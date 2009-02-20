@@ -8,6 +8,8 @@
  * (C) Copyright 2002
  * Gary Jennejohn, DENX Software Engineering, <garyj@denx.de>
  *
+ * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ *
  * See file CREDITS for list of people who contributed to this
  * project.
  *
@@ -63,7 +65,10 @@ int cleanup_before_linux (void)
 	dcache_disable();
 	/* flush I/D-cache */
 	cache_flush();
-
+/*Workaround to enable L2CC during kernel decompressing*/
+#ifdef fixup_before_linux
+	fixup_before_linux;
+#endif
 	return 0;
 }
 

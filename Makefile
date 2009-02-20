@@ -3229,6 +3229,9 @@ mx31pdk_nand_config	: unconfig
 	fi
 	@$(MKCONFIG) -a mx31pdk arm arm1136 mx31pdk freescale mx31
 
+mx35_3stack_config	: unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm1136 mx35_3stack freescale mx35
+
 omap2420h4_config	: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1136 omap2420h4 NULL omap24xx
 
