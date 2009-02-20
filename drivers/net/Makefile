@@ -44,6 +44,7 @@ COBJS-$(CONFIG_MACB) += macb.o
 COBJS-$(CONFIG_MCFFEC) += mcffec.o mcfmii.o
 COBJS-$(CONFIG_MPC5xxx_FEC) += mpc5xxx_fec.o
 COBJS-$(CONFIG_MPC512x_FEC) += mpc512x_fec.o
+COBJS-$(CONFIG_MXC_FEC) += mxc_fec.o
 COBJS-$(CONFIG_NATSEMI) += natsemi.o
 COBJS-$(CONFIG_DRIVER_NE2000) += ne2000.o ne2000_base.o
 COBJS-$(CONFIG_DRIVER_AX88796L) += ax88796.o ne2000_base.o

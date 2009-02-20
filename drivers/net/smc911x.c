@@ -3,6 +3,8 @@
  *
  * (c) 2007 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
  *
+ * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ *
  * See file CREDITS for list of people who contributed to this
  * project.
  *
@@ -48,6 +50,7 @@ static inline u32 reg_read(u32 addr)
 	volatile u16 *addr_16 = (u16 *)addr;
 	return ((*addr_16 & 0x0000ffff) | (*(addr_16 + 1) << 16));
 }
+
 static inline void reg_write(u32 addr, u32 val)
 {
 	*(volatile u16*)addr = (u16)val;
@@ -426,10 +429,9 @@ void smc911x_set_mac_csr(u8 reg, u32 data)
 		;
 }
 
-static int smx911x_handle_mac_address(bd_t *bd)
+static int smx911x_handle_mac_address(unsigned char *m)
 {
 	unsigned long addrh, addrl;
-	unsigned char *m = bd->bi_enetaddr;
 
 	/* if the environment has a valid mac address then use it */
 	if ((m[0] | m[1] | m[2] | m[3] | m[4] | m[5])) {
@@ -594,7 +596,11 @@ static void smc911x_enable(void)
 
 }
 
+#ifndef CONFIG_NET_MULTI
 int eth_init(bd_t *bd)
+#else
+static int smc911x_eth_init(struct eth_device *dev, bd_t *bd)
+#endif
 {
 	unsigned long val, i;
 
@@ -622,7 +628,11 @@ int eth_init(bd_t *bd)
 	/* Configure the PHY, initialize the link state */
 	smc911x_phy_configure();
 
-	if (smx911x_handle_mac_address(bd))
+#ifndef CONFIG_NET_MULTI
+	if (smx911x_handle_mac_address(bd->bi_enetaddr))
+#else
+	if (smx911x_handle_mac_address(dev->enetaddr))
+#endif
 		goto err_out;
 
 	/* Turn on Tx + Rx */
@@ -634,7 +644,12 @@ err_out:
 	return -1;
 }
 
+#ifndef CONFIG_NET_MULTI
 int eth_send(volatile void *packet, int length)
+#else
+static int smc911x_eth_send(struct eth_device *dev,
+				volatile void *packet, int length)
+#endif
 {
 	u32 *data = (u32*)packet;
 	u32 tmplen;
@@ -670,12 +685,20 @@ int eth_send(volatile void *packet, int length)
 	return -1;
 }
 
+#ifndef CONFIG_NET_MULTI
 void eth_halt(void)
+#else
+static void smc911x_eth_halt(struct eth_device *dev)
+#endif
 {
 	smc911x_reset();
 }
 
+#ifndef CONFIG_NET_MULTI
 int eth_rx(void)
+#else
+static int smc911x_eth_rx(struct eth_device *dev)
+#endif
 {
 	u32 *data = (u32 *)NetRxPackets[0];
 	u32 pktlen, tmplen;
@@ -701,3 +724,21 @@ int eth_rx(void)
 
 	return 0;
 }
+
+#if defined(CONFIG_CMD_NET) && defined(CONFIG_NET_MULTI)
+static struct eth_device smc911x_device;
+int smc911x_initialize(bd_t *bis)
+{
+       memset(&smc911x_device, 0, sizeof(smc911x_device));
+
+       strcpy(smc911x_device.name, DRIVERNAME);
+
+       smc911x_device.init = smc911x_eth_init;
+       smc911x_device.send = smc911x_eth_send;
+       smc911x_device.recv = smc911x_eth_rx;
+       smc911x_device.halt = smc911x_eth_halt;
+
+       eth_register(&smc911x_device);
+       return 0;
+}
+#endif

@@ -2,6 +2,8 @@
  * (C) Copyright 2001-2004
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
+ * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ *
  * See file CREDITS for list of people who contributed to this
  * project.
  *
@@ -492,6 +494,9 @@ int eth_initialize(bd_t *bis)
 #endif
 #if defined(CONFIG_DRIVER_TI_EMAC)
 	davinci_eth_miiphy_initialize(bis);
+#endif
+#if defined(CONFIG_DRIVER_SMC911X)
+	smc911x_initialize(bis);
 #endif
 	return 0;
 }

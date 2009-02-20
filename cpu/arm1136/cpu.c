@@ -8,6 +8,8 @@
  * (C) Copyright 2002
  * Gary Jennejohn, DENX Software Engineering, <gj@denx.de>
  *
+ * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ *
  * See file CREDITS for list of people who contributed to this
  * project.
  *
@@ -127,6 +129,10 @@ int cleanup_before_linux (void)
 	i = 0;
 	asm ("mcr p15, 0, %0, c7, c7, 0": :"r" (i));  /* invalidate both caches and flush btb */
 	asm ("mcr p15, 0, %0, c7, c10, 4": :"r" (i)); /* mem barrier to sync things */
+/*Workaround to enable L2CC during kernel decompressing*/
+#ifdef fixup_before_linux
+	fixup_before_linux;
+#endif
 	return(0);
 }
 
