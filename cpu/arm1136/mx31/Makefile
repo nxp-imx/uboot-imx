@@ -29,9 +29,7 @@ COBJS	+= generic.o
 COBJS	+= timer.o
 COBJS	+= devices.o
 
-ifdef CONFIG_NAND_BOOT
 SOBJS	= nand_load.o
-endif
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
