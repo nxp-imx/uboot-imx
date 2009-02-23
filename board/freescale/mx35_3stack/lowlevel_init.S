@@ -24,6 +24,22 @@
 #include "board-mx35_3stack.h"
 
 /*
+ * return soc version
+ * 	0x10:  TO1
+ *	0x20:  TO2
+ *	0x30:  TO3
+ */
+.macro check_soc_version ret, tmp
+	ldr \tmp, =IIM_BASE_ADDR
+	ldr \ret, [\tmp, #IIM_SREV]
+	cmp \ret, #0x00
+	moveq \tmp, #ROMPATCH_BASE_ADDR
+	ldreq \ret, [\tmp, #ROMPATCH_REV]
+	moveq \ret, \ret, lsl #4
+	addne \ret, \ret, #0x10
+.endm
+
+/*
  * L2CC Cache setup/invalidation/disable
  */
 .macro init_l2cc
@@ -45,11 +61,6 @@
     ldr r2, =L2CC_AUX_CTL_CONFIG
     orr r1, r1, r2
     str r1, [r0, #L2_CACHE_AUX_CTL_REG]
-
-/* Workaournd for DDR issue:WT*/
-    ldr r1, [r0, #L2_CACHE_DBG_CTL_REG]
-    orr r1, r1, #2
-    str r1, [r0, #L2_CACHE_DBG_CTL_REG]
 
    /* Invalidate L2 */
     mov r1, #0x000000FF
@@ -184,11 +195,15 @@
         ldr r2, =CCM_CCMR_CONFIG
         str r2, [r0, #CLKCTL_CCMR]
 
+    	check_soc_version r1, r2
+    	cmp r1, #0x20
+	ldrhs r3, =CCM_MPLL_399_HZ
+	bhs 1f
 	ldr r2, [r0, #CLKCTL_PDR0]
         tst r2, #CLKMODE_CONSUMER
         ldrne r3, =CCM_MPLL_532_HZ  /* consumer path*/
         ldreq r3, =CCM_MPLL_399_HZ  /* auto path*/
-
+1:
 	str r3, [r0, #CLKCTL_MPCTL]
 
         ldr r1, =CCM_PPLL_300_HZ
@@ -231,12 +246,15 @@
 
         mov lr, fp
 
+	check_soc_version r3, r4
+	cmp r1, #0x20
+	bhs 1f
 	cmp r5, #0
         movne r3, #L2CC_BASE_ADDR
         ldrne r4, [r3, #L2_CACHE_AUX_CTL_REG]
         orrne r4, r4, #0x1000
         strne r4, [r3, #L2_CACHE_AUX_CTL_REG]
-
+1:
         ldr r3, =ESDCTL_DELAY_LINE5
         str r3, [r0, #0x30]
 .endm /* setup_sdram */
@@ -280,14 +298,14 @@ lowlevel_init:
 #endif
 	mcr 15, 0, r0, c7, c10, 4       /* Drain the write buffer */
 
-	init_l2cc
-
 	/* initializes very early AIPS, what for?
 	 * Then it also initializes Multi-Layer AHB Crossbar Switch,
 	 * M3IF */
 	/* Also setup the Peripheral Port Remap register inside the core */
 	ldr r0, =0x40000015        /* start from AIPS 2GB region */
 	mcr p15, 0, r0, c15, c2, 4
+
+	init_l2cc
 
 	init_aips
 
