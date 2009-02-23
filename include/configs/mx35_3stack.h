@@ -54,7 +54,7 @@
 /*
  * Size of malloc() pool
  */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 128 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 512 * 1024)
 #define CONFIG_SYS_GBL_DATA_SIZE	128/* size in bytes reserved for initial data */
 
 /*
@@ -82,6 +82,9 @@
 
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
+/*#define CONFIG_CMD_SPI*/
+/*#define CONFIG_CMD_DATE*/
+#define CONFIG_CMD_NAND
 
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_MII
@@ -209,6 +212,12 @@
 #define CONFIG_SYS_FLASH_USE_BUFFER_WRITE 1/* Use buffered writes (~10x faster) */
 #define CONFIG_SYS_FLASH_PROTECTION	1/* Use hardware sector protection */
 
+/*-----------------------------------------------------------------------
+ * NAND FLASH driver setup
+ */
+#define NAND_MAX_CHIPS         1
+#define CFG_MAX_NAND_DEVICE    1
+#define CFG_NAND_BASE          0x40000000
 /*
  * JFFS2 partitions
  */

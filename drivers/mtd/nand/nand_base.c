@@ -867,8 +867,8 @@ static int nand_wait(struct mtd_info *mtd, struct nand_chip *this)
 
 	while (1) {
 		if (get_timer(0) > timeo) {
-			printf("Timeout!");
-			return 0x01;
+			/*printf("Timeout!");*/
+			/*return 0x01;*/
 		}
 
 		if (this->dev_ready) {
