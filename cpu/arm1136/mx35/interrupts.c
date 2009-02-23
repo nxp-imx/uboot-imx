@@ -54,6 +54,11 @@ int interrupt_init(void)
 	return 0;
 }
 
+void reset_timer(void)
+{
+	reset_timer_masked();
+}
+
 void reset_timer_masked(void)
 {
 	GPTCR = 0;
