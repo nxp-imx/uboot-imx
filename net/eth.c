@@ -495,9 +495,6 @@ int eth_initialize(bd_t *bis)
 #if defined(CONFIG_DRIVER_TI_EMAC)
 	davinci_eth_miiphy_initialize(bis);
 #endif
-#if defined(CONFIG_DRIVER_SMC911X)
-	smc911x_initialize(bis);
-#endif
 	return 0;
 }
 #endif

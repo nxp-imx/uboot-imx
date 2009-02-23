@@ -24,6 +24,7 @@
  */
 
 #include <common.h>
+#include <asm/errno.h>
 #include <asm/arch/mx35.h>
 #include "crm_regs.h"
 
@@ -203,3 +204,16 @@ int print_cpuinfo(void)
 	return 0;
 }
 #endif
+
+/*
+ * Initializes on-chip ethernet controllers.
+ * to override, implement board_eth_init()
+ */
+int cpu_eth_init(bd_t *bis)
+{
+	int rc = -ENODEV;
+#if defined(CONFIG_MXC_FEC)
+	rc = mxc_fec_initialize(bis);
+#endif
+	return rc;
+}

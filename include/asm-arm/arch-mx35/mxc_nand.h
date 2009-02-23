@@ -25,11 +25,11 @@
 
 #include <asm/arch/mx35.h>
 
-#define IS_2K_PAGE_NAND         ((mtd->oobblock / info->num_of_intlv) \
+#define IS_2K_PAGE_NAND         ((mtd->writesize / info->num_of_intlv) \
 						== NAND_PAGESIZE_2KB)
-#define IS_4K_PAGE_NAND         ((mtd->oobblock / info->num_of_intlv) \
+#define IS_4K_PAGE_NAND         ((mtd->writesize / info->num_of_intlv) \
 						== NAND_PAGESIZE_4KB)
-#define IS_LARGE_PAGE_NAND      ((mtd->oobblock / info->num_of_intlv) > 512)
+#define IS_LARGE_PAGE_NAND      ((mtd->writesize / info->num_of_intlv) > 512)
 
 #define NAND_PAGESIZE_2KB	2048
 #define NAND_PAGESIZE_4KB	4096

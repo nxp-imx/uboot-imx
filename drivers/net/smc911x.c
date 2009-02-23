@@ -736,5 +736,3 @@ int smc911x_initialize(bd_t *bis)
        return 0;
 }
 #endif
-
-#endif

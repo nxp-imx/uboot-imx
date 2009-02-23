@@ -44,27 +44,27 @@
 /*
  * Size of malloc() pool
  */
-#define CFG_MALLOC_LEN		(CFG_ENV_SIZE + 128 * 1024)
-#define CFG_GBL_DATA_SIZE	128
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 512 * 1024)
+#define CONFIG_SYS_GBL_DATA_SIZE	128
 
 /*
  * Hardware drivers
  */
 
 #define CONFIG_MX31_UART	1
-#define CFG_MX31_UART1		1
+#define CONFIG_SYS_MX31_UART1		1
 
-#define CONFIG_HARD_SPI		1
 #define CONFIG_MXC_SPI		1
-#define CONFIG_MXC_SPI_IFACE	1
 
 #define CONFIG_RTC_MC13783	1
+#define CONFIG_MC13783_SPI_BUS	1
+#define CONFIG_MC13783_SPI_CS   0
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX	1
 #define CONFIG_BAUDRATE		115200
-#define CFG_BAUDRATE_TABLE	{9600, 19200, 38400, 57600, 115200}
+#define CONFIG_SYS_BAUDRATE_TABLE	{9600, 19200, 38400, 57600, 115200}
 
 /***********************************************************
  * Command definition
@@ -99,32 +99,31 @@
 		"tftpboot ${loadaddr} ${tftp_server}:${kernel}; bootm\0"
 
 /* configure for smc91xx debug board ethernet */
-#define CONFIG_NET_MULTI 1
 #define CONFIG_DRIVER_SMC911X          1
+#define CONFIG_DRIVER_SMC911X_16_BIT   1
 #define CONFIG_DRIVER_SMC911X_BASE     CS5_BASE
-#define CONFIG_DRIVER_SMC911X_32_BIT   1
 
 #define CONFIG_ARP_TIMEOUT	200UL
 
 /*
  * Miscellaneous configurable options
  */
-#define CFG_LONGHELP		/* undef to save memory */
-#define CFG_PROMPT		"=> "
-#define CFG_CBSIZE		256		/* Console I/O Buffer Size */
+#define CONFIG_SYS_LONGHELP	/* undef to save memory */
+#define CONFIG_SYS_PROMPT	"=> "
+#define CONFIG_SYS_CBSIZE	256		/* Console I/O Buffer Size */
 /* Print Buffer Size */
-#define CFG_PBSIZE		(CFG_CBSIZE + sizeof(CFG_PROMPT) + 16)
-#define CFG_MAXARGS		16		/* max number of command args */
-#define CFG_BARGSIZE		CFG_CBSIZE	/* Boot Argument Buffer Size */
+#define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
+#define CONFIG_SYS_MAXARGS	16		/* max number of command args */
+#define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE /* Boot Argument Buffer Size */
 
-#define CFG_MEMTEST_START	0		/* memtest works on */
-#define CFG_MEMTEST_END		0x10000
+#define CONFIG_SYS_MEMTEST_START	0	/* memtest works on */
+#define CONFIG_SYS_MEMTEST_END		0x10000
 
-#undef	CFG_CLKS_IN_HZ		/* everything, incl board info, in Hz */
+#undef	CONFIG_SYS_CLKS_IN_HZ	/* everything, incl board info, in Hz */
 
-#define CFG_LOAD_ADDR		CONFIG_LOADADDR
+#define CONFIG_SYS_LOAD_ADDR	CONFIG_LOADADDR
 
-#define CFG_HZ			CONFIG_MX31_CLK32
+#define CONFIG_SYS_HZ		CONFIG_MX31_CLK32
 
 #define CONFIG_CMDLINE_EDITING	1
 
@@ -146,15 +145,14 @@
  * TODO: NAND Flash configure
  */
 
-#define CFG_NO_FLASH
+#define CONFIG_SYS_NO_FLASH
 #define NAND_MAX_CHIPS         1
-#define CFG_MAX_NAND_DEVICE    1
-#define CFG_NAND_BASE          0x40000000
+#define CONFIG_SYS_MAX_NAND_DEVICE    1
+#define CONFIG_SYS_NAND_BASE          0x40000000
 
-#define	CFG_ENV_IS_IN_NAND	1
-#define CFG_ENV_OFFSET		0x40000	/* 2nd block */
-#define CFG_ENV_SIZE		(128*1024)
-
+#define	CONFIG_ENV_IS_IN_NAND	1
+#define CONFIG_ENV_OFFSET	0x40000	/* 2nd block */
+#define CONFIG_ENV_SIZE		(128*1024)
 /*
  * JFFS2 partitions TODO:
  */

@@ -58,7 +58,7 @@
 #ifdef CONFIG_SYS_I2C_PORT
 # define I2C_BASE	CONFIG_SYS_I2C_PORT
 #else
-# error "define CFG_I2C_PORT(I2C base address) to use the I2C driver"
+# error "define CONFIG_SYS_I2C_PORT(I2C base address) to use the I2C driver"
 #endif
 
 #define I2C_MAX_TIMEOUT		100000
