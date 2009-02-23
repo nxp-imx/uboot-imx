@@ -34,10 +34,11 @@
 #define GPTCNT	__REG(TIMER_BASE + 0x24)	/* Counter register	*/
 
 /* General purpose timers bitfields */
-#define GPTCR_SWR		(1 << 15)	/* Software reset	*/
-#define GPTCR_FRR		(1 << 9)	/* Freerun / restart	*/
-#define GPTCR_CLKSOURCE_32	(4 << 6)	/* Clock source		*/
-#define GPTCR_TEN		1		/* Timer enable		*/
+#define GPTCR_SWR       (1<<15) /* Software reset */
+#define GPTCR_FRR       (1<<9)  /* Freerun / restart */
+#define GPTCR_CLKSOURCE_32 (4<<6)  /* Clock source */
+#define GPTCR_TEN       (1)     /* Timer enable */
+#define GPTCR_ENMODE	(1<<1)	/* gpt enable mode */
 
 static ulong timestamp;
 static ulong lastinc;
@@ -93,15 +94,13 @@ static inline unsigned long long us_to_tick(unsigned long long us)
 /* The 32768Hz 32-bit timer overruns in 131072 seconds */
 int interrupt_init (void)
 {
-	int i;
-
 	/* setup GP Timer 1 */
 	GPTCR = GPTCR_SWR;
-	for (i = 0; i < 100; i++)
-		GPTCR = 0; /* We have no udelay by now */
+	while (GPTCR & GPTCR_SWR)
+		;
 	GPTPR = 0; /* 32Khz */
 	/* Freerun Mode, PERCLK1 input */
-	GPTCR |= GPTCR_CLKSOURCE_32 | GPTCR_TEN;
+	GPTCR |= GPTCR_CLKSOURCE_32 | GPTCR_TEN | GPTCR_ENMODE;
 
 	return 0;
 }

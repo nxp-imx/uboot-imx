@@ -168,4 +168,105 @@
 #define CS5_BASE	0xB6000000
 #define PCMCIA_MEM_BASE	0xC0000000
 
+/*
+ * NAND controller
+ */
+#define NFC_BASE_ADDR	0xB8000000
+
+/*
+ * Addresses for NFC registers
+ */
+#define NFC_BUF_SIZE            (*((volatile u16 *)(NFC_BASE_ADDR + 0xE00)))
+#define NFC_BUF_ADDR            (*((volatile u16 *)(NFC_BASE_ADDR + 0xE04)))
+#define NFC_FLASH_ADDR          (*((volatile u16 *)(NFC_BASE_ADDR + 0xE06)))
+#define NFC_FLASH_CMD           (*((volatile u16 *)(NFC_BASE_ADDR + 0xE08)))
+#define NFC_CONFIG              (*((volatile u16 *)(NFC_BASE_ADDR + 0xE0A)))
+#define NFC_ECC_STATUS_RESULT   (*((volatile u16 *)(NFC_BASE_ADDR + 0xE0C)))
+#define NFC_RSLTMAIN_AREA       (*((volatile u16 *)(NFC_BASE_ADDR + 0xE0E)))
+#define NFC_RSLTSPARE_AREA      (*((volatile u16 *)(NFC_BASE_ADDR + 0xE10)))
+#define NFC_WRPROT              (*((volatile u16 *)(NFC_BASE_ADDR + 0xE12)))
+#define NFC_UNLOCKSTART_BLKADDR (*((volatile u16 *)(NFC_BASE_ADDR + 0xE14)))
+#define NFC_UNLOCKEND_BLKADDR   (*((volatile u16 *)(NFC_BASE_ADDR + 0xE16)))
+#define NFC_NF_WRPRST           (*((volatile u16 *)(NFC_BASE_ADDR + 0xE18)))
+#define NFC_CONFIG1             (*((volatile u16 *)(NFC_BASE_ADDR + 0xE1A)))
+#define NFC_CONFIG2             (*((volatile u16 *)(NFC_BASE_ADDR + 0xE1C)))
+
+#define NFC_BUFSIZE_REG_OFF		(0 + 0x00)
+#define RAM_BUFFER_ADDRESS_REG_OFF	(0 + 0x04)
+#define NAND_FLASH_ADD_REG_OFF		(0 + 0x06)
+#define NAND_FLASH_CMD_REG_OFF		(0 + 0x08)
+#define NFC_CONFIGURATION_REG_OFF	(0 + 0x0A)
+#define ECC_STATUS_RESULT_REG_OFF	(0 + 0x0C)
+#define ECC_RSLT_MAIN_AREA_REG_OFF	(0 + 0x0E)
+#define ECC_RSLT_SPARE_AREA_REG_OFF	(0 + 0x10)
+#define NF_WR_PROT_REG_OFF		(0 + 0x12)
+#define UNLOCK_START_BLK_ADD_REG_OFF	(0 + 0x14)
+#define UNLOCK_END_BLK_ADD_REG_OFF	(0 + 0x16)
+#define NAND_FLASH_WR_PR_ST_REG_OFF	(0 + 0x18)
+#define NAND_FLASH_CONFIG1_REG_OFF	(0 + 0x1A)
+#define NAND_FLASH_CONFIG2_REG_OFF	(0 + 0x1C)
+#define RAM_BUFFER_ADDRESS_RBA_3	0x3
+#define NFC_BUFSIZE_1KB	0x0
+#define NFC_BUFSIZE_2KB	0x1
+#define NFC_CONFIGURATION_UNLOCKED	0x2
+#define ECC_STATUS_RESULT_NO_ERR	0x0
+#define ECC_STATUS_RESULT_1BIT_ERR	0x1
+#define ECC_STATUS_RESULT_2BIT_ERR	0x2
+#define NF_WR_PROT_UNLOCK		0x4
+#define NAND_FLASH_CONFIG1_FORCE_CE	(1 << 7)
+#define NAND_FLASH_CONFIG1_RST		(1 << 6)
+#define NAND_FLASH_CONFIG1_BIG		(1 << 5)
+#define NAND_FLASH_CONFIG1_INT_MSK	(1 << 4)
+#define NAND_FLASH_CONFIG1_ECC_EN	(1 << 3)
+#define NAND_FLASH_CONFIG1_SP_EN	(1 << 2)
+#define NAND_FLASH_CONFIG2_INT_DONE	(1 << 15)
+#define NAND_FLASH_CONFIG2_FDO_PAGE	(0 << 3)
+#define NAND_FLASH_CONFIG2_FDO_ID	(2 << 3)
+#define NAND_FLASH_CONFIG2_FDO_STATUS	(4 << 3)
+#define NAND_FLASH_CONFIG2_FDI_EN	(1 << 2)
+#define NAND_FLASH_CONFIG2_FADD_EN	(1 << 1)
+#define NAND_FLASH_CONFIG2_FCMD_EN	(1 << 0)
+#define FDO_PAGE_SPARE_VAL		0x8
+#define NAND_FLASH_BOOT			0x10000000
+#define MXCFIS_NAND			0x10000000
+
+/*
+ * Addresses for NFC RAM BUFFER Main area 0
+ */
+#define MAIN_AREA0        (volatile u16 *)(NFC_BASE_ADDR + 0x000)
+#define MAIN_AREA1        (volatile u16 *)(NFC_BASE_ADDR + 0x200)
+#define MAIN_AREA2        (volatile u16 *)(NFC_BASE_ADDR + 0x400)
+#define MAIN_AREA3        (volatile u16 *)(NFC_BASE_ADDR + 0x600)
+
+/*
+ * Addresses for NFC SPARE BUFFER Spare area 0
+ */
+#define SPARE_AREA0       (volatile u16 *)(NFC_BASE_ADDR + 0x800)
+#define SPARE_AREA1       (volatile u16 *)(NFC_BASE_ADDR + 0x810)
+#define SPARE_AREA2       (volatile u16 *)(NFC_BASE_ADDR + 0x820)
+#define SPARE_AREA3       (volatile u16 *)(NFC_BASE_ADDR + 0x830)
+
+#define NFC_CMD            0x1
+#define NFC_ADDR           0x2
+#define NFC_INPUT          0x4
+#define NFC_OUTPUT         0x8
+#define NFC_ID             0x10
+#define NFC_STATUS         0x20
+#define NFC_INT            0x8000
+
+#define NFC_SP_EN           (1 << 2)
+#define NFC_ECC_EN          (1 << 3)
+#define NFC_INT_MSK         (1 << 4)
+#define NFC_BIG             (1 << 5)
+#define NFC_RST             (1 << 6)
+#define NFC_CE              (1 << 7)
+#define NFC_ONE_CYCLE       (1 << 8)
+
+/*
+ * NFMS bit in RCSR register for pagesize of nandflash
+ */
+#define NFMS		(*((volatile u32 *)CCM_RCSR))
+#define NFMS_BIT	30
+
 #endif /* __ASM_ARCH_MX31_REGS_H */
+
