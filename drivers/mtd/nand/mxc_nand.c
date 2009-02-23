@@ -16,7 +16,6 @@
 #include <asm/io.h>
 #include <asm/errno.h>
 #include <nand.h>
-#include <linux/mtd/compat.h>
 #include <asm-arm/arch/mxc_nand.h>
 
 struct nand_info {
@@ -39,22 +38,19 @@ struct nand_info {
 /*
  * OOB placement block for use with hardware ecc generation
  */
-static struct nand_oobinfo nand_hw_eccoob_512 = {
-	.useecc = MTD_NANDECC_AUTOPL_USR,
+static struct nand_ecclayout nand_hw_eccoob_512 = {
 	.eccbytes = 9,
 	.eccpos = {7, 8, 9, 10, 11, 12, 13, 14, 15},
 	.oobfree = {{0, 4} }
 };
 
-static struct nand_oobinfo nand_hw_eccoob_2k = {
-	.useecc = MTD_NANDECC_AUTOPL_USR,
+static struct nand_ecclayout nand_hw_eccoob_2k = {
 	.eccbytes = 9,
 	.eccpos = {7, 8, 9, 10, 11, 12, 13, 14, 15},
 	.oobfree = {{2, 4} }
 };
 
-static struct nand_oobinfo nand_hw_eccoob_4k = {
-	.useecc = MTD_NANDECC_AUTOPL_USR,
+static struct nand_ecclayout nand_hw_eccoob_4k = {
 	.eccbytes = 9,
 	.eccpos = {7, 8, 9, 10, 11, 12, 13, 14, 15},
 	.oobfree = {{2, 4} }
@@ -97,7 +93,7 @@ copy_spare(struct mtd_info *mtd, void *pbuf, void *pspare, int len, int bfrom)
 {
 	u16 i, j;
 	u16 m = mtd->oobsize;
-	u16 n = mtd->oobblock >> 9;
+	u16 n = mtd->writesize >> 9;
 	u8 *d = (u8 *) pbuf;
 	u8 *s = (u8 *) pspare;
 	u16 t = SPARE_LEN;
@@ -144,7 +140,7 @@ static void wait_op_done(int max_retries)
 		udelay(1);
 	}
 	if (max_retries <= 0)
-		DEBUG(MTD_DEBUG_LEVEL0, "wait: INT not set\n");
+		MTDDEBUG(MTD_DEBUG_LEVEL0, "wait: INT not set\n");
 }
 
 static void send_cmd_atomic(struct mtd_info *mtd, u16 cmd)
@@ -211,7 +207,7 @@ static void send_cmd_interleave(struct mtd_info *mtd, u16 cmd)
 	u32 page_addr = addr_low >> 16 | addr_high << 16;
 	u8 *dbuf = mtd->info.data_buf;
 	u8 *obuf = mtd->info.oob_buf;
-	u32 dlen = mtd->oobblock / j;
+	u32 dlen = mtd->writesize / j;
 	u32 olen = mtd->oobsize / j;
 
 	/* adjust the addr value
@@ -303,7 +299,7 @@ static void send_cmd(struct mtd_info *mtd, u16 cmd)
 	else
 		send_cmd_atomic(mtd, cmd);
 
-	DEBUG(MTD_DEBUG_LEVEL3, "send_cmd(0x%x, %d)\n", cmd);
+	MTDDEBUG(MTD_DEBUG_LEVEL3, "send_cmd(0x%x, %d)\n", cmd);
 }
 
 /*!
@@ -316,7 +312,7 @@ static void send_cmd(struct mtd_info *mtd, u16 cmd)
  */
 static void send_addr(u16 addr)
 {
-	DEBUG(MTD_DEBUG_LEVEL3, "send_addr(0x%x %d)\n", addr);
+	MTDDEBUG(MTD_DEBUG_LEVEL3, "send_addr(0x%x %d)\n", addr);
 
 	/* fill address */
 	raw_write((addr << NFC_FLASH_ADDR_SHIFT), REG_NFC_FLASH_ADDR);
@@ -355,7 +351,7 @@ static void send_prog_page(struct mtd_info *mtd, u8 buf_id)
 		/* Wait for operation to complete */
 		wait_op_done(TROP_US_DELAY);
 
-		DEBUG(MTD_DEBUG_LEVEL3, "%s\n", __func__);
+		MTDDEBUG(MTD_DEBUG_LEVEL3, "%s\n", __func__);
 	}
 }
 
@@ -384,7 +380,7 @@ static void send_read_page(struct mtd_info *mtd, u8 buf_id)
 		/* Wait for operation to complete */
 		wait_op_done(TROP_US_DELAY);
 
-		DEBUG(MTD_DEBUG_LEVEL3, "%s(%d)\n", __func__, buf_id);
+		MTDDEBUG(MTD_DEBUG_LEVEL3, "%s(%d)\n", __func__, buf_id);
 
 	}
 
@@ -511,7 +507,7 @@ static int mxc_nand_ecc_status(struct mtd_info *mtd)
 	ecc_bit_mask = (IS_4BIT_ECC ? 0x7 : 0xf);
 	err_limit = (IS_4BIT_ECC ? 0x4 : 0x8);
 
-	no_subpages = mtd->oobblock >> 9;
+	no_subpages = mtd->writesize >> 9;
 
 	no_subpages /= info->num_of_intlv;
 
@@ -527,7 +523,7 @@ static int mxc_nand_ecc_status(struct mtd_info *mtd)
 		ecc_stat >>= 4;
 	} while (--no_subpages);
 
-	DEBUG(MTD_DEBUG_LEVEL3, "%d Symbol Correctable RS-ECC Error\n", ret);
+	MTDDEBUG(MTD_DEBUG_LEVEL3, "%d Symbol Correctable RS-ECC Error\n", ret);
 
 	return ret;
 }
@@ -574,9 +570,9 @@ static void mxc_nand_read_buf(struct mtd_info *mtd, u_char * buf, int len)
 	u8 *data_buf = info->data_buf;
 	u8 *oob_buf = info->oob_buf;
 
-	if (mtd->oobblock) {
+	if (mtd->writesize) {
 
-		int j = mtd->oobblock - col;
+		int j = mtd->writesize - col;
 		int n = mtd->oobsize + j;
 
 		n = min(n, len);
@@ -589,7 +585,7 @@ static void mxc_nand_read_buf(struct mtd_info *mtd, u_char * buf, int len)
 				memcpy(buf, &data_buf[col], n);
 			}
 		} else {
-			col -= mtd->oobblock;
+			col -= mtd->writesize;
 			memcpy(buf, &oob_buf[col], len);
 		}
 
@@ -598,7 +594,7 @@ static void mxc_nand_read_buf(struct mtd_info *mtd, u_char * buf, int len)
 
 	} else {
 		/* At flash identify phase,
-		 * mtd->oobblock has not been
+		 * mtd->writesize has not been
 		 * set correctly, it should
 		 * be zero.And len will less 2
 		 */
@@ -683,7 +679,7 @@ static void mxc_nand_write_buf(struct mtd_info *mtd,
 	u16 col = info->col_addr;
 	u8 *data_buf = info->data_buf;
 	u8 *oob_buf = info->oob_buf;
-	int j = mtd->oobblock - col;
+	int j = mtd->writesize - col;
 	int n = mtd->oobsize + j;
 
 	n = min(n, len);
@@ -696,7 +692,7 @@ static void mxc_nand_write_buf(struct mtd_info *mtd,
 			memcpy(&data_buf[col], buf, n);
 		}
 	} else {
-		col -= mtd->oobblock;
+		col -= mtd->writesize;
 		memcpy(&oob_buf[col], buf, len);
 	}
 
@@ -773,7 +769,7 @@ static void mxc_do_addr_cycle_auto(struct mtd_info *mtd, int column,
 		raw_write(page_addr, NFC_FLASH_ADDR0);
 	}
 
-	DEBUG(MTD_DEBUG_LEVEL3,
+	MTDDEBUG(MTD_DEBUG_LEVEL3,
 	      "AutoMode:the ADDR REGS value is (0x%x, 0x%x)\n",
 	      raw_read(NFC_FLASH_ADDR0), raw_read(NFC_FLASH_ADDR8));
 #endif
@@ -836,7 +832,7 @@ static void mxc_nand_command(struct mtd_info *mtd, unsigned command,
 	struct nand_chip *this = mtd->priv;
 	struct nand_info *info = this->priv;
 
-	DEBUG(MTD_DEBUG_LEVEL3,
+	MTDDEBUG(MTD_DEBUG_LEVEL3,
 	      "mxc_nand_command (cmd = 0x%x, col = 0x%x, page = 0x%x)\n",
 	      command, column, page_addr);
 	/*
@@ -888,7 +884,7 @@ static void mxc_nand_command(struct mtd_info *mtd, unsigned command,
 
 	case NAND_CMD_PAGEPROG:
 		if (!info->auto_mode) {
-			nfc_memcpy(MAIN_AREA0, info->data_buf, mtd->oobblock);
+			nfc_memcpy(MAIN_AREA0, info->data_buf, mtd->writesize);
 			copy_spare(mtd, info->oob_buf, SPARE_AREA0,
 						mtd->oobsize, 0);
 		}
@@ -923,7 +919,7 @@ static void mxc_nand_command(struct mtd_info *mtd, unsigned command,
 
 		if (!info->auto_mode) {
 			mxc_nand_ecc_status(mtd);
-			nfc_memcpy(info->data_buf, MAIN_AREA0, mtd->oobblock);
+			nfc_memcpy(info->data_buf, MAIN_AREA0, mtd->writesize);
 			copy_spare(mtd, info->oob_buf, SPARE_AREA0,
 						mtd->oobsize, 1);
 		}
@@ -989,14 +985,14 @@ static int mxc_nand_scan_bbt(struct mtd_info *mtd)
 
 	if (IS_2K_PAGE_NAND) {
 		NFC_SET_NFMS(1 << NFMS_NF_PG_SZ);
-		this->autooob = &nand_hw_eccoob_2k;
+		this->ecc.layout = &nand_hw_eccoob_2k;
 		info->large_page = 1;
 	} else if (IS_4K_PAGE_NAND) {
 		NFC_SET_NFMS(1 << NFMS_NF_PG_SZ);
-		this->autooob = &nand_hw_eccoob_4k;
+		this->ecc.layout = &nand_hw_eccoob_4k;
 		info->large_page = 1;
 	} else {
-		this->autooob = &nand_hw_eccoob_512;
+		this->ecc.layout = &nand_hw_eccoob_512;
 		info->large_page = 0;
 	}
 
@@ -1012,17 +1008,17 @@ static int mxc_nand_scan_bbt(struct mtd_info *mtd)
 		 */
 		mtd->size = this->chipsize;
 		mtd->erasesize *= info->num_of_intlv;
-		mtd->oobblock *= info->num_of_intlv;
+		mtd->writesize *= info->num_of_intlv;
 		mtd->oobsize *= info->num_of_intlv;
-		this->page_shift = ffs(mtd->oobblock) - 1;
+		this->page_shift = ffs(mtd->writesize) - 1;
 		this->bbt_erase_shift =
 		this->phys_erase_shift = ffs(mtd->erasesize) - 1;
 		this->chip_shift = ffs(this->chipsize) - 1;
-		/*this->oob_poi = this->buffers->databuf + mtd->oobblock;*/
+		/*this->oob_poi = this->buffers->databuf + mtd->writesize;*/
 	}
 
 	/* propagate ecc.layout to mtd_info */
-	memcpy(&mtd->oobinfo, this->autooob, sizeof(mtd->oobinfo));
+	mtd->ecclayout = this->ecc.layout;
 
 	/* jffs2 not write oob */
 	/*mtd->flags &= ~MTD_OOB_WRITEABLE;*/
@@ -1035,7 +1031,7 @@ static int mxc_nand_scan_bbt(struct mtd_info *mtd)
 	this->options |= NAND_USE_FLASH_BBT;
 
 	if (!this->badblock_pattern) {
-		this->badblock_pattern = (mtd->oobblock > 512) ?
+		this->badblock_pattern = (mtd->writesize > 512) ?
 		    &largepage_memorybased : &smallpage_memorybased;
 	}
 
@@ -1136,12 +1132,12 @@ int board_nand_init(struct nand_chip *nand)
 	this->read_buf = mxc_nand_read_buf;
 	this->verify_buf = mxc_nand_verify_buf;
 	this->scan_bbt = mxc_nand_scan_bbt;
-	this->calculate_ecc = mxc_nand_calculate_ecc;
-	this->correct_data = mxc_nand_correct_data;
-	this->enable_hwecc = mxc_nand_enable_hwecc;
-	this->eccmode = NAND_ECC_HW3_512;
-	this->eccbytes = 9;
-	this->eccsize = 512;
+	this->ecc.calculate = mxc_nand_calculate_ecc;
+	this->ecc.correct = mxc_nand_correct_data;
+	this->ecc.hwctl = mxc_nand_enable_hwecc;
+	this->ecc.mode = NAND_ECC_HW;
+	this->ecc.bytes = 9;
+	this->ecc.size = 512;
 
 	return 0;
 

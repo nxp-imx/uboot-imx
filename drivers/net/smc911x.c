@@ -711,5 +711,3 @@ int smc911x_initialize(u8 dev_num, int base_addr)
 	return 0;
 }
 #endif
-
-#endif

@@ -24,6 +24,7 @@
 
 #include <common.h>
 #include <asm/io.h>
+#include <asm/errno.h>
 #include <asm/arch/mx35.h>
 #include <asm/arch/mx35_pins.h>
 #include <asm/arch/iomux.h>
@@ -268,4 +269,13 @@ int checkboard(void)
 	}
 	printf("]\n");
 	return 0;
+}
+
+int board_eth_init(bd_t *bis)
+{
+	int rc = -ENODEV;
+#if defined(CONFIG_DRIVER_SMC911X)
+	rc = smc911x_initialize(bis);
+#endif
+	return rc;
 }
