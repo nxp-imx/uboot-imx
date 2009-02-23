@@ -179,6 +179,45 @@
 #define GPIO_PORT_NUM	3
 #define GPIO_NUM_PIN	32
 
+#define NFC_BUF_SIZE   0x1000
+#define NFC_BUFSIZE_REG_OFF             (0 + 0x00)
+#define RAM_BUFFER_ADDRESS_REG_OFF      (0 + 0x04)
+#define NAND_FLASH_ADD_REG_OFF          (0 + 0x06)
+#define NAND_FLASH_CMD_REG_OFF          (0 + 0x08)
+#define NFC_CONFIGURATION_REG_OFF       (0 + 0x0A)
+#define ECC_STATUS_RESULT_REG_OFF       (0 + 0x0C)
+#define ECC_RSLT_MAIN_AREA_REG_OFF      (0 + 0x0E)
+#define ECC_RSLT_SPARE_AREA_REG_OFF     (0 + 0x10)
+#define NF_WR_PROT_REG_OFF              (0 + 0x12)
+#define NAND_FLASH_WR_PR_ST_REG_OFF     (0 + 0x18)
+#define NAND_FLASH_CONFIG1_REG_OFF      (0 + 0x1A)
+#define NAND_FLASH_CONFIG2_REG_OFF      (0 + 0x1C)
+#define UNLOCK_START_BLK_ADD_REG_OFF    (0 + 0x20)
+#define UNLOCK_END_BLK_ADD_REG_OFF      (0 + 0x22)
+#define RAM_BUFFER_ADDRESS_RBA_3        0x3
+#define NFC_BUFSIZE_1KB                 0x0
+#define NFC_BUFSIZE_2KB                 0x1
+#define NFC_CONFIGURATION_UNLOCKED      0x2
+#define ECC_STATUS_RESULT_NO_ERR        0x0
+#define ECC_STATUS_RESULT_1BIT_ERR      0x1
+#define ECC_STATUS_RESULT_2BIT_ERR      0x2
+#define NF_WR_PROT_UNLOCK               0x4
+#define NAND_FLASH_CONFIG1_FORCE_CE     (1 << 7)
+#define NAND_FLASH_CONFIG1_RST          (1 << 6)
+#define NAND_FLASH_CONFIG1_BIG          (1 << 5)
+#define NAND_FLASH_CONFIG1_INT_MSK      (1 << 4)
+#define NAND_FLASH_CONFIG1_ECC_EN       (1 << 3)
+#define NAND_FLASH_CONFIG1_SP_EN        (1 << 2)
+#define NAND_FLASH_CONFIG2_INT_DONE     (1 << 15)
+#define NAND_FLASH_CONFIG2_FDO_PAGE     (0 << 3)
+#define NAND_FLASH_CONFIG2_FDO_ID       (2 << 3)
+#define NAND_FLASH_CONFIG2_FDO_STATUS   (4 << 3)
+#define NAND_FLASH_CONFIG2_FDI_EN       (1 << 2)
+#define NAND_FLASH_CONFIG2_FADD_EN      (1 << 1)
+#define NAND_FLASH_CONFIG2_FCMD_EN      (1 << 0)
+#define FDO_PAGE_SPARE_VAL              0x8
+#define NAND_BUF_NUM    8
+
 #ifndef __ASSEMBLER__
 
 enum mxc_clock {

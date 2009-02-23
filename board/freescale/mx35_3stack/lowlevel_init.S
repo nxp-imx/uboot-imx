@@ -241,6 +241,8 @@
         str r3, [r0, #0x30]
 .endm /* setup_sdram */
 
+.section ".text.init", "x"
+
 .globl lowlevel_init
 lowlevel_init:
 	/* Platform CHIP level init*/
@@ -306,7 +308,15 @@ init_clock_start:
 	/*init_sdram*/
 	setup_sdram
 skip_sdram_setup:
-	mov	pc, lr
+	mov r0, #NFC_BASE_ADDR
+	add r1, r0, #NFC_BUF_SIZE
+	cmp pc, r0
+	movlo pc, lr
+	cmp pc, r1
+	movhi pc, lr
+	/* return from mxc_nand_load */
+	/* r12 saved upper lr*/
+	b mxc_nand_load
 
 /*
  * r0: ESDCTL control base, r1: sdram slot base

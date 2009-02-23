@@ -30,8 +30,14 @@
 
 #include <config.h>
 #include <version.h>
+
+.section ".text.head", "ax"
 .globl _start
-_start: b	reset
+_start:
+.section ".text.vect", "ax"
+.global _start_vect
+_start_vect:
+	b	reset
 #ifdef CONFIG_ONENAND_IPL
 	ldr	pc, _hang
 	ldr	pc, _hang
@@ -89,10 +95,7 @@ _end_vect:
  * the actual reset code
  */
 
-#ifdef CONFIG_NAND_BOOT
-.section ".text.head", "x"
-#endif
-
+.section ".text.head", "ax"
 .globl reset
 reset:
 	/*
@@ -106,7 +109,7 @@ reset:
 #ifdef CONFIG_OMAP2420H4
        /* Copy vectors to mask ROM indirect addr */
 	adr	r0, _start		/* r0 <- current position of code   */
-		add     r0, r0, #4				/* skip reset vector			*/
+ 	add     r0, r0, #4	/* skip reset vector			*/
 	mov	r2, #64			/* r2 <- size to copy  */
 	add	r2, r0, r2		/* r2 <- source end address	    */
 	mov	r1, #SRAM_OFFSET0	  /* build vect addr */
@@ -165,21 +168,15 @@ cpu_init_crit:
 	mov	pc, lr		/* back to my caller */
 
 
-#ifdef CONFIG_NAND_BOOT
-.section ".text.setup"
-#endif
+.section ".text.setup", "ax"
 
-.globl _TEST_BASE
+.globl _TEXT_BASE
 _TEXT_BASE:
 	.word	TEXT_BASE
 
 .globl _armboot_start
 _armboot_start:
-#ifndef CONFIG_NAND_BOOT
 	.word _start
-#else
-	.word reset
-#endif
 
 /*
  * These are defined in the board-specific linker script.
@@ -208,13 +205,16 @@ setup_env:
 
 #ifndef CONFIG_SKIP_RELOCATE_UBOOT
 relocate:				/* relocate U-Boot to RAM	    */
-	adr	r0, _start		/* r0 <- current position of code   */
-	ldr	r1, _TEXT_BASE		/* test if we run from flash or RAM */
+	adr	r0, _armboot_start
+	ldr	r1, =_armboot_start
 	cmp	r0, r1			/* don't reloc during debug	    */
 #ifndef CONFIG_ONENAND_IPL
 	beq	stack_setup
 #endif	/* CONFIG_ONENAND_IPL */
-
+	ldr 	r2, _TEXT_BASE
+	sub	r0, r1, r0
+	sub	r0, r2, r0
+	ldr	r1, _TEXT_BASE
 	ldr	r2, _armboot_start
 	ldr	r3, _bss_start
 	sub	r2, r3, r2		/* r2 <- size of armboot	    */
