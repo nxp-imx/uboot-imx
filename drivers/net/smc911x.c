@@ -29,12 +29,6 @@
 #include <net.h>
 #include <miiphy.h>
 
-#if defined (CONFIG_DRIVER_SMC911X_32_BIT) && \
-	defined (CONFIG_DRIVER_SMC911X_16_BIT)
-#error "SMC911X: Only one of CONFIG_DRIVER_SMC911X_32_BIT and \
-	CONFIG_DRIVER_SMC911X_16_BIT shall be set"
-#endif
-
 #if defined (CONFIG_DRIVER_SMC911X_32_BIT)
 static inline u32 reg_read(u32 addr)
 {
@@ -741,4 +735,6 @@ int smc911x_initialize(bd_t *bis)
        eth_register(&smc911x_device);
        return 0;
 }
+#endif
+
 #endif

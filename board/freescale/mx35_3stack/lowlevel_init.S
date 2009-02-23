@@ -33,8 +33,8 @@
 	ldr \tmp, =IIM_BASE_ADDR
 	ldr \ret, [\tmp, #IIM_SREV]
 	cmp \ret, #0x00
-	moveq \tmp, #ROMPATCH_BASE_ADDR
-	ldreq \ret, [\tmp, #ROMPATCH_REV]
+	moveq \tmp, #ROMPATCH_REV
+	ldreq \ret, [\tmp]
 	moveq \ret, \ret, lsl #4
 	addne \ret, \ret, #0x10
 .endm
@@ -61,6 +61,13 @@
     ldr r2, =L2CC_AUX_CTL_CONFIG
     orr r1, r1, r2
     str r1, [r0, #L2_CACHE_AUX_CTL_REG]
+
+    /* Workaournd for TO1 DDR issue:WT*/
+    check_soc_version r1, r2
+    cmp r1, #CHIP_REV_2_0
+    ldrlo r1, [r0, #L2_CACHE_DBG_CTL_REG]
+    orrlo r1, r1, #2
+    strlo r1, [r0, #L2_CACHE_DBG_CTL_REG]
 
    /* Invalidate L2 */
     mov r1, #0x000000FF
@@ -196,7 +203,7 @@
         str r2, [r0, #CLKCTL_CCMR]
 
     	check_soc_version r1, r2
-    	cmp r1, #0x20
+	cmp r1, #CHIP_REV_2_0
 	ldrhs r3, =CCM_MPLL_399_HZ
 	bhs 1f
 	ldr r2, [r0, #CLKCTL_PDR0]
@@ -247,7 +254,7 @@
         mov lr, fp
 
 	check_soc_version r3, r4
-	cmp r1, #0x20
+	cmp r1, #CHIP_REV_2_0
 	bhs 1f
 	cmp r5, #0
         movne r3, #L2CC_BASE_ADDR
