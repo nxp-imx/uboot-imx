@@ -43,19 +43,20 @@ static inline void setup_soc_rev(void)
 	int reg;
 	reg = __REG(IIM_BASE_ADDR + IIM_SREV);
 	if (!reg) {
-		reg = __REG(ROMPATCH_BASE_ADDR + ROMPATCH_REV);
+		reg = __REG(ROMPATCH_REV);
 		reg <<= 4;
 	} else
-		reg += 0x10;
+		reg += CHIP_REV_1_0;
 	system_rev = 0x35000 + (reg & 0xFF);
 }
 
 static inline void set_board_rev(int rev)
 {
-	system_rev |= (rev & 0xF) << 8;
+	int reg;
+	system_rev =  (system_rev & ~(0xF << 8)) | (rev & 0xF) << 8;
 }
 
-static inline int is_soc_rev(int rev)
+int is_soc_rev(int rev)
 {
 	return (system_rev & 0xFF) - rev;
 }
@@ -171,6 +172,7 @@ static inline int board_detect(void)
 		set_board_rev(1);
 		return 1;
 	}
+	set_board_rev(0);
 	return 0;
 }
 

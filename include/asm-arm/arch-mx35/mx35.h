@@ -221,6 +221,12 @@
 #define FDO_PAGE_SPARE_VAL              0x8
 #define NAND_BUF_NUM    8
 
+#define CHIP_REV_1_0		0x10
+#define CHIP_REV_2_0		0x20
+
+#define BOARD_REV_1_0		0x0
+#define BOARD_REV_2_0		0x1
+
 #ifndef __ASSEMBLER__
 
 enum mxc_clock {
@@ -239,12 +245,16 @@ MXC_UART_CLK,
 #define NFMS_NF_DWIDTH          14
 #define NFMS_NF_PG_SZ           8
 
+
 extern unsigned int mxc_get_clock(enum mxc_clock clk);
+extern unsigned int get_board_rev(void);
+extern int is_soc_rev(int rev);
 
 #define fixup_before_linux	\
 	{		\
 		volatile unsigned long *l2cc_ctl = (unsigned long *)0x30000100;\
-		*l2cc_ctl = 1;\
+		if (is_soc_rev(CHIP_REV_2_0) < 0) \
+			*l2cc_ctl = 1;\
 	}
 #endif /* __ASSEMBLER__*/
 #endif /* __ASM_ARCH_MX35_H */
