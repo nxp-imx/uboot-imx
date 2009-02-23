@@ -31,6 +31,35 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+static u32 system_rev;
+
+u32 get_board_rev(void)
+{
+	return system_rev;
+}
+
+static inline void setup_soc_rev(void)
+{
+	int reg;
+	reg = __REG(IIM_BASE_ADDR + IIM_SREV);
+	if (!reg) {
+		reg = __REG(ROMPATCH_BASE_ADDR + ROMPATCH_REV);
+		reg <<= 4;
+	} else
+		reg += 0x10;
+	system_rev = 0x35000 + (reg & 0xFF);
+}
+
+static inline void set_board_rev(int rev)
+{
+	system_rev |= (rev & 0xF) << 8;
+}
+
+static inline int is_soc_rev(int rev)
+{
+	return (system_rev & 0xFF) - rev;
+}
+
 int dram_init(void)
 {
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
@@ -42,6 +71,8 @@ int dram_init(void)
 int board_init(void)
 {
 	int pad;
+
+	setup_soc_rev();
 
 	/* enable clocks */
 	__REG(CCM_BASE_ADDR + CLKCTL_CGR0) |= 0x003F0000;
@@ -124,40 +155,89 @@ int board_init(void)
 }
 
 #ifdef BOARD_LATE_INIT
+static inline int board_detect(void)
+{
+	u8 buf[4];
+	int id;
+
+	if (i2c_read(0x08, 0x7, 1, buf, 3) < 0) {
+		printf("board_late_init: read PMIC@0x08:0x7 fail\n");
+		return 0;
+	}
+	id = (buf[0] << 16) + (buf[1] << 8) + buf[2];
+	printf("PMIC@0x08:0x7 is %x\n", id);
+	id = (id >> 6) & 0x7;
+	if (id == 0x7) {
+		set_board_rev(1);
+		return 1;
+	}
+	return 0;
+}
+
 int board_late_init(void)
 {
-	u8 reg;
+	u8 reg[3];
 	int i;
-	if (i2c_read(0x69, 0x20, 1, &reg, 1) < 0) {
-		printf("board_late_init: read PMIC@0x20 fail\n");
+
+	if (board_detect()) {
+		mxc_request_iomux(MX35_PIN_WATCHDOG_RST, MUX_CONFIG_SION |
+					MUX_CONFIG_ALT1);
+		printf("i.MX35 CPU board version 2.0\n");
+		if (i2c_read(0x08, 0x1E, 1, reg, 3)) {
+			printf("board_late_init: read PMIC@0x08:0x1E fail\n");
+			return 0;
+		}
+		reg[2] |= 0x3;
+		if (i2c_write(0x08, 0x1E, 1, reg, 3)) {
+			printf("board_late_init: write PMIC@0x08:0x1E fail\n");
+			return 0;
+		}
+		if (i2c_read(0x08, 0x20, 1, reg, 3)) {
+			printf("board_late_init: read PMIC@0x08:0x20 fail\n");
+			return 0;
+		}
+		reg[2] |= 0x1;
+		if (i2c_write(0x08, 0x20, 1, reg, 3)) {
+			printf("board_late_init: write PMIC@0x08:0x20 fail\n");
+			return 0;
+		}
+		mxc_request_iomux(MX35_PIN_COMPARE, MUX_CONFIG_GPIO);
+		mxc_iomux_set_input(MUX_IN_GPIO1_IN_5, INPUT_CTL_PATH0);
+		__REG(GPIO1_BASE_ADDR + 0x04) |= 1 << 5;
+		__REG(GPIO1_BASE_ADDR) |= 1 << 5;
+	} else
+		printf("i.MX35 CPU board version 1.0\n");
+
+	if (i2c_read(0x69, 0x20, 1, reg, 1) < 0) {
+		printf("board_late_init: read PMIC@0x69:0x20 fail\n");
 		return 0;
 	}
 
-	reg |= 0x4;
-	if (i2c_write(0x69, 0x20, 1, &reg, 1) < 0) {
-		printf("board_late_init: write back PMIC@0x20 fail\n");
+	reg[0] |= 0x4;
+	if (i2c_write(0x69, 0x20, 1, reg, 1) < 0) {
+		printf("board_late_init: write back PMIC@0x69:0x20 fail\n");
 		return 0;
 	}
 
 	for (i = 0; i < 1000; i++)
 		udelay(200);
 
-	if (i2c_read(0x69, 0x1A, 1, &reg, 1) < 0) {
-		printf("board_late_init: read PMIC@0x1A fail\n");
+	if (i2c_read(0x69, 0x1A, 1, reg, 1) < 0) {
+		printf("board_late_init: read PMIC@0x69:0x1A fail\n");
 		return 0;
 	}
 
-	reg &= 0x7F;
-	if (i2c_write(0x69, 0x1A, 1, &reg, 1) < 0) {
-		printf("board_late_init: write back PMIC@0x1A fail\n");
+	reg[0] &= 0x7F;
+	if (i2c_write(0x69, 0x1A, 1, reg, 1) < 0) {
+		printf("board_late_init: write back PMIC@0x69:0x1A fail\n");
 		return 0;
 	}
 	for (i = 0; i < 1000; i++)
 		udelay(200);
 
-	reg |= 0x80;
-	if (i2c_write(0x69, 0x1A, 1, &reg, 1) < 0) {
-		printf("board_late_init: 2st write back PMIC@0x1A fail\n");
+	reg[0] |= 0x80;
+	if (i2c_write(0x69, 0x1A, 1, reg, 1) < 0) {
+		printf("board_late_init: 2st write back PMIC@0x69:0x1A fail\n");
 		return 0;
 	}
 

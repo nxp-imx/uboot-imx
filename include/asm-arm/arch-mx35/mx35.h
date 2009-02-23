@@ -164,6 +164,9 @@
 #define CSCR_L(x)	(WEIM_CTRL_CS#x + 4)
 #define CSCR_A(x)	(WEIM_CTRL_CS#x + 8)
 
+#define IIM_SREV	0x24
+#define ROMPATCH_REV	0x40
+
 #define IPU_CONF	IPU_CTRL_BASE_ADDR
 
 #define IPU_CONF_PXL_ENDIAN	(1<<8)
