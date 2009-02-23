@@ -27,9 +27,7 @@ LIB	= $(obj)lib$(SOC).a
 
 COBJS	= interrupts.o serial.o generic.o
 
-ifdef CONFIG_NAND_BOOT
 SOBJS	= nand_load.o
-endif
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
