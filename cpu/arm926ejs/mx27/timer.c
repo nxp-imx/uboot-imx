@@ -118,7 +118,6 @@ int timer_init(void)
 	writel(readl(&regs->gpt_tctl) | GPTCR_CLKSOURCE_32 | GPTCR_FRR,
 			&regs->gpt_tctl);
 	writel(readl(&regs->gpt_tctl) | GPTCR_TEN, &regs->gpt_tctl);
-
 	return 0;
 }
 

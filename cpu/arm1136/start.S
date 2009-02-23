@@ -85,40 +85,15 @@ _end_vect:
  *************************************************************************
  */
 
-_TEXT_BASE:
-	.word	TEXT_BASE
-
-.globl _armboot_start
-_armboot_start:
-	.word _start
-
-/*
- * These are defined in the board-specific linker script.
- */
-.globl _bss_start
-_bss_start:
-	.word __bss_start
-
-.globl _bss_end
-_bss_end:
-	.word _end
-
-#ifdef CONFIG_USE_IRQ
-/* IRQ stack memory (calculated at run-time) */
-.globl IRQ_STACK_START
-IRQ_STACK_START:
-	.word	0x0badc0de
-
-/* IRQ stack memory (calculated at run-time) */
-.globl FIQ_STACK_START
-FIQ_STACK_START:
-	.word 0x0badc0de
-#endif
-
 /*
  * the actual reset code
  */
 
+#ifdef CONFIG_NAND_BOOT
+.section ".text.head", "x"
+#endif
+
+.globl reset
 reset:
 	/*
 	 * set the cpu to SVC32 mode
@@ -150,6 +125,86 @@ next:
 #ifndef CONFIG_SKIP_LOWLEVEL_INIT
 	bl  cpu_init_crit
 #endif
+	b	setup_env
+
+/*
+ *************************************************************************
+ *
+ * CPU_init_critical registers
+ *
+ * setup important registers
+ * setup memory timing
+ *
+ *************************************************************************
+ */
+cpu_init_crit:
+	/*
+	 * flush v4 I/D caches
+	 */
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c7, 0	/* flush v3/v4 cache */
+	mcr	p15, 0, r0, c8, c7, 0	/* flush v4 TLB */
+
+	/*
+	 * disable MMU stuff and caches
+	 */
+	mrc	p15, 0, r0, c1, c0, 0
+	bic	r0, r0, #0x00002300	@ clear bits 13, 9:8 (--V- --RS)
+	bic	r0, r0, #0x00000087	@ clear bits 7, 2:0 (B--- -CAM)
+	orr	r0, r0, #0x00000002	@ set bit 2 (A) Align
+	orr	r0, r0, #0x00001000	@ set bit 12 (I) I-Cache
+	mcr	p15, 0, r0, c1, c0, 0
+
+	/*
+	 * Jump to board specific initialization... The Mask ROM will have already initialized
+	 * basic memory.  Go here to bump up clock rate and handle wake up conditions.
+	 */
+	mov	ip, lr		/* persevere link reg across call */
+	bl	lowlevel_init	/* go setup pll,mux,memory */
+	mov	lr, ip		/* restore link */
+	mov	pc, lr		/* back to my caller */
+
+
+#ifdef CONFIG_NAND_BOOT
+.section ".text.setup"
+#endif
+
+.globl _TEST_BASE
+_TEXT_BASE:
+	.word	TEXT_BASE
+
+.globl _armboot_start
+_armboot_start:
+#ifndef CONFIG_NAND_BOOT
+	.word _start
+#else
+	.word reset
+#endif
+
+/*
+ * These are defined in the board-specific linker script.
+ */
+.globl _bss_start
+_bss_start:
+	.word __bss_start
+
+.globl _bss_end
+_bss_end:
+	.word _end
+
+#ifdef CONFIG_USE_IRQ
+/* IRQ stack memory (calculated at run-time) */
+.globl IRQ_STACK_START
+IRQ_STACK_START:
+	.word	0x0badc0de
+
+/* IRQ stack memory (calculated at run-time) */
+.globl FIQ_STACK_START
+FIQ_STACK_START:
+	.word 0x0badc0de
+#endif
+
+setup_env:
 
 #ifndef CONFIG_SKIP_RELOCATE_UBOOT
 relocate:				/* relocate U-Boot to RAM	    */
