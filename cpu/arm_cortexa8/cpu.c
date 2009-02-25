@@ -33,7 +33,10 @@
 
 #include <common.h>
 #include <command.h>
+
+#ifndef CONFIG_MXC
 #include <asm/arch/sys_proto.h>
+#endif
 
 #ifdef CONFIG_USE_IRQ
 DECLARE_GLOBAL_DATA_PTR;
@@ -170,6 +173,7 @@ void dcache_disable (void)
 	write_p15_c1 (reg & ~C1_DC);
 }
 
+#ifndef CONFIG_L2_OFF
 void l2cache_enable()
 {
 	unsigned long i;
@@ -228,6 +232,7 @@ void l2cache_disable()
 		__asm__ __volatile__("mov r12, %0":"=r"(j));
 	}
 }
+#endif
 
 int icache_status(void)
 {

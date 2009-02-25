@@ -2970,6 +2970,9 @@ mx31_3stack_config	: unconfig
 mx35_3stack_config	: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1136 mx35_3stack freescale mx35
 
+mx51_3stack_config	: unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx51_3stack freescale mx51
+
 omap2420h4_config	: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1136 omap2420h4 NULL omap24xx
 

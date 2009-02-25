@@ -29,6 +29,15 @@
 #include <net.h>
 #include <miiphy.h>
 
+#ifndef CONFIG_DRIVER_SMC911X_BASE
+#ifdef CONFIG_DRIVER_SMC911X_BASE_VARIABLE
+extern u32 CONFIG_DRIVER_SMC911X_BASE_VARIABLE;
+#define CONFIG_DRIVER_SMC911X_BASE CONFIG_DRIVER_SMC911X_BASE_VARIABLE
+#else
+#error "Please define base constant or variable!"
+#endif
+#endif
+
 #if defined (CONFIG_DRIVER_SMC911X_32_BIT)
 static inline u32 reg_read(u32 addr)
 {

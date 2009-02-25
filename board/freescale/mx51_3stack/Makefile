@@ -1,9 +1,7 @@
 #
-# (C) Copyright 2006
-# Wolfgang Denk, DENX Software Engineering, wd@denx.de.
+# Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
 #
-# See file CREDITS for list of people who contributed to this
-# project.
+# (C) Copyright 2009 Freescale Semiconductor, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -12,7 +10,7 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -23,34 +21,23 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	:= $(obj)libnand.a
+LIB	= $(obj)lib$(BOARD).a
 
-ifdef CONFIG_CMD_NAND
-ifndef CONFIG_NAND_LEGACY
-COBJS-y += nand.o
-COBJS-y += nand_base.o
-COBJS-y += nand_bbt.o
-COBJS-y += nand_ecc.o
-COBJS-y += nand_ids.o
-COBJS-y += nand_util.o
-endif
+COBJS	:= mx51_3stack.o
+SOBJS	:= lowlevel_init.o flash_header.o
 
-COBJS-$(CONFIG_NAND_FSL_ELBC) += fsl_elbc_nand.o
-COBJS-$(CONFIG_NAND_FSL_UPM) += fsl_upm.o
-COBJS-$(CONFIG_NAND_S3C64XX) += s3c64xx.o
-COBJS-$(CONFIG_MX31_NAND) += mx31_nand.o
-COBJS-$(CONFIG_MX35) += mxc_nand.o
-COBJS-$(CONFIG_MX51) += mxc_nand.o
-endif
-
-COBJS	:= $(COBJS-y)
-SRCS	:= $(COBJS:.o=.c)
+SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
+SOBJS	:= $(addprefix $(obj),$(SOBJS))
 
-all:	$(LIB)
+$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS) $(SOBJS)
 
-$(LIB):	$(obj).depend $(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+clean:
+	rm -f $(SOBJS) $(OBJS)
+
+distclean:	clean
+	rm -f $(LIB) core *.bak .depend
 
 #########################################################################
 

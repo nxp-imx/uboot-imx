@@ -9,6 +9,7 @@
  * Copyright (c) 2003	Richard Woodruff <r-woodruff2@ti.com>
  * Copyright (c) 2003	Kshitij <kshitij@ti.com>
  * Copyright (c) 2006-2008 Syed Mohammed Khasim <x0khasim@ti.com>
+ * Copyright (c) 2009 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -501,7 +502,7 @@ finished_inval:
 
 	ldmfd	r13!, {r0 - r5, r7, r9 - r12, pc}
 
-
+#ifdef PRM_RSTCTRL
 	.align	5
 .global reset_cpu
 reset_cpu:
@@ -514,3 +515,4 @@ _loop_forever:
 	b	_loop_forever
 rstctl:
 	.word	PRM_RSTCTRL
+#endif
