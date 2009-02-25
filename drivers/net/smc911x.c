@@ -36,6 +36,14 @@ u32 pkt_data_pull(struct eth_device *dev, u32 addr) \
 	__attribute__ ((weak, alias ("smc911x_reg_read")));
 void pkt_data_push(struct eth_device *dev, u32 addr, u32 val) \
 	__attribute__ ((weak, alias ("smc911x_reg_write")));
+#ifndef CONFIG_DRIVER_SMC911X_BASE
+#ifdef CONFIG_DRIVER_SMC911X_BASE_VARIABLE
+extern u32 CONFIG_DRIVER_SMC911X_BASE_VARIABLE;
+#define CONFIG_DRIVER_SMC911X_BASE CONFIG_DRIVER_SMC911X_BASE_VARIABLE
+#else
+#error "Please define base constant or variable!"
+#endif
+#endif
 
 #if defined (CONFIG_DRIVER_SMC911X_32_BIT)
 static inline u32 smc911x_reg_read(u32 addr)
