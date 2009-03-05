@@ -2677,6 +2677,9 @@ at91sam9rlek_config	:	unconfig
 	fi;
 	@$(MKCONFIG) -a at91sam9rlek arm arm926ejs at91sam9rlek atmel at91
 
+mx25_3stack_config	:	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs mx25_3stack freescale mx25
+
 ########################################################################
 ## ARM Integrator boards - see doc/README-integrator for more info.
 integratorap_config	\
