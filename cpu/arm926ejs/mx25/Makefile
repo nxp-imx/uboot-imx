@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2006
+# (C) Copyright 2000-2006
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
 # See file CREDITS for list of people who contributed to this
@@ -12,7 +12,7 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -23,34 +23,16 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	:= $(obj)libnand.a
+LIB	= $(obj)lib$(SOC).a
 
-ifdef CONFIG_CMD_NAND
-ifndef CONFIG_NAND_LEGACY
-COBJS-y += nand.o
-COBJS-y += nand_base.o
-COBJS-y += nand_bbt.o
-COBJS-y += nand_ecc.o
-COBJS-y += nand_ids.o
-COBJS-y += nand_util.o
-endif
+COBJS	= interrupts.o serial.o generic.o iomux.o gpio.o
 
-COBJS-$(CONFIG_NAND_FSL_ELBC) += fsl_elbc_nand.o
-COBJS-$(CONFIG_NAND_FSL_UPM) += fsl_upm.o
-COBJS-$(CONFIG_NAND_S3C64XX) += s3c64xx.o
-COBJS-$(CONFIG_MX25) += mxc_nand.o
-COBJS-$(CONFIG_MX31_NAND) += mx31_nand.o
-COBJS-$(CONFIG_MX35) += mxc_nand.o
-COBJS-$(CONFIG_MX51) += mxc_nand.o
-endif
+SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
 
-COBJS	:= $(COBJS-y)
-SRCS	:= $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS))
+all:	$(obj).depend $(LIB)
 
-all:	$(LIB)
-
-$(LIB):	$(obj).depend $(OBJS)
+$(LIB):	$(OBJS)
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################

@@ -38,7 +38,7 @@
 #include <common.h>
 #include <arm926ejs.h>
 
-#ifdef CONFIG_INTEGRATOR
+#if defined(CONFIG_INTEGRATOR) || defined(CONFIG_MX25)
 
 	/* Timer functionality supplied by Integrator board (AP or CP) */
 

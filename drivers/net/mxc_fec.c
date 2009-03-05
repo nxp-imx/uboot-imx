@@ -88,6 +88,44 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#ifdef CONFIG_MX25
+/*
+ *  * i.MX25 allows RMII mode to be configured via a gasket
+ *   */
+#define FEC_MIIGSK_CFGR_FRCONT (1 << 6)
+#define FEC_MIIGSK_CFGR_LBMODE (1 << 4)
+#define FEC_MIIGSK_CFGR_EMODE (1 << 3)
+#define FEC_MIIGSK_CFGR_IF_MODE_MASK (3 << 0)
+#define FEC_MIIGSK_CFGR_IF_MODE_MII (0 << 0)
+#define FEC_MIIGSK_CFGR_IF_MODE_RMII (1 << 0)
+
+#define FEC_MIIGSK_ENR_READY (1 << 2)
+#define FEC_MIIGSK_ENR_EN (1 << 1)
+
+static inline void fec_localhw_setup(volatile fec_t *fecp)
+{
+	/*
+	 * Set up the MII gasket for RMII mode
+	 */
+	printf("FEC: enable RMII gasket\n");
+
+	/* disable the gasket and wait */
+	fecp->fec_miigsk_enr = 0;
+	while (fecp->fec_miigsk_enr & FEC_MIIGSK_ENR_READY)
+		udelay(1);
+
+	/* configure the gasket for RMII, 50 MHz, no loopback, no echo */
+	fecp->fec_miigsk_cfgr = FEC_MIIGSK_CFGR_IF_MODE_RMII;
+
+	/* re-enable the gasket */
+	fecp->fec_miigsk_enr = FEC_MIIGSK_ENR_EN;
+}
+#else
+static inline void fec_localhw_setup(struct fec_t *fecp)
+{
+}
+#endif
+
 #if defined(CONFIG_CMD_NET) && defined(CONFIG_NET_MULTI)
 
 struct fec_info_s fec_info[] = {
@@ -573,6 +611,8 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	u8 *ea = NULL;
 
 	fec_reset(dev);
+
+	fec_localhw_setup(fecp);
 
 #if defined (CONFIG_CMD_MII) || defined (CONFIG_MII) || \
 	defined (CONFIG_DISCOVER_PHY)
