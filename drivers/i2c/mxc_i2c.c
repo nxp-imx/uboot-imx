@@ -28,7 +28,10 @@
 
 #if defined(CONFIG_HARD_I2C)
 
-#ifdef CONFIG_MX31
+#ifdef CONFIG_MX25
+#include <asm/arch/mx25.h>
+#include <asm/arch/mx25-regs.h>
+#elif defined(CONFIG_MX31)
 #include <asm/arch/mx31.h>
 #include <asm/arch/mx31-regs.h>
 #elif defined(CONFIG_MX35)

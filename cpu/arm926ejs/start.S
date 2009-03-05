@@ -126,7 +126,7 @@ FIQ_STACK_START:
 /*
  * the actual reset code
  */
-
+.globl reset
 reset:
 	/*
 	 * set the cpu to SVC32 mode

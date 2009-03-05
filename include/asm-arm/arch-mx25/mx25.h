@@ -1,6 +1,8 @@
 /*
- * (C) Copyright 2004
- * Pantelis Antoniou, Intracom S.A. , panto@intracom.gr
+ *
+ * (c) 2007 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
+ *
+ * (C) Copyright 2009 Freescale Semiconductor
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -21,27 +23,22 @@
  * MA 02111-1307 USA
  */
 
-#include <common.h>
-#include <arm926ejs.h>
+#ifndef __ASM_ARCH_MX25_H
+#define __ASM_ARCH_MX25_H
+#ifndef __ASSEMBLER__
 
-#if defined(CONFIG_INTEGRATOR) || defined(CONFIG_MX25)
-/*
- * DSP test
- *
- * This test verifies the connection and performs a memory test
- * on any connected DSP(s). The meat of the work is done
- * in the board specific function.
- */
+#define GPIO_PORT_NUM	3
+#define GPIO_NUM_PIN	32
 
-#include <post.h>
+enum mxc_clock {
+	MXC_ARM_CLK = 0,
+	MXC_AHB_CLK,
+	MXC_IPG_CLK,
+	MXC_IPG_PERCLK,
+	MXC_UART_CLK,
+};
 
-#if CONFIG_POST & CONFIG_SYS_POST_DSP
-
-extern int board_post_dsp(int flags);
-
-int dsp_post_test (int flags)
-{
-	return board_post_dsp(flags);
-}
-
-#endif /* CONFIG_POST & CONFIG_SYS_POST_DSP */
+extern unsigned int mx25_get_ipg_clk(void);
+extern unsigned int mxc_get_clock(enum mxc_clock clk);
+#endif
+#endif /* __ASM_ARCH_MX25_H */
