@@ -33,7 +33,6 @@
 
 #define NAND_PAGESIZE_2KB	2048
 #define NAND_PAGESIZE_4KB	4096
-#define NAND_MAX_PAGESIZE	4096
 
 /*
  * Addresses for NFC registers

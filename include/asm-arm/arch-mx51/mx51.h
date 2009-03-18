@@ -406,14 +406,6 @@ MXC_IPG_PERCLK,
 MXC_UART_CLK,
 };
 
-/*!
- * NFMS bit in RCSR register for pagesize of nandflash
- */
-#define NFMS            (*((volatile u32 *)(CCM_BASE_ADDR+0x18)))
-#define NFMS_BIT                8
-#define NFMS_NF_DWIDTH          14
-#define NFMS_NF_PG_SZ           8
-
 extern unsigned int mxc_get_clock(enum mxc_clock clk);
 extern unsigned int get_board_rev(void);
 extern int is_soc_rev(int rev);

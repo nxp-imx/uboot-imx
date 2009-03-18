@@ -45,7 +45,7 @@ static void nand_init_chip(struct mtd_info *mtd, struct nand_chip *nand,
 
 	nand->IO_ADDR_R = nand->IO_ADDR_W = (void  __iomem *)base_addr;
 	if (board_nand_init(nand) == 0) {
-		if (nand_scan(mtd, 1) == 0) {
+		if (nand_scan(mtd, NAND_MAX_CHIPS) == 0) {
 			if (!mtd->name)
 				mtd->name = (char *)default_nand_name;
 		} else
