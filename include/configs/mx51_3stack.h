@@ -58,7 +58,7 @@
 /*
  * Size of malloc() pool
  */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 512 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
 /* size in bytes reserved for initial data */
 #define CONFIG_SYS_GBL_DATA_SIZE	128
 
@@ -83,7 +83,8 @@
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
 /* Enable below configure when supporting nand */
-/* #define CONFIG_CMD_NAND */
+#define CONFIG_CMD_NAND
+#define CONFIG_CMD_ENV
 #undef CONFIG_CMD_IMLS
 
 #define CONFIG_BOOTDELAY	3
@@ -172,16 +173,15 @@
 /*-----------------------------------------------------------------------
  * NAND FLASH driver setup
  */
-#define NAND_MAX_CHIPS         1
+#define NAND_MAX_CHIPS         8
 #define CONFIG_SYS_MAX_NAND_DEVICE    1
 #define CONFIG_SYS_NAND_BASE          0x40000000
 
 /* Monitor at beginning of flash */
-#define CONFIG_ENV_IS_NOWHERE 1
-#define CONFIG_ENV_SECT_SIZE	(128 * 1024)
+#define CONFIG_ENV_IS_IN_NAND 1
+#define CONFIG_ENV_SECT_SIZE	(1024 * 1024)
 #define CONFIG_ENV_SIZE		CONFIG_ENV_SECT_SIZE
-/* #define CFG_ENV_ADDR		(CFG_MONITOR_BASE + CFG_ENV_SECT_SIZE) */
-#define CONFIG_ENV_OFFSET		0x40000
+#define CONFIG_ENV_OFFSET		0x100000
 /*
  * JFFS2 partitions
  */

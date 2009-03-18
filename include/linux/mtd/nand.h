@@ -50,8 +50,8 @@ extern void nand_wait_ready(struct mtd_info *mtd);
  * is supported now. If you add a chip with bigger oobsize/page
  * adjust this accordingly.
  */
-#define NAND_MAX_OOBSIZE	218
-#define NAND_MAX_PAGESIZE	4096
+#define NAND_MAX_OOBSIZE	(218 * CONFIG_SYS_NAND_MAX_CHIPS)
+#define NAND_MAX_PAGESIZE	(4096 * CONFIG_SYS_NAND_MAX_CHIPS)
 
 /*
  * Constants for hardware specific CLE/ALE/NCE function

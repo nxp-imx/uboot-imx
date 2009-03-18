@@ -2529,7 +2529,8 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 		mtd->writesize = 1024 << (extid & 0x3);
 		extid >>= 2;
 		/* Calc oobsize */
-		mtd->oobsize = (8 << (extid & 0x01)) * (mtd->writesize >> 9);
+		mtd->oobsize = (*maf_id == 0x2c && dev_id == 0xd5) ?
+			218 : (8 << (extid & 0x01)) * (mtd->writesize >> 9);
 		extid >>= 2;
 		/* Calc blocksize. Blocksize is multiples of 64KiB */
 		mtd->erasesize = (64 * 1024) << (extid & 0x03);
@@ -2866,10 +2867,9 @@ int nand_scan_tail(struct mtd_info *mtd)
 	mtd->ecclayout = chip->ecc.layout;
 
 	/* Check, if we should skip the bad block table scan */
-	if (chip->options & NAND_SKIP_BBTSCAN)
-		chip->options |= NAND_BBT_SCANNED;
+	chip->options |= NAND_BBT_SCANNED;
 
-	return 0;
+	return chip->scan_bbt(mtd);
 }
 
 /* module_text_address() isn't exported, and it's mostly a pointless
