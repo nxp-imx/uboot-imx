@@ -1,4 +1,5 @@
 /*
+ * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
  * (C) Copyright 2007
  * Sascha Hauer, Pengutronix
  *
