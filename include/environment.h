@@ -84,6 +84,27 @@
 # endif
 #endif /* CONFIG_ENV_IS_IN_NAND */
 
+#if defined(CONFIG_ENV_IS_IN_MMC)
+#ifndef CONFIG_MMC_BASE
+# error "Need to define CONFIG_MMC_BASE when using CONFIG_ENV_IS_IN_MMC"
+#endif
+# ifndef CONFIG_ENV_OFFSET
+#  error "Need to define CONFIG_ENV_OFFSET when using CONFIG_ENV_IS_IN_MMC"
+# endif
+# ifndef CONFIG_ENV_ADDR
+#  define CONFIG_ENV_ADDR	(CONFIG_MMC_BASE + CONFIG_ENV_OFFSET)
+# endif
+# ifndef CONFIG_ENV_OFFSET
+#  define CONFIG_ENV_OFFSET (CONFIG_ENV_ADDR - CONFIG_MMC_BASE)
+# endif
+# ifdef CONFIG_ENV_OFFSET_REDUND
+#  define CONFIG_SYS_REDUNDAND_ENVIRONMENT
+# endif
+# ifdef CONFIG_ENV_IS_EMBEDDED
+#  define ENV_IS_EMBEDDED	1
+# endif
+#endif /* CONFIG_ENV_IS_IN_NAND */
+
 #ifdef USE_HOSTCC
 # include <stdint.h>
 #else

@@ -69,6 +69,9 @@
 #define EPIT1_BASE_ADDR         0x53F94000
 #define EPIT2_BASE_ADDR         0x53F98000
 #define GPIO3_BASE_ADDR         0x53FA4000
+#define MMC_SDHC1_BASE_ADDR 	0x53FB4000
+#define MMC_SDHC2_BASE_ADDR 	0x53FB8000
+#define MMC_SDHC3_BASE_ADDR 	0x53FBC000
 #define IPU_CTRL_BASE_ADDR      0x53FC0000
 #define GPIO3_BASE_ADDR         0x53FA4000
 #define GPIO1_BASE_ADDR         0x53FCC000
@@ -249,6 +252,7 @@ MXC_UART_CLK,
 extern unsigned int mxc_get_clock(enum mxc_clock clk);
 extern unsigned int get_board_rev(void);
 extern int is_soc_rev(int rev);
+extern int sdhc_init(void);
 
 #define fixup_before_linux	\
 	{		\

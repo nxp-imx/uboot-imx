@@ -59,8 +59,9 @@ DECLARE_GLOBAL_DATA_PTR;
     !defined(CONFIG_ENV_IS_IN_NAND)	&& \
     !defined(CONFIG_ENV_IS_IN_ONENAND)	&& \
     !defined(CONFIG_ENV_IS_IN_SPI_FLASH)	&& \
+    !defined(CONFIG_ENV_IS_IN_MMC)	&& \
     !defined(CONFIG_ENV_IS_NOWHERE)
-# error Define one of CONFIG_ENV_IS_IN_{NVRAM|EEPROM|FLASH|DATAFLASH|ONENAND|SPI_FLASH|NOWHERE}
+# error Define one of CONFIG_ENV_IS_IN_{NVRAM|EEPROM|FLASH|DATAFLASH|ONENAND|SPI_FLASH|MMC|NOWHERE}
 #endif
 
 #define XMK_STR(x)	#x
@@ -549,7 +550,8 @@ int getenv_r (char *name, char *buf, unsigned len)
 #if ((defined(CONFIG_ENV_IS_IN_NVRAM) || defined(CONFIG_ENV_IS_IN_EEPROM) \
     || (defined(CONFIG_CMD_ENV) && defined(CONFIG_CMD_FLASH)) \
     || (defined(CONFIG_CMD_ENV) && defined(CONFIG_CMD_NAND)) \
-    || (defined(CONFIG_CMD_ENV) && defined(CONFIG_CMD_ONENAND))) \
+    || (defined(CONFIG_CMD_ENV) && defined(CONFIG_CMD_ONENAND)) \
+	|| (defined(CONFIG_CMD_ENV) && defined(CONFIG_CMD_MMC))) \
     && !defined(CONFIG_ENV_IS_NOWHERE))
 int do_saveenv (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
@@ -605,7 +607,8 @@ U_BOOT_CMD(
 #if ((defined(CONFIG_ENV_IS_IN_NVRAM) || defined(CONFIG_ENV_IS_IN_EEPROM) \
     || (defined(CONFIG_CMD_ENV) && defined(CONFIG_CMD_FLASH)) \
     || (defined(CONFIG_CMD_ENV) && defined(CONFIG_CMD_NAND)) \
-    || (defined(CONFIG_CMD_ENV) && defined(CONFIG_CMD_ONENAND))) \
+    || (defined(CONFIG_CMD_ENV) && defined(CONFIG_CMD_ONENAND)) \
+	|| (defined(CONFIG_CMD_ENV) && defined(CONFIG_CMD_MMC))) \
     && !defined(CONFIG_ENV_IS_NOWHERE))
 U_BOOT_CMD(
 	saveenv, 1, 0,	do_saveenv,

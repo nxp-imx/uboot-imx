@@ -38,6 +38,7 @@ SECTIONS
 	{
 	  /* WARNING - the following is hand-optimized to fit within	*/
 	  /* the sector layout of our flash chips!	XXX FIXME XXX	*/
+	  board/freescale/mx35_3stack/flash_header.o	(.text.flasheader)
 	  *(.text.head)		/*arm startup code*/
 	  *(.text.init)		/*platform lowlevel initial code*/
 	  *(.text.load)		/*load bootloader*/
@@ -47,6 +48,7 @@ SECTIONS
 	  lib_arm/libarm.a		(.text)
 	  net/libnet.a			(.text)
 	  drivers/mtd/libmtd.a		(.text)
+	  drivers/mmc/libmmc.a		(.text)
 
 	  . = DEFINED(env_offset) ? env_offset : .;
 	  common/env_embedded.o(.text)

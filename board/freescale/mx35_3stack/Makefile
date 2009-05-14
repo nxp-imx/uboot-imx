@@ -25,6 +25,7 @@ LIB	= $(obj)lib$(BOARD).a
 
 COBJS	:= mx35_3stack.o
 SOBJS	:= lowlevel_init.o
+SOBJS	+= flash_header.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
