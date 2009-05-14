@@ -44,6 +44,7 @@ SECTIONS
 	  lib_arm/libarm.a		(.text)
 	  net/libnet.a			(.text)
 	  drivers/mtd/libmtd.a		(.text)
+	  drivers/mmc/libmmc.a		(.text)
 
 	  . = DEFINED(env_offset) ? env_offset : .;
 	  common/env_embedded.o(.text)

@@ -35,6 +35,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
 u32	mx51_io_base_addr;
+volatile u32 *esdhc_base_pointer;
 
 u32 get_board_rev(void)
 {
@@ -208,4 +209,82 @@ int board_eth_init(bd_t *bis)
 #endif
 	return rc;
 }
+#endif
+
+#ifdef CONFIG_FSL_MMC
+
+int sdhc_init(void)
+{
+	u32 interface_esdhc = 0;
+	u32 pad_val = 0;
+	s32 status = 0;
+
+	interface_esdhc = (readl(SRC_BASE_ADDR + 0x4) & (0x00180000)) >> 19;
+
+	switch (interface_esdhc) {
+	case 0:
+
+		esdhc_base_pointer = (volatile u32 *)MMC_SDHC1_BASE_ADDR;
+
+		mxc_request_iomux(MX51_PIN_SD1_CMD,
+			  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_request_iomux(MX51_PIN_SD1_CLK,
+			  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+
+		mxc_request_iomux(MX51_PIN_SD1_DATA0,
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_request_iomux(MX51_PIN_SD1_DATA1,
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_request_iomux(MX51_PIN_SD1_DATA2,
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_request_iomux(MX51_PIN_SD1_DATA3,
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_iomux_set_pad(MX51_PIN_SD1_CMD,
+				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
+				PAD_CTL_PUE_PULL |
+				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD1_CLK,
+				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+				PAD_CTL_HYS_NONE | PAD_CTL_47K_PU |
+				PAD_CTL_PUE_PULL |
+				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD1_DATA0,
+				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
+				PAD_CTL_PUE_PULL |
+				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD1_DATA1,
+				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
+				PAD_CTL_PUE_PULL |
+				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD1_DATA2,
+				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
+				PAD_CTL_PUE_PULL |
+				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD1_DATA3,
+				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+				PAD_CTL_HYS_ENABLE | PAD_CTL_100K_PD |
+				PAD_CTL_PUE_PULL |
+				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+		break;
+	case 1:
+		status = 1;
+		break;
+	case 2:
+		status = 1;
+		break;
+	case 3:
+		status = 1;
+		break;
+	default:
+		status = 1;
+		break;
+	}
+
+	return status = 1;
+}
+
 #endif
