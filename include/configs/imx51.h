@@ -68,8 +68,25 @@
 #define CONFIG_MX51_UART	1
 #define CONFIG_MX51_UART1	1
 
+/*
+ * SPI Configs
+ * */
+/*
+#define CONFIG_FSL_SF		1
+#define CONFIG_CMD_SPI
+#define CONFIG_CMD_SF
+#define CONFIG_SPI_FLASH_IMX
+#define CONFIG_SPI_FLASH_CS	1
+#define CONFIG_IMX_SPI
+#define CONFIG_IMX_SPI_PMIC
+#define CONFIG_IMX_SPI_PMIC_CS 0
 
-/* #define CONFIG_CMD_SPI */
+#define MAX_SPI_BYTES		(64 * 4)
+*/
+
+/*
+ * MMC Configs
+ * */
 
 /*
 #define CONFIG_FSL_MMC		1
@@ -190,7 +207,9 @@
 #define CONFIG_SYS_NAND_BASE          0x40000000
 
 /* Monitor at beginning of flash */
-#if defined(CONFIG_FSL_MMC)
+#if defined(CONFIG_FSL_SF)
+	#define CONFIG_FSL_ENV_IN_SF
+#elif defined(CONFIG_FSL_MMC)
 	#define CONFIG_MMC              1
 	#define CONFIG_CMD_MMC
 /*
@@ -209,6 +228,10 @@
 #elif defined(CONFIG_FSL_ENV_IN_MMC)
 	#define CONFIG_ENV_IS_IN_MMC	1
 	#define CONFIG_ENV_OFFSET	(1024 * 1024)
+#elif defined(CONFIG_FSL_ENV_IN_SF)
+	#define CONFIG_ENV_IS_IN_SPI_FLASH	1
+	#define CONFIG_ENV_SPI_CS		1
+	#define CONFIG_ENV_OFFSET       (1024 * 1024)
 #else
 	#define CONFIG_ENV_IS_NOWHERE	1
 #endif

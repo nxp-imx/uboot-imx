@@ -44,3 +44,4 @@ int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
 struct spi_flash *spi_flash_probe_spansion(struct spi_slave *spi, u8 *idcode);
 struct spi_flash *spi_flash_probe_atmel(struct spi_slave *spi, u8 *idcode);
 struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 *idcode);
+struct spi_flash *spi_flash_probe_imx(struct spi_slave *spi, u8 *idcode);

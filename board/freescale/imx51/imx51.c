@@ -30,6 +30,7 @@
 #include <asm/arch/iomux.h>
 #include <i2c.h>
 #include "board-imx51.h"
+#include <asm/arch/imx_spi.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -159,7 +160,6 @@ static void setup_expio(void)
 
 int board_init(void)
 {
-	int pad;
 	setup_soc_rev();
 
 	gd->bd->bi_arch_number = MACH_TYPE_MX51_3DS;	/* board id for linux */
@@ -198,6 +198,48 @@ int checkboard(void)
 	}
 	printf("]\n");
 	return 0;
+}
+
+void spi_io_init(struct imx_spi_dev_t *dev)
+{
+	switch (dev->base) {
+	case CSPI1_BASE_ADDR:
+		/* 000: Select mux mode: ALT0 mux port: MOSI of instance: ecspi1 */
+		mxc_request_iomux(MX51_PIN_CSPI1_MOSI, IOMUX_CONFIG_ALT0);
+		mxc_iomux_set_pad(MX51_PIN_CSPI1_MOSI, 0x105);
+
+		/* 000: Select mux mode: ALT0 mux port: MISO of instance: ecspi1. */
+		mxc_request_iomux(MX51_PIN_CSPI1_MISO, IOMUX_CONFIG_ALT0);
+		mxc_iomux_set_pad(MX51_PIN_CSPI1_MISO, 0x105);
+
+		if (dev->ss == 0) {
+			/* de-select SS1 of instance: ecspi1. */
+			mxc_request_iomux(MX51_PIN_CSPI1_SS1, IOMUX_CONFIG_ALT3);
+			mxc_iomux_set_pad(MX51_PIN_CSPI1_SS1, 0x85);
+			/* 000: Select mux mode: ALT0 mux port: SS0 of instance: ecspi1. */
+			mxc_request_iomux(MX51_PIN_CSPI1_SS0, IOMUX_CONFIG_ALT0);
+			mxc_iomux_set_pad(MX51_PIN_CSPI1_SS0, 0x185);
+		} else if (dev->ss == 1) {
+			/* de-select SS0 of instance: ecspi1. */
+			mxc_request_iomux(MX51_PIN_CSPI1_SS0, IOMUX_CONFIG_ALT3);
+			mxc_iomux_set_pad(MX51_PIN_CSPI1_SS0, 0x85);
+			/* 000: Select mux mode: ALT0 mux port: SS1 of instance: ecspi1. */
+			mxc_request_iomux(MX51_PIN_CSPI1_SS1, IOMUX_CONFIG_ALT0);
+			mxc_iomux_set_pad(MX51_PIN_CSPI1_SS1, 0x105);
+		}
+
+		/* 000: Select mux mode: ALT0 mux port: RDY of instance: ecspi1. */
+		mxc_request_iomux(MX51_PIN_CSPI1_RDY, IOMUX_CONFIG_ALT0);
+		mxc_iomux_set_pad(MX51_PIN_CSPI1_RDY, 0x180);
+
+		/* 000: Select mux mode: ALT0 mux port: SCLK of instance: ecspi1. */
+		mxc_request_iomux(MX51_PIN_CSPI1_SCLK, IOMUX_CONFIG_ALT0);
+		mxc_iomux_set_pad(MX51_PIN_CSPI1_SCLK, 0x105);
+		break;
+	case CSPI2_BASE_ADDR:
+	default:
+		break;
+	}
 }
 
 #ifdef CONFIG_NET_MULTI

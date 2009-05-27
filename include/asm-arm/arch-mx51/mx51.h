@@ -404,6 +404,7 @@ MXC_AHB_CLK,
 MXC_IPG_CLK,
 MXC_IPG_PERCLK,
 MXC_UART_CLK,
+MXC_CSPI_CLK,
 };
 
 extern unsigned int mxc_get_clock(enum mxc_clock clk);
