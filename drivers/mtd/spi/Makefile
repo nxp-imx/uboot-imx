@@ -32,6 +32,7 @@ COBJS-$(CONFIG_SPI_FLASH_SPANSION)	+= spansion.o
 COBJS-$(CONFIG_SPI_FLASH_SST)	+= sst.o
 COBJS-$(CONFIG_SPI_FLASH_STMICRO)	+= stmicro.o
 COBJS-$(CONFIG_SPI_M95XXX) += eeprom_m95xxx.o
+COBJS-$(CONFIG_SPI_FLASH_IMX)	+= imx_spi_nor.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
