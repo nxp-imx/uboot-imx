@@ -125,6 +125,12 @@ CPPFLAGS   = -idirafter $(SRCTREE)/include \
 		-idirafter $(OBJTREE)/include2 \
 		-idirafter $(OBJTREE)/include \
 		-DTEXT_BASE=$(TEXT_BASE) -DUSE_HOSTCC
+
+ifneq ($(BOOT_MEDIA),)
+        BOOT_MEDIA_MACRO := BOOT_MEDIA_$(shell echo $(BOOT_MEDIA) | tr '[a-z]' '[A-Z]')
+        CPPFLAGS += -D$(BOOT_MEDIA_MACRO)
+endif
+
 CFLAGS     = $(HOST_CFLAGS) $(CPPFLAGS) -O
 
 # No -pedantic switch to avoid libfdt compilation warnings

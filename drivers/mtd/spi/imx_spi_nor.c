@@ -321,7 +321,7 @@ static int spi_nor_flash_write(struct spi_flash *flash, u32 offset,
 	if (len == 0)
 		return 0;
 
-	write("%s(flash addr=0x%08x, ram=%p, len=0x%x)\n",
+	debug("%s(flash addr=0x%08x, ram=%p, len=0x%x)\n",
 			__func__, offset, buf, len);
 
 	if (ENABLE_WRITE_STATUS(flash) != 0 ||
