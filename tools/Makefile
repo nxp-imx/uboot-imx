@@ -150,6 +150,11 @@ CPPFLAGS   = -idirafter $(SRCTREE)/include \
 		-D__KERNEL_STRICT_NAMES
 CFLAGS     = $(HOSTCFLAGS) $(CPPFLAGS) -O
 
+ifneq ($(BOOT_MEDIA),)
+        BOOT_MEDIA_MACRO := BOOT_MEDIA_$(shell echo $(BOOT_MEDIA) | tr '[a-z]' '[A-Z]')
+        CPPFLAGS += -D$(BOOT_MEDIA_MACRO)
+endif
+
 # No -pedantic switch to avoid libfdt compilation warnings
 FIT_CFLAGS = -Wall $(CPPFLAGS) -O
 

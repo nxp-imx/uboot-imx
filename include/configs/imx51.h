@@ -68,10 +68,10 @@
 #define CONFIG_MX51_UART	1
 #define CONFIG_MX51_UART1	1
 
+#if defined(BOOT_MEDIA_SPI_NOR)
 /*
  * SPI Configs
- * */
-/*
+ */
 #define CONFIG_FSL_SF		1
 #define CONFIG_CMD_SPI
 #define CONFIG_CMD_SF
@@ -80,19 +80,17 @@
 #define CONFIG_IMX_SPI
 #define CONFIG_IMX_SPI_PMIC
 #define CONFIG_IMX_SPI_PMIC_CS 0
-
 #define MAX_SPI_BYTES		(64 * 4)
-*/
 
+#elif defined(BOOT_MEDIA_MMC)
 /*
  * MMC Configs
- * */
-
-/*
+ */
 #define CONFIG_FSL_MMC		1
 #define CONFIG_DOS_PARTITION	1
 #define CONFIG_CMD_FAT		1
-*/
+
+#endif
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
