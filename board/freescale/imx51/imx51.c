@@ -258,7 +258,6 @@ int board_eth_init(bd_t *bis)
 int sdhc_init(void)
 {
 	u32 interface_esdhc = 0;
-	u32 pad_val = 0;
 	s32 status = 0;
 
 	interface_esdhc = (readl(SRC_BASE_ADDR + 0x4) & (0x00180000)) >> 19;
