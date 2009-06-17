@@ -25,9 +25,9 @@
 
 #include <linux/types.h>
 
-struct spi_slave *spi_pmic_probe();
-void spi_pmic_free(struct spi_slave *slave);
-u32 pmic_reg(struct spi_slave *slave,
+extern struct spi_slave *spi_pmic_probe();
+extern void spi_pmic_free(struct spi_slave *slave);
+extern u32 pmic_reg(struct spi_slave *slave,
 				u32 reg, u32 val, u32 write);
 
 #endif /* _IMX_SPI_PMIC_H_ */

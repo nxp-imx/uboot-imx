@@ -230,6 +230,8 @@ static int spi_nor_flash_read(struct spi_flash *flash, u32 offset,
 	if (!(flash->spi))
 		return -1;
 
+	printf("Reading SPI NOR flash 0x%x [0x%x bytes] -> ram 0x%p\n",
+		offset, len, buf);
 	debug("%s(from flash=0x%08x to ram=%p len=0x%x)\n",
 		__func__,
 		offset, buf, len);
@@ -271,7 +273,7 @@ static int spi_nor_flash_read(struct spi_flash *flash, u32 offset,
 						*d_buf++ = s_buf[1];
 						*d_buf++ = s_buf[0];
 					}
-					printf("\n");
+					printf("SUCCESS\n\n");
 					return 0;
 				}
 				/* copy 4 bytes */
@@ -302,7 +304,7 @@ static int spi_nor_flash_read(struct spi_flash *flash, u32 offset,
 		if ((s32remain_size % imx_sf->params->block_size) == 0)
 			printf(".");
 	}
-	printf("\n");
+	printf("SUCCESS\n\n");
 
 	return -1;
 }
@@ -321,6 +323,8 @@ static int spi_nor_flash_write(struct spi_flash *flash, u32 offset,
 	if (len == 0)
 		return 0;
 
+	printf("Writing SPI NOR flash 0x%x [0x%x bytes] <- ram 0x%p\n",
+		offset, len, buf);
 	debug("%s(flash addr=0x%08x, ram=%p, len=0x%x)\n",
 			__func__, offset, buf, len);
 
@@ -395,7 +399,7 @@ static int spi_nor_flash_write(struct spi_flash *flash, u32 offset,
 		if ((s32remain_size % imx_sf->params->block_size) == 0)
 			printf(".");
 	}
-	printf("\n");
+	printf("SUCCESS\n\n");
 	debug("100%% transferred\n");
 
 	WRITE_DISABLE(flash);
@@ -423,11 +427,13 @@ static int spi_nor_flash_write(struct spi_flash *flash, u32 offset,
 static int spi_nor_flash_erase(struct spi_flash *flash, u32 offset,
 		size_t len)
 {
-	struct imx_spi_flash *imx_sf = to_imx_spi_flash(flash);
 	s32 s32remain_size = len;
 
 	if (!(flash->spi))
 		return -1;
+
+	printf("Erasing SPI NOR flash 0x%x [0x%x bytes]\n",
+		offset, len);
 
 	if ((len % SZ_4K) != 0 || len == 0) {
 		printf("Error: size (0x%x) is not integer multiples of 4kB(0x1000)\n",
@@ -450,7 +456,7 @@ static int spi_nor_flash_erase(struct spi_flash *flash, u32 offset,
 		}
 		printf(".");
 	}
-	printf("\n");
+	printf("SUCCESS\n\n");
 	debug("100%% erased\n");
 	return 0;
 }
