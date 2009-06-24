@@ -121,7 +121,7 @@ static inline void fec_localhw_setup(volatile fec_t *fecp)
 	fecp->fec_miigsk_enr = FEC_MIIGSK_ENR_EN;
 }
 #else
-static inline void fec_localhw_setup(struct fec_t *fecp)
+static inline void fec_localhw_setup(fec_t *fecp)
 {
 }
 #endif
@@ -271,7 +271,7 @@ static inline u16 getFecPhyStatus(volatile fec_t *fecp, unsigned char addr)
 	return val;
 }
 
-static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
+static void setFecDuplexSpeed(volatile fec_t *fecp,  unsigned char addr,
 			      int dup_spd)
 {
 	unsigned short val;
@@ -386,7 +386,7 @@ int fec_send(struct eth_device *dev, volatile void *packet, int length)
 		j++;
 	}
 	if (j >= FEC_MAX_TIMEOUT)
-		printf("TX timeout packet at %x\n", packet);
+		printf("TX timeout packet at %p\n", packet);
 
 #ifdef ET_DEBUG
 	printf("%s[%d] %s: cycles: %d    status: %x  retry cnt: %d\n",
@@ -612,7 +612,7 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 
 	fec_reset(dev);
 
-	fec_localhw_setup(fecp);
+	fec_localhw_setup((fec_t *)fecp);
 
 #if defined (CONFIG_CMD_MII) || defined (CONFIG_MII) || \
 	defined (CONFIG_DISCOVER_PHY)
@@ -622,10 +622,11 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	if (info->phy_addr < 0 || info->phy_addr > 0x1F)
 		info->phy_addr = mxc_fec_mii_discover_phy(dev);
 #endif
-	setFecDuplexSpeed(fecp, bd, info->dup_spd);
+	setFecDuplexSpeed(fecp, (unsigned char)bd, info->dup_spd);
 #else
 #ifndef CONFIG_DISCOVER_PHY
-	setFecDuplexSpeed(fecp, bd, (FECDUPLEX << 16) | FECSPEED);
+	setFecDuplexSpeed(fecp, (unsigned char)bd,
+				(FECDUPLEX << 16) | FECSPEED);
 #endif				/* ifndef CONFIG_SYS_DISCOVER_PHY */
 #endif				/* CONFIG_CMD_MII || CONFIG_MII */
 

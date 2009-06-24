@@ -91,14 +91,32 @@
 #define CONFIG_CMD_MMC
 #define CONFIG_DOS_PARTITION	1
 #define CONFIG_CMD_FAT		1
+#define CONFIG_MMC_BASE         0x0
+
+/*
+ * Eth Configs
+ */
+#define CONFIG_HAS_ETH1
+#define CONFIG_NET_MULTI 1
+#define CONFIG_MXC_FEC
+#define CONFIG_MII
+#define CONFIG_DISCOVER_PHY
+
+#define CONFIG_FEC0_IOBASE	FEC_BASE_ADDR
+#define CONFIG_FEC0_PINMUX	-1
+#define CONFIG_FEC0_PHY_ADDR	0x1F
+#define CONFIG_FEC0_MIIBASE 	-1
+
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_NET
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_CONS_INDEX	1
-#define CONFIG_BAUDRATE		115200
+#define CONFIG_CONS_INDEX		1
+#define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{9600, 19200, 38400, 57600, 115200}
-
-#define CONFIG_MMC_BASE		0x0
 
 /***********************************************************
  * Command definition
@@ -116,11 +134,13 @@
 
 #define CONFIG_BOOTDELAY	3
 
+#define CONFIG_PRIME	"FEC0"
+
 #define CONFIG_LOADADDR		0x90800000	/* loadaddr env var */
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
-		"ethprime=smc911x\0"					\
+		"ethprime=FEC0\0"					\
 		"uboot_addr=0xa0000000\0"				\
 		"uboot=u-boot.bin\0"			\
 		"kernel=uImage\0"				\
@@ -138,9 +158,11 @@
 			"setenv filesize; saveenv\0"
 
 /*Support LAN9217*/
+/*
 #define CONFIG_DRIVER_SMC911X	1
 #define CONFIG_DRIVER_SMC911X_16_BIT 1
 #define CONFIG_DRIVER_SMC911X_BASE_VARIABLE mx51_io_base_addr
+*/
 
 /*
  * The MX51 3stack board seems to have a hardware "peculiarity" confirmed under
@@ -158,7 +180,8 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_PROMPT		"=> "
+#define CONFIG_SYS_PROMPT		"BBG U-Boot > "
+#define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
