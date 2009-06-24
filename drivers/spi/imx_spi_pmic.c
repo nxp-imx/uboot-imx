@@ -53,13 +53,17 @@ u32 pmic_reg(struct spi_slave *slave, u32 reg, u32 val, u32 write)
 	pmic_tx = (write << 31) | (reg << 25) | (val & 0x00FFFFFF);
 	printf("reg=0x%x, val=0x%08x\n", reg, pmic_tx);
 
-	spi_xfer(slave, 4 << 3, (u8 *)&pmic_tx,
-				  (u8 *)&pmic_rx, 0);
+	if (spi_xfer(slave, 4 << 3, (u8 *)&pmic_tx, (u8 *)&pmic_rx,
+			SPI_XFER_BEGIN | SPI_XFER_END)) {
+		return -1;
+	}
 
 	if (write) {
 		pmic_tx &= ~(1 << 31);
-		spi_xfer(slave, 4 << 3,
-			(u8 *)&pmic_tx, (u8 *)&pmic_rx, 0);
+		if (spi_xfer(slave, 4 << 3, (u8 *)&pmic_tx, (u8 *)&pmic_rx,
+			SPI_XFER_BEGIN | SPI_XFER_END)) {
+			return -1;
+		}
 	}
 
 	return pmic_rx;
@@ -73,7 +77,7 @@ void show_pmic_info(struct spi_slave *slave)
 		return;
 
 	rev_id = pmic_reg(slave, 7, 0, 0);
-	printf("PMIC ID: 0x%08x [Rev: ", rev_id);
+	debug("PMIC ID: 0x%08x [Rev: ", rev_id);
 	switch (rev_id & 0x1F) {
 	case 0x1:
 		printf("1.0");

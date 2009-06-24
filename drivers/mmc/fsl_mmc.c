@@ -38,6 +38,8 @@
 #define RETRY_TIMEOUT					(10)
 
 
+extern int sdhc_init();
+
 extern int fat_register_device(block_dev_desc_t *dev_desc, int part_no);
 
 static block_dev_desc_t	mmc_dev;

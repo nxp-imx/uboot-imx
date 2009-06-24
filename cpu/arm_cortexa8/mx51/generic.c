@@ -25,6 +25,7 @@
 
 #include <common.h>
 #include <asm/arch/mx51.h>
+#include <asm/errno.h>
 #include "crm_regs.h"
 
 enum pll_clocks {
@@ -203,6 +204,10 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 		return __get_uart_clk();
 	case MXC_CSPI_CLK:
 		return __get_cspi_clk();
+	case MXC_FEC_CLK:
+		return __decode_pll(PLL1_CLK, CONFIG_MX51_HCLK_FREQ);
+	default:
+		break;
 	}
 	return -1;
 }
@@ -233,3 +238,23 @@ int print_cpuinfo(void)
 	return 0;
 }
 #endif
+
+/*
+ * Initializes on-chip ethernet controllers.
+ * to override, implement board_eth_init()
+ */
+ #if defined(CONFIG_MXC_FEC)
+ extern int mxc_fec_initialize(bd_t *bis);
+ #endif
+
+int cpu_eth_init(bd_t *bis)
+{
+	int rc = -ENODEV;
+
+#if defined(CONFIG_MXC_FEC)
+	rc = mxc_fec_initialize(bis);
+#endif
+
+	return rc;
+}
+

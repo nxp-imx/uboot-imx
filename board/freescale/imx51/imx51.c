@@ -24,13 +24,14 @@
 
 #include <common.h>
 #include <asm/io.h>
-#include <asm/errno.h>
 #include <asm/arch/mx51.h>
 #include <asm/arch/mx51_pins.h>
 #include <asm/arch/iomux.h>
+#include <asm/errno.h>
 #include <i2c.h>
 #include "board-imx51.h"
 #include <asm/arch/imx_spi.h>
+#include <asm/arch/imx_spi_pmic.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -158,48 +159,6 @@ static void setup_expio(void)
 	writew(reg, mx51_io_base_addr + PBC_SW_RESET);
 }
 
-int board_init(void)
-{
-	setup_soc_rev();
-
-	gd->bd->bi_arch_number = MACH_TYPE_MX51_3DS;	/* board id for linux */
-	/* address of boot parameters */
-	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
-
-	setup_uart();
-	setup_nfc();
-	setup_expio();
-	return 0;
-}
-
-#ifdef BOARD_LATE_INIT
-int board_late_init(void)
-{
-	return 0;
-}
-#endif
-
-int checkboard(void)
-{
-	printf("Board: MX51 3STACK [");
-	switch (__REG(SRC_BASE_ADDR + 0x8)) {
-	case 0x0001:
-		printf("POR");
-		break;
-	case 0x0009:
-		printf("RST");
-		break;
-	case 0x0010:
-	case 0x0011:
-		printf("WDOG");
-		break;
-	default:
-		printf("unknown");
-	}
-	printf("]\n");
-	return 0;
-}
-
 void spi_io_init(struct imx_spi_dev_t *dev)
 {
 	switch (dev->base) {
@@ -242,13 +201,177 @@ void spi_io_init(struct imx_spi_dev_t *dev)
 	}
 }
 
+static void setup_fec(void)
+{
+	/*FEC_MDIO*/
+	writel(0x3, IOMUXC_BASE_ADDR + 0x0D4);
+	writel(0x1FD, IOMUXC_BASE_ADDR + 0x0468);
+	writel(0x0, IOMUXC_BASE_ADDR + 0x0954);
+
+	/*FEC_MDC*/
+	writel(0x2, IOMUXC_BASE_ADDR + 0x13C);
+	writel(0x2004, IOMUXC_BASE_ADDR + 0x0524);
+
+	/* FEC RDATA[3] */
+	writel(0x3, IOMUXC_BASE_ADDR + 0x0EC);
+	writel(0x180, IOMUXC_BASE_ADDR + 0x0480);
+	writel(0x0, IOMUXC_BASE_ADDR + 0x0964);
+
+	/* FEC RDATA[2] */
+	writel(0x3, IOMUXC_BASE_ADDR + 0x0E8);
+	writel(0x180, IOMUXC_BASE_ADDR + 0x047C);
+	writel(0x0, IOMUXC_BASE_ADDR + 0x0960);
+
+	/* FEC RDATA[1] */
+	writel(0x3, IOMUXC_BASE_ADDR + 0x0d8);
+	writel(0x180, IOMUXC_BASE_ADDR + 0x046C);
+	writel(0x0, IOMUXC_BASE_ADDR + 0x095C);
+
+	/* FEC RDATA[0] */
+	writel(0x2, IOMUXC_BASE_ADDR + 0x016C);
+	writel(0x2180, IOMUXC_BASE_ADDR + 0x0554);
+	writel(0x0, IOMUXC_BASE_ADDR + 0x0958);
+
+	/* FEC TDATA[3] */
+	writel(0x2, IOMUXC_BASE_ADDR + 0x148);
+	writel(0x2004, IOMUXC_BASE_ADDR + 0x0530);
+
+	/* FEC TDATA[2] */
+	writel(0x2, IOMUXC_BASE_ADDR + 0x144);
+	writel(0x2004, IOMUXC_BASE_ADDR + 0x052C);
+
+	/* FEC TDATA[1] */
+	writel(0x2, IOMUXC_BASE_ADDR + 0x140);
+	writel(0x2004, IOMUXC_BASE_ADDR + 0x0528);
+
+	/* FEC TDATA[0] */
+	writel(0x2, IOMUXC_BASE_ADDR + 0x0170);
+	writel(0x2004, IOMUXC_BASE_ADDR + 0x0558);
+
+	/* FEC TX_EN */
+	writel(0x1, IOMUXC_BASE_ADDR + 0x014C);
+	writel(0x2004, IOMUXC_BASE_ADDR + 0x0534);
+
+	/* FEC TX_ER */
+	writel(0x2, IOMUXC_BASE_ADDR + 0x0138);
+	writel(0x2004, IOMUXC_BASE_ADDR + 0x0520);
+
+	/* FEC TX_CLK */
+	writel(0x1, IOMUXC_BASE_ADDR + 0x0150);
+	writel(0x2180, IOMUXC_BASE_ADDR + 0x0538);
+	writel(0x0, IOMUXC_BASE_ADDR + 0x0974);
+
+	/* FEC COL */
+	writel(0x1, IOMUXC_BASE_ADDR + 0x0124);
+	writel(0x2180, IOMUXC_BASE_ADDR + 0x0500);
+	writel(0x0, IOMUXC_BASE_ADDR + 0x094c);
+
+	/* FEC RX_CLK */
+	writel(0x1, IOMUXC_BASE_ADDR + 0x0128);
+	writel(0x2180, IOMUXC_BASE_ADDR + 0x0504);
+	writel(0x0, IOMUXC_BASE_ADDR + 0x0968);
+
+	/* FEC CRS */
+	writel(0x3, IOMUXC_BASE_ADDR + 0x0f4);
+	writel(0x180, IOMUXC_BASE_ADDR + 0x0488);
+	writel(0x0, IOMUXC_BASE_ADDR + 0x0950);
+
+	/* FEC RX_ER */
+	writel(0x3, IOMUXC_BASE_ADDR + 0x0f0);
+	writel(0x180, IOMUXC_BASE_ADDR + 0x0484);
+	writel(0x0, IOMUXC_BASE_ADDR + 0x0970);
+
+	/* FEC RX_DV */
+	writel(0x2, IOMUXC_BASE_ADDR + 0x164);
+	writel(0x2180, IOMUXC_BASE_ADDR + 0x054C);
+	writel(0x0, IOMUXC_BASE_ADDR + 0x096C);
+}
+
+static void power_init(void)
+{
+	struct spi_slave *slave;
+	unsigned int val;
+	unsigned int reg;
+
+	slave = spi_pmic_probe();
+
+	/* power up the system first */
+	pmic_reg(slave, 34, 0x00200000, 1);
+
+	if (mxc_get_clock(MXC_FEC_CLK) > 800000000) {
+		/* Set core voltage to 1.175V */
+		val = pmic_reg(slave, 24, 0, 0);
+		val = (val & (~0x1F)) | 0x17;
+		pmic_reg(slave, 24, val, 1);
+	}
+
+	/* Setup VCC (SW2) to 1.225 */
+	val = pmic_reg(slave, 25, 0, 0);
+	val = (val & (~0x1F)) | 0x19;
+	pmic_reg(slave, 25, val, 1);
+
+	/* Setup 1V2_DIG1 (SW3) to 1.2 */
+	val = pmic_reg(slave, 26, 0, 0);
+	val = (val & (~0x1F)) | 0x18;
+	pmic_reg(slave, 25, val, 1);
+
+	/* Set VDIG to 1.65V, VGEN3 to 1.8V, VCAM to 2.5V */
+	val = pmic_reg(slave, 30, 0, 0);
+	val &= ~0x34030;
+	val |= 0x10020;
+	pmic_reg(slave, 30, val, 1);
+
+	/* Set VVIDEO to 2.775V, VAUDIO to 3V, VSD to 3.15V */
+	val = pmic_reg(slave, 31, 0, 0);
+	val &= ~0x1FC;
+	val |= 0x1F4;
+	pmic_reg(slave, 31, val, 1);
+
+	/* Configure VGEN3 and VCAM regulators to use external PNP */
+	val = 0x208;
+	pmic_reg(slave, 33, val, 1);
+	udelay(200);
+
+	reg = readl(GPIO2_BASE_ADDR + 0x0);
+	reg &= ~0x4000;  /* Lower reset line */
+	writel(reg, GPIO2_BASE_ADDR + 0x0);
+
+	reg = readl(GPIO2_BASE_ADDR + 0x4);
+	reg |= 0x4000;  /* configure GPIO lines as output */
+	writel(reg, GPIO2_BASE_ADDR + 0x4);
+
+	/* Reset the ethernet controller over GPIO */
+	writel(0x1, IOMUXC_BASE_ADDR + 0x0AC);
+
+	/* Enable VGEN3, VCAM, VAUDIO, VVIDEO, VSD regulators */
+	val = 0x49249;
+	pmic_reg(slave, 33, val, 1);
+
+	udelay(500);
+
+	reg = readl(GPIO2_BASE_ADDR + 0x0);
+	reg |= 0x4000;
+	writel(reg, GPIO2_BASE_ADDR + 0x0);
+
+	/* Setup the FEC after enabling the regulators */
+	setup_fec();
+
+	spi_pmic_free(slave);
+}
+
 #ifdef CONFIG_NET_MULTI
+
+#if defined(CONFIG_DRIVER_SMC911X)
+extern int smc911x_initialize(bd_t *bis);
+#endif
 int board_eth_init(bd_t *bis)
 {
 	int rc = -ENODEV;
+
 #if defined(CONFIG_DRIVER_SMC911X)
-	 rc = smc911x_initialize(bis);
+	rc = smc911x_initialize(bis);
 #endif
+
 	return rc;
 }
 #endif
@@ -329,3 +452,47 @@ int sdhc_init(void)
 }
 
 #endif
+
+int board_init(void)
+{
+	setup_soc_rev();
+
+	gd->bd->bi_arch_number = MACH_TYPE_MX51_3DS;	/* board id for linux */
+	/* address of boot parameters */
+	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
+
+	setup_uart();
+	setup_nfc();
+	setup_expio();
+	return 0;
+}
+
+#ifdef BOARD_LATE_INIT
+int board_late_init(void)
+{
+	power_init();
+	return 0;
+}
+#endif
+
+int checkboard(void)
+{
+	printf("Board: MX51 3STACK [");
+	switch (__REG(SRC_BASE_ADDR + 0x8)) {
+	case 0x0001:
+		printf("POR");
+		break;
+	case 0x0009:
+		printf("RST");
+		break;
+	case 0x0010:
+	case 0x0011:
+		printf("WDOG");
+		break;
+	default:
+		printf("unknown");
+	}
+	printf("]\n");
+	return 0;
+}
+
