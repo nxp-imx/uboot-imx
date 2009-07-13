@@ -97,6 +97,17 @@
 /* #define CONFIG_CMD_DATE */
 #define CONFIG_CMD_NAND
 
+/*
+ * MMC Configs
+ * */
+/*
+#define CONFIG_FSL_MMC
+#define CONFIG_MMC
+#define CONFIG_CMD_MMC
+#define CONFIG_DOS_PARTITION
+#define CONFIG_CMD_FAT
+#define CONFIG_MMC_BASE       0x0  */
+
 /* Disabled due to compilation errors in cmd_bootm.c (IMLS seems to require
  * that CONFIG_NO_FLASH is undefined).
  */
@@ -122,6 +133,8 @@
 #define CONFIG_DRIVER_SMC911X_BASE CS5_BASE*/
 
 /*#define CONFIG_HAS_ETH1*/
+#define CONFIG_CMD_NET
+#define CONFIG_CMD_DHCP
 #define CONFIG_NET_MULTI	1
 #define CONFIG_MXC_FEC
 #define CONFIG_MII
@@ -174,12 +187,33 @@
 #else
 #define PHYS_SDRAM_1_SIZE       (64 * 1024 * 1024)
 #endif
+
+/* Monitor at beginning of flash */
+#if defined(CONFIG_FSL_SF)
+	#define CONFIG_FSL_ENV_IN_SF
+#elif defined(CONFIG_FSL_MMC)
+	#define CONFIG_FSL_ENV_IN_MMC
+#elif defined(CONFIG_CMD_NAND)
+	#define CONFIG_FSL_ENV_IN_NAND
+#endif
+
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
+#if defined(CONFIG_FSL_ENV_IN_NAND)
+	#define CONFIG_ENV_IS_IN_NAND 1
+	#define CONFIG_ENV_OFFSET	0x80000
+#elif defined(CONFIG_FSL_ENV_IN_MMC)
+	#define CONFIG_ENV_IS_IN_MMC	1
+	#define CONFIG_ENV_OFFSET	0x100000
+#elif defined(CONFIG_FSL_ENV_IN_SF)
+	#define CONFIG_ENV_IS_IN_SPI_FLASH	1
+	#define CONFIG_ENV_SPI_CS		1
+	#define CONFIG_ENV_OFFSET      		0x100000
+#else
+	#define CONFIG_ENV_IS_NOWHERE	1
+#endif
 
-#define	CONFIG_ENV_IS_IN_NAND	1
-#define CONFIG_ENV_OFFSET		0x80000 /* 2nd block */
 #define CONFIG_ENV_SECT_SIZE	(256 * 1024)
 #define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE
 

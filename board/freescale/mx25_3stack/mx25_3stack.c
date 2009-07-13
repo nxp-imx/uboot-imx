@@ -35,6 +35,7 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
+volatile u32 *esdhc_base_pointer;
 
 u32 get_board_rev(void)
 {
@@ -53,6 +54,11 @@ static inline void setup_soc_rev(void)
 	system_rev = 0x25000 + (reg & 0xFF);
 }
 
+inline int is_soc_rev(int rev)
+{
+	return (system_rev & 0xFF) - rev;
+}
+
 int dram_init(void)
 {
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
@@ -60,6 +66,85 @@ int dram_init(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_FSL_MMC
+
+int sdhc_init(void)
+{
+	u32 interface_esdhc = 0, val = 0;
+
+	interface_esdhc = (readl(CCM_RCSR) & (0x00300000)) >> 20;
+
+	switch (interface_esdhc) {
+	case 0:
+		esdhc_base_pointer = (volatile u32 *)MMC_SDHC1_BASE;
+		/* Pins */
+		writel(0x10, IOMUXC_BASE + 0x190);	/* SD1_CMD */
+		writel(0x10, IOMUXC_BASE + 0x194);	/* SD1_CLK */
+		writel(0x00, IOMUXC_BASE + 0x198);	/* SD1_DATA0 */
+		writel(0x00, IOMUXC_BASE + 0x19c);	/* SD1_DATA1 */
+		writel(0x00, IOMUXC_BASE + 0x1a0);	/* SD1_DATA2 */
+		writel(0x00, IOMUXC_BASE + 0x1a4);	/* SD1_DATA3 */
+		writel(0x06, IOMUXC_BASE + 0x094);	/* D12 (SD1_DATA4) */
+		writel(0x06, IOMUXC_BASE + 0x090);	/* D13 (SD1_DATA5) */
+		writel(0x06, IOMUXC_BASE + 0x08c);	/* D14 (SD1_DATA6) */
+		writel(0x06, IOMUXC_BASE + 0x088);	/* D15 (SD1_DATA7) */
+		writel(0x05, IOMUXC_BASE + 0x010);	/* A14 (SD1_WP) */
+		writel(0x05, IOMUXC_BASE + 0x014);	/* A15 (SD1_DET) */
+
+		/* Pads */
+		writel(0xD1, IOMUXC_BASE + 0x388);	/* SD1_CMD */
+		writel(0xD1, IOMUXC_BASE + 0x38c);	/* SD1_CLK */
+		writel(0xD1, IOMUXC_BASE + 0x390);	/* SD1_DATA0 */
+		writel(0xD1, IOMUXC_BASE + 0x394);	/* SD1_DATA1 */
+		writel(0xD1, IOMUXC_BASE + 0x398);	/* SD1_DATA2 */
+		writel(0xD1, IOMUXC_BASE + 0x39c);	/* SD1_DATA3 */
+		writel(0xD1, IOMUXC_BASE + 0x28c);	/* D12 (SD1_DATA4) */
+		writel(0xD1, IOMUXC_BASE + 0x288);	/* D13 (SD1_DATA5) */
+		writel(0xD1, IOMUXC_BASE + 0x284);	/* D14 (SD1_DATA6) */
+		writel(0xD1, IOMUXC_BASE + 0x280);	/* D15 (SD1_DATA7) */
+		writel(0xD1, IOMUXC_BASE + 0x230);	/* A14 (SD1_WP) */
+		writel(0xD1, IOMUXC_BASE + 0x234);	/* A15 (SD1_DET) */
+
+		/*
+		 * Set write protect and card detect gpio as inputs
+		 * A14 (SD1_WP) and A15 (SD1_DET)
+		 */
+		val = ~(3 << 0) & readl(GPIO1_BASE + GPIO_GDIR);
+		writel(val, GPIO1_BASE + GPIO_GDIR);
+		break;
+	case 1:
+		esdhc_base_pointer = (volatile u32 *)MMC_SDHC2_BASE;
+		/* Pins */
+		writel(0x16, IOMUXC_BASE + 0x0e8);	/* LD8 (SD1_CMD) */
+		writel(0x16, IOMUXC_BASE + 0x0ec);	/* LD9 (SD1_CLK) */
+		writel(0x06, IOMUXC_BASE + 0x0f0);	/* LD10 (SD1_DATA0) */
+		writel(0x06, IOMUXC_BASE + 0x0f4);	/* LD11 (SD1_DATA1) */
+		writel(0x06, IOMUXC_BASE + 0x0f8);	/* LD12 (SD1_DATA2) */
+		writel(0x06, IOMUXC_BASE + 0x0fc);	/* LD13 (SD1_DATA3) */
+		writel(0x02, IOMUXC_BASE + 0x120);	/* CSI_D2 (SD1_DATA4) */
+		writel(0x02, IOMUXC_BASE + 0x124);	/* CSI_D3 (SD1_DATA5) */
+		writel(0x02, IOMUXC_BASE + 0x128);	/* CSI_D4 (SD1_DATA6) */
+		writel(0x02, IOMUXC_BASE + 0x12c);	/* CSI_D5 (SD1_DATA7) */
+
+		/* Pads */
+		writel(0xD1, IOMUXC_BASE + 0x2e0);	/* LD8 (SD1_CMD) */
+		writel(0xD1, IOMUXC_BASE + 0x2e4);	/* LD9 (SD1_CLK) */
+		writel(0xD1, IOMUXC_BASE + 0x2e8);	/* LD10 (SD1_DATA0) */
+		writel(0xD1, IOMUXC_BASE + 0x2ec);	/* LD11 (SD1_DATA1) */
+		writel(0xD1, IOMUXC_BASE + 0x2f0);	/* LD12 (SD1_DATA2) */
+		writel(0xD1, IOMUXC_BASE + 0x2f4);	/* LD13 (SD1_DATA3) */
+		writel(0xD1, IOMUXC_BASE + 0x318);	/* CSI_D2 (SD1_DATA4) */
+		writel(0xD1, IOMUXC_BASE + 0x31c);	/* CSI_D3 (SD1_DATA5) */
+		writel(0xD1, IOMUXC_BASE + 0x320);	/* CSI_D4 (SD1_DATA6) */
+		writel(0xD1, IOMUXC_BASE + 0x324);	/* CSI_D5 (SD1_DATA7) */
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+#endif
 
 int board_init(void)
 {
