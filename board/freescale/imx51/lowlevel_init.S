@@ -258,8 +258,6 @@ lowlevel_init:
 
 	init_aips
 
-	setup_wdog
-
 	init_max
 
 	init_m4if
