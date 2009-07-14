@@ -22,7 +22,7 @@
 #include "board-mx35_3stack.h"
 
 #ifdef	CONFIG_FLASH_HEADER
-#ifndef FHEADER_OFFSET
+#ifndef CONFIG_FLASH_HEADER_OFFSET
 # error "Must define the offset of flash header"
 #endif
 
@@ -37,9 +37,9 @@ dcd_##i:                         ;\
 
 .section ".text.flasheader", "x"
 	b _start
-	.org FHEADER_OFFSET
+	.org CONFIG_FLASH_HEADER_OFFSET
 app_code_jump_v:    .long GEN_FHEADERADDR(_start)
-app_code_barker:    .long 0xB1
+app_code_barker:    .long CONFIG_FLASH_HEADER_BARKER
 app_code_csf:       .long 0
 hwcfg_ptr_ptr:      .long GEN_FHEADERADDR(hwcfg_ptr)
 super_root_key:     .long 0

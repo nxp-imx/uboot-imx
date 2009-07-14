@@ -210,29 +210,13 @@ u32 interface_reset(void)
 
 	/* Wait for clearance of CIHB and CDIHB Bits */
 	for (u32Retries = RETRIES_TIMES; u32Retries > 0; --u32Retries) {
-		if (!is_soc_rev(CHIP_REV_1_0)) {
-			if (readl(esdhc_base_pointer + SDHCI_PRESENT_STATE) \
-						& ESDHC_CMD_INHIBIT) {
-				reset_status = 1;
-			} else {
-				reset_status = 0;
-				break;
-			}
-		} else if (!is_soc_rev(CHIP_REV_2_0)) {
-			if (readl(esdhc_base_pointer + SDHCI_SYSTEM_CONTROL) \
-						& ESDHC_SOFTWARE_RESET) {
-				reset_status = 1;
-			} else {
-				reset_status = 0;
-				break;
-			}
+		if (readl(esdhc_base_pointer + SDHCI_SYSTEM_CONTROL) \
+					& ESDHC_SOFTWARE_RESET) {
+			reset_status = 1;
+		} else {
+			reset_status = 0;
+			break;
 		}
-	}
-
-	if (!is_soc_rev(CHIP_REV_1_0)) {
-		/* send 80 clock ticks for card to power up */
-		REG_WRITE_OR(ESDHC_SYSCTL_INITA, \
-			esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
 	}
 
 	/* Set data bus width of ESDCH */
@@ -265,32 +249,19 @@ void interface_configure_clock(sdhc_freq_t frequency)
 	u32 ident_freq = 0;
 	u32 oper_freq  = 0;
 
-	if (!is_soc_rev(CHIP_REV_1_0)) {
-		/* Enable ipg_perclk, HCLK enable and IPG Clock enable. */
-		REG_WRITE_OR(ESDHC_CLOCK_ENABLE, \
-			esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
-		/* Clear DTOCV SDCLKFS bits */
-		REG_WRITE_OR(ESDHC_FREQ_MASK, \
-			esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
-		ident_freq = ESDHC_SYSCTL_IDENT_FREQ_TO1;
-		oper_freq  = ESDHC_SYSCTL_OPERT_FREQ_TO1;
-	} else if (!is_soc_rev(CHIP_REV_2_0)) {
-		/* Clear SDCLKEN bit */
-		REG_WRITE_OR((~ESDHC_SYSCTL_SDCLKEN_MASK), \
-			esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
+	/* Clear SDCLKEN bit */
+	REG_WRITE_OR((~ESDHC_SYSCTL_SDCLKEN_MASK), \
+		esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
 
-		/* Clear DTOCV, SDCLKFS, DVFS bits */
-		REG_WRITE_OR((~ESDHC_SYSCTL_FREQ_MASK), \
-			esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
-		ident_freq = ESDHC_SYSCTL_IDENT_FREQ_TO2;
-		oper_freq  = ESDHC_SYSCTL_OPERT_FREQ_TO2;
-	}
+	/* Clear DTOCV, SDCLKFS, DVFS bits */
+	REG_WRITE_OR((~ESDHC_SYSCTL_FREQ_MASK), \
+		esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
+	ident_freq = ESDHC_SYSCTL_IDENT_FREQ_TO2;
+	oper_freq  = ESDHC_SYSCTL_OPERT_FREQ_TO2;
 
-	if (!is_soc_rev(CHIP_REV_2_0)) {
-		/* Disable the PEREN, HCKEN and IPGEN */
-		REG_WRITE_OR((~ESDHC_SYSCTL_INPUT_CLOCK_MASK), \
+	/* Disable the PEREN, HCKEN and IPGEN */
+	REG_WRITE_OR((~ESDHC_SYSCTL_INPUT_CLOCK_MASK), \
 			esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
-	}
 
 	if (frequency == IDENTIFICATION_FREQ) {
 		/* Input frequecy to eSDHC is 36 MHZ */
@@ -306,28 +277,26 @@ void interface_configure_clock(sdhc_freq_t frequency)
 			esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
 	}
 
-	if (!is_soc_rev(CHIP_REV_2_0)) {
-		/* Start a general purpose timer */
-		/* Wait for clock to be stable */
-		SDHC_DELAY_BY_100(96);
+	/* Start a general purpose timer */
+	/* Wait for clock to be stable */
+	SDHC_DELAY_BY_100(96);
 
-		/* Set SDCLKEN bit to enable clock */
-		REG_WRITE_OR(ESDHC_SYSCTL_SDCLKEN_MASK, \
-			esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
+	/* Set SDCLKEN bit to enable clock */
+	REG_WRITE_OR(ESDHC_SYSCTL_SDCLKEN_MASK, \
+		esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
 
-		/* Mask Data Timeout Error Status Enable Interrupt (DTOESEN) */
-		REG_WRITE_AND((~ESDHC_IRQSTATEN_DTOESEN), \
+	/* Mask Data Timeout Error Status Enable Interrupt (DTOESEN) */
+	REG_WRITE_AND((~ESDHC_IRQSTATEN_DTOESEN), \
 			esdhc_base_pointer + SDHCI_INT_ENABLE);
 
-		/* Set the Data Timeout Counter Value(DTOCV) */
-		REG_WRITE_OR(ESDHC_SYSCTL_DTOCV_VAL, \
-			esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
+	/* Set the Data Timeout Counter Value(DTOCV) */
+	REG_WRITE_OR(ESDHC_SYSCTL_DTOCV_VAL, \
+		esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
 
-		/* Enable Data Timeout Error Status
-			Enable Interrupt (DTOESEN) */
-		REG_WRITE_OR(ESDHC_IRQSTATEN_DTOESEN, \
+	/* Enable Data Timeout Error Status
+		Enable Interrupt (DTOESEN) */
+	REG_WRITE_OR(ESDHC_IRQSTATEN_DTOESEN, \
 			esdhc_base_pointer + SDHCI_INT_ENABLE);
-	}
 }
 
 /*
@@ -409,8 +378,7 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 static void esdhc_set_data_transfer_width(u32 data_transfer_width)
 {
 	/* Set DWT bit of protocol control register according to bus_width */
-	if (!is_soc_rev(CHIP_REV_2_0))
-		REG_WRITE_AND((~ESDHC_BUS_WIDTH_MASK), \
+	REG_WRITE_AND((~ESDHC_BUS_WIDTH_MASK), \
 			esdhc_base_pointer + SDHCI_HOST_CONTROL);
 
 	REG_WRITE_OR((data_transfer_width), \
@@ -422,10 +390,8 @@ static void esdhc_set_data_transfer_width(u32 data_transfer_width)
  */
 static void esdhc_set_endianness(u32 endian_mode)
 {
-	if (!is_soc_rev(CHIP_REV_2_0)) {
-		REG_WRITE_AND((~ESDHC_ENDIAN_MODE_MASK), \
-			esdhc_base_pointer + SDHCI_HOST_CONTROL);
-	}
+	REG_WRITE_AND((~ESDHC_ENDIAN_MODE_MASK), \
+		esdhc_base_pointer + SDHCI_HOST_CONTROL);
 	/* Set DWT bit of protocol control register according to bus_width */
 	REG_WRITE_OR((endian_mode), \
 			esdhc_base_pointer + SDHCI_HOST_CONTROL);
@@ -506,12 +472,11 @@ u32 interface_send_cmd_wait_resp(esdhc_cmd_t *cmd)
 	/* Enable Interrupt */
 	REG_WRITE_OR(ESDHC_INTERRUPT_ENABLE, \
 			esdhc_base_pointer + SDHCI_INT_ENABLE);
-	if (!is_soc_rev(CHIP_REV_2_0)) {
-		cmd_status = interface_wait_cmd_data_lines(cmd->data_present);
 
-		if (cmd_status == 1)
-			return 1;
-	}
+	cmd_status = interface_wait_cmd_data_lines(cmd->data_present);
+
+	if (cmd_status == 1)
+		return 1;
 
 	/* Configure Command */
 	esdhc_cmd_config(cmd);
@@ -647,10 +612,8 @@ u32 interface_data_read(u32 *dest_ptr, u32 blk_len)
 				*tmp_ptr++ = \
 				readl(esdhc_base_pointer + SDHCI_BUFFER);
 			}
-			if (!is_soc_rev(CHIP_REV_2_0)) {
-				/* Clear the BRR */
-				esdhc_clear_buf_rdy_intr(ESDHC_STATUS_BUF_READ_RDY_MSK);
-			}
+			/* Clear the BRR */
+			esdhc_clear_buf_rdy_intr(ESDHC_STATUS_BUF_READ_RDY_MSK);
 		} else {
 			debug("esdhc_wait_buf_rdy_intr failed\n");
 			break;
@@ -661,7 +624,7 @@ u32 interface_data_read(u32 *dest_ptr, u32 blk_len)
 
 	status = esdhc_check_data();
 
-	if (!is_soc_rev(CHIP_REV_2_0) && !status)
+	if (!status)
 		status = 0;
 
 	debug("esdhc_check_data: %d\n", status);
@@ -770,10 +733,8 @@ static u32 esdhc_check_data(void)
 		ESDHC_STATUS_TIME_OUT_READ_MASK) &&
 		!(readl(esdhc_base_pointer + SDHCI_INT_STATUS) & \
 		ESDHC_STATUS_READ_CRC_ERR_MSK)) {
-		if (!is_soc_rev(CHIP_REV_2_0)) {
-			writel(ESDHC_STATUS_TRANSFER_COMPLETE_MSK, \
-				(esdhc_base_pointer + SDHCI_INT_STATUS));
-		}
+		writel(ESDHC_STATUS_TRANSFER_COMPLETE_MSK, \
+			(esdhc_base_pointer + SDHCI_INT_STATUS));
 		status = 0;
 	} else {
 		status = 1;
