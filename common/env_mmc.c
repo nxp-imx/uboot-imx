@@ -295,7 +295,7 @@ void env_relocate_spec(void)
 	}
 
 	total = CONFIG_ENV_SIZE;
-	ret = mmc_read(CONFIG_ENV_OFFSET, (u_char *)env_ptr, &total);
+	ret = mmc_read(CONFIG_ENV_OFFSET, (u_char *)env_ptr, total);
 	if (ret || total != CONFIG_ENV_SIZE)
 		return use_default();
 
