@@ -978,6 +978,72 @@ static void mxc_nand_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 
 }
 
+/**
+ * mxc_nand_prog_page - [REPLACEABLE] write one page
+ * @mtd:        MTD device structure
+ * @chip:       NAND chip descriptor
+ * @buf:        the data to write
+ * @page:       page number to write
+ * @cached:     cached programming
+ * @raw:        use _raw version of write_page
+ */
+static int mxc_nand_prog_page(struct mtd_info *mtd, struct nand_chip *chip,
+			const uint8_t *buf, int page, int cached, int raw)
+{
+	int status;
+	int i;
+
+	for (i = 0; i < mtd->writesize; i += 4) {
+		if (*(u32 *)(buf + i) != (u32)-1)
+			break;
+	}
+
+	if (i == mtd->writesize)
+		return 0;
+
+		chip->cmdfunc(mtd, NAND_CMD_SEQIN, 0x00, page);
+
+	if (unlikely(raw))
+		chip->ecc.write_page_raw(mtd, chip, buf);
+	else
+		chip->ecc.write_page(mtd, chip, buf);
+
+	/*
+	 * Cached progamming disabled for now, Not sure if its worth the
+	 * trouble. The speed gain is not very impressive. (2.3->2.6Mib/s)
+	 */
+	cached = 0;
+
+	if (!cached || !(chip->options & NAND_CACHEPRG)) {
+
+		chip->cmdfunc(mtd, NAND_CMD_PAGEPROG, -1, -1);
+		status = chip->waitfunc(mtd, chip);
+		/*
+		 * See if operation failed and additional status checks are
+		 * available
+		 */
+		if ((status & NAND_STATUS_FAIL) && (chip->errstat))
+			status = chip->errstat(mtd, chip, FL_WRITING, status,
+					       page);
+
+		if (status & NAND_STATUS_FAIL)
+			return -EIO;
+	} else {
+		chip->cmdfunc(mtd, NAND_CMD_CACHEDPROG, -1, -1);
+		status = chip->waitfunc(mtd, chip);
+	}
+
+
+	#ifdef CONFIG_MTD_NAND_VERIFY_WRITE
+	/* Send command to read back the data */
+	chip->cmdfunc(mtd, NAND_CMD_READ0, 0, page);
+
+	if (chip->verify_buf(mtd, buf, mtd->writesize))
+		return -EIO;
+	#endif
+	return 0;
+	}
+
 /* Define some generic bad / good block scan pattern which are used
  * while scanning a device for factory marked good / bad blocks. */
 static uint8_t scan_ff_pattern[] = { 0xff, 0xff };
@@ -1174,6 +1240,7 @@ int board_nand_init(struct nand_chip *nand)
 	this->read_buf = mxc_nand_read_buf;
 	this->verify_buf = mxc_nand_verify_buf;
 	this->scan_bbt = mxc_nand_scan_bbt;
+	this->write_page = mxc_nand_prog_page;
 	this->ecc.read_page = mxc_nand_read_page;
 	this->ecc.write_page = mxc_nand_write_page;
 	this->ecc.read_oob = mxc_nand_read_oob;
