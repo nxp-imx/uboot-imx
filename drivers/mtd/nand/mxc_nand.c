@@ -1069,7 +1069,7 @@ static uint8_t mirror_pattern[] = { '1', 't', 'b', 'B' };
 
 static struct nand_bbt_descr bbt_main_descr = {
 	.options = NAND_BBT_LASTBLOCK | NAND_BBT_CREATE | NAND_BBT_WRITE
-	    | NAND_BBT_2BIT | NAND_BBT_VERSION | NAND_BBT_PERCHIP,
+	    | NAND_BBT_2BIT | NAND_BBT_VERSION,
 	.offs = 0,
 	.len = 4,
 	.veroffs = 4,
@@ -1079,7 +1079,7 @@ static struct nand_bbt_descr bbt_main_descr = {
 
 static struct nand_bbt_descr bbt_mirror_descr = {
 	.options = NAND_BBT_LASTBLOCK | NAND_BBT_CREATE | NAND_BBT_WRITE
-	    | NAND_BBT_2BIT | NAND_BBT_VERSION | NAND_BBT_PERCHIP,
+	    | NAND_BBT_2BIT | NAND_BBT_VERSION,
 	.offs = 0,
 	.len = 4,
 	.veroffs = 4,
@@ -1094,6 +1094,17 @@ static int mxc_nand_scan_bbt(struct mtd_info *mtd)
 
 	info->page_mask = this->pagemask;
 
+	/* limit to 2G size due to Kernel
+	 * larger 4G space support,need fix
+	 * it later
+	 */
+	if (mtd->size == 0) {
+		mtd->size = 1 << 31;
+		this->numchips = 1;
+		this->chipsize = mtd->size;
+	}
+
+
 	if (IS_2K_PAGE_NAND) {
 		NFC_SET_NFMS(1 << NFMS_NF_PG_SZ);
 		this->ecc.layout = &nand_hw_eccoob_2k;
@@ -1105,27 +1116,6 @@ static int mxc_nand_scan_bbt(struct mtd_info *mtd)
 	} else {
 		this->ecc.layout = &nand_hw_eccoob_512;
 		info->large_page = 0;
-	}
-
-	/* reconfig for interleave mode */
-
-	if (this->numchips > 1 && info->auto_mode) {
-		info->num_of_intlv = this->numchips;
-		this->numchips = 1;
-
-		/* FIXEME:need remove it
-		 * when kernel support
-		 * 4G larger space
-		 */
-		mtd->size = this->chipsize;
-		mtd->erasesize *= info->num_of_intlv;
-		mtd->writesize *= info->num_of_intlv;
-		mtd->oobsize *= info->num_of_intlv;
-		this->page_shift = ffs(mtd->writesize) - 1;
-		this->bbt_erase_shift =
-		this->phys_erase_shift = ffs(mtd->erasesize) - 1;
-		this->chip_shift = ffs(this->chipsize) - 1;
-		this->oob_poi = this->buffers->databuf + mtd->writesize;
 	}
 
 	/* propagate ecc.layout to mtd_info */
