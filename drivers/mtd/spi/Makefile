@@ -28,7 +28,8 @@ LIB	:= $(obj)libspi_flash.a
 COBJS-$(CONFIG_SPI_FLASH)	+= spi_flash.o
 COBJS-$(CONFIG_SPI_FLASH_ATMEL)	+= atmel.o
 COBJS-$(CONFIG_SPI_FLASH_STMICRO)	+= stmicro.o
-COBJS-$(CONFIG_SPI_FLASH_IMX)	+= imx_spi_nor.o
+COBJS-$(CONFIG_SPI_FLASH_IMX_SST)	+= imx_spi_nor_sst.o
+COBJS-$(CONFIG_SPI_FLASH_IMX_ATMEL)	+= imx_spi_nor_atmel.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
