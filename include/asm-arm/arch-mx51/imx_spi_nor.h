@@ -47,6 +47,22 @@
 				/* + [1cmd + 2 data] + .. + [WRDI] + [RDSR] */
 #define JEDEC_ID    0x9F    /* read JEDEC ID. tx: 1 byte cmd; rx: 3 byte ID */
 
+/* Atmel SPI-NOR commands */
+#define WR_2_MEM_DIR	0x82
+#define BUF1_WR		0x84
+#define BUF2_WR		0x87
+#define BUF1_TO_MEM	0x83
+#define BUF2_TO_MEM	0x86
+#define STAT_READ	0xD7
+#define STAT_PG_SZ	(1 << 0)  /* 1=Page size is 512, 0=Page size is 528 (default 0) */
+#define STAT_PROT	(1 << 1)  /* 1=sector protection enabled (default 0) */
+#define STAT_COMP	(1 << 6)
+#define STAT_BUSY	(1 << 7) /* 1=Device not busy */
+#define CONFIG_REG1	0x3D
+#define CONFIG_REG2	0x2A
+#define CONFIG_REG3	0x80
+#define CONFIG_REG4	0xA6
+
 #define SZ_64K      0x10000
 #define SZ_32K      0x8000
 #define SZ_4K       0x1000

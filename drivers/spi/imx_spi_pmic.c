@@ -51,7 +51,7 @@ u32 pmic_reg(struct spi_slave *slave, u32 reg, u32 val, u32 write)
 		return 0;
 	}
 	pmic_tx = (write << 31) | (reg << 25) | (val & 0x00FFFFFF);
-	printf("reg=0x%x, val=0x%08x\n", reg, pmic_tx);
+	debug("reg=0x%x, val=0x%08x\n", reg, pmic_tx);
 
 	if (spi_xfer(slave, 4 << 3, (u8 *)&pmic_tx, (u8 *)&pmic_rx,
 			SPI_XFER_BEGIN | SPI_XFER_END)) {
