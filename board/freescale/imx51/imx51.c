@@ -53,7 +53,11 @@ static inline void setup_soc_rev(void)
 		system_rev = 0x51000 | CHIP_REV_1_1;
 		break;
 	case 0x10:
-		system_rev = 0x51000 | CHIP_REV_2_0;
+		if ((__REG(GPIO1_BASE_ADDR + 0x0) & (0x1 << 22)) == 0) {
+			system_rev = 0x51000 | CHIP_REV_2_5;
+		} else {
+			system_rev = 0x51000 | CHIP_REV_2_0;
+		}
 		break;
 	default:
 		system_rev = 0x51000 | CHIP_REV_1_0;
@@ -457,7 +461,7 @@ int board_init(void)
 {
 	setup_soc_rev();
 
-	gd->bd->bi_arch_number = MACH_TYPE_MX51_3DS;	/* board id for linux */
+	gd->bd->bi_arch_number = MACH_TYPE_MX51_BABBAGE;	/* board id for linux */
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
@@ -477,7 +481,18 @@ int board_late_init(void)
 
 int checkboard(void)
 {
-	printf("Board: MX51 3STACK [");
+	printf("Board: MX51 BABBAGE ");
+
+	if (system_rev & CHIP_REV_2_5) {
+		printf("2.5 [");
+	} else if (system_rev & CHIP_REV_2_0) {
+		printf("2.0 [");
+	} else if (system_rev & CHIP_REV_1_1) {
+		printf("1.1 [");
+	} else {
+		printf("1.0 [");
+	}
+
 	switch (__REG(SRC_BASE_ADDR + 0x8)) {
 	case 0x0001:
 		printf("POR");
