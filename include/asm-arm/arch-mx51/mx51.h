@@ -392,6 +392,7 @@
 #define CHIP_REV_1_0            0x10
 #define CHIP_REV_1_1            0x11
 #define CHIP_REV_2_0            0x20
+#define CHIP_REV_2_5		0x120
 
 #define BOARD_REV_1_0           0x0
 #define BOARD_REV_2_0           0x1
