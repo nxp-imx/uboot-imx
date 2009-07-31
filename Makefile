@@ -2938,6 +2938,9 @@ nhk8815_onenand_config:	unconfig
 omap1510inn_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm925t omap1510inn
 
+stmp378x_dev_config : unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs stmp378x_dev NULL stmp378x
+
 xtract_omap1610xxx = $(subst _cs0boot,,$(subst _cs3boot,,$(subst _cs_autoboot,,$(subst _config,,$1))))
 
 omap1610inn_config \
