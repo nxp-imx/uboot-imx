@@ -432,6 +432,11 @@ extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 	}
 #endif /* CONFIG_DRIVER_SMC91111 || CONFIG_DRIVER_LAN91C96 */
 
+#if defined(CONFIG_ENC28J60_ETH) && !defined(CONFIG_ETHADDR)
+	extern void enc_set_mac_addr (uchar *addr);
+	enc_set_mac_addr (gd->bd->bi_enetaddr);
+#endif /* CONFIG_ENC28J60_ETH && !CONFIG_ETHADDR*/
+
 	/* Initialize from environment */
 	if ((s = getenv ("loadaddr")) != NULL) {
 		load_addr = simple_strtoul (s, NULL, 16);

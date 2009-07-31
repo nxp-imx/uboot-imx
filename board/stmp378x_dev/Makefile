@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2006
+# (C) Copyright 2000-2006
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
 # See file CREDITS for list of people who contributed to this
@@ -12,7 +12,7 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -23,32 +23,23 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	:= $(obj)libserial.a
+LIB	= $(obj)lib$(BOARD).a
 
-COBJS-$(CONFIG_ATMEL_USART) += atmel_usart.o
-COBJS-$(CONFIG_MCFUART) += mcfuart.o
-COBJS-$(CONFIG_NS9750_UART) += ns9750_serial.o
-COBJS-y += ns16550.o
-COBJS-$(CONFIG_DRIVER_S3C4510_UART) += s3c4510b_uart.o
-COBJS-$(CONFIG_S3C64XX) += s3c64xx.o
-COBJS-y += serial.o
-COBJS-$(CONFIG_MAX3100_SERIAL) += serial_max3100.o
-COBJS-$(CONFIG_PL010_SERIAL) += serial_pl01x.o
-COBJS-$(CONFIG_PL011_SERIAL) += serial_pl01x.o
-COBJS-$(CONFIG_XILINX_UARTLITE) += serial_xuartlite.o
-COBJS-$(CONFIG_SCIF_CONSOLE) += serial_sh.o
-COBJS-$(CONFIG_USB_TTY) += usbtty.o
-COBJS-$(CONFIG_VCTH_SERIAL) += vcth.o
-COBJS-$(CONFIG_STMP3XXX_DBGUART) += stmp3xxx_dbguart.o
+COBJS	:= stmp378x_dev.o
+SOBJS	:= lowlevel_init.o
 
-COBJS	:= $(sort $(COBJS-y))
-SRCS	:= $(COBJS:.o=.c)
+SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
+SOBJS	:= $(addprefix $(obj),$(SOBJS))
 
-all:	$(LIB)
+$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS) $(SOBJS)
 
-$(LIB):	$(obj).depend $(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+clean:
+	rm -f $(SOBJS) $(OBJS)
+
+distclean:	clean
+	rm -f $(LIB) core *.bak $(obj).depend
 
 #########################################################################
 
@@ -58,3 +49,4 @@ include $(SRCTREE)/rules.mk
 sinclude $(obj).depend
 
 #########################################################################
+
