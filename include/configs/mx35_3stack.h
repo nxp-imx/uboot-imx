@@ -36,10 +36,6 @@
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
-#define CONFIG_FLASH_HEADER     1
-#define CONFIG_FLASH_HEADER_OFFSET 0x400
-#define CONFIG_FLASH_HEADER_BARKER 0xB1
-
 #define BOARD_LATE_INIT
 /*
  * Disabled for now due to build problems under Debian and a significant increase
@@ -190,6 +186,13 @@
 
 #define CONFIG_MMC              1
 #define CONFIG_CMD_MMC
+
+#if defined(CONFIG_FSL_MMC)
+	#define CONFIG_FLASH_HEADER     1
+	#define CONFIG_FLASH_HEADER_OFFSET 0x400
+	#define CONFIG_FLASH_HEADER_BARKER 0xB1
+#endif
+
 #define CONFIG_DOS_PARTITION    1
 #define CONFIG_CMD_FAT          1
 #define CONFIG_MMC_BASE         0x0
