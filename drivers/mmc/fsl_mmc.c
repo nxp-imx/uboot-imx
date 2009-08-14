@@ -119,7 +119,7 @@ static u32 mmc_cmd(struct mmc_command *cmd, u32 opcode,
 	}
 
 	if (interface_send_cmd_wait_resp(&(pCmd->cmd))) {
-		debug("interface_send_cmd_wait_resp Failed!");
+		debug("interface_send_cmd_wait_resp Failed!\n");
 		return EPERM;
 	}
 
@@ -147,7 +147,7 @@ static u32 mmc_acmd(struct mmc_command *cmd, u32 opcode,
 	stAPCmd.cmd.cmdindex_check = ENABLE;
 
 	if (interface_send_cmd_wait_resp(&(stAPCmd.cmd))) {
-		debug("Send MMC_APP_CMD Failed! :(");
+		debug("Send MMC_APP_CMD Failed! :(\n");
 		return EPERM;
 	}
 
@@ -160,7 +160,7 @@ static u32 mmc_acmd(struct mmc_command *cmd, u32 opcode,
 	pCmd->cmd.cmdindex_check = cmd_check_en;
 
 	if (interface_send_cmd_wait_resp(&(pCmd->cmd))) {
-		debug("interface_send_cmd_wait_resp Failed!, :(");
+		debug("interface_send_cmd_wait_resp Failed!, :(\n");
 		return EPERM;
 	}
 
@@ -190,9 +190,9 @@ mmc_read(ulong src, uchar *dst, int size)
 	if (size == 0)
 		return 0;
 
-	debug("Entry: mmc_read");
+	debug("Entry: mmc_read\n");
 
-	debug("src:%08x	dst:%08x size:%d", src,	dst, size);
+	debug("src:%08x	dst:%08x size:%d\n", src,	dst, size);
 
 	memset(&stCmd, 0, sizeof(struct	mmc_command));
 
@@ -249,9 +249,9 @@ mmc_read(ulong src, uchar *dst, int size)
 		}
 	}
 
-	debug("mmc_read	succeed! :)");
+	debug("mmc_read	succeed! :)\n");
 
-	debug("Exit: mmc_read");
+	debug("Exit: mmc_read\n");
 
 	return s32ReadRslt;
 }
@@ -269,9 +269,9 @@ mmc_write(uchar *src, ulong dst, int size)
 	u32 *pu32Src = (u32 *)src;
 	u32 u32MultiBlkNum = 0;
 
-	debug("Entry: mmc_write");
+	debug("Entry: mmc_write\n");
 
-	debug("src:%08x	dst:%08x size:%d", src,	dst, size);
+	debug("src:%08x	dst:%08x size:%d\n", src,	dst, size);
 
 	if (!mmc_ready)	{
 		printf("Please initial the Card first\n");
@@ -309,7 +309,7 @@ mmc_write(uchar *src, ulong dst, int size)
 			ENABLE);
 
 	if (s32Rslt) {
-		debug("Send MMC_WRITE_BLOCK Failed! :(");
+		debug("Send MMC_WRITE_BLOCK Failed! :(\n");
 		return EPERM;
 	}
 
@@ -317,7 +317,7 @@ mmc_write(uchar *src, ulong dst, int size)
 					BLK_LEN * u32MultiBlkNum);
 
 	if (s32Rslt) {
-		debug("interface_data_read Failed! :(");
+		debug("interface_data_read Failed! :(\n");
 		return EPERM;
 	}
 
@@ -332,14 +332,14 @@ mmc_write(uchar *src, ulong dst, int size)
 				ENABLE);
 
 		if (s32Rslt) {
-			debug("Send MMC_STOP_TRANSMISSION Failed! :(");
+			debug("Send MMC_STOP_TRANSMISSION Failed! :(\n");
 			return EPERM;
 		}
 	}
 
-	debug("mmc_write succeed! :)");
+	debug("mmc_write succeed! :)\n");
 
-	debug("Exit: mmc_write");
+	debug("Exit: mmc_write\n");
 
 	return s32WriteRslt;
 }
@@ -410,7 +410,7 @@ static s32 mmc_set_blk_len(u32 len)
 	s32 s32Rslt = 0;
 	struct mmc_command stCmd;
 
-	debug("Entry: mmc_set_blk_len");
+	debug("Entry: mmc_set_blk_len\n");
 
 	memset(&stCmd, 0, sizeof(struct mmc_command));
 
@@ -424,11 +424,11 @@ static s32 mmc_set_blk_len(u32 len)
 			ENABLE);
 
 	if (s32Rslt) {
-		debug("Send MMC_SET_BLOCKLEN Failed! :(");
+		debug("Send MMC_SET_BLOCKLEN Failed! :(\n");
 		return EPERM;
 	}
 
-	debug("Exit: mmc_set_blk_len");
+	debug("Exit: mmc_set_blk_len\n");
 
 	return s32Rslt;
 }
@@ -440,10 +440,10 @@ static s32 mmc_decode_cid(struct mmc_card *card)
 {
 	u32 *resp = card->raw_cid;
 
-	debug("Entry: mmc_decode_cid");
+	debug("Entry: mmc_decode_cid\n");
 
 	if (!card) {
-		debug("NULL card pointer!");
+		debug("NULL card pointer!\n");
 		return EPERM;
 	}
 
@@ -451,7 +451,7 @@ static s32 mmc_decode_cid(struct mmc_card *card)
 
 	switch (card->type) {
 	case MMC_TYPE_MMC:
-		debug("MMC Card!");
+		debug("MMC Card!\n");
 		/*
 		* The selection	of the format here is based upon published
 		* specs	from sandisk and from what people have reported.
@@ -547,7 +547,7 @@ static s32 mmc_decode_cid(struct mmc_card *card)
 		break;
 
 	case MMC_TYPE_SD:
-		debug("SD Card!");
+		debug("SD Card!\n");
 		card->cid.manfid	= UNSTUFF_BITS(resp, 120, 8);
 		card->cid.oemid.sd_id[0] = UNSTUFF_BITS(resp, 112, 8);
 		card->cid.oemid.sd_id[1] = UNSTUFF_BITS(resp, 104, 8);
@@ -582,7 +582,7 @@ static s32 mmc_decode_cid(struct mmc_card *card)
 		break;
 
 	default:
-		printf("unknown card type!");
+		printf("unknown card type!\n");
 		return EPERM;
 	}
 
@@ -590,7 +590,7 @@ static s32 mmc_decode_cid(struct mmc_card *card)
 	       (IF_TYPE_SD == mmc_dev.if_type) ? "SD" : "MMC", mmc_dev.vendor,
 	       mmc_dev.product, mmc_dev.revision);
 
-	debug("Exit: mmc_decode_cid");
+	debug("Exit: mmc_decode_cid\n");
 
 	return 0;
 }
@@ -604,10 +604,10 @@ static s32 mmc_decode_csd(struct mmc_card *card)
 	u32 e, m, csd_struct;
 	u32 *resp = card->raw_csd;
 
-	debug("Entry: mmc_decode_csd");
+	debug("Entry: mmc_decode_csd\n");
 
 	if (!card) {
-		debug("NULL card pointer!");
+		debug("NULL card pointer!\n");
 		return EPERM;
 	}
 
@@ -749,11 +749,11 @@ static s32 mmc_decode_csd(struct mmc_card *card)
 		break;
 
 	default:
-		printf("unknown	card type!");
+		printf("unknown	card type!\n");
 		return EPERM;
 		}
 
-	debug("Exit: mmc_decode_csd");
+	debug("Exit: mmc_decode_csd\n");
 
 	return 0;
 }
@@ -777,7 +777,7 @@ static s32 sd_voltage_validation(void)
 		SD_OCR_VALUE_LV_HC,
 		SD_OCR_VALUE_HV_LC };
 
-	debug("Entry: sd_voltage_validation");
+	debug("Entry: sd_voltage_validation\n");
 
 	memset(&stCmd, 0, sizeof(struct	mmc_command));
 
@@ -805,7 +805,7 @@ static s32 sd_voltage_validation(void)
 	}
 
 	if (s32Rslt) {
-		debug("Card is of SD-1.x spec with LC");
+		debug("Card is of SD-1.x spec with LC\n");
 		u32OcrVal = SD_OCR_VALUE_HV_LC;
 	}
 
@@ -823,7 +823,7 @@ static s32 sd_voltage_validation(void)
 
 		/* Issue ACMD41	to SD Memory card to determine OCR value */
 		if (s32Rslt == EPERM) {
-			debug("Send SD_APP_OP_COND Failed! :(");
+			debug("Send SD_APP_OP_COND Failed! :(\n");
 			break;
 		}
 
@@ -843,7 +843,7 @@ static s32 sd_voltage_validation(void)
 		break;
 	}
 
-	debug("Exit: sd_voltage_validation");
+	debug("Exit: sd_voltage_validation\n");
 
 	return u32VoltageValidation;
 }
@@ -859,7 +859,7 @@ static s32 mmc_voltage_validation(void)
 	s32 s32Rslt = EPERM;
 	s32 s32Retries = 0;
 
-	debug("Entry: mmc_voltage_validation");
+	debug("Entry: mmc_voltage_validation\n");
 
 	for (s32Retries = RETRY_TIMEOUT; s32Retries; --s32Retries) {
 		s32Rslt	= mmc_cmd(&stCmd,
@@ -873,7 +873,7 @@ static s32 mmc_voltage_validation(void)
 
 		/* Issue CMD55 to SD Memory card*/
 		if (s32Rslt == EPERM) {
-			debug("Send MMC_SEND_OP_COND Failed! :(");
+			debug("Send MMC_SEND_OP_COND Failed! :(\n");
 			break;
 		}
 
@@ -883,7 +883,7 @@ static s32 mmc_voltage_validation(void)
 
 		/* Check if card busy bit is cleared or not */
 		if (!(u32Respones & MMC_CARD_BUSY)) {
-			debug("Card Busy!");
+			debug("Card Busy!\n");
 			continue;
 		}
 
@@ -891,17 +891,17 @@ static s32 mmc_voltage_validation(void)
 
 		/* Check if volatge lies in range or not*/
 		if (0x40000000 == (u32Respones & 0x60000000)) {
-			debug("Address_mode: SECT_MODE");
+			debug("Address_mode: SECT_MODE\n");
 			g_Card_Address_Mode = CARD_SUPPORT_SECT_MODE;
 		} else {
-			debug("Address_mode: BYTE_MODE");
+			debug("Address_mode: BYTE_MODE\n");
 			g_Card_Address_Mode = CARD_SUPPORT_BYTE_MODE;
 		}
 	}
 
-	debug("mmc_voltage_validation succeed! :)");
+	debug("mmc_voltage_validation succeed! :)\n");
 
-	debug("Exit: mmc_voltage_validation");
+	debug("Exit: mmc_voltage_validation\n");
 
 	return u32VoltageValidation;
 }
@@ -911,10 +911,10 @@ static s32 mmc_send_cid(struct mmc_card *card)
 	struct mmc_command stCmd;
 	s32 s32Rslt = EPERM;
 
-	debug("Entry: mmc_send_cid");
+	debug("Entry: mmc_send_cid\n");
 
 	if (!card) {
-		debug("NULL card pointer!");
+		debug("NULL card pointer!\n");
 		return EPERM;
 	}
 
@@ -931,7 +931,7 @@ static s32 mmc_send_cid(struct mmc_card *card)
 
 	/* Issue CMD55 to SD Memory card*/
 	if (s32Rslt) {
-		debug("Send MMC_ALL_SEND_CID Failed! :(");
+		debug("Send MMC_ALL_SEND_CID Failed! :(\n");
 		return EPERM;
 	}
 
@@ -950,9 +950,9 @@ static s32 mmc_send_cid(struct mmc_card *card)
 				(stCmd.resp.cmd_rsp0 >> 24);
 	card->raw_cid[3] = stCmd.resp.cmd_rsp0 << 8;
 
-	debug("mmc_send_cid succeed! :)");
+	debug("mmc_send_cid succeed! :)\n");
 
-	debug("Exit: mmc_send_cid");
+	debug("Exit: mmc_send_cid\n");
 
 	return 0;
 }
@@ -962,10 +962,10 @@ static s32 mmc_send_csd(struct mmc_card *card, u32 u32CardRCA)
 	struct mmc_command stCmd;
 	s32 s32Rslt = EPERM;
 
-	debug("Entry: mmc_send_csd");
+	debug("Entry: mmc_send_csd\n");
 
 	if (!card) {
-		debug("NULL card pointer!");
+		debug("NULL card pointer!\n");
 		return s32Rslt;
 	}
 
@@ -982,7 +982,7 @@ static s32 mmc_send_csd(struct mmc_card *card, u32 u32CardRCA)
 
 	 /* Issue CMD55 to SD Memory card*/
 	 if (s32Rslt) {
-		debug("Send MMC_SEND_CSD Failed! :(");
+		debug("Send MMC_SEND_CSD Failed! :(\n");
 		return EPERM;
 	 }
 
@@ -1001,9 +1001,9 @@ static s32 mmc_send_csd(struct mmc_card *card, u32 u32CardRCA)
 				(stCmd.resp.cmd_rsp0 >> 24);
 	card->raw_csd[3] = stCmd.resp.cmd_rsp0 << 8;
 
-	debug("mmc_send_csd succeed! :)");
+	debug("mmc_send_csd succeed! :)\n");
 
-	debug("Exit: mmc_send_csd");
+	debug("Exit: mmc_send_csd\n");
 
 	return 0;
 }
@@ -1014,7 +1014,7 @@ static s32 mmc_select_card(u32 card_rca)
 	s32 s32Rslt = EPERM;
 	u32 u32CardAddr = card_rca << 16;
 
-	debug("Entry: mmcsd_set_data_transfer_mode");
+	debug("Entry: mmcsd_set_data_transfer_mode\n");
 
 	memset(&stCmd, 0, sizeof(struct	mmc_command));
 
@@ -1027,11 +1027,11 @@ static s32 mmc_select_card(u32 card_rca)
 			ENABLE,
 			ENABLE);
 	if (s32Rslt) {
-		debug("Send MMC_SELECT_CARD Failed! :(");
+		debug("Send MMC_SELECT_CARD Failed! :(\n");
 		return EPERM;
 	}
 
-	debug("Exit mmcsd_set_data_transfer_mode");
+	debug("Exit mmcsd_set_data_transfer_mode\n");
 
 	return mmcsd_check_status(card_rca, 96, TRAN, R1_ERROR);
 }
@@ -1045,7 +1045,7 @@ static s32 mmcsd_check_status(u32 card_rca, u32 timeout, \
 	u32 u32CardAddr	= card_rca << 16;
 	s32 s32Status =	1;
 
-	debug("Entry: mmcsd_check_status");
+	debug("Entry: mmcsd_check_status\n");
 
 	memset(&stCmd, 0, sizeof(struct	mmc_command));
 
@@ -1062,23 +1062,23 @@ static s32 mmcsd_check_status(u32 card_rca, u32 timeout, \
 			ENABLE,
 			ENABLE);
 		if (s32Rslt) {
-			debug("Send MMC_SEND_STATUS Failed!	:(");
+			debug("Send MMC_SEND_STATUS Failed!	:(\n");
 			break;
 		}
 
 		if (stCmd.resp.cmd_rsp0 & status_bit) {
-			debug("R1 Error! :(");
+			debug("R1 Error! :(\n");
 			break;
 		}
 
 		if (R1_CURRENT_STATE(stCmd.resp.cmd_rsp0) == card_state) {
-			debug("Get state! :)");
+			debug("Get state! :)\n");
 			s32Status = 0;
 			break;
 		}
 	}
 
-	debug("Exit: mmcsd_check_status");
+	debug("Exit: mmcsd_check_status\n");
 
 	return s32Status;
 }
@@ -1089,7 +1089,7 @@ static s32 mmc_send_relative_addr(u32 *u32CardRCA)
 	s32 s32Status = 1;
 	s32	s32Rslt	= EPERM;
 
-	debug("Entry: mmc_send_relative_addr");
+	debug("Entry: mmc_send_relative_addr\n");
 
 	memset(&stCmd, 0, sizeof(struct	mmc_command));
 
@@ -1102,18 +1102,18 @@ static s32 mmc_send_relative_addr(u32 *u32CardRCA)
 			ENABLE,
 			ENABLE);
 	if (s32Rslt) {
-		debug("Send SD_SEND_RELATIVE_ADDR Failed! :(");
+		debug("Send SD_SEND_RELATIVE_ADDR Failed! :(\n");
 		return s32Status;
 	}
 
 	*u32CardRCA = (u32)stCmd.resp.cmd_rsp0 >> 16;
 
 	if (R1_CURRENT_STATE(stCmd.resp.cmd_rsp0) != IDENT) {
-		debug("Invalid R1 State! :(");
+		debug("Invalid R1 State! :(\n");
 		return s32Status;
 	}
 
-	debug("Exit: mmc_send_relative_addr");
+	debug("Exit: mmc_send_relative_addr\n");
 
 	return 0;
 }
@@ -1123,7 +1123,7 @@ static s32 mmc_set_relative_addr(u32 u32CardRCA)
 	struct mmc_command stCmd;
 	s32	s32Rslt	= EPERM;
 
-	debug("Entry: mmc_set_relative_addr");
+	debug("Entry: mmc_set_relative_addr\n");
 
 	memset(&stCmd, 0, sizeof(struct	mmc_command));
 
@@ -1137,16 +1137,16 @@ static s32 mmc_set_relative_addr(u32 u32CardRCA)
 			ENABLE,
 			ENABLE);
 	if (s32Rslt) {
-		debug("Send MMC_SET_RELATIVE_ADDR Failed! :(");
+		debug("Send MMC_SET_RELATIVE_ADDR Failed! :(\n");
 		return 1;
 	}
 
 	if (R1_CURRENT_STATE(stCmd.resp.cmd_rsp0) != IDENT) {
-		debug("Invalid R1 State! :(");
+		debug("Invalid R1 State! :(\n");
 		return 1;
 	}
 
-	debug("Exit: mmc_set_relative_addr");
+	debug("Exit: mmc_set_relative_addr\n");
 
 	return 0;
 }
@@ -1156,10 +1156,10 @@ static s32 mmc_send_scr(struct mmc_card *card)
 	struct mmc_command stCmd;
 	s32 s32Rslt = EPERM;
 
-	debug("Entry: mmc_app_send_scr");
+	debug("Entry: mmc_app_send_scr\n");
 
 	if (!card) {
-		debug("NULL card pointer!");
+		debug("NULL card pointer!\n");
 		return s32Rslt;
 	}
 
@@ -1176,7 +1176,7 @@ static s32 mmc_send_scr(struct mmc_card *card)
 
 	 /* Issue CMD55 to SD Memory card*/
 	 if (s32Rslt) {
-		debug("Send SD_APP_SEND_SCR Failed! :(");
+		debug("Send SD_APP_SEND_SCR Failed! :(\n");
 		return EPERM;
 	 }
 
@@ -1185,9 +1185,9 @@ static s32 mmc_send_scr(struct mmc_card *card)
 
 	mmc_decode_scr(card);
 
-	debug("mmc_send_scr succeed! :)");
+	debug("mmc_send_scr succeed! :)\n");
 
-	debug("Exit: mmc_app_send_scr");
+	debug("Exit: mmc_app_send_scr\n");
 
 	return 0;
 }
@@ -1250,10 +1250,10 @@ static s32 mmc_sd_switch(struct mmc_card *card, s32 mode, s32 group,
 	s32 s32Rslt = EPERM;
 	u32 u32Args = 0;
 
-	debug("Entry: mmc_sd_switch");
+	debug("Entry: mmc_sd_switch\n");
 
 	if (!card) {
-		debug("NULL card pointer!");
+		debug("NULL card pointer!\n");
 		return s32Rslt;
 	}
 
@@ -1274,7 +1274,7 @@ static s32 mmc_sd_switch(struct mmc_card *card, s32 mode, s32 group,
 
 	 /* Issue CMD55 to SD Memory card*/
 	 if (s32Rslt) {
-		debug("Send SD_SWITCH Failed! :(");
+		debug("Send SD_SWITCH Failed! :(\n");
 		return EPERM;
 	 }
 
@@ -1286,7 +1286,7 @@ static s32 mmc_app_set_bus_width(s32 width)
 	struct mmc_command stCmd;
 	s32 s32Rslt = EPERM;
 
-	debug("Entry: mmc_app_set_bus_width");
+	debug("Entry: mmc_app_set_bus_width\n");
 
 	memset(&stCmd, 0, sizeof(struct	mmc_command));
 
@@ -1300,11 +1300,11 @@ static s32 mmc_app_set_bus_width(s32 width)
 			ENABLE);
 
 	if (s32Rslt) {
-		debug("Send SD_APP_SET_BUS_WIDTH Failed! :(");
+		debug("Send SD_APP_SET_BUS_WIDTH Failed! :(\n");
 		return EPERM;
 	 }
 
-	debug("Exit: mmc_app_set_bus_width");
+	debug("Exit: mmc_app_set_bus_width\n");
 
 	return 0;
 }
@@ -1315,10 +1315,10 @@ static s32 mmc_switch(struct mmc_card *card, u8 set, u8 index, u8 value)
 	s32 s32Rslt = EPERM;
 	u32 u32Args = 0;
 
-	debug("Entry: mmc_sd_switch");
+	debug("Entry: mmc_sd_switch\n");
 
 	if (!card) {
-		debug("NULL card pointer!");
+		debug("NULL card pointer!\n");
 		return s32Rslt;
 	}
 
@@ -1338,11 +1338,11 @@ static s32 mmc_switch(struct mmc_card *card, u8 set, u8 index, u8 value)
 
 	/* Issue CMD55 to SD Memory card*/
 	if (s32Rslt) {
-		debug("Send SD_SWITCH Failed! :(");
+		debug("Send SD_SWITCH Failed! :(\n");
 		return EPERM;
 	}
 
-	debug("Entry: mmc_sd_switch");
+	debug("Entry: mmc_sd_switch\n");
 
 	return 0;
 }
@@ -1353,17 +1353,17 @@ static s32 mmc_init_sd(struct mmc_card *card)
 	u32 u32CardRCA = 0;
 
 	if (mmc_send_cid(card)) {
-		debug("mmcsd_get_cid Failed! :(");
+		debug("mmcsd_get_cid Failed! :(\n");
 		return 1;
 	}
 
 	if (mmc_send_relative_addr(&u32CardRCA)) {
-		debug("sd_send_relative_addr Failed! :(");
+		debug("sd_send_relative_addr Failed! :(\n");
 		return 1;
 	}
 
 	if (mmc_send_csd(card, u32CardRCA)) {
-		debug("mmcsd_get_csd Failed! :(");
+		debug("mmcsd_get_csd Failed! :(\n");
 		return 1;
 	}
 
@@ -1376,7 +1376,7 @@ static s32 mmc_init_sd(struct mmc_card *card)
 	interface_configure_clock(OPERATING_FREQ);
 
 	if (mmc_select_card(u32CardRCA)) {
-		debug("mmc_select_card Failed! :(");
+		debug("mmc_select_card Failed! :(\n");
 		return 1;
 	}
 
@@ -1386,13 +1386,13 @@ static s32 mmc_init_sd(struct mmc_card *card)
 	}
 
 	if (mmc_set_blk_len(BLK_LEN)) {
-		debug("mmc_set_blk_len Failed! :(");
+		debug("mmc_set_blk_len Failed! :(\n");
 		return EPERM;
 	}
 
 	/*
 	if (mmc_send_scr(card)) {
-		debug("mmc_send_scr Failed! :(");
+		debug("mmc_send_scr Failed! :(\n");
 		return 1;
 	}
 	*/
@@ -1400,7 +1400,7 @@ static s32 mmc_init_sd(struct mmc_card *card)
 	if (mmc_app_set_bus_width(SD_BUS_WIDTH_4)) {
 		/* Try to set 1 bit mode */
 		if (mmc_app_set_bus_width(SD_BUS_WIDTH_1)) {
-			debug("mmc_app_set_bus_width Failed");
+			debug("mmc_app_set_bus_width Failed\n");
 			return EPERM;
 		}
 		interface_set_bus_width(SD_BUS_WIDTH_1);
@@ -1417,18 +1417,18 @@ static s32 mmc_init_mmc(struct mmc_card *card)
 
 	/* mmc init */
 	if (mmc_send_cid(card)) {
-		debug("mmcsd_get_cid Failed! :(");
+		debug("mmcsd_get_cid Failed! :(\n");
 		return 1;
 	}
 
 	/* Set RCA */
 	if (mmc_set_relative_addr(u32CardRCA)) {
-		debug("mmc_set_relative_addr Failed! :(");
+		debug("mmc_set_relative_addr Failed! :(\n");
 		return 1;
 	}
 
 	if (mmc_send_csd(card, u32CardRCA)) {
-		debug("mmcsd_get_csd Failed! :(");
+		debug("mmcsd_get_csd Failed! :(\n");
 		return 1;
 	}
 
@@ -1441,7 +1441,7 @@ static s32 mmc_init_mmc(struct mmc_card *card)
 	interface_configure_clock(OPERATING_FREQ);
 
 	if (mmc_select_card(u32CardRCA)) {
-		debug("mmc_select_card Failed! :(");
+		debug("mmc_select_card Failed! :(\n");
 		return 1;
 	}
 
@@ -1451,7 +1451,7 @@ static s32 mmc_init_mmc(struct mmc_card *card)
 	}
 
 	if (mmc_set_blk_len(BLK_LEN)) {
-		debug("mmc_set_blk_len Failed! :(");
+		debug("mmc_set_blk_len Failed! :(\n");
 		return 1;
 	}
 
@@ -1477,7 +1477,7 @@ mmc_init(int verbose)
 	struct mmc_card	card;
 	s32	s32Rslt	= EPERM;
 
-	debug("Entry: mmc_init");
+	debug("Entry: mmc_init\n");
 
 	memset(&stCmd, 0, sizeof(struct	mmc_command));
 	memset(&card, 0, sizeof(struct mmc_card));
@@ -1492,7 +1492,7 @@ mmc_init(int verbose)
 
 	/* Software reset to Interface Controller */
 	if (interface_reset()) {
-		debug("interface_reset failed! :(");
+		debug("interface_reset failed! :(\n");
 		return s32InitStatus;
 	}
 
@@ -1510,24 +1510,24 @@ mmc_init(int verbose)
 			DISABLE);
 
 	if (!sd_voltage_validation()) {
-		debug("SD Card Detected!");
+		debug("SD Card Detected!\n");
 		card.type = MMC_TYPE_SD;
 
 		/* SD init */
 		if (mmc_init_sd(&card)) {
-			debug("mmc_init_sd Failed! :(");
+			debug("mmc_init_sd Failed! :(\n");
 			return s32InitStatus;
 		}
 
 		s32InitStatus = 0;
 		mmc_ready = 1;
 	} else if (!mmc_voltage_validation()) {
-		debug("MMC Card	Detected!");
+		debug("MMC Card	Detected!\n");
 		card.type = MMC_TYPE_MMC;
 
 		/* mmc init	*/
 		if (mmc_init_mmc(&card)) {
-			debug("mmc_init_mmc Failed! :(");
+			debug("mmc_init_mmc Failed! :(\n");
 			return s32InitStatus;
 		}
 
@@ -1540,7 +1540,7 @@ mmc_init(int verbose)
 
 	fat_register_device(&mmc_dev, 1); /* partitions start counting with 1 */
 
-	debug("Exit: mmc_init");
+	debug("Exit: mmc_init\n");
 
 	return s32InitStatus;
 }
@@ -1552,15 +1552,17 @@ int mmc_ident(block_dev_desc_t *dev)
 
 int mmc2info(ulong addr)
 {
-	/* Not avaiable for cp command now. */
-	return 0;
+	u32 u32BaseAddr = 0;
+
+#if defined(CONFIG_MMC_BASE)
+	u32BaseAddr = CONFIG_MMC_BASE;
+#endif
 
 	if (addr >= CONFIG_MMC_BASE
 	    && addr < CONFIG_MMC_BASE + (mmc_dev.lba * mmc_dev.blksz)) {
 		return 1;
 	}
 	return 0;
-
 }
 
 #endif /* CONFIG_MMC */
