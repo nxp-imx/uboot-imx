@@ -178,6 +178,21 @@
 #define PHYS_SDRAM_1		CSD0_BASE_ADDR
 #define PHYS_SDRAM_1_SIZE	(128 * 1024 * 1024)
 
+/*
+ * MMC Configs
+ * */
+#define CONFIG_FSL_MMC
+#define CONFIG_MMC              1
+#define CONFIG_CMD_MMC
+
+#define CONFIG_FLASH_HEADER     1
+#define CONFIG_FLASH_HEADER_OFFSET 0x400
+#define CONFIG_FLASH_HEADER_BARKER 0xB1
+
+#define CONFIG_DOS_PARTITION    1
+#define CONFIG_CMD_FAT          1
+#define CONFIG_MMC_BASE         0x0
+
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
@@ -203,17 +218,14 @@
  */
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE + CONFIG_ENV_SECT_SIZE)
 
-#if defined(CONFIG_CMD_NAND)
-	#define CONFIG_FSL_ENV_IN_NAND
-#else
-	#define CONFIG_ENV_IS_IN_FLASH  1
-#endif
-
-#if defined(CONFIG_FSL_ENV_IN_NAND)
+#if defined(CONFIG_CMD_MMC)
+	#define CONFIG_ENV_IS_IN_MMC    1
+	#define CONFIG_ENV_OFFSET       (768 * 1024)
+#elif defined(CONFIG_CMD_NAND)
 	#define CONFIG_ENV_IS_IN_NAND 1
 	#define CONFIG_ENV_OFFSET       0x100000
-#elif defined(CONFIG_FSL_ENV_IS_IN_FLASH)
-	#define CONFIG_ENV_IS_IN_FLASH	1
+#else
+	#define CONFIG_ENV_IS_IN_FLASH  1
 #endif
 
 /*-----------------------------------------------------------------------
