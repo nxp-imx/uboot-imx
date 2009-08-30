@@ -2977,9 +2977,11 @@ mx35_3stack_config      \
 mx35_3stack_mmc_config: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1136 mx35_3stack freescale mx35
 
+imx51_android_config	\
 imx51_config		: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 imx51 freescale mx51
 
+mx51_3stack_android_config	\
 mx51_3stack_config	: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx51_3stack freescale mx51
 

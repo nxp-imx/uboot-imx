@@ -3,7 +3,7 @@
  *
  * (C) Copyright 2009 Freescale Semiconductor, Inc.
  *
- * Configuration settings for the MX31ADS Freescale board.
+ * Configuration settings for the MX51-3Stack Freescale board.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -32,7 +32,7 @@
 #define CONFIG_L2_OFF
 
 #define CONFIG_MXC		1
-#define CONFIG_MX51		1	/* in a mx51 */
+#define CONFIG_MX51_3DS		1	/* in a mx51 */
 #define CONFIG_FLASH_HEADER	1
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_FLASH_HEADER_BARKER 0xB1
@@ -67,6 +67,23 @@
  */
 #define CONFIG_MX51_UART	1
 #define CONFIG_MX51_UART1	1
+
+
+/*
+ * MMC Configs
+ * */
+#define CONFIG_FSL_MMC		1
+
+#define CONFIG_MMC              1
+#define CONFIG_CMD_MMC
+#define CONFIG_DOS_PARTITION	1
+#define CONFIG_CMD_FAT		1
+#define CONFIG_MMC_BASE         0x0
+
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_NET
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
@@ -179,10 +196,18 @@
 #define CONFIG_SYS_NAND_BASE          0x40000000
 
 /* Monitor at beginning of flash */
-#define CONFIG_ENV_IS_IN_NAND 1
-#define CONFIG_ENV_SECT_SIZE	(1024 * 1024)
+#define CONFIG_FSL_ENV_IN_NAND
+#define CONFIG_ENV_SECT_SIZE    (128 * 1024)
 #define CONFIG_ENV_SIZE		CONFIG_ENV_SECT_SIZE
-#define CONFIG_ENV_OFFSET		0x100000
+#if defined(CONFIG_FSL_ENV_IN_NAND)
+	#define CONFIG_ENV_IS_IN_NAND 1
+	#define CONFIG_ENV_OFFSET	0x100000
+#elif defined(CONFIG_FSL_ENV_IN_MMC)
+	#define CONFIG_ENV_IS_IN_MMC	1
+	#define CONFIG_ENV_OFFSET	(768 * 1024)
+#else
+	#define CONFIG_ENV_IS_NOWHERE	1
+#endif
 /*
  * JFFS2 partitions
  */

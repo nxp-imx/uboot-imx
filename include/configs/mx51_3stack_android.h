@@ -25,6 +25,7 @@
 #define __CONFIG_H
 
 #include <asm/arch/mx51.h>
+#include <asm/arch/keypad.h>
 
  /* High Level Configuration Options */
 #define CONFIG_ARMV7		1	/* This is armv7 Cortex-A8 CPU core */
@@ -32,7 +33,7 @@
 #define CONFIG_L2_OFF
 
 #define CONFIG_MXC		1
-#define CONFIG_MX51_BBG		1	/* in a mx51 */
+#define CONFIG_MX51_3DS		1	/* in a mx51 */
 #define CONFIG_FLASH_HEADER	1
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_FLASH_HEADER_BARKER 0xB1
@@ -112,6 +113,28 @@
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
 
+/*
+ * Android support Configs
+ */
+#include <asm/arch/keypad.h>
+
+#define CONFIG_FSL_ANDROID
+
+#define CONFIG_MXC_KPD
+#define CONFIG_MXC_KEYMAPPING \
+	{	\
+		KEY_1, KEY_2, KEY_3, KEY_F1, KEY_UP, KEY_F2, \
+		KEY_4, KEY_5, KEY_6, KEY_LEFT, KEY_SELECT, KEY_RIGHT, \
+		KEY_7, KEY_8, KEY_9, KEY_F3, KEY_DOWN, KEY_F4, \
+		KEY_0, KEY_OK, KEY_ESC, KEY_ENTER, KEY_MENU, KEY_BACK, \
+	}
+#define CONFIG_MXC_KPD_COLMAX 6
+#define CONFIG_MXC_KPD_ROWMAX 4
+#define CONFIG_ANDROID_NORMAL_BOOTARGS "ip=dhcp mem=480M init=/init wvga calibration"
+#define CONFIG_ANDROID_RECOVERY_BOOTARGS "setenv bootargs ${bootargs} root=/dev/mmcblk0p4 ip=dhcp init=/init rootfstype=ext3 wvga"
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD  "run bootargs_base bootargs_android;mmcinit;cp.b 0x100000 ${loadaddr} 0x250000;bootm"
+#define CONFIG_ANDROID_BOOTMOD_DELAY 3
+
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX		1
@@ -127,8 +150,8 @@
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
 /* Enable below configure when supporting nand */
-/* #define CONFIG_CMD_NAND */
-/* #define CONFIG_CMD_ENV */
+#define CONFIG_CMD_NAND
+#define CONFIG_CMD_ENV
 
 #undef CONFIG_CMD_IMLS
 
@@ -137,20 +160,27 @@
 #define CONFIG_PRIME	"FEC0"
 
 #define CONFIG_LOADADDR		0x90800000	/* loadaddr env var */
+#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
-		"ethprime=FEC0\0"					\
+		"ethprime=smc911x\0"					\
 		"uboot_addr=0xa0000000\0"				\
 		"uboot=u-boot.bin\0"			\
 		"kernel=uImage\0"				\
+		"rd_loadaddr=0x90B00000\0"
 		"nfsroot=/opt/eldk/arm\0"				\
 		"bootargs_base=setenv bootargs console=ttymxc0,115200\0"\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
 			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
-		"bootcmd=run bootcmd_net\0"				\
+		"bootargs_android=setenv bootargs ${bootargs} ip=dhcp mem=480M init=/init wvga calibration\0"	\
+		"bootcmd=run bootcmd_android\0"				\
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
+		"bootcmd_android=run bootargs_base bootargs_android; "	\
+			"mmcinit;cp.b 0x100000 ${loadaddr} 0x250000; "	\
+			"cp.b 0x400000 ${rd_loadaddr} 0x4B000; "	\
+			"bootm ${loadaddr} ${rd_loadaddr}\0"		\
 		"prg_uboot=tftpboot ${loadaddr} ${uboot}; "		\
 			"protect off ${uboot_addr} 0xa003ffff; "	\
 			"erase ${uboot_addr} 0xa003ffff; "		\
@@ -158,11 +188,9 @@
 			"setenv filesize; saveenv\0"
 
 /*Support LAN9217*/
-/*
 #define CONFIG_DRIVER_SMC911X	1
 #define CONFIG_DRIVER_SMC911X_16_BIT 1
 #define CONFIG_DRIVER_SMC911X_BASE_VARIABLE mx51_io_base_addr
-*/
 
 /*
  * The MX51 3stack board seems to have a hardware "peculiarity" confirmed under
@@ -180,7 +208,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_PROMPT		"BBG U-Boot > "
+#define CONFIG_SYS_PROMPT		"MX51 U-Boot > "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */

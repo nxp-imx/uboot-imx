@@ -30,6 +30,7 @@ ifdef CONFIG_PS2KBD
 COBJS-y += keyboard.o pc_keyb.o
 COBJS-$(CONFIG_PS2MULT) += ps2mult.o ps2ser.o
 endif
+COBJS-${CONFIG_MXC_KPD} += mxc_keyb.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

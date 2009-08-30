@@ -29,6 +29,8 @@
 #include <asm/arch/iomux.h>
 #include <asm/errno.h>
 #include <i2c.h>
+#include <mxc_keyb.h>
+#include <asm/arch/keypad.h>
 #include "board-imx51.h"
 #include <asm/arch/imx_spi.h>
 #include <asm/arch/imx_spi_pmic.h>
@@ -457,6 +459,24 @@ int sdhc_init(void)
 
 #endif
 
+#if defined(CONFIG_MXC_KPD)
+int setup_mxc_kpd()
+{
+	mxc_request_iomux(MX51_PIN_KEY_COL0, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_COL1, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_COL2, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_COL3, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_COL4, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_COL5, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_ROW0, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_ROW1, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_ROW2, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_ROW3, IOMUX_CONFIG_ALT0);
+
+	return 0;
+}
+#endif
+
 int board_init(void)
 {
 	setup_soc_rev();
@@ -474,7 +494,85 @@ int board_init(void)
 #ifdef BOARD_LATE_INIT
 int board_late_init(void)
 {
+#if defined(CONFIG_FSL_ANDROID) && defined(CONFIG_MXC_KPD)
+	struct kpp_key_info key_info = {0, 0};
+	int switch_delay = CONFIG_ANDROID_BOOTMOD_DELAY;
+	int state = 0, boot_mode_switch = 0;
+#endif
+
 	power_init();
+
+#if defined(CONFIG_FSL_ANDROID) && defined(CONFIG_MXC_KPD)
+	mxc_kpp_init();
+
+	puts("Press home + power to enter recovery mode ...\n");
+
+	while ((switch_delay > 0) && (!boot_mode_switch)) {
+		int i;
+
+		--switch_delay;
+		/* delay 100 * 10ms */
+		for (i = 0; !boot_mode_switch && i < 100; ++i) {
+			/* A state machine to scan home + power key */
+			/* Check for home + power */
+			if (mxc_kpp_getc(&key_info)) {
+				switch (state) {
+				case 0:
+					/* First press */
+					if (TEST_HOME_KEY_DEPRESS(key_info.val, key_info.evt)) {
+						/* Press Home */
+						state = 1;
+					} else if (TEST_POWER_KEY_DEPRESS(key_info.val, key_info.evt)) {
+						state = 2;
+					} else {
+						state = 0;
+					}
+					break;
+				case 1:
+					/* Home is already pressed, try to detect Power */
+					if (TEST_POWER_KEY_DEPRESS(key_info.val,
+						    key_info.evt)) {
+						boot_mode_switch = 1;
+					} else {
+					    if (TEST_HOME_KEY_DEPRESS(key_info.val,
+							key_info.evt))
+						state = 1;
+					    else
+						state = 0;
+					}
+					break;
+				case 2:
+					/* Power is already pressed, try to detect Home */
+					if (TEST_HOME_KEY_DEPRESS(key_info.val,
+						    key_info.evt)) {
+						boot_mode_switch = 1;
+					} else {
+						if (TEST_POWER_KEY_DEPRESS(key_info.val,
+							    key_info.evt))
+							state = 2;
+						else
+							state = 0;
+					}
+					break;
+				default:
+					break;
+				}
+
+				if (1 == boot_mode_switch) {
+					printf("Boot mode switched to recovery mode!\n");
+					/* Set env to recovery mode */
+					setenv("bootargs_android", CONFIG_ANDROID_RECOVERY_BOOTARGS);
+					setenv("bootcmd_android", CONFIG_ANDROID_RECOVERY_BOOTCMD);
+					setenv("bootcmd", "run bootcmd_android");
+					break;
+				}
+			}
+		}
+		for (i = 0; i < 100; ++i)
+			udelay(10000);
+	}
+#endif
+
 	return 0;
 }
 #endif

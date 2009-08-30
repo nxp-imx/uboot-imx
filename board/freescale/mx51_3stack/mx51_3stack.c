@@ -29,6 +29,8 @@
 #include <asm/arch/mx51_pins.h>
 #include <asm/arch/iomux.h>
 #include <i2c.h>
+#include <mxc_keyb.h>
+#include <asm/arch/keypad.h>
 #include "board-mx51_3stack.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -175,6 +177,84 @@ int board_init(void)
 #ifdef BOARD_LATE_INIT
 int board_late_init(void)
 {
+#if defined(CONFIG_FSL_ANDROID) && defined(CONFIG_MXC_KPD)
+	struct kpp_key_info key_info = {0, 0};
+	int switch_delay = CONFIG_ANDROID_BOOTMOD_DELAY;
+	int state = 0, boot_mode_switch = 0;
+#endif
+
+
+#if defined(CONFIG_FSL_ANDROID) && defined(CONFIG_MXC_KPD)
+	mxc_kpp_init();
+
+	puts("Press home + power to enter recovery mode ...\n");
+
+	while ((switch_delay > 0) && (!boot_mode_switch)) {
+		int i;
+
+		--switch_delay;
+		/* delay 100 * 10ms */
+		for (i = 0; !boot_mode_switch && i < 100; ++i) {
+			/* A state machine to scan home + power key */
+			/* Check for home + power */
+			if (mxc_kpp_getc(&key_info)) {
+				switch (state) {
+				case 0:
+					/* First press */
+					if (TEST_HOME_KEY_DEPRESS(key_info.val, key_info.evt)) {
+						/* Press Home */
+						state = 1;
+					} else if (TEST_POWER_KEY_DEPRESS(key_info.val, key_info.evt)) {
+						state = 2;
+					} else {
+						state = 0;
+					}
+					break;
+				case 1:
+					/* Home is already pressed, try to detect Power */
+					if (TEST_POWER_KEY_DEPRESS(key_info.val,
+						    key_info.evt)) {
+						boot_mode_switch = 1;
+					} else {
+					    if (TEST_HOME_KEY_DEPRESS(key_info.val,
+							key_info.evt))
+						state = 2;
+					    else
+						state = 0;
+					}
+					break;
+				case 2:
+					/* Power is already pressed, try to detect Home */
+					if (TEST_HOME_KEY_DEPRESS(key_info.val,
+						    key_info.evt)) {
+						boot_mode_switch = 1;
+					} else {
+						if (TEST_POWER_KEY_DEPRESS(key_info.val,
+							    key_info.evt))
+							state = 1;
+						else
+							state = 0;
+					}
+					break;
+				default:
+					break;
+				}
+
+				if (1 == boot_mode_switch) {
+					printf("Boot mode switched to recovery mode!\n");
+					/* Set env to recovery mode */
+					setenv("bootargs_android", CONFIG_ANDROID_RECOVERY_BOOTARGS);
+					setenv("bootcmd_android", CONFIG_ANDROID_RECOVERY_BOOTCMD);
+					setenv("bootcmd", "run bootcmd_android");
+					break;
+				}
+			}
+		}
+		for (i = 0; i < 100; ++i)
+			udelay(10000);
+	}
+#endif
+
 	return 0;
 }
 #endif
@@ -182,6 +262,15 @@ int board_late_init(void)
 int checkboard(void)
 {
 	printf("Board: MX51 3STACK [");
+
+	if (system_rev & CHIP_REV_2_0) {
+		printf("2.0 [");
+	} else if (system_rev & CHIP_REV_1_1) {
+		printf("1.1 [");
+	} else {
+		printf("1.0 [");
+	}
+
 	switch (__REG(SRC_BASE_ADDR + 0x8)) {
 	case 0x0001:
 		printf("POR");
@@ -216,7 +305,6 @@ int board_eth_init(bd_t *bis)
 int sdhc_init(void)
 {
 	u32 interface_esdhc = 0;
-	u32 pad_val = 0;
 	s32 status = 0;
 
 	interface_esdhc = (readl(SRC_BASE_ADDR + 0x4) & (0x00180000)) >> 19;
@@ -287,4 +375,22 @@ int sdhc_init(void)
 	return status = 1;
 }
 
+#endif
+
+#if defined(CONFIG_MXC_KPD)
+int setup_mxc_kpd()
+{
+	mxc_request_iomux(MX51_PIN_KEY_COL0, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_COL1, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_COL2, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_COL3, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_COL4, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_COL5, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_ROW0, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_ROW1, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_ROW2, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX51_PIN_KEY_ROW3, IOMUX_CONFIG_ALT0);
+
+	return 0;
+}
 #endif

@@ -547,7 +547,7 @@ static u16 mxc_do_status_auto(struct mtd_info *mtd)
 		 */
 		do {
 			raw_write(NFC_AUTO_STATE, REG_NFC_OPS);
-		#ifdef CONFIG_MX51
+		#if defined(CONFIG_MX51_3DS) || defined(CONFIG_MX51_BBG)
 			/* mx51to2 NFC need wait the op done */
 			if (is_soc_rev(CHIP_REV_2_0) == 0)
 				wait_op_done(TROP_US_DELAY);

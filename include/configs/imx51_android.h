@@ -112,6 +112,35 @@
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
 
+/*
+ * Android support Configs
+ */
+#include <asm/arch/keypad.h>
+
+#define CONFIG_FSL_ANDROID
+
+#define CONFIG_MXC_KPD
+#define CONFIG_MXC_KEYMAPPING \
+	{	\
+		KEY_1, KEY_2, KEY_3, KEY_F1, KEY_UP, KEY_F2, \
+		KEY_4, KEY_5, KEY_6, KEY_LEFT, KEY_SELECT, KEY_RIGHT, \
+		KEY_7, KEY_8, KEY_9, KEY_F3, KEY_DOWN, KEY_F4, \
+		KEY_0, KEY_OK, KEY_ESC, KEY_ENTER, KEY_MENU, KEY_BACK, \
+	}
+/*
+	{	\
+		KEY_3,         KEY_2,        KEY_0, KEY_OK, KEY_ESC, KEY_ENTER,
+		KEY_F1,	KEY_4, KEY_6, KEY_5,
+		KEY_LEFT,      KEY_1,        KEY_ , KEY_8,  KEY_9,   KEY_RIGHT,
+	}
+	*/
+#define CONFIG_MXC_KPD_COLMAX 4
+#define CONFIG_MXC_KPD_ROWMAX 4
+#define CONFIG_ANDROID_NORMAL_BOOTARGS "ip=dhcp mem=480M init=/init wvga calibration"
+#define CONFIG_ANDROID_RECOVERY_BOOTARGS "setenv bootargs ${bootargs} root=/dev/mmcblk0p4 ip=dhcp init=/init rootfstype=ext3 wvga"
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD  "run bootargs_base bootargs_android;mmcinit;cp.b 0x100000 ${loadaddr} 0x250000;bootm"
+#define CONFIG_ANDROID_BOOTMOD_DELAY 3
+
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX		1
@@ -128,7 +157,7 @@
 #define CONFIG_CMD_DHCP
 /* Enable below configure when supporting nand */
 /* #define CONFIG_CMD_NAND */
-/* #define CONFIG_CMD_ENV */
+#define CONFIG_CMD_ENV
 
 #undef CONFIG_CMD_IMLS
 
@@ -137,6 +166,7 @@
 #define CONFIG_PRIME	"FEC0"
 
 #define CONFIG_LOADADDR		0x90800000	/* loadaddr env var */
+#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
@@ -144,13 +174,19 @@
 		"uboot_addr=0xa0000000\0"				\
 		"uboot=u-boot.bin\0"			\
 		"kernel=uImage\0"				\
+		"rd_loadaddr=0x90B00000\0"	\
 		"nfsroot=/opt/eldk/arm\0"				\
 		"bootargs_base=setenv bootargs console=ttymxc0,115200\0"\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
 			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
-		"bootcmd=run bootcmd_net\0"				\
+		"bootargs_android=setenv bootargs ${bootargs} ip=dhcp mem=480M init=/init wvga calibration\0"	\
+		"bootcmd=run bootcmd_android\0"				\
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
+		"bootcmd_android=run bootargs_base bootargs_android; "	\
+			"mmcinit;cp.b 0x100000 ${loadaddr} 0x250000; "	\
+			"cp.b 0x400000 ${rd_loadaddr} 0x4B000; "	\
+			"bootm ${loadaddr} ${rd_loadaddr}\0"		\
 		"prg_uboot=tftpboot ${loadaddr} ${uboot}; "		\
 			"protect off ${uboot_addr} 0xa003ffff; "	\
 			"erase ${uboot_addr} 0xa003ffff; "		\
