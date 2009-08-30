@@ -211,7 +211,7 @@
 
 #if defined(CONFIG_FSL_ENV_IN_NAND)
 	#define CONFIG_ENV_IS_IN_NAND 1
-	#define CONFIG_ENV_OFFSET       0x100000
+	#define CONFIG_ENV_OFFSET       (768 * 1024)
 #elif defined(CONFIG_FSL_ENV_IS_IN_FLASH)
 	#define CONFIG_ENV_IS_IN_FLASH	1
 #endif
