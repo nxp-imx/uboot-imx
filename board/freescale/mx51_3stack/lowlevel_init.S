@@ -72,9 +72,18 @@
 	 * IPU accesses with ID=0x1 given highest priority (=0xA)
 	 */
 	ldr r0, =M4IF_BASE_ADDR
-	ldr r1, =0x00000a01
+
+	ldr r1, =0x00000203
+	str r1, [r0, #0x40]
+
+	ldr r1, =0x0
+	str r1, [r0, #0x44]
+
+	ldr r1, =0x00120125
+	str r1, [r0, #0x9C]
+
+	ldr r1, =0x001901A3
 	str r1, [r0, #0x48]
-	ldr r1, =0x00000404
 	str r1, [r0, #0x40]
 .endm /* init_m4if */
 
