@@ -40,8 +40,7 @@ COBJS-$(CONFIG_NAND_FSL_UPM) += fsl_upm.o
 COBJS-$(CONFIG_NAND_S3C64XX) += s3c64xx.o
 COBJS-$(CONFIG_MX25) += mxc_nand.o
 COBJS-$(CONFIG_MX31_NAND) += mx31_nand.o
-COBJS-$(CONFIG_MX35) += mxc_nand.o
-COBJS-$(CONFIG_MX51) += mxc_nand.o
+COBJS-$(CONFIG_MXC_NAND) += mxc_nand.o
 endif
 
 COBJS	:= $(COBJS-y)

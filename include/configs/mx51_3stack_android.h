@@ -25,7 +25,6 @@
 #define __CONFIG_H
 
 #include <asm/arch/mx51.h>
-#include <asm/arch/keypad.h>
 
  /* High Level Configuration Options */
 #define CONFIG_ARMV7		1	/* This is armv7 Cortex-A8 CPU core */
@@ -72,6 +71,7 @@
 /*
  * SPI Configs
  * */
+/*
 #define CONFIG_FSL_SF		1
 #define CONFIG_CMD_SPI
 #define CONFIG_CMD_SF
@@ -82,6 +82,7 @@
 #define CONFIG_IMX_SPI_PMIC_CS 0
 
 #define MAX_SPI_BYTES		(64 * 4)
+*/
 
 /*
  * MMC Configs
@@ -151,6 +152,7 @@
 #define CONFIG_CMD_DHCP
 /* Enable below configure when supporting nand */
 #define CONFIG_CMD_NAND
+#define CONFIG_MXC_NAND
 #define CONFIG_CMD_ENV
 
 #undef CONFIG_CMD_IMLS
@@ -168,7 +170,7 @@
 		"uboot_addr=0xa0000000\0"				\
 		"uboot=u-boot.bin\0"			\
 		"kernel=uImage\0"				\
-		"rd_loadaddr=0x90B00000\0"
+		"rd_loadaddr=0x90B00000\0"	\
 		"nfsroot=/opt/eldk/arm\0"				\
 		"bootargs_base=setenv bootargs console=ttymxc0,115200\0"\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\

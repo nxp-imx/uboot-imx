@@ -101,6 +101,7 @@
 #define CONFIG_CMD_DHCP
 /* Enable below configure when supporting nand */
 #define CONFIG_CMD_NAND
+#define CONFIG_MXC_NAND
 #define CONFIG_CMD_ENV
 #undef CONFIG_CMD_IMLS
 

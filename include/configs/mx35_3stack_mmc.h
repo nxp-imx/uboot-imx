@@ -85,7 +85,7 @@
 #define CONFIG_CMD_DHCP
 /*#define CONFIG_CMD_SPI*/
 /*#define CONFIG_CMD_DATE*/
-#define CONFIG_CMD_NAND
+/*#define CONFIG_CMD_NAND*/
 
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_MII
