@@ -36,6 +36,8 @@
 #include <asm/arch/mx31-regs.h>
 #elif defined(CONFIG_MX35)
 #include <asm/arch/mx35.h>
+#elif defined(CONFIG_MX51_3DS)
+#include <asm/arch/mx51.h>
 #else
 #error "Please include specific headfile "
 #endif
