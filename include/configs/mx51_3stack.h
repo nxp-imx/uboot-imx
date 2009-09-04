@@ -68,23 +68,6 @@
 #define CONFIG_MX51_UART	1
 #define CONFIG_MX51_UART1	1
 
-
-/*
- * MMC Configs
- * */
-#define CONFIG_FSL_MMC		1
-
-#define CONFIG_MMC              1
-#define CONFIG_CMD_MMC
-#define CONFIG_DOS_PARTITION	1
-#define CONFIG_CMD_FAT		1
-#define CONFIG_MMC_BASE         0x0
-
-#define CONFIG_CMD_PING
-#define CONFIG_CMD_DHCP
-#define CONFIG_CMD_MII
-#define CONFIG_CMD_NET
-
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX	1
@@ -100,10 +83,33 @@
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
 /* Enable below configure when supporting nand */
-#define CONFIG_CMD_NAND
+/* #define CONFIG_CMD_NAND */
 #define CONFIG_MXC_NAND
 #define CONFIG_CMD_ENV
 #undef CONFIG_CMD_IMLS
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_NET
+
+/*
+ * MMC Configs
+ */
+#define CONFIG_FSL_MMC          1
+
+#define CONFIG_MMC              1
+#define CONFIG_CMD_MMC
+#define CONFIG_DOS_PARTITION    1
+#define CONFIG_CMD_FAT          1
+#define CONFIG_MMC_BASE         0x0
+
+/*
+ * I2C Configs
+ */
+#define CONFIG_CMD_I2C          1
+#define CONFIG_HARD_I2C         1
+#define CONFIG_I2C_MXC          1
+#define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
+#define CONFIG_SYS_I2C_SPEED            400000
+#define CONFIG_SYS_I2C_SLAVE            0xfe
 
 #define CONFIG_BOOTDELAY	3
 
@@ -197,7 +203,7 @@
 #define CONFIG_SYS_NAND_BASE          0x40000000
 
 /* Monitor at beginning of flash */
-#define CONFIG_FSL_ENV_IN_NAND
+#define CONFIG_FSL_ENV_IN_MMC
 #define CONFIG_ENV_SECT_SIZE    (128 * 1024)
 #define CONFIG_ENV_SIZE		CONFIG_ENV_SECT_SIZE
 #if defined(CONFIG_FSL_ENV_IN_NAND)

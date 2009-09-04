@@ -159,6 +159,63 @@ static void setup_expio(void)
 	writew(reg, mx51_io_base_addr + PBC_SW_RESET);
 }
 
+#ifdef CONFIG_I2C_MXC
+static setup_i2c(unsigned int module_base)
+{
+	unsigned int reg;
+
+	switch (module_base) {
+	case I2C1_BASE_ADDR:
+		reg = IOMUXC_BASE_ADDR + 0x210; /* i2c SDA */
+		writel(0x11, reg);
+		reg = IOMUXC_BASE_ADDR + 0x600;
+		writel(0x1ad, reg);
+		reg = IOMUXC_BASE_ADDR + 0x9B4;
+		writel(0x1, reg);
+
+		reg = IOMUXC_BASE_ADDR + 0x224; /* i2c SCL */
+		writel(0x11, reg);
+		reg = IOMUXC_BASE_ADDR + 0x614;
+		writel(0x1ad, reg);
+		reg = IOMUXC_BASE_ADDR + 0x9B0;
+		writel(0x1, reg);
+		break;
+	case I2C2_BASE_ADDR:
+		/* Workaround for Atlas Lite */
+		writel(0x0, IOMUXC_BASE_ADDR + 0x3CC); /* i2c SCL */
+		writel(0x0, IOMUXC_BASE_ADDR + 0x3D0); /* i2c SDA */
+		reg = readl(GPIO1_BASE_ADDR + 0x0);
+		reg |= 0xC;  /* write a 1 on the SCL and SDA lines */
+		writel(reg, GPIO1_BASE_ADDR + 0x0);
+		reg = readl(GPIO1_BASE_ADDR + 0x4);
+		reg |= 0xC;  /* configure GPIO lines as output */
+		writel(reg, GPIO1_BASE_ADDR + 0x4);
+		reg = readl(GPIO1_BASE_ADDR + 0x0);
+		reg &= ~0x4 ; /* set SCL low for a few milliseconds */
+		writel(reg, GPIO1_BASE_ADDR + 0x0);
+		udelay(20000);
+		reg |= 0x4;
+		writel(reg, GPIO1_BASE_ADDR + 0x0);
+		udelay(10);
+		reg = readl(GPIO1_BASE_ADDR + 0x4);
+		reg &= ~0xC;  /* configure GPIO lines back as input */
+		writel(reg, GPIO1_BASE_ADDR + 0x4);
+
+		writel(0x12, IOMUXC_BASE_ADDR + 0x3CC);  /* i2c SCL */
+		writel(0x3, IOMUXC_BASE_ADDR + 0x9B8);
+		writel(0x1ed, IOMUXC_BASE_ADDR + 0x7D4);
+
+		writel(0x12, IOMUXC_BASE_ADDR + 0x3D0); /* i2c SDA */
+		writel(0x3, IOMUXC_BASE_ADDR + 0x9BC);
+		writel(0x1ed, IOMUXC_BASE_ADDR + 0x7D8);
+		break;
+	default:
+		printf("Invalid I2C base: 0x%x\n", module_base);
+		break;
+	}
+}
+#endif
+
 int board_init(void)
 {
 	int pad;
@@ -171,6 +228,9 @@ int board_init(void)
 	setup_uart();
 	setup_nfc();
 	setup_expio();
+#ifdef CONFIG_I2C_MXC
+	setup_i2c(I2C2_BASE_ADDR);
+#endif
 	return 0;
 }
 
@@ -285,7 +345,7 @@ int checkboard(void)
 	default:
 		printf("unknown");
 	}
-	printf("]\n");
+	printf("]]\n");
 	return 0;
 }
 

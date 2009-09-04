@@ -38,17 +38,30 @@
 #define GPTCR_CLKSOURCE_32 (4<<6)	/* Clock source */
 #define GPTCR_TEN       (1)	/* Timer enable */
 
-/* nothing really to do with interrupts, just starts up a counter. */
-int interrupt_init(void)
+static inline void setup_gpt()
 {
 	int i;
+	static int init_done;
+
+	if (init_done)
+	    return;
+
+	init_done = 1;
+
 	/* setup GP Timer 1 */
 	GPTCR = GPTCR_SWR;
 	for (i = 0; i < 100; i++)
-		GPTCR = 0;	/* We have no udelay by now */
-	GPTPR = 0;		/* 32Khz */
+		GPTCR = 0;      /* We have no udelay by now */
+	GPTPR = 0;              /* 32Khz */
 	/* Freerun Mode, PERCLK1 input */
 	GPTCR |= GPTCR_CLKSOURCE_32 | GPTCR_TEN;
+}
+
+/* nothing really to do with interrupts, just starts up a counter. */
+int interrupt_init(void)
+{
+	setup_gpt();
+
 	return 0;
 }
 
@@ -84,7 +97,9 @@ void udelay(unsigned long usec)
 {
 	ulong tmo, tmp;
 
-		/* if "big" number, spread normalization to seconds */
+	setup_gpt();
+
+	/* if "big" number, spread normalization to seconds */
 	if (usec >= 1000) {
 		/* start to normalize for usec to ticks per sec */
 		tmo = usec / 1000;
