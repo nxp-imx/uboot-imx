@@ -30,11 +30,14 @@ PLATFORM_CPPFLAGS += -march=armv5
 # Supply options according to compiler version
 #
 # =========================================================================
-ifdef CONFIG_SYS_APCS_GNU
-PLATFORM_CPPFLAGS +=$(call cc-option,-mapcs-32,-mabi=apcs-gnu)
-else
-PLATFORM_CPPFLAGS +=$(call cc-option)
-endif
-PLATFORM_CPPFLAGS +=$(call cc-option,-mno-thumb-interwork,)
-PLATFORM_RELFLAGS +=$(call cc-option,-mshort-load-bytes,\
+#ifdef CONFIG_SYS_APCS_GNU
+#PLATFORM_CPPFLAGS +=$(call cc-option,-mapcs-32,-mabi=apcs-gnu)
+#else
+#PLATFORM_CPPFLAGS +=$(call cc-option)
+#endif
+#PLATFORM_CPPFLAGS +=$(call cc-option,-mno-thumb-interwork,\
+#		    $(call cc-option,-mshort-load-bytes,\
+#		    $(call cc-option,-malignment-traps,)))
+
+PLATFORM_CPPFLAGS +=$(call cc-option,-mshort-load-bytes,\
 		    $(call cc-option,-malignment-traps,))

@@ -38,13 +38,86 @@
 #define GPTCR_CLKSOURCE_32 (4<<6)	/* Clock source */
 #define GPTCR_TEN       (1)	/* Timer enable */
 
-/* nothing really to do with interrupts, just starts up a counter. */
-int interrupt_init(void)
+static inline void setup_gpt()
 {
+	int i;
+	static int init_done;
+
+	if (init_done)
+	    return;
+
+	init_done = 1;
+
+	/* setup GP Timer 1 */
+	GPTCR = GPTCR_SWR;
+	for (i = 0; i < 100; i++)
+		GPTCR = 0;      /* We have no udelay by now */
+	GPTPR = 0;              /* 32Khz */
+	/* Freerun Mode, PERCLK1 input */
+	GPTCR |= GPTCR_CLKSOURCE_32 | GPTCR_TEN;
+}
+
+/* nothing really to do with interrupts, just starts up a counter. */
+int timer_init(void)
+{
+	setup_gpt();
+
 	return 0;
 }
 
-void reset_cpu(ulong addr)
+void reset_timer(void)
 {
-	__REG16(WDOG1_BASE_ADDR) = 4;
+	reset_timer_masked();
+}
+
+void reset_timer_masked(void)
+{
+	GPTCR = 0;
+	/* Freerun Mode, PERCLK1 input */
+	GPTCR = GPTCR_CLKSOURCE_32 | GPTCR_TEN;
+}
+
+ulong get_timer_masked(void)
+{
+	ulong val = GPTCNT;
+	return val;
+}
+
+ulong get_timer(ulong base)
+{
+	return get_timer_masked() - base;
+}
+
+void set_timer(ulong t)
+{
+}
+
+/* delay x useconds AND perserve advance timstamp value */
+void udelay(unsigned long usec)
+{
+	ulong tmo, tmp;
+
+	setup_gpt();
+
+	/* if "big" number, spread normalization to seconds */
+	if (usec >= 1000) {
+		/* start to normalize for usec to ticks per sec */
+		tmo = usec / 1000;
+		/* find number of "ticks" to wait to achieve target */
+		tmo *= CONFIG_SYS_HZ;
+		tmo /= 1000;	/* finish normalize. */
+	} else {/* else small number, don't kill it prior to HZ multiply */
+		tmo = usec * CONFIG_SYS_HZ;
+		tmo /= (1000 * 1000);
+	}
+
+	tmp = get_timer(0);	/* get current timestamp */
+	/* if setting this forward will roll time stamp */
+	if ((tmo + tmp + 1) < tmp)
+		 /* reset "advancing" timestamp to 0, set lastinc value */
+		reset_timer_masked();
+	else	/* else, set advancing stamp wake up time */
+		tmo += tmp;
+	while (get_timer_masked() < tmo)	/* loop till event */
+		 /*NOP*/;
 }

@@ -613,14 +613,6 @@ U_BOOT_CMD(
 	"    - delete environment variable 'name'"
 );
 
-#if defined(CONFIG_CMD_SAVEENV) && !defined(CONFIG_ENV_IS_NOWHERE)
-U_BOOT_CMD(
-	saveenv, 1, 0,	do_saveenv,
-	"saveenv - save environment variables to persistent storage\n",
-	NULL
-);
-#endif
-
 #if defined(CONFIG_CMD_ASKENV)
 
 U_BOOT_CMD(

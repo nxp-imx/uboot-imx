@@ -28,7 +28,6 @@
 
  /* High Level Configuration Options */
 #define CONFIG_ARMV7		1	/* This is armv7 Cortex-A8 CPU core */
-#define CONFIG_SYS_APCS_GNU
 #define CONFIG_L2_OFF
 
 #define CONFIG_MXC		1
@@ -85,13 +84,6 @@
 /*
  * MMC Configs
  * */
-#define CONFIG_FSL_MMC		1
-
-#define CONFIG_MMC              1
-#define CONFIG_CMD_MMC
-#define CONFIG_DOS_PARTITION	1
-#define CONFIG_CMD_FAT		1
-#define CONFIG_MMC_BASE         0x0
 
 /*
  * Eth Configs
@@ -107,11 +99,6 @@
 #define CONFIG_FEC0_PHY_ADDR	0x1F
 #define CONFIG_FEC0_MIIBASE 	-1
 
-#define CONFIG_CMD_PING
-#define CONFIG_CMD_DHCP
-#define CONFIG_CMD_MII
-#define CONFIG_CMD_NET
-
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX		1
@@ -126,9 +113,11 @@
 
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_NET
+
 /* Enable below configure when supporting nand */
-/* #define CONFIG_CMD_NAND */
-/* #define CONFIG_CMD_ENV */
+#define CONFIG_CMD_ENV
 
 #undef CONFIG_CMD_IMLS
 
@@ -144,25 +133,13 @@
 		"uboot_addr=0xa0000000\0"				\
 		"uboot=u-boot.bin\0"			\
 		"kernel=uImage\0"				\
-		"nfsroot=/opt/eldk/arm\0"				\
 		"bootargs_base=setenv bootargs console=ttymxc0,115200\0"\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
 			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
 		"bootcmd=run bootcmd_net\0"				\
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
-		"prg_uboot=tftpboot ${loadaddr} ${uboot}; "		\
-			"protect off ${uboot_addr} 0xa003ffff; "	\
-			"erase ${uboot_addr} 0xa003ffff; "		\
-			"cp.b ${loadaddr} ${uboot_addr} ${filesize}; "	\
-			"setenv filesize; saveenv\0"
-
-/*Support LAN9217*/
-/*
-#define CONFIG_DRIVER_SMC911X	1
-#define CONFIG_DRIVER_SMC911X_16_BIT 1
-#define CONFIG_DRIVER_SMC911X_BASE_VARIABLE mx51_io_base_addr
-*/
+		"load_uboot=tftpboot ${loadaddr} ${uboot}\0"		\
 
 /*
  * The MX51 3stack board seems to have a hardware "peculiarity" confirmed under
@@ -247,6 +224,7 @@
 	#define CONFIG_ENV_OFFSET	(768 * 1024)
 #elif defined(CONFIG_FSL_ENV_IN_SF)
 	#define CONFIG_ENV_IS_IN_SPI_FLASH	1
+	#define CONFIG_ENV_IS_EMBEDDED	1
 	#define CONFIG_ENV_SPI_CS		1
 	#define CONFIG_ENV_OFFSET       (768 * 1024)
 #else

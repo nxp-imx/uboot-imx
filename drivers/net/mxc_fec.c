@@ -622,10 +622,10 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	if (info->phy_addr < 0 || info->phy_addr > 0x1F)
 		info->phy_addr = mxc_fec_mii_discover_phy(dev);
 #endif
-	setFecDuplexSpeed(fecp, (unsigned char)bd, info->dup_spd);
+	setFecDuplexSpeed(fecp, (unsigned char)info->phy_addr, info->dup_spd);
 #else
 #ifndef CONFIG_DISCOVER_PHY
-	setFecDuplexSpeed(fecp, (unsigned char)bd,
+	setFecDuplexSpeed(fecp, (unsigned char)info->phy_addr,
 				(FECDUPLEX << 16) | FECSPEED);
 #endif				/* ifndef CONFIG_SYS_DISCOVER_PHY */
 #endif				/* CONFIG_CMD_MII || CONFIG_MII */
