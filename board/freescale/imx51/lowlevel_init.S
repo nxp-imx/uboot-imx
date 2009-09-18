@@ -36,9 +36,22 @@
  * L2CC Cache setup/invalidation/disable
  */
 .macro init_l2cc
-	/* reconfigure L2 cache aux control reg */
-	ldr r0, =0x03C000C4
-	mcr p15, 1, r0, c9, c0, 2
+	/* explicitly disable L2 cache */
+        mrc 15, 0, r0, c1, c0, 1
+        bic r0, r0, #0x2
+        mcr 15, 0, r0, c1, c0, 1
+
+        /* reconfigure L2 cache aux control reg */
+        mov r0, #0xC0                   /* tag RAM */
+        add r0, r0, #0x4                /* data RAM */
+        orr r0, r0, #(1 << 24)          /* disable write allocate delay */
+        orr r0, r0, #(1 << 23)          /* disable write allocate combine */
+        orr r0, r0, #(1 << 22)          /* disable write allocate */
+
+	cmp r3, #0x10    /* r3 contains the silicon rev */
+	orrls r0, r0, #(1 << 25)    /* ENGcm09124: disable write combine for TO 2 and lower revs */
+
+	mcr 15, 1, r0, c9, c0, 2
 .endm /* init_l2cc */
 
 /* AIPS setup - Only setup MPROTx registers.
@@ -126,26 +139,52 @@
 
 .macro init_clock
 	ldr r0, =CCM_BASE_ADDR
-	mov r1, #0x00060000
-	str r1, [r0, #CLKCTL_CCDR]
+
+	/* Gate of clocks to the peripherals first */
+	ldr r1, =0x3FFFFFFF
+	str r1, [r0, #CLKCTL_CCGR0]
+	ldr r1, =0x0
+	str r1, [r0, #CLKCTL_CCGR1]
+	str r1, [r0, #CLKCTL_CCGR2]
+	str r1, [r0, #CLKCTL_CCGR3]
+
+	ldr r1, =0x00030000
+	str r1, [r0, #CLKCTL_CCGR4]
+	ldr r1, =0x00FFF030
+	str r1, [r0, #CLKCTL_CCGR5]
+	ldr r1, =0x00000300
+	str r1, [r0, #CLKCTL_CCGR6]
+
+        /* Disable IPU and HSC dividers */
+        mov r1, #0x60000
+        str r1, [r0, #CLKCTL_CCDR]
+
+	/* Make sure to switch the DDR away from PLL 1 */
+	ldr r1, =0x19239145
+	str r1, [r0, #CLKCTL_CBCDR]
+	/* make sure divider effective */
+1:	ldr r1, [r0, #CLKCTL_CDHIPR]
+	cmp r1, #0x0
+	bne 1b
 
 	/* Switch ARM to step clock */
 	mov r1, #0x4
 	str r1, [r0, #CLKCTL_CCSR]
-
 	mov r3, #DP_OP_800
 	mov r4, #DP_MFD_800
 	mov r5, #DP_MFN_800
 	setup_pll PLL1_BASE_ADDR
+
 	mov r3, #DP_OP_665
 	mov r4, #DP_MFD_665
 	mov r5, #DP_MFN_665
 	setup_pll PLL3_BASE_ADDR
 
 	/* Switch peripheral to PLL 3 */
-	ldr r1, =0x0000D3C0
+	ldr r0, =CCM_BASE_ADDR
+        ldr r1, =0x000010C0
 	str r1, [r0, #CLKCTL_CBCMR]
-	ldr r1, =0x033B9145
+	ldr r1, =0x13239145
 	str r1, [r0, #CLKCTL_CBCDR]
 	mov r3, #DP_OP_665
 	mov r4, #DP_MFD_665
@@ -153,9 +192,10 @@
 	setup_pll PLL2_BASE_ADDR
 
 	/* Switch peripheral to PLL2 */
-	ldr r1, =0x013B9145
+	ldr r0, =CCM_BASE_ADDR
+	ldr r1, =0x19239145
 	str r1, [r0, #CLKCTL_CBCDR]
-	ldr r1, =0x0000E3C0
+	ldr r1, =0x000020C0
 	str r1, [r0, #CLKCTL_CBCMR]
 
 	mov r3, #DP_OP_216
@@ -163,30 +203,39 @@
 	mov r5, #DP_MFN_216
 	setup_pll PLL3_BASE_ADDR
 
+
 	/* Set the platform clock dividers */
-	ldr r2, =ARM_BASE_ADDR
+	ldr r0, =ARM_BASE_ADDR
 	ldr r1, =0x00000725
-	str r1, [r2, #0x14]
+	str r1, [r0, #0x14]
+
+	ldr r0, =CCM_BASE_ADDR
+	mov r1, #0x1
+	str r1, [r0, #CLKCTL_CACRR]
 
 	/* Switch ARM back to PLL 1 */
 	mov r1, #0
-	str r1, [r0,  #CLKCTL_CCSR]
-	str r1, [r0,  #CLKCTL_CACRR]
+	str r1, [r0, #CLKCTL_CCSR]
 
+	/* setup the rest */
 	/* Use lp_apm (24MHz) source for perclk */
-	mov r2, #0x48
-	ldr r2, [r0]
-	cmp r2, #0x10
-	ldrhs r1, =0x000020C2
-	ldrlo r1, =0x0000E3C2
+	ldr r1, =0x000020C2
 	str r1, [r0, #CLKCTL_CBCMR]
-	/* TO1.x emi = ahb, all perclk dividers are 1 since using 24MHz */
-	/* TO2.x ddr from PLL1, all perclk dividers are 1 since using 24MHz */
-	ldrhs r1, =0x59239100
-	ldrlo r1, =0x013D9100
-	strlo r1, [r0, #CLKCTL_CBCDR]
+	/* ddr clock from PLL 1, all perclk dividers are 1 since using 24MHz */
+	ldr r1, =0x59E35100
+	str r1, [r0, #CLKCTL_CBCDR]
 
-	/* use PLL2 for UART source, get 66.5MHz */
+	/* Restore the default values in the Gate registers */
+	ldr r1, =0xFFFFFFFF
+	str r1, [r0, #CLKCTL_CCGR0]
+	str r1, [r0, #CLKCTL_CCGR1]
+	str r1, [r0, #CLKCTL_CCGR2]
+	str r1, [r0, #CLKCTL_CCGR3]
+	str r1, [r0, #CLKCTL_CCGR4]
+	str r1, [r0, #CLKCTL_CCGR5]
+	str r1, [r0, #CLKCTL_CCGR6]
+
+	/* Use PLL 2 for UART's, get 66.5MHz from it */
 	ldr r1, =0xA5A2A020
 	str r1, [r0, #CLKCTL_CSCMR1]
 	ldr r1, =0x00C30321
@@ -194,11 +243,16 @@
 
 	/* make sure divider effective */
 1:	ldr r1, [r0, #CLKCTL_CDHIPR]
-	cmp r1, #0
+	cmp r1, #0x0
 	bne 1b
 
 	mov r1, #0x0
 	str r1, [r0, #CLKCTL_CCDR]
+
+	/* for cko - for ARM div by 8 */
+	mov r1, #0x000A0000
+	add r1, r1, #0x00000F0
+	str r1, [r0, #CLKCTL_CCOSR]
 .endm
 
 .macro setup_wdog
@@ -211,48 +265,27 @@
 
 .globl lowlevel_init
 lowlevel_init:
-	/* Platform CHIP level init*/
 	ldr r0, =GPIO1_BASE_ADDR
-    ldr r1, [r0, #0x0]
-    orr r1, r1, #(1 << 23)
-    str r1, [r0, #0x0]
-    ldr r1, [r0, #0x4]
-    orr r1, r1, #(1 << 23)
-    str r1, [r0, #0x4]
+	ldr r1, [r0, #0x0]
+	orr r1, r1, #(1 << 23)
+	str r1, [r0, #0x0]
+	ldr r1, [r0, #0x4]
+	orr r1, r1, #(1 << 23)
+	str r1, [r0, #0x4]
 
-#ifdef TURN_OFF_IMPRECISE_ABORT
-	mrs r0, cpsr
-	bic r0, r0, #0x100
-	msr cpsr, r0
+#ifdef ENABLE_IMPRECISE_ABORT
+        mrs r1, spsr            /* save old spsr */
+        mrs r0, cpsr            /* read out the cpsr */
+	bic r0, r0, #0x100      /* clear the A bit */
+	msr spsr, r0            /* update spsr */
+	add lr, pc, #0x8        /* update lr */
+        movs pc, lr             /* update cpsr */
+        nop
+        nop
+        nop
+	nop
+	msr spsr, r1            /* restore old spsr */
 #endif
-
-	mrc 15, 0, r1, c1, c0, 0
-
-#ifndef BRANCH_PREDICTION_ENABLE
-    	mrc 15, 0, r0, c1, c0, 1
-    	bic r0, r0, #7
-    	mcr 15, 0, r0, c1, c0, 1
-#else
-    	mrc 15, 0, r0, c1, c0, 1
-    	orr r0, r0, #7
-    	mcr 15, 0, r0, c1, c0, 1
-    	orr r1, r1, #(1<<11)
-#endif
-
-#ifdef UNALIGNED_ACCESS_ENABLE
-    	orr r1, r1, #(1<<22)
-#endif
-
-#ifdef LOW_INT_LATENCY_ENABLE
-    	orr r1, r1, #(1<<21)
-#endif
-    	mcr 15, 0, r1, c1, c0, 0
-
-    	mov r0, #0
-#ifdef BRANCH_PREDICTION_ENABLE
-   	mcr 15, 0, r0, c15, c2, 4
-#endif
-	mcr 15, 0, r0, c7, c10, 4       /* Drain the write buffer */
 
 	init_l2cc
 
@@ -264,15 +297,9 @@ lowlevel_init:
 
 	init_drive_strength
 
-	cmp pc, #PHYS_SDRAM_1
-	blo init_clock_start
-	cmp pc, #(PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)
-	blo init_clock_start
-
-init_clock_start:
 	init_clock
+
 	init_debug_board
-	/*init_sdram*/
 
 	/* return from mxc_nand_load */
 	/* r12 saved upper lr*/

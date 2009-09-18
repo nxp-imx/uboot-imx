@@ -343,6 +343,7 @@
 #define CLKCTL_CCGR3            0x74
 #define CLKCTL_CCGR4            0x78
 #define CLKCTL_CCGR5            0x7C
+#define CLKCTL_CCGR6            0x80
 #define CLKCTL_CMEOR            0x84
 
 /* DPLL */
@@ -392,7 +393,8 @@
 #define CHIP_REV_1_0            0x10
 #define CHIP_REV_1_1            0x11
 #define CHIP_REV_2_0            0x20
-#define CHIP_REV_2_5		0x120
+#define CHIP_REV_2_5		0x25
+#define CHIP_REV_3_0            0x30
 
 #define BOARD_REV_1_0           0x0
 #define BOARD_REV_2_0           0x1
