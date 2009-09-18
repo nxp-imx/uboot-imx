@@ -61,6 +61,9 @@ static inline void setup_soc_rev(void)
 			system_rev = 0x51000 | CHIP_REV_2_0;
 		}
 		break;
+	case 0x20:
+		system_rev = 0x51000 | CHIP_REV_3_0;
+		break;
 	default:
 		system_rev = 0x51000 | CHIP_REV_1_0;
 	}
@@ -95,6 +98,9 @@ static void setup_uart(void)
 	mxc_iomux_set_pad(MX51_PIN_UART1_RTS, pad);
 	mxc_request_iomux(MX51_PIN_UART1_CTS, IOMUX_CONFIG_ALT0);
 	mxc_iomux_set_pad(MX51_PIN_UART1_CTS, pad);
+	/* enable GPIO1_9 for CLK0 and GPIO1_8 for CLK02 */
+	writel(0x00000004, 0x73fa83e8);
+	writel(0x00000004, 0x73fa83ec);
 }
 
 void setup_nfc(void)
@@ -299,27 +305,79 @@ static void power_init(void)
 	unsigned int val;
 	unsigned int reg;
 
+#define REV_ATLAS_LITE_1_0         0x8
+#define REV_ATLAS_LITE_1_1         0x9
+#define REV_ATLAS_LITE_2_0         0x10
+#define REV_ATLAS_LITE_2_1         0x11
+
 	slave = spi_pmic_probe();
+
+	/* Write needed to Power Gate 2 register */
+	val = pmic_reg(slave, 34, 0, 0);
+	val &= ~0x10000;
+	pmic_reg(slave, 34, val, 1);
+
+	/* Write needed to update Charger 0 */
+	pmic_reg(slave, 48, 0x0023807F, 1);
 
 	/* power up the system first */
 	pmic_reg(slave, 34, 0x00200000, 1);
 
-	if (mxc_get_clock(MXC_FEC_CLK) > 800000000) {
-		/* Set core voltage to 1.175V */
+	if (is_soc_rev(CHIP_REV_2_0) >= 0) {
+		/* Set core voltage to 1.1V */
 		val = pmic_reg(slave, 24, 0, 0);
-		val = (val & (~0x1F)) | 0x17;
+		val = (val & (~0x1F)) | 0x14;
 		pmic_reg(slave, 24, val, 1);
+
+		/* Setup VCC (SW2) to 1.25 */
+		val = pmic_reg(slave, 25, 0, 0);
+		val = (val & (~0x1F)) | 0x1A;
+		pmic_reg(slave, 25, val, 1);
+
+		/* Setup 1V2_DIG1 (SW3) to 1.25 */
+		val = pmic_reg(slave, 26, 0, 0);
+		val = (val & (~0x1F)) | 0x1A;
+		pmic_reg(slave, 26, val, 1);
+		udelay(50);
+		/* Raise the core frequency to 800MHz */
+		writel(0x0, CCM_BASE_ADDR + CLKCTL_CACRR);
+	} else {
+		/* TO 3.0 */
+		/* Setup VCC (SW2) to 1.225 */
+		val = pmic_reg(slave, 25, 0, 0);
+		val = (val & (~0x1F)) | 0x19;
+		pmic_reg(slave, 25, val, 1);
+
+		/* Setup 1V2_DIG1 (SW3) to 1.2 */
+		val = pmic_reg(slave, 26, 0, 0);
+		val = (val & (~0x1F)) | 0x18;
+		pmic_reg(slave, 26, val, 1);
 	}
 
-	/* Setup VCC (SW2) to 1.225 */
-	val = pmic_reg(slave, 25, 0, 0);
-	val = (val & (~0x1F)) | 0x19;
-	pmic_reg(slave, 25, val, 1);
+	if (((pmic_reg(slave, 7, 0, 0) & 0x1F) < REV_ATLAS_LITE_2_0) ||
+		(((pmic_reg(slave, 7, 0, 0) >> 9) & 0x3) == 0)) {
+		/* Set switchers in PWM mode for Atlas 2.0 and lower */
+		/* Setup the switcher mode for SW1 & SW2*/
+		val = pmic_reg(slave, 28, 0, 0);
+		val = (val & (~0x3C0F)) | 0x1405;
+		pmic_reg(slave, 28, val, 1);
 
-	/* Setup 1V2_DIG1 (SW3) to 1.2 */
-	val = pmic_reg(slave, 26, 0, 0);
-	val = (val & (~0x1F)) | 0x18;
-	pmic_reg(slave, 25, val, 1);
+		/* Setup the switcher mode for SW3 & SW4 */
+		val = pmic_reg(slave, 29, 0, 0);
+		val = (val & (~0xF0F)) | 0x505;
+		pmic_reg(slave, 29, val, 1);
+	} else {
+		/* Set switchers in Auto in NORMAL mode & STANDBY mode for Atlas 2.0a */
+		/* Setup the switcher mode for SW1 & SW2*/
+		val = pmic_reg(slave, 28, 0, 0);
+		val = (val & (~0x3C0F)) | 0x2008;
+		pmic_reg(slave, 28, val, 1);
+
+		/* Setup the switcher mode for SW3 & SW4 */
+		val = pmic_reg(slave, 29, 0, 0);
+		val = (val & (~0xF0F)) | 0x808;
+		pmic_reg(slave, 29, val, 1);
+	}
 
 	/* Set VDIG to 1.65V, VGEN3 to 1.8V, VCAM to 2.5V */
 	val = pmic_reg(slave, 30, 0, 0);
@@ -358,9 +416,6 @@ static void power_init(void)
 	reg = readl(GPIO2_BASE_ADDR + 0x0);
 	reg |= 0x4000;
 	writel(reg, GPIO2_BASE_ADDR + 0x0);
-
-	/* Setup the FEC after enabling the regulators */
-	setup_fec();
 
 	spi_pmic_free(slave);
 }
@@ -488,6 +543,7 @@ int board_init(void)
 	setup_uart();
 	setup_nfc();
 	setup_expio();
+	setup_fec();
 	return 0;
 }
 
@@ -581,7 +637,9 @@ int checkboard(void)
 {
 	printf("Board: MX51 BABBAGE ");
 
-	if (system_rev & CHIP_REV_2_5) {
+	if (system_rev & CHIP_REV_3_0) {
+		printf("3.0 [");
+	} else if (system_rev & CHIP_REV_2_5) {
 		printf("2.5 [");
 	} else if (system_rev & CHIP_REV_2_0) {
 		printf("2.0 [");

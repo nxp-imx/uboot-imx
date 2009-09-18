@@ -49,7 +49,7 @@
         orr r0, r0, #(1 << 22)          /* disable write allocate */
 
 	cmp r3, #0x10    /* r3 contains the silicon rev */
-	orrls r0, r0, #(1 << 25)    /* ENGcm09124: disable write combine for TO 2 and lower revs */
+	orrls r0, r0, #(1 << 25)    /* disable write combine for TO 2 and lower revs */
 
 	mcr 15, 1, r0, c9, c0, 2
 .endm /* init_l2cc */
@@ -210,7 +210,12 @@
 	str r1, [r0, #0x14]
 
 	ldr r0, =CCM_BASE_ADDR
-	mov r1, #0x1
+	/* Run TO 3.0 at Full speed, for other TO's wait till we increase VDDGP */
+	ldr r1, =0x0
+	ldr r3, [r1, #ROM_SI_REV]
+	cmp r3, #0x10
+	movls r1, #0x1
+	movhi r1, #0
 	str r1, [r0, #CLKCTL_CACRR]
 
 	/* Switch ARM back to PLL 1 */
