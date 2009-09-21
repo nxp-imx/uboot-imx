@@ -148,17 +148,17 @@ void interface_configure_clock(sdhc_freq_t frequency)
 	u32 oper_freq  = 0;
 
 	/* Clear SDCLKEN bit */
-	REG_WRITE_OR((~ESDHC_SYSCTL_SDCLKEN_MASK), \
+	REG_WRITE_AND((~ESDHC_SYSCTL_SDCLKEN_MASK), \
 		esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
 
 	/* Clear DTOCV, SDCLKFS, DVFS bits */
-	REG_WRITE_OR((~ESDHC_SYSCTL_FREQ_MASK), \
+	REG_WRITE_AND((~ESDHC_SYSCTL_FREQ_MASK), \
 		esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
-	ident_freq = ESDHC_SYSCTL_IDENT_FREQ_TO2;
-	oper_freq  = ESDHC_SYSCTL_OPERT_FREQ_TO2;
+	ident_freq = ESDHC_SYSCTL_IDENT_FREQ;
+	oper_freq  = ESDHC_SYSCTL_OPERT_FREQ;
 
 	/* Disable the PEREN, HCKEN and IPGEN */
-	REG_WRITE_OR((~ESDHC_SYSCTL_INPUT_CLOCK_MASK), \
+	REG_WRITE_AND((~ESDHC_SYSCTL_INPUT_CLOCK_MASK), \
 			esdhc_base_pointer + SDHCI_SYSTEM_CONTROL);
 
 	if (frequency == IDENTIFICATION_FREQ) {
