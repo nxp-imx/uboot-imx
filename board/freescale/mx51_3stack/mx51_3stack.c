@@ -321,7 +321,7 @@ int board_late_init(void)
 
 int checkboard(void)
 {
-	printf("Board: MX51 3STACK [");
+	printf("Board: MX51 3STACK ");
 
 	if (system_rev & CHIP_REV_2_0) {
 		printf("2.0 [");
@@ -345,7 +345,7 @@ int checkboard(void)
 	default:
 		printf("unknown");
 	}
-	printf("]]\n");
+	printf("]\n");
 	return 0;
 }
 
