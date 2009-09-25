@@ -31,10 +31,8 @@
 #include <i2c.h>
 #include <linux/types.h>
 
-#ifdef CONFIG_MMC
-#include <asm/arch/sdhc.h>
-#endif
 DECLARE_GLOBAL_DATA_PTR;
+
 volatile u32 *esdhc_base_pointer;
 
 static u32 system_rev;

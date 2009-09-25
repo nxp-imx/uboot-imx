@@ -10,7 +10,7 @@
 #ifndef MMC_CORE_H
 #define MMC_CORE_H
 
-#include <asm/arch/sdhc.h>
+#include <asm/fsl_esdhc.h>
 
 struct request;
 struct mmc_data;

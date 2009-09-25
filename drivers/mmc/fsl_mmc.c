@@ -29,7 +29,7 @@
 #include <linux/mmc/card.h>
 #include <asm/errno.h>
 #include <part.h>
-#include <asm/arch/sdhc.h>
+#include <asm/fsl_esdhc.h>
 #include <linux/types.h>
 
 #define CARD_SUPPORT_BYTE_MODE			(0)

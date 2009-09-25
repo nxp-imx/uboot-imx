@@ -28,7 +28,7 @@
  * @ingroup mmc
  */
 
-#include <asm/arch/sdhc.h>
+#include <asm/fsl_esdhc.h>
 #include <linux/mmc/sdhci.h>
 #include <asm/errno.h>
 #include <common.h>
