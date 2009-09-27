@@ -28,7 +28,9 @@
 #include <asm/arch/mx51.h>
 #include <asm/arch/mx51_pins.h>
 #include <asm/arch/iomux.h>
+#ifdef CONFIG_I2C_MXC
 #include <i2c.h>
+#endif
 #include <mxc_keyb.h>
 #include <asm/arch/keypad.h>
 #include "board-mx51_3stack.h"
@@ -160,7 +162,7 @@ static void setup_expio(void)
 }
 
 #ifdef CONFIG_I2C_MXC
-static setup_i2c(unsigned int module_base)
+static void setup_i2c(unsigned int module_base)
 {
 	unsigned int reg;
 
@@ -214,11 +216,143 @@ static setup_i2c(unsigned int module_base)
 		break;
 	}
 }
+
+#define REV_ATLAS_LITE_1_0         0x8
+#define REV_ATLAS_LITE_1_1         0x9
+#define REV_ATLAS_LITE_2_0         0x10
+#define REV_ATLAS_LITE_2_1         0x11
+
+void setup_core_voltages(void)
+{
+	unsigned char buf[4] = { 0 };
+
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+
+	if (is_soc_rev(CHIP_REV_2_0) <= 0) {
+		/* Set core voltage to 1.1V */
+		if (i2c_read(0x8, 24, 1, buf, 3)) {
+			puts("setup_core_voltages: read PMIC@0x08:0x18 fail\n");
+			return;
+		}
+		buf[2] = (buf[2] & (~0x1F)) | 0x14;
+		if (i2c_write(0x8, 24, 1, buf, 3)) {
+			puts("setup_core_voltages: write PMIC@0x08:0x18 fail\n");
+			return;
+		}
+
+		/* Setup VCC (SW2) to 1.25 */
+		if (i2c_read(0x8, 25, 1, buf, 3)) {
+			puts("setup_core_voltages: read PMIC@0x08:0x19 fail\n");
+			return;
+		}
+		buf[2] = (buf[2] & (~0x1F)) | 0x1A;
+		if (i2c_write(0x8, 25, 1, buf, 3)) {
+			puts("setup_core_voltages: write PMIC@0x08:0x19 fail\n");
+			return;
+		}
+
+		/* Setup 1V2_DIG1 (SW3) to 1.25 */
+		if (i2c_read(0x8, 26, 1, buf, 3)) {
+			puts("setup_core_voltages: read PMIC@0x08:0x1A fail\n");
+			return;
+		}
+		buf[2] = (buf[2] & (~0x1F)) | 0x1A;
+		if (i2c_write(0x8, 26, 1, buf, 3)) {
+			puts("setup_core_voltages: write PMIC@0x08:0x1A fail\n");
+			return;
+		}
+
+		udelay(50);
+
+		/* Raise the core frequency to 800MHz */
+		writel(0x0, CCM_BASE_ADDR + CLKCTL_CACRR);
+	} else {
+		/* TO 3.0 */
+		/* Setup VCC (SW2) to 1.225 */
+		if (i2c_read(0x8, 25, 1, buf, 3)) {
+			puts("setup_core_voltages: read PMIC@0x08:0x19 fail\n");
+			return;
+		}
+		buf[2] = (buf[2] & (~0x1F)) | 0x19;
+		if (i2c_write(0x8, 25, 1, buf, 3)) {
+			puts("setup_core_voltages: write PMIC@0x08:0x19 fail\n");
+			return;
+		}
+
+		/* Setup 1V2_DIG1 (SW3) to 1.2 */
+		if (i2c_read(0x8, 26, 1, buf, 3)) {
+			puts("setup_core_voltages: read PMIC@0x08:0x1A fail\n");
+			return;
+		}
+		buf[2] = (buf[2] & (~0x1F)) | 0x18;
+		if (i2c_write(0x8, 26, 1, buf, 3)) {
+			puts("setup_core_voltages: write PMIC@0x08:0x1A fail\n");
+			return;
+		}
+	}
+
+	if (i2c_read(0x8, 7, 1, buf, 3)) {
+		puts("setup_core_voltages: read PMIC@0x08:0x07 fail\n");
+		return;
+	}
+
+	if (((buf[2] & 0x1F) < REV_ATLAS_LITE_2_0) || (((buf[1] >> 1) & 0x3) == 0)) {
+		/* Set switchers in PWM mode for Atlas 2.0 and lower */
+		/* Setup the switcher mode for SW1 & SW2*/
+		if (i2c_read(0x8, 28, 1, buf, 3)) {
+			puts("setup_core_voltages: read PMIC@0x08:0x1C fail\n");
+			return;
+		}
+		buf[2] = (buf[2] & (~0xF)) | 0x5;
+		buf[1] = (buf[1] & (~0x3C)) | 0x14;
+		if (i2c_write(0x8, 28, 1, buf, 3)) {
+			puts("setup_core_voltages: write PMIC@0x08:0x1C fail\n");
+			return;
+		}
+
+		/* Setup the switcher mode for SW3 & SW4*/
+		if (i2c_read(0x8, 29, 1, buf, 3)) {
+			puts("setup_core_voltages: read PMIC@0x08:0x1D fail\n");
+			return;
+		}
+		buf[2] = (buf[2] & (~0xF)) | 0x5;
+		buf[1] = (buf[1] & (~0xF)) | 0x5;
+		if (i2c_write(0x8, 29, 1, buf, 3)) {
+			puts("setup_core_voltages: write PMIC@0x08:0x1D fail\n");
+			return;
+		}
+	} else {
+		/* Set switchers in Auto in NORMAL mode & STANDBY mode for Atlas 2.0a */
+		/* Setup the switcher mode for SW1 & SW2*/
+		if (i2c_read(0x8, 28, 1, buf, 3)) {
+			puts("setup_core_voltages: read PMIC@0x08:0x1C fail\n");
+			return;
+		}
+		buf[2] = (buf[2] & (~0xF)) | 0x8;
+		buf[1] = (buf[1] & (~0x3C)) | 0x20;
+		if (i2c_write(0x8, 28, 1, buf, 3)) {
+			puts("setup_core_voltages: write PMIC@0x08:0x1C fail\n");
+			return;
+		}
+
+		/* Setup the switcher mode for SW3 & SW4*/
+		if (i2c_read(0x8, 29, 1, buf, 3)) {
+			puts("setup_core_voltages: read PMIC@0x08:0x1D fail\n");
+			return;
+		}
+		buf[2] = (buf[2] & (~0xF)) | 0x8;
+		buf[1] = (buf[1] & (~0xF)) | 0x8;
+		if (i2c_write(0x8, 29, 1, buf, 3)) {
+			puts("setup_core_voltages: write PMIC@0x08:0x1D fail\n");
+			return;
+		}
+	}
+}
+
 #endif
 
 int board_init(void)
 {
-	int pad;
 	setup_soc_rev();
 
 	gd->bd->bi_arch_number = MACH_TYPE_MX51_3DS;	/* board id for linux */
@@ -230,6 +364,7 @@ int board_init(void)
 	setup_expio();
 #ifdef CONFIG_I2C_MXC
 	setup_i2c(I2C2_BASE_ADDR);
+	setup_core_voltages();
 #endif
 	return 0;
 }
@@ -242,7 +377,6 @@ int board_late_init(void)
 	int switch_delay = CONFIG_ANDROID_BOOTMOD_DELAY;
 	int state = 0, boot_mode_switch = 0;
 #endif
-
 
 #if defined(CONFIG_FSL_ANDROID) && defined(CONFIG_MXC_KPD)
 	mxc_kpp_init();
