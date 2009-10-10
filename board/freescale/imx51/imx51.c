@@ -305,10 +305,10 @@ static void power_init(void)
 	unsigned int val;
 	unsigned int reg;
 
-#define REV_ATLAS_LITE_1_0         0x8
-#define REV_ATLAS_LITE_1_1         0x9
-#define REV_ATLAS_LITE_2_0         0x10
-#define REV_ATLAS_LITE_2_1         0x11
+#define REV_ATLAS_LITE_1_0	   0x8
+#define REV_ATLAS_LITE_1_1	   0x9
+#define REV_ATLAS_LITE_2_0	   0x10
+#define REV_ATLAS_LITE_2_1	   0x11
 
 	slave = spi_pmic_probe();
 
@@ -401,7 +401,7 @@ static void power_init(void)
 	writel(reg, GPIO2_BASE_ADDR + 0x0);
 
 	reg = readl(GPIO2_BASE_ADDR + 0x4);
-	reg |= 0x4000;  /* configure GPIO lines as output */
+	reg |= 0x4000;	/* configure GPIO lines as output */
 	writel(reg, GPIO2_BASE_ADDR + 0x4);
 
 	/* Reset the ethernet controller over GPIO */
@@ -452,10 +452,9 @@ int sdhc_init(void)
 		esdhc_base_pointer = (volatile u32 *)MMC_SDHC1_BASE_ADDR;
 
 		mxc_request_iomux(MX51_PIN_SD1_CMD,
-			  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
 		mxc_request_iomux(MX51_PIN_SD1_CLK,
-			  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
-
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
 		mxc_request_iomux(MX51_PIN_SD1_DATA0,
 				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
 		mxc_request_iomux(MX51_PIN_SD1_DATA1,
@@ -496,7 +495,38 @@ int sdhc_init(void)
 				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
 		break;
 	case 1:
-		status = 1;
+		esdhc_base_pointer = (volatile u32 *)MMC_SDHC2_BASE_ADDR;
+
+		mxc_request_iomux(MX51_PIN_SD2_CMD,
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_request_iomux(MX51_PIN_SD2_CLK,
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_request_iomux(MX51_PIN_SD2_DATA0,
+				IOMUX_CONFIG_ALT0);
+		mxc_request_iomux(MX51_PIN_SD2_DATA1,
+				IOMUX_CONFIG_ALT0);
+		mxc_request_iomux(MX51_PIN_SD2_DATA2,
+				IOMUX_CONFIG_ALT0);
+		mxc_request_iomux(MX51_PIN_SD2_DATA3,
+				IOMUX_CONFIG_ALT0);
+		mxc_iomux_set_pad(MX51_PIN_SD2_CMD,
+				PAD_CTL_DRV_MAX | PAD_CTL_22K_PU |
+				PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD2_CLK,
+				PAD_CTL_DRV_MAX | PAD_CTL_22K_PU |
+				PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD2_DATA0,
+				PAD_CTL_DRV_MAX | PAD_CTL_22K_PU |
+				PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD2_DATA1,
+				PAD_CTL_DRV_MAX | PAD_CTL_22K_PU |
+				PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD2_DATA2,
+				PAD_CTL_DRV_MAX | PAD_CTL_22K_PU |
+				PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD2_DATA3,
+				PAD_CTL_DRV_MAX | PAD_CTL_22K_PU |
+				PAD_CTL_SRE_FAST);
 		break;
 	case 2:
 		status = 1;
@@ -637,16 +667,23 @@ int checkboard(void)
 {
 	printf("Board: MX51 BABBAGE ");
 
-	if (system_rev & CHIP_REV_3_0) {
+	switch (system_rev & 0xff) {
+	case CHIP_REV_3_0:
 		printf("3.0 [");
-	} else if (system_rev & CHIP_REV_2_5) {
+		break;
+	case CHIP_REV_2_5:
 		printf("2.5 [");
-	} else if (system_rev & CHIP_REV_2_0) {
+		break;
+	case CHIP_REV_2_0:
 		printf("2.0 [");
-	} else if (system_rev & CHIP_REV_1_1) {
+		break;
+	case CHIP_REV_1_1:
 		printf("1.1 [");
-	} else {
+		break;
+	case CHIP_REV_1_0:
+	default:
 		printf("1.0 [");
+		break;
 	}
 
 	switch (__REG(SRC_BASE_ADDR + 0x8)) {
