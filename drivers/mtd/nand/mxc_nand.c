@@ -415,7 +415,9 @@ static void send_cmd_auto(struct mtd_info *mtd, u16 cmd)
 		break;
 	case NAND_CMD_RESET:
 		send_cmd_interleave(mtd, cmd);
+		break;
 	case NAND_CMD_STATUS:
+		send_cmd_atomic(mtd, cmd);
 		break;
 	default:
 		break;
@@ -540,20 +542,15 @@ static u16 mxc_do_status_auto(struct mtd_info *mtd)
 		/* clear status */
 		ACK_OPS;
 
-		/* FIXME, NFC Auto erase may have
-		 * problem, have to pollingit until
-		 * the nand get idle, otherwise
-		 * it may get error
-		 */
-		do {
-			raw_write(NFC_AUTO_STATE, REG_NFC_OPS);
-		#if defined(CONFIG_MX51_3DS) || defined(CONFIG_MX51_BBG)
-			/* mx51to2 NFC need wait the op done */
-			if (is_soc_rev(CHIP_REV_2_0) == 0)
-				wait_op_done(TROP_US_DELAY);
-		#endif
-			status = (raw_read(NFC_CONFIG1) & mask) >> 16;
-		} while ((status & NAND_STATUS_READY) == 0);
+		/* use atomic mode to read status instead
+		 * of using auto mode,auto-mode has issues
+		 * and the status is not correct.
+		*/
+		raw_write(NFC_STATUS, REG_NFC_OPS);
+
+		wait_op_done(TROP_US_DELAY);
+
+		status = (raw_read(NFC_CONFIG1) & mask) >> 16;
 
 		if (status & NAND_STATUS_FAIL)
 			break;
@@ -729,6 +726,26 @@ static u16 mxc_nand_read_word(struct mtd_info *mtd)
 
 	return ret;
 }
+
+/*!
+ * This function reads byte from the NAND Flash
+ *
+ * @param     mtd     MTD structure for the NAND Flash
+ *
+ * @return    data read from the NAND Flash
+ */
+static u_char mxc_nand_read_byte16(struct mtd_info *mtd)
+{
+	struct nand_chip *this = mtd->priv;
+	struct nand_info *info = this->priv;
+
+	/* Check for status request */
+	if (info->status_req)
+		return mxc_nand_get_status(mtd) & 0xFF;
+
+	return mxc_nand_read_word(mtd) & 0xFF;
+}
+
 
 /*!
  * This function writes data of length \b len from buffer \b buf to the NAND
@@ -1197,6 +1214,7 @@ int board_nand_init(struct nand_chip *nand)
 {
 	struct nand_info *info;
 	struct nand_chip *this = nand;
+	struct mtd_info *mtd; /* dummy for compile */
 	int err;
 
 	info = kmalloc(sizeof(struct nand_info), GFP_KERNEL);
@@ -1218,6 +1236,7 @@ int board_nand_init(struct nand_chip *nand)
 #ifdef CONFIG_MXC_NFC_SP_AUTO
 	info->auto_mode = 1;
 #endif
+
 	/* init the nfc */
 	mxc_nfc_init();
 
@@ -1241,6 +1260,18 @@ int board_nand_init(struct nand_chip *nand)
 	this->ecc.mode = NAND_ECC_HW;
 	this->ecc.bytes = 9;
 	this->ecc.size = 512;
+
+#ifdef CONFIG_NAND_FW_16BIT
+	if (CONFIG_NAND_FW_16BIT == 1) {
+		this->read_byte = mxc_nand_read_byte16;
+		this->options |= NAND_BUSWIDTH_16;
+		NFC_SET_NFMS(1 << NFMS_NF_DWIDTH);
+	} else {
+		NFC_SET_NFMS(0);
+	}
+#else
+	NFC_SET_NFMS(0);
+#endif
 
 	return 0;
 }
