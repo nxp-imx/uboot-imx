@@ -72,7 +72,7 @@
 
 #define IS_4BIT_ECC \
 ( \
-	is_soc_rev(CHIP_REV_2_0) == 0 ? \
+	is_soc_rev(CHIP_REV_2_0) >= 0 ? \
 		!((raw_read(NFC_CONFIG2) & NFC_ECC_MODE_4) >> 6) : \
 		((raw_read(NFC_CONFIG2) & NFC_ECC_MODE_4) >> 6) \
 )
@@ -84,7 +84,7 @@
 
 #define NFC_SET_ECC_MODE(v)		\
 do { \
-	if (is_soc_rev(CHIP_REV_2_0) == 0) { \
+	if (is_soc_rev(CHIP_REV_2_0) >= 0) { \
 		if ((v) == NFC_SPAS_218 || (v) == NFC_SPAS_112) \
 			raw_write(((raw_read(NFC_CONFIG2) & \
 					NFC_ECC_MODE_MASK) | \
@@ -201,9 +201,9 @@ do { \
 #define NFC_PPB_256			(3 << 7)
 #define NFC_PPB_RESET			(~(3 << 7))
 
-#define NFC_BLS_LOCKED			(0 << 16)
-#define NFC_BLS_LOCKED_DEFAULT		(1 << 16)
-#define NFC_BLS_UNLCOKED		(2 << 16)
+#define NFC_BLS_LOCKED			(0 << 6)
+#define NFC_BLS_LOCKED_DEFAULT		(1 << 6)
+#define NFC_BLS_UNLCOKED		(2 << 6)
 #define NFC_BLS_RESET			(~(3 << 16))
 #define NFC_WPC_LOCK_TIGHT		1
 #define NFC_WPC_LOCK			(1 << 1)
@@ -335,7 +335,8 @@ do { \
 /*should set the fw,ps,spas,ppb*/
 #define NFC_SET_NFMS(v)	\
 do {	\
-	NFC_SET_FW(NFC_FW_8);	\
+	if (!(v)) \
+		NFC_SET_FW(NFC_FW_8);   \
 	if (((v) & (1 << NFMS_NF_DWIDTH)))	\
 		NFC_SET_FW(NFC_FW_16);	\
 	if (((v) & (1 << NFMS_NF_PG_SZ))) {	\
@@ -356,7 +357,8 @@ do {	\
 		NFC_SET_SPAS(GET_NAND_OOB_SIZE >> 1);	\
 		NFC_SET_ECC_MODE(GET_NAND_OOB_SIZE >> 1); \
 		NFC_SET_ST_CMD(0x70); \
-		raw_write(raw_read(NFC_CONFIG3) | 1 << 20, NFC_CONFIG3); \
+		raw_write(raw_read(NFC_CONFIG3) | NFC_NO_SDMA, NFC_CONFIG3); \
+		raw_write(raw_read(NFC_CONFIG3) | NFC_RBB_MODE, NFC_CONFIG3); \
 	} \
 } while (0)
 
