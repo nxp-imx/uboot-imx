@@ -36,6 +36,7 @@ COBJS-$(CONFIG_SATA_SIL3114) += sata_sil3114.o
 COBJS-$(CONFIG_SCSI_AHCI) += ahci.o
 COBJS-$(CONFIG_SCSI_SYM53C8XX) += sym53c8xx.o
 COBJS-$(CONFIG_SYSTEMACE) += systemace.o
+COBJS-$(CONFIG_MXC_ATA) += mxc_ata.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

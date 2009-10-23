@@ -108,6 +108,6 @@ MXC_DCD_ITEM(54, 4, ESDCTL_BASE_ADDR + ESDCTL_ESDMISC, 0x000ad6d0)
 MXC_DCD_ITEM(55, 4, ESDCTL_BASE_ADDR + ESDCTL_ESDCDLYGD, 0x90000000)
 MXC_DCD_ITEM(56, 4, ESDCTL_BASE_ADDR + ESDCTL_ESDSCR, 0x00000000)
 dcd_data_end:
-image_len:		.word	0x40000
+image_len:		.word	0x80000
 //image_len:		.word	_end - _start
 #endif
