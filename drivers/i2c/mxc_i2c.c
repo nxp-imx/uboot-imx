@@ -99,7 +99,7 @@ void i2c_init(int speed, int unused)
 #else
 	freq = mxc_get_clock(MXC_IPG_PERCLK);
 #endif
-	For (i = 0; i < 0x1f; i++)
+	for (i = 0; i < 0x1f; i++)
 		if (freq / div[i] <= speed)
 			break;
 

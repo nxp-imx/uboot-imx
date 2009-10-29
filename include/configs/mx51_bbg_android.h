@@ -68,44 +68,6 @@
 #define CONFIG_MX51_UART	1
 #define CONFIG_MX51_UART1	1
 
-/*
- * SPI Configs
- * */
-#define CONFIG_FSL_SF		1
-#define CONFIG_CMD_SPI
-#define CONFIG_CMD_SF
-#define CONFIG_SPI_FLASH_IMX_ATMEL	1
-#define CONFIG_SPI_FLASH_CS	1
-#define CONFIG_IMX_SPI
-#define CONFIG_IMX_SPI_PMIC
-#define CONFIG_IMX_SPI_PMIC_CS 0
-
-#define MAX_SPI_BYTES		(64 * 4)
-
-/*
- * MMC Configs
- * */
-#define CONFIG_FSL_MMC		1
-
-#define CONFIG_MMC              1
-#define CONFIG_CMD_MMC
-#define CONFIG_DOS_PARTITION	1
-#define CONFIG_CMD_FAT		1
-#define CONFIG_MMC_BASE         0x0
-
-/*
- * Eth Configs
- */
-#define CONFIG_HAS_ETH1
-#define CONFIG_NET_MULTI 1
-#define CONFIG_MXC_FEC
-#define CONFIG_MII
-#define CONFIG_DISCOVER_PHY
-
-#define CONFIG_FEC0_IOBASE	FEC_BASE_ADDR
-#define CONFIG_FEC0_PINMUX	-1
-#define CONFIG_FEC0_PHY_ADDR	0x1F
-#define CONFIG_FEC0_MIIBASE 	-1
 
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
@@ -138,8 +100,10 @@
 #define CONFIG_MXC_KPD_ROWMAX 4
 #define CONFIG_ANDROID_NORMAL_BOOTARGS "ip=dhcp mem=480M init=/init wvga calibration"
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS "setenv bootargs ${bootargs} root=/dev/mmcblk0p4 ip=dhcp init=/init rootfstype=ext3 wvga"
-#define CONFIG_ANDROID_RECOVERY_BOOTCMD  "run bootargs_base bootargs_android;mmcinit;cp.b 0x100000 ${loadaddr} 0x250000;bootm"
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD  "run bootargs_base bootargs_android;mmc read 0 ${loadaddr} 0x800 0x1280;bootm"
+#define CONFIG_ANDROID_RECOVERY_CMD_FILE "/cache/recovery/command"
 #define CONFIG_ANDROID_BOOTMOD_DELAY 3
+#define CONFIG_ANDROID_CACHE_PARTITION 4
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
@@ -157,6 +121,7 @@
 #define CONFIG_CMD_DHCP
 /* Enable below configure when supporting nand */
 /* #define CONFIG_CMD_NAND */
+#define CONFIG_CMD_MMC
 #define CONFIG_CMD_ENV
 
 #undef CONFIG_CMD_IMLS
@@ -195,9 +160,9 @@
 
 /*Support LAN9217*/
 /*
-#define CONFIG_DRIVER_SMC911X	1
-#define CONFIG_DRIVER_SMC911X_16_BIT 1
-#define CONFIG_DRIVER_SMC911X_BASE_VARIABLE mx51_io_base_addr
+#define CONFIG_SMC911X	1
+#define CONFIG_SMC911X_16_BIT 1
+#define CONFIG_SMC911X_BASE mx51_io_base_addr
 */
 
 /*
@@ -235,6 +200,46 @@
 
 #define CONFIG_CMDLINE_EDITING	1
 
+/*
+ * Eth Configs
+ */
+#define CONFIG_HAS_ETH1
+#define CONFIG_NET_MULTI 1
+#define CONFIG_MXC_FEC
+#define CONFIG_MII
+#define CONFIG_DISCOVER_PHY
+
+#define CONFIG_FEC0_IOBASE	FEC_BASE_ADDR
+#define CONFIG_FEC0_PINMUX	-1
+#define CONFIG_FEC0_PHY_ADDR	0x1F
+#define CONFIG_FEC0_MIIBASE 	-1
+
+/*
+ * SPI Configs
+ * */
+#define CONFIG_FSL_SF		1
+#define CONFIG_CMD_SPI
+#define CONFIG_CMD_SF
+#define CONFIG_SPI_FLASH_IMX_ATMEL	1
+#define CONFIG_SPI_FLASH_CS	1
+#define CONFIG_IMX_SPI
+#define CONFIG_IMX_SPI_PMIC
+#define CONFIG_IMX_SPI_PMIC_CS 0
+
+#define MAX_SPI_BYTES		(64 * 4)
+
+/*
+ * MMC Configs
+ * */
+#ifdef CONFIG_CMD_MMC
+	#define CONFIG_MMC				1
+	#define CONFIG_MMC_BASE		0x0
+	#define CONFIG_GENERIC_MMC
+	#define CONFIG_IMX_MMC
+	#define CONFIG_DOS_PARTITION	1
+	#define CONFIG_CMD_FAT		1
+	#define CONFIG_CMD_EXT2		1
+#endif
 /*-----------------------------------------------------------------------
  * Stack sizes
  *
@@ -264,13 +269,9 @@
 #define CONFIG_SYS_NAND_BASE          0x40000000
 
 /* Monitor at beginning of flash */
-#if defined(CONFIG_FSL_SF)
-	#define CONFIG_FSL_ENV_IN_SF
-#elif defined(CONFIG_FSL_MMC)
-	#define CONFIG_FSL_ENV_IN_MMC
-#elif defined(CONFIG_CMD_NAND)
-	#define CONFIG_FSL_ENV_IN_NAND
-#endif
+/* #define CONFIG_FSL_ENV_IN_SF */
+#define CONFIG_FSL_ENV_IN_MMC
+/* #define CONFIG_FSL_ENV_IN_NAND */
 
 #define CONFIG_ENV_SECT_SIZE    (128 * 1024)
 #define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE

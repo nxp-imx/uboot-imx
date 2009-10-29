@@ -407,6 +407,32 @@ MXC_IPG_PERCLK,
 MXC_UART_CLK,
 MXC_CSPI_CLK,
 MXC_FEC_CLK,
+MXC_ESDHC_CLK,
+};
+
+/*
+enum mxc_main_clocks {
+	MXC_CPU_CLK,
+	MXC_AHB_CLK,
+	MXC_IPG_CLK,
+	MXC_IPG_PER_CLK,
+	MXC_DDR_CLK,
+	MXC_NFC_CLK,
+	MXC_USB_CLK,
+};
+*/
+
+enum mxc_peri_clocks {
+	MXC_UART1_BAUD,
+	MXC_UART2_BAUD,
+	MXC_UART3_BAUD,
+	MXC_SSI1_BAUD,
+	MXC_SSI2_BAUD,
+	MXC_CSI_BAUD,
+	MXC_MSTICK1_CLK,
+	MXC_MSTICK2_CLK,
+	MXC_SPI1_CLK,
+	MXC_SPI2_CLK,
 };
 
 extern unsigned int mxc_get_clock(enum mxc_clock clk);

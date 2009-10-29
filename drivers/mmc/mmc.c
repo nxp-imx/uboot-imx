@@ -88,7 +88,7 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 	err = mmc_set_blocklen(mmc, mmc->write_bl_len);
 
 	if (err) {
-		printf("set write bl len failed\n\r");
+		puts("set write bl len failed\n\r");
 		return err;
 	}
 
@@ -113,7 +113,7 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 	err = mmc_send_cmd(mmc, &cmd, &data);
 
 	if (err) {
-		printf("mmc write failed\n\r");
+		puts("mmc write failed\n\r");
 		return err;
 	}
 
@@ -164,7 +164,7 @@ int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size)
 	buffer = malloc(blklen);
 
 	if (!buffer) {
-		printf("Could not allocate buffer for MMC read!\n");
+		puts("Could not allocate buffer for MMC read!\n");
 		return -1;
 	}
 
@@ -205,27 +205,56 @@ free_buffer:
 
 static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
 {
+	struct mmc_cmd cmd;
+	struct mmc_data data;
 	int err;
-	int i;
+	int stoperr = 0;
 	struct mmc *mmc = find_mmc_device(dev_num);
+	int blklen;
 
 	if (!mmc)
-		return 0;
+		return -1;
 
-	/* We always do full block reads from the card */
-	err = mmc_set_blocklen(mmc, mmc->read_bl_len);
+	blklen = mmc->read_bl_len;
+
+	err = mmc_set_blocklen(mmc, blklen);
 
 	if (err) {
-		return 0;
+		puts("set read bl len failed\n\r");
+		return err;
 	}
 
-	for (i = start; i < start + blkcnt; i++, dst += mmc->read_bl_len) {
-		err = mmc_read_block(mmc, dst, i);
+	if (blkcnt > 1)
+		cmd.cmdidx = MMC_CMD_READ_MULTIPLE_BLOCK;
+	else
+		cmd.cmdidx = MMC_CMD_READ_SINGLE_BLOCK;
 
-		if (err) {
-			printf("block read failed: %d\n", err);
-			return i - start;
-		}
+	if (mmc->high_capacity)
+		cmd.cmdarg = start;
+	else
+		cmd.cmdarg = start * blklen;
+
+	cmd.resp_type = MMC_RSP_R1;
+	cmd.flags = 0;
+
+	data.dest = dst;
+	data.blocks = blkcnt;
+	data.blocksize = blklen;
+	data.flags = MMC_DATA_READ;
+
+	err = mmc_send_cmd(mmc, &cmd, &data);
+
+	if (err) {
+		puts("mmc read failed\n\r");
+		return err;
+	}
+
+	if (blkcnt > 1) {
+		cmd.cmdidx = MMC_CMD_STOP_TRANSMISSION;
+		cmd.cmdarg = 0;
+		cmd.resp_type = MMC_RSP_R1b;
+		cmd.flags = 0;
+		stoperr = mmc_send_cmd(mmc, &cmd, NULL);
 	}
 
 	return blkcnt;

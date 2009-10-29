@@ -83,23 +83,27 @@
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
 /* Enable below configure when supporting nand */
-/* #define CONFIG_CMD_NAND */
+#define CONFIG_CMD_NAND
 #define CONFIG_MXC_NAND
 #define CONFIG_CMD_ENV
+#define CMD_SAVEENV
 #undef CONFIG_CMD_IMLS
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
+#define CONFIG_NET_MULTI
+#define CONFIG_CMD_MMC
 
 /*
  * MMC Configs
  */
-#define CONFIG_FSL_MMC          1
-
-#define CONFIG_MMC              1
-#define CONFIG_CMD_MMC
-#define CONFIG_DOS_PARTITION    1
-#define CONFIG_CMD_FAT          1
-#define CONFIG_MMC_BASE         0x0
+#ifdef CONFIG_CMD_MMC
+	#define CONFIG_MMC				1
+	#define CONFIG_MMC_BASE		0x0
+	#define CONFIG_GENERIC_MMC
+	#define CONFIG_IMX_MMC
+	#define CONFIG_DOS_PARTITION	1
+	#define CONFIG_CMD_FAT		1
+#endif
 
 /*
  * I2C Configs
@@ -135,9 +139,9 @@
 			"setenv filesize; saveenv\0"
 
 /*Support LAN9217*/
-#define CONFIG_DRIVER_SMC911X	1
-#define CONFIG_DRIVER_SMC911X_16_BIT 1
-#define CONFIG_DRIVER_SMC911X_BASE_VARIABLE mx51_io_base_addr
+#define CONFIG_SMC911X	1
+#define CONFIG_SMC911X_16_BIT 1
+#define CONFIG_SMC911X_BASE mx51_io_base_addr
 
 /*
  * The MX51 3stack board seems to have a hardware "peculiarity" confirmed under
@@ -203,7 +207,9 @@
 #define CONFIG_SYS_NAND_BASE          0x40000000
 
 /* Monitor at beginning of flash */
-#define CONFIG_FSL_ENV_IN_MMC
+#define CONFIG_FSL_ENV_IN_NAND
+/* #define CONFIG_FSL_ENV_IN_NAND */
+
 #define CONFIG_ENV_SECT_SIZE    (128 * 1024)
 #define CONFIG_ENV_SIZE		CONFIG_ENV_SECT_SIZE
 #if defined(CONFIG_FSL_ENV_IN_NAND)

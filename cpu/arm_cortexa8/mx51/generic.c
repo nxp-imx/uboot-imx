@@ -206,6 +206,8 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 		return __get_cspi_clk();
 	case MXC_FEC_CLK:
 		return __decode_pll(PLL1_CLK, CONFIG_MX51_HCLK_FREQ);
+	case MXC_ESDHC_CLK:
+		return __decode_pll(PLL3_CLK, CONFIG_MX51_HCLK_FREQ);
 	default:
 		break;
 	}

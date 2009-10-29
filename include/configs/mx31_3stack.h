@@ -50,9 +50,8 @@
 /*
  * Hardware drivers
  */
-
-#define CONFIG_MX31_UART	1
-#define CONFIG_SYS_MX31_UART1		1
+#define CONFIG_MXC_UART	1
+#define CONFIG_SYS_MX31_UART1   1
 
 #define CONFIG_MXC_SPI		1
 
@@ -99,9 +98,10 @@
 		"tftpboot ${loadaddr} ${tftp_server}:${kernel}; bootm\0"
 
 /* configure for smc91xx debug board ethernet */
-#define CONFIG_DRIVER_SMC911X          1
-#define CONFIG_DRIVER_SMC911X_16_BIT   1
-#define CONFIG_DRIVER_SMC911X_BASE     CS5_BASE
+#define CONFIG_NET_MULTI
+#define CONFIG_SMC911X          1
+#define CONFIG_SMC911X_16_BIT   1
+#define CONFIG_SMC911X_BASE     CS5_BASE
 
 #define CONFIG_ARP_TIMEOUT	200UL
 

@@ -71,8 +71,6 @@
  * SPI Configs
  * */
 #define CONFIG_FSL_SF		1
-#define CONFIG_CMD_SPI
-#define CONFIG_CMD_SF
 #define CONFIG_SPI_FLASH_IMX_ATMEL	1
 #define CONFIG_SPI_FLASH_CS	1
 #define CONFIG_IMX_SPI
@@ -115,6 +113,50 @@
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
+#define CONFIG_CMD_SPI
+#define CONFIG_CMD_SF
+#define CONFIG_CMD_MMC
+
+/*
+ * SPI Configs
+ * */
+#ifdef CONFIG_CMD_SF
+	#define CONFIG_FSL_SF		1
+	#define CONFIG_SPI_FLASH_IMX_ATMEL	1
+	#define CONFIG_SPI_FLASH_CS	1
+	#define CONFIG_IMX_SPI
+	#define CONFIG_IMX_SPI_PMIC
+	#define CONFIG_IMX_SPI_PMIC_CS 0
+
+	#define MAX_SPI_BYTES		(64 * 4)
+#endif
+
+/*
+ * MMC Configs
+ * */
+#ifdef CONFIG_CMD_MMC
+	#define CONFIG_MMC				1
+	#define CONFIG_MMC_BASE		0x0
+	#define CONFIG_GENERIC_MMC
+	#define CONFIG_IMX_MMC
+	#define CONFIG_DOS_PARTITION	1
+	#define CONFIG_CMD_FAT		1
+#endif
+/*
+ * Eth Configs
+ */
+#define CONFIG_HAS_ETH1
+#define CONFIG_NET_MULTI 1
+#define CONFIG_MXC_FEC
+#define CONFIG_MII
+#define CONFIG_DISCOVER_PHY
+
+#define CONFIG_FEC0_IOBASE	FEC_BASE_ADDR
+#define CONFIG_FEC0_PINMUX	-1
+#define CONFIG_FEC0_PHY_ADDR	0x1F
+#define CONFIG_FEC0_MIIBASE 	-1
+
+
 
 /* Enable below configure when supporting nand */
 #define CONFIG_CMD_ENV
@@ -205,13 +247,9 @@
 #define CONFIG_SYS_NAND_BASE          0x40000000
 
 /* Monitor at beginning of flash */
-#if defined(CONFIG_FSL_SF)
-	#define CONFIG_FSL_ENV_IN_SF
-#elif defined(CONFIG_FSL_MMC)
-	#define CONFIG_FSL_ENV_IN_MMC
-#elif defined(CONFIG_CMD_NAND)
-	#define CONFIG_FSL_ENV_IN_NAND
-#endif
+/* #define CONFIG_FSL_ENV_IN_SF */
+#define CONFIG_FSL_ENV_IN_MMC
+/* #define CONFIG_FSL_ENV_IN_NAND */
 
 #define CONFIG_ENV_SECT_SIZE    (128 * 1024)
 #define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE

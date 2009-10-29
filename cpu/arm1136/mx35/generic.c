@@ -24,6 +24,7 @@
  */
 
 #include <common.h>
+#include <asm/io.h>
 #include <asm/errno.h>
 #include <asm/arch/mx35.h>
 #include "crm_regs.h"
@@ -45,6 +46,12 @@ static int g_clk_mux_consumer[16] = {
 	-1, -1, CLK_CODE(4, 1, 0), CLK_CODE(1, 5, 0),
 	CLK_CODE(1, 8, 1), CLK_CODE(1, 6, 1), CLK_CODE(2, 4, 0), -1,
 	-1, -1, CLK_CODE(4, 2, 0), -1,
+};
+
+static int hsp_div_table[3][16] = {
+	{4, 3, 2, -1, -1, -1, 1, 5, 4, 3, 2, -1, -1, -1, 1, -1},
+	{-1, -1, -1, -1, -1, -1, -1, -1, 8, 6, 4, -1, -1, -1, 2, -1},
+	{3, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, -1, -1, -1, -1, -1},
 };
 
 static u32 __get_arm_div(u32 pdr0, u32 *fi, u32 *fd)
@@ -117,7 +124,7 @@ static u32 __get_mcu_main_clk(void)
 	u32 arm_div, fi, fd;
 	arm_div = __get_arm_div(__REG(CCM_BASE_ADDR + CLKCTL_PDR0), &fi, &fd);
 	fi *=
-	    __decode_pll(__REG(CCM_BASE_ADDR + CLKCTL_MPCTL),
+	    __decode_pll(__REG(MCU_PLL),
 			 CONFIG_MX35_HCLK_FREQ);
 	return fi / (arm_div * fd);
 }
@@ -160,7 +167,7 @@ static u32 __get_uart_clk(void)
 	if (__REG(CCM_BASE_ADDR + CLKCTL_PDR3) & MXC_CCM_PDR3_UART_M_U)
 		freq = __get_mcu_main_clk();
 	else
-		freq = __decode_pll(__REG(CCM_BASE_ADDR + CLKCTL_PPCTL),
+		freq = __decode_pll(__REG(PER_PLL),
 				    CONFIG_MX35_HCLK_FREQ);
 	freq /= ((CCM_GET_DIVIDER(pdr4,
 				  MXC_CCM_PDR4_UART_PRDF_MASK,
@@ -169,6 +176,150 @@ static u32 __get_uart_clk(void)
 				  MXC_CCM_PDR4_UART_PODF_MASK,
 				  MXC_CCM_PDR4_UART_PODF_OFFSET) + 1));
 	return freq;
+}
+
+unsigned int mxc_get_main_clock(enum mxc_main_clocks clk)
+{
+	u32 nfc_pdf, hsp_podf;
+	u32 pll, ret_val = 0, usb_prdf, usb_podf;
+
+	u32 reg = readl(CCM_BASE_ADDR + CLKCTL_PDR0);
+	u32 reg4 = readl(CCM_BASE_ADDR + CLKCTL_PDR4);
+
+	reg |= 0x1;
+
+	switch (clk) {
+	case CPU_CLK:
+		ret_val = __get_mcu_main_clk();
+		break;
+	case AHB_CLK:
+		ret_val = __get_mcu_main_clk();
+		break;
+	case HSP_CLK:
+		if (reg & CLKMODE_CONSUMER) {
+			hsp_podf = (reg >> 20) & 0x3;
+			pll = __get_mcu_main_clk();
+			hsp_podf = hsp_div_table[hsp_podf][(reg>>16)&0xF];
+			if(hsp_podf > 0 ) {
+				ret_val = pll / hsp_podf;
+			} else {
+				puts("mismatch HSP with ARM clock setting\n");
+				ret_val = 0;
+			}
+		} else {
+			ret_val = __get_mcu_main_clk();
+		}
+		break;
+	case IPG_CLK:
+		ret_val = __get_ipg_clk();;
+		break;
+	case IPG_PER_CLK:
+		ret_val = __get_ipg_per_clk();
+		break;
+	case NFC_CLK:
+		nfc_pdf = (reg4 >> 28) & 0xF;
+		pll = __get_mcu_main_clk();
+		/* AHB/nfc_pdf */
+		ret_val = pll / (nfc_pdf + 1);
+		break;
+	case USB_CLK:
+		usb_prdf = (reg4 >> 25) & 0x7;
+		usb_podf = (reg4 >> 22) & 0x7;
+		if (reg4 & 0x200)
+       		pll = __get_mcu_main_clk();
+ 		else
+       		pll = __decode_pll(__REG(PER_PLL), CONFIG_MX35_HCLK_FREQ);
+
+		ret_val = pll / ((usb_prdf + 1) * (usb_podf + 1));
+		break;
+	default:
+		printf("Unknown clock: %d\n", clk);
+		break;
+	}
+
+	return ret_val;
+}
+unsigned int mxc_get_peri_clock(enum mxc_peri_clocks clk)
+{
+	u32 ret_val = 0, pdf, pre_pdf, clk_sel;
+	u32 mpdr2 = readl(CCM_BASE_ADDR + CLKCTL_PDR2);
+	u32 mpdr3 = readl(CCM_BASE_ADDR + CLKCTL_PDR3);
+	u32 mpdr4 = readl(CCM_BASE_ADDR + CLKCTL_PDR4);
+
+	switch (clk) {
+	case UART1_BAUD:
+	case UART2_BAUD:
+	case UART3_BAUD:
+		clk_sel = mpdr3 & (1 << 14);
+		pre_pdf = (mpdr4 >> 13) & 0x7;
+		pdf = (mpdr4 >> 10) & 0x7;
+		ret_val = ((clk_sel != 0) ? mxc_get_main_clock(CPU_CLK) :
+		__decode_pll(__REG(PER_PLL), CONFIG_MX35_HCLK_FREQ)) / ((pre_pdf + 1) * (pdf + 1));
+		break;
+	case SSI1_BAUD:
+		pre_pdf = (mpdr2 >> 24) & 0x7;
+		pdf = mpdr2 & 0x3F;
+		clk_sel = mpdr2 & ( 1 << 6);
+		ret_val = ((clk_sel != 0) ? mxc_get_main_clock(CPU_CLK) :
+		__decode_pll(__REG(PER_PLL), CONFIG_MX35_HCLK_FREQ)) / ((pre_pdf + 1) * (pdf + 1));
+		break;
+	case SSI2_BAUD:
+		pre_pdf = (mpdr2 >> 27) & 0x7;
+		pdf = (mpdr2 >> 8)& 0x3F;
+		clk_sel = mpdr2 & ( 1 << 6);
+		ret_val = ((clk_sel != 0) ? mxc_get_main_clock(CPU_CLK) :
+		__decode_pll(__REG(PER_PLL), CONFIG_MX35_HCLK_FREQ)) / ((pre_pdf + 1) * (pdf + 1));
+		break;
+	case CSI_BAUD:
+		clk_sel = mpdr2 & (1 << 7);
+		pre_pdf = (mpdr2 >> 16) & 0x7;
+		pdf = (mpdr2 >> 19) & 0x7;
+		ret_val = ((clk_sel != 0) ? mxc_get_main_clock(CPU_CLK) :
+		__decode_pll(__REG(PER_PLL), CONFIG_MX35_HCLK_FREQ)) / ((pre_pdf + 1) * (pdf + 1));
+		break;
+	case MSHC_CLK:
+		pre_pdf = readl(CCM_BASE_ADDR + CLKCTL_PDR1);
+	 	clk_sel = (pre_pdf & 0x80);
+		pdf = (pre_pdf >> 22) & 0x3F;
+		pre_pdf = (pre_pdf >> 28) & 0x7;
+		ret_val = ((clk_sel != 0)? mxc_get_main_clock(CPU_CLK) :
+				__decode_pll(__REG(PER_PLL), CONFIG_MX35_HCLK_FREQ)) / ((pre_pdf + 1) * (pdf + 1));
+		break;
+	case ESDHC1_CLK:
+		clk_sel = mpdr3 & 0x40;
+		pre_pdf = mpdr3&0x7;
+		pdf = (mpdr3>>3)&0x7;
+		ret_val = ((clk_sel != 0)? mxc_get_main_clock(CPU_CLK) :
+				__decode_pll(__REG(PER_PLL), CONFIG_MX35_HCLK_FREQ)) / ((pre_pdf + 1) * (pdf + 1));
+		break;
+	case ESDHC2_CLK:
+		clk_sel = mpdr3 & 0x40;
+		pre_pdf = (mpdr3 >> 8)&0x7;
+		pdf = (mpdr3 >> 11)&0x7;
+		ret_val = ((clk_sel != 0)? mxc_get_main_clock(CPU_CLK) :
+				__decode_pll(__REG(PER_PLL), CONFIG_MX35_HCLK_FREQ)) / ((pre_pdf + 1) * (pdf + 1));
+		break;
+	case ESDHC3_CLK:
+		clk_sel = mpdr3 & 0x40;
+		pre_pdf = (mpdr3 >> 16)&0x7;
+		pdf = (mpdr3 >> 19)&0x7;
+		ret_val = ((clk_sel != 0)? mxc_get_main_clock(CPU_CLK) :
+				__decode_pll(__REG(PER_PLL), CONFIG_MX35_HCLK_FREQ)) / ((pre_pdf + 1) * (pdf + 1));
+		break;
+	case SPDIF_CLK:
+		clk_sel = mpdr3 & 0x400000;
+		pre_pdf = (mpdr3 >> 29)&0x7;
+		pdf = (mpdr3 >> 23)&0x3F;
+		ret_val = ((clk_sel != 0)? mxc_get_main_clock(CPU_CLK) :
+				__decode_pll(__REG(PER_PLL), CONFIG_MX35_HCLK_FREQ)) / ((pre_pdf + 1) * (pdf + 1));
+		break;
+	default:
+		printf("%s(): This clock: %d not supported yet \n",
+				__FUNCTION__, clk);
+		break;
+	}
+
+	return ret_val;
 }
 
 unsigned int mxc_get_clock(enum mxc_clock clk)
@@ -184,6 +335,10 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 		return __get_ipg_per_clk();
 	case MXC_UART_CLK:
 		return __get_uart_clk();
+	case MXC_ESDHC_CLK:
+		return mxc_get_peri_clock(ESDHC1_CLK);
+	case MXC_USB_CLK:
+		return mxc_get_main_clock(USB_CLK);
 	}
 	return -1;
 }

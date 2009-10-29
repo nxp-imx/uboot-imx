@@ -147,45 +147,74 @@ int env_init(void)
 int saveenv(void)
 {
 	size_t total;
-	int ret = 0;
+	uint blk_start = 0, blk_cnt = 0, n = 0;
+	struct mmc *mmc = find_mmc_device(0);
 
 	env_ptr->flags++;
 	total = CONFIG_ENV_SIZE;
 
+	if (!mmc) {
+		puts("No MMC card found\n");
+		return;
+	}
+
+	if (mmc_init(mmc)) {
+		puts("MMC init failed\n");
+		return 1;
+	}
+
 	if (gd->env_valid == 1) {
 		puts("Writing to redundant MMC... ");
-		ret = mmc_write((u_char *)env_ptr,
-				CONFIG_ENV_OFFSET_REDUND, total);
+		blk_start = (CONFIG_ENV_OFFSET_REDUND % 512) ? \
+			((CONFIG_ENV_OFFSET_REDUND / 512) + 1) : (CONFIG_ENV_OFFSET_REDUND / 512);
+		blk_cnt = (total % 512) ? ((total / 512) + 1) : (total / 512);
+		n = mmc->block_dev.block_write(0, blk_start , blk_cnt, (u_char *)env_ptr);
 	} else {
 		puts("Writing to MMC... ");
-		ret = mmc_write((u_char *)env_ptr,
-				CONFIG_ENV_OFFSET, total);
+		blk_start = (CONFIG_ENV_OFFSET % 512) ? \
+			((CONFIG_ENV_OFFSET / 512) + 1) : (CONFIG_ENV_OFFSET / 512);
+		blk_cnt = (total % 512) ? ((total / 512) + 1) : (total / 512);
+		n = mmc->block_dev.block_write(0, blk_start , blk_cnt, (u_char *)env_ptr);
 	}
-	if (ret || total != CONFIG_ENV_SIZE) {
+	if ((n != blk_cnt) || (total != CONFIG_ENV_SIZE)) {
 		puts("failed\n");
 		return 1;
 	}
 
 	puts("done\n");
 	gd->env_valid = (gd->env_valid == 2 ? 1 : 2);
-	return ret;
+	return 0;
 }
 #else /* ! CONFIG_ENV_OFFSET_REDUND */
 int saveenv(void)
 {
 	size_t total;
-	int ret = 0;
+	uint blk_start = 0, blk_cnt = 0, n = 0;
+	struct mmc *mmc = find_mmc_device(0);
+
+	if (!mmc) {
+		puts("No MMC card found\n");
+		return;
+	}
+
+	if (mmc_init(mmc)) {
+		puts("MMC init failed\n");
+		return 1;
+	}
 
 	puts("Writing to MMC... ");
 	total = CONFIG_ENV_SIZE;
-	ret = mmc_write((u_char *)env_ptr, CONFIG_ENV_OFFSET, total);
-	if (ret || total != CONFIG_ENV_SIZE) {
+	blk_start = (CONFIG_ENV_OFFSET % 512) ? \
+			((CONFIG_ENV_OFFSET / 512) + 1) : (CONFIG_ENV_OFFSET / 512);
+	blk_cnt = (total % 512) ? ((total / 512) + 1) : (total / 512);
+	n = mmc->block_dev.block_write(0, blk_start , blk_cnt, (u_char *)env_ptr);
+	if ((n != blk_cnt) || (total != CONFIG_ENV_SIZE)) {
 		puts("failed\n");
 		return 1;
 	}
 
 	puts("done\n");
-	return ret;
+	return 0;
 }
 #endif /* CONFIG_ENV_OFFSET_REDUND */
 #endif /* CMD_SAVEENV */
@@ -197,11 +226,16 @@ void env_relocate_spec(void)
 	size_t total;
 	int crc1_ok = 0, crc2_ok = 0;
 	env_t *tmp_env1 = NULL, *tmp_env2 = NULL;
+	uint blk_start = 0, blk_cnt = 0, n = 0;
+	struct mmc *mmc = find_mmc_device(0);
 
-	puts("Initialing MMC card... \n");
-
-	if (mmc_init(1) != 0) {
+	if (!mmc) {
 		puts("No MMC card found\n");
+		return;
+	}
+
+	if (mmc_init(mmc)) {
+		puts("MMC init failed\n");
 		goto use_default;
 	}
 
@@ -222,14 +256,28 @@ void env_relocate_spec(void)
 	memset(tmp_env2, 0, CONFIG_ENV_SIZE);
 
 	puts("Loading environment from mmc... ");
-	if (mmc_read(CONFIG_ENV_OFFSET, (uchar *)tmp_env1, total)) {
+
+	blk_start = (CONFIG_ENV_OFFSET % 512) ? \
+			((CONFIG_ENV_OFFSET / 512) + 1) : (CONFIG_ENV_OFFSET / 512);
+	blk_cnt = (total % 512) ? ((total / 512) + 1) : (total / 512);
+
+	n = mmc->block_dev.block_read(0, blk_start, blk_cnt, (uchar *)tmp_env1);
+	
+	if (n != blk_cnt) {
 		puts("failed\n");
 		goto use_default;
 	}
 	puts("done\n");
 
 	puts("Loading redundant environment from mmc... ");
-	if (mmc_read(CONFIG_ENV_OFFSET_REDUND, (uchar *)tmp_env2, total)) {
+
+	blk_start = (CONFIG_ENV_OFFSET_REDUND % 512) ? \
+			((CONFIG_ENV_OFFSET_REDUND / 512) + 1) : (CONFIG_ENV_OFFSET_REDUND / 512);
+	blk_cnt = (total % 512) ? ((total / 512) + 1) : (total / 512);
+
+	n = mmc->block_dev.block_read(0, blk_start, blk_cnt, (uchar *)tmp_env2);
+
+	if (n != blk_cnt) {
 		puts("failed\n");
 		goto use_default;
 	}
@@ -287,16 +335,28 @@ void env_relocate_spec(void)
 {
 #if !defined(ENV_IS_EMBEDDED)
 	size_t total;
-	int ret;
+	uint blk_start = 0, blk_cnt = 0, n = 0;
+	struct mmc *mmc = find_mmc_device(0);
 
-	if (mmc_init(1) != 0) {
+	if (!mmc) {
 		puts("No MMC card found\n");
+		return;	
+	}
+
+	if (mmc_init(mmc)) {
+		puts("MMC init failed\n");
 		return;
 	}
 
 	total = CONFIG_ENV_SIZE;
-	ret = mmc_read(CONFIG_ENV_OFFSET, (u_char *)env_ptr, total);
-	if (ret || total != CONFIG_ENV_SIZE)
+
+	blk_start = (CONFIG_ENV_OFFSET % 512) ? \
+			((CONFIG_ENV_OFFSET / 512) + 1) : (CONFIG_ENV_OFFSET / 512);
+	blk_cnt = (total % 512) ? ((total / 512) + 1) : (total / 512);
+
+	n = mmc->block_dev.block_read(0, blk_start, blk_cnt, (uchar *)env_ptr);
+	
+	if ((n != blk_cnt) || (total != CONFIG_ENV_SIZE))
 		return use_default();
 
 	if (crc32(0, env_ptr->data, ENV_SIZE) != env_ptr->crc)

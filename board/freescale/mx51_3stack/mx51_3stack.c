@@ -32,12 +32,12 @@
 #include <mxc_keyb.h>
 #include <asm/arch/keypad.h>
 #include "board-mx51_3stack.h"
+#include <netdev.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
 u32	mx51_io_base_addr;
-volatile u32 *esdhc_base_pointer;
 
 u32 get_board_rev(void)
 {
@@ -349,20 +349,26 @@ int checkboard(void)
 	return 0;
 }
 
+#if defined(CONFIG_SMC911X)
+extern int smc911x_initialize(u8 dev_num, int base_addr);
+#endif
+
 #ifdef CONFIG_NET_MULTI
 int board_eth_init(bd_t *bis)
 {
 	int rc = -ENODEV;
-#if defined(CONFIG_DRIVER_SMC911X)
-	 rc = smc911x_initialize(bis);
+#if defined(CONFIG_SMC911X)
+	 rc = smc911x_initialize(0, CONFIG_SMC911X_BASE);
 #endif
 	return rc;
 }
 #endif
 
-#ifdef CONFIG_FSL_MMC
+#ifdef CONFIG_CMD_MMC
 
-int sdhc_init(void)
+u32 *imx_esdhc_base_addr;
+
+int esdhc_gpio_init(void)
 {
 	u32 interface_esdhc = 0;
 	s32 status = 0;
@@ -372,7 +378,7 @@ int sdhc_init(void)
 	switch (interface_esdhc) {
 	case 0:
 
-		esdhc_base_pointer = (volatile u32 *)MMC_SDHC1_BASE_ADDR;
+		imx_esdhc_base_addr = (u32 *)MMC_SDHC1_BASE_ADDR;
 
 		mxc_request_iomux(MX51_PIN_SD1_CMD,
 			  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
@@ -432,9 +438,16 @@ int sdhc_init(void)
 		break;
 	}
 
-	return status = 1;
+	return status;
 }
 
+int board_mmc_init(void)
+{
+	if (!esdhc_gpio_init())
+		return fsl_esdhc_mmc_init(gd->bd);
+	else
+		return -1;
+}
 #endif
 
 #if defined(CONFIG_MXC_KPD)

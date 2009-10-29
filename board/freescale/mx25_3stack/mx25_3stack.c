@@ -35,7 +35,6 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
-volatile u32 *esdhc_base_pointer;
 
 u32 get_board_rev(void)
 {
@@ -67,9 +66,11 @@ int dram_init(void)
 	return 0;
 }
 
-#ifdef CONFIG_FSL_MMC
+#ifdef CONFIG_CMD_MMC
 
-int sdhc_init(void)
+u32 *imx_esdhc_base_addr;
+
+int esdhc_gpio_init(void)
 {
 	u32 interface_esdhc = 0, val = 0;
 
@@ -77,7 +78,7 @@ int sdhc_init(void)
 
 	switch (interface_esdhc) {
 	case 0:
-		esdhc_base_pointer = (volatile u32 *)MMC_SDHC1_BASE;
+		imx_esdhc_base_addr = (u32 *)MMC_SDHC1_BASE;
 		/* Pins */
 		writel(0x10, IOMUXC_BASE + 0x190);	/* SD1_CMD */
 		writel(0x10, IOMUXC_BASE + 0x194);	/* SD1_CLK */
@@ -114,7 +115,7 @@ int sdhc_init(void)
 		writel(val, GPIO1_BASE + GPIO_GDIR);
 		break;
 	case 1:
-		esdhc_base_pointer = (volatile u32 *)MMC_SDHC2_BASE;
+		imx_esdhc_base_addr = (u32 *)MMC_SDHC2_BASE;
 		/* Pins */
 		writel(0x16, IOMUXC_BASE + 0x0e8);	/* LD8 (SD1_CMD) */
 		writel(0x16, IOMUXC_BASE + 0x0ec);	/* LD9 (SD1_CLK) */
@@ -143,6 +144,14 @@ int sdhc_init(void)
 		break;
 	}
 	return 0;
+}
+
+int board_mmc_init(void)
+{
+	if (!esdhc_gpio_init())
+		return fsl_esdhc_mmc_init(gd->bd);
+	else
+		return -1;
 }
 #endif
 
@@ -264,8 +273,8 @@ int checkboard(void)
 int board_eth_init(bd_t *bis)
 {
 	int rc = -ENODEV;
-#if defined(CONFIG_DRIVER_SMC911X)
-	rc = smc911x_initialize(bis);
+#if defined(CONFIG_SMC911X)
+	rc = smc911x_initialize(0, CONFIG_SMC911X_BASE);
 #endif
 	return rc;
 }

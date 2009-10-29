@@ -96,17 +96,21 @@
 /* #define CONFIG_CMD_SPI */
 /* #define CONFIG_CMD_DATE */
 #define CONFIG_CMD_NAND
+/* #define CONFIG_CMD_MMC */
 
 /*
  * MMC Configs
  * */
 /*
-#define CONFIG_FSL_MMC
-#define CONFIG_MMC
-#define CONFIG_CMD_MMC
-#define CONFIG_DOS_PARTITION
-#define CONFIG_CMD_FAT
-#define CONFIG_MMC_BASE       0x0  */
+#ifdef CONFIG_CMD_MMC
+	#define CONFIG_MMC				1
+	#define CONFIG_MMC_BASE		0x0
+	#define CONFIG_GENERIC_MMC
+	#define CONFIG_IMX_MMC
+	#define CONFIG_DOS_PARTITION	1
+	#define CONFIG_CMD_FAT		1
+#endif
+*/
 
 /* Disabled due to compilation errors in cmd_bootm.c (IMLS seems to require
  * that CONFIG_NO_FLASH is undefined).
@@ -128,9 +132,9 @@
 		"tftpboot 0x81000000 uImage; bootm\0"
 
 /*Support LAN9217*/
-/*#define CONFIG_DRIVER_SMC911X   1
-#define CONFIG_DRIVER_SMC911X_16_BIT 1
-#define CONFIG_DRIVER_SMC911X_BASE CS5_BASE*/
+/*#define CONFIG_SMC911X   1
+#define CONFIG_SMC911X_16_BIT 1
+#define CONFIG_SMC911X_BASE CS5_BASE*/
 
 /*#define CONFIG_HAS_ETH1*/
 #define CONFIG_CMD_NET
@@ -189,13 +193,8 @@
 #endif
 
 /* Monitor at beginning of flash */
-#if defined(CONFIG_FSL_SF)
-	#define CONFIG_FSL_ENV_IN_SF
-#elif defined(CONFIG_FSL_MMC)
-	#define CONFIG_FSL_ENV_IN_MMC
-#elif defined(CONFIG_CMD_NAND)
-	#define CONFIG_FSL_ENV_IN_NAND
-#endif
+/* #define CONFIG_FSL_ENV_IN_MMC */
+#define CONFIG_FSL_ENV_IN_NAND
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
@@ -205,10 +204,6 @@
 	#define CONFIG_ENV_OFFSET	0x80000
 #elif defined(CONFIG_FSL_ENV_IN_MMC)
 	#define CONFIG_ENV_IS_IN_MMC	1
-	#define CONFIG_ENV_OFFSET	(768 * 1024)
-#elif defined(CONFIG_FSL_ENV_IN_SF)
-	#define CONFIG_ENV_IS_IN_SPI_FLASH	1
-	#define CONFIG_ENV_SPI_CS		1
 	#define CONFIG_ENV_OFFSET	(768 * 1024)
 #else
 	#define CONFIG_ENV_IS_NOWHERE	1

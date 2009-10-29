@@ -393,6 +393,7 @@ static inline void smc911x_reg_write(struct eth_device *dev,
 #define CHIP_9216	0x116a
 #define CHIP_9217	0x117a
 #define CHIP_9218	0x118a
+#define CHIP_9220	0x9220
 #define CHIP_9221	0x9221
 
 struct chip_id {
@@ -410,6 +411,7 @@ static const struct chip_id chip_ids[] =  {
 	{ CHIP_9216, "LAN9216" },
 	{ CHIP_9217, "LAN9217" },
 	{ CHIP_9218, "LAN9218" },
+	{ CHIP_9220, "LAN9220" },
 	{ CHIP_9221, "LAN9221" },
 	{ 0, NULL },
 };
@@ -441,7 +443,10 @@ static int smc911x_detect_chip(struct eth_device *dev)
 	unsigned long val, i;
 
 	val = smc911x_reg_read(dev, BYTE_TEST);
-	if (val != 0x87654321) {
+	if (val == 0xffffffff) {
+		/* Special case -- no chip present */
+		return -1;
+	} else if (val != 0x87654321) {
 		printf(DRIVERNAME ": Invalid chip endian 0x%08lx\n", val);
 		return -1;
 	}
@@ -455,7 +460,7 @@ static int smc911x_detect_chip(struct eth_device *dev)
 		return -1;
 	}
 
-	printf(DRIVERNAME ": detected %s controller\n", chip_ids[i].name);
+	dev->priv = (void *)&chip_ids[i];
 
 	return 0;
 }

@@ -43,17 +43,29 @@
 static ulong timestamp;
 static ulong lastinc;
 
-/* nothing really to do with interrupts, just starts up a counter. */
-int interrupt_init(void)
+static inline void setup_gpt()
 {
 	int i;
+	static int init_done;
+
+	if (init_done)
+	    return;
+
+	init_done = 1;
 
 	/* setup GP Timer 1 */
 	GPTCR = GPTCR_SWR;
 	for (i = 0; i < 100; i++)
-		GPTCR = 0; /* We have no udelay by now */
-	GPTPR = 0; /* 32Khz */
-	GPTCR |= GPTCR_CLKSOURCE_32 | GPTCR_TEN; /* Freerun Mode, PERCLK1 in */
+		GPTCR = 0;      /* We have no udelay by now */
+	GPTPR = 0;              /* 32Khz */
+	/* Freerun Mode, PERCLK1 input */
+	GPTCR |= GPTCR_CLKSOURCE_32 | GPTCR_TEN;
+}
+
+/* nothing really to do with interrupts, just starts up a counter. */
+int timer_init(void)
+{
+	setup_gpt();
 
 	return 0;
 }
@@ -96,6 +108,8 @@ void set_timer(ulong t)
 void udelay(unsigned long usec)
 {
 	ulong tmo, tmp;
+
+	setup_gpt();
 
 	if (usec >= 1000) {	/* if "big" number, spread normalize to secs */
 		tmo = usec / 1000;	/* normalize usec to ticks per sec */

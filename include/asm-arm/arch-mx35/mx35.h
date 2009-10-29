@@ -232,14 +232,47 @@
 
 #ifndef __ASSEMBLER__
 
+
 enum mxc_clock {
 MXC_ARM_CLK = 0,
 MXC_AHB_CLK,
 MXC_IPG_CLK,
 MXC_IPG_PERCLK,
 MXC_UART_CLK,
+MXC_ESDHC_CLK,
+MXC_USB_CLK,
 };
 
+enum plls {
+	MCU_PLL = CCM_BASE_ADDR + CLKCTL_MPCTL,
+	PER_PLL = CCM_BASE_ADDR + CLKCTL_PPCTL,
+};
+
+enum mxc_main_clocks {
+	CPU_CLK,
+	AHB_CLK,
+	IPG_CLK,
+	IPG_PER_CLK,
+	NFC_CLK,
+	USB_CLK,
+	HSP_CLK,
+};
+
+enum mxc_peri_clocks {
+	UART1_BAUD,
+	UART2_BAUD,
+	UART3_BAUD,
+	SSI1_BAUD,
+	SSI2_BAUD,
+	CSI_BAUD,
+	MSHC_CLK,
+	ESDHC1_CLK,
+	ESDHC2_CLK,
+	ESDHC3_CLK,
+	SPDIF_CLK,
+	SPI1_CLK,
+	SPI2_CLK,
+};
 /*!
  * NFMS bit in RCSR register for pagesize of nandflash
  */

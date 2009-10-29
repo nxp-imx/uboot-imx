@@ -523,8 +523,8 @@ int eth_initialize(bd_t *bis)
 #if defined(CONFIG_DRIVER_NS7520_ETHERNET)
 	ns7520_miiphy_initialize(bis);
 #endif
-#if defined(CONFIG_DRIVER_SMC911X)
-	smc911x_initialize(bis);
+#if defined(CONFIG_SMC911X)
+	smc911x_initialize(0, CONFIG_SMC911X_BASE);
 #endif
 	return 0;
 }

@@ -86,6 +86,8 @@
 /*#define CONFIG_CMD_SPI*/
 /*#define CONFIG_CMD_DATE*/
 /*#define CONFIG_CMD_NAND*/
+#define CONFIG_CMD_ENV
+#define CONFIG_CMD_MMC
 
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_MII
@@ -114,9 +116,9 @@
 			"setenv filesize; saveenv\0"
 
 /*Support LAN9217*/
-#define CONFIG_DRIVER_SMC911X	1
-#define CONFIG_DRIVER_SMC911X_16_BIT 1
-#define CONFIG_DRIVER_SMC911X_BASE CS5_BASE_ADDR
+#define CONFIG_SMC911X	1
+#define CONFIG_SMC911X_16_BIT 1
+#define CONFIG_SMC911X_BASE CS5_BASE_ADDR
 
 #define CONFIG_HAS_ETH1
 #define CONFIG_NET_MULTI 1
@@ -181,9 +183,14 @@
 /*
  * MMC Configs
  * */
-#define CONFIG_FSL_MMC
-#define CONFIG_MMC              1
-#define CONFIG_CMD_MMC
+#ifdef CONFIG_CMD_MMC
+	#define CONFIG_MMC				1
+	#define CONFIG_MMC_BASE		0x0
+	#define CONFIG_GENERIC_MMC
+	#define CONFIG_IMX_MMC
+	#define CONFIG_DOS_PARTITION	1
+	#define CONFIG_CMD_FAT		1
+#endif
 
 #define CONFIG_FLASH_HEADER     1
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
@@ -191,7 +198,6 @@
 
 #define CONFIG_DOS_PARTITION    1
 #define CONFIG_CMD_FAT          1
-#define CONFIG_MMC_BASE         0x0
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization

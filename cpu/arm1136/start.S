@@ -130,6 +130,7 @@ next:
 #endif
 	b	setup_env
 
+#ifndef CONFIG_SKIP_LOWLEVEL_INIT
 /*
  *************************************************************************
  *
@@ -166,7 +167,7 @@ cpu_init_crit:
 	bl	lowlevel_init	/* go setup pll,mux,memory */
 	mov	lr, ip		/* restore link */
 	mov	pc, lr		/* back to my caller */
-
+#endif /* CONFIG_SKIP_LOWLEVEL_INIT */
 
 .section ".text.setup", "ax"
 
@@ -262,45 +263,6 @@ _start_armboot: .word start_oneboot
 _start_armboot: .word start_armboot
 #endif /* CONFIG_ONENAND_IPL */
 #endif /* CONFIG_NAND_SPL */
-
-/*
- *************************************************************************
- *
- * CPU_init_critical registers
- *
- * setup important registers
- * setup memory timing
- *
- *************************************************************************
- */
-#ifndef CONFIG_SKIP_LOWLEVEL_INIT
-cpu_init_crit:
-	/*
-	 * flush v4 I/D caches
-	 */
-	mov	r0, #0
-	mcr	p15, 0, r0, c7, c7, 0	/* flush v3/v4 cache */
-	mcr	p15, 0, r0, c8, c7, 0	/* flush v4 TLB */
-
-	/*
-	 * disable MMU stuff and caches
-	 */
-	mrc	p15, 0, r0, c1, c0, 0
-	bic	r0, r0, #0x00002300	@ clear bits 13, 9:8 (--V- --RS)
-	bic	r0, r0, #0x00000087	@ clear bits 7, 2:0 (B--- -CAM)
-	orr	r0, r0, #0x00000002	@ set bit 2 (A) Align
-	orr	r0, r0, #0x00001000	@ set bit 12 (I) I-Cache
-	mcr	p15, 0, r0, c1, c0, 0
-
-	/*
-	 * Jump to board specific initialization... The Mask ROM will have already initialized
-	 * basic memory.  Go here to bump up clock rate and handle wake up conditions.
-	 */
-	mov	ip, lr		/* persevere link reg across call */
-	bl	lowlevel_init	/* go setup pll,mux,memory */
-	mov	lr, ip		/* restore link */
-	mov	pc, lr		/* back to my caller */
-#endif /* CONFIG_SKIP_LOWLEVEL_INIT */
 
 #ifndef CONFIG_PRELOADER
 /*

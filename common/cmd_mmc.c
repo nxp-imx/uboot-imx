@@ -127,9 +127,10 @@ int do_mmcinfo (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	mmc = find_mmc_device(dev_num);
 
 	if (mmc) {
-		mmc_init(mmc);
-
-		print_mmcinfo(mmc);
+		if (mmc_init(mmc))
+			puts("MMC card init failed!\n");
+		else
+			print_mmcinfo(mmc);
 	}
 
 	return 0;

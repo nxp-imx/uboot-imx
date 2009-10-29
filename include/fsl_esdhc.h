@@ -30,9 +30,11 @@
 
 /* FSL eSDHC-specific constants */
 #define SYSCTL			0x0002e02c
+#define SYSCTL_RSTA		0x01000000
 #define SYSCTL_INITA		0x08000000
 #define SYSCTL_TIMEOUT_MASK	0x000f0000
-#define SYSCTL_CLOCK_MASK	0x00000fff
+#define SYSCTL_CLOCK_MASK	0x0000fff0
+#define SYSCTL_SDCLKEN		0x00000008
 #define SYSCTL_PEREN		0x00000004
 #define SYSCTL_HCKEN		0x00000002
 #define SYSCTL_IPGEN		0x00000001
@@ -86,6 +88,7 @@
 #define PRSSTAT_CDPL		(0x00040000)
 #define PRSSTAT_CINS		(0x00010000)
 #define PRSSTAT_BREN		(0x00000800)
+#define PRSSTAT_SDSTB		(0x00000008)
 #define PRSSTAT_DLA		(0x00000004)
 #define PRSSTAT_CICHB		(0x00000002)
 #define PRSSTAT_CIDHB		(0x00000001)
@@ -94,6 +97,7 @@
 #define PROCTL_INIT		0x00000020
 #define PROCTL_DTW_4		0x00000002
 #define PROCTL_DTW_8		0x00000004
+#define PROCTL_D3CD		0x00000008
 
 #define CMDARG			0x0002e008
 
@@ -142,7 +146,7 @@
 #define ESDHC_HOSTCAPBLT_DMAS	0x00400000
 #define ESDHC_HOSTCAPBLT_HSS	0x00200000
 
-#ifdef CONFIG_FSL_ESDHC
+#if defined(CONFIG_FSL_ESDHC) || defined(CONFIG_IMX_MMC)
 int fsl_esdhc_mmc_init(bd_t *bis);
 void fdt_fixup_esdhc(void *blob, bd_t *bd);
 #else

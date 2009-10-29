@@ -34,12 +34,15 @@
 #include "board-imx51.h"
 #include <asm/arch/imx_spi.h>
 #include <asm/arch/imx_spi_pmic.h>
+#include <fsl_esdhc.h>
+
+#include <part.h>
+#include <ext2fs.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
 u32	mx51_io_base_addr;
-volatile u32 *esdhc_base_pointer;
 
 u32 get_board_rev(void)
 {
@@ -367,34 +370,34 @@ static void power_init(void)
 
 #ifdef CONFIG_NET_MULTI
 
-#if defined(CONFIG_DRIVER_SMC911X)
-extern int smc911x_initialize(bd_t *bis);
-#endif
 int board_eth_init(bd_t *bis)
 {
 	int rc = -ENODEV;
-
-#if defined(CONFIG_DRIVER_SMC911X)
-	rc = smc911x_initialize(bis);
-#endif
 
 	return rc;
 }
 #endif
 
-#ifdef CONFIG_FSL_MMC
+#ifdef CONFIG_CMD_MMC
 
-int sdhc_init(void)
+u32 *imx_esdhc_base_addr;
+
+int esdhc_gpio_init(void)
 {
 	u32 interface_esdhc = 0;
-	s32 status = 0;
+        s32 status = 0;
+        u32 pad = 0;
 
-	interface_esdhc = (readl(SRC_BASE_ADDR + 0x4) & (0x00180000)) >> 19;
+        interface_esdhc = (readl(SRC_BASE_ADDR + 0x4) & (0x00180000)) >> 19;
+
+	printf("interface_esdhc: %d\n", interface_esdhc);
 
 	switch (interface_esdhc) {
-	case 0:
+        case 0:
+		imx_esdhc_base_addr = (u32 *)MMC_SDHC1_BASE_ADDR;
 
-		esdhc_base_pointer = (volatile u32 *)MMC_SDHC1_BASE_ADDR;
+		pad = PAD_CTL_PUE_KEEPER | PAD_CTL_PKE_ENABLE | PAD_CTL_DRV_HIGH |
+		                PAD_CTL_47K_PU | PAD_CTL_SRE_FAST;
 
 		mxc_request_iomux(MX51_PIN_SD1_CMD,
 			  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
@@ -409,52 +412,58 @@ int sdhc_init(void)
 				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
 		mxc_request_iomux(MX51_PIN_SD1_DATA3,
 				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
-		mxc_iomux_set_pad(MX51_PIN_SD1_CMD,
-				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
-				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
-				PAD_CTL_PUE_PULL |
-				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
-		mxc_iomux_set_pad(MX51_PIN_SD1_CLK,
-				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
-				PAD_CTL_HYS_NONE | PAD_CTL_47K_PU |
-				PAD_CTL_PUE_PULL |
-				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
-		mxc_iomux_set_pad(MX51_PIN_SD1_DATA0,
-				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
-				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
-				PAD_CTL_PUE_PULL |
-				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
-		mxc_iomux_set_pad(MX51_PIN_SD1_DATA1,
-				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
-				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
-				PAD_CTL_PUE_PULL |
-				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
-		mxc_iomux_set_pad(MX51_PIN_SD1_DATA2,
-				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
-				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
-				PAD_CTL_PUE_PULL |
-				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
-		mxc_iomux_set_pad(MX51_PIN_SD1_DATA3,
-				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
-				PAD_CTL_HYS_ENABLE | PAD_CTL_100K_PD |
-				PAD_CTL_PUE_PULL |
-				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD1_CMD, pad);
+		mxc_iomux_set_pad(MX51_PIN_SD1_CLK, pad);
+		mxc_iomux_set_pad(MX51_PIN_SD1_DATA0, pad);
+		mxc_iomux_set_pad(MX51_PIN_SD1_DATA1, pad);
+		mxc_iomux_set_pad(MX51_PIN_SD1_DATA2, pad);
+		mxc_iomux_set_pad(MX51_PIN_SD1_DATA3, pad);
 		break;
 	case 1:
-		status = 1;
+		imx_esdhc_base_addr = (u32 *)MMC_SDHC2_BASE_ADDR;
+
+		pad = PAD_CTL_DRV_MAX | PAD_CTL_22K_PU | PAD_CTL_SRE_FAST;
+
+		mxc_request_iomux(MX51_PIN_SD2_CMD,
+			  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_request_iomux(MX51_PIN_SD2_CLK,
+			  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+
+		mxc_request_iomux(MX51_PIN_SD2_DATA0,
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_request_iomux(MX51_PIN_SD2_DATA1,
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_request_iomux(MX51_PIN_SD2_DATA2,
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_request_iomux(MX51_PIN_SD2_DATA3,
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_iomux_set_pad(MX51_PIN_SD2_CMD, pad);
+		mxc_iomux_set_pad(MX51_PIN_SD2_CLK, pad);
+		mxc_iomux_set_pad(MX51_PIN_SD2_DATA0, pad);
+		mxc_iomux_set_pad(MX51_PIN_SD2_DATA1, pad);
+		mxc_iomux_set_pad(MX51_PIN_SD2_DATA2, pad);
+		mxc_iomux_set_pad(MX51_PIN_SD2_DATA3, pad);
 		break;
 	case 2:
-		status = 1;
+		status = -1;
 		break;
 	case 3:
-		status = 1;
+		status = -1;
 		break;
 	default:
-		status = 1;
+		status = -1;
 		break;
 	}
 
-	return status = 1;
+	return status;
+}
+
+int board_mmc_init(void)
+{
+	if (!esdhc_gpio_init())
+		return fsl_esdhc_mmc_init(gd->bd);
+	else
+		return -1;
 }
 
 #endif
@@ -571,6 +580,66 @@ int board_late_init(void)
 		for (i = 0; i < 100; ++i)
 			udelay(10000);
 	}
+
+	/* Check CONFIG_ANDROID_RECOVERY_CMD_FILE to 
+	judge if need to enter recovery mode */
+	{
+		char *cmd_file_patch;
+		block_dev_desc_t *dev_desc = NULL;
+		disk_partition_t info;
+		ulong part_length;
+		int filelen;
+
+		cmd_file_patch = getenv("android_recovery_cmd_file");
+		if (!cmd_file_patch)
+			cmd_file_patch = CONFIG_ANDROID_RECOVERY_CMD_FILE;
+
+		dev_desc = get_dev("mmc", 0);
+
+		if (dev_desc==NULL) {
+			puts("** Block device MMC 0 not supported\n");
+			return 1;
+		}
+
+		if (get_partition_info (dev_desc, 
+				CONFIG_ANDROID_CACHE_PARTITION,
+				&info)) {
+			printf("** Bad partition %d **\n",
+				CONFIG_ANDROID_CACHE_PARTITION);
+			return 1;
+		}
+
+		if ((part_length = \
+			ext2fs_set_blk_dev(dev_desc, 
+				CONFIG_ANDROID_CACHE_PARTITION)) == 0) {
+			printf("** Bad partition - mmc 0:%d **\n",
+				CONFIG_ANDROID_CACHE_PARTITION);
+			ext2fs_close();
+			return 1;
+		}
+
+		if (!ext2fs_mount(part_length)) {
+			printf ("** Bad ext2 partition or disk - mmc 0:%d **\n",
+				CONFIG_ANDROID_CACHE_PARTITION);
+			ext2fs_close();
+			return 1;
+		}
+
+		filelen = ext2fs_open(CONFIG_ANDROID_RECOVERY_CMD_FILE);
+
+		if (filelen > 0) {
+			puts("Recovery command file founded, switch to recovery mode!\n");
+			/* Set env to recovery mode */
+			setenv("bootargs_android", CONFIG_ANDROID_RECOVERY_BOOTARGS);
+			setenv("bootcmd_android", CONFIG_ANDROID_RECOVERY_BOOTCMD);
+			setenv("bootcmd", "run bootcmd_android");
+		} else {
+			puts("Recovery command file not found, normal boot!\n");
+		}
+
+		ext2fs_close();
+	}
+	
 #endif
 
 	return 0;
