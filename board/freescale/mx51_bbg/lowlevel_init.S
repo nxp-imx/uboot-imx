@@ -292,6 +292,11 @@ lowlevel_init:
 	msr spsr, r1            /* restore old spsr */
 #endif
 
+	/* ARM errata ID #468414 */
+	mrc 15, 0, r1, c1, c0, 1
+	orr r1, r1, #(1 << 5)    /* enable L1NEON bit */
+	mcr 15, 0, r1, c1, c0, 1
+
 	init_l2cc
 
 	init_aips

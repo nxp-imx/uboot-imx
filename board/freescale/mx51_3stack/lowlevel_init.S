@@ -274,6 +274,11 @@ lowlevel_init:
 #endif
 	mcr 15, 0, r0, c7, c10, 4       /* Drain the write buffer */
 
+	/* ARM errata ID #468414 */
+	mrc 15, 0, r1, c1, c0, 1
+	orr r1, r1, #(1 << 5)    /* enable L1NEON bit */
+	mcr 15, 0, r1, c1, c0, 1
+
 	init_l2cc
 
 	init_aips
