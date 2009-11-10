@@ -54,7 +54,7 @@
 
 #if defined(CONFIG_MX51_BBG)
 #define TEST_HOME_KEY_DEPRESS(k, e)  (((k) == (KEY_F1)) && (((e) == (KDepress))))
-#define TEST_POWER_KEY_DEPRESS(k, e) (((k) == (KEY_RIGHT)) && (((e) == (KDepress))))
+#define TEST_POWER_KEY_DEPRESS(k, e) (((k) == (KEY_ENTER)) && (((e) == (KDepress))))
 #elif defined(CONFIG_MX51_3DS)
 #define TEST_HOME_KEY_DEPRESS(k, e)  (((k) == (KEY_MENU)) && (((e) == (KDepress))))
 #define TEST_POWER_KEY_DEPRESS(k, e) (((k) == (KEY_F2)) && (((e) == (KDepress))))

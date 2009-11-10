@@ -51,6 +51,9 @@ static const struct block_drvr block_drvr[] = {
 #if defined(CONFIG_CMD_IDE)
 	{ .name = "ide", .get_dev = ide_get_dev, },
 #endif
+#if defined(CONFIG_CMD_PATA)
+	{ .name = "pata", .get_dev = pata_get_dev, },
+#endif
 #if defined(CONFIG_CMD_SATA)
 	{.name = "sata", .get_dev = sata_get_dev, },
 #endif
@@ -95,6 +98,7 @@ block_dev_desc_t *get_dev(char* ifname, int dev)
 #endif
 
 #if (defined(CONFIG_CMD_IDE) || \
+	defined(CONFIG_CMD_PATA) || \
      defined(CONFIG_CMD_MG_DISK) || \
      defined(CONFIG_CMD_SATA) || \
      defined(CONFIG_CMD_SCSI) || \
@@ -213,6 +217,7 @@ void dev_print (block_dev_desc_t *dev_desc)
 #endif
 
 #if (defined(CONFIG_CMD_IDE) || \
+	defined(CONFIG_CMD_PATA) || \
      defined(CONFIG_CMD_MG_DISK) || \
      defined(CONFIG_CMD_SATA) || \
      defined(CONFIG_CMD_SCSI) || \

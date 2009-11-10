@@ -83,10 +83,8 @@
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
 /* Enable below configure when supporting nand */
-/*
 #define CONFIG_CMD_NAND
 #define CONFIG_MXC_NAND
-*/
 #define CONFIG_CMD_ENV
 #define CMD_SAVEENV
 #undef CONFIG_CMD_IMLS
@@ -100,7 +98,6 @@
  */
 #ifdef CONFIG_CMD_MMC
 	#define CONFIG_MMC				1
-	#define CONFIG_MMC_BASE		0x0
 	#define CONFIG_GENERIC_MMC
 	#define CONFIG_IMX_MMC
 	#define CONFIG_DOS_PARTITION	1
@@ -116,17 +113,6 @@
 #define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
 #define CONFIG_SYS_I2C_SPEED            400000
 #define CONFIG_SYS_I2C_SLAVE            0xfe
-
-/*
- * PATA Configs
- */
-#define CONFIG_CMD_PATA
-#define CONFIG_CMD_EXT2
-#define CONFIG_MXC_ATA
-#define CONFIG_LIBATA
-#define CONFIG_LBA48
-#define CONFIG_SYS_ATA_MAX_DEVICE	1
-#define CONFIG_SYS_ATA_BASE_ADDR	ATA_BASE_ADDR
 
 #define CONFIG_BOOTDELAY	3
 
@@ -223,7 +209,6 @@
 /* Monitor at beginning of flash */
 #define CONFIG_FSL_ENV_IN_NAND
 /* #define CONFIG_FSL_ENV_IN_NAND */
-/* #define CONFIG_FSL_ENV_IN_MMC */
 
 #define CONFIG_ENV_SECT_SIZE    (128 * 1024)
 #define CONFIG_ENV_SIZE		CONFIG_ENV_SECT_SIZE

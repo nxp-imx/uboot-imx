@@ -73,6 +73,10 @@
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
+/*
+#define CONFIG_CMD_UBI
+#define CONFIG_CMD_UBIFS
+*/
 
 /*
  * Android support Configs
@@ -80,6 +84,10 @@
 #include <asm/arch/keypad.h>
 
 #define CONFIG_FSL_ANDROID
+
+#define CONFIG_MTD_DEVICE
+#define CONFIG_MTD_PARTITIONS
+
 
 #define CONFIG_MXC_KPD
 #define CONFIG_MXC_KEYMAPPING \
@@ -96,14 +104,17 @@
 		KEY_LEFT,      KEY_1,        KEY_ , KEY_8,  KEY_9,   KEY_RIGHT,
 	}
 	*/
-#define CONFIG_MXC_KPD_COLMAX 4
+#define CONFIG_MXC_KPD_COLMAX 6
 #define CONFIG_MXC_KPD_ROWMAX 4
 #define CONFIG_ANDROID_NORMAL_BOOTARGS "ip=dhcp mem=480M init=/init wvga calibration"
-#define CONFIG_ANDROID_RECOVERY_BOOTARGS "setenv bootargs ${bootargs} root=/dev/mmcblk0p4 ip=dhcp init=/init rootfstype=ext3 wvga"
-#define CONFIG_ANDROID_RECOVERY_BOOTCMD  "run bootargs_base bootargs_android;mmc read 0 ${loadaddr} 0x800 0x1280;bootm"
-#define CONFIG_ANDROID_RECOVERY_CMD_FILE "/cache/recovery/command"
+#define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC "setenv bootargs ${bootargs} root=/dev/mmcblk0p4 ip=dhcp init=/init rootfstype=ext3 wvga"
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  "run bootargs_base bootargs_android;mmc read 0 ${loadaddr} 0x800 0x1280;bootm"
+#define CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND "setenv bootargs ${bootargs} root=/dev/mtdblock2 ip=dhcp init=/init rootfstype=ext3 wvga"
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND  "run bootargs_base bootargs_android;nand read ${loadaddr} 0x300000 0x250000;bootm"
+#define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 #define CONFIG_ANDROID_BOOTMOD_DELAY 3
-#define CONFIG_ANDROID_CACHE_PARTITION 4
+#define CONFIG_ANDROID_CACHE_PARTITION_MMC 6
+#define CONFIG_ANDROID_CACHE_PARTITION_NAND "cache"
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
@@ -233,7 +244,6 @@
  * */
 #ifdef CONFIG_CMD_MMC
 	#define CONFIG_MMC				1
-	#define CONFIG_MMC_BASE		0x0
 	#define CONFIG_GENERIC_MMC
 	#define CONFIG_IMX_MMC
 	#define CONFIG_DOS_PARTITION	1

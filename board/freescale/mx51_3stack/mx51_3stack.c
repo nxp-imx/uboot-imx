@@ -34,10 +34,70 @@
 #include "board-mx51_3stack.h"
 #include <netdev.h>
 
+#ifdef CONFIG_CMD_MMC
+#include <mmc.h>
+#include <fsl_esdhc.h>
+#endif
+
+#ifdef CONFIG_FSL_ANDROID
+#include <part.h>
+#include <ext2fs.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
+#include <ubi_uboot.h>
+#include <jffs2/load_kernel.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
+static enum boot_device boot_dev;
 u32	mx51_io_base_addr;
+
+static inline void setup_boot_device(void)
+{
+	uint *fis_addr = (uint *)IRAM_BASE_ADDR;
+
+	switch (*fis_addr) {
+	case NAND_FLASH_BOOT:
+		boot_dev = NAND_BOOT;
+		break;
+	case SPI_NOR_FLASH_BOOT:
+		boot_dev = SPI_NOR_BOOT;
+		break;
+	case MMC_FLASH_BOOT:
+		boot_dev = MMC_BOOT;
+		break;
+	default:
+		{
+			uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+			uint bt_mem_ctl = soc_sbmr & 0x00000003;
+			uint bt_mem_type = (soc_sbmr & 0x000000C0) >> 7;
+
+			switch (bt_mem_ctl) {
+			case 0x3:
+				if (bt_mem_type == 0)
+					boot_dev = MMC_BOOT;
+				else if (bt_mem_type == 3)
+					boot_dev = SPI_NOR_BOOT;
+				else
+					boot_dev = UNKNOWN_BOOT;
+				break;
+			case 0x1:
+				boot_dev = NAND_BOOT;
+				break;
+			default:
+				boot_dev = UNKNOWN_BOOT;
+			}
+		}
+		break;
+	}
+}
+
+enum boot_device get_boot_device(void)
+{
+	return boot_dev;
+}
 
 u32 get_board_rev(void)
 {
@@ -160,7 +220,7 @@ static void setup_expio(void)
 }
 
 #if defined(CONFIG_MXC_ATA)
-int setup_ata()
+int setup_ata(void)
 {
 	u32 pad;
 
@@ -455,6 +515,7 @@ void setup_core_voltages(void)
 
 int board_init(void)
 {
+	setup_boot_device();
 	setup_soc_rev();
 
 	gd->bd->bi_arch_number = MACH_TYPE_MX51_3DS;	/* board id for linux */
@@ -472,15 +533,14 @@ int board_init(void)
 }
 
 #ifdef BOARD_LATE_INIT
-int board_late_init(void)
-{
+
 #if defined(CONFIG_FSL_ANDROID) && defined(CONFIG_MXC_KPD)
+inline int waiting_for_func_key_pressing(void)
+{
 	struct kpp_key_info key_info = {0, 0};
 	int switch_delay = CONFIG_ANDROID_BOOTMOD_DELAY;
 	int state = 0, boot_mode_switch = 0;
-#endif
 
-#if defined(CONFIG_FSL_ANDROID) && defined(CONFIG_MXC_KPD)
 	mxc_kpp_init();
 
 	puts("Press home + power to enter recovery mode ...\n");
@@ -536,18 +596,196 @@ int board_late_init(void)
 					break;
 				}
 
-				if (1 == boot_mode_switch) {
-					printf("Boot mode switched to recovery mode!\n");
-					/* Set env to recovery mode */
-					setenv("bootargs_android", CONFIG_ANDROID_RECOVERY_BOOTARGS);
-					setenv("bootcmd_android", CONFIG_ANDROID_RECOVERY_BOOTCMD);
-					setenv("bootcmd", "run bootcmd_android");
-					break;
-				}
+				if (1 == boot_mode_switch)
+					return 1;
 			}
 		}
 		for (i = 0; i < 100; ++i)
 			udelay(10000);
+	}
+
+	return 0;
+}
+
+inline int switch_to_recovery_mode(void)
+{
+	printf("Boot mode switched to recovery mode!\n");
+
+	switch (get_boot_device()) {
+	case MMC_BOOT:
+		/* Set env to recovery mode */
+		setenv("bootargs_android", \
+			CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC);
+		setenv("bootcmd_android", \
+			CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC);
+		setenv("bootcmd", "run bootcmd_android");
+		break;
+	case NAND_BOOT:
+		setenv("bootargs_android", \
+			CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND);
+		setenv("bootcmd_android", \
+			CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND);
+		setenv("bootcmd", "run bootcmd_android");
+		break;
+	case SPI_NOR_BOOT:
+		printf("Recovery mode not supported in SPI NOR boot\n");
+		return -1;
+		break;
+	case UNKNOWN_BOOT:
+	default:
+		printf("Unknown boot device!\n");
+		return -1;
+		break;
+	}
+
+	return 0;
+}
+
+inline int check_recovery_cmd_file(void)
+{
+	disk_partition_t info;
+	ulong part_length;
+	int filelen;
+
+	switch (get_boot_device()) {
+	case MMC_BOOT:
+		{
+			block_dev_desc_t *dev_desc = NULL;
+			struct mmc *mmc = find_mmc_device(0);
+
+			dev_desc = get_dev("mmc", 0);
+
+			if (NULL == dev_desc) {
+				puts("** Block device MMC 0 not supported\n");
+				return 0;
+			}
+
+			mmc_init(mmc);
+
+			if (get_partition_info(dev_desc,
+					CONFIG_ANDROID_CACHE_PARTITION_MMC,
+					&info)) {
+				printf("** Bad partition %d **\n",
+					CONFIG_ANDROID_CACHE_PARTITION_MMC);
+				return 0;
+			}
+
+			part_length = ext2fs_set_blk_dev(dev_desc,
+								CONFIG_ANDROID_CACHE_PARTITION_MMC);
+			if (part_length == 0) {
+				printf("** Bad partition - mmc 0:%d **\n",
+					CONFIG_ANDROID_CACHE_PARTITION_MMC);
+				ext2fs_close();
+				return 0;
+			}
+
+			if (!ext2fs_mount(part_length)) {
+				printf("** Bad ext2 partition or disk - mmc 0:%d **\n",
+					CONFIG_ANDROID_CACHE_PARTITION_MMC);
+				ext2fs_close();
+				return 0;
+			}
+
+			filelen = ext2fs_open(CONFIG_ANDROID_RECOVERY_CMD_FILE);
+
+			ext2fs_close();
+		}
+		break;
+	case NAND_BOOT:
+		{
+			#if 0
+			struct mtd_device *dev_desc = NULL;
+			struct part_info *part = NULL;
+			struct mtd_partition mtd_part;
+			struct mtd_info *mtd_info;
+			char mtd_dev[16] = { 0 };
+			char mtd_buffer[80] = { 0 };
+			u8 pnum;
+			int err;
+			u8 read_test;
+
+			/* ========== ubi and mtd operations ========== */
+			if (mtdparts_init() != 0) {
+				printf("Error initializing mtdparts!\n");
+				return 0;
+			}
+
+			if (find_dev_and_part("nand", &dev_desc, &pnum, &part)) {
+				printf("Partition %s not found!\n", "nand");
+				return 0;
+			}
+			sprintf(mtd_dev, "%s%d",
+					MTD_DEV_TYPE(dev_desc->id->type),
+					dev_desc->id->num);
+			mtd_info = get_mtd_device_nm(mtd_dev);
+			if (IS_ERR(mtd_info)) {
+				printf("Partition %s not found on device %s!\n",
+					"nand", mtd_dev);
+				return 0;
+			}
+
+			sprintf(mtd_buffer, "mtd=%d", pnum);
+			memset(&mtd_part, 0, sizeof(mtd_part));
+			mtd_part.name = mtd_buffer;
+			mtd_part.size = part->size;
+			mtd_part.offset = part->offset;
+			add_mtd_partitions(&info, &mtd_part, 1);
+
+			err = ubi_mtd_param_parse(mtd_buffer, NULL);
+			if (err) {
+				del_mtd_partitions(&info);
+				return 0;
+			}
+
+			err = ubi_init();
+			if (err) {
+				del_mtd_partitions(&info);
+				return 0;
+			}
+
+			/* ========== ubifs operations ========== */
+			/* Init ubifs */
+			ubifs_init();
+
+			if (ubifs_mount(CONFIG_ANDROID_CACHE_PARTITION_NAND)) {
+				printf("Mount ubifs volume %s fail!\n",
+						CONFIG_ANDROID_CACHE_PARTITION_NAND);
+				return 0;
+			}
+
+			/* Try to read one byte for a read test. */
+			if (ubifs_load(CONFIG_ANDROID_RECOVERY_CMD_FILE,
+						&read_test, 1)) {
+				/* File not found */
+				filelen = 0;
+			} else
+				filelen = 1;
+		#endif
+		}
+		break;
+	case SPI_NOR_BOOT:
+		return 0;
+		break;
+	case UNKNOWN_BOOT:
+	default:
+		return 0;
+		break;
+	}
+
+	return (filelen > 0) ? 1 : 0;
+}
+#endif
+
+int board_late_init(void)
+{
+#if defined(CONFIG_FSL_ANDROID) && defined(CONFIG_MXC_KPD)
+	if (waiting_for_func_key_pressing())
+		switch_to_recovery_mode();
+	else {
+		if (check_recovery_cmd_file()) {
+			puts("Recovery command file founded!\n");
+			switch_to_recovery_mode();
+		}
 	}
 #endif
 
@@ -582,6 +820,24 @@ int checkboard(void)
 		printf("unknown");
 	}
 	printf("]\n");
+
+	printf("Boot Device: ");
+	switch (get_boot_device()) {
+	case NAND_BOOT:
+		printf("NAND\n");
+		break;
+	case SPI_NOR_BOOT:
+		printf("SPI NOR\n");
+		break;
+	case MMC_BOOT:
+		printf("MMC\n");
+		break;
+	case UNKNOWN_BOOT:
+	default:
+		printf("UNKNOWN\n");
+		break;
+	}
+
 	return 0;
 }
 
@@ -687,7 +943,7 @@ int board_mmc_init(void)
 #endif
 
 #if defined(CONFIG_MXC_KPD)
-int setup_mxc_kpd()
+int setup_mxc_kpd(void)
 {
 	mxc_request_iomux(MX51_PIN_KEY_COL0, IOMUX_CONFIG_ALT0);
 	mxc_request_iomux(MX51_PIN_KEY_COL1, IOMUX_CONFIG_ALT0);

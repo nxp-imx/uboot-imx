@@ -1,4 +1,7 @@
 /*
+ * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ * Terry Lv
+ *
  * Copyright 2007, Freescale Semiconductor, Inc
  * Andy Fleming
  *
@@ -28,13 +31,10 @@
 #include <config.h>
 #include <common.h>
 #include <command.h>
-#include <hwconfig.h>
 #include <mmc.h>
-#include <part.h>
 #include <malloc.h>
 #include <mmc.h>
 #include <fsl_esdhc.h>
-#include <fdt_support.h>
 #include <asm/io.h>
 
 
@@ -367,10 +367,10 @@ static int esdhc_init(struct mmc *mmc)
 	set_sysctl(mmc, 400000);
 
 	/* Put the PROCTL reg back to the default */
-	writel(PROCTL_INIT | PROCTL_D3CD, &regs->proctl);
+	writel(PROCTL_INIT, &regs->proctl);
 
 	/* FIXME: For our CINS bit doesn't work. So this section is disabled. */
-
+	/*
 	while (!(readl(&regs->prsstat) & PRSSTAT_CINS) && --timeout)
 		mdelay(1);
 
@@ -378,7 +378,7 @@ static int esdhc_init(struct mmc *mmc)
 		printf("No MMC card detected!\n");
 		return NO_CARD_ERR;
 	}
-
+	*/
 
 	set_sysctl(mmc, 400000);
 

@@ -1,4 +1,7 @@
 /*
+ * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ * Terry Lv
+ *
  * Copyright 2008, Freescale Semiconductor, Inc
  * Andy Fleming
  *
@@ -864,6 +867,22 @@ int mmc_register(struct mmc *mmc)
 	mmc->block_dev.removable = 1;
 	mmc->block_dev.block_read = mmc_bread;
 	mmc->block_dev.block_write = mmc_bwrite;
+#if defined(CONFIG_DOS_PARTITION)
+	mmc->block_dev.part_type = PART_TYPE_DOS;
+	mmc->block_dev.type = DEV_TYPE_HARDDISK;
+#elif defined(CONFIG_MAC_PARTITION)
+	mmc->block_dev.part_type = PART_TYPE_MAC;
+	mmc->block_dev.type = DEV_TYPE_HARDDISK;
+#elif defined(CONFIG_ISO_PARTITION)
+	mmc->block_dev.part_type = PART_TYPE_ISO;
+	mmc->block_dev.type = DEV_TYPE_HARDDISK;
+#elif defined(CONFIG_AMIGA_PARTITION)
+	mmc->block_dev.part_type = PART_TYPE_AMIGA;
+	mmc->block_dev.type = DEV_TYPE_HARDDISK;
+#elif defined(CONFIG_EFI_PARTITION)
+	mmc->block_dev.part_type = PART_TYPE_EFI;
+	mmc->block_dev.type = DEV_TYPE_HARDDISK;
+#endif
 
 	INIT_LIST_HEAD (&mmc->link);
 

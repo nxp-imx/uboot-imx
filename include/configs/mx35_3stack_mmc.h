@@ -185,7 +185,6 @@
  * */
 #ifdef CONFIG_CMD_MMC
 	#define CONFIG_MMC				1
-	#define CONFIG_MMC_BASE		0x0
 	#define CONFIG_GENERIC_MMC
 	#define CONFIG_IMX_MMC
 	#define CONFIG_DOS_PARTITION	1

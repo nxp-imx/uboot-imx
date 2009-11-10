@@ -399,7 +399,18 @@
 #define BOARD_REV_1_0           0x0
 #define BOARD_REV_2_0           0x1
 
+#define NAND_FLASH_BOOT		0x10000000
+#define SPI_NOR_FLASH_BOOT	0x80000000
+#define MMC_FLASH_BOOT		0x40000000
+
 #ifndef __ASSEMBLER__
+
+enum boot_device {
+	UNKNOWN_BOOT,
+	NAND_BOOT,
+	SPI_NOR_BOOT,
+	MMC_BOOT,
+};
 
 enum mxc_clock {
 MXC_ARM_CLK = 0,
@@ -440,6 +451,7 @@ enum mxc_peri_clocks {
 extern unsigned int mxc_get_clock(enum mxc_clock clk);
 extern unsigned int get_board_rev(void);
 extern int is_soc_rev(int rev);
+extern enum boot_device get_boot_device();
 
 #endif /* __ASSEMBLER__*/
 

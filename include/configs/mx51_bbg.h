@@ -136,7 +136,6 @@
  * */
 #ifdef CONFIG_CMD_MMC
 	#define CONFIG_MMC				1
-	#define CONFIG_MMC_BASE		0x0
 	#define CONFIG_GENERIC_MMC
 	#define CONFIG_IMX_MMC
 	#define CONFIG_DOS_PARTITION	1
@@ -247,8 +246,8 @@
 #define CONFIG_SYS_NAND_BASE          0x40000000
 
 /* Monitor at beginning of flash */
-/* #define CONFIG_FSL_ENV_IN_SF */
-#define CONFIG_FSL_ENV_IN_MMC
+#define CONFIG_FSL_ENV_IN_SF
+/* #define CONFIG_FSL_ENV_IN_MMC */
 /* #define CONFIG_FSL_ENV_IN_NAND */
 
 #define CONFIG_ENV_SECT_SIZE    (128 * 1024)
@@ -262,7 +261,6 @@
 	#define CONFIG_ENV_OFFSET	(768 * 1024)
 #elif defined(CONFIG_FSL_ENV_IN_SF)
 	#define CONFIG_ENV_IS_IN_SPI_FLASH	1
-	#define CONFIG_ENV_IS_EMBEDDED	1
 	#define CONFIG_ENV_SPI_CS		1
 	#define CONFIG_ENV_OFFSET       (768 * 1024)
 #else

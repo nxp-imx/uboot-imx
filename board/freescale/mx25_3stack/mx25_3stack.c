@@ -32,6 +32,11 @@
 #include <asm/arch/iomux.h>
 #include <asm/arch/gpio.h>
 
+#ifdef CONFIG_CMD_MMC
+#include <mmc.h>
+#include <fsl_esdhc.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
