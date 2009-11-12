@@ -695,23 +695,20 @@ inline int waiting_for_func_key_pressing(void)
 
 inline int switch_to_recovery_mode(void)
 {
+	char *env = NULL;
+	char *boot_args = NULL;
+	char *boot_cmd = NULL;
+
 	printf("Boot mode switched to recovery mode!\n");
 
 	switch (get_boot_device()) {
 	case MMC_BOOT:
-		/* Set env to recovery mode */
-		setenv("bootargs_android", \
-			CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC);
-		setenv("bootcmd_android", \
-			CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC);
-		setenv("bootcmd", "run bootcmd_android");
+		boot_args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC;
+		boot_cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC;
 		break;
 	case NAND_BOOT:
-		setenv("bootargs_android", \
-			CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND);
-		setenv("bootcmd_android", \
-			CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND);
-		setenv("bootcmd", "run bootcmd_android");
+		printf("Recovery mode not supported in NAND boot\n");
+		return -1;
 		break;
 	case SPI_NOR_BOOT:
 		printf("Recovery mode not supported in SPI NOR boot\n");
@@ -723,6 +720,16 @@ inline int switch_to_recovery_mode(void)
 		return -1;
 		break;
 	}
+
+	env = getenv("bootargs_android_recovery");
+	/* Set env to recovery mode */
+	if (!env)
+		setenv("bootargs_android_recovery", boot_args);
+	env = getenv("bootcmd_android_recovery");
+	if (!env)
+		setenv("bootcmd_android_recovery", boot_cmd);
+	setenv("bootcmd", "run bootcmd_android_recovery");
+
 
 	return 0;
 }
@@ -778,76 +785,7 @@ inline int check_recovery_cmd_file(void)
 		}
 		break;
 	case NAND_BOOT:
-		{
-			#if 0
-			struct mtd_device *dev_desc = NULL;
-			struct part_info *part = NULL;
-			struct mtd_partition mtd_part;
-			struct mtd_info *mtd_info;
-			char mtd_dev[16] = { 0 };
-			char mtd_buffer[80] = { 0 };
-			u8 pnum;
-			int err;
-			u8 read_test;
-
-			/* ========== ubi and mtd operations ========== */
-			if (mtdparts_init() != 0) {
-				printf("Error initializing mtdparts!\n");
-				return 0;
-			}
-
-			if (find_dev_and_part("nand", &dev_desc, &pnum, &part)) {
-				printf("Partition %s not found!\n", "nand");
-				return 0;
-			}
-			sprintf(mtd_dev, "%s%d",
-					MTD_DEV_TYPE(dev_desc->id->type),
-					dev_desc->id->num);
-			mtd_info = get_mtd_device_nm(mtd_dev);
-			if (IS_ERR(mtd_info)) {
-				printf("Partition %s not found on device %s!\n",
-					"nand", mtd_dev);
-				return 0;
-			}
-
-			sprintf(mtd_buffer, "mtd=%d", pnum);
-			memset(&mtd_part, 0, sizeof(mtd_part));
-			mtd_part.name = mtd_buffer;
-			mtd_part.size = part->size;
-			mtd_part.offset = part->offset;
-			add_mtd_partitions(&info, &mtd_part, 1);
-
-			err = ubi_mtd_param_parse(mtd_buffer, NULL);
-			if (err) {
-				del_mtd_partitions(&info);
-				return 0;
-			}
-
-			err = ubi_init();
-			if (err) {
-				del_mtd_partitions(&info);
-				return 0;
-			}
-
-			/* ========== ubifs operations ========== */
-			/* Init ubifs */
-			ubifs_init();
-
-			if (ubifs_mount(CONFIG_ANDROID_CACHE_PARTITION_NAND)) {
-				printf("Mount ubifs volume %s fail!\n",
-						CONFIG_ANDROID_CACHE_PARTITION_NAND);
-				return 0;
-			}
-
-			/* Try to read one byte for a read test. */
-			if (ubifs_load(CONFIG_ANDROID_RECOVERY_CMD_FILE,
-						&read_test, 1)) {
-				/* File not found */
-				filelen = 0;
-			} else
-				filelen = 1;
-		#endif
-		}
+		return 0;
 		break;
 	case SPI_NOR_BOOT:
 		return 0;

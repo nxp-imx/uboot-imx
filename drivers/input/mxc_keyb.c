@@ -122,7 +122,7 @@ extern void setup_mxc_kpd(void);
  *
  * @result    Number of key pressed/released.
  */
-static int mxc_kpp_scan_matrix()
+static int mxc_kpp_scan_matrix(void)
 {
 	unsigned short reg_val;
 	int col, row;
@@ -289,7 +289,7 @@ static int mxc_kpp_scan_matrix()
 	return keycnt;
 }
 
-static int mxc_kpp_reset()
+static int mxc_kpp_reset(void)
 {
 	unsigned short reg_val;
 	int i;
@@ -485,7 +485,7 @@ static void mxc_kpp_free_allocated(void)
  * @return  The function returns 0 on successful registration. Otherwise returns
  *          specific error code.
  */
-int mxc_kpp_init()
+int mxc_kpp_init(void)
 {
 	int i;
 	int retval;

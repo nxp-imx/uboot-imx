@@ -451,7 +451,7 @@ enum mxc_peri_clocks {
 extern unsigned int mxc_get_clock(enum mxc_clock clk);
 extern unsigned int get_board_rev(void);
 extern int is_soc_rev(int rev);
-extern enum boot_device get_boot_device();
+extern enum boot_device get_boot_device(void);
 
 #endif /* __ASSEMBLER__*/
 

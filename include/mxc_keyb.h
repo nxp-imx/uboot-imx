@@ -195,7 +195,7 @@ struct kpp_key_info {
 	unsigned short val;
 };
 
-int mxc_kpp_init();
+int mxc_kpp_init(void);
 int mxc_kpp_getc(struct kpp_key_info *);
 
 #endif				/* __MXC_KEYB_H__ */

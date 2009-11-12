@@ -25,7 +25,7 @@
 
 #include <linux/types.h>
 
-extern struct spi_slave *spi_pmic_probe();
+extern struct spi_slave *spi_pmic_probe(void);
 extern void spi_pmic_free(struct spi_slave *slave);
 extern u32 pmic_reg(struct spi_slave *slave,
 				u32 reg, u32 val, u32 write);

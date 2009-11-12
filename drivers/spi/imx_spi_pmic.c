@@ -119,7 +119,7 @@ void show_pmic_info(struct spi_slave *slave)
 	printf("]\n");
 }
 
-struct spi_slave *spi_pmic_probe()
+struct spi_slave *spi_pmic_probe(void)
 {
 	return spi_setup_slave(0, CONFIG_IMX_SPI_PMIC_CS, 2500000, 0);
 }

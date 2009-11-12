@@ -57,6 +57,7 @@ COBJS-$(CONFIG_ENV_IS_IN_FLASH) += env_embedded.o
 COBJS-$(CONFIG_ENV_IS_IN_NVRAM) += env_embedded.o
 COBJS-$(CONFIG_ENV_IS_IN_MMC) += env_embedded.o
 COBJS-$(CONFIG_ENV_IS_IN_NAND) += env_embedded.o
+COBJS-$(CONFIG_ENV_IS_IN_SPI_FLASH) += env_embedded.o
 COBJS-$(CONFIG_ENV_IS_IN_FLASH) += env_flash.o
 COBJS-$(CONFIG_ENV_IS_IN_MG_DISK) += env_mgdisk.o
 COBJS-$(CONFIG_ENV_IS_IN_NAND) += env_nand.o

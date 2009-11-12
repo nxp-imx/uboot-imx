@@ -89,7 +89,12 @@
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
-/* #define CONFIG_CMD_UBIFS */
+/*
+#define CONFIG_CMD_UBI
+#define CONFIG_CMD_UBIFS
+#define CONFIG_RBTREE
+#define CONFIG_LZO
+*/
 
 /*
  * Android support Configs
@@ -108,11 +113,14 @@
 	}
 #define CONFIG_MXC_KPD_COLMAX 6
 #define CONFIG_MXC_KPD_ROWMAX 4
-#define CONFIG_ANDROID_NORMAL_BOOTARGS "ip=dhcp mem=480M init=/init wvga calibration"
-#define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC "setenv bootargs ${bootargs} root=/dev/mmcblk0p4 ip=dhcp init=/init rootfstype=ext3 wvga"
-#define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  "run bootargs_base bootargs_android;mmc read 0 ${loadaddr} 0x800 0x1280;bootm"
-#define CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND "setenv bootargs ${bootargs} root=/dev/mtdblock2 ip=dhcp init=/init rootfstype=ext3 wvga"
-#define CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND  "run bootargs_base bootargs_android;nand read ${loadaddr} 0x300000 0x250000;bootm"
+#define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
+	"setenv bootargs ${bootargs} root=/dev/mmcblk0p4 ip=off init=/init rootfstype=ext3"
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
+	"run bootargs_base bootargs_android;mmc read 0 ${loadaddr} 0x800 0x1280;bootm"
+#define CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND \
+	"setenv bootargs ${bootargs} ip=off rootfstype=ubifs root=ubi1:recovery init=/init ubi.mtd=3 ubi.mtd=2"
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND  \
+	"run bootargs_base bootargs_android;nand read ${loadaddr} 0x300000 0x250000;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 #define CONFIG_ANDROID_BOOTMOD_DELAY 3
 #define CONFIG_ANDROID_CACHE_PARTITION_MMC 6

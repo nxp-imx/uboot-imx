@@ -84,7 +84,6 @@
 
 	ldr r1, =0x001901A3
 	str r1, [r0, #0x48]
-	str r1, [r0, #0x40]
 .endm /* init_m4if */
 
 /* To support 133MHz DDR */

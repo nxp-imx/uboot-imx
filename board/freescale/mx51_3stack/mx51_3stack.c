@@ -609,23 +609,20 @@ inline int waiting_for_func_key_pressing(void)
 
 inline int switch_to_recovery_mode(void)
 {
+	char *env = NULL;
+	char *boot_args = NULL;
+	char *boot_cmd = NULL;
+
 	printf("Boot mode switched to recovery mode!\n");
 
 	switch (get_boot_device()) {
 	case MMC_BOOT:
-		/* Set env to recovery mode */
-		setenv("bootargs_android", \
-			CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC);
-		setenv("bootcmd_android", \
-			CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC);
-		setenv("bootcmd", "run bootcmd_android");
+		boot_args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC;
+		boot_cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC;
 		break;
 	case NAND_BOOT:
-		setenv("bootargs_android", \
-			CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND);
-		setenv("bootcmd_android", \
-			CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND);
-		setenv("bootcmd", "run bootcmd_android");
+		boot_args = CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND;
+		boot_cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND;
 		break;
 	case SPI_NOR_BOOT:
 		printf("Recovery mode not supported in SPI NOR boot\n");
@@ -637,6 +634,16 @@ inline int switch_to_recovery_mode(void)
 		return -1;
 		break;
 	}
+
+	env = getenv("bootargs_android_recovery");
+	/* Set env to recovery mode */
+	if (!env)
+		setenv("bootargs_android_recovery", boot_args);
+	env = getenv("bootcmd_android_recovery");
+	if (!env)
+		setenv("bootcmd_android_recovery", boot_cmd);
+	setenv("bootcmd", "run bootcmd_android_recovery");
+
 
 	return 0;
 }
@@ -783,7 +790,7 @@ int board_late_init(void)
 		switch_to_recovery_mode();
 	else {
 		if (check_recovery_cmd_file()) {
-			puts("Recovery command file founded!\n");
+			puts("Recovery command file detected!\n");
 			switch_to_recovery_mode();
 		}
 	}
