@@ -38,7 +38,6 @@
  */
 
 #include <common.h>
-#include <arm926ejs.h>
 #include <asm/arch/stmp378x.h>
 #include <asm/arch/timrot.h>
 

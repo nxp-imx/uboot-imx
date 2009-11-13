@@ -336,6 +336,7 @@ static int rxResetCounter;
 int eth_init(bd_t *bis)
 {
 	unsigned char estatVal;
+	unsigned char enetaddr[6];
 
 	/* taken from the Linux driver - dangerous stuff here! */
 	/* Wait for CLKRDY to become set (i.e., check that we can
@@ -347,7 +348,8 @@ int eth_init(bd_t *bis)
 
 	/* initialize controller */
 	encReset();
-	encInit(bis->bi_enetaddr);
+	eth_getenv_enetaddr("ethaddr", enetaddr);
+	encInit(enetaddr);
 
 	m_nic_bfs(CTL_REG_ECON1, ENC_ECON1_RXEN);	/* enable receive */
 
@@ -971,12 +973,13 @@ static void encReset(void)
 
 #ifndef CONFIG_ETHADDR
 #include <asm/arch/ocotp.h>
-void enc_set_mac_addr(uchar *addr)
+void enc_set_mac_addr(void)
 {
 	if (NULL == getenv("ethaddr")) {
 
-		char reg[8];
-		char nid[20];
+		uchar reg[8];
+		uchar addr[8];
+		uchar nid[20];
 		ulong *s;
 
 		/*set this bit to open the OTP banks for reading*/
