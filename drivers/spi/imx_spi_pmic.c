@@ -26,7 +26,7 @@
 #include <asm/errno.h>
 #include <linux/types.h>
 
-#include <asm/arch/imx_spi.h>
+#include <imx_spi.h>
 
 static u32 pmic_tx, pmic_rx;
 

@@ -32,7 +32,7 @@
 #include <mxc_keyb.h>
 #include <asm/arch/keypad.h>
 #include "board-imx51.h"
-#include <asm/arch/imx_spi.h>
+#include <imx_spi.h>
 #include <asm/arch/imx_spi_pmic.h>
 
 #include <asm/errno.h>

@@ -30,7 +30,8 @@
 #define DRIVERNAME "smc911x"
 
 #if defined (CONFIG_SMC911X_32_BIT) && \
-	defined (CONFIG_SMC911X_16_BIT)
+	defined (CONFIG_SMC911X_16_BIT) && \
+	defined(CONFIG_SMC911X_CPLD)
 #error "SMC911X: Only one of CONFIG_SMC911X_32_BIT and \
 	CONFIG_SMC911X_16_BIT shall be set"
 #endif
@@ -61,6 +62,19 @@ static inline void smc911x_reg_write(struct eth_device *dev,
 {
 	*(volatile u16 *)(dev->iobase + offset) = (u16)val;
 	*(volatile u16 *)(dev->iobase + offset + 2) = (u16)(val >> 16);
+}
+#elif defined(CONFIG_SMC911X_CPLD)
+#include <asm/arch/imx_spi_cpld.h>
+static inline u32 smc911x_reg_read(struct eth_device *dev, u32 offset)
+{
+	return cpld_reg_xfer(offset, 0x0, 1) | \
+		(cpld_reg_xfer(offset + 0x2, 0x0, 1) << 16);
+}
+static void smc911x_reg_write(struct eth_device *dev,
+			u32 offset, u32 val)
+{
+	cpld_reg_xfer(offset, val, 0);
+	cpld_reg_xfer(offset + 0x2, (val >> 16), 0);
 }
 #else
 #error "SMC911X: undefined bus width"

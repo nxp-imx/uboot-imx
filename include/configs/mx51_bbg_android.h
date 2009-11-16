@@ -227,9 +227,10 @@
 #define CONFIG_CMD_SF
 #define CONFIG_SPI_FLASH_IMX_ATMEL	1
 #define CONFIG_SPI_FLASH_CS	1
-#define CONFIG_IMX_SPI
+#define CONFIG_IMX_ECSPI
 #define CONFIG_IMX_SPI_PMIC
 #define CONFIG_IMX_SPI_PMIC_CS 0
+#define IMX_CSPI_VER_2_3        1
 
 #define MAX_SPI_BYTES		(64 * 4)
 

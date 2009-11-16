@@ -31,6 +31,7 @@
 #include <asm/arch/mx25_pins.h>
 #include <asm/arch/iomux.h>
 #include <asm/arch/gpio.h>
+#include <imx_spi.h>
 
 #ifdef CONFIG_CMD_MMC
 #include <mmc.h>
@@ -160,11 +161,28 @@ int board_mmc_init(void)
 }
 #endif
 
+void spi_io_init(struct imx_spi_dev_t *dev)
+{
+	switch (dev->base) {
+	case CSPI1_BASE:
+		writel(0, IOMUXC_BASE + 0x180);		/* CSPI1 SCLK */
+		writel(0x1C0, IOMUXC_BASE + 0x5c4);
+		writel(0, IOMUXC_BASE + 0x184);		/* SPI_RDY */
+		writel(0x1E0, IOMUXC_BASE + 0x5c8);
+		writel(0, IOMUXC_BASE + 0x170);		/* MOSI */
+		writel(0x1C0, IOMUXC_BASE + 0x5b4);
+		writel(0, IOMUXC_BASE + 0x174);		/* MISO */
+		writel(0x1C0, IOMUXC_BASE + 0x5b8);
+		writel(0, IOMUXC_BASE + 0x17C);		/* SS1 */
+		writel(0x1E0, IOMUXC_BASE + 0x5C0);
+		break;
+	default:
+		break;
+	}
+}
+
 int board_init(void)
 {
-	int pad;
-	u8 reg[4];
-
 	setup_soc_rev();
 
 	/* setup pins for UART1 */
@@ -265,6 +283,12 @@ int board_late_init(void)
 	/* Turn PMIC On*/
 	reg[0] = 0x09;
 	i2c_write(0x54, 0x02, 1, reg, 1);
+
+#ifdef CONFIG_IMX_SPI_CPLD
+	mxc_cpld_spi_init();
+#endif
+
+	return 0;
 }
 #endif
 

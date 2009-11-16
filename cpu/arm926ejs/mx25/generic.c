@@ -70,6 +70,11 @@ unsigned int mx25_get_ipg_clk(void)
 	return mx25_get_ahb_clk()/2;
 }
 
+unsigned int mx25_get_cspi_clk(void)
+{
+	return mx25_get_ipg_clk();
+}
+
 void mx25_dump_clocks(void)
 {
 	u32 cpufreq = mx25_get_mcu_main_clk();
@@ -88,6 +93,8 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	case MXC_IPG_PERCLK:
 	case MXC_IPG_CLK:
 		return mx25_get_ipg_clk();
+	case MXC_CSPI_CLK:
+		return mx25_get_cspi_clk();
 	case MXC_UART_CLK:
 		break;
 	}

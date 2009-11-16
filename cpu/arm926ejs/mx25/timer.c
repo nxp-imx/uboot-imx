@@ -84,15 +84,10 @@ void reset_timer(void)
 
 ulong get_timer_masked(void)
 {
-	ulong now = GPTCNT; /* current tick value */
+	ulong now = GPTCNT;
+	now = now * 1000 / CONFIG_SYS_HZ; /* current tick value */
 
-	if (now >= lastinc)	/* normal mode (non roll) */
-		/* move stamp forward with absolut diff ticks */
-		timestamp += (now - lastinc);
-	else			/* we have rollover of incrementer */
-		timestamp += (0xFFFFFFFF - lastinc) + now;
-	lastinc = now;
-	return timestamp;
+	return now;
 }
 
 ulong get_timer(ulong base)
@@ -111,14 +106,7 @@ void udelay(unsigned long usec)
 
 	setup_gpt();
 
-	if (usec >= 1000) {	/* if "big" number, spread normalize to secs */
-		tmo = usec / 1000;	/* normalize usec to ticks per sec */
-		tmo *= CONFIG_SYS_HZ;	/* find number of "ticks" to wait */
-		tmo /= 1000;		/* finish normalize. */
-	} else {			/* don't kill prior to HZ multiply */
-		tmo = usec * CONFIG_SYS_HZ;
-		tmo /= (1000*1000);
-	}
+	tmo = usec / 1000;		/* Current precision is Millisecond */
 
 	tmp = get_timer(0);		/* get current timestamp */
 	if ((tmo + tmp + 1) < tmp)	/* if overflow time stamp */

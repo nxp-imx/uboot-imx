@@ -28,7 +28,7 @@
 #include <linux/types.h>
 #include <malloc.h>
 
-#include <asm/arch/imx_spi.h>
+#include <imx_spi.h>
 #include <asm/arch/imx_spi_nor.h>
 
 static u8 g_tx_buf[256];

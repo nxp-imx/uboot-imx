@@ -39,6 +39,10 @@
 #define CONFIG_MX25_HCLK_FREQ	24000000
 #define CONFIG_MX25_CLK32	32768
 
+#define CONFIG_IMX_CSPI		1
+#define IMX_CSPI_VER_0_7	1
+#define CONFIG_IMX_SPI_CPLD
+
 /* IF iMX25 3DS V-1.0 define it */
 /* #define CONFIG_MX25_3DS_V10 */
 
@@ -122,23 +126,29 @@
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 	"netdev=eth0\0"							\
-	"ethprime=fec\0"						\
+	"ethprime=smc911x-0\0"						\
+	"uboot=u-boot.bin\0"						\
+	"uboot_addr=0xa0000000\0"					\
+	"kernel=uImage\0"						\
 	"bootargs_base=setenv bootargs console=ttymxc0,115200\0"	\
 	"bootargs_nfs=setenv bootargs $(bootargs) root=/dev/nfs "	\
 		"ip=dhcp nfsroot=$(serverip):$(nfsrootfs),v3,tcp\0"	\
 	"bootcmd=run bootcmd_net\0"					\
-	"bootcmd_net=run bootargs_base bootargs_mtd bootargs_nfs; "	\
-		"tftpboot 0x81000000 uImage; bootm\0"
+	"bootcmd_net=run bootargs_base bootargs_nfs; "			\
+		"tftpboot ${loadaddr} ${kernel}; bootm\0"		\
+	"load_uboot=tftpboot ${loadaddr} ${uboot}\0"
 
 /*Support LAN9217*/
-/*#define CONFIG_SMC911X   1
-#define CONFIG_SMC911X_16_BIT 1
-#define CONFIG_SMC911X_BASE CS5_BASE*/
+#define CONFIG_SMC911X
+#define CONFIG_SMC911X_CPLD
+#define CONFIG_SMC911X_BASE	0
 
-/*#define CONFIG_HAS_ETH1*/
+#define CONFIG_HAS_ETH1
 #define CONFIG_CMD_NET
 #define CONFIG_CMD_DHCP
-#define CONFIG_NET_MULTI	1
+#define CONFIG_NET_MULTI
+#define CONFIG_ETH_PRIME
+
 #define CONFIG_MXC_FEC
 #define CONFIG_MII
 #define CONFIG_DISCOVER_PHY

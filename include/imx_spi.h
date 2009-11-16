@@ -31,14 +31,44 @@
 #define IMX_SPI_ACTIVE_LOW      0
 #define SPI_RETRY_TIMES         100
 
-#define	SPI_RX_DATA				0x0
-#define SPI_TX_DATA				0x4
-#define SPI_CON_REG				0x8
-#define SPI_CFG_REG				0xc
-#define SPI_INT_REG				0x10
-#define SPI_DMA_REG				0x14
-#define SPI_STAT_REG				0x18
-#define SPI_PERIOD_REG				0x1C
+#if defined(IMX_CSPI_VER_0_7)
+	#define	SPI_RX_DATA		0x0
+	#define SPI_TX_DATA		0x4
+	#define SPI_CON_REG		0x8
+	#define SPI_INT_REG		0xC
+	#define SPI_DMA_REG		0x10
+	#define SPI_STAT_REG		0x14
+	#define SPI_PERIOD_REG		0x18
+
+	#define SPI_CTRL_EN		(1 << 0)
+	#define SPI_CTRL_MODE		(1 << 1)
+	#define SPI_CTRL_REG_XCH_BIT	(1 << 2)
+	#define SPI_CTRL_SSPOL		(1 << 7)
+	#define SPI_CTRL_SSPOL_OFF	(7)
+	#define SPI_CTRL_SSCTL		(1 << 6)
+	#define SPI_CTRL_SSCTL_OFF	(6)
+	#define SPI_CTRL_SCLK_POL	(1 << 4)
+	#define SPI_CTRL_SCLK_POL_OFF	(4)
+	#define SPI_CTRL_SCLK_PHA	(1 << 5)
+	#define SPI_CTRL_SCLK_PHA_OFF	(5)
+	#define SPI_CTRL_SS_OFF		(12)
+	#define SPI_CTRL_SS_MASK	(3 << 12)
+	#define SPI_CTRL_DATA_OFF	(16)
+	#define SPI_CTRL_DATA_MASK	(7 << 16)
+	#define SPI_CTRL_BURST_OFF	(20)
+	#define SPI_CTRL_BURST_MASK	(0xFFF << 20)
+	#define SPI_INT_STAT_TC		(1 << 7)
+
+#elif defined(IMX_CSPI_VER_2_3)
+	#define	SPI_RX_DATA		0x0
+	#define SPI_TX_DATA		0x4
+	#define SPI_CON_REG		0x8
+	#define SPI_CFG_REG		0xC
+	#define SPI_INT_REG		0x10
+	#define SPI_DMA_REG		0x14
+	#define SPI_STAT_REG		0x18
+	#define SPI_PERIOD_REG		0x1C
+#endif
 
 struct spi_reg_t {
 	u32 ctrl_reg;

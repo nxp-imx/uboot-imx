@@ -1,8 +1,5 @@
 /*
- *
- * (c) 2007 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
- *
- * (C) Copyright 2009 Freescale Semiconductor
+ * (C) Copyright 2009 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -14,7 +11,7 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -23,23 +20,14 @@
  * MA 02111-1307 USA
  */
 
-#ifndef __ASM_ARCH_MX25_H
-#define __ASM_ARCH_MX25_H
-#ifndef __ASSEMBLER__
+#ifndef _IMX_SPI_CPLD_H_
+#define _IMX_SPI_CPLD_H_
 
-#define GPIO_PORT_NUM	3
-#define GPIO_NUM_PIN	32
+#include <linux/types.h>
 
-enum mxc_clock {
-	MXC_ARM_CLK = 0,
-	MXC_AHB_CLK,
-	MXC_IPG_CLK,
-	MXC_IPG_PERCLK,
-	MXC_UART_CLK,
-	MXC_CSPI_CLK
-};
+extern struct spi_slave *spi_cpld_probe();
+extern void spi_cpld_free(struct spi_slave *slave);
+extern unsigned int cpld_reg_xfer(unsigned int reg, unsigned int val,
+				  unsigned int read);
 
-extern unsigned int mx25_get_ipg_clk(void);
-extern unsigned int mxc_get_clock(enum mxc_clock clk);
-#endif
-#endif /* __ASM_ARCH_MX25_H */
+#endif				/* _IMX_SPI_CPLD_H_ */
