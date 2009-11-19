@@ -372,3 +372,12 @@ int cpu_eth_init(bd_t *bis)
 #endif
 	return rc;
 }
+
+#if defined(CONFIG_ARCH_CPU_INIT)
+int arch_cpu_init(void)
+{
+	icache_enable();
+	dcache_enable();
+	return 0;
+}
+#endif

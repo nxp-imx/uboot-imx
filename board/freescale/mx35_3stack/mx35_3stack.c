@@ -36,6 +36,10 @@
 #include <fsl_esdhc.h>
 #endif
 
+#ifdef CONFIG_ARCH_MMU
+#include <asm/mmu.h>
+#include <asm/arch/mmu.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -67,6 +71,68 @@ int is_soc_rev(int rev)
 {
 	return (system_rev & 0xFF) - rev;
 }
+
+#ifdef CONFIG_ARCH_MMU
+void board_mmu_init(void)
+{
+	unsigned long ttb_base = PHYS_SDRAM_1 + 0x40000;
+	unsigned long i;
+
+	/*
+	 * Set the TTB register
+	 */
+	asm volatile ("mcr  p15,0,%0,c2,c0,0" : : "r"(ttb_base) /*:*/);
+
+	/*
+	 * Set the Domain Access Control Register
+	 */
+	i = ARM_ACCESS_DACR_DEFAULT;
+	asm volatile ("mcr  p15,0,%0,c3,c0,0" : : "r"(i) /*:*/);
+
+	/*
+	 * First clear all TT entries - ie Set them to Faulting
+	 */
+	memset((void *)ttb_base, 0, ARM_FIRST_LEVEL_PAGE_TABLE_SIZE);
+	/* Actual   Virtual  Size   Attributes   	Function */
+	/* Base     Base     MB     cached? buffered?  access permissions */
+	/* xxx00000 xxx00000 */
+	X_ARM_MMU_SECTION(0x000, 0xF00, 0x1,
+			  ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			  ARM_ACCESS_PERM_RW_RW); /* ROM */
+	X_ARM_MMU_SECTION(0x100, 0x100, 0x1,
+			  ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			  ARM_ACCESS_PERM_RW_RW); /* iRAM */
+	X_ARM_MMU_SECTION(0x300, 0x300, 0x1,
+			  ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			  ARM_ACCESS_PERM_RW_RW); /* L2CC */
+	/* Internal Regsisters upto SDRAM*/
+	X_ARM_MMU_SECTION(0x400, 0x400, 0x400,
+			  ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			  ARM_ACCESS_PERM_RW_RW);
+	X_ARM_MMU_SECTION(0x800, 0x000, 0x80,
+			  ARM_CACHEABLE, ARM_BUFFERABLE,
+			  ARM_ACCESS_PERM_RW_RW); /* SDRAM 0:128M*/
+	X_ARM_MMU_SECTION(0x800, 0x800, 0x80,
+			  ARM_CACHEABLE, ARM_BUFFERABLE,
+			  ARM_ACCESS_PERM_RW_RW); /* SDRAM 0:128M*/
+	X_ARM_MMU_SECTION(0x800, 0x880, 0x80,
+			  ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			  ARM_ACCESS_PERM_RW_RW); /* SDRAM 0:128M*/
+	X_ARM_MMU_SECTION(0x900, 0x900, 0x80,
+			  ARM_CACHEABLE, ARM_BUFFERABLE,
+			  ARM_ACCESS_PERM_RW_RW); /* SDRAM 1:128M*/
+	X_ARM_MMU_SECTION(0xA00, 0xA00, 0x40,
+			  ARM_CACHEABLE, ARM_BUFFERABLE,
+			  ARM_ACCESS_PERM_RW_RW); /* Flash */
+	X_ARM_MMU_SECTION(0xB00, 0xB00, 0x20,
+			  ARM_CACHEABLE, ARM_BUFFERABLE,
+			  ARM_ACCESS_PERM_RW_RW); /* PSRAM */
+	/* ESDCTL, WEIM, M3IF, EMI, NFC, External I/O */
+	X_ARM_MMU_SECTION(0xB20, 0xB20, 0x1E0,
+			  ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			  ARM_ACCESS_PERM_RW_RW);
+}
+#endif
 
 int dram_init(void)
 {

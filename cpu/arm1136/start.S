@@ -251,7 +251,9 @@ clbss_l:str	r2, [r0]		/* clear loop...		    */
 	cmp	r0, r1
 	bne	clbss_l
 #endif
-
+#ifdef CONFIG_ARCH_MMU
+	bl board_mmu_init
+#endif
 	ldr	pc, _start_armboot
 
 #ifdef CONFIG_NAND_SPL
