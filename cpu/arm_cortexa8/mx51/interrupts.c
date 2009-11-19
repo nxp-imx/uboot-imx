@@ -26,18 +26,6 @@
 #include <common.h>
 #include <asm/arch/mx51.h>
 
-/* General purpose timers registers */
-#define GPTCR   __REG(GPT1_BASE_ADDR)	/* Control register */
-#define GPTPR  	__REG(GPT1_BASE_ADDR + 0x4)	/* Prescaler register */
-#define GPTSR   __REG(GPT1_BASE_ADDR + 0x8)	/* Status register */
-#define GPTCNT 	__REG(GPT1_BASE_ADDR + 0x24)	/* Counter register */
-
-/* General purpose timers bitfields */
-#define GPTCR_SWR       (1<<15)	/* Software reset */
-#define GPTCR_FRR       (1<<9)	/* Freerun / restart */
-#define GPTCR_CLKSOURCE_32 (4<<6)	/* Clock source */
-#define GPTCR_TEN       (1)	/* Timer enable */
-
 /* nothing really to do with interrupts, just starts up a counter. */
 int interrupt_init(void)
 {

@@ -35,8 +35,10 @@
 /* General purpose timers bitfields */
 #define GPTCR_SWR       (1<<15)	/* Software reset */
 #define GPTCR_FRR       (1<<9)	/* Freerun / restart */
-#define GPTCR_CLKSOURCE_32 (4<<6)	/* Clock source */
+#define GPTCR_CLKSOURCE_32   (0x100<<6)	/* Clock source */
+#define GPTCR_CLKSOURCE_IPG (0x001<<6)	/* Clock source */
 #define GPTCR_TEN       (1)	/* Timer enable */
+#define GPTPR_VAL	(66)
 
 static inline void setup_gpt()
 {
@@ -52,9 +54,9 @@ static inline void setup_gpt()
 	GPTCR = GPTCR_SWR;
 	for (i = 0; i < 100; i++)
 		GPTCR = 0;      /* We have no udelay by now */
-	GPTPR = 0;              /* 32Khz */
+	GPTPR = GPTPR_VAL;	/* 66Mhz / 66 */
 	/* Freerun Mode, PERCLK1 input */
-	GPTCR |= GPTCR_CLKSOURCE_32 | GPTCR_TEN;
+	GPTCR |= GPTCR_CLKSOURCE_IPG | GPTCR_TEN;
 }
 
 int timer_init(void)
@@ -64,27 +66,37 @@ int timer_init(void)
 	return 0;
 }
 
+void reset_timer_masked(void)
+{
+	GPTCR = 0;
+	/* Freerun Mode, PERCLK1 input */
+	GPTCR = GPTCR_CLKSOURCE_IPG | GPTCR_TEN;
+}
+
+inline ulong get_timer_masked(void)
+{
+	ulong val = GPTCNT;
+
+	return val;
+}
+
 void reset_timer(void)
 {
 	reset_timer_masked();
 }
 
-void reset_timer_masked(void)
-{
-	GPTCR = 0;
-	/* Freerun Mode, PERCLK1 input */
-	GPTCR = GPTCR_CLKSOURCE_32 | GPTCR_TEN;
-}
-
-ulong get_timer_masked(void)
-{
-	ulong val = GPTCNT;
-	return val;
-}
-
 ulong get_timer(ulong base)
 {
-	return get_timer_masked() - base;
+	ulong tmp;
+
+	tmp = get_timer_masked();
+
+	if (tmp <= (base * 1000)) {
+		/* Overflow */
+		tmp += (0xffffffff -  base);
+	}
+
+	return (tmp / 1000) - base;
 }
 
 void set_timer(ulong t)
@@ -92,32 +104,25 @@ void set_timer(ulong t)
 }
 
 /* delay x useconds AND perserve advance timstamp value */
+/* GPTCNT is now supposed to tick 1 by 1 us. */
 void udelay(unsigned long usec)
 {
-	ulong tmo, tmp;
+	ulong tmp;
 
 	setup_gpt();
 
-	/* if "big" number, spread normalization to seconds */
-	if (usec >= 1000) {
-		/* start to normalize for usec to ticks per sec */
-		tmo = usec / 1000;
-		/* find number of "ticks" to wait to achieve target */
-		tmo *= CONFIG_SYS_HZ;
-		tmo /= 1000;	/* finish normalize. */
-	} else {/* else small number, don't kill it prior to HZ multiply */
-		tmo = usec * CONFIG_SYS_HZ;
-		tmo /= (1000 * 1000);
+	tmp = get_timer_masked();	/* get current timestamp */
+
+	/* if setting this forward will roll time stamp */
+	if ((usec + tmp + 1) < tmp) {
+		/* reset "advancing" timestamp to 0, set lastinc value */
+		reset_timer_masked();
+	} else {
+		/* else, set advancing stamp wake up time */
+		tmp += usec;
 	}
 
-	tmp = get_timer(0);	/* get current timestamp */
-	/* if setting this forward will roll time stamp */
-	if ((tmo + tmp + 1) < tmp)
-		 /* reset "advancing" timestamp to 0, set lastinc value */
-		reset_timer_masked();
-	else	/* else, set advancing stamp wake up time */
-		tmo += tmp;
-	while (get_timer_masked() < tmo)	/* loop till event */
+	while (get_timer_masked() < tmp)	/* loop till event */
 		 /*NOP*/;
 }
 

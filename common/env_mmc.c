@@ -101,8 +101,10 @@ inline int write_env(struct mmc *mmc, unsigned long size,
 {
 	uint blk_start = 0, blk_cnt = 0, n = 0;
 
-	blk_start = (offset % 512) ? ((offset / 512) + 1) : (offset / 512);
-	blk_cnt = (size % 512) ? ((size / 512) + 1) : (size / 512);
+	blk_start = (offset & (0x200 - 1)) \
+			? ((offset >> 9) + 1) : (offset >> 9);
+	blk_cnt   = (size   & (0x200 - 1)) \
+			? ((size   >> 9) + 1) : (size   >> 9);
 	n = mmc->block_dev.block_write(0, blk_start , blk_cnt, (u_char *)buffer);
 
 	return (n == blk_cnt) ? 0 : -1;
@@ -132,8 +134,10 @@ inline int read_env(struct mmc *mmc, unsigned long size,
 {
 	uint blk_start = 0, blk_cnt = 0, n = 0;
 
-	blk_start = (offset % 512) ? ((offset / 512) + 1) : (offset / 512);
-	blk_cnt = (size % 512) ? ((size / 512) + 1) : (size / 512);
+	blk_start = (offset & (0x200 - 1)) ? \
+			((offset >> 9) + 1) : (offset >> 9);
+	blk_cnt   = (size   & (0x200 - 1)) ? \
+			((size   >> 9) + 1) : (size   >> 9);
 
 	n = mmc->block_dev.block_read(0, blk_start, blk_cnt, (uchar *)buffer);
 

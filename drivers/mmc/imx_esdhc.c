@@ -76,15 +76,15 @@ struct fsl_esdhc {
 static inline void mdelay(unsigned long msec)
 {
 	unsigned long i;
-	for (i = 0; i < msec * 10; i++)
-		udelay(100);
+	for (i = 0; i < msec; i++)
+		udelay(1000);
 }
 
 static inline void sdelay(unsigned long sec)
 {
 	unsigned long i;
-	for (i = 0; i < sec * 10; i++)
-		mdelay(100);
+	for (i = 0; i < sec; i++)
+		mdelay(1000);
 }
 
 /* Return the XFERTYP flags for a given command and data packet */

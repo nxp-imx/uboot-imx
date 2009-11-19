@@ -29,7 +29,6 @@
 #include <asm/arch/iomux.h>
 #include <asm/errno.h>
 #include <i2c.h>
-#include <mxc_keyb.h>
 #include <asm/arch/keypad.h>
 #include "board-imx51.h"
 #include <imx_spi.h>
@@ -43,6 +42,7 @@
 #endif
 
 #ifdef CONFIG_FSL_ANDROID
+#include <mxc_keyb.h>
 #include <part.h>
 #include <ext2fs.h>
 #include <linux/mtd/mtd.h>

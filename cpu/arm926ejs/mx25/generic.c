@@ -97,6 +97,9 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 		return mx25_get_cspi_clk();
 	case MXC_UART_CLK:
 		break;
+	case MXC_ESDHC_CLK:
+		return mx25_get_ipg_clk();
+		break;
 	}
 	return -1;
 }
@@ -106,6 +109,7 @@ int print_cpuinfo(void)
 {
 	printf("CPU:   Freescale i.MX25 at %d MHz\n",
 		mx25_get_mcu_main_clk() / 1000000);
+	mx25_dump_clocks();
 	return 0;
 }
 /*

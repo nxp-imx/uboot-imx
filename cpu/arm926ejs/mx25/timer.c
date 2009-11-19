@@ -26,22 +26,19 @@
 #include <common.h>
 #include <asm/arch/mx25-regs.h>
 
-#define TIMER_BASE 0x53f90000 /* General purpose timer 1 */
-
 /* General purpose timers registers */
-#define GPTCR	__REG(TIMER_BASE) /* Control register */
-#define GPTPR	__REG(TIMER_BASE + 0x4) /* Prescaler register */
-#define GPTSR	__REG(TIMER_BASE + 0x8) /* Status register */
-#define GPTCNT	__REG(TIMER_BASE + 0x24) /* Counter register */
+#define GPTCR   __REG(GPT1_BASE)	/* Control register */
+#define GPTPR  	__REG(GPT1_BASE + 0x4)	/* Prescaler register */
+#define GPTSR   __REG(GPT1_BASE + 0x8)	/* Status register */
+#define GPTCNT 	__REG(GPT1_BASE + 0x24)	/* Counter register */
 
 /* General purpose timers bitfields */
 #define GPTCR_SWR	(1<<15) /* Software reset */
 #define GPTCR_FRR	(1<<9)  /* Freerun / restart */
-#define GPTCR_CLKSOURCE_32	(4<<6)  /* Clock source */
+#define GPTCR_CLKSOURCE_32   (0x100<<6)	/* Clock source */
+#define GPTCR_CLKSOURCE_IPG (0x001<<6)	/* Clock source */
 #define GPTCR_TEN	(1)	/* Timer enable */
-
-static ulong timestamp;
-static ulong lastinc;
+#define GPTPR_VAL	(66)
 
 static inline void setup_gpt()
 {
@@ -56,13 +53,12 @@ static inline void setup_gpt()
 	/* setup GP Timer 1 */
 	GPTCR = GPTCR_SWR;
 	for (i = 0; i < 100; i++)
-		GPTCR = 0;      /* We have no udelay by now */
-	GPTPR = 0;              /* 32Khz */
+		GPTCR = 0;      	/* We have no udelay by now */
+	GPTPR = GPTPR_VAL;	/* 66Mhz / 66 */
 	/* Freerun Mode, PERCLK1 input */
-	GPTCR |= GPTCR_CLKSOURCE_32 | GPTCR_TEN;
+	GPTCR |= GPTCR_CLKSOURCE_IPG | GPTCR_TEN;
 }
 
-/* nothing really to do with interrupts, just starts up a counter. */
 int timer_init(void)
 {
 	setup_gpt();
@@ -72,9 +68,16 @@ int timer_init(void)
 
 void reset_timer_masked(void)
 {
-	/* reset time */
-	lastinc = GPTCNT; /* capture current incrementer value time */
-	timestamp = 0; /* start "advancing" time stamp from 0 */
+	GPTCR = 0;
+	/* Freerun Mode, PERCLK1 input */
+	GPTCR = GPTCR_CLKSOURCE_IPG | GPTCR_TEN;
+}
+
+inline ulong get_timer_masked(void)
+{
+	ulong val = GPTCNT;
+
+	return val;
 }
 
 void reset_timer(void)
@@ -82,17 +85,18 @@ void reset_timer(void)
 	reset_timer_masked();
 }
 
-ulong get_timer_masked(void)
-{
-	ulong now = GPTCNT;
-	now = now * 1000 / CONFIG_SYS_HZ; /* current tick value */
-
-	return now;
-}
-
 ulong get_timer(ulong base)
 {
-	return get_timer_masked() - base;
+	ulong tmp;
+
+	tmp = get_timer_masked();
+
+	if (tmp <= (base * 1000)) {
+		/* Overflow */
+		tmp += (0xffffffff -  base);
+	}
+
+	return (tmp / 1000) - base;
 }
 
 void set_timer(ulong t)
@@ -100,21 +104,26 @@ void set_timer(ulong t)
 }
 
 /* delay x useconds AND perserve advance timstamp value */
+/* GPTCNT is now supposed to tick 1 by 1 us. */
 void udelay(unsigned long usec)
 {
-	ulong tmo, tmp;
+	ulong tmp;
 
 	setup_gpt();
 
-	tmo = usec / 1000;		/* Current precision is Millisecond */
+	tmp = get_timer_masked();	/* get current timestamp */
 
-	tmp = get_timer(0);		/* get current timestamp */
-	if ((tmo + tmp + 1) < tmp)	/* if overflow time stamp */
-		reset_timer_masked();	/* reset "advancing" timestamp to 0 */
-	else
-		tmo += tmp;		/* else, set stamp wake up time */
-	while (get_timer_masked() < tmo)/* loop till event */
-		/*NOP*/;
+	/* if setting this forward will roll time stamp */
+	if ((usec + tmp + 1) < tmp) {
+		/* reset "advancing" timestamp to 0, set lastinc value */
+		reset_timer_masked();
+	} else {
+		/* else, set advancing stamp wake up time */
+		tmp += usec;
+	}
+
+	while (get_timer_masked() < tmp)	/* loop till event */
+		 /*NOP*/;
 }
 
 void reset_cpu(ulong addr)

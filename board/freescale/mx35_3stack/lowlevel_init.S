@@ -204,9 +204,8 @@
 
     	check_soc_version r1, r2
 	cmp r1, #CHIP_REV_2_0
-	ldrhs r3, =CCM_MPLL_399_HZ
-	bhs 1f
-	ldr r2, [r0, #CLKCTL_PDR0]
+	movhs r2, #CLKMODE_CONSUMER
+	ldrlo r2, [r0, #CLKCTL_PDR0]
         tst r2, #CLKMODE_CONSUMER
         ldrne r3, =CCM_MPLL_532_HZ  /* consumer path*/
         ldreq r3, =CCM_MPLL_399_HZ  /* auto path*/
@@ -224,7 +223,7 @@
         str r1, [r0, #CLKCTL_PDR0]
 
         ldr r1, [r0, #CLKCTL_CGR0]
-        orr r1, r1, #0x00300000
+        orr r1, r1, #0x0C300000
         str r1, [r0, #CLKCTL_CGR0]
 
         ldr r1, [r0, #CLKCTL_CGR1]
@@ -322,14 +321,15 @@ lowlevel_init:
 
 	init_drive_strength
 
+	init_clock
+	init_debug_board
+
 	cmp pc, #PHYS_SDRAM_1
-	blo init_clock_start
+	blo init_sdram_start
 	cmp pc, #(PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)
 	blo skip_sdram_setup
 
-init_clock_start:
-	init_clock
-	init_debug_board
+init_sdram_start:
 	/*init_sdram*/
 	setup_sdram
 skip_sdram_setup:

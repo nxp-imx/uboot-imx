@@ -100,12 +100,11 @@
 /* #define CONFIG_CMD_SPI */
 /* #define CONFIG_CMD_DATE */
 #define CONFIG_CMD_NAND
-/* #define CONFIG_CMD_MMC */
+#define CONFIG_CMD_MMC
 
 /*
  * MMC Configs
  * */
-/*
 #ifdef CONFIG_CMD_MMC
 	#define CONFIG_MMC				1
 	#define CONFIG_GENERIC_MMC
@@ -113,7 +112,6 @@
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
 #endif
-*/
 
 /* Disabled due to compilation errors in cmd_bootm.c (IMLS seems to require
  * that CONFIG_NO_FLASH is undefined).
@@ -145,6 +143,7 @@
 
 #define CONFIG_HAS_ETH1
 #define CONFIG_CMD_NET
+#define CONFIG_NET_RETRY_COUNT	100
 #define CONFIG_CMD_DHCP
 #define CONFIG_NET_MULTI
 #define CONFIG_ETH_PRIME
@@ -175,7 +174,7 @@
 
 #define CONFIG_SYS_LOAD_ADDR	CONFIG_LOADADDR /* default load address */
 
-#define CONFIG_SYS_HZ		CONFIG_MX25_CLK32
+#define CONFIG_SYS_HZ			1000
 
 #define UBOOT_IMAGE_SIZE	0x40000
 

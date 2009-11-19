@@ -31,7 +31,6 @@
 #define CONFIG_MXC		1
 #define CONFIG_MX35		1	/* in a mx31 */
 #define CONFIG_MX35_HCLK_FREQ	24000000	/* RedBoot says 26MHz */
-#define CONFIG_MX35_CLK32	32768
 
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
@@ -91,6 +90,7 @@
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
+#define CONFIG_NET_RETRY_COUNT	100
 
 #define CONFIG_BOOTDELAY	3
 
@@ -164,7 +164,7 @@
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 
-#define CONFIG_SYS_HZ		CONFIG_MX35_CLK32/* use 32kHz clock as source */
+#define CONFIG_SYS_HZ				1000
 
 #define CONFIG_CMDLINE_EDITING	1
 

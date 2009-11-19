@@ -95,6 +95,7 @@ int print_cpuinfo (void)
 {
 	printf("CPU:   Freescale i.MX31 at %d MHz\n",
 		mx31_get_mcu_main_clk() / 1000000);
+	mx31_dump_clocks();
 	return 0;
 }
 #endif

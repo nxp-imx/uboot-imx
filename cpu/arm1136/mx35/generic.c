@@ -89,15 +89,10 @@ static u32 __get_arm_div(u32 pdr0, u32 *fi, u32 *fd)
 static int __get_ahb_div(u32 pdr0)
 {
 	int *pclk_mux;
-	if (pdr0 & MXC_CCM_PDR0_AUTO_CON) {
-		pclk_mux = g_clk_mux_consumer +
-		    ((pdr0 & MXC_CCM_PDR0_CON_MUX_DIV_MASK) >>
-		     MXC_CCM_PDR0_CON_MUX_DIV_OFFSET);
-	} else {
-		pclk_mux = g_clk_mux_auto +
-		    ((pdr0 & MXC_CCM_PDR0_AUTO_MUX_DIV_MASK) >>
-		     MXC_CCM_PDR0_AUTO_MUX_DIV_OFFSET);
-	}
+
+	pclk_mux = g_clk_mux_consumer +
+	    ((pdr0 & MXC_CCM_PDR0_CON_MUX_DIV_MASK) >>
+	     MXC_CCM_PDR0_CON_MUX_DIV_OFFSET);
 
 	if ((*pclk_mux) == -1)
 		return -1;
@@ -348,6 +343,7 @@ void mxc_dump_clocks(void)
 	u32 cpufreq = __get_mcu_main_clk();
 	printf("mx35 cpu clock: %dMHz\n", cpufreq / 1000000);
 	printf("ipg clock     : %dHz\n", __get_ipg_clk());
+	printf("ipg per clock : %dHz\n", __get_ipg_per_clk());
 	printf("uart clock     : %dHz\n", mxc_get_clock(MXC_UART_CLK));
 }
 
@@ -356,6 +352,7 @@ int print_cpuinfo(void)
 {
 	printf("CPU:   Freescale i.MX35 at %d MHz\n",
 	       __get_mcu_main_clk() / 1000000);
+	/* mxc_dump_clocks(); */
 	return 0;
 }
 #endif
