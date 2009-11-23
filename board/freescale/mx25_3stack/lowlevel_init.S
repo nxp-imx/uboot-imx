@@ -44,7 +44,32 @@ lowlevel_init:
 	REG 0xB8002054, 0x22252521
 	REG 0xB8002058, 0x22220A00
 
+	/* MAX (Multi-Layer AHB Crossbar Switch) setup */
+	/* MAX - priority for MX25 is (SDHC2/SDMA)>USBOTG>RTIC>IAHB>DAHB */
+	ldr r0, =MAX_BASE
+	ldr r1, =0x00002143
+	str r1, [r0, #0x000]        /* for S0 */
+	str r1, [r0, #0x100]        /* for S1 */
+	str r1, [r0, #0x200]        /* for S2 */
+	str r1, [r0, #0x300]        /* for S3 */
+	str r1, [r0, #0x400]        /* for S4 */
+	/* SGPCR - always park on last master */
+	ldr r1, =0x10
+	str r1, [r0, #0x010]        /* for S0 */
+	str r1, [r0, #0x110]        /* for S1 */
+	str r1, [r0, #0x210]        /* for S2 */
+	str r1, [r0, #0x310]        /* for S3 */
+	str r1, [r0, #0x410]        /* for S4 */
+	/* MGPCR - restore default values */
+	ldr r1, =0x0
+	str r1, [r0, #0x800]        /* for M0 */
+	str r1, [r0, #0x900]        /* for M1 */
+	str r1, [r0, #0xA00]        /* for M2 */
+	str r1, [r0, #0xB00]        /* for M3 */
+	str r1, [r0, #0xC00]        /* for M4 */
+
 	/* M3IF setup */
+	ldr r1, =M3IF_BASE
 	ldr r0, =0x00000001
 	str r0, [r1]  /* M3IF control reg */
 
