@@ -407,7 +407,7 @@ int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value)
 
 int mmc_change_freq(struct mmc *mmc)
 {
-	char ext_csd[512];
+	char *ext_csd;
 	char cardtype;
 	int err;
 
@@ -419,30 +419,42 @@ int mmc_change_freq(struct mmc *mmc)
 
 	mmc->card_caps |= MMC_MODE_4BIT;
 
+	ext_csd = (char *)malloc(512);
+
+	if (!ext_csd) {
+		puts("Could not allocate buffer for MMC ext csd!\n");
+		return -1;
+	}
+
 	err = mmc_send_ext_csd(mmc, ext_csd);
 
 	if (err)
-		return err;
+		goto err_rtn;
 
-	if (ext_csd[212] || ext_csd[213] || ext_csd[214] || ext_csd[215])
+/*
+	if (ext_csd[EXT_CSD_SEC_CNT] ||
+		ext_csd[EXT_CSD_SEC_CNT + 1] ||
+		ext_csd[EXT_CSD_SEC_CNT + 2] ||
+		ext_csd[EXT_CSD_SEC_CNT + 3])
 		mmc->high_capacity = 1;
+*/
 
-	cardtype = ext_csd[196] & 0xf;
+	cardtype = ext_csd[EXT_CSD_CARD_TYPE] & 0xf;
 
 	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_HS_TIMING, 1);
 
 	if (err)
-		return err;
+		goto err_rtn;
 
 	/* Now check to see that it worked */
 	err = mmc_send_ext_csd(mmc, ext_csd);
 
 	if (err)
-		return err;
+		goto err_rtn;
 
 	/* No high-speed support */
-	if (!ext_csd[185])
-		return 0;
+	if (!ext_csd[EXT_CSD_HS_TIMING])
+		goto no_err_rtn;
 
 	/* High Speed is set, there are two types: 52MHz and 26MHz */
 	if (cardtype & MMC_HS_52MHZ)
@@ -450,7 +462,13 @@ int mmc_change_freq(struct mmc *mmc)
 	else
 		mmc->card_caps |= MMC_MODE_HS;
 
+no_err_rtn:
+	free(ext_csd);
 	return 0;
+
+err_rtn:
+	free(ext_csd);
+	return err;
 }
 
 int sd_switch(struct mmc *mmc, int mode, int group, u8 value, u8 *resp)
@@ -720,14 +738,29 @@ int mmc_startup(struct mmc *mmc)
 	else
 		mmc->write_bl_len = 1 << ((cmd.response[3] >> 22) & 0xf);
 
-	if (mmc->high_capacity) {
+	if (IS_SD(mmc)) {
+		int csd_struct = (cmd.response[0] >> 30) & 0x3;
+
+		switch (csd_struct) {
+		case 1:
+			csize = (mmc->csd[1] & 0x3f) << 16
+				| (mmc->csd[2] & 0xffff0000) >> 16;
+			cmult = 8;
+			break;
+		case 0:
+		default:
+			if (0 != csd_struct)
+				printf("unrecognised CSD structure version %d\n",
+						csd_struct);
+			csize = (mmc->csd[1] & 0x3ff) << 2
+				| (mmc->csd[2] & 0xc0000000) >> 30;
+			cmult = (mmc->csd[2] & 0x00038000) >> 15;
+			break;
+		}
+	} else {
 		csize = (mmc->csd[1] & 0x3f) << 16
 			| (mmc->csd[2] & 0xffff0000) >> 16;
 		cmult = 8;
-	} else {
-		csize = (mmc->csd[1] & 0x3ff) << 2
-			| (mmc->csd[2] & 0xc0000000) >> 30;
-		cmult = (mmc->csd[2] & 0x00038000) >> 15;
 	}
 
 	mmc->capacity = (csize + 1) << (cmult + 2);
