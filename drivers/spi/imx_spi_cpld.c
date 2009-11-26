@@ -27,8 +27,21 @@
 #include <linux/types.h>
 
 #include <imx_spi.h>
+#include <asm/arch/imx_spi_cpld.h>
 
 static struct spi_slave *cpld_slave;
+
+void cpld_reg_write(u32 offset, u32 val)
+{
+	cpld_reg_xfer(offset, val, 0);
+	cpld_reg_xfer(offset + 0x2, (val >> 16), 0);
+}
+
+u32 cpld_reg_read(u32 offset)
+{
+	return cpld_reg_xfer(offset, 0x0, 1) | \
+		(cpld_reg_xfer(offset + 0x2, 0x0, 1) << 16);
+}
 
 /*!
  * To read/write to a CPLD register.
@@ -74,7 +87,22 @@ unsigned int cpld_reg_xfer(unsigned int reg, unsigned int val,
 
 struct spi_slave *spi_cpld_probe()
 {
+	u32 reg;
 	cpld_slave = spi_setup_slave(0, 0, 25000000, 0);
+
+	udelay(1000);
+
+	/* Reset interrupt status reg */
+	cpld_reg_write(PBC_INT_REST, 0x1F);
+	cpld_reg_write(PBC_INT_REST, 0);
+	cpld_reg_write(PBC_INT_MASK, 0xFFFF);
+	/* Reset the XUART and Ethernet controllers */
+	reg = cpld_reg_read(PBC_SW_RESET);
+	reg |= 0x9;
+	cpld_reg_write(PBC_SW_RESET, reg);
+	reg &= ~0x9;
+	cpld_reg_write(PBC_SW_RESET, reg);
+
 	return cpld_slave;
 }
 

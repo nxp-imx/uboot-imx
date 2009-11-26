@@ -25,9 +25,22 @@
 
 #include <linux/types.h>
 
-extern struct spi_slave *spi_cpld_probe();
-extern void spi_cpld_free(struct spi_slave *slave);
-extern unsigned int cpld_reg_xfer(unsigned int reg, unsigned int val,
-				  unsigned int read);
+#define PBC_LED_CTRL		0x20000
+#define PBC_SB_STAT		0x20008
+#define PBC_ID_AAAA		0x20040
+#define PBC_ID_5555		0x20048
+#define PBC_VERSION		0x20050
+#define PBC_ID_CAFE		0x20058
+#define PBC_INT_STAT		0x20010
+#define PBC_INT_MASK		0x20038
+#define PBC_INT_REST		0x20020
+#define PBC_SW_RESET		0x20060
+
+void cpld_reg_write(u32 offset, u32 val);
+u32 cpld_reg_read(u32 offset);
+struct spi_slave *spi_cpld_probe();
+void spi_cpld_free(struct spi_slave *slave);
+unsigned int cpld_reg_xfer(unsigned int reg, unsigned int val,
+				unsigned int read);
 
 #endif				/* _IMX_SPI_CPLD_H_ */
