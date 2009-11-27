@@ -75,7 +75,7 @@ static inline void setup_boot_device(void)
 		{
 			uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
 			uint bt_mem_ctl = soc_sbmr & 0x00000003;
-			uint bt_mem_type = (soc_sbmr & 0x000000C0) >> 7;
+			uint bt_mem_type = (soc_sbmr & 0x00000180) >> 7;
 
 			switch (bt_mem_ctl) {
 			case 0x3:
