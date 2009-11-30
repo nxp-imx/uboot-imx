@@ -31,6 +31,7 @@
 					== NAND_PAGESIZE_4KB)
 #define IS_LARGE_PAGE_NAND	((mtd->writesize / info->num_of_intlv) > 512)
 
+#define GET_NAND_OOB_SIZE       (mtd->oobsize / info->num_of_intlv)
 #define NAND_PAGESIZE_2KB	2048
 #define NAND_PAGESIZE_4KB	4096
 #define NAND_MAX_PAGESIZE	4096
@@ -94,16 +95,21 @@ do { \
 
 #define NFC_SET_NFMS(v)	\
 do { \
-	(NFMS |= (v)); \
 	if (((v) & (1 << NFMS_NF_PG_SZ))) { \
 		if (IS_2K_PAGE_NAND) { \
+			(NFMS |= 0x00000100); \
+			(NFMS &= ~0x00000200); \
 			NFC_SET_SPAS(NFC_SPAS_64); \
 		} else if (IS_4K_PAGE_NAND) { \
-			NFC_SET_SPAS(NFC_SPAS_128); \
+			(NFMS &= ~0x00000100); \
+			(NFMS |= 0x00000200); \
+			GET_NAND_OOB_SIZE == 128 ? \
+			NFC_SET_SPAS(NFC_SPAS_128) : \
+			NFC_SET_SPAS(NFC_SPAS_218); \
 		} else { \
-			NFC_SET_SPAS(NFC_SPAS_16); \
+			printk(KERN_ERR "Err for setting page/oob size"); \
 		} \
-		NFC_SET_ECC_MODE(NFC_SPAS_128); \
+		NFC_SET_ECC_MODE(GET_NAND_OOB_SIZE >> 1); \
 	} \
 } while (0)
 

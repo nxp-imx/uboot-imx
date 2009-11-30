@@ -17,6 +17,7 @@
 #include <asm/errno.h>
 #include <linux/mtd/nand.h>
 #include <asm-arm/arch/mxc_nand.h>
+#include "nand_device_info.h"
 
 struct nand_info {
 	int status_req;
@@ -1059,7 +1060,7 @@ static int mxc_nand_prog_page(struct mtd_info *mtd, struct nand_chip *chip,
 		return -EIO;
 	#endif
 	return 0;
-	}
+}
 
 /* Define some generic bad / good block scan pattern which are used
  * while scanning a device for factory marked good / bad blocks. */
@@ -1106,22 +1107,64 @@ static struct nand_bbt_descr bbt_mirror_descr = {
 
 static int mxc_nand_scan_bbt(struct mtd_info *mtd)
 {
+	int i;
+	uint8_t id_bytes[NAND_DEVICE_ID_BYTE_COUNT];
 	struct nand_chip *this = mtd->priv;
 	struct nand_info *info = this->priv;
+	struct nand_device_info  *dev_info;
 
 	info->page_mask = this->pagemask;
+
+	if (!IS_LARGE_PAGE_NAND)
+		goto skip_it;
+
+	/* Read ID bytes from the first NAND Flash chip. */
+	this->select_chip(mtd, 0);
+
+	this->cmdfunc(mtd, NAND_CMD_READID, 0x00, -1);
+
+	for (i = 0; i < NAND_DEVICE_ID_BYTE_COUNT; i++)
+		id_bytes[i] = this->read_byte(mtd);
+
+	/* Get information about this device, based on the ID bytes. */
+	dev_info = nand_device_get_info(id_bytes);
+
+	/* Check if we understand this device. */
+	if (!dev_info) {
+		printk(KERN_ERR "Unrecognized NAND Flash device.\n");
+		return !0;
+	}
+
+	nand_device_print_info(dev_info);
+
+	/* Correct mtd setting */
+	this->chipsize = dev_info->chip_size_in_bytes;
+	mtd->size = dev_info->chip_size_in_bytes * this->numchips;
+	mtd->writesize = dev_info->page_total_size_in_bytes & ~0x3ff;
+	mtd->oobsize = dev_info->page_total_size_in_bytes & 0x3ff;;
+	mtd->erasesize = dev_info->block_size_in_pages * mtd->writesize;
 
 	/* limit to 2G size due to Kernel
 	 * larger 4G space support,need fix
 	 * it later
 	 */
-	if (mtd->size == 0) {
-		mtd->size = 1 << 31;
+	if ((u32)mtd->size == 0) {
+		mtd->size = (u32)(1 << 31);
 		this->numchips = 1;
 		this->chipsize = mtd->size;
 	}
 
+	/* Calculate the address shift from the page size */
+	this->page_shift = ffs(mtd->writesize) - 1;
+	/* Convert chipsize to number of pages per chip -1. */
+	this->pagemask = (this->chipsize >> this->page_shift) - 1;
 
+	this->bbt_erase_shift = this->phys_erase_shift =
+		ffs(mtd->erasesize) - 1;
+	this->chip_shift = ffs(this->chipsize) - 1;
+	this->oob_poi = this->buffers->databuf + mtd->writesize;
+
+skip_it:
 	if (IS_2K_PAGE_NAND) {
 		NFC_SET_NFMS(1 << NFMS_NF_PG_SZ);
 		this->ecc.layout = &nand_hw_eccoob_2k;

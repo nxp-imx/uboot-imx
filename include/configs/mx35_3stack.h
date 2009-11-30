@@ -196,7 +196,7 @@
 #define CONFIG_ENV_SIZE		CONFIG_ENV_SECT_SIZE
 
 /* Address and size of Redundant Environment Sector	*/
-#define CONFIG_ENV_OFFSET_REDUND (CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
+#define CONFIG_ENV_OFFSET_REDUND (2 * 1024 * 1024)
 #define CONFIG_ENV_SIZE_REDUND	CONFIG_ENV_SIZE
 
 /*
@@ -215,7 +215,7 @@
 
 #if defined(CONFIG_FSL_ENV_IN_NAND)
 	#define CONFIG_ENV_IS_IN_NAND 1
-	#define CONFIG_ENV_OFFSET       (768 * 1024)
+	#define CONFIG_ENV_OFFSET       (1024 * 1024)
 #elif defined(CONFIG_FSL_ENV_IS_IN_FLASH)
 	#define CONFIG_ENV_IS_IN_FLASH	1
 #endif
