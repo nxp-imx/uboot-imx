@@ -322,7 +322,13 @@ int board_late_init(void)
 
 int checkboard(void)
 {
-	printf("Board: MX35 3STACK [");
+	printf("Board: MX35 3STACK ");
+
+	if (system_rev & CHIP_REV_2_0)
+		printf("2.0 [");
+	else
+		printf("1.0 [");
+
 	switch (__REG(CCM_BASE_ADDR + CLKCTL_RCSR) & 0x0F) {
 	case 0x0000:
 		printf("POR");

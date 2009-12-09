@@ -204,8 +204,9 @@
 
     	check_soc_version r1, r2
 	cmp r1, #CHIP_REV_2_0
-	movhs r2, #CLKMODE_CONSUMER
-	ldrlo r2, [r0, #CLKCTL_PDR0]
+	ldrhs r3, =CCM_MPLL_532_HZ
+	bhs 1f
+	ldr r2, [r0, #CLKCTL_PDR0]
         tst r2, #CLKMODE_CONSUMER
         ldrne r3, =CCM_MPLL_532_HZ  /* consumer path*/
         ldreq r3, =CCM_MPLL_399_HZ  /* auto path*/
