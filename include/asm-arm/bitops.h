@@ -17,6 +17,8 @@
 
 #ifdef __KERNEL__
 
+#include <asm/proc/system.h>
+
 #define smp_mb__before_clear_bit()	do { } while (0)
 #define smp_mb__after_clear_bit()	do { } while (0)
 
@@ -25,59 +27,72 @@
  */
 extern void set_bit(int nr, volatile void * addr);
 
-static inline void __set_bit(int nr, volatile void *addr)
-{
-	((unsigned char *) addr)[nr >> 3] |= (1U << (nr & 7));
-}
-
 extern void clear_bit(int nr, volatile void * addr);
-
-static inline void __clear_bit(int nr, volatile void *addr)
-{
-	((unsigned char *) addr)[nr >> 3] &= ~(1U << (nr & 7));
-}
 
 extern void change_bit(int nr, volatile void * addr);
 
 static inline void __change_bit(int nr, volatile void *addr)
 {
-	((unsigned char *) addr)[nr >> 3] ^= (1U << (nr & 7));
-}
+	unsigned long mask = BIT_MASK(nr);
+	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
 
-extern int test_and_set_bit(int nr, volatile void * addr);
+	*p ^= mask;
+}
 
 static inline int __test_and_set_bit(int nr, volatile void *addr)
 {
-	unsigned int mask = 1 << (nr & 7);
-	unsigned int oldval;
+	unsigned long mask = BIT_MASK(nr);
+	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
+	unsigned long old = *p;
 
-	oldval = ((unsigned char *) addr)[nr >> 3];
-	((unsigned char *) addr)[nr >> 3] = oldval | mask;
-	return oldval & mask;
+	*p = old | mask;
+	return (old & mask) != 0;
 }
 
-extern int test_and_clear_bit(int nr, volatile void * addr);
+static inline int test_and_set_bit(int nr, volatile void *addr)
+{
+	unsigned long flags;
+	int out;
+
+	local_irq_save(flags);
+	out = __test_and_set_bit(nr, addr);
+	local_irq_restore(flags);
+
+	return out;
+}
 
 static inline int __test_and_clear_bit(int nr, volatile void *addr)
 {
-	unsigned int mask = 1 << (nr & 7);
-	unsigned int oldval;
+	unsigned long mask = BIT_MASK(nr);
+	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
+	unsigned long old = *p;
 
-	oldval = ((unsigned char *) addr)[nr >> 3];
-	((unsigned char *) addr)[nr >> 3] = oldval & ~mask;
-	return oldval & mask;
+	*p = old & ~mask;
+	return (old & mask) != 0;
+}
+
+static inline int test_and_clear_bit(int nr, volatile void *addr)
+{
+	unsigned long flags;
+	int out;
+
+	local_irq_save(flags);
+	out = __test_and_clear_bit(nr, addr);
+	local_irq_restore(flags);
+
+	return out;
 }
 
 extern int test_and_change_bit(int nr, volatile void * addr);
 
 static inline int __test_and_change_bit(int nr, volatile void *addr)
 {
-	unsigned int mask = 1 << (nr & 7);
-	unsigned int oldval;
+	unsigned long mask = BIT_MASK(nr);
+	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
+	unsigned long old = *p;
 
-	oldval = ((unsigned char *) addr)[nr >> 3];
-	((unsigned char *) addr)[nr >> 3] = oldval ^ mask;
-	return oldval & mask;
+	*p = old ^ mask;
+	return (old & mask) != 0;
 }
 
 extern int find_first_zero_bit(void * addr, unsigned size);
@@ -108,14 +123,6 @@ static inline unsigned long ffz(unsigned long word)
 	if (word & 0x40000000) { k -= 1; }
 	return k;
 }
-
-/*
- * ffs: find first bit set. This is defined the same way as
- * the libc and compiler builtin ffs routines, therefore
- * differs in spirit from the above ffz (man ffs).
- */
-
-#define ffs(x) generic_ffs(x)
 
 /*
  * hweightN: returns the hamming weight (i.e. the number

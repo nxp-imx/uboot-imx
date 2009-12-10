@@ -535,7 +535,7 @@ int board_init(void)
 #ifdef BOARD_LATE_INIT
 
 #if defined(CONFIG_FSL_ANDROID) && defined(CONFIG_MXC_KPD)
-inline int waiting_for_func_key_pressing(void)
+static int waiting_for_func_key_pressing(void)
 {
 	struct kpp_key_info key_info = {0, 0};
 	int switch_delay = CONFIG_ANDROID_BOOTMOD_DELAY;
@@ -607,7 +607,7 @@ inline int waiting_for_func_key_pressing(void)
 	return 0;
 }
 
-inline int switch_to_recovery_mode(void)
+static int switch_to_recovery_mode(void)
 {
 	char *env = NULL;
 	char *boot_args = NULL;
@@ -648,127 +648,164 @@ inline int switch_to_recovery_mode(void)
 	return 0;
 }
 
-inline int check_recovery_cmd_file(void)
+static int check_mmc_recovery_cmd_file(int dev_num, int part_num, char *path)
 {
+	block_dev_desc_t *dev_desc = NULL;
+	struct mmc *mmc = find_mmc_device(dev_num);
 	disk_partition_t info;
-	ulong part_length;
-	int filelen;
+	ulong part_length = 0;
+	int filelen = 0;
+
+	memset(&info, 0, sizeof(disk_partition_t));
+
+	dev_desc = get_dev("mmc", dev_num);
+
+	if (NULL == dev_desc) {
+		printf("** Block device MMC %d not supported\n",
+				dev_num);
+		return 0;
+	}
+
+	mmc_init(mmc);
+
+	if (get_partition_info(dev_desc,
+			part_num,
+			&info)) {
+		printf("** Bad partition %d **\n",
+			part_num);
+		return 0;
+	}
+
+	part_length = ext2fs_set_blk_dev(dev_desc,
+						part_num);
+	if (part_length == 0) {
+		printf("** Bad partition - mmc 0:%d **\n",
+			part_num);
+		ext2fs_close();
+		return 0;
+	}
+
+	if (!ext2fs_mount(part_length)) {
+		printf("** Bad ext2 partition or disk - mmc 0:%d **\n",
+			part_num);
+		ext2fs_close();
+		return 0;
+	}
+
+	filelen = ext2fs_open(path);
+
+	ext2fs_close();
+
+	return (filelen > 0) ? 1 : 0;
+}
+
+extern int ubifs_init(void);
+extern int ubifs_mount(char *vol_name);
+extern int ubifs_load(char *filename, u32 addr, u32 size);
+
+static int check_nand_recovery_cmd_file(char *mtd_part_name,
+				char *ubi_part_name,
+				char *path)
+{
+	struct mtd_device *dev_desc = NULL;
+	struct part_info *part = NULL;
+	struct mtd_partition mtd_part;
+	struct mtd_info *mtd_info = NULL;
+	char mtd_dev[16] = { 0 };
+	char mtd_buffer[80] = { 0 };
+	u8 pnum = 0,
+	   read_test = 0;
+	int err = 0,
+		filelen = 0;
+
+	memset(&mtd_part, 0, sizeof(struct mtd_partition));
+
+	/* ========== ubi and mtd operations ========== */
+	if (mtdparts_init() != 0) {
+		printf("Error initializing mtdparts!\n");
+		return 0;
+	}
+
+	if (find_dev_and_part(mtd_part_name, &dev_desc, &pnum, &part)) {
+		printf("Partition %s not found!\n", mtd_part_name);
+		return 0;
+	}
+	sprintf(mtd_dev, "%s%d",
+			MTD_DEV_TYPE(dev_desc->id->type),
+			dev_desc->id->num);
+	mtd_info = get_mtd_device_nm(mtd_dev);
+	if (IS_ERR(mtd_info)) {
+		printf("Partition %s not found on device %s!\n",
+			"nand", mtd_dev);
+		return 0;
+	}
+
+	sprintf(mtd_buffer, "mtd=%d", pnum);
+	memset(&mtd_part, 0, sizeof(mtd_part));
+	mtd_part.name = mtd_buffer;
+	mtd_part.size = part->size;
+	mtd_part.offset = part->offset;
+	add_mtd_partitions(mtd_info, &mtd_part, 1);
+
+	err = ubi_mtd_param_parse(mtd_buffer, NULL);
+	if (err) {
+		del_mtd_partitions(mtd_info);
+		return 0;
+	}
+
+	err = ubi_init();
+	if (err) {
+		del_mtd_partitions(mtd_info);
+		return 0;
+	}
+
+	/* ========== ubifs operations ========== */
+	/* Init ubifs */
+	ubifs_init();
+
+	if (ubifs_mount(ubi_part_name)) {
+		printf("Mount ubifs volume %s fail!\n",
+				ubi_part_name);
+		return 0;
+	}
+
+	/* Try to read one byte for a read test. */
+	if (ubifs_load(path, (u32)&read_test, 1)) {
+		/* File not found */
+		filelen = 0;
+	} else
+		filelen = 1;
+
+	return filelen;
+}
+
+static int check_recovery_cmd_file(void)
+{
+	int if_exist;
+	char *env = NULL;
 
 	switch (get_boot_device()) {
 	case MMC_BOOT:
-		{
-			block_dev_desc_t *dev_desc = NULL;
-			struct mmc *mmc = find_mmc_device(0);
-
-			dev_desc = get_dev("mmc", 0);
-
-			if (NULL == dev_desc) {
-				puts("** Block device MMC 0 not supported\n");
-				return 0;
-			}
-
-			mmc_init(mmc);
-
-			if (get_partition_info(dev_desc,
-					CONFIG_ANDROID_CACHE_PARTITION_MMC,
-					&info)) {
-				printf("** Bad partition %d **\n",
-					CONFIG_ANDROID_CACHE_PARTITION_MMC);
-				return 0;
-			}
-
-			part_length = ext2fs_set_blk_dev(dev_desc,
-								CONFIG_ANDROID_CACHE_PARTITION_MMC);
-			if (part_length == 0) {
-				printf("** Bad partition - mmc 0:%d **\n",
-					CONFIG_ANDROID_CACHE_PARTITION_MMC);
-				ext2fs_close();
-				return 0;
-			}
-
-			if (!ext2fs_mount(part_length)) {
-				printf("** Bad ext2 partition or disk - mmc 0:%d **\n",
-					CONFIG_ANDROID_CACHE_PARTITION_MMC);
-				ext2fs_close();
-				return 0;
-			}
-
-			filelen = ext2fs_open(CONFIG_ANDROID_RECOVERY_CMD_FILE);
-
-			ext2fs_close();
-		}
+		if_exist = check_mmc_recovery_cmd_file(0,
+				CONFIG_ANDROID_CACHE_PARTITION_MMC,
+				CONFIG_ANDROID_RECOVERY_CMD_FILE);
 		break;
 	case NAND_BOOT:
-		{
-			#if 0
-			struct mtd_device *dev_desc = NULL;
-			struct part_info *part = NULL;
-			struct mtd_partition mtd_part;
-			struct mtd_info *mtd_info;
-			char mtd_dev[16] = { 0 };
-			char mtd_buffer[80] = { 0 };
-			u8 pnum;
-			int err;
-			u8 read_test;
+		env = getenv("mtdparts");
+		if (!env)
+			setenv("mtdparts", MTDPARTS_DEFAULT);
 
-			/* ========== ubi and mtd operations ========== */
-			if (mtdparts_init() != 0) {
-				printf("Error initializing mtdparts!\n");
-				return 0;
-			}
+		env = getenv("mtdids");
+		if (!env)
+			setenv("mtdids", MTDIDS_DEFAULT);
 
-			if (find_dev_and_part("nand", &dev_desc, &pnum, &part)) {
-				printf("Partition %s not found!\n", "nand");
-				return 0;
-			}
-			sprintf(mtd_dev, "%s%d",
-					MTD_DEV_TYPE(dev_desc->id->type),
-					dev_desc->id->num);
-			mtd_info = get_mtd_device_nm(mtd_dev);
-			if (IS_ERR(mtd_info)) {
-				printf("Partition %s not found on device %s!\n",
-					"nand", mtd_dev);
-				return 0;
-			}
+		env = getenv("partition");
+		if (!env)
+			setenv("partition", MTD_ACTIVE_PART);
 
-			sprintf(mtd_buffer, "mtd=%d", pnum);
-			memset(&mtd_part, 0, sizeof(mtd_part));
-			mtd_part.name = mtd_buffer;
-			mtd_part.size = part->size;
-			mtd_part.offset = part->offset;
-			add_mtd_partitions(&info, &mtd_part, 1);
-
-			err = ubi_mtd_param_parse(mtd_buffer, NULL);
-			if (err) {
-				del_mtd_partitions(&info);
-				return 0;
-			}
-
-			err = ubi_init();
-			if (err) {
-				del_mtd_partitions(&info);
-				return 0;
-			}
-
-			/* ========== ubifs operations ========== */
-			/* Init ubifs */
-			ubifs_init();
-
-			if (ubifs_mount(CONFIG_ANDROID_CACHE_PARTITION_NAND)) {
-				printf("Mount ubifs volume %s fail!\n",
-						CONFIG_ANDROID_CACHE_PARTITION_NAND);
-				return 0;
-			}
-
-			/* Try to read one byte for a read test. */
-			if (ubifs_load(CONFIG_ANDROID_RECOVERY_CMD_FILE,
-						&read_test, 1)) {
-				/* File not found */
-				filelen = 0;
-			} else
-				filelen = 1;
-		#endif
-		}
+		if_exist = check_nand_recovery_cmd_file(CONFIG_ANDROID_UBIFS_PARTITION_NM,
+						CONFIG_ANDROID_CACHE_PARTITION_NAND,
+						CONFIG_ANDROID_RECOVERY_CMD_FILE);
 		break;
 	case SPI_NOR_BOOT:
 		return 0;
@@ -779,7 +816,7 @@ inline int check_recovery_cmd_file(void)
 		break;
 	}
 
-	return (filelen > 0) ? 1 : 0;
+	return if_exist;
 }
 #endif
 

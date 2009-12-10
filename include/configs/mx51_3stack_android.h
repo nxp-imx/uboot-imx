@@ -58,7 +58,7 @@
 /*
  * Size of malloc() pool
  */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 4 * 1024 * 1024)
 /* size in bytes reserved for initial data */
 #define CONFIG_SYS_GBL_DATA_SIZE	128
 
@@ -90,12 +90,17 @@
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
 #define CONFIG_NET_RETRY_COUNT	100
-/*
+
 #define CONFIG_CMD_UBI
 #define CONFIG_CMD_UBIFS
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_MTD_DEVICE
+#define CONFIG_MTD_PARTITIONS
+#define MTDIDS_DEFAULT "nand0=nand0"
+#define MTDPARTS_DEFAULT "mtdparts=nand0:0x700000@0x0(BOOT),0x100000@0x700000(MISC),0x1400000@0x800000(RECOVERY),-@0x1c00000(ROOT)"
+#define MTD_ACTIVE_PART "nand0,3"
 #define CONFIG_RBTREE
 #define CONFIG_LZO
-*/
 
 /*
  * Android support Configs
@@ -125,7 +130,8 @@
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 #define CONFIG_ANDROID_BOOTMOD_DELAY 3
 #define CONFIG_ANDROID_CACHE_PARTITION_MMC 6
-#define CONFIG_ANDROID_CACHE_PARTITION_NAND 2
+#define CONFIG_ANDROID_UBIFS_PARTITION_NM  "ROOT"
+#define CONFIG_ANDROID_CACHE_PARTITION_NAND "cache"
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
@@ -172,8 +178,8 @@
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
 		"bootcmd_android=run bootargs_base bootargs_android; "	\
-			"mmcinit;cp.b 0x100000 ${loadaddr} 0x250000; "	\
-			"cp.b 0x400000 ${rd_loadaddr} 0x4B000; "	\
+			"mmc read 0 ${loadaddr} 0x800 0x1280; "	\
+			"mmc read 0 ${rd_loadaddr} 0x2000 0x258; "	\
 			"bootm ${loadaddr} ${rd_loadaddr}\0"		\
 		"prg_uboot=tftpboot ${loadaddr} ${uboot}; "		\
 			"protect off ${uboot_addr} 0xa003ffff; "	\

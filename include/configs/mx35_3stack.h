@@ -35,6 +35,10 @@
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
+#define CONFIG_FLASH_HEADER     1
+#define CONFIG_FLASH_HEADER_OFFSET 0x400
+#define CONFIG_FLASH_HEADER_BARKER 0xB1
+
 #define BOARD_LATE_INIT
 /*
  * Disabled for now due to build problems under Debian and a significant increase
