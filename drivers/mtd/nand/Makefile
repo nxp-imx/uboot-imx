@@ -46,7 +46,6 @@ COBJS-$(CONFIG_NAND_S3C2410) += s3c2410_nand.o
 COBJS-$(CONFIG_NAND_S3C64XX) += s3c64xx.o
 COBJS-$(CONFIG_NAND_OMAP_GPMC) += omap_gpmc.o
 COBJS-$(CONFIG_NAND_PLAT) += nand_plat.o
-COBJS-$(CONFIG_MX25) += mxc_nand.o
 COBJS-$(CONFIG_MX31_NAND) += mx31_nand.o
 COBJS-$(CONFIG_MXC_NAND) += mxc_nand.o nand_device_info.o
 endif

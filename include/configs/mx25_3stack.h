@@ -101,6 +101,7 @@
 /* #define CONFIG_CMD_DATE */
 #define CONFIG_CMD_NAND
 #define CONFIG_CMD_MMC
+#define CONFIG_MXC_NAND
 
 /*
  * MMC Configs
