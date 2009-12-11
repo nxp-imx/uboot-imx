@@ -722,6 +722,16 @@ void fec_halt(struct eth_device *dev)
 	memset(info->txbuf, 0, DBUF_LENGTH);
 }
 
+static void mxc_fec_set_mac(struct fec_info_s *fec_info)
+{
+	unsigned char ea[6];
+	volatile fec_t *fecp = (fec_t *)(fec_info->iobase);
+
+	memcpy(ea, eth_get_dev()->enetaddr, 6);
+	fecp->palr = (ea[0] << 24) | (ea[1] << 16) | (ea[2] << 8) | (ea[3]);
+	fecp->paur = (ea[4] << 24) | (ea[5] << 16);
+}
+
 int mxc_fec_initialize(bd_t *bis)
 {
 	struct eth_device *dev;
@@ -767,6 +777,8 @@ int mxc_fec_initialize(bd_t *bis)
 		miiphy_register(dev->name, mxc_fec_mii_read, mxc_fec_mii_write);
 #endif
 	}
+
+	mxc_fec_set_mac(&fec_info);
 
 	return 1;
 }
