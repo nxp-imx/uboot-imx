@@ -29,7 +29,6 @@
 #include <asm/arch/mx51_pins.h>
 #include <asm/arch/iomux.h>
 #include <i2c.h>
-#include <mxc_keyb.h>
 #include <asm/arch/keypad.h>
 #include "board-mx51_3stack.h"
 #include <netdev.h>
@@ -39,7 +38,13 @@
 #include <fsl_esdhc.h>
 #endif
 
+#ifdef CONFIG_ARCH_MMU
+#include <asm/mmu.h>
+#include <asm/arch/mmu.h>
+#endif
+
 #ifdef CONFIG_FSL_ANDROID
+#include <mxc_keyb.h>
 #include <part.h>
 #include <ext2fs.h>
 #include <linux/mtd/mtd.h>
@@ -129,6 +134,66 @@ inline int is_soc_rev(int rev)
 {
 	return (system_rev & 0xFF) - rev;
 }
+
+#ifdef CONFIG_ARCH_MMU
+void board_mmu_init(void)
+{
+	unsigned long ttb_base = PHYS_SDRAM_1 + 0x4000;
+	unsigned long i;
+
+	/*
+	* Set the TTB register
+	*/
+	asm volatile ("mcr  p15,0,%0,c2,c0,0" : : "r"(ttb_base) /*:*/);
+
+	/*
+	* Set the Domain Access Control Register
+	*/
+	i = ARM_ACCESS_DACR_DEFAULT;
+	asm volatile ("mcr  p15,0,%0,c3,c0,0" : : "r"(i) /*:*/);
+
+	/*
+	* First clear all TT entries - ie Set them to Faulting
+	*/
+	memset((void *)ttb_base, 0, ARM_FIRST_LEVEL_PAGE_TABLE_SIZE);
+	/* Actual   Virtual  Size   Attributes          Function */
+	/* Base     Base     MB     cached? buffered?  access permissions */
+	/* xxx00000 xxx00000 */
+	X_ARM_MMU_SECTION(0x000, 0x200, 0x1,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* ROM */
+	X_ARM_MMU_SECTION(0x1FF, 0x1FF, 0x001,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* IRAM */
+	X_ARM_MMU_SECTION(0x300, 0x300, 0x100,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* GPU */
+	X_ARM_MMU_SECTION(0x400, 0x400, 0x200,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* IPUv3D */
+	X_ARM_MMU_SECTION(0x600, 0x600, 0x300,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* periperals */
+	X_ARM_MMU_SECTION(0x900, 0x000, 0x080,
+			ARM_CACHEABLE, ARM_BUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* SDRAM */
+	X_ARM_MMU_SECTION(0x900, 0x900, 0x080,
+			ARM_CACHEABLE, ARM_BUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* SDRAM */
+	X_ARM_MMU_SECTION(0x900, 0x980, 0x080,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* SDRAM 0:128M*/
+	X_ARM_MMU_SECTION(0xA00, 0xA00, 0x100,
+			ARM_CACHEABLE, ARM_BUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* SDRAM */
+	X_ARM_MMU_SECTION(0xB80, 0xB80, 0x10,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* CS1 EIM control*/
+	X_ARM_MMU_SECTION(0xCC0, 0xCC0, 0x040,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* CS4/5/NAND Flash buffer */
+}
+#endif
 
 int dram_init(void)
 {
@@ -781,7 +846,7 @@ static int check_nand_recovery_cmd_file(char *mtd_part_name,
 
 static int check_recovery_cmd_file(void)
 {
-	int if_exist;
+	int if_exist = 0;
 	char *env = NULL;
 
 	switch (get_boot_device()) {
@@ -803,9 +868,11 @@ static int check_recovery_cmd_file(void)
 		if (!env)
 			setenv("partition", MTD_ACTIVE_PART);
 
+		/*
 		if_exist = check_nand_recovery_cmd_file(CONFIG_ANDROID_UBIFS_PARTITION_NM,
 						CONFIG_ANDROID_CACHE_PARTITION_NAND,
 						CONFIG_ANDROID_RECOVERY_CMD_FILE);
+		*/
 		break;
 	case SPI_NOR_BOOT:
 		return 0;

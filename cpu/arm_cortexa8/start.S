@@ -178,6 +178,9 @@ clbss_l:
 	add	r0, r0, #4		@ increment clear index pointer
 	bne	clbss_l			@ keep clearing till at end
 
+#ifdef CONFIG_ARCH_MMU
+	bl board_mmu_init
+#endif
 	ldr	pc, _start_armboot	@ jump to C code
 
 _start_armboot: .word start_armboot
