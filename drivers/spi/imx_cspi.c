@@ -227,9 +227,7 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 		while ((val-- > 0) &&
 		       (((reg =
 			  readl(dev->base + SPI_STAT_REG)) & SPI_INT_STAT_TC) ==
-			0)) {
-			udelay(100);
-		}
+			0));
 
 		/* clear the TC bit */
 		writel(reg | SPI_INT_STAT_TC, dev->base + SPI_STAT_REG);
