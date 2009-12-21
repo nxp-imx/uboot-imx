@@ -315,7 +315,11 @@ void set_sysctl(struct mmc *mmc, uint clock)
 
 	clk = (pre_div << 8) | (div << 4);
 
+#ifdef CONFIG_MX25
+	tmp = readl(&regs->sysctl) | (SYSCTL_HCKEN | SYSCTL_IPGEN);
+#else
 	tmp = readl(&regs->sysctl) & (~SYSCTL_SDCLKEN);
+#endif
 	writel(tmp, &regs->sysctl);
 
 	tmp = (readl(&regs->sysctl) & (~SYSCTL_CLOCK_MASK)) | clk;
@@ -323,10 +327,15 @@ void set_sysctl(struct mmc *mmc, uint clock)
 
 	mdelay(100);
 
+#ifdef CONFIG_MX25
+	tmp = readl(&regs->sysctl) | SYSCTL_PEREN;
+	writel(tmp, &regs->sysctl);
+#else
 	while (!(readl(&regs->prsstat) & PRSSTAT_SDSTB)) ;
 
 	tmp = readl(&regs->sysctl) | (SYSCTL_SDCLKEN);
 	writel(tmp, &regs->sysctl);
+#endif
 }
 
 static void esdhc_set_ios(struct mmc *mmc)
@@ -380,6 +389,7 @@ static int esdhc_init(struct mmc *mmc)
 	}
 	*/
 
+#ifndef CONFIG_MX25
 	set_sysctl(mmc, 400000);
 
 	tmp = readl(&regs->sysctl) | SYSCTL_INITA;
@@ -387,6 +397,7 @@ static int esdhc_init(struct mmc *mmc)
 
 	while (readl(&regs->sysctl) & SYSCTL_INITA)
 		mdelay(1);
+#endif
 
 	return 0;
 }

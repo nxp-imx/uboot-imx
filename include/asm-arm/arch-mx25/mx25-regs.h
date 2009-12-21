@@ -372,7 +372,7 @@
 /*!
  *  * NFMS bit in RCSR register for pagesize of nandflash
  *   */
-#define NFMS		(*((volatile u32 *)(CCM_BASE+0x18)))
+#define NFMS		(*((volatile u32 *)(CCM_BASE+0x28)))
 #define NFMS_BIT	8
 #define NFMS_NF_DWIDTH	14
 #define NFMS_NF_PG_SZ	8
