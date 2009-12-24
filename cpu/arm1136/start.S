@@ -210,10 +210,10 @@ relocate:				/* relocate U-Boot to RAM	    */
 	ldr	r1, =_armboot_start
 	cmp	r0, r1			/* don't reloc during debug	    */
 	beq	stack_setup
-	ldr 	r2, _TEXT_BASE
+	ldr 	r2, _armboot_start
 	sub	r0, r1, r0
 	sub	r0, r2, r0
-	ldr	r1, _TEXT_BASE
+	mov	r1, r2
 	ldr	r2, _armboot_start
 	ldr	r3, _bss_start
 	sub	r2, r3, r2		/* r2 <- size of armboot	    */
