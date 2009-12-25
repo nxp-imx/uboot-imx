@@ -24,6 +24,7 @@
  */
 
 #include <common.h>
+#include <asm/io.h>
 #include <asm/arch/mx51.h>
 
 /* nothing really to do with interrupts, just starts up a counter. */
@@ -34,5 +35,13 @@ int interrupt_init(void)
 
 void reset_cpu(ulong addr)
 {
+	/* workaround for ENGcm09397 - Fix SPI NOR reset issue*/
+	/* de-select SS0 of instance: eCSPI1 */
+	writel(0x3, IOMUXC_BASE_ADDR + 0x218);
+	writel(0x85, IOMUXC_BASE_ADDR + 0x608);
+	/* de-select SS1 of instance: ecspi1 */
+	writel(0x3, IOMUXC_BASE_ADDR + 0x21C);
+	writel(0x85, IOMUXC_BASE_ADDR + 0x60C);
+
 	__REG16(WDOG1_BASE_ADDR) = 4;
 }
