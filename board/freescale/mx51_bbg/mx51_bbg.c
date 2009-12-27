@@ -121,11 +121,7 @@ static inline void setup_soc_rev(void)
 		system_rev = 0x51000 | CHIP_REV_1_1;
 		break;
 	case 0x10:
-		if ((__REG(GPIO1_BASE_ADDR + 0x0) & (0x1 << 22)) == 0) {
-			system_rev = 0x51000 | CHIP_REV_2_5;
-		} else {
-			system_rev = 0x51000 | CHIP_REV_2_0;
-		}
+		system_rev = 0x51000 | CHIP_REV_2_0;
 		break;
 	case 0x20:
 		system_rev = 0x51000 | CHIP_REV_3_0;
@@ -135,9 +131,11 @@ static inline void setup_soc_rev(void)
 	}
 }
 
-static inline void set_board_rev(int rev)
+static inline void set_board_rev()
 {
-	system_rev |= (rev & 0xF) << 8;
+	if ((__REG(GPIO1_BASE_ADDR + 0x0) & (0x1 << 22)) == 0)
+		system_rev |= BOARD_REV_2_0 << BOARD_VER_OFFSET;
+
 }
 
 inline int is_soc_rev(int rev)
@@ -664,6 +662,7 @@ int board_init(void)
 {
 	setup_boot_device();
 	setup_soc_rev();
+	set_board_rev();
 
 	gd->bd->bi_arch_number = MACH_TYPE_MX51_BABBAGE;	/* board id for linux */
 	/* address of boot parameters */
@@ -886,13 +885,14 @@ int checkboard(void)
 {
 	printf("Board: MX51 BABBAGE ");
 
-	if (system_rev & CHIP_REV_3_0) {
+	if (is_soc_rev(CHIP_REV_3_0) == 0) {
 		printf("3.0 [");
-	} else if (system_rev & CHIP_REV_2_5) {
+	} else if ((is_soc_rev(CHIP_REV_2_0) == 0)
+	 && (system_rev & (BOARD_REV_2_0 << BOARD_VER_OFFSET))) {
 		printf("2.5 [");
-	} else if (system_rev & CHIP_REV_2_0) {
+	} else if (is_soc_rev(CHIP_REV_2_0) == 0) {
 		printf("2.0 [");
-	} else if (system_rev & CHIP_REV_1_1) {
+	} else if (is_soc_rev(CHIP_REV_1_1) == 0) {
 		printf("1.1 [");
 	} else {
 		printf("1.0 [");

@@ -399,6 +399,8 @@
 #define BOARD_REV_1_0           0x0
 #define BOARD_REV_2_0           0x1
 
+#define BOARD_VER_OFFSET	0x8
+
 #define NAND_FLASH_BOOT		0x10000000
 #define SPI_NOR_FLASH_BOOT	0x80000000
 #define MMC_FLASH_BOOT		0x40000000
