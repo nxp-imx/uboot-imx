@@ -48,6 +48,8 @@
         orr r0, r0, #(1 << 23)          /* disable write allocate combine */
         orr r0, r0, #(1 << 22)          /* disable write allocate */
 
+	ldr r1, =0x00000000
+	ldr r3, [r1, #ROM_SI_REV]
 	cmp r3, #0x10    /* r3 contains the silicon rev */
 	orrls r0, r0, #(1 << 25)    /* disable write combine for TO 2 and lower revs */
 
