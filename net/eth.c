@@ -201,7 +201,7 @@ int eth_initialize(bd_t *bis)
 #endif
 	/* Try board-specific initialization first.  If it fails or isn't
 	 * present, try the cpu-specific initialization */
-#ifdef CONFIG_ETH_PRIME
+#ifdef CONFIG_ETHPRIME
 	board_eth_init(bis);
 	cpu_eth_init(bis);
 #else
