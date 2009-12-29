@@ -110,6 +110,7 @@
 	#define CONFIG_MMC				1
 	#define CONFIG_GENERIC_MMC
 	#define CONFIG_IMX_MMC
+	#define CONFIG_IMX_ESDHC_V1
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
 #endif

@@ -315,19 +315,17 @@ void set_sysctl(struct mmc *mmc, uint clock)
 
 	clk = (pre_div << 8) | (div << 4);
 
-#ifdef CONFIG_MX25
-	tmp = readl(&regs->sysctl) | (SYSCTL_HCKEN | SYSCTL_IPGEN);
-#else
+#ifndef CONFIG_IMX_ESDHC_V1
 	tmp = readl(&regs->sysctl) & (~SYSCTL_SDCLKEN);
-#endif
 	writel(tmp, &regs->sysctl);
+#endif
 
 	tmp = (readl(&regs->sysctl) & (~SYSCTL_CLOCK_MASK)) | clk;
 	writel(tmp, &regs->sysctl);
 
 	mdelay(100);
 
-#ifdef CONFIG_MX25
+#ifdef CONFIG_IMX_ESDHC_V1
 	tmp = readl(&regs->sysctl) | SYSCTL_PEREN;
 	writel(tmp, &regs->sysctl);
 #else
@@ -372,6 +370,11 @@ static int esdhc_init(struct mmc *mmc)
 	while (readl(&regs->sysctl) & SYSCTL_RSTA)
 	    mdelay(1);
 
+#ifdef CONFIG_IMX_ESDHC_V1
+	tmp = readl(&regs->sysctl) | (SYSCTL_HCKEN | SYSCTL_IPGEN);
+	writel(tmp, &regs->sysctl);
+#endif
+
 	/* Set the initial clock speed */
 	set_sysctl(mmc, 400000);
 
@@ -389,9 +392,7 @@ static int esdhc_init(struct mmc *mmc)
 	}
 	*/
 
-#ifndef CONFIG_MX25
-	set_sysctl(mmc, 400000);
-
+#ifndef CONFIG_IMX_ESDHC_V1
 	tmp = readl(&regs->sysctl) | SYSCTL_INITA;
 	writel(tmp, &regs->sysctl);
 
