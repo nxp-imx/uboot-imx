@@ -3210,6 +3210,9 @@ apollon_config		: unconfig
 mx25_3stack_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs mx25_3stack freescale mx25
 
+mx28_config : unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs mx28 freescale mx28
+
 imx31_litekit_config	: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1136 imx31_litekit NULL mx31
 
