@@ -568,13 +568,10 @@ int esdhc_gpio_init(void)
 	case 0:
 		imx_esdhc_base_addr = (u32 *)MMC_SDHC1_BASE_ADDR;
 
-		pad = PAD_CTL_PUE_KEEPER | PAD_CTL_PKE_ENABLE | PAD_CTL_DRV_HIGH |
-		                PAD_CTL_47K_PU | PAD_CTL_SRE_FAST;
-
 		mxc_request_iomux(MX51_PIN_SD1_CMD,
-			  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
 		mxc_request_iomux(MX51_PIN_SD1_CLK,
-			  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
 
 		mxc_request_iomux(MX51_PIN_SD1_DATA0,
 				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
@@ -584,12 +581,36 @@ int esdhc_gpio_init(void)
 				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
 		mxc_request_iomux(MX51_PIN_SD1_DATA3,
 				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
-		mxc_iomux_set_pad(MX51_PIN_SD1_CMD, pad);
-		mxc_iomux_set_pad(MX51_PIN_SD1_CLK, pad);
-		mxc_iomux_set_pad(MX51_PIN_SD1_DATA0, pad);
-		mxc_iomux_set_pad(MX51_PIN_SD1_DATA1, pad);
-		mxc_iomux_set_pad(MX51_PIN_SD1_DATA2, pad);
-		mxc_iomux_set_pad(MX51_PIN_SD1_DATA3, pad);
+		mxc_iomux_set_pad(MX51_PIN_SD1_CMD,
+				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
+				PAD_CTL_PUE_PULL |
+				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD1_CLK,
+				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+				PAD_CTL_HYS_NONE | PAD_CTL_47K_PU |
+				PAD_CTL_PUE_PULL |
+				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD1_DATA0,
+				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
+				PAD_CTL_PUE_PULL |
+				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD1_DATA1,
+				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
+				PAD_CTL_PUE_PULL |
+				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD1_DATA2,
+				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
+				PAD_CTL_PUE_PULL |
+				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+		mxc_iomux_set_pad(MX51_PIN_SD1_DATA3,
+				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+				PAD_CTL_HYS_ENABLE | PAD_CTL_100K_PD |
+				PAD_CTL_PUE_PULL |
+				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
 		break;
 	case 1:
 		imx_esdhc_base_addr = (u32 *)MMC_SDHC2_BASE_ADDR;

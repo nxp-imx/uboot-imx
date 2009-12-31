@@ -380,18 +380,18 @@ int esdhc_gpio_init(void)
 				(u32 *)MMC_SDHC1_BASE_ADDR;
 
 		pad_val = PAD_CTL_PUE_PUD | PAD_CTL_PKE_ENABLE |
-				PAD_CTL_HYS_SCHMITZ | PAD_CTL_DRV_HIGH |
-				PAD_CTL_47K_PU | PAD_CTL_SRE_FAST;
-		mxc_request_iomux(MX35_PIN_SD1_CLK,
-				MUX_CONFIG_FUNC | MUX_CONFIG_SION);
-		mxc_iomux_set_pad(MX35_PIN_SD1_CLK, pad_val);
-
-		pad_val = PAD_CTL_PUE_PUD | PAD_CTL_PKE_ENABLE |
 			PAD_CTL_HYS_SCHMITZ | PAD_CTL_DRV_HIGH |
-			PAD_CTL_100K_PU | PAD_CTL_SRE_FAST;
+			PAD_CTL_100K_PD | PAD_CTL_SRE_FAST;
 		mxc_request_iomux(MX35_PIN_SD1_CMD,
 			MUX_CONFIG_FUNC | MUX_CONFIG_SION);
 		mxc_iomux_set_pad(MX35_PIN_SD1_CMD, pad_val);
+
+		pad_val = PAD_CTL_PUE_PUD | PAD_CTL_PKE_ENABLE |
+				PAD_CTL_HYS_SCHMITZ | PAD_CTL_DRV_HIGH |
+				PAD_CTL_100K_PU | PAD_CTL_SRE_FAST;
+		mxc_request_iomux(MX35_PIN_SD1_CLK,
+				MUX_CONFIG_FUNC | MUX_CONFIG_SION);
+		mxc_iomux_set_pad(MX35_PIN_SD1_CLK, pad_val);
 		mxc_request_iomux(MX35_PIN_SD1_DATA0,
 			  MUX_CONFIG_FUNC);
 		mxc_iomux_set_pad(MX35_PIN_SD1_DATA0, pad_val);
@@ -415,13 +415,13 @@ int esdhc_gpio_init(void)
 
 		pad_val = PAD_CTL_PUE_PUD | PAD_CTL_PKE_ENABLE |
 			PAD_CTL_HYS_SCHMITZ | PAD_CTL_DRV_MAX |
-			PAD_CTL_47K_PU | PAD_CTL_SRE_FAST;
-		mxc_iomux_set_pad(MX35_PIN_SD2_CLK, pad_val);
+			PAD_CTL_100K_PD | PAD_CTL_SRE_FAST;
+		mxc_iomux_set_pad(MX35_PIN_SD2_CMD, pad_val);
 
 		pad_val = PAD_CTL_PUE_PUD | PAD_CTL_PKE_ENABLE |
-			PAD_CTL_HYS_SCHMITZ | PAD_CTL_DRV_MAX |
-			PAD_CTL_100K_PU | PAD_CTL_SRE_FAST;
-		mxc_iomux_set_pad(MX35_PIN_SD2_CMD, pad_val);
+				PAD_CTL_HYS_SCHMITZ | PAD_CTL_DRV_HIGH |
+				PAD_CTL_100K_PU | PAD_CTL_SRE_FAST;
+		mxc_iomux_set_pad(MX35_PIN_SD2_CLK, pad_val);
 		mxc_iomux_set_pad(MX35_PIN_SD2_DATA0, pad_val);
 		mxc_iomux_set_pad(MX35_PIN_SD2_DATA3, pad_val);
 
