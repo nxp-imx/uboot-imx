@@ -216,11 +216,8 @@
         ldr r1, =CCM_PPLL_300_HZ
         str r1, [r0, #CLKCTL_PPCTL]
 
-        ldr r1, [r0, #CLKCTL_PDR0]
-        orr r1, r1, #0x800000
-        str r1, [r0, #CLKCTL_PDR0]
-
         ldr r1, =CCM_PDR0_CONFIG
+        bic r1, r1, #0x800000
         str r1, [r0, #CLKCTL_PDR0]
 
         ldr r1, [r0, #CLKCTL_CGR0]
