@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX51-3Stack Freescale board.
  *
@@ -212,6 +212,7 @@
  */
 #define CONFIG_HAS_ETH1
 #define CONFIG_NET_MULTI 1
+#define CONFIG_ETHPRIME
 #define CONFIG_MXC_FEC
 #define CONFIG_MII
 #define CONFIG_DISCOVER_PHY

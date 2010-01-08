@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX51-3Stack Freescale board.
  *
@@ -93,8 +93,6 @@
 #undef CONFIG_CMD_IMLS
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
-#define CONFIG_NET_RETRY_COUNT	100
-#define CONFIG_NET_MULTI
 #define CONFIG_CMD_MMC
 
 /*
@@ -117,6 +115,23 @@
 #define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
 #define CONFIG_SYS_I2C_SPEED            400000
 #define CONFIG_SYS_I2C_SLAVE            0xfe
+
+/*
+ * Eth Configs
+ */
+#define CONFIG_HAS_ETH1
+#define CONFIG_ETHPRIME
+#define CONFIG_NET_RETRY_COUNT	100
+#define CONFIG_NET_MULTI
+#define CONFIG_MXC_FEC
+#define CONFIG_MII
+#define CONFIG_DISCOVER_PHY
+
+#define CONFIG_FEC0_IOBASE	FEC_BASE_ADDR
+#define CONFIG_FEC0_PINMUX	-1
+#define CONFIG_FEC0_PHY_ADDR	0x1F
+#define CONFIG_FEC0_MIIBASE 	-1
+
 
 #define CONFIG_BOOTDELAY	3
 

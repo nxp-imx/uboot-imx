@@ -3,7 +3,7 @@
  *
  * (c) 2007 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
  *
- * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -257,7 +257,7 @@ int i2c_read(uchar chip, uint addr, int alen, uchar *buf, int len)
 	ret = __REG16(I2C_BASE + I2DR);
 
 	while (len--) {
-		if (len == 1)
+		if (len == 0)
 			__REG16(I2C_BASE + I2CR) = I2CR_IEN | I2CR_MSTA |
 			    I2CR_TX_NO_AK;
 
