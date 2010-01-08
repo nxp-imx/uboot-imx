@@ -2,7 +2,7 @@
  * (C) Copyright 2001-2004
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -201,13 +201,8 @@ int eth_initialize(bd_t *bis)
 #endif
 	/* Try board-specific initialization first.  If it fails or isn't
 	 * present, try the cpu-specific initialization */
-#ifdef CONFIG_ETHPRIME
-	board_eth_init(bis);
-	cpu_eth_init(bis);
-#else
 	if (board_eth_init(bis) < 0)
 		cpu_eth_init(bis);
-#endif
 
 #if defined(CONFIG_DB64360) || defined(CONFIG_CPCI750)
 	mv6436x_eth_initialize(bis);

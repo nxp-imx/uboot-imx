@@ -2,7 +2,7 @@
  * (C) Copyright 2000-2004
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -722,14 +722,19 @@ void fec_halt(struct eth_device *dev)
 	memset(info->txbuf, 0, DBUF_LENGTH);
 }
 
-static void mxc_fec_set_mac(struct fec_info_s *fec_info)
+void mxc_fec_set_mac_from_env(char *mac_addr)
 {
 	unsigned char ea[6];
-	volatile fec_t *fecp = (fec_t *)(fec_info->iobase);
+	volatile fec_t *fecp = NULL;
+	int i;
 
-	memcpy(ea, eth_get_dev()->enetaddr, 6);
-	fecp->palr = (ea[0] << 24) | (ea[1] << 16) | (ea[2] << 8) | (ea[3]);
-	fecp->paur = (ea[4] << 24) | (ea[5] << 16);
+	eth_parse_enetaddr(mac_addr, ea);
+
+	for (i = 0; i < sizeof(fec_info) / sizeof(fec_info[0]); i++) {
+		fecp = (fec_t *)(fec_info[i].iobase);
+		fecp->palr = (ea[0] << 24) | (ea[1] << 16) | (ea[2] << 8) | (ea[3]);
+		fecp->paur = (ea[4] << 24) | (ea[5] << 16);
+	}
 }
 
 int mxc_fec_initialize(bd_t *bis)
@@ -777,8 +782,6 @@ int mxc_fec_initialize(bd_t *bis)
 		miiphy_register(dev->name, mxc_fec_mii_read, mxc_fec_mii_write);
 #endif
 	}
-
-	mxc_fec_set_mac(&fec_info);
 
 	return 1;
 }

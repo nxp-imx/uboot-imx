@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -359,6 +359,9 @@ int board_eth_init(bd_t *bis)
 #if defined(CONFIG_SMC911X)
 	rc = smc911x_initialize(0, CONFIG_SMC911X_BASE);
 #endif
+
+	cpu_eth_init(bis);
+
 	return rc;
 }
 

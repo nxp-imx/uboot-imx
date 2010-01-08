@@ -1,5 +1,5 @@
 /*
- * (c) Copyright 2009 Freescale Semiconductor
+ * (c) Copyright 2009-2010 Freescale Semiconductor
  *
  * (c) 2007 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
  *
@@ -305,6 +305,9 @@ int board_eth_init(bd_t *bis)
 #if defined(CONFIG_SMC911X)
 	rc = smc911x_initialize(0, CONFIG_SMC911X_BASE);
 #endif
+
+	cpu_eth_init(bis);
+
 	return rc;
 }
 

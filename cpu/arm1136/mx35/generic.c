@@ -2,7 +2,7 @@
  * (C) Copyright 2007
  * Sascha Hauer, Pengutronix
  *
- * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -364,9 +364,16 @@ int print_cpuinfo(void)
 int cpu_eth_init(bd_t *bis)
 {
 	int rc = -ENODEV;
+	char *env = NULL;
+
 #if defined(CONFIG_MXC_FEC)
 	rc = mxc_fec_initialize(bis);
 #endif
+
+	env = getenv("fec_addr");
+	if (env)
+		mxc_fec_set_mac_from_env(env);
+
 	return rc;
 }
 
