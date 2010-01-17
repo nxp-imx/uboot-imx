@@ -89,16 +89,16 @@
 	 */
 	ldr r0, =M4IF_BASE_ADDR
 
-	ldr r1, =0x00000203
+	ldr r1, =0x00000103
 	str r1, [r0, #0x40]
 
 	ldr r1, =0x0
 	str r1, [r0, #0x44]
 
-	ldr r1, =0x00120125
+	ldr r1, =0x00240126
 	str r1, [r0, #0x9C]
 
-	ldr r1, =0x001901A3
+	ldr r1, =0x00230185
 	str r1, [r0, #0x48]
 .endm /* init_m4if */
 
