@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -806,12 +806,16 @@ inline int switch_to_recovery_mode(void)
 	env = getenv("bootargs_android_recovery");
 	/* Set env to recovery mode */
 	if (!env)
-		setenv("bootargs_android_recovery", boot_args);
+		setenv("bootargs_android", boot_args);
+	else
+		setenv("bootargs_android", env);
+
 	env = getenv("bootcmd_android_recovery");
 	if (!env)
-		setenv("bootcmd_android_recovery", boot_cmd);
-	setenv("bootcmd", "run bootcmd_android_recovery");
-
+		setenv("bootcmd_android", boot_cmd);
+	else
+		setenv("bootcmd_android", env);
+	setenv("bootcmd", "run bootcmd_android");
 
 	return 0;
 }
