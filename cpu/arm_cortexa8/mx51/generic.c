@@ -270,6 +270,11 @@ int arch_cpu_init(void)
 {
 	icache_enable();
 	dcache_enable();
+#ifdef CONFIG_L2_OFF
+	l2_cache_disable();
+#else
+	l2_cache_enable();
+#endif
 	return 0;
 }
 #endif

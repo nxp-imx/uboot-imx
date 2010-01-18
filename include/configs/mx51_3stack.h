@@ -29,7 +29,6 @@
  /* High Level Configuration Options */
 #define CONFIG_ARMV7		1	/* This is armv7 Cortex-A8 CPU core */
 #define CONFIG_SYS_APCS_GNU
-#define CONFIG_L2_OFF
 
 #define CONFIG_MXC		1
 #define CONFIG_MX51_3DS		1	/* in a mx51 */
