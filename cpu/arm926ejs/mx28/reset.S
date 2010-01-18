@@ -1,7 +1,8 @@
 /*
- * Processor reset for Freescale MX28 SoC.
+ * Processor reset for Freescale i.MX28 SoC.
  *
  * Copyright (C) 2007 Sergey Kubushyn <ksi@koi8.net>
+ * Copyright (C) 2009-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * -----------------------------------------------------
  *
@@ -39,5 +40,5 @@ POWER_MINPWR:
 POWER_CHARGE:
 	.word 0x80044030
 CLKCTRL_RESET:
-	.word 0x80040120
+	.word 0x800401e0
 

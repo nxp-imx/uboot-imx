@@ -30,7 +30,7 @@ SECTIONS
 	. = ALIGN(4);
 	.text	:
 	{
-	  cpu/arm926ejs/start.o	(.text)
+	  cpu/arm926ejs/start.o (.text)
 	  *(.text)
 	}
 	.rodata : { *(.rodata) }

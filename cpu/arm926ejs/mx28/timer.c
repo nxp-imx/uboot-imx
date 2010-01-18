@@ -16,7 +16,7 @@
  * (C) Copyright 2004
  * Philippe Robin, ARM Ltd. <philippe.robin@arm.com>
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -39,72 +39,60 @@
 
 #include <common.h>
 #include <asm/arch/mx28.h>
-#include <asm/arch/timrot.h>
+#include <asm/arch/regs-timrot.h>
 
-#define CONFIG_USE_TIMER0
+/*
+ * TIMROT gets 4 timer instances
+ * Define N as 0..3 to specify
+ */
+#define N		0
 
-#if defined(CONFIG_USE_TIMER0)
-#define TIMCTRL		TIMCTRL0
-#define TIMCOUNT	TIMCOUNT0
-#elif defined(CONFIG_USE_TIMER1)
-#define TIMCTRL		TIMCTRL1
-#define TIMCOUNT	TIMCOUNT1
-#elif defined(CONFIG_USE_TIMER2)
-#define TIMCTRL		TIMCTRL2
-#define TIMCOUNT	TIMCOUNT2
-#elif defined(CONFIG_USE_TIMER3)
-#define TIMCTRL		TIMCTRL3
-#define TIMCOUNT	TIMCOUNT3
-#else
-#error "Define which STMP378x timer to use"
-#endif
+/* Ticks per second */
+#define CONFIG_SYS_HZ	1000
 
-#define TIMER_LOAD_VAL 0x0000ffff
-
-/* macro to read the 16 bit timer */
-#define READ_TIMER ((REG_RD(TIMROT_BASE + TIMCOUNT) & 0xffff0000) >> 16)
+/* Maximum fixed count */
+#define TIMER_LOAD_VAL	0xffffffff
 
 static ulong timestamp;
 static ulong lastdec;
 
 int timer_init(void)
 {
-	u32 val;
-
 	/*
 	 * Reset Timers and Rotary Encoder module
 	 */
 
 	/* Clear SFTRST */
-	REG_CLR(TIMROT_BASE + ROTCTRL, 1 << 31);
-	while (REG_RD(TIMROT_BASE + ROTCTRL) & (1 << 31))
+	REG_CLR(REGS_TIMROT_BASE, HW_TIMROT_ROTCTRL, 1 << 31);
+	while (REG_RD(REGS_TIMROT_BASE, HW_TIMROT_ROTCTRL) & (1 << 31))
 		;
 
 	/* Clear CLKGATE */
-	REG_CLR(TIMROT_BASE + ROTCTRL, 1 << 30);
+	REG_CLR(REGS_TIMROT_BASE, HW_TIMROT_ROTCTRL, 1 << 30);
 
 	/* Set SFTRST and wait until CLKGATE is set */
-	REG_SET(TIMROT_BASE + ROTCTRL, 1 << 31);
-	while (!(REG_RD(TIMROT_BASE + ROTCTRL) & (1 << 30)))
+	REG_SET(REGS_TIMROT_BASE, HW_TIMROT_ROTCTRL, 1 << 31);
+	while (!(REG_RD(REGS_TIMROT_BASE, HW_TIMROT_ROTCTRL) & (1 << 30)))
 		;
 
 	/* Clear SFTRST and CLKGATE */
-	REG_CLR(TIMROT_BASE + ROTCTRL, 1 << 31);
-	REG_CLR(TIMROT_BASE + ROTCTRL, 1 << 30);
+	REG_CLR(REGS_TIMROT_BASE, HW_TIMROT_ROTCTRL, 1 << 31);
+	REG_CLR(REGS_TIMROT_BASE, HW_TIMROT_ROTCTRL, 1 << 30);
 
 	/*
 	* Now initialize timer
 	*/
 
 	/* Set fixed_count to 0 */
-	REG_WR(TIMROT_BASE + TIMCOUNT, 0);
+	REG_WR(REGS_TIMROT_BASE, HW_TIMROT_FIXED_COUNTn(N), 0);
 
 	/* set UPDATE bit and 1Khz frequency */
-	REG_WR(TIMROT_BASE + TIMCTRL,
-	       TIMCTRL_RELOAD | TIMCTRL_UPDATE | TIMCTRL_SELECT_1KHZ);
+	REG_WR(REGS_TIMROT_BASE, HW_TIMROT_TIMCTRLn(N),
+		BM_TIMROT_TIMCTRLn_RELOAD | BM_TIMROT_TIMCTRLn_UPDATE |
+		BV_TIMROT_TIMCTRLn_SELECT__1KHZ_XTAL);
 
 	/* Set fixed_count to maximal value */
-	REG_WR(TIMROT_BASE + TIMCOUNT, TIMER_LOAD_VAL);
+	REG_WR(REGS_TIMROT_BASE, HW_TIMROT_FIXED_COUNTn(N), TIMER_LOAD_VAL);
 
 	/* init the timestamp and lastdec value */
 	reset_timer_masked();
@@ -166,14 +154,16 @@ void udelay(unsigned long usec)
 
 void reset_timer_masked(void)
 {
-	/* reset time */
-	lastdec = READ_TIMER;  /* capure current decrementer value time */
-	timestamp = 0;	       /* start "advancing" time stamp from 0 */
+	/* capure current decrementer value time */
+	lastdec = REG_RD(REGS_TIMROT_BASE, HW_TIMROT_RUNNING_COUNTn(N));
+	/* start "advancing" time stamp from 0 */
+	timestamp = 0;
 }
 
 ulong get_timer_masked(void)
 {
-	ulong now = READ_TIMER;		/* current tick value */
+	/* current tick value */
+	ulong now = REG_RD(REGS_TIMROT_BASE, HW_TIMROT_RUNNING_COUNTn(N));
 
 	if (lastdec >= now) {		/* normal mode (non roll) */
 		/* normal mode */
