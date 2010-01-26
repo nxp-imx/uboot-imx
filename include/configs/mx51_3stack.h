@@ -93,6 +93,12 @@
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
 #define CONFIG_CMD_MMC
+#define CONFIG_CMD_FUSE
+
+/*
+ * FUSE Configs
+ * */
+#define CONFIG_IMX_FUSE
 
 /*
  * MMC Configs

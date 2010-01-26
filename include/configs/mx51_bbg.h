@@ -119,6 +119,12 @@
 #define CONFIG_CMD_SPI
 #define CONFIG_CMD_SF
 #define CONFIG_CMD_MMC
+#define CONFIG_CMD_FUSE
+
+/*
+ * FUSE Configs
+ * */
+#define CONFIG_IMX_FUSE
 
 /*
  * SPI Configs

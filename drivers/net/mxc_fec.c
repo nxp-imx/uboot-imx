@@ -729,6 +729,10 @@ void mxc_fec_set_mac_from_env(char *mac_addr)
 	int i;
 
 	eth_parse_enetaddr(mac_addr, ea);
+	if (!is_valid_ether_addr(ea)) {
+		printf("Error: invalid FEC MAC address!\n");
+		return;
+	}
 
 	for (i = 0; i < sizeof(fec_info) / sizeof(fec_info[0]); i++) {
 		fecp = (fec_t *)(fec_info[i].iobase);
