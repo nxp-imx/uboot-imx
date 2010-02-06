@@ -112,6 +112,48 @@ static void print_mmcinfo(struct mmc *mmc)
 	printf("Capacity: %lld\n", mmc->capacity);
 
 	printf("Bus Width: %d-bit\n", mmc->bus_width);
+#ifdef CONFIG_BOOT_PARTITION_ACCESS
+	if (mmc->boot_size_mult == 0) {
+		printf("Boot Partition Size: %s\n", "No boot partition available");
+	} else {
+		printf("Boot Partition Size: %5dKB\n", mmc->boot_size_mult * 128);
+
+		printf("Current Partition for boot: ");
+		switch (mmc->boot_config & EXT_CSD_BOOT_PARTITION_ENABLE_MASK) {
+		case EXT_CSD_BOOT_PARTITION_DISABLE:
+			printf("Not bootable\n");
+			break;
+		case EXT_CSD_BOOT_PARTITION_PART1:
+			printf("Boot partition 1\n");
+			break;
+		case EXT_CSD_BOOT_PARTITION_PART2:
+			printf("Boot partition 2\n");
+			break;
+		case EXT_CSD_BOOT_PARTITION_USER:
+			printf("User area\n");
+			break;
+		default:
+			printf("Unknown\n");
+			break;
+		}
+
+		printf("Current Partition for read/write: ");
+		switch (mmc->boot_config & EXT_CSD_BOOT_PARTITION_ACCESS_MASK) {
+		case EXT_CSD_BOOT_PARTITION_ACCESS_DISABLE:
+			printf("User Area\n");
+			break;
+		case EXT_CSD_BOOT_PARTITION_ACCESS_PART1:
+			printf("Boot partition 1\n");
+			break;
+		case EXT_CSD_BOOT_PARTITION_ACCESS_PART2:
+			printf("Boot partition 2\n");
+			break;
+		default:
+			printf("Unknown\n");
+			break;
+		}
+	}
+#endif
 }
 
 int do_mmcinfo (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
@@ -144,6 +186,9 @@ U_BOOT_CMD(mmcinfo, 2, 0, do_mmcinfo,
 int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	int rc = 0;
+#ifdef CONFIG_BOOT_PARTITION_ACCESS
+	u32 part = 0;
+#endif
 
 	switch (argc) {
 	case 3:
@@ -171,6 +216,10 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			return 0;
 		}
 		return 1;
+#ifdef CONFIG_BOOT_PARTITION_ACCESS
+	case 6: /* Fall through */
+		part = simple_strtoul(argv[6], NULL, 10);
+#endif
 	default: /* at least 5 args */
 		if (strcmp(argv[1], "read") == 0) {
 			int dev = simple_strtoul(argv[2], NULL, 10);
@@ -178,6 +227,7 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			u32 cnt = simple_strtoul(argv[5], NULL, 16);
 			u32 n;
 			u32 blk = simple_strtoul(argv[4], NULL, 16);
+
 			struct mmc *mmc = find_mmc_device(dev);
 
 			if (!mmc)
@@ -188,11 +238,44 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 			mmc_init(mmc);
 
+#ifdef CONFIG_BOOT_PARTITION_ACCESS
+			/* After mmc_init, we now know whether this is a eSD/eMMC which support boot partition */
+			if (part > 0) {
+				if (IS_SD(mmc)) {
+					if (sd_switch_partition(mmc, 1) < 0) {
+						printf("\nError: Fail to switch partition to %d before reading\n", 1);
+						return 1;
+					}
+				} else {
+					if (mmc_switch_partition(mmc, part) < 0) {
+						printf("\nError: Fail to switch partition to %d before reading\n", part);
+						return 1;
+					}
+				}
+			}
+#endif
+
 			n = mmc->block_dev.block_read(dev, blk, cnt, addr);
 
 			/* flush cache after read */
 			flush_cache((ulong)addr, cnt * 512); /* FIXME */
 
+#ifdef CONFIG_BOOT_PARTITION_ACCESS
+			/* Switch back */
+			if (part > 0) {
+				if (IS_SD(mmc)) {
+					if (sd_switch_partition(mmc, 0) < 0) {
+						printf("\nError: Fail to switch partition back!\n");
+						return 1;
+					}
+				} else {
+					if (mmc_switch_partition(mmc, 0) < 0) {
+						printf("\nError: Fail to switch partition back!\n");
+						return 1;
+					}
+				}
+			}
+#endif
 			printf("%d blocks read: %s\n",
 				n, (n==cnt) ? "OK" : "ERROR");
 			return (n == cnt) ? 0 : 1;
@@ -201,6 +284,7 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			void *addr = (void *)simple_strtoul(argv[3], NULL, 16);
 			u32 cnt = simple_strtoul(argv[5], NULL, 16);
 			u32 n;
+
 			struct mmc *mmc = find_mmc_device(dev);
 
 			int blk = simple_strtoul(argv[4], NULL, 16);
@@ -213,7 +297,41 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 			mmc_init(mmc);
 
+#ifdef CONFIG_BOOT_PARTITION_ACCESS
+			/* After mmc_init, we now know whether this is a eSD/eMMC which support boot partition */
+			 if (part > 0) {
+				if (IS_SD(mmc)) {
+					if (sd_switch_partition(mmc, 1) < 0) {
+						printf("\nError: Fail to switch partition to %d before writing\n", 1);
+						return 1;
+					}
+				} else {
+					if (mmc_switch_partition(mmc, part) < 0) {
+						printf("\nError: Fail to switch partition to %d before writing\n", part);
+						return 1;
+					}
+				}
+			}
+#endif
+
 			n = mmc->block_dev.block_write(dev, blk, cnt, addr);
+
+#ifdef CONFIG_BOOT_PARTITION_ACCESS
+			/* Switch back */
+			if (part > 0) {
+				if (IS_SD(mmc)) {
+					if (sd_switch_partition(mmc, 0) < 0) {
+						printf("\nError: Fail to switch partition back!\n");
+						return 1;
+					}
+				} else {
+					if (mmc_switch_partition(mmc, 0) < 0) {
+						printf("\nError: Fail to switch partition back!\n");
+						return 1;
+					}
+				}
+			}
+#endif
 
 			printf("%d blocks written: %s\n",
 				n, (n == cnt) ? "OK" : "ERROR");
@@ -227,11 +345,22 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	}
 }
 
+#ifndef CONFIG_BOOT_PARTITION_ACCESS
 U_BOOT_CMD(
 	mmc, 6, 1, do_mmcops,
 	"MMC sub system",
-	"read <device num> addr blk# cnt\n"
+	"mmc read <device num> addr blk# cnt\n"
 	"mmc write <device num> addr blk# cnt\n"
 	"mmc rescan <device num>\n"
 	"mmc list - lists available devices");
+#else
+U_BOOT_CMD(
+	mmc, 7, 1, do_mmcops,
+	"MMC sub system",
+	"mmc read <device num> addr blk# cnt [partition]\n"
+	"mmc write <device num> addr blk# cnt [partition]\n"
+	"mmc rescan <device num>\n"
+	"mmc list - lists available devices");
 #endif
+#endif
+

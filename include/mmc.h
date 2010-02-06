@@ -1,5 +1,7 @@
 /*
- * Copyright 2008, Freescale Semiconductor, Inc
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
+ *
+ * Copyright 2008-2010, Freescale Semiconductor, Inc
  * Andy Fleming
  *
  * Based (loosely) on the Linux code
@@ -79,6 +81,7 @@
 #define SD_CMD_SEND_RELATIVE_ADDR	3
 #define SD_CMD_SWITCH_FUNC		6
 #define SD_CMD_SEND_IF_COND		8
+#define SD_CMD_SELECT_PARTITION   43
 
 #define SD_CMD_APP_SET_BUS_WIDTH	6
 #define SD_CMD_APP_SEND_OP_COND		41
@@ -128,11 +131,13 @@
  * EXT_CSD fields
  */
 
+#define EXT_CSD_BOOT_CONFIG	179	/* RW */
 #define EXT_CSD_BUS_WIDTH	183	/* R/W */
 #define EXT_CSD_HS_TIMING	185	/* R/W */
 #define EXT_CSD_CARD_TYPE	196	/* RO */
 #define EXT_CSD_REV		192	/* RO */
 #define EXT_CSD_SEC_CNT		212	/* RO, 4 bytes */
+#define EXT_CSD_BOOT_INFO	228	/* RO */
 
 /*
  * EXT_CSD field definitions
@@ -148,6 +153,17 @@
 #define EXT_CSD_BUS_WIDTH_1	0	/* Card is in 1 bit mode */
 #define EXT_CSD_BUS_WIDTH_4	1	/* Card is in 4 bit mode */
 #define EXT_CSD_BUS_WIDTH_8	2	/* Card is in 8 bit mode */
+
+#define EXT_CSD_BOOT_PARTITION_ENABLE_MASK	(0x7 << 3)
+#define EXT_CSD_BOOT_PARTITION_DISABLE		(0x0)
+#define EXT_CSD_BOOT_PARTITION_PART1		(0x1 << 3)
+#define EXT_CSD_BOOT_PARTITION_PART2		(0x2 << 3)
+#define EXT_CSD_BOOT_PARTITION_USER		(0x7 << 3)
+
+#define EXT_CSD_BOOT_PARTITION_ACCESS_MASK	(0x7)
+#define EXT_CSD_BOOT_PARTITION_ACCESS_DISABLE   (0x0)
+#define EXT_CSD_BOOT_PARTITION_ACCESS_PART1   	(0x1)
+#define EXT_CSD_BOOT_PARTITION_ACCESS_PART2   	(0x2)
 
 #define R1_ILLEGAL_COMMAND		(1 << 22)
 #define R1_APP_CMD			(1 << 5)
@@ -259,6 +275,10 @@ struct mmc {
 	uint read_bl_len;
 	uint write_bl_len;
 	u64 capacity;
+#ifdef CONFIG_BOOT_PARTITION_ACCESS
+	uint boot_config;
+	uint boot_size_mult;
+#endif
 	block_dev_desc_t block_dev;
 	int (*send_cmd)(struct mmc *mmc,
 			struct mmc_cmd *cmd, struct mmc_data *data);
@@ -272,6 +292,10 @@ int mmc_init(struct mmc *mmc);
 int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size);
 struct mmc *find_mmc_device(int dev_num);
 void print_mmc_devices(char separator);
+#ifdef CONFIG_BOOT_PARTITION_ACCESS
+int mmc_switch_partition(struct mmc *mmc, uint part);
+int sd_switch_partition(struct mmc *mmc, uint part);
+#endif
 
 #ifndef CONFIG_GENERIC_MMC
 int mmc_legacy_init(int verbose);

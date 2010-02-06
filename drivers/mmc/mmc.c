@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
  * Terry Lv
  *
  * Copyright 2008, Freescale Semiconductor, Inc
@@ -646,6 +646,149 @@ void mmc_set_bus_width(struct mmc *mmc, uint width)
 	mmc_set_ios(mmc);
 }
 
+#ifdef CONFIG_BOOT_PARTITION_ACCESS
+/* Return 0/1/2 for partition id before switch; Return -1 if fail to switch */
+int mmc_switch_partition(struct mmc *mmc, uint part)
+{
+	char *ext_csd;
+	int err;
+	uint old_part, new_part;
+	char boot_config;
+
+	/* partition must be -
+		0 - user area
+		1 - boot partition 1
+		2 - boot partition 2
+	*/
+	if (part > 2) {
+		printf("\nWrong partition id - 0 (user area), 1 (boot1), 2 (boot2)\n");
+		return 1;
+	}
+
+	/* Before calling this func, "mmc" struct must have been initialized */
+	if (mmc->version < MMC_VERSION_4) {
+		puts("Error: invalid mmc version! mmc version is below version 4!");
+		return -1;
+	}
+
+	if (mmc->boot_size_mult <= 0) {
+		/* it's a normal SD/MMC but user request to boot partition */
+		printf("\nError: This is a normal SD/MMC card but you request to access boot partition\n");
+		return -1;
+	}
+
+	/* part must be 0 (user area), 1 (boot partition1) or 2 (boot partition2) */
+	if (part > 2) {
+		puts("Error: partition id must be 0(user area), 1(boot partition1) or 2(boot partition2)\n");
+		return -1;
+	}
+
+	if (IS_SD(mmc)) {
+		/* eSD card hadn't been supported. Return directly without warning */
+		return -1;
+	}
+
+	ext_csd = (char *)malloc(512);
+	if (!ext_csd) {
+		puts("Error: Could not allocate buffer for MMC ext csd!\n");
+		return -1;
+	}
+
+	err = mmc_send_ext_csd(mmc, ext_csd);
+	if (err) {
+		puts("Warning: fail to get ext csd for MMC!\n");
+		goto err_rtn;
+    }
+
+	old_part = ext_csd[EXT_CSD_BOOT_CONFIG] & EXT_CSD_BOOT_PARTITION_ACCESS_MASK;
+
+	/* Send SWITCH command to change partition for access */
+	boot_config = (ext_csd[EXT_CSD_BOOT_CONFIG] & ~EXT_CSD_BOOT_PARTITION_ACCESS_MASK) | (char)part;
+
+	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_BOOT_CONFIG, boot_config);
+	if (err) {
+		puts("Error: fail to send SWITCH command to card to swich partition for access!\n");
+		goto err_rtn;
+	}
+
+	/* Now check whether it works */
+	err = mmc_send_ext_csd(mmc, ext_csd);
+	if (err) {
+		puts("Warning: fail to get ext csd for MMC!\n");
+		goto err_rtn;
+	}
+
+	new_part = ext_csd[EXT_CSD_BOOT_CONFIG] & EXT_CSD_BOOT_PARTITION_ACCESS_MASK;
+	if ((char)part != new_part) {
+		printf("Warning: after SWITCH, current part id %d is not same as requested partition %d!\n",
+			new_part, part);
+		goto err_rtn;
+	}
+
+	/* Seems everything is ok, return the partition id before switch */
+	free(ext_csd);
+	return old_part;
+
+err_rtn:
+	free(ext_csd);
+	return -1;
+}
+
+int sd_switch_partition(struct mmc *mmc, uint part)
+{
+	struct mmc_cmd cmd;
+	int err;
+
+	if (part > 1) {
+		printf("\nWrong partition id - 0 (user area), 1 (boot1)\n");
+		return 1;
+	}
+
+	cmd.cmdidx = SD_CMD_SELECT_PARTITION;
+	cmd.resp_type = MMC_RSP_R1;
+	cmd.cmdarg = part << 24;
+	cmd.flags = 0;
+
+	err = mmc_send_cmd(mmc, &cmd, NULL);
+
+	if (err) {
+		printf("Failed to switch to partition %d\nPartition not exists or command execute fail!\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+int mmc_get_cur_boot_partition(struct mmc *mmc)
+{
+	char *ext_csd;
+	int err;
+
+	ext_csd = (char *)malloc(512);
+
+	if (!ext_csd) {
+		puts("Error! Could not allocate buffer for MMC ext csd!\n");
+		return -1;
+	}
+
+	err = mmc_send_ext_csd(mmc, ext_csd);
+
+	if (err) {
+		mmc->boot_config = 0;
+		mmc->boot_size_mult = 0;
+		/* continue since it's not a fatal error */
+	} else {
+		mmc->boot_config = ext_csd[EXT_CSD_BOOT_CONFIG];
+		mmc->boot_size_mult = ext_csd[EXT_CSD_BOOT_INFO];
+	}
+
+	free(ext_csd);
+
+	return err;
+}
+
+#endif
+
 int mmc_startup(struct mmc *mmc)
 {
 	int err;
@@ -819,6 +962,7 @@ int mmc_startup(struct mmc *mmc)
 			mmc_set_clock(mmc, 50000000);
 		else
 			mmc_set_clock(mmc, 25000000);
+
 	} else {
 		if (mmc->card_caps & MMC_MODE_4BIT) {
 			/* Set the card to use 4 bit*/
@@ -849,6 +993,10 @@ int mmc_startup(struct mmc *mmc)
 				mmc_set_clock(mmc, 26000000);
 		} else
 			mmc_set_clock(mmc, 20000000);
+
+#ifdef CONFIG_BOOT_PARTITION_ACCESS
+		mmc_get_cur_boot_partition(mmc);
+#endif
 	}
 
 	/* fill in device description */
@@ -1009,3 +1157,4 @@ int mmc_initialize(bd_t *bis)
 
 	return 0;
 }
+

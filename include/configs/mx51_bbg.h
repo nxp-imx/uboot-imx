@@ -69,36 +69,6 @@
 #define CONFIG_MX51_UART	1
 #define CONFIG_MX51_UART1	1
 
-/*
- * SPI Configs
- * */
-#define CONFIG_FSL_SF		1
-#define CONFIG_SPI_FLASH_IMX_ATMEL	1
-#define CONFIG_SPI_FLASH_CS	1
-#define CONFIG_IMX_ECSPI
-#define CONFIG_IMX_SPI_PMIC
-#define CONFIG_IMX_SPI_PMIC_CS	0
-#define	IMX_CSPI_VER_2_3	1
-#define MAX_SPI_BYTES		(64 * 4)
-
-/*
- * MMC Configs
- * */
-
-/*
- * Eth Configs
- */
-#define CONFIG_HAS_ETH1
-#define CONFIG_NET_MULTI 1
-#define CONFIG_MXC_FEC
-#define CONFIG_MII
-#define CONFIG_DISCOVER_PHY
-
-#define CONFIG_FEC0_IOBASE	FEC_BASE_ADDR
-#define CONFIG_FEC0_PINMUX	-1
-#define CONFIG_FEC0_PHY_ADDR	0x1F
-#define CONFIG_FEC0_MIIBASE 	-1
-
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX		1
@@ -133,7 +103,8 @@
 	#define CONFIG_FSL_SF		1
 	#define CONFIG_SPI_FLASH_IMX_ATMEL	1
 	#define CONFIG_SPI_FLASH_CS	1
-	#define CONFIG_IMX_SPI
+	#define CONFIG_IMX_ECSPI
+	#define IMX_CSPI_VER_2_3        1
 	#define CONFIG_IMX_SPI_PMIC
 	#define CONFIG_IMX_SPI_PMIC_CS 0
 
