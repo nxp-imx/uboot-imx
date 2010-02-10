@@ -681,6 +681,13 @@ int setup_mxc_kpd(void)
 
 int board_init(void)
 {
+#ifdef CONFIG_MFG
+/* MFG firmware need reset usb to avoid host crash firstly */
+#define USBCMD 0x140
+	int val = readl(OTG_BASE_ADDR + USBCMD);
+	val &= ~0x1; /*RS bit*/
+	writel(val, OTG_BASE_ADDR + USBCMD);
+#endif
 	setup_boot_device();
 	setup_soc_rev();
 	set_board_rev();
