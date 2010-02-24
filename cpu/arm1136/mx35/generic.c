@@ -27,6 +27,7 @@
 #include <asm/io.h>
 #include <asm/errno.h>
 #include <asm/arch/mx35.h>
+#include <asm/cache-cp15.h>
 #include "crm_regs.h"
 
 #define CLK_CODE(arm, ahb, sel) (((arm) << 16) + ((ahb) << 8) + (sel))
@@ -116,7 +117,7 @@ static u32 __decode_pll(u32 reg, u32 infreq)
 
 static u32 __get_mcu_main_clk(void)
 {
-	u32 arm_div, fi, fd;
+	u32 arm_div = 0, fi = 0, fd = 0;
 	arm_div = __get_arm_div(__REG(CCM_BASE_ADDR + CLKCTL_PDR0), &fi, &fd);
 	fi *=
 	    __decode_pll(__REG(MCU_PLL),
@@ -357,6 +358,11 @@ int print_cpuinfo(void)
 }
 #endif
 
+#if defined(CONFIG_MXC_FEC)
+extern int mxc_fec_initialize(bd_t *bis);
+extern void mxc_fec_set_mac_from_env(char *mac_addr);
+#endif
+
 /*
  * Initializes on-chip ethernet controllers.
  * to override, implement board_eth_init()
@@ -364,15 +370,16 @@ int print_cpuinfo(void)
 int cpu_eth_init(bd_t *bis)
 {
 	int rc = -ENODEV;
-	char *env = NULL;
 
 #if defined(CONFIG_MXC_FEC)
+	char *env = NULL;
+
 	rc = mxc_fec_initialize(bis);
-#endif
 
 	env = getenv("fec_addr");
 	if (env)
 		mxc_fec_set_mac_from_env(env);
+#endif
 
 	return rc;
 }

@@ -112,6 +112,13 @@ int print_cpuinfo(void)
 	mx25_dump_clocks();
 	return 0;
 }
+#endif
+
+#if defined(CONFIG_MXC_FEC)
+extern int mxc_fec_initialize(bd_t *bis);
+extern void mxc_fec_set_mac_from_env(char *mac_addr);
+#endif
+
 /*
  * Initializes on-chip ethernet controllers.
  * to override, implement board_eth_init()
@@ -119,16 +126,17 @@ int print_cpuinfo(void)
 int cpu_eth_init(bd_t *bis)
 {
 	int rc = -ENODEV;
-	char *env = NULL;
 
 #if defined(CONFIG_MXC_FEC)
+	char *env = NULL;
+
 	rc = mxc_fec_initialize(bis);
-#endif
 
 	env = getenv("fec_addr");
 	if (env)
 		mxc_fec_set_mac_from_env(env);
+#endif
 
 	return rc;
 }
-#endif
+

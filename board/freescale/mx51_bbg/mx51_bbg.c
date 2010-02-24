@@ -115,7 +115,12 @@ u32 get_board_rev(void)
 static inline void setup_soc_rev(void)
 {
 	int reg;
+#ifdef CONFIG_ARCH_MMU
+	reg = __REG(0x20000000 + ROM_SI_REV); /* Virtual address */
+#else
 	reg = __REG(ROM_SI_REV);
+#endif
+
 	switch (reg) {
 	case 0x02:
 		system_rev = 0x51000 | CHIP_REV_1_1;
@@ -131,7 +136,7 @@ static inline void setup_soc_rev(void)
 	}
 }
 
-static inline void set_board_rev()
+static inline void set_board_rev(void)
 {
 	if ((__REG(GPIO1_BASE_ADDR + 0x0) & (0x1 << 22)) == 0)
 		system_rev |= BOARD_REV_2_0 << BOARD_VER_OFFSET;
@@ -152,13 +157,13 @@ void board_mmu_init(void)
 	/*
 	* Set the TTB register
 	*/
-	asm volatile ("mcr  p15,0,%0,c2,c0,0" : : "r"(ttb_base) /*:*/);
+	asm volatile ("mcr p15, 0, %0, c2, c0, 0" : : "r"(ttb_base) /*:*/);
 
 	/*
 	* Set the Domain Access Control Register
 	*/
 	i = ARM_ACCESS_DACR_DEFAULT;
-	asm volatile ("mcr  p15,0,%0,c3,c0,0" : : "r"(i) /*:*/);
+	asm volatile ("mcr p15, 0, %0, c3, c0, 0" : : "r"(i) /*:*/);
 
 	/*
 	* First clear all TT entries - ie Set them to Faulting
@@ -197,6 +202,15 @@ void board_mmu_init(void)
 	X_ARM_MMU_SECTION(0xCC0, 0xCC0, 0x040,
 			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
 			ARM_ACCESS_PERM_RW_RW); /* CS4/5/NAND Flash buffer */
+
+	/* Workaround for arm errata #709718 */
+	/* Setup PRRR so device is always mapped to non-shared */
+	asm volatile ("mrc p15, 0, %0, c10, c2, 0" : "=r"(i) : /*:*/);
+	i &= (~(3 << 0x10));
+	asm volatile ("mcr p15, 0, %0, c10, c2, 0" : : "r"(i) /*:*/);
+
+	/* Enable MMU */
+	MMU_ON();
 }
 #endif
 

@@ -75,7 +75,7 @@ int is_soc_rev(int rev)
 #ifdef CONFIG_ARCH_MMU
 void board_mmu_init(void)
 {
-	unsigned long ttb_base = PHYS_SDRAM_1 + 0x40000;
+	unsigned long ttb_base = PHYS_SDRAM_1 + 0x4000;
 	unsigned long i;
 
 	/*
@@ -131,6 +131,9 @@ void board_mmu_init(void)
 	X_ARM_MMU_SECTION(0xB20, 0xB20, 0x1E0,
 			  ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
 			  ARM_ACCESS_PERM_RW_RW);
+
+	/* Enable MMU */
+	MMU_ON();
 }
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -13,6 +13,8 @@
 
 #ifndef __ARM_ARCH_MMU_H
 #define __ARM_ARCH_MMU_H
+
+#include <linux/types.h>
 
 /*
  * Translation Table Base Bit Masks
@@ -131,5 +133,83 @@ union ARM_MMU_FIRST_LEVEL_DESCRIPTOR {
 	ARM_ACCESS_TYPE_NO_ACCESS(13) |	\
 	ARM_ACCESS_TYPE_NO_ACCESS(14) |	\
 	ARM_ACCESS_TYPE_NO_ACCESS(15))
+
+#if defined(CONFIG_MX51_3DS)
+
+/*
+ * Translate the virtual address of ram space to physical address
+ * It is dependent on the implementation of mmu_init
+ */
+inline void *iomem_to_phys(unsigned long virt)
+{
+	if (virt < 0x08000000)
+		return (void *)(virt | PHYS_SDRAM_1);
+
+	if ((virt & 0xF0000000) == PHYS_SDRAM_1)
+		return (void *)(virt & (~0x08000000));
+
+	return (void *)virt;
+}
+
+/*
+ * remap the physical address of ram space to uncacheable virtual address space
+ * It is dependent on the implementation of hal_mmu_init
+ */
+void *__ioremap(unsigned long offset, size_t size, unsigned long flags)
+{
+	if (1 == flags) {
+		/* 0x98000000~0x9FFFFFFF is uncacheable meory
+			space which is mapped to SDRAM */
+		if ((offset & 0xF0000000) == PHYS_SDRAM_1)
+			return (void *)(offset |= 0x08000000);
+		else
+			return NULL;
+	} else
+		return (void *)offset;
+}
+
+#elif defined(CONFIG_MX51_BBG)
+
+/*
+ * Translate the virtual address of ram space to physical address
+ * It is dependent on the implementation of mmu_init
+ */
+inline void *iomem_to_phys(unsigned long virt)
+{
+	if (virt < (PHYS_SDRAM_1_SIZE - 0x100000))
+		return (void *)(virt + PHYS_SDRAM_1);
+
+	if (virt >= 0xE0000000)
+		return (void *)((virt - 0xE0000000) + PHYS_SDRAM_1);
+
+	return (void *)virt;
+}
+
+/*
+ * Remap the physical address of ram space to uncacheable virtual address space
+ * It is dependent on the implementation of hal_mmu_init
+ */
+void __iounmap(void *addr)
+{
+	return;
+}
+
+void *__ioremap(unsigned long offset, size_t size, unsigned long flags)
+{
+	if (1 == flags) {
+		/* 0xE0000000~0xFFFFFFFF is uncacheable
+		meory space which is mapped to SDRAM */
+		if (offset >= PHYS_SDRAM_1 &&
+			offset < (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
+			return (void *)(offset - PHYS_SDRAM_1) + 0xE0000000;
+		else
+			return NULL;
+	} else
+		return (void *)offset;
+}
+
+#else
+	#error "No such platforms for MMU!"
+#endif
 
 #endif

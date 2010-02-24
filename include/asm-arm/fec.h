@@ -6,7 +6,7 @@
  * Copyright (c) 1997 Dan Malek (dmalek@jlc.net)
  *
  * Add FEC Structure and definitions
- * Copyright 2004-2009 Freescale Semiconductor, Inc.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc.
  * TsiChung Liew (Tsi-Chung.Liew@freescale.com)
  *
  * See file CREDITS for list of people who contributed to this
@@ -30,6 +30,8 @@
 
 #ifndef	fec_h
 #define	fec_h
+
+#include <net.h>
 
 /* Buffer descriptors used FEC.
 */
@@ -111,6 +113,9 @@ struct fec_info_s {
 	uint rxIdx;
 	uint txIdx;
 	char *txbuf;
+#ifdef CONFIG_ARCH_MMU
+	char *rxbuf[PKTBUFSRX];
+#endif
 	int initialized;
 	struct fec_info_s *next;
 };

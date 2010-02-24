@@ -31,6 +31,11 @@
 #include <command.h>
 #include <net.h>
 #include <miiphy.h>
+#include <linux/types.h>
+
+#ifdef CONFIG_ARCH_MMU
+#include <asm/io.h>
+#endif
 
 #undef	ET_DEBUG
 #undef	MII_DEBUG
@@ -141,6 +146,9 @@ struct fec_info_s fec_info[] = {
 	 0,			/* rx Index */
 	 0,			/* tx Index */
 	 0,			/* tx buffer */
+#ifdef CONFIG_ARCH_MMU
+	 { 0 },			/* rx buffer */
+#endif
 	 0,			/* initialized flag */
 	 },
 };
@@ -271,10 +279,10 @@ static inline u16 getFecPhyStatus(volatile fec_t *fecp, unsigned char addr)
 	return val;
 }
 
-static void setFecDuplexSpeed(volatile fec_t *fecp,  unsigned char addr,
+static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 			      int dup_spd)
 {
-	unsigned short val;
+	unsigned short val = 0;
 	int ret;
 
 	ret = __fec_mii_read(fecp, addr, PHY_BMCR, &val);
@@ -340,7 +348,7 @@ int fec_send(struct eth_device *dev, volatile void *packet, int length)
 	struct fec_info_s *info = dev->priv;
 	volatile fec_t *fecp = (fec_t *) (info->iobase);
 	int j, rc;
-	u16 phyStatus;
+	u16 phyStatus = 0;
 
 	__fec_mii_read(fecp, info->phy_addr, PHY_BMSR, &phyStatus);
 
@@ -361,7 +369,12 @@ int fec_send(struct eth_device *dev, volatile void *packet, int length)
 	if (j >= FEC_MAX_TIMEOUT)
 		printf("TX not ready\n");
 
-	info->txbd[info->txIdx].cbd_bufaddr = (uint) packet;
+#ifdef CONFIG_ARCH_MMU
+	memcpy(ioremap_nocache(info->txbd[info->txIdx].cbd_bufaddr, length),
+			packet, length);
+#else
+	info->txbd[info->txIdx].cbd_bufaddr = (uint)packet;
+#endif
 	info->txbd[info->txIdx].cbd_datlen = length;
 	info->txbd[info->txIdx].cbd_sc =
 	    (info->txbd[info->txIdx].cbd_sc & BD_ENET_TX_WRAP) |
@@ -428,6 +441,11 @@ int fec_recv(struct eth_device *dev)
 		} else {
 			length -= 4;
 			/* Pass the packet up to the protocol layers. */
+#ifdef CONFIG_ARCH_MMU
+			memcpy(NetRxPackets[info->rxIdx],
+				ioremap_nocache(info->rxbd[info->rxIdx].cbd_bufaddr, 0),
+				length);
+#endif
 			NetReceive(NetRxPackets[info->rxIdx], length);
 
 			fecp->eir |= FEC_EIR_RXF;
@@ -483,6 +501,41 @@ void dbgFecRegs(struct eth_device *dev)
 	printf("x_drng       %x - %x\n", (int)&fecp->etdsr, fecp->etdsr);
 	printf("r_bufsz      %x - %x\n", (int)&fecp->emrbr, fecp->emrbr);
 
+	printf("\n\n\n");
+}
+#endif
+
+#ifdef ET_DEBUG
+void dbgFecRegs(struct eth_device *dev)
+{
+	struct fec_info_s *info = dev->priv;
+	volatile fec_t *fecp = (fec_t *) (info->iobase);
+
+	printf("=====\n");
+	printf("ievent       %x - %x\n", (int)&fecp->eir, fecp->eir);
+	printf("imask        %x - %x\n", (int)&fecp->eimr, fecp->eimr);
+	printf("r_des_active %x - %x\n", (int)&fecp->rdar, fecp->rdar);
+	printf("x_des_active %x - %x\n", (int)&fecp->tdar, fecp->tdar);
+	printf("ecntrl       %x - %x\n", (int)&fecp->ecr, fecp->ecr);
+	printf("mii_mframe   %x - %x\n", (int)&fecp->mmfr, fecp->mmfr);
+	printf("mii_speed    %x - %x\n", (int)&fecp->mscr, fecp->mscr);
+	printf("mii_ctrlstat %x - %x\n", (int)&fecp->mibc, fecp->mibc);
+	printf("r_cntrl      %x - %x\n", (int)&fecp->rcr, fecp->rcr);
+	printf("x_cntrl      %x - %x\n", (int)&fecp->tcr, fecp->tcr);
+	printf("padr_l       %x - %x\n", (int)&fecp->palr, fecp->palr);
+	printf("padr_u       %x - %x\n", (int)&fecp->paur, fecp->paur);
+	printf("op_pause     %x - %x\n", (int)&fecp->opd, fecp->opd);
+	printf("iadr_u       %x - %x\n", (int)&fecp->iaur, fecp->iaur);
+	printf("iadr_l       %x - %x\n", (int)&fecp->ialr, fecp->ialr);
+	printf("gadr_u       %x - %x\n", (int)&fecp->gaur, fecp->gaur);
+	printf("gadr_l       %x - %x\n", (int)&fecp->galr, fecp->galr);
+	printf("x_wmrk       %x - %x\n", (int)&fecp->tfwr, fecp->tfwr);
+	printf("r_bound      %x - %x\n", (int)&fecp->frbr, fecp->frbr);
+	printf("r_fstart     %x - %x\n", (int)&fecp->frsr, fecp->frsr);
+	printf("r_drng       %x - %x\n", (int)&fecp->erdsr, fecp->erdsr);
+	printf("x_drng       %x - %x\n", (int)&fecp->etdsr, fecp->etdsr);
+	printf("r_bufsz      %x - %x\n", (int)&fecp->emrbr, fecp->emrbr);
+#if 0
 	printf("\n");
 	printf("rmon_t_drop        %x - %x\n", (int)&fecp->rmon_t_drop,
 	       fecp->rmon_t_drop);
@@ -546,7 +599,6 @@ void dbgFecRegs(struct eth_device *dev)
 	       fecp->ieee_t_fdxfc);
 	printf("ieee_t_octets_ok %x - %x\n", (int)&fecp->ieee_t_octets_ok,
 	       fecp->ieee_t_octets_ok);
-
 	printf("\n");
 	printf("rmon_r_drop        %x - %x\n", (int)&fecp->rmon_r_drop,
 	       fecp->rmon_r_drop);
@@ -598,7 +650,7 @@ void dbgFecRegs(struct eth_device *dev)
 	       fecp->ieee_r_fdxfc);
 	printf("ieee_r_octets_ok %x - %x\n", (int)&fecp->ieee_r_octets_ok,
 	       fecp->ieee_r_octets_ok);
-
+#endif
 	printf("\n\n\n");
 }
 #endif
@@ -622,10 +674,10 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	if (info->phy_addr < 0 || info->phy_addr > 0x1F)
 		info->phy_addr = mxc_fec_mii_discover_phy(dev);
 #endif
-	setFecDuplexSpeed(fecp, (unsigned char)info->phy_addr, info->dup_spd);
+	setFecDuplexSpeed(fecp, (uchar)info->phy_addr, info->dup_spd);
 #else
 #ifndef CONFIG_DISCOVER_PHY
-	setFecDuplexSpeed(fecp, (unsigned char)info->phy_addr,
+	setFecDuplexSpeed(fecp, (uchar)info->phy_addr,
 				(FECDUPLEX << 16) | FECSPEED);
 #endif				/* ifndef CONFIG_SYS_DISCOVER_PHY */
 #endif				/* CONFIG_CMD_MII || CONFIG_MII */
@@ -666,7 +718,12 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	for (i = 0; i < PKTBUFSRX; i++) {
 		info->rxbd[i].cbd_sc = BD_ENET_RX_EMPTY;
 		info->rxbd[i].cbd_datlen = 0;	/* Reset */
-		info->rxbd[i].cbd_bufaddr = (uint) NetRxPackets[i];
+#ifdef CONFIG_ARCH_MMU
+		info->rxbd[i].cbd_bufaddr =
+			(uint)iomem_to_phys(info->rxbuf[i]);
+#else
+		info->rxbd[i].cbd_bufaddr = (uint)NetRxPackets[i];
+#endif
 	}
 	info->rxbd[PKTBUFSRX - 1].cbd_sc |= BD_ENET_RX_WRAP;
 
@@ -678,13 +735,23 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	for (i = 0; i < TX_BUF_CNT; i++) {
 		info->txbd[i].cbd_sc = BD_ENET_TX_LAST | BD_ENET_TX_TC;
 		info->txbd[i].cbd_datlen = 0;	/* Reset */
-		info->txbd[i].cbd_bufaddr = (uint) (&info->txbuf[0]);
+#ifdef CONFIG_ARCH_MMU
+		info->txbd[i].cbd_bufaddr =
+			(uint)iomem_to_phys(&info->txbuf[0]);
+#else
+		info->txbd[i].cbd_bufaddr = (uint)&info->txbuf[0];
+#endif
 	}
 	info->txbd[TX_BUF_CNT - 1].cbd_sc |= BD_ENET_TX_WRAP;
 
 	/* Set receive and transmit descriptor base */
-	fecp->erdsr = (unsigned int)(&info->rxbd[0]);
-	fecp->etdsr = (unsigned int)(&info->txbd[0]);
+#ifdef CONFIG_ARCH_MMU
+	fecp->erdsr = (uint)iomem_to_phys(&info->rxbd[0]);
+	fecp->etdsr = (uint)iomem_to_phys(&info->txbd[0]);
+#else
+	fecp->erdsr = (uint)(&info->rxbd[0]);
+	fecp->etdsr = (uint)(&info->txbd[0]);
+#endif
 
 	/* Now enable the transmit and receive processing */
 	fecp->ecr |= FEC_ECR_ETHER_EN;
@@ -698,7 +765,7 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 void fec_reset(struct eth_device *dev)
 {
 	struct fec_info_s *info = dev->priv;
-	volatile fec_t *fecp = (fec_t *) (info->iobase);
+	volatile fec_t *fecp = (fec_t *)(info->iobase);
 	int i;
 
 	fecp->ecr = FEC_ECR_RESET;
@@ -744,7 +811,7 @@ void mxc_fec_set_mac_from_env(char *mac_addr)
 int mxc_fec_initialize(bd_t *bis)
 {
 	struct eth_device *dev;
-	int i;
+	int i, j;
 
 	for (i = 0; i < sizeof(fec_info) / sizeof(fec_info[0]); i++) {
 
@@ -764,26 +831,50 @@ int mxc_fec_initialize(bd_t *bis)
 		dev->recv = fec_recv;
 
 		/* setup Receive and Transmit buffer descriptor */
+#ifdef CONFIG_ARCH_MMU
 		fec_info[i].rxbd =
-		    (cbd_t *) memalign(CONFIG_SYS_CACHELINE_SIZE,
-				       (PKTBUFSRX * sizeof(cbd_t)));
+			(cbd_t *)ioremap_nocache((ulong)iomem_to_phys(memalign(CONFIG_SYS_CACHELINE_SIZE,
+						(PKTBUFSRX * sizeof(cbd_t)))),
+						CONFIG_SYS_CACHELINE_SIZE);
 		fec_info[i].txbd =
-		    (cbd_t *) memalign(CONFIG_SYS_CACHELINE_SIZE,
+			(cbd_t *)ioremap_nocache((ulong)iomem_to_phys(memalign(CONFIG_SYS_CACHELINE_SIZE,
+						(TX_BUF_CNT * sizeof(cbd_t)))),
+						CONFIG_SYS_CACHELINE_SIZE);
+		fec_info[i].txbuf =
+			(char *)ioremap_nocache((ulong)iomem_to_phys(memalign(CONFIG_SYS_CACHELINE_SIZE,
+						DBUF_LENGTH)),
+						CONFIG_SYS_CACHELINE_SIZE);
+		for (j = 0; j < PKTBUFSRX; ++j) {
+			fec_info[i].rxbuf[j] =
+				(char *)ioremap_nocache((ulong)iomem_to_phys(memalign(PKTSIZE_ALIGN,
+						PKTSIZE)),
+						PKTSIZE_ALIGN);
+		}
+#else
+		fec_info[i].rxbd =
+			(cbd_t *)memalign(CONFIG_SYS_CACHELINE_SIZE,
+						(PKTBUFSRX * sizeof(cbd_t)));
+		fec_info[i].txbd =
+		    (cbd_t *)memalign(CONFIG_SYS_CACHELINE_SIZE,
 				       (TX_BUF_CNT * sizeof(cbd_t)));
 		fec_info[i].txbuf =
 		    (char *)memalign(CONFIG_SYS_CACHELINE_SIZE, DBUF_LENGTH);
+#endif
+
 #ifdef ET_DEBUG
 		printf("%s: rxbd %x txbd %x ->%x\n", dev->name,
 		       (int)fec_info[i].rxbd, (int)fec_info[i].txbd,
 		       (int)fec_info[i].txbuf);
 #endif
 
-		fec_info[i].phy_name = (char *)memalign(CONFIG_SYS_CACHELINE_SIZE, 32);
+		fec_info[i].phy_name =
+			(char *)memalign(CONFIG_SYS_CACHELINE_SIZE, 32);
 
 		eth_register(dev);
 
 #if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
-		miiphy_register(dev->name, mxc_fec_mii_read, mxc_fec_mii_write);
+		miiphy_register(dev->name, mxc_fec_mii_read,
+						mxc_fec_mii_write);
 #endif
 	}
 

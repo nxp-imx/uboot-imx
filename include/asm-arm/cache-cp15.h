@@ -1,4 +1,6 @@
 /*
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ *
  * (C) Copyright 2002
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
@@ -25,96 +27,62 @@
 #include <asm/system.h>
 
 #if !(defined(CONFIG_SYS_NO_ICACHE) && defined(CONFIG_SYS_NO_DCACHE))
-static void cp_delay (void)
-{
-	volatile int i;
-
-	/* copro seems to need some delay between reading and writing */
-	for (i = 0; i < 100; i++)
-		nop();
+#define cp_delay()	\
+{	\
+	volatile int i;	\
+	/* copro seems to need some delay between reading and writing */	\
+	for (i = 0; i < 100; i++)	\
+		nop();	\
 }
 
 /* cache_bit must be either CR_I or CR_C */
-static void cache_enable(uint32_t cache_bit)
-{
-	uint32_t reg;
-
-	reg = get_cr();	/* get control reg. */
-	cp_delay();
-	set_cr(reg | cache_bit);
+#define cache_enable(cache_bit)	\
+{	\
+	uint32_t reg;	\
+	reg = get_cr();	/* get control reg. */	\
+	set_cr(reg | cache_bit);	\
+	cp_delay();	\
 }
 
 /* cache_bit must be either CR_I or CR_C */
-static void cache_disable(uint32_t cache_bit)
-{
-	uint32_t reg;
-
-	reg = get_cr();
-	cp_delay();
-	set_cr(reg & ~cache_bit);
+#define cache_disable(cache_bit)	\
+{	\
+	uint32_t reg;	\
+	reg = get_cr();	\
+	set_cr(reg & ~cache_bit);	\
+	cp_delay();	\
 }
+
 #endif
 
 #ifdef CONFIG_SYS_NO_ICACHE
-void icache_enable (void)
-{
-	return;
-}
+#define icache_enable()
 
-void icache_disable (void)
-{
-	return;
-}
+#define icache_disable()
 
-int icache_status (void)
-{
-	return 0;					/* always off */
-}
+#define icache_status()
 #else
-void icache_enable(void)
-{
-	cache_enable(CR_I);
-}
+#define icache_enable()		(cache_enable(CR_I))
 
-void icache_disable(void)
-{
-	cache_disable(CR_I);
-}
+#define icache_disable()	(cache_disable(CR_I))
 
-int icache_status(void)
-{
-	return (get_cr() & CR_I) != 0;
-}
+#define icache_status()		((get_cr() & CR_I) != 0)
 #endif
 
 #ifdef CONFIG_SYS_NO_DCACHE
-void dcache_enable (void)
-{
-	return;
-}
+#define dcache_enable()
 
-void dcache_disable (void)
-{
-	return;
-}
+#define dcache_disable()
 
-int dcache_status (void)
-{
-	return 0;					/* always off */
-}
+#define dcache_status()
 #else
-void dcache_enable(void)
-{
-	cache_enable(CR_C);
+#define dcache_enable()		(cache_enable(CR_C))
+
+#define dcache_disable()	\
+{	\
+	cache_disable(CR_C);	\
 }
 
-void dcache_disable(void)
-{
-	cache_disable(CR_C);
-}
+#define dcache_status()	((get_cr() & CR_C) != 0)
 
-int dcache_status(void)
-{
-	return (get_cr() & CR_C) != 0;
-}
 #endif

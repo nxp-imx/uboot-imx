@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -300,6 +300,8 @@ lowlevel_init:
 #ifdef BRANCH_PREDICTION_ENABLE
 	mcr 15, 0, r0, c15, c2, 4
 #endif
+	mcr 15, 0, r0, c7, c7, 0        /* invalidate I cache and D cache */
+	mcr 15, 0, r0, c8, c7, 0        /* invalidate TLBs */
 	mcr 15, 0, r0, c7, c10, 4       /* Drain the write buffer */
 
 	/* initializes very early AIPS, what for?

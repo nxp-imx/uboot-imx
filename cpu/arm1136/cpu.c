@@ -8,7 +8,7 @@
  * (C) Copyright 2002
  * Gary Jennejohn, DENX Software Engineering, <garyj@denx.de>
  *
- * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -36,8 +36,65 @@
 #include <common.h>
 #include <command.h>
 #include <asm/system.h>
+#include <asm/cache-cp15.h>
+#include <asm/mmu.h>
 
-static void cache_flush(void);
+#define dcache_invalidate_all_l1()	\
+{	\
+	int i = 0;	\
+	/* Clean and Invalidate Entire Data Cache */       \
+	asm volatile ("mcr p15, 0, %0, c7, c14, 0;"	\
+			:	\
+			: "r"(i)	\
+			: "memory");	\
+	asm volatile ("mcr p15, 0, %0, c8, c7, 0;"	\
+			:	\
+			: "r"(i)	\
+			: "memory"); /* Invalidate i+d-TLBs */	\
+}
+
+#define dcache_disable_l1()	\
+{	\
+	int i = 0;	\
+	asm volatile ("mcr p15, 0, %0, c7, c6, 0;"	\
+			:	\
+			: "r"(i)); /* clear data cache */	\
+	asm volatile ("mrc p15, 0, %0, c1, c0, 0;"	\
+			: "=r"(i));	\
+	i &= (~0x0004);	/* disable DCache */	\
+			/* but not MMU and alignment faults */     \
+	asm volatile ("mcr p15, 0, %0, c1, c0, 0;"	\
+			:	\
+			: "r"(i));	\
+}
+
+#define icache_invalidate_all_l1()        \
+{	\
+	/* this macro can discard dirty cache lines (N/A for ICache) */	\
+	int i = 0;	\
+	asm volatile ("mcr p15, 0, %0, c7, c5, 0;"	\
+			:	\
+			: "r"(i)); /* flush ICache */	\
+	asm volatile ("mcr p15, 0, %0, c8, c5, 0;"	\
+			:	\
+			: "r"(i)); /* flush ITLB only */	\
+	asm volatile ("mcr p15, 0, %0, c7, c5, 4;"	\
+			:	\
+			: "r"(i)); /* flush prefetch buffer */	\
+	asm (	\
+	"nop;" /* next few instructions may be via cache */	\
+	"nop;"	\
+	"nop;"	\
+	"nop;"	\
+	"nop;"	\
+	"nop;");	\
+}
+
+#define cache_flush()	\
+{	\
+	dcache_invalidate_all_l1();	\
+	icache_invalidate_all_l1();	\
+}
 
 int cleanup_before_linux (void)
 {
@@ -59,12 +116,16 @@ int cleanup_before_linux (void)
 		lcd_panel_disable();
 	}
 #endif
+	/* flush I/D-cache */
+	cache_flush();
 
 	/* turn off I/D-cache */
 	icache_disable();
 	dcache_disable();
-	/* flush I/D-cache */
-	cache_flush();
+
+	/* MMU Off */
+	MMU_OFF();
+
 /*Workaround to enable L2CC during kernel decompressing*/
 #ifdef fixup_before_linux
 	fixup_before_linux;
@@ -72,10 +133,3 @@ int cleanup_before_linux (void)
 	return 0;
 }
 
-static void cache_flush(void)
-{
-	unsigned long i = 0;
-
-	asm ("mcr p15, 0, %0, c7, c7, 0": :"r" (i));  /* invalidate both caches and flush btb */
-	asm ("mcr p15, 0, %0, c7, c10, 4": :"r" (i)); /* mem barrier to sync things */
-}

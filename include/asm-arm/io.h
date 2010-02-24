@@ -198,7 +198,7 @@ extern void __iounmap(void *addr);
 	unsigned long _off = (off), _size = (sz);		\
 	void *_ret = (void *)0;					\
 	if (iomem_valid_addr(_off, _size))			\
-		_ret = __ioremap(iomem_to_phys(_off),_size,0);	\
+		_ret = __ioremap(iomem_to_phys(_off), _size, nocache);	\
 	_ret;							\
  })
 

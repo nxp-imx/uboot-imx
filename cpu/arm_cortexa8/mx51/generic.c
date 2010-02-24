@@ -26,6 +26,7 @@
 #include <common.h>
 #include <asm/arch/mx51.h>
 #include <asm/errno.h>
+#include <asm/cache-cp15.h>
 #include "crm_regs.h"
 
 enum pll_clocks {
@@ -245,22 +246,24 @@ int print_cpuinfo(void)
  * Initializes on-chip ethernet controllers.
  * to override, implement board_eth_init()
  */
- #if defined(CONFIG_MXC_FEC)
- extern int mxc_fec_initialize(bd_t *bis);
- #endif
+#if defined(CONFIG_MXC_FEC)
+extern int mxc_fec_initialize(bd_t *bis);
+extern void mxc_fec_set_mac_from_env(char *mac_addr);
+#endif
 
 int cpu_eth_init(bd_t *bis)
 {
 	int rc = -ENODEV;
-	char *env = NULL;
 
 #if defined(CONFIG_MXC_FEC)
+	char *env = NULL;
+
 	rc = mxc_fec_initialize(bis);
-#endif
 
 	env = getenv("fec_addr");
 	if (env)
 		mxc_fec_set_mac_from_env(env);
+#endif
 
 	return rc;
 }

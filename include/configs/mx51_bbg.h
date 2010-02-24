@@ -209,9 +209,9 @@
  */
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		CSD0_BASE_ADDR
-/* TO1 boards */
-/* #define PHYS_SDRAM_1_SIZE	(128 * 1024 * 1024) */
 #define PHYS_SDRAM_1_SIZE	(512 * 1024 * 1024)
+#define iomem_valid_addr(addr, size) \
+	(addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization

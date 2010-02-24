@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -14,6 +14,7 @@
 #ifndef __ASM_MMU_H
 #define __ASM_MMU_H
 
+#include <asm/system.h>
 
 #define MMU_L1_TYPE         0x03  /* Descriptor type */
 #define MMU_L1_TYPE_Fault   0x00  /* Invalid */
@@ -75,5 +76,43 @@
 #define MMU_Control_F  0x400    /* IMPLEMENTATION DEFINED */
 #define MMU_Control_Z  0x800    /* Enable branch predicion */
 #define MMU_Control_RR 0x4000   /* Select non-random cache replacement */
+
+#ifdef	CONFIG_ARCH_MMU
+
+#define MMU_ON()	\
+	{	\
+	unsigned long cr = 0;	\
+	asm volatile ("mrc p15, 0, %0, c1, c0;" : "=r"(cr) : /*:*/);	\
+	cr |= (CR_M | CR_A | CR_C | CR_Z);	\
+	asm volatile ("mcr p15, 0, %0, c1, c0;" : : "r"(cr) /*:*/);	\
+	/* Clean instruction pipeline */	\
+	asm volatile (	\
+		"b skip;"	\
+		"nop;"	\
+		"nop;"	\
+		"nop;"	\
+		"skip:"	\
+	);	\
+	}
+
+#define MMU_OFF()	\
+	{	\
+	unsigned long cr = 0;	\
+	asm volatile ("mrc p15, 0, %0, c1, c0;" : "=r"(cr) /*: :*/);	\
+	cr &= (~(CR_M | CR_A | CR_C | CR_I));	\
+	asm volatile ("mcr p15, 0, %0, c1, c0;" : : "r"(cr) /*:*/);	\
+	asm volatile (	\
+		"nop;" /* flush i+d-TLBs */      \
+		"nop;" /* flush i+d-TLBs */      \
+		"nop;" /* flush i+d-TLBs */	\
+	);	\
+	}
+
+#else
+
+#define MMU_ON()
+#define MMU_OFF()
+
+#endif
 
 #endif
