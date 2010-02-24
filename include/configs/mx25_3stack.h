@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2009 Freescale Semiconductor
+ * (C) Copyright 2009-2010 Freescale Semiconductor
  *
  * (C) Copyright 2004
  * Texas Instruments.
@@ -147,6 +147,9 @@
 #define CONFIG_CMD_NET
 #define CONFIG_NET_RETRY_COUNT	100
 #define CONFIG_CMD_DHCP
+#define CONFIG_BOOTP_SUBNETMASK
+#define CONFIG_BOOTP_GATEWAY
+#define CONFIG_BOOTP_DNS
 #define CONFIG_NET_MULTI
 #define CONFIG_ETHPRIME
 

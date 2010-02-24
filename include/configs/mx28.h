@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2008 Embedded Alley Solutions, Inc.
- * (C) Copyright 2010 Freescale Semiconductor, Inc.
+ *
+ * Copyright (C) 2010 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -158,6 +159,9 @@
 #define CONFIG_CMD_MII
 #define CONFIG_DISCOVER_PHY
 #define CONFIG_CMD_DHCP
+#define CONFIG_BOOTP_SUBNETMASK
+#define CONFIG_BOOTP_GATEWAY
+#define CONFIG_BOOTP_DNS
 #define CONFIG_CMD_PING
 #define CONFIG_IPADDR			192.168.1.101
 #define CONFIG_SERVERIP			192.168.1.100

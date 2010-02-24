@@ -84,6 +84,9 @@
 
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
+#define CONFIG_BOOTP_SUBNETMASK
+#define CONFIG_BOOTP_GATEWAY
+#define CONFIG_BOOTP_DNS
 /* Enable below configure when supporting nand */
 #define CONFIG_CMD_NAND
 #define CONFIG_MXC_NAND
