@@ -149,6 +149,14 @@ int board_init(void)
 {
 	int pad;
 
+#ifdef CONFIG_MFG
+/* MFG firmware need reset usb to avoid host crash firstly */
+#define USBCMD 0x53FF4140
+	int val = readl(USBCMD);
+	val &= ~0x1; /*RS bit*/
+	writel(val, USBCMD);
+#endif
+
 	setup_soc_rev();
 
 	/* enable clocks */
