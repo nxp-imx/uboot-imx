@@ -32,6 +32,7 @@
 #include <common.h>
 #include <command.h>
 #include <asm/system.h>
+#include <asm/cache-cp15.h>
 
 static void cache_flush(void);
 
