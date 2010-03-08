@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -24,7 +24,7 @@
 #include <exports.h>
 #include <mmc.h>
 
-#if defined(CONFIG_GENERIC_MMC) && defined(CONFIG_CUSTOMIZE_MMCOPS)
+#ifdef CONFIG_GENERIC_MMC
 #define MMCOPS_DEBUG
 
 #define MBR_SIGNATURE		0xaa55
@@ -96,7 +96,7 @@ static int mmc_format(int dev)
 
 	/* Warning */
 	printf("WARN: Data on card will get lost with format.\n"
-		"Continue?(y/n)");
+		"Continue? (y/n)");
 	char ch = getc();
 	printf("\n");
 	if (ch != 'y') {
@@ -309,7 +309,7 @@ static int install_sbimage(int dev, void *addr, u32 size)
 	}
 	if (memcmp(addr, addr + sectors * mmc->read_bl_len,
 		sectors * mmc->read_bl_len)) {
-		printf("Verifying sbImage write fails");
+		printf("Verifying sbImage write fails\n");
 		rc = -1;
 		goto out;
 	}
@@ -493,7 +493,7 @@ out:
 	return rc;
 }
 
-int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_mxs_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	int dev = 0;
 	struct mmc *mmc;
@@ -501,9 +501,8 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	if (argc < 2)
 		goto err_out;
 
-	if (strcmp(argv[1], "read") && strcmp(argv[1], "write") &&
-		strcmp(argv[1], "rescan") && strcmp(argv[1], "format") &&
-		strcmp(argv[1], "install") && strcmp(argv[1], "list"))
+	if (strcmp(argv[1], "format") &&
+		strcmp(argv[1], "install"))
 		goto err_out;
 
 	if (argc == 2) { /* list */
@@ -531,26 +530,7 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	if (argc != 6)
 		goto err_out;
 
-	if (!strcmp(argv[1], "read") || !strcmp(argv[1], "write")) {
-		void *addr = (void *)simple_strtoul(argv[3], NULL, 16);
-		u32 blk = simple_strtoul(argv[4], NULL, 16);
-		u32 cnt = simple_strtoul(argv[5], NULL, 16);
-		u32 n;
-
-		printf("\nMMC %s: dev # %d, block # %d, count %d ... ",
-			argv[1], dev, blk, cnt);
-
-		if (!strcmp(argv[1], "read")) {
-			n = mmc->block_dev.block_read(dev, blk, cnt, addr);
-			/* flush cache after read */
-			flush_cache((ulong)addr, cnt * 512); /* FIXME */
-		} else /* write */
-			n = mmc->block_dev.block_write(dev, blk, cnt, addr);
-
-		printf("%d blocks %s: %s\n", n, argv[1],
-			(n == cnt) ? "OK" : "ERROR");
-		return (n == cnt) ? 0 : -1;
-	} else if (!strcmp(argv[1], "install")) {
+	if (!strcmp(argv[1], "install")) {
 		void *addr = (void *)simple_strtoul(argv[3], NULL, 16);
 		u32 size = simple_strtoul(argv[4], NULL, 16);
 
@@ -568,12 +548,8 @@ err_out:
 }
 
 U_BOOT_CMD(
-	mmc, 6, 1, do_mmcops,
-	"MMC sub system",
-	"mmc read <device num> addr blk# cnt\n"
-	"mmc write <device num> addr blk# cnt\n"
-	"mmc rescan <device num>\n"
-	"mmc format <device num>\n"
-	"mmc install <device num> addr size sbImage/uImage/rootfs\n"
-	"mmc list - lists available devices");
-#endif /* (CONFIG_GENERIC_MMC && CONFIG_CUSTOMIZE_MMCOPS) */
+	mxs_mmc, 6, 1, do_mxs_mmcops,
+	"MXS specific MMC sub system",
+	"mxs_mmc format <device num>\n"
+	"mxs_mmc install <device num> addr size sbImage/uImage/rootfs\n");
+#endif /* CONFIG_GENERIC_MMC */

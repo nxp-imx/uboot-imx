@@ -38,7 +38,6 @@
  */
 
 #include <common.h>
-#include <asm/arch/mx28.h>
 #include <asm/arch/regs-timrot.h>
 
 /*

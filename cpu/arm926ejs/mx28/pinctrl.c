@@ -17,7 +17,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include <common.h>
-#include <asm/arch/mx28.h>
 #include <asm/arch/regs-pinctrl.h>
 #include <asm/arch/pinctrl.h>
 

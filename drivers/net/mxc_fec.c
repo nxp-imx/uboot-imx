@@ -285,6 +285,17 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 	unsigned short val = 0;
 	int ret;
 
+#ifdef CONFIG_MX28
+	/* Dummy read with delay to get phy start working */
+	do {
+		__fec_mii_read(fecp, CONFIG_FEC0_PHY_ADDR, PHY_PHYIDR1, &val);
+		udelay(10000);
+#ifdef MII_DEBUG
+		printf("Dummy read on phy\n");
+#endif
+	} while (val == 0 || val == 0xffff);
+#endif
+
 	ret = __fec_mii_read(fecp, addr, PHY_BMCR, &val);
 	switch (dup_spd >> 16) {
 	case HALF:
@@ -343,6 +354,17 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 #endif
 }
 
+#ifdef CONFIG_MX28
+static void swap_packet(void *packet, int length)
+{
+	int i;
+	unsigned int *buf = packet;
+
+	for (i = 0; i < (length + 3) / 4; i++, buf++)
+		*buf = __swab32(*buf);
+}
+#endif
+
 int fec_send(struct eth_device *dev, volatile void *packet, int length)
 {
 	struct fec_info_s *info = dev->priv;
@@ -368,6 +390,10 @@ int fec_send(struct eth_device *dev, volatile void *packet, int length)
 	}
 	if (j >= FEC_MAX_TIMEOUT)
 		printf("TX not ready\n");
+
+#ifdef CONFIG_MX28
+	swap_packet((void *)packet, length);
+#endif
 
 #ifdef CONFIG_ARCH_MMU
 	memcpy(ioremap_nocache(info->txbd[info->txIdx].cbd_bufaddr, length),
@@ -440,6 +466,9 @@ int fec_recv(struct eth_device *dev)
 #endif
 		} else {
 			length -= 4;
+#ifdef CONFIG_MX28
+			swap_packet((void *)NetRxPackets[info->rxIdx], length);
+#endif
 			/* Pass the packet up to the protocol layers. */
 #ifdef CONFIG_ARCH_MMU
 			memcpy(NetRxPackets[info->rxIdx],

@@ -30,7 +30,6 @@
 #include <common.h>
 #include <malloc.h>
 #include <mmc.h>
-#include <asm/arch/mx28.h>
 #include <asm/arch/regs-ssp.h>
 #include <asm/arch/regs-clkctrl.h>
 
@@ -281,7 +280,7 @@ static int ssp_mmc_init(struct mmc *mmc)
 	/*
 	 * Set up SSPCLK
 	 */
-	/* Set REF_IO0 at 480 MHz */
+	/* Set REF_IO0 at 297.731 MHz */
 	regval = REG_RD(REGS_CLKCTRL_BASE, HW_CLKCTRL_FRAC0);
 	regval &= ~BM_CLKCTRL_FRAC0_IO0FRAC;
 	REG_WR(REGS_CLKCTRL_BASE, HW_CLKCTRL_FRAC0,

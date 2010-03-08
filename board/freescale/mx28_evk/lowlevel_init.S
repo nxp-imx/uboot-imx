@@ -1,6 +1,8 @@
 /*
  * Board specific setup info
  *
+ * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ *
  * (C) Copyright 2003, ARM Ltd.
  * Philippe Robin, <philippe.robin@arm.com>
  *

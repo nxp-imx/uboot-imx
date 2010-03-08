@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -21,7 +21,6 @@
  */
 
 #include <common.h>
-#include <asm/arch/mx28.h>
 #include <asm/arch/regs-pinctrl.h>
 #include <asm/arch/pinctrl.h>
 
@@ -34,17 +33,17 @@ DECLARE_GLOBAL_DATA_PTR;
 
 /* MMC pins */
 static struct pin_desc mmc_pins_desc[] = {
-	{ PINID_SSP0_DATA0, PIN_FUN1, PAD_12MA, PAD_3V3, 1 },
-	{ PINID_SSP0_DATA1, PIN_FUN1, PAD_12MA, PAD_3V3, 1 },
-	{ PINID_SSP0_DATA2, PIN_FUN1, PAD_12MA, PAD_3V3, 1 },
-	{ PINID_SSP0_DATA3, PIN_FUN1, PAD_12MA, PAD_3V3, 1 },
-	{ PINID_SSP0_DATA4, PIN_FUN1, PAD_12MA, PAD_3V3, 1 },
-	{ PINID_SSP0_DATA5, PIN_FUN1, PAD_12MA, PAD_3V3, 1 },
-	{ PINID_SSP0_DATA6, PIN_FUN1, PAD_12MA, PAD_3V3, 1 },
-	{ PINID_SSP0_DATA7, PIN_FUN1, PAD_12MA, PAD_3V3, 1 },
-	{ PINID_SSP0_CMD, PIN_FUN1, PAD_12MA, PAD_3V3, 1 },
-	{ PINID_SSP0_DETECT, PIN_FUN1, PAD_12MA, PAD_3V3, 1 },
-	{ PINID_SSP0_SCK, PIN_FUN1, PAD_12MA, PAD_3V3, 1 }
+	{ PINID_SSP0_DATA0, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP0_DATA1, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP0_DATA2, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP0_DATA3, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP0_DATA4, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP0_DATA5, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP0_DATA6, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP0_DATA7, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP0_CMD, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP0_DETECT, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP0_SCK, PIN_FUN1, PAD_8MA, PAD_3V3, 1 }
 };
 
 static struct pin_group mmc_pins = {

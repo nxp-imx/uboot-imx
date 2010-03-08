@@ -19,7 +19,6 @@
  *
  */
 #include <common.h>
-#include <asm/arch/mx28.h>
 #include <asm/arch/regs-uartdbg.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -38,7 +37,7 @@ void serial_setbrg(void)
 	REG_WR(REGS_UARTDBG_BASE, HW_UARTDBGCR, 0);
 
 	/* Calculate and set baudrate */
-	quot = (CONFIG_DBGUART_CLK * 4)	/ gd->baudrate;
+	quot = (CONFIG_UARTDBG_CLK * 4)	/ gd->baudrate;
 	REG_WR(REGS_UARTDBG_BASE, HW_UARTDBGFBRD, quot & 0x3f);
 	REG_WR(REGS_UARTDBG_BASE, HW_UARTDBGIBRD, quot >> 6);
 

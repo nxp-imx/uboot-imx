@@ -261,4 +261,10 @@ typedef struct fec {
 
 #define FEC_MAX_TIMEOUT			50000
 #define FEC_TIMEOUT_TICKET		2
+
+/*
+ * Functions
+ */
+int mxc_fec_initialize(bd_t *bis);
+
 #endif				/* fec_h */

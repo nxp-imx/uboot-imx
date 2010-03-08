@@ -20,6 +20,17 @@
 #ifndef __MX28_H
 #define __MX28_H
 
+#ifndef __ASSEMBLER__
+enum mxc_clock {
+	MXC_ARM_CLK = 0,
+	MXC_AHB_CLK,
+	MXC_IPG_CLK,
+};
+
+unsigned int mxc_get_clock(enum mxc_clock clk);
+void enet_board_init(void);
+#endif
+
 /*
  * Most of i.MX28 SoC registers are associated with four addresses
  * used for different operations - read/write, set, clear and toggle bits.
