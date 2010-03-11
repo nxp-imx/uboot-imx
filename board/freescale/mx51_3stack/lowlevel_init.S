@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -89,16 +89,16 @@
 	 */
 	ldr r0, =M4IF_BASE_ADDR
 
-	ldr r1, =0x00000103
+	ldr r1, =0x00000203
 	str r1, [r0, #0x40]
 
 	ldr r1, =0x0
 	str r1, [r0, #0x44]
 
-	ldr r1, =0x00240126
+	ldr r1, =0x00120125
 	str r1, [r0, #0x9C]
 
-	ldr r1, =0x00230185
+	ldr r1, =0x001901A3
 	str r1, [r0, #0x48]
 .endm /* init_m4if */
 
