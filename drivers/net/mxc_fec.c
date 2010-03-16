@@ -336,12 +336,21 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 
 	if ((dup_spd >> 16) == FULL) {
 		/* Set maximum frame length */
+#ifdef CONFIG_RMII
+		fecp->rcr = FEC_RCR_MAX_FL(PKT_MAXBUF_SIZE) | FEC_RCR_RMII_MODE;
+#else
 		fecp->rcr = FEC_RCR_MAX_FL(PKT_MAXBUF_SIZE) | FEC_RCR_MII_MODE;
+#endif
 		fecp->tcr = FEC_TCR_FDEN;
 	} else {
 		/* Half duplex mode */
+#ifdef CONFIG_RMII
 		fecp->rcr = FEC_RCR_MAX_FL(PKT_MAXBUF_SIZE) |
-		    FEC_RCR_MII_MODE | FEC_RCR_DRT;
+			FEC_RCR_RMII_MODE | FEC_RCR_DRT;
+#else
+		fecp->rcr = FEC_RCR_MAX_FL(PKT_MAXBUF_SIZE) |
+			FEC_RCR_MII_MODE | FEC_RCR_DRT;
+#endif
 		fecp->tcr &= ~FEC_TCR_FDEN;
 	}
 
