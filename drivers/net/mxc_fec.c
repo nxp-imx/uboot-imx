@@ -93,7 +93,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#ifdef CONFIG_MX25
+#if defined(CONFIG_MX25) || defined(CONFIG_MX53)
 /*
  *  * i.MX25 allows RMII mode to be configured via a gasket
  *   */
@@ -124,6 +124,9 @@ static inline void fec_localhw_setup(volatile fec_t *fecp)
 
 	/* re-enable the gasket */
 	fecp->fec_miigsk_enr = FEC_MIIGSK_ENR_EN;
+
+	while (!(fecp->fec_miigsk_enr & FEC_MIIGSK_ENR_READY))
+		udelay(1);
 }
 #else
 static inline void fec_localhw_setup(fec_t *fecp)

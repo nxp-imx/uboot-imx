@@ -2241,6 +2241,7 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_OMAP3_WL_FF          2258
 #define MACH_TYPE_SIMCOM               2259
 #define MACH_TYPE_MCWEBIO              2260
+#define MACH_TYPE_MX53_EVK             2716
 
 #ifdef CONFIG_ARCH_EBSA110
 # ifdef machine_arch_type
@@ -27404,6 +27405,18 @@ extern unsigned int __machine_arch_type;
 # define machine_is_mx51_babbage()	(machine_arch_type == MACH_TYPE_MX51_BABBAGE)
 #else
 # define machine_is_mx51_babbage()	(0)
+#endif
+
+#ifdef CONFIG_MACH_MX53_EVK
+# ifdef machine_arch_type
+#  undef machine_arch_type
+#  define machine_arch_type     __machine_arch_type
+# else
+#  define machine_arch_type     MACH_TYPE_MX53_EVK
+# endif
+# define machine_is_mx53_evk()      (machine_arch_type == MACH_TYPE_MX53_EVK)
+#else
+# define machine_is_mx53_evk()      (0)
 #endif
 
 #ifdef CONFIG_MACH_S3C2440TURKIYE

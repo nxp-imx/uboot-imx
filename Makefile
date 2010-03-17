@@ -3254,6 +3254,9 @@ mx51_3stack_android_config	\
 mx51_3stack_config	: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx51_3stack freescale mx51
 
+mx53_evk_config      : unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx53_evk freescale mx53
+
 omap2420h4_config	: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1136 omap2420h4 NULL omap24xx
 

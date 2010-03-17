@@ -38,6 +38,8 @@
 #include <asm/arch/mx35.h>
 #elif defined(CONFIG_MX51_3DS)
 #include <asm/arch/mx51.h>
+#elif defined(CONFIG_MX53)
+#include <asm/arch/mx53.h>
 #else
 #error "Please include specific headfile "
 #endif
@@ -233,7 +235,7 @@ static int i2c_addr(uchar chip, uint addr, int alen)
 int i2c_read(uchar chip, uint addr, int alen, uchar *buf, int len)
 {
 	int timeout = I2C_MAX_TIMEOUT;
-	int ret;
+	uint ret;
 
 	DPRINTF("%s chip: 0x%02x addr: 0x%04x alen: %d len: %d\n",
 		__func__, chip, addr, alen, len);
