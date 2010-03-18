@@ -39,6 +39,11 @@
 #include <fsl_esdhc.h>
 #endif
 
+#ifdef CONFIG_ARCH_MMU
+#include <asm/mmu.h>
+#include <asm/arch/mmu.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
@@ -92,6 +97,75 @@ inline int is_soc_rev(int rev)
 {
 	return (system_rev & 0xFF) - rev;
 }
+
+#ifdef CONFIG_ARCH_MMU
+void board_mmu_init(void)
+{
+	unsigned long ttb_base = PHYS_SDRAM_1 + 0x4000;
+	unsigned long i;
+
+	/*
+	* Set the TTB register
+	*/
+	asm volatile ("mcr  p15,0,%0,c2,c0,0" : : "r"(ttb_base) /*:*/);
+
+	/*
+	* Set the Domain Access Control Register
+	*/
+	i = ARM_ACCESS_DACR_DEFAULT;
+	asm volatile ("mcr  p15,0,%0,c3,c0,0" : : "r"(i) /*:*/);
+
+	/*
+	* First clear all TT entries - ie Set them to Faulting
+	*/
+	memset((void *)ttb_base, 0, ARM_FIRST_LEVEL_PAGE_TABLE_SIZE);
+	/* Actual   Virtual  Size   Attributes          Function */
+	/* Base     Base     MB     cached? buffered?  access permissions */
+	/* xxx00000 xxx00000 */
+	X_ARM_MMU_SECTION(0x000, 0x000, 0x10,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* ROM, 16M */
+	X_ARM_MMU_SECTION(0x070, 0x070, 0x010,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* IRAM */
+	X_ARM_MMU_SECTION(0x100, 0x100, 0x040,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* SATA */
+	X_ARM_MMU_SECTION(0x180, 0x180, 0x100,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* IPUv3M */
+	X_ARM_MMU_SECTION(0x200, 0x200, 0x200,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* GPU */
+	X_ARM_MMU_SECTION(0x400, 0x400, 0x300,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* periperals */
+	X_ARM_MMU_SECTION(0x700, 0x700, 0x400,
+			ARM_CACHEABLE, ARM_BUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* CSD0 1G */
+	X_ARM_MMU_SECTION(0x700, 0xB00, 0x400,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* CSD0 1G */
+	X_ARM_MMU_SECTION(0xF00, 0xF00, 0x100,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* CS1 EIM control*/
+	X_ARM_MMU_SECTION(0xF7F, 0xF7F, 0x040,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* NAND Flash buffer */
+	X_ARM_MMU_SECTION(0xF80, 0xF80, 0x001,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW); /* iRam */
+
+	/* Workaround for arm errata #709718 */
+	/* Setup PRRR so device is always mapped to non-shared */
+	asm volatile ("mrc p15, 0, %0, c10, c2, 0" : "=r"(i) : /*:*/);
+	i &= (~(3 << 0x10));
+	asm volatile ("mcr p15, 0, %0, c10, c2, 0" : : "r"(i) /*:*/);
+
+	/* Enable MMU */
+	MMU_ON();
+}
+#endif
 
 int dram_init(void)
 {

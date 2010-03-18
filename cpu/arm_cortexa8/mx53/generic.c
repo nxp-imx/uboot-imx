@@ -24,6 +24,9 @@
 #include <asm/arch/mx53.h>
 #include <asm/errno.h>
 #include "crm_regs.h"
+#ifdef CONFIG_ARCH_CPU_INIT
+#include <asm/cache-cp15.h>
+#endif
 
 enum pll_clocks {
 	PLL1_CLK = MXC_DPLL1_BASE,
@@ -336,6 +339,7 @@ int cpu_eth_init(bd_t *bis)
 	int rc = -ENODEV;
 #if defined(CONFIG_MXC_FEC)
 	char *env = NULL;
+
 	rc = mxc_fec_initialize(bis);
 
 	env = getenv("fec_addr");
@@ -344,4 +348,19 @@ int cpu_eth_init(bd_t *bis)
 #endif
 	return rc;
 }
+
+#if defined(CONFIG_ARCH_CPU_INIT)
+int arch_cpu_init(void)
+{
+	icache_enable();
+	dcache_enable();
+
+#ifdef CONFIG_L2_OFF
+	l2_cache_disable();
+#else
+	l2_cache_enable();
+#endif
+	return 0;
+}
+#endif
 

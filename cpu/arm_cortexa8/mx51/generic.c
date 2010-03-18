@@ -26,7 +26,9 @@
 #include <common.h>
 #include <asm/arch/mx51.h>
 #include <asm/errno.h>
+#ifdef CONFIG_ARCH_CPU_INIT
 #include <asm/cache-cp15.h>
+#endif
 #include "crm_regs.h"
 
 enum pll_clocks {

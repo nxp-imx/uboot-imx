@@ -36,6 +36,9 @@
 
 #define CONFIG_SKIP_RELOCATE_UBOOT
 
+#define CONFIG_ARCH_CPU_INIT
+#define CONFIG_ARCH_MMU
+
 #define CONFIG_MX53_HCLK_FREQ	24000000	/* RedBoot says 26MHz */
 
 #define CONFIG_DISPLAY_CPUINFO
@@ -197,6 +200,8 @@
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		CSD0_BASE_ADDR
 #define PHYS_SDRAM_1_SIZE	(1024 * 1024 * 1024)
+#define iomem_valid_addr(addr, size) \
+	(addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
