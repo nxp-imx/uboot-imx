@@ -256,7 +256,7 @@ void setup_core_voltages(void)
 	/* Set DDR voltage VDDA to 1.225V */
 	buf[0] = 0;
 	buf[1] = 0x63;
-	buf[2] = 0x19;
+	buf[2] = 0x1a;
 	if (i2c_write(0x8, 26, 1, buf, 3))
 		return;
 
