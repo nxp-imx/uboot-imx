@@ -713,6 +713,13 @@ static image_header_t *image_get_kernel (ulong img_addr, int verify)
 		return NULL;
 	}
 
+#if defined(CONFIG_MX51_BBG) || defined(CONFIG_MX51_3DS)
+	if (image_get_load(hdr) < 0x90000000)
+		image_set_load(hdr, image_get_load(hdr)+0x20000000);
+	if (image_get_ep(hdr) < 0x90000000)
+		image_set_ep(hdr, image_get_ep(hdr)+0x20000000);
+#endif
+
 	show_boot_progress (3);
 	image_print_contents (hdr);
 
