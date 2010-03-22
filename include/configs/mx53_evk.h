@@ -151,6 +151,7 @@
 
 #define CONFIG_MXC_FEC
 #define CONFIG_MII
+#define CONFIG_MII_GASKET
 #define CONFIG_DISCOVER_PHY
 
 /*

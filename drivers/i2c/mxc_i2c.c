@@ -28,22 +28,6 @@
 
 #if defined(CONFIG_HARD_I2C)
 
-#ifdef CONFIG_MX25
-#include <asm/arch/mx25.h>
-#include <asm/arch/mx25-regs.h>
-#elif defined(CONFIG_MX31)
-#include <asm/arch/mx31.h>
-#include <asm/arch/mx31-regs.h>
-#elif defined(CONFIG_MX35)
-#include <asm/arch/mx35.h>
-#elif defined(CONFIG_MX51_3DS)
-#include <asm/arch/mx51.h>
-#elif defined(CONFIG_MX53)
-#include <asm/arch/mx53.h>
-#else
-#error "Please include specific headfile "
-#endif
-
 #define IADR	0x00
 #define IFDR	0x04
 #define I2CR	0x08

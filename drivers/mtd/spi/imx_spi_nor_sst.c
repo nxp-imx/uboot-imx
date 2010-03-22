@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -29,7 +29,7 @@
 #include <malloc.h>
 
 #include <imx_spi.h>
-#include <asm/arch/imx_spi_nor.h>
+#include <imx_spi_nor.h>
 
 static u8 g_tx_buf[256];
 static u8 g_rx_buf[256];

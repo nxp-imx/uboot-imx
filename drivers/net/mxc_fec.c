@@ -93,10 +93,10 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if defined(CONFIG_MX25) || defined(CONFIG_MX53)
+#if defined(CONFIG_MII_GASKET)
 /*
- *  * i.MX25 allows RMII mode to be configured via a gasket
- *   */
+ * RMII mode to be configured via a gasket
+ */
 #define FEC_MIIGSK_CFGR_FRCONT (1 << 6)
 #define FEC_MIIGSK_CFGR_LBMODE (1 << 4)
 #define FEC_MIIGSK_CFGR_EMODE (1 << 3)
