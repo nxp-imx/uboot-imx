@@ -38,7 +38,7 @@
 #define GPTCR_CLKSOURCE_32   (0x100<<6)	/* Clock source */
 #define GPTCR_CLKSOURCE_IPG (0x001<<6)	/* Clock source */
 #define GPTCR_TEN       (1)	/* Timer enable */
-#define GPTPR_VAL	(66)
+#define GPTPR_VAL	(50)
 
 static inline void setup_gpt(void)
 {
@@ -54,7 +54,7 @@ static inline void setup_gpt(void)
 	GPTCR = GPTCR_SWR;
 	for (i = 0; i < 100; i++)
 		GPTCR = 0;      	/* We have no udelay by now */
-	GPTPR = GPTPR_VAL;	/* 66Mhz / 66 */
+	GPTPR = GPTPR_VAL;	/* 50Mhz / 50 */
 	/* Freerun Mode, PERCLK1 input */
 	GPTCR |= GPTCR_CLKSOURCE_IPG | GPTCR_TEN;
 }

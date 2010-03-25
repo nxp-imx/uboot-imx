@@ -379,10 +379,16 @@
 #ifndef __ASSEMBLER__
 
 enum boot_device {
-	UNKNOWN_BOOT,
-	NAND_BOOT,
+	WEIM_NOR_BOOT,
+	ONE_NAND_BOOT,
+	PATA_BOOT,
+	SATA_BOOT,
+	I2C_BOOT,
 	SPI_NOR_BOOT,
+	SD_BOOT,
 	MMC_BOOT,
+	NAND_BOOT,
+	UNKNOWN_BOOT
 };
 
 enum mxc_clock {
@@ -397,6 +403,9 @@ enum mxc_clock {
 	MXC_EMI_SLOW_CLK,
 	MXC_DDR_CLK,
 	MXC_ESDHC_CLK,
+	MXC_ESDHC2_CLK,
+	MXC_ESDHC3_CLK,
+	MXC_ESDHC4_CLK,
 };
 
 enum mxc_peri_clocks {

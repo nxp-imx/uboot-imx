@@ -57,15 +57,34 @@ static inline void setup_boot_device(void)
 	uint bt_mem_type = (soc_sbmr & 0x00000008) >> 3;
 
 	switch (bt_mem_ctl) {
-	case 0x4:
-		boot_dev = MMC_BOOT;
+	case 0x0:
+		if (bt_mem_type)
+			boot_dev = ONE_NAND_BOOT;
+		else
+			boot_dev = WEIM_NOR_BOOT;
 		break;
-	case 0x8:
-		boot_dev = NAND_BOOT;
+	case 0x2:
+		if (bt_mem_type)
+			boot_dev = SATA_BOOT;
+		else
+			boot_dev = PATA_BOOT;
 		break;
 	case 0x3:
 		if (bt_mem_type)
 			boot_dev = SPI_NOR_BOOT;
+		else
+			boot_dev = I2C_BOOT;
+		break;
+	case 0x4:
+	case 0x5:
+		boot_dev = SD_BOOT;
+		break;
+	case 0x6:
+	case 0x7:
+		boot_dev = MMC_BOOT;
+		break;
+	case 0x8 ... 0xf:
+		boot_dev = NAND_BOOT;
 		break;
 	default:
 		boot_dev = UNKNOWN_BOOT;
@@ -505,14 +524,32 @@ int checkboard(void)
 
 	printf("Boot Device: ");
 	switch (get_boot_device()) {
-	case NAND_BOOT:
-		printf("NAND\n");
+	case WEIM_NOR_BOOT:
+		printf("NOR\n");
+		break;
+	case ONE_NAND_BOOT:
+		printf("ONE NAND\n");
+		break;
+	case PATA_BOOT:
+		printf("PATA\n");
+		break;
+	case SATA_BOOT:
+		printf("SATA\n");
+		break;
+	case I2C_BOOT:
+		printf("I2C\n");
 		break;
 	case SPI_NOR_BOOT:
 		printf("SPI NOR\n");
 		break;
+	case SD_BOOT:
+		printf("SD\n");
+		break;
 	case MMC_BOOT:
 		printf("MMC\n");
+		break;
+	case NAND_BOOT:
+		printf("NAND\n");
 		break;
 	case UNKNOWN_BOOT:
 	default:

@@ -116,7 +116,7 @@ static u32 __get_ipg_per_clk(void)
 /*!
  * This function returns the low power audio clock.
  */
-static u32 get_lp_apm(void)
+static u32 __get_lp_apm(void)
 {
 	u32 ret_val = 0;
 	u32 ccsr = __REG(MXC_CCM_CCSR);
@@ -145,7 +145,7 @@ static u32 __get_uart_clk(void)
 		freq = __decode_pll(PLL3_CLK, CONFIG_MX53_HCLK_FREQ);
 		break;
 	case 0x4:
-		freq = get_lp_apm();
+		freq = __get_lp_apm();
 		break;
 	default:
 		break;
@@ -190,7 +190,7 @@ static u32 __get_cspi_clk(void)
 		ret_val = __decode_pll(PLL3_CLK, CONFIG_MX53_HCLK_FREQ) / div;
 		break;
 	default:
-		ret_val = get_lp_apm() / div;
+		ret_val = __get_lp_apm() / div;
 		break;
 	}
 
@@ -265,7 +265,100 @@ static u32 __get_ddr_clk(void)
 	return ret_val;
 }
 
+static u32 __get_esdhc1_clk(void)
+{
+	u32 ret_val = 0, div, pre_pdf, pdf;
+	u32 cscmr1 = __REG(MXC_CCM_CSCMR1);
+	u32 cscdr1 = __REG(MXC_CCM_CSCDR1);
+	u32 esdh1_clk_sel;
 
+	esdh1_clk_sel = (cscmr1 & MXC_CCM_CSCMR1_ESDHC1_MSHC1_CLK_SEL_MASK) \
+				>> MXC_CCM_CSCMR1_ESDHC1_MSHC1_CLK_SEL_OFFSET;
+	pre_pdf = (cscdr1 & MXC_CCM_CSCDR1_ESDHC1_MSHC1_CLK_PRED_MASK) \
+			>> MXC_CCM_CSCDR1_ESDHC1_MSHC1_CLK_PRED_OFFSET;
+	pdf = (cscdr1 & MXC_CCM_CSCDR1_ESDHC1_MSHC1_CLK_PODF_MASK) \
+			>> MXC_CCM_CSCDR1_ESDHC1_MSHC1_CLK_PODF_OFFSET ;
+
+	div = (pre_pdf + 1) * (pdf + 1);
+
+	switch (esdh1_clk_sel) {
+	case 0:
+		ret_val = __decode_pll(PLL1_CLK, CONFIG_MX53_HCLK_FREQ);
+		break;
+	case 1:
+		ret_val = __decode_pll(PLL2_CLK, CONFIG_MX53_HCLK_FREQ);
+		break;
+	case 2:
+		ret_val = __decode_pll(PLL3_CLK, CONFIG_MX53_HCLK_FREQ);
+		break;
+	case 3:
+		ret_val = __get_lp_apm();
+		break;
+	default:
+		break;
+	}
+
+	ret_val /= div;
+
+	return ret_val;
+}
+
+static u32 __get_esdhc3_clk(void)
+{
+	u32 ret_val = 0, div, pre_pdf, pdf;
+	u32 esdh3_clk_sel;
+	u32 cscmr1 = __REG(MXC_CCM_CSCMR1);
+	u32 cscdr1 = __REG(MXC_CCM_CSCDR1);
+	esdh3_clk_sel = (cscmr1 & MXC_CCM_CSCMR1_ESDHC3_MSHC2_CLK_SEL_MASK) \
+				>> MXC_CCM_CSCMR1_ESDHC3_MSHC2_CLK_SEL_OFFSET;
+	pre_pdf = (cscdr1 & MXC_CCM_CSCDR1_ESDHC3_MSHC2_CLK_PRED_MASK) \
+			>> MXC_CCM_CSCDR1_ESDHC3_MSHC2_CLK_PRED_OFFSET;
+	pdf = (cscdr1 & MXC_CCM_CSCDR1_ESDHC3_MSHC2_CLK_PODF_MASK) \
+			>> MXC_CCM_CSCDR1_ESDHC3_MSHC2_CLK_PODF_OFFSET ;
+
+	div = (pre_pdf + 1) * (pdf + 1);
+
+	switch (esdh3_clk_sel) {
+	case 0:
+		ret_val = __decode_pll(PLL1_CLK, CONFIG_MX53_HCLK_FREQ);
+		break;
+	case 1:
+		ret_val = __decode_pll(PLL2_CLK, CONFIG_MX53_HCLK_FREQ);
+		break;
+	case 2:
+		ret_val = __decode_pll(PLL3_CLK, CONFIG_MX53_HCLK_FREQ);
+		break;
+	case 3:
+		ret_val = __get_lp_apm();
+		break;
+	default:
+		break;
+	}
+
+	ret_val /= div;
+
+	return ret_val;
+}
+
+static u32 __get_esdhc2_clk(void)
+{
+	u32 cscmr1 = __REG(MXC_CCM_CSCMR1);
+	u32 esdh2_clk_sel = cscmr1 & MXC_CCM_CSCMR1_ESDHC2_CLK_SEL;
+	if (esdh2_clk_sel)
+		return __get_esdhc3_clk();
+
+	return __get_esdhc1_clk();
+}
+
+static u32 __get_esdhc4_clk(void)
+{
+	u32 cscmr1 = __REG(MXC_CCM_CSCMR1);
+	u32 esdh4_clk_sel = cscmr1 & MXC_CCM_CSCMR1_ESDHC4_CLK_SEL;
+	if (esdh4_clk_sel)
+		return __get_esdhc3_clk();
+
+	return __get_esdhc1_clk();
+}
 unsigned int mxc_get_clock(enum mxc_clock clk)
 {
 	switch (clk) {
@@ -290,7 +383,13 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	case MXC_DDR_CLK:
 		return __get_ddr_clk();
 	case MXC_ESDHC_CLK:
-		return __decode_pll(PLL3_CLK, CONFIG_MX53_HCLK_FREQ);
+		return __get_esdhc1_clk();
+	case MXC_ESDHC2_CLK:
+		return __get_esdhc2_clk();
+	case MXC_ESDHC3_CLK:
+		return __get_esdhc3_clk();
+	case MXC_ESDHC4_CLK:
+		return __get_esdhc4_clk();
 	default:
 		break;
 	}
@@ -315,6 +414,10 @@ void mxc_dump_clocks(void)
 	printf("axi_b clock   : %dHz\n", mxc_get_clock(MXC_AXI_B_CLK));
 	printf("emi_slow clock: %dHz\n", mxc_get_clock(MXC_EMI_SLOW_CLK));
 	printf("ddr clock     : %dHz\n", mxc_get_clock(MXC_DDR_CLK));
+	printf("esdhc1 clock  : %dHz\n", mxc_get_clock(MXC_ESDHC_CLK));
+	printf("esdhc2 clock  : %dHz\n", mxc_get_clock(MXC_ESDHC2_CLK));
+	printf("esdhc3 clock  : %dHz\n", mxc_get_clock(MXC_ESDHC3_CLK));
+	printf("esdhc4 clock  : %dHz\n", mxc_get_clock(MXC_ESDHC4_CLK));
 }
 
 #if defined(CONFIG_DISPLAY_CPUINFO)

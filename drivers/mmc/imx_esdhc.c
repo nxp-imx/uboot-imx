@@ -1,6 +1,6 @@
 /*
- * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
- * Terry Lv
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * Terry Lv, Jason Liu
  *
  * Copyright 2007, Freescale Semiconductor, Inc
  * Andy Fleming
@@ -184,7 +184,7 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	/* Wait for the bus to be idle */
 	while ((readl(&regs->prsstat) & PRSSTAT_CICHB) ||
 			(readl(&regs->prsstat) & PRSSTAT_CIDHB))
-			mdelay(1);
+			;
 
 	while (readl(&regs->prsstat) & PRSSTAT_DLA);
 
@@ -193,7 +193,7 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	 * Note: This is way more than 8 cycles, but 1ms seems to
 	 * resolve timing issues with some cards
 	 */
-	mdelay(10);
+	udelay(1000);
 
 	/* Set up for a data transfer if we have one */
 	if (data) {
@@ -210,8 +210,6 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	/* Send the command */
 	writel(cmd->cmdarg, &regs->cmdarg);
 	writel(xfertyp, &regs->xfertyp);
-
-	mdelay(10);
 
 	/* Mask all irqs */
 	writel(0, &regs->irqsigen);
@@ -258,7 +256,7 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 
 			for (i = 0; i < (block_cnt); ++i) {
 				while (!(readl(&regs->irqstat) & IRQSTAT_BRR)) 
-					mdelay(1);
+					;
 
 				for (j = 0; j < (block_size >> 2); ++j, ++tmp_ptr) {
 					*tmp_ptr = readl(&regs->datport);
@@ -271,8 +269,8 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 			tmp_ptr = (u32 *)data->src;
 
 			for (i = 0; i < (block_cnt); ++i) {
-				while (!(readl(&regs->irqstat) & IRQSTAT_BWR)) 
-					mdelay(1);
+				while (!(readl(&regs->irqstat) & IRQSTAT_BWR))
+					;
 
 				for (j = 0; j < (block_size >> 2); ++j, ++tmp_ptr) {
 					writel(*tmp_ptr, &regs->datport);
