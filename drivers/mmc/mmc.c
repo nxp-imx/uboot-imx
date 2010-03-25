@@ -35,6 +35,7 @@
 #include <linux/list.h>
 #include <mmc.h>
 #include <div64.h>
+#include <fsl_esdhc.h>
 
 static struct list_head mmc_devices;
 static int cur_dev_num = -1;
@@ -82,6 +83,7 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 	int stoperr = 0;
 	struct mmc *mmc = find_mmc_device(dev_num);
 	int blklen;
+	lbaint_t blk_offset = 0, blk_left = blkcnt;
 
 	if (!mmc)
 		return -1;
@@ -95,38 +97,45 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 		return err;
 	}
 
-	if (blkcnt > 1)
-		cmd.cmdidx = MMC_CMD_WRITE_MULTIPLE_BLOCK;
-	else
-		cmd.cmdidx = MMC_CMD_WRITE_SINGLE_BLOCK;
+	do {
+		cmd.cmdidx = (blk_left > 1) \
+				? MMC_CMD_WRITE_MULTIPLE_BLOCK \
+				: MMC_CMD_WRITE_SINGLE_BLOCK;
 
-	if (mmc->high_capacity)
-		cmd.cmdarg = start;
-	else
-		cmd.cmdarg = start * blklen;
+		cmd.cmdarg = (mmc->high_capacity) \
+				? (start + blk_offset) \
+				: ((start + blk_offset) * blklen);
 
-	cmd.resp_type = MMC_RSP_R1;
-	cmd.flags = 0;
-
-	data.src = src;
-	data.blocks = blkcnt;
-	data.blocksize = blklen;
-	data.flags = MMC_DATA_WRITE;
-
-	err = mmc_send_cmd(mmc, &cmd, &data);
-
-	if (err) {
-		puts("mmc write failed\n\r");
-		return err;
-	}
-
-	if (blkcnt > 1) {
-		cmd.cmdidx = MMC_CMD_STOP_TRANSMISSION;
-		cmd.cmdarg = 0;
-		cmd.resp_type = MMC_RSP_R1b;
+		cmd.resp_type = MMC_RSP_R1;
 		cmd.flags = 0;
-		stoperr = mmc_send_cmd(mmc, &cmd, NULL);
-	}
+
+		data.src = src + blk_offset * blklen;
+		data.blocks = (blk_left > MAX_BLK_CNT) \
+					  ? MAX_BLK_CNT : blk_left;
+		data.blocksize = blklen;
+		data.flags = MMC_DATA_WRITE;
+
+		err = mmc_send_cmd(mmc, &cmd, &data);
+
+		if (err) {
+			puts("mmc write failed\n\r");
+			return err;
+		}
+
+		if (blk_left > 1) {
+			cmd.cmdidx = MMC_CMD_STOP_TRANSMISSION;
+			cmd.cmdarg = 0;
+			cmd.resp_type = MMC_RSP_R1b;
+			cmd.flags = 0;
+			stoperr = mmc_send_cmd(mmc, &cmd, NULL);
+		}
+
+		if (blk_left > MAX_BLK_CNT) {
+			blk_left -= MAX_BLK_CNT;
+			blk_offset += MAX_BLK_CNT;
+		} else
+			break;
+	} while (blk_left > 0);
 
 	return blkcnt;
 }
@@ -214,6 +223,7 @@ static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
 	int stoperr = 0;
 	struct mmc *mmc = find_mmc_device(dev_num);
 	int blklen;
+	lbaint_t blk_offset = 0, blk_left = blkcnt;
 
 	if (!mmc)
 		return -1;
@@ -227,38 +237,44 @@ static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
 		return err;
 	}
 
-	if (blkcnt > 1)
-		cmd.cmdidx = MMC_CMD_READ_MULTIPLE_BLOCK;
-	else
-		cmd.cmdidx = MMC_CMD_READ_SINGLE_BLOCK;
+	do {
+		cmd.cmdidx = (blk_left > 1) \
+				? MMC_CMD_READ_MULTIPLE_BLOCK \
+				: MMC_CMD_READ_SINGLE_BLOCK;
 
-	if (mmc->high_capacity)
-		cmd.cmdarg = start;
-	else
-		cmd.cmdarg = start * blklen;
+		cmd.cmdarg = (mmc->high_capacity) \
+				? (start + blk_offset) \
+				: ((start + blk_offset) * blklen);
 
-	cmd.resp_type = MMC_RSP_R1;
-	cmd.flags = 0;
-
-	data.dest = dst;
-	data.blocks = blkcnt;
-	data.blocksize = blklen;
-	data.flags = MMC_DATA_READ;
-
-	err = mmc_send_cmd(mmc, &cmd, &data);
-
-	if (err) {
-		puts("mmc read failed\n\r");
-		return err;
-	}
-
-	if (blkcnt > 1) {
-		cmd.cmdidx = MMC_CMD_STOP_TRANSMISSION;
-		cmd.cmdarg = 0;
-		cmd.resp_type = MMC_RSP_R1b;
+		cmd.resp_type = MMC_RSP_R1;
 		cmd.flags = 0;
-		stoperr = mmc_send_cmd(mmc, &cmd, NULL);
-	}
+
+		data.dest = dst + blk_offset * blklen;
+		data.blocks = (blk_left > MAX_BLK_CNT) ? MAX_BLK_CNT : blk_left;
+		data.blocksize = blklen;
+		data.flags = MMC_DATA_READ;
+
+		err = mmc_send_cmd(mmc, &cmd, &data);
+
+		if (err) {
+			puts("mmc read failed\n\r");
+			return err;
+		}
+
+		if (blk_left > 1) {
+			cmd.cmdidx = MMC_CMD_STOP_TRANSMISSION;
+			cmd.cmdarg = 0;
+			cmd.resp_type = MMC_RSP_R1b;
+			cmd.flags = 0;
+			stoperr = mmc_send_cmd(mmc, &cmd, NULL);
+		}
+
+		if (blk_left > MAX_BLK_CNT) {
+			blk_left -= MAX_BLK_CNT;
+			blk_offset += MAX_BLK_CNT;
+		} else
+			break;
+	} while (blk_left > 0);
 
 	return blkcnt;
 }
@@ -901,9 +917,9 @@ int mmc_startup(struct mmc *mmc)
 			break;
 		}
 	} else {
-		csize = (mmc->csd[1] & 0x3f) << 16
-			| (mmc->csd[2] & 0xffff0000) >> 16;
-		cmult = 8;
+		csize = (mmc->csd[1] & 0x3ff) << 2
+			| (mmc->csd[2] & 0xc0000000) >> 30;
+		cmult = (mmc->csd[2] & 0x00038000) >> 15;
 	}
 
 	mmc->capacity = (csize + 1) << (cmult + 2);

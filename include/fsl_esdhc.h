@@ -2,7 +2,8 @@
  * FSL SD/MMC Defines
  *-------------------------------------------------------------------
  *
- * Copyright 2007-2008, Freescale Semiconductor, Inc
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * Copyright 2007-2010, Freescale Semiconductor, Inc
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -137,7 +138,7 @@
 #define BLKATTR		0x2e004
 #define BLKATTR_CNT(x)	((x & 0xffff) << 16)
 #define BLKATTR_SIZE(x)	(x & 0x1fff)
-#define MAX_BLK_CNT	0x7fff	/* so malloc will have enough room with 32M */
+#define MAX_BLK_CNT	0xffff	/* so malloc will have enough room with 32M */
 
 #define ESDHC_HOSTCAPBLT_VS18	0x04000000
 #define ESDHC_HOSTCAPBLT_VS30	0x02000000

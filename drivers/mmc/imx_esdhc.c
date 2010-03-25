@@ -72,21 +72,6 @@ struct fsl_esdhc {
 	uint	scr;
 };
 
-
-static inline void mdelay(unsigned long msec)
-{
-	unsigned long i;
-	for (i = 0; i < msec; i++)
-		udelay(1000);
-}
-
-static inline void sdelay(unsigned long sec)
-{
-	unsigned long i;
-	for (i = 0; i < sec; i++)
-		mdelay(1000);
-}
-
 /* Return the XFERTYP flags for a given command and data packet */
 uint esdhc_xfertyp(struct mmc_cmd *cmd, struct mmc_data *data)
 {
@@ -144,7 +129,7 @@ static int esdhc_setup_data(struct mmc *mmc, struct mmc_data *data)
 
 	/* Calculate the timeout period for data transactions */
 	/*
-	timeout = __ilog2(mmc->tran_speed/10);
+	timeout = fls(mmc->tran_speed / 10) - 1;
 	timeout -= 13;
 
 	if (timeout > 14)
@@ -193,7 +178,7 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	 * Note: This is way more than 8 cycles, but 1ms seems to
 	 * resolve timing issues with some cards
 	 */
-	udelay(1000);
+	udelay(10000);
 
 	/* Set up for a data transfer if we have one */
 	if (data) {
@@ -321,7 +306,7 @@ void set_sysctl(struct mmc *mmc, uint clock)
 	tmp = (readl(&regs->sysctl) & (~SYSCTL_CLOCK_MASK)) | clk;
 	writel(tmp, &regs->sysctl);
 
-	mdelay(100);
+	udelay(10000);
 
 #ifdef CONFIG_IMX_ESDHC_V1
 	tmp = readl(&regs->sysctl) | SYSCTL_PEREN;
@@ -358,7 +343,9 @@ static void esdhc_set_ios(struct mmc *mmc)
 static int esdhc_init(struct mmc *mmc)
 {
 	struct fsl_esdhc *regs = mmc->priv;
+	/*
 	int timeout = 1000;
+	*/
 	u32 tmp;
 
 	/* Reset the eSDHC by writing 1 to RSTA bit of SYSCTRL Register */
@@ -366,7 +353,7 @@ static int esdhc_init(struct mmc *mmc)
 	writel(tmp, &regs->sysctl);
 
 	while (readl(&regs->sysctl) & SYSCTL_RSTA)
-	    mdelay(1);
+		;
 
 #ifdef CONFIG_IMX_ESDHC_V1
 	tmp = readl(&regs->sysctl) | (SYSCTL_HCKEN | SYSCTL_IPGEN);
@@ -382,7 +369,7 @@ static int esdhc_init(struct mmc *mmc)
 	/* FIXME: For our CINS bit doesn't work. So this section is disabled. */
 	/*
 	while (!(readl(&regs->prsstat) & PRSSTAT_CINS) && --timeout)
-		mdelay(1);
+		;
 
 	if (timeout <= 0) {
 		printf("No MMC card detected!\n");
@@ -395,7 +382,7 @@ static int esdhc_init(struct mmc *mmc)
 	writel(tmp, &regs->sysctl);
 
 	while (readl(&regs->sysctl) & SYSCTL_INITA)
-		mdelay(1);
+		;
 #endif
 
 	return 0;
@@ -423,9 +410,8 @@ static int esdhc_initialize(bd_t *bis)
 	mmc->set_ios = esdhc_set_ios;
 	mmc->init = esdhc_init;
 
-	/*
 	caps = regs->hostcapblt;
-
+	/*
 	if (caps & ESDHC_HOSTCAPBLT_VS18)
 		mmc->voltages |= MMC_VDD_165_195;
 	if (caps & ESDHC_HOSTCAPBLT_VS30)
