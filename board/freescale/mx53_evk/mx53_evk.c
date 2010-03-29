@@ -402,72 +402,89 @@ static void setup_fec(void)
 
 #ifdef CONFIG_CMD_MMC
 
-u32 *imx_esdhc_base_addr;
+struct fsl_esdhc_cfg esdhc_cfg[2] = {
+	{MMC_SDHC1_BASE_ADDR, 1, 1},
+	{MMC_SDHC3_BASE_ADDR, 1, 1},
+};
 
-int esdhc_gpio_init(void)
+int esdhc_gpio_init(bd_t *bis)
 {
-	u32 interface_esdhc = 0;
 	s32 status = 0;
-	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	u32 index = 0;
 
-	interface_esdhc = (soc_sbmr & (0x00300000)) >> 20;
+	for (index = 0; index < CONFIG_SYS_FSL_ESDHC_NUM;
+		++index) {
+		switch (index) {
+		case 0:
+			mxc_request_iomux(MX53_PIN_SD1_CMD, IOMUX_CONFIG_ALT0);
+			mxc_request_iomux(MX53_PIN_SD1_CLK, IOMUX_CONFIG_ALT0);
+			mxc_request_iomux(MX53_PIN_SD1_DATA0,
+						IOMUX_CONFIG_ALT0);
+			mxc_request_iomux(MX53_PIN_SD1_DATA1,
+						IOMUX_CONFIG_ALT0);
+			mxc_request_iomux(MX53_PIN_SD1_DATA2,
+						IOMUX_CONFIG_ALT0);
+			mxc_request_iomux(MX53_PIN_SD1_DATA3,
+						IOMUX_CONFIG_ALT0);
 
-	switch (interface_esdhc) {
-	case 0:
-		imx_esdhc_base_addr = (u32 *)MMC_SDHC1_BASE_ADDR;
+			mxc_iomux_set_pad(MX53_PIN_SD1_CMD, 0x1E4);
+			mxc_iomux_set_pad(MX53_PIN_SD1_CLK, 0xD4);
+			mxc_iomux_set_pad(MX53_PIN_SD1_DATA0, 0x1D4);
+			mxc_iomux_set_pad(MX53_PIN_SD1_DATA1, 0x1D4);
+			mxc_iomux_set_pad(MX53_PIN_SD1_DATA2, 0x1D4);
+			mxc_iomux_set_pad(MX53_PIN_SD1_DATA3, 0x1D4);
+			break;
+		case 1:
+			mxc_request_iomux(MX53_PIN_ATA_RESET_B,
+						IOMUX_CONFIG_ALT2);
+			mxc_request_iomux(MX53_PIN_ATA_IORDY,
+						IOMUX_CONFIG_ALT2);
+			mxc_request_iomux(MX53_PIN_ATA_DATA8,
+						IOMUX_CONFIG_ALT4);
+			mxc_request_iomux(MX53_PIN_ATA_DATA9,
+						IOMUX_CONFIG_ALT4);
+			mxc_request_iomux(MX53_PIN_ATA_DATA10,
+						IOMUX_CONFIG_ALT4);
+			mxc_request_iomux(MX53_PIN_ATA_DATA11,
+						IOMUX_CONFIG_ALT4);
+			mxc_request_iomux(MX53_PIN_ATA_DATA0,
+						IOMUX_CONFIG_ALT4);
+			mxc_request_iomux(MX53_PIN_ATA_DATA1,
+						IOMUX_CONFIG_ALT4);
+			mxc_request_iomux(MX53_PIN_ATA_DATA2,
+						IOMUX_CONFIG_ALT4);
+			mxc_request_iomux(MX53_PIN_ATA_DATA3,
+						IOMUX_CONFIG_ALT4);
 
-		mxc_request_iomux(MX53_PIN_SD1_CMD, IOMUX_CONFIG_ALT0);
-		mxc_request_iomux(MX53_PIN_SD1_CLK, IOMUX_CONFIG_ALT0);
-		mxc_request_iomux(MX53_PIN_SD1_DATA0, IOMUX_CONFIG_ALT0);
-		mxc_request_iomux(MX53_PIN_SD1_DATA1, IOMUX_CONFIG_ALT0);
-		mxc_request_iomux(MX53_PIN_SD1_DATA2, IOMUX_CONFIG_ALT0);
-		mxc_request_iomux(MX53_PIN_SD1_DATA3, IOMUX_CONFIG_ALT0);
+			mxc_iomux_set_pad(MX53_PIN_ATA_RESET_B, 0x1E4);
+			mxc_iomux_set_pad(MX53_PIN_ATA_IORDY, 0xD4);
+			mxc_iomux_set_pad(MX53_PIN_ATA_DATA8, 0x1D4);
+			mxc_iomux_set_pad(MX53_PIN_ATA_DATA9, 0x1D4);
+			mxc_iomux_set_pad(MX53_PIN_ATA_DATA10, 0x1D4);
+			mxc_iomux_set_pad(MX53_PIN_ATA_DATA11, 0x1D4);
+			mxc_iomux_set_pad(MX53_PIN_ATA_DATA0, 0x1D4);
+			mxc_iomux_set_pad(MX53_PIN_ATA_DATA1, 0x1D4);
+			mxc_iomux_set_pad(MX53_PIN_ATA_DATA2, 0x1D4);
+			mxc_iomux_set_pad(MX53_PIN_ATA_DATA3, 0x1D4);
 
-		mxc_iomux_set_pad(MX53_PIN_SD1_CMD, 0x1E4);
-		mxc_iomux_set_pad(MX53_PIN_SD1_CLK, 0xD4);
-		mxc_iomux_set_pad(MX53_PIN_SD1_DATA0, 0x1D4);
-		mxc_iomux_set_pad(MX53_PIN_SD1_DATA1, 0x1D4);
-		mxc_iomux_set_pad(MX53_PIN_SD1_DATA2, 0x1D4);
-		mxc_iomux_set_pad(MX53_PIN_SD1_DATA3, 0x1D4);
-		break;
-	case 2:
-		imx_esdhc_base_addr = (u32 *)MMC_SDHC3_BASE_ADDR;
-
-		mxc_request_iomux(MX53_PIN_ATA_RESET_B, IOMUX_CONFIG_ALT2);
-		mxc_request_iomux(MX53_PIN_ATA_IORDY, IOMUX_CONFIG_ALT2);
-		mxc_request_iomux(MX53_PIN_ATA_DATA8, IOMUX_CONFIG_ALT4);
-		mxc_request_iomux(MX53_PIN_ATA_DATA9, IOMUX_CONFIG_ALT4);
-		mxc_request_iomux(MX53_PIN_ATA_DATA10, IOMUX_CONFIG_ALT4);
-		mxc_request_iomux(MX53_PIN_ATA_DATA11, IOMUX_CONFIG_ALT4);
-		mxc_request_iomux(MX53_PIN_ATA_DATA0, IOMUX_CONFIG_ALT4);
-		mxc_request_iomux(MX53_PIN_ATA_DATA1, IOMUX_CONFIG_ALT4);
-		mxc_request_iomux(MX53_PIN_ATA_DATA2, IOMUX_CONFIG_ALT4);
-		mxc_request_iomux(MX53_PIN_ATA_DATA3, IOMUX_CONFIG_ALT4);
-
-		mxc_iomux_set_pad(MX53_PIN_ATA_RESET_B, 0x1E4);
-		mxc_iomux_set_pad(MX53_PIN_ATA_IORDY, 0xD4);
-		mxc_iomux_set_pad(MX53_PIN_ATA_DATA8, 0x1D4);
-		mxc_iomux_set_pad(MX53_PIN_ATA_DATA9, 0x1D4);
-		mxc_iomux_set_pad(MX53_PIN_ATA_DATA10, 0x1D4);
-		mxc_iomux_set_pad(MX53_PIN_ATA_DATA11, 0x1D4);
-		mxc_iomux_set_pad(MX53_PIN_ATA_DATA0, 0x1D4);
-		mxc_iomux_set_pad(MX53_PIN_ATA_DATA1, 0x1D4);
-		mxc_iomux_set_pad(MX53_PIN_ATA_DATA2, 0x1D4);
-		mxc_iomux_set_pad(MX53_PIN_ATA_DATA3, 0x1D4);
-
-		break;
-	default:
-		status = -1;
-		break;
+			break;
+		default:
+			printf("Warning: you configured more ESDHC controller"
+				"(%d) as supported by the board(2)\n",
+				CONFIG_SYS_FSL_ESDHC_NUM);
+			return status;
+			break;
+		}
+		status |= fsl_esdhc_initialize(bis, &esdhc_cfg[index]);
 	}
 
 	return status;
 }
 
-int board_mmc_init(void)
+int board_mmc_init(bd_t *bis)
 {
-	if (!esdhc_gpio_init())
-		return fsl_esdhc_mmc_init(gd->bd);
+	if (!esdhc_gpio_init(bis))
+		return 0;
 	else
 		return -1;
 }

@@ -35,6 +35,8 @@
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
+#define CONFIG_SYS_64BIT_VSPRINTF
+
 #define BOARD_LATE_INIT
 /*
  * Disabled for now due to build problems under Debian and a significant increase

@@ -31,10 +31,13 @@
 #include <config.h>
 #include <common.h>
 #include <command.h>
+#include <hwconfig.h>
 #include <mmc.h>
+#include <part.h>
 #include <malloc.h>
 #include <mmc.h>
 #include <fsl_esdhc.h>
+#include <fdt_support.h>
 #include <asm/io.h>
 
 
@@ -108,7 +111,8 @@ static int esdhc_setup_data(struct mmc *mmc, struct mmc_data *data)
 	uint wml_value;
 	int timeout;
 	u32 tmp;
-	struct fsl_esdhc *regs = mmc->priv;
+	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
+	struct fsl_esdhc *regs = (struct fsl_esdhc *)cfg->esdhc_base;
 
 	wml_value = data->blocksize / 4;
 
@@ -157,7 +161,8 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	uint	xfertyp;
 	uint	irqstat;
 	u32	tmp;
-	volatile struct fsl_esdhc *regs = mmc->priv;
+	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
+	volatile struct fsl_esdhc *regs = (struct fsl_esdhc *)cfg->esdhc_base;
 
 	writel(-1, &regs->irqstat);
 
@@ -278,7 +283,8 @@ void set_sysctl(struct mmc *mmc, uint clock)
 {
 	int sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
 	int div, pre_div;
-	volatile struct fsl_esdhc *regs = mmc->priv;
+	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
+	volatile struct fsl_esdhc *regs = (struct fsl_esdhc *)cfg->esdhc_base;
 	uint clk;
 	u32 tmp;
 
@@ -321,7 +327,8 @@ void set_sysctl(struct mmc *mmc, uint clock)
 
 static void esdhc_set_ios(struct mmc *mmc)
 {
-	struct fsl_esdhc *regs = mmc->priv;
+	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
+	struct fsl_esdhc *regs = (struct fsl_esdhc *)cfg->esdhc_base;
 	u32 tmp;
 
 	/* Set the clock speed */
@@ -342,10 +349,8 @@ static void esdhc_set_ios(struct mmc *mmc)
 
 static int esdhc_init(struct mmc *mmc)
 {
-	struct fsl_esdhc *regs = mmc->priv;
-	/*
-	int timeout = 1000;
-	*/
+	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
+	struct fsl_esdhc *regs = (struct fsl_esdhc *)cfg->esdhc_base;
 	u32 tmp;
 
 	/* Reset the eSDHC by writing 1 to RSTA bit of SYSCTRL Register */
@@ -388,41 +393,31 @@ static int esdhc_init(struct mmc *mmc)
 	return 0;
 }
 
-#ifndef CONFIG_SYS_FSL_ESDHC_ADDR
-extern u32 *imx_esdhc_base_addr;
-#endif
-
-static int esdhc_initialize(bd_t *bis)
+int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 {
-#ifdef CONFIG_SYS_FSL_ESDHC_ADDR
-	struct fsl_esdhc *regs = (struct fsl_esdhc *)CONFIG_SYS_IMX_ESDHC_ADDR;
-#else
-	struct fsl_esdhc *regs = (struct fsl_esdhc *)imx_esdhc_base_addr;
-#endif
+	struct fsl_esdhc *regs;
 	struct mmc *mmc;
 	u32 caps;
+
+	if (!cfg)
+		return -1;
 
 	mmc = malloc(sizeof(struct mmc));
 
 	sprintf(mmc->name, "FSL_ESDHC");
-	mmc->priv = regs;
+	regs = (struct fsl_esdhc *)cfg->esdhc_base;
+	mmc->priv = cfg;
 	mmc->send_cmd = esdhc_send_cmd;
 	mmc->set_ios = esdhc_set_ios;
 	mmc->init = esdhc_init;
 
 	caps = regs->hostcapblt;
-	/*
 	if (caps & ESDHC_HOSTCAPBLT_VS18)
 		mmc->voltages |= MMC_VDD_165_195;
 	if (caps & ESDHC_HOSTCAPBLT_VS30)
 		mmc->voltages |= MMC_VDD_29_30 | MMC_VDD_30_31;
-	if (caps & ESDHC_HOSTCAPBLT_VS33) {
+	if (caps & ESDHC_HOSTCAPBLT_VS33)
 		mmc->voltages |= MMC_VDD_32_33 | MMC_VDD_33_34;
-	}
-	*/
-	mmc->voltages = MMC_VDD_35_36 | MMC_VDD_34_35 | MMC_VDD_33_34 |
-			MMC_VDD_32_33 | MMC_VDD_31_32 | MMC_VDD_30_31 |
-			MMC_VDD_29_30 | MMC_VDD_28_29 | MMC_VDD_27_28;
 
 	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_8BIT;
 
@@ -439,6 +434,29 @@ static int esdhc_initialize(bd_t *bis)
 
 int fsl_esdhc_mmc_init(bd_t *bis)
 {
-	return esdhc_initialize(bis);
+	struct fsl_esdhc_cfg *cfg;
+
+	cfg = malloc(sizeof(struct fsl_esdhc_cfg));
+	memset(cfg, 0, sizeof(struct fsl_esdhc_cfg));
+	cfg->esdhc_base = CONFIG_SYS_FSL_ESDHC_ADDR;
+	return fsl_esdhc_initialize(bis, cfg);
 }
 
+#ifdef CONFIG_OF_LIBFDT
+void fdt_fixup_esdhc(void *blob, bd_t *bd)
+{
+	const char *compat = "fsl,esdhc";
+	const char *status = "okay";
+
+	if (!hwconfig("esdhc")) {
+		status = "disabled";
+		goto out;
+	}
+
+	do_fixup_by_compat_u32(blob, compat, "clock-frequency",
+			       gd->sdhc_clk, 1);
+out:
+	do_fixup_by_compat(blob, compat, "status", status,
+			   strlen(status) + 1, 1);
+}
+#endif

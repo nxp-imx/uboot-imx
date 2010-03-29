@@ -45,6 +45,8 @@
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
+#define CONFIG_SYS_64BIT_VSPRINTF
+
 #define BOARD_LATE_INIT
 /*
  * Disabled for now due to build problems under Debian and a significant
@@ -121,6 +123,9 @@
 	#define CONFIG_MMC				1
 	#define CONFIG_GENERIC_MMC
 	#define CONFIG_IMX_MMC
+	#define CONFIG_SYS_FSL_ESDHC_NUM	2
+	#define CONFIG_SYS_FSL_ESDHC_ADDR       0
+	#define CONFIG_SYS_MMC_ENV_DEV	0
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
 #endif

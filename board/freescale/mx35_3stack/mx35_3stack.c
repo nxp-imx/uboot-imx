@@ -370,85 +370,82 @@ int board_eth_init(bd_t *bis)
 
 #ifdef CONFIG_CMD_MMC
 
-u32 *imx_esdhc_base_addr;
+struct fsl_esdhc_cfg esdhc_cfg[2] = {
+	{MMC_SDHC1_BASE_ADDR, 1, 1},
+	{MMC_SDHC2_BASE_ADDR, 1, 1},
+};
 
-int esdhc_gpio_init(void)
+int esdhc_gpio_init(bd_t *bis)
 {
-	u32 interface_esdhc = 0;
-	u32 pad_val = 0;
-
-	interface_esdhc = (readl(IIM_BASE_ADDR + 0x80c)) & (0x000000C0) >> 6;
+	u32 pad_val = 0, index = 0;
+	s32 status = 0;
 
 	/* IOMUX PROGRAMMING */
-	switch (interface_esdhc) {
-	case 0:
-		imx_esdhc_base_addr = \
-				(u32 *)MMC_SDHC1_BASE_ADDR;
-
-		pad_val = PAD_CTL_PUE_PUD | PAD_CTL_PKE_ENABLE |
-			PAD_CTL_HYS_SCHMITZ | PAD_CTL_DRV_HIGH |
-			PAD_CTL_100K_PD | PAD_CTL_SRE_FAST;
-		mxc_request_iomux(MX35_PIN_SD1_CMD,
-			MUX_CONFIG_FUNC | MUX_CONFIG_SION);
-		mxc_iomux_set_pad(MX35_PIN_SD1_CMD, pad_val);
-
-		pad_val = PAD_CTL_PUE_PUD | PAD_CTL_PKE_ENABLE |
+	for (index = 0; index < CONFIG_SYS_FSL_ESDHC_NUM;
+		++index) {
+		switch (index) {
+		case 0:
+			pad_val = PAD_CTL_PUE_PUD | PAD_CTL_PKE_ENABLE |
 				PAD_CTL_HYS_SCHMITZ | PAD_CTL_DRV_HIGH |
-				PAD_CTL_100K_PU | PAD_CTL_SRE_FAST;
-		mxc_request_iomux(MX35_PIN_SD1_CLK,
+				PAD_CTL_100K_PD | PAD_CTL_SRE_FAST;
+			mxc_request_iomux(MX35_PIN_SD1_CMD,
 				MUX_CONFIG_FUNC | MUX_CONFIG_SION);
-		mxc_iomux_set_pad(MX35_PIN_SD1_CLK, pad_val);
-		mxc_request_iomux(MX35_PIN_SD1_DATA0,
-			  MUX_CONFIG_FUNC);
-		mxc_iomux_set_pad(MX35_PIN_SD1_DATA0, pad_val);
-		mxc_request_iomux(MX35_PIN_SD1_DATA3,
-			  MUX_CONFIG_FUNC);
-		mxc_iomux_set_pad(MX35_PIN_SD1_DATA3, pad_val);
+			mxc_iomux_set_pad(MX35_PIN_SD1_CMD, pad_val);
 
-		break;
-	case 1:
-		imx_esdhc_base_addr = \
-				(u32 *)MMC_SDHC2_BASE_ADDR;
+			pad_val = PAD_CTL_PUE_PUD | PAD_CTL_PKE_ENABLE |
+					PAD_CTL_HYS_SCHMITZ | PAD_CTL_DRV_HIGH |
+					PAD_CTL_100K_PU | PAD_CTL_SRE_FAST;
+			mxc_request_iomux(MX35_PIN_SD1_CLK,
+					MUX_CONFIG_FUNC | MUX_CONFIG_SION);
+			mxc_iomux_set_pad(MX35_PIN_SD1_CLK, pad_val);
+			mxc_request_iomux(MX35_PIN_SD1_DATA0,
+					MUX_CONFIG_FUNC);
+			mxc_iomux_set_pad(MX35_PIN_SD1_DATA0, pad_val);
+			mxc_request_iomux(MX35_PIN_SD1_DATA3,
+					MUX_CONFIG_FUNC);
+			mxc_iomux_set_pad(MX35_PIN_SD1_DATA3, pad_val);
 
-		mxc_request_iomux(MX35_PIN_SD2_CLK,
-			  MUX_CONFIG_FUNC | MUX_CONFIG_SION);
-		mxc_request_iomux(MX35_PIN_SD2_CMD,
-			  MUX_CONFIG_FUNC | MUX_CONFIG_SION);
-		mxc_request_iomux(MX35_PIN_SD2_DATA0,
-			  MUX_CONFIG_FUNC);
-		mxc_request_iomux(MX35_PIN_SD2_DATA3,
-			  MUX_CONFIG_FUNC);
+			break;
+		case 1:
+			mxc_request_iomux(MX35_PIN_SD2_CLK,
+					MUX_CONFIG_FUNC | MUX_CONFIG_SION);
+			mxc_request_iomux(MX35_PIN_SD2_CMD,
+					MUX_CONFIG_FUNC | MUX_CONFIG_SION);
+			mxc_request_iomux(MX35_PIN_SD2_DATA0,
+					MUX_CONFIG_FUNC);
+			mxc_request_iomux(MX35_PIN_SD2_DATA3,
+					MUX_CONFIG_FUNC);
 
-		pad_val = PAD_CTL_PUE_PUD | PAD_CTL_PKE_ENABLE |
-			PAD_CTL_HYS_SCHMITZ | PAD_CTL_DRV_MAX |
-			PAD_CTL_100K_PD | PAD_CTL_SRE_FAST;
-		mxc_iomux_set_pad(MX35_PIN_SD2_CMD, pad_val);
+			pad_val = PAD_CTL_PUE_PUD | PAD_CTL_PKE_ENABLE |
+					PAD_CTL_HYS_SCHMITZ | PAD_CTL_DRV_MAX |
+					PAD_CTL_100K_PD | PAD_CTL_SRE_FAST;
+			mxc_iomux_set_pad(MX35_PIN_SD2_CMD, pad_val);
 
-		pad_val = PAD_CTL_PUE_PUD | PAD_CTL_PKE_ENABLE |
-				PAD_CTL_HYS_SCHMITZ | PAD_CTL_DRV_HIGH |
-				PAD_CTL_100K_PU | PAD_CTL_SRE_FAST;
-		mxc_iomux_set_pad(MX35_PIN_SD2_CLK, pad_val);
-		mxc_iomux_set_pad(MX35_PIN_SD2_DATA0, pad_val);
-		mxc_iomux_set_pad(MX35_PIN_SD2_DATA3, pad_val);
+			pad_val = PAD_CTL_PUE_PUD | PAD_CTL_PKE_ENABLE |
+					PAD_CTL_HYS_SCHMITZ | PAD_CTL_DRV_HIGH |
+					PAD_CTL_100K_PU | PAD_CTL_SRE_FAST;
+			mxc_iomux_set_pad(MX35_PIN_SD2_CLK, pad_val);
+			mxc_iomux_set_pad(MX35_PIN_SD2_DATA0, pad_val);
+			mxc_iomux_set_pad(MX35_PIN_SD2_DATA3, pad_val);
 
-		break;
-	case 2:
-		imx_esdhc_base_addr = \
-				(u32 *)MMC_SDHC3_BASE_ADDR;
-
-		printf("TO2 ESDHC3 not supported!");
-		break;
-	default:
-		break;
+			break;
+		default:
+			printf("Warning: you configured more ESDHC controller"
+				"(%d) as supported by the board(2)\n",
+				CONFIG_SYS_FSL_ESDHC_NUM);
+			return status;
+			break;
+		}
+		status |= fsl_esdhc_initialize(bis, &esdhc_cfg[index]);
 	}
 
-	return 0;
+	return status;
 }
 
-int board_mmc_init(void)
+int board_mmc_init(bd_t *bis)
 {
-	if (!esdhc_gpio_init())
-		return fsl_esdhc_mmc_init(gd->bd);
+	if (!esdhc_gpio_init(bis))
+		return 0;
 	else
 		return -1;
 }

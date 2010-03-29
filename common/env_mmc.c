@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
 
  * (C) Copyright 2000-2006
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
@@ -112,12 +112,12 @@ inline int write_env(struct mmc *mmc, unsigned long size,
 
 int saveenv(void)
 {
-	struct mmc *mmc = find_mmc_device(0);
+	struct mmc *mmc = find_mmc_device(CONFIG_SYS_MMC_ENV_DEV);
 
 	if (init_mmc_for_env(mmc))
 		return 1;
 
-	puts("Writing to MMC... ");
+	printf("Writing to MMC(%d)... ", CONFIG_SYS_MMC_ENV_DEV);
 	if (write_env(mmc, CONFIG_ENV_SIZE, \
 				CONFIG_ENV_OFFSET, env_ptr)) {
 		puts("failed\n");
@@ -147,7 +147,7 @@ inline int read_env(struct mmc *mmc, unsigned long size,
 void env_relocate_spec(void)
 {
 #if !defined(ENV_IS_EMBEDDED)
-	struct mmc *mmc = find_mmc_device(0);
+	struct mmc *mmc = find_mmc_device(CONFIG_SYS_MMC_ENV_DEV);
 
 	if (init_mmc_for_env(mmc))
 		return;

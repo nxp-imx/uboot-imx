@@ -53,6 +53,8 @@
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
+#define CONFIG_SYS_64BIT_VSPRINTF
+
 #define BOARD_LATE_INIT
 
 #define CONFIG_CMDLINE_TAG		1	/* enable passing of ATAGs */
@@ -110,6 +112,9 @@
 	#define CONFIG_MMC				1
 	#define CONFIG_GENERIC_MMC
 	#define CONFIG_IMX_MMC
+	#define CONFIG_SYS_FSL_ESDHC_NUM        2
+	#define CONFIG_SYS_FSL_ESDHC_ADDR       0
+	#define CONFIG_SYS_MMC_ENV_DEV  0
 	#define CONFIG_IMX_ESDHC_V1
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1

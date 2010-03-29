@@ -74,88 +74,105 @@ int dram_init(void)
 
 #ifdef CONFIG_CMD_MMC
 
-u32 *imx_esdhc_base_addr;
+struct fsl_esdhc_cfg esdhc_cfg[2] = {
+	{MMC_SDHC1_BASE, 1, 1},
+	{MMC_SDHC2_BASE, 1, 1},
+};
 
-int esdhc_gpio_init(void)
+int esdhc_gpio_init(bd_t *bis)
 {
-	u32 interface_esdhc = 0, val = 0;
+	s32 status = 0;
+	u32 index = 0;
+	u32 val = 0;
 
-	interface_esdhc = (readl(CCM_RCSR) & (0x00300000)) >> 20;
+	for (index = 0; index < CONFIG_SYS_FSL_ESDHC_NUM;
+		++index) {
+		switch (index) {
+		case 0:
+			/* Pins */
+			writel(0x10, IOMUXC_BASE + 0x190); /* SD1_CMD */
+			writel(0x10, IOMUXC_BASE + 0x194); /* SD1_CLK */
+			writel(0x00, IOMUXC_BASE + 0x198); /* SD1_DATA0 */
+			writel(0x00, IOMUXC_BASE + 0x19c); /* SD1_DATA1 */
+			writel(0x00, IOMUXC_BASE + 0x1a0); /* SD1_DATA2 */
+			writel(0x00, IOMUXC_BASE + 0x1a4); /* SD1_DATA3 */
+			writel(0x06, IOMUXC_BASE + 0x094); /* D12 (SD1_DATA4) */
+			writel(0x06, IOMUXC_BASE + 0x090); /* D13 (SD1_DATA5) */
+			writel(0x06, IOMUXC_BASE + 0x08c); /* D14 (SD1_DATA6) */
+			writel(0x06, IOMUXC_BASE + 0x088); /* D15 (SD1_DATA7) */
+			writel(0x05, IOMUXC_BASE + 0x010); /* A14 (SD1_WP) */
+			writel(0x05, IOMUXC_BASE + 0x014); /* A15 (SD1_DET) */
 
-	switch (interface_esdhc) {
-	case 0:
-		imx_esdhc_base_addr = (u32 *)MMC_SDHC1_BASE;
-		/* Pins */
-		writel(0x10, IOMUXC_BASE + 0x190);	/* SD1_CMD */
-		writel(0x10, IOMUXC_BASE + 0x194);	/* SD1_CLK */
-		writel(0x00, IOMUXC_BASE + 0x198);	/* SD1_DATA0 */
-		writel(0x00, IOMUXC_BASE + 0x19c);	/* SD1_DATA1 */
-		writel(0x00, IOMUXC_BASE + 0x1a0);	/* SD1_DATA2 */
-		writel(0x00, IOMUXC_BASE + 0x1a4);	/* SD1_DATA3 */
-		writel(0x06, IOMUXC_BASE + 0x094);	/* D12 (SD1_DATA4) */
-		writel(0x06, IOMUXC_BASE + 0x090);	/* D13 (SD1_DATA5) */
-		writel(0x06, IOMUXC_BASE + 0x08c);	/* D14 (SD1_DATA6) */
-		writel(0x06, IOMUXC_BASE + 0x088);	/* D15 (SD1_DATA7) */
-		writel(0x05, IOMUXC_BASE + 0x010);	/* A14 (SD1_WP) */
-		writel(0x05, IOMUXC_BASE + 0x014);	/* A15 (SD1_DET) */
+			/* Pads */
+			writel(0xD1, IOMUXC_BASE + 0x388); /* SD1_CMD */
+			writel(0xD1, IOMUXC_BASE + 0x38c); /* SD1_CLK */
+			writel(0xD1, IOMUXC_BASE + 0x390); /* SD1_DATA0 */
+			writel(0xD1, IOMUXC_BASE + 0x394); /* SD1_DATA1 */
+			writel(0xD1, IOMUXC_BASE + 0x398); /* SD1_DATA2 */
+			writel(0xD1, IOMUXC_BASE + 0x39c); /* SD1_DATA3 */
+			writel(0xD1, IOMUXC_BASE + 0x28c); /* D12 (SD1_DATA4) */
+			writel(0xD1, IOMUXC_BASE + 0x288); /* D13 (SD1_DATA5) */
+			writel(0xD1, IOMUXC_BASE + 0x284); /* D14 (SD1_DATA6) */
+			writel(0xD1, IOMUXC_BASE + 0x280); /* D15 (SD1_DATA7) */
+			writel(0xD1, IOMUXC_BASE + 0x230); /* A14 (SD1_WP) */
+			writel(0xD1, IOMUXC_BASE + 0x234); /* A15 (SD1_DET) */
 
-		/* Pads */
-		writel(0xD1, IOMUXC_BASE + 0x388);	/* SD1_CMD */
-		writel(0xD1, IOMUXC_BASE + 0x38c);	/* SD1_CLK */
-		writel(0xD1, IOMUXC_BASE + 0x390);	/* SD1_DATA0 */
-		writel(0xD1, IOMUXC_BASE + 0x394);	/* SD1_DATA1 */
-		writel(0xD1, IOMUXC_BASE + 0x398);	/* SD1_DATA2 */
-		writel(0xD1, IOMUXC_BASE + 0x39c);	/* SD1_DATA3 */
-		writel(0xD1, IOMUXC_BASE + 0x28c);	/* D12 (SD1_DATA4) */
-		writel(0xD1, IOMUXC_BASE + 0x288);	/* D13 (SD1_DATA5) */
-		writel(0xD1, IOMUXC_BASE + 0x284);	/* D14 (SD1_DATA6) */
-		writel(0xD1, IOMUXC_BASE + 0x280);	/* D15 (SD1_DATA7) */
-		writel(0xD1, IOMUXC_BASE + 0x230);	/* A14 (SD1_WP) */
-		writel(0xD1, IOMUXC_BASE + 0x234);	/* A15 (SD1_DET) */
+			/*
+			 * Set write protect and card detect gpio as inputs
+			 * A14 (SD1_WP) and A15 (SD1_DET)
+			 */
+			val = ~(3 << 0) & readl(GPIO1_BASE + GPIO_GDIR);
+			writel(val, GPIO1_BASE + GPIO_GDIR);
+			break;
+		case 1:
+			/* Pins */
+			writel(0x16, IOMUXC_BASE + 0x0e8); /* LD8 (SD1_CMD) */
+			writel(0x16, IOMUXC_BASE + 0x0ec); /* LD9 (SD1_CLK) */
+			writel(0x06, IOMUXC_BASE + 0x0f0); /* LD10 (SD1_DATA0)*/
+			writel(0x06, IOMUXC_BASE + 0x0f4); /* LD11 (SD1_DATA1)*/
+			writel(0x06, IOMUXC_BASE + 0x0f8); /* LD12 (SD1_DATA2)*/
+			writel(0x06, IOMUXC_BASE + 0x0fc); /* LD13 (SD1_DATA3)*/
+			/* CSI_D2 (SD1_DATA4) */
+			writel(0x02, IOMUXC_BASE + 0x120);
+			/* CSI_D3 (SD1_DATA5) */
+			writel(0x02, IOMUXC_BASE + 0x124);
+			/* CSI_D4 (SD1_DATA6) */
+			writel(0x02, IOMUXC_BASE + 0x128);
+			/* CSI_D5 (SD1_DATA7) */
+			writel(0x02, IOMUXC_BASE + 0x12c);
 
-		/*
-		 * Set write protect and card detect gpio as inputs
-		 * A14 (SD1_WP) and A15 (SD1_DET)
-		 */
-		val = ~(3 << 0) & readl(GPIO1_BASE + GPIO_GDIR);
-		writel(val, GPIO1_BASE + GPIO_GDIR);
-		break;
-	case 1:
-		imx_esdhc_base_addr = (u32 *)MMC_SDHC2_BASE;
-		/* Pins */
-		writel(0x16, IOMUXC_BASE + 0x0e8);	/* LD8 (SD1_CMD) */
-		writel(0x16, IOMUXC_BASE + 0x0ec);	/* LD9 (SD1_CLK) */
-		writel(0x06, IOMUXC_BASE + 0x0f0);	/* LD10 (SD1_DATA0) */
-		writel(0x06, IOMUXC_BASE + 0x0f4);	/* LD11 (SD1_DATA1) */
-		writel(0x06, IOMUXC_BASE + 0x0f8);	/* LD12 (SD1_DATA2) */
-		writel(0x06, IOMUXC_BASE + 0x0fc);	/* LD13 (SD1_DATA3) */
-		writel(0x02, IOMUXC_BASE + 0x120);	/* CSI_D2 (SD1_DATA4) */
-		writel(0x02, IOMUXC_BASE + 0x124);	/* CSI_D3 (SD1_DATA5) */
-		writel(0x02, IOMUXC_BASE + 0x128);	/* CSI_D4 (SD1_DATA6) */
-		writel(0x02, IOMUXC_BASE + 0x12c);	/* CSI_D5 (SD1_DATA7) */
-
-		/* Pads */
-		writel(0xD1, IOMUXC_BASE + 0x2e0);	/* LD8 (SD1_CMD) */
-		writel(0xD1, IOMUXC_BASE + 0x2e4);	/* LD9 (SD1_CLK) */
-		writel(0xD1, IOMUXC_BASE + 0x2e8);	/* LD10 (SD1_DATA0) */
-		writel(0xD1, IOMUXC_BASE + 0x2ec);	/* LD11 (SD1_DATA1) */
-		writel(0xD1, IOMUXC_BASE + 0x2f0);	/* LD12 (SD1_DATA2) */
-		writel(0xD1, IOMUXC_BASE + 0x2f4);	/* LD13 (SD1_DATA3) */
-		writel(0xD1, IOMUXC_BASE + 0x318);	/* CSI_D2 (SD1_DATA4) */
-		writel(0xD1, IOMUXC_BASE + 0x31c);	/* CSI_D3 (SD1_DATA5) */
-		writel(0xD1, IOMUXC_BASE + 0x320);	/* CSI_D4 (SD1_DATA6) */
-		writel(0xD1, IOMUXC_BASE + 0x324);	/* CSI_D5 (SD1_DATA7) */
-		break;
-	default:
-		break;
+			/* Pads */
+			writel(0xD1, IOMUXC_BASE + 0x2e0); /* LD8 (SD1_CMD) */
+			writel(0xD1, IOMUXC_BASE + 0x2e4); /* LD9 (SD1_CLK) */
+			writel(0xD1, IOMUXC_BASE + 0x2e8); /* LD10 (SD1_DATA0)*/
+			writel(0xD1, IOMUXC_BASE + 0x2ec); /* LD11 (SD1_DATA1)*/
+			writel(0xD1, IOMUXC_BASE + 0x2f0); /* LD12 (SD1_DATA2)*/
+			writel(0xD1, IOMUXC_BASE + 0x2f4); /* LD13 (SD1_DATA3)*/
+			/* CSI_D2 (SD1_DATA4) */
+			writel(0xD1, IOMUXC_BASE + 0x318);
+			/* CSI_D3 (SD1_DATA5) */
+			writel(0xD1, IOMUXC_BASE + 0x31c);
+			/* CSI_D4 (SD1_DATA6) */
+			writel(0xD1, IOMUXC_BASE + 0x320);
+			/* CSI_D5 (SD1_DATA7) */
+			writel(0xD1, IOMUXC_BASE + 0x324);
+			break;
+		default:
+			printf("Warning: you configured more ESDHC controller"
+				"(%d) as supported by the board(2)\n",
+				CONFIG_SYS_FSL_ESDHC_NUM);
+			return status;
+			break;
+		}
+		status |= fsl_esdhc_initialize(bis, &esdhc_cfg[index]);
 	}
 	return 0;
 }
 
-int board_mmc_init(void)
+int board_mmc_init(bd_t *bis)
 {
-	if (!esdhc_gpio_init())
-		return fsl_esdhc_mmc_init(gd->bd);
+	if (!esdhc_gpio_init(bis))
+		return 0;
 	else
 		return -1;
 }

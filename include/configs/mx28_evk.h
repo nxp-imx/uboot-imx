@@ -56,6 +56,8 @@
 #define CONFIG_AUTO_COMPLETE			/* Command auto complete */
 #define CONFIG_CMDLINE_EDITING			/* Command history etc */
 
+#define CONFIG_SYS_64BIT_VSPRINTF
+
 /*
  * Boot Linux
  */
@@ -125,6 +127,7 @@
 #define CONFIG_MMC
 #define CONFIG_IMX_SSP_MMC		/* MMC driver based on SSP */
 #define CONFIG_GENERIC_MMC
+#define CONFIG_SYS_MMC_ENV_DEV	0
 #define CONFIG_DOS_PARTITION
 #define CONFIG_CMD_FAT
 

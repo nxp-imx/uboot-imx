@@ -31,10 +31,10 @@
 
 /* FSL eSDHC-specific constants */
 #define SYSCTL			0x0002e02c
-#define SYSCTL_RSTA		0x01000000
 #define SYSCTL_INITA		0x08000000
 #define SYSCTL_TIMEOUT_MASK	0x000f0000
 #define SYSCTL_CLOCK_MASK	0x0000fff0
+#define SYSCTL_RSTA			0x01000000
 #define SYSCTL_SDCLKEN		0x00000008
 #define SYSCTL_PEREN		0x00000004
 #define SYSCTL_HCKEN		0x00000002
@@ -147,8 +147,15 @@
 #define ESDHC_HOSTCAPBLT_DMAS	0x00400000
 #define ESDHC_HOSTCAPBLT_HSS	0x00200000
 
+struct fsl_esdhc_cfg {
+	u32	esdhc_base;
+	u32	no_snoop;
+	u32	clk_enable;
+};
+
 #if defined(CONFIG_FSL_ESDHC) || defined(CONFIG_IMX_MMC)
 int fsl_esdhc_mmc_init(bd_t *bis);
+int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg);
 void fdt_fixup_esdhc(void *blob, bd_t *bd);
 #else
 static inline int fsl_esdhc_mmc_init(bd_t *bis) { return -ENOSYS; }

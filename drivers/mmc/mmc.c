@@ -176,7 +176,7 @@ int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size)
 	buffer = malloc(blklen);
 
 	if (!buffer) {
-		puts("Could not allocate buffer for MMC read!\n");
+		printf("Could not allocate buffer for MMC read!\n");
 		return -1;
 	}
 
@@ -184,7 +184,7 @@ int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size)
 	err = mmc_set_blocklen(mmc, mmc->read_bl_len);
 
 	if (err)
-		return err;
+		goto free_buffer;
 
 	for (i = startblock; i <= endblock; i++) {
 		int segment_size;
@@ -321,7 +321,15 @@ sd_send_op_cond(struct mmc *mmc)
 
 		cmd.cmdidx = SD_CMD_APP_SEND_OP_COND;
 		cmd.resp_type = MMC_RSP_R3;
-		cmd.cmdarg = mmc->voltages;
+
+		/*
+		 * Most cards do not answer if some reserved bits
+		 * in the ocr are set. However, Some controller
+		 * can set bit 7 (reserved for low voltages), but
+		 * how to manage low voltages SD card is not yet
+		 * specified.
+		 */
+		cmd.cmdarg = mmc->voltages & 0xff8000;
 
 		if (mmc->version == SD_VERSION_2)
 			cmd.cmdarg |= OCR_HCS;
@@ -978,7 +986,6 @@ int mmc_startup(struct mmc *mmc)
 			mmc_set_clock(mmc, 50000000);
 		else
 			mmc_set_clock(mmc, 25000000);
-
 	} else {
 		if (mmc->card_caps & MMC_MODE_4BIT) {
 			/* Set the card to use 4 bit*/

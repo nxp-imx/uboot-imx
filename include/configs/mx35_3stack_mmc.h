@@ -32,8 +32,13 @@
 #define CONFIG_MX35		1	/* in a mx31 */
 #define CONFIG_MX35_HCLK_FREQ	24000000	/* RedBoot says 26MHz */
 
+#define CONFIG_ARCH_CPU_INIT
+#define CONFIG_ARCH_MMU
+
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
+
+#define CONFIG_SYS_64BIT_VSPRINTF
 
 #define BOARD_LATE_INIT
 /*
@@ -153,8 +158,6 @@
  */
 #define CONFIG_SYS_LONGHELP	/* undef to save memory */
 #define CONFIG_SYS_PROMPT	"MX35 U-Boot > "
-#define CONFIG_ARCH_CPU_INIT
-#define CONFIG_ARCH_MMU
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
@@ -196,6 +199,9 @@
 	#define CONFIG_MMC				1
 	#define CONFIG_GENERIC_MMC
 	#define CONFIG_IMX_MMC
+	#define CONFIG_SYS_FSL_ESDHC_NUM        2
+	#define CONFIG_SYS_FSL_ESDHC_ADDR       0
+	#define CONFIG_SYS_MMC_ENV_DEV		0
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
 #endif
