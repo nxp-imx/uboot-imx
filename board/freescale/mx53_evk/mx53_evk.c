@@ -107,7 +107,7 @@ static inline void setup_soc_rev(void)
 	system_rev = 0x53000 | CHIP_REV_1_0;
 }
 
-static inline void set_board_rev(int rev)
+static inline void setup_board_rev(int rev)
 {
 	system_rev |= (rev & 0xF) << 8;
 }
@@ -495,7 +495,9 @@ int board_init(void)
 {
 	setup_boot_device();
 	setup_soc_rev();
-
+#ifdef CONFIG_MX53_ARM2
+	setup_board_rev(1);
+#endif
 	gd->bd->bi_arch_number = MACH_TYPE_MX53_EVK;	/* board id for linux */
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;

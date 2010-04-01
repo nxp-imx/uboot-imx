@@ -58,24 +58,27 @@
 .endm /* init_aips */
 
 .macro setup_pll pll, freq
-	ldr r2, =\pll
+	ldr r0, =\pll
 	ldr r1, =0x00001232
-	str r1, [r2, #PLL_DP_CTL] /* Set DPLL ON (set UPEN bit): BRMO=1 */
+	str r1, [r0, #PLL_DP_CTL]
 	mov r1, #0x2
-	str r1, [r2, #PLL_DP_CONFIG] /* Enable auto-restart AREN bit */
+	str r1, [r0, #PLL_DP_CONFIG]
 
-	str r3, [r2, #PLL_DP_OP]
-	str r3, [r2, #PLL_DP_HFS_OP]
+	ldr r1, W_DP_OP_\freq
+	str r1, [r0, #PLL_DP_OP]
+	str r1, [r0, #PLL_DP_HFS_OP]
 
-	str r4, [r2, #PLL_DP_MFD]
-	str r4, [r2, #PLL_DP_HFS_MFD]
+	ldr r1,	W_DP_MFD_\freq
+	str r1, [r0, #PLL_DP_MFD]
+	str r1, [r0, #PLL_DP_HFS_MFD]
 
-	str r5, [r2, #PLL_DP_MFN]
-	str r5, [r2, #PLL_DP_HFS_MFN]
+	ldr r1,  W_DP_MFN_\freq
+	str r1, [r0, #PLL_DP_MFN]
+	str r1, [r0, #PLL_DP_HFS_MFN]
 
 	ldr r1, =0x00001232
-	str r1, [r2, #PLL_DP_CTL]
-1:	ldr r1, [r2, #PLL_DP_CTL]
+	str r1, [r0, #PLL_DP_CTL]
+1:	ldr r1, [r0, #PLL_DP_CTL]
 	ands r1, r1, #0x1
 	beq 1b
 .endm
@@ -87,14 +90,8 @@
 	mov r1, #0x4
 	str r1, [r0, #CLKCTL_CCSR]
 
-	mov r3, #DP_OP_800
-	mov r4, #DP_MFD_800
-	mov r5, #DP_MFN_800
 	setup_pll PLL1_BASE_ADDR, 800
 
-	mov r3, #DP_OP_400
-        mov r4, #DP_MFD_400
-        mov r5, #DP_MFN_400
         setup_pll PLL3_BASE_ADDR, 400
 
         /* Switch peripheral to PLL3 */
@@ -102,36 +99,31 @@
         ldr r1, CCM_VAL_0x00015154
         str r1, [r0, #CLKCTL_CBCMR]
         ldr r1, CCM_VAL_0x02888945
-        orr r1, r1, #(1 << 16)   /* Set DDR divider to run at 200MHz */
+        orr r1, r1, #(1 << 16)
         str r1, [r0, #CLKCTL_CBCDR]
-        /* make sure mux & divider change is effective */
+        /* make sure change is effective */
 1:      ldr r1, [r0, #CLKCTL_CDHIPR]
         cmp r1, #0x0
         bne 1b
 
-	mov r3, #DP_OP_600
-	mov r4, #DP_MFD_600
-	mov r5, #DP_MFN_600
-        setup_pll PLL2_BASE_ADDR, 600
+        setup_pll PLL2_BASE_ADDR, CONFIG_SYS_PLL2_FREQ
 
 	/* Switch peripheral to PLL2 */
 	ldr r0, CCM_BASE_ADDR_W
-	ldr r1, CCM_VAL_0x00809145 /* AHB is 120MHz, from PLL2 */
-	orr r1, r1, #(1 << 16)   /* Set DDR divider to run at 300MHz */
-	orr r1, r1, #(2 << 19)   /* Set AXI_B divider to run at 200MHz */
+	ldr r1, CCM_VAL_0x00808145
+	orr r1, r1, #(CONFIG_SYS_AHB_PODF << 10)
+	orr r1, r1, #(CONFIG_SYS_AXIA_PODF << 16)
+	orr r1, r1, #(CONFIG_SYS_AXIB_PODF << 19)
 	str r1, [r0, #CLKCTL_CBCDR]
 
 	ldr r1, CCM_VAL_0x00016154
 	str r1, [r0, #CLKCTL_CBCMR]
 
-	/* make sure mux change is effective */
+	/* make sure change is effective */
 1:      ldr r1, [r0, #CLKCTL_CDHIPR]
 	cmp r1, #0x0
 	bne 1b
 
-	mov r3, #DP_OP_216
-        mov r4, #DP_MFD_216
-        mov r5, #DP_MFN_216
         setup_pll PLL3_BASE_ADDR, 216
 
 	/* Set the platform clock dividers */
@@ -139,7 +131,6 @@
 	ldr r1, PLATFORM_CLOCK_DIV_W
 	str r1, [r0, #PLATFORM_ICGC]
 
-	/* CPU 400M hz */
 	ldr r0, CCM_BASE_ADDR_W
 	mov r1, #1
 	str r1, [r0, #CLKCTL_CACRR]
@@ -209,8 +200,20 @@ lowlevel_init:
 /* Board level setting value */
 CCM_BASE_ADDR_W:        .word CCM_BASE_ADDR
 CCM_VAL_0x00016154:     .word 0x00016154
-CCM_VAL_0x00809145:     .word 0x00809145
+CCM_VAL_0x00808145:     .word 0x00808145
 CCM_VAL_0x00015154:     .word 0x00015154
 CCM_VAL_0x02888945:     .word 0x02888945
+W_DP_OP_800:           	.word DP_OP_800
+W_DP_MFD_800:           .word DP_MFD_800
+W_DP_MFN_800:           .word DP_MFN_800
+W_DP_OP_600:            .word DP_OP_600
+W_DP_MFD_600:           .word DP_MFD_600
+W_DP_MFN_600:           .word DP_MFN_600
+W_DP_OP_400:            .word DP_OP_400
+W_DP_MFD_400:           .word DP_MFD_400
+W_DP_MFN_400:           .word DP_MFN_400
+W_DP_OP_216:            .word DP_OP_216
+W_DP_MFD_216:           .word DP_MFD_216
+W_DP_MFN_216:           .word DP_MFN_216
 PLATFORM_BASE_ADDR_W:   .word ARM_BASE_ADDR
 PLATFORM_CLOCK_DIV_W:   .word 0x00000124

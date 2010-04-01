@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2010 Freescale Semiconductor, Inc.
  *
- * Configuration settings for the MX53-EVK Freescale board.
+ * Configuration settings for the MX53-ARM2 Freescale board.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -28,7 +28,7 @@
 #define CONFIG_ARMV7		/* This is armv7 Cortex-A8 CPU core */
 #define CONFIG_MXC
 #define CONFIG_MX53
-#define CONFIG_MX53_EVK
+#define CONFIG_MX53_ARM2
 #define CONFIG_FLASH_HEADER
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 
@@ -38,10 +38,10 @@
 #define CONFIG_ARCH_MMU
 
 #define CONFIG_MX53_HCLK_FREQ	24000000
-#define CONFIG_SYS_PLL2_FREQ    600
-#define CONFIG_SYS_AHB_PODF     4
-#define CONFIG_SYS_AXIA_PODF    1
-#define CONFIG_SYS_AXIB_PODF    2
+#define CONFIG_SYS_PLL2_FREQ    400
+#define CONFIG_SYS_AHB_PODF     2
+#define CONFIG_SYS_AXIA_PODF    0
+#define CONFIG_SYS_AXIB_PODF    1
 
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
@@ -129,7 +129,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_PROMPT		"EVK U-Boot > "
+#define CONFIG_SYS_PROMPT		"ARM2 U-Boot > "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
@@ -190,7 +190,7 @@
 	#define CONFIG_IMX_MMC
 	#define CONFIG_SYS_FSL_ESDHC_NUM        2
 	#define CONFIG_SYS_FSL_ESDHC_ADDR       0
-	#define CONFIG_SYS_MMC_ENV_DEV  0
+	#define CONFIG_SYS_MMC_ENV_DEV  1
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
