@@ -190,6 +190,8 @@
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		CSD0_BASE_ADDR
 #define PHYS_SDRAM_1_SIZE	(128 * 1024 * 1024)
+#define iomem_valid_addr(addr, size) \
+	(addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
@@ -218,6 +220,18 @@
  */
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE + CONFIG_ENV_SECT_SIZE)
 
+#if defined(CONFIG_CMD_NAND)
+	#define CONFIG_FSL_ENV_IN_NAND
+#else
+	#define CONFIG_ENV_IS_IN_FLASH  1
+#endif
+
+#if defined(CONFIG_FSL_ENV_IN_NAND)
+	#define CONFIG_ENV_IS_IN_NAND 1
+	#define CONFIG_ENV_OFFSET       (1024 * 1024)
+#elif defined(CONFIG_FSL_ENV_IS_IN_FLASH)
+	#define CONFIG_ENV_IS_IN_FLASH  1
+#endif
 
 /*-----------------------------------------------------------------------
  * CFI FLASH driver setup
