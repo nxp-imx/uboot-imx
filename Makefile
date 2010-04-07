@@ -3207,6 +3207,7 @@ apollon_config		: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1136 apollon NULL omap24xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
 
+mx25_3stack_mfg_config \
 mx25_3stack_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs mx25_3stack freescale mx25
 

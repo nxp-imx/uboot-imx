@@ -200,6 +200,15 @@ void spi_io_init(struct imx_spi_dev_t *dev)
 
 int board_init(void)
 {
+
+#ifdef CONFIG_MFG
+/* MFG firmware need reset usb to avoid host crash firstly */
+#define USBCMD 0x140
+	int val = readl(USB_BASE + USBCMD);
+	val &= ~0x1; /*RS bit*/
+	writel(val, USB_BASE + USBCMD);
+#endif
+
 	setup_soc_rev();
 
 	/* setup pins for UART1 */
