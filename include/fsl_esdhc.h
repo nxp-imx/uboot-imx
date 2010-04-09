@@ -2,8 +2,7 @@
  * FSL SD/MMC Defines
  *-------------------------------------------------------------------
  *
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
- * Copyright 2007-2010, Freescale Semiconductor, Inc
+ * Copyright (C) 2007-2008, 2010 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
