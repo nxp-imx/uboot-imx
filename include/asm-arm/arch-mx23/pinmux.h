@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008 Embedded Alley Solutions Inc.
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * Clock control register descriptions
  *
@@ -22,9 +22,9 @@
 #ifndef PINMUX_H
 #define PINMUX_H
 
-#include <asm/arch/stmp378x.h>
+#include <asm/arch/mx23.h>
 
-#define	PINCTRL_BASE	(STMP378X_REGS_BASE + 0x18000)
+#define	PINCTRL_BASE	(MX23_REGS_BASE + 0x18000)
 
 #define PINCTRL_CTRL		0x000
 #define	PINCTRL_MUXSEL(n)	(0x100 + 0x10*(n))

@@ -16,7 +16,7 @@
  * (C) Copyright 2004
  * Philippe Robin, ARM Ltd. <philippe.robin@arm.com>
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -38,7 +38,7 @@
  */
 
 #include <common.h>
-#include <asm/arch/stmp378x.h>
+#include <asm/arch/mx23.h>
 #include <asm/arch/timrot.h>
 
 #define CONFIG_USE_TIMER0
@@ -56,7 +56,7 @@
 #define TIMCTRL		TIMCTRL3
 #define TIMCOUNT	TIMCOUNT3
 #else
-#error "Define which STMP378x timer to use"
+#error "Define which MX23 timer to use"
 #endif
 
 #define TIMER_LOAD_VAL 0x0000ffff

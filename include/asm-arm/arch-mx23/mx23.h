@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008 Embedded Alley Solutions Inc.
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#ifndef STMP378X_H
-#define STMP378X_H
+#ifndef MX23_H
+#define MX23_H
 
 /*
  * Most of 378x SoC registers are associated with four addresses
@@ -33,8 +33,8 @@
 #define REG_CLR(x, v)	((*(volatile unsigned int *)((x) + 0x08)) = (v))
 #define REG_TOG(x, v)	((*(volatile unsigned int *)((x) + 0x0c)) = (v))
 
-#define STMP378X_OCRAM_BASE	0x00000000
-#define STMP378X_SDRAM_BASE	0x40000000
-#define STMP378X_REGS_BASE	0x80000000
+#define MX23_OCRAM_BASE	0x00000000
+#define MX23_SDRAM_BASE	0x40000000
+#define MX23_REGS_BASE	0x80000000
 
 #endif /* STMP378X_H */

@@ -2938,9 +2938,6 @@ nhk8815_onenand_config:	unconfig
 omap1510inn_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm925t omap1510inn
 
-stmp378x_dev_config : unconfig
-	@$(MKCONFIG) $(@:_config=) arm arm926ejs stmp378x_dev NULL stmp378x
-
 xtract_omap1610xxx = $(subst _cs0boot,,$(subst _cs3boot,,$(subst _cs_autoboot,,$(subst _config,,$1))))
 
 omap1610inn_config \
@@ -3206,6 +3203,9 @@ apollon_config		: unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
 	@$(MKCONFIG) $(@:_config=) arm arm1136 apollon NULL omap24xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
+
+mx23_evk_config : unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs mx23_evk freescale mx23
 
 mx25_3stack_mfg_config \
 mx25_3stack_config	:	unconfig

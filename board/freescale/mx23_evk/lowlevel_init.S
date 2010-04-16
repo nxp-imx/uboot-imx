@@ -1,9 +1,13 @@
 /*
- * Processor reset for Freescale STMP378x SoC.
+ * Board specific setup info
  *
- * Copyright (C) 2007 Sergey Kubushyn <ksi@koi8.net>
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
- * -----------------------------------------------------
+ * (C) Copyright 2003, ARM Ltd.
+ * Philippe Robin, <philippe.robin@arm.com>
+ *
+ * See file CREDITS for list of people who contributed to this
+ * project.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -21,23 +25,12 @@
  * MA 02111-1307 USA
  */
 
-.globl reset_cpu
-reset_cpu:
-	ldr	r0, POWER_CHARGE
-	mov	r1, #0x0
-	str	r1, [r0]
-	ldr	r0, POWER_MINPWR
-	str	r1, [r0]
-	ldr	r0, CLKCTRL_RESET
-	mov	r1, #0x1
-	str	r1, [r0]
-_loop_forever:
-	b	_loop_forever
+#include <config.h>
+#include <version.h>
 
-POWER_MINPWR:
-	.word 0x80044020
-POWER_CHARGE:
-	.word 0x80044030
-CLKCTRL_RESET:
-	.word 0x80040120
+/* Set up the platform, once the cpu has been initialized */
+.globl lowlevel_init
+lowlevel_init:
 
+	/* All SDRAM settings are done by sdram_prep */
+	mov pc, lr

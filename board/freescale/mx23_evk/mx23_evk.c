@@ -2,7 +2,7 @@
  *
  * (c) 2008 Embedded Alley Solutions, Inc.
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -25,7 +25,7 @@
 
 
 #include <common.h>
-#include <asm/arch/stmp378x.h>
+#include <asm/arch/mx23.h>
 #include <asm/arch/clkctrl.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/spi.h>
@@ -131,7 +131,7 @@ int dram_init(void)
 int board_init(void)
 {
 	/* arch number of Freescale STMP 378x development board */
-	gd->bd->bi_arch_number = MACH_TYPE_STMP378X;
+	gd->bd->bi_arch_number = MACH_TYPE_MX23EVK;
 
 	/* adress of boot parameters */
 	gd->bd->bi_boot_params = LINUX_BOOT_PARAM_ADDR;
@@ -153,6 +153,6 @@ int misc_init_r(void)
 
 int checkboard(void)
 {
-	printf("Board: STMP378x dev. \n");
+	printf("Board: MX23 EVK. \n");
 	return 0;
 }

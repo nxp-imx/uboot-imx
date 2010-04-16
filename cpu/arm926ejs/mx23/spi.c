@@ -1,9 +1,9 @@
 /*
  * Copyright (C) 2008 Embedded Alley Solutions Inc.
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
- * Freescale STMP378x SSP/SPI driver
+ * Freescale MX23 SSP/SPI driver
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

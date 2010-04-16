@@ -1,11 +1,11 @@
 /*
- * Board specific setup info
+ * Processor reset for Freescale MX23 SoC.
  *
- * (C) Copyright 2003, ARM Ltd.
- * Philippe Robin, <philippe.robin@arm.com>
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
- * See file CREDITS for list of people who contributed to this
- * project.
+ * Copyright (C) 2007 Sergey Kubushyn <ksi@koi8.net>
+ *
+ * -----------------------------------------------------
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -23,12 +23,23 @@
  * MA 02111-1307 USA
  */
 
-#include <config.h>
-#include <version.h>
+.globl reset_cpu
+reset_cpu:
+	ldr	r0, POWER_CHARGE
+	mov	r1, #0x0
+	str	r1, [r0]
+	ldr	r0, POWER_MINPWR
+	str	r1, [r0]
+	ldr	r0, CLKCTRL_RESET
+	mov	r1, #0x1
+	str	r1, [r0]
+_loop_forever:
+	b	_loop_forever
 
-/* Set up the platform, once the cpu has been initialized */
-.globl lowlevel_init
-lowlevel_init:
+POWER_MINPWR:
+	.word 0x80044020
+POWER_CHARGE:
+	.word 0x80044030
+CLKCTRL_RESET:
+	.word 0x80040120
 
-	/* All SDRAM settings are done by sdram_prep */
-	mov pc, lr

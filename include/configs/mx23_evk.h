@@ -51,8 +51,8 @@
 /* SoC Configuration */
 /*===================*/
 #define CONFIG_ARM926EJS			/* arm926ejs CPU core */
-#define CONFIG_STMP378X				/* STMP378x SoC */
-#define CONFIG_STMP378X_DEV			/* STMP378x Development board */
+#define CONFIG_MX23				/* MX23 SoC */
+#define CONFIG_MX23_EVK				/* MX23 EVK board */
 #define CONFIG_SYS_CLK_FREQ	120000000	/* Arm Clock frequency */
 #define CONFIG_USE_TIMER0			/* use timer 0 */
 #define CONFIG_SYS_HZ		1000		/* Ticks per second */
@@ -101,7 +101,7 @@
 #define CONFIG_SERVERIP		192.167.10.1
 #define CONFIG_BOOTDELAY	2
 #define CONFIG_BOOTFILE		"uImage"	/* Boot file name */
-#define CONFIG_SYS_PROMPT	"stmp378x U-Boot > "
+#define CONFIG_SYS_PROMPT	"MX23 U-Boot > "
 						/* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE	1024		/* Console I/O Buffer Size  */
 #define CONFIG_SYS_PBSIZE	(CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16)

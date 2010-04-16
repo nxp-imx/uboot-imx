@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008 Embedded Alley Solutions Inc.
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * Debug UART register definitions
  *
@@ -23,8 +23,8 @@
 #ifndef DBGUART_H
 #define DBGUART_H
 
-#include <asm/arch/stmp378x.h>
+#include <asm/arch/mx23.h>
 
-#define DBGUART_BASE	(STMP378X_REGS_BASE + 0x00070000)
+#define DBGUART_BASE	(MX23_REGS_BASE + 0x00070000)
 
 #endif /* DBGUART_H */

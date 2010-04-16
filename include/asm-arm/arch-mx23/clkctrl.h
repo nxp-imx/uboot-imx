@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008 Embedded Alley Solutions Inc.
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * Clock control register descriptions
  *
@@ -22,9 +22,9 @@
 #ifndef CLKCTRL_H
 #define CLKCTRL_H
 
-#include <asm/arch/stmp378x.h>
+#include <asm/arch/mx23.h>
 
-#define CLKCTRL_BASE	(STMP378X_REGS_BASE + 0x40000)
+#define CLKCTRL_BASE	(MX23_REGS_BASE + 0x40000)
 
 #define	CLKCTRL_PLLCTRL0	0x000
 #define	CLKCTRL_PLLCTRL1	0x010

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008 Embedded Alley Solutions Inc.
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * SSP register definitions
  *
@@ -22,10 +22,10 @@
 #ifndef SSP_H
 #define SSP_H
 
-#include <asm/arch/stmp378x.h>
+#include <asm/arch/mx23.h>
 
-#define SSP1_BASE	(STMP378X_REGS_BASE + 0x10000)
-#define SSP2_BASE	(STMP378X_REGS_BASE + 0x34000)
+#define SSP1_BASE	(MX23_REGS_BASE + 0x10000)
+#define SSP2_BASE	(MX23_REGS_BASE + 0x34000)
 
 #define SSP_CTRL0	0x000
 #define SSP_CMD0	0x010

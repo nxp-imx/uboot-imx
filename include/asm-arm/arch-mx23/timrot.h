@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008 Embedded Alley Solutions Inc.
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * Timers and rotary encoder register definitions
  *
@@ -22,9 +22,9 @@
 #ifndef TIMROT_H
 #define TIMROT_H
 
-#include <asm/arch/stmp378x.h>
+#include <asm/arch/mx23.h>
 
-#define TIMROT_BASE	(STMP378X_REGS_BASE + 0x00068000)
+#define TIMROT_BASE	(MX23_REGS_BASE + 0x00068000)
 
 /* Timer and rotary encoder register offsets */
 #define ROTCTRL		0x0

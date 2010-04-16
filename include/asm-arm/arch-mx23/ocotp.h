@@ -1,4 +1,4 @@
-/* Copyright 2009 Freescale Semiconductor, Inc.
+/* Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
  * On-Chip OTP register descriptions
  *
@@ -19,9 +19,9 @@
 #ifndef OCOTP_H
 #define OCOTP_H
 
-#include <asm/arch/stmp378x.h>
+#include <asm/arch/mx23.h>
 
-#define OCOTP_BASE	(STMP378X_REGS_BASE + 0x2c000)
+#define OCOTP_BASE	(MX23_REGS_BASE + 0x2c000)
 
 #define	OCOTP_CTRL		0x000
 #define	OCOTP_CTRL_SET		0x004
