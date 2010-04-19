@@ -95,6 +95,7 @@
 #define CONFIG_CMD_SF
 #define CONFIG_CMD_MMC
 #define CONFIG_CMD_FUSE
+#define CONFIG_CMD_I2C
 
 /*
  * FUSE Configs
@@ -129,6 +130,18 @@
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
 #endif
+
+/*
+ * I2C Configs
+ */
+#ifdef CONFIG_CMD_I2C
+	#define CONFIG_HARD_I2C         1
+	#define CONFIG_I2C_MXC          1
+	#define CONFIG_SYS_I2C_PORT             I2C1_BASE_ADDR
+	#define CONFIG_SYS_I2C_SPEED            400000
+	#define CONFIG_SYS_I2C_SLAVE            0xfe
+#endif
+
 /*
  * Eth Configs
  */

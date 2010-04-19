@@ -81,6 +81,7 @@
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
 #define CONFIG_NET_RETRY_COUNT	100
+#define CONFIG_CMD_I2C
 
 /*
  * Android support Configs
@@ -256,6 +257,16 @@
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
 #endif
+
+/*
+ * I2C Configs
+ */
+#define CONFIG_HARD_I2C         1
+#define CONFIG_I2C_MXC          1
+#define CONFIG_SYS_I2C_PORT             I2C1_BASE_ADDR
+#define CONFIG_SYS_I2C_SPEED            400000
+#define CONFIG_SYS_I2C_SLAVE            0xfe
+
 /*-----------------------------------------------------------------------
  * Stack sizes
  *

@@ -60,6 +60,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
 static enum boot_device boot_dev;
+static u32 voltage_setup;
 u32	mx51_io_base_addr;
 
 static inline void setup_boot_device(void)
@@ -306,6 +307,7 @@ static void setup_expio(void)
 	writew(reg, mx51_io_base_addr + PBC_SW_RESET);
 }
 
+#ifdef CONFIG_IMX_ECSPI
 void spi_io_init(struct imx_spi_dev_t *dev)
 {
 	switch (dev->base) {
@@ -347,7 +349,9 @@ void spi_io_init(struct imx_spi_dev_t *dev)
 		break;
 	}
 }
+#endif
 
+#ifdef CONFIG_MXC_FEC
 static void setup_fec(void)
 {
 	/*FEC_MDIO*/
@@ -433,12 +437,92 @@ static void setup_fec(void)
 	writel(0x2180, IOMUXC_BASE_ADDR + 0x054C);
 	writel(0x0, IOMUXC_BASE_ADDR + 0x096C);
 }
+#endif
 
-static void power_init(void)
+#ifdef CONFIG_I2C_MXC
+static void setup_i2c(unsigned int module_base)
+{
+	unsigned int reg;
+
+	switch (module_base) {
+	case I2C1_BASE_ADDR:
+		reg = IOMUXC_BASE_ADDR + 0x5c; /* i2c1 SDA */
+		writel(0x14, reg);
+		reg = IOMUXC_BASE_ADDR + 0x3f0;
+		writel(0x10d, reg);
+		reg = IOMUXC_BASE_ADDR + 0x9B4;
+		writel(0x0, reg);
+
+		reg = IOMUXC_BASE_ADDR + 0x68; /* i2c2 SCL */
+		writel(0x14, reg);
+		reg = IOMUXC_BASE_ADDR + 0x3fc;
+		writel(0x10d, reg);
+		reg = IOMUXC_BASE_ADDR + 0x9B0;
+		writel(0x0, reg);
+		break;
+	case I2C2_BASE_ADDR:
+		/* dummy here*/
+		break;
+	default:
+		printf("Invalid I2C base: 0x%x\n", module_base);
+		break;
+	}
+}
+
+static void setup_core_voltage_i2c(void)
+{
+	unsigned int reg;
+	unsigned char buf[1] = { 0 };
+
+	puts("PMIC Mode: linear\n");
+
+	writel(0x0, CCM_BASE_ADDR + CLKCTL_CACRR);
+	reg = readl(GPIO2_BASE_ADDR + 0x0);
+	reg &= ~0x4000;  /* Lower reset line */
+	writel(reg, GPIO2_BASE_ADDR + 0x0);
+
+	reg = readl(GPIO2_BASE_ADDR + 0x4);
+	reg |= 0x4000;  /* configure GPIO lines as output */
+	writel(reg, GPIO2_BASE_ADDR + 0x4);
+
+	/* Reset the ethernet controller over GPIO */
+	writel(0x1, IOMUXC_BASE_ADDR + 0x0AC);
+
+	/*Configure LDO4*/
+	i2c_read(0x34, 0x12, 1, buf, 1);
+	buf[0] = buf[0] | 0x40;
+	if (i2c_write(0x34, 0x12, 1, buf, 1)) {
+		puts("write to PMIC 0x12 failed!\n");
+		return;
+	}
+	i2c_read(0x34, 0x12, 1, buf, 1);
+	printf("PMIC 0x12: 0x%x \n", buf[0]);
+
+	i2c_read(0x34, 0x10, 1, buf, 1);
+	buf[0] = buf[0] | 0x40;
+	if (i2c_write(0x34, 0x10, 1, buf, 1)) {
+		puts("write to PMIC 0x10 failed!\n");
+		return;
+	}
+	i2c_read(0x34, 0x10, 1, buf, 1);
+	printf("PMIC 0x10: 0x%x \n", buf[0]);
+
+	udelay(500);
+
+	reg = readl(GPIO2_BASE_ADDR + 0x0);
+	reg |= 0x4000;
+	writel(reg, GPIO2_BASE_ADDR + 0x0);
+}
+#endif
+
+#ifdef CONFIG_IMX_ECSPI
+static void setup_core_voltage_spi(void)
 {
 	struct spi_slave *slave;
 	unsigned int val;
 	unsigned int reg;
+
+	puts("PMIC Mode: SPI\n");
 
 #define REV_ATLAS_LITE_1_0         0x8
 #define REV_ATLAS_LITE_1_1         0x9
@@ -554,6 +638,7 @@ static void power_init(void)
 
 	spi_pmic_free(slave);
 }
+#endif
 
 #ifdef CONFIG_NET_MULTI
 
@@ -719,7 +804,13 @@ int board_init(void)
 	setup_uart();
 	setup_nfc();
 	setup_expio();
+#ifdef CONFIG_MXC_FEC
 	setup_fec();
+#endif
+#ifdef CONFIG_I2C_MXC
+	setup_i2c(I2C1_BASE_ADDR);
+#endif
+
 	return 0;
 }
 
@@ -916,7 +1007,15 @@ inline int check_recovery_cmd_file(void)
 
 int board_late_init(void)
 {
-	power_init();
+#ifdef CONFIG_I2C_MXC
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+	if (!i2c_probe(0x34))
+		setup_core_voltage_i2c();
+	else
+#endif
+#ifdef CONFIG_IMX_ECSPI
+		setup_core_voltage_spi();
+#endif
 
 #if defined(CONFIG_FSL_ANDROID) && defined(CONFIG_MXC_KPD)
 	if (waiting_for_func_key_pressing())

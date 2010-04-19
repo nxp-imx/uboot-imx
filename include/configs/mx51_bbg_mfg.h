@@ -47,6 +47,7 @@
 #define CONFIG_DISPLAY_BOARDINFO
 
 #define BOARD_LATE_INIT
+
 /*
  * Disabled for now due to build problems under Debian and a significant
  * increase in the final file size: 144260 vs. 109536 Bytes.
@@ -207,6 +208,8 @@
 /* TO1 boards */
 /* #define PHYS_SDRAM_1_SIZE	(128 * 1024 * 1024) */
 #define PHYS_SDRAM_1_SIZE	(512 * 1024 * 1024)
+#define iomem_valid_addr(addr, size) \
+	(addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
