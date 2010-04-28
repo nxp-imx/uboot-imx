@@ -60,7 +60,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
 static enum boot_device boot_dev;
-static u32 voltage_setup;
 u32	mx51_io_base_addr;
 
 static inline void setup_boot_device(void)

@@ -1,12 +1,6 @@
 /*
  * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
-
- * (C) Copyright 2000-2006
- * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * (C) Copyright 2001 Sysgo Real-Time Solutions, GmbH <www.elinos.com>
- * Andreas Heppel <aheppel@sysgo.de>
-
  * See file CREDITS for list of people who contributed to this
  * project.
  *
@@ -35,16 +29,6 @@
 #include <linux/stddef.h>
 #include <malloc.h>
 #include <mmc.h>
-
-#if defined(CONFIG_CMD_ENV) && defined(CONFIG_CMD_MMC)
-#define CMD_SAVEENV
-#elif defined(CONFIG_ENV_OFFSET_REDUND)
-#error Cannot use CONFIG_ENV_OFFSET_REDUND without CONFIG_CMD_ENV & CONFIG_CMD_MMC
-#endif
-
-#if defined(CONFIG_ENV_SIZE_REDUND) && (CONFIG_ENV_SIZE_REDUND < CONFIG_ENV_SIZE)
-#error CONFIG_ENV_SIZE_REDUND should not be less then CONFIG_ENV_SIZE
-#endif
 
 /* references to names in env_common.c */
 extern uchar default_environment[];
@@ -79,7 +63,7 @@ int env_init(void)
 	return 0;
 }
 
-inline int init_mmc_for_env(struct mmc *mmc)
+int init_mmc_for_env(struct mmc *mmc)
 {
 	if (!mmc) {
 		puts("No MMC card found\n");
@@ -94,18 +78,18 @@ inline int init_mmc_for_env(struct mmc *mmc)
 	return 0;
 }
 
-#ifdef CMD_SAVEENV
+#ifdef CONFIG_CMD_SAVEENV
 
 inline int write_env(struct mmc *mmc, unsigned long size,
-						unsigned long offset, const void *buffer)
+			unsigned long offset, const void *buffer)
 {
-	uint blk_start = 0, blk_cnt = 0, n = 0;
+	uint blk_start, blk_cnt, n;
 
-	blk_start = (offset & (0x200 - 1)) \
-			? ((offset >> 9) + 1) : (offset >> 9);
-	blk_cnt   = (size   & (0x200 - 1)) \
-			? ((size   >> 9) + 1) : (size   >> 9);
-	n = mmc->block_dev.block_write(0, blk_start , blk_cnt, (u_char *)buffer);
+	blk_start = ALIGN(offset, mmc->write_bl_len) / mmc->write_bl_len;
+	blk_cnt   = ALIGN(size, mmc->write_bl_len) / mmc->write_bl_len;
+
+	n = mmc->block_dev.block_write(CONFIG_SYS_MMC_ENV_DEV, blk_start,
+					blk_cnt, (u_char *)buffer);
 
 	return (n == blk_cnt) ? 0 : -1;
 }
@@ -118,8 +102,7 @@ int saveenv(void)
 		return 1;
 
 	printf("Writing to MMC(%d)... ", CONFIG_SYS_MMC_ENV_DEV);
-	if (write_env(mmc, CONFIG_ENV_SIZE, \
-				CONFIG_ENV_OFFSET, env_ptr)) {
+	if (write_env(mmc, CONFIG_ENV_SIZE, CONFIG_ENV_OFFSET, env_ptr)) {
 		puts("failed\n");
 		return 1;
 	}
@@ -127,19 +110,18 @@ int saveenv(void)
 	puts("done\n");
 	return 0;
 }
-#endif /* CMD_SAVEENV */
+#endif /* CONFIG_CMD_SAVEENV */
 
 inline int read_env(struct mmc *mmc, unsigned long size,
-						unsigned long offset, const void *buffer)
+			unsigned long offset, const void *buffer)
 {
-	uint blk_start = 0, blk_cnt = 0, n = 0;
+	uint blk_start, blk_cnt, n;
 
-	blk_start = (offset & (0x200 - 1)) ? \
-			((offset >> 9) + 1) : (offset >> 9);
-	blk_cnt   = (size   & (0x200 - 1)) ? \
-			((size   >> 9) + 1) : (size   >> 9);
+	blk_start = ALIGN(offset, mmc->read_bl_len) / mmc->read_bl_len;
+	blk_cnt   = ALIGN(size, mmc->read_bl_len) / mmc->read_bl_len;
 
-	n = mmc->block_dev.block_read(0, blk_start, blk_cnt, (uchar *)buffer);
+	n = mmc->block_dev.block_read(CONFIG_SYS_MMC_ENV_DEV, blk_start,
+					blk_cnt, (uchar *)buffer);
 
 	return (n == blk_cnt) ? 0 : -1;
 }
@@ -157,7 +139,9 @@ void env_relocate_spec(void)
 
 	if (crc32(0, env_ptr->data, ENV_SIZE) != env_ptr->crc)
 		return use_default();
-#endif /* ! ENV_IS_EMBEDDED */
+
+	gd->env_valid = 1;
+#endif
 }
 
 #if !defined(ENV_IS_EMBEDDED)
