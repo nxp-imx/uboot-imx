@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -32,6 +32,30 @@
 #define IS_LARGE_PAGE_NAND	((mtd->writesize / info->num_of_intlv) > 512)
 
 #define GET_NAND_OOB_SIZE       (mtd->oobsize / info->num_of_intlv)
+#define GET_NAND_PAGE_SIZE      (mtd->writesize / info->num_of_intlv)
+
+/*
+ * main area for bad block marker is in the last data section
+ * the spare area for swapped bad block marker is the second
+ * byte of last spare section
+ */
+#define NAND_SECTIONS        (GET_NAND_PAGE_SIZE >> 9)
+#define NAND_OOB_PER_SECTION (((GET_NAND_OOB_SIZE / NAND_SECTIONS) >> 1) << 1)
+#define NAND_CHUNKS          (GET_NAND_PAGE_SIZE / (512 + NAND_OOB_PER_SECTION))
+
+#define BAD_BLK_MARKER_MAIN_OFFS \
+	(GET_NAND_PAGE_SIZE - NAND_CHUNKS * NAND_OOB_PER_SECTION)
+
+#define BAD_BLK_MARKER_SP_OFFS (NAND_CHUNKS * SPARE_LEN)
+
+#define BAD_BLK_MARKER_OOB_OFFS (NAND_CHUNKS * NAND_OOB_PER_SECTION)
+
+#define BAD_BLK_MARKER_MAIN  \
+	((u32)MAIN_AREA0 + BAD_BLK_MARKER_MAIN_OFFS)
+
+#define BAD_BLK_MARKER_SP  \
+	((u32)SPARE_AREA0 + BAD_BLK_MARKER_SP_OFFS)
+
 #define NAND_PAGESIZE_2KB	2048
 #define NAND_PAGESIZE_4KB	4096
 #define NAND_MAX_PAGESIZE	4096

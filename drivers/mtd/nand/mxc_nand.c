@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -56,6 +56,27 @@ static struct nand_ecclayout nand_hw_eccoob_4k = {
 	.eccpos = {7, 8, 9, 10, 11, 12, 13, 14, 15},
 	.oobfree = {{2, 4} }
 };
+
+
+static void mxc_nand_bi_swap(struct mtd_info *mtd)
+{
+	struct nand_chip *this = mtd->priv;
+	struct nand_info *info = this->priv;
+	u16 ma, sa, nma, nsa;
+
+	if (!IS_LARGE_PAGE_NAND)
+		return;
+
+	ma = __raw_readw(BAD_BLK_MARKER_MAIN);
+	sa = __raw_readw(BAD_BLK_MARKER_SP);
+
+	nma = (ma & 0xFF00) | (sa >> 8);
+	nsa = (sa & 0x00FF) | (ma << 8);
+
+	__raw_writew(nma, BAD_BLK_MARKER_MAIN);
+	__raw_writew(nsa, BAD_BLK_MARKER_SP);
+
+}
 
 /*!
  * @defgroup NAND_MTD NAND Flash MTD Driver for MXC processors
@@ -325,6 +346,7 @@ static void send_cmd_interleave(struct mtd_info *mtd, u16 cmd)
 			/* data transfer */
 			nfc_memcpy(MAIN_AREA0, dbuf, dlen);
 			copy_spare(mtd, obuf, SPARE_AREA0, olen, 0);
+			mxc_nand_bi_swap(mtd);
 
 			/* update the value */
 			dbuf += dlen;
@@ -358,6 +380,7 @@ static void send_cmd_interleave(struct mtd_info *mtd, u16 cmd)
 			mxc_nand_ecc_status(mtd);
 
 			/* data transfer */
+			mxc_nand_bi_swap(mtd);
 			nfc_memcpy(dbuf, MAIN_AREA0, dlen);
 			copy_spare(mtd, obuf, SPARE_AREA0, olen, 1);
 
@@ -906,6 +929,7 @@ static void mxc_nand_command(struct mtd_info *mtd, unsigned command,
 			nfc_memcpy(MAIN_AREA0, info->data_buf, mtd->writesize);
 			copy_spare(mtd, info->oob_buf, SPARE_AREA0,
 						mtd->oobsize, 0);
+			mxc_nand_bi_swap(mtd);
 		}
 
 		send_prog_page(mtd, 0);
@@ -938,6 +962,7 @@ static void mxc_nand_command(struct mtd_info *mtd, unsigned command,
 
 		if (!info->auto_mode) {
 			mxc_nand_ecc_status(mtd);
+			mxc_nand_bi_swap(mtd);
 			nfc_memcpy(info->data_buf, MAIN_AREA0, mtd->writesize);
 			copy_spare(mtd, info->oob_buf, SPARE_AREA0,
 						mtd->oobsize, 1);
@@ -1183,6 +1208,9 @@ skip_it:
 
 	/* jffs2 not write oob */
 	/*mtd->flags &= ~MTD_OOB_WRITEABLE;*/
+
+	/* fix up the offset */
+	largepage_memorybased.offs = BAD_BLK_MARKER_OOB_OFFS;
 
 	/* use flash based bbt */
 	this->bbt_td = &bbt_main_descr;
