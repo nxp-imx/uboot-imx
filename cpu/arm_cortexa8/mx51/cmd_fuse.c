@@ -88,5 +88,5 @@ U_BOOT_CMD(
 	"blow scc <value>	- Blow scc value\n"
 	"blow srk <value>	- Blow srk value\n"
 	"blow fecmac <0x##:0x##:0x##:0x##:0x##:0x##>"
-	"- Blow FEC Mac address\n");
+	"- Blow FEC Mac address");
 

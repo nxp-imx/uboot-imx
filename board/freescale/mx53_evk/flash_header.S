@@ -49,7 +49,7 @@ app_code_csf:     .word 0x0
 reserv2:          .word 0x0
 
 boot_data:        .word 0x77800000
-image_len:        .word 256 * 1024
+image_len:        .word _end - TEXT_BASE
 plugin:           .word 0x0
 
 #ifdef CONFIG_MX53_EVK
