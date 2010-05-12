@@ -38,6 +38,8 @@ int do_clkops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	case 2:
 		if (strcmp(argv[1], "core") == 0)
 			clk_info(CPU_CLK);
+		else if (strcmp(argv[1], "periph") == 0)
+			clk_info(PERIPH_CLK);
 		else if (strcmp(argv[1], "ddr") == 0)
 			clk_info(DDR_CLK);
 		else
@@ -47,6 +49,8 @@ int do_clkops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		freq = simple_strtoul(argv[2], NULL, 10);
 		if (strcmp(argv[1], "core") == 0)
 			clk_config(CONFIG_REF_CLK_FREQ, freq, CPU_CLK);
+		else if (strcmp(argv[1], "periph") == 0)
+			clk_config(CONFIG_REF_CLK_FREQ, freq, PERIPH_CLK);
 		else if (strcmp(argv[1], "ddr") == 0)
 			clk_config(CONFIG_REF_CLK_FREQ, freq, DDR_CLK);
 		else
@@ -68,9 +72,12 @@ U_BOOT_CMD(
 	"Setup/Display clock\n"
 	"clk - Display all clocks\n"
 	"clk core <core clock in MHz> - Setup/Display core clock\n"
+	"clk periph <peripheral clock in MHz> -"
+	"Setup/Display peripheral clock\n"
 	"clk ddr <DDR clock in MHz> - Setup/Display DDR clock\n"
 	"Example:\n"
 	"clk - Show various clocks\n"
 	"clk core 665 - Set core clock to 665MHz\n"
+	"clk periph 600 - Set peripheral clock to 600MHz\n"
 	"clk ddr 166 - Set DDR clock to 166MHz");
 

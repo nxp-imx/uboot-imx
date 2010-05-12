@@ -47,6 +47,10 @@ enum pll_sw_clocks {
 	PLL4_SW_CLK,
 };
 
+#define AHB_CLK_ROOT 133333333
+#define IPG_CLK_ROOT 66666666
+#define IPG_PER_CLK_ROOT 40000000
+
 #ifdef CONFIG_CMD_CLOCK
 #define SZ_DEC_1M       1000000
 #define PLL_PD_MAX      16      /* Actual pd+1 */
@@ -175,6 +179,29 @@ static u32 __get_lp_apm(void)
 	return ret_val;
 }
 
+/*
+static u32 __get_perclk_lp_apm(void)
+{
+	u32 ret_val = 0;
+	u32 cbcmr = __REG(MXC_CCM_CBCMR);
+	u32 clk_sel = (cbcmr & MXC_CCM_CBCMR_PERCLK_LP_APM_CLK_SEL) \
+			>> MXC_CCM_CBCMR_PERCLK_LP_APM_CLK_SEL_OFFSET;
+
+	switch (clk_sel) {
+	case 0:
+		ret_val =  __get_periph_clk();
+		break;
+	case 1:
+		ret_val =  __get_lp_apm();
+		break;
+	default:
+		break;
+	}
+
+	return ret_val;
+}
+*/
+
 static u32 __get_uart_clk(void)
 {
 	u32 freq = 0, reg, pred, podf;
@@ -284,10 +311,21 @@ static u32 __get_emi_slow_clk(void)
 	return  __get_periph_clk() / (pdf + 1);
 }
 
+/*
+static u32 __get_nfc_clk(void)
+{
+	u32 cbcdr =  __REG(MXC_CCM_CBCDR);
+	u32 pdf = (cbcdr & MXC_CCM_CBCDR_NFC_PODF_MASK) \
+			>> MXC_CCM_CBCDR_NFC_PODF_OFFSET;
+
+	return  __get_emi_slow_clk() / (pdf + 1);
+}
+*/
+
 static u32 __get_ddr_clk(void)
 {
 	u32 ret_val = 0;
-	u32 cbcmr =  __REG(MXC_CCM_CBCMR);
+	u32 cbcmr = __REG(MXC_CCM_CBCMR);
 	u32 ddr_clk_sel = (cbcmr & MXC_CCM_CBCMR_DDR_CLK_SEL_MASK) \
 				>> MXC_CCM_CBCMR_DDR_CLK_SEL_OFFSET;
 
@@ -411,6 +449,8 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	switch (clk) {
 	case MXC_ARM_CLK:
 		return __get_mcu_main_clk();
+	case MXC_PER_CLK:
+		return __get_periph_clk();
 	case MXC_AHB_CLK:
 		return __get_ahb_clk();
 	case MXC_IPG_CLK:
@@ -497,18 +537,22 @@ static int gcd(int m, int n)
  */
 static int calc_pll_params(u32 ref, u32 target, struct pll_param *pll)
 {
-	u64 pd, mfi = 1, mfn, mfd;
+	u64 pd, mfi = 1, mfn, mfd, t1;
 	u32 n_target = target;
 	u32 n_ref = ref, i;
-	u64 t1, t2;
 
 	/*
 	 * Make sure targeted freq is in the valid range.
 	 * Otherwise the following calculation might be wrong!!!
 	 */
 	if (n_target < PLL_FREQ_MIN(ref) ||
-			n_target > PLL_FREQ_MAX(ref))
+		n_target > PLL_FREQ_MAX(ref)) {
+		printf("Targeted peripheral clock should be"
+			"within [%d - %d]\n",
+			PLL_FREQ_MIN(ref) / SZ_DEC_1M,
+			PLL_FREQ_MAX(ref) / SZ_DEC_1M);
 		return -1;
+	}
 
 	for (i = 0; i < ARRAY_SIZE(fixed_mfd); i++) {
 		if (fixed_mfd[i].ref_clk_hz == ref) {
@@ -566,35 +610,39 @@ int clk_info(u32 clk_type)
 	switch (clk_type) {
 	case CPU_CLK:
 		printf("CPU Clock: %dHz\n",
-				mxc_get_clock(MXC_ARM_CLK));
+			mxc_get_clock(MXC_ARM_CLK));
+		break;
+	case PERIPH_CLK:
+		printf("Peripheral Clock: %dHz\n",
+			mxc_get_clock(MXC_PER_CLK));
 		break;
 	case AHB_CLK:
 		printf("AHB Clock: %dHz\n",
-				mxc_get_clock(MXC_AHB_CLK));
+			mxc_get_clock(MXC_AHB_CLK));
 		break;
 	case IPG_CLK:
 		printf("IPG Clock: %dHz\n",
-				mxc_get_clock(MXC_IPG_CLK));
+			mxc_get_clock(MXC_IPG_CLK));
 		break;
 	case IPG_PERCLK:
 		printf("IPG_PER Clock: %dHz\n",
-				mxc_get_clock(MXC_IPG_PERCLK));
+			mxc_get_clock(MXC_IPG_PERCLK));
 		break;
 	case UART_CLK:
 		printf("UART Clock: %dHz\n",
-				mxc_get_clock(MXC_UART_CLK));
+			mxc_get_clock(MXC_UART_CLK));
 		break;
 	case CSPI_CLK:
 		printf("CSPI Clock: %dHz\n",
-				mxc_get_clock(MXC_CSPI_CLK));
+			mxc_get_clock(MXC_CSPI_CLK));
 		break;
 	case DDR_CLK:
 		printf("DDR Clock: %dHz\n",
-				mxc_get_clock(MXC_DDR_CLK));
+			mxc_get_clock(MXC_DDR_CLK));
 		break;
 	case ALL_CLK:
 		printf("cpu clock: %dHz\n",
-				mxc_get_clock(MXC_ARM_CLK));
+			mxc_get_clock(MXC_ARM_CLK));
 		mxc_dump_clocks();
 		break;
 	default:
@@ -604,29 +652,216 @@ int clk_info(u32 clk_type)
 	return 0;
 }
 
-int config_core_clk(struct pll_param *pll_param)
+#define calc_div(target_clk, src_clk, limit) ({	\
+		u32 tmp = 0;	\
+		if ((src_clk % target_clk) <= 100)	\
+			tmp = src_clk / target_clk;	\
+		else	\
+			tmp = (src_clk / target_clk) + 1;	\
+		if (tmp > limit)	\
+			tmp = limit;	\
+		(tmp - 1);	\
+	})
+
+u32 calc_per_cbcdr_val(u32 per_clk, u32 cbcmr)
+{
+	u32 cbcdr = __REG(MXC_CCM_CBCDR);
+	u32 tmp_clk = 0, div = 0, clk_sel = 0;
+
+	cbcdr &= ~MXC_CCM_CBCDR_PERIPH_CLK_SEL;
+
+	/* emi_slow_podf divider */
+	tmp_clk = __get_emi_slow_clk();
+	clk_sel = cbcdr & MXC_CCM_CBCDR_EMI_CLK_SEL;
+	if (clk_sel) {
+		div = calc_div(tmp_clk, per_clk, 8);
+		cbcdr &= ~MXC_CCM_CBCDR_EMI_PODF_MASK;
+		cbcdr |= (div << MXC_CCM_CBCDR_EMI_PODF_OFFSET);
+	}
+
+	/* axi_b_podf divider */
+	tmp_clk = __get_axi_b_clk();
+	div = calc_div(tmp_clk, per_clk, 8);
+	cbcdr &= ~MXC_CCM_CBCDR_AXI_B_PODF_MASK;
+	cbcdr |= (div << MXC_CCM_CBCDR_AXI_B_PODF_OFFSET);
+
+	/* axi_b_podf divider */
+	tmp_clk = __get_axi_a_clk();
+	div = calc_div(tmp_clk, per_clk, 8);
+	cbcdr &= ~MXC_CCM_CBCDR_AXI_A_PODF_MASK;
+	cbcdr |= (div << MXC_CCM_CBCDR_AXI_A_PODF_OFFSET);
+
+	/* ahb podf divider */
+	tmp_clk = AHB_CLK_ROOT;
+	div = calc_div(tmp_clk, per_clk, 8);
+	cbcdr &= ~MXC_CCM_CBCDR_AHB_PODF_MASK;
+	cbcdr |= (div << MXC_CCM_CBCDR_AHB_PODF_OFFSET);
+
+	return cbcdr;
+}
+
+#define CHANGE_PLL_SETTINGS(base, pd, mfi, mfn, mfd) \
+	{	\
+		writel(((pd - 1) << 0) | (mfi << 4),	\
+			base + PLL_DP_OP);	\
+		writel(mfn, base + PLL_DP_MFN);	\
+		writel(mfd - 1, base + PLL_DP_MFD);	\
+		writel(((pd - 1) << 0) | (mfi << 4),	\
+			base + PLL_DP_HFS_OP);	\
+		writel(mfn, base + PLL_DP_HFS_MFN);	\
+		writel(mfd - 1, base + PLL_DP_HFS_MFD);	\
+	}
+
+int config_pll_clk(enum pll_clocks pll, struct pll_param *pll_param)
 {
 	u32 ccsr = readl(CCM_BASE_ADDR + CLKCTL_CCSR);
+	u32 pll_base = pll;
 
-	/* Switch ARM to PLL2 clock */
-	writel(ccsr | 0x4, CCM_BASE_ADDR + CLKCTL_CCSR);
+	switch (pll) {
+	case PLL1_CLK:
+		/* Switch ARM to PLL2 clock */
+		writel(ccsr | 0x4, CCM_BASE_ADDR + CLKCTL_CCSR);
+		CHANGE_PLL_SETTINGS(pll_base, pll_param->pd,
+					pll_param->mfi, pll_param->mfn,
+					pll_param->mfd);
+		/* Switch back */
+		writel(ccsr & ~0x4, CCM_BASE_ADDR + CLKCTL_CCSR);
+		break;
+	case PLL2_CLK:
+		/* Switch to pll2 bypass clock */
+		writel(ccsr | 0x2, CCM_BASE_ADDR + CLKCTL_CCSR);
+		CHANGE_PLL_SETTINGS(pll_base, pll_param->pd,
+					pll_param->mfi, pll_param->mfn,
+					pll_param->mfd);
+		/* Switch back */
+		writel(ccsr & ~0x2, CCM_BASE_ADDR + CLKCTL_CCSR);
+		break;
+	case PLL3_CLK:
+		/* Switch to pll3 bypass clock */
+		writel(ccsr | 0x1, CCM_BASE_ADDR + CLKCTL_CCSR);
+		CHANGE_PLL_SETTINGS(pll_base, pll_param->pd,
+					pll_param->mfi, pll_param->mfn,
+					pll_param->mfd);
+		/* Switch back */
+		writel(ccsr & ~0x1, CCM_BASE_ADDR + CLKCTL_CCSR);
+		break;
+	case PLL4_CLK:
+		/* Switch to pll4 bypass clock */
+		writel(ccsr | 0x20, CCM_BASE_ADDR + CLKCTL_CCSR);
+		CHANGE_PLL_SETTINGS(pll_base, pll_param->pd,
+					pll_param->mfi, pll_param->mfn,
+					pll_param->mfd);
+		/* Switch back */
+		writel(ccsr & ~0x20, CCM_BASE_ADDR + CLKCTL_CCSR);
+		break;
+	default:
+		return -1;
+	}
 
-	/* Adjust pll settings */
-	writel(((pll_param->pd - 1) << 0) | (pll_param->mfi << 4),
-			PLL1_BASE_ADDR + PLL_DP_OP);
-	writel(pll_param->mfn,
-			PLL1_BASE_ADDR + PLL_DP_MFN);
-	writel(pll_param->mfd - 1,
-			PLL1_BASE_ADDR + PLL_DP_MFD);
-	writel(((pll_param->pd - 1) << 0) | (pll_param->mfi << 4),
-			PLL1_BASE_ADDR + PLL_DP_HFS_OP);
-	writel(pll_param->mfn,
-			PLL1_BASE_ADDR + PLL_DP_HFS_MFN);
-	writel(pll_param->mfd - 1,
-			PLL1_BASE_ADDR + PLL_DP_HFS_MFD);
+	return 0;
+}
 
-	/* Switch ARM back to PLL1 */
-	writel((ccsr & ~0x4), CCM_BASE_ADDR + CLKCTL_CCSR);
+int config_core_clk(u32 ref, u32 freq)
+{
+	int ret = 0;
+	u32 pll = 0;
+	struct pll_param pll_param;
+
+	memset(&pll_param, 0, sizeof(struct pll_param));
+
+	/* The case that periph uses PLL1 is not considered here */
+	pll = freq;
+	ret = calc_pll_params(ref, pll, &pll_param);
+	if (ret != 0) {
+		printf("Can't find pll parameters: %d\n",
+			ret);
+		return ret;
+	}
+
+	return config_pll_clk(PLL1_CLK, &pll_param);
+}
+
+int config_periph_clk(u32 ref, u32 freq)
+{
+	int ret = 0;
+	u32 pll = 0;
+	struct pll_param pll_param;
+
+	memset(&pll_param, 0, sizeof(struct pll_param));
+
+	if (__REG(MXC_CCM_CBCDR) & MXC_CCM_CBCDR_PERIPH_CLK_SEL) {
+		/* Actually this case is not considered here */
+		pll = freq;
+		ret = calc_pll_params(ref, pll, &pll_param);
+		if (ret != 0) {
+			printf("Can't find pll parameters: %d\n",
+				ret);
+			return ret;
+		}
+		switch ((__REG(MXC_CCM_CBCMR) & \
+			MXC_CCM_CBCMR_PERIPH_CLK_SEL_MASK) >>
+			MXC_CCM_CBCMR_PERIPH_CLK_SEL_OFFSET) {
+		case 0:
+			return config_pll_clk(PLL1_CLK, &pll_param);
+			break;
+		case 1:
+			return config_pll_clk(PLL3_CLK, &pll_param);
+			break;
+		default:
+			return -1;
+		}
+	} else {
+		u32 pll3_freq = __decode_pll(PLL3_CLK, CONFIG_MX53_HCLK_FREQ);
+		u32 old_cbcmr = readl(CCM_BASE_ADDR + CLKCTL_CBCMR);
+		u32 cbcdr = 0;
+
+		/* Set PLL3 to 400MHz */
+		ret = calc_pll_params(ref, 400000000, &pll_param);
+		if (ret != 0) {
+			printf("Can't find pll parameters: %d\n",
+				ret);
+			return ret;
+		}
+		config_pll_clk(PLL3_CLK, &pll_param);
+
+		/* Switch peripheral to PLL3 */
+		writel(0x00015154, CCM_BASE_ADDR + CLKCTL_CBCMR);
+		writel(0x02888945, CCM_BASE_ADDR + CLKCTL_CBCDR);
+
+		/* Make sure change is effective */
+		while (readl(CCM_BASE_ADDR + CLKCTL_CDHIPR) != 0)
+			;
+
+		/* Setup PLL2 */
+		pll = freq;
+		ret = calc_pll_params(ref, pll, &pll_param);
+		if (ret != 0) {
+			printf("Can't find pll parameters: %d\n",
+				ret);
+			return ret;
+		}
+		config_pll_clk(PLL2_CLK, &pll_param);
+
+		/* Switch peripheral back */
+		cbcdr = calc_per_cbcdr_val(pll, old_cbcmr);
+		writel(cbcdr, CCM_BASE_ADDR + CLKCTL_CBCDR);
+		writel(old_cbcmr, CCM_BASE_ADDR + CLKCTL_CBCMR);
+
+		/* Make sure change is effective */
+		while (readl(CCM_BASE_ADDR + CLKCTL_CDHIPR) != 0)
+			;
+
+		/* Switch PLL3's freq back */
+		ret = calc_pll_params(ref, pll3_freq, &pll_param);
+		if (ret != 0) {
+			printf("Can't find pll parameters: %d\n",
+				ret);
+			return ret;
+		}
+		config_pll_clk(PLL3_CLK, &pll_param);
+
+		puts("\n");
+	}
 
 	return 0;
 }
@@ -637,6 +872,13 @@ int config_ddr_clk(u32 emi_clk)
 	s32 shift = 0, clk_sel, div = 1;
 	u32 cbcmr = readl(CCM_BASE_ADDR + CLKCTL_CBCMR);
 	u32 cbcdr = readl(CCM_BASE_ADDR + CLKCTL_CBCDR);
+
+	if (emi_clk > MAX_DDR_CLK) {
+		printf("DDR clock should be less than"
+			"%d MHz, assuming max value \n",
+			(MAX_DDR_CLK / SZ_DEC_1M));
+		emi_clk = MAX_DDR_CLK;
+	}
 
 	clk_src = __get_periph_clk();
 	/* Find DDR clock input */
@@ -702,47 +944,20 @@ int config_ddr_clk(u32 emi_clk)
  */
 int clk_config(u32 ref, u32 freq, u32 clk_type)
 {
-	u32 pll;
-	struct pll_param pll_param;
-	int ret;
-
 	freq *= SZ_DEC_1M;
 
 	switch (clk_type) {
 	case CPU_CLK:
-		if ((freq < PLL_FREQ_MIN(ref)) ||
-			(freq > PLL_FREQ_MAX(ref))) {
-			printf("Targeted core clock should be"
-					"within [%d - %d]\n",
-					PLL_FREQ_MIN(ref) / SZ_DEC_1M,
-					PLL_FREQ_MAX(ref) / SZ_DEC_1M);
+		if (config_core_clk(ref, freq))
 			return -1;
-		}
-
-		pll = freq;
-		ret = calc_pll_params(ref, pll, &pll_param);
-		if (ret != 0) {
-			printf("Can't find pll parameters: %d\n",
-					ret);
-			return ret;
-		}
-#ifdef CMD_CLOCK_DEBUG
-		printf("ref=%d, pll=%d, pd=%d, "
-				"mfi=%d,mfn=%d, mfd=%d\n",
-				ref, pll, pll_param.pd, pll_param.mfi,
-				pll_param.mfn, pll_param.mfd);
-#endif
-		config_core_clk(&pll_param);
+		break;
+	case PERIPH_CLK:
+		if (config_periph_clk(ref, freq))
+			return -1;
 		break;
 	case DDR_CLK:
-		if (freq > MAX_DDR_CLK) {
-			printf("DDR clock should be less than"
-					"%d MHz, assuming max value \n",
-					(MAX_DDR_CLK / SZ_DEC_1M));
-			freq = MAX_DDR_CLK;
-		}
-
-		config_ddr_clk(freq);
+		if (config_ddr_clk(freq))
+			return -1;
 		break;
 	default:
 		printf("Unsupported or invalid clock type! :(\n");

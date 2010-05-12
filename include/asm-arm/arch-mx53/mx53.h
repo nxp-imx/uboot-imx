@@ -393,6 +393,7 @@ enum boot_device {
 
 enum mxc_clock {
 	MXC_ARM_CLK = 0,
+	MXC_PER_CLK,
 	MXC_AHB_CLK,
 	MXC_IPG_CLK,
 	MXC_IPG_PERCLK,

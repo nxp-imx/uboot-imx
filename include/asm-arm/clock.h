@@ -27,6 +27,7 @@
 
 enum {
 	CPU_CLK = 0,
+	PERIPH_CLK,
 	AHB_CLK,
 	IPG_CLK,
 	IPG_PERCLK,
