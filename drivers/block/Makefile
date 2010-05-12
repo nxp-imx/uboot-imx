@@ -27,6 +27,7 @@ LIB	:= $(obj)libblock.a
 
 COBJS-$(CONFIG_ATA_PIIX) += ata_piix.o
 COBJS-$(CONFIG_CMD_MG_DISK) += mg_disk.o
+COBJS-$(CONFIG_DWC_AHSATA) += dwc_ahsata.o
 COBJS-$(CONFIG_FSL_SATA) += fsl_sata.o
 COBJS-$(CONFIG_IDE_SIL680) += sil680.o
 COBJS-$(CONFIG_LIBATA) += libata.o

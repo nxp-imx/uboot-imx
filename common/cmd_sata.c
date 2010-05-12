@@ -1,4 +1,7 @@
 /*
+ * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * Terry Lv <r65388@freescale.com>
+ *
  * Copyright (C) 2000-2005, DENX Software Engineering
  *		Wolfgang Denk <wd@denx.de>
  * Copyright (C) Procsys. All rights reserved.
@@ -48,9 +51,12 @@ int __sata_initialize(void)
 		sata_dev_desc[i].block_write = sata_write;
 
 		rc = init_sata(i);
-		rc = scan_sata(i);
-		if ((sata_dev_desc[i].lba > 0) && (sata_dev_desc[i].blksz > 0))
-			init_part(&sata_dev_desc[i]);
+		if (!rc) {
+			rc = scan_sata(i);
+			if ((sata_dev_desc[i].lba > 0) &&
+				(sata_dev_desc[i].blksz > 0))
+				init_part(&sata_dev_desc[i]);
+		}
 	}
 	sata_curr_device = 0;
 	return rc;

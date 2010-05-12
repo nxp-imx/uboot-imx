@@ -100,6 +100,8 @@
 #define CONFIG_CMD_CLOCK
 #define CONFIG_REF_CLK_FREQ CONFIG_MX53_HCLK_FREQ
 
+#define CONFIG_CMD_SATA
+
 #undef CONFIG_CMD_IMLS
 
 #define CONFIG_BOOTDELAY	3
@@ -198,6 +200,19 @@
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
 #endif
+
+/*
+ * SATA Configs
+ */
+#ifdef CONFIG_CMD_SATA
+	#define CONFIG_DWC_AHSATA
+	#define CONFIG_SYS_SATA_MAX_DEVICE	1
+	#define CONFIG_DWC_AHSATA_PORT_ID	0
+	#define CONFIG_DWC_AHSATA_BASE_ADDR 	SATA_BASE_ADDR
+	#define CONFIG_LBA48
+	#define CONFIG_LIBATA
+#endif
+
 /*-----------------------------------------------------------------------
  * Stack sizes
  *
@@ -212,7 +227,8 @@
 #define PHYS_SDRAM_1		CSD0_BASE_ADDR
 #define PHYS_SDRAM_1_SIZE	(1024 * 1024 * 1024)
 #define iomem_valid_addr(addr, size) \
-	(addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
+	(addr >= PHYS_SDRAM_1 && addr <= \
+		(unsigned long)(PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization

@@ -477,6 +477,8 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 		return __get_esdhc3_clk();
 	case MXC_ESDHC4_CLK:
 		return __get_esdhc4_clk();
+	case MXC_SATA_CLK:
+		return __get_ahb_clk();
 	default:
 		break;
 	}

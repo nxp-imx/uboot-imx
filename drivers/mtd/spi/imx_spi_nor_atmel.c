@@ -100,13 +100,13 @@ static s32 spi_nor_status(struct spi_flash *flash)
 	return g_rx_buf[0];
 }
 
+#if 0
 /*!
  * Erase a block_size data from block_addr offset in the flash
  */
 static int spi_nor_erase_page(struct spi_flash *flash,
 				void *page_addr)
 {
-	u32 *cmd = (u32 *)g_tx_buf;
 	u32 addr = (u32)page_addr;
 
 	if ((addr & 512) != 0) {
@@ -127,6 +127,7 @@ static int spi_nor_erase_page(struct spi_flash *flash,
 
 	return 0;
 }
+#endif
 
 static int spi_nor_flash_read(struct spi_flash *flash, u32 offset,
 		size_t len, void *buf)

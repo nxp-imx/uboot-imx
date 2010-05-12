@@ -23,7 +23,12 @@
 #define __REG16(x)      (*((volatile u16 *)(x)))
 #define __REG8(x)       (*((volatile u8 *)(x)))
 
- /*
+/*
+ * SATA
+ */
+#define SATA_BASE_ADDR		0x10000000
+
+/*
  * IRAM
  */
 #define IRAM_BASE_ADDR		0xF8000000	/* internal ram */
@@ -407,6 +412,7 @@ enum mxc_clock {
 	MXC_ESDHC2_CLK,
 	MXC_ESDHC3_CLK,
 	MXC_ESDHC4_CLK,
+	MXC_SATA_CLK
 };
 
 enum mxc_peri_clocks {

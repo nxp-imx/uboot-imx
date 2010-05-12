@@ -52,7 +52,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
 static enum boot_device boot_dev;
-u32	mx51_io_base_addr;
 
 static inline void setup_boot_device(void)
 {
@@ -287,6 +286,7 @@ void setup_core_voltages(void)
 	writel(0x0, CCM_BASE_ADDR + CLKCTL_CACRR);
 }
 
+#ifndef CONFIG_MX53_ARM2
 static int __read_adc_channel(unsigned int chan)
 {
 	unsigned char buf[4] = { 0 };
@@ -474,6 +474,7 @@ int identify_board_id(void)
 	return ret;
 
 }
+#endif
 #endif
 
 void spi_io_init(struct imx_spi_dev_t *dev)
@@ -714,10 +715,16 @@ int checkboard(void)
 {
 	printf("Board: ");
 
+#ifdef CONFIG_MX53_ARM2
+	printf("Board: MX53 ARMADILLO2 ");
+	printf("1.0 [");
+#else
 #ifdef CONFIG_I2C_MXC
 	identify_board_id();
-#endif
+
 	printf("Boot Reason: [");
+#endif
+#endif
 
 	switch (__REG(SRC_BASE_ADDR + 0x8)) {
 	case 0x0001:

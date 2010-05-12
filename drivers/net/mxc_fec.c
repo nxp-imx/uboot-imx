@@ -23,6 +23,10 @@
  * MA 02111-1307 USA
  */
 
+#ifdef CONFIG_ARCH_MMU
+#include <asm/arch/mmu.h>
+#endif
+
 #include <common.h>
 #include <malloc.h>
 
@@ -32,10 +36,7 @@
 #include <net.h>
 #include <miiphy.h>
 #include <linux/types.h>
-
-#ifdef CONFIG_ARCH_MMU
 #include <asm/io.h>
-#endif
 
 #undef	ET_DEBUG
 #undef	MII_DEBUG
@@ -408,8 +409,9 @@ int fec_send(struct eth_device *dev, volatile void *packet, int length)
 #endif
 
 #ifdef CONFIG_ARCH_MMU
-	memcpy(ioremap_nocache(info->txbd[info->txIdx].cbd_bufaddr, length),
-			packet, length);
+	memcpy(ioremap_nocache((ulong)info->txbd[info->txIdx].cbd_bufaddr,
+			length),
+			(void *)packet, length);
 #else
 	info->txbd[info->txIdx].cbd_bufaddr = (uint)packet;
 #endif
@@ -483,8 +485,8 @@ int fec_recv(struct eth_device *dev)
 #endif
 			/* Pass the packet up to the protocol layers. */
 #ifdef CONFIG_ARCH_MMU
-			memcpy(NetRxPackets[info->rxIdx],
-				ioremap_nocache(info->rxbd[info->rxIdx].cbd_bufaddr, 0),
+			memcpy((void *)NetRxPackets[info->rxIdx],
+				ioremap_nocache((ulong)info->rxbd[info->rxIdx].cbd_bufaddr, 0),
 				length);
 #endif
 			NetReceive(NetRxPackets[info->rxIdx], length);
@@ -761,7 +763,7 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 		info->rxbd[i].cbd_datlen = 0;	/* Reset */
 #ifdef CONFIG_ARCH_MMU
 		info->rxbd[i].cbd_bufaddr =
-			(uint)iomem_to_phys(info->rxbuf[i]);
+			(uint)iomem_to_phys((ulong)info->rxbuf[i]);
 #else
 		info->rxbd[i].cbd_bufaddr = (uint)NetRxPackets[i];
 #endif
@@ -778,7 +780,7 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 		info->txbd[i].cbd_datlen = 0;	/* Reset */
 #ifdef CONFIG_ARCH_MMU
 		info->txbd[i].cbd_bufaddr =
-			(uint)iomem_to_phys(&info->txbuf[0]);
+			(uint)iomem_to_phys((ulong)&info->txbuf[0]);
 #else
 		info->txbd[i].cbd_bufaddr = (uint)&info->txbuf[0];
 #endif
@@ -787,8 +789,8 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 
 	/* Set receive and transmit descriptor base */
 #ifdef CONFIG_ARCH_MMU
-	fecp->erdsr = (uint)iomem_to_phys(&info->rxbd[0]);
-	fecp->etdsr = (uint)iomem_to_phys(&info->txbd[0]);
+	fecp->erdsr = (uint)iomem_to_phys((ulong)&info->rxbd[0]);
+	fecp->etdsr = (uint)iomem_to_phys((ulong)&info->txbd[0]);
 #else
 	fecp->erdsr = (uint)(&info->rxbd[0]);
 	fecp->etdsr = (uint)(&info->txbd[0]);
@@ -874,20 +876,20 @@ int mxc_fec_initialize(bd_t *bis)
 		/* setup Receive and Transmit buffer descriptor */
 #ifdef CONFIG_ARCH_MMU
 		fec_info[i].rxbd =
-			(cbd_t *)ioremap_nocache((ulong)iomem_to_phys(memalign(CONFIG_SYS_CACHELINE_SIZE,
+			(cbd_t *)ioremap_nocache(iomem_to_phys((ulong)memalign(CONFIG_SYS_CACHELINE_SIZE,
 						(PKTBUFSRX * sizeof(cbd_t)))),
 						CONFIG_SYS_CACHELINE_SIZE);
 		fec_info[i].txbd =
-			(cbd_t *)ioremap_nocache((ulong)iomem_to_phys(memalign(CONFIG_SYS_CACHELINE_SIZE,
+			(cbd_t *)ioremap_nocache(iomem_to_phys((ulong)memalign(CONFIG_SYS_CACHELINE_SIZE,
 						(TX_BUF_CNT * sizeof(cbd_t)))),
 						CONFIG_SYS_CACHELINE_SIZE);
 		fec_info[i].txbuf =
-			(char *)ioremap_nocache((ulong)iomem_to_phys(memalign(CONFIG_SYS_CACHELINE_SIZE,
+			(char *)ioremap_nocache(iomem_to_phys((ulong)memalign(CONFIG_SYS_CACHELINE_SIZE,
 						DBUF_LENGTH)),
 						CONFIG_SYS_CACHELINE_SIZE);
 		for (j = 0; j < PKTBUFSRX; ++j) {
 			fec_info[i].rxbuf[j] =
-				(char *)ioremap_nocache((ulong)iomem_to_phys(memalign(PKTSIZE_ALIGN,
+				(char *)ioremap_nocache(iomem_to_phys((ulong)memalign(PKTSIZE_ALIGN,
 						PKTSIZE)),
 						PKTSIZE_ALIGN);
 		}
