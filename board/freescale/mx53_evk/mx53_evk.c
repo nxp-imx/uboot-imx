@@ -282,6 +282,168 @@ void setup_core_voltages(void)
 	/* Raise the core frequency to 800MHz */
 	writel(0x0, CCM_BASE_ADDR + CLKCTL_CACRR);
 }
+
+static int __read_adc_channel(unsigned int chan)
+{
+	unsigned char buf[4] = { 0 };
+
+	buf[0] = (0xb0 | ((chan & 0x1) << 3) | ((chan >> 1) & 0x7));
+
+	/* LTC2495 need 410ms delay */
+	udelay(410000);
+
+	if (i2c_write(0x14, chan, 0, &buf[0], 1)) {
+		printf("%s:i2c_write:error\n", __func__);
+		return -1;
+	}
+
+	/* LTC2495 need 410ms delay*/
+	udelay(410000);
+
+	if (i2c_read(0x14, chan, 0, &buf[0], 3)) {
+		printf("%s:i2c_read:error\n", __func__);
+		return -1;
+	}
+
+	return buf[0] << 16 | buf[1] << 8 | buf[2];
+}
+
+static int __lookup_board_id(int adc_val)
+{
+	int id;
+
+	if (adc_val < 0x3FFFC0)
+		id = 0;
+	else if (adc_val < 0x461863)
+		id = 1;
+	else if (adc_val < 0x4C30C4)
+		id = 2;
+	else if (adc_val < 0x524926)
+		id = 3;
+	else if (adc_val < 0x586187)
+		id = 4;
+	else if (adc_val < 0x5E79E9)
+		id = 5;
+	else if (adc_val < 0x64924A)
+		id = 6;
+	else if (adc_val < 0x6AAAAC)
+		id = 7;
+	else if (adc_val < 0x70C30D)
+		id = 8;
+	else if (adc_val < 0x76DB6F)
+		id = 9;
+	else if (adc_val < 0x7CF3D0)
+		id = 10;
+	else if (adc_val < 0x830C32)
+		id = 11;
+	else if (adc_val < 0x892493)
+		id = 12;
+	else if (adc_val < 0x8F3CF5)
+		id = 13;
+	else if (adc_val < 0x955556)
+		id = 14;
+	else if (adc_val < 0x9B6DB8)
+		id = 15;
+	else if (adc_val < 0xA18619)
+		id = 16;
+	else if (adc_val < 0xA79E7B)
+		id = 17;
+	else if (adc_val < 0xADB6DC)
+		id = 18;
+	else if (adc_val < 0xB3CF3E)
+		id = 19;
+	else if (adc_val < 0xB9E79F)
+		id = 20;
+	else if (adc_val < 0xC00000)
+		id = 21;
+		else
+		return -1;
+
+	return id;
+}
+
+static int __print_board_info(int id0, int id1)
+{
+	int ret = 0;
+
+	switch (id0) {
+	case 21:
+		switch (id1) {
+		case 15:
+			printf("MX53-EVK with DDR2 1GByte RevB\n");
+
+			break;
+		case 18:
+			printf("MX53-EVK with DDR2 2GByte RevA1\n");
+
+			break;
+		case 19:
+			printf("MX53-EVK with DDR2 2GByte RevA2\n");
+			break;
+		default:
+			printf("Unkown board id1:%d\n", id1);
+			ret = -1;
+
+			break;
+		}
+
+		break;
+	case 11:
+		switch (id1) {
+		case 1:
+			printf("MX53 1.5V DDR3 x8 CPU Card, Rev. A\n");
+
+			break;
+		case 11:
+			printf("MX53 1.8V DDR2 x8 CPU Card, Rev. A\n");
+
+			break;
+		default:
+			printf("Unkown board id1:%d\n", id1);
+			ret = -1;
+
+			break;
+		}
+
+		break;
+	default:
+		printf("Unkown board id0:%d\n", id0);
+
+		break;
+	}
+
+	return ret;
+}
+
+int identify_board_id(void)
+{
+	int ret = 0;
+	int bd_id0, bd_id1;
+
+#define CPU_CHANNEL_ID0 0xc
+#define CPU_CHANNEL_ID1 0xd
+
+	ret = bd_id0 = __read_adc_channel(CPU_CHANNEL_ID0);
+	if (ret < 0)
+		return ret;
+
+	ret = bd_id1 = __read_adc_channel(CPU_CHANNEL_ID1);
+	if (ret < 0)
+		return ret;
+
+	ret = bd_id0 = __lookup_board_id(bd_id0);
+	if (ret < 0)
+		return ret;
+
+	ret = bd_id1 = __lookup_board_id(bd_id1);
+	if (ret < 0)
+		return ret;
+
+	ret = __print_board_info(bd_id0, bd_id1);
+
+	return ret;
+
+}
 #endif
 
 void spi_io_init(struct imx_spi_dev_t *dev)
@@ -520,10 +682,12 @@ int board_late_init(void)
 
 int checkboard(void)
 {
-	printf("Board: MX53 EVK ");
+	printf("Board:   ");
 
-	printf("1.0 [");
-
+#ifdef CONFIG_I2C_MXC
+	identify_board_id();
+#endif
+	printf("Boot Reason: [");
 
 	switch (__REG(SRC_BASE_ADDR + 0x8)) {
 	case 0x0001:
