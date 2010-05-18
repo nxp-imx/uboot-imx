@@ -477,7 +477,7 @@ ulong lcd_setmem (ulong addr)
 
 static void lcd_setfgcolor (int color)
 {
-#ifdef CONFIG_ATMEL_LCD
+#if defined(CONFIG_ATMEL_LCD) || defined(CONFIG_MXC2_LCD)
 	lcd_color_fg = color;
 #else
 	lcd_color_fg = color & 0x0F;
@@ -488,7 +488,7 @@ static void lcd_setfgcolor (int color)
 
 static void lcd_setbgcolor (int color)
 {
-#ifdef CONFIG_ATMEL_LCD
+#if defined(CONFIG_ATMEL_LCD) || defined(CONFIG_MXC2_LCD)
 	lcd_color_bg = color;
 #else
 	lcd_color_bg = color & 0x0F;
@@ -649,14 +649,20 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 
 	bpix = NBITS(panel_info.vl_bpix);
 
-	if ((bpix != 1) && (bpix != 8) && (bpix != 16)) {
+	if ((bpix != 1) && (bpix != 8) && (bpix != 16) && (bpix != 24)) {
 		printf ("Error: %d bit/pixel mode, but BMP has %d bit/pixel\n",
 			bpix, bmp_bpix);
 		return 1;
 	}
 
+#if defined(CONFIG_BMP_24BPP)
+	/* We support displaying 24bpp BMPs on 16bpp LCDs */
+	if (bpix != bmp_bpix && (bmp_bpix != 24 || bpix != 16) &&
+		(bmp_bpix != 8 || bpix != 16)) {
+#else
 	/* We support displaying 8bpp BMPs on 16bpp LCDs */
 	if (bpix != bmp_bpix && (bmp_bpix != 8 || bpix != 16)) {
+#endif
 		printf ("Error: %d bit/pixel mode, but BMP has %d bit/pixel\n",
 			bpix,
 			le16_to_cpu(bmp->header.bit_count));
@@ -676,7 +682,6 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 #elif !defined(CONFIG_ATMEL_LCD)
 		cmap = panel_info.cmap;
 #endif
-
 		cmap_base = cmap;
 
 		/* Set color map */
@@ -705,12 +710,12 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 #endif
 
 	/*
-	 *  BMP format for Monochrome assumes that the state of a
+	 * BMP format for Monochrome assumes that the state of a
 	 * pixel is described on a per Bit basis, not per Byte.
-	 *  So, in case of Monochrome BMP we should align widths
+	 * So, in case of Monochrome BMP we should align widths
 	 * on a byte boundary and convert them from Bit to Byte
 	 * units.
-	 *  Probably, PXA250 and MPC823 process 1bpp BMP images in
+	 * Probably, PXA250 and MPC823 process 1bpp BMP images in
 	 * their own ways, so make the converting to be MCC200
 	 * specific.
 	 */
@@ -722,9 +727,7 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 		pwidth= ((pwidth + 7) & ~7) >> 3;
 	}
 #endif
-
 	padded_line = (width&0x3) ? ((width&~0x3)+4) : (width);
-
 #ifdef CONFIG_SPLASH_SCREEN_ALIGN
 	if (x == BMP_ALIGN_CENTER)
 		x = max(0, (pwidth - width) / 2);
@@ -743,8 +746,7 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 		height = panel_info.vl_row - y;
 
 	bmap = (uchar *)bmp + le32_to_cpu (bmp->header.data_offset);
-	fb   = (uchar *) (lcd_base +
-		(y + height - 1) * lcd_line_length + x);
+	fb   = (uchar *) (lcd_base + (y + height - 1) * lcd_line_length + x);
 
 	switch (bmp_bpix) {
 	case 1: /* pass through */
@@ -794,7 +796,28 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 		}
 		break;
 #endif /* CONFIG_BMP_16BPP */
-
+#if defined(CONFIG_BMP_24BPP)
+	case 24:
+		if (bpix != 16) {
+			printf("Error: %d bit/pixel mode,"
+				"but BMP has %d bit/pixel\n",
+				bpix, bmp_bpix);
+			break;
+		}
+		for (i = 0; i < height; ++i) {
+			WATCHDOG_RESET();
+			for (j = 0; j < width; j++) {
+				*(uint16_t *)fb = ((*(bmap + 2) << 8) & 0xf800)
+						| ((*(bmap + 1) << 3) & 0x07e0)
+						| ((*(bmap) >> 3) & 0x001f);
+				bmap += 3;
+				fb += sizeof(uint16_t) / sizeof(*fb);
+			}
+			bmap += (width - padded_line);
+			fb   -= ((2*width) + lcd_line_length);
+		}
+		break;
+#endif /* CONFIG_BMP_24BPP */
 	default:
 		break;
 	};
@@ -815,6 +838,7 @@ static void *lcd_logo (void)
 		do_splash = 0;
 
 		addr = simple_strtoul (s, NULL, 16);
+
 #ifdef CONFIG_SPLASH_SCREEN_ALIGN
 		if ((s = getenv ("splashpos")) != NULL) {
 			if (s[0] == 'm')

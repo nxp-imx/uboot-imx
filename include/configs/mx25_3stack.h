@@ -105,6 +105,7 @@
 #define CONFIG_CMD_MMC
 #define CONFIG_MXC_NAND
 
+
 /*
  * MMC Configs
  * */
@@ -141,7 +142,8 @@
 	"bootcmd=run bootcmd_net\0"					\
 	"bootcmd_net=run bootargs_base bootargs_nfs; "			\
 		"tftpboot ${loadaddr} ${kernel}; bootm\0"		\
-	"load_uboot=tftpboot ${loadaddr} ${uboot}\0"
+	"load_uboot=tftpboot ${loadaddr} ${uboot}\0"	\
+	"splashimage=0x80800000\0"
 
 /*Support LAN9217*/
 #define CONFIG_SMC911X
@@ -209,6 +211,34 @@
 #define PHYS_SDRAM_1_SIZE	(128 * 1024 * 1024)
 #else
 #define PHYS_SDRAM_1_SIZE       (64 * 1024 * 1024)
+#endif
+
+/* LCD */
+/*
+#define CONFIG_SPLASH_SCREEN
+*/
+
+#ifdef CONFIG_SPLASH_SCREEN
+	#define CONFIG_LCD
+	#define CONFIG_MXC2_LCD 1
+	#undef LCD_TEST_PATTERN
+	#define CONFIG_FB_BASE				0x81400000
+	#define CONFIG_SYS_CONSOLE_IS_IN_ENV            1
+	#define CONFIG_SPLASH_SCREEN                    1
+	#define CONFIG_SPLASH_IS_IN_MMC                 1
+	#define LCD_BPP                                 LCD_COLOR16
+	/* #define CONFIG_SPLASH_SCREEN_ALIGN           1 */
+
+	#define CONFIG_CMD_BMP
+	#define CONFIG_BMP_24BPP 1
+	#define CONFIG_BMP_16BPP 1
+#endif
+
+
+#ifdef CONFIG_SPLASH_IS_IN_MMC
+	#define CONFIG_SPLASH_IMG_MMC_DEV	0
+	#define CONFIG_SPLASH_IMG_OFFSET	0x4c000
+	#define CONFIG_SPLASH_IMG_SIZE		0x19000
 #endif
 
 /* Monitor at beginning of flash */

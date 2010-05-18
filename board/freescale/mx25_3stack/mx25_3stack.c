@@ -33,6 +33,11 @@
 #include <asm/arch/gpio.h>
 #include <imx_spi.h>
 
+#ifdef CONFIG_LCD
+#include <mx2fb.h>
+#include <lcd.h>
+#endif
+
 #ifdef CONFIG_CMD_MMC
 #include <mmc.h>
 #include <fsl_esdhc.h>
@@ -41,6 +46,9 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
+#ifdef CONFIG_LCD
+char lcd_cmap[256];
+#endif
 
 u32 get_board_rev(void)
 {
@@ -198,11 +206,104 @@ void spi_io_init(struct imx_spi_dev_t *dev)
 	}
 }
 
+#ifdef CONFIG_LCD
+
+vidinfo_t panel_info = {
+	vl_refresh:60,
+	vl_col:640,
+	vl_row:480,
+	vl_pixclock:39683,
+	vl_left_margin:45,
+	vl_right_margin:114,
+	vl_upper_margin:33,
+	vl_lower_margin:11,
+	vl_hsync:1,
+	vl_vsync:1,
+	vl_sync : FB_SYNC_CLK_LAT_FALL,
+	vl_mode:0,
+	vl_flag:0,
+	vl_bpix:4,
+	cmap : (void *)lcd_cmap,
+};
+
+void lcdc_hw_init(void)
+{
+	/* Set VSTBY_REQ as GPIO3[17] on ALT5 */
+	mxc_request_iomux(MX25_PIN_VSTBY_REQ, MUX_CONFIG_ALT5);
+
+	/* Set GPIO3[17] as output */
+	writel(0x20000, GPIO3_BASE + 0x04);
+
+	/* Set GPIOE as LCDC_LD[16] on ALT2 */
+	mxc_request_iomux(MX25_PIN_GPIO_E, MUX_CONFIG_ALT2);
+
+	/* Set GPIOF as LCDC_LD[17] on ALT2 */
+	mxc_request_iomux(MX25_PIN_GPIO_F, MUX_CONFIG_ALT2);
+
+	/* Enable pull up on LCDC_LD[16]	*/
+	mxc_iomux_set_pad(MX25_PIN_GPIO_E,
+			PAD_CTL_PKE_ENABLE | PAD_CTL_100K_PU);
+
+	/* Enable pull up on LCDC_LD[17]	*/
+	mxc_iomux_set_pad(MX25_PIN_GPIO_F,
+			PAD_CTL_PKE_ENABLE | PAD_CTL_100K_PU);
+
+	/* Enable Pull/Keeper for pad LSCKL */
+	mxc_iomux_set_pad(MX25_PIN_LSCLK,
+			PAD_CTL_PKE_ENABLE | PAD_CTL_PUE_PUD |
+			PAD_CTL_100K_PU | PAD_CTL_SRE_FAST);
+
+	gd->fb_base = CONFIG_FB_BASE;
+}
+
+#ifdef CONFIG_SPLASH_SCREEN
+int setup_splash_img()
+{
+#ifdef CONFIG_SPLASH_IS_IN_MMC
+	int mmc_dev = CONFIG_SPLASH_IMG_MMC_DEV;
+	ulong offset = CONFIG_SPLASH_IMG_OFFSET;
+	ulong size = CONFIG_SPLASH_IMG_SIZE;
+	ulong addr = 0;
+	char *s = NULL;
+	struct mmc *mmc = find_mmc_device(mmc_dev);
+	uint blk_start, blk_cnt, n;
+
+	s = getenv("splashimage");
+
+	if (NULL == s) {
+		puts("env splashimage not found!\n");
+		return -1;
+	}
+	addr = simple_strtoul(s, NULL, 16);
+
+	if (!mmc) {
+		printf("MMC Device %d not found\n",
+			mmc_dev);
+		return -1;
+	}
+
+	if (mmc_init(mmc)) {
+		puts("MMC init failed\n");
+		return  -1;
+	}
+
+	blk_start = ALIGN(offset, mmc->read_bl_len) / mmc->read_bl_len;
+	blk_cnt   = ALIGN(size, mmc->read_bl_len) / mmc->read_bl_len;
+	n = mmc->block_dev.block_read(mmc_dev, blk_start,
+					blk_cnt, (u_char *)addr);
+	flush_cache((ulong)addr, blk_cnt * mmc->read_bl_len);
+
+	return (n == blk_cnt) ? 0 : -1;
+#endif
+}
+#endif
+#endif
+
 int board_init(void)
 {
 
 #ifdef CONFIG_MFG
-/* MFG firmware need reset usb to avoid host crash firstly */
+	/* MFG firmware need reset usb to avoid host crash firstly */
 #define USBCMD 0x140
 	int val = readl(USB_BASE + USBCMD);
 	val &= ~0x1; /*RS bit*/
@@ -291,6 +392,10 @@ int board_init(void)
 	mxc_iomux_set_pad(MX25_PIN_I2C1_CLK, 0x1E8);
 	mxc_iomux_set_pad(MX25_PIN_I2C1_DAT, 0x1E8);
 
+#ifdef CONFIG_LCD
+	lcdc_hw_init();
+#endif
+
 	gd->bd->bi_arch_number = MACH_TYPE_MX25_3DS;    /* board id for linux */
 	gd->bd->bi_boot_params = 0x80000100;    /* address of boot parameters */
 
@@ -312,6 +417,11 @@ int board_late_init(void)
 
 #ifdef CONFIG_IMX_SPI_CPLD
 	mxc_cpld_spi_init();
+#endif
+
+#ifdef CONFIG_SPLASH_SCREEN
+	if (!setup_splash_img())
+		printf("Read splash screen failed!\n");
 #endif
 
 	return 0;
