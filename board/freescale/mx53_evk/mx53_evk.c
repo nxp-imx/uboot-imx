@@ -44,6 +44,10 @@
 #include <asm/arch/mmu.h>
 #endif
 
+#ifdef CONFIG_CMD_CLOCK
+#include <asm/clock.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
@@ -415,6 +419,25 @@ static int __print_board_info(int id0, int id1)
 	return ret;
 }
 
+static int _identify_board_fix_up(int id0, int id1)
+{
+	int ret = 0;
+
+#ifdef CONFIG_CMD_CLOCK
+	/* For EVK RevB, set DDR to 400MHz */
+	if (id0 == 21 && id1 == 15) {
+		ret = clk_config(CONFIG_REF_CLK_FREQ, 400, PERIPH_CLK);
+		if (ret < 0)
+			return ret;
+
+		ret = clk_config(CONFIG_REF_CLK_FREQ, 400, DDR_CLK);
+		if (ret < 0)
+			return ret;
+	}
+#endif
+	return ret;
+}
+
 int identify_board_id(void)
 {
 	int ret = 0;
@@ -440,6 +463,10 @@ int identify_board_id(void)
 		return ret;
 
 	ret = __print_board_info(bd_id0, bd_id1);
+	if (ret < 0)
+		return ret;
+
+	ret = _identify_board_fix_up(bd_id0, bd_id1);
 
 	return ret;
 
@@ -682,7 +709,7 @@ int board_late_init(void)
 
 int checkboard(void)
 {
-	printf("Board:   ");
+	printf("Board: ");
 
 #ifdef CONFIG_I2C_MXC
 	identify_board_id();

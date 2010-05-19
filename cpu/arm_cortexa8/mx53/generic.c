@@ -641,8 +641,8 @@ int clk_info(u32 clk_type)
 			mxc_get_clock(MXC_DDR_CLK));
 		break;
 	case ALL_CLK:
-		printf("cpu clock: %dHz\n",
-			mxc_get_clock(MXC_ARM_CLK));
+		printf("cpu clock: %dMHz\n",
+			mxc_get_clock(MXC_ARM_CLK) / SZ_DEC_1M);
 		mxc_dump_clocks();
 		break;
 	default:
@@ -702,6 +702,8 @@ u32 calc_per_cbcdr_val(u32 per_clk, u32 cbcmr)
 
 #define CHANGE_PLL_SETTINGS(base, pd, mfi, mfn, mfd) \
 	{	\
+		writel(0x1232, base + PLL_DP_CTL); \
+		writel(0x2, base + PLL_DP_CONFIG);    \
 		writel(((pd - 1) << 0) | (mfi << 4),	\
 			base + PLL_DP_OP);	\
 		writel(mfn, base + PLL_DP_MFN);	\
@@ -710,6 +712,9 @@ u32 calc_per_cbcdr_val(u32 per_clk, u32 cbcmr)
 			base + PLL_DP_HFS_OP);	\
 		writel(mfn, base + PLL_DP_HFS_MFN);	\
 		writel(mfd - 1, base + PLL_DP_HFS_MFD);	\
+		writel(0x1232, base + PLL_DP_CTL); \
+		while (!readl(base + PLL_DP_CTL) & 0x1)  \
+			; \
 	}
 
 int config_pll_clk(enum pll_clocks pll, struct pll_param *pll_param)
@@ -815,15 +820,6 @@ int config_periph_clk(u32 ref, u32 freq)
 		u32 old_cbcmr = readl(CCM_BASE_ADDR + CLKCTL_CBCMR);
 		u32 cbcdr = 0;
 
-		/* Set PLL3 to 400MHz */
-		ret = calc_pll_params(ref, 400000000, &pll_param);
-		if (ret != 0) {
-			printf("Can't find pll parameters: %d\n",
-				ret);
-			return ret;
-		}
-		config_pll_clk(PLL3_CLK, &pll_param);
-
 		/* Switch peripheral to PLL3 */
 		writel(0x00015154, CCM_BASE_ADDR + CLKCTL_CBCMR);
 		writel(0x02888945, CCM_BASE_ADDR + CLKCTL_CBCDR);
@@ -850,16 +846,6 @@ int config_periph_clk(u32 ref, u32 freq)
 		/* Make sure change is effective */
 		while (readl(CCM_BASE_ADDR + CLKCTL_CDHIPR) != 0)
 			;
-
-		/* Switch PLL3's freq back */
-		ret = calc_pll_params(ref, pll3_freq, &pll_param);
-		if (ret != 0) {
-			printf("Can't find pll parameters: %d\n",
-				ret);
-			return ret;
-		}
-		config_pll_clk(PLL3_CLK, &pll_param);
-
 		puts("\n");
 	}
 
@@ -974,7 +960,6 @@ int print_cpuinfo(void)
 	       (get_board_rev() & 0xFF) >> 4,
 	       (get_board_rev() & 0xF),
 		__get_mcu_main_clk() / 1000000);
-	mxc_dump_clocks();
 	return 0;
 }
 #endif
