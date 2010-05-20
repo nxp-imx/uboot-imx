@@ -684,7 +684,7 @@ int board_init(void)
 {
 	setup_boot_device();
 	setup_soc_rev();
-#ifdef CONFIG_MX53_ARM2
+#if defined(CONFIG_MX53_ARM2) || defined(CONFIG_MX53_ARM2_DDR3)
 	setup_board_rev(1);
 #endif
 	gd->bd->bi_arch_number = MACH_TYPE_MX53_EVK;	/* board id for linux */
