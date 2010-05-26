@@ -789,14 +789,13 @@ int config_core_clk(u32 ref, u32 freq)
 int config_periph_clk(u32 ref, u32 freq)
 {
 	int ret = 0;
-	u32 pll = 0;
+	u32 pll = freq;
 	struct pll_param pll_param;
 
 	memset(&pll_param, 0, sizeof(struct pll_param));
 
 	if (__REG(MXC_CCM_CBCDR) & MXC_CCM_CBCDR_PERIPH_CLK_SEL) {
 		/* Actually this case is not considered here */
-		pll = freq;
 		ret = calc_pll_params(ref, pll, &pll_param);
 		if (ret != 0) {
 			printf("Can't find pll parameters: %d\n",
@@ -816,9 +815,8 @@ int config_periph_clk(u32 ref, u32 freq)
 			return -1;
 		}
 	} else {
-		u32 pll3_freq = __decode_pll(PLL3_CLK, CONFIG_MX53_HCLK_FREQ);
 		u32 old_cbcmr = readl(CCM_BASE_ADDR + CLKCTL_CBCMR);
-		u32 cbcdr = 0;
+		u32 new_cbcdr = calc_per_cbcdr_val(pll, old_cbcmr);
 
 		/* Switch peripheral to PLL3 */
 		writel(0x00015154, CCM_BASE_ADDR + CLKCTL_CBCMR);
@@ -829,7 +827,6 @@ int config_periph_clk(u32 ref, u32 freq)
 			;
 
 		/* Setup PLL2 */
-		pll = freq;
 		ret = calc_pll_params(ref, pll, &pll_param);
 		if (ret != 0) {
 			printf("Can't find pll parameters: %d\n",
@@ -839,8 +836,7 @@ int config_periph_clk(u32 ref, u32 freq)
 		config_pll_clk(PLL2_CLK, &pll_param);
 
 		/* Switch peripheral back */
-		cbcdr = calc_per_cbcdr_val(pll, old_cbcmr);
-		writel(cbcdr, CCM_BASE_ADDR + CLKCTL_CBCDR);
+		writel(new_cbcdr, CCM_BASE_ADDR + CLKCTL_CBCDR);
 		writel(old_cbcmr, CCM_BASE_ADDR + CLKCTL_CBCMR);
 
 		/* Make sure change is effective */
