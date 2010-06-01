@@ -119,7 +119,6 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
 
-
 /*
  * MMC Driver
  */
@@ -130,6 +129,7 @@
 #define CONFIG_SYS_MMC_ENV_DEV	0
 #define CONFIG_DOS_PARTITION
 #define CONFIG_CMD_FAT
+#define CONFIG_SYS_SSP_MMC_NUM 2
 
 /*
  * Environments on MMC
@@ -140,5 +140,13 @@
 /* Assoiated with the MMC layout defined in mmcops.c */
 #define CONFIG_ENV_OFFSET		(0x400) /* 1 KB */
 #define CONFIG_ENV_SIZE			(0x20000 - 0x400) /* 127 KB */
+#define CONFIG_DYNAMIC_MMC_DEVNO
+
+/* The global boot mode has been detected by Boot ROM and a boot mode value
+ * is stored at address of 0x0001a7f0.
+ */
+#define GLOBAL_BOOT_MODE_ADDR 0x0001a7f0
+#define BOOT_MODE_SD0 0x9
+#define BOOT_MODE_SD1 0xa
 
 #endif /* __MX28_EVK_H */

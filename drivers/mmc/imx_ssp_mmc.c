@@ -32,11 +32,21 @@
 #include <mmc.h>
 #include <asm/arch/regs-ssp.h>
 #include <asm/arch/regs-clkctrl.h>
+#include <imx_ssp_mmc.h>
 
 #undef IMX_SSP_MMC_DEBUG
 
-extern void ssp_mmc_board_init(void);
-extern u32 ssp_mmc_is_wp(void);
+static inline int ssp_mmc_read(struct mmc *mmc, uint reg)
+{
+	struct imx_ssp_mmc_cfg *cfg = (struct imx_ssp_mmc_cfg *)mmc->priv;
+	return REG_RD(cfg->ssp_mmc_base, reg);
+}
+
+static inline void ssp_mmc_write(struct mmc *mmc, uint reg, uint val)
+{
+	struct imx_ssp_mmc_cfg *cfg = (struct imx_ssp_mmc_cfg *)mmc->priv;
+	REG_WR(cfg->ssp_mmc_base, reg, val);
+}
 
 static inline void mdelay(unsigned long msec)
 {
@@ -62,106 +72,112 @@ ssp_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	int i;
 
 #ifdef IMX_SSP_MMC_DEBUG
-	printf("MMC: CMD%d\n", cmd->cmdidx);
+	printf("MMC%d: CMD%d\n", mmc->block_dev.dev, cmd->cmdidx);
 #endif
 
 	/* Check bus busy */
 	i = 0;
-	while (REG_RD(REGS_SSP0_BASE, HW_SSP_STATUS) & (BM_SSP_STATUS_BUSY |
+	while (ssp_mmc_read(mmc, HW_SSP_STATUS) & (BM_SSP_STATUS_BUSY |
 		BM_SSP_STATUS_DATA_BUSY | BM_SSP_STATUS_CMD_BUSY)) {
 		mdelay(1);
 		i++;
 		if (i == 1000) {
-			printf("MMC: Bus busy timeout!\n");
+			printf("MMC%d: Bus busy timeout!\n",
+				mmc->block_dev.dev);
 			return TIMEOUT;
 		}
 	}
 
 	/* See if card is present */
-	if (REG_RD(REGS_SSP0_BASE, HW_SSP_STATUS) & BM_SSP_STATUS_CARD_DETECT) {
-		printf("MMC: No card detected!\n");
+	if (ssp_mmc_read(mmc, HW_SSP_STATUS) & BM_SSP_STATUS_CARD_DETECT) {
+		printf("MMC%d: No card detected!\n", mmc->block_dev.dev);
 		return NO_CARD_ERR;
 	}
 
 	/* Clear all control bits except bus width */
-	REG_CLR(REGS_SSP0_BASE, HW_SSP_CTRL0, 0xff3fffff);
+	ssp_mmc_write(mmc, HW_SSP_CTRL0_CLR, 0xff3fffff);
 
 	/* Set up command */
 	if (!(cmd->resp_type & MMC_RSP_CRC))
-		REG_SET(REGS_SSP0_BASE, HW_SSP_CTRL0, BM_SSP_CTRL0_IGNORE_CRC);
+		ssp_mmc_write(mmc, HW_SSP_CTRL0_SET, BM_SSP_CTRL0_IGNORE_CRC);
 	if (cmd->resp_type & MMC_RSP_PRESENT)	/* Need to get response */
-		REG_SET(REGS_SSP0_BASE, HW_SSP_CTRL0, BM_SSP_CTRL0_GET_RESP);
+		ssp_mmc_write(mmc, HW_SSP_CTRL0_SET, BM_SSP_CTRL0_GET_RESP);
 	if (cmd->resp_type & MMC_RSP_136)	/* It's a 136 bits response */
-		REG_SET(REGS_SSP0_BASE, HW_SSP_CTRL0, BM_SSP_CTRL0_LONG_RESP);
+		ssp_mmc_write(mmc, HW_SSP_CTRL0_SET, BM_SSP_CTRL0_LONG_RESP);
 
 	/* Command index */
-	REG_WR(REGS_SSP0_BASE, HW_SSP_CMD0,
-		(REG_RD(REGS_SSP0_BASE, HW_SSP_CMD0) & ~BM_SSP_CMD0_CMD) |
+	ssp_mmc_write(mmc, HW_SSP_CMD0,
+		(ssp_mmc_read(mmc, HW_SSP_CMD0) & ~BM_SSP_CMD0_CMD) |
 		(cmd->cmdidx << BP_SSP_CMD0_CMD));
 	/* Command argument */
-	REG_WR(REGS_SSP0_BASE, HW_SSP_CMD1, cmd->cmdarg);
+	ssp_mmc_write(mmc, HW_SSP_CMD1, cmd->cmdarg);
 
 	/* Set up data */
 	if (data) {
 		/* READ or WRITE */
 		if (data->flags & MMC_DATA_READ) {
-			REG_SET(REGS_SSP0_BASE, HW_SSP_CTRL0,
+			ssp_mmc_write(mmc, HW_SSP_CTRL0_SET,
 				BM_SSP_CTRL0_READ);
-		} else if (ssp_mmc_is_wp()) {
-			printf("MMC: Can not write a locked card!\n");
+		} else if (ssp_mmc_is_wp(mmc)) {
+			printf("MMC%d: Can not write a locked card!\n",
+				mmc->block_dev.dev);
 			return UNUSABLE_ERR;
 		}
-		REG_SET(REGS_SSP0_BASE, HW_SSP_CTRL0, BM_SSP_CTRL0_DATA_XFER);
-		REG_WR(REGS_SSP0_BASE, HW_SSP_BLOCK_SIZE,
+		ssp_mmc_write(mmc, HW_SSP_CTRL0_SET, BM_SSP_CTRL0_DATA_XFER);
+		ssp_mmc_write(mmc, HW_SSP_BLOCK_SIZE,
 			((data->blocks - 1) <<
 				BP_SSP_BLOCK_SIZE_BLOCK_COUNT) |
 			((ffs(data->blocksize) - 1) <<
 				BP_SSP_BLOCK_SIZE_BLOCK_SIZE));
-		REG_WR(REGS_SSP0_BASE, HW_SSP_XFER_SIZE,
+		ssp_mmc_write(mmc, HW_SSP_XFER_SIZE,
 			data->blocksize * data->blocks);
 	}
 
 	/* Kick off the command */
-	REG_SET(REGS_SSP0_BASE, HW_SSP_CTRL0, BM_SSP_CTRL0_WAIT_FOR_IRQ);
-	REG_SET(REGS_SSP0_BASE, HW_SSP_CTRL0, BM_SSP_CTRL0_ENABLE);
-	REG_SET(REGS_SSP0_BASE, HW_SSP_CTRL0, BM_SSP_CTRL0_RUN);
+	ssp_mmc_write(mmc, HW_SSP_CTRL0_SET, BM_SSP_CTRL0_WAIT_FOR_IRQ);
+	ssp_mmc_write(mmc, HW_SSP_CTRL0_SET, BM_SSP_CTRL0_ENABLE);
+	ssp_mmc_write(mmc, HW_SSP_CTRL0_SET, BM_SSP_CTRL0_RUN);
 
 	/* Wait for the command to complete */
 	i = 0;
 	do {
 		mdelay(10);
 		if (i++ == 100) {
-			printf("MMC: Command %d busy\n", cmd->cmdidx);
+			printf("MMC%d: Command %d busy\n",
+				mmc->block_dev.dev,
+				cmd->cmdidx);
 			break;
 		}
-	} while (REG_RD(REGS_SSP0_BASE, HW_SSP_STATUS) &
+	} while (ssp_mmc_read(mmc, HW_SSP_STATUS) &
 		BM_SSP_STATUS_CMD_BUSY);
 
 	/* Check command timeout */
-	if (REG_RD(REGS_SSP0_BASE, HW_SSP_STATUS) &
+	if (ssp_mmc_read(mmc, HW_SSP_STATUS) &
 		BM_SSP_STATUS_RESP_TIMEOUT) {
 #ifdef IMX_SSP_MMC_DEBUG
-		printf("MMC: Command %d timeout\n", cmd->cmdidx);
+		printf("MMC%d: Command %d timeout\n", mmc->block_dev.dev,
+			cmd->cmdidx);
 #endif
 		return TIMEOUT;
 	}
 
 	/* Check command errors */
-	if (REG_RD(REGS_SSP0_BASE, HW_SSP_STATUS) &
+	if (ssp_mmc_read(mmc, HW_SSP_STATUS) &
 		(BM_SSP_STATUS_RESP_CRC_ERR | BM_SSP_STATUS_RESP_ERR)) {
-		printf("MMC: Command %d error (status 0x%08x)!\n",
-			cmd->cmdidx, REG_RD(REGS_SSP0_BASE, HW_SSP_STATUS));
+		printf("MMC%d: Command %d error (status 0x%08x)!\n",
+			mmc->block_dev.dev, cmd->cmdidx,
+			ssp_mmc_read(mmc, HW_SSP_STATUS));
 		return COMM_ERR;
 	}
 
 	/* Copy response to response buffer */
 	if (cmd->resp_type & MMC_RSP_136) {
-		cmd->response[3] = REG_RD(REGS_SSP0_BASE, HW_SSP_SDRESP0);
-		cmd->response[2] = REG_RD(REGS_SSP0_BASE, HW_SSP_SDRESP1);
-		cmd->response[1] = REG_RD(REGS_SSP0_BASE, HW_SSP_SDRESP2);
-		cmd->response[0] = REG_RD(REGS_SSP0_BASE, HW_SSP_SDRESP3);
+		cmd->response[3] = ssp_mmc_read(mmc, HW_SSP_SDRESP0);
+		cmd->response[2] = ssp_mmc_read(mmc, HW_SSP_SDRESP1);
+		cmd->response[1] = ssp_mmc_read(mmc, HW_SSP_SDRESP2);
+		cmd->response[0] = ssp_mmc_read(mmc, HW_SSP_SDRESP3);
 	} else
-		cmd->response[0] = REG_RD(REGS_SSP0_BASE, HW_SSP_SDRESP0);
+		cmd->response[0] = ssp_mmc_read(mmc, HW_SSP_SDRESP0);
 
 	/* Return if no data to process */
 	if (!data)
@@ -174,36 +190,37 @@ ssp_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	if (data->flags & MMC_DATA_READ) {
 		tmp_ptr = (u32 *)data->dest;
 		while (xfer_cnt > 0) {
-			if ((REG_RD(REGS_SSP0_BASE, HW_SSP_STATUS) &
+			if ((ssp_mmc_read(mmc, HW_SSP_STATUS) &
 				BM_SSP_STATUS_FIFO_EMPTY) == 0) {
-				*tmp_ptr++ = REG_RD(REGS_SSP0_BASE, HW_SSP_DATA);
+				*tmp_ptr++ = ssp_mmc_read(mmc, HW_SSP_DATA);
 				xfer_cnt -= 4;
 			}
 		}
 	} else {
 		tmp_ptr = (u32 *)data->src;
 		while (xfer_cnt > 0) {
-			if ((REG_RD(REGS_SSP0_BASE, HW_SSP_STATUS) &
+			if ((ssp_mmc_read(mmc, HW_SSP_STATUS) &
 				BM_SSP_STATUS_FIFO_FULL) == 0) {
-				REG_WR(REGS_SSP0_BASE, HW_SSP_DATA, *tmp_ptr++);
+				ssp_mmc_write(mmc, HW_SSP_DATA, *tmp_ptr++);
 				xfer_cnt -= 4;
 			}
 		}
 	}
 
 	/* Check data errors */
-	if (REG_RD(REGS_SSP0_BASE, HW_SSP_STATUS) &
+	if (ssp_mmc_read(mmc, HW_SSP_STATUS) &
 		(BM_SSP_STATUS_TIMEOUT | BM_SSP_STATUS_DATA_CRC_ERR |
 		BM_SSP_STATUS_FIFO_OVRFLW | BM_SSP_STATUS_FIFO_UNDRFLW)) {
-		printf("MMC: Data error with command %d (status 0x%08x)!\n",
-			cmd->cmdidx, REG_RD(REGS_SSP0_BASE, HW_SSP_STATUS));
+		printf("MMC%d: Data error with command %d (status 0x%08x)!\n",
+			mmc->block_dev.dev, cmd->cmdidx,
+			ssp_mmc_read(mmc, HW_SSP_STATUS));
 		return COMM_ERR;
 	}
 
 	return 0;
 }
 
-static void set_bit_clock(u32 clock)
+static void set_bit_clock(struct mmc *mmc, u32 clock)
 {
 	const u32 sspclk = 480000 * 18 / 29 / 1;	/* 297931 KHz */
 	u32 divide, rate, tgtclk;
@@ -229,13 +246,13 @@ static void set_bit_clock(u32 clock)
 		rate = 256;
 
 	/* Always set timeout the maximum */
-	REG_WR(REGS_SSP0_BASE, HW_SSP_TIMING, BM_SSP_TIMING_TIMEOUT |
+	ssp_mmc_write(mmc, HW_SSP_TIMING, BM_SSP_TIMING_TIMEOUT |
 		divide << BP_SSP_TIMING_CLOCK_DIVIDE |
 		(rate - 1) << BP_SSP_TIMING_CLOCK_RATE);
 
 #ifdef IMX_SSP_MMC_DEBUG
-	printf("MMC: Set clock rate to %d KHz (requested %d KHz)\n",
-		tgtclk, clock);
+	printf("MMC%d: Set clock rate to %d KHz (requested %d KHz)\n",
+		mmc->block_dev.dev, tgtclk, clock);
 #endif
 }
 
@@ -245,10 +262,10 @@ static void ssp_mmc_set_ios(struct mmc *mmc)
 
 	/* Set the clock speed */
 	if (mmc->clock)
-		set_bit_clock(mmc->clock);
+		set_bit_clock(mmc, mmc->clock);
 
 	/* Set the bus width */
-	regval = REG_RD(REGS_SSP0_BASE, HW_SSP_CTRL0);
+	regval = ssp_mmc_read(mmc, HW_SSP_CTRL0);
 	regval &= ~BM_SSP_CTRL0_BUS_WIDTH;
 	switch (mmc->bus_width) {
 	case 1:
@@ -263,19 +280,18 @@ static void ssp_mmc_set_ios(struct mmc *mmc)
 		regval |= (BV_SSP_CTRL0_BUS_WIDTH__EIGHT_BIT <<
 				BP_SSP_CTRL0_BUS_WIDTH);
 	}
-	REG_WR(REGS_SSP0_BASE, HW_SSP_CTRL0, regval);
+	ssp_mmc_write(mmc, HW_SSP_CTRL0, regval);
 
 #ifdef IMX_SSP_MMC_DEBUG
-	printf("MMC: Set %d bits bus width\n", mmc->bus_width);
+	printf("MMC%d: Set %d bits bus width\n",
+		mmc->block_dev.dev, mmc->bus_width);
 #endif
 }
 
 static int ssp_mmc_init(struct mmc *mmc)
 {
+	struct imx_ssp_mmc_cfg *cfg = (struct imx_ssp_mmc_cfg *)mmc->priv;
 	u32 regval;
-
-	/* Board level init */
-	ssp_mmc_board_init();
 
 	/*
 	 * Set up SSPCLK
@@ -288,65 +304,66 @@ static int ssp_mmc_init(struct mmc *mmc)
 	/* Enable REF_IO0 */
 	REG_CLR(REGS_CLKCTRL_BASE, HW_CLKCTRL_FRAC0,
 		BM_CLKCTRL_FRAC0_CLKGATEIO0);
+
 	/* Source SSPCLK from REF_IO0 */
 	REG_CLR(REGS_CLKCTRL_BASE, HW_CLKCTRL_CLKSEQ,
-		BM_CLKCTRL_CLKSEQ_BYPASS_SSP0);
+		cfg->clkctrl_clkseq_ssp_offset);
 	/* Turn on SSPCLK */
-	REG_WR(REGS_CLKCTRL_BASE, HW_CLKCTRL_SSP0,
-		REG_RD(REGS_CLKCTRL_BASE, HW_CLKCTRL_SSP0) &
-		~BM_CLKCTRL_SSP0_CLKGATE);
+	REG_WR(REGS_CLKCTRL_BASE, cfg->clkctrl_ssp_offset,
+		REG_RD(REGS_CLKCTRL_BASE, cfg->clkctrl_ssp_offset) &
+		~BM_CLKCTRL_SSP_CLKGATE);
 	/* Set SSPCLK divide 1 */
-	regval = REG_RD(REGS_CLKCTRL_BASE, HW_CLKCTRL_SSP0);
-	regval &= ~(BM_CLKCTRL_SSP0_DIV_FRAC_EN | BM_CLKCTRL_SSP0_DIV);
-	REG_WR(REGS_CLKCTRL_BASE, HW_CLKCTRL_SSP0,
-		regval | (1 << BP_CLKCTRL_SSP0_DIV));
+	regval = REG_RD(REGS_CLKCTRL_BASE, cfg->clkctrl_ssp_offset);
+	regval &= ~(BM_CLKCTRL_SSP_DIV_FRAC_EN | BM_CLKCTRL_SSP_DIV);
+	REG_WR(REGS_CLKCTRL_BASE, cfg->clkctrl_ssp_offset,
+		regval | (1 << BP_CLKCTRL_SSP_DIV));
 	/* Wait for new divide ready */
 	do {
 		udelay(10);
-	} while (REG_RD(REGS_CLKCTRL_BASE, HW_CLKCTRL_SSP0) &
-		BM_CLKCTRL_SSP0_BUSY);
+	} while (REG_RD(REGS_CLKCTRL_BASE, cfg->clkctrl_ssp_offset) &
+		BM_CLKCTRL_SSP_BUSY);
 
 	/* Prepare for software reset */
-	REG_CLR(REGS_SSP0_BASE, HW_SSP_CTRL0, BM_SSP_CTRL0_SFTRST);
-	REG_CLR(REGS_SSP0_BASE, HW_SSP_CTRL0, BM_SSP_CTRL0_CLKGATE);
+	ssp_mmc_write(mmc, HW_SSP_CTRL0_CLR, BM_SSP_CTRL0_SFTRST);
+	ssp_mmc_write(mmc, HW_SSP_CTRL0_CLR, BM_SSP_CTRL0_CLKGATE);
 	/* Assert reset */
-	REG_SET(REGS_SSP0_BASE, HW_SSP_CTRL0, BM_SSP_CTRL0_SFTRST);
+	ssp_mmc_write(mmc, HW_SSP_CTRL0_SET, BM_SSP_CTRL0_SFTRST);
 	/* Wait for confirmation */
-	while (!(REG_RD(REGS_SSP0_BASE, HW_SSP_CTRL0) & BM_SSP_CTRL0_CLKGATE))
+	while (!(ssp_mmc_read(mmc, HW_SSP_CTRL0) & BM_SSP_CTRL0_CLKGATE))
 		;
 	/* Done */
-	REG_CLR(REGS_SSP0_BASE, HW_SSP_CTRL0, BM_SSP_CTRL0_SFTRST);
-	REG_CLR(REGS_SSP0_BASE, HW_SSP_CTRL0, BM_SSP_CTRL0_CLKGATE);
+	ssp_mmc_write(mmc, HW_SSP_CTRL0_CLR, BM_SSP_CTRL0_SFTRST);
+	ssp_mmc_write(mmc, HW_SSP_CTRL0_CLR, BM_SSP_CTRL0_CLKGATE);
 
 	/* 8 bits word length in MMC mode */
-	regval = REG_RD(REGS_SSP0_BASE, HW_SSP_CTRL1);
+	regval = ssp_mmc_read(mmc, HW_SSP_CTRL1);
 	regval &= ~(BM_SSP_CTRL1_SSP_MODE | BM_SSP_CTRL1_WORD_LENGTH);
-	REG_WR(REGS_SSP0_BASE, HW_SSP_CTRL1, regval |
+	ssp_mmc_write(mmc, HW_SSP_CTRL1, regval |
 		(BV_SSP_CTRL1_SSP_MODE__SD_MMC << BP_SSP_CTRL1_SSP_MODE) |
 		(BV_SSP_CTRL1_WORD_LENGTH__EIGHT_BITS <<
 			BP_SSP_CTRL1_WORD_LENGTH));
 
 	/* Set initial bit clock 400 KHz */
-	set_bit_clock(400000);
+	set_bit_clock(mmc, 400000);
 
 	/* Send initial 74 clock cycles (185 us @ 400 KHz)*/
-	REG_SET(REGS_SSP0_BASE, HW_SSP_CMD0, BM_SSP_CMD0_CONT_CLKING_EN);
+	ssp_mmc_write(mmc, HW_SSP_CMD0_SET, BM_SSP_CMD0_CONT_CLKING_EN);
 	udelay(200);
-	REG_CLR(REGS_SSP0_BASE, HW_SSP_CMD0, BM_SSP_CMD0_CONT_CLKING_EN);
+	ssp_mmc_write(mmc, HW_SSP_CMD0_CLR, BM_SSP_CMD0_CONT_CLKING_EN);
 
 	return 0;
 }
 
-int imx_ssp_mmc_initialize(bd_t *bis)
+int imx_ssp_mmc_initialize(bd_t *bis, struct imx_ssp_mmc_cfg *cfg)
 {
 	struct mmc *mmc;
 
 	mmc = malloc(sizeof(struct mmc));
-
 	sprintf(mmc->name, "IMX_SSP_MMC");
 	mmc->send_cmd = ssp_mmc_send_cmd;
 	mmc->set_ios = ssp_mmc_set_ios;
 	mmc->init = ssp_mmc_init;
+	mmc->priv = cfg;
 
 	mmc->voltages = MMC_VDD_32_33 | MMC_VDD_31_32 | MMC_VDD_30_31 |
 			MMC_VDD_29_30 | MMC_VDD_28_29 | MMC_VDD_27_28;
@@ -364,7 +381,5 @@ int imx_ssp_mmc_initialize(bd_t *bis)
 	mmc->f_max = 148000000;	/* 297.731 MHz / 2 */
 
 	mmc_register(mmc);
-
 	return 0;
 }
-

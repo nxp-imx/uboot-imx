@@ -23,6 +23,9 @@
 #include <common.h>
 #include <asm/arch/regs-pinctrl.h>
 #include <asm/arch/pinctrl.h>
+#include <asm/arch/regs-clkctrl.h>
+#include <mmc.h>
+#include <imx_ssp_mmc.h>
 
 /* This should be removed after it's added into mach-types.h */
 #ifndef MACH_TYPE_MX28EVK
@@ -31,8 +34,10 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#ifdef CONFIG_IMX_SSP_MMC
+
 /* MMC pins */
-static struct pin_desc mmc_pins_desc[] = {
+static struct pin_desc mmc0_pins_desc[] = {
 	{ PINID_SSP0_DATA0, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
 	{ PINID_SSP0_DATA1, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
 	{ PINID_SSP0_DATA2, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
@@ -43,13 +48,38 @@ static struct pin_desc mmc_pins_desc[] = {
 	{ PINID_SSP0_DATA7, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
 	{ PINID_SSP0_CMD, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
 	{ PINID_SSP0_DETECT, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
-	{ PINID_SSP0_SCK, PIN_FUN1, PAD_8MA, PAD_3V3, 1 }
+	{ PINID_SSP0_SCK, PIN_FUN1, PAD_8MA, PAD_3V3, 1 },
 };
 
-static struct pin_group mmc_pins = {
-	.pins		= mmc_pins_desc,
-	.nr_pins	= ARRAY_SIZE(mmc_pins_desc)
+static struct pin_desc mmc1_pins_desc[] = {
+	{ PINID_SSP1_DATA0, PIN_FUN2, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP1_DATA1, PIN_FUN2, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP1_DATA2, PIN_FUN2, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP1_DATA3, PIN_FUN2, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP1_DATA4, PIN_FUN2, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP1_DATA5, PIN_FUN2, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP1_DATA6, PIN_FUN2, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP1_DATA7, PIN_FUN2, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP1_CMD, PIN_FUN2, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP1_DETECT, PIN_FUN2, PAD_8MA, PAD_3V3, 1 },
+	{ PINID_SSP1_SCK, PIN_FUN2, PAD_8MA, PAD_3V3, 1 }
 };
+
+static struct pin_group mmc0_pins = {
+	.pins		= mmc0_pins_desc,
+	.nr_pins	= ARRAY_SIZE(mmc0_pins_desc)
+};
+
+static struct pin_group mmc1_pins = {
+	.pins		= mmc1_pins_desc,
+	.nr_pins	= ARRAY_SIZE(mmc1_pins_desc)
+};
+
+struct imx_ssp_mmc_cfg ssp_mmc_cfg[2] = {
+	{REGS_SSP0_BASE, HW_CLKCTRL_SSP0, BM_CLKCTRL_CLKSEQ_BYPASS_SSP0},
+	{REGS_SSP1_BASE, HW_CLKCTRL_SSP1, BM_CLKCTRL_CLKSEQ_BYPASS_SSP1},
+};
+#endif
 
 /* ENET pins */
 static struct pin_desc enet_pins_desc[] = {
@@ -90,28 +120,88 @@ int dram_init(void)
 	return 0;
 }
 
-u32 ssp_mmc_is_wp(void)
+#ifdef CONFIG_IMX_SSP_MMC
+
+#ifdef CONFIG_DYNAMIC_MMC_DEVNO
+int get_mmc_env_devno()
 {
-	return pin_gpio_get(PINID_SSP1_SCK);
+	unsigned long global_boot_mode;
+
+	global_boot_mode = REG_RD_ADDR(GLOBAL_BOOT_MODE_ADDR);
+	return ((global_boot_mode & 0xf) == BOOT_MODE_SD1) ? 1 : 0;
+}
+#endif
+
+u32 ssp_mmc_is_wp(struct mmc *mmc)
+{
+	return (mmc->block_dev.dev == 0) ?
+		pin_gpio_get(PINID_SSP0_GPIO_WP) :
+		pin_gpio_get(PINID_SSP1_GPIO_WP);
 }
 
-void ssp_mmc_board_init(void)
+int ssp_mmc_gpio_init(bd_t *bis)
 {
-	/* Set up MMC pins */
-	pin_set_group(&mmc_pins);
+	s32 status = 0;
+	u32 index = 0;
 
-	/* Power on the card slot */
-	pin_set_type(PINID_PWM3, PIN_GPIO);
-	pin_gpio_direction(PINID_PWM3, 1);
-	pin_gpio_set(PINID_PWM3, 0);
+	for (index = 0; index < CONFIG_SYS_SSP_MMC_NUM;
+		++index) {
+		switch (index) {
+		case 0:
+			/* Set up MMC pins */
+			pin_set_group(&mmc0_pins);
 
-	/* Wait 10 ms for card ramping up */
-	udelay(10000);
+			/* Power on the card slot 0 */
+			pin_set_type(PINID_PWM3, PIN_GPIO);
+			pin_gpio_direction(PINID_PWM3, 1);
+			pin_gpio_set(PINID_PWM3, 0);
 
-	/* Set up WP pin */
-	pin_set_type(PINID_SSP1_SCK, PIN_GPIO);
-	pin_gpio_direction(PINID_SSP1_SCK, 0);
+			/* Wait 10 ms for card ramping up */
+			udelay(10000);
+
+			/* Set up SD0 WP pin */
+			pin_set_type(PINID_SSP0_GPIO_WP, PIN_GPIO);
+			pin_gpio_direction(PINID_SSP0_GPIO_WP, 0);
+
+			break;
+		case 1:
+			/* Set up MMC pins */
+			pin_set_group(&mmc1_pins);
+
+			/* Power on the card slot 1 */
+			pin_set_type(PINID_PWM4, PIN_GPIO);
+			pin_gpio_direction(PINID_PWM4, 1);
+			pin_gpio_set(PINID_PWM4, 0);
+
+			/* Wait 10 ms for card ramping up */
+			udelay(10000);
+
+			/* Set up SD1 WP pin */
+			pin_set_type(PINID_SSP1_GPIO_WP, PIN_GPIO);
+			pin_gpio_direction(PINID_SSP1_GPIO_WP, 0);
+
+			break;
+		default:
+			printf("Warning: you configured more ssp mmc controller"
+				"(%d) as supported by the board(2)\n",
+				CONFIG_SYS_SSP_MMC_NUM);
+			return status;
+		}
+		status |= imx_ssp_mmc_initialize(bis, &ssp_mmc_cfg[index]);
+	}
+
+	return status;
 }
+
+int board_mmc_init(bd_t *bis)
+{
+	if (!ssp_mmc_gpio_init(bis))
+		return 0;
+	else
+		return -1;
+}
+
+#endif
 
 void enet_board_init(void)
 {

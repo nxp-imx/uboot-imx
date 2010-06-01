@@ -142,21 +142,6 @@ int print_cpuinfo(void)
 #endif
 
 /*
- * Initializes on-chip MMC controllers.
- */
-#if defined(CONFIG_IMX_SSP_MMC)
-int imx_ssp_mmc_initialize(bd_t *bis);
-#endif
-int cpu_mmc_init(bd_t *bis)
-{
-	int rc = ENODEV;
-#if defined(CONFIG_IMX_SSP_MMC)
-	rc = imx_ssp_mmc_initialize(bis);
-#endif
-	return rc;
-}
-
-/*
  * Initializes on-chip ethernet controllers.
  */
 int cpu_eth_init(bd_t *bis)
