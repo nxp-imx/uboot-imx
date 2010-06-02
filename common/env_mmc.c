@@ -42,6 +42,8 @@ env_t *env_ptr = (env_t *)(&environment[0]);
 env_t *env_ptr;
 #endif /* ENV_IS_EMBEDDED */
 
+static int mmc_env_devno;
+
 /* local functions */
 #if !defined(ENV_IS_EMBEDDED)
 static void use_default(void);
@@ -59,6 +61,12 @@ int env_init(void)
 	/* use default */
 	gd->env_addr = (ulong)&default_environment[0];
 	gd->env_valid = 1;
+
+#ifdef CONFIG_DYNAMIC_MMC_DEVNO
+	mmc_env_devno = get_mmc_env_devno();
+#else
+	mmc_env_devno = CONFIG_SYS_MMC_ENV_DEV;
+#endif
 
 	return 0;
 }
@@ -88,7 +96,7 @@ inline int write_env(struct mmc *mmc, unsigned long size,
 	blk_start = ALIGN(offset, mmc->write_bl_len) / mmc->write_bl_len;
 	blk_cnt   = ALIGN(size, mmc->write_bl_len) / mmc->write_bl_len;
 
-	n = mmc->block_dev.block_write(CONFIG_SYS_MMC_ENV_DEV, blk_start,
+	n = mmc->block_dev.block_write(mmc_env_devno, blk_start,
 					blk_cnt, (u_char *)buffer);
 
 	return (n == blk_cnt) ? 0 : -1;
@@ -96,12 +104,12 @@ inline int write_env(struct mmc *mmc, unsigned long size,
 
 int saveenv(void)
 {
-	struct mmc *mmc = find_mmc_device(CONFIG_SYS_MMC_ENV_DEV);
+	struct mmc *mmc = find_mmc_device(mmc_env_devno);
 
 	if (init_mmc_for_env(mmc))
 		return 1;
 
-	printf("Writing to MMC(%d)... ", CONFIG_SYS_MMC_ENV_DEV);
+	printf("Writing to MMC(%d)... ", mmc_env_devno);
 	if (write_env(mmc, CONFIG_ENV_SIZE, CONFIG_ENV_OFFSET, env_ptr)) {
 		puts("failed\n");
 		return 1;
@@ -120,7 +128,7 @@ inline int read_env(struct mmc *mmc, unsigned long size,
 	blk_start = ALIGN(offset, mmc->read_bl_len) / mmc->read_bl_len;
 	blk_cnt   = ALIGN(size, mmc->read_bl_len) / mmc->read_bl_len;
 
-	n = mmc->block_dev.block_read(CONFIG_SYS_MMC_ENV_DEV, blk_start,
+	n = mmc->block_dev.block_read(mmc_env_devno, blk_start,
 					blk_cnt, (uchar *)buffer);
 
 	return (n == blk_cnt) ? 0 : -1;
@@ -129,7 +137,7 @@ inline int read_env(struct mmc *mmc, unsigned long size,
 void env_relocate_spec(void)
 {
 #if !defined(ENV_IS_EMBEDDED)
-	struct mmc *mmc = find_mmc_device(CONFIG_SYS_MMC_ENV_DEV);
+	struct mmc *mmc = find_mmc_device(mmc_env_devno);
 
 	if (init_mmc_for_env(mmc))
 		return;
