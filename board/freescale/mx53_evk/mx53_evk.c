@@ -433,6 +433,9 @@ static int _identify_board_fix_up(int id0, int id1)
 		ret = clk_config(CONFIG_REF_CLK_FREQ, 400, DDR_CLK);
 		if (ret < 0)
 			return ret;
+
+		/* set up rev #2 for EVK RevB board */
+		setup_board_rev(2);
 	}
 #endif
 	return ret;
