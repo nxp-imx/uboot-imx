@@ -3,7 +3,7 @@
  *
  * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
  *
- * Configuration settings for the MX35 3stack Freescale board.
+ * Configuration settings for the MX31ADS Freescale board.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -25,21 +25,29 @@
 #define __CONFIG_H
 
 #include <asm/arch/mx35.h>
-
+/* for mfg firmware */
+#define CONFIG_MFG
+#define CONFIG_BOOTARGS "console=ttymxc0,115200 rdinit=/linuxrc"
+#define CONFIG_ENV_IS_NOWHERE
  /* High Level Configuration Options */
 #define CONFIG_ARM1136		1	/* This is an arm1136 CPU core */
 #define CONFIG_MXC		1
 #define CONFIG_MX35		1	/* in a mx31 */
 #define CONFIG_MX35_HCLK_FREQ	24000000	/* RedBoot says 26MHz */
-#define CONFIG_MFG              1
+
+#define CONFIG_ARCH_CPU_INIT
+#define CONFIG_ARCH_MMU
 
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
+#define CONFIG_SYS_64BIT_VSPRINTF
+
 #define BOARD_LATE_INIT
 /*
- * Disabled for now due to build problems under Debian and a significant
- * increase in the final file size: 144260 vs. 109536 Bytes.
+ * Disabled for now due to build problems under Debian
+ * and a significant increase
+ * in the final file size: 144260 vs. 109536 Bytes.
  */
 #if 0
 #define CONFIG_OF_LIBFDT		1
@@ -56,7 +64,8 @@
  * Size of malloc() pool
  */
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 512 * 1024)
-#define CONFIG_SYS_GBL_DATA_SIZE	128 /* size in bytes reserved for initial data */
+/* size in bytes reserved for initial data */
+#define CONFIG_SYS_GBL_DATA_SIZE	128
 
 /*
  * Hardware drivers
@@ -83,10 +92,14 @@
 
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
+#define CONFIG_BOOTP_SUBNETMASK
+#define CONFIG_BOOTP_GATEWAY
+#define CONFIG_BOOTP_DNS
 /*#define CONFIG_CMD_SPI*/
 /*#define CONFIG_CMD_DATE*/
-#define CONFIG_CMD_NAND
-#define CONFIG_MXC_NAND
+/*#define CONFIG_CMD_NAND*/
+#define CONFIG_CMD_ENV
+/* #define CONFIG_CMD_MMC */
 
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_MII
@@ -96,35 +109,9 @@
 #define CONFIG_BOOTDELAY	0
 
 #define CONFIG_LOADADDR		0x80100000	/* loadaddr env var */
-
-#define CONFIG_BOOTARGS         "console=ttymxc0,115200 "\
-				"rdinit=/linuxrc"
-
-#define CONFIG_BOOTCOMMAND      "bootm ${loadaddr}  0x80800000"
-
-#define CONFIG_ENV_IS_EMBEDDED
-
-#define	CONFIG_EXTRA_ENV_SETTINGS					\
-		"netdev=eth0\0"						\
-		"ethprime=smc911x\0"					\
-		"uboot_addr=0xa0000000\0"				\
-		"uboot=u-boot.bin\0"			\
-		"kernel=uImage\0"				\
-		"nfsroot=/opt/eldk/arm\0"				\
-		"bootargs_base=setenv bootargs console=ttymxc0,115200\0"\
-		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
-			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
-		"bootcmd=run bootcmd_net\0"				\
-		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
-			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
-		"prg_uboot=tftpboot ${loadaddr} ${uboot}; "		\
-			"protect off ${uboot_addr} 0xa003ffff; "	\
-			"erase ${uboot_addr} 0xa003ffff; "		\
-			"cp.b ${loadaddr} ${uboot_addr} ${filesize}; "	\
-			"setenv filesize; saveenv\0"
-
+#define CONFIG_BOOTCOMMAND      "bootm ${loadaddr} 0x80800000"
 /*Support LAN9217*/
-#define CONFIG_SMC911X		1
+#define CONFIG_SMC911X	1
 #define CONFIG_SMC911X_16_BIT 1
 #define CONFIG_SMC911X_BASE CS5_BASE_ADDR
 
@@ -157,8 +144,6 @@
  */
 #define CONFIG_SYS_LONGHELP	/* undef to save memory */
 #define CONFIG_SYS_PROMPT	"MX35 U-Boot > "
-#define CONFIG_ARCH_CPU_INIT
-#define CONFIG_ARCH_MMU
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
@@ -193,6 +178,23 @@
 #define iomem_valid_addr(addr, size) \
 	(addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
 
+/*
+ * MMC Configs
+ * */
+#ifdef CONFIG_CMD_MMC
+	#define CONFIG_MMC				1
+	#define CONFIG_GENERIC_MMC
+	#define CONFIG_IMX_MMC
+	#define CONFIG_SYS_FSL_ESDHC_NUM        2
+	#define CONFIG_SYS_FSL_ESDHC_ADDR       0
+	#define CONFIG_SYS_MMC_ENV_DEV		0
+	#define CONFIG_DOS_PARTITION	1
+	#define CONFIG_CMD_FAT		1
+#endif
+
+#define CONFIG_DOS_PARTITION    1
+#define CONFIG_CMD_FAT          1
+
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
@@ -207,10 +209,8 @@
 #define CONFIG_ENV_SIZE		CONFIG_ENV_SECT_SIZE
 
 /* Address and size of Redundant Environment Sector	*/
-#define CONFIG_ENV_OFFSET_REDUND (2 * 1024 * 1024)
+#define CONFIG_ENV_OFFSET_REDUND (CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
 #define CONFIG_ENV_SIZE_REDUND	CONFIG_ENV_SIZE
-
-#define CONFIG_ENV_IS_NOWHERE
 
 /*
  * S29WS256N NOR flash has 4 32KiB small sectors at the beginning and at the
@@ -220,16 +220,13 @@
  */
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE + CONFIG_ENV_SECT_SIZE)
 
-#if defined(CONFIG_CMD_NAND)
-	#define CONFIG_FSL_ENV_IN_NAND
-#else
-	#define CONFIG_ENV_IS_IN_FLASH  1
-#endif
-
-#if defined(CONFIG_FSL_ENV_IN_NAND)
+#if defined(CONFIG_CMD_MMC)
+	#define CONFIG_ENV_IS_IN_MMC    1
+	#define CONFIG_ENV_OFFSET       (768 * 1024)
+#elif defined(CONFIG_CMD_NAND)
 	#define CONFIG_ENV_IS_IN_NAND 1
-	#define CONFIG_ENV_OFFSET       (1024 * 1024)
-#elif defined(CONFIG_FSL_ENV_IS_IN_FLASH)
+	#define CONFIG_ENV_OFFSET       0x100000
+#else
 	#define CONFIG_ENV_IS_IN_FLASH  1
 #endif
 
