@@ -137,7 +137,7 @@
 #define EXT_CSD_CARD_TYPE	196	/* RO */
 #define EXT_CSD_REV		192	/* RO */
 #define EXT_CSD_SEC_CNT		212	/* RO, 4 bytes */
-#define EXT_CSD_BOOT_INFO	228	/* RO */
+#define EXT_CSD_BOOT_SIZE_MULT	226	/* RO */
 
 /*
  * EXT_CSD field definitions
@@ -184,7 +184,6 @@
 #define MMC_RSP_R5      (MMC_RSP_PRESENT|MMC_RSP_CRC|MMC_RSP_OPCODE)
 #define MMC_RSP_R6      (MMC_RSP_PRESENT|MMC_RSP_CRC|MMC_RSP_OPCODE)
 #define MMC_RSP_R7      (MMC_RSP_PRESENT|MMC_RSP_CRC|MMC_RSP_OPCODE)
-
 
 struct mmc_cid {
 	unsigned long psn;
@@ -293,7 +292,7 @@ int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size);
 struct mmc *find_mmc_device(int dev_num);
 void print_mmc_devices(char separator);
 #ifdef CONFIG_BOOT_PARTITION_ACCESS
-int mmc_switch_partition(struct mmc *mmc, uint part);
+int mmc_switch_partition(struct mmc *mmc, uint part, uint enable_boot);
 int sd_switch_partition(struct mmc *mmc, uint part);
 #endif
 

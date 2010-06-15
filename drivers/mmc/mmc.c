@@ -40,12 +40,13 @@
 static struct list_head mmc_devices;
 static int cur_dev_num = -1;
 
-int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
+static int mmc_send_cmd(struct mmc *mmc,
+	struct mmc_cmd *cmd, struct mmc_data *data)
 {
 	return mmc->send_cmd(mmc, cmd, data);
 }
 
-int mmc_set_blocklen(struct mmc *mmc, int len)
+static int mmc_set_blocklen(struct mmc *mmc, int len)
 {
 	struct mmc_cmd cmd;
 
@@ -140,7 +141,7 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 	return blkcnt;
 }
 
-int mmc_read_block(struct mmc *mmc, void *dst, uint blocknum)
+static int mmc_read_block(struct mmc *mmc, void *dst, uint blocknum)
 {
 	struct mmc_cmd cmd;
 	struct mmc_data data;
@@ -279,7 +280,9 @@ static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
 	return blkcnt;
 }
 
-int mmc_go_idle(struct mmc* mmc)
+#define CARD_STATE(r) ((u32)((r) & 0x1e00) >> 9)
+
+static int mmc_go_idle(struct mmc *mmc)
 {
 	struct mmc_cmd cmd;
 	int err;
@@ -301,7 +304,7 @@ int mmc_go_idle(struct mmc* mmc)
 	return 0;
 }
 
-int
+static int
 sd_send_op_cond(struct mmc *mmc)
 {
 	int timeout = 1000;
@@ -356,7 +359,7 @@ sd_send_op_cond(struct mmc *mmc)
 	return 0;
 }
 
-int mmc_send_op_cond(struct mmc *mmc)
+static int mmc_send_op_cond(struct mmc *mmc)
 {
 	int timeout = 1000;
 	struct mmc_cmd cmd;
@@ -392,7 +395,7 @@ int mmc_send_op_cond(struct mmc *mmc)
 }
 
 
-int mmc_send_ext_csd(struct mmc *mmc, char *ext_csd)
+static int mmc_send_ext_csd(struct mmc *mmc, char *ext_csd)
 {
 	struct mmc_cmd cmd;
 	struct mmc_data data;
@@ -415,7 +418,7 @@ int mmc_send_ext_csd(struct mmc *mmc, char *ext_csd)
 }
 
 
-int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value)
+static int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value)
 {
 	struct mmc_cmd cmd;
 
@@ -429,7 +432,7 @@ int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value)
 	return mmc_send_cmd(mmc, &cmd, NULL);
 }
 
-int mmc_change_freq(struct mmc *mmc)
+static int mmc_change_freq(struct mmc *mmc)
 {
 	char *ext_csd;
 	char cardtype;
@@ -455,13 +458,13 @@ int mmc_change_freq(struct mmc *mmc)
 	if (err)
 		goto err_rtn;
 
-/*
-	if (ext_csd[EXT_CSD_SEC_CNT] ||
-		ext_csd[EXT_CSD_SEC_CNT + 1] ||
-		ext_csd[EXT_CSD_SEC_CNT + 2] ||
-		ext_csd[EXT_CSD_SEC_CNT + 3])
-		mmc->high_capacity = 1;
-*/
+	if (mmc->high_capacity) {
+		mmc->capacity = ext_csd[EXT_CSD_SEC_CNT + 3] << 24 |
+				ext_csd[EXT_CSD_SEC_CNT + 2] << 16 |
+				ext_csd[EXT_CSD_SEC_CNT + 1] << 8 |
+				ext_csd[EXT_CSD_SEC_CNT];
+		mmc->capacity *= 512;
+	}
 
 	cardtype = ext_csd[EXT_CSD_CARD_TYPE] & 0xf;
 
@@ -495,7 +498,7 @@ err_rtn:
 	return err;
 }
 
-int sd_switch(struct mmc *mmc, int mode, int group, u8 value, u8 *resp)
+static int sd_switch(struct mmc *mmc, int mode, int group, u8 value, u8 *resp)
 {
 	struct mmc_cmd cmd;
 	struct mmc_data data;
@@ -517,7 +520,7 @@ int sd_switch(struct mmc *mmc, int mode, int group, u8 value, u8 *resp)
 }
 
 
-int sd_change_freq(struct mmc *mmc)
+static int sd_change_freq(struct mmc *mmc)
 {
 	int err;
 	struct mmc_cmd cmd;
@@ -616,7 +619,7 @@ retry_scr:
 
 /* frequency bases */
 /* divided by 10 to be nice to platforms without floating point */
-int fbase[] = {
+static int fbase[] = {
 	10000,
 	100000,
 	1000000,
@@ -626,7 +629,7 @@ int fbase[] = {
 /* Multiplier values for TRAN_SPEED.  Multiplied by 10 to be nice
  * to platforms without floating point.
  */
-int multipliers[] = {
+static int multipliers[] = {
 	0,	/* reserved */
 	10,
 	12,
@@ -645,12 +648,12 @@ int multipliers[] = {
 	80,
 };
 
-void mmc_set_ios(struct mmc *mmc)
+static void mmc_set_ios(struct mmc *mmc)
 {
 	mmc->set_ios(mmc);
 }
 
-void mmc_set_clock(struct mmc *mmc, uint clock)
+static void mmc_set_clock(struct mmc *mmc, uint clock)
 {
 	if (clock > mmc->f_max)
 		clock = mmc->f_max;
@@ -663,7 +666,7 @@ void mmc_set_clock(struct mmc *mmc, uint clock)
 	mmc_set_ios(mmc);
 }
 
-void mmc_set_bus_width(struct mmc *mmc, uint width)
+static void mmc_set_bus_width(struct mmc *mmc, uint width)
 {
 	mmc->bus_width = width;
 
@@ -672,7 +675,7 @@ void mmc_set_bus_width(struct mmc *mmc, uint width)
 
 #ifdef CONFIG_BOOT_PARTITION_ACCESS
 /* Return 0/1/2 for partition id before switch; Return -1 if fail to switch */
-int mmc_switch_partition(struct mmc *mmc, uint part)
+int mmc_switch_partition(struct mmc *mmc, uint part, uint enable_boot)
 {
 	char *ext_csd;
 	int err;
@@ -685,66 +688,79 @@ int mmc_switch_partition(struct mmc *mmc, uint part)
 		2 - boot partition 2
 	*/
 	if (part > 2) {
-		printf("\nWrong partition id - 0 (user area), 1 (boot1), 2 (boot2)\n");
+		printf("\nWrong partition id - "
+			"0 (user area), 1 (boot1), 2 (boot2)\n");
 		return 1;
 	}
 
 	/* Before calling this func, "mmc" struct must have been initialized */
 	if (mmc->version < MMC_VERSION_4) {
-		puts("Error: invalid mmc version! mmc version is below version 4!");
+		puts("\nError: invalid mmc version! "
+			"mmc version is below version 4!");
 		return -1;
 	}
 
 	if (mmc->boot_size_mult <= 0) {
 		/* it's a normal SD/MMC but user request to boot partition */
-		printf("\nError: This is a normal SD/MMC card but you request to access boot partition\n");
+		printf("\nError: This is a normal SD/MMC card but you"
+			"request to access boot partition\n");
 		return -1;
 	}
 
-	/* part must be 0 (user area), 1 (boot partition1) or 2 (boot partition2) */
+	/*
+	 * Part must be 0 (user area), 1 (boot partition1)
+	 * or 2 (boot partition2)
+	 */
 	if (part > 2) {
-		puts("Error: partition id must be 0(user area), 1(boot partition1) or 2(boot partition2)\n");
-		return -1;
-	}
-
-	if (IS_SD(mmc)) {
-		/* eSD card hadn't been supported. Return directly without warning */
+		puts("\nError: partition id must be 0(user area), "
+			"1(boot partition1) or 2(boot partition2)\n");
 		return -1;
 	}
 
 	ext_csd = (char *)malloc(512);
 	if (!ext_csd) {
-		puts("Error: Could not allocate buffer for MMC ext csd!\n");
+		puts("\nError: Could not allocate buffer for MMC ext csd!\n");
 		return -1;
 	}
 
 	err = mmc_send_ext_csd(mmc, ext_csd);
 	if (err) {
-		puts("Warning: fail to get ext csd for MMC!\n");
+		puts("\nWarning: fail to get ext csd for MMC!\n");
 		goto err_rtn;
-    }
+	}
 
-	old_part = ext_csd[EXT_CSD_BOOT_CONFIG] & EXT_CSD_BOOT_PARTITION_ACCESS_MASK;
+	old_part = ext_csd[EXT_CSD_BOOT_CONFIG] &
+			EXT_CSD_BOOT_PARTITION_ACCESS_MASK;
 
 	/* Send SWITCH command to change partition for access */
-	boot_config = (ext_csd[EXT_CSD_BOOT_CONFIG] & ~EXT_CSD_BOOT_PARTITION_ACCESS_MASK) | (char)part;
+	boot_config = (ext_csd[EXT_CSD_BOOT_CONFIG] &
+			~EXT_CSD_BOOT_PARTITION_ACCESS_MASK) |
+			(char)part;
 
-	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_BOOT_CONFIG, boot_config);
+	/* enable access plus boot from that partition and boot_ack bit */
+	if (enable_boot != 0)
+		boot_config = (char)(part) | (char)(part << 3) | (char)(1 << 6);
+
+	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
+			EXT_CSD_BOOT_CONFIG, boot_config);
 	if (err) {
-		puts("Error: fail to send SWITCH command to card to swich partition for access!\n");
+		puts("\nError: fail to send SWITCH command to card "
+			"to swich partition for access!\n");
 		goto err_rtn;
 	}
 
 	/* Now check whether it works */
 	err = mmc_send_ext_csd(mmc, ext_csd);
 	if (err) {
-		puts("Warning: fail to get ext csd for MMC!\n");
+		puts("\nWarning: fail to get ext csd for MMC!\n");
 		goto err_rtn;
 	}
 
-	new_part = ext_csd[EXT_CSD_BOOT_CONFIG] & EXT_CSD_BOOT_PARTITION_ACCESS_MASK;
+	new_part = ext_csd[EXT_CSD_BOOT_CONFIG] &
+			EXT_CSD_BOOT_PARTITION_ACCESS_MASK;
 	if ((char)part != new_part) {
-		printf("Warning: after SWITCH, current part id %d is not same as requested partition %d!\n",
+		printf("\nWarning: after SWITCH, current part id %d is "
+			"not same as requested partition %d!\n",
 			new_part, part);
 		goto err_rtn;
 	}
@@ -775,15 +791,13 @@ int sd_switch_partition(struct mmc *mmc, uint part)
 
 	err = mmc_send_cmd(mmc, &cmd, NULL);
 
-	if (err) {
-		printf("Failed to switch to partition %d\nPartition not exists or command execute fail!\n");
+	if (err)
 		return -1;
-	}
 
 	return 0;
 }
 
-int mmc_get_cur_boot_partition(struct mmc *mmc)
+static int mmc_get_cur_boot_partition(struct mmc *mmc)
 {
 	char *ext_csd;
 	int err;
@@ -791,7 +805,7 @@ int mmc_get_cur_boot_partition(struct mmc *mmc)
 	ext_csd = (char *)malloc(512);
 
 	if (!ext_csd) {
-		puts("Error! Could not allocate buffer for MMC ext csd!\n");
+		puts("\nError! Could not allocate buffer for MMC ext csd!\n");
 		return -1;
 	}
 
@@ -803,7 +817,7 @@ int mmc_get_cur_boot_partition(struct mmc *mmc)
 		/* continue since it's not a fatal error */
 	} else {
 		mmc->boot_config = ext_csd[EXT_CSD_BOOT_CONFIG];
-		mmc->boot_size_mult = ext_csd[EXT_CSD_BOOT_INFO];
+		mmc->boot_size_mult = ext_csd[EXT_CSD_BOOT_SIZE_MULT];
 	}
 
 	free(ext_csd);
@@ -813,7 +827,7 @@ int mmc_get_cur_boot_partition(struct mmc *mmc)
 
 #endif
 
-int mmc_startup(struct mmc *mmc)
+static int mmc_startup(struct mmc *mmc)
 {
 	int err;
 	uint mult, freq;
@@ -1039,7 +1053,7 @@ int mmc_startup(struct mmc *mmc)
 	return 0;
 }
 
-int mmc_send_if_cond(struct mmc *mmc)
+static int mmc_send_if_cond(struct mmc *mmc)
 {
 	struct mmc_cmd cmd;
 	int err;

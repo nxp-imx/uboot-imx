@@ -199,6 +199,8 @@
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
+
+	#define CONFIG_BOOT_PARTITION_ACCESS
 #endif
 
 /*
