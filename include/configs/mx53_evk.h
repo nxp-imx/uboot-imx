@@ -199,6 +199,9 @@
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
 
+	/* detect whether ESDHC1 or ESDHC3 is boot device */
+	#define CONFIG_DYNAMIC_MMC_DEVNO
+
 	#define CONFIG_BOOT_PARTITION_ACCESS
 #endif
 
