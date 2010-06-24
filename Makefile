@@ -3256,6 +3256,7 @@ mx51_3stack_android_config	\
 mx51_3stack_config	: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx51_3stack freescale mx51
 
+mx53_evk_mfg_config 		\
 mx53_arm2_ddr3_config		\
 mx53_arm2_config		\
 mx53_evk_config      : unconfig
