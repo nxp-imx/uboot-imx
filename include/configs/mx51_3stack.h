@@ -117,6 +117,7 @@
 	#define CONFIG_SYS_MMC_ENV_DEV	0
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
+	#define CONFIG_SYS_FSL_ESDHC_NUM 1
 #endif
 
 /*

@@ -990,84 +990,93 @@ int board_eth_init(bd_t *bis)
 
 #ifdef CONFIG_CMD_MMC
 
-u32 *imx_esdhc_base_addr;
+struct fsl_esdhc_cfg esdhc_cfg[2] = {
+	{MMC_SDHC1_BASE_ADDR, 1, 1},
+};
 
-int esdhc_gpio_init(void)
+#ifdef CONFIG_DYNAMIC_MMC_DEVNO
+int get_mmc_env_devno()
 {
-	u32 interface_esdhc = 0;
+	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	return (soc_sbmr & 0x00180000) ? 1 : 0;
+}
+#endif
+
+int esdhc_gpio_init(bd_t *bis)
+{
+	u32 index = 0;
 	s32 status = 0;
 
-	interface_esdhc = (readl(SRC_BASE_ADDR + 0x4) & (0x00180000)) >> 19;
+	for (index = 0; index < CONFIG_SYS_FSL_ESDHC_NUM;
+		++index) {
+		switch (index) {
+		case 0:
+			mxc_request_iomux(MX51_PIN_SD1_CMD,
+				  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+			mxc_request_iomux(MX51_PIN_SD1_CLK,
+				  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
 
-	switch (interface_esdhc) {
-	case 0:
-
-		imx_esdhc_base_addr = (u32 *)MMC_SDHC1_BASE_ADDR;
-
-		mxc_request_iomux(MX51_PIN_SD1_CMD,
-			  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
-		mxc_request_iomux(MX51_PIN_SD1_CLK,
-			  IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
-
-		mxc_request_iomux(MX51_PIN_SD1_DATA0,
-				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
-		mxc_request_iomux(MX51_PIN_SD1_DATA1,
-				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
-		mxc_request_iomux(MX51_PIN_SD1_DATA2,
-				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
-		mxc_request_iomux(MX51_PIN_SD1_DATA3,
-				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
-		mxc_iomux_set_pad(MX51_PIN_SD1_CMD,
-				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
-				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
-				PAD_CTL_PUE_PULL |
-				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
-		mxc_iomux_set_pad(MX51_PIN_SD1_CLK,
-				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
-				PAD_CTL_HYS_NONE | PAD_CTL_47K_PU |
-				PAD_CTL_PUE_PULL |
-				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
-		mxc_iomux_set_pad(MX51_PIN_SD1_DATA0,
-				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
-				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
-				PAD_CTL_PUE_PULL |
-				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
-		mxc_iomux_set_pad(MX51_PIN_SD1_DATA1,
-				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
-				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
-				PAD_CTL_PUE_PULL |
-				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
-		mxc_iomux_set_pad(MX51_PIN_SD1_DATA2,
-				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
-				PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
-				PAD_CTL_PUE_PULL |
-				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
-		mxc_iomux_set_pad(MX51_PIN_SD1_DATA3,
-				PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
-				PAD_CTL_HYS_ENABLE | PAD_CTL_100K_PD |
-				PAD_CTL_PUE_PULL |
-				PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
-		break;
-	case 1:
-		status = 1;
-		break;
-	case 2:
-		status = 1;
-		break;
-	case 3:
-		status = 1;
-		break;
-	default:
-		status = 1;
-		break;
+			mxc_request_iomux(MX51_PIN_SD1_DATA0,
+					IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+			mxc_request_iomux(MX51_PIN_SD1_DATA1,
+					IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+			mxc_request_iomux(MX51_PIN_SD1_DATA2,
+					IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+			mxc_request_iomux(MX51_PIN_SD1_DATA3,
+					IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+			mxc_iomux_set_pad(MX51_PIN_SD1_CMD,
+					PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+					PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
+					PAD_CTL_PUE_PULL |
+					PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+			mxc_iomux_set_pad(MX51_PIN_SD1_CLK,
+					PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+					PAD_CTL_HYS_NONE | PAD_CTL_47K_PU |
+					PAD_CTL_PUE_PULL |
+					PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+			mxc_iomux_set_pad(MX51_PIN_SD1_DATA0,
+					PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+					PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
+					PAD_CTL_PUE_PULL |
+					PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+			mxc_iomux_set_pad(MX51_PIN_SD1_DATA1,
+					PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+					PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
+					PAD_CTL_PUE_PULL |
+					PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+			mxc_iomux_set_pad(MX51_PIN_SD1_DATA2,
+					PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+					PAD_CTL_HYS_ENABLE | PAD_CTL_47K_PU |
+					PAD_CTL_PUE_PULL |
+					PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+			mxc_iomux_set_pad(MX51_PIN_SD1_DATA3,
+					PAD_CTL_DRV_MAX | PAD_CTL_DRV_VOT_HIGH |
+					PAD_CTL_HYS_ENABLE | PAD_CTL_100K_PD |
+					PAD_CTL_PUE_PULL |
+					PAD_CTL_PKE_ENABLE | PAD_CTL_SRE_FAST);
+			break;
+		case 1:
+			status = 1;
+			break;
+		case 2:
+			status = 1;
+			break;
+		case 3:
+			status = 1;
+			break;
+		default:
+			status = 1;
+			break;
+		}
+		status |= fsl_esdhc_initialize(bis, &esdhc_cfg[index]);
 	}
 
 	return status;
 }
 
-int board_mmc_init(void)
+int board_mmc_init(bd_t *bis)
 {
-	if (!esdhc_gpio_init())
+	if (!esdhc_gpio_init(bis))
 		return fsl_esdhc_mmc_init(gd->bd);
 	else
 		return -1;

@@ -129,6 +129,7 @@
 	#define CONFIG_SYS_MMC_ENV_DEV	0
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
+	#define CONFIG_DYNAMIC_MMC_DEVNO
 #endif
 
 /*

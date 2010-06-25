@@ -687,6 +687,14 @@ struct fsl_esdhc_cfg esdhc_cfg[2] = {
 	{MMC_SDHC2_BASE_ADDR, 1, 1},
 };
 
+#ifdef CONFIG_DYNAMIC_MMC_DEVNO
+int get_mmc_env_devno()
+{
+	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	return (soc_sbmr & 0x00180000) ? 1 : 0;
+}
+#endif
+
 int esdhc_gpio_init(bd_t *bis)
 {
 	s32 status = 0;

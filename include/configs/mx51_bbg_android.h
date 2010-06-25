@@ -256,6 +256,7 @@
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
+	#define CONFIG_DYNAMIC_MMC_DEVNO
 #endif
 
 /*
