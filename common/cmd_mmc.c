@@ -103,7 +103,11 @@ U_BOOT_CMD(
 				return 1;	\
 			}	\
 			if (sd_switch_partition(mmc, part) < 0) {	\
-				return 1;	\
+				if (part > 0) { \
+					printf("\nError: Unable to switch SD "\
+					"partition\n");\
+					return 1;	\
+				}	\
 			}	\
 		} else {	\
 			if (mmc_switch_partition(mmc, part, enable_boot) \
