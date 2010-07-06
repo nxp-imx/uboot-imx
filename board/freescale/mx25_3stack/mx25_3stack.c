@@ -186,6 +186,26 @@ int board_mmc_init(bd_t *bis)
 }
 #endif
 
+s32 spi_get_cfg(struct imx_spi_dev_t *dev)
+{
+	switch (dev->slave.cs) {
+	case 0:
+		/* cpld */
+		dev->base = CSPI1_BASE;
+		dev->freq = 25000000;
+		dev->ss_pol = IMX_SPI_ACTIVE_LOW;
+		dev->ss = 0;
+		dev->fifo_sz = 32;
+		dev->us_delay = 0;
+		break;
+	default:
+		printf("Invalid Bus ID! \n");
+		break;
+	}
+
+	return 0;
+}
+
 void spi_io_init(struct imx_spi_dev_t *dev)
 {
 	switch (dev->base) {
