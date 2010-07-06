@@ -2513,6 +2513,7 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_MX28EVK              2531
 #define MACH_TYPE_MX23EVK              2629
 #define MACH_TYPE_MX53_EVK             2716
+#define MACH_TYPE_MX50_ARM2            2955
 
 #ifdef CONFIG_ARCH_EBSA110
 # ifdef machine_arch_type
@@ -32524,6 +32525,18 @@ extern unsigned int __machine_arch_type;
 # define machine_is_mx53_evk()	(machine_arch_type == MACH_TYPE_MX53_EVK)
 #else
 # define machine_is_mx53_evk()	(0)
+#endif
+
+#ifdef CONFIG_MACH_MX50_ARM2
+# ifdef machine_arch_type
+#  undef machine_arch_type
+#  define machine_arch_type     __machine_arch_type
+# else
+#  define machine_arch_type     MACH_TYPE_MX50_ARM2
+# endif
+# define machine_is_mx50_arm2()  (machine_arch_type == MACH_TYPE_MX50_ARM2)
+#else
+# define machine_is_mx50_arm2()  (0)
 #endif
 
 /*
