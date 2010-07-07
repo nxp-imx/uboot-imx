@@ -31,7 +31,7 @@
 #include <i2c.h>
 #include <asm/arch/keypad.h>
 #include "board-imx51.h"
-#ifdef #ifdef CONFIG_IMX_ECSPI
+#ifdef CONFIG_IMX_ECSPI
 #include <imx_spi.h>
 #include <asm/arch/imx_spi_pmic.h>
 #endif
