@@ -358,7 +358,7 @@ static int __lookup_board_id(int adc_val)
 		id = 19;
 	else if (adc_val < 0xB9E79F)
 		id = 20;
-	else if (adc_val < 0xC00000)
+	else if (adc_val <= 0xC00000)
 		id = 21;
 		else
 		return -1;
