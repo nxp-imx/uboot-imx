@@ -434,13 +434,13 @@ int get_mmc_env_devno()
 
 	switch (soc_sbmr & 0x00300000) {
 	default:
-	case 0:
+	case 0x0:
 		mmc_devno = 0;
 		break;
-	case 1:
+	case 0x00100000:
 		mmc_devno = 1;
 		break;
-	case 2:
+	case 0x00200000:
 		mmc_devno = 2;
 		break;
 	}
@@ -486,7 +486,7 @@ int esdhc_gpio_init(bd_t *bis)
 			mxc_request_iomux(MX50_PIN_SD2_D6,  IOMUX_CONFIG_ALT0);
 			mxc_request_iomux(MX50_PIN_SD2_D7,  IOMUX_CONFIG_ALT0);
 
-			mxc_iomux_set_pad(MX50_PIN_SD2_CMD, 0x1E4);
+			mxc_iomux_set_pad(MX50_PIN_SD2_CMD, 0x14);
 			mxc_iomux_set_pad(MX50_PIN_SD2_CLK, 0xD4);
 			mxc_iomux_set_pad(MX50_PIN_SD2_D0,  0x1D4);
 			mxc_iomux_set_pad(MX50_PIN_SD2_D1,  0x1D4);

@@ -412,8 +412,6 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	mmc->init = esdhc_init;
 
 	caps = regs->hostcapblt;
-	if (caps & ESDHC_HOSTCAPBLT_VS18)
-		mmc->voltages |= MMC_VDD_165_195;
 	if (caps & ESDHC_HOSTCAPBLT_VS30)
 		mmc->voltages |= MMC_VDD_29_30 | MMC_VDD_30_31;
 	if (caps & ESDHC_HOSTCAPBLT_VS33)
