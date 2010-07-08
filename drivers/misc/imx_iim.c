@@ -30,16 +30,18 @@
 
 #include <linux/types.h>
 #include <asm/io.h>
-#include <asm/arch/mx51.h>
-#include <asm/arch/imx_fuse.h>
+#include <asm/imx_iim.h>
 #include <common.h>
 #include <net.h>
+
+static const struct iim_regs *imx_iim =
+		(struct iim_regs *)IMX_IIM_BASE;
 
 static void quick_itoa(u32 num, char *a)
 {
 	int i, j, k;
 	for (i = 0; i <= 7; i++) {
-		j = (num >> (4 * i)) & 0xF;
+		j = (num >> (4 * i)) & 0xf;
 		k = (j < 10) ? '0' : ('a' - 0xa);
 		a[i] = j + k;
 	}
@@ -70,11 +72,11 @@ static u32 quick_atoi(char *a, u32 slen)
 
 static void fuse_op_start(void)
 {
-    /* Do not generate interrupt */
-    writel(0, IIM_BASE_ADDR + IIM_STATM_OFF);
-    /* clear the status bits and error bits */
-    writel(0x3, IIM_BASE_ADDR + IIM_STAT_OFF);
-    writel(0xFE, IIM_BASE_ADDR + IIM_ERR_OFF);
+	/* Do not generate interrupt */
+	writel(0, &(imx_iim->statm));
+	/* clear the status bits and error bits */
+	writel(0x3, &(imx_iim->stat));
+	writel(0xfe, &(imx_iim->err));
 }
 
 /*
@@ -90,30 +92,32 @@ static s32 poll_fuse_op_done(s32 action)
 	if (action != POLL_FUSE_PRGD && action != POLL_FUSE_SNSD) {
 		printf("%s(%d) invalid operation\n", __func__, action);
 		return -1;
-    }
+	}
 
-    /* Poll busy bit till it is NOT set */
-	while ((readl(IIM_BASE_ADDR + IIM_STAT_OFF) & IIM_STAT_BUSY) != 0)
+	/* Poll busy bit till it is NOT set */
+	while ((readl(&(imx_iim->stat)) & IIM_STAT_BUSY) != 0)
 		;
 
-    /* Test for successful write */
-	status = readl(IIM_BASE_ADDR + IIM_STAT_OFF);
-	error = readl(IIM_BASE_ADDR + IIM_ERR_OFF);
+	/* Test for successful write */
+	status = readl(&(imx_iim->stat));
+	error = readl(&(imx_iim->err));
 
 	if ((status & action) != 0 && \
 			(error & (action >> IIM_ERR_SHIFT)) == 0) {
 		if (error) {
-			printf("Even though the operation seems successful...\n");
-			printf("There are some error(s) at addr=0x%x: 0x%x\n",
-					(IIM_BASE_ADDR + IIM_ERR_OFF), error);
+			printf("Even though the operation"
+				"seems successful...\n");
+			printf("There are some error(s) "
+				"at addr=0x%x: 0x%x\n",
+				(u32)&(imx_iim->err), error);
 		}
 		return 0;
 	}
 	printf("%s(%d) failed\n", __func__, action);
 	printf("status address=0x%x, value=0x%x\n",
-			(IIM_BASE_ADDR + IIM_STAT_OFF), status);
+		(u32)&(imx_iim->stat), status);
 	printf("There are some error(s) at addr=0x%x: 0x%x\n",
-			(IIM_BASE_ADDR + IIM_ERR_OFF), error);
+		(u32)&(imx_iim->err), error);
 	return -1;
 }
 
@@ -133,23 +137,23 @@ static u32 sense_fuse(s32 bank, s32 row, s32 bit)
 	printf("%s: addr_h=0x%x, addr_l=0x%x\n",
 			__func__, addr_h, addr_l);
 #endif
-	writel(addr_h, IIM_BASE_ADDR + IIM_UA_OFF);
-	writel(addr_l, IIM_BASE_ADDR + IIM_LA_OFF);
+	writel(addr_h, &(imx_iim->ua));
+	writel(addr_l, &(imx_iim->la));
 
-    /* Start sensing */
-	writel(0x8, IIM_BASE_ADDR + IIM_FCTL_OFF);
+	/* Start sensing */
+	writel(0x8, &(imx_iim->fctl));
 	if (poll_fuse_op_done(POLL_FUSE_SNSD) != 0) {
 		printf("%s(bank: %d, row: %d, bit: %d failed\n",
-				__func__, bank, row, bit);
+			__func__, bank, row, bit);
 	}
-	reg_addr = IIM_BASE_ADDR + IIM_SDAT_OFF;
+	reg_addr = &(imx_iim->sdat);
 
 	return readl(reg_addr);
 }
 
-int fuse_read(int bank, char row)
+int iim_read(int bank, char row)
 {
-    u32 fuse_val;
+	u32 fuse_val;
 	s32 err = 0;
 
 	printf("Read fuse at bank:%d row:%d\n", bank, row);
@@ -168,7 +172,7 @@ static s32 fuse_blow_bit(s32 bank, s32 row, s32 bit)
 	fuse_op_start();
 
 	/* Disable IIM Program Protect */
-	writel(0xAA, IIM_BASE_ADDR + IIM_PREG_P_OFF);
+	writel(0xaa, &(imx_iim->preg_p));
 
 	addr = ((bank << 11) | (row << 3) | (bit & 0x7));
 	/* Set IIM Program Upper Address */
@@ -180,16 +184,16 @@ static s32 fuse_blow_bit(s32 bank, s32 row, s32 bit)
 	printf("blowing addr_h=0x%x, addr_l=0x%x\n", addr_h, addr_l);
 #endif
 
-	writel(addr_h, IIM_BASE_ADDR + IIM_UA_OFF);
-	writel(addr_l, IIM_BASE_ADDR + IIM_LA_OFF);
+	writel(addr_h, &(imx_iim->ua));
+	writel(addr_l, &(imx_iim->la));
 
 	/* Start Programming */
-	writel(0x31, IIM_BASE_ADDR + IIM_FCTL_OFF);
+	writel(0x31, &(imx_iim->fctl));
 	if (poll_fuse_op_done(POLL_FUSE_PRGD) == 0)
 		ret = 0;
 
 	/* Enable IIM Program Protect */
-	writel(0x0, IIM_BASE_ADDR + IIM_PREG_P_OFF);
+	writel(0x0, &(imx_iim->preg_p));
 
 	return ret;
 }
@@ -207,17 +211,18 @@ static void fuse_blow_row(s32 bank, s32 row, s32 value)
 		if (((value >> i) & 0x1) == 0)
 			continue;
 	if (fuse_blow_bit(bank, row, i) != 0) {
-			printf("fuse_blow_bit(bank: %d, row: %d, bit: %d failed\n",
-					bank, row, i);
+			printf("fuse_blow_bit(bank: %d, row: %d, "
+				"bit: %d failed\n",
+				bank, row, i);
 		}
     }
     reg &= ~0x10;
     writel(reg, CCM_BASE_ADDR + 0x64);
 }
 
-int fuse_blow(int bank, int row, int val)
+int iim_blow(int bank, int row, int val)
 {
-    u32 fuse_val, err = 0;
+	u32 fuse_val, err = 0;
 
 	printf("Blowing fuse at bank:%d row:%d value:%d\n",
 			bank, row, val);
@@ -228,24 +233,25 @@ int fuse_blow(int bank, int row, int val)
 	return err;
 }
 
-static int fuse_read_mac_addr(u8 *data)
+static int iim_read_mac_addr(u8 *data)
 {
-    data[0] = sense_fuse(1, 9, 0) ;
-    data[1] = sense_fuse(1, 10, 0) ;
-    data[2] = sense_fuse(1, 11, 0) ;
-    data[3] = sense_fuse(1, 12, 0) ;
-    data[4] = sense_fuse(1, 13, 0) ;
-    data[5] = sense_fuse(1, 14, 0) ;
+	s32 bank = CONFIG_IIM_MAC_BANK;
+	s32 row  = CONFIG_IIM_MAC_ROW;
 
-    if ((data[0] == 0) && (data[1] == 0) && (data[2] == 0) &&
-		(data[3] == 0) && (data[4] == 0) && (data[5] == 0)) {
+	data[0] = sense_fuse(bank, row, 0) ;
+	data[1] = sense_fuse(bank, row + 1, 0) ;
+	data[2] = sense_fuse(bank, row + 2, 0) ;
+	data[3] = sense_fuse(bank, row + 3, 0) ;
+	data[4] = sense_fuse(bank, row + 4, 0) ;
+	data[5] = sense_fuse(bank, row + 5, 0) ;
+
+	if (!memcmp(data, "\0\0\0\0\0\0", 6))
 		return 0;
-    }
-
-    return 1;
+	else
+		return 1;
 }
 
-int fuse_blow_func(char *func_name, char *func_val)
+int iim_blow_func(char *func_name, char *func_val)
 {
 	u32 value, i;
 	char *s;
@@ -253,14 +259,16 @@ int fuse_blow_func(char *func_name, char *func_val)
 	s32 err = 0;
 
 	if (0 == strcmp(func_name, "scc")) {
-		/* fuse_blow scc C3D153EDFD2EA9982226EF5047D3B9A0B9C7138EA87C028401D28C2C2C0B9AA2 */
+		/* fuse_blow scc
+	C3D153EDFD2EA9982226EF5047D3B9A0B9C7138EA87C028401D28C2C2C0B9AA2 */
 		printf("Ready to burn SCC fuses\n");
 		s = func_val;
 		for (i = 0; ; ++i) {
 			memcpy(val, s, 2);
 			val[2] = '\0';
 			value = quick_atoi(val, 2);
-			/* printf("fuse_blow_row(2, %d, value=0x%x)\n", i, value); */
+			/* printf("fuse_blow_row(2, %d, value=0x%x)\n",
+					i, value); */
 			fuse_blow_row(2, i, value);
 
 			if ((++s)[0] == '\0') {
@@ -274,7 +282,8 @@ int fuse_blow_func(char *func_name, char *func_val)
 			}
 		}
 	} else if (0 == strcmp(func_name, "srk")) {
-		/* fuse_blow srk 418bccd09b53bee1ab59e2662b3c7877bc0094caee201052add49be8780dff95 */
+		/* fuse_blow srk
+	418bccd09b53bee1ab59e2662b3c7877bc0094caee201052add49be8780dff95 */
 		printf("Ready to burn SRK key fuses\n");
 		s = func_val;
 		for (i = 0; ; ++i) {
@@ -282,7 +291,8 @@ int fuse_blow_func(char *func_name, char *func_val)
 			val[2] = '\0';
 			value = quick_atoi(val, 2);
 			if (i == 0) {
-				/* 0x41 goes to SRK_HASH[255:248], bank 1, row 1 */
+				/* 0x41 goes to SRK_HASH[255:248],
+				 * bank 1, row 1 */
 				fuse_blow_row(1, 1, value);
 			} else {
 				/* 0x8b in SRK_HASH[247:240] bank 3, row 1 */
@@ -306,11 +316,11 @@ int fuse_blow_func(char *func_name, char *func_val)
 
 		if (NULL == func_val) {
 			/* Read the Mac address and print it */
-			fuse_read_mac_addr(ea);
+			iim_read_mac_addr(ea);
 
 			printf("FEC MAC address: ");
 			printf("0x%02x:0x%02x:0x%02x:0x%02x:0x%02x:0x%02x\n\n",
-					ea[0], ea[1], ea[2], ea[3], ea[4], ea[5]);
+				ea[0], ea[1], ea[2], ea[3], ea[4], ea[5]);
 
 			return 0;
 		}

@@ -348,6 +348,24 @@ void spi_io_init(struct imx_spi_dev_t *dev)
 #endif
 
 #ifdef CONFIG_MXC_FEC
+
+#ifdef CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
+
+#define HW_OCOTP_MACn(n)	(0x00000250 + (n) * 0x10)
+
+int fec_get_mac_addr(unsigned char *mac)
+{
+	u32 *ocotp_mac_base =
+		(u32 *)(OCOTP_CTRL_BASE_ADDR + HW_OCOTP_MACn(0));
+	int i;
+
+	for (i = 0; i < 6; ++i, ++ocotp_mac_base)
+		mac[6 - 1 - i] = readl(++ocotp_mac_base);
+
+	return 0;
+}
+#endif
+
 static void setup_fec(void)
 {
 	volatile unsigned int reg;

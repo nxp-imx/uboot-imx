@@ -98,12 +98,17 @@
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
 #define CONFIG_CMD_MMC
-#define CONFIG_CMD_FUSE
+#define CONFIG_CMD_IIM
 
 /*
  * FUSE Configs
  * */
-#define CONFIG_IMX_FUSE
+#ifdef CONFIG_CMD_IIM
+	#define CONFIG_IMX_IIM
+	#define IMX_IIM_BASE    IIM_BASE_ADDR
+	#define CONFIG_IIM_MAC_BANK     1
+	#define CONFIG_IIM_MAC_ROW      9
+#endif
 
 /*
  * MMC Configs
@@ -112,7 +117,6 @@
 	#define CONFIG_MMC				1
 	#define CONFIG_GENERIC_MMC
 	#define CONFIG_IMX_MMC
-	#define CONFIG_SYS_FSL_ESDHC_NUM	2
 	#define CONFIG_SYS_FSL_ESDHC_ADDR       0
 	#define CONFIG_SYS_MMC_ENV_DEV	0
 	#define CONFIG_DOS_PARTITION	1

@@ -38,6 +38,10 @@
 #include <lcd.h>
 #endif
 
+#ifdef CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
+#include <asm/imx_iim.h>
+#endif
+
 #ifdef CONFIG_CMD_MMC
 #include <mmc.h>
 #include <fsl_esdhc.h>
@@ -317,6 +321,22 @@ int setup_splash_img()
 #endif
 }
 #endif
+#endif
+
+#ifdef CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
+
+int fec_get_mac_addr(unsigned char *mac)
+{
+	u32 *iim0_mac_base =
+		(u32 *)(IIM_BASE + IIM_BANK_AREA_0_OFFSET +
+			CONFIG_IIM_MAC_ADDR_OFFSET);
+	int i;
+
+	for (i = 0; i < 6; ++i, ++iim0_mac_base)
+		mac[i] = readl(iim0_mac_base);
+
+	return 0;
+}
 #endif
 
 int board_init(void)

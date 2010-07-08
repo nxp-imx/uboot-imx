@@ -93,7 +93,7 @@
 #define CONFIG_BOOTP_SUBNETMASK
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
-
+#define CONFIG_CMD_IIM
 #define CONFIG_CMD_MMC
 #define CONFIG_CMD_ENV
 
@@ -157,10 +157,23 @@
 #define CONFIG_FEC0_PHY_ADDR	-1
 #define CONFIG_FEC0_MIIBASE 	-1
 
+#define CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
+#define CONFIG_IIM_MAC_ADDR_OFFSET      0x24
+
 #define CONFIG_MXC_FEC
 #define CONFIG_MII
 #define CONFIG_MII_GASKET
 #define CONFIG_DISCOVER_PHY
+
+/*
+ * FUSE Configs
+ * */
+#ifdef CONFIG_CMD_MMC
+	#define CONFIG_IMX_IIM
+	#define IMX_IIM_BASE    IIM_BASE_ADDR
+	#define CONFIG_IIM_MAC_BANK     1
+	#define CONFIG_IIM_MAC_ROW      9
+#endif
 
 /*
  * I2C Configs

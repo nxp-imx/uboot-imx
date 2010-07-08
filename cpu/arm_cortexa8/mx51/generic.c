@@ -258,13 +258,7 @@ int cpu_eth_init(bd_t *bis)
 	int rc = -ENODEV;
 
 #if defined(CONFIG_MXC_FEC)
-	char *env = NULL;
-
 	rc = mxc_fec_initialize(bis);
-
-	env = getenv("fec_addr");
-	if (env)
-		mxc_fec_set_mac_from_env(env);
 #endif
 
 	return rc;

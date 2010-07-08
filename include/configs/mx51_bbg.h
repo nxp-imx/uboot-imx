@@ -94,13 +94,18 @@
 #define CONFIG_CMD_SPI
 #define CONFIG_CMD_SF
 #define CONFIG_CMD_MMC
-#define CONFIG_CMD_FUSE
+#define CONFIG_CMD_IIM
 #define CONFIG_CMD_I2C
 
 /*
  * FUSE Configs
  * */
-#define CONFIG_IMX_FUSE
+#ifdef CONFIG_CMD_IIM
+	#define CONFIG_IMX_IIM
+	#define IMX_IIM_BASE    IIM_BASE_ADDR
+	#define CONFIG_IIM_MAC_BANK	1
+	#define CONFIG_IIM_MAC_ROW	9
+#endif
 
 /*
  * SPI Configs
@@ -151,6 +156,9 @@
 #define CONFIG_MXC_FEC
 #define CONFIG_MII
 #define CONFIG_DISCOVER_PHY
+
+#define CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
+#define CONFIG_IIM_MAC_ADDR_OFFSET      0x24
 
 #define CONFIG_FEC0_IOBASE	FEC_BASE_ADDR
 #define CONFIG_FEC0_PINMUX	-1

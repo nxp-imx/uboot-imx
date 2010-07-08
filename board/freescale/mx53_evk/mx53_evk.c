@@ -44,6 +44,10 @@
 #include <asm/arch/mmu.h>
 #endif
 
+#ifdef CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
+#include <asm/imx_iim.h>
+#endif
+
 #ifdef CONFIG_CMD_CLOCK
 #include <asm/clock.h>
 #endif
@@ -558,7 +562,24 @@ void spi_io_init(struct imx_spi_dev_t *dev)
 		break;
 	}
 }
+#endif
 
+#ifdef CONFIG_MXC_FEC
+
+#ifdef CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
+
+int fec_get_mac_addr(unsigned char *mac)
+{
+	u32 *iim1_mac_base =
+		(u32 *)(IIM_BASE_ADDR + IIM_BANK_AREA_1_OFFSET +
+			CONFIG_IIM_MAC_ADDR_OFFSET);
+	int i;
+
+	for (i = 0; i < 6; ++i, ++iim1_mac_base)
+		mac[i] = (u8)readl(iim1_mac_base);
+
+	return 0;
+}
 #endif
 
 static void setup_fec(void)
@@ -624,6 +645,7 @@ static void setup_fec(void)
 	writel(reg, GPIO7_BASE_ADDR + 0x0);
 
 }
+#endif
 
 #ifdef CONFIG_CMD_MMC
 

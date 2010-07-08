@@ -378,6 +378,38 @@ static void swap_packet(void *packet, int length)
 }
 #endif
 
+static int fec_get_hwaddr(struct eth_device *dev, unsigned char *mac)
+{
+#ifdef CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
+	fec_get_mac_addr(mac);
+
+	return 0;
+#else
+	return -1;
+#endif
+}
+
+static int fec_set_hwaddr(struct eth_device *dev)
+{
+	uchar *mac = dev->enetaddr;
+	struct fec_info_s *info = dev->priv;
+	volatile fec_t *fecp = (fec_t *)(info->iobase);
+
+	writel(0, &fecp->iaur);
+	writel(0, &fecp->ialr);
+	writel(0, &fecp->gaur);
+	writel(0, &fecp->galr);
+
+	/*
+	 * Set physical address
+	 */
+	writel((mac[0] << 24) + (mac[1] << 16) + (mac[2] << 8) + mac[3],
+			&fecp->palr);
+	writel((mac[4] << 24) + (mac[5] << 16) + 0x8808, &fecp->paur);
+
+	return 0;
+}
+
 int fec_send(struct eth_device *dev, volatile void *packet, int length)
 {
 	struct fec_info_s *info = dev->priv;
@@ -832,29 +864,11 @@ void fec_halt(struct eth_device *dev)
 	memset(info->txbuf, 0, DBUF_LENGTH);
 }
 
-void mxc_fec_set_mac_from_env(char *mac_addr)
-{
-	unsigned char ea[6];
-	volatile fec_t *fecp = NULL;
-	int i;
-
-	eth_parse_enetaddr(mac_addr, ea);
-	if (!is_valid_ether_addr(ea)) {
-		printf("Error: invalid FEC MAC address!\n");
-		return;
-	}
-
-	for (i = 0; i < sizeof(fec_info) / sizeof(fec_info[0]); i++) {
-		fecp = (fec_t *)(fec_info[i].iobase);
-		fecp->palr = (ea[0] << 24) | (ea[1] << 16) | (ea[2] << 8) | (ea[3]);
-		fecp->paur = (ea[4] << 24) | (ea[5] << 16);
-	}
-}
-
 int mxc_fec_initialize(bd_t *bis)
 {
 	struct eth_device *dev;
 	int i, j;
+	unsigned char ethaddr[6];
 
 	for (i = 0; i < sizeof(fec_info) / sizeof(fec_info[0]); i++) {
 
@@ -872,6 +886,7 @@ int mxc_fec_initialize(bd_t *bis)
 		dev->halt = fec_halt;
 		dev->send = fec_send;
 		dev->recv = fec_recv;
+		dev->write_hwaddr = fec_set_hwaddr;
 
 		/* setup Receive and Transmit buffer descriptor */
 #ifdef CONFIG_ARCH_MMU
@@ -919,6 +934,12 @@ int mxc_fec_initialize(bd_t *bis)
 		miiphy_register(dev->name, mxc_fec_mii_read,
 						mxc_fec_mii_write);
 #endif
+
+		if (fec_get_hwaddr(dev, ethaddr) == 0) {
+			printf("got MAC address from IIM: %pM\n", ethaddr);
+			memcpy(dev->enetaddr, ethaddr, 6);
+			fec_set_hwaddr(dev);
+		}
 	}
 
 	return 1;
