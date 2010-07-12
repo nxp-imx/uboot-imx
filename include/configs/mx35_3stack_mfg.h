@@ -3,7 +3,7 @@
  *
  * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
  *
- * Configuration settings for the MX31ADS Freescale board.
+ * Configuration settings for the MX35 3stack Freescale board.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
