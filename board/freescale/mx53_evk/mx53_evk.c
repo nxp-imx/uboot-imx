@@ -268,14 +268,14 @@ void setup_core_voltages(void)
 
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 
-	/* Set core voltage VDDGP to 1.1V */
+	/* Set core voltage VDDGP to 1.05V for 800MHZ */
 	buf[0] = 0x45;
 	buf[1] = 0x4a;
-	buf[2] = 0x54;
+	buf[2] = 0x52;
 	if (i2c_write(0x8, 24, 1, buf, 3))
 		return;
 
-	/* Set DDR voltage VDDA to 1.225V */
+	/* Set DDR voltage VDDA to 1.25V */
 	buf[0] = 0;
 	buf[1] = 0x63;
 	buf[2] = 0x1a;
