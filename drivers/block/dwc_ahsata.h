@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010 Freescale Semiconductor, Inc.
  * Terry Lv <r65388@freescale.com>
  *
  * This program is free software; you can redistribute it and/or

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010 Freescale Semiconductor, Inc.
  * Terry Lv <r65388@freescale.com>
  *
  * See file CREDITS for list of people who contributed to this
