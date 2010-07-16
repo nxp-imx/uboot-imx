@@ -69,10 +69,11 @@ struct fsl_esdhc {
 	uint	wml;
 	char	reserved1[8];
 	uint	fevt;
-	char	reserved2[168];
+	char	reserved2[12];
+	uint dllctrl;
+	uint dllstatus;
+	char	reserved3[148];
 	uint	hostver;
-	char	reserved3[780];
-	uint	scr;
 };
 
 /* Return the XFERTYP flags for a given command and data packet */
@@ -197,6 +198,10 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	/* Figure out the transfer arguments */
 	xfertyp = esdhc_xfertyp(cmd, data);
 
+	if (mmc->bus_width == EMMC_MODE_4BIT_DDR ||
+		mmc->bus_width == EMMC_MODE_8BIT_DDR)
+		xfertyp |= XFERTYP_DDR_EN;
+
 	/* Send the command */
 	writel(cmd->cmdarg, &regs->cmdarg);
 	writel(xfertyp, &regs->xfertyp);
@@ -274,6 +279,9 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 		while (!(readl(&regs->irqstat) & IRQSTAT_TC)) ;
 	}
 
+	if (readl(&regs->irqstat) & 0xFFFF0000)
+		return COMM_ERR;
+
 	writel(-1, &regs->irqstat);
 
 	return 0;
@@ -325,6 +333,22 @@ void set_sysctl(struct mmc *mmc, uint clock)
 #endif
 }
 
+static void esdhc_dll_setup(struct mmc *mmc)
+{
+	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
+	struct fsl_esdhc *regs = (struct fsl_esdhc *)cfg->esdhc_base;
+
+	uint dll_control = readl(&regs->dllctrl);
+	dll_control &= ~(ESDHC_DLLCTRL_SLV_OVERRIDE_VAL_MASK |
+		ESDHC_DLLCTRL_SLV_OVERRIDE);
+	dll_control |= ((ESDHC_DLLCTRL_SLV_OVERRIDE_VAL <<
+		ESDHC_DLLCTRL_SLV_OVERRIDE_VAL_SHIFT) |
+		ESDHC_DLLCTRL_SLV_OVERRIDE);
+
+	writel(dll_control, &regs->dllctrl);
+
+}
+
 static void esdhc_set_ios(struct mmc *mmc)
 {
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
@@ -344,6 +368,14 @@ static void esdhc_set_ios(struct mmc *mmc)
 	} else if (mmc->bus_width == 8) {
 		tmp = readl(&regs->proctl) | PROCTL_DTW_8;
 		writel(tmp, &regs->proctl);
+	} else if (mmc->bus_width == EMMC_MODE_4BIT_DDR) {
+		tmp = readl(&regs->proctl) | PROCTL_DTW_4;
+		writel(tmp, &regs->proctl);
+		esdhc_dll_setup(mmc);
+	} else if (mmc->bus_width == EMMC_MODE_8BIT_DDR) {
+		tmp = readl(&regs->proctl) | PROCTL_DTW_8;
+		writel(tmp, &regs->proctl);
+		esdhc_dll_setup(mmc);
 	}
 }
 
@@ -411,21 +443,34 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	mmc->set_ios = esdhc_set_ios;
 	mmc->init = esdhc_init;
 
-	caps = regs->hostcapblt;
+	caps = readl(&regs->hostcapblt);
 	if (caps & ESDHC_HOSTCAPBLT_VS30)
 		mmc->voltages |= MMC_VDD_29_30 | MMC_VDD_30_31;
 	if (caps & ESDHC_HOSTCAPBLT_VS33)
 		mmc->voltages |= MMC_VDD_32_33 | MMC_VDD_33_34;
 
-	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_8BIT;
+	mmc->host_caps = MMC_MODE_4BIT;
 
 	if (caps & ESDHC_HOSTCAPBLT_HSS)
 		mmc->host_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS;
+
+	if (((readl(&regs->hostver) & ESDHC_HOSTVER_VVN_MASK)
+		>> ESDHC_HOSTVER_VVN_SHIFT) >= ESDHC_HOSTVER_DDR_SUPPORT)
+		mmc->host_caps |= EMMC_MODE_4BIT_DDR;
 
 	mmc->f_min = 400000;
 	mmc->f_max = MIN(mxc_get_clock(MXC_ESDHC_CLK), 50000000);
 
 	mmc_register(mmc);
+
+#ifdef CONFIG_MMC_8BIT_PORTS
+	if ((1 << mmc->block_dev.dev) & CONFIG_MMC_8BIT_PORTS) {
+		mmc->host_caps |= MMC_MODE_8BIT;
+
+		if (mmc->host_caps & EMMC_MODE_4BIT_DDR)
+			mmc->host_caps |= EMMC_MODE_8BIT_DDR;
+	}
+#endif
 
 	return 0;
 }

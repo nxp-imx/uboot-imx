@@ -46,6 +46,8 @@
 #define MMC_MODE_HS_52MHz	0x010
 #define MMC_MODE_4BIT		0x100
 #define MMC_MODE_8BIT		0x200
+#define EMMC_MODE_4BIT_DDR	0x400
+#define EMMC_MODE_8BIT_DDR	0x800
 
 #define SD_DATA_4BIT	0x00040000
 
@@ -93,7 +95,7 @@
 
 #define MMC_HS_TIMING		0x00000100
 #define MMC_HS_52MHZ		0x2
-
+#define EMMC_MODE_DDR_3V		0x4
 #define OCR_BUSY	0x80000000
 #define OCR_HCS		0x40000000
 
@@ -131,6 +133,7 @@
  * EXT_CSD fields
  */
 
+#define EXT_CSD_BOOT_BUS_WIDTH	177		/* RW */
 #define EXT_CSD_BOOT_CONFIG	179	/* RW */
 #define EXT_CSD_BUS_WIDTH	183	/* R/W */
 #define EXT_CSD_HS_TIMING	185	/* R/W */
@@ -153,6 +156,13 @@
 #define EXT_CSD_BUS_WIDTH_1	0	/* Card is in 1 bit mode */
 #define EXT_CSD_BUS_WIDTH_4	1	/* Card is in 4 bit mode */
 #define EXT_CSD_BUS_WIDTH_8	2	/* Card is in 8 bit mode */
+#define EXT_CSD_BUS_WIDTH_4_DDR   5		/* eMMC 4.4 in 4-bit DDR mode */
+#define EXT_CSD_BUS_WIDTH_8_DDR   6		/* eMMC 4.4 in 8-bit DDR mode */
+
+#define EXT_CSD_BOOT_BUS_WIDTH_1BIT	 	0
+#define EXT_CSD_BOOT_BUS_WIDTH_4BIT	 	1
+#define EXT_CSD_BOOT_BUS_WIDTH_8BIT		2
+#define EXT_CSD_BOOT_BUS_WIDTH_DDR	(1 << 4)
 
 #define EXT_CSD_BOOT_PARTITION_ENABLE_MASK	(0x7 << 3)
 #define EXT_CSD_BOOT_PARTITION_DISABLE		(0x0)

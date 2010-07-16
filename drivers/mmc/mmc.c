@@ -91,6 +91,13 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 
 	blklen = mmc->write_bl_len;
 
+#ifdef CONFIG_EMMC_DDR_MODE
+	if (mmc->bus_width == EMMC_MODE_4BIT_DDR ||
+		mmc->bus_width == EMMC_MODE_8BIT_DDR) {
+		err = 0;
+		blklen = 512;
+	} else
+#endif
 	err = mmc_set_blocklen(mmc, mmc->write_bl_len);
 
 	if (err) {
@@ -173,6 +180,12 @@ int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size)
 	int endblock = lldiv(src + size - 1, mmc->read_bl_len);
 	int err = 0;
 
+#ifdef CONFIG_EMMC_DDR_MODE
+	if (mmc->bus_width == EMMC_MODE_4BIT_DDR ||
+		mmc->bus_width == EMMC_MODE_8BIT_DDR)
+		blklen = 512;
+#endif
+
 	/* Make a buffer big enough to hold all the blocks we might read */
 	buffer = malloc(blklen);
 
@@ -181,6 +194,12 @@ int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size)
 		return -1;
 	}
 
+#ifdef CONFIG_EMMC_DDR_MODE
+	if (mmc->bus_width == EMMC_MODE_4BIT_DDR ||
+		mmc->bus_width == EMMC_MODE_8BIT_DDR)
+		err = 0;
+	else
+#endif
 	/* We always do full block reads from the card */
 	err = mmc_set_blocklen(mmc, mmc->read_bl_len);
 
@@ -229,9 +248,14 @@ static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
 	if (!mmc)
 		return -1;
 
-	blklen = mmc->read_bl_len;
-
-	err = mmc_set_blocklen(mmc, blklen);
+	if (mmc->bus_width == EMMC_MODE_4BIT_DDR ||
+		mmc->bus_width == EMMC_MODE_8BIT_DDR) {
+		blklen = 512;
+		err = 0;
+	} else {
+		blklen = mmc->read_bl_len;
+		err = mmc_set_blocklen(mmc, blklen);
+	}
 
 	if (err) {
 		puts("set read bl len failed\n\r");
@@ -444,7 +468,8 @@ static int mmc_change_freq(struct mmc *mmc)
 	if (mmc->version < MMC_VERSION_4)
 		return 0;
 
-	mmc->card_caps |= MMC_MODE_4BIT;
+	mmc->card_caps |= ((mmc->host_caps & MMC_MODE_8BIT)
+		? MMC_MODE_8BIT : MMC_MODE_4BIT);
 
 	ext_csd = (char *)malloc(512);
 
@@ -488,6 +513,15 @@ static int mmc_change_freq(struct mmc *mmc)
 		mmc->card_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS;
 	else
 		mmc->card_caps |= MMC_MODE_HS;
+#ifdef CONFIG_EMMC_DDR_MODE
+	if (cardtype & EMMC_MODE_DDR_3V) {
+		if (mmc->card_caps & MMC_MODE_8BIT)
+			mmc->card_caps |= EMMC_MODE_8BIT_DDR;
+		else
+			mmc->card_caps |= EMMC_MODE_4BIT_DDR;
+	}
+
+#endif
 
 no_err_rtn:
 	free(ext_csd);
@@ -681,6 +715,9 @@ int mmc_switch_partition(struct mmc *mmc, uint part, uint enable_boot)
 	int err;
 	uint old_part, new_part;
 	char boot_config;
+#ifdef CONFIG_EMMC_DDR_MODE
+	char boot_bus_width, card_boot_bus_width;
+#endif
 
 	/* partition must be -
 		0 - user area
@@ -764,6 +801,44 @@ int mmc_switch_partition(struct mmc *mmc, uint part, uint enable_boot)
 			new_part, part);
 		goto err_rtn;
 	}
+
+#ifdef CONFIG_EMMC_DDR_MODE
+	/* Program boot_bus_width field for eMMC 4.4 boot mode */
+	if ((ext_csd[EXT_CSD_CARD_TYPE] & 0xC) && enable_boot != 0) {
+
+		/* Configure according to this host's capabilities */
+		if (mmc->host_caps & EMMC_MODE_8BIT_DDR)
+			boot_bus_width =  EXT_CSD_BOOT_BUS_WIDTH_DDR |
+				EXT_CSD_BOOT_BUS_WIDTH_8BIT;
+		else if (mmc->host_caps & EMMC_MODE_4BIT_DDR)
+			boot_bus_width =  EXT_CSD_BOOT_BUS_WIDTH_DDR |
+				EXT_CSD_BOOT_BUS_WIDTH_4BIT;
+		else if (mmc->host_caps & MMC_MODE_8BIT)
+			boot_bus_width = EXT_CSD_BOOT_BUS_WIDTH_8BIT;
+		else if (mmc->host_caps & MMC_MODE_4BIT)
+			boot_bus_width = EXT_CSD_BOOT_BUS_WIDTH_4BIT;
+		else
+			boot_bus_width = 0;
+
+		err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
+			EXT_CSD_BOOT_BUS_WIDTH, boot_bus_width);
+
+		/* Ensure that it programmed properly */
+		err = mmc_send_ext_csd(mmc, ext_csd);
+		if (err) {
+			puts("\nWarning: fail to get ext csd for MMC!\n");
+			goto err_rtn;
+		}
+
+		card_boot_bus_width = ext_csd[EXT_CSD_BOOT_BUS_WIDTH];
+		if (card_boot_bus_width != boot_bus_width) {
+			printf("\nWarning: current boot_bus_width, 0x%x, is "
+				"not same as requested boot_bus_width 0x%x!\n",
+				card_boot_bus_width, boot_bus_width);
+			goto err_rtn;
+		}
+	}
+#endif
 
 	/* Seems everything is ok, return the partition id before switch */
 	free(ext_csd);
@@ -1022,6 +1097,32 @@ static int mmc_startup(struct mmc *mmc)
 
 			mmc_set_bus_width(mmc, 8);
 		}
+
+#ifdef CONFIG_EMMC_DDR_MODE
+
+		if (mmc->card_caps & EMMC_MODE_8BIT_DDR) {
+			/* Set the card to use 8 bit DDR mode */
+			err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
+					EXT_CSD_BUS_WIDTH,
+					EXT_CSD_BUS_WIDTH_8_DDR);
+			if (err)
+				return err;
+
+
+			/* Setup the host controller for DDR mode */
+			mmc_set_bus_width(mmc, EMMC_MODE_8BIT_DDR);
+		} else if (mmc->card_caps & EMMC_MODE_4BIT_DDR) {
+			/* Set the card to use 4 bit DDR mode */
+			err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
+					EXT_CSD_BUS_WIDTH,
+					EXT_CSD_BUS_WIDTH_4_DDR);
+			if (err)
+				return err;
+
+			/* Setup the host controller for DDR mode */
+			mmc_set_bus_width(mmc, EMMC_MODE_4BIT_DDR);
+		}
+#endif
 
 		if (mmc->card_caps & MMC_MODE_HS) {
 			if (mmc->card_caps & MMC_MODE_HS_52MHz)

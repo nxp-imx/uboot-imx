@@ -138,6 +138,12 @@ static void print_mmcinfo(struct mmc *mmc)
 	printf("High Capacity: %s\n", mmc->high_capacity ? "Yes" : "No");
 	printf("Capacity: %lld\n", mmc->capacity);
 
+#ifdef CONFIG_EMMC_DDR_MODE
+	if (mmc->bus_width == EMMC_MODE_4BIT_DDR ||
+		mmc->bus_width == EMMC_MODE_8BIT_DDR)
+		printf("Bus Width: %d-bit DDR\n", (mmc->bus_width >> 8));
+	else
+#endif
 	printf("Bus Width: %d-bit\n", mmc->bus_width);
 #ifdef CONFIG_BOOT_PARTITION_ACCESS
 	if (mmc->boot_size_mult == 0) {

@@ -202,10 +202,15 @@
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
 
-	/* detect whether ESDHC1 or ESDHC3 is boot device */
+	/* detect whether ESDHC1, ESDHC2, or ESDHC3 is boot device */
 	#define CONFIG_DYNAMIC_MMC_DEVNO
 
 	#define CONFIG_BOOT_PARTITION_ACCESS
+	#define CONFIG_EMMC_DDR_MODE
+
+	/* Indicate to esdhc driver which ports support 8-bit data */
+	#define CONFIG_MMC_8BIT_PORTS		0x6   /* ports 1 and 2 */
+
 
 #endif
 /*-----------------------------------------------------------------------
