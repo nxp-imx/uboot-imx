@@ -3249,7 +3249,8 @@ mx35_3stack_mmc_config: unconfig
 
 mx50_arm2_lpddr2_config \
 mx50_arm2_iram_config \
-mx50_arm2_config      : unconfig
+mx50_arm2_config  \
+mx50_arm2_mfg_config	: unconfig
 	@[ -z "$(findstring iram_,$@)" ] || \
 		{ echo "TEXT_BASE = 0xF8008400" >$(obj)board/freescale/mx50_arm2/config.tmp ; \
 		  echo "... with iram configuration" ; \
