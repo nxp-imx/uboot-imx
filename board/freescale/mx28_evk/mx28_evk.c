@@ -24,6 +24,8 @@
 #include <asm/arch/regs-pinctrl.h>
 #include <asm/arch/pinctrl.h>
 #include <asm/arch/regs-clkctrl.h>
+#include <asm/arch/regs-ocotp.h>
+
 #include <mmc.h>
 #include <imx_ssp_mmc.h>
 
@@ -204,6 +206,32 @@ int board_mmc_init(bd_t *bis)
 		return -1;
 }
 
+#endif
+
+#ifdef CONFIG_MXC_FEC
+#ifdef CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
+int fec_get_mac_addr(unsigned char *mac)
+{
+	u32 val;
+
+	/*set this bit to open the OTP banks for reading*/
+	REG_WR(REGS_OCOTP_BASE, HW_OCOTP_CTRL_SET,
+		BM_OCOTP_CTRL_RD_BANK_OPEN);
+
+	/*wait until OTP contents are readable*/
+	while (BM_OCOTP_CTRL_BUSY & REG_RD(REGS_OCOTP_BASE, HW_OCOTP_CTRL))
+		udelay(100);
+
+	mac[0] = 0x00;
+	mac[1] = 0x04;
+	val = REG_RD(REGS_OCOTP_BASE, HW_OCOTP_CUSTn(0));
+	mac[2] = (val >> 24) & 0xFF;
+	mac[3] = (val >> 16) & 0xFF;
+	mac[4] = (val >> 8) & 0xFF;
+	mac[5] = (val >> 0) & 0xFF;
+	return 0;
+}
+#endif
 #endif
 
 void enet_board_init(void)
