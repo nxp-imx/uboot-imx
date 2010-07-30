@@ -25,6 +25,7 @@
  * SoC configurations
  */
 #define CONFIG_MX28				/* i.MX28 SoC */
+#define CONFIG_MX28_TO1_2
 #define CONFIG_SYS_HZ		1000		/* Ticks per second */
 /* ROM loads UBOOT into DRAM */
 #define CONFIG_SKIP_RELOCATE_UBOOT
@@ -143,10 +144,16 @@
 #define CONFIG_ENV_SIZE			(0x20000 - 0x400) /* 127 KB */
 #define CONFIG_DYNAMIC_MMC_DEVNO
 
-/* The global boot mode has been detected by Boot ROM and a boot mode value
- * is stored at address of 0x0001a7f0.
+/* The global boot mode will be detected by ROM code and
+ * a boot mode value will be stored at fixed address:
+ * TO1.0 addr 0x0001a7f0
+ * TO1.2 addr 0x00019BF0
  */
-#define GLOBAL_BOOT_MODE_ADDR 0x0001a7f0
+#ifndef MX28_EVK_TO1_0
+ #define GLOBAL_BOOT_MODE_ADDR 0x00019BF0
+#else
+ #define GLOBAL_BOOT_MODE_ADDR 0x0001a7f0
+#endif
 #define BOOT_MODE_SD0 0x9
 #define BOOT_MODE_SD1 0xa
 
