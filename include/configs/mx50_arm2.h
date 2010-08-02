@@ -163,6 +163,36 @@
 #define CONFIG_DISCOVER_PHY
 
 /*
+#define CONFIG_SPLASH_SCREEN
+*/
+
+/*
+ * SPLASH SCREEN Configs
+ */
+#ifdef CONFIG_SPLASH_SCREEN
+	#define CONFIG_LCD
+	#undef LCD_TEST_PATTERN
+	#define CONFIG_FB_BASE                          (TEXT_BASE + 0x300000)
+	#define CONFIG_SYS_CONSOLE_IS_IN_ENV		1
+	/* #define CONFIG_SPLASH_IS_IN_MMC                 1 */
+	#define LCD_BPP					LCD_MONOCHROME
+	/* #define CONFIG_SPLASH_SCREEN_ALIGN           1 */
+
+	#define CONFIG_MXC_EPDC				1
+
+	#define CONFIG_WORKING_BUF_ADDR			(TEXT_BASE + 0x100000)
+	#define CONFIG_WAVEFORM_BUF_ADDR		(TEXT_BASE + 0x200000)
+	#define CONFIG_WAVEFORM_FILE_OFFSET		0x100000
+	#define CONFIG_WAVEFORM_FILE_SIZE		0xB4000
+	#define CONFIG_WAVEFORM_FILE_IN_MMC
+#endif
+
+#ifdef CONFIG_SPLASH_IS_IN_MMC
+	#define CONFIG_SPLASH_IMG_OFFSET		0x4c000
+	#define CONFIG_SPLASH_IMG_SIZE			0x19000
+#endif
+
+/*
  * I2C Configs
  */
 #define CONFIG_CMD_I2C          1

@@ -203,6 +203,45 @@ typedef struct vidinfo {
 	ushort	*cmap;
 } vidinfo_t;
 
+#elif defined(CONFIG_MXC_EPDC)
+
+struct waveform_modes {
+	int mode_init;
+	int mode_du;
+	int mode_gc4;
+	int mode_gc8;
+	int mode_gc16;
+	int mode_gc32;
+};
+
+struct epdc_data_struct {
+	/* EPDC buffer pointers */
+	u_long working_buf_addr;
+	u_long waveform_buf_addr;
+
+	/* Waveform mode definitions */
+	struct waveform_modes wv_modes;
+};
+
+typedef struct vidinfo {
+	u_long vl_refresh;      /* Refresh Rate Hz */
+	u_long vl_row;          /* resolution in x */
+	u_long vl_col;          /* resolution in y */
+	u_long vl_pixclock;     /* pixel clock in picoseconds */
+	u_long vl_left_margin;  /* Horizontal back porch */
+	u_long vl_right_margin; /* Horizontal front porch */
+	u_long vl_upper_margin; /* Vertical back porch */
+	u_long vl_lower_margin; /* Vertical front porch */
+	u_long vl_hsync;        /* Horizontal sync pulse length */
+	u_long vl_vsync;        /* Vertical sync pulse length */
+	u_long vl_sync;         /* Polarity on data enable */
+	u_long vl_mode;         /* Video Mode */
+	u_long vl_flag;
+	u_char  vl_bpix;
+	ushort  *cmap;
+	struct epdc_data_struct epdc_data;
+} vidinfo_t;
+
 #else
 
 typedef struct vidinfo {

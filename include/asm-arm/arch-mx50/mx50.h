@@ -43,6 +43,7 @@
 #define CTI3_BASE_ADDR		(DEBUG_BASE_ADDR + 0x00007000)
 #define CORTEX_DBG_BASE_ADDR	(DEBUG_BASE_ADDR + 0x00008000)
 #define OCOTP_CTRL_BASE_ADDR	(DEBUG_BASE_ADDR + 0x01002000)
+#define EPDC_BASE_ADDR		(DEBUG_BASE_ADDR + 0x01010000)
 
 /*
  * SPBA global module enabled #0
@@ -133,6 +134,35 @@
 #define NFC_BASE_ADDR		(AIPS2_BASE_ADDR + 0x000DB000)
 #define EMI_BASE_ADDR		(AIPS2_BASE_ADDR + 0x000DBF00)
 #define FEC_BASE_ADDR		(AIPS2_BASE_ADDR + 0x000EC000)
+
+/*
+ * Some of i.MX50 SoC registers are associated with four addresses
+ * used for different operations - read/write, set, clear and toggle bits.
+ *
+ * Some of registers do not implement such feature and, thus, should be
+ * accessed/manipulated via single address in common way.
+ */
+#define REG_RD(base, reg) \
+	(*(volatile unsigned int *)((base) + (reg)))
+#define REG_WR(base, reg, value) \
+	((*(volatile unsigned int *)((base) + (reg))) = (value))
+#define REG_SET(base, reg, value) \
+	((*(volatile unsigned int *)((base) + (reg ## _SET))) = (value))
+#define REG_CLR(base, reg, value) \
+	((*(volatile unsigned int *)((base) + (reg ## _CLR))) = (value))
+#define REG_TOG(base, reg, value) \
+	((*(volatile unsigned int *)((base) + (reg ## _TOG))) = (value))
+
+#define REG_RD_ADDR(addr) \
+	(*(volatile unsigned int *)((addr)))
+#define REG_WR_ADDR(addr, value) \
+	((*(volatile unsigned int *)((addr))) = (value))
+#define REG_SET_ADDR(addr, value) \
+	((*(volatile unsigned int *)((addr) + 0x4)) = (value))
+#define REG_CLR_ADDR(addr, value) \
+	((*(volatile unsigned int *)((addr) + 0x8)) = (value))
+#define REG_TOG_ADDR(addr, value) \
+	((*(volatile unsigned int *)((addr) + 0xc)) = (value))
 
 /*
  * Memory regions and CS
