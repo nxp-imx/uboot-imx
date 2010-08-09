@@ -97,6 +97,9 @@
 #define CONFIG_CMD_IIM
 #define CONFIG_CMD_I2C
 
+#define CONFIG_CMD_CLOCK
+#define CONFIG_REF_CLK_FREQ CONFIG_MX51_HCLK_FREQ
+
 /*
  * FUSE Configs
  * */

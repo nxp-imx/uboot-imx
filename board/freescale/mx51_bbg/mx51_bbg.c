@@ -588,7 +588,7 @@ static void setup_core_voltage_spi(void)
 	pmic_reg(slave, 34, val, 1);
 
 	/* Write needed to update Charger 0 */
-	pmic_reg(slave, 48, 0x0023807F, 1);
+	pmic_reg(slave, 48, 0x0023807f, 1);
 
 	/* power up the system first */
 	pmic_reg(slave, 34, 0x00200000, 1);
@@ -596,17 +596,17 @@ static void setup_core_voltage_spi(void)
 	if (is_soc_rev(CHIP_REV_2_0) >= 0) {
 		/* Set core voltage to 1.1V */
 		val = pmic_reg(slave, 24, 0, 0);
-		val = (val & (~0x1F)) | 0x14;
+		val = (val & (~0x1f)) | 0x14;
 		pmic_reg(slave, 24, val, 1);
 
 		/* Setup VCC (SW2) to 1.25 */
 		val = pmic_reg(slave, 25, 0, 0);
-		val = (val & (~0x1F)) | 0x1A;
+		val = (val & (~0x1f)) | 0x1a;
 		pmic_reg(slave, 25, val, 1);
 
 		/* Setup 1V2_DIG1 (SW3) to 1.25 */
 		val = pmic_reg(slave, 26, 0, 0);
-		val = (val & (~0x1F)) | 0x1A;
+		val = (val & (~0x1f)) | 0x1a;
 		pmic_reg(slave, 26, val, 1);
 		udelay(50);
 		/* Raise the core frequency to 800MHz */
@@ -615,37 +615,37 @@ static void setup_core_voltage_spi(void)
 		/* TO 3.0 */
 		/* Setup VCC (SW2) to 1.225 */
 		val = pmic_reg(slave, 25, 0, 0);
-		val = (val & (~0x1F)) | 0x19;
+		val = (val & (~0x1f)) | 0x19;
 		pmic_reg(slave, 25, val, 1);
 
 		/* Setup 1V2_DIG1 (SW3) to 1.2 */
 		val = pmic_reg(slave, 26, 0, 0);
-		val = (val & (~0x1F)) | 0x18;
+		val = (val & (~0x1f)) | 0x18;
 		pmic_reg(slave, 26, val, 1);
 	}
 
-	if (((pmic_reg(slave, 7, 0, 0) & 0x1F) < REV_ATLAS_LITE_2_0) ||
+	if (((pmic_reg(slave, 7, 0, 0) & 0x1f) < REV_ATLAS_LITE_2_0) ||
 		(((pmic_reg(slave, 7, 0, 0) >> 9) & 0x3) == 0)) {
 		/* Set switchers in PWM mode for Atlas 2.0 and lower */
 		/* Setup the switcher mode for SW1 & SW2*/
 		val = pmic_reg(slave, 28, 0, 0);
-		val = (val & (~0x3C0F)) | 0x1405;
+		val = (val & (~0x3c0f)) | 0x1405;
 		pmic_reg(slave, 28, val, 1);
 
 		/* Setup the switcher mode for SW3 & SW4 */
 		val = pmic_reg(slave, 29, 0, 0);
-		val = (val & (~0xF0F)) | 0x505;
+		val = (val & (~0xf0f)) | 0x505;
 		pmic_reg(slave, 29, val, 1);
 	} else {
 		/* Set switchers in Auto in NORMAL mode & STANDBY mode for Atlas 2.0a */
 		/* Setup the switcher mode for SW1 & SW2*/
 		val = pmic_reg(slave, 28, 0, 0);
-		val = (val & (~0x3C0F)) | 0x2008;
+		val = (val & (~0x3c0f)) | 0x2008;
 		pmic_reg(slave, 28, val, 1);
 
 		/* Setup the switcher mode for SW3 & SW4 */
 		val = pmic_reg(slave, 29, 0, 0);
-		val = (val & (~0xF0F)) | 0x808;
+		val = (val & (~0xf0f)) | 0x808;
 		pmic_reg(slave, 29, val, 1);
 	}
 
@@ -657,8 +657,8 @@ static void setup_core_voltage_spi(void)
 
 	/* Set VVIDEO to 2.775V, VAUDIO to 3V, VSD to 3.15V */
 	val = pmic_reg(slave, 31, 0, 0);
-	val &= ~0x1FC;
-	val |= 0x1F4;
+	val &= ~0x1fc;
+	val |= 0x1f4;
 	pmic_reg(slave, 31, val, 1);
 
 	/* Configure VGEN3 and VCAM regulators to use external PNP */
@@ -675,7 +675,7 @@ static void setup_core_voltage_spi(void)
 	writel(reg, GPIO2_BASE_ADDR + 0x4);
 
 	/* Reset the ethernet controller over GPIO */
-	writel(0x1, IOMUXC_BASE_ADDR + 0x0AC);
+	writel(0x1, IOMUXC_BASE_ADDR + 0x0ac);
 
 	/* Enable VGEN3, VCAM, VAUDIO, VVIDEO, VSD regulators */
 	val = 0x49249;

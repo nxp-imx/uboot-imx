@@ -242,10 +242,10 @@
 	str r1, [r0, #CLKCTL_CCGR5]
 	str r1, [r0, #CLKCTL_CCGR6]
 
-	/* Use PLL 2 for UART's, get 66.5MHz from it */
-	ldr r1, =0xA5A2A020
+	/* Use default for UART clock */
+	ldr r1, =0xA6A2A020
 	str r1, [r0, #CLKCTL_CSCMR1]
-	ldr r1, =0x00C30321
+	ldr r1, =0x00C30318
 	str r1, [r0, #CLKCTL_CSCDR1]
 
 	/* make sure divider effective */

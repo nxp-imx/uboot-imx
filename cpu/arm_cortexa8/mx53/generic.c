@@ -665,7 +665,7 @@ int clk_info(u32 clk_type)
 		(tmp - 1);	\
 	})
 
-u32 calc_per_cbcdr_val(u32 per_clk, u32 cbcmr)
+static u32 calc_per_cbcdr_val(u32 per_clk, u32 cbcmr)
 {
 	u32 cbcdr = __REG(MXC_CCM_CBCDR);
 	u32 tmp_clk = 0, div = 0, clk_sel = 0;
@@ -719,7 +719,7 @@ u32 calc_per_cbcdr_val(u32 per_clk, u32 cbcmr)
 			; \
 	}
 
-int config_pll_clk(enum pll_clocks pll, struct pll_param *pll_param)
+static int config_pll_clk(enum pll_clocks pll, struct pll_param *pll_param)
 {
 	u32 ccsr = readl(CCM_BASE_ADDR + CLKCTL_CCSR);
 	u32 pll_base = pll;
@@ -768,7 +768,7 @@ int config_pll_clk(enum pll_clocks pll, struct pll_param *pll_param)
 	return 0;
 }
 
-int config_core_clk(u32 ref, u32 freq)
+static int config_core_clk(u32 ref, u32 freq)
 {
 	int ret = 0;
 	u32 pll = 0;
@@ -788,7 +788,7 @@ int config_core_clk(u32 ref, u32 freq)
 	return config_pll_clk(PLL1_CLK, &pll_param);
 }
 
-int config_periph_clk(u32 ref, u32 freq)
+static int config_periph_clk(u32 ref, u32 freq)
 {
 	int ret = 0;
 	u32 pll = freq;
@@ -850,7 +850,7 @@ int config_periph_clk(u32 ref, u32 freq)
 	return 0;
 }
 
-int config_ddr_clk(u32 emi_clk)
+static int config_ddr_clk(u32 emi_clk)
 {
 	u32 clk_src;
 	s32 shift = 0, clk_sel, div = 1;

@@ -37,6 +37,7 @@
 static const struct iim_regs *imx_iim =
 		(struct iim_regs *)IMX_IIM_BASE;
 
+/*
 static void quick_itoa(u32 num, char *a)
 {
 	int i, j, k;
@@ -46,6 +47,7 @@ static void quick_itoa(u32 num, char *a)
 		a[i] = j + k;
 	}
 }
+*/
 
 /* slen - streng length, e.g.: 23 -> slen=2; abcd -> slen=4 */
 /* only convert hex value as string input. so "12" is 0x12. */
@@ -146,7 +148,7 @@ static u32 sense_fuse(s32 bank, s32 row, s32 bit)
 		printf("%s(bank: %d, row: %d, bit: %d failed\n",
 			__func__, bank, row, bit);
 	}
-	reg_addr = &(imx_iim->sdat);
+	reg_addr = (s32)&(imx_iim->sdat);
 
 	return readl(reg_addr);
 }
