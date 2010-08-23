@@ -175,7 +175,7 @@ wait_pll1_lock:
 	str r1, [r0, #0xc]
 /* setmem /32 0x14000010	= 0x0000010b */
 	ldr r1, =0x0000010b
-	str r1, [r0, #0xc]
+	str r1, [r0, #0x10]
 /* setmem /32 0x14000014	= 0x00000a6b */
 	ldr r1, =0x00000a6b
 	str r1, [r0, #0x14]
@@ -240,7 +240,7 @@ wait_pll1_lock:
 	ldr r1, =0x00000001
 	str r1, [r0, #0x70]
 /* setmem /32 0x14000074	= 0x00000000 */
-	ldr r1, =0x00000001
+	ldr r1, =0x00000000
 	str r1, [r0, #0x74]
 /* setmem /32 0x14000078	= 0x00040042 */
 	ldr r1, =0x00040042
