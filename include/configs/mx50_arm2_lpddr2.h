@@ -240,9 +240,26 @@
 
 	/* Indicate to esdhc driver which ports support 8-bit data */
 	#define CONFIG_MMC_8BIT_PORTS		0x6   /* ports 1 and 2 */
-
-
 #endif
+
+/*
+ * GPMI Nand Configs
+ */
+#define CONFIG_CMD_NAND
+
+#ifdef CONFIG_CMD_NAND
+	#define CONFIG_NAND_GPMI
+	#define CONFIG_GPMI_NFC_SWAP_BLOCK_MARK
+	#define CONFIG_GPMI_NFC_V2
+
+	#define CONFIG_GPMI_REG_BASE	GPMI_BASE_ADDR
+	#define CONFIG_BCH_REG_BASE	BCH_BASE_ADDR
+
+	#define NAND_MAX_CHIPS		8
+	#define CONFIG_SYS_NAND_BASE		0x40000000
+	#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#endif
+
 /*-----------------------------------------------------------------------
  * Stack sizes
  *

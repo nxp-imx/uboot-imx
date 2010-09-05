@@ -351,6 +351,204 @@ void spi_io_init(struct imx_spi_dev_t *dev)
 }
 #endif
 
+#ifdef CONFIG_NAND_GPMI
+void setup_gpmi_nand()
+{
+	u32 src_sbmr = readl(SRC_BASE_ADDR + 0x4);
+
+	/* Fix for gpmi gatelevel issue */
+	mxc_iomux_set_pad(MX50_PIN_SD3_CLK, 0x00e4);
+
+	/* RESETN,WRN,RDN,DATA0~7 Signals iomux*/
+	/* Check if 1.8v NAND is to be supported */
+	if ((src_sbmr & 0x00000004) >> 2)
+		*(u32 *)(IOMUXC_BASE_ADDR + PAD_GRP_START + 0x58) = (0x1 << 13);
+
+	/* RESETN */
+	mxc_request_iomux(MX50_PIN_SD3_WP, IOMUX_CONFIG_ALT2);
+	mxc_iomux_set_pad(MX50_PIN_SD3_WP, PAD_CTL_DRV_HIGH);
+
+	/* WRN */
+	mxc_request_iomux(MX50_PIN_SD3_CMD, IOMUX_CONFIG_ALT2);
+	mxc_iomux_set_pad(MX50_PIN_SD3_CMD, PAD_CTL_DRV_HIGH);
+
+	/* RDN */
+	mxc_request_iomux(MX50_PIN_SD3_CLK, IOMUX_CONFIG_ALT2);
+	mxc_iomux_set_pad(MX50_PIN_SD3_CLK, PAD_CTL_DRV_HIGH);
+
+	/* D0 */
+	mxc_request_iomux(MX50_PIN_SD3_D4, IOMUX_CONFIG_ALT2);
+	mxc_iomux_set_pad(MX50_PIN_SD3_D4, PAD_CTL_DRV_HIGH);
+
+	/* D1 */
+	mxc_request_iomux(MX50_PIN_SD3_D5, IOMUX_CONFIG_ALT2);
+	mxc_iomux_set_pad(MX50_PIN_SD3_D5, PAD_CTL_DRV_HIGH);
+
+	/* D2 */
+	mxc_request_iomux(MX50_PIN_SD3_D6, IOMUX_CONFIG_ALT2);
+	mxc_iomux_set_pad(MX50_PIN_SD3_D6, PAD_CTL_DRV_HIGH);
+
+	/* D3 */
+	mxc_request_iomux(MX50_PIN_SD3_D7, IOMUX_CONFIG_ALT2);
+	mxc_iomux_set_pad(MX50_PIN_SD3_D7, PAD_CTL_DRV_HIGH);
+
+	/* D4 */
+	mxc_request_iomux(MX50_PIN_SD3_D0, IOMUX_CONFIG_ALT2);
+	mxc_iomux_set_pad(MX50_PIN_SD3_D0, PAD_CTL_DRV_HIGH);
+
+	/* D5 */
+	mxc_request_iomux(MX50_PIN_SD3_D1, IOMUX_CONFIG_ALT2);
+	mxc_iomux_set_pad(MX50_PIN_SD3_D1, PAD_CTL_DRV_HIGH);
+
+	/* D6 */
+	mxc_request_iomux(MX50_PIN_SD3_D2, IOMUX_CONFIG_ALT2);
+	mxc_iomux_set_pad(MX50_PIN_SD3_D2, PAD_CTL_DRV_HIGH);
+
+	/* D7 */
+	mxc_request_iomux(MX50_PIN_SD3_D3, IOMUX_CONFIG_ALT2);
+	mxc_iomux_set_pad(MX50_PIN_SD3_D3, PAD_CTL_DRV_HIGH);
+
+	/*CE0~3,and other four controls signals muxed on KPP*/
+	switch ((src_sbmr & 0x00000018) >> 3) {
+	case  0:
+		/* Muxed on key */
+		if ((src_sbmr & 0x00000004) >> 2)
+			*(u32 *)(IOMUXC_BASE_ADDR + PAD_GRP_START + 0x20) =
+								(0x1 << 13);
+
+		/* CLE */
+		mxc_request_iomux(MX50_PIN_KEY_COL0, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_KEY_COL0, PAD_CTL_DRV_HIGH);
+
+		/* ALE */
+		mxc_request_iomux(MX50_PIN_KEY_ROW0, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_KEY_ROW0, PAD_CTL_DRV_HIGH);
+
+		/* READY0 */
+		mxc_request_iomux(MX50_PIN_KEY_COL3, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_KEY_COL3,
+				PAD_CTL_PKE_ENABLE | PAD_CTL_PUE_PULL |
+				PAD_CTL_100K_PU);
+		mxc_iomux_set_input(MUX_IN_RAWNAND_U_GPMI_INPUT_GPMI_RDY0_IN_SELECT_INPUT,
+				INPUT_CTL_PATH0);
+
+		/* DQS */
+		mxc_request_iomux(MX50_PIN_KEY_ROW3, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_KEY_ROW3, PAD_CTL_DRV_HIGH);
+		mxc_iomux_set_input(MUX_IN_RAWNAND_U_GPMI_INPUT_GPMI_DQS_IN_SELECT_INPUT,
+				INPUT_CTL_PATH0);
+
+		/* CE0 */
+		mxc_request_iomux(MX50_PIN_KEY_COL1, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_KEY_COL1, PAD_CTL_DRV_HIGH);
+
+		/* CE1 */
+		mxc_request_iomux(MX50_PIN_KEY_ROW1, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_KEY_ROW1, PAD_CTL_DRV_HIGH);
+
+		/* CE2 */
+		mxc_request_iomux(MX50_PIN_KEY_COL2, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_KEY_COL2, PAD_CTL_DRV_HIGH);
+
+		/* CE3 */
+		mxc_request_iomux(MX50_PIN_KEY_ROW2, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_KEY_ROW2, PAD_CTL_DRV_HIGH);
+
+		break;
+	case 1:
+		if ((src_sbmr & 0x00000004) >> 2)
+			*(u32 *)(IOMUXC_BASE_ADDR + PAD_GRP_START + 0xc) =
+								(0x1 << 13);
+
+		/* CLE */
+		mxc_request_iomux(MX50_PIN_EIM_DA8, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_EIM_DA8, PAD_CTL_DRV_HIGH);
+
+		/* ALE */
+		mxc_request_iomux(MX50_PIN_EIM_DA9, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_EIM_DA9, PAD_CTL_DRV_HIGH);
+
+		/* READY0 */
+		mxc_request_iomux(MX50_PIN_EIM_DA14, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_EIM_DA14,
+				PAD_CTL_PKE_ENABLE | PAD_CTL_PUE_PULL |
+				PAD_CTL_100K_PU);
+		mxc_iomux_set_input(MUX_IN_RAWNAND_U_GPMI_INPUT_GPMI_RDY0_IN_SELECT_INPUT,
+				INPUT_CTL_PATH2);
+
+		/* DQS */
+		mxc_request_iomux(MX50_PIN_EIM_DA15, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_EIM_DA15, PAD_CTL_DRV_HIGH);
+		mxc_iomux_set_input(MUX_IN_RAWNAND_U_GPMI_INPUT_GPMI_DQS_IN_SELECT_INPUT,
+				INPUT_CTL_PATH2);
+
+		/* CE0 */
+		mxc_request_iomux(MX50_PIN_EIM_DA10, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_EIM_DA10, PAD_CTL_DRV_HIGH);
+
+		/* CE1 */
+		mxc_request_iomux(MX50_PIN_EIM_DA11, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_EIM_DA11, PAD_CTL_DRV_HIGH);
+
+		/* CE2 */
+		mxc_request_iomux(MX50_PIN_EIM_DA12, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_EIM_DA12, PAD_CTL_DRV_HIGH);
+
+		/* CE3 */
+		mxc_request_iomux(MX50_PIN_EIM_DA13, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_EIM_DA13, PAD_CTL_DRV_HIGH);
+
+		break;
+	case 2:
+		if ((src_sbmr & 0x00000004) >> 2)
+			*(u32 *)(IOMUXC_BASE_ADDR + PAD_GRP_START + 0x48) =
+								(0x1 << 13);
+
+		/* CLE */
+		mxc_request_iomux(MX50_PIN_DISP_D8, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_DISP_D8, PAD_CTL_DRV_HIGH);
+
+		/* ALE */
+		mxc_request_iomux(MX50_PIN_DISP_D9, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_DISP_D9, PAD_CTL_DRV_HIGH);
+
+		/* READY0 */
+		mxc_request_iomux(MX50_PIN_DISP_D14, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_DISP_D14,
+				PAD_CTL_PKE_ENABLE | PAD_CTL_PUE_PULL |
+				PAD_CTL_100K_PU);
+		mxc_iomux_set_input(MUX_IN_RAWNAND_U_GPMI_INPUT_GPMI_RDY0_IN_SELECT_INPUT,
+				INPUT_CTL_PATH1);
+
+		/* DQS */
+		mxc_request_iomux(MX50_PIN_DISP_D15, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_DISP_D15, PAD_CTL_DRV_HIGH);
+		mxc_iomux_set_input(MUX_IN_RAWNAND_U_GPMI_INPUT_GPMI_DQS_IN_SELECT_INPUT,
+				INPUT_CTL_PATH1);
+
+		/* CE0 */
+		mxc_request_iomux(MX50_PIN_DISP_D10, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_DISP_D10, PAD_CTL_DRV_HIGH);
+
+		/* CE1 */
+		mxc_request_iomux(MX50_PIN_EIM_DA11, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_EIM_DA11, PAD_CTL_DRV_HIGH);
+
+		/* CE2 */
+		mxc_request_iomux(MX50_PIN_DISP_D12, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_DISP_D12, PAD_CTL_DRV_HIGH);
+
+		/* CE3 */
+		mxc_request_iomux(MX50_PIN_DISP_D13, IOMUX_CONFIG_ALT2);
+		mxc_iomux_set_pad(MX50_PIN_DISP_D13, PAD_CTL_DRV_HIGH);
+
+		break;
+	default:
+		break;
+	}
+}
+#endif
+
 #ifdef CONFIG_MXC_FEC
 
 #ifdef CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
@@ -521,6 +719,7 @@ int esdhc_gpio_init(bd_t *bis)
 
 			break;
 		case 2:
+#ifndef CONFIG_NAND_GPMI
 			mxc_request_iomux(MX50_PIN_SD3_CMD, IOMUX_CONFIG_ALT0);
 			mxc_request_iomux(MX50_PIN_SD3_CLK, IOMUX_CONFIG_ALT0);
 			mxc_request_iomux(MX50_PIN_SD3_D0,  IOMUX_CONFIG_ALT0);
@@ -542,7 +741,7 @@ int esdhc_gpio_init(bd_t *bis)
 			mxc_iomux_set_pad(MX50_PIN_SD3_D5,  0x1D4);
 			mxc_iomux_set_pad(MX50_PIN_SD3_D6,  0x1D4);
 			mxc_iomux_set_pad(MX50_PIN_SD3_D7,  0x1D4);
-
+#endif
 			break;
 		default:
 			printf("Warning: you configured more ESDHC controller"
@@ -809,7 +1008,6 @@ static void setup_power(void)
 {
 	struct spi_slave *slave;
 	unsigned int val;
-	unsigned int reg;
 
 	puts("PMIC Mode: SPI\n");
 
@@ -872,6 +1070,10 @@ int board_init(void)
 #ifdef CONFIG_MXC_FEC
 	/* iomux for fec */
 	setup_fec();
+#endif
+
+#ifdef CONFIG_NAND_GPMI
+	setup_gpmi_nand();
 #endif
 
 #ifdef CONFIG_MXC_EPDC

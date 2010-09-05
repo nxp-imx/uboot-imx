@@ -27,7 +27,8 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(SOC).a
 
-COBJS	= interrupts.o serial.o generic.o iomux.o timer.o cache.o
+COBJS	= interrupts.o generic.o iomux.o timer.o cache.o
+COBJS-$(CONFIG_ARCH_MMU) += mmu.o
 COBJS += $(COBJS-y)
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)

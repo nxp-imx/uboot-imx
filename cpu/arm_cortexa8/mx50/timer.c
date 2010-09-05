@@ -37,6 +37,7 @@
 #define GPTCR_FRR       (1<<9)	/* Freerun / restart */
 #define GPTCR_CLKSOURCE_32   (0x100<<6)	/* Clock source */
 #define GPTCR_CLKSOURCE_IPG (0x001<<6)	/* Clock source */
+#define GPTCR_ENMOD_RESET	(2)
 #define GPTCR_TEN       (1)	/* Timer enable */
 #define GPTPR_VAL	(50)
 
@@ -56,6 +57,7 @@ static inline void setup_gpt(void)
 		GPTCR = 0;      	/* We have no udelay by now */
 	GPTPR = GPTPR_VAL;	/* 50Mhz / 50 */
 	/* Freerun Mode, PERCLK1 input */
+	GPTCR |= GPTCR_ENMOD_RESET;
 	GPTCR |= GPTCR_CLKSOURCE_IPG | GPTCR_TEN;
 }
 
@@ -69,8 +71,9 @@ int timer_init(void)
 void reset_timer_masked(void)
 {
 	GPTCR = 0;
+	GPTCR |= GPTCR_ENMOD_RESET;
 	/* Freerun Mode, PERCLK1 input */
-	GPTCR = GPTCR_CLKSOURCE_IPG | GPTCR_TEN;
+	GPTCR |= GPTCR_CLKSOURCE_IPG | GPTCR_TEN;
 }
 
 inline ulong get_timer_masked(void)

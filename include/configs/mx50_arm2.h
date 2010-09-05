@@ -33,8 +33,10 @@
 
 #define CONFIG_SKIP_RELOCATE_UBOOT
 
+/*
 #define CONFIG_ARCH_CPU_INIT
 #define CONFIG_ARCH_MMU
+*/
 
 #define CONFIG_MX50_HCLK_FREQ	24000000
 #define CONFIG_SYS_PLL2_FREQ    400
@@ -68,8 +70,8 @@
 /*
  * Hardware drivers
  */
-#define CONFIG_MX50_UART	1
-#define CONFIG_MX50_UART1	1
+#define CONFIG_MXC_UART
+#define CONFIG_UART_BASE_ADDR	UART1_BASE_ADDR
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
@@ -195,12 +197,17 @@
 /*
  * I2C Configs
  */
+/*
 #define CONFIG_CMD_I2C          1
-#define CONFIG_HARD_I2C         1
-#define CONFIG_I2C_MXC          1
-#define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
-#define CONFIG_SYS_I2C_SPEED            100000
-#define CONFIG_SYS_I2C_SLAVE            0xfe
+*/
+
+#ifdef CONFIG_CMD_I2C
+	#define CONFIG_HARD_I2C         1
+	#define CONFIG_I2C_MXC          1
+	#define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
+	#define CONFIG_SYS_I2C_SPEED            100000
+	#define CONFIG_SYS_I2C_SLAVE            0xfe
+#endif
 
 
 /*
@@ -241,6 +248,31 @@
 	#define CONFIG_MMC_8BIT_PORTS		0x6   /* ports 1 and 2 */
 
 #endif
+
+/*
+ * GPMI Nand Configs
+ */
+#define CONFIG_CMD_NAND
+
+#ifdef CONFIG_CMD_NAND
+	#define CONFIG_NAND_GPMI
+	#define CONFIG_GPMI_NFC_SWAP_BLOCK_MARK
+	#define CONFIG_GPMI_NFC_V2
+
+	#define CONFIG_GPMI_REG_BASE	GPMI_BASE_ADDR
+	#define CONFIG_BCH_REG_BASE	BCH_BASE_ADDR
+
+	#define NAND_MAX_CHIPS		8
+	#define CONFIG_SYS_NAND_BASE		0x40000000
+	#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#endif
+
+/*
+ * APBH DMA Configs
+ */
+#define CONFIG_APBH_DMA
+#define CONFIG_MXS_DMA_REG_BASE	ABPHDMA_BASE_ADDR
+
 /*-----------------------------------------------------------------------
  * Stack sizes
  *

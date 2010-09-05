@@ -143,41 +143,4 @@ union ARM_MMU_FIRST_LEVEL_DESCRIPTOR {
 	ARM_ACCESS_TYPE_NO_ACCESS(14) |	\
 	ARM_ACCESS_TYPE_NO_ACCESS(15))
 
-/*
- * Translate the virtual address of ram space to physical address
- * It is dependent on the implementation of mmu_init
- */
-inline void *iomem_to_phys(unsigned long virt)
-{
-	if (virt >= 0xB0000000)
-		return (void *)((virt - 0xB0000000) + PHYS_SDRAM_1);
-
-	return (void *)virt;
-}
-
-/*
- * remap the physical address of ram space to uncacheable virtual address space
- * It is dependent on the implementation of hal_mmu_init
- */
-void *__ioremap(unsigned long offset, size_t size, unsigned long flags)
-{
-	if (1 == flags) {
-		if (offset >= PHYS_SDRAM_1 &&
-			offset < (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
-			return (void *)(offset - PHYS_SDRAM_1) + 0xB0000000;
-		else
-			return NULL;
-	} else
-		return (void *)offset;
-}
-
-/*
- * Remap the physical address of ram space to uncacheable virtual address space
- * It is dependent on the implementation of hal_mmu_init
- */
-void __iounmap(void *addr)
-{
-	return;
-}
-
 #endif

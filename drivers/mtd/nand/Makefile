@@ -48,6 +48,7 @@ COBJS-$(CONFIG_NAND_OMAP_GPMC) += omap_gpmc.o
 COBJS-$(CONFIG_NAND_PLAT) += nand_plat.o
 COBJS-$(CONFIG_MX31_NAND) += mx31_nand.o
 COBJS-$(CONFIG_MXC_NAND) += mxc_nand.o nand_device_info.o
+COBJS-$(CONFIG_NAND_GPMI) += gpmi_nfc_hal.o gpmi_nfc_mil.o nand_device_info.o
 endif
 
 COBJS	:= $(COBJS-y)

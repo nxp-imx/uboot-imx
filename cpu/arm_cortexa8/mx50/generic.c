@@ -464,6 +464,88 @@ static u32 __get_esdhc4_clk(void)
 }
 #endif
 
+#ifdef CONFIG_CMD_NAND
+static inline void __enable_gpmi_clk(void)
+{
+	u32 reg1 = __REG(MXC_CCM_GPMI);
+
+	reg1 |= 0x80000000;
+
+	writel(reg1, MXC_CCM_GPMI);
+}
+
+static inline void __enable_bch_clk(void)
+{
+	u32 reg1 = __REG(MXC_CCM_BCH);
+
+	reg1 |= 0x80000000;
+
+	writel(reg1, MXC_CCM_BCH);
+}
+
+
+static u32 __get_gpmi_clk(void)
+{
+	u32 ret_val = 0;
+	u32 clkseq_bypass = __REG(MXC_CCM_CLKSEQ_BYPASS);
+	u32 clk_sel = (clkseq_bypass & MXC_CCM_CLKSEQ_BYPASS_GPMI_MASK)
+			>> MXC_CCM_CLKSEQ_BYPASS_GPMI_OFFSET;
+	u32 div = __REG(MXC_CCM_GPMI) & 0x3f;
+
+	__enable_gpmi_clk();
+
+	switch (clk_sel) {
+	case 0:
+		/* 24MHz xtal */
+		ret_val = CONFIG_MX50_HCLK_FREQ;
+		break;
+	case 1:
+		/* PFD4 */
+		puts("Warning, Fixme,not handle PFD mux\n");
+		break;
+	case 2:
+		/* PLL1 */
+		ret_val = __decode_pll(PLL1_CLK, CONFIG_MX50_HCLK_FREQ);
+		break;
+	default:
+		break;
+	}
+
+	return (div > 0) ? (ret_val / div) : 0;
+}
+
+static u32 __get_bch_clk(void)
+{
+	u32 ret_val = 0;
+	u32 clkseq_bypass = __REG(MXC_CCM_CLKSEQ_BYPASS);
+	u32 clk_sel = (clkseq_bypass & MXC_CCM_CLKSEQ_BYPASS_BCH_MASK)
+			>> MXC_CCM_CLKSEQ_BYPASS_BCH_OFFSET;
+	u32 div = __REG(MXC_CCM_BCH) & 0x3f;
+
+	__enable_bch_clk();
+
+	switch (clk_sel) {
+	case 0:
+		/* 24MHz xtal */
+		ret_val = CONFIG_MX50_HCLK_FREQ;
+		break;
+	case 1:
+		/* PFD4 */
+		puts("Warning, Fixme,not handle PFD mux\n");
+		break;
+	case 2:
+		/* PLL1 */
+		ret_val = __decode_pll(PLL1_CLK, CONFIG_MX50_HCLK_FREQ);
+		break;
+	default:
+		break;
+	}
+
+	return (div > 0) ? (ret_val / div) : 0;
+}
+
+#endif
+
 unsigned int mxc_get_clock(enum mxc_clock clk)
 {
 	switch (clk) {
@@ -501,6 +583,12 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	case MXC_ESDHC4_CLK:
 		return __get_esdhc4_clk();
 #endif
+#ifdef CONFIG_CMD_NAND
+	case MXC_GPMI_CLK:
+		return __get_gpmi_clk();
+	case MXC_BCH_CLK:
+		return __get_bch_clk();
+#endif
 	default:
 		break;
 	}
@@ -532,6 +620,10 @@ void mxc_dump_clocks(void)
 	printf("esdhc2 clock  : %dHz\n", mxc_get_clock(MXC_ESDHC2_CLK));
 	printf("esdhc3 clock  : %dHz\n", mxc_get_clock(MXC_ESDHC3_CLK));
 	printf("esdhc4 clock  : %dHz\n", mxc_get_clock(MXC_ESDHC4_CLK));
+#endif
+#ifdef CONFIG_CMD_NAND
+	printf("GPMI clock    : %dHz\n", mxc_get_clock(MXC_GPMI_CLK));
+	printf("BCH clock     : %dHz\n", mxc_get_clock(MXC_BCH_CLK));
 #endif
 }
 

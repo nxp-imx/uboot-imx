@@ -69,6 +69,7 @@
 #define NON_PAD_I		PIN_TO_PAD_MASK
 #define MUX_I_START		0x0020
 #define PAD_I_START		0x2CC
+#define PAD_GRP_START		0x668
 #define INPUT_CTL_START		0x6C4
 #define MUX_I_END		(PAD_I_START - 4)
 

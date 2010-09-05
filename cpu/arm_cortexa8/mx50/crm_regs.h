@@ -119,6 +119,8 @@
 #define MXC_CCM_CLKSEQ_BYPASS	(MXC_CCM_BASE + 0x90)
 #define MXC_CCM_CLK_SYS		(MXC_CCM_BASE + 0x94)
 #define MXC_CCM_CLK_DDR		(MXC_CCM_BASE + 0x98)
+#define MXC_CCM_GPMI		(MXC_CCM_BASE + 0xac)
+#define MXC_CCM_BCH		(MXC_CCM_BASE + 0xb0)
 
 /* Define the bits in register CCR */
 #define MXC_CCM_CCR_COSC_EN			(1 << 12)
