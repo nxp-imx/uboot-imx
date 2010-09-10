@@ -43,7 +43,8 @@
 #include <asm/arch/mmu.h>
 #endif
 
-#ifdef CONFIG_FSL_ANDROID
+#ifdef CONFIG_ANDROID_RECOVERY
+#include "../common/recovery.h"
 #include <mxc_keyb.h>
 #include <part.h>
 #include <ext2fs.h>
@@ -611,125 +612,21 @@ int board_init(void)
 	return 0;
 }
 
-#ifdef BOARD_LATE_INIT
-
-#if defined(CONFIG_FSL_ANDROID) && defined(CONFIG_MXC_KPD)
-static int waiting_for_func_key_pressing(void)
-{
-	struct kpp_key_info key_info = {0, 0};
-	int switch_delay = CONFIG_ANDROID_BOOTMOD_DELAY;
-	int state = 0, boot_mode_switch = 0;
-
-	mxc_kpp_init();
-
-	puts("Press home + power to enter recovery mode ...\n");
-
-	while ((switch_delay > 0) && (!boot_mode_switch)) {
-		int i;
-
-		--switch_delay;
-		/* delay 100 * 10ms */
-		for (i = 0; !boot_mode_switch && i < 100; ++i) {
-			/* A state machine to scan home + power key */
-			/* Check for home + power */
-			if (mxc_kpp_getc(&key_info)) {
-				switch (state) {
-				case 0:
-					/* First press */
-					if (TEST_HOME_KEY_DEPRESS(key_info.val, key_info.evt)) {
-						/* Press Home */
-						state = 1;
-					} else if (TEST_POWER_KEY_DEPRESS(key_info.val, key_info.evt)) {
-						state = 2;
-					} else {
-						state = 0;
-					}
-					break;
-				case 1:
-					/* Home is already pressed, try to detect Power */
-					if (TEST_POWER_KEY_DEPRESS(key_info.val,
-						    key_info.evt)) {
-						boot_mode_switch = 1;
-					} else {
-					    if (TEST_HOME_KEY_DEPRESS(key_info.val,
-							key_info.evt))
-						state = 2;
-					    else
-						state = 0;
-					}
-					break;
-				case 2:
-					/* Power is already pressed, try to detect Home */
-					if (TEST_HOME_KEY_DEPRESS(key_info.val,
-						    key_info.evt)) {
-						boot_mode_switch = 1;
-					} else {
-						if (TEST_POWER_KEY_DEPRESS(key_info.val,
-							    key_info.evt))
-							state = 1;
-						else
-							state = 0;
-					}
-					break;
-				default:
-					break;
-				}
-
-				if (1 == boot_mode_switch)
-					return 1;
-			}
-		}
-		for (i = 0; i < 100; ++i)
-			udelay(10000);
-	}
-
-	return 0;
-}
-
-static int switch_to_recovery_mode(void)
-{
-	char *env = NULL;
-	char *boot_args = NULL;
-	char *boot_cmd = NULL;
-
-	printf("Boot mode switched to recovery mode!\n");
-
-	switch (get_boot_device()) {
-	case MMC_BOOT:
-		boot_args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC;
-		boot_cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC;
-		break;
-	case NAND_BOOT:
-		boot_args = CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND;
-		boot_cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND;
-		break;
-	case SPI_NOR_BOOT:
-		printf("Recovery mode not supported in SPI NOR boot\n");
-		return -1;
-		break;
-	case UNKNOWN_BOOT:
-	default:
-		printf("Unknown boot device!\n");
-		return -1;
-		break;
-	}
-
-	env = getenv("bootargs_android_recovery");
-	/* Set env to recovery mode */
-	if (!env)
-		setenv("bootargs_android", boot_args);
-	else
-		setenv("bootargs_android", env);
-
-	env = getenv("bootcmd_android_recovery");
-	if (!env)
-		setenv("bootcmd_android", boot_cmd);
-	else
-		setenv("bootcmd_android", env);
-	setenv("bootcmd", "run bootcmd_android");
-
-	return 0;
-}
+#ifdef CONFIG_ANDROID_RECOVERY
+struct reco_envs supported_reco_envs[END_BOOT] = {
+	{
+	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND,
+	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND,
+	 },
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+	{
+	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
+	 },
+};
 
 static int check_mmc_recovery_cmd_file(int dev_num, int part_num, char *path)
 {
@@ -905,19 +802,9 @@ static int check_recovery_cmd_file(void)
 }
 #endif
 
+#ifdef BOARD_LATE_INIT
 int board_late_init(void)
 {
-#if defined(CONFIG_FSL_ANDROID) && defined(CONFIG_MXC_KPD)
-	if (waiting_for_func_key_pressing())
-		switch_to_recovery_mode();
-	else {
-		if (check_recovery_cmd_file()) {
-			puts("Recovery command file detected!\n");
-			switch_to_recovery_mode();
-		}
-	}
-#endif
-
 	return 0;
 }
 #endif

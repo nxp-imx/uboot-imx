@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -196,6 +196,6 @@ struct kpp_key_info {
 };
 
 int mxc_kpp_init(void);
-int mxc_kpp_getc(struct kpp_key_info *);
+int mxc_kpp_getc(struct kpp_key_info **);
 
 #endif				/* __MXC_KEYB_H__ */

@@ -441,10 +441,11 @@
 #ifndef __ASSEMBLER__
 
 enum boot_device {
-	UNKNOWN_BOOT,
-	NAND_BOOT,
+	UNKNOWN_BOOT = -1,
+	NAND_BOOT = 0,
 	SPI_NOR_BOOT,
 	MMC_BOOT,
+	END_BOOT,
 };
 
 enum mxc_clock {

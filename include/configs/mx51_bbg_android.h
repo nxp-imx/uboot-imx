@@ -88,7 +88,9 @@
  */
 #include <asm/arch/keypad.h>
 
-#define CONFIG_FSL_ANDROID
+#define CONFIG_ANDROID_RECOVERY
+#define CONFIG_POWER_KEY	KEY_F3
+#define CONFIG_HOME_KEY	KEY_F1
 
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
@@ -102,13 +104,6 @@
 		KEY_7, KEY_8, KEY_9, KEY_F3, KEY_DOWN, KEY_F4, \
 		KEY_0, KEY_OK, KEY_ESC, KEY_ENTER, KEY_MENU, KEY_BACK, \
 	}
-	/*
-	{	\
-		KEY_3,         KEY_2,        KEY_0, KEY_OK, KEY_ESC, KEY_ENTER,
-		KEY_F1,	KEY_4, KEY_6, KEY_5,
-		KEY_LEFT,      KEY_1,        KEY_ , KEY_8,  KEY_9,   KEY_RIGHT,
-	}
-	*/
 #define CONFIG_MXC_KPD_COLMAX 6
 #define CONFIG_MXC_KPD_ROWMAX 4
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
@@ -116,7 +111,6 @@
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
 	"run bootargs_base bootargs_android;mmc read 0 ${loadaddr} 0x800 0x1280;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
-#define CONFIG_ANDROID_BOOTMOD_DELAY 3
 #define CONFIG_ANDROID_CACHE_PARTITION_MMC 6
 
 /* allow to overwrite serial and ethaddr */
@@ -140,7 +134,7 @@
 
 #undef CONFIG_CMD_IMLS
 
-#define CONFIG_BOOTDELAY	3
+#define CONFIG_BOOTDELAY	1
 
 #define CONFIG_PRIME	"FEC0"
 

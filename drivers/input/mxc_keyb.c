@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -326,32 +326,39 @@ static int mxc_kpp_reset(void)
 	return 0;
 }
 
-int mxc_kpp_getc(struct kpp_key_info *key_info)
+int mxc_kpp_getc(struct kpp_key_info **key_info)
 {
 	int col, row;
-	static int key_cnt;
+	int key_cnt;
 	unsigned short reg_val;
 	short scancode = 0;
+	int index = 0;
+	struct kpp_key_info *keyi;
 
 	reg_val = __raw_readw(KPSR);
 
-	if (!key_cnt) {
-		if (reg_val & KBD_STAT_KPKD) {
-			/*
-			* Disable key press(KDIE status bit) interrupt
-			*/
-			reg_val &= ~KBD_STAT_KDIE;
-			__raw_writew(reg_val, KPSR);
+	if (reg_val & KBD_STAT_KPKD) {
+		/*
+		* Disable key press(KDIE status bit) interrupt
+		*/
+		reg_val &= ~KBD_STAT_KDIE;
+		__raw_writew(reg_val, KPSR);
 
 #ifdef KPP_DEBUG
-			mxc_kpp_dump_regs();
+		mxc_kpp_dump_regs();
 #endif
 
-			key_cnt = mxc_kpp_scan_matrix();
-		} else {
-			return 0;
-		}
+		key_cnt = mxc_kpp_scan_matrix();
+	} else {
+		return 0;
 	}
+
+	if (key_cnt <= 0)
+		return 0;
+
+	*key_info = keyi =
+		(struct kpp_key_info *)malloc
+		(sizeof(struct kpp_key_info) * key_cnt);
 
 	/*
 	* This switch case statement is the
@@ -399,15 +406,16 @@ int mxc_kpp_getc(struct kpp_key_info *key_info)
 				scancode =
 				    press_scancode[row][col];
 
-				key_info->val = mxckpd_keycodes[scancode];
-				key_info->evt = KDepress;
+				keyi[index].val = mxckpd_keycodes[scancode];
+				keyi[index++].evt = KDepress;
 
 				KPP_PRINTF("KStateFirstDown: scan=%d val=%d\n",
 					scancode, mxckpd_keycodes[scancode]);
+				if (index >= key_cnt)
+					goto key_detect;
+
 				kpp_dev.iKeyState = KStateDown;
 				press_scancode[row][col] = -1;
-
-				goto key_detect;
 			}
 		}
 	}
@@ -420,29 +428,23 @@ int mxc_kpp_getc(struct kpp_key_info *key_info)
 				scancode =
 					scancode - MXC_KEYRELEASE;
 
-				key_info->val = mxckpd_keycodes[scancode];
-				key_info->evt = KRelease;
+				keyi[index].val = mxckpd_keycodes[scancode];
+				keyi[index++].evt = KRelease;
 
 				KPP_PRINTF("KStateFirstUp: scan=%d val=%d\n",
 					scancode, mxckpd_keycodes[scancode]);
+				if (index >= key_cnt)
+					goto key_detect;
 
 				kpp_dev.iKeyState = KStateUp;
 				release_scancode[row][col] = -1;
-
-				goto key_detect;
 			}
 		}
 	}
 
-	return 0;
-
 key_detect:
-	/* udelay(KScanRate); */
-	key_cnt = mxc_kpp_scan_matrix();
-
-	if (0 == key_cnt)
-		mxc_kpp_reset();
-	return 1;
+	mxc_kpp_reset();
+	return key_cnt;
 }
 
 /*!

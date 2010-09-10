@@ -52,14 +52,4 @@
 #define KEY_MENU                139     /* Menu (show menu) */
 #define KEY_BACK                158     /* AC Back */
 
-#if defined(CONFIG_MX51_BBG)
-#define TEST_HOME_KEY_DEPRESS(k, e)  (((k) == (KEY_F1)) && (((e) == (KDepress))))
-#define TEST_POWER_KEY_DEPRESS(k, e) (((k) == (KEY_F3)) && (((e) == (KDepress))))
-#elif defined(CONFIG_MX51_3DS)
-#define TEST_HOME_KEY_DEPRESS(k, e)  (((k) == (KEY_MENU)) && (((e) == (KDepress))))
-#define TEST_POWER_KEY_DEPRESS(k, e) (((k) == (KEY_F2)) && (((e) == (KDepress))))
-#else
-# error Undefined board type!
-#endif
-
 #endif

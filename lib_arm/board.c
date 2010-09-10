@@ -461,6 +461,10 @@ extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 	board_late_init ();
 #endif
 
+#ifdef CONFIG_ANDROID_RECOVERY
+	check_recovery_mode();
+#endif
+
 #if defined(CONFIG_CMD_NET)
 #if defined(CONFIG_NET_MULTI)
 	puts ("Net:   ");

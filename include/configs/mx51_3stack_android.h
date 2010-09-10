@@ -114,7 +114,9 @@
  */
 #include <asm/arch/keypad.h>
 
-#define CONFIG_FSL_ANDROID
+#define CONFIG_ANDROID_RECOVERY
+#define CONFIG_POWER_KEY	KEY_F2
+#define CONFIG_HOME_KEY	KEY_MENU
 
 #define CONFIG_MXC_KPD
 #define CONFIG_MXC_KEYMAPPING \
@@ -135,7 +137,6 @@
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND  \
 	"run bootargs_base bootargs_android;nand read ${loadaddr} 0x300000 0x250000;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
-#define CONFIG_ANDROID_BOOTMOD_DELAY 3
 #define CONFIG_ANDROID_CACHE_PARTITION_MMC 6
 #define CONFIG_ANDROID_UBIFS_PARTITION_NM  "ROOT"
 #define CONFIG_ANDROID_CACHE_PARTITION_NAND "cache"
@@ -162,7 +163,7 @@
 
 #undef CONFIG_CMD_IMLS
 
-#define CONFIG_BOOTDELAY	3
+#define CONFIG_BOOTDELAY	1
 
 #define CONFIG_PRIME	"FEC0"
 

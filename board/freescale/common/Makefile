@@ -41,6 +41,7 @@ COBJS-${CONFIG_MPC8541CDS}	+= cds_pci_ft.o
 COBJS-${CONFIG_MPC8548CDS}	+= cds_pci_ft.o
 COBJS-${CONFIG_MPC8555CDS}	+= cds_pci_ft.o
 
+COBJS-${CONFIG_ANDROID_RECOVERY} += recovery.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS-y))
