@@ -52,6 +52,16 @@
 #include <asm/clock.h>
 #endif
 
+#ifdef CONFIG_ANDROID_RECOVERY
+#include "../common/recovery.h"
+#include <part.h>
+#include <ext2fs.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
+#include <ubi_uboot.h>
+#include <jffs2/load_kernel.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
@@ -647,6 +657,26 @@ static void setup_fec(void)
 }
 #endif
 
+#if defined(CONFIG_MXC_KPD)
+int setup_mxc_kpd(void)
+{
+	mxc_request_iomux(MX53_PIN_KEY_COL0, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX53_PIN_KEY_COL1, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX53_PIN_KEY_COL2, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX53_PIN_KEY_COL3, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX53_PIN_KEY_COL4, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX53_PIN_GPIO_19,  IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX53_PIN_KEY_ROW0, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX53_PIN_KEY_ROW1, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX53_PIN_KEY_ROW2, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX53_PIN_KEY_ROW3, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX53_PIN_KEY_ROW4, IOMUX_CONFIG_ALT0);
+
+	return 0;
+}
+#endif
+
+
 #ifdef CONFIG_CMD_MMC
 
 struct fsl_esdhc_cfg esdhc_cfg[2] = {
@@ -775,6 +805,127 @@ int board_init(void)
 
 	return 0;
 }
+
+
+#ifdef CONFIG_ANDROID_RECOVERY
+struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+	{
+	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+	 .args = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+	 },
+	{
+	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
+	 },
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+};
+
+int check_recovery_cmd_file(void)
+{
+	disk_partition_t info;
+	ulong part_length;
+	int filelen;
+	char *env;
+
+	/* For test only */
+	/* When detecting android_recovery_switch,
+	 * enter recovery mode directly */
+	env = getenv("android_recovery_switch");
+	if (!strcmp(env, "1")) {
+		printf("Env recovery detected!\nEnter recovery mode!\n");
+		return 1;
+	}
+
+	printf("Checking for recovery command file...\n");
+	switch (get_boot_device()) {
+	case MMC_BOOT:
+	case SD_BOOT:
+		{
+			block_dev_desc_t *dev_desc = NULL;
+			struct mmc *mmc = find_mmc_device(0);
+
+			dev_desc = get_dev("mmc", 0);
+
+			if (NULL == dev_desc) {
+				puts("** Block device MMC 0 not supported\n");
+				return 0;
+			}
+
+			mmc_init(mmc);
+
+			if (get_partition_info(dev_desc,
+					CONFIG_ANDROID_CACHE_PARTITION_MMC,
+					&info)) {
+				printf("** Bad partition %d **\n",
+					CONFIG_ANDROID_CACHE_PARTITION_MMC);
+				return 0;
+			}
+
+			part_length = ext2fs_set_blk_dev(dev_desc,
+						CONFIG_ANDROID_CACHE_PARTITION_MMC);
+			if (part_length == 0) {
+				printf("** Bad partition - mmc 0:%d **\n",
+					CONFIG_ANDROID_CACHE_PARTITION_MMC);
+				ext2fs_close();
+				return 0;
+			}
+
+			if (!ext2fs_mount(part_length)) {
+				printf("** Bad ext2 partition or "
+					"disk - mmc 0:%d **\n",
+					CONFIG_ANDROID_CACHE_PARTITION_MMC);
+				ext2fs_close();
+				return 0;
+			}
+
+			filelen = ext2fs_open(CONFIG_ANDROID_RECOVERY_CMD_FILE);
+
+			ext2fs_close();
+		}
+		break;
+	case NAND_BOOT:
+		return 0;
+		break;
+	case SPI_NOR_BOOT:
+		return 0;
+		break;
+	case UNKNOWN_BOOT:
+	default:
+		return 0;
+		break;
+	}
+
+	return (filelen > 0) ? 1 : 0;
+
+}
+#endif
 
 int board_late_init(void)
 {

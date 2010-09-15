@@ -445,7 +445,7 @@ enum boot_device {
 	NAND_BOOT = 0,
 	SPI_NOR_BOOT,
 	MMC_BOOT,
-	END_BOOT,
+	BOOT_DEV_NUM,
 };
 
 enum mxc_clock {

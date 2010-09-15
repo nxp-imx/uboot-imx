@@ -29,7 +29,6 @@
 #include <asm/arch/iomux.h>
 #include <asm/errno.h>
 #include <i2c.h>
-#include <asm/arch/keypad.h>
 #include "board-imx51.h"
 #ifdef CONFIG_IMX_ECSPI
 #include <imx_spi.h>
@@ -874,7 +873,7 @@ int board_init(void)
 }
 
 #ifdef CONFIG_ANDROID_RECOVERY
-struct reco_envs supported_reco_envs[END_BOOT] = {
+struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
 	{
 	 .cmd = NULL,
 	 .args = NULL,

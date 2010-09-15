@@ -29,7 +29,6 @@
 #include <asm/arch/mx51_pins.h>
 #include <asm/arch/iomux.h>
 #include <i2c.h>
-#include <asm/arch/keypad.h>
 #include "board-mx51_3stack.h"
 #include <netdev.h>
 
@@ -613,7 +612,7 @@ int board_init(void)
 }
 
 #ifdef CONFIG_ANDROID_RECOVERY
-struct reco_envs supported_reco_envs[END_BOOT] = {
+struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
 	{
 	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND,
 	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND,
@@ -759,7 +758,7 @@ static int check_nand_recovery_cmd_file(char *mtd_part_name,
 	return filelen;
 }
 
-static int check_recovery_cmd_file(void)
+int check_recovery_cmd_file(void)
 {
 	int if_exist = 0;
 	char *env = NULL;

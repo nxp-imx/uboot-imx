@@ -30,8 +30,8 @@
 #include <asm/io.h>
 #include <common.h>
 #include <asm/errno.h>
-#include <asm/arch/keypad.h>
 #include <linux/types.h>
+#include <asm/mxc_key_defs.h>
 #include <malloc.h>
 
 /*

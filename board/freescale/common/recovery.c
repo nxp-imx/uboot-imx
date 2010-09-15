@@ -11,18 +11,18 @@
 #include <common.h>
 #include <malloc.h>
 #include "recovery.h"
-
-#ifndef CONFIG_MXC_KPD
-#error "error! keypad must be configured to support recovery"
-#endif
+#ifdef CONFIG_MXC_KPD
 #include <mxc_keyb.h>
+#endif
+
+extern int check_recovery_cmd_file(void);
+extern enum boot_device get_boot_device(void);
+
+#ifdef CONFIG_MXC_KPD
 
 #define PRESSED_HOME	0x01
 #define PRESSED_POWER	0x02
 #define RECOVERY_KEY_MASK (PRESSED_HOME | PRESSED_POWER)
-
-extern int check_recovery_cmd_file(void);
-extern enum boot_device get_boot_device(void);
 
 inline int test_key(int value, struct kpp_key_info *ki)
 {
@@ -57,6 +57,13 @@ int check_key_pressing(void)
 
 	return 0;
 }
+#else
+/* If not using mxc keypad, currently we will detect power key on board */
+int check_key_pressing(void)
+{
+	return 0;
+}
+#endif
 
 extern struct reco_envs supported_reco_envs[];
 
@@ -78,17 +85,16 @@ void setup_recovery_env(void)
 	env = getenv("bootargs_android_recovery");
 	/* Set env to recovery mode */
 	if (!env)
-		setenv("bootargs_android", boot_args);
+		setenv("bootargs_android_recovery", boot_args);
 	else
-		setenv("bootargs_android", env);
+		setenv("bootargs_android_recovery", env);
 
 	env = getenv("bootcmd_android_recovery");
 	if (!env)
-		setenv("bootcmd_android", boot_cmd);
+		setenv("bootcmd_android_recovery", boot_cmd);
 	else
-		setenv("bootcmd_android", env);
-	setenv("bootcmd", "run bootcmd_android");
-
+		setenv("bootcmd_android_recovery", env);
+	setenv("bootcmd", "run bootcmd_android_recovery");
 }
 
 /* export to lib_arm/board.c */
