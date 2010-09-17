@@ -39,7 +39,7 @@ self_ptr:          .long 0xF8006400
 app_code_csf:      .long 0x0 	       /* reserve 4K for csf */
 reserv2:           .long 0x0
 boot_data:         .long 0xF8006000
-image_len:         .long 8*1024        /* Can copy upto 72K, OCRAM free space */
+image_len:         .long 4*1024        /* Can copy upto 72K, OCRAM free space */
 plugin:            .long 0x1  	       /* Enable plugin flag */
 
 /* Second IVT to give entry point into the bootloader copied to DDR */
@@ -1166,10 +1166,10 @@ after_calling_rom___pu_irom_hwcnfg_setup:
 	mov r0, #1
 	bx lr          /* return back to ROM code */
 
-DDR_DEST_ADDR:    .word   0x77800000
-COPY_SIZE:        .word   0x40000
-BOOT_DATA:        .word   0x77800000
-                  .word   0x40000 /*data be copied by pu_irom_hwcnfg_setup()*/
+DDR_DEST_ADDR:    .word   TEXT_BASE
+COPY_SIZE:        .word   _end - TEXT_BASE
+BOOT_DATA:        .word   TEXT_BASE
+                  .word   _end - TEXT_BASE /*data be copied by pu_irom_hwcnfg_setup()*/
                   .word   0
 
 #endif
