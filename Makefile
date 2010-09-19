@@ -3248,6 +3248,7 @@ mx35_3stack_mmc_config: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1136 mx35_3stack freescale mx35
 
 mx50_arm2_lpddr2_config \
+mx50_arm2_ddr2_config \
 mx50_arm2_iram_config \
 mx50_arm2_config  \
 mx50_arm2_mfg_config	: unconfig

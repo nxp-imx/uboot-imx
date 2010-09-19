@@ -60,6 +60,7 @@ plugin2:           .long 0x0
  *===========================================================================*/
 
 plugin_start:
+
 /* Save the return address and the function arguments */
 	push    {r0-r2, lr}
 
@@ -416,6 +417,430 @@ wait_pll1_lock:
 	ldr r1, [r0, #0xa8]
 	ands r1, r1, #0x10
 	beq 1b
+
+#elif defined(CONFIG_DDR2)
+
+/*  DDR clock setting -- Set DDR to be div 3 to get 266MHz     */
+	ldr	r0, =CCM_BASE_ADDR
+	ldr     r1, =0xA0000043
+	str     r1, [r0, #0x94]
+
+/*	DDR clock from PLL1 */
+	ldr     r1, =0x00000803
+	str     r1, [r0, #0x90]
+
+/*	---------- IOMUX SETUP ---------- */
+/*	0x53fa86ac = 0x02000000  IOMUXC_SW_PAD_CTL_GRP_DDR_TYPE, ddr_sel=2'b01*/
+	ldr r0, =0x53fa8600
+	mov r1, #0x02000000
+	mov r3, #0x00200000
+	mov r2, #0x0
+	str r1, [r0, #0xac]
+/*	These DSE values seem to make thing work */
+/*	0x53fa86a4 = 0x00200000  IOMUXC_SW_PAD_CTL_GRP_CTLDS, dse=3'b100*/
+	str r3, [r0, #0xa4]
+/*	0x53fa8668 = 0x00200000  IOMUXC_SW_PAD_CTL_GRP_ADDDS, dse=3'b100*/
+	str r3, [r0, #0x68]
+/*	0x53fa8698 = 0x00200000  IOMUXC_SW_PAD_CTL_GRP_B0DS, dse=3'b100*/
+	str r3, [r0, #0x98]
+/*	0x53fa86a0 = 0x00200000  IOMUXC_SW_PAD_CTL_GRP_B1DS, dse=3'b100*/
+	str r3, [r0, #0xa0]
+/*	0x53fa86a8 = 0x00200000  IOMUXC_SW_PAD_CTL_GRP_B2DS, dse=3'b100*/
+	str r3, [r0, #0xa8]
+/*	0x53fa86b4 = 0x00200000  IOMUXC_SW_PAD_CTL_GRP_B3DS, dse=3'b100*/
+	str r3, [r0, #0xb4]
+/*	0x53fa8498 = 0x00200000  IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCLK_1 */
+	ldr r0, =0x53fa8400
+	str r3, [r0, #0x98]
+/*	0x53fa849c = 0x00200000  IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCLK_0 */
+	str r3, [r0, #0x9c]
+/*	0x53fa84f0 = 0x00200000  IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM0, dse=3'b100*/
+	str r3, [r0, #0xf0]
+/*	0x53fa8500 = 0x00200000  IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM1, dse=3'b100*/
+	ldr r0, =0x53fa8500
+	str r3, [r0, #0x00]
+/*	0x53fa84c8 = 0x00200000  IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM2, dse=3'b100*/
+	ldr r0, =0x53fa8400
+	str r3, [r0, #0xc8]
+/*	0x53fa8528 = 0x00200000  IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM3, dse=3'b100*/
+	ldr r0, =0x53fa8500
+	str r3, [r0, #0x28]
+
+/*	0x53fa84f4 = 0x00200080
+	IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS0, dse=3'b100 , pke=1, pue=1
+	*/
+	ldr r0, =0x53fa8400
+	orr r3, r3,#0x00000080
+	str r3, [r0, #0xf4]
+
+/*	0x53fa84fc = 0x00200080
+	IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS1, dse=3'b100 , pke=1, pue=1
+	*/
+	str r3, [r0, #0xfc]
+
+/*	0x53fa84cc = 0x00200080
+	IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS2, dse=3'b100 , pke=1, pue=1
+	*/
+	str r3, [r0, #0xcc]
+	ldr r0, =0x53fa8500
+
+/*	0x53fa8524 = 0x00200080
+	IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS3, dse=3'b100 , pke=1, pue=1
+	*/
+	str r3, [r0, #0x24]
+
+/*	---------- DDR SETUP ---------- */
+/*	ldr r0, =CSP_BASE_REG_PA_DATABAHN   */
+	ldr r0, =0x14000000
+
+/*	CTL setting */
+/*	setmem /32 0x14000000    = 0x00000400 */
+	ldr r1, =0x00000400
+	str r1, [r0, #0x0]
+/*	setmem /32 0x14000004    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x4]
+/*	setmem /32 0x14000008    = 0x0000d056  */
+	ldr r1, =0x0000d056
+	str r1, [r0, #0x8]
+/*	setmem /32 0x1400000c    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0xc]
+/*	setmem /32 0x14000010    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x10]
+/*	setmem /32 0x14000014    = 0x02000000 */
+	ldr r1, =0x02000000
+	str r1, [r0, #0x14]
+/*	setmem /32 0x14000018    = 0x02030808 */
+	ldr r1, =0x02030808
+	str r1, [r0, #0x18]
+/*	setmem /32 0x1400001c    = 0x0c100302 */
+	ldr r1, =0x0c100302
+	str r1, [r0, #0x1c]
+/*	setmem /32 0x14000020    = 0x02020402 */
+	ldr r1, =0x02020402
+	str r1, [r0, #0x20]
+/*	setmem /32 0x14000024    = 0x0048eb04 */
+	ldr r1, =0x0048eb04
+	str r1, [r0, #0x24]
+/*	setmem /32 0x14000028    = 0x01000303 */
+	ldr r1, =0x01000303
+	str r1, [r0, #0x28]
+/*	setmem /32 0x1400002c    = 0x08040401 */
+	ldr r1, =0x08040401
+	str r1, [r0, #0x2c]
+/*	setmem /32 0x14000030    = 0x000000c8 */
+	ldr r1, =0x000000c8
+	str r1, [r0, #0x30]
+/*	setmem /32 0x14000034    = 0x006b0c02 */
+	ldr r1, =0x006b0c02
+	str r1, [r0, #0x34]
+/*	setmem /32 0x14000038    = 0x00000005 */
+	ldr r1, =0x00000005
+	str r1, [r0, #0x38]
+/*	setmem /32 0x1400003c    = 0x00003401 */
+	ldr r1, =0x00003401
+	str r1, [r0, #0x3c]
+/*	setmem /32 0x14000040    = 0x0005081b */
+	ldr r1, =0x0005081b
+	str r1, [r0, #0x40]
+/*	setmem /32 0x14000044    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x44]
+/*	setmem /32 0x14000048    = 0x003700c8 */
+	ldr r1, =0x003700c8
+	str r1, [r0, #0x48]
+/*	setmem /32 0x1400004c    = 0x00010000 */
+	ldr r1, =0x00010000
+	str r1, [r0, #0x4c]
+/*	setmem /32 0x14000050    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x50]
+/*	setmem /32 0x14000054    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x54]
+/*	setmem /32 0x14000058    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x58]
+/*	setmem /32 0x1400005c    = 0x03000000 */
+	ldr r1, =0x03000000
+	str r1, [r0, #0x5c]
+/*	setmem /32 0x14000060    = 0x00000003 */
+	ldr r1, =0x00000003
+	str r1, [r0, #0x60]
+/*	setmem /32 0x14000064    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x64]
+/*	setmem /32 0x14000068    = 0x06420000 */
+	ldr r1, =0x06420000
+	str r1, [r0, #0x68]
+/*	setmem /32 0x1400006c    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x6c]
+/*	setmem /32 0x14000070    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x70]
+/*	setmem /32 0x14000074    = 0x06420000 */
+	ldr r1, =0x06420000
+	str r1, [r0, #0x74]
+/*	setmem /32 0x14000078    = 0x00000004 */
+	ldr r1, =0x00000004
+	str r1, [r0, #0x78]
+/*	setmem /32 0x1400007c    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x7c]
+/*	setmem /32 0x14000080    = 0x02000000 */
+	ldr r1, =0x02000000
+	str r1, [r0, #0x80]
+/*	setmem /32 0x14000084    = 0x00000100 */
+	ldr r1, =0x00000100
+	str r1, [r0, #0x84]
+/*	setmem /32 0x14000088    = 0x02400040 */
+	ldr r1, =0x02400040
+	str r1, [r0, #0x88]
+/*	setmem /32 0x1400008c    = 0x01000000 */
+	ldr r1, =0x01000000
+	str r1, [r0, #0x8c]
+/*	setmem /32 0x14000090    = 0x0a000101 */
+	ldr r1, =0x0a000101
+	str r1, [r0, #0x90]
+/*	setmem /32 0x14000094    = 0x01011f1f */
+	ldr r1, =0x01011f1f
+	str r1, [r0, #0x94]
+/*	setmem /32 0x14000098    = 0x01010101 */
+	ldr r1, =0x01010101
+	str r1, [r0, #0x98]
+/*	setmem /32 0x1400009c    = 0x00030103 */
+	ldr r1, =0x00030103
+	str r1, [r0, #0x9c]
+/*	setmem /32 0x140000a0    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0xa0]
+/*	setmem /32 0x140000a4    = 0x00010000 */
+	ldr r1, =0x00010000
+	str r1, [r0, #0xa4]
+/*	setmem /32 0x140000a8    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0xa8]
+/*	setmem /32 0x140000ac    = 0x0000ffff */
+	ldr r1, =0x0000ffff
+	str r1, [r0, #0xac]
+/*	setmem /32 0x140000b0    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0xb0]
+/*	setmem /32 0x140000b4    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0xb4]
+/*	setmem /32 0x140000b8    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0xb8]
+/*	setmem /32 0x140000bc    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0xbc]
+/*	setmem /32 0x140000c0    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0xc0]
+/*	setmem /32 0x140000c4    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0xc4]
+/*	setmem /32 0x140000c8    = 0x02020101 */
+	ldr r1, =0x02020101
+	str r1, [r0, #0xc8]
+/*	setmem /32 0x140000cc    = 0x01000000 */
+	ldr r1, =0x01000000
+	str r1, [r0, #0xcc]
+/*	setmem /32 0x140000d0    = 0x01010201 */
+	ldr r1, =0x01010201
+	str r1, [r0, #0xd0]
+/*	setmem /32 0x140000d4    = 0x00000200 */
+	ldr r1, =0x00000200
+	str r1, [r0, #0xd4]
+/*	setmem /32 0x140000d8    = 0x00000101 */
+	ldr r1, =0x00000101
+	str r1, [r0, #0xd8]
+/*	setmem /32 0x140000dc    = 0x0003ffff */
+	ldr r1, =0x0003ffff
+	str r1, [r0, #0xdc]
+/*	setmem /32 0x140000e0    = 0x0000ffff */
+	ldr r1, =0x0000ffff
+	str r1, [r0, #0xe0]
+/*	setmem /32 0x140000e4    = 0x02020000 */
+	ldr r1, =0x02020000
+	str r1, [r0, #0xe4]
+/*	setmem /32 0x140000e8    = 0x02020202 */
+	ldr r1, =0x02020202
+	str r1, [r0, #0xe8]
+/*	setmem /32 0x140000ec    = 0x00000202 */
+	ldr r1, =0x00000202
+	str r1, [r0, #0xec]
+/*	setmem /32 0x140000f0    = 0x01010064 */
+	ldr r1, =0x01010064
+	str r1, [r0, #0xf0]
+/*	setmem /32 0x140000f4    = 0x01010101 */
+	ldr r1, =0x01010101
+	str r1, [r0, #0xf4]
+/*	setmem /32 0x140000f8    = 0x00010101 */
+	ldr r1, =0x00010101
+	str r1, [r0, #0xf8]
+/*	setmem /32 0x140000fc    = 0x00000064 */
+	ldr r1, =0x00000064
+	str r1, [r0, #0xfc]
+/*	setmem /32 0x14000100    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x100]
+/*	setmem /32 0x14000104    = 0x02000702 */
+	ldr r1, =0x02000702
+	str r1, [r0, #0x104]
+/*	setmem /32 0x14000108    = 0x081b0000 */
+	ldr r1, =0x081b0000
+	str r1, [r0, #0x108]
+/*	setmem /32 0x1400010c    = 0x081b081b */
+	ldr r1, =0x081b081b
+	str r1, [r0, #0x10c]
+/*	setmem /32 0x14000110    = 0x081b081b */
+	ldr r1, =0x081b081b
+	str r1, [r0, #0x110]
+/*	setmem /32 0x14000114    = 0x0304081b */
+	ldr r1, =0x0304081b
+	str r1, [r0, #0x114]
+/*	setmem /32 0x14000118    = 0x01010002 */
+	ldr r1, =0x01010002
+	str r1, [r0, #0x118]
+/*	setmem /32 0x1400011c    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x11c]
+/*	setmem /32 0x14000120    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x120]
+/*	setmem /32 0x14000124    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x124]
+/*	setmem /32 0x14000128    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x128]
+/*	setmem /32 0x1400012c    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x12c]
+/*	setmem /32 0x14000130    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x130]
+/*	setmem /32 0x14000134    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x134]
+/*	setmem /32 0x14000138    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x138]
+/*	setmem /32 0x1400013c    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x13c]
+/*	setmem /32 0x14000140    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x140]
+/*	setmem /32 0x14000144    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x144]
+/*	setmem /32 0x14000148    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x148]
+/*	setmem /32 0x1400014c    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x14c]
+/*	setmem /32 0x14000150    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x150]
+/*	setmem /32 0x14000154    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x154]
+/*	setmem /32 0x14000158    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x158]
+
+/*	PHY setting */
+/*	setmem /32 0x14000200    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x200]
+/*	setmem /32 0x14000204    = 0x000f1100 */
+	ldr r1, =0x000f1100
+	str r1, [r0, #0x204]
+/*	setmem /32 0x14000208    = 0xf4013a27 */
+	ldr r1, =0xf4013a27
+	str r1, [r0, #0x208]
+/*	setmem /32 0x1400020c    = 0x26c002c0 */
+	ldr r1, =0x26c002c0
+	str r1, [r0, #0x20c]
+/*	setmem /32 0x14000210    = 0xf4013a27 */
+	ldr r1, =0xf4013a27
+	str r1, [r0, #0x210]
+/*	setmem /32 0x14000214    = 0x26c002c0 */
+	ldr r1, =0x26c002c0
+	str r1, [r0, #0x214]
+/*	setmem /32 0x14000218    = 0xf4013a27 */
+	ldr r1, =0xf4013a27
+	str r1, [r0, #0x218]
+/*	setmem /32 0x1400021c    = 0x26c002c0 */
+	ldr r1, =0x26c002c0
+	str r1, [r0, #0x21c]
+/*	setmem /32 0x14000220    = 0xf4013a27 */
+	ldr r1, =0xf4013a27
+	str r1, [r0, #0x220]
+/*	setmem /32 0x14000224    = 0x26c002c0 */
+	ldr r1, =0x26c002c0
+	str r1, [r0, #0x224]
+/*	setmem /32 0x14000228    = 0xf4013a27 */
+	ldr r1, =0xf4013a27
+	str r1, [r0, #0x228]
+/*	setmem /32 0x1400022c    = 0x26c002c0 */
+	ldr r1, =0x26c002c0
+	str r1, [r0, #0x22c]
+/*	setmem /32 0x14000230    = 0x00000000 */
+	ldr r1, =0x00000000
+	str r1, [r0, #0x230]
+/*	setmem /32 0x14000234    = 0x00000005 */
+	ldr r1, =0x00000005
+	str r1, [r0, #0x234]
+/*	setmem /32 0x14000238    = 0x20099d14 */
+	ldr r1, =0x20099d14
+	str r1, [r0, #0x238]
+/*	setmem /32 0x1400023c    = 0x000a1f01 */
+	ldr r1, =0x000a1f01
+	str r1, [r0, #0x23c]
+/*	setmem /32 0x14000240    = 0x20099d14 */
+	ldr r1, =0x20099d14
+	str r1, [r0, #0x240]
+/*	setmem /32 0x14000244    = 0x000a1f01 */
+	ldr r1, =0x000a1f01
+	str r1, [r0, #0x244]
+/*	setmem /32 0x14000248    = 0x20099d14 */
+	ldr r1, =0x20099d14
+	str r1, [r0, #0x248]
+/*	setmem /32 0x1400024c    = 0x000a1f01 */
+	ldr r1, =0x000a1f01
+	str r1, [r0, #0x24c]
+/*	setmem /32 0x14000250    = 0x20099d14 */
+	ldr r1, =0x20099d14
+	str r1, [r0, #0x250]
+/*	setmem /32 0x14000254    = 0x000a1f01 */
+	ldr r1, =0x000a1f01
+	str r1, [r0, #0x254]
+/*	setmem /32 0x14000258    = 0x20099d14 */
+	ldr r1, =0x20099d14
+	str r1, [r0, #0x258]
+/*	setmem /32 0x1400025c    = 0x000a1f01 */
+	ldr r1, =0x000a1f01
+	str r1, [r0, #0x25c]
+
+/*	Start ddr */
+/*	setmem /32 0x14000000 = 0x00000401  // bit[0]: start */
+	ldr	r1, =0x00000401
+	str	r1, [r0, #0x0]
+
+/*	poll to make sure it is done */
+1:
+	ldr	r1, [r0, #0xa8]
+	ands	r1, r1, #0x10
+	beq	1b
+
 #else
 
 /*==================================================================
