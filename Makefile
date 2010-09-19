@@ -3274,7 +3274,7 @@ mx53_arm2_android_config	\
 mx53_arm2_ddr3_android_config	\
 mx53_evk_android_config		\
 mx53_evk_config      : unconfig
-	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx53_evk freescale mx53
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx53_rd freescale mx53
 
 omap2420h4_config	: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1136 omap2420h4 NULL omap24xx

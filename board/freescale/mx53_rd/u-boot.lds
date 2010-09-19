@@ -38,9 +38,9 @@ SECTIONS
 	{
 	  /* WARNING - the following is hand-optimized to fit within	*/
 	  /* the sector layout of our flash chips!	XXX FIXME XXX	*/
-	  board/freescale/mx53_evk/flash_header.o	(.text.flasheader)
+	  board/freescale/mx53_rd/flash_header.o	(.text.flasheader)
 	  cpu/arm_cortexa8/start.o
-	  board/freescale/mx53_evk/libmx53_evk.a	(.text)
+	  board/freescale/mx53_rd/libmx53_rd.a	(.text)
 	  lib_arm/libarm.a		(.text)
 	  net/libnet.a			(.text)
 	  drivers/mtd/libmtd.a		(.text)

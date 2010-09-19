@@ -889,7 +889,7 @@ int check_recovery_cmd_file(void)
 			}
 
 			part_length = ext2fs_set_blk_dev(dev_desc,
-						CONFIG_ANDROID_CACHE_PARTITION_MMC);
+					CONFIG_ANDROID_CACHE_PARTITION_MMC);
 			if (part_length == 0) {
 				printf("** Bad partition - mmc 0:%d **\n",
 					CONFIG_ANDROID_CACHE_PARTITION_MMC);
