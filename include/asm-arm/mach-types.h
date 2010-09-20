@@ -39780,6 +39780,18 @@ extern unsigned int __machine_arch_type;
 # define machine_is_torbreck()	(0)
 #endif
 
+#ifdef CONFIG_MACH_MX50_RDP
+# ifdef machine_arch_type
+#  undef machine_arch_type
+#  define machine_arch_type     __machine_arch_type
+# else
+#  define machine_arch_type     MACH_TYPE_MX50_RDP
+# endif
+# define machine_is_mx50_rdp()  (machine_arch_type == MACH_TYPE_MX50_RDP)
+#else
+# define machine_is_mx50_rdp()  (0)
+#endif
+
 /*
  * These have not yet been registered
  */
