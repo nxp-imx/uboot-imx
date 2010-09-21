@@ -69,8 +69,8 @@
 /*
  * Hardware drivers
  */
-#define CONFIG_MX50_UART	1
-#define CONFIG_MX50_UART1	1
+#define CONFIG_MXC_UART
+#define CONFIG_UART_BASE_ADDR   UART1_BASE_ADDR
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
@@ -259,6 +259,12 @@
 	#define CONFIG_SYS_NAND_BASE		0x40000000
 	#define CONFIG_SYS_MAX_NAND_DEVICE	1
 #endif
+
+/*
+ * APBH DMA Configs
+ */
+#define CONFIG_APBH_DMA
+#define CONFIG_MXS_DMA_REG_BASE ABPHDMA_BASE_ADDR
 
 /*-----------------------------------------------------------------------
  * Stack sizes
