@@ -24,21 +24,28 @@
 #ifndef __ASM_ARCH_MX31_H
 #define __ASM_ARCH_MX31_H
 
-extern u32 mx31_get_ipg_clk(void);
-extern void mx31_gpio_mux(unsigned long mode);
+#ifndef __ASSEMBLER__
+
+enum mxc_clock {
+	MXC_ARM_CLK,
+	MXC_UART_CLK,
+};
 
 enum mx31_gpio_direction {
 	MX31_GPIO_DIRECTION_IN,
 	MX31_GPIO_DIRECTION_OUT,
 };
 
+extern int mxc_get_clock(enum mxc_clock clk);
+extern void mx31_gpio_mux(unsigned long mode);
+
 #ifdef CONFIG_MX31_GPIO
 extern int mx31_gpio_direction(unsigned int gpio,
-			       enum mx31_gpio_direction direction);
+				enum mx31_gpio_direction direction);
 extern void mx31_gpio_set(unsigned int gpio, unsigned int value);
 #else
 static inline int mx31_gpio_direction(unsigned int gpio,
-				      enum mx31_gpio_direction direction)
+				enum mx31_gpio_direction direction)
 {
 	return 1;
 }
@@ -49,5 +56,7 @@ static inline void mx31_gpio_set(unsigned int gpio, unsigned int value)
 
 void mx31_uart1_hw_init(void);
 void mx31_spi2_hw_init(void);
+
+#endif
 
 #endif /* __ASM_ARCH_MX31_H */

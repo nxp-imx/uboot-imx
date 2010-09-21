@@ -341,6 +341,7 @@ s32 spi_get_cfg(struct imx_spi_dev_t *dev)
 	return 0;
 }
 
+#ifdef CONFIG_IMX_ECSPI
 void spi_io_init(struct imx_spi_dev_t *dev)
 {
 	switch (dev->base) {
@@ -382,6 +383,7 @@ void spi_io_init(struct imx_spi_dev_t *dev)
 		break;
 	}
 }
+#endif
 #endif
 
 #ifdef CONFIG_MXC_FEC

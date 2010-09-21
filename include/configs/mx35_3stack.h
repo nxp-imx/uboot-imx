@@ -68,7 +68,8 @@
 #define CONFIG_SYS_I2C_SPEED		100000
 #define CONFIG_SYS_I2C_SLAVE		0xfe
 
-#define CONFIG_MX35_UART	UART1_BASE_ADDR
+#define CONFIG_MXC_UART 1
+#define CONFIG_UART_BASE_ADDR   UART1_BASE_ADDR
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE

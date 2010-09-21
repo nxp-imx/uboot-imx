@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2008-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Configuration settings for the MX31 3Stack Freescale board.
  *
@@ -22,7 +22,7 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#include <asm/arch/mx31-regs.h>
+#include <asm/arch/mx31.h>
 
  /* High Level Configuration Options */
 #define CONFIG_ARM1136		1	/* This is an arm1136 CPU core */
@@ -51,7 +51,7 @@
  * Hardware drivers
  */
 #define CONFIG_MXC_UART	1
-#define CONFIG_SYS_MX31_UART1   1
+#define CONFIG_UART_BASE_ADDR	0x43f90000
 
 #define CONFIG_MXC_SPI		1
 

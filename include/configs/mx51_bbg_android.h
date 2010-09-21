@@ -69,8 +69,8 @@
 /*
  * Hardware drivers
  */
-#define CONFIG_MX51_UART	1
-#define CONFIG_MX51_UART1	1
+#define CONFIG_MXC_UART 1
+#define CONFIG_UART_BASE_ADDR   UART1_BASE_ADDR
 
 
 #define CONFIG_CMD_PING
@@ -157,8 +157,8 @@
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
 		"bootcmd_android=run bootargs_base bootargs_android; "	\
-			"mmcinit;cp.b 0x100000 ${loadaddr} 0x250000; "	\
-			"cp.b 0x400000 ${rd_loadaddr} 0x4B000; "	\
+			"mmc read 0 ${loadaddr} 0x800 0x1280; "	\
+			"mmc read 0 ${rd_loadaddr} 0x2000 0x258; "	\
 			"bootm ${loadaddr} ${rd_loadaddr}\0"		\
 		"prg_uboot=tftpboot ${loadaddr} ${uboot}; "		\
 			"protect off ${uboot_addr} 0xa003ffff; "	\

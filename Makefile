@@ -3260,7 +3260,12 @@ mx50_arm2_mfg_config	: unconfig
 
 mx51_bbg_android_config	\
 mx51_bbg_mfg_config \
+mx51_bbg_iram_config \
 mx51_bbg_config		: unconfig
+	@[ -z "$(findstring iram_,$@)" ] || \
+		{ echo "TEXT_BASE = 0x1FFE5000" >$(obj)board/freescale/mx51_bbg/config.tmp ; \
+		  echo "... with iram configuration" ; \
+		}
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx51_bbg freescale mx51
 
 mx51_3stack_android_config	\

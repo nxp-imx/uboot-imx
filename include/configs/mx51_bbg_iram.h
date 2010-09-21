@@ -29,7 +29,6 @@
  /* High Level Configuration Options */
 #define CONFIG_ARMV7		1	/* This is armv7 Cortex-A8 CPU core */
 
-#define CONFIG_MFG		1
 #define CONFIG_MXC		1
 #define CONFIG_MX51_BBG		1	/* in a mx51 */
 #define CONFIG_FLASH_HEADER	1
@@ -61,7 +60,7 @@
 /*
  * Size of malloc() pool
  */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(5 * 1024)
 /* size in bytes reserved for initial data */
 #define CONFIG_SYS_GBL_DATA_SIZE	128
 
@@ -74,14 +73,6 @@
 /*
  * SPI Configs
  * */
-#define CONFIG_FSL_SF		1
-#define CONFIG_SPI_FLASH_IMX_ATMEL	1
-#define CONFIG_SPI_FLASH_CS	1
-#define CONFIG_IMX_ECSPI
-#define CONFIG_IMX_SPI_PMIC
-#define CONFIG_IMX_SPI_PMIC_CS	0
-#define	IMX_CSPI_VER_2_3	1
-#define MAX_SPI_BYTES		(64 * 4)
 
 /*
  * MMC Configs
@@ -90,16 +81,6 @@
 /*
  * Eth Configs
  */
-#define CONFIG_HAS_ETH1
-#define CONFIG_NET_MULTI 1
-#define CONFIG_MXC_FEC
-#define CONFIG_MII
-#define CONFIG_DISCOVER_PHY
-
-#define CONFIG_FEC0_IOBASE	FEC_BASE_ADDR
-#define CONFIG_FEC0_PINMUX	-1
-#define CONFIG_FEC0_PHY_ADDR	0x1F
-#define CONFIG_FEC0_MIIBASE 	-1
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
@@ -111,13 +92,15 @@
  * Command definition
  ***********************************************************/
 
-#include <config_cmd_default.h>
-
-#define CONFIG_CMD_PING
-#define CONFIG_CMD_DHCP
-#define CONFIG_CMD_MII
-#define CONFIG_CMD_NET
-#define CONFIG_NET_RETRY_COUNT	100
+#define CONFIG_CMD_BDI		/* bdinfo			*/
+#define CONFIG_CMD_BOOTD	/* bootd			*/
+#define CONFIG_CMD_CONSOLE	/* coninfo			*/
+#define CONFIG_CMD_FPGA		/* FPGA configuration Support	*/
+#define CONFIG_CMD_IMI		/* iminfo			*/
+#define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
+#define CONFIG_CMD_RUN		/* run command in env variable	*/
+#define CONFIG_CMD_SOURCE	/* "source" command support	*/
+#define CONFIG_CMD_XIMG		/* Load part of Multi Image	*/
 
 /*
  * SPI Configs
@@ -129,17 +112,6 @@
 /*
  * Eth Configs
  */
-#define CONFIG_HAS_ETH1
-#define CONFIG_NET_MULTI 1
-#define CONFIG_MXC_FEC
-#define CONFIG_MII
-#define CONFIG_DISCOVER_PHY
-
-#define CONFIG_FEC0_IOBASE	FEC_BASE_ADDR
-#define CONFIG_FEC0_PINMUX	-1
-#define CONFIG_FEC0_PHY_ADDR	0x1F
-#define CONFIG_FEC0_MIIBASE 	-1
-
 
 
 /* Enable below configure when supporting nand */
@@ -147,7 +119,7 @@
 
 #undef CONFIG_CMD_IMLS
 
-#define CONFIG_BOOTDELAY	0
+#define CONFIG_BOOTDELAY	3
 
 #define CONFIG_PRIME	"FEC0"
 
@@ -198,7 +170,7 @@
  *
  * The stack sizes are set up in start.S using the settings below
  */
-#define CONFIG_STACKSIZE	(128 * 1024)	/* regular stack */
+#define CONFIG_STACKSIZE	(30 * 1024)	/* regular stack */
 
 /*-----------------------------------------------------------------------
  * Physical Memory Map
