@@ -83,7 +83,7 @@
 #define CONFIG_MTD_PARTITIONS
 
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
-	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p7 rootfs=ext3"
+	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4 rootfs=ext4"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
 	"run bootargs_base bootargs_android_recovery;mmc read 0 ${loadaddr} 0x800 0x1800;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
