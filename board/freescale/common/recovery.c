@@ -84,16 +84,14 @@ void setup_recovery_env(void)
 
 	env = getenv("bootargs_android_recovery");
 	/* Set env to recovery mode */
+	/* Only set recovery env when these env not exist, give user a
+	 * chance to change their recovery env */
 	if (!env)
 		setenv("bootargs_android_recovery", boot_args);
-	else
-		setenv("bootargs_android_recovery", env);
 
 	env = getenv("bootcmd_android_recovery");
 	if (!env)
 		setenv("bootcmd_android_recovery", boot_cmd);
-	else
-		setenv("bootcmd_android_recovery", env);
 	setenv("bootcmd", "run bootcmd_android_recovery");
 }
 

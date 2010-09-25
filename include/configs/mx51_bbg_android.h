@@ -107,9 +107,11 @@
 #define CONFIG_MXC_KPD_COLMAX 6
 #define CONFIG_MXC_KPD_ROWMAX 4
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
-	"setenv bootargs ${bootargs} root=/dev/mmcblk0p4 ip=off init=/init rootfstype=ext3 wvga"
+	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4 " \
+	"rootfs=ext4 di1_primary"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
-	"run bootargs_base bootargs_android;mmc read 0 ${loadaddr} 0x800 0x1280;bootm"
+	"run bootargs_base bootargs_android_recovery;"	\
+	"mmc read 0 ${loadaddr} 0x800 0x1800;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 #define CONFIG_ANDROID_CACHE_PARTITION_MMC 6
 
@@ -150,21 +152,32 @@
 		"rd_loadaddr=0x90B00000\0"	\
 		"nfsroot=/opt/eldk/arm\0"				\
 		"bootargs_base=setenv bootargs console=ttymxc0,115200\0"\
-		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
+		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs " \
 			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
-		"bootargs_android=setenv bootargs ${bootargs} ip=dhcp mem=480M init=/init wvga calibration\0"	\
-		"bootcmd=run bootcmd_android\0"				\
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
-		"bootcmd_android=run bootargs_base bootargs_android; "	\
-			"mmc read 0 ${loadaddr} 0x800 0x1280; "	\
-			"mmc read 0 ${rd_loadaddr} 0x2000 0x258; "	\
-			"bootm ${loadaddr} ${rd_loadaddr}\0"		\
 		"prg_uboot=tftpboot ${loadaddr} ${uboot}; "		\
 			"protect off ${uboot_addr} 0xa003ffff; "	\
 			"erase ${uboot_addr} 0xa003ffff; "		\
 			"cp.b ${loadaddr} ${uboot_addr} ${filesize}; "	\
-			"setenv filesize; saveenv\0"
+			"setenv filesize; saveenv\0"			\
+		"bootcmd=run bootcmd_SD \0"				\
+		"bootcmd_SD=run bootargs_base bootargs_android;"	\
+		     "mmc read 0 ${loadaddr} 0x800 1800;"		\
+		     "mmc read 0 ${rd_loadaddr} 0x2000 0x258;"		\
+		     "bootm ${loadaddr} ${rd_loadaddr}\0"		\
+		"bootargs_android=setenv bootargs ${bootargs}  "	\
+		     "androidboot.console=ttymxc0 init=/init "		\
+		     "di1_primary calibration\0"			\
+		"bootcmd_android_recovery=run bootargs_base"		\
+		     " bootargs_android_recovery;"			\
+		     "mmc read 0 ${loadaddr} 0x800 0x1800;bootm\0"	\
+		"bootargs_android_recovery=setenv bootargs ${bootargs}" \
+		     " init=/init root=/dev/mmcblk0p4 rootfs=ext4"	\
+		     " di1_primary \0"					\
+
+
+
 
 /*Support LAN9217*/
 /*

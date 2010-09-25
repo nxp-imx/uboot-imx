@@ -127,26 +127,34 @@
 #define CONFIG_LOADADDR		0x70800000	/* loadaddr env var */
 #define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
 
+
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
-		"uboot=u-boot.bin\0"			\
-		"kernel=uImage\0"				\
-		"loadaddr=0x70800000\0"		\
-		"rd_loadaddr=0x70B00000\0"	\
+		"uboot=u-boot.bin\0"					\
+		"kernel=uImage\0"					\
+		"loadaddr=0x70800000\0"					\
+		"rd_loadaddr=0x70B00000\0"				\
 		"nfsroot=/opt/eldk/arm\0"				\
-		"bootargs_base=setenv bootargs console=ttymxc0,115200\0"\
-		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
-			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
-		"bootargs_android=setenv bootargs ${bootargs} ip=dhcp mem=480M init=/init wvga calibration\0"	\
-		"bootcmd=run bootcmd_android\0"				\
+		"bootargs_base=setenv bootargs ${bootargs} "		\
+		"console=ttymxc0,115200\0"				\
+		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs " \
+		     "ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"	\
+		"bootargs_android=setenv bootargs ${bootargs} mem=512M " \
+		     "androidboot.console=ttymxc0 init=/init "		\
+		     "video=mxcdi0fb:RGB565,800x480M@55 calibration\0"	\
+		"bootcmd=run bootcmd_SD \0"				\
+		"bootcmd_SD=run bootargs_base bootargs_android;"	\
+		     "mmc read 0 ${loadaddr} 0x800 1800;"		\
+		     "mmc read 0 ${rd_loadaddr} 0x2000 0x258;"		\
+		     "bootm ${loadaddr} ${rd_loadaddr}\0"		\
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
-		"bootcmd_android=run bootargs_base bootargs_android; "	\
-			"mmcinit;cp.b 0x100000 ${loadaddr} 0x250000; "	\
-			"cp.b 0x400000 ${rd_loadaddr} 0x4B000; "	\
-			"bootm ${loadaddr} ${rd_loadaddr}\0"		\
-
+		"bootcmd_android_recovery=run bootargs_base"		\
+		     " bootargs_android_recovery;"			\
+		     "mmc read 0 ${loadaddr} 0x800 0x1800;bootm\0"	\
+		"bootargs_android_recovery=setenv bootargs ${bootargs}" \
+		     " init=/init root=/dev/mmcblk0p4 rootfs=ext4\0"	\
 
 #define CONFIG_ARP_TIMEOUT	200UL
 
