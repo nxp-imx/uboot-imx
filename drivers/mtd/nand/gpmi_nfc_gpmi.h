@@ -907,8 +907,6 @@ struct gpmi_nfc_info {
 	s32 cur_chip;
 	u8  *data_buf;
 	u8  *oob_buf;
-	u32 *cmd_queue;
-	u32 cmd_Q_len;
 
 	u8 m_u8MarkingBadBlock;
 	u8 m_u8RawOOBMode;

@@ -56,13 +56,35 @@ static void gpmi_nfc_cmd_ctrl(struct mtd_info *mtd, int data, unsigned int ctrl)
 	struct gpmi_nfc_info  *gpmi_info = chip->priv;
 	struct nfc_hal        *nfc  =  gpmi_info->nfc;
 	int error;
-	u32 *cmd_queue = gpmi_info->cmd_queue;
-	u32 *cmd_Q_len = &(gpmi_info->cmd_Q_len);
+	static u8 *cmd_queue;
+	static u32 cmd_Q_len;
 #if defined(CONFIG_MTD_DEBUG)
 	unsigned int          i;
 	char                  display[GPMI_NFC_COMMAND_BUFFER_SIZE * 5];
 #endif
 	MTDDEBUG(MTD_DEBUG_LEVEL2, "%s =>\n", __func__);
+
+	MTDDEBUG(MTD_DEBUG_LEVEL1, "%s: cmd data: 0x%08x\n", __func__, data);
+
+	if (!cmd_queue) {
+#ifdef CONFIG_ARCH_MMU
+		cmd_queue =
+		(u8 *)ioremap_nocache((u32)iomem_to_phys((ulong)kmalloc(GPMI_NFC_COMMAND_BUFFER_SIZE,
+		GFP_KERNEL)),
+		MXS_DMA_ALIGNMENT);
+#else
+		cmd_queue =
+		memalign(MXS_DMA_ALIGNMENT, GPMI_NFC_COMMAND_BUFFER_SIZE);
+#endif
+		if (!cmd_queue) {
+			printf("%s: failed to allocate command "
+				"queuebuffer\n",
+				__func__);
+			return;
+		}
+		memset(cmd_queue, 0, GPMI_NFC_COMMAND_BUFFER_SIZE);
+		cmd_Q_len = 0;
+	}
 
 	/*
 	 * Every operation begins with a command byte and a series of zero or
@@ -78,7 +100,7 @@ static void gpmi_nfc_cmd_ctrl(struct mtd_info *mtd, int data, unsigned int ctrl)
 
 	if ((ctrl & (NAND_ALE | NAND_CLE))) {
 		if (data != NAND_CMD_NONE)
-			cmd_queue[(*cmd_Q_len)++] = data;
+			cmd_queue[cmd_Q_len++] = data;
 		return;
 	}
 
@@ -88,12 +110,12 @@ static void gpmi_nfc_cmd_ctrl(struct mtd_info *mtd, int data, unsigned int ctrl)
 	 * bytes to send.
 	 */
 
-	if (!(*cmd_Q_len))
+	if (!cmd_Q_len)
 		return;
 
 #if defined(CONFIG_MTD_DEBUG)
 	display[0] = 0;
-	for (i = 0; i < (*cmd_Q_len); i++)
+	for (i = 0; i < cmd_Q_len; i++)
 		sprintf(display + strlen(display),
 			" 0x%02x", cmd_queue[i] & 0xff);
 	MTDDEBUG(MTD_DEBUG_LEVEL1, "%s: command: %s\n", __func__, display);
@@ -101,17 +123,18 @@ static void gpmi_nfc_cmd_ctrl(struct mtd_info *mtd, int data, unsigned int ctrl)
 
 #ifdef CONFIG_ARCH_MMU
 	error = nfc->send_command(mtd, gpmi_info->cur_chip,
-		(dma_addr_t)iomem_to_phys((u32)cmd_queue), (*cmd_Q_len));
+		(dma_addr_t)iomem_to_phys((u32)cmd_queue), cmd_Q_len);
 #else
 	error = nfc->send_command(mtd, gpmi_info->cur_chip,
-		(dma_addr_t)cmd_queue, (*cmd_Q_len));
+		(dma_addr_t)cmd_queue, cmd_Q_len);
 #endif
 
 	if (error)
 		printf("Command execute failed!\n");
 
 	/* Reset. */
-	(*cmd_Q_len) = 0;
+	cmd_Q_len = 0;
+
 
 	MTDDEBUG(MTD_DEBUG_LEVEL2, "<= %s\n", __func__);
 }
@@ -328,7 +351,7 @@ static int gpmi_nfc_ecc_read_page(struct mtd_info *mtd,
 
 	MTDDEBUG(MTD_DEBUG_LEVEL1, "Buf: 0x%08x, data_buf: 0x%08x, "
 		"oob_buf: 0x%08x",
-		buf, gpmi_info->data_buf, gpmi_info->oob_buf);
+		buf, (u32)gpmi_info->data_buf, (u32)gpmi_info->oob_buf);
 	/* Ask the NFC. */
 #ifdef CONFIG_ARCH_MMU
 	error = nfc->read_page(mtd, gpmi_info->cur_chip,
@@ -418,7 +441,7 @@ static void gpmi_nfc_ecc_write_page(struct mtd_info *mtd,
 	MTDDEBUG(MTD_DEBUG_LEVEL3, "%s =>\n", __func__);
 
 	MTDDEBUG(MTD_DEBUG_LEVEL1, "Buf: 0x%08x, data_buf: 0x%08x, "
-		"oob_buf: 0x%08x\n", buf, data_buf, oob_buf);
+		"oob_buf: 0x%08x\n", buf, (u32)data_buf, (u32)oob_buf);
 
 	memcpy(data_buf, buf, mtd->writesize);
 	memcpy(oob_buf, nand->oob_poi, mtd->oobsize);
@@ -1035,24 +1058,6 @@ static int gpmi_nfc_alloc_buf(struct gpmi_nfc_info *gpmi_info)
 
 	gpmi_info->data_buf = pBuf;
 	gpmi_info->oob_buf  = pBuf + NAND_MAX_PAGESIZE;
-
-#ifdef CONFIG_ARCH_MMU
-	gpmi_info->cmd_queue =
-		(u32 *)ioremap_nocache((u32)iomem_to_phys((ulong)kmalloc(GPMI_NFC_COMMAND_BUFFER_SIZE,
-		GFP_KERNEL)),
-		MXS_DMA_ALIGNMENT);
-#else
-	gpmi_info->cmd_queue =
-		memalign(MXS_DMA_ALIGNMENT, GPMI_NFC_COMMAND_BUFFER_SIZE);
-#endif
-	if (!gpmi_info->cmd_queue) {
-		printf("%s: failed to allocate command queuebuffer\n",
-			__func__);
-		err = -ENOMEM;
-		return err;
-	}
-	memset(gpmi_info->cmd_queue, 0, GPMI_NFC_COMMAND_BUFFER_SIZE);
-	gpmi_info->cmd_Q_len = 0;
 
 	MTDDEBUG(MTD_DEBUG_LEVEL3, "<= %s\n", __func__);
 
