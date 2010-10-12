@@ -134,60 +134,60 @@ wait_pll1_lock:
  * IOMUX
  *===========================================================================*/
     ldr r0, =0x53fa8600
-    mov r1, #0x02000000
-    mov r3, #0x00200000
+    mov r1, #0x04000000
+    mov r3, #0x00180000
     mov r2, #0x0
-//setmem /32 0x53fa86ac = 0x02000000
+//setmem /32 0x53fa86ac = 0x04000000
 //IOMUXC_SW_PAD_CTL_GRP_DDR_TYPE, ddr_sel=2'b01 (LPDDR2)
     str r1, [r0, #0xac]
-//setmem /32 0x53fa86a4 = 0x00200000
+//setmem /32 0x53fa86a4 = 0x00180000
 //IOMUXC_SW_PAD_CTL_GRP_CTLDS, dse=3'b100
     str r3, [r0, #0xa4]
-//setmem /32 0x53fa8668 = 0x00200000
+//setmem /32 0x53fa8668 = 0x00180000
 //IOMUXC_SW_PAD_CTL_GRP_ADDDS, dse=3'b100
     str r3, [r0, #0x68]
-//setmem /32 0x53fa8698 = 0x00200000
+//setmem /32 0x53fa8698 = 0x00180000
 //IOMUXC_SW_PAD_CTL_GRP_B0DS, dse=3'b100
     str r3, [r0, #0x98]
-//setmem /32 0x53fa86a0 = 0x00200000
+//setmem /32 0x53fa86a0 = 0x00180000
 //IOMUXC_SW_PAD_CTL_GRP_B1DS, dse=3'b100
     str r3, [r0, #0xa0]
-//setmem /32 0x53fa86a8 = 0x00200000
+//setmem /32 0x53fa86a8 = 0x00180000
 //IOMUXC_SW_PAD_CTL_GRP_B2DS, dse=3'b100
     str r3, [r0, #0xa8]
-//setmem /32 0x53fa86b4 = 0x00200000
+//setmem /32 0x53fa86b4 = 0x00180000
 //IOMUXC_SW_PAD_CTL_GRP_B3DS, dse=3'b100
     str r3, [r0, #0xb4]
 
     ldr r0, =0x53fa8400
-//setmem /32 0x53fa8498 = 0x00200000
+//setmem /32 0x53fa8498 = 0x00180000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCLK_1
     str r3, [r0, #0x98]
-//setmem /32 0x53fa849c = 0x00200000
+//setmem /32 0x53fa849c = 0x00180000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCLK_0
     str r3, [r0, #0x9c]
-//setmem /32 0x53fa84f0 = 0x00200000
+//setmem /32 0x53fa84f0 = 0x00180000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM0, dse=3'b100
     str r3, [r0, #0xf0]
-//setmem /32 0x53fa8500 = 0x00200000
+//setmem /32 0x53fa8500 = 0x00180000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM1, dse=3'b100
     str r3, [r0, #0x100]
-//setmem /32 0x53fa84c8 = 0x00200000
+//setmem /32 0x53fa84c8 = 0x00180000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM2, dse=3'b100
     str r3, [r0, #0xc8]
-//setmem /32 0x53fa8528 = 0x00200000
+//setmem /32 0x53fa8528 = 0x00180000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM3, dse=3'b100
     str r3, [r0, #0x128]
-//setmem /32 0x53fa84f4 = 0x00200000
+//setmem /32 0x53fa84f4 = 0x00180000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS0, dse=3'b100
     str r3, [r0, #0xf4]
-//setmem /32 0x53fa84fc = 0x00200000
+//setmem /32 0x53fa84fc = 0x00180000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS1, dse=3'b100
     str r3, [r0, #0xfc]
-//setmem /32 0x53fa84cc = 0x00200000
+//setmem /32 0x53fa84cc = 0x00180000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS2, dse=3'b100
     str r3, [r0, #0xcc]
-//setmem /32 0x53fa8524 = 0x00200000
+//setmem /32 0x53fa8524 = 0x00180000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS3, dse=3'b100
     str r3, [r0, #0x124]
 
@@ -196,6 +196,37 @@ wait_pll1_lock:
 //*===========================================
 // CTL setting
     ldr r0, =DATABAHN_BASE_ADDR
+
+//*==========================================
+// Load ZQ
+//*==========================================
+//setmem /32 0x14000128 = 0x00170101  // load PU
+    ldr r1, =0x00170101
+    str r1, [r0, #0x128]
+
+    ldr r1, =0x1000
+delay0:
+    sub r1, r1, #0x1
+    cmp r1, #0x0
+    bne delay0
+
+//setmem /32 0x14000128 = 0x00000000  // clear
+    ldr r1, =0x00000000
+    str r1, [r0, #0x128]
+//setmem /32 0x14000128 = 0x08170111  // load PD
+    ldr r1, =0x08170111
+    str r1, [r0, #0x128]
+
+    ldr r1, =0x1000
+delay1:
+    sub r1, r1, #0x1
+    cmp r1, #0x0
+    bne delay1
+
+//setmem /32 0x14000128 = 0x00000000  // clear
+    ldr r1, =0x00000000
+    str r1, [r0, #0x128]
+
 //setmem /32 0x14000000 = 0x00000500
     ldr r1, =0x00000500
     str r1, [r0, #0x0]
@@ -223,8 +254,8 @@ wait_pll1_lock:
 //setmem /32 0x14000020 = 0x05020503
     ldr r1, =0x05020503
     str r1, [r0, #0x20]
-//setmem /32 0x14000024 = 0x0048EB05
-    ldr r1, =0x0048EB05
+//setmem /32 0x14000024 = 0x0048D005
+    ldr r1, =0x0048D005
     str r1, [r0, #0x24]
 //setmem /32 0x14000028 = 0x01000403
     ldr r1, =0x01000403
