@@ -418,7 +418,8 @@ enum mxc_clock {
 	MXC_ESDHC2_CLK,
 	MXC_ESDHC3_CLK,
 	MXC_ESDHC4_CLK,
-	MXC_SATA_CLK
+	MXC_SATA_CLK,
+	MXC_NFC_CLK,
 };
 
 enum mxc_peri_clocks {

@@ -280,12 +280,9 @@ static int mxc_nand_ecc_status(struct mtd_info *mtd)
 	u32 ecc_stat, err;
 	int no_subpages = 1;
 	int ret = 0;
-	u8 ecc_bit_mask, err_limit;
 	struct nand_chip *this = mtd->priv;
 	struct nand_info *info = this->priv;
-
-	ecc_bit_mask = (IS_4BIT_ECC ? 0x7 : 0xf);
-	err_limit = (IS_4BIT_ECC ? 0x4 : 0x8);
+	u8 ecc_bit_mask = 0xf;
 
 	no_subpages = mtd->writesize >> 9;
 
@@ -294,7 +291,7 @@ static int mxc_nand_ecc_status(struct mtd_info *mtd)
 	ecc_stat = GET_NFC_ECC_STATUS();
 	do {
 		err = ecc_stat & ecc_bit_mask;
-		if (err > err_limit) {
+		if (err == ecc_bit_mask) {
 			printk(KERN_WARNING "UnCorrectable RS-ECC Error\n");
 			return -1;
 		} else {
@@ -303,7 +300,7 @@ static int mxc_nand_ecc_status(struct mtd_info *mtd)
 		ecc_stat >>= 4;
 	} while (--no_subpages);
 
-	MTDDEBUG(MTD_DEBUG_LEVEL3, "%d Symbol Correctable RS-ECC Error\n", ret);
+	MTDDEBUG(MTD_DEBUG_LEVEL3, "Correctable ECC Error(%d)\n", ret);
 
 	return ret;
 }
@@ -1238,15 +1235,17 @@ static void mxc_nfc_init(void)
 
 	/* Unlock the internal RAM Buffer */
 	raw_write(NFC_SET_BLS(NFC_BLS_UNLCOKED), REG_NFC_BLS);
-
+#ifndef CONFIG_MX53
 	/* Blocks to be unlocked */
 	UNLOCK_ADDR(0x0, 0xFFFF);
 
 	/* Unlock Block Command for given address range */
 	raw_write(NFC_SET_WPC(NFC_WPC_UNLOCK), REG_NFC_WPC);
-
+#endif
 	/* Enable hw ecc */
 	raw_write((raw_read(REG_NFC_ECC_EN) | NFC_ECC_EN), REG_NFC_ECC_EN);
+	raw_write(raw_read(REG_NFC_ONE_CYCLE) |
+		NFC_ONE_CYCLE, REG_NFC_ONE_CYCLE);
 }
 
 static int mxc_alloc_buf(struct nand_info *info)

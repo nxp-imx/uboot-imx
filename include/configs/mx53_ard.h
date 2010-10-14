@@ -93,6 +93,16 @@
 #define CONFIG_BOOTP_SUBNETMASK
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
+
+/* Enable below configure when supporting nand */
+#define CONFIG_CMD_NAND
+#define CONFIG_MXC_NAND
+/* NAND FLASH driver setup */
+#define NAND_MAX_CHIPS         8
+#define CONFIG_SYS_MAX_NAND_DEVICE    1
+#define CONFIG_SYS_NAND_BASE          0x40000000
+#define CONFIG_NAND_FW_16BIT    0 /* 1: 16bit 0: 8bit */
+
 #define CONFIG_CMD_IIM
 #define CONFIG_CMD_MMC
 #define CONFIG_CMD_ENV

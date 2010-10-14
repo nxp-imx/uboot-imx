@@ -88,7 +88,7 @@ struct pll_param {
 #define MAX_DDR_CLK     420000000
 #define AHB_CLK_MAX     133333333
 #define IPG_CLK_MAX     (AHB_CLK_MAX / 2)
-#define NFC_CLK_MAX     25000000
+#define NFC_CLK_MAX     34000000
 #define HSP_CLK_MAX     133333333
 #endif
 
@@ -311,7 +311,6 @@ static u32 __get_emi_slow_clk(void)
 	return  __get_periph_clk() / (pdf + 1);
 }
 
-/*
 static u32 __get_nfc_clk(void)
 {
 	u32 cbcdr =  __REG(MXC_CCM_CBCDR);
@@ -320,7 +319,6 @@ static u32 __get_nfc_clk(void)
 
 	return  __get_emi_slow_clk() / (pdf + 1);
 }
-*/
 
 static u32 __get_ddr_clk(void)
 {
@@ -479,6 +477,8 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 		return __get_esdhc4_clk();
 	case MXC_SATA_CLK:
 		return __get_ahb_clk();
+	case MXC_NFC_CLK:
+	  return __get_nfc_clk();
 	default:
 		break;
 	}
@@ -507,6 +507,7 @@ void mxc_dump_clocks(void)
 	printf("esdhc2 clock  : %dHz\n", mxc_get_clock(MXC_ESDHC2_CLK));
 	printf("esdhc3 clock  : %dHz\n", mxc_get_clock(MXC_ESDHC3_CLK));
 	printf("esdhc4 clock  : %dHz\n", mxc_get_clock(MXC_ESDHC4_CLK));
+	printf("nfc clock     : %dHz\n", mxc_get_clock(MXC_NFC_CLK));
 }
 
 #ifdef CONFIG_CMD_CLOCK
