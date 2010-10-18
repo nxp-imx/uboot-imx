@@ -1244,8 +1244,6 @@ static void mxc_nfc_init(void)
 #endif
 	/* Enable hw ecc */
 	raw_write((raw_read(REG_NFC_ECC_EN) | NFC_ECC_EN), REG_NFC_ECC_EN);
-	raw_write(raw_read(REG_NFC_ONE_CYCLE) |
-		NFC_ONE_CYCLE, REG_NFC_ONE_CYCLE);
 }
 
 static int mxc_alloc_buf(struct nand_info *info)
