@@ -42,6 +42,8 @@ int do_clkops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			clk_info(PERIPH_CLK);
 		else if (strcmp(argv[1], "ddr") == 0)
 			clk_info(DDR_CLK);
+		else if (strcmp(argv[1], "nfc") == 0)
+			clk_info(MXC_NFC_CLK);
 		else
 			printf("Unsupported clock type!\n");
 		break;
@@ -53,6 +55,8 @@ int do_clkops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			clk_config(CONFIG_REF_CLK_FREQ, freq, PERIPH_CLK);
 		else if (strcmp(argv[1], "ddr") == 0)
 			clk_config(CONFIG_REF_CLK_FREQ, freq, DDR_CLK);
+		else if (strcmp(argv[1], "nfc") == 0)
+			clk_config(CONFIG_REF_CLK_FREQ, freq, MXC_NFC_CLK);
 		else
 			printf("Unsupported clock type!\n");
 		break;
@@ -75,6 +79,7 @@ U_BOOT_CMD(
 	"clk periph <peripheral clock in MHz> -"
 	"Setup/Display peripheral clock\n"
 	"clk ddr <DDR clock in MHz> - Setup/Display DDR clock\n"
+	"clk nfc <NFC clk in MHz> - Setup/Display NFC clock\n"
 	"Example:\n"
 	"clk - Show various clocks\n"
 	"clk core 665 - Set core clock to 665MHz\n"

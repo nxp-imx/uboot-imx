@@ -789,6 +789,26 @@ static int config_core_clk(u32 ref, u32 freq)
 	return config_pll_clk(PLL1_CLK, &pll_param);
 }
 
+static int config_nfc_clk(u32 nfc_clk)
+{
+	u32 reg;
+	u32 parent_rate = __get_emi_slow_clk();
+	u32 div = parent_rate / nfc_clk;
+
+	if (nfc_clk <= 0)
+		return -1;
+	if (div == 0)
+		div++;
+	if (parent_rate / div > NFC_CLK_MAX)
+		div++;
+	reg = __REG(MXC_CCM_CBCDR);
+	reg &= ~MXC_CCM_CBCDR_NFC_PODF_MASK;
+	reg |= (div - 1) << MXC_CCM_CBCDR_NFC_PODF_OFFSET;
+	writel(reg, MXC_CCM_CBCDR);
+	while (readl(CCM_BASE_ADDR + CLKCTL_CDHIPR) != 0)
+		;
+	return 0;
+}
 static int config_periph_clk(u32 ref, u32 freq)
 {
 	int ret = 0;
@@ -820,6 +840,7 @@ static int config_periph_clk(u32 ref, u32 freq)
 	} else {
 		u32 old_cbcmr = readl(CCM_BASE_ADDR + CLKCTL_CBCMR);
 		u32 new_cbcdr = calc_per_cbcdr_val(pll, old_cbcmr);
+		u32 old_nfc = __get_nfc_clk();
 
 		/* Switch peripheral to PLL3 */
 		writel(0x00015154, CCM_BASE_ADDR + CLKCTL_CBCMR);
@@ -845,6 +866,8 @@ static int config_periph_clk(u32 ref, u32 freq)
 		/* Make sure change is effective */
 		while (readl(CCM_BASE_ADDR + CLKCTL_CDHIPR) != 0)
 			;
+		/* restore to old NFC clock */
+		config_nfc_clk(old_nfc);
 		puts("\n");
 	}
 
@@ -942,6 +965,10 @@ int clk_config(u32 ref, u32 freq, u32 clk_type)
 		break;
 	case DDR_CLK:
 		if (config_ddr_clk(freq))
+			return -1;
+		break;
+	case MXC_NFC_CLK:
+		if (config_nfc_clk(freq))
 			return -1;
 		break;
 	default:

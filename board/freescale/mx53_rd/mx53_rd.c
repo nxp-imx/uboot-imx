@@ -1036,6 +1036,13 @@ void setup_nfc(void)
 		reg &= ~WEIM_GCR2_MUX16_BYP_GRANT_MASK;
 		__raw_writel(reg, WEIM_BASE_ADDR + i);
 	}
+
+	/* To be compatible with some old NAND flash,
+	 * limit NFC clocks as 34MHZ. The user can modify
+	 * it according to dedicate NAND flash
+	 */
+	clk_config(0, 34, MXC_NFC_CLK);
+
 #if defined(CONFIG_MX53_ARD)
 	mxc_request_iomux(MX53_PIN_NANDF_CS0,
 			IOMUX_CONFIG_ALT0);
