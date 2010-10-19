@@ -25,6 +25,7 @@
 
 #include <common.h>
 #include <asm/arch/mx53.h>
+#include <div64.h>
 
 /* General purpose timers registers */
 #define GPTCR   __REG(GPT1_BASE_ADDR)	/* Control register */
@@ -35,10 +36,11 @@
 /* General purpose timers bitfields */
 #define GPTCR_SWR       (1<<15)	/* Software reset */
 #define GPTCR_FRR       (1<<9)	/* Freerun / restart */
-#define GPTCR_CLKSOURCE_32   (0x100<<6)	/* Clock source */
-#define GPTCR_CLKSOURCE_IPG (0x001<<6)	/* Clock source */
+#define GPTCR_CLKSOURCE_32	(4<<6)	/* Clock source */
 #define GPTCR_TEN       (1)	/* Timer enable */
-#define GPTPR_VAL	(50)
+
+static ulong timestamp;
+static ulong lastinc;
 
 static inline void setup_gpt(void)
 {
@@ -54,9 +56,10 @@ static inline void setup_gpt(void)
 	GPTCR = GPTCR_SWR;
 	for (i = 0; i < 100; i++)
 		GPTCR = 0;      	/* We have no udelay by now */
-	GPTPR = GPTPR_VAL;	/* 50Mhz / 50 */
-	/* Freerun Mode, PERCLK1 input */
-	GPTCR |= GPTCR_CLKSOURCE_IPG | GPTCR_TEN;
+	GPTPR = 0;	/* 32KHz */
+	/* Freerun Mode, CLK32 input */
+	GPTCR = GPTCR | GPTCR_CLKSOURCE_32 | GPTCR_TEN;
+	reset_timer_masked();
 }
 
 int timer_init(void)
@@ -68,16 +71,9 @@ int timer_init(void)
 
 void reset_timer_masked(void)
 {
-	GPTCR = 0;
-	/* Freerun Mode, PERCLK1 input */
-	GPTCR = GPTCR_CLKSOURCE_IPG | GPTCR_TEN;
-}
-
-inline ulong get_timer_masked(void)
-{
-	ulong val = GPTCNT;
-
-	return val;
+	/* capture current incrementer value time */
+	lastinc = GPTCNT / (CONFIG_MX53_CLK32 / CONFIG_SYS_HZ);
+	timestamp = 0; /* start "advancing" time stamp from 0 */
 }
 
 void reset_timer(void)
@@ -85,43 +81,42 @@ void reset_timer(void)
 	reset_timer_masked();
 }
 
+inline ulong get_timer_masked(void)
+{
+	ulong val = GPTCNT;
+	val /= (CONFIG_MX53_CLK32 / CONFIG_SYS_HZ);
+	if (val >= lastinc)
+		timestamp += (val - lastinc);
+	else
+		timestamp += ((0xFFFFFFFF / (CONFIG_MX53_CLK32 / CONFIG_SYS_HZ))
+			- lastinc) + val;
+	lastinc = val;
+	return timestamp;
+}
+
 ulong get_timer(ulong base)
 {
-	ulong tmp;
-
-	tmp = get_timer_masked();
-
-	if (tmp <= (base * 1000)) {
-		/* Overflow */
-		tmp += (0xffffffff - base);
-	}
-
-	return (tmp / 1000) - base;
+	return get_timer_masked() - base;
 }
 
 void set_timer(ulong t)
 {
+	timestamp = t;
 }
 
 /* delay x useconds AND perserve advance timstamp value */
 /* GPTCNT is now supposed to tick 1 by 1 us. */
 void udelay(unsigned long usec)
 {
-	ulong tmp;
-
+	unsigned long now, start, tmo;
 	setup_gpt();
 
-	tmp = get_timer_masked();	/* get current timestamp */
+	tmo = usec * (CONFIG_MX53_CLK32 / 1000) / 1000;
+	if (!tmo)
+		tmo = 1;
 
-	/* if setting this forward will roll time stamp */
-	if ((usec + tmp + 1) < tmp) {
-		/* reset "advancing" timestamp to 0, set lastinc value */
-		reset_timer_masked();
-	} else {
-		/* else, set advancing stamp wake up time */
-		tmp += usec;
-	}
+	now = start = GPTCNT;
 
-	while (get_timer_masked() < tmp)	/* loop till event */
-		 /*NOP*/;
+	while ((now - start) < tmo)
+		now = GPTCNT;
 }
