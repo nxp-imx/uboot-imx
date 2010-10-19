@@ -643,6 +643,9 @@ int clk_info(u32 clk_type)
 		printf("DDR Clock: %dHz\n",
 			mxc_get_clock(MXC_DDR_CLK));
 		break;
+	case NFC_CLK:
+		printf("NFC Clock: %dHz\n",
+			 mxc_get_clock(MXC_NFC_CLK));
 	case ALL_CLK:
 		printf("cpu clock: %dMHz\n",
 			mxc_get_clock(MXC_ARM_CLK) / SZ_DEC_1M);
@@ -967,7 +970,7 @@ int clk_config(u32 ref, u32 freq, u32 clk_type)
 		if (config_ddr_clk(freq))
 			return -1;
 		break;
-	case MXC_NFC_CLK:
+	case NFC_CLK:
 		if (config_nfc_clk(freq))
 			return -1;
 		break;

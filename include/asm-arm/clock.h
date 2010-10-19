@@ -34,7 +34,8 @@ enum {
 	UART_CLK,
 	CSPI_CLK,
 	DDR_CLK,
-	ALL_CLK
+	NFC_CLK,
+	ALL_CLK,
 };
 
 int clk_config(u32 ref, u32 freq, u32 clk_type);

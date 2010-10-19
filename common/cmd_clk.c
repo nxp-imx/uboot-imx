@@ -43,7 +43,7 @@ int do_clkops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		else if (strcmp(argv[1], "ddr") == 0)
 			clk_info(DDR_CLK);
 		else if (strcmp(argv[1], "nfc") == 0)
-			clk_info(MXC_NFC_CLK);
+			clk_info(NFC_CLK);
 		else
 			printf("Unsupported clock type!\n");
 		break;
@@ -56,7 +56,7 @@ int do_clkops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		else if (strcmp(argv[1], "ddr") == 0)
 			clk_config(CONFIG_REF_CLK_FREQ, freq, DDR_CLK);
 		else if (strcmp(argv[1], "nfc") == 0)
-			clk_config(CONFIG_REF_CLK_FREQ, freq, MXC_NFC_CLK);
+			clk_config(CONFIG_REF_CLK_FREQ, freq, NFC_CLK);
 		else
 			printf("Unsupported clock type!\n");
 		break;

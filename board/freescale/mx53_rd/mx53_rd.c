@@ -1041,7 +1041,7 @@ void setup_nfc(void)
 	 * limit NFC clocks as 34MHZ. The user can modify
 	 * it according to dedicate NAND flash
 	 */
-	clk_config(0, 34, MXC_NFC_CLK);
+	clk_config(0, 34, NFC_CLK);
 
 #if defined(CONFIG_MX53_ARD)
 	mxc_request_iomux(MX53_PIN_NANDF_CS0,
