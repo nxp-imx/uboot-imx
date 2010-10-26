@@ -45,6 +45,7 @@
 /*
  * U-Boot general configurations
  */
+#define CONFIG_SYS_LONGHELP
 #define CONFIG_SYS_PROMPT	"MX28 U-Boot > "
 #define CONFIG_SYS_CBSIZE	1024		/* Console I/O buffer size */
 #define CONFIG_SYS_PBSIZE \
@@ -125,24 +126,70 @@
  * MMC Driver
  */
 #define CONFIG_CMD_MMC
-#define CONFIG_MMC
-#define CONFIG_IMX_SSP_MMC		/* MMC driver based on SSP */
-#define CONFIG_GENERIC_MMC
-#define CONFIG_SYS_MMC_ENV_DEV	0
-#define CONFIG_DOS_PARTITION
-#define CONFIG_CMD_FAT
-#define CONFIG_SYS_SSP_MMC_NUM 2
+
+#ifdef CONFIG_CMD_MMC
+	#define CONFIG_MMC
+	#define CONFIG_IMX_SSP_MMC		/* MMC driver based on SSP */
+	#define CONFIG_GENERIC_MMC
+	#define CONFIG_DYNAMIC_MMC_DEVNO
+	#define CONFIG_DOS_PARTITION
+	#define CONFIG_CMD_FAT
+	#define CONFIG_SYS_SSP_MMC_NUM 2
+#endif
 
 /*
- * Environments on MMC
+ * GPMI Nand Configs
  */
+#ifndef CONFIG_CMD_MMC	/* NAND conflict with MMC */
+
+#define CONFIG_CMD_NAND
+
+#ifdef CONFIG_CMD_NAND
+	#define CONFIG_NAND_GPMI
+	#define CONFIG_GPMI_NFC_SWAP_BLOCK_MARK
+	#define CONFIG_GPMI_NFC_V1
+
+	#define CONFIG_GPMI_REG_BASE	GPMI_BASE_ADDR
+	#define CONFIG_BCH_REG_BASE	BCH_BASE_ADDR
+
+	#define NAND_MAX_CHIPS		8
+	#define CONFIG_SYS_NAND_BASE		0x40000000
+	#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#endif
+
+/*
+ * APBH DMA Configs
+ */
+#define CONFIG_APBH_DMA
+
+#ifdef CONFIG_APBH_DMA
+	#define CONFIG_APBH_DMA_V1
+	#define CONFIG_MXS_DMA_REG_BASE ABPHDMA_BASE_ADDR
+#endif
+
+#endif
+
+/*
+ * Environments
+ */
+#define CONFIG_FSL_ENV_IN_MMC
+
 #define CONFIG_CMD_ENV
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_ENV_IS_IN_MMC
-/* Assoiated with the MMC layout defined in mmcops.c */
-#define CONFIG_ENV_OFFSET		(0x400) /* 1 KB */
-#define CONFIG_ENV_SIZE			(0x20000 - 0x400) /* 127 KB */
-#define CONFIG_DYNAMIC_MMC_DEVNO
+
+#if defined(CONFIG_FSL_ENV_IN_NAND)
+	#define CONFIG_ENV_IS_IN_NAND 1
+	#define CONFIG_ENV_OFFSET	0x1400000 /* Nand env, offset: 20M */
+	#define CONFIG_ENV_SECT_SIZE    (128 * 1024)
+	#define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE
+#elif defined(CONFIG_FSL_ENV_IN_MMC)
+	#define CONFIG_ENV_IS_IN_MMC	1
+	/* Assoiated with the MMC layout defined in mmcops.c */
+	#define CONFIG_ENV_OFFSET               (0x400) /* 1 KB */
+	#define CONFIG_ENV_SIZE                 (0x20000 - 0x400) /* 127 KB */
+#else
+	#define CONFIG_ENV_IS_NOWHERE	1
+#endif
 
 /* The global boot mode will be detected by ROM code and
  * a boot mode value will be stored at fixed address:

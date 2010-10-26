@@ -96,9 +96,33 @@ static struct pin_desc enet_pins_desc[] = {
 	{ PINID_ENET_CLK, PIN_FUN1, PAD_8MA, PAD_3V3, 1 }
 };
 
+/* Gpmi pins */
+static struct pin_desc gpmi_pins_desc[] = {
+	{ PINID_GPMI_D00, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_D01, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_D02, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_D03, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_D04, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_D05, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_D06, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_D07, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_RDN, PIN_FUN1, PAD_8MA, PAD_1V8, 1 },
+	{ PINID_GPMI_WRN, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_ALE, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_CLE, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_RDY0, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_RDY1, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_CE0N, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_CE1N, PIN_FUN1, PAD_4MA, PAD_3V3, 0 },
+	{ PINID_GPMI_RESETN, PIN_FUN1, PAD_4MA, PAD_3V3, 0 }
+};
 static struct pin_group enet_pins = {
 	.pins		= enet_pins_desc,
 	.nr_pins	= ARRAY_SIZE(enet_pins_desc)
+};
+static struct pin_group gpmi_pins = {
+	.pins		= gpmi_pins_desc,
+	.nr_pins	= ARRAY_SIZE(gpmi_pins_desc)
 };
 
 /*
@@ -110,7 +134,9 @@ int board_init(void)
 	gd->bd->bi_arch_number = MACH_TYPE_MX28EVK;
 	/* Adress of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
-
+#ifdef CONFIG_NAND_GPMI
+	setup_gpmi_nand();
+#endif
 	return 0;
 }
 
@@ -170,6 +196,7 @@ int ssp_mmc_gpio_init(bd_t *bis)
 
 			break;
 		case 1:
+#ifdef CONFIG_CMD_MMC
 			/* Set up MMC pins */
 			pin_set_group(&mmc1_pins);
 
@@ -184,7 +211,7 @@ int ssp_mmc_gpio_init(bd_t *bis)
 			/* Set up SD1 WP pin */
 			pin_set_type(PINID_SSP1_GPIO_WP, PIN_GPIO);
 			pin_gpio_direction(PINID_SSP1_GPIO_WP, 0);
-
+#endif
 			break;
 		default:
 			printf("Warning: you configured more ssp mmc controller"
@@ -251,3 +278,10 @@ void enet_board_init(void)
 	udelay(200);
 	pin_gpio_set(PINID_ENET0_RX_CLK, 1);
 }
+#ifdef CONFIG_NAND_GPMI
+void setup_gpmi_nand()
+{
+	/* Set up GPMI pins */
+	pin_set_group(&gpmi_pins);
+}
+#endif

@@ -16,12 +16,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <asm/apbh_dma.h>
-
 #include <linux/err.h>
 #include <linux/list.h>
 #include <malloc.h>
 #include <common.h>
+#include <asm/apbh_dma.h>
 #include <asm/io.h>
 
 #ifdef CONFIG_ARCH_MMU
@@ -268,7 +267,7 @@ static int mxs_dma_apbh_probe(void)
 		BM_APBH_CTRL0_APB_BURST_EN);
 #endif
 
-	mxs_dma_apbh.chan_base = MXS_DMA_CHANNEL_AHB_APBH_GPMI0;
+	mxs_dma_apbh.chan_base = MXS_DMA_CHANNEL_AHB_APBH;
 	mxs_dma_apbh.chan_num = MXS_MAX_DMA_CHANNELS;
 
 	return mxs_dma_device_register(&mxs_dma_apbh);
@@ -566,7 +565,7 @@ struct mxs_dma_desc *mxs_dma_alloc_desc(void)
 	if (pdesc == NULL)
 		return NULL;
 	memset(pdesc, 0, sizeof(*pdesc));
-	pdesc->address = pdesc;
+	pdesc->address = (dma_addr_t)pdesc;
 #endif
 
 	return pdesc;

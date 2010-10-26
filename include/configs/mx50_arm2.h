@@ -265,13 +265,19 @@
 	#define NAND_MAX_CHIPS		8
 	#define CONFIG_SYS_NAND_BASE		0x40000000
 	#define CONFIG_SYS_MAX_NAND_DEVICE	1
+
+
 #endif
 
 /*
  * APBH DMA Configs
  */
 #define CONFIG_APBH_DMA
-#define CONFIG_MXS_DMA_REG_BASE	ABPHDMA_BASE_ADDR
+
+#ifdef CONFIG_APBH_DMA
+	#define CONFIG_APBH_DMA_V2
+	#define CONFIG_MXS_DMA_REG_BASE	ABPHDMA_BASE_ADDR
+#endif
 
 /*-----------------------------------------------------------------------
  * Stack sizes

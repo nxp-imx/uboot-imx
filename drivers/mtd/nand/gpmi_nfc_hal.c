@@ -1113,7 +1113,7 @@ static int read_data(struct mtd_info *mtd, unsigned chip,
 
 	(*d)->cmd.cmd.data                   = 0;
 	(*d)->cmd.cmd.bits.command           = DMA_WRITE;
-#if defined(CONFIG_GPMI_NFC_V2)
+#if !defined(CONFIG_GPMI_NFC_V0)
 	(*d)->cmd.cmd.bits.chain             = 0;
 	(*d)->cmd.cmd.bits.irq               = 1;
 #else
@@ -1398,7 +1398,7 @@ static int read_page(struct mtd_info *mtd, unsigned chip,
 	(*d)->cmd.cmd.bits.irq               = 0;
 	(*d)->cmd.cmd.bits.nand_lock         = 0;
 	(*d)->cmd.cmd.bits.nand_wait_4_ready = 1;
-#if defined(CONFIG_GPMI_NFC_V2)
+#if !defined(CONFIG_GPMI_NFC_V0)
 	(*d)->cmd.cmd.bits.dec_sem           = 0;
 #else
 	(*d)->cmd.cmd.bits.dec_sem           = 1;
@@ -1446,7 +1446,7 @@ static int read_page(struct mtd_info *mtd, unsigned chip,
 	(*d)->cmd.cmd.bits.irq               = 0;
 	(*d)->cmd.cmd.bits.nand_lock         = 0;
 	(*d)->cmd.cmd.bits.nand_wait_4_ready = 0;
-#if defined(CONFIG_GPMI_NFC_V2)
+#if !defined(CONFIG_GPMI_NFC_V0)
 	(*d)->cmd.cmd.bits.dec_sem           = 0;
 #else
 	(*d)->cmd.cmd.bits.dec_sem           = 1;
@@ -1509,7 +1509,7 @@ static int read_page(struct mtd_info *mtd, unsigned chip,
 	(*d)->cmd.cmd.bits.irq               = 0;
 	(*d)->cmd.cmd.bits.nand_lock         = 0;
 	(*d)->cmd.cmd.bits.nand_wait_4_ready = 1;
-#if defined(CONFIG_GPMI_NFC_V2)
+#if !defined(CONFIG_GPMI_NFC_V0)
 	(*d)->cmd.cmd.bits.dec_sem           = 0;
 #else
 	(*d)->cmd.cmd.bits.dec_sem           = 1;

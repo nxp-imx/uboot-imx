@@ -25,6 +25,7 @@ enum mxc_clock {
 	MXC_ARM_CLK = 0,
 	MXC_AHB_CLK,
 	MXC_IPG_CLK,
+	MXC_GPMI_CLK,
 };
 
 unsigned int mxc_get_clock(enum mxc_clock clk);
@@ -116,4 +117,7 @@ void enet_board_init(void);
 #define REGS_DRAM_BASE		(0x800E0000)
 #define REGS_ENET_BASE		(0x800F0000)
 
+#define BCH_BASE_ADDR REGS_BCH_BASE
+#define GPMI_BASE_ADDR REGS_GPMI_BASE
+#define ABPHDMA_BASE_ADDR  REGS_APBH_BASE
 #endif /* __MX28_H */

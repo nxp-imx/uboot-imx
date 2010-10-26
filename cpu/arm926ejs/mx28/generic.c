@@ -105,12 +105,54 @@ static u32 mx28_get_emiclk(void)
 
 	return emiclk;
 }
+static inline void __enable_gpmi_clk(void)
+{
+	/* Clear bypass bit*/
+	REG_SET(REGS_CLKCTRL_BASE, HW_CLKCTRL_CLKSEQ,
+	       BM_CLKCTRL_CLKSEQ_BYPASS_GPMI);
+	/* Set gpmi clock to ref_gpmi/12 */
+	REG_WR(REGS_CLKCTRL_BASE, HW_CLKCTRL_GPMI,
+	      REG_RD(REGS_CLKCTRL_BASE, HW_CLKCTRL_GPMI) &
+	      (~(BM_CLKCTRL_GPMI_DIV)) &
+	      (~(BM_CLKCTRL_GPMI_CLKGATE)) |
+	      1);
+}
+static u32 mx28_get_gpmiclk(void)
+{
+	const u32 xtal = 24, ref = 480;
+	u32 clkfrac, clkseq, clkctrl;
+	u32 frac, div;
+	u32 gpmiclk;
+	/* Enable gpmi clock */
+	__enable_gpmi_clk();
 
+	clkfrac = REG_RD(REGS_CLKCTRL_BASE, HW_CLKCTRL_FRAC1);
+	clkseq = REG_RD(REGS_CLKCTRL_BASE, HW_CLKCTRL_CLKSEQ);
+	clkctrl = REG_RD(REGS_CLKCTRL_BASE, HW_CLKCTRL_GPMI);
+
+	if (clkseq & BM_CLKCTRL_CLKSEQ_BYPASS_GPMI) {
+		/* xtal path */
+		div = (clkctrl & BM_CLKCTRL_GPMI_DIV) >>
+			BP_CLKCTRL_GPMI_DIV;
+		gpmiclk = xtal / div;
+	} else {
+		/* ref path */
+		frac = (clkfrac & BM_CLKCTRL_FRAC1_GPMIFRAC) >>
+			BP_CLKCTRL_FRAC1_GPMIFRAC;
+		div = (clkctrl & BM_CLKCTRL_GPMI_DIV) >>
+			BP_CLKCTRL_GPMI_DIV;
+		gpmiclk =  (ref * 18 / frac) / div;
+	}
+
+	return gpmiclk;
+}
 u32 mxc_get_clock(enum mxc_clock clk)
 {
 	switch (clk) {
 	case MXC_ARM_CLK:
 		return mx28_get_pclk() * 1000000;
+	case MXC_GPMI_CLK:
+		return mx28_get_gpmiclk() * 1000000;
 	case MXC_AHB_CLK:
 	case MXC_IPG_CLK:
 		return mx28_get_hclk() * 1000000;
@@ -136,7 +178,7 @@ int print_cpuinfo(void)
 	printf("CPU:   %d MHz\n", mx28_get_pclk());
 	printf("BUS:   %d MHz\n", mx28_get_hclk());
 	printf("EMI:   %d MHz\n", mx28_get_emiclk());
-
+	printf("GPMI:   %d MHz\n", mx28_get_gpmiclk());
 	return 0;
 }
 #endif
