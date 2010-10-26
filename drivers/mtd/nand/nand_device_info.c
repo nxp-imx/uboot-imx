@@ -515,6 +515,11 @@ static struct nand_device_info nand_device_info_table_type_2[] =
 	 .data_setup_in_ns         = 15,
 	 .data_hold_in_ns          = 10,
 	 .address_setup_in_ns      = 20,
+	 .gpmi_sample_delay_in_ns  = 6,
+	 .tREA_in_ns               = 20,
+	 .tRLOH_in_ns              = 5,
+	 .tRHOH_in_ns              = 15,
+	 "MT29F16G08ABACA(2GB)",
 	},
 	{true}
 };
