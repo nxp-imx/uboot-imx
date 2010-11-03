@@ -61,7 +61,25 @@ plugin2:           .long 0x0
 
 plugin_start:
 /* Save the return address and the function arguments */
-	push    {r0-r2, lr}
+	push    {r0-r4, lr}
+
+/* To return to ROM from plugin, we need to fill in these argument.
+ * Here is what need to do:
+ * Need to construct the paramters for this function before return to ROM:
+ * plugin_download(void **start, size_t *bytes, UINT32 *ivt_offset)
+ */
+ /* Check r0 if valid address
+  * Mfgtools or sb_loader run-plug maybe pass down invalidate data
+ */
+ 	cmp r0, #0xf8000000
+	mov r4, r0
+ 	ldr r3, DDR_DEST_ADDR
+	strhi r3, [r0]
+	ldr r3, COPY_SIZE
+	strhi r3, [r1]
+	mov r3, #0x400  /* Point to the second IVT table at offset 0x42C */
+	add r3, r3, #0x2C
+	strhi r3, [r2]
 
 /*=============================================================================
  *init script for codex LPDDR1-200MHz CPU board
@@ -563,25 +581,13 @@ delay1:
 	adr r2, BOOT_DATA
 
 before_calling_rom___pu_irom_hwcnfg_setup:
-	mov r4, #0x2a00
-	add r4, r4, #0x19
-	blx r4 // This address might change in future ROM versions
+	mov r3, #0x2a00
+	add r3, r3, #0x19
+	cmp r4, #0xF8000000
+	blxhi r3 // This address might change in future ROM versions
 after_calling_rom___pu_irom_hwcnfg_setup:
 
-
-/* To return to ROM from plugin, we need to fill in these argument.
- * Here is what need to do:
- * Need to construct the paramters for this function before return to ROM:
- * plugin_download(void **start, size_t *bytes, UINT32 *ivt_offset)
- */
-	pop {r0-r2, lr}
-	ldr r3, DDR_DEST_ADDR
-	str r3, [r0]
-	ldr r3, COPY_SIZE
-	str r3, [r1]
-	mov r3, #0x400  /* Point to the second IVT table at offset 0x42C */
-	add r3, r3, #0x2C
-	str r3, [r2]
+	pop {r0-r4, lr}
 	mov r0, #1
 	bx lr          /* return back to ROM code */
 
