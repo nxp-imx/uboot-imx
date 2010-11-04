@@ -1139,14 +1139,20 @@ wait_pll1_lock:
  * Final image size on exit.
  * boot_data - Initial @ref ivt Boot Data load address.
  */
+	ldr r0, =ROM_SI_REV
+	ldr r1, [r0]
+	cmp r1, #0x11
+
 	adr r0, DDR_DEST_ADDR
 	adr r1, COPY_SIZE
 	adr r2, BOOT_DATA
 
 before_calling_rom___pu_irom_hwcnfg_setup:
 	mov r4, #0x2a00
-	add r4, r4, #0x19
-	blx r4 // This address might change in future ROM versions
+	/* Different ROM address for TO 1.0 & TO 1.1.1 */
+	addeq r4, r4, #0xad
+	addne r4, r4, #0x19
+	blx r4
 after_calling_rom___pu_irom_hwcnfg_setup:
 
 

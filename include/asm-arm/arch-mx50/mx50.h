@@ -229,7 +229,10 @@
 #define CLKCTL_CLK_DDR         0x98
 
 #define CHIP_REV_1_0            0x10
+#define CHIP_REV_1_1_1         0x11
 #define PLATFORM_ICGC           0x14
+/* ROM ID as the indicator of SOC rev */
+#define ROM_SI_REV	0x48
 
 /* Assuming 24MHz input clock with doubler ON */
 /*                            MFI         PDF */

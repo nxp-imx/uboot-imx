@@ -576,15 +576,22 @@ delay1:
  * Final image size on exit.
  * boot_data - Initial @ref ivt Boot Data load address.
  */
+
+	ldr r0, =ROM_SI_REV
+	ldr r1, [r0]
+	cmp r1, #0x11
+
 	adr r0, DDR_DEST_ADDR
 	adr r1, COPY_SIZE
 	adr r2, BOOT_DATA
 
 before_calling_rom___pu_irom_hwcnfg_setup:
 	mov r3, #0x2a00
-	add r3, r3, #0x19
-	cmp r4, #0xF8000000
-	blxhi r3 // This address might change in future ROM versions
+	/* Different ROM address for TO 1.0 & TO 1.1.1 */
+	addeq r3, r3, #0xad
+	addne r3, r3, #0x19
+	cmp r4, #0xf8000000
+	blxhi r3
 after_calling_rom___pu_irom_hwcnfg_setup:
 
 	pop {r0-r4, lr}
