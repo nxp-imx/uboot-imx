@@ -918,13 +918,6 @@ static int send_command(struct mtd_info *mtd, unsigned chip,
 	MTDDEBUG(MTD_DEBUG_LEVEL2, "Chip: %d DMA Buf: 0x%08x Length: %d\n",
 		chip, buffer, length);
 
-#ifdef CONFIG_ARCH_MMU
-	/* FIXME: I don't know why this delay is needed.
-	 * But with this delay, nand operations can be ok.
-	 */
-	udelay(200);
-#endif
-
 	/* Compute the DMA channel. */
 	dma_channel = MXS_DMA_CHANNEL_AHB_APBH_GPMI0 + chip;
 

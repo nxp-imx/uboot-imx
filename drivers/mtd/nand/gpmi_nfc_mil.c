@@ -69,8 +69,8 @@ static void gpmi_nfc_cmd_ctrl(struct mtd_info *mtd, int data, unsigned int ctrl)
 	if (!cmd_queue) {
 #ifdef CONFIG_ARCH_MMU
 		cmd_queue =
-		(u8 *)ioremap_nocache((u32)iomem_to_phys((ulong)kmalloc(GPMI_NFC_COMMAND_BUFFER_SIZE,
-		GFP_KERNEL)),
+		(u8 *)ioremap_nocache((u32)iomem_to_phys((ulong)memalign(MXS_DMA_ALIGNMENT,
+		GPMI_NFC_COMMAND_BUFFER_SIZE)),
 		MXS_DMA_ALIGNMENT);
 #else
 		cmd_queue =
@@ -351,7 +351,7 @@ static int gpmi_nfc_ecc_read_page(struct mtd_info *mtd,
 
 	MTDDEBUG(MTD_DEBUG_LEVEL1, "Buf: 0x%08x, data_buf: 0x%08x, "
 		"oob_buf: 0x%08x",
-		buf, (u32)gpmi_info->data_buf, (u32)gpmi_info->oob_buf);
+		(u32)buf, (u32)gpmi_info->data_buf, (u32)gpmi_info->oob_buf);
 	/* Ask the NFC. */
 #ifdef CONFIG_ARCH_MMU
 	error = nfc->read_page(mtd, gpmi_info->cur_chip,
@@ -441,7 +441,7 @@ static void gpmi_nfc_ecc_write_page(struct mtd_info *mtd,
 	MTDDEBUG(MTD_DEBUG_LEVEL3, "%s =>\n", __func__);
 
 	MTDDEBUG(MTD_DEBUG_LEVEL1, "Buf: 0x%08x, data_buf: 0x%08x, "
-		"oob_buf: 0x%08x\n", buf, (u32)data_buf, (u32)oob_buf);
+		"oob_buf: 0x%08x\n", (u32)buf, (u32)data_buf, (u32)oob_buf);
 
 	memcpy(data_buf, buf, mtd->writesize);
 	memcpy(oob_buf, nand->oob_poi, mtd->oobsize);
@@ -1116,11 +1116,11 @@ int board_nand_init(struct nand_chip *nand)
 	 */
 	chip->cmdfunc		= NULL;
 	chip->waitfunc		= NULL;
-	chip->dev_ready	= gpmi_nfc_dev_ready;
+	chip->dev_ready		= gpmi_nfc_dev_ready;
 	chip->select_chip	= gpmi_nfc_select_chip;
-	chip->block_bad	= gpmi_nfc_block_bad;
+	chip->block_bad		= gpmi_nfc_block_bad;
 	chip->block_markbad	= NULL;
-	chip->read_byte	= gpmi_nfc_read_byte;
+	chip->read_byte		= gpmi_nfc_read_byte;
 	/*
 	 * Low-level I/O
 	 *
@@ -1129,7 +1129,7 @@ int board_nand_init(struct nand_chip *nand)
 	 *
 	 * We rely on the reference implentation of verify_buf.
 	 */
-	chip->read_word	= NULL;
+	chip->read_word		= NULL;
 	chip->write_buf		= gpmi_nfc_write_buf;
 	chip->read_buf		= gpmi_nfc_read_buf;
 	chip->verify_buf	= NULL;

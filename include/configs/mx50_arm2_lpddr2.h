@@ -132,7 +132,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_PROMPT		"ARM2 U-Boot > "
+#define CONFIG_SYS_PROMPT		"MX50_ARM2 U-Boot > "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
@@ -197,11 +197,14 @@
  * I2C Configs
  */
 #define CONFIG_CMD_I2C          1
-#define CONFIG_HARD_I2C         1
-#define CONFIG_I2C_MXC          1
-#define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
-#define CONFIG_SYS_I2C_SPEED            100000
-#define CONFIG_SYS_I2C_SLAVE            0xfe
+
+#ifdef CONFIG_CMD_I2C
+	#define CONFIG_HARD_I2C         1
+	#define CONFIG_I2C_MXC          1
+	#define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
+	#define CONFIG_SYS_I2C_SPEED            100000
+	#define CONFIG_SYS_I2C_SLAVE            0xfe
+#endif
 
 
 /*
@@ -267,7 +270,7 @@
 
 #ifdef CONFIG_APBH_DMA
 	#define CONFIG_APBH_DMA_V2
-	#define CONFIG_MXS_DMA_REG_BASE ABPHDMA_BASE_ADDR
+	#define CONFIG_MXS_DMA_REG_BASE	ABPHDMA_BASE_ADDR
 #endif
 
 /*-----------------------------------------------------------------------

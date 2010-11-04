@@ -133,7 +133,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_PROMPT		"ARM2 U-Boot > "
+#define CONFIG_SYS_PROMPT		"MX50_ARM2 U-Boot > "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
@@ -246,7 +246,6 @@
 
 	/* Indicate to esdhc driver which ports support 8-bit data */
 	#define CONFIG_MMC_8BIT_PORTS		0x6   /* ports 1 and 2 */
-
 #endif
 
 /*
@@ -265,8 +264,6 @@
 	#define NAND_MAX_CHIPS		8
 	#define CONFIG_SYS_NAND_BASE		0x40000000
 	#define CONFIG_SYS_MAX_NAND_DEVICE	1
-
-
 #endif
 
 /*

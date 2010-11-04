@@ -132,7 +132,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_PROMPT		"ARM_EVK U-Boot > "
+#define CONFIG_SYS_PROMPT		"MX50_ARM2 U-Boot > "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
@@ -197,11 +197,13 @@
  * I2C Configs
  */
 #define CONFIG_CMD_I2C          1
-#define CONFIG_HARD_I2C         1
-#define CONFIG_I2C_MXC          1
-#define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
-#define CONFIG_SYS_I2C_SPEED            100000
-#define CONFIG_SYS_I2C_SLAVE            0xfe
+#ifdef CONFIG_CMD_I2C
+	#define CONFIG_HARD_I2C         1
+	#define CONFIG_I2C_MXC          1
+	#define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
+	#define CONFIG_SYS_I2C_SPEED            100000
+	#define CONFIG_SYS_I2C_SLAVE            0xfe
+#endif
 
 
 /*
@@ -241,8 +243,38 @@
 	/* Indicate to esdhc driver which ports support 8-bit data */
 	#define CONFIG_MMC_8BIT_PORTS		0x6   /* ports 1 and 2 */
 
+#endif
+
+/*
+ * GPMI Nand Configs
+ */
+#define CONFIG_CMD_NAND
+
+#ifdef CONFIG_CMD_NAND
+	#define CONFIG_NAND_GPMI
+	#define CONFIG_GPMI_NFC_SWAP_BLOCK_MARK
+	#define CONFIG_GPMI_NFC_V2
+
+	#define CONFIG_GPMI_REG_BASE	GPMI_BASE_ADDR
+	#define CONFIG_BCH_REG_BASE	BCH_BASE_ADDR
+
+	#define NAND_MAX_CHIPS		8
+	#define CONFIG_SYS_NAND_BASE		0x40000000
+	#define CONFIG_SYS_MAX_NAND_DEVICE	1
+
 
 #endif
+
+/*
+ * APBH DMA Configs
+ */
+#define CONFIG_APBH_DMA
+
+#ifdef CONFIG_APBH_DMA
+	#define CONFIG_APBH_DMA_V2
+	#define CONFIG_MXS_DMA_REG_BASE	ABPHDMA_BASE_ADDR
+#endif
+
 /*-----------------------------------------------------------------------
  * Stack sizes
  *

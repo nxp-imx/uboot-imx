@@ -352,7 +352,7 @@ void spi_io_init(struct imx_spi_dev_t *dev)
 #endif
 
 #ifdef CONFIG_NAND_GPMI
-void setup_gpmi_nand()
+void setup_gpmi_nand(void)
 {
 	u32 src_sbmr = readl(SRC_BASE_ADDR + 0x4);
 
@@ -647,7 +647,7 @@ struct fsl_esdhc_cfg esdhc_cfg[3] = {
 
 
 #ifdef CONFIG_DYNAMIC_MMC_DEVNO
-int get_mmc_env_devno()
+int get_mmc_env_devno(void)
 {
 	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
 	int mmc_devno = 0;
