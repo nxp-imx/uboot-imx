@@ -122,7 +122,21 @@ u32 get_board_rev(void)
 
 static inline void setup_soc_rev(void)
 {
-	system_rev = 0x53000 | CHIP_REV_1_0;
+	int reg;
+
+	/* Si rev is obtained from ROM */
+	reg = __REG(ROM_SI_REV);
+
+	switch (reg) {
+	case 0x10:
+		system_rev = 0x53000 | CHIP_REV_1_0;
+		break;
+	case 0x20:
+		system_rev = 0x53000 | CHIP_REV_2_0;
+		break;
+	default:
+		system_rev = 0x53000 | CHIP_REV_2_0;
+	}
 }
 
 static inline void setup_board_rev(int rev)
@@ -346,10 +360,29 @@ void setup_core_voltages(void)
 
 	/* Set DDR voltage VDDA to 1.25V */
 	buf[0] = 0;
-	buf[1] = 0x63;
+	buf[1] = 0;
 	buf[2] = 0x1a;
 	if (i2c_write(0x8, 26, 1, buf, 3))
 		return;
+
+	if (is_soc_rev(CHIP_REV_2_0) == 0) {
+		/* Set VCC to 1.3V for TO2 */
+		buf[0] = 0;
+		buf[1] = 0;
+		buf[2] = 0x1C;
+		if (i2c_write(0x8, 25, 1, buf, 3))
+			return;
+
+		/* Set VDDA to 1.3V for TO2 */
+		buf[0] = 0;
+		buf[1] = 0;
+		buf[2] = 0x1C;
+		if (i2c_write(0x8, 26, 1, buf, 3))
+			return;
+	}
+
+	/* need to delay 100 ms to allow power supplies to ramp-up */
+	udelay(100000);
 #endif
 	/* Raise the core frequency to 800MHz */
 	writel(0x0, CCM_BASE_ADDR + CLKCTL_CACRR);
@@ -1379,6 +1412,13 @@ int board_late_init(void)
 int checkboard(void)
 {
 	printf("Board: ");
+
+/* On EVK, DDR frequency will be bumped up to 400 MHz in identify_board_id() */
+#if !defined(CONFIG_MX53_EVK)
+	/* Bump up the DDR frequency to 400 MHz */
+	if (clk_config(CONFIG_REF_CLK_FREQ, 400, PERIPH_CLK) >= 0)
+		clk_config(CONFIG_REF_CLK_FREQ, 400, DDR_CLK);
+#endif
 
 #if defined(CONFIG_MX53_ARD)
 	printf("MX53-ARD 1.0 [");

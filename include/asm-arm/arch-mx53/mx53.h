@@ -24,6 +24,11 @@
 #define __REG8(x)       (*((volatile u8 *)(x)))
 
 /*
+  * ROM address which denotes silicon rev
+  */
+#define ROM_SI_REV	0x48
+
+/*
  * SATA
  */
 #define SATA_BASE_ADDR		0x10000000
@@ -337,6 +342,7 @@
 #define CLKCTL_CMEOR            0x88
 
 #define CHIP_REV_1_0            0x10
+#define CHIP_REV_2_0            0x20
 #define PLATFORM_ICGC           0x14
 
 /* Assuming 24MHz input clock with doubler ON */

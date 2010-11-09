@@ -92,37 +92,10 @@
 
 	setup_pll PLL1_BASE_ADDR, 800
 
-        setup_pll PLL3_BASE_ADDR, 400
-
-        /* Switch peripheral to PLL3 */
-        ldr r0, CCM_BASE_ADDR_W
-        ldr r1, CCM_VAL_0x00015154
-        str r1, [r0, #CLKCTL_CBCMR]
-        ldr r1, CCM_VAL_0x02888945
-        orr r1, r1, #(1 << 16)
-        str r1, [r0, #CLKCTL_CBCDR]
-        /* make sure change is effective */
-1:      ldr r1, [r0, #CLKCTL_CDHIPR]
-        cmp r1, #0x0
-        bne 1b
-
-        setup_pll PLL2_BASE_ADDR, CONFIG_SYS_PLL2_FREQ
-
-	/* Switch peripheral to PLL2 */
-	ldr r0, CCM_BASE_ADDR_W
-	ldr r1, CCM_VAL_0x00808145
-	orr r1, r1, #(CONFIG_SYS_AHB_PODF << 10)
-	orr r1, r1, #(CONFIG_SYS_AXIA_PODF << 16)
-	orr r1, r1, #(CONFIG_SYS_AXIB_PODF << 19)
-	str r1, [r0, #CLKCTL_CBCDR]
-
-	ldr r1, CCM_VAL_0x00016154
-	str r1, [r0, #CLKCTL_CBCMR]
-
-	/* make sure change is effective */
-1:      ldr r1, [r0, #CLKCTL_CDHIPR]
-	cmp r1, #0x0
-	bne 1b
+      /* Allow PLL2/DDR to remain at 333 MHz as setup by ROM (must set
+        * BOOT_CFG2[4]=1). VCC and VDDA need to be boosted before DDR
+        * is run at 400 MHz.
+        */
 
         setup_pll PLL3_BASE_ADDR, 216
 
@@ -199,10 +172,6 @@ lowlevel_init:
 
 /* Board level setting value */
 CCM_BASE_ADDR_W:        .word CCM_BASE_ADDR
-CCM_VAL_0x00016154:     .word 0x00016154
-CCM_VAL_0x00808145:     .word 0x00808145
-CCM_VAL_0x00015154:     .word 0x00015154
-CCM_VAL_0x02888945:     .word 0x02888945
 W_DP_OP_800:           	.word DP_OP_800
 W_DP_MFD_800:           .word DP_MFD_800
 W_DP_MFN_800:           .word DP_MFN_800

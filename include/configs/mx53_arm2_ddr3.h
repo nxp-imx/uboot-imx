@@ -39,10 +39,6 @@
 #define CONFIG_ARCH_MMU
 
 #define CONFIG_MX53_HCLK_FREQ	24000000
-#define CONFIG_SYS_PLL2_FREQ    400
-#define CONFIG_SYS_AHB_PODF     2
-#define CONFIG_SYS_AXIA_PODF    0
-#define CONFIG_SYS_AXIB_PODF    1
 
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
@@ -213,6 +209,8 @@
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
+	#define CONFIG_BOOT_PARTITION_ACCESS
+	#define CONFIG_DYNAMIC_MMC_DEVNO
 #endif
 /*-----------------------------------------------------------------------
  * Stack sizes
