@@ -337,16 +337,49 @@ static void esdhc_dll_setup(struct mmc *mmc)
 {
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
 	struct fsl_esdhc *regs = (struct fsl_esdhc *)cfg->esdhc_base;
+	uint dll_control;
 
-	uint dll_control = readl(&regs->dllctrl);
-	dll_control &= ~(ESDHC_DLLCTRL_SLV_OVERRIDE_VAL_MASK |
-		ESDHC_DLLCTRL_SLV_OVERRIDE);
-	dll_control |= ((ESDHC_DLLCTRL_SLV_OVERRIDE_VAL <<
-		ESDHC_DLLCTRL_SLV_OVERRIDE_VAL_SHIFT) |
-		ESDHC_DLLCTRL_SLV_OVERRIDE);
+	/* For i.MX50 TO1, need to force slave override mode */
+	if (get_board_rev() == (0x50000 | CHIP_REV_1_0)) {
+		dll_control = readl(&regs->dllctrl);
 
-	writel(dll_control, &regs->dllctrl);
+		dll_control &= ~(ESDHC_DLLCTRL_SLV_OVERRIDE_VAL_MASK |
+			ESDHC_DLLCTRL_SLV_OVERRIDE);
+		dll_control |= ((ESDHC_DLLCTRL_SLV_OVERRIDE_VAL <<
+			ESDHC_DLLCTRL_SLV_OVERRIDE_VAL_SHIFT) |
+			ESDHC_DLLCTRL_SLV_OVERRIDE);
 
+		writel(dll_control, &regs->dllctrl);
+	} else {
+		/* Disable auto clock gating for PERCLK, HCLK, and IPGCLK */
+		writel(readl(&regs->sysctl) | 0x7, &regs->sysctl);
+		/* Stop SDCLK while delay line is calibrated */
+		writel(readl(&regs->sysctl) &= ~SYSCTL_SDCLKEN, &regs->sysctl);
+
+		/* Reset DLL */
+		writel(readl(&regs->dllctrl) | 0x2, &regs->dllctrl);
+
+		/* Enable DLL */
+		writel(readl(&regs->dllctrl) | 0x1, &regs->dllctrl);
+
+		dll_control = readl(&regs->dllctrl);
+
+		/* Set target delay */
+		dll_control &= ~ESDHC_DLLCTRL_TARGET_MASK;
+		dll_control |= (ESDHC_DLL_TARGET_DEFAULT_VAL <<
+				ESDHC_DLLCTRL_TARGET_SHIFT);
+		writel(dll_control, &regs->dllctrl);
+
+		/* Wait for slave lock */
+		while ((readl(&regs->dllstatus) & ESDHC_DLLSTS_SLV_LOCK_MASK) !=
+			ESDHC_DLLSTS_SLV_LOCK_MASK)
+			;
+
+		/* Re-enable auto clock gating */
+		writel(readl(&regs->sysctl) | SYSCTL_SDCLKEN, &regs->sysctl);
+		/* Re-enable SDCLK */
+		writel(readl(&regs->sysctl) &= ~0x7, &regs->sysctl);
+	}
 }
 
 static void esdhc_set_ios(struct mmc *mmc)
