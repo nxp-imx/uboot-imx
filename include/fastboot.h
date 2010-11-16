@@ -1,4 +1,6 @@
 /*
+ * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ *
  * (C) Copyright 2008 - 2009
  * Windriver, <www.windriver.com>
  * Tom Rix <Tom.Rix@windriver.com>
@@ -62,20 +64,20 @@
 #include <common.h>
 #include <command.h>
 
-/* This is the interface file between the common cmd_fastboot.c and 
-   the board specific support.  
+/* This is the interface file between the common cmd_fastboot.c and
+   the board specific support.
 
    To use this interface, define CONFIG_FASTBOOT in your board config file.
    An example is include/configs/omap3430labrador.h
    ...
    #define CONFIG_FASTBOOT	        1    / * Using fastboot interface * /
    ...
-   
+
    An example of the board specific spupport for omap3 is found at
    cpu/omap3/fastboot.c
 
 */
-  
+
 /* From fastboot client.. */
 #define FASTBOOT_INTERFACE_CLASS     0xff
 #define FASTBOOT_INTERFACE_SUB_CLASS 0x42
@@ -83,47 +85,46 @@
 
 #define FASTBOOT_VERSION "0.5"
 
-/* The fastboot client uses a value of 2048 for the 
-   page size of it boot.img file format. 
+/* The fastboot client uses a value of 2048 for the
+   page size of it boot.img file format.
    Reset this in your board config file as needed. */
 #ifndef CFG_FASTBOOT_MKBOOTIMAGE_PAGE_SIZE
 #define CFG_FASTBOOT_MKBOOTIMAGE_PAGE_SIZE 2048
 #endif
 
-struct cmd_fastboot_interface
-{
-	/* This function is called when a buffer has been 
+struct cmd_fastboot_interface {
+	/* This function is called when a buffer has been
 	   recieved from the client app.
-	   The buffer is a supplied by the board layer and must be unmodified. 
-	   The buffer_size is how much data is passed in. 
+	   The buffer is a supplied by the board layer and must be unmodified.
+	   The buffer_size is how much data is passed in.
 	   Returns 0 on success
-	   Returns 1 on failure	
+	   Returns 1 on failure
 
 	   Set by cmd_fastboot	*/
 	int (*rx_handler)(const unsigned char *buffer,
 			  unsigned int buffer_size);
-	
+
 	/* This function is called when an exception has
 	   occurred in the device code and the state
-	   off fastboot needs to be reset 
+	   off fastboot needs to be reset
 
 	   Set by cmd_fastboot */
 	void (*reset_handler)(void);
-  
+
 	/* A getvar string for the product name
-	   It can have a maximum of 60 characters 
+	   It can have a maximum of 60 characters
 
 	   Set by board	*/
 	char *product_name;
-	
-	/* A getvar string for the serial number 
-	   It can have a maximum of 60 characters 
+
+	/* A getvar string for the serial number
+	   It can have a maximum of 60 characters
 
 	   Set by board */
 	char *serial_no;
 
-	/* Nand block size 
-	   Supports the write option WRITE_NEXT_GOOD_BLOCK 
+	/* Nand block size
+	   Supports the write option WRITE_NEXT_GOOD_BLOCK
 
 	   Set by board */
 	unsigned int nand_block_size;
@@ -133,9 +134,9 @@ struct cmd_fastboot_interface
 	unsigned int nand_oob_size;
 
 	/* Transfer buffer, for handling flash updates
-	   Should be multiple of the nand_block_size 
-	   Care should be take so it does not overrun bootloader memory	
-	   Controlled by the configure variable CFG_FASTBOOT_TRANSFER_BUFFER 
+	   Should be multiple of the nand_block_size
+	   Care should be take so it does not overrun bootloader memory
+	   Controlled by the configure variable CFG_FASTBOOT_TRANSFER_BUFFER
 
 	   Set by board */
 	unsigned char *transfer_buffer;
@@ -144,7 +145,7 @@ struct cmd_fastboot_interface
 	   Controlled by the configure variable
 	   CFG_FASTBOOT_TRANSFER_BUFFER_SIZE
 
-	   Set by board	*/ 
+	   Set by board	*/
 	unsigned int transfer_buffer_size;
 
 };
@@ -155,8 +156,7 @@ typedef struct fastboot_ptentry fastboot_ptentry;
 /* flash partitions are defined in terms of blocks
 ** (flash erase units)
 */
-struct fastboot_ptentry
-{
+struct fastboot_ptentry {
 	/* The logical name for this partition, null terminated */
 	char name[16];
 	/* The start wrt the nand part, must be multiple of nand block size */
@@ -168,23 +168,23 @@ struct fastboot_ptentry
 	unsigned int flags;
 };
 
-/* Lower byte shows if the read/write/erase operation in 
-   repeated.  The base address is incremented. 
+/* Lower byte shows if the read/write/erase operation in
+   repeated.  The base address is incremented.
    Either 0 or 1 is ok for a default */
 
 #define FASTBOOT_PTENTRY_FLAGS_REPEAT(n)              (n & 0x0f)
 #define FASTBOOT_PTENTRY_FLAGS_REPEAT_MASK            0x0000000F
 
 /* Writes happen a block at a time.
-   If the write fails, go to next block 
+   If the write fails, go to next block
    NEXT_GOOD_BLOCK and CONTIGOUS_BLOCK can not both be set */
 #define FASTBOOT_PTENTRY_FLAGS_WRITE_NEXT_GOOD_BLOCK  0x00000010
 
-/* Find a contiguous block big enough for a the whole file 
+/* Find a contiguous block big enough for a the whole file
    NEXT_GOOD_BLOCK and CONTIGOUS_BLOCK can not both be set */
 #define FASTBOOT_PTENTRY_FLAGS_WRITE_CONTIGUOUS_BLOCK 0x00000020
 
-/* Sets the ECC to hardware before writing 
+/* Sets the ECC to hardware before writing
    HW and SW ECC should not both be set. */
 #define FASTBOOT_PTENTRY_FLAGS_WRITE_HW_ECC           0x00000040
 
@@ -244,7 +244,7 @@ struct fastboot_boot_img_hdr {
    Returns 1 to execute fastboot */
 extern int fastboot_preboot(void);
 
-/* Initizes the board specific fastboot 
+/* Initizes the board specific fastboot
    Returns 0 on success
    Returns 1 on failure */
 extern int fastboot_init(struct cmd_fastboot_interface *interface);
@@ -261,7 +261,7 @@ extern void fastboot_shutdown(void);
 */
 extern int fastboot_poll(void);
 
-/* Is this high speed (2.0) or full speed (1.1) ? 
+/* Is this high speed (2.0) or full speed (1.1) ?
    Returns 0 on full speed
    Returns 1 on high speed */
 extern int fastboot_is_highspeed(void);
@@ -269,10 +269,10 @@ extern int fastboot_is_highspeed(void);
 /* Return the size of the fifo */
 extern int fastboot_fifo_size(void);
 
-/* Send a status reply to the client app 
-   buffer does not have to be null terminated. 
+/* Send a status reply to the client app
+   buffer does not have to be null terminated.
    buffer_size must be not be larger than what is returned by
-   fastboot_fifo_size 
+   fastboot_fifo_size
    Returns 0 on success
    Returns 1 on failure */
 extern int fastboot_tx_status(const char *buffer, unsigned int buffer_size);
@@ -286,9 +286,9 @@ extern int fastboot_tx_status(const char *buffer, unsigned int buffer_size);
  */
 extern int fastboot_tx(unsigned char *buffer, unsigned int buffer_size);
 
-/* A board specific variable handler. 
-   The size of the buffers is governed by the fastboot spec. 
-   rx_buffer is at most 57 bytes 
+/* A board specific variable handler.
+   The size of the buffers is governed by the fastboot spec.
+   rx_buffer is at most 57 bytes
    tx_buffer is at most 60 bytes
    Returns 0 on success
    Returns 1 on failure */
@@ -305,8 +305,8 @@ extern void fastboot_flash_dump_ptn(void);
 
 extern int fastboot_flash_init(void);
 extern int fastboot_flash_erase(fastboot_ptentry *ptn);
-extern int fastboot_flash_read_ext(fastboot_ptentry *ptn, 
-				   unsigned extra_per_page, unsigned offset, 
+extern int fastboot_flash_read_ext(fastboot_ptentry *ptn,
+				   unsigned extra_per_page, unsigned offset,
 				   void *data, unsigned bytes);
 #define fastboot_flash_read(ptn, offset, data, bytes) \
   flash_read_ext(ptn, 0, offset, data, bytes)
@@ -319,20 +319,20 @@ extern int fastboot_flash_write(fastboot_ptentry *ptn, unsigned extra_per_page,
 /* Stubs for when CONFIG_FASTBOOT is not defined */
 #define fastboot_preboot() 0
 #define fastboot_init(a) 1
-#define fastboot_shutdown() 
+#define fastboot_shutdown()
 #define fastboot_poll() 1
 #define fastboot_is_highspeed() 0
 #define fastboot_fifo_size() 0
 #define fastboot_tx_status(a, b) 1
-#define fastboot_getvar(a,b) 1
+#define fastboot_getvar(a, b) 1
 #define fastboot_tx(a, b) 1
 
-#define fastboot_flash_add_ptn(a) 
+#define fastboot_flash_add_ptn(a)
 #define fastboot_flash_find_ptn(a) NULL
 #define fastboot_flash_get_ptn(a) NULL
 #define fastboot_flash_get_ptn_count() 0
-#define fastboot_flash_dump_ptn() 
-#define fastboot_flash_init() 
+#define fastboot_flash_dump_ptn()
+#define fastboot_flash_init()
 #define fastboot_flash_erase(a) 1
 #define fastboot_flash_read_ext(a, b, c, d, e) 0
 #define fastboot_flash_read(a, b, c, d, e) 0
