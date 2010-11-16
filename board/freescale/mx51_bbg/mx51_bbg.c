@@ -153,6 +153,11 @@ inline int is_soc_rev(int rev)
 	return (system_rev & 0xFF) - rev;
 }
 
+static int is_board_rev(int rev)
+{
+	return (((system_rev & 0x0F00) >> 8) == rev) ? 1 : 0;
+}
+
 #ifdef CONFIG_ARCH_MMU
 void board_mmu_init(void)
 {
@@ -588,13 +593,25 @@ static void setup_core_voltage_spi(void)
 	val &= ~0x10000;
 	pmic_reg(slave, 34, val, 1);
 
-	/* Write needed to update Charger 0 */
-	pmic_reg(slave, 48, 0x0023807f, 1);
+	/* For BBG2.5 and BBG3.0, set SPI register 48 = 0x21807B
+	 * and  disable the PLIM.
+	 * MC13892 has an inside charge timer which expires in 120 minutes.
+	 * If ICHRG and CHGAUTOB are not set properly, this timer expiration
+	 * will get system power recycled.
+	 * Since BBG has no Li-Ion battery on board, sets
+	 * ICHRG in externally powered mode and sets CHGAUTOB bit to avoid
+	 * automatic charging, so that system will not get reset by this
+	 * timer expiration.
+	 * Set the charge regulator output voltage as 4.2V by default
+	 * according to MC13892 spec
+	 */
+	if (is_board_rev(BOARD_REV_2_0))
+		pmic_reg(slave, 48, 0x0023807B, 1);
 
 	/* power up the system first */
 	pmic_reg(slave, 34, 0x00200000, 1);
 
-	if (is_soc_rev(CHIP_REV_2_0) >= 0) {
+	if (is_soc_rev(CHIP_REV_2_0) <= 0) {
 		/* Set core voltage to 1.1V */
 		val = pmic_reg(slave, 24, 0, 0);
 		val = (val & (~0x1f)) | 0x14;
