@@ -62,15 +62,15 @@
 #include <fastboot.h>
 #include <environment.h>
 
-#if (CONFIG_FASTBOOT)
+#ifdef CONFIG_FASTBOOT
 
 /* Use do_reset for fastboot's 'reboot' command */
 extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 /* Use do_nand for fastboot's flash commands */
-#if defined(CONFIG_STORAGE_NAND)
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
 extern int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
-#elif defined(CONFIG_STORAGE_EMMC)
-extern int do_mmc(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+#elif defined(CONFIG_FASTBOOT_STORAGE_EMMC)
+extern int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 extern env_t *env_ptr;
 #endif
 /* Use do_setenv and do_saveenv to permenantly save data */
@@ -106,7 +106,9 @@ static unsigned int upload_error;
 static unsigned int mmc_controller_no;
 
 /* To support the Android-style naming of flash */
-#define MAX_PTN 16
+#define MAX_PTN		    16
+#define MMC_BLOCK_SIZE	    512
+
 static fastboot_ptentry ptable[MAX_PTN];
 static unsigned int pcount;
 static int static_pcount = -1;
@@ -121,6 +123,7 @@ static void set_env(char *var, char *val)
 	do_setenv(NULL, 0, 3, setenv);
 }
 
+#ifdef CONFIG_FASTBOOT_STORAGE_NAND
 static void save_env(struct fastboot_ptentry *ptn,
 		     char *var, char *val)
 {
@@ -226,7 +229,7 @@ static void save_block_values(struct fastboot_ptentry *ptn,
 		if ((env_ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_HW_ECC) &&
 		    (env_ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_SW_ECC)) {
 			/* Both can not be true */
-			printf("Warning can not do hw and sw ecc for
+			printf("Warning can not do hw and sw ecc for \
 				partition '%s'\n", ptn->name);
 			printf("Ignoring these flags\n");
 		} else if (env_ptn->flags &
@@ -251,6 +254,9 @@ static void save_block_values(struct fastboot_ptentry *ptn,
 	if (env_ptn)
 		do_nand(NULL, 0, 4, lock);
 }
+#else
+/* will do later */
+#endif
 
 static void reset_handler ()
 {
@@ -265,6 +271,7 @@ static void reset_handler ()
 	upload_error = 0;
 }
 
+#ifdef CONFIG_FASTBOOT_STORAGE_NAND
 /* When save = 0, just parse.  The input is unchanged
    When save = 1, parse and do the save.  The input is changed */
 static int parse_env(void *ptn, char *err_string, int save, int debug)
@@ -692,6 +699,9 @@ static int write_to_ptn(struct fastboot_ptentry *ptn)
 
 	return ret;
 }
+#else
+/* will do environment writing/saving later */
+#endif
 
 static int tx_handler(void)
 {
@@ -719,7 +729,7 @@ static int tx_handler(void)
 
 static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 {
-	int ret = 1;
+	int ret = 1, temp_len = 0;
 
 	/* Use 65 instead of 64
 	   null gets dropped
@@ -763,7 +773,7 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 				printf("\ndownloading of %d bytes finished\n",
 					download_bytes);
 
-#if defined(CONFIG_STORAGE_NAND)
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
 				/* Pad to block length
 				   In most cases, padding the download to be
 				   block aligned is correct. The exception is
@@ -820,6 +830,7 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 
 		/* Cast to make compiler happy with string functions */
 		const char *cmdbuf = (char *) buffer;
+		printf("cmdbuf: %s\n", cmdbuf);
 
 		/* Generic failed response */
 		sprintf(response, "FAIL");
@@ -845,22 +856,24 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 		if (memcmp(cmdbuf, "getvar:", 7) == 0) {
 			strcpy(response, "OKAY");
 
-			if (!strcmp(cmdbuf + strlen("version"), "version")) {
+			temp_len = strlen("getvar:");
+			if (!strcmp(cmdbuf + temp_len, "version")) {
 				strcpy(response + 4, FASTBOOT_VERSION);
-			} else if (!strcmp(cmdbuf + strlen("product"),
+			} else if (!strcmp(cmdbuf + temp_len,
 					     "product")) {
 				if (interface.product_name)
 					strcpy(response + 4, interface.product_name);
 
-			} else if (!strcmp(cmdbuf + strlen("serialno"),
+			} else if (!strcmp(cmdbuf + temp_len,
 					     "serialno")) {
 				if (interface.serial_no)
 					strcpy(response + 4, interface.serial_no);
 
-			} else if (!strcmp(cmdbuf + strlen("downloadsize"),
+			} else if (!strcmp(cmdbuf + temp_len,
 					    "downloadsize")) {
 				if (interface.transfer_buffer_size)
-					sprintf(response + 4, "08x", interface.transfer_buffer_size);
+					sprintf(response + 4, "0x%x",
+						interface.transfer_buffer_size);
 			} else {
 				fastboot_getvar(cmdbuf + 7, response + 4);
 			}
@@ -871,9 +884,8 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 		/* erase
 		   Erase a register flash partition
 		   Board has to set up flash partitions */
-
 		if (memcmp(cmdbuf, "erase:", 6) == 0) {
-#if defined(CONFIG_STORAGE_NAND)
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
 			struct fastboot_ptentry *ptn;
 
 			ptn = fastboot_flash_find_ptn(cmdbuf + 6);
@@ -920,12 +932,15 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 				}
 
 			}
-#elif defined(CONFIG_STORAGE_EMMC)
+#elif defined(CONFIG_FASTBOOT_STORAGE_EMMC)
 			struct fastboot_ptentry *ptn;
 
+#ifdef CONFIG_DYNAMIC_MMC_DEVNO
+			mmc_controller_no = get_mmc_env_devno();
+#else
 			/* Save the MMC controller number */
-			mmc_controller_no = CFG_FASTBOOT_MMC_NO;
-
+			mmc_controller_no = CONFIG_FASTBOOT_MMC_NO;
+#endif
 			/* Find the partition and erase it */
 			ptn = fastboot_flash_find_ptn(cmdbuf + 6);
 
@@ -936,26 +951,29 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 				char start[32], length[32];
 				char slot_no[32];
 
-				char *erase[5]  = { "mmc", NULL, "erase", NULL, NULL, };
-				char *mmc_init[2] = {"mmcinit", NULL,};
+				char *erase[5] = {"mmc", "erase",
+						    NULL, NULL, NULL};
+				char *mmc_init[2] = {"mmcinit", NULL};
 
 				mmc_init[1] = slot_no;
-				erase[1] = slot_no;
+				erase[2] = slot_no;
 				erase[3] = start;
 				erase[4] = length;
 
 				sprintf(slot_no, "%d", mmc_controller_no);
-				sprintf(length, "0x%x", ptn->length);
-				sprintf(start, "0x%x", ptn->start);
+				sprintf(length, "0x%x",
+					    ptn->length / MMC_BLOCK_SIZE);
+				sprintf(start, "0x%x",
+					    ptn->start / MMC_BLOCK_SIZE);
 
 				printf("Initializing '%s'\n", ptn->name);
-				if (do_mmc(NULL, 0, 2, mmc_init))
+				if (do_mmcops(NULL, 0, 2, mmc_init))
 					sprintf(response, "FAIL: Init of MMC card");
 				else
 					sprintf(response, "OKAY");
 
 				printf("Erasing '%s'\n", ptn->name);
-				if (do_mmc(NULL, 0, 5, erase)) {
+				if (do_mmcops(NULL, 0, 5, erase)) {
 					printf("Erasing '%s' FAILED!\n", ptn->name);
 					sprintf(response, "FAIL: Erase partition");
 				} else {
@@ -1055,7 +1073,7 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 					&interface.transfer_buffer[CFG_FASTBOOT_MKBOOTIMAGE_PAGE_SIZE];
 
 				bootm[1] = go[1] = start;
-				sprintf(start, "0x%x", hdr);
+				sprintf(start, "0x%x", (unsigned int)hdr);
 
 				/* Execution should jump to kernel so send the response
 				   now and wait a bit.  */
@@ -1093,7 +1111,7 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 		   Flash what was downloaded */
 
 		if (memcmp(cmdbuf, "flash:", 6) == 0) {
-#if defined(CONFIG_STORAGE_NAND)
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
 			if (download_bytes) {
 				struct fastboot_ptentry *ptn;
 
@@ -1132,17 +1150,19 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 			} else {
 				sprintf(response, "FAILno image downloaded");
 			}
-#elif defined(CONFIG_STORAGE_EMMC)
+#elif defined(CONFIG_FASTBOOT_STORAGE_EMMC)
 			if (download_bytes) {
 
 				struct fastboot_ptentry *ptn;
 
+#ifdef CONFIG_DYNAMIC_MMC_DEVNO
+				mmc_controller_no = get_mmc_env_devno();
+#else
 				/* Save the MMC controller number */
-				mmc_controller_no = CFG_FASTBOOT_MMC_NO;
-
+				mmc_controller_no = CONFIG_FASTBOOT_MMC_NO;
+#endif
 				/* Next is the partition name */
 				ptn = fastboot_flash_find_ptn(cmdbuf + 6);
-
 				if (ptn == 0) {
 					printf("Partition:'%s' does not exist\n", ptn->name);
 					sprintf(response, "FAILpartition does not exist");
@@ -1159,6 +1179,8 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 					 * env variables So replace New line Feeds (0x0a) with
 					 * NULL (0x00)
 					 */
+					printf("Goto write env, flags=0x%x\n",
+						    ptn->flags);
 					for (i = 0; i < download_bytes; i++) {
 						if (interface.transfer_buffer[i] == 0x0a)
 							interface.transfer_buffer[i] = 0x00;
@@ -1173,31 +1195,39 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 
 					char source[32], dest[32], length[32];
 					char slot_no[32];
+					unsigned int temp;
 
 					printf("writing to partition '%s'\n", ptn->name);
-					char *mmc_write[6]  = {"mmc", NULL, "write", NULL, NULL, NULL};
+					char *mmc_write[6] = {"mmc", "write",
+							NULL, NULL, NULL, NULL};
 					char *mmc_init[2] = {"mmcinit", NULL,};
 
 					mmc_init[1] = slot_no;
-					mmc_write[1] = slot_no;
+					mmc_write[2] = slot_no;
 					mmc_write[3] = source;
 					mmc_write[4] = dest;
 					mmc_write[5] = length;
 
 					sprintf(slot_no, "%d", mmc_controller_no);
 					sprintf(source, "0x%x", interface.transfer_buffer);
-					sprintf(dest, "0x%x", ptn->start);
-					sprintf(length, "0x%x", download_bytes);
+
+					/* block offset */
+					temp = ptn->start / MMC_BLOCK_SIZE;
+					sprintf(dest, "0x%x", temp);
+					/* block count */
+					temp = (download_bytes +
+						    MMC_BLOCK_SIZE - 1) /
+						    MMC_BLOCK_SIZE;
+					sprintf(length, "0x%x", temp);
 
 					printf("Initializing '%s'\n", ptn->name);
-					if (do_mmc(NULL, 0, 2, mmc_init))
+					if (do_mmcops(NULL, 0, 2, mmc_init))
 						sprintf(response, "FAIL:Init of MMC card");
 					else
 						sprintf(response, "OKAY");
 
-
 					printf("Writing '%s'\n", ptn->name);
-					if (do_mmc(NULL, 0, 6, mmc_write)) {
+					if (do_mmcops(NULL, 0, 6, mmc_write)) {
 						printf("Writing '%s' FAILED!\n", ptn->name);
 						sprintf(response, "FAIL: Write partition");
 					} else {
@@ -1225,7 +1255,7 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 		   Upload just the data in a partition */
 		if ((memcmp(cmdbuf, "upload:", 7) == 0) ||
 		    (memcmp(cmdbuf, "uploadraw:", 10) == 0)) {
-#if defined(CONFIG_STORAGE_NAND)
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
 			unsigned int adv, delim_index, len;
 			struct fastboot_ptentry *ptn;
 			unsigned int is_raw = 0;
@@ -1540,7 +1570,7 @@ int do_fastboot (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	char fbparts[4096], *env;
 	int check_timeout = 0;
 	uint64_t timeout_endtime = 0;
-	uint64_t timeout_ticks = 0;
+	uint64_t timeout_ticks = 1000;
 	long timeout_seconds = -1;
 	int continue_from_disconnect = 0;
 
@@ -1605,12 +1635,6 @@ int do_fastboot (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		}
 	}
 
-	if (1 == check_timeout) {
-		timeout_ticks = (uint64_t)
-			(timeout_seconds * get_tbclk());
-	}
-
-
 	do {
 		continue_from_disconnect = 0;
 
@@ -1623,7 +1647,7 @@ int do_fastboot (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			ret = 0;
 			printf("fastboot initialized\n");
 
-			timeout_endtime = get_ticks();
+			timeout_endtime = get_timer(0);
 			timeout_endtime += timeout_ticks;
 
 			while (1) {
@@ -1631,7 +1655,7 @@ int do_fastboot (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 				poll_status = fastboot_poll();
 
 				if (1 == check_timeout)
-					current_time = get_ticks();
+					current_time = get_timer(0);
 
 				if (FASTBOOT_ERROR == poll_status) {
 					/* Error */
@@ -1703,7 +1727,7 @@ U_BOOT_CMD(
 void fastboot_flash_add_ptn(fastboot_ptentry *ptn)
 {
 	if (pcount < MAX_PTN) {
-		memcpy(ptable + pcount, ptn, sizeof(*ptn));
+		memcpy(ptable + pcount, ptn, sizeof(fastboot_ptentry));
 		pcount++;
 	}
 }

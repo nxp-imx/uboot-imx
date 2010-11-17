@@ -237,20 +237,20 @@ struct fastboot_boot_img_hdr {
 	unsigned id[8]; /* timestamp / checksum / sha1 / etc */
 };
 
-#if (CONFIG_FASTBOOT)
+#ifdef CONFIG_FASTBOOT
 /* A board specific test if u-boot should go into the fastboot command
    ahead of the bootcmd
    Returns 0 to continue with normal u-boot flow
    Returns 1 to execute fastboot */
-extern int fastboot_preboot(void);
+int fastboot_preboot(void);
 
 /* Initizes the board specific fastboot
    Returns 0 on success
    Returns 1 on failure */
-extern int fastboot_init(struct cmd_fastboot_interface *interface);
+int fastboot_init(struct cmd_fastboot_interface *interface);
 
 /* Cleans up the board specific fastboot */
-extern void fastboot_shutdown(void);
+void fastboot_shutdown(void);
 
 /*
  * Handles board specific usb protocol exchanges
@@ -259,15 +259,15 @@ extern void fastboot_shutdown(void);
  * Returns 2 if no USB activity detected
  * Returns -1 on failure, unhandled usb requests and other error conditions
 */
-extern int fastboot_poll(void);
+int fastboot_poll(void);
 
 /* Is this high speed (2.0) or full speed (1.1) ?
    Returns 0 on full speed
    Returns 1 on high speed */
-extern int fastboot_is_highspeed(void);
+int fastboot_is_highspeed(void);
 
 /* Return the size of the fifo */
-extern int fastboot_fifo_size(void);
+int fastboot_fifo_size(void);
 
 /* Send a status reply to the client app
    buffer does not have to be null terminated.
@@ -275,7 +275,7 @@ extern int fastboot_fifo_size(void);
    fastboot_fifo_size
    Returns 0 on success
    Returns 1 on failure */
-extern int fastboot_tx_status(const char *buffer, unsigned int buffer_size);
+int fastboot_tx_status(const char *buffer, unsigned int buffer_size);
 
 /*
  * Send some data to the client app
@@ -284,7 +284,7 @@ extern int fastboot_tx_status(const char *buffer, unsigned int buffer_size);
  * fastboot_fifo_size
  * Returns number of bytes written
  */
-extern int fastboot_tx(unsigned char *buffer, unsigned int buffer_size);
+int fastboot_tx(unsigned char *buffer, unsigned int buffer_size);
 
 /* A board specific variable handler.
    The size of the buffers is governed by the fastboot spec.
@@ -292,25 +292,25 @@ extern int fastboot_tx(unsigned char *buffer, unsigned int buffer_size);
    tx_buffer is at most 60 bytes
    Returns 0 on success
    Returns 1 on failure */
-extern int fastboot_getvar(const char *rx_buffer, char *tx_buffer);
+int fastboot_getvar(const char *rx_buffer, char *tx_buffer);
 
 /* The Android-style flash handling */
 
 /* tools to populate and query the partition table */
-extern void fastboot_flash_add_ptn(fastboot_ptentry *ptn);
-extern fastboot_ptentry *fastboot_flash_find_ptn(const char *name);
-extern fastboot_ptentry *fastboot_flash_get_ptn(unsigned n);
-extern unsigned int fastboot_flash_get_ptn_count(void);
-extern void fastboot_flash_dump_ptn(void);
+void fastboot_flash_add_ptn(fastboot_ptentry *ptn);
+fastboot_ptentry *fastboot_flash_find_ptn(const char *name);
+fastboot_ptentry *fastboot_flash_get_ptn(unsigned n);
+unsigned int fastboot_flash_get_ptn_count(void);
+void fastboot_flash_dump_ptn(void);
 
-extern int fastboot_flash_init(void);
-extern int fastboot_flash_erase(fastboot_ptentry *ptn);
-extern int fastboot_flash_read_ext(fastboot_ptentry *ptn,
+int fastboot_flash_init(void);
+int fastboot_flash_erase(fastboot_ptentry *ptn);
+int fastboot_flash_read_ext(fastboot_ptentry *ptn,
 				   unsigned extra_per_page, unsigned offset,
 				   void *data, unsigned bytes);
 #define fastboot_flash_read(ptn, offset, data, bytes) \
   flash_read_ext(ptn, 0, offset, data, bytes)
-extern int fastboot_flash_write(fastboot_ptentry *ptn, unsigned extra_per_page,
+int fastboot_flash_write(fastboot_ptentry *ptn, unsigned extra_per_page,
 				const void *data, unsigned bytes);
 
 

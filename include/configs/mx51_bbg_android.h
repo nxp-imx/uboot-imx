@@ -88,6 +88,21 @@
  */
 #include <asm/mxc_key_defs.h>
 
+#define CONFIG_USB_DEVICE
+#define CONFIG_FASTBOOT		1
+#define CONFIG_FASTBOOT_STORAGE_EMMC
+#define CONFIG_FASTBOOT_VENDOR_ID	0xbb4
+#define CONFIG_FASTBOOT_PRODUCT_ID	0xc01
+#define CONFIG_FASTBOOT_BCD_DEVICE	0x311
+#define CONFIG_FASTBOOT_MANUFACTURER_STR  "Freescale"
+#define CONFIG_FASTBOOT_PRODUCT_NAME_STR "i.mx51"
+#define CONFIG_FASTBOOT_CONFIGURATION_STR  "Android fastboot"
+#define CONFIG_FASTBOOT_INTERFACE_STR    "Android fastboot"
+#define CONFIG_FASTBOOT_SERIAL_NUM	 "12345"
+#define CONFIG_FASTBOOT_MMC_NO		 0
+#define CONFIG_FASTBOOT_TRANSFER_BUF	 0xA0000000
+#define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x8000000 /* 128M byte */
+
 #define CONFIG_ANDROID_RECOVERY
 #define CONFIG_POWER_KEY	KEY_F3
 #define CONFIG_HOME_KEY	KEY_F1
@@ -113,6 +128,9 @@
 	"run bootargs_base bootargs_android_recovery;"	\
 	"mmc read 0 ${loadaddr} 0x800 0x1800;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
+
+#define CONFIG_ANDROID_SYSTEM_PARTITION_MMC 2
+#define CONFIG_ANDROID_RECOVERY_PARTITION_MMC 4
 #define CONFIG_ANDROID_CACHE_PARTITION_MMC 6
 
 /* allow to overwrite serial and ethaddr */
