@@ -562,6 +562,28 @@ int clk_info(u32 clk_type)
 		(tmp - 1);	\
 	})
 
+#define calc_pred_n_podf(target_clk, src_clk, p_pred, p_podf, pred_limit, podf_limit) {	\
+		u32 div = calc_div(target_clk, src_clk,	\
+				pred_limit * podf_limit);	\
+		u32 tmp = 0, tmp_i = 0, tmp_j = 0;	\
+		if (div > (pred_limit * podf_limit))	{\
+			tmp_i = pred_limit;	\
+			tmp_j = podf_limit;	\
+		}	\
+		for (tmp_i = 1; tmp_i <= pred_limit; ++tmp_i) {	\
+			for (tmp_j = 1; tmp_j <= podf_limit; ++tmp_j) {	\
+				if (div == (tmp_i * tmp_j)) {	\
+					tmp = 1;	\
+					break;	\
+				}	\
+			}	\
+			if (1 == tmp)	\
+				break;	\
+		}	\
+		*p_pred = tmp_j - 1;	\
+		*p_podf = tmp_i - 1;	\
+	}
+
 static u32 calc_per_cbcdr_val(u32 per_clk, u32 cbcmr)
 {
 	u32 cbcdr = __REG(MXC_CCM_CBCDR);
@@ -597,6 +619,29 @@ static u32 calc_per_cbcdr_val(u32 per_clk, u32 cbcmr)
 	cbcdr |= (div << MXC_CCM_CBCDR_AHB_PODF_OFFSET);
 
 	return cbcdr;
+}
+
+static u32 calc_per_cscdr1_val(u32 per_clk)
+{
+	u32 cscdr1 = __REG(MXC_CCM_CSCDR1);
+	u32 tmp_clk = 0, pred, podf;
+
+	/*
+	 * Currently, most clocks in scsmr1 will use pll3 as clock source,
+	 * except uart.
+	 * So we will just adjust uart clock here.
+	 */
+	tmp_clk = __get_uart_clk();
+	calc_pred_n_podf(tmp_clk, per_clk, &pred, &podf, 8, 8);
+
+	cscdr1 &=
+		!(MXC_CCM_CSCDR1_UART_CLK_PRED_MASK
+		| MXC_CCM_CSCDR1_UART_CLK_PODF_MASK);
+
+	cscdr1 |= (pred << MXC_CCM_CSCDR1_UART_CLK_PRED_OFFSET);
+	cscdr1 |= (podf << MXC_CCM_CSCDR1_UART_CLK_PODF_OFFSET);
+
+	return cscdr1;
 }
 
 #define CHANGE_PLL_SETTINGS(base, pd, mfi, mfn, mfd) \
@@ -732,8 +777,21 @@ static int config_periph_clk(u32 ref, u32 freq)
 			return -1;
 		}
 	} else {
+		u32 pll3_freq = __decode_pll(PLL3_CLK, CONFIG_MX51_HCLK_FREQ);
+		u32 old_pll2_freq =
+			__decode_pll(PLL2_CLK, CONFIG_MX51_HCLK_FREQ);
 		u32 old_cbcmr = readl(CCM_BASE_ADDR + CLKCTL_CBCMR);
 		u32 new_cbcdr = calc_per_cbcdr_val(pll, old_cbcmr);
+		u32 new_cscdr1 = calc_per_cscdr1_val(pll);
+
+		/* Set PLL3 to PLL2 freq */
+		ret = calc_pll_params(ref, old_pll2_freq, &pll_param);
+		if (ret != 0) {
+			printf("Can't find pll parameters: %d\n",
+				ret);
+			return ret;
+		}
+		config_pll_clk(PLL3_CLK, &pll_param);
 
 		/* Switch peripheral to PLL3 */
 		/* Disable IPU and HSC dividers */
@@ -760,11 +818,22 @@ static int config_periph_clk(u32 ref, u32 freq)
 		writel(0x60000, CCM_BASE_ADDR + CLKCTL_CCDR);
 		writel(new_cbcdr, CCM_BASE_ADDR + CLKCTL_CBCDR);
 		writel(old_cbcmr, CCM_BASE_ADDR + CLKCTL_CBCMR);
+		writel(new_cscdr1, CCM_BASE_ADDR + CLKCTL_CSCDR1);
+
+		/* Switch PLL3's freq back */
+		ret = calc_pll_params(ref, pll3_freq, &pll_param);
+		if (ret != 0) {
+			printf("Can't find pll parameters: %d\n",
+				ret);
+			return ret;
+		}
+		config_pll_clk(PLL3_CLK, &pll_param);
 
 		/* Make sure change is effective */
 		while (readl(CCM_BASE_ADDR + CLKCTL_CDHIPR) != 0)
 			;
 		writel(0x0, CCM_BASE_ADDR + CLKCTL_CCDR);
+
 		puts("\n");
 	}
 
