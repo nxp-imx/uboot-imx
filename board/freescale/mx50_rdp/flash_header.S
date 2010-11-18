@@ -531,24 +531,24 @@ delay1:
     ldr r1, =0x60099414
     str r1, [r0, #0x258]
 
-//setmem /32 0x1400023c = 0x000a1401
-    ldr r1, =0x000a1401
+//setmem /32 0x1400023c = 0x000a0b01
+    ldr r1, =0x000a0b01
     str r1, [r0, #0x23c]
 
-//setmem /32 0x14000244 = 0x000a1401
-    ldr r1, =0x000a1401
+//setmem /32 0x14000244 = 0x000a0b01
+    ldr r1, =0x000a0b01
     str r1, [r0, #0x244]
 
-//setmem /32 0x1400024c = 0x000a1401
-    ldr r1, =0x000a1401
+//setmem /32 0x1400024c = 0x000a0b01
+    ldr r1, =0x000a0b01
     str r1, [r0, #0x24c]
 
-//setmem /32 0x14000254 = 0x000a1401
-    ldr r1, =0x000a1401
+//setmem /32 0x14000254 = 0x000a0b01
+    ldr r1, =0x000a0b01
     str r1, [r0, #0x254]
 
-//setmem /32 0x1400025c = 0x000a1401
-    ldr r1, =0x000a1401
+//setmem /32 0x1400025c = 0x000a0b01
+    ldr r1, =0x000a0b01
     str r1, [r0, #0x25c]
 
 
