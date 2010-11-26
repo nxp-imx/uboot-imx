@@ -933,9 +933,11 @@ void set_usboh3_clk(void)
 {
 	unsigned int reg;
 
-	reg = readl(MXC_CCM_CSCMR1);
-	reg |= 1 << 22;
+	reg = readl(MXC_CCM_CSCMR1) &
+		    ~MXC_CCM_CSCMR1_USBOH3_CLK_SEL_MASK;
+	reg |= 1 << MXC_CCM_CSCMR1_USBOH3_CLK_SEL_OFFSET;
 	writel(reg, MXC_CCM_CSCMR1);
+
 	reg = readl(MXC_CCM_CSCDR1);
 	reg &= ~MXC_CCM_CSCDR1_USBOH3_CLK_PODF_MASK;
 	reg &= ~MXC_CCM_CSCDR1_USBOH3_CLK_PRED_MASK;
@@ -960,9 +962,9 @@ void enable_usboh3_clk(unsigned char enable)
 
 	reg = readl(MXC_CCM_CCGR2);
 	if (enable)
-		reg |= 1 << 14;
+		reg |= 1 << MXC_CCM_CCGR2_CG14_OFFSET;
 	else
-		reg &= ~(1 << 14);
+		reg &= ~(1 << MXC_CCM_CCGR2_CG14_OFFSET);
 	writel(reg, MXC_CCM_CCGR2);
 }
 
@@ -974,9 +976,9 @@ void enable_usb_phy1_clk(unsigned char enable)
 	reg = readl(MXC_CCM_CCGR2);
 
 	if (enable)
-		reg |= 1 << 0;
+		reg |= 1 << MXC_CCM_CCGR2_CG0_OFFSET;
 	else
-		reg &= ~(1<<0);
+		reg &= ~(1 << MXC_CCM_CCGR2_CG0_OFFSET);
 	writel(reg, MXC_CCM_CCGR2);
 }
 

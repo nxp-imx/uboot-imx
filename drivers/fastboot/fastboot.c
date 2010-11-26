@@ -224,15 +224,14 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 				(unsigned char *)CONFIG_FASTBOOT_TRANSFER_BUF;
 	fastboot_interface->transfer_buffer_size =
 				CONFIG_FASTBOOT_TRANSFER_BUF_SIZE;
-
 	fastboot_init_strings();
+	/* Basic USB initialization */
+	udc_init();
+
 	fastboot_init_instances();
 #ifdef CONFIG_FASTBOOT_STORAGE_EMMC
 	fastboot_init_mmc_ptable();
 #endif
-	/* Now, set up USB controller and infrastructure */
-	/* Basic USB initialization */
-	udc_init();
 	udc_startup_events(device_instance);
 	udc_connect();		/* Enable pullup for host detection */
 

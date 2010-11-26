@@ -28,10 +28,6 @@
 #ifndef _IMX_UDC_H_
 #define _IMX_UDC_H_
 
-#define AIPS1_BASE_ADDR		0x73F00000
-
-#define OTG_BASE_ADDR	(AIPS1_BASE_ADDR + 0x00080000)
-
 #define USB_ID               (OTG_BASE_ADDR + 0x0000)
 #define USB_HWGENERAL        (OTG_BASE_ADDR + 0x0004)
 #define USB_HWHOST           (OTG_BASE_ADDR + 0x0008)
@@ -57,7 +53,7 @@
 #define USB_ULPI_VIEWPORT    (OTG_BASE_ADDR + 0x0170)
 #define USB_ENDPTNAK         (OTG_BASE_ADDR + 0x0178)
 #define USB_ENDPTNAKEN       (OTG_BASE_ADDR + 0x017C)
-#define USB_PORTSC           (OTG_BASE_ADDR + 0x0184)
+#define USB_PORTSC1          (OTG_BASE_ADDR + 0x0184)
 #define USB_OTGSC            (OTG_BASE_ADDR + 0x01A4)
 #define USB_USBMODE          (OTG_BASE_ADDR + 0x01A8)
 #define USB_ENDPTSETUPSTAT   (OTG_BASE_ADDR + 0x01AC)

@@ -388,39 +388,7 @@ static void mxc_ep0_stall(void)
 	temp |= EPCTRL_TX_EP_STALL | EPCTRL_RX_EP_STALL;
 	writel(temp, USB_ENDPTCTRL(0));
 }
-/*
- * usb function
- */
-void usb_setup(void)
-{
-	unsigned int temp = 0, portctrl = 0;
 
-	/* Stop and reset the usb controller */
-	temp = readl(USB_USBCMD);
-	temp &= ~USB_CMD_RUN_STOP;
-	writel(temp, USB_USBCMD);
-
-	temp = readl(USB_USBCMD);
-	temp |= USB_CMD_CTRL_RESET;
-	writel(temp, USB_USBCMD);
-	while (readl(USB_USBCMD) & USB_CMD_CTRL_RESET)
-		;
-
-	/* Set the controller as device mode */
-	temp = readl(USB_USBMODE);
-	temp &= ~USB_MODE_CTRL_MODE_MASK;	/* clear mode bits */
-	temp |= USB_MODE_CTRL_MODE_DEVICE;
-	/* Disable Setup Lockout */
-	writel(temp, USB_USBMODE);
-
-	/* Config PHY interface */
-	portctrl = readl(USB_PORTSC);
-	portctrl &= ~(PORTSCX_PHY_TYPE_SEL | PORTSCX_PORT_WIDTH);
-	portctrl |= PORTSCX_PTW_16BIT;
-	writel(portctrl, USB_PORTSC);
-
-	writel(0xffffffff, USB_ENDPTFLUSH);
-}
 static void mxc_usb_run(void)
 {
 	unsigned int temp = 0;
@@ -459,16 +427,22 @@ static void usb_phy_init(void)
 	temp |= 1;
 	writel(temp, USB_PHY1_CTRL);
 	/* Config PHY interface */
-	temp = readl(USB_PORTSC);
+	temp = readl(USB_PORTSC1);
 	temp &= ~(PORTSCX_PHY_TYPE_SEL | PORTSCX_PORT_WIDTH);
 	temp |= PORTSCX_PTW_16BIT;
-	writel(temp, USB_PORTSC);
+	writel(temp, USB_PORTSC1);
 	DBG("Config PHY  END\n");
 }
 
 static void usb_set_mode_device(void)
 {
 	u32 temp;
+
+	/* Set controller to stop */
+	temp = readl(USB_USBCMD);
+	temp &= ~USB_CMD_RUN_STOP;
+	writel(temp, USB_USBCMD);
+
 	/* Do core reset */
 	temp = readl(USB_USBCMD);
 	temp |= USB_CMD_CTRL_RESET;
@@ -731,16 +705,16 @@ static void usb_dev_hand_reset(void)
 	while (readl(USB_ENDPTPRIME))
 		;
 	writel(0xffffffff, USB_ENDPTFLUSH);
-	DBG("reset-PORTSC=%x\n", readl(USB_PORTSC));
+	DBG("reset-PORTSC=%x\n", readl(USB_PORTSC1));
 	usbd_device_event_irq(udc_device, DEVICE_RESET, 0);
 }
 
 void usb_dev_hand_pci(void)
 {
 	u32 speed;
-	while (readl(USB_PORTSC) & PORTSCX_PORT_RESET)
+	while (readl(USB_PORTSC1) & PORTSCX_PORT_RESET)
 		;
-	speed = readl(USB_PORTSC) & PORTSCX_PORT_SPEED_MASK;
+	speed = readl(USB_PORTSC1) & PORTSCX_PORT_SPEED_MASK;
 	switch (speed) {
 	case PORTSCX_PORT_SPEED_HIGH:
 		usb_highspeed = 2;
