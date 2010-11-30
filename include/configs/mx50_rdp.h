@@ -165,6 +165,13 @@
 #define CONFIG_DISCOVER_PHY
 
 /*
+ * DDR ZQ calibration
+ */
+/*
+#define CONFIG_ZQ_CALIB
+*/
+
+/*
  * I2C Configs
  */
 #define CONFIG_CMD_I2C          1

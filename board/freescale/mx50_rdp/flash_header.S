@@ -25,6 +25,159 @@
 # error "Must define the offset of flash header"
 #endif
 
+#if defined(CONFIG_ZQ_CALIB)
+.macro do_zq_calib
+/*=============================================================================
+ * ZQ calibration
+ *===========================================================================*/
+	ldr r0, =DATABAHN_BASE_ADDR
+
+/*=============================================================================
+ * Pu calibration start
+ *===========================================================================*/
+	ldr r1, =0x0
+pu_loop:
+	cmp r1, #0x20
+	beq pu_out
+
+	// pu<<16,pd=0
+	mov r2, r1, lsl #16
+	// Set SW_CFG1
+	str r2, [r0, #0x128]
+
+	// ((pd+1)<<8) | (pu+1)
+	add r1, r1, #0x1
+	ldr r2, =0x1
+	orr r3, r1, r2, lsl #8
+	// Set SW_CFG2
+	str r3, [r0, #0x12c]
+
+	sub r1, r1, #0x1
+
+	// Start ZQ comparator
+	ldr r2, =0x10000
+	str r2, [r0, #0x124]
+
+	// Delay 300ns at least
+	ldr r3, =0x0
+pu_delay:
+	add r3, r3, #0x1
+	cmp r3, #0x1000
+	bne pu_delay
+
+	// Read compare result
+	ldr r3, [r0,#0x14c]
+	and r3, r3, #0x1
+
+	// Stop ZQ comparator
+	ldr r2, =0x0
+	str r2, [r0, #0x124]
+
+	// Add pu value
+	add r1, r1, #0x1
+	cmp r3, #0x1
+	bne pu_loop
+
+pu_out:
+	// Pu calibration result in r1
+	sub r1, r1, #0x1
+
+/*=============================================================================
+ * PD calibration start
+ *===========================================================================*/
+	ldr r2, =0x0
+pd_loop:
+	cmp r2, #0xf
+	beq pd_out
+
+	// pd<<24 | pu<<16 | 1<<4
+	mov r3, r2, lsl #24
+	orr r3, r3, r1, lsl #16
+	orr r3, r3, #0x10
+	// Set SW_CFG1
+	str r3, [r0, #0x128]
+
+	// ((pd+1) << 8) | (pu+1)
+	add r2, r2, #0x1
+	add r1, r1, #0x1
+	mov r3, r2, LSL #8
+	orr r3, r3, r1
+	// Set SW_CFG2
+	str r3, [r0, #0x12c]
+
+	sub r2, r2, #0x1
+	sub r1, r1, #0x1
+
+	// Start ZQ comparator
+	ldr r3, =0x10000
+	str r3, [r0, #0x124]
+
+	// Delay 300ns at least
+	ldr r3, =0x0
+pd_delay:
+	add r3, r3, #0x1
+	cmp r3, #0x1000
+	bne pd_delay
+
+	// Read compare result
+	ldr r3, [r0, #0x14c]
+	and r3, r3, #0x1
+
+	// Stop ZQ comparator
+	ldr r8, =0x0
+	str r8, [r0, #0x124]
+
+	// Add pd value
+	add r2, r2, #0x1
+
+	cmp r3, #0x0
+	bne pd_loop
+
+	// Make sure r2 > 0
+	cmp r2, #0x0
+	beq pd_loop
+
+pd_out:
+	// Pd calibration result in r2
+	sub r2, r2, #0x2
+
+/*=============================================================================
+ * Software load PU/PD value,PU is stored in r1, and PD is stored in r2
+ *===========================================================================*/
+	/* ((pd + 1) << 24) | ((pu + 1) << 16) */
+	add r5, r1, #0x1
+	add r6, r2, #0x1
+	mov r3, r6, lsl #24
+	orr r3, r3, r5, lsl #16
+	/* Set SW_CFG1 */
+	str r3, [r0, #0x128]
+
+	/* (pd << 8) | pu */
+	mov r3, r2, lsl #8
+	orr r3, r3, r1
+	/* Set SW_CFG2 */
+	str r3, [r0, #0x12c]
+
+	/* Loading PU value, set pu_pd_sel=0 */
+	ldr r3, =0x310000
+	str r3, [r0, #0x124]
+	/* Clear for next load */
+	ldr r3, =0x200000
+	str r3, [r0, #0x124]
+
+	/* Loading PD value, set pu_pd_sel=1 */
+	ldr r3, =0x10
+	orr r3, r3, r6, lsl #24
+	orr r3, r3, r5, lsl #16
+	str r3, [r0, #0x128]
+
+	ldr r3, =0x310000
+	str r3, [r0, #0x124]
+	ldr r3, =0x200000
+	str r3, [r0, #0x124]
+.endm
+#endif
+
 .section ".text.flasheader", "x"
 	b	_start
 	.org	CONFIG_FLASH_HEADER_OFFSET
@@ -61,7 +214,7 @@ plugin2:           .long 0x0
 
 plugin_start:
 /* Save the return address and the function arguments */
-	push    {r0-r4, lr}
+	push    {r0-r6, r8, lr}
 
 /* To return to ROM from plugin, we need to fill in these argument.
  * Here is what need to do:
@@ -77,8 +230,7 @@ plugin_start:
 	strhi r3, [r0]
 	ldr r3, COPY_SIZE
 	strhi r3, [r1]
-	mov r3, #0x400  /* Point to the second IVT table at offset 0x42C */
-	add r3, r3, #0x2C
+	ldr r3, IVT2_HDR_OFS
 	strhi r3, [r2]
 
 /*=============================================================================
@@ -153,7 +305,7 @@ wait_pll1_lock:
  *===========================================================================*/
     ldr r0, =0x53fa8600
     mov r1, #0x04000000
-    mov r3, #0x00180000
+    ldr r3, =0x00180000
     mov r2, #0x0
 //setmem /32 0x53fa86ac = 0x04000000
 //IOMUXC_SW_PAD_CTL_GRP_DDR_TYPE, ddr_sel=2'b01 (LPDDR2)
@@ -213,37 +365,35 @@ wait_pll1_lock:
 //   DDR controller setting
 //*===========================================
 // CTL setting
-    ldr r0, =DATABAHN_BASE_ADDR
+	ldr r0, =DATABAHN_BASE_ADDR
 
-//*==========================================
-// Load ZQ
-//*==========================================
-//setmem /32 0x14000128 = 0x00170101  // load PU
-    ldr r1, =0x00170101
-    str r1, [r0, #0x128]
-
-    ldr r1, =0x1000
-delay0:
-    sub r1, r1, #0x1
-    cmp r1, #0x0
-    bne delay0
-
-//setmem /32 0x14000128 = 0x00000000  // clear
-    ldr r1, =0x00000000
-    str r1, [r0, #0x128]
-//setmem /32 0x14000128 = 0x08170111  // load PD
-    ldr r1, =0x08170111
-    str r1, [r0, #0x128]
-
-    ldr r1, =0x1000
-delay1:
-    sub r1, r1, #0x1
-    cmp r1, #0x0
-    bne delay1
-
-//setmem /32 0x14000128 = 0x00000000  // clear
-    ldr r1, =0x00000000
-    str r1, [r0, #0x128]
+#if defined(CONFIG_ZQ_CALIB)
+	do_zq_calib
+#else
+// setmem /32 0x1400012C = 0x00000817  // pd=<<8, pu=<<0
+	ldr r1, =0x00000817
+	str r1, [r0, #0x12c]
+// setmem /32 0x14000128 = 0x09180000  // (pd+1)<<24, (pu+1)<<16
+	ldr r1, =0x09180000
+	str r1, [r0, #0x128]
+// load PU, pu_pd_sel=0
+// setmem /32 0x14000124 = 0x00310000  // software load ZQ: 3<<20, 1<<16
+	ldr r1, =0x00310000
+	str r1, [r0, #0x124]
+// setmem /32 0x14000124 = 0x00200000  // clear for next load
+	ldr r1, =0x00200000
+	str r1, [r0, #0x124]
+// load PD, pu_pd_sel=1
+// setmem /32 0x14000128 = 0x09180010  // (pd+1)<<24, (pu+1)<<16, 1<<4
+	ldr r1, =0x09180010
+	str r1, [r0, #0x128]
+// setmem /32 0x14000124 = 0x00310000  // software load ZQ: 3<<20, 1<<16
+	ldr r1, =0x00310000
+	str r1, [r0, #0x124]
+// setmem /32 0x14000124 = 0x00200000  // clear for next load
+	ldr r1, =0x00200000
+	str r1, [r0, #0x124]
+#endif
 
 //setmem /32 0x14000000 = 0x00000500
     ldr r1, =0x00000500
@@ -450,8 +600,8 @@ delay1:
     ldr r1, =0x01010002
     str r1, [r0, #0x118]
 
-//setmem /32 0x1400011c = 0x00000000
-    ldr r1, =0x00000000
+//setmem /32 0x1400011c = 0x00001000
+    ldr r1, =0x00001000
     str r1, [r0, #0x11c]
 
 // PHY setting
@@ -594,14 +744,15 @@ before_calling_rom___pu_irom_hwcnfg_setup:
 	blxhi r3
 after_calling_rom___pu_irom_hwcnfg_setup:
 
-	pop {r0-r4, lr}
+	pop {r0-r6, r8, lr}
 	mov r0, #1
 	bx lr          /* return back to ROM code */
 
-DDR_DEST_ADDR:    .word   TEXT_BASE
-COPY_SIZE:        .word   _end - TEXT_BASE
-BOOT_DATA:        .word   TEXT_BASE
-                  .word   _end - TEXT_BASE
-                  .word   0
+DDR_DEST_ADDR:		.word TEXT_BASE
+COPY_SIZE:		.word _end - TEXT_BASE
+BOOT_DATA:		.word TEXT_BASE
+			.word _end - TEXT_BASE
+			.word 0
+IVT2_HDR_OFS:		.word ivt2_header - TEXT_BASE
 
 #endif
