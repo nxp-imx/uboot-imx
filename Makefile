@@ -3252,13 +3252,7 @@ mx50_arm2_lpddr2_config \
 mx50_arm2_ddr2_config \
 mx50_arm2_iram_config \
 mx50_arm2_config  \
-mx50_arm2_mfg_config	: unconfig
-	@[ -z "$(findstring iram_,$@)" ] || \
-		{ echo "TEXT_BASE = 0xF8008400" >$(obj)board/freescale/mx50_arm2/config.tmp ; \
-		  echo "... with iram configuration" ; \
-		}
-	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx50_arm2 freescale mx50
-
+mx50_arm2_mfg_config \
 mx50_rdp_iram_config \
 mx50_rdp_mfg_config \
 mx50_rdp_config      : unconfig

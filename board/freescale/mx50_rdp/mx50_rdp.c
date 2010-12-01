@@ -52,11 +52,14 @@
 #include <asm/clock.h>
 #endif
 
+#ifdef CONFIG_MXC_EPDC
+#include <lcd.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
 static enum boot_device boot_dev;
-u32	mx51_io_base_addr;
 
 static inline void setup_boot_device(void)
 {
@@ -256,6 +259,25 @@ static void setup_i2c(unsigned int module_base)
 		mxc_request_iomux(MX50_PIN_I2C2_SCL,
 				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
 		mxc_iomux_set_pad(MX50_PIN_I2C2_SCL,
+				PAD_CTL_SRE_FAST |
+				PAD_CTL_ODE_OPENDRAIN_ENABLE |
+				PAD_CTL_DRV_HIGH | PAD_CTL_100K_PU |
+				PAD_CTL_HYS_ENABLE);
+		break;
+	case I2C3_BASE_ADDR:
+		/* i2c3 SDA */
+		mxc_request_iomux(MX50_PIN_I2C3_SDA,
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_iomux_set_pad(MX50_PIN_I2C3_SDA,
+				PAD_CTL_SRE_FAST |
+				PAD_CTL_ODE_OPENDRAIN_ENABLE |
+				PAD_CTL_DRV_HIGH | PAD_CTL_100K_PU |
+				PAD_CTL_HYS_ENABLE);
+
+		/* i2c3 SCL */
+		mxc_request_iomux(MX50_PIN_I2C3_SCL,
+				IOMUX_CONFIG_ALT0 | IOMUX_CONFIG_SION);
+		mxc_iomux_set_pad(MX50_PIN_I2C3_SCL,
 				PAD_CTL_SRE_FAST |
 				PAD_CTL_ODE_OPENDRAIN_ENABLE |
 				PAD_CTL_DRV_HIGH | PAD_CTL_100K_PU |
@@ -566,6 +588,7 @@ static void setup_fec(void)
 {
 	volatile unsigned int reg;
 
+#if defined(CONFIG_MX50_RDP)
 	/* FEC_EN: gpio6-23 set to 0 to enable FEC */
 	mxc_request_iomux(MX50_PIN_I2C3_SDA, IOMUX_CONFIG_ALT1);
 
@@ -576,7 +599,7 @@ static void setup_fec(void)
 	reg = readl(GPIO6_BASE_ADDR + 0x4);
 	reg |= (1 << 23);
 	writel(reg, GPIO6_BASE_ADDR + 0x4);
-
+#endif
 
 	/*FEC_MDIO*/
 	mxc_request_iomux(MX50_PIN_SSI_RXC, IOMUX_CONFIG_ALT6);
@@ -624,6 +647,7 @@ static void setup_fec(void)
 	mxc_iomux_set_pad(MX50_PIN_DISP_D2, 0x0);
 	mxc_iomux_set_input(MUX_IN_FEC_FEC_RX_DV_SELECT_INPUT, 0);
 
+#if defined(CONFIG_MX50_RDP)
 	/* FEC_RESET_B: gpio4-12 */
 	mxc_request_iomux(MX50_PIN_ECSPI1_SCLK, IOMUX_CONFIG_ALT1);
 
@@ -640,6 +664,26 @@ static void setup_fec(void)
 	reg = readl(GPIO4_BASE_ADDR + 0x0);
 	reg |= (1 << 12);
 	writel(reg, GPIO4_BASE_ADDR + 0x0);
+#elif defined(CONFIG_MX50_ARM2)
+	/* phy reset: gpio4-6 */
+	mxc_request_iomux(MX50_PIN_KEY_COL3, IOMUX_CONFIG_ALT1);
+
+	reg = readl(GPIO4_BASE_ADDR + 0x0);
+	reg &= ~0x40;
+	writel(reg, GPIO4_BASE_ADDR + 0x0);
+
+	reg = readl(GPIO4_BASE_ADDR + 0x4);
+	reg |= 0x40;
+	writel(reg, GPIO4_BASE_ADDR + 0x4);
+
+	udelay(500);
+
+	reg = readl(GPIO4_BASE_ADDR + 0x0);
+	reg |= 0x40;
+	writel(reg, GPIO4_BASE_ADDR + 0x0);
+#else
+#	error "Unsupported board!"
+#endif
 }
 #endif
 
@@ -772,6 +816,244 @@ int board_mmc_init(bd_t *bis)
 
 #endif
 
+#ifdef CONFIG_MXC_EPDC
+#ifdef CONFIG_SPLASH_SCREEN
+int setup_splash_img()
+{
+#ifdef CONFIG_SPLASH_IS_IN_MMC
+	int mmc_dev = get_mmc_env_devno();
+	ulong offset = CONFIG_SPLASH_IMG_OFFSET;
+	ulong size = CONFIG_SPLASH_IMG_SIZE;
+	ulong addr = 0;
+	char *s = NULL;
+	struct mmc *mmc = find_mmc_device(mmc_dev);
+	uint blk_start, blk_cnt, n;
+
+	s = getenv("splashimage");
+
+	if (NULL == s) {
+		puts("env splashimage not found!\n");
+		return -1;
+	}
+	addr = simple_strtoul(s, NULL, 16);
+
+	if (!mmc) {
+		printf("MMC Device %d not found\n",
+			mmc_dev);
+		return -1;
+	}
+
+	if (mmc_init(mmc)) {
+		puts("MMC init failed\n");
+		return  -1;
+	}
+
+	blk_start = ALIGN(offset, mmc->read_bl_len) / mmc->read_bl_len;
+	blk_cnt   = ALIGN(size, mmc->read_bl_len) / mmc->read_bl_len;
+	n = mmc->block_dev.block_read(mmc_dev, blk_start,
+					blk_cnt, (u_char *)addr);
+	flush_cache((ulong)addr, blk_cnt * mmc->read_bl_len);
+
+	return (n == blk_cnt) ? 0 : -1;
+#endif
+}
+#endif
+
+vidinfo_t panel_info = {
+	.vl_refresh = 60,
+	.vl_col = 800,
+	.vl_row = 600,
+	.vl_pixclock = 17700000,
+	.vl_left_margin = 8,
+	.vl_right_margin = 142,
+	.vl_upper_margin = 4,
+	.vl_lower_margin = 10,
+	.vl_hsync = 20,
+	.vl_vsync = 4,
+	.vl_sync = 0,
+	.vl_mode = 0,
+	.vl_flag = 0,
+	.vl_bpix = 3,
+	cmap:0,
+};
+
+static void setup_epdc_power()
+{
+	unsigned int reg;
+
+	/* Setup epdc voltage */
+
+	/* EPDC PWRSTAT - GPIO3[28] for PWR_GOOD status */
+	mxc_request_iomux(MX50_PIN_EPDC_PWRSTAT, IOMUX_CONFIG_ALT1);
+
+	/* EPDC VCOM0 - GPIO4[21] for VCOM control */
+	mxc_request_iomux(MX50_PIN_EPDC_VCOM0, IOMUX_CONFIG_ALT1);
+	/* Set as output */
+	reg = readl(GPIO4_BASE_ADDR + 0x4);
+	reg |= (1 << 21);
+	writel(reg, GPIO4_BASE_ADDR + 0x4);
+
+	/* UART4 TXD - GPIO6[16] for EPD PMIC WAKEUP */
+	mxc_request_iomux(MX50_PIN_UART4_TXD, IOMUX_CONFIG_ALT1);
+	/* Set as output */
+	reg = readl(GPIO6_BASE_ADDR + 0x4);
+	reg |= (1 << 16);
+	writel(reg, GPIO6_BASE_ADDR + 0x4);
+}
+
+void epdc_power_on()
+{
+	unsigned int reg;
+
+	/* Set PMIC Wakeup to high - enable Display power */
+	reg = readl(GPIO6_BASE_ADDR + 0x0);
+	reg |= (1 << 16);
+	writel(reg, GPIO6_BASE_ADDR + 0x0);
+
+	/* Wait for PWRGOOD == 1 */
+	while (1) {
+		reg = readl(GPIO3_BASE_ADDR + 0x0);
+		if (!(reg & (1 << 28)))
+			break;
+
+		udelay(100);
+	}
+
+	/* Enable VCOM */
+	reg = readl(GPIO4_BASE_ADDR + 0x0);
+	reg |= (1 << 21);
+	writel(reg, GPIO4_BASE_ADDR + 0x0);
+
+	reg = readl(GPIO4_BASE_ADDR + 0x0);
+
+	udelay(500);
+}
+
+void  epdc_power_off()
+{
+	unsigned int reg;
+	/* Set PMIC Wakeup to low - disable Display power */
+	reg = readl(GPIO6_BASE_ADDR + 0x0);
+	reg |= 0 << 16;
+	writel(reg, GPIO6_BASE_ADDR + 0x0);
+
+	/* Disable VCOM */
+	reg = readl(GPIO4_BASE_ADDR + 0x0);
+	reg |= 0 << 21;
+	writel(reg, GPIO4_BASE_ADDR + 0x0);
+}
+
+int setup_waveform_file()
+{
+#ifdef CONFIG_WAVEFORM_FILE_IN_MMC
+	int mmc_dev = get_mmc_env_devno();
+	ulong offset = CONFIG_WAVEFORM_FILE_OFFSET;
+	ulong size = CONFIG_WAVEFORM_FILE_SIZE;
+	ulong addr = CONFIG_WAVEFORM_BUF_ADDR;
+	char *s = NULL;
+	struct mmc *mmc = find_mmc_device(mmc_dev);
+	uint blk_start, blk_cnt, n;
+
+	if (!mmc) {
+		printf("MMC Device %d not found\n",
+			mmc_dev);
+		return -1;
+	}
+
+	if (mmc_init(mmc)) {
+		puts("MMC init failed\n");
+		return -1;
+	}
+
+	blk_start = ALIGN(offset, mmc->read_bl_len) / mmc->read_bl_len;
+	blk_cnt   = ALIGN(size, mmc->read_bl_len) / mmc->read_bl_len;
+	n = mmc->block_dev.block_read(mmc_dev, blk_start,
+		blk_cnt, (u_char *)addr);
+	flush_cache((ulong)addr, blk_cnt * mmc->read_bl_len);
+
+	return (n == blk_cnt) ? 0 : -1;
+#else
+	return -1;
+#endif
+}
+
+static void setup_epdc()
+{
+	unsigned int reg;
+
+	/* epdc iomux settings */
+	mxc_request_iomux(MX50_PIN_EPDC_D0, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_D1, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_D2, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_D3, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_D4, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_D5, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_D6, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_D7, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_GDCLK, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_GDSP, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_GDOE, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_GDRL, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_SDCLK, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_SDOE, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_SDLE, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_SDSHR, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_BDR0, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_SDCE0, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_SDCE1, IOMUX_CONFIG_ALT0);
+	mxc_request_iomux(MX50_PIN_EPDC_SDCE2, IOMUX_CONFIG_ALT0);
+
+
+	/*** epdc Maxim PMIC settings ***/
+
+	/* EPDC PWRSTAT - GPIO3[28] for PWR_GOOD status */
+	mxc_request_iomux(MX50_PIN_EPDC_PWRSTAT, IOMUX_CONFIG_ALT1);
+
+	/* EPDC VCOM0 - GPIO4[21] for VCOM control */
+	mxc_request_iomux(MX50_PIN_EPDC_VCOM0, IOMUX_CONFIG_ALT1);
+
+	/* UART4 TXD - GPIO6[16] for EPD PMIC WAKEUP */
+	mxc_request_iomux(MX50_PIN_UART4_TXD, IOMUX_CONFIG_ALT1);
+
+
+	/*** Set pixel clock rates for EPDC ***/
+
+	/* EPDC AXI clk and EPDC PIX clk from PLL1 */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CLKSEQ_BYPASS);
+	reg &= ~(0x3 << 4);
+	reg |= (0x2 << 4) | (0x2 << 12);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CLKSEQ_BYPASS);
+
+	/* EPDC AXI clk enable and set to 200MHz (800/4) */
+	reg = readl(CCM_BASE_ADDR + 0xA8);
+	reg &= ~((0x3 << 30) | 0x3F);
+	reg |= (0x2 << 30) | 0x4;
+	writel(reg, CCM_BASE_ADDR + 0xA8);
+
+	/* EPDC PIX clk enable and set to 20MHz (800/40) */
+	reg = readl(CCM_BASE_ADDR + 0xA0);
+	reg &= ~((0x3 << 30) | (0x3 << 12) | 0x3F);
+	reg |= (0x2 << 30) | (0x1 << 12) | 0x2D;
+	writel(reg, CCM_BASE_ADDR + 0xA0);
+
+	panel_info.epdc_data.working_buf_addr = CONFIG_WORKING_BUF_ADDR;
+	panel_info.epdc_data.waveform_buf_addr = CONFIG_WAVEFORM_BUF_ADDR;
+
+	panel_info.epdc_data.wv_modes.mode_init = 0;
+	panel_info.epdc_data.wv_modes.mode_du = 1;
+	panel_info.epdc_data.wv_modes.mode_gc4 = 3;
+	panel_info.epdc_data.wv_modes.mode_gc8 = 2;
+	panel_info.epdc_data.wv_modes.mode_gc16 = 2;
+	panel_info.epdc_data.wv_modes.mode_gc32 = 2;
+
+	setup_epdc_power();
+
+	/* Assign fb_base */
+	gd->fb_base = CONFIG_FB_BASE;
+}
+#endif
+
+
 #ifdef CONFIG_IMX_CSPI
 static void setup_power(void)
 {
@@ -828,7 +1110,13 @@ int board_init(void)
 	setup_soc_rev();
 
 	/* arch id for linux */
+#if defined(CONFIG_MX50_RDP)
 	gd->bd->bi_arch_number = MACH_TYPE_MX50_RDP;
+#elif defined(CONFIG_MX50_ARM2)
+	gd->bd->bi_arch_number = MACH_TYPE_MX50_ARM2;
+#else
+#	error "Unsupported board!"
+#endif
 
 	/* boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
@@ -845,6 +1133,10 @@ int board_init(void)
 	setup_gpmi_nand();
 #endif
 
+#ifdef CONFIG_MXC_EPDC
+	setup_epdc();
+#endif
+
 	return 0;
 }
 
@@ -858,7 +1150,13 @@ int board_late_init(void)
 
 int checkboard(void)
 {
+#if defined(CONFIG_MX50_RDP)
 	printf("Board: MX50 RDP board\n");
+#elif defined(CONFIG_MX50_ARM2)
+	printf("Board: MX50 ARM2 board\n");
+#else
+#	error "Unsupported board!"
+#endif
 
 	printf("Boot Reason: [");
 

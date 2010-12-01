@@ -27,7 +27,7 @@
  /* High Level Configuration Options */
 #define CONFIG_MXC
 #define CONFIG_MX50
-#define CONFIG_MX50_ARM_EVK
+#define CONFIG_MX50_ARM2
 #define CONFIG_DDR2
 #define CONFIG_FLASH_HEADER
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
