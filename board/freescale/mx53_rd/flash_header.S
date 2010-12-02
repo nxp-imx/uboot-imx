@@ -70,18 +70,22 @@ plugin_start:
 
     /* IOMUX Setup */
     ldr r0, =0x53fa8500
-    moveq r1, #0x00180000
+    moveq r1, #0x00200000
     movne r1, #0x00380000
-    mov r2, #0x00380000
-    add r2, r2, #0x40
-    add r3, r1, #0x40
+    add r2, r1, #0x40
+    mov r3, #0x00280000
     mov r4, #0x00200000
 
     str r1, [r0, #0x54]
-    str r2, [r0, #0x58]
     str r1, [r0, #0x60]
-    str r3, [r0, #0x64]
+    str r1, [r0, #0x94]
+    str r1, [r0, #0x84]
+    str r2, [r0, #0x58]
     str r2, [r0, #0x68]
+    str r2, [r0, #0x90]
+    str r2, [r0, #0x7c]
+    str r2, [r0, #0x64]
+    str r2, [r0, #0x80]
 
     streq r1, [r0, #0x70]
 #if defined(CONFIG_MX53_EVK)
@@ -89,22 +93,17 @@ plugin_start:
 #else
     strne r1, [r0, #0x70]
 #endif
-    str r1, [r0, #0x74]
+    str r3, [r0, #0x74]
     streq r1, [r0, #0x78]
 #if defined(CONFIG_MX53_EVK)
     strne r4, [r0, #0x78]
 #else
     strne r1, [r0, #0x78]
 #endif
-    str r2, [r0, #0x7c]
-    str r3, [r0, #0x80]
-    str r1, [r0, #0x84]
-    str r1, [r0, #0x88]
-    str r2, [r0, #0x90]
-    str r1, [r0, #0x94]
+    str r3, [r0, #0x88]
 
     ldr r0, =0x53fa86f0
-    str r1, [r0, #0x0]
+    str r3, [r0, #0x0]
     mov r2, #0x00000200
     str r2, [r0, #0x4]
     mov r2, #0x00000000
@@ -114,14 +113,10 @@ plugin_start:
     str r2, [r0, #0x14]
     str r1, [r0, #0x18]
     str r1, [r0, #0x1c]
-    str r1, [r0, #0x20]
+    str r3, [r0, #0x20]
 
     moveq r2, #0x02000000
-#if defined(CONFIG_MX53_EVK) || defined(CONFIG_MX53_ARD)
     movne r2, #0x06000000
-#else
-    movne r2, #0x02000000
-#endif
 
     str r2, [r0, #0x24]
     str r1, [r0, #0x28]
@@ -130,50 +125,37 @@ plugin_start:
     /* Initialize DDR2 memory - Hynix H5PS2G83AFR */
     ldr r0, =ESDCTL_BASE_ADDR
 
-    ldreq r1, =0x31333530
-#if defined(CONFIG_MX53_EVK) || defined(CONFIG_MX53_ARD)
-    ldrne r1, =0x2b2f3031
-#else
-    ldrne r1, =0x2d313331
-#endif
+    ldreq r1, =0x34333936
+    ldrne r1, =0x2b2f322f
+
     str r1, [r0, #0x088]
 
-    ldreq r1, =0x4a474a44
-    ldrne r1, =0x40363333
+    ldreq r1, =0x49434942
+    ldrne r1, =0x43403a3a
     str r1, [r0, #0x090]
 
     /* add 3 logic unit of delay to sdclk  */
     ldr r1, =0x00000f00
-    str r1, [r0, #0x098]
+    strne r1, [r0, #0x098]
 
     ldr r1, =0x00000800
     str r1, [r0, #0x0F8]
 
-    ldreq r1, =0x02490241
-#if defined(CONFIG_MX53_EVK) || defined(CONFIG_MX53_ARD)
-    ldrne r1, =0x01310132
-#else
+    ldreq r1, =0x01350138
     ldrne r1, =0x020c0211
-#endif
+
     str r1, [r0, #0x07c]
 
-    ldreq r1, =0x01710171
-#if defined(CONFIG_MX53_EVK) || defined(CONFIG_MX53_ARD)
+    ldreq r1, =0x01380139
     ldrne r1, =0x0133014b
-#else
-    ldrne r1, =0x014c0155
-#endif
+
     str r1, [r0, #0x080]
 
     /* Enable bank interleaving, RALAT = 0x4, DDR2_EN = 1 */
     ldr r1, =0x00001710
     str r1, [r0, #0x018]
 
-#if defined(CONFIG_MX53_ARD)
-    ldr r1, =0x84110000
-#else
     ldr r1, =0xc4110000
-#endif
     str r1, [r0, #0x00]
 
     ldr r1, =0x4d5122d2
@@ -227,7 +209,8 @@ plugin_start:
     ldr r1, =0x03c68031
     str r1, [r0, #0x1C]
 
-    ldr r1, =0x00468031
+    ldreq r1, =0x00448031
+    ldrne r1, =0x00468031
     str r1, [r0, #0x1C]
 
     /* Even though Rev B does not have DDR on CSD1, keep these
@@ -264,19 +247,31 @@ plugin_start:
     ldr r1, =0x03c68039
     str r1, [r0, #0x1C]
 
-    ldr r1, =0x00468039
+    ldreq r1, =0x00448039
+    ldrne r1, =0x00468039
     str r1, [r0, #0x1C]
 
     ldr r1, =0x00005800
     str r1, [r0, #0x20]
 
-    ldr r1, =0x00033337
+    /* Enable 50ohm ODT for TO2*/
+    ldreq r1, =0x00033335
+    ldrne r1, =0x00033337
     str r1, [r0, #0x58]
 
     ldr r1, =0x00000000
     str r1, [r0, #0x1C]
 
-/* DDR3 script for ARM2 CPU3 board */
+/* Enable ZQ calibration for TO2 */
+    ldr r1, =0x04b80003
+    streq r1, [r0, #0x40]
+
+/* For TO2 only, set LDO to 1.3V */
+    ldr r0, =0x53fa8000
+    ldr r1, =0x00194005
+    streq r1, [r0, #0x04]
+
+/* DDR3 script for SMD and ARM2 CPU3 board */
 #else
 
     /* IOMUX Setup */
