@@ -289,7 +289,7 @@
 /*-----------------------------------------------------------------------
  * NAND FLASH driver setup
  */
-#define NAND_MAX_CHIPS         8
+#define CONFIG_SYS_NAND_MAX_CHIPS     8
 #define CONFIG_SYS_MAX_NAND_DEVICE    1
 #define CONFIG_SYS_NAND_BASE          0x40000000
 
