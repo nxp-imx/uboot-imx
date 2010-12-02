@@ -296,9 +296,19 @@ int do_nand(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 	if (strcmp(cmd, "bad") == 0) {
 		printf("\nDevice %d bad blocks:\n", nand_curr_device);
-		for (off = 0; off < nand->size; off += nand->erasesize)
+		for (off = 0; off < nand->size; off += nand->erasesize) {
 			if (nand_block_isbad(nand, off))
 				printf("  %08lx\n", off);
+			/*
+			 *FIXME: currently, uboot cmd_nand does not
+			 * support 64bit address space. It will make
+			 * the for loop the infinit loop due to off is
+			 * 32bit width with ulong definiton on arm gcc.
+			 * Break the for loop when off overflow.
+			 */
+			if (off > off + nand->erasesize)
+				break;
+		}
 		return 0;
 	}
 
