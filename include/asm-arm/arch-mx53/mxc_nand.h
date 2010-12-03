@@ -275,7 +275,7 @@ do { \
 #define UNLOCK_ADDR(start_addr, end_addr)     \
 { \
 	int i = 0; \
-	for (; i < NAND_MAX_CHIPS; i++)  \
+	for (; i < NFC_GET_MAXCHIP_SP(); i++)  \
 		raw_write(start_addr | \
 		(end_addr << NFC_UNLOCK_END_ADDR_SHIFT), \
 		REG_UNLOCK_BLK_ADD0 + (i << 2)); \
@@ -285,6 +285,10 @@ do { \
 	raw_write((raw_read(NFC_CONFIG1) & \
 	(NFC_FIELD_RESET(NFC_ACTIVE_CS_WIDTH, NFC_ACTIVE_CS_SHIFT))) | \
 	((val) << NFC_ACTIVE_CS_SHIFT), NFC_CONFIG1);
+
+#define NFC_GET_NFC_ACTIVE_CS() \
+	((raw_read(NFC_CONFIG1) >> NFC_ACTIVE_CS_SHIFT) & \
+	((1 << NFC_ACTIVE_CS_WIDTH) - 1))
 
 #define NFC_GET_MAXCHIP_SP()		8
 

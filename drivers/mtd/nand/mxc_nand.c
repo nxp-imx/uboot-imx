@@ -324,21 +324,28 @@ static void send_cmd_interleave(struct mtd_info *mtd, u16 cmd)
 	u8 *obuf = info->oob_buf;
 	u32 dlen = mtd->writesize / j;
 	u32 olen = mtd->oobsize / j;
+	u32 ncs = 0;
 
 	/* adjust the addr value
 	 * since ADD_OP mode is 01
 	 */
-	if (j > 1)
+	if (cmd == NAND_CMD_ERASE2)
+		page_addr = addr_low;
+
+	ncs = NFC_GET_NFC_ACTIVE_CS();
+
+	if (j > 1) {
 		page_addr *= j;
-	else
+	} else {
 		page_addr *= this->numchips;
+		page_addr += ncs;
+	}
 
 	switch (cmd) {
 	case NAND_CMD_PAGEPROG:
 		for (i = 0; i < j; i++) {
 			/* reset addr cycle */
-			if (j > 1)
-				mxc_nand_addr_cycle(mtd, 0, page_addr++);
+			mxc_nand_addr_cycle(mtd, 0, page_addr++);
 
 			/* data transfer */
 			nfc_memcpy(MAIN_AREA0, dbuf, dlen);
@@ -365,8 +372,7 @@ static void send_cmd_interleave(struct mtd_info *mtd, u16 cmd)
 	case NAND_CMD_READSTART:
 		for (i = 0; i < j; i++) {
 			/* reset addr cycle */
-			if (j > 1)
-				mxc_nand_addr_cycle(mtd, 0, page_addr++);
+			mxc_nand_addr_cycle(mtd, 0, page_addr++);
 
 			NFC_SET_RBA(0);
 			raw_write(0, REG_NFC_OPS_STAT);
@@ -388,10 +394,6 @@ static void send_cmd_interleave(struct mtd_info *mtd, u16 cmd)
 		break;
 	case NAND_CMD_ERASE2:
 		for (i = 0; i < j; i++) {
-			if (!i) {
-				page_addr = addr_low;
-				page_addr *= (j > 1 ? j : this->numchips);
-			}
 			mxc_nand_addr_cycle(mtd, -1, page_addr++);
 			raw_write(0, REG_NFC_OPS_STAT);
 			raw_write(NFC_AUTO_ERASE, REG_NFC_OPS);
@@ -552,6 +554,7 @@ static u16 mxc_do_status_auto(struct mtd_info *mtd)
 #ifdef CONFIG_MXC_NFC_SP_AUTO
 	int i = 0;
 	u32 mask = 0xFF << 16;
+	int cs = NFC_GET_NFC_ACTIVE_CS();
 	struct nand_chip *this = mtd->priv;
 	struct nand_info *info = this->priv;
 
@@ -576,6 +579,9 @@ static u16 mxc_do_status_auto(struct mtd_info *mtd)
 		if (status & NAND_STATUS_FAIL)
 			break;
 	}
+
+	/* Restore active CS */
+	NFC_SET_NFC_ACTIVE_CS(cs);
 #endif
 	return status;
 }
