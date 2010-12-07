@@ -166,7 +166,7 @@
 /*
  * FUSE Configs
  * */
-#ifdef CONFIG_CMD_MMC
+#ifdef CONFIG_CMD_IIM
 	#define CONFIG_IMX_IIM
 	#define IMX_IIM_BASE    IIM_BASE_ADDR
 	#define CONFIG_IIM_MAC_BANK     1
@@ -210,6 +210,7 @@
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
 	#define CONFIG_BOOT_PARTITION_ACCESS
+	#define CONFIG_EMMC_DDR_PORT_DETECT
 	#define CONFIG_DYNAMIC_MMC_DEVNO
 #endif
 /*-----------------------------------------------------------------------

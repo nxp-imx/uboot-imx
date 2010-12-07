@@ -340,7 +340,8 @@ static void esdhc_dll_setup(struct mmc *mmc)
 	uint dll_control;
 
 	/* For i.MX50 TO1, need to force slave override mode */
-	if (get_board_rev() == (0x50000 | CHIP_REV_1_0)) {
+	if (get_board_rev() == (0x50000 | CHIP_REV_1_0) ||
+			get_board_rev() == 0x53000) {
 		dll_control = readl(&regs->dllctrl);
 
 		dll_control &= ~(ESDHC_DLLCTRL_SLV_OVERRIDE_VAL_MASK |
@@ -490,6 +491,11 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	if (((readl(&regs->hostver) & ESDHC_HOSTVER_VVN_MASK)
 		>> ESDHC_HOSTVER_VVN_SHIFT) >= ESDHC_HOSTVER_DDR_SUPPORT)
 		mmc->host_caps |= EMMC_MODE_4BIT_DDR;
+
+#ifdef CONFIG_EMMC_DDR_PORT_DETECT
+	if (detect_mmc_emmc_ddr_port(cfg))
+		mmc->host_caps |= EMMC_MODE_4BIT_DDR;
+#endif
 
 	mmc->f_min = 400000;
 	mmc->f_max = MIN(mxc_get_clock(MXC_ESDHC_CLK), 50000000);
