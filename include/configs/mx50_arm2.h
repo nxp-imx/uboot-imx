@@ -165,6 +165,13 @@
 #define CONFIG_DISCOVER_PHY
 
 /*
+ * DDR ZQ calibration
+ */
+/*
+#define CONFIG_ZQ_CALIB
+*/
+
+/*
 #define CONFIG_SPLASH_SCREEN
 */
 
