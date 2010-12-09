@@ -33,22 +33,27 @@
 	ldr r0, =DATABAHN_BASE_ADDR
 
 /*=============================================================================
- * Pu calibration start
+ * Pu calibration based on 240 Ohm
  *===========================================================================*/
 	ldr r1, =0x0
 pu_loop:
 	cmp r1, #0x20
 	beq pu_out
 
-	// pu<<16,pd=0
-	mov r2, r1, lsl #16
-	// Set SW_CFG1
-	str r2, [r0, #0x128]
-
-	// ((pd+1)<<8) | (pu+1)
+	;(pd + 1) << 24 | (pu + 1) << 16
+	ldr r2, =0x0
+	add r2, r2, #0x1
 	add r1, r1, #0x1
-	ldr r2, =0x1
-	orr r3, r1, r2, lsl #8
+	mov r3, r1, LSL #16
+	orr r3, r3, r2, LSL #24
+
+	// Set SW_CFG1
+	str r3, [r0, #0x128]
+
+	sub r2, r2, #0x1
+	sub r1, r1, #0x1
+	;(pd << 8) | pu
+	mov r3, r1
 	// Set SW_CFG2
 	str r3, [r0, #0x12c]
 
@@ -83,30 +88,29 @@ pu_out:
 	sub r1, r1, #0x1
 
 /*=============================================================================
- * PD calibration start
+ * PD calibration start (based on pu)
  *===========================================================================*/
 	ldr r2, =0x0
 pd_loop:
 	cmp r2, #0xf
 	beq pd_out
 
-	// pd<<24 | pu<<16 | 1<<4
+	; (pd + 1) << 24 | (pu + 1) << 16 | 1 << 4
+	add r2, r2, #0x1
+	add r1, r1, #0x1
 	mov r3, r2, lsl #24
 	orr r3, r3, r1, lsl #16
 	orr r3, r3, #0x10
 	// Set SW_CFG1
 	str r3, [r0, #0x128]
 
-	// ((pd+1) << 8) | (pu+1)
-	add r2, r2, #0x1
-	add r1, r1, #0x1
+	sub r2, r2, #0x1
+	sub r1, r1, #0x1
+	;(pd << 8) | pu
 	mov r3, r2, LSL #8
 	orr r3, r3, r1
 	// Set SW_CFG2
 	str r3, [r0, #0x12c]
-
-	sub r2, r2, #0x1
-	sub r1, r1, #0x1
 
 	// Start ZQ comparator
 	ldr r3, =0x10000
@@ -141,40 +145,94 @@ pd_out:
 	// Pd calibration result in r2
 	sub r2, r2, #0x2
 
+#if defined(CONFIG_LPDDR2)
+	; Pd add 3
+	add  r2, r2, #0x3
+
+/*=============================================================================
+ * Pu calibration based on pd value
+ *===========================================================================*/
+	ldr r1, =0x0
+pu_loop_pd:
+	cmp r1, #0x20
+	beq pu_out_pd
+
+	; (pd + 1) << 24 | (pu + 1) << 16 | 1 << 4
+	add r2, r2, #0x1
+	add r1, r1, #0x1
+	mov r3, r2, LSL #24
+	orr r3, r3, r1, LSL #16
+	orr r3, r3, #0x10
+	;Set SW_CFG1
+	str r3, [r0,#0x128]
+
+	sub r2, r2, #0x1
+	sub r1, r1, #0x1
+	;(pd << 8) | pu
+	mov r3, r2, LSL #8
+	orr r3, r3, r1
+	;Set SW_CFG2
+	str r3, [r0,#0x12c]
+
+	;Start ZQ comparator
+	ldr r3, =0x10000
+	str r3, [r0,#0x124]
+
+	;Delay 300ns at least
+	ldr r3, =0x0
+pu_delay_pd:
+	add r3, r3, #0x1
+	cmp r3,#0x1000
+	bne pu_delay_pd
+
+	;Read compare result
+	ldr r3, [r0, #0x14c]
+	and r3, r3, #0x1
+
+	;Stop ZQ comparator
+	ldr r8, =0x0
+	str r8, [r0,#0x124]
+
+	;Add pu value
+	add r1, r1, #0x1
+	cmp r3, #0x1
+	bne pu_loop_pd
+
+pu_out_pd:
+	;Pu calibration result in r1
+	sub r1, r1, #0x1
+#endif
+
 /*=============================================================================
  * Software load PU/PD value,PU is stored in r1, and PD is stored in r2
  *===========================================================================*/
-	/* ((pd + 1) << 24) | ((pu + 1) << 16) */
-	add r5, r1, #0x1
-	add r6, r2, #0x1
-	mov r3, r6, lsl #24
-	orr r3, r3, r5, lsl #16
-	/* Set SW_CFG1 */
-	str r3, [r0, #0x128]
-
-	/* (pd << 8) | pu */
-	mov r3, r2, lsl #8
+	;(pd << 8) | pu
+	mov r3, r2, LSL #8
 	orr r3, r3, r1
-	/* Set SW_CFG2 */
+	;Set SW_CFG2
 	str r3, [r0, #0x12c]
 
-	/* Loading PU value, set pu_pd_sel=0 */
-	ldr r3, =0x310000
-	str r3, [r0, #0x124]
-	/* Clear for next load */
-	ldr r3, =0x200000
-	str r3, [r0, #0x124]
-
-	/* Loading PD value, set pu_pd_sel=1 */
-	ldr r3, =0x10
-	orr r3, r3, r6, lsl #24
-	orr r3, r3, r5, lsl #16
+	;((pd + 1) << 24) | ((pu + 1) <<16)
+	add r2, r2, #0x1
+	add r1, r1, #0x1
+	mov r3, r2, LSL #24
+	orr r3, r3, r1, LSL #16
+	;Load PU, pu_pd_sel=0
 	str r3, [r0, #0x128]
 
-	ldr r3, =0x310000
-	str r3, [r0, #0x124]
-	ldr r3, =0x200000
-	str r3, [r0, #0x124]
+	;Set SW_CFG
+	ldr r1, =0x00310000
+	str r1, [r0, #0x124]
+	ldr r2, =0x00200000
+	str r2, [r0, #0x124]
+
+	;Load PD, pu_pd_sel=1
+	orr r3, r3, #0x10
+	str r3, [r0, #0x128]
+
+	;Set SW_CFG
+	str r1, [r0, #0x124]
+	str r2, [r0, #0x124]
 .endm
 #endif
 
@@ -308,59 +366,65 @@ wait_pll1_lock:
  *===========================================================================*/
 	ldr r0, =0x53fa8600
 	mov r1, #0x04000000
-	ldr r3, =0x00180000
+	ldr r3, =0x00200000
 	mov r2, #0x0
 //setmem /32 0x53fa86ac = 0x04000000
 //IOMUXC_SW_PAD_CTL_GRP_DDR_TYPE, ddr_sel=2'b01 (LPDDR2)
 	str r1, [r0, #0xac]
-//setmem /32 0x53fa86a4 = 0x00180000
+//setmem /32 0x53fa86a4 = 0x00200000
 //IOMUXC_SW_PAD_CTL_GRP_CTLDS, dse=3'b100
 	str r3, [r0, #0xa4]
-//setmem /32 0x53fa8668 = 0x00180000
+//setmem /32 0x53fa8668 = 0x00200000
 //IOMUXC_SW_PAD_CTL_GRP_ADDDS, dse=3'b100
 	str r3, [r0, #0x68]
-//setmem /32 0x53fa8698 = 0x00180000
+//setmem /32 0x53fa8698 = 0x00200000
 //IOMUXC_SW_PAD_CTL_GRP_B0DS, dse=3'b100
 	str r3, [r0, #0x98]
-//setmem /32 0x53fa86a0 = 0x00180000
+//setmem /32 0x53fa86a0 = 0x00200000
 //IOMUXC_SW_PAD_CTL_GRP_B1DS, dse=3'b100
 	str r3, [r0, #0xa0]
-//setmem /32 0x53fa86a8 = 0x00180000
+//setmem /32 0x53fa86a8 = 0x00200000
 //IOMUXC_SW_PAD_CTL_GRP_B2DS, dse=3'b100
 	str r3, [r0, #0xa8]
-//setmem /32 0x53fa86b4 = 0x00180000
+//setmem /32 0x53fa86b4 = 0x00200000
 //IOMUXC_SW_PAD_CTL_GRP_B3DS, dse=3'b100
 	str r3, [r0, #0xb4]
 
 	ldr r0, =0x53fa8400
-//setmem /32 0x53fa8498 = 0x00180000
+//setmem /32 0x53fa8490 = 0x00200000
+//IOMUXC_SW_PAD_CTL_PAD_DRAM_OPEN
+	str r3, [r0, #0x90]
+//setmem /32 0x53fa8494 = 0x00200000
+//IOMUXC_SW_PAD_CTL_PAD_DRAM_OPENFB
+	str r3, [r0, #0x94]
+//setmem /32 0x53fa8498 = 0x00200000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCLK_1
 	str r3, [r0, #0x98]
-//setmem /32 0x53fa849c = 0x00180000
+//setmem /32 0x53fa849c = 0x00200000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCLK_0
 	str r3, [r0, #0x9c]
-//setmem /32 0x53fa84f0 = 0x00180000
+//setmem /32 0x53fa84f0 = 0x00200000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM0, dse=3'b100
 	str r3, [r0, #0xf0]
-//setmem /32 0x53fa8500 = 0x00180000
+//setmem /32 0x53fa8500 = 0x00200000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM1, dse=3'b100
 	str r3, [r0, #0x100]
-//setmem /32 0x53fa84c8 = 0x00180000
+//setmem /32 0x53fa84c8 = 0x00200000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM2, dse=3'b100
 	str r3, [r0, #0xc8]
-//setmem /32 0x53fa8528 = 0x00180000
+//setmem /32 0x53fa8528 = 0x00200000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM3, dse=3'b100
 	str r3, [r0, #0x128]
-//setmem /32 0x53fa84f4 = 0x00180000
+//setmem /32 0x53fa84f4 = 0x00200000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS0, dse=3'b100
 	str r3, [r0, #0xf4]
-//setmem /32 0x53fa84fc = 0x00180000
+//setmem /32 0x53fa84fc = 0x00200000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS1, dse=3'b100
 	str r3, [r0, #0xfc]
-//setmem /32 0x53fa84cc = 0x00180000
+//setmem /32 0x53fa84cc = 0x00200000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS2, dse=3'b100
 	str r3, [r0, #0xcc]
-//setmem /32 0x53fa8524 = 0x00180000
+//setmem /32 0x53fa8524 = 0x00200000
 //IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS3, dse=3'b100
 	str r3, [r0, #0x124]
 
@@ -1007,8 +1071,13 @@ wait_pll1_lock:
 	str r3, [r0, #0xa8]
 /*	0x53fa86b4 = 0x00200000  IOMUXC_SW_PAD_CTL_GRP_B3DS, dse=3'b100*/
 	str r3, [r0, #0xb4]
-/*	0x53fa8498 = 0x00200000  IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCLK_1 */
+
 	ldr r0, =0x53fa8400
+/*	0x53fa8490 = 0x00200000  IOMUXC_SW_PAD_CTL_PAD_DRAM_OPEN */
+	str r3, [r0, #0x90]
+/*	0x53fa8494 = 0x00200000  IOMUXC_SW_PAD_CTL_PAD_DRAM_OPENFB */
+	str r3, [r0, #0x94]
+/*	0x53fa8498 = 0x00200000  IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCLK_1 */
 	str r3, [r0, #0x98]
 /*	0x53fa849c = 0x00200000  IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCLK_0 */
 	str r3, [r0, #0x9c]
@@ -1296,8 +1365,8 @@ wait_pll1_lock:
 /*	setmem /32 0x14000118    = 0x01010002 */
 	ldr r1, =0x01010002
 	str r1, [r0, #0x118]
-/*	setmem /32 0x1400011c    = 0x00000000 */
-	ldr r1, =0x00000000
+/*	setmem /32 0x1400011c    = 0x00001000 */
+	ldr r1, =0x00001000
 	str r1, [r0, #0x11c]
 /*	setmem /32 0x14000120    = 0x00000000 */
 	ldr r1, =0x00000000
@@ -1452,7 +1521,7 @@ wait_pll1_lock:
  *=================================================================*/
 	ldr r0, =0x53fa8600
 	mov r1, #0x00000000
-	mov r3, #0x00380000
+	mov r3, #0x00200000
 	mov r2, #0x0
 	str r1, [r0, #0xac]
 	str r2, [r0, #0x6c]
@@ -1466,12 +1535,16 @@ wait_pll1_lock:
 	str r3, [r0, #0xb4]
 
 	ldr r0, =0x53fa8400
+	str r3, [r0, #0x90]
+	str r3, [r0, #0x94]
 	str r3, [r0, #0x98]
 	str r3, [r0, #0x9c]
 	str r3, [r0, #0xf0]
 	str r3, [r0, #0x100]
 	str r3, [r0, #0xc8]
 	str r3, [r0, #0x128]
+
+	orr r3, r3,#0x00000080
 	str r3, [r0, #0xf4]
 	str r3, [r0, #0xfc]
 	str r3, [r0, #0xcc]
@@ -1676,6 +1749,9 @@ wait_pll1_lock:
 /* setmem /32 0x14000118 = 0x01010002 */
 	ldr r1, =0x01010002
 	str r1, [r0, #0x0118]
+/* setmem /32 0x1400011c  = 0x00001000 */
+	ldr r1, =0x00001000
+	str r1, [r0, #0x11c]
 
 /*=============================================================
  *  DDR PHY setting
