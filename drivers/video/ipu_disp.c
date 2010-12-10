@@ -913,6 +913,9 @@ int32_t ipu_init_sync_panel(int disp, uint32_t pixel_clk,
 	/* Init clocking */
 	debug("pixel clk = %d\n", pixel_clk);
 
+	/* clear DI */
+	__raw_writel((1 << 21), DI_GENERAL(disp));
+
 	if (sig.ext_clk) {
 		if (!(g_di1_tvout && (disp == 1))) { /*not round div for tvout*/
 			/*
@@ -950,6 +953,14 @@ int32_t ipu_init_sync_panel(int disp, uint32_t pixel_clk,
 	/* Get integer portion of divider */
 	div = clk_get_rate(clk_get_parent(g_pixel_clk[disp])) /
 		rounded_pixel_clk;
+
+	/* Enable for a divide by 2 clock change. */
+	reg = __raw_readl(IPU_PM);
+	reg &= ~(0x7f << 7);
+	reg |= 0x20 << 7;
+	reg &= ~(0x7f << 23);
+	reg |= 0x20 << 23;
+	__raw_writel(reg, IPU_PM);
 
 	ipu_di_data_wave_config(disp, SYNC_WAVE, div - 1, div - 1);
 	ipu_di_data_pin_config(disp, SYNC_WAVE, DI_PIN15, 3, 0, div * 2);
@@ -1175,6 +1186,11 @@ int32_t ipu_init_sync_panel(int disp, uint32_t pixel_clk,
 		__raw_writel(0, DI_STP_REP(disp, 7));
 		__raw_writel(0, DI_STP_REP(disp, 9));
 
+		h_total = ((width + h_start_width + h_sync_width) / 2) - 2;
+		ipu_di_sync_config(disp, 6, 1, 0, 2, DI_SYNC_CLK, h_total,
+				DI_SYNC_INT_HSYNC, 0, DI_SYNC_NONE,
+				DI_SYNC_NONE, 0, 0);
+
 		/* Init template microcode */
 		if (disp) {
 		   ipu_dc_write_tmpl(2, WROD(0), 0, map, SYNC_WAVE, 8, 5);
@@ -1194,12 +1210,18 @@ int32_t ipu_init_sync_panel(int disp, uint32_t pixel_clk,
 		if (sig.clk_pol)
 			di_gen |= DI_GEN_POL_CLK;
 
+		/* Set the clock to stop at counter 6. */
+		di_gen |= 0x6000000;
 	}
 
 	__raw_writel(di_gen, DI_GENERAL(disp));
 
-	__raw_writel((--vsync_cnt << DI_VSYNC_SEL_OFFSET) |
-			0x00000002, DI_SYNC_AS_GEN(disp));
+	if (sig.interlaced)
+		__raw_writel((--vsync_cnt << DI_VSYNC_SEL_OFFSET) |
+				0x00000002, DI_SYNC_AS_GEN(disp));
+	else
+		__raw_writel((--vsync_cnt << DI_VSYNC_SEL_OFFSET),
+				DI_SYNC_AS_GEN(disp));
 
 	reg = __raw_readl(DI_POL(disp));
 	reg &= ~(DI_POL_DRDY_DATA_POLARITY | DI_POL_DRDY_POLARITY_15);

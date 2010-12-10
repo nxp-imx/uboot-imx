@@ -29,6 +29,11 @@
 #include <asm/arch/iomux.h>
 #include <asm/errno.h>
 #include <i2c.h>
+#include <linux/list.h>
+#include <ipu.h>
+#include <lcd.h>
+#include <linux/fb.h>
+#include <linux/mxcfb.h>
 #include "board-imx51.h"
 #ifdef CONFIG_IMX_ECSPI
 #include <imx_spi.h>
@@ -66,6 +71,24 @@ DECLARE_GLOBAL_DATA_PTR;
 static u32 system_rev;
 static enum boot_device boot_dev;
 u32	mx51_io_base_addr;
+
+#ifdef CONFIG_VIDEO_MX5
+extern unsigned char fsl_bmp_600x400[];
+extern int fsl_bmp_600x400_size;
+#endif
+
+extern int mx51_fb_init(struct fb_videomode *mode, int di,
+			int interface_pix_fmt);
+
+static struct fb_videomode claa_wvga = {
+	/* 800x480 @ 60 Hz , pixel clk @ 27MHz */
+	"CLAA-WVGA", 60, 800, 480, 40000, 40, 40, 5, 5, 20, 10,
+	FB_SYNC_CLK_LAT_FALL,
+	FB_VMODE_NONINTERLACED,
+	0,
+};
+
+vidinfo_t panel_info;
 
 static inline void setup_boot_device(void)
 {
@@ -843,6 +866,78 @@ int board_mmc_init(bd_t *bis)
 
 #endif
 
+#ifdef CONFIG_LCD
+void lcd_enable(void)
+{
+	int ret;
+	unsigned int reg;
+
+	mxc_request_iomux(MX51_PIN_DI_GP4, IOMUX_CONFIG_ALT4);
+
+	mxc_iomux_set_pad(MX51_PIN_DI2_DISP_CLK, PAD_CTL_HYS_NONE |
+			  PAD_CTL_PKE_ENABLE | PAD_CTL_PUE_KEEPER |
+			  PAD_CTL_DRV_MAX | PAD_CTL_SRE_SLOW);
+
+	mxc_request_iomux(MX51_PIN_CSI2_D12, IOMUX_CONFIG_ALT3);
+	reg = readl(GPIO4_BASE_ADDR + 0x4);
+	reg |= 0x200;
+	writel(reg, GPIO4_BASE_ADDR + 0x4);
+	reg = readl(GPIO4_BASE_ADDR + 0x0);
+	reg |= 0x200;
+	writel(reg, GPIO4_BASE_ADDR + 0x0);
+
+	mxc_request_iomux(MX51_PIN_CSI2_D13, IOMUX_CONFIG_ALT3);
+	reg = readl(GPIO4_BASE_ADDR + 0x4);
+	reg |= 0x400;
+	writel(reg, GPIO4_BASE_ADDR + 0x4);
+	reg = readl(GPIO4_BASE_ADDR + 0x0);
+	reg |= 0x400;
+	writel(reg, GPIO4_BASE_ADDR + 0x0);
+
+	/* GPIO backlight */
+	mxc_request_iomux(MX51_PIN_DI1_D1_CS, IOMUX_CONFIG_ALT4);
+	mxc_iomux_set_input(MUX_IN_GPIO3_IPP_IND_G_IN_4_SELECT_INPUT, INPUT_CTL_PATH1);
+	reg = readl(GPIO3_BASE_ADDR + 0x4);
+	reg |= 0x10;
+	writel(reg, GPIO3_BASE_ADDR + 0x4);
+	reg = readl(GPIO3_BASE_ADDR + 0x0);
+	reg |= 0x10;
+	writel(reg, GPIO3_BASE_ADDR + 0x0);
+
+	ret = mx51_fb_init(&claa_wvga, 1, IPU_PIX_FMT_RGB565);
+	if (ret)
+		puts("LCD cannot be configured\n");
+}
+#endif
+
+#ifdef CONFIG_VIDEO_MX5
+static void panel_info_init(void)
+{
+	panel_info.vl_bpix = LCD_BPP;
+	panel_info.vl_col = claa_wvga.xres;
+	panel_info.vl_row = claa_wvga.yres;
+}
+#endif
+
+#ifdef CONFIG_SPLASH_SCREEN
+void setup_splash_image(void)
+{
+	char *s;
+	ulong addr;
+
+	s = getenv("splashimage");
+
+	if (s != NULL) {
+		addr = simple_strtoul (s, NULL, 16);
+
+#if defined(CONFIG_ARCH_MMU)
+		addr = ioremap_nocache(iomem_to_phys(addr), fsl_bmp_600x400_size);
+#endif
+		memcpy((char *)addr, (char *)fsl_bmp_600x400, fsl_bmp_600x400_size);
+	}
+}
+#endif
+
 #if defined(CONFIG_MXC_KPD)
 int setup_mxc_kpd(void)
 {
@@ -888,6 +983,14 @@ int board_init(void)
 	setup_i2c(I2C1_BASE_ADDR);
 #endif
 
+#ifdef CONFIG_VIDEO_MX5
+	panel_info_init();
+
+	gd->fb_base = CONFIG_FB_BASE;
+#ifdef CONFIG_ARCH_MMU
+	gd->fb_base = ioremap_nocache(iomem_to_phys(gd->fb_base), 0);
+#endif
+#endif
 	return 0;
 }
 

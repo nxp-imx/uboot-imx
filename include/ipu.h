@@ -318,4 +318,7 @@ void ipu_dp_uninit(ipu_channel_t channel);
 void ipu_dp_dc_disable(ipu_channel_t channel, unsigned char swap);
 ipu_color_space_t format_to_colorspace(uint32_t fmt);
 
+void ipu_clk_enable(void);
+void ipu_clk_disable(void);
+
 #endif

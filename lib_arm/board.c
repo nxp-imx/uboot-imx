@@ -66,6 +66,10 @@ extern int  AT91F_DataflashInit(void);
 extern void dataflash_print_info(void);
 #endif
 
+#if defined CONFIG_SPLASH_SCREEN && defined CONFIG_VIDEO_MX5
+extern void setup_splash_image(void);
+#endif
+
 #ifndef CONFIG_IDENT_STRING
 #define CONFIG_IDENT_STRING ""
 #endif
@@ -393,6 +397,10 @@ void start_armboot (void)
 
 	/* IP Address */
 	gd->bd->bi_ip_addr = getenv_IPaddr ("ipaddr");
+
+#if defined CONFIG_SPLASH_SCREEN && defined CONFIG_VIDEO_MX5
+	setup_splash_image();
+#endif
 
 	stdio_init ();	/* get the devices list going. */
 

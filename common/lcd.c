@@ -488,7 +488,7 @@ static void lcd_setfgcolor (int color)
 
 static void lcd_setbgcolor (int color)
 {
-#if defined(CONFIG_ATMEL_LCD) || defined(CONFIG_MXC2_LCD)
+#if defined(CONFIG_ATMEL_LCD) || defined(CONFIG_MXC2_LCD) || defined(CONFIG_VIDEO_MX5)
 	lcd_color_bg = color;
 #else
 	lcd_color_bg = color & 0x0F;

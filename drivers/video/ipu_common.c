@@ -162,13 +162,13 @@ int clk_set_parent(struct clk *clk, struct clk *parent)
 
 static int clk_ipu_enable(struct clk *clk)
 {
+	ipu_clk_enable();
 	return 0;
 }
 
 static void clk_ipu_disable(struct clk *clk)
 {
 }
-
 
 static struct clk ipu_clk = {
 	.name = "ipu_clk",
@@ -976,8 +976,12 @@ int32_t ipu_enable_channel(ipu_channel_t channel)
 	}
 
 	if ((channel == MEM_DC_SYNC) || (channel == MEM_BG_SYNC) ||
-	    (channel == MEM_FG_SYNC))
+	    (channel == MEM_FG_SYNC)) {
+		reg = __raw_readl(IDMAC_WM_EN(in_dma));
+		__raw_writel(reg | idma_mask(in_dma), IDMAC_WM_EN(in_dma));
+
 		ipu_dp_dc_enable(channel);
+	}
 
 	g_channel_enable_mask |= 1L << IPU_CHAN_ID(channel);
 

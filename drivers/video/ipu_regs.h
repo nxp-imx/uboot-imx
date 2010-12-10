@@ -6,7 +6,7 @@
  *
  * Linux IPU driver for MX51:
  *
- * (C) Copyright 2005-2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2005-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -314,6 +314,7 @@ struct ipu_dmfc {
 #define IPU_FS_DISP_FLOW1	(&IPU_CM_REG->fs_disp_flow[0])
 #define IPU_DISP_GEN		(&IPU_CM_REG->disp_gen)
 #define IPU_MEM_RST		(&IPU_CM_REG->mem_rst)
+#define IPU_PM                  (&IPU_CM_REG->pm)
 #define IPU_GPR			(&IPU_CM_REG->gpr)
 #define IPU_CHA_DB_MODE_SEL(ch)	(&IPU_CM_REG->ch_db_mode_sel[ch / 32])
 
@@ -330,6 +331,7 @@ struct ipu_dmfc {
 #define IDMAC_CONF		(&IDMAC_REG->conf)
 #define IDMAC_CHA_EN(ch)	(&IDMAC_REG->ch_en[ch / 32])
 #define IDMAC_CHA_PRI(ch)	(&IDMAC_REG->ch_pri[ch / 32])
+#define IDMAC_WM_EN(ch)		(&IDMAC_REG->wm_en[ch / 32])
 
 #define DI_REG(di)		((struct ipu_di *)(IPU_CTRL_BASE_ADDR + \
 				((di == 1) ? IPU_DI1_REG_BASE : \
