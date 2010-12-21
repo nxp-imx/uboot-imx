@@ -168,9 +168,7 @@
 /*
  * DDR ZQ calibration
  */
-/*
 #define CONFIG_ZQ_CALIB
-*/
 
 /*
  * I2C Configs

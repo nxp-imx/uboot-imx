@@ -167,9 +167,7 @@
 /*
  * DDR ZQ calibration
  */
-/*
 #define CONFIG_ZQ_CALIB
-*/
 
 /*
 #define CONFIG_SPLASH_SCREEN
