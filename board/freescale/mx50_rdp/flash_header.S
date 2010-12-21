@@ -40,7 +40,7 @@ pu_loop:
 	cmp r1, #0x20
 	beq pu_out
 
-	;(pd + 1) << 24 | (pu + 1) << 16
+	// (pd + 1) << 24 | (pu + 1) << 16
 	ldr r2, =0x0
 	add r2, r2, #0x1
 	add r1, r1, #0x1
@@ -52,12 +52,10 @@ pu_loop:
 
 	sub r2, r2, #0x1
 	sub r1, r1, #0x1
-	;(pd << 8) | pu
+	// (pd << 8) | pu
 	mov r3, r1
 	// Set SW_CFG2
 	str r3, [r0, #0x12c]
-
-	sub r1, r1, #0x1
 
 	// Start ZQ comparator
 	ldr r2, =0x10000
@@ -95,7 +93,7 @@ pd_loop:
 	cmp r2, #0xf
 	beq pd_out
 
-	; (pd + 1) << 24 | (pu + 1) << 16 | 1 << 4
+	// (pd + 1) << 24 | (pu + 1) << 16 | 1 << 4
 	add r2, r2, #0x1
 	add r1, r1, #0x1
 	mov r3, r2, lsl #24
@@ -106,7 +104,7 @@ pd_loop:
 
 	sub r2, r2, #0x1
 	sub r1, r1, #0x1
-	;(pd << 8) | pu
+	// (pd << 8) | pu
 	mov r3, r2, LSL #8
 	orr r3, r3, r1
 	// Set SW_CFG2
@@ -146,7 +144,7 @@ pd_out:
 	sub r2, r2, #0x2
 
 #if defined(CONFIG_LPDDR2)
-	; Pd add 3
+	// Pd add 3
 	add  r2, r2, #0x3
 
 /*=============================================================================
@@ -157,80 +155,80 @@ pu_loop_pd:
 	cmp r1, #0x20
 	beq pu_out_pd
 
-	; (pd + 1) << 24 | (pu + 1) << 16 | 1 << 4
+	// (pd + 1) << 24 | (pu + 1) << 16 | 1 << 4
 	add r2, r2, #0x1
 	add r1, r1, #0x1
 	mov r3, r2, LSL #24
 	orr r3, r3, r1, LSL #16
 	orr r3, r3, #0x10
-	;Set SW_CFG1
+	// Set SW_CFG1
 	str r3, [r0,#0x128]
 
 	sub r2, r2, #0x1
 	sub r1, r1, #0x1
-	;(pd << 8) | pu
+	// (pd << 8) | pu
 	mov r3, r2, LSL #8
 	orr r3, r3, r1
-	;Set SW_CFG2
+	// Set SW_CFG2
 	str r3, [r0,#0x12c]
 
-	;Start ZQ comparator
+	// Start ZQ comparator
 	ldr r3, =0x10000
 	str r3, [r0,#0x124]
 
-	;Delay 300ns at least
+	// Delay 300ns at least
 	ldr r3, =0x0
 pu_delay_pd:
 	add r3, r3, #0x1
 	cmp r3,#0x1000
 	bne pu_delay_pd
 
-	;Read compare result
+	// Read compare result
 	ldr r3, [r0, #0x14c]
 	and r3, r3, #0x1
 
-	;Stop ZQ comparator
+	// Stop ZQ comparator
 	ldr r8, =0x0
 	str r8, [r0,#0x124]
 
-	;Add pu value
+	// Add pu value
 	add r1, r1, #0x1
 	cmp r3, #0x1
 	bne pu_loop_pd
 
 pu_out_pd:
-	;Pu calibration result in r1
+	// Pu calibration result in r1
 	sub r1, r1, #0x1
 #endif
 
 /*=============================================================================
  * Software load PU/PD value,PU is stored in r1, and PD is stored in r2
  *===========================================================================*/
-	;(pd << 8) | pu
+	// (pd << 8) | pu
 	mov r3, r2, LSL #8
 	orr r3, r3, r1
-	;Set SW_CFG2
+	// Set SW_CFG2
 	str r3, [r0, #0x12c]
 
-	;((pd + 1) << 24) | ((pu + 1) <<16)
+	// ((pd + 1) << 24) | ((pu + 1) <<16)
 	add r2, r2, #0x1
 	add r1, r1, #0x1
 	mov r3, r2, LSL #24
 	orr r3, r3, r1, LSL #16
-	;Load PU, pu_pd_sel=0
+	// Load PU, pu_pd_sel=0
 	str r3, [r0, #0x128]
 
-	;Set SW_CFG
+	// Set SW_CFG
 	ldr r1, =0x00310000
 	str r1, [r0, #0x124]
 	ldr r2, =0x00200000
 	str r2, [r0, #0x124]
 
-	;Load PD, pu_pd_sel=1
+	// Load PD, pu_pd_sel=1
 	orr r3, r3, #0x10
 	str r3, [r0, #0x128]
 
-	;Set SW_CFG
+	// Set SW_CFG
 	str r1, [r0, #0x124]
 	str r2, [r0, #0x124]
 .endm
