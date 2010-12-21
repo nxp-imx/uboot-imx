@@ -28,8 +28,7 @@ LIB	:= $(obj)libusb_gadget.a
 ifdef CONFIG_USB_DEVICE
 COBJS-y += core.o
 COBJS-y += ep0.o
-COBJS-$(CONFIG_MX51_BBG) += imx_udc.o
-COBJS-$(CONFIG_MX53_EVK) += imx_udc.o
+COBJS-$(CONFIG_IMX_UDC) += imx_udc.o
 COBJS-$(CONFIG_OMAP1510) += omap1510_udc.o
 COBJS-$(CONFIG_OMAP1610) += omap1510_udc.o
 COBJS-$(CONFIG_MPC885_FAMILY) += mpc8xx_udc.o

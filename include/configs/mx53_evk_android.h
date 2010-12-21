@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX53-EVK Freescale board.
  *
@@ -80,6 +80,7 @@
 /* Android fastboot configs */
 #define CONFIG_USB_DEVICE
 #define CONFIG_FASTBOOT                1
+#define CONFIG_IMX_UDC                 1
 #define CONFIG_FASTBOOT_STORAGE_EMMC
 #define CONFIG_FASTBOOT_VENDOR_ID      0xbb4
 #define CONFIG_FASTBOOT_PRODUCT_ID     0xc01
