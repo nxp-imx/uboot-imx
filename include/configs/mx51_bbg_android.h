@@ -159,7 +159,7 @@
 #define CONFIG_PRIME	"FEC0"
 
 #define CONFIG_LOADADDR		0x90800000	/* loadaddr env var */
-#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
+#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x400000)
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
@@ -167,9 +167,9 @@
 		"uboot_addr=0xa0000000\0"				\
 		"uboot=u-boot.bin\0"			\
 		"kernel=uImage\0"				\
-		"rd_loadaddr=0x90B00000\0"	\
+		"rd_loadaddr=0x90C00000\0"	\
 		"nfsroot=/opt/eldk/arm\0"				\
-		"bootargs_base=setenv bootargs console=ttymxc0,115200\0"\
+		"bootargs_base=setenv bootargs console=ttymxc0,115200 gpu_memory=16M\0"\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs " \
 			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\

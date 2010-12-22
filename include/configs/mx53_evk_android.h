@@ -151,7 +151,7 @@
 #define CONFIG_PRIME	"FEC0"
 
 #define CONFIG_LOADADDR		0x70800000	/* loadaddr env var */
-#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
+#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x400000)
 
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
@@ -160,14 +160,14 @@
 		"uboot=u-boot.bin\0"					\
 		"kernel=uImage\0"					\
 		"loadaddr=0x70800000\0"					\
-		"rd_loadaddr=0x70B00000\0"				\
+		"rd_loadaddr=0x70C00000\0"				\
 		"nfsroot=/opt/eldk/arm\0"				\
 		"bootargs_base=setenv bootargs ${bootargs} "		\
-		"console=ttymxc0,115200\0"				\
+		"console=ttymxc0,115200 gpu_memory=16M\0"		\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs " \
 		     "ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"	\
-		"bootargs_android=setenv bootargs ${bootargs} mem=512M " \
-		     "androidboot.console=ttymxc0 init=/init "		\
+		"bootargs_android=setenv bootargs ${bootargs} " \
+		     "androidboot.console=ttymxc0 init=/init di0_primary" \
 		     "video=mxcdi0fb:RGB565,800x480M@55 calibration\0"	\
 		"bootcmd=run bootcmd_SD \0"				\
 		"bootcmd_SD=run bootargs_base bootargs_android;"	\
