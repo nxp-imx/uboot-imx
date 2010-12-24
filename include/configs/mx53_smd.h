@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX53-SMD Freescale board.
  *
@@ -250,6 +250,7 @@
 #define CONFIG_SYS_NO_FLASH
 
 /* Monitor at beginning of flash */
+/* #define CONFIG_FSL_ENV_IN_SATA */
 #define CONFIG_FSL_ENV_IN_MMC
 
 #define CONFIG_ENV_SECT_SIZE    (128 * 1024)
@@ -261,6 +262,10 @@
 #elif defined(CONFIG_FSL_ENV_IN_MMC)
 	#define CONFIG_ENV_IS_IN_MMC	1
 	#define CONFIG_ENV_OFFSET	(768 * 1024)
+#elif defined(CONFIG_FSL_ENV_IN_SATA)
+	#define CONFIG_ENV_IS_IN_SATA   1
+	#define CONFIG_SATA_ENV_DEV     0
+	#define CONFIG_ENV_OFFSET       (768 * 1024)
 #elif defined(CONFIG_FSL_ENV_IN_SF)
 	#define CONFIG_ENV_IS_IN_SPI_FLASH	1
 	#define CONFIG_ENV_SPI_CS		1
