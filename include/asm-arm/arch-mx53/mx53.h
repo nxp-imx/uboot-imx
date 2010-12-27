@@ -24,10 +24,9 @@
 #define __REG8(x)       (*((volatile u8 *)(x)))
 
 /*
-  * ROM address which denotes silicon rev
-  */
-#define ROM_SI_REV	0x48
-
+ *ROM address which denotes silicon rev
+ */
+#define ROM_SI_REV     0x48
 /*
  * SATA
  */

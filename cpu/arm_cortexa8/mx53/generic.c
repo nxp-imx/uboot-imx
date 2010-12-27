@@ -739,9 +739,13 @@ static int config_pll_clk(enum pll_clocks pll, struct pll_param *pll_param)
 		writel(ccsr & ~0x4, CCM_BASE_ADDR + CLKCTL_CCSR);
 		break;
 	case PLL2_CLK:
+		/* Switch to pll2 bypass clock */
+		writel(ccsr | 0x2, CCM_BASE_ADDR + CLKCTL_CCSR);
 		CHANGE_PLL_SETTINGS(pll_base, pll_param->pd,
 					pll_param->mfi, pll_param->mfn,
 					pll_param->mfd);
+		/* Switch back */
+		writel(ccsr & ~0x2, CCM_BASE_ADDR + CLKCTL_CCSR);
 		break;
 	case PLL3_CLK:
 		/* Switch to pll3 bypass clock */
@@ -842,8 +846,8 @@ static int config_periph_clk(u32 ref, u32 freq)
 		u32 old_nfc = __get_nfc_clk();
 
 		/* Switch peripheral to PLL3 */
-		writel((old_cbcmr & ~0x3000) | (1 << 12),
-			CCM_BASE_ADDR + CLKCTL_CBCMR);
+		writel(0x00015154, CCM_BASE_ADDR + CLKCTL_CBCMR);
+		writel(0x02888945, CCM_BASE_ADDR + CLKCTL_CBCDR);
 
 		/* Make sure change is effective */
 		while (readl(CCM_BASE_ADDR + CLKCTL_CDHIPR) != 0)
@@ -859,6 +863,7 @@ static int config_periph_clk(u32 ref, u32 freq)
 		config_pll_clk(PLL2_CLK, &pll_param);
 
 		/* Switch peripheral back */
+		writel(new_cbcdr, CCM_BASE_ADDR + CLKCTL_CBCDR);
 		writel(old_cbcmr, CCM_BASE_ADDR + CLKCTL_CBCMR);
 
 		/* Make sure change is effective */

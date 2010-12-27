@@ -358,12 +358,14 @@ void setup_core_voltages(void)
 	if (i2c_write(0x8, 24, 1, buf, 3))
 		return;
 
-	/* Set DDR voltage VDDA to 1.25V */
-	buf[0] = 0;
-	buf[1] = 0;
-	buf[2] = 0x1a;
-	if (i2c_write(0x8, 26, 1, buf, 3))
-		return;
+	if (is_soc_rev(CHIP_REV_1_0) == 0) {
+		/* Set DDR voltage VDDA to 1.25V */
+		buf[0] = 0;
+		buf[1] = 0;
+		buf[2] = 0x1a;
+		if (i2c_write(0x8, 26, 1, buf, 3))
+			return;
+	}
 
 	if (is_soc_rev(CHIP_REV_2_0) == 0) {
 		/* Set VCC to 1.3V for TO2 */
@@ -388,7 +390,7 @@ void setup_core_voltages(void)
 	writel(0x0, CCM_BASE_ADDR + CLKCTL_CACRR);
 }
 
-#ifdef CONFIG_MX53_EVK
+#if defined(CONFIG_MX53_EVK) || defined(CONFIG_MX53_ARM2_DDR3)
 static int __read_adc_channel(unsigned int chan)
 {
 	unsigned char buf[4] = { 0 };
@@ -512,9 +514,10 @@ static int __print_board_info(int id0, int id1)
 		}
 
 		break;
+
 	default:
 		printf("Unkown board id0:%d\n", id0);
-
+		ret =  -1;
 		break;
 	}
 
@@ -539,6 +542,14 @@ static int _identify_board_fix_up(int id0, int id1)
 		/* set up rev #2 for EVK RevB board */
 		setup_board_rev(2);
 	}
+
+	/* For ARM2 board */
+	if (id0 == -1) {
+		if (clk_config(CONFIG_REF_CLK_FREQ, 400, PERIPH_CLK) >= 0)
+			clk_config(CONFIG_REF_CLK_FREQ, 400, DDR_CLK);
+		setup_board_rev(1);
+	}
+
 #endif
 	return ret;
 }
@@ -568,8 +579,11 @@ int identify_board_id(void)
 		return ret;
 
 	ret = __print_board_info(bd_id0, bd_id1);
-	if (ret < 0)
-		return ret;
+	if (ret < 0) {
+		/* Treat it as ARM2 board if it's not recognized */
+		printf("Treat it as MX53 ARM2 board\n");
+		bd_id0 = -1;
+	}
 
 	ret = _identify_board_fix_up(bd_id0, bd_id1);
 
@@ -1255,9 +1269,6 @@ int board_init(void)
 #endif
 	setup_boot_device();
 	setup_soc_rev();
-#if defined(CONFIG_MX53_ARM2) || defined(CONFIG_MX53_ARM2_DDR3)
-	setup_board_rev(1);
-#endif
 
 #if defined(CONFIG_MX53_ARD)
 	gd->bd->bi_arch_number = MACH_TYPE_MX53_ARD;
@@ -1419,19 +1430,10 @@ int checkboard(void)
 {
 	printf("Board: ");
 
-/* On EVK, DDR frequency will be bumped up to 400 MHz in identify_board_id() */
-#if !defined(CONFIG_MX53_EVK)
-	/* Bump up the DDR frequency to 400 MHz */
-	if (clk_config(CONFIG_REF_CLK_FREQ, 400, PERIPH_CLK) >= 0)
-		clk_config(CONFIG_REF_CLK_FREQ, 400, DDR_CLK);
-#endif
-
 #if defined(CONFIG_MX53_ARD)
 	printf("MX53-ARD 1.0 [");
-#elif defined(CONFIG_MX53_ARM2) || defined(CONFIG_MX53_ARM2_DDR3)
-	printf("Board: MX53 ARMADILLO2 ");
 	printf("1.0 [");
-#elif defined(CONFIG_MX53_EVK)
+#elif defined(CONFIG_MX53_EVK) || defined(CONFIG_MX53_ARM2_DDR3)
 #ifdef CONFIG_I2C_MXC
 	identify_board_id();
 
