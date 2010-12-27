@@ -1205,6 +1205,13 @@ skip_it:
 	/* fix up the offset */
 	largepage_memorybased.offs = BAD_BLK_MARKER_OOB_OFFS;
 
+	/* keep compatible for bbt table with old soc */
+#ifdef CONFIG_MX53
+	bbt_mirror_descr.offs = BAD_BLK_MARKER_OOB_OFFS + 2;
+	bbt_main_descr.offs = BAD_BLK_MARKER_OOB_OFFS + 2;
+	bbt_mirror_descr.veroffs = bbt_mirror_descr.offs + 4;
+	bbt_main_descr.veroffs = bbt_main_descr.offs + 4;
+#endif
 	/* use flash based bbt */
 	this->bbt_td = &bbt_main_descr;
 	this->bbt_md = &bbt_mirror_descr;
