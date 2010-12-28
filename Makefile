@@ -3277,15 +3277,15 @@ mx51_3stack_config	: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx51_3stack freescale mx51
 
 mx53_ard_mfg_config		\
-mx53_evk_mfg_config 		\
+mx53_ard_config		: unconfig
+	$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx53_ard freescale mx53
+
 mx53_arm2_ddr3_config		\
-mx53_arm2_config		\
-mx53_arm2_android_config	\
 mx53_arm2_ddr3_android_config	\
 mx53_evk_android_config		\
-mx53_ard_config			\
+mx53_evk_mfg_config             \
 mx53_evk_config      : unconfig
-	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx53_rd freescale mx53
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx53_evk freescale mx53
 
 omap2420h4_config	: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1136 omap2420h4 NULL omap24xx
