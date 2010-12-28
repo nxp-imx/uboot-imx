@@ -35,10 +35,17 @@
 #include <linux/list.h>
 #include <mmc.h>
 #include <div64.h>
-#include <fsl_esdhc.h>
 
 static struct list_head mmc_devices;
 static int cur_dev_num = -1;
+
+int __board_mmc_getcd(u8 *cd, struct mmc *mmc)
+{
+	return -1;
+}
+
+int board_mmc_getcd(u8 *cd, struct mmc *mmc)__attribute__((weak,
+	alias("__board_mmc_getcd")));
 
 static int mmc_send_cmd(struct mmc *mmc,
 	struct mmc_cmd *cmd, struct mmc_data *data)
@@ -76,18 +83,63 @@ struct mmc *find_mmc_device(int dev_num)
 }
 
 static ulong
-mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
+mmc_write_blocks(struct mmc *mmc, ulong start, lbaint_t blkcnt, const void*src)
 {
 	struct mmc_cmd cmd;
 	struct mmc_data data;
-	int err;
-	int stoperr = 0;
-	struct mmc *mmc = find_mmc_device(dev_num);
-	int blklen;
-	lbaint_t blk_offset = 0, blk_left = blkcnt;
 
+	if ((start + blkcnt) > mmc->block_dev.lba) {
+		printf("MMC: block number 0x%lx exceeds max(0x%lx)\n",
+			start + blkcnt, mmc->block_dev.lba);
+		return 0;
+	}
+
+	if (blkcnt > 1)
+		cmd.cmdidx = MMC_CMD_WRITE_MULTIPLE_BLOCK;
+	else
+		cmd.cmdidx = MMC_CMD_WRITE_SINGLE_BLOCK;
+
+	if (mmc->high_capacity)
+		cmd.cmdarg = start;
+	else
+		cmd.cmdarg = start * mmc->write_bl_len;
+
+	cmd.resp_type = MMC_RSP_R1;
+	cmd.flags = 0;
+
+	data.src = src;
+	data.blocks = blkcnt;
+	data.blocksize = mmc->write_bl_len;
+	data.flags = MMC_DATA_WRITE;
+
+	if (mmc_send_cmd(mmc, &cmd, &data)) {
+		printf("mmc write failed\n");
+		return 0;
+	}
+
+	if (blkcnt > 1) {
+		cmd.cmdidx = MMC_CMD_STOP_TRANSMISSION;
+		cmd.cmdarg = 0;
+		cmd.resp_type = MMC_RSP_R1b;
+		cmd.flags = 0;
+		if (mmc_send_cmd(mmc, &cmd, NULL)) {
+			printf("mmc fail to send stop cmd\n");
+			return 0;
+		}
+	}
+
+	return blkcnt;
+}
+
+static ulong
+mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void *src)
+{
+	lbaint_t cur, blocks_todo = blkcnt;
+	int err = 0, blklen;
+
+	struct mmc *mmc = find_mmc_device(dev_num);
 	if (!mmc)
-		return -1;
+		return 0;
 
 	blklen = mmc->write_bl_len;
 
@@ -104,144 +156,79 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 	}
 
 	do {
-		cmd.cmdidx = (blk_left > 1) \
-				? MMC_CMD_WRITE_MULTIPLE_BLOCK \
-				: MMC_CMD_WRITE_SINGLE_BLOCK;
-
-		cmd.cmdarg = (mmc->high_capacity) \
-				? (start + blk_offset) \
-				: ((start + blk_offset) * blklen);
-
-		cmd.resp_type = MMC_RSP_R1;
-		cmd.flags = 0;
-
-		data.src = src + blk_offset * blklen;
-		data.blocks = (blk_left > MAX_BLK_CNT) \
-					  ? MAX_BLK_CNT : blk_left;
-		data.blocksize = blklen;
-		data.flags = MMC_DATA_WRITE;
-
-		err = mmc_send_cmd(mmc, &cmd, &data);
-
-		if (err) {
-			puts("mmc write failed\n\r");
-			return err;
-		}
-
-		if (blk_left > 1) {
-			cmd.cmdidx = MMC_CMD_STOP_TRANSMISSION;
-			cmd.cmdarg = 0;
-			cmd.resp_type = MMC_RSP_R1b;
-			cmd.flags = 0;
-			stoperr = mmc_send_cmd(mmc, &cmd, NULL);
-		}
-
-		if (blk_left > MAX_BLK_CNT) {
-			blk_left -= MAX_BLK_CNT;
-			blk_offset += MAX_BLK_CNT;
-		} else
-			break;
-	} while (blk_left > 0);
+		/*
+		 * The 65535 constraint comes from some hardware has
+		 * only 16 bit width block number counter
+		 */
+		cur = (blocks_todo > 65535) ? 65535 : blocks_todo;
+		if (mmc_write_blocks(mmc, start, cur, src) != cur)
+			return 0;
+		blocks_todo -= cur;
+		start += cur;
+		src += cur * mmc->write_bl_len;
+	} while (blocks_todo > 0);
 
 	return blkcnt;
 }
 
-static int mmc_read_block(struct mmc *mmc, void *dst, uint blocknum)
+static int mmc_read_blocks(struct mmc *mmc, void *dst,
+				ulong start, lbaint_t blkcnt)
 {
 	struct mmc_cmd cmd;
 	struct mmc_data data;
 
-	cmd.cmdidx = MMC_CMD_READ_SINGLE_BLOCK;
+	if (blkcnt > 1)
+		cmd.cmdidx = MMC_CMD_READ_MULTIPLE_BLOCK;
+	else
+		cmd.cmdidx = MMC_CMD_READ_SINGLE_BLOCK;
 
 	if (mmc->high_capacity)
-		cmd.cmdarg = blocknum;
+		cmd.cmdarg = start;
 	else
-		cmd.cmdarg = blocknum * mmc->read_bl_len;
+		cmd.cmdarg = start * mmc->read_bl_len;
 
 	cmd.resp_type = MMC_RSP_R1;
 	cmd.flags = 0;
 
 	data.dest = dst;
-	data.blocks = 1;
+	data.blocks = blkcnt;
 	data.blocksize = mmc->read_bl_len;
 	data.flags = MMC_DATA_READ;
 
-	return mmc_send_cmd(mmc, &cmd, &data);
-}
+	if (mmc_send_cmd(mmc, &cmd, &data))
+		return 0;
 
-int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size)
-{
-	char *buffer;
-	int i;
-	int blklen = mmc->read_bl_len;
-	int startblock = lldiv(src, mmc->read_bl_len);
-	int endblock = lldiv(src + size - 1, mmc->read_bl_len);
-	int err = 0;
-
-	if (mmc->bus_width == EMMC_MODE_4BIT_DDR ||
-		mmc->bus_width == EMMC_MODE_8BIT_DDR)
-		blklen = 512;
-
-	/* Make a buffer big enough to hold all the blocks we might read */
-	buffer = malloc(blklen);
-
-	if (!buffer) {
-		printf("Could not allocate buffer for MMC read!\n");
-		return -1;
+	if (blkcnt > 1) {
+		cmd.cmdidx = MMC_CMD_STOP_TRANSMISSION;
+		cmd.cmdarg = 0;
+		cmd.resp_type = MMC_RSP_R1b;
+		cmd.flags = 0;
+		if (mmc_send_cmd(mmc, &cmd, NULL)) {
+			printf("mmc fail to send stop cmd\n");
+			return 0;
+		}
 	}
 
-	if (mmc->bus_width == EMMC_MODE_4BIT_DDR ||
-		mmc->bus_width == EMMC_MODE_8BIT_DDR)
-		err = 0;
-	else {
-		/* We always do full block reads from the card */
-		err = mmc_set_blocklen(mmc, mmc->read_bl_len);
-	}
-
-	if (err)
-		goto free_buffer;
-
-	for (i = startblock; i <= endblock; i++) {
-		int segment_size;
-		int offset;
-
-		err = mmc_read_block(mmc, buffer, i);
-
-		if (err)
-			goto free_buffer;
-
-		/*
-		 * The first block may not be aligned, so we
-		 * copy from the desired point in the block
-		 */
-		offset = (src & (blklen - 1));
-		segment_size = MIN(blklen - offset, size);
-
-		memcpy(dst, buffer + offset, segment_size);
-
-		dst += segment_size;
-		src += segment_size;
-		size -= segment_size;
-	}
-
-free_buffer:
-	free(buffer);
-
-	return err;
+	return blkcnt;
 }
 
 static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
 {
-	struct mmc_cmd cmd;
-	struct mmc_data data;
-	int err;
-	int stoperr = 0;
-	struct mmc *mmc = find_mmc_device(dev_num);
-	int blklen;
-	lbaint_t blk_offset = 0, blk_left = blkcnt;
+	lbaint_t cur, blocks_todo = blkcnt;
+	int err = 0, blklen;
 
+	if (blkcnt == 0)
+		return 0;
+
+	struct mmc *mmc = find_mmc_device(dev_num);
 	if (!mmc)
-		return -1;
+		return 0;
+
+	if ((start + blkcnt) > mmc->block_dev.lba) {
+		printf("MMC: block number 0x%lx exceeds max(0x%lx)\n",
+			start + blkcnt, mmc->block_dev.lba);
+		return 0;
+	}
 
 	if (mmc->bus_width == EMMC_MODE_4BIT_DDR ||
 		mmc->bus_width == EMMC_MODE_8BIT_DDR) {
@@ -258,48 +245,20 @@ static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
 	}
 
 	do {
-		cmd.cmdidx = (blk_left > 1) \
-				? MMC_CMD_READ_MULTIPLE_BLOCK \
-				: MMC_CMD_READ_SINGLE_BLOCK;
-
-		cmd.cmdarg = (mmc->high_capacity) \
-				? (start + blk_offset) \
-				: ((start + blk_offset) * blklen);
-
-		cmd.resp_type = MMC_RSP_R1;
-		cmd.flags = 0;
-
-		data.dest = dst + blk_offset * blklen;
-		data.blocks = (blk_left > MAX_BLK_CNT) ? MAX_BLK_CNT : blk_left;
-		data.blocksize = blklen;
-		data.flags = MMC_DATA_READ;
-
-		err = mmc_send_cmd(mmc, &cmd, &data);
-
-		if (err) {
-			puts("mmc read failed\n\r");
-			return err;
-		}
-
-		if (blk_left > 1) {
-			cmd.cmdidx = MMC_CMD_STOP_TRANSMISSION;
-			cmd.cmdarg = 0;
-			cmd.resp_type = MMC_RSP_R1b;
-			cmd.flags = 0;
-			stoperr = mmc_send_cmd(mmc, &cmd, NULL);
-		}
-
-		if (blk_left > MAX_BLK_CNT) {
-			blk_left -= MAX_BLK_CNT;
-			blk_offset += MAX_BLK_CNT;
-		} else
-			break;
-	} while (blk_left > 0);
+		/*
+		 * The 65535 constraint comes from some hardware has
+		 * only 16 bit width block number counter
+		 */
+		cur = (blocks_todo > 65535) ? 65535 : blocks_todo;
+		if (mmc_read_blocks(mmc, dst, start, cur) != cur)
+			return 0;
+		blocks_todo -= cur;
+		start += cur;
+		dst += cur * mmc->read_bl_len;
+	} while (blocks_todo > 0);
 
 	return blkcnt;
 }
-
-#define CARD_STATE(r) ((u32)((r) & 0x1e00) >> 9)
 
 static int mmc_go_idle(struct mmc *mmc)
 {
@@ -478,13 +437,8 @@ static int mmc_change_freq(struct mmc *mmc)
 	if (err)
 		goto err_rtn;
 
-	if (mmc->high_capacity) {
-		mmc->capacity = ext_csd[EXT_CSD_SEC_CNT + 3] << 24 |
-				ext_csd[EXT_CSD_SEC_CNT + 2] << 16 |
-				ext_csd[EXT_CSD_SEC_CNT + 1] << 8 |
-				ext_csd[EXT_CSD_SEC_CNT];
-		mmc->capacity *= 512;
-	}
+	if (ext_csd[212] || ext_csd[213] || ext_csd[214] || ext_csd[215])
+		mmc->high_capacity = 1;
 
 	cardtype = ext_csd[EXT_CSD_CARD_TYPE] & 0xf;
 
@@ -680,7 +634,7 @@ static void mmc_set_ios(struct mmc *mmc)
 	mmc->set_ios(mmc);
 }
 
-static void mmc_set_clock(struct mmc *mmc, uint clock)
+void mmc_set_clock(struct mmc *mmc, uint clock)
 {
 	if (clock > mmc->f_max)
 		clock = mmc->f_max;
@@ -897,6 +851,7 @@ static int mmc_startup(struct mmc *mmc)
 	uint mult, freq;
 	u64 cmult, csize;
 	struct mmc_cmd cmd;
+	char ext_csd[512];
 
 	/* Put the Card in Identify Mode */
 	cmd.cmdidx = MMC_CMD_ALL_SEND_CID;
@@ -983,25 +938,10 @@ static int mmc_startup(struct mmc *mmc)
 	else
 		mmc->write_bl_len = 1 << ((cmd.response[3] >> 22) & 0xf);
 
-	if (IS_SD(mmc)) {
-		int csd_struct = (cmd.response[0] >> 30) & 0x3;
-
-		switch (csd_struct) {
-		case 1:
-			csize = (mmc->csd[1] & 0x3f) << 16
-				| (mmc->csd[2] & 0xffff0000) >> 16;
-			cmult = 8;
-			break;
-		case 0:
-		default:
-			if (0 != csd_struct)
-				printf("unrecognised CSD structure version %d\n",
-						csd_struct);
-			csize = (mmc->csd[1] & 0x3ff) << 2
-				| (mmc->csd[2] & 0xc0000000) >> 30;
-			cmult = (mmc->csd[2] & 0x00038000) >> 15;
-			break;
-		}
+	if (mmc->high_capacity) {
+		csize = (mmc->csd[1] & 0x3f) << 16
+			| (mmc->csd[2] & 0xffff0000) >> 16;
+		cmult = 8;
 	} else {
 		csize = (mmc->csd[1] & 0x3ff) << 2
 			| (mmc->csd[2] & 0xc0000000) >> 30;
@@ -1026,6 +966,16 @@ static int mmc_startup(struct mmc *mmc)
 
 	if (err)
 		return err;
+
+	if (!IS_SD(mmc) && (mmc->version >= MMC_VERSION_4)) {
+		/* check  ext_csd version and capacity */
+		err = mmc_send_ext_csd(mmc, ext_csd);
+		if (!err & (ext_csd[192] >= 2)) {
+			mmc->capacity = ext_csd[212] << 0 | ext_csd[213] << 8 |
+					ext_csd[214] << 16 | ext_csd[215] << 24;
+			mmc->capacity *= 512;
+		}
+	}
 
 	if (IS_SD(mmc))
 		err = sd_change_freq(mmc);
@@ -1172,22 +1122,6 @@ int mmc_register(struct mmc *mmc)
 	mmc->block_dev.removable = 1;
 	mmc->block_dev.block_read = mmc_bread;
 	mmc->block_dev.block_write = mmc_bwrite;
-#if defined(CONFIG_DOS_PARTITION)
-	mmc->block_dev.part_type = PART_TYPE_DOS;
-	mmc->block_dev.type = DEV_TYPE_HARDDISK;
-#elif defined(CONFIG_MAC_PARTITION)
-	mmc->block_dev.part_type = PART_TYPE_MAC;
-	mmc->block_dev.type = DEV_TYPE_HARDDISK;
-#elif defined(CONFIG_ISO_PARTITION)
-	mmc->block_dev.part_type = PART_TYPE_ISO;
-	mmc->block_dev.type = DEV_TYPE_HARDDISK;
-#elif defined(CONFIG_AMIGA_PARTITION)
-	mmc->block_dev.part_type = PART_TYPE_AMIGA;
-	mmc->block_dev.type = DEV_TYPE_HARDDISK;
-#elif defined(CONFIG_EFI_PARTITION)
-	mmc->block_dev.part_type = PART_TYPE_EFI;
-	mmc->block_dev.type = DEV_TYPE_HARDDISK;
-#endif
 
 	INIT_LIST_HEAD (&mmc->link);
 
