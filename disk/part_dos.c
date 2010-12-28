@@ -77,8 +77,10 @@ static int test_block_type(unsigned char *buffer)
 	    (buffer[DOS_PART_MAGIC_OFFSET + 1] != 0xaa) ) {
 		return (-1);
 	} /* no DOS Signature at all */
-	if(strncmp((char *)&buffer[DOS_PBR_FSTYPE_OFFSET],"FAT",3)==0)
+	if (strncmp((char *)&buffer[DOS_PBR_FSTYPE_OFFSET], "FAT", 3) == 0 ||
+	    strncmp((char *)&buffer[DOS_PBR32_FSTYPE_OFFSET], "FAT32", 5) == 0) {
 		return DOS_PBR; /* is PBR */
+	}
 	return DOS_MBR;	    /* Is MBR */
 }
 
@@ -188,7 +190,8 @@ static int get_partition_info_extended (block_dev_desc_t *dev_desc, int ext_part
 		 * fdisk does not show the extended partitions that
 		 * are not in the MBR
 		 */
-		if ((pt->sys_ind != 0) &&
+		if (((pt->boot_ind & ~0x80) == 0) &&
+		    (pt->sys_ind != 0) &&
 		    (part_num == which_part) &&
 		    (is_extended(pt->sys_ind) == 0)) {
 			info->blksz = 512;
