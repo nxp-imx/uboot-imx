@@ -346,6 +346,10 @@
 
 /* Assuming 24MHz input clock with doubler ON */
 /*                            MFI         PDF */
+#define DP_OP_1000	((10 << 4) + ((1 - 1) << 0))
+#define DP_MFD_1000	(12 - 1)
+#define DP_MFN_1000	5
+
 #define DP_OP_850       ((8 << 4) + ((1 - 1)  << 0))
 #define DP_MFD_850      (48 - 1)
 #define DP_MFN_850      41
