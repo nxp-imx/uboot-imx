@@ -140,7 +140,7 @@ union ARM_MMU_FIRST_LEVEL_DESCRIPTOR {
  */
 inline unsigned long iomem_to_phys(unsigned long virt)
 {
-#if defined(CONFIG_MX53_SMD)
+#if defined(CONFIG_MX53_SMD) || defined(CONFIG_MX53_LOCO)
 	if (virt >= 0x90000000 && virt <= 0xafffffff)
 		return (unsigned long)((virt - 0x90000000) + PHYS_SDRAM_1);
 	if (virt >= 0xD0000000 && virt <= 0xEfffffff)
@@ -160,7 +160,7 @@ inline unsigned long iomem_to_phys(unsigned long virt)
 void *__ioremap(unsigned long offset, size_t size, unsigned long flags)
 {
 	if (1 == flags) {
-#if defined(CONFIG_MX53_SMD)
+#if defined(CONFIG_MX53_SMD) || defined(CONFIG_MX53_LOCO)
 		if (offset >= PHYS_SDRAM_1 &&
 		offset < (unsigned long)(PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
 			return (void *)((offset - PHYS_SDRAM_1) + 0x90000000);
