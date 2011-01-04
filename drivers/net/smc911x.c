@@ -2,6 +2,7 @@
  * SMSC LAN9[12]1[567] Network driver
  *
  * (c) 2007 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
+ * Copyright (C) 2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -27,6 +28,10 @@
 #include <malloc.h>
 #include <net.h>
 #include <miiphy.h>
+#ifdef CONFIG_MX53
+#include <asm/io.h>
+#include <asm/imx_iim.h>
+#endif
 
 #include "smc911x.h"
 
@@ -235,6 +240,20 @@ static int smc911x_rx(struct eth_device *dev)
 	return 0;
 }
 
+#ifdef CONFIG_MX53
+void smc911x_get_mac_from_iim(unsigned char *mac)
+{
+	unsigned int mac_ptr;
+	int i;
+
+	for (i = 0; i < 6; i++) {
+		mac_ptr = IMX_IIM_BASE + IIM_BANK_AREA_1_OFFSET + 0x24 +
+			(i << 2);
+		mac[5-i] = readl(mac_ptr);
+	}
+}
+#endif
+
 int smc911x_initialize(u8 dev_num, int base_addr)
 {
 	unsigned long addrl, addrh;
@@ -263,6 +282,12 @@ int smc911x_initialize(u8 dev_num, int base_addr)
 	dev->enetaddr[3] = addrl >> 24;
 	dev->enetaddr[4] = addrh;
 	dev->enetaddr[5] = addrh >> 8;
+
+#ifdef CONFIG_MX53
+	/* Get MAC addr from IIM if the one on the controller is not valid */
+	if (!is_valid_ether_addr(dev->enetaddr))
+		smc911x_get_mac_from_iim(dev->enetaddr);
+#endif
 
 	dev->init = smc911x_init;
 	dev->halt = smc911x_halt;
