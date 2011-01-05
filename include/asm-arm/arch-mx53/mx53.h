@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -373,6 +373,10 @@
 #define DP_OP_532       ((5 << 4) + ((1 - 1)  << 0))
 #define DP_MFD_532      (24 - 1)
 #define DP_MFN_532      13
+
+#define DP_OP_455       ((8 << 4) + ((2 - 1)  << 0))
+#define DP_MFD_455      (48 - 1)
+#define DP_MFN_455      71
 
 #define DP_OP_400       ((8 << 4) + ((2 - 1)  << 0))
 #define DP_MFD_400      (3 - 1)

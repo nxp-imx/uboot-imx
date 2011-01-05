@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -494,6 +494,8 @@ void mxc_dump_clocks(void)
 	printf("mx53 pll2: %dMHz\n", freq / 1000000);
 	freq = __decode_pll(PLL3_CLK, CONFIG_MX53_HCLK_FREQ);
 	printf("mx53 pll3: %dMHz\n", freq / 1000000);
+	freq = __decode_pll(PLL4_CLK, CONFIG_MX53_HCLK_FREQ);
+	printf("mx53 pll4: %dMHz\n", freq / 1000000);
 	printf("ipg clock     : %dHz\n", mxc_get_clock(MXC_IPG_CLK));
 	printf("ipg per clock : %dHz\n", mxc_get_clock(MXC_IPG_PERCLK));
 	printf("uart clock    : %dHz\n", mxc_get_clock(MXC_UART_CLK));
@@ -989,6 +991,7 @@ int print_cpuinfo(void)
 	       (get_board_rev() & 0xFF) >> 4,
 	       (get_board_rev() & 0xF),
 		__get_mcu_main_clk() / 1000000);
+	mxc_dump_clocks();
 	return 0;
 }
 #endif

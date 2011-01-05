@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -135,6 +135,8 @@
 
         setup_pll PLL3_BASE_ADDR, 216
 
+	setup_pll PLL4_BASE_ADDR, 455
+
 	/* Set the platform clock dividers */
 	ldr r0, PLATFORM_BASE_ADDR_W
 	ldr r1, PLATFORM_CLOCK_DIV_W
@@ -224,5 +226,8 @@ W_DP_MFN_400:           .word DP_MFN_400
 W_DP_OP_216:            .word DP_OP_216
 W_DP_MFD_216:           .word DP_MFD_216
 W_DP_MFN_216:           .word DP_MFN_216
+W_DP_OP_455:            .word DP_OP_455
+W_DP_MFD_455:           .word DP_MFD_455
+W_DP_MFN_455:           .word DP_MFN_455
 PLATFORM_BASE_ADDR_W:   .word ARM_BASE_ADDR
 PLATFORM_CLOCK_DIV_W:   .word 0x00000124
