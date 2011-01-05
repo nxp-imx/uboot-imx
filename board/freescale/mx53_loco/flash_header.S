@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -80,7 +80,7 @@ MXC_DCD_ITEM(21, IOMUXC_BASE_ADDR + 0x720, 0x00300000)
 MXC_DCD_ITEM(22, IOMUXC_BASE_ADDR + 0x724, 0x04000000)
 MXC_DCD_ITEM(23, IOMUXC_BASE_ADDR + 0x728, 0x00300000)
 MXC_DCD_ITEM(24, IOMUXC_BASE_ADDR + 0x72c, 0x00300000)
-MXC_DCD_ITEM(25, ESDCTL_BASE_ADDR + 0x088, 0x32383535)
+MXC_DCD_ITEM(25, ESDCTL_BASE_ADDR + 0x088, 0x35343535)
 MXC_DCD_ITEM(26, ESDCTL_BASE_ADDR + 0x090, 0x4d444c44)
 MXC_DCD_ITEM(27, ESDCTL_BASE_ADDR + 0x07c, 0x01370138)
 MXC_DCD_ITEM(28, ESDCTL_BASE_ADDR + 0x080, 0x013b013c)
