@@ -249,7 +249,7 @@ void smc911x_get_mac_from_iim(unsigned char *mac)
 	for (i = 0; i < 6; i++) {
 		mac_ptr = IMX_IIM_BASE + IIM_BANK_AREA_1_OFFSET + 0x24 +
 			(i << 2);
-		mac[5-i] = readl(mac_ptr);
+		mac[i] = readl(mac_ptr);
 	}
 }
 #endif
