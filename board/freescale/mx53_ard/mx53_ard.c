@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -524,17 +524,10 @@ void weim_cs1_settings()
 
 #ifdef CONFIG_CMD_MMC
 
-#if defined(CONFIG_MX53_ARD)
 struct fsl_esdhc_cfg esdhc_cfg[2] = {
 	{MMC_SDHC1_BASE_ADDR, 1, 1},
 	{MMC_SDHC2_BASE_ADDR, 1, 1},
 };
-#else
-struct fsl_esdhc_cfg esdhc_cfg[2] = {
-	{MMC_SDHC1_BASE_ADDR, 1, 1},
-	{MMC_SDHC3_BASE_ADDR, 1, 1},
-};
-#endif
 
 #ifdef CONFIG_DYNAMIC_MMC_DEVNO
 int get_mmc_env_devno()

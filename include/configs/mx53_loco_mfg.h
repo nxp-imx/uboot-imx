@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2011 Freescale Semiconductor, Inc.
  *
- * MFG Configuration settings for the MX53-ARD Freescale board.
+ * Configuration settings for the MX53-LOCO Freescale board.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -25,11 +25,11 @@
 #include <asm/arch/mx53.h>
 
  /* High Level Configuration Options */
-#define CONFIG_MFG	1
+#define CONFIG_MFG    1
 #define CONFIG_ARMV7		/* This is armv7 Cortex-A8 CPU core */
 #define CONFIG_MXC
 #define CONFIG_MX53
-#define CONFIG_MX53_ARD
+#define CONFIG_MX53_LOCO
 #define CONFIG_FLASH_HEADER
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_MX53_CLK32	32768
@@ -95,34 +95,36 @@
 #define CONFIG_BOOTP_SUBNETMASK
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
-#define CONFIG_CMD_IIM
+
 #define CONFIG_CMD_MMC
 #define CONFIG_CMD_ENV
+
+#define CONFIG_CMD_IIM
 
 #define CONFIG_CMD_CLOCK
 #define CONFIG_REF_CLK_FREQ CONFIG_MX53_HCLK_FREQ
 
+#define CONFIG_CMD_SATA
 #undef CONFIG_CMD_IMLS
 
 #define CONFIG_BOOTDELAY	0
 
-#define CONFIG_PRIME	"smc911x"
+#define CONFIG_PRIME	"FEC0"
 
 #define CONFIG_LOADADDR		0x70800000	/* loadaddr env var */
 #define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
 
-#define CONFIG_BOOTARGS         "console=ttymxc0,115200 "\
-				"rdinit=/linuxrc"
-#define CONFIG_BOOTCOMMAND      "bootm 0x70800000 0x70B00000"
+#define CONFIG_BOOTARGS	"console=ttymxc0,115200 "\
+		"rdinit=/linuxrc"
+#define CONFIG_BOOTCOMMAND	"bootm 0x70800000 0x70B00000"
 #define CONFIG_ENV_IS_EMBEDDED
-
 #define CONFIG_ARP_TIMEOUT	200UL
 
 /*
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_PROMPT		"MX53-ARD MFG U-Boot > "
+#define CONFIG_SYS_PROMPT		"MX53-LOCO-MFG U-Boot > "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
@@ -141,46 +143,38 @@
 
 #define CONFIG_CMDLINE_EDITING	1
 
-/*Support LAN9217*/
-#define CONFIG_SMC911X        1
-#define CONFIG_SMC911X_16_BIT 1
-#define CONFIG_SMC911X_BASE CS1_BASE_ADDR
+#define CONFIG_FEC0_IOBASE	FEC_BASE_ADDR
+#define CONFIG_FEC0_PINMUX	-1
+#define CONFIG_FEC0_PHY_ADDR	-1
+#define CONFIG_FEC0_MIIBASE	-1
 
+#define CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
+#define CONFIG_IIM_MAC_ADDR_OFFSET      0x24
+
+#define CONFIG_MXC_FEC
 #define CONFIG_MII
 #define CONFIG_MII_GASKET
 #define CONFIG_DISCOVER_PHY
 
 /*
  * FUSE Configs
-  * */
+ * */
 #ifdef CONFIG_CMD_IIM
 	#define CONFIG_IMX_IIM
 	#define IMX_IIM_BASE    IIM_BASE_ADDR
 	#define CONFIG_IIM_MAC_BANK     1
 	#define CONFIG_IIM_MAC_ROW      9
 #endif
+
 /*
  * I2C Configs
  */
 #define CONFIG_CMD_I2C          1
 #define CONFIG_HARD_I2C         1
 #define CONFIG_I2C_MXC          1
-#define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
+#define CONFIG_SYS_I2C_PORT             I2C1_BASE_ADDR
 #define CONFIG_SYS_I2C_SPEED            100000
 #define CONFIG_SYS_I2C_SLAVE            0xfe
-
-
-/*
- * SPI Configs
- */
-#define CONFIG_FSL_SF		1
-#define CONFIG_CMD_SPI
-#define CONFIG_CMD_SF
-#define CONFIG_SPI_FLASH_IMX_ATMEL	1
-#define CONFIG_SPI_FLASH_CS	1
-#define CONFIG_IMX_ECSPI
-#define IMX_CSPI_VER_2_3        1
-#define MAX_SPI_BYTES		(64 * 4)
 
 /*
  * MMC Configs
@@ -195,7 +189,29 @@
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
+
+	/* detect whether ESDHC1 or ESDHC3 is boot device */
+	#define CONFIG_DYNAMIC_MMC_DEVNO
+
+	#define CONFIG_BOOT_PARTITION_ACCESS
+	#define CONFIG_EMMC_DDR_MODE
+	/* port 1 (ESDHC3) is 8 bit */
+	#define CONFIG_MMC_8BIT_PORTS	0x2
+
 #endif
+
+/*
+ * SATA Configs
+ */
+#ifdef CONFIG_CMD_SATA
+  #define CONFIG_DWC_AHSATA
+  #define CONFIG_SYS_SATA_MAX_DEVICE      1
+  #define CONFIG_DWC_AHSATA_PORT_ID       0
+  #define CONFIG_DWC_AHSATA_BASE_ADDR     SATA_BASE_ADDR
+  #define CONFIG_LBA48
+  #define CONFIG_LIBATA
+#endif
+
 /*-----------------------------------------------------------------------
  * Stack sizes
  *
@@ -206,17 +222,19 @@
 /*-----------------------------------------------------------------------
  * Physical Memory Map
  */
-#define CONFIG_NR_DRAM_BANKS	1
+#define CONFIG_NR_DRAM_BANKS	2
 #define PHYS_SDRAM_1		CSD0_BASE_ADDR
-#define PHYS_SDRAM_1_SIZE	(1024 * 1024 * 1024)
+#define PHYS_SDRAM_1_SIZE	(512 * 1024 * 1024)
+#define PHYS_SDRAM_2		CSD1_BASE_ADDR
+#define PHYS_SDRAM_2_SIZE	(512 * 1024 * 1024)
 #define iomem_valid_addr(addr, size) \
-	(addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
+	((addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)) \
+	|| (addr >= PHYS_SDRAM_2 && addr <= (PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE)))
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
 #define CONFIG_SYS_NO_FLASH
-
 
 #define CONFIG_ENV_SECT_SIZE    (128 * 1024)
 #define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE
