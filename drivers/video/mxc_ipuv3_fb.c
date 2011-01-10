@@ -6,7 +6,7 @@
  *
  * MX51 Linux framebuffer:
  *
- * (C) Copyright 2004-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2004-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -439,11 +439,15 @@ static int mxcfb_map_video_memory(struct fb_info *fbi)
 		fbi->fix.smem_len = fbi->var.yres_virtual *
 				    fbi->fix.line_length;
 	}
-
+#if defined(CONFIG_ARCH_MMU)
 	fbi->screen_base =
 		(char *)iomem_to_phys((unsigned long)lcd_base);
 	fbi->fix.smem_start =
 		(unsigned long)iomem_to_phys((unsigned long)lcd_base);
+#else
+	fbi->screen_base = (char *)lcd_base;
+	fbi->fix.smem_start = (unsigned long)lcd_base;
+#endif
 	if (fbi->screen_base == 0) {
 		puts("Unable to allocate framebuffer memory\n");
 		fbi->fix.smem_len = 0;
