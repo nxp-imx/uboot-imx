@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -75,6 +75,14 @@ u32	mx51_io_base_addr;
 #ifdef CONFIG_VIDEO_MX5
 extern unsigned char fsl_bmp_600x400[];
 extern int fsl_bmp_600x400_size;
+
+#if defined(CONFIG_BMP_8BPP)
+short colormap[256];
+#elif defined(CONFIG_BMP_16BPP)
+short colormap[65536];
+#else
+short colormap[16777216];
+#endif
 #endif
 
 extern int mx51_fb_init(struct fb_videomode *mode, int di,
@@ -916,6 +924,7 @@ static void panel_info_init(void)
 	panel_info.vl_bpix = LCD_BPP;
 	panel_info.vl_col = claa_wvga.xres;
 	panel_info.vl_row = claa_wvga.yres;
+	panel_info.cmap = colormap;
 }
 #endif
 
