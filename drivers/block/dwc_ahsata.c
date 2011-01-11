@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  * Terry Lv <r65388@freescale.com>
  *
  * See file CREDITS for list of people who contributed to this
@@ -558,7 +558,7 @@ static int ahci_port_start(struct ahci_probe_ent *probe_ent,
 		(struct sata_port_regs *)pp->port_mmio;
 	u32 port_status;
 	u32 mem;
-	int timeout = 1000;
+	int timeout = 10000000;
 
 	debug("Enter start port: %d\n", port);
 	port_status = readl(&(port_mmio->ssts));
