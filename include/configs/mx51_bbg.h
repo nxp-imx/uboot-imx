@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2011 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX51-3Stack Freescale board.
  *
@@ -281,6 +281,8 @@
 	 */
 	#define CONFIG_LCD
 	#define CONFIG_VIDEO_MX5
+	#define CONFIG_MXC_HSC
+	#define CONFIG_IPU_CLKRATE	133000000
 	#define CONFIG_SYS_CONSOLE_ENV_OVERWRITE
 	#define CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
 	#define CONFIG_SYS_CONSOLE_IS_IN_ENV

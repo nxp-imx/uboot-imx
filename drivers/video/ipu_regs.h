@@ -4,9 +4,9 @@
  * (C) Copyright 2010
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de
  *
- * Linux IPU driver for MX51:
+ * Linux IPU driver:
  *
- * (C) Copyright 2005-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2005-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.

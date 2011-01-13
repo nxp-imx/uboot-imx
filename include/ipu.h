@@ -4,9 +4,9 @@
  * (C) Copyright 2010
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de
  *
- * Linux IPU driver for MX51:
+ * Linux IPU driver:
  *
- * (C) Copyright 2005-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2005-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -258,6 +258,12 @@ typedef enum {
 	YUV
 } ipu_color_space_t;
 
+typedef enum {
+	DI_PCLK_PLL3,
+	DI_PCLK_LDB,
+	DI_PCLK_TVE
+} ipu_di_clk_parent_t;
+
 /* Common IPU API */
 int32_t ipu_init_channel(ipu_channel_t channel, ipu_channel_params_t *params);
 void ipu_uninit_channel(ipu_channel_t channel);
@@ -304,7 +310,7 @@ int clk_get_usecount(struct clk *clk);
 struct clk *clk_get_parent(struct clk *clk);
 
 void ipu_dump_registers(void);
-int ipu_probe(void);
+int ipu_probe(int di, ipu_di_clk_parent_t di_clk_parent, int di_clk_val);
 
 void ipu_dmfc_init(int dmfc_type, int first);
 void ipu_init_dc_mappings(void);

@@ -4,9 +4,9 @@
  * (C) Copyright 2010
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de
  *
- * Linux IPU driver for MX51:
+ * Linux IPU driver
  *
- * (C) Copyright 2005-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2005-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -34,7 +34,6 @@
 #include <linux/err.h>
 #include <asm/io.h>
 #include <asm/errno.h>
-#include <asm/arch/mx51.h>
 #include "ipu_regs.h"
 
 extern struct mxc_ccm_reg *mxc_ccm;
@@ -172,7 +171,9 @@ static void clk_ipu_disable(struct clk *clk)
 
 static struct clk ipu_clk = {
 	.name = "ipu_clk",
-	.rate = 133000000,
+#if defined(CONFIG_IPU_CLKRATE)
+	.rate = CONFIG_IPU_CLKRATE,
+#endif
 	.enable = clk_ipu_enable,
 	.disable = clk_ipu_disable,
 	.usecount = 0,
@@ -337,6 +338,17 @@ static struct clk pixel_clk[] = {
 	},
 };
 
+static struct clk di_clk[] = {
+	{
+	.name = "ipu_di_clk",
+	.id = 0,
+	},
+	{
+	.name = "ipu_di_clk",
+	.id = 1,
+	},
+};
+
 /*
  * This function resets IPU
  */
@@ -360,11 +372,12 @@ void ipu_reset(void)
  *
  * @return      Returns 0 on success or negative error code on error
  */
-int ipu_probe(void)
+int ipu_probe(int di, ipu_di_clk_parent_t di_clk_parent, int di_clk_val)
 {
 	unsigned long ipu_base;
-	u32 temp;
 
+#if defined(CONFIG_MXC_HSC)
+	u32 temp;
 	u32 *reg_hsc_mcd = (u32 *)MIPI_HSC_BASE_ADDR;
 	u32 *reg_hsc_mxt_conf = (u32 *)(MIPI_HSC_BASE_ADDR + 0x800);
 
@@ -376,6 +389,7 @@ int ipu_probe(void)
 
 	temp = __raw_readl(reg_hsc_mxt_conf);
 	__raw_writel(temp | 0x10000, reg_hsc_mxt_conf);
+#endif
 
 	ipu_base = IPU_CTRL_BASE_ADDR;
 	ipu_cpmem_base = (u32 *)(ipu_base + IPU_CPMEM_REG_BASE);
@@ -384,17 +398,23 @@ int ipu_probe(void)
 	g_pixel_clk[0] = &pixel_clk[0];
 	g_pixel_clk[1] = &pixel_clk[1];
 
+	g_di_clk[0] = &di_clk[0];
+	g_di_clk[1] = &di_clk[1];
+	g_di_clk[di]->rate = di_clk_val;
+
 	g_ipu_clk = &ipu_clk;
 	debug("ipu_clk = %u\n", clk_get_rate(g_ipu_clk));
 
 	ipu_reset();
 
-	clk_set_parent(g_pixel_clk[0], g_ipu_clk);
-	clk_set_parent(g_pixel_clk[1], g_ipu_clk);
-	clk_enable(g_ipu_clk);
+	if (di_clk_parent == DI_PCLK_LDB) {
+		clk_set_parent(g_pixel_clk[di], g_di_clk[di]);
+	} else {
+		clk_set_parent(g_pixel_clk[0], g_ipu_clk);
+		clk_set_parent(g_pixel_clk[1], g_ipu_clk);
+	}
 
-	g_di_clk[0] = NULL;
-	g_di_clk[1] = NULL;
+	clk_enable(g_ipu_clk);
 
 	__raw_writel(0x807FFFFF, IPU_MEM_RST);
 	while (__raw_readl(IPU_MEM_RST) & 0x80000000)
