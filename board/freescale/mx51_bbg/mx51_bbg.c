@@ -85,8 +85,10 @@ short colormap[16777216];
 #endif
 #endif
 
-extern int mx51_fb_init(struct fb_videomode *mode, int di,
-			int interface_pix_fmt);
+extern int ipuv3_fb_init(struct fb_videomode *mode, int di,
+			int interface_pix_fmt,
+			ipu_di_clk_parent_t di_clk_parent,
+			int di_clk_val);
 
 static struct fb_videomode claa_wvga = {
 	/* 800x480 @ 60 Hz , pixel clk @ 27MHz */
@@ -912,7 +914,8 @@ void lcd_enable(void)
 	reg |= 0x10;
 	writel(reg, GPIO3_BASE_ADDR + 0x0);
 
-	ret = mx51_fb_init(&claa_wvga, 1, IPU_PIX_FMT_RGB565);
+	ret = ipuv3_fb_init(&claa_wvga, 1, IPU_PIX_FMT_RGB565,
+			DI_PCLK_PLL3, 0);
 	if (ret)
 		puts("LCD cannot be configured\n");
 }

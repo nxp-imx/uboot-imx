@@ -4,7 +4,7 @@
  * (C) Copyright 2010
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de
  *
- * MX51 Linux framebuffer:
+ * IPUv3 Linux framebuffer:
  *
  * (C) Copyright 2004-2011 Freescale Semiconductor, Inc.
  *
@@ -585,7 +585,6 @@ static int mxcfb_probe(u32 interface_pix_fmt, struct fb_videomode *mode, int di)
 	mxcfb_set_par(fbi);
 
 	/* Setting panel_info for lcd */
-	panel_info.cmap = NULL;
 	panel_info.vl_col = fbi->var.xres;
 	panel_info.vl_row = fbi->var.yres;
 	panel_info.vl_bpix = LCD_BPP;
@@ -634,11 +633,12 @@ void lcd_ctrl_init(void *lcdbase)
 	memset(lcdbase, 0, mem_len);
 }
 
-int mx51_fb_init(struct fb_videomode *mode, int di, int interface_pix_fmt)
+int ipuv3_fb_init(struct fb_videomode *mode, int di, int interface_pix_fmt,
+		  ipu_di_clk_parent_t di_clk_parent, int di_clk_val)
 {
 	int ret;
 
-	ret = ipu_probe();
+	ret = ipu_probe(di, di_clk_parent, di_clk_val);
 	if (ret)
 		puts("Error initializing IPU\n");
 
