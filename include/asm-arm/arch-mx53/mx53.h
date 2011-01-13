@@ -40,6 +40,11 @@
 #define IRAM_SIZE		(IRAM_PARTITIONS*SZ_8K)	/* 128KB */
 
 /*
+ * IPU
+ */
+#define IPU_CTRL_BASE_ADDR	0x0
+
+/*
  * NFC
  */
 #define NFC_BASE_ADDR_AXI		0xF7FF0000	/* NAND flash AXI */

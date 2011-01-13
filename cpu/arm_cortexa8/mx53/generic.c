@@ -1076,3 +1076,46 @@ void enable_usb_phy1_clk(unsigned char enable)
 	writel(reg, MXC_CCM_CCGR4);
 }
 
+void ipu_clk_enable(void)
+{
+	unsigned int reg;
+
+	/* IPU root clock deprived from AXI B */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CBCMR);
+	reg &= ~0xC0;
+	reg |= 0x40;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CBCMR);
+
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR5);
+	reg |= (0x3 << 10);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR5);
+
+	/* Handshake with IPU when certain clock rates are changed. */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCDR);
+	reg &= ~(0x1 << 21);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CCDR);
+
+	/* Handshake with IPU when LPM is entered as its enabled. */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CLPCR);
+	reg &= ~(0x1 << 18);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CLPCR);
+}
+
+void ipu_clk_disable(void)
+{
+	unsigned int reg;
+
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR5);
+	reg &= (0x3 << 10);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR5);
+
+	/* Handshake with IPU when certain clock rates are changed. */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCDR);
+	reg |= (0x1 << 21);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CCDR);
+
+	/* Handshake with IPU when LPM is entered as its enabled. */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CLPCR);
+	reg |= (0x1 << 18);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CLPCR);
+}
