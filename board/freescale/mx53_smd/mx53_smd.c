@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -26,6 +26,14 @@
 #include <asm/arch/mx53_pins.h>
 #include <asm/arch/iomux.h>
 #include <asm/errno.h>
+#if defined(CONFIG_VIDEO_MX5)
+#include <asm/imx_pwm.h>
+#include <linux/list.h>
+#include <linux/fb.h>
+#include <linux/mxcfb.h>
+#include <ipu.h>
+#include <lcd.h>
+#endif
 #include <netdev.h>
 
 #if CONFIG_I2C_MXC
@@ -64,6 +72,45 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
 static enum boot_device boot_dev;
+
+#ifdef CONFIG_VIDEO_MX5
+extern unsigned char fsl_bmp_600x400[];
+extern int fsl_bmp_600x400_size;
+
+#if defined(CONFIG_BMP_8BPP)
+unsigned short colormap[256];
+#elif defined(CONFIG_BMP_16BPP)
+unsigned short colormap[65536];
+#else
+unsigned short colormap[16777216];
+#endif
+
+struct pwm_device pwm0 = {
+	.pwm_id = 1,
+	.pwmo_invert = 0,
+};
+
+struct pwm_device pwm1 = {
+	.pwm_id = 1,
+	.pwmo_invert = 0,
+};
+
+static int di = 1;
+#endif
+
+extern int ipuv3_fb_init(struct fb_videomode *mode, int di,
+			int interface_pix_fmt,
+			ipu_di_clk_parent_t di_clk_parent,
+			int di_clk_val);
+
+static struct fb_videomode lvds_xga = {
+	 "XGA", 60, 1024, 768, 15385, 220, 40, 21, 7, 60, 10,
+	 FB_SYNC_EXT,
+	 FB_VMODE_NONINTERLACED,
+	 0,
+};
+
+vidinfo_t panel_info;
 
 static inline void setup_boot_device(void)
 {
@@ -540,6 +587,77 @@ int board_mmc_init(bd_t *bis)
 
 #endif
 
+#ifdef CONFIG_LCD
+void lcd_enable(void)
+{
+	char *s;
+	int ret;
+	unsigned int reg;
+
+	s = getenv("lvds_num");
+	di = simple_strtol(s, NULL, 10);
+
+	/* 20KHz PWM wave, 50% duty */
+	if (di == 1) {
+		imx_pwm_config(pwm1, 25000, 50000);
+		imx_pwm_enable(pwm1);
+	} else {
+		imx_pwm_config(pwm0, 25000, 50000);
+		imx_pwm_enable(pwm0);
+	}
+	mxc_request_iomux(MX53_PIN_GPIO_1, IOMUX_CONFIG_ALT4);
+
+	ret = ipuv3_fb_init(&lvds_xga, di, IPU_PIX_FMT_RGB666,
+			DI_PCLK_LDB, 65000000);
+	if (ret)
+		puts("LCD cannot be configured\n");
+
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CSCMR2);
+	reg &= ~0xFC000000;
+	reg |= 0xB4000F00;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CSCMR2);
+
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR6);
+	reg |= 0xF0000000;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR6);
+
+	if (di == 1)
+		writel(0x40C, IOMUXC_BASE_ADDR + 0x8);
+	else
+		writel(0x201, IOMUXC_BASE_ADDR + 0x8);
+}
+#endif
+
+#ifdef CONFIG_VIDEO_MX5
+void panel_info_init(void)
+{
+	panel_info.vl_bpix = LCD_BPP;
+	panel_info.vl_col = lvds_xga.xres;
+	panel_info.vl_row = lvds_xga.yres;
+	panel_info.cmap = colormap;
+}
+#endif
+
+#ifdef CONFIG_SPLASH_SCREEN
+void setup_splash_image(void)
+{
+	char *s;
+	ulong addr;
+
+	s = getenv("splashimage");
+
+	if (s != NULL) {
+		addr = simple_strtoul(s, NULL, 16);
+
+#if defined(CONFIG_ARCH_MMU)
+		addr = ioremap_nocache(iomem_to_phys(addr),
+				fsl_bmp_600x400_size);
+#endif
+		memcpy((char *)addr, (char *)fsl_bmp_600x400,
+				fsl_bmp_600x400_size);
+	}
+}
+#endif
 
 int board_init(void)
 {
@@ -572,6 +690,14 @@ int board_init(void)
 	setup_sata_device();
 #endif
 
+#ifdef CONFIG_VIDEO_MX5
+	panel_info_init();
+
+	gd->fb_base = CONFIG_FB_BASE;
+#ifdef CONFIG_ARCH_MMU
+	gd->fb_base = ioremap_nocache(iomem_to_phys(gd->fb_base), 0);
+#endif
+#endif
 	return 0;
 }
 
