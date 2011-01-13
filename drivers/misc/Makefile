@@ -29,6 +29,7 @@ COBJS-$(CONFIG_ALI152X) += ali512x.o
 COBJS-$(CONFIG_DS4510)  += ds4510.o
 COBJS-$(CONFIG_FSL_LAW) += fsl_law.o
 COBJS-$(CONFIG_IMX_IIM) += imx_iim.o
+COBJS-$(CONFIG_IMX_PWM) += imx_pwm.o
 COBJS-$(CONFIG_NS87308) += ns87308.o
 COBJS-$(CONFIG_STATUS_LED) += status_led.o
 COBJS-$(CONFIG_TWL4030_LED) += twl4030_led.o
