@@ -363,6 +363,16 @@ static void setup_i2c(unsigned int module_base)
 		break;
 	}
 }
+
+void setup_pmic_voltages(void)
+{
+	int value;
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+	/* increase VDDGP as 1.2V for 1GHZ */
+	value = 0x5c;
+	i2c_write(0x48, 0x2e, 1, &value, 1);
+}
+
 #endif
 
 #if defined(CONFIG_DWC_AHSATA)
@@ -684,6 +694,10 @@ int board_init(void)
 
 #ifdef CONFIG_I2C_MXC
 	setup_i2c(CONFIG_SYS_I2C_PORT);
+	/* Increase VDDGP voltage */
+	setup_pmic_voltages();
+	/* Switch to 1GHZ */
+	clk_config(CONFIG_REF_CLK_FREQ, 1000, CPU_CLK);
 #endif
 
 #if defined(CONFIG_DWC_AHSATA)

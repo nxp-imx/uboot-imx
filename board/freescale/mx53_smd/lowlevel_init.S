@@ -97,7 +97,7 @@
 	mov r1, #0x4
 	str r1, [r0, #CLKCTL_CCSR]
 
-	setup_pll PLL1_BASE_ADDR, 1000
+	setup_pll PLL1_BASE_ADDR, 800
 
         setup_pll PLL3_BASE_ADDR, 400
 
