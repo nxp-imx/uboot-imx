@@ -99,7 +99,6 @@ struct pwm_device pwm1 = {
 };
 
 static int di = 1;
-#endif
 
 extern int ipuv3_fb_init(struct fb_videomode *mode, int di,
 			int interface_pix_fmt,
@@ -114,6 +113,7 @@ static struct fb_videomode lvds_xga = {
 };
 
 vidinfo_t panel_info;
+#endif
 
 static inline void setup_boot_device(void)
 {

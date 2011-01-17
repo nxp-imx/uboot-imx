@@ -29,11 +29,13 @@
 #include <asm/arch/iomux.h>
 #include <asm/errno.h>
 #include <i2c.h>
+#if defined(CONFIG_VIDEO_MX5)
 #include <linux/list.h>
 #include <ipu.h>
 #include <lcd.h>
 #include <linux/fb.h>
 #include <linux/mxcfb.h>
+#endif
 #include "board-imx51.h"
 #ifdef CONFIG_IMX_ECSPI
 #include <imx_spi.h>
@@ -83,7 +85,6 @@ short colormap[65536];
 #else
 short colormap[16777216];
 #endif
-#endif
 
 extern int ipuv3_fb_init(struct fb_videomode *mode, int di,
 			int interface_pix_fmt,
@@ -99,6 +100,7 @@ static struct fb_videomode claa_wvga = {
 };
 
 vidinfo_t panel_info;
+#endif
 
 static inline void setup_boot_device(void)
 {
