@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -301,14 +301,14 @@ void setup_core_voltages(void)
 
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 
-	/* Set core voltage VDDGP to 1.05V for 800MHZ */
-	buf[0] = 0x45;
-	buf[1] = 0x4a;
-	buf[2] = 0x52;
-	if (i2c_write(0x8, 24, 1, buf, 3))
-		return;
-
 	if (is_soc_rev(CHIP_REV_1_0) == 0) {
+		/* Set core voltage VDDGP to 1.05V for 800MHZ */
+		buf[0] = 0x45;
+		buf[1] = 0x4a;
+		buf[2] = 0x52;
+		if (i2c_write(0x8, 24, 1, buf, 3))
+			return;
+
 		/* Set DDR voltage VDDA to 1.25V */
 		buf[0] = 0;
 		buf[1] = 0;
@@ -317,7 +317,13 @@ void setup_core_voltages(void)
 			return;
 	}
 
-	if (is_soc_rev(CHIP_REV_2_0) == 0) {
+	if (is_soc_rev(CHIP_REV_2_0) >= 0) {
+		/* set VDDGP as 1.2V for 1.0 GHZ */
+		buf[0] = 0x45;
+		buf[1] = 0x4a;
+		buf[2] = 0x58;
+		if (i2c_write(0x8, 24, 1, buf, 3))
+			return;
 		/* Set VCC to 1.3V for TO2 */
 		buf[0] = 0;
 		buf[1] = 0;
@@ -338,6 +344,9 @@ void setup_core_voltages(void)
 
 	/* Raise the core frequency to 800MHz */
 	writel(0x0, CCM_BASE_ADDR + CLKCTL_CACRR);
+	if (is_soc_rev(CHIP_REV_2_0) >= 0)
+		/* Raise the core frequency as 1G for TO2.0 */
+		clk_config(CONFIG_REF_CLK_FREQ, 1000, CPU_CLK);
 }
 
 static int __read_adc_channel(unsigned int chan)
