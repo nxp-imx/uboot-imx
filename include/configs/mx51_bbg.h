@@ -274,7 +274,6 @@
 #undef CONFIG_JFFS2_CMDLINE
 #define CONFIG_JFFS2_DEV	"nand0"
 
-#define CONFIG_SPLASH_SCREEN
 #ifdef CONFIG_SPLASH_SCREEN
 	/*
 	 * Framebuffer and LCD
