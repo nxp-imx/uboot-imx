@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -265,8 +265,8 @@ static void fastboot_init_mmc_ptable(void)
 	 * imx family android layout
 	 * mbr -  0 ~ 0x3FF byte
 	 * bootloader - 0x400 ~ 0xFFFFF byte
-	 * kernel - 0x100000 ~ 3FFFFF byte
-	 * uramedisk - 0x400000 ~ 0x4FFFFF  supposing 1M temporarily
+	 * kernel - 0x100000 ~ 5FFFFF byte
+	 * uramedisk - 0x600000 ~ 0x6FFFFF  supposing 1M temporarily
 	 * SYSTEM partition - /dev/mmcblk0p2
 	 * RECOVERY parittion - dev/mmcblk0p6
 	 */
@@ -281,10 +281,10 @@ static void fastboot_init_mmc_ptable(void)
 	/* kernel */
 	strcpy(ptable[PTN_KERNEL_INDEX].name, "kernel");
 	ptable[PTN_KERNEL_INDEX].start = 0x100000;  /* 1M byte offset */
-	ptable[PTN_KERNEL_INDEX].length = 0x300000; /* 3M byte */
+	ptable[PTN_KERNEL_INDEX].length = 0x500000; /* 5M byte */
 	/* uramdisk */
 	strcpy(ptable[PTN_URAMDISK_INDEX].name, "uramdisk");
-	ptable[PTN_URAMDISK_INDEX].start = 0x400000; /* 4M byte offset */
+	ptable[PTN_URAMDISK_INDEX].start = 0x600000; /* 6M byte offset */
 	ptable[PTN_URAMDISK_INDEX].length = 0x100000;
 
 	/* system partition */
