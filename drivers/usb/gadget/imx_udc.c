@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,8 +49,9 @@
 
 #define ep_is_in(e, tx) ((e == 0) ? (mxc_udc.ep0_dir == USB_DIR_IN) : tx)
 
-#define USB_RECIP_MASK 0x03
-#define USB_TYPE_MASK  (0x03 << 5)
+#define USB_RECIP_MASK	    0x03
+#define USB_TYPE_MASK	    (0x03 << 5)
+#define USB_MEM_ALIGN_BYTE  4096
 
 typedef struct {
 	int epnum;
@@ -92,10 +93,16 @@ static void *malloc_dma_buffer(u32 *dmaaddr, int size, int align)
 	u32 vir, vir_align;
 
 	vir = (u32)malloc(msize);
+#ifdef CONFIG_ARCH_MMU
 	vir = ioremap_nocache(iomem_to_phys(vir), msize);
+#endif
 	memset((void *)vir, 0, msize);
 	vir_align = (vir + align - 1) & (~(align - 1));
+#ifdef CONFIG_ARCH_MMU
 	*dmaaddr = (u32)iomem_to_phys(vir_align);
+#else
+	*dmaaddr = vir_align;
+#endif
 	DBG("vir addr %x, dma addr %x\n", vir_align, *dmaaddr);
 	return (void *)vir_align;
 }
@@ -115,7 +122,8 @@ static int mxc_init_usb_qh(void)
 	mxc_udc.max_ep = (readl(USB_DCCPARAMS) & DCCPARAMS_DEN_MASK) * 2;
 	DBG("udc max ep = %d\n", mxc_udc.max_ep);
 	size = mxc_udc.max_ep * sizeof(struct ep_queue_head);
-	mxc_udc.ep_qh = malloc_dma_buffer(&mxc_udc.qh_dma, size, 1024);
+	mxc_udc.ep_qh = malloc_dma_buffer(&mxc_udc.qh_dma,
+					     size, USB_MEM_ALIGN_BYTE);
 	if (!mxc_udc.ep_qh) {
 		printf("malloc ep qh dma buffer failure\n");
 		return -1;
@@ -165,8 +173,9 @@ static int mxc_init_ep_dtd(u8 index)
 		DBG("%s ep %d is not valid\n", __func__, index);
 
 	ep = mxc_udc.mxc_ep + index;
-	tqi = malloc_dma_buffer(&dma,
-		EP_TQ_ITEM_SIZE * sizeof(struct ep_queue_item), 1024);
+	tqi = malloc_dma_buffer(&dma, EP_TQ_ITEM_SIZE *
+			    EP_TQ_ITEM_SIZE * sizeof(struct ep_queue_item),
+			    USB_MEM_ALIGN_BYTE);
 	if (tqi == NULL) {
 		printf("%s malloc tq item failure\n", __func__);
 		return -1;
@@ -241,7 +250,8 @@ static int mxc_malloc_ep0_ptr(mxc_ep_t *ep)
 	for (i = 0; i < EP_TQ_ITEM_SIZE; i++) {
 		tqi = ep->ep_dtd[i];
 		tqi->page_vir = (u32)malloc_dma_buffer(&tqi->page_dma,
-						    max_pkt_size, 1024);
+						    max_pkt_size,
+						    USB_MEM_ALIGN_BYTE);
 		if ((void *)tqi->page_vir == NULL) {
 			printf("malloc ep's dtd bufer failure, i=%d\n", i);
 			return -1;
@@ -852,7 +862,8 @@ void udc_setup_ep(struct usb_device_instance *device, u32 index,
 			for (i = 0; i < EP_TQ_ITEM_SIZE; i++) {
 				tqi = ep->ep_dtd[i];
 				tqi->page_vir = (u32)malloc_dma_buffer(
-					    &tqi->page_dma, max_pkt_size, 1024);
+					    &tqi->page_dma, max_pkt_size,
+					    USB_MEM_ALIGN_BYTE);
 				if ((void *)tqi->page_vir == NULL) {
 					printf("malloc dtd bufer failure\n");
 					return;
