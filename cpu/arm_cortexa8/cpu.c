@@ -33,6 +33,9 @@
 
 #include <common.h>
 #include <command.h>
+#ifdef CONFIG_VIDEO_MX5
+#include <ipu.h>
+#endif
 #include <asm/system.h>
 #include <asm/cache.h>
 #include <asm/cache-cp15.h>
@@ -130,6 +133,11 @@
 int cleanup_before_linux(void)
 {
 	unsigned int i;
+
+#ifdef CONFIG_VIDEO_MX5
+	ipu_disable_channel(MEM_BG_SYNC);
+	ipu_uninit_channel(MEM_BG_SYNC);
+#endif
 
 	/*
 	 * this function is called just before we call linux
