@@ -303,20 +303,26 @@ static int fastboot_init_mmc_sata_ptable(void)
 		    sizeof(fastboot_ptentry) * (PTN_RECOVERY_INDEX + 1));
 	/* MBR */
 	strcpy(ptable[PTN_MBR_INDEX].name, "mbr");
-	ptable[PTN_MBR_INDEX].start = ANDROID_MBR_OFFSET;
-	ptable[PTN_MBR_INDEX].length = ANDROID_MBR_SIZE;
+	ptable[PTN_MBR_INDEX].start = ANDROID_MBR_OFFSET / dev_desc->blksz;
+	ptable[PTN_MBR_INDEX].length = ANDROID_MBR_SIZE / dev_desc->blksz;
 	/* Bootloader */
 	strcpy(ptable[PTN_BOOTLOADER_INDEX].name, "bootloader");
-	ptable[PTN_BOOTLOADER_INDEX].start = ANDROID_BOOTLOADER_OFFSET;
-	ptable[PTN_BOOTLOADER_INDEX].length = ANDROID_BOOTLOADER_SIZE;
+	ptable[PTN_BOOTLOADER_INDEX].start =
+				ANDROID_BOOTLOADER_OFFSET / dev_desc->blksz;
+	ptable[PTN_BOOTLOADER_INDEX].length =
+				 ANDROID_BOOTLOADER_SIZE / dev_desc->blksz;
 	/* kernel */
 	strcpy(ptable[PTN_KERNEL_INDEX].name, "kernel");
-	ptable[PTN_KERNEL_INDEX].start = ANDROID_KERNEL_OFFSET;
-	ptable[PTN_KERNEL_INDEX].length = ANDROID_KERNEL_SIZE;
+	ptable[PTN_KERNEL_INDEX].start =
+				ANDROID_KERNEL_OFFSET / dev_desc->blksz;
+	ptable[PTN_KERNEL_INDEX].length =
+				ANDROID_KERNEL_SIZE / dev_desc->blksz;
 	/* uramdisk */
 	strcpy(ptable[PTN_URAMDISK_INDEX].name, "uramdisk");
-	ptable[PTN_URAMDISK_INDEX].start = ANDROID_URAMDISK_OFFSET;
-	ptable[PTN_URAMDISK_INDEX].length = ANDROID_URAMDISK_SIZE;
+	ptable[PTN_URAMDISK_INDEX].start =
+				ANDROID_URAMDISK_OFFSET / dev_desc->blksz;
+	ptable[PTN_URAMDISK_INDEX].length =
+				ANDROID_URAMDISK_SIZE / dev_desc->blksz;
 
 	/* system partition */
 	strcpy(ptable[PTN_SYSTEM_INDEX].name, "system");
@@ -325,10 +331,8 @@ static int fastboot_init_mmc_sata_ptable(void)
 		printf("Bad partition index:%d\n",
 			CONFIG_ANDROID_SYSTEM_PARTITION_MMC);
 	else {
-		ptable[PTN_SYSTEM_INDEX].start = info.start *
-						    dev_desc->blksz;
-		ptable[PTN_SYSTEM_INDEX].length = info.size *
-						    dev_desc->blksz;
+		ptable[PTN_SYSTEM_INDEX].start = info.start;
+		ptable[PTN_SYSTEM_INDEX].length = info.size;
 	}
 	/* recovery partition */
 	strcpy(ptable[PTN_RECOVERY_INDEX].name, "recovery");
@@ -337,10 +341,8 @@ static int fastboot_init_mmc_sata_ptable(void)
 		printf("Bad partition index:%d\n",
 			CONFIG_ANDROID_RECOVERY_PARTITION_MMC);
 	else {
-		ptable[PTN_RECOVERY_INDEX].start = info.start *
-							dev_desc->blksz;
-		ptable[PTN_RECOVERY_INDEX].length = info.size *
-							dev_desc->blksz;
+		ptable[PTN_RECOVERY_INDEX].start = info.start;
+		ptable[PTN_RECOVERY_INDEX].length = info.size;
 	}
 
 	for (i = 0; i <= PTN_RECOVERY_INDEX; i++)

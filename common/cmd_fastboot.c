@@ -110,8 +110,7 @@ static unsigned int mmc_controller_no;
 
 /* To support the Android-style naming of flash */
 #define MAX_PTN		    16
-#define MMC_BLOCK_SIZE	    512
-#define SATA_BLOCK_SIZE     512
+#define MMC_SATA_BLOCK_SIZE 512
 
 static fastboot_ptentry ptable[MAX_PTN];
 static unsigned int pcount;
@@ -1116,7 +1115,8 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 				if (ptn == 0) {
 					printf("Partition:'%s' does not exist\n", ptn->name);
 					sprintf(response, "FAILpartition does not exist");
-				} else if ((download_bytes > ptn->length) &&
+				} else if ((download_bytes >
+					   ptn->length * MMC_SATA_BLOCK_SIZE) &&
 						!(ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_ENV)) {
 					printf("Image too large for the partition\n");
 					sprintf(response, "FAILimage too large for partition");
@@ -1164,13 +1164,12 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 
 					sprintf(source, "0x%x",
 						 interface.transfer_buffer);
-						/* block offset */
-					temp = ptn->start / SATA_BLOCK_SIZE;
-					sprintf(dest, "0x%x", temp);
+					/* block offset */
+					sprintf(dest, "0x%x", ptn->start);
 					/* block count */
 					temp = (download_bytes +
-						SATA_BLOCK_SIZE - 1) /
-							SATA_BLOCK_SIZE;
+						MMC_SATA_BLOCK_SIZE - 1) /
+							MMC_SATA_BLOCK_SIZE;
 					sprintf(length, "0x%x", temp);
 					if (do_sata(NULL, 0, 5, sata_write)) {
 						printf("Writing '%s' FAILED!\n",
@@ -1210,12 +1209,11 @@ mmc_ops:
 					sprintf(source, "0x%x", interface.transfer_buffer);
 
 					/* block offset */
-					temp = ptn->start / MMC_BLOCK_SIZE;
-					sprintf(dest, "0x%x", temp);
+					sprintf(dest, "0x%x", ptn->start);
 					/* block count */
 					temp = (download_bytes +
-						    MMC_BLOCK_SIZE - 1) /
-						    MMC_BLOCK_SIZE;
+						    MMC_SATA_BLOCK_SIZE - 1) /
+						    MMC_SATA_BLOCK_SIZE;
 					sprintf(length, "0x%x", temp);
 
 					printf("Initializing '%s'\n", ptn->name);
