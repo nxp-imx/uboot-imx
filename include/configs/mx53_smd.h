@@ -274,7 +274,6 @@
 	#define CONFIG_ENV_IS_NOWHERE	1
 #endif
 
-#define CONFIG_SPLASH_SCREEN
 #ifdef CONFIG_SPLASH_SCREEN
 	/*
 	 * Framebuffer and LCD
