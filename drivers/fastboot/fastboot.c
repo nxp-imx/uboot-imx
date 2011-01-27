@@ -81,6 +81,8 @@ enum {
     PTN_RECOVERY_INDEX
 };
 
+struct fastboot_device_info fastboot_devinfo;
+
 /* defined and used by gadget/ep0.c */
 extern struct usb_string_descriptor **usb_strings;
 
@@ -229,6 +231,26 @@ static void str2wide(char *str, u16 * wide)
 }
 
 /*
+   Get mmc control number from passed string, eg, "mmc1" mean device 1. Only
+   support "mmc0" to "mmc9" currently. It will be treated as device 0 for
+   other string.
+*/
+static int get_mmc_no(char *env_str)
+{
+	int digit = 0;
+	unsigned char a;
+
+	if (env_str && (strlen(env_str) >= 4) &&
+	    !strncmp(env_str, "mmc", 3)) {
+		a = env_str[3];
+		if (a >= '0' && a <= '9')
+			digit = a - '0';
+	}
+
+	return digit;
+}
+
+/*
  * Initialize fastboot
  */
 int fastboot_init(struct cmd_fastboot_interface *interface)
@@ -269,19 +291,9 @@ static int fastboot_init_mmc_sata_ptable(void)
 	fastboot_ptentry ptable[PTN_RECOVERY_INDEX + 1];
 
 	fastboot_env = getenv("fastboot_dev");
-	if ((fastboot_env == NULL) || strcmp(fastboot_env, "sata")) {
-		puts("flash target is SD card\n");
-		mmc = find_mmc_device(CONFIG_FASTBOOT_MMC_NO);
-		if (mmc && mmc_init(mmc))
-			printf("MMC card init failed!\n");
-
-		dev_desc = get_dev("mmc", CONFIG_FASTBOOT_MMC_NO);
-		if (NULL == dev_desc) {
-			printf("** Block device MMC %d not supported\n",
-				CONFIG_FASTBOOT_MMC_NO);
-			return -1;
-		}
-	} else {
+	/* sata case in env */
+	if (fastboot_env && !strcmp(fastboot_env, "sata")) {
+		fastboot_devinfo.type = DEV_SATA;
 #ifdef CONFIG_CMD_SATA
 		puts("flash target is SATA\n");
 		if (sata_initialize())
@@ -297,6 +309,25 @@ static int fastboot_init_mmc_sata_ptable(void)
 		puts("SATA isn't buildin\n");
 		return -1;
 #endif
+	} else {
+		int mmc_no = 0;
+
+		mmc_no = get_mmc_no(fastboot_env);
+
+		fastboot_devinfo.type = DEV_MMC;
+		fastboot_devinfo.dev_id = mmc_no;
+
+		printf("flash target is MMC:%d\n", mmc_no);
+		mmc = find_mmc_device(mmc_no);
+		if (mmc && mmc_init(mmc))
+			printf("MMC card init failed!\n");
+
+		dev_desc = get_dev("mmc", mmc_no);
+		if (NULL == dev_desc) {
+			printf("** Block device MMC %d not supported\n",
+				mmc_no);
+			return -1;
+		}
 	}
 
 	memset((char *)ptable, 0,
@@ -724,3 +755,4 @@ int fastboot_cdc_setup(struct usb_device_request *request, struct urb *urb)
 {
 	return 0;
 }
+

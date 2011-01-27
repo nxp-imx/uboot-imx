@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * (C) Copyright 2008 - 2009
  * Windriver, <www.windriver.com>
@@ -92,6 +92,12 @@
 #define CFG_FASTBOOT_MKBOOTIMAGE_PAGE_SIZE 2048
 #endif
 
+enum {
+    DEV_SATA,
+    DEV_MMC,
+    DEV_NAND
+};
+
 struct cmd_fastboot_interface {
 	/* This function is called when a buffer has been
 	   recieved from the client app.
@@ -166,6 +172,11 @@ struct fastboot_ptentry {
 	/* Controls the details of how operations are done on the partition
 	   See the FASTBOOT_PTENTRY_FLAGS_*'s defined below */
 	unsigned int flags;
+};
+
+struct fastboot_device_info {
+	unsigned char type;
+	unsigned char dev_id;
 };
 
 /* Lower byte shows if the read/write/erase operation in

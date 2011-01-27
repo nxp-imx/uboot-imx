@@ -98,6 +98,8 @@ static struct cmd_fastboot_interface interface = {
 	.transfer_buffer_size  = 0,
 };
 
+extern struct fastboot_device_info fastboot_devinfo;
+
 static unsigned int download_size;
 static unsigned int download_bytes;
 static unsigned int download_bytes_unpadded;
@@ -106,7 +108,6 @@ static unsigned int continue_booting;
 static unsigned int upload_size;
 static unsigned int upload_bytes;
 static unsigned int upload_error;
-static unsigned int mmc_controller_no;
 
 /* To support the Android-style naming of flash */
 #define MAX_PTN		    16
@@ -1141,18 +1142,15 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 					printf("saveenv to '%s' DONE!\n", ptn->name);
 					sprintf(response, "OKAY");
 				} else {
-					char *fastboot_env;
 					char source[32], dest[32];
 					char length[32], slot_no[32];
 					unsigned int temp;
 
 					/* Normal case */
-					fastboot_env = getenv("fastboot_dev");
-					if ((fastboot_env == NULL) ||
-					     strcmp(fastboot_env, "sata")) {
+					if (fastboot_devinfo.type == DEV_MMC)
 						/* download to mmc */
 						goto mmc_ops;
-					} else {
+					else {
 						/* downaload to sata */
 #ifdef CONFIG_CMD_SATA
 					char *sata_write[5] = {"sata", "write",
@@ -1189,11 +1187,8 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 							    strlen(response));
 					return ret; /* End of sata download */
 				}
-mmc_ops:
-					/* Save the MMC controller number */
-					mmc_controller_no =
-							CONFIG_FASTBOOT_MMC_NO;
 
+mmc_ops:
 					printf("writing to partition '%s'\n", ptn->name);
 					char *mmc_write[6] = {"mmc", "write",
 							NULL, NULL, NULL, NULL};
@@ -1205,7 +1200,8 @@ mmc_ops:
 					mmc_write[4] = dest;
 					mmc_write[5] = length;
 
-					sprintf(slot_no, "%d", mmc_controller_no);
+					sprintf(slot_no, "%d",
+						    fastboot_devinfo.dev_id);
 					sprintf(source, "0x%x", interface.transfer_buffer);
 
 					/* block offset */
