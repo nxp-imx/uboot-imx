@@ -168,8 +168,12 @@
 		     "video=mxcdi1fb:RGB666,XGA ldb gpu_memory=32M\0"   \
 		"bootcmd=run bootcmd_SD \0"                             \
 		"bootcmd_SD=run bootargs_base bootargs_android;"        \
-		     "mmc read 0 ${loadaddr} 0x800 1800;"               \
-		     "mmc read 0 ${rd_loadaddr} 0x2000 0x258;"          \
+		     "mmc read 0 ${loadaddr} 0x800 2000;"               \
+		     "mmc read 0 ${rd_loadaddr} 0x3000 0x258;"          \
+		     "bootm ${loadaddr} ${rd_loadaddr}\0"               \
+		"bootcmd_eMMC=run bootargs_base bootargs_android;"        \
+		     "mmc read 1 ${loadaddr} 0x800 2000;"               \
+		     "mmc read 1 ${rd_loadaddr} 0x3000 0x258;"          \
 		     "bootm ${loadaddr} ${rd_loadaddr}\0"               \
 		"bootcmd_net=run bootargs_base bootargs_nfs; "          \
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"       \

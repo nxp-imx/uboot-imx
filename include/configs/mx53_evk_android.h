@@ -103,7 +103,7 @@
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
 	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4 rootfs=ext4"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
-	"run bootargs_base bootargs_android_recovery;mmc read 0 ${loadaddr} 0x800 0x1800;bootm"
+	"run bootargs_base bootargs_android_recovery;mmc read 0 ${loadaddr} 0x800 0x2000;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 
 #define CONFIG_ANDROID_SYSTEM_PARTITION_MMC 2
@@ -176,14 +176,14 @@
 		     "video=mxcdi0fb:RGB565,800x480M@55 calibration\0"	\
 		"bootcmd=run bootcmd_SD \0"				\
 		"bootcmd_SD=run bootargs_base bootargs_android;"	\
-		     "mmc read 0 ${loadaddr} 0x800 1800;"		\
-		     "mmc read 0 ${rd_loadaddr} 0x2000 0x258;"		\
+		     "mmc read 0 ${loadaddr} 0x800 2000;"		\
+		     "mmc read 0 ${rd_loadaddr} 0x3000 0x258;"		\
 		     "bootm ${loadaddr} ${rd_loadaddr}\0"		\
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
 		"bootcmd_android_recovery=run bootargs_base"		\
 		     " bootargs_android_recovery;"			\
-		     "mmc read 0 ${loadaddr} 0x800 0x1800;bootm\0"	\
+		     "mmc read 0 ${loadaddr} 0x800 0x2000;bootm\0"	\
 		"bootargs_android_recovery=setenv bootargs ${bootargs}" \
 		     " init=/init root=/dev/mmcblk0p4 rootfs=ext4\0"	\
 
