@@ -291,7 +291,7 @@ plugin_start:
 	strhi r3, [r2]
 
 /*=============================================================================
- *init script for codex LPDDR1-200MHz CPU board
+ *init script for all MX50 boards
  *===========================================================================*/
 
 /* Setup PLL1 to be 800 MHz */
@@ -369,6 +369,9 @@ wait_pll1_lock:
 //setmem /32 0x53fa86ac = 0x04000000
 //IOMUXC_SW_PAD_CTL_GRP_DDR_TYPE, ddr_sel=2'b01 (LPDDR2)
 	str r1, [r0, #0xac]
+//setmem /32 0x53fa8670 = 0x00000000  //IOMUXC_SW_PAD_CTL_GRP_DDRPKE
+// bit 7: PKE=0 (All ddr pads except DQS)
+	str r2, [r0, #0x70]
 //setmem /32 0x53fa86a4 = 0x00200000
 //IOMUXC_SW_PAD_CTL_GRP_CTLDS, dse=3'b100
 	str r3, [r0, #0xa4]
@@ -461,8 +464,6 @@ wait_pll1_lock:
 	str r1, [r0, #0x124]
 #endif
 
-#if defined(CONFIG_MX50_RDP)
-
 /*===========================================================================
  * DDR setting
  *===========================================================================*/
@@ -470,9 +471,6 @@ wait_pll1_lock:
 //setmem /32 0x14000000 = 0x00000500
     ldr r1, =0x00000500
     str r1, [r0, #0x0]
-//setmem /32 0x14000004 = 0x00000000
-    ldr r1, =0x00000000
-    str r1, [r0, #0x4]
 //setmem /32 0x14000008 = 0x0000001b
     ldr r1, =0x0000001b
     str r1, [r0, #0x8]
@@ -485,20 +483,20 @@ wait_pll1_lock:
 //setmem /32 0x14000014 = 0x00000a6b
     ldr r1, =0x00000a6b
     str r1, [r0, #0x14]
-//setmem /32 0x14000018 = 0x02030d0c
-    ldr r1, =0x02030d0c
+//setmem /32 0x14000018 = 0x02020d0c
+    ldr r1, =0x02020d0c
     str r1, [r0, #0x18]
-//setmem /32 0x1400001c = 0x0c110304
-    ldr r1, =0x0c110304
+//setmem /32 0x1400001c = 0x0c110302
+    ldr r1, =0x0c110302
     str r1, [r0, #0x1c]
 //setmem /32 0x14000020 = 0x05020503
     ldr r1, =0x05020503
     str r1, [r0, #0x20]
-//setmem /32 0x14000024 = 0x0048D005
-    ldr r1, =0x0048D005
+//setmem /32 0x14000024 = 0x0048eb05
+    ldr r1, =0x0048eb05
     str r1, [r0, #0x24]
-//setmem /32 0x14000028 = 0x01000403
-    ldr r1, =0x01000403
+//setmem /32 0x14000028 = 0x00000606
+    ldr r1, =0x00000606
     str r1, [r0, #0x28]
 //setmem /32 0x1400002c = 0x09040501
     ldr r1, =0x09040501
@@ -515,8 +513,8 @@ wait_pll1_lock:
 //setmem /32 0x1400003c = 0x00002301
     ldr r1, =0x00002301
     str r1, [r0, #0x3c]
-//setmem /32 0x14000040 = 0x00050300
-    ldr r1, =0x00050300
+//setmem /32 0x14000040 = 0x00050408
+    ldr r1, =0x00050408
     str r1, [r0, #0x40]
 //setmem /32 0x14000044 = 0x00000300
     ldr r1, =0x00000300
@@ -612,8 +610,8 @@ wait_pll1_lock:
     ldr r1, =0x0000ffff
     str r1, [r0, #0xdc]
 
-//setmem /32 0x140000e0 = 0x0000ffff
-    ldr r1, =0x0000ffff
+//setmem /32 0x140000e0 = 0x0000ff00
+    ldr r1, =0x0000ff00
     str r1, [r0, #0xe0]
 
 //setmem /32 0x140000e4 = 0x02020000
@@ -668,8 +666,8 @@ wait_pll1_lock:
     ldr r1, =0x03060408
     str r1, [r0, #0x114]
 
-//setmem /32 0x14000118 = 0x01010002
-    ldr r1, =0x01010002
+//setmem /32 0x14000118 = 0x00010002
+    ldr r1, =0x00010002
     str r1, [r0, #0x118]
 
 //setmem /32 0x1400011c = 0x00001000
@@ -685,44 +683,36 @@ wait_pll1_lock:
     ldr r1, =0x00000000
     str r1, [r0, #0x204]
 
-//setmem /32 0x14000208 = 0xf5003a27
-    ldr r1, =0xf5003a27
+//setmem /32 0x14000208 = 0x35003a27
+    ldr r1, =0x35003a27
     str r1, [r0, #0x208]
 
-//setmem /32 0x14000210 = 0xf5003a27
-    ldr r1, =0xf5003a27
+//setmem /32 0x14000210 = 0x35003a27
     str r1, [r0, #0x210]
 
-//setmem /32 0x14000218 = 0xf5003a27
-    ldr r1, =0xf5003a27
+//setmem /32 0x14000218 = 0x35003a27
     str r1, [r0, #0x218]
 
-//setmem /32 0x14000220 = 0xf5003a27
-    ldr r1, =0xf5003a27
+//setmem /32 0x14000220 = 0x35003a27
     str r1, [r0, #0x220]
 
-//setmem /32 0x14000228 = 0xf5003a27
-    ldr r1, =0xf5003a27
+//setmem /32 0x14000228 = 0x35003a27
     str r1, [r0, #0x228]
 
-//setmem /32 0x1400020c = 0x074002e1
-    ldr r1, =0x074002e1
+//setmem /32 0x1400020c = 0x380002e1
+    ldr r1, =0x380002e1
     str r1, [r0, #0x20c]
 
-//setmem /32 0x14000214 = 0x074002e1
-    ldr r1, =0x074002e1
+//setmem /32 0x14000214 = 0x380002e1
     str r1, [r0, #0x214]
 
-//setmem /32 0x1400021c = 0x074002e1
-    ldr r1, =0x074002e1
+//setmem /32 0x1400021c = 0x380002e1
     str r1, [r0, #0x21c]
 
-//setmem /32 0x14000224 = 0x074002e1
-    ldr r1, =0x074002e1
+//setmem /32 0x14000224 = 0x380002e1
     str r1, [r0, #0x224]
 
-//setmem /32 0x1400022c = 0x074002e1
-    ldr r1, =0x074002e1
+//setmem /32 0x1400022c = 0x380002e1
     str r1, [r0, #0x22c]
 
 //setmem /32 0x14000230 = 0x00000000
@@ -733,300 +723,37 @@ wait_pll1_lock:
     ldr r1, =0x00810006
     str r1, [r0, #0x234]
 
-//setmem /32 0x14000238 = 0x60099414
-    ldr r1, =0x60099414
+//setmem /32 0x14000238 = 0x60101014
+    ldr r1, =0x60101014
     str r1, [r0, #0x238]
 
-//setmem /32 0x14000240 = 0x60099414
-    ldr r1, =0x60099414
+//setmem /32 0x14000240 = 0x60101014
     str r1, [r0, #0x240]
 
-//setmem /32 0x14000248 = 0x60099414
-    ldr r1, =0x60099414
+//setmem /32 0x14000248 = 0x60101014
     str r1, [r0, #0x248]
 
-//setmem /32 0x14000250 = 0x60099414
-    ldr r1, =0x60099414
+//setmem /32 0x14000250 = 0x60101014
     str r1, [r0, #0x250]
 
-//setmem /32 0x14000258 = 0x60099414
-    ldr r1, =0x60099414
+//setmem /32 0x14000258 = 0x60101014
     str r1, [r0, #0x258]
 
-//setmem /32 0x1400023c = 0x000a0b01
-    ldr r1, =0x000a0b01
+//setmem /32 0x1400023c = 0x00100b01
+    ldr r1, =0x00100b01
     str r1, [r0, #0x23c]
 
-//setmem /32 0x14000244 = 0x000a0b01
-    ldr r1, =0x000a0b01
+//setmem /32 0x14000244 = 0x00100b01
     str r1, [r0, #0x244]
 
-//setmem /32 0x1400024c = 0x000a0b01
-    ldr r1, =0x000a0b01
+//setmem /32 0x1400024c = 0x00100b01
     str r1, [r0, #0x24c]
 
-//setmem /32 0x14000254 = 0x000a0b01
-    ldr r1, =0x000a0b01
+//setmem /32 0x14000254 = 0x00100b01
     str r1, [r0, #0x254]
 
-//setmem /32 0x1400025c = 0x000a0b01
-    ldr r1, =0x000a0b01
+//setmem /32 0x1400025c = 0x00100b01
     str r1, [r0, #0x25c]
-
-#elif defined(CONFIG_MX50_ARM2)
-
-/*=============================================================================
- * DDR setting
- *===========================================================================*/
-
-/* setmem /32 0x14000000	= 0x00000500 */
-	ldr r1, =0x00000500
-	str r1, [r0, #0x0]
-/* setmem /32 0x14000004	= 0x00000000 */
-	ldr r1, =0x00000000
-	str r1, [r0, #0x4]
-/* setmem /32 0x14000008	= 0x0000001b */
-	ldr r1, =0x0000001b
-	str r1, [r0, #0x8]
-/* setmem /32 0x1400000c	= 0x0000d056 */
-	ldr r1, =0x0000d056
-	str r1, [r0, #0xc]
-/* setmem /32 0x14000010	= 0x0000010b */
-	ldr r1, =0x0000010b
-	str r1, [r0, #0x10]
-/* setmem /32 0x14000014	= 0x00000a6b */
-	ldr r1, =0x00000a6b
-	str r1, [r0, #0x14]
-/* setmem /32 0x14000018	= 0x02020d0c */
-        ldr r1, =0x02020d0c
-        str r1, [r0, #0x18]
-/* setmem /32 0x1400001c	= 0x0c110302 */
-	ldr r1, =0x0c110302
-	str r1, [r0, #0x1c]
-/* setmem /32 0x14000020	= 0x05020503 */
-	ldr r1, =0x05020503
-	str r1, [r0, #0x20]
-/* setmem /32 0x14000024	= 0x00000105 */
-	ldr r1, =0x00000105
-	str r1, [r0, #0x24]
-/* setmem /32 0x14000028	= 0x01000403 */
-	ldr r1, =0x01000403
-	str r1, [r0, #0x28]
-/* setmem /32 0x1400002c	= 0x09040501 */
-	ldr r1, =0x09040501
-	str r1, [r0, #0x2c]
-/* setmem /32 0x14000030	= 0x02000000 */
-	ldr r1, =0x02000000
-	str r1, [r0, #0x30]
-/* setmem /32 0x14000034	= 0x00000e02 */
-	ldr r1, =0x00000e02
-	str r1, [r0, #0x34]
-/* setmem /32 0x14000038	= 0x00000006 */
-	ldr r1, =0x00000006
-	str r1, [r0, #0x38]
-/* setmem /32 0x1400003c	= 0x00002301 */
-	ldr r1, =0x00002301
-	str r1, [r0, #0x3c]
-/* setmem /32 0x14000040	= 0x00050300 */
-	ldr r1, =0x00050300
-	str r1, [r0, #0x40]
-/* setmem /32 0x14000044	= 0x00000300 */
-	ldr r1, =0x00000300
-	str r1, [r0, #0x44]
-/* setmem /32 0x14000048	= 0x00260026 */
-	ldr r1, =0x00260026
-	str r1, [r0, #0x48]
-/* setmem /32 0x1400004c	= 0x00010000 */
-	ldr r1, =0x00010000
-	str r1, [r0, #0x4c]
-/* setmem /32 0x1400005c	= 0x02000000 */
-	ldr r1, =0x02000000
-	str r1, [r0, #0x5c]
-/* setmem /32 0x14000060	= 0x00000002 */
-	ldr r1, =0x00000002
-	str r1, [r0, #0x60]
-/* setmem /32 0x14000064	= 0x00000000 */
-	ldr r1, =0x00000000
-	str r1, [r0, #0x64]
-/* setmem /32 0x14000068	= 0x00000000 */
-	ldr r1, =0x00000000
-	str r1, [r0, #0x68]
-/* setmem /32 0x1400006c	= 0x00040042 */
-	ldr r1, =0x00040042
-	str r1, [r0, #0x6c]
-/* setmem /32 0x14000070	= 0x00000001 */
-	ldr r1, =0x00000001
-	str r1, [r0, #0x70]
-/* setmem /32 0x14000074	= 0x00000000 */
-	ldr r1, =0x00000000
-	str r1, [r0, #0x74]
-/* setmem /32 0x14000078	= 0x00040042 */
-	ldr r1, =0x00040042
-	str r1, [r0, #0x78]
-/* setmem /32 0x1400007c	= 0x00000001 */
-	ldr r1, =0x00000001
-	str r1, [r0, #0x7c]
-/* setmem /32 0x14000080	= 0x010b0000 */
-	ldr r1, =0x010b0000
-	str r1, [r0, #0x80]
-/* setmem /32 0x14000084	= 0x00000060 */
-	ldr r1, =0x00000060
-	str r1, [r0, #0x84]
-/* setmem /32 0x14000088	= 0x02400018 */
-        ldr r1, =0x02400018
-        str r1, [r0, #0x88]
-/* setmem /32 0x1400008c	= 0x01000e00 */
-        ldr r1, =0x01000e00
-        str r1, [r0, #0x8c]
-/* setmem /32 0x14000090	= 0x0a010101 */
-        ldr r1, =0x0a010101
-        str r1, [r0, #0x90]
-/* setmem /32 0x14000094	= 0x01011f1f */
-        ldr r1, =0x01011f1f
-        str r1, [r0, #0x94]
-/* setmem /32 0x14000098	= 0x01010101 */
-        ldr r1, =0x01010101
-        str r1, [r0, #0x98]
-/* setmem /32 0x1400009c	= 0x00030101 */
-        ldr r1, =0x00030101
-        str r1, [r0, #0x9c]
-/* setmem /32 0x140000a0	= 0x00010000 */
-        ldr r1, =0x00010000
-        str r1, [r0, #0xa0]
-/* setmem /32 0x140000a4	= 0x00010000 */
-        ldr r1, =0x00010000
-        str r1, [r0, #0xa4]
-/* setmem /32 0x140000a8	= 0x00000000 */
-        ldr r1, =0x00000000
-        str r1, [r0, #0xa8]
-/* setmem /32 0x140000ac	= 0x0000ffff */
-        ldr r1, =0x0000ffff
-        str r1, [r0, #0xac]
-/* setmem /32 0x140000c8	= 0x02020101 */
-        ldr r1, =0x02020101
-        str r1, [r0, #0xc8]
-/* setmem /32 0x140000cc	= 0x01000000 */
-        ldr r1, =0x01000000
-        str r1, [r0, #0xcc]
-/* setmem /32 0x140000d0	= 0x06060606 */
-        ldr r1, =0x06060606
-        str r1, [r0, #0xd0]
-/* setmem /32 0x140000d4	= 0x06060606 */
-        ldr r1, =0x06060606
-        str r1, [r0, #0xd4]
-/* setmem /32 0x140000d8	= 0x00000102 */
-        ldr r1, =0x00000102
-        str r1, [r0, #0xd8]
-/* setmem /32 0x140000dc	= 0x0000ffff */
-        ldr r1, =0x0000ffff
-        str r1, [r0, #0xdc]
-/* setmem /32 0x140000e0	= 0x0000ffff */
-        ldr r1, =0x0000ffff
-        str r1, [r0, #0xdc]
-/* setmem /32 0x140000e4	= 0x02020000 */
-        ldr r1, =0x02020000
-        str r1, [r0, #0xe4]
-/* setmem /32 0x140000e8	= 0x02020202 */
-        ldr r1, =0x02020202
-        str r1, [r0, #0xe8]
-/* setmem /32 0x140000ec	= 0x00000202 */
-        ldr r1, =0x00000202
-        str r1, [r0, #0xec]
-/* setmem /32 0x140000f0	= 0x01010064 */
-        ldr r1, =0x01010064
-        str r1, [r0, #0xf0]
-/* setmem /32 0x140000f4	= 0x01010101 */
-        ldr r1, =0x01010101
-        str r1, [r0, #0xf4]
-/* setmem /32 0x140000f8	= 0x00010101 */
-        ldr r1, =0x00010101
-        str r1, [r0, #0xf8]
-/* setmem /32 0x140000fc	= 0x00000064 */
-        ldr r1, =0x00000064
-        str r1, [r0, #0xfc]
-/* setmem /32 0x14000100	= 0x00000000 */
-        ldr r1, =0x00000000
-        str r1, [r0, #0x100]
-/* setmem /32 0x14000104	= 0x02000802 */
-        ldr r1, =0x02000802
-        str r1, [r0, #0x104]
-/* setmem /32 0x14000108	= 0x04080000 */
-        ldr r1, =0x04080000
-        str r1, [r0, #0x108]
-/* setmem /32 0x1400010c	= 0x04080408 */
-        ldr r1, =0x04080408
-        str r1, [r0, #0x10c]
-/* setmem /32 0x14000110	= 0x04080408 */
-        ldr r1, =0x04080408
-        str r1, [r0, #0x110]
-/* setmem /32 0x14000114	= 0x03060408 */
-        ldr r1, =0x03060408
-        str r1, [r0, #0x114]
-/* setmem /32 0x14000118	= 0x01010002 */
-        ldr r1, =0x01010002
-        str r1, [r0, #0x118]
-/* setmem /32 0x1400011c	= 0x00001000 */
-        ldr r1, =0x00001000
-        str r1, [r0, #0x11c]
-/* setmem /32 0x14000200	= 0x00000000 */
-	ldr r1, =0x00000000
-	str r1, [r0, #0x200]
-/* setmem /32 0x14000204	= 0x00000000 */
-	ldr r1, =0x00000000
-	str r1, [r0, #0x204]
-/* setmem /32 0x14000208	= 0xf5003a27 */
-	ldr r1, =0xf5003a27
-	str r1, [r0, #0x208]
-/* setmem /32 0x14000210	= 0xf5003a27 */
-	str r1, [r0, #0x210]
-/* setmem /32 0x14000218	= 0xf5003a27 */
-	str r1, [r0, #0x218]
-/* setmem /32 0x14000220	= 0xf5003a27 */
-	str r1, [r0, #0x220]
-/* setmem /32 0x14000228	= 0xf5003a27 */
-	str r1, [r0, #0x228]
-/* setmem /32 0x1400020c        = 0x074002e1 */
-        ldr r1, =0x074002e1
-        str r1, [r0, #0x20c]
-/* setmem /32 0x14000214        = 0x074002e1 */
-        str r1, [r0, #0x214]
-/* setmem /32 0x1400021c        = 0x074002e1 */
-        str r1, [r0, #0x21c]
-/* setmem /32 0x14000224        = 0x074002e1 */
-        str r1, [r0, #0x224]
-/* setmem /32 0x1400022c	= 0x074002e1 */
-	str r1, [r0, #0x22c]
-/* setmem /32 0x14000230	= 0x00000000 */
-	ldr r1, =0x00000000
-	str r1, [r0, #0x230]
-/* setmem /32 0x14000234	= 0x00810006 */
-	ldr r1, =0x00810006
-	str r1, [r0, #0x234]
-/* setmem /32 0x14000238	= 0x20099414 */
-	ldr r1, =0x20099414
-	str r1, [r0, #0x238]
-/* setmem /32 0x14000240	= 0x20099414 */
-	str r1, [r0, #0x240]
-/* setmem /32 0x14000248	= 0x20099414 */
-	str r1, [r0, #0x248]
-/* setmem /32 0x14000250	= 0x20099414 */
-	str r1, [r0, #0x250]
-/* setmem /32 0x14000258	= 0x20099414 */
-	str r1, [r0, #0x258]
-/* setmem /32 0x1400023c	= 0x000a0b01 */
-	ldr r1, =0x000a0b01
-	str r1, [r0, #0x23c]
-/* setmem /32 0x14000244	= 0x000a0b01 */
-	str r1, [r0, #0x244]
-/* setmem /32 0x1400024c	= 0x000a0b01 */
-	str r1, [r0, #0x24c]
-/* setmem /32 0x14000254	= 0x000a0b01 */
-	str r1, [r0, #0x254]
-/* setmem /32 0x1400025c	= 0x000a0b01 */
-	str r1, [r0, #0x25c]
-#else
-#	error "Unsupported board!"
-#endif
 
 /* Start ddr */
 /* setmem /32 0x14000000 = 0x00000501  // bit[0]: start */
