@@ -159,6 +159,20 @@ enum boot_device get_boot_device(void)
 	return boot_dev;
 }
 
+u32 get_board_rev_from_fuse(void)
+{
+	u32 board_rev = readl(IIM_BASE_ADDR + 0x878);
+
+	return board_rev;
+}
+
+u32 get_board_id_from_fuse(void)
+{
+	u32 board_id = readl(IIM_BASE_ADDR + 0x87c);
+
+	return board_id;
+}
+
 u32 get_board_rev(void)
 {
 	return system_rev;
@@ -167,6 +181,7 @@ u32 get_board_rev(void)
 static inline void setup_soc_rev(void)
 {
 	int reg;
+	u32 board_rev = get_board_rev_from_fuse();
 
 	/* Si rev is obtained from ROM */
 	reg = __REG(ROM_SI_REV);
@@ -181,11 +196,15 @@ static inline void setup_soc_rev(void)
 	default:
 		system_rev = 0x53000 | CHIP_REV_2_0;
 	}
-}
 
-static inline void setup_board_rev(int rev)
-{
-	system_rev |= (rev & 0xF) << 8;
+	switch (board_rev) {
+	case 0x02:
+		system_rev |= BOARD_REV_5;
+		break;
+	case 0x01:
+	default:
+		system_rev |= BOARD_REV_4;
+	}
 }
 
 inline int is_soc_rev(int rev)
@@ -846,10 +865,20 @@ int board_late_init(void)
 
 int checkboard(void)
 {
-	printf("Board: ");
-	printf("MX53-SMD 1.0\n");
-	printf("Boot Reason: [");
+	printf("Board: MX53-SMD ");
 
+	switch (get_board_rev_from_fuse()) {
+	case 0x2:
+		printf("Rev. B\n");
+		break;
+	case 0x1:
+	default:
+		printf("Rev. A\n");
+		break;
+
+	}
+
+	printf("Boot Reason: [");
 
 	switch (__REG(SRC_BASE_ADDR + 0x8)) {
 	case 0x0001:

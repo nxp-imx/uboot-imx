@@ -347,6 +347,13 @@
 
 #define CHIP_REV_1_0            0x10
 #define CHIP_REV_2_0            0x20
+
+#define BOARD_REV_1             0x000
+#define BOARD_REV_2             0x100
+#define BOARD_REV_3             0x200
+#define BOARD_REV_4             0x300
+#define BOARD_REV_5             0x400
+
 #define PLATFORM_ICGC           0x14
 
 /* Assuming 24MHz input clock with doubler ON */
