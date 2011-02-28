@@ -118,6 +118,7 @@ static inline void sdelay(u32 sec)
 		mdelay(1000);
 }
 
+#ifdef DWC_AHSATA_DEBUG
 void dprint_buffer(u8 *buf, s32 len)
 {
 	s32 i, j;
@@ -136,6 +137,7 @@ void dprint_buffer(u8 *buf, s32 len)
 	}
 	printf("\n\r");
 }
+#endif
 
 static inline u32 ahci_port_base(u32 base, u32 port)
 {
@@ -408,7 +410,7 @@ static int ahci_init_one(int pdev)
 	ahci_print_info(probe_ent);
 
 #ifdef CONFIG_ARCH_MMU
-	dma_buf = (u8 *)memalign(ATA_MAX_SECTORS * ATA_SECT_SIZE, 4);
+	dma_buf = (u8 *)memalign(4, ATA_MAX_SECTORS * ATA_SECT_SIZE);
 	if (NULL == dma_buf) {
 		printf("Fail to alloc buf for dma access!\n");
 		return 0;
