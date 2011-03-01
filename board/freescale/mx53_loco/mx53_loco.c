@@ -307,6 +307,9 @@ void setup_pmic_voltages(void)
 	/* increase VDDGP as 1.2V for 1GHZ */
 	value = 0x5c;
 	i2c_write(0x48, 0x2e, 1, &value, 1);
+	i2c_read(0x48, 60, 1, &value, 1);
+	value |= 0x1;
+	i2c_write(0x48, 60, 1, &value, 1);
 }
 #endif
 
