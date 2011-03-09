@@ -3285,6 +3285,7 @@ mx53_loco_mfg_config		\
 mx53_loco_config	:unconfig
 	$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx53_loco freescale mx53
 
+mx53_ard_ddr3_config		\
 mx53_ard_mfg_config		\
 mx53_ard_config		: unconfig
 	$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx53_ard freescale mx53

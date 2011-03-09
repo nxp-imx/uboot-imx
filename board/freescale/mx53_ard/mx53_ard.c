@@ -162,6 +162,20 @@ enum boot_device get_boot_device(void)
 	return boot_dev;
 }
 
+u32 get_board_rev_from_fuse(void)
+{
+	u32 board_rev = readl(IIM_BASE_ADDR + 0x878);
+
+	return board_rev;
+}
+
+u32 get_board_id_from_fuse(void)
+{
+	u32 board_id = readl(IIM_BASE_ADDR + 0x87c);
+
+	return board_id;
+}
+
 u32 get_board_rev(void)
 {
 	return system_rev;
@@ -170,6 +184,7 @@ u32 get_board_rev(void)
 static inline void setup_soc_rev(void)
 {
 	int reg;
+	u32 board_rev = get_board_rev_from_fuse();
 
 	/* Si rev is obtained from ROM */
 	reg = __REG(ROM_SI_REV);
@@ -184,6 +199,15 @@ static inline void setup_soc_rev(void)
 	default:
 		system_rev = 0x53000 | CHIP_REV_2_0;
 	}
+	switch (board_rev) {
+	case 0x01:
+		system_rev |= BOARD_REV_1;
+		break;
+	case 0x02:
+	default:
+		system_rev |= BOARD_REV_2;
+	}
+
 }
 
 static inline void setup_board_rev(int rev)
@@ -269,6 +293,11 @@ int dram_init(void)
 {
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
+
+#if defined(CONFIG_MX53_ARD_DDR3)
+	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
+	gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
+#endif
 	return 0;
 }
 
@@ -1094,11 +1123,20 @@ int board_late_init(void)
 
 int checkboard(void)
 {
-	printf("Board: ");
+	printf("Board: MX53-ARD ");
 
-	printf("MX53-ARD 1.0\n");
+	switch (get_board_rev_from_fuse()) {
+	case 0x2:
+		printf("Rev. B\n");
+		break;
+	case 0x1:
+	default:
+		printf("Rev. A\n");
+		break;
+
+	}
+
 	printf("Boot Reason: [");
-
 	switch (__REG(SRC_BASE_ADDR + 0x8)) {
 	case 0x0001:
 		printf("POR");
