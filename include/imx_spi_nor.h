@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -62,6 +62,21 @@
 #define CONFIG_REG2	0x2A
 #define CONFIG_REG3	0x80
 #define CONFIG_REG4	0xA6
+
+/* Flash opcodes. M25P32 */
+#define	OPCODE_WREN		0x06	/* Write enable */
+#define	OPCODE_RDSR		0x05	/* Read status register */
+#define	OPCODE_WRSR		0x01	/* Write status register 1 byte */
+#define	OPCODE_NORM_READ	0x03	/* Read data bytes (low frequency) */
+#define	OPCODE_FAST_READ	0x0b	/* Read data bytes (high frequency) */
+#define	OPCODE_PP		0x02	/* Page program (up to 256 bytes) */
+#define	OPCODE_BE_4K		0x20	/* Erase 4KiB block */
+#define	OPCODE_BE_32K		0x52	/* Erase 32KiB block */
+#define	OPCODE_CHIP_ERASE	0xc7	/* Erase whole flash chip */
+#define	OPCODE_SE		0xd8	/* Sector erase (usually 64KiB) */
+#define	OPCODE_RDID		0x9f	/* Read JEDEC ID */
+/* Status Register bits. */
+#define	SR_WIP			1	/* Write in progress */
 
 #define SZ_64K      0x10000
 #define SZ_32K      0x8000

@@ -35,6 +35,7 @@ COBJS-$(CONFIG_SPI_M95XXX) += eeprom_m95xxx.o
 COBJS-$(CONFIG_SPI_FLASH_IMX)	+= imx_spi_nor.o
 COBJS-$(CONFIG_SPI_FLASH_IMX_SST)	+= imx_spi_nor_sst.o
 COBJS-$(CONFIG_SPI_FLASH_IMX_ATMEL)	+= imx_spi_nor_atmel.o
+COBJS-$(CONFIG_SPI_FLASH_IMX_M25PXX)	+= imx_spi_nor_m25pxx.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
