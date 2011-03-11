@@ -371,6 +371,38 @@ static void setup_i2c(unsigned int module_base)
 		break;
 	}
 }
+
+void setup_pmic_voltages(void)
+{
+  int value;
+  /* Increase VDDGP as 1.1v for 800MHZ
+   * Since VDDGP voltage is caculated via resistors, the actual
+   * voltage is only about 1.1v
+   */
+   if (is_soc_rev(CHIP_REV_2_0) == 0) {
+    i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+    /* Update B2DTV1 */
+    /* VCC = (1+R1/R2)*(0.3625 + B1DTV1*0.0125)
+     * = (1 + 100/180)*(0.3625 + 27*0.0125)
+     * =  1.1083V
+     */
+    value |= 0x1C;
+    i2c_write(0x34, 0x23, 1, &value, 1);
+    /* Update VCCR */
+    i2c_read(0x34, 0x20, 1, &value, 1);
+    value = (value & 0xfc) | 0x1;
+    i2c_write(0x34, 0x20, 1, &value, 1);
+    /* Update SCR1 */
+    i2c_read(0x34, 0x12, 1, &value, 1);
+    value = (value & 0xfe) | 0x1;
+    i2c_write(0x34, 0x12, 1, &value, 1);
+    /* Update OVEN */
+    i2c_read(0x34, 0x10, 1, &value, 1);
+    value = (value & 0xfe) | 0x1;
+    i2c_write(0x34, 0x10, 1, &value, 1);
+    udelay(10000);
+   }
+}
 #endif
 
 #ifdef CONFIG_IMX_ECSPI
@@ -983,6 +1015,7 @@ int board_init(void)
 
 #ifdef CONFIG_I2C_MXC
 	setup_i2c(CONFIG_SYS_I2C_PORT);
+	setup_pmic_voltages();
 #endif
 
 	weim_smc911x_iomux();
