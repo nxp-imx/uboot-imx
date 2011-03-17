@@ -296,10 +296,9 @@
 #define PHYS_SDRAM_1		CSD0_BASE_ADDR
 #define PHYS_SDRAM_1_SIZE	(512 * 1024 * 1024)
 #define PHYS_SDRAM_2		CSD1_BASE_ADDR
-#define PHYS_SDRAM_2_SIZE	(512 * 1024 * 1024)
+#define PHYS_SDRAM_2_SIZE	0
 #define iomem_valid_addr(addr, size) \
-	((addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)) \
-	|| (addr >= PHYS_SDRAM_2 && addr <= (PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE)))
+	(addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
