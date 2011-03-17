@@ -913,7 +913,7 @@ static int config_ddr_clk(u32 emi_clk)
 		return -1;
 	}
 
-	if ((clk_src % emi_clk) == 0)
+	if ((clk_src % emi_clk) < 10000000)
 		div = clk_src / emi_clk;
 	else
 		div = (clk_src / emi_clk) + 1;

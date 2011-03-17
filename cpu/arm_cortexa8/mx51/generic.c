@@ -2,7 +2,7 @@
  * (C) Copyright 2007
  * Sascha Hauer, Pengutronix
  *
- * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -243,24 +243,32 @@ static u32 __get_ddr_clk(void)
 {
 	u32 ret_val = 0;
 	u32 cbcmr = __REG(MXC_CCM_CBCMR);
+	u32 cbcdr = __REG(MXC_CCM_CBCDR);
 	u32 ddr_clk_sel = (cbcmr & MXC_CCM_CBCMR_DDR_CLK_SEL_MASK) \
 				>> MXC_CCM_CBCMR_DDR_CLK_SEL_OFFSET;
 
-	switch (ddr_clk_sel) {
-	case 0:
-		ret_val =  __get_axi_a_clk();
-		break;
-	case 1:
-		ret_val =  __get_axi_b_clk();
-		break;
-	case 2:
-		ret_val =  __get_emi_slow_clk();
-		break;
-	case 3:
-		ret_val =  __get_ahb_clk();
-		break;
-	default:
-		break;
+	if (((cbcdr >> 30) & 0x1) == 0x1) {
+		u32 ddr_clk_podf = (cbcdr >> 27) & 0x7;
+
+		ret_val = __decode_pll(PLL1_CLK, CONFIG_MX51_HCLK_FREQ)
+			/ (ddr_clk_podf + 1);
+	} else {
+		switch (ddr_clk_sel) {
+		case 0:
+			ret_val =  __get_axi_a_clk();
+			break;
+		case 1:
+			ret_val =  __get_axi_b_clk();
+			break;
+		case 2:
+			ret_val =  __get_emi_slow_clk();
+			break;
+		case 3:
+			ret_val =  __get_ahb_clk();
+			break;
+		default:
+			break;
+		}
 	}
 
 	return ret_val;
@@ -879,7 +887,7 @@ static int config_ddr_clk(u32 emi_clk)
 		}
 	}
 
-	if ((clk_src % emi_clk) == 0)
+	if ((clk_src % emi_clk) < 10000000)
 		div = clk_src / emi_clk;
 	else
 		div = (clk_src / emi_clk) + 1;
