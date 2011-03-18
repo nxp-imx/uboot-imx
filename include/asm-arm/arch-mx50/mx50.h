@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -333,6 +333,11 @@ extern unsigned int mxc_get_clock(enum mxc_clock clk);
 extern unsigned int get_board_rev(void);
 extern int is_soc_rev(int rev);
 extern enum boot_device get_boot_device(void);
+
+extern void set_usboh3_clk(void);
+extern void set_usb_phy1_clk(void);
+extern void enable_usboh3_clk(unsigned char enable);
+extern void enable_usb_phy1_clk(unsigned char enable);
 
 #endif /* __ASSEMBLER__*/
 

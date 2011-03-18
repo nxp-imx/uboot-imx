@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -190,10 +190,14 @@
 #define MXC_CCM_CSCMR1_SSI_EXT2_CLK_SEL_MASK		(0x3 << 30)
 #define MXC_CCM_CSCMR1_SSI_EXT1_CLK_SEL_OFFSET		(28)
 #define MXC_CCM_CSCMR1_SSI_EXT1_CLK_SEL_MASK		(0x3 << 28)
+#define MXC_CCM_CSCMR1_USB_PHY_CLK_SEL_OFFSET		(26)
+#define MXC_CCM_CSCMR1_USB_PHY_CLK_SEL			(0x1 << 26)
 #define MXC_CCM_CSCMR1_UART_CLK_SEL_OFFSET		(24)
 #define MXC_CCM_CSCMR1_UART_CLK_SEL_MASK		(0x3 << 24)
-#define MXC_CCM_CSCMR1_ESDHC1_CLK_SEL_OFFSET	(21)
-#define MXC_CCM_CSCMR1_ESDHC1_CLK_SEL_MASK	(0x3 << 21)
+#define MXC_CCM_CSCMR1_USBOH3_CLK_SEL_OFFSET		(22)
+#define MXC_CCM_CSCMR1_USBOH3_CLK_SEL_MASK		(0x3 << 22)
+#define MXC_CCM_CSCMR1_ESDHC1_CLK_SEL_OFFSET		(21)
+#define MXC_CCM_CSCMR1_ESDHC1_CLK_SEL_MASK		(0x3 << 21)
 #define MXC_CCM_CSCMR1_ESDHC2_CLK_SEL			(0x1 << 20)
 #define MXC_CCM_CSCMR1_ESDHC4_CLK_SEL			(0x1 << 19)
 #define MXC_CCM_CSCMR1_ESDHC3_CLK_SEL_OFFSET		(16)
@@ -220,6 +224,10 @@
 #define MXC_CCM_CSCDR1_PGC_CLK_PODF_MASK		(0x3 << 14)
 #define MXC_CCM_CSCDR1_ESDHC1_CLK_PODF_OFFSET		(11)
 #define MXC_CCM_CSCDR1_ESDHC1_CLK_PODF_MASK		(0x7 << 11)
+#define MXC_CCM_CSCDR1_USBOH3_CLK_PRED_OFFSET		(8)
+#define MXC_CCM_CSCDR1_USBOH3_CLK_PRED_MASK		(0x7 << 8)
+#define MXC_CCM_CSCDR1_USBOH3_CLK_PODF_OFFSET		(6)
+#define MXC_CCM_CSCDR1_USBOH3_CLK_PODF_MASK		(0x3 << 6)
 #define MXC_CCM_CSCDR1_UART_CLK_PRED_OFFSET		(3)
 #define MXC_CCM_CSCDR1_UART_CLK_PRED_MASK		(0x7 << 3)
 #define MXC_CCM_CSCDR1_UART_CLK_PODF_OFFSET		(0)
