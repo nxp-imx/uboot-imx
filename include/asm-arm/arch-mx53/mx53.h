@@ -347,6 +347,8 @@
 
 #define CHIP_REV_1_0            0x10
 #define CHIP_REV_2_0            0x20
+#define CHIP_REV_2_1            0x21
+#define CHIP_REV_UNKNOWN        0xff
 
 #define BOARD_REV_1             0x000
 #define BOARD_REV_2             0x100

@@ -134,8 +134,11 @@ static inline void setup_soc_rev(void)
 	case 0x20:
 		system_rev = 0x53000 | CHIP_REV_2_0;
 		break;
+	case 0x21:
+		system_rev = 0x53000 | CHIP_REV_2_1;
+		break;
 	default:
-		system_rev = 0x53000 | CHIP_REV_2_0;
+		system_rev = 0x53000 | CHIP_REV_UNKNOWN;
 	}
 }
 
