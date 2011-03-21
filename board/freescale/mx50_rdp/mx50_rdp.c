@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -129,9 +129,27 @@ static inline void setup_soc_rev(void)
 	}
 }
 
-static inline void setup_board_rev(int rev)
+static inline void set_board_rev(int rev)
 {
 	system_rev |= (rev & 0xF) << 8;
+}
+
+static inline void setup_board_rev(void)
+{
+#if defined(CONFIG_MX50_RD3)
+	set_board_rev(0x3);
+#endif
+}
+
+static inline void setup_arch_id(void)
+{
+#if defined(CONFIG_MX50_RDP) || defined(CONFIG_MX50_RD3)
+	gd->bd->bi_arch_number = MACH_TYPE_MX50_RDP;
+#elif defined(CONFIG_MX50_ARM2)
+	gd->bd->bi_arch_number = MACH_TYPE_MX50_ARM2;
+#else
+#	error "Unsupported board!"
+#endif
 }
 
 inline int is_soc_rev(int rev)
@@ -214,7 +232,21 @@ int dram_init(void)
 
 static void setup_uart(void)
 {
+	unsigned int reg;
 
+#if defined(CONFIG_MX50_RD3)
+	/* UART3 TXD */
+	mxc_request_iomux(MX50_PIN_UART3_TXD, IOMUX_CONFIG_ALT1);
+	mxc_iomux_set_pad(MX50_PIN_UART3_TXD, 0x1E4);
+	/* Enable UART1 */
+	reg = readl(GPIO6_BASE_ADDR + 0x0);
+	reg |= (1 << 14);
+	writel(reg, GPIO6_BASE_ADDR + 0x0);
+
+	reg = readl(GPIO6_BASE_ADDR + 0x4);
+	reg |= (1 << 14);
+	writel(reg, GPIO6_BASE_ADDR + 0x4);
+#endif
 	/* UART1 RXD */
 	mxc_request_iomux(MX50_PIN_UART1_RXD, IOMUX_CONFIG_ALT0);
 	mxc_iomux_set_pad(MX50_PIN_UART1_RXD, 0x1E4);
@@ -599,6 +631,18 @@ static void setup_fec(void)
 	reg = readl(GPIO6_BASE_ADDR + 0x4);
 	reg |= (1 << 23);
 	writel(reg, GPIO6_BASE_ADDR + 0x4);
+
+#elif defined(CONFIG_MX50_RD3)
+	/* FEC_EN: gpio4-15 set to 0 to enable FEC */
+	mxc_request_iomux(MX50_PIN_I2C3_SDA, IOMUX_CONFIG_ALT1);
+
+	reg = readl(GPIO4_BASE_ADDR + 0x0);
+	reg |= (1 << 15);
+	writel(reg, GPIO4_BASE_ADDR + 0x0);
+
+	reg = readl(GPIO4_BASE_ADDR + 0x4);
+	reg |= (1 << 15);
+	writel(reg, GPIO4_BASE_ADDR + 0x4);
 #endif
 
 	/*FEC_MDIO*/
@@ -647,7 +691,7 @@ static void setup_fec(void)
 	mxc_iomux_set_pad(MX50_PIN_DISP_D2, 0x0);
 	mxc_iomux_set_input(MUX_IN_FEC_FEC_RX_DV_SELECT_INPUT, 0);
 
-#if defined(CONFIG_MX50_RDP)
+#if defined(CONFIG_MX50_RDP) || defined(CONFIG_MX50_RD3)
 	/* FEC_RESET_B: gpio4-12 */
 	mxc_request_iomux(MX50_PIN_ECSPI1_SCLK, IOMUX_CONFIG_ALT1);
 
@@ -1065,6 +1109,12 @@ static void setup_power(void)
 	/* Enable VGEN1 to enable ethernet */
 	slave = spi_pmic_probe();
 
+#if defined(CONFIG_MX50_RD3)
+	/* Set global reset time to 0s*/
+	val = pmic_reg(slave, 15, 0, 0);
+	val &= ~(0x300);
+	pmic_reg(slave, 15, val, 1);
+#else
 	val = pmic_reg(slave, 30, 0, 0);
 	val |= 0x3;
 	pmic_reg(slave, 30, val, 1);
@@ -1077,6 +1127,7 @@ static void setup_power(void)
 	val = pmic_reg(slave, 33, 0, 0);
 	val |= 0x40;
 	pmic_reg(slave, 33, val, 1);
+#endif
 
 	spi_pmic_free(slave);
 }
@@ -1109,14 +1160,11 @@ int board_init(void)
 	/* soc rev */
 	setup_soc_rev();
 
+	/* board rev */
+	setup_board_rev();
+
 	/* arch id for linux */
-#if defined(CONFIG_MX50_RDP)
-	gd->bd->bi_arch_number = MACH_TYPE_MX50_RDP;
-#elif defined(CONFIG_MX50_ARM2)
-	gd->bd->bi_arch_number = MACH_TYPE_MX50_ARM2;
-#else
-#	error "Unsupported board!"
-#endif
+	setup_arch_id();
 
 	/* boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
@@ -1152,6 +1200,8 @@ int checkboard(void)
 {
 #if defined(CONFIG_MX50_RDP)
 	printf("Board: MX50 RDP board\n");
+#elif defined(CONFIG_MX50_RD3)
+	printf("Board: MX50 RD3 board\n");
 #elif defined(CONFIG_MX50_ARM2)
 	printf("Board: MX50 ARM2 board\n");
 #else

@@ -3254,6 +3254,8 @@ mx50_arm2_iram_config \
 mx50_arm2_config  \
 mx50_arm2_mfg_config \
 mx50_rdp_iram_config \
+mx50_rd3_config \
+mx50_rd3_mfg_config \
 mx50_rdp_mfg_config \
 mx50_rdp_android_config \
 mx50_rdp_config      : unconfig
