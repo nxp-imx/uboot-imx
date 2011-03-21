@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2011 Freescale Semiconductor, Inc.
  * Terry Lv
  *
  * Copyright 2008, Freescale Semiconductor, Inc
@@ -437,7 +437,9 @@ static int mmc_change_freq(struct mmc *mmc)
 	if (err)
 		goto err_rtn;
 
-	if (ext_csd[212] || ext_csd[213] || ext_csd[214] || ext_csd[215])
+	/* Cards with density > 2GiB are sector addressed */
+	if (ext_csd[212] || ext_csd[213] || ext_csd[214] || ext_csd[215] &&
+			(mmc->capacity > (2u * 1024 * 1024 * 1024) / 512))
 		mmc->high_capacity = 1;
 
 	cardtype = ext_csd[EXT_CSD_CARD_TYPE] & 0xf;
