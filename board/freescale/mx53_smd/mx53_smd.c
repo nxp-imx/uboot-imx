@@ -390,8 +390,8 @@ void setup_pmic_voltages(void)
 {
 	int value;
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
-	/* increase VDDGP as 1.2V for 1GHZ */
-	value = 0x5c;
+	/* increase VDDGP as 1.25V for 1GHZ */
+	value = 0x5e;
 	i2c_write(0x48, 0x2e, 1, &value, 1);
 	i2c_read(0x48, 60, 1, &value, 1);
 	value |= 0x1;

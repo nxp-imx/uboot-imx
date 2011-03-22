@@ -321,10 +321,10 @@ void setup_core_voltages(void)
 	}
 
 	if (is_soc_rev(CHIP_REV_2_0) >= 0) {
-		/* set VDDGP as 1.2V for 1.0 GHZ */
+		/* set VDDGP as 1.25V for 1.0 GHZ */
 		buf[0] = 0x45;
 		buf[1] = 0x4a;
-		buf[2] = 0x58;
+		buf[2] = 0x5a;
 		if (i2c_write(0x8, 24, 1, buf, 3))
 			return;
 		/* Set VCC to 1.3V for TO2 */
