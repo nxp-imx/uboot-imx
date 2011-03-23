@@ -312,6 +312,15 @@
 #define CONFIG_FASTBOOT_TRANSFER_BUF    0x80000000
 #define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x8000000 /* 128M byte */
 
+#define CONFIG_ANDROID_RECOVERY
+#define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
+	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4"	\
+	"rootfs=ext4 keypad"
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
+	"run bootargs_base bootargs_android_recovery;"  \
+	"mmc read 0 ${loadaddr} 0x800 0x2000;bootm"
+#define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
+
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
 

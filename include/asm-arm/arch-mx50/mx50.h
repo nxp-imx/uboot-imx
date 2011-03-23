@@ -293,7 +293,8 @@ enum boot_device {
 	SD_BOOT,
 	MMC_BOOT,
 	NAND_BOOT,
-	UNKNOWN_BOOT
+	UNKNOWN_BOOT,
+	BOOT_DEV_NUM = UNKNOWN_BOOT,
 };
 
 enum mxc_clock {
