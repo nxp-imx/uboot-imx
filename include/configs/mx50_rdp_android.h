@@ -315,7 +315,7 @@
 #define CONFIG_ANDROID_RECOVERY
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
 	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4"	\
-	"rootfs=ext4 keypad"
+	" rootfs=ext4 keypad"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
 	"run bootargs_base bootargs_android_recovery;"  \
 	"mmc read 0 ${loadaddr} 0x800 0x2000;bootm"
