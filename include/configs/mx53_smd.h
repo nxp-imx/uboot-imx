@@ -96,6 +96,9 @@
 #define CONFIG_BOOTP_DNS
 
 #define CONFIG_CMD_MMC
+#define CONFIG_CMD_SPI
+#define CONFIG_CMD_I2C
+#define CONFIG_CMD_SF
 #define CONFIG_CMD_ENV
 
 #define CONFIG_CMD_IIM
@@ -182,12 +185,25 @@
 /*
  * I2C Configs
  */
-#define CONFIG_CMD_I2C          1
-#define CONFIG_HARD_I2C         1
-#define CONFIG_I2C_MXC          1
-#define CONFIG_SYS_I2C_PORT             I2C1_BASE_ADDR
-#define CONFIG_SYS_I2C_SPEED            100000
-#define CONFIG_SYS_I2C_SLAVE            0xfe
+#ifdef CONFIG_CMD_I2C
+	#define CONFIG_HARD_I2C         1
+	#define CONFIG_I2C_MXC          1
+	#define CONFIG_SYS_I2C_PORT             I2C1_BASE_ADDR
+	#define CONFIG_SYS_I2C_SPEED            100000
+	#define CONFIG_SYS_I2C_SLAVE            0xfe
+#endif
+
+/*
+ * SPI Configs
+ */
+#ifdef CONFIG_CMD_SF
+	#define CONFIG_FSL_SF		1
+	#define CONFIG_SPI_FLASH_IMX_M25PXX	1
+	#define CONFIG_SPI_FLASH_CS	1
+	#define CONFIG_IMX_ECSPI
+	#define IMX_CSPI_VER_2_3	1
+	#define MAX_SPI_BYTES		(64 * 4)
+#endif
 
 /*
  * MMC Configs

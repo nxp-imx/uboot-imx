@@ -36,6 +36,10 @@
 #endif
 #include <netdev.h>
 
+#ifdef CONFIG_IMX_ECSPI
+#include <imx_spi.h>
+#endif
+
 #if CONFIG_I2C_MXC
 #include <i2c.h>
 #endif
@@ -399,6 +403,83 @@ void setup_pmic_voltages(void)
 }
 
 #endif
+
+#ifdef CONFIG_IMX_ECSPI
+s32 spi_get_cfg(struct imx_spi_dev_t *dev)
+{
+	switch (dev->slave.cs) {
+	case 0:
+		/* Zigbee */
+		dev->base = CSPI1_BASE_ADDR;
+		dev->freq = 25000000;
+		dev->ss_pol = IMX_SPI_ACTIVE_HIGH;
+		dev->ss = 0;
+		dev->fifo_sz = 64 * 4;
+		dev->us_delay = 0;
+		break;
+	case 1:
+		/* SPI-NOR */
+		dev->base = CSPI1_BASE_ADDR;
+		dev->freq = 25000000;
+		dev->ss_pol = IMX_SPI_ACTIVE_LOW;
+		dev->ss = 1;
+		dev->fifo_sz = 64 * 4;
+		dev->us_delay = 0;
+		break;
+	default:
+		printf("Invalid Bus ID!\n");
+	}
+
+	return 0;
+}
+
+void spi_io_init(struct imx_spi_dev_t *dev)
+{
+	switch (dev->base) {
+	case CSPI1_BASE_ADDR:
+		/* SCLK */
+		mxc_request_iomux(MX53_PIN_EIM_D16, IOMUX_CONFIG_ALT4);
+		mxc_iomux_set_pad(MX53_PIN_EIM_D16, 0x104);
+		mxc_iomux_set_input(MUX_IN_ECSPI1_IPP_CSPI_CLK_IN_SELECT_INPUT,
+				0x3);
+
+		/* MISO */
+		mxc_request_iomux(MX53_PIN_EIM_D17, IOMUX_CONFIG_ALT4);
+		mxc_iomux_set_pad(MX53_PIN_EIM_D17, 0x104);
+		mxc_iomux_set_input(MUX_IN_ECSPI1_IPP_IND_MISO_SELECT_INPUT,
+				0x3);
+
+		/* MISO */
+		mxc_request_iomux(MX53_PIN_EIM_D18, IOMUX_CONFIG_ALT4);
+		mxc_iomux_set_pad(MX53_PIN_EIM_D18, 0x104);
+		mxc_iomux_set_input(MUX_IN_ECSPI1_IPP_IND_MOSI_SELECT_INPUT,
+				0x3);
+
+		if (dev->ss == 0) {
+			mxc_request_iomux(MX53_PIN_EIM_EB2,
+						IOMUX_CONFIG_ALT4);
+			mxc_iomux_set_pad(MX53_PIN_EIM_EB2, 0x104);
+			mxc_iomux_set_input(
+				MUX_IN_ECSPI1_IPP_IND_SS_B_1_SELECT_INPUT,
+				0x3);
+		} else if (dev->ss == 1) {
+			mxc_request_iomux(MX53_PIN_EIM_D19, IOMUX_CONFIG_ALT4);
+			mxc_iomux_set_pad(MX53_PIN_EIM_D19, 0x104);
+			mxc_iomux_set_input(
+				MUX_IN_ECSPI1_IPP_IND_SS_B_2_SELECT_INPUT,
+				0x2);
+		}
+		break;
+	case CSPI2_BASE_ADDR:
+	case CSPI3_BASE_ADDR:
+		/* ecspi2-3 fall through */
+		break;
+	default:
+		break;
+	}
+}
+#endif
+
 
 #if defined(CONFIG_DWC_AHSATA)
 static void setup_sata_device(void)
