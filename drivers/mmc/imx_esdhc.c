@@ -343,7 +343,7 @@ static void esdhc_dll_setup(struct mmc *mmc)
 
 	/* For i.MX50 TO1, need to force slave override mode */
 	if (get_board_rev() == (0x50000 | CHIP_REV_1_0) ||
-			get_board_rev() == 0x53000) {
+			((get_board_rev() & 0xff000) == 0x53000)) {
 		dll_control = readl(&regs->dllctrl);
 
 		dll_control &= ~(ESDHC_DLLCTRL_SLV_OVERRIDE_VAL_MASK |
