@@ -216,6 +216,7 @@
 	#define CONFIG_DYNAMIC_MMC_DEVNO
 
 	#define CONFIG_BOOT_PARTITION_ACCESS
+	#define CONFIG_EMMC_DDR_PORT_DETECT
 	#define CONFIG_EMMC_DDR_MODE
 
 	/* Indicate to esdhc driver which ports support 8-bit data */

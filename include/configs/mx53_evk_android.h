@@ -274,7 +274,12 @@
 	/* detect whether ESDHC1 or ESDHC3 is boot device */
 	#define CONFIG_DYNAMIC_MMC_DEVNO
 
+
 	#define CONFIG_BOOT_PARTITION_ACCESS
+	#define CONFIG_EMMC_DDR_PORT_DETECT
+	#define CONFIG_EMMC_DDR_MODE
+	/* port 1 (ESDHC3) is 8 bit */
+	#define CONFIG_MMC_8BIT_PORTS   0x2
 #endif
 
 /*

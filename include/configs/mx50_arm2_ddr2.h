@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX50-ARM_EVK Freescale board.
  *
@@ -238,10 +238,11 @@
 	#define CONFIG_DYNAMIC_MMC_DEVNO
 
 	#define CONFIG_BOOT_PARTITION_ACCESS
+	#define CONFIG_EMMC_DDR_PORT_DETECT
 	#define CONFIG_EMMC_DDR_MODE
 
 	/* Indicate to esdhc driver which ports support 8-bit data */
-	#define CONFIG_MMC_8BIT_PORTS		0x6   /* ports 1 and 2 */
+	#define CONFIG_MMC_8BIT_PORTS		0x6   /* ports 1 & 2 */
 
 #endif
 

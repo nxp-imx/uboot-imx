@@ -783,6 +783,12 @@ int get_mmc_env_devno(void)
 }
 #endif
 
+#ifdef CONFIG_EMMC_DDR_PORT_DETECT
+int detect_mmc_emmc_ddr_port(struct fsl_esdhc_cfg *cfg)
+{
+	return (MMC_SDHC3_BASE_ADDR == cfg->esdhc_base) ? 1 : 0;
+}
+#endif
 
 int esdhc_gpio_init(bd_t *bis)
 {

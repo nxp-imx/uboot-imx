@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX53-ARM2-DDR3 Freescale board.
  *
@@ -216,6 +216,9 @@
 	#define CONFIG_BOOT_PARTITION_ACCESS
 	#define CONFIG_EMMC_DDR_PORT_DETECT
 	#define CONFIG_DYNAMIC_MMC_DEVNO
+	#define CONFIG_EMMC_DDR_MODE
+	/* port 1 (ESDHC3) is 8 bit */
+	#define CONFIG_MMC_8BIT_PORTS   0x2
 #endif
 /*-----------------------------------------------------------------------
  * Stack sizes
