@@ -146,23 +146,6 @@ static u32 __get_ipg_clk(void)
 	return __get_periph_clk() / ((ahb_podf + 1) * (ipg_podf + 1));
 }
 
-static u32 __get_ipg_per_clk(void)
-{
-	u32 pred1, pred2, podf;
-	if (__REG(MXC_CCM_CBCMR) & MXC_CCM_CBCMR_PERCLK_IPG_CLK_SEL)
-		return __get_ipg_clk();
-	/* Fixme: not handle what about lpm */
-	podf = __REG(MXC_CCM_CBCDR);
-	pred1 = (podf & MXC_CCM_CBCDR_PERCLK_PRED1_MASK) >>
-		MXC_CCM_CBCDR_PERCLK_PRED1_OFFSET;
-	pred2 = (podf & MXC_CCM_CBCDR_PERCLK_PRED2_MASK) >>
-		MXC_CCM_CBCDR_PERCLK_PRED2_OFFSET;
-	podf = (podf & MXC_CCM_CBCDR_PERCLK_PODF_MASK) >>
-		MXC_CCM_CBCDR_PERCLK_PODF_OFFSET;
-
-	return __get_periph_clk() / ((pred1 + 1) * (pred2 + 1) * (podf + 1));
-}
-
 /*!
  * This function returns the low power audio clock.
  */
@@ -177,6 +160,30 @@ static u32 __get_lp_apm(void)
 		ret_val = ((32768 * 1024));
 
 	return ret_val;
+}
+
+static u32 __get_ipg_per_clk(void)
+{
+	u32 pred1, pred2, podf;
+	u32 clk_root;
+	if (__REG(MXC_CCM_CBCMR) & MXC_CCM_CBCMR_PERCLK_IPG_CLK_SEL)
+		return __get_ipg_clk();
+
+	/* Fixme: not handle what about lpm */
+	if (__REG(MXC_CCM_CBCMR) & MXC_CCM_CBCMR_PERCLK_LP_APM_CLK_SEL)
+		clk_root = __get_lp_apm();
+	else
+		clk_root = __get_periph_clk();
+
+	podf = __REG(MXC_CCM_CBCDR);
+	pred1 = (podf & MXC_CCM_CBCDR_PERCLK_PRED1_MASK) >>
+		MXC_CCM_CBCDR_PERCLK_PRED1_OFFSET;
+	pred2 = (podf & MXC_CCM_CBCDR_PERCLK_PRED2_MASK) >>
+		MXC_CCM_CBCDR_PERCLK_PRED2_OFFSET;
+	podf = (podf & MXC_CCM_CBCDR_PERCLK_PODF_MASK) >>
+		MXC_CCM_CBCDR_PERCLK_PODF_OFFSET;
+
+	return clk_root / ((pred1 + 1) * (pred2 + 1) * (podf + 1));
 }
 
 /*
