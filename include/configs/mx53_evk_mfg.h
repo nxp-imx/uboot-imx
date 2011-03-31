@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX53-EVK Freescale board.
  *
@@ -40,10 +40,10 @@
 #define CONFIG_ARCH_MMU
 
 #define CONFIG_MX53_HCLK_FREQ	24000000
-#define CONFIG_SYS_PLL2_FREQ    600
-#define CONFIG_SYS_AHB_PODF     4
-#define CONFIG_SYS_AXIA_PODF    1
-#define CONFIG_SYS_AXIB_PODF    2
+#define CONFIG_SYS_PLL2_FREQ    400
+#define CONFIG_SYS_AHB_PODF     2
+#define CONFIG_SYS_AXIA_PODF    0
+#define CONFIG_SYS_AXIB_PODF    1
 
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO

@@ -490,26 +490,27 @@ static int _identify_board_fix_up(int id0, int id1)
 	int ret = 0;
 
 #ifdef CONFIG_CMD_CLOCK
-	/* For EVK RevB, set DDR to 400MHz */
-	if (id0 == 21 && id1 == 15) {
-		ret = clk_config(CONFIG_REF_CLK_FREQ, 400, PERIPH_CLK);
+	/* For EVK RevA, set DDR to 300MHz */
+	if (id0 == 21 && (id1 == 18 || id1 == 19)) {
+		ret = clk_config(CONFIG_REF_CLK_FREQ, 600, PERIPH_CLK);
 		if (ret < 0)
 			return ret;
 
-		ret = clk_config(CONFIG_REF_CLK_FREQ, 400, DDR_CLK);
+		/*reinit serial*/
+		serial_init();
+
+		ret = clk_config(CONFIG_REF_CLK_FREQ, 300, DDR_CLK);
 		if (ret < 0)
 			return ret;
-
-		/* set up rev #2 for EVK RevB board */
-		setup_board_rev(2);
 	}
+
+	/* set up rev #2 for EVK RevB board */
+	if (id0 == 21 && id1 == 15)
+		setup_board_rev(2);
 
 	/* For ARM2 board */
-	if (id0 == -1) {
-		if (clk_config(CONFIG_REF_CLK_FREQ, 400, PERIPH_CLK) >= 0)
-			clk_config(CONFIG_REF_CLK_FREQ, 400, DDR_CLK);
+	if (id0 == -1)
 		setup_board_rev(1);
-	}
 
 #endif
 	return ret;

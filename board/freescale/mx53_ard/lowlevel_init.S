@@ -128,6 +128,12 @@
 	ldr r1, CCM_VAL_0x00016154
 	str r1, [r0, #CLKCTL_CBCMR]
 
+	/*change uart clk parent to pll2*/
+	ldr r1, [r0, #CLKCTL_CSCMR1]
+	and r1, r1, #0xfcffffff
+	orr r1, r1, #0x01000000
+	str r1, [r0, #CLKCTL_CSCMR1]
+
 	/* make sure change is effective */
 1:      ldr r1, [r0, #CLKCTL_CDHIPR]
 	cmp r1, #0x0
@@ -150,10 +156,10 @@
 	mov r1, #0x0
 	str r1, [r0, #CLKCTL_CCSR]
 
+	/* make uart div=6*/
 	ldr r1, [r0, #CLKCTL_CSCDR1]
-	orr r1, r1, #0x3f
-	eor r1, r1, #0x3f
-	orr r1, r1, #0x21
+	and r1, r1, #0xffffffc0
+	orr r1, r1, #0x0a
 	str r1, [r0, #CLKCTL_CSCDR1]
 
 	/* Restore the default values in the Gate registers */
