@@ -643,8 +643,8 @@ static void setup_fec(void)
 	writel(reg, GPIO6_BASE_ADDR + 0x4);
 
 #elif defined(CONFIG_MX50_RD3)
-	/* FEC_EN: gpio4-15 set to 0 to enable FEC */
-	mxc_request_iomux(MX50_PIN_I2C3_SDA, IOMUX_CONFIG_ALT1);
+	/* FEC_EN: gpio4-15 set to 1 to enable FEC */
+	mxc_request_iomux(MX50_PIN_ECSPI1_SS0, IOMUX_CONFIG_ALT1);
 
 	reg = readl(GPIO4_BASE_ADDR + 0x0);
 	reg |= (1 << 15);
@@ -652,6 +652,16 @@ static void setup_fec(void)
 
 	reg = readl(GPIO4_BASE_ADDR + 0x4);
 	reg |= (1 << 15);
+	writel(reg, GPIO4_BASE_ADDR + 0x4);
+
+	/* DCDC_PWREN(GP4_16) set to 0 to enable DCDC_3V15 */
+	mxc_request_iomux(MX50_PIN_ECSPI2_SCLK, IOMUX_CONFIG_ALT1);
+	reg = readl(GPIO4_BASE_ADDR + 0x0);
+	reg &= ~(1 << 16);
+	writel(reg, GPIO4_BASE_ADDR + 0x0);
+
+	reg = readl(GPIO4_BASE_ADDR + 0x4);
+	reg |= (1 << 16);
 	writel(reg, GPIO4_BASE_ADDR + 0x4);
 #endif
 
