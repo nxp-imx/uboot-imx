@@ -1,8 +1,8 @@
 /*
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
- *
  * (C) Copyright 2002
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
+ *
+ * Copyright (C) 2008-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.

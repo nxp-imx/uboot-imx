@@ -1,9 +1,8 @@
 /*
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
- * Terry Lv, Jason Liu
- *
  * Copyright 2007, Freescale Semiconductor, Inc
  * Andy Fleming
+ *
+ * Copyright (C) 2008-2011 Freescale Semiconductor, Inc.
  *
  * Based vaguely on the pxa mmc code:
  * (C) Copyright 2003

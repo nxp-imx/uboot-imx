@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
- *
  * Copyright 2008 - 2009 (C) Wind River Systems, Inc.
  * Tom Rix <Tom.Rix@windriver.com>
+ *
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as

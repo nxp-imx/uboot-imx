@@ -1,9 +1,8 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
- * Terry Lv <r65388@freescale.com>
- *
  * (C) Copyright 2003
  * Kyle Harris, kharris@nexus-tech.net
+ *
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.

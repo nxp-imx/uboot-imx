@@ -1,10 +1,5 @@
 /*
- * (C) Copyright 2009-2010 Freescale Semiconductor
- *
- * (C) Copyright 2004
- * Texas Instruments.
- * Richard Woodruff <r-woodruff2@ti.com>
- * Kshitij Gupta <kshitij@ti.com>
+ * Copyright (C) 2009-2011 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX31 PDK board.
  *

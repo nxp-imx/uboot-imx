@@ -1,13 +1,5 @@
 /*
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
- * Terry Lv
- *
- * Copyright 2007, Freescale Semiconductor, Inc
- * Andy Fleming
- *
- * Based vaguely on the pxa mmc code:
- * (C) Copyright 2003
- * Kyle Harris, Nexus Technologies, Inc. kharris@nexus-tech.net
+ * Copyright (C) 2008-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.

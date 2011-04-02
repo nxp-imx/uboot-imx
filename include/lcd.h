@@ -1,6 +1,4 @@
 /*
- * Copyright (C) 2004-2010 Freescale Semiconductor, Inc.
- *
  * MPC823 and PXA LCD Controller
  *
  * Modeled after video interface by Paolo Scaffardi
@@ -8,6 +6,8 @@
  *
  * (C) Copyright 2001
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
+ *
+ * Copyright (C) 2004-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.

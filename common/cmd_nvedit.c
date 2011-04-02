@@ -4,7 +4,9 @@
  *
  * (C) Copyright 2001 Sysgo Real-Time Solutions, GmbH <www.elinos.com>
  * Andreas Heppel <aheppel@sysgo.de>
-
+ *
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ *
  * See file CREDITS for list of people who contributed to this
  * project.
  *

@@ -2,7 +2,7 @@
  *
  * (c) 2008 Embedded Alley Solutions, Inc.
  *
- * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.

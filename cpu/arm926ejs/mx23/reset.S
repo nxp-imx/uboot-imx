@@ -1,10 +1,10 @@
 /*
  * Processor reset for Freescale MX23 SoC.
  *
- * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
- *
  * Copyright (C) 2007 Sergey Kubushyn <ksi@koi8.net>
  *
+ * Copyright (C) 2009-2011 Freescale Semiconductor, Inc.
+
  * -----------------------------------------------------
  *
  * This program is free software; you can redistribute it and/or

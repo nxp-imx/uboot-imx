@@ -1,7 +1,4 @@
 /*
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
- * Terry Lv <r65388@freescale.com>
- *
  * Copyright (C) 2000-2005, DENX Software Engineering
  *		Wolfgang Denk <wd@denx.de>
  * Copyright (C) Procsys. All rights reserved.
@@ -9,6 +6,8 @@
  *			<mushtaqk_921@yahoo.co.in>
  * Copyright (C) 2008 Freescale Semiconductor, Inc.
  *		Dave Liu <daveliu@freescale.com>
+ *
+ * Copyright (C) 2009-2011 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as

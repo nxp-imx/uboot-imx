@@ -1,8 +1,8 @@
 /*
- * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
- *
  * Copyright 2008-2010, Freescale Semiconductor, Inc
  * Andy Fleming
+ *
+ * Copyright (C) 2011 Freescale Semiconductor, Inc.
  *
  * Based (loosely) on the Linux code
  *
