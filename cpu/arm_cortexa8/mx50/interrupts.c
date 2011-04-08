@@ -2,7 +2,7 @@
  * (C) Copyright 2007
  * Sascha Hauer, Pengutronix
  *
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -26,6 +26,7 @@
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/mx50.h>
+#include <asm/arch/iomux.h>
 
 /* nothing really to do with interrupts, just starts up a counter. */
 int interrupt_init(void)
@@ -35,5 +36,11 @@ int interrupt_init(void)
 
 void reset_cpu(ulong addr)
 {
+	/* Reconfigure eCSPI SS signal as GPIO before reset */
+	/* de-select SS0 of instance: CSPI */
+	mxc_request_iomux(MX50_PIN_CSPI_SS0, IOMUX_CONFIG_ALT1);
+	/* de-select SS1 of instance: eCSPI1 */
+	mxc_request_iomux(MX50_PIN_ECSPI1_MOSI, IOMUX_CONFIG_ALT1);
+
 	__REG16(WDOG1_BASE_ADDR) = 4;
 }
