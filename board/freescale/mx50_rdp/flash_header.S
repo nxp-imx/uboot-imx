@@ -35,15 +35,15 @@
 /*=============================================================================
  * Pu calibration based on 240 Ohm
  *===========================================================================*/
-	ldr r1, =0x0
+	ldr r1, =0x1
 pu_loop:
 	cmp r1, #0x20
 	beq pu_out
 
-	// (pd + 1) << 24 | (pu + 1) << 16
-	ldr r2, =0x0
-	add r2, r2, #0x1
-	add r1, r1, #0x1
+	// (pd - 1) << 24 | (pu - 1) << 16
+	ldr r2, =0x1
+	sub r2, r2, #0x1
+	sub r1, r1, #0x1
 	mov r3, r1, LSL #16
 	orr r3, r3, r2, LSL #24
 
@@ -88,14 +88,14 @@ pu_out:
 /*=============================================================================
  * PD calibration start (based on pu)
  *===========================================================================*/
-	ldr r2, =0x0
+	ldr r2, =0x1
 pd_loop:
 	cmp r2, #0xf
 	beq pd_out
 
-	// (pd + 1) << 24 | (pu + 1) << 16 | 1 << 4
-	add r2, r2, #0x1
-	add r1, r1, #0x1
+	// (pd - 1) << 24 | (pu - 1) << 16 | 1 << 4
+	sub r2, r2, #0x1
+	sub r1, r1, #0x1
 	mov r3, r2, lsl #24
 	orr r3, r3, r1, lsl #16
 	orr r3, r3, #0x10
@@ -143,21 +143,20 @@ pd_out:
 	// Pd calibration result in r2
 	sub r2, r2, #0x2
 
-#if defined(CONFIG_LPDDR2)
 	// Pd add 3
 	add  r2, r2, #0x3
 
 /*=============================================================================
  * Pu calibration based on pd value
  *===========================================================================*/
-	ldr r1, =0x0
+	ldr r1, =0x1
 pu_loop_pd:
 	cmp r1, #0x20
 	beq pu_out_pd
 
-	// (pd + 1) << 24 | (pu + 1) << 16 | 1 << 4
-	add r2, r2, #0x1
-	add r1, r1, #0x1
+	// (pd - 1) << 24 | (pu - 1) << 16 | 1 << 4
+	sub r2, r2, #0x1
+	sub r1, r1, #0x1
 	mov r3, r2, LSL #24
 	orr r3, r3, r1, LSL #16
 	orr r3, r3, #0x10
@@ -199,7 +198,6 @@ pu_delay_pd:
 pu_out_pd:
 	// Pu calibration result in r1
 	sub r1, r1, #0x1
-#endif
 
 /*=============================================================================
  * Software load PU/PD value,PU is stored in r1, and PD is stored in r2
@@ -210,9 +208,9 @@ pu_out_pd:
 	// Set SW_CFG2
 	str r3, [r0, #0x12c]
 
-	// ((pd + 1) << 24) | ((pu + 1) <<16)
-	add r2, r2, #0x1
-	add r1, r1, #0x1
+	// ((pd - 1) << 24) | ((pu - 1) <<16)
+	sub r2, r2, #0x1
+	sub r1, r1, #0x1
 	mov r3, r2, LSL #24
 	orr r3, r3, r1, LSL #16
 	// Load PU, pu_pd_sel=0
@@ -369,8 +367,17 @@ wait_pll1_lock:
 //setmem /32 0x53fa86ac = 0x04000000
 //IOMUXC_SW_PAD_CTL_GRP_DDR_TYPE, ddr_sel=2'b01 (LPDDR2)
 	str r1, [r0, #0xac]
+//setmem /32 0x53fa866c = 0x00000200 //IOMUXC_SW_PAD_CTL_GRP_DDRMODE_CTL
+// [9] DDR_INPUT=1 (DQS: differential input mode)
+	mov r2, #0x00000200
+	str r2, [r0, #0x6c]
+//setmem /32 0x53fa868c = 0x0 // IOMUXC_SW_PAD_CTL_GRP_DDRMODE
+// [9] DDR_INPUT=0 (DATA: CMOS input type)
+	mov r2, #0x0
+	str r2, [r0, #0x8c]
 //setmem /32 0x53fa8670 = 0x00000000  //IOMUXC_SW_PAD_CTL_GRP_DDRPKE
 // bit 7: PKE=0 (All ddr pads except DQS)
+	mov r2, #0x0
 	str r2, [r0, #0x70]
 //setmem /32 0x53fa86a4 = 0x00200000
 //IOMUXC_SW_PAD_CTL_GRP_CTLDS, dse=3'b100
@@ -525,6 +532,15 @@ wait_pll1_lock:
 //setmem /32 0x1400004c = 0x00010000
     ldr r1, =0x00010000
     str r1, [r0, #0x4c]
+//setmem /32 0x14000050 = 0x00000000, lowpower mode
+    ldr r1, =0x00000000
+    str r1, [r0, #0x50]
+//setmem /32 0x14000054 = 0x00000000, lowpower mode
+    ldr r1, =0x00000000
+    str r1, [r0, #0x54]
+//setmem /32 0x14000058 = 0x00000000, lowpower mode
+    ldr r1, =0x00000000
+    str r1, [r0, #0x58]
 //setmem /32 0x1400005c = 0x02000000
     ldr r1, =0x02000000
     str r1, [r0, #0x5c]
