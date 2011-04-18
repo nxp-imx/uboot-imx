@@ -663,6 +663,16 @@ static void setup_fec(void)
 	reg = readl(GPIO4_BASE_ADDR + 0x4);
 	reg |= (1 << 16);
 	writel(reg, GPIO4_BASE_ADDR + 0x4);
+
+	/* Isolate EIM signals and boot configuration signals. - GPIO6_11 to 1*/
+	mxc_request_iomux(MX50_PIN_UART2_RXD, IOMUX_CONFIG_ALT1);
+	reg = readl(GPIO6_BASE_ADDR + 0x0);
+	reg |= (1 << 11);
+	writel(reg, GPIO6_BASE_ADDR + 0x0);
+
+	reg = readl(GPIO6_BASE_ADDR + 0x4);
+	reg |= (1 << 11);
+	writel(reg, GPIO6_BASE_ADDR + 0x4);
 #endif
 
 	/*FEC_MDIO*/
