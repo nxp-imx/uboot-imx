@@ -449,7 +449,7 @@ void spi_io_init(struct imx_spi_dev_t *dev)
 		mxc_iomux_set_input(MUX_IN_ECSPI1_IPP_IND_MISO_SELECT_INPUT,
 				0x3);
 
-		/* MISO */
+		/* MOSI */
 		mxc_request_iomux(MX53_PIN_EIM_D18, IOMUX_CONFIG_ALT4);
 		mxc_iomux_set_pad(MX53_PIN_EIM_D18, 0x104);
 		mxc_iomux_set_input(MUX_IN_ECSPI1_IPP_IND_MOSI_SELECT_INPUT,
