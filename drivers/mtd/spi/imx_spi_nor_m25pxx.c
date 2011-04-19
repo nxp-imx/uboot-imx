@@ -121,8 +121,7 @@ static s32 spi_nor_status(struct spi_flash *flash)
 static int wait_till_ready(struct spi_flash *flash)
 {
 	int sr;
-	int i;
-	int times = 100;
+	int times = 10000;
 
 	do {
 		sr = spi_nor_status(flash);
@@ -186,7 +185,7 @@ static int spi_nor_flash_read(struct spi_flash *flash, u32 from,
 {
 	struct imx_spi_flash *imx_sf = to_imx_spi_flash(flash);
 	int rx_len = 0, count = 0, i = 0;
-	int addr, cmd_len, status;
+	int addr, cmd_len;
 	u8 txer[SPI_FIFOSIZE] = { 0 };
 	u8 *s = txer;
 	u8 *d = buf;
@@ -270,7 +269,7 @@ static int _fsl_spi_write(struct spi_flash *flash, const void *buf, int len, int
 	u8 txer[SPI_FIFOSIZE] = { 0 };
 	u8 *d = txer;
 	u8 *s = (u8 *) buf;
-	int delta = 0, l = 0, i = 0, count = 0, status;
+	int delta = 0, l = 0, i = 0, count = 0;
 
 	count = len;
 	delta = count % 4;
@@ -421,9 +420,13 @@ static int spi_nor_flash_erase(struct spi_flash *flash, u32 offset,
 	struct imx_spi_flash *imx_sf = to_imx_spi_flash(flash);
 
 	/* whole-chip erase? */
+	/*
 	if (len == imx_sf->params->device_size) {
 		if (erase_chip(flash))
 			return -EIO;
+		else
+			return 0;
+	*/
 
 	/* REVISIT in some cases we could speed up erasing large regions
 	 * by using OPCODE_SE instead of OPCODE_BE_4K.  We may have set up
@@ -431,17 +434,14 @@ static int spi_nor_flash_erase(struct spi_flash *flash, u32 offset,
 	 */
 
 	/* "sector"-at-a-time erase */
-	} else {
-		len = roundup(len, imx_sf->params->block_size);
-		while (len) {
-			if (erase_sector(flash, offset))
-				return -EIO;
+	len = roundup(len, imx_sf->params->block_size);
+	while (len) {
+		if (erase_sector(flash, offset))
+			return -EIO;
 
-			offset += imx_sf->params->block_size;
-			len -= imx_sf->params->block_size;
-		}
+		offset += imx_sf->params->block_size;
+		len -= imx_sf->params->block_size;
 	}
-
 
 	return 0;
 }
