@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX50-RDP Freescale board.
  *
@@ -108,7 +108,7 @@
 #define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
 
 #define CONFIG_BOOTARGS         "console=ttymxc0,115200 "\
-				"rdinit=/linuxrc"
+				"rdinit=/linuxrc gpmi:nand"
 #define CONFIG_BOOTCOMMAND      "bootm 0x70800000 0x70B00000"
 #define CONFIG_ENV_IS_EMBEDDED
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
