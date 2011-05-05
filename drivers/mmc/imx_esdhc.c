@@ -66,12 +66,15 @@ struct fsl_esdhc {
 	uint	autoc12err;
 	uint	hostcapblt;
 	uint	wml;
-	char	reserved1[8];
+	uint	mixctrl;
+	char	reserved1[4];
 	uint	fevt;
 	char	reserved2[12];
 	uint dllctrl;
 	uint dllstatus;
-	char	reserved3[148];
+	char	reserved3[88];
+	uint vendorspec;
+	char	reserved4[56];
 	uint	hostver;
 };
 
@@ -206,16 +209,23 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 
 	/* Send the command */
 	writel(cmd->cmdarg, &regs->cmdarg);
+	/* for uSDHC, write to mixer control register */
+	writel(xfertyp, &regs->mixctrl);
 	writel(xfertyp, &regs->xfertyp);
 
 	/* Mask all irqs */
 	writel(0, &regs->irqsigen);
 
 	/* Wait for the command to complete */
-	while (!(readl(&regs->irqstat) & IRQSTAT_CC));
+	while (!(readl(&regs->irqstat) & (IRQSTAT_CC | IRQSTAT_CTOE)))
+		;
 
 	irqstat = readl(&regs->irqstat);
 	writel(irqstat, &regs->irqstat);
+
+	/* Reset CMD portion on error */
+	if (irqstat & (CMD_ERR | IRQSTAT_CTOE))
+		writel(readl(&regs->sysctl) | SYSCTL_RSTC, &regs->sysctl);
 
 	if (irqstat & CMD_ERR)
 		return COMM_ERR;
@@ -281,9 +291,12 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 		while (!(readl(&regs->irqstat) & IRQSTAT_TC)) ;
 	}
 
-	if (readl(&regs->irqstat) & 0xFFFF0000)
+	/* Reset CMD and DATA portions of the controller on error */
+	if (readl(&regs->irqstat) & 0xFFFF0000) {
+		writel(readl(&regs->sysctl) | SYSCTL_RSTC | SYSCTL_RSTD,
+			&regs->sysctl);
 		return COMM_ERR;
-
+	}
 	writel(-1, &regs->irqstat);
 
 	return 0;
@@ -479,6 +492,11 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	mmc->set_ios = esdhc_set_ios;
 	mmc->init = esdhc_init;
 
+/* Enable uSDHC if the config is defined (only for i.MX50 in SDR mode) */
+#ifdef CONFIG_MX50_ENABLE_USDHC_SDR
+	enable_usdhc();
+#endif
+
 	caps = readl(&regs->hostcapblt);
 	if (caps & ESDHC_HOSTCAPBLT_VS30)
 		mmc->voltages |= MMC_VDD_29_30 | MMC_VDD_30_31;
@@ -490,6 +508,10 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	if (caps & ESDHC_HOSTCAPBLT_HSS)
 		mmc->host_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS;
 
+/* Do not advertise DDR capability for uSDHC on MX50 since
+ *  it is to be used in SDR mode only. Use eSDHC for DDR mode.
+ */
+#ifndef CONFIG_MX50_ENABLE_USDHC_SDR
 	if (((readl(&regs->hostver) & ESDHC_HOSTVER_VVN_MASK)
 		>> ESDHC_HOSTVER_VVN_SHIFT) >= ESDHC_HOSTVER_DDR_SUPPORT)
 		mmc->host_caps |= EMMC_MODE_4BIT_DDR;
@@ -499,8 +521,10 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 		mmc->host_caps |= EMMC_MODE_4BIT_DDR;
 #endif
 
+#endif /* #ifndef CONFIG_MX50_ENABLE_USDHC_SDR */
+
 	mmc->f_min = 400000;
-	mmc->f_max = MIN(mxc_get_clock(MXC_ESDHC_CLK), 50000000);
+	mmc->f_max = MIN(mxc_get_clock(MXC_ESDHC_CLK), 52000000);
 
 	mmc_register(mmc);
 

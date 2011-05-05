@@ -251,7 +251,15 @@
 	#define CONFIG_EMMC_DDR_MODE
 
 	/* Indicate to esdhc driver which ports support 8-bit data */
-	#define CONFIG_MMC_8BIT_PORTS		0x6   /* ports 1 and 2 */
+	#define CONFIG_MMC_8BIT_PORTS		0x6   /* SD2 and SD3 */
+
+	/* Uncomment the following define to enable uSDHC instead
+	 * of eSDHC on SD3 port for SDR mode since eSDHC timing on MX50
+	 * is borderline for SDR mode. DDR mode will be disabled when this
+	 * define is enabled since the uSDHC timing on MX50 is borderline
+	 * for DDR mode. */
+
+	/*#define CONFIG_MX50_ENABLE_USDHC_SDR	1*/
 #endif
 
 /*

@@ -2,7 +2,7 @@
  * FSL SD/MMC Defines
  *-------------------------------------------------------------------
  *
- * Copyright (C) 2007-2008, 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2008, 2010-2011 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -34,6 +34,8 @@
 #define SYSCTL_TIMEOUT_MASK	0x000f0000
 #define SYSCTL_CLOCK_MASK	0x0000fff0
 #define SYSCTL_RSTA			0x01000000
+#define SYSCTL_RSTC			0x02000000
+#define SYSCTL_RSTD			0x04000000
 #define SYSCTL_SDCLKEN		0x00000008
 #define SYSCTL_PEREN		0x00000004
 #define SYSCTL_HCKEN		0x00000002

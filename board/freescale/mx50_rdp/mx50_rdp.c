@@ -800,6 +800,21 @@ int detect_mmc_emmc_ddr_port(struct fsl_esdhc_cfg *cfg)
 }
 #endif
 
+/* The following function enables uSDHC instead of eSDHC
+ * on SD3 port for SDR mode since eSDHC timing on MX50
+ * is borderline for SDR mode. DDR mode will be disabled when this
+ * define is enabled since the uSDHC timing on MX50 is borderline
+ * for DDR mode. */
+#ifdef CONFIG_MX50_ENABLE_USDHC_SDR
+void enable_usdhc()
+{
+	/* Bring DIGCTL block out of reset and ungate clock */
+	writel(0xC0000000, DIGCTL_BASE_ADDR + 0x8);
+	/* Set bit 0 to select uSDHC */
+	writel(1, DIGCTL_BASE_ADDR + 0x4);
+}
+#endif
+
 int esdhc_gpio_init(bd_t *bis)
 {
 	s32 status = 0;
