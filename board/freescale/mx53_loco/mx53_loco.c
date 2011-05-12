@@ -305,14 +305,6 @@ static void setup_i2c(unsigned int module_base)
 
 void setup_pmic_voltages(void)
 {
-	int value;
-	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
-	/* increase VDDGP as 1.25V for 1GHZ */
-	value = 0x5e;
-	i2c_write(0x48, 0x2e, 1, &value, 1);
-	i2c_read(0x48, 60, 1, &value, 1);
-	value |= 0x1;
-	i2c_write(0x48, 60, 1, &value, 1);
 }
 #endif
 
@@ -564,10 +556,13 @@ int board_init(void)
 
 #ifdef CONFIG_I2C_MXC
 	setup_i2c(CONFIG_SYS_I2C_PORT);
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+    /* delay pmic i2c access to board_late_init()
+       due to i2c_probe fail here on loco/ripley board. */
 	/* Increase VDDGP voltage */
-	setup_pmic_voltages();
+	/* setup_pmic_voltages(); */
 	/* Switch to 1GHZ */
-	clk_config(CONFIG_REF_CLK_FREQ, 1000, CPU_CLK);
+	/* clk_config(CONFIG_REF_CLK_FREQ, 1000, CPU_CLK); */
 #endif
 
 #if defined(CONFIG_DWC_AHSATA)
@@ -700,6 +695,48 @@ int check_recovery_cmd_file(void)
 
 int board_late_init(void)
 {
+	int value;
+	unsigned char buf[4] = { 0 };
+
+	if (!i2c_probe(0x8)) {
+		if (i2c_read(0x8, 24, 1, &buf[0], 3)) {
+			printf("%s:i2c_read:error\n", __func__);
+			return -1;
+		}
+		/* increase VDDGP as 1.25V for 1GHZ on SW1 */
+		buf[2] = 0x30;
+		if (i2c_write(0x8, 24, 1, buf, 3)) {
+			printf("%s:i2c_write:error\n", __func__);
+			return -1;
+		}
+		if (i2c_read(0x8, 25, 1, &buf[0], 3)) {
+			printf("%s:i2c_read:error\n", __func__);
+			return -1;
+		}
+		/* increase VCC as 1.35V on SW2 */
+		buf[2] = 0x38;
+		if (i2c_write(0x8, 25, 1, buf, 3)) {
+			printf("%s:i2c_write:error\n", __func__);
+			return -1;
+		}
+		/* set up rev #1 for loco/ripley board */
+		setup_board_rev(1);
+		/* Switch to 1GHZ */
+		clk_config(CONFIG_REF_CLK_FREQ, 1000, CPU_CLK);
+	} else if (!i2c_probe(0x48)) {
+		/* increase VDDGP as 1.25V for 1GHZ */
+		value = 0x5e;
+		i2c_write(0x48, 0x2e, 1, &value, 1);
+		i2c_read(0x48, 60, 1, &value, 1);
+		value |= 0x1;
+		i2c_write(0x48, 60, 1, &value, 1);
+		/* set up rev #0 for loco/da9053 board */
+		setup_board_rev(0);
+		/* Switch to 1GHZ */
+		clk_config(CONFIG_REF_CLK_FREQ, 1000, CPU_CLK);
+	} else
+		printf("Error: Dont't found mc34708 or da9052 on board.\n");
+
 	return 0;
 }
 
