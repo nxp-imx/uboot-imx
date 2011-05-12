@@ -987,6 +987,9 @@ int clk_config(u32 ref, u32 freq, u32 clk_type)
 		printf("Unsupported or invalid clock type! :(\n");
 	}
 
+	serial_init();
+	printf("Serial reinitilized!\n");
+
 	return 0;
 }
 #endif
