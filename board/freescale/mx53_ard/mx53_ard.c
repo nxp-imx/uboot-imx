@@ -990,6 +990,21 @@ void setup_nfc(void)
 }
 #endif
 
+#if defined(CONFIG_DWC_AHSATA)
+static void setup_sata_device(void)
+{
+	/* only RevB board uses internal SATA clock */
+#if defined(CONFIG_MX53_ARD_DDR3)
+	u32 *tmp_base =
+		(u32 *)(IIM_BASE_ADDR + 0x180c);
+
+	/* Set USB_PHY1 clk, fuse bank4 row3 bit2 */
+	set_usb_phy1_clk();
+	writel((readl(tmp_base) & (~0x7)) | 0x4, tmp_base);
+#endif
+}
+#endif
+
 int board_init(void)
 {
 #ifdef CONFIG_MFG
@@ -1020,6 +1035,10 @@ int board_init(void)
 
 	weim_smc911x_iomux();
 	weim_cs1_settings();
+
+#if defined(CONFIG_DWC_AHSATA)
+	setup_sata_device();
+#endif
 
 #ifdef CONFIG_VIDEO_MX5
 	panel_info_init();
