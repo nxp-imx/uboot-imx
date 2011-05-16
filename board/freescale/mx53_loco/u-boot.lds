@@ -61,6 +61,7 @@ SECTIONS
 	__u_boot_cmd_end = .;
 
 	. = ALIGN(4);
+	_end_of_copy = .; /* end_of ROM copy code here */
 	__bss_start = .;
 	.bss : { *(.bss) }
 	_end = .;

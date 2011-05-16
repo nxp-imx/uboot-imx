@@ -49,7 +49,7 @@ app_code_csf:     .word 0x0
 reserv2:          .word 0x0
 
 boot_data:        .word 0x77800000
-image_len:        .word _end - TEXT_BASE
+image_len:        .word _end_of_copy - TEXT_BASE + CONFIG_FLASH_HEADER_OFFSET
 plugin:           .word 0x0
 
 dcd_hdr:          .word 0x40A001D2 /* Tag=0xD2, Len=51*8 + 4 + 4, Ver=0x40 */
