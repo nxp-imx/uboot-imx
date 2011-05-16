@@ -655,10 +655,10 @@ static void setup_fec(void)
 	reg |= (1 << 15);
 	writel(reg, GPIO4_BASE_ADDR + 0x4);
 
-	/* DCDC_PWREN(GP4_16) set to 0 to enable DCDC_3V15 */
+	/* DCDC_PWREN(GP4_16) set to 1 to enable DCDC_3V15 */
 	mxc_request_iomux(MX50_PIN_ECSPI2_SCLK, IOMUX_CONFIG_ALT1);
 	reg = readl(GPIO4_BASE_ADDR + 0x0);
-	reg &= ~(1 << 16);
+	reg |= (1 << 16);
 	writel(reg, GPIO4_BASE_ADDR + 0x0);
 
 	reg = readl(GPIO4_BASE_ADDR + 0x4);
