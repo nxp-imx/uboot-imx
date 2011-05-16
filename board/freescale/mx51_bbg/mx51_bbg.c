@@ -666,6 +666,11 @@ static void setup_core_voltage_spi(void)
 		writel(0x0, CCM_BASE_ADDR + CLKCTL_CACRR);
 	} else {
 		/* TO 3.0 */
+		/* Set core voltage to 1.1V */
+		val = pmic_reg(slave, 24, 0, 0);
+		val = (val & (~0x1f)) | 0x14;
+		pmic_reg(slave, 24, val, 1);
+
 		/* Setup VCC (SW2) to 1.225 */
 		val = pmic_reg(slave, 25, 0, 0);
 		val = (val & (~0x1f)) | 0x19;
