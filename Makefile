@@ -3258,6 +3258,7 @@ mx50_rd3_config \
 mx50_rd3_mfg_config \
 mx50_rdp_mfg_config \
 mx50_rdp_android_config \
+mx50_rd3_android_config \
 mx50_rdp_config      : unconfig
 	@[ -z "$(findstring iram_,$@)" ] || \
 		{ echo "TEXT_BASE = 0xF8008400" >$(obj)board/freescale/mx50_rdp/config.tmp ; \

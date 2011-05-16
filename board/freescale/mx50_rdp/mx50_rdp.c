@@ -1274,16 +1274,95 @@ struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
 	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
 	 },
 	{
-	 .cmd = NULL,
-	 .args = NULL,
+	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND,
+	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND,
 	 },
 };
+
+extern int ubifs_init(void);
+extern int ubifs_mount(char *vol_name);
+extern int ubifs_load(char *filename, u32 addr, u32 size);
+
+static int check_nand_recovery_cmd_file(char *mtd_part_name,
+				char *ubi_part_name,
+				char *path)
+{
+	struct mtd_device *dev_desc = NULL;
+	struct part_info *part = NULL;
+	struct mtd_partition mtd_part;
+	struct mtd_info *mtd_info = NULL;
+	char mtd_dev[16] = { 0 };
+	char mtd_buffer[80] = { 0 };
+	char read_test[PAGE_SIZE];
+	u8 pnum = 0;
+	int err = 0,
+		filelen = 0;
+
+	memset(&mtd_part, 0, sizeof(struct mtd_partition));
+
+	if (mtdparts_init() != 0) {
+		printf("Error initializing mtdparts!\n");
+		return 0;
+	}
+
+	if (find_dev_and_part(mtd_part_name, &dev_desc, &pnum, &part)) {
+		printf("Partition %s not found!\n", mtd_part_name);
+		return 0;
+	}
+	sprintf(mtd_dev, "%s%d",
+			MTD_DEV_TYPE(dev_desc->id->type),
+			dev_desc->id->num);
+	mtd_info = get_mtd_device_nm(mtd_dev);
+	if (IS_ERR(mtd_info)) {
+		printf("Partition %s not found on device %s!\n",
+			"nand", mtd_dev);
+		return 0;
+	}
+
+	sprintf(mtd_buffer, "mtd=%d", pnum);
+	memset(&mtd_part, 0, sizeof(mtd_part));
+	mtd_part.name = mtd_buffer;
+	mtd_part.size = part->size;
+	mtd_part.offset = part->offset;
+	add_mtd_partitions(mtd_info, &mtd_part, 1);
+
+	err = ubi_mtd_param_parse(mtd_buffer, NULL);
+	if (err) {
+		del_mtd_partitions(mtd_info);
+		return 0;
+	}
+
+	err = ubi_init();
+	if (err) {
+		del_mtd_partitions(mtd_info);
+		return 0;
+	}
+
+	/* Init ubifs */
+	ubifs_init();
+
+	if (ubifs_mount(ubi_part_name)) {
+		printf("Mount ubifs volume %s fail!\n",
+				ubi_part_name);
+		return 0;
+	}
+
+	/* Try to read one byte for a read test. */
+	if (ubifs_load(path, &read_test[0], PAGE_SIZE)) {
+		/* File not found */
+		filelen = 0;
+	} else
+		filelen = 1;
+
+	return filelen;
+}
 
 int check_recovery_cmd_file(void)
 {
 	disk_partition_t info;
 	ulong part_length;
 	int filelen;
+	char *env = NULL;
 
 	switch (get_boot_device()) {
 	case MMC_BOOT:
@@ -1331,7 +1410,22 @@ int check_recovery_cmd_file(void)
 		}
 		break;
 	case NAND_BOOT:
-		return 0;
+		env = getenv("mtdparts");
+		if (!env)
+			setenv("mtdparts", MTDPARTS_DEFAULT);
+
+		env = getenv("mtdids");
+		if (!env)
+			setenv("mtdids", MTDIDS_DEFAULT);
+
+		env = getenv("partition");
+		if (!env)
+			setenv("partition", MTD_ACTIVE_PART);
+
+		return check_nand_recovery_cmd_file(
+				CONFIG_ANDROID_UBIFS_PARTITION_NM,
+				CONFIG_ANDROID_CACHE_PARTITION_NAND,
+				CONFIG_ANDROID_RECOVERY_CMD_FILE);
 		break;
 	case SPI_NOR_BOOT:
 		return 0;

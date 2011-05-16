@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2011 Freescale Semiconductor, Inc.
  *
- * Configuration settings for the MX50-RDP Freescale board.
+ * Configuration settings for the MX50-RD3 Freescale board.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -25,7 +25,6 @@
 #include <asm/arch/mx50.h>
 
  /* High Level Configuration Options */
-#define CONFIG_MFG
 #define CONFIG_MXC
 #define CONFIG_MX50
 #define CONFIG_MX50_RD3
@@ -34,6 +33,11 @@
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 
 #define CONFIG_SKIP_RELOCATE_UBOOT
+
+/*
+#define CONFIG_ARCH_CPU_INIT
+#define CONFIG_ARCH_MMU
+*/
 
 #define CONFIG_MX50_HCLK_FREQ	24000000
 #define CONFIG_SYS_PLL2_FREQ    400
@@ -60,7 +64,7 @@
 /*
  * Size of malloc() pool
  */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(4 * 1024 * 1024)
 /* size in bytes reserved for initial data */
 #define CONFIG_SYS_GBL_DATA_SIZE	128
 
@@ -92,40 +96,48 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
 
-/* #define CONFIG_CMD_MMC */
-/* #define CONFIG_CMD_ENV */
+#define CONFIG_CMD_MMC
+#define CONFIG_CMD_ENV
 
 /*#define CONFIG_CMD */
 #define CONFIG_REF_CLK_FREQ CONFIG_MX50_HCLK_FREQ
 
 #undef CONFIG_CMD_IMLS
 
-#define CONFIG_BOOTDELAY	0
+#define CONFIG_BOOTDELAY	3
 
 #define CONFIG_PRIME	"FEC0"
 
 #define CONFIG_LOADADDR		0x70800000	/* loadaddr env var */
-#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
+#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x500000)
 
-#define CONFIG_BOOTARGS         "console=ttymxc0,115200 "\
-				"rdinit=/linuxrc gpmi:nand"
-#define CONFIG_BOOTCOMMAND      "bootm 0x70800000 0x70B00000"
-#define CONFIG_ENV_IS_EMBEDDED
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
 		"uboot=u-boot.bin\0"			\
 		"kernel=uImage\0"				\
+		"rd_loadaddr=0x70D00000\0"                              \
 		"nfsroot=/opt/eldk/arm\0"				\
 		"bootargs_base=setenv bootargs console=ttymxc0,115200\0"\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
 			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
-		"bootargs_mmc=setenv bootargs ${bootargs} ip=dhcp "     \
-			"root=/dev/mmcblk0p2 rootwait\0"                \
-		"bootcmd_mmc=run bootargs_base bootargs_mmc; bootm\0"   \
-		"bootcmd=run bootcmd_net\0"                             \
+		"bootcmd=run bootcmd_nand \0"				\
+		"bootcmd_nand=run bootargs_base bootargs_android;"	\
+		     "sf probe 1;"	\
+		     "sf read ${loadaddr} 0x40000 0x380000;"	\
+		     "sf read ${rd_loadaddr} 0x3C0000 0x40000;"	\
+		     "bootm ${loadaddr} ${rd_loadaddr}\0"		\
+		"bootargs_android=setenv bootargs ${bootargs}  "	\
+		     "androidboot.console=ttymxc0 init=/init "		\
+		     "keypad gpmi:nand ubi.mtd=4\0"			\
+		"bootcmd_android_recovery=run bootargs_base"		\
+		     " bootargs_android_recovery;"			\
+		     "nand read ${loadaddr} 0x1400000 0x400000; bootm\0"	\
+		"bootargs_android_recovery=setenv bootargs ${bootargs}" \
+		     " init=/init keypad gpmi:nand ubi.mtd=3 ubi.mtd=4" \
+		     " root=ubi0:recovery rootfstype=ubifs\0" \
 
 
 #define CONFIG_ARP_TIMEOUT	200UL
@@ -158,10 +170,31 @@
 #define CONFIG_FEC0_PHY_ADDR	-1
 #define CONFIG_FEC0_MIIBASE	-1
 
+#define CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
+
 #define CONFIG_MXC_FEC
 #define CONFIG_MII
 #define CONFIG_MII_GASKET
 #define CONFIG_DISCOVER_PHY
+
+/*
+ * DDR ZQ calibration
+ */
+#define CONFIG_ZQ_CALIB
+
+/*
+ * I2C Configs
+ */
+#define CONFIG_CMD_I2C          1
+
+#ifdef CONFIG_CMD_I2C
+	#define CONFIG_HARD_I2C         1
+	#define CONFIG_I2C_MXC          1
+	#define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
+	#define CONFIG_SYS_I2C_SPEED            100000
+	#define CONFIG_SYS_I2C_SLAVE            0xfe
+#endif
+
 
 /*
  * SPI Configs
@@ -169,7 +202,7 @@
 #define CONFIG_FSL_SF		1
 #define CONFIG_CMD_SPI
 #define CONFIG_CMD_SF
-#define CONFIG_SPI_FLASH_IMX_M25PXX	1
+#define CONFIG_SPI_FLASH_IMX_M25PXX 1
 #define CONFIG_SPI_FLASH_CS	1
 #define CONFIG_IMX_CSPI
 #define IMX_CSPI_VER_0_7        1
@@ -191,12 +224,45 @@
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
 
-	/* detect whether ESDHC1 or ESDHC3 is boot device */
+	/* detect whether ESDHC1, ESDHC2, or ESDHC3 is boot device */
 	#define CONFIG_DYNAMIC_MMC_DEVNO
 
 	#define CONFIG_BOOT_PARTITION_ACCESS
+	#define CONFIG_EMMC_DDR_PORT_DETECT
+	#define CONFIG_EMMC_DDR_MODE
 
+	/* Indicate to esdhc driver which ports support 8-bit data */
+	#define CONFIG_MMC_8BIT_PORTS		0x2   /* ports 1 and 2 */
 #endif
+
+/*
+ * GPMI Nand Configs
+ */
+#undef CONFIG_CMD_NAND
+
+#ifdef CONFIG_CMD_NAND
+	#define CONFIG_NAND_GPMI
+	#define CONFIG_GPMI_NFC_SWAP_BLOCK_MARK
+	#define CONFIG_GPMI_NFC_V2
+
+	#define CONFIG_GPMI_REG_BASE	GPMI_BASE_ADDR
+	#define CONFIG_BCH_REG_BASE	BCH_BASE_ADDR
+
+	#define NAND_MAX_CHIPS		8
+	#define CONFIG_SYS_NAND_BASE		0x40000000
+	#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#endif
+
+/*
+ * APBH DMA Configs
+ */
+#define CONFIG_APBH_DMA
+
+#ifdef CONFIG_APBH_DMA
+	#define CONFIG_APBH_DMA_V2
+	#define CONFIG_MXS_DMA_REG_BASE	ABPHDMA_BASE_ADDR
+#endif
+
 /*-----------------------------------------------------------------------
  * Stack sizes
  *
@@ -219,22 +285,60 @@
 #define CONFIG_SYS_NO_FLASH
 
 /* Monitor at beginning of flash */
-/* #define CONFIG_FSL_ENV_IN_MMC */
+#define CONFIG_FSL_ENV_IN_SF
 
-#define CONFIG_ENV_SECT_SIZE    (128 * 1024)
+#define CONFIG_ENV_SECT_SIZE    (64 * 1024)
 #define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE
 
 #if defined(CONFIG_FSL_ENV_IN_NAND)
 	#define CONFIG_ENV_IS_IN_NAND 1
-	#define CONFIG_ENV_OFFSET	0x100000
+	#define CONFIG_ENV_OFFSET	0x1A00000
 #elif defined(CONFIG_FSL_ENV_IN_MMC)
 	#define CONFIG_ENV_IS_IN_MMC	1
 	#define CONFIG_ENV_OFFSET	(768 * 1024)
 #elif defined(CONFIG_FSL_ENV_IN_SF)
 	#define CONFIG_ENV_IS_IN_SPI_FLASH	1
 	#define CONFIG_ENV_SPI_CS		1
-	#define CONFIG_ENV_OFFSET       (768 * 1024)
+	#define CONFIG_ENV_OFFSET       (192 * 1024)
 #else
 	#define CONFIG_ENV_IS_NOWHERE	1
 #endif
+
+/*
+ * Android support Configs
+ */
+/*
+#define CONFIG_ANDROID_RECOVERY
+#define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
+       "setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4"    \
+       " rootfs=ext4 keypad"
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
+	"run bootargs_base bootargs_android_recovery;"  \
+	"mmc read 0 ${loadaddr} 0x800 0x2000;bootm"
+#define CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND \
+	"setenv bootargs ${bootargs} init=/init keypad gpmi:nand ubi.mtd=3 ubi.mtd=4" \
+	" root=ubi0:recovery rootfstype=ubifs keypad"
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND  \
+	"run bootargs_base bootargs_android_recovery;"  \
+	"nand read ${loadaddr} 0x1400000 0x400000; bootm"
+#define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
+
+#define CONFIG_CMD_UBI
+#define CONFIG_CMD_UBIFS
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_MTD_DEVICE
+#define CONFIG_MTD_PARTITIONS
+#define MTDIDS_DEFAULT "nand0=nand0"
+#define MTDPARTS_DEFAULT "mtdparts=nand0:20M@0x0(BOOT),6M@0x1400000(KERNEL),1M@0x1A00000(MISC),20M@0x1B00000(RECOVERY),350M@0x2F00000(ROOT)"
+#define MTD_ACTIVE_PART "nand0,4"
+#define CONFIG_RBTREE
+#define CONFIG_LZO
+*/
+
+#define CONFIG_ANDROID_SYSTEM_PARTITION_MMC 2
+#define CONFIG_ANDROID_RECOVERY_PARTITION_MMC 4
+#define CONFIG_ANDROID_CACHE_PARTITION_MMC 6
+#define CONFIG_ANDROID_UBIFS_PARTITION_NM  "ROOT"
+#define CONFIG_ANDROID_CACHE_PARTITION_NAND "cache"
+
 #endif				/* __CONFIG_H */
