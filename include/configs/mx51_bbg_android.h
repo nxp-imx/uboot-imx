@@ -167,7 +167,7 @@
 		"uboot_addr=0xa0000000\0"				\
 		"uboot=u-boot.bin\0"			\
 		"kernel=uImage\0"				\
-		"rd_loadaddr=0x90C00000\0"	\
+		"rd_loadaddr=0x90D00000\0"	\
 		"nfsroot=/opt/eldk/arm\0"				\
 		"bootargs_base=setenv bootargs console=ttymxc0,115200 gpu_memory=16M\0"\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs " \
