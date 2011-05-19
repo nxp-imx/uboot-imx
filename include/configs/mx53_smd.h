@@ -128,9 +128,10 @@
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
 		"bootargs_mmc=setenv bootargs ${bootargs} ip=dhcp "	\
-			"root=/dev/mmcblk0p2 rootwait\0"	\
-		"bootcmd_mmc=run bootargs_base bootargs_mmc; bootm\0"	\
-		"bootcmd=run bootcmd_net\0"	\
+			"root=/dev/mmcblk0p1 rootwait rw\0"		\
+		"bootcmd_mmc=run bootargs_base bootargs_mmc; "		\
+			"mmc read 0 ${loadaddr} 0x800 0x1800; bootm\0"	\
+		"bootcmd=run bootcmd_mmc\0"	\
 	\
 
 
