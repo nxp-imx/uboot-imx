@@ -1,7 +1,7 @@
 /*
  * Freescale GPMI Register Definitions
  *
- * Copyright 2008-2010 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2008-2011 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -802,7 +802,9 @@ static inline u32 gpmi_nfc_get_ecc_strength(u32 page_data_size,
 			return 16;
 		else
 			return 0;
-	} else
+	} else if (8192 == page_data_size)
+		return 24;
+	else
 		return 0;
 }
 

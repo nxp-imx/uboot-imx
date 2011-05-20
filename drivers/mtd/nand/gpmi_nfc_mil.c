@@ -904,20 +904,22 @@ static int gpmi_nfc_scan_bbt(struct mtd_info *mtd)
 
 	/* Correct mtd setting */
 	mtd->size	= dev_info->chip_size_in_bytes * nand->numchips;
-	/*
+
 	mtd->writesize	= 1 << (fls(dev_info->page_total_size_in_bytes) - 1);
 	mtd->oobsize	= dev_info->page_total_size_in_bytes - mtd->writesize;
 	mtd->erasesize	= dev_info->block_size_in_pages * mtd->writesize;
-	*/
+
 	mtd->ecclayout	= layout;
 	mtd->oobavail	= mtd->oobsize;
-	mtd->oobsize	= mtd->oobavail + layout->eccbytes;
 	mtd->subpage_sft = 0; /* We don't support sub-page writing. */
 
 	/* Configure the struct nand_ecclayout. */
-	layout->oobavail = mtd->oobavail;
+	layout->eccbytes          = 0;
+	layout->oobavail = mtd->oobsize;
 	layout->oobfree[0].offset = 0;
-	layout->oobfree[0].length = layout->oobavail;
+	layout->oobfree[0].length = mtd->oobsize;
+
+	nand->ecc.layout = layout;
 
 	/* Configure the struct nand_chip. */
 	/*
