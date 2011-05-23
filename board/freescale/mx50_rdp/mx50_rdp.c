@@ -510,6 +510,7 @@ void setup_gpmi_nand(void)
 
 		break;
 	case 1:
+	case 3:
 		if ((src_sbmr & 0x00000004) >> 2)
 			*(u32 *)(IOMUXC_BASE_ADDR + PAD_GRP_START + 0xc) =
 								(0x1 << 13);
@@ -1410,6 +1411,7 @@ int check_recovery_cmd_file(void)
 		}
 		break;
 	case NAND_BOOT:
+	case SPI_NOR_BOOT:
 		env = getenv("mtdparts");
 		if (!env)
 			setenv("mtdparts", MTDPARTS_DEFAULT);
@@ -1426,10 +1428,6 @@ int check_recovery_cmd_file(void)
 				CONFIG_ANDROID_UBIFS_PARTITION_NM,
 				CONFIG_ANDROID_CACHE_PARTITION_NAND,
 				CONFIG_ANDROID_RECOVERY_CMD_FILE);
-		break;
-	case SPI_NOR_BOOT:
-		return 0;
-		break;
 	case UNKNOWN_BOOT:
 	default:
 		return 0;

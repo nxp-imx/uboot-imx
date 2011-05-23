@@ -125,13 +125,12 @@
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
 		"bootcmd=run bootcmd_nand \0"				\
 		"bootcmd_nand=run bootargs_base bootargs_android;"	\
-		     "sf probe 1;"	\
-		     "sf read ${loadaddr} 0x40000 0x380000;"	\
-		     "sf read ${rd_loadaddr} 0x3C0000 0x40000;"	\
+		     "nand read ${loadaddr} 0x1400000 0x400000;"	\
+		     "nand read ${rd_loadaddr} 0x1900000 0x32000;"	\
 		     "bootm ${loadaddr} ${rd_loadaddr}\0"		\
 		"bootargs_android=setenv bootargs ${bootargs}  "	\
 		     "androidboot.console=ttymxc0 init=/init "		\
-		     "keypad gpmi:nand ubi.mtd=4\0"			\
+		     "keypad gpmi:nand ubi.mtd=4 video=mxc_elcdif_fb:off\0"	\
 		"bootcmd_android_recovery=run bootargs_base"		\
 		     " bootargs_android_recovery;"			\
 		     "nand read ${loadaddr} 0x1400000 0x400000; bootm\0"	\
@@ -238,7 +237,7 @@
 /*
  * GPMI Nand Configs
  */
-#undef CONFIG_CMD_NAND
+#define CONFIG_CMD_NAND
 
 #ifdef CONFIG_CMD_NAND
 	#define CONFIG_NAND_GPMI
@@ -299,7 +298,7 @@
 #elif defined(CONFIG_FSL_ENV_IN_SF)
 	#define CONFIG_ENV_IS_IN_SPI_FLASH	1
 	#define CONFIG_ENV_SPI_CS		1
-	#define CONFIG_ENV_OFFSET       (192 * 1024)
+	#define CONFIG_ENV_OFFSET       (768 * 1024)
 #else
 	#define CONFIG_ENV_IS_NOWHERE	1
 #endif
@@ -307,7 +306,6 @@
 /*
  * Android support Configs
  */
-/*
 #define CONFIG_ANDROID_RECOVERY
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
        "setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4"    \
@@ -333,7 +331,6 @@
 #define MTD_ACTIVE_PART "nand0,4"
 #define CONFIG_RBTREE
 #define CONFIG_LZO
-*/
 
 #define CONFIG_ANDROID_SYSTEM_PARTITION_MMC 2
 #define CONFIG_ANDROID_RECOVERY_PARTITION_MMC 4
