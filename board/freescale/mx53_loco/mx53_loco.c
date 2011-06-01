@@ -713,8 +713,8 @@ int board_late_init(void)
 			printf("%s:i2c_read:error\n", __func__);
 			return -1;
 		}
-		/* increase VCC as 1.35V on SW2 */
-		buf[2] = 0x38;
+		/* increase VCC as 1.3V on SW2 */
+		buf[2] = 0x34;
 		if (i2c_write(0x8, 25, 1, buf, 3)) {
 			printf("%s:i2c_write:error\n", __func__);
 			return -1;
