@@ -399,9 +399,15 @@ static void setup_i2c(unsigned int module_base)
 	}
 }
 
+/* restore VUSB 2V5 active after suspend */
+#define BUCKPERI_RESTORE_SW_STEP   (0x55)
+/* restore VUSB 2V5 power supply after suspend */
+#define SUPPLY_RESTORE_VPERISW_EN  (0x20)
+#define DA9052_ID1213_REG		   (35)
+#define DA9052_SUPPLY_REG		   (60)
 void setup_pmic_voltages(void)
 {
-	int value;
+	uchar value;
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 	/* increase VDDGP as 1.25V for 1GHZ */
 	value = 0x5e;
@@ -409,6 +415,13 @@ void setup_pmic_voltages(void)
 	i2c_read(0x48, 60, 1, &value, 1);
 	value |= 0x1;
 	i2c_write(0x48, 60, 1, &value, 1);
+
+	/* restore VUSB_2V5 when reset from suspend state */
+	value = BUCKPERI_RESTORE_SW_STEP;
+	i2c_write(0x48, DA9052_ID1213_REG, 1, &value, 1);
+	i2c_read(0x48, DA9052_SUPPLY_REG, 1, &value, 1);
+	value |= SUPPLY_RESTORE_VPERISW_EN;
+	i2c_write(0x48, DA9052_SUPPLY_REG, 1, &value, 1);
 }
 
 #endif
