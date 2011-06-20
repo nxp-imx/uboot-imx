@@ -300,32 +300,67 @@ plugin_start:
 	str r1, [r0, #CLKCTL_CCSR]
 
 	ldr r0, =PLL1_BASE_ADDR
-	ldr r1, =0x1232
-	str r1, [r0, #PLL_DP_CTL]     /* Set DPLL ON (set UPEN bit); BRMO=1 */
-	ldr r1, =0x2
-	str r1, [r0, #PLL_DP_CONFIG]  /* Enable auto-restart AREN bit */
 
-	ldr r1, =DP_OP_800
-	str r1, [r0, #PLL_DP_OP]
-	str r1, [r0, #PLL_DP_HFS_OP]
+	/*
+	 * PLL1 workaround as the following
+	 *      (1) Disable AREN bit to avoid PLL1 restart during MFN change
+	 *      (2) set PLL1 to ~864Mhz with MFI = 8, MFN = 180, MFD = 179, PDF = 0
+	 *      (3) Manual restart PLL1
+	 *      (4) Wait PLL1 lock
+	 *      (5) Set PLL1 to 800Mhz with only change MFN to 60, others keep
+	 *      (6) Set LDREQ bit to load new MFN
+	 *      (7) Poll on LDREQ bit for MFN update to be completed
+	 *      (8) Delay at least 4 us to avoid PLL1 instability window
+	 *      (9) Switch ARM back to PLL1
+	 */
+	/* Step 1 * /
+	ldr r1, [r0, #PLL_DP_CONFIG]
+	bic r1, r1, #0x2
+	str r1, [r0, #PLL_DP_CONFIG] /* disable auto-restart AREN bit */
 
-	ldr r1, =DP_MFD_800
-	str r1, [r0, #PLL_DP_MFD]
-	str r1, [r0, #PLL_DP_HFS_MFD]
+	/* Step 2 */
+	ldr   r1, =0x80
+	str   r1, [r0, #PLL_DP_OP]
+	str   r1, [r0, #PLL_DP_HFS_OP]
 
-	ldr r1, =DP_MFN_800
-	str r1, [r0, #PLL_DP_MFN]
-	str r1, [r0, #PLL_DP_HFS_MFN]
+	ldr   r1, =180
+	str   r1, [r0, #PLL_DP_MFN]
+	str   r1, [r0, #PLL_DP_HFS_MFN]
 
-	/* Now restart PLL */
-	ldr r1, =0x1232
-	str r1, [r0, #PLL_DP_CTL]
-wait_pll1_lock:
-	ldr r1, [r0, #PLL_DP_CTL]
+	ldr   r1, =179
+	str   r1, [r0, #PLL_DP_MFD]
+	str   r1, [r0, #PLL_DP_HFS_MFD]
+
+	/* Step 3. */
+	ldr    r1, =0x00001236 /* Set PLM =1, manual restart and enable PLL*/
+	str   r1, [r0, #PLL_DP_CTL]
+
+	/* Step 4 */
+1:    ldr    r1, [r0, #0x0]
 	ands r1, r1, #0x1
-	beq wait_pll1_lock
+	beq   1b
 
-/* Switch ARM back to PLL1 */
+	/* Step 5 -  set PLL1 to 800Mhz */
+	ldr    r1, =60
+	str   r1, [r0, #PLL_DP_MFN]
+	str   r1, [r0, #PLL_DP_HFS_MFN]
+
+	/* Step 6 - Set the LDREQ bit */
+	ldr    r1, [r0, #PLL_DP_CONFIG]
+	orr    r1, r1, #1
+	str    r1, [r0, #PLL_DP_CONFIG]
+
+	/* Step 7 - Poll until LDREQ clears */
+2:    ldr    r1, [r0, #PLL_DP_CONFIG]
+	tst    r1, #0x1
+	bne   2b
+
+	/* Step 8 - delay more than 4 us */
+	mov   r1, #100
+3:   subs   r1, r1, #1
+	bge    3b
+
+	/* Step 9 - Switch ARM back to PLL1 */
 	ldr r0, =CCM_BASE_ADDR
 	ldr r1, =0x0
 	str r1, [r0,#CLKCTL_CCSR]
