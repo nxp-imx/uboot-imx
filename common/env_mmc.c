@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -63,6 +63,7 @@ int env_init(void)
 	gd->env_valid = 1;
 
 #ifdef CONFIG_DYNAMIC_MMC_DEVNO
+	extern int get_mmc_env_devno(void);
 	mmc_env_devno = get_mmc_env_devno();
 #else
 	mmc_env_devno = CONFIG_SYS_MMC_ENV_DEV;

@@ -209,8 +209,8 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 
 	/* Send the command */
 	writel(cmd->cmdarg, &regs->cmdarg);
-	/* for uSDHC, write to mixer control register */
-	writel(xfertyp, &regs->mixctrl);
+	/* for uSDHC, write lower-half of xfertyp to mixctrl */
+	writel((xfertyp & 0xFFFF), &regs->mixctrl);
 	writel(xfertyp, &regs->xfertyp);
 
 	/* Mask all irqs */
@@ -478,7 +478,7 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 {
 	struct fsl_esdhc *regs;
 	struct mmc *mmc;
-	u32 caps;
+	u32 ver, caps;
 
 	if (!cfg)
 		return -1;
@@ -497,6 +497,11 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	enable_usdhc();
 #endif
 
+	ver = (readl(&regs->hostver) & ESDHC_HOSTVER_VVN_MASK)
+		>> ESDHC_HOSTVER_VVN_SHIFT;
+	if (SDHC_IS_USDHC(ver))
+		sprintf(mmc->name, "FSL_USDHC");
+
 	caps = readl(&regs->hostcapblt);
 	if (caps & ESDHC_HOSTCAPBLT_VS30)
 		mmc->voltages |= MMC_VDD_29_30 | MMC_VDD_30_31;
@@ -512,14 +517,16 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
  *  it is to be used in SDR mode only. Use eSDHC for DDR mode.
  */
 #ifndef CONFIG_MX50_ENABLE_USDHC_SDR
-	if (((readl(&regs->hostver) & ESDHC_HOSTVER_VVN_MASK)
-		>> ESDHC_HOSTVER_VVN_SHIFT) >= ESDHC_HOSTVER_DDR_SUPPORT)
+	if (ver >= ESDHC_HOSTVER_DDR_SUPPORT)
 		mmc->host_caps |= EMMC_MODE_4BIT_DDR;
 
 #ifdef CONFIG_EMMC_DDR_PORT_DETECT
 	if (detect_mmc_emmc_ddr_port(cfg))
 		mmc->host_caps |= EMMC_MODE_4BIT_DDR;
 #endif
+
+	if (SDHC_IS_USDHC(ver))
+		mmc->host_caps |= EMMC_MODE_4BIT_DDR;
 
 #endif /* #ifndef CONFIG_MX50_ENABLE_USDHC_SDR */
 

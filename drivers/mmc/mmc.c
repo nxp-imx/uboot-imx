@@ -438,8 +438,8 @@ static int mmc_change_freq(struct mmc *mmc)
 		goto err_rtn;
 
 	/* Cards with density > 2GiB are sector addressed */
-	if (ext_csd[212] || ext_csd[213] || ext_csd[214] || ext_csd[215] &&
-			(mmc->capacity > (2u * 1024 * 1024 * 1024) / 512))
+	if ((ext_csd[212] || ext_csd[213] || ext_csd[214] || ext_csd[215]) &&
+			((mmc->capacity > (2u * 1024 * 1024 * 1024) / 512)))
 		mmc->high_capacity = 1;
 
 	cardtype = ext_csd[EXT_CSD_CARD_TYPE] & 0xf;
