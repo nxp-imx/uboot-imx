@@ -6,7 +6,7 @@
  * Copyright (c) 1997 Dan Malek (dmalek@jlc.net)
  *
  * Add FEC Structure and definitions
- * Copyright 2004-2010 Freescale Semiconductor, Inc.
+ * Copyright 2004-2011 Freescale Semiconductor, Inc.
  * TsiChung Liew (Tsi-Chung.Liew@freescale.com)
  *
  * See file CREDITS for list of people who contributed to this
@@ -189,6 +189,7 @@ typedef struct fec {
 #define FEC_TDAR_X_DES_ACTIVE		(0x01000000)
 
 /* Bit definitions and macros for FEC_ECR */
+#define FEC_ECR_DBSWP			(0x00000100)
 #define FEC_ECR_ETHER_EN		(0x00000002)
 #define FEC_ECR_RESET			(0x00000001)
 

@@ -2,7 +2,7 @@
  * (C) Copyright 2000-2004
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -311,6 +311,12 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 	default:
 		val |= PHY_BMCR_AUTON | PHY_BMCR_RST_NEG;
 	}
+
+	/* force mx6 phy works at 100Mbits */
+#ifdef CONFIG_MX6Q
+	val = PHY_BMCR_100MB | PHY_BMCR_DPLX | PHY_BMCR_RESET;
+#endif
+
 	ret |= __fec_mii_write(fecp, addr, PHY_BMCR, val);
 
 	if (!ret && (val & PHY_BMCR_AUTON)) {
@@ -325,7 +331,9 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 		};
 	}
 
-	if (__fec_mii_read(fecp, addr, PHY_BMSR, &val)) {
+	ret = __fec_mii_read(fecp, addr, PHY_BMSR, &val);
+	if (ret) {
+		/* set default speed and duplex */
 		dup_spd = _100BASET | (FULL << 16);
 	} else {
 		if (val & (PHY_BMSR_100TXF | PHY_BMSR_100TXH | PHY_BMSR_100T4))
@@ -358,12 +366,24 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 		fecp->tcr &= ~FEC_TCR_FDEN;
 	}
 
-#ifdef ET_DEBUG
-	if ((dup_spd & 0xFFFF) == _100BASET) {
-		printf("100Mbps\n");
+#ifdef CONFIG_MX6Q
+	if ((dup_spd & 0xFFFF) == _1000BASET) {
+		fecp->ecr |= (0x1 << 5);
+	} else if ((dup_spd & 0xFFFF) == _100BASET) {
+		fecp->ecr &= ~(0x1 << 5);
 	} else {
-		printf("10Mbps\n");
+		fecp->ecr &= ~(0x1 << 5);
+		fecp->rcr |= (0x1 << 9);
 	}
+#endif
+
+#ifdef ET_DEBUG
+	if ((dup_spd & 0xFFFF) == _1000BASET)
+		printf("1000Mbps\n");
+	else if ((dup_spd & 0xFFFF) == _100BASET)
+		printf("100Mbps\n");
+	else
+		printf("10Mbps\n");
 #endif
 }
 
@@ -473,6 +493,8 @@ int fec_send(struct eth_device *dev, volatile void *packet, int length)
 	if (j >= FEC_MAX_TIMEOUT)
 		printf("TX timeout packet at %p\n", packet);
 
+	fecp->eir &= fecp->eir;
+
 #ifdef ET_DEBUG
 	printf("%s[%d] %s: cycles: %d    status: %x  retry cnt: %d\n",
 	       __FILE__, __LINE__, __func__, j,
@@ -510,6 +532,7 @@ int fec_recv(struct eth_device *dev)
 			       __func__, __LINE__,
 			       info->rxbd[info->rxIdx].cbd_sc);
 #endif
+			fecp->eir &= fecp->eir;
 		} else {
 			length -= 4;
 #ifdef CONFIG_MX28
@@ -730,6 +753,31 @@ void dbgFecRegs(struct eth_device *dev)
 }
 #endif
 
+#ifdef CONFIG_MX6Q_SABREAUTO
+static int mx6_rgmii_rework(fec_t *fecp, int addr)
+{
+	unsigned short val;
+
+	/* To enable AR8031 ouput a 125MHz clk from CLK_25M */
+	__fec_mii_write(fecp, addr, 0xd, 0x7);
+	__fec_mii_write(fecp, addr, 0xe, 0x8016);
+	__fec_mii_write(fecp, addr, 0xd, 0x4007);
+	__fec_mii_read(fecp, addr, 0xe, &val);
+
+	val &= 0xffe3;
+	val |= 0x18;
+	__fec_mii_write(fecp, addr, 0xe, val);
+
+	/* introduce tx clock delay */
+	__fec_mii_write(fecp, addr, 0x1d, 0x5);
+	__fec_mii_read(fecp, addr, 0x1e, &val);
+	val |= 0x0100;
+	__fec_mii_write(fecp, addr, 0x1e, val);
+
+	return 0;
+}
+#endif
+
 int fec_init(struct eth_device *dev, bd_t *bd)
 {
 	struct fec_info_s *info = dev->priv;
@@ -745,6 +793,10 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	defined (CONFIG_DISCOVER_PHY)
 
 	mxc_fec_mii_init(fecp);
+#ifdef CONFIG_MX6Q_SABREAUTO
+	mx6_rgmii_rework((fec_t *)fecp, info->phy_addr);
+#endif
+
 #ifdef CONFIG_DISCOVER_PHY
 	if (info->phy_addr < 0 || info->phy_addr > 0x1F)
 		info->phy_addr = mxc_fec_mii_discover_phy(dev);
@@ -779,6 +831,10 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	/* Set maximum receive buffer size. */
 	fecp->emrbr = PKT_MAXBLR_SIZE;
 
+#ifdef CONFIG_MX6Q
+	fecp->rcr &= ~(0x100);
+	fecp->rcr |= 0x44;
+#endif
 	/*
 	 * Setup Buffers and Buffer Desriptors
 	 */
@@ -826,6 +882,14 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 #else
 	fecp->erdsr = (uint)(&info->rxbd[0]);
 	fecp->etdsr = (uint)(&info->txbd[0]);
+#endif
+
+#ifdef CONFIG_MX6Q
+	/* Enable Swap to support little-endian device */
+	fecp->ecr |= FEC_ECR_DBSWP;
+
+	/* set transmit fifo buffer to 0x1111 */
+	fecp->tfwr |= 0x3f;
 #endif
 
 	/* Now enable the transmit and receive processing */
