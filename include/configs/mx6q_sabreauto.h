@@ -183,6 +183,8 @@
 	#define CONFIG_BOOT_PARTITION_ACCESS
 	/* SD3 and SD4 are 8 bit */
 	#define CONFIG_MMC_8BIT_PORTS   0xC
+	/* Setup target delay in DDR mode for each SD port */
+	#define CONFIG_GET_DDR_TARGET_DELAY
 #endif
 
 /*

@@ -200,10 +200,10 @@ int board_eth_init(bd_t *bis)
 #ifdef CONFIG_CMD_MMC
 
 struct fsl_esdhc_cfg usdhc_cfg[4] = {
-	{USDHC1_BASE_ADDR, 1, 1},
-	{USDHC2_BASE_ADDR, 1, 1},
-	{USDHC3_BASE_ADDR, 1, 1},
-	{USDHC4_BASE_ADDR, 1, 1},
+	{USDHC1_BASE_ADDR, 1, 1, 1},
+	{USDHC2_BASE_ADDR, 1, 1, 1},
+	{USDHC3_BASE_ADDR, 1, 1, 1},
+	{USDHC4_BASE_ADDR, 1, 1, 1},
 };
 
 #ifdef CONFIG_DYNAMIC_MMC_DEVNO
@@ -300,6 +300,19 @@ int board_mmc_init(bd_t *bis)
 	else
 		return -1;
 }
+
+/* For DDR mode operation, provide target delay parameter for each SD port.
+ * Use cfg->esdhc_base to distinguish the SD port #. The delay for each port
+ * is dependent on trace lengths for that particular port.  If the following
+ * CONFIG is not defined, then the default target delay value will be used.
+ */
+#ifdef CONFIG_GET_DDR_TARGET_DELAY
+u32 get_ddr_delay(struct fsl_esdhc *cfg)
+{
+	/* No delay required on SABRE Auto board SD ports */
+	return 0;
+}
+#endif
 
 #endif
 

@@ -325,6 +325,11 @@ void set_sysctl(struct mmc *mmc, uint clock)
 	pre_div >>= 1;
 	div -= 1;
 
+	/* for USDHC, pre_div requires another shift in DDR mode */
+	if (cfg->is_usdhc && (mmc->bus_width == EMMC_MODE_4BIT_DDR ||
+		mmc->bus_width == EMMC_MODE_8BIT_DDR))
+		pre_div >>= 1;
+
 	clk = (pre_div << 8) | (div << 4);
 
 #ifndef CONFIG_IMX_ESDHC_V1
@@ -353,6 +358,16 @@ static void esdhc_dll_setup(struct mmc *mmc)
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
 	struct fsl_esdhc *regs = (struct fsl_esdhc *)cfg->esdhc_base;
 	uint dll_control;
+	u32 target_delay = ESDHC_DLL_TARGET_DEFAULT_VAL;
+
+/* For DDR mode operation, provide target delay parameter for each SD port.
+ * Use cfg->esdhc_base to distinguish the SD port #. The delay for each port
+ * is dependent on trace lengths for that particular port. If the following
+ * CONFIG is not defined, then the default target delay value will be used.
+ */
+#ifdef CONFIG_GET_DDR_TARGET_DELAY
+	target_delay = get_ddr_delay(cfg);
+#endif
 
 	/* For i.MX50 TO1, need to force slave override mode */
 	if (get_board_rev() == (0x50000 | CHIP_REV_1_0) ||
@@ -367,6 +382,11 @@ static void esdhc_dll_setup(struct mmc *mmc)
 
 		writel(dll_control, &regs->dllctrl);
 	} else {
+
+		/* on USDHC, enable DLL only for clock > 25 MHz */
+		if (cfg->is_usdhc && mmc->clock <= 25000000)
+			return;
+
 		/* Disable auto clock gating for PERCLK, HCLK, and IPGCLK */
 		writel(readl(&regs->sysctl) | 0x7, &regs->sysctl);
 		/* Stop SDCLK while delay line is calibrated */
@@ -375,16 +395,29 @@ static void esdhc_dll_setup(struct mmc *mmc)
 		/* Reset DLL */
 		writel(readl(&regs->dllctrl) | 0x2, &regs->dllctrl);
 
-		/* Enable DLL */
-		writel(readl(&regs->dllctrl) | 0x1, &regs->dllctrl);
+		dll_control = 0;
 
-		dll_control = readl(&regs->dllctrl);
+		/* Enable DLL */
+		if (cfg->is_usdhc)
+			dll_control |= 0x01000001;
+		else
+			dll_control |= 0x00000001;
+
+		writel(dll_control, &regs->dllctrl);
 
 		/* Set target delay */
-		dll_control &= ~ESDHC_DLLCTRL_TARGET_MASK;
-		dll_control |= (ESDHC_DLL_TARGET_DEFAULT_VAL <<
-				ESDHC_DLLCTRL_TARGET_SHIFT);
-		writel(dll_control, &regs->dllctrl);
+		if (cfg->is_usdhc) {
+			dll_control &= ~USDHC_DLLCTRL_TARGET_MASK;
+			dll_control |= (((target_delay & USDHC_DLL_LOW_MASK) <<
+				USDHC_DLLCTRL_TARGET_LOW_SHIFT) |
+				((target_delay >> USDHC_DLL_HIGH_SHIFT) <<
+				USDHC_DLLCTRL_TARGET_HIGH_SHIFT));
+			writel(dll_control, &regs->dllctrl);
+		} else {
+			dll_control &= ~ESDHC_DLLCTRL_TARGET_MASK;
+			dll_control |= (target_delay << ESDHC_DLLCTRL_TARGET_SHIFT);
+			writel(dll_control, &regs->dllctrl);
+		}
 
 		/* Wait for slave lock */
 		while ((readl(&regs->dllstatus) & ESDHC_DLLSTS_SLV_LOCK_MASK) !=
@@ -478,7 +511,7 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 {
 	struct fsl_esdhc *regs;
 	struct mmc *mmc;
-	u32 ver, caps;
+	u32 caps;
 
 	if (!cfg)
 		return -1;
@@ -497,9 +530,7 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	enable_usdhc();
 #endif
 
-	ver = (readl(&regs->hostver) & ESDHC_HOSTVER_VVN_MASK)
-		>> ESDHC_HOSTVER_VVN_SHIFT;
-	if (SDHC_IS_USDHC(ver))
+	if (cfg->is_usdhc)
 		sprintf(mmc->name, "FSL_USDHC");
 
 	caps = readl(&regs->hostcapblt);
@@ -517,16 +548,13 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
  *  it is to be used in SDR mode only. Use eSDHC for DDR mode.
  */
 #ifndef CONFIG_MX50_ENABLE_USDHC_SDR
-	if (ver >= ESDHC_HOSTVER_DDR_SUPPORT)
+	if (cfg->is_usdhc)
 		mmc->host_caps |= EMMC_MODE_4BIT_DDR;
 
 #ifdef CONFIG_EMMC_DDR_PORT_DETECT
 	if (detect_mmc_emmc_ddr_port(cfg))
 		mmc->host_caps |= EMMC_MODE_4BIT_DDR;
 #endif
-
-	if (SDHC_IS_USDHC(ver))
-		mmc->host_caps |= EMMC_MODE_4BIT_DDR;
 
 #endif /* #ifndef CONFIG_MX50_ENABLE_USDHC_SDR */
 
