@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2011 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -118,10 +118,10 @@
 
 .macro setup_pll pll, freq
 	ldr r2, =\pll
-	ldr r1, =0x00001232
-	str r1, [r2, #PLL_DP_CTL] /* Set DPLL ON (set UPEN bit): BRMO=1 */
-	mov r1, #0x2
-	str r1, [r2, #PLL_DP_CONFIG] /* Enable auto-restart AREN bit */
+
+	ldr r1, [r2, #PLL_DP_CONFIG]
+	bic r1, r1, #0x2
+	str r1, [r2, #PLL_DP_CONFIG] /* disable auto-restart AREN bit */
 
 	str r3, [r2, #PLL_DP_OP]
 	str r3, [r2, #PLL_DP_HFS_OP]
@@ -132,11 +132,34 @@
 	str r5, [r2, #PLL_DP_MFN]
 	str r5, [r2, #PLL_DP_HFS_MFN]
 
-	ldr r1, =0x00001232
+	ldr r1, =0x00001236 /* Set PLM =1, manual restart and enable PLL*/
 	str r1, [r2, #PLL_DP_CTL]
 1:	ldr r1, [r2, #PLL_DP_CTL]
 	ands r1, r1, #0x1
 	beq 1b
+
+	/* Workaround for PLL1 issue */
+	ldr r1, =PLL1_BASE_ADDR
+	cmp r1, r2
+	bne 4f
+
+	/* set PLL1 to 800Mhz */
+	ldr r1, =60
+	str r1, [r2, #PLL_DP_MFN]
+
+	ldr r1, [r2, #PLL_DP_CONFIG]
+	orr r1, r1, #1 /* set LDREQ */
+	str r1, [r2, #PLL_DP_CONFIG]
+
+      /* Wait till LDREQ bit is cleared. */
+2:	ldr r1, [r2, #PLL_DP_CONFIG]
+	tst r1, #1
+	bne 2b
+
+	mov r0, #100 /* delay more than 4.6 us */
+3:      subs r0, r0, #1
+	bge 3b
+4:
 .endm
 
 .macro init_clock
@@ -161,6 +184,8 @@
         mov r1, #0x60000
         str r1, [r0, #CLKCTL_CCDR]
 
+	/* PLL1 workaround */
+	/* (1). switch off all clock from PLL1, CPU/DDR */
 	/* Make sure to switch the DDR away from PLL 1 */
 	ldr r1, =0x19239145
 	str r1, [r0, #CLKCTL_CBCDR]
@@ -169,12 +194,20 @@
 	cmp r1, #0x0
 	bne 1b
 
+	/* Make sure step clock is 24MHz OSC. */
+	ldr   r1, [r0, #CLKCTL_CCSR]
+	bic  r1, r1, #(3 << 7)
+	str  r1, [r0, #CLKCTL_CCSR]
+
 	/* Switch ARM to step clock */
-	mov r1, #0x4
+	ldr   r1, [r0, #CLKCTL_CCSR]
+	orr  r1, r1, #4
 	str r1, [r0, #CLKCTL_CCSR]
-	mov r3, #DP_OP_800
-	mov r4, #DP_MFD_800
-	mov r5, #DP_MFN_800
+
+	/* PLL1 workaround:|MFN/(MFD+1)| <1 */
+	mov r3, #0x80 /* MFI = 8*/
+	mov r4, #179 /* MFD = 179 */
+	mov r5, #180 /* MFN = 180 */
 	setup_pll PLL1_BASE_ADDR
 
 	mov r3, #DP_OP_665
