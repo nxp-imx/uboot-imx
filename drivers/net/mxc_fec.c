@@ -76,6 +76,14 @@
 #define FEC_MII_WRITE(pa, ra, v) (FEC_MII_FRAME | FEC_MII_OP(FEC_MII_OP_WR)|\
 			FEC_MII_PA(pa) | FEC_MII_RA(ra) | FEC_MII_SET_DATA(v))
 
+#ifdef CONFIG_MX6Q_SABREAUTO
+#define PHY_MIPSCR_LINK_UP	(0x1 << 10)
+#define PHY_MIPSCR_SPEED_MASK	(0x3 << 14)
+#define PHY_MIPSCR_1000M	(0x2 << 14)
+#define PHY_MIPSCR_100M		(0x1 << 14)
+#define PHY_MIPSCR_FULL_DUPLEX	(0x1 << 13)
+#endif
+
 #ifndef CONFIG_SYS_CACHELINE_SIZE
 #define CONFIG_SYS_CACHELINE_SIZE 32
 #endif
@@ -312,11 +320,6 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 		val |= PHY_BMCR_AUTON | PHY_BMCR_RST_NEG;
 	}
 
-	/* force mx6 phy works at 100Mbits */
-#ifdef CONFIG_MX6Q
-	val = PHY_BMCR_100MB | PHY_BMCR_DPLX | PHY_BMCR_RESET;
-#endif
-
 	ret |= __fec_mii_write(fecp, addr, PHY_BMCR, val);
 
 	if (!ret && (val & PHY_BMCR_AUTON)) {
@@ -331,6 +334,31 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 		};
 	}
 
+/* for AR8031 PHY */
+#ifdef CONFIG_MX6Q_SABREAUTO
+	ret = 100;
+	/* set default mode to 100M full duplex */
+	dup_spd = _100BASET | (FULL << 16);
+
+	/* wait link becomes up, maximum wait 10s */
+	while (!__fec_mii_read(fecp, addr, PHY_MIPSCR, &val) &&
+		!(val & PHY_MIPSCR_LINK_UP) && ret--)
+		udelay(100*1000);
+
+	if (ret) {
+		if ((val & PHY_MIPSCR_SPEED_MASK) == PHY_MIPSCR_1000M)
+			dup_spd = _1000BASET;
+		else if ((val & PHY_MIPSCR_SPEED_MASK) == PHY_MIPSCR_100M)
+			dup_spd = _100BASET;
+		else
+			dup_spd = _10BASET;
+
+		if (val & PHY_MIPSCR_FULL_DUPLEX)
+			dup_spd |= (FULL << 16);
+		else
+			dup_spd |= (HALF << 16);
+	}
+#else
 	ret = __fec_mii_read(fecp, addr, PHY_BMSR, &val);
 	if (ret) {
 		/* set default speed and duplex */
@@ -345,7 +373,7 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 		else
 			dup_spd |= (HALF << 16);
 	}
-
+#endif
 	if ((dup_spd >> 16) == FULL) {
 		/* Set maximum frame length */
 #ifdef CONFIG_RMII
@@ -398,6 +426,7 @@ static void swap_packet(void *packet, int length)
 }
 #endif
 
+extern int fec_get_mac_addr(unsigned char *mac);
 static int fec_get_hwaddr(struct eth_device *dev, unsigned char *mac)
 {
 #ifdef CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
@@ -888,8 +917,8 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	/* Enable Swap to support little-endian device */
 	fecp->ecr |= FEC_ECR_DBSWP;
 
-	/* set transmit fifo buffer to 0x1111 */
-	fecp->tfwr |= 0x3f;
+	/* set ENET tx at store and forward mode */
+	fecp->tfwr |= (0x1 << 8);
 #endif
 
 	/* Now enable the transmit and receive processing */
@@ -931,11 +960,13 @@ void fec_halt(struct eth_device *dev)
 int mxc_fec_initialize(bd_t *bis)
 {
 	struct eth_device *dev;
-	int i, j;
+	int i;
 	unsigned char ethaddr[6];
 
 	for (i = 0; i < sizeof(fec_info) / sizeof(fec_info[0]); i++) {
-
+#ifdef CONFIG_ARCH_MMU
+		int j;
+#endif
 		dev =
 		    (struct eth_device *)memalign(CONFIG_SYS_CACHELINE_SIZE,
 						  sizeof *dev);
