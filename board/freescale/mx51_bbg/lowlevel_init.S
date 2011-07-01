@@ -119,11 +119,15 @@
 .macro setup_pll pll, freq
 	ldr r2, =\pll
 
+	ldr r1, =PLL1_BASE_ADDR
+	cmp r1, r2
+	bne    5f
+
 	ldr r1, [r2, #PLL_DP_CONFIG]
 	bic r1, r1, #0x2
 	str r1, [r2, #PLL_DP_CONFIG] /* disable auto-restart AREN bit */
 
-	str r3, [r2, #PLL_DP_OP]
+5:	str r3, [r2, #PLL_DP_OP]
 	str r3, [r2, #PLL_DP_HFS_OP]
 
 	str r4, [r2, #PLL_DP_MFD]
@@ -132,8 +136,17 @@
 	str r5, [r2, #PLL_DP_MFN]
 	str r5, [r2, #PLL_DP_HFS_MFN]
 
+
+	ldr r1, =PLL1_BASE_ADDR
+	cmp r1, r2
+	bne    6f
 	ldr r1, =0x00001236 /* Set PLM =1, manual restart and enable PLL*/
-	str r1, [r2, #PLL_DP_CTL]
+	b       7f
+
+6:	ldr r1, =0x00001232
+
+7:	str r1, [r2, #PLL_DP_CTL]
+
 1:	ldr r1, [r2, #PLL_DP_CTL]
 	ands r1, r1, #0x1
 	beq 1b
