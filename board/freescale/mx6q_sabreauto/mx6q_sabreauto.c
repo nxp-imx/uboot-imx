@@ -303,7 +303,7 @@ int board_mmc_init(bd_t *bis)
 
 /* For DDR mode operation, provide target delay parameter for each SD port.
  * Use cfg->esdhc_base to distinguish the SD port #. The delay for each port
- * is dependent on trace lengths for that particular port.  If the following
+ * is dependent on signal layout for that particular port.  If the following
  * CONFIG is not defined, then the default target delay value will be used.
  */
 #ifdef CONFIG_GET_DDR_TARGET_DELAY

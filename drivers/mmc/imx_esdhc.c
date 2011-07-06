@@ -74,7 +74,8 @@ struct fsl_esdhc {
 	uint dllstatus;
 	char	reserved3[88];
 	uint vendorspec;
-	char	reserved4[56];
+	uint	mmcboot;
+	char	reserved4[52];
 	uint	hostver;
 };
 
@@ -362,7 +363,7 @@ static void esdhc_dll_setup(struct mmc *mmc)
 
 /* For DDR mode operation, provide target delay parameter for each SD port.
  * Use cfg->esdhc_base to distinguish the SD port #. The delay for each port
- * is dependent on trace lengths for that particular port. If the following
+ * is dependent on signal layout for that particular port. If the following
  * CONFIG is not defined, then the default target delay value will be used.
  */
 #ifdef CONFIG_GET_DDR_TARGET_DELAY
@@ -473,6 +474,9 @@ static int esdhc_init(struct mmc *mmc)
 
 	while (readl(&regs->sysctl) & SYSCTL_RSTA)
 		;
+
+	/* RSTA doesn't reset MMC_BOOT register, so manually reset it */
+	writel(0, &regs->mmcboot);
 
 #ifdef CONFIG_IMX_ESDHC_V1
 	tmp = readl(&regs->sysctl) | (SYSCTL_HCKEN | SYSCTL_IPGEN);
