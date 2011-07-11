@@ -169,7 +169,7 @@
 		"kernel=uImage\0"				\
 		"rd_loadaddr=0x90D00000\0"	\
 		"nfsroot=/opt/eldk/arm\0"				\
-		"bootargs_base=setenv bootargs console=ttymxc0,115200 gpu_memory=16M\0"\
+		"bootargs_base=setenv bootargs console=ttymxc0,115200 gpu_nommu,gpu_memory=32M\0"\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs " \
 			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
@@ -182,7 +182,7 @@
 		"bootcmd=run bootcmd_SD \0"				\
 		"bootcmd_SD=run bootargs_base bootargs_android;"	\
 		     "mmc read 0 ${loadaddr} 0x800 2000;"		\
-		     "mmc read 0 ${rd_loadaddr} 0x3000 0x258;"		\
+		     "mmc read 0 ${rd_loadaddr} 0x3000 0x300;"		\
 		     "bootm ${loadaddr} ${rd_loadaddr}\0"		\
 		"bootargs_android=setenv bootargs ${bootargs}  "	\
 		     "androidboot.console=ttymxc0 init=/init "		\

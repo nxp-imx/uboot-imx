@@ -39,10 +39,10 @@
 #define CONFIG_ARCH_MMU
 
 #define CONFIG_MX53_HCLK_FREQ	24000000
-#define CONFIG_SYS_PLL2_FREQ    400
-#define CONFIG_SYS_AHB_PODF     2
-#define CONFIG_SYS_AXIA_PODF    0
-#define CONFIG_SYS_AXIB_PODF    1
+#define CONFIG_SYS_PLL2_FREQ	400
+#define CONFIG_SYS_AHB_PODF	2
+#define CONFIG_SYS_AXIA_PODF	0
+#define CONFIG_SYS_AXIB_PODF	1
 
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
@@ -71,7 +71,7 @@
  * Hardware drivers
  */
 #define CONFIG_MXC_UART 1
-#define CONFIG_UART_BASE_ADDR   UART1_BASE_ADDR
+#define CONFIG_UART_BASE_ADDR	UART1_BASE_ADDR
 
 /*
  * Android support Configs
@@ -79,8 +79,8 @@
 
 /* Android fastboot configs */
 #define CONFIG_USB_DEVICE
-#define CONFIG_IMX_UDC                 1
-#define CONFIG_FASTBOOT                1
+#define CONFIG_IMX_UDC		       1
+#define CONFIG_FASTBOOT		       1
 #define CONFIG_FASTBOOT_STORAGE_EMMC_SATA
 #define CONFIG_FASTBOOT_VENDOR_ID      0xbb4
 #define CONFIG_FASTBOOT_PRODUCT_ID     0xc01
@@ -88,10 +88,10 @@
 #define CONFIG_FASTBOOT_MANUFACTURER_STR  "Freescale"
 #define CONFIG_FASTBOOT_PRODUCT_NAME_STR "i.mx53 smd"
 #define CONFIG_FASTBOOT_CONFIGURATION_STR  "Android fastboot"
-#define CONFIG_FASTBOOT_INTERFACE_STR    "Android fastboot"
-#define CONFIG_FASTBOOT_SERIAL_NUM      "12345"
-#define CONFIG_FASTBOOT_SATA_NO          0
-#define CONFIG_FASTBOOT_TRANSFER_BUF    0x80000000
+#define CONFIG_FASTBOOT_INTERFACE_STR	 "Android fastboot"
+#define CONFIG_FASTBOOT_SERIAL_NUM	"12345"
+#define CONFIG_FASTBOOT_SATA_NO		 0
+#define CONFIG_FASTBOOT_TRANSFER_BUF	0x80000000
 #define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x8000000 /* 128M byte */
 
 #define CONFIG_ANDROID_RECOVERY
@@ -103,7 +103,7 @@
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
 	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4 rootfs=ext4 video=mxcdi1fb:RGB666,XGA ldb=di1 di1_primary"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
-	"run bootargs_base bootargs_android_recovery;"  \
+	"run bootargs_base bootargs_android_recovery;"	\
 	"mmc read 1 ${loadaddr} 0x800 0x2000;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 
@@ -127,7 +127,7 @@
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
-#define CONFIG_NET_RETRY_COUNT  100
+#define CONFIG_NET_RETRY_COUNT	100
 #define CONFIG_NET_MULTI 1
 #define CONFIG_BOOTP_SUBNETMASK
 #define CONFIG_BOOTP_GATEWAY
@@ -157,34 +157,34 @@
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
-		"uboot=u-boot.bin\0"                                    \
-		"kernel=uImage\0"                                       \
-		"loadaddr=0x70800000\0"                                 \
-		"rd_loadaddr=0x70D00000\0"                              \
-		"nfsroot=/opt/eldk/arm\0"                               \
+		"uboot=u-boot.bin\0"					\
+		"kernel=uImage\0"					\
+		"loadaddr=0x70800000\0"					\
+		"rd_loadaddr=0x70D00000\0"				\
+		"nfsroot=/opt/eldk/arm\0"				\
 		"bootargs_base=setenv bootargs console=ttymxc0,115200\0"\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs " \
-		    "ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"  \
-		"bootargs_android=setenv bootargs ${bootargs} " \
+		    "ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"	 \
+		"bootargs_android=setenv bootargs ${bootargs} "		\
 		     "androidboot.console=ttymxc0 init=/init di1_primary "\
-		     "video=mxcdi1fb:RGB666,XGA hdmi ldb=di1 gpu_memory=32M\0"   \
-		"bootcmd=run bootcmd_eMMC \0"                             \
-		"bootcmd_SD=run bootargs_base bootargs_android;"        \
-		     "mmc read 0 ${loadaddr} 0x800 2000;"               \
-		     "mmc read 0 ${rd_loadaddr} 0x3000 0x258;"          \
-		     "bootm ${loadaddr} ${rd_loadaddr}\0"               \
-		"bootcmd_eMMC=run bootargs_base bootargs_android;"        \
-		     "mmc read 1 ${loadaddr} 0x800 2000;"               \
-		     "mmc read 1 ${rd_loadaddr} 0x3000 0x258;"          \
-		     "bootm ${loadaddr} ${rd_loadaddr}\0"               \
-		"bootcmd_net=run bootargs_base bootargs_nfs; "          \
-			"tftpboot ${loadaddr} ${kernel}; bootm\0"       \
-		"bootcmd_android_recovery=run bootargs_base"            \
-		     " bootargs_android_recovery;"                      \
-		     "mmc read 0 ${loadaddr} 0x800 0x2000;bootm\0"      \
+		     "video=mxcdi1fb:RGB666,XGA hdmi ldb=di1 gpu_nommu,gpu_memory=64M\0"   \
+		"bootcmd_SD=run bootargs_base bootargs_android;"	\
+		     "mmc read 0 ${loadaddr} 0x800 2000;"		\
+		     "mmc read 0 ${rd_loadaddr} 0x3000 0x300;"		\
+		     "bootm ${loadaddr} ${rd_loadaddr}\0"		\
+		"bootcmd_eMMC=run bootargs_base bootargs_android;"	  \
+		     "mmc read 1 ${loadaddr} 0x800 2000;"		\
+		     "mmc read 1 ${rd_loadaddr} 0x3000 0x300;"		\
+		     "bootm ${loadaddr} ${rd_loadaddr}\0"		\
+		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
+			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
+		"bootcmd_android_recovery=run bootargs_base"		\
+		     " bootargs_android_recovery;"			\
+		     "mmc read 1 ${loadaddr} 0x800 0x2000;bootm\0"	\
 		"bootargs_android_recovery=setenv bootargs ${bootargs}" \
-		     " init=/init root=/dev/mmcblk0p4 rootfs=ext4\0"    \
-
+		     "init=/init root=/dev/mmcblk0p4 rootfs=ext4 "	\
+		     "di1_primary video=mxcdi1fb:RGB666,XGA ldb=di1\0"	  \
+		"bootcmd=run bootcmd_eMMC\0"
 
 #define CONFIG_ARP_TIMEOUT	200UL
 
