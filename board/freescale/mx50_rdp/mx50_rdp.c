@@ -1274,12 +1274,15 @@ struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
 	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
 	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
 	 },
+#ifdef CONFIG_CMD_UBI
 	{
 	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND,
 	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND,
 	 },
+#endif
 };
 
+#ifdef CONFIG_CMD_UBI
 extern int ubifs_init(void);
 extern int ubifs_mount(char *vol_name);
 extern int ubifs_load(char *filename, u32 addr, u32 size);
@@ -1357,6 +1360,7 @@ static int check_nand_recovery_cmd_file(char *mtd_part_name,
 
 	return filelen;
 }
+#endif
 
 int check_recovery_cmd_file(void)
 {
@@ -1412,6 +1416,7 @@ int check_recovery_cmd_file(void)
 		break;
 	case NAND_BOOT:
 	case SPI_NOR_BOOT:
+#ifdef CONFIG_CMD_UBI
 		env = getenv("mtdparts");
 		if (!env)
 			setenv("mtdparts", MTDPARTS_DEFAULT);
@@ -1428,6 +1433,7 @@ int check_recovery_cmd_file(void)
 				CONFIG_ANDROID_UBIFS_PARTITION_NM,
 				CONFIG_ANDROID_CACHE_PARTITION_NAND,
 				CONFIG_ANDROID_RECOVERY_CMD_FILE);
+#endif
 	case UNKNOWN_BOOT:
 	default:
 		return 0;

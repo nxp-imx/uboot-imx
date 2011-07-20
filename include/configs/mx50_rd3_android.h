@@ -64,7 +64,7 @@
 /*
  * Size of malloc() pool
  */
-#define CONFIG_SYS_MALLOC_LEN		(4 * 1024 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
 /* size in bytes reserved for initial data */
 #define CONFIG_SYS_GBL_DATA_SIZE	128
 
@@ -114,29 +114,15 @@
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
-		"uboot=u-boot.bin\0"			\
-		"kernel=uImage\0"				\
-		"rd_loadaddr=0x70D00000\0"                              \
-		"nfsroot=/opt/eldk/arm\0"				\
-		"bootargs_base=setenv bootargs console=ttymxc0,115200\0"\
-		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
-			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
-		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
-			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
-		"bootcmd=run bootcmd_nand \0"				\
-		"bootcmd_nand=run bootargs_base bootargs_android;"	\
-		     "nand read ${loadaddr} 0x1400000 0x400000;"	\
-		     "nand read ${rd_loadaddr} 0x1900000 0x32000;"	\
-		     "bootm ${loadaddr} ${rd_loadaddr}\0"		\
-		"bootargs_android=setenv bootargs ${bootargs}  "	\
-		     "androidboot.console=ttymxc0 init=/init "		\
-		     "keypad gpmi:nand ubi.mtd=4 video=mxc_elcdif_fb:off\0"	\
-		"bootcmd_android_recovery=run bootargs_base"		\
-		     " bootargs_android_recovery;"			\
-		     "nand read ${loadaddr} 0x1400000 0x400000; bootm\0"	\
-		"bootargs_android_recovery=setenv bootargs ${bootargs}" \
-		     " init=/init keypad gpmi:nand ubi.mtd=3 ubi.mtd=4" \
-		     " root=ubi0:recovery rootfstype=ubifs\0" \
+		"ethaddr=00:04:9f:00:ea:d3\0"		\
+		"bootfile=uImage\0"	\
+		"loadaddr=0x70800000\0"				\
+		"rd_loadaddr=0x70D00000\0"		\
+		"bootargs=console=ttymxc0 init=/init androidboot.console=ttymxc0 " \
+			"keypad video=mxc_elcdif_fb:off\0" \
+		"bootcmd_SD=mmc read 0 ${loadaddr} 0x800 0x2000;" \
+			"mmc read 0 ${rd_loadaddr} 0x3000 0x300\0" \
+		"bootcmd=run bootcmd_SD; bootm ${loadaddr} ${rd_loadaddr}\0" \
 
 
 #define CONFIG_ARP_TIMEOUT	200UL
@@ -201,7 +187,7 @@
 #define CONFIG_FSL_SF		1
 #define CONFIG_CMD_SPI
 #define CONFIG_CMD_SF
-#define CONFIG_SPI_FLASH_IMX_M25PXX 1
+#define CONFIG_SPI_FLASH_IMX_M25PXX	1
 #define CONFIG_SPI_FLASH_CS	1
 #define CONFIG_IMX_CSPI
 #define IMX_CSPI_VER_0_7        1
@@ -231,13 +217,21 @@
 	#define CONFIG_EMMC_DDR_MODE
 
 	/* Indicate to esdhc driver which ports support 8-bit data */
-	#define CONFIG_MMC_8BIT_PORTS		0x2   /* ports 1 and 2 */
+	#define CONFIG_MMC_8BIT_PORTS		0x6   /* SD2 and SD3 */
+
+	/* Uncomment the following define to enable uSDHC instead
+	 * of eSDHC on SD3 port for SDR mode since eSDHC timing on MX50
+	 * is borderline for SDR mode. DDR mode will be disabled when this
+	 * define is enabled since the uSDHC timing on MX50 is borderline
+	 * for DDR mode. */
+
+	/*#define CONFIG_MX50_ENABLE_USDHC_SDR	1*/
 #endif
 
 /*
  * GPMI Nand Configs
  */
-#define CONFIG_CMD_NAND
+#undef CONFIG_CMD_NAND
 
 #ifdef CONFIG_CMD_NAND
 	#define CONFIG_NAND_GPMI
@@ -284,14 +278,14 @@
 #define CONFIG_SYS_NO_FLASH
 
 /* Monitor at beginning of flash */
-#define CONFIG_FSL_ENV_IN_SF
+#define CONFIG_FSL_ENV_IN_MMC
 
-#define CONFIG_ENV_SECT_SIZE    (64 * 1024)
+#define CONFIG_ENV_SECT_SIZE    (128 * 1024)
 #define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE
 
 #if defined(CONFIG_FSL_ENV_IN_NAND)
 	#define CONFIG_ENV_IS_IN_NAND 1
-	#define CONFIG_ENV_OFFSET	0x1A00000
+	#define CONFIG_ENV_OFFSET	0x100000
 #elif defined(CONFIG_FSL_ENV_IN_MMC)
 	#define CONFIG_ENV_IS_IN_MMC	1
 	#define CONFIG_ENV_OFFSET	(768 * 1024)
@@ -306,36 +300,38 @@
 /*
  * Android support Configs
  */
+
+/* Android fastboot configs */
+#define CONFIG_USB_DEVICE
+#define CONFIG_IMX_UDC                 1
+#define CONFIG_FASTBOOT                1
+#define CONFIG_FASTBOOT_STORAGE_EMMC_SATA
+#define CONFIG_FASTBOOT_VENDOR_ID      0xbb4
+#define CONFIG_FASTBOOT_PRODUCT_ID     0xc01
+#define CONFIG_FASTBOOT_BCD_DEVICE     0x311
+#define CONFIG_FASTBOOT_MANUFACTURER_STR  "Freescale"
+#define CONFIG_FASTBOOT_PRODUCT_NAME_STR "i.mx50 rd3"
+#define CONFIG_FASTBOOT_CONFIGURATION_STR  "Android fastboot"
+#define CONFIG_FASTBOOT_INTERFACE_STR    "Android fastboot"
+#define CONFIG_FASTBOOT_SERIAL_NUM      "12345"
+#define CONFIG_FASTBOOT_SATA_NO          0
+#define CONFIG_FASTBOOT_TRANSFER_BUF    0x80000000
+#define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x8000000 /* 128M byte */
+
 #define CONFIG_ANDROID_RECOVERY
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
-       "setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4"    \
-       " rootfs=ext4 keypad"
+	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4"	\
+	" rootfs=ext4 keypad"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
 	"run bootargs_base bootargs_android_recovery;"  \
 	"mmc read 0 ${loadaddr} 0x800 0x2000;bootm"
-#define CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND \
-	"setenv bootargs ${bootargs} init=/init keypad gpmi:nand ubi.mtd=3 ubi.mtd=4" \
-	" root=ubi0:recovery rootfstype=ubifs keypad"
-#define CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND  \
-	"run bootargs_base bootargs_android_recovery;"  \
-	"nand read ${loadaddr} 0x1400000 0x400000; bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 
-#define CONFIG_CMD_UBI
-#define CONFIG_CMD_UBIFS
-#define CONFIG_CMD_MTDPARTS
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
-#define MTDIDS_DEFAULT "nand0=nand0"
-#define MTDPARTS_DEFAULT "mtdparts=nand0:20M@0x0(BOOT),6M@0x1400000(KERNEL),1M@0x1A00000(MISC),20M@0x1B00000(RECOVERY),350M@0x2F00000(ROOT)"
-#define MTD_ACTIVE_PART "nand0,4"
-#define CONFIG_RBTREE
-#define CONFIG_LZO
 
 #define CONFIG_ANDROID_SYSTEM_PARTITION_MMC 2
 #define CONFIG_ANDROID_RECOVERY_PARTITION_MMC 4
 #define CONFIG_ANDROID_CACHE_PARTITION_MMC 6
-#define CONFIG_ANDROID_UBIFS_PARTITION_NM  "ROOT"
-#define CONFIG_ANDROID_CACHE_PARTITION_NAND "cache"
 
 #endif				/* __CONFIG_H */
