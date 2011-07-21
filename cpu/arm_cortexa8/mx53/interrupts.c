@@ -36,25 +36,10 @@ int interrupt_init(void)
 
 void reset_cpu(ulong addr)
 {
-#if defined(CONFIG_MX53_SMD)
-	unsigned int reg;
-#endif
-
 	/* de-select SS0 of instance: eCSPI1 */
 	mxc_request_iomux(MX53_PIN_EIM_EB2, IOMUX_CONFIG_ALT1);
 	/* de-select SS1 of instance: eCSPI1 */
 	mxc_request_iomux(MX53_PIN_EIM_D19, IOMUX_CONFIG_ALT1);
 
-#if defined(CONFIG_MX53_SMD)
-	/* GPIO_1_9 */
-	reg = readl(GPIO1_BASE_ADDR + 0x4);
-	reg |= (0x1 << 9);
-	writel(reg, GPIO1_BASE_ADDR + 0x4);
-
-	reg = readl(GPIO1_BASE_ADDR);
-	reg &= ~0x200;
-	writel(reg, GPIO1_BASE_ADDR);
-#else
 	__REG16(WDOG1_BASE_ADDR) = 4;
-#endif
 }
