@@ -799,6 +799,7 @@ void setup_splash_image(void)
 
 int board_init(void)
 {
+	unsigned int val;
 #ifdef CONFIG_MFG
 /* MFG firmware need reset usb to avoid host crash firstly */
 #define USBCMD 0x140
@@ -806,6 +807,14 @@ int board_init(void)
 	val &= ~0x1; /*RS bit*/
 	writel(val, OTG_BASE_ADDR + USBCMD);
 #endif
+
+	/* Workaround: To make watchdog timeout work in mx53
+	 * SMD, force warm reset as cold reset
+	 */
+	val = readl(SRC_BASE_ADDR);
+	val &= 0xFFFFFFFE;
+	writel(val, SRC_BASE_ADDR);
+
 	setup_boot_device();
 	setup_soc_rev();
 
