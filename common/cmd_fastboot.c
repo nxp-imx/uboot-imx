@@ -1144,6 +1144,7 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 				} else {
 					char source[32], dest[32];
 					char length[32], slot_no[32];
+					char part_no[32];
 					unsigned int temp;
 
 					/* Normal case */
@@ -1190,8 +1191,8 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 
 mmc_ops:
 					printf("writing to partition '%s'\n", ptn->name);
-					char *mmc_write[6] = {"mmc", "write",
-							NULL, NULL, NULL, NULL};
+					char *mmc_write[7] = {"mmc", "write",
+						NULL, NULL, NULL, NULL, NULL};
 					char *mmc_init[2] = {"mmcinit", NULL,};
 
 					mmc_init[1] = slot_no;
@@ -1199,11 +1200,14 @@ mmc_ops:
 					mmc_write[3] = source;
 					mmc_write[4] = dest;
 					mmc_write[5] = length;
+					mmc_write[6] = part_no;
 
 					sprintf(slot_no, "%d",
 						    fastboot_devinfo.dev_id);
 					sprintf(source, "0x%x", interface.transfer_buffer);
-
+					/* partition no */
+					sprintf(part_no, "%d",
+						    ptn->partition_id);
 					/* block offset */
 					sprintf(dest, "0x%x", ptn->start);
 					/* block count */
@@ -1219,7 +1223,7 @@ mmc_ops:
 						sprintf(response, "OKAY");
 
 					printf("Writing '%s'\n", ptn->name);
-					if (do_mmcops(NULL, 0, 6, mmc_write)) {
+					if (do_mmcops(NULL, 0, 7, mmc_write)) {
 						printf("Writing '%s' FAILED!\n", ptn->name);
 						sprintf(response, "FAIL: Write partition");
 					} else {

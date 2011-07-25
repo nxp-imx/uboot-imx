@@ -172,6 +172,8 @@ struct fastboot_ptentry {
 	/* Controls the details of how operations are done on the partition
 	   See the FASTBOOT_PTENTRY_FLAGS_*'s defined below */
 	unsigned int flags;
+	/* partition id: 0 - normal partition; 1 - boot partition */
+	unsigned int partition_id;
 };
 
 struct fastboot_device_info {
