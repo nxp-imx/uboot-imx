@@ -53,8 +53,8 @@ boot_data:        .word TEXT_BASE
 image_len:        .word _end_of_copy  - TEXT_BASE + CONFIG_FLASH_HEADER_OFFSET
 plugin:           .word 0x0
 
-dcd_hdr:          .word 0x40D002D2 /* Tag=0xD2, Len=89*8 + 4 + 4, Ver=0x40 */
-write_dcd_cmd:    .word 0x04CC02CC /* Tag=0xCC, Len=89*8 + 4, Param=0x04 */
+dcd_hdr:          .word 0x40D802D2 /* Tag=0xD2, Len=90*8 + 4 + 4, Ver=0x40 */
+write_dcd_cmd:    .word 0x04D402CC /* Tag=0xCC, Len=90*8 + 4, Param=0x04 */
 
 /* DCD */
 
@@ -128,7 +128,7 @@ MXC_DCD_ITEM(54, MMDC_P0_BASE_ADDR + 0x02c, 0x000026D2)
 
 MXC_DCD_ITEM(55, MMDC_P0_BASE_ADDR + 0x030, 0x005B0E21)
 MXC_DCD_ITEM(56, MMDC_P0_BASE_ADDR + 0x008, 0x09444040)
-MXC_DCD_ITEM(57, MMDC_P0_BASE_ADDR + 0x004, 0x00020036)
+MXC_DCD_ITEM(57, MMDC_P0_BASE_ADDR + 0x004, 0x00025576)
 MXC_DCD_ITEM(58, MMDC_P0_BASE_ADDR + 0x040, 0x00000027)
 MXC_DCD_ITEM(59, MMDC_P0_BASE_ADDR + 0x000, 0xC31A0000)
 
@@ -168,5 +168,6 @@ MXC_DCD_ITEM(87, MMDC_P0_BASE_ADDR + 0x8b8, 0x00000800)
 MXC_DCD_ITEM(88, MMDC_P1_BASE_ADDR + 0x8b8, 0x00000800)
 
 MXC_DCD_ITEM(89, MMDC_P0_BASE_ADDR + 0x01c, 0x00000000)
+MXC_DCD_ITEM(90, MMDC_P0_BASE_ADDR + 0x404, 0x00011006)
 
 #endif
