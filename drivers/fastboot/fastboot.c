@@ -283,7 +283,7 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 #ifdef CONFIG_FASTBOOT_STORAGE_EMMC_SATA
 static int fastboot_init_mmc_sata_ptable(void)
 {
-	int i, sata_device_no;
+	int i, sata_device_no, boot_partition = 0;
 	struct mmc *mmc;
 	block_dev_desc_t *dev_desc;
 	disk_partition_t info;
@@ -328,6 +328,10 @@ static int fastboot_init_mmc_sata_ptable(void)
 				mmc_no);
 			return -1;
 		}
+
+		/* multiple boot paritions for eMMC 4.3 later */
+		if (mmc->boot_size_mult)
+			boot_partition = 1;
 	}
 
 	memset((char *)ptable, 0,
@@ -342,6 +346,7 @@ static int fastboot_init_mmc_sata_ptable(void)
 				ANDROID_BOOTLOADER_OFFSET / dev_desc->blksz;
 	ptable[PTN_BOOTLOADER_INDEX].length =
 				 ANDROID_BOOTLOADER_SIZE / dev_desc->blksz;
+	ptable[PTN_BOOTLOADER_INDEX].partition_id = boot_partition;
 	/* kernel */
 	strcpy(ptable[PTN_KERNEL_INDEX].name, "kernel");
 	ptable[PTN_KERNEL_INDEX].start =
