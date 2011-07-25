@@ -3253,6 +3253,7 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_LQ2                  3271
 #define MACH_TYPE_SWEDA_TMS2           3272
 #define MACH_TYPE_MX53_LOCO            3273
+#define MACH_TYPE_MX53_PCBA            3274
 #define MACH_TYPE_MX6Q_SABREAUTO	3529
 
 #ifdef CONFIG_ARCH_EBSA110
