@@ -53,8 +53,8 @@ boot_data:        .word TEXT_BASE
 image_len:        .word _end_of_copy  - TEXT_BASE + CONFIG_FLASH_HEADER_OFFSET
 plugin:           .word 0x0
 
-dcd_hdr:          .word 0x40D802D2 /* Tag=0xD2, Len=90*8 + 4 + 4, Ver=0x40 */
-write_dcd_cmd:    .word 0x04D402CC /* Tag=0xCC, Len=90*8 + 4, Param=0x04 */
+dcd_hdr:          .word 0x40F002D2 /* Tag=0xD2, Len=93*8 + 4 + 4, Ver=0x40 */
+write_dcd_cmd:    .word 0x04EC02CC /* Tag=0xCC, Len=93*8 + 4, Param=0x04 */
 
 /* DCD */
 
@@ -169,5 +169,11 @@ MXC_DCD_ITEM(88, MMDC_P1_BASE_ADDR + 0x8b8, 0x00000800)
 
 MXC_DCD_ITEM(89, MMDC_P0_BASE_ADDR + 0x01c, 0x00000000)
 MXC_DCD_ITEM(90, MMDC_P0_BASE_ADDR + 0x404, 0x00011006)
+
+/* enable AXI cache for VDOA/VPU/IPU */
+MXC_DCD_ITEM(91, IOMUXC_BASE_ADDR + 0x010, 0xf00000ff)
+/* set IPU Qos=0x7 */
+MXC_DCD_ITEM(92, IOMUXC_BASE_ADDR + 0x018, 0x00070007)
+MXC_DCD_ITEM(93, IOMUXC_BASE_ADDR + 0x01c, 0x00070007)
 
 #endif
