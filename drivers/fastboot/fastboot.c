@@ -330,8 +330,10 @@ static int fastboot_init_mmc_sata_ptable(void)
 		}
 
 		/* multiple boot paritions for eMMC 4.3 later */
+#ifdef CONFIG_BOOT_PARTITION_ACCESS
 		if (mmc->boot_size_mult)
 			boot_partition = 1;
+#endif
 	}
 
 	memset((char *)ptable, 0,
