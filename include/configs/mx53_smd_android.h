@@ -103,7 +103,7 @@
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
 	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4 rootfs=ext4 video=mxcdi1fb:RGB666,XGA ldb=di1 di1_primary"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
-	"run bootargs_base bootargs_android_recovery;"	\
+	"run bootargs_android_recovery;"	\
 	"mmc read 1 ${loadaddr} 0x800 0x2000;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 
