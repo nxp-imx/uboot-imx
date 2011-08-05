@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2011 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX31ADS Freescale board.
  *
@@ -56,7 +56,7 @@
 /*
  * Size of malloc() pool
  */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 512 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(1 * 1024 * 1024)
 #define CONFIG_SYS_GBL_DATA_SIZE	128/* size in bytes reserved for initial data */
 
 /*
@@ -201,7 +201,7 @@
 #define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_FLASH_BASE
 #define CONFIG_SYS_MONITOR_LEN		(512 * 1024)	/* Reserve 256KiB */
 
-#define CONFIG_ENV_SECT_SIZE	(128 * 1024)
+#define CONFIG_ENV_SECT_SIZE	(8 * 1024)
 #define CONFIG_ENV_SIZE		CONFIG_ENV_SECT_SIZE
 
 /* Address and size of Redundant Environment Sector	*/
