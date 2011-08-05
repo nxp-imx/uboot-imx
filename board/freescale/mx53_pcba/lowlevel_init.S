@@ -161,21 +161,14 @@
 	str r1, [r0, #CLKCTL_CSCDR1]
 
 	/* Restore the default values in the Gate registers */
-	ldr r1, =0xFFFF003F
+	ldr r1, =0xFFFFFFFF
 	str r1, [r0, #CLKCTL_CCGR0]
-	ldr r1, =0xC00C03C0
 	str r1, [r0, #CLKCTL_CCGR1]
-	ldr r1, =0x033FFC00
 	str r1, [r0, #CLKCTL_CCGR2]
-	ldr r1, =0x0000FFFF
 	str r1, [r0, #CLKCTL_CCGR3]
-	ldr r1, =0x3FFC000C
 	str r1, [r0, #CLKCTL_CCGR4]
-	ldr r1, =0x00FFF000
 	str r1, [r0, #CLKCTL_CCGR5]
-	ldr r1, =0x0000000F
 	str r1, [r0, #CLKCTL_CCGR6]
-	ldr r1, =0x00000000
 	str r1, [r0, #CLKCTL_CCGR7]
 
 	mov r1, #0x00000
