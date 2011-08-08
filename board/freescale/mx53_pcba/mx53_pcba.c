@@ -330,11 +330,19 @@ void setup_pmic_voltages(void)
 			printf("%s:i2c_write:error\n", __func__);
 		}
 
+		/* set both AUX&USB current limit to 1.5A for Ripley 2.1 only */
+		if (i2c_read(0x8, 52, 1, &buf[0], 3))
+			printf("%s:i2c_read 52:error\n", __func__);
+		buf[0] = (buf[1] & 0xef) | 0x1;
+		if (i2c_write(0x8, 52, 1, buf, 3))
+			printf("%s:i2c_write 52:error\n", __func__);
+
+		/* Change CC current to 950mA */
 		/* Change CV voltage as 4.2v */
 		if (i2c_read(0x8, 51, 1, &buf[0], 3))
 			printf("%s:i2c_read 51:error\n", __func__);
 
-		buf[1] = (buf[1] & 0xf0) | 0x8;
+		buf[1] = (buf[1] & 0x0) | 0x78;
 		buf[2] = (buf[2] & 0x3f) | 0xc0;
 		if (i2c_write(0x8, 51, 1, buf, 3))
 			printf("%s:i2c_write 51:error\n", __func__);
