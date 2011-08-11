@@ -330,19 +330,28 @@ void setup_pmic_voltages(void)
 			printf("%s:i2c_write:error\n", __func__);
 		}
 
+		/* Charger Source: set VBUS threshold low to 4.25V,
+		 *	set Weak VBUS threshold to 4.275V */
+		if (i2c_read(0x8, 53, 1, &buf[0], 3))
+			printf("%s:i2c_read 53:error\n", __func__);
+		buf[2] = (buf[2] & 0x38) | 0x47;
+		buf[1] = (buf[1] & 0x70) | 0x8e;
+		buf[0] = buf[0] & 0xfc;
+		if (i2c_write(0x8, 53, 1, buf, 3))
+			printf("%s:i2c_write 53:error\n", __func__);
+
 		/* set both AUX&USB current limit to 1.5A for Ripley 2.1 only */
 		if (i2c_read(0x8, 52, 1, &buf[0], 3))
 			printf("%s:i2c_read 52:error\n", __func__);
-		buf[0] = (buf[1] & 0xef) | 0x1;
+		buf[0] = (buf[0] & 0xef) | 0x10;
 		if (i2c_write(0x8, 52, 1, buf, 3))
 			printf("%s:i2c_write 52:error\n", __func__);
 
-		/* Change CC current to 950mA */
+		/* Change CC current to 1550mA */
 		/* Change CV voltage as 4.2v */
 		if (i2c_read(0x8, 51, 1, &buf[0], 3))
 			printf("%s:i2c_read 51:error\n", __func__);
-
-		buf[1] = (buf[1] & 0x0) | 0x78;
+		buf[1] = (buf[1] & 0x0) | 0xd8;
 		buf[2] = (buf[2] & 0x3f) | 0xc0;
 		if (i2c_write(0x8, 51, 1, buf, 3))
 			printf("%s:i2c_write 51:error\n", __func__);
