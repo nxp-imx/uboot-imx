@@ -131,7 +131,7 @@
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
 	"setenv bootargs ${bootargs} root=/dev/mmcblk0p4 ip=off init=/init rootfstype=ext3"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
-	"run bootargs_base bootargs_android;mmc read 0 ${loadaddr} 0x800 0x1280;bootm"
+	"run bootargs_base bootargs_android;mmc dev 0;mmc read ${loadaddr} 0x800 0x1280;bootm"
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND \
 	"setenv bootargs ${bootargs} ip=off rootfstype=ubifs root=ubi1:recovery init=/init ubi.mtd=3 ubi.mtd=2"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND  \
@@ -186,8 +186,9 @@
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
 		"bootcmd_android=run bootargs_base bootargs_android; "	\
-			"mmc read 0 ${loadaddr} 0x800 0x1280; "	\
-			"mmc read 0 ${rd_loadaddr} 0x2000 0x258; "	\
+			"mmc dev 0"					\
+			"mmc read ${loadaddr} 0x800 0x1280; "		\
+			"mmc read ${rd_loadaddr} 0x2000 0x258; "	\
 			"bootm ${loadaddr} ${rd_loadaddr}\0"		\
 		"prg_uboot=tftpboot ${loadaddr} ${uboot}; "		\
 			"protect off ${uboot_addr} 0xa003ffff; "	\

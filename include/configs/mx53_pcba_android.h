@@ -104,7 +104,7 @@
 	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4 rootfs=ext4 video=mxcdi1fb:RGB666,XGA ldb=di1 di1_primary"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
 	"run bootargs_base bootargs_android_recovery;"  \
-	"mmc read 0 ${loadaddr} 0x800 0x2000;bootm"
+	"mmc dev 0; read ${loadaddr} 0x800 0x2000;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 
 #define CONFIG_ANDROID_SYSTEM_PARTITION_MMC 2
@@ -146,8 +146,8 @@
 		"bootargs=console=ttymxc0 init=/init " \
 			"androidboot.console=ttymxc0 video=mxcdi0fb:RGB24,AT070TN93 " \
 			"di0_primary gpu_nommu gpu_memory=32M\0" \
-		"bootcmd_SD=mmc read 1 ${loadaddr} 0x800 0x2000;" \
-			"mmc read 1 ${rd_loadaddr} 0x3000 0x300\0" \
+		"bootcmd_SD=mmc dev 1 0; mmc read ${loadaddr} 0x800 0x2000;" \
+			"mmc read ${rd_loadaddr} 0x3000 0x300\0" \
 		"bootcmd=run bootcmd_SD; bootm ${loadaddr} ${rd_loadaddr}\0" \
 
 

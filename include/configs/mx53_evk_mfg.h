@@ -188,7 +188,6 @@
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
 
-	#define CONFIG_BOOT_PARTITION_ACCESS
 	#define CONFIG_EMMC_DDR_PORT_DETECT
 	#define CONFIG_EMMC_DDR_MODE
 	/* port 1 (ESDHC3) is 8 bit */

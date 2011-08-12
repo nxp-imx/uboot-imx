@@ -123,7 +123,9 @@
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
 		"bootargs_mmc=setenv bootargs ${bootargs} ip=dhcp "     \
 			"root=/dev/mmcblk0p2 rootwait\0"                \
-		"bootcmd_mmc=run bootargs_base bootargs_mmc; bootm\0"   \
+		"bootcmd_mmc=run bootargs_base bootargs_mmc; "	\
+		"mmc dev 0; "	\
+		"mmc read ${loadaddr} 0x800 0x1800; bootm\0"   \
 		"bootcmd=run bootcmd_net\0"                             \
 
 
@@ -246,7 +248,6 @@
 	/* detect whether ESDHC1, ESDHC2, or ESDHC3 is boot device */
 	#define CONFIG_DYNAMIC_MMC_DEVNO
 
-	#define CONFIG_BOOT_PARTITION_ACCESS
 	#define CONFIG_EMMC_DDR_PORT_DETECT
 	#define CONFIG_EMMC_DDR_MODE
 

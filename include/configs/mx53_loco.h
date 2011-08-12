@@ -127,7 +127,8 @@
 		"bootargs_mmc=setenv bootargs ${bootargs} ip=dhcp "	\
 			"root=/dev/mmcblk0p1 rootwait rw\0"		\
 		"bootcmd_mmc=run bootargs_base bootargs_mmc; "		\
-			"mmc read 0 ${loadaddr} 0x800 0x1800; bootm\0"	\
+			"mmc dev 0"					\
+			"mmc read ${loadaddr} 0x800 0x1800; bootm\0"	\
 		"bootcmd=run bootcmd_mmc\0"	\
 	\
 
@@ -207,7 +208,6 @@
 	/* detect whether ESDHC1 or ESDHC3 is boot device */
 	#define CONFIG_DYNAMIC_MMC_DEVNO
 
-	#define CONFIG_BOOT_PARTITION_ACCESS
 	#define CONFIG_EMMC_DDR_PORT_DETECT
 	#define CONFIG_EMMC_DDR_MODE
 	/* port 1 (ESDHC3) is 8 bit */

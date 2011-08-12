@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -84,7 +84,8 @@
 	"bootargs_mmc=setenv bootargs ${bootargs} root=/dev/mmcblk0p3 " \
 		"rw rootwait ip=dhcp fec_mac=${ethaddr}\0" \
 	"bootcmd_mmc=run bootargs_mmc; " \
-		"mmc read 0 ${loadaddr} 100 3000; bootm\0" \
+		"mmc dev 0"	\
+		"mmc read ${loadaddr} 100 3000; bootm\0" \
 
 /*
  * U-Boot Commands

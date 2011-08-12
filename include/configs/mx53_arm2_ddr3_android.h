@@ -86,7 +86,7 @@
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
 	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4 rootfs=ext4"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
-	"run bootargs_base bootargs_android_recovery;mmc read 0 ${loadaddr} 0x800 0x1800;bootm"
+	"run bootargs_base bootargs_android_recovery;mmc dev 0;mmc read ${loadaddr} 0x800 0x1800;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 #define CONFIG_ANDROID_CACHE_PARTITION_MMC 6
 
@@ -140,22 +140,24 @@
 		"bootargs_base=setenv bootargs ${bootargs} "		\
 		"console=ttymxc0,115200\0"				\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs " \
-		     "ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"	\
+			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"	\
 		"bootargs_android=setenv bootargs ${bootargs} mem=512M " \
-		     "androidboot.console=ttymxc0 init=/init "		\
-		     "video=mxcdi0fb:RGB565,800x480M@55 calibration\0"	\
+			"androidboot.console=ttymxc0 init=/init "		\
+			"video=mxcdi0fb:RGB565,800x480M@55 calibration\0"	\
 		"bootcmd=run bootcmd_SD \0"				\
 		"bootcmd_SD=run bootargs_base bootargs_android;"	\
-		     "mmc read 0 ${loadaddr} 0x800 1800;"		\
-		     "mmc read 0 ${rd_loadaddr} 0x2000 0x258;"		\
-		     "bootm ${loadaddr} ${rd_loadaddr}\0"		\
+			"mmc dev 0"					\
+			"mmc read ${loadaddr} 0x800 1800;"		\
+			"mmc read ${rd_loadaddr} 0x2000 0x258;"		\
+			"bootm ${loadaddr} ${rd_loadaddr}\0"		\
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
 		"bootcmd_android_recovery=run bootargs_base"		\
-		     " bootargs_android_recovery;"			\
-		     "mmc read 0 ${loadaddr} 0x800 0x1800;bootm\0"	\
+			" bootargs_android_recovery;"			\
+			"mmc dev 0"					\
+			"mmc read ${loadaddr} 0x800 0x1800;bootm\0"	\
 		"bootargs_android_recovery=setenv bootargs ${bootargs}" \
-		     " init=/init root=/dev/mmcblk0p4 rootfs=ext4\0"	\
+			" init=/init root=/dev/mmcblk0p4 rootfs=ext4\0"	\
 
 #define CONFIG_ARP_TIMEOUT	200UL
 
@@ -241,7 +243,6 @@
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
-	#define CONFIG_BOOT_PARTITION_ACCESS
 	#define CONFIG_EMMC_DDR_PORT_DETECT
 	#define CONFIG_EMMC_DDR_MODE
 	/* port 1 (ESDHC3) is 8 bit */

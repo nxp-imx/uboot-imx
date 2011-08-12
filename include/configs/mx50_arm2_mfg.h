@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX50-ARM2 Freescale board.
  *
@@ -126,7 +126,9 @@
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
 		"bootargs_mmc=setenv bootargs ${bootargs} ip=dhcp "     \
 			"root=/dev/mmcblk0p2 rootwait\0"                \
-		"bootcmd_mmc=run bootargs_base bootargs_mmc; bootm\0"   \
+		"bootcmd_mmc=run bootargs_base bootargs_mmc; "   \
+		"mmc dev 0; "	\
+		"mmc read ${loadaddr} 0x800 0x1800; bootm\0"   \
 		"bootcmd=run bootcmd_net\0"                             \
 
 
@@ -206,9 +208,6 @@
 
 	/* detect whether ESDHC1 or ESDHC3 is boot device */
 	#define CONFIG_DYNAMIC_MMC_DEVNO
-
-	#define CONFIG_BOOT_PARTITION_ACCESS
-
 #endif
 /*-----------------------------------------------------------------------
  * Stack sizes

@@ -102,7 +102,7 @@
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
 	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4 rootfs=ext4"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
-	"run bootargs_base bootargs_android_recovery;mmc read 0 ${loadaddr} 0x800 0x2000;bootm"
+	"run bootargs_base bootargs_android_recovery;mmc dev 0;mmc read ${loadaddr} 0x800 0x2000;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 
 #define CONFIG_ANDROID_SYSTEM_PARTITION_MMC 2
@@ -169,22 +169,24 @@
 		"bootargs_base=setenv bootargs ${bootargs} "		\
 		"console=ttymxc0,115200 gpu_memory=16M\0"		\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs " \
-		     "ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"	\
+			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"	\
 		"bootargs_android=setenv bootargs ${bootargs} " \
-		     "androidboot.console=ttymxc0 init=/init di0_primary" \
-		     "video=mxcdi0fb:RGB565,800x480M@55 calibration\0"	\
+			"androidboot.console=ttymxc0 init=/init di0_primary" \
+			"video=mxcdi0fb:RGB565,800x480M@55 calibration\0"	\
 		"bootcmd=run bootcmd_SD \0"				\
 		"bootcmd_SD=run bootargs_base bootargs_android;"	\
-		     "mmc read 0 ${loadaddr} 0x800 2000;"		\
-		     "mmc read 0 ${rd_loadaddr} 0x3000 0x258;"		\
-		     "bootm ${loadaddr} ${rd_loadaddr}\0"		\
+			"mmc dev 0"					\
+			"mmc read ${loadaddr} 0x800 2000;"		\
+			"mmc read ${rd_loadaddr} 0x3000 0x258;"		\
+			"bootm ${loadaddr} ${rd_loadaddr}\0"		\
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
 		"bootcmd_android_recovery=run bootargs_base"		\
-		     " bootargs_android_recovery;"			\
-		     "mmc read 0 ${loadaddr} 0x800 0x2000;bootm\0"	\
+			" bootargs_android_recovery;"			\
+			"mmc dev 0"					\
+			"mmc read ${loadaddr} 0x800 0x2000;bootm\0"	\
 		"bootargs_android_recovery=setenv bootargs ${bootargs}" \
-		     " init=/init root=/dev/mmcblk0p4 rootfs=ext4\0"	\
+			" init=/init root=/dev/mmcblk0p4 rootfs=ext4\0"	\
 
 #define CONFIG_ARP_TIMEOUT	200UL
 
@@ -274,8 +276,6 @@
 	/* detect whether ESDHC1 or ESDHC3 is boot device */
 	#define CONFIG_DYNAMIC_MMC_DEVNO
 
-
-	#define CONFIG_BOOT_PARTITION_ACCESS
 	#define CONFIG_EMMC_DDR_PORT_DETECT
 	#define CONFIG_EMMC_DDR_MODE
 	/* port 1 (ESDHC3) is 8 bit */

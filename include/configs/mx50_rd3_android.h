@@ -120,8 +120,9 @@
 		"rd_loadaddr=0x70D00000\0"		\
 		"bootargs=console=ttymxc0 init=/init androidboot.console=ttymxc0 " \
 			"keypad video=mxc_elcdif_fb:off\0" \
-		"bootcmd_SD=mmc read 0 ${loadaddr} 0x800 0x2000;" \
-			"mmc read 0 ${rd_loadaddr} 0x3000 0x300\0" \
+		"bootcmd_SD=mmc dev 0;"	\
+			"mmc read ${loadaddr} 0x800 0x2000;" \
+			"mmc read ${rd_loadaddr} 0x3000 0x300\0" \
 		"bootcmd=run bootcmd_SD; bootm ${loadaddr} ${rd_loadaddr}\0" \
 
 
@@ -212,7 +213,6 @@
 	/* detect whether ESDHC1, ESDHC2, or ESDHC3 is boot device */
 	#define CONFIG_DYNAMIC_MMC_DEVNO
 
-	#define CONFIG_BOOT_PARTITION_ACCESS
 	#define CONFIG_EMMC_DDR_PORT_DETECT
 	#define CONFIG_EMMC_DDR_MODE
 
@@ -324,7 +324,8 @@
 	" rootfs=ext4 keypad"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
 	"run bootargs_base bootargs_android_recovery;"  \
-	"mmc read 0 ${loadaddr} 0x800 0x2000;bootm"
+	"mmc dev 0"	\
+	"mmc read ${loadaddr} 0x800 0x2000;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 
 #define CONFIG_MTD_DEVICE
