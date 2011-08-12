@@ -637,7 +637,7 @@ struct fsl_esdhc_cfg esdhc_cfg[2] = {
 };
 
 #ifdef CONFIG_DYNAMIC_MMC_DEVNO
-int get_mmc_env_devno()
+int get_mmc_env_devno(void)
 {
 	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
 	return (soc_sbmr & 0x00300000) ? 1 : 0;
