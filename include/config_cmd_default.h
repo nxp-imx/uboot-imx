@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2011 Freescale Semiconductor, Inc.
  *
  * This file is licensed under the terms of the GNU General Public
  * License Version 2. This file is licensed "as is" without any
@@ -38,5 +38,7 @@
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_XIMG		/* Load part of Multi Image	*/
+
+#define CONFIG_PARTITIONS	1
 
 #endif	/* _CONFIG_CMD_DEFAULT_H */

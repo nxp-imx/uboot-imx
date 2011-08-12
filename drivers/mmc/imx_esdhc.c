@@ -204,8 +204,8 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	/* Figure out the transfer arguments */
 	xfertyp = esdhc_xfertyp(cmd, data);
 
-	if (mmc->bus_width == EMMC_MODE_4BIT_DDR ||
-		mmc->bus_width == EMMC_MODE_8BIT_DDR)
+	if (mmc->card_caps & EMMC_MODE_4BIT_DDR ||
+		mmc->card_caps & EMMC_MODE_8BIT_DDR)
 		xfertyp |= XFERTYP_DDR_EN;
 
 	/* Send the command */
@@ -327,8 +327,8 @@ void set_sysctl(struct mmc *mmc, uint clock)
 	div -= 1;
 
 	/* for USDHC, pre_div requires another shift in DDR mode */
-	if (cfg->is_usdhc && (mmc->bus_width == EMMC_MODE_4BIT_DDR ||
-		mmc->bus_width == EMMC_MODE_8BIT_DDR))
+	if (cfg->is_usdhc && (mmc->card_caps & EMMC_MODE_4BIT_DDR ||
+		mmc->card_caps & EMMC_MODE_8BIT_DDR))
 		pre_div >>= 1;
 
 	clk = (pre_div << 8) | (div << 4);
@@ -451,15 +451,11 @@ static void esdhc_set_ios(struct mmc *mmc)
 	} else if (mmc->bus_width == 8) {
 		tmp = readl(&regs->proctl) | PROCTL_DTW_8;
 		writel(tmp, &regs->proctl);
-	} else if (mmc->bus_width == EMMC_MODE_4BIT_DDR) {
-		tmp = readl(&regs->proctl) | PROCTL_DTW_4;
-		writel(tmp, &regs->proctl);
-		esdhc_dll_setup(mmc);
-	} else if (mmc->bus_width == EMMC_MODE_8BIT_DDR) {
-		tmp = readl(&regs->proctl) | PROCTL_DTW_8;
-		writel(tmp, &regs->proctl);
-		esdhc_dll_setup(mmc);
 	}
+
+	if (mmc->card_caps & EMMC_MODE_4BIT_DDR ||
+		mmc->card_caps & EMMC_MODE_8BIT_DDR)
+		esdhc_dll_setup(mmc);
 }
 
 static int esdhc_init(struct mmc *mmc)
@@ -546,11 +542,11 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	mmc->host_caps = MMC_MODE_4BIT;
 
 	if (caps & ESDHC_HOSTCAPBLT_HSS)
-		mmc->host_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS;
+		mmc->host_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
 
-/* Do not advertise DDR capability for uSDHC on MX50 since
- *  it is to be used in SDR mode only. Use eSDHC for DDR mode.
- */
+	/* Do not advertise DDR capability for uSDHC on MX50 since
+	*  it is to be used in SDR mode only. Use eSDHC for DDR mode.
+	*/
 #ifndef CONFIG_MX50_ENABLE_USDHC_SDR
 	if (cfg->is_usdhc)
 		mmc->host_caps |= EMMC_MODE_4BIT_DDR;
@@ -559,7 +555,6 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	if (detect_mmc_emmc_ddr_port(cfg))
 		mmc->host_caps |= EMMC_MODE_4BIT_DDR;
 #endif
-
 #endif /* #ifndef CONFIG_MX50_ENABLE_USDHC_SDR */
 
 	mmc->f_min = 400000;
