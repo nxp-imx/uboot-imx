@@ -1191,16 +1191,15 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 
 mmc_ops:
 					printf("writing to partition '%s'\n", ptn->name);
-					char *mmc_write[7] = {"mmc", "write",
-						NULL, NULL, NULL, NULL, NULL};
-					char *mmc_init[2] = {"mmcinit", NULL,};
+					char *mmc_write[5] = {"mmc", "write",
+						NULL, NULL, NULL, NULL};
+					char *mmc_dev[4] = {"mmc", "dev", NULL, NULL};
 
-					mmc_init[1] = slot_no;
-					mmc_write[2] = slot_no;
-					mmc_write[3] = source;
-					mmc_write[4] = dest;
-					mmc_write[5] = length;
-					mmc_write[6] = part_no;
+					mmc_dev[2] = slot_no;
+					mmc_dev[3] = part_no;
+					mmc_write[2] = source;
+					mmc_write[3] = dest;
+					mmc_write[4] = length;
 
 					sprintf(slot_no, "%d",
 						    fastboot_devinfo.dev_id);
@@ -1217,13 +1216,13 @@ mmc_ops:
 					sprintf(length, "0x%x", temp);
 
 					printf("Initializing '%s'\n", ptn->name);
-					if (do_mmcops(NULL, 0, 2, mmc_init))
+					if (do_mmcops(NULL, 0, 4, mmc_dev))
 						sprintf(response, "FAIL:Init of MMC card");
 					else
 						sprintf(response, "OKAY");
 
 					printf("Writing '%s'\n", ptn->name);
-					if (do_mmcops(NULL, 0, 7, mmc_write)) {
+					if (do_mmcops(NULL, 0, 5, mmc_write)) {
 						printf("Writing '%s' FAILED!\n", ptn->name);
 						sprintf(response, "FAIL: Write partition");
 					} else {
