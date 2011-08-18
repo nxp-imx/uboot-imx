@@ -140,35 +140,15 @@
 #define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x400000)
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
-		"netdev=eth0\0"						\
-		"ethprime=FEC0\0"					\
-		"uboot=u-boot.bin\0"                                    \
-		"kernel=uImage\0"                                       \
-		"loadaddr=0x70800000\0"                                 \
-		"rd_loadaddr=0x70D00000\0"                              \
-		"nfsroot=/opt/eldk/arm\0"                               \
-		"bootargs_base=setenv bootargs console=ttymxc0,115200\0"\
-		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs " \
-		    "ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"  \
-		"bootargs_android=setenv bootargs ${bootargs} " \
-		     "androidboot.console=ttymxc0 init=/init di0_primary "\
-		     "video=mxcdi0fb:RGB666,XGA ldb=di0 gpu_memory=32M\0"   \
-		"bootcmd=run bootcmd_eMMC \0"                             \
-		"bootcmd_SD=run bootargs_base bootargs_android;"        \
-		     "mmc read 0 ${loadaddr} 0x800 2000;"               \
-		     "mmc read 0 ${rd_loadaddr} 0x3000 0x258;"          \
-		     "bootm ${loadaddr} ${rd_loadaddr}\0"               \
-		"bootcmd_eMMC=run bootargs_base bootargs_android;"        \
-		     "mmc read 1 ${loadaddr} 0x800 2000;"               \
-		     "mmc read 1 ${rd_loadaddr} 0x3000 0x258;"          \
-		     "bootm ${loadaddr} ${rd_loadaddr}\0"               \
-		"bootcmd_net=run bootargs_base bootargs_nfs; "          \
-			"tftpboot ${loadaddr} ${kernel}; bootm\0"       \
-		"bootcmd_android_recovery=run bootargs_base"            \
-		     " bootargs_android_recovery;"                      \
-		     "mmc read 0 ${loadaddr} 0x800 0x2000;bootm\0"      \
-		"bootargs_android_recovery=setenv bootargs ${bootargs}" \
-		     " init=/init root=/dev/mmcblk0p4 rootfs=ext4\0"    \
+		"bootfile=uImage\0"	\
+		"loadaddr=0x70800000\0"				\
+		"rd_loadaddr=0x70D00000\0"		\
+		"bootargs=console=ttymxc0 init=/init " \
+			"androidboot.console=ttymxc0 video=mxcdi0fb:RGB24,AT070TN93 " \
+			"di0_primary gpu_nommu gpu_memory=32M\0" \
+		"bootcmd_SD=mmc read 1 ${loadaddr} 0x800 0x2000;" \
+			"mmc read 1 ${rd_loadaddr} 0x3000 0x300\0" \
+		"bootcmd=run bootcmd_SD; bootm ${loadaddr} ${rd_loadaddr}\0" \
 
 
 #define CONFIG_ARP_TIMEOUT	200UL
