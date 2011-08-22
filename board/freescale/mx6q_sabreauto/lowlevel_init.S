@@ -71,7 +71,7 @@
 
 	/* Restore the default values in the Gate registers */
 	ldr r0, CCM_BASE_ADDR_W
-	ldr r1, =0x3F
+	ldr r1, =0xC0003F
 	str r1, [r0, #CLKCTL_CCGR0]
 	ldr r1, =0x30FC00
 	str r1, [r0, #CLKCTL_CCGR1]

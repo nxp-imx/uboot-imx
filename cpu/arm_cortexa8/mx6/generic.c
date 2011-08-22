@@ -741,30 +741,7 @@ int cpu_eth_init(bd_t *bis)
 {
 	int rc = -ENODEV;
 #if defined(CONFIG_MXC_FEC)
-	printf("cpu_eth_init\n");
 	rc = mxc_fec_initialize(bis);
-
-	/* Set up ENET PLL for 50 MHz */
-
-	/* Clear power down bit */
-	REG_CLR(ANATOP_BASE_ADDR, HW_ANADIG_PLL_ENET,
-		BM_ANADIG_PLL_ENET_POWERDOWN);
-	/* Set ENET clock to 50M, Anson need to check */
-	REG_SET(ANATOP_BASE_ADDR, HW_ANADIG_PLL_ENET,
-		BF_ANADIG_PLL_ENET_DIV_SELECT(0x11));
-	/* Enable ENET PLL */
-	REG_SET(ANATOP_BASE_ADDR, HW_ANADIG_PLL_ENET,
-		BM_ANADIG_PLL_ENET_ENABLE);
-	printf("before while\n");
-	/* Wait for PLL lock */
-	while ((REG_RD(ANATOP_BASE_ADDR, HW_ANADIG_PLL_ENET) &
-		BM_ANADIG_PLL_ENET_LOCK) == 0)
-		udelay(100);
-	/* Clear bypass bit */
-	REG_CLR(ANATOP_BASE_ADDR, HW_ANADIG_PLL_ENET,
-		BM_ANADIG_PLL_ENET_BYPASS);
-
-	printf("before enent_board_init\n");
 
 	/* Board level init */
 	enet_board_init();

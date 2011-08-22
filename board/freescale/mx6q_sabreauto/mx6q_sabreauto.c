@@ -341,7 +341,6 @@ int board_init(void)
 
 int board_late_init(void)
 {
-	printf("board_late_init\n");
 	return 0;
 }
 
