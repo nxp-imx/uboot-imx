@@ -152,6 +152,66 @@ void board_mmu_init(void)
 }
 #endif
 
+#ifdef CONFIG_DWC_AHSATA
+
+#define ANATOP_PLL_LOCK                 0x80000000
+#define ANATOP_PLL_ENABLE_MASK          0x00002000
+#define ANATOP_PLL_BYPASS_MASK          0x00010000
+#define ANATOP_PLL_LOCK                 0x80000000
+#define ANATOP_PLL_PWDN_MASK            0x00001000
+#define ANATOP_PLL_HOLD_RING_OFF_MASK   0x00000800
+#define ANATOP_SATA_CLK_ENABLE_MASK     0x00100000
+
+int setup_sata(void)
+{
+	u32 reg = 0;
+	s32 timeout = 100000;
+
+	/* Enable sata clock */
+	reg = readl(CCM_BASE_ADDR + 0x7c); /* CCGR5 */
+	reg |= 0x30;
+	writel(reg, CCM_BASE_ADDR + 0x7c);
+
+	/* Enable PLLs */
+	reg = readl(ANATOP_BASE_ADDR + 0xe0); /* ENET PLL */
+	reg &= ~ANATOP_PLL_PWDN_MASK;
+	writel(reg, ANATOP_BASE_ADDR + 0xe0);
+	reg |= ANATOP_PLL_ENABLE_MASK;
+	while (timeout--) {
+		if (readl(ANATOP_BASE_ADDR + 0xe0) & ANATOP_PLL_LOCK)
+			break;
+	}
+	if (timeout <= 0)
+		return -1;
+	reg &= ~ANATOP_PLL_BYPASS_MASK;
+	writel(reg, ANATOP_BASE_ADDR + 0xe0);
+	reg |= ANATOP_SATA_CLK_ENABLE_MASK;
+	writel(reg, ANATOP_BASE_ADDR + 0xe0);
+
+	/* Enable sata phy */
+	reg = readl(IOMUXC_BASE_ADDR + 0x34); /* GPR13 */
+
+	reg &= ~0x07ffffff;
+	/*
+	 * rx_eq_val_0 = 5 [26:24]
+	 * los_lvl = 0x12 [23:19]
+	 * rx_dpll_mode_0 = 0x3 [18:16]
+	 * mpll_ss_en = 0x0 [14]
+	 * tx_atten_0 = 0x4 [13:11]
+	 * tx_boost_0 = 0x0 [10:7]
+	 * tx_lvl = 0x11 [6:2]
+	 * mpll_ck_off_b = 0x1 [1]
+	 * tx_edgerate_0 = 0x0 [0]
+	 * */
+	reg |= 0x59124c6;
+	writel(reg, IOMUXC_BASE_ADDR + 0x34);
+
+	return 0;
+}
+#endif
+
+
+
 int dram_init(void)
 {
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
@@ -335,6 +395,10 @@ int board_init(void)
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
 	setup_uart();
+
+#ifdef CONFIG_DWC_AHSATA
+	setup_sata();
+#endif
 
 	return 0;
 }
