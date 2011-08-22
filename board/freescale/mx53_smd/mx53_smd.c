@@ -408,10 +408,19 @@ static void setup_i2c(unsigned int module_base)
 void setup_pmic_voltages(void)
 {
 	uchar value;
+	int retries = 10, ret = -1;
+
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 	/* increase VDDGP as 1.25V for 1GHZ */
 	value = 0x5e;
-	i2c_write(0x48, 0x2e, 1, &value, 1);
+	do {
+		if (0 != i2c_write(0x48, 0x2e, 1, &value, 1)) {
+			printf("da9052_i2c_is_connected - i2c write failed.....\n");
+		} else {
+			printf("da9052_i2c_is_connected - i2c write success....\n");
+			ret = 0;
+		}
+	} while (ret != 0 && retries--);
 	i2c_read(0x48, 60, 1, &value, 1);
 	value |= 0x1;
 	i2c_write(0x48, 60, 1, &value, 1);
