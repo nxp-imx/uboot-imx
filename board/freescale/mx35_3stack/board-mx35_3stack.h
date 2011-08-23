@@ -2,7 +2,7 @@
  *
  * (c) 2007 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
  *
- * (C) Copyright 2008-2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -88,6 +88,7 @@
 #define ESDCTL_0xA2220000	0xA2220000
 #define ESDCTL_0xB2220000	0xB2220000
 #define ESDCTL_0x82228080 	0x82228080
+#define ESDCTL_0x82226080	0x82226080
 
 #define ESDCTL_PRECHARGE	0x00000400
 

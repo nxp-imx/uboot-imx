@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2011 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -422,7 +422,7 @@ skip_set_mode:
         strb r3, [r1, r4]
 
         cmp r1, #CSD1_BASE_ADDR
-        ldr r3, =ESDCTL_0x82228080
+        ldr r3, =ESDCTL_0x82226080
         strlo r3, [r0, #0x0]
         strhs r3, [r0, #0x8]
 
