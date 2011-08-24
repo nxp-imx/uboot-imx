@@ -388,17 +388,20 @@
 #define DP_MFD_532      (24 - 1)
 #define DP_MFN_532      13
 
-#define DP_OP_455       ((8 << 4) + ((2 - 1)  << 0))
+#define DP_OP_455       ((9 << 4) + ((2 - 1)  << 0))
 #define DP_MFD_455      (48 - 1)
-#define DP_MFN_455      71
+#define DP_MFN_455      23
 
 #define DP_OP_400       ((8 << 4) + ((2 - 1)  << 0))
 #define DP_MFD_400      (3 - 1)
 #define DP_MFN_400      1
 
-#define DP_OP_216       ((6 << 4) + ((3 - 1)  << 0))
-#define DP_MFD_216      (4 - 1)
-#define DP_MFN_216      3
+/* For freq lower than 300MHz, dpgdck0_2_en is 0.
+ * Thus the parameters is for 432MHz.
+ */
+#define DP_OP_216       ((8 << 4) + ((2 - 1)  << 0))
+#define DP_MFD_216      (1 - 1)
+#define DP_MFN_216      1
 
 #define PLL_DP_CTL      0x00
 #define PLL_DP_CONFIG   0x04

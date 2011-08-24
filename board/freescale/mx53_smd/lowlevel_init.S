@@ -56,8 +56,15 @@
 .endm /* init_aips */
 
 .macro setup_pll pll, freq
+	/*
+	 * If freq < 300MHz, we need to set dpdck0_2_en to 0
+	 */
+	ldr r0, =\freq
+	ldr r1, =0x12c
+	cmp r0, r1
+	ldrcs r1, =0x00001232
+	ldrcc r1, =0x00000232
 	ldr r0, =\pll
-	ldr r1, =0x00001232
 	str r1, [r0, #PLL_DP_CTL]
 	mov r1, #0x2
 	str r1, [r0, #PLL_DP_CONFIG]
@@ -74,7 +81,8 @@
 	str r1, [r0, #PLL_DP_MFN]
 	str r1, [r0, #PLL_DP_HFS_MFN]
 
-	ldr r1, =0x00001232
+	ldrcs r1, =0x00001232
+	ldrcc r1, =0x00000232
 	str r1, [r0, #PLL_DP_CTL]
 1:	ldr r1, [r0, #PLL_DP_CTL]
 	ands r1, r1, #0x1
