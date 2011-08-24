@@ -414,8 +414,12 @@ void setup_pmic_voltages(void)
 	/* increase VDDGP as 1.25V for 1GHZ */
 	value = 0x5e;
 	do {
-		if (0 == i2c_write(0x48, 0x2e, 1, &value, 1))
+		if (0 != i2c_write(0x48, 0x2e, 1, &value, 1)) {
+			printf("da9052_i2c_is_connected - i2c write failed.....\n");
+		} else {
+			printf("da9052_i2c_is_connected - i2c write success....\n");
 			ret = 0;
+		}
 	} while (ret != 0 && retries--);
 	i2c_read(0x48, 60, 1, &value, 1);
 	value |= 0x1;
@@ -834,14 +838,6 @@ int board_init(void)
 	setup_fec();
 #endif
 
-#ifdef CONFIG_I2C_MXC
-	setup_i2c(CONFIG_SYS_I2C_PORT);
-	/* Increase VDDGP voltage */
-	setup_pmic_voltages();
-	/* Switch to 1GHZ */
-	clk_config(CONFIG_REF_CLK_FREQ, 1000, CPU_CLK);
-#endif
-
 #if defined(CONFIG_DWC_AHSATA)
 	setup_sata_device();
 #endif
@@ -984,6 +980,13 @@ int check_recovery_cmd_file(void)
 
 int board_late_init(void)
 {
+#ifdef CONFIG_I2C_MXC
+	setup_i2c(CONFIG_SYS_I2C_PORT);
+	/* Increase VDDGP voltage */
+	setup_pmic_voltages();
+	/* Switch to 1GHZ */
+	clk_config(CONFIG_REF_CLK_FREQ, 1000, CPU_CLK);
+#endif
 	return 0;
 }
 
