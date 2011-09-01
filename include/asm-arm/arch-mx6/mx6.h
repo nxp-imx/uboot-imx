@@ -65,6 +65,11 @@
  * @ingroup MSL_MX6
  */
 
+/*
+ * IPU
+ */
+#define IPU_CTRL_BASE_ADDR	0x02400000
+
 /*!
  * Register an interrupt handler for the SMN as well as the SCC.  In some
  * implementations, the SMN is not connected at all, and in others, it is
@@ -575,7 +580,7 @@
 #define CLKCTL_CS1CDR           0x28
 #define CLKCTL_CS2CDR           0x2C
 #define CLKCTL_CDCDR            0x30
-#define CLKCTL_CHSCDR           0x34
+#define CLKCTL_CHSCCDR          0x34
 #define CLKCTL_CSCDR2           0x38
 #define CLKCTL_CSCDR3           0x3C
 #define CLKCTL_CSCDR4           0x40

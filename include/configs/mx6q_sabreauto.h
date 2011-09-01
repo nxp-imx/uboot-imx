@@ -88,6 +88,8 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
 
+#define CONFIG_CMD_I2C
+
 /* Enable below configure when supporting nand */
 
 #define CONFIG_CMD_MMC
@@ -164,6 +166,17 @@
 #define CONFIG_IPADDR			192.168.1.103
 #define CONFIG_SERVERIP			192.168.1.101
 #define CONFIG_NETMASK			255.255.255.0
+
+/*
+ * I2C Configs
+ */
+#ifdef CONFIG_CMD_I2C
+	#define CONFIG_HARD_I2C         1
+	#define CONFIG_I2C_MXC          1
+	#define CONFIG_SYS_I2C_PORT             I2C3_BASE_ADDR
+	#define CONFIG_SYS_I2C_SPEED            100000
+	#define CONFIG_SYS_I2C_SLAVE            0x1f
+#endif
 
 /*
  * MMC Configs
@@ -244,5 +257,24 @@
 	#define CONFIG_ENV_OFFSET       (768 * 1024)
 #else
 	#define CONFIG_ENV_IS_NOWHERE	1
+#endif
+
+#ifdef CONFIG_SPLASH_SCREEN
+	/*
+	 * Framebuffer and LCD
+	 */
+	#define CONFIG_LCD
+	#define CONFIG_IPU_V3H
+	#define CONFIG_VIDEO_MX5
+	#define CONFIG_IPU_CLKRATE	260000000
+	#define CONFIG_SYS_CONSOLE_ENV_OVERWRITE
+	#define CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
+	#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+	#define LCD_BPP		LCD_COLOR16
+	#define CONFIG_CMD_BMP
+	#define CONFIG_BMP_8BPP
+	#define CONFIG_FB_BASE	(TEXT_BASE + 0x300000)
+	#define CONFIG_SPLASH_SCREEN_ALIGN
+	#define CONFIG_SYS_WHITE_ON_BLACK
 #endif
 #endif				/* __CONFIG_H */

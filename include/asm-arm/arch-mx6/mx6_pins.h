@@ -55,6 +55,18 @@ typedef enum iomux_config {
 		PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED | \
 		PAD_CTL_DSE_40ohm | PAD_CTL_HYS)
 
+#define MX6Q_I2C_PAD_CTRL	(PAD_CTL_PKE | PAD_CTL_PUE |	\
+		PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED | \
+		PAD_CTL_DSE_40ohm | PAD_CTL_HYS | \
+		PAD_CTL_ODE | PAD_CTL_SRE_FAST)
+
+#define MX6Q_PWM_PAD_CTRL	(PAD_CTL_PKE | PAD_CTL_PUE |	\
+		PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED| \
+		PAD_CTL_DSE_40ohm | PAD_CTL_HYS | \
+		PAD_CTL_ODE | PAD_CTL_SRE_FAST)
+
+#define MX6Q_HIGH_DRV (PAD_CTL_DSE_120ohm)
+
 #define _MX6Q_PAD_SD2_DAT1__USDHC2_DAT1                                        \
 		IOMUX_PAD(0x0360, 0x004C, 0, 0x0000, 0, 0)
 #define _MX6Q_PAD_SD2_DAT1__ECSPI5_SS0                                         \
@@ -254,7 +266,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_EIM_EB2__GPIO_2_30                                           \
 		IOMUX_PAD(0x03A0, 0x008C, 5, 0x0000, 0, 0)
 #define _MX6Q_PAD_EIM_EB2__I2C2_SCL                                            \
-		IOMUX_PAD(0x03A0, 0x008C, 6, 0x08A0, 0, 0)
+		IOMUX_PAD(0x03A0, 0x008C, 6 | IOMUX_CONFIG_SION, 0x08A0, 0, 0)
 #define _MX6Q_PAD_EIM_EB2__SRC_BT_CFG_30                                       \
 		IOMUX_PAD(0x03A0, 0x008C, 7, 0x0000, 0, 0)
 
@@ -271,7 +283,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_EIM_D16__GPIO_3_16                                           \
 		IOMUX_PAD(0x03A4, 0x0090, 5, 0x0000, 0, 0)
 #define _MX6Q_PAD_EIM_D16__I2C2_SDA                                            \
-		IOMUX_PAD(0x03A4, 0x0090, 6, 0x08A4, 0, 0)
+		IOMUX_PAD(0x03A4, 0x0090, 6 | IOMUX_CONFIG_SION, 0x08A4, 0, 0)
 
 #define _MX6Q_PAD_EIM_D17__WEIM_WEIM_D_17                                      \
 		IOMUX_PAD(0x03A8, 0x0094, 0, 0x0000, 0, 0)
@@ -286,7 +298,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_EIM_D17__GPIO_3_17                                           \
 		IOMUX_PAD(0x03A8, 0x0094, 5, 0x0000, 0, 0)
 #define _MX6Q_PAD_EIM_D17__I2C3_SCL                                            \
-		IOMUX_PAD(0x03A8, 0x0094, 6, 0x08A8, 0, 0)
+		IOMUX_PAD(0x03A8, 0x0094, 6 | IOMUX_CONFIG_SION, 0x08A8, 0, 0)
 #define _MX6Q_PAD_EIM_D17__PL301_MX6QPER1_HBURST_1                             \
 		IOMUX_PAD(0x03A8, 0x0094, 7, 0x0000, 0, 0)
 
@@ -303,7 +315,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_EIM_D18__GPIO_3_18                                           \
 		IOMUX_PAD(0x03AC, 0x0098, 5, 0x0000, 0, 0)
 #define _MX6Q_PAD_EIM_D18__I2C3_SDA                                            \
-		IOMUX_PAD(0x03AC, 0x0098, 6, 0x08AC, 0, 0)
+		IOMUX_PAD(0x03AC, 0x0098, 6 | IOMUX_CONFIG_SION, 0x08AC, 0, 0)
 #define _MX6Q_PAD_EIM_D18__PL301_MX6QPER1_HBURST_2                             \
 		IOMUX_PAD(0x03AC, 0x0098, 7, 0x0000, 0, 0)
 
@@ -354,7 +366,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_EIM_D21__GPIO_3_21                                           \
 		IOMUX_PAD(0x03B8, 0x00A4, 5, 0x0000, 0, 0)
 #define _MX6Q_PAD_EIM_D21__I2C1_SCL                                            \
-		IOMUX_PAD(0x03B8, 0x00A4, 6, 0x0898, 0, 0)
+		IOMUX_PAD(0x03B8, 0x00A4, 6 | IOMUX_CONFIG_SION, 0x0898, 0, 0)
 #define _MX6Q_PAD_EIM_D21__SPDIF_IN1                                           \
 		IOMUX_PAD(0x03B8, 0x00A4, 7, 0x0914, 0, 0)
 
@@ -490,7 +502,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_EIM_D28__WEIM_WEIM_D_28                                      \
 		IOMUX_PAD(0x03D8, 0x00C4, 0, 0x0000, 0, 0)
 #define _MX6Q_PAD_EIM_D28__I2C1_SDA                                            \
-		IOMUX_PAD(0x03D8, 0x00C4, 1, 0x089C, 0, 0)
+		IOMUX_PAD(0x03D8, 0x00C4, 1 | IOMUX_CONFIG_SION, 0x089C, 0, 0)
 #define _MX6Q_PAD_EIM_D28__ECSPI4_MOSI                                         \
 		IOMUX_PAD(0x03D8, 0x00C4, 2, 0x0000, 0, 0)
 #define _MX6Q_PAD_EIM_D28__IPU2_CSI1_D_12                                      \
@@ -2154,7 +2166,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_KEY_COL3__KPP_COL_3                                          \
 		IOMUX_PAD(0x05E0, 0x0210, 3, 0x0000, 0, 0)
 #define _MX6Q_PAD_KEY_COL3__I2C2_SCL                                           \
-		IOMUX_PAD(0x05E0, 0x0210, 4, 0x08A0, 1, 0)
+		IOMUX_PAD(0x05E0, 0x0210, 4 | IOMUX_CONFIG_SION, 0x08A0, 1, 0)
 #define _MX6Q_PAD_KEY_COL3__GPIO_4_12                                          \
 		IOMUX_PAD(0x05E0, 0x0210, 5, 0x0000, 0, 0)
 #define _MX6Q_PAD_KEY_COL3__SPDIF_IN1                                          \
@@ -2171,7 +2183,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_KEY_ROW3__KPP_ROW_3                                          \
 		IOMUX_PAD(0x05E4, 0x0214, 3, 0x0000, 0, 0)
 #define _MX6Q_PAD_KEY_ROW3__I2C2_SDA                                           \
-		IOMUX_PAD(0x05E4, 0x0214, 4, 0x08A4, 1, 0)
+		IOMUX_PAD(0x05E4, 0x0214, 4 | IOMUX_CONFIG_SION, 0x08A4, 1, 0)
 #define _MX6Q_PAD_KEY_ROW3__GPIO_4_13                                          \
 		IOMUX_PAD(0x05E4, 0x0214, 5, 0x0000, 0, 0)
 #define _MX6Q_PAD_KEY_ROW3__USDHC1_VSELECT                                     \
@@ -2267,7 +2279,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_GPIO_3__OBSERVE_MUX_OBSRV_INT_OUT0                           \
 		IOMUX_PAD(0x05FC, 0x022C, 1, 0x0000, 0, 0)
 #define _MX6Q_PAD_GPIO_3__I2C3_SCL                                             \
-		IOMUX_PAD(0x05FC, 0x022C, 2, 0x08A8, 1, 0)
+		IOMUX_PAD(0x05FC, 0x022C, 2 | IOMUX_CONFIG_SION, 0x08A8, 1, 0)
 #define _MX6Q_PAD_GPIO_3__ANATOP_ANATOP_24M_OUT                                \
 		IOMUX_PAD(0x05FC, 0x022C, 3, 0x0000, 0, 0)
 #define _MX6Q_PAD_GPIO_3__CCM_CLKO2                                            \
@@ -2284,7 +2296,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_GPIO_6__OBSERVE_MUX_OBSRV_INT_OUT1                           \
 		IOMUX_PAD(0x0600, 0x0230, 1, 0x0000, 0, 0)
 #define _MX6Q_PAD_GPIO_6__I2C3_SDA                                             \
-		IOMUX_PAD(0x0600, 0x0230, 2, 0x08AC, 1, 0)
+		IOMUX_PAD(0x0600, 0x0230, 2 | IOMUX_CONFIG_SION, 0x08AC, 1, 0)
 #define _MX6Q_PAD_GPIO_6__CCM_CCM_OUT_0                                        \
 		IOMUX_PAD(0x0600, 0x0230, 3, 0x0000, 0, 0)
 #define _MX6Q_PAD_GPIO_6__CSU_CSU_INT_DEB                                      \
@@ -2343,7 +2355,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_GPIO_5__GPIO_1_5                                             \
 		IOMUX_PAD(0x060C, 0x023C, 5, 0x0000, 0, 0)
 #define _MX6Q_PAD_GPIO_5__I2C3_SCL                                             \
-		IOMUX_PAD(0x060C, 0x023C, 6, 0x08A8, 2, 0)
+		IOMUX_PAD(0x060C, 0x023C, 6 | IOMUX_CONFIG_SION, 0x08A8, 2, 0)
 #define _MX6Q_PAD_GPIO_5__CHEETAH_EVENTI                                       \
 		IOMUX_PAD(0x060C, 0x023C, 7, 0x0000, 0, 0)
 
@@ -2398,7 +2410,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_GPIO_16__GPIO_7_11                                           \
 		IOMUX_PAD(0x0618, 0x0248, 5, 0x0000, 0, 0)
 #define _MX6Q_PAD_GPIO_16__I2C3_SDA                                            \
-		IOMUX_PAD(0x0618, 0x0248, 6, 0x08AC, 2, 0)
+		IOMUX_PAD(0x0618, 0x0248, 6 | IOMUX_CONFIG_SION, 0x08AC, 2, 0)
 #define _MX6Q_PAD_GPIO_16__SJC_DE_B                                            \
 		IOMUX_PAD(0x0618, 0x0248, 7, 0x0000, 0, 0)
 
@@ -2586,7 +2598,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_CSI0_DAT8__KPP_COL_7                                         \
 		IOMUX_PAD(0x0648, 0x0278, 3, 0x08F0, 2, 0)
 #define _MX6Q_PAD_CSI0_DAT8__I2C1_SDA                                          \
-		IOMUX_PAD(0x0648, 0x0278, 4, 0x089C, 1, 0)
+		IOMUX_PAD(0x0648, 0x0278, 4 | IOMUX_CONFIG_SION, 0x089C, 1, 0)
 #define _MX6Q_PAD_CSI0_DAT8__GPIO_5_26                                         \
 		IOMUX_PAD(0x0648, 0x0278, 5, 0x0000, 0, 0)
 #define _MX6Q_PAD_CSI0_DAT8__MMDC_MMDC_DEBUG_47                                \
@@ -2603,7 +2615,7 @@ typedef enum iomux_config {
 #define _MX6Q_PAD_CSI0_DAT9__KPP_ROW_7                                         \
 		IOMUX_PAD(0x064C, 0x027C, 3, 0x08FC, 2, 0)
 #define _MX6Q_PAD_CSI0_DAT9__I2C1_SCL                                          \
-		IOMUX_PAD(0x064C, 0x027C, 4, 0x0898, 1, 0)
+		IOMUX_PAD(0x064C, 0x027C, 4 | IOMUX_CONFIG_SION, 0x0898, 1, 0)
 #define _MX6Q_PAD_CSI0_DAT9__GPIO_5_27                                         \
 		IOMUX_PAD(0x064C, 0x027C, 5, 0x0000, 0, 0)
 #define _MX6Q_PAD_CSI0_DAT9__MMDC_MMDC_DEBUG_48                                \
@@ -3755,7 +3767,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_EIM_EB2__IPU2_CSI1_D_19                        (_MX6Q_PAD_EIM_EB2__IPU2_CSI1_D_19 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_EIM_EB2__HDMI_TX_DDC_SCL                       (_MX6Q_PAD_EIM_EB2__HDMI_TX_DDC_SCL | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_EIM_EB2__GPIO_2_30                             (_MX6Q_PAD_EIM_EB2__GPIO_2_30 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_EIM_EB2__I2C2_SCL                              (_MX6Q_PAD_EIM_EB2__I2C2_SCL | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_EIM_EB2__I2C2_SCL                              (_MX6Q_PAD_EIM_EB2__I2C2_SCL | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 #define  MX6Q_PAD_EIM_EB2__SRC_BT_CFG_30                         (_MX6Q_PAD_EIM_EB2__SRC_BT_CFG_30 | MUX_PAD_CTRL(NO_PAD_CTRL))
 
 #define  MX6Q_PAD_EIM_D16__WEIM_WEIM_D_16                        (_MX6Q_PAD_EIM_D16__WEIM_WEIM_D_16 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -3764,7 +3776,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_EIM_D16__IPU2_CSI1_D_18                        (_MX6Q_PAD_EIM_D16__IPU2_CSI1_D_18 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D16__HDMI_TX_DDC_SDA                       (_MX6Q_PAD_EIM_D16__HDMI_TX_DDC_SDA | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D16__GPIO_3_16                             (_MX6Q_PAD_EIM_D16__GPIO_3_16 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_EIM_D16__I2C2_SDA                              (_MX6Q_PAD_EIM_D16__I2C2_SDA | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_EIM_D16__I2C2_SDA                              (_MX6Q_PAD_EIM_D16__I2C2_SDA | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 
 #define  MX6Q_PAD_EIM_D17__WEIM_WEIM_D_17                        (_MX6Q_PAD_EIM_D17__WEIM_WEIM_D_17 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D17__ECSPI1_MISO                           (_MX6Q_PAD_EIM_D17__ECSPI1_MISO | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -3772,7 +3784,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_EIM_D17__IPU2_CSI1_PIXCLK                      (_MX6Q_PAD_EIM_D17__IPU2_CSI1_PIXCLK | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D17__DCIC1_DCIC_OUT                        (_MX6Q_PAD_EIM_D17__DCIC1_DCIC_OUT | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D17__GPIO_3_17                             (_MX6Q_PAD_EIM_D17__GPIO_3_17 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_EIM_D17__I2C3_SCL                              (_MX6Q_PAD_EIM_D17__I2C3_SCL | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_EIM_D17__I2C3_SCL                              (_MX6Q_PAD_EIM_D17__I2C3_SCL | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D17__PL301_MX6QPER1_HBURST_1               (_MX6Q_PAD_EIM_D17__PL301_MX6QPER1_HBURST_1 | MUX_PAD_CTRL(NO_PAD_CTRL))
 
 #define  MX6Q_PAD_EIM_D18__WEIM_WEIM_D_18                        (_MX6Q_PAD_EIM_D18__WEIM_WEIM_D_18 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -3781,7 +3793,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_EIM_D18__IPU2_CSI1_D_17                        (_MX6Q_PAD_EIM_D18__IPU2_CSI1_D_17 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D18__IPU1_DI1_D0_CS                        (_MX6Q_PAD_EIM_D18__IPU1_DI1_D0_CS | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D18__GPIO_3_18                             (_MX6Q_PAD_EIM_D18__GPIO_3_18 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_EIM_D18__I2C3_SDA                              (_MX6Q_PAD_EIM_D18__I2C3_SDA | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_EIM_D18__I2C3_SDA                              (_MX6Q_PAD_EIM_D18__I2C3_SDA | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D18__PL301_MX6QPER1_HBURST_2               (_MX6Q_PAD_EIM_D18__PL301_MX6QPER1_HBURST_2 | MUX_PAD_CTRL(NO_PAD_CTRL))
 
 #define  MX6Q_PAD_EIM_D19__WEIM_WEIM_D_19                        (_MX6Q_PAD_EIM_D19__WEIM_WEIM_D_19 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -3808,7 +3820,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_EIM_D21__IPU2_CSI1_D_11                        (_MX6Q_PAD_EIM_D21__IPU2_CSI1_D_11 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D21__USBOH3_USBOTG_OC                      (_MX6Q_PAD_EIM_D21__USBOH3_USBOTG_OC | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D21__GPIO_3_21                             (_MX6Q_PAD_EIM_D21__GPIO_3_21 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_EIM_D21__I2C1_SCL                              (_MX6Q_PAD_EIM_D21__I2C1_SCL | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_EIM_D21__I2C1_SCL                              (_MX6Q_PAD_EIM_D21__I2C1_SCL | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D21__SPDIF_IN1                             (_MX6Q_PAD_EIM_D21__SPDIF_IN1 | MUX_PAD_CTRL(NO_PAD_CTRL))
 
 #define  MX6Q_PAD_EIM_D22__WEIM_WEIM_D_22                        (_MX6Q_PAD_EIM_D22__WEIM_WEIM_D_22 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -3880,7 +3892,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_EIM_D27__IPU1_DISP1_DAT_23                     (_MX6Q_PAD_EIM_D27__IPU1_DISP1_DAT_23 | MUX_PAD_CTRL(NO_PAD_CTRL))
 
 #define  MX6Q_PAD_EIM_D28__WEIM_WEIM_D_28                        (_MX6Q_PAD_EIM_D28__WEIM_WEIM_D_28 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_EIM_D28__I2C1_SDA                              (_MX6Q_PAD_EIM_D28__I2C1_SDA | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_EIM_D28__I2C1_SDA                              (_MX6Q_PAD_EIM_D28__I2C1_SDA | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D28__ECSPI4_MOSI                           (_MX6Q_PAD_EIM_D28__ECSPI4_MOSI | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D28__IPU2_CSI1_D_12                        (_MX6Q_PAD_EIM_D28__IPU2_CSI1_D_12 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_EIM_D28__UART2_CTS                             (_MX6Q_PAD_EIM_D28__UART2_CTS | MUX_PAD_CTRL(MX6Q_UART_PAD_CTRL))
@@ -4809,7 +4821,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_KEY_COL3__ENET_CRS                             (_MX6Q_PAD_KEY_COL3__ENET_CRS | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_COL3__HDMI_TX_DDC_SCL                      (_MX6Q_PAD_KEY_COL3__HDMI_TX_DDC_SCL | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_COL3__KPP_COL_3                            (_MX6Q_PAD_KEY_COL3__KPP_COL_3 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_KEY_COL3__I2C2_SCL                             (_MX6Q_PAD_KEY_COL3__I2C2_SCL | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_KEY_COL3__I2C2_SCL                             (_MX6Q_PAD_KEY_COL3__I2C2_SCL | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 #define  MX6Q_PAD_KEY_COL3__GPIO_4_12                            (_MX6Q_PAD_KEY_COL3__GPIO_4_12 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_COL3__SPDIF_IN1                            (_MX6Q_PAD_KEY_COL3__SPDIF_IN1 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_COL3__PL301_MX6QPER1_HADDR_5               (_MX6Q_PAD_KEY_COL3__PL301_MX6QPER1_HADDR_5 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -4818,7 +4830,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_KEY_ROW3__ASRC_ASRC_EXT_CLK                    (_MX6Q_PAD_KEY_ROW3__ASRC_ASRC_EXT_CLK | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_ROW3__HDMI_TX_DDC_SDA                      (_MX6Q_PAD_KEY_ROW3__HDMI_TX_DDC_SDA | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_ROW3__KPP_ROW_3                            (_MX6Q_PAD_KEY_ROW3__KPP_ROW_3 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_KEY_ROW3__I2C2_SDA                             (_MX6Q_PAD_KEY_ROW3__I2C2_SDA | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_KEY_ROW3__I2C2_SDA                             (_MX6Q_PAD_KEY_ROW3__I2C2_SDA | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 #define  MX6Q_PAD_KEY_ROW3__GPIO_4_13                            (_MX6Q_PAD_KEY_ROW3__GPIO_4_13 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_ROW3__USDHC1_VSELECT                       (_MX6Q_PAD_KEY_ROW3__USDHC1_VSELECT | MUX_PAD_CTRL(MX6Q_USDHC_PAD_CTRL))
 #define  MX6Q_PAD_KEY_ROW3__PL301_MX6QPER1_HADDR_6      (_MX6Q_PAD_KEY_ROW3__PL301_MX6QPER1_HADDR_6 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -4862,14 +4874,14 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_GPIO_9__WDOG1_WDOG_B                           (_MX6Q_PAD_GPIO_9__WDOG1_WDOG_B | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_9__KPP_COL_6                              (_MX6Q_PAD_GPIO_9__KPP_COL_6 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_9__CCM_REF_EN_B                           (_MX6Q_PAD_GPIO_9__CCM_REF_EN_B | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_GPIO_9__PWM1_PWMO                              (_MX6Q_PAD_GPIO_9__PWM1_PWMO | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_GPIO_9__GPIO_1_9                               (_MX6Q_PAD_GPIO_9__GPIO_1_9 | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_GPIO_9__PWM1_PWMO                              (_MX6Q_PAD_GPIO_9__PWM1_PWMO | MUX_PAD_CTRL(MX6Q_PWM_PAD_CTRL))
+#define  MX6Q_PAD_GPIO_9__GPIO_1_9                               (_MX6Q_PAD_GPIO_9__GPIO_1_9 | MUX_PAD_CTRL(MX6Q_HIGH_DRV))
 #define  MX6Q_PAD_GPIO_9__USDHC1_WP                              (_MX6Q_PAD_GPIO_9__USDHC1_WP | MUX_PAD_CTRL(MX6Q_USDHC_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_9__SRC_EARLY_RST                          (_MX6Q_PAD_GPIO_9__SRC_EARLY_RST | MUX_PAD_CTRL(NO_PAD_CTRL))
 
 #define  MX6Q_PAD_GPIO_3__ESAI1_HCKR                             (_MX6Q_PAD_GPIO_3__ESAI1_HCKR | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_3__OBSERVE_MUX_OBSRV_INT_OUT0             (_MX6Q_PAD_GPIO_3__OBSERVE_MUX_OBSRV_INT_OUT0 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_GPIO_3__I2C3_SCL                               (_MX6Q_PAD_GPIO_3__I2C3_SCL | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_GPIO_3__I2C3_SCL                               (_MX6Q_PAD_GPIO_3__I2C3_SCL | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_3__ANATOP_ANATOP_24M_OUT                  (_MX6Q_PAD_GPIO_3__ANATOP_ANATOP_24M_OUT | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_3__CCM_CLKO2                              (_MX6Q_PAD_GPIO_3__CCM_CLKO2 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_3__GPIO_1_3                               (_MX6Q_PAD_GPIO_3__GPIO_1_3 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -4878,7 +4890,7 @@ typedef enum iomux_config {
 
 #define  MX6Q_PAD_GPIO_6__ESAI1_SCKT                             (_MX6Q_PAD_GPIO_6__ESAI1_SCKT | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_6__OBSERVE_MUX_OBSRV_INT_OUT1             (_MX6Q_PAD_GPIO_6__OBSERVE_MUX_OBSRV_INT_OUT1 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_GPIO_6__I2C3_SDA                               (_MX6Q_PAD_GPIO_6__I2C3_SDA | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_GPIO_6__I2C3_SDA                               (_MX6Q_PAD_GPIO_6__I2C3_SDA | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_6__CCM_CCM_OUT_0                          (_MX6Q_PAD_GPIO_6__CCM_CCM_OUT_0 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_6__CSU_CSU_INT_DEB                        (_MX6Q_PAD_GPIO_6__CSU_CSU_INT_DEB | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_6__GPIO_1_6                               (_MX6Q_PAD_GPIO_6__GPIO_1_6 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -4909,7 +4921,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_GPIO_5__CCM_CLKO                               (_MX6Q_PAD_GPIO_5__CCM_CLKO | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_5__CSU_CSU_ALARM_AUT_2                    (_MX6Q_PAD_GPIO_5__CSU_CSU_ALARM_AUT_2 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_5__GPIO_1_5                               (_MX6Q_PAD_GPIO_5__GPIO_1_5 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_GPIO_5__I2C3_SCL                               (_MX6Q_PAD_GPIO_5__I2C3_SCL | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_GPIO_5__I2C3_SCL                               (_MX6Q_PAD_GPIO_5__I2C3_SCL | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_5__CHEETAH_EVENTI                         (_MX6Q_PAD_GPIO_5__CHEETAH_EVENTI | MUX_PAD_CTRL(NO_PAD_CTRL))
 
 #define  MX6Q_PAD_GPIO_7__ESAI1_TX4_RX1                          (_MX6Q_PAD_GPIO_7__ESAI1_TX4_RX1 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -4938,7 +4950,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_GPIO_16__USDHC1_LCTL                           (_MX6Q_PAD_GPIO_16__USDHC1_LCTL | MUX_PAD_CTRL(MX6Q_USDHC_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_16__SPDIF_IN1                             (_MX6Q_PAD_GPIO_16__SPDIF_IN1 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_16__GPIO_7_11                             (_MX6Q_PAD_GPIO_16__GPIO_7_11 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_GPIO_16__I2C3_SDA                              (_MX6Q_PAD_GPIO_16__I2C3_SDA | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_GPIO_16__I2C3_SDA                              (_MX6Q_PAD_GPIO_16__I2C3_SDA | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 #define  MX6Q_PAD_GPIO_16__SJC_DE_B                              (_MX6Q_PAD_GPIO_16__SJC_DE_B | MUX_PAD_CTRL(NO_PAD_CTRL))
 
 #define  MX6Q_PAD_GPIO_17__ESAI1_TX0                             (_MX6Q_PAD_GPIO_17__ESAI1_TX0 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -5038,7 +5050,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_CSI0_DAT8__WEIM_WEIM_D_6                       (_MX6Q_PAD_CSI0_DAT8__WEIM_WEIM_D_6 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_CSI0_DAT8__ECSPI2_SCLK                         (_MX6Q_PAD_CSI0_DAT8__ECSPI2_SCLK | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_CSI0_DAT8__KPP_COL_7                           (_MX6Q_PAD_CSI0_DAT8__KPP_COL_7 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_CSI0_DAT8__I2C1_SDA                            (_MX6Q_PAD_CSI0_DAT8__I2C1_SDA | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_CSI0_DAT8__I2C1_SDA                            (_MX6Q_PAD_CSI0_DAT8__I2C1_SDA | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 #define  MX6Q_PAD_CSI0_DAT8__GPIO_5_26                           (_MX6Q_PAD_CSI0_DAT8__GPIO_5_26 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_CSI0_DAT8__MMDC_MMDC_DEBUG_47                  (_MX6Q_PAD_CSI0_DAT8__MMDC_MMDC_DEBUG_47 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_CSI0_DAT8__CHEETAH_TRACE_5                     (_MX6Q_PAD_CSI0_DAT8__CHEETAH_TRACE_5 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -5047,7 +5059,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_CSI0_DAT9__WEIM_WEIM_D_7                       (_MX6Q_PAD_CSI0_DAT9__WEIM_WEIM_D_7 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_CSI0_DAT9__ECSPI2_MOSI                         (_MX6Q_PAD_CSI0_DAT9__ECSPI2_MOSI | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_CSI0_DAT9__KPP_ROW_7                           (_MX6Q_PAD_CSI0_DAT9__KPP_ROW_7 | MUX_PAD_CTRL(NO_PAD_CTRL))
-#define  MX6Q_PAD_CSI0_DAT9__I2C1_SCL                            (_MX6Q_PAD_CSI0_DAT9__I2C1_SCL | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_CSI0_DAT9__I2C1_SCL                            (_MX6Q_PAD_CSI0_DAT9__I2C1_SCL | MUX_PAD_CTRL(MX6Q_I2C_PAD_CTRL))
 #define  MX6Q_PAD_CSI0_DAT9__GPIO_5_27                           (_MX6Q_PAD_CSI0_DAT9__GPIO_5_27 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_CSI0_DAT9__MMDC_MMDC_DEBUG_48                  (_MX6Q_PAD_CSI0_DAT9__MMDC_MMDC_DEBUG_48 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_CSI0_DAT9__CHEETAH_TRACE_6                     (_MX6Q_PAD_CSI0_DAT9__CHEETAH_TRACE_6 | MUX_PAD_CTRL(NO_PAD_CTRL))

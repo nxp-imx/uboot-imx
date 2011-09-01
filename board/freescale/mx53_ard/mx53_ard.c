@@ -79,6 +79,7 @@ static enum boot_device boot_dev;
 #ifdef CONFIG_VIDEO_MX5
 extern unsigned char fsl_bmp_600x400[];
 extern int fsl_bmp_600x400_size;
+extern int g_ipu_hw_rev;
 
 #if defined(CONFIG_BMP_8BPP)
 unsigned short colormap[256];
@@ -836,6 +837,13 @@ void lcd_enable(void)
 
 	s = getenv("lvds_num");
 	di = simple_strtol(s, NULL, 10);
+
+	/*
+	* hw_rev 2: IPUV3DEX
+	* hw_rev 3: IPUV3M
+	* hw_rev 4: IPUV3H
+	*/
+	g_ipu_hw_rev = IPUV3_HW_REV_IPUV3M;
 
 	/* 200Hz PWM wave, 50% duty */
 	if (di == 1) {

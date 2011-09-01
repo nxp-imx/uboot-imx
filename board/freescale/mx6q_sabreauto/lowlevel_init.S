@@ -34,6 +34,31 @@
 /* AIPS setup - Only setup MPROTx registers.
  * The PACR default values are good.*/
 .macro init_aips
+	/*
+	 * Set all MPROTx to be non-bufferable, trusted for R/W,
+	 * not forced to user-mode.
+	 */
+	ldr r0, =AIPS1_ON_BASE_ADDR
+	ldr r1, =0x77777777
+	str r1, [r0, #0x0]
+	str r1, [r0, #0x4]
+	ldr r1, =0x0
+	str r1, [r0, #0x40]
+	str r1, [r0, #0x44]
+	str r1, [r0, #0x48]
+	str r1, [r0, #0x4C]
+	str r1, [r0, #0x50]
+
+	ldr r0, =AIPS2_ON_BASE_ADDR
+	ldr r1, =0x77777777
+	str r1, [r0, #0x0]
+	str r1, [r0, #0x4]
+	ldr r1, =0x0
+	str r1, [r0, #0x40]
+	str r1, [r0, #0x44]
+	str r1, [r0, #0x48]
+	str r1, [r0, #0x4C]
+	str r1, [r0, #0x50]
 .endm /* init_aips */
 
 .macro setup_pll pll, freq
@@ -79,13 +104,12 @@
 	str r1, [r0, #CLKCTL_CCGR2]
 	ldr r1, =0x3FF00000
 	str r1, [r0, #CLKCTL_CCGR3]
-	ldr r1, =0xF300
+	ldr r1, =0xFFF300
 	str r1, [r0, #CLKCTL_CCGR4]
 	ldr r1, =0xF0000C3
 	str r1, [r0, #CLKCTL_CCGR5]
 	ldr r1, =0x3C0
 	str r1, [r0, #CLKCTL_CCGR6]
-
 .endm
 
 .section ".text.init", "x"

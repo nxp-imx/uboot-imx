@@ -27,6 +27,18 @@
 #include <asm/arch/iomux-v3.h>
 #include <asm/errno.h>
 
+#if defined(CONFIG_VIDEO_MX5)
+#include <linux/list.h>
+#include <linux/fb.h>
+#include <linux/mxcfb.h>
+#include <ipu.h>
+#include <lcd.h>
+#endif
+
+#if CONFIG_I2C_MXC
+#include <i2c.h>
+#endif
+
 #ifdef CONFIG_CMD_MMC
 #include <mmc.h>
 #include <fsl_esdhc.h>
@@ -49,6 +61,37 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
 static enum boot_device boot_dev;
+
+#ifdef CONFIG_VIDEO_MX5
+extern unsigned char fsl_bmp_600x400[];
+extern int fsl_bmp_600x400_size;
+extern int g_ipu_hw_rev;
+
+#if defined(CONFIG_BMP_8BPP)
+unsigned short colormap[256];
+#elif defined(CONFIG_BMP_16BPP)
+unsigned short colormap[65536];
+#else
+unsigned short colormap[16777216];
+#endif
+
+static int di = 1;
+
+
+extern int ipuv3_fb_init(struct fb_videomode *mode, int di,
+			int interface_pix_fmt,
+			ipu_di_clk_parent_t di_clk_parent,
+			int di_clk_val);
+
+static struct fb_videomode lvds_xga = {
+	 "XGA", 60, 1024, 768, 15385, 220, 40, 21, 7, 60, 10,
+	 FB_SYNC_EXT,
+	 FB_VMODE_NONINTERLACED,
+	 0,
+};
+
+vidinfo_t panel_info;
+#endif
 
 static inline void setup_boot_device(void)
 {
@@ -228,6 +271,73 @@ static void setup_uart(void)
 	mxc_iomux_v3_setup_pad(MX6Q_PAD_KEY_ROW0__UART4_RXD);
 }
 
+#ifdef CONFIG_I2C_MXC
+static void setup_i2c(unsigned int module_base)
+{
+	unsigned int reg;
+
+	switch (module_base) {
+	case I2C1_BASE_ADDR:
+		/* i2c1 SDA */
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_CSI0_DAT8__I2C1_SDA);
+
+		/* i2c1 SCL */
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_CSI0_DAT9__I2C1_SCL);
+
+		/* Enable i2c clock */
+		reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR2);
+		reg |= 0xC0;
+		writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR2);
+
+		break;
+	case I2C2_BASE_ADDR:
+		/* i2c2 SDA */
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_KEY_ROW3__I2C2_SDA);
+
+		/* i2c2 SCL */
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_KEY_COL3__I2C2_SCL);
+
+		/* Enable i2c clock */
+		reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR2);
+		reg |= 0x300;
+		writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR2);
+
+		break;
+	case I2C3_BASE_ADDR:
+		/* GPIO_5 for I2C3_SCL */
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_5__I2C3_SCL);
+
+		/* GPIO_16 for I2C3_SDA */
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_16__I2C3_SDA);
+
+		/* Enable i2c clock */
+		reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR2);
+		reg |= 0xC00;
+		writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR2);
+
+		break;
+	default:
+		printf("Invalid I2C base: 0x%x\n", module_base);
+		break;
+	}
+}
+
+void setup_lvds_poweron(void)
+{
+	uchar value;
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+
+	i2c_read(0x1f, 3, 1, &value, 1);
+	value &= ~0x2;
+	i2c_write(0x1f, 3, 1, &value, 1);
+
+	i2c_read(0x1f, 1, 1, &value, 1);
+	value |= 0x2;
+	i2c_write(0x1f, 1, 1, &value, 1);
+}
+
+#endif
+
 #define HW_OCOTP_MACn(n)       (0x00000620 + (n) * 0x10)
 
 #ifdef CONFIG_MXC_FEC
@@ -376,6 +486,104 @@ u32 get_ddr_delay(struct fsl_esdhc *cfg)
 
 #endif
 
+#ifdef CONFIG_LCD
+void lcd_enable(void)
+{
+	char *s;
+	int ret;
+	unsigned int reg;
+
+	s = getenv("lvds_num");
+	di = simple_strtol(s, NULL, 10);
+
+	/*
+	* hw_rev 2: IPUV3DEX
+	* hw_rev 3: IPUV3M
+	* hw_rev 4: IPUV3H
+	*/
+	g_ipu_hw_rev = IPUV3_HW_REV_IPUV3H;
+
+	/* set GPIO_9 to high so that backlight control could be high */
+	mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_9__GPIO_1_9);
+	reg = readl(GPIO1_BASE_ADDR + GPIO_GDIR);
+	reg |= (1 << 9);
+	writel(reg, GPIO1_BASE_ADDR + GPIO_GDIR);
+
+	reg = readl(GPIO1_BASE_ADDR + GPIO_DR);
+	reg |= (1 << 9);
+	writel(reg, GPIO1_BASE_ADDR + GPIO_DR);
+
+	/* Enable IPU clock */
+	if (di == 1) {
+		reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR3);
+		reg |= 0xC033;
+		writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR3);
+	} else {
+		reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR3);
+		reg |= 0x300F;
+		writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR3);
+	}
+
+	ret = ipuv3_fb_init(&lvds_xga, di, IPU_PIX_FMT_RGB666,
+			DI_PCLK_LDB, 65000000);
+	if (ret)
+		puts("LCD cannot be configured\n");
+
+	reg = readl(ANATOP_BASE_ADDR + 0xF0);
+	reg &= ~0x00003F00;
+	reg |= 0x00001300;
+	writel(reg, ANATOP_BASE_ADDR + 0xF4);
+
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CS2CDR);
+	reg &= ~0x00007E00;
+	reg |= 0x00003600;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CS2CDR);
+
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CSCMR2);
+	reg |= 0x00000C00;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CSCMR2);
+
+	reg = 0x0002A953;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CHSCCDR);
+
+	if (di == 1)
+		writel(0x40C, IOMUXC_BASE_ADDR + 0x8);
+	else
+		writel(0x201, IOMUXC_BASE_ADDR + 0x8);
+}
+#endif
+
+#ifdef CONFIG_VIDEO_MX5
+void panel_info_init(void)
+{
+	panel_info.vl_bpix = LCD_BPP;
+	panel_info.vl_col = lvds_xga.xres;
+	panel_info.vl_row = lvds_xga.yres;
+	panel_info.cmap = colormap;
+}
+#endif
+
+#ifdef CONFIG_SPLASH_SCREEN
+void setup_splash_image(void)
+{
+	char *s;
+	ulong addr;
+
+	s = getenv("splashimage");
+
+	if (s != NULL) {
+		addr = simple_strtoul(s, NULL, 16);
+
+#if defined(CONFIG_ARCH_MMU)
+		addr = ioremap_nocache(iomem_to_phys(addr),
+				fsl_bmp_600x400_size);
+#endif
+		memcpy((char *)addr, (char *)fsl_bmp_600x400,
+				fsl_bmp_600x400_size);
+	}
+}
+#endif
+
 int board_init(void)
 {
 #ifdef CONFIG_MFG
@@ -398,6 +606,23 @@ int board_init(void)
 
 #ifdef CONFIG_DWC_AHSATA
 	setup_sata();
+#endif
+
+
+#ifdef CONFIG_VIDEO_MX5
+
+#ifdef CONFIG_I2C_MXC
+	setup_i2c(CONFIG_SYS_I2C_PORT);
+	/* Enable lvds power */
+	setup_lvds_poweron();
+#endif
+
+	panel_info_init();
+
+	gd->fb_base = CONFIG_FB_BASE;
+#ifdef CONFIG_ARCH_MMU
+	gd->fb_base = ioremap_nocache(iomem_to_phys(gd->fb_base), 0);
+#endif
 #endif
 
 	return 0;

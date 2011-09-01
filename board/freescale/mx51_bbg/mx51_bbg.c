@@ -77,6 +77,7 @@ u32	mx51_io_base_addr;
 #ifdef CONFIG_VIDEO_MX5
 extern unsigned char fsl_bmp_600x400[];
 extern int fsl_bmp_600x400_size;
+extern int g_ipu_hw_rev;
 
 #if defined(CONFIG_BMP_8BPP)
 short colormap[256];
@@ -888,6 +889,13 @@ void lcd_enable(void)
 {
 	int ret;
 	unsigned int reg;
+
+	/*
+	* hw_rev 2: IPUV3DEX
+	* hw_rev 3: IPUV3M
+	* hw_rev 4: IPUV3H
+	*/
+	g_ipu_hw_rev = IPUV3_HW_REV_IPUV3DEX;
 
 	mxc_request_iomux(MX51_PIN_DI_GP4, IOMUX_CONFIG_ALT4);
 

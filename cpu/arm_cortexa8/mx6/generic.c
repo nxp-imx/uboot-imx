@@ -763,3 +763,10 @@ int arch_cpu_init(void)
 }
 #endif
 
+void ipu_clk_enable(void)
+{
+}
+
+void ipu_clk_disable(void)
+{
+}

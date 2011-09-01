@@ -187,6 +187,17 @@ typedef enum {
 	IPU_SEC_INPUT_BUFFER = IPU_GRAPH_IN_BUFFER,
 } ipu_buffer_t;
 
+
+/*
+ * Enumeration of version of IPU V3 .
+ */
+typedef enum {
+	IPUV3_HW_REV_IPUV3DEX = 2,	/*IPUv3D, IPUv3E  IPUv3EX  */
+	IPUV3_HW_REV_IPUV3M = 3,	/*IPUv3M */
+	IPUV3_HW_REV_IPUV3H = 4,	/*IPUv3H */
+} ipu3_hw_rev_t;
+
+
 #define IPU_PANEL_SERIAL		1
 #define IPU_PANEL_PARALLEL		2
 

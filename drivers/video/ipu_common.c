@@ -36,6 +36,8 @@
 #include <asm/errno.h>
 #include "ipu_regs.h"
 
+int g_ipu_hw_rev;
+
 extern struct mxc_ccm_reg *mxc_ccm;
 extern u32 *ipu_cpmem_base;
 
@@ -392,6 +394,13 @@ int ipu_probe(int di, ipu_di_clk_parent_t di_clk_parent, int di_clk_val)
 #endif
 
 	ipu_base = IPU_CTRL_BASE_ADDR;
+	/* base fixup */
+	if (g_ipu_hw_rev == IPUV3_HW_REV_IPUV3H)	/* IPUv3H */
+		ipu_base += IPUV3H_REG_BASE;
+	else if (g_ipu_hw_rev == IPUV3_HW_REV_IPUV3M)	/* IPUv3M */
+		ipu_base += IPUV3M_REG_BASE;
+	else			/* IPUv3D, v3E, v3EX */
+		ipu_base += IPUV3DEX_REG_BASE;
 	ipu_cpmem_base = (u32 *)(ipu_base + IPU_CPMEM_REG_BASE);
 	ipu_dc_tmpl_reg = (u32 *)(ipu_base + IPU_DC_TMPL_REG_BASE);
 
