@@ -167,7 +167,7 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 {
 	uint	xfertyp;
 	uint	irqstat;
-	u32	tmp;
+	u32	tmp, sysctl_restore;
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
 	volatile struct fsl_esdhc *regs = (struct fsl_esdhc *)cfg->esdhc_base;
 
@@ -208,6 +208,14 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 		mmc->card_caps & EMMC_MODE_8BIT_DDR)
 		xfertyp |= XFERTYP_DDR_EN;
 
+	/* ESDHC errata ENGcm03648: Turn off auto-clock gate for commands
+	 * with busy signaling and no data
+	 */
+	if (!cfg->is_usdhc && !data && (cmd->resp_type & MMC_RSP_BUSY)) {
+		sysctl_restore = readl(&regs->sysctl);
+		writel(sysctl_restore | 0xF, &regs->sysctl);
+	}
+
 	/* Send the command */
 	writel(cmd->cmdarg, &regs->cmdarg);
 	/* for uSDHC, write lower-half of xfertyp to mixctrl */
@@ -225,14 +233,37 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	writel(irqstat, &regs->irqstat);
 
 	/* Reset CMD portion on error */
-	if (irqstat & (CMD_ERR | IRQSTAT_CTOE))
+	if (irqstat & (CMD_ERR | IRQSTAT_CTOE)) {
 		writel(readl(&regs->sysctl) | SYSCTL_RSTC, &regs->sysctl);
+
+		/* Restore auto-clock gate if error */
+		if (!cfg->is_usdhc && !data && (cmd->resp_type & MMC_RSP_BUSY))
+			writel(sysctl_restore, &regs->sysctl);
+	}
 
 	if (irqstat & CMD_ERR)
 		return COMM_ERR;
 
 	if (irqstat & IRQSTAT_CTOE)
 		return TIMEOUT;
+
+	/* Workaround for ESDHC errata ENGcm03648 */
+	if (!cfg->is_usdhc && !data && (cmd->resp_type & MMC_RSP_BUSY)) {
+		int timeout = 2500;
+
+		/* Poll on DATA0 line for cmd with busy signal for 250 ms */
+		while (timeout > 0 && !(readl(&regs->prsstat) & PRSSTAT_DAT0)) {
+			udelay(100);
+			timeout--;
+		}
+
+		writel(sysctl_restore, &regs->sysctl);
+
+		if (timeout <= 0) {
+			printf("Timeout waiting for DAT0 to go high!\n");
+			return TIMEOUT;
+		}
+	}
 
 	/* Copy the response to the response buffer */
 	if (cmd->resp_type & MMC_RSP_136) {
