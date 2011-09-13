@@ -185,13 +185,6 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 
 	while (readl(&regs->prsstat) & PRSSTAT_DLA);
 
-	/* Wait at least 8 SD clock cycles before the next command */
-	/*
-	 * Note: This is way more than 8 cycles, but 1ms seems to
-	 * resolve timing issues with some cards
-	 */
-	udelay(10000);
-
 	/* Set up for a data transfer if we have one */
 	if (data) {
 		int err;
@@ -232,9 +225,18 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	irqstat = readl(&regs->irqstat);
 	writel(irqstat, &regs->irqstat);
 
-	/* Reset CMD portion on error */
+	/* Reset CMD and DATA portions on error */
 	if (irqstat & (CMD_ERR | IRQSTAT_CTOE)) {
 		writel(readl(&regs->sysctl) | SYSCTL_RSTC, &regs->sysctl);
+		while (readl(&regs->sysctl) & SYSCTL_RSTC)
+			;
+
+		if (data) {
+			writel(readl(&regs->sysctl) | SYSCTL_RSTD,
+				&regs->sysctl);
+			while (readl(&regs->sysctl) & SYSCTL_RSTD)
+				;
+		}
 
 		/* Restore auto-clock gate if error */
 		if (!cfg->is_usdhc && !data && (cmd->resp_type & MMC_RSP_BUSY))
@@ -327,6 +329,9 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	if (readl(&regs->irqstat) & 0xFFFF0000) {
 		writel(readl(&regs->sysctl) | SYSCTL_RSTC | SYSCTL_RSTD,
 			&regs->sysctl);
+		while (readl(&regs->sysctl) & (SYSCTL_RSTC | SYSCTL_RSTD))
+			;
+
 		return COMM_ERR;
 	}
 	writel(-1, &regs->irqstat);
