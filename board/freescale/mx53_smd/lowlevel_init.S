@@ -101,6 +101,21 @@
 
 	ldr r0, CCM_BASE_ADDR_W
 
+	/* Gate of clocks to the peripherals first */
+	ldr r1, =0x3FFFFFFF
+	str r1, [r0, #CLKCTL_CCGR0]
+	ldr r1, =0x0
+	str r1, [r0, #CLKCTL_CCGR1]
+	str r1, [r0, #CLKCTL_CCGR2]
+	str r1, [r0, #CLKCTL_CCGR3]
+	str r1, [r0, #CLKCTL_CCGR7]
+	ldr r1, =0x00030000
+	str r1, [r0, #CLKCTL_CCGR4]
+	ldr r1, =0x00FFF030
+	str r1, [r0, #CLKCTL_CCGR5]
+	ldr r1, =0x0F00030F
+	str r1, [r0, #CLKCTL_CCGR6]
+
 	/* Switch ARM to step clock */
 	mov r1, #0x4
 	str r1, [r0, #CLKCTL_CCSR]
