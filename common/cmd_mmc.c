@@ -113,7 +113,7 @@ static void print_mmcinfo(struct mmc *mmc)
 
 	printf("High Capacity: %s\n", mmc->high_capacity ? "Yes" : "No");
 	puts("Capacity: ");
-	print_size(mmc->capacity, "\n");
+	printf("%lld Bytes\n", mmc->capacity);
 
 	printf("Bus Width: %d-bit %s\n", mmc->bus_width,
 		(mmc->card_caps & EMMC_MODE_4BIT_DDR ||
