@@ -240,13 +240,11 @@
         mov fp, lr
 
 	mov r5, #0x00
-        mov r2, #0x00
         mov r1, #CSD0_BASE_ADDR
-        bl setup_sdram_bank
+        bl setup_sdram_ddr2_bank
         cmp r3, #0x0
         orreq r5, r5, #1
-        eorne r2, r2, #0x1
-        blne setup_sdram_bank
+        blne setup_sdram_mddr_bank
 
         mov lr, fp
 
@@ -347,22 +345,360 @@ skip_sdram_setup:
  * r0: ESDCTL control base, r1: sdram slot base
  * r2: DDR type(0:DDR2, 1:MDDR) r3, r4:working base
  */
-setup_sdram_bank:
+setup_sdram_ddr2_bank:
+	/*
+	 * DDR2 initialization
+	 */
+	ldr	r0, =ESDCTL_BASE_ADDR
+
+	/* Configure for DDR2 */
+	ldr     r3, =0x30E      /* bit 9 is DDR2_EN */
+	str     r3, [r0, #ESDCTL_ESDMISC_OFFSET]
+	ldr	r3, =0x304
+	str     r3, [r0, #ESDCTL_ESDMISC_OFFSET]
+
+	/*----------------------------------------
+	 * Configure DDR2 memory on CSD0
+	 *----------------------------------------*/
+	ldr     r1, =CSD0_BASE_ADDR
+
+	/* Configure timing parameters */
+	ldr     r3, =ESDCTL_DDR2_CONFIG // Moderate
+	str     r3, [r0, #ESDCTL_ESDCFG0_OFFSET]
+
+	/*
+	 * Set precharge command
+	 *
+	 *   DSIZ - 32-bit memory width (2 << 16)            = 0x00020000
+	 *   COL - 10 column addresses (2 << 20)             = 0x00200000
+	 *   ROW - 13 Row addresses (2 << 24)                = 0x02000000
+	 *   SP - User mode access (0 << 27)                 = 0x00000000
+	 *   SMODE - Precharge command (1 << 28)             = 0x10000000
+	 *   SDE - Enable controller (1 << 31)               = 0x80000000
+	 *                                                   ------------
+	 *                                                     0x92220000
+	 */
+	ldr     r3, =ESDCTL_0x92220000
+	str     r3, [r0, #ESDCTL_ESDCTL0_OFFSET]
+
+	/* Access SDRAM with A10 high to precharge all banks */
+	ldr     r3, =0x0
+	strb    r3, [r1, #ESDCTL_PRECHARGE]
+
+	/*
+	 * Set load mode command
+	 *
+	 *   DSIZ - 32-bit memory width (2 << 16)            = 0x00020000
+	 *   COL - 10 column addresses (2 << 20)             = 0x00200000
+	 *   ROW - 13 Row addresses (2 << 24)                = 0x02000000
+	 *   SP - User mode access (0 << 27)                 = 0x00000000
+	 *   SMODE - Load mode command (3 << 28)             = 0x30000000
+	 *   SDE - Enable controller (1 << 31)               = 0x80000000
+	 *                                                   ------------
+	 *                                                     0xB2220000
+	 */
+	ldr     r3, =ESDCTL_0xB2220000
+	str     r3, [r0, #ESDCTL_ESDCTL0_OFFSET]
+
+	/* DDR2 EMR2 */
+	ldr     r3, =0x0
+	ldr     r4, =ESDCTL_DDR2_EMR2
+	strb    r3, [r1, r4]
+
+	/* DDR2 EMR3 */
+	ldr     r3, =0x0
+	ldr     r4, =ESDCTL_DDR2_EMR3
+	strb    r3, [r1, r4]
+
+	/* DDR2 EMR1: enable DLL, disable /DQS */
+	ldr     r3, =0x0
+	ldr     r4, =ESDCTL_DDR2_EN_DLL
+	strb    r3, [r1, r4]
+
+	/* DDR2 MR: reset DLL, BL=8, CL=3 */
+	ldr     r3, =0x0
+	ldr	r4, =ESDCTL_DDR2_RESET_DLL
+	strb    r3, [r1, r4]
+
+	/*
+	 * Set precharge command
+	 *
+	 *   DSIZ - 32-bit memory width (2 << 16)            = 0x00020000
+	 *   COL - 10 column addresses (2 << 20)             = 0x00200000
+	 *   ROW - 13 Row addresses (2 << 24)                = 0x02000000
+	 *   SP - User mode access (0 << 27)                 = 0x00000000
+	 *   SMODE - Precharge command (1 << 28)             = 0x10000000
+	 *   SDE - Enable controller (1 << 31)               = 0x80000000
+	 *                                                   ------------
+	 *                                                     0x92220000
+	 */
+	ldr     r3, =ESDCTL_0x92220000
+	str     r3, [r0, #ESDCTL_ESDCTL0_OFFSET]
+
+	/* Access SDRAM with A10 high to precharge all banks */
+	ldr     r3, =0x0
+	ldr	r4, =ESDCTL_DDR2_EN_DLL
+	strb    r3, [r1, r4]
+
+	/*
+	 * Set autorefresh command
+	 *
+	 *   DSIZ - 32-bit memory width (2 << 16)            = 0x00020000
+	 *   COL - 10 column addresses (2 << 20)             = 0x00200000
+	 *   ROW - 13 Row addresses (2 << 24)                = 0x02000000
+	 *   SP - User mode access (0 << 27)                 = 0x00000000
+	 *   SMODE - Autorefresh command (2 << 28)           = 0x20000000
+	 *   SDE - Enable controller (1 << 31)               = 0x80000000
+	 *                                                   ------------
+	 *                                                     0xA2220000
+	 */
+	ldr     r3, =ESDCTL_0xA2220000
+	str     r3, [r1, #ESDCTL_ESDCTL0_OFFSET]
+
+	/* Use writes to refresh all banks of SDRAM */
+	ldr     r3, =0x0
+	strb    r3, [r1]
+	strb    r3, [r1]
+
+	/*
+	 * Set load mode command
+	 *
+	 *   DSIZ - 32-bit memory width (2 << 16)            = 0x00020000
+	 *   COL - 10 column addresses (2 << 20)             = 0x00200000
+	 *   ROW - 13 Row addresses (2 << 24)                = 0x02000000
+	 *   SP - User mode access (0 << 27)                 = 0x00000000
+	 *   SMODE - Load mode command (3 << 28)             = 0x30000000
+	 *   SDE - Enable controller (1 << 31)               = 0x80000000
+	 *                                                   ------------
+	 *                                                     0xB2220000
+	 */
+	ldr     r3, =ESDCTL_0xB2220000
+	str     r3, [r0, #ESDCTL_ESDCTL0_OFFSET]
+
+	/* DDR2 MR: end DLL reset, BL=8, CL=3 */
+	ldr     r3, =0x0
+	strb    r3, [r1, #ESDCTL_DDR2_MR]
+
+	/* Hold for more than 200 cycles */
+	ldr     r3, =0x100
+hold_1:
+	subs    r3, r3, #1
+	bne     hold_1
+
+	/* DDR2 EMR1: OCD calibration default */
+	ldr     r3, =0x0
+	ldr     r4, =ESDCTL_DDR2_OCD_DEFAULT
+	strb    r3, [r1, r4]
+
+	/* DDR2 EMR1: OCD calibration exit, enable DLL, disable /DQS */
+	ldr     r3, =0x0
+	ldr     r4, =ESDCTL_DDR2_EN_DLL
+	strb    r3, [r1, r4]
+
+	/*
+	 * Set normal mode command
+	 *
+	 *   PRCT - Precharge timer disabled (0 << 5)        = 0x00000000
+	 *   BL - Burst of 8 for SDR/DDR (1 << 7)            = 0x00000080
+	 *   FP - No full page mode (0 << 8)                 = 0x00000000
+	 *   PWDT - Power down timeout disabled (3 << 10)    = 0x00000000
+	 *   SREFR - 4 rows refreshed each clock (3 << 13)   = 0x00006000
+	 *   DSIZ - 32-bit memory width (2 << 16)            = 0x00020000
+	 *   COL - 10 column addresses (2 << 20)             = 0x00200000
+	 *   ROW - 13 Row addresses (2 << 24)                = 0x02000000
+	 *   SP - User mode access (0 << 27)                 = 0x00000000
+	 *   SMODE - Normal mode command (0 << 28)           = 0x00000000
+	 *   SDE - Enable controller (1 << 31)               = 0x80000000
+	 *                                                   ------------
+	 *                                                     0x82226080
+	 */
+	ldr     r3, =ESDCTL_0x82226080
+	str     r3, [r0, #ESDCTL_ESDCTL0_OFFSET]
+
+#ifdef CONFIG_MX35_256M_RAM
+	/*----------------------------------------
+	 * Configure DDR2 memory on CSD1
+	 *----------------------------------------*/
+	ldr     r1, =CSD1_BASE_ADDR
+	/* Configure timing parameters */
+	ldr     r3, =ESDCTL_DDR2_CONFIG /* Moderate */
+	str     r3, [r0, #ESDCTL_ESDCFG1_OFFSET]
+
+	/*
+	 * Set precharge command
+	 *
+	 *   DSIZ - 32-bit memory width (2 << 16)            = 0x00020000
+	 *   COL - 10 column addresses (2 << 20)             = 0x00200000
+	 *   ROW - 13 Row addresses (2 << 24)                = 0x02000000
+	 *   SP - User mode access (0 << 27)                 = 0x00000000
+	 *   SMODE - Precharge command (1 << 28)             = 0x10000000
+	 *   SDE - Enable controller (1 << 31)               = 0x80000000
+	 *                                                   ------------
+	 *                                                     0x92220000
+	 */
+	ldr     r3, =ESDCTL_0x92220000
+	str     r3, [r0, #ESDCTL_ESDCTL1_OFFSET]
+
+	/* Access SDRAM with A10 high to precharge all banks */
+	ldr     r3, =0x0
+	ldr	r4, =ESDCTL_DDR2_EN_DLL
+	strb    r3, [r1, r4]
+
+	/*
+	 * Set load mode command
+	 *
+	 *   DSIZ - 32-bit memory width (2 << 16)            = 0x00020000
+	 *   COL - 10 column addresses (2 << 20)             = 0x00200000
+	 *   ROW - 13 Row addresses (2 << 24)                = 0x02000000
+	 *   SP - User mode access (0 << 27)                 = 0x00000000
+	 *   SMODE - Load mode command (3 << 28)             = 0x30000000
+	 *   SDE - Enable controller (1 << 31)               = 0x80000000
+	 *                                                   ------------
+	 *                                                     0xB2220000
+	 */
+	ldr     r3, =ESDCTL_0xB2220000
+	str     r3, [r0, #ESDCTL_ESDCTL1_OFFSET]
+
+	/* DDR2 EMR2 */
+	ldr     r3, =0x0
+	ldr     r4, =ESDCTL_DDR2_EMR2
+	strb    r3, [r1, r4]
+
+	/* DDR2 EMR3 */
+	ldr     r3, =0x0
+	ldr     r4, =ESDCTL_DDR2_EMR3
+	strb    r3, [r1, r4]
+
+	/* DDR2 EMR1: enable DLL, disable /DQS */
+	ldr     r3, =0x0
+	ldr     r4, =ESDCTL_DDR2_EN_DLL
+	strb    r3, [r1, r4]
+
+	/* DDR2 MR: reset DLL, BL=8, CL=3 */
+	ldr     r3, =0x0
+	strb    r3, [r1, #ESDCTL_DDR2_RESET_DLL]
+
+	/*
+	 * Set precharge command
+	 *
+	 *   DSIZ - 32-bit memory width (2 << 16)            = 0x00020000
+	 *   COL - 10 column addresses (2 << 20)             = 0x00200000
+	 *   ROW - 13 Row addresses (2 << 24)                = 0x02000000
+	 *   SP - User mode access (0 << 27)                 = 0x00000000
+	 *   SMODE - Precharge command (1 << 28)             = 0x10000000
+	 *   SDE - Enable controller (1 << 31)               = 0x80000000
+	 *                                                   ------------
+	 *                                                     0x92220000
+	 */
+	ldr     r3, =ESDCTL_0x92220000
+	str     r3, [r0, #ESDCTL_ESDCTL1_OFFSET]
+
+	/* Access SDRAM with A10 high to precharge all banks */
+	ldr     r3, =0x0
+	strb    r3, [r1, #ESDCTL_PRECHARGE]
+
+	/*
+	 * Set autorefresh command
+	 *
+	 *   DSIZ - 32-bit memory width (2 << 16)            = 0x00020000
+	 *   COL - 10 column addresses (2 << 20)             = 0x00200000
+	 *   ROW - 13 Row addresses (2 << 24)                = 0x02000000
+	 *   SP - User mode access (0 << 27)                 = 0x00000000
+	 *   SMODE - Autorefresh command (2 << 28)           = 0x20000000
+	 *   SDE - Enable controller (1 << 31)               = 0x80000000
+	 *                                                   ------------
+	 *                                                     0xA2220000
+	 */
+	ldr     r3, =ESDCTL_0xA2220000
+	str     r3, [r0, #ESDCTL_ESDCTL1_OFFSET]
+
+	/* Use writes to refresh all banks of SDRAM */
+	ldr     r3, =0x0
+	strb    r3, [r1]
+	strb    r3, [r1]
+
+	/*
+	 * Set load mode command
+	 *
+	 *   DSIZ - 32-bit memory width (2 << 16)            = 0x00020000
+	 *   COL - 10 column addresses (2 << 20)             = 0x00200000
+	 *   ROW - 13 Row addresses (2 << 24)                = 0x02000000
+	 *   SP - User mode access (0 << 27)                 = 0x00000000
+	 *   SMODE - Load mode command (3 << 28)             = 0x30000000
+	 *   SDE - Enable controller (1 << 31)               = 0x80000000
+	 *                                                   ------------
+	 *                                                     0xB2220000
+	 *
+	 */
+	ldr     r3, =ESDCTL_0xB2220000
+	str     r3, [r0, #ESDCTL_ESDCTL1_OFFSET]
+
+	/* DDR2 MR: end DLL reset, BL=8, CL=3 */
+	ldr     r3, =0x0
+	strb    r3, [r1, #ESDCTL_DDR2_MR]
+
+	/* Hold for more than 200 cycles */
+	ldr     r3, =0x100
+hold1:
+	subs    r3, r3, #1
+	bne     hold1
+
+	/* DDR2 EMR1: OCD calibration default */
+	ldr     r3, =0x0
+	ldr     r4, =ESDCTL_DDR2_OCD_DEFAULT
+	strb    r3, [r1, r4]
+
+	/* DDR2 EMR1: OCD calibration exit, enable DLL, disable /DQS */
+	ldr     r3, =0x0
+	ldr     r4, =ESDCTL_DDR2_EN_DLL
+	strb    r3, [r1, r4]
+
+	/*
+	 * Set normal mode command
+	 *
+	 *   PRCT - Precharge timer disabled (0 << 5)        = 0x00000000
+	 *   BL - Burst of 8 for SDR/DDR (1 << 7)            = 0x00000080
+	 *   FP - No full page mode (0 << 8)                 = 0x00000000
+	 *   PWDT - Power down timeout disabled (3 << 10)    = 0x00000000
+	 *   SREFR - 4 rows refreshed each clock (3 << 13)   = 0x00006000
+	 *   DSIZ - 32-bit memory width (2 << 16)            = 0x00020000
+	 *   COL - 10 column addresses (2 << 20)             = 0x00200000
+	 *   ROW - 13 Row addresses (2 << 24)                = 0x02000000
+	 *   SP - User mode access (0 << 27)                 = 0x00000000
+	 *   SMODE - Normal mode command (0 << 28)           = 0x00000000
+	 *   SDE - Enable controller (1 << 31)               = 0x80000000
+	 *                                                   ------------
+	 *                                                     0x82226080
+	 */
+	ldr     r3, =ESDCTL_0x82226080
+	str     r3, [r0, #ESDCTL_ESDCTL1_OFFSET]
+#endif
+
+	str r3, [r1, #0x100]
+	ldr r4, [r1, #0x100]
+	cmp r3, r4
+	movne r3, #1
+	moveq r3, #0
+
+	mov pc, lr
+
+/*
+ * r0: ESDCTL control base, r1: sdram slot base
+ * r2: DDR type(0:DDR2, 1:MDDR) r3, r4:working base
+ */
+setup_sdram_mddr_bank:
         mov r3, #0xE /*0xA + 0x4*/
-        tst r2, #0x1
-        orreq r3, r3, #0x300 /*DDR2*/
         str r3, [r0, #0x10]
         bic r3, r3, #0x00A
         str r3, [r0, #0x10]
-        beq 2f
 
         mov r3, #0x20000
-1:      subs r3, r3, #1
+1:
+	subs r3, r3, #1
         bne 1b
 
-2:      tst r2, #0x1
-        ldreq r3, =ESDCTL_DDR2_CONFIG
-        ldrne r3, =ESDCTL_MDDR_CONFIG
+2:
+        ldr r3, =ESDCTL_MDDR_CONFIG
         cmp r1, #CSD1_BASE_ADDR
         strlo r3, [r0, #0x4]
         strhs r3, [r0, #0xC]
@@ -374,32 +710,6 @@ setup_sdram_bank:
         ldr r4, =ESDCTL_PRECHARGE
         strb r3, [r1, r4]
 
-        tst r2, #0x1
-        bne skip_set_mode
-
-        cmp r1, #CSD1_BASE_ADDR
-        ldr r3, =ESDCTL_0xB2220000
-        strlo r3, [r0, #0x0]
-        strhs r3, [r0, #0x8]
-        mov r3, #0xDA
-        ldr r4, =ESDCTL_DDR2_EMR2
-        strb r3, [r1, r4]
-        ldr r4, =ESDCTL_DDR2_EMR3
-        strb r3, [r1, r4]
-        ldr r4, =ESDCTL_DDR2_EN_DLL
-        strb r3, [r1, r4]
-        ldr r4, =ESDCTL_DDR2_RESET_DLL
-        strb r3, [r1, r4]
-
-        ldr r3, =ESDCTL_0x92220000
-        strlo r3, [r0, #0x0]
-        strhs r3, [r0, #0x8]
-        mov r3, #0xDA
-        ldr r4, =ESDCTL_PRECHARGE
-        strb r3, [r1, r4]
-
-skip_set_mode:
-        cmp r1, #CSD1_BASE_ADDR
         ldr r3, =ESDCTL_0xA2220000
         strlo r3, [r0, #0x0]
         strhs r3, [r0, #0x8]
@@ -410,25 +720,17 @@ skip_set_mode:
         ldr r3, =ESDCTL_0xB2220000
         strlo r3, [r0, #0x0]
         strhs r3, [r0, #0x8]
-        tst r2, #0x1
-        ldreq r4, =ESDCTL_DDR2_MR
-        ldrne r4, =ESDCTL_MDDR_MR
+        ldr r4, =ESDCTL_MDDR_MR
        	mov r3, #0xDA
         strb r3, [r1, r4]
-        ldreq r4, =ESDCTL_DDR2_OCD_DEFAULT
-        streqb r3, [r1, r4]
-        ldreq r4, =ESDCTL_DDR2_EN_DLL
-        ldrne r4, =ESDCTL_MDDR_EMR
+        ldr r4, =ESDCTL_MDDR_EMR
         strb r3, [r1, r4]
 
-        cmp r1, #CSD1_BASE_ADDR
         ldr r3, =ESDCTL_0x82226080
         strlo r3, [r0, #0x0]
         strhs r3, [r0, #0x8]
 
-        tst r2, #0x1
-        moveq r4, #0x20000
-        movne r4, #0x200
+        mov r4, #0x200
 1:      subs r4, r4, #1
         bne 1b
 

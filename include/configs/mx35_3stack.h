@@ -185,11 +185,21 @@
 /*-----------------------------------------------------------------------
  * Physical Memory Map
  */
-#define CONFIG_NR_DRAM_BANKS	1
+#define CONFIG_MX35_256M_RAM
 #define PHYS_SDRAM_1		CSD0_BASE_ADDR
 #define PHYS_SDRAM_1_SIZE	(128 * 1024 * 1024)
-#define iomem_valid_addr(addr, size) \
-	(addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
+#ifdef CONFIG_MX35_256M_RAM
+	#define CONFIG_NR_DRAM_BANKS	2
+	#define PHYS_SDRAM_2		CSD1_BASE_ADDR
+	#define PHYS_SDRAM_2_SIZE	(128 * 1024 * 1024)
+	#define iomem_valid_addr(addr, size) \
+		((addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)) \
+		|| (addr >= PHYS_SDRAM_2 && addr <= (PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE)))
+#else
+	#define CONFIG_NR_DRAM_BANKS	1
+	#define iomem_valid_addr(addr, size) \
+		(addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
+#endif
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization

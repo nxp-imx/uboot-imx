@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -121,6 +121,9 @@ void board_mmu_init(void)
 	X_ARM_MMU_SECTION(0x900, 0x900, 0x80,
 			  ARM_CACHEABLE, ARM_BUFFERABLE,
 			  ARM_ACCESS_PERM_RW_RW); /* SDRAM 1:128M*/
+	X_ARM_MMU_SECTION(0x900, 0x980, 0x80,
+			  ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			  ARM_ACCESS_PERM_RW_RW); /* SDRAM 1:128M*/
 	X_ARM_MMU_SECTION(0xA00, 0xA00, 0x40,
 			  ARM_CACHEABLE, ARM_BUFFERABLE,
 			  ARM_ACCESS_PERM_RW_RW); /* Flash */
@@ -141,6 +144,10 @@ int dram_init(void)
 {
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
+#ifdef CONFIG_MX35_256M_RAM
+	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
+	gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
+#endif
 
 	return 0;
 }

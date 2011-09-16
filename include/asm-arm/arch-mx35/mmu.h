@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2004-2011 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -138,10 +138,11 @@ union ARM_MMU_FIRST_LEVEL_DESCRIPTOR {
  */
 inline unsigned long iomem_to_phys(unsigned long virt)
 {
-	if (virt < 0x08000000)
-		return (unsigned long)(virt | PHYS_SDRAM_1);
-
-	if ((virt & 0xF0000000) == PHYS_SDRAM_1)
+	if (((virt & 0xF0000000) == PHYS_SDRAM_1)
+#ifdef CONFIG_MX35_256M_RAM
+		|| ((virt & 0xF0000000) == PHYS_SDRAM_2)
+#endif
+		)
 		return (unsigned long)(virt & (~0x08000000));
 
 	return (unsigned long)virt;
@@ -161,7 +162,11 @@ void *__ioremap(unsigned long offset, size_t size, unsigned long flags)
 	if (1 == flags) {
 		/* 0x88000000~0x87FFFFFF is uncacheable meory
 		space which is mapped to SDRAM */
-		if ((offset & 0xF0000000) == PHYS_SDRAM_1)
+		if ((offset & 0xF0000000) == PHYS_SDRAM_1
+#ifdef CONFIG_MX35_256M_RAM
+			|| ((offset & 0xF0000000) == PHYS_SDRAM_2)
+#endif
+			)
 			return (void *)(offset | 0x08000000);
 		else
 			return NULL;
