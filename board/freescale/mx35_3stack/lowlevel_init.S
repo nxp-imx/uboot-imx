@@ -83,6 +83,37 @@
  * The PACR default values are good.*/
 .macro init_aips
 	/*
+	 * Clear the on and off peripheral modules Supervisor Protect bit
+	 * for SDMA to access them. Did not change the AIPS control registers
+	 * (offset 0x20) access type
+	 */
+	ldr r0, =AIPS1_BASE_ADDR
+	ldr r1, =AIPS_PACR_CONFIG
+	str r1, [r0, #0x24]
+	str r1, [r0, #0x28]
+	str r1, [r0, #0x2C]
+	str r1, [r0, #0x40]
+	str r1, [r0, #0x44]
+	str r1, [r0, #0x48]
+	str r1, [r0, #0x4C]
+	str r1, [r0, #0x50]
+	ldr r0, =AIPS2_BASE_ADDR
+	str r1, [r0, #0x24]
+	str r1, [r0, #0x28]
+	str r1, [r0, #0x2C]
+	str r1, [r0, #0x40]
+	str r1, [r0, #0x44]
+	str r1, [r0, #0x48]
+	str r1, [r0, #0x4C]
+	str r1, [r0, #0x50]
+
+	ldr r0, =AIPS1_BASE_ADDR
+	ldr r1, =AIPS_PACR0_CONFIG
+	str r1, [r0, #0x20]
+	ldr r0, =AIPS2_BASE_ADDR
+	str r1, [r0, #0x20]
+
+	/*
 	 * Set all MPROTx to be non-bufferable, trusted for R/W,
 	 * not forced to user-mode.
 	 */
@@ -94,24 +125,6 @@
 	str r1, [r0, #0x00]
 	str r1, [r0, #0x04]
 
-	/*
-	 * Clear the on and off peripheral modules Supervisor Protect bit
-	 * for SDMA to access them. Did not change the AIPS control registers
-	 * (offset 0x20) access type
-	 */
-	ldr r0, =AIPS1_BASE_ADDR
-	ldr r1, =AIPS_OPACR_CONFIG
-	str r1, [r0, #0x40]
-	str r1, [r0, #0x44]
-	str r1, [r0, #0x48]
-	str r1, [r0, #0x4C]
-	str r1, [r0, #0x50]
-	ldr r0, =AIPS2_BASE_ADDR
-	str r1, [r0, #0x40]
-	str r1, [r0, #0x44]
-	str r1, [r0, #0x48]
-	str r1, [r0, #0x4C]
-	str r1, [r0, #0x50]
 .endm /* init_aips */
 
 /* MAX (Multi-Layer AHB Crossbar Switch) setup */

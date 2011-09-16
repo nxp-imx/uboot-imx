@@ -33,14 +33,15 @@
 #define L2CC_AUX_CTL_CONFIG	0x00030024
 
 #define AIPS_MPR_CONFIG		0x77777777
-#define AIPS_OPACR_CONFIG	0x00000000
+#define AIPS_PACR_CONFIG	0x00000000
+#define AIPS_PACR0_CONFIG	0x40000000
 
 /* MPR - priority is M4 > M2 > M3 > M5 > M0 > M1 */
-#define MAX_MPR_CONFIG		0x00302154
+#define MAX_MPR_CONFIG		0x00032154
 /* SGPCR - always park on last master */
 #define MAX_SGPCR_CONFIG	0x00000010
 /* MGPCR - restore default values */
-#define MAX_MGPCR_CONFIG	0x00000000
+#define MAX_MGPCR_CONFIG	0x00000001
 
 /*
  * M3IF Control Register (M3IFCTL)
@@ -55,10 +56,10 @@
  *                                               ------------
  *                                                 0x00000040
  */
-#define M3IF_CONFIG	0x00000040
+#define M3IF_CONFIG	0x000000C0
 
 #define DBG_BASE_ADDR		WEIM_CTRL_CS5
-#define DBG_CSCR_U_CONFIG	0x0000D843
+#define DBG_CSCR_U_CONFIG	0x0000D000
 #define DBG_CSCR_L_CONFIG	0x22252521
 #define DBG_CSCR_A_CONFIG	0x22220A00
 
