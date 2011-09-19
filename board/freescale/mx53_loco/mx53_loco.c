@@ -844,6 +844,17 @@ int board_late_init(void)
 			printf("%s:i2c_write:error\n", __func__);
 			return -1;
 		}
+		/*change global reset time as 4s*/
+		if (i2c_read(0x8, 15, 1, &buf[0], 3)) {
+			printf("%s:i2c_read:error\n", __func__);
+			return -1;
+		}
+		buf[1] |= 0x1;
+		buf[1] &= ~0x2;
+		if (i2c_write(0x8, 15, 1, buf, 3)) {
+			printf("%s:i2c_write:error\n", __func__);
+			return -1;
+		}
 
 		/* set up rev #1 for loco/ripley board */
 		setup_board_rev(get_board_rev_from_fuse());

@@ -356,6 +356,17 @@ void setup_pmic_voltages(void)
 		buf[0] = (buf[0] & 0xf8) | 0x7;
 		if (i2c_write(0x8, 51, 1, buf, 3))
 			printf("%s:i2c_write 51:error\n", __func__);
+		/*change global reset time as 4s*/
+		if (i2c_read(0x8, 15, 1, &buf[0], 3)) {
+			printf("%s:i2c_read:error\n", __func__);
+			return -1;
+		}
+		buf[1] |= 0x1;
+		buf[1] &= ~0x2;
+		if (i2c_write(0x8, 15, 1, buf, 3)) {
+			printf("%s:i2c_write:error\n", __func__);
+			return -1;
+		}
 
 	} else
 		printf("Error: Dont't found mc34708 on board.\n");
