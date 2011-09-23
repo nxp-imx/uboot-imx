@@ -84,7 +84,7 @@
 	"bootargs_mmc=setenv bootargs ${bootargs} root=/dev/mmcblk0p3 " \
 		"rw rootwait ip=dhcp fec_mac=${ethaddr}\0" \
 	"bootcmd_mmc=run bootargs_mmc; " \
-		"mmc dev 0"	\
+		"mmc dev 0; "	\
 		"mmc read ${loadaddr} 100 3000; bootm\0" \
 
 /*

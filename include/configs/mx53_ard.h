@@ -135,7 +135,7 @@
 		"bootargs_mmc=setenv bootargs ${bootargs} ip=dhcp "     \
 			"root=/dev/mmcblk0p1 rootwait rw\0"                \
 		"bootcmd_mmc=run bootargs_base bootargs_mmc; "		\
-			"mmc dev 0"					\
+			"mmc dev 0;"					\
 			"mmc read ${loadaddr} 0x800 0x1800; bootm\0"   \
 		"bootcmd=run bootcmd_net\0"                             \
 

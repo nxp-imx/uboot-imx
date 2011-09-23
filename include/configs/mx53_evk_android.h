@@ -175,7 +175,7 @@
 			"video=mxcdi0fb:RGB565,800x480M@55 calibration\0"	\
 		"bootcmd=run bootcmd_SD \0"				\
 		"bootcmd_SD=run bootargs_base bootargs_android;"	\
-			"mmc dev 0"					\
+			"mmc dev 0;"					\
 			"mmc read ${loadaddr} 0x800 2000;"		\
 			"mmc read ${rd_loadaddr} 0x3000 0x258;"		\
 			"bootm ${loadaddr} ${rd_loadaddr}\0"		\
@@ -183,7 +183,7 @@
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
 		"bootcmd_android_recovery=run bootargs_base"		\
 			" bootargs_android_recovery;"			\
-			"mmc dev 0"					\
+			"mmc dev 0;"					\
 			"mmc read ${loadaddr} 0x800 0x2000;bootm\0"	\
 		"bootargs_android_recovery=setenv bootargs ${bootargs}" \
 			" init=/init root=/dev/mmcblk0p4 rootfs=ext4\0"	\
