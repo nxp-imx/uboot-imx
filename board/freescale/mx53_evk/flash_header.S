@@ -147,11 +147,6 @@ plugin_start:
 	REG_LD_AND_STR_OP(64, 0x040, 0x04b80003)
 	REG_LD_AND_STR_END(ESDCTL_BASE_ADDR)
 
-	/* For TO2 only, increase LD0 for VDIG_PLL to 1.3V */
-	REG_LD_AND_STR_INIT(IOMUXC_BASE_ADDR)
-	REG_LD_AND_STR_OP(52, 0x4, 0x00194005)
-	REG_LD_AND_STR_END(IOMUXC_BASE_ADDR)
-
 /*
  *  The following is to fill in those arguments for this ROM function
  * pu_irom_hwcnfg_setup(void **start, size_t *bytes, const void *boot_data)
