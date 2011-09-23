@@ -186,7 +186,7 @@
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
 		"bootcmd_android=run bootargs_base bootargs_android; "	\
-			"mmc dev 0"					\
+			"mmc dev 0;"					\
 			"mmc read ${loadaddr} 0x800 0x1280; "		\
 			"mmc read ${rd_loadaddr} 0x2000 0x258; "	\
 			"bootm ${loadaddr} ${rd_loadaddr}\0"		\
