@@ -210,8 +210,11 @@ static inline void setup_soc_rev(void)
 		system_rev |= BOARD_REV_5;
 		break;
 	case 0x01:
-	default:
+	case 0x00:
 		system_rev |= BOARD_REV_4;
+		break;
+	default:
+		system_rev |= BOARD_REV_UNKNOWN;
 	}
 }
 
