@@ -355,6 +355,7 @@
 #define BOARD_REV_3             0x200
 #define BOARD_REV_4             0x300
 #define BOARD_REV_5             0x400
+#define BOARD_REV_UNKNOWN       0xf00
 
 #define PLATFORM_ICGC           0x14
 
