@@ -34,7 +34,9 @@ COBJS-$(CONFIG_IMX_PWM) += imx_pwm.o
 COBJS-$(CONFIG_NS87308) += ns87308.o
 COBJS-$(CONFIG_STATUS_LED) += status_led.o
 COBJS-$(CONFIG_TWL4030_LED) += twl4030_led.o
-COBJS-$(CONFIG_FSL_PMIC) += fsl_pmic.o
+COBJS-$(CONFIG_PMIC) += pmic_core.o
+COBJS-$(CONFIG_PMIC_I2C) += pmic_i2c.o
+COBJS-$(CONFIG_PMIC_SPI) += pmic_spi.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
