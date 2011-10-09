@@ -3307,6 +3307,7 @@ mx53_evk_config      : unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx53_evk freescale mx53
 
 mx6q_sabreauto_config			\
+mx6q_sabreauto_mfg_config		\
 mx6q_sabreauto_lpddr2_config	\
 mx6q_sabreauto_iram_config	: unconfig
 	@[ -z "$(findstring iram_,$@)" ] || \
