@@ -3307,6 +3307,7 @@ mx53_evk_config      : unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx53_evk freescale mx53
 
 mx6q_sabreauto_config			\
+mx6q_sabreauto_lpddr2_config	\
 mx6q_sabreauto_iram_config	: unconfig
 	@[ -z "$(findstring iram_,$@)" ] || \
 		{ echo "TEXT_BASE = 0x00910000" >$(obj)board/freescale/mx6q_sabreauto/config.tmp ; \
