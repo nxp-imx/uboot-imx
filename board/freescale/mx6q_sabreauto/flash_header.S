@@ -55,8 +55,8 @@ plugin:           .word 0x0
 
 #ifdef CONFIG_LPDDR2
 
-dcd_hdr:          .word 0x40e803D2 /* Tag=0xD2, Len=124*8 + 4 + 4, Ver=0x40 */
-write_dcd_cmd:    .word 0x04e403CC /* Tag=0xCC, Len=124*8 + 4, Param=0x04 */
+dcd_hdr:          .word 0x400804D2 /* Tag=0xD2, Len=128*8 + 4 + 4, Ver=0x40 */
+write_dcd_cmd:    .word 0x040404CC /* Tag=0xCC, Len=128*8 + 4, Param=0x04 */
 
 /* DCD */
 MXC_DCD_ITEM(1, CCM_BASE_ADDR + 0x18, 0x60324)
@@ -218,6 +218,14 @@ MXC_DCD_ITEM(122, MMDC_P1_BASE_ADDR + 0x8b8, 0x800)
 
 MXC_DCD_ITEM(123, MMDC_P0_BASE_ADDR + 0x1c, 0x0)
 MXC_DCD_ITEM(124, MMDC_P1_BASE_ADDR + 0x1c, 0x0)
+
+MXC_DCD_ITEM(125, MMDC_P0_BASE_ADDR + 0x404, 0x00011006)
+
+/* enable AXI cache for VDOA/VPU/IPU */
+MXC_DCD_ITEM(126, IOMUXC_BASE_ADDR + 0x010, 0xf00000ff)
+/* set IPU Qos=0x7 */
+MXC_DCD_ITEM(127, IOMUXC_BASE_ADDR + 0x018, 0x00070007)
+MXC_DCD_ITEM(128, IOMUXC_BASE_ADDR + 0x01c, 0x00070007)
 
 #else
 
