@@ -31,6 +31,41 @@
     str     r0, [r1, #0x100]
 .endm /* init_l2cc */
 
+/* invalidate the D-CACHE */
+.macro inv_dcache
+    mov     r0,#0
+    mcr     p15,2,r0,c0,c0,0  /* cache size selection register, select dcache */
+    mrc     p15,1,r0,c0,c0,0  /* cache size ID register */
+    mov     r0,r0,ASR #13
+    ldr     r3,=0xfff
+    and     r0,r0,r3
+    cmp     r0,#0x7f
+    moveq   r6,#0x1000
+    beq     size_done
+    cmp     r0,#0xff
+    moveq   r6,#0x2000
+    movne   r6,#0x4000
+
+size_done:
+    mov     r2,#0
+    mov     r3,#0x40000000
+    mov     r4,#0x80000000
+    mov     r5,#0xc0000000
+
+d_inv_loop:
+    mcr     p15,0,r2,c7,c6,2  /* invalidate dcache by set / way */
+    mcr     p15,0,r3,c7,c6,2  /* invalidate dcache by set / way */
+    mcr     p15,0,r4,c7,c6,2  /* invalidate dcache by set / way */
+    mcr     p15,0,r5,c7,c6,2  /* invalidate dcache by set / way */
+    add     r2,r2,#0x20
+    add     r3,r3,#0x20
+    add     r4,r4,#0x20
+    add     r5,r5,#0x20
+
+    cmp     r2,r6
+    bne     d_inv_loop
+.endm
+
 /* AIPS setup - Only setup MPROTx registers.
  * The PACR default values are good.*/
 .macro init_aips
@@ -116,6 +151,8 @@
 
 .globl lowlevel_init
 lowlevel_init:
+
+	inv_dcache
 
 	init_l2cc
 
