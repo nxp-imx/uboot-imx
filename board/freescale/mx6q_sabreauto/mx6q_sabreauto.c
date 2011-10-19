@@ -366,11 +366,15 @@ int board_eth_init(bd_t *bis)
 
 #ifdef CONFIG_CMD_MMC
 
+/* On this board, only SD3 can support 1.8V signalling
+ * that is required for UHS-I mode of operation.
+ * Last element in struct is used to indicate 1.8V support.
+ */
 struct fsl_esdhc_cfg usdhc_cfg[4] = {
-	{USDHC1_BASE_ADDR, 1, 1, 1},
-	{USDHC2_BASE_ADDR, 1, 1, 1},
-	{USDHC3_BASE_ADDR, 1, 1, 1},
-	{USDHC4_BASE_ADDR, 1, 1, 1},
+	{USDHC1_BASE_ADDR, 1, 1, 1, 0},
+	{USDHC2_BASE_ADDR, 1, 1, 1, 0},
+	{USDHC3_BASE_ADDR, 1, 1, 1, 1},
+	{USDHC4_BASE_ADDR, 1, 1, 1, 0},
 };
 
 #ifdef CONFIG_DYNAMIC_MMC_DEVNO
@@ -412,6 +416,7 @@ iomux_v3_cfg_t mx6q_usdhc3_pads[] = {
 	MX6Q_PAD_SD3_DAT5__USDHC3_DAT5,
 	MX6Q_PAD_SD3_DAT6__USDHC3_DAT6,
 	MX6Q_PAD_SD3_DAT7__USDHC3_DAT7,
+	MX6Q_PAD_GPIO_18__USDHC3_VSELECT,
 };
 
 iomux_v3_cfg_t mx6q_usdhc4_pads[] = {

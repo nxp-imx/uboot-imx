@@ -31,6 +31,7 @@
 #include <linux/list.h>
 
 #define SD_VERSION_SD	0x20000
+#define SD_VERSION_3	(SD_VERSION_SD | 0x30)
 #define SD_VERSION_2	(SD_VERSION_SD | 0x20)
 #define SD_VERSION_1_0	(SD_VERSION_SD | 0x10)
 #define SD_VERSION_1_10	(SD_VERSION_SD | 0x1a)
@@ -50,6 +51,24 @@
 #define EMMC_MODE_8BIT_DDR	0x800
 #define MMC_MODE_SPI		0x010
 #define MMC_MODE_HC		0x020
+
+/* UHS-I modes  - host and card capabilities*/
+#define SD_UHSI_CAP_SDR104		0x00080000
+#define SD_UHSI_CAP_SDR50		0x00040000
+#define SD_UHSI_CAP_SDR25		0x00020000
+#define SD_UHSI_CAP_SDR12		0x00010000
+#define SD_UHSI_CAP_DDR50		0x00100000
+#define SD_UHSI_CAP_ALL_MODES	(SD_UHSI_CAP_SDR104 | SD_UHSI_CAP_SDR50 |\
+	SD_UHSI_CAP_DDR50 | SD_UHSI_CAP_SDR25 | SD_UHSI_CAP_SDR12)
+#define SD_UHSI_CAP_HS_MODES	(SD_UHSI_CAP_SDR104 | SD_UHSI_CAP_SDR50 |\
+	SD_UHSI_CAP_DDR50)
+
+/* UHS-I modes - function numbers */
+#define SD_UHSI_FUNC_SDR12		0
+#define SD_UHSI_FUNC_SDR25		1
+#define SD_UHSI_FUNC_SDR50		2
+#define SD_UHSI_FUNC_SDR104		3
+#define SD_UHSI_FUNC_DDR50		4
 
 #define SD_DATA_4BIT	0x00040000
 
@@ -120,6 +139,11 @@
 #define OCR_HCS			0x40000000
 #define OCR_VOLTAGE_MASK	0x007FFF80
 #define OCR_ACCESS_MODE		0x60000000
+
+/* UHS-I related defines */
+#define SD_SWITCH_18V	0x01000000
+#define SD_CMD_SWITCH_UHS18V	11
+#define SD_CMD_TUNING	19
 
 #define SECURE_ERASE		0x80000000
 
@@ -315,10 +339,15 @@ struct mmc {
 	uint f_min;
 	uint f_max;
 	int high_capacity;
+	uint uhs18v;	/* UHS-I complaint 1.8V signalling */
 	uint bus_width;
 	uint clock;
 	uint card_caps;
 	uint host_caps;
+	uint card_uhs_mode;
+	uint tuning_min;
+	uint tuning_max;
+	uint tuning_step;
 	uint ocr;
 	uint scr[2];
 	uint csd[4];
@@ -337,6 +366,7 @@ struct mmc {
 			struct mmc_cmd *cmd, struct mmc_data *data);
 	void (*set_ios)(struct mmc *mmc);
 	int (*init)(struct mmc *mmc);
+	void (*set_tuning)(struct mmc *mmc, uint val);
 	uint b_max;
 };
 

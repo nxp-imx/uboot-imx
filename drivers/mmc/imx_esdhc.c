@@ -72,7 +72,8 @@ struct fsl_esdhc {
 	char	reserved2[12];
 	uint dllctrl;
 	uint dllstatus;
-	char	reserved3[88];
+	uint clktunectrlstatus;
+	char	reserved3[84];
 	uint vendorspec;
 	uint	mmcboot;
 	char	reserved4[52];
@@ -165,7 +166,7 @@ static int esdhc_setup_data(struct mmc *mmc, struct mmc_data *data)
 static int
 esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 {
-	uint	xfertyp;
+	uint	xfertyp, mixctrl;
 	uint	irqstat;
 	u32	tmp, sysctl_restore;
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
@@ -211,8 +212,13 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 
 	/* Send the command */
 	writel(cmd->cmdarg, &regs->cmdarg);
-	/* for uSDHC, write lower-half of xfertyp to mixctrl */
-	writel((xfertyp & 0xFFFF), &regs->mixctrl);
+
+	/* write lower-half of xfertyp to mixctrl */
+	mixctrl = xfertyp & 0xFFFF;
+	/* Keep the bits 22-25 of the register as is */
+	mixctrl |= (readl(&regs->mixctrl) & (0xF << 22));
+	writel(mixctrl, &regs->mixctrl);
+
 	writel(xfertyp, &regs->xfertyp);
 
 	/* Mask all irqs */
@@ -241,6 +247,11 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 		/* Restore auto-clock gate if error */
 		if (!cfg->is_usdhc && !data && (cmd->resp_type & MMC_RSP_BUSY))
 			writel(sysctl_restore, &regs->sysctl);
+
+		/* If this was CMD11, then notify that power cycle is needed */
+		if (cmd->cmdidx == SD_CMD_SWITCH_UHS18V)
+			printf("CMD11 to switch to 1.8V mode failed."
+				"Card requires power cycle\n");
 	}
 
 	if (irqstat & CMD_ERR)
@@ -248,6 +259,27 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 
 	if (irqstat & IRQSTAT_CTOE)
 		return TIMEOUT;
+
+	/* Switch voltage to 1.8V if CMD11 succeeded */
+	if (cmd->cmdidx == SD_CMD_SWITCH_UHS18V) {
+		/* Set SD_VSELECT to switch to 1.8V */
+		u32 reg;
+		reg = readl(&regs->vendorspec);
+		reg |= VENDORSPEC_VSELECT;
+		writel(reg, &regs->vendorspec);
+
+		/* Sleep for 5 ms - max time for card to switch to 1.8V */
+		udelay(5000);
+
+		/* Turn on SD clock */
+		writel(reg | VENDORSPEC_FRC_SDCLK_ON, &regs->vendorspec);
+
+		while (!(readl(&regs->prsstat) & PRSSTAT_DAT0))
+			;
+
+		/* restore SD clock status */
+		writel(reg, &regs->vendorspec);
+	}
 
 	/* Workaround for ESDHC errata ENGcm03648 */
 	if (!cfg->is_usdhc && !data && (cmd->resp_type & MMC_RSP_BUSY)) {
@@ -354,6 +386,12 @@ void set_sysctl(struct mmc *mmc, uint clock)
 				break;
 	} else
 		pre_div = 2;
+
+	/* For the case where clock requested is equal to SDHC clock,
+	 * the pre_div should be 1.
+	 */
+	if (clock == sdhc_clk)
+		pre_div = 1;
 
 	for (div = 1; div <= 16; div++)
 		if ((sdhc_clk / (div * pre_div)) <= clock)
@@ -494,6 +532,24 @@ static void esdhc_set_ios(struct mmc *mmc)
 		esdhc_dll_setup(mmc);
 }
 
+static void esdhc_uhsi_tuning(struct mmc *mmc, uint val)
+{
+	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
+	struct fsl_esdhc *regs = (struct fsl_esdhc *)cfg->esdhc_base;
+	u32 mixctrl;
+
+	/* No tuning needed for 50 MHz or lower */
+	if (mmc->card_uhs_mode < SD_UHSI_FUNC_SDR50)
+		return;
+
+	mixctrl = readl(&regs->mixctrl);
+	mixctrl |= USDHC_MIXCTRL_EXE_TUNE | \
+		USDHC_MIXCTRL_SMPCLK_SEL | \
+		USDHC_MIXCTRL_FBCLK_SEL;
+	writel(mixctrl, &regs->mixctrl);
+	writel((val << 8), &regs->clktunectrlstatus);
+}
+
 static int esdhc_init(struct mmc *mmc)
 {
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
@@ -509,6 +565,12 @@ static int esdhc_init(struct mmc *mmc)
 
 	/* RSTA doesn't reset MMC_BOOT register, so manually reset it */
 	writel(0, &regs->mmcboot);
+	/* Reset MIX_CTRL and CLK_TUNE_CTRL_STATUS regs to 0 */
+	writel(0, &regs->mixctrl);
+	writel(0, &regs->clktunectrlstatus);
+
+	/* Put VEND_SPEC to default value */
+	writel(VENDORSPEC_INIT, &regs->vendorspec);
 
 #ifdef CONFIG_IMX_ESDHC_V1
 	tmp = readl(&regs->sysctl) | (SYSCTL_HCKEN | SYSCTL_IPGEN);
@@ -560,6 +622,7 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	mmc->send_cmd = esdhc_send_cmd;
 	mmc->set_ios = esdhc_set_ios;
 	mmc->init = esdhc_init;
+	mmc->set_tuning = esdhc_uhsi_tuning;
 
 /* Enable uSDHC if the config is defined (only for i.MX50 in SDR mode) */
 #ifdef CONFIG_MX50_ENABLE_USDHC_SDR
@@ -570,6 +633,7 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 		sprintf(mmc->name, "FSL_USDHC");
 
 	caps = readl(&regs->hostcapblt);
+
 	if (caps & ESDHC_HOSTCAPBLT_VS30)
 		mmc->voltages |= MMC_VDD_29_30 | MMC_VDD_30_31;
 	if (caps & ESDHC_HOSTCAPBLT_VS33)
@@ -595,6 +659,16 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 
 	mmc->f_min = 400000;
 	mmc->f_max = MIN(mxc_get_clock(MXC_ESDHC_CLK), 52000000);
+
+	if (cfg->is_usdhc) {
+		mmc->f_max = MIN(mxc_get_clock(MXC_ESDHC_CLK), 208000000);
+		mmc->tuning_max = USDHC_TUNE_CTRL_MAX;
+		mmc->tuning_min = USDHC_TUNE_CTRL_MIN;
+		mmc->tuning_step = USDHC_TUNE_CTRL_STEP;
+	}
+
+	if (cfg->port_supports_uhs18v)
+		mmc->host_caps |= SD_UHSI_CAP_ALL_MODES;
 
 	mmc_register(mmc);
 

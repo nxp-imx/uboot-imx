@@ -328,8 +328,9 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void *src)
 
 	blklen = mmc->write_bl_len;
 
-	if (mmc->card_caps & EMMC_MODE_4BIT_DDR ||
-		mmc->card_caps & EMMC_MODE_8BIT_DDR) {
+	if ((mmc->card_caps & EMMC_MODE_4BIT_DDR ||
+		mmc->card_caps & EMMC_MODE_8BIT_DDR) ||
+		(IS_SD(mmc) && mmc->high_capacity)) {
 		err = 0;
 		blklen = 512;
 	} else
@@ -346,7 +347,7 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void *src)
 			return 0;
 		blocks_todo -= cur;
 		start += cur;
-		src += cur * mmc->write_bl_len;
+		src += cur * blklen;
 	} while (blocks_todo > 0);
 
 	return blkcnt;
@@ -415,8 +416,9 @@ static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
 		return 0;
 	}
 
-	if (mmc->card_caps & EMMC_MODE_4BIT_DDR ||
-		mmc->card_caps & EMMC_MODE_8BIT_DDR) {
+	if ((mmc->card_caps & EMMC_MODE_4BIT_DDR ||
+		mmc->card_caps & EMMC_MODE_8BIT_DDR) ||
+		(IS_SD(mmc) && mmc->high_capacity)) {
 		blklen = 512;
 		err = 0;
 	} else {
@@ -435,7 +437,7 @@ static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
 			return 0;
 		blocks_todo -= cur;
 		start += cur;
-		dst += cur * mmc->read_bl_len;
+		dst += cur * blklen;
 	} while (blocks_todo > 0);
 
 	return blkcnt;
@@ -494,8 +496,13 @@ sd_send_op_cond(struct mmc *mmc)
 		cmd.cmdarg = mmc_host_is_spi(mmc) ? 0 :
 			(mmc->voltages & 0xff8000);
 
-		if (mmc->version == SD_VERSION_2)
+		/* Check for high capacity or UHS-I 1.8V signalling */
+		if (mmc->version == SD_VERSION_2) {
 			cmd.cmdarg |= OCR_HCS;
+
+			if (mmc->host_caps & SD_UHSI_CAP_ALL_MODES)
+				cmd.cmdarg |= SD_SWITCH_18V;
+		}
 
 		err = mmc_send_cmd(mmc, &cmd, NULL);
 
@@ -526,6 +533,11 @@ sd_send_op_cond(struct mmc *mmc)
 	mmc->ocr = cmd.response[0];
 
 	mmc->high_capacity = ((mmc->ocr & OCR_HCS) == OCR_HCS);
+
+	/* Is card UHS-I compliant? */
+	if (mmc->host_caps & SD_UHSI_CAP_ALL_MODES)
+		mmc->uhs18v = ((mmc->ocr & SD_SWITCH_18V) == SD_SWITCH_18V);
+
 	mmc->rca = 0;
 
 	return 0;
@@ -833,6 +845,27 @@ err_rtn:
 	return -1;
 }
 
+static int sd_send_switch_uhs18v(struct mmc *mmc)
+{
+	struct mmc_cmd cmd;
+	int err;
+
+	cmd.cmdidx = SD_CMD_SWITCH_UHS18V;
+	cmd.cmdarg = 0;
+	cmd.resp_type = MMC_RSP_R1;
+	cmd.flags = 0;
+
+	err = mmc_send_cmd(mmc, &cmd, NULL);
+
+	if (err) {
+		printf("mmc: CMD11 to switch to 1.8V UHS mode failed. \
+			Card will require power cycle\n");
+		return err;
+	}
+
+	return 0;
+}
+
 int sd_switch_boot_part(int dev_num, unsigned int part_num)
 {
 	return 0;
@@ -917,7 +950,9 @@ retry_scr:
 			mmc->version = SD_VERSION_1_10;
 			break;
 		case 2:
-			mmc->version = SD_VERSION_2;
+			if ((mmc->scr[0] >> 15) & 0x1)
+				mmc->version = SD_VERSION_3;
+			/* else, it is already initialized as SD_VERSION_2 */
 			break;
 		default:
 			mmc->version = SD_VERSION_1_0;
@@ -948,15 +983,140 @@ retry_scr:
 	if (!(__be32_to_cpu(switch_status[3]) & SD_HIGHSPEED_SUPPORTED))
 		return 0;
 
-	err = sd_switch(mmc, SD_SWITCH_SWITCH, 0, 1, (u8 *)&switch_status);
+	if (mmc->uhs18v) {
+		/* which UHS-I modes are supported by card? */
+		if (__be32_to_cpu(switch_status[3]) & SD_UHSI_CAP_SDR104)
+			mmc->card_caps |= SD_UHSI_CAP_SDR104;
+		if (__be32_to_cpu(switch_status[3]) & SD_UHSI_CAP_SDR50)
+			mmc->card_caps |= SD_UHSI_CAP_SDR50;
+		if (__be32_to_cpu(switch_status[3]) & SD_UHSI_CAP_DDR50)
+			mmc->card_caps |= SD_UHSI_CAP_DDR50;
+		if (__be32_to_cpu(switch_status[3]) & SD_UHSI_CAP_SDR25)
+			mmc->card_caps |= SD_UHSI_CAP_SDR25;
+		if (__be32_to_cpu(switch_status[3]) & SD_UHSI_CAP_SDR12)
+			mmc->card_caps |= SD_UHSI_CAP_SDR12;
+	} else {
+		/* Switch non-UHS card to high speed mode (50 MHz) */
+		err = sd_switch(mmc, SD_SWITCH_SWITCH, 0, 1,
+			(u8 *)&switch_status);
+
+		if (err)
+			return err;
+
+		if ((__be32_to_cpu(switch_status[4]) & 0x0f000000) ==
+			0x01000000)
+			mmc->card_caps |= MMC_MODE_HS;
+	}
+
+	return 0;
+}
+
+/* Put the card in SDR50, DDR50, or SDR104 mode of UHS-I */
+int sd_uhsi_mode_select(struct mmc *mmc)
+{
+	int timeout, err;
+	uint switch_status[16];
+	uint func_num;
+
+	mmc->card_uhs_mode = SD_UHSI_FUNC_SDR12;
+
+	/* Order of checking important to pick fastest mode */
+	if (mmc->card_caps & SD_UHSI_CAP_SDR104)
+		func_num = SD_UHSI_FUNC_SDR104;
+	else if (mmc->card_caps & SD_UHSI_CAP_SDR50)
+		func_num = SD_UHSI_FUNC_SDR50;
+	else if (mmc->card_caps & SD_UHSI_CAP_DDR50)
+		func_num = SD_UHSI_FUNC_DDR50;
+	else if (mmc->card_caps & SD_UHSI_CAP_SDR25)
+		func_num = SD_UHSI_FUNC_SDR25;
+	else
+		return 0;
+
+	timeout = 4;
+	while (timeout--) {
+		err = sd_switch(mmc, SD_SWITCH_CHECK, 0, func_num,
+				(u8 *)&switch_status);
+
+		if (err)
+			return err;
+
+		/* The function is busy if bit is set.  Try again */
+		if (!(__be32_to_cpu(switch_status[7]) & (1 << (16 + func_num))))
+			break;
+	}
+
+	err = sd_switch(mmc, SD_SWITCH_SWITCH, 0, func_num,
+		(u8 *)&switch_status);
 
 	if (err)
 		return err;
 
-	if ((__be32_to_cpu(switch_status[4]) & 0x0f000000) == 0x01000000)
-		mmc->card_caps |= MMC_MODE_HS;
+	if (((__be32_to_cpu(switch_status[4]) & 0x0f000000) >> 24) ==
+		func_num) {
+		mmc->card_uhs_mode = func_num;
+
+		if (mmc->card_uhs_mode == SD_UHSI_FUNC_DDR50)
+			mmc->card_caps |= EMMC_MODE_4BIT_DDR;
+	}
 
 	return 0;
+
+}
+
+int sd_send_tuning_cmd(struct mmc *mmc)
+{
+	struct mmc_cmd cmd;
+	struct mmc_data data;
+	char buff[64]; /* 64 byte tuning block */
+
+	/* Switch the frequency */
+	cmd.cmdidx = SD_CMD_TUNING;
+	cmd.resp_type = MMC_RSP_R1;
+	cmd.cmdarg = 0;
+	cmd.flags = 0;
+
+	data.dest = buff;
+	data.blocksize = 64;
+	data.blocks = 1;
+	data.flags = MMC_DATA_READ;
+
+	return mmc_send_cmd(mmc, &cmd, &data);
+}
+
+void sd_uhsi_tuning(struct mmc *mmc)
+{
+	int min, max, avg;
+
+	/* Tuning only required for SDR50 and SDR104 modes */
+	if (mmc->card_uhs_mode != SD_UHSI_FUNC_SDR50 &&
+		mmc->card_uhs_mode != SD_UHSI_FUNC_SDR104)
+		return;
+
+	/* Start with lowest value, increase it until CMD19 succeeds */
+	min = mmc->tuning_min;
+	while (min < mmc->tuning_max) {
+		mmc->set_tuning(mmc, min);
+		if (!sd_send_tuning_cmd(mmc))
+			break;
+		min += mmc->tuning_step;
+	}
+
+	/* Start with last successful value, increase it until CMD19 fails */
+	max = min;
+	while (max < mmc->tuning_max) {
+		mmc->set_tuning(mmc, max);
+		if (sd_send_tuning_cmd(mmc))
+			break;
+		max += mmc->tuning_step;
+	}
+
+	/* Set tuning value to average of
+	 * [lowest successful val, highest successful val]
+	 */
+	avg = (min + max) / 2;
+	mmc->set_tuning(mmc, avg);
+	sd_send_tuning_cmd(mmc);
+	sd_send_tuning_cmd(mmc);
 }
 
 /* frequency bases */
@@ -1036,6 +1196,13 @@ int mmc_startup(struct mmc *mmc)
 			return err;
 	}
 #endif
+
+	/* If this is a UHS-I compliant SD card, switch to 1.8V for I/O now */
+	if (mmc->uhs18v) {
+		err = sd_send_switch_uhs18v(mmc);
+		if (err)
+			return err;
+	}
 
 	/* Put the Card in Identify Mode */
 	cmd.cmdidx = mmc_host_is_spi(mmc) ? MMC_CMD_SEND_CID :
@@ -1236,10 +1403,36 @@ int mmc_startup(struct mmc *mmc)
 			mmc_set_bus_width(mmc, 4);
 		}
 
-		if (mmc->card_caps & MMC_MODE_HS)
-			mmc_set_clock(mmc, 50000000);
-		else
-			mmc_set_clock(mmc, 25000000);
+		/* Switch the card and host to UHS-I modes, if available */
+		if (mmc->uhs18v) {
+			err = sd_uhsi_mode_select(mmc);
+			if (err)
+				return err;
+
+			switch (mmc->card_uhs_mode) {
+			case SD_UHSI_FUNC_SDR104:
+				mmc_set_clock(mmc, 208000000);
+				break;
+			case SD_UHSI_FUNC_SDR50:
+				mmc_set_clock(mmc, 100000000);
+				break;
+			case SD_UHSI_FUNC_SDR25:
+			case SD_UHSI_FUNC_DDR50:
+				mmc_set_clock(mmc, 50000000);
+				break;
+			case SD_UHSI_FUNC_SDR12:
+			default:
+				mmc_set_clock(mmc, 25000000);
+				break;
+			}
+
+			sd_uhsi_tuning(mmc);
+		} else {
+			if (mmc->card_caps & MMC_MODE_HS)
+				mmc_set_clock(mmc, 50000000);
+			else
+				mmc_set_clock(mmc, 25000000);
+		}
 	} else {
 
 		if (mmc->card_caps & MMC_MODE_4BIT) {
@@ -1362,6 +1555,8 @@ int mmc_init(struct mmc *mmc)
 
 	if (mmc->has_init)
 		return 0;
+
+	mmc->uhs18v = 0;
 
 	err = mmc->init(mmc);
 

@@ -29,6 +29,11 @@
 #include <asm/errno.h>
 
 /* FSL eSDHC-specific constants */
+
+#define VENDORSPEC_VSELECT		0x00000002
+#define VENDORSPEC_FRC_SDCLK_ON	0x00000100
+#define VENDORSPEC_INIT	0x20007809
+
 #define SYSCTL			0x0002e02c
 #define SYSCTL_INITA		0x08000000
 #define SYSCTL_TIMEOUT_MASK	0x000f0000
@@ -97,7 +102,7 @@
 #define PRSSTAT_CIDHB		(0x00000001)
 
 #define PROCTL			0x0002e028
-#define PROCTL_INIT		0x00000020
+#define PROCTL_INIT		0x08800020
 #define PROCTL_DTW_4		0x00000002
 #define PROCTL_DTW_8		0x00000004
 #define PROCTL_D3CD		0x00000008
@@ -173,11 +178,20 @@
 #define USDHC_DLL_LOW_MASK	0xF
 #define USDHC_DLL_HIGH_SHIFT	4
 
+#define USDHC_MIXCTRL_EXE_TUNE	0x00400000
+#define USDHC_MIXCTRL_SMPCLK_SEL	0x00800000
+#define USDHC_MIXCTRL_FBCLK_SEL	0x02000000
+
+#define USDHC_TUNE_CTRL_STEP	0x1
+#define USDHC_TUNE_CTRL_MIN	0x0
+#define USDHC_TUNE_CTRL_MAX	((1 << 7) - 1)
+
 struct fsl_esdhc_cfg {
 	u32	esdhc_base;
 	u32	no_snoop;
 	u32	clk_enable;
 	u32	is_usdhc;
+	u32	port_supports_uhs18v;
 };
 
 #if defined(CONFIG_FSL_ESDHC) || defined(CONFIG_IMX_MMC)
