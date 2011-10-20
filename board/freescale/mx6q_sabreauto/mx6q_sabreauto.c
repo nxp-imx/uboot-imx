@@ -26,7 +26,7 @@
 #include <asm/arch/mx6_pins.h>
 #include <asm/arch/iomux-v3.h>
 #include <asm/errno.h>
-
+#include <miiphy.h>
 #if defined(CONFIG_VIDEO_MX5)
 #include <linux/list.h>
 #include <linux/fb.h>
@@ -76,7 +76,6 @@ unsigned short colormap[16777216];
 #endif
 
 static int di = 1;
-
 
 extern int ipuv3_fb_init(struct fb_videomode *mode, int di,
 			int interface_pix_fmt,
@@ -253,8 +252,6 @@ int setup_sata(void)
 }
 #endif
 
-
-
 int dram_init(void)
 {
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
@@ -357,7 +354,6 @@ int fec_get_mac_addr(unsigned char *mac)
 #endif
 #endif
 
-
 #ifdef CONFIG_NET_MULTI
 int board_eth_init(bd_t *bis)
 {
@@ -394,6 +390,7 @@ iomux_v3_cfg_t mx6q_usdhc1_pads[] = {
 	MX6Q_PAD_SD1_DAT2__USDHC1_DAT2,
 	MX6Q_PAD_SD1_DAT3__USDHC1_DAT3,
 };
+
 iomux_v3_cfg_t mx6q_usdhc2_pads[] = {
 	MX6Q_PAD_SD2_CLK__USDHC2_CLK,
 	MX6Q_PAD_SD2_CMD__USDHC2_CMD,
@@ -402,6 +399,7 @@ iomux_v3_cfg_t mx6q_usdhc2_pads[] = {
 	MX6Q_PAD_SD2_DAT2__USDHC2_DAT2,
 	MX6Q_PAD_SD2_DAT3__USDHC2_DAT3,
 };
+
 iomux_v3_cfg_t mx6q_usdhc3_pads[] = {
 	MX6Q_PAD_SD3_CLK__USDHC3_CLK,
 	MX6Q_PAD_SD3_CMD__USDHC3_CMD,
@@ -414,6 +412,7 @@ iomux_v3_cfg_t mx6q_usdhc3_pads[] = {
 	MX6Q_PAD_SD3_DAT6__USDHC3_DAT6,
 	MX6Q_PAD_SD3_DAT7__USDHC3_DAT7,
 };
+
 iomux_v3_cfg_t mx6q_usdhc4_pads[] = {
 	MX6Q_PAD_SD4_CLK__USDHC4_CLK,
 	MX6Q_PAD_SD4_CMD__USDHC4_CMD,
@@ -608,7 +607,6 @@ int board_init(void)
 	setup_sata();
 #endif
 
-
 #ifdef CONFIG_VIDEO_MX5
 
 #ifdef CONFIG_I2C_MXC
@@ -630,6 +628,49 @@ int board_init(void)
 
 int board_late_init(void)
 {
+	return 0;
+}
+
+static int phy_read(char *devname, unsigned char addr, unsigned char reg,
+		    unsigned short *pdata)
+{
+	int ret = miiphy_read(devname, addr, reg, pdata);
+	if (ret)
+		printf("Error reading from %s PHY addr=%02x reg=%02x\n",
+		       devname, addr, reg);
+	return ret;
+}
+
+static int phy_write(char *devname, unsigned char addr, unsigned char reg,
+		     unsigned short value)
+{
+	int ret = miiphy_write(devname, addr, reg, value);
+	if (ret)
+		printf("Error writing to %s PHY addr=%02x reg=%02x\n", devname,
+		       addr, reg);
+	return ret;
+}
+
+int mx6_rgmii_rework(char *devname, int phy_addr)
+{
+	unsigned short val;
+
+	/* To enable AR8031 ouput a 125MHz clk from CLK_25M */
+	phy_write(devname, phy_addr, 0xd, 0x7);
+	phy_write(devname, phy_addr, 0xe, 0x8016);
+	phy_write(devname, phy_addr, 0xd, 0x4007);
+	phy_read(devname, phy_addr, 0xe, &val);
+
+	val &= 0xffe3;
+	val |= 0x18;
+	phy_write(devname, phy_addr, 0xe, val);
+
+	/* introduce tx clock delay */
+	phy_write(devname, phy_addr, 0x1d, 0x5);
+	phy_read(devname, phy_addr, 0x1e, &val);
+	val |= 0x0100;
+	phy_write(devname, phy_addr, 0x1e, val);
+
 	return 0;
 }
 

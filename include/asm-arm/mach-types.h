@@ -3254,7 +3254,8 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_SWEDA_TMS2           3272
 #define MACH_TYPE_MX53_LOCO            3273
 #define MACH_TYPE_MX53_PCBA            3274
-#define MACH_TYPE_MX6Q_SABREAUTO	3529
+#define MACH_TYPE_MX6Q_SABREAUTO       3529
+#define MACH_TYPE_MX6Q_SABRELITE       3769
 
 #ifdef CONFIG_ARCH_EBSA110
 # ifdef machine_arch_type
@@ -42158,6 +42159,18 @@ extern unsigned int __machine_arch_type;
 # define machine_is_mx6q_sabreauto()	(machine_arch_type == MACH_TYPE_MX6Q_SABREAUTO)
 #else
 # define machine_is_mx6q_sabreauto()	(0)
+#endif
+
+#ifdef CONFIG_MACH_MX6Q_SABRELITE
+# ifdef machine_arch_type
+#  undef machine_arch_type
+#  define machine_arch_type	__machine_arch_type
+# else
+#  define machine_arch_type	MACH_TYPE_MX6Q_SABRELITE
+# endif
+# define machine_is_mx6q_sabrelite()	(machine_arch_type == MACH_TYPE_MX6Q_SABRELITE)
+#else
+# define machine_is_mx6q_sabrelite()	(0)
 #endif
 
 /*

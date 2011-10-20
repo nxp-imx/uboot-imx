@@ -76,6 +76,9 @@
 #define FEC_MII_WRITE(pa, ra, v) (FEC_MII_FRAME | FEC_MII_OP(FEC_MII_OP_WR)|\
 			FEC_MII_PA(pa) | FEC_MII_RA(ra) | FEC_MII_SET_DATA(v))
 
+#if defined (CONFIG_MX6Q)
+extern int mx6_rgmii_rework(char *devname, int phy_addr);
+#endif
 #ifdef CONFIG_MX6Q_SABREAUTO
 #define PHY_MIPSCR_LINK_UP	(0x1 << 10)
 #define PHY_MIPSCR_SPEED_MASK	(0x3 << 14)
@@ -296,6 +299,7 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 {
 	unsigned short val = 0;
 	int ret;
+	int cnt;
 
 #ifdef CONFIG_MX28
 	/* Dummy read with delay to get phy start working */
@@ -354,6 +358,36 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 			dup_spd = _10BASET;
 
 		if (val & PHY_MIPSCR_FULL_DUPLEX)
+			dup_spd |= (FULL << 16);
+		else
+			dup_spd |= (HALF << 16);
+	}
+#elif defined(CONFIG_PHY_MICREL_KSZ9021)
+	for (cnt = 0; cnt < 100; cnt++) {
+		val = 0;
+		ret = __fec_mii_read(fecp, addr, PHY_BMSR, &val);
+		if (val & PHY_BMSR_LS)
+			break;
+		udelay(100*1000);
+	}
+	if (ret) {
+		/* set default speed and duplex */
+		dup_spd = _100BASET | (FULL << 16);
+	} else {
+		unsigned short reg31 = 0;
+		ret = __fec_mii_read(fecp, addr, 0x1f, &reg31);
+		if (val & PHY_BMSR_LS) {
+			printf("FEC: Link is Up %x, %x\n", val, reg31);
+		} else {
+			printf("FEC: Link is down %x, %x\n", val, reg31);
+		}
+		if (reg31 & (1 << 6))
+			dup_spd = _1000BASET;
+		else if (reg31 & (1 << 5))
+			dup_spd = _100BASET;
+		else
+			dup_spd = _10BASET;
+		if (reg31 & (1 << 3))
 			dup_spd |= (FULL << 16);
 		else
 			dup_spd |= (HALF << 16);
@@ -782,31 +816,6 @@ void dbgFecRegs(struct eth_device *dev)
 }
 #endif
 
-#ifdef CONFIG_MX6Q_SABREAUTO
-static int mx6_rgmii_rework(fec_t *fecp, int addr)
-{
-	unsigned short val;
-
-	/* To enable AR8031 ouput a 125MHz clk from CLK_25M */
-	__fec_mii_write(fecp, addr, 0xd, 0x7);
-	__fec_mii_write(fecp, addr, 0xe, 0x8016);
-	__fec_mii_write(fecp, addr, 0xd, 0x4007);
-	__fec_mii_read(fecp, addr, 0xe, &val);
-
-	val &= 0xffe3;
-	val |= 0x18;
-	__fec_mii_write(fecp, addr, 0xe, val);
-
-	/* introduce tx clock delay */
-	__fec_mii_write(fecp, addr, 0x1d, 0x5);
-	__fec_mii_read(fecp, addr, 0x1e, &val);
-	val |= 0x0100;
-	__fec_mii_write(fecp, addr, 0x1e, val);
-
-	return 0;
-}
-#endif
-
 int fec_init(struct eth_device *dev, bd_t *bd)
 {
 	struct fec_info_s *info = dev->priv;
@@ -817,13 +826,11 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	fec_reset(dev);
 
 	fec_localhw_setup((fec_t *)fecp);
-
 #if defined (CONFIG_CMD_MII) || defined (CONFIG_MII) || \
 	defined (CONFIG_DISCOVER_PHY)
-
 	mxc_fec_mii_init(fecp);
-#ifdef CONFIG_MX6Q_SABREAUTO
-	mx6_rgmii_rework((fec_t *)fecp, info->phy_addr);
+#if defined (CONFIG_MX6Q)
+	mx6_rgmii_rework(dev->name, info->phy_addr);
 #endif
 
 #ifdef CONFIG_DISCOVER_PHY
