@@ -268,6 +268,7 @@ static void setup_uart(void)
 	mxc_iomux_v3_setup_pad(MX6Q_PAD_KEY_ROW0__UART4_RXD);
 }
 
+#ifdef CONFIG_VIDEO_MX5
 #ifdef CONFIG_I2C_MXC
 static void setup_i2c(unsigned int module_base)
 {
@@ -332,7 +333,7 @@ void setup_lvds_poweron(void)
 	value |= 0x2;
 	i2c_write(0x1f, 1, 1, &value, 1);
 }
-
+#endif
 #endif
 
 #define HW_OCOTP_MACn(n)       (0x00000620 + (n) * 0x10)
@@ -476,7 +477,7 @@ int board_mmc_init(bd_t *bis)
  * CONFIG is not defined, then the default target delay value will be used.
  */
 #ifdef CONFIG_GET_DDR_TARGET_DELAY
-u32 get_ddr_delay(struct fsl_esdhc *cfg)
+u32 get_ddr_delay(struct fsl_esdhc_cfg *cfg)
 {
 	/* No delay required on SABRE Auto board SD ports */
 	return 0;
