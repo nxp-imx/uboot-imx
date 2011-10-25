@@ -340,10 +340,10 @@ void setup_pmic_voltages(void)
 		if (i2c_write(0x8, 53, 1, buf, 3))
 			printf("%s:i2c_write 53:error\n", __func__);
 
-		/* set both AUX current limit to 950mA */
+		/* set 1P5 */
 		if (i2c_read(0x8, 52, 1, &buf[0], 3))
 			printf("%s:i2c_read 52:error\n", __func__);
-		buf[1] = (buf[1] & 0xc7) | 0x38;
+		buf[0] = buf[0] | 0x10;
 		if (i2c_write(0x8, 52, 1, buf, 3))
 			printf("%s:i2c_write 52:error\n", __func__);
 
