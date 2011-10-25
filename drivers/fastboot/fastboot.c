@@ -408,7 +408,7 @@ static void fastboot_init_strings(void)
 	fastboot_string_table[STR_PRODUCT_INDEX] = string;
 
 	string = (struct usb_string_descriptor *)wstrSerial;
-	string->bLength = strlen(CONFIG_FASTBOOT_SERIAL_NUM);
+	string->bLength = sizeof(wstrSerial);
 	string->bDescriptorType = USB_DT_STRING;
 	str2wide(CONFIG_FASTBOOT_SERIAL_NUM, string->wData);
 	fastboot_string_table[STR_SERIAL_INDEX] = string;
