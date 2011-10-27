@@ -3282,6 +3282,7 @@ mx51_3stack_config	: unconfig
 
 mx53_smd_mfg_config             \
 mx53_smd_android_config		\
+mx53_smd_android_hc_config		\
 mx53_smd_config		:unconfig
 	$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx53_smd freescale mx53
 
