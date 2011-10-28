@@ -79,7 +79,7 @@
 #if defined (CONFIG_MX6Q)
 extern int mx6_rgmii_rework(char *devname, int phy_addr);
 #endif
-#ifdef CONFIG_MX6Q_SABREAUTO
+#ifdef CONFIG_MX6Q_ARM2
 #define PHY_MIPSCR_LINK_UP	(0x1 << 10)
 #define PHY_MIPSCR_SPEED_MASK	(0x3 << 14)
 #define PHY_MIPSCR_1000M	(0x2 << 14)
@@ -339,7 +339,7 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 	}
 
 /* for AR8031 PHY */
-#ifdef CONFIG_MX6Q_SABREAUTO
+#ifdef CONFIG_MX6Q_ARM2
 	ret = 100;
 	/* set default mode to 100M full duplex */
 	dup_spd = _100BASET | (FULL << 16);

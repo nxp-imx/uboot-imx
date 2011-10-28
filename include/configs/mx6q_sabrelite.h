@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2011 Freescale Semiconductor, Inc.
  *
- * Configuration settings for the MX6Q SABRE Automotive Infotainment Freescale board.
+ * Configuration settings for the MX6Q SABRE-Lite Freescale board.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as

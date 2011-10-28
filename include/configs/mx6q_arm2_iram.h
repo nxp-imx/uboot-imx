@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
- * Configuration settings for the MX6Q SABRE Automotive Infotainment Freescale board.
+ * Configuration settings for the MX6Q Armadillo2 Freescale board.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -29,7 +29,7 @@
 
 #define CONFIG_MXC
 #define CONFIG_MX6Q
-#define CONFIG_MX6Q_SABREAUTO
+#define CONFIG_MX6Q_ARM2
 #define CONFIG_FLASH_HEADER
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_MX6_CLK32	   32768
@@ -115,7 +115,7 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_PROMPT		"MX6Q SABREAUTO IRAM U-Boot > "
+#define CONFIG_SYS_PROMPT		"MX6Q ARM2 IRAM U-Boot > "
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)

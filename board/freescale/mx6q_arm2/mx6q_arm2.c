@@ -442,19 +442,23 @@ int usdhc_gpio_init(bd_t *bis)
 		switch (index) {
 		case 0:
 			mxc_iomux_v3_setup_multiple_pads(mx6q_usdhc1_pads,
-				sizeof(mx6q_usdhc1_pads) / sizeof(mx6q_usdhc1_pads[0]));
+				sizeof(mx6q_usdhc1_pads) /
+				sizeof(mx6q_usdhc1_pads[0]));
 			break;
 		case 1:
 			mxc_iomux_v3_setup_multiple_pads(mx6q_usdhc2_pads,
-				sizeof(mx6q_usdhc2_pads) / sizeof(mx6q_usdhc2_pads[0]));
+				sizeof(mx6q_usdhc2_pads) /
+				sizeof(mx6q_usdhc2_pads[0]));
 			break;
 		case 2:
 			mxc_iomux_v3_setup_multiple_pads(mx6q_usdhc3_pads,
-				sizeof(mx6q_usdhc3_pads) / sizeof(mx6q_usdhc3_pads[0]));
+				sizeof(mx6q_usdhc3_pads) /
+				sizeof(mx6q_usdhc3_pads[0]));
 			break;
 		case 3:
 			mxc_iomux_v3_setup_multiple_pads(mx6q_usdhc4_pads,
-				sizeof(mx6q_usdhc4_pads) / sizeof(mx6q_usdhc4_pads[0]));
+				sizeof(mx6q_usdhc4_pads) /
+				sizeof(mx6q_usdhc4_pads[0]));
 			break;
 		default:
 			printf("Warning: you configured more USDHC controllers"
@@ -484,7 +488,7 @@ int board_mmc_init(bd_t *bis)
 #ifdef CONFIG_GET_DDR_TARGET_DELAY
 u32 get_ddr_delay(struct fsl_esdhc_cfg *cfg)
 {
-	/* No delay required on SABRE Auto board SD ports */
+	/* No delay required on ARM2 board SD ports */
 	return 0;
 }
 #endif
@@ -602,7 +606,7 @@ int board_init(void)
 	setup_boot_device();
 
 	/* board id for linux */
-	gd->bd->bi_arch_number = MACH_TYPE_MX6Q_SABREAUTO;
+	gd->bd->bi_arch_number = MACH_TYPE_MX6Q_ARM2;
 
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
@@ -731,7 +735,7 @@ void enet_board_init(void)
 
 int checkboard(void)
 {
-	printf("Board: MX6Q-SABREAUTO:[ ");
+	printf("Board: MX6Q-ARM2:[ ");
 
 	switch (__REG(SRC_BASE_ADDR + 0x8)) {
 	case 0x0001:
