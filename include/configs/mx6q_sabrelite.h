@@ -121,12 +121,12 @@
 			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
-		"bootargs_mmc=setenv bootargs ${bootargs} ip=dhcp "     \
+		"bootargs_mmc=setenv bootargs ${bootargs} "     \
 			"root=/dev/mmcblk0p1 rootwait\0"                \
 		"bootcmd_mmc=run bootargs_base bootargs_mmc; "   \
 		"mmc dev 1; "	\
 		"mmc read ${loadaddr} 0x800 0x1800; bootm\0"	\
-		"bootcmd=run bootcmd_net\0"                             \
+		"bootcmd=run bootcmd_mmc\0"                             \
 
 
 #define CONFIG_ARP_TIMEOUT	200UL
