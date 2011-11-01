@@ -35,6 +35,10 @@
 #include <lcd.h>
 #endif
 
+#ifdef CONFIG_IMX_ECSPI
+#include <imx_spi.h>
+#endif
+
 #if CONFIG_I2C_MXC
 #include <i2c.h>
 #endif
@@ -334,6 +338,70 @@ void setup_lvds_poweron(void)
 	i2c_write(0x1f, 1, 1, &value, 1);
 }
 #endif
+#endif
+
+#ifdef CONFIG_IMX_ECSPI
+s32 spi_get_cfg(struct imx_spi_dev_t *dev)
+{
+	switch (dev->slave.cs) {
+	case 0:
+		/* SPI-NOR */
+		dev->base = ECSPI1_BASE_ADDR;
+		dev->freq = 25000000;
+		dev->ss_pol = IMX_SPI_ACTIVE_LOW;
+		dev->ss = 0;
+		dev->fifo_sz = 64 * 4;
+		dev->us_delay = 0;
+		break;
+	case 1:
+		/* SPI-NOR */
+		dev->base = ECSPI1_BASE_ADDR;
+		dev->freq = 25000000;
+		dev->ss_pol = IMX_SPI_ACTIVE_LOW;
+		dev->ss = 1;
+		dev->fifo_sz = 64 * 4;
+		dev->us_delay = 0;
+		break;
+	default:
+		printf("Invalid Bus ID!\n");
+	}
+
+	return 0;
+}
+
+void spi_io_init(struct imx_spi_dev_t *dev)
+{
+	u32 reg;
+
+	switch (dev->base) {
+	case ECSPI1_BASE_ADDR:
+		/* Enable clock */
+		reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR1);
+		reg |= 0x3;
+		writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR1);
+
+		/* SCLK */
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_EIM_D16__ECSPI1_SCLK);
+
+		/* MISO */
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_EIM_D17__ECSPI1_MISO);
+
+		/* MOSI */
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_EIM_D18__ECSPI1_MOSI);
+
+		if (dev->ss == 0)
+			mxc_iomux_v3_setup_pad(MX6Q_PAD_EIM_EB2__ECSPI1_SS0);
+		else if (dev->ss == 1)
+			mxc_iomux_v3_setup_pad(MX6Q_PAD_EIM_D19__ECSPI1_SS1);
+		break;
+	case ECSPI2_BASE_ADDR:
+	case ECSPI3_BASE_ADDR:
+		/* ecspi2-3 fall through */
+		break;
+	default:
+		break;
+	}
+}
 #endif
 
 #define HW_OCOTP_MACn(n)       (0x00000620 + (n) * 0x10)

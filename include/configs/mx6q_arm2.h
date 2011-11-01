@@ -88,10 +88,11 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
 
+#define CONFIG_CMD_SPI
 #define CONFIG_CMD_I2C
 
 /* Enable below configure when supporting nand */
-
+#define CONFIG_CMD_SF
 #define CONFIG_CMD_MMC
 #define CONFIG_CMD_ENV
 
@@ -176,6 +177,18 @@
 	#define CONFIG_SYS_I2C_PORT             I2C3_BASE_ADDR
 	#define CONFIG_SYS_I2C_SPEED            100000
 	#define CONFIG_SYS_I2C_SLAVE            0x1f
+#endif
+
+/*
+ * SPI Configs
+ */
+#ifdef CONFIG_CMD_SF
+	#define CONFIG_FSL_SF		1
+	#define CONFIG_SPI_FLASH_IMX_M25PXX	1
+	#define CONFIG_SPI_FLASH_CS	1
+	#define CONFIG_IMX_ECSPI
+	#define IMX_CSPI_VER_2_3	1
+	#define MAX_SPI_BYTES		(64 * 4)
 #endif
 
 /*
