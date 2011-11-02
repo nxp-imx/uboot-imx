@@ -770,3 +770,27 @@ void ipu_clk_enable(void)
 void ipu_clk_disable(void)
 {
 }
+
+int otp_clk_enable(void)
+{
+	u32 reg = 0;
+
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR2);
+	if (!(reg & 0x3000))
+		reg |= 0x3000;
+    writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR2);
+	return 0;
+}
+
+int otp_clk_disable(void)
+{
+	u32 reg = 0;
+
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR2);
+	if ((reg & 0x3000) == 0x3000)
+		reg &= ~(0x3000);
+    writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR2);
+	return 0;
+}
+
+

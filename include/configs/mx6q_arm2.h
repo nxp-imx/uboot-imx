@@ -90,6 +90,7 @@
 
 #define CONFIG_CMD_SPI
 #define CONFIG_CMD_I2C
+#define CONFIG_CMD_IMXOTP
 
 /* Enable below configure when supporting nand */
 #define CONFIG_CMD_SF
@@ -167,6 +168,16 @@
 #define CONFIG_IPADDR			192.168.1.103
 #define CONFIG_SERVERIP			192.168.1.101
 #define CONFIG_NETMASK			255.255.255.0
+
+/*
+ * OCOTP Configs
+ */
+#ifdef CONFIG_CMD_IMXOTP
+	#define CONFIG_IMX_OTP
+	#define IMX_OTP_BASE			OCOTP_BASE_ADDR
+	#define IMX_OTP_ADDR_MAX		0x7F
+	#define IMX_OTP_DATA_ERROR_VAL	0xBADABADA
+#endif
 
 /*
  * I2C Configs
