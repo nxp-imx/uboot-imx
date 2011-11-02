@@ -411,12 +411,17 @@ void spi_io_init(struct imx_spi_dev_t *dev)
 
 int fec_get_mac_addr(unsigned char *mac)
 {
-	u32 *ocotp_mac_base =
-		(u32 *)(OCOTP_BASE_ADDR + HW_OCOTP_MACn(0));
-	int i;
+	unsigned int value;
 
-	for (i = 0; i < 6; ++i, ++ocotp_mac_base)
-		mac[6 - 1 - i] = readl(++ocotp_mac_base);
+	value = readl(OCOTP_BASE_ADDR + HW_OCOTP_MACn(0));
+	mac[0] = value & 0xff;
+	mac[1] = (value >> 8) & 0xff;
+	mac[2] = (value >> 16) & 0xff;
+	mac[3] = (value >> 24) & 0xff;
+	value = readl(OCOTP_BASE_ADDR + HW_OCOTP_MACn(1));
+	mac[4] = value & 0xff;
+	mac[5] = (value >> 8) & 0xff;
+
 	return 0;
 }
 
