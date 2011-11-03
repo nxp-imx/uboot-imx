@@ -280,7 +280,7 @@ static u32 __get_nfc_clk(void)
 			break;
 	}
 
-	return  clkroot / pred / podf;
+	return  clkroot / (pred+1) / (podf+1);
 }
 
 static u32 __get_ddr_clk(void)
@@ -390,6 +390,8 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	case MXC_SATA_CLK:
 		return __get_ahb_clk();
 	case MXC_NFC_CLK:
+	case MXC_GPMI_CLK:
+	case MXC_BCH_CLK:
 	  return __get_nfc_clk();
 	default:
 		break;

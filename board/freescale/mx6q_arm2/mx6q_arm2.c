@@ -404,6 +404,59 @@ void spi_io_init(struct imx_spi_dev_t *dev)
 }
 #endif
 
+#ifdef CONFIG_NAND_GPMI
+
+iomux_v3_cfg_t nfc_pads[] = {
+	MX6Q_PAD_NANDF_CLE__RAWNAND_CLE,
+	MX6Q_PAD_NANDF_ALE__RAWNAND_ALE,
+	MX6Q_PAD_NANDF_WP_B__RAWNAND_RESETN,
+	MX6Q_PAD_NANDF_RB0__RAWNAND_READY0,
+	MX6Q_PAD_NANDF_CS0__RAWNAND_CE0N,
+	MX6Q_PAD_NANDF_CS1__RAWNAND_CE1N,
+	MX6Q_PAD_NANDF_CS2__RAWNAND_CE2N,
+	MX6Q_PAD_NANDF_CS3__RAWNAND_CE3N,
+	MX6Q_PAD_SD4_CMD__RAWNAND_RDN,
+	MX6Q_PAD_SD4_CLK__RAWNAND_WRN,
+	MX6Q_PAD_NANDF_D0__RAWNAND_D0,
+	MX6Q_PAD_NANDF_D1__RAWNAND_D1,
+	MX6Q_PAD_NANDF_D2__RAWNAND_D2,
+	MX6Q_PAD_NANDF_D3__RAWNAND_D3,
+	MX6Q_PAD_NANDF_D4__RAWNAND_D4,
+	MX6Q_PAD_NANDF_D5__RAWNAND_D5,
+	MX6Q_PAD_NANDF_D6__RAWNAND_D6,
+	MX6Q_PAD_NANDF_D7__RAWNAND_D7,
+	MX6Q_PAD_SD4_DAT0__RAWNAND_DQS,
+};
+
+int setup_gpmi_nand(void)
+{
+	unsigned int reg;
+
+	/* config gpmi nand iomux */
+	mxc_iomux_v3_setup_multiple_pads(nfc_pads,
+			ARRAY_SIZE(nfc_pads));
+
+
+	/* config gpmi and bch clock to 11Mhz*/
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CS2CDR);
+	reg &= 0xF800FFFF;
+	reg |= 0x01E40000;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CS2CDR);
+
+	/* enable gpmi and bch clock gating */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR4);
+	reg |= 0xFF003000;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR4);
+
+	/* enable apbh clock gating */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR0);
+	reg |= 0x0030;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR0);
+
+}
+#endif
+
+
 #define HW_OCOTP_MACn(n)       (0x00000620 + (n) * 0x10)
 
 #ifdef CONFIG_MXC_FEC
@@ -706,6 +759,9 @@ int board_init(void)
 #endif
 #endif
 
+#ifdef CONFIG_NAND_GPMI
+	setup_gpmi_nand();
+#endif
 	return 0;
 }
 

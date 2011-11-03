@@ -169,6 +169,9 @@
 #define CSD1_DDR_BASE_ADDR              MMDC1_ARB_BASE_ADDR
 #define CS0_BASE_ADDR                   WEIM_ARB_BASE_ADDR
 #define NAND_FLASH_BASE_ADDR            APBH_DMA_ARB_BASE_ADDR
+#define ABPHDMA_BASE_ADDR               APBH_DMA_ARB_BASE_ADDR
+#define GPMI_BASE_ADDR                  (APBH_DMA_ARB_BASE_ADDR + 0x02000)
+#define BCH_BASE_ADDR                   (APBH_DMA_ARB_BASE_ADDR + 0x04000)
 
 /* Defines for Blocks connected via AIPS (SkyBlue) */
 #define ATZ1_BASE_ADDR              AIPS1_ARB_BASE_ADDR
@@ -652,6 +655,8 @@ enum mxc_clock {
 	MXC_ESDHC4_CLK,
 	MXC_SATA_CLK,
 	MXC_NFC_CLK,
+	MXC_GPMI_CLK,
+	MXC_BCH_CLK,
 };
 
 enum mxc_peri_clocks {
