@@ -143,7 +143,7 @@ d_inv_loop:
 	str r1, [r0, #CLKCTL_CCGR4]
 	ldr r1, =0xF0000C3
 	str r1, [r0, #CLKCTL_CCGR5]
-	ldr r1, =0x3C0
+	ldr r1, =0x3FC
 	str r1, [r0, #CLKCTL_CCGR6]
 .endm
 

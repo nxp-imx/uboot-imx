@@ -110,9 +110,9 @@ static inline void setup_boot_device(void)
 		break;
 	case 0x3:
 		if (bt_mem_type)
-			boot_dev = SPI_NOR_BOOT;
-		else
 			boot_dev = I2C_BOOT;
+		else
+			boot_dev = SPI_NOR_BOOT;
 		break;
 	case 0x4:
 	case 0x5:
@@ -479,8 +479,12 @@ int get_mmc_env_devno(void)
 {
 	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
 
-	/* BOOT_CFG2[3] and BOOT_CFG2[4] */
-	return (soc_sbmr & 0x00001800) >> 11;
+	if (SD_BOOT == boot_dev || MMC_BOOT == boot_dev) {
+		/* BOOT_CFG2[3] and BOOT_CFG2[4] */
+		return (soc_sbmr & 0x00001800) >> 11;
+	} else
+		return -1;
+
 }
 #endif
 
@@ -851,7 +855,7 @@ int checkboard(void)
 	default:
 		printf("unknown");
 	}
-	printf("]\n");
+	printf(" ]\n");
 
 	printf("Boot Device: ");
 	switch (get_boot_device()) {
