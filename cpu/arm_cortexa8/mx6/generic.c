@@ -33,6 +33,9 @@
 #ifdef CONFIG_ARCH_CPU_INIT
 #include <asm/cache-cp15.h>
 #endif
+#ifdef CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
+#include <asm/arch/regs-ocotp.h>
+#endif
 
 enum pll_clocks {
 	CPU_PLL1,	/* System PLL */
@@ -527,8 +530,6 @@ int clk_info(u32 clk_type)
 	return 0;
 }
 
-
-
 static int config_pll_clk(enum pll_clocks pll, u32 divider)
 {
 	u32 ccsr = readl(CCM_BASE_ADDR + CLKCTL_CCSR);
@@ -737,6 +738,24 @@ int print_cpuinfo(void)
 extern int mxc_fec_initialize(bd_t *bis);
 extern void mxc_fec_set_mac_from_env(char *mac_addr);
 void enet_board_init(void);
+#ifdef CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
+int fec_get_mac_addr(unsigned char *mac)
+{
+	unsigned int value;
+
+	value = readl(OCOTP_BASE_ADDR + HW_OCOTP_MACn(0));
+	mac[5] = value & 0xff;
+	mac[4] = (value >> 8) & 0xff;
+	mac[3] = (value >> 16) & 0xff;
+	mac[2] = (value >> 24) & 0xff;
+	value = readl(OCOTP_BASE_ADDR + HW_OCOTP_MACn(1));
+	mac[1] = value & 0xff;
+	mac[0] = (value >> 8) & 0xff;
+
+	return 0;
+}
+#endif
+
 #endif
 
 int cpu_eth_init(bd_t *bis)

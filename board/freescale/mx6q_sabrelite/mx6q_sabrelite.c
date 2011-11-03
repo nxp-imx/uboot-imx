@@ -41,10 +41,6 @@
 #include <asm/arch/mmu.h>
 #endif
 
-#ifdef CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
-#include <asm/imx_iim.h>
-#endif
-
 #ifdef CONFIG_CMD_CLOCK
 #include <asm/clock.h>
 #endif
@@ -293,30 +289,6 @@ void spi_io_init(struct imx_spi_dev_t *dev)
 		break;
 	}
 }
-#endif
-
-#define HW_OCOTP_MACn(n)       (0x00000620 + (n) * 0x10)
-
-#ifdef CONFIG_MXC_FEC
-#ifdef CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
-
-int fec_get_mac_addr(unsigned char *mac)
-{
-	unsigned int value;
-
-	value = readl(OCOTP_BASE_ADDR + HW_OCOTP_MACn(0));
-	mac[0] = value & 0xff;
-	mac[1] = (value >> 8) & 0xff;
-	mac[2] = (value >> 16) & 0xff;
-	mac[3] = (value >> 24) & 0xff;
-	value = readl(OCOTP_BASE_ADDR + HW_OCOTP_MACn(1));
-	mac[4] = value & 0xff;
-	mac[5] = (value >> 8) & 0xff;
-
-	return 0;
-}
-
-#endif
 #endif
 
 #ifdef CONFIG_NET_MULTI
