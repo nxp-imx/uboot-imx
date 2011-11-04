@@ -162,8 +162,8 @@
 		"loadaddr=0x70800000\0"				\
 		"rd_loadaddr=0x70D00000\0"		\
 		"bootargs=console=ttymxc0 init=/init " \
-			"androidboot.console=ttymxc0 video=mxcdi1fb:RGB666,XGA " \
-			"ldb=di1 di1_primary gpu_memory=128M fbmem=14M pmem=128M,16M vmalloc=400M\0" \
+			"androidboot.console=ttymxc0 video=mxcdi1fb:RGB666,XGA,bpp=32 " \
+			"ldb=di1 di1_primary gpu_memory=128M fbmem=10M pmem=128M,32M vmalloc=400M\0" \
 		"bootcmd_SD=mmc read 1 ${loadaddr} 0x800 0x2000;" \
 			"mmc read 1 ${rd_loadaddr} 0x3000 0x300\0" \
 		"bootcmd=run bootcmd_SD; bootm ${loadaddr} ${rd_loadaddr}\0" \
