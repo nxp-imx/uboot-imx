@@ -3316,7 +3316,8 @@ mx6q_arm2_iram_config	: unconfig
 		}
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx6q_arm2 freescale mx6
 
-mx6q_sabrelite_config	: unconfig
+mx6q_sabrelite_config			\
+mx6q_sabrelite_mfg_config   : unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx6q_sabrelite freescale mx6
 
 omap2420h4_config	: unconfig
