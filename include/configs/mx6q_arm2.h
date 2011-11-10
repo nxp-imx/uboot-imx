@@ -259,6 +259,7 @@
 	#define CONFIG_CMD_EXT2		1
 
 	/* NAND is the unique module invoke APBH-DMA */
+	#define CONFIG_APBH_DMA
 	#define CONFIG_APBH_DMA_V2
 	#define CONFIG_MXS_DMA_REG_BASE	ABPHDMA_BASE_ADDR
 #endif
