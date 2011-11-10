@@ -198,6 +198,7 @@ struct fsl_esdhc_cfg {
 int fsl_esdhc_mmc_init(bd_t *bis);
 int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg);
 void fdt_fixup_esdhc(void *blob, bd_t *bd);
+u32 get_ddr_delay(struct fsl_esdhc_cfg *cfg);
 #else
 static inline int fsl_esdhc_mmc_init(bd_t *bis) { return -ENOSYS; }
 static inline void fdt_fixup_esdhc(void *blob, bd_t *bd) {}

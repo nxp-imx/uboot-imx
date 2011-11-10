@@ -144,7 +144,7 @@ static void print_mmcinfo(struct mmc *mmc)
 	}
 }
 
-int do_mmcinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mmcinfo(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	struct mmc *mmc;
 
@@ -177,7 +177,7 @@ U_BOOT_CMD(
 	""
 );
 
-int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	enum mmc_state state;
 
@@ -342,7 +342,7 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if (state != MMC_INVALID) {
 		struct mmc *mmc = find_mmc_device(curr_device);
 		int idx = 2;
-		u32 blk, cnt, n;
+		u32 blk, cnt, n = 0;
 		void *addr;
 
 		if (state != MMC_ERASE) {

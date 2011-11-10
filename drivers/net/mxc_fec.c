@@ -299,7 +299,9 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 {
 	unsigned short val = 0;
 	int ret;
+#ifdef CONFIG_PHY_MICREL_KSZ9021
 	int cnt;
+#endif
 
 #ifdef CONFIG_MX28
 	/* Dummy read with delay to get phy start working */

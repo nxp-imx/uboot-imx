@@ -168,7 +168,7 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 {
 	uint	xfertyp, mixctrl;
 	uint	irqstat;
-	u32	tmp, sysctl_restore;
+	u32	tmp, sysctl_restore = 0;
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
 	volatile struct fsl_esdhc *regs = (struct fsl_esdhc *)cfg->esdhc_base;
 

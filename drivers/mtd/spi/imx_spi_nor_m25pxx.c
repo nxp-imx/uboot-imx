@@ -137,6 +137,7 @@ static int wait_till_ready(struct spi_flash *flash)
 	return 1;
 }
 
+#ifdef DEBUG
 static int erase_chip(struct spi_flash *flash)
 {
 	/* Wait until finished previous write command. */
@@ -156,6 +157,7 @@ static int erase_chip(struct spi_flash *flash)
 
 	return 0;
 }
+#endif
 
 static int erase_sector(struct spi_flash *flash, u32 offset)
 {

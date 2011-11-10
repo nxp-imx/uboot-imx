@@ -400,7 +400,7 @@ int board_mmc_init(bd_t *bis)
  * CONFIG is not defined, then the default target delay value will be used.
  */
 #ifdef CONFIG_GET_DDR_TARGET_DELAY
-u32 get_ddr_delay(struct fsl_esdhc *cfg)
+u32 get_ddr_delay(struct fsl_esdhc_cfg *cfg)
 {
 	/* No delay required  */
 	return 0;
@@ -476,6 +476,7 @@ iomux_v3_cfg_t enet_pads_final[] = {
 	MX6Q_PAD_RGMII_RX_CTL__ENET_RGMII_RX_CTL,
 };
 
+#ifdef DEBUG
 static int phy_read(char *devname, unsigned char addr, unsigned char reg,
 		    unsigned short *pdata)
 {
@@ -485,6 +486,7 @@ static int phy_read(char *devname, unsigned char addr, unsigned char reg,
 		       devname, addr, reg);
 	return ret;
 }
+#endif
 
 static int phy_write(char *devname, unsigned char addr, unsigned char reg,
 		     unsigned short value)
