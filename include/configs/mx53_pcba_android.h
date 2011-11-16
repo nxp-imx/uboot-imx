@@ -197,6 +197,12 @@
 	#define CONFIG_SYS_I2C_SLAVE            0xfe
 #endif
 
+#define CONFIG_IMX_ECSPI
+#define IMX_CSPI_VER_2_3        1
+#define CONFIG_IMX_SPI_PMIC
+#define CONFIG_IMX_SPI_PMIC_CS 1
+#define MAX_SPI_BYTES           (64 * 4)
+
 
 /*
  * SPI Configs

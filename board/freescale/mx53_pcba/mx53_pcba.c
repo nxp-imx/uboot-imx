@@ -55,6 +55,11 @@
 #include <jffs2/load_kernel.h>
 #endif
 
+#ifdef CONFIG_IMX_ECSPI
+#include <imx_spi.h>
+#include <asm/arch/imx_spi_pmic.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
@@ -321,6 +326,7 @@ void setup_pmic_voltages(void)
 
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 	if (!i2c_probe(0x8)) {
+		printf("Found mc34708 on board by I2C!\n");
 		if (i2c_read(0x8, 24, 1, &buf[0], 3)) {
 			printf("%s:i2c_read:error\n", __func__);
 		}
@@ -367,11 +373,132 @@ void setup_pmic_voltages(void)
 			printf("%s:i2c_write:error\n", __func__);
 			return -1;
 		}
-
-	} else
-		printf("Error: Dont't found mc34708 on board.\n");
+	} else {
+		if (setup_pmic_voltages_spi())	/*Probe by spi*/
+			printf("Error: Dont't found mc34708 on board.\n");
+		else
+			printf("Found mc34708 on board by SPI!\n");
+	}
 }
 
+#endif
+
+#ifdef CONFIG_IMX_ECSPI
+s32 spi_get_cfg(struct imx_spi_dev_t *dev)
+{
+	switch (dev->slave.cs) {
+	case 1:
+		dev->base = CSPI1_BASE_ADDR;
+		dev->freq = 25000000;
+		dev->ss_pol = IMX_SPI_ACTIVE_HIGH;
+		dev->ss = 1;
+		dev->fifo_sz = 64 * 4;
+		dev->us_delay = 0;
+		break;
+	default:
+		printf("Invalid Bus ID!\n");
+	}
+
+	return 0;
+}
+
+void spi_io_init(struct imx_spi_dev_t *dev)
+{
+	switch (dev->base) {
+	case CSPI1_BASE_ADDR:
+		/* Select mux mode: ALT0 mux port: SCLK of instance: ecspi1. */
+		mxc_request_iomux(MX53_PIN_EIM_D16, IOMUX_CONFIG_ALT4);
+		mxc_iomux_set_pad(MX53_PIN_EIM_D16, 0x104);
+		mxc_iomux_set_input(
+			MUX_IN_CSPI_IPP_CSPI_CLK_IN_SELECT_INPUT, 0x3);
+
+		/* Select mux mode: ALT4 mux port: MISO of instance: ecspi1. */
+		mxc_request_iomux(MX53_PIN_EIM_D17, IOMUX_CONFIG_ALT4);
+		mxc_iomux_set_pad(MX53_PIN_EIM_D17, 0x104);
+		mxc_iomux_set_input(
+			MUX_IN_ECSPI1_IPP_IND_MISO_SELECT_INPUT, 0x3);
+
+		/* Select mux mode: ALT4 mux port: MOSI of instance: ecspi1 */
+		mxc_request_iomux(MX53_PIN_EIM_D18, IOMUX_CONFIG_ALT4);
+		mxc_iomux_set_pad(MX53_PIN_EIM_D18, 0x104);
+		mxc_iomux_set_input(
+			MUX_IN_ECSPI1_IPP_IND_MOSI_SELECT_INPUT, 0x3);
+
+		if (dev->ss == 0) {
+			mxc_request_iomux(MX53_PIN_EIM_EB2,
+				IOMUX_CONFIG_ALT4);
+			mxc_iomux_set_pad(MX53_PIN_EIM_EB2, 0x104);
+			mxc_iomux_set_input(
+				MUX_IN_ECSPI1_IPP_IND_SS_B_1_SELECT_INPUT,
+				0x3);
+		} else if (dev->ss == 1) {
+			mxc_request_iomux(MX53_PIN_EIM_D19, IOMUX_CONFIG_ALT4);
+			mxc_iomux_set_pad(MX53_PIN_EIM_D19, 0x104);
+			mxc_iomux_set_input(
+				MUX_IN_ECSPI1_IPP_IND_SS_B_2_SELECT_INPUT,
+				0x2);
+		}
+		break;
+	default:
+		break;
+	}
+}
+
+int  setup_pmic_voltages_spi(void)
+{
+	struct spi_slave *slave = NULL;
+	unsigned int val;
+
+	slave = spi_pmic_probe();
+	if (slave) {
+		/* increase VDDGP as 1.25V for 1GHZ on SW1 */
+		val = pmic_reg(slave, 24, 0, 0);
+		val &= ~0x3F;
+		val |= 0x30;
+		if (pmic_reg(slave, 24, val, 1) == -1) {
+			printf("%s:spi_write 24:error\n", __func__);
+			return -1;
+		}
+
+		/* Charger Source: set VBUS threshold low to 4.25V,
+		 * set Weak VBUS threshold to 4.275V */
+		val = pmic_reg(slave, 53, 0, 0);
+		val = (val & 0xfc7038) | 0x8e47;
+		if (pmic_reg(slave, 53, val, 1) == -1) {
+			printf("%s:spi_write 53:error\n", __func__);
+			return -1;
+		}
+		/* set 1P5 */
+		val = pmic_reg(slave, 52, 0, 0);
+		val |= 0x100000;
+		if (pmic_reg(slave, 52, val, 1) == -1) {
+			printf("%s:spi_write 52:error\n", __func__);
+			return -1;
+		}
+
+		/* Change CC current to 1550mA */
+		/* Change CV voltage as 4.2v */
+		val = pmic_reg(slave, 51, 0, 0);
+		val = (val & 0xf83f00) | 0x7c0d8;
+		if (pmic_reg(slave, 51, val, 1) == -1) {
+			printf("%s:spi_write:error\n", __func__);
+			return -1;
+		}
+
+		/*change global reset time as 4s*/
+		val = pmic_reg(slave, 15, 0, 0);
+		val &= ~0x300;
+		val |= 0x100;
+		if (pmic_reg(slave, 15, val, 1) == -1) {
+			printf("%s:spi_write:error\n", __func__);
+			return -1;
+		}
+	} else {
+		printf("spi_pmic_probe failed!\n");
+		return -1;
+	}
+	return 0;
+}
 #endif
 
 #ifdef CONFIG_CMD_MMC
@@ -498,13 +625,7 @@ int board_init(void)
 
 	setup_uart();
 
-#ifdef CONFIG_I2C_MXC
-	setup_i2c(CONFIG_SYS_I2C_PORT);
-	/* Increase VDDGP voltage */
-	setup_pmic_voltages();
-	/* Switch to 1GHZ */
 	clk_config(CONFIG_REF_CLK_FREQ, 1000, CPU_CLK);
-#endif
 
 	return 0;
 }
@@ -636,6 +757,11 @@ int check_recovery_cmd_file(void)
 
 int board_late_init(void)
 {
+#ifdef CONFIG_I2C_MXC
+	setup_i2c(CONFIG_SYS_I2C_PORT);
+	/* Increase VDDGP voltage */
+	setup_pmic_voltages();
+#endif
 	return 0;
 }
 
