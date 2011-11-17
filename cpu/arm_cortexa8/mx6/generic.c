@@ -774,12 +774,19 @@ int cpu_eth_init(bd_t *bis)
 #if defined(CONFIG_ARCH_CPU_INIT)
 int arch_cpu_init(void)
 {
+	int val;
 	icache_enable();
 	dcache_enable();
 
 #ifndef CONFIG_L2_OFF
 	l2_cache_enable();
 #endif
+	/* Increase the VDDSOC to 1.2V */
+	val = REG_RD(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE);
+	val &= ~BM_ANADIG_REG_CORE_REG2_TRG;
+	val |= BF_ANADIG_REG_CORE_REG2_TRG(0x5);
+	REG_SET(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE, val);
+
 	return 0;
 }
 #endif
