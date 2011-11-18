@@ -1009,9 +1009,11 @@ struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
 int check_recovery_cmd_file(void)
 {
 	disk_partition_t info;
+	int button_pressed = 0;
 	ulong part_length;
 	int filelen = 0;
 	char *env;
+	u32 reg;
 	int i;
 
 	/* For test only */
@@ -1085,7 +1087,20 @@ int check_recovery_cmd_file(void)
 		break;
 	}
 
-	return (filelen > 0) ? 1 : 0;
+	/* Check Recovery Combo Button press or not.
+	 * @TODO: Need At least Two key, but in SMD board,
+	 * only can use one Volume key. */
+	mxc_request_iomux(MX53_PIN_ATA_DATA14, IOMUX_CONFIG_ALT1);
+	readl(GPIO2_BASE_ADDR + GPIO_GDIR);
+	reg &= ~(1<<14);
+	writel(reg, GPIO2_BASE_ADDR + GPIO_GDIR);
+	reg = readl(GPIO2_BASE_ADDR + GPIO_PSR);
+	if (!(reg & (1 << 14))) { /* Vol - is low assert */
+		button_pressed = 1;
+		printf("Recovery key pressed\n");
+	}
+
+	return (filelen > 0 || button_pressed);
 
 }
 #endif
