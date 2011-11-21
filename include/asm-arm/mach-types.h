@@ -3256,7 +3256,7 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_MX53_PCBA            3274
 #define MACH_TYPE_MX6Q_SABREAUTO       3529
 #define MACH_TYPE_MX6Q_SABRELITE       3769
-#define MACH_TYPE_MX6Q_ARM2       3837
+#define MACH_TYPE_MX6Q_ARM2            3837
 
 #ifdef CONFIG_ARCH_EBSA110
 # ifdef machine_arch_type
