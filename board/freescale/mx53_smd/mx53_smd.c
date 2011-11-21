@@ -403,6 +403,18 @@ static void setup_i2c(unsigned int module_base)
 	}
 }
 
+/* Note: udelay() is not accurate for i2c timing */
+static void __udelay(int time)
+{
+	int i, j;
+
+	for (i = 0; i < time; i++) {
+		for (j = 0; j < 200; j++) {
+			asm("nop");
+			asm("nop");
+		}
+	}
+}
 /* DA9053 I2C SDA stuck low issue: the I2C block in DA9053 may not correctly
  * receive a Power On Reset and device is in unknown state during start-up.
  * The only way to get the chip into known state before any communication
@@ -417,9 +429,9 @@ static void setup_i2c(unsigned int module_base)
  */
 #define I2C1_SDA_GPIO5_26_BIT_MASK  (1 << 26)
 #define I2C1_SCL_GPIO5_27_BIT_MASK  (1 << 27)
-void i2c_failed_handle(void)
+int da9053_i2c_startup_reset(void)
 {
-	unsigned int reg, i, retry = 10;
+	unsigned int reg, i, retry = 3;
 
 	do {
 		/* set I2C1_SDA as GPIO input */
@@ -437,70 +449,107 @@ void i2c_failed_handle(void)
 		reg = readl(GPIO5_BASE_ADDR + 0x4);
 		reg |= I2C1_SCL_GPIO5_27_BIT_MASK;
 		writel(reg, GPIO5_BASE_ADDR + 0x4);
-		udelay(10000);
+		__udelay(10000);
 
 		for (i = 0; i < 10; i++) {
 			reg = readl(GPIO5_BASE_ADDR + 0x0);
 			reg |= I2C1_SCL_GPIO5_27_BIT_MASK;
 			writel(reg, GPIO5_BASE_ADDR + 0x0);
-			udelay(5000);
+			__udelay(4);
 
 			reg = readl(GPIO5_BASE_ADDR + 0x0);
 			reg &= ~I2C1_SCL_GPIO5_27_BIT_MASK;
 			writel(reg, GPIO5_BASE_ADDR + 0x0);
-			udelay(5000);
+			__udelay(4);
 		}
 		reg = readl(GPIO5_BASE_ADDR + 0x0);
 		reg |= I2C1_SCL_GPIO5_27_BIT_MASK;
 		writel(reg, GPIO5_BASE_ADDR + 0x0);
-		udelay(1000);
+		__udelay(20);
+
+		/* I2C1_SDA = output */
+		reg = readl(GPIO5_BASE_ADDR + 0x4);
+		reg |= I2C1_SDA_GPIO5_26_BIT_MASK;
+		writel(reg, GPIO5_BASE_ADDR + 0x4);
+
+		/* I2C1_SDA = H i2c start and stop bit */
+		reg = readl(GPIO5_BASE_ADDR + 0x0);
+		reg |= I2C1_SDA_GPIO5_26_BIT_MASK;
+		writel(reg, GPIO5_BASE_ADDR + 0x0);
+		__udelay(4);
+		/* I2C1_SDA = L */
+		reg = readl(GPIO5_BASE_ADDR + 0x0);
+		reg &= ~I2C1_SDA_GPIO5_26_BIT_MASK;
+		writel(reg, GPIO5_BASE_ADDR + 0x0);
+		__udelay(4);
+		/* I2C1_SCL = L */
+		reg = readl(GPIO5_BASE_ADDR + 0x0);
+		reg &= ~I2C1_SCL_GPIO5_27_BIT_MASK;
+		writel(reg, GPIO5_BASE_ADDR + 0x0);
+		__udelay(4);
+		/* I2C1_SCL = H */
+		reg = readl(GPIO5_BASE_ADDR + 0x0);
+		reg |= I2C1_SCL_GPIO5_27_BIT_MASK;
+		writel(reg, GPIO5_BASE_ADDR + 0x0);
+		__udelay(4);
+		/* I2C1_SDA = H */
+		reg = readl(GPIO5_BASE_ADDR + 0x0);
+		reg |= I2C1_SDA_GPIO5_26_BIT_MASK;
+		writel(reg, GPIO5_BASE_ADDR + 0x0);
+		__udelay(4);
+
+		/* I2C1_SDA = input */
+		reg = readl(GPIO5_BASE_ADDR + 0x4);
+		reg &= ~I2C1_SDA_GPIO5_26_BIT_MASK;
+		writel(reg, GPIO5_BASE_ADDR + 0x4);
 
 		reg = readl(GPIO5_BASE_ADDR + 0x8);
 		if (reg & I2C1_SDA_GPIO5_26_BIT_MASK) {
 			printf("***I2C1_SDA = hight***\n");
-			return;
-		} else {
+			break;
+		} else
 			printf("***I2C1_SDA = low***\n");
-		}
 	} while (retry--);
+	/* restore I2C1_SDA/I2C1_SCL iomux */
+	mxc_request_iomux(MX53_PIN_CSI0_D8,
+			IOMUX_CONFIG_ALT5 | IOMUX_CONFIG_SION);
+	mxc_request_iomux(MX53_PIN_CSI0_D9,
+			IOMUX_CONFIG_ALT5 | IOMUX_CONFIG_SION);
+	return 0;
 }
 
-int i2c_read_check(uchar chip, uint addr, int alen, uchar *buf, int len)
+#define DA9053_DUMMY_WRITE_REG (0xff)
+int i2c_read_da9053(uchar chip, uint addr, int alen, uchar *buf, int len)
 {
 	int ret = 0;
+	uchar dummy = 0xff;
 
 	ret = i2c_read(chip, addr, alen, buf, len);
 	if (ret == 0) {
+		ret = i2c_write(chip, DA9053_DUMMY_WRITE_REG, 1, &dummy, 1);
+		if (0 != ret)
+			printf("[I2C-Rd-DA9053]dummy write reg fail\n");
 		return 0;
 	} else {
-	i2c_failed_handle();
-	setup_i2c(CONFIG_SYS_I2C_PORT);
-	ret = i2c_read(chip, addr, alen, buf, len);
-	if (ret != 0) {
 		printf("[I2C-DA9053]read i2c fail\n");
 		return -1;
 	}
-	return 0;
-	}
 }
 
-int i2c_write_check(uchar chip, uint addr, int alen, uchar *buf, int len)
+int i2c_write_da9053(uchar chip, uint addr, int alen, uchar *buf, int len)
 {
 	int ret = 0;
+	uchar dummy = 0xff;
 
 	ret = i2c_write(chip, addr, alen, buf, len);
 	if (ret == 0) {
+		ret = i2c_write(chip, DA9053_DUMMY_WRITE_REG, 1, &dummy, 1);
+		if (0 != ret)
+			printf("[I2C-Wr-DA9053]dummy write reg fail\n");
 		return 0;
 	} else {
-		i2c_failed_handle();
-		setup_i2c(CONFIG_SYS_I2C_PORT);
-		i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
-		ret = i2c_write(chip, addr, alen, buf, len);
-		if (ret != 0) {
-			printf("[I2C-DA9053]write i2c fail\n");
-			return -1;
-		}
-		return 0;
+		printf("[I2C-DA9053]write i2c fail\n");
+		return -1;
 	}
 }
 
@@ -516,26 +565,27 @@ void setup_pmic_voltages(void)
 	int retries = 10, ret = -1;
 
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+	da9053_i2c_startup_reset();
 	/* increase VDDGP as 1.25V for 1GHZ */
 	value = 0x5e;
 	do {
-		if (0 != i2c_write_check(0x48, 0x2e, 1, &value, 1)) {
+		if (0 != i2c_write_da9053(0x48, 0x2e, 1, &value, 1)) {
 			printf("da9052_i2c_is_connected - i2c write failed.....\n");
 		} else {
 			printf("da9052_i2c_is_connected - i2c write success....\n");
 			ret = 0;
 		}
 	} while (ret != 0 && retries--);
-	i2c_read(0x48, 60, 1, &value, 1);
+	i2c_read_da9053(0x48, 60, 1, &value, 1);
 	value |= 0x1;
-	i2c_write(0x48, 60, 1, &value, 1);
+	i2c_write_da9053(0x48, 60, 1, &value, 1);
 
 	/* restore VUSB_2V5 when reset from suspend state */
 	value = BUCKPERI_RESTORE_SW_STEP;
-	i2c_write(0x48, DA9052_ID1213_REG, 1, &value, 1);
-	i2c_read(0x48, DA9052_SUPPLY_REG, 1, &value, 1);
+	i2c_write_da9053(0x48, DA9052_ID1213_REG, 1, &value, 1);
+	i2c_read_da9053(0x48, DA9052_SUPPLY_REG, 1, &value, 1);
 	value |= SUPPLY_RESTORE_VPERISW_EN;
-	i2c_write(0x48, DA9052_SUPPLY_REG, 1, &value, 1);
+	i2c_write_da9053(0x48, DA9052_SUPPLY_REG, 1, &value, 1);
 }
 
 #endif
