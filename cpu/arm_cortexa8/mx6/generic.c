@@ -260,7 +260,7 @@ static u32 __get_emi_slow_clk(void)
 static u32 __get_nfc_clk(void)
 {
 	u32 clkroot;
-	u32 cs2cdr =  __REG(MXC_CCM_CS2CDR);
+	u32 cs2cdr = __REG(MXC_CCM_CS2CDR);
 	u32 podf = (cs2cdr & MXC_CCM_CS2CDR_ENFC_CLK_PODF_MASK) \
 			>> MXC_CCM_CS2CDR_ENFC_CLK_PODF_OFFSET;
 	u32 pred = (cs2cdr & MXC_CCM_CS2CDR_ENFC_CLK_PRED_MASK) \
@@ -283,7 +283,7 @@ static u32 __get_nfc_clk(void)
 			break;
 	}
 
-	return  clkroot / (pred+1) / (podf+1);
+	return  clkroot / (pred + 1) / (podf + 1);
 }
 
 static u32 __get_ddr_clk(void)
@@ -395,7 +395,7 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	case MXC_NFC_CLK:
 	case MXC_GPMI_CLK:
 	case MXC_BCH_CLK:
-	  return __get_nfc_clk();
+		return __get_nfc_clk();
 	default:
 		break;
 	}
@@ -518,6 +518,7 @@ int clk_info(u32 clk_type)
 	case NFC_CLK:
 		printf("NFC Clock: %dHz\n",
 			 mxc_get_clock(MXC_NFC_CLK));
+		break;
 	case ALL_CLK:
 		printf("cpu clock: %dMHz\n",
 			mxc_get_clock(MXC_ARM_CLK) / SZ_DEC_1M);
@@ -529,6 +530,39 @@ int clk_info(u32 clk_type)
 
 	return 0;
 }
+
+#define calc_div(target_clk, src_clk, limit) ({	\
+		u32 tmp = 0;	\
+		if ((src_clk % target_clk) <= 100)	\
+			tmp = src_clk / target_clk;	\
+		else	\
+			tmp = (src_clk / target_clk) + 1;	\
+		if (tmp > limit)	\
+			tmp = limit;	\
+		(tmp - 1);	\
+	})
+
+#define calc_pred_n_podf(target_clk, src_clk, p_pred, p_podf, pred_limit, podf_limit) {	\
+		u32 div = calc_div(target_clk, src_clk,	\
+				pred_limit * podf_limit);	\
+		u32 tmp = 0, tmp_i = 0, tmp_j = 0;	\
+		if ((div + 1) > (pred_limit * podf_limit))	{\
+			tmp_i = pred_limit;	\
+			tmp_j = podf_limit;	\
+		}	\
+		for (tmp_i = 1; tmp_i <= podf_limit; ++tmp_i) {	\
+			for (tmp_j = 1; tmp_j <= pred_limit; ++tmp_j) {	\
+				if ((div + 1) == (tmp_i * tmp_j)) {	\
+					tmp = 1;	\
+					break;	\
+				}	\
+			}	\
+			if (1 == tmp)	\
+				break;	\
+		}	\
+		*p_pred = tmp_j - 1;	\
+		*p_podf = tmp_i - 1;	\
+	}
 
 static int config_pll_clk(enum pll_clocks pll, u32 divider)
 {
@@ -599,8 +633,38 @@ static int config_core_clk(u32 ref, u32 freq)
 
 static int config_nfc_clk(u32 nfc_clk)
 {
-	/* TBD */
-	return -1;
+	u32 clkroot;
+	u32 cs2cdr = __REG(MXC_CCM_CS2CDR);
+	u32 podf = 0, pred = 0;
+
+	switch ((cs2cdr & MXC_CCM_CS2CDR_ENFC_CLK_SEL_MASK) >>
+		MXC_CCM_CS2CDR_ENFC_CLK_SEL_OFFSET) {
+		default:
+		case 0:
+			clkroot = PLL2_PFD0_FREQ;
+			break;
+		case 1:
+			clkroot = __decode_pll(BUS_PLL2, CONFIG_MX6_HCLK_FREQ);
+			break;
+		case 2:
+			clkroot = __decode_pll(USBOTG_PLL3,
+					CONFIG_MX6_HCLK_FREQ);
+			break;
+		case 3:
+			clkroot = PLL2_PFD2_FREQ;
+			break;
+	}
+
+	calc_pred_n_podf(nfc_clk, clkroot, &pred, &podf, 8, 64);
+
+	cs2cdr &= ~(MXC_CCM_CS2CDR_ENFC_CLK_PRED_MASK |
+			MXC_CCM_CS2CDR_ENFC_CLK_PODF_MASK);
+	cs2cdr |= (pred << MXC_CCM_CS2CDR_ENFC_CLK_PRED_OFFSET);
+	cs2cdr |= (podf << MXC_CCM_CS2CDR_ENFC_CLK_PODF_OFFSET);
+
+	writel(cs2cdr, MXC_CCM_CS2CDR);
+
+	return  0;
 }
 static int config_periph_clk(u32 ref, u32 freq)
 {
@@ -671,8 +735,10 @@ static int config_ddr_clk(u32 ddr_clk)
 
 	podf = i - 1;
 
-	cbcdr &= ~MXC_CCM_CBCDR_MMDC_CH0_PODF_MASK;
-	cbcdr |= podf << MXC_CCM_CBCDR_MMDC_CH0_PODF_OFFSET;
+	cbcdr &= ~(MXC_CCM_CBCDR_MMDC_CH0_PODF_MASK |
+			MXC_CCM_CBCDR_MMDC_CH1_PODF_MASK);
+	cbcdr |= (podf << MXC_CCM_CBCDR_MMDC_CH0_PODF_OFFSET) |
+			(podf << MXC_CCM_CBCDR_MMDC_CH1_PODF_OFFSET);
 	writel(cbcdr, CCM_BASE_ADDR + CLKCTL_CBCDR);
 	while (readl(CCM_BASE_ADDR + CLKCTL_CDHIPR) != 0)
 		;
@@ -775,12 +841,14 @@ int cpu_eth_init(bd_t *bis)
 int arch_cpu_init(void)
 {
 	int val;
+
 	icache_enable();
 	dcache_enable();
 
 #ifndef CONFIG_L2_OFF
 	l2_cache_enable();
 #endif
+
 	/* Increase the VDDSOC to 1.2V */
 	val = REG_RD(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE);
 	val &= ~BM_ANADIG_REG_CORE_REG2_TRG;
