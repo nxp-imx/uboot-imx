@@ -1131,3 +1131,38 @@ void ipu_clk_disable(void)
 	reg |= (0x1 << 18);
 	writel(reg, CCM_BASE_ADDR + CLKCTL_CLPCR);
 }
+
+#ifdef CONFIG_CMD_IMX_DOWNLOAD_MODE
+
+/* this function should call before enter linux, otherwise, you
+ * watchdog reset will enter mfg download mode again, clear this bit
+ * to prevent this behavior */
+void clear_mfgmode_mem(void)
+{
+	u32 reg;
+	reg = readl(SRTC_BASE_ADDR + SRTC_LPGR);
+	reg &= ~0x12000000;
+	writel(reg, SRTC_BASE_ADDR + SRTC_LPGR);
+}
+
+void do_switch_mfgmode(void)
+{
+	u32 reg;
+	reg = readl(SRTC_BASE_ADDR + SRTC_LPGR);
+	/* After set bit 28 of LPGR register of SRTC to 1, Set bit
+	 * [25:0] to specified value according to format of SBMR,
+	 * after trigger a watchdog reset, ROM will read Bit 28 and
+	 * then copy bit [25:0] of LPGR to SBMR, then ROM can enter
+	 * serial download mode.*/
+	reg |= 0x12000000;
+	writel(reg, SRTC_BASE_ADDR + SRTC_LPGR);
+	/* this watchdog reset will let chip enter mfgtool download
+	 * mode. */
+	do_reset(NULL, 0, 0, NULL);
+}
+
+U_BOOT_CMD(
+	download_mode, 1, 1, do_switch_mfgmode,
+	"download_mode - enter i.MX serial/usb download mode\n",
+	"");
+#endif

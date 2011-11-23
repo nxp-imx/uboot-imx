@@ -359,6 +359,8 @@
 
 #define PLATFORM_ICGC           0x14
 
+#define SRTC_LPGR		0x1c
+
 /* Assuming 24MHz input clock with doubler ON */
 /*                            MFI         PDF */
 #define DP_OP_1000	((10 << 4) + ((1 - 1) << 0))
@@ -466,6 +468,7 @@ enum mxc_peri_clocks {
 	MXC_SPI2_CLK,
 };
 
+extern void clear_mfgmode_mem(void);
 extern unsigned int mxc_get_clock(enum mxc_clock clk);
 extern unsigned int get_board_rev(void);
 extern int is_soc_rev(int rev);
