@@ -79,6 +79,9 @@
 #define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{9600, 19200, 38400, 57600, 115200}
 
+/* download mode command */
+#define CONFIG_IMX_DOWNLOAD_CMD
+
 /***********************************************************
  * Command definition
  ***********************************************************/

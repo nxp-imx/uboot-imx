@@ -136,6 +136,10 @@ int cleanup_before_linux(void)
 {
 	unsigned int i;
 
+#ifdef CONFIG_CMD_IMX_DOWNLOAD_MODE
+	clear_mfgmode_mem();
+#endif
+
 #ifdef CONFIG_VIDEO_MX5
 	ipu_disable_channel(MEM_BG_SYNC);
 	ipu_uninit_channel(MEM_BG_SYNC);
