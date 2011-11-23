@@ -118,6 +118,7 @@
 #define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{9600, 19200, 38400, 57600, 115200}
 
+
 /***********************************************************
  * Command definition
  ***********************************************************/
@@ -147,6 +148,9 @@
 
 #define CONFIG_CMD_SATA
 #undef CONFIG_CMD_IMLS
+
+/* download mode command */
+#define CONFIG_CMD_IMX_DOWNLOAD_MODE
 
 #define CONFIG_BOOTDELAY	3
 
