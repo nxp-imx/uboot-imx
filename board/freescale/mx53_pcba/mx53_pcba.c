@@ -463,7 +463,12 @@ int  setup_pmic_voltages_spi(void)
 		/* Charger Source: set VBUS threshold low to 4.25V,
 		 * set Weak VBUS threshold to 4.275V */
 		val = pmic_reg(slave, 53, 0, 0);
-		val = (val & 0xfc7038) | 0x8e47;
+
+		val = (val & ~0x7) | 0x7;		/* VBUSTL */
+		val = (val & ~0x1c0) | 0x40;		/* VBUSWEAK */
+		val = (val & ~0xe00) | 0xe00;		/* AUXTL */
+		val = (val & ~0x38000) | 0x8000;	/* AUXWEAK */
+
 		if (pmic_reg(slave, 53, val, 1) == -1) {
 			printf("%s:spi_write 53:error\n", __func__);
 			return -1;
@@ -476,10 +481,12 @@ int  setup_pmic_voltages_spi(void)
 			return -1;
 		}
 
-		/* Change CC current to 1550mA */
 		/* Change CV voltage as 4.2v */
+		/* Change CC current to 1550mA */
 		val = pmic_reg(slave, 51, 0, 0);
-		val = (val & 0xf83f00) | 0x7c0d8;
+		val = (val & ~0xfc0) | 0x8c0;		/* CHRCV */
+		val = (val & ~0xf000) | 0xd000;		/* CHRCC */
+
 		if (pmic_reg(slave, 51, val, 1) == -1) {
 			printf("%s:spi_write:error\n", __func__);
 			return -1;
@@ -493,6 +500,9 @@ int  setup_pmic_voltages_spi(void)
 			printf("%s:spi_write:error\n", __func__);
 			return -1;
 		}
+
+		spi_pmic_free(slave);
+
 	} else {
 		printf("spi_pmic_probe failed!\n");
 		return -1;
