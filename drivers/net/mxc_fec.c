@@ -168,6 +168,10 @@ struct fec_info_s fec_info[] = {
 	 },
 };
 
+static int mxc_fec_mii_read(char *devname, unsigned char addr,
+			    unsigned char reg, unsigned short *value);
+static int mxc_fec_mii_write(char *devname, unsigned char addr,
+			     unsigned char reg, unsigned short value);
 int fec_send(struct eth_device *dev, volatile void *packet, int length);
 int fec_recv(struct eth_device *dev);
 int fec_init(struct eth_device *dev, bd_t *bd);
@@ -180,6 +184,14 @@ static void mxc_fec_mii_init(volatile fec_t *fecp)
 	clk = mxc_get_clock(MXC_IPG_CLK);
 
 	fecp->mscr = (fecp->mscr & (~0x7E)) | (((clk + 499999) / 5000000) << 1);
+}
+
+static void mxc_fec_phy_powerup(char *devname, int phy_addr)
+{
+	unsigned short value;
+	mxc_fec_mii_read(devname, phy_addr, PHY_BMCR, &value);
+	if (value & PHY_BMCR_POWD)
+		mxc_fec_mii_write(devname, phy_addr, PHY_BMCR, (value & ~PHY_BMCR_POWD));
 }
 
 static inline int __fec_mii_read(volatile fec_t *fecp, unsigned char addr,
@@ -818,6 +830,23 @@ void dbgFecRegs(struct eth_device *dev)
 }
 #endif
 
+static void fec_mii_phy_init(struct eth_device *dev)
+{
+	struct fec_info_s *info = dev->priv;
+	volatile fec_t *fecp = (fec_t *) (info->iobase);
+
+	fec_reset(dev);
+	fec_localhw_setup(fecp);
+#if defined (CONFIG_CMD_MII) || defined (CONFIG_MII) || \
+	defined (CONFIG_DISCOVER_PHY)
+	mxc_fec_mii_init(fecp);
+#if defined (CONFIG_MX6Q)
+	mx6_rgmii_rework(dev->name, info->phy_addr);
+#endif
+	mxc_fec_phy_powerup(dev->name, info->phy_addr);
+
+}
+
 int fec_init(struct eth_device *dev, bd_t *bd)
 {
 	struct fec_info_s *info = dev->priv;
@@ -825,15 +854,7 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	int i;
 	u8 *ea = NULL;
 
-	fec_reset(dev);
-
-	fec_localhw_setup((fec_t *)fecp);
-#if defined (CONFIG_CMD_MII) || defined (CONFIG_MII) || \
-	defined (CONFIG_DISCOVER_PHY)
-	mxc_fec_mii_init(fecp);
-#if defined (CONFIG_MX6Q)
-	mx6_rgmii_rework(dev->name, info->phy_addr);
-#endif
+	fec_mii_phy_init(dev);
 
 #ifdef CONFIG_DISCOVER_PHY
 	if (info->phy_addr < 0 || info->phy_addr > 0x1F)
@@ -1038,7 +1059,6 @@ int mxc_fec_initialize(bd_t *bis)
 		miiphy_register(dev->name, mxc_fec_mii_read,
 						mxc_fec_mii_write);
 #endif
-
 		if (fec_get_hwaddr(dev, ethaddr) == 0) {
 			printf("got MAC address from IIM: %pM\n", ethaddr);
 			memcpy(dev->enetaddr, ethaddr, 6);
