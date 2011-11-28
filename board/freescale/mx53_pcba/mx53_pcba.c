@@ -503,6 +503,17 @@ int  setup_pmic_voltages_spi(void)
 
 		spi_pmic_free(slave);
 
+		/* extra charging circuit enabled */
+		/* set GPIO2_27 to high */
+		mxc_request_iomux(MX53_PIN_EIM_LBA, IOMUX_CONFIG_ALT1);
+
+		val = readl(GPIO2_BASE_ADDR + 0x4);
+		val |= 0x8000000;
+		writel(val, GPIO2_BASE_ADDR + 0x4);
+		val = readl(GPIO2_BASE_ADDR + 0x0);
+		val |= 0x8000000;
+		writel(val, GPIO2_BASE_ADDR + 0x0);
+
 	} else {
 		printf("spi_pmic_probe failed!\n");
 		return -1;
