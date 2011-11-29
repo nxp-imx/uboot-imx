@@ -1112,7 +1112,7 @@ int check_recovery_cmd_file(void)
 
 				if (!ext2fs_mount(part_length)) {
 					printf("** Bad ext2 partition or "
-					       "disk - mmc i:%d **\n",
+					       "disk - mmc %d:%d **\n",
 					       i, CONFIG_ANDROID_CACHE_PARTITION_MMC);
 					ext2fs_close();
 					continue;
@@ -1141,7 +1141,7 @@ int check_recovery_cmd_file(void)
 	 * @TODO: Need At least Two key, but in SMD board,
 	 * only can use one Volume key. */
 	mxc_request_iomux(MX53_PIN_ATA_DATA14, IOMUX_CONFIG_ALT1);
-	readl(GPIO2_BASE_ADDR + GPIO_GDIR);
+	reg = readl(GPIO2_BASE_ADDR + GPIO_GDIR);
 	reg &= ~(1<<14);
 	writel(reg, GPIO2_BASE_ADDR + GPIO_GDIR);
 	reg = readl(GPIO2_BASE_ADDR + GPIO_PSR);
