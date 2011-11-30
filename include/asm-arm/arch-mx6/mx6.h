@@ -622,6 +622,9 @@
 
 #define PLATFORM_ICGC           0x14
 
+#define SRC_GPR9		0x40
+#define SRC_GPR10		0x44
+
 #ifndef __ASSEMBLER__
 
 enum boot_device {

@@ -889,4 +889,54 @@ int otp_clk_disable(void)
 	return 0;
 }
 
+#ifdef CONFIG_CMD_IMX_DOWNLOAD_MODE
 
+#define PERSIST_WATCHDOG_RESET_BOOT		(0x10000000)
+/*BOOT_CFG1[7..4] = 0x3 Boot from Serial ROM (I2C/SPI)*/
+#define BOOT_MODE_SERIAL_ROM			(0x00000030)
+
+/* this function should call before enter linux, otherwise, you
+ * watchdog reset will enter mfg download mode again, clear this bit
+ * to prevent this behavior */
+void clear_mfgmode_mem(void)
+{
+	u32 reg;
+	reg = readl(SRC_BASE_ADDR + SRC_GPR9);
+
+	reg &= ~BOOT_MODE_SERIAL_ROM;
+	writel(reg, SRC_BASE_ADDR + SRC_GPR9);
+
+	reg = readl(SRC_BASE_ADDR + SRC_GPR10);
+	reg &= ~PERSIST_WATCHDOG_RESET_BOOT;
+	reg = writel(reg, SRC_BASE_ADDR + SRC_GPR10);
+}
+
+void do_switch_mfgmode(void)
+{
+	u32 reg;
+
+	/*
+	 * During reset, if GPR10[28] is 1, ROM will copy GPR9[25:0]
+	 * to SBMR1, which will determine what is the boot device.
+	 * Here SERIAL_ROM mode is selected
+	 */
+	reg = readl(SRC_BASE_ADDR + SRC_GPR9);
+	reg |= BOOT_MODE_SERIAL_ROM;
+	writel(reg, SRC_BASE_ADDR + SRC_GPR9);
+
+	reg = readl(SRC_BASE_ADDR + SRC_GPR10);
+	reg |= PERSIST_WATCHDOG_RESET_BOOT;
+	writel(reg, SRC_BASE_ADDR + SRC_GPR10);
+
+	/*
+	 * this watchdog reset will let chip enter mfgtool download
+	 * mode.
+	 */
+	do_reset(NULL, 0, 0, NULL);
+}
+
+U_BOOT_CMD(
+	download_mode, 1, 1, do_switch_mfgmode,
+	"download_mode - enter i.MX serial/usb download mode",
+	"");
+#endif
