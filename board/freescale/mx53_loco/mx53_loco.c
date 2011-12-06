@@ -1163,6 +1163,7 @@ int board_late_init(void)
 			printf("%s:i2c_read:error\n", __func__);
 			return -1;
 		}
+		buf[2] |= 0x2;
 		buf[1] |= 0x1;
 		buf[1] &= ~0x2;
 		if (i2c_write(0x8, 15, 1, buf, 3)) {
