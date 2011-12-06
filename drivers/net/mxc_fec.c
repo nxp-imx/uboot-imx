@@ -310,10 +310,7 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 			      int dup_spd)
 {
 	unsigned short val = 0;
-	int ret;
-#ifdef CONFIG_PHY_MICREL_KSZ9021
-	int cnt;
-#endif
+	int ret, cnt;
 
 #ifdef CONFIG_MX28
 	/* Dummy read with delay to get phy start working */
@@ -352,31 +349,7 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 		};
 	}
 
-/* for AR8031 PHY */
-#ifdef CONFIG_MX6Q_ARM2
-	ret = 100;
-	/* set default mode to 100M full duplex */
-	dup_spd = _100BASET | (FULL << 16);
-
-	/* wait link becomes up, maximum wait 10s */
-	while (!__fec_mii_read(fecp, addr, PHY_MIPSCR, &val) &&
-		!(val & PHY_MIPSCR_LINK_UP) && ret--)
-		udelay(100*1000);
-
-	if (ret) {
-		if ((val & PHY_MIPSCR_SPEED_MASK) == PHY_MIPSCR_1000M)
-			dup_spd = _1000BASET;
-		else if ((val & PHY_MIPSCR_SPEED_MASK) == PHY_MIPSCR_100M)
-			dup_spd = _100BASET;
-		else
-			dup_spd = _10BASET;
-
-		if (val & PHY_MIPSCR_FULL_DUPLEX)
-			dup_spd |= (FULL << 16);
-		else
-			dup_spd |= (HALF << 16);
-	}
-#elif defined(CONFIG_PHY_MICREL_KSZ9021)
+	/*wait the cable link*/
 	for (cnt = 0; cnt < 100; cnt++) {
 		val = 0;
 		ret = __fec_mii_read(fecp, addr, PHY_BMSR, &val);
@@ -384,44 +357,67 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 			break;
 		udelay(100*1000);
 	}
+
 	if (ret) {
-		/* set default speed and duplex */
+		/* set default mode to 100M full duplex */
 		dup_spd = _100BASET | (FULL << 16);
 	} else {
-		unsigned short reg31 = 0;
-		ret = __fec_mii_read(fecp, addr, 0x1f, &reg31);
 		if (val & PHY_BMSR_LS) {
-			printf("FEC: Link is Up %x, %x\n", val, reg31);
+			printf("FEC: Link is Up %x\n", val);
 		} else {
-			printf("FEC: Link is down %x, %x\n", val, reg31);
+			printf("FEC: Link is down %x\n", val);
+	}
+/* for AR8031 PHY */
+#ifdef CONFIG_MX6Q_ARM2
+		ret = __fec_mii_read(fecp, addr, PHY_MIPSCR, &val);
+		if (ret)
+			dup_spd = _100BASET | (FULL << 16);
+		else {
+			if ((val & PHY_MIPSCR_SPEED_MASK) == PHY_MIPSCR_1000M)
+				dup_spd = _1000BASET;
+			else if ((val & PHY_MIPSCR_SPEED_MASK) == PHY_MIPSCR_100M)
+				dup_spd = _100BASET;
+			else
+				dup_spd = _10BASET;
+
+			if (val & PHY_MIPSCR_FULL_DUPLEX)
+				dup_spd |= (FULL << 16);
+			else
+				dup_spd |= (HALF << 16);
 		}
-		if (reg31 & (1 << 6))
-			dup_spd = _1000BASET;
-		else if (reg31 & (1 << 5))
-			dup_spd = _100BASET;
-		else
-			dup_spd = _10BASET;
-		if (reg31 & (1 << 3))
-			dup_spd |= (FULL << 16);
-		else
-			dup_spd |= (HALF << 16);
-	}
+#elif defined(CONFIG_PHY_MICREL_KSZ9021)
+		ret = __fec_mii_read(fecp, addr, 0x1f, &val);
+		if (ret)
+			dup_spd = _100BASET | (FULL << 16);
+		else {
+			if (val & (1 << 6))
+				dup_spd = _1000BASET;
+			else if (val & (1 << 5))
+				dup_spd = _100BASET;
+			else
+				dup_spd = _10BASET;
+			if (val & (1 << 3))
+				dup_spd |= (FULL << 16);
+			else
+				dup_spd |= (HALF << 16);
+		}
 #else
-	ret = __fec_mii_read(fecp, addr, PHY_BMSR, &val);
-	if (ret) {
-		/* set default speed and duplex */
-		dup_spd = _100BASET | (FULL << 16);
-	} else {
-		if (val & (PHY_BMSR_100TXF | PHY_BMSR_100TXH | PHY_BMSR_100T4))
-			dup_spd = _100BASET;
-		else
-			dup_spd = _10BASET;
-		if (val & (PHY_BMSR_100TXF | PHY_BMSR_10TF))
-			dup_spd |= (FULL << 16);
-		else
-			dup_spd |= (HALF << 16);
-	}
+		ret = __fec_mii_read(fecp, addr, PHY_BMSR, &val);
+		if (ret)
+			dup_spd = _100BASET | (FULL << 16);
+		else {
+			if (val & (PHY_BMSR_100TXF | PHY_BMSR_100TXH | PHY_BMSR_100T4))
+				dup_spd = _100BASET;
+			else
+				dup_spd = _10BASET;
+			if (val & (PHY_BMSR_100TXF | PHY_BMSR_10TF))
+				dup_spd |= (FULL << 16);
+			else
+				dup_spd |= (HALF << 16);
+		}
 #endif
+	}
+
 	if ((dup_spd >> 16) == FULL) {
 		/* Set maximum frame length */
 #ifdef CONFIG_RMII
