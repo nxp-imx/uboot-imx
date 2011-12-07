@@ -517,7 +517,6 @@ iomux_v3_cfg_t mx6q_usdhc3_pads[] = {
 	MX6Q_PAD_SD3_DAT5__USDHC3_DAT5,
 	MX6Q_PAD_SD3_DAT6__USDHC3_DAT6,
 	MX6Q_PAD_SD3_DAT7__USDHC3_DAT7,
-	MX6Q_PAD_GPIO_18__USDHC3_VSELECT,
 };
 
 iomux_v3_cfg_t mx6q_usdhc4_pads[] = {
@@ -589,7 +588,7 @@ int board_mmc_init(bd_t *bis)
 #ifdef CONFIG_GET_DDR_TARGET_DELAY
 u32 get_ddr_delay(struct fsl_esdhc_cfg *cfg)
 {
-	/* No delay required on ARM2 board SD ports */
+	/* No delay required on SABRE Auto board SD ports */
 	return 0;
 }
 #endif
@@ -839,7 +838,7 @@ void enet_board_init(void)
 
 int checkboard(void)
 {
-	printf("Board: MX6Q-ARM2:[ ");
+	printf("Board: MX6Q-SABREAUTO:[ ");
 
 	switch (__REG(SRC_BASE_ADDR + 0x8)) {
 	case 0x0001:
