@@ -180,6 +180,7 @@ void board_mmu_init(void)
 	X_ARM_MMU_SECTION(0x00A, 0x00A, 0x0F6,
 			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
 			ARM_ACCESS_PERM_RW_RW); /* 246M */
+#ifndef CONFIG_MX6Q_ARM2_LPDDR2POP
 	/* 2 GB memory starting at 0x10000000, only map 1.875 GB */
 	X_ARM_MMU_SECTION(0x100, 0x100, 0x780,
 			ARM_CACHEABLE, ARM_BUFFERABLE,
@@ -188,6 +189,29 @@ void board_mmu_init(void)
 	X_ARM_MMU_SECTION(0x100, 0x880, 0x780,
 			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
 			ARM_ACCESS_PERM_RW_RW);
+#else
+	/*
+	 * Phys		Virtual		Size		Property
+	 * ----------	----------	--------	----------
+	 * 0x10000000	0x10000000	256M		cacheable
+	 * 0x80000000	0x20000000	16M		uncacheable
+	 * 0x81000000	0x21000000	240M		cacheable
+	 */
+	/* Reserve the first 256MB of bank 1 as cacheable memory */
+	X_ARM_MMU_SECTION(0x100, 0x100, 0x100,
+			ARM_CACHEABLE, ARM_BUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW);
+
+	/* Reserve the first 16MB of bank 2 uncachable memory*/
+	X_ARM_MMU_SECTION(0x800, 0x200, 0x010,
+			ARM_UNCACHEABLE, ARM_UNBUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW);
+
+	/* Reserve the remaining 240MB of bank 2 as cacheable memory */
+	X_ARM_MMU_SECTION(0x810, 0x210, 0x0F0,
+			ARM_CACHEABLE, ARM_BUFFERABLE,
+			ARM_ACCESS_PERM_RW_RW);
+#endif
 
 	/* Enable MMU */
 	MMU_ON();
@@ -254,8 +278,21 @@ int setup_sata(void)
 
 int dram_init(void)
 {
+	/*
+	 * Switch PL301_FAST2 to DDR Dual-channel mapping
+	 * however this block the boot up, temperory redraw
+	 */
+	/*
+	 * u32 reg = 1;
+	 * writel(reg, GPV0_BASE_ADDR);
+	 */
+
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
+#ifdef CONFIG_MX6Q_ARM2_LPDDR2POP
+	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
+	gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
+#endif
 	return 0;
 }
 

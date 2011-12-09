@@ -140,10 +140,18 @@ union ARM_MMU_FIRST_LEVEL_DESCRIPTOR {
  */
 inline unsigned long iomem_to_phys(unsigned long virt)
 {
+#ifndef CONFIG_MX6Q_ARM2_LPDDR2POP
 	if (virt >= 0x88000000 && virt <= 0xffffffff)
 		return (unsigned long)(virt - 0x78000000);
 
 	return (unsigned long)virt;
+#else
+	/* bank 2 : virt 0x20000000 ~ phy 0x80000000, size 256MB */
+	if (virt >= 0x20000000 && virt <= 0x30000000)
+		return (unsigned long)(virt + 0x60000000);
+
+	return (unsigned long)virt;
+#endif
 }
 
 /*
@@ -152,6 +160,7 @@ inline unsigned long iomem_to_phys(unsigned long virt)
  */
 void *__ioremap(unsigned long offset, size_t size, unsigned long flags)
 {
+#ifndef CONFIG_MX6Q_ARM2_LPDDR2POP
 	if (1 == flags) {
 		if (offset >= PHYS_SDRAM_1 &&
 		offset < (unsigned long)(PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
@@ -160,6 +169,14 @@ void *__ioremap(unsigned long offset, size_t size, unsigned long flags)
 			return NULL;
 	} else
 		return (void *)offset;
+#else
+	/*
+	 * In case the cacheable and uncacheable memory don't overlap in
+	 * physical memory, this function is no longer needed, we simply return
+	 * the first address itself
+	 */
+	return (void *)offset;
+#endif
 }
 
 /*
