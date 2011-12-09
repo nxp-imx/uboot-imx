@@ -88,6 +88,111 @@
 	beq 1b
 .endm
 
+.macro init_m4if
+	/*increase master2 priority for WIFI*/
+	ldr r0, =M4IF_BASE_ADDR
+	ldr r1, [r0, #0x40]
+	orr r1, r1, #(0x33 << 16)
+	str r1, [r0, #0x40]
+
+	/*increase master4 priority for FEC*/
+	ldr r1, [r0, #0x44]
+	orr r1, r1, #0x33
+	str r1, [r0, #0x44]
+
+	/*set SDHC-port3 high priority to all AHB MAX Slave port*/
+	ldr r0, =AHBMAX_BASE_ADDR
+
+#ifdef CONFIG_WIFI_SDHC_PORT3
+	/*set PARK to SDHC-port3*/
+	ldr r0, =AHBMAX_BASE_ADDR
+	ldr r1, [r0, #0x10]
+	bic r1, r1, #(0x7 << 0)
+	orr r1, r1, #0x3
+	bic r1, r1, #(0x3 << 4)
+	bic r1, r1, #(0x3 << 8)
+	orr r1, r1, #(0x1 << 30)
+	bic r1, r1, #(0x1 << 31)
+
+	ldr r1, [r0, #0x110]
+	bic r1, r1, #(0x7 << 0)
+	orr r1, r1, #0x3
+	bic r1, r1, #(0x3 << 4)
+	bic r1, r1, #(0x3 << 8)
+	orr r1, r1, #(0x1 << 30)
+	bic r1, r1, #(0x1 << 31)
+
+	ldr r1, [r0, #0x210]
+	bic r1, r1, #(0x7 << 0)
+	orr r1, r1, #0x3
+	bic r1, r1, #(0x3 << 4)
+	bic r1, r1, #(0x3 << 8)
+	orr r1, r1, #(0x1 << 30)
+	bic r1, r1, #(0x1 << 31)
+
+	ldr r1, [r0, #0x310]
+	bic r1, r1, #(0x7 << 0)
+	orr r1, r1, #0x3
+	bic r1, r1, #(0x3 << 4)
+	bic r1, r1, #(0x3 << 8)
+	orr r1, r1, #(0x1 << 30)
+	bic r1, r1, #(0x1 << 31)
+
+	/*set SDHC-port3 arbitration*/
+	ldr r0, =AHBMAX_BASE_ADDR
+	ldr r1, [r0, #0xb00]
+	bic r1, r1, #(0x7 << 0)
+	orr r1, r1, #0x1
+#endif
+
+#ifdef CONFIG_WIFI_SDHC_PORT2
+	/*set PARK to SDHC-port3*/
+	ldr r0, =AHBMAX_BASE_ADDR
+	ldr r1, [r0, #0x10]
+	bic r1, r1, #(0x7 << 0)
+	orr r1, r1, #0x2
+	bic r1, r1, #(0x3 << 4)
+	bic r1, r1, #(0x3 << 8)
+	orr r1, r1, #(0x1 << 30)
+	bic r1, r1, #(0x1 << 31)
+
+	ldr r1, [r0, #0x110]
+	bic r1, r1, #(0x7 << 0)
+	orr r1, r1, #0x2
+	bic r1, r1, #(0x3 << 4)
+	bic r1, r1, #(0x3 << 8)
+	orr r1, r1, #(0x1 << 30)
+	bic r1, r1, #(0x1 << 31)
+
+	ldr r1, [r0, #0x210]
+	bic r1, r1, #(0x7 << 0)
+	orr r1, r1, #0x2
+	bic r1, r1, #(0x3 << 4)
+	bic r1, r1, #(0x3 << 8)
+	orr r1, r1, #(0x1 << 30)
+	bic r1, r1, #(0x1 << 31)
+
+	ldr r1, [r0, #0x310]
+	bic r1, r1, #(0x7 << 0)
+	orr r1, r1, #0x2
+	bic r1, r1, #(0x3 << 4)
+	bic r1, r1, #(0x3 << 8)
+	orr r1, r1, #(0x1 << 30)
+	bic r1, r1, #(0x1 << 31)
+
+	/*set SDHC-port2 arbitration*/
+	ldr r0, =AHBMAX_BASE_ADDR
+	ldr r1, [r0, #0xA00]
+	bic r1, r1, #(0x7 << 0)
+#endif
+
+	/*set JMP step to zero*/
+	ldr r0, =M4IF_BASE_ADDR
+	ldr r1, [r0, #0x48]
+	bic r1, r1, #(0x3 << 8)
+	str r1, [r0, #0x48]
+.endm
+
 .macro init_clock
 	ldr r0, =ROM_SI_REV
 	ldr r1, [r0]
@@ -229,6 +334,11 @@ lowlevel_init:
 	init_l2cc
 
 	init_aips
+
+#ifdef CONFIG_ADJUST_WIFI_FEC_PERFORMANCE
+        /*increase WIFI & FEC priority of accessing bus*/
+        init_m4if
+#endif
 
 	init_clock
 
