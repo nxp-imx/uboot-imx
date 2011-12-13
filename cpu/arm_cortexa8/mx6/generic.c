@@ -82,6 +82,8 @@ enum pll_clocks {
 #define NFC_CLK_MAX     PLL2_FREQ_MAX
 #endif
 
+#define SNVS_LPGPR_OFFSET	0x68
+
 static u32 __decode_pll(enum pll_clocks pll, u32 infreq)
 {
 	u32 div;
@@ -843,6 +845,29 @@ int cpu_eth_init(bd_t *bis)
 int arch_cpu_init(void)
 {
 	int val;
+	unsigned int reg;
+
+	/* Check the flag of SNVS_LPGPR[0], SRC register will not reset
+	when we do a wdog reset, so we keep flag in SNVS_LPGPR[0],
+	when we finish this workaround, we will clear it */
+	reg = readl(SNVS_BASE_ADDR + SNVS_LPGPR_OFFSET);
+	/* If flagg is not set */
+	if (!(reg & 0x1)) {
+		/* Set flag in SNVS_LPGPR[0] */
+		writel(readl(SNVS_BASE_ADDR + SNVS_LPGPR_OFFSET) | 0x1,
+				SNVS_BASE_ADDR + SNVS_LPGPR_OFFSET);
+		/* Set wdog to timeout in 0.5 second */
+		writew(0x34, WDOG1_BASE_ADDR);
+		/* Disable CORE LDO */
+		writel(0x0, ANATOP_BASE_ADDR + HW_ANADIG_REG_CORE);
+		/* Wait for wdog timeout */
+		while (1)
+			;
+	} else {
+		/* Clear flag */
+		writel(readl(SNVS_BASE_ADDR + SNVS_LPGPR_OFFSET) & (~0x1),
+				SNVS_BASE_ADDR + SNVS_LPGPR_OFFSET);
+	}
 
 	icache_enable();
 	dcache_enable();
