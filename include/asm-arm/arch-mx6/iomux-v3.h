@@ -140,6 +140,11 @@ int mxc_iomux_v3_setup_pad(iomux_v3_cfg_t pad);
 int mxc_iomux_v3_setup_multiple_pads(iomux_v3_cfg_t *pad_list, unsigned count);
 
 /*
+ * Set bits for general purpose registers
+ */
+void mxc_iomux_set_gpr_register(int group, int start_bit, int num_bits, int value);
+
+/*
  * Initialise the iomux controller
  */
 void mxc_iomux_v3_init(void *iomux_v3_base);

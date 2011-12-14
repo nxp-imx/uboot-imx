@@ -37,6 +37,8 @@
 #include <asm/arch/regs-ocotp.h>
 #endif
 
+#include <usb/regs-usbphy-mx6.h>
+
 enum pll_clocks {
 	CPU_PLL1,	/* System PLL */
 	BUS_PLL2,	/* System Bus PLL*/
@@ -889,8 +891,62 @@ int otp_clk_disable(void)
 	return 0;
 }
 
-#ifdef CONFIG_CMD_IMX_DOWNLOAD_MODE
+#ifdef CONFIG_IMX_UDC
+void enable_usboh3_clk(unsigned char enable)
+{
+	unsigned int reg;
+	reg = readl(MXC_CCM_CCGR6);
+	if (enable)
+		reg |= 1 << MXC_CCM_CCGR6_CG0_OFFSET;
+	else
+		reg &= ~(1 << MXC_CCM_CCGR6_CG0_OFFSET);
+	writel(reg, MXC_CCM_CCGR2);
+}
 
+void enable_usb_phy1_clk(unsigned char enable)
+{
+	if (enable) {
+		writel(BM_USBPHY_CTRL_CLKGATE, USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL_CLR);
+	} else {
+		writel(BM_USBPHY_CTRL_CLKGATE, USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL_SET);
+	}
+}
+
+void reset_usb_phy1()
+{
+	/* Reset USBPHY module */
+	u32 temp;
+	temp = readl(USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL);
+	temp |= BM_USBPHY_CTRL_SFTRST;
+	writel(temp, USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL);
+	udelay(10);
+
+	/* Remove CLKGATE and SFTRST */
+	temp = readl(USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL);
+	temp &= ~(BM_USBPHY_CTRL_CLKGATE | BM_USBPHY_CTRL_SFTRST);
+	writel(temp, USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL);
+	udelay(10);
+
+	/* Power up the PHY */
+	writel(0, USB_PHY0_BASE_ADDR + HW_USBPHY_PWD);
+}
+
+void set_usb_phy1_clk(void)
+{
+	/* make sure pll3 is enable here */
+	REG_SET(ANATOP_BASE_ADDR, HW_ANADIG_USB1_CHRG_DETECT,
+		BM_ANADIG_USB1_CHRG_DETECT_EN_B | BM_ANADIG_USB1_CHRG_DETECT_CHK_CHRG_B);
+	REG_SET(ANATOP_BASE_ADDR, HW_ANADIG_USB1_PLL_480_CTRL,
+		BM_ANADIG_USB1_PLL_480_CTRL_EN_USB_CLKS);
+}
+
+void set_usboh3_clk(void)
+{
+	udc_pins_setting();
+}
+#endif
+
+#ifdef CONFIG_CMD_IMX_DOWNLOAD_MODE
 #define PERSIST_WATCHDOG_RESET_BOOT		(0x10000000)
 /*BOOT_CFG1[7..4] = 0x3 Boot from Serial ROM (I2C/SPI)*/
 #define BOOT_MODE_SERIAL_ROM			(0x00000030)

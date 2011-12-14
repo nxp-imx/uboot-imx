@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,6 +27,22 @@
 
 #ifndef _IMX_UDC_H_
 #define _IMX_UDC_H_
+
+#include <usbdevice.h>
+
+#define USB_OTGREGS_BASE	(OTG_BASE_ADDR + 0x000)
+#define USB_H1REGS_BASE		(OTG_BASE_ADDR + 0x200)
+#define USB_H2REGS_BASE		(OTG_BASE_ADDR + 0x400)
+#if (defined CONFIG_MX6Q || defined CONFIG_MX53 || defined CONFIG_MX51 || CONFIG_MX50)
+#define USB_H3REGS_BASE		(OTG_BASE_ADDR + 0x600)
+#define USB_OTHERREGS_BASE	(OTG_BASE_ADDR + 0x800)
+#else
+#define USB_OTHERREGS_BASE	(OTG_BASE_ADDR + 0x600)
+#endif
+
+#define USBOTG_REG32(offset)	(USB_OTGREGS_BASE + (offset))
+#define USBOTG_REG16(offset)	(USB_OTGREGS_BASE + (offset))
+#define USBOTHER_REG(offset)	(USB_OTHERREGS_BASE + (offset))
 
 #define USB_ID               (OTG_BASE_ADDR + 0x0000)
 #define USB_HWGENERAL        (OTG_BASE_ADDR + 0x0004)
@@ -62,6 +78,36 @@
 #define USB_ENDPTSTAT        (OTG_BASE_ADDR + 0x01B8)
 #define USB_ENDPTCOMPLETE    (OTG_BASE_ADDR + 0x01BC)
 #define USB_ENDPTCTRL(n)     (OTG_BASE_ADDR + 0x01C0 + (4 * (n)))
+
+/*
+ * other regs (not part of ARC core)
+ */
+#define USBCTRL			USBOTHER_REG(0x00)	/* USB Control register */
+#define USB_OTG_MIRROR		USBOTHER_REG(0x04)	/* USB OTG mirror register */
+#define USB_PHY_CTR_FUNC	USBOTHER_REG(0x08)      /* OTG UTMI PHY Function Control register */
+#define USB_PHY_CTR_FUNC2	USBOTHER_REG(0x0c)      /* OTG UTMI PHY Function Control register */
+#define USB_CTRL_1		USBOTHER_REG(0x10)	/* USB Cotrol Register 1*/
+#define USBCTRL_HOST2		USBOTHER_REG(0x14)	/* USB Cotrol Register 1*/
+#define USBCTRL_HOST3		USBOTHER_REG(0x18)	/* USB Cotrol Register 1*/
+#define USBH1_PHY_CTRL0		USBOTHER_REG(0x1c)	/* USB Cotrol Register 1*/
+#define USBH1_PHY_CTRL1		USBOTHER_REG(0x20)	/* USB Cotrol Register 1*/
+#define USB_CLKONOFF_CTRL       USBOTHER_REG(0x24)      /* USB Clock on/off Control Register */
+/* mx6x other regs */
+#define USB_OTG_CTRL			USBOTHER_REG(0x00)	/* USB OTG Control register */
+#define USB_H1_CTRL			USBOTHER_REG(0x04)	/* USB H1 Control register */
+#define USB_H2_CTRL			USBOTHER_REG(0x08)	/* USB H2 Control register */
+#define USB_H3_CTRL			USBOTHER_REG(0x0c)	/* USB H3 Control register */
+#define USB_UH2_HSIC_CTRL		USBOTHER_REG(0x10)	/* USB Host2 HSIC Control Register */
+#define USB_UH3_HSIC_CTRL		USBOTHER_REG(0x14)	/* USB Host3 HSIC Control Register */
+#define USB_OTG_PHY_CTRL_0		USBOTHER_REG(0x18)	/* OTG UTMI PHY Control 0 Register */
+#define USB_H1_PHY_CTRL_0		USBOTHER_REG(0x1c)	/* OTG UTMI PHY Control 1 Register */
+#define USB_UH2_HSIC_DLL_CFG1		USBOTHER_REG(0x20)      /* USB Host2 HSIC DLL Configuration Register 1 */
+#define USB_UH2_HSIC_DLL_CFG2		USBOTHER_REG(0x24)      /* USB Host2 HSIC DLL Configuration Register 2 */
+#define USB_UH2_HSIC_DLL_CFG3		USBOTHER_REG(0x28)      /* USB Host2 HSIC DLL Configuration Register 3 */
+#define USB_UH3_HSIC_DLL_CFG1		USBOTHER_REG(0x30)      /* USB Host3 HSIC DLL Configuration Register 1 */
+#define USB_UH3_HSIC_DLL_CFG2		USBOTHER_REG(0x34)      /* USB Host3 HSIC DLL Configuration Register 2 */
+#define USB_UH3_HSIC_DLL_CFG3		USBOTHER_REG(0x38)      /* USB Host3 HSIC DLL Configuration Register 3 */
+
 
 #define USB_PHY1_CTRL        (OTG_BASE_ADDR + 0x80C)
 #define USBCMD_RESET   2
@@ -395,6 +441,33 @@ struct ep_queue_item {
 #define UDC_INT_ENDPOINT        0x01
 #define UDC_INT_PACKET_SIZE     USB_MAX_CTRL_PAYLOAD
 #define UDC_BULK_PACKET_SIZE    USB_MAX_CTRL_PAYLOAD
+
+/* mx6q's register bit begins*/
+
+/* OTG CTRL - H3 CTRL */
+#define UCTRL_OWIR		(1 << 31)	/* OTG wakeup intr request received */
+/* bit 18 - bit 30 is reserved at mx6q */
+#define UCTRL_WKUP_VBUS_EN	(1 << 17)	/* OTG wake-up on VBUS change enable */
+#define UCTRL_WKUP_ID_EN	(1 << 16)	/* OTG wake-up on ID change enable */
+#define UCTRL_WKUP_SW		(1 << 15)	/* OTG Software Wake-up */
+#define UCTRL_WKUP_SW_EN	(1 << 14)	/* OTG Software Wake-up enable */
+#define UCTRL_UTMI_ON_CLOCK	(1 << 13)	/* Force OTG UTMI PHY clock output on even if suspend mode */
+#define UCTRL_SUSPENDM		(1 << 12)	/* Force OTG UTMI PHY Suspend */
+#define UCTRL_RESET		(1 << 11)	/* Force OTG UTMI PHY Reset */
+#define UCTRL_OWIE		(1 << 10)	/* OTG wakeup intr request received */
+#define UCTRL_PM		(1 << 9)	/* OTG Power Mask */
+#define UCTRL_OVER_CUR_POL	(1 << 8)	/* OTG Polarity of Overcurrent */
+#define UCTRL_OVER_CUR_DIS	(1 << 7)	/* Disable OTG Overcurrent Detection */
+/* bit 0 - bit 6 is reserved at mx6q */
+
+/* Host2/3 HSIC Ctrl */
+#define CLK_VLD		(1 << 31)	/* Indicating whether HSIC clock is valid */
+#define HSIC_EN		(1 << 12)	/* HSIC enable */
+#define HSIC_CLK_ON		(1 << 11)	/* Force HSIC module 480M clock on,
+						 * even when in Host is in suspend mode
+						 */
+/* OTG/HOST1 Phy Ctrl */
+#define PHY_UTMI_CLK_VLD	(1 << 31)	/* Indicating whether OTG UTMI PHY Clock Valida */
 
 int  udc_init(void);
 

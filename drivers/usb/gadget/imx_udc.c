@@ -33,6 +33,7 @@
 #include <asm/errno.h>
 #include <usbdevice.h>
 #include <usb/imx_udc.h>
+
 #include "ep0.h"
 
 #ifdef DEBUG
@@ -130,7 +131,6 @@ static int mxc_init_usb_qh(void)
 	}
 	memset(mxc_udc.ep_qh, 0, size);
 	writel(mxc_udc.qh_dma & 0xfffff800, USB_ENDPOINTLISTADDR);
-
 	return 0;
 }
 
@@ -453,6 +453,8 @@ static void usb_set_mode_device(void)
 	temp &= ~USB_CMD_RUN_STOP;
 	writel(temp, USB_USBCMD);
 
+	while (readl(USB_USBCMD) & USB_CMD_RUN_STOP)
+		;
 	/* Do core reset */
 	temp = readl(USB_USBCMD);
 	temp |= USB_CMD_CTRL_RESET;
@@ -461,6 +463,9 @@ static void usb_set_mode_device(void)
 		;
 	DBG("DOORE RESET END\n");
 
+#ifdef CONFIG_MX6Q
+	reset_usb_phy1();
+#endif
 	DBG("init core to device mode\n");
 	temp = readl(USB_USBMODE);
 	temp &= ~USB_MODE_CTRL_MODE_MASK;	/* clear mode bits */
@@ -474,7 +479,7 @@ static void usb_set_mode_device(void)
 static void usb_init_eps(void)
 {
 	u32 temp;
-
+	DBG("Flush begin\n");
 	temp = readl(USB_ENDPTNAKEN);
 	temp |= 0x10001;	/* clear mode bits */
 	writel(temp, USB_ENDPTNAKEN);
@@ -789,6 +794,14 @@ void mxc_udc_wait_cable_insert(void)
 	} while (1);
 }
 
+int udc_disable_over_current()
+{
+	u32 temp;
+	temp = readl(USB_OTG_CTRL);
+	temp |= UCTRL_OVER_CUR_POL;
+	writel(temp, USB_OTG_CTRL);
+}
+
 /*
  * mxc_udc_init function
  */
@@ -797,6 +810,9 @@ int mxc_udc_init(void)
 	set_usboh3_clk();
 	set_usb_phy1_clk();
 	enable_usboh3_clk(1);
+#ifdef CONFIG_MX6Q
+	udc_disable_over_current();
+#endif
 	enable_usb_phy1_clk(1);
 	usb_udc_init();
 
