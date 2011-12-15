@@ -98,7 +98,7 @@
 	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4 rootfs=ext4 rootwait"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
 	"run bootargs_android_recovery; "	\
-	"mmc dev 0; "	\
+	"mmc dev 1; "	\
 	"mmc read ${loadaddr} 0x800 0x2000;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 
@@ -150,7 +150,7 @@
 		"bootfile=uImage\0"	\
 		"bootargs=console=ttymxc1 init=/init " \
 			"androidboot.console=ttymxc1 video=mxcfb0:bpp=16 fbmem=5M\0" \
-		"bootcmd_SD=mmc dev 0;"		\
+		"bootcmd_SD=mmc dev 1;"		\
 			"mmc read ${loadaddr} 0x800 0x2000;" \
 			"mmc read ${rd_loadaddr} 0x3000 0x300\0" \
 		"bootcmd=run bootcmd_SD; bootm ${loadaddr} ${rd_loadaddr}\0" \
