@@ -510,7 +510,6 @@ int check_recovery_cmd_file(void)
 	}
 
 	printf("Checking for recovery command file...\n");
-	printf("boot mode: %d\n", get_boot_device());
 	switch (get_boot_device()) {
 	case MMC_BOOT:
 	case SD_BOOT:
@@ -578,7 +577,7 @@ int check_recovery_cmd_file(void)
 	reg &= ~(1<<5);
 	writel(reg, GPIO4_BASE_ADDR + GPIO_GDIR);
 	reg = readl(GPIO4_BASE_ADDR + GPIO_PSR);
-	if (reg & (1 << 5)) {
+	if (!(reg & (1 << 5))) { /* VOL_DN key is low assert */
 		button_pressed = 1;
 		printf("Recovery key pressed\n");
 	}
