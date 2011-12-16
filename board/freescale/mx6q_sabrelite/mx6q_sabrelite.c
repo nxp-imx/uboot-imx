@@ -657,8 +657,8 @@ int mx6_rgmii_rework(char *devname, int phy_addr)
 	phy_write(devname, phy_addr, 0x9, 0x0c00);
 #endif
 
-	/* prefer master mode, 1000 Base-T capable */
-	phy_write(devname, phy_addr, 0x9, 0x0f00);
+	/* enable master mode, 1000 Base-T capable */
+	phy_write(devname, phy_addr, 0x9, 0x1f00);
 
 	/* min rx data delay */
 	phy_write(devname, phy_addr, 0x0b, 0x8105);
