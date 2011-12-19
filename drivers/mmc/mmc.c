@@ -437,11 +437,6 @@ static int mmc_change_freq(struct mmc *mmc)
 	if (err)
 		goto err_rtn;
 
-	/* Cards with density > 2GiB are sector addressed */
-	if ((ext_csd[212] || ext_csd[213] || ext_csd[214] || ext_csd[215]) &&
-			((mmc->capacity > (2u * 1024 * 1024 * 1024) / 512)))
-		mmc->high_capacity = 1;
-
 	cardtype = ext_csd[EXT_CSD_CARD_TYPE] & 0xf;
 
 	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_HS_TIMING, 1);
@@ -565,6 +560,9 @@ retry_scr:
 			break;
 	}
 
+	if (mmc->scr[0] & SD_DATA_4BIT)
+		mmc->card_caps |= MMC_MODE_4BIT;
+
 	/* Version 1.0 doesn't support switching */
 	if (mmc->version == SD_VERSION_1_0)
 		return 0;
@@ -581,9 +579,6 @@ retry_scr:
 		if (!(__be32_to_cpu(switch_status[7]) & SD_HIGHSPEED_BUSY))
 			break;
 	}
-
-	if (mmc->scr[0] & SD_DATA_4BIT)
-		mmc->card_caps |= MMC_MODE_4BIT;
 
 	/* If high-speed isn't supported, we return */
 	if (!(__be32_to_cpu(switch_status[3]) & SD_HIGHSPEED_SUPPORTED))
