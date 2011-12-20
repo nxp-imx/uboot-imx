@@ -124,7 +124,7 @@
 			"root=/dev/mmcblk0p1 rootwait\0"                \
 		"bootcmd_mmc=run bootargs_base bootargs_mmc; "   \
 		"mmc dev 3; "	\
-		"mmc read ${loadaddr} 0x800 0x1800; bootm\0"	\
+		"mmc read ${loadaddr} 0x800 0x2000; bootm\0"	\
 		"bootcmd=run bootcmd_net\0"                             \
 
 
