@@ -283,7 +283,10 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 #ifdef CONFIG_FASTBOOT_STORAGE_EMMC_SATA
 static int fastboot_init_mmc_sata_ptable(void)
 {
-	int i, sata_device_no, boot_partition = 0;
+	int i, sata_device_no;
+	int boot_partition = -1, user_partition = -1;
+	/* mmc boot partition: -1 means no partition, 0 user part., 1 boot part.
+	 * default is no partition, for emmc default user part, except emmc*/
 	struct mmc *mmc;
 	block_dev_desc_t *dev_desc;
 	disk_partition_t info;
@@ -330,8 +333,10 @@ static int fastboot_init_mmc_sata_ptable(void)
 		}
 
 		/* multiple boot paritions for eMMC 4.3 later */
-		if (mmc->part_config != MMCPART_NOAVAILABLE)
+		if (mmc->part_config != MMCPART_NOAVAILABLE) {
 			boot_partition = 1;
+			user_partition = 0;
+		}
 	}
 
 	memset((char *)ptable, 0,
@@ -340,6 +345,7 @@ static int fastboot_init_mmc_sata_ptable(void)
 	strcpy(ptable[PTN_MBR_INDEX].name, "mbr");
 	ptable[PTN_MBR_INDEX].start = ANDROID_MBR_OFFSET / dev_desc->blksz;
 	ptable[PTN_MBR_INDEX].length = ANDROID_MBR_SIZE / dev_desc->blksz;
+	ptable[PTN_MBR_INDEX].partition_id = user_partition;
 	/* Bootloader */
 	strcpy(ptable[PTN_BOOTLOADER_INDEX].name, "bootloader");
 	ptable[PTN_BOOTLOADER_INDEX].start =
@@ -353,12 +359,14 @@ static int fastboot_init_mmc_sata_ptable(void)
 				ANDROID_KERNEL_OFFSET / dev_desc->blksz;
 	ptable[PTN_KERNEL_INDEX].length =
 				ANDROID_KERNEL_SIZE / dev_desc->blksz;
+	ptable[PTN_KERNEL_INDEX].partition_id = user_partition;
 	/* uramdisk */
 	strcpy(ptable[PTN_URAMDISK_INDEX].name, "uramdisk");
 	ptable[PTN_URAMDISK_INDEX].start =
 				ANDROID_URAMDISK_OFFSET / dev_desc->blksz;
 	ptable[PTN_URAMDISK_INDEX].length =
 				ANDROID_URAMDISK_SIZE / dev_desc->blksz;
+	ptable[PTN_URAMDISK_INDEX].partition_id = user_partition;
 
 	/* system partition */
 	strcpy(ptable[PTN_SYSTEM_INDEX].name, "system");
@@ -369,6 +377,7 @@ static int fastboot_init_mmc_sata_ptable(void)
 	else {
 		ptable[PTN_SYSTEM_INDEX].start = info.start;
 		ptable[PTN_SYSTEM_INDEX].length = info.size;
+		ptable[PTN_SYSTEM_INDEX].partition_id = user_partition;
 	}
 	/* recovery partition */
 	strcpy(ptable[PTN_RECOVERY_INDEX].name, "recovery");
@@ -379,6 +388,7 @@ static int fastboot_init_mmc_sata_ptable(void)
 	else {
 		ptable[PTN_RECOVERY_INDEX].start = info.start;
 		ptable[PTN_RECOVERY_INDEX].length = info.size;
+		ptable[PTN_RECOVERY_INDEX].partition_id = user_partition;
 	}
 
 	for (i = 0; i <= PTN_RECOVERY_INDEX; i++)

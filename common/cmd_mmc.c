@@ -285,7 +285,7 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			dev = simple_strtoul(argv[2], NULL, 10);
 		else if (argc == 4) {
 			dev = (int)simple_strtoul(argv[2], NULL, 10);
-			part = (int)simple_strtoul(argv[3], NULL, 10);
+			part = (int)simple_strtol(argv[3], NULL, 10);
 			if (part > PART_ACCESS_MASK) {
 				printf("#part_num shouldn't be larger"
 					" than %d\n", PART_ACCESS_MASK);
