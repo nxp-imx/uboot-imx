@@ -82,6 +82,14 @@ enum pll_clocks {
 #define NFC_CLK_MAX     PLL2_FREQ_MAX
 #endif
 
+#define OCOTP_THERMAL_OFFSET	0x4E0
+#define TEMPERATURE_MIN			-25
+#define TEMPERATURE_HOT			80
+#define TEMPERATURE_MAX			125
+#define REG_VALUE_TO_CEL(ratio, raw) ((raw_n25c - raw) * 100 / ratio - 25)
+static int cpu_tmp;
+static unsigned int fuse;
+
 #define SNVS_LPGPR_OFFSET	0x68
 
 static u32 __decode_pll(enum pll_clocks pll, u32 infreq)
@@ -792,6 +800,98 @@ int clk_config(u32 ref, u32 freq, u32 clk_type)
 }
 #endif
 
+int read_cpu_temperature(void)
+{
+	unsigned int reg, tmp, temperature, i;
+	unsigned int raw_25c, raw_hot, hot_temp, raw_n25c, ratio;
+	unsigned int ccm_ccgr2;
+
+	ccm_ccgr2 = readl(MXC_CCM_CCGR2);
+	writel(readl(MXC_CCM_CCGR2) | (0x3 << MXC_CCM_CCGR2_CG6_OFFSET),
+			MXC_CCM_CCGR2);
+	fuse = readl(OCOTP_BASE_ADDR + OCOTP_THERMAL_OFFSET);
+	writel(ccm_ccgr2, MXC_CCM_CCGR2);
+	if (fuse == 0 || fuse == 0xffffffff)
+		return TEMPERATURE_MIN;
+
+	/* Fuse data layout:
+	 * [31:20] sensor value @ 25C
+	 * [19:8] sensor value of hot
+	 * [7:0] hot temperature value */
+	raw_25c = fuse >> 20;
+	raw_hot = (fuse & 0xfff00) >> 8;
+	hot_temp = fuse & 0xff;
+
+	ratio = ((raw_25c - raw_hot) * 100) / (hot_temp - 25);
+	raw_n25c = raw_25c + ratio / 2;
+
+	/* now we only using single measure, every time we measure
+	the temperature, we will power on/down the anadig module*/
+	writel(BM_ANADIG_TEMPSENSE0_POWER_DOWN,
+			ANATOP_BASE_ADDR + HW_ANADIG_TEMPSENSE0_CLR);
+	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF,
+			ANATOP_BASE_ADDR + HW_ANADIG_ANA_MISC0_SET);
+
+	/* write measure freq */
+	reg = readl(ANATOP_BASE_ADDR + HW_ANADIG_TEMPSENSE1);
+	reg &= ~BM_ANADIG_TEMPSENSE1_MEASURE_FREQ;
+	reg |= 327;
+	writel(reg, ANATOP_BASE_ADDR + HW_ANADIG_TEMPSENSE1);
+
+	writel(BM_ANADIG_TEMPSENSE0_MEASURE_TEMP,
+		ANATOP_BASE_ADDR + HW_ANADIG_TEMPSENSE0_CLR);
+	writel(BM_ANADIG_TEMPSENSE0_FINISHED,
+		ANATOP_BASE_ADDR + HW_ANADIG_TEMPSENSE0_CLR);
+	writel(BM_ANADIG_TEMPSENSE0_MEASURE_TEMP,
+		ANATOP_BASE_ADDR + HW_ANADIG_TEMPSENSE0_SET);
+
+	tmp = 0;
+	/* read five times of temperature values to get average*/
+	for (i = 0; i < 5; i++) {
+		while ((readl(ANATOP_BASE_ADDR + HW_ANADIG_TEMPSENSE0)
+			& BM_ANADIG_TEMPSENSE0_FINISHED) == 0)
+			udelay(10000);
+		reg = readl(ANATOP_BASE_ADDR + HW_ANADIG_TEMPSENSE0);
+		tmp += (reg & BM_ANADIG_TEMPSENSE0_TEMP_VALUE)
+				>> BP_ANADIG_TEMPSENSE0_TEMP_VALUE;
+		writel(BM_ANADIG_TEMPSENSE0_FINISHED,
+			ANATOP_BASE_ADDR + HW_ANADIG_TEMPSENSE0_CLR);
+	}
+
+	tmp = tmp / 5;
+	if (tmp <= raw_n25c)
+		temperature = REG_VALUE_TO_CEL(ratio, tmp);
+	else
+		temperature = TEMPERATURE_MIN;
+	/* power down anatop thermal sensor */
+	writel(BM_ANADIG_TEMPSENSE0_POWER_DOWN,
+			ANATOP_BASE_ADDR + HW_ANADIG_TEMPSENSE0_SET);
+	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF,
+			ANATOP_BASE_ADDR + HW_ANADIG_ANA_MISC0_CLR);
+
+	return temperature;
+
+}
+
+void check_cpu_temperature(void)
+{
+	cpu_tmp = read_cpu_temperature();
+	while (cpu_tmp > TEMPERATURE_MIN && cpu_tmp < TEMPERATURE_MAX) {
+		if (cpu_tmp >= TEMPERATURE_HOT) {
+			printf("CPU is %d C, too hot to boot, waiting...\n",
+				cpu_tmp);
+			udelay(5000000);
+			cpu_tmp = read_cpu_temperature();
+		} else
+			break;
+	}
+	if (cpu_tmp > TEMPERATURE_MIN && cpu_tmp < TEMPERATURE_MAX)
+		printf("Temperature:   %d C, calibration data 0x%x\n",
+			cpu_tmp, fuse);
+	else
+		printf("Temperature:   can't get valid data!\n");
+}
+
 #if defined(CONFIG_DISPLAY_CPUINFO)
 int print_cpuinfo(void)
 {
@@ -799,6 +899,9 @@ int print_cpuinfo(void)
 	       (get_board_rev() & 0xFF) >> 4,
 	       (get_board_rev() & 0xF),
 		__get_mcu_main_clk() / SZ_DEC_1M);
+
+	check_cpu_temperature();
+
 	mxc_dump_clocks();
 	return 0;
 }
