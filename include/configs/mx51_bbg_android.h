@@ -169,7 +169,7 @@
 		"loadaddr=0x90800000\0"				\
 		"rd_loadaddr=0x90D00000\0"		\
 		"bootargs=console=ttymxc0 init=/init androidboot.console=ttymxc0 " \
-			"di1_primary gpu_nommu gpu_memory=32M calibration\0" \
+			"di1_primary pmem=32M,64M fbmem=5M gpu_memory=32M calibration\0" \
 		"bootcmd_SD=mmc read 0 ${loadaddr} 0x800 0x2000;" \
 			"mmc read 0 ${rd_loadaddr} 0x3000 0x300\0" \
 		"bootcmd=run bootcmd_SD; bootm ${loadaddr} ${rd_loadaddr}\0" \
