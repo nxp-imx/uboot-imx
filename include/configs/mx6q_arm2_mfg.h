@@ -25,6 +25,7 @@
 #include <asm/arch/mx6.h>
 
  /* High Level Configuration Options */
+#define CONFIG_MFG
 #define CONFIG_ARMV7	/* This is armv7 Cortex-A9 CPU core */
 #define CONFIG_MXC
 #define CONFIG_MX6Q

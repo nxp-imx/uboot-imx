@@ -948,6 +948,7 @@ int cpu_eth_init(bd_t *bis)
 int arch_cpu_init(void)
 {
 	int val;
+#ifndef CONFIG_MFG
 	unsigned int reg;
 
 	/* Check the flag of SNVS_LPGPR[0], SRC register will not reset
@@ -971,6 +972,7 @@ int arch_cpu_init(void)
 		writel(readl(SNVS_BASE_ADDR + SNVS_LPGPR_OFFSET) & (~0x1),
 				SNVS_BASE_ADDR + SNVS_LPGPR_OFFSET);
 	}
+#endif
 
 	icache_enable();
 	dcache_enable();
