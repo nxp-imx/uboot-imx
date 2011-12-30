@@ -676,7 +676,7 @@ void dbgFecRegs(struct eth_device *dev)
 }
 #endif
 
-#ifdef ET_DEBUG
+#ifndef ET_DEBUG
 void dbgFecRegs(struct eth_device *dev)
 {
 	struct fec_info_s *info = dev->priv;

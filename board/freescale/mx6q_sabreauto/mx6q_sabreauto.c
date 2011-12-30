@@ -92,6 +92,21 @@ static struct fb_videomode lvds_xga = {
 vidinfo_t panel_info;
 #endif
 
+static void set_gpio_output_val(unsigned base, unsigned mask, unsigned val)
+{
+	unsigned reg = readl(base + GPIO_DR);
+	if (val & 1)
+		reg |= mask;	/* set high */
+	else
+		reg &= ~mask;	/* clear low */
+	writel(reg, base + GPIO_DR);
+
+	reg = readl(base + GPIO_GDIR);
+	reg |= mask;		/* configure GPIO line as output */
+	writel(reg, base + GPIO_GDIR);
+}
+
+
 static inline void setup_boot_device(void)
 {
 	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
@@ -766,23 +781,18 @@ static int phy_write(char *devname, unsigned char addr, unsigned char reg,
 
 int mx6_rgmii_rework(char *devname, int phy_addr)
 {
-	unsigned short val;
 
-	/* To enable AR8031 ouput a 125MHz clk from CLK_25M */
-	phy_write(devname, phy_addr, 0xd, 0x7);
-	phy_write(devname, phy_addr, 0xe, 0x8016);
-	phy_write(devname, phy_addr, 0xd, 0x4007);
-	phy_read(devname, phy_addr, 0xe, &val);
+	/* enable master mode, 1000 Base-T capable */
+	phy_write(devname, phy_addr, 0x9, 0x1f00);
 
-	val &= 0xffe3;
-	val |= 0x18;
-	phy_write(devname, phy_addr, 0xe, val);
+	/* min rx data delay */
+	phy_write(devname, phy_addr, 0x0b, 0x8105);
+	phy_write(devname, phy_addr, 0x0c, 0x0000);
 
-	/* introduce tx clock delay */
-	phy_write(devname, phy_addr, 0x1d, 0x5);
-	phy_read(devname, phy_addr, 0x1e, &val);
-	val |= 0x0100;
-	phy_write(devname, phy_addr, 0x1e, val);
+	/* max rx/tx clock delay, min rx/tx control delay */
+	phy_write(devname, phy_addr, 0x0b, 0x8104);
+	phy_write(devname, phy_addr, 0x0c, 0xf0f0);
+	phy_write(devname, phy_addr, 0x0b, 0x104);
 
 	return 0;
 }
@@ -803,37 +813,16 @@ iomux_v3_cfg_t enet_pads[] = {
 	MX6Q_PAD_RGMII_RD2__ENET_RGMII_RD2,
 	MX6Q_PAD_RGMII_RD3__ENET_RGMII_RD3,
 	MX6Q_PAD_RGMII_RX_CTL__ENET_RGMII_RX_CTL,
-	MX6Q_PAD_GPIO_0__CCM_CLKO,
-	MX6Q_PAD_GPIO_3__CCM_CLKO2,
 };
 
 void enet_board_init(void)
 {
 	unsigned int reg;
-	iomux_v3_cfg_t enet_reset =
-			(MX6Q_PAD_KEY_ROW4__GPIO_4_15 &
-			~MUX_PAD_CTRL_MASK)           |
-			 MUX_PAD_CTRL(0x84);
 
 	mxc_iomux_v3_setup_multiple_pads(enet_pads,
 			ARRAY_SIZE(enet_pads));
+	set_gpio_output_val(GPIO6_BASE_ADDR, (1 << 24), 1);
 
-	mxc_iomux_v3_setup_pad(enet_reset);
-
-	/* phy reset: gpio4-15 */
-	reg = readl(GPIO4_BASE_ADDR + 0x0);
-	reg &= ~0x8000;
-	writel(reg, GPIO4_BASE_ADDR + 0x0);
-
-	reg = readl(GPIO4_BASE_ADDR + 0x4);
-	reg |= 0x8000;
-	writel(reg, GPIO4_BASE_ADDR + 0x4);
-
-	udelay(500);
-
-	reg = readl(GPIO4_BASE_ADDR + 0x0);
-	reg |= 0x8000;
-	writel(reg, GPIO4_BASE_ADDR + 0x0);
 }
 
 int checkboard(void)
