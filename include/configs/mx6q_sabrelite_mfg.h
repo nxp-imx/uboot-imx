@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2011-2012 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX6Q SABRE-Lite Freescale board.
  *
@@ -110,7 +110,7 @@
 #define CONFIG_PRIME	"FEC0"
 
 #define CONFIG_LOADADDR		0x10800000	/* loadaddr env var */
-#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
+#define CONFIG_RD_LOADADDR	0x10c00000
 
 #define CONFIG_BOOTARGS         "console=ttymxc1,115200 rdinit=/linuxrc"
 #define CONFIG_BOOTCOMMAND      "bootm 0x10800000 0x10c00000"

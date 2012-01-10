@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2011-2012 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX6Q SABRE-Lite Freescale board.
  *
@@ -141,15 +141,15 @@
 #define CONFIG_PRIME	"FEC0"
 
 #define CONFIG_LOADADDR		0x10800000	/* loadaddr env var */
-#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x600000) /* 6M */
+#define CONFIG_RD_LOADADDR	0x11000000
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
 		"ethaddr=00:04:9f:00:ea:d3\0"		\
 		"bootfile=uImage\0"	\
-		"bootargs=console=ttymxc1 init=/init " \
-			"androidboot.console=ttymxc1 video=mxcfb0:bpp=16 fbmem=5M\0" \
+		"bootargs=console=ttymxc0,115200 init=/init rw " \
+		"video=mxcfb0 fbmem=10M vmalloc=400M enable_wiat_mode=off\0" \
 		"bootcmd_SD=mmc dev 1;"		\
 			"mmc read ${loadaddr} 0x800 0x2000;" \
 			"mmc read ${rd_loadaddr} 0x3000 0x300\0" \
