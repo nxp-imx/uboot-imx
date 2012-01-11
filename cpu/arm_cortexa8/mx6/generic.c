@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -91,6 +91,7 @@ static int cpu_tmp;
 static unsigned int fuse;
 
 #define SNVS_LPGPR_OFFSET	0x68
+#define IOMUXC_GPR1_OFFSET	0x4
 
 static u32 __decode_pll(enum pll_clocks pll, u32 infreq)
 {
@@ -961,6 +962,11 @@ int arch_cpu_init(void)
 	val &= ~BM_ANADIG_REG_CORE_REG2_TRG;
 	val |= BF_ANADIG_REG_CORE_REG2_TRG(0x14);
 	REG_WR(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE, val);
+
+	/* Need to power down PCIe */
+	val = REG_RD(IOMUXC_BASE_ADDR, IOMUXC_GPR1_OFFSET);
+	val |= (0x1 << 18);
+	REG_WR(IOMUXC_BASE_ADDR, IOMUXC_GPR1_OFFSET, val);
 
 	return 0;
 }
