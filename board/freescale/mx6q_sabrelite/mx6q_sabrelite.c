@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2011-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -657,8 +657,8 @@ int mx6_rgmii_rework(char *devname, int phy_addr)
 	phy_write(devname, phy_addr, 0x9, 0x0c00);
 #endif
 
-	/* enable master mode, 1000 Base-T capable */
-	phy_write(devname, phy_addr, 0x9, 0x1f00);
+	/* enable master mode, force phy to 100Mbps */
+	phy_write(devname, phy_addr, 0x9, 0x1c00);
 
 	/* min rx data delay */
 	phy_write(devname, phy_addr, 0x0b, 0x8105);
