@@ -149,7 +149,7 @@
 		"ethaddr=00:04:9f:00:ea:d3\0"		\
 		"bootfile=uImage\0"	\
 		"bootargs=console=ttymxc0,115200 init=/init rw " \
-		"video=mxcfb0 fbmem=10M vmalloc=400M enable_wiat_mode=off\0" \
+		"video=mxcfb0 fbmem=10M vmalloc=400M enable_wait_mode=off\0" \
 		"bootcmd_SD=mmc dev 1;"		\
 			"mmc read ${loadaddr} 0x800 0x2000;" \
 			"mmc read ${rd_loadaddr} 0x3000 0x300\0" \
