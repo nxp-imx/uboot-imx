@@ -148,7 +148,7 @@
 		"ethprime=FEC0\0"					\
 		"ethaddr=00:04:9f:00:ea:d3\0"		\
 		"bootfile=uImage\0"	\
-		"bootargs=console=ttymxc0,115200 init=/init rw " \
+		"bootargs=console=ttymxc1,115200 init=/init rw " \
 		"video=mxcfb0 fbmem=10M vmalloc=400M enable_wait_mode=off\0" \
 		"bootcmd_SD=mmc dev 1;"		\
 			"mmc read ${loadaddr} 0x800 0x2000;" \
