@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -115,6 +115,8 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	    (struct imx_spi_dev_t *)malloc(sizeof(struct imx_spi_dev_t));
 	if (!imx_spi_slave)
 		return NULL;
+
+	memset(imx_spi_slave, 0, sizeof(struct imx_spi_dev_t));
 
 	imx_spi_slave->slave.bus = bus;
 	imx_spi_slave->slave.cs = cs;
