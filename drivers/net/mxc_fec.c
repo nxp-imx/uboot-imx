@@ -2,7 +2,7 @@
  * (C) Copyright 2000-2004
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * (C) Copyright 2008-2011 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -79,7 +79,7 @@
 #if defined (CONFIG_MX6Q)
 extern int mx6_rgmii_rework(char *devname, int phy_addr);
 #endif
-#ifdef CONFIG_MX6Q_ARM2
+#if defined(CONFIG_MX6Q_ARM2) || defined(CONFIG_MX6Q_SABRESD)
 #define PHY_MIPSCR_LINK_UP	(0x1 << 10)
 #define PHY_MIPSCR_SPEED_MASK	(0x3 << 14)
 #define PHY_MIPSCR_1000M	(0x2 << 14)
@@ -368,7 +368,7 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 			printf("FEC: Link is down %x\n", val);
 	}
 /* for AR8031 PHY */
-#ifdef CONFIG_MX6Q_ARM2
+#if defined(CONFIG_MX6Q_ARM2) || defined(CONFIG_MX6Q_SABRESD)
 		ret = __fec_mii_read(fecp, addr, PHY_MIPSCR, &val);
 		if (ret)
 			dup_spd = _100BASET | (FULL << 16);
