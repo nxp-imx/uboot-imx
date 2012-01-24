@@ -120,13 +120,11 @@
 		"kernel=uImage\0"				\
 		"nfsroot=/opt/eldk/arm\0"				\
 		"bootargs=console=ttymxc1,115200\0" 			\
-		"bootcmd_base=\0" \
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
 			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
-		"bootcmd_net=run bootcmd_base bootargs_nfs; "	       	\
+		"bootcmd_net=run bootargs_nfs;"		\
 			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
-		"bootcmd_mmc=run bootcmd_base ;" 			\
-			"for disk in 0 1 ; do mmc dev ${disk} ;" 	\
+		"bootcmd_mmc= for disk in 0 1 ; do mmc dev ${disk} ;"	\
 				"for fs in fat ext2 ; do " 		\
 					"${fs}load mmc ${disk}:1 10008000 " \
 						"/6q_bootscript && " 	\
