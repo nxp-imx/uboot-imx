@@ -509,9 +509,6 @@ restart:
 			x = timeHandler;
 			timeHandler = (thand_f *)0;
 			(*x)();
-
-			/*get packets timeout, restart net interface*/
-			NetStartAgain();
 		}
 
 
