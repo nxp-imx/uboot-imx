@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX6Q Armadillo2 Freescale board.
  *
@@ -109,7 +109,7 @@
 #define CONFIG_LOADADDR		0x10800000	/* loadaddr env var */
 #define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
 
-#define CONFIG_BOOTARGS         "console=ttymxc0,115200 rdinit=/linuxrc"
+#define CONFIG_BOOTARGS         "console=ttymxc3,115200 rdinit=/linuxrc"
 #define CONFIG_BOOTCOMMAND      "bootm 0x10800000 0x10c00000"
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
