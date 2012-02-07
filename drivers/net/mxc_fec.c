@@ -76,7 +76,7 @@
 #define FEC_MII_WRITE(pa, ra, v) (FEC_MII_FRAME | FEC_MII_OP(FEC_MII_OP_WR)|\
 			FEC_MII_PA(pa) | FEC_MII_RA(ra) | FEC_MII_SET_DATA(v))
 
-#if defined (CONFIG_MX6Q)
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
 extern int mx6_rgmii_rework(char *devname, int phy_addr);
 #endif
 #if defined(CONFIG_MX6Q_ARM2) || defined(CONFIG_MX6Q_SABRESD)
@@ -438,7 +438,7 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 		fecp->tcr &= ~FEC_TCR_FDEN;
 	}
 
-#ifdef CONFIG_MX6Q
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
 	if ((dup_spd & 0xFFFF) == _1000BASET) {
 		fecp->ecr |= (0x1 << 5);
 	} else if ((dup_spd & 0xFFFF) == _100BASET) {
@@ -836,7 +836,7 @@ static void fec_mii_phy_init(struct eth_device *dev)
 #if defined (CONFIG_CMD_MII) || defined (CONFIG_MII) || \
 	defined (CONFIG_DISCOVER_PHY)
 	mxc_fec_mii_init(fecp);
-#if defined (CONFIG_MX6Q)
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
 	mx6_rgmii_rework(dev->name, info->phy_addr);
 #endif
 	mxc_fec_phy_powerup(dev->name, info->phy_addr);
@@ -886,7 +886,7 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	/* Set maximum receive buffer size. */
 	fecp->emrbr = PKT_MAXBLR_SIZE;
 
-#ifdef CONFIG_MX6Q
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
 	fecp->rcr &= ~(0x100);
 	fecp->rcr |= 0x44;
 #endif
@@ -939,7 +939,7 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	fecp->etdsr = (uint)(&info->txbd[0]);
 #endif
 
-#ifdef CONFIG_MX6Q
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
 	/* Enable Swap to support little-endian device */
 	fecp->ecr |= FEC_ECR_DBSWP;
 
