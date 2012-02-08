@@ -59,6 +59,16 @@
 #include <asm/clock.h>
 #endif
 
+#ifdef CONFIG_ANDROID_RECOVERY
+#include "../common/recovery.h"
+#include <part.h>
+#include <ext2fs.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
+#include <ubi_uboot.h>
+#include <jffs2/load_kernel.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
@@ -743,6 +753,134 @@ int board_init(void)
 	return 0;
 }
 
+
+#ifdef CONFIG_ANDROID_RECOVERY
+struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
+	{
+		.cmd = NULL,
+		.args = NULL,
+	},
+	{
+		.cmd = NULL,
+		.args = NULL,
+	},
+	{
+		.cmd = NULL,
+		.args = NULL,
+	},
+	{
+		.cmd = NULL,
+		.args = NULL,
+	},
+	{
+		.cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+		.args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
+	},
+	{
+		.cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+		.args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
+	},
+	{
+		.cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+		.args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
+	},
+	{
+		.cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+		.args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
+	},
+	{
+		.cmd = NULL,
+		.args = NULL,
+	},
+};
+
+int check_recovery_cmd_file(void)
+{
+	disk_partition_t info;
+	int button_pressed = 0;
+	ulong part_length;
+	int filelen = 0;
+	char *env;
+	u32 reg;
+	int i;
+
+	printf("Checking for recovery command file...\n");
+	switch (get_boot_device()) {
+	case MMC_BOOT:
+	case SD_BOOT:
+	case SPI_NOR_BOOT:
+	case I2C_BOOT:
+		{
+			for (i = 0; i < 3; i++) {
+				block_dev_desc_t *dev_desc = NULL;
+				struct mmc *mmc = find_mmc_device(i);
+
+				dev_desc = get_dev("mmc", i);
+
+				if (NULL == dev_desc) {
+					printf("** Block device MMC %d not supported\n", i);
+					continue;
+				}
+
+				mmc_init(mmc);
+
+				if (get_partition_info(dev_desc,
+						       CONFIG_ANDROID_CACHE_PARTITION_MMC,
+						       &info)) {
+					printf("** Bad partition %d **\n",
+					       CONFIG_ANDROID_CACHE_PARTITION_MMC);
+					continue;
+				}
+
+				part_length = ext2fs_set_blk_dev(dev_desc,
+								 CONFIG_ANDROID_CACHE_PARTITION_MMC);
+				if (part_length == 0) {
+					printf("** Bad partition - mmc %d:%d **\n", i,
+					       CONFIG_ANDROID_CACHE_PARTITION_MMC);
+					ext2fs_close();
+					continue;
+				}
+
+				if (!ext2fs_mount(part_length)) {
+					printf("** Bad ext2 partition or "
+					       "disk - mmc %d:%d **\n",
+					       i, CONFIG_ANDROID_CACHE_PARTITION_MMC);
+					ext2fs_close();
+					continue;
+				}
+
+				filelen = ext2fs_open(CONFIG_ANDROID_RECOVERY_CMD_FILE);
+
+				ext2fs_close();
+				break;
+			}
+		}
+		break;
+	case NAND_BOOT:
+		return 0;
+		break;
+	case UNKNOWN_BOOT:
+	default:
+		return 0;
+		break;
+	}
+
+
+	/* Check Recovery Combo Button press or not. */
+	mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_5__GPIO_1_5);
+	reg = readl(GPIO1_BASE_ADDR + GPIO_GDIR);
+	reg &= ~(1<<5);
+	writel(reg, GPIO1_BASE_ADDR + GPIO_GDIR);
+	reg = readl(GPIO1_BASE_ADDR + GPIO_PSR);
+	if (!(reg & (1 << 5))) { /* VOL_DN key is low assert */
+		button_pressed = 1;
+		printf("Recovery key pressed\n");
+	}
+
+	return (filelen > 0 || button_pressed);
+}
+#endif
+
 int board_late_init(void)
 {
 	return 0;
@@ -898,3 +1036,27 @@ int checkboard(void)
 	}
 	return 0;
 }
+
+#ifdef CONFIG_IMX_UDC
+
+void udc_pins_setting(void)
+{
+#define GPIO_3_22_BIT_MASK (1<<22)
+	u32 reg;
+	mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_1__USBOTG_ID);
+	/* USB_OTG_PWR */
+	mxc_iomux_v3_setup_pad(MX6Q_PAD_EIM_D22__GPIO_3_22);
+
+	reg = readl(GPIO3_BASE_ADDR + GPIO_GDIR);
+	/* set gpio_3_22 as output */
+	reg |= GPIO_3_22_BIT_MASK;
+	writel(reg, GPIO3_BASE_ADDR + GPIO_GDIR);
+
+	/* set USB_OTG_PWR to 0 */
+	reg = readl(GPIO3_BASE_ADDR + GPIO_DR);
+	reg &= ~GPIO_3_22_BIT_MASK;
+	writel(reg, GPIO3_BASE_ADDR + GPIO_DR);
+
+	mxc_iomux_set_gpr_register(1, 13, 1, 1);
+}
+#endif

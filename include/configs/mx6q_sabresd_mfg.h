@@ -25,6 +25,7 @@
 #include <asm/arch/mx6.h>
 
  /* High Level Configuration Options */
+#define CONFIG_MFG
 #define CONFIG_ARMV7	/* This is armv7 Cortex-A9 CPU core */
 #define CONFIG_MXC
 #define CONFIG_MX6Q
@@ -103,33 +104,21 @@
 /* #define CONFIG_CMD_SATA */
 #undef CONFIG_CMD_IMLS
 
-#define CONFIG_CMD_IMX_DOWNLOAD_MODE
-
-#define CONFIG_BOOTDELAY 3
+#define CONFIG_BOOTDELAY 0
 
 #define CONFIG_PRIME	"FEC0"
 
 #define CONFIG_LOADADDR		0x10800000	/* loadaddr env var */
-#define CONFIG_RD_LOADADDR	(0x1300000)
+#define CONFIG_RD_LOADADDR	0x10c00000
+
+#define CONFIG_BOOTARGS         "console=ttymxc0,115200 rdinit=/linuxrc enable_wait_mode=off"
+#define CONFIG_BOOTCOMMAND      "bootm 0x10800000 0x10c00000"
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
 		"uboot=u-boot.bin\0"			\
 		"kernel=uImage\0"				\
-		"nfsroot=/opt/eldk/arm\0"				\
-		"bootargs_base=setenv bootargs console=ttymxc0,115200\0"\
-		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
-			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
-		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
-			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
-		"bootargs_mmc=setenv bootargs ${bootargs} ip=dhcp "     \
-			"root=/dev/mmcblk0p1 rootwait\0"                \
-		"bootcmd_mmc=run bootargs_base bootargs_mmc; "   \
-		"mmc dev 3; "	\
-		"mmc read ${loadaddr} 0x800 0x2000; bootm\0"	\
-		"bootcmd=run bootcmd_net\0"                             \
-
 
 #define CONFIG_ARP_TIMEOUT	200UL
 
@@ -137,7 +126,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_PROMPT		"MX6Q SABRESD U-Boot > "
+#define CONFIG_SYS_PROMPT		"MX6Q SABRESD-MFG U-Boot > "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
@@ -237,10 +226,6 @@
 	#define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
 	#define CONFIG_LBA48
 	#define CONFIG_LIBATA
-
-	#define CONFIG_DOS_PARTITION	1
-	#define CONFIG_CMD_FAT		1
-	#define CONFIG_CMD_EXT2		1
 #endif
 
 /*
@@ -259,6 +244,10 @@
 	#define NAND_MAX_CHIPS		8
 	#define CONFIG_SYS_NAND_BASE		0x40000000
 	#define CONFIG_SYS_MAX_NAND_DEVICE	1
+
+	#define CONFIG_DOS_PARTITION	1
+	#define CONFIG_CMD_FAT		1
+	#define CONFIG_CMD_EXT2		1
 
 	/* NAND is the unique module invoke APBH-DMA */
 	#define CONFIG_APBH_DMA
@@ -288,30 +277,13 @@
 #define CONFIG_SYS_NO_FLASH
 
 /* Monitor at beginning of flash */
-#define CONFIG_FSL_ENV_IN_MMC
+/* #define CONFIG_FSL_ENV_IN_MMC */
 /* #define CONFIG_FSL_ENV_IN_NAND */
 /* #define CONFIG_FSL_ENV_IN_SATA */
 
-#define CONFIG_ENV_SECT_SIZE    (8 * 1024)
+#define CONFIG_ENV_SECT_SIZE    (128 * 1024)
 #define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE
-
-#if defined(CONFIG_FSL_ENV_IN_NAND)
-	#define CONFIG_ENV_IS_IN_NAND 1
-	#define CONFIG_ENV_OFFSET	0x100000
-#elif defined(CONFIG_FSL_ENV_IN_MMC)
-	#define CONFIG_ENV_IS_IN_MMC	1
-	#define CONFIG_ENV_OFFSET	(768 * 1024)
-#elif defined(CONFIG_FSL_ENV_IN_SATA)
-	#define CONFIG_ENV_IS_IN_SATA   1
-	#define CONFIG_SATA_ENV_DEV     0
-	#define CONFIG_ENV_OFFSET       (768 * 1024)
-#elif defined(CONFIG_FSL_ENV_IN_SF)
-	#define CONFIG_ENV_IS_IN_SPI_FLASH	1
-	#define CONFIG_ENV_SPI_CS		1
-	#define CONFIG_ENV_OFFSET       (768 * 1024)
-#else
-	#define CONFIG_ENV_IS_NOWHERE	1
-#endif
+#define CONFIG_ENV_IS_NOWHERE   1
 
 #ifdef CONFIG_SPLASH_SCREEN
 	/*
