@@ -29,6 +29,7 @@
 #define CONFIG_MXC
 #define CONFIG_MX6DL
 #define CONFIG_MX6Q_ARM2
+#define CONFIG_DDR_32BIT /* For 32bit DDR, comment it out for 64bit */
 #define CONFIG_FLASH_HEADER
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_MX6_CLK32	   32768
@@ -265,7 +266,11 @@
  */
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		CSD0_DDR_BASE_ADDR
+#ifdef CONFIG_DDR_32BIT
+#define PHYS_SDRAM_1_SIZE       (1u * 1024 * 1024 * 1024)
+#else
 #define PHYS_SDRAM_1_SIZE	(2u * 1024 * 1024 * 1024)
+#endif
 #define iomem_valid_addr(addr, size) \
 	(addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
 
