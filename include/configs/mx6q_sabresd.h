@@ -237,6 +237,10 @@
 	#define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
 	#define CONFIG_LBA48
 	#define CONFIG_LIBATA
+
+	#define CONFIG_DOS_PARTITION	1
+	#define CONFIG_CMD_FAT		1
+	#define CONFIG_CMD_EXT2		1
 #endif
 
 /*
@@ -255,10 +259,6 @@
 	#define NAND_MAX_CHIPS		8
 	#define CONFIG_SYS_NAND_BASE		0x40000000
 	#define CONFIG_SYS_MAX_NAND_DEVICE	1
-
-	#define CONFIG_DOS_PARTITION	1
-	#define CONFIG_CMD_FAT		1
-	#define CONFIG_CMD_EXT2		1
 
 	/* NAND is the unique module invoke APBH-DMA */
 	#define CONFIG_APBH_DMA

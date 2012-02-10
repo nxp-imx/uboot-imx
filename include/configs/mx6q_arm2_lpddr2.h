@@ -212,6 +212,10 @@
 	#define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
 	#define CONFIG_LBA48
 	#define CONFIG_LIBATA
+
+	#define CONFIG_DOS_PARTITION	1
+	#define CONFIG_CMD_FAT		1
+	#define CONFIG_CMD_EXT2		1
 #endif
 
 /*-----------------------------------------------------------------------
