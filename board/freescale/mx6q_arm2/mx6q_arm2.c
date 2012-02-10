@@ -27,7 +27,9 @@
 #include <asm/arch/mx6dl_pins.h>
 #include <asm/arch/iomux-v3.h>
 #include <asm/errno.h>
+#ifdef CONFIG_MXC_FEC
 #include <miiphy.h>
+#endif
 #if defined(CONFIG_VIDEO_MX5)
 #include <linux/list.h>
 #include <linux/fb.h>
@@ -893,6 +895,7 @@ int board_late_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_MXC_FEC
 static int phy_read(char *devname, unsigned char addr, unsigned char reg,
 		    unsigned short *pdata)
 {
@@ -935,6 +938,7 @@ int mx6_rgmii_rework(char *devname, int phy_addr)
 
 	return 0;
 }
+
 #if defined CONFIG_MX6Q
 iomux_v3_cfg_t enet_pads[] = {
 	MX6Q_PAD_KEY_COL1__ENET_MDIO,
@@ -1010,6 +1014,7 @@ void enet_board_init(void)
 	reg |= 0x8000;
 	writel(reg, GPIO4_BASE_ADDR + 0x0);
 }
+#endif
 
 int checkboard(void)
 {

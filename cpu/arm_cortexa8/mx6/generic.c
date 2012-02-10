@@ -801,7 +801,7 @@ int clk_config(u32 ref, u32 freq, u32 clk_type)
 }
 #endif
 
-int read_cpu_temperature(void)
+static inline int read_cpu_temperature(void)
 {
 	unsigned int reg, tmp, temperature, i;
 	unsigned int raw_25c, raw_hot, hot_temp, raw_n25c, ratio;
@@ -874,7 +874,7 @@ int read_cpu_temperature(void)
 
 }
 
-void check_cpu_temperature(void)
+static void check_cpu_temperature(void)
 {
 	cpu_tmp = read_cpu_temperature();
 	while (cpu_tmp > TEMPERATURE_MIN && cpu_tmp < TEMPERATURE_MAX) {
@@ -972,6 +972,7 @@ int arch_cpu_init(void)
 }
 #endif
 
+#ifdef CONFIG_VIDEO_MX5
 void ipu_clk_enable(void)
 {
 }
@@ -979,7 +980,9 @@ void ipu_clk_enable(void)
 void ipu_clk_disable(void)
 {
 }
+#endif
 
+#ifdef CONFIG_CMD_IMXOTP
 int otp_clk_enable(void)
 {
 	u32 reg = 0;
@@ -1001,6 +1004,7 @@ int otp_clk_disable(void)
     writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR2);
 	return 0;
 }
+#endif
 
 #ifdef CONFIG_IMX_UDC
 void enable_usboh3_clk(unsigned char enable)

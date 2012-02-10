@@ -26,7 +26,9 @@
 #include <asm/arch/mx6_pins.h>
 #include <asm/arch/iomux-v3.h>
 #include <asm/errno.h>
+#ifdef CONFIG_MXC_FEC
 #include <miiphy.h>
+#endif
 #if defined(CONFIG_VIDEO_MX5)
 #include <linux/list.h>
 #include <linux/fb.h>
@@ -746,6 +748,7 @@ int board_late_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_MXC_FEC
 static int phy_read(char *devname, unsigned char addr, unsigned char reg,
 		    unsigned short *pdata)
 {
@@ -837,6 +840,7 @@ void enet_board_init(void)
 	reg |= 0x2000000;
 	writel(reg, GPIO1_BASE_ADDR + 0x0);
 }
+#endif
 
 int checkboard(void)
 {
