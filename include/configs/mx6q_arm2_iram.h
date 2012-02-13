@@ -56,7 +56,7 @@
 /*
  * Size of malloc() pool
  */
-#define CONFIG_SYS_MALLOC_LEN		(3 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(10 * 1024)
 /* size in bytes reserved for initial data */
 #define CONFIG_SYS_GBL_DATA_SIZE	128
 

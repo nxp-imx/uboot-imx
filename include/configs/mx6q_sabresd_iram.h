@@ -56,7 +56,7 @@
 /*
  * Size of malloc() pool
  */
-#define CONFIG_SYS_MALLOC_LEN		(3 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(10 * 1024)
 /* size in bytes reserved for initial data */
 #define CONFIG_SYS_GBL_DATA_SIZE	128
 
@@ -76,17 +76,6 @@
  * Command definition
  ***********************************************************/
 
-#include <config_cmd_default.h>
-
-#define CONFIG_CMD_PING
-#define CONFIG_CMD_DHCP
-#define CONFIG_CMD_MII
-#define CONFIG_CMD_NET
-#define CONFIG_NET_RETRY_COUNT  100
-#define CONFIG_NET_MULTI 1
-#define CONFIG_BOOTP_SUBNETMASK
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_DNS
 #define CONFIG_CMD_BDI		/* bdinfo			*/
 #define CONFIG_CMD_BOOTD	/* bootd			*/
 #define CONFIG_CMD_CONSOLE	/* coninfo			*/
@@ -143,21 +132,6 @@
 #define CONFIG_SYS_HZ			1000
 
 #define CONFIG_CMDLINE_EDITING
-
-#define CONFIG_FEC0_IOBASE	ENET_BASE_ADDR
-#define CONFIG_FEC0_PINMUX	-1
-#define CONFIG_FEC0_MIIBASE	-1
-#define CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
-#define CONFIG_MXC_FEC
-#define CONFIG_FEC0_PHY_ADDR		0
-#define CONFIG_ETH_PRIME
-#define CONFIG_RMII
-#define CONFIG_CMD_MII
-#define CONFIG_CMD_DHCP
-#define CONFIG_CMD_PING
-#define CONFIG_IPADDR			192.168.1.103
-#define CONFIG_SERVERIP			192.168.1.101
-#define CONFIG_NETMASK			255.255.255.0
 
 /*-----------------------------------------------------------------------
  * Stack sizes
