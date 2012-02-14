@@ -3308,6 +3308,7 @@ mx53_evk_config      : unconfig
 
 mx6dl_arm2_config		\
 mx6dl_arm2_iram_config		\
+mx6dl_arm2_mfg_config		\
 mx6q_arm2_config		\
 mx6q_arm2_mfg_config		\
 mx6q_arm2_lpddr2_config		\
