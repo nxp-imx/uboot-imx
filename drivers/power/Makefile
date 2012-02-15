@@ -25,6 +25,7 @@ include $(TOPDIR)/config.mk
 
 LIB 	:= $(obj)libpower.a
 
+COBJS-$(CONFIG_ANATOP_REGULATOR) += anatop.o
 COBJS-$(CONFIG_TWL4030_POWER)	+= twl4030.o
 
 COBJS	:= $(COBJS-y)

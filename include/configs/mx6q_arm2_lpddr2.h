@@ -95,6 +95,7 @@
 
 #define CONFIG_CMD_MMC
 #define CONFIG_CMD_ENV
+#define CONFIG_CMD_REGUL
 
 #define CONFIG_CMD_CLOCK
 #define CONFIG_REF_CLK_FREQ CONFIG_MX6_HCLK_FREQ
@@ -177,6 +178,13 @@
 	#define CONFIG_SYS_I2C_PORT             I2C3_BASE_ADDR
 	#define CONFIG_SYS_I2C_SPEED            100000
 	#define CONFIG_SYS_I2C_SLAVE            0x1f
+#endif
+
+/* Regulator Configs */
+#ifdef CONFIG_CMD_REGUL
+	#define CONFIG_ANATOP_REGULATOR
+	#define CONFIG_CORE_REGULATOR_NAME "vdd1p1"
+	#define CONFIG_PERIPH_REGULATOR_NAME "vdd1p1"
 #endif
 
 /*

@@ -96,6 +96,7 @@
 #define CONFIG_CMD_SF
 #define CONFIG_CMD_MMC
 #define CONFIG_CMD_ENV
+#define CONFIG_CMD_REGUL
 
 #define CONFIG_CMD_CLOCK
 #define CONFIG_REF_CLK_FREQ CONFIG_MX6_HCLK_FREQ
@@ -202,6 +203,13 @@
 	#define CONFIG_IMX_ECSPI
 	#define IMX_CSPI_VER_2_3	1
 	#define MAX_SPI_BYTES		(64 * 4)
+#endif
+
+/* Regulator Configs */
+#ifdef CONFIG_CMD_REGUL
+	#define CONFIG_ANATOP_REGULATOR
+	#define CONFIG_CORE_REGULATOR_NAME "vdd1p1"
+	#define CONFIG_PERIPH_REGULATOR_NAME "vdd1p1"
 #endif
 
 /*
