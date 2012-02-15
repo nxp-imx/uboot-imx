@@ -2,7 +2,7 @@
  * Copyright 2008 - 2009 (C) Wind River Systems, Inc.
  * Tom Rix <Tom.Rix@windriver.com>
  *
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -1014,8 +1014,8 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 			    (CFG_FASTBOOT_MKBOOTIMAGE_PAGE_SIZE <
 				    download_bytes)) {
 				char start[32];
-				char *bootm[3] = { "bootm", NULL, NULL, };
 				char *go[3]    = { "go",    NULL, NULL, };
+				char *booti_args[4] = {"booti",  NULL, "boot", NULL};
 
 				/*
 				 * Use this later to determine if a command line was passed
@@ -1025,40 +1025,30 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 					(struct fastboot_boot_img_hdr *) interface.transfer_buffer;
 
 				/* Skip the mkbootimage header */
-				image_header_t *hdr =
-					(image_header_t *)
-					&interface.transfer_buffer[CFG_FASTBOOT_MKBOOTIMAGE_PAGE_SIZE];
+				/* image_header_t *hdr = */
+				/* 	(image_header_t *) */
+				/* 	&interface.transfer_buffer[CFG_FASTBOOT_MKBOOTIMAGE_PAGE_SIZE]; */
 
-				bootm[1] = go[1] = start;
-				sprintf(start, "0x%x", (unsigned int)hdr);
+				booti_args[1] = start;
+				sprintf(start, "0x%x", (unsigned int)interface.transfer_buffer);
 
 				/* Execution should jump to kernel so send the response
 				   now and wait a bit.  */
 				sprintf(response, "OKAY");
 				fastboot_tx_status(response, strlen(response));
-				udelay(1000000); /* 1 sec */
 
-				if (ntohl(hdr->ih_magic) == IH_MAGIC) {
-					/* Looks like a kernel.. */
-					printf("Booting kernel..\n");
+				printf("Booting kernel...\n");
 
-					/*
-					 * Check if the user sent a bootargs down.
-					 * If not, do not override what is already there
-					 */
-					if (strlen((char *)&fb_hdr->cmdline[0]))
-						set_env("bootargs",
-						   (char *)&fb_hdr->cmdline[0]);
 
-					do_bootm(NULL, 0, 2, bootm);
-				} else {
-					/* Raw image, maybe another uboot */
-					printf("Booting raw image..\n");
+				/* Reserve for further use, this can
+				 * be more convient for developer. */
+				/* if (strlen ((char *) &fb_hdr->cmdline[0])) */
+				/* 	set_env("bootargs", (char *) &fb_hdr->cmdline[0]); */
 
-					do_go(NULL, 0, 2, go);
-				}
-				printf("ERROR : bootting failed\n");
-				printf("You should reset the board\n");
+				/* boot the boot.img */
+				do_booti(NULL, 0, 3, booti_args);
+
+
 			}
 			sprintf(response, "FAILinvalid boot image");
 			ret = 0;
@@ -1749,6 +1739,9 @@ fastboot_ptentry *fastboot_flash_find_ptn(const char *name)
 				return ptable + n;
 		}
 	}
+
+	printf("can't find partition: %s, dump the partition table\n", name);
+	fastboot_flash_dump_ptn();
 	return 0;
 }
 

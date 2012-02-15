@@ -4,6 +4,7 @@
  * Marius Groeger <mgroeger@sysgo.de>
  *
  * Copyright (C) 2001  Erik Mouw (J.A.K.Mouw@its.tudelft.nl)
+ * Copyright (C) 2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +27,8 @@
 #include <image.h>
 #include <u-boot/zlib.h>
 #include <asm/byteorder.h>
+
+#include <bootimg.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -131,6 +134,68 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
 	return 1;
 }
 
+void do_booti_linux (boot_img_hdr *hdr)
+{
+	ulong initrd_start, initrd_end;
+	void (*theKernel)(int zero, int arch, uint params);
+	bd_t *bd = gd->bd;
+#ifdef CONFIG_CMDLINE_TAG
+	char *commandline = getenv("bootargs");
+
+	/* If no bootargs env, just use hdr command line */
+	if (!commandline)
+	    commandline = hdr->cmdline;
+
+	/* XXX: in production, you should always use boot.img 's cmdline !!! */
+
+	printf("kernel cmdline: \n\tuse %s command line:\n\t%s \n",
+	       getenv("bootargs") ? "uboot" : "boot.img",
+	       commandline);
+#endif
+
+	theKernel = (void (*)(int, int, uint))(hdr->kernel_addr);
+
+	initrd_start = hdr->ramdisk_addr;
+	initrd_end = initrd_start + hdr->ramdisk_size;
+
+#if defined (CONFIG_SETUP_MEMORY_TAGS)
+	setup_start_tag(bd);
+#ifdef CONFIG_SERIAL_TAG
+	setup_serial_tag (&params);
+#endif
+#ifdef CONFIG_REVISION_TAG
+	setup_revision_tag (&params);
+#endif
+#ifdef CONFIG_SETUP_MEMORY_TAGS
+	setup_memory_tags (bd);
+#endif
+#ifdef CONFIG_CMDLINE_TAG
+	setup_commandline_tag (bd, commandline);
+#endif
+#ifdef CONFIG_INITRD_TAG
+	if (hdr->ramdisk_size)
+		setup_initrd_tag (bd, initrd_start, initrd_end);
+#endif
+#if defined (CONFIG_VFD) || defined (CONFIG_LCD)
+	setup_videolfb_tag ((gd_t *) gd);
+#endif
+	setup_end_tag (bd);
+#endif
+
+	/* we assume that the kernel is in place */
+	printf ("\nStarting kernel ...\n\n");
+
+#ifdef CONFIG_USB_DEVICE
+	{
+		extern void udc_disconnect (void);
+		udc_disconnect ();
+	}
+#endif
+
+	cleanup_before_linux ();
+
+	theKernel (0, bd->bi_arch_number, bd->bi_boot_params);
+}
 
 #if defined (CONFIG_SETUP_MEMORY_TAGS) || \
     defined (CONFIG_CMDLINE_TAG) || \
@@ -277,3 +342,4 @@ static void setup_end_tag (bd_t *bd)
 }
 
 #endif /* CONFIG_SETUP_MEMORY_TAGS || CONFIG_CMDLINE_TAG || CONFIG_INITRD_TAG */
+

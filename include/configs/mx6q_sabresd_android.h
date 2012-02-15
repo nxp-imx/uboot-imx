@@ -56,6 +56,7 @@
 	"mmc dev 3; "	\
 	"mmc read ${loadaddr} 0x800 0x2000;bootm"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
+#define CONFIG_INITRD_TAG
 
 #undef CONFIG_LOADADDR
 #undef CONFIG_RD_LOADADDR

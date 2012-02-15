@@ -1,7 +1,7 @@
 /*
  * Freescale Android Recovery mode checking routing
  *
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,7 +83,6 @@ void setup_recovery_env(void)
 	int bootdev = get_boot_device();
 
 	boot_cmd = supported_reco_envs[bootdev].cmd;
-	boot_args = supported_reco_envs[bootdev].args;
 
 	if (boot_cmd == NULL) {
 		printf("Unsupported bootup device for recovery\n");
@@ -91,13 +90,6 @@ void setup_recovery_env(void)
 	}
 
 	printf("setup env for recovery..\n");
-
-	env = getenv("bootargs_android_recovery");
-	/* Set env to recovery mode */
-	/* Only set recovery env when these env not exist, give user a
-	 * chance to change their recovery env */
-	if (!env)
-		setenv("bootargs_android_recovery", boot_args);
 
 	env = getenv("bootcmd_android_recovery");
 	if (!env)

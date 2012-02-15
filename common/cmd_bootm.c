@@ -2,6 +2,8 @@
  * (C) Copyright 2000-2009
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
+ * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ *
  * See file CREDITS for list of people who contributed to this
  * project.
  *
@@ -35,6 +37,7 @@
 #include <environment.h>
 #include <lmb.h>
 #include <linux/ctype.h>
+#include <fastboot.h>
 #include <asm/byteorder.h>
 
 #if defined(CONFIG_CMD_USB)
@@ -56,6 +59,10 @@
 #include <lzma/LzmaDec.h>
 #include <lzma/LzmaTools.h>
 #endif /* CONFIG_LZMA */
+
+#include <mmc.h>
+/* Android mkbootimg format*/
+#include <bootimg.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1452,3 +1459,213 @@ static int do_bootm_integrity (int flag, int argc, char *argv[],
 	return 1;
 }
 #endif
+
+  /* Section for Android bootimage format support
+   * Refer:
+   * http://android.git.kernel.org/?p=platform/system/core.git;a=blob;f=mkbootimg/bootimg.h
+   */
+
+void
+bootimg_print_image_hdr (boot_img_hdr *hdr)
+{
+#ifdef DEBUG
+	int i;
+	printf("   Image magic:   %s\n", hdr->magic);
+
+	printf("   kernel_size:   0x%x\n", hdr->kernel_size);
+	printf("   kernel_addr:   0x%x\n", hdr->kernel_addr);
+
+	printf("   rdisk_size:   0x%x\n", hdr->ramdisk_size);
+	printf("   rdisk_addr:   0x%x\n", hdr->ramdisk_addr);
+
+	printf("   second_size:   0x%x\n", hdr->second_size);
+	printf("   second_addr:   0x%x\n", hdr->second_addr);
+
+	printf("   tags_addr:   0x%x\n", hdr->tags_addr);
+	printf("   page_size:   0x%x\n", hdr->page_size);
+
+	printf("   name:      %s\n", hdr->name);
+	printf("   cmdline:   %s%x\n", hdr->cmdline);
+
+	for (i = 0; i < 8; i++)
+		printf("   id[%d]:   0x%x\n", i, hdr->id[i]);
+#endif
+}
+
+static unsigned char boothdr[512];
+
+#define ALIGN_SECTOR(n, pagesz) ((n + (pagesz - 1)) & (~(pagesz - 1)))
+
+/* booti <addr> [ mmc0 | mmc1 [ <partition> ] ] */
+int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	unsigned addr;
+	char *ptn = "boot";
+	int mmcc = -1;
+	boot_img_hdr *hdr = (void *)boothdr;
+
+	if (argc < 2)
+		return -1;
+
+	if (!strncmp(argv[1], "mmc", 3))
+		mmcc = simple_strtoul(argv[1]+3, NULL, 10);
+	else
+		addr = simple_strtoul(argv[1], NULL, 16);
+
+	if (argc > 2)
+		ptn = argv[2];
+
+	if (mmcc != -1) {
+#ifdef CONFIG_MMC
+		struct fastboot_ptentry *pte;
+		struct mmc *mmc;
+		disk_partition_t info;
+		block_dev_desc_t *dev_desc = NULL;
+		unsigned sector, partno = -1;
+
+		/* i.MX use MBR as partition table, so this will have
+		   to find the start block and length for the
+		   partition name and register the fastboot pte we
+		   define the partition number of each partition in
+		   config file
+		 */
+
+		mmc = find_mmc_device(mmcc);
+		if (!mmc) {
+			printf("booti: cannot find '%d' mmc device\n", mmcc);
+			goto fail;
+		}
+		dev_desc = get_dev("mmc", mmcc);
+		if (NULL == dev_desc) {
+			printf("** Block device MMC %d not supported\n", mmcc);
+			goto fail;
+		}
+
+		/* below was i.MX mmc operation code */
+		if (mmc_init(mmc)) {
+			printf("mmc%d init failed\n", mmcc);
+			goto fail;
+		}
+
+		if (!strcmp(ptn, "boot"))
+			partno = CONFIG_ANDROID_BOOT_PARTITION_MMC;
+		if (!strcmp(ptn, "recovery"))
+			partno = CONFIG_ANDROID_RECOVERY_PARTITION_MMC;
+
+		if (get_partition_info(dev_desc, partno, &info)) {
+			printf("booti: device don't have such partition:%s\n", ptn);
+			goto fail;
+		}
+
+#ifdef CONFIG_FASTBOOT
+		fastboot_ptentry the_partition = {
+			.start = info.start,
+			.length = info.start * info.blksz,
+			.flags = 0,
+			.partition_id = 0,
+		};
+		strncpy(the_partition.name, ptn, 10);
+		fastboot_flash_add_ptn(&the_partition);
+		/* fastboot_flash_dump_ptn(); */
+
+		pte = fastboot_flash_find_ptn(ptn);
+		if (!pte) {
+			printf("booti: cannot find '%s' partition\n", ptn);
+			goto fail;
+		}
+
+		if (mmc->block_dev.block_read(mmcc, pte->start,
+					      1, (void *)hdr) < 0) {
+			printf("booti: mmc failed to read bootimg header\n");
+			goto fail;
+		}
+			/* flush cache after read */
+		flush_cache((ulong)hdr, 512); /* FIXME */
+
+		if (memcmp(hdr->magic, BOOT_MAGIC, 8)) {
+			printf("booti: bad boot image magic\n");
+			goto fail;
+		}
+
+		sector = pte->start + (hdr->page_size / 512);
+#else
+		if (mmc->block_dev.block_read(mmcc, info.start,
+					      1, (void *)hdr) < 0) {
+			printf("booti: mmc failed to read bootimg header\n");
+			goto fail;
+		}
+			/* flush cache after read */
+		flush_cache((ulong)hdr, 512); /* FIXME */
+
+		if (memcmp(hdr->magic, BOOT_MAGIC, 8)) {
+			printf("booti: bad boot image magic\n");
+			goto fail;
+		}
+
+		sector = info.start + (hdr->page_size / 512);
+#endif
+		if (mmc->block_dev.block_read(mmcc, sector,
+					      (hdr->kernel_size / 512) + 1,
+					      (void *)hdr->kernel_addr) < 0) {
+			printf("booti: mmc failed to read kernel\n");
+			goto fail;
+		}
+		/* flush cache after read */
+		flush_cache((ulong)hdr->kernel_addr, hdr->kernel_size); /* FIXME */
+		sector += ALIGN_SECTOR(hdr->kernel_size, hdr->page_size) / 512;
+		if (mmc->block_dev.block_read(mmcc, sector,
+					      (hdr->ramdisk_size / 512) + 1,
+					      (void *)hdr->ramdisk_addr) < 0) {
+			printf("booti: mmc failed to read kernel\n");
+			goto fail;
+		}
+		/* flush cache after read */
+		flush_cache((ulong)hdr->ramdisk_addr, hdr->ramdisk_size); /* FIXME */
+#else
+		return -1;
+#endif
+	} else {
+		unsigned kaddr, raddr;
+
+		/* set this aside somewhere safe */
+		memcpy(hdr, (void *) addr, sizeof(*hdr));
+
+		if (memcmp(hdr->magic, BOOT_MAGIC, 8)) {
+			printf("booti: bad boot image magic\n");
+			return 1;
+		}
+
+		bootimg_print_image_hdr(hdr);
+
+		kaddr = addr + hdr->page_size;
+		raddr = kaddr + ALIGN_SECTOR(hdr->kernel_size, hdr->page_size);
+
+		memmove((void *) hdr->kernel_addr, (void *)kaddr, hdr->kernel_size);
+		memmove((void *) hdr->ramdisk_addr, (void *)raddr, hdr->ramdisk_size);
+	}
+
+	printf("kernel   @ %08x (%d)\n", hdr->kernel_addr, hdr->kernel_size);
+	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
+
+	do_booti_linux(hdr);
+
+	puts ("booti: Control returned to monitor - resetting...\n");
+	do_reset (cmdtp, flag, argc, argv);
+	return 1;
+
+fail:
+#ifdef CONFIG_FASTBOOT
+	return do_fastboot(NULL, 0, 0, NULL);
+#else
+	return -1;
+#endif
+}
+
+U_BOOT_CMD(
+	booti,	3,	1,	do_booti,
+	"booti   - boot android bootimg from memory\n",
+	"[<addr> | mmc0 | mmc1 | mmc2 | mmcX] [<partition>] \n    - boot application image stored in memory or mmc\n"
+	"\t'addr' should be the address of boot image which is zImage+ramdisk.img\n"
+	"\t'mmcX' is the mmc device you store your boot.img, which will read the boot.img from 1M offset('/boot' partition)\n"
+	"\t 'partition' (optional) is the partition id of your device, if no partition give, will going to 'boot' partition\n"
+);
