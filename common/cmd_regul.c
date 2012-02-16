@@ -50,10 +50,10 @@ int do_regulops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			else
 				uv = regul_get(argv[2]);
 
-			if (uv >= 0)
+			if (uv >= 0) {
 				printf("Name\t\tVoltage\n");
 				printf("%s:\t\t%d\n", argv[2], uv);
-			else
+			} else
 				printf("Can't get regulator's voltage!\n");
 		} else
 			printf("Unsupported command: %s!\n", argv[1]);
