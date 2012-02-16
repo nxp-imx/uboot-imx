@@ -45,16 +45,14 @@
 #endif	/* if 0 */
 
 #define CONFIG_ANDROID_RECOVERY
-#define CONFIG_ANDROID_SYSTEM_PARTITION_MMC 2
-#define CONFIG_ANDROID_RECOVERY_PARTITION_MMC 4
+#define CONFIG_ANDROID_BOOT_PARTITION_MMC 1
+#define CONFIG_ANDROID_SYSTEM_PARTITION_MMC 5
+#define CONFIG_ANDROID_RECOVERY_PARTITION_MMC 2
 #define CONFIG_ANDROID_CACHE_PARTITION_MMC 6
 
-#define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
-	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4 rootfs=ext4 rootwait enable_wait_mode=off"
+#define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC NULL
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
-	"run bootargs_android_recovery; "	\
-	"mmc dev 3; "	\
-	"mmc read ${loadaddr} 0x800 0x2000;bootm"
+	"booti mmc3 recovery"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 #define CONFIG_INITRD_TAG
 
@@ -65,17 +63,10 @@
 #define CONFIG_LOADADDR		0x10800000	/* loadaddr env var */
 #define CONFIG_RD_LOADADDR      0x11000000
 
+#define CONFIG_INITRD_TAG
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
-		"bootfile=uImage\0"	\
-		"bootargs=console=ttymxc0,115200 init=/init rw " \
-		"video=mxcfb0 fbmem=10M vmalloc=400M enable_wait_mode=off\0" \
-		"bootcmd_SD=mmc dev 3;"		\
-			"mmc read ${loadaddr} 0x800 0x2000;" \
-			"mmc read ${rd_loadaddr} 0x3000 0x300\0" \
-		"bootcmd=run bootcmd_SD; bootm ${loadaddr} ${rd_loadaddr}\0" \
-
-
+		"bootcmd=booti mmc3\0"
 #endif
