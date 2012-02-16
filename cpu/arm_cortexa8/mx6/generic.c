@@ -1066,6 +1066,8 @@ void set_usboh3_clk(void)
 /*BOOT_CFG1[7..4] = 0x3 Boot from Serial ROM (I2C/SPI)*/
 #define BOOT_MODE_SERIAL_ROM			(0x00000030)
 
+extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+
 /* this function should call before enter linux, otherwise, you
  * watchdog reset will enter mfg download mode again, clear this bit
  * to prevent this behavior */
@@ -1082,7 +1084,7 @@ void clear_mfgmode_mem(void)
 	reg = writel(reg, SRC_BASE_ADDR + SRC_GPR10);
 }
 
-void do_switch_mfgmode(void)
+int do_switch_mfgmode(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	u32 reg;
 
@@ -1104,6 +1106,8 @@ void do_switch_mfgmode(void)
 	 * mode.
 	 */
 	do_reset(NULL, 0, 0, NULL);
+
+	return 0;
 }
 
 U_BOOT_CMD(

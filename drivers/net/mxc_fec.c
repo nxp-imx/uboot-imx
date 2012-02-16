@@ -141,7 +141,7 @@ static inline void fec_localhw_setup(volatile fec_t *fecp)
 		udelay(1);
 }
 #else
-static inline void fec_localhw_setup(fec_t *fecp)
+static inline void fec_localhw_setup(volatile fec_t *fecp)
 {
 }
 #endif

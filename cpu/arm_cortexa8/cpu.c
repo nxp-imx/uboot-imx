@@ -8,7 +8,7 @@
  * (C) Copyright 2002
  * Gary Jennejohn, DENX Software Engineering, <garyj@denx.de>
  *
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -137,6 +137,8 @@ int cleanup_before_linux(void)
 	unsigned int i;
 
 #ifdef CONFIG_CMD_IMX_DOWNLOAD_MODE
+	extern void clear_mfgmode_mem(void);
+
 	clear_mfgmode_mem();
 #endif
 
