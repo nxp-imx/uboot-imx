@@ -114,34 +114,37 @@
 #define CONFIG_LOADADDR		0x10800000	/* loadaddr env var */
 #define CONFIG_RD_LOADADDR      0x11000000
 
-#define	CONFIG_EXTRA_ENV_SETTINGS					\
-		"netdev=eth0\0"						\
-		"ethprime=FEC0\0"					\
-		"uboot=u-boot.bin\0"			\
-		"kernel=uImage\0"				\
-		"nfsroot=/opt/eldk/arm\0"				\
-		"bootargs=console=ttymxc1,115200\0" 			\
-		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
-			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
-		"bootcmd_net=run bootargs_nfs;"		\
-			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
-		"bootcmd_mmc= for disk in 0 1 ; do mmc dev ${disk} ;"	\
-				"for fs in fat ext2 ; do " 		\
+#define	CONFIG_EXTRA_ENV_SETTINGS \
+		"netdev=eth0\0" \
+		"ethprime=FEC0\0" \
+		"ethaddr=00:01:02:03:04:05\0" \
+		"uboot=u-boot.bin\0" \
+		"kernel=uImage\0" \
+		"bootargs=console=ttymxc1,115200\0" \
+		"bootargs_base=setenv bootargs console=ttymxc1,115200\0" \
+		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs " \
+			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp " \
+			"video=mxcfb0:dev=ldb,LDB-XGA,if=RGB666 " \
+			"enable_wait_mode=off\0" \
+		"bootcmd_net=dhcp; run bootargs_base bootargs_nfs;bootm\0" \
+		"bootargs_mmc=setenv bootargs ${bootargs} " \
+			"root=/dev/mmcblk0p1 rootwait rw " \
+			"video=mxcfb0:dev=ldb,LDB-XGA,if=RGB666 " \
+			"video=mxcfb0:dev=hdmi,1920x1080M@60,if=RGB24\0" \
+		"bootcmd_mmc=run bootargs_base bootargs_mmc;mmc dev 1;" \
+			"mmc read ${loadaddr} 0x800 0x2000;bootm\0" \
+		"bootcmd=run bootcmd_mmc\0" \
+		"clearenv=sf probe 1 && sf erase 0xc0000 0x2000 && " \
+			"echo restored environment to factory default\0" \
+		"upgradeu=for disk in 0 1 ; do mmc dev ${disk} ;" \
+				"for fs in fat ext2 ; do " \
 					"${fs}load mmc ${disk}:1 10008000 " \
-						"/6q_bootscript && " 	\
-					"source 10008000 ; " 		\
-				"done ; " 				\
-			"done\0" 					\
-		"bootcmd=run bootcmd_mmc\0"                             \
-		"clearenv=sf probe 1 && sf erase 0xc0000 0x2000 && "	\
-			"echo restored environment to factory default\0"\
-		"upgradeu=for disk in 0 1 ; do mmc dev ${disk} ;" 	\
-				"for fs in fat ext2 ; do " 		\
-					"${fs}load mmc ${disk}:1 10008000 " \
-						"/6q_upgrade && " 	\
-					"source 10008000 ; " 		\
-				"done ; " 				\
-			"done\0" 					\
+						"/6q_upgrade && " \
+					"source 10008000 ; " \
+				"done ; " \
+			"done\0" \
+		"bootfile=_BOOT_FILE_PATH_IN_TFTP_\0" \
+		"nfsroot=_ROOTFS_PATH_IN_NFS_\0"
 
 
 #define CONFIG_ARP_TIMEOUT	200UL
@@ -186,7 +189,10 @@
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_PING
 #define CONFIG_IPADDR			192.168.1.103
-#define CONFIG_SERVERIP			192.168.1.101
+
+/*The IP ADDRESS of SERVERIP*/
+#define CONFIG_SERVERIP			_SERVER_IP_ADDR_
+
 #define CONFIG_NETMASK			255.255.255.0
 
 /*

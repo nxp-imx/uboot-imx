@@ -2,6 +2,8 @@
  * (C) Copyright 2002
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
+ * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ *
  * See file CREDITS for list of people who contributed to this
  * project.
  *
@@ -147,6 +149,8 @@ unsigned char env_get_char_memory (int index);
 
 /* Function that updates CRC of the enironment */
 void env_crc_update (void);
+/* Function that destroys CRC of the environment */
+void env_crc_destroy(void);
 
 /* [re]set to the default environment */
 void set_default_env(void);

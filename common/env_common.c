@@ -4,7 +4,9 @@
  *
  * (C) Copyright 2001 Sysgo Real-Time Solutions, GmbH <www.elinos.com>
  * Andreas Heppel <aheppel@sysgo.de>
-
+ *
+ * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ *
  * See file CREDITS for list of people who contributed to this
  * project.
  *
@@ -151,6 +153,11 @@ int default_environment_size = sizeof(default_environment);
 void env_crc_update (void)
 {
 	env_ptr->crc = crc32(0, env_ptr->data, ENV_SIZE);
+}
+
+void env_crc_destroy(void)
+{
+	env_ptr->crc += 1;
 }
 
 static uchar env_get_char_init (int index)
