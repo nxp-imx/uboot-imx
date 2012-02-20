@@ -118,7 +118,7 @@
 		"uboot=u-boot.bin\0"			\
 		"kernel=uImage\0"				\
 		"nfsroot=/opt/eldk/arm\0"				\
-		"bootargs_base=setenv bootargs console=ttymxc0,115200 "\
+		"bootargs_base=setenv bootargs console=ttymxc3,115200 "\
 			"nosmp enable_wait_mode=off\0"     \
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
 			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
