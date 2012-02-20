@@ -1547,6 +1547,8 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			goto fail;
 		}
 
+#ifdef CONFIG_ANDROID_BOOT_PARTITION_MMC
+#ifdef CONFIG_ANDROID_RECOVERY_PARTITION_MMC
 		if (!strcmp(ptn, "boot"))
 			partno = CONFIG_ANDROID_BOOT_PARTITION_MMC;
 		if (!strcmp(ptn, "recovery"))
@@ -1556,6 +1558,8 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			printf("booti: device don't have such partition:%s\n", ptn);
 			goto fail;
 		}
+#endif
+#endif
 
 #ifdef CONFIG_FASTBOOT
 		fastboot_ptentry the_partition = {
