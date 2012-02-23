@@ -811,49 +811,47 @@ int check_recovery_cmd_file(void)
 	case SPI_NOR_BOOT:
 	case I2C_BOOT:
 		{
-			for (i = 0; i < 3; i++) {
-				block_dev_desc_t *dev_desc = NULL;
-				struct mmc *mmc = find_mmc_device(i);
+			block_dev_desc_t *dev_desc = NULL;
+			struct mmc *mmc = find_mmc_device(CONFIG_ANDROID_MAIN_MMC_BUS);
 
-				dev_desc = get_dev("mmc", i);
+			dev_desc = get_dev("mmc", CONFIG_ANDROID_MAIN_MMC_BUS);
 
-				if (NULL == dev_desc) {
-					printf("** Block device MMC %d not supported\n", i);
-					continue;
-				}
+			if (NULL == dev_desc) {
+				printf("** Block device MMC %d not supported\n", i);
+				break;
+			}
 
-				mmc_init(mmc);
+			mmc_init(mmc);
 
-				if (get_partition_info(dev_desc,
-						       CONFIG_ANDROID_CACHE_PARTITION_MMC,
-						       &info)) {
-					printf("** Bad partition %d **\n",
-					       CONFIG_ANDROID_CACHE_PARTITION_MMC);
-					continue;
-				}
+			if (get_partition_info(dev_desc,
+					       CONFIG_ANDROID_CACHE_PARTITION_MMC,
+					       &info)) {
+				printf("** Bad partition %d **\n",
+				       CONFIG_ANDROID_CACHE_PARTITION_MMC);
+				break;
+			}
 
-				part_length = ext2fs_set_blk_dev(dev_desc,
-								 CONFIG_ANDROID_CACHE_PARTITION_MMC);
-				if (part_length == 0) {
-					printf("** Bad partition - mmc %d:%d **\n", i,
-					       CONFIG_ANDROID_CACHE_PARTITION_MMC);
-					ext2fs_close();
-					continue;
-				}
-
-				if (!ext2fs_mount(part_length)) {
-					printf("** Bad ext2 partition or "
-					       "disk - mmc %d:%d **\n",
-					       i, CONFIG_ANDROID_CACHE_PARTITION_MMC);
-					ext2fs_close();
-					continue;
-				}
-
-				filelen = ext2fs_open(CONFIG_ANDROID_RECOVERY_CMD_FILE);
-
+			part_length = ext2fs_set_blk_dev(dev_desc,
+							 CONFIG_ANDROID_CACHE_PARTITION_MMC);
+			if (part_length == 0) {
+				printf("** Bad partition - mmc %d:%d **\n", i,
+				       CONFIG_ANDROID_CACHE_PARTITION_MMC);
 				ext2fs_close();
 				break;
 			}
+
+			if (!ext2fs_mount(part_length)) {
+				printf("** Bad ext2 partition or "
+				       "disk - mmc %d:%d **\n",
+				       i, CONFIG_ANDROID_CACHE_PARTITION_MMC);
+				ext2fs_close();
+				break;
+			}
+
+			filelen = ext2fs_open(CONFIG_ANDROID_RECOVERY_CMD_FILE);
+
+			ext2fs_close();
+			break;
 		}
 		break;
 	case NAND_BOOT:
