@@ -28,7 +28,7 @@
 #define CONFIG_ARMV7	/* This is armv7 Cortex-A9 CPU core */
 #define CONFIG_MXC
 #define CONFIG_MX6DL
-#define CONFIG_MX6DL_DDR3
+#define CONFIG_MX6DL_LPDDR2
 #define CONFIG_MX6Q_ARM2
 #define CONFIG_DDR_32BIT /* For 32bit DDR, comment it out for 64bit */
 #define CONFIG_FLASH_HEADER
@@ -139,7 +139,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_PROMPT		"MX6SDL ARM2 U-Boot > "
+#define CONFIG_SYS_PROMPT		"MX6SDL ARM2 LPDDR2 U-Boot > "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
