@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -827,8 +827,14 @@ void setup_pmic_voltages(void)
 
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 	da9053_i2c_startup_reset();
+
+#ifdef CONFIG_CPU_1_2G
+	/* Increase VDDGP as 1.3V for 1.2GHz */
+	value = 0x60;
+#else
 	/* increase VDDGP as 1.25V for 1GHZ */
 	value = 0x5e;
+#endif
 	do {
 		if (0 != i2c_write_da9053(0x48, 0x2e, 1, &value, 1)) {
 			printf("da9052_i2c_is_connected - i2c write failed.....\n");
@@ -1425,8 +1431,13 @@ int board_late_init(void)
 	i2c_bus_recovery();
 	/* Increase VDDGP voltage */
 	setup_pmic_voltages();
+#ifdef CONFIG_CPU_1_2G
+	/* Switch to 1.2GHz */
+	clk_config(CONFIG_REF_CLK_FREQ, 1200, CPU_CLK);
+#else
 	/* Switch to 1GHZ */
 	clk_config(CONFIG_REF_CLK_FREQ, 1000, CPU_CLK);
+#endif
 #endif
 	return 0;
 }

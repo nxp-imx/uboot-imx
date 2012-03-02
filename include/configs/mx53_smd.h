@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX53-SMD Freescale board.
  *
@@ -32,6 +32,9 @@
 #define CONFIG_FLASH_HEADER
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_MX53_CLK32	32768
+
+/* To enable 1.2G by default */
+/* #define CONFIG_CPU_1_2G */
 
 #define CONFIG_SKIP_RELOCATE_UBOOT
 
