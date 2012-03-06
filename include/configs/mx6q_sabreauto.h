@@ -191,7 +191,7 @@
 	#define CONFIG_I2C_MXC          1
 	#define CONFIG_SYS_I2C_PORT             I2C3_BASE_ADDR
 	#define CONFIG_SYS_I2C_SPEED            100000
-	#define CONFIG_SYS_I2C_SLAVE            0x1f
+	#define CONFIG_SYS_I2C_SLAVE            0x30
 #endif
 
 /*

@@ -317,8 +317,8 @@ static void setup_i2c(unsigned int module_base)
 
 		break;
 	case I2C3_BASE_ADDR:
-		/* GPIO_5 for I2C3_SCL */
-		mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_5__I2C3_SCL);
+		/* GPIO_3 for I2C3_SCL */
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_3__I2C3_SCL);
 
 		/* GPIO_16 for I2C3_SDA */
 		mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_16__I2C3_SDA);
@@ -340,13 +340,13 @@ void setup_lvds_poweron(void)
 	uchar value;
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 
-	i2c_read(0x1f, 3, 1, &value, 1);
+	i2c_read(0x30, 3, 1, &value, 1);
 	value &= ~0x2;
-	i2c_write(0x1f, 3, 1, &value, 1);
+	i2c_write(0x30, 3, 1, &value, 1);
 
-	i2c_read(0x1f, 1, 1, &value, 1);
+	i2c_read(0x30, 1, 1, &value, 1);
 	value |= 0x2;
-	i2c_write(0x1f, 1, 1, &value, 1);
+	i2c_write(0x30, 1, 1, &value, 1);
 }
 #endif
 #endif
