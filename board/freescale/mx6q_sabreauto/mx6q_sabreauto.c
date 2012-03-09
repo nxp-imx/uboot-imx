@@ -907,6 +907,10 @@ int board_late_init(void)
 	return 0;
 }
 
+/*
+ * The following function is used for debug purpose
+ */
+/*
 static int phy_read(char *devname, unsigned char addr, unsigned char reg,
 		    unsigned short *pdata)
 {
@@ -916,6 +920,7 @@ static int phy_read(char *devname, unsigned char addr, unsigned char reg,
 		       devname, addr, reg);
 	return ret;
 }
+*/
 
 static int phy_write(char *devname, unsigned char addr, unsigned char reg,
 		     unsigned short value)
@@ -985,8 +990,6 @@ iomux_v3_cfg_t enet_pads[] = {
 
 void enet_board_init(void)
 {
-	unsigned int reg;
-
 	mxc_iomux_v3_setup_multiple_pads(enet_pads,
 			ARRAY_SIZE(enet_pads));
 	set_gpio_output_val(GPIO6_BASE_ADDR, (1 << 24), 1);
