@@ -89,7 +89,7 @@ static int is_enabled(struct anatop_regulator_data *sreg)
 	return 1;
 }
 
-#ifdef CONFIG_MX6Q
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
 static struct anatop_regulator_data vdd_data_set[] = {
 	{
 	.name		= "vddpu",
