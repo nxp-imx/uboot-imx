@@ -58,6 +58,10 @@
 #include <asm/clock.h>
 #endif
 
+#ifdef CONFIG_CMD_IMXOTP
+#include <imx_otp.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
@@ -151,15 +155,55 @@ enum boot_device get_boot_device(void)
 {
 	return boot_dev;
 }
+/*
+ * Set system_rev:
+ * bit 0-7: Chip Revision ID
+ * bit 8-11: Board Revision ID
+ *     1: RevA Board
+ *     0: RevB board, Unknown board
+ * bit 12-19: Chip Silicon ID
+ *     0x63: i.MX 6Dual/Quad
+ *     0x61: i.MX 6Solo/DualLite
+ */
+void set_system_rev(void)
+{
+	/* Read Silicon information from Anatop register */
+	/* The register layout:
+	 *                Major    Minor
+	 * i.MX6Q1.1:       6300     01
+	 * i.MX6Q1.0:       6300     00
+	 * i.MX6Solo1.0:    6100     00
+	 */
+	u32 cpu_type = readl(ANATOP_BASE_ADDR + 0x260);
+	u32 board_type = 0;
+	/* Chip Silicon ID */
+	system_rev = (cpu_type >> 4) & 0xFF000;
+	/* Chip Revision ID */
+	system_rev |= (cpu_type & 0xFF);
+	/* Get Board ID information from OCOTP_GP1[15:8]
+	 * i.MX6Q ARD RevA:     0x01
+	 * i.MX6Q ARD RevB:     0x02
+	 * i.MX6Solo ARD RevA:  0x11
+	 * i.MX6Solo ARD RevB:  0x12
+	 */
+#ifdef CONFIG_CMD_IMXOTP
+	imx_otp_read_one_u32(0x26, &board_type);
+	switch (board_type >> 8) {
+	case 0x1:
+	case 0x11:
+		system_rev |= BOARD_REV_2;
+		break;
+	case 0x2:
+	case 0x12:
+	default:
+		system_rev |= BOARD_REV_1;
+	break;
+  }
+#endif
+}
 
 u32 get_board_rev(void)
 {
-#if defined CONFIG_MX6Q
-	system_rev = 0x63000;
-#elif defined CONFIG_MX6DL
-	system_rev = 0x61000;
-#endif
-
 	return system_rev;
 }
 
@@ -822,6 +866,7 @@ int board_init(void)
 {
 	mxc_iomux_v3_init((void *)IOMUXC_BASE_ADDR);
 	setup_boot_device();
+	set_system_rev();
 
 	/* board id for linux */
 	gd->bd->bi_arch_number = MACH_TYPE_MX6Q_SABREAUTO;
@@ -950,11 +995,10 @@ void enet_board_init(void)
 
 int checkboard(void)
 {
-#if defined CONFIG_MX6Q
-	printf("Board: MX6Q-SABREAUTO:[ ");
-#elif defined CONFIG_MX6DL
-	printf("Board: MX6Solo-SABREAUTO:[ ");
-#endif
+	printf("Board: %s-SABREAUTO: %s Board: 0x%x [",
+	(((system_rev & 0xFF000) == 0x63000) ? "i.MX6Dual/Quad" : "i.MX6Solo"),
+	(((system_rev & 0xF00) == BOARD_REV_1) ? "RevB" : "RevA"),
+	system_rev);
 
 	switch (__REG(SRC_BASE_ADDR + 0x8)) {
 	case 0x0001:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2011-2012 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -626,6 +626,9 @@
 
 #define SRC_GPR9		0x40
 #define SRC_GPR10		0x44
+
+/* Get Board ID */
+#define board_is_rev(system_rev, rev)       (((system_rev & 0x0F00) == rev) ? 1 : 0)
 
 #ifndef __ASSEMBLER__
 
