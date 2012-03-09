@@ -97,7 +97,7 @@ static int fit_check_kernel (const void *fit, int os_noffset, int verify);
 static void *boot_get_kernel (cmd_tbl_t *cmdtp, int flag,int argc, char *argv[],
 		bootm_headers_t *images, ulong *os_data, ulong *os_len);
 extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
-
+extern void do_booti_linux(boot_img_hdr *hdr);
 /*
  *  Continue booting an OS image; caller already has:
  *  - copied image header to global variable `header'
@@ -1499,7 +1499,7 @@ static unsigned char boothdr[512];
 /* booti <addr> [ mmc0 | mmc1 [ <partition> ] ] */
 int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
-	unsigned addr;
+	unsigned addr = 0;
 	char *ptn = "boot";
 	int mmcc = -1;
 	boot_img_hdr *hdr = (void *)boothdr;
@@ -1517,19 +1517,18 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	if (mmcc != -1) {
 #ifdef CONFIG_MMC
-		struct fastboot_ptentry *pte;
 		struct mmc *mmc;
 		disk_partition_t info;
 		block_dev_desc_t *dev_desc = NULL;
-		unsigned sector, partno = -1;
+		unsigned sector;
 
+		memset((void *)&info, 0 , sizeof(disk_partition_t));
 		/* i.MX use MBR as partition table, so this will have
 		   to find the start block and length for the
 		   partition name and register the fastboot pte we
 		   define the partition number of each partition in
 		   config file
 		 */
-
 		mmc = find_mmc_device(mmcc);
 		if (!mmc) {
 			printf("booti: cannot find '%d' mmc device\n", mmcc);
