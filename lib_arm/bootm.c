@@ -144,7 +144,7 @@ void do_booti_linux (boot_img_hdr *hdr)
 
 	/* If no bootargs env, just use hdr command line */
 	if (!commandline)
-	    commandline = hdr->cmdline;
+		commandline = (char *)hdr->cmdline;
 
 	/* XXX: in production, you should always use boot.img 's cmdline !!! */
 
