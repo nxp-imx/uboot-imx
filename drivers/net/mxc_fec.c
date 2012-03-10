@@ -350,7 +350,7 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 	}
 
 	/*wait the cable link*/
-	for (cnt = 0; cnt < 100; cnt++) {
+	for (cnt = 0; cnt < 200; cnt++) {
 		val = 0;
 		ret = __fec_mii_read(fecp, addr, PHY_BMSR, &val);
 		if (val & PHY_BMSR_LS)
@@ -366,7 +366,7 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 			printf("FEC: Link is Up %x\n", val);
 		} else {
 			printf("FEC: Link is down %x\n", val);
-	}
+		}
 /* for AR8031 PHY */
 #if defined(CONFIG_MX6Q_ARM2) || defined(CONFIG_MX6Q_SABRESD)
 		ret = __fec_mii_read(fecp, addr, PHY_MIPSCR, &val);
@@ -840,6 +840,7 @@ static void fec_mii_phy_init(struct eth_device *dev)
 	mx6_rgmii_rework(dev->name, info->phy_addr);
 #endif
 	mxc_fec_phy_powerup(dev->name, info->phy_addr);
+#endif
 
 }
 
@@ -852,6 +853,8 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 
 	fec_mii_phy_init(dev);
 
+#if defined(CONFIG_CMD_MII) || defined(CONFIG_MII) || \
+	defined(CONFIG_DISCOVER_PHY)
 #ifdef CONFIG_DISCOVER_PHY
 	if (info->phy_addr < 0 || info->phy_addr > 0x1F)
 		info->phy_addr = mxc_fec_mii_discover_phy(dev);
@@ -861,8 +864,8 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 #ifndef CONFIG_DISCOVER_PHY
 	setFecDuplexSpeed(fecp, (uchar)info->phy_addr,
 				(FECDUPLEX << 16) | FECSPEED);
-#endif				/* ifndef CONFIG_SYS_DISCOVER_PHY */
-#endif				/* CONFIG_CMD_MII || CONFIG_MII */
+#endif                         /* ifndef CONFIG_SYS_DISCOVER_PHY */
+#endif                         /* CONFIG_CMD_MII || CONFIG_MII */
 
 	/* We use strictly polling mode only */
 	fecp->eimr = 0;

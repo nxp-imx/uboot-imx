@@ -97,21 +97,6 @@ static struct fb_videomode lvds_xga = {
 vidinfo_t panel_info;
 #endif
 
-static void set_gpio_output_val(unsigned base, unsigned mask, unsigned val)
-{
-	unsigned reg = readl(base + GPIO_DR);
-	if (val & 1)
-		reg |= mask;	/* set high */
-	else
-		reg &= ~mask;	/* clear low */
-	writel(reg, base + GPIO_DR);
-
-	reg = readl(base + GPIO_GDIR);
-	reg |= mask;		/* configure GPIO line as output */
-	writel(reg, base + GPIO_GDIR);
-}
-
-
 static inline void setup_boot_device(void)
 {
 	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
@@ -992,8 +977,6 @@ void enet_board_init(void)
 {
 	mxc_iomux_v3_setup_multiple_pads(enet_pads,
 			ARRAY_SIZE(enet_pads));
-	set_gpio_output_val(GPIO6_BASE_ADDR, (1 << 24), 1);
-
 }
 
 int checkboard(void)
