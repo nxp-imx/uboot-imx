@@ -100,9 +100,13 @@
 #define CONFIG_MTD_PARTITIONS
 
 
-#define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
-	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4 " \
-	"rootfs=ext4 video=mxcdi1fb:RGB666,XGA ldb=di1 di1_primary"
+#define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC			\
+	"setenv bootargs console=ttymxc0,115200 init=/init "	\
+	"androidboot.console=ttymxc0 "				\
+	"video=mxcdi1fb:RGB666,LDB-XGA "			\
+	"ldb=di1 di1_primary pmem=128M,64M fbmem=10M "		\
+	"gpu_memory=128M vmalloc=576M fs_sdcard=0 "             \
+	"root=/dev/mmcblk0p4 rootfs=ext4"
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
 	"run bootargs_android_recovery;"	\
 	"mmc read 1 ${loadaddr} 0x800 0x2000;bootm"
@@ -166,14 +170,18 @@
 		"bootfile=uImage\0"					\
 		"loadaddr=0x70800000\0"					\
 		"rd_loadaddr=0x70D00000\0"				\
-		"bootargs=console=ttymxc0,115200 init=/init "		\
+		"bootargs_base=console=ttymxc0,115200 init=/init "	\
 			"androidboot.console=ttymxc0 "			\
 			"video=mxcdi1fb:RGB666,LDB-XGA "		\
 			"ldb=di1 di1_primary pmem=128M,64M fbmem=10M "	\
-			"gpu_memory=128M vmalloc=576M fs_sdcard=1\0"	\
-		"bootcmd_SD=mmc read 0 ${loadaddr} 0x800 0x2000;"	\
+			"gpu_memory=128M vmalloc=576M\0"		\
+		"bootcmd_eMMC=setenv bootargs ${bootargs_base} fs_sdcard=0;" \
+			"mmc read 1 ${loadaddr} 0x800 0x2000;"		\
+			"mmc read 1 ${rd_loadaddr} 0x3000 0x300\0"	\
+		"bootcmd_SD=setenv bootargs ${bootargs_base} fs_sdcard=1;" \
+			"mmc read 0 ${loadaddr} 0x800 0x2000;"		\
 			"mmc read 0 ${rd_loadaddr} 0x3000 0x300\0"	\
-		"bootcmd=run bootcmd_SD; bootm ${loadaddr} ${rd_loadaddr}\0" \
+		"bootcmd=run bootcmd_eMMC; bootm ${loadaddr} ${rd_loadaddr}\0" \
 
 #define CONFIG_ARP_TIMEOUT	200UL
 
