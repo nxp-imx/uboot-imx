@@ -163,25 +163,31 @@
 #define CONFIG_LOADADDR		0x70800000	/* loadaddr env var */
 #define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x500000)
 
-#define	CONFIG_EXTRA_ENV_SETTINGS					\
-		"netdev=eth0\0"						\
-		"ethprime=FEC0\0"					\
-		"ethaddr=00:04:9f:00:ea:d3\0"				\
-		"bootfile=uImage\0"					\
-		"loadaddr=0x70800000\0"					\
-		"rd_loadaddr=0x70D00000\0"				\
-		"bootargs_base=console=ttymxc0,115200 init=/init "	\
-			"androidboot.console=ttymxc0 "			\
-			"video=mxcdi1fb:RGB666,LDB-XGA "		\
-			"ldb=di1 di1_primary pmem=128M,64M fbmem=10M "	\
-			"gpu_memory=128M vmalloc=576M\0"		\
-		"bootcmd_eMMC=setenv bootargs ${bootargs_base} fs_sdcard=0;" \
-			"mmc read 1 ${loadaddr} 0x800 0x2000;"		\
-			"mmc read 1 ${rd_loadaddr} 0x3000 0x300\0"	\
-		"bootcmd_SD=setenv bootargs ${bootargs_base} fs_sdcard=1;" \
-			"mmc read 0 ${loadaddr} 0x800 0x2000;"		\
-			"mmc read 0 ${rd_loadaddr} 0x3000 0x300\0"	\
-		"bootcmd=run bootcmd_eMMC; bootm ${loadaddr} ${rd_loadaddr}\0" \
+#define CONFIG_EXTRA_ENV_SETTINGS				\
+	"netdev=eth0\0"						\
+	"ethprime=FEC0\0"					\
+	"autoload=n\0"						\
+	"bootfile=uImage\0"					\
+	"loadaddr=0x70800000\0"					\
+	"rd_loadaddr=0x70D00000\0"				\
+	"bootargs_base=console=ttymxc0,115200 init=/init "	\
+		"androidboot.console=ttymxc0 "			\
+		"video=mxcdi1fb:RGB666,LDB-XGA "		\
+		"ldb=di1 di1_primary pmem=128M,64M fbmem=10M "	\
+		"gpu_memory=128M vmalloc=576M\0"		\
+	"bootcmd_eMMC=setenv bootargs ${bootargs_base} fs_sdcard=0;" \
+		"mmc read 1 ${loadaddr} 0x800 0x2000;"		\
+		"mmc read 1 ${rd_loadaddr} 0x3000 0x300;"	\
+		"bootm ${loadaddr} ${rd_loadaddr}\0"		\
+	"bootcmd_NFS=dhcp;nfs ${loadaddr} ${serverip}:${nfskernel}; " \
+		"setenv bootargs ${bootargs_base} root=/dev/nfs " \
+		"nfsroot=${serverip}:${nfsroot} rw ip=dhcp;"	\
+		"bootm\0"					\
+	"bootcmd_SD=setenv bootargs ${bootargs_base} fs_sdcard=1;" \
+		"mmc read 0 ${loadaddr} 0x800 0x2000;"		\
+		"mmc read 0 ${rd_loadaddr} 0x3000 0x300;"	\
+		"bootm ${loadaddr} ${rd_loadaddr}\0"		\
+	"bootcmd=run bootcmd_eMMC\0"				\
 
 #define CONFIG_ARP_TIMEOUT	200UL
 
@@ -191,7 +197,7 @@
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_SYS_PROMPT		"MX53-SMD U-Boot > "
 #define CONFIG_AUTO_COMPLETE
-#define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
+#define CONFIG_SYS_CBSIZE	512	/* Console I/O Buffer Size */
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 #define CONFIG_SYS_MAXARGS	256	/* max number of command args */
