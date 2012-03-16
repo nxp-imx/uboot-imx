@@ -44,6 +44,7 @@
 #define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x10000000 /* 256M byte */
 #endif	/* if 0 */
 
+#define CONFIG_CMD_BOOTI
 #define CONFIG_ANDROID_RECOVERY
 /* which mmc bus is your main storage ? */
 #define CONFIG_ANDROID_MAIN_MMC_BUS 3

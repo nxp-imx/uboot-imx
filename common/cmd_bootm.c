@@ -1460,6 +1460,7 @@ static int do_bootm_integrity (int flag, int argc, char *argv[],
 }
 #endif
 
+#ifdef CONFIG_CMD_BOOTI
   /* Section for Android bootimage format support
    * Refer:
    * http://android.git.kernel.org/?p=platform/system/core.git;a=blob;f=mkbootimg/bootimg.h
@@ -1517,10 +1518,11 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	if (mmcc != -1) {
 #ifdef CONFIG_MMC
+		struct fastboot_ptentry *pte;
 		struct mmc *mmc;
 		disk_partition_t info;
 		block_dev_desc_t *dev_desc = NULL;
-		unsigned sector;
+		unsigned sector, partno = -1;
 
 		memset((void *)&info, 0 , sizeof(disk_partition_t));
 		/* i.MX use MBR as partition table, so this will have
@@ -1672,3 +1674,4 @@ U_BOOT_CMD(
 	"\t'mmcX' is the mmc device you store your boot.img, which will read the boot.img from 1M offset('/boot' partition)\n"
 	"\t 'partition' (optional) is the partition id of your device, if no partition give, will going to 'boot' partition\n"
 );
+#endif	/* CMD_BOOTI */
