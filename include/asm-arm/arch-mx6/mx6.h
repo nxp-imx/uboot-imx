@@ -611,6 +611,11 @@
 #define ANATOP_USB1				0x10
 #define ANATOP_USB2				0x20
 
+#define CHIP_TYPE_DQ		0x63000
+#define CHIP_TYPE_DL		0x61000
+#define CHIP_TYPE_SOLO		0x61000
+#define CHIP_TYPE_SOLOLITE	0x60000
+
 #define CHIP_REV_1_0            0x10
 #define CHIP_REV_2_0            0x20
 #define CHIP_REV_2_1            0x21
@@ -628,7 +633,19 @@
 #define SRC_GPR10		0x44
 
 /* Get Board ID */
-#define board_is_rev(system_rev, rev)       (((system_rev & 0x0F00) == rev) ? 1 : 0)
+#define board_is_rev(system_rev, rev) (((system_rev & 0x0F00) == rev) ? 1 : 0)
+#define chip_is_type(system_rev, rev) \
+	(((system_rev & 0xFF000) == rev) ? 1 : 0)
+
+#define mx6_board_is_unknown()  board_is_rev(fsl_system_rev, BOARD_REV_1)
+#define mx6_board_is_reva()	board_is_rev(fsl_system_rev, BOARD_REV_2)
+#define mx6_board_is_revb()	board_is_rev(fsl_system_rev, BOARD_REV_3)
+#define mx6_board_is_revc()     board_is_rev(fsl_system_rev, BOARD_REV_4)
+
+#define mx6_chip_is_dq()	chip_is_type(fsl_system_rev, CHIP_TYPE_DQ)
+#define mx6_chip_is_dl()	chip_is_type(fsl_system_rev, CHIP_TYPE_DL)
+#define mx6_chip_is_solo()      chip_is_type(fsl_system_rev, CHIP_TYPE_SOLO)
+#define mx6_chip_is_sololite()	chip_is_type(fsl_system_rev, CHIP_TYPE_SOLOLITE)
 
 #ifndef __ASSEMBLER__
 
@@ -680,10 +697,12 @@ enum mxc_peri_clocks {
 	MXC_SPI2_CLK,
 };
 
+extern unsigned int fsl_system_rev;
 extern unsigned int mxc_get_clock(enum mxc_clock clk);
 extern unsigned int get_board_rev(void);
 extern int is_soc_rev(int rev);
 extern enum boot_device get_boot_device(void);
+extern void fsl_set_system_rev(void);
 
 #endif /* __ASSEMBLER__*/
 
