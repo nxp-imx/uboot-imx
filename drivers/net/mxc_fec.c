@@ -79,7 +79,8 @@
 #if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
 extern int mx6_rgmii_rework(char *devname, int phy_addr);
 #endif
-#if defined(CONFIG_MX6Q_ARM2) || defined(CONFIG_MX6Q_SABRESD)
+#if defined(CONFIG_MX6Q_ARM2) || defined(CONFIG_MX6Q_SABRESD) || \
+				 defined(CONFIG_MX6DL_SABRESD)
 #define PHY_MIPSCR_LINK_UP	(0x1 << 10)
 #define PHY_MIPSCR_SPEED_MASK	(0x3 << 14)
 #define PHY_MIPSCR_1000M	(0x2 << 14)
@@ -368,7 +369,8 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 			printf("FEC: Link is down %x\n", val);
 		}
 /* for AR8031 PHY */
-#if defined(CONFIG_MX6Q_ARM2) || defined(CONFIG_MX6Q_SABRESD)
+#if defined(CONFIG_MX6Q_ARM2) || defined(CONFIG_MX6Q_SABRESD) || \
+				 defined(CONFIG_MX6DL_SABRESD)
 		ret = __fec_mii_read(fecp, addr, PHY_MIPSCR, &val);
 		if (ret)
 			dup_spd = _100BASET | (FULL << 16);
