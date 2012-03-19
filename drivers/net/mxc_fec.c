@@ -78,9 +78,7 @@
 
 #if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
 extern int mx6_rgmii_rework(char *devname, int phy_addr);
-#endif
-#if defined(CONFIG_MX6Q_ARM2) || defined(CONFIG_MX6Q_SABRESD) || \
-				 defined(CONFIG_MX6DL_SABRESD)
+
 #define PHY_MIPSCR_LINK_UP	(0x1 << 10)
 #define PHY_MIPSCR_SPEED_MASK	(0x3 << 14)
 #define PHY_MIPSCR_1000M	(0x2 << 14)
@@ -103,6 +101,27 @@ extern int mx6_rgmii_rework(char *devname, int phy_addr);
 #else
 #define FEC_MII_TICK         	CONFIG_FEC_TICKET
 #endif
+
+/* define phy ID */
+#define PHY_OUID_MASK		0x1FFFFF8
+#define PHY_OUID_GET(high_bits, low_bits) \
+				((high_bits << 19) | (low_bits << 3))
+#define PHY_ATHEROS_OUID_GET(valh, vall) \
+				PHY_OUID_GET((valh & 0x3F), vall)
+#define PHY_MICREL_OUID_GET(valh, vall) \
+				PHY_OUID_GET((valh >> 10), vall)
+#define PHY_AR8031_OUID         PHY_OUID_GET(0x34, 0x4D)
+#define PHY_AR8033_OUID		PHY_OUID_GET(0x34, 0x4D)
+#define PHY_KSZ9021_OUID	PHY_OUID_GET(0x5, 0x22)
+
+/* Get phy ID */
+static unsigned int fec_phy_ouid;
+#define phy_is_ksz9021() (((fec_phy_ouid & PHY_OUID_MASK) == PHY_KSZ9021_OUID) \
+			? 1 : 0)
+#define phy_is_ar8031()	(((fec_phy_ouid & PHY_OUID_MASK) == PHY_AR8031_OUID) \
+			? 1 : 0)
+#define phy_is_ar8033()	(((fec_phy_ouid & PHY_OUID_MASK) == PHY_AR8033_OUID) \
+			? 1 : 0)
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -193,6 +212,26 @@ static void mxc_fec_phy_powerup(char *devname, int phy_addr)
 	mxc_fec_mii_read(devname, phy_addr, PHY_BMCR, &value);
 	if (value & PHY_BMCR_POWD)
 		mxc_fec_mii_write(devname, phy_addr, PHY_BMCR, (value & ~PHY_BMCR_POWD));
+}
+
+static void mxc_get_phy_ouid(char *devname, int phy_addr)
+{
+	unsigned short value1, value2;
+
+	mxc_fec_mii_read(devname, phy_addr, PHY_PHYIDR1, &value1);
+	mxc_fec_mii_read(devname, phy_addr, PHY_PHYIDR2, &value2);
+
+	fec_phy_ouid = PHY_ATHEROS_OUID_GET(value2, value1);
+	if (phy_is_ar8031())
+		return;
+	else if (phy_is_ar8033())
+		return;
+
+	fec_phy_ouid = PHY_MICREL_OUID_GET(value2, value1);
+	if (phy_is_ksz9021())
+		return;
+
+	fec_phy_ouid = 0xFFFFFFFF;
 }
 
 static inline int __fec_mii_read(volatile fec_t *fecp, unsigned char addr,
@@ -368,56 +407,56 @@ static void setFecDuplexSpeed(volatile fec_t *fecp, unsigned char addr,
 		} else {
 			printf("FEC: Link is down %x\n", val);
 		}
-/* for AR8031 PHY */
-#if defined(CONFIG_MX6Q_ARM2) || defined(CONFIG_MX6Q_SABRESD) || \
-				 defined(CONFIG_MX6DL_SABRESD)
-		ret = __fec_mii_read(fecp, addr, PHY_MIPSCR, &val);
-		if (ret)
-			dup_spd = _100BASET | (FULL << 16);
-		else {
-			if ((val & PHY_MIPSCR_SPEED_MASK) == PHY_MIPSCR_1000M)
-				dup_spd = _1000BASET;
-			else if ((val & PHY_MIPSCR_SPEED_MASK) == PHY_MIPSCR_100M)
-				dup_spd = _100BASET;
-			else
-				dup_spd = _10BASET;
 
-			if (val & PHY_MIPSCR_FULL_DUPLEX)
-				dup_spd |= (FULL << 16);
-			else
-				dup_spd |= (HALF << 16);
+		/* for Atheros PHY */
+		if (phy_is_ar8031() || phy_is_ar8033()) {
+			ret = __fec_mii_read(fecp, addr, PHY_MIPSCR, &val);
+			if (ret)
+				dup_spd = _100BASET | (FULL << 16);
+			else {
+				if ((val & PHY_MIPSCR_SPEED_MASK) == PHY_MIPSCR_1000M)
+					dup_spd = _1000BASET;
+				else if ((val & PHY_MIPSCR_SPEED_MASK) == PHY_MIPSCR_100M)
+					dup_spd = _100BASET;
+				else
+					dup_spd = _10BASET;
+
+				if (val & PHY_MIPSCR_FULL_DUPLEX)
+					dup_spd |= (FULL << 16);
+				else
+					dup_spd |= (HALF << 16);
+			}
+		} else if (phy_is_ksz9021()) { /* for Micrel phy */
+			ret = __fec_mii_read(fecp, addr, 0x1f, &val);
+			if (ret)
+				dup_spd = _100BASET | (FULL << 16);
+			else {
+				if (val & (1 << 6))
+					dup_spd = _1000BASET;
+				else if (val & (1 << 5))
+					dup_spd = _100BASET;
+				else
+					dup_spd = _10BASET;
+				if (val & (1 << 3))
+					dup_spd |= (FULL << 16);
+				else
+					dup_spd |= (HALF << 16);
+			}
+		} else { /* for SMSC and other unknow phys */
+			ret = __fec_mii_read(fecp, addr, PHY_BMSR, &val);
+			if (ret)
+				dup_spd = _100BASET | (FULL << 16);
+			else {
+				if (val & (PHY_BMSR_100TXF | PHY_BMSR_100TXH | PHY_BMSR_100T4))
+					dup_spd = _100BASET;
+				else
+					dup_spd = _10BASET;
+				if (val & (PHY_BMSR_100TXF | PHY_BMSR_10TF))
+					dup_spd |= (FULL << 16);
+				else
+					dup_spd |= (HALF << 16);
+			}
 		}
-#elif defined(CONFIG_PHY_MICREL_KSZ9021)
-		ret = __fec_mii_read(fecp, addr, 0x1f, &val);
-		if (ret)
-			dup_spd = _100BASET | (FULL << 16);
-		else {
-			if (val & (1 << 6))
-				dup_spd = _1000BASET;
-			else if (val & (1 << 5))
-				dup_spd = _100BASET;
-			else
-				dup_spd = _10BASET;
-			if (val & (1 << 3))
-				dup_spd |= (FULL << 16);
-			else
-				dup_spd |= (HALF << 16);
-		}
-#else
-		ret = __fec_mii_read(fecp, addr, PHY_BMSR, &val);
-		if (ret)
-			dup_spd = _100BASET | (FULL << 16);
-		else {
-			if (val & (PHY_BMSR_100TXF | PHY_BMSR_100TXH | PHY_BMSR_100T4))
-				dup_spd = _100BASET;
-			else
-				dup_spd = _10BASET;
-			if (val & (PHY_BMSR_100TXF | PHY_BMSR_10TF))
-				dup_spd |= (FULL << 16);
-			else
-				dup_spd |= (HALF << 16);
-		}
-#endif
 	}
 
 	if ((dup_spd >> 16) == FULL) {
@@ -838,9 +877,6 @@ static void fec_mii_phy_init(struct eth_device *dev)
 #if defined (CONFIG_CMD_MII) || defined (CONFIG_MII) || \
 	defined (CONFIG_DISCOVER_PHY)
 	mxc_fec_mii_init(fecp);
-#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
-	mx6_rgmii_rework(dev->name, info->phy_addr);
-#endif
 	mxc_fec_phy_powerup(dev->name, info->phy_addr);
 #endif
 
@@ -861,6 +897,10 @@ int fec_init(struct eth_device *dev, bd_t *bd)
 	if (info->phy_addr < 0 || info->phy_addr > 0x1F)
 		info->phy_addr = mxc_fec_mii_discover_phy(dev);
 #endif
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
+	mx6_rgmii_rework(dev->name, info->phy_addr);
+#endif
+	mxc_get_phy_ouid(dev->name, info->phy_addr);
 	setFecDuplexSpeed(fecp, (uchar)info->phy_addr, info->dup_spd);
 #else
 #ifndef CONFIG_DISCOVER_PHY
