@@ -848,7 +848,6 @@ int board_late_init(void)
 /*
  * The following function is used for debug purpose
  */
-/*
 static int phy_read(char *devname, unsigned char addr, unsigned char reg,
 		    unsigned short *pdata)
 {
@@ -858,7 +857,6 @@ static int phy_read(char *devname, unsigned char addr, unsigned char reg,
 		       devname, addr, reg);
 	return ret;
 }
-*/
 
 static int phy_write(char *devname, unsigned char addr, unsigned char reg,
 		     unsigned short value)
@@ -872,18 +870,37 @@ static int phy_write(char *devname, unsigned char addr, unsigned char reg,
 
 int mx6_rgmii_rework(char *devname, int phy_addr)
 {
+	unsigned short val;
 
-	/* enable master mode, 1000 Base-T capable */
-	phy_write(devname, phy_addr, 0x9, 0x1f00);
+	if (mx6_board_is_reva()) {
+		/* Phy: KSZ9021 */
+		phy_write(devname, phy_addr, 0x9, 0x1c00);
 
-	/* min rx data delay */
-	phy_write(devname, phy_addr, 0x0b, 0x8105);
-	phy_write(devname, phy_addr, 0x0c, 0x0000);
+		/* min rx data delay */
+		phy_write(devname, phy_addr, 0x0b, 0x8105);
+		phy_write(devname, phy_addr, 0x0c, 0x0000);
 
-	/* max rx/tx clock delay, min rx/tx control delay */
-	phy_write(devname, phy_addr, 0x0b, 0x8104);
-	phy_write(devname, phy_addr, 0x0c, 0xf0f0);
-	phy_write(devname, phy_addr, 0x0b, 0x104);
+		/* max rx/tx clock delay, min rx/tx control delay */
+		phy_write(devname, phy_addr, 0x0b, 0x8104);
+		phy_write(devname, phy_addr, 0x0c, 0xf0f0);
+		phy_write(devname, phy_addr, 0x0b, 0x104);
+	} else {
+		/* To enable AR8031 ouput a 125MHz clk from CLK_25M */
+		phy_write(devname, phy_addr, 0xd, 0x7);
+		phy_write(devname, phy_addr, 0xe, 0x8016);
+		phy_write(devname, phy_addr, 0xd, 0x4007);
+		phy_read(devname, phy_addr, 0xe, &val);
+
+		val &= 0xffe3;
+		val |= 0x18;
+		phy_write(devname, phy_addr, 0xe, val);
+
+		/* introduce tx clock delay */
+		phy_write(devname, phy_addr, 0x1d, 0x5);
+		phy_read(devname, phy_addr, 0x1e, &val);
+		val |= 0x0100;
+		phy_write(devname, phy_addr, 0x1e, val);
+	}
 
 	return 0;
 }
