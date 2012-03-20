@@ -1114,8 +1114,8 @@ void enet_board_init(void)
 int checkboard(void)
 {
 	printf("Board: %s-SABRESD: %s Board: 0x%x [",
-	(mx6_chip_is_dq() ? "i.MX6Q" : "i.MX6DL/Solo"),
-	(mx6_board_is_revb() ? "RevB" : "RevA"),
+	mx6_chip_name(),
+	mx6_board_rev_name(),
 	fsl_system_rev);
 
 	switch (__REG(SRC_BASE_ADDR + 0x8)) {

@@ -647,6 +647,16 @@
 #define mx6_chip_is_solo()      chip_is_type(fsl_system_rev, CHIP_TYPE_SOLO)
 #define mx6_chip_is_sololite()	chip_is_type(fsl_system_rev, CHIP_TYPE_SOLOLITE)
 
+#define mx6_chip_dq_name	"i.MX6Q"
+#define mx6_chip_dl_solo_name	"i.MX6DL/Solo"
+#define mx6_chip_sololite_name	"i.MX6SoloLite"
+#define mx6_chip_name()		(mx6_chip_is_dq() ? mx6_chip_dq_name : \
+	((mx6_chip_is_dl() | mx6_chip_is_solo()) ? mx6_chip_dl_solo_name : \
+	(mx6_chip_is_sololite() ? mx6_chip_sololite_name : "unknown-chip")))
+#define mx6_board_rev_name()	(mx6_board_is_reva() ? "RevA" : \
+	(mx6_board_is_revb() ? "RevB" : \
+	(mx6_board_is_revc() ? "RevC" : "unknown-board")))
+
 #ifndef __ASSEMBLER__
 
 enum boot_device {
