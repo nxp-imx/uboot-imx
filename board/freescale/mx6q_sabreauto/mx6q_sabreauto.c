@@ -330,14 +330,18 @@ static void setup_i2c(unsigned int module_base)
 		/* GPIO_3 for I2C3_SCL */
 		mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_3__I2C3_SCL);
 
-		/* GPIO_16 for I2C3_SDA */
-		mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_16__I2C3_SDA);
+		if (mx6_board_is_reva()) /* GPIO_16 for I2C3_SDA */
+			mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_16__I2C3_SDA);
+		else
+			mxc_iomux_v3_setup_pad(MX6Q_PAD_EIM_D18__I2C3_SDA);
 #elif defined CONFIG_MX6DL
 		/* GPIO_3 for I2C3_SCL */
 		mxc_iomux_v3_setup_pad(MX6DL_PAD_GPIO_3__I2C3_SCL);
 
-		/* GPIO_16 for I2C3_SDA */
-		mxc_iomux_v3_setup_pad(MX6DL_PAD_GPIO_16__I2C3_SDA);
+		if (mx6_board_is_reva()) /* GPIO_16 for I2C3_SDA */
+			mxc_iomux_v3_setup_pad(MX6DL_PAD_GPIO_16__I2C3_SDA);
+		else
+			mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_D18__I2C3_SDA);
 #endif
 		/* Enable i2c clock */
 		reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR2);
