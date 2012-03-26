@@ -2602,7 +2602,7 @@
 		IOMUX_PAD(0x0628, NO_MUX_I, 0, 0x0000, 0, NO_PAD_CTRL)
 
 #define MX6DL_PAD_KEY_COL0__ECSPI1_SCLK                                        \
-		IOMUX_PAD(0x062C, 0x0244, 0, 0x07D8, 3, NO_PAD_CTRL)
+		IOMUX_PAD(0x062C, 0x0244, 0, 0x07D8, 3, MX6DL_ECSPI_PAD_CTRL)
 #define MX6DL_PAD_KEY_COL0__ENET_RDATA_3                                       \
 		IOMUX_PAD(0x062C, 0x0244, 1, 0x0824, 0, NO_PAD_CTRL)
 #define MX6DL_PAD_KEY_COL0__AUDMUX_AUD5_TXC                                    \
@@ -2621,7 +2621,7 @@
 		IOMUX_PAD(0x062C, 0x0244, 7, 0x0000, 0, NO_PAD_CTRL)
 
 #define MX6DL_PAD_KEY_COL1__ECSPI1_MISO                                        \
-		IOMUX_PAD(0x0630, 0x0248, 0, 0x07DC, 3, NO_PAD_CTRL)
+		IOMUX_PAD(0x0630, 0x0248, 0, 0x07DC, 3, MX6DL_ECSPI_PAD_CTRL)
 #define MX6DL_PAD_KEY_COL1__ENET_MDIO                                          \
 		IOMUX_PAD(0x0630, 0x0248, 1, 0x0810, 1, MX6DL_ENET_PAD_CTRL)
 #define MX6DL_PAD_KEY_COL1__AUDMUX_AUD5_TXFS                                   \
@@ -2693,7 +2693,7 @@
 		IOMUX_PAD(0x063C, 0x0254, 7, 0x0000, 0, NO_PAD_CTRL)
 
 #define MX6DL_PAD_KEY_ROW0__ECSPI1_MOSI                                        \
-		IOMUX_PAD(0x0640, 0x0258, 0, 0x07E0, 3, NO_PAD_CTRL)
+		IOMUX_PAD(0x0640, 0x0258, 0, 0x07E0, 3, MX6DL_ECSPI_PAD_CTRL)
 #define MX6DL_PAD_KEY_ROW0__ENET_TDATA_3                                       \
 		IOMUX_PAD(0x0640, 0x0258, 1, 0x0000, 0, NO_PAD_CTRL)
 #define MX6DL_PAD_KEY_ROW0__AUDMUX_AUD5_TXD                                    \
@@ -2712,7 +2712,7 @@
 		IOMUX_PAD(0x0640, 0x0258, 7, 0x0000, 0, NO_PAD_CTRL)
 
 #define MX6DL_PAD_KEY_ROW1__ECSPI1_SS0                                         \
-		IOMUX_PAD(0x0644, 0x025C, 0, 0x07E4, 3, NO_PAD_CTRL)
+		IOMUX_PAD(0x0644, 0x025C, 0, 0x07E4, 3, MX6DL_ECSPI_PAD_CTRL)
 #define MX6DL_PAD_KEY_ROW1__ENET_COL                                           \
 		IOMUX_PAD(0x0644, 0x025C, 1, 0x0000, 0, NO_PAD_CTRL)
 #define MX6DL_PAD_KEY_ROW1__AUDMUX_AUD5_RXD                                    \

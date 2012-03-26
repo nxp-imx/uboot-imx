@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2012 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -4755,7 +4755,7 @@ typedef enum iomux_config {
 
 #define  MX6Q_PAD_DRAM_D63__MMDC_DRAM_D_63                       (_MX6Q_PAD_DRAM_D63__MMDC_DRAM_D_63 | MUX_PAD_CTRL(NO_PAD_CTRL))
 
-#define  MX6Q_PAD_KEY_COL0__ECSPI1_SCLK                          (_MX6Q_PAD_KEY_COL0__ECSPI1_SCLK | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_KEY_COL0__ECSPI1_SCLK                          (_MX6Q_PAD_KEY_COL0__ECSPI1_SCLK | MUX_PAD_CTRL(MX6Q_ECSPI_PAD_CTRL))
 #define  MX6Q_PAD_KEY_COL0__ENET_RDATA_3                         (_MX6Q_PAD_KEY_COL0__ENET_RDATA_3 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_COL0__AUDMUX_AUD5_TXC                      (_MX6Q_PAD_KEY_COL0__AUDMUX_AUD5_TXC | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_COL0__KPP_COL_0                            (_MX6Q_PAD_KEY_COL0__KPP_COL_0 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -4765,7 +4765,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_KEY_COL0__DCIC1_DCIC_OUT                       (_MX6Q_PAD_KEY_COL0__DCIC1_DCIC_OUT | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_COL0__SRC_ANY_PU_RST                       (_MX6Q_PAD_KEY_COL0__SRC_ANY_PU_RST | MUX_PAD_CTRL(NO_PAD_CTRL))
 
-#define  MX6Q_PAD_KEY_ROW0__ECSPI1_MOSI                          (_MX6Q_PAD_KEY_ROW0__ECSPI1_MOSI | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_KEY_ROW0__ECSPI1_MOSI                          (_MX6Q_PAD_KEY_ROW0__ECSPI1_MOSI | MUX_PAD_CTRL(MX6Q_ECSPI_PAD_CTRL))
 #define  MX6Q_PAD_KEY_ROW0__ENET_TDATA_3                         (_MX6Q_PAD_KEY_ROW0__ENET_TDATA_3 | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_ROW0__AUDMUX_AUD5_TXD                      (_MX6Q_PAD_KEY_ROW0__AUDMUX_AUD5_TXD | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_ROW0__KPP_ROW_0                            (_MX6Q_PAD_KEY_ROW0__KPP_ROW_0 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -4775,7 +4775,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_KEY_ROW0__DCIC2_DCIC_OUT                       (_MX6Q_PAD_KEY_ROW0__DCIC2_DCIC_OUT | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_ROW0__PL301_MX6QPER1_HADDR_0               (_MX6Q_PAD_KEY_ROW0__PL301_MX6QPER1_HADDR_0 | MUX_PAD_CTRL(NO_PAD_CTRL))
 
-#define  MX6Q_PAD_KEY_COL1__ECSPI1_MISO                          (_MX6Q_PAD_KEY_COL1__ECSPI1_MISO | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_KEY_COL1__ECSPI1_MISO                          (_MX6Q_PAD_KEY_COL1__ECSPI1_MISO | MUX_PAD_CTRL(MX6Q_ECSPI_PAD_CTRL))
 #define  MX6Q_PAD_KEY_COL1__ENET_MDIO                            (_MX6Q_PAD_KEY_COL1__ENET_MDIO | MUX_PAD_CTRL(MX6Q_ENET_PAD_CTRL))
 #define  MX6Q_PAD_KEY_COL1__AUDMUX_AUD5_TXFS                     (_MX6Q_PAD_KEY_COL1__AUDMUX_AUD5_TXFS | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_COL1__KPP_COL_1                            (_MX6Q_PAD_KEY_COL1__KPP_COL_1 | MUX_PAD_CTRL(NO_PAD_CTRL))
@@ -4785,7 +4785,7 @@ typedef enum iomux_config {
 #define  MX6Q_PAD_KEY_COL1__USDHC1_VSELECT                       (_MX6Q_PAD_KEY_COL1__USDHC1_VSELECT | MUX_PAD_CTRL(MX6Q_USDHC_PAD_CTRL))
 #define  MX6Q_PAD_KEY_COL1__PL301_MX6QPER1_HADDR_1               (_MX6Q_PAD_KEY_COL1__PL301_MX6QPER1_HADDR_1 | MUX_PAD_CTRL(NO_PAD_CTRL))
 
-#define  MX6Q_PAD_KEY_ROW1__ECSPI1_SS0                           (_MX6Q_PAD_KEY_ROW1__ECSPI1_SS0 | MUX_PAD_CTRL(NO_PAD_CTRL))
+#define  MX6Q_PAD_KEY_ROW1__ECSPI1_SS0                           (_MX6Q_PAD_KEY_ROW1__ECSPI1_SS0 | MUX_PAD_CTRL(MX6Q_ECSPI_PAD_CTRL))
 #define  MX6Q_PAD_KEY_ROW1__ENET_COL                             (_MX6Q_PAD_KEY_ROW1__ENET_COL | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_ROW1__AUDMUX_AUD5_RXD                      (_MX6Q_PAD_KEY_ROW1__AUDMUX_AUD5_RXD | MUX_PAD_CTRL(NO_PAD_CTRL))
 #define  MX6Q_PAD_KEY_ROW1__KPP_ROW_1                            (_MX6Q_PAD_KEY_ROW1__KPP_ROW_1 | MUX_PAD_CTRL(NO_PAD_CTRL))
