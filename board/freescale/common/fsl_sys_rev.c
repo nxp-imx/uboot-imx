@@ -20,7 +20,9 @@
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
 #include <asm/arch/mx6.h>
+#endif
 
 #ifdef CONFIG_CMD_IMXOTP
 #include <imx_otp.h>
@@ -28,7 +30,7 @@
 
 unsigned int fsl_system_rev;
 
-#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL) || defined(CONFIG_MX6SOLO)
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
 /*
  * Set fsl_system_rev:
  * bit 0-7: Chip Revision ID
