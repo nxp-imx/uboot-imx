@@ -24,6 +24,9 @@
 #include <asm/io.h>
 #include <asm/arch/mx6.h>
 #include <asm/arch/mx6_pins.h>
+#if defined(CONFIG_SECURE_BOOT)
+#include <asm/arch/mx6_secure.h>
+#endif
 #include <asm/arch/mx6dl_pins.h>
 #include <asm/arch/iomux-v3.h>
 #include <asm/errno.h>
@@ -895,6 +898,119 @@ int board_late_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_SECURE_BOOT
+/* -------- start of HAB API updates ------------*/
+#define hab_rvt_report_event ((hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT)
+#define hab_rvt_report_status ((hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS)
+#define hab_rvt_authenticate_image \
+	((hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE)
+#define hab_rvt_entry ((hab_rvt_entry_t *) HAB_RVT_ENTRY)
+#define hab_rvt_exit ((hab_rvt_exit_t *) HAB_RVT_EXIT)
+#define hab_rvt_clock_init HAB_RVT_CLOCK_INIT
+
+
+void display_event(uint8_t *event_data, size_t bytes)
+{
+	uint32_t i;
+	if ((event_data) && (bytes > 0)) {
+		for (i = 0; i < bytes; i++) {
+			if (i == 0)
+				printf("\t0x%02x", event_data[i]);
+			else if ((i % 8) == 0)
+				printf("\n\t0x%02x", event_data[i]);
+			else
+				printf(" 0x%02x", event_data[i]);
+		}
+	}
+}
+
+int get_hab_status(void)
+{
+	uint32_t index = 0; /* Loop index */
+	uint8_t event_data[128]; /* Event data buffer */
+	size_t bytes = sizeof(event_data); /* Event size in bytes */
+	hab_config_t config = 0;
+	hab_state_t state = 0;
+
+	/* Check HAB status */
+	if (hab_rvt_report_status(&config, &state) != HAB_SUCCESS) {
+		printf("\nHAB Configuration: 0x%02x, HAB State: 0x%02x\n",
+			config, state);
+
+		/* Display HAB Error events */
+		while (hab_rvt_report_event(HAB_FAILURE, index, event_data,
+				&bytes) == HAB_SUCCESS) {
+			printf("\n");
+			printf("--------- HAB Event %d -----------------\n",
+					index + 1);
+			printf("event data:\n");
+			display_event(event_data, bytes);
+			printf("\n");
+			bytes = sizeof(event_data);
+			index++;
+		}
+	}
+	/* Display message if no HAB events are found */
+	else {
+		printf("\nHAB Configuration: 0x%02x, HAB State: 0x%02x\n",
+			config, state);
+		printf("No HAB Events Found!\n\n");
+	}
+	return 0;
+}
+
+void hab_caam_clock_enable(void)
+{
+	u32 reg = 0;
+
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR0); /* CCGR0 */
+	reg |= 0x3F00; /*CG4 ~ CG6, enable CAAM clocks*/
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR0);
+}
+
+
+void hab_caam_clock_disable(void)
+{
+	u32 reg = 0;
+
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR0); /* CCGR0 */
+	reg &= ~0x3F00; /*CG4 ~ CG6, disable CAAM clocks*/
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR0);
+}
+
+uint32_t authenticate_image(ulong start)
+{
+	uint32_t load_addr = 0;
+	size_t bytes;
+	ptrdiff_t ivt_offset = 0x003FDFE0;
+
+	printf("\nAuthenticate uImage from DDR location 0x%lx...\n", start);
+
+	hab_caam_clock_enable();
+
+	if (hab_rvt_entry() == HAB_SUCCESS) {
+		start = 0x10800000;
+		bytes = 0x00400000;
+		load_addr = (uint32_t)hab_rvt_authenticate_image(HAB_CID_UBOOT,
+				ivt_offset, (void **)&start,
+				(size_t *)&bytes, NULL);
+		if (hab_rvt_exit() != HAB_SUCCESS) {
+			printf("hab exit function fail\n");
+			load_addr = 0;
+		}
+	} else
+		printf("hab entry function fail\n");
+
+	hab_caam_clock_disable();
+
+	get_hab_status();
+
+	return load_addr;
+}
+/* ----------- end of HAB API updates ------------*/
+#endif
+
+
 #ifdef CONFIG_MXC_FEC
 static int phy_read(char *devname, unsigned char addr, unsigned char reg,
 		    unsigned short *pdata)
@@ -1070,5 +1186,10 @@ int checkboard(void)
 		printf("UNKNOWN\n");
 		break;
 	}
+
+#ifdef CONFIG_SECURE_BOOT
+	get_hab_status();
+#endif
+
 	return 0;
 }

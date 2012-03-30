@@ -5,7 +5,7 @@
  * (C) Copyright 2002
  * Gary Jennejohn, DENX Software Engineering, <gj@denx.de>
  *
- * (C) Copyright 2011 Freescale Semiconductor, Inc.
+ * (C) Copyright 2011-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -65,6 +65,14 @@ SECTIONS
 	__u_boot_cmd_start = .;
 	.u_boot_cmd : { *(.u_boot_cmd) }
 	__u_boot_cmd_end = .;
+
+	/* Original Size is 0x27..., enlarge to 0x2F000 */
+	. = TEXT_BASE + 0x2F000;
+	__hab_data = .;
+	. = . + 0x2000;
+	__hab_data_end = .;
+	/* End of Hab Data, Place it before BSS section */
+
 
 	. = ALIGN(4);
 	_end_of_copy = .; /* end_of ROM copy code here */
