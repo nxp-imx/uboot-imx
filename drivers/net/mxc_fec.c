@@ -78,13 +78,13 @@
 
 #if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
 extern int mx6_rgmii_rework(char *devname, int phy_addr);
+#endif
 
 #define PHY_MIPSCR_LINK_UP	(0x1 << 10)
 #define PHY_MIPSCR_SPEED_MASK	(0x3 << 14)
 #define PHY_MIPSCR_1000M	(0x2 << 14)
 #define PHY_MIPSCR_100M		(0x1 << 14)
 #define PHY_MIPSCR_FULL_DUPLEX	(0x1 << 13)
-#endif
 
 #ifndef CONFIG_SYS_CACHELINE_SIZE
 #define CONFIG_SYS_CACHELINE_SIZE 32
