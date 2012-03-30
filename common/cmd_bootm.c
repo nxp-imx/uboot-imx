@@ -598,6 +598,14 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	if (bootm_start(cmdtp, flag, argc, argv))
 		return 1;
 
+#ifdef CONFIG_SECURE_BOOT
+	extern uint32_t authenticate_image(ulong start);
+	if (authenticate_image(images.os.start) == 0) {
+		printf("Authenticate UImage Fail, Please check\n");
+		return 1;
+	}
+#endif
+
 	/*
 	 * We have reached the point of no return: we are going to
 	 * overwrite all exception vector code, so we cannot easily
