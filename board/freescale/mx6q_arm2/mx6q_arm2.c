@@ -908,6 +908,55 @@ int board_late_init(void)
 #define hab_rvt_exit ((hab_rvt_exit_t *) HAB_RVT_EXIT)
 #define hab_rvt_clock_init HAB_RVT_CLOCK_INIT
 
+/*
+ * +------------+  0x0 (0x10800000)    -
+ * |   Header   |                       |
+ * +------------+  0x40                 |
+ * |            |                       |
+ * |            |                       |
+ * |            |                       |
+ * |            |                       |
+ * | Image Data |                       |
+ * .            |                       |
+ * .            |                        > Stuff to be authenticated ------+
+ * .            |                       |                                  |
+ * |            |                       |                                  |
+ * |            |                       |                                  |
+ * +------------+                       |                                  |
+ * |            |                       |                                  |
+ * | Fill Data  |                       |                                  |
+ * |            |                       |                                  |
+ * +------------+ 0x003F_DFE0           |                                  |
+ * |    IVT     |                       |                                  |
+ * +------------+ 0x003F_E000          -                                   |
+ * |            |                                                          |
+ * |  CSF DATA  | <--------------------------------------------------------+
+ * |            |
+ * +------------+
+ * |            |
+ * | Fill Data  |
+ * |            |
+ * +------------+ 0x0040_0000
+ */
+
+#define DDR_UIMAGE_START 0x10800000
+#define DDR_UIMAGE_LENGTH 0x400000
+#define DDR_IVT_OFFSET 0x3FDFE0
+#define DDR_UIMAGE_IVT_START (DDR_UIMAGE_START + DDR_IVT_OFFSET)
+
+#define OCOTP_CFG5_OFFSET 0x460
+
+int check_hab_enable(void)
+{
+	u32 reg = 0;
+	int result = 0;
+
+	reg = readl(IMX_OTP_BASE + OCOTP_CFG5_OFFSET);
+	if ((reg & 0x2) == 0x2)
+		result = 1;
+
+	return result;
+}
 
 void display_event(uint8_t *event_data, size_t bytes)
 {
@@ -982,30 +1031,38 @@ uint32_t authenticate_image(ulong start)
 {
 	uint32_t load_addr = 0;
 	size_t bytes;
-	ptrdiff_t ivt_offset = 0x003FDFE0;
+	ptrdiff_t ivt_offset = DDR_IVT_OFFSET;
+	int result = 0;
 
-	printf("\nAuthenticate uImage from DDR location 0x%lx...\n", start);
+	if (check_hab_enable() == 1) {
+		printf("\nAuthenticate uImage from DDR location 0x%lx...\n",
+			start);
 
-	hab_caam_clock_enable();
+		hab_caam_clock_enable();
 
-	if (hab_rvt_entry() == HAB_SUCCESS) {
-		start = 0x10800000;
-		bytes = 0x00400000;
-		load_addr = (uint32_t)hab_rvt_authenticate_image(HAB_CID_UBOOT,
-				ivt_offset, (void **)&start,
-				(size_t *)&bytes, NULL);
-		if (hab_rvt_exit() != HAB_SUCCESS) {
-			printf("hab exit function fail\n");
-			load_addr = 0;
-		}
-	} else
-		printf("hab entry function fail\n");
+		if (hab_rvt_entry() == HAB_SUCCESS) {
+			start = DDR_UIMAGE_START;
+			bytes = DDR_UIMAGE_LENGTH;
+			load_addr = (uint32_t)hab_rvt_authenticate_image(
+					HAB_CID_UBOOT,
+					ivt_offset, (void **)&start,
+					(size_t *)&bytes, NULL);
+			if (hab_rvt_exit() != HAB_SUCCESS) {
+				printf("hab exit function fail\n");
+				load_addr = 0;
+			}
+		} else
+			printf("hab entry function fail\n");
 
-	hab_caam_clock_disable();
+		hab_caam_clock_disable();
 
-	get_hab_status();
+		get_hab_status();
+	}
 
-	return load_addr;
+	if ((!check_hab_enable()) || (load_addr != 0))
+		result = 1;
+
+	return result;
 }
 /* ----------- end of HAB API updates ------------*/
 #endif
@@ -1188,7 +1245,8 @@ int checkboard(void)
 	}
 
 #ifdef CONFIG_SECURE_BOOT
-	get_hab_status();
+	if (check_hab_enable() == 1)
+		get_hab_status();
 #endif
 
 	return 0;
