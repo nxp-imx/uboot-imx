@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -143,7 +143,11 @@ d_inv_loop:
 	str r1, [r0, #CLKCTL_CCGR4]
 	ldr r1, =0xF0000C3
 	str r1, [r0, #CLKCTL_CCGR5]
+#ifdef CONFIG_CMD_WEIMNOR
+	ldr r1, =0xFFC
+#else
 	ldr r1, =0x3FC
+#endif
 	str r1, [r0, #CLKCTL_CCGR6]
 .endm
 

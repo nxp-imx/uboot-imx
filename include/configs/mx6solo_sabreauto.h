@@ -32,7 +32,6 @@
 #define CONFIG_DDR_32BIT
 #define CONFIG_MX6Q_SABREAUTO
 #define CONFIG_FLASH_HEADER
-#define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_MX6_CLK32	   32768
 
 #define CONFIG_SKIP_RELOCATE_UBOOT
@@ -93,6 +92,7 @@
 #define CONFIG_CMD_SPI
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_IMXOTP
+#define CONFIG_CMD_WEIMNOR 	/*To boot from WEIM NOR. This will disable SPI NOR BOOT */
 
 /* Enable below configure when supporting nand */
 #define CONFIG_CMD_SF
@@ -197,6 +197,7 @@
 
 /*
  * SPI Configs
+ * SPI NOR AND WEIM NOR share PINs, so cannot be enabled both at sametime
  */
 #ifdef CONFIG_CMD_SF
 	#define CONFIG_FSL_SF		1
@@ -205,6 +206,25 @@
 	#define CONFIG_IMX_ECSPI
 	#define IMX_CSPI_VER_2_3	1
 	#define MAX_SPI_BYTES		(64 * 4)
+#endif
+
+/*
+ * WEIM NOR Config
+ */
+#ifdef CONFIG_CMD_WEIMNOR
+	#define CONFIG_SYS_FLASH_CFI			/* use the Common Flash Interface */
+	#define CONFIG_FLASH_CFI_DRIVER			/* use the CFI driver */
+	#define CONFIG_SYS_FLASH_BASE		0x08000000	/* start of FLASH   */
+	#define CONFIG_SYS_FLASH_SIZE		0x08000000	/* max flash size in bytes */
+	#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
+	#define CONFIG_SYS_FLASH_CFI_WIDTH	FLASH_CFI_16BIT
+	#define CONFIG_SYS_FLASH_BANKS_LIST	{CONFIG_SYS_FLASH_BASE}
+	#define CONFIG_SYS_MAX_FLASH_BANKS	1		/* number of banks */
+	#define CONFIG_SYS_MAX_FLASH_SECT	256		/* max sectors per device */
+	#define CONFIG_SYS_FLASH_PROTECTION
+	#define CONFIG_FLASH_HEADER_OFFSET 0x1000
+#else
+	#define CONFIG_FLASH_HEADER_OFFSET 0x400
 #endif
 
 /* Regulator Configs */
@@ -283,8 +303,9 @@
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
-#define CONFIG_SYS_NO_FLASH
-
+#ifndef CONFIG_CMD_WEIMNOR
+	#define CONFIG_SYS_NO_FLASH
+#endif
 /* Monitor at beginning of flash */
 #define CONFIG_FSL_ENV_IN_MMC
 /* #define CONFIG_FSL_ENV_IN_NAND */
