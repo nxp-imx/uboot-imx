@@ -2,7 +2,7 @@
  * Copyright (C) 2009 by Jan Weitzel Phytec Messtechnik GmbH,
  *			<armlinux@phytec.de>
  *
- * Copyright (C) 2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2011-2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -90,6 +90,9 @@ typedef u64 iomux_v3_cfg_t;
  */
 #define NO_PAD_CTRL		(1 << 17)
 #define PAD_CTL_HYS		(1 << 16)
+
+#define NO_PAD_I		0
+#define NO_MUX_I		0
 
 #define PAD_CTL_PUS_100K_DOWN	(0 << 14)
 #define PAD_CTL_PUS_47K_UP	(1 << 14)
