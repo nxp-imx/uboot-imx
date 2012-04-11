@@ -93,6 +93,7 @@ typedef u64 iomux_v3_cfg_t;
 
 #define NO_PAD_I		0
 #define NO_MUX_I		0
+#define IOMUX_CONFIG_SION	(0x1 << 4)
 
 #define PAD_CTL_PUS_100K_DOWN	(0 << 14)
 #define PAD_CTL_PUS_47K_UP	(1 << 14)
