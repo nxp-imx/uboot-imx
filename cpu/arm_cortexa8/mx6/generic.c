@@ -896,7 +896,7 @@ static void check_cpu_temperature(void)
 #if defined(CONFIG_DISPLAY_CPUINFO)
 int print_cpuinfo(void)
 {
-	printf("CPU:   Freescale i.MX 6 family %d.%dV at %d MHz\n",
+	printf("CPU: Freescale i.MX6 family TO%d.%d at %d MHz\n",
 	       (get_board_rev() & 0xFF) >> 4,
 	       (get_board_rev() & 0xF),
 		__get_mcu_main_clk() / SZ_DEC_1M);

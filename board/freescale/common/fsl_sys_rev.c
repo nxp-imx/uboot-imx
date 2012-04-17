@@ -63,13 +63,20 @@ void fsl_set_system_rev(void)
 	 * i.MX6Q1.0:       6300     00
 	 * i.MX6Q1.1:       6300     01
 	 * i.MX6Solo1.0:    6100     00
+
+	 * Thus the system_rev will be the following layout:
+	 * | 31 - 20 | 19 - 12 | 11 - 8 | 7 - 0 |
+	 * | resverd | CHIP ID | BD REV | SI REV |
 	 */
 	u32 cpu_type = readl(ANATOP_BASE_ADDR + 0x260);
 	u32 board_type = 0;
 	/* Chip Silicon ID */
-	fsl_system_rev = (cpu_type >> 4) & 0xFF000;
-	/* Chip Revision ID */
-	fsl_system_rev |= (cpu_type & 0xFF);
+	fsl_system_rev = ((cpu_type >> 16) & 0xFF) << 12;
+	/* Chip silicon major revision */
+	fsl_system_rev |= ((cpu_type >> 8) & 0xFF) << 4;
+	fsl_system_rev += 0x10;
+	/* Chip silicon minor revision */
+	fsl_system_rev |= cpu_type & 0xFF;
 
 	/* Get Board ID information from OCOTP_GP1[15:8]
 	 * bit 12-15: Board type
