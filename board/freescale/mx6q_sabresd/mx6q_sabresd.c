@@ -817,9 +817,8 @@ int check_recovery_cmd_file(void)
 	int button_pressed = 0;
 	ulong part_length;
 	int filelen = 0;
-	char *env;
 	u32 reg;
-	int i;
+	int i = 0;
 
 	printf("Checking for recovery command file...\n");
 	switch (get_boot_device()) {
@@ -1086,21 +1085,23 @@ int checkboard(void)
 	return 0;
 }
 
+#if defined CONFIG_MX6Q
+#define MX6X_IOMUX(s) MX6Q_##s
+#elif defined CONFIG_MX6DL
+#define MX6X_IOMUX(s) MX6DL_##s
+#endif
+
 #ifdef CONFIG_IMX_UDC
 
 void udc_pins_setting(void)
 {
 #define GPIO_3_22_BIT_MASK (1<<22)
+#define GPIO_1_29_BIT_MASK (1<<29)
 	u32 reg;
-#if defined CONFIG_MX6Q
-	mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_1__USBOTG_ID);
-	/* USB_OTG_PWR */
-	mxc_iomux_v3_setup_pad(MX6Q_PAD_EIM_D22__GPIO_3_22);
-#elif defined CONFIG_MX6DL
-	mxc_iomux_v3_setup_pad(MX6DL_PAD_ENET_RX_ER__ANATOP_USBOTG_ID);
-	/* USB_OTG_PWR */
-	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_D22__GPIO_3_22);
-#endif
+
+	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_ENET_RX_ER__ANATOP_USBOTG_ID));
+	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_EIM_D22__GPIO_3_22));
+	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_ENET_TXD1__GPIO_1_29));
 
 	reg = readl(GPIO3_BASE_ADDR + GPIO_GDIR);
 	/* set gpio_3_22 as output */
@@ -1112,6 +1113,17 @@ void udc_pins_setting(void)
 	reg &= ~GPIO_3_22_BIT_MASK;
 	writel(reg, GPIO3_BASE_ADDR + GPIO_DR);
 
-	mxc_iomux_set_gpr_register(1, 13, 1, 1);
+	reg = readl(GPIO1_BASE_ADDR + GPIO_GDIR);
+	/* set gpio_1_29 as output */
+	reg |= GPIO_1_29_BIT_MASK;
+	writel(reg, GPIO1_BASE_ADDR + GPIO_GDIR);
+
+	/* set USB_H1_POWER to 1 */
+	reg = readl(GPIO1_BASE_ADDR + GPIO_DR);
+	reg |= GPIO_1_29_BIT_MASK;
+	writel(reg, GPIO1_BASE_ADDR + GPIO_DR);
+
+	mxc_iomux_set_gpr_register(1, 13, 1, 0);
+
 }
 #endif

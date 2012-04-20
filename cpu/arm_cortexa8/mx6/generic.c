@@ -1015,7 +1015,7 @@ void enable_usboh3_clk(unsigned char enable)
 		reg |= 1 << MXC_CCM_CCGR6_CG0_OFFSET;
 	else
 		reg &= ~(1 << MXC_CCM_CCGR6_CG0_OFFSET);
-	writel(reg, MXC_CCM_CCGR2);
+	writel(reg, MXC_CCM_CCGR6);
 }
 
 void enable_usb_phy1_clk(unsigned char enable)

@@ -24,9 +24,6 @@
 
 #include "mx6q_sabresd.h"
 
-/* Can't enable OTG on this board, if enable kernel will hang very
- * early stage */
-#if 0
 #define CONFIG_USB_DEVICE
 #define CONFIG_IMX_UDC		       1
 #define CONFIG_FASTBOOT		       1
@@ -42,13 +39,11 @@
 #define CONFIG_FASTBOOT_SATA_NO		 0
 #define CONFIG_FASTBOOT_TRANSFER_BUF	0x30000000
 #define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x10000000 /* 256M byte */
-#endif	/* if 0 */
 
 #define CONFIG_CMD_BOOTI
 #define CONFIG_ANDROID_RECOVERY
 /* which mmc bus is your main storage ? */
 #define CONFIG_ANDROID_MAIN_MMC_BUS 3
-
 #define CONFIG_ANDROID_BOOT_PARTITION_MMC 1
 #define CONFIG_ANDROID_SYSTEM_PARTITION_MMC 5
 #define CONFIG_ANDROID_RECOVERY_PARTITION_MMC 2
@@ -73,5 +68,7 @@
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
+		"fastboot_dev=mmc3\0"					\
 		"bootcmd=booti mmc3\0"
+
 #endif

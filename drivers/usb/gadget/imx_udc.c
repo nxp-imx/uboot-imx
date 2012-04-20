@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,6 +78,7 @@ typedef struct {
 typedef struct usb_device_request setup_packet;
 
 static int usb_highspeed;
+static int usb_inited;
 static mxc_udc_ctrl mxc_udc;
 static struct usb_device_instance *udc_device;
 static struct urb *ep0_urb;
@@ -501,6 +502,7 @@ static void usb_udc_init(void)
 	usb_init_eps();
 	mxc_init_ep_struct();
 	ep0_setup();
+	usb_inited = 1;
 }
 
 void usb_shutdown(void)
@@ -929,7 +931,10 @@ void udc_connect(void)
 
 void udc_disconnect(void)
 {
-	mxc_usb_stop();
+	/* imx6 will hang if access usb register without init oh3
+	 * clock, so not access it if not init. */
+	if (usb_inited)
+		mxc_usb_stop();
 }
 
 void udc_set_nak(int epid)

@@ -25,6 +25,22 @@
 #include <asm/arch/mx6.h>
 #include "mx6dl_sabresd.h"
 
+#define CONFIG_USB_DEVICE
+#define CONFIG_IMX_UDC		       1
+#define CONFIG_FASTBOOT		       1
+#define CONFIG_FASTBOOT_STORAGE_EMMC_SATA
+#define CONFIG_FASTBOOT_VENDOR_ID      0x18d1
+#define CONFIG_FASTBOOT_PRODUCT_ID     0xc01
+#define CONFIG_FASTBOOT_BCD_DEVICE     0x311
+#define CONFIG_FASTBOOT_MANUFACTURER_STR  "Freescale"
+#define CONFIG_FASTBOOT_PRODUCT_NAME_STR "i.mx6dl Sabre SmartDevice"
+#define CONFIG_FASTBOOT_INTERFACE_STR	 "Android fastboot"
+#define CONFIG_FASTBOOT_CONFIGURATION_STR  "Android fastboot"
+#define CONFIG_FASTBOOT_SERIAL_NUM	"12345"
+#define CONFIG_FASTBOOT_SATA_NO		 0
+#define CONFIG_FASTBOOT_TRANSFER_BUF	0x30000000
+#define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x10000000 /* 256M byte */
+
 #define CONFIG_CMD_BOOTI
 #define CONFIG_ANDROID_RECOVERY
 /* which mmc bus is your main storage ? */
@@ -40,6 +56,7 @@
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
 	"booti mmc3 recovery"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
+#define CONFIG_INITRD_TAG
 
 #undef CONFIG_LOADADDR
 #undef CONFIG_RD_LOADADDR
@@ -53,5 +70,6 @@
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
+		"fastboot_dev=mmc3\0"					\
 		"bootcmd=booti mmc3\0"
 #endif
