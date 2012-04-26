@@ -736,6 +736,17 @@ void setup_splash_image(void)
 
 int board_init(void)
 {
+/* need set Power Supply Glitch to 0x41736166
+*and need clear Power supply Glitch Detect bit
+* when POR or reboot or power on Otherwise system
+*could not be power off anymore*/
+	u32 reg;
+	writel(0x41736166, SNVS_BASE_ADDR + 0x64);/*set LPPGDR*/
+	udelay(10);
+	reg = readl(SNVS_BASE_ADDR + 0x4c);
+	reg |= (1 << 3);
+	writel(reg, SNVS_BASE_ADDR + 0x4c);/*clear LPSR*/
+
 	mxc_iomux_v3_init((void *)IOMUXC_BASE_ADDR);
 	setup_boot_device();
 	fsl_set_system_rev();
