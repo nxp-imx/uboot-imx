@@ -7,7 +7,7 @@
  * (C) Copyright 2001
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * Copyright (C) 2004-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2004-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -214,6 +214,19 @@ struct waveform_modes {
 	int mode_gc32;
 };
 
+struct epdc_timing_params {
+    int vscan_holdoff;
+    int sdoed_width;
+    int sdoed_delay;
+    int sdoez_width;
+    int sdoez_delay;
+    int gdclk_hp_offs;
+    int gdsp_offs;
+    int gdoe_offs;
+    int gdclk_offs;
+    int num_ce;
+};
+
 struct epdc_data_struct {
 	/* EPDC buffer pointers */
 	u_long working_buf_addr;
@@ -221,6 +234,7 @@ struct epdc_data_struct {
 
 	/* Waveform mode definitions */
 	struct waveform_modes wv_modes;
+	struct epdc_timing_params epdc_timings;
 };
 
 typedef struct vidinfo {

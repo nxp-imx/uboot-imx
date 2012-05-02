@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@
 #include <linux/list.h>
 #include <linux/err.h>
 #include <linux/types.h>
-#include <asm/arch/mx50.h>
 
 #include "mxc_epdc_fb.h"
 
@@ -46,6 +45,8 @@ int lcd_color_bg;
 
 short console_col;
 short console_row;
+
+int rev;
 
 void lcd_initcolregs(void)
 {
@@ -160,6 +161,7 @@ static void epdc_set_vertical_timing(u32 vert_start, u32 vert_end,
 static void epdc_init_settings(void)
 {
 	u32 reg_val;
+	int num_ce;
 
 	/* EPDC_CTRL */
 	reg_val = REG_RD(EPDC_BASE, EPDC_CTRL);
@@ -205,8 +207,9 @@ static void epdc_init_settings(void)
 	 * PIXELS_PER_SDCLK = 4
 	 */
 	reg_val =
-		((4 << EPDC_TCE_CTRL_VSCAN_HOLDOFF_OFFSET) &
-		EPDC_TCE_CTRL_VSCAN_HOLDOFF_MASK)
+		((panel_info.epdc_data.epdc_timings.vscan_holdoff <<
+			EPDC_TCE_CTRL_VSCAN_HOLDOFF_OFFSET) &
+			EPDC_TCE_CTRL_VSCAN_HOLDOFF_MASK)
 		| EPDC_TCE_CTRL_PIXELS_PER_SDCLK_4;
 	REG_WR(EPDC_BASE, EPDC_TCE_CTRL, reg_val);
 
@@ -223,14 +226,18 @@ static void epdc_init_settings(void)
 
 	/* EPDC_TCE_OE */
 	reg_val =
-		((10 << EPDC_TCE_OE_SDOED_WIDTH_OFFSET) &
-		EPDC_TCE_OE_SDOED_WIDTH_MASK)
-		| ((20 << EPDC_TCE_OE_SDOED_DLY_OFFSET) &
-		EPDC_TCE_OE_SDOED_DLY_MASK)
-		| ((10 << EPDC_TCE_OE_SDOEZ_WIDTH_OFFSET) &
-		EPDC_TCE_OE_SDOEZ_WIDTH_MASK)
-		| ((20 << EPDC_TCE_OE_SDOEZ_DLY_OFFSET) &
-		EPDC_TCE_OE_SDOEZ_DLY_MASK);
+		((panel_info.epdc_data.epdc_timings.sdoed_width <<
+			EPDC_TCE_OE_SDOED_WIDTH_OFFSET) &
+			EPDC_TCE_OE_SDOED_WIDTH_MASK)
+		| ((panel_info.epdc_data.epdc_timings.sdoed_delay <<
+			EPDC_TCE_OE_SDOED_DLY_OFFSET) &
+			EPDC_TCE_OE_SDOED_DLY_MASK)
+		| ((panel_info.epdc_data.epdc_timings.sdoez_width <<
+			EPDC_TCE_OE_SDOEZ_WIDTH_OFFSET) &
+			EPDC_TCE_OE_SDOEZ_WIDTH_MASK)
+		| ((panel_info.epdc_data.epdc_timings.sdoez_delay <<
+			EPDC_TCE_OE_SDOEZ_DLY_OFFSET) &
+			EPDC_TCE_OE_SDOEZ_DLY_MASK);
 	REG_WR(EPDC_BASE, EPDC_TCE_OE, reg_val);
 
 	/* EPDC_TCE_TIMING1 */
@@ -238,18 +245,22 @@ static void epdc_init_settings(void)
 
 	/* EPDC_TCE_TIMING2 */
 	reg_val =
-		((480 << EPDC_TCE_TIMING2_GDCLK_HP_OFFSET) &
-		EPDC_TCE_TIMING2_GDCLK_HP_MASK)
-		| ((20 << EPDC_TCE_TIMING2_GDSP_OFFSET_OFFSET) &
-		EPDC_TCE_TIMING2_GDSP_OFFSET_MASK);
+		((panel_info.epdc_data.epdc_timings.gdclk_hp_offs <<
+			EPDC_TCE_TIMING2_GDCLK_HP_OFFSET) &
+			EPDC_TCE_TIMING2_GDCLK_HP_MASK)
+		| ((panel_info.epdc_data.epdc_timings.gdsp_offs <<
+			EPDC_TCE_TIMING2_GDSP_OFFSET_OFFSET) &
+			EPDC_TCE_TIMING2_GDSP_OFFSET_MASK);
 	REG_WR(EPDC_BASE, EPDC_TCE_TIMING2, reg_val);
 
 	/* EPDC_TCE_TIMING3 */
 	reg_val =
-		((0 << EPDC_TCE_TIMING3_GDOE_OFFSET_OFFSET) &
-		EPDC_TCE_TIMING3_GDOE_OFFSET_MASK)
-		| ((1 << EPDC_TCE_TIMING3_GDCLK_OFFSET_OFFSET) &
-		EPDC_TCE_TIMING3_GDCLK_OFFSET_MASK);
+		((panel_info.epdc_data.epdc_timings.gdoe_offs <<
+			EPDC_TCE_TIMING3_GDOE_OFFSET_OFFSET) &
+			EPDC_TCE_TIMING3_GDOE_OFFSET_MASK)
+		| ((panel_info.epdc_data.epdc_timings.gdclk_offs <<
+			EPDC_TCE_TIMING3_GDCLK_OFFSET_OFFSET) &
+			EPDC_TCE_TIMING3_GDCLK_OFFSET_MASK);
 	REG_WR(EPDC_BASE, EPDC_TCE_TIMING3, reg_val);
 
 	/*
@@ -261,8 +272,11 @@ static void epdc_init_settings(void)
 	 * SDDO_INVERT = DISABLED
 	 * PIXELS_PER_CE = display horizontal resolution
 	 */
+	num_ce = panel_info.epdc_data.epdc_timings.num_ce;
+	if (num_ce == 0)
+		num_ce = 1;
 	reg_val = EPDC_TCE_SDCFG_SDCLK_HOLD | EPDC_TCE_SDCFG_SDSHR
-		| ((1 << EPDC_TCE_SDCFG_NUM_CE_OFFSET) & EPDC_TCE_SDCFG_NUM_CE_MASK)
+		| ((num_ce << EPDC_TCE_SDCFG_NUM_CE_OFFSET) & EPDC_TCE_SDCFG_NUM_CE_MASK)
 		| EPDC_TCE_SDCFG_SDDO_REFORMAT_FLIP_PIXELS
 		| ((panel_info.vl_col << EPDC_TCE_SDCFG_PIXELS_PER_CE_OFFSET) &
 		EPDC_TCE_SDCFG_PIXELS_PER_CE_MASK);
@@ -350,7 +364,6 @@ static void draw_splash_screen(void)
 		msleep(100);
 	}
 	debug("Splash screen update failed!\n");
-
 }
 
 void lcd_enable(void)
@@ -391,6 +404,8 @@ void lcd_panel_disable(void)
 
 void lcd_ctrl_init(void *lcdbase)
 {
+	unsigned int val;
+
 	/*
 	 * We rely on lcdbase being a physical address, i.e., either MMU off,
 	 * or 1-to-1 mapping. Might want to add some virt2phys here.
@@ -416,11 +431,20 @@ void lcd_ctrl_init(void *lcdbase)
 	debug("resolution %dx%d, bpp %d\n", (int)panel_info.vl_col,
 		(int)panel_info.vl_row, NBITS(panel_info.vl_bpix));
 
+	/* Get EPDC version */
+	val = REG_RD(EPDC_BASE, EPDC_VERSION);
+	rev = ((val & EPDC_VERSION_MAJOR_MASK) >>
+				EPDC_VERSION_MAJOR_OFFSET) * 10
+			+ ((val & EPDC_VERSION_MINOR_MASK) >>
+				EPDC_VERSION_MINOR_OFFSET);
+
 	/* Set framebuffer pointer */
 	REG_WR(EPDC_BASE, EPDC_UPD_ADDR, (u32)lcdbase);
 
 	/* Set Working Buffer pointer */
 	REG_WR(EPDC_BASE, EPDC_WB_ADDR, panel_info.epdc_data.working_buf_addr);
+	if (rev > 20)
+		REG_WR(EPDC_BASE, EPDC_WB_ADDR_TCE, panel_info.epdc_data.working_buf_addr);
 
 	/* Get waveform data address and offset */
 	if (setup_waveform_file()) {
