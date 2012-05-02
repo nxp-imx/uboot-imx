@@ -45,8 +45,10 @@ enum pll_clocks {
 	USBOTG_PLL3,    /* OTG USB PLL */
 	AUD_PLL4,	/* Audio PLL */
 	VID_PLL5,	/* Video PLL */
+#ifndef CONFIG_MX6SL
 	MLB_PLL6,	/* MLB PLL */
 	USBHOST_PLL7,   /* Host USB PLL */
+#endif
 	ENET_PLL8,      /* ENET PLL */
 };
 
@@ -55,8 +57,8 @@ enum pll_clocks {
 /* Out-of-reset PFDs and clock source definitions */
 #define PLL2_PFD0_FREQ	352000000
 #define PLL2_PFD1_FREQ	594000000
-#define PLL2_PFD2_FREQ	400000000
-#define PLL2_PFD2_DIV_FREQ	200000000
+#define PLL2_PFD2_FREQ	396000000
+#define PLL2_PFD2_DIV_FREQ	198000000
 #define PLL3_PFD0_FREQ	720000000
 #define PLL3_PFD1_FREQ	540000000
 #define PLL3_PFD2_FREQ	508200000
@@ -126,8 +128,10 @@ static u32 __decode_pll(enum pll_clocks pll, u32 infreq)
 		}
 	case AUD_PLL4:
 	case VID_PLL5:
+#ifndef CONFIG_MX6SL
 	case MLB_PLL6:
 	case USBHOST_PLL7:
+#endif
 	default:
 		return 0;
 	}
@@ -201,6 +205,10 @@ static u32 __get_uart_clk(void)
 	u32 freq = PLL3_80M, reg, podf;
 
 	reg = __REG(MXC_CCM_CSCDR1);
+#ifdef CONFIG_MX6SL
+	if (reg & 0x40) /* UART clock from 24M OSC */
+		freq = CONFIG_MX6_HCLK_FREQ;
+#endif
 	podf = (reg & MXC_CCM_CSCDR1_UART_CLK_PODF_MASK) >>
 		MXC_CCM_CSCDR1_UART_CLK_PODF_OFFSET;
 	freq /= (podf + 1);
@@ -299,6 +307,35 @@ static u32 __get_nfc_clk(void)
 	return  clkroot / (pred + 1) / (podf + 1);
 }
 
+#ifdef CONFIG_MX6SL
+static u32 __get_ddr_clk(void)
+{
+	u32 cbcmr = __REG(MXC_CCM_CBCMR);
+	u32 cbcdr = __REG(MXC_CCM_CBCDR);
+	u32 freq, podf;
+
+	podf = (cbcdr & MXC_CCM_CBCDR_MMDC_CH1_PODF_MASK) \
+			>> MXC_CCM_CBCDR_MMDC_CH1_PODF_OFFSET;
+
+	switch ((cbcmr & MXC_CCM_CBCMR_PRE_PERIPH2_CLK_SEL_MASK) >>
+		MXC_CCM_CBCMR_PRE_PERIPH2_CLK_SEL_MASK) {
+	case 0:
+		freq = __decode_pll(BUS_PLL2, CONFIG_MX6_HCLK_FREQ);
+		break;
+	case 1:
+		freq = PLL2_PFD2_FREQ;
+		break;
+	case 2:
+		freq = PLL2_PFD0_FREQ;
+		break;
+	case 3:
+		freq = PLL2_PFD2_DIV_FREQ;
+	}
+
+	return freq / (podf + 1);
+
+}
+#else
 static u32 __get_ddr_clk(void)
 {
 	u32 cbcdr = __REG(MXC_CCM_CBCDR);
@@ -307,6 +344,7 @@ static u32 __get_ddr_clk(void)
 
 	return __get_periph_clk() / (podf + 1);
 }
+#endif
 
 static u32 __get_usdhc1_clk(void)
 {
@@ -438,7 +476,9 @@ void mxc_dump_clocks(void)
 	printf("usdhc2 clock  : %dHz\n", mxc_get_clock(MXC_ESDHC2_CLK));
 	printf("usdhc3 clock  : %dHz\n", mxc_get_clock(MXC_ESDHC3_CLK));
 	printf("usdhc4 clock  : %dHz\n", mxc_get_clock(MXC_ESDHC4_CLK));
+#ifndef CONFIG_MX6SL
 	printf("nfc clock     : %dHz\n", mxc_get_clock(MXC_NFC_CLK));
+#endif
 }
 
 #ifdef CONFIG_CMD_CLOCK

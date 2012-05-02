@@ -112,10 +112,17 @@
 #define IROM_SIZE			SZ_64K
 
 /* CPU Memory Map */
+#ifdef CONFIG_MX6SL
+#define MMDC0_ARB_BASE_ADDR             0x80000000
+#define MMDC0_ARB_END_ADDR              0xFFFFFFFF
+#define MMDC1_ARB_BASE_ADDR             0xC0000000
+#define MMDC1_ARB_END_ADDR              0xFFFFFFFF
+#else
 #define MMDC0_ARB_BASE_ADDR             0x10000000
 #define MMDC0_ARB_END_ADDR              0x7FFFFFFF
 #define MMDC1_ARB_BASE_ADDR             0x80000000
 #define MMDC1_ARB_END_ADDR              0xFFFFFFFF
+#endif
 #define OCRAM_ARB_BASE_ADDR             0x00900000
 #define OCRAM_ARB_END_ADDR              0x009FFFFF
 #define IRAM_BASE_ADDR                  OCRAM_ARB_BASE_ADDR
@@ -124,8 +131,14 @@
 
 /* Blocks connected via pl301periph */
 #define ROMCP_ARB_BASE_ADDR             0x00000000
-#define ROMCP_ARB_END_ADDR              0x000FFFFF
+#define ROMCP_ARB_END_ADDR              0x00017FFF
 #define BOOT_ROM_BASE_ADDR              ROMCP_ARB_BASE_ADDR
+#ifdef CONFIG_MX6SL
+#define GPU_2D_ARB_BASE_ADDR            0x02200000
+#define GPU_2D_ARB_END_ADDR             0x02203FFF
+#define OPENVG_ARB_BASE_ADDR            0x02204000
+#define OPENVG_ARB_END_ADDR             0x02207FFF
+#else
 #define CAAM_ARB_BASE_ADDR              0x00100000
 #define CAAM_ARB_END_ADDR               0x00103FFF
 #define APBH_DMA_ARB_BASE_ADDR          0x00110000
@@ -139,18 +152,24 @@
 #define DTCP_ARB_BASE_ADDR              0x00138000
 #define DTCP_ARB_END_ADDR               0x0013BFFF
 #define GPU_MEM_BASE_ADDR               GPU_3D_ARB_BASE_ADDR
+#endif
 
 /* GPV - PL301 configuration ports */
 #define GPV0_BASE_ADDR                  0x00B00000
 #define GPV1_BASE_ADDR                  0x00C00000
+#ifdef CONFIG_MX6SL
+#define GPV2_BASE_ADDR                  0x00D00000
+#else
 #define GPV2_BASE_ADDR                  0x00200000
 #define GPV3_BASE_ADDR                  0x00300000
 #define GPV4_BASE_ADDR                  0x00800000
+#endif
 
 #define AIPS1_ARB_BASE_ADDR             0x02000000
 #define AIPS1_ARB_END_ADDR              0x020FFFFF
 #define AIPS2_ARB_BASE_ADDR             0x02100000
 #define AIPS2_ARB_END_ADDR              0x021FFFFF
+
 #define SATA_ARB_BASE_ADDR              0x02200000
 #define SATA_ARB_END_ADDR               0x02203FFF
 #define OPENVG_ARB_BASE_ADDR            0x02204000
@@ -161,6 +180,7 @@
 #define IPU1_ARB_END_ADDR               0x027FFFFF
 #define IPU2_ARB_BASE_ADDR              0x02800000
 #define IPU2_ARB_END_ADDR               0x02BFFFFF
+
 #define WEIM_ARB_BASE_ADDR              0x08000000
 #define WEIM_ARB_END_ADDR               0x0FFFFFFF
 
@@ -183,6 +203,16 @@
 #define ECSPI2_BASE_ADDR            (ATZ1_BASE_ADDR + 0x0C000)
 #define ECSPI3_BASE_ADDR            (ATZ1_BASE_ADDR + 0x10000)
 #define ECSPI4_BASE_ADDR            (ATZ1_BASE_ADDR + 0x14000)
+#ifdef CONFIG_MX6SL
+#define UART5_IPS_BASE_ADDR         (ATZ1_BASE_ADDR + 0x18000)
+#define UART1_IPS_BASE_ADDR         (ATZ1_BASE_ADDR + 0x20000)
+#define UART2_IPS_BASE_ADDR         (ATZ1_BASE_ADDR + 0x24000)
+#define SSI1_IPS_BASE_ADDR          (ATZ1_BASE_ADDR + 0x28000)
+#define SSI2_IPS_BASE_ADDR          (ATZ1_BASE_ADDR + 0x2C000)
+#define SSI3_IPS_BASE_ADDR          (ATZ1_BASE_ADDR + 0x30000)
+#define UART3_IPS_BASE_ADDR         (ATZ1_BASE_ADDR + 0x34000)
+#define UART4_IPS_BASE_ADDR         (ATZ1_BASE_ADDR + 0x38000)
+#else
 #define ECSPI5_BASE_ADDR            (ATZ1_BASE_ADDR + 0x18000)
 #define UART1_BASE_ADDR             (ATZ1_BASE_ADDR + 0x20000)
 #define ESAI1_BASE_ADDR             (ATZ1_BASE_ADDR + 0x24000)
@@ -190,6 +220,7 @@
 #define SSI2_BASE_ADDR              (ATZ1_BASE_ADDR + 0x2C000)
 #define SSI3_BASE_ADDR              (ATZ1_BASE_ADDR + 0x30000)
 #define ASRC_BASE_ADDR              (ATZ1_BASE_ADDR + 0x34000)
+#endif
 #define SPBA_BASE_ADDR              (ATZ1_BASE_ADDR + 0x3C000)
 #define VPU_BASE_ADDR               (ATZ1_BASE_ADDR + 0x40000)
 
@@ -203,8 +234,13 @@
 #define PWM2_BASE_ADDR              (AIPS1_OFF_BASE_ADDR + 0x4000)
 #define PWM3_BASE_ADDR              (AIPS1_OFF_BASE_ADDR + 0x8000)
 #define PWM4_BASE_ADDR              (AIPS1_OFF_BASE_ADDR + 0xC000)
+#ifdef CONFIG_MX6SL
+#define DBGMON_IPS_BASE_ADDR        (AIPS1_OFF_BASE_ADDR + 0x10000)
+#define QOSC_IPS_BASE_ADDR          (AIPS1_OFF_BASE_ADDR + 0x14000)
+#else
 #define CAN1_BASE_ADDR              (AIPS1_OFF_BASE_ADDR + 0x10000)
 #define CAN2_BASE_ADDR              (AIPS1_OFF_BASE_ADDR + 0x14000)
+#endif
 #define GPT_BASE_ADDR               (AIPS1_OFF_BASE_ADDR + 0x18000)
 #define GPIO1_BASE_ADDR             (AIPS1_OFF_BASE_ADDR + 0x1C000)
 #define GPIO2_BASE_ADDR             (AIPS1_OFF_BASE_ADDR + 0x20000)
@@ -226,9 +262,19 @@
 #define SRC_BASE_ADDR               (AIPS1_OFF_BASE_ADDR + 0x58000)
 #define GPC_BASE_ADDR               (AIPS1_OFF_BASE_ADDR + 0x5C000)
 #define IOMUXC_BASE_ADDR            (AIPS1_OFF_BASE_ADDR + 0x60000)
+#ifdef CONFIG_MX6SL
+#define CSI_BASE_ADDR               (AIPS1_OFF_BASE_ADDR + 0x64000)
+#define SIPIX_BASE_ADDR             (AIPS1_OFF_BASE_ADDR + 0x68000)
+#define SDMA_PORT_HOST_BASE_ADDR    (AIPS1_OFF_BASE_ADDR + 0x6C000)
+#define EPXP_BASE_ADDR              (AIPS1_OFF_BASE_ADDR + 0x70000)
+#define EPDC_BASE_ADDR              (AIPS1_OFF_BASE_ADDR + 0x74000)
+#define ELCDIF_BASE_ADDR            (AIPS1_OFF_BASE_ADDR + 0x78000)
+#define DCP_BASE_ADDR               (AIPS1_OFF_BASE_ADDR + 0x7C000)
+#else
 #define DCIC1_BASE_ADDR             (AIPS1_OFF_BASE_ADDR + 0x64000)
 #define DCIC2_BASE_ADDR             (AIPS1_OFF_BASE_ADDR + 0x68000)
 #define DMA_REQ_PORT_HOST_BASE_ADDR (AIPS1_OFF_BASE_ADDR + 0x6C000)
+#endif
 
 /* ATZ#2- On Platform */
 #define AIPS2_ON_BASE_ADDR          (ATZ2_BASE_ADDR + 0x7C000)
@@ -240,12 +286,22 @@
 #define CAAM_BASE_ADDR              (ATZ2_BASE_ADDR)
 #define ARM_BASE_ADDR		    (ATZ2_BASE_ADDR + 0x40000)
 
+#ifdef CONFIG_MX6SL
+#define USBO2H_PL301_IPS_BASE_ADDR  (AIPS2_OFF_BASE_ADDR + 0x0000)
+#define USBO2H_USB_BASE_ADDR        (AIPS2_OFF_BASE_ADDR + 0x4000)
+#else
 #define USBOH3_PL301_BASE_ADDR      (AIPS2_OFF_BASE_ADDR + 0x0000)
 #define USBOH3_USB_BASE_ADDR        (AIPS2_OFF_BASE_ADDR + 0x4000)
-/* Frank Li Need IC confirm OTG base address*/
-#define OTG_BASE_ADDR					USBOH3_USB_BASE_ADDR
+#endif
 #define ENET_BASE_ADDR              (AIPS2_OFF_BASE_ADDR + 0x8000)
+/* Frank Li Need IC confirm OTG base address*/
+#ifdef CONFIG_MX6SL
+#define OTG_BASE_ADDR               USBO2H_USB_BASE_ADDR
+#define MSHC_IPS_BASE_ADDR          (AIPS2_OFF_BASE_ADDR + 0xC000)
+#else
+#define OTG_BASE_ADDR               USBOH3_USB_BASE_ADDR
 #define MLB_BASE_ADDR               (AIPS2_OFF_BASE_ADDR + 0xC000)
+#endif
 
 #define USDHC1_BASE_ADDR            (AIPS2_OFF_BASE_ADDR + 0x10000)
 #define USDHC2_BASE_ADDR            (AIPS2_OFF_BASE_ADDR + 0x14000)
@@ -256,7 +312,11 @@
 #define I2C3_BASE_ADDR              (AIPS2_OFF_BASE_ADDR + 0x28000)
 #define ROMCP_BASE_ADDR             (AIPS2_OFF_BASE_ADDR + 0x2C000)
 #define MMDC_P0_BASE_ADDR           (AIPS2_OFF_BASE_ADDR + 0x30000)
+#ifdef CONFIG_MX6SL
+#define RNGB_IPS_BASE_ADDR          (AIPS2_OFF_BASE_ADDR + 0x34000)
+#else
 #define MMDC_P1_BASE_ADDR           (AIPS2_OFF_BASE_ADDR + 0x34000)
+#endif
 #define WEIM_BASE_ADDR              (AIPS2_OFF_BASE_ADDR + 0x38000)
 #define OCOTP_BASE_ADDR             (AIPS2_OFF_BASE_ADDR + 0x3C000)
 #define CSU_BASE_ADDR               (AIPS2_OFF_BASE_ADDR + 0x40000)
@@ -277,7 +337,7 @@
 #define IP2APB_USBPHY2_BASE_ADDR    (AIPS2_OFF_BASE_ADDR + 0x7C000)
 
 /* Cortex-A9 MPCore private memory region */
-#define ARM_PERIPHBASE                  (0x00A00000)
+#define ARM_PERIPHBASE              0x00A00000
 #define SCU_BASE_ADDR               (ARM_PERIPHBASE)
 #define IC_INTERFACES_BASE_ADDR     (ARM_PERIPHBASE + 0x0100)
 #define GLOBAL_TIMER_BASE_ADDR      (ARM_PERIPHBASE + 0x0200)
@@ -432,6 +492,7 @@
 #define MXC_INT_GPR                                32
 #define MXC_INT_CHEETAH_CSYSPWRUPREQ               33
 #define MXC_INT_SDMA                               34
+#ifndef CONFIG_MX6SL
 #define MXC_INT_VPU_JPG                            35
 #define MXC_INT_INTERRUPT_36_NUM                   36
 #define MXC_INT_IPU1_ERR                           37
@@ -439,6 +500,13 @@
 #define MXC_INT_IPU2_ERR                           39
 #define MXC_INT_IPU2_FUNC                          40
 #define MXC_INT_GPU3D_IRQ                          41
+#else
+#define MXC_INT_MSHC                               35
+#define MXC_INT_SNVS_PMIC_OFF                      36
+#define MXC_INT_RNGB                               37
+#define MXC_INT_SPDC                               38
+#define MXC_INT_CSI                                39
+#endif
 #define MXC_INT_GPU2D_IRQ                          42
 #define MXC_INT_OPENVG_XAQ2                        43
 #define MXC_INT_VPU_IPI                            44
@@ -468,11 +536,19 @@
 #define MXC_INT_I2C1                               68
 #define MXC_INT_I2C2                               69
 #define MXC_INT_I2C3                               70
+#ifdef CONFIG_MX6Q
 #define MXC_INT_SATA                               71
 #define MXC_INT_USBOH3_UH1                         72
 #define MXC_INT_USBOH3_UH2                         73
 #define MXC_INT_USBOH3_UH3                         74
 #define MXC_INT_USBOH3_UOTG                        75
+#else
+#define MXC_INT_LCDIF                              71
+#define MXC_INT_USBO2H_UH1                         72
+#define MXC_INT_USBO2H_UH2                         73
+#define MXC_INT_USBO2H_UH3                         74
+#define MXC_INT_USBO2H_UOTG                        75
+#endif
 #define MXC_INT_ANATOP_UTMI0                       76
 #define MXC_INT_ANATOP_UTMI1                       77
 #define MXC_INT_SSI1                               78
@@ -480,7 +556,7 @@
 #define MXC_INT_SSI3                               80
 #define MXC_INT_ANATOP_TEMPSNSR                    81
 #define MXC_INT_ASRC                               82
-#define MXC_INT_ESAI                              83
+#define MXC_INT_ESAI                               83
 #define MXC_INT_SPDIF                              84
 #define MXC_INT_MLB                                85
 #define MXC_INT_ANATOP_ANA1                        86
@@ -526,17 +602,26 @@
 #define MXC_INT_CHEETAH_PERFORM                    126
 #define MXC_INT_CHEETAH_TRIGGER                    127
 #define MXC_INT_SRC_CPU_WDOG                       128
-#define MXC_INT_INTERRUPT_129_NUM                          129
-#define MXC_INT_INTERRUPT_130_NUM                          130
-#define MXC_INT_INTERRUPT_131_NUM                          131
+#ifndef CONFIG_MX6SL
+#define MXC_INT_INTERRUPT_129_NUM                  129
+#define MXC_INT_INTERRUPT_130_NUM                  130
+#define MXC_INT_INTERRUPT_13                       131
 #define MXC_INT_CSI_INTR1                          132
 #define MXC_INT_CSI_INTR2                          133
 #define MXC_INT_DSI                                134
 #define MXC_INT_HSI                                135
+#else
+#define MXC_INT_EPDC                               129
+#define MXC_INT_PXP                                130
+#define MXC_INT_DCP_GP                             131
+#define MXC_INT_DCP_CH0                            132
+#define MXC_INT_DCP_SEC                            133
+#endif
 #define MXC_INT_SJC                                136
-#define MXC_INT_CAAM_INT0_NUM                              137
-#define MXC_INT_CAAM_INT1_NUM                              138
-#define MXC_INT_INTERRUPT_139_NUM                          139
+#ifndef CONFIG_MX6SL
+#define MXC_INT_CAAM_INT0_NUM                      137
+#define MXC_INT_CAAM_INT1_NUM                      138
+#define MXC_INT_INTERRUPT_139_NUM                  139
 #define MXC_INT_TZASC1                             140
 #define MXC_INT_TZASC2                             141
 #define MXC_INT_CAN1                               142
@@ -556,6 +641,10 @@
 #define MXC_INT_DCIC1                              156
 #define MXC_INT_DCIC2                              157
 #define MXC_INT_MLB_AHB1                           158
+#else
+#define MXC_INT_TZASC1                             140
+#define MXC_INT_FEC                                146
+#endif
 #define MXC_INT_ANATOP_ANA2                        159
 
 /* gpio and gpio based interrupt handling */
