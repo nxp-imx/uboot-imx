@@ -593,7 +593,16 @@ iomux_v3_cfg_t enet_pads[] = {
 #else
 	MX6SL_PAD_FEC_REF_CLK__GPIO_4_26, /* clock from OSC */
 #endif
-	MX6SL_PAD_FEC_RX_ER__FEC_RX_ER,
+
+	/*
+	 * Since FEC_RX_ER is not connected with PHY(LAN8720A), we need
+	 * either configure FEC_RX_ER PAD to other mode than FEC_RX_ER,
+	 * or configure FEC_RX_ER PAD to FEC_RX_ER but need pull it down,
+	 * otherwise, FEC MAC will report CRC error always. We configure
+	 * FEC_RX_ER PAD to GPIO mode here.
+	 */
+
+	MX6SL_PAD_FEC_RX_ER__GPIO_4_19,
 	MX6SL_PAD_FEC_TX_CLK__GPIO_4_21, /* Phy power enable */
 };
 
