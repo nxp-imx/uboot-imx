@@ -92,7 +92,7 @@
 #define CONFIG_CMD_SPI
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_IMXOTP
-#define CONFIG_CMD_WEIMNOR 	/*To boot from WEIM NOR. This will disable SPI NOR BOOT */
+/*#define CONFIG_CMD_WEIMNOR*/  /*To boot from WEIM NOR. This will disable SPI NOR BOOT */
 
 /* Enable below configure when supporting nand */
 #define CONFIG_CMD_SF
