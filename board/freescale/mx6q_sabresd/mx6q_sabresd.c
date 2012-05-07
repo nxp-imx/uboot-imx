@@ -379,7 +379,7 @@ static void setup_i2c(unsigned int module_base)
 		/* GPIO_3 for I2C3_SCL */
 		mxc_iomux_v3_setup_pad(MX6DL_PAD_GPIO_3__I2C3_SCL);
 		/* GPIO_6 for I2C3_SDA */
-		mxc_iomux_v3_setup_pad(MX6DL_PAD_GPIO_6__I2C3_SDA;
+		mxc_iomux_v3_setup_pad(MX6DL_PAD_GPIO_6__I2C3_SDA);
 #endif
 		/* Enable i2c clock */
 		reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR2);
