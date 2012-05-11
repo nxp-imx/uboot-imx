@@ -322,6 +322,14 @@ void setup_lvds_poweron(void)
 #endif
 
 #ifdef CONFIG_I2C_MXC
+#define I2C1_SDA_GPIO5_26_BIT_MASK  (1 << 26)
+#define I2C1_SCL_GPIO5_27_BIT_MASK  (1 << 27)
+#define I2C2_SCL_GPIO4_12_BIT_MASK  (1 << 12)
+#define I2C2_SDA_GPIO4_13_BIT_MASK  (1 << 13)
+#define I2C3_SCL_GPIO1_3_BIT_MASK   (1 << 3)
+#define I2C3_SDA_GPIO1_6_BIT_MASK   (1 << 6)
+
+
 static void setup_i2c(unsigned int module_base)
 {
 	unsigned int reg;
@@ -392,12 +400,285 @@ static void setup_i2c(unsigned int module_base)
 		break;
 	}
 }
+/* Note: udelay() is not accurate for i2c timing */
+static void __udelay(int time)
+{
+	int i, j;
+
+	for (i = 0; i < time; i++) {
+		for (j = 0; j < 200; j++) {
+			asm("nop");
+			asm("nop");
+		}
+	}
+}
+static void mx6q_i2c_gpio_scl_direction(int bus, int output)
+{
+	u32 reg;
+
+	switch (bus) {
+	case 1:
+#if defined CONFIG_MX6Q
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_CSI0_DAT9__GPIO_5_27);
+#elif defined CONFIG_MX6DL
+		mxc_iomux_v3_setup_pad(MX6DL_PAD_CSI0_DAT9__GPIO_5_27);
+#endif
+		reg = readl(GPIO5_BASE_ADDR + GPIO_GDIR);
+		if (output)
+			reg |= I2C1_SCL_GPIO5_27_BIT_MASK;
+		else
+			reg &= ~I2C1_SCL_GPIO5_27_BIT_MASK;
+		writel(reg, GPIO5_BASE_ADDR + GPIO_GDIR);
+		break;
+	case 2:
+#if defined CONFIG_MX6Q
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_KEY_COL3__GPIO_4_12);
+#elif defined CONFIG_MX6DL
+		mxc_iomux_v3_setup_pad(MX6DL_PAD_KEY_COL3__GPIO_4_12);
+#endif
+		reg = readl(GPIO4_BASE_ADDR + GPIO_GDIR);
+		if (output)
+			reg |= I2C2_SCL_GPIO4_12_BIT_MASK;
+		else
+			reg &= ~I2C2_SCL_GPIO4_12_BIT_MASK;
+		writel(reg, GPIO4_BASE_ADDR + GPIO_GDIR);
+		break;
+	case 3:
+#if defined CONFIG_MX6Q
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_3__GPIO_1_3);
+#elif defined CONFIG_MX6DL
+		mxc_iomux_v3_setup_pad(MX6DL_PAD_GPIO_3__GPIO_1_3);
+#endif
+		reg = readl(GPIO1_BASE_ADDR + GPIO_GDIR);
+		if (output)
+			reg |= I2C3_SCL_GPIO1_3_BIT_MASK;
+		else
+			reg &= I2C3_SCL_GPIO1_3_BIT_MASK;
+		writel(reg, GPIO1_BASE_ADDR + GPIO_GDIR);
+		break;
+	}
+}
+
+/* set 1 to output, sent 0 to input */
+static void mx6q_i2c_gpio_sda_direction(int bus, int output)
+{
+	u32 reg;
+
+	switch (bus) {
+	case 1:
+#if defined CONFIG_MX6Q
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_CSI0_DAT8__GPIO_5_26);
+#elif defined CONFIG_MX6DL
+		mxc_iomux_v3_setup_pad(MX6DL_PAD_CSI0_DAT8__GPIO_5_26);
+#endif
+		reg = readl(GPIO5_BASE_ADDR + GPIO_GDIR);
+		if (output)
+			reg |= I2C1_SDA_GPIO5_26_BIT_MASK;
+		else
+			reg &= ~I2C1_SDA_GPIO5_26_BIT_MASK;
+		writel(reg, GPIO5_BASE_ADDR + GPIO_GDIR);
+		break;
+	case 2:
+#if defined CONFIG_MX6Q
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_KEY_ROW3__GPIO_4_13);
+#elif defined CONFIG_MX6DL
+		mxc_iomux_v3_setup_pad(MX6DL_PAD_KEY_ROW3__GPIO_4_13);
+#endif
+		reg = readl(GPIO4_BASE_ADDR + GPIO_GDIR);
+		if (output)
+			reg |= I2C2_SDA_GPIO4_13_BIT_MASK;
+		else
+			reg &= ~I2C2_SDA_GPIO4_13_BIT_MASK;
+		writel(reg, GPIO4_BASE_ADDR + GPIO_GDIR);
+	case 3:
+#if defined CONFIG_MX6Q
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_6__GPIO_1_6);
+#elif defined CONFIG_MX6DL
+		mxc_iomux_v3_setup_pad(MX6DL_PAD_GPIO_6__GPIO_1_6);
+#endif
+		reg = readl(GPIO1_BASE_ADDR + GPIO_GDIR);
+		if (output)
+			reg |= I2C3_SDA_GPIO1_6_BIT_MASK;
+		else
+			reg &= ~I2C3_SDA_GPIO1_6_BIT_MASK;
+		writel(reg, GPIO1_BASE_ADDR + GPIO_GDIR);
+	default:
+		break;
+	}
+}
+
+/* set 1 to high 0 to low */
+static void mx6q_i2c_gpio_scl_set_level(int bus, int high)
+{
+	u32 reg;
+
+	switch (bus) {
+	case 1:
+		reg = readl(GPIO5_BASE_ADDR + GPIO_DR);
+		if (high)
+			reg |= I2C1_SCL_GPIO5_27_BIT_MASK;
+		else
+			reg &= ~I2C1_SCL_GPIO5_27_BIT_MASK;
+		writel(reg, GPIO5_BASE_ADDR + GPIO_DR);
+		break;
+	case 2:
+		reg = readl(GPIO4_BASE_ADDR + GPIO_DR);
+		if (high)
+			reg |= I2C2_SCL_GPIO4_12_BIT_MASK;
+		else
+			reg &= ~I2C2_SCL_GPIO4_12_BIT_MASK;
+		writel(reg, GPIO4_BASE_ADDR + GPIO_DR);
+		break;
+	case 3:
+		reg = readl(GPIO1_BASE_ADDR + GPIO_DR);
+		if (high)
+			reg |= I2C3_SCL_GPIO1_3_BIT_MASK;
+		else
+			reg &= ~I2C3_SCL_GPIO1_3_BIT_MASK;
+		writel(reg, GPIO1_BASE_ADDR + GPIO_DR);
+		break;
+	}
+}
+
+/* set 1 to high 0 to low */
+static void mx6q_i2c_gpio_sda_set_level(int bus, int high)
+{
+	u32 reg;
+
+	switch (bus) {
+	case 1:
+		reg = readl(GPIO5_BASE_ADDR + GPIO_DR);
+		if (high)
+			reg |= I2C1_SDA_GPIO5_26_BIT_MASK;
+		else
+			reg &= ~I2C1_SDA_GPIO5_26_BIT_MASK;
+		writel(reg, GPIO5_BASE_ADDR + GPIO_DR);
+		break;
+	case 2:
+		reg = readl(GPIO4_BASE_ADDR + GPIO_DR);
+		if (high)
+			reg |= I2C2_SDA_GPIO4_13_BIT_MASK;
+		else
+			reg &= ~I2C2_SDA_GPIO4_13_BIT_MASK;
+		writel(reg, GPIO4_BASE_ADDR + GPIO_DR);
+		break;
+	case 3:
+		reg = readl(GPIO1_BASE_ADDR + GPIO_DR);
+		if (high)
+			reg |= I2C3_SDA_GPIO1_6_BIT_MASK;
+		else
+			reg &= ~I2C3_SDA_GPIO1_6_BIT_MASK;
+		writel(reg, GPIO1_BASE_ADDR + GPIO_DR);
+		break;
+	}
+}
+
+static int mx6q_i2c_gpio_check_sda(int bus)
+{
+	u32 reg;
+	int result = 0;
+
+	switch (bus) {
+	case 1:
+		reg = readl(GPIO5_BASE_ADDR + GPIO_PSR);
+		result = !!(reg & I2C1_SDA_GPIO5_26_BIT_MASK);
+		break;
+	case 2:
+		reg = readl(GPIO4_BASE_ADDR + GPIO_PSR);
+		result = !!(reg & I2C2_SDA_GPIO4_13_BIT_MASK);
+		break;
+	case 3:
+		reg = readl(GPIO1_BASE_ADDR + GPIO_PSR);
+		result = !!(reg & I2C3_SDA_GPIO1_6_BIT_MASK);
+		break;
+	}
+
+	return result;
+}
+
+ /* Random reboot cause i2c SDA low issue:
+  * the i2c bus busy because some device pull down the I2C SDA
+  * line. This happens when Host is reading some byte from slave, and
+  * then host is reset/reboot. Since in this case, device is
+  * controlling i2c SDA line, the only thing host can do this give the
+  * clock on SCL and sending NAK, and STOP to finish this
+  * transaction.
+  *
+  * How to fix this issue:
+  * detect if the SDA was low on bus send 8 dummy clock, and 1
+  * clock + NAK, and STOP to finish i2c transaction the pending
+  * transfer.
+  */
+int i2c_bus_recovery(void)
+{
+	int i, bus, result = 0;
+
+	for (bus = 1; bus <= 3; bus++) {
+		mx6q_i2c_gpio_sda_direction(bus, 0);
+
+		if (mx6q_i2c_gpio_check_sda(bus) == 0) {
+			printf("i2c: I2C%d SDA is low, start i2c recovery...\n", bus);
+			mx6q_i2c_gpio_scl_direction(bus, 1);
+			mx6q_i2c_gpio_scl_set_level(bus, 1);
+			__udelay(10000);
+
+			for (i = 0; i < 9; i++) {
+				mx6q_i2c_gpio_scl_set_level(bus, 1);
+				__udelay(5);
+				mx6q_i2c_gpio_scl_set_level(bus, 0);
+				__udelay(5);
+			}
+
+			/* 9th clock here, the slave should already
+			   release the SDA, we can set SDA as high to
+			   a NAK.*/
+			mx6q_i2c_gpio_sda_direction(bus, 1);
+			mx6q_i2c_gpio_sda_set_level(bus, 1);
+			__udelay(1); /* Pull up SDA first */
+			mx6q_i2c_gpio_scl_set_level(bus, 1);
+			__udelay(5); /* plus pervious 1 us */
+			mx6q_i2c_gpio_scl_set_level(bus, 0);
+			__udelay(5);
+			mx6q_i2c_gpio_sda_set_level(bus, 0);
+			__udelay(5);
+			mx6q_i2c_gpio_scl_set_level(bus, 1);
+			__udelay(5);
+			/* Here: SCL is high, and SDA from low to high, it's a
+			 * stop condition */
+			mx6q_i2c_gpio_sda_set_level(bus, 1);
+			__udelay(5);
+
+			mx6q_i2c_gpio_sda_direction(bus, 0);
+			if (mx6q_i2c_gpio_check_sda(bus) == 1)
+				printf("I2C%d Recovery success\n", bus);
+			else {
+				printf("I2C%d Recovery failed, I2C1 SDA still low!!!\n", bus);
+				result |= 1 << bus;
+			}
+		}
+
+		/* configure back to i2c */
+		switch (bus) {
+		case 1:
+			setup_i2c(I2C1_BASE_ADDR);
+			break;
+		case 2:
+			setup_i2c(I2C2_BASE_ADDR);
+			break;
+		case 3:
+			setup_i2c(I2C3_BASE_ADDR);
+			break;
+		}
+	}
+
+	return result;
+}
+
 
 void setup_pmic_voltages(void)
 {
 	unsigned char value = 0 ;
 	unsigned int val = 0;
-
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 	if (!i2c_probe(0x8)) {
 		if (i2c_read(0x8, 0, 1, &value, 1))
@@ -887,9 +1168,6 @@ int board_init(void)
 	setup_sata();
 #endif
 
-#ifdef CONFIG_I2C_MXC
-	setup_i2c(CONFIG_SYS_I2C_PORT);
-#endif
 #ifdef CONFIG_VIDEO_MX5
 	/* Enable lvds power */
 	setup_lvds_poweron();
@@ -1039,7 +1317,11 @@ int check_recovery_cmd_file(void)
 
 int board_late_init(void)
 {
+	#ifdef CONFIG_I2C_MXC
+	setup_i2c(CONFIG_SYS_I2C_PORT);
+	i2c_bus_recovery();
 	setup_pmic_voltages();
+	#endif
 	return 0;
 }
 
