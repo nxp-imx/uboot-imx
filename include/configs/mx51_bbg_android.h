@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2009-2011 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2012 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX51-3Stack Freescale board.
  *
@@ -92,8 +92,8 @@
 #define CONFIG_FASTBOOT		1
 #define CONFIG_IMX_UDC		1
 #define CONFIG_FASTBOOT_STORAGE_EMMC_SATA
-#define CONFIG_FASTBOOT_VENDOR_ID	0xbb4
-#define CONFIG_FASTBOOT_PRODUCT_ID	0xc01
+#define CONFIG_FASTBOOT_VENDOR_ID	0x18d1
+#define CONFIG_FASTBOOT_PRODUCT_ID	0xd02
 #define CONFIG_FASTBOOT_BCD_DEVICE	0x311
 #define CONFIG_FASTBOOT_MANUFACTURER_STR  "Freescale"
 #define CONFIG_FASTBOOT_PRODUCT_NAME_STR "i.mx51"
