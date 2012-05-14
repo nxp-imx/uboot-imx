@@ -1,7 +1,7 @@
 /*
  * Android Recovery supported header file
  *
- * Copyright (C) 2010 Freescale Semiconductor.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,5 +26,7 @@ struct reco_envs {
 	char *cmd;
 	char *args;
 };
+
+int check_and_clean_recovery_flag(void);
 
 #endif

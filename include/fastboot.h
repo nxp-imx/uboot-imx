@@ -3,7 +3,7 @@
  * Windriver, <www.windriver.com>
  * Tom Rix <Tom.Rix@windriver.com>
  *
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -326,6 +326,9 @@ int fastboot_flash_read_ext(fastboot_ptentry *ptn,
 int fastboot_flash_write(fastboot_ptentry *ptn, unsigned extra_per_page,
 				const void *data, unsigned bytes);
 
+/* Check the board special boot mode reboot to fastboot mode. */
+int fastboot_check_and_clean_flag(void);
+int do_fastboot(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 
 #else
 
@@ -350,6 +353,7 @@ int fastboot_flash_write(fastboot_ptentry *ptn, unsigned extra_per_page,
 #define fastboot_flash_read_ext(a, b, c, d, e) 0
 #define fastboot_flash_read(a, b, c, d, e) 0
 #define fastboot_flash_write(a, b, c, d) 0
+#define do_fastboot(a, b, c, d) 0
 
 #endif /* CONFIG_FASTBOOT */
 #endif /* FASTBOOT_H */

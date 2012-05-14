@@ -678,7 +678,6 @@ int i2c_bus_recovery(void)
 void setup_pmic_voltages(void)
 {
 	unsigned char value = 0 ;
-	unsigned int val = 0;
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 	if (!i2c_probe(0x8)) {
 		if (i2c_read(0x8, 0, 1, &value, 1))
@@ -1229,72 +1228,11 @@ struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
 
 int check_recovery_cmd_file(void)
 {
-	disk_partition_t info;
 	int button_pressed = 0;
-	ulong part_length;
-	int filelen = 0;
+	int recovery_mode = 0;
 	u32 reg;
-	int i = 0;
 
-	printf("Checking for recovery command file...\n");
-	switch (get_boot_device()) {
-	case MMC_BOOT:
-	case SD_BOOT:
-	case SPI_NOR_BOOT:
-	case I2C_BOOT:
-		{
-			block_dev_desc_t *dev_desc = NULL;
-			struct mmc *mmc = find_mmc_device(CONFIG_ANDROID_MAIN_MMC_BUS);
-
-			dev_desc = get_dev("mmc", CONFIG_ANDROID_MAIN_MMC_BUS);
-
-			if (NULL == dev_desc) {
-				printf("** Block device MMC %d not supported\n", i);
-				break;
-			}
-
-			mmc_init(mmc);
-
-			if (get_partition_info(dev_desc,
-					       CONFIG_ANDROID_CACHE_PARTITION_MMC,
-					       &info)) {
-				printf("** Bad partition %d **\n",
-				       CONFIG_ANDROID_CACHE_PARTITION_MMC);
-				break;
-			}
-
-			part_length = ext2fs_set_blk_dev(dev_desc,
-							 CONFIG_ANDROID_CACHE_PARTITION_MMC);
-			if (part_length == 0) {
-				printf("** Bad partition - mmc %d:%d **\n", i,
-				       CONFIG_ANDROID_CACHE_PARTITION_MMC);
-				ext2fs_close();
-				break;
-			}
-
-			if (!ext2fs_mount(part_length)) {
-				printf("** Bad ext2 partition or "
-				       "disk - mmc %d:%d **\n",
-				       i, CONFIG_ANDROID_CACHE_PARTITION_MMC);
-				ext2fs_close();
-				break;
-			}
-
-			filelen = ext2fs_open(CONFIG_ANDROID_RECOVERY_CMD_FILE);
-
-			ext2fs_close();
-			break;
-		}
-		break;
-	case NAND_BOOT:
-		return 0;
-		break;
-	case UNKNOWN_BOOT:
-	default:
-		return 0;
-		break;
-	}
-
+	recovery_mode = check_and_clean_recovery_flag();
 
 	/* Check Recovery Combo Button press or not. */
 #if defined CONFIG_MX6Q
@@ -1311,7 +1249,7 @@ int check_recovery_cmd_file(void)
 		printf("Recovery key pressed\n");
 	}
 
-	return (filelen > 0 || button_pressed);
+	return recovery_mode || button_pressed;
 }
 #endif
 

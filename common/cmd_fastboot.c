@@ -1014,15 +1014,14 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 			    (CFG_FASTBOOT_MKBOOTIMAGE_PAGE_SIZE <
 				    download_bytes)) {
 				char start[32];
-				char *go[3]    = { "go",    NULL, NULL, };
 				char *booti_args[4] = {"booti",  NULL, "boot", NULL};
 
 				/*
 				 * Use this later to determine if a command line was passed
 				 * for the kernel.
 				 */
-				struct fastboot_boot_img_hdr *fb_hdr =
-					(struct fastboot_boot_img_hdr *) interface.transfer_buffer;
+				/* struct fastboot_boot_img_hdr *fb_hdr = */
+				/* 	(struct fastboot_boot_img_hdr *) interface.transfer_buffer; */
 
 				/* Skip the mkbootimage header */
 				/* image_header_t *hdr = */

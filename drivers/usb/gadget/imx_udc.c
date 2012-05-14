@@ -297,7 +297,7 @@ static int mxc_ep_xfer_is_working(mxc_ep_t *ep, u32 in)
 		temp = readl(USB_USBCMD);
 		writel(temp|USB_CMD_ATDTW, USB_USBCMD);
 		tstat = readl(USB_ENDPTSTAT) & bitmask;
-	} while (!readl(USB_USBCMD) & USB_CMD_ATDTW);
+	} while (!(readl(USB_USBCMD) & USB_CMD_ATDTW));
 	writel(temp & (~USB_CMD_ATDTW), USB_USBCMD);
 
 	if (tstat)
@@ -542,7 +542,7 @@ static void mxc_udc_read_setup_pkt(setup_packet *s)
 		writel(temp, USB_USBCMD);
 		memcpy((void *)s,
 			(void *)mxc_udc.mxc_ep[0].ep_qh->setup_data, 8);
-	} while (!readl(USB_USBCMD) & USB_CMD_SUTW);
+	} while (!(readl(USB_USBCMD) & USB_CMD_SUTW));
 
 	DBG("handle_setup s.type=%x req=%x len=%x\n",
 		s->bmRequestType, s->bRequest, s->wLength);

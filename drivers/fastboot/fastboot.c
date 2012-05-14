@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -255,8 +255,6 @@ static int get_mmc_no(char *env_str)
  */
 int fastboot_init(struct cmd_fastboot_interface *interface)
 {
-	char *fastboot_env;
-
 	printf("fastboot is in init......");
 	fastboot_interface = interface;
 	fastboot_interface->product_name = CONFIG_FASTBOOT_PRODUCT_NAME_STR;
@@ -281,6 +279,34 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 }
 
 #ifdef CONFIG_FASTBOOT_STORAGE_EMMC_SATA
+/**
+   @mmc_dos_partition_index: the partition index in mbr.
+   @mmc_partition_index: the boot partition or user partition index,
+   not related to the partition table.
+ */
+static int setup_ptable_mmc_partition(int ptable_index,
+				      int mmc_dos_partition_index,
+				      int mmc_partition_index,
+				      const char *name,
+				      block_dev_desc_t *dev_desc,
+				      fastboot_ptentry *ptable)
+{
+	disk_partition_t info;
+	strcpy(ptable[ptable_index].name, name);
+
+	if (get_partition_info(dev_desc,
+			       mmc_dos_partition_index, &info)) {
+		printf("Bad partition index:%d for partition:%s\n",
+		       mmc_dos_partition_index, name);
+		return -1;
+	} else {
+		ptable[ptable_index].start = info.start;
+		ptable[ptable_index].length = info.size;
+		ptable[ptable_index].partition_id = mmc_partition_index;
+	}
+	return 0;
+}
+
 static int fastboot_init_mmc_sata_ptable(void)
 {
 	int i, sata_device_no;
@@ -289,7 +315,6 @@ static int fastboot_init_mmc_sata_ptable(void)
 	 * default is no partition, for emmc default user part, except emmc*/
 	struct mmc *mmc;
 	block_dev_desc_t *dev_desc;
-	disk_partition_t info;
 	char *fastboot_env;
 	fastboot_ptentry ptable[PTN_RECOVERY_INDEX + 1];
 
@@ -353,43 +378,18 @@ static int fastboot_init_mmc_sata_ptable(void)
 	ptable[PTN_BOOTLOADER_INDEX].length =
 				 ANDROID_BOOTLOADER_SIZE / dev_desc->blksz;
 	ptable[PTN_BOOTLOADER_INDEX].partition_id = boot_partition;
-	/* kernel */
-	strcpy(ptable[PTN_KERNEL_INDEX].name, "kernel");
-	ptable[PTN_KERNEL_INDEX].start =
-				ANDROID_KERNEL_OFFSET / dev_desc->blksz;
-	ptable[PTN_KERNEL_INDEX].length =
-				ANDROID_KERNEL_SIZE / dev_desc->blksz;
-	ptable[PTN_KERNEL_INDEX].partition_id = user_partition;
-	/* uramdisk */
-	strcpy(ptable[PTN_URAMDISK_INDEX].name, "uramdisk");
-	ptable[PTN_URAMDISK_INDEX].start =
-				ANDROID_URAMDISK_OFFSET / dev_desc->blksz;
-	ptable[PTN_URAMDISK_INDEX].length =
-				ANDROID_URAMDISK_SIZE / dev_desc->blksz;
-	ptable[PTN_URAMDISK_INDEX].partition_id = user_partition;
 
-	/* system partition */
-	strcpy(ptable[PTN_SYSTEM_INDEX].name, "system");
-	if (get_partition_info(dev_desc,
-				CONFIG_ANDROID_SYSTEM_PARTITION_MMC, &info))
-		printf("Bad partition index:%d\n",
-			CONFIG_ANDROID_SYSTEM_PARTITION_MMC);
-	else {
-		ptable[PTN_SYSTEM_INDEX].start = info.start;
-		ptable[PTN_SYSTEM_INDEX].length = info.size;
-		ptable[PTN_SYSTEM_INDEX].partition_id = user_partition;
-	}
-	/* recovery partition */
-	strcpy(ptable[PTN_RECOVERY_INDEX].name, "recovery");
-	if (get_partition_info(dev_desc,
-				CONFIG_ANDROID_RECOVERY_PARTITION_MMC, &info))
-		printf("Bad partition index:%d\n",
-			CONFIG_ANDROID_RECOVERY_PARTITION_MMC);
-	else {
-		ptable[PTN_RECOVERY_INDEX].start = info.start;
-		ptable[PTN_RECOVERY_INDEX].length = info.size;
-		ptable[PTN_RECOVERY_INDEX].partition_id = user_partition;
-	}
+	setup_ptable_mmc_partition(PTN_KERNEL_INDEX,
+				   CONFIG_ANDROID_BOOT_PARTITION_MMC,
+				   user_partition, "boot", dev_desc, ptable);
+	setup_ptable_mmc_partition(PTN_RECOVERY_INDEX,
+				   CONFIG_ANDROID_RECOVERY_PARTITION_MMC,
+				   user_partition,
+				   "recovery", dev_desc, ptable);
+	setup_ptable_mmc_partition(PTN_SYSTEM_INDEX,
+				   CONFIG_ANDROID_SYSTEM_PARTITION_MMC,
+				   user_partition,
+				   "system", dev_desc, ptable);
 
 	for (i = 0; i <= PTN_RECOVERY_INDEX; i++)
 		fastboot_flash_add_ptn(&ptable[i]);
@@ -771,3 +771,9 @@ int fastboot_cdc_setup(struct usb_device_request *request, struct urb *urb)
 	return 0;
 }
 
+/* export to lib_arm/board.c */
+void check_fastboot_mode(void)
+{
+	if (fastboot_check_and_clean_flag())
+		do_fastboot(NULL, 0, 0, 0);
+}

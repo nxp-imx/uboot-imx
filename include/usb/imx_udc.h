@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -483,7 +483,8 @@ void udc_setup_ep(struct usb_device_instance *device,
 int udc_endpoint_write(struct usb_endpoint_instance *epi);
 void udc_irq(void);
 void usb_shutdown(void);
-
+void mxc_udc_rxqueue_update(u8 ep, u32 len);
 int is_usb_disconnected(void);
+void reset_usb_phy1();
 
 #endif

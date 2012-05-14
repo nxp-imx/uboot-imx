@@ -492,84 +492,11 @@ struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
 
 int check_recovery_cmd_file(void)
 {
-	disk_partition_t info;
 	int button_pressed = 0;
-	ulong part_length;
-	int filelen = 0;
-	char *env;
+	int recovery_mode = 0;
 	u32 reg;
-	int i;
 
-	/* For test only */
-	/* When detecting android_recovery_switch,
-	 * enter recovery mode directly */
-	env = getenv("android_recovery_switch");
-	if (!strcmp(env, "1")) {
-		printf("Env recovery detected!\nEnter recovery mode!\n");
-		return 1;
-	}
-
-	printf("Checking for recovery command file...\n");
-	switch (get_boot_device()) {
-	case MMC_BOOT:
-	case SD_BOOT:
-	case SPI_NOR_BOOT:
-	case I2C_BOOT:
-		{
-			for (i = 0; i < 3; i++) {
-				block_dev_desc_t *dev_desc = NULL;
-				struct mmc *mmc = find_mmc_device(i);
-
-				dev_desc = get_dev("mmc", i);
-
-				if (NULL == dev_desc) {
-					printf("** Block device MMC %d not supported\n", i);
-					continue;
-				}
-
-				mmc_init(mmc);
-
-				if (get_partition_info(dev_desc,
-						       CONFIG_ANDROID_CACHE_PARTITION_MMC,
-						       &info)) {
-					printf("** Bad partition %d **\n",
-					       CONFIG_ANDROID_CACHE_PARTITION_MMC);
-					continue;
-				}
-
-				part_length = ext2fs_set_blk_dev(dev_desc,
-								 CONFIG_ANDROID_CACHE_PARTITION_MMC);
-				if (part_length == 0) {
-					printf("** Bad partition - mmc %d:%d **\n", i,
-					       CONFIG_ANDROID_CACHE_PARTITION_MMC);
-					ext2fs_close();
-					continue;
-				}
-
-				if (!ext2fs_mount(part_length)) {
-					printf("** Bad ext2 partition or "
-					       "disk - mmc %d:%d **\n",
-					       i, CONFIG_ANDROID_CACHE_PARTITION_MMC);
-					ext2fs_close();
-					continue;
-				}
-
-				filelen = ext2fs_open(CONFIG_ANDROID_RECOVERY_CMD_FILE);
-
-				ext2fs_close();
-				break;
-			}
-		}
-		break;
-	case NAND_BOOT:
-		return 0;
-		break;
-	case UNKNOWN_BOOT:
-	default:
-		return 0;
-		break;
-	}
-
+	recovery_mode = check_and_clean_recovery_flag();
 
 	/* Check Recovery Combo Button press or not. */
 	mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_19__GPIO_4_5);
@@ -582,7 +509,7 @@ int check_recovery_cmd_file(void)
 		printf("Recovery key pressed\n");
 	}
 
-	return (filelen > 0 || button_pressed);
+	return recovery_mode || button_pressed;
 }
 #endif
 

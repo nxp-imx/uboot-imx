@@ -1101,6 +1101,50 @@ void set_usboh3_clk(void)
 }
 #endif
 
+#ifdef CONFIG_ANDROID_RECOVERY
+#define ANDROID_RECOVERY_BOOT  (1 << 7)
+/* check if the recovery bit is set by kernel, it can be set by kernel
+ * issue a command '# reboot recovery' */
+int check_and_clean_recovery_flag()
+{
+	int flag_set = 0;
+	u32 reg;
+	reg = readl(SRC_BASE_ADDR + SRC_GPR10);
+
+	flag_set = !!(reg & ANDROID_RECOVERY_BOOT);
+
+	/* clean it in case looping infinite here.... */
+	if (flag_set) {
+		reg &= ~ANDROID_RECOVERY_BOOT;
+		writel(reg, SRC_BASE_ADDR + SRC_GPR10);
+	}
+
+	return flag_set;
+}
+#endif
+
+#ifdef CONFIG_FASTBOOT
+#define ANDROID_FASTBOOT_BOOT  (1 << 8)
+/* check if the recovery bit is set by kernel, it can be set by kernel
+ * issue a command '# reboot fastboot' */
+int fastboot_check_and_clean_flag()
+{
+	int flag_set = 0;
+	u32 reg;
+	reg = readl(SRC_BASE_ADDR + SRC_GPR10);
+
+	flag_set = !!(reg & ANDROID_FASTBOOT_BOOT);
+
+	/* clean it in case looping infinite here.... */
+	if (flag_set) {
+		reg &= ~ANDROID_FASTBOOT_BOOT;
+		writel(reg, SRC_BASE_ADDR + SRC_GPR10);
+	}
+
+	return flag_set;
+}
+#endif
+
 #ifdef CONFIG_CMD_IMX_DOWNLOAD_MODE
 #define PERSIST_WATCHDOG_RESET_BOOT		(0x10000000)
 /*BOOT_CFG1[7..4] = 0x3 Boot from Serial ROM (I2C/SPI)*/
