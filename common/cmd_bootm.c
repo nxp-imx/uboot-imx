@@ -734,6 +734,12 @@ static image_header_t *image_get_kernel (ulong img_addr, int verify)
 	if (image_get_ep(hdr) < 0x90000000)
 		image_set_ep(hdr, image_get_ep(hdr)+0x20000000);
 #endif
+#if defined(CONFIG_MX6SL)
+	if (image_get_load(hdr) < 0x80000000)
+		image_set_load(hdr, image_get_load(hdr)+0x70000000);
+	if (image_get_ep(hdr) < 0x80000000)
+		image_set_ep(hdr, image_get_ep(hdr)+0x70000000);
+#endif
 
 	show_boot_progress (3);
 	image_print_contents (hdr);
