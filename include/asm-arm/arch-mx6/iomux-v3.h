@@ -50,9 +50,8 @@
  * PAD_CTRL_OFS:	   12..23 (12)
  * SEL_INPUT_OFS:	   24..35 (12)
  * MUX_MODE + SION:	   36..40  (5)
- * PAD_CTRL + NO_PAD_CTRL: 41..58 (18)
- * SEL_INP:		   59..62  (4)
- * reserved:		     63    (1)
+ * PAD_CTRL + NO_PAD_CTRL: 41..59 (19)
+ * SEL_INP:		   60..63  (4)
 */
 
 typedef u64 iomux_v3_cfg_t;
@@ -69,8 +68,8 @@ typedef u64 iomux_v3_cfg_t;
 #define MUX_MODE_SHIFT		36
 #define MUX_MODE_MASK		((iomux_v3_cfg_t)0x1f << MUX_MODE_SHIFT)
 #define MUX_PAD_CTRL_SHIFT	41
-#define MUX_PAD_CTRL_MASK	((iomux_v3_cfg_t)0x3ffff << MUX_PAD_CTRL_SHIFT)
-#define MUX_SEL_INPUT_SHIFT	59
+#define MUX_PAD_CTRL_MASK	((iomux_v3_cfg_t)0x7ffff << MUX_PAD_CTRL_SHIFT)
+#define MUX_SEL_INPUT_SHIFT	60
 #define MUX_SEL_INPUT_MASK	((iomux_v3_cfg_t)0xf << MUX_SEL_INPUT_SHIFT)
 
 #define MUX_PAD_CTRL(x)		((iomux_v3_cfg_t)(x) << MUX_PAD_CTRL_SHIFT)
@@ -88,6 +87,8 @@ typedef u64 iomux_v3_cfg_t;
 /*
  * Use to set PAD control
  */
+#define PAD_CTL_LVE_OFFSET	(1 << 22)
+#define PAD_CTL_LVE		(1 << 18)
 #define NO_PAD_CTRL		(1 << 17)
 #define PAD_CTL_HYS		(1 << 16)
 

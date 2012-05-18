@@ -3,7 +3,7 @@
  * Copyright (C) 2009 by Jan Weitzel Phytec Messtechnik GmbH,
  *                       <armlinux@phytec.de>
  *
- * Copyright (C) 2004-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2004-2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,8 +48,14 @@ int mxc_iomux_v3_setup_pad(iomux_v3_cfg_t pad)
 	if (sel_input_ofs)
 		__raw_writel(sel_input, base + sel_input_ofs);
 
-	if (!(pad_ctrl & NO_PAD_CTRL) && pad_ctrl_ofs)
+	if (!(pad_ctrl & NO_PAD_CTRL) && pad_ctrl_ofs) {
+		if (pad_ctrl & PAD_CTL_LVE) {
+			/* Set the bit for LVE */
+			pad_ctrl |= (1 << PAD_CTL_LVE_OFFSET);
+			pad_ctrl &= ~(1 << PAD_CTL_LVE);
+		}
 		__raw_writel(pad_ctrl, base + pad_ctrl_ofs);
+	}
 
 	return 0;
 }
