@@ -117,6 +117,7 @@ static fastboot_ptentry ptable[MAX_PTN];
 static unsigned int pcount;
 static int static_pcount = -1;
 
+#ifdef CONFIG_FASTBOOT_STORAGE_NAND
 static void set_env(char *var, char *val)
 {
 	char *setenv[4]  = { "setenv", NULL, NULL, NULL, };
@@ -127,7 +128,6 @@ static void set_env(char *var, char *val)
 	do_setenv(NULL, 0, 3, setenv);
 }
 
-#ifdef CONFIG_FASTBOOT_STORAGE_NAND
 static void save_env(struct fastboot_ptentry *ptn,
 		     char *var, char *val)
 {

@@ -37,6 +37,10 @@
 #include <asm/arch/regs-ocotp.h>
 #endif
 
+#ifdef CONFIG_IMX_UDC
+#include <usb/imx_udc.h>
+#endif
+
 #include <usb/regs-usbphy-mx6.h>
 
 enum pll_clocks {
@@ -1067,7 +1071,7 @@ void enable_usb_phy1_clk(unsigned char enable)
 	}
 }
 
-void reset_usb_phy1()
+void reset_usb_phy1(void)
 {
 	/* Reset USBPHY module */
 	u32 temp;
@@ -1105,7 +1109,7 @@ void set_usboh3_clk(void)
 #define ANDROID_RECOVERY_BOOT  (1 << 7)
 /* check if the recovery bit is set by kernel, it can be set by kernel
  * issue a command '# reboot recovery' */
-int check_and_clean_recovery_flag()
+int check_and_clean_recovery_flag(void)
 {
 	int flag_set = 0;
 	u32 reg;
@@ -1127,7 +1131,7 @@ int check_and_clean_recovery_flag()
 #define ANDROID_FASTBOOT_BOOT  (1 << 8)
 /* check if the recovery bit is set by kernel, it can be set by kernel
  * issue a command '# reboot fastboot' */
-int fastboot_check_and_clean_flag()
+int fastboot_check_and_clean_flag(void)
 {
 	int flag_set = 0;
 	u32 reg;

@@ -485,6 +485,11 @@ void udc_irq(void);
 void usb_shutdown(void);
 void mxc_udc_rxqueue_update(u8 ep, u32 len);
 int is_usb_disconnected(void);
-void reset_usb_phy1();
+void reset_usb_phy1(void);
+void set_usboh3_clk(void);
+void set_usb_phy1_clk(void);
+void enable_usb_phy1_clk(unsigned char enable);
+void enable_usboh3_clk(unsigned char enable);
+void udc_pins_setting(void);
 
 #endif
