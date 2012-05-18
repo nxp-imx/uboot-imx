@@ -55,6 +55,7 @@
 */
 
 typedef u64 iomux_v3_cfg_t;
+typedef unsigned int iomux_pin_name_t;
 
 #define MUX_CTRL_OFS_SHIFT	0
 #define MUX_CTRL_OFS_MASK	((iomux_v3_cfg_t)0xfff << MUX_CTRL_OFS_SHIFT)
@@ -83,6 +84,14 @@ typedef u64 iomux_v3_cfg_t;
 		((iomux_v3_cfg_t)(_sel_input_ofs) << \
 			MUX_SEL_INPUT_OFS_SHIFT) | \
 		((iomux_v3_cfg_t)(_sel_input) << MUX_SEL_INPUT_SHIFT))
+
+#if defined CONFIG_MX6Q
+#define MX6X_IOMUX(s) MX6Q_##s
+#elif defined CONFIG_MX6DL
+#define MX6X_IOMUX(s) MX6DL_##s
+#elif defined CONFIG_MX6SL
+#define MX6X_IOMUX(s) MX6SL_##s
+#endif
 
 /*
  * Use to set PAD control

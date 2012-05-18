@@ -79,6 +79,7 @@
 
 #include <config_cmd_default.h>
 
+#define CONFIG_MXC_GPIO
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_MII

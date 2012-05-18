@@ -65,6 +65,11 @@
 #include <imx_otp.h>
 #endif
 
+#ifdef CONFIG_MXC_GPIO
+#include <asm/gpio.h>
+#include <asm/arch/gpio.h>
+#endif
+
 #ifdef CONFIG_ANDROID_RECOVERY
 #include "../common/recovery.h"
 #include <part.h>
@@ -77,6 +82,10 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 static enum boot_device boot_dev;
+
+#define GPIO_VOL_DN_KEY IMX_GPIO_NR(1, 5)
+#define USB_OTG_PWR IMX_GPIO_NR(3, 22)
+#define USB_H1_POWER IMX_GPIO_NR(1, 29)
 
 #ifdef CONFIG_VIDEO_MX5
 extern unsigned char fsl_bmp_600x400[];
@@ -1235,16 +1244,12 @@ int check_recovery_cmd_file(void)
 	recovery_mode = check_and_clean_recovery_flag();
 
 	/* Check Recovery Combo Button press or not. */
-#if defined CONFIG_MX6Q
-	mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_5__GPIO_1_5);
-#elif defined CONFIG_MX6DL
-	mxc_iomux_v3_setup_pad(MX6DL_PAD_GPIO_5__GPIO_1_5);
-#endif
-	reg = readl(GPIO1_BASE_ADDR + GPIO_GDIR);
-	reg &= ~(1<<5);
-	writel(reg, GPIO1_BASE_ADDR + GPIO_GDIR);
-	reg = readl(GPIO1_BASE_ADDR + GPIO_PSR);
-	if (!(reg & (1 << 5))) { /* VOL_DN key is low assert */
+	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_GPIO_5__GPIO_1_5));
+
+	gpio_request(GPIO_VOL_DN_KEY);
+	gpio_direction_input(GPIO_VOL_DN_KEY);
+
+	if (gpio_get_value(GPIO_VOL_DN_KEY) == 0) { /* VOL_DN key is low assert */
 		button_pressed = 1;
 		printf("Recovery key pressed\n");
 	}
@@ -1444,43 +1449,19 @@ int checkboard(void)
 	return 0;
 }
 
-#if defined CONFIG_MX6Q
-#define MX6X_IOMUX(s) MX6Q_##s
-#elif defined CONFIG_MX6DL
-#define MX6X_IOMUX(s) MX6DL_##s
-#endif
 
 #ifdef CONFIG_IMX_UDC
 
 void udc_pins_setting(void)
 {
-#define GPIO_3_22_BIT_MASK (1<<22)
-#define GPIO_1_29_BIT_MASK (1<<29)
-	u32 reg;
-
 	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_ENET_RX_ER__ANATOP_USBOTG_ID));
 	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_EIM_D22__GPIO_3_22));
 	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_ENET_TXD1__GPIO_1_29));
 
-	reg = readl(GPIO3_BASE_ADDR + GPIO_GDIR);
-	/* set gpio_3_22 as output */
-	reg |= GPIO_3_22_BIT_MASK;
-	writel(reg, GPIO3_BASE_ADDR + GPIO_GDIR);
-
-	/* set USB_OTG_PWR to 0 */
-	reg = readl(GPIO3_BASE_ADDR + GPIO_DR);
-	reg &= ~GPIO_3_22_BIT_MASK;
-	writel(reg, GPIO3_BASE_ADDR + GPIO_DR);
-
-	reg = readl(GPIO1_BASE_ADDR + GPIO_GDIR);
-	/* set gpio_1_29 as output */
-	reg |= GPIO_1_29_BIT_MASK;
-	writel(reg, GPIO1_BASE_ADDR + GPIO_GDIR);
-
-	/* set USB_H1_POWER to 1 */
-	reg = readl(GPIO1_BASE_ADDR + GPIO_DR);
-	reg |= GPIO_1_29_BIT_MASK;
-	writel(reg, GPIO1_BASE_ADDR + GPIO_DR);
+	/* USB_OTG_PWR = 0 */
+	gpio_direction_output(USB_OTG_PWR, 0);
+	/* USB_H1_POWER = 1 */
+	gpio_direction_output(USB_H1_POWER, 1);
 
 	mxc_iomux_set_gpr_register(1, 13, 1, 0);
 
