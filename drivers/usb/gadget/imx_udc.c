@@ -464,7 +464,7 @@ static void usb_set_mode_device(void)
 		;
 	DBG("DOORE RESET END\n");
 
-#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL) || defined(CONFIG_MX6SL)
 	reset_usb_phy1();
 #endif
 	DBG("init core to device mode\n");
@@ -812,7 +812,7 @@ int mxc_udc_init(void)
 	set_usboh3_clk();
 	set_usb_phy1_clk();
 	enable_usboh3_clk(1);
-#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL) || defined(CONFIG_MX6SL)
 	udc_disable_over_current();
 #endif
 	enable_usb_phy1_clk(1);

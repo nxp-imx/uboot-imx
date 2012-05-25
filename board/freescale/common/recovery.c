@@ -85,7 +85,7 @@ void setup_recovery_env(void)
 	boot_cmd = supported_reco_envs[bootdev].cmd;
 
 	if (boot_cmd == NULL) {
-		printf("Unsupported bootup device for recovery\n");
+		printf("Unsupported bootup device for recovery: dev: %d\n", bootdev);
 		return;
 	}
 

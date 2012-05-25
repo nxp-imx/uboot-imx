@@ -33,7 +33,8 @@
 #define USB_OTGREGS_BASE	(OTG_BASE_ADDR + 0x000)
 #define USB_H1REGS_BASE		(OTG_BASE_ADDR + 0x200)
 #define USB_H2REGS_BASE		(OTG_BASE_ADDR + 0x400)
-#if (defined CONFIG_MX6Q || defined CONFIG_MX53 || defined CONFIG_MX51 || CONFIG_MX50)
+#if (defined CONFIG_MX51 || defined CONFIG_MX50 || defined CONFIG_MX6Q \
+     || defined CONFIG_MX53 || defined CONFIG_MX6DL || defined CONFIG_MX6SL)
 #define USB_H3REGS_BASE		(OTG_BASE_ADDR + 0x600)
 #define USB_OTHERREGS_BASE	(OTG_BASE_ADDR + 0x800)
 #else

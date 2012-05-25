@@ -40,7 +40,8 @@ static unsigned long gpio_ports[] = {
 	[0] = GPIO1_BASE_ADDR,
 	[1] = GPIO2_BASE_ADDR,
 	[2] = GPIO3_BASE_ADDR,
-#if defined(CONFIG_MX51) || defined(CONFIG_MX53) || defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
+#if defined(CONFIG_MX51) || defined(CONFIG_MX53) || defined(CONFIG_MX6Q) \
+	|| defined(CONFIG_MX6DL) || defined(CONFIG_MX6SL)
 	[3] = GPIO4_BASE_ADDR,
 #if !defined(CONFIG_MX51)
 	[4] = GPIO5_BASE_ADDR,

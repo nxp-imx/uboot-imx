@@ -44,10 +44,22 @@
 #include <fsl_esdhc.h>
 #endif
 
+#ifdef CONFIG_MXC_GPIO
+#include <asm/gpio.h>
+#include <asm/arch/gpio.h>
+#endif
+
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
 static enum boot_device boot_dev;
+
+#define USB_OTG_PWR IMX_GPIO_NR(4, 0)
+#define USB_H1_PWR IMX_GPIO_NR(4, 2)
 
 static inline void setup_boot_device(void)
 {
@@ -757,3 +769,24 @@ int checkboard(void)
 	}
 	return 0;
 }
+
+#ifdef CONFIG_ANDROID_RECOVERY
+int check_recovery_cmd_file(void)
+{
+	return check_and_clean_recovery_flag();
+}
+#endif
+
+
+#ifdef CONFIG_IMX_UDC
+void udc_pins_setting(void)
+{
+	/* USB_OTG_PWR */
+	mxc_iomux_v3_setup_pad(MX6SL_PAD_KEY_COL4__GPIO_4_0);
+	mxc_iomux_v3_setup_pad(MX6SL_PAD_KEY_COL5__GPIO_4_2);
+	/* USB_OTG_PWR = 0 */
+	gpio_direction_output(USB_OTG_PWR, 0);
+	/* USB_H1_POWER = 1 */
+	gpio_direction_output(USB_H1_PWR, 1);
+}
+#endif
