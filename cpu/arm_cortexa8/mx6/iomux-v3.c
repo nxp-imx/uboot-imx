@@ -52,7 +52,7 @@ int mxc_iomux_v3_setup_pad(iomux_v3_cfg_t pad)
 		if (pad_ctrl & PAD_CTL_LVE) {
 			/* Set the bit for LVE */
 			pad_ctrl |= (1 << PAD_CTL_LVE_OFFSET);
-			pad_ctrl &= ~(1 << PAD_CTL_LVE);
+			pad_ctrl &= ~(PAD_CTL_LVE);
 		}
 		__raw_writel(pad_ctrl, base + pad_ctrl_ofs);
 	}

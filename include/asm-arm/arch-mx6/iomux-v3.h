@@ -96,7 +96,7 @@ typedef unsigned int iomux_pin_name_t;
 /*
  * Use to set PAD control
  */
-#define PAD_CTL_LVE_OFFSET	(1 << 22)
+#define PAD_CTL_LVE_OFFSET	(22)
 #define PAD_CTL_LVE		(1 << 18)
 #define NO_PAD_CTRL		(1 << 17)
 #define PAD_CTL_HYS		(1 << 16)
