@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -51,7 +51,7 @@
 #endif
 
 #ifdef CONFIG_ANDROID_RECOVERY
-#include "../common/recovery.h"
+#include <recovery.h>
 #include <part.h>
 #include <ext2fs.h>
 #include <linux/mtd/mtd.h>
@@ -739,45 +739,6 @@ int board_init(void)
 
 
 #ifdef CONFIG_ANDROID_RECOVERY
-struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
-	{
-	 .cmd = NULL,
-	 .args = NULL,
-	 },
-	{
-	 .cmd = NULL,
-	 .args = NULL,
-	 },
-	{
-	 .cmd = NULL,
-	 .args = NULL,
-	 },
-	{
-	 .cmd = NULL,
-	 .args = NULL,
-	 },
-	{
-	 .cmd = NULL,
-	 .args = NULL,
-	 },
-	{
-	 .cmd = NULL,
-	 .args = NULL,
-	 },
-	{
-	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
-	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
-	 },
-	{
-	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
-	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
-	 },
-	{
-	 .cmd = NULL,
-	 .args = NULL,
-	 },
-};
-
 int check_recovery_cmd_file(void)
 {
 	disk_partition_t info;

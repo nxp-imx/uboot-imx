@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
- * (C) Copyright 2009-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -43,7 +43,7 @@
 #endif
 
 #ifdef CONFIG_ANDROID_RECOVERY
-#include "../common/recovery.h"
+#include <recovery.h>
 #include <mxc_keyb.h>
 #include <part.h>
 #include <ext2fs.h>
@@ -612,21 +612,6 @@ int board_init(void)
 }
 
 #ifdef CONFIG_ANDROID_RECOVERY
-struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
-	{
-	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND,
-	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND,
-	 },
-	{
-	 .cmd = NULL,
-	 .args = NULL,
-	 },
-	{
-	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
-	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
-	 },
-};
-
 static int check_mmc_recovery_cmd_file(int dev_num, int part_num, char *path)
 {
 	block_dev_desc_t *dev_desc = NULL;

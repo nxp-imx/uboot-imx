@@ -20,7 +20,7 @@
  */
 #include <common.h>
 #include <malloc.h>
-#include "recovery.h"
+#include <recovery.h>
 #ifdef CONFIG_MXC_KPD
 #include <mxc_keyb.h>
 #endif

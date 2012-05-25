@@ -41,6 +41,10 @@
 #include <usb/imx_udc.h>
 #endif
 
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif
+
 #include <usb/regs-usbphy-mx6.h>
 
 enum pll_clocks {
@@ -1202,4 +1206,46 @@ U_BOOT_CMD(
 	download_mode, 1, 1, do_switch_mfgmode,
 	"download_mode - enter i.MX serial/usb download mode",
 	"");
+#endif
+
+
+#ifdef CONFIG_ANDROID_RECOVERY
+struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
+	{
+		.cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+		.args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
+	},
+	{
+		.cmd = NULL,
+		.args = NULL,
+	},
+	{
+		.cmd = NULL,
+		.args = NULL,
+	},
+	{
+		.cmd = NULL,
+		.args = NULL,
+	},
+	{
+		.cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+		.args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
+	},
+	{
+		.cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+		.args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
+	},
+	{
+		.cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+		.args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
+	},
+	{
+		.cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+		.args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
+	},
+	{
+		.cmd = NULL,
+		.args = NULL,
+	},
+};
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -31,6 +31,10 @@
 #include <div64.h>
 #ifdef CONFIG_ARCH_CPU_INIT
 #include <asm/cache-cp15.h>
+#endif
+
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
 #endif
 
 enum pll_clocks {
@@ -1166,3 +1170,55 @@ U_BOOT_CMD(
 	"download_mode - enter i.MX serial/usb download mode\n",
 	"");
 #endif
+
+
+#ifdef CONFIG_ANDROID_RECOVERY
+struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	},
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+	{
+	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
+	 },
+	{
+	 .cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
+	 .args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
+	 },
+	{
+	 .cmd = NULL,
+	 .args = NULL,
+	 },
+};
+#endif
+
+#ifdef CONFIG_FASTBOOT
+/* check if the recovery bit is set by kernel, it can be set by kernel
+ * issue a command '# reboot fastboot' */
+int fastboot_check_and_clean_flag(void)
+{
+	return 0;
+}
+#endif
+
