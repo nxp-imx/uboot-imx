@@ -31,13 +31,18 @@
 #ifdef CONFIG_MXC_FEC
 #include <miiphy.h>
 #endif
+
 #if defined(CONFIG_VIDEO_MX5)
 #include <linux/list.h>
 #include <linux/fb.h>
 #include <linux/mxcfb.h>
 #include <ipu.h>
+#endif
+#if defined(CONFIG_VIDEO_MX5) || defined(CONFIG_MXC_EPDC)
 #include <lcd.h>
 #endif
+
+#include "../../../drivers/video/mxc_epdc_fb.h"
 
 #ifdef CONFIG_IMX_ECSPI
 #include <imx_spi.h>
@@ -1024,6 +1029,287 @@ int board_mmc_init(bd_t *bis)
 		return -1;
 }
 
+#ifdef CONFIG_MXC_EPDC
+#ifdef CONFIG_SPLASH_SCREEN
+int setup_splash_img()
+{
+#ifdef CONFIG_SPLASH_IS_IN_MMC
+	int mmc_dev = get_mmc_env_devno();
+	ulong offset = CONFIG_SPLASH_IMG_OFFSET;
+	ulong size = CONFIG_SPLASH_IMG_SIZE;
+	ulong addr = 0;
+	char *s = NULL;
+	struct mmc *mmc = find_mmc_device(mmc_dev);
+	uint blk_start, blk_cnt, n;
+
+	s = getenv("splashimage");
+
+	if (NULL == s) {
+		puts("env splashimage not found!\n");
+		return -1;
+	}
+	addr = simple_strtoul(s, NULL, 16);
+
+	if (!mmc) {
+		printf("MMC Device %d not found\n",
+			mmc_dev);
+		return -1;
+	}
+
+	if (mmc_init(mmc)) {
+		puts("MMC init failed\n");
+		return  -1;
+	}
+
+	blk_start = ALIGN(offset, mmc->read_bl_len) / mmc->read_bl_len;
+	blk_cnt   = ALIGN(size, mmc->read_bl_len) / mmc->read_bl_len;
+	n = mmc->block_dev.block_read(mmc_dev, blk_start,
+					blk_cnt, (u_char *)addr);
+	flush_cache((ulong)addr, blk_cnt * mmc->read_bl_len);
+
+	return (n == blk_cnt) ? 0 : -1;
+#endif
+}
+#endif
+
+vidinfo_t panel_info = {
+	.vl_refresh = 85,
+	.vl_col = 800,
+	.vl_row = 600,
+	.vl_pixclock = 26666667,
+	.vl_left_margin = 8,
+	.vl_right_margin = 100,
+	.vl_upper_margin = 4,
+	.vl_lower_margin = 8,
+	.vl_hsync = 4,
+	.vl_vsync = 1,
+	.vl_sync = 0,
+	.vl_mode = 0,
+	.vl_flag = 0,
+	.vl_bpix = 3,
+	cmap:0,
+};
+
+struct epdc_timing_params panel_timings = {
+	.vscan_holdoff = 4,
+	.sdoed_width = 10,
+	.sdoed_delay = 20,
+	.sdoez_width = 10,
+	.sdoez_delay = 20,
+	.gdclk_hp_offs = 419,
+	.gdsp_offs = 20,
+	.gdoe_offs = 0,
+	.gdclk_offs = 5,
+	.num_ce = 1,
+};
+
+static void setup_epdc_power()
+{
+	unsigned int reg;
+
+	/* Setup epdc voltage */
+
+	/* EIM_A17 - GPIO2[21] for PWR_GOOD status */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_A17__GPIO_2_21);
+
+	/* EIM_D17 - GPIO3[17] for VCOM control */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_D17__GPIO_3_17);
+
+	/* Set as output */
+	reg = readl(GPIO3_BASE_ADDR + GPIO_GDIR);
+	reg |= (1 << 17);
+	writel(reg, GPIO3_BASE_ADDR + GPIO_GDIR);
+
+	/* EIM_D20 - GPIO3[20] for EPD PMIC WAKEUP */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_D20__GPIO_3_20);
+	/* Set as output */
+	reg = readl(GPIO3_BASE_ADDR + GPIO_GDIR);
+	reg |= (1 << 20);
+	writel(reg, GPIO3_BASE_ADDR + GPIO_GDIR);
+
+	/* EIM_A18 - GPIO2[20] for EPD PWR CTL0 */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_A18__GPIO_2_20);
+	/* Set as output */
+	reg = readl(GPIO2_BASE_ADDR + GPIO_GDIR);
+	reg |= (1 << 20);
+	writel(reg, GPIO2_BASE_ADDR + GPIO_GDIR);
+}
+
+void epdc_power_on()
+{
+	unsigned int reg;
+
+	/* Set EPD_PWR_CTL0 to high - enable EINK_VDD (3.15) */
+	reg = readl(GPIO2_BASE_ADDR + GPIO_DR);
+	reg |= (1 << 20);
+	writel(reg, GPIO2_BASE_ADDR + GPIO_DR);
+
+	/* Set PMIC Wakeup to high - enable Display power */
+	reg = readl(GPIO3_BASE_ADDR + GPIO_DR);
+	reg |= (1 << 20);
+	writel(reg, GPIO3_BASE_ADDR + GPIO_DR);
+
+	/* Wait for PWRGOOD == 1 */
+	while (1) {
+		reg = readl(GPIO2_BASE_ADDR + GPIO_DR);
+		if (!(reg & (1 << 21)))
+			break;
+
+		udelay(100);
+	}
+
+	/* Enable VCOM */
+	reg = readl(GPIO3_BASE_ADDR + GPIO_DR);
+	reg |= (1 << 17);
+	writel(reg, GPIO3_BASE_ADDR + GPIO_DR);
+
+	reg = readl(GPIO3_BASE_ADDR + GPIO_DR);
+
+	udelay(500);
+}
+
+void  epdc_power_off()
+{
+	unsigned int reg;
+	/* Set PMIC Wakeup to low - disable Display power */
+	reg = readl(GPIO3_BASE_ADDR + GPIO_DR);
+	reg &= ~(1 << 20);
+	writel(reg, GPIO3_BASE_ADDR + GPIO_DR);
+
+	/* Disable VCOM */
+	reg = readl(GPIO3_BASE_ADDR + GPIO_DR);
+	reg &= ~(1 << 17);
+	writel(reg, GPIO3_BASE_ADDR + GPIO_DR);
+
+	/* Set EPD_PWR_CTL0 to low - disable EINK_VDD (3.15) */
+	reg = readl(GPIO2_BASE_ADDR + GPIO_DR);
+	reg &= ~(1 << 20);
+	writel(reg, GPIO2_BASE_ADDR + GPIO_DR);
+}
+
+int setup_waveform_file()
+{
+#ifdef CONFIG_WAVEFORM_FILE_IN_MMC
+	int mmc_dev = get_mmc_env_devno();
+	ulong offset = CONFIG_WAVEFORM_FILE_OFFSET;
+	ulong size = CONFIG_WAVEFORM_FILE_SIZE;
+	ulong addr = CONFIG_WAVEFORM_BUF_ADDR;
+	char *s = NULL;
+	struct mmc *mmc = find_mmc_device(mmc_dev);
+	uint blk_start, blk_cnt, n;
+
+	if (!mmc) {
+		printf("MMC Device %d not found\n",
+			mmc_dev);
+		return -1;
+	}
+
+	if (mmc_init(mmc)) {
+		puts("MMC init failed\n");
+		return -1;
+	}
+
+	blk_start = ALIGN(offset, mmc->read_bl_len) / mmc->read_bl_len;
+	blk_cnt   = ALIGN(size, mmc->read_bl_len) / mmc->read_bl_len;
+	n = mmc->block_dev.block_read(mmc_dev, blk_start,
+		blk_cnt, (u_char *)addr);
+	flush_cache((ulong)addr, blk_cnt * mmc->read_bl_len);
+
+	return (n == blk_cnt) ? 0 : -1;
+#else
+	return -1;
+#endif
+}
+
+static void setup_epdc()
+{
+	unsigned int reg;
+
+	/* epdc iomux settings */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_A16__EPDC_SDDO_0);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_DA10__EPDC_SDDO_1);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_DA12__EPDC_SDDO_2);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_DA11__EPDC_SDDO_3);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_LBA__EPDC_SDDO_4);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_EB2__EPDC_SDDO_5);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_CS0__EPDC_SDDO_6);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_RW__EPDC_SDDO_7);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_A21__EPDC_GDCLK);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_A22__EPDC_GDSP);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_A23__EPDC_GDOE);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_A24__EPDC_GDRL);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_D31__EPDC_SDCLK);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_D27__EPDC_SDOE);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_DA1__EPDC_SDLE);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_EB1__EPDC_SDSHR);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_DA2__EPDC_BDR_0);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_DA4__EPDC_SDCE_0);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_DA5__EPDC_SDCE_1);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_DA6__EPDC_SDCE_2);
+
+	/*** epdc Maxim PMIC settings ***/
+
+	/* EPDC PWRSTAT - GPIO2[21] for PWR_GOOD status */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_A17__GPIO_2_21);
+
+	/* EPDC VCOM0 - GPIO3[17] for VCOM control */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_D17__GPIO_3_17);
+
+	/* UART4 TXD - GPIO3[20] for EPD PMIC WAKEUP */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_D20__GPIO_3_20);
+
+	/* EIM_A18 - GPIO2[20] for EPD PWR CTL0 */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_EIM_A18__GPIO_2_20);
+
+	/*** Set pixel clock rates for EPDC ***/
+
+	/* EPDC AXI clk (IPU2_CLK) from PFD_400M, set to 396/2 = 198MHz */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CSCDR3);
+	reg &= ~0x7C000;
+	reg |= (1 << 16) | (1 << 14);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CSCDR3);
+
+	/* EPDC AXI clk enable */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR3);
+	reg |= 0x00C0;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR3);
+
+	/* EPDC PIX clk (IPU2_DI1_CLK) from PLL5, set to 650/4/6 = ~27MHz */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CSCDR2);
+	reg &= ~0x3FE00;
+	reg |= (2 << 15) | (5 << 12);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CSCDR2);
+
+	/* PLL5 enable (defaults to 650) */
+	reg = readl(ANATOP_BASE_ADDR + ANATOP_PLL_VIDEO);
+	reg &= ~((1 << 16) | (1 << 12));
+	reg |= (1 << 13);
+	writel(reg, ANATOP_BASE_ADDR + ANATOP_PLL_VIDEO);
+
+	/* EPDC PIX clk enable */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR3);
+	reg |= 0x0C00;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR3);
+
+	panel_info.epdc_data.working_buf_addr = CONFIG_WORKING_BUF_ADDR;
+	panel_info.epdc_data.waveform_buf_addr = CONFIG_WAVEFORM_BUF_ADDR;
+
+	panel_info.epdc_data.wv_modes.mode_init = 0;
+	panel_info.epdc_data.wv_modes.mode_du = 1;
+	panel_info.epdc_data.wv_modes.mode_gc4 = 3;
+	panel_info.epdc_data.wv_modes.mode_gc8 = 2;
+	panel_info.epdc_data.wv_modes.mode_gc16 = 2;
+	panel_info.epdc_data.wv_modes.mode_gc32 = 2;
+
+	panel_info.epdc_data.epdc_timings = panel_timings;
+
+	setup_epdc_power();
+
+	/* Assign fb_base */
+	gd->fb_base = CONFIG_FB_BASE;
+}
+#endif
+
 /* For DDR mode operation, provide target delay parameter for each SD port.
  * Use cfg->esdhc_base to distinguish the SD port #. The delay for each port
  * is dependent on signal layout for that particular port.  If the following
@@ -1039,6 +1325,7 @@ u32 get_ddr_delay(struct fsl_esdhc_cfg *cfg)
 
 #endif
 
+#ifndef CONFIG_MXC_EPDC
 #ifdef CONFIG_LCD
 void lcd_enable(void)
 {
@@ -1140,6 +1427,7 @@ void setup_splash_image(void)
 	}
 }
 #endif
+#endif /* !CONFIG_MXC_EPDC */
 
 int board_init(void)
 {
@@ -1184,6 +1472,10 @@ int board_init(void)
 
 #ifdef CONFIG_NAND_GPMI
 	setup_gpmi_nand();
+#endif
+
+#ifdef CONFIG_MXC_EPDC
+	setup_epdc();
 #endif
 	return 0;
 }

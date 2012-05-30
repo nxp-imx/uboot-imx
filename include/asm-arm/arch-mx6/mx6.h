@@ -266,15 +266,15 @@
 #define CSI_BASE_ADDR               (AIPS1_OFF_BASE_ADDR + 0x64000)
 #define SIPIX_BASE_ADDR             (AIPS1_OFF_BASE_ADDR + 0x68000)
 #define SDMA_PORT_HOST_BASE_ADDR    (AIPS1_OFF_BASE_ADDR + 0x6C000)
-#define EPXP_BASE_ADDR              (AIPS1_OFF_BASE_ADDR + 0x70000)
-#define EPDC_BASE_ADDR              (AIPS1_OFF_BASE_ADDR + 0x74000)
-#define ELCDIF_BASE_ADDR            (AIPS1_OFF_BASE_ADDR + 0x78000)
-#define DCP_BASE_ADDR               (AIPS1_OFF_BASE_ADDR + 0x7C000)
 #else
 #define DCIC1_BASE_ADDR             (AIPS1_OFF_BASE_ADDR + 0x64000)
 #define DCIC2_BASE_ADDR             (AIPS1_OFF_BASE_ADDR + 0x68000)
 #define DMA_REQ_PORT_HOST_BASE_ADDR (AIPS1_OFF_BASE_ADDR + 0x6C000)
 #endif
+#define EPXP_BASE_ADDR              (AIPS1_OFF_BASE_ADDR + 0x70000)
+#define EPDC_BASE_ADDR              (AIPS1_OFF_BASE_ADDR + 0x74000)
+#define ELCDIF_BASE_ADDR            (AIPS1_OFF_BASE_ADDR + 0x78000)
+#define DCP_BASE_ADDR               (AIPS1_OFF_BASE_ADDR + 0x7C000)
 
 /* ATZ#2- On Platform */
 #define AIPS2_ON_BASE_ADDR          (ATZ2_BASE_ADDR + 0x7C000)
@@ -697,8 +697,9 @@
 #define CLKCTL_CCGR7            0x84
 #define CLKCTL_CMEOR            0x88
 
-#define ANATOP_USB1				0x10
-#define ANATOP_USB2				0x20
+#define ANATOP_USB1		0x10
+#define ANATOP_USB2		0x20
+#define ANATOP_PLL_VIDEO	0xA0
 
 #define CHIP_TYPE_DQ		0x63000
 #define CHIP_TYPE_DL		0x61000
