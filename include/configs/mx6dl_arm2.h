@@ -299,8 +299,8 @@
 	#define CONFIG_ENV_IS_NOWHERE	1
 #endif
 
-#define CONFIG_SPLASH_SCREEN
-#define CONFIG_MXC_EPDC
+/* #define CONFIG_SPLASH_SCREEN */
+/* #define CONFIG_MXC_EPDC */
 
 /*
  * SPLASH SCREEN Configs
