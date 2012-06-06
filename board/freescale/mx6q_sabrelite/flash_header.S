@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2011-2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -146,8 +146,8 @@ MXC_DCD_ITEM(69, MMDC_P0_BASE_ADDR + 0x01c, 0x04008048)
 MXC_DCD_ITEM(70, MMDC_P0_BASE_ADDR + 0x800, 0xA1380003)
 MXC_DCD_ITEM(71, MMDC_P1_BASE_ADDR + 0x800, 0xA1380003)
 MXC_DCD_ITEM(72, MMDC_P0_BASE_ADDR + 0x020, 0x00005800)
-MXC_DCD_ITEM(73, MMDC_P0_BASE_ADDR + 0x818, 0x00022227)
-MXC_DCD_ITEM(74, MMDC_P1_BASE_ADDR + 0x818, 0x00022227)
+MXC_DCD_ITEM(73, MMDC_P0_BASE_ADDR + 0x818, 0x00000007)
+MXC_DCD_ITEM(74, MMDC_P1_BASE_ADDR + 0x818, 0x00000007)
 
 MXC_DCD_ITEM(75, MMDC_P0_BASE_ADDR + 0x83c, 0x434B0350)
 MXC_DCD_ITEM(76, MMDC_P0_BASE_ADDR + 0x840, 0x034C0359)
