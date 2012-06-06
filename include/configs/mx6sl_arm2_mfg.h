@@ -201,8 +201,8 @@
 	/* detect whether SD1, 2, or 3 is boot device */
 	#define CONFIG_DYNAMIC_MMC_DEVNO
 
-	/* SD1 is 8 bit */
-	#define CONFIG_MMC_8BIT_PORTS   0x3
+	/* SD2 is 8 bit */
+	#define CONFIG_MMC_8BIT_PORTS   0x2
 	/* Setup target delay in DDR mode for each SD port */
 	#define CONFIG_GET_DDR_TARGET_DELAY
 #endif
