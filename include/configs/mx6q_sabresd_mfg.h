@@ -112,7 +112,7 @@
 #define CONFIG_LOADADDR		0x10800000	/* loadaddr env var */
 #define CONFIG_RD_LOADADDR	0x10c00000
 
-#define CONFIG_BOOTARGS         "console=ttymxc0,115200 rdinit=/linuxrc enable_wait_mode=off"
+#define CONFIG_BOOTARGS         "console=ttymxc0,115200 rdinit=/linuxrc"
 #define CONFIG_BOOTCOMMAND      "bootm 0x10800000 0x10c00000"
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\

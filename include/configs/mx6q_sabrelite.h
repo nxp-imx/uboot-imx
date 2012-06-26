@@ -124,8 +124,7 @@
 		"bootargs_base=setenv bootargs console=ttymxc1,115200\0" \
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs " \
 			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp " \
-			"video=mxcfb0:dev=ldb,LDB-XGA,if=RGB666 " \
-			"enable_wait_mode=off\0" \
+			"video=mxcfb0:dev=ldb,LDB-XGA,if=RGB666\0" \
 		"bootcmd_net=dhcp; run bootargs_base bootargs_nfs;bootm\0" \
 		"bootargs_mmc=setenv bootargs ${bootargs} " \
 			"root=/dev/mmcblk0p1 rootwait rw " \
