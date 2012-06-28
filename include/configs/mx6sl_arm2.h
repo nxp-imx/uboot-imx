@@ -93,6 +93,7 @@
 #define CONFIG_BOOTP_DNS
 
 #define CONFIG_CMD_SPI
+#define CONFIG_CMD_I2C
 #define CONFIG_CMD_IMXOTP
 
 /* Enable below configure when supporting nand */
@@ -261,6 +262,18 @@
 	#define CONFIG_ENV_OFFSET       (768 * 1024)
 #else
 	#define CONFIG_ENV_IS_NOWHERE	1
+#endif
+
+/*
+ * I2C Configs
+ */
+#ifdef CONFIG_CMD_I2C
+	#define CONFIG_HARD_I2C         1
+	#define CONFIG_I2C_MXC          1
+	#define CONFIG_SYS_I2C_PORT             I2C1_BASE_ADDR
+	#define CONFIG_SYS_I2C_SPEED            100000
+	#define CONFIG_SYS_I2C_SLAVE            0x8
+	#define CONFIG_MX6_INTER_LDO_BYPASS	0
 #endif
 
 /*#define CONFIG_SPLASH_SCREEN*/

@@ -686,6 +686,9 @@ int i2c_bus_recovery(void)
 void setup_pmic_voltages(void)
 {
 	unsigned char value = 0 ;
+	#if CONFIG_MX6_INTER_LDO_BYPASS
+	unsigned int val = 0;
+	#endif
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 	if (!i2c_probe(0x8)) {
 		if (i2c_read(0x8, 0, 1, &value, 1))
