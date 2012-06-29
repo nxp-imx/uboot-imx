@@ -54,8 +54,8 @@ image_len:        .word _end_of_copy  - TEXT_BASE + CONFIG_FLASH_HEADER_OFFSET
 plugin:           .word 0x0
 
 #if defined CONFIG_MX6SOLO_DDR3
-dcd_hdr:          .word 0x40A002D2 /* Tag=0xD2, Len=83*8 + 4 + 4, Ver=0x40 */
-write_dcd_cmd:    .word 0x049C02CC /* Tag=0xCC, Len=83*8 + 4, Param=0x04 */
+dcd_hdr:          .word 0x408802D2 /* Tag=0xD2, Len=80*8 + 4 + 4, Ver=0x40 */
+write_dcd_cmd:    .word 0x048402CC /* Tag=0xCC, Len=80*8 + 4, Param=0x04 */
 
 /* DCD */
 /* DDR3 initialization based on the MX6Solo Auto Reference Design (ARD) */
@@ -154,15 +154,9 @@ MXC_DCD_ITEM(78, MMDC_P0_BASE_ADDR + 0x004, 0x0002556d)
 MXC_DCD_ITEM(79, MMDC_P1_BASE_ADDR + 0x004, 0x00011006)
 MXC_DCD_ITEM(80, MMDC_P0_BASE_ADDR + 0x01c, 0x00000000)
 
-/* enable AXI cache for VDOA/VPU/IPU */
-MXC_DCD_ITEM(81, IOMUXC_BASE_ADDR + 0x010, 0xf00000ff)
-/* set IPU AXI-id0 Qos=0xf(bypass) AXI-id1 Qos=0x7 */
-MXC_DCD_ITEM(82, IOMUXC_BASE_ADDR + 0x018, 0x007f007f)
-MXC_DCD_ITEM(83, IOMUXC_BASE_ADDR + 0x01c, 0x007f007f)
-
 #elif defined CONFIG_LPDDR2
-dcd_hdr:          .word 0x400804D2 /* Tag=0xD2, Len=128*8 + 4 + 4, Ver=0x40 */
-write_dcd_cmd:    .word 0x040404CC /* Tag=0xCC, Len=128*8 + 4, Param=0x04 */
+dcd_hdr:          .word 0x40F003D2 /* Tag=0xD2, Len=125*8 + 4 + 4, Ver=0x40 */
+write_dcd_cmd:    .word 0x04EC03CC /* Tag=0xCC, Len=125*8 + 4, Param=0x04 */
 
 /* DCD */
 MXC_DCD_ITEM(1, CCM_BASE_ADDR + 0x18, 0x60324)
@@ -327,16 +321,10 @@ MXC_DCD_ITEM(124, MMDC_P1_BASE_ADDR + 0x1c, 0x0)
 
 MXC_DCD_ITEM(125, MMDC_P0_BASE_ADDR + 0x404, 0x00011006)
 
-/* enable AXI cache for VDOA/VPU/IPU */
-MXC_DCD_ITEM(126, IOMUXC_BASE_ADDR + 0x010, 0xf00000ff)
-/* set IPU Qos=0x7 */
-MXC_DCD_ITEM(127, IOMUXC_BASE_ADDR + 0x018, 0x00070007)
-MXC_DCD_ITEM(128, IOMUXC_BASE_ADDR + 0x01c, 0x00070007)
-
 #else
 
-dcd_hdr:          .word 0x40C802D2 /* Tag=0xD2, Len=88*8 + 4 + 4, Ver=0x40 */
-write_dcd_cmd:    .word 0x04C402CC /* Tag=0xCC, Len=88*8 + 4, Param=0x04 */
+dcd_hdr:          .word 0x40B002D2 /* Tag=0xD2, Len=85*8 + 4 + 4, Ver=0x40 */
+write_dcd_cmd:    .word 0x04AC02CC /* Tag=0xCC, Len=85*8 + 4, Param=0x04 */
 
 /* DCD */
 /* DDR3 initialization based on the MX6Q Auto Reference Design (ARD) */
@@ -450,12 +438,6 @@ MXC_DCD_ITEM(84, MMDC_P0_BASE_ADDR + 0x004, 0x00025576)
 
 MXC_DCD_ITEM(85, MMDC_P0_BASE_ADDR + 0x01c, 0x00000000)
 
-
-/* enable AXI cache for VDOA/VPU/IPU */
-MXC_DCD_ITEM(86, IOMUXC_BASE_ADDR + 0x010, 0xf00000ff)
-/* set IPU AXI-id0 Qos=0xf(bypass) AXI-id1 Qos=0x7 */
-MXC_DCD_ITEM(87, IOMUXC_BASE_ADDR + 0x018, 0x007f007f)
-MXC_DCD_ITEM(88, IOMUXC_BASE_ADDR + 0x01c, 0x007f007f)
 #endif
 
 #endif

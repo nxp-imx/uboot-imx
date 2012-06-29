@@ -54,8 +54,8 @@ image_len:        .word _end_of_copy  - TEXT_BASE + CONFIG_FLASH_HEADER_OFFSET
 plugin:           .word 0x0
 
 #if defined CONFIG_MX6DL_DDR3
-dcd_hdr:          .word 0x40F802D2 /* Tag=0xD2, Len=94*8 + 4 + 4, Ver=0x40 */
-write_dcd_cmd:    .word 0x04F402CC /* Tag=0xCC, Len=94*8 + 4, Param=0x04 */
+dcd_hdr:          .word 0x40E002D2 /* Tag=0xD2, Len=91*8 + 4 + 4, Ver=0x40 */
+write_dcd_cmd:    .word 0x04DC02CC /* Tag=0xCC, Len=91*8 + 4, Param=0x04 */
 
 # IOMUXC_BASE_ADDR  = 0x20e0000
 # DDR IO TYPE
@@ -181,15 +181,9 @@ MXC_DCD_ITEM(89, MMDC_P0_BASE_ADDR + 0x004, 0x0002556d)
 MXC_DCD_ITEM(90, MMDC_P1_BASE_ADDR + 0x404, 0x00011006)
 MXC_DCD_ITEM(91, MMDC_P0_BASE_ADDR + 0x01c, 0x00000000)
 
-/* enable AXI cache for VDOA/VPU/IPU */
-MXC_DCD_ITEM(92, IOMUXC_BASE_ADDR + 0x010, 0xf00000ff)
-/* set IPU AXI-id0 Qos=0xf(bypass) AXI-id1 Qos=0x7 */
-MXC_DCD_ITEM(93, IOMUXC_BASE_ADDR + 0x018, 0x007f007f)
-MXC_DCD_ITEM(94, IOMUXC_BASE_ADDR + 0x01c, 0x007f007f)
-
 #else
-dcd_hdr:          .word 0x40F002D2 /* Tag=0xD2, Len=93*8 + 4 + 4, Ver=0x40 */
-write_dcd_cmd:    .word 0x04EC02CC /* Tag=0xCC, Len=93*8 + 4, Param=0x04 */
+dcd_hdr:          .word 0x40D802D2 /* Tag=0xD2, Len=90*8 + 4 + 4, Ver=0x40 */
+write_dcd_cmd:    .word 0x04D402CC /* Tag=0xCC, Len=90*8 + 4, Param=0x04 */
 
 /* DCD */
 
@@ -305,11 +299,6 @@ MXC_DCD_ITEM(88, MMDC_P1_BASE_ADDR + 0x8b8, 0x00000800)
 MXC_DCD_ITEM(89, MMDC_P0_BASE_ADDR + 0x01c, 0x00000000)
 MXC_DCD_ITEM(90, MMDC_P0_BASE_ADDR + 0x404, 0x00011006)
 
-/* enable AXI cache for VDOA/VPU/IPU */
-MXC_DCD_ITEM(91, IOMUXC_BASE_ADDR + 0x010, 0xf00000ff)
-/* set IPU AXI-id0 Qos=0xf(bypass) AXI-id1 Qos=0x7 */
-MXC_DCD_ITEM(92, IOMUXC_BASE_ADDR + 0x018, 0x007f007f)
-MXC_DCD_ITEM(93, IOMUXC_BASE_ADDR + 0x01c, 0x007f007f)
 #endif
 
 #endif
