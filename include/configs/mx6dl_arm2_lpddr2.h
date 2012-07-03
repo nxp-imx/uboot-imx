@@ -41,6 +41,8 @@
 #undef CONFIG_ARCH_MMU /* disable MMU first */
 #define CONFIG_L2_OFF  /* disable L2 cache first*/
 
+#define CONFIG_FLASH_PLUG_IN /*Necessary to enable 2-channel mode*/
+
 #define CONFIG_MX6_HCLK_FREQ	24000000
 
 #define CONFIG_DISPLAY_CPUINFO
@@ -262,16 +264,16 @@
 /*-----------------------------------------------------------------------
  * Physical Memory Map
  */
-#define CONFIG_NR_DRAM_BANKS	1
+#define CONFIG_NR_DRAM_BANKS	2
 #define PHYS_SDRAM_1		CSD0_DDR_BASE_ADDR
-#ifdef CONFIG_DDR_32BIT
-#define PHYS_SDRAM_1_SIZE       (1u * 1024 * 1024 * 1024)
-#else
-#define PHYS_SDRAM_1_SIZE	(2u * 1024 * 1024 * 1024)
-#endif
+#define PHYS_SDRAM_1_SIZE	(256 * 1024 * 1024)
+#define PHYS_SDRAM_2		CSD1_DDR_BASE_ADDR
+#define PHYS_SDRAM_2_SIZE	(256 * 1024 * 1024)
 #define iomem_valid_addr(addr, size) \
-	(addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
+ ((addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)) || \
+ (addr >= PHYS_SDRAM_2 && addr <= (PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE)))
 
+#define IRAM_FREE_START		0x00907000
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */

@@ -930,6 +930,585 @@ MXC_DCD_ITEM(90, MMDC_P0_BASE_ADDR + 0x404, 0x00011006)
 
 /*****************PLUGIN IN mode********************/
 
+#ifdef CONFIG_MX6DL_LPDDR2
+.section ".text.flasheader", "x"
+origin:
+	b	_start
+	.org	CONFIG_FLASH_HEADER_OFFSET
+
+/* First IVT to copy the plugin that initializes the system into OCRAM */
+ivt_header:             .long 0x402000D1    /*Tag=0xD1, Len=0x0020, Ver=0x40 */
+app_code_jump_v:        .long IRAM_FREE_START + (plugin_start - origin)    /* Plugin entry point, address after the second IVT table */
+reserv1:                .long 0x0
+dcd_ptr:                .long 0x0
+boot_data_ptr:          .long IRAM_FREE_START + (boot_data - origin) /*0x00907420*/
+self_ptr:               .long IRAM_FREE_START + (ivt_header - origin)
+app_code_csf:           .long 0x0
+reserv2:                .long 0x0
+
+boot_data:              .long IRAM_FREE_START
+image_len:              .long 16*1024  /* plugin can be upto 16KB in size */
+plugin:                 .long 0x1  /* Enable plugin flag */
+
+/* Second IVT to give entry point into the bootloader copied to DDR */
+ivt2_header:            .long 0x402000D1    /*Tag=0xD1, Len=0x0020, Ver=0x40 */
+app2_code_jump_v:       .long _start       /* Entry point for uboot */
+reserv3:                .long 0x0
+dcd2_ptr:               .long 0x0
+boot_data2_ptr:         .long boot_data2
+self_ptr2:              .long ivt2_header
+app_code_csf2:          .long 0x0
+reserv4:                .long 0x0
+
+boot_data2:             .long TEXT_BASE
+image_len2:             .long _end_of_copy  - TEXT_BASE + CONFIG_FLASH_HEADER_OFFSET
+plugin2:                .long 0x0
+
+/* Here starts the plugin code */
+plugin_start:
+/* Save the return address and the function arguments */
+    push    {r0-r4, lr}
+
+/*
+ * The following is following MX6DL LPDDR2 init script
+ * "MX6DL_init_LPDDR2_400MHz_1.0.inc"
+ * With the change of Switch PL301_FAST2 to DDR Dual-channel
+ * mapping on
+ */
+/*========================================================================*/
+/*init script for i.MX6DL LPDDR2*/
+/*========================================================================*/
+/* Revision History*/
+/* v1.00 : Init version for Micron MT42L64M64D2KH-18 on CPU LPDDR2 board.
+   It's currently soldered, not PoPed.*/
+/* Seen passing with overclocking DDR stress test up to 475MHz.*/
+/* If someone is playing this init on different DDR device, or on PoPed
+   board, please feedback me with result.*/
+/* boaz.perlman@freescale.com*/
+/*========================================================================*/
+
+/* CCM_BASE_ADDR = 0x020C4000 */
+/*DDR clk to 400MHz*/
+    ldr r0, =CCM_BASE_ADDR
+
+    ldr r1, =0x00060324
+    str r1, [r0, #0x018]
+
+
+/*IPU2_IPU_CLOCK and IPU1_IPU_CLOCK is necessary for setting
+  the Dual-Channel Mode*/
+    ldr r1, =0xFFFFFFC3
+    str r1, [r0, #0x074]
+
+/* GPV0_BASE_ADDR = 0x00B00000*/
+/* Switch PL301_FAST2 to DDR Dual-channel mapping*/
+/* Setting This bit to 0x1 will Cause 0x80000000 mapping to Channel 0 and
+ * 0x10000000 mapping to Channel 1, setting it to 0x0 will only map
+ * Channel 0 to 0x10000000*/
+    ldr r0, =GPV0_BASE_ADDR
+    ldr r1, =0x00000001
+    str r1, [r0, #0x000]
+
+/*========================================================================*/
+/* IOMUX*/
+/*========================================================================*/
+/* IOMUXC_BASE_ADDR = 0x020E0000*/
+
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS0*/
+    ldr r0, =IOMUXC_BASE_ADDR
+    ldr r1, =0x00003030
+    ldr r1, [r0, #0x4bc]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS1*/
+    ldr r1, =0x00003030
+    ldr r1, [r0, #0x4c0]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS2*/
+    ldr r1, =0x00003030
+    ldr r1, [r0, #0x4c4]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS3*/
+    ldr r1, =0x00003030
+    ldr r1, [r0, #0x4c8]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS4*/
+    ldr r1, =0x00003030
+    ldr r1, [r0, #0x4cc]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS5*/
+    ldr r1, =0x00003030
+    ldr r1, [r0, #0x4d0]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS6*/
+    ldr r1, =0x00003030
+    ldr r1, [r0, #0x4d4]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS7*/
+    ldr r1, =0x00003030
+    ldr r1, [r0, #0x4d8]
+
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM0*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x470]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM1*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x474]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM2*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x478]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM3*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x47c]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM4*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x480]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM5*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x484]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM6*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x488]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM7*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x48c]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_CAS*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x464]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_RAS*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x490]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCLK_0*/
+    ldr r1, =0x00000030
+    ldr r1, [r0, #0x4ac]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCLK_1*/
+    ldr r1, =0x00000030
+    ldr r1, [r0, #0x4b0]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_RESET*/
+    ldr r1, =0x00080038
+    ldr r1, [r0, #0x494]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCKE0*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x4a4]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCKE1*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x4a8]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDBA2 - DSE can be configured using Group Control
+   Register: IOMUXC_SW_PAD_CTL_GRP_CTLDS*/
+    ldr r1, =0x00000000
+    ldr r1, [r0, #0x4a0]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDODT0*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x4b4]
+/* IOMUXC_SW_PAD_CTL_PAD_DRAM_SDODT1*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x4b8]
+/* IOMUXC_SW_PAD_CTL_GRP_B0DS*/
+    ldr r1, =0x00000030
+    ldr r1, [r0, #0x764]
+/* IOMUXC_SW_PAD_CTL_GRP_B1DS*/
+    ldr r1, =0x00000030
+    ldr r1, [r0, #0x770]
+/* IOMUXC_SW_PAD_CTL_GRP_B2DS*/
+    ldr r1, =0x00000030
+    ldr r1, [r0, #0x778]
+/* IOMUXC_SW_PAD_CTL_GRP_B3DS*/
+    ldr r1, =0x00000030
+    ldr r1, [r0, #0x77c]
+/* IOMUXC_SW_PAD_CTL_GRP_B4DS*/
+    ldr r1, =0x00000030
+    ldr r1, [r0, #0x780]
+/* IOMUXC_SW_PAD_CTL_GRP_B5DS*/
+    ldr r1, =0x00000030
+    ldr r1, [r0, #0x784]
+/* IOMUXC_SW_PAD_CTL_GRP_B6DS*/
+    ldr r1, =0x00000030
+    ldr r1, [r0, #0x78c]
+/* IOMUXC_SW_PAD_CTL_GRP_B7DS*/
+    ldr r1, =0x00000030
+    ldr r1, [r0, #0x748]
+/* IOMUXC_SW_PAD_CTL_GRP_ADDDS*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x74c]
+/* IOMUXC_SW_PAD_CTL_GRP_CTLDS*/
+    ldr r1, =0x00000038
+    ldr r1, [r0, #0x76c]
+/* IOMUXC_SW_PAD_CTL_GRP_DDRMODE_CTL*/
+    ldr r1, =0x00020000
+    ldr r1, [r0, #0x750]
+/* IOMUXC_SW_PAD_CTL_GRP_DDRPKE*/
+    ldr r1, =0x00000000
+    ldr r1, [r0, #0x754]
+/* IOMUXC_SW_PAD_CTL_GRP_DDRMODE*/
+    ldr r1, =0x00020000
+    ldr r1, [r0, #0x760]
+/* IOMUXC_SW_PAD_CTL_GRP_DDR_TYPE*/
+    ldr r1, =0x00080000
+    ldr r1, [r0, #0x774]
+
+/*========================================================================*/
+/* DDR Controller Registers*/
+/*========================================================================*/
+/* Manufacturer:	Mocron*/
+/* Device Part Number:	MT42L64M64D2KH-18*/
+/* Clock Freq.: 	528MHz*/
+/* MMDC channels: Both MMDC0, MMDC1*/
+/*Density per CS in Gb: 	256M*/
+/* Chip Selects used:	2*/
+/* Number of Banks:	8*/
+/* Row address:    	14*/
+/* Column address: 	9*/
+/* Data bus width	32*/
+/*========================================================================*/
+/* MMDC_P0_BASE_ADDR = 0x021b0000 */
+/* MMDC_P1_BASE_ADDR = 0x021b4000 */
+/* MMDC0_MDSCR, set the Configuration request bit during MMDC set up*/
+    ldr r0, =MMDC_P0_BASE_ADDR
+    ldr r1, =MMDC_P1_BASE_ADDR
+    ldr r2, =0x00008000
+    str r2, [r0, #0x01c]
+/* MMDC1_MDSCR, set the Configuration request bit during MMDC set up*/
+    ldr r2, =0x00008000
+    str r2, [r1, #0x01c]
+
+/*LPDDR2 ZQ params*/
+    ldr r2, =0x1b5f01ff
+    str r2, [r0, #0x85c]
+    ldr r2, =0x1b5f01ff
+    str r2, [r1, #0x85c]
+
+/*========================================================================*/
+/* Calibration setup.*/
+/*========================================================================*/
+/* DDR_PHY_P0_MPZQHWCTRL, enable on time ZQ calibration*/
+    ldr r2, =0xa1390003
+    str r2, [r0, #0x800]
+
+/*ca bus abs delay*/
+    ldr r2, =0x00400000
+    str r2, [r0, #0x890]
+/*ca bus abs delay*/
+    ldr r2, =0x00400000
+    str r2, [r1, #0x890]
+/* values of 20,40,50,60,7f tried. no difference seen*/
+
+/*frc_msr.*/
+    ldr r2, =0x00000800
+    str r2, [r0, #0x8b8]
+/*frc_msr.*/
+    ldr r2, =0x00000800
+    str r2, [r1, #0x8b8]
+
+/* DDR_PHY_P0_MPREDQBY0DL3*/
+    ldr r2, =0x33333333
+    str r2, [r0, #0x81c]
+/* DDR_PHY_P0_MPREDQBY1DL3*/
+    ldr r2, =0x33333333
+    str r2, [r0, #0x820]
+/* DDR_PHY_P0_MPREDQBY2DL3*/
+    ldr r2, =0x33333333
+    str r2, [r0, #0x824]
+/* DDR_PHY_P0_MPREDQBY3DL3*/
+    ldr r2, =0x33333333
+    str r2, [r0, #0x828]
+
+/* DDR_PHY_P1_MPREDQBY0DL3*/
+    ldr r2, =0x33333333
+    str r2, [r1, #0x81c]
+/* DDR_PHY_P1_MPREDQBY1DL3*/
+    ldr r2, =0x33333333
+    str r2, [r1, #0x820]
+/* DDR_PHY_P1_MPREDQBY2DL3*/
+    ldr r2, =0x33333333
+    str r2, [r1, #0x824]
+/* DDR_PHY_P1_MPREDQBY3DL3*/
+    ldr r2, =0x33333333
+    str r2, [r1, #0x828]
+
+/*write delayes:*/
+/*setmem /32 0x021b082c = 0xf3333333 all byte 0 data & dm delayed by 3*/
+/*all byte 1 data & dm delayed by 3*/
+    ldr r2, =0xf3333333
+    str r2, [r0, #0x830]
+/*all byte 2 data & dm delayed by 3*/
+    ldr r2, =0xf3333333
+    str r2, [r0, #0x834]
+/*all byte 3 data & dm delayed by 3*/
+    ldr r2, =0xf3333333
+    str r2, [r0, #0x838]
+
+
+/*all byte 0 data & dm delayed by 3*/
+    ldr r2, =0xf3333333
+    str r2, [r1, #0x82c]
+/*all byte 1 data & dm delayed by 3*/
+    ldr r2, =0xf3333333
+    str r2, [r1, #0x830]
+/*all byte 2 data & dm delayed by 3*/
+    ldr r2, =0xf3333333
+    str r2, [r1, #0x834]
+/*all byte 3 data & dm delayed by 3*/
+    ldr r2, =0xf3333333
+    str r2, [r1, #0x838]
+
+/* Read and write data delay, per byte.*/
+/* For optimized DDR operation it is recommended to run mmdc_calibration on
+   your board, and replace 4 delay register assigns with resulted values*/
+/* Note:*/
+/* a. DQS gating is not relevant for LPDDR2. DSQ gating calibration section
+   should be skipped, or the write/read calibration comming after that
+   will stall*/
+/* b. The calibration code that runs for both MMDC0 & MMDC1 should be used.*/
+
+/*it is strongly recommended to run calibration on your board, and replace
+  bellow values:*/
+
+/*Read calibration*/
+    ldr r2, =0x444A4F4D
+    str r2, [r0, #0x848]
+    ldr r2, =0x4B4E4042
+    str r2, [r1, #0x848]
+
+/*Write calibration*/
+    ldr r2, =0x312E272E
+    str r2, [r0, #0x850]
+    ldr r2, =0x28302E2B
+    str r2, [r1, #0x850]
+
+/*dqs gating dis*/
+    ldr r2, =0x20000000
+    str r2, [r0, #0x83c]
+    ldr r2, =0x0
+    str r2, [r0, #0x840]
+    ldr r2, =0x20000000
+    str r2, [r1, #0x83c]
+    ldr r2, =0x0
+    str r2, [r1, #0x840]
+
+
+/*setmem /32 0x021b0858 = 0xa00 clk delay*/
+/*setmem /32 0x021b4858 = 0xa00 clk delay*/
+
+/*frc_msr*/
+    ldr r2, =0x00000800
+    str r2, [r0, #0x8b8]
+/*frc_msr*/
+    ldr r2, =0x00000800
+    str r2, [r1, #0x8b8]
+
+/*========================================================================*/
+/* Calibration setup end*/
+/*========================================================================*/
+/* Channel0 - startng address 0x80000000*/
+/* MMDC0_MDCFG0*/
+    ldr r2, =0x3f436133
+    str r2, [r0, #0x00c]
+/* MMDC0_MDPDC*/
+    ldr r2, =0x00020024
+    str r2, [r0, #0x004]
+/* MMDC0_MDCFG1*/
+    ldr r2, =0x00100A82
+    str r2, [r0, #0x010]
+/* MMDC0_MDCFG2*/
+    ldr r2, =0x00000093
+    str r2, [r0, #0x014]
+
+/* MMDC0_MDMISC*/
+    ldr r2, =0x0000174C
+    str r2, [r0, #0x018]
+/* MMDC0_MDRWD;*/
+    ldr r2, =0x0f9f26d2
+    str r2, [r0, #0x02c]
+/* MMDC0_MDOR*/
+    ldr r2, =0x0000020e
+    str r2, [r0, #0x030]
+
+/* MMDC0_MDCFG3LP*/
+    ldr r2, =0x001a099a
+    str r2, [r0, #0x038]
+
+/* MMDC0_MDOTC*/
+    ldr r2, =0x00000000
+    str r2, [r0, #0x008]
+
+/* CS0_END*/
+    ldr r2, =0x0000005f
+    str r2, [r0, #0x040]
+
+/* ROC*/
+    ldr r2, =0x0000000f
+    str r2, [r0, #0x404]
+
+/* MMDC0_MDCTL*/
+    ldr r2, =0xc3010000
+    str r2, [r0, #0x000]
+
+/* Channel1 - starting address 0x10000000*/
+/* MMDC1_MDCFG0*/
+    ldr r2, =0x3f436133
+    str r2, [r1, #0x00c]
+
+/* MMDC1_MDPDC*/
+    ldr r2, =0x00020024
+    str r2, [r1, #0x004]
+/* MMDC1_MDCFG1*/
+    ldr r2, =0x00100A82
+    str r2, [r1, #0x010]
+/* MMDC1_MDCFG2*/
+    ldr r2, =0x00000093
+    str r2, [r1, #0x014]
+/* MMDC1_MDMISC*/
+    ldr r2, =0x0000174C
+    str r2, [r1, #0x018]
+/* MMDC1_MDRWD;*/
+    ldr r2, =0x0f9f26d2
+    str r2, [r1, #0x02c]
+/* MMDC1_MDOR*/
+    ldr r2, =0x0000020e
+    str r2, [r1, #0x030]
+/* MMDC1_MDCFG3LP*/
+    ldr r2, =0x001a099a
+    str r2, [r1, #0x038]
+/* MMDC1_MDOTC*/
+    ldr r2, =0x00000000
+    str r2, [r1, #0x008]
+
+/* CS0_END*/
+    ldr r2, =0x0000003f
+    str r2, [r1, #0x040]
+
+/* MMDC1_MDCTL*/
+    ldr r2, =0xc3010000
+    str r2, [r1, #0x000]
+
+/* Channel0 : Configure DDR device:*/
+/* MRW: BA=0 CS=0 MR_ADDR=63 MR_OP=0*/
+    ldr r2, =0x003f8030
+    str r2, [r0, #0x01c]
+/* MRW: BA=0 CS=0 MR_ADDR=10 MR_OP=ff*/
+    ldr r2, =0xff0a8030
+    str r2, [r0, #0x01c]
+/* MRW: BA=0 CS=0 MR_ADDR=1  MR_OP=c2*/
+    ldr r2, =0xc2018030
+    str r2, [r0, #0x01c]
+/* MRW: BA=0 CS=0 MR_ADDR=2  MR_OP=4. tcl=6, tcwl=3*/
+    ldr r2, =0x04028030
+    str r2, [r0, #0x01c]
+/* MRW: BA=0 CS=0 MR_ADDR=3  MR_OP=2.drive=240/6*/
+    ldr r2, =0x02038030
+    str r2, [r0, #0x01c]
+
+/* Channel1 : Configure DDR device:*/
+/* MRW: BA=0 CS=0 MR_ADDR=63 MR_OP=0*/
+    ldr r2, =0x003f8030
+    str r2, [r1, #0x01c]
+/* MRW: BA=0 CS=0 MR_ADDR=10 MR_OP=ff*/
+    ldr r2, =0xff0a8030
+    str r2, [r1, #0x01c]
+/* MRW: BA=0 CS=0 MR_ADDR=1  MR_OP=c2*/
+    ldr r2, =0xc2018030
+    str r2, [r1, #0x01c]
+/* MRW: BA=0 CS=0 MR_ADDR=2  MR_OP=4. tcl=6, tcwl=3*/
+    ldr r2, =0x04028030
+    str r2, [r1, #0x01c]
+/* MRW: BA=0 CS=0 MR_ADDR=3  MR_OP=2.drive=240/6*/
+    ldr r2, =0x02038030
+    str r2, [r1, #0x01c]
+
+/* MMDC0_MDREF*/
+    ldr r2, =0x00005800
+    str r2, [r0, #0x020]
+/* MMDC1_MDREF*/
+    ldr r2, =0x00005800
+    str r2, [r1, #0x020]
+
+/* DDR_PHY_P0_MPODTCTRL*/
+    ldr r2, =0x00000000
+    str r2, [r0, #0x818]
+/* DDR_PHY_P1_MPODTCTRL*/
+    ldr r2, =0x00000000
+    str r2, [r1, #0x818]
+
+
+/*######################################################*/
+/*calibration values based on calibration compare of 0x00ffff00:*/
+/*Note, these calibration values are based on Freescale's board*/
+/*May need to run calibration on target board to fine tune these*/
+/*######################################################*/
+
+/* DDR_PHY_P0_MPZQHWCTRL, enable automatic ZQ calibration*/
+    ldr r2, =0xa1310003
+    str r2, [r0, #0x800]
+
+/* DDR_PHY_P0_MPMUR0, frc_msr*/
+    ldr r2, =0x00000800
+    str r2, [r0, #0x8b8]
+/* DDR_PHY_P1_MPMUR0, frc_msr*/
+    ldr r2, =0x00000800
+    str r2, [r1, #0x8b8]
+
+/* MMDC0_MDSCR, clear this register (especially the configuration
+   bit as initialization is complete)*/
+    ldr r2, =0x00000000
+    str r2, [r0, #0x01c]
+/* MMDC0_MDSCR, clear this register (especially the configuration
+   bit as initialization is complete)*/
+    ldr r2, =0x00000000
+    str r2, [r1, #0x01c]
+
+/* DDR_PHY_P0_MPMUR0, frc_msr*/
+    ldr r2, =0x00000800
+    str r2, [r0, #0x8b8]
+/* DDR_PHY_P1_MPMUR0, frc_msr*/
+    ldr r2, =0x00000800
+    str r2, [r1, #0x8b8]
+
+/*
+ * End of LPDDR init script
+ */
+
+/*
+    The following is to fill in those arguments for this ROM function
+    pu_irom_hwcnfg_setup(void **start, size_t *bytes, const void *boot_data)
+
+    This function is used to copy data from the storage media into DDR.
+
+    start - Initial (possibly partial) image load address on entry.  Final
+    image load address on exit.
+    bytes - Initial (possibly partial) image size on entry.  Final image size
+    on exit.
+    boot_data - Initial @ref ivt Boot Data load address.
+*/
+    adr r0, DDR_DEST_ADDR
+    adr r1, COPY_SIZE
+    adr r2, BOOT_DATA
+
+/*
+ * check the _pu_irom_api_table for the address
+ * pu_irom_hwcnfg_setup is in 0x1fb5  ERIC : < what is the address in Rigel >
+ */
+before_calling_rom___pu_irom_hwcnfg_setup:
+    mov r4, #0x1f00
+    add r4, r4, #0xb5
+    blx r4	/* This address might change in future ROM versions */
+after_calling_rom___pu_irom_hwcnfg_setup:
+
+/* To return to ROM from plugin, we need to fill in these argument.
+ * Here is what need to do:
+ * Need to construct the paramters for this function before return to ROM:
+ * plugin_download(void **start, size_t *bytes, UINT32 *ivt_offset)
+ */
+    pop {r0-r4, lr}
+    ldr r5, DDR_DEST_ADDR
+    str r5, [r0]
+    ldr r5, COPY_SIZE
+    str r5, [r1]
+    mov r5, #0x400  /* Point to the second IVT table at offset 0x42C */
+    add r5, r5, #0x2C
+    str r5, [r2]
+    mov r0, #1
+
+    bx lr          /* return back to ROM code */
+
+DDR_DEST_ADDR:    .word   TEXT_BASE
+COPY_SIZE:        .word   _end_of_copy  - TEXT_BASE + CONFIG_FLASH_HEADER_OFFSET
+BOOT_DATA:        .word   TEXT_BASE
+                  .word   _end_of_copy  - TEXT_BASE + CONFIG_FLASH_HEADER_OFFSET
+                  .word   0
+#else
+
 /*DDR clock:480MHz, ipg clock:40MHz, AHB clock:80MHz*/
 #define CONFIG_IPG_40M_FR_PLL3
 
@@ -1220,6 +1799,7 @@ BOOT_DATA:        .word   TEXT_BASE
                   .word   _end_of_copy  - TEXT_BASE + CONFIG_FLASH_HEADER_OFFSET
                   .word   0
 /*********************************************************************/
+#endif
 #endif
 
 #endif
