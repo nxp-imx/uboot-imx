@@ -77,6 +77,8 @@ write_dcd_cmd:    .word 0x044402CC /* Tag=0xCC, Len=72*8 + 4, Param=0x04 */
           (Improved SDCLK signal shape)*/
 /* v0.91 : IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCKE0/1 programming is removed, as this
            got no effect on SDCKE drive strength, pull activiticy.*/
+/* v0.93 : DRAM_RESET/DDR_SEL=00, as a workaround to SDCLK cross point and
+           duty cycle offsets.*/
 /*========================================================================*/
 
 /*wait = on*/
@@ -135,10 +137,10 @@ MXC_DCD_ITEM(10, IOMUXC_BASE_ADDR + 0x300, 0x00000030)
 /*IOMUXC_SW_PAD_CTL_PAD_DRAM_RAS*/
 MXC_DCD_ITEM(11, IOMUXC_BASE_ADDR + 0x31c, 0x00000030)
 /*IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCLK_0*/
-MXC_DCD_ITEM(12, IOMUXC_BASE_ADDR + 0x338, 0x00000030)
+MXC_DCD_ITEM(12, IOMUXC_BASE_ADDR + 0x338, 0x00000028)
 
 /*IOMUXC_SW_PAD_CTL_PAD_DRAM_RESET*/
-MXC_DCD_ITEM(13, IOMUXC_BASE_ADDR + 0x320, 0x00080030)
+MXC_DCD_ITEM(13, IOMUXC_BASE_ADDR + 0x320, 0x00000030)
 
 /*IOMUXC_SW_PAD_CTL_PAD_DRAM_SDBA2 - DSE can be configured using Group Control
   Register: IOMUXC_SW_PAD_CTL_GRP_CTLDS*/
@@ -203,7 +205,7 @@ MXC_DCD_ITEM(29, MMDC_P0_BASE_ADDR + 0x800, 0xa1390003)
 /* Megrez note: If entire word fails, CA bus might be involved. Try changing
    this:*/
 /*ca bus abs delay*/
-MXC_DCD_ITEM(30, MMDC_P0_BASE_ADDR + 0x890, 0x00400000)
+MXC_DCD_ITEM(30, MMDC_P0_BASE_ADDR + 0x890, 0x00300000)
 
 /* values of 20,40,50,60,7f tried. no difference seen*/
 
@@ -289,7 +291,7 @@ MXC_DCD_ITEM(49, MMDC_P0_BASE_ADDR + 0x014, 0x00000093)
 
 /*MMDC0_MDMISC. RALAT=3. Try increasing RALAT if case of failures at higher DDR
   freq*/
-MXC_DCD_ITEM(50, MMDC_P0_BASE_ADDR + 0x018, 0x000016c8)
+MXC_DCD_ITEM(50, MMDC_P0_BASE_ADDR + 0x018, 0x00001688)
 /*MMDC0_MDRWD;*/
 MXC_DCD_ITEM(51, MMDC_P0_BASE_ADDR + 0x02c, 0x0f9f26d2)
 /*MMDC0_MDOR*/
@@ -343,7 +345,7 @@ MXC_DCD_ITEM(65, MMDC_P0_BASE_ADDR + 0x01c, 0x02038038)
 MXC_DCD_ITEM(66, MMDC_P0_BASE_ADDR + 0x800, 0xa1310003)
 
 /*MMDC0_MDREF*/
-MXC_DCD_ITEM(67, MMDC_P0_BASE_ADDR + 0x020, 0x00007800)
+MXC_DCD_ITEM(67, MMDC_P0_BASE_ADDR + 0x020, 0x00001800)
 
 /*DDR_PHY_P0_MPODTCTRL*/
 /*setmem /32	0x021b0818 =	0*/
@@ -405,7 +407,7 @@ plugin_start:
 
 /*
  * The following is following Megrez LPDDR init script
- * Ver 0.91
+ * Ver 0.93
  */
 /*
  * CCM Configuration
@@ -449,11 +451,11 @@ plugin_start:
 /*MXC_DCD_ITEM(11, IOMUXC_BASE_ADDR + 0x31c, 0x00000030)*/
 	ldr r1, =0x00000030
 	str r1, [r0, #0x31c]
-/*MXC_DCD_ITEM(12, IOMUXC_BASE_ADDR + 0x338, 0x00000030)*/
-	ldr r1, =0x00000030
+/*MXC_DCD_ITEM(12, IOMUXC_BASE_ADDR + 0x338, 0x00000028)*/
+	ldr r1, =0x00000028
 	str r1, [r0, #0x338]
-/*MXC_DCD_ITEM(13, IOMUXC_BASE_ADDR + 0x320, 0x00080030)*/
-	ldr r1, =0x00080030
+/*MXC_DCD_ITEM(13, IOMUXC_BASE_ADDR + 0x320, 0x00000030)*/
+	ldr r1, =0x00000030
 	str r1, [r0, #0x320]
 /*MXC_DCD_ITEM(14, IOMUXC_BASE_ADDR + 0x32c, 0x00000000)*/
 	ldr r1, =0x00000000
@@ -474,7 +476,8 @@ plugin_start:
 	ldr r1, =0x00000030
 	str r1, [r0, #0x5d4]
 /*MXC_DCD_ITEM(20, IOMUXC_BASE_ADDR + 0x5d8, 0x00000030)*/
-	ldr r1, =0x00000030 str r1, [r0, #0x5d8]
+	ldr r1, =0x00000030
+	str r1, [r0, #0x5d8]
 /*MXC_DCD_ITEM(21, IOMUXC_BASE_ADDR + 0x5ac, 0x00000030)*/
 	ldr r1, =0x00000030
 	str r1, [r0, #0x5ac]
@@ -507,8 +510,8 @@ plugin_start:
 /*MXC_DCD_ITEM(29, MMDC_P0_BASE_ADDR + 0x800, 0xa1390003)*/
 	ldr r1, =0xa1390003
 	str r1, [r0, #0x800]
-/*MXC_DCD_ITEM(30, MMDC_P0_BASE_ADDR + 0x890, 0x00400000)*/
-	ldr r1, =0x00400000
+/*MXC_DCD_ITEM(30, MMDC_P0_BASE_ADDR + 0x890, 0x00300000)*/
+	ldr r1, =0x00300000
 	str r1, [r0, #0x890]
 /*MXC_DCD_ITEM(31, MMDC_P0_BASE_ADDR + 0x8b8, 0x00000800)*/
 	ldr r1, =0x00000800
@@ -567,8 +570,8 @@ plugin_start:
 /*MXC_DCD_ITEM(49, MMDC_P0_BASE_ADDR + 0x014, 0x00000093)*/
 	ldr r1, =0x00000093
 	str r1, [r0, #0x014]
-/*MXC_DCD_ITEM(50, MMDC_P0_BASE_ADDR + 0x018, 0x000016c8)*/
-	ldr r1, =0x000016c8
+/*MXC_DCD_ITEM(50, MMDC_P0_BASE_ADDR + 0x018, 0x00001688)*/
+	ldr r1, =0x00001688
 	str r1, [r0, #0x018]
 /*MXC_DCD_ITEM(51, MMDC_P0_BASE_ADDR + 0x02c, 0x0f9f26d2)*/
 	ldr r1, =0x0f9f26d2
@@ -618,8 +621,8 @@ plugin_start:
 /*MXC_DCD_ITEM(66, MMDC_P0_BASE_ADDR + 0x800, 0xa1310003)*/
 	ldr r1, =0xa1310003
 	str r1, [r0, #0x800]
-/*MXC_DCD_ITEM(67, MMDC_P0_BASE_ADDR + 0x020, 0x00007800)*/
-	ldr r1, =0x00007800
+/*MXC_DCD_ITEM(67, MMDC_P0_BASE_ADDR + 0x020, 0x00001800)*/
+	ldr r1, =0x00001800
 	str r1, [r0, #0x020]
 /*MXC_DCD_ITEM(68, MMDC_P0_BASE_ADDR + 0x818, 0x00000000)*/
 	ldr r1, =0x00000000
