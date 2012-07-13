@@ -31,6 +31,8 @@
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_MX6_CLK32	   32768
 
+#define CONFIG_SECURE_BOOT
+
 #include <asm/arch/mx6.h>
 
 #define CONFIG_SKIP_RELOCATE_UBOOT

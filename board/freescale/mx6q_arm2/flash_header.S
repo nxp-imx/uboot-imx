@@ -52,7 +52,7 @@ self_ptr:         .word ivt_header
 #ifdef CONFIG_SECURE_BOOT
 app_code_csf:     .word __hab_data
 #else
-app_code_csf:     .word 0
+app_code_csf:     .word 0x0
 #endif
 reserv2:          .word 0x0
 
