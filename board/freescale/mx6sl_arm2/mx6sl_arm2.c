@@ -154,8 +154,8 @@ int board_eth_init(bd_t *bis)
  * Last element in struct is used to indicate 1.8V support.
  */
 struct fsl_esdhc_cfg usdhc_cfg[3] = {
-	{USDHC1_BASE_ADDR, 1, 1, 1, 0},
-	{USDHC2_BASE_ADDR, 1, 1, 1, 0},
+	{USDHC1_BASE_ADDR, 1, 1, 1, 1},
+	{USDHC2_BASE_ADDR, 1, 1, 1, 1},
 	{USDHC3_BASE_ADDR, 1, 1, 1, 1},
 };
 
