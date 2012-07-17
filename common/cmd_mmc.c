@@ -2,7 +2,7 @@
  * (C) Copyright 2003
  * Kyle Harris, kharris@nexus-tech.net
  *
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -110,6 +110,7 @@ static void print_mmcinfo(struct mmc *mmc)
 
 	printf("%s version %d.%d\n", IS_SD(mmc) ? "SD" : "MMC",
 			(mmc->version >> 4) & 0xf, mmc->version & 0xf);
+	printf("Clock: %d\n", mmc->clock);
 
 	printf("High Capacity: %s\n", mmc->high_capacity ? "Yes" : "No");
 	puts("Capacity: ");
