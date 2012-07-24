@@ -278,7 +278,7 @@
 	#define CONFIG_SYS_I2C_PORT             I2C1_BASE_ADDR
 	#define CONFIG_SYS_I2C_SPEED            100000
 	#define CONFIG_SYS_I2C_SLAVE            0x8
-	#define CONFIG_MX6_INTER_LDO_BYPASS	0
+	#define CONFIG_MX6_INTER_LDO_BYPASS	1
 #endif
 
 /*#define CONFIG_SPLASH_SCREEN*/
