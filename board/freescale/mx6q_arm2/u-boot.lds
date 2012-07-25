@@ -53,7 +53,7 @@ SECTIONS
 	}
 
 	. = ALIGN(4);
-	.rodata : { *(.rodata) }
+	.rodata : { *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*))) }
 
 	. = ALIGN(4);
 	.data : { *(.data) }
@@ -69,8 +69,8 @@ SECTIONS
 	. = ALIGN(4);
 	_end_of_copy = .; /* end_of ROM copy code when HAB is not enabled */
 
-	/* Original Size is 0x27..., enlarge to 0x2F000 */
-	. = TEXT_BASE + 0x2F000;
+	/* Original Size is 0x27..., enlarge to 0x3F000 */
+	. = TEXT_BASE + 0x3F000;
 	__hab_data = .;
 	. = . + 0x2000;
 	__hab_data_end = .;

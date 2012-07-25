@@ -24,6 +24,10 @@
 
 #include "mx6q_arm2.h"
 
+/* Disable secure boot feature in default, if you want to enable this
+ * feature, please carefully read related documents, you may needs to
+ * change u-boot.lds */
+#undef CONFIG_SECURE_BOOT
 
 /* Disable fastboot and recovery to pass build.
 
