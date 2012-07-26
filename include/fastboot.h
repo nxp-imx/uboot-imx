@@ -329,6 +329,7 @@ int fastboot_flash_write(fastboot_ptentry *ptn, unsigned extra_per_page,
 /* Check the board special boot mode reboot to fastboot mode. */
 int fastboot_check_and_clean_flag(void);
 int do_fastboot(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+void check_fastboot_mode(void);
 
 #else
 

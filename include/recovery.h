@@ -28,5 +28,6 @@ struct reco_envs {
 };
 
 int check_and_clean_recovery_flag(void);
+void check_recovery_mode(void);
 
 #endif

@@ -1490,14 +1490,12 @@ int check_recovery_cmd_file(void)
 {
 	int button_pressed = 0;
 	int recovery_mode = 0;
-	u32 reg;
 
 	recovery_mode = check_and_clean_recovery_flag();
 
 	/* Check Recovery Combo Button press or not. */
 	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_GPIO_5__GPIO_1_5));
 
-	gpio_request(GPIO_VOL_DN_KEY);
 	gpio_direction_input(GPIO_VOL_DN_KEY);
 
 	if (gpio_get_value(GPIO_VOL_DN_KEY) == 0) { /* VOL_DN key is low assert */

@@ -79,7 +79,7 @@ extern struct reco_envs supported_reco_envs[];
 
 void setup_recovery_env(void)
 {
-	char *env, *boot_args, *boot_cmd;
+	char *env, *boot_cmd;
 	int bootdev = get_boot_device();
 
 	boot_cmd = supported_reco_envs[bootdev].cmd;

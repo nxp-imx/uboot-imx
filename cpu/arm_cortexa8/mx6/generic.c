@@ -330,7 +330,7 @@ static u32 __get_ddr_clk(void)
 			>> MXC_CCM_CBCDR_MMDC_CH1_PODF_OFFSET;
 
 	switch ((cbcmr & MXC_CCM_CBCMR_PRE_PERIPH2_CLK_SEL_MASK) >>
-		MXC_CCM_CBCMR_PRE_PERIPH2_CLK_SEL_MASK) {
+		MXC_CCM_CBCMR_PRE_PERIPH2_CLK_SEL_OFFSET) {
 	case 0:
 		freq = __decode_pll(BUS_PLL2, CONFIG_MX6_HCLK_FREQ);
 		break;

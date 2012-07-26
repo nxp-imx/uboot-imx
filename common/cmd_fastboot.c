@@ -76,6 +76,7 @@ extern int do_sata(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 #endif
 extern env_t *env_ptr;
 #endif
+extern int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 /* Use do_setenv and do_saveenv to permenantly save data */
 int do_saveenv(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 int do_setenv(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
@@ -1151,7 +1152,7 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 					sata_write[4] = length;
 
 					sprintf(source, "0x%x",
-						 interface.transfer_buffer);
+						 (unsigned int)interface.transfer_buffer);
 					/* block offset */
 					sprintf(dest, "0x%x", ptn->start);
 					/* block count */
@@ -1181,7 +1182,7 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 mmc_ops:
 					printf("writing to partition '%s'\n", ptn->name);
 					char *mmc_write[5] = {"mmc", "write",
-						NULL, NULL, NULL, NULL};
+						NULL, NULL, NULL};
 					char *mmc_dev[4] = {"mmc", "dev", NULL, NULL};
 
 					mmc_dev[2] = slot_no;
@@ -1192,7 +1193,7 @@ mmc_ops:
 
 					sprintf(slot_no, "%d",
 						    fastboot_devinfo.dev_id);
-					sprintf(source, "0x%x", interface.transfer_buffer);
+					sprintf(source, "0x%x", (unsigned int)interface.transfer_buffer);
 					/* partition no */
 					sprintf(part_no, "%d",
 						    ptn->partition_id);

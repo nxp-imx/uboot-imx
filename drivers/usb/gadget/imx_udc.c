@@ -796,7 +796,7 @@ void mxc_udc_wait_cable_insert(void)
 	} while (1);
 }
 
-int udc_disable_over_current()
+void udc_disable_over_current(void)
 {
 	u32 temp;
 	temp = readl(USB_OTG_CTRL);

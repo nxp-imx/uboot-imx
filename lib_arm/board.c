@@ -49,6 +49,12 @@
 #include <nand.h>
 #include <onenand_uboot.h>
 #include <mmc.h>
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif
+#ifdef CONFIG_FASTBOOT
+#include <fastboot.h>
+#endif
 
 #ifdef CONFIG_DRIVER_SMC91111
 #include "../drivers/net/smc91111.h"

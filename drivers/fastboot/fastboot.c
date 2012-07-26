@@ -309,7 +309,10 @@ static int setup_ptable_mmc_partition(int ptable_index,
 
 static int fastboot_init_mmc_sata_ptable(void)
 {
-	int i, sata_device_no;
+	int i;
+#ifdef CONFIG_CMD_SATA
+	int sata_device_no;
+#endif
 	int boot_partition = -1, user_partition = -1;
 	/* mmc boot partition: -1 means no partition, 0 user part., 1 boot part.
 	 * default is no partition, for emmc default user part, except emmc*/
@@ -469,7 +472,7 @@ static void fastboot_init_instances(void)
 	bus_instance->device = device_instance;
 	bus_instance->endpoint_array = endpoint_instance;
 	bus_instance->max_endpoints = NUM_ENDPOINTS + 1;
-	bus_instance->maxpacketsize = 512;
+	bus_instance->maxpacketsize = 0xFF;
 	bus_instance->serial_number_str = CONFIG_FASTBOOT_SERIAL_NUM;
 
 	/* configuration instance */
@@ -766,7 +769,7 @@ static void fastboot_event_handler(struct usb_device_instance *device,
 	}
 }
 
-int fastboot_cdc_setup(struct usb_device_request *request, struct urb *urb)
+static int fastboot_cdc_setup(struct usb_device_request *request, struct urb *urb)
 {
 	return 0;
 }
