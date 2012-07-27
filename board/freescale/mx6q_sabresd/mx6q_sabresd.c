@@ -1393,6 +1393,15 @@ void lcd_enable(void)
 	reg = 0x0002A953;
 	writel(reg, CCM_BASE_ADDR + CLKCTL_CHSCCDR);
 
+	/*
+	 * LVDS0 mux to IPU1 DI0.
+	 * LVDS1 mux to IPU1 DI1.
+	 */
+	reg = readl(IOMUXC_BASE_ADDR + 0xC);
+	reg &= ~(0x000003C0);
+	reg |= 0x00000100;
+	writel(reg, IOMUXC_BASE_ADDR + 0xC);
+
 	if (di == 1)
 		writel(0x40C, IOMUXC_BASE_ADDR + 0x8);
 	else
