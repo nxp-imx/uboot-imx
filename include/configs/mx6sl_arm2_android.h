@@ -24,7 +24,6 @@
 
 #include <configs/mx6sl_arm2.h>
 
-#if 0
 #define CONFIG_USB_DEVICE
 #define CONFIG_IMX_UDC		       1
 #define CONFIG_FASTBOOT		       1
@@ -38,9 +37,14 @@
 #define CONFIG_FASTBOOT_CONFIGURATION_STR  "Android fastboot"
 #define CONFIG_FASTBOOT_SERIAL_NUM	"12345"
 #define CONFIG_FASTBOOT_SATA_NO		 0
-#define CONFIG_FASTBOOT_TRANSFER_BUF	0x30000000
-#define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x10000000 /* 256M byte */
-#endif
+
+/*  mx6sl ddr address starts from 0x80000000, not like mx6dl and mx6q
+*   which start from 0x10000000
+*   For system.img growing up more than 256MB, more buffer needs
+*   to receive the system.img*/
+#define CONFIG_FASTBOOT_TRANSFER_BUF    0x8c000000
+#define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x14000000 /* 320M byte */
+
 
 #define CONFIG_CMD_BOOTI
 #define CONFIG_ANDROID_RECOVERY
