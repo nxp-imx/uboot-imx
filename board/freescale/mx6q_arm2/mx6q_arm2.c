@@ -148,13 +148,7 @@ enum boot_device get_boot_device(void)
 
 u32 get_board_rev(void)
 {
-
-#if defined CONFIG_MX6Q
-	system_rev = 0x63000;
-#elif defined CONFIG_MX6DL
-	system_rev = 0x61000;
-#endif
-	return system_rev;
+	return fsl_system_rev;
 }
 
 #ifdef CONFIG_ARCH_MMU
@@ -1152,6 +1146,7 @@ int board_init(void)
 {
 	mxc_iomux_v3_init((void *)IOMUXC_BASE_ADDR);
 	setup_boot_device();
+	fsl_set_system_rev();
 
 	/* board id for linux */
 	gd->bd->bi_arch_number = MACH_TYPE_MX6Q_ARM2;
