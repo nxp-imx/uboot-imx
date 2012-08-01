@@ -1222,6 +1222,11 @@ U_BOOT_CMD(
 #define hab_rvt_exit ((hab_rvt_exit_t *) HAB_RVT_EXIT)
 #define hab_rvt_clock_init HAB_RVT_CLOCK_INIT
 
+#define OCOTP_CFG5_OFFSET	0x460
+#define IVT_SIZE		0x20
+#define ALIGN_SIZE		0x1000
+#define CSF_PAD_SIZE		0x2000
+
 /*
  * +------------+  0x0 (DDR_UIMAGE_START) -
  * |   Header   |                          |
@@ -1240,9 +1245,9 @@ U_BOOT_CMD(
  * |            |                          |                                |
  * | Fill Data  |                          |                                |
  * |            |                          |                                |
- * +------------+ 0x003F_DFE0              |                                |
+ * +------------+ Align to ALIGN_SIZE      |                                |
  * |    IVT     |                          |                                |
- * +------------+ 0x003F_E000             -                                 |
+ * +------------+ + IVT_SIZE              -                                 |
  * |            |                                                           |
  * |  CSF DATA  | <---------------------------------------------------------+
  * |            |
@@ -1250,18 +1255,8 @@ U_BOOT_CMD(
  * |            |
  * | Fill Data  |
  * |            |
- * +------------+ 0x0040_0000
+ * +------------+ + CSF_PAD_SIZE
  */
-
-#ifndef CONFIG_MX6SL
-#define DDR_UIMAGE_START	0x10800000
-#else
-#define DDR_UIMAGE_START	0x80800000
-#endif
-
-#define DDR_UIMAGE_LENGTH	0x400000
-#define DDR_IVT_OFFSET		0x3FDFE0
-#define OCOTP_CFG5_OFFSET	0x460
 
 int check_hab_enable(void)
 {
@@ -1344,23 +1339,28 @@ void hab_caam_clock_disable(void)
 	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR0);
 }
 
-uint32_t authenticate_image(void)
+uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 {
 	uint32_t load_addr = 0;
 	size_t bytes;
-	ptrdiff_t ivt_offset = DDR_IVT_OFFSET;
+	ptrdiff_t ivt_offset = 0;
 	int result = 0;
 	ulong start;
 
 	if (check_hab_enable() == 1) {
 		printf("\nAuthenticate uImage from DDR location 0x%lx...\n",
-			DDR_UIMAGE_START);
+			ddr_start);
 
 		hab_caam_clock_enable();
 
 		if (hab_rvt_entry() == HAB_SUCCESS) {
-			start = DDR_UIMAGE_START;
-			bytes = DDR_UIMAGE_LENGTH;
+			/*Align to ALIGN_SIZE*/
+			ivt_offset = image_size - image_size % ALIGN_SIZE
+				+ ALIGN_SIZE;
+
+			start = ddr_start;
+			bytes = ivt_offset + IVT_SIZE + CSF_PAD_SIZE;
+
 			load_addr = (uint32_t)hab_rvt_authenticate_image(
 					HAB_CID_UBOOT,
 					ivt_offset, (void **)&start,
