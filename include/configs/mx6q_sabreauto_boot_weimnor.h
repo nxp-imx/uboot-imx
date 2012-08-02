@@ -30,7 +30,6 @@
 #define CONFIG_MX6Q
 #define CONFIG_MX6Q_SABREAUTO
 #define CONFIG_FLASH_HEADER
-#define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_MX6_CLK32	   32768
 
 #define CONFIG_SKIP_RELOCATE_UBOOT
@@ -88,17 +87,13 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
 
-#define CONFIG_CMD_SPI
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_IMXOTP
-/*Uncomment if wish to view Parallel NOR as device.
- *If you want to use it as Boot device you need
- *to use mx6q_sabreauto_boot_weimnor.h
- */
-/*#define CONFIG_CMD_WEIMNOR*/
+/* Must define. Otherwise emi_slow_clk would be dead */
+#define CONFIG_CMD_WEIMNOR
+#define CONFIG_FLASH_HEADER_OFFSET 0x1000
 
 /* Enable below configure when supporting nand */
-#define CONFIG_CMD_SF
 #define CONFIG_CMD_MMC
 #define CONFIG_CMD_ENV
 #define CONFIG_CMD_REGUL
@@ -116,7 +111,6 @@
 #define CONFIG_PRIME	"FEC0"
 
 #define CONFIG_LOADADDR		0x10800000	/* loadaddr env var */
-#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
@@ -124,7 +118,7 @@
 		"uboot=u-boot.bin\0"			\
 		"kernel=uImage\0"				\
 		"nfsroot=/opt/eldk/arm\0"				\
-		"bootargs_base=setenv bootargs console=ttymxc3,115200\0"\
+		"bootargs_base=setenv bootargs console=ttymxc3,115200"\
 		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
 			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
 		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
@@ -134,7 +128,11 @@
 		"bootcmd_mmc=run bootargs_base bootargs_mmc; "   \
 		"mmc dev 2; "	\
 		"mmc read ${loadaddr} 0x800 0x2000; bootm\0"	\
-		"bootcmd=run bootcmd_mmc\0"                             \
+		"bootcmd=run bootcmd_nor\0"                             \
+		"bootargs_nor=setenv bootargs ${bootargs} root=/dev/nfs	"\
+			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
+		"bootcmd_nor=run bootargs_base bootargs_nor;	"\
+			"cp.l 0x8080000 ${loadaddr} 0x400000; bootm\0"
 
 
 #define CONFIG_ARP_TIMEOUT	200UL
@@ -145,7 +143,7 @@
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_SYS_PROMPT		"MX6Q SABREAUTO U-Boot > "
 #define CONFIG_AUTO_COMPLETE
-#define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
+#define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 #define CONFIG_SYS_MAXARGS	16	/* max number of command args */
@@ -199,8 +197,6 @@
 	#define CONFIG_SYS_I2C_SLAVE            0x30
 #endif
 
-
-
 /*
  * SPI Configs
  * SPI NOR AND WEIM NOR share PINs, so cannot be enabled both at sametime
@@ -213,23 +209,6 @@
 	#define IMX_CSPI_VER_2_3	1
 	#define MAX_SPI_BYTES		(64 * 4)
 #endif
-
-/*
- * WEIM NOR Config
- */
-#ifdef CONFIG_CMD_WEIMNOR
-	#define CONFIG_SYS_FLASH_CFI			/* use the Common Flash Interface */
-	#define CONFIG_FLASH_CFI_DRIVER			/* use the CFI driver */
-	#define CONFIG_SYS_FLASH_BASE		0x08000000	/* start of FLASH   */
-	#define CONFIG_SYS_FLASH_SIZE		0x08000000	/* max flash size in bytes */
-	#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
-	#define CONFIG_SYS_FLASH_CFI_WIDTH	FLASH_CFI_16BIT
-	#define CONFIG_SYS_FLASH_BANKS_LIST	{CONFIG_SYS_FLASH_BASE}
-	#define CONFIG_SYS_MAX_FLASH_BANKS	1		/* number of banks */
-	#define CONFIG_SYS_MAX_FLASH_SECT	256		/* max sectors per device */
-	#define CONFIG_SYS_FLASH_PROTECTION
-#endif
-
 
 /* Regulator Configs */
 #ifdef CONFIG_CMD_REGUL
@@ -319,16 +298,35 @@
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
-#ifndef CONFIG_CMD_WEIMNOR
-	#define CONFIG_SYS_NO_FLASH
-#endif
+
+#define CONFIG_SYS_FLASH_BASE           CS0_BASE_ADDR
+#define CONFIG_SYS_MAX_FLASH_BANKS 1    /* max number of memory banks */
+#define CONFIG_SYS_MAX_FLASH_SECT 256   /* max number of sectors on one chip */
+#define CONFIG_SYS_MONITOR_BASE CONFIG_SYS_FLASH_BASE /* Monitor at beginning*/
+#define CONFIG_SYS_MONITOR_LEN  0x40000 /* Reserve 256KiB */
+
+#define CONFIG_ENV_SECT_SIZE   0x00020000   /*128KiB sector size */
+#define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE
+
+/* Address and size of Redundant Environment Sector     */
+#define CONFIG_ENV_OFFSET_REDUND        (CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
+#define CONFIG_ENV_SIZE_REDUND  CONFIG_ENV_SIZE
+
+#define CONFIG_ENV_ADDR         (CONFIG_SYS_MONITOR_BASE + 0x0040000)
+
+/*-----------------------------------------------------------------------
+* CFI FLASH driver setup
+*/
+#define CONFIG_SYS_FLASH_CFI            1/* Flash memory is CFI compliant */
+#define CONFIG_FLASH_CFI_DRIVER         1/* Use drivers/cfi_flash.c */
+#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE 1/* Use buffered writes*/
+#define CONFIG_SYS_FLASH_PROTECTION     1/* Use hardware sector protection */
+
 /* Monitor at beginning of flash */
-#define CONFIG_FSL_ENV_IN_MMC
+/* #define CONFIG_FSL_ENV_IN_MMC*/
 /* #define CONFIG_FSL_ENV_IN_NAND */
 /* #define CONFIG_FSL_ENV_IN_SATA */
-
-#define CONFIG_ENV_SECT_SIZE    (8 * 1024)
-#define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE
+#define CONFIG_FSL_ENV_IN_FLASH
 
 #if defined(CONFIG_FSL_ENV_IN_NAND)
 	#define CONFIG_ENV_IS_IN_NAND 1
@@ -344,6 +342,8 @@
 	#define CONFIG_ENV_IS_IN_SPI_FLASH	1
 	#define CONFIG_ENV_SPI_CS		1
 	#define CONFIG_ENV_OFFSET       (768 * 1024)
+#elif defined(CONFIG_FSL_ENV_IN_FLASH)
+	#define CONFIG_ENV_IS_IN_FLASH 1
 #else
 	#define CONFIG_ENV_IS_NOWHERE	1
 #endif

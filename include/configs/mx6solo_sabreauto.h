@@ -32,6 +32,7 @@
 #define CONFIG_DDR_32BIT
 #define CONFIG_MX6Q_SABREAUTO
 #define CONFIG_FLASH_HEADER
+#define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_MX6_CLK32	   32768
 
 #define CONFIG_SKIP_RELOCATE_UBOOT
@@ -92,7 +93,11 @@
 #define CONFIG_CMD_SPI
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_IMXOTP
-/*#define CONFIG_CMD_WEIMNOR*/  /*To boot from WEIM NOR. This will disable SPI NOR BOOT */
+/*Uncomment if wish to view Parallel NOR as device.
+ *If you want to use it as Boot device you need
+ *to use mx6solo_sabreauto_boot_weimnor.h
+ */
+/*#define CONFIG_CMD_WEIMNOR*/
 
 /* Enable below configure when supporting nand */
 #define CONFIG_CMD_SF
@@ -222,9 +227,6 @@
 	#define CONFIG_SYS_MAX_FLASH_BANKS	1		/* number of banks */
 	#define CONFIG_SYS_MAX_FLASH_SECT	256		/* max sectors per device */
 	#define CONFIG_SYS_FLASH_PROTECTION
-	#define CONFIG_FLASH_HEADER_OFFSET 0x1000
-#else
-	#define CONFIG_FLASH_HEADER_OFFSET 0x400
 #endif
 
 /* Regulator Configs */
