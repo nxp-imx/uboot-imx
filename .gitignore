@@ -59,6 +59,7 @@ cscope.*
 /tags
 /ctags
 /etags
+/csc
 
 # OneNAND IPL files
 /onenand_ipl/onenand-ipl*
