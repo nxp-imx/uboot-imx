@@ -57,7 +57,7 @@
 #define CONFIG_REVISION_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
-
+#define CONFIG_MXC_GPIO
 /*
  * Size of malloc() pool
  */

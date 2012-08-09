@@ -36,7 +36,6 @@
   recovery, please reference sabreSD board which
   mx6q_sabresd_android.h
 */
-#if 0
 #define CONFIG_USB_DEVICE
 #define CONFIG_IMX_UDC		       1
 #define CONFIG_FASTBOOT		       1
@@ -45,15 +44,16 @@
 #define CONFIG_FASTBOOT_PRODUCT_ID     0x0d02
 #define CONFIG_FASTBOOT_BCD_DEVICE     0x311
 #define CONFIG_FASTBOOT_MANUFACTURER_STR  "Freescale"
-#define CONFIG_FASTBOOT_PRODUCT_NAME_STR "i.mx6q Sabre Smart Device"
+#define CONFIG_FASTBOOT_PRODUCT_NAME_STR "i.mx6q ARM2 Smart Device"
 #define CONFIG_FASTBOOT_INTERFACE_STR	 "Android fastboot"
 #define CONFIG_FASTBOOT_CONFIGURATION_STR  "Android fastboot"
 #define CONFIG_FASTBOOT_SERIAL_NUM	"12345"
 #define CONFIG_FASTBOOT_SATA_NO		 0
-#define CONFIG_FASTBOOT_TRANSFER_BUF	0x30000000
-#define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x10000000 /* 256M byte */
+/*  For system.img growing up more than 256MB, more buffer needs
+*   to receive the system.img*/
+#define CONFIG_FASTBOOT_TRANSFER_BUF	0x2c000000
+#define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x14000000 /* 320M byte */
 #define CONFIG_ANDROID_RECOVERY
-#endif
 
 #define CONFIG_CMD_BOOTI
 /* which mmc bus is your main storage ? */

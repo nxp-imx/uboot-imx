@@ -67,6 +67,11 @@
 #include <asm/clock.h>
 #endif
 
+#ifdef CONFIG_MXC_GPIO
+#include <asm/gpio.h>
+#include <asm/arch/gpio.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static u32 system_rev;
@@ -1186,6 +1191,18 @@ int board_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_ANDROID_RECOVERY
+
+int check_recovery_cmd_file(void)
+{
+	/*not realized*/
+	return 0;
+}
+#endif
+
+
+
+
 int board_late_init(void)
 {
 	return 0;
@@ -1374,3 +1391,33 @@ int checkboard(void)
 
 	return 0;
 }
+
+
+#ifdef CONFIG_IMX_UDC
+
+#define USB_H1_POWER  IMX_GPIO_NR(3, 31)
+#define USB_OTG_PWR0  IMX_GPIO_NR(3, 22)
+#define USB_OTG_PWR1  IMX_GPIO_NR(4, 15)
+
+void udc_pins_setting(void)
+{
+	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_GPIO_1__USBOTG_ID));
+	mxc_iomux_set_gpr_register(1, 13, 1, 1);
+
+	/*USB_HOST_VBUS  EIM_D31                         LED D5*/
+	gpio_direction_output(USB_H1_POWER, 1);
+	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_EIM_D31__GPIO_3_31));
+
+	/*USB_OTG_VBUS  EIM_D22   KEY_ROW4               LED D6*/
+	/* there are two pads to control OTG power supply, but only one pads
+	acturally used, in case of different hardware setting, two pads
+	function as gpio, and set to 0.
+	In case of 1-pluse when set the pad as gpio, set the pad to 0 before
+	setting it as gpio*/
+	gpio_direction_output(USB_OTG_PWR0, 0);
+	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_EIM_D22__GPIO_3_22));
+
+	gpio_direction_output(USB_OTG_PWR1, 0);
+	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_KEY_ROW4__GPIO_4_15));
+}
+#endif
