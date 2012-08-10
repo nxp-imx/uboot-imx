@@ -625,6 +625,10 @@ int fastboot_usb_recv(u8 *buf, int count)
 
 	while (!len) {
 		if (is_usb_disconnected()) {
+			/*it will not unconfigure when disconnect
+			from host, so here needs manual unconfigure
+			anyway, it's just a workaround*/
+			fastboot_configured_flag = 0;
 			usb_disconnected = 1;
 			return 0;
 		}
@@ -654,6 +658,10 @@ int fastboot_poll()
 	if (usb_disconnected) {
 		udc_disconnect();
 		udc_connect();
+		/*the udc_connect will be blocked until connect to host
+		  so, the usb_disconnect should be 0 after udc_connect,
+		  and should be set manually. Anyway, it's just a workaround*/
+		usb_disconnected = 0;
 	}
 
 	if (!length)
