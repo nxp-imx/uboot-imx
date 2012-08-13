@@ -694,6 +694,33 @@ void setup_pmic_voltages(void)
 		if (i2c_read(0x8, 0, 1, &value, 1))
 			printf("%s:i2c_read:error\n", __func__);
 		printf("Found PFUZE100! device id=%x\n", value);
+		if (value == 0x10) {
+			/*workaround ER1 of pfuze1.0: set all buck regulators
+			in PWM mode except SW1C*/
+			value = 0x6;
+			i2c_write(0x8, 0x23, 1, &value, 1);/*SW1AB*/
+
+			value = 0x6;
+			i2c_write(0x8, 0x38, 1, &value, 1);/*SW2*/
+
+			value = 0x6;
+			i2c_write(0x8, 0x3f, 1, &value, 1);/*SW3A*/
+
+			value = 0x6;
+			i2c_write(0x8, 0x46, 1, &value, 1);/*SW3B*/
+
+			value = 0x6;
+			i2c_write(0x8, 0x4d, 1, &value, 1);/*SW4*/
+		}
+		/*VDDCORE/VDDSOC default 1.375V is not enough, considering
+		pfuze tolerance and IR drop and ripple, need increase
+		to 1.425V for SabreSD*/
+		value = 0x2d;
+		i2c_write(0x8, 0x20, 1, &value, 1);
+
+		value = 0x2d;
+		i2c_write(0x8, 0x2e, 1, &value, 1);
+
 		#if CONFIG_MX6_INTER_LDO_BYPASS
 		/*VDDCORE 1.1V@800Mhz: SW1AB*/
 		value = 0x20;
