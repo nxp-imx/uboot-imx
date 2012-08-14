@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2008 Embedded Alley Solutions, Inc.
  *
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,22 @@
 #ifdef CONFIG_ARCH_MMU
 #include <asm/arch/mmu.h>
 #endif
+
+/* add our owner bbt descriptor */
+static uint8_t scan_ff_pattern[] = { 0xff };
+static struct nand_bbt_descr gpmi_bbt_descr = {
+	.options	= 0,
+	.offs		= 0,
+	.len		= 1,
+	.pattern	= scan_ff_pattern
+};
+
+/*  We will use all the (page + OOB). */
+static struct nand_ecclayout gpmi_hw_ecclayout = {
+	.eccbytes = 0,
+	.eccpos = { 0, },
+	.oobfree = { {.offset = 0, .length = 0} }
+};
 
 /**
  * gpmi_nfc_cmd_ctrl - MTD Interface cmd_ctrl()
@@ -848,113 +864,6 @@ static int gpmi_nfc_scan_bbt(struct mtd_info *mtd)
 
 	MTDDEBUG(MTD_DEBUG_LEVEL3, "%s =>\n", __func__);
 
-	/*
-	 * Tell MTD users that the out-of-band area can't be written.
-	 *
-	 * This flag is not part of the standard kernel source tree. It comes
-	 * from a patch that touches both MTD and JFFS2.
-	 *
-	 * The problem is that, without this patch, JFFS2 believes it can write
-	 * the data area and the out-of-band area separately. This is wrong for
-	 * two reasons:
-	 *
-	 *     1)  Our NFC distributes out-of-band bytes throughout the page,
-	 *         intermingled with the data, and covered by the same ECC.
-	 *         Thus, it's not possible to write the out-of-band bytes and
-	 *         data bytes separately.
-	 *
-	 *     2)  Large page (MLC) Flash chips don't support partial page
-	 *         writes. You must write the entire page at a time. Thus, even
-	 *         if our NFC didn't force you to write out-of-band and data
-	 *         bytes together, it would *still* be a bad idea to do
-	 *         otherwise.
-	 */
-
-	/* mtd->flags &= ~MTD_OOB_WRITEABLE; */
-
-	/*
-	 * MTD identified the attached NAND Flash devices, but we have a much
-	 * better database that we want to consult. First, we need to gather all
-	 * the ID bytes from the first chip (MTD only read the first two).
-	 */
-
-	saved_chip_number = gpmi_info->cur_chip;
-
-	/* Read ID bytes from the first NAND Flash chip. */
-	nand->select_chip(mtd, 0);
-
-	nand->cmdfunc(mtd, NAND_CMD_READID, 0x00, -1);
-	nand->read_buf(mtd, id_bytes, NAND_DEVICE_ID_BYTE_COUNT);
-
-	nand->select_chip(mtd, saved_chip_number);
-
-	/* Look up this device in our database. */
-	dev_info = nand_device_get_info(id_bytes);
-
-	/* Check if we understand this device. */
-	if (!dev_info) {
-		printf("Unrecognized NAND Flash device.\n");
-		return !0;
-	}
-
-	/* Display the information we discovered. */
-	nand_device_print_info(dev_info);
-
-	layout->eccbytes          = 0;
-
-	/* Correct mtd setting */
-	mtd->size	= dev_info->chip_size_in_bytes * nand->numchips;
-
-	mtd->writesize	= 1 << (fls(dev_info->page_total_size_in_bytes) - 1);
-	mtd->oobsize	= dev_info->page_total_size_in_bytes - mtd->writesize;
-	mtd->erasesize	= dev_info->block_size_in_pages * mtd->writesize;
-
-	mtd->ecclayout	= layout;
-	mtd->oobavail	= mtd->oobsize;
-	mtd->subpage_sft = 0; /* We don't support sub-page writing. */
-
-	/* Configure the struct nand_ecclayout. */
-	layout->eccbytes          = 0;
-	layout->oobavail = mtd->oobsize;
-	layout->oobfree[0].offset = 0;
-	layout->oobfree[0].length = mtd->oobsize;
-
-	nand->ecc.layout = layout;
-
-	/* Configure the struct nand_chip. */
-	/*
-	nand->page_shift	= ffs(mtd->writesize) - 1;
-	nand->pagemask	= (nand->chipsize >> nand->page_shift) - 1;
-	nand->subpagesize	= mtd->writesize >> mtd->subpage_sft;
-	nand->phys_erase_shift	= ffs(mtd->erasesize) - 1;
-	nand->bbt_erase_shift	= nand->phys_erase_shift;
-	nand->chip_shift		= ffs(nand->chipsize) - 1;
-	nand->oob_poi		= nand->buffers->databuf + mtd->writesize;
-	*/
-	nand->phys_erase_shift	= ffs(mtd->erasesize) - 1;
-	nand->ecc.layout	= layout;
-	nand->ecc.size		= 512;
-	/*
-	nand->ecc.steps		= mtd->writesize / nand->ecc.size;
-	nand->ecc.total		= nand->ecc.steps * nand->ecc.bytes;
-	*/
-	/*
-	if (nand->chipsize & 0xffffffff)
-		nand->chip_shift = ffs((u32)nand->chipsize) - 1;
-	else
-		nand->chip_shift =
-				ffs((u32)(nand->chipsize >> 32)) + 32 - 1;
-	*/
-
-	/* limit to 2G size due to Kernel
-	 * larger 4G space support,need fix
-	 * it later
-	 */
-	if ((u32)mtd->size == 0) {
-		mtd->size = (u32)(1 << 31);
-		nand->numchips = 1;
-		nand->chipsize = mtd->size;
-	}
 
 	gpmi_info->m_u32EccChunkCnt = GPMI_NFC_ECC_CHUNK_CNT(mtd->writesize);
 	gpmi_info->m_u32EccStrength =
@@ -1146,6 +1055,7 @@ int board_nand_init(struct nand_chip *nand)
 	chip->erase_cmd		= NULL;
 	chip->write_page	= NULL;
 	chip->scan_bbt		= gpmi_nfc_scan_bbt;
+	chip->badblock_pattern	= &gpmi_bbt_descr;
 	/*
 	 * Error Recovery Functions
 	 *
@@ -1163,6 +1073,7 @@ int board_nand_init(struct nand_chip *nand)
 	chip->ecc.read_page_raw = NULL;
 	chip->ecc.write_page_raw = NULL;
 	chip->ecc.read_page	= gpmi_nfc_ecc_read_page;
+	chip->ecc.layout	= &gpmi_hw_ecclayout;
 	/*
 	 * Set up NAND Flash options. Specifically:
 	 *
