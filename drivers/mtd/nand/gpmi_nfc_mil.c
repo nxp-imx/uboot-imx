@@ -313,14 +313,10 @@ static void gpmi_nfc_block_mark_swapping(struct gpmi_nfc_info *gpmi_info,
 	 * If control arrives here, we're swapping. Make some convenience
 	 * variables.
 	 */
-	bit = gpmi_info->m_u32BlkMarkBitStart;
-	p   = ((u8 *)data_buf) + gpmi_info->m_u32BlkMarkByteOfs;
+	bit = gpmi_info->block_mark_bit_offset;
+	p   = ((u8 *)data_buf) + gpmi_info->block_mark_byte_offset;
 	a   = oob_buf;
 
-	MTDDEBUG(MTD_DEBUG_LEVEL1, "Block mark byte offset: %d, "
-		"bit offset: %d",
-		gpmi_info->m_u32BlkMarkByteOfs,
-		gpmi_info->m_u32BlkMarkBitStart);
 
 	/*
 	 * Get the byte from the data area that overlays the block mark. Since
@@ -394,12 +390,9 @@ static int gpmi_nfc_ecc_read_page(struct mtd_info *mtd,
 	corrected = 0;
 
 	status = ((u8 *)gpmi_info->oob_buf) +
-		gpmi_info->m_u32AuxStsOfs;
-	MTDDEBUG(MTD_DEBUG_LEVEL1, "Auxiliary status offset: %d, "
-		"Ecc chunk cnt: %d\n",
-		gpmi_info->m_u32AuxStsOfs, gpmi_info->m_u32EccChunkCnt);
+		gpmi_info->auxiliary_status_offset;
 
-	for (i = 0; i < gpmi_info->m_u32EccChunkCnt; i++, status++) {
+	for (i = 0; i < gpmi_info->ecc_chunk_count; i++, status++) {
 
 		if ((*status == 0x00) || (*status == 0xff))
 			continue;
@@ -826,6 +819,137 @@ static int gpmi_nfc_pre_bbt_scan(struct gpmi_nfc_info *this)
 }
 #endif
 
+#define round_down(x, y) ((x) & ~(y - 1))
+
+/*
+ *  Calculate the ECC strength by hand:
+ *	E : The ECC strength.
+ *	G : the length of Galois Field.
+ *	N : The chunk count of per page.
+ *	O : the oobsize of the NAND chip.
+ *	M : the metasize of per page.
+ *
+ *	The formula is :
+ *		E * G * N
+ *	      ------------ <= (O - M)
+ *                  8
+ *
+ *      So, we get E by:
+ *                    (O - M) * 8
+ *              E <= -------------
+ *                       G * N
+ */
+static inline int get_ecc_strength(struct gpmi_nfc_info *geo,
+					struct mtd_info *mtd)
+{
+	int ecc_strength;
+
+	ecc_strength = ((mtd->oobsize - geo->metadata_size) * 8)
+			/ (geo->gf_len * geo->ecc_chunk_count);
+
+	/* We need the minor even number. */
+	return round_down(ecc_strength, 2);
+}
+
+int common_nfc_set_geometry(struct gpmi_nfc_info *geo, struct mtd_info *mtd)
+{
+	unsigned int metadata_size;
+	unsigned int status_size;
+	unsigned int block_mark_bit_offset;
+
+	/*
+	 * The size of the metadata can be changed, though we set it to 10
+	 * bytes now. But it can't be too large, because we have to save
+	 * enough space for BCH.
+	 */
+	geo->metadata_size = 10;
+
+	/* The default for the length of Galois Field. */
+	geo->gf_len = 13;
+
+	/* The default for chunk size. There is no oobsize greater then 512. */
+	geo->ecc_chunk_size = 512;
+	while (geo->ecc_chunk_size < mtd->oobsize)
+		geo->ecc_chunk_size *= 2; /* keep C >= O */
+
+	geo->ecc_chunk_count = mtd->writesize / geo->ecc_chunk_size;
+
+	/* We use the same ECC strength for all chunks. */
+	geo->ecc_strength = get_ecc_strength(geo, mtd);
+	if (!geo->ecc_strength) {
+		printf("We get a wrong ECC strength.\n");
+		return -EINVAL;
+	}
+
+	/*
+	 * The auxiliary buffer contains the metadata and the ECC status. The
+	 * metadata is padded to the nearest 32-bit boundary. The ECC status
+	 * contains one byte for every ECC chunk, and is also padded to the
+	 * nearest 32-bit boundary.
+	 */
+	metadata_size = ALIGN(geo->metadata_size, 4);
+	status_size   = ALIGN(geo->ecc_chunk_count, 4);
+
+	geo->auxiliary_size = metadata_size + status_size;
+	geo->auxiliary_status_offset = metadata_size;
+
+#ifndef CONFIG_GPMI_NFC_SWAP_BLOCK_MARK
+	return 0;
+#endif
+
+	/*
+	 * We need to compute the byte and bit offsets of
+	 * the physical block mark within the ECC-based view of the page.
+	 *
+	 * NAND chip with 2K page shows below:
+	 *                                             (Block Mark)
+	 *                                                   |      |
+	 *                                                   |  D   |
+	 *                                                   |<---->|
+	 *                                                   V      V
+	 *    +---+----------+-+----------+-+----------+-+----------+-+
+	 *    | M |   data   |E|   data   |E|   data   |E|   data   |E|
+	 *    +---+----------+-+----------+-+----------+-+----------+-+
+	 *
+	 * The position of block mark moves forward in the ECC-based view
+	 * of page, and the delta is:
+	 *
+	 *                   E * G * (N - 1)
+	 *             D = (---------------- + M)
+	 *                          8
+	 *
+	 * With the formula to compute the ECC strength, and the condition
+	 *       : C >= O         (C is the ecc chunk size)
+	 *
+	 * It's easy to deduce to the following result:
+	 *
+	 *         E * G       (O - M)      C - M         C - M
+	 *      ----------- <= ------- <=  --------  <  ---------
+	 *           8            N           N          (N - 1)
+	 *
+	 *  So, we get:
+	 *
+	 *                   E * G * (N - 1)
+	 *             D = (---------------- + M) < C
+	 *                          8
+	 *
+	 *  The above inequality means the position of block mark
+	 *  within the ECC-based view of the page is still in the data chunk,
+	 *  and it's NOT in the ECC bits of the chunk.
+	 *
+	 *  Use the following to compute the bit position of the
+	 *  physical block mark within the ECC-based view of the page:
+	 *          (page_size - D) * 8
+	 */
+	block_mark_bit_offset = mtd->writesize * 8 -
+		(geo->ecc_strength * geo->gf_len * (geo->ecc_chunk_count - 1)
+				+ geo->metadata_size * 8);
+
+	geo->block_mark_byte_offset = block_mark_bit_offset / 8;
+	geo->block_mark_bit_offset  = block_mark_bit_offset % 8;
+	return 0;
+}
+
 /**
  * gpmi_nfc_scan_bbt() - MTD Interface scan_bbt().
  *
@@ -849,64 +973,30 @@ static int gpmi_nfc_pre_bbt_scan(struct gpmi_nfc_info *this)
  */
 static int gpmi_nfc_scan_bbt(struct mtd_info *mtd)
 {
-	uint8_t                 id_bytes[NAND_DEVICE_ID_BYTE_COUNT];
 	struct nand_chip        *nand = mtd->priv;
 	struct gpmi_nfc_info    *gpmi_info = nand->priv;
 	struct nfc_hal *nfc = gpmi_info->nfc;
-	struct nand_ecclayout	*layout = nand->ecc.layout;
-	int                     saved_chip_number;
-	struct nand_device_info *dev_info;
 	struct gpmi_nfc_timing  timing;
 	int                     error;
-#ifdef CONFIG_GPMI_NFC_SWAP_BLOCK_MARK
-	u32 blk_mark_bit_offs;
-#endif
 
 	MTDDEBUG(MTD_DEBUG_LEVEL3, "%s =>\n", __func__);
 
-
-	gpmi_info->m_u32EccChunkCnt = GPMI_NFC_ECC_CHUNK_CNT(mtd->writesize);
-	gpmi_info->m_u32EccStrength =
-		gpmi_nfc_get_ecc_strength(mtd->writesize, mtd->oobsize);
-
-	/* Try to calculate block mark info */
-	gpmi_info->m_u32AuxSize =
-		GPMI_NFC_AUX_SIZE(dev_info->page_total_size_in_bytes);
-	gpmi_info->m_u32AuxStsOfs = GPMI_NFC_AUX_STATUS_OFF;
-
-#ifdef CONFIG_GPMI_NFC_SWAP_BLOCK_MARK
-	blk_mark_bit_offs = gpmi_nfc_get_blk_mark_bit_ofs(mtd->writesize,
-						gpmi_info->m_u32EccStrength);
-
-	gpmi_info->m_u32BlkMarkByteOfs = blk_mark_bit_offs >> 3;
-	gpmi_info->m_u32BlkMarkBitStart  = blk_mark_bit_offs & 0x7;
-#endif
-
-	MTDDEBUG(MTD_DEBUG_LEVEL1, "ECC Chunk Cnt: %d, "
-		"Ecc Strength: %d, "
-		"Auxiliary Size: %d, "
-		"Auxiliary Status Offset: %d\n",
-		gpmi_info->m_u32EccChunkCnt, gpmi_info->m_u32EccStrength,
-		gpmi_info->m_u32AuxSize, gpmi_info->m_u32AuxStsOfs);
-
-#ifdef CONFIG_GPMI_NFC_SWAP_BLOCK_MARK
-	MTDDEBUG(MTD_DEBUG_LEVEL1, "Block mark byte offset: %d, "
-		"Block mark bit start: %d\n",
-		gpmi_info->m_u32BlkMarkByteOfs,
-		gpmi_info->m_u32BlkMarkBitStart);
-#endif
-
 	/* Set nfc geo */
+	common_nfc_set_geometry(gpmi_info, mtd);
 	nfc->set_geometry(mtd);
 
-	/* Set timing */
-	timing.m_u8DataSetup	= dev_info->data_setup_in_ns;
-	timing.m_u8DataHold	= dev_info->data_hold_in_ns;
-	timing.m_u8AddressSetup	= dev_info->address_setup_in_ns;
-	timing.m_u8SampleDelay	= dev_info->gpmi_sample_delay_in_ns;
-	timing.m_u8tREA		= dev_info->tREA_in_ns;
-	timing.m_u8tRLOH	= dev_info->tRLOH_in_ns;
-	timing.m_u8tRHOH	= dev_info->tRHOH_in_ns;
+	/*
+	 * The "safe" GPMI timing that should succeed
+	 * with any NAND Flash device
+	 * (although, with less-than-optimal performance).
+	 */
+	timing.m_u8DataSetup	= 80;
+	timing.m_u8DataHold	= 60;
+	timing.m_u8AddressSetup	= 25;
+	timing.m_u8SampleDelay	=  6;
+	timing.m_u8tREA		= -1;
+	timing.m_u8tRLOH	= -1;
+	timing.m_u8tRHOH	= -1;
 
 	error = nfc->set_timing(mtd, &timing);
 

@@ -844,12 +844,15 @@ struct gpmi_nfc_info {
 	u8 m_u8MarkingBadBlock;
 	u8 m_u8RawOOBMode;
 
-	u32 m_u32EccChunkCnt;
-	u32 m_u32EccStrength;
-	u32 m_u32AuxSize;
-	u32 m_u32AuxStsOfs;
-	u32 m_u32BlkMarkByteOfs;
-	u32 m_u32BlkMarkBitStart;
+	u32 gf_len;
+	u32 ecc_strength;
+	u32 metadata_size;
+	u32 ecc_chunk_size;
+	u32 ecc_chunk_count;
+	u32 auxiliary_size;
+	u32 auxiliary_status_offset;
+	u32 block_mark_byte_offset;
+	u32 block_mark_bit_offset;
 
 	int (*hooked_read_oob)(struct mtd_info *mtd,
 				loff_t from, struct mtd_oob_ops *ops);

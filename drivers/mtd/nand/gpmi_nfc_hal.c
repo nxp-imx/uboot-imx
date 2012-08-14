@@ -210,6 +210,8 @@ static int init(void)
  */
 static int set_geometry(struct mtd_info *mtd)
 {
+	struct nand_chip *nand = mtd->priv;
+	struct gpmi_nfc_info *gpmi_info = nand->priv;
 	u32 block_count;
 	u32 block_size;
 	u32 metadata_size;
@@ -227,8 +229,7 @@ static int set_geometry(struct mtd_info *mtd)
 #endif
 	metadata_size = GPMI_NFC_METADATA_SIZE;
 
-	ecc_strength =
-		gpmi_nfc_get_ecc_strength(mtd->writesize, mtd->oobsize) >> 1;
+	ecc_strength = gpmi_info->ecc_strength >> 1;
 
 	page_size    = mtd->writesize + mtd->oobsize;
 
