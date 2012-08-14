@@ -1,7 +1,7 @@
 /*
  * Freescale GPMI Register Definitions
  *
- * Copyright 2008-2011 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2008-2012 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -806,75 +806,6 @@ static inline u32 gpmi_nfc_get_ecc_strength(u32 page_data_size,
 		return 24;
 	else
 		return 0;
-}
-
-static inline s32 gpmi_nfc_reset_block(void *hwreg, int is_enable)
-{
-	int timeout;
-
-	/* the process of software reset of IP block is done
-	   in several steps:
-
-	   - clear SFTRST and wait for block is enabled;
-	   - clear clock gating (CLKGATE bit);
-	   - set the SFTRST again and wait for block is in reset;
-	   - clear SFTRST and wait for reset completion.
-	 */
-	/* clear SFTRST */
-	REG_CLR_ADDR(hwreg, BM_GPMI_CTRL0_SFTRST);
-
-	for (timeout = 1000000; timeout > 0; timeout--)
-		/* still in SFTRST state ? */
-		if ((REG_RD_ADDR(hwreg) & BM_GPMI_CTRL0_SFTRST) == 0)
-			break;
-		if (timeout <= 0) {
-			printk(KERN_ERR "%s(%p): timeout when enabling\n",
-				__func__, hwreg);
-			return -ETIME;
-	}
-
-	/* clear CLKGATE */
-	REG_CLR_ADDR(hwreg, BM_GPMI_CTRL0_CLKGATE);
-
-	if (is_enable) {
-		/* now again set SFTRST */
-		REG_SET_ADDR(hwreg, BM_GPMI_CTRL0_SFTRST);
-		for (timeout = 1000000; timeout > 0; timeout--)
-			/* poll until CLKGATE set */
-			if (REG_RD_ADDR(hwreg) & BM_GPMI_CTRL0_CLKGATE)
-				break;
-		if (timeout <= 0) {
-			printk(KERN_ERR "%s(%p): timeout when resetting\n",
-				__func__, hwreg);
-			return -ETIME;
-		}
-
-		REG_CLR_ADDR(hwreg, BM_GPMI_CTRL0_SFTRST);
-		for (timeout = 1000000; timeout > 0; timeout--)
-			/* still in SFTRST state ? */
-			if ((REG_RD_ADDR(hwreg) & BM_GPMI_CTRL0_SFTRST) == 0)
-				break;
-		if (timeout <= 0) {
-			printk(KERN_ERR "%s(%p): timeout when enabling "
-				"after reset\n", __func__, hwreg);
-			return -ETIME;
-		}
-
-		/* clear CLKGATE */
-		REG_CLR_ADDR(hwreg, BM_GPMI_CTRL0_CLKGATE);
-	}
-	for (timeout = 1000000; timeout > 0; timeout--)
-		/* still in SFTRST state ? */
-		if ((REG_RD_ADDR(hwreg) & BM_GPMI_CTRL0_CLKGATE) == 0)
-			break;
-
-	if (timeout <= 0) {
-		printk(KERN_ERR "%s(%p): timeout when unclockgating\n",
-			__func__, hwreg);
-		return -ETIME;
-	}
-
-	return 0;
 }
 
 /**

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2008 Embedded Alley Solutions, Inc.
  *
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,6 +52,94 @@ static struct gpmi_nfc_timing  safe_timing = {
 	.m_u8tRHOH		= -1,
 };
 
+#define MXS_SET_ADDR		0x4
+#define MXS_CLR_ADDR		0x8
+/*
+ * Clear the bit and poll it cleared.  This is usually called with
+ * a reset address and mask being either SFTRST(bit 31) or CLKGATE
+ * (bit 30).
+ */
+static int clear_poll_bit(void __iomem *addr, u32 mask)
+{
+	int timeout = 0x400;
+
+	/* clear the bit */
+	writel(mask, addr + MXS_CLR_ADDR);
+
+	/*
+	 * SFTRST needs 3 GPMI clocks to settle, the reference manual
+	 * recommends to wait 1us.
+	 */
+	udelay(1);
+
+	/* poll the bit becoming clear */
+	while ((readl(addr) & mask) && --timeout)
+		/* nothing */;
+
+	return !timeout;
+}
+
+#define MODULE_CLKGATE		(1 << 30)
+#define MODULE_SFTRST		(1 << 31)
+/*
+ * The current mxs_reset_block() will do two things:
+ *  [1] enable the module.
+ *  [2] reset the module.
+ *
+ * In most of the cases, it's ok.
+ * But in MX23, there is a hardware bug in the BCH block (see erratum #2847).
+ * If you try to soft reset the BCH block, it becomes unusable until
+ * the next hard reset. This case occurs in the NAND boot mode. When the board
+ * boots by NAND, the ROM of the chip will initialize the BCH blocks itself.
+ * So If the driver tries to reset the BCH again, the BCH will not work anymore.
+ * You will see a DMA timeout in this case. The bug has been fixed
+ * in the following chips, such as MX28.
+ *
+ * To avoid this bug, just add a new parameter `just_enable` for
+ * the mxs_reset_block(), and rewrite it here.
+ */
+static int gpmi_reset_block(void __iomem *reset_addr, int just_enable)
+{
+	int ret;
+	int timeout = 0x400;
+
+	/* clear and poll SFTRST */
+	ret = clear_poll_bit(reset_addr, MODULE_SFTRST);
+	if (unlikely(ret))
+		goto error;
+
+	/* clear CLKGATE */
+	writel(MODULE_CLKGATE, reset_addr + MXS_CLR_ADDR);
+
+	if (!just_enable) {
+		/* set SFTRST to reset the block */
+		writel(MODULE_SFTRST, reset_addr + MXS_SET_ADDR);
+		udelay(1);
+
+		/* poll CLKGATE becoming set */
+		while ((!(readl(reset_addr) & MODULE_CLKGATE)) && --timeout)
+			/* nothing */;
+		if (unlikely(!timeout))
+			goto error;
+	}
+
+	/* clear and poll SFTRST */
+	ret = clear_poll_bit(reset_addr, MODULE_SFTRST);
+	if (unlikely(ret))
+		goto error;
+
+	/* clear and poll CLKGATE */
+	ret = clear_poll_bit(reset_addr, MODULE_CLKGATE);
+	if (unlikely(ret))
+		goto error;
+
+	return 0;
+
+error:
+	printf("%s(%p): module reset timeout\n", __func__, reset_addr);
+	return -ETIMEDOUT;
+}
+
 /**
  * init() - Initializes the NFC hardware.
  *
@@ -86,7 +174,11 @@ static int init(void)
 	mxs_dma_init();
 
 	/* Reset the GPMI block. */
-	gpmi_nfc_reset_block((void *)(CONFIG_GPMI_REG_BASE + HW_GPMI_CTRL0), 1);
+	i = 0;
+	do {
+		error = gpmi_reset_block((void *)CONFIG_GPMI_REG_BASE, 0);
+		i++;
+	} while (error != 0 && i < 10);
 
 	/* Choose NAND mode. */
 	REG_CLR(CONFIG_GPMI_REG_BASE, HW_GPMI_CTRL1,
@@ -149,11 +241,7 @@ static int set_geometry(struct mtd_info *mtd)
 	 * the next hard reset.
 	 */
 
-#if defined(CONFIG_GPMI_NFC_V2)
-	gpmi_nfc_reset_block((void *)CONFIG_BCH_REG_BASE + HW_BCH_CTRL, 0);
-#else
-	gpmi_nfc_reset_block((void *)CONFIG_BCH_REG_BASE + HW_BCH_CTRL, 1);
-#endif
+	gpmi_reset_block((void *)CONFIG_BCH_REG_BASE + HW_BCH_CTRL, 0);
 
 	/* Configure layout 0. */
 	writel(BF_BCH_FLASH0LAYOUT0_NBLOCKS(block_count)     |
