@@ -199,6 +199,10 @@ static int init(void)
 	memcpy(&gpmi_nfc_hal.timing, &safe_timing,
 		sizeof(struct gpmi_nfc_timing));
 
+	/* Set the busy_timeout. */
+	REG_SET(CONFIG_GPMI_REG_BASE, HW_GPMI_TIMING1,
+		BF_GPMI_TIMING1_DEVICE_BUSY_TIMEOUT(0x500));
+
 	MTDDEBUG(MTD_DEBUG_LEVEL3, "<= %s\n", __func__);
 	return 0;
 }
