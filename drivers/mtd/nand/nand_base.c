@@ -2458,6 +2458,127 @@ static void nand_set_defaults(struct nand_chip *chip, int busw)
 
 }
 
+#define isspace(c)	((c) == ' ')
+char *skip_spaces(const char *str)
+{
+	while (isspace(*str))
+		++str;
+	return (char *)str;
+}
+
+char *strim(char *s)
+{
+	size_t size;
+	char *end;
+
+	size = strlen(s);
+	if (!size)
+		return s;
+
+	end = s + size - 1;
+	while (end >= s && isspace(*end))
+		end--;
+	*(end + 1) = '\0';
+
+	return skip_spaces(s);
+}
+/* Sanitize ONFI strings so we can safely print them */
+static void sanitize_string(uint8_t *s, size_t len)
+{
+	ssize_t i;
+
+	/* Null terminate */
+	s[len - 1] = 0;
+
+	/* Remove non printable chars */
+	for (i = 0; i < len - 1; i++) {
+		if (s[i] < ' ' || s[i] > 127)
+			s[i] = '?';
+	}
+
+	/* Remove trailing spaces */
+	strim(s);
+}
+
+static u16 onfi_crc16(u16 crc, u8 const *p, size_t len)
+{
+	int i;
+	while (len--) {
+		crc ^= *p++ << 8;
+		for (i = 0; i < 8; i++)
+			crc = (crc << 1) ^ ((crc & 0x8000) ? 0x8005 : 0);
+	}
+
+	return crc;
+}
+
+/*
+ * Check if the NAND chip is ONFI compliant, returns 1 if it is, 0 otherwise.
+ */
+static int nand_flash_detect_onfi(struct mtd_info *mtd, struct nand_chip *chip,
+					int *busw)
+{
+	struct nand_onfi_params *p = &chip->onfi_params;
+	int i;
+	int val;
+
+	/* Try ONFI for unknown chip or LP */
+	chip->cmdfunc(mtd, NAND_CMD_READID, 0x20, -1);
+	if (chip->read_byte(mtd) != 'O' || chip->read_byte(mtd) != 'N' ||
+		chip->read_byte(mtd) != 'F' || chip->read_byte(mtd) != 'I')
+		return 0;
+
+	chip->cmdfunc(mtd, NAND_CMD_PARAM, 0, -1);
+	for (i = 0; i < 3; i++) {
+		chip->read_buf(mtd, (uint8_t *)p, sizeof(*p));
+		if (onfi_crc16(ONFI_CRC_BASE, (uint8_t *)p, 254) ==
+				le16_to_cpu(p->crc)) {
+			printf("ONFI param page %d valid\n", i);
+			break;
+		}
+	}
+
+	if (i == 3)
+		return 0;
+
+	/* Check version */
+	val = le16_to_cpu(p->revision);
+	if (val & (1 << 5))
+		chip->onfi_version = 23;
+	else if (val & (1 << 4))
+		chip->onfi_version = 22;
+	else if (val & (1 << 3))
+		chip->onfi_version = 21;
+	else if (val & (1 << 2))
+		chip->onfi_version = 20;
+	else if (val & (1 << 1))
+		chip->onfi_version = 10;
+	else
+		chip->onfi_version = 0;
+
+	if (!chip->onfi_version) {
+		printf("%s: unsupported ONFI version: %d\n", __func__, val);
+		return 0;
+	}
+
+	sanitize_string(p->manufacturer, sizeof(p->manufacturer));
+	sanitize_string(p->model, sizeof(p->model));
+	if (!mtd->name)
+		mtd->name = p->model;
+	mtd->writesize = le32_to_cpu(p->byte_per_page);
+	mtd->erasesize = le32_to_cpu(p->pages_per_block) * mtd->writesize;
+	mtd->oobsize = le16_to_cpu(p->spare_bytes_per_page);
+	chip->chipsize = le32_to_cpu(p->blocks_per_lun);
+	chip->chipsize *= (uint64_t)mtd->erasesize * p->lun_count;
+	*busw = 0;
+	if (le16_to_cpu(p->features) & 1)
+		*busw = NAND_BUSWIDTH_16;
+
+	chip->options &= ~NAND_CHIPOPTIONS_MSK;
+
+	printf("ONFI flash detected\n");
+	return 1;
+}
 /*
  * Get the flash and manufacturer id and lookup if the type is supported
  */
@@ -2468,6 +2589,7 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 	struct nand_flash_dev *type = NULL;
 	int i, dev_id, maf_idx;
 	int tmp_id, tmp_manf;
+	u8 id_data[8];
 
 	/* Select the device */
 	chip->select_chip(mtd, 0);
@@ -2513,6 +2635,21 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 		}
 	}
 
+	chip->onfi_version = 0;
+	if (!type || !type->name || !type->pagesize) {
+		int ret;
+
+		/* Check is chip is ONFI compliant */
+		ret = nand_flash_detect_onfi(mtd, chip, &busw);
+		if (ret)
+			goto ident_done;
+	}
+
+	/* Read entire ID string */
+	chip->cmdfunc(mtd, NAND_CMD_READID, 0x00, -1);
+	for (i = 0; i < 8; i++)
+		id_data[i] = chip->read_byte(mtd);
+
 	if (!type)
 		return ERR_PTR(-ENODEV);
 
@@ -2525,32 +2662,83 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 	if (!type->pagesize) {
 		int extid;
 		/* The 3rd id byte holds MLC / multichip data */
-		chip->cellinfo = chip->read_byte(mtd);
+		chip->cellinfo = id_data[2];
 		/* The 4th id byte is the important one */
-		extid = chip->read_byte(mtd);
-		/* Calc pagesize */
-		mtd->writesize = 1024 << (extid & 0x3);
-		extid >>= 2;
-		/* Calc oobsize */
-		mtd->oobsize = (*maf_id == 0x2c && dev_id == 0xd5) ?
-			218 : (8 << (extid & 0x01)) * (mtd->writesize >> 9);
-		extid >>= 2;
-		/* Calc blocksize. Blocksize is multiples of 64KiB */
-		mtd->erasesize = (64 * 1024) << (extid & 0x03);
-		extid >>= 2;
-		/* Get buswidth information */
-		busw = (extid & 0x01) ? NAND_BUSWIDTH_16 : 0;
+		extid = id_data[3];
 
+		/*
+		 * Field definitions are in the following datasheets:
+		 * Old style (4,5 byte ID): Samsung K9GAG08U0M (p.32)
+		 * New style   (6 byte ID): Samsung K9GBG08U0M (p.40)
+		 *
+		 * Check for wraparound + Samsung ID + nonzero 6th byte
+		 * to decide what to do.
+		 */
+		if (id_data[0] == id_data[6] && id_data[1] == id_data[7] &&
+				id_data[0] == NAND_MFR_SAMSUNG &&
+				(chip->cellinfo & NAND_CI_CELLTYPE_MSK) &&
+				id_data[5] != 0x00) {
+			/* Calc pagesize */
+			mtd->writesize = 2048 << (extid & 0x03);
+			extid >>= 2;
+			/* Calc oobsize */
+			switch (extid & 0x03) {
+			case 1:
+				mtd->oobsize = 128;
+				break;
+			case 2:
+				mtd->oobsize = 218;
+				break;
+			case 3:
+				mtd->oobsize = 400;
+				break;
+			default:
+				mtd->oobsize = 436;
+				break;
+			}
+			extid >>= 2;
+			/* Calc blocksize */
+			mtd->erasesize = (128 * 1024) <<
+				(((extid >> 1) & 0x04) | (extid & 0x03));
+			busw = 0;
+		} else {
+			/* Calc pagesize */
+			mtd->writesize = 1024 << (extid & 0x03);
+			extid >>= 2;
+			/* Calc oobsize */
+			mtd->oobsize = (8 << (extid & 0x01)) *
+				(mtd->writesize >> 9);
+			extid >>= 2;
+			/* Calc blocksize. Blocksize is multiples of 64KiB */
+			mtd->erasesize = (64 * 1024) << (extid & 0x03);
+			extid >>= 2;
+			/* Get buswidth information */
+			busw = (extid & 0x01) ? NAND_BUSWIDTH_16 : 0;
+		}
 	} else {
 		/*
-		 * Old devices have chip data hardcoded in the device id table
+		 * Old devices have chip data hardcoded in the device id table.
 		 */
 		mtd->erasesize = type->erasesize;
 		mtd->writesize = type->pagesize;
 		mtd->oobsize = mtd->writesize / 32;
 		busw = type->options & NAND_BUSWIDTH_16;
+
+		/*
+		 * Check for Spansion/AMD ID + repeating 5th, 6th byte since
+		 * some Spansion chips have erasesize that conflicts with size
+		 * listed in nand_ids table.
+		 * Data sheet (5 byte ID): Spansion S30ML-P ORNAND (p.39)
+		 */
+		if (*maf_id == NAND_MFR_AMD && id_data[4] != 0x00 &&
+				id_data[5] == 0x00 && id_data[6] == 0x00 &&
+				id_data[7] == 0x00 && mtd->writesize == 512) {
+			mtd->erasesize = 128 * 1024;
+			mtd->erasesize <<= ((id_data[3] & 0x03) << 1);
+		}
 	}
 
+ident_done:
 	/* Try to identify manufacturer */
 	for (maf_idx = 0; nand_manuf_ids[maf_idx].id != 0x0; maf_idx++) {
 		if (nand_manuf_ids[maf_idx].id == *maf_id)
@@ -2612,9 +2800,11 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 	if (mtd->writesize > 512 && chip->cmdfunc == nand_command)
 		chip->cmdfunc = nand_command_lp;
 
-	MTDDEBUG (MTD_DEBUG_LEVEL0, "NAND device: Manufacturer ID:"
-	          " 0x%02x, Chip ID: 0x%02x (%s %s)\n", *maf_id, dev_id,
-	          nand_manuf_ids[maf_idx].name, type->name);
+	printf("Manufacturer ID: 0x%02x, Chip ID: 0x%02x (%s %s),"
+		" page size: %d, OOB size: %d\n",
+		*maf_id, dev_id, nand_manuf_ids[maf_idx].name,
+		chip->onfi_version ? chip->onfi_params.model : type->name,
+		mtd->writesize, mtd->oobsize);
 
 	return type;
 }
