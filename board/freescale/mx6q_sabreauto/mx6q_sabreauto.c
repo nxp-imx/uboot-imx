@@ -532,11 +532,10 @@ int setup_gpmi_nand(void)
 	mxc_iomux_v3_setup_multiple_pads(nfc_pads,
 			ARRAY_SIZE(nfc_pads));
 
-
-	/* config gpmi and bch clock to 11Mhz*/
+	/* config gpmi and bch clock to 20Mhz, from pll2 400M pfd*/
 	reg = readl(CCM_BASE_ADDR + CLKCTL_CS2CDR);
 	reg &= 0xF800FFFF;
-	reg |= 0x01E40000;
+	reg |= 0x02630000;
 	writel(reg, CCM_BASE_ADDR + CLKCTL_CS2CDR);
 
 	/* enable gpmi and bch clock gating */
