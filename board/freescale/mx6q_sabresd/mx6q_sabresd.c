@@ -1374,11 +1374,22 @@ void lcd_enable(void)
 	g_ipu_hw_rev = IPUV3_HW_REV_IPUV3H;
 
 #if defined CONFIG_MX6Q
+	/* GPIO backlight */
 	mxc_iomux_v3_setup_pad(MX6Q_PAD_SD1_DAT3__GPIO_1_21);
+	/* LVDS panel CABC_EN0 */
+	mxc_iomux_v3_setup_pad(MX6Q_PAD_NANDF_CS2__GPIO_6_15);
+	/* LVDS panel CABC_EN1 */
+	mxc_iomux_v3_setup_pad(MX6Q_PAD_NANDF_CS3__GPIO_6_16);
 #elif defined CONFIG_MX6DL
+	/* GPIO backlight */
 	mxc_iomux_v3_setup_pad(MX6DL_PAD_SD1_DAT3__GPIO_1_21);
+	/* LVDS panel CABC_EN0 */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_NANDF_CS2__GPIO_6_15);
+	/* LVDS panel CABC_EN1 */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_NANDF_CS3__GPIO_6_16);
 #endif
 
+	/* Set GPIO backlight to high. */
 	reg = readl(GPIO1_BASE_ADDR + GPIO_GDIR);
 	reg |= (1 << 21);
 	writel(reg, GPIO1_BASE_ADDR + GPIO_GDIR);
@@ -1386,6 +1397,33 @@ void lcd_enable(void)
 	reg = readl(GPIO1_BASE_ADDR + GPIO_DR);
 	reg |= (1 << 21);
 	writel(reg, GPIO1_BASE_ADDR + GPIO_DR);
+
+	/*
+	 * Set LVDS panel CABC_EN0 to low to disable
+	 * CABC function. This function will turn backlight
+	 * automatically according to display content, so
+	 * simply disable it to get rid of annoying unstable
+	 * backlight phenomena.
+	 */
+	reg = readl(GPIO6_BASE_ADDR + GPIO_GDIR);
+	reg |= (1 << 15);
+	writel(reg, GPIO6_BASE_ADDR + GPIO_GDIR);
+
+	reg = readl(GPIO6_BASE_ADDR + GPIO_DR);
+	reg &= ~(1 << 15);
+	writel(reg, GPIO6_BASE_ADDR + GPIO_DR);
+
+	/*
+	 * Set LVDS panel CABC_EN1 to low to disable
+	 * CABC function.
+	 */
+	reg = readl(GPIO6_BASE_ADDR + GPIO_GDIR);
+	reg |= (1 << 16);
+	writel(reg, GPIO6_BASE_ADDR + GPIO_GDIR);
+
+	reg = readl(GPIO6_BASE_ADDR + GPIO_DR);
+	reg &= ~(1 << 16);
+	writel(reg, GPIO6_BASE_ADDR + GPIO_DR);
 
 	/* Enable IPU clock */
 	if (di == 1) {
