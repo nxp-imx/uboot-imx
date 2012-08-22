@@ -3347,6 +3347,8 @@ mx6solo_sabreauto_boot_weimnor_config		\
 mx6solo_sabreauto_config	\
 mx6solo_sabreauto_mfg_config	\
 mx6q_sabreauto_mfg_config	\
+mx6q_sabreauto_mfg_enable_spi-nor_config	\
+mx6solo_sabreauto_mfg_enable_spi-nor_config	\
 mx6q_sabreauto_nand_boot_config \
 mx6q_sabreauto_config    : unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx6q_sabreauto freescale mx6
