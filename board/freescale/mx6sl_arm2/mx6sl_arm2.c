@@ -31,6 +31,7 @@
 #include <asm/arch/iomux-v3.h>
 #include <asm/arch/regs-anadig.h>
 #include <asm/errno.h>
+#include <imx_wdog.h>
 #ifdef CONFIG_MXC_FEC
 #include <miiphy.h>
 #endif
@@ -1004,8 +1005,6 @@ void setup_pmic_voltages(void)
 		val |= BF_ANADIG_REG_CORE_REG1_TRG(0x1f);
 		REG_WR(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE, val);
 
-		/*clear PowerDown Enable bit of WDOG1_WMCR*/
-		writew(0, WDOG1_BASE_ADDR + 0x08);
 		printf("hw_anadig_reg_core=%x\n",
 			REG_RD(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE));
 		#endif
@@ -1024,6 +1023,8 @@ int board_init(void)
 
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
+
+	wdog_preconfig(WDOG1_BASE_ADDR);
 
 	setup_uart();
 
