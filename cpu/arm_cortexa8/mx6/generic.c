@@ -51,6 +51,10 @@
 #include <asm/arch/mx6_secure.h>
 #endif
 
+#ifdef CONFIG_SERIAL_TAG
+#include <imx_otp.h>
+#endif
+
 enum pll_clocks {
 	CPU_PLL1,	/* System PLL */
 	BUS_PLL2,	/* System Bus PLL*/
@@ -1425,4 +1429,12 @@ struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
 		.args = NULL,
 	},
 };
+#endif
+
+#ifdef CONFIG_SERIAL_TAG
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+	imx_otp_read_one_u32(CPU_UID_LOW_FUSE_INDEX, &serialnr->low);
+	imx_otp_read_one_u32(CPU_UID_HIGH_FUSE_INDEX, &serialnr->high);
+}
 #endif

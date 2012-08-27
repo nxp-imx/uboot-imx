@@ -105,6 +105,16 @@
  */
 #define DVFS_MAX_PIX_CLK	54000000
 
+/*!
+ * The Low 32 bits of CPU Serial Number Fuse Index
+ */
+#define CPU_UID_LOW_FUSE_INDEX         1
+
+/*!
+ * The High 32 bits of CPU Serial Number Fuse Index
+ */
+#define CPU_UID_HIGH_FUSE_INDEX         2
+
 
 /* IROM
  */

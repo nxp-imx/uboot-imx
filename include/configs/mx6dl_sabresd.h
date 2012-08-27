@@ -51,6 +51,7 @@
 #define BOARD_LATE_INIT
 
 #define CONFIG_CMDLINE_TAG	/* enable passing of ATAGs */
+#define CONFIG_SERIAL_TAG
 #define CONFIG_REVISION_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
