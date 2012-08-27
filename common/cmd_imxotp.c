@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2011-2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -149,8 +149,13 @@ usage:
 
 U_BOOT_CMD(imxotp, 5, 0, do_imxotp,
 	"One-Time Programable sub-system",
-	"imxotp read <addr>\n"
-	" - read fuse at 'addr'\n"
-	"imxotp blow [--force] <addr> <value>\n"
-	" - blow fuse at 'addr' with hex value 'value'\n"
+	"imxotp read <index>\n"
+	" - read fuse at 'index'\n"
+	"imxotp blow [--force] <index> <value>\n"
+	" - blow fuse at 'index' with hex value 'value'\n"
+	"Tips:\n"
+	"'addr' to 'index':\n"
+	"convert 'index' from 'address'\n"
+	"index = (addr - otp_base) / 0x10\n"
+	"eg, addr is 0x021bc410, otp_base is 0x021bc400, the index = 1\n"
 );
