@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
- * Configuration settings for the MX6Q Armadillo2 Freescale board.
+ * Configuration settings for the MX6Q SABRE-AI Freescale board.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -28,7 +28,7 @@
 #define CONFIG_ARMV7	/* This is armv7 Cortex-A9 CPU core */
 #define CONFIG_MXC
 #define CONFIG_MX6Q
-#define CONFIG_MX6Q_ARM2
+#define CONFIG_MX6Q_SABREAUTO
 #define CONFIG_FLASH_HEADER
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_MX6_CLK32	   32768
@@ -54,6 +54,7 @@
 #define CONFIG_REVISION_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
+#define CONFIG_MXC_GPIO
 
 /*
  * Size of malloc() pool
@@ -177,7 +178,7 @@
 	#define CONFIG_I2C_MXC          1
 	#define CONFIG_SYS_I2C_PORT             I2C3_BASE_ADDR
 	#define CONFIG_SYS_I2C_SPEED            100000
-	#define CONFIG_SYS_I2C_SLAVE            0x1f
+	#define CONFIG_SYS_I2C_SLAVE            0x30
 #endif
 
 /*
