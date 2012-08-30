@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012 Freescale Semiconductor, Inc.
  *
- * Configuration settings for the MX6Q Armadillo2 Freescale board.
+ * Configuration settings for the MX6SL EVK Freescale board.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -27,7 +27,7 @@
 #define CONFIG_ARMV7	/* This is armv7 Cortex-A9 CPU core */
 #define CONFIG_MXC
 #define CONFIG_MX6SL
-#define CONFIG_MX6SL_ARM2
+#define CONFIG_MX6SL_EVK
 #define CONFIG_FLASH_HEADER
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_MX6_CLK32	   32768
@@ -131,7 +131,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_PROMPT		"MX6Sl ARM2 MFG U-Boot > "
+#define CONFIG_SYS_PROMPT		"MX6Sl EVK MFG U-Boot > "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
@@ -203,8 +203,8 @@
 	/* detect whether SD1, 2, or 3 is boot device */
 	#define CONFIG_DYNAMIC_MMC_DEVNO
 
-	/* SD2 is 8 bit */
-	#define CONFIG_MMC_8BIT_PORTS   0x2
+	/* SD1 is 8 bit */
+	#define CONFIG_MMC_8BIT_PORTS   0x1
 	/* Setup target delay in DDR mode for each SD port */
 	#define CONFIG_GET_DDR_TARGET_DELAY
 #endif
