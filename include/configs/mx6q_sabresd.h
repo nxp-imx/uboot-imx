@@ -343,5 +343,9 @@
 	#define CONFIG_FB_BASE	(TEXT_BASE + 0x300000)
 	#define CONFIG_SPLASH_SCREEN_ALIGN
 	#define CONFIG_SYS_WHITE_ON_BLACK
+
+	#define CONFIG_IMX_PWM
+	#define IMX_PWM1_BASE    PWM1_BASE_ADDR
+	#define IMX_PWM2_BASE    PWM2_BASE_ADDR
 #endif
 #endif				/* __CONFIG_H */

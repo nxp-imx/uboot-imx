@@ -33,6 +33,7 @@
 #endif
 
 #if defined(CONFIG_VIDEO_MX5)
+#include <asm/imx_pwm.h>
 #include <linux/list.h>
 #include <linux/fb.h>
 #include <linux/mxcfb.h>
@@ -98,6 +99,11 @@ unsigned short colormap[65536];
 #else
 unsigned short colormap[16777216];
 #endif
+
+static struct pwm_device pwm0 = {
+	.pwm_id = 0,
+	.pwmo_invert = 0,
+};
 
 static int di = 1;
 
@@ -1373,31 +1379,24 @@ void lcd_enable(void)
 	*/
 	g_ipu_hw_rev = IPUV3_HW_REV_IPUV3H;
 
+	imx_pwm_config(pwm0, 25000, 50000);
+	imx_pwm_enable(pwm0);
+
 #if defined CONFIG_MX6Q
-	/* GPIO backlight */
-	mxc_iomux_v3_setup_pad(MX6Q_PAD_SD1_DAT3__GPIO_1_21);
+	/* PWM backlight */
+	mxc_iomux_v3_setup_pad(MX6Q_PAD_SD1_DAT3__PWM1_PWMO);
 	/* LVDS panel CABC_EN0 */
 	mxc_iomux_v3_setup_pad(MX6Q_PAD_NANDF_CS2__GPIO_6_15);
 	/* LVDS panel CABC_EN1 */
 	mxc_iomux_v3_setup_pad(MX6Q_PAD_NANDF_CS3__GPIO_6_16);
 #elif defined CONFIG_MX6DL
-	/* GPIO backlight */
-	mxc_iomux_v3_setup_pad(MX6DL_PAD_SD1_DAT3__GPIO_1_21);
+	/* PWM backlight */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_SD1_DAT3__PWM1_PWMO);
 	/* LVDS panel CABC_EN0 */
 	mxc_iomux_v3_setup_pad(MX6DL_PAD_NANDF_CS2__GPIO_6_15);
 	/* LVDS panel CABC_EN1 */
 	mxc_iomux_v3_setup_pad(MX6DL_PAD_NANDF_CS3__GPIO_6_16);
 #endif
-
-	/* Set GPIO backlight to high. */
-	reg = readl(GPIO1_BASE_ADDR + GPIO_GDIR);
-	reg |= (1 << 21);
-	writel(reg, GPIO1_BASE_ADDR + GPIO_GDIR);
-
-	reg = readl(GPIO1_BASE_ADDR + GPIO_DR);
-	reg |= (1 << 21);
-	writel(reg, GPIO1_BASE_ADDR + GPIO_DR);
-
 	/*
 	 * Set LVDS panel CABC_EN0 to low to disable
 	 * CABC function. This function will turn backlight
