@@ -101,10 +101,10 @@ enum pll_clocks {
 #endif
 
 #define OCOTP_THERMAL_OFFSET	0x4E0
-#define TEMPERATURE_MIN			-25
+#define TEMPERATURE_MIN			-40
 #define TEMPERATURE_HOT			80
 #define TEMPERATURE_MAX			125
-#define REG_VALUE_TO_CEL(ratio, raw) ((raw_n25c - raw) * 100 / ratio - 25)
+#define REG_VALUE_TO_CEL(ratio, raw) ((raw_n40c - raw) * 100 / ratio - 40)
 static int cpu_tmp;
 static unsigned int fuse;
 
@@ -859,9 +859,10 @@ int clk_config(u32 ref, u32 freq, u32 clk_type)
 
 static inline int read_cpu_temperature(void)
 {
-	unsigned int reg, tmp, temperature, i;
-	unsigned int raw_25c, raw_hot, hot_temp, raw_n25c, ratio;
+	unsigned int reg, tmp, i;
+	unsigned int raw_25c, raw_hot, hot_temp, raw_n40c, ratio;
 	unsigned int ccm_ccgr2;
+	int temperature;
 
 	ccm_ccgr2 = readl(MXC_CCM_CCGR2);
 	writel(readl(MXC_CCM_CCGR2) | (0x3 << MXC_CCM_CCGR2_CG6_OFFSET),
@@ -880,7 +881,7 @@ static inline int read_cpu_temperature(void)
 	hot_temp = fuse & 0xff;
 
 	ratio = ((raw_25c - raw_hot) * 100) / (hot_temp - 25);
-	raw_n25c = raw_25c + ratio / 2;
+	raw_n40c = raw_25c + (13 * ratio) / 20;
 
 	/* now we only using single measure, every time we measure
 	the temperature, we will power on/down the anadig module*/
@@ -916,7 +917,7 @@ static inline int read_cpu_temperature(void)
 	}
 
 	tmp = tmp / 5;
-	if (tmp <= raw_n25c)
+	if (tmp <= raw_n40c)
 		temperature = REG_VALUE_TO_CEL(ratio, tmp);
 	else
 		temperature = TEMPERATURE_MIN;
