@@ -25,6 +25,7 @@
 #include <asm/arch/mx6.h>
 
  /* High Level Configuration Options */
+#define CONFIG_MFG
 #define CONFIG_ARMV7	/* This is armv7 Cortex-A9 CPU core */
 #define CONFIG_MXC
 #define CONFIG_MX6Q
@@ -32,8 +33,6 @@
 #define CONFIG_FLASH_HEADER
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_MX6_CLK32	   32768
-
-#define CONFIG_CLKO_SET
 
 #define CONFIG_SKIP_RELOCATE_UBOOT
 
@@ -92,34 +91,39 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
 
+#define CONFIG_CMD_SPI
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_IMXOTP
 
 /* Enable below configure when supporting nand */
+#define CONFIG_CMD_SF
+#define CONFIG_CMD_MMC
 #define CONFIG_CMD_ENV
 #define CONFIG_CMD_REGUL
 
 #define CONFIG_CMD_CLOCK
 #define CONFIG_REF_CLK_FREQ CONFIG_MX6_HCLK_FREQ
 
+#define CONFIG_CMD_SATA
 #undef CONFIG_CMD_IMLS
 
 #define CONFIG_CMD_IMX_DOWNLOAD_MODE
 
-#define CONFIG_BOOTDELAY 3
+#define CONFIG_BOOTDELAY 0
 
 #define CONFIG_PRIME	"FEC0"
 
 #define CONFIG_LOADADDR		0x10800000	/* loadaddr env var */
-#define CONFIG_RD_LOADADDR	0x11000000
+#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
+
+#define CONFIG_BOOTARGS         "console=ttymxc3,115200 rdinit=/linuxrc mtdparts=gpmi-nand:16m(boot),16m(kernel),128m(rootfs)"
+#define CONFIG_BOOTCOMMAND      "bootm 0x10800000 0x10c00000"
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
-		"bootargs=noinitrd console=ttymxc3,115200n8 "		\
-		"ubi.mtd=2 root=ubi0:rootfs rootfstype=ubifs rootwait rw "\
-		"mtdparts=gpmi-nand:16m(boot),16m(kernel),128m(rootfs)\0"\
-		"bootcmd=nand read ${loadaddr} 0x1000000 0x400000;bootm\0"
+		"uboot=u-boot.bin\0"			\
+		"kernel=uImage\0"				\
 
 #define CONFIG_ARP_TIMEOUT	200UL
 
@@ -127,7 +131,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_PROMPT		"MX6Q ARD U-Boot > "
+#define CONFIG_SYS_PROMPT		"MX6Q SABREAUTO MFG U-Boot > "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
@@ -151,9 +155,10 @@
 #define CONFIG_FEC0_MIIBASE	-1
 #define CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
 #define CONFIG_MXC_FEC
-#define CONFIG_FEC0_PHY_ADDR		0
+#define CONFIG_FEC0_PHY_ADDR		1
 #define CONFIG_ETH_PRIME
 #define CONFIG_RMII
+#define CONFIG_PHY_MICREL_KSZ9021
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_PING
@@ -202,10 +207,48 @@
 #endif
 
 /*
+ * MMC Configs
+ */
+#ifdef CONFIG_CMD_MMC
+	#define CONFIG_MMC
+	#define CONFIG_GENERIC_MMC
+	#define CONFIG_IMX_MMC
+	#define CONFIG_SYS_FSL_USDHC_NUM        4
+	#define CONFIG_SYS_FSL_ESDHC_ADDR       0
+	#define CONFIG_SYS_MMC_ENV_DEV  2
+	#define CONFIG_DOS_PARTITION	1
+	#define CONFIG_CMD_FAT		1
+	#define CONFIG_CMD_EXT2		1
+
+	/* detect whether SD1, 2, 3, or 4 is boot device */
+	#define CONFIG_DYNAMIC_MMC_DEVNO
+
+	/* SD3 and SD4 are 8 bit */
+	#define CONFIG_MMC_8BIT_PORTS   0xC
+	/* Setup target delay in DDR mode for each SD port */
+	#define CONFIG_GET_DDR_TARGET_DELAY
+#endif
+
+/*
+ * SATA Configs
+ */
+#ifdef CONFIG_CMD_SATA
+	#define CONFIG_DWC_AHSATA
+	#define CONFIG_SYS_SATA_MAX_DEVICE	1
+	#define CONFIG_DWC_AHSATA_PORT_ID	0
+	#define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
+	#define CONFIG_LBA48
+	#define CONFIG_LIBATA
+
+	#define CONFIG_DOS_PARTITION	1
+	#define CONFIG_CMD_FAT		1
+	#define CONFIG_CMD_EXT2		1
+#endif
+
+/*
  * GPMI Nand Configs
  */
 /* #define CONFIG_CMD_NAND */
-#define CONFIG_CMD_NAND
 
 #ifdef CONFIG_CMD_NAND
 	#define CONFIG_NAND_GPMI
@@ -247,27 +290,12 @@
 #define CONFIG_SYS_NO_FLASH
 
 /* Monitor at beginning of flash */
-#define CONFIG_FSL_ENV_IN_NAND
+/* #define CONFIG_FSL_ENV_IN_MMC */
+/* #define CONFIG_FSL_ENV_IN_SATA */
+/* #define CONFIG_FSL_ENV_IN_SF */
 
-#define CONFIG_ENV_SECT_SIZE    (8 * 1024)
+#define CONFIG_ENV_SECT_SIZE    (128 * 1024)
 #define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE
-
-#if defined(CONFIG_FSL_ENV_IN_NAND)
-	#define CONFIG_ENV_IS_IN_NAND 1
-	#define CONFIG_ENV_OFFSET	0x100000
-#elif defined(CONFIG_FSL_ENV_IN_MMC)
-	#define CONFIG_ENV_IS_IN_MMC	1
-	#define CONFIG_ENV_OFFSET	(768 * 1024)
-#elif defined(CONFIG_FSL_ENV_IN_SATA)
-	#define CONFIG_ENV_IS_IN_SATA   1
-	#define CONFIG_SATA_ENV_DEV     0
-	#define CONFIG_ENV_OFFSET       (768 * 1024)
-#elif defined(CONFIG_FSL_ENV_IN_SF)
-	#define CONFIG_ENV_IS_IN_SPI_FLASH	1
-	#define CONFIG_ENV_SPI_CS		1
-	#define CONFIG_ENV_OFFSET       (768 * 1024)
-#else
-	#define CONFIG_ENV_IS_NOWHERE	1
-#endif
+#define CONFIG_ENV_IS_NOWHERE	1
 
 #endif				/* __CONFIG_H */
