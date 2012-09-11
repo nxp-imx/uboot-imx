@@ -35,7 +35,8 @@
 
 #include <common.h>
 #include <command.h>
-#ifdef CONFIG_VIDEO_MX5
+#if defined(CONFIG_VIDEO_MX5) && (defined(CONFIG_MX53) || \
+				  defined(CONFIG_MX51_BBG))
 #include <ipu.h>
 #endif
 #include <asm/system.h>
@@ -142,7 +143,8 @@ int cleanup_before_linux(void)
 	clear_mfgmode_mem();
 #endif
 
-#ifdef CONFIG_VIDEO_MX5
+#if defined(CONFIG_VIDEO_MX5) && (defined(CONFIG_MX53) || \
+				  defined(CONFIG_MX51_BBG))
 	ipu_disable_channel(MEM_BG_SYNC);
 	ipu_uninit_channel(MEM_BG_SYNC);
 #endif
