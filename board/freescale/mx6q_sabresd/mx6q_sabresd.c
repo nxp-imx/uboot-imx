@@ -1424,7 +1424,170 @@ void lcd_enable(void)
 	reg &= ~(1 << 16);
 	writel(reg, GPIO6_BASE_ADDR + GPIO_DR);
 
-	/* Enable IPU clock */
+	/* Disable ipu1_clk/ipu1_di_clk_x/ldb_dix_clk. */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR3);
+	reg &= ~0xC033;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR3);
+
+#if defined CONFIG_MX6Q
+	/*
+	 * Align IPU1 HSP clock and IPU1 DIx pixel clock
+	 * with kernel setting to avoid screen flick when
+	 * booting into kernel. Developer should change
+	 * the relevant setting if kernel setting changes.
+	 * IPU1 HSP clock tree:
+	 * osc_clk(24M)->pll2_528_bus_main_clk(528M)->
+	 * periph_clk(528M)->mmdc_ch0_axi_clk(528M)->
+	 * ipu1_clk(264M)
+	 */
+	/* pll2_528_bus_main_clk */
+	/* divider */
+	writel(0x1, ANATOP_BASE_ADDR + 0x34);
+
+	/* periph_clk */
+	/* source */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CBCMR);
+	reg &= ~(0x3 << 18);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CBCMR);
+
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CBCDR);
+	reg &= ~(0x1 << 25);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CBCDR);
+
+	/*
+	 * Check PERIPH_CLK_SEL_BUSY in
+	 * MXC_CCM_CDHIPR register.
+	 */
+	do {
+		udelay(5);
+		reg = readl(CCM_BASE_ADDR + CLKCTL_CDHIPR);
+	} while (reg & (0x1 << 5));
+
+	/* mmdc_ch0_axi_clk */
+	/* divider */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CBCDR);
+	reg &= ~(0x7 << 19);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CBCDR);
+
+	/*
+	 * Check MMDC_CH0PODF_BUSY in
+	 * MXC_CCM_CDHIPR register.
+	 */
+	do {
+		udelay(5);
+		reg = readl(CCM_BASE_ADDR + CLKCTL_CDHIPR);
+	} while (reg & (0x1 << 4));
+
+	/* ipu1_clk */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CSCDR3);
+	/* source */
+	reg &= ~(0x3 << 9);
+	/* divider */
+	reg &= ~(0x7 << 11);
+	reg |= (0x1 << 11);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CSCDR3);
+
+	/*
+	 * ipu1_pixel_clk_x clock tree:
+	 * osc_clk(24M)->pll2_528_bus_main_clk(528M)->
+	 * pll2_pfd_352M(452.57M)->ldb_dix_clk(64.65M)->
+	 * ipu1_di_clk_x(64.65M)->ipu1_pixel_clk_x(64.65M)
+	 */
+	/* pll2_pfd_352M */
+	/* disable */
+	writel(0x1 << 7, ANATOP_BASE_ADDR + 0x104);
+	/* divider */
+	writel(0x3F, ANATOP_BASE_ADDR + 0x108);
+	writel(0x15, ANATOP_BASE_ADDR + 0x104);
+
+	/* ldb_dix_clk */
+	/* source */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CS2CDR);
+	reg &= ~(0x3F << 9);
+	reg |= (0x9 << 9);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CS2CDR);
+	/* divider */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CSCMR2);
+	reg |= (0x3 << 10);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CSCMR2);
+
+	/* pll2_pfd_352M */
+	/* enable after ldb_dix_clk source is set */
+	writel(0x1 << 7, ANATOP_BASE_ADDR + 0x108);
+
+	/* ipu1_di_clk_x */
+	/* source */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CHSCCDR);
+	reg &= ~0xE07;
+	reg |= 0x803;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CHSCCDR);
+#elif defined CONFIG_MX6DL /* CONFIG_MX6Q */
+	/*
+	 * IPU1 HSP clock tree:
+	 * osc_clk(24M)->pll3_usb_otg_main_clk(480M)->
+	 * pll3_pfd_540M(540M)->ipu1_clk(270M)
+	 */
+	/* pll3_usb_otg_main_clk */
+	/* divider */
+	writel(0x3, ANATOP_BASE_ADDR + 0x18);
+
+	/* pll3_pfd_540M */
+	/* divider */
+	writel(0x3F << 8, ANATOP_BASE_ADDR + 0xF8);
+	writel(0x10 << 8, ANATOP_BASE_ADDR + 0xF4);
+	/* enable */
+	writel(0x1 << 15, ANATOP_BASE_ADDR + 0xF8);
+
+	/* ipu1_clk */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CSCDR3);
+	/* source */
+	reg |= (0x3 << 9);
+	/* divider */
+	reg &= ~(0x7 << 11);
+	reg |= (0x1 << 11);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CSCDR3);
+
+	/*
+	 * ipu1_pixel_clk_x clock tree:
+	 * osc_clk(24M)->pll2_528_bus_main_clk(528M)->
+	 * pll2_pfd_352M(452.57M)->ldb_dix_clk(64.65M)->
+	 * ipu1_di_clk_x(64.65M)->ipu1_pixel_clk_x(64.65M)
+	 */
+	/* pll2_528_bus_main_clk */
+	/* divider */
+	writel(0x1, ANATOP_BASE_ADDR + 0x34);
+
+	/* pll2_pfd_352M */
+	/* disable */
+	writel(0x1 << 7, ANATOP_BASE_ADDR + 0x104);
+	/* divider */
+	writel(0x3F, ANATOP_BASE_ADDR + 0x108);
+	writel(0x15, ANATOP_BASE_ADDR + 0x104);
+
+	/* ldb_dix_clk */
+	/* source */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CS2CDR);
+	reg &= ~(0x3F << 9);
+	reg |= (0x9 << 9);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CS2CDR);
+	/* divider */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CSCMR2);
+	reg |= (0x3 << 10);
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CSCMR2);
+
+	/* pll2_pfd_352M */
+	/* enable after ldb_dix_clk source is set */
+	writel(0x1 << 7, ANATOP_BASE_ADDR + 0x108);
+
+	/* ipu1_di_clk_x */
+	/* source */
+	reg = readl(CCM_BASE_ADDR + CLKCTL_CHSCCDR);
+	reg &= ~0xE07;
+	reg |= 0x803;
+	writel(reg, CCM_BASE_ADDR + CLKCTL_CHSCCDR);
+#endif	/* CONFIG_MX6DL */
+
+	/* Enable ipu1/ipu1_dix/ldb_dix clocks. */
 	if (di == 1) {
 		reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR3);
 		reg |= 0xC033;
@@ -1439,23 +1602,6 @@ void lcd_enable(void)
 			DI_PCLK_LDB, 65000000);
 	if (ret)
 		puts("LCD cannot be configured\n");
-
-	reg = readl(ANATOP_BASE_ADDR + 0xF0);
-	reg &= ~0x00003F00;
-	reg |= 0x00001300;
-	writel(reg, ANATOP_BASE_ADDR + 0xF4);
-
-	reg = readl(CCM_BASE_ADDR + CLKCTL_CS2CDR);
-	reg &= ~0x00007E00;
-	reg |= 0x00003600;
-	writel(reg, CCM_BASE_ADDR + CLKCTL_CS2CDR);
-
-	reg = readl(CCM_BASE_ADDR + CLKCTL_CSCMR2);
-	reg |= 0x00000C00;
-	writel(reg, CCM_BASE_ADDR + CLKCTL_CSCMR2);
-
-	reg = 0x0002A953;
-	writel(reg, CCM_BASE_ADDR + CLKCTL_CHSCCDR);
 
 	/*
 	 * LVDS0 mux to IPU1 DI0.
