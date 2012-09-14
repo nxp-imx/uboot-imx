@@ -81,6 +81,8 @@
 #define CONFIG_CMD_CONSOLE	/* coninfo			*/
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
 
+#define CONFIG_CMD_IMXOTP
+
 /* Enable below configure when supporting nand */
 #define CONFIG_CMD_ENV
 
@@ -122,6 +124,16 @@
 #define CONFIG_SYS_HZ			1000
 
 #define CONFIG_CMDLINE_EDITING
+
+/*
+ * OCOTP Configs
+ */
+#ifdef CONFIG_CMD_IMXOTP
+	#define CONFIG_IMX_OTP
+	#define IMX_OTP_BASE		OCOTP_BASE_ADDR
+	#define IMX_OTP_ADDR_MAX	0x7F
+	#define IMX_OTP_DATA_ERROR_VAL	0xBADABADA
+#endif
 
 /*-----------------------------------------------------------------------
  * Stack sizes
