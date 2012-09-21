@@ -3342,10 +3342,13 @@ mx6q_sabrelite_mfg_config   : unconfig
 
 mx6q_sabreauto_weimnor_mfg_config	\
 mx6q_sabreauto_weimnor_config		\
+mx6q_sabreauto_nand_mfg_config		\
+mx6q_sabreauto_spi-nor_config          \
 mx6solo_sabreauto_weimnor_mfg_config	\
 mx6solo_sabreauto_weimnor_config		\
 mx6solo_sabreauto_config	\
 mx6solo_sabreauto_mfg_config	\
+mx6solo_sabreauto_spi-nor_config         \
 mx6q_sabreauto_mfg_config	\
 mx6q_sabreauto_spi-nor_mfg_config	\
 mx6solo_sabreauto_spi-nor_mfg_config	\
