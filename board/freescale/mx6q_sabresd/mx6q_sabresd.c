@@ -79,6 +79,11 @@
 #ifdef CONFIG_ANDROID_RECOVERY
 #include <recovery.h>
 #endif
+
+#ifdef CONFIG_DWC_AHSATA
+#include <ahci.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static enum boot_device boot_dev;
@@ -91,6 +96,7 @@ static enum boot_device boot_dev;
 extern unsigned char fsl_bmp_reversed_600x400[];
 extern int fsl_bmp_reversed_600x400_size;
 extern int g_ipu_hw_rev;
+extern int sata_curr_device;
 
 #if defined(CONFIG_BMP_8BPP)
 unsigned short colormap[256];
@@ -232,6 +238,60 @@ void board_mmu_init(void)
 #define ANATOP_PLL_HOLD_RING_OFF_MASK   0x00000800
 #define ANATOP_SATA_CLK_ENABLE_MASK     0x00100000
 
+/* Staggered Spin-up */
+#define	HOST_CAP_SSS			(1 << 27)
+/* host version register*/
+#define	HOST_VERSIONR			0xfc
+#define PORT_SATA_SR			0x128
+#define	PORT_PHY_CTL			0x178
+#define	PORT_PHY_CTL_PDDQ_LOC		0x100000
+
+int sata_initialize(void)
+{
+	u32 reg = 0;
+	u32 iterations = 1000000;
+
+	if (sata_curr_device == -1) {
+		/* Make sure that the PDDQ mode is disabled. */
+		reg = readl(SATA_ARB_BASE_ADDR + PORT_PHY_CTL);
+		writel(reg & (~PORT_PHY_CTL_PDDQ_LOC),
+				SATA_ARB_BASE_ADDR + PORT_PHY_CTL);
+
+		/* Reset HBA */
+		writel(HOST_RESET, SATA_ARB_BASE_ADDR + HOST_CTL);
+
+		reg = 0;
+		while (readl(SATA_ARB_BASE_ADDR + HOST_VERSIONR) == 0) {
+			reg++;
+			if (reg > 1000000)
+				break;
+		}
+
+		reg = readl(SATA_ARB_BASE_ADDR + HOST_CAP);
+		if (!(reg & HOST_CAP_SSS)) {
+			reg |= HOST_CAP_SSS;
+			writel(reg, SATA_ARB_BASE_ADDR + HOST_CAP);
+		}
+
+		reg = readl(SATA_ARB_BASE_ADDR + HOST_PORTS_IMPL);
+		if (!(reg & 0x1))
+			writel((reg | 0x1),
+					SATA_ARB_BASE_ADDR + HOST_PORTS_IMPL);
+
+		/* Release resources when there is no device on the port */
+		do {
+			reg = readl(SATA_ARB_BASE_ADDR + PORT_SATA_SR) & 0xF;
+			if ((reg & 0xF) == 0)
+				iterations--;
+			else
+				break;
+
+		} while (iterations > 0);
+	}
+
+	return __sata_initialize();
+}
+
 int setup_sata(void)
 {
 	u32 reg = 0;
@@ -275,6 +335,13 @@ int setup_sata(void)
 	 * */
 	reg |= 0x59124c6;
 	writel(reg, IOMUXC_BASE_ADDR + 0x34);
+
+	if (sata_curr_device == -1) {
+		/* Enable PDDQ mode in default if there isn't sata boot */
+		reg = readl(SATA_ARB_BASE_ADDR + PORT_PHY_CTL);
+		writel(reg | PORT_PHY_CTL_PDDQ_LOC,
+				SATA_ARB_BASE_ADDR + PORT_PHY_CTL);
+	}
 
 	return 0;
 }
