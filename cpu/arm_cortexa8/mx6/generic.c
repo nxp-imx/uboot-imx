@@ -100,6 +100,9 @@ enum pll_clocks {
 #define NFC_CLK_MAX     PLL2_FREQ_MAX
 #endif
 
+#define GPC_PGC_GPU_PGCR_OFFSET 0x260
+#define GPC_CNTR_OFFSET         0x0
+
 #define OCOTP_THERMAL_OFFSET	0x4E0
 #define TEMPERATURE_MIN			-40
 #define TEMPERATURE_HOT			80
@@ -1013,10 +1016,19 @@ int arch_cpu_init(void)
 #ifndef CONFIG_L2_OFF
 	l2_cache_enable();
 #endif
+	/* Need to power down xPU in GPC before turn off PU LDO */
+	val = readl(GPC_BASE_ADDR + GPC_PGC_GPU_PGCR_OFFSET);
+	writel(val | 0x1, GPC_BASE_ADDR + GPC_PGC_GPU_PGCR_OFFSET);
 
-	/* Increase the VDDSOC to 1.2V */
+	val = readl(GPC_BASE_ADDR + GPC_CNTR_OFFSET);
+	writel(val | 0x1, GPC_BASE_ADDR + GPC_CNTR_OFFSET);
+	while (readl(GPC_BASE_ADDR + GPC_CNTR_OFFSET) & 0x1)
+		;
+
+	/* Increase the VDDSOC to 1.2V and disable VDDPU */
 	val = REG_RD(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE);
 	val &= ~BM_ANADIG_REG_CORE_REG2_TRG;
+	val &= ~BM_ANADIG_REG_CORE_REG1_TRG;
 	val |= BF_ANADIG_REG_CORE_REG2_TRG(0x14);
 	REG_WR(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE, val);
 
