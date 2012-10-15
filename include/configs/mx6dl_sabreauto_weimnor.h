@@ -133,7 +133,7 @@
 		"mmc read ${loadaddr} 0x800 0x2000; bootm\0"	\
 		"bootcmd=run bootcmd_nor\0"                             \
 		"bootargs_nor=setenv bootargs ${bootargs} root=/dev/nfs	"\
-			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
+			"ip=dhcp weim-nor nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
 		"bootcmd_nor=run bootargs_base bootargs_nor;	"\
 			"cp.l 0x8080000 ${loadaddr} 0x400000; bootm\0"
 
