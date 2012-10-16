@@ -3356,6 +3356,14 @@ mx6q_sabreauto_spi-nor_mfg_config	\
 mx6dl_sabreauto_spi-nor_mfg_config	\
 mx6q_sabreauto_nand_config \
 mx6dl_sabreauto_nand_config \
+mx6solo_sabreauto_nand_config \
+mx6solo_sabreauto_nand_mfg_config          \
+mx6solo_sabreauto_weimnor_config          \
+mx6solo_sabreauto_weimnor_mfg_config      \
+mx6solo_sabreauto_spi-nor_config         \
+mx6solo_sabreauto_spi-nor_mfg_config      \
+mx6solo_sabreauto_config  \
+mx6solo_sabreauto_mfg_config      \
 mx6q_sabreauto_config    : unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx6q_sabreauto freescale mx6
 
