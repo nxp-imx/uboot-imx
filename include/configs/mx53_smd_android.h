@@ -102,7 +102,7 @@
 
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
-
+#define CONFIG_TIMESTAMP
 
 #define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
 	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4 rootfs=ext4 video=mxcdi1fb:RGB666,XGA ldb=di1 di1_primary"
@@ -163,22 +163,38 @@
 #define CONFIG_PRIME	"FEC0"
 
 #define CONFIG_LOADADDR		0x70800000	/* loadaddr env var */
-#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x500000)
+#define CONFIG_RD_LOADADDR	0x70D00000	/* rd_loadaddr env var */
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
-		"ethaddr=00:04:9f:00:ea:d3\0"		\
-		"bootfile=uImage\0"	\
-		"loadaddr=0x70800000\0"				\
-		"rd_loadaddr=0x70D00000\0"		\
-		"bootargs=console=ttymxc0 init=/init " \
-		"androidboot.console=ttymxc0 video=mxcdi1fb:RGB666,XGA " \
-		"ldb=di1 di1_primary pmem=32M,64M fbmem=5M gpu_memory=64M\0" \
-		"bootcmd_SD=mmc dev 1 0;"		\
-			"mmc read ${loadaddr} 0x800 0x2000;" \
-			"mmc read ${rd_loadaddr} 0x3000 0x300\0" \
-		"bootcmd=run bootcmd_SD; bootm ${loadaddr} ${rd_loadaddr}\0" \
+		"autoload=n\0"						\
+		"bootfile=uImage\0"					\
+		"bootargs_base=console=ttymxc0,115200 init=/init "	\
+		"androidboot.console=ttymxc0 "				\
+		"androidboot.hardware=freescale "			\
+		"ion=128M,64M fbmem=12M,12M "				\
+		"video=mxcfb0:dev=ldb,LDB-XGA,if=RGB666,bpp=32 " 	\
+		"video=mxcfb1:dev=sii902x_hdmi,1280x720M@60,bpp=32 " 	\
+		"gpu_memory=128M vmalloc=576M\0"			\
+		"bootcmd_eMMC=setenv bootargs ${bootargs_base} fs_sdcard=0;" \
+		"mmc dev 1;"						\
+		"mmc read ${loadaddr} 0x800 0x2000;"			\
+		"mmc read ${rd_loadaddr} 0x3000 0x300;"			\
+		"bootm ${loadaddr} ${rd_loadaddr}\0"			\
+		"bootcmd_NFS=dhcp;nfs ${loadaddr} ${serverip}:${nfskernel}; " \
+		"setenv bootargs ${bootargs_base} root=/dev/nfs " 	\
+		"nfsroot=${serverip}:${nfsroot} rw ip=dhcp;"		\
+		"bootm\0"						\
+		"bootcmd_SD=setenv bootargs ${bootargs_base} fs_sdcard=1;" \
+		"mmc dev 0;"						\
+		"mmc read ${loadaddr} 0x800 0x2000;"			\
+		"mmc read ${rd_loadaddr} 0x3000 0x300;"			\
+		"bootm ${loadaddr} ${rd_loadaddr}\0"			\
+		"bootcmd=run bootcmd_eMMC\0"				\
+		"splashimage=0x780000000\0"				\
+		"splashpos=m,m\0"					\
+		"lvds_num=1\0"
 
 #define CONFIG_ARP_TIMEOUT	200UL
 
@@ -188,10 +204,10 @@
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_SYS_PROMPT		"MX53-SMD U-Boot > "
 #define CONFIG_AUTO_COMPLETE
-#define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
+#define CONFIG_SYS_CBSIZE	1024	/* Console I/O Buffer Size */
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
-#define CONFIG_SYS_MAXARGS	16	/* max number of command args */
+#define CONFIG_SYS_MAXARGS	256	/* max number of command args */
 #define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE /* Boot Argument Buffer Size */
 
 #define CONFIG_SYS_MEMTEST_START	0	/* memtest works on */
@@ -301,9 +317,10 @@
 #define PHYS_SDRAM_1		CSD0_BASE_ADDR
 #define PHYS_SDRAM_1_SIZE	(512 * 1024 * 1024)
 #define PHYS_SDRAM_2		CSD1_BASE_ADDR
-#define PHYS_SDRAM_2_SIZE	0
+#define PHYS_SDRAM_2_SIZE	(512 * 1024 * 1024)
 #define iomem_valid_addr(addr, size) \
-	(addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
+	((addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)) \
+	|| (addr >= PHYS_SDRAM_2 && addr <= (PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE)))
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
@@ -330,6 +347,7 @@
 	#define CONFIG_ENV_IS_NOWHERE	1
 #endif
 
+#define CONFIG_SPLASH_SCREEN
 #ifdef CONFIG_SPLASH_SCREEN
 	/*
 	 * Framebuffer and LCD

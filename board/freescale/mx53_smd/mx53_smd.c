@@ -78,8 +78,8 @@ static u32 system_rev;
 static enum boot_device boot_dev;
 
 #ifdef CONFIG_VIDEO_MX5
-extern unsigned char fsl_bmp_600x400[];
-extern int fsl_bmp_600x400_size;
+extern unsigned char fsl_bmp_reversed_600x400[];
+extern int fsl_bmp_reversed_600x400_size;
 extern int g_ipu_hw_rev;
 
 #if defined(CONFIG_BMP_8BPP)
@@ -505,7 +505,6 @@ int da9053_i2c_startup_reset(void)
 
 		reg = readl(GPIO5_BASE_ADDR + 0x8);
 		if (reg & I2C1_SDA_GPIO5_26_BIT_MASK) {
-			printf("***I2C1_SDA = hight***\n");
 			break;
 		} else
 			printf("***I2C1_SDA = low***\n");
@@ -1227,10 +1226,10 @@ void setup_splash_image(void)
 
 #if defined(CONFIG_ARCH_MMU)
 		addr = ioremap_nocache(iomem_to_phys(addr),
-				fsl_bmp_600x400_size);
+				fsl_bmp_reversed_600x400_size);
 #endif
-		memcpy((char *)addr, (char *)fsl_bmp_600x400,
-				fsl_bmp_600x400_size);
+		memcpy((char *)addr, (char *)fsl_bmp_reversed_600x400,
+				fsl_bmp_reversed_600x400_size);
 	}
 }
 #endif
