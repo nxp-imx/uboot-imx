@@ -92,11 +92,12 @@ static enum boot_device boot_dev;
 #define USB_OTG_PWR IMX_GPIO_NR(3, 22)
 #define USB_H1_POWER IMX_GPIO_NR(1, 29)
 
+extern int sata_curr_device;
+
 #ifdef CONFIG_VIDEO_MX5
 extern unsigned char fsl_bmp_reversed_600x400[];
 extern int fsl_bmp_reversed_600x400_size;
 extern int g_ipu_hw_rev;
-extern int sata_curr_device;
 
 #if defined(CONFIG_BMP_8BPP)
 unsigned short colormap[256];

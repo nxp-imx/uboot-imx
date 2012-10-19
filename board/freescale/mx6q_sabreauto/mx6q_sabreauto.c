@@ -77,12 +77,12 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 static enum boot_device boot_dev;
+extern int sata_curr_device;
 
 #ifdef CONFIG_VIDEO_MX5
 extern unsigned char fsl_bmp_600x400[];
 extern int fsl_bmp_600x400_size;
 extern int g_ipu_hw_rev;
-extern int sata_curr_device;
 
 #if defined(CONFIG_BMP_8BPP)
 unsigned short colormap[256];
