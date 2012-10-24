@@ -949,43 +949,37 @@ int i2c_bus_recovery(void)
 }
 
 
-void setup_pmic_voltages(void)
+static int setup_pmic_voltages(void)
 {
-	unsigned char value = 0 ;
+	unsigned char value, rev_id = 0 ;
 	#if CONFIG_MX6_INTER_LDO_BYPASS
 	unsigned int val = 0;
 	#endif
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 	if (!i2c_probe(0x8)) {
-		if (i2c_read(0x8, 0, 1, &value, 1))
-			printf("%s:i2c_read:error\n", __func__);
-		printf("Found PFUZE100! device id=%x\n", value);
-		if (value == 0x10) {
-			/*workaround ER1 of pfuze1.0: set all buck regulators
-			in PWM mode except SW1C*/
-			value = 0x6;
-			i2c_write(0x8, 0x23, 1, &value, 1);/*SW1AB*/
-
-			value = 0x6;
-			i2c_write(0x8, 0x38, 1, &value, 1);/*SW2*/
-
-			value = 0x6;
-			i2c_write(0x8, 0x3f, 1, &value, 1);/*SW3A*/
-
-			value = 0x6;
-			i2c_write(0x8, 0x46, 1, &value, 1);/*SW3B*/
-
-			value = 0x6;
-			i2c_write(0x8, 0x4d, 1, &value, 1);/*SW4*/
+		if (i2c_read(0x8, 0, 1, &value, 1)) {
+			printf("Read device ID error!\n");
+			return -1;
 		}
+		if (i2c_read(0x8, 3, 1, &rev_id, 1)) {
+			printf("Read Rev ID error!\n");
+			return -1;
+		}
+		printf("Found PFUZE100! deviceid=%x,revid=%x\n", value, rev_id);
 		#if CONFIG_MX6_INTER_LDO_BYPASS
 		/*VDDCORE 1.1V@800Mhz: SW1AB*/
 		value = 0x20;
-		i2c_write(0x8, 0x20, 1, &value, 1);
+		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
+			printf("VDDCORE set voltage error!\n");
+			return -1;
+		}
 
 		/*VDDSOC 1.2V : SW1C*/
 		value = 0x24;
-		i2c_write(0x8, 0x2e, 1, &value, 1);
+		if (i2c_write(0x8, 0x2e, 1, &value, 1)) {
+			printf("VDDSOC set voltage error!\n");
+			return -1;
+		}
 
 		/* Bypass the VDDSOC from Anatop */
 		val = REG_RD(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE);
@@ -1041,9 +1035,12 @@ int board_init(void)
 int board_late_init(void)
 {
 	#ifdef CONFIG_I2C_MXC
+	int ret = 0;
 	setup_i2c(CONFIG_SYS_I2C_PORT);
 	i2c_bus_recovery();
-	setup_pmic_voltages();
+	ret = setup_pmic_voltages();
+	if (ret)
+		return -1;
 	#endif
 	return 0;
 }
