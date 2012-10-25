@@ -118,7 +118,7 @@
 #define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
 
 #define CONFIG_BOOTARGS         "console=ttymxc3,115200 rdinit=/linuxrc "\
-				"nosmp arm_freq=800"
+				"nosmp arm_freq=800 enable_wait_mode=off"
 #define CONFIG_BOOTCOMMAND      "bootm 0x10800000 0x10c00000"
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
