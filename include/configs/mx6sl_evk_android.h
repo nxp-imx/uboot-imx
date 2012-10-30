@@ -23,6 +23,7 @@
 #define MX6SL_EVK_ANDROID_H
 
 #include <configs/mx6sl_evk.h>
+#include <asm/mxc_key_defs.h>
 
 #define CONFIG_USB_DEVICE
 #define CONFIG_IMX_UDC		       1
@@ -48,6 +49,21 @@
 
 #define CONFIG_CMD_BOOTI
 #define CONFIG_ANDROID_RECOVERY
+
+#define CONFIG_VOL_DOWN_KEY     KEY_4
+
+#define CONFIG_MXC_KPD
+#define CONFIG_MXC_KEYMAPPING \
+	{       \
+		KEY_SELECT, KEY_BACK, KEY_1,     KEY_2, \
+		KEY_3,      KEY_4,    KEY_5,     KEY_MENU, \
+		KEY_6,      KEY_7,    KEY_8,     KEY_9, \
+		KEY_UP,     KEY_LEFT, KEY_RIGHT, KEY_DOWN, \
+	}
+#define CONFIG_MXC_KPD_COLMAX 4
+#define CONFIG_MXC_KPD_ROWMAX 4
+
+
 /* which mmc bus is your main storage ? */
 #define CONFIG_ANDROID_MAIN_MMC_BUS 0
 #define CONFIG_ANDROID_BOOT_PARTITION_MMC 1

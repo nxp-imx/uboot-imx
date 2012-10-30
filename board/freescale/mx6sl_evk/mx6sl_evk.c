@@ -69,6 +69,8 @@ static enum boot_device boot_dev;
 
 #define USB_OTG_PWR IMX_GPIO_NR(4, 0)
 #define USB_H1_PWR IMX_GPIO_NR(4, 2)
+#define GPIO_POWER_KEY IMX_GPIO_NR(3, 18)
+
 
 static inline void setup_boot_device(void)
 {
@@ -992,6 +994,35 @@ static int setup_pmic_voltages(void)
 	}
 }
 #endif
+
+#ifdef CONFIG_MXC_KPD
+int setup_mxc_kpd(void)
+{
+	mxc_iomux_v3_setup_pad(MX6SL_PAD_KEY_COL0__KPP_COL_0);
+	mxc_iomux_v3_setup_pad(MX6SL_PAD_KEY_COL1__KPP_COL_1);
+	mxc_iomux_v3_setup_pad(MX6SL_PAD_KEY_COL2__KPP_COL_2);
+	mxc_iomux_v3_setup_pad(MX6SL_PAD_KEY_COL3__KPP_COL_3);
+
+	mxc_iomux_v3_setup_pad(MX6SL_PAD_KEY_ROW0__KPP_ROW_0);
+	mxc_iomux_v3_setup_pad(MX6SL_PAD_KEY_ROW1__KPP_ROW_1);
+	mxc_iomux_v3_setup_pad(MX6SL_PAD_KEY_ROW2__KPP_ROW_2);
+	mxc_iomux_v3_setup_pad(MX6SL_PAD_KEY_ROW3__KPP_ROW_3);
+
+	return 0;
+}
+
+int check_powerkey_pressed(void)
+{
+	mxc_iomux_v3_setup_pad(MX6SL_PAD_WDOG_B__GPIO_3_18);
+	gpio_direction_input(GPIO_POWER_KEY);
+	udelay(5);
+	if (gpio_get_value(GPIO_POWER_KEY) == 0)
+		return 1;
+	return 0;
+}
+
+#endif
+
 
 int board_init(void)
 {
