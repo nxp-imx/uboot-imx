@@ -212,10 +212,15 @@ static u32 __get_ipg_clk(void)
 
 static u32 __get_ipg_per_clk(void)
 {
-	u32 podf;
+	u32 podf, reg;
 	u32 clk_root = __get_ipg_clk();
 
-	podf = __REG(MXC_CCM_CSCMR1) & MXC_CCM_CSCMR1_PERCLK_PODF_MASK;
+	reg = __REG(MXC_CCM_CSCMR1);
+#ifdef CONFIG_MX6SL
+	if (reg & 0x40) /* PERCLK from 24M OSC */
+		clk_root = CONFIG_MX6_HCLK_FREQ;
+#endif
+	podf = reg & MXC_CCM_CSCMR1_PERCLK_PODF_MASK;
 	return clk_root / (podf + 1);
 }
 
