@@ -1,7 +1,7 @@
 /*
  * Freescale BCH Register Definitions
  *
- * Copyright 2008-2010 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2008-2012 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -238,13 +238,16 @@
 #define BV_BCH_FLASH0LAYOUT0_ECC0__ECC32 0x10
 #define BM_BCH_FLASH0LAYOUT0_GF13_0_GF14_1 0x00000400
 #define BP_BCH_FLASH0LAYOUT0_DATA0_SIZE      0
+
 #if defined(CONFIG_GPMI_NFC_V2)
 #define BM_BCH_FLASH0LAYOUT0_DATA0_SIZE 0x000003FF
+#define BF_BCH_FLASH0LAYOUT0_DATA0_SIZE(v)  \
+	(((v) >> 2) & BM_BCH_FLASH0LAYOUT0_DATA0_SIZE)
 #else
 #define BM_BCH_FLASH0LAYOUT0_DATA0_SIZE	0x00000FFF
-#endif
 #define BF_BCH_FLASH0LAYOUT0_DATA0_SIZE(v)  \
 	(((v) << 0) & BM_BCH_FLASH0LAYOUT0_DATA0_SIZE)
+#endif
 
 #define HW_BCH_FLASH0LAYOUT1	(0x00000090)
 
@@ -284,11 +287,13 @@
 #define BP_BCH_FLASH0LAYOUT1_DATAN_SIZE      0
 #if defined(CONFIG_GPMI_NFC_V2)
 #define BM_BCH_FLASH0LAYOUT1_DATAN_SIZE 0x000003FF
+#define BF_BCH_FLASH0LAYOUT1_DATAN_SIZE(v)  \
+	(((v) >> 2) & BM_BCH_FLASH0LAYOUT1_DATAN_SIZE)
 #else
 #define BM_BCH_FLASH0LAYOUT1_DATAN_SIZE	0x00000FFF
-#endif
 #define BF_BCH_FLASH0LAYOUT1_DATAN_SIZE(v)  \
 	(((v) << 0) & BM_BCH_FLASH0LAYOUT1_DATAN_SIZE)
+#endif
 
 #define HW_BCH_FLASH1LAYOUT0	(0x000000a0)
 
