@@ -225,16 +225,10 @@ static int set_geometry(struct mtd_info *mtd)
 	MTDDEBUG(MTD_DEBUG_LEVEL3, "%s =>\n", __func__);
 
 	/* Translate the abstract choices into register fields. */
-	block_count = GPMI_NFC_ECC_CHUNK_CNT(mtd->writesize) - 1;
-#if defined(CONFIG_GPMI_NFC_V2)
-	block_size = GPMI_NFC_CHUNK_DATA_CHUNK_SIZE >> 2;
-#else
-	block_size = GPMI_NFC_CHUNK_DATA_CHUNK_SIZE;
-#endif
-	metadata_size = GPMI_NFC_METADATA_SIZE;
-
+	block_count = gpmi_info->ecc_chunk_count - 1;
+	block_size = gpmi_info->ecc_chunk_size;
+	metadata_size = gpmi_info->metadata_size;
 	ecc_strength = gpmi_info->ecc_strength >> 1;
-
 	page_size    = mtd->writesize + mtd->oobsize;
 
 	/*
