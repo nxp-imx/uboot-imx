@@ -628,15 +628,22 @@ void enet_board_init(void)
 	writel(reg, GPIO4_BASE_ADDR + 0x4);
 
 	/* phy power enable and reset: gpio4_21 */
-	/* DR: High Level on: Power ON */
+	/* DR: High Level off: Power Off */
 	reg = readl(GPIO4_BASE_ADDR + 0x0);
-	reg |= (1 << 21);
+	reg &= ~(1 << 21);
 	writel(reg, GPIO4_BASE_ADDR + 0x0);
 
 	/* DIR: output */
 	reg = readl(GPIO4_BASE_ADDR + 0x4);
 	reg |= (1 << 21);
 	writel(reg, GPIO4_BASE_ADDR + 0x4);
+
+	udelay(1000);
+
+	/* DR: High Level on: Power On */
+	reg = readl(GPIO4_BASE_ADDR + 0x0);
+	reg |= (1 << 21);
+	writel(reg, GPIO4_BASE_ADDR + 0x0);
 
 	/* wait RC ms for hw reset */
 	udelay(500);
