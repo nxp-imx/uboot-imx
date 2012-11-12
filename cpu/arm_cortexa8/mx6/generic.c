@@ -1361,6 +1361,29 @@ void hab_caam_clock_disable(void)
 	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR0);
 }
 
+#ifdef DEBUG_AUTHENTICATE_IMAGE
+void dump_mem(uint32_t addr, int size)
+{
+	int i;
+
+	for (i = 0; i < size; i += 4) {
+		if (i != 0) {
+			if (i % 16 == 0)
+				printf("\n");
+			else
+				printf(" ");
+		}
+
+		printf("0x%08x", *(uint32_t *)addr);
+		addr += 4;
+	}
+
+	printf("\n");
+
+	return;
+}
+#endif
+
 uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 {
 	uint32_t load_addr = 0;
@@ -1376,12 +1399,32 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 		hab_caam_clock_enable();
 
 		if (hab_rvt_entry() == HAB_SUCCESS) {
-			/*Align to ALIGN_SIZE*/
-			ivt_offset = image_size - image_size % ALIGN_SIZE
-				+ ALIGN_SIZE;
+
+			/* If not already aligned, Align to ALIGN_SIZE */
+			if (image_size % ALIGN_SIZE)
+				ivt_offset = image_size - image_size %
+					ALIGN_SIZE + ALIGN_SIZE;
+			else
+				ivt_offset = image_size;
 
 			start = ddr_start;
 			bytes = ivt_offset + IVT_SIZE + CSF_PAD_SIZE;
+
+#ifdef DEBUG_AUTHENTICATE_IMAGE
+			printf("\nivt_offset = 0x%x, ivt addr = 0x%x\n",
+			       ivt_offset, ddr_start + ivt_offset);
+			printf("Dumping IVT\n");
+			dump_mem(ddr_start + ivt_offset, 0x20);
+
+			printf("Dumping CSF Header\n");
+			dump_mem(ddr_start + ivt_offset + 0x20, 0x40);
+
+			get_hab_status();
+
+			printf("\nCalling authenticate_image in ROM\n");
+			printf("\tivt_offset = 0x%x\n\tstart = 0x%08x"
+			       "\n\tbytes = 0x%x\n", ivt_offset, start, bytes);
+#endif
 
 			load_addr = (uint32_t)hab_rvt_authenticate_image(
 					HAB_CID_UBOOT,

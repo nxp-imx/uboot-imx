@@ -24,6 +24,9 @@
 #include <asm/io.h>
 #include <asm/arch/mx6.h>
 #include <asm/arch/mx6_pins.h>
+#if defined(CONFIG_SECURE_BOOT)
+#include <asm/arch/mx6_secure.h>
+#endif
 #include <asm/arch/mx6dl_pins.h>
 #include <asm/arch/iomux-v3.h>
 #include <asm/arch/regs-anadig.h>
@@ -1985,6 +1988,12 @@ int checkboard(void)
 		printf("UNKNOWN\n");
 		break;
 	}
+
+#ifdef CONFIG_SECURE_BOOT
+	if (check_hab_enable() == 1)
+		get_hab_status();
+#endif
+
 	return 0;
 }
 

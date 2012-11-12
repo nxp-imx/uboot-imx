@@ -33,10 +33,10 @@
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_MX6_CLK32	   32768
 
-/*
- * #define CONFIG_SECURE_BOOT
- *	Enable Secure Boot. DO NOT TURN ON IT until you know what you are doing
- */
+/* Disable secure boot feature in default, if you want to enable this
+ * feature, please carefully read related documents, you may needs to
+ * change u-boot.lds */
+#undef CONFIG_SECURE_BOOT
 
 #define CONFIG_SKIP_RELOCATE_UBOOT
 

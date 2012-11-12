@@ -1521,6 +1521,10 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	char *ptn = "boot";
 	int mmcc = -1;
 	boot_img_hdr *hdr = (void *)boothdr;
+#ifdef CONFIG_SECURE_BOOT
+    u_int32_t load_addr;
+    uint32_t image_size;
+#endif
 
 	if (argc < 2)
 		return -1;
@@ -1668,6 +1672,21 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	printf("kernel   @ %08x (%d)\n", hdr->kernel_addr, hdr->kernel_size);
 	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
+
+#ifdef CONFIG_SECURE_BOOT
+#define IVT_SIZE 0x20
+#define CSF_PAD_SIZE 0x2000
+	extern uint32_t authenticate_image(uint32_t ddr_start,
+					   uint32_t image_size);
+
+	image_size = hdr->ramdisk_addr + hdr->ramdisk_size - hdr->kernel_addr -
+		IVT_SIZE - CSF_PAD_SIZE;
+
+	if (authenticate_image(hdr->kernel_addr, image_size))
+		printf("Authentication Successful\n");
+	else
+		printf("Authentication Failed\n");
+#endif
 
 	do_booti_linux(hdr);
 

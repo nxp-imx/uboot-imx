@@ -73,6 +73,10 @@ SECTIONS
 	. = ALIGN(0x1000);
 	__hab_data = .;
 	. = . + 0x2000;
+	__data_enc_key = .;
+	/* actually, only 64bytes are needed, but this generates
+		a size multiple of 512bytes, which is optimal for SD boot */
+	. = . + 0x200;
 	__hab_data_end = .;
 	/* End of Hab Data, Place it before BSS section */
 
