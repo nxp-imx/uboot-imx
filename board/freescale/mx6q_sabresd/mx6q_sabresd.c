@@ -777,20 +777,6 @@ static int setup_pmic_voltages(void)
 			return -1;
 		}
 		printf("Found PFUZE100! deviceid=%x,revid=%x\n", value, rev_id);
-		/*VDDCORE/VDDSOC default 1.375V is not enough, considering
-		pfuze tolerance and IR drop and ripple, need increase
-		to 1.425V for SabreSD*/
-		value = 0x2d;
-		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
-			printf("VDDCORE set voltage error!\n");
-			return -1;
-		}
-
-		value = 0x2d;
-		if (i2c_write(0x8, 0x2e, 1, &value, 1)) {
-			printf("VDDSOC set voltage error!\n");
-			return -1;
-		}
 
 		#if CONFIG_MX6_INTER_LDO_BYPASS
 		/*VDDCORE 1.1V@800Mhz: SW1AB*/
