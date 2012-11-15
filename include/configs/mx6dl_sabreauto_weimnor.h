@@ -327,7 +327,7 @@
 #elif defined(CONFIG_FSL_ENV_IN_SF)
 	#define CONFIG_ENV_IS_IN_SPI_FLASH	1
 	#define CONFIG_ENV_SPI_CS		1
-	#define CONFIG_ENV_OFFSET       (768 * 1024)
+	#define CONFIG_ENV_OFFSET       0x40000
 #elif defined(CONFIG_FSL_ENV_IN_FLASH)
 	#define CONFIG_ENV_IS_IN_FLASH 1
 #else
