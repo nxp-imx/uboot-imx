@@ -952,9 +952,6 @@ int i2c_bus_recovery(void)
 static int setup_pmic_voltages(void)
 {
 	unsigned char value, rev_id = 0 ;
-	#if CONFIG_MX6_INTER_LDO_BYPASS
-	unsigned int val = 0;
-	#endif
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 	if (!i2c_probe(0x8)) {
 		if (i2c_read(0x8, 0, 1, &value, 1)) {
@@ -966,42 +963,6 @@ static int setup_pmic_voltages(void)
 			return -1;
 		}
 		printf("Found PFUZE100! deviceid=%x,revid=%x\n", value, rev_id);
-		#if CONFIG_MX6_INTER_LDO_BYPASS
-		/*VDDCORE 1.1V@800Mhz: SW1AB*/
-		value = 0x20;
-		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
-			printf("VDDCORE set voltage error!\n");
-			return -1;
-		}
-
-		/*VDDSOC 1.2V : SW1C*/
-		value = 0x24;
-		if (i2c_write(0x8, 0x2e, 1, &value, 1)) {
-			printf("VDDSOC set voltage error!\n");
-			return -1;
-		}
-
-		/* Bypass the VDDSOC from Anatop */
-		val = REG_RD(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE);
-		val &= ~BM_ANADIG_REG_CORE_REG2_TRG;
-		val |= BF_ANADIG_REG_CORE_REG2_TRG(0x1f);
-		REG_WR(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE, val);
-
-		/* Bypass the VDDCORE from Anatop */
-		val = REG_RD(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE);
-		val &= ~BM_ANADIG_REG_CORE_REG0_TRG;
-		val |= BF_ANADIG_REG_CORE_REG0_TRG(0x1f);
-		REG_WR(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE, val);
-
-		/* Bypass the VDDPU from Anatop */
-		val = REG_RD(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE);
-		val &= ~BM_ANADIG_REG_CORE_REG1_TRG;
-		val |= BF_ANADIG_REG_CORE_REG1_TRG(0x1f);
-		REG_WR(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE, val);
-
-		printf("hw_anadig_reg_core=%x\n",
-			REG_RD(ANATOP_BASE_ADDR, HW_ANADIG_REG_CORE));
-		#endif
 
 	}
 }

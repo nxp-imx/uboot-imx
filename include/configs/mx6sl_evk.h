@@ -281,7 +281,6 @@
 	#define CONFIG_SYS_I2C_SLAVE            0x8
 #endif
 
-#define CONFIG_MX6_INTER_LDO_BYPASS	1
 
 /*#define CONFIG_SPLASH_SCREEN*/
 

@@ -1042,6 +1042,9 @@ int arch_cpu_init(void)
 	val |= (0x1 << 18);
 	REG_WR(IOMUXC_BASE_ADDR, IOMUXC_GPR1_OFFSET, val);
 
+	/*clear PowerDown Enable bit of WDOGx_WMCR*/
+	writew(0, WDOG1_BASE_ADDR + 0x08);
+	writew(0, WDOG2_BASE_ADDR + 0x08);
 	return 0;
 }
 #endif
