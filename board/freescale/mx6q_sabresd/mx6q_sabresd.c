@@ -777,6 +777,33 @@ static int setup_pmic_voltages(void)
 			return -1;
 		}
 		printf("Found PFUZE100! deviceid=%x,revid=%x\n", value, rev_id);
+		/*For camera streaks issue,swap VGEN5 and VGEN3 to power camera.
+		*sperate VDDHIGH_IN and camera 2.8V power supply, after switch:
+		*VGEN5 for VDDHIGH_IN and increase to 3V to align with datasheet
+		*VGEN3 for camera 2.8V power supply
+		*/
+		/*increase VGEN3 from 2.5 to 2.8V*/
+		if (i2c_read(0x8, 0x6e, 1, &value, 1)) {
+			printf("Read VGEN3 error!\n");
+			return -1;
+		}
+		value &= ~0xf;
+		value |= 0xa;
+		if (i2c_write(0x8, 0x6e, 1, &value, 1)) {
+			printf("Set VGEN3 error!\n");
+			return -1;
+		}
+		/*increase VGEN5 from 2.8 to 3V*/
+		if (i2c_read(0x8, 0x70, 1, &value, 1)) {
+			printf("Read VGEN5 error!\n");
+			return -1;
+		}
+		value &= ~0xf;
+		value |= 0xc;
+		if (i2c_write(0x8, 0x70, 1, &value, 1)) {
+			printf("Set VGEN5 error!\n");
+			return -1;
+		}
 
 		#if CONFIG_MX6_INTER_LDO_BYPASS
 		/*VDDCORE 1.1V@800Mhz: SW1AB*/
