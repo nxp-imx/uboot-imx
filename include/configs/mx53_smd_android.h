@@ -330,7 +330,7 @@
 /* Monitor at beginning of flash */
 #define CONFIG_FSL_ENV_IN_MMC
 
-#define CONFIG_ENV_SECT_SIZE    (8 * 1024)
+#define CONFIG_ENV_SECT_SIZE    (128 * 1024)
 #define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE
 
 #if defined(CONFIG_FSL_ENV_IN_NAND)
