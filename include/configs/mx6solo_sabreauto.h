@@ -92,8 +92,6 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
 
-#define CONFIG_CMD_SPI
-#define CONFIG_CMD_I2C
 #define CONFIG_CMD_IMXOTP
 /*Uncomment if wish to view Parallel NOR as device.
  *If you want to use it as Boot device you need
@@ -101,8 +99,13 @@
  */
 /*#define CONFIG_CMD_WEIMNOR*/
 
-/* Enable below configure when supporting nand */
+
+#ifndef CONFIG_CMD_WEIMNOR
+#define CONFIG_CMD_SPI
+#define CONFIG_CMD_I2C
 #define CONFIG_CMD_SF
+#endif
+
 #define CONFIG_CMD_MMC
 #define CONFIG_CMD_ENV
 #define CONFIG_CMD_REGUL
@@ -222,13 +225,13 @@
 	#define CONFIG_SYS_FLASH_CFI			/* use the Common Flash Interface */
 	#define CONFIG_FLASH_CFI_DRIVER			/* use the CFI driver */
 	#define CONFIG_SYS_FLASH_BASE		0x08000000	/* start of FLASH   */
-	#define CONFIG_SYS_FLASH_SIZE		0x08000000	/* max flash size in bytes */
-	#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
+	#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE 1
 	#define CONFIG_SYS_FLASH_CFI_WIDTH	FLASH_CFI_16BIT
 	#define CONFIG_SYS_FLASH_BANKS_LIST	{CONFIG_SYS_FLASH_BASE}
 	#define CONFIG_SYS_MAX_FLASH_BANKS	1		/* number of banks */
 	#define CONFIG_SYS_MAX_FLASH_SECT	256		/* max sectors per device */
-	#define CONFIG_SYS_FLASH_PROTECTION
+	#define CONFIG_SYS_FLASH_PROTECTION 1
+	#define CONFIG_SYS_FLASH_EMPTY_INFO
 #endif
 
 /* Regulator Configs */
