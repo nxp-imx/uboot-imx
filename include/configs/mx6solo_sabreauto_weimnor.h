@@ -32,6 +32,7 @@
 #define CONFIG_DDR_32BIT
 #define CONFIG_MX6Q_SABREAUTO
 #define CONFIG_FLASH_HEADER
+#define CONFIG_FLASH_HEADER_OFFSET 0x1000
 #define CONFIG_MX6_CLK32	   32768
 
 #define CONFIG_SKIP_RELOCATE_UBOOT
@@ -91,11 +92,9 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
 
-#define CONFIG_CMD_I2C
 #define CONFIG_CMD_IMXOTP
 /* Must define. Otherwise emi_slow_clk would be dead */
 #define CONFIG_CMD_WEIMNOR
-#define CONFIG_FLASH_HEADER_OFFSET 0x1000
 
 /* Enable below configure when supporting nand */
 #define CONFIG_CMD_MMC
@@ -298,6 +297,7 @@
 
 #define CONFIG_ENV_SECT_SIZE   0x00020000   /*128KiB sector size */
 #define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE
+#define CONFIG_ENV_OFFSET       CONFIG_SYS_MONITOR_LEN
 
 /* Address and size of Redundant Environment Sector     */
 #define CONFIG_ENV_OFFSET_REDUND        (CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
@@ -312,6 +312,7 @@
 #define CONFIG_FLASH_CFI_DRIVER         1/* Use drivers/cfi_flash.c */
 #define CONFIG_SYS_FLASH_USE_BUFFER_WRITE 1/* Use buffered writes*/
 #define CONFIG_SYS_FLASH_PROTECTION     1/* Use hardware sector protection */
+#define CONFIG_SYS_FLASH_EMPTY_INFO
 
 /* Monitor at beginning of flash */
 /* #define CONFIG_FSL_ENV_IN_MMC*/
