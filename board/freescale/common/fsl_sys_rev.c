@@ -85,6 +85,7 @@ void fsl_set_system_rev(void)
 	 * 0x2 : Smart Device (SD)
 	 * 0x3 : Quick-Start Board (QSB)
 	 * 0x4 : SoloLite EVK (SL-EVK)
+     * 0x6 : HDMI Dongle
 	 *
 	 * bit 8-11: Board Revision ID
 	 * 0x0 : Unknown or latest revision

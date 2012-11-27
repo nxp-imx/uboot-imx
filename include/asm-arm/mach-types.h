@@ -3259,6 +3259,7 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_MX6Q_ARM2            3837
 #define MACH_TYPE_MX6Q_SABRESD	       3980
 #define MACH_TYPE_MX6SL_ARM2           4091
+#define MACH_TYPE_MX6Q_HDMIDONGLE      4284
 #define MACH_TYPE_MX6SL_EVK            4307
 
 #ifdef CONFIG_ARCH_EBSA110

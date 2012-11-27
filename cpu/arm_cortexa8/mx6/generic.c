@@ -1488,10 +1488,17 @@ struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
 		.cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
 		.args = CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC,
 	},
+#ifdef CONFIG_CMD_NAND
+	{
+		.cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND,
+		.args = CONFIG_ANDROID_RECOVERY_BOOTARGS_NAND,
+	},
+#else
 	{
 		.cmd = NULL,
 		.args = NULL,
 	},
+#endif
 };
 #endif
 
