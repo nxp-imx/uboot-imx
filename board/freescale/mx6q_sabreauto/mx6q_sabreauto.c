@@ -1219,3 +1219,54 @@ int checkboard(void)
 	}
 	return 0;
 }
+
+#ifdef CONFIG_IMX_UDC
+#define SABREAUTO_MAX7310_1_BASE_ADDR	IMX_GPIO_NR(8, 0)
+#define SABREAUTO_MAX7310_2_BASE_ADDR	IMX_GPIO_NR(8, 8)
+#define SABREAUTO_MAX7310_3_BASE_ADDR	IMX_GPIO_NR(8, 16)
+
+#define SABREAUTO_IO_EXP_GPIO1(x)	(SABREAUTO_MAX7310_1_BASE_ADDR + (x))
+#define SABREAUTO_IO_EXP_GPIO2(x)	(SABREAUTO_MAX7310_2_BASE_ADDR + (x))
+#define SABREAUTO_IO_EXP_GPIO3(x)	(SABREAUTO_MAX7310_3_BASE_ADDR + (x))
+
+#define SABREAUTO_USB_HOST1_PWR		SABREAUTO_IO_EXP_GPIO2(7)
+#define SABREAUTO_USB_OTG_PWR		SABREAUTO_IO_EXP_GPIO3(1)
+
+void udc_pins_setting(void)
+{
+	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_ENET_RX_ER__ANATOP_USBOTG_ID));
+
+	/* USB_OTG_PWR = 0 */
+	gpio_direction_output(SABREAUTO_USB_OTG_PWR, 0);
+	/* USB_H1_POWER = 1 */
+	gpio_direction_output(SABREAUTO_USB_HOST1_PWR, 1);
+
+	mxc_iomux_set_gpr_register(1, 13, 1, 0);
+
+}
+#endif
+
+#ifdef CONFIG_ANDROID_RECOVERY
+
+#define GPIO_VOL_DN_KEY IMX_GPIO_NR(5, 14)
+
+int check_recovery_cmd_file(void)
+{
+	int button_pressed = 0;
+	int recovery_mode = 0;
+
+	recovery_mode = check_and_clean_recovery_flag();
+
+	/* Check Recovery Combo Button press or not. */
+	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_DISP0_DAT20__GPIO_5_14));
+
+	gpio_direction_input(GPIO_VOL_DN_KEY);
+
+	if (gpio_get_value(GPIO_VOL_DN_KEY) == 0) { /* VOL_DN key is low assert */
+		button_pressed = 1;
+		printf("Recovery key pressed\n");
+	}
+
+	return recovery_mode || button_pressed;
+}
+#endif

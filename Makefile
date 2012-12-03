@@ -3356,6 +3356,7 @@ mx6q_hdmidongle_mfg_config			\
 mx6q_hdmidongle_nand_mfg_config   : unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx6q_hdmidongle freescale mx6
 
+mx6q_sabreauto_android_config		\
 mx6q_sabreauto_weimnor_mfg_config	\
 mx6q_sabreauto_weimnor_config		\
 mx6q_sabreauto_nand_mfg_config		\
