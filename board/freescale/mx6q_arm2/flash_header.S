@@ -928,6 +928,9 @@ MXC_DCD_ITEM(90, MMDC_P0_BASE_ADDR + 0x404, 0x00011006)
 
 #else
 
+#define ROM_API_TABLE_BASE_ADDR		(0x000000C0)
+#define ROM_API_HWCNFG_SETUP_OFFSET	(0x08)
+
 /*****************PLUGIN IN mode********************/
 
 #ifdef CONFIG_MX6DL_LPDDR2
@@ -1480,9 +1483,9 @@ plugin_start:
  * pu_irom_hwcnfg_setup is in 0x1fb5  ERIC : < what is the address in Rigel >
  */
 before_calling_rom___pu_irom_hwcnfg_setup:
-    mov r4, #0x1f00
-    add r4, r4, #0xb5
-    blx r4	/* This address might change in future ROM versions */
+    ldr r3, =ROM_API_TABLE_BASE_ADDR
+    ldr r4, [r3, #ROM_API_HWCNFG_SETUP_OFFSET]
+    blx r4
 after_calling_rom___pu_irom_hwcnfg_setup:
 
 /* To return to ROM from plugin, we need to fill in these argument.
@@ -1771,9 +1774,9 @@ plugin_start:
  * check the _pu_irom_api_table for the address
  */
 before_calling_rom___pu_irom_hwcnfg_setup:
-    mov r4, #0x2000
-    add r4, r4, #0xed
-    blx r4	/* This address might change in future ROM versions */
+    ldr r3, =ROM_API_TABLE_BASE_ADDR
+    ldr r4, [r3, #ROM_API_HWCNFG_SETUP_OFFSET]
+    blx r4
 after_calling_rom___pu_irom_hwcnfg_setup:
 
 /* To return to ROM from plugin, we need to fill in these argument.

@@ -375,6 +375,9 @@ MXC_DCD_ITEM(72, MMDC_P0_BASE_ADDR + 0x01c, 0x00000000)
 
 #else
 
+#define ROM_API_TABLE_BASE_ADDR		(0x000000C0)
+#define ROM_API_HWCNFG_SETUP_OFFSET	(0x08)
+
 .section ".text.flasheader", "x"
 origin:
 	b	_start
@@ -672,9 +675,9 @@ plugin_start:
  * pu_irom_hwcnfg_setup is in 0x1f20
  */
 before_calling_rom___pu_irom_hwcnfg_setup:
-    mov r4, #0x1f00
-    add r4, r4, #0x21
-    blx r4	/* This address might change in future ROM versions */
+    ldr r3, =ROM_API_TABLE_BASE_ADDR
+    ldr r4, [r3, #ROM_API_HWCNFG_SETUP_OFFSET]
+    blx r4
 after_calling_rom___pu_irom_hwcnfg_setup:
 
 /* To return to ROM from plugin, we need to fill in these argument.
