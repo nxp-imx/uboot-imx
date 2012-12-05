@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -1006,6 +1006,37 @@ int cpu_eth_init(bd_t *bis)
 int arch_cpu_init(void)
 {
 	int val;
+
+	/* Due to hardware limitation, on MX6Q we need to gate/ungate all PFDs
+	 * to make sure PFD is working right, otherwise, PFDs may
+	 * not output clock after reset, MX6DL and MX6SL have added 396M pfd
+	 * workaround in ROM code, as bus clock need it
+	 */
+	writel(BM_ANADIG_PFD_480_PFD3_CLKGATE |
+		BM_ANADIG_PFD_480_PFD2_CLKGATE |
+		BM_ANADIG_PFD_480_PFD1_CLKGATE |
+		BM_ANADIG_PFD_480_PFD0_CLKGATE,
+		ANATOP_BASE_ADDR + HW_ANADIG_PFD_480_SET);
+	writel(BM_ANADIG_PFD_528_PFD3_CLKGATE |
+#ifdef CONFIG_MX6Q
+		BM_ANADIG_PFD_528_PFD2_CLKGATE |
+#endif
+		BM_ANADIG_PFD_528_PFD1_CLKGATE |
+		BM_ANADIG_PFD_528_PFD0_CLKGATE,
+		ANATOP_BASE_ADDR + HW_ANADIG_PFD_528_SET);
+
+	writel(BM_ANADIG_PFD_480_PFD3_CLKGATE |
+		BM_ANADIG_PFD_480_PFD2_CLKGATE |
+		BM_ANADIG_PFD_480_PFD1_CLKGATE |
+		BM_ANADIG_PFD_480_PFD0_CLKGATE,
+		ANATOP_BASE_ADDR + HW_ANADIG_PFD_480_CLR);
+	writel(BM_ANADIG_PFD_528_PFD3_CLKGATE |
+#ifdef CONFIG_MX6Q
+		BM_ANADIG_PFD_528_PFD2_CLKGATE |
+#endif
+		BM_ANADIG_PFD_528_PFD1_CLKGATE |
+		BM_ANADIG_PFD_528_PFD0_CLKGATE,
+		ANATOP_BASE_ADDR + HW_ANADIG_PFD_528_CLR);
 
 	icache_enable();
 	dcache_enable();
