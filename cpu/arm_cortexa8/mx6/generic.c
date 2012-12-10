@@ -286,7 +286,7 @@ static u32 __get_emi_slow_clk(void)
 	u32 emi_clk_sel = (cscmr1 & MXC_CCM_CSCMR1_ACLK_EMI_SLOW_MASK) >>
 		MXC_CCM_CSCMR1_ACLK_EMI_SLOW_OFFSET;
 	u32 podf = (cscmr1 & MXC_CCM_CSCMR1_ACLK_EMI_SLOW_PODF_MASK) >>
-			MXC_CCM_CSCMR1_ACLK_EMI_PODF_OFFSET;
+			MXC_CCM_CSCMR1_ACLK_EMI_SLOW_PODF_OFFSET;
 
 	switch (emi_clk_sel) {
 	default:
