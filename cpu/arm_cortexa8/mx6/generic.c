@@ -1146,14 +1146,14 @@ int check_and_clean_recovery_flag(void)
 {
 	int flag_set = 0;
 	u32 reg;
-	reg = readl(SRC_BASE_ADDR + SRC_GPR10);
+	reg = readl(SNVS_BASE_ADDR + SNVS_LPGPR);
 
 	flag_set = !!(reg & ANDROID_RECOVERY_BOOT);
 
 	/* clean it in case looping infinite here.... */
 	if (flag_set) {
 		reg &= ~ANDROID_RECOVERY_BOOT;
-		writel(reg, SRC_BASE_ADDR + SRC_GPR10);
+		writel(reg, SNVS_BASE_ADDR + SNVS_LPGPR);
 	}
 
 	return flag_set;
@@ -1168,14 +1168,15 @@ int fastboot_check_and_clean_flag(void)
 {
 	int flag_set = 0;
 	u32 reg;
-	reg = readl(SRC_BASE_ADDR + SRC_GPR10);
+
+	reg = readl(SNVS_BASE_ADDR + SNVS_LPGPR);
 
 	flag_set = !!(reg & ANDROID_FASTBOOT_BOOT);
 
 	/* clean it in case looping infinite here.... */
 	if (flag_set) {
 		reg &= ~ANDROID_FASTBOOT_BOOT;
-		writel(reg, SRC_BASE_ADDR + SRC_GPR10);
+		writel(reg, SNVS_BASE_ADDR + SNVS_LPGPR);
 	}
 
 	return flag_set;
