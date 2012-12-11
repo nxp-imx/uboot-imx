@@ -70,6 +70,7 @@
 #include <linux/mtd/partitions.h>
 #include <ubi_uboot.h>
 #include <jffs2/load_kernel.h>
+#define	GPIO_VOL_DN_KEY	14
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -1286,100 +1287,27 @@ int board_init(void)
 
 int check_recovery_cmd_file(void)
 {
-	disk_partition_t info;
 	int button_pressed = 0;
-	ulong part_length;
-	int filelen = 0;
-	char *env;
+	int recovery_mode = 0;
 	u32 reg;
-	int i;
 
-	/* For test only */
-	/* When detecting android_recovery_switch,
-	 * enter recovery mode directly */
-	env = getenv("android_recovery_switch");
-	if (!strcmp(env, "1")) {
-		printf("Env recovery detected!\nEnter recovery mode!\n");
-		return 1;
-	}
+	/* Enter Recovery Mode if Recovery Switch is set. */
+	recovery_mode = check_and_clean_recovery_flag();
 
-	printf("Checking for recovery command file...\n");
-	switch (get_boot_device()) {
-	case MMC_BOOT:
-	case SD_BOOT:
-		{
-			for (i = 0; i < 2; i++) {
-				block_dev_desc_t *dev_desc = NULL;
-				struct mmc *mmc = find_mmc_device(i);
-
-				dev_desc = get_dev("mmc", i);
-
-				if (NULL == dev_desc) {
-					printf("** Block device MMC %d not supported\n", i);
-					continue;
-				}
-
-				mmc_init(mmc);
-
-				if (get_partition_info(dev_desc,
-						       CONFIG_ANDROID_CACHE_PARTITION_MMC,
-						       &info)) {
-					printf("** Bad partition %d **\n",
-					       CONFIG_ANDROID_CACHE_PARTITION_MMC);
-					continue;
-				}
-
-				part_length = ext2fs_set_blk_dev(dev_desc,
-								 CONFIG_ANDROID_CACHE_PARTITION_MMC);
-				if (part_length == 0) {
-					printf("** Bad partition - mmc %d:%d **\n", i,
-					       CONFIG_ANDROID_CACHE_PARTITION_MMC);
-					ext2fs_close();
-					continue;
-				}
-
-				if (!ext2fs_mount(part_length)) {
-					printf("** Bad ext2 partition or "
-					       "disk - mmc %d:%d **\n",
-					       i, CONFIG_ANDROID_CACHE_PARTITION_MMC);
-					ext2fs_close();
-					continue;
-				}
-
-				filelen = ext2fs_open(CONFIG_ANDROID_RECOVERY_CMD_FILE);
-
-				ext2fs_close();
-				break;
-			}
-		}
-		break;
-	case NAND_BOOT:
-		return 0;
-		break;
-	case SPI_NOR_BOOT:
-		return 0;
-		break;
-	case UNKNOWN_BOOT:
-	default:
-		return 0;
-		break;
-	}
-
-	/* Check Recovery Combo Button press or not.
-	 * @TODO: Need At least Two key, but in SMD board,
-	 * only can use one Volume key. */
+	/* Check Recovery Combo Button press or not. */
 	mxc_request_iomux(MX53_PIN_ATA_DATA14, IOMUX_CONFIG_ALT1);
+	/* Set GPIO direction to INPUT */
 	reg = readl(GPIO2_BASE_ADDR + GPIO_GDIR);
-	reg &= ~(1<<14);
+	reg &= ~(1 << GPIO_VOL_DN_KEY);
 	writel(reg, GPIO2_BASE_ADDR + GPIO_GDIR);
+	/* Read GPIO status */
 	reg = readl(GPIO2_BASE_ADDR + GPIO_PSR);
-	if (!(reg & (1 << 14))) { /* Vol - is low assert */
+	if (!(reg & (1 << GPIO_VOL_DN_KEY))) { /* Vol - is low assert */
 		button_pressed = 1;
 		printf("Recovery key pressed\n");
 	}
 
-	return (filelen > 0 || button_pressed);
-
+	return recovery_mode || button_pressed;
 }
 #endif
 

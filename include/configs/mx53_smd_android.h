@@ -94,8 +94,8 @@
 #define CONFIG_FASTBOOT_INTERFACE_STR	 "Android fastboot"
 #define CONFIG_FASTBOOT_SERIAL_NUM	"12345"
 #define CONFIG_FASTBOOT_SATA_NO		 0
-#define CONFIG_FASTBOOT_TRANSFER_BUF	0x80000000
-#define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x9400000 /* 148M byte */
+#define CONFIG_FASTBOOT_TRANSFER_BUF	0x78000000
+#define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x14000000 /* 320M byte */
 
 #define CONFIG_CMD_BOOTI
 #define CONFIG_ANDROID_RECOVERY
@@ -104,12 +104,9 @@
 #define CONFIG_MTD_PARTITIONS
 #define CONFIG_TIMESTAMP
 
-#define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC \
-	"setenv bootargs ${bootargs} init=/init root=/dev/mmcblk0p4 rootfs=ext4 video=mxcdi1fb:RGB666,XGA ldb=di1 di1_primary"
-#define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC  \
-	"run bootargs_base bootargs_android_recovery; "	\
-	"mmc dev 1 0; "	\
-	"mmc read ${loadaddr} 0x800 0x2000;bootm"
+#define CONFIG_ANDROID_RECOVERY_BOOTARGS_MMC NULL
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC \
+	"booti mmc1 recovery"
 #define CONFIG_ANDROID_RECOVERY_CMD_FILE "/recovery/command"
 
 #define CONFIG_ANDROID_BOOT_PARTITION_MMC -1

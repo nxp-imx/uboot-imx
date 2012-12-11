@@ -1213,12 +1213,48 @@ struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
 };
 #endif
 
-#ifdef CONFIG_FASTBOOT
+#ifdef CONFIG_ANDROID_RECOVERY
+#define ANDROID_RECOVERY_BOOT  (1 << 27)
 /* check if the recovery bit is set by kernel, it can be set by kernel
+ * issue a command '# reboot recovery' */
+int check_and_clean_recovery_flag(void)
+{
+	int flag_set = 0;
+	u32 reg;
+	reg = readl(SRTC_BASE_ADDR + SRTC_LPGR);
+
+	flag_set = !!(reg & ANDROID_RECOVERY_BOOT);
+
+	/* clean it in case looping infinite here.... */
+	if (flag_set) {
+		printf("Recovery flag is set...\n");
+		reg &= ~ANDROID_RECOVERY_BOOT;
+		writel(reg, SRTC_BASE_ADDR + SRTC_LPGR);
+	}
+
+	return flag_set;
+}
+#endif
+
+#ifdef CONFIG_FASTBOOT
+#define ANDROID_FASTBOOT_BOOT  (1 << 26)
+/* check if the fastboot bit is set by kernel, it can be set by kernel
  * issue a command '# reboot fastboot' */
 int fastboot_check_and_clean_flag(void)
 {
-	return 0;
+	int flag_set = 0;
+	u32 reg;
+	reg = readl(SRTC_BASE_ADDR + SRTC_LPGR);
+
+	flag_set = !!(reg & ANDROID_FASTBOOT_BOOT);
+
+	/* clean it in case looping infinite here.... */
+	if (flag_set) {
+		reg &= ~ANDROID_FASTBOOT_BOOT;
+		writel(reg, SRTC_BASE_ADDR + SRTC_LPGR);
+	}
+
+	return flag_set;
 }
 #endif
 
