@@ -732,6 +732,8 @@
 #define SRC_GPR9		0x40
 #define SRC_GPR10		0x44
 
+#define SNVS_LPGPR              0x68
+
 /* Get Board ID */
 #define board_is_rev(system_rev, rev) (((system_rev & 0x0F00) == rev) ? 1 : 0)
 #define chip_is_type(system_rev, rev) \
