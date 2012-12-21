@@ -59,10 +59,13 @@
  */
 
 #define CONFIG_CMDLINE_TAG		1	/* enable passing of ATAGs */
+#define CONFIG_SERIAL_TAG		1
 #define CONFIG_REVISION_TAG		1
 #define CONFIG_SETUP_MEMORY_TAGS	1
 #define CONFIG_INITRD_TAG		1
 
+/* IIM Unique ID offset on Bank0 */
+#define CONFIG_IIM_UNIQUE_ID_OFFSET	0x20
 /*
  * Size of malloc() pool
  */

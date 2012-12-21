@@ -22,6 +22,8 @@
 
 #include <common.h>
 #include <asm/arch/mx53.h>
+#include <asm/imx_iim.h>
+#include <asm/setup.h>
 #include <asm/errno.h>
 #include <asm/io.h>
 #include "crm_regs.h"
@@ -1258,3 +1260,29 @@ int fastboot_check_and_clean_flag(void)
 }
 #endif
 
+#ifdef CONFIG_SERIAL_TAG
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+	int i = 0, tmp = 0;
+	u32 *iim0_unique_id_base =
+		(u32 *)(IIM_BASE_ADDR + IIM_BANK_AREA_0_OFFSET +
+			CONFIG_IIM_UNIQUE_ID_OFFSET);
+
+	serialnr->low = 0;
+	serialnr->high = 0;
+
+	/* Read the 32-63 bits of UID from 4 registers */
+	for (i = 0; i < 4; ++i, ++iim0_unique_id_base) {
+		tmp = readl(iim0_unique_id_base);
+		serialnr->high = serialnr->high << 8;
+		serialnr->high |= (tmp & 0xff);
+	}
+
+	/* Read the 0-31 bits of UID from next 4 registers */
+	for (i = 0; i < 4; ++i, ++iim0_unique_id_base) {
+		tmp = readl(iim0_unique_id_base);
+		serialnr->low = serialnr->low << 8;
+		serialnr->low |= (tmp & 0xff);
+	}
+}
+#endif
