@@ -595,3 +595,121 @@ int ep0_recv_setup (struct urb *urb)
 	}
 	return -1;
 }
+
+#ifdef CONFIG_FASTBOOT
+
+#include <usb/imx_udc.h>
+#include <fastboot.h>
+
+/* Standard requests */
+#define USB_REQ_GET_STATUS          0x00
+#define USB_REQ_CLEAR_FEATURE       0x01
+#define USB_REQ_SET_FEATURE         0x03
+#define USB_REQ_SET_ADDRESS         0x05
+#define USB_REQ_GET_DESCRIPTOR      0x06
+#define USB_REQ_SET_DESCRIPTOR      0x07
+#define USB_REQ_GET_CONFIGURATION   0x08
+#define USB_REQ_SET_CONFIGURATION   0x09
+#define USB_REQ_GET_INTERFACE       0x0A
+#define USB_REQ_SET_INTERFACE       0x0B
+#define USB_REQ_SYNCH_FRAME         0x0C
+
+struct USB_SETUP_T {
+    u8 bmRequestType;
+    u8 bRequest;
+    u16 wValue;
+    u16 wIndex;
+    u16 wLength;
+};
+
+void ep0_parse_setup(void *ctrl)
+{
+    struct USB_SETUP_T *s = (struct USB_SETUP_T *)ctrl;
+    DBG_DEBUG("SETUP, type=0x%x, req=0x%x, value=0x%x, index=0x%x, len=0x%x\n",
+	s->bmRequestType, s->bRequest, s->wValue, s->wIndex, s->wLength);
+    switch (s->bRequest) {
+    case USB_REQ_GET_DESCRIPTOR:
+    {
+	u8 type = (s->wValue >> 8) & 0xff;
+	u8 *pdesc, len;
+
+	udc_recv_data(EP0_OUT_INDEX, NULL, 0, NULL);
+	switch (type) {
+	case USB_DESCRIPTOR_TYPE_DEVICE:
+	case USB_DESCRIPTOR_TYPE_CONFIGURATION:
+	    pdesc = udc_get_descriptor(type, &len);
+	    len = MIN(s->wLength, len);
+	    udc_send_data(EP0_IN_INDEX, pdesc, len, NULL);
+	    break;
+
+	case USB_DESCRIPTOR_TYPE_STRING:
+	    {
+		struct usb_string_descriptor **string_table;
+		string_table = fastboot_get_string_table();
+		len = string_table[(s->wValue)&0xff]->bLength;
+		len = MIN(s->wLength, len);
+		udc_send_data(EP0_IN_INDEX,
+			(u8 *)string_table[(s->wValue)&0xff], len, NULL);
+		break;
+	    }
+
+	case USB_DESCRIPTOR_TYPE_ENDPOINT:
+	case USB_DESCRIPTOR_TYPE_INTERFACE:
+	case USB_DESCRIPTOR_TYPE_HID:
+	case USB_DESCRIPTOR_TYPE_REPORT:
+	case USB_DESCRIPTOR_TYPE_DEVICE_QUALIFIER:
+	default:
+	    DBG_ERR("not support type=0x%x\n", type);
+	    return;
+	}
+	break;
+    }
+    case USB_REQ_SET_ADDRESS:
+	udc_set_addr((s->wValue)&0xff);
+	udc_send_data(EP0_IN_INDEX, NULL, 0, NULL);
+	DBG_INFO("USB addr=0x%x\n", (s->wValue)&0xff);
+	break;
+
+    case USB_REQ_GET_STATUS:
+    {
+	static u8 tmp[2];
+#define USB_RECIP_MASK 0x03
+	udc_recv_data(EP0_OUT_INDEX, NULL, 0, NULL);
+	tmp[0] = tmp[1] = 0;
+	if ((s->bmRequestType & USB_RECIP_MASK) == USB_RECIP_DEVICE) {
+		tmp[0] = 1 << 0; /* self powerd */
+		tmp[0] |= 0 << 1; /* not remote wakeup able */
+	} else if ((s->bmRequestType & USB_RECIP_MASK) == USB_RECIP_INTERFACE) {
+		tmp[0] = 0;
+	} else if ((s->bmRequestType & USB_RECIP_MASK) == USB_RECIP_ENDPOINT) {
+		tmp[0] = 0;
+	}
+	udc_send_data(EP0_IN_INDEX, (u8 *)&tmp, 2, NULL);
+	break;
+    }
+    case USB_REQ_SET_CONFIGURATION:
+	udc_send_data(EP0_IN_INDEX, NULL, 0, NULL);
+	if (s->wValue == 0x01) {
+		u8 in, out;
+		fastboot_get_ep_num(&in, &out);
+		udc_qh_dtd_init(in);
+		udc_qh_dtd_init(out);
+		udc_qh_setup(in, USB_ENDPOINT_XFER_BULK, MAX_PAKET_LEN, 1, 0);
+		udc_qh_setup(out, USB_ENDPOINT_XFER_BULK, MAX_PAKET_LEN, 1, 0);
+		udc_dtd_setup(in, USB_ENDPOINT_XFER_BULK);
+		udc_dtd_setup(out, USB_ENDPOINT_XFER_BULK);
+		udc_qh_dtd_init(in);
+		udc_qh_dtd_init(out);
+
+		udc_set_configure(1);
+	}
+	break;
+    default:
+	DBG_ERR("Setup Error. rq=0x%x, type=0x%x, value=0x%x, index=0x%x,"
+				"len=0x%x\n", s->bRequest, s->bmRequestType,
+				s->wValue, s->wIndex, s->wLength);
+	break;
+    }
+}
+
+#endif  /* CONFIG_FASTBOOT */

@@ -331,6 +331,19 @@ int fastboot_check_and_clean_flag(void);
 int do_fastboot(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 void check_fastboot_mode(void);
 
+
+void fastboot_quick(u8 debug);
+void *fastboot_get_string_table(void);
+int  fastboot_write_mmc(u8 *partition_name, u32 write_len);
+void fastboot_dump_memory(u32 *ptr, u32 lEN);
+void fastboot_get_ep_num(u8 *in, u8 *out);
+extern u8 fastboot_debug_level;
+#define DBG_ALWS(x...)    printf(x)
+#define DBG_ERR(x...)     printf(x)
+#define DBG_DEBUG(x...)   if (fastboot_debug_level >= 1) printf(x)
+#define DBG_INFO(x...)    if (fastboot_debug_level >= 2) printf(x)
+
+
 #else
 
 /* Stubs for when CONFIG_FASTBOOT is not defined */
@@ -355,6 +368,17 @@ void check_fastboot_mode(void);
 #define fastboot_flash_read(a, b, c, d, e) 0
 #define fastboot_flash_write(a, b, c, d) 0
 #define do_fastboot(a, b, c, d) 0
+
+
+#define fastboot_quick(a) 0
+#define fastboot_get_ep_num(a, b)  0
+#define fastboot_get_string_table()  1
+#define fastboot_dump_memory(a, b) 0
+#define DBG_ALWS(x...)
+#define DBG_ERR(x...)
+#define DBG_DEBUG(x...)
+#define DBG_INFO(x...)
+
 
 #endif /* CONFIG_FASTBOOT */
 #endif /* FASTBOOT_H */

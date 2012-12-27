@@ -788,3 +788,160 @@ void check_fastboot_mode(void)
 	if (fastboot_check_and_clean_flag())
 		do_fastboot(NULL, 0, 0, 0);
 }
+
+u8 fastboot_debug_level;
+void fastboot_dump_memory(u32 *ptr, u32 len)
+{
+    u32 i;
+    for (i = 0; i < len; i++) {
+	DBG_DEBUG("0x%p: %08x %08x %08x %08x\n", ptr,
+			*ptr, *(ptr+1), *(ptr+2), *(ptr+3));
+	ptr += 4;
+    }
+}
+
+#define FASTBOOT_STS_CMD 0
+#define FASTBOOT_STS_CMD_WAIT 1
+#define FASTBOOT_STS_DATA 2
+#define FASTBOOT_STS_DATA_WAIT 3
+
+static u8 fastboot_status;
+static u8 g_fastboot_recvbuf[MAX_PAKET_LEN];
+static u8 g_fastboot_sendbuf[MAX_PAKET_LEN];
+
+static u32 g_fastboot_datalen;
+static u8 g_fastboot_outep_index, g_fastboot_inep_index;
+static u8 g_usb_connected;
+
+void fastboot_get_ep_num(u8 *in, u8 *out)
+{
+    if (out)
+	*out = rx_endpoint + EP0_OUT_INDEX + 1;
+    if (in)
+	*in = tx_endpoint + EP0_IN_INDEX + 1;
+}
+
+static void fastboot_data_handler(u32 len, u8 *recvbuf)
+{
+    if (len != g_fastboot_datalen)
+	DBG_ERR("Fastboot data recv error, want:%d, recv:%d\n",
+					g_fastboot_datalen, len);
+    sprintf((char *)g_fastboot_sendbuf, "OKAY");
+    udc_send_data(g_fastboot_inep_index, g_fastboot_sendbuf, 4, NULL);
+    fastboot_status = FASTBOOT_STS_CMD;
+}
+
+static void fastboot_cmd_handler(u32 len, u8 *recvbuf)
+{
+    u32 *databuf = (u32 *)CONFIG_FASTBOOT_TRANSFER_BUF;
+
+    if (len > sizeof(g_fastboot_recvbuf)) {
+	DBG_ERR("%s, recv len=%d error\n", __func__, len);
+	return;
+    }
+    recvbuf[len] = 0;
+    DBG_ALWS("\nFastboot Cmd, len=%u, %s\n", len, recvbuf);
+
+    if (memcmp(recvbuf, "download:", 9) == 0) {
+	g_fastboot_datalen = simple_strtoul((const char *)recvbuf + 9,
+								NULL, 16);
+	if (g_fastboot_datalen > CONFIG_FASTBOOT_TRANSFER_BUF_SIZE) {
+		DBG_ERR("Download too much data\n");
+		sprintf((char *)g_fastboot_sendbuf, "FAIL");
+		udc_send_data(g_fastboot_inep_index, g_fastboot_sendbuf,
+								4, NULL);
+		fastboot_status = FASTBOOT_STS_CMD;
+	} else {
+		sprintf((char *)g_fastboot_sendbuf, "DATA%08x",
+							g_fastboot_datalen);
+		udc_send_data(g_fastboot_inep_index, g_fastboot_sendbuf,
+								12, NULL);
+		DBG_ALWS("Fastboot is receiveing data...\n");
+		udc_recv_data(g_fastboot_outep_index, (u8 *)databuf,
+				g_fastboot_datalen, fastboot_data_handler);
+		fastboot_status = FASTBOOT_STS_DATA_WAIT;
+	}
+    } else if (memcmp(recvbuf, "flash:", 6) == 0) {
+		if (g_fastboot_datalen ==
+			fastboot_write_mmc(recvbuf+6, g_fastboot_datalen)) {
+			DBG_ALWS("Fastboot write OK, send OKAY...\n");
+			sprintf((char *)g_fastboot_sendbuf, "OKAY");
+			udc_send_data(g_fastboot_inep_index, g_fastboot_sendbuf,
+								4, NULL);
+		} else {
+			DBG_ERR("Fastboot write error, write 0x%x\n",
+							g_fastboot_datalen);
+			sprintf((char *)g_fastboot_sendbuf, "FAIL");
+			udc_send_data(g_fastboot_inep_index, g_fastboot_sendbuf,
+								4, NULL);
+		}
+		g_fastboot_datalen = 0;
+		fastboot_status = FASTBOOT_STS_CMD;
+    } else {
+		DBG_ERR("Not support command:%s\n", recvbuf);
+		sprintf((char *)g_fastboot_sendbuf, "FAIL");
+		udc_send_data(g_fastboot_inep_index, g_fastboot_sendbuf,
+								4, NULL);
+		g_fastboot_datalen = 0;
+		fastboot_status = FASTBOOT_STS_CMD;
+    }
+}
+
+static struct cmd_fastboot_interface interface = {
+    .rx_handler            = NULL,
+    .reset_handler         = NULL,
+    .product_name          = NULL,
+    .serial_no             = NULL,
+    .nand_block_size       = 0,
+    .transfer_buffer       = (unsigned char *)0xffffffff,
+    .transfer_buffer_size  = 0,
+};
+
+void *fastboot_get_string_table(void)
+{
+    return fastboot_string_table;
+}
+
+/*
+ * fastboot main process, only support 'download', 'flash' command now
+ *
+ * @debug  control debug level, support three level now,
+ *	   0(normal), 1(debug), 2(info), default is 0
+ */
+void fastboot_quick(u8 debug)
+{
+    u32 plug_cnt = 0;
+    if (debug > 2)
+	debug = 0;
+    fastboot_debug_level = debug;
+
+    fastboot_init(&interface);
+    fastboot_get_ep_num(&g_fastboot_inep_index, &g_fastboot_outep_index);
+    DBG_INFO("g_fastboot_inep_index=%d, g_fastboot_outep_index=%d\n",
+		g_fastboot_inep_index, g_fastboot_outep_index);
+    while (++plug_cnt) {
+	fastboot_status = FASTBOOT_STS_CMD;
+	udc_hal_data_init();
+	udc_run();
+	if (plug_cnt > 1)
+		DBG_ALWS("wait usb cable into the connector!\n");
+	udc_wait_connect();
+	g_usb_connected = 1;
+	if (plug_cnt > 1)
+		DBG_ALWS("USB Mini b cable Connected!\n");
+	while (g_usb_connected) {
+		int usb_irq = udc_irq_handler();
+		if (usb_irq > 0) {
+			if (fastboot_status == FASTBOOT_STS_CMD) {
+				memset(g_fastboot_recvbuf, 0 , MAX_PAKET_LEN);
+				udc_recv_data(g_fastboot_outep_index,
+					g_fastboot_recvbuf, MAX_PAKET_LEN,
+					fastboot_cmd_handler);
+				fastboot_status = FASTBOOT_STS_CMD_WAIT;
+			}
+		}
+		if (usb_irq < 0)
+			g_usb_connected = 0;
+	}
+    }
+}

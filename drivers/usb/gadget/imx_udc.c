@@ -44,7 +44,7 @@
 
 #define mdelay(n) udelay((n)*1000)
 
-#define EP_TQ_ITEM_SIZE 4
+#define EP_TQ_ITEM_SIZE 16
 
 #define inc_index(x) (x = ((x+1) % EP_TQ_ITEM_SIZE))
 
@@ -944,3 +944,626 @@ void udc_set_nak(int epid)
 void udc_unset_nak(int epid)
 {
 }
+
+#ifdef CONFIG_FASTBOOT
+
+#include <fastboot.h>
+
+struct EP_QUEUE_HEAD_T {
+    unsigned int config;
+    unsigned int current; /* read-only */
+
+    unsigned int next_queue_item;
+    unsigned int info;
+    unsigned int page0;
+    unsigned int page1;
+    unsigned int page2;
+    unsigned int page3;
+    unsigned int page4;
+    unsigned int reserved_0;
+
+    unsigned char setup_data[8];
+    unsigned int self_buf;
+    unsigned int deal_cnt;
+    unsigned int total_len;
+    unsigned char *deal_buf;
+};
+
+struct EP_DTD_ITEM_T {
+    unsigned int next_item_ptr;
+    unsigned int info;
+    unsigned int page0;
+    unsigned int page1;
+    unsigned int page2;
+    unsigned int page3;
+    unsigned int page4;
+    unsigned int reserved[9];
+};
+
+struct USB_CTRL_T {
+    struct EP_QUEUE_HEAD_T *qh_ptr;
+    struct EP_DTD_ITEM_T *dtd_ptr;
+    EP_HANDLER_P *handler_ptr;
+    u32 configed;
+    u32 max_ep;
+};
+
+struct USB_CTRL_T g_usb_ctrl;
+
+u8 *udc_get_descriptor(u8 type, u8 *plen)
+{
+    if (USB_DESCRIPTOR_TYPE_DEVICE == type) {
+	*plen = ep0_urb->device->device_descriptor->bLength;
+	return (u8 *)(ep0_urb->device->device_descriptor);
+    } else if (USB_DESCRIPTOR_TYPE_CONFIGURATION == type) {
+	*plen = ep0_urb->device->configuration_instance_array->
+			configuration_descriptor->wTotalLength;
+	return (u8 *)(ep0_urb->device->configuration_instance_array->
+			configuration_descriptor);
+    } else {
+	*plen = 0;
+	DBG_ERR("%s, wrong type:%x\n", __func__, type);
+	return NULL;
+    }
+}
+
+void udc_qh_setup(u32 index, u8 ep_type, u32 max_pkt_len, u32 zlt, u8 mult)
+{
+    u32 tmp = max_pkt_len << 16;
+    u32 offset;
+    struct EP_QUEUE_HEAD_T *qh_ptr;
+
+    if (index > EP15_IN_INDEX) {
+	DBG_ERR("%s:%d error, wrong index=%d\n", __func__, __LINE__, index);
+	return;
+    }
+
+    if (index >= EP0_IN_INDEX)
+	offset = (index-EP0_IN_INDEX) * 2 + 1;
+    else
+	offset = index * 2;
+
+    qh_ptr = g_usb_ctrl.qh_ptr + offset;
+
+    switch (ep_type) {
+    case USB_ENDPOINT_XFER_CONTROL:
+	tmp |= (1 << 15);
+	break;
+    case USB_ENDPOINT_XFER_ISOC:
+	tmp |= (mult << 30);
+	break;
+    case USB_ENDPOINT_XFER_BULK:
+    case USB_ENDPOINT_XFER_INT:
+	break;
+    default:
+	DBG_ERR("%s:%d, index=%d, error_type=%d\n",
+			__func__, __LINE__, index, ep_type);
+	return;
+    }
+    if (zlt)
+	tmp |= (1<<29);
+
+    qh_ptr->config = tmp;
+}
+
+void udc_dtd_setup(u32 index, u8 ep_type)
+{
+    u32 epctrl = 0;
+    u8 ep_num, dir;
+
+    if (index > EP15_IN_INDEX) {
+	DBG_ERR("%s:%d error, wrong index=%d", __func__, __LINE__, index);
+	return;
+    }
+
+    if (index >= EP0_IN_INDEX) {
+	ep_num = index - EP0_IN_INDEX;
+	dir = 1;
+    } else {
+	ep_num = index;
+	dir = 0;
+    }
+
+    epctrl = readl(USB_ENDPTCTRL(ep_num));
+    if (dir) {
+	if (ep_num != 0)
+		epctrl |= EPCTRL_TX_DATA_TOGGLE_RST;
+	epctrl |= EPCTRL_TX_ENABLE;
+	epctrl |= ((u32)(ep_type) << EPCTRL_TX_EP_TYPE_SHIFT);
+    } else {
+	if (ep_num != 0)
+		epctrl |= EPCTRL_RX_DATA_TOGGLE_RST;
+	epctrl |= EPCTRL_RX_ENABLE;
+	epctrl |= ((u32)(ep_type) << EPCTRL_RX_EP_TYPE_SHIFT);
+    }
+    writel(epctrl, USB_ENDPTCTRL(ep_num));
+}
+
+
+void udc_qh_dtd_init(u32 index)
+{
+    u32 i, tmp, max_len = 0;
+    u32 offset;
+
+    if (index > EP15_IN_INDEX) {
+	DBG_ERR("%s:%d error, wrong index=%d", __func__, __LINE__, index);
+	return;
+    }
+
+    if (index >= EP0_IN_INDEX)
+	offset = (index-EP0_IN_INDEX) * 2 + 1;
+    else
+	offset = index * 2;
+
+    struct EP_QUEUE_HEAD_T *qh_ptr = g_usb_ctrl.qh_ptr + offset;
+    struct EP_DTD_ITEM_T *dtd_ptr = g_usb_ctrl.dtd_ptr +
+					offset * EP_TQ_ITEM_SIZE;
+
+    if ((index == EP0_IN_INDEX) || (index == EP0_OUT_INDEX))
+	max_len = 64;
+    else
+	max_len = MAX_PAKET_LEN;
+
+    qh_ptr->self_buf = (u32)malloc_dma_buffer(&tmp, max_len,
+						USB_MEM_ALIGN_BYTE);
+    if (!qh_ptr->self_buf) {
+	DBG_ERR("malloc ep data buffer error\n");
+	return;
+    }
+    qh_ptr->next_queue_item = 0x1;
+
+    for (i = 0; i < EP_TQ_ITEM_SIZE; i++) {
+	dtd_ptr[i].next_item_ptr = 1;
+	dtd_ptr[i].info  = 0x0;
+    }
+}
+
+int udc_recv_data(u32 index, u8 *buf, u32 recvlen, EP_HANDLER_P cb)
+{
+    u32 offset;
+    struct EP_DTD_ITEM_T *dtd_ptr;
+    struct EP_QUEUE_HEAD_T *qh_ptr;
+    u32 max_pkt_len, i;
+    u32 dtd_cnt = 0;
+    u32 len = recvlen;
+
+    if (index >= EP0_IN_INDEX) {
+	DBG_ERR("IN %d is trying to recv data\n", index);
+	return 0;
+    }
+
+    if (index != EP0_OUT_INDEX)
+	max_pkt_len = MAX_PAKET_LEN;
+    else
+	max_pkt_len = 64;
+
+    if ((len > max_pkt_len) && (!buf)) {
+	DBG_ERR("RecvData, wrong param\n");
+	return 0;
+    }
+
+    offset = index * 2;
+
+    dtd_ptr = g_usb_ctrl.dtd_ptr + offset*EP_TQ_ITEM_SIZE;
+    qh_ptr = g_usb_ctrl.qh_ptr + offset;
+    if (!buf)
+	buf = (u8 *)(qh_ptr->self_buf);
+
+    DBG_INFO("\n\n\n\nRecvData, index=%d, qh_ptr=0x%p, recvlen=0x%x, "
+				"recvbuf=0x%p\n", index, qh_ptr, len, buf);
+    for (i = 0; i < EP_TQ_ITEM_SIZE; i++) {
+	if (dtd_ptr[i].info & 0x80) {
+		DBG_ERR("We got index=%d dtd%u error[0x%08x]\n",
+			index, i, dtd_ptr[i].info);
+	}
+    }
+
+    if (qh_ptr->total_len == 0) {
+	qh_ptr->total_len = recvlen;
+	qh_ptr->deal_buf = buf;
+	qh_ptr->deal_cnt = 0;
+	g_usb_ctrl.handler_ptr[index] = cb;
+    }
+
+    while (dtd_cnt < EP_TQ_ITEM_SIZE) {
+	u32 remain = 0x1000 - (((u32)buf)&0xfff);
+	dtd_ptr[dtd_cnt].page0 = (u32)buf;
+	dtd_ptr[dtd_cnt].page1 = (dtd_ptr[dtd_cnt].page0&0xfffff000) + 0x1000;
+	dtd_ptr[dtd_cnt].page2 = dtd_ptr[dtd_cnt].page1 + 0x1000;
+	dtd_ptr[dtd_cnt].page3 = dtd_ptr[dtd_cnt].page2 + 0x1000;
+	dtd_ptr[dtd_cnt].page4 = dtd_ptr[dtd_cnt].page3 + 0x1000;
+
+	if (len > (remain+16*1024)) { /*we need another dtd*/
+	    len -= (remain+16*1024);
+	    buf += (remain+16*1024);
+	    /*no interrupt here*/
+	    dtd_ptr[dtd_cnt].info = (((remain+16*1024)<<16) | (1<<7));
+	    if (dtd_cnt < (EP_TQ_ITEM_SIZE-1)) { /*we have another dtd*/
+		/*get dtd linked*/
+		dtd_ptr[dtd_cnt].next_item_ptr = (u32)(dtd_ptr+dtd_cnt+1);
+		DBG_INFO("we have another dtd, cnt=%u, remain=0x%x\n",
+							dtd_cnt, remain);
+		dtd_cnt++;
+		continue;
+	    } else { /*there is no more dtd, so we need to recv the dtd chain*/
+		dtd_ptr[dtd_cnt].next_item_ptr = 0x1;  /*dtd terminate*/
+		/*interrupt when transfer done*/
+		dtd_ptr[dtd_cnt].info |= (1<<15);
+		DBG_INFO("we have none dtd, cnt=%u, remain=%u, "
+				"len_left=0x%x\n", dtd_cnt, remain, len);
+		break;
+	    }
+	} else { /*we could recv all data in this dtd*/
+	    /*interrupt when transfer done*/
+	    dtd_ptr[dtd_cnt].info = ((len<<16) | (1<<15) | (1<<7));
+	    dtd_ptr[dtd_cnt].next_item_ptr = 0x1;  /*dtd terminate*/
+	    len = 0;
+	    DBG_INFO("we could done in this dtd, cnt=%u, remain=%u, "
+				"len_left=0x%x\n", dtd_cnt, remain, len);
+	    break;
+	}
+    }
+
+    for (i = dtd_cnt+1; i < EP_TQ_ITEM_SIZE; i++)
+	dtd_ptr[i].info = 0;
+
+    qh_ptr->next_queue_item = (u32)dtd_ptr;
+    qh_ptr->deal_cnt += (recvlen - len);
+    writel(1 << index, USB_ENDPTPRIME);
+    return qh_ptr->deal_cnt;
+}
+
+int udc_send_data(u32 index, u8 *buf, u32 sendlen, EP_HANDLER_P cb)
+{
+    u32 offset;
+    struct EP_DTD_ITEM_T *dtd_ptr;
+    struct EP_QUEUE_HEAD_T *qh_ptr;
+    u32 max_pkt_len, i;
+    u32 dtd_cnt = 0;
+    u32 len = sendlen;
+
+    if (index < EP0_IN_INDEX) {
+	DBG_ERR("OUT %d is trying to send data\n", index);
+	return 0;
+    }
+
+    if (index != EP0_IN_INDEX)
+	max_pkt_len = MAX_PAKET_LEN;
+    else
+	max_pkt_len = 64;
+
+    if ((len > max_pkt_len) && (!buf)) {
+	DBG_ERR("SendData, wrong param\n");
+	return 0;
+    }
+
+    offset = (index - EP0_IN_INDEX) * 2 + 1;
+
+    dtd_ptr = g_usb_ctrl.dtd_ptr + offset*EP_TQ_ITEM_SIZE;
+    qh_ptr = g_usb_ctrl.qh_ptr + offset;
+    if (!buf)
+	buf = (u8 *)(qh_ptr->self_buf);
+
+    DBG_INFO("\n\n\n\nSendData, index=%d, qh_ptr=0x%p, sendlen=0x%x, "
+				"sendbuf=0x%p\n", index, qh_ptr, len, buf);
+    for (i = 0; i < EP_TQ_ITEM_SIZE; i++) {
+	if (dtd_ptr[i].info & 0x80) {
+		DBG_ERR("We got index=%d dtd%u error[0x%08x]\n",
+					index, i, dtd_ptr[i].info);
+	}
+    }
+
+    if (qh_ptr->total_len == 0) {
+	qh_ptr->total_len = sendlen;
+	qh_ptr->deal_buf = buf;
+	qh_ptr->deal_cnt = 0;
+	g_usb_ctrl.handler_ptr[index] = cb;
+    }
+
+    while (dtd_cnt < EP_TQ_ITEM_SIZE) {
+	u32 remain = 0x1000 - (((u32)buf)&0xfff);
+	dtd_ptr[dtd_cnt].page0 = (u32)buf;
+	dtd_ptr[dtd_cnt].page1 = (dtd_ptr[dtd_cnt].page0&0xfffff000) + 0x1000;
+	dtd_ptr[dtd_cnt].page2 = dtd_ptr[dtd_cnt].page1 + 0x1000;
+	dtd_ptr[dtd_cnt].page3 = dtd_ptr[dtd_cnt].page2 + 0x1000;
+	dtd_ptr[dtd_cnt].page4 = dtd_ptr[dtd_cnt].page3 + 0x1000;
+
+	if (len > (remain+16*1024)) { /*we need another dtd*/
+	    len -= (remain+16*1024);
+	    buf += (remain+16*1024);
+	    /*no interrupt here*/
+	    dtd_ptr[dtd_cnt].info = (((remain+16*1024)<<16) | (1<<7));
+	    if (dtd_cnt < (EP_TQ_ITEM_SIZE-1)) { /*we have another dtd*/
+		/*get dtd linked*/
+		dtd_ptr[dtd_cnt].next_item_ptr = (u32)(dtd_ptr+dtd_cnt+1);
+		DBG_INFO("we have another dtd, cnt=%u, remain=0x%x\n",
+				dtd_cnt, remain);
+		dtd_cnt++;
+		continue;
+	    } else { /*there is no more dtd, so we need to recv the dtd chain*/
+		dtd_ptr[dtd_cnt].next_item_ptr = 0x1;  /*dtd terminate*/
+		/*interrupt when transfer done*/
+		dtd_ptr[dtd_cnt].info |= (1<<15);
+		DBG_INFO("we have none dtd, cnt=%u, remain=%u, "
+				"len_left=0x%x\n", dtd_cnt, remain, len);
+		break;
+	    }
+	} else { /* we could recv all data in this dtd */
+	    /*interrupt when transfer done*/
+	    dtd_ptr[dtd_cnt].info = ((len<<16) | (1<<15) | (1<<7));
+	    dtd_ptr[dtd_cnt].next_item_ptr = 0x1;  /*dtd terminate*/
+	    len = 0;
+	    DBG_INFO("we could done in this dtd, cnt=%u, remain=%u, "
+				"len_left=0x%x\n", dtd_cnt, remain, len);
+	    break;
+	}
+    }
+
+    for (i = dtd_cnt+1; i < EP_TQ_ITEM_SIZE; i++)
+	dtd_ptr[i].info = 0;
+
+    qh_ptr->next_queue_item = (u32)dtd_ptr;
+    qh_ptr->deal_cnt += (sendlen - len);
+    writel(1 << index, USB_ENDPTPRIME);
+    return qh_ptr->deal_cnt;
+}
+
+static void udc_get_setup(void *s)
+{
+    u32 temp;
+    temp = readl(USB_ENDPTSETUPSTAT);
+    writel(temp, USB_ENDPTSETUPSTAT);
+    DBG_INFO("setup stat %x\n", temp);
+    do {
+	temp = readl(USB_USBCMD);
+	temp |= USB_CMD_SUTW;
+	writel(temp, USB_USBCMD);
+	memcpy((void *)s, (void *)g_usb_ctrl.qh_ptr[0].setup_data, 8);
+    } while (!(readl(USB_USBCMD) & USB_CMD_SUTW));
+
+    temp = readl(USB_USBCMD);
+    temp &= ~USB_CMD_SUTW;
+    writel(temp, USB_ENDPTSETUPSTAT);
+}
+
+static void ep_out_handler(u32 index)
+{
+    u32 offset = index*2;
+    struct EP_DTD_ITEM_T *dtd_ptr = g_usb_ctrl.dtd_ptr +
+						offset * EP_TQ_ITEM_SIZE;
+    struct EP_QUEUE_HEAD_T *qh_ptr = g_usb_ctrl.qh_ptr + offset;
+
+    u32 i, len = 0;
+
+    for (i = 0; i < EP_TQ_ITEM_SIZE; i++) {
+	len += (dtd_ptr[i].info >> 16 & 0x7fff);
+	dtd_ptr[i].info = 0;
+    }
+
+    DBG_INFO("%s, index=%d, qh_ptr=0x%p\n", __func__, index, qh_ptr);
+    DBG_DEBUG("%s, index=%d, dealbuf=0x%p, len_cnt=0x%x, total_len=0x%x\n",
+	__func__, index, qh_ptr->deal_buf, qh_ptr->deal_cnt, qh_ptr->total_len);
+
+    if (qh_ptr->total_len < qh_ptr->deal_cnt)
+	DBG_ERR("index %d recv error, total=0x%x, cnt=0x%x\n",
+		index, qh_ptr->total_len, qh_ptr->deal_cnt);
+    if (qh_ptr->total_len != qh_ptr->deal_cnt) {
+	u32 nowcnt, precnt = qh_ptr->deal_cnt;
+	nowcnt = udc_recv_data(index, (u8 *)(qh_ptr->deal_buf+qh_ptr->deal_cnt),
+			qh_ptr->total_len - qh_ptr->deal_cnt,
+			g_usb_ctrl.handler_ptr[index]);
+	if (nowcnt > qh_ptr->total_len)
+		DBG_ERR("index %d recv error, total=0x%x, cnt=0x%x\n",
+			index, qh_ptr->total_len, qh_ptr->deal_cnt);
+	else if (nowcnt == qh_ptr->total_len)
+		DBG_ALWS("\rreceive 100%\n");
+	else
+		DBG_ALWS("\rreceive %d%", precnt/(qh_ptr->total_len/100));
+    } else {
+	qh_ptr->total_len = 0;
+	if (g_usb_ctrl.handler_ptr[index]) {
+		g_usb_ctrl.handler_ptr[index](qh_ptr->deal_cnt-len,
+						(u8 *)(qh_ptr->deal_buf));
+	}
+    }
+}
+
+static void ep_in_handler(u32 index)
+{
+    u32 offset = (index-EP0_IN_INDEX) * 2 + 1;
+    struct EP_DTD_ITEM_T *dtd_ptr = g_usb_ctrl.dtd_ptr +
+					offset * EP_TQ_ITEM_SIZE;
+    struct EP_QUEUE_HEAD_T *qh_ptr = g_usb_ctrl.qh_ptr + offset;
+
+    u32 i, len = 0;
+    for (i = 0; i < EP_TQ_ITEM_SIZE; i++) {
+	len += (dtd_ptr[i].info >> 16 & 0x7fff);
+	dtd_ptr[i].info = 0;
+    }
+
+    DBG_INFO("%s, index=%d, qh_ptr=0x%p\n", __func__, index, qh_ptr);
+    DBG_DEBUG("%s, index=%d, dealbuf=0x%p, len_cnt=0x%x, total_len=0x%x\n",
+	__func__, index, qh_ptr->deal_buf, qh_ptr->deal_cnt, qh_ptr->total_len);
+
+    if (qh_ptr->total_len < qh_ptr->deal_cnt)
+	DBG_ERR("index %d send error, total=0x%x, cnt=0x%x\n",
+		index, qh_ptr->total_len, qh_ptr->deal_cnt);
+    if (qh_ptr->total_len != qh_ptr->deal_cnt) {
+	u32 nowcnt, precnt = qh_ptr->deal_cnt;
+	nowcnt = udc_send_data(index, (u8 *)(qh_ptr->deal_buf+qh_ptr->deal_cnt),
+			qh_ptr->total_len - qh_ptr->deal_cnt,
+			g_usb_ctrl.handler_ptr[index]);
+	if (nowcnt > (qh_ptr->total_len))
+		DBG_ERR("index %d recv error, total=0x%x, cnt=0x%x\n",
+			index, qh_ptr->total_len, qh_ptr->deal_cnt);
+	else if (nowcnt == qh_ptr->total_len)
+		DBG_ALWS("\rreceive 100%\n");
+	else
+		DBG_ALWS("\rreceive %d%", precnt/(qh_ptr->total_len/100));
+    } else {
+	qh_ptr->total_len = 0;
+	if (g_usb_ctrl.handler_ptr[index]) {
+		g_usb_ctrl.handler_ptr[index](qh_ptr->deal_cnt-len,
+						(u8 *)(qh_ptr->deal_buf));
+	}
+    }
+}
+
+static void setup_handler(void)
+{
+    u32 setup[2];
+    udc_get_setup(setup);
+    ep0_parse_setup(setup);
+}
+
+int udc_irq_handler(void)
+{
+    u32 irq_src = readl(USB_USBSTS) & readl(USB_USBINTR);
+    writel(irq_src, USB_USBSTS);
+
+    if (!(readl(USB_OTGSC) & OTGSC_B_SESSION_VALID)) {
+	DBG_ALWS("USB disconnect\n");
+	return -1;
+    }
+
+    if (irq_src == 0)
+	return g_usb_ctrl.configed;
+
+    DBG_DEBUG("\nGet USB irq: 0x%x\n", irq_src);
+
+    if (irq_src & USB_STS_INT) {
+	u32 complete, i;
+	if (readl(USB_ENDPTSETUPSTAT)) {
+		DBG_INFO("recv setup packet\n");
+		if (g_usb_ctrl.handler_ptr)
+			setup_handler();
+	}
+
+	complete = readl(USB_ENDPTCOMPLETE);
+	writel(complete, USB_ENDPTCOMPLETE);
+	if (complete) {
+		DBG_INFO("Dtd complete irq, 0x%x\n", complete);
+		for (i = 0;  i < g_usb_ctrl.max_ep; i++) {
+			if (complete & (1<<i))
+				ep_out_handler(i);
+
+			if (complete & (1<<(i+EP0_IN_INDEX)))
+				ep_in_handler(i+EP0_IN_INDEX);
+		}
+	}
+    }
+
+    if (irq_src & USB_STS_RESET) {
+	u32 temp;
+	temp = readl(USB_DEVICEADDR);
+	temp &= ~0xfe000000;
+	writel(temp, USB_DEVICEADDR);
+	writel(readl(USB_ENDPTSETUPSTAT), USB_ENDPTSETUPSTAT);
+	writel(readl(USB_ENDPTCOMPLETE), USB_ENDPTCOMPLETE);
+	while (readl(USB_ENDPTPRIME))
+			;
+	writel(0xffffffff, USB_ENDPTFLUSH);
+	DBG_DEBUG("USB_RESET, PORTSC = 0x%x\n", readl(USB_PORTSC1));
+    }
+
+    if (irq_src & USB_STS_PORT_CHANGE) {
+	u32 speed;
+	while (readl(USB_PORTSC1) & PORTSCX_PORT_RESET)
+		;
+	speed = readl(USB_PORTSC1) & PORTSCX_PORT_SPEED_MASK;
+	DBG_DEBUG("USB port changed, speed = 0x%x\n", speed);
+    }
+
+    if (irq_src & USB_STS_SUSPEND)
+	DBG_DEBUG("USB_SUSPEND\n");
+
+    if (irq_src & USB_STS_ERR)
+	DBG_ERR("USB_ERR\n");
+
+    return g_usb_ctrl.configed;
+}
+
+void udc_set_addr(u8 addr)
+{
+    writel((addr << 25) | (1<<24), USB_DEVICEADDR);
+}
+
+void udc_set_configure(u8 config)
+{
+    g_usb_ctrl.configed = config;
+}
+
+void udc_run(void)
+{
+    unsigned int reg;
+    /* Set controller to Run */
+    reg = readl(USB_USBCMD);
+    reg |= USB_CMD_RUN_STOP;
+    writel(reg, USB_USBCMD);
+}
+
+
+void udc_wait_connect(void)
+{
+	unsigned int reg;
+	do {
+		udelay(50);
+		reg = readl(USB_OTGSC);
+		if (reg & (OTGSC_B_SESSION_VALID))
+			break;
+	} while (1);
+}
+
+
+void udc_hal_data_init(void)
+{
+    u32 size, tmp;
+
+    g_usb_ctrl.max_ep = (readl(USB_DCCPARAMS) & DCCPARAMS_DEN_MASK);
+    udc_set_configure(0);
+    size = g_usb_ctrl.max_ep * 2 * sizeof(struct EP_QUEUE_HEAD_T);
+    if (g_usb_ctrl.qh_ptr == NULL)
+	g_usb_ctrl.qh_ptr = malloc_dma_buffer(&tmp, size, USB_MEM_ALIGN_BYTE);
+    if (g_usb_ctrl.qh_ptr == NULL) {
+	DBG_ERR("malloc ep qh error\n");
+	return;
+    }
+    memset(g_usb_ctrl.qh_ptr, 0, size);
+    writel(((u32)(g_usb_ctrl.qh_ptr)) & 0xfffff800, USB_ENDPOINTLISTADDR);
+
+    size = g_usb_ctrl.max_ep * 2
+		* sizeof(struct EP_DTD_ITEM_T) * EP_TQ_ITEM_SIZE;
+    if (g_usb_ctrl.dtd_ptr == NULL)
+	g_usb_ctrl.dtd_ptr = malloc_dma_buffer(&tmp, size, USB_MEM_ALIGN_BYTE);
+    if (g_usb_ctrl.dtd_ptr == NULL) {
+	DBG_ERR("malloc ep dtd error\n");
+	return;
+    }
+    memset(g_usb_ctrl.dtd_ptr, 0, size);
+
+    size = (EP15_IN_INDEX + 1) * sizeof(EP_HANDLER_P);
+    if (g_usb_ctrl.handler_ptr == NULL)
+	g_usb_ctrl.handler_ptr = malloc_dma_buffer(&tmp, size, 4);
+
+    if (g_usb_ctrl.handler_ptr == NULL) {
+	DBG_ERR("malloc ep dtd error\n");
+	return;
+    }
+    memset(g_usb_ctrl.handler_ptr, 0, size);
+
+    DBG_INFO("USB max ep = %d, qh_addr = 0x%p, dtd_addr = 0x%p\n",
+	g_usb_ctrl.max_ep, g_usb_ctrl.qh_ptr, g_usb_ctrl.dtd_ptr);
+
+    udc_qh_dtd_init(EP0_OUT_INDEX);
+    udc_qh_dtd_init(EP0_IN_INDEX);
+
+    udc_qh_setup(EP0_OUT_INDEX, USB_ENDPOINT_XFER_CONTROL,
+					USB_MAX_CTRL_PAYLOAD, 0, 0);
+    udc_qh_setup(EP0_IN_INDEX, USB_ENDPOINT_XFER_CONTROL,
+					USB_MAX_CTRL_PAYLOAD, 0, 0);
+
+    udc_dtd_setup(EP0_OUT_INDEX, USB_ENDPOINT_XFER_CONTROL);
+    udc_dtd_setup(EP0_IN_INDEX, USB_ENDPOINT_XFER_CONTROL);
+}
+
+#endif  /* CONFIG_FASTBOOT */

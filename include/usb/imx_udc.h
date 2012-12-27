@@ -493,4 +493,57 @@ void enable_usb_phy1_clk(unsigned char enable);
 void enable_usboh3_clk(unsigned char enable);
 void udc_pins_setting(void);
 
+#ifdef CONFIG_FASTBOOT
+
+#define EP0_OUT_INDEX    0
+#define EP0_IN_INDEX    16
+#define EP1_OUT_INDEX    1
+#define EP1_IN_INDEX    17
+#define EP2_OUT_INDEX    2
+#define EP2_IN_INDEX    18
+#define EP3_OUT_INDEX    3
+#define EP3_IN_INDEX    19
+#define EP4_OUT_INDEX    4
+#define EP4_IN_INDEX    20
+#define EP5_OUT_INDEX    5
+#define EP5_IN_INDEX    21
+#define EP6_OUT_INDEX    6
+#define EP6_IN_INDEX    22
+#define EP7_OUT_INDEX    7
+#define EP7_IN_INDEX    23
+#define EP8_OUT_INDEX    8
+#define EP8_IN_INDEX    24
+#define EP9_OUT_INDEX    9
+#define EP9_IN_INDEX    25
+#define EP10_OUT_INDEX  10
+#define EP10_IN_INDEX   26
+#define EP11_OUT_INDEX  11
+#define EP11_IN_INDEX   27
+#define EP12_OUT_INDEX  12
+#define EP12_IN_INDEX   28
+#define EP13_OUT_INDEX  13
+#define EP13_IN_INDEX   29
+#define EP14_OUT_INDEX  14
+#define EP14_IN_INDEX   30
+#define EP15_OUT_INDEX  15
+#define EP15_IN_INDEX   31
+
+#define MAX_PAKET_LEN 512
+typedef void (*EP_HANDLER_P)(u32 index, u8 *buf);
+
+int  udc_irq_handler(void);
+void udc_hal_data_init(void);
+void udc_wait_connect(void);
+void udc_run(void);
+int  udc_recv_data(u32 index, u8 *recvbuf, u32 recvlen, EP_HANDLER_P cb);
+int  udc_send_data(u32 index, u8 *buf, u32 sendlen, EP_HANDLER_P cb);
+void udc_qh_dtd_init(u32 index);
+void udc_dtd_setup(u32 index, u8 ep_type);
+void udc_qh_setup(u32 index, u8 ep_type, u32 max_pkt_len, u32 zlt, u8 mult);
+u8  *udc_get_descriptor(u8 type, u8 *plen);
+void udc_set_addr(u8 addr);
+void udc_set_configure(u8 config);
+
+#endif  /* CONFIG_FASTBOOT */
+
 #endif

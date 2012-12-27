@@ -1609,6 +1609,15 @@ int do_fastboot (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	if (2 == argc) {
 		long try_seconds;
 		char *try_seconds_end;
+
+		if (argv[1][0] == 'q') {
+			if ((argv[1][1] >= '0') && (argv[1][1] <= '2'))
+				fastboot_quick(argv[1][1] - '0');
+			else
+				fastboot_quick(0);
+		}
+
+
 		/* Check for timeout */
 		try_seconds = simple_strtol(argv[1],
 					    &try_seconds_end, 10);
@@ -1758,6 +1767,62 @@ unsigned int fastboot_flash_get_ptn_count(void)
 	return pcount;
 }
 
+int fastboot_write_mmc(u8 *partition_name, u32 write_len)
+{
+    struct fastboot_ptentry *ptn;
 
+    char source[32], dest[32], length[32];
+    char part_no[32], slot_no[32];
+    unsigned int temp;
+
+    memset(source,  0, sizeof(source));
+    memset(dest,    0, sizeof(dest));
+    memset(length,  0, sizeof(length));
+    memset(part_no, 0, sizeof(part_no));
+    memset(slot_no, 0, sizeof(slot_no));
+
+    char *mmc_write[5] = {"mmc", "write", source, dest, length};
+    char *mmc_dev[4] = {"mmc", "dev", slot_no, part_no};
+
+    if (0 == write_len) {
+	DBG_ERR("WriteMMC with 0 lenght\n");
+	return -1;
+    }
+
+    ptn = fastboot_flash_find_ptn((const char *)partition_name);
+    if (!ptn) {
+	DBG_ERR("Partition:'%s' does not exist\n", ptn->name);
+	return -1;
+    }
+    DBG_DEBUG("PTN, name=%s, start=0x%x, leng=0x%x, flags=0x%x, partid=0x%x\n",
+	ptn->name, ptn->start, ptn->length, ptn->flags, ptn->partition_id);
+
+    sprintf(slot_no, "%d", fastboot_devinfo.dev_id);
+    sprintf(part_no, "%d", ptn->partition_id);
+
+    DBG_ALWS("Init MMC%s(%s)...\n", slot_no,  ptn->name);
+    if (do_mmcops(NULL, 0, 4, mmc_dev)) {
+	DBG_ERR("MMC%s(%s) init fail\n", slot_no, ptn->name);
+	return -1;
+    } else {
+	DBG_ALWS("MMC%s(%s) init done\n", slot_no, ptn->name);
+    }
+
+#define MMC_SATA_BLOCK_SIZE 512
+    sprintf(source, "0x%x", CONFIG_FASTBOOT_TRANSFER_BUF);
+    sprintf(dest, "0x%x", ptn->start);
+    temp = (write_len + MMC_SATA_BLOCK_SIZE - 1) / MMC_SATA_BLOCK_SIZE;
+    sprintf(length, "0x%x", temp);
+
+    DBG_ALWS("Writing MMC%s(%s)...", slot_no, ptn->name);
+
+    if (do_mmcops(NULL, 0, 5, mmc_write)) {
+	DBG_ERR("MMC%s(%s) write fail\n", slot_no, ptn->name);
+	return -1;
+    } else {
+	DBG_ALWS("MMC%s(%s) write done\n", slot_no, ptn->name);
+	return write_len;
+    }
+}
 
 #endif	/* CONFIG_FASTBOOT */
