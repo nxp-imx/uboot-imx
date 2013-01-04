@@ -4,7 +4,7 @@
  * Marius Groeger <mgroeger@sysgo.de>
  *
  * Copyright (C) 2001  Erik Mouw (J.A.K.Mouw@its.tudelft.nl)
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -147,10 +147,9 @@ void do_booti_linux (boot_img_hdr *hdr)
 		commandline = (char *)hdr->cmdline;
 
 	/* XXX: in production, you should always use boot.img 's cmdline !!! */
-
-	printf("kernel cmdline: \n\tuse %s command line:\n\t%s \n",
-	       getenv("bootargs") ? "uboot" : "boot.img",
-	       commandline);
+	printf("kernel cmdline: \n");
+	printf("\tuse %s ", getenv("bootargs") ? "uboot" : "boot.img");
+	printf("command line:\n\t%s \n", commandline);
 #endif
 
 	theKernel = (void (*)(int, int, uint))(hdr->kernel_addr);
