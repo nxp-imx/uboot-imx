@@ -863,7 +863,7 @@ static void fastboot_cmd_handler(u32 len, u8 *recvbuf)
 	}
     } else if (memcmp(recvbuf, "flash:", 6) == 0) {
 		if (g_fastboot_datalen ==
-			fastboot_write_mmc(recvbuf+6, g_fastboot_datalen)) {
+			fastboot_write_storage(recvbuf+6, g_fastboot_datalen)) {
 			DBG_ALWS("Fastboot write OK, send OKAY...\n");
 			sprintf((char *)g_fastboot_sendbuf, "OKAY");
 			udc_send_data(g_fastboot_inep_index, g_fastboot_sendbuf,

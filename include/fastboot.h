@@ -334,7 +334,7 @@ void check_fastboot_mode(void);
 
 void fastboot_quick(u8 debug);
 void *fastboot_get_string_table(void);
-int  fastboot_write_mmc(u8 *partition_name, u32 write_len);
+int  fastboot_write_storage(u8 *partition_name, u32 write_len);
 void fastboot_dump_memory(u32 *ptr, u32 lEN);
 void fastboot_get_ep_num(u8 *in, u8 *out);
 extern u8 fastboot_debug_level;

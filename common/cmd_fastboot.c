@@ -574,7 +574,7 @@ static int write_to_ptn(struct fastboot_ptentry *ptn)
 
 					/* download's address only advance
 					   if last write was successful */
-					sprintf(addr, "0x%x",
+					sprintf(addr, "0x%p",
 						interface.transfer_buffer +
 						(i * interface.nand_block_size));
 
@@ -640,7 +640,8 @@ static int write_to_ptn(struct fastboot_ptentry *ptn)
 					/* Check if there is enough space */
 					if (ok_start + download_bytes <=
 					    ptn->start + ptn->length) {
-						sprintf(addr,    "0x%x", interface.transfer_buffer);
+						sprintf(addr,    "0x%p",
+						interface.transfer_buffer);
 						sprintf(wstart,  "0x%x", ok_start);
 						sprintf(wlength, "0x%x", download_bytes);
 
@@ -675,7 +676,7 @@ static int write_to_ptn(struct fastboot_ptentry *ptn)
 			}
 		} else {
 			/* Normal case */
-			sprintf(addr,    "0x%x", interface.transfer_buffer);
+			sprintf(addr,    "0x%p", interface.transfer_buffer);
 			sprintf(wstart,  "0x%x", ptn->start +
 				(repeat * ptn->length));
 			sprintf(wlength, "0x%x", download_bytes);
@@ -1767,35 +1768,84 @@ unsigned int fastboot_flash_get_ptn_count(void)
 	return pcount;
 }
 
-int fastboot_write_mmc(u8 *partition_name, u32 write_len)
+int fastboot_write_storage(u8 *partition_name, u32 write_len)
 {
-    struct fastboot_ptentry *ptn;
+	struct fastboot_ptentry *ptn;
+	u32 storage_len = 0;
 
+	if (0 == write_len) {
+		DBG_ERR("WriteMMC with 0 lenght\n");
+		return -1;
+	}
+
+	ptn = fastboot_flash_find_ptn((const char *)partition_name);
+	if (!ptn) {
+		DBG_ERR("Partition:'%s' does not exist\n", partition_name);
+		return -1;
+	}
+
+	if (ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_ENV) {
+		DBG_ERR("ENV Write, None image partition, failed\n");
+		return -1;
+	}
+
+	DBG_DEBUG("PTN name=%s, start=0x%x, len=0x%x, flags=0x%x, id=0x%x\n",
+	ptn->name, ptn->start, ptn->length, ptn->flags, ptn->partition_id);
+
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
+	storage_len = ptn->length;
+#elif defined(CONFIG_FASTBOOT_STORAGE_EMMC_SATA)
+	storage_len = ptn->length * MMC_SATA_BLOCK_SIZE;
+#endif
+
+	if (write_len > storage_len) {
+		DBG_ERR("Write len big than part volume. 0x%x:0x%x\n",
+						write_len, storage_len);
+		return -1;
+	}
+
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
+	DBG_ALWS("Writing nand %s...", ptn->name);
+	download_bytes_unpadded = download_bytes = write_len;
+	if (interface.nand_block_size) {
+		if (download_bytes %
+		    interface.nand_block_size) {
+			unsigned int pad = interface.nand_block_size -
+				(download_bytes % interface.nand_block_size);
+			unsigned int i;
+
+			for (i = 0; i < pad; i++) {
+				if (download_bytes >=
+					interface.transfer_buffer_size)
+					break;
+
+				interface.transfer_buffer[download_bytes] = 0;
+				download_bytes++;
+			}
+		}
+	}
+
+	if (write_to_ptn(ptn)) {
+		DBG_ERR("Write to nand %s failed\n", ptn->name);
+		return -1;
+	} else {
+		DBG_ALWS("Write to nand %s done\n", ptn->name);
+		return write_len;
+	}
+#elif defined(CONFIG_FASTBOOT_STORAGE_EMMC_SATA)
+{
     char source[32], dest[32], length[32];
     char part_no[32], slot_no[32];
     unsigned int temp;
+
+    char *mmc_write[5] = {"mmc", "write", source, dest, length};
+    char *mmc_dev[4] = {"mmc", "dev", slot_no, part_no};
 
     memset(source,  0, sizeof(source));
     memset(dest,    0, sizeof(dest));
     memset(length,  0, sizeof(length));
     memset(part_no, 0, sizeof(part_no));
     memset(slot_no, 0, sizeof(slot_no));
-
-    char *mmc_write[5] = {"mmc", "write", source, dest, length};
-    char *mmc_dev[4] = {"mmc", "dev", slot_no, part_no};
-
-    if (0 == write_len) {
-	DBG_ERR("WriteMMC with 0 lenght\n");
-	return -1;
-    }
-
-    ptn = fastboot_flash_find_ptn((const char *)partition_name);
-    if (!ptn) {
-	DBG_ERR("Partition:'%s' does not exist\n", ptn->name);
-	return -1;
-    }
-    DBG_DEBUG("PTN, name=%s, start=0x%x, leng=0x%x, flags=0x%x, partid=0x%x\n",
-	ptn->name, ptn->start, ptn->length, ptn->flags, ptn->partition_id);
 
     sprintf(slot_no, "%d", fastboot_devinfo.dev_id);
     sprintf(part_no, "%d", ptn->partition_id);
@@ -1808,13 +1858,12 @@ int fastboot_write_mmc(u8 *partition_name, u32 write_len)
 	DBG_ALWS("MMC%s(%s) init done\n", slot_no, ptn->name);
     }
 
-#define MMC_SATA_BLOCK_SIZE 512
     sprintf(source, "0x%x", CONFIG_FASTBOOT_TRANSFER_BUF);
     sprintf(dest, "0x%x", ptn->start);
     temp = (write_len + MMC_SATA_BLOCK_SIZE - 1) / MMC_SATA_BLOCK_SIZE;
     sprintf(length, "0x%x", temp);
 
-    DBG_ALWS("Writing MMC%s(%s)...", slot_no, ptn->name);
+    DBG_ALWS("Writing MMC%s(%s), %u blocks...", slot_no, ptn->name, temp);
 
     if (do_mmcops(NULL, 0, 5, mmc_write)) {
 	DBG_ERR("MMC%s(%s) write fail\n", slot_no, ptn->name);
@@ -1823,6 +1872,8 @@ int fastboot_write_mmc(u8 *partition_name, u32 write_len)
 	DBG_ALWS("MMC%s(%s) write done\n", slot_no, ptn->name);
 	return write_len;
     }
+}
+#endif
 }
 
 #endif	/* CONFIG_FASTBOOT */
