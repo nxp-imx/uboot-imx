@@ -622,7 +622,7 @@ struct USB_SETUP_T {
     u16 wLength;
 };
 
-void ep0_parse_setup(void *ctrl)
+int ep0_parse_setup(void *ctrl)
 {
     struct USB_SETUP_T *s = (struct USB_SETUP_T *)ctrl;
     DBG_DEBUG("SETUP, type=0x%x, req=0x%x, value=0x%x, index=0x%x, len=0x%x\n",
@@ -644,12 +644,18 @@ void ep0_parse_setup(void *ctrl)
 
 	case USB_DESCRIPTOR_TYPE_STRING:
 	    {
-		struct usb_string_descriptor **string_table;
-		string_table = fastboot_get_string_table();
-		len = string_table[(s->wValue)&0xff]->bLength;
-		len = MIN(s->wLength, len);
-		udc_send_data(EP0_IN_INDEX,
-			(u8 *)string_table[(s->wValue)&0xff], len, NULL);
+		struct usb_string_descriptor *string_descriptor;
+		string_descriptor = usbd_get_string((s->wValue)&0xff);
+		if (!string_descriptor) {
+			DBG_ERR("Invalid string index 0x%x\n",
+						(s->wValue)&0xff);
+			return -1;
+		} else {
+			len = string_descriptor->bLength;
+			len = MIN(s->wLength, len);
+			udc_send_data(EP0_IN_INDEX, (u8 *)string_descriptor,
+								len, NULL);
+		}
 		break;
 	    }
 
@@ -660,7 +666,7 @@ void ep0_parse_setup(void *ctrl)
 	case USB_DESCRIPTOR_TYPE_DEVICE_QUALIFIER:
 	default:
 	    DBG_ERR("not support type=0x%x\n", type);
-	    return;
+	    return -1;
 	}
 	break;
     }
@@ -710,6 +716,7 @@ void ep0_parse_setup(void *ctrl)
 				s->wValue, s->wIndex, s->wLength);
 	break;
     }
+    return 0;
 }
 
 #endif  /* CONFIG_FASTBOOT */

@@ -897,11 +897,6 @@ static struct cmd_fastboot_interface interface = {
     .transfer_buffer_size  = 0,
 };
 
-void *fastboot_get_string_table(void)
-{
-    return fastboot_string_table;
-}
-
 /*
  * fastboot main process, only support 'download', 'flash' command now
  *

@@ -1409,13 +1409,6 @@ static void ep_in_handler(u32 index)
     }
 }
 
-static void setup_handler(void)
-{
-    u32 setup[2];
-    udc_get_setup(setup);
-    ep0_parse_setup(setup);
-}
-
 int udc_irq_handler(void)
 {
     u32 irq_src = readl(USB_USBSTS) & readl(USB_USBINTR);
@@ -1433,11 +1426,6 @@ int udc_irq_handler(void)
 
     if (irq_src & USB_STS_INT) {
 	u32 complete, i;
-	if (readl(USB_ENDPTSETUPSTAT)) {
-		DBG_INFO("recv setup packet\n");
-		if (g_usb_ctrl.handler_ptr)
-			setup_handler();
-	}
 
 	complete = readl(USB_ENDPTCOMPLETE);
 	writel(complete, USB_ENDPTCOMPLETE);
@@ -1450,6 +1438,14 @@ int udc_irq_handler(void)
 			if (complete & (1<<(i+EP0_IN_INDEX)))
 				ep_in_handler(i+EP0_IN_INDEX);
 		}
+	}
+
+	if (readl(USB_ENDPTSETUPSTAT)) {
+		u32 setup[2];
+		DBG_INFO("recv setup packet\n");
+		udc_get_setup(setup);
+		if (ep0_parse_setup(setup) < 0)
+			mxc_ep0_stall();
 	}
     }
 
