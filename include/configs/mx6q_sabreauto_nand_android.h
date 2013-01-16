@@ -30,6 +30,7 @@
 
 #define CONFIG_FASTBOOT		       1
 #define CONFIG_FASTBOOT_STORAGE_NAND
+#define CONFIG_CMD_NAND_LOCK_UNLOCK
 #define CONFIG_FASTBOOT_VENDOR_ID      0x18d1
 #define CONFIG_FASTBOOT_PRODUCT_ID     0x0d02
 #define CONFIG_FASTBOOT_BCD_DEVICE     0x311
@@ -75,5 +76,6 @@
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
 		"fastboot_dev=mmc2\0"					\
+		"fbparts=16m@16m(boot) 128m@32m(recovery) 810m@160m(android_root)\0" \
 		"bootcmd=nand read 0x12800000 0x1000000 0x500000;booti 0x12800000\0"
 #endif
