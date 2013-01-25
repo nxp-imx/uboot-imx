@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -213,17 +213,29 @@ void board_mmu_init(void)
 }
 #endif
 
-#ifdef CONFIG_DWC_AHSATA
-
 #define ANATOP_PLL_LOCK                 0x80000000
 #define ANATOP_PLL_ENABLE_MASK          0x00002000
 #define ANATOP_PLL_BYPASS_MASK          0x00010000
-#define ANATOP_PLL_LOCK                 0x80000000
 #define ANATOP_PLL_PWDN_MASK            0x00001000
 #define ANATOP_PLL_HOLD_RING_OFF_MASK   0x00000800
 #define ANATOP_SATA_CLK_ENABLE_MASK     0x00100000
+#define	PORT_PHY_CTL			        0x178
+#define	PORT_PHY_CTL_PDDQ_LOC		    0x100000
 
-int setup_sata(void)
+/* Note: udelay() is not accurate for i2c timing */
+static void __udelay(int time)
+{
+	int i, j;
+
+	for (i = 0; i < time; i++) {
+		for (j = 0; j < 200; j++) {
+			asm("nop");
+			asm("nop");
+		}
+	}
+}
+
+static int setup_sata(void)
 {
 	u32 reg = 0;
 	s32 timeout = 100000;
@@ -266,10 +278,19 @@ int setup_sata(void)
 	 * */
 	reg |= 0x59124c6;
 	writel(reg, IOMUXC_BASE_ADDR + 0x34);
+    /* FIXME */
+    /*
+     * It needs to wait SATA PHY initialize completed, otherwise write the
+     * PORT_PHY_CTL will fail, then can't enable PDDQ which let PHY entry LPM
+     * Currently set it as 1ms.
+     */
+	__udelay(1000);
+	/* Enable PDDQ mode in default */
+    writel(readl(SATA_ARB_BASE_ADDR + PORT_PHY_CTL) | PORT_PHY_CTL_PDDQ_LOC,
+			SATA_ARB_BASE_ADDR + PORT_PHY_CTL);
 
 	return 0;
 }
-#endif
 
 int dram_init(void)
 {
@@ -404,18 +425,7 @@ static void setup_i2c(unsigned int module_base)
 		break;
 	}
 }
-/* Note: udelay() is not accurate for i2c timing */
-static void __udelay(int time)
-{
-	int i, j;
 
-	for (i = 0; i < time; i++) {
-		for (j = 0; j < 200; j++) {
-			asm("nop");
-			asm("nop");
-		}
-	}
-}
 static void mx6q_i2c_gpio_scl_direction(int bus, int output)
 {
 	u32 reg;
@@ -1193,10 +1203,7 @@ int board_init(void)
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
 	setup_uart();
-
-#ifdef CONFIG_DWC_AHSATA
 	setup_sata();
-#endif
 
 #ifdef CONFIG_VIDEO_MX5
 	/* Enable lvds power */
@@ -1427,6 +1434,8 @@ int checkboard(void)
 		printf("UNKNOWN\n");
 		break;
 	}
+    printf("SATA PDDQ: %s\n", ((readl(SATA_ARB_BASE_ADDR + PORT_PHY_CTL)
+			& PORT_PHY_CTL_PDDQ_LOC)>>20) ? "enabled" : "disabled");
 	return 0;
 }
 
