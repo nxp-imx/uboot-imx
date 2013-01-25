@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -208,23 +208,22 @@ void board_mmu_init(void)
 }
 #endif
 
-#ifdef CONFIG_DWC_AHSATA
 
 #define ANATOP_PLL_LOCK                 0x80000000
 #define ANATOP_PLL_ENABLE_MASK          0x00002000
 #define ANATOP_PLL_BYPASS_MASK          0x00010000
-#define ANATOP_PLL_LOCK                 0x80000000
 #define ANATOP_PLL_PWDN_MASK            0x00001000
 #define ANATOP_PLL_HOLD_RING_OFF_MASK   0x00000800
 #define ANATOP_SATA_CLK_ENABLE_MASK     0x00100000
+#define	PORT_PHY_CTL			        0x178
+#define	PORT_PHY_CTL_PDDQ_LOC		    0x100000
 
+#ifdef CONFIG_DWC_AHSATA
 /* Staggered Spin-up */
 #define	HOST_CAP_SSS			(1 << 27)
 /* host version register*/
 #define	HOST_VERSIONR			0xfc
 #define PORT_SATA_SR			0x128
-#define	PORT_PHY_CTL			0x178
-#define	PORT_PHY_CTL_PDDQ_LOC		0x100000
 
 int sata_initialize(void)
 {
@@ -271,8 +270,9 @@ int sata_initialize(void)
 
 	return __sata_initialize();
 }
+#endif
 
-int setup_sata(void)
+static int setup_sata(void)
 {
 	u32 reg = 0;
 	s32 timeout = 100000;
@@ -315,17 +315,19 @@ int setup_sata(void)
 	 * */
 	reg |= 0x59124c6;
 	writel(reg, IOMUXC_BASE_ADDR + 0x34);
-
-	if (sata_curr_device == -1) {
-		/* Enable PDDQ mode in default if there isn't sata boot */
-		reg = readl(SATA_ARB_BASE_ADDR + PORT_PHY_CTL);
-		writel(reg | PORT_PHY_CTL_PDDQ_LOC,
-				SATA_ARB_BASE_ADDR + PORT_PHY_CTL);
-	}
+    /* FIXME */
+    /*
+     * It needs to wait SATA PHY initialize completed, otherwise write the
+     * PORT_PHY_CTL will fail, then can't enable PDDQ which let PHY entry LPM
+     * Currently set it as 1ms.
+     */
+	udelay(1000);
+	/* Enable PDDQ mode in default */
+    writel(readl(SATA_ARB_BASE_ADDR + PORT_PHY_CTL) | PORT_PHY_CTL_PDDQ_LOC,
+			SATA_ARB_BASE_ADDR + PORT_PHY_CTL);
 
 	return 0;
 }
-#endif
 
 int dram_init(void)
 {
@@ -1032,9 +1034,7 @@ int board_init(void)
 #ifdef CONFIG_CMD_WEIMNOR
 	setup_nor();
 #endif
-#ifdef CONFIG_DWC_AHSATA
 	setup_sata();
-#endif
 
 #ifdef CONFIG_VIDEO_MX5
 	panel_info_init();
@@ -1217,6 +1217,8 @@ int checkboard(void)
 		printf("UNKNOWN\n");
 		break;
 	}
+    printf("SATA PDDQ: %s\n", ((readl(SATA_ARB_BASE_ADDR + PORT_PHY_CTL)
+			& PORT_PHY_CTL_PDDQ_LOC)>>20) ? "enabled" : "disabled");
 	return 0;
 }
 
