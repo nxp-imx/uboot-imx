@@ -1034,7 +1034,8 @@ int board_init(void)
 #ifdef CONFIG_CMD_WEIMNOR
 	setup_nor();
 #endif
-	setup_sata();
+	if (cpu_is_mx6q())
+		setup_sata();
 
 #ifdef CONFIG_VIDEO_MX5
 	panel_info_init();
@@ -1217,7 +1218,9 @@ int checkboard(void)
 		printf("UNKNOWN\n");
 		break;
 	}
-    printf("SATA PDDQ: %s\n", ((readl(SATA_ARB_BASE_ADDR + PORT_PHY_CTL)
+	if (cpu_is_mx6q())
+		printf("SATA PDDQ: %s\n", ((readl(SATA_ARB_BASE_ADDR
+							+ PORT_PHY_CTL)
 			& PORT_PHY_CTL_PDDQ_LOC)>>20) ? "enabled" : "disabled");
 	return 0;
 }

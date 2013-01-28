@@ -1203,7 +1203,8 @@ int board_init(void)
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
 	setup_uart();
-	setup_sata();
+	if (cpu_is_mx6q())
+		setup_sata();
 
 #ifdef CONFIG_VIDEO_MX5
 	/* Enable lvds power */
@@ -1434,7 +1435,9 @@ int checkboard(void)
 		printf("UNKNOWN\n");
 		break;
 	}
-    printf("SATA PDDQ: %s\n", ((readl(SATA_ARB_BASE_ADDR + PORT_PHY_CTL)
+	if (cpu_is_mx6q())
+		printf("SATA PDDQ: %s\n", ((readl(SATA_ARB_BASE_ADDR
+							+ PORT_PHY_CTL)
 			& PORT_PHY_CTL_PDDQ_LOC)>>20) ? "enabled" : "disabled");
 	return 0;
 }

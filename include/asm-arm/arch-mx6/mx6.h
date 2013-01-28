@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2011-2013 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -815,6 +815,7 @@ extern unsigned int get_board_rev(void);
 extern int is_soc_rev(int rev);
 extern enum boot_device get_boot_device(void);
 extern void fsl_set_system_rev(void);
+extern int cpu_is_mx6q(void);
 
 #endif /* __ASSEMBLER__*/
 

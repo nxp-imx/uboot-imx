@@ -1,6 +1,6 @@
 /*
  * Freescale system chip & board version define
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -118,8 +118,20 @@ void fsl_set_system_rev(void)
 	}
 #endif
 }
+
+int cpu_is_mx6q()
+{
+	if (fsl_system_rev != NULL)
+		fsl_set_system_rev();
+	return (((fsl_system_rev & 0xff000)>>12) == 0x63);
+}
 #else
 void fsl_set_system_rev(void)
 {
+}
+
+int cpu_is_mx6q()
+{
+	return 0;
 }
 #endif
