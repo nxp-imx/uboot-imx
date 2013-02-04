@@ -624,19 +624,6 @@ struct fsl_esdhc_cfg usdhc_cfg[4] = {
 	{USDHC4_BASE_ADDR, 1, 1, 1, 0},
 };
 
-#ifdef CONFIG_DYNAMIC_MMC_DEVNO
-int get_mmc_env_devno(void)
-{
-	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
-
-	if (SD_BOOT == boot_dev || MMC_BOOT == boot_dev) {
-		/* BOOT_CFG2[3] and BOOT_CFG2[4] */
-		return (soc_sbmr & 0x00001800) >> 11;
-	} else
-		return -1;
-
-}
-#endif
 #ifdef CONFIG_CMD_WEIMNOR
 
 #if defined CONFIG_MX6Q

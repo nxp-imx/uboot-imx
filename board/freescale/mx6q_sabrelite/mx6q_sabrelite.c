@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2011-2013 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -317,16 +317,6 @@ struct fsl_esdhc_cfg usdhc_cfg[2] = {
 	{USDHC3_BASE_ADDR, 1, 1, 1},
 	{USDHC4_BASE_ADDR, 1, 1, 1},
 };
-
-#ifdef CONFIG_DYNAMIC_MMC_DEVNO
-int get_mmc_env_devno(void)
-{
-	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
-
-	/* BOOT_CFG2[3] and BOOT_CFG2[4] */
-	return (soc_sbmr & 0x00001800) >> 11;
-}
-#endif
 
 iomux_v3_cfg_t mx6q_usdhc1_pads[] = {
 	MX6Q_PAD_SD1_CLK__USDHC1_CLK,
