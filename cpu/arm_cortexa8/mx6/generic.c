@@ -1470,3 +1470,13 @@ void get_board_serial(struct tag_serialnr *serialnr)
 	imx_otp_read_one_u32(CPU_UID_HIGH_FUSE_INDEX, &serialnr->high);
 }
 #endif
+
+#ifdef CONFIG_DYNAMIC_MMC_DEVNO
+int get_mmc_env_devno(void)
+{
+	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+
+	/* BOOT_CFG2[3] and BOOT_CFG2[4] */
+	return (soc_sbmr & 0x00001800) >> 11;
+}
+#endif
