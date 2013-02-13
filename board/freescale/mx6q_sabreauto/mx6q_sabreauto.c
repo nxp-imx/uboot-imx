@@ -723,10 +723,10 @@ iomux_v3_cfg_t nor_pads[] = {
 static void weim_norflash_cs_setup(void)
 {
     writel(0x00000120, WEIM_BASE_ADDR + 0x090);
-    writel(0x00620181, WEIM_BASE_ADDR + 0x000);
+    writel(0x00020181, WEIM_BASE_ADDR + 0x000);
     writel(0x00000001, WEIM_BASE_ADDR + 0x004);
-    writel(0x0f020000, WEIM_BASE_ADDR + 0x008);
-    writel(0x0000b000, WEIM_BASE_ADDR + 0x00c);
+    writel(0x0a020000, WEIM_BASE_ADDR + 0x008);
+    writel(0x0000c000, WEIM_BASE_ADDR + 0x00c);
     writel(0x0804a240, WEIM_BASE_ADDR + 0x010);
 }
 
