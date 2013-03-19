@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -877,6 +877,14 @@ static void fastboot_cmd_handler(u32 len, u8 *recvbuf)
 		}
 		g_fastboot_datalen = 0;
 		fastboot_status = FASTBOOT_STS_CMD;
+    } else if (memcmp(recvbuf, "reboot", 6) == 0) {
+			sprintf((char *)g_fastboot_sendbuf, "OKAY");
+			udc_send_data(g_fastboot_inep_index, g_fastboot_sendbuf,
+								4, NULL);
+			udelay(100000); /* 1 sec */
+
+			do_reset(NULL, 0, 0, NULL);
+
     } else {
 		DBG_ERR("Not support command:%s\n", recvbuf);
 		sprintf((char *)g_fastboot_sendbuf, "FAIL");
@@ -898,7 +906,7 @@ static struct cmd_fastboot_interface interface = {
 };
 
 /*
- * fastboot main process, only support 'download', 'flash' command now
+ * fastboot main process, only support 'download', 'flash' 'reboot' command now
  *
  * @debug  control debug level, support three level now,
  *	   0(normal), 1(debug), 2(info), default is 0
