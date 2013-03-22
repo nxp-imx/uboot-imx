@@ -64,7 +64,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static u32 system_rev;
 static enum boot_device boot_dev;
 
 #define USB_OTG_PWR IMX_GPIO_NR(4, 0)
@@ -112,10 +111,13 @@ enum boot_device get_boot_device(void)
 
 u32 get_board_rev(void)
 {
-
-	system_rev = 0x60000 | BOARD_REV_3; /* means revB: EVK */
-
-	return system_rev;
+	/*
+	 * If no fuse burned for board version (i.e., 0x0),
+	 * then assume latest one - RevC
+	 */
+	if ((fsl_system_rev & BOARD_REV_MASK) == BOARD_REV_1)
+		fsl_system_rev |= BOARD_REV_4;
+	return fsl_system_rev;
 }
 
 int dram_init(void)
@@ -1033,6 +1035,7 @@ int board_init(void)
 
 	mxc_iomux_v3_init((void *)IOMUXC_BASE_ADDR);
 	setup_boot_device();
+	fsl_set_system_rev();
 
 	/* board id for linux */
 	gd->bd->bi_arch_number = MACH_TYPE_MX6SL_EVK;
@@ -1069,7 +1072,7 @@ int board_late_init(void)
 
 int checkboard(void)
 {
-	printf("Board: MX6SoloLite-EVK:[ ");
+	printf("Board: MX6SoloLite-EVK (0x%x): [ ", fsl_system_rev);
 
 	switch (__REG(SRC_BASE_ADDR + 0x8)) {
 	case 0x0001:

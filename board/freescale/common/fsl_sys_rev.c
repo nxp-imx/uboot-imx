@@ -20,7 +20,7 @@
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
-#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL) || defined(CONFIG_MX6SL)
 #include <asm/arch/mx6.h>
 #endif
 
@@ -30,7 +30,7 @@
 
 unsigned int fsl_system_rev;
 
-#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL)
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL) || defined(CONFIG_MX6SL)
 /*
  * Set fsl_system_rev:
  * bit 0-7: Chip Revision ID
@@ -68,8 +68,14 @@ void fsl_set_system_rev(void)
 	 * | 31 - 20 | 19 - 12 | 11 - 8 | 7 - 0 |
 	 * | resverd | CHIP ID | BD REV | SI REV |
 	 */
-	u32 cpu_type = readl(ANATOP_BASE_ADDR + 0x260);
 	u32 board_type = 0;
+	u32 cpu_type = readl(ANATOP_BASE_ADDR + 0x280);
+
+	if ((cpu_type >> 16) == 0x60)
+		goto found;
+
+	cpu_type = readl(ANATOP_BASE_ADDR + 0x260);
+found:
 	/* Chip Silicon ID */
 	fsl_system_rev = ((cpu_type >> 16) & 0xFF) << 12;
 	/* Chip silicon major revision */
