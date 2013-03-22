@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -108,6 +108,9 @@ enum pll_clocks {
 #define TEMPERATURE_HOT			80
 #define TEMPERATURE_MAX			125
 #define REG_VALUE_TO_CEL(ratio, raw) ((raw_n40c - raw) * 100 / ratio - 40)
+#define FACTOR1	15976
+#define FACTOR2	4297157
+
 static int cpu_tmp;
 static unsigned int fuse;
 
@@ -872,7 +875,7 @@ static inline int read_cpu_temperature(void)
 			MXC_CCM_CCGR2);
 	fuse = readl(OCOTP_BASE_ADDR + OCOTP_THERMAL_OFFSET);
 	writel(ccm_ccgr2, MXC_CCM_CCGR2);
-	if (fuse == 0 || fuse == 0xffffffff)
+	if (fuse == 0 || fuse == 0xffffffff || (fuse & 0xfff00000) == 0)
 		return TEMPERATURE_MIN;
 
 	/* Fuse data layout:
@@ -883,7 +886,25 @@ static inline int read_cpu_temperature(void)
 	raw_hot = (fuse & 0xfff00) >> 8;
 	hot_temp = fuse & 0xff;
 
+	/*
+	 * Only when it is i.MX6Q and high temperature calibration
+	 * data not used, we use universal equation to get thermal
+	 * sensor's ratio.
+	 */
+#if (defined(CONFIG_MX6Q) && !defined(USE_CALIBRATION))
+	/*
+	 * The universal equation for thermal sensor
+	 * is slope = 0.4297157 - (0.0015976 * 25C fuse),
+	 * here we convert them to integer to make them
+	 * easy for counting, FACTOR1 is 15976,
+	 * FACTOR2 is 4297157. Our ratio = -100 * slope.
+	 */
+	ratio = ((FACTOR1 * raw_25c - FACTOR2) + 50000) / 100000;
+#else
 	ratio = ((raw_25c - raw_hot) * 100) / (hot_temp - 25);
+#endif
+
+	printf("Thermal sensor with ratio = %d\n", ratio);
 	raw_n40c = raw_25c + (13 * ratio) / 20;
 
 	/* now we only using single measure, every time we measure
