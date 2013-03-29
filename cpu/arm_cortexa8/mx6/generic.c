@@ -896,7 +896,7 @@ static inline int read_cpu_temperature(void)
 	 * data not used, we use universal equation to get thermal
 	 * sensor's ratio.
 	 */
-#if (defined(CONFIG_MX6Q) && !defined(USE_CALIBRATION))
+#if (!defined(CONFIG_MX6SL) && !defined(USE_CALIBRATION))
 	/*
 	 * The universal equation for thermal sensor
 	 * is slope = 0.4297157 - (0.0015976 * 25C fuse),
