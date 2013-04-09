@@ -38,6 +38,10 @@
 #define DTCP_ARB_BASE_ADDR              0x00138000
 #define DTCP_ARB_END_ADDR               0x0013BFFF
 
+#define MXS_APBH_BASE			APBH_DMA_ARB_BASE_ADDR
+#define MXS_GPMI_BASE			(APBH_DMA_ARB_BASE_ADDR + 0x02000)
+#define MXS_BCH_BASE			(APBH_DMA_ARB_BASE_ADDR + 0x04000)
+
 /* GPV - PL301 configuration ports */
 #define GPV2_BASE_ADDR			0x00200000
 #define GPV3_BASE_ADDR			0x00300000
