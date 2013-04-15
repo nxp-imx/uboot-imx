@@ -892,11 +892,11 @@ static inline int read_cpu_temperature(void)
 	hot_temp = fuse & 0xff;
 
 	/*
-	 * Only when it is i.MX6Q and high temperature calibration
+	 * Only when high temperature calibration
 	 * data not used, we use universal equation to get thermal
 	 * sensor's ratio.
 	 */
-#if (!defined(CONFIG_MX6SL) && !defined(USE_CALIBRATION))
+#ifndef USE_CALIBRATION
 	/*
 	 * The universal equation for thermal sensor
 	 * is slope = 0.4297157 - (0.0015976 * 25C fuse),
