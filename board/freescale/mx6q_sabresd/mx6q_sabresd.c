@@ -238,8 +238,6 @@ void board_mmu_init(void)
 #define ANATOP_PLL_PWDN_MASK            0x00001000
 #define ANATOP_PLL_HOLD_RING_OFF_MASK   0x00000800
 #define ANATOP_SATA_CLK_ENABLE_MASK     0x00100000
-#define	PORT_PHY_CTL			        0x178
-#define	PORT_PHY_CTL_PDDQ_LOC		    0x100000
 
 #ifdef CONFIG_DWC_AHSATA
 /* Staggered Spin-up */
@@ -254,11 +252,6 @@ int sata_initialize(void)
 	u32 iterations = 1000000;
 
 	if (sata_curr_device == -1) {
-		/* Make sure that the PDDQ mode is disabled. */
-		reg = readl(SATA_ARB_BASE_ADDR + PORT_PHY_CTL);
-		writel(reg & (~PORT_PHY_CTL_PDDQ_LOC),
-				SATA_ARB_BASE_ADDR + PORT_PHY_CTL);
-
 		/* Reset HBA */
 		writel(HOST_RESET, SATA_ARB_BASE_ADDR + HOST_CTL);
 
@@ -351,17 +344,6 @@ static int setup_sata(void)
 	 * */
 	reg |= 0x59124c6;
 	writel(reg, IOMUXC_BASE_ADDR + 0x34);
-
-    /* FIXME */
-    /*
-     * It needs to wait SATA PHY initialize completed, otherwise write the
-     * PORT_PHY_CTL will fail, then can't enable PDDQ which let PHY entry LPM
-     * Currently set it as 1ms.
-     */
-	__udelay(1000);
-	/* Enable PDDQ mode in default */
-    writel(readl(SATA_ARB_BASE_ADDR + PORT_PHY_CTL) | PORT_PHY_CTL_PDDQ_LOC,
-			SATA_ARB_BASE_ADDR + PORT_PHY_CTL);
 
 	return 0;
 }
@@ -1982,10 +1964,6 @@ int checkboard(void)
 		break;
 	}
 
-	if (cpu_is_mx6q())
-		printf("SATA PDDQ: %s\n", ((readl(SATA_ARB_BASE_ADDR
-							+ PORT_PHY_CTL)
-			& PORT_PHY_CTL_PDDQ_LOC)>>20) ? "enabled" : "disabled");
 #ifdef CONFIG_SECURE_BOOT
 	if (check_hab_enable() == 1)
 		get_hab_status();
