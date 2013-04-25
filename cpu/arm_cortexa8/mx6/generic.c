@@ -1036,6 +1036,9 @@ int arch_cpu_init(void)
 {
 	int val;
 
+	/* Clear MMDC channel mask */
+	writel(0, CCM_BASE_ADDR + 0x4);
+
 	/* Due to hardware limitation, on MX6Q we need to gate/ungate all PFDs
 	 * to make sure PFD is working right, otherwise, PFDs may
 	 * not output clock after reset, MX6DL and MX6SL have added 396M pfd
