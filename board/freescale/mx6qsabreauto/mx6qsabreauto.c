@@ -23,7 +23,7 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/iomux.h>
-#include <asm/arch/mx6q_pins.h>
+#include <asm/arch/mx6-pins.h>
 #include <asm/errno.h>
 #include <asm/gpio.h>
 #include <asm/imx-common/iomux-v3.h>
@@ -250,7 +250,7 @@ int checkboard(void)
 		break;
 	}
 
-	printf("Board: MX6Q-Sabreauto rev%s\n", revname);
+	printf("Board: MX6Q/SDL-Sabreauto rev%s\n", revname);
 
 	return 0;
 }
