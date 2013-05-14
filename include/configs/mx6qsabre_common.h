@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6Q SabreSD board.
  *
@@ -18,7 +18,6 @@
 #define __MX6QSABRE_COMMON_CONFIG_H
 
 #define CONFIG_MX6
-#define CONFIG_MX6Q
 
 #include "mx6_common.h"
 

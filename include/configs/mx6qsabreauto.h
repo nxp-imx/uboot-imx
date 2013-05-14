@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6Q SabreAuto board.
  *
@@ -15,9 +15,7 @@
 #define CONFIG_MACH_TYPE	3529
 #define CONFIG_MXC_UART_BASE	UART4_BASE
 #define CONFIG_CONSOLE_DEV		"ttymxc3"
-#define CONFIG_DEFAULT_FDT_FILE	"imx6q-sabreauto.dtb"
 #define CONFIG_MMCROOT			"/dev/mmcblk0p2"
-#define PHYS_SDRAM_SIZE		(2u * 1024 * 1024 * 1024)
 
 /* USB Configs */
 #define CONFIG_CMD_USB
