@@ -47,6 +47,10 @@ DECLARE_GLOBAL_DATA_PTR;
 	PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED   |		\
 	PAD_CTL_DSE_40ohm   | PAD_CTL_HYS)
 
+#define SPI_PAD_CTRL (PAD_CTL_HYS |				\
+	PAD_CTL_SPEED_MED |		\
+	PAD_CTL_DSE_40ohm | PAD_CTL_SRE_FAST)
+
 int dram_init(void)
 {
 	gd->ram_size = ((ulong)CONFIG_DDR_MB * 1024 * 1024);
@@ -88,6 +92,22 @@ static void setup_iomux_enet(void)
 	udelay(500);
 	gpio_set_value(IMX_GPIO_NR(1, 25), 1);
 }
+
+#ifdef CONFIG_SYS_USE_SPINOR
+iomux_v3_cfg_t const ecspi1_pads[] = {
+	MX6_PAD_KEY_COL0__ECSPI1_SCLK | MUX_PAD_CTRL(SPI_PAD_CTRL),
+	MX6_PAD_KEY_COL1__ECSPI1_MISO | MUX_PAD_CTRL(SPI_PAD_CTRL),
+	MX6_PAD_KEY_ROW0__ECSPI1_MOSI | MUX_PAD_CTRL(SPI_PAD_CTRL),
+	MX6_PAD_KEY_ROW1__GPIO_4_9    | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+void setup_spinor(void)
+{
+	imx_iomux_v3_setup_multiple_pads(ecspi1_pads,
+					 ARRAY_SIZE(ecspi1_pads));
+	gpio_direction_output(IMX_GPIO_NR(4, 9), 0);
+}
+#endif
 
 iomux_v3_cfg_t const usdhc2_pads[] = {
 	MX6_PAD_SD2_CLK__USDHC2_CLK	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
@@ -267,6 +287,9 @@ int board_init(void)
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
+#ifdef CONFIG_SYS_USE_SPINOR
+	setup_spinor();
+#endif
 	return 0;
 }
 

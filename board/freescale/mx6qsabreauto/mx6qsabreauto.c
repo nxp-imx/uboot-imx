@@ -48,6 +48,10 @@ DECLARE_GLOBAL_DATA_PTR;
 	PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED   |		\
 	PAD_CTL_DSE_40ohm   | PAD_CTL_HYS)
 
+#define SPI_PAD_CTRL (PAD_CTL_HYS |				\
+	PAD_CTL_PUS_100K_DOWN | PAD_CTL_SPEED_MED |		\
+	PAD_CTL_DSE_40ohm     | PAD_CTL_SRE_FAST)
+
 int dram_init(void)
 {
 	gd->ram_size = ((ulong)CONFIG_DDR_MB * 1024 * 1024);
@@ -120,6 +124,25 @@ int board_mmc_init(bd_t *bis)
 
 	usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 	return fsl_esdhc_initialize(bis, &usdhc_cfg[0]);
+}
+#endif
+
+#ifdef CONFIG_SYS_USE_SPINOR
+iomux_v3_cfg_t const ecspi1_pads[] = {
+	MX6_PAD_EIM_D16__ECSPI1_SCLK | MUX_PAD_CTRL(SPI_PAD_CTRL),
+	MX6_PAD_EIM_D17__ECSPI1_MISO | MUX_PAD_CTRL(SPI_PAD_CTRL),
+	MX6_PAD_EIM_D18__ECSPI1_MOSI | MUX_PAD_CTRL(SPI_PAD_CTRL),
+	MX6_PAD_EIM_D19__GPIO_3_19   | MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* Steer logic */
+	MX6_PAD_EIM_A24__GPIO_5_4    | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+void setup_spinor(void)
+{
+	imx_iomux_v3_setup_multiple_pads(ecspi1_pads,
+					 ARRAY_SIZE(ecspi1_pads));
+	gpio_direction_output(IMX_GPIO_NR(5, 4), 0);
+	gpio_direction_output(IMX_GPIO_NR(3, 19), 0);
 }
 #endif
 
@@ -207,6 +230,9 @@ int board_early_init_f(void)
 {
 	setup_iomux_uart();
 
+#ifdef CONFIG_SYS_USE_SPINOR
+	setup_spinor();
+#endif
 	return 0;
 }
 
