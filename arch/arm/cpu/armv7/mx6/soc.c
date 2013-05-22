@@ -27,6 +27,7 @@
 #include <asm/errno.h>
 #include <asm/io.h>
 #include <asm/arch/imx-regs.h>
+#include <asm/arch/crm_regs.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/imx-common/boot_mode.h>
@@ -40,6 +41,18 @@ struct scu_regs {
 	u32	invalidate;
 	u32	fpga_rev;
 };
+
+#define TEMPERATURE_MIN		-40
+#define TEMPERATURE_HOT		80
+#define TEMPERATURE_MAX		125
+#define FACTOR1			15976
+#define FACTOR2			4297157
+#define MEASURE_FREQ		327
+
+#define REG_VALUE_TO_CEL(ratio, raw) \
+	((raw_n40c - raw) * 100 / ratio - 40)
+
+static unsigned int fuse = ~0;
 
 u32 get_cpu_rev(void)
 {
@@ -153,10 +166,132 @@ static void imx_set_wdog_powerdown(bool enable)
 	writew(enable, &wdog2->wmcr);
 }
 
+static int read_cpu_temperature(void)
+{
+	int temperature;
+	unsigned int ccm_ccgr2;
+	unsigned int reg, tmp;
+	unsigned int raw_25c, raw_n40c, ratio;
+	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
+	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+	struct iim_regs *iim = (struct iim_regs *)IMX_IIM_BASE;
+	struct fuse_bank *bank = &iim->bank[1];
+	struct fuse_bank1_regs *fuse_bank1 =
+			(struct fuse_bank1_regs *)bank->fuse_regs;
+
+	/* need to make sure pll3 is enabled for thermal sensor */
+	if ((readl(&anatop->usb1_pll_480_ctrl) &
+			BM_ANADIG_USB1_PLL_480_CTRL_LOCK) == 0) {
+		/* enable pll's power */
+		writel(BM_ANADIG_USB1_PLL_480_CTRL_POWER,
+				&anatop->usb1_pll_480_ctrl_set);
+		writel(0x80, &anatop->ana_misc2_clr);
+		/* wait for pll lock */
+		while ((readl(&anatop->usb1_pll_480_ctrl) &
+			BM_ANADIG_USB1_PLL_480_CTRL_LOCK) == 0)
+			;
+		/* disable bypass */
+		writel(BM_ANADIG_USB1_PLL_480_CTRL_BYPASS,
+				&anatop->usb1_pll_480_ctrl_clr);
+		/* enable pll output */
+		writel(BM_ANADIG_USB1_PLL_480_CTRL_ENABLE,
+				&anatop->usb1_pll_480_ctrl_set);
+	}
+
+	ccm_ccgr2 = readl(&mxc_ccm->CCGR2);
+	/* enable OCOTP_CTRL clock in CCGR2 */
+	writel(ccm_ccgr2 | MXC_CCM_CCGR2_OCOTP_CTRL_MASK, &mxc_ccm->CCGR2);
+	fuse = readl(&fuse_bank1->ana1);
+
+	/* restore CCGR2 */
+	writel(ccm_ccgr2, &mxc_ccm->CCGR2);
+
+	if (fuse == 0 || fuse == 0xffffffff || (fuse & 0xfff00000) == 0)
+		return TEMPERATURE_MIN;
+
+	/*
+	 * fuse data layout:
+	 * [31:20] sensor value @ 25C
+	 * [19:8] sensor value of hot
+	 * [7:0] hot temperature value
+	 */
+	raw_25c = fuse >> 20;
+
+	/*
+	 * The universal equation for thermal sensor
+	 * is slope = 0.4297157 - (0.0015976 * 25C fuse),
+	 * here we convert them to integer to make them
+	 * easy for counting, FACTOR1 is 15976,
+	 * FACTOR2 is 4297157. Our ratio = -100 * slope
+	 */
+	ratio = ((FACTOR1 * raw_25c - FACTOR2) + 50000) / 100000;
+
+	debug("Thermal sensor with ratio = %d\n", ratio);
+
+	raw_n40c = raw_25c + (13 * ratio) / 20;
+
+	/*
+	 * now we only use single measure, every time we read
+	 * the temperature, we will power on/down anadig thermal
+	 * module
+	 */
+	writel(BM_ANADIG_TEMPSENSE0_POWER_DOWN, &anatop->tempsense0_clr);
+	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF, &anatop->ana_misc0_set);
+
+	/* write measure freq */
+	reg = readl(&anatop->tempsense1);
+	reg &= ~BM_ANADIG_TEMPSENSE1_MEASURE_FREQ;
+	reg |= MEASURE_FREQ;
+	writel(reg, &anatop->tempsense1);
+
+	writel(BM_ANADIG_TEMPSENSE0_MEASURE_TEMP, &anatop->tempsense0_clr);
+	writel(BM_ANADIG_TEMPSENSE0_FINISHED, &anatop->tempsense0_clr);
+	writel(BM_ANADIG_TEMPSENSE0_MEASURE_TEMP, &anatop->tempsense0_set);
+
+	while ((readl(&anatop->tempsense0) &
+			BM_ANADIG_TEMPSENSE0_FINISHED) == 0)
+		udelay(10000);
+
+	reg = readl(&anatop->tempsense0);
+	tmp = (reg & BM_ANADIG_TEMPSENSE0_TEMP_VALUE)
+		>> BP_ANADIG_TEMPSENSE0_TEMP_VALUE;
+	writel(BM_ANADIG_TEMPSENSE0_FINISHED, &anatop->tempsense0_clr);
+
+	if (tmp <= raw_n40c)
+		temperature = REG_VALUE_TO_CEL(ratio, tmp);
+	else
+		temperature = TEMPERATURE_MIN;
+	/* power down anatop thermal sensor */
+	writel(BM_ANADIG_TEMPSENSE0_POWER_DOWN, &anatop->tempsense0_set);
+	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF, &anatop->ana_misc0_clr);
+
+	return temperature;
+}
+
+void check_cpu_temperature(void)
+{
+	int cpu_tmp = 0;
+
+	cpu_tmp = read_cpu_temperature();
+	while (cpu_tmp > TEMPERATURE_MIN && cpu_tmp < TEMPERATURE_MAX) {
+		if (cpu_tmp >= TEMPERATURE_HOT) {
+			printf("CPU is %d C, too hot to boot, waiting...\n",
+				cpu_tmp);
+			udelay(5000000);
+			cpu_tmp = read_cpu_temperature();
+		} else
+			break;
+	}
+	if (cpu_tmp > TEMPERATURE_MIN && cpu_tmp < TEMPERATURE_MAX)
+		printf("CPU:   Temperature %d C, calibration data: 0x%x\n",
+			cpu_tmp, fuse);
+	else
+		printf("CPU:   Temperature: can't get valid data!\n");
+}
+
 int arch_cpu_init(void)
 {
 	init_aips();
-
 	set_vddsoc(1200);	/* Set VDDSOC to 1.2V */
 
 	imx_set_wdog_powerdown(false); /* Disable PDE bit of WMCR register */

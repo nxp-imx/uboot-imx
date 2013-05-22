@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2011-2013 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -407,6 +407,12 @@ struct iim_regs {
 	} bank[15];
 };
 
+struct fuse_bank1_regs {
+	u32     mem[0x18];
+	u32	ana1;
+	u32     ana2;
+};
+
 struct fuse_bank4_regs {
 	u32	sjc_resp_low;
 	u32     rsvd0[3];
@@ -613,6 +619,8 @@ struct wdog_regs {
 	u16	wicr;	/* Interrupt Control */
 	u16	wmcr;	/* Miscellaneous Control */
 };
+
+extern void check_cpu_temperature(void);
 
 #endif /* __ASSEMBLER__*/
 #endif /* __ASM_ARCH_MX6_IMX_REGS_H__ */
