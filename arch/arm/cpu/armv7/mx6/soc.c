@@ -2,7 +2,7 @@
  * (C) Copyright 2007
  * Sascha Hauer, Pengutronix
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2013 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -133,6 +133,14 @@ void set_vddsoc(u32 mv)
 	 */
 	reg = (reg & ~(0x1F << 18)) | (val << 18);
 	writel(reg, &anatop->reg_core);
+
+	/* ROM may modify LDO ramp up time according to fuse setting for safe,
+	 * we need to reset these settings to match the reset value: 0'b00
+	 */
+	reg = readl(&anatop->ana_misc2);
+	reg &= ~(0x3f << 24);
+	writel(reg, &anatop->ana_misc2);
+
 }
 
 static void imx_set_wdog_powerdown(bool enable)
