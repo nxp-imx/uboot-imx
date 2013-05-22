@@ -202,8 +202,6 @@
 
 #define CONFIG_ENV_SIZE			(8 * 1024)
 
-#define CONFIG_SYS_USE_NAND
-
 #ifndef CONFIG_SYS_NOSMP
 #define CONFIG_SYS_NOSMP
 #endif
