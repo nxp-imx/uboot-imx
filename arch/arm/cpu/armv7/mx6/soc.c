@@ -289,12 +289,50 @@ void check_cpu_temperature(void)
 		printf("CPU:   Temperature: can't get valid data!\n");
 }
 
+static void imx_reset_pfd(void)
+{
+	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
+
+	/*
+	 * Per the IC design, we need to gate/ungate all the unused PFDs
+	 * to make sure PFD is working correctly, otherwise, PFDs may not
+	 * not output clock after reset.
+	 */
+
+	writel(BM_ANADIG_PFD_480_PFD3_CLKGATE  |
+		BM_ANADIG_PFD_480_PFD2_CLKGATE |
+		BM_ANADIG_PFD_480_PFD1_CLKGATE |
+		BM_ANADIG_PFD_480_PFD0_CLKGATE, &anatop->pfd_480_set);
+#ifdef CONFIG_MX6Q
+	writel(BM_ANADIG_PFD_528_PFD2_CLKGATE  |
+		BM_ANADIG_PFD_528_PFD1_CLKGATE |
+		BM_ANADIG_PFD_528_PFD0_CLKGATE, &anatop->pfd_528_set);
+#else
+	writel(BM_ANADIG_PFD_528_PFD1_CLKGATE  |
+		BM_ANADIG_PFD_528_PFD0_CLKGATE, &anatop->pfd_528_set);
+#endif
+	writel(BM_ANADIG_PFD_480_PFD3_CLKGATE  |
+		BM_ANADIG_PFD_480_PFD2_CLKGATE |
+		BM_ANADIG_PFD_480_PFD1_CLKGATE |
+		BM_ANADIG_PFD_480_PFD0_CLKGATE, &anatop->pfd_480_clr);
+#ifdef CONFIG_MX6Q
+	writel(BM_ANADIG_PFD_528_PFD2_CLKGATE  |
+		BM_ANADIG_PFD_528_PFD1_CLKGATE |
+		BM_ANADIG_PFD_528_PFD0_CLKGATE, &anatop->pfd_528_clr);
+#else
+	writel(BM_ANADIG_PFD_528_PFD1_CLKGATE  |
+		BM_ANADIG_PFD_528_PFD0_CLKGATE, &anatop->pfd_528_clr);
+#endif
+}
+
 int arch_cpu_init(void)
 {
 	init_aips();
 	set_vddsoc(1200);	/* Set VDDSOC to 1.2V */
 
 	imx_set_wdog_powerdown(false); /* Disable PDE bit of WMCR register */
+
+	imx_reset_pfd();
 
 #ifdef CONFIG_APBH_DMA
 	/* Start APBH DMA */
