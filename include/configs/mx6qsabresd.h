@@ -20,16 +20,14 @@
 #define CONFIG_MACH_TYPE	3980
 #define CONFIG_MXC_UART_BASE	UART1_BASE
 #define CONFIG_CONSOLE_DEV		"ttymxc0"
-#define CONFIG_MMCROOT			"/dev/mmcblk1p2"
+#define CONFIG_MMCROOT			"/dev/mmcblk0p2"
 
 #include "mx6qsabre_common.h"
 #include <asm/imx-common/gpio.h>
 
 #define CONFIG_SYS_FSL_USDHC_NUM	3
-#if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_SYS_MMC_ENV_DEV		1	/* SDHC3 */
 #define CONFIG_SYS_MMC_ENV_PART		1	/* Boot partition 1 */
-#endif
 
 #ifdef CONFIG_SYS_USE_SPINOR
 #define CONFIG_SF_DEFAULT_CS   (0|(IMX_GPIO_NR(4, 9)<<8))

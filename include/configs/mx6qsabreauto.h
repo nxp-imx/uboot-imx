@@ -34,10 +34,8 @@
 #include <asm/imx-common/gpio.h>
 
 #define CONFIG_SYS_FSL_USDHC_NUM	2
-#if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_SYS_MMC_ENV_PART		1	/* Boot partition 1 */
-#endif
 
 #ifdef CONFIG_SYS_USE_SPINOR
 #define CONFIG_SF_DEFAULT_CS   (1|(IMX_GPIO_NR(3, 19)<<8))
