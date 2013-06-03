@@ -81,8 +81,9 @@
 
 #define CONFIG_BOOTDELAY               1
 
-#define CONFIG_LOADADDR                        0x12000000
-#define CONFIG_SYS_TEXT_BASE           0x17800000
+#define CONFIG_LOADADDR			0x12000000
+#define CONFIG_SYS_TEXT_BASE		0x17800000
+#define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"script=boot.scr\0" \
@@ -95,7 +96,7 @@
 	"fdt_high=0xffffffff\0"	  \
 	"initrd_high=0xffffffff\0" \
 	"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
-	"mmcpart=" __stringify(CONFIG_SYS_MMC_ENV_PART) "\0" \
+	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
 	"smp=" CONFIG_SYS_NOSMP "\0"\
 	"mmcargs=setenv bootargs console=${console},${baudrate} ${smp} " \
