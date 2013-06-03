@@ -29,6 +29,10 @@
 #include <asm/gpio.h>
 #include <asm/imx-common/iomux-v3.h>
 #include <asm/imx-common/boot_mode.h>
+#ifdef CONFIG_I2C_MXC
+#include <i2c.h>
+#include <asm/imx-common/mxc_i2c.h>
+#endif
 #include <mmc.h>
 #include <fsl_esdhc.h>
 #include <miiphy.h>
@@ -37,6 +41,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define I2C_EXP_RST IMX_GPIO_NR(1, 15)
+#define I2C3_STEER  IMX_GPIO_NR(5, 4)
 #define UART_PAD_CTRL  (PAD_CTL_PKE | PAD_CTL_PUE |            \
 	PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED |               \
 	PAD_CTL_DSE_40ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
@@ -62,6 +68,29 @@ DECLARE_GLOBAL_DATA_PTR;
 #define GPMI_PAD_CTRL1 (PAD_CTL_DSE_40ohm | PAD_CTL_SPEED_MED | \
 			PAD_CTL_SRE_FAST)
 #define GPMI_PAD_CTRL2 (GPMI_PAD_CTRL0 | GPMI_PAD_CTRL1)
+
+#define I2C_PAD_CTRL	(PAD_CTL_PKE | PAD_CTL_PUE |		\
+	PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED |		\
+	PAD_CTL_DSE_40ohm | PAD_CTL_HYS |			\
+	PAD_CTL_ODE | PAD_CTL_SRE_FAST)
+
+#ifdef CONFIG_I2C_MXC
+#define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
+/* I2C2 pfuze */
+struct i2c_pads_info i2c_pad_info1 = {
+	/* don't support Sabreauto REVA */
+	.scl = {
+		.i2c_mode = MX6_PAD_EIM_EB2__I2C2_SCL | PC,
+		.gpio_mode = MX6_PAD_EIM_EB2__GPIO_2_30 | PC,
+		.gp = IMX_GPIO_NR(2, 30)
+	},
+	.sda = {
+		.i2c_mode = MX6_PAD_KEY_ROW3__I2C2_SDA | PC,
+		.gpio_mode = MX6_PAD_KEY_ROW3__GPIO_4_13 | PC,
+		.gp = IMX_GPIO_NR(4, 13)
+	}
+};
+#endif
 
 int dram_init(void)
 {
@@ -112,6 +141,73 @@ iomux_v3_cfg_t const usdhc3_pads[] = {
 	MX6_PAD_GPIO_18__USDHC3_VSELECT | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_NANDF_CS2__GPIO_6_15   | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
+
+#ifdef CONFIG_I2C_MXC
+static int setup_pmic_voltages(void)
+{
+	unsigned char value, rev_id = 0 ;
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+	if (!i2c_probe(0x8)) {
+		if (i2c_read(0x8, 0, 1, &value, 1)) {
+			printf("Read device ID error!\n");
+			return -1;
+		}
+		if (i2c_read(0x8, 3, 1, &rev_id, 1)) {
+			printf("Read Rev ID error!\n");
+			return -1;
+		}
+		printf("Found PFUZE100! deviceid=%x,revid=%x\n", value, rev_id);
+		/* set SW1AB staby volatage 0.975V*/
+		if (i2c_read(0x8, 0x21, 1, &value, 1)) {
+			printf("Read SW1ABSTBY error!\n");
+			return -1;
+		}
+		value &= ~0x3f;
+		value |= 0x1b;
+		if (i2c_write(0x8, 0x21, 1, &value, 1)) {
+			printf("Set SW1ABSTBY error!\n");
+			return -1;
+		}
+		/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
+		if (i2c_read(0x8, 0x24, 1, &value, 1)) {
+			printf("Read SW1ABSTBY error!\n");
+			return -1;
+		}
+		value &= ~0xc0;
+		value |= 0x40;
+		if (i2c_write(0x8, 0x24, 1, &value, 1)) {
+			printf("Set SW1ABSTBY error!\n");
+			return -1;
+		}
+
+		/* set SW1C staby volatage 0.975V*/
+		if (i2c_read(0x8, 0x2f, 1, &value, 1)) {
+			printf("Read SW1CSTBY error!\n");
+			return -1;
+		}
+		value &= ~0x3f;
+		value |= 0x1b;
+		if (i2c_write(0x8, 0x2f, 1, &value, 1)) {
+			printf("Set SW1CSTBY error!\n");
+			return -1;
+		}
+
+		/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+		if (i2c_read(0x8, 0x32, 1, &value, 1)) {
+			printf("Read SW1ABSTBY error!\n");
+			return -1;
+		}
+		value &= ~0xc0;
+		value |= 0x40;
+		if (i2c_write(0x8, 0x32, 1, &value, 1)) {
+			printf("Set SW1ABSTBY error!\n");
+			return -1;
+		}
+	}
+
+	return 0;
+}
+#endif
 
 static void setup_iomux_uart(void)
 {
@@ -397,8 +493,17 @@ static const struct boot_mode board_boot_modes[] = {
 
 int board_late_init(void)
 {
+	int ret;
 #ifdef CONFIG_CMD_BMODE
 	add_board_boot_modes(board_boot_modes);
+#endif
+
+#ifdef CONFIG_I2C_MXC
+	setup_i2c(1, CONFIG_SYS_I2C_SPEED,
+			CONFIG_SYS_I2C_SLAVE, &i2c_pad_info1);
+	ret = setup_pmic_voltages();
+	if (ret)
+		return -1;
 #endif
 
 	return 0;
