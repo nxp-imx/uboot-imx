@@ -1098,8 +1098,7 @@ int checkboard(void)
 	}
 
 #ifdef CONFIG_SECURE_BOOT
-	if (check_hab_enable() == 1)
-		get_hab_status();
+	get_hab_status();
 #endif
 
 	return 0;
