@@ -6,7 +6,7 @@
  *
  * Linux IPU driver:
  *
- * (C) Copyright 2005-2011 Freescale Semiconductor, Inc.
+ * (C) Copyright 2005-2013 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -445,5 +445,6 @@ static inline struct ipu_dc_ch *dc_ch_offset(int ch)
 
 /* DC template opcodes */
 #define WROD(lf)		(0x18 | (lf << 1))
+#define WRG			(0x01)
 
 #endif
