@@ -177,6 +177,8 @@
  */
 #include <video_fb.h>
 
+#include <splash.h>
+
 /*
  * some Macros
  */
@@ -1991,9 +1993,8 @@ static void *video_logo(void)
 #ifdef CONFIG_SPLASH_SCREEN
 	s = getenv("splashimage");
 	if (s != NULL) {
-
+		splash_screen_prepare();
 		addr = simple_strtoul(s, NULL, 16);
-
 
 		if (video_display_bitmap(addr,
 					video_logo_xpos,
