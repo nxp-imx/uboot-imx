@@ -1,7 +1,7 @@
 /*
  * Freescale Android Recovery mode checking routing
  *
- * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -101,6 +101,7 @@ void setup_recovery_env(void)
 	char *env, *boot_cmd;
 	int bootdev = get_boot_device();
 
+	printf("recovery on bootdev: %d\n", bootdev);
 	boot_cmd = supported_reco_envs[bootdev].cmd;
 
 	if (boot_cmd == NULL) {
