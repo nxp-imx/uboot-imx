@@ -1509,6 +1509,9 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 
 
 #ifdef CONFIG_ANDROID_RECOVERY
+#ifndef CONFIG_ANDROID_RECOVERY_BOOTCMD_SD
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD_SD CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC
+#endif
 struct reco_envs supported_reco_envs[BOOT_DEV_NUM] = {
 	{
 		.cmd = CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC,
