@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2008-2011 Freescale Semiconductor, Inc.
+ * (C) Copyright 2008-2013 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -52,6 +52,11 @@ __weak int mmc_get_env_addr(struct mmc *mmc, u32 *env_addr)
 	return 0;
 }
 
+__weak int mmc_get_env_devno(void)
+{
+	return CONFIG_SYS_MMC_ENV_DEV;
+}
+
 int env_init(void)
 {
 	/* use default */
@@ -75,7 +80,9 @@ static int init_mmc_for_env(struct mmc *mmc)
 
 #ifdef CONFIG_SYS_MMC_ENV_PART
 	if (CONFIG_SYS_MMC_ENV_PART != mmc->part_num) {
-		if (mmc_switch_part(CONFIG_SYS_MMC_ENV_DEV,
+		int mmc_env_devno = mmc_get_env_devno();
+
+		if (mmc_switch_part(mmc_env_devno,
 				    CONFIG_SYS_MMC_ENV_PART)) {
 			puts("MMC partition switch failed\n");
 			return -1;
@@ -89,8 +96,10 @@ static int init_mmc_for_env(struct mmc *mmc)
 static void fini_mmc_for_env(struct mmc *mmc)
 {
 #ifdef CONFIG_SYS_MMC_ENV_PART
+	int mmc_env_devno = mmc_get_env_devno();
+
 	if (CONFIG_SYS_MMC_ENV_PART != mmc->part_num)
-		mmc_switch_part(CONFIG_SYS_MMC_ENV_DEV,
+		mmc_switch_part(mmc_env_devno,
 				mmc->part_num);
 #endif
 }
@@ -100,11 +109,12 @@ static inline int write_env(struct mmc *mmc, unsigned long size,
 			    unsigned long offset, const void *buffer)
 {
 	uint blk_start, blk_cnt, n;
+	int mmc_env_devno = mmc_get_env_devno();
 
 	blk_start	= ALIGN(offset, mmc->write_bl_len) / mmc->write_bl_len;
 	blk_cnt		= ALIGN(size, mmc->write_bl_len) / mmc->write_bl_len;
 
-	n = mmc->block_dev.block_write(CONFIG_SYS_MMC_ENV_DEV, blk_start,
+	n = mmc->block_dev.block_write(mmc_env_devno, blk_start,
 					blk_cnt, (u_char *)buffer);
 
 	return (n == blk_cnt) ? 0 : -1;
@@ -113,9 +123,10 @@ static inline int write_env(struct mmc *mmc, unsigned long size,
 int saveenv(void)
 {
 	ALLOC_CACHE_ALIGN_BUFFER(env_t, env_new, 1);
+	int mmc_env_devno = mmc_get_env_devno();
 	ssize_t	len;
 	char	*res;
-	struct mmc *mmc = find_mmc_device(CONFIG_SYS_MMC_ENV_DEV);
+	struct mmc *mmc = find_mmc_device(mmc_env_devno);
 	u32	offset;
 	int	ret;
 
@@ -136,7 +147,7 @@ int saveenv(void)
 	}
 
 	env_new->crc = crc32(0, &env_new->data[0], ENV_SIZE);
-	printf("Writing to MMC(%d)... ", CONFIG_SYS_MMC_ENV_DEV);
+	printf("Writing to MMC(%d)... ", mmc_env_devno);
 	if (write_env(mmc, CONFIG_ENV_SIZE, offset, (u_char *)env_new)) {
 		puts("failed\n");
 		ret = 1;
@@ -156,11 +167,12 @@ static inline int read_env(struct mmc *mmc, unsigned long size,
 			   unsigned long offset, const void *buffer)
 {
 	uint blk_start, blk_cnt, n;
+	int mmc_env_devno = mmc_get_env_devno();
 
 	blk_start	= ALIGN(offset, mmc->read_bl_len) / mmc->read_bl_len;
 	blk_cnt		= ALIGN(size, mmc->read_bl_len) / mmc->read_bl_len;
 
-	n = mmc->block_dev.block_read(CONFIG_SYS_MMC_ENV_DEV, blk_start,
+	n = mmc->block_dev.block_read(mmc_env_devno, blk_start,
 					blk_cnt, (uchar *)buffer);
 
 	return (n == blk_cnt) ? 0 : -1;
@@ -170,7 +182,8 @@ void env_relocate_spec(void)
 {
 #if !defined(ENV_IS_EMBEDDED)
 	ALLOC_CACHE_ALIGN_BUFFER(char, buf, CONFIG_ENV_SIZE);
-	struct mmc *mmc = find_mmc_device(CONFIG_SYS_MMC_ENV_DEV);
+	int mmc_env_devno = mmc_get_env_devno();
+	struct mmc *mmc = find_mmc_device(mmc_env_devno);
 	u32 offset;
 	int ret;
 
