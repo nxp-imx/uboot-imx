@@ -85,6 +85,26 @@
 #define CONFIG_SYS_TEXT_BASE		0x17800000
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
+#ifdef CONFIG_SYS_BOOT_NAND
+	/*
+	 * The partions' layout for NAND is:
+	 *     mtd0: 16M      (uboot)
+	 *     mtd1: 16M      (kernel)
+	 *     mtd2: 16M      (dtb)
+	 *     mtd3: left     (rootfs)
+	 */
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	"fdt_addr=0x18000000\0" \
+	"fdt_high=0xffffffff\0"	  \
+	"bootargs=console=" CONFIG_CONSOLE_DEV ",115200 ubi.mtd=3 "  \
+		"root=ubi0:rootfs rootfstype=ubifs "		     \
+		"mtdparts=gpmi-nand:16m(boot),16m(kernel),16m(dtb),-(rootfs)\0"\
+	"bootcmd=nand read ${loadaddr} 0x1000000 0x800000;"\
+		"nand read ${fdt_addr} 0x2000000 0x100000;"\
+		"bootm ${loadaddr} - ${fdt_addr}\0"
+
+#else /* the following is used by the non-NAND boot. */
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"uimage=uImage\0" \
@@ -159,6 +179,7 @@
 			"fi; " \
 		"fi; " \
 	"else run netboot; fi"
+#endif
 
 #define CONFIG_ARP_TIMEOUT     200UL
 
