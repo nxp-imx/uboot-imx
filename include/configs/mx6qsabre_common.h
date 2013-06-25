@@ -85,7 +85,7 @@
 #define CONFIG_SYS_TEXT_BASE		0x17800000
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
-#ifdef CONFIG_SYS_BOOT_NAND
+#if defined(CONFIG_SYS_BOOT_NAND)
 	/*
 	 * The partions' layout for NAND is:
 	 *     mtd0: 16M      (uboot)
@@ -103,8 +103,20 @@
 		"nand read ${fdt_addr} 0x2000000 0x100000;"\
 		"bootm ${loadaddr} - ${fdt_addr}\0"
 
-#else /* the following is used by the non-NAND boot. */
+#elif defined(CONFIG_SYS_BOOT_SATA)
 
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	"fdt_addr=0x18000000\0" \
+	"fdt_high=0xffffffff\0"   \
+	"bootargs=console=" CONFIG_CONSOLE_DEV ",115200 \0"\
+	"bootargs_sata=setenv bootargs ${bootargs} " \
+		"root=/dev/sda1 rootwait rw \0" \
+	"bootcmd_sata=run bootargs_sata; sata init; " \
+		"sata read ${loadaddr} 0x800  0x4000; " \
+		"sata read ${fdt_addr} 0x8000 0x800; " \
+		"bootm ${loadaddr} - ${fdt_addr} \0" \
+	"bootcmd=run bootcmd_sata \0"
+#else
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"uimage=uImage\0" \
@@ -180,7 +192,6 @@
 		"fi; " \
 	"else run netboot; fi"
 #endif
-
 #define CONFIG_ARP_TIMEOUT     200UL
 
 /* Miscellaneous configurable options */
@@ -237,8 +248,20 @@
 #elif defined CONFIG_SYS_BOOT_NAND
 #define CONFIG_SYS_USE_NAND
 #define CONFIG_ENV_IS_IN_NAND
+#elif defined CONFIG_SYS_BOOT_SATA
+#define CONFIG_ENV_IS_IN_SATA
+#define CONFIG_CMD_SATA
 #else
 #define CONFIG_ENV_IS_IN_MMC
+#endif
+
+#ifdef CONFIG_CMD_SATA
+#define CONFIG_DWC_AHSATA
+#define CONFIG_SYS_SATA_MAX_DEVICE	1
+#define CONFIG_DWC_AHSATA_PORT_ID	0
+#define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
+#define CONFIG_LBA48
+#define CONFIG_LIBATA
 #endif
 
 #ifdef CONFIG_SYS_USE_SPINOR
@@ -300,6 +323,10 @@
 #define CONFIG_ENV_OFFSET		(8 << 20)
 #define CONFIG_ENV_SECT_SIZE		(128 << 10)
 #define CONFIG_ENV_SIZE			CONFIG_ENV_SECT_SIZE
+#elif defined(CONFIG_ENV_IS_IN_SATA)
+#define CONFIG_ENV_OFFSET		(768 * 1024)
+#define CONFIG_SATA_ENV_DEV		0
+#define CONFIG_SYS_DCACHE_OFF /* remove when sata driver support cache */
 #endif
 
 #define CONFIG_OF_LIBFDT
