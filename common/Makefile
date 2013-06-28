@@ -58,7 +58,6 @@ XCOBJS-$(CONFIG_ENV_IS_EMBEDDED) += env_embedded.o
 COBJS-$(CONFIG_ENV_IS_IN_EEPROM) += env_embedded.o
 XCOBJS-$(CONFIG_ENV_IS_IN_FLASH) += env_embedded.o
 COBJS-$(CONFIG_ENV_IS_IN_NVRAM) += env_embedded.o
-COBJS-$(CONFIG_ENV_IS_IN_SATA) += env_embedded.o
 COBJS-$(CONFIG_ENV_IS_IN_FLASH) += env_flash.o
 COBJS-$(CONFIG_ENV_IS_IN_MMC) += env_mmc.o
 COBJS-$(CONFIG_ENV_IS_IN_FAT) += env_fat.o
