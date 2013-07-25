@@ -1778,12 +1778,16 @@ int board_late_init(void)
 #ifdef MX6Q_SABRESD_ANDROID_H
 	switch (get_boot_device()) {
 	case SD_BOOT:
-		setenv("fastboot_dev", "mmc2");
-		setenv("bootcmd", "booti mmc2");
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "mmc2");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "booti mmc2");
 		break;
 	case MMC_BOOT:
-		setenv("fastboot_dev", "mmc3");
-		setenv("bootcmd", "booti mmc3");
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "mmc3");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "booti mmc3");
 		break;
 	default:
 		printf("unsupported boot devices\n");
