@@ -23,6 +23,13 @@
 #define CONFIG_SYS_PL310_BASE		0x00A02000
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
+#ifdef CONFIG_MX6SOLO
+#define CONFIG_MX6DL
+#endif
+
+/* uncomment for PLUGIN mode support */
+/* #define CONFIG_USE_PLUGIN */
+
 #include "mx6_common.h"
 
 #define CONFIG_DISPLAY_CPUINFO
