@@ -19,6 +19,10 @@
 
 #define CONFIG_MX6
 
+#define CONFIG_SYS_L2_PL310
+#define CONFIG_SYS_PL310_BASE		0x00A02000
+#define CONFIG_SYS_CACHELINE_SIZE	32
+
 #include "mx6_common.h"
 
 #define CONFIG_DISPLAY_CPUINFO

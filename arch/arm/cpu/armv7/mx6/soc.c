@@ -24,6 +24,8 @@
  */
 
 #include <common.h>
+#include <asm/armv7.h>
+#include <asm/pl310.h>
 #include <asm/errno.h>
 #include <asm/io.h>
 #include <asm/arch/imx-regs.h>
@@ -439,3 +441,21 @@ const struct boot_mode soc_boot_modes[] = {
 void s_init(void)
 {
 }
+
+#ifndef CONFIG_SYS_L2CACHE_OFF
+void v7_outer_cache_enable(void)
+{
+	struct pl310_regs *const pl310 =
+		(struct pl310_regs *)CONFIG_SYS_PL310_BASE;
+
+	writel(1, &pl310->pl310_ctrl);
+}
+
+void v7_outer_cache_disable(void)
+{
+	struct pl310_regs *const pl310 =
+		(struct pl310_regs *)CONFIG_SYS_PL310_BASE;
+
+	writel(0, &pl310->pl310_ctrl);
+}
+#endif /* !CONFIG_SYS_L2CACHE_OFF */
