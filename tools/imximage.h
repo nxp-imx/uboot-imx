@@ -1,5 +1,7 @@
 /*
- * (C) Copyright 2009
+ * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
+ *
+ * (C) Copyright 2009-2012
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de.
  *
  * See file CREDITS for list of people who contributed to this
@@ -24,7 +26,16 @@
 #ifndef _IMXIMAGE_H_
 #define _IMXIMAGE_H_
 
-#define MAX_HW_CFG_SIZE_V2 121 /* Max number of registers imx can set for v2 */
+#define MAX_HW_CFG_SIZE_V2 219 /* Max number of registers imx can set for v2 */
+/*
+ * For MX51/MX53/MX6, the maximum DCD lenght is 1768 bytes
+ * IVT occupies 8 bytes
+ * Boot Data 3 bytes
+ * DCD tag and write tag 2 bytes
+ * The remaining 1755 bytes can hold up to 219 DCD entries
+ */
+#define MAX_PLUGIN_CODE_SIZE (16*1024)
+#define PLUGIN_IRAM_COPY_SIZE (16*1024)
 #define MAX_HW_CFG_SIZE_V1 60  /* Max number of registers imx can set for v1 */
 #define APP_CODE_BARKER	0xB1
 #define DCD_BARKER	0xB17219E9
@@ -52,7 +63,8 @@ enum imximage_cmd {
 	CMD_INVALID,
 	CMD_IMAGE_VERSION,
 	CMD_BOOT_FROM,
-	CMD_DATA
+	CMD_DATA,
+	CMD_PLUGIN,
 };
 
 enum imximage_fld_types {
@@ -148,7 +160,10 @@ typedef struct {
 typedef struct {
 	flash_header_v2_t fhdr;
 	boot_data_t boot_data;
-	dcd_v2_t dcd_table;
+	union {
+		dcd_v2_t dcd_table;
+		char plugin_code[MAX_PLUGIN_CODE_SIZE];
+	} data;
 } imx_header_v2_t;
 
 struct imx_header {
@@ -157,7 +172,9 @@ struct imx_header {
 		imx_header_v2_t hdr_v2;
 	} header;
 	uint32_t flash_offset;
-};
+	uint32_t iram_free_start;
+	uint32_t plugin_size;
+} __attribute__((aligned(0x1000)));
 
 typedef void (*set_dcd_val_t)(struct imx_header *imxhdr,
 					char *name, int lineno,
