@@ -1,7 +1,7 @@
 #
 # Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
 #
-# (C) Copyright 2011 Freescale Semiconductor, Inc.
+# (C) Copyright 2011-2013 Freescale Semiconductor, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -28,8 +28,13 @@ COBJS	:= mx6qarm2.o
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
 
+all:	$(LIB) plugin.bin
+
 $(LIB):	$(obj).depend $(OBJS)
 	$(call cmd_link_o_target, $(OBJS))
+
+plugin.bin: plugin.o
+	$(OBJCOPY) -O binary --gap-fill 0xff $< $@
 
 #########################################################################
 
