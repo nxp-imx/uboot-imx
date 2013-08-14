@@ -36,6 +36,8 @@
  */
 #define MAX_PLUGIN_CODE_SIZE (16*1024)
 #define PLUGIN_IRAM_COPY_SIZE (16*1024)
+#define CSF_ALIGN_SIZE 0x1000
+#define CSF_DATA_SIZE 0x2000
 #define MAX_HW_CFG_SIZE_V1 60  /* Max number of registers imx can set for v1 */
 #define APP_CODE_BARKER	0xB1
 #define DCD_BARKER	0xB17219E9
@@ -65,6 +67,7 @@ enum imximage_cmd {
 	CMD_BOOT_FROM,
 	CMD_DATA,
 	CMD_PLUGIN,
+	CMD_SECURE_BOOT
 };
 
 enum imximage_fld_types {
@@ -174,6 +177,7 @@ struct imx_header {
 	uint32_t flash_offset;
 	uint32_t iram_free_start;
 	uint32_t plugin_size;
+	uint32_t secure_enable;
 } __attribute__((aligned(0x1000)));
 
 typedef void (*set_dcd_val_t)(struct imx_header *imxhdr,

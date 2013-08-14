@@ -438,6 +438,56 @@ struct cspi_regs {
 	ECSPI5_BASE_ADDR
 #endif
 
+/* gpio and gpio based interrupt handling */
+#define GPIO_DR                 0x00
+#define GPIO_GDIR               0x04
+#define GPIO_PSR                0x08
+#define GPIO_ICR1               0x0C
+#define GPIO_ICR2               0x10
+#define GPIO_IMR                0x14
+#define GPIO_ISR                0x18
+#define GPIO_INT_LOW_LEV        0x0
+#define GPIO_INT_HIGH_LEV       0x1
+#define GPIO_INT_RISE_EDGE      0x2
+#define GPIO_INT_FALL_EDGE      0x3
+#define GPIO_INT_NONE           0x4
+
+#define CLKCTL_CCR              0x00
+#define	CLKCTL_CCDR             0x04
+#define CLKCTL_CSR              0x08
+#define CLKCTL_CCSR             0x0C
+#define CLKCTL_CACRR            0x10
+#define CLKCTL_CBCDR            0x14
+#define CLKCTL_CBCMR            0x18
+#define CLKCTL_CSCMR1           0x1C
+#define CLKCTL_CSCMR2           0x20
+#define CLKCTL_CSCDR1           0x24
+#define CLKCTL_CS1CDR           0x28
+#define CLKCTL_CS2CDR           0x2C
+#define CLKCTL_CDCDR            0x30
+#define CLKCTL_CHSCCDR          0x34
+#define CLKCTL_CSCDR2           0x38
+#define CLKCTL_CSCDR3           0x3C
+#define CLKCTL_CSCDR4           0x40
+#define CLKCTL_CWDR             0x44
+#define CLKCTL_CDHIPR           0x48
+#define CLKCTL_CDCR             0x4C
+#define CLKCTL_CTOR             0x50
+#define CLKCTL_CLPCR            0x54
+#define CLKCTL_CISR             0x58
+#define CLKCTL_CIMR             0x5C
+#define CLKCTL_CCOSR            0x60
+#define CLKCTL_CGPR             0x64
+#define CLKCTL_CCGR0            0x68
+#define CLKCTL_CCGR1            0x6C
+#define CLKCTL_CCGR2            0x70
+#define CLKCTL_CCGR3            0x74
+#define CLKCTL_CCGR4            0x78
+#define CLKCTL_CCGR5            0x7C
+#define CLKCTL_CCGR6            0x80
+#define CLKCTL_CCGR7            0x84
+#define CLKCTL_CMEOR            0x88
+
 struct iim_regs {
 	u32	ctrl;
 	u32	ctrl_set;
@@ -467,6 +517,25 @@ struct iim_regs {
 	struct fuse_bank {
 		u32	fuse_regs[0x20];
 	} bank[15];
+};
+
+struct fuse_bank0_regs {
+	u32     lock;
+	u32     rsvd0[3];
+	u32	cfg0;
+	u32     rsvd1[3];
+	u32	cfg1;
+	u32     rsvd2[3];
+	u32	cfg2;
+	u32     rsvd3[3];
+	u32	cfg3;
+	u32     rsvd4[3];
+	u32	cfg4;
+	u32     rsvd5[3];
+	u32	cfg5;
+	u32     rsvd6[3];
+	u32	cfg6;
+	u32     rsvd7[3];
 };
 
 struct fuse_bank1_regs {

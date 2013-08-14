@@ -48,6 +48,7 @@ void set_vddsoc(u32 mv);
 int fecmxc_initialize(bd_t *bis);
 u32 get_ahb_clk(void);
 u32 get_periph_clk(void);
+int get_hab_status(void);
 
 int mxs_reset_block(struct mxs_register_32 *reg);
 int mxs_wait_mask_set(struct mxs_register_32 *reg,

@@ -40,6 +40,7 @@ static table_entry_t imximage_cmds[] = {
 	{CMD_DATA,              "DATA",                 "Reg Write Data", },
 	{CMD_IMAGE_VERSION,     "IMAGE_VERSION",        "image version",  },
 	{CMD_PLUGIN,            "PLUGIN",               "file plugin_addr",  },
+	{CMD_SECURE_BOOT,       "SECURE_BOOT",          "secure boot enable", },
 	{-1,                    "",                     "",	          },
 };
 
@@ -74,6 +75,7 @@ static set_dcd_rst_t set_dcd_rst;
 static set_imx_hdr_t set_imx_hdr;
 static uint32_t max_dcd_entries;
 static uint32_t *header_size_ptr;
+static struct stat *sbuf_ptr;
 
 static uint32_t get_cfg_value(char *token, char *name,  int linenr)
 {
@@ -250,12 +252,27 @@ static void set_imx_hdr_v2(struct imx_header *imxhdr, uint32_t dcd_len,
 				+ offsetof(imx_header_v2_t, boot_data);
 		hdr_v2->boot_data.start = hdr_base - flash_offset;
 
-		/* Security feature are not supported */
-		fhdr_v2->csf = 0;
-		header_size_ptr = &hdr_v2->boot_data.size;
+		if (imxhdr->secure_enable) {
+			uint32_t round_size;
+			round_size = ROUND(sbuf_ptr->st_size, CSF_ALIGN_SIZE);
+
+			hdr_v2->boot_data.size = ROUND(round_size + CSF_DATA_SIZE +
+								flash_offset, 512);
+			fhdr_v2->csf = fhdr_v2->self + round_size;
+		} else {
+			/* Security feature are not supported */
+			fhdr_v2->csf = 0;
+			header_size_ptr = &hdr_v2->boot_data.size;
+		}
 	} else {
 		imx_header_v2_t *next_hdr_v2;
 		flash_header_v2_t *next_fhdr_v2;
+
+		if (imxhdr->secure_enable) {
+			fprintf(stderr, "Error: Header v2: SECURE_BOOT"
+					"is only supported in DCD mode!");
+			exit(EXIT_FAILURE);
+		}
 
 		fhdr_v2->entry = imxhdr->iram_free_start +
 			flash_offset + sizeof(flash_header_v2_t) +
@@ -369,8 +386,9 @@ static void print_hdr_v2(struct imx_header *imx_hdr)
 	imx_header_v2_t *hdr_v2 = &imx_hdr->header.hdr_v2;
 	flash_header_v2_t *fhdr_v2 = &hdr_v2->fhdr;
 	dcd_v2_t *dcd_v2 = &hdr_v2->data.dcd_table;
-	uint32_t size, version, plugin;
+	uint32_t size, version, plugin, secure_enable;
 
+	secure_enable = imx_hdr->secure_enable;
 	plugin = hdr_v2->boot_data.plugin;
 	if (!plugin) {
 		size = be16_to_cpu(dcd_v2->header.length) - 8;
@@ -389,6 +407,10 @@ static void print_hdr_v2(struct imx_header *imx_hdr)
 	printf("Image Ver:    %x", version);
 	printf("%s\n", get_table_entry_name(imximage_versions, NULL, version));
 	printf("Mode:                 %s\n", plugin ? "PLUGIN" : "DCD");
+	printf("Secure Boot Mode:     %s\n", secure_enable ? "ON" : "OFF");
+	if (secure_enable) {
+		printf("CSF Data Address:     %08x\n", fhdr_v2->csf);
+	}
 	if (!plugin) {
 		printf("U-Boot Data Size:     ");
 		genimg_print_size(hdr_v2->boot_data.size);
@@ -510,7 +532,10 @@ static void parse_cfg_fld(struct imx_header *imxhdr, int32_t *cmd,
 			fprintf(stderr, "Error: %s[%d] - Invalid command"
 			"(%s)\n", name, lineno, token);
 			exit(EXIT_FAILURE);
+
 		}
+		if (*cmd == CMD_SECURE_BOOT)
+			imxhdr->secure_enable = 1;
 		break;
 	case CFG_REG_SIZE:
 		parse_cfg_cmd(imxhdr, *cmd, token, name, lineno, fld, *dcd_len);
@@ -643,6 +668,7 @@ static void imximage_set_header(void *ptr, struct stat *sbuf, int ifd,
 {
 	struct imx_header *imxhdr = (struct imx_header *)ptr;
 	uint32_t dcd_len;
+	sbuf_ptr = sbuf;
 
 	/*
 	 * In order to not change the old imx cfg file
@@ -666,7 +692,9 @@ static void imximage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	 * The remaining fraction of a block bytes would
 	 * not be loaded.
 	 */
-	*header_size_ptr = ROUND(sbuf->st_size + imxhdr->flash_offset, 512);
+	if (!imxhdr->secure_enable)
+		*header_size_ptr = ROUND(sbuf->st_size +
+					imxhdr->flash_offset, 512);
 }
 
 int imximage_check_params(struct mkimage_params *params)
