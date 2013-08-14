@@ -29,8 +29,13 @@
 #define CONFIG_SYS_PL310_BASE		0x00A02000
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
+#define CONFIG_ARCH_MISC_INIT
+
 /* uncomment for PLUGIN mode support */
 /* #define CONFIG_USE_PLUGIN */
+
+/* uncomment for SECURE mode support */
+/* #define CONFIG_SECURE_BOOT */
 
 #include "mx6_common.h"
 
