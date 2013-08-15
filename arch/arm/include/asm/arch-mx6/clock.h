@@ -64,5 +64,6 @@ unsigned int mxc_get_clock(enum mxc_clock clk);
 void enable_usboh3_clk(unsigned char enable);
 int enable_sata_clock(void);
 int enable_i2c_clk(unsigned char enable, unsigned i2c_num);
+int enable_fec_clock(void);
 
 #endif /* __ASM_ARCH_CLOCK_H */

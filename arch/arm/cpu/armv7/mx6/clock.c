@@ -284,6 +284,34 @@ static u32 get_mmdc_ch0_clk(void)
 	return freq / (podf + 1);
 
 }
+
+int enable_fec_clock(void)
+{
+	u32 reg = 0;
+	s32 timeout = 100000;
+
+	reg = readl(ANATOP_BASE_ADDR + 0xe0);
+	if ((reg & BM_ANADIG_PLL_ENET_POWERDOWN) ||
+		(!(reg & BM_ANADIG_PLL_ENET_LOCK))) {
+		reg &= ~BM_ANADIG_PLL_ENET_POWERDOWN;
+		writel(reg, ANATOP_BASE_ADDR + 0xe0);
+		while (timeout--) {
+			if (readl(ANATOP_BASE_ADDR + 0xe0) &
+					BM_ANADIG_PLL_ENET_LOCK)
+				break;
+		}
+		if (timeout <= 0)
+			return -1;
+	}
+
+	/* Enable FEC clock */
+	reg |= BM_ANADIG_PLL_ENET_ENABLE;
+	reg &= ~BM_ANADIG_PLL_ENET_BYPASS;
+	writel(reg, ANATOP_BASE_ADDR + 0xe0);
+
+	return 0;
+}
+
 #else
 static u32 get_mmdc_ch0_clk(void)
 {
@@ -292,6 +320,11 @@ static u32 get_mmdc_ch0_clk(void)
 				MXC_CCM_CBCDR_MMDC_CH0_PODF_OFFSET;
 
 	return get_periph_clk() / (mmdc_ch0_podf + 1);
+}
+
+int enable_fec_clock(void)
+{
+	return 0;
 }
 #endif
 
