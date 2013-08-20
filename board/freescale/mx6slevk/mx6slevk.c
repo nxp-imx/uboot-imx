@@ -177,6 +177,54 @@ static int setup_pmic_voltages(void)
 			return -1;
 		}
 		printf("Found PFUZE100! deviceid=%x,revid=%x\n", value, rev_id);
+
+		/* set SW1AB staby volatage 0.975V */
+		if (i2c_read(0x8, 0x21, 1, &value, 1)) {
+			printf("Read SW1ABSTBY error!\n");
+			return -1;
+		}
+		value &= ~0x3f;
+		value |= 0x1b;
+		if (i2c_write(0x8, 0x21, 1, &value, 1)) {
+			printf("Set SW1ABSTBY error!\n");
+			return -1;
+		}
+
+		/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
+		if (i2c_read(0x8, 0x24, 1, &value, 1)) {
+			printf("Read SW1ABCONFIG error!\n");
+			return -1;
+		}
+		value &= ~0xc0;
+		value |= 0x40;
+		if (i2c_write(0x8, 0x24, 1, &value, 1)) {
+			printf("Set SW1ABCONFIG error!\n");
+			return -1;
+		}
+
+		/* set SW1C staby volatage 0.975V */
+		if (i2c_read(0x8, 0x2f, 1, &value, 1)) {
+			printf("Read SW1CSTBY error!\n");
+			return -1;
+		}
+		value &= ~0x3f;
+		value |= 0x1b;
+		if (i2c_write(0x8, 0x2f, 1, &value, 1)) {
+			printf("Set SW1CSTBY error!\n");
+			return -1;
+		}
+
+		/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+		if (i2c_read(0x8, 0x32, 1, &value, 1)) {
+			printf("Read SW1CCONFIG error!\n");
+			return -1;
+		}
+		value &= ~0xc0;
+		value |= 0x40;
+		if (i2c_write(0x8, 0x32, 1, &value, 1)) {
+			printf("Set SW1CCONFIG error!\n");
+			return -1;
+		}
 	}
 
 	return 0;
