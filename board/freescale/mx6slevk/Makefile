@@ -15,8 +15,13 @@ COBJS  := mx6slevk.o
 SRCS   := $(COBJS:.o=.c)
 OBJS   := $(addprefix $(obj),$(COBJS))
 
+all:	$(LIB) plugin.bin
+
 $(LIB):        $(obj).depend $(OBJS)
 	$(call cmd_link_o_target, $(OBJS))
+
+plugin.bin: plugin.o
+	$(OBJCOPY) -O binary --gap-fill 0xff $< $@
 
 #########################################################################
 

@@ -23,6 +23,9 @@
 #define CONFIG_SYS_PL310_BASE		0x00A02000
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
+/* uncomment for PLUGIN mode support */
+/* #define CONFIG_USE_PLUGIN */
+
 #define MACH_TYPE_MX6SLEVK		4307
 #define CONFIG_MACH_TYPE		MACH_TYPE_MX6SLEVK
 
