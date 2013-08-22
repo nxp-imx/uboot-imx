@@ -25,15 +25,14 @@
 #include <mxc_keyb.h>
 #endif
 
-extern int check_powerkey_pressed(void);
 extern int check_recovery_cmd_file(void);
 extern enum boot_device get_boot_device(void);
 
 #ifdef CONFIG_MXC_KPD
 
-#define PRESSED_HOME	0x01
-#define PRESSED_POWER	0x02
-#define RECOVERY_KEY_MASK (PRESSED_HOME | PRESSED_POWER)
+#define PRESSED_VOL_DOWN	0x01
+#define PRESSED_POWER	    0x02
+#define RECOVERY_KEY_MASK (PRESSED_VOL_DOWN | PRESSED_POWER)
 
 inline int test_key(int value, struct kpp_key_info *ki)
 {
@@ -53,35 +52,18 @@ int check_key_pressing(void)
 	udelay(1000);
 	keys = mxc_kpp_getc(&key_info);
 
-	if (!check_powerkey_pressed())
-		keys = 0;
-
-#ifdef CONFIG_MX6SL_EVK
-	/* For mx6sl-evk, hold power+vol_down when boot
-	   will enter recovery mode */
 	printf("Detecting VOL_DOWN+POWER key for recovery(%d:%d) ...\n",
 		keys, keys ? key_info->val : 0);
-	if (keys > 0) {
-		for (i = 0; i < keys; i++) {
-			if (test_key(CONFIG_VOL_DOWN_KEY, &key_info[i])) {
-				ret = 1;
-				break;
-			}
-		}
-	}
-#else
-	puts("Detecting HOME+POWER key for recovery ...\n");
 	if (keys > 1) {
 		for (i = 0; i < keys; i++) {
 			if (test_key(CONFIG_POWER_KEY, &key_info[i]))
-				state |= PRESSED_HOME;
-			else if (test_key(CONFIG_HOME_KEY, &key_info[i]))
 				state |= PRESSED_POWER;
+			else if (test_key(CONFIG_VOL_DOWN_KEY, &key_info[i]))
+				state |= PRESSED_VOL_DOWN;
 		}
 	}
 	if ((state & RECOVERY_KEY_MASK) == RECOVERY_KEY_MASK)
 		ret = 1;
-#endif
 	if (key_info)
 		free(key_info);
 	return ret;

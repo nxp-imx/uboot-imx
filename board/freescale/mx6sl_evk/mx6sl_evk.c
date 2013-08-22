@@ -1003,17 +1003,6 @@ int setup_mxc_kpd(void)
 
 	return 0;
 }
-
-int check_powerkey_pressed(void)
-{
-	mxc_iomux_v3_setup_pad(MX6SL_PAD_WDOG_B__GPIO_3_18);
-	gpio_direction_input(GPIO_POWER_KEY);
-	udelay(5);
-	if (gpio_get_value(GPIO_POWER_KEY) == 0)
-		return 1;
-	return 0;
-}
-
 #endif
 
 
