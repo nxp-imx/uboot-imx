@@ -24,6 +24,7 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/iomux.h>
 #include <asm/arch/mx6-pins.h>
+#include <asm/arch/sys_proto.h>
 #include <asm/errno.h>
 #include <asm/gpio.h>
 #include <asm/imx-common/iomux-v3.h>
@@ -185,6 +186,7 @@ static void setup_iomux_uart(void)
 static int setup_pmic_voltages(void)
 {
 	unsigned char value, rev_id = 0 ;
+
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 	if (!i2c_probe(0x8)) {
 		if (i2c_read(0x8, 0, 1, &value, 1)) {
@@ -273,6 +275,68 @@ static int setup_pmic_voltages(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	unsigned char value;
+	/* increase VDDARM/VDDSOC to support 1.2G chip */
+	if (check_1_2G()) {
+		ldo_bypass = 0;	/* ldo_enable on 1.2G chip */
+		printf("1.2G chip, increase VDDARM_IN/VDDSOC_IN\n");
+		/* increase VDDARM to 1.425V */
+		if (i2c_read(0x8, 0x20, 1, &value, 1)) {
+			printf("Read SW1AB error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x2d;
+		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
+			printf("Set SW1AB error!\n");
+			return;
+		}
+		/* increase VDDSOC to 1.425V */
+		if (i2c_read(0x8, 0x2e, 1, &value, 1)) {
+			printf("Read SW1C error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x2d;
+		if (i2c_write(0x8, 0x2e, 1, &value, 1)) {
+			printf("Set SW1C error!\n");
+			return;
+		}
+	}
+	/* switch to ldo_bypass mode , boot on 800Mhz */
+	if (ldo_bypass) {
+		/* decrease VDDARM to 1.175V */
+		if (i2c_read(0x8, 0x20, 1, &value, 1)) {
+			printf("Read SW1AB error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x23;
+		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
+			printf("Set SW1AB error!\n");
+			return;
+		}
+		/* increase VDDSOC to 1.175V */
+		if (i2c_read(0x8, 0x2e, 1, &value, 1)) {
+			printf("Read SW1C error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x23;
+		if (i2c_write(0x8, 0x2e, 1, &value, 1)) {
+			printf("Set SW1C error!\n");
+			return;
+		}
+
+		set_anatop_bypass();
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
+#endif
 #endif
 
 

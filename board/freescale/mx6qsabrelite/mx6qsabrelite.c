@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -851,3 +851,11 @@ int misc_init_r(void)
 #endif
 	return 0;
 }
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+/* no external pmic, always ldo_enable */
+void ldo_mode_set(int ldo_bypass)
+{
+	return;
+}
+#endif

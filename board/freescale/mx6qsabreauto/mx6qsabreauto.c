@@ -207,6 +207,40 @@ static int setup_pmic_voltages(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	unsigned char value;
+	/* increase VDDARM/VDDSOC to support 1.2G chip */
+	if (check_1_2G()) {
+		ldo_bypass = 0;	/* ldo_enable on 1.2G chip */
+		printf("1.2G chip, increase VDDARM_IN/VDDSOC_IN\n");
+		/* increase VDDARM to 1.425V */
+		if (i2c_read(0x8, 0x20, 1, &value, 1)) {
+			printf("Read SW1AB error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x2d;
+		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
+			printf("Set SW1AB error!\n");
+			return;
+		}
+		/* increase VDDSOC to 1.425V */
+		if (i2c_read(0x8, 0x2e, 1, &value, 1)) {
+			printf("Read SW1C error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x2d;
+		if (i2c_write(0x8, 0x2e, 1, &value, 1)) {
+			printf("Set SW1C error!\n");
+			return;
+		}
+	}
+}
+#endif
 #endif
 
 static void setup_iomux_uart(void)
