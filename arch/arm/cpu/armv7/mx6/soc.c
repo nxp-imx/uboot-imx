@@ -34,6 +34,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/imx-common/boot_mode.h>
 #include <asm/imx-common/dma.h>
+#include <libfdt.h>
 #include <stdbool.h>
 
 struct scu_regs {
@@ -445,6 +446,50 @@ const struct boot_mode soc_boot_modes[] = {
 void s_init(void)
 {
 }
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+DECLARE_GLOBAL_DATA_PTR;
+int check_ldo_bypass(void)
+{
+	int ret = 0;
+	int node;
+	/* Get the node from FDT for anatop ldo-bypass */
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1,
+		"fsl,imx6q-gpc");
+	if (node < 0) {
+		printf("gpc: No node for gpc in device tree,%d\n", node);
+		return ret;
+	}
+	ret = fdt_getprop(gd->fdt_blob, node, "fsl,ldo-bypass", NULL);
+	return ret;
+}
+
+int check_1_2G(void)
+{
+	u32 reg;
+	int result = 0;
+	struct iim_regs *iim = (struct iim_regs *)IMX_IIM_BASE;
+	struct fuse_bank *bank = &iim->bank[0];
+	struct fuse_bank0_regs *fuse_bank0 =
+			(struct fuse_bank0_regs *)bank->fuse_regs;
+
+	reg = readl(&fuse_bank0->cfg4);
+	if (reg & (0x3 << 16))
+		result = 1;
+
+	return result;
+}
+
+void set_anatop_bypass(void)
+{
+	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
+	u32 reg = readl(&anatop->reg_core);
+
+	/* bypass VDDARM/VDDSOC */
+	reg = reg | (0x1F << 18) | 0x1F;
+	writel(reg, &anatop->reg_core);
+}
+#endif
 
 #ifndef CONFIG_SYS_L2CACHE_OFF
 void v7_outer_cache_enable(void)
