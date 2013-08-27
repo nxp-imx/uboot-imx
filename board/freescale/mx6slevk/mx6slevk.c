@@ -181,6 +181,42 @@ static int setup_pmic_voltages(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	unsigned char value;
+	/* swith to ldo_bypass mode */
+	if (ldo_bypass) {
+		/* decrease VDDARM to 1.15V */
+		if (i2c_read(0x8, 0x20, 1, &value, 1)) {
+			printf("Read SW1AB error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x22;
+		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
+			printf("Set SW1AB error!\n");
+			return;
+		}
+		/* increase VDDSOC to 1.15V */
+		if (i2c_read(0x8, 0x2e, 1, &value, 1)) {
+			printf("Read SW1C error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x22;
+		if (i2c_write(0x8, 0x2e, 1, &value, 1)) {
+			printf("Set SW1C error!\n");
+			return;
+		}
+
+		set_anatop_bypass();
+		printf("switch to ldo_bypass mode!\n");
+	}
+
+}
+#endif
 #endif
 
 int board_early_init_f(void)
