@@ -101,6 +101,14 @@
 #define CONFIG_SYS_TEXT_BASE		0x17800000
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
+#define CONFIG_MFG_ENV_SETTINGS \
+	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
+		"rdinit=/linuxrc " \
+		"enable_wait_mode=off \0"\
+		"initrd_addr=0x12C00000\0" \
+		"bootcmd_mfg=run mfgtool_args;bootm ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+
+
 #if defined(CONFIG_SYS_BOOT_NAND)
 	/*
 	 * The partions' layout for NAND is:
@@ -110,6 +118,7 @@
 	 *     mtd3: left     (rootfs)
 	 */
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
 	"fdt_addr=0x18000000\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"bootargs=console=" CONFIG_CONSOLE_DEV ",115200 ubi.mtd=3 "  \
@@ -122,6 +131,7 @@
 #elif defined(CONFIG_SYS_BOOT_SATA)
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
 	"fdt_addr=0x18000000\0" \
 	"fdt_high=0xffffffff\0"   \
 	"bootargs=console=" CONFIG_CONSOLE_DEV ",115200 \0"\
@@ -134,6 +144,7 @@
 	"bootcmd=run bootcmd_sata \0"
 #else
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"uimage=uImage\0" \
 	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
