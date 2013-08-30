@@ -453,6 +453,10 @@ int check_ldo_bypass(void)
 {
 	int ret = 0;
 	int node;
+
+	/* get the right fdt_addr */
+	gd->fdt_blob = (void *)getenv_ulong("fdt_addr", 16,
+						(uintptr_t)gd->fdt_blob);
 	/* Get the node from FDT for anatop ldo-bypass */
 	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1,
 		"fsl,imx6q-gpc");
