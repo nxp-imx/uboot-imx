@@ -477,9 +477,11 @@ int check_1_2G(void)
 	struct fuse_bank0_regs *fuse_bank0 =
 			(struct fuse_bank0_regs *)bank->fuse_regs;
 
-	reg = readl(&fuse_bank0->cfg4);
-	if (reg & (0x3 << 16))
+	reg = readl(&fuse_bank0->cfg3);
+	if ((reg >> 16) & 0x3 == 0x3) {
+		printf("Please use ldo-enable dts!\n");
 		result = 1;
+	}
 
 	return result;
 }
