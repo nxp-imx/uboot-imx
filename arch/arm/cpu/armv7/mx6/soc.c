@@ -451,7 +451,7 @@ void s_init(void)
 DECLARE_GLOBAL_DATA_PTR;
 int check_ldo_bypass(void)
 {
-	int ret = 0;
+	const int *ldo_mode;
 	int node;
 
 	/* get the right fdt_addr */
@@ -461,11 +461,15 @@ int check_ldo_bypass(void)
 	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1,
 		"fsl,imx6q-gpc");
 	if (node < 0) {
-		printf("gpc: No node for gpc in device tree,%d\n", node);
-		return ret;
+		printf("No gpc device node %d, force to ldo-enable.\n", node);
+		return 0;
 	}
-	ret = fdt_getprop(gd->fdt_blob, node, "fsl,ldo-bypass", NULL);
-	return ret;
+	ldo_mode = fdt_getprop(gd->fdt_blob, node, "fsl,ldo-bypass", NULL);
+	/*
+	 * return 1 if "fsl,ldo-bypass = <1>", else return 0 if
+	 * "fsl,ldo-bypass = <0>" or no "fsl,ldo-bypass" property
+	 */
+	return fdt32_to_cpu(*ldo_mode) == 1 ? 1 : 0;
 }
 
 int check_1_2G(void)
