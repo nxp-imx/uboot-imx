@@ -449,14 +449,15 @@ void s_init(void)
 
 #ifdef CONFIG_LDO_BYPASS_CHECK
 DECLARE_GLOBAL_DATA_PTR;
+static int ldo_bypass;
+
 int check_ldo_bypass(void)
 {
 	const int *ldo_mode;
 	int node;
 
 	/* get the right fdt_addr */
-	gd->fdt_blob = (void *)getenv_ulong("fdt_addr", 16,
-						(uintptr_t)gd->fdt_blob);
+	gd->fdt_blob = images.ft_addr;
 	/* Get the node from FDT for anatop ldo-bypass */
 	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1,
 		"fsl,imx6q-gpc");
@@ -469,7 +470,9 @@ int check_ldo_bypass(void)
 	 * return 1 if "fsl,ldo-bypass = <1>", else return 0 if
 	 * "fsl,ldo-bypass = <0>" or no "fsl,ldo-bypass" property
 	 */
-	return fdt32_to_cpu(*ldo_mode) == 1 ? 1 : 0;
+	ldo_bypass = fdt32_to_cpu(*ldo_mode) == 1 ? 1 : 0;
+
+	return ldo_bypass;
 }
 
 int check_1_2G(void)
@@ -483,7 +486,19 @@ int check_1_2G(void)
 
 	reg = readl(&fuse_bank0->cfg3);
 	if ((reg >> 16) & 0x3 == 0x3) {
-		printf("Please use ldo-enable dts!\n");
+		if (ldo_bypass) {
+			printf("ERR:Wrong dtb file used! i.MX6Q@1.2Ghz only"
+				"works with ldo-enable mode!\n");
+			/*
+			 * Currently, only imx6q-sabresd board might be here,
+			 * since only i.MX6Q support 1.2G and only Sabresd board
+			 * support ldo-bypass mode. So hardcode here.
+			 * You can also modify your board(i.MX6Q) dtb name if it
+			 * supports both ldo-bypass and ldo-enable mode.
+			 */
+			printf("Please use imx6q-sabresd-ldo.dtb!\n");
+			do_reset(NULL, 0, 0, NULL);
+		}
 		result = 1;
 	}
 
