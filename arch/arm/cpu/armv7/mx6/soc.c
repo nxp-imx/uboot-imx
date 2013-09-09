@@ -456,8 +456,8 @@ int check_ldo_bypass(void)
 	const int *ldo_mode;
 	int node;
 
-	/* get the right fdt_addr */
-	gd->fdt_blob = images.ft_addr;
+	/* get the right fdt_blob from the global working_fdt */
+	gd->fdt_blob = working_fdt;
 	/* Get the node from FDT for anatop ldo-bypass */
 	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1,
 		"fsl,imx6q-gpc");
