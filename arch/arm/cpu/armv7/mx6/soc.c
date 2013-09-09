@@ -487,7 +487,7 @@ int check_1_2G(void)
 	reg = readl(&fuse_bank0->cfg3);
 	if ((reg >> 16) & 0x3 == 0x3) {
 		if (ldo_bypass) {
-			printf("ERR:Wrong dtb file used! i.MX6Q@1.2Ghz only"
+			printf("Wrong dtb file used! i.MX6Q@1.2Ghz only "
 				"works with ldo-enable mode!\n");
 			/*
 			 * Currently, only imx6q-sabresd board might be here,
@@ -497,7 +497,7 @@ int check_1_2G(void)
 			 * supports both ldo-bypass and ldo-enable mode.
 			 */
 			printf("Please use imx6q-sabresd-ldo.dtb!\n");
-			do_reset(NULL, 0, 0, NULL);
+			hang();
 		}
 		result = 1;
 	}
