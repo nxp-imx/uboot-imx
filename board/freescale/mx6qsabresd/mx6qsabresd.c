@@ -908,6 +908,7 @@ int board_video_skip(void)
 		if (!panel) {
 			panel = displays[0].mode.name;
 			printf("No panel detected: default to %s\n", panel);
+			i = 0;
 		}
 	} else {
 		for (i = 0; i < ARRAY_SIZE(displays); i++) {
