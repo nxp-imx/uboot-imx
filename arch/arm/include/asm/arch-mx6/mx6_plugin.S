@@ -17,8 +17,13 @@
 
 #include <config.h>
 
-#define ROM_API_TABLE_BASE_ADDR		0xC0
-#define ROM_API_HWCNFG_SETUP_OFFSET	0x08
+#define ROM_API_TABLE_BASE_ADDR_LEGACY		0xC0
+#define ROM_API_TABLE_BASE_ADDR_MX6DQ_TO15	0xC4
+#define ROM_API_TABLE_BASE_ADDR_MX6DL_TO12	0xC4
+#define ROM_API_HWCNFG_SETUP_OFFSET		0x08
+#define ROM_VERSION_OFFSET			0x48
+#define ROM_VERSION_TO12			0x12
+#define ROM_VERSION_TO15			0x15
 
 plugin_start:
 
@@ -52,7 +57,21 @@ plugin_start:
  * check the _pu_irom_api_table for the address
  */
 before_calling_rom___pu_irom_hwcnfg_setup:
-	ldr r3, =ROM_API_TABLE_BASE_ADDR
+	ldr r3, =ROM_VERSION_OFFSET
+	ldr r4, [r3]
+#if defined(CONFIG_MX6SOLO) || defined(CONFIG_MX6DL)
+	ldr r3, =ROM_VERSION_TO12
+	cmp r4, r3
+	ldrge r3, =ROM_API_TABLE_BASE_ADDR_MX6DL_TO12
+	ldrlt r3, =ROM_API_TABLE_BASE_ADDR_LEGACY
+#elif defined(CONFIG_MX6Q)
+	ldr r3, =ROM_VERSION_TO15
+	cmp r4, r3
+	ldrge r3, =ROM_API_TABLE_BASE_ADDR_MX6DQ_TO15
+	ldrlt r3, =ROM_API_TABLE_BASE_ADDR_LEGACY
+#else
+	ldr r3, =ROM_API_TABLE_BASE_ADDR_LEGACY
+#endif
 	ldr r4, [r3, #ROM_API_HWCNFG_SETUP_OFFSET]
 	blx r4
 after_calling_rom___pu_irom_hwcnfg_setup:
