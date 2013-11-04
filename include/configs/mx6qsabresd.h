@@ -23,6 +23,7 @@
 #define CONFIG_MMCROOT			"/dev/mmcblk0p2"
 
 #include "mx6qsabre_common.h"
+#include <asm/arch/imx-regs.h>
 #include <asm/imx-common/gpio.h>
 
 #define CONFIG_SYS_FSL_USDHC_NUM	3
@@ -65,5 +66,20 @@
 #endif
 #endif
 #endif /* CONFIG_SPLASH_SCREEN */
+/* Framebuffer */
+#define CONFIG_VIDEO
+#define CONFIG_VIDEO_IPUV3
+#define CONFIG_CFB_CONSOLE
+#define CONFIG_VGA_AS_SINGLE_DEVICE
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+#define CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
+#define CONFIG_VIDEO_BMP_RLE8
+#define CONFIG_SPLASH_SCREEN
+#define CONFIG_SPLASH_SCREEN_ALIGN
+#define CONFIG_BMP_16BPP
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_VIDEO_BMP_LOGO
+#define CONFIG_IPUV3_CLK 260000000
+#define CONFIG_IMX_HDMI
 
 #endif                         /* __MX6QSABRESD_CONFIG_H */
