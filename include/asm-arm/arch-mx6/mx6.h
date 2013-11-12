@@ -717,6 +717,8 @@
 #define CHIP_TYPE_SOLOLITE	0x60000
 
 #define CHIP_REV_1_0            0x10
+#define CHIP_REV_1_2		0x12
+#define CHIP_REV_1_5		0x15
 #define CHIP_REV_2_0            0x20
 #define CHIP_REV_2_1            0x21
 #define CHIP_REV_MASK           0xff
@@ -749,6 +751,7 @@
 #define mx6_chip_is_dl()	chip_is_type(fsl_system_rev, CHIP_TYPE_DL)
 #define mx6_chip_is_solo()      chip_is_type(fsl_system_rev, CHIP_TYPE_SOLO)
 #define mx6_chip_is_sololite()	chip_is_type(fsl_system_rev, CHIP_TYPE_SOLOLITE)
+#define mx6_chip_rev()		(fsl_system_rev & 0xFF)
 
 #define mx6_chip_dq_name	"i.MX6Q"
 #define mx6_chip_dl_solo_name	"i.MX6DL/Solo"

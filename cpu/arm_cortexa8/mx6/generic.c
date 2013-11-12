@@ -1295,13 +1295,50 @@ U_BOOT_CMD(
 
 #ifdef CONFIG_SECURE_BOOT
 /* -------- start of HAB API updates ------------*/
-#define hab_rvt_report_event ((hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT)
-#define hab_rvt_report_status ((hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS)
-#define hab_rvt_authenticate_image \
-	((hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE)
-#define hab_rvt_entry ((hab_rvt_entry_t *) HAB_RVT_ENTRY)
-#define hab_rvt_exit ((hab_rvt_exit_t *) HAB_RVT_EXIT)
-#define hab_rvt_clock_init HAB_RVT_CLOCK_INIT
+#define hab_rvt_report_event_p						\
+(									\
+	(mx6_chip_is_dq() && (mx6_chip_rev() >= CHIP_REV_1_5)) ?	\
+	((hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT_NEW) :		\
+	(mx6_chip_is_dl() && (mx6_chip_rev() >= CHIP_REV_1_2)) ?	\
+	((hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT_NEW) :		\
+	((hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT)		\
+)
+
+#define hab_rvt_report_status_p						\
+(									\
+	(mx6_chip_is_dq() && (mx6_chip_rev() >= CHIP_REV_1_5)) ?	\
+	((hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS_NEW) :	\
+	(mx6_chip_is_dl() && (mx6_chip_rev() >= CHIP_REV_1_2)) ?	\
+	((hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS_NEW) :	\
+	((hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS)		\
+)
+
+#define hab_rvt_authenticate_image_p					\
+(									\
+	(mx6_chip_is_dq() && (mx6_chip_rev() >= CHIP_REV_1_5)) ?	\
+	((hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE_NEW) :\
+	(mx6_chip_is_dl() && (mx6_chip_rev() >= CHIP_REV_1_2)) ?	\
+	((hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE_NEW) :\
+	((hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE)	\
+)
+
+#define hab_rvt_entry_p							\
+(									\
+	(mx6_chip_is_dq() && (mx6_chip_rev() >= CHIP_REV_1_5)) ?	\
+	((hab_rvt_entry_t *)HAB_RVT_ENTRY_NEW) :			\
+	(mx6_chip_is_dl() && (mx6_chip_rev() >= CHIP_REV_1_2)) ?	\
+	((hab_rvt_entry_t *)HAB_RVT_ENTRY_NEW) :			\
+	((hab_rvt_entry_t *)HAB_RVT_ENTRY)				\
+)
+
+#define hab_rvt_exit_p							\
+(									\
+	(mx6_chip_is_dq() && (mx6_chip_rev() >= CHIP_REV_1_5)) ?	\
+	((hab_rvt_exit_t *)HAB_RVT_EXIT_NEW) :				\
+	(mx6_chip_is_dl() && (mx6_chip_rev() >= CHIP_REV_1_2)) ?	\
+	((hab_rvt_exit_t *)HAB_RVT_EXIT_NEW) :				\
+	((hab_rvt_exit_t *)HAB_RVT_EXIT)				\
+)
 
 #define OCOTP_CFG5_OFFSET	0x460
 #define IVT_SIZE		0x20
@@ -1373,6 +1410,11 @@ int get_hab_status(void)
 	size_t bytes = sizeof(event_data); /* Event size in bytes */
 	hab_config_t config = 0;
 	hab_state_t state = 0;
+	hab_rvt_report_event_t *hab_rvt_report_event;
+	hab_rvt_report_status_t *hab_rvt_report_status;
+
+	hab_rvt_report_event = hab_rvt_report_event_p;
+	hab_rvt_report_status = hab_rvt_report_status_p;
 
 	/* Check HAB status */
 	if (hab_rvt_report_status(&config, &state) != HAB_SUCCESS) {
@@ -1450,6 +1492,13 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 	ptrdiff_t ivt_offset = 0;
 	int result = 0;
 	ulong start;
+	hab_rvt_authenticate_image_t *hab_rvt_authenticate_image;
+	hab_rvt_entry_t *hab_rvt_entry;
+	hab_rvt_exit_t *hab_rvt_exit;
+
+	hab_rvt_authenticate_image = hab_rvt_authenticate_image_p;
+	hab_rvt_entry = hab_rvt_entry_p;
+	hab_rvt_exit = hab_rvt_exit_p;
 
 	printf("\nAuthenticate uImage from DDR location 0x%lx...\n", ddr_start);
 
