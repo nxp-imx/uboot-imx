@@ -228,6 +228,11 @@
 #define IP2APB_USBPHY2_BASE_ADDR    (AIPS2_OFF_BASE_ADDR + 0x7C000)
 
 #define CHIP_REV_1_0                 0x10
+#define CHIP_REV_1_1                 0x11
+#define CHIP_REV_1_2                 0x12
+#define CHIP_REV_1_3                 0x13
+#define CHIP_REV_1_4                 0x14
+#define CHIP_REV_1_5                 0x15
 #define IRAM_SIZE                    0x00040000
 #define IMX_IIM_BASE                 OCOTP_BASE_ADDR
 #define FEC_QUIRK_ENET_MAC

@@ -547,14 +547,51 @@ int arch_misc_init(void)
 #endif /* !CONFIG_ARCH_MISC_INIT */
 
 #ifdef CONFIG_SECURE_BOOT
-/* -------- start of HAB API updates ------------*/
-#define hab_rvt_report_event ((hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT)
-#define hab_rvt_report_status ((hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS)
-#define hab_rvt_authenticate_image \
-	((hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE)
-#define hab_rvt_entry ((hab_rvt_entry_t *) HAB_RVT_ENTRY)
-#define hab_rvt_exit ((hab_rvt_exit_t *) HAB_RVT_EXIT)
-#define hab_rvt_clock_init HAB_RVT_CLOCK_INIT
+
+#define hab_rvt_report_event_p						\
+(									\
+	(is_mx6dq() && (is_soc_rev(CHIP_REV_1_5) >= 0)) ?		\
+	((hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT_NEW) :		\
+	(is_mx6dlsolo() && (is_soc_rev(CHIP_REV_1_2) >= 0)) ?		\
+	((hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT_NEW) :		\
+	((hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT)		\
+)
+
+#define hab_rvt_report_status_p						\
+(									\
+	(is_mx6dq() && (is_soc_rev(CHIP_REV_1_5) >= 0)) ?		\
+	((hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS_NEW) :	\
+	(is_mx6dlsolo() && (is_soc_rev(CHIP_REV_1_2) >= 0)) ?		\
+	((hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS_NEW) :	\
+	((hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS)		\
+)
+
+#define hab_rvt_authenticate_image_p					\
+(									\
+	(is_mx6dq() && (is_soc_rev(CHIP_REV_1_5) >= 0)) ?		\
+	((hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE_NEW) : \
+	(is_mx6dlsolo() && (is_soc_rev(CHIP_REV_1_2) >= 0)) ?		\
+	((hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE_NEW) :\
+	((hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE)	\
+)
+
+#define hab_rvt_entry_p							\
+(									\
+	(is_mx6dq() && (is_soc_rev(CHIP_REV_1_5) >= 0)) ?		\
+	((hab_rvt_entry_t *)HAB_RVT_ENTRY_NEW) :			\
+	(is_mx6dlsolo() && (is_soc_rev(CHIP_REV_1_2) >= 0)) ?		\
+	((hab_rvt_entry_t *)HAB_RVT_ENTRY_NEW) :			\
+	((hab_rvt_entry_t *)HAB_RVT_ENTRY)				\
+)
+
+#define hab_rvt_exit_p							\
+(									\
+	(is_mx6dq() && (is_soc_rev(CHIP_REV_1_5) >= 0)) ?		\
+	((hab_rvt_exit_t *)HAB_RVT_EXIT_NEW) :				\
+	(is_mx6dlsolo() && (is_soc_rev(CHIP_REV_1_2) >= 0)) ?		\
+	((hab_rvt_exit_t *)HAB_RVT_EXIT_NEW) :				\
+	((hab_rvt_exit_t *)HAB_RVT_EXIT)				\
+)
 
 #define IVT_SIZE		0x20
 #define ALIGN_SIZE		0x1000
@@ -629,6 +666,11 @@ int get_hab_status(void)
 	size_t bytes = sizeof(event_data); /* Event size in bytes */
 	hab_config_t config = 0;
 	hab_state_t state = 0;
+	hab_rvt_report_event_t *hab_rvt_report_event;
+	hab_rvt_report_status_t *hab_rvt_report_status;
+
+	hab_rvt_report_event = hab_rvt_report_event_p;
+	hab_rvt_report_status = hab_rvt_report_status_p;
 
 	/* Check HAB status */
 	if (hab_rvt_report_status(&config, &state) != HAB_SUCCESS) {
@@ -706,6 +748,13 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 	ptrdiff_t ivt_offset = 0;
 	int result = 0;
 	ulong start;
+	hab_rvt_authenticate_image_t *hab_rvt_authenticate_image;
+	hab_rvt_entry_t *hab_rvt_entry;
+	hab_rvt_exit_t *hab_rvt_exit;
+
+	hab_rvt_authenticate_image = hab_rvt_authenticate_image_p;
+	hab_rvt_entry = hab_rvt_entry_p;
+	hab_rvt_exit = hab_rvt_exit_p;
 
 	if (check_hab_enable() == 1) {
 		printf("\nAuthenticate uImage from DDR location 0x%x...\n",
