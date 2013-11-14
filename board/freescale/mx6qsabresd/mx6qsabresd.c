@@ -361,6 +361,8 @@ int mmc_get_env_devno(void)
 
 	dev_no--;
 
+	setenv_ulong("mmcdev", dev_no);
+
 	return dev_no;
 }
 

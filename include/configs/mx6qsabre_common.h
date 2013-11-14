@@ -107,6 +107,19 @@
 #define CONFIG_MFG_NAND_PARTITION ""
 #endif
 
+/*
+ * For the SPI/WEIM NOR, it can't store all the images into it due to it's
+ * capacity, we need one default mmc device to load the left image or rootfs.
+ * The end user need change the default setting according to their needs.
+ * For NAND/SATA boot, the storage is big enough to hold all the stuff.
+ * For SD/MMC boot, mmcdev is dynamiclly created due to the boot SD/MMC slot.
+ */
+#if defined(CONFIG_SYS_BOOT_EIMNOR) || defined(CONFIG_SYS_BOOT_SPINOR)
+#define CONFIG_MMC_DEV_SET "mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV)
+#else
+#define CONFIG_MMC_DEV_SET " "
+#endif
+
 #define CONFIG_MFG_ENV_SETTINGS \
 	"mfgtool_args=setenv bootargs console=" CONFIG_CONSOLE_DEV ",115200 " \
 		"rdinit=/linuxrc " \
@@ -166,7 +179,8 @@
 	"console=" CONFIG_CONSOLE_DEV "\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"initrd_high=0xffffffff\0" \
-	"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
+	CONFIG_MMC_DEV_SET \
+	"\0" \
 	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
 	"smp=" CONFIG_SYS_NOSMP "\0"\
