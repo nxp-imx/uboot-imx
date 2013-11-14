@@ -487,7 +487,7 @@ int check_1_2G(void)
 			(struct fuse_bank0_regs *)bank->fuse_regs;
 
 	reg = readl(&fuse_bank0->cfg3);
-	if ((reg >> 16) & 0x3 == 0x3) {
+	if (((reg >> 16) & 0x3) == 0x3) {
 		if (ldo_bypass) {
 			printf("Wrong dtb file used! i.MX6Q@1.2Ghz only "
 				"works with ldo-enable mode!\n");

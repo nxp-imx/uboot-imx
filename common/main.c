@@ -49,6 +49,10 @@
 #include <fdt_support.h>
 #endif /* CONFIG_OF_LIBFDT */
 
+#ifdef is_boot_from_usb
+#include <environment.h>
+#endif
+
 #include <post.h>
 #include <linux/ctype.h>
 #include <menu.h>
