@@ -928,8 +928,13 @@ MXC_DCD_ITEM(90, MMDC_P0_BASE_ADDR + 0x404, 0x00011006)
 
 #else
 
-#define ROM_API_TABLE_BASE_ADDR		(0x000000C0)
-#define ROM_API_HWCNFG_SETUP_OFFSET	(0x08)
+#define ROM_API_TABLE_BASE_ADDR_LEGACY		0xC0
+#define ROM_API_TABLE_BASE_ADDR_MX6DQ_TO15	0xC4
+#define ROM_API_TABLE_BASE_ADDR_MX6DL_TO12	0xC4
+#define ROM_API_HWCNFG_SETUP_OFFSET		0x08
+#define ROM_VERSION_OFFSET			0x48
+#define ROM_VERSION_TO12			0x12
+#define ROM_VERSION_TO15			0x15
 
 /*****************PLUGIN IN mode********************/
 
@@ -1483,7 +1488,12 @@ plugin_start:
  * pu_irom_hwcnfg_setup is in 0x1fb5  ERIC : < what is the address in Rigel >
  */
 before_calling_rom___pu_irom_hwcnfg_setup:
-    ldr r3, =ROM_API_TABLE_BASE_ADDR
+    ldr r3, =ROM_VERSION_OFFSET
+    ldr r4, [r3]
+    ldr r3, =ROM_VERSION_TO12
+    cmp r4, r3
+    ldrge r3, =ROM_API_TABLE_BASE_ADDR_MX6DL_TO12
+    ldrlt r3, =ROM_API_TABLE_BASE_ADDR_LEGACY
     ldr r4, [r3, #ROM_API_HWCNFG_SETUP_OFFSET]
     blx r4
 after_calling_rom___pu_irom_hwcnfg_setup:
@@ -1510,7 +1520,7 @@ COPY_SIZE:        .word   _end_of_copy  - TEXT_BASE + CONFIG_FLASH_HEADER_OFFSET
 BOOT_DATA:        .word   TEXT_BASE
                   .word   _end_of_copy  - TEXT_BASE + CONFIG_FLASH_HEADER_OFFSET
                   .word   0
-#else
+#else /* i.MX6Q PATH */
 
 /*DDR clock:480MHz, ipg clock:40MHz, AHB clock:80MHz*/
 #define CONFIG_IPG_40M_FR_PLL3
@@ -1774,7 +1784,12 @@ plugin_start:
  * check the _pu_irom_api_table for the address
  */
 before_calling_rom___pu_irom_hwcnfg_setup:
-    ldr r3, =ROM_API_TABLE_BASE_ADDR
+    ldr r3, =ROM_VERSION_OFFSET
+    ldr r4, [r3]
+    ldr r3, =ROM_VERSION_TO15
+    cmp r4, r3
+    ldrge r3, =ROM_API_TABLE_BASE_ADDR_MX6DQ_TO15
+    ldrlt r3, =ROM_API_TABLE_BASE_ADDR_LEGACY
     ldr r4, [r3, #ROM_API_HWCNFG_SETUP_OFFSET]
     blx r4
 after_calling_rom___pu_irom_hwcnfg_setup:
