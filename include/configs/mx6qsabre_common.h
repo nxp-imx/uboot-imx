@@ -136,17 +136,18 @@
 
 #if defined(CONFIG_SYS_BOOT_NAND)
 	/*
-	 * The partions' layout for NAND is:
-	 *     mtd0: 16M      (uboot)
-	 *     mtd1: 16M      (kernel)
-	 *     mtd2: 16M      (dtb)
-	 *     mtd3: left     (rootfs)
+	 * The dts also enables the WEIN NOR which is mtd0.
+	 * So the partions' layout for NAND is:
+	 *     mtd1: 16M      (uboot)
+	 *     mtd2: 16M      (kernel)
+	 *     mtd3: 16M      (dtb)
+	 *     mtd4: left     (rootfs)
 	 */
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
 	"fdt_addr=0x18000000\0" \
 	"fdt_high=0xffffffff\0"	  \
-	"bootargs=console=" CONFIG_CONSOLE_DEV ",115200 ubi.mtd=3 "  \
+	"bootargs=console=" CONFIG_CONSOLE_DEV ",115200 ubi.mtd=4 "  \
 		"root=ubi0:rootfs rootfstype=ubifs "		     \
 		"mtdparts=gpmi-nand:16m(boot),16m(kernel),16m(dtb),-(rootfs)\0"\
 	"bootcmd=nand read ${loadaddr} 0x1000000 0x800000;"\
