@@ -1,5 +1,5 @@
 /*
- * Copyright 2007, 2010-2011 Freescale Semiconductor, Inc
+ * Copyright 2007, 2010-2013 Freescale Semiconductor, Inc.
  * Andy Fleming
  *
  * Based vaguely on the pxa mmc code:
@@ -61,10 +61,22 @@ struct fsl_esdhc {
 	uint    mixctrl;
 	char    reserved1[4];
 	uint	fevt;
-	char	reserved2[168];
+	uint    admaerrstat;
+	uint    admasysaddr;
+	char    reserved2[4];
+	uint    dllctrl;
+	uint    dllstat;
+	uint    clktunectrlstatus;
+	char    reserved3[84];
+	uint    vendorspec;
+	uint    mmcboot;
+	uint    vendorspec2;
+	char	reserved4[48];
 	uint	hostver;
+#ifndef ARCH_MXC
 	char	reserved3[780];
 	uint	scr;
+#endif
 };
 
 /* Return the XFERTYP flags for a given command and data packet */
@@ -476,6 +488,17 @@ static int esdhc_init(struct mmc *mmc)
 	/* Wait until the controller is available */
 	while ((esdhc_read32(&regs->sysctl) & SYSCTL_RSTA) && --timeout)
 		udelay(1000);
+
+#if defined(CONFIG_FSL_USDHC)
+	/* RSTA doesn't reset MMC_BOOT register, so manually reset it */
+	esdhc_write32(&regs->mmcboot, 0x0);
+	/* Reset MIX_CTRL and CLK_TUNE_CTRL_STATUS regs to 0 */
+	esdhc_write32(&regs->mixctrl, 0x0);
+	esdhc_write32(&regs->clktunectrlstatus, 0x0);
+
+	/* Put VEND_SPEC to default value */
+	esdhc_write32(&regs->vendorspec, VENDORSPEC_INIT);
+#endif
 
 #ifndef ARCH_MXC
 	/* Enable cache snooping */
