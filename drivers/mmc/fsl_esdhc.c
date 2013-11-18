@@ -1,5 +1,5 @@
 /*
- * Copyright 2007, 2010-2011 Freescale Semiconductor, Inc
+ * Copyright 2007, 2010-2016 Freescale Semiconductor, Inc
  * Andy Fleming
  *
  * Based vaguely on the pxa mmc code:
@@ -54,22 +54,30 @@ struct fsl_esdhc {
 	uint    fevt;		/* Force event register */
 	uint    admaes;		/* ADMA error status register */
 	uint    adsaddr;	/* ADMA system address register */
-	char    reserved2[100];	/* reserved */
-	uint    vendorspec;	/* Vendor Specific register */
-	char    reserved3[56];	/* reserved */
+	char    reserved2[4];
+	uint    dllctrl;
+	uint    dllstat;
+	uint    clktunectrlstatus;
+	char    reserved3[84];
+	uint    vendorspec;
+	uint    mmcboot;
+	uint    vendorspec2;
+	char	reserved4[48];
 	uint    hostver;	/* Host controller version register */
-	char    reserved4[4];	/* reserved */
-	uint    dmaerraddr;	/* DMA error address register */
+#ifndef ARCH_MXC
 	char    reserved5[4];	/* reserved */
-	uint    dmaerrattr;	/* DMA error attribute register */
+	uint    dmaerraddr;	/* DMA error address register */
 	char    reserved6[4];	/* reserved */
+	uint    dmaerrattr;	/* DMA error attribute register */
+	char    reserved7[4];	/* reserved */
 	uint    hostcapblt2;	/* Host controller capabilities register 2 */
-	char    reserved7[8];	/* reserved */
+	char    reserved8[8];	/* reserved */
 	uint    tcr;		/* Tuning control register */
-	char    reserved8[28];	/* reserved */
+	char    reserved9[28];	/* reserved */
 	uint    sddirctl;	/* SD direction control register */
-	char    reserved9[712];	/* reserved */
+	char    reserved10[712];/* reserved */
 	uint    scr;		/* eSDHC control register */
+#endif
 };
 
 /* Return the XFERTYP flags for a given command and data packet */
@@ -590,6 +598,17 @@ static int esdhc_init(struct mmc *mmc)
 	/* Wait until the controller is available */
 	while ((esdhc_read32(&regs->sysctl) & SYSCTL_RSTA) && --timeout)
 		udelay(1000);
+
+#if defined(CONFIG_FSL_USDHC)
+	/* RSTA doesn't reset MMC_BOOT register, so manually reset it */
+	esdhc_write32(&regs->mmcboot, 0x0);
+	/* Reset MIX_CTRL and CLK_TUNE_CTRL_STATUS regs to 0 */
+	esdhc_write32(&regs->mixctrl, 0x0);
+	esdhc_write32(&regs->clktunectrlstatus, 0x0);
+
+	/* Put VEND_SPEC to default value */
+	esdhc_write32(&regs->vendorspec, VENDORSPEC_INIT);
+#endif
 
 #ifndef ARCH_MXC
 	/* Enable cache snooping */
