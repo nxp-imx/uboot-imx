@@ -38,7 +38,7 @@
 #include <miiphy.h>
 #include <netdev.h>
 
-#if defined(CONFIG_MXC_EPDC)
+#if defined(CONFIG_MX6DL) && defined(CONFIG_MXC_EPDC)
 #include <lcd.h>
 #include <mxc_epdc_fb.h>
 #endif
@@ -185,6 +185,7 @@ iomux_v3_cfg_t const usdhc4_pads[] = {
 	MX6_PAD_SD4_DAT7__USDHC4_DAT7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 };
 
+#if defined(CONFIG_MX6DL) && defined(CONFIG_MXC_EPDC)
 static iomux_v3_cfg_t const epdc_enable_pads[] = {
 	MX6_PAD_EIM_A16__EPDC_SDDO_0	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
 	MX6_PAD_EIM_DA10__EPDC_SDDO_1	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
@@ -230,6 +231,7 @@ static iomux_v3_cfg_t const epdc_disable_pads[] = {
 	MX6_PAD_EIM_DA5__GPIO_3_5,
 	MX6_PAD_EIM_DA6__GPIO_3_6,
 };
+#endif
 
 static void setup_iomux_uart(void)
 {
@@ -488,7 +490,7 @@ int board_mmc_init(bd_t *bis)
 }
 #endif
 
-#ifdef CONFIG_MXC_EPDC
+#if defined(CONFIG_MX6DL) && defined(CONFIG_MXC_EPDC)
 #ifdef CONFIG_SPLASH_SCREEN
 extern int mmc_get_env_devno(void);
 int setup_splash_img(void)
@@ -844,7 +846,7 @@ int board_init(void)
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
-#ifdef CONFIG_MXC_EPDC
+#if defined(CONFIG_MX6DL) && defined(CONFIG_MXC_EPDC)
 	setup_epdc();
 #endif
 
