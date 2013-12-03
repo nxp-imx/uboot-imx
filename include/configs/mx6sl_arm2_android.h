@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX6Q Sabre Lite2 Freescale board.
  *
@@ -43,7 +43,7 @@
 *   For system.img growing up more than 256MB, more buffer needs
 *   to receive the system.img*/
 #define CONFIG_FASTBOOT_TRANSFER_BUF    0x8c000000
-#define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x14000000 /* 320M byte */
+#define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x20000000 /* 512M byte */
 
 
 #define CONFIG_CMD_BOOTI

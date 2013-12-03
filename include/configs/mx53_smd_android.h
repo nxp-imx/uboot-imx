@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX53-SMD Freescale board.
  *
@@ -98,7 +98,7 @@
 #define CONFIG_FASTBOOT_SERIAL_NUM	"12345"
 #define CONFIG_FASTBOOT_SATA_NO		 0
 #define CONFIG_FASTBOOT_TRANSFER_BUF	0x78000000
-#define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x14000000 /* 320M byte */
+#define CONFIG_FASTBOOT_TRANSFER_BUF_SIZE 0x20000000 /* 512M byte */
 
 #define CONFIG_CMD_BOOTI
 #define CONFIG_ANDROID_RECOVERY
