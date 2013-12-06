@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX6Q Sabre auto Freescale board.
  *
