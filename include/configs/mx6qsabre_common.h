@@ -412,7 +412,11 @@
 #define CONFIG_BMP_16BPP
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
+#ifdef CONFIG_MX6DL
+#define CONFIG_IPUV3_CLK 198000000
+#else
 #define CONFIG_IPUV3_CLK 264000000
+#endif
 #define CONFIG_IMX_HDMI
 
 #endif                         /* __MX6QSABRE_COMMON_CONFIG_H */
