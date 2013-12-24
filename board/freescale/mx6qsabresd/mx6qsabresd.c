@@ -1075,3 +1075,18 @@ int checkboard(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_IMX_UDC
+iomux_v3_cfg_t const otg_udc_pads[] = {
+	(MX6_PAD_ENET_RX_ER__ANATOP_USBOTG_ID | MUX_PAD_CTRL(NO_PAD_CTRL)),
+};
+void udc_pins_setting(void)
+{
+	imx_iomux_v3_setup_multiple_pads(otg_udc_pads,
+			ARRAY_SIZE(otg_udc_pads));
+
+	/*set daisy chain for otg_pin_id on 6q. for 6dl, this bit is reserved*/
+    mxc_iomux_set_gpr_register(1, 13, 1, 0);
+}
+
+#endif /*CONFIG_IMX_UDC*/

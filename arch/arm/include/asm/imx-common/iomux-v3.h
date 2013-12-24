@@ -3,7 +3,7 @@
  * Copyright (C) 2009 by Jan Weitzel Phytec Messtechnik GmbH,
  *			<armlinux@phytec.de>
  *
- * Copyright (C) 2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2011-2013 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -100,5 +100,10 @@ typedef u64 iomux_v3_cfg_t;
 int imx_iomux_v3_setup_pad(iomux_v3_cfg_t pad);
 int imx_iomux_v3_setup_multiple_pads(iomux_v3_cfg_t const *pad_list,
 				     unsigned count);
+/*
+* Set bits for general purpose registers
+*/
+void mxc_iomux_set_gpr_register(int group, int start_bit,
+					 int num_bits, int value);
 
 #endif	/* __MACH_IOMUX_V3_H__*/

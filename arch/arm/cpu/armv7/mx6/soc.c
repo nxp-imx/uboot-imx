@@ -37,7 +37,10 @@
 #include <libfdt.h>
 #include <stdbool.h>
 #include <asm/arch/mxc_hdmi.h>
-#include <asm/arch/crm_regs.h>
+#ifdef CONFIG_IMX_UDC
+#include <asm/arch/mx6_usbphy.h>
+#include <usb/imx_udc.h>
+#endif
 
 struct scu_regs {
 	u32	ctrl;
@@ -860,5 +863,51 @@ void imx_setup_hdmi(void)
 		for (count = 0 ; count < 5 ; count++)
 			writeb(val, &hdmi->fc_invidconf);
 	}
+}
+#endif
+
+#ifdef CONFIG_IMX_UDC
+void set_usboh3_clk(void)
+{
+	udc_pins_setting();
+}
+
+void set_usb_phy1_clk(void)
+{
+	/* make sure pll3 is enable here */
+	writel((BM_ANADIG_USB1_CHRG_DETECT_EN_B |
+		BM_ANADIG_USB1_CHRG_DETECT_CHK_CHRG_B),
+		ANATOP_BASE_ADDR + HW_ANADIG_USB1_CHRG_DETECT_SET);
+
+	writel(BM_ANADIG_USB1_PLL_480_CTRL_EN_USB_CLKS,
+		ANATOP_BASE_ADDR + HW_ANADIG_USB1_PLL_480_CTRL_SET);
+}
+void enable_usb_phy1_clk(unsigned char enable)
+{
+	if (enable)
+		writel(BM_USBPHY_CTRL_CLKGATE,
+			USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL_CLR);
+	else
+		writel(BM_USBPHY_CTRL_CLKGATE,
+			USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL_SET);
+}
+
+void reset_usb_phy1(void)
+{
+	/* Reset USBPHY module */
+	u32 temp;
+	temp = readl(USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL);
+	temp |= BM_USBPHY_CTRL_SFTRST;
+	writel(temp, USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL);
+	udelay(10);
+
+	/* Remove CLKGATE and SFTRST */
+	temp = readl(USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL);
+	temp &= ~(BM_USBPHY_CTRL_CLKGATE | BM_USBPHY_CTRL_SFTRST);
+	writel(temp, USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL);
+	udelay(10);
+
+	/* Power up the PHY */
+	writel(0, USB_PHY0_BASE_ADDR + HW_USBPHY_PWD);
 }
 #endif

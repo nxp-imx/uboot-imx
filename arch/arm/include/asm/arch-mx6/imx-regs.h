@@ -228,6 +228,12 @@
 #define IP2APB_USBPHY1_BASE_ADDR    (AIPS2_OFF_BASE_ADDR + 0x78000)
 #define IP2APB_USBPHY2_BASE_ADDR    (AIPS2_OFF_BASE_ADDR + 0x7C000)
 
+#ifdef CONFIG_MX6SL
+#define OTG_BASE_ADDR               USBO2H_USB_BASE_ADDR
+#else
+#define OTG_BASE_ADDR               USBOH3_USB_BASE_ADDR
+#endif
+
 #define CHIP_REV_1_0                 0x10
 #define CHIP_REV_1_1                 0x11
 #define CHIP_REV_1_2                 0x12

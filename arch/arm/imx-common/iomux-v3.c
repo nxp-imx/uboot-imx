@@ -4,7 +4,7 @@
  * Copyright (C) 2009 by Jan Weitzel Phytec Messtechnik GmbH,
  *                       <armlinux@phytec.de>
  *
- * Copyright (C) 2004-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2004-2013 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,4 +68,19 @@ int imx_iomux_v3_setup_multiple_pads(iomux_v3_cfg_t const *pad_list,
 		p++;
 	}
 	return 0;
+}
+
+void mxc_iomux_set_gpr_register(int group, int start_bit,
+					int num_bits, int value)
+{
+	int i = 0;
+	u32 reg;
+	reg = readl(base + group * 4);
+	while (num_bits) {
+		reg &= ~(1<<(start_bit + i));
+		i++;
+		num_bits--;
+	}
+	reg |= (value << start_bit);
+	writel(reg, base + group * 4);
 }
