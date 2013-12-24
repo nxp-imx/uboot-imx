@@ -42,6 +42,13 @@
 #include <linux/fb.h>
 #include <ipu_pixfmt.h>
 
+#ifdef CONFIG_FASTBOOT
+#include <fastboot.h>
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif
+#endif /*CONFIG_FASTBOOT*/
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #define I2C_EXP_RST IMX_GPIO_NR(1, 15)
@@ -771,6 +778,114 @@ int board_late_init(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_FASTBOOT
+
+void board_fastboot_setup(void)
+{
+	switch (get_boot_device()) {
+#if defined(CONFIG_FASTBOOT_STORAGE_SATA)
+	case SATA_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "sata");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "booti sata");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_SATA*/
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	case SD3_BOOT:
+	case MMC3_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "mmc0");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "booti mmc0");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
+	case NAND_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "nand");
+		if (!getenv("fbparts"))
+			setenv("fbparts",
+			 "16m@16m(boot) 128m@32m(recovery) 810m@160m(android_root)ubifs");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd",
+				"nand read ${loadaddr} ${boot_nand_offset} "
+				"${boot_nand_size};booti ${loadaddr}");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
+	default:
+		printf("unsupported boot devices\n");
+		break;
+	}
+}
+
+#ifdef CONFIG_ANDROID_RECOVERY
+
+#define GPIO_VOL_DN_KEY IMX_GPIO_NR(5, 14)
+iomux_v3_cfg_t const recovery_key_pads[] = {
+	(MX6_PAD_DISP0_DAT20__GPIO_5_14 | MUX_PAD_CTRL(NO_PAD_CTRL)),
+};
+
+int check_recovery_cmd_file(void)
+{
+	int button_pressed = 0;
+	int recovery_mode = 0;
+
+	recovery_mode = recovery_check_and_clean_flag();
+
+	/* Check Recovery Combo Button press or not. */
+	imx_iomux_v3_setup_multiple_pads(recovery_key_pads,
+		ARRAY_SIZE(recovery_key_pads));
+
+	gpio_direction_input(GPIO_VOL_DN_KEY);
+
+	if (gpio_get_value(GPIO_VOL_DN_KEY) == 0) { /* VOL_DN key is low assert */
+		button_pressed = 1;
+		printf("Recovery key pressed\n");
+	}
+
+	return recovery_mode || button_pressed;
+}
+
+void board_recovery_setup(void)
+{
+	int bootdev = get_boot_device();
+
+	switch (bootdev) {
+#if defined(CONFIG_FASTBOOT_STORAGE_SATA)
+	case SATA_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery", "booti sata recovery");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_SATA*/
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	case SD3_BOOT:
+	case MMC3_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery", "booti mmc0 recovery");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
+	case NAND_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery",
+				"nand read ${loadaddr} ${recovery_nand_offset} "
+				"${recovery_nand_size};booti ${loadaddr}");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
+	default:
+		printf("Unsupported bootup device for recovery: dev: %d\n",
+			bootdev);
+		return;
+	}
+
+	printf("setup env for recovery..\n");
+	setenv("bootcmd", "run bootcmd_android_recovery");
+}
+#endif /*CONFIG_ANDROID_RECOVERY*/
+
+#endif /*CONFIG_FASTBOOT*/
 
 int checkboard(void)
 {

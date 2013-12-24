@@ -37,6 +37,11 @@
 #include <libfdt.h>
 #include <stdbool.h>
 #include <asm/arch/mxc_hdmi.h>
+#ifdef CONFIG_FASTBOOT
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif
+#endif
 #ifdef CONFIG_IMX_UDC
 #include <asm/arch/mx6_usbphy.h>
 #include <usb/imx_udc.h>
@@ -449,6 +454,49 @@ const struct boot_mode soc_boot_modes[] = {
 	{"esdhc4",	MAKE_CFGVAL(0x40, 0x38, 0x00, 0x00)},
 	{NULL,		0},
 };
+
+enum boot_device get_boot_device(void)
+{
+    enum boot_device boot_dev = UNKNOWN_BOOT;
+	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	uint bt_mem_ctl = (soc_sbmr & 0x000000FF) >> 4 ;
+	uint bt_mem_type = (soc_sbmr & 0x00000008) >> 3;
+	uint bt_dev_port = (soc_sbmr & 0x00001800) >> 11;
+
+	switch (bt_mem_ctl) {
+	case 0x0:
+		if (bt_mem_type)
+			boot_dev = ONE_NAND_BOOT;
+		else
+			boot_dev = WEIM_NOR_BOOT;
+		break;
+	case 0x2:
+			boot_dev = SATA_BOOT;
+		break;
+	case 0x3:
+		if (bt_mem_type)
+			boot_dev = I2C_BOOT;
+		else
+			boot_dev = SPI_NOR_BOOT;
+		break;
+	case 0x4:
+	case 0x5:
+		boot_dev = bt_dev_port + SD1_BOOT;
+		break;
+	case 0x6:
+	case 0x7:
+		boot_dev = bt_dev_port + MMC1_BOOT;
+		break;
+	case 0x8 ... 0xf:
+		boot_dev = NAND_BOOT;
+		break;
+	default:
+		boot_dev = UNKNOWN_BOOT;
+		break;
+	}
+
+    return boot_dev;
+}
 
 void s_init(void)
 {
@@ -865,6 +913,52 @@ void imx_setup_hdmi(void)
 	}
 }
 #endif
+
+#ifdef CONFIG_FASTBOOT
+
+#ifdef CONFIG_ANDROID_RECOVERY
+#define ANDROID_RECOVERY_BOOT  (1 << 7)
+/* check if the recovery bit is set by kernel, it can be set by kernel
+ * issue a command '# reboot recovery' */
+int recovery_check_and_clean_flag(void)
+{
+	int flag_set = 0;
+	u32 reg;
+	reg = readl(SNVS_BASE_ADDR + SNVS_LPGPR);
+
+	flag_set = !!(reg & ANDROID_RECOVERY_BOOT);
+    printf("check_and_clean: reg %x, flag_set %d\n", reg, flag_set);
+	/* clean it in case looping infinite here.... */
+	if (flag_set) {
+		reg &= ~ANDROID_RECOVERY_BOOT;
+		writel(reg, SNVS_BASE_ADDR + SNVS_LPGPR);
+	}
+
+	return flag_set;
+}
+#endif /*CONFIG_ANDROID_RECOVERY*/
+
+#define ANDROID_FASTBOOT_BOOT  (1 << 8)
+/* check if the recovery bit is set by kernel, it can be set by kernel
+ * issue a command '# reboot fastboot' */
+int fastboot_check_and_clean_flag(void)
+{
+	int flag_set = 0;
+	u32 reg;
+
+	reg = readl(SNVS_BASE_ADDR + SNVS_LPGPR);
+
+	flag_set = !!(reg & ANDROID_FASTBOOT_BOOT);
+
+	/* clean it in case looping infinite here.... */
+	if (flag_set) {
+		reg &= ~ANDROID_FASTBOOT_BOOT;
+		writel(reg, SNVS_BASE_ADDR + SNVS_LPGPR);
+	}
+
+	return flag_set;
+}
+#endif /*CONFIG_FASTBOOT*/
 
 #ifdef CONFIG_IMX_UDC
 void set_usboh3_clk(void)

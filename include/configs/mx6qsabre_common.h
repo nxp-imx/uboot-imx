@@ -419,4 +419,8 @@
 #endif
 #define CONFIG_IMX_HDMI
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx6qsabreandroid_common.h"
+#endif
+
 #endif                         /* __MX6QSABRE_COMMON_CONFIG_H */

@@ -243,6 +243,7 @@
 #define IRAM_SIZE                    0x00040000
 #define IMX_IIM_BASE                 OCOTP_BASE_ADDR
 #define FEC_QUIRK_ENET_MAC
+#define SNVS_LPGPR                   0x68
 
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 #include <asm/types.h>

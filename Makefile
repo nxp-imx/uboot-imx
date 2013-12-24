@@ -321,6 +321,7 @@ LIBS-y += drivers/usb/phy/libusb_phy.o
 LIBS-y += drivers/usb/ulpi/libusb_ulpi.o
 LIBS-y += drivers/video/libvideo.o
 LIBS-y += drivers/watchdog/libwatchdog.o
+LIBS-y += drivers/fastboot/libfastboot.o
 LIBS-y += common/libcommon.o
 LIBS-y += lib/libfdt/libfdt.o
 LIBS-y += api/libapi.o
