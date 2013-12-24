@@ -22,6 +22,209 @@
 #define ROM_API_TABLE_BASE_ADDR		0xC0
 #define ROM_API_HWCNFG_SETUP_OFFSET	0x08
 
+.macro imx6dlarm2_ddr_setting
+	ldr r0, =CCM_BASE_ADDR
+	ldr r1, =0xffffffff
+	str r1, [r0, #0x068]
+	ldr r1, =0xffffffff
+	str r1, [r0, #0x06c]
+	ldr r1, =0xffffffff
+	str r1, [r0, #0x070]
+	ldr r1, =0xffffffff
+	str r1, [r0, #0x074]
+	ldr r1, =0xffffffff
+	str r1, [r0, #0x078]
+	ldr r1, =0xffffffff
+	str r1, [r0, #0x07c]
+	ldr r1, =0xffffffff
+	str r1, [r0, #0x080]
+	ldr r1, =0xffffffff
+	str r1, [r0, #0x084]
+
+	ldr r0, =IOMUXC_BASE_ADDR
+	ldr r1, =0x000c0000
+	str r1, [r0, #0x798]
+	ldr r1, =0x00000000
+	str r1, [r0, #0x758]
+
+	ldr r1, =0x00000030
+	str r1, [r0, #0x588]
+	str r1, [r0, #0x594]
+	str r1, [r0, #0x56c]
+	str r1, [r0, #0x578]
+	str r1, [r0, #0x74c]
+	str r1, [r0, #0x57c]
+
+	ldr r1, =0x00003000
+	str r1, [r0, #0x590]
+	str r1, [r0, #0x598]
+
+	ldr r1, =0x00000000
+	str r1, [r0, #0x58c]
+
+	ldr r1, =0x00003030
+	str r1, [r0, #0x59c]
+	str r1, [r0, #0x5a0]
+
+	ldr r1, =0x00000030
+	str r1, [r0, #0x78c]
+
+	ldr r1, =0x00020000
+	str r1, [r0, #0x750]
+
+	ldr r1, =0x00000030
+	str r1, [r0, #0x5a8]
+	str r1, [r0, #0x5b0]
+	str r1, [r0, #0x524]
+	str r1, [r0, #0x51c]
+	str r1, [r0, #0x518]
+	str r1, [r0, #0x50c]
+	str r1, [r0, #0x5b8]
+	str r1, [r0, #0x5c0]
+
+	ldr r1, =0x00020000
+	str r1, [r0, #0x774]
+
+	ldr r1, =0x00000030
+	str r1, [r0, #0x784]
+	str r1, [r0, #0x788]
+	str r1, [r0, #0x794]
+	str r1, [r0, #0x79c]
+	str r1, [r0, #0x7a0]
+	str r1, [r0, #0x7a4]
+	str r1, [r0, #0x7a8]
+	str r1, [r0, #0x748]
+	str r1, [r0, #0x5ac]
+	str r1, [r0, #0x5b4]
+	str r1, [r0, #0x528]
+	str r1, [r0, #0x520]
+	str r1, [r0, #0x514]
+	str r1, [r0, #0x510]
+	str r1, [r0, #0x5bc]
+	str r1, [r0, #0x5c4]
+
+	ldr r0, =MMDC_P0_BASE_ADDR
+	ldr r1, =MMDC_P1_BASE_ADDR
+	ldr r2, =0xa1390003
+	str r2, [r0, #0x800]
+	str r2, [r1, #0x800]
+
+	ldr r2, =0x001F001F
+	str r2, [r0, #0x80c]
+	str r2, [r0, #0x810]
+
+	ldr r2, =0x00370037
+	str r2, [r1, #0x80c]
+	str r2, [r1, #0x810]
+
+	ldr r2, =0x422f0220
+	str r2, [r0, #0x83c]
+	ldr r2, =0x021f0219
+	str r2, [r0, #0x840]
+
+	ldr r2, =0x422f0220
+	str r2, [r1, #0x83c]
+	ldr r2, =0x022d022f
+	str r2, [r1, #0x840]
+
+	ldr r2, =0x47494b49
+	str r2, [r0, #0x848]
+	ldr r2, =0x48484c47
+	str r2, [r1, #0x848]
+
+	ldr r2, =0x39382b2f
+	str r2, [r0, #0x850]
+	ldr r2, =0x2f35312c
+	str r2, [r1, #0x850]
+
+	ldr r2, =0x33333333
+	str r2, [r0, #0x81c]
+	str r2, [r0, #0x820]
+	str r2, [r0, #0x824]
+	str r2, [r0, #0x828]
+	str r2, [r1, #0x81c]
+	str r2, [r1, #0x820]
+	str r2, [r1, #0x824]
+	str r2, [r1, #0x828]
+
+	ldr r2, =0x00000800
+	str r2, [r0, #0x8b8]
+	ldr r2, =0x00000800
+	str r2, [r1, #0x8b8]
+
+	ldr r2, =0x0002002d
+	str r2, [r0, #0x004]
+	ldr r2, =0x00333030
+	str r2, [r0, #0x008]
+	ldr r2, =0x40445323
+	str r2, [r0, #0x00c]
+	ldr r2, =0xb66e8c63
+	str r2, [r0, #0x010]
+	ldr r2, =0x01ff00db
+	str r2, [r0, #0x014]
+	ldr r2, =0x00081740
+	str r2, [r0, #0x018]
+
+	ldr r2, =0x00008000
+	str r2, [r0, #0x01c]
+
+	ldr r2, =0x000026d2
+	str r2, [r0, #0x02c]
+	ldr r2, =0x00440e21
+	str r2, [r0, #0x030]
+
+#ifdef CONFIG_DDR_32BIT
+	ldr r2, =0x00000017
+	str r2, [r0, #0x040]
+	ldr r2, =0xc3190000
+	str r2, [r0, #0x000]
+#else
+	ldr r2, =0x00000027
+	str r2, [r0, #0x040]
+	ldr r2, =0xc31a0000
+	str r2, [r0, #0x000]
+#endif
+
+	ldr r2, =0x04008032
+	str r2, [r0, #0x01c]
+	ldr r2, =0x0400803a
+	str r2, [r0, #0x01c]
+
+	ldr r2, =0x00008033
+	str r2, [r0, #0x01c]
+	ldr r2, =0x0000803b
+	str r2, [r0, #0x01c]
+
+	ldr r2, =0x00428031
+	str r2, [r0, #0x01c]
+	ldr r2, =0x00428039
+	str r2, [r0, #0x01c]
+
+	ldr r2, =0x07208030
+	str r2, [r0, #0x01c]
+	ldr r2, =0x07208038
+	str r2, [r0, #0x01c]
+
+	ldr r2, =0x04008040
+	str r2, [r0, #0x01c]
+	ldr r2, =0x04008048
+	str r2, [r0, #0x01c]
+
+	ldr r2, =0x00005800
+	str r2, [r0, #0x020]
+
+	ldr r2, =0x00000007
+	str r2, [r0, #0x818]
+	str r2, [r1, #0x818]
+
+	ldr r2, =0x0002556d
+	str r2, [r0, #0x004]
+	ldr r2, =0x00011006
+	str r2, [r1, #0x004]
+	ldr r2, =0x00000000
+	str r2, [r0, #0x01c]
+.endm
+
 .macro imx6dqarm2_ddr_setting
 	ldr r0, =CCM_BASE_ADDR
 	ldr r1, =0xffffffff
@@ -258,6 +461,8 @@
 .macro imx6_ddr_setting
 	#if defined (CONFIG_MX6Q)
 	imx6dqarm2_ddr_setting
+	#elif defined (CONFIG_MX6DL)
+	imx6dlarm2_ddr_setting
 	#else
 	#error "SOC not configured"
 	#endif
