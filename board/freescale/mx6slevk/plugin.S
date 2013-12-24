@@ -17,9 +17,6 @@
 
 #include <config.h>
 
-#define ROM_API_TABLE_BASE_ADDR		0xC0
-#define ROM_API_HWCNFG_SETUP_OFFSET	0x08
-
 /* DDR script */
 .macro imx6slevk_ddr_setting
 	ldr r0, =CCM_BASE_ADDR
