@@ -33,6 +33,7 @@ COBJS-$(CONFIG_PS2MULT) += ps2mult.o ps2ser.o
 endif
 COBJS-y += input.o
 COBJS-$(CONFIG_OF_CONTROL) += key_matrix.o
+COBJS-$(CONFIG_MXC_KPD) += mxc_keyb.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
