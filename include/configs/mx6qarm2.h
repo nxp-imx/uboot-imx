@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2014 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6Q Armadillo2 board.
  *
@@ -55,6 +55,12 @@
 
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE		UART4_BASE
+
+/* OCOTP Config */
+#define CONFIG_CMD_FUSE
+#ifdef CONFIG_CMD_FUSE
+#define CONFIG_MXC_OCOTP
+#endif
 
 /* MMC Configs */
 #define CONFIG_FSL_ESDHC

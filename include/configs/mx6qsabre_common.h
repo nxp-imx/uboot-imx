@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2014 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6Q SabreSD board.
  *
@@ -56,6 +56,12 @@
 #define CONFIG_MXC_GPIO
 
 #define CONFIG_MXC_UART
+
+/* OCOTP Config */
+#define CONFIG_CMD_FUSE
+#ifdef CONFIG_CMD_FUSE
+#define CONFIG_MXC_OCOTP
+#endif
 
 /* MMC Configs */
 #define CONFIG_FSL_ESDHC
