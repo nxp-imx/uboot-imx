@@ -241,7 +241,6 @@
 #define CHIP_REV_1_4                 0x14
 #define CHIP_REV_1_5                 0x15
 #define IRAM_SIZE                    0x00040000
-#define IMX_IIM_BASE                 OCOTP_BASE_ADDR
 #define FEC_QUIRK_ENET_MAC
 #define SNVS_LPGPR                   0x68
 
@@ -269,12 +268,6 @@ struct src {
 	u32     gpr8;
 	u32     gpr9;
 	u32     gpr10;
-};
-
-/* OCOTP Registers */
-struct ocotp_regs {
-	u32	reserved[0x198];
-	u32	gp1;	/* 0x660 */
 };
 
 /* GPR3 bitfields */
@@ -503,7 +496,7 @@ struct cspi_regs {
 
 #define ANATOP_PLL_VIDEO        0xA0
 
-struct iim_regs {
+struct ocotp_regs {
 	u32	ctrl;
 	u32	ctrl_set;
 	u32     ctrl_clr;
@@ -514,9 +507,9 @@ struct iim_regs {
 	u32     rsvd1[3];
 	u32     read_ctrl;
 	u32     rsvd2[3];
-	u32     fuse_data;
+	u32	read_fuse_data;
 	u32     rsvd3[3];
-	u32     sticky;
+	u32	sw_sticky;
 	u32     rsvd4[3];
 	u32     scs;
 	u32     scs_set;
@@ -531,7 +524,7 @@ struct iim_regs {
 
 	struct fuse_bank {
 		u32	fuse_regs[0x20];
-	} bank[15];
+	} bank[16];
 };
 
 struct fuse_bank0_regs {
@@ -567,7 +560,9 @@ struct fuse_bank4_regs {
 	u32	mac_addr_low;
 	u32     rsvd2[3];
 	u32     mac_addr_high;
-	u32	rsvd3[0x13];
+	u32	rsvd3[0xb];
+	u32	gp1;
+	u32	rsvd4[7];
 };
 
 struct aipstz_regs {
