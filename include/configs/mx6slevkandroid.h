@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013-2014 Freescale Semiconductor, Inc.
  *
  * Configuration android settings for the MX6SL EVK Freescale board.
  *
@@ -82,6 +82,8 @@
 #undef CONFIG_BOOTCOMMAND
 
 #define CONFIG_EXTRA_ENV_SETTINGS					\
-	"splashpos=m,m\0"
+	"splashpos=m,m\0"	  \
+	"fdt_high=0xffffffff\0"	  \
+	"initrd_high=0xffffffff\0" \
 
 #endif

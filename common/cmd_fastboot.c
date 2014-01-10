@@ -2,7 +2,7 @@
  * Copyright 2008 - 2009 (C) Wind River Systems, Inc.
  * Tom Rix <Tom.Rix@windriver.com>
  *
- * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2014 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -1504,6 +1504,27 @@ static unsigned char boothdr[512] __aligned(ARCH_DMA_MINALIGN);
 
 #define ALIGN_SECTOR(n, pagesz) ((n + (pagesz - 1)) & (~(pagesz - 1)))
 
+#ifdef CONFIG_LMB
+static void boot_start_lmb(bootm_headers_t *images)
+{
+	ulong		mem_start;
+	phys_size_t	mem_size;
+
+	lmb_init(&images->lmb);
+
+	mem_start = getenv_bootm_low();
+	mem_size = getenv_bootm_size();
+
+	lmb_add(&images->lmb, (phys_addr_t)mem_start, mem_size);
+
+	arch_lmb_reserve(&images->lmb);
+	board_lmb_reserve(&images->lmb);
+}
+#else
+#define lmb_reserve(lmb, base, size)
+static inline void boot_start_lmb(bootm_headers_t *images) { }
+#endif
+
 /* booti <addr> [ mmc0 | mmc1 [ <partition> ] ] */
 int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
@@ -1604,16 +1625,16 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 #ifdef CONFIG_OF_LIBFDT
 		/* load the dtb file */
-		if (hdr->unused[0] && hdr->unused[1]) {
+		if (hdr->second_size && hdr->second_addr) {
 			sector += ALIGN_SECTOR(hdr->ramdisk_size, hdr->page_size) / 512;
 			if (mmc->block_dev.block_read(mmcc, sector,
-						(hdr->unused[0] / 512) + 1,
-						(void *)hdr->unused[1]) < 0) {
+						(hdr->second_size / 512) + 1,
+						(void *)hdr->second_addr) < 0) {
 				printf("booti: mmc failed to dtb\n");
 				goto fail;
 			}
 			/* flush cache after read */
-			flush_cache((ulong)hdr->unused[1], hdr->unused[0]); /* FIXME */
+			flush_cache((ulong)hdr->second_addr, hdr->second_size); /* FIXME */
 		}
 #endif /*CONFIG_OF_LIBFDT*/
 
@@ -1640,9 +1661,9 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		raddr = kaddr + ALIGN_SECTOR(hdr->kernel_size, hdr->page_size);
 		end = raddr + hdr->ramdisk_size;
 #ifdef CONFIG_OF_LIBFDT
-		if (hdr->unused[0]) {
+		if (hdr->second_size) {
 			fdtaddr = raddr + ALIGN_SECTOR(hdr->ramdisk_size, hdr->page_size);
-			end = fdtaddr + hdr->unused[0];
+			end = fdtaddr + hdr->second_size;
 		}
 #endif /*CONFIG_OF_LIBFDT*/
 		if (kaddr != hdr->kernel_addr) {
@@ -1671,17 +1692,17 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		}
 
 #ifdef CONFIG_OF_LIBFDT
-		if (hdr->unused[0] && fdtaddr != hdr->unused[1]) {
+		if (hdr->second_size && fdtaddr != hdr->second_addr) {
 			/*check overlap*/
-			if (((hdr->unused[1] >= addr) &&
-					(hdr->unused[1] <= end)) ||
-				((addr >= hdr->unused[1]) &&
-					(addr <= hdr->unused[1] + hdr->unused[0]))) {
+			if (((hdr->second_addr >= addr) &&
+					(hdr->second_addr <= end)) ||
+				((addr >= hdr->second_addr) &&
+					(addr <= hdr->second_addr + hdr->second_size))) {
 				printf("Fail: booti address overlap with FDT address\n");
 				return 1;
 			}
-			memmove((void *) hdr->unused[1],
-				(void *)fdtaddr, hdr->unused[0]);
+			memmove((void *) hdr->second_addr,
+				(void *)fdtaddr, hdr->second_size);
 		}
 #endif /*CONFIG_OF_LIBFDT*/
 	}
@@ -1689,8 +1710,8 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	printf("kernel   @ %08x (%d)\n", hdr->kernel_addr, hdr->kernel_size);
 	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
 #ifdef CONFIG_OF_LIBFDT
-	if (hdr->unused[0])
-		printf("fdt      @ %08x (%d)\n", hdr->unused[1], hdr->unused[0]);
+	if (hdr->second_size)
+		printf("fdt      @ %08x (%d)\n", hdr->second_addr, hdr->second_size);
 #endif /*CONFIG_OF_LIBFDT*/
 
 #ifdef CONFIG_SECURE_BOOT
@@ -1721,14 +1742,21 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif /*CONFIG_CMDLINE_TAG*/
 
 	memset(&images, 0, sizeof(images));
+
+	/*Setup lmb for memory reserve*/
+	boot_start_lmb(&images);
+
 	images.ep = hdr->kernel_addr;
 	images.rd_start = hdr->ramdisk_addr;
 	images.rd_end = hdr->ramdisk_addr + hdr->ramdisk_size;
 
+	/*Reserve memory for kernel image*/
+	lmb_reserve(&images.lmb, images.ep, hdr->kernel_size);
+
 #ifdef CONFIG_OF_LIBFDT
-	/*use unused fields for fdt, unused[0] = fdt size, unused[1] = fdt addr*/
-	images.ft_addr = (char *)(hdr->unused[1]);
-	images.ft_len = (ulong)(hdr->unused[0]);
+	/*use secondary fields for fdt, second_size= fdt size, second_addr= fdt addr*/
+	images.ft_addr = (char *)(hdr->second_addr);
+	images.ft_len = (ulong)(hdr->second_size);
 #endif /*CONFIG_OF_LIBFDT*/
 
 	do_bootm_linux(0, 0, NULL, &images);
