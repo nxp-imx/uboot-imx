@@ -1732,10 +1732,15 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif /*CONFIG_SECURE_BOOT*/
 
 #ifdef CONFIG_CMDLINE_TAG
-	/* XXX: in production, you should always use boot.img 's cmdline !!! */
-	char *commandline = (char *)hdr->cmdline;
-	setenv("bootargs", commandline);
+	char *commandline = getenv("bootargs");
 
+	/* If no bootargs env, just use hdr command line */
+	if (!commandline) {
+		commandline = (char *)hdr->cmdline;
+		setenv("bootargs", commandline);
+	}
+
+	/* XXX: in production, you should always use boot.img 's cmdline !!! */
 	printf("kernel cmdline:\n");
 	printf("\tuse boot.img ");
 	printf("command line:\n\t%s\n", commandline);
@@ -1757,7 +1762,10 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	/*use secondary fields for fdt, second_size= fdt size, second_addr= fdt addr*/
 	images.ft_addr = (char *)(hdr->second_addr);
 	images.ft_len = (ulong)(hdr->second_size);
+	set_working_fdt_addr(images.ft_addr);
 #endif /*CONFIG_OF_LIBFDT*/
+
+	arch_preboot_os();
 
 	do_bootm_linux(0, 0, NULL, &images);
 
