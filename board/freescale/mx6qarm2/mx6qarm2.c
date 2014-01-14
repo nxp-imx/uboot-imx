@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2014 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -255,5 +255,29 @@ int checkboard(void)
 void ldo_mode_set(int ldo_bypass)
 {
 	return;
+}
+#endif
+
+#ifdef CONFIG_USB_EHCI_MX6
+iomux_v3_cfg_t const usb_otg_pads[] = {
+	MX6_PAD_EIM_D22__USBOH3_USBOTG_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_GPIO_1__USBOTG_ID | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+int board_ehci_hcd_init(int port)
+{
+	switch (port) {
+	case 0:
+		imx_iomux_v3_setup_multiple_pads(usb_otg_pads,
+			ARRAY_SIZE(usb_otg_pads));
+
+		/*set daisy chain for otg_pin_id on 6q. for 6dl, this bit is reserved*/
+		mxc_iomux_set_gpr_register(1, 13, 1, 1);
+		break;
+	default:
+		printf("MXC USB port %d not yet supported\n", port);
+		return 1;
+	}
+	return 0;
 }
 #endif
