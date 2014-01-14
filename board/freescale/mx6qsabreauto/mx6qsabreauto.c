@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2014 Freescale Semiconductor, Inc.
  *
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
  * Author: Jason Liu <r64343@freescale.com>
@@ -48,6 +48,10 @@
 #include <recovery.h>
 #endif
 #endif /*CONFIG_FASTBOOT*/
+
+#ifdef CONFIG_MAX7310_IOEXP
+#include <gpio_exp.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -100,7 +104,29 @@ struct i2c_pads_info i2c_pad_info1 = {
 		.gp = IMX_GPIO_NR(4, 13)
 	}
 };
+
+struct i2c_pads_info i2c_pad_info2 = {
+	.scl = {
+		.i2c_mode = MX6_PAD_GPIO_3__I2C3_SCL | PC,
+		.gpio_mode = MX6_PAD_GPIO_3__GPIO_1_3 | PC,
+		.gp = IMX_GPIO_NR(1, 3)
+	},
+	.sda = {
+		.i2c_mode = MX6_PAD_EIM_D18__I2C3_SDA | PC,
+		.gpio_mode = MX6_PAD_EIM_D18__GPIO_3_18 | PC,
+		.gp = IMX_GPIO_NR(3, 18)
+	}
+};
+
+iomux_v3_cfg_t const i2c_info2_steer_pads[] = {
+	/* Steer logic */
+	MX6_PAD_EIM_A24__GPIO_5_4    | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
 #endif
+
+iomux_v3_cfg_t const ioexp_max7310_reset_pads[] = {
+	MX6_PAD_SD2_DAT0__GPIO_1_15    | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
 
 int dram_init(void)
 {
@@ -446,6 +472,39 @@ int setup_sata(void)
 }
 #endif
 
+#ifdef CONFIG_MAX7310_IOEXP
+void reset_max7310(void)
+{
+	imx_iomux_v3_setup_multiple_pads(ioexp_max7310_reset_pads,
+					ARRAY_SIZE(ioexp_max7310_reset_pads));
+	gpio_direction_output(I2C_EXP_RST, 1);
+}
+
+int setup_max7310(void)
+{
+#ifdef CONFIG_I2C_MXC
+	/* set steering config to i2c,
+	  * note: this causes pin conflicts with eimnor and spinor
+	  */
+	imx_iomux_v3_setup_multiple_pads(i2c_info2_steer_pads,
+					ARRAY_SIZE(i2c_info2_steer_pads));
+	gpio_direction_output(IMX_GPIO_NR(5, 4), 1);
+
+	/*setup i2c info 2*/
+	setup_i2c(2, CONFIG_SYS_I2C_SPEED,
+					CONFIG_SYS_I2C_SLAVE + 1, &i2c_pad_info2);
+
+	gpio_exp_setup_port(1, 1, 0x30);
+	gpio_exp_setup_port(2, 1, 0x32);
+	gpio_exp_setup_port(3, 1, 0x34);
+
+	return 0;
+#else
+	return -EPERM;
+#endif
+}
+#endif
+
 int mx6_rgmii_rework(struct phy_device *phydev)
 {
 	unsigned short val;
@@ -726,6 +785,11 @@ int board_early_init_f(void)
 {
 	setup_iomux_uart();
 
+#ifdef CONFIG_MAX7310_IOEXP
+	/*Reset gpio expander at early stage*/
+	reset_max7310();
+#endif
+
 #if defined(CONFIG_VIDEO_IPUV3)
 	setup_display();
 #endif
@@ -777,6 +841,10 @@ int board_late_init(void)
 	ret = setup_pmic_voltages();
 	if (ret)
 		return -1;
+#endif
+
+#ifdef CONFIG_MAX7310_IOEXP
+	setup_max7310();
 #endif
 
 	return 0;
@@ -924,3 +992,53 @@ void udc_pins_setting(void)
 }
 
 #endif /*CONFIG_IMX_UDC*/
+
+#ifdef CONFIG_USB_EHCI_MX6
+#define USB_HOST1_PWR     IOEXP_GPIO_NR(2, 7)
+#define USB_OTG_PWR       IOEXP_GPIO_NR(3, 1)
+
+iomux_v3_cfg_t const usb_otg_pads[] = {
+	MX6_PAD_ENET_RX_ER__ANATOP_USBOTG_ID | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+int board_ehci_hcd_init(int port)
+{
+	switch (port) {
+	case 0:
+		imx_iomux_v3_setup_multiple_pads(usb_otg_pads,
+			ARRAY_SIZE(usb_otg_pads));
+
+		/*set daisy chain for otg_pin_id on 6q. for 6dl, this bit is reserved*/
+		mxc_iomux_set_gpr_register(1, 13, 1, 0);
+		break;
+	case 1:
+		break;
+	default:
+		printf("MXC USB port %d not yet supported\n", port);
+		return 1;
+	}
+	return 0;
+}
+
+int board_ehci_power(int port, int on)
+{
+	switch (port) {
+	case 0:
+		if (on)
+			gpio_exp_direction_output(USB_OTG_PWR, 1);
+		else
+			gpio_exp_direction_output(USB_OTG_PWR, 0);
+		break;
+	case 1:
+		if (on)
+			gpio_exp_direction_output(USB_HOST1_PWR, 1);
+		else
+			gpio_exp_direction_output(USB_HOST1_PWR, 0);
+		break;
+	default:
+		printf("MXC USB port %d not yet supported\n", port);
+		return 1;
+	}
+	return 0;
+}
+#endif
