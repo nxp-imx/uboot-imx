@@ -52,6 +52,10 @@ DECLARE_GLOBAL_DATA_PTR;
 	PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED   |             \
 	PAD_CTL_DSE_40ohm   | PAD_CTL_HYS)
 
+#define SPI_PAD_CTRL (PAD_CTL_HYS |				\
+	PAD_CTL_SPEED_MED |		\
+	PAD_CTL_DSE_40ohm | PAD_CTL_SRE_FAST)
+
 #define I2C_PAD_CTRL    (PAD_CTL_PKE | PAD_CTL_PUE |            \
 	PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED |               \
 	PAD_CTL_DSE_40ohm | PAD_CTL_HYS |			\
@@ -172,6 +176,22 @@ static void setup_iomux_fec(void)
 	udelay(1000);
 	gpio_set_value(IMX_GPIO_NR(4, 21), 1);
 }
+
+#ifdef CONFIG_SYS_USE_SPINOR
+iomux_v3_cfg_t const ecspi1_pads[] = {
+	MX6_PAD_ECSPI1_SCLK__ECSPI1_SCLK | MUX_PAD_CTRL(SPI_PAD_CTRL),
+	MX6_PAD_ECSPI1_MISO__ECSPI1_MISO | MUX_PAD_CTRL(SPI_PAD_CTRL),
+	MX6_PAD_ECSPI1_MOSI__ECSPI1_MOSI | MUX_PAD_CTRL(SPI_PAD_CTRL),
+	MX6_PAD_ECSPI1_SS0__GPIO_4_11    | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+void setup_spinor(void)
+{
+	imx_iomux_v3_setup_multiple_pads(ecspi1_pads,
+					 ARRAY_SIZE(ecspi1_pads));
+	gpio_direction_output(IMX_GPIO_NR(4, 11), 0);
+}
+#endif
 
 static struct fsl_esdhc_cfg usdhc_cfg[1] = {
 	{USDHC2_BASE_ADDR},
@@ -594,6 +614,11 @@ void ldo_mode_set(int ldo_bypass)
 int board_early_init_f(void)
 {
 	setup_iomux_uart();
+
+#ifdef CONFIG_SYS_USE_SPINOR
+	setup_spinor();
+#endif
+
 	return 0;
 }
 
