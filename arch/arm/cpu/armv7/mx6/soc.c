@@ -2,7 +2,7 @@
  * (C) Copyright 2007
  * Sascha Hauer, Pengutronix
  *
- * (C) Copyright 2009-2013 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2014 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -372,6 +372,9 @@ static void imx_set_pcie_phy_power_down(void)
 
 int arch_cpu_init(void)
 {
+	/* Clear MMDC channel mask */
+	writel(0, CCM_BASE_ADDR + CLKCTL_CCDR);
+
 	init_aips();
 	set_vddsoc(1200);	/* Set VDDSOC to 1.2V */
 
