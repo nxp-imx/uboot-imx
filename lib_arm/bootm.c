@@ -4,7 +4,7 @@
  * Marius Groeger <mgroeger@sysgo.de>
  *
  * Copyright (C) 2001  Erik Mouw (J.A.K.Mouw@its.tudelft.nl)
- * Copyright (C) 2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013-2014 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -137,14 +137,37 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
 void do_booti_linux (boot_img_hdr *hdr)
 {
 	ulong initrd_start, initrd_end;
+#ifdef CONFIG_SERIAL_TAG
+	char appended_cmd_line[512];
+#endif
 	void (*theKernel)(int zero, int arch, uint params);
 	bd_t *bd = gd->bd;
 #ifdef CONFIG_CMDLINE_TAG
 	char *commandline = getenv("bootargs");
 
 	/* If no bootargs env, just use hdr command line */
-	if (!commandline)
+	if (!commandline) {
 		commandline = (char *)hdr->cmdline;
+#ifdef CONFIG_SERIAL_TAG
+		struct tag_serialnr serialnr;
+		void get_board_serial(struct tag_serialnr *serialnr);
+		get_board_serial(&serialnr);
+		/* append androidboot.serialno=chipserial number */
+		/* customer need to customize the serial number here*/
+		if (strlen((char *)hdr->cmdline) +
+			strlen("androidboot.serialno") + 17 < 512) {
+			sprintf(appended_cmd_line,
+					"%s androidboot.serialno=%08x%08x",
+					(char *)hdr->cmdline,
+					serialnr.high,
+					serialnr.low);
+			commandline = appended_cmd_line;
+		} else {
+			printf("Cannot append androidboot.serialno\n");
+		}
+
+#endif
+    }
 
 	/* XXX: in production, you should always use boot.img 's cmdline !!! */
 	printf("kernel cmdline: \n");
