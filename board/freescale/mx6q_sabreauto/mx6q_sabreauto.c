@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2014 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -814,6 +814,18 @@ iomux_v3_cfg_t usdhc4_pads[] = {
 };
 #endif
 
+#define USDHC_PAD_CTRL_DEFAULT (PAD_CTL_PKE | PAD_CTL_PUE |		\
+		PAD_CTL_PUS_47K_UP  | PAD_CTL_SPEED_LOW |		\
+		PAD_CTL_DSE_80ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
+
+#define USDHC_PAD_CTRL_100MHZ (PAD_CTL_PKE | PAD_CTL_PUE |	\
+		PAD_CTL_PUS_47K_UP  | PAD_CTL_SPEED_MED |		\
+		PAD_CTL_DSE_40ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
+
+#define USDHC_PAD_CTRL_200MHZ (PAD_CTL_PKE | PAD_CTL_PUE |	\
+		PAD_CTL_PUS_47K_UP  | PAD_CTL_SPEED_HIGH |		\
+		PAD_CTL_DSE_40ohm   | PAD_CTL_SRE_FAST   | PAD_CTL_HYS)
+
 int usdhc_gpio_init(bd_t *bis)
 {
 	s32 status = 0;
@@ -848,6 +860,57 @@ int usdhc_gpio_init(bd_t *bis)
 	}
 
 	return status;
+}
+
+static void usdhc_switch_pad(iomux_v3_cfg_t *pad_list, unsigned count,
+	iomux_v3_cfg_t *new_pad_list, iomux_v3_cfg_t pad_val)
+{
+	u32 i;
+
+	for (i = 0; i < count; i++) {
+		new_pad_list[i] = pad_list[i] & (~MUX_PAD_CTRL_MASK);
+		new_pad_list[i] |= MUX_PAD_CTRL(pad_val);
+	}
+}
+
+int board_mmc_io_switch(u32 index, u32 clock)
+{
+	iomux_v3_cfg_t new_pads[14];
+	u32 count;
+	iomux_v3_cfg_t pad_ctrl = USDHC_PAD_CTRL_DEFAULT;
+
+	if (clock >= 200000000)
+		pad_ctrl = USDHC_PAD_CTRL_200MHZ;
+	else if (clock == 100000000)
+		pad_ctrl = USDHC_PAD_CTRL_100MHZ;
+
+	switch (index) {
+	case 0:
+		count = sizeof(usdhc1_pads) / sizeof(usdhc1_pads[0]);
+		usdhc_switch_pad(usdhc1_pads, count, new_pads, pad_ctrl);
+		break;
+	case 1:
+		count = sizeof(usdhc2_pads) / sizeof(usdhc2_pads[0]);
+		usdhc_switch_pad(usdhc2_pads, count, new_pads, pad_ctrl);
+		break;
+	case 2:
+		count = sizeof(usdhc3_pads) / sizeof(usdhc3_pads[0]);
+		usdhc_switch_pad(usdhc3_pads, count, new_pads, pad_ctrl);
+		break;
+	case 3:
+		count = sizeof(usdhc4_pads) / sizeof(usdhc4_pads[0]);
+		usdhc_switch_pad(usdhc4_pads, count, new_pads, pad_ctrl);
+		break;
+	default:
+		printf("Warning: you configured more USDHC controllers"
+			"(%d) then supported by the board (%d)\n",
+			index+1, CONFIG_SYS_FSL_USDHC_NUM);
+		return -1;
+	}
+
+	mxc_iomux_v3_setup_multiple_pads(new_pads, count);
+
+	return 0;
 }
 
 int board_mmc_init(bd_t *bis)
