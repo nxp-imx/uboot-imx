@@ -30,8 +30,9 @@
 #define MXC_CPU_MX53		0x53
 #define MXC_CPU_MX6SL		0x60
 #define MXC_CPU_MX6DL		0x61
-#define MXC_CPU_MX6SOLO		0x62
+#define MXC_CPU_MX6SX		0x62
 #define MXC_CPU_MX6Q		0x63
+#define MXC_CPU_MX6SOLO		0x66 /* dummy */
 
 #define is_soc_rev(rev)		((int)((get_cpu_rev() & 0xFF) - rev))
 #define is_soc(soc)		(((get_cpu_rev() >> 12) & 0xFF) ==  (soc))
@@ -40,6 +41,7 @@
 #define is_mx6solo()		is_soc(MXC_CPU_MX6SOLO)
 #define is_mx6dlsolo()		(is_mx6dl() || is_mx6solo())
 #define is_mx6sl()		is_soc(MXC_CPU_MX6SL)
+#define is_mx6sx()		is_soc(MXC_CPU_MX6SX)
 
 u32 get_cpu_rev(void);
 const char *get_imx_type(u32 imxtype);

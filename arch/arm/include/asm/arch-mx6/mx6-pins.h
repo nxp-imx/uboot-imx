@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2013 Boundary Devices Inc.
+ * Copyright (C) 2014 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +28,11 @@
 #if defined(CONFIG_MX6SL)
 #include "mx6sl_pins.h"
 #else
+#if defined(CONFIG_MX6SX)
+#include "mx6sx_pins.h"
+#else
 #error "Please select cpu"
+#endif	/* CONFIG_MX6SX */
 #endif	/* CONFIG_MX6SL */
 #endif	/* CONFIG_MX6DL or CONFIG_MX6S */
 #endif	/* CONFIG_MX6Q */

@@ -2,7 +2,7 @@
  * (C) Copyright 2007
  * Sascha Hauer, Pengutronix
  *
- * (C) Copyright 2009-2013 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2014 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -128,6 +128,8 @@ const char *get_imx_type(u32 imxtype)
 		return "6SOLO";	/* Solo version of the mx6 */
 	case MXC_CPU_MX6SL:
 		return "6SL";	/* Solo-Lite version of the mx6 */
+	case MXC_CPU_MX6SX:
+		return "6SX";	/* SoloX version of the mx6 */
 	case MXC_CPU_MX51:
 		return "51";
 	case MXC_CPU_MX53:
