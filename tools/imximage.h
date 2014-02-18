@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2014 Freescale Semiconductor, Inc.
  *
  * (C) Copyright 2009-2012
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de.
@@ -53,6 +53,7 @@
 #define FLASH_OFFSET_ONENAND	0x100
 #define FLASH_OFFSET_NOR	0x1000
 #define FLASH_OFFSET_SATA	FLASH_OFFSET_STANDARD
+#define FLASH_OFFSET_QSPI	0x1000
 
 #define IVT_HEADER_TAG 0xD1
 #define IVT_VERSION 0x40

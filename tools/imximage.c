@@ -55,6 +55,7 @@ static table_entry_t imximage_bootops[] = {
 	{FLASH_OFFSET_SATA,	"sata",		"SATA Disk",	},
 	{FLASH_OFFSET_SD,	"sd",		"SD Card",	},
 	{FLASH_OFFSET_SPI,	"spi",		"SPI Flash",	},
+	{FLASH_OFFSET_QSPI,	"qspi",		"QSPI Flash",	},
 	{-1,			"",		"Invalid",	},
 };
 
