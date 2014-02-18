@@ -395,6 +395,7 @@ u32 imx_get_fecclk(void)
 	return decode_pll(PLL_ENET, MXC_HCLK);
 }
 
+#ifndef CONFIG_MX6SX
 int enable_sata_clock(void)
 {
 	u32 reg = 0;
@@ -425,6 +426,7 @@ int enable_sata_clock(void)
 
 	return 0 ;
 }
+#endif
 
 unsigned int mxc_get_clock(enum mxc_clock clk)
 {
@@ -501,6 +503,7 @@ int do_mx6_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
+#ifndef CONFIG_MX6SX
 void enable_ipu_clock(void)
 {
 	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
@@ -509,6 +512,7 @@ void enable_ipu_clock(void)
 	reg |= MXC_CCM_CCGR3_IPU1_IPU_MASK;
 	writel(reg, &mxc_ccm->CCGR3);
 }
+#endif
 /***************************************************/
 
 U_BOOT_CMD(
