@@ -430,8 +430,6 @@ int mmc_get_env_devno(void)
 
 	dev_no--;
 
-	setenv_ulong("mmcdev", dev_no);
-
 	return dev_no;
 }
 
@@ -500,6 +498,17 @@ int board_mmc_init(bd_t *bis)
 	}
 
 	return 0;
+}
+
+void board_late_mmc_env_init(void)
+{
+	char cmd[32];
+	u32 dev_no = mmc_get_env_devno();
+
+	setenv_ulong("mmcdev", dev_no);
+
+	sprintf(cmd, "mmc dev %d", dev_no);
+	run_command(cmd, 0);
 }
 #endif
 
@@ -1072,6 +1081,10 @@ int board_late_init(void)
 	ret = setup_pmic_voltages();
 	if (ret)
 		return -1;
+#endif
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
 #endif
 
 	return 0;

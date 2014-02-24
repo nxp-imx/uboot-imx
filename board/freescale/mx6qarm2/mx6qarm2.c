@@ -122,6 +122,23 @@ struct fsl_esdhc_cfg usdhc_cfg[2] = {
 	{USDHC4_BASE_ADDR},
 };
 
+int mmc_get_env_devno(void)
+{
+	u32 soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	u32 dev_no;
+
+	/* BOOT_CFG2[3] and BOOT_CFG2[4] */
+	dev_no = (soc_sbmr & 0x00001800) >> 11;
+
+	/* need ubstract 1 to map to the mmc device id
+	 * see the comments in board_mmc_init function
+	 */
+
+	dev_no -= 2;
+
+	return dev_no;
+}
+
 int board_mmc_getcd(struct mmc *mmc)
 {
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
@@ -166,6 +183,18 @@ int board_mmc_init(bd_t *bis)
 
 	return status;
 }
+
+void board_late_mmc_env_init(void)
+{
+	char cmd[32];
+	u32 dev_no = mmc_get_env_devno();
+
+	setenv_ulong("mmcdev", dev_no);
+
+	sprintf(cmd, "mmc dev %d", dev_no);
+	run_command(cmd, 0);
+}
+
 #endif
 
 #define MII_MMD_ACCESS_CTRL_REG		0xd
@@ -239,6 +268,15 @@ int board_init(void)
 {
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
+
+	return 0;
+}
+
+int board_late_init(void)
+{
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
 
 	return 0;
 }

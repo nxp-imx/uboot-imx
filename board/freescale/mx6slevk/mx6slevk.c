@@ -93,6 +93,23 @@ static iomux_v3_cfg_t const uart1_pads[] = {
 	MX6_PAD_UART1_RXD__UART1_RXD | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
+static iomux_v3_cfg_t const usdhc1_pads[] = {
+	/* 8 bit SD */
+	MX6_PAD_SD1_CLK__USDHC1_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD1_CMD__USDHC1_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD1_DAT0__USDHC1_DAT0 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD1_DAT1__USDHC1_DAT1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD1_DAT2__USDHC1_DAT2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD1_DAT3__USDHC1_DAT3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD1_DAT4__USDHC1_DAT4 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD1_DAT5__USDHC1_DAT5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD1_DAT6__USDHC1_DAT6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD1_DAT7__USDHC1_DAT7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+
+	/*CD pin*/
+	MX6_PAD_KEY_ROW7__GPIO_4_7 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
 static iomux_v3_cfg_t const usdhc2_pads[] = {
 	MX6_PAD_SD2_CLK__USDHC2_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD2_CMD__USDHC2_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
@@ -100,6 +117,21 @@ static iomux_v3_cfg_t const usdhc2_pads[] = {
 	MX6_PAD_SD2_DAT1__USDHC2_DAT1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD2_DAT2__USDHC2_DAT2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD2_DAT3__USDHC2_DAT3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+
+	/*CD pin*/
+	MX6_PAD_SD2_DAT7__GPIO_5_0 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const usdhc3_pads[] = {
+	MX6_PAD_SD3_CLK__USDHC3_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD3_CMD__USDHC3_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD3_DAT0__USDHC3_DAT0 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD3_DAT1__USDHC3_DAT1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD3_DAT2__USDHC3_DAT2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD3_DAT3__USDHC3_DAT3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+
+	/*CD pin*/
+	MX6_PAD_REF_CLK_32K__GPIO_3_22 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
 static iomux_v3_cfg_t const fec_pads[] = {
@@ -193,22 +225,104 @@ void setup_spinor(void)
 }
 #endif
 
-static struct fsl_esdhc_cfg usdhc_cfg[1] = {
-	{USDHC2_BASE_ADDR},
+#ifdef CONFIG_FSL_ESDHC
+
+#define USDHC1_CD_GPIO	IMX_GPIO_NR(4, 7)
+#define USDHC2_CD_GPIO	IMX_GPIO_NR(5, 0)
+#define USDHC3_CD_GPIO	IMX_GPIO_NR(3, 22)
+
+static struct fsl_esdhc_cfg usdhc_cfg[3] = {
+	{USDHC1_BASE_ADDR},
+	{USDHC2_BASE_ADDR, 0, 4},
+	{USDHC3_BASE_ADDR, 0, 4},
 };
+
+int mmc_get_env_devno(void)
+{
+	u32 soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	u32 dev_no;
+
+	/* BOOT_CFG2[3] and BOOT_CFG2[4] */
+	dev_no = (soc_sbmr & 0x00001800) >> 11;
+
+	return dev_no;
+}
 
 int board_mmc_getcd(struct mmc *mmc)
 {
-	return 1;	/* Assume boot SD always present */
+	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
+	int ret = 0;
+
+	switch (cfg->esdhc_base) {
+	case USDHC1_BASE_ADDR:
+		ret = !gpio_get_value(USDHC1_CD_GPIO);
+		break;
+	case USDHC2_BASE_ADDR:
+		ret = !gpio_get_value(USDHC2_CD_GPIO);
+		break;
+	case USDHC3_BASE_ADDR:
+		ret = !gpio_get_value(USDHC3_CD_GPIO);
+		break;
+	}
+
+	return ret;
 }
 
 int board_mmc_init(bd_t *bis)
 {
-	imx_iomux_v3_setup_multiple_pads(usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
+	int i;
 
-	usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
-	return fsl_esdhc_initialize(bis, &usdhc_cfg[0]);
+	/*
+	 * According to the board_mmc_init() the following map is done:
+	 * (U-boot device node)    (Physical Port)
+	 * mmc0                    USDHC1
+	 * mmc1                    USDHC2
+	 * mmc2                    USDHC3
+	 */
+	for (i = 0; i < CONFIG_SYS_FSL_USDHC_NUM; i++) {
+		switch (i) {
+		case 0:
+			imx_iomux_v3_setup_multiple_pads(
+				usdhc1_pads, ARRAY_SIZE(usdhc1_pads));
+			gpio_direction_input(USDHC1_CD_GPIO);
+			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
+			break;
+		case 1:
+			imx_iomux_v3_setup_multiple_pads(
+				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
+			gpio_direction_input(USDHC2_CD_GPIO);
+			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
+			break;
+		case 2:
+			imx_iomux_v3_setup_multiple_pads(
+				usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
+			gpio_direction_input(USDHC3_CD_GPIO);
+			usdhc_cfg[2].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
+			break;
+		default:
+			printf("Warning: you configured more USDHC controllers"
+				"(%d) than supported by the board\n", i + 1);
+			return 0;
+			}
+
+			if (fsl_esdhc_initialize(bis, &usdhc_cfg[i]))
+				printf("Warning: failed to initialize mmc dev %d\n", i);
+	}
+
+	return 0;
 }
+
+void board_late_mmc_env_init(void)
+{
+	char cmd[32];
+	u32 dev_no = mmc_get_env_devno();
+
+	setenv_ulong("mmcdev", dev_no);
+
+	sprintf(cmd, "mmc dev %d", dev_no);
+	run_command(cmd, 0);
+}
+#endif
 
 #ifdef CONFIG_MXC_EPDC
 #ifdef CONFIG_SPLASH_SCREEN
@@ -649,6 +763,10 @@ int board_late_init(void)
 		return -1;
 #endif
 
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
+
 	return 0;
 }
 
@@ -661,15 +779,28 @@ u32 get_board_rev(void)
 
 void board_fastboot_setup(void)
 {
-	/*current uboot BSP only supports USDHC2*/
 	switch (get_boot_device()) {
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
-	case SD2_BOOT:
-	case MMC2_BOOT:
+	case SD1_BOOT:
+	case MMC1_BOOT:
 		if (!getenv("fastboot_dev"))
 			setenv("fastboot_dev", "mmc0");
 		if (!getenv("bootcmd"))
 			setenv("bootcmd", "booti mmc0");
+		break;
+	case SD2_BOOT:
+	case MMC2_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "mmc1");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "booti mmc1");
+		break;
+	case SD3_BOOT:
+	case MMC3_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "mmc2");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "booti mmc2");
 		break;
 #endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
 	default:
@@ -692,11 +823,23 @@ void board_recovery_setup(void)
 	/*current uboot BSP only supports USDHC2*/
 	switch (bootdev) {
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	case SD1_BOOT:
+	case MMC1_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery",
+					"booti mmc0 recovery");
+		break;
 	case SD2_BOOT:
 	case MMC2_BOOT:
 		if (!getenv("bootcmd_android_recovery"))
 			setenv("bootcmd_android_recovery",
-					"booti mmc0 recovery");
+					"booti mmc1 recovery");
+		break;
+	case SD3_BOOT:
+	case MMC3_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery",
+					"booti mmc2 recovery");
 		break;
 #endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
 	default:

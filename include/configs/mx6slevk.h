@@ -61,6 +61,7 @@
 #define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
+#define CONFIG_SYS_FSL_USDHC_NUM 3
 
 #define CONFIG_MMC
 #define CONFIG_CMD_MMC
@@ -127,7 +128,7 @@
 	"fdt_addr=0x83000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
-	"mmcdev=0\0" \
+	"mmcdev=1\0" \
 	"mmcpart=1\0" \
 	"mmcroot=/dev/mmcblk0p2 rootwait rw\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
@@ -230,7 +231,7 @@
 #define CONFIG_SYS_NO_FLASH
 
 #define CONFIG_ENV_SIZE			SZ_8K
-#define CONFIG_SYS_MMC_ENV_DEV		0
+#define CONFIG_SYS_MMC_ENV_DEV		1
 
 #if defined CONFIG_SYS_BOOT_SPINOR
 #define CONFIG_SYS_USE_SPINOR
