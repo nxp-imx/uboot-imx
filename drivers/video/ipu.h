@@ -6,7 +6,7 @@
  *
  * Linux IPU driver for MX51:
  *
- * (C) Copyright 2005-2010 Freescale Semiconductor, Inc.
+ * (C) Copyright 2005-2014 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -174,6 +174,14 @@ typedef union {
 		unsigned char alpha_chan_en;
 	} mem_dp_fg_sync;
 } ipu_channel_params_t;
+
+/*
+ * Enumeration of IPU interrupts.
+ */
+enum ipu_irq_line {
+	IPU_IRQ_DP_SF_END = 448 + 3,
+	IPU_IRQ_DC_FC_1 = 448 + 9,
+};
 
 /*
  * Bitfield of Display Interface signal polarities.
