@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013-2014 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,11 @@
 #define PAD_CTL_PUE		(1 << 13)
 #define PAD_CTL_PKE		(1 << 12)
 #define PAD_CTL_ODE		(1 << 11)
+#ifdef CONFIG_MX6SX
+#define PAD_CTL_SPEED_LOW	(0 << 6)
+#else
 #define PAD_CTL_SPEED_LOW	(1 << 6)
+#endif
 #define PAD_CTL_SPEED_MED	(2 << 6)
 #define PAD_CTL_SPEED_HIGH	(3 << 6)
 #define PAD_CTL_DSE_DISABLE	(0 << 3)
