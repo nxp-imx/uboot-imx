@@ -79,6 +79,7 @@
 #define CONFIG_FEC_XCV_TYPE             RMII
 #define CONFIG_ETHPRIME                 "FEC"
 #define CONFIG_FEC_MXC_PHYADDR          0
+#define CONFIG_FEC_CLOCK_FROM_ANATOP
 
 #define CONFIG_PHYLIB
 #define CONFIG_PHY_SMSC

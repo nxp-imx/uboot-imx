@@ -248,7 +248,8 @@ int board_eth_init(bd_t *bis)
 
 	setup_iomux_fec1();
 
-	ret = cpu_eth_init(bis);
+	ret = fecmxc_initialize_multi(bis, 0,
+		CONFIG_FEC_MXC_PHYADDR, IMX_FEC_BASE);
 	if (ret)
 		printf("FEC1 MXC: %s:failed\n", __func__);
 
@@ -271,12 +272,12 @@ static int setup_fec(void)
 	clrbits_le32(&iomuxc_gpr_regs->gpr[1], IOMUX_GPR1_FEC1_CLOCK_MUX1_SEL_MASK);
 #endif
 
-	ret = enable_fec_clock();
+	ret = enable_fec_clock(0);
 	if (ret)
 		return ret;
 
 #ifdef CONFIG_FEC_CLOCK_FROM_ANATOP
-	fec_set_rate(125000000);
+	fec_set_rate(0, 125000000);
 #endif
 
 #ifdef CONFIG_FEC_ENABLE_MAX7322

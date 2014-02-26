@@ -299,9 +299,19 @@ static u32 get_mmdc_ch0_clk(void)
 
 }
 
-int enable_fec_clock(void)
+void enable_fec_25m_clock()
 {
 	u32 reg = 0;
+	reg = readl(ANATOP_BASE_ADDR + 0xe0);
+	reg |= BM_ANADIG_PLL_ENET_REF_25M_ENABLE;
+	writel(reg, ANATOP_BASE_ADDR + 0xe0);
+}
+
+int enable_fec_clock(int fec_id)
+{
+	u32 reg = 0;
+
+#ifdef CONFIG_FEC_CLOCK_FROM_ANATOP
 	s32 timeout = 100000;
 
 	reg = readl(ANATOP_BASE_ADDR + 0xe0);
@@ -319,8 +329,66 @@ int enable_fec_clock(void)
 	}
 
 	/* Enable FEC clock */
-	reg |= BM_ANADIG_PLL_ENET_ENABLE;
+	if (0 == fec_id)
+		reg |= BM_ANADIG_PLL_ENET_ENABLE;
+	else
+		reg |= BM_ANADIG_PLL_ENET2_ENABLE;
 	reg &= ~BM_ANADIG_PLL_ENET_BYPASS;
+	writel(reg, ANATOP_BASE_ADDR + 0xe0);
+#endif
+
+#ifdef CONFIG_MX6SX
+	/* set enet ahb clock 200Mhz
+	 * pll2_pfd2_396m-> ENET_PODF-> ENET_AHB
+	 */
+	reg = __raw_readl(&imx_ccm->chsccdr);
+	reg &= ~(MXC_CCM_CHSCCDR_ENET_PRE_CLK_SEL_MASK
+		| MXC_CCM_CHSCCDR_ENET_PODF_MASK | MXC_CCM_CHSCCDR_ENET_CLK_SEL_MASK);
+	/* PLL2 PFD2 */
+	reg |= (4 << MXC_CCM_CHSCCDR_ENET_PRE_CLK_SEL_OFFSET);
+	/* Div = 2*/
+	reg |= (1 << MXC_CCM_CHSCCDR_ENET_PODF_OFFSET);
+	reg |= (0 << MXC_CCM_CHSCCDR_ENET_CLK_SEL_OFFSET);
+	writel(reg, &imx_ccm->chsccdr);
+
+	/* Enable enet system clock */
+	reg = readl(&imx_ccm->CCGR3);
+	reg |= MXC_CCM_CCGR3_ENET_MASK;
+	writel(reg, &imx_ccm->CCGR3);
+#endif
+	return 0;
+}
+
+int fec_set_rate(int fec_id, unsigned long rate)
+{
+	unsigned int reg, div = 1;
+
+	switch (rate) {
+	case 25000000:
+		div = 0;
+		break;
+	case 50000000:
+		div = 1;
+		break;
+	case 100000000:
+		div = 2;
+		break;
+	case 125000000:
+		div = 3;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	reg = readl(ANATOP_BASE_ADDR + 0xe0);
+
+	if (0 == fec_id) {
+		reg &= ~BM_ANADIG_PLL_ENET_DIV_SELECT;
+		reg |= BF_ANADIG_PLL_ENET_DIV_SELECT(div);
+	} else {
+		reg &= ~BM_ANADIG_PLL_ENET2_DIV_SELECT;
+		reg |= BF_ANADIG_PLL_ENET2_DIV_SELECT(div);
+	}
 	writel(reg, ANATOP_BASE_ADDR + 0xe0);
 
 	return 0;
@@ -335,7 +403,7 @@ static u32 get_mmdc_ch0_clk(void)
 	return get_periph_clk() / (mmdc_ch0_podf + 1);
 }
 
-int enable_fec_clock(void)
+int enable_fec_clock(int fec_id)
 {
 	return 0;
 }

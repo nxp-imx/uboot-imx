@@ -647,6 +647,22 @@ struct fuse_bank1_regs {
 	u32     ana2;
 };
 
+#ifdef CONFIG_MX6SX
+struct fuse_bank4_regs {
+	u32 sjc_resp_low;
+	u32 rsvd0[3];
+	u32 sjc_resp_high;
+	u32 rsvd1[3];
+	u32 mac_addr0;
+	u32 rsvd2[3];
+	u32 mac_addr1;
+	u32 rsvd3[3];
+	u32 mac_addr2;
+	u32 rsvd4[7];
+	u32 gp1;
+	u32 rsvd5[7];
+};
+#else
 struct fuse_bank4_regs {
 	u32	sjc_resp_low;
 	u32     rsvd0[3];
@@ -659,6 +675,7 @@ struct fuse_bank4_regs {
 	u32	gp1;
 	u32	rsvd4[7];
 };
+#endif
 
 struct aipstz_regs {
 	u32	mprot0;
