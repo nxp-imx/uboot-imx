@@ -39,6 +39,11 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define SDHCI_IRQ_EN_BITS		(IRQSTATEN_CC | IRQSTATEN_TC | \
+				IRQSTATEN_CINT | \
+				IRQSTATEN_CTOE | IRQSTATEN_CCE | IRQSTATEN_CEBE | \
+				IRQSTATEN_CIE | IRQSTATEN_DTOE | IRQSTATEN_DCE | IRQSTATEN_DEBE)
+
 struct fsl_esdhc {
 	uint	dsaddr;
 	uint	blkattr;
@@ -505,8 +510,15 @@ static int esdhc_init(struct mmc *mmc)
 	/* Set the initial clock speed */
 	mmc_set_clock(mmc, 400000);
 
+#ifdef CONFIG_SYS_FSL_ESDHC_USE_PIO
+	/* Enable the BRR and BWR bits in IRQSTAT */
+	esdhc_clrbits32(&regs->irqstaten, IRQSTATEN_DINT);
+	esdhc_setbits32(&regs->irqstaten, IRQSTATEN_BRR | IRQSTATEN_BWR);
+#else
 	/* Disable the BRR and BWR bits in IRQSTAT */
 	esdhc_clrbits32(&regs->irqstaten, IRQSTATEN_BRR | IRQSTATEN_BWR);
+	esdhc_setbits32(&regs->irqstaten, IRQSTATEN_DINT);
+#endif
 
 	/* Put the PROCTL reg back to the default */
 	esdhc_write32(&regs->proctl, PROCTL_INIT);
@@ -562,6 +574,8 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 
 	esdhc_setbits32(&regs->sysctl, SYSCTL_PEREN | SYSCTL_HCKEN
 				| SYSCTL_IPGEN | SYSCTL_CKEN);
+
+	writel(SDHCI_IRQ_EN_BITS, &regs->irqstaten);
 
 	mmc->priv = cfg;
 	mmc->send_cmd = esdhc_send_cmd;
