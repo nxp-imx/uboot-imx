@@ -305,17 +305,23 @@ struct mxc_ccm_reg {
 #define MXC_CCM_CS1CDR_SSI1_CLK_PODF_OFFSET		0
 
 /* Define the bits in register CS2CDR */
+#ifdef CONFIG_MX6SX
+#define MXC_CCM_CS2CDR_QSPI2_CLK_PODF_MASK             (0x3F << 21)
+#define MXC_CCM_CS2CDR_QSPI2_CLK_PODF_OFFSET           21
+#define MXC_CCM_CS2CDR_QSPI2_CLK_PODF(v)                       (((v) & 0x3f) << 21)
+#define MXC_CCM_CS2CDR_QSPI2_CLK_PRED_MASK             (0x7 << 18)
+#define MXC_CCM_CS2CDR_QSPI2_CLK_PRED_OFFSET           18
+#define MXC_CCM_CS2CDR_QSPI2_CLK_PRED(v)                       (((v) & 0x7) << 18)
+#define MXC_CCM_CS2CDR_QSPI2_CLK_SEL_MASK              (0x7 << 15)
+#define MXC_CCM_CS2CDR_QSPI2_CLK_SEL_OFFSET            15
+#define MXC_CCM_CS2CDR_QSPI2_CLK_SEL(v)                        (((v) & 0x7) << 15)
+#else
 #define MXC_CCM_CS2CDR_ENFC_CLK_PODF_MASK		(0x3F << 21)
 #define MXC_CCM_CS2CDR_ENFC_CLK_PODF_OFFSET		21
 #define MXC_CCM_CS2CDR_ENFC_CLK_PODF(v)			(((v) & 0x3f) << 21)
 #define MXC_CCM_CS2CDR_ENFC_CLK_PRED_MASK		(0x7 << 18)
 #define MXC_CCM_CS2CDR_ENFC_CLK_PRED_OFFSET		18
 #define MXC_CCM_CS2CDR_ENFC_CLK_PRED(v)			(((v) & 0x7) << 18)
-#ifdef CONFIG_MX6SX
-#define MXC_CCM_CS2CDR_ENFC_CLK_SEL_MASK		(0x7 << 15)
-#define MXC_CCM_CS2CDR_ENFC_CLK_SEL_OFFSET		15
-#define MXC_CCM_CS2CDR_ENFC_CLK_SEL(v)			(((v) & 0x7) << 15)
-#else
 #define MXC_CCM_CS2CDR_ENFC_CLK_SEL_MASK		(0x3 << 16)
 #define MXC_CCM_CS2CDR_ENFC_CLK_SEL_OFFSET		16
 #define MXC_CCM_CS2CDR_ENFC_CLK_SEL(v)			(((v) & 0x3) << 16)

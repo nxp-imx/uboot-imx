@@ -67,4 +67,5 @@ int enable_sata_clock(void);
 int enable_i2c_clk(unsigned char enable, unsigned i2c_num);
 int enable_fec_clock(void);
 void enable_ipu_clock(void);
+void enable_qspi_clk(void);
 #endif /* __ASM_ARCH_CLOCK_H */

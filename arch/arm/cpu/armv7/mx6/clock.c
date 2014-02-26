@@ -326,6 +326,26 @@ int enable_fec_clock(void)
 	return 0;
 }
 
+void enable_qspi_clk(void)
+{
+    u32 reg = 0;
+
+    /* Enable QuadSPI clock */
+    reg = readl(&imx_ccm->CCGR4);
+    reg |= MXC_CCM_CCGR4_QSPI2_ENFC_OFFSET;
+    writel(reg, &imx_ccm->CCGR4);
+
+    /* set 50M  : (50 = 396 / 2 / 4) */
+    reg = readl(&imx_ccm->cs2cdr);
+    reg &= ~(0xfff << 15);
+    reg &= ~(MXC_CCM_CS2CDR_QSPI2_CLK_PODF_MASK |
+			MXC_CCM_CS2CDR_QSPI2_CLK_PRED_MASK |
+			MXC_CCM_CS2CDR_QSPI2_CLK_SEL_MASK);
+    reg |= (MXC_CCM_CS2CDR_QSPI2_CLK_PRED(0x1) |
+			MXC_CCM_CS2CDR_QSPI2_CLK_SEL(0x3));
+    writel(reg, &imx_ccm->cs2cdr);
+}
+
 #else
 static u32 get_mmdc_ch0_clk(void)
 {
@@ -340,6 +360,8 @@ int enable_fec_clock(void)
 {
 	return 0;
 }
+
+void enable_qspi_clk(void) {}
 #endif
 
 static u32 get_usdhc_clk(u32 port)

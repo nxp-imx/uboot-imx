@@ -154,6 +154,39 @@ int board_mmc_getcd(struct mmc *mmc)
 	return 1;	/* Assume boot SD always present */
 }
 
+#ifdef CONFIG_QSPI
+
+#define QSPI_PAD_CTRL1  \
+		(PAD_CTL_SRE_FAST | PAD_CTL_SPEED_HIGH | \
+		PAD_CTL_PKE | PAD_CTL_PUE | PAD_CTL_PUS_47K_UP | PAD_CTL_DSE_34ohm)
+
+#define QSPI_PAD_CTRL2 (QSPI_PAD_CTRL1 | PAD_CTL_DSE_34ohm)
+
+static iomux_v3_cfg_t const quadspi_pads[] = {
+	MX6SX_PAD_NAND_WP_B__QSPI2_A_DATA_0 | MUX_PAD_CTRL(QSPI_PAD_CTRL1),
+	MX6SX_PAD_NAND_READY_B__QSPI2_A_DATA_1 | MUX_PAD_CTRL(QSPI_PAD_CTRL1),
+	MX6SX_PAD_NAND_CE0_B__QSPI2_A_DATA_2 | MUX_PAD_CTRL(QSPI_PAD_CTRL1),
+	MX6SX_PAD_NAND_CE1_B__QSPI2_A_DATA_3 | MUX_PAD_CTRL(QSPI_PAD_CTRL1),
+	/*MX6SX_PAD_QSPI1A_DQS__QSPI1_A_DQS | MUX_PAD_CTRL(QSPI_PAD_CTRL1),*/
+	MX6SX_PAD_NAND_CLE__QSPI2_A_SCLK | MUX_PAD_CTRL(QSPI_PAD_CTRL1),
+	MX6SX_PAD_NAND_ALE__QSPI2_A_SS0_B | MUX_PAD_CTRL(QSPI_PAD_CTRL1),
+	/*MX6SX_PAD_QSPI1A_SS1_B__QSPI1_A_SS1_B | MUX_PAD_CTRL(QSPI_PAD_CTRL2),*/
+	/* just configs QSPIA */
+};
+
+int board_qspi_init(void)
+{
+	/* Set the iomux */
+	imx_iomux_v3_setup_multiple_pads(quadspi_pads, ARRAY_SIZE(quadspi_pads));
+
+	/* Set the clock */
+	enable_qspi_clk();
+
+	return 0;
+}
+#endif
+
+
 #ifdef CONFIG_FSL_ESDHC
 int board_mmc_init(bd_t *bis)
 {
@@ -452,6 +485,11 @@ int board_init(void)
 #ifdef	CONFIG_FEC_MXC
 	setup_fec();
 #endif
+
+#ifdef CONFIG_QSPI
+	board_qspi_init();
+#endif
+
 
 	return 0;
 }
