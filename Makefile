@@ -467,6 +467,7 @@ $(obj)u-boot.imx:	$(obj)u-boot.bin
 		$(CC) -E -x c $(CONFIG_IMX_CONFIG) -I./include -o $(obj)imxcfg.imx
 		$(obj)tools/mkimage -n  $(obj)imxcfg.imx -T imximage \
 		-e $(CONFIG_SYS_TEXT_BASE) -d $< $@
+		@rm -f $(obj)imxcfg.imx
 
 $(obj)u-boot.kwb:       $(obj)u-boot.bin
 		$(obj)tools/mkimage -n $(CONFIG_SYS_KWD_CONFIG) -T kwbimage \
