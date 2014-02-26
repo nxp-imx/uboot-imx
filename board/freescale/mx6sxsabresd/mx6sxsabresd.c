@@ -193,17 +193,6 @@ static void setup_iomux_fec(int fec_id)
 		imx_iomux_v3_setup_multiple_pads(fec1_pads, ARRAY_SIZE(fec1_pads));
 	else
 		imx_iomux_v3_setup_multiple_pads(fec2_pads, ARRAY_SIZE(fec2_pads));
-
-	imx_iomux_v3_setup_multiple_pads(phy_control_pads,
-		ARRAY_SIZE(phy_control_pads));
-
-	/* Enable the ENET power, active low */
-	gpio_direction_output(IMX_GPIO_NR(2, 6) , 0);
-
-	/* Reset AR8031 PHY */
-	gpio_direction_output(IMX_GPIO_NR(2, 7) , 0);
-	udelay(500);
-	gpio_set_value(IMX_GPIO_NR(2, 7), 1);
 }
 #endif
 
@@ -436,6 +425,17 @@ static int setup_fec(int fec_id)
 		clrbits_le32(&iomuxc_gpr_regs->gpr[1], IOMUX_GPR1_FEC2_CLOCK_MUX1_SEL_MASK);
 	}
 #endif
+
+	imx_iomux_v3_setup_multiple_pads(phy_control_pads,
+		ARRAY_SIZE(phy_control_pads));
+
+	/* Enable the ENET power, active low */
+	gpio_direction_output(IMX_GPIO_NR(2, 6) , 0);
+
+	/* Reset AR8031 PHY */
+	gpio_direction_output(IMX_GPIO_NR(2, 7) , 0);
+	udelay(500);
+	gpio_set_value(IMX_GPIO_NR(2, 7), 1);
 
 #ifdef CONFIG_FEC_CLOCK_25M_REF
 	enable_fec_25m_clock();
