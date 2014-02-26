@@ -88,13 +88,16 @@
 #define CONFIG_FEC_DMA_MINALIGN		64
 #define CONFIG_FEC_CLOCK_FROM_ANATOP
 
-/* #define	CONFIG_CMD_SF */
-/* #define	CONFIG_CMD_SPI */
+#define	CONFIG_CMD_SF
+#define	CONFIG_CMD_SF_TEST
+#define	CONFIG_CMD_SPI
 
 /*
  * SPI
  */
 #ifdef	CONFIG_CMD_SPI
+
+#define CONFIG_QSPI    /* enable the QUADSPI driver */
 
 #define	CONFIG_HARD_SPI
 #define	CONFIG_DEFAULT_SPI_BUS		0
