@@ -141,7 +141,7 @@ static void fec_mii_setspeed(struct ethernet_regs *eth)
 	 * Set MII_SPEED = (1/(mii_speed * 2)) * System Clock
 	 * and do not drop the Preamble.
 	 */
-	writel((((imx_get_fecclk() / 1000000) + 2) / 5) << 1,
+	writel((((mxc_get_clock(MXC_IPG_CLK) / 1000000) + 2) / 5) << 1,
 			&eth->mii_speed);
 	debug("%s: mii_speed %08x\n", __func__, readl(&eth->mii_speed));
 }
@@ -296,12 +296,20 @@ static int fec_rbd_init(struct fec_priv *fec, int count, int dsize)
 	 * Allocate memory for the buffers. This allocation respects the
 	 * alignment
 	 */
+#if defined(CONFIG_FEC_DMA_MINALIGN)
+	size = roundup(dsize, CONFIG_FEC_DMA_MINALIGN);
+#else
 	size = roundup(dsize, ARCH_DMA_MINALIGN);
+#endif
 	for (i = 0; i < count; i++) {
 		uint32_t data_ptr = readl(&fec->rbd_base[i].data_pointer);
 		if (data_ptr == 0) {
+#if defined(CONFIG_FEC_DMA_MINALIGN)
+			uint8_t *data = memalign(CONFIG_FEC_DMA_MINALIGN, size);
+#else
 			uint8_t *data = memalign(ARCH_DMA_MINALIGN,
 						 size);
+#endif
 			if (!data) {
 				printf("%s: error allocating rxbuf %d\n",
 				       __func__, i);
