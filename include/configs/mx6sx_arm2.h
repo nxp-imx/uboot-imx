@@ -76,7 +76,7 @@
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
-/* #define CONFIG_FEC_MXC */
+#define CONFIG_FEC_MXC
 #define CONFIG_MII
 #define IMX_FEC_BASE			ENET_BASE_ADDR
 #define CONFIG_FEC_XCV_TYPE             RGMII
@@ -113,11 +113,6 @@
 #define	CONFIG_SF_DEFAULT_CS		0
 #define	CONFIG_SF_DEFAULT_SPEED		40000000
 #define	CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
-
-#define	CONFIG_ENV_SPI_BUS		0
-#define	CONFIG_ENV_SPI_CS		0
-#define	CONFIG_ENV_SPI_MAX_HZ		40000000
-#define	CONFIG_ENV_SPI_MODE		SPI_MODE_0
 
 #endif	/* CONFIG_CMD_SF */
 
@@ -181,7 +176,6 @@
 	"fdt_addr=0x84000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
-	"mmcdev=0\0" \
 	"mmcpart=1\0" \
 	"mmcroot=/dev/mmcblk0p2 rootwait rw\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
@@ -258,7 +252,7 @@
 #define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE
 
 #define CONFIG_SYS_MEMTEST_START	0x80000000
-#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + SZ_512M)
+#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 0x10000)
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_SYS_HZ			1000
@@ -283,22 +277,30 @@
 /* FLASH and environment organization */
 #define CONFIG_SYS_NO_FLASH
 
-#define CONFIG_ENV_OFFSET		(8 * SZ_64K)
 #define CONFIG_ENV_SIZE			SZ_8K
 
 #ifdef CONFIG_SYS_BOOT_QSPI
 #define CONFIG_SYS_USE_QSPI
-#define CONFIG_ENV_IS_NOWHERE           /* No QSPI env for now */
-#define CONFIG_SYS_MAX_FLASH_BANKS 1    /* max number of memory banks */
-#define CONFIG_SYS_MAX_FLASH_SECT 256   /* max number of sectors on one chip */
+#define CONFIG_ENV_IS_IN_SPI_FLASH
 #else
 #define CONFIG_ENV_IS_IN_MMC
 #endif
-#define CONFIG_SYS_MMC_ENV_DEV		0
+
+#if defined(CONFIG_ENV_IS_IN_MMC)
+#define CONFIG_ENV_OFFSET		(8 * SZ_64K)
+#elif defined(CONFIG_ENV_IS_IN_SPI_FLASH)
+#define CONFIG_ENV_OFFSET		(768 * 1024)
+#define CONFIG_ENV_SECT_SIZE		(64 * 1024)
+#define CONFIG_ENV_SPI_BUS		CONFIG_SF_DEFAULT_BUS
+#define CONFIG_ENV_SPI_CS		CONFIG_SF_DEFAULT_CS
+#define CONFIG_ENV_SPI_MODE		CONFIG_SF_DEFAULT_MODE
+#define CONFIG_ENV_SPI_MAX_HZ		CONFIG_SF_DEFAULT_SPEED
+#endif
 
 #define CONFIG_OF_LIBFDT
 #define CONFIG_CMD_BOOTZ
 
+#define CONFIG_SYS_DCACHE_OFF
 #ifndef CONFIG_SYS_DCACHE_OFF
 #define CONFIG_CMD_CACHE
 #endif
@@ -322,5 +324,18 @@
 	#define CONFIG_SPLASH_IMG_SIZE			0x19000
 #endif
 #endif /* CONFIG_SPLASH_SCREEN */
+
+/* USB Configs */
+#define CONFIG_CMD_USB
+#define CONFIG_USB_EHCI
+#define CONFIG_USB_EHCI_MX6
+#define CONFIG_USB_STORAGE
+#define CONFIG_EHCI_HCD_INIT_AFTER_RESET
+#define CONFIG_USB_HOST_ETHER
+#define CONFIG_USB_ETHER_ASIX
+#define CONFIG_MXC_USB_PORTSC  (PORT_PTS_UTMI | PORT_PTS_PTW)
+#define CONFIG_MXC_USB_FLAGS   0
+/*Only enable OTG1, the OTG2 has pin conflicts with PWM and WDOG*/
+#define CONFIG_USB_MAX_CONTROLLER_COUNT 1
 
 #endif				/* __CONFIG_H */

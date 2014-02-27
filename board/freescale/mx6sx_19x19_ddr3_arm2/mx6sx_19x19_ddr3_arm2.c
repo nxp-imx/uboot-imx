@@ -81,7 +81,7 @@ struct i2c_pads_info i2c_pad_info2 = {
 
 int dram_init(void)
 {
-	gd->ram_size = get_ram_size((void *)PHYS_SDRAM, PHYS_SDRAM_SIZE);
+	gd->ram_size = PHYS_SDRAM_SIZE;
 
 	return 0;
 }
@@ -138,15 +138,6 @@ static void setup_iomux_uart(void)
 	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
 }
 
-static struct fsl_esdhc_cfg usdhc_cfg[1] = {
-	{USDHC1_BASE_ADDR},
-};
-
-int board_mmc_getcd(struct mmc *mmc)
-{
-	return 1;	/* Assume boot SD always present */
-}
-
 #ifdef CONFIG_QSPI
 
 #define QSPI_PAD_CTRL1	\
@@ -178,13 +169,48 @@ int board_qspi_init(void)
 #endif
 
 #ifdef CONFIG_FSL_ESDHC
+static struct fsl_esdhc_cfg usdhc_cfg[1] = {
+	{USDHC1_BASE_ADDR, 0, 4},
+};
+
+int mmc_get_env_devno(void)
+{
+	u32 soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	u32 dev_no;
+
+	/* BOOT_CFG2[3] and BOOT_CFG2[4] */
+	dev_no = (soc_sbmr & 0x00001800) >> 11;
+
+	return dev_no;
+}
+int board_mmc_getcd(struct mmc *mmc)
+{
+	return 1;	/* Assume boot SD always present */
+}
 int board_mmc_init(bd_t *bis)
 {
+	/*
+	 * According to the board_mmc_init() the following map is done:
+	 * (U-boot device node)    (Physical Port)
+	 * mmc0                    USDHC1 (SDA)
+	 */
 	imx_iomux_v3_setup_multiple_pads(usdhc1_pads, ARRAY_SIZE(usdhc1_pads));
 
 	usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
 	return fsl_esdhc_initialize(bis, &usdhc_cfg[0]);
 }
+
+void board_late_mmc_init(void)
+{
+	char cmd[32];
+	u32 dev_no = mmc_get_env_devno();
+
+	setenv_ulong("mmcdev", dev_no);
+
+	sprintf(cmd, "mmc dev %d", dev_no);
+	run_command(cmd, 0);
+}
+
 #endif
 
 #ifdef CONFIG_SPLASH_SCREEN
@@ -238,7 +264,8 @@ int board_eth_init(bd_t *bis)
 
 	setup_iomux_fec1();
 
-	ret = cpu_eth_init(bis);
+	ret = fecmxc_initialize_multi(bis, 0,
+		CONFIG_FEC_MXC_PHYADDR, IMX_FEC_BASE);
 	if (ret)
 		printf("FEC1 MXC: %s:failed\n", __func__);
 
@@ -493,6 +520,10 @@ int board_late_init(void)
 		return -1;
 #endif
 
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_init();
+#endif
+
 	return 0;
 }
 
@@ -507,3 +538,32 @@ int checkboard(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_USB_EHCI_MX6
+iomux_v3_cfg_t const usb_otg1_pads[] = {
+	MX6SX_PAD_GPIO1_IO09__USB_OTG1_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6SX_PAD_GPIO1_IO10__ANATOP_OTG1_ID | MUX_PAD_CTRL(NO_PAD_CTRL)
+};
+
+iomux_v3_cfg_t const usb_otg2_pads[] = {
+	MX6SX_PAD_GPIO1_IO12__USB_OTG2_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+int board_ehci_hcd_init(int port)
+{
+	switch (port) {
+	case 0:
+		imx_iomux_v3_setup_multiple_pads(usb_otg1_pads,
+			ARRAY_SIZE(usb_otg1_pads));
+		break;
+	case 1:
+		imx_iomux_v3_setup_multiple_pads(usb_otg2_pads,
+			ARRAY_SIZE(usb_otg2_pads));
+		break;
+	default:
+		printf("MXC USB port %d not yet supported\n", port);
+		return 1;
+	}
+	return 0;
+}
+#endif

@@ -33,7 +33,7 @@ DECLARE_GLOBAL_DATA_PTR;
 	PAD_CTL_DSE_40ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
 
 #define USDHC_PAD_CTRL (PAD_CTL_PKE | PAD_CTL_PUE |		\
-	PAD_CTL_PUS_22K_UP  | PAD_CTL_SPEED_LOW |		\
+	PAD_CTL_PUS_47K_UP  | PAD_CTL_SPEED_LOW |		\
 	PAD_CTL_DSE_80ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
 
 #define ENET_PAD_CTRL  (PAD_CTL_PUS_100K_UP | PAD_CTL_PUE |     \
@@ -84,7 +84,7 @@ struct i2c_pads_info i2c_pad_info2 = {
 
 int dram_init(void)
 {
-	gd->ram_size = get_ram_size((void *)PHYS_SDRAM, PHYS_SDRAM_SIZE);
+	gd->ram_size = PHYS_SDRAM_SIZE;
 
 	return 0;
 }
@@ -92,6 +92,15 @@ int dram_init(void)
 static iomux_v3_cfg_t const uart1_pads[] = {
 	MX6SX_PAD_GPIO1_IO04__UART1_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
 	MX6SX_PAD_GPIO1_IO05__UART1_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const usdhc2_pads[] = {
+	MX6SX_PAD_SD2_CLK__USDHC2_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD2_CMD__USDHC2_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD2_DATA0__USDHC2_DATA0 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD2_DATA1__USDHC2_DATA1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD2_DATA2__USDHC2_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD2_DATA3__USDHC2_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 };
 
 static iomux_v3_cfg_t const usdhc3_pads[] = {
@@ -105,6 +114,22 @@ static iomux_v3_cfg_t const usdhc3_pads[] = {
 	MX6SX_PAD_SD3_DATA5__USDHC3_DATA5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6SX_PAD_SD3_DATA6__USDHC3_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6SX_PAD_SD3_DATA7__USDHC3_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+
+	/*CD pin*/
+	MX6SX_PAD_KEY_COL0__GPIO2_IO_10 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const usdhc4_pads[] = {
+	MX6SX_PAD_SD4_CLK__USDHC4_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_CMD__USDHC4_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA0__USDHC4_DATA0 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA1__USDHC4_DATA1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA2__USDHC4_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA3__USDHC4_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA4__USDHC4_DATA4 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA5__USDHC4_DATA5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA6__USDHC4_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA7__USDHC4_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 };
 
 #ifdef CONFIG_FEC_MXC
@@ -145,15 +170,6 @@ static void setup_iomux_uart(void)
 	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
 }
 
-static struct fsl_esdhc_cfg usdhc_cfg[1] = {
-	{USDHC3_BASE_ADDR},
-};
-
-int board_mmc_getcd(struct mmc *mmc)
-{
-	return 1;	/* Assume boot SD always present */
-}
-
 #ifdef CONFIG_QSPI
 
 #define QSPI_PAD_CTRL1  \
@@ -186,15 +202,105 @@ int board_qspi_init(void)
 }
 #endif
 
-
 #ifdef CONFIG_FSL_ESDHC
+static struct fsl_esdhc_cfg usdhc_cfg[3] = {
+	{USDHC2_BASE_ADDR, 0, 4},
+	{USDHC3_BASE_ADDR},
+	{USDHC4_BASE_ADDR},
+};
+
+#define USDHC3_CD_GPIO	IMX_GPIO_NR(2, 10)
+
+int mmc_get_env_devno(void)
+{
+	u32 soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	u32 dev_no;
+
+	/* BOOT_CFG2[3] and BOOT_CFG2[4] */
+	dev_no = (soc_sbmr & 0x00001800) >> 11;
+
+	/* need ubstract 2 to map to the mmc device id
+	 * see the comments in board_mmc_init function
+	 */
+
+	dev_no--;
+
+	return dev_no;
+}
+
+int board_mmc_getcd(struct mmc *mmc)
+{
+	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
+	int ret = 0;
+
+	switch (cfg->esdhc_base) {
+	case USDHC2_BASE_ADDR:
+		ret = 1; /*always present */
+		break;
+	case USDHC3_BASE_ADDR:
+		ret = !gpio_get_value(USDHC3_CD_GPIO);
+		break;
+	case USDHC4_BASE_ADDR:
+		ret = 1; /*always present */
+		break;
+	}
+
+	return ret;
+}
+
 int board_mmc_init(bd_t *bis)
 {
-	imx_iomux_v3_setup_multiple_pads(usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
+	int i;
 
-	usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
-	return fsl_esdhc_initialize(bis, &usdhc_cfg[0]);
+	/*
+	 * According to the board_mmc_init() the following map is done:
+	 * (U-boot device node)    (Physical Port)
+	 * mmc0                    SD2 (SDA)
+	 * mmc1                    SD3 (SDB)
+	 * mmc2                    eMMC
+	 */
+	for (i = 0; i < CONFIG_SYS_FSL_USDHC_NUM; i++) {
+		switch (i) {
+		case 0:
+			imx_iomux_v3_setup_multiple_pads(
+				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
+			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
+			break;
+		case 1:
+			imx_iomux_v3_setup_multiple_pads(
+				usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
+			gpio_direction_input(USDHC3_CD_GPIO);
+			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
+			break;
+		case 2:
+			imx_iomux_v3_setup_multiple_pads(
+				usdhc4_pads, ARRAY_SIZE(usdhc4_pads));
+			usdhc_cfg[2].sdhc_clk = mxc_get_clock(MXC_ESDHC4_CLK);
+			break;
+		default:
+			printf("Warning: you configured more USDHC controllers"
+				"(%d) than supported by the board\n", i + 1);
+			return 0;
+		}
+
+		if (fsl_esdhc_initialize(bis, &usdhc_cfg[i]))
+			printf("Warning: failed to initialize mmc dev %d\n", i);
+	}
+
+	return 0;
 }
+
+void board_late_mmc_init(void)
+{
+	char cmd[32];
+	u32 dev_no = mmc_get_env_devno();
+
+	setenv_ulong("mmcdev", dev_no);
+
+	sprintf(cmd, "mmc dev %d", dev_no);
+	run_command(cmd, 0);
+}
+
 #endif
 
 #ifdef CONFIG_SPLASH_SCREEN
@@ -483,7 +589,7 @@ int board_init(void)
 	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info2);
 #endif
 
-#ifdef	CONFIG_FEC_MXC
+#ifdef CONFIG_FEC_MXC
 	setup_fec();
 #endif
 
@@ -505,6 +611,10 @@ int board_late_init(void)
 		return -1;
 #endif
 
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_init();
+#endif
+
 	return 0;
 }
 
@@ -515,7 +625,36 @@ u32 get_board_rev(void)
 
 int checkboard(void)
 {
-	puts("Board: MX6SX 17x17 EVB\n");
+	puts("Board: MX6SX 17x17 ARM2\n");
 
 	return 0;
 }
+
+#ifdef CONFIG_USB_EHCI_MX6
+iomux_v3_cfg_t const usb_otg1_pads[] = {
+	MX6SX_PAD_GPIO1_IO09__USB_OTG1_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6SX_PAD_GPIO1_IO10__ANATOP_OTG1_ID | MUX_PAD_CTRL(NO_PAD_CTRL)
+};
+
+iomux_v3_cfg_t const usb_otg2_pads[] = {
+	MX6SX_PAD_GPIO1_IO12__USB_OTG2_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+int board_ehci_hcd_init(int port)
+{
+	switch (port) {
+	case 0:
+		imx_iomux_v3_setup_multiple_pads(usb_otg1_pads,
+			ARRAY_SIZE(usb_otg1_pads));
+		break;
+	case 1:
+		imx_iomux_v3_setup_multiple_pads(usb_otg2_pads,
+			ARRAY_SIZE(usb_otg2_pads));
+		break;
+	default:
+		printf("MXC USB port %d not yet supported\n", port);
+		return 1;
+	}
+	return 0;
+}
+#endif
