@@ -325,7 +325,25 @@ int enable_fec_clock(void)
 
 	return 0;
 }
+#else
+static u32 get_mmdc_ch0_clk(void)
+{
+	u32 cbcdr = __raw_readl(&imx_ccm->cbcdr);
+	u32 mmdc_ch0_podf = (cbcdr & MXC_CCM_CBCDR_MMDC_CH0_PODF_MASK) >>
+				MXC_CCM_CBCDR_MMDC_CH0_PODF_OFFSET;
 
+	return get_periph_clk() / (mmdc_ch0_podf + 1);
+}
+
+int enable_fec_clock(void)
+{
+	return 0;
+}
+
+#endif
+
+
+#ifdef CONFIG_MX6SX
 void enable_qspi_clk(void)
 {
     u32 reg = 0;
@@ -345,22 +363,7 @@ void enable_qspi_clk(void)
 			MXC_CCM_CS2CDR_QSPI2_CLK_SEL(0x3));
     writel(reg, &imx_ccm->cs2cdr);
 }
-
 #else
-static u32 get_mmdc_ch0_clk(void)
-{
-	u32 cbcdr = __raw_readl(&imx_ccm->cbcdr);
-	u32 mmdc_ch0_podf = (cbcdr & MXC_CCM_CBCDR_MMDC_CH0_PODF_MASK) >>
-				MXC_CCM_CBCDR_MMDC_CH0_PODF_OFFSET;
-
-	return get_periph_clk() / (mmdc_ch0_podf + 1);
-}
-
-int enable_fec_clock(void)
-{
-	return 0;
-}
-
 void enable_qspi_clk(void) {}
 #endif
 

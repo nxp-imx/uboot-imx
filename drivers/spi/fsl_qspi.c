@@ -713,7 +713,7 @@ static inline u32 fsl_qspi_endian_xchg(struct fsl_qspi *q, u32 a)
 static void fsl_qspi_read(struct fsl_qspi *q, unsigned int addr, int len, u8 *rxbuf)
 {
 	/* Read out the data directly from the AHB buffer.*/
-	memcpy(rxbuf, q->memmap_phy + q->chip_base_addr + addr, len);
+	memcpy(rxbuf, (u8 *)(q->memmap_phy + q->chip_base_addr + addr), len);
 }
 
 /* Read out the data from the QUADSPI_RBDR buffer registers. */
@@ -721,11 +721,7 @@ static void fsl_qspi_read_data(struct fsl_qspi *q, int len, u8 *rxbuf)
 {
 	u32 tmp;
 	int i = 0;
-	u32 seqid;
 	struct previous_cmd *pcmd = &pre_cmd;
-
-	seqid = (readl(q->iobase + QUADSPI_IPCR) >> QUADSPI_IPCR_SEQID_SHIFT
-			& 0xF);
 
 	if (OPCODE_DDR_QUAD_READ == pcmd->cmd) {
 		fsl_qspi_read(q, pcmd->addr, len, rxbuf);
