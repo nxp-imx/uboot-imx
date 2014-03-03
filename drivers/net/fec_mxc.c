@@ -758,15 +758,12 @@ static int fec_send(struct eth_device *dev, void *packet, int length)
 	 * barrier here.
 	 */
 	while (--timeout) {
-		if (!(readl(&fec->eth->x_des_active) & FEC_X_DES_ACTIVE_TDAR))
+		invalidate_dcache_range(addr, addr + size);
+		if (!(readw(&fec->tbd_base[fec->tbd_index].status) & FEC_TBD_READY))
 			break;
 	}
 
 	if (!timeout)
-		ret = -EINVAL;
-
-	invalidate_dcache_range(addr, addr + size);
-	if (readw(&fec->tbd_base[fec->tbd_index].status) & FEC_TBD_READY)
 		ret = -EINVAL;
 
 	debug("fec_send: status 0x%x index %d ret %i\n",
