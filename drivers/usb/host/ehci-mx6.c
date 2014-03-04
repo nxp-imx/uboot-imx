@@ -61,12 +61,6 @@
 #define UCMD_RUN_STOP           (1 << 0) /* controller run/stop */
 #define UCMD_RESET		(1 << 1) /* controller reset */
 
-#ifdef CONFIG_MX6SL
-#define USB_BASE_ADDR          USBO2H_USB_BASE_ADDR
-#else
-#define USB_BASE_ADDR          USBOH3_USB_BASE_ADDR
-#endif
-
 static const unsigned phy_bases[] = {
 	USB_PHY0_BASE_ADDR,
 	USB_PHY1_BASE_ADDR,
