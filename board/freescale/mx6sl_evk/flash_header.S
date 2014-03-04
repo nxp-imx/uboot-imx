@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2014 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -63,6 +63,236 @@ image_len:        .word __hab_data_end - TEXT_BASE + CONFIG_FLASH_HEADER_OFFSET
 image_len:        .word _end_of_copy  - TEXT_BASE + CONFIG_FLASH_HEADER_OFFSET
 #endif
 plugin:           .word 0x0
+
+
+
+#if defined CONFIG_MX6SL_DDR3
+
+/* !!!! Need update Len field after adding ddr script !!!!!!!!!!!!!!!!!*/
+dcd_hdr:          .word 0x40F801D2 /* Tag=0xD2, Len=62*8 + 4 + 4, Ver=0x40 */
+write_dcd_cmd:    .word 0x04F401CC /* Tag=0xCC, Len=62*8 + 4, Param=0x04 */
+
+/*
+//=============================================================================
+//init script for i.MX6SL DDR3
+//=============================================================================
+// Revision History
+// v01
+//=============================================================================
+
+wait = on
+//=============================================================================
+// Disable	WDOG
+//=============================================================================
+//setmem /16	0x020bc000 =	0x30
+
+//=============================================================================
+// Enable all clocks (they are disabled by ROM code)
+//=============================================================================
+setmem /32	0x020c4068 =	0xffffffff
+setmem /32	0x020c406c =	0xffffffff
+setmem /32	0x020c4070 =	0xffffffff
+setmem /32	0x020c4074 =	0xffffffff
+setmem /32	0x020c4078 =	0xffffffff
+setmem /32	0x020c407c =	0xffffffff
+setmem /32	0x020c4080 =	0xffffffff
+setmem /32	0x020c4084 =	0xffffffff
+
+*/
+//setmem /32	0x020c4018 =	0x00260324	//DDR clk to 400MHz
+
+MXC_DCD_ITEM(1, CCM_BASE_ADDR + 0x018, 0x00260324)
+
+//=============================================================================
+// IOMUX
+//=============================================================================
+//DDR IO TYPE:
+//setmem /32	0x020e05c0 =	0x00020000	// IOMUXC_SW_PAD_CTL_GRP_DDRMODE
+//setmem /32	0x020e05b4 =	0x00000000	// IOMUXC_SW_PAD_CTL_GRP_DDRPKE
+MXC_DCD_ITEM(2, IOMUXC_BASE_ADDR + 0x5c0, 0x00020000)
+MXC_DCD_ITEM(3, IOMUXC_BASE_ADDR + 0x5b4, 0x00000000)
+
+
+//CLOCK:
+//setmem /32	0x020e0338 =	0x00000030	// IOMUXC_SW_PAD_CTL_PAD_DRAM_SDCLK_0
+MXC_DCD_ITEM(4, IOMUXC_BASE_ADDR + 0x338, 0x00000030)
+
+
+//Control:
+//setmem /32	0x020e0300 =	0x00000030	// IOMUXC_SW_PAD_CTL_PAD_DRAM_CAS
+//setmem /32	0x020e031c =	0x00000030	// IOMUXC_SW_PAD_CTL_PAD_DRAM_RAS
+//setmem /32	0x020e0320 =	0x00000030	// IOMUXC_SW_PAD_CTL_PAD_DRAM_RESET
+//setmem /32	0x020e032c =	0x00000000	// IOMUXC_SW_PAD_CTL_PAD_DRAM_SDBA2 - DSE can be configured using Group Control Register: IOMUXC_SW_PAD_CTL_GRP_CTLDS
+//setmem /32	0x020e05ac =	0x00000030	// IOMUXC_SW_PAD_CTL_GRP_ADDDS
+//setmem /32	0x020e05c8 =	0x00000030	// IOMUXC_SW_PAD_CTL_GRP_CTLDS
+
+MXC_DCD_ITEM(5, IOMUXC_BASE_ADDR + 0x300, 0x00000030)
+MXC_DCD_ITEM(6, IOMUXC_BASE_ADDR + 0x31c, 0x00000030)
+MXC_DCD_ITEM(7, IOMUXC_BASE_ADDR + 0x320, 0x00000030)
+MXC_DCD_ITEM(8, IOMUXC_BASE_ADDR + 0x32c, 0x00000000)
+MXC_DCD_ITEM(9, IOMUXC_BASE_ADDR + 0x5ac, 0x00000030)
+MXC_DCD_ITEM(10, IOMUXC_BASE_ADDR + 0x5c8, 0x00000030)
+
+//Data Strobes:
+//setmem /32	0x020e05b0 =	0x00020000	// IOMUXC_SW_PAD_CTL_GRP_DDRMODE_CTL
+//setmem /32	0x020e0344 =	0x00000030	// IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS0
+//setmem /32	0x020e0348 =	0x00000030	// IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS1
+//setmem /32	0x020e034c =	0x00000030	// IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS2
+//setmem /32	0x020e0350 =	0x00000030	// IOMUXC_SW_PAD_CTL_PAD_DRAM_SDQS3
+MXC_DCD_ITEM(11, IOMUXC_BASE_ADDR + 0x5b0, 0x00020000)
+MXC_DCD_ITEM(12, IOMUXC_BASE_ADDR + 0x344, 0x00000030)
+MXC_DCD_ITEM(13, IOMUXC_BASE_ADDR + 0x348, 0x00000030)
+MXC_DCD_ITEM(14, IOMUXC_BASE_ADDR + 0x34c, 0x00000030)
+MXC_DCD_ITEM(15, IOMUXC_BASE_ADDR + 0x350, 0x00000030)
+
+
+//Data:
+//setmem /32	0x020e05d0 =	0x000C0000	// IOMUXC_SW_PAD_CTL_GRP_DDR_TYPE
+//setmem /32	0x020e05c4 =	0x00000030	// IOMUXC_SW_PAD_CTL_GRP_B0DS
+//setmem /32	0x020e05cc =	0x00000030	// IOMUXC_SW_PAD_CTL_GRP_B1DS
+//setmem /32	0x020e05d4 =	0x00000030	// IOMUXC_SW_PAD_CTL_GRP_B2DS
+//setmem /32	0x020e05d8 =	0x00000030	// IOMUXC_SW_PAD_CTL_GRP_B3DS
+
+MXC_DCD_ITEM(16, IOMUXC_BASE_ADDR + 0x5d0, 0x000C0000)
+MXC_DCD_ITEM(17, IOMUXC_BASE_ADDR + 0x5c4, 0x00000030)
+MXC_DCD_ITEM(18, IOMUXC_BASE_ADDR + 0x5cc, 0x00000030)
+MXC_DCD_ITEM(19, IOMUXC_BASE_ADDR + 0x5d4, 0x00000030)
+MXC_DCD_ITEM(20, IOMUXC_BASE_ADDR + 0x5d8, 0x00000030)
+
+//setmem /32	0x020e030c =	0x00000030	// IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM0
+//setmem /32	0x020e0310 =	0x00000030	// IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM1
+//setmem /32	0x020e0314 =	0x00000030	// IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM2
+//setmem /32	0x020e0318 =	0x00000030	// IOMUXC_SW_PAD_CTL_PAD_DRAM_DQM3
+MXC_DCD_ITEM(21, IOMUXC_BASE_ADDR + 0x30c, 0x00000030)
+MXC_DCD_ITEM(22, IOMUXC_BASE_ADDR + 0x310, 0x00000030)
+MXC_DCD_ITEM(23, IOMUXC_BASE_ADDR + 0x314, 0x00000030)
+MXC_DCD_ITEM(24, IOMUXC_BASE_ADDR + 0x318, 0x00000030)
+
+//=============================================================================
+// DDR Controller Registers
+//=============================================================================
+// Manufacturer:	Micron
+// Device Part Number:	MT41J128M16HA-187E
+// Clock Freq.: 	400MHz
+// Density per CS in Gb: 	4
+// Chip Selects used:	2
+// Total DRAM density (Gb)	8
+// Number of Banks:	8
+// Row address:    	14
+// Column address: 	10
+// Data bus width	32
+//=============================================================================
+//setmem /32	0x021b0800 =	0xa1390023 	// DDR_PHY_P0_MPZQHWCTRL, enable both one-time & periodic HW ZQ calibration.
+//change ZQ_HW_PER=256ms, Original - 0xa1390003
+MXC_DCD_ITEM(25, MMDC_P0_BASE_ADDR + 0x800, 0xa1390023)
+
+// write leveling, based on Freescale board layout and T topology
+// For target board, may need to run write leveling calibration
+// to fine tune these settings
+// If target board does not use T topology, then these registers
+// should either be cleared or write leveling calibration can be run
+//setmem /32	0x021b080c = 	0x001F001F
+//setmem /32	0x021b0810 = 	0x001F001F
+MXC_DCD_ITEM(26, MMDC_P0_BASE_ADDR + 0x80c, 0x001F001F)
+MXC_DCD_ITEM(27, MMDC_P0_BASE_ADDR + 0x810, 0x001F001F)
+
+//######################################################
+//calibration values based on calibration compare of 0x00ffff00:
+//Note, these calibration values are based on Freescale's board
+//May need to run calibration on target board to fine tune these
+//######################################################
+
+//setmem /32	0x021b083c =	0x407E007F	// MPDGCTRL0 PHY0
+//setmem /32	0x021b0840 =	0x00690069	// MPDGCTRL1 PHY0
+//setmem /32	0x021b0848 =	0x42424645	// MPRDDLCTL PHY0
+//setmem /32	0x021b0850 =	0x3B383630	// MPWRDLCTL PHY0
+MXC_DCD_ITEM(28, MMDC_P0_BASE_ADDR + 0x83c, 0x407E007F)
+MXC_DCD_ITEM(29, MMDC_P0_BASE_ADDR + 0x840, 0x00690069)
+MXC_DCD_ITEM(30, MMDC_P0_BASE_ADDR + 0x848, 0x42424645)
+MXC_DCD_ITEM(31, MMDC_P0_BASE_ADDR + 0x850, 0x3B383630)
+
+
+//setmem /32	0x021b081c =	0x33333333	// DDR_PHY_P0_MPREDQBY0DL3
+//setmem /32	0x021b0820 =	0x33333333	// DDR_PHY_P0_MPREDQBY1DL3
+//setmem /32	0x021b0824 =	0x33333333	// DDR_PHY_P0_MPREDQBY2DL3
+//setmem /32	0x021b0828 =	0x33333333	// DDR_PHY_P0_MPREDQBY3DL3
+MXC_DCD_ITEM(32, MMDC_P0_BASE_ADDR + 0x81c, 0x33333333)
+MXC_DCD_ITEM(33, MMDC_P0_BASE_ADDR + 0x820, 0x33333333)
+MXC_DCD_ITEM(34, MMDC_P0_BASE_ADDR + 0x824, 0x33333333)
+MXC_DCD_ITEM(35, MMDC_P0_BASE_ADDR + 0x828, 0x33333333)
+
+
+// Complete calibration by forced measurement:
+//setmem /32	0x021b08b8 =	0x00000800 	// DDR_PHY_P0_MPMUR0, frc_msr
+MXC_DCD_ITEM(36, MMDC_P0_BASE_ADDR + 0x8b8, 0x00000800)
+
+//setmem /32	0x021b0004 =	0x00020024	// MMDC0_MDPDC
+//setmem /32	0x021b0008 =	0x00333040	// MMDC0_MDOTC
+//setmem /32	0x021b000c =	0x3F435313	// MMDC0_MDCFG0
+//setmem /32	0x021b0010 =	0xB68E8B63	// MMDC0_MDCFG1
+//setmem /32	0x021b0014 =	0x01FF00DB	// MMDC0_MDCFG2
+//setmem /32	0x021b0018 =	0x00081740	// MMDC0_MDMISC
+MXC_DCD_ITEM(37, MMDC_P0_BASE_ADDR + 0x004, 0x00020024)
+MXC_DCD_ITEM(38, MMDC_P0_BASE_ADDR + 0x008, 0x00333040)
+MXC_DCD_ITEM(39, MMDC_P0_BASE_ADDR + 0x00c, 0x3F435313)
+MXC_DCD_ITEM(40, MMDC_P0_BASE_ADDR + 0x010, 0xB68E8B63)
+MXC_DCD_ITEM(41, MMDC_P0_BASE_ADDR + 0x014, 0x01FF00DB)
+MXC_DCD_ITEM(42, MMDC_P0_BASE_ADDR + 0x018, 0x00081740)
+
+
+//setmem /32	0x021b001c =	0x00008000	// MMDC0_MDSCR, set the Configuration request bit during MMDC set up
+//setmem /32	0x021b002c =	0x000026d2	// MMDC0_MDRWD; recommend to maintain the default values
+//setmem /32	0x021b0030 =	0x00431023	// MMDC0_MDOR
+//setmem /32	0x021b0040 =	0x0000004F	// CS0_END
+//setmem /32	0x021b0000 =	0xC3190000	// MMDC0_MDCTL
+MXC_DCD_ITEM(43, MMDC_P0_BASE_ADDR + 0x01c, 0x00008000)
+MXC_DCD_ITEM(44, MMDC_P0_BASE_ADDR + 0x02c, 0x000026d2)
+MXC_DCD_ITEM(45, MMDC_P0_BASE_ADDR + 0x030, 0x00431023)
+MXC_DCD_ITEM(46, MMDC_P0_BASE_ADDR + 0x040, 0x0000004F)
+MXC_DCD_ITEM(47, MMDC_P0_BASE_ADDR + 0x000, 0xC3190000)
+
+// Mode register writes
+//setmem /32	0x021b001c =	0x04008032	// MMDC0_MDSCR, MR2 write, CS0
+//setmem /32	0x021b001c =	0x00008033	// MMDC0_MDSCR, MR3 write, CS0
+//setmem /32	0x021b001c =	0x00048031	// MMDC0_MDSCR, MR1 write, CS0
+//setmem /32	0x021b001c =	0x05208030	// MMDC0_MDSCR, MR0 write, CS0
+//setmem /32	0x021b001c =	0x04008040	// MMDC0_MDSCR, ZQ calibration command sent to device on CS0
+
+MXC_DCD_ITEM(48, MMDC_P0_BASE_ADDR + 0x01c, 0x04008032)
+MXC_DCD_ITEM(49, MMDC_P0_BASE_ADDR + 0x01c, 0x00008033)
+MXC_DCD_ITEM(50, MMDC_P0_BASE_ADDR + 0x01c, 0x00048031)
+MXC_DCD_ITEM(51, MMDC_P0_BASE_ADDR + 0x01c, 0x05208030)
+MXC_DCD_ITEM(52, MMDC_P0_BASE_ADDR + 0x01c, 0x04008040)
+
+//setmem /32	0x021b001c =	0x0400803A	// MMDC0_MDSCR, MR2 write, CS1
+//setmem /32	0x021b001c =	0x0000803B	// MMDC0_MDSCR, MR3 write, CS1
+//setmem /32	0x021b001c =	0x00048039	// MMDC0_MDSCR, MR1 write, CS1
+//setmem /32	0x021b001c =	0x05208038	// MMDC0_MDSCR, MR0 write, CS1
+//setmem /32	0x021b001c =	0x04008048	// MMDC0_MDSCR, ZQ calibration command sent to device on CS1
+MXC_DCD_ITEM(53, MMDC_P0_BASE_ADDR + 0x01c, 0x0400803A)
+MXC_DCD_ITEM(54, MMDC_P0_BASE_ADDR + 0x01c, 0x0000803B)
+MXC_DCD_ITEM(55, MMDC_P0_BASE_ADDR + 0x01c, 0x00048039)
+MXC_DCD_ITEM(56, MMDC_P0_BASE_ADDR + 0x01c, 0x05208038)
+MXC_DCD_ITEM(57, MMDC_P0_BASE_ADDR + 0x01c, 0x04008048)
+
+
+//setmem /32	0x021b0020 =	0x00005800	// MMDC0_MDREF
+//setmem /32	0x021b0818 =	0x00011117	// DDR_PHY_P0_MPODTCTRL
+MXC_DCD_ITEM(58, MMDC_P0_BASE_ADDR + 0x020, 0x00005800)
+MXC_DCD_ITEM(59, MMDC_P0_BASE_ADDR + 0x818, 0x00011117)
+
+
+
+//setmem /32	0x021b0004 =	0x00025564	// MMDC0_MDPDC now SDCTL power down enabled
+//setmem /32	0x021b0404 =	0x00011006 	//MMDC0_MAPSR ADOPT power down enabled
+//setmem /32	0x021b001c =	0x00000000	// MMDC0_MDSCR, clear this register (especially the configuration bit as initialization is complete)
+
+MXC_DCD_ITEM(60, MMDC_P0_BASE_ADDR + 0x004, 0x00025564)
+MXC_DCD_ITEM(61, MMDC_P0_BASE_ADDR + 0x404, 0x00011006)
+MXC_DCD_ITEM(62, MMDC_P0_BASE_ADDR + 0x01c, 0x00000000)
+
+
+#else
 
 /* !!!! Need update Len field after adding ddr script !!!!!!!!!!!!!!!!!*/
 dcd_hdr:          .word 0x404802D2 /* Tag=0xD2, Len=72*8 + 4 + 4, Ver=0x40 */
@@ -373,6 +603,7 @@ MXC_DCD_ITEM(71, MMDC_P0_BASE_ADDR + 0x404, 0x00011006)
 MXC_DCD_ITEM(72, MMDC_P0_BASE_ADDR + 0x01c, 0x00000000)
 /*###################put the ddr script here ######################*/
 
+#endif  //CONFIG_MX6SL_DDR3
 #else
 
 #define ROM_API_TABLE_BASE_ADDR		(0x000000C0)

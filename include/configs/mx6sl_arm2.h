@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2014 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the MX6Q Armadillo2 Freescale board.
  *
@@ -27,6 +27,7 @@
 #define CONFIG_MXC
 #define CONFIG_MX6SL
 #define CONFIG_MX6SL_ARM2
+/* #define CONFIG_MX6SL_DDR3 */
 #define CONFIG_FLASH_HEADER
 #define CONFIG_FLASH_HEADER_OFFSET 0x400
 #define CONFIG_MX6_CLK32	   32768
