@@ -14,6 +14,8 @@
 
 #include <asm/io.h>
 
+#define QUADSPI_AHBMAP_BANK_MAXSIZE SZ_64M
+
 /* The registers */
 #define QUADSPI_MCR			0x00
 #define QUADSPI_MCR_RESERVED_SHIFT	16
@@ -253,20 +255,9 @@ struct fsl_qspi {
 	uint32_t mode;
 	u32 iobase;
 	u32 ahb_base; /* Used when read from AHB bus */
-	u32 memmap_phy;
-	u32 nor_size;
-	u32 nor_num;
-	unsigned int chip_base_addr; /* We may support two chips. */
+	u32 bank_memmap_phy[4];
 	struct fsl_qspi_devtype_data *devtype_data;
 };
-
-/*stucture to store the previous cmd*/
-struct previous_cmd {
-u8 cmd;
-unsigned int addr;
-};
-struct previous_cmd pre_cmd = {0, 0};
-
 
 static inline void fsl_qspi_unlock_lut(struct fsl_qspi *q)
 {
@@ -297,15 +288,10 @@ static void fsl_qspi_init_lut(struct fsl_qspi *q)
 	/* Quad Read */
 	lut_base = SEQID_QUAD_READ * 4;
 
-	if (q->nor_size <= SZ_16M) {
-		cmd = OPCODE_QUAD_READ;
-		addrlen = ADDR24BIT;
-		dummy = 8;
-	} else {
-		cmd = OPCODE_QUAD_READ_4B;
-		addrlen = ADDR32BIT;
-		dummy = 8;
-	}
+	/* U-boot SPI flash only support 24bits address*/
+	cmd = OPCODE_QUAD_READ;
+	addrlen = ADDR24BIT;
+	dummy = 8;
 
 	writel(LUT0(CMD, PAD1, cmd) | LUT1(ADDR, PAD1, addrlen),
 			base + QUADSPI_LUT(lut_base));
@@ -318,16 +304,10 @@ static void fsl_qspi_init_lut(struct fsl_qspi *q)
 
 	/* Fast Read */
 	lut_base = SEQID_FAST_READ * 4;
+	cmd = OPCODE_FAST_READ;
+	addrlen = ADDR24BIT;
+	dummy = 8;
 
-	if (q->nor_size <= SZ_16M) {
-		cmd = OPCODE_FAST_READ;
-		addrlen = ADDR24BIT;
-		dummy = 8;
-	} else {
-		cmd = OPCODE_FAST_READ_4B;
-		addrlen = ADDR32BIT;
-		dummy = 8;
-	}
 	writel(LUT0(CMD, PAD1, cmd) | LUT1(ADDR, PAD1, addrlen),
 			base + QUADSPI_LUT(lut_base));
 	writel(LUT0(DUMMY, PAD1, dummy) | LUT1(READ, PAD1, rxfifo),
@@ -335,14 +315,8 @@ static void fsl_qspi_init_lut(struct fsl_qspi *q)
 
 	/* Page Program */
 	lut_base = SEQID_PP * 4;
-
-	if (q->nor_size <= SZ_16M) {
-		cmd = OPCODE_PP;
-		addrlen = ADDR24BIT;
-	} else {
-		cmd = OPCODE_PP_4B;
-		addrlen = ADDR32BIT;
-	}
+	cmd = OPCODE_PP;
+	addrlen = ADDR24BIT;
 
 	writel(LUT0(CMD, PAD1, cmd) | LUT1(ADDR, PAD1, addrlen),
 			base + QUADSPI_LUT(lut_base));
@@ -355,14 +329,8 @@ static void fsl_qspi_init_lut(struct fsl_qspi *q)
 
 	/* Erase a sector */
 	lut_base = SEQID_SE * 4;
-
-	if (q->nor_size <= SZ_16M) {
-		cmd = OPCODE_SE;
-		addrlen = ADDR24BIT;
-	} else {
-		cmd = OPCODE_SE_4B;
-		addrlen = ADDR32BIT;
-	}
+	cmd = OPCODE_SE;
+	addrlen = ADDR24BIT;
 
 	writel(LUT0(CMD, PAD1, cmd) | LUT1(ADDR, PAD1, addrlen),
 			base + QUADSPI_LUT(lut_base));
@@ -389,16 +357,9 @@ static void fsl_qspi_init_lut(struct fsl_qspi *q)
 
 	/* DDR QUAD Read */
 	lut_base = SEQID_DDR_QUAD_READ * 4;
-
-	if (q->nor_size <= SZ_16M) {
-		cmd = OPCODE_DDR_QUAD_READ;
-		addrlen = ADDR24BIT;
-		dummy = 6;
-	} else {
-		cmd = OPCODE_DDR_QUAD_READ;
-		addrlen = ADDR32BIT;
-		dummy = 6;
-	}
+	cmd = OPCODE_DDR_QUAD_READ;
+	addrlen = ADDR24BIT;
+	dummy = 6;
 
 	writel(LUT0(CMD, PAD1, cmd) | LUT1(ADDR_DDR, PAD1, addrlen),
 			base + QUADSPI_LUT(lut_base));
@@ -450,14 +411,16 @@ static void fsl_enable_ddr_mode(struct fsl_qspi *q)
 static void fsl_qspi_init_abh_read(struct fsl_qspi *q)
 {
 	u32 base = q->iobase;
-	int nor_size = q->nor_size;
-	int nor_num = q->nor_num;
 
-	/* Map the SPI NOR to accessiable address */
-	writel(nor_size + q->memmap_phy, base + QUADSPI_SFA1AD);
-	writel(nor_size + q->memmap_phy, base + QUADSPI_SFA2AD);
-	writel((nor_size * nor_num) + q->memmap_phy, base + QUADSPI_SFB1AD);
-	writel((nor_size * nor_num) + q->memmap_phy, base + QUADSPI_SFB2AD);
+	/* Map the SPI NOR to accessiable address, arrage max space for each bank*/
+	writel(q->bank_memmap_phy[0] + QUADSPI_AHBMAP_BANK_MAXSIZE,
+		base + QUADSPI_SFA1AD);
+	writel(q->bank_memmap_phy[1] + QUADSPI_AHBMAP_BANK_MAXSIZE,
+		base + QUADSPI_SFA2AD);
+	writel(q->bank_memmap_phy[2] + QUADSPI_AHBMAP_BANK_MAXSIZE,
+		base + QUADSPI_SFB1AD);
+	writel(q->bank_memmap_phy[3] + QUADSPI_AHBMAP_BANK_MAXSIZE,
+		base + QUADSPI_SFB2AD);
 
 	/* AHB configuration for access buffer 0/1/2 .*/
 	writel(QUADSPI_BUFXCR_INVALID_MSTRID, base + QUADSPI_BUF0CR);
@@ -528,22 +491,32 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	struct fsl_qspi *q;
 	int ret;
 
+	if (bus > 1) {
+		puts("FSL_QSPI: Not a valid bus !\n");
+		return NULL;
+	}
+
+	if (cs > 1) {
+		puts("FSL_QSPI: Not a valid cs !\n");
+		return NULL;
+	}
+
 	q = spi_alloc_slave(struct fsl_qspi, bus, cs);
 	if (!q) {
 		puts("FSL_QSPI: SPI Slave not allocated !\n");
 		return NULL;
 	}
 
-	q->iobase = QSPI2_BASE_ADDR;
-	q->memmap_phy = QSPI2_ARB_BASE_ADDR;
-	q->nor_num = 1; /* change it in future */
-	q->nor_size = 0x1000000; /* 16MB */
+	q->iobase = CONFIG_QSPI_BASE;
+	q->bank_memmap_phy[0] = CONFIG_QSPI_MEMMAP_BASE;
+	q->bank_memmap_phy[1] = q->bank_memmap_phy[0] + QUADSPI_AHBMAP_BANK_MAXSIZE;
+	q->bank_memmap_phy[2] = q->bank_memmap_phy[1] + QUADSPI_AHBMAP_BANK_MAXSIZE;
+	q->bank_memmap_phy[3] = q->bank_memmap_phy[2] + QUADSPI_AHBMAP_BANK_MAXSIZE;
 
 	/* Init the QuadSPI controller */
 	ret = fsl_qspi_init(q);
 	if (ret) {
 		puts("FSL_QSPI: init failed!\n");
-		printf("FSL_QSPI: init failed!\n");
 		return NULL;
 	}
 
@@ -652,35 +625,32 @@ fsl_qspi_runcmd(struct fsl_qspi *q, u8 cmd, unsigned int addr, int len)
 	int seqid;
 	u32 reg, reg2;
 	int err;
-	struct previous_cmd *pcmd = &pre_cmd;
+	int bank_id;
 
-	/*use ddr quad read instead of fast read*/
-	if (OPCODE_FAST_READ == cmd)
-		cmd = OPCODE_DDR_QUAD_READ;
-	/*save the previous cmd*/
-	pcmd->cmd =  cmd;
-	pcmd->addr = addr;
-	/* save the reg */
-	reg = readl(base + QUADSPI_MCR);
-
-	writel(q->memmap_phy + q->chip_base_addr + addr, base + QUADSPI_SFAR);
-	writel(QUADSPI_RBCT_WMRK_MASK | QUADSPI_RBCT_RXBRD_USEIPS,
-			base + QUADSPI_RBCT);
-	writel(reg | QUADSPI_MCR_CLR_RXF_MASK, base + QUADSPI_MCR);
-
-    do {
+	/* check the SR first, wait previous cmd completed*/
+	do {
 		reg2 = readl(base + QUADSPI_SR);
 		if (reg2 & (QUADSPI_SR_IP_ACC_MASK | QUADSPI_SR_AHB_ACC_MASK)) {
 			udelay(1);
-		printf("The controller is busy, 0x%x\n", reg2);
-		continue;
+			printf("The controller is busy, 0x%x\n", reg2);
+			continue;
 		}
 		break;
 	} while (1);
 
+	/* save the reg */
+	reg = readl(base + QUADSPI_MCR);
+
+	/* get the bank index */
+	bank_id = ((q->slave.bus) << 1) + (q->slave.cs);
+
+	writel(q->bank_memmap_phy[bank_id] + addr, base + QUADSPI_SFAR);
+	writel(QUADSPI_RBCT_WMRK_MASK | QUADSPI_RBCT_RXBRD_USEIPS,
+			base + QUADSPI_RBCT);
+	writel(reg | QUADSPI_MCR_CLR_RXF_MASK, base + QUADSPI_MCR);
+
 	/* trigger the LUT now */
 	seqid = fsl_qspi_get_seqid(q, cmd);
-	/*printf("cmd %x, len %d, seqid %d\n", cmd, len, seqid);*/
 	writel((seqid << QUADSPI_IPCR_SEQID_SHIFT) | len, base + QUADSPI_IPCR);
 
 	/* Wait until completed */
@@ -710,23 +680,23 @@ static inline u32 fsl_qspi_endian_xchg(struct fsl_qspi *q, u32 a)
 }
 
 /* Read out the data from the AHB buffer. */
-static void fsl_qspi_read(struct fsl_qspi *q, unsigned int addr, int len, u8 *rxbuf)
+static void fsl_qspi_ahb_read(struct fsl_qspi *q,
+	unsigned int addr, int len, u8 *rxbuf)
 {
+	int bank_id;
+
+	/* get the bank index */
+	bank_id = ((q->slave.bus) << 1) + (q->slave.cs);
+
 	/* Read out the data directly from the AHB buffer.*/
-	memcpy(rxbuf, (u8 *)(q->memmap_phy + q->chip_base_addr + addr), len);
+	memcpy(rxbuf, (u8 *)(q->bank_memmap_phy[bank_id] + addr), len);
 }
 
 /* Read out the data from the QUADSPI_RBDR buffer registers. */
-static void fsl_qspi_read_data(struct fsl_qspi *q, int len, u8 *rxbuf)
+static void fsl_qspi_ip_read(struct fsl_qspi *q, int len, u8 *rxbuf)
 {
 	u32 tmp;
 	int i = 0;
-	struct previous_cmd *pcmd = &pre_cmd;
-
-	if (OPCODE_DDR_QUAD_READ == pcmd->cmd) {
-		fsl_qspi_read(q, pcmd->addr, len, rxbuf);
-		return;
-	}
 
 	while (len > 0) {
 		tmp = readl(q->iobase + QUADSPI_RBDR + i * 4);
@@ -768,57 +738,47 @@ int  spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 {
 	struct fsl_qspi *q = container_of(slave, struct fsl_qspi, slave);
 	int len = bitlen / 8;
-	int ret;
+	int ret = 0;
 	u8 *buf;
 	static u8 opcode;
 	static unsigned int addr;
 
-	if (!opcode) {
+	if (!opcode && (flags & SPI_XFER_BEGIN)) {
 		/* spi_xfer for cmd phase */
 		buf = (u8 *)dout;
 		opcode = buf[0];
-		addr = buf[1] << 16 | buf[2] << 8 | buf[3];
-		if (flags & SPI_XFER_END) {
-			/* if transfer cmd only */
-			ret = fsl_qspi_runcmd(q, opcode, addr, len);
-			opcode = 0;
-			addr = 0;
-			if (ret)
-				return ret;
-		}
-	} else if (SPI_XFER_END == flags && !din && !dout) {
-		/* for read status only, restore opcode and addr to 0 */
-		opcode = 0;
-		addr = 0;
-		return 0;
-	} else {
+		if (len > 1)
+			addr = buf[1] << 16 | buf[2] << 8 | buf[3];
+
+		/* if transfer cmd only */
+		if (flags & SPI_XFER_END)
+			ret = fsl_qspi_runcmd(q, opcode, addr, 0);
+
+	} else if (opcode) {
 		/* spi_xfer for data phase */
-		if (OPCODE_PP != opcode) {
-			/* run all cmds except page program*/
-			ret = fsl_qspi_runcmd(q, opcode, addr, len);
-			if (flags == SPI_XFER_END) {
-				/* data transfer end, restore opcode and addr to 0*/
-				opcode = 0;
-				addr = 0;
-			}
-			if (ret)
-				return ret;
-		}
 		if (din) {
-			/* read data */
+			/* read*/
 			buf = (u8 *)din;
-			fsl_qspi_read_data(q, len, buf);
+			if (OPCODE_FAST_READ == opcode) {
+				fsl_qspi_ahb_read(q, addr, len, buf);
+			} else {
+				ret = fsl_qspi_runcmd(q, opcode, addr, len);
+				if (!ret)
+					fsl_qspi_ip_read(q, len, buf);
+			}
 		} else if (dout) {
 			/* write data, prepare data first */
 			buf = (u8 *)dout;
 			fsl_qspi_write_data(q, len, buf);
 			/* then run page program cmd */
 			ret = fsl_qspi_runcmd(q, opcode, addr, len);
-			opcode = 0;
-			addr = 0;
-			if (ret)
-				return ret;
 		}
 	}
-	return 0;
+
+	if (ret || (flags & SPI_XFER_END)) {
+		opcode = 0;
+		addr = 0;
+	}
+
+	return ret;
 }
