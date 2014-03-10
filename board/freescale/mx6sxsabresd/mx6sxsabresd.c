@@ -230,7 +230,7 @@ int board_qspi_init(void)
 	imx_iomux_v3_setup_multiple_pads(quadspi_pads, ARRAY_SIZE(quadspi_pads));
 
 	/* Set the clock */
-	enable_qspi_clk();
+	enable_qspi_clk(1);
 
 	return 0;
 }

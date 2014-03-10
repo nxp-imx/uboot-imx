@@ -412,27 +412,47 @@ int enable_fec_clock(int fec_id)
 
 
 #ifdef CONFIG_MX6SX
-void enable_qspi_clk(void)
+/* qspi_num can be from 0 - 1 */
+void enable_qspi_clk(int qspi_num)
 {
     u32 reg = 0;
 
     /* Enable QuadSPI clock */
-    reg = readl(&imx_ccm->CCGR4);
-    reg |= MXC_CCM_CCGR4_QSPI2_ENFC_OFFSET;
-    writel(reg, &imx_ccm->CCGR4);
+	switch (qspi_num) {
+	case 0:
+		reg = readl(&imx_ccm->CCGR3);
+	    reg |= MXC_CCM_CCGR3_QSPI1_OFFSET;
+	    writel(reg, &imx_ccm->CCGR3);
 
-    /* set 50M  : (50 = 396 / 2 / 4) */
-    reg = readl(&imx_ccm->cs2cdr);
-    reg &= ~(0xfff << 15);
-    reg &= ~(MXC_CCM_CS2CDR_QSPI2_CLK_PODF_MASK |
-			MXC_CCM_CS2CDR_QSPI2_CLK_PRED_MASK |
-			MXC_CCM_CS2CDR_QSPI2_CLK_SEL_MASK);
-    reg |= (MXC_CCM_CS2CDR_QSPI2_CLK_PRED(0x1) |
-			MXC_CCM_CS2CDR_QSPI2_CLK_SEL(0x3));
-    writel(reg, &imx_ccm->cs2cdr);
+		/* set 50M  : (50 = 396 / 2 / 4) */
+	    reg = readl(&imx_ccm->cscmr1);
+	    reg &= ~(MXC_CCM_CSCMR1_QSPI1_PODF_MASK |
+			MXC_CCM_CSCMR1_QSPI1_CLK_SEL_MASK);
+	    reg |= ((1 << MXC_CCM_CSCMR1_QSPI1_PODF_OFFSET) |
+				(2 << MXC_CCM_CSCMR1_QSPI1_CLK_SEL_OFFSET));
+	    writel(reg, &imx_ccm->cscmr1);
+		break;
+	case 1:
+	    reg = readl(&imx_ccm->CCGR4);
+	    reg |= MXC_CCM_CCGR4_QSPI2_ENFC_OFFSET;
+	    writel(reg, &imx_ccm->CCGR4);
+
+	    /* set 50M  : (50 = 396 / 2 / 4) */
+	    reg = readl(&imx_ccm->cs2cdr);
+	    reg &= ~(MXC_CCM_CS2CDR_QSPI2_CLK_PODF_MASK |
+				MXC_CCM_CS2CDR_QSPI2_CLK_PRED_MASK |
+				MXC_CCM_CS2CDR_QSPI2_CLK_SEL_MASK);
+	    reg |= (MXC_CCM_CS2CDR_QSPI2_CLK_PRED(0x1) |
+				MXC_CCM_CS2CDR_QSPI2_CLK_SEL(0x3));
+	    writel(reg, &imx_ccm->cs2cdr);
+		break;
+	default:
+		break;
+
+	}
 }
 #else
-void enable_qspi_clk(void) {}
+void enable_qspi_clk(int qspi_num) {}
 #endif
 
 static u32 get_usdhc_clk(u32 port)

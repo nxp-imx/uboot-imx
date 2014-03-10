@@ -69,5 +69,5 @@ int enable_fec_clock(int fec_id);
 int fec_set_rate(int fec_id, unsigned long rate);
 void enable_fec_25m_clock(void);
 void enable_ipu_clock(void);
-void enable_qspi_clk(void);
+void enable_qspi_clk(int qspi_num);
 #endif /* __ASM_ARCH_CLOCK_H */
