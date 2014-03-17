@@ -215,6 +215,7 @@ COBJS-$(CONFIG_USB_KEYBOARD) += usb_kbd.o
 COBJS-$(CONFIG_FASTBOOT) += cmd_fastboot.o
 COBJS-$(CONFIG_CMD_DFU) += cmd_dfu.o
 COBJS-$(CONFIG_CMD_GPT) += cmd_gpt.o
+COBJS-$(CONFIG_CMD_BOOTAUX) += cmd_bootaux.o
 endif
 
 ifdef CONFIG_SPL_BUILD
