@@ -158,6 +158,28 @@
 #define CONFIG_LOADADDR			0x80800000
 #define CONFIG_SYS_TEXT_BASE		0x87800000
 
+#define CONFIG_CMD_BOOTAUX /* Boot M4 */
+#define CONFIG_CMD_SETEXPR
+
+#ifdef CONFIG_CMD_BOOTAUX
+#define UPDATE_M4_ENV \
+	"m4image=m4_qspi.bin\0" \
+	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \
+	"update_m4_from_sd=" \
+		"if sf probe; then " \
+			"if run loadm4image; then " \
+				"setexpr fw_sz ${filesize} + 0xffff; " \
+				"setexpr fw_sz ${fw_sz} / 0x10000; "	\
+				"setexpr fw_sz ${fw_sz} * 0x10000; "	\
+				"sf erase 0x0 ${fw_sz}; " \
+				"sf write ${loadaddr} 0x0 ${filesize}; " \
+			"fi; " \
+		"fi\0" \
+	"m4boot=sf probe; bootaux 0x70000000\0"
+#else
+#define UPDATE_M4_ENV ""
+#endif
+
 #define CONFIG_MFG_ENV_SETTINGS \
 	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
 		"rdinit=/linuxrc " \
@@ -171,6 +193,7 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
+	UPDATE_M4_ENV \
 	"script=boot.scr\0" \
 	"uimage=uImage\0" \
 	"console=ttymxc0\0" \
