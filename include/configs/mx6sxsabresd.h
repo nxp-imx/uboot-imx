@@ -362,4 +362,8 @@
 #define CONFIG_MXC_USB_FLAGS   0
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 2
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx6sxsabresdandroid.h"
+#endif
+
 #endif				/* __CONFIG_H */

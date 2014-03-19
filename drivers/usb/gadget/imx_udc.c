@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2014 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -604,7 +604,7 @@ static void usb_set_mode_device(void)
 		;
 	DBG("DOORE RESET END\n");
 
-#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL) || defined(CONFIG_MX6SL)
+#if defined(CONFIG_MX6)
 	reset_usb_phy1();
 #endif
 	DBG("init core to device mode\n");
@@ -1004,7 +1004,7 @@ int mxc_udc_init(void)
     udc_pins_setting();
 	set_usb_phy1_clk();
 	enable_usboh3_clk(1);
-#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL) || defined(CONFIG_MX6SL)
+#if defined(CONFIG_MX6)
 	udc_disable_over_current();
 #endif
 	enable_usb_phy1_clk(1);
