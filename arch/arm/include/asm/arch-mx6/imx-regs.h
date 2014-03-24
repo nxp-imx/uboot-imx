@@ -266,7 +266,11 @@
 #define CSU_BASE_ADDR               (AIPS2_OFF_BASE_ADDR + 0x40000)
 #define IP2APB_PERFMON1_BASE_ADDR   (AIPS2_OFF_BASE_ADDR + 0x44000)
 #define IP2APB_PERFMON2_BASE_ADDR   (AIPS2_OFF_BASE_ADDR + 0x48000)
+#ifdef CONFIG_MX6SX
+#define DEBUG_MONITOR_BASE_ADDR     (AIPS2_OFF_BASE_ADDR + 0x4C000)
+#else
 #define IP2APB_PERFMON3_BASE_ADDR   (AIPS2_OFF_BASE_ADDR + 0x4C000)
+#endif
 #define IP2APB_TZASC1_BASE_ADDR     (AIPS2_OFF_BASE_ADDR + 0x50000)
 #ifdef CONFIG_MX6SX
 #define SAI1_BASE_ADDR              (AIPS2_OFF_BASE_ADDR + 0x54000)
@@ -877,6 +881,19 @@ struct wdog_regs {
 	u16	wrsr;	/* Reset Status */
 	u16	wicr;	/* Interrupt Control */
 	u16	wmcr;	/* Miscellaneous Control */
+};
+
+struct dbg_monitor_regs {
+	u32	ctrl[4];		/* Control */
+	u32	master_en[4];		/* Master enable */
+	u32	irq[4];			/* IRQ */
+	u32	trap_addr_low[4];	/* Trap address low */
+	u32	trap_addr_high[4];	/* Trap address high */
+	u32	trap_id[4];		/* Trap ID */
+	u32	snvs_addr[4];		/* SNVS address */
+	u32	snvs_data[4];		/* SNVS data */
+	u32	snvs_info[4];		/* SNVS info */
+	u32	version[4];		/* Version */
 };
 
 extern void check_cpu_temperature(void);

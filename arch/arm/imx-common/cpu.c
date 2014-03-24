@@ -142,6 +142,10 @@ const char *get_imx_type(u32 imxtype)
 int print_cpuinfo(void)
 {
 	u32 cpurev;
+#if defined(CONFIG_DBG_MONITOR)
+	struct dbg_monitor_regs *dbg =
+		(struct dbg_monitor_regs *)DEBUG_MONITOR_BASE_ADDR;
+#endif
 
 	cpurev = get_cpu_rev();
 
@@ -153,6 +157,14 @@ int print_cpuinfo(void)
 
 #if defined(CONFIG_MX6)
 	check_cpu_temperature();
+#endif
+
+#if defined(CONFIG_DBG_MONITOR)
+	if (readl(&dbg->snvs_addr))
+		printf("DBG snvs regs addr 0x%x, data 0x%x, info 0x%x\n",
+		       readl(&dbg->snvs_addr),
+		       readl(&dbg->snvs_data),
+		       readl(&dbg->snvs_info));
 #endif
 
 	printf("Reset cause: %s\n", get_reset_cause());

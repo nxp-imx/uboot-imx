@@ -24,6 +24,8 @@
 #define CONFIG_SYS_PL310_BASE		0x00A02000
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
+#define CONFIG_DBG_MONITOR
+
 /* uncomment for PLUGIN mode support */
 /* #define CONFIG_USE_PLUGIN */
 
