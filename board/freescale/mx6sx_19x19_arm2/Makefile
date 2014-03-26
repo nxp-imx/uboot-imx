@@ -10,7 +10,7 @@ include $(TOPDIR)/config.mk
 
 LIB    = $(obj)lib$(BOARD).o
 
-COBJS  := mx6sx_19x19_ddr3_arm2.o
+COBJS  := mx6sx_19x19_arm2.o
 
 SRCS   := $(COBJS:.o=.c)
 OBJS   := $(addprefix $(obj),$(COBJS))
