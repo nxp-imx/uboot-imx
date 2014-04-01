@@ -415,6 +415,15 @@ int arch_cpu_init(void)
 	mxs_dma_init();
 #endif
 
+#ifdef CONFIG_MX6SX
+	/* Update the gpu QoS to Write 2, Read 8 */
+	writel(0, QOSC_BASE_ADDR); /* Disable clkgate & soft_rst */
+	writel(0, QOSC_BASE_ADDR+0x60); /* Enable all masters */
+	writel(0, QOSC_BASE_ADDR+0x1400); /* Disable clkgate & soft_rst for gpu */
+	writel(0x0f000222, QOSC_BASE_ADDR+0x14d0); /* Set Write QoS 2 */
+	writel(0x0f020822, QOSC_BASE_ADDR+0x14e0); /* Set Read QoS 8 */
+#endif
+
 	return 0;
 }
 
