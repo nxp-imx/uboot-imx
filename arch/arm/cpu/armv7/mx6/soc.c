@@ -406,7 +406,9 @@ int arch_cpu_init(void)
 
 	imx_set_wdog_powerdown(false); /* Disable PDE bit of WMCR register */
 
+#ifndef CONFIG_MX6SX  /* Reset pfd is not needed for MX6SX */
 	imx_reset_pfd();
+#endif
 	imx_set_pcie_phy_power_down();
 	imx_set_vddpu_power_down();
 
