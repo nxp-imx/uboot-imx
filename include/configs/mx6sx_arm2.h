@@ -14,6 +14,7 @@
 
 #include <asm/arch/imx-regs.h>
 #include <asm/sizes.h>
+#include <asm/imx-common/gpio.h>
 
 #define CONFIG_MX6
 #define CONFIG_ROM_UNIFIED_SECTIONS
@@ -90,37 +91,6 @@
 #define CONFIG_FEC_DMA_MINALIGN		64
 #define CONFIG_FEC_CLOCK_FROM_ANATOP
 
-#define	CONFIG_CMD_SF
-#define	CONFIG_CMD_SF_TEST
-#define	CONFIG_CMD_SPI
-
-/*
- * SPI
- */
-#ifdef	CONFIG_CMD_SPI
-
-#define CONFIG_QSPI    /* enable the QUADSPI driver */
-#define CONFIG_QSPI_BASE			QSPI2_BASE_ADDR
-#define CONFIG_QSPI_MEMMAP_BASE		QSPI2_ARB_BASE_ADDR
-
-#define	CONFIG_HARD_SPI
-#define	CONFIG_DEFAULT_SPI_BUS		0
-#define	CONFIG_DEFAULT_SPI_CS		0
-#define	CONFIG_DEFAULT_SPI_MODE		SPI_MODE_0
-
-/* SPI FLASH */
-#ifdef	CONFIG_CMD_SF
-
-#define	CONFIG_SPI_FLASH
-#define	CONFIG_SPI_FLASH_STMICRO
-#define	CONFIG_SF_DEFAULT_BUS		0
-#define	CONFIG_SF_DEFAULT_CS		0
-#define	CONFIG_SF_DEFAULT_SPEED		40000000
-#define	CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
-
-#endif	/* CONFIG_CMD_SF */
-
-#endif	/* CONFIG_CMD_SPI */
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
@@ -180,17 +150,51 @@
 #define UPDATE_M4_ENV ""
 #endif
 
+#define CONFIG_SYS_MMC_IMG_LOAD_PART	1
+#ifdef CONFIG_SYS_BOOT_NAND
+#define CONFIG_MFG_NAND_PARTITION "mtdparts=gpmi-nand:16m(boot),16m(kernel),16m(dtb),-(rootfs) "
+#else
+#define CONFIG_MFG_NAND_PARTITION ""
+#endif
+
+/*
+ * For the SPI/WEIM NOR, it can't store all the images into it due to it's
+ * capacity, we need one default mmc device to load the left image or rootfs.
+ * The end user need change the default setting according to their needs.
+ * For NAND/SATA boot, the storage is big enough to hold all the stuff.
+ * For SD/MMC boot, mmcdev is dynamiclly created due to the boot SD/MMC slot.
+ */
+#if defined(CONFIG_SYS_BOOT_EIMNOR) || defined(CONFIG_SYS_BOOT_SPINOR)
+#define CONFIG_MMC_DEV_SET "mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV)
+#else
+#define CONFIG_MMC_DEV_SET " "
+#endif
+
 #define CONFIG_MFG_ENV_SETTINGS \
 	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
 		"rdinit=/linuxrc " \
 		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
 		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
 		"g_mass_storage.iSerialNumber=\"\" "\
+		CONFIG_MFG_NAND_PARTITION \
 		"\0" \
 	"initrd_addr=0x83800000\0" \
 	"initrd_high=0xffffffff\0" \
 	"bootcmd_mfg=run mfgtool_args;bootm ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 
+#if defined(CONFIG_SYS_BOOT_NAND)
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
+	"fdt_addr=0x83000000\0" \
+	"fdt_high=0xffffffff\0"	  \
+	"bootargs=console=ttymxc0,115200 ubi.mtd=4 "  \
+		"root=ubi0:rootfs rootfstype=ubifs "		     \
+		"mtdparts=gpmi-nand:16m(boot),16m(kernel),16m(dtb),-(rootfs)\0"\
+	"bootcmd=nand read ${loadaddr} 0x1000000 0x800000;"\
+		"nand read ${fdt_addr} 0x2000000 0x100000;"\
+		"bootm ${loadaddr} - ${fdt_addr}\0"
+
+#else
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
 	UPDATE_M4_ENV \
@@ -203,7 +207,9 @@
 	"fdt_addr=0x83000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
-	"mmcpart=1\0" \
+	CONFIG_MMC_DEV_SET \
+	"\0" \
+	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
 	"mmcroot=/dev/mmcblk0p2 rootwait rw\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
 		"root=${mmcroot}\0" \
@@ -265,6 +271,7 @@
 			   "fi; " \
 		   "fi; " \
 	   "else run netboot; fi"
+#endif
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP
@@ -309,9 +316,74 @@
 #ifdef CONFIG_SYS_BOOT_QSPI
 #define CONFIG_SYS_USE_QSPI
 #define CONFIG_ENV_IS_IN_SPI_FLASH
+#elif defined CONFIG_SYS_BOOT_NAND
+#define CONFIG_SYS_USE_NAND
+#define CONFIG_ENV_IS_IN_NAND
+#elif defined CONFIG_SYS_BOOT_SPINOR
+#define CONFIG_SYS_USE_SPINOR
+#define CONFIG_ENV_IS_IN_SPI_FLASH
+#elif defined CONFIG_SYS_BOOT_EIMNOR
+#define CONFIG_SYS_USE_EIMNOR
+#define CONFIG_ENV_IS_IN_FLASH
 #else
+#define CONFIG_SYS_USE_QSPI   /* Enable the QSPI flash at default */
 #define CONFIG_ENV_IS_IN_MMC
 #endif
+
+#ifdef CONFIG_SYS_USE_QSPI
+#define CONFIG_QSPI    /* enable the QUADSPI driver */
+#define CONFIG_QSPI_BASE			QSPI2_BASE_ADDR
+#define CONFIG_QSPI_MEMMAP_BASE		QSPI2_ARB_BASE_ADDR
+
+#define CONFIG_CMD_SF
+#define	CONFIG_SPI_FLASH
+#define	CONFIG_SPI_FLASH_STMICRO
+#define	CONFIG_SF_DEFAULT_BUS		0
+#define	CONFIG_SF_DEFAULT_CS		0
+#define	CONFIG_SF_DEFAULT_SPEED		40000000
+#define	CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
+#endif
+
+#ifdef CONFIG_SYS_USE_SPINOR
+#define CONFIG_CMD_SF
+#define CONFIG_SPI_FLASH
+#define CONFIG_SPI_FLASH_STMICRO
+#define CONFIG_MXC_SPI
+#define CONFIG_SF_DEFAULT_BUS  3
+#define CONFIG_SF_DEFAULT_SPEED 20000000
+#define CONFIG_SF_DEFAULT_MODE (SPI_MODE_0)
+#define CONFIG_SF_DEFAULT_CS   (0|(IMX_GPIO_NR(6, 10)<<8))
+#endif
+
+#ifdef CONFIG_SYS_USE_EIMNOR
+#undef CONFIG_SYS_NO_FLASH
+#define CONFIG_SYS_FLASH_BASE           WEIM_ARB_BASE_ADDR
+#define CONFIG_SYS_FLASH_SECT_SIZE	(128 * 1024)
+#define CONFIG_SYS_MAX_FLASH_BANKS 1    /* max number of memory banks */
+#define CONFIG_SYS_MAX_FLASH_SECT 256   /* max number of sectors on one chip */
+#define CONFIG_SYS_FLASH_CFI            /* Flash memory is CFI compliant */
+#define CONFIG_FLASH_CFI_DRIVER         /* Use drivers/cfi_flash.c */
+#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE /* Use buffered writes*/
+#define CONFIG_SYS_FLASH_EMPTY_INFO
+#endif
+
+#ifdef CONFIG_SYS_USE_NAND
+#define CONFIG_CMD_NAND
+#define CONFIG_CMD_NAND_TRIMFFS
+
+/* NAND stuff */
+#define CONFIG_NAND_MXS
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_SYS_NAND_BASE		0x40000000
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+
+/* DMA stuff, needed for GPMI/MXS NAND support */
+#define CONFIG_APBH_DMA
+#define CONFIG_APBH_DMA_BURST
+#define CONFIG_APBH_DMA_BURST8
+#endif
+
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_ENV_OFFSET		(8 * SZ_64K)
@@ -322,6 +394,16 @@
 #define CONFIG_ENV_SPI_CS		CONFIG_SF_DEFAULT_CS
 #define CONFIG_ENV_SPI_MODE		CONFIG_SF_DEFAULT_MODE
 #define CONFIG_ENV_SPI_MAX_HZ		CONFIG_SF_DEFAULT_SPEED
+#elif defined(CONFIG_ENV_IS_IN_NAND)
+#undef CONFIG_ENV_SIZE
+#define CONFIG_ENV_OFFSET		(8 << 20)
+#define CONFIG_ENV_SECT_SIZE		(128 << 10)
+#define CONFIG_ENV_SIZE			CONFIG_ENV_SECT_SIZE
+#elif defined(CONFIG_ENV_IS_IN_FLASH)
+#undef CONFIG_ENV_SIZE
+#define CONFIG_ENV_SIZE			CONFIG_SYS_FLASH_SECT_SIZE
+#define CONFIG_ENV_SECT_SIZE		CONFIG_SYS_FLASH_SECT_SIZE
+#define CONFIG_ENV_OFFSET		(4 * CONFIG_SYS_FLASH_SECT_SIZE)
 #endif
 
 #define CONFIG_OF_LIBFDT

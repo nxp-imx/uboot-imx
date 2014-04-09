@@ -14,6 +14,11 @@
 
 #include "mx6sx_arm2.h"
 
+#ifdef CONFIG_SYS_USE_SPINOR  /* Pin conflict between SPI-NOR and SD2 */
+#define CONFIG_SYS_FSL_USDHC_NUM    2
+#define CONFIG_SYS_MMC_ENV_DEV		0
+#else
 #define CONFIG_SYS_FSL_USDHC_NUM    3
 #define CONFIG_SYS_MMC_ENV_DEV		1
+#endif
 #endif
