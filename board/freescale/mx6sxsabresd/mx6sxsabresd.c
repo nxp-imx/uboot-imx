@@ -267,7 +267,7 @@ static struct fsl_esdhc_cfg usdhc_cfg[3] = {
 int mmc_get_env_devno(void)
 {
 	u32 soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
-	u32 dev_no;
+	int dev_no;
 
 	/* BOOT_CFG2[3] and BOOT_CFG2[4] */
 	dev_no = (soc_sbmr & 0x00001800) >> 11;
@@ -277,6 +277,9 @@ int mmc_get_env_devno(void)
 	 */
 
 	dev_no--;
+
+	if (dev_no < 0)
+		dev_no = CONFIG_SYS_MMC_ENV_DEV;
 
 	return dev_no;
 }
@@ -659,6 +662,10 @@ int board_early_init_f(void)
 {
 #ifdef CONFIG_MXC_RDC
 	imx_rdc_setup_peripherals(shared_resources, ARRAY_SIZE(shared_resources));
+#endif
+
+#ifdef CONFIG_SYS_AUXCORE_FASTUP
+	arch_auxiliary_core_up(0, CONFIG_SYS_AUXCORE_BOOTDATA);
 #endif
 
 	setup_iomux_uart();

@@ -495,9 +495,6 @@ int arch_auxiliary_core_up(u32 core_id, u32 boot_private_data)
 	stack = *(u32 *)boot_private_data;
 	pc = *(u32 *)(boot_private_data + 4);
 
-	printf("## Stack at 0x%08x\n", stack);
-	printf("## PC at 0x%08x\n", pc);
-
 	/* Set the stack and pc to M4 bootROM */
 	writel(stack, M4_BOOTROM_BASE_ADDR);
 	writel(pc, M4_BOOTROM_BASE_ADDR + 4);

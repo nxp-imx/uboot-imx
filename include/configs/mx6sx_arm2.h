@@ -128,6 +128,7 @@
 #define CONFIG_LOADADDR			0x80800000
 #define CONFIG_SYS_TEXT_BASE		0x87800000
 
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x78000000 /* Set to QSPI2 B flash at default */
 #define CONFIG_CMD_BOOTAUX /* Boot M4 */
 #define CONFIG_CMD_SETEXPR
 
@@ -145,7 +146,7 @@
 				"sf write ${loadaddr} 0x0 ${filesize}; " \
 			"fi; " \
 		"fi\0" \
-	"m4boot=sf probe; bootaux 0x70000000\0"
+	"m4boot=sf probe; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
 #else
 #define UPDATE_M4_ENV ""
 #endif
