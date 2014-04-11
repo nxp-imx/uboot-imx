@@ -30,6 +30,7 @@ LIB     = $(obj)libimx-common.o
 ifeq ($(SOC),$(filter $(SOC),mx5 mx6))
 COBJS-y	= iomux-v3.o timer.o cpu.o speed.o
 COBJS-$(CONFIG_I2C_MXC) += i2c-mxv7.o
+COBJS-$(CONFIG_MXC_RDC) += rdc-sema.o
 endif
 ifeq ($(SOC),$(filter $(SOC),mx6 mxs))
 COBJS-y	+= misc.o
