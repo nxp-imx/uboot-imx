@@ -26,6 +26,10 @@
 #include <i2c.h>
 #include <asm/imx-common/mxc_i2c.h>
 #endif
+#ifdef CONFIG_MXC_RDC
+#include <asm/imx-common/rdc-sema.h>
+#include <asm/arch/imx-rdc.h>
+#endif
 
 #ifdef CONFIG_FASTBOOT
 #include <fastboot.h>
@@ -645,8 +649,18 @@ void ldo_mode_set(int ldo_bypass)
 #endif
 #endif
 
+#ifdef CONFIG_MXC_RDC
+static rdc_peri_cfg_t const shared_resources[] = {
+	(RDC_PER_GPIO1 | RDC_DOMAIN(0) | RDC_DOMAIN(1)),
+};
+#endif
+
 int board_early_init_f(void)
 {
+#ifdef CONFIG_MXC_RDC
+	imx_rdc_setup_peripherals(shared_resources, ARRAY_SIZE(shared_resources));
+#endif
+
 	setup_iomux_uart();
 	return 0;
 }
