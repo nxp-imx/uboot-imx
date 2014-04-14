@@ -332,6 +332,7 @@ void check_cpu_temperature(void)
 		printf("CPU:   Temperature: can't get valid data!\n");
 }
 
+#ifndef CONFIG_MX6SX
 static void imx_reset_pfd(void)
 {
 	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
@@ -367,6 +368,7 @@ static void imx_reset_pfd(void)
 		BM_ANADIG_PFD_528_PFD0_CLKGATE, &anatop->pfd_528_clr);
 #endif
 }
+#endif
 
 static void imx_set_vddpu_power_down(void)
 {
