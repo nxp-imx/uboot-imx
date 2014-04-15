@@ -397,8 +397,10 @@ void enable_caches(void)
 {
 	/* Avoid random hang when download by usb */
 	invalidate_dcache_all();
+
 	/* Enable D-cache. I-cache is already enabled in start.S */
 	dcache_enable();
+
 }
 #endif
 
@@ -807,6 +809,42 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 	hab_rvt_authenticate_image_t *hab_rvt_authenticate_image;
 	hab_rvt_entry_t *hab_rvt_entry;
 	hab_rvt_exit_t *hab_rvt_exit;
+
+#if defined(CONFIG_SYS_ARM_CACHE_WRITETHROUGH)
+	enum dcache_option option = DCACHE_WRITETHROUGH;
+#else
+	enum dcache_option option = DCACHE_WRITEBACK;
+#endif
+
+	/*
+	 * If the MMU is enabled, we have to notify the ROM code, or
+	 * it won't flush the caches when needed. This is done by
+	 * setting the "pu_irom_mmu_enabled" word to 1. You can find
+	 * its address by looking in the ROM map.
+	 *
+	 * This is critical for authenticate_image(). If MMU is enabled
+	 * without setting this bit, authentication will fail and may
+	 * crash.
+	 *
+	 * This is no longer needed in CPUs starting with i.MX6SX.
+	 */
+	if (is_mx6dq()) {
+		/* Will not work for rev 1.0.0 of the CPU */
+		writel(1, 0x009024a8);
+	} else if (is_mx6solo() || is_mx6dlsolo()) {
+		writel(1, 0x00901dd0);
+	} else if (is_mx6sl()) {
+		writel(1, 0x00900a18);
+	}
+
+	/* Enable caching on OCRAM and ROM */
+	mmu_set_region_dcache_behaviour(ROMCP_ARB_BASE_ADDR,
+					ROMCP_ARB_END_ADDR,
+					option);
+	mmu_set_region_dcache_behaviour(IRAM_BASE_ADDR,
+					IRAM_SIZE,
+					option);
+
 
 	hab_rvt_authenticate_image = hab_rvt_authenticate_image_p;
 	hab_rvt_entry = hab_rvt_entry_p;
