@@ -287,7 +287,7 @@
 #define CONFIG_ENV_SIZE			SZ_8K
 
 #ifdef CONFIG_SYS_AUXCORE_FASTUP
-#define CONFIG_MXC_RDC
+/*#define CONFIG_MXC_RDC*/   /* Disable the RDC temporarily, will enable it in future */
 #define CONFIG_ENV_IS_IN_MMC  /* Must disable QSPI driver, because M4 run on QSPI */
 #elif defined CONFIG_SYS_BOOT_QSPI
 #define CONFIG_SYS_USE_QSPI
