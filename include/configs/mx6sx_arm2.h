@@ -165,7 +165,7 @@
  * For NAND/SATA boot, the storage is big enough to hold all the stuff.
  * For SD/MMC boot, mmcdev is dynamiclly created due to the boot SD/MMC slot.
  */
-#if defined(CONFIG_SYS_BOOT_EIMNOR) || defined(CONFIG_SYS_BOOT_SPINOR)
+#if defined(CONFIG_SYS_BOOT_EIMNOR) || defined(CONFIG_SYS_BOOT_SPINOR) || defined(CONFIG_SYS_BOOT_QSPI)
 #define CONFIG_MMC_DEV_SET "mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV)
 #else
 #define CONFIG_MMC_DEV_SET " "
