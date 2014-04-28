@@ -52,13 +52,15 @@ plugin_start:
 	adr r2, boot_data2
 
 #ifdef CONFIG_SYS_BOOT_EIMNOR
-	ldr r3, =0x00900800
 #ifdef CONFIG_MX6SX
+	ldr r3, =0x00900b00
 	ldr r4, =0x50000000
+	str r4, [r3, #0x5c]
 #else
+	ldr r3, =0x00900800
 	ldr r4, =0x08000000
-#endif
 	str r4, [r3, #0xc0]
+#endif
 #endif
 
 /*
