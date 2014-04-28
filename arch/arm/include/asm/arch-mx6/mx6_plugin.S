@@ -93,6 +93,7 @@ after_calling_rom___pu_irom_hwcnfg_setup:
  * plugin_download(void **start, size_t *bytes, UINT32 *ivt_offset)
  */
 	pop {r0-r4, lr}
+	push {r5}
 	ldr r5, boot_data2
 	str r5, [r0]
 	ldr r5, image_len2
@@ -100,6 +101,7 @@ after_calling_rom___pu_irom_hwcnfg_setup:
 	ldr r5, second_ivt_offset
 	str r5, [r2]
 	mov r0, #1
+	pop {r5}
 
 	/* return back to ROM code */
 	bx lr
