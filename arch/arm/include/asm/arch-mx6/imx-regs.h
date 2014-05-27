@@ -210,6 +210,7 @@
 #define DCIC2_BASE_ADDR             (AIPS1_OFF_BASE_ADDR + 0x68000)
 #define DMA_REQ_PORT_HOST_BASE_ADDR (AIPS1_OFF_BASE_ADDR + 0x6C000)
 #endif
+#define EPDC_BASE_ADDR              (AIPS1_OFF_BASE_ADDR + 0x74000)
 
 #define AIPS2_ON_BASE_ADDR          (ATZ2_BASE_ADDR + 0x7C000)
 #define AIPS2_OFF_BASE_ADDR         (ATZ2_BASE_ADDR + 0x80000)
@@ -597,6 +598,8 @@ struct cspi_regs {
 	ECSPI4_BASE_ADDR, \
 	ECSPI5_BASE_ADDR
 #endif
+
+#define ANATOP_PLL_VIDEO        0xA0
 
 struct ocotp_regs {
 	u32	ctrl;
