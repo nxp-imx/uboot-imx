@@ -13,4 +13,5 @@ obj-y += tpm/
 obj-y += twserial/
 obj-y += video/
 obj-y += watchdog/
+obj-y += fastboot/
 obj-$(CONFIG_QE) += qe/

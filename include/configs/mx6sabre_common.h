@@ -290,4 +290,8 @@
 #define CONFIG_SYS_I2C_SPEED		100000
 #define CONFIG_SYS_I2C_SLAVE		0x8
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx6sabreandroid_common.h"
+#endif
+
 #endif                         /* __MX6QSABRE_COMMON_CONFIG_H */
