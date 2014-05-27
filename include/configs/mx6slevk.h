@@ -64,6 +64,13 @@
 #define CONFIG_CONS_INDEX		1
 #define CONFIG_BAUDRATE			115200
 
+/* I2C configs */
+#define CONFIG_CMD_I2C
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_MXC
+#define CONFIG_SYS_I2C_SPEED		100000
+#define CONFIG_SYS_I2C_SLAVE		0x8
+
 /* Command definition */
 #include <config_cmd_default.h>
 

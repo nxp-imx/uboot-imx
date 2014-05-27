@@ -17,6 +17,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/imx-common/boot_mode.h>
 #include <asm/imx-common/dma.h>
+#include <libfdt.h>
 #include <stdbool.h>
 #include <asm/arch/mxc_hdmi.h>
 #include <asm/arch/crm_regs.h>
@@ -486,6 +487,75 @@ void s_init(void)
 	writel(mask480, &anatop->pfd_480_clr);
 	writel(mask528, &anatop->pfd_528_clr);
 }
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+DECLARE_GLOBAL_DATA_PTR;
+static int ldo_bypass;
+
+int check_ldo_bypass(void)
+{
+	const int *ldo_mode;
+	int node;
+
+	/* get the right fdt_blob from the global working_fdt */
+	gd->fdt_blob = working_fdt;
+	/* Get the node from FDT for anatop ldo-bypass */
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1,
+		"fsl,imx6q-gpc");
+	if (node < 0) {
+		printf("No gpc device node %d, force to ldo-enable.\n", node);
+		return 0;
+	}
+	ldo_mode = fdt_getprop(gd->fdt_blob, node, "fsl,ldo-bypass", NULL);
+	/*
+	 * return 1 if "fsl,ldo-bypass = <1>", else return 0 if
+	 * "fsl,ldo-bypass = <0>" or no "fsl,ldo-bypass" property
+	 */
+	ldo_bypass = fdt32_to_cpu(*ldo_mode) == 1 ? 1 : 0;
+
+	return ldo_bypass;
+}
+
+int check_1_2G(void)
+{
+	u32 reg;
+	int result = 0;
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[0];
+	struct fuse_bank0_regs *fuse_bank0 =
+			(struct fuse_bank0_regs *)bank->fuse_regs;
+
+	reg = readl(&fuse_bank0->cfg3);
+	if (((reg >> 16) & 0x3) == 0x3) {
+		if (ldo_bypass) {
+			printf("Wrong dtb file used! i.MX6Q@1.2Ghz only "
+				"works with ldo-enable mode!\n");
+			/*
+			 * Currently, only imx6q-sabresd board might be here,
+			 * since only i.MX6Q support 1.2G and only Sabresd board
+			 * support ldo-bypass mode. So hardcode here.
+			 * You can also modify your board(i.MX6Q) dtb name if it
+			 * supports both ldo-bypass and ldo-enable mode.
+			 */
+			printf("Please use imx6q-sabresd-ldo.dtb!\n");
+			hang();
+		}
+		result = 1;
+	}
+
+	return result;
+}
+
+void set_anatop_bypass(void)
+{
+	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
+	u32 reg = readl(&anatop->reg_core);
+
+	/* bypass VDDARM/VDDSOC */
+	reg = reg | (0x1F << 18) | 0x1F;
+	writel(reg, &anatop->reg_core);
+}
+#endif
 
 #ifdef CONFIG_IMX_HDMI
 void imx_enable_hdmi_phy(void)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013-2014 Freescale Semiconductor, Inc.
  *
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
  *
@@ -19,6 +19,10 @@
 #include <fsl_esdhc.h>
 #include <mmc.h>
 #include <netdev.h>
+#ifdef CONFIG_SYS_I2C_MXC
+#include <i2c.h>
+#include <asm/imx-common/mxc_i2c.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -128,6 +132,41 @@ static int setup_fec(void)
 }
 #endif
 
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	unsigned char value;
+	/* swith to ldo_bypass mode */
+	if (ldo_bypass) {
+		/* decrease VDDARM to 1.15V */
+		if (i2c_read(0x8, 0x20, 1, &value, 1)) {
+			printf("Read SW1AB error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x22;
+		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
+			printf("Set SW1AB error!\n");
+			return;
+		}
+		/* increase VDDSOC to 1.15V */
+		if (i2c_read(0x8, 0x2e, 1, &value, 1)) {
+			printf("Read SW1C error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x22;
+		if (i2c_write(0x8, 0x2e, 1, &value, 1)) {
+			printf("Set SW1C error!\n");
+			return;
+		}
+
+		set_anatop_bypass();
+		printf("switch to ldo_bypass mode!\n");
+	}
+
+}
+#endif
 
 int board_early_init_f(void)
 {

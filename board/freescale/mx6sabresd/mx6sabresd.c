@@ -24,6 +24,10 @@
 #include <ipu_pixfmt.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
+#ifdef CONFIG_SYS_I2C_MXC
+#include <i2c.h>
+#include <asm/imx-common/mxc_i2c.h>
+#endif
 DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL  (PAD_CTL_PUS_100K_UP |			\
@@ -155,6 +159,68 @@ static void setup_iomux_uart(void)
 {
 	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
 }
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	unsigned char value;
+	/* increase VDDARM/VDDSOC to support 1.2G chip */
+	if (check_1_2G()) {
+		ldo_bypass = 0;	/* ldo_enable on 1.2G chip */
+		printf("1.2G chip, increase VDDARM_IN/VDDSOC_IN\n");
+		/* increase VDDARM to 1.425V */
+		if (i2c_read(0x8, 0x20, 1, &value, 1)) {
+			printf("Read SW1AB error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x2d;
+		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
+			printf("Set SW1AB error!\n");
+			return;
+		}
+		/* increase VDDSOC to 1.425V */
+		if (i2c_read(0x8, 0x2e, 1, &value, 1)) {
+			printf("Read SW1C error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x2d;
+		if (i2c_write(0x8, 0x2e, 1, &value, 1)) {
+			printf("Set SW1C error!\n");
+			return;
+		}
+	}
+	/* switch to ldo_bypass mode , boot on 800Mhz */
+	if (ldo_bypass) {
+		/* decrease VDDARM to 1.175V */
+		if (i2c_read(0x8, 0x20, 1, &value, 1)) {
+			printf("Read SW1AB error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x23;
+		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
+			printf("Set SW1AB error!\n");
+			return;
+		}
+		/* increase VDDSOC to 1.175V */
+		if (i2c_read(0x8, 0x2e, 1, &value, 1)) {
+			printf("Read SW1C error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x23;
+		if (i2c_write(0x8, 0x2e, 1, &value, 1)) {
+			printf("Set SW1C error!\n");
+			return;
+		}
+
+		set_anatop_bypass();
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
+#endif
 
 #ifdef CONFIG_FSL_ESDHC
 struct fsl_esdhc_cfg usdhc_cfg[3] = {
@@ -516,3 +582,4 @@ int checkboard(void)
 	puts("Board: MX6-SabreSD\n");
 	return 0;
 }
+
