@@ -59,4 +59,8 @@ int enable_pcie_clock(void);
 int enable_i2c_clk(unsigned char enable, unsigned i2c_num);
 void enable_ipu_clock(void);
 int enable_fec_anatop_clock(enum enet_freq freq);
+#ifdef CONFIG_SECURE_BOOT
+void hab_caam_clock_enable(void);
+void hab_caam_clock_disable(void);
+#endif
 #endif /* __ASM_ARCH_CLOCK_H */

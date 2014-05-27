@@ -498,6 +498,44 @@ int enable_pcie_clock(void)
 			       BM_ANADIG_PLL_ENET_ENABLE_PCIE);
 }
 
+#ifdef CONFIG_SECURE_BOOT
+void hab_caam_clock_enable(void)
+{
+	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+	u32 reg = 0;
+
+	/*CG4 ~ CG6, enable CAAM clocks*/
+	reg = readl(ccm_regs->CCGR0);
+	reg |= (MXC_CCM_CCGR0_CAAM_WRAPPER_IPG_MASK |
+			MXC_CCM_CCGR0_CAAM_WRAPPER_ACLK_MASK |
+			MXC_CCM_CCGR0_CAAM_SECURE_MEM_MASK);
+	writel(reg, ccm_regs->CCGR0);
+
+	/* Enable EMI slow clk */
+	reg = readl(ccm_regs->CCGR6);
+	reg |= MXC_CCM_CCGR6_EMI_SLOW_MASK;
+	writel(reg, ccm_regs->CCGR6);
+}
+
+void hab_caam_clock_disable(void)
+{
+	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+	u32 reg = 0;
+
+	/*CG4 ~ CG6, disable CAAM clocks*/
+	reg = readl(ccm_regs->CCGR0);
+	reg &= ~(MXC_CCM_CCGR0_CAAM_WRAPPER_IPG_MASK |
+			MXC_CCM_CCGR0_CAAM_WRAPPER_ACLK_MASK |
+			MXC_CCM_CCGR0_CAAM_SECURE_MEM_MASK);
+	writel(reg, ccm_regs->CCGR0);
+
+	/* Disable EMI slow clk */
+	reg = readl(ccm_regs->CCGR6);
+	reg &= ~MXC_CCM_CCGR6_EMI_SLOW_MASK;
+	writel(reg, ccm_regs->CCGR6);
+}
+#endif
+
 unsigned int mxc_get_clock(enum mxc_clock clk)
 {
 	switch (clk) {
