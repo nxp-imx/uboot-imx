@@ -33,6 +33,8 @@
 #define CONFIG_BOARD_LATE_INIT
 #define CONFIG_MXC_GPIO
 
+/* #define CONFIG_USE_PLUGIN */
+
 #define CONFIG_MXC_UART
 
 #define CONFIG_CMD_FUSE
