@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2014 Freescale Semiconductor, Inc.
  *
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
  *
@@ -1077,3 +1077,53 @@ void udc_pins_setting(void)
     mxc_iomux_set_gpr_register(1, 13, 1, 0);
 }
 #endif /*CONFIG_IMX_UDC*/
+
+#ifdef CONFIG_USB_EHCI_MX6
+iomux_v3_cfg_t const usb_otg_pads[] = {
+	MX6_PAD_EIM_D22__USB_OTG_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_ENET_RX_ER__USB_OTG_ID | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+iomux_v3_cfg_t const usb_hc1_pads[] = {
+	MX6_PAD_ENET_TXD1__GPIO1_IO29 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+int board_ehci_hcd_init(int port)
+{
+	switch (port) {
+	case 0:
+		imx_iomux_v3_setup_multiple_pads(usb_otg_pads,
+			ARRAY_SIZE(usb_otg_pads));
+
+		/*set daisy chain for otg_pin_id on 6q. for 6dl, this bit is reserved*/
+		mxc_iomux_set_gpr_register(1, 13, 1, 0);
+		break;
+	case 1:
+		imx_iomux_v3_setup_multiple_pads(usb_hc1_pads,
+			ARRAY_SIZE(usb_hc1_pads));
+		break;
+	default:
+		printf("MXC USB port %d not yet supported\n", port);
+		return 1;
+	}
+	return 0;
+}
+
+int board_ehci_power(int port, int on)
+{
+	switch (port) {
+	case 0:
+		break;
+	case 1:
+		if (on)
+			gpio_direction_output(IMX_GPIO_NR(1, 29), 1);
+		else
+			gpio_direction_output(IMX_GPIO_NR(1, 29), 0);
+		break;
+	default:
+		printf("MXC USB port %d not yet supported\n", port);
+		return 1;
+	}
+	return 0;
+}
+#endif
