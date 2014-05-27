@@ -17,6 +17,11 @@
 #include <hush.h>
 #include <malloc.h>
 #include <menu.h>
+
+#ifdef is_boot_from_usb
+#include <environment.h>
+#endif
+
 #include <post.h>
 #include <version.h>
 #include <watchdog.h>
@@ -342,6 +347,16 @@ static void process_boot_delay(void)
 	s = getenv ("bootdelay");
 	bootdelay = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
 
+#ifdef is_boot_from_usb
+	if (is_boot_from_usb()) {
+		printf("Boot from USB for mfgtools\n");
+		bootdelay = 0;
+		set_default_env("Use default environment for mfgtools\n");
+	} else {
+		printf("Normal Boot\n");
+	}
+#endif
+
 #ifdef CONFIG_OF_CONTROL
 	bootdelay = fdtdec_get_config_int(gd->fdt_blob, "bootdelay",
 			bootdelay);
@@ -371,6 +386,13 @@ static void process_boot_delay(void)
 	else
 #endif /* CONFIG_BOOTCOUNT_LIMIT */
 		s = getenv ("bootcmd");
+#ifdef is_boot_from_usb
+	if (is_boot_from_usb()) {
+		s = getenv("bootcmd_mfg");
+		printf("Run bootcmd_mfg: %s\n", s);
+	}
+#endif
+
 #ifdef CONFIG_OF_CONTROL
 	/* Allow the fdt to override the boot command */
 	env = fdtdec_get_config_string(gd->fdt_blob, "bootcmd");
