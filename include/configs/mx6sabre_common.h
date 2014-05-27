@@ -14,6 +14,7 @@
 #include "mx6_common.h"
 #include <linux/sizes.h>
 
+#define CONFIG_SYS_GENERIC_BOARD
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
