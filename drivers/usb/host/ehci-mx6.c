@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2009 Daniel Mack <daniel@caiaq.de>
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2014 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -45,13 +45,19 @@
 #define ANADIG_USB2_PLL_480_CTRL_POWER		0x00001000
 #define ANADIG_USB2_PLL_480_CTRL_EN_USB_CLKS	0x00000040
 
-
+#define UCTRL_PM		(1 << 9)	/* OTG Power Mask */
 #define UCTRL_OVER_CUR_POL	(1 << 8) /* OTG Polarity of Overcurrent */
 #define UCTRL_OVER_CUR_DIS	(1 << 7) /* Disable OTG Overcurrent Detection */
 
 /* USBCMD */
 #define UCMD_RUN_STOP           (1 << 0) /* controller run/stop */
 #define UCMD_RESET		(1 << 1) /* controller reset */
+
+#ifdef CONFIG_MX6SL
+#define USB_BASE_ADDR          USBO2H_USB_BASE_ADDR
+#else
+#define USB_BASE_ADDR          USBOH3_USB_BASE_ADDR
+#endif
 
 static const unsigned phy_bases[] = {
 	USB_PHY0_BASE_ADDR,
@@ -174,7 +180,7 @@ struct usbnc_regs {
 
 static void usb_oc_config(int index)
 {
-	struct usbnc_regs *usbnc = (struct usbnc_regs *)(USBOH3_USB_BASE_ADDR +
+	struct usbnc_regs *usbnc = (struct usbnc_regs *)(USB_BASE_ADDR +
 			USB_OTHERREGS_OFFSET);
 	void __iomem *ctrl = (void __iomem *)(&usbnc->ctrl[index]);
 	u32 val;
@@ -189,7 +195,7 @@ static void usb_oc_config(int index)
 	__raw_writel(val, ctrl);
 
 	val = __raw_readl(ctrl);
-	val |= UCTRL_OVER_CUR_DIS;
+	val |= (UCTRL_OVER_CUR_DIS | UCTRL_PM);
 	__raw_writel(val, ctrl);
 }
 
@@ -207,7 +213,7 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 		struct ehci_hccr **hccr, struct ehci_hcor **hcor)
 {
 	enum usb_init_type type;
-	struct usb_ehci *ehci = (struct usb_ehci *)(USBOH3_USB_BASE_ADDR +
+	struct usb_ehci *ehci = (struct usb_ehci *)(USB_BASE_ADDR +
 		(0x200 * index));
 
 	if (index > 3)
