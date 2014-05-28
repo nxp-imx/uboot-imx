@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2014 Freescale Semiconductor, Inc.
  *
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
  *
@@ -33,6 +33,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define I2C_EXP_RST IMX_GPIO_NR(1, 15)
+#define I2C3_STEER  IMX_GPIO_NR(5, 4)
 #define UART_PAD_CTRL  (PAD_CTL_PUS_100K_UP |			\
 	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm |			\
 	PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
@@ -157,6 +159,72 @@ iomux_v3_cfg_t const usdhc3_pads[] = {
 	MX6_PAD_NANDF_CS2__GPIO6_IO15   | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
+#ifdef CONFIG_SYS_I2C_MXC
+static int setup_pmic_voltages(void)
+{
+	unsigned char value, rev_id = 0 ;
+	i2c_set_bus_num(1);
+	if (!i2c_probe(0x8)) {
+		if (i2c_read(0x8, 0, 1, &value, 1)) {
+			printf("Read device ID error!\n");
+			return -1;
+		}
+		if (i2c_read(0x8, 3, 1, &rev_id, 1)) {
+			printf("Read Rev ID error!\n");
+			return -1;
+		}
+		printf("Found PFUZE100! deviceid=%x,revid=%x\n", value, rev_id);
+		/* set SW1AB staby volatage 0.975V*/
+		if (i2c_read(0x8, 0x21, 1, &value, 1)) {
+			printf("Read SW1ABSTBY error!\n");
+			return -1;
+		}
+		value &= ~0x3f;
+		value |= 0x1b;
+		if (i2c_write(0x8, 0x21, 1, &value, 1)) {
+			printf("Set SW1ABSTBY error!\n");
+			return -1;
+		}
+		/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
+		if (i2c_read(0x8, 0x24, 1, &value, 1)) {
+			printf("Read SW1ABSTBY error!\n");
+			return -1;
+		}
+		value &= ~0xc0;
+		value |= 0x40;
+		if (i2c_write(0x8, 0x24, 1, &value, 1)) {
+			printf("Set SW1ABSTBY error!\n");
+			return -1;
+		}
+
+		/* set SW1C staby volatage 0.975V*/
+		if (i2c_read(0x8, 0x2f, 1, &value, 1)) {
+			printf("Read SW1CSTBY error!\n");
+			return -1;
+		}
+		value &= ~0x3f;
+		value |= 0x1b;
+		if (i2c_write(0x8, 0x2f, 1, &value, 1)) {
+			printf("Set SW1CSTBY error!\n");
+			return -1;
+		}
+
+		/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+		if (i2c_read(0x8, 0x32, 1, &value, 1)) {
+			printf("Read SW1ABSTBY error!\n");
+			return -1;
+		}
+		value &= ~0xc0;
+		value |= 0x40;
+		if (i2c_write(0x8, 0x32, 1, &value, 1)) {
+			printf("Set SW1ABSTBY error!\n");
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 #ifdef CONFIG_LDO_BYPASS_CHECK
 void ldo_mode_set(int ldo_bypass)
 {
@@ -189,6 +257,7 @@ void ldo_mode_set(int ldo_bypass)
 		}
 	}
 }
+#endif
 #endif
 
 static void setup_iomux_uart(void)
@@ -402,9 +471,19 @@ static const struct boot_mode board_boot_modes[] = {
 
 int board_late_init(void)
 {
+	int ret;
 #ifdef CONFIG_CMD_BMODE
 	add_board_boot_modes(board_boot_modes);
 #endif
+
+#ifdef CONFIG_SYS_I2C_MXC
+	setup_i2c(1, CONFIG_SYS_I2C_SPEED,
+			CONFIG_SYS_I2C_SLAVE, &i2c_pad_info1);
+	ret = setup_pmic_voltages();
+	if (ret)
+		return -1;
+#endif
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
