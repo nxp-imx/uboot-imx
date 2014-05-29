@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2014 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6Q SabreSD board.
  *
@@ -16,12 +16,6 @@
 #define CONFIG_MXC_UART_BASE	UART1_BASE
 #define CONFIG_CONSOLE_DEV		"ttymxc0"
 #define CONFIG_MMCROOT			"/dev/mmcblk1p2"
-#if defined(CONFIG_MX6Q)
-#define CONFIG_DEFAULT_FDT_FILE	"imx6q-sabresd.dtb"
-#elif defined(CONFIG_MX6DL)
-#define CONFIG_DEFAULT_FDT_FILE	"imx6dl-sabresd.dtb"
-#endif
-#define PHYS_SDRAM_SIZE		(1u * 1024 * 1024 * 1024)
 
 #define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
 
