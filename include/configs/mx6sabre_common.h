@@ -128,6 +128,28 @@
 		"initrd_high=0xffffffff\0" \
 		"bootcmd_mfg=run mfgtool_args;bootm ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 
+#if defined(CONFIG_SYS_BOOT_NAND)
+	/*
+	 * The dts also enables the WEIN NOR which is mtd0.
+	 * So the partions' layout for NAND is:
+	 *     mtd1: 16M      (uboot)
+	 *     mtd2: 16M      (kernel)
+	 *     mtd3: 16M      (dtb)
+	 *     mtd4: left     (rootfs)
+	 */
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
+	"fdt_addr=0x18000000\0" \
+	"fdt_high=0xffffffff\0"	  \
+	"bootargs=console=" CONFIG_CONSOLE_DEV ",115200 ubi.mtd=4 "  \
+		"root=ubi0:rootfs rootfstype=ubifs "		     \
+		"mtdparts=gpmi-nand:16m(boot),16m(kernel),16m(dtb),-(rootfs)\0"\
+	"bootcmd=nand read ${loadaddr} 0x1000000 0x800000;"\
+		"nand read ${fdt_addr} 0x2000000 0x100000;"\
+		"bootm ${loadaddr} - ${fdt_addr}\0"
+
+#else /* the following is used by the non-NAND boot. */
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
 	"script=boot.scr\0" \
@@ -217,6 +239,7 @@
 			"fi; " \
 		"fi; " \
 	"else run netboot; fi"
+#endif
 
 #define CONFIG_ARP_TIMEOUT     200UL
 
@@ -269,6 +292,9 @@
 #elif defined CONFIG_SYS_BOOT_EIMNOR
 #define CONFIG_SYS_USE_EIMNOR
 #define CONFIG_ENV_IS_IN_FLASH
+#elif defined CONFIG_SYS_BOOT_NAND
+#define CONFIG_SYS_USE_NAND
+#define CONFIG_ENV_IS_IN_NAND
 #else
 #define CONFIG_ENV_IS_IN_MMC
 #endif
@@ -296,6 +322,23 @@
 #define CONFIG_SYS_FLASH_PROTECTION
 #endif
 
+#ifdef CONFIG_SYS_USE_NAND
+#define CONFIG_CMD_NAND
+#define CONFIG_CMD_NAND_TRIMFFS
+
+/* NAND stuff */
+#define CONFIG_NAND_MXS
+#define CONFIG_SYS_MAX_NAND_DEVICE     1
+#define CONFIG_SYS_NAND_BASE           0x40000000
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+
+/* DMA stuff, needed for GPMI/MXS NAND support */
+#define CONFIG_APBH_DMA
+#define CONFIG_APBH_DMA_BURST
+#define CONFIG_APBH_DMA_BURST8
+#endif
+
 #if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_ENV_OFFSET		(6 * 64 * 1024)
 #elif defined(CONFIG_ENV_IS_IN_SPI_FLASH)
@@ -310,6 +353,11 @@
 #define CONFIG_ENV_SIZE                        CONFIG_SYS_FLASH_SECT_SIZE
 #define CONFIG_ENV_SECT_SIZE           CONFIG_SYS_FLASH_SECT_SIZE
 #define CONFIG_ENV_OFFSET              (4 * CONFIG_SYS_FLASH_SECT_SIZE)
+#elif defined(CONFIG_ENV_IS_IN_NAND)
+#undef CONFIG_ENV_SIZE
+#define CONFIG_ENV_OFFSET              (8 << 20)
+#define CONFIG_ENV_SECT_SIZE           (128 << 10)
+#define CONFIG_ENV_SIZE                        CONFIG_ENV_SECT_SIZE
 #endif
 
 #define CONFIG_OF_LIBFDT
