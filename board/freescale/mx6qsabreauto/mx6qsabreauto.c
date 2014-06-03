@@ -626,7 +626,7 @@ int checkboard(void)
 		break;
 	}
 
-	printf("Board: MX6Q-Sabreauto rev%s\n", revname);
+	printf("Board: MX6-Sabreauto rev%s\n", revname);
 
 	return 0;
 }
