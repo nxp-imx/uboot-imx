@@ -69,17 +69,6 @@
 #define CONFIG_PHYLIB
 #define CONFIG_PHY_ATHEROS
 
-#define CONFIG_CMD_SF
-#ifdef CONFIG_CMD_SF
-#define CONFIG_SPI_FLASH
-#define CONFIG_SPI_FLASH_STMICRO
-#define CONFIG_MXC_SPI
-#define CONFIG_SF_DEFAULT_BUS		0
-#define CONFIG_SF_DEFAULT_CS		(0 | (IMX_GPIO_NR(4, 9) << 8))
-#define CONFIG_SF_DEFAULT_SPEED		20000000
-#define CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
-#endif
-
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX              1
@@ -167,7 +156,8 @@
 			"fi; "	\
 		"fi\0" \
 	EMMC_ENV	  \
-	"mmcargs=setenv bootargs console=${console},${baudrate} " \
+	"smp=" CONFIG_SYS_NOSMP "\0"\
+	"mmcargs=setenv bootargs console=${console},${baudrate} ${smp} " \
 		"root=${mmcroot}\0" \
 	"loadbootscript=" \
 		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
@@ -190,7 +180,7 @@
 		"else " \
 			"bootz; " \
 		"fi;\0" \
-	"netargs=setenv bootargs console=${console},${baudrate} " \
+	"netargs=setenv bootargs console=${console},${baudrate} ${smp} " \
 		"root=/dev/nfs " \
 		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 	"netboot=echo Booting from net ...; " \
@@ -269,10 +259,36 @@
 
 #define CONFIG_ENV_SIZE			(8 * 1024)
 
+#ifndef CONFIG_SYS_NOSMP
+#define CONFIG_SYS_NOSMP
+#endif
+
+#if defined CONFIG_SYS_BOOT_SPINOR
+#define CONFIG_SYS_USE_SPINOR
+#define CONFIG_ENV_IS_IN_SPI_FLASH
+#else
 #define CONFIG_ENV_IS_IN_MMC
+#endif
+
+#ifdef CONFIG_SYS_USE_SPINOR
+#define CONFIG_CMD_SF
+#define CONFIG_SPI_FLASH
+#define CONFIG_SPI_FLASH_STMICRO
+#define CONFIG_MXC_SPI
+#define CONFIG_SF_DEFAULT_BUS  0
+#define CONFIG_SF_DEFAULT_SPEED 20000000
+#define CONFIG_SF_DEFAULT_MODE (SPI_MODE_0)
+#endif
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_ENV_OFFSET		(6 * 64 * 1024)
+#elif defined(CONFIG_ENV_IS_IN_SPI_FLASH)
+#define CONFIG_ENV_OFFSET              (768 * 1024)
+#define CONFIG_ENV_SECT_SIZE           (64 * 1024)
+#define CONFIG_ENV_SPI_BUS             CONFIG_SF_DEFAULT_BUS
+#define CONFIG_ENV_SPI_CS              CONFIG_SF_DEFAULT_CS
+#define CONFIG_ENV_SPI_MODE            CONFIG_SF_DEFAULT_MODE
+#define CONFIG_ENV_SPI_MAX_HZ          CONFIG_SF_DEFAULT_SPEED
 #endif
 
 #define CONFIG_OF_LIBFDT

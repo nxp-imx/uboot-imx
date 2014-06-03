@@ -27,6 +27,7 @@
 #define CONFIG_MXC_USB_FLAGS	0
 
 #include "mx6sabre_common.h"
+#include <asm/imx-common/gpio.h>
 
 #define CONFIG_SYS_FSL_USDHC_NUM	2
 #if defined(CONFIG_ENV_IS_IN_MMC)
@@ -38,5 +39,9 @@
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_I2C_MXC
 #define CONFIG_SYS_I2C_SPEED		100000
+
+#ifdef CONFIG_SYS_USE_SPINOR
+#define CONFIG_SF_DEFAULT_CS   (1|(IMX_GPIO_NR(3, 19)<<8))
+#endif
 
 #endif                         /* __MX6QSABREAUTO_CONFIG_H */

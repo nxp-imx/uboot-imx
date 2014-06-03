@@ -38,6 +38,10 @@
 #define CONFIG_SYS_MMC_ENV_DEV		1	/* SDHC3 */
 #endif
 
+#ifdef CONFIG_SYS_USE_SPINOR
+#define CONFIG_SF_DEFAULT_CS   (0|(IMX_GPIO_NR(4, 9)<<8))
+#endif
+
 /* Framebuffer */
 #define CONFIG_VIDEO
 #define CONFIG_VIDEO_IPUV3
