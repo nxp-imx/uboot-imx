@@ -743,7 +743,7 @@ int board_late_init(void)
 
 #ifdef CONFIG_SYS_I2C_MXC
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED,
-			CONFIG_SYS_I2C_SLAVE, &i2c_pad_info0);
+			0x7f, &i2c_pad_info0);
 	ret = setup_pmic_voltages();
 	if (ret)
 		return -1;
