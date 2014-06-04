@@ -617,8 +617,8 @@ int board_init(void)
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
-	/* I2C 2 and 3 setup - I2C 3 hw mux with EIM */
-	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+#ifdef CONFIG_SYS_I2C_MXC
+	/* I2C 3 setup - I2C 3 hw mux with EIM */
 	/* I2C 3 Steer */
 	gpio_direction_output(IMX_GPIO_NR(5, 4), 1);
 	imx_iomux_v3_setup_multiple_pads(i2c3_pads, ARRAY_SIZE(i2c3_pads));
@@ -626,6 +626,7 @@ int board_init(void)
 
 	gpio_direction_output(IMX_GPIO_NR(1, 15), 1);
 	imx_iomux_v3_setup_multiple_pads(port_exp, ARRAY_SIZE(port_exp));
+#endif
 
 	return 0;
 }

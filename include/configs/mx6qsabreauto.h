@@ -35,12 +35,6 @@
 #define CONFIG_SYS_MMC_ENV_DEV		1
 #define CONFIG_SYS_MMC_ENV_PART                0       /* user partition */
 
-/* I2C Configs */
-#define CONFIG_CMD_I2C
-#define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_MXC
-#define CONFIG_SYS_I2C_SPEED		100000
-
 #ifdef CONFIG_SYS_USE_SPINOR
 #define CONFIG_SF_DEFAULT_CS   (1|(IMX_GPIO_NR(3, 19)<<8))
 #endif
