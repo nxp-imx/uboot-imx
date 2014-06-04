@@ -352,6 +352,34 @@ static void clear_mmdc_ch_mask(void)
 	writel(0, &mxc_ccm->ccdr);
 }
 
+static void imx_set_vddpu_power_down(void)
+{
+	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
+	u32 val;
+
+	/* need to power down xPU in GPC before turn off PU LDO */
+	val = readl(GPC_BASE_ADDR + 0x260);
+	writel(val | 0x1, GPC_BASE_ADDR + 0x260);
+
+	val = readl(GPC_BASE_ADDR + 0x0);
+	writel(val | 0x1, GPC_BASE_ADDR + 0x0);
+	while (readl(GPC_BASE_ADDR + 0x0) & 0x1)
+		;
+
+	/* disable VDDPU */
+	val = 0x3e00;
+	writel(val, &anatop->reg_core_clr);
+}
+
+static void imx_set_pcie_phy_power_down(void)
+{
+	u32 val;
+
+	val = readl(IOMUXC_BASE_ADDR + 0x4);
+	val |= 0x1 << 18;
+	writel(val, IOMUXC_BASE_ADDR + 0x4);
+}
+
 int arch_cpu_init(void)
 {
 	init_aips();
@@ -368,6 +396,9 @@ int arch_cpu_init(void)
 		set_ahb_rate(132000000);
 
 	imx_set_wdog_powerdown(false); /* Disable PDE bit of WMCR register */
+
+	imx_set_pcie_phy_power_down();
+	imx_set_vddpu_power_down();
 
 #ifdef CONFIG_APBH_DMA
 	/* Start APBH DMA */
