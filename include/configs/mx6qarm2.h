@@ -12,6 +12,9 @@
 #define CONFIG_MX6
 #define CONFIG_MX6Q
 
+/* uncomment for PLUGIN mode support */
+/* #define CONFIG_USE_PLUGIN */
+
 #include "mx6_common.h"
 
 #define CONFIG_DISPLAY_CPUINFO
