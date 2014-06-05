@@ -21,6 +21,9 @@
 /* uncomment for PLUGIN mode support */
 /* #define CONFIG_USE_PLUGIN */
 
+/* uncomment for SECURE mode support */
+/* #define CONFIG_SECURE_BOOT */
+
 #define MACH_TYPE_MX6SLEVK		4307
 #define CONFIG_MACH_TYPE		MACH_TYPE_MX6SLEVK
 
