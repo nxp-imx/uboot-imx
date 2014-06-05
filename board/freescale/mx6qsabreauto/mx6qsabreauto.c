@@ -25,6 +25,9 @@
 #include <asm/arch/sys_proto.h>
 #include <i2c.h>
 
+#ifdef CONFIG_CMD_SATA
+#include <asm/imx-common/sata.h>
+#endif
 #ifdef CONFIG_FASTBOOT
 #include <fastboot.h>
 #ifdef CONFIG_ANDROID_RECOVERY
@@ -608,6 +611,10 @@ int board_early_init_f(void)
 
 #ifdef CONFIG_SYS_USE_NAND
 	setup_gpmi_nand();
+#endif
+
+#ifdef CONFIG_CMD_SATA
+	setup_sata();
 #endif
 	return 0;
 }

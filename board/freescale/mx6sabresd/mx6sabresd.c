@@ -33,6 +33,9 @@
 #include <i2c.h>
 #include <asm/imx-common/mxc_i2c.h>
 #endif
+#ifdef CONFIG_CMD_SATA
+#include <asm/imx-common/sata.h>
+#endif
 #ifdef CONFIG_FASTBOOT
 #include <fastboot.h>
 #ifdef CONFIG_ANDROID_RECOVERY
@@ -753,6 +756,14 @@ int board_early_init_f(void)
 	setup_display();
 #endif
 
+#ifdef CONFIG_SYS_USE_SPINOR
+	setup_spinor();
+#endif
+
+#ifdef CONFIG_CMD_SATA
+	setup_sata();
+#endif
+
 	return 0;
 }
 
@@ -760,10 +771,6 @@ int board_init(void)
 {
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
-
-#ifdef CONFIG_SYS_USE_SPINOR
-	setup_spinor();
-#endif
 
 #if defined(CONFIG_MX6DL) && defined(CONFIG_MXC_EPDC)
 	setup_epdc();
