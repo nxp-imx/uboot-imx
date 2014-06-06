@@ -201,6 +201,7 @@
 
 #define CONFIG_ENV_SIZE			SZ_8K
 #define CONFIG_SYS_MMC_ENV_DEV		1
+#define CONFIG_SYS_MMC_ENV_PART		0	/* user partition */
 
 #if defined CONFIG_SYS_BOOT_SPINOR
 #define CONFIG_SYS_USE_SPINOR

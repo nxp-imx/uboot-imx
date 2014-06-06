@@ -88,8 +88,8 @@
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
 	"mmcdev=1\0" \
-	"mmcpart=2\0" \
-	"mmcroot=/dev/mmcblk0p3 rootwait rw\0" \
+	"mmcpart=1\0" \
+	"mmcroot=/dev/mmcblk0p2 rootwait rw\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
 		"root=${mmcroot}\0" \
 	"loadbootscript=" \
@@ -192,6 +192,7 @@
 #define CONFIG_ENV_SIZE			(8 * 1024)
 #define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		1
+#define CONFIG_SYS_MMC_ENV_PART		0	/* user partition */
 
 #define CONFIG_OF_LIBFDT
 #define CONFIG_CMD_BOOTZ
