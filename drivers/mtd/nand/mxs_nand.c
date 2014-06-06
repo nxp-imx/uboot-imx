@@ -7,7 +7,7 @@
  * Based on code from LTIB:
  * Freescale GPMI NFC NAND Flash Driver
  *
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2014 Freescale Semiconductor, Inc.
  * Copyright (C) 2008 Embedded Alley Solutions, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
@@ -146,21 +146,14 @@ static uint32_t mxs_nand_aux_status_offset(void)
 static inline uint32_t mxs_nand_get_ecc_strength(uint32_t page_data_size,
 						uint32_t page_oob_size)
 {
-	if (page_data_size == 2048)
-		return 8;
+	int ecc_strength;
 
-	if (page_data_size == 4096) {
-		if (page_oob_size == 128)
-			return 8;
+	ecc_strength = ((page_oob_size - MXS_NAND_METADATA_SIZE) * 8)
+			/ (13 * mxs_nand_ecc_chunk_cnt(page_data_size));
 
-		if (page_oob_size == 218)
-			return 16;
-
-		if (page_oob_size == 224)
-			return 16;
-	}
-
-	return 0;
+	/* We need the minor even number. */
+	ecc_strength -= ecc_strength & 1;
+	return ecc_strength;
 }
 
 static inline uint32_t mxs_nand_get_mark_offset(uint32_t page_data_size,
@@ -971,6 +964,12 @@ static int mxs_nand_scan_bbt(struct mtd_info *mtd)
 	struct mxs_nand_info *nand_info = nand->priv;
 	struct mxs_bch_regs *bch_regs = (struct mxs_bch_regs *)MXS_BCH_BASE;
 	uint32_t tmp;
+
+	if (mtd->oobsize > MXS_NAND_CHUNK_DATA_CHUNK_SIZE) {
+		printf("we do not support the NAND whose OOB size is"
+			"larger then 512 bytes!\n");
+		return -EINVAL;
+	}
 
 	/* Configure BCH and set NFC geometry */
 	mxs_reset_block(&bch_regs->hw_bch_ctrl_reg);
