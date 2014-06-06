@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2014 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -505,16 +505,16 @@ void hab_caam_clock_enable(void)
 	u32 reg = 0;
 
 	/*CG4 ~ CG6, enable CAAM clocks*/
-	reg = readl(ccm_regs->CCGR0);
+	reg = readl(&ccm_regs->CCGR0);
 	reg |= (MXC_CCM_CCGR0_CAAM_WRAPPER_IPG_MASK |
 			MXC_CCM_CCGR0_CAAM_WRAPPER_ACLK_MASK |
 			MXC_CCM_CCGR0_CAAM_SECURE_MEM_MASK);
-	writel(reg, ccm_regs->CCGR0);
+	writel(reg, &ccm_regs->CCGR0);
 
 	/* Enable EMI slow clk */
-	reg = readl(ccm_regs->CCGR6);
+	reg = readl(&ccm_regs->CCGR6);
 	reg |= MXC_CCM_CCGR6_EMI_SLOW_MASK;
-	writel(reg, ccm_regs->CCGR6);
+	writel(reg, &ccm_regs->CCGR6);
 }
 
 void hab_caam_clock_disable(void)
@@ -523,16 +523,16 @@ void hab_caam_clock_disable(void)
 	u32 reg = 0;
 
 	/*CG4 ~ CG6, disable CAAM clocks*/
-	reg = readl(ccm_regs->CCGR0);
+	reg = readl(&ccm_regs->CCGR0);
 	reg &= ~(MXC_CCM_CCGR0_CAAM_WRAPPER_IPG_MASK |
 			MXC_CCM_CCGR0_CAAM_WRAPPER_ACLK_MASK |
 			MXC_CCM_CCGR0_CAAM_SECURE_MEM_MASK);
-	writel(reg, ccm_regs->CCGR0);
+	writel(reg, &ccm_regs->CCGR0);
 
 	/* Disable EMI slow clk */
-	reg = readl(ccm_regs->CCGR6);
+	reg = readl(&ccm_regs->CCGR6);
 	reg &= ~MXC_CCM_CCGR6_EMI_SLOW_MASK;
-	writel(reg, ccm_regs->CCGR6);
+	writel(reg, &ccm_regs->CCGR6);
 }
 #endif
 
