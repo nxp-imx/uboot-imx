@@ -54,6 +54,8 @@
 #define CONFIG_CMD_FAT
 #define CONFIG_DOS_PARTITION
 
+#define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
+
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_MII

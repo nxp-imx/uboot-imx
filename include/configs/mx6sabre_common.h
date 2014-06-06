@@ -63,6 +63,8 @@
 #define CONFIG_CMD_FAT
 #define CONFIG_DOS_PARTITION
 
+#define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
+
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_MII
@@ -100,28 +102,6 @@
 #define CONFIG_MFG_NAND_PARTITION "mtdparts=gpmi-nand:16m(boot),16m(kernel),16m(dtb),-(rootfs) "
 #else
 #define CONFIG_MFG_NAND_PARTITION ""
-#endif
-
-#ifdef CONFIG_SUPPORT_EMMC_BOOT
-#define EMMC_ENV \
-	"emmcdev=2\0" \
-	"update_emmc_firmware=" \
-		"if test ${ip_dyn} = yes; then " \
-			"setenv get_cmd dhcp; " \
-		"else " \
-			"setenv get_cmd tftp; " \
-		"fi; " \
-		"if ${get_cmd} ${update_sd_firmware_filename}; then " \
-			"if mmc dev ${emmcdev} && " \
-				"mmc open ${emmcdev} 1; then "	\
-				"setexpr fw_sz ${filesize} / 0x200; " \
-				"setexpr fw_sz ${fw_sz} + 1; "	\
-				"mmc write ${loadaddr} 0x2 ${fw_sz}; " \
-				"mmc close ${emmcdev} 1; " \
-			"fi; "	\
-		"fi\0"
-#else
-#define EMMC_ENV ""
 #endif
 
 #define CONFIG_MFG_ENV_SETTINGS \
@@ -200,7 +180,6 @@
 				"mmc write ${loadaddr} 0x2 ${fw_sz}; " \
 			"fi; "	\
 		"fi\0" \
-	EMMC_ENV	  \
 	"smp=" CONFIG_SYS_NOSMP "\0"\
 	"mmcargs=setenv bootargs console=${console},${baudrate} ${smp} " \
 		"root=${mmcroot}\0" \
