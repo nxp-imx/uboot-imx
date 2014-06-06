@@ -86,7 +86,7 @@
 
 #define CONFIG_BOOTDELAY		3
 
-#define CONFIG_LOADADDR			0x82000000
+#define CONFIG_LOADADDR			0x80800000
 #define CONFIG_SYS_TEXT_BASE		0x87800000
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
@@ -96,7 +96,7 @@
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
 	"fdt_file=imx6sl-evk.dtb\0" \
-	"fdt_addr=0x88000000\0" \
+	"fdt_addr=0x83000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
 	"mmcdev=1\0" \
