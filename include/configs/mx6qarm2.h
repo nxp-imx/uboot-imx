@@ -38,6 +38,12 @@
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE		UART4_BASE
 
+/* OCOTP Config */
+#define CONFIG_CMD_FUSE
+#ifdef CONFIG_CMD_FUSE
+#define CONFIG_MXC_OCOTP
+#endif
+
 /* MMC Configs */
 #define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
