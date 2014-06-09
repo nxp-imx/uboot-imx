@@ -11,6 +11,13 @@
 
 #define CONFIG_MX6
 
+#ifdef CONFIG_MX6SOLO
+#define CONFIG_MX6DL
+#endif
+
+/* uncomment for PLUGIN mode support */
+/* #define CONFIG_USE_PLUGIN */
+
 #include "mx6_common.h"
 #include <linux/sizes.h>
 
@@ -32,8 +39,6 @@
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_BOARD_LATE_INIT
 #define CONFIG_MXC_GPIO
-
-/* #define CONFIG_USE_PLUGIN */
 
 #define CONFIG_MXC_UART
 
