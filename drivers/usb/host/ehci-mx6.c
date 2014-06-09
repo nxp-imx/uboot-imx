@@ -53,12 +53,6 @@
 #define UCMD_RUN_STOP           (1 << 0) /* controller run/stop */
 #define UCMD_RESET		(1 << 1) /* controller reset */
 
-#ifdef CONFIG_MX6SL
-#define USB_BASE_ADDR          USBO2H_USB_BASE_ADDR
-#else
-#define USB_BASE_ADDR          USBOH3_USB_BASE_ADDR
-#endif
-
 static const unsigned phy_bases[] = {
 	USB_PHY0_BASE_ADDR,
 	USB_PHY1_BASE_ADDR,
@@ -212,7 +206,6 @@ int __weak board_ehci_power(int port, int on)
 int ehci_hcd_init(int index, enum usb_init_type init,
 		struct ehci_hccr **hccr, struct ehci_hcor **hcor)
 {
-	enum usb_init_type type;
 	struct usb_ehci *ehci = (struct usb_ehci *)(USB_BASE_ADDR +
 		(0x200 * index));
 
@@ -227,17 +220,14 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	usb_power_config(index);
 	usb_oc_config(index);
 	usb_internal_phy_clock_gate(index, 1);
-	type = usb_phy_enable(index, ehci) ? USB_INIT_DEVICE : USB_INIT_HOST;
+	usb_phy_enable(index, ehci);
 
 	*hccr = (struct ehci_hccr *)((uint32_t)&ehci->caplength);
 	*hcor = (struct ehci_hcor *)((uint32_t)*hccr +
 			HC_LENGTH(ehci_readl(&(*hccr)->cr_capbase)));
 
-	if ((type == init) || (type == USB_INIT_DEVICE))
-		board_ehci_power(index, (type == USB_INIT_DEVICE) ? 0 : 1);
-	if (type != init)
-		return -ENODEV;
-	if (type == USB_INIT_DEVICE)
+	board_ehci_power(index, (init == USB_INIT_DEVICE) ? 0 : 1);
+	if (init == USB_INIT_DEVICE)
 		return 0;
 	setbits_le32(&ehci->usbmode, CM_HOST);
 	__raw_writel(CONFIG_MXC_USB_PORTSC, &ehci->portsc);
