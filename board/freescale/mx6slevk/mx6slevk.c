@@ -14,6 +14,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
 #include <asm/imx-common/iomux-v3.h>
+#include <asm/imx-common/boot_mode.h>
 #include <asm/io.h>
 #include <linux/sizes.h>
 #include <common.h>
@@ -28,6 +29,13 @@
 #include <lcd.h>
 #include <mxc_epdc_fb.h>
 #endif
+#ifdef CONFIG_FASTBOOT
+#include <fastboot.h>
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif
+#endif /*CONFIG_FASTBOOT*/
+
 
 DECLARE_GLOBAL_DATA_PTR;
 

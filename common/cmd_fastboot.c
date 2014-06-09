@@ -63,6 +63,10 @@
 #include <environment.h>
 #include <mmc.h>
 
+#if defined(CONFIG_OF_LIBFDT)
+#include <libfdt.h>
+#include <fdt_support.h>
+#endif
 
 #ifdef CONFIG_FASTBOOT
 
@@ -1524,6 +1528,13 @@ static void boot_start_lmb(bootm_headers_t *images)
 #define lmb_reserve(lmb, base, size)
 static inline void boot_start_lmb(bootm_headers_t *images) { }
 #endif
+
+/* Allow for arch specific config before we boot */
+static void __arch_preboot_os(void)
+{
+	/* please define platform specific arch_preboot_os() */
+}
+void arch_preboot_os(void) __attribute__((weak, alias("__arch_preboot_os")));
 
 /* booti <addr> [ mmc0 | mmc1 [ <partition> ] ] */
 int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])

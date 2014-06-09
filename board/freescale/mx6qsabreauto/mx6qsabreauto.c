@@ -920,7 +920,7 @@ void board_fastboot_setup(void)
 
 #define GPIO_VOL_DN_KEY IMX_GPIO_NR(5, 14)
 iomux_v3_cfg_t const recovery_key_pads[] = {
-	(MX6_PAD_DISP0_DAT20__GPIO_5_14 | MUX_PAD_CTRL(NO_PAD_CTRL)),
+	(MX6_PAD_DISP0_DAT20__GPIO5_IO14 | MUX_PAD_CTRL(NO_PAD_CTRL)),
 };
 
 int check_recovery_cmd_file(void)
