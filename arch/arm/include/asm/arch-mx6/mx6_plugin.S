@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2014 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -17,7 +17,11 @@
 
 #include <config.h>
 
+#ifdef CONFIG_ROM_UNIFIED_SECTIONS
+#define ROM_API_TABLE_BASE_ADDR_LEGACY		0x180
+#else
 #define ROM_API_TABLE_BASE_ADDR_LEGACY		0xC0
+#endif
 #define ROM_API_TABLE_BASE_ADDR_MX6DQ_TO15	0xC4
 #define ROM_API_TABLE_BASE_ADDR_MX6DL_TO12	0xC4
 #define ROM_API_HWCNFG_SETUP_OFFSET		0x08
@@ -48,9 +52,15 @@ plugin_start:
 	adr r2, boot_data2
 
 #ifdef CONFIG_SYS_BOOT_EIMNOR
+#ifdef CONFIG_MX6SX
+	ldr r3, =0x00900b00
+	ldr r4, =0x50000000
+	str r4, [r3, #0x5c]
+#else
 	ldr r3, =0x00900800
 	ldr r4, =0x08000000
 	str r4, [r3, #0xc0]
+#endif
 #endif
 
 /*
@@ -83,6 +93,7 @@ after_calling_rom___pu_irom_hwcnfg_setup:
  * plugin_download(void **start, size_t *bytes, UINT32 *ivt_offset)
  */
 	pop {r0-r4, lr}
+	push {r5}
 	ldr r5, boot_data2
 	str r5, [r0]
 	ldr r5, image_len2
@@ -90,6 +101,7 @@ after_calling_rom___pu_irom_hwcnfg_setup:
 	ldr r5, second_ivt_offset
 	str r5, [r2]
 	mov r0, #1
+	pop {r5}
 
 	/* return back to ROM code */
 	bx lr
@@ -97,7 +109,7 @@ after_calling_rom___pu_irom_hwcnfg_setup:
 /* make the following data right in the end of the output*/
 .ltorg
 
-#ifdef CONFIG_SYS_BOOT_EIMNOR
+#if (defined(CONFIG_SYS_BOOT_EIMNOR) || defined(CONFIG_SYS_BOOT_QSPI))
 #define FLASH_OFFSET 0x1000
 #else
 #define FLASH_OFFSET 0x400

@@ -101,9 +101,15 @@ u32 __weak get_board_rev(void)
 void init_aips(void)
 {
 	struct aipstz_regs *aips1, *aips2;
+#ifdef CONFIG_MX6SX
+	struct aipstz_regs *aips3;
+#endif
 
 	aips1 = (struct aipstz_regs *)AIPS1_BASE_ADDR;
 	aips2 = (struct aipstz_regs *)AIPS2_BASE_ADDR;
+#ifdef CONFIG_MX6SX
+	aips3 = (struct aipstz_regs *)AIPS3_CONFIG_BASE_ADDR;
+#endif
 
 	/*
 	 * Set all MPROTx to be non-bufferable, trusted for R/W,
@@ -129,6 +135,26 @@ void init_aips(void)
 	writel(0x00000000, &aips2->opacr2);
 	writel(0x00000000, &aips2->opacr3);
 	writel(0x00000000, &aips2->opacr4);
+
+#ifdef CONFIG_MX6SX
+	/*
+	 * Set all MPROTx to be non-bufferable, trusted for R/W,
+	 * not forced to user-mode.
+	 */
+	writel(0x77777777, &aips3->mprot0);
+	writel(0x77777777, &aips3->mprot1);
+
+	/*
+	 * Set all OPACRx to be non-bufferable, not require
+	 * supervisor privilege level for access,allow for
+	 * write access and untrusted master access.
+	 */
+	writel(0x00000000, &aips3->opacr0);
+	writel(0x00000000, &aips3->opacr1);
+	writel(0x00000000, &aips3->opacr2);
+	writel(0x00000000, &aips3->opacr3);
+	writel(0x00000000, &aips3->opacr4);
+#endif
 }
 
 static void clear_ldo_ramp(void)
@@ -375,9 +401,15 @@ static void imx_set_pcie_phy_power_down(void)
 {
 	u32 val;
 
+#ifndef CONFIG_MX6SX
 	val = readl(IOMUXC_BASE_ADDR + 0x4);
 	val |= 0x1 << 18;
 	writel(val, IOMUXC_BASE_ADDR + 0x4);
+#else
+	val = readl(IOMUXC_GPR_BASE_ADDR + 0x30);
+	val |= 0x1 << 30;
+	writel(val, IOMUXC_GPR_BASE_ADDR + 0x30);
+#endif
 }
 
 int arch_cpu_init(void)
@@ -543,8 +575,13 @@ void s_init(void)
 {
 	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
 	int is_6q = is_cpu_type(MXC_CPU_MX6Q);
+	int is_6sx = is_cpu_type(MXC_CPU_MX6SX);
 	u32 mask480;
 	u32 mask528;
+
+	/* Don't reset PFD for MX6SX */
+	if (is_6sx)
+		return;
 
 	/* Due to hardware limitation, on MX6Q we need to gate/ungate all PFDs
 	 * to make sure PFD is working right, otherwise, PFDs may
