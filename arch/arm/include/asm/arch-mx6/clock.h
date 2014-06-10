@@ -63,4 +63,7 @@ int enable_fec_anatop_clock(enum enet_freq freq);
 void hab_caam_clock_enable(void);
 void hab_caam_clock_disable(void);
 #endif
+#if (defined(CONFIG_MX6SX))
+void enable_qspi_clk(int qspi_num);
+#endif
 #endif /* __ASM_ARCH_CLOCK_H */
