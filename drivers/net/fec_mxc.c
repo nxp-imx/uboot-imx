@@ -286,7 +286,11 @@ static void fec_rbd_init(struct fec_priv *fec, int count, int dsize)
 	 * Reload the RX descriptors with default values and wipe
 	 * the RX buffers.
 	 */
+#if defined(CONFIG_FEC_DMA_MINALIGN)
+	size = roundup(dsize, CONFIG_FEC_DMA_MINALIGN);
+#else
 	size = roundup(dsize, ARCH_DMA_MINALIGN);
+#endif
 	for (i = 0; i < count; i++) {
 		data = (uint8_t *)fec->rbd_base[i].data_pointer;
 		memset(data, 0, dsize);
@@ -707,15 +711,12 @@ static int fec_send(struct eth_device *dev, void *packet, int length)
 	 * barrier here.
 	 */
 	while (--timeout) {
-		if (!(readl(&fec->eth->x_des_active) & FEC_X_DES_ACTIVE_TDAR))
+		invalidate_dcache_range(addr, addr + size);
+		if (!(readw(&fec->tbd_base[fec->tbd_index].status) & FEC_TBD_READY))
 			break;
 	}
 
 	if (!timeout)
-		ret = -EINVAL;
-
-	invalidate_dcache_range(addr, addr + size);
-	if (readw(&fec->tbd_base[fec->tbd_index].status) & FEC_TBD_READY)
 		ret = -EINVAL;
 
 	debug("fec_send: status 0x%x index %d ret %i\n",
@@ -881,9 +882,17 @@ static int fec_alloc_descs(struct fec_priv *fec)
 	/* Allocate RX buffers. */
 
 	/* Maximum RX buffer size. */
+#if defined(CONFIG_FEC_DMA_MINALIGN)
+	size = roundup(FEC_MAX_PKT_SIZE, CONFIG_FEC_DMA_MINALIGN);
+#else
 	size = roundup(FEC_MAX_PKT_SIZE, ARCH_DMA_MINALIGN);
+#endif
 	for (i = 0; i < FEC_RBD_NUM; i++) {
+#if defined(CONFIG_FEC_DMA_MINALIGN)
+		data = memalign(CONFIG_FEC_DMA_MINALIGN, size);
+#else
 		data = memalign(ARCH_DMA_MINALIGN, size);
+#endif
 		if (!data) {
 			printf("%s: error allocating rxbuf %d\n", __func__, i);
 			goto err_ring;
