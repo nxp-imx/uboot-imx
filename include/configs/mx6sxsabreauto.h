@@ -12,6 +12,8 @@
 
 #include "mx6_common.h"
 
+#define CONFIG_DBG_MONITOR
+
 /* uncomment for PLUGIN mode support */
 /* #define CONFIG_USE_PLUGIN */
 
