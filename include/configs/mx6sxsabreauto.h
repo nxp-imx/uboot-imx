@@ -11,6 +11,8 @@
 
 #include "mx6_common.h"
 
+#define CONFIG_DBG_MONITOR
+
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(32 * SZ_1M)
 
