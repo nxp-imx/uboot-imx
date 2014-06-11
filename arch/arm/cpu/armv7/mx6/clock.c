@@ -362,10 +362,34 @@ void enable_qspi_clk(int qspi_num)
 
 	}
 }
+
+void enable_enet_clock(void)
+{
+	u32 reg = 0;
+
+	/* set enet ahb clock 200Mhz
+	 * pll2_pfd2_396m-> ENET_PODF-> ENET_AHB
+	 */
+	reg = __raw_readl(&imx_ccm->chsccdr);
+	reg &= ~(MXC_CCM_CHSCCDR_ENET_PRE_CLK_SEL_MASK
+		| MXC_CCM_CHSCCDR_ENET_PODF_MASK | MXC_CCM_CHSCCDR_ENET_CLK_SEL_MASK);
+	/* PLL2 PFD2 */
+	reg |= (4 << MXC_CCM_CHSCCDR_ENET_PRE_CLK_SEL_OFFSET);
+	/* Div = 2*/
+	reg |= (1 << MXC_CCM_CHSCCDR_ENET_PODF_OFFSET);
+	reg |= (0 << MXC_CCM_CHSCCDR_ENET_CLK_SEL_OFFSET);
+	writel(reg, &imx_ccm->chsccdr);
+
+	/* Enable enet system clock */
+	reg = readl(&imx_ccm->CCGR3);
+	reg |= MXC_CCM_CCGR3_ENET_MASK;
+	writel(reg, &imx_ccm->CCGR3);
+}
+
 #endif
 
 #ifdef CONFIG_FEC_MXC
-int enable_fec_anatop_clock(enum enet_freq freq)
+int enable_fec_anatop_clock(int fec_id, enum enet_freq freq)
 {
 	u32 reg = 0;
 	s32 timeout = 100000;
@@ -378,7 +402,14 @@ int enable_fec_anatop_clock(enum enet_freq freq)
 
 	reg = readl(&anatop->pll_enet);
 	reg &= ~BM_ANADIG_PLL_ENET_DIV_SELECT;
-	reg |= freq;
+
+	if (0 == fec_id) {
+		reg &= ~BM_ANADIG_PLL_ENET_DIV_SELECT;
+		reg |= BF_ANADIG_PLL_ENET_DIV_SELECT(freq);
+	} else {
+		reg &= ~BM_ANADIG_PLL_ENET2_DIV_SELECT;
+		reg |= BF_ANADIG_PLL_ENET2_DIV_SELECT(freq);
+	}
 
 	if ((reg & BM_ANADIG_PLL_ENET_POWERDOWN) ||
 	    (!(reg & BM_ANADIG_PLL_ENET_LOCK))) {
@@ -393,8 +424,14 @@ int enable_fec_anatop_clock(enum enet_freq freq)
 	}
 
 	/* Enable FEC clock */
-	reg |= BM_ANADIG_PLL_ENET_ENABLE;
+	if (0 == fec_id)
+		reg |= BM_ANADIG_PLL_ENET_ENABLE;
+	else
+		reg |= BM_ANADIG_PLL_ENET2_ENABLE;
 	reg &= ~BM_ANADIG_PLL_ENET_BYPASS;
+#ifdef CONFIG_FEC_MXC_25M_REF_CLK
+	reg |= BM_ANADIG_PLL_ENET_REF_25M_ENABLE;
+#endif
 	writel(reg, &anatop->pll_enet);
 
 	return 0;
