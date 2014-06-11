@@ -1088,6 +1088,19 @@ struct pwm_regs {
 	u32	cnr;
 };
 
+struct dbg_monitor_regs {
+	u32	ctrl[4];		/* Control */
+	u32	master_en[4];		/* Master enable */
+	u32	irq[4];			/* IRQ */
+	u32	trap_addr_low[4];	/* Trap address low */
+	u32	trap_addr_high[4];	/* Trap address high */
+	u32	trap_id[4];		/* Trap ID */
+	u32	snvs_addr[4];		/* SNVS address */
+	u32	snvs_data[4];		/* SNVS data */
+	u32	snvs_info[4];		/* SNVS info */
+	u32	version[4];		/* Version */
+};
+
 /*
  * If ROM fail back to USB recover mode, USBPH0_PWD will be clear to use USB
  * If boot from the other mode, USB0_PWD will keep reset value
