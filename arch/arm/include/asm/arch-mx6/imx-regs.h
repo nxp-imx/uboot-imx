@@ -867,6 +867,19 @@ struct pwm_regs {
 	u32	cnr;
 };
 
+struct dbg_monitor_regs {
+	u32	ctrl[4];		/* Control */
+	u32	master_en[4];		/* Master enable */
+	u32	irq[4];			/* IRQ */
+	u32	trap_addr_low[4];	/* Trap address low */
+	u32	trap_addr_high[4];	/* Trap address high */
+	u32	trap_id[4];		/* Trap ID */
+	u32	snvs_addr[4];		/* SNVS address */
+	u32	snvs_data[4];		/* SNVS data */
+	u32	snvs_info[4];		/* SNVS info */
+	u32	version[4];		/* Version */
+};
+
 /* eLCDIF controller registers */
 struct mxs_lcdif_regs {
 	u32	hw_lcdif_ctrl;			/* 0x00 */
