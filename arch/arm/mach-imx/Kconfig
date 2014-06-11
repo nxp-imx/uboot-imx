@@ -71,6 +71,14 @@ config CMD_HDMIDETECT
 	  This enables the 'hdmidet' command which detects if an HDMI monitor
 	  is connected.
 
+config DBG_MONITOR
+	bool "Enable the AXI debug monitor"
+	depends on ARCH_MX6 || ARCH_MX7
+	help
+	  This option enables the debug monitor which prints out last 
+	  failed AXI access info when system reboot is caused by AXI 
+	  access failure.
+
 config NXP_BOARD_REVISION
 	bool "Read NXP board revision from fuses"
 	depends on ARCH_MX6 || ARCH_MX7
