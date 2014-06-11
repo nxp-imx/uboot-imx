@@ -12,6 +12,8 @@
 
 #include "mx6_common.h"
 
+#define CONFIG_DBG_MONITOR
+
 #ifdef CONFIG_SPL
 #include "imx6_spl.h"
 #endif

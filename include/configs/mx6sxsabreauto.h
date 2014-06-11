@@ -10,6 +10,8 @@
 
 #include "mx6_common.h"
 
+#define CONFIG_DBG_MONITOR
+
 #define CONFIG_MXC_UART_BASE		UART1_BASE
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
