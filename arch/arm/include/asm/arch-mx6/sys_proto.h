@@ -38,6 +38,10 @@ void prep_anatop_bypass(void);
 void finish_anatop_bypass(void);
 #endif
 
+#ifdef CONFIG_MX6SX
+int arch_auxiliary_core_up(u32 core_id, u32 boot_private_data);
+#endif
+
 /*
  * Initializes on-chip ethernet controllers.
  * to override, implement board_eth_init()
