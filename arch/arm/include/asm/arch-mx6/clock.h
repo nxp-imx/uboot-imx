@@ -69,4 +69,8 @@ int enable_fec_anatop_clock(int fec_id, enum enet_freq freq);
 void enable_enet_clk(unsigned char enable);
 void enable_qspi_clk(int qspi_num);
 void enable_thermal_clk(void);
+void enable_enet_clock(void);
+void enable_lcdif_clock(uint32_t base_addr);
+void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq);
+void enable_lvds(uint32_t lcdif_base);
 #endif /* __ASM_ARCH_CLOCK_H */

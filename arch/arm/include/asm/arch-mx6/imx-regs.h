@@ -858,5 +858,247 @@ struct pwm_regs {
 	u32	pr;
 	u32	cnr;
 };
+
+/* eLCDIF controller registers */
+struct mxs_lcdif_regs {
+	u32	hw_lcdif_ctrl;			/* 0x00 */
+	u32	hw_lcdif_ctrl_set;
+	u32	hw_lcdif_ctrl_clr;
+	u32	hw_lcdif_ctrl_tog;
+	u32	hw_lcdif_ctrl1;			/* 0x10 */
+	u32	hw_lcdif_ctrl1_set;
+	u32	hw_lcdif_ctrl1_clr;
+	u32	hw_lcdif_ctrl1_tog;
+	u32	hw_lcdif_ctrl2;			/* 0x20 */
+	u32	hw_lcdif_ctrl2_set;
+	u32	hw_lcdif_ctrl2_clr;
+	u32	hw_lcdif_ctrl2_tog;
+	u32	hw_lcdif_transfer_count;	/* 0x30 */
+	u32	reserved1[3];
+	u32	hw_lcdif_cur_buf;		/* 0x40 */
+	u32	reserved2[3];
+	u32	hw_lcdif_next_buf;		/* 0x50 */
+	u32	reserved3[3];
+	u32	hw_lcdif_timing;		/* 0x60 */
+	u32	reserved4[3];
+	u32	hw_lcdif_vdctrl0;		/* 0x70 */
+	u32	hw_lcdif_vdctrl0_set;
+	u32	hw_lcdif_vdctrl0_clr;
+	u32	hw_lcdif_vdctrl0_tog;
+	u32	hw_lcdif_vdctrl1;		/* 0x80 */
+	u32	reserved5[3];
+	u32	hw_lcdif_vdctrl2;		/* 0x90 */
+	u32	reserved6[3];
+	u32	hw_lcdif_vdctrl3;		/* 0xa0 */
+	u32	reserved7[3];
+	u32	hw_lcdif_vdctrl4;		/* 0xb0 */
+	u32	reserved8[3];
+	u32	hw_lcdif_dvictrl0;		/* 0xc0 */
+	u32	reserved9[3];
+	u32	hw_lcdif_dvictrl1;		/* 0xd0 */
+	u32	reserved10[3];
+	u32	hw_lcdif_dvictrl2;		/* 0xe0 */
+	u32	reserved11[3];
+	u32	hw_lcdif_dvictrl3;		/* 0xf0 */
+	u32	reserved12[3];
+	u32	hw_lcdif_dvictrl4;		/* 0x100 */
+	u32	reserved13[3];
+	u32	hw_lcdif_csc_coeffctrl0;	/* 0x110 */
+	u32	reserved14[3];
+	u32	hw_lcdif_csc_coeffctrl1;	/* 0x120 */
+	u32	reserved15[3];
+	u32	hw_lcdif_csc_coeffctrl2;	/* 0x130 */
+	u32	reserved16[3];
+	u32	hw_lcdif_csc_coeffctrl3;	/* 0x140 */
+	u32	reserved17[3];
+	u32	hw_lcdif_csc_coeffctrl4;	/* 0x150 */
+	u32	reserved18[3];
+	u32	hw_lcdif_csc_offset;	/* 0x160 */
+	u32	reserved19[3];
+	u32	hw_lcdif_csc_limit;		/* 0x170 */
+	u32	reserved20[3];
+	u32	hw_lcdif_data;			/* 0x180 */
+	u32	reserved21[3];
+	u32	hw_lcdif_bm_error_stat;	/* 0x190 */
+	u32	reserved22[3];
+	u32	hw_lcdif_crc_stat;		/* 0x1a0 */
+	u32	reserved23[3];
+	u32	hw_lcdif_lcdif_stat;	/* 0x1b0 */
+	u32	reserved24[3];
+	u32	hw_lcdif_version;		/* 0x1c0 */
+	u32	reserved25[3];
+	u32	hw_lcdif_debug0;		/* 0x1d0 */
+	u32	reserved26[3];
+	u32	hw_lcdif_debug1;		/* 0x1e0 */
+	u32	reserved27[3];
+	u32	hw_lcdif_debug2;		/* 0x1f0 */
+	u32	reserved28[3];
+	u32	hw_lcdif_thres;			/* 0x200 */
+	u32	reserved29[3];
+	u32	hw_lcdif_as_ctrl;		/* 0x210 */
+	u32	reserved30[3];
+	u32	hw_lcdif_as_buf;		/* 0x220 */
+	u32	reserved31[3];
+	u32	hw_lcdif_as_next_buf;	/* 0x230 */
+	u32	reserved32[3];
+	u32	hw_lcdif_as_clrkeylow;	/* 0x240 */
+	u32	reserved33[3];
+	u32	hw_lcdif_as_clrkeyhigh;	/* 0x250 */
+	u32	reserved34[3];
+	u32	hw_lcdif_as_sync_delay;	/* 0x260 */
+	u32	reserved35[3];
+	u32	hw_lcdif_as_debug3;		/* 0x270 */
+	u32	reserved36[3];
+	u32	hw_lcdif_as_debug4;		/* 0x280 */
+	u32	reserved37[3];
+	u32	hw_lcdif_as_debug5;		/* 0x290 */
+};
+
+#define MXS_LCDIF_BASE LCDIF2_BASE_ADDR
+
+#define	LCDIF_CTRL_SFTRST					(1 << 31)
+#define	LCDIF_CTRL_CLKGATE					(1 << 30)
+#define	LCDIF_CTRL_YCBCR422_INPUT				(1 << 29)
+#define	LCDIF_CTRL_READ_WRITEB					(1 << 28)
+#define	LCDIF_CTRL_WAIT_FOR_VSYNC_EDGE				(1 << 27)
+#define	LCDIF_CTRL_DATA_SHIFT_DIR				(1 << 26)
+#define	LCDIF_CTRL_SHIFT_NUM_BITS_MASK				(0x1f << 21)
+#define	LCDIF_CTRL_SHIFT_NUM_BITS_OFFSET			21
+#define	LCDIF_CTRL_DVI_MODE					(1 << 20)
+#define	LCDIF_CTRL_BYPASS_COUNT					(1 << 19)
+#define	LCDIF_CTRL_VSYNC_MODE					(1 << 18)
+#define	LCDIF_CTRL_DOTCLK_MODE					(1 << 17)
+#define	LCDIF_CTRL_DATA_SELECT					(1 << 16)
+#define	LCDIF_CTRL_INPUT_DATA_SWIZZLE_MASK			(0x3 << 14)
+#define	LCDIF_CTRL_INPUT_DATA_SWIZZLE_OFFSET			14
+#define	LCDIF_CTRL_CSC_DATA_SWIZZLE_MASK			(0x3 << 12)
+#define	LCDIF_CTRL_CSC_DATA_SWIZZLE_OFFSET			12
+#define	LCDIF_CTRL_LCD_DATABUS_WIDTH_MASK			(0x3 << 10)
+#define	LCDIF_CTRL_LCD_DATABUS_WIDTH_OFFSET			10
+#define	LCDIF_CTRL_LCD_DATABUS_WIDTH_16BIT			(0 << 10)
+#define	LCDIF_CTRL_LCD_DATABUS_WIDTH_8BIT			(1 << 10)
+#define	LCDIF_CTRL_LCD_DATABUS_WIDTH_18BIT			(2 << 10)
+#define	LCDIF_CTRL_LCD_DATABUS_WIDTH_24BIT			(3 << 10)
+#define	LCDIF_CTRL_WORD_LENGTH_MASK				(0x3 << 8)
+#define	LCDIF_CTRL_WORD_LENGTH_OFFSET				8
+#define	LCDIF_CTRL_WORD_LENGTH_16BIT				(0 << 8)
+#define	LCDIF_CTRL_WORD_LENGTH_8BIT				(1 << 8)
+#define	LCDIF_CTRL_WORD_LENGTH_18BIT				(2 << 8)
+#define	LCDIF_CTRL_WORD_LENGTH_24BIT				(3 << 8)
+#define	LCDIF_CTRL_RGB_TO_YCBCR422_CSC				(1 << 7)
+#define	LCDIF_CTRL_LCDIF_MASTER					(1 << 5)
+#define	LCDIF_CTRL_DATA_FORMAT_16_BIT				(1 << 3)
+#define	LCDIF_CTRL_DATA_FORMAT_18_BIT				(1 << 2)
+#define	LCDIF_CTRL_DATA_FORMAT_24_BIT				(1 << 1)
+#define	LCDIF_CTRL_RUN						(1 << 0)
+
+#define	LCDIF_CTRL1_COMBINE_MPU_WR_STRB				(1 << 27)
+#define	LCDIF_CTRL1_BM_ERROR_IRQ_EN				(1 << 26)
+#define	LCDIF_CTRL1_BM_ERROR_IRQ				(1 << 25)
+#define	LCDIF_CTRL1_RECOVER_ON_UNDERFLOW			(1 << 24)
+#define	LCDIF_CTRL1_INTERLACE_FIELDS				(1 << 23)
+#define	LCDIF_CTRL1_START_INTERLACE_FROM_SECOND_FIELD		(1 << 22)
+#define	LCDIF_CTRL1_FIFO_CLEAR					(1 << 21)
+#define	LCDIF_CTRL1_IRQ_ON_ALTERNATE_FIELDS			(1 << 20)
+#define	LCDIF_CTRL1_BYTE_PACKING_FORMAT_MASK			(0xf << 16)
+#define	LCDIF_CTRL1_BYTE_PACKING_FORMAT_OFFSET			16
+#define	LCDIF_CTRL1_OVERFLOW_IRQ_EN				(1 << 15)
+#define	LCDIF_CTRL1_UNDERFLOW_IRQ_EN				(1 << 14)
+#define	LCDIF_CTRL1_CUR_FRAME_DONE_IRQ_EN			(1 << 13)
+#define	LCDIF_CTRL1_VSYNC_EDGE_IRQ_EN				(1 << 12)
+#define	LCDIF_CTRL1_OVERFLOW_IRQ				(1 << 11)
+#define	LCDIF_CTRL1_UNDERFLOW_IRQ				(1 << 10)
+#define	LCDIF_CTRL1_CUR_FRAME_DONE_IRQ				(1 << 9)
+#define	LCDIF_CTRL1_VSYNC_EDGE_IRQ				(1 << 8)
+#define	LCDIF_CTRL1_BUSY_ENABLE					(1 << 2)
+#define	LCDIF_CTRL1_MODE86					(1 << 1)
+#define	LCDIF_CTRL1_RESET					(1 << 0)
+
+#define	LCDIF_CTRL2_OUTSTANDING_REQS_MASK			(0x7 << 21)
+#define	LCDIF_CTRL2_OUTSTANDING_REQS_OFFSET			21
+#define	LCDIF_CTRL2_OUTSTANDING_REQS_REQ_1			(0x0 << 21)
+#define	LCDIF_CTRL2_OUTSTANDING_REQS_REQ_2			(0x1 << 21)
+#define	LCDIF_CTRL2_OUTSTANDING_REQS_REQ_4			(0x2 << 21)
+#define	LCDIF_CTRL2_OUTSTANDING_REQS_REQ_8			(0x3 << 21)
+#define	LCDIF_CTRL2_OUTSTANDING_REQS_REQ_16			(0x4 << 21)
+#define	LCDIF_CTRL2_BURST_LEN_8					(1 << 20)
+#define	LCDIF_CTRL2_ODD_LINE_PATTERN_MASK			(0x7 << 16)
+#define	LCDIF_CTRL2_ODD_LINE_PATTERN_OFFSET			16
+#define	LCDIF_CTRL2_ODD_LINE_PATTERN_RGB			(0x0 << 16)
+#define	LCDIF_CTRL2_ODD_LINE_PATTERN_RBG			(0x1 << 16)
+#define	LCDIF_CTRL2_ODD_LINE_PATTERN_GBR			(0x2 << 16)
+#define	LCDIF_CTRL2_ODD_LINE_PATTERN_GRB			(0x3 << 16)
+#define	LCDIF_CTRL2_ODD_LINE_PATTERN_BRG			(0x4 << 16)
+#define	LCDIF_CTRL2_ODD_LINE_PATTERN_BGR			(0x5 << 16)
+#define	LCDIF_CTRL2_EVEN_LINE_PATTERN_MASK			(0x7 << 12)
+#define	LCDIF_CTRL2_EVEN_LINE_PATTERN_OFFSET			12
+#define	LCDIF_CTRL2_EVEN_LINE_PATTERN_RGB			(0x0 << 12)
+#define	LCDIF_CTRL2_EVEN_LINE_PATTERN_RBG			(0x1 << 12)
+#define	LCDIF_CTRL2_EVEN_LINE_PATTERN_GBR			(0x2 << 12)
+#define	LCDIF_CTRL2_EVEN_LINE_PATTERN_GRB			(0x3 << 12)
+#define	LCDIF_CTRL2_EVEN_LINE_PATTERN_BRG			(0x4 << 12)
+#define	LCDIF_CTRL2_EVEN_LINE_PATTERN_BGR			(0x5 << 12)
+#define	LCDIF_CTRL2_READ_PACK_DIR				(1 << 10)
+#define	LCDIF_CTRL2_READ_MODE_OUTPUT_IN_RGB_FORMAT		(1 << 9)
+#define	LCDIF_CTRL2_READ_MODE_6_BIT_INPUT			(1 << 8)
+#define	LCDIF_CTRL2_READ_MODE_NUM_PACKED_SUBWORDS_MASK		(0x7 << 4)
+#define	LCDIF_CTRL2_READ_MODE_NUM_PACKED_SUBWORDS_OFFSET	4
+#define	LCDIF_CTRL2_INITIAL_DUMMY_READ_MASK			(0x7 << 1)
+#define	LCDIF_CTRL2_INITIAL_DUMMY_READ_OFFSET			1
+
+#define	LCDIF_TRANSFER_COUNT_V_COUNT_MASK			(0xffff << 16)
+#define	LCDIF_TRANSFER_COUNT_V_COUNT_OFFSET			16
+#define	LCDIF_TRANSFER_COUNT_H_COUNT_MASK			(0xffff << 0)
+#define	LCDIF_TRANSFER_COUNT_H_COUNT_OFFSET			0
+
+#define	LCDIF_CUR_BUF_ADDR_MASK					0xffffffff
+#define	LCDIF_CUR_BUF_ADDR_OFFSET				0
+
+#define	LCDIF_NEXT_BUF_ADDR_MASK				0xffffffff
+#define	LCDIF_NEXT_BUF_ADDR_OFFSET				0
+
+#define	LCDIF_TIMING_CMD_HOLD_MASK				(0xff << 24)
+#define	LCDIF_TIMING_CMD_HOLD_OFFSET				24
+#define	LCDIF_TIMING_CMD_SETUP_MASK				(0xff << 16)
+#define	LCDIF_TIMING_CMD_SETUP_OFFSET				16
+#define	LCDIF_TIMING_DATA_HOLD_MASK				(0xff << 8)
+#define	LCDIF_TIMING_DATA_HOLD_OFFSET				8
+#define	LCDIF_TIMING_DATA_SETUP_MASK				(0xff << 0)
+#define	LCDIF_TIMING_DATA_SETUP_OFFSET				0
+
+#define	LCDIF_VDCTRL0_VSYNC_OEB					(1 << 29)
+#define	LCDIF_VDCTRL0_ENABLE_PRESENT				(1 << 28)
+#define	LCDIF_VDCTRL0_VSYNC_POL					(1 << 27)
+#define	LCDIF_VDCTRL0_HSYNC_POL					(1 << 26)
+#define	LCDIF_VDCTRL0_DOTCLK_POL				(1 << 25)
+#define	LCDIF_VDCTRL0_ENABLE_POL				(1 << 24)
+#define	LCDIF_VDCTRL0_VSYNC_PERIOD_UNIT				(1 << 21)
+#define	LCDIF_VDCTRL0_VSYNC_PULSE_WIDTH_UNIT			(1 << 20)
+#define	LCDIF_VDCTRL0_HALF_LINE					(1 << 19)
+#define	LCDIF_VDCTRL0_HALF_LINE_MODE				(1 << 18)
+#define	LCDIF_VDCTRL0_VSYNC_PULSE_WIDTH_MASK			0x3ffff
+#define	LCDIF_VDCTRL0_VSYNC_PULSE_WIDTH_OFFSET			0
+
+#define	LCDIF_VDCTRL1_VSYNC_PERIOD_MASK				0xffffffff
+#define	LCDIF_VDCTRL1_VSYNC_PERIOD_OFFSET			0
+
+#define	LCDIF_VDCTRL2_HSYNC_PULSE_WIDTH_MASK			(0x3fff << 18)
+#define	LCDIF_VDCTRL2_HSYNC_PULSE_WIDTH_OFFSET			18
+#define	LCDIF_VDCTRL2_HSYNC_PERIOD_MASK				0x3ffff
+#define	LCDIF_VDCTRL2_HSYNC_PERIOD_OFFSET			0
+
+#define	LCDIF_VDCTRL3_MUX_SYNC_SIGNALS				(1 << 29)
+#define	LCDIF_VDCTRL3_VSYNC_ONLY				(1 << 28)
+#define	LCDIF_VDCTRL3_HORIZONTAL_WAIT_CNT_MASK			(0xfff << 16)
+#define	LCDIF_VDCTRL3_HORIZONTAL_WAIT_CNT_OFFSET		16
+#define	LCDIF_VDCTRL3_VERTICAL_WAIT_CNT_MASK			(0xffff << 0)
+#define	LCDIF_VDCTRL3_VERTICAL_WAIT_CNT_OFFSET			0
+
+#define	LCDIF_VDCTRL4_DOTCLK_DLY_SEL_MASK			(0x7 << 29)
+#define	LCDIF_VDCTRL4_DOTCLK_DLY_SEL_OFFSET			29
+#define	LCDIF_VDCTRL4_SYNC_SIGNALS_ON				(1 << 18)
+#define	LCDIF_VDCTRL4_DOTCLK_H_VALID_DATA_CNT_MASK		0x3ffff
+#define	LCDIF_VDCTRL4_DOTCLK_H_VALID_DATA_CNT_OFFSET		0
+
 #endif /* __ASSEMBLER__*/
 #endif /* __ASM_ARCH_MX6_IMX_REGS_H__ */
