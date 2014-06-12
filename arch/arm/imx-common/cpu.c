@@ -16,6 +16,10 @@
 #include <asm/arch/crm_regs.h>
 #include <ipu_pixfmt.h>
 
+#ifdef CONFIG_VIDEO_GIS
+#include <gis.h>
+#endif
+
 #ifdef CONFIG_FSL_ESDHC
 #include <fsl_esdhc.h>
 #endif
@@ -200,5 +204,9 @@ void arch_preboot_os(void)
 #if defined(CONFIG_VIDEO_IPUV3)
 	/* disable video before launching O/S */
 	ipuv3_fb_shutdown();
+#endif
+#ifdef CONFIG_VIDEO_GIS
+	/* Entry for GIS */
+	mxc_disable_gis();
 #endif
 }
