@@ -267,7 +267,8 @@ static int setup_pmic_voltages(void)
 			printf("Read Rev ID error!\n");
 			return -1;
 		}
-		printf("Found PFUZE100! deviceid=%x,revid=%x\n", value, rev_id);
+		printf("Found PFUZE%s deviceid=%x,revid=%x\n",
+			((value & 0xf) == 0) ? "100" : "200", value, rev_id);
 		/*For camera streaks issue,swap VGEN5 and VGEN3 to power camera.
 		*sperate VDDHIGH_IN and camera 2.8V power supply, after switch:
 		*VGEN5 for VDDHIGH_IN and increase to 3V to align with datasheet

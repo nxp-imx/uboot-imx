@@ -631,7 +631,8 @@ static int setup_pmic_voltages(void)
 			printf("Read Rev ID error!\n");
 			return -1;
 		}
-		printf("Found PFUZE100! deviceid 0x%x, revid 0x%x\n", value, rev_id);
+		printf("Found PFUZE%s deviceid=%x,revid=%x\n",
+			((value & 0xf) == 0) ? "100" : "200", value, rev_id);
 
 		/* set SW1AB staby volatage 0.975V */
 		if (i2c_read(CONFIG_PMIC_I2C_SLAVE, PFUZE100_SW1ABSTBY, 1, &value, 1)) {
