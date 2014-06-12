@@ -484,6 +484,14 @@ struct iomuxc {
 #define IOMUXC_GPR2_LVDS_CH0_MODE_ENABLED_DI0		(IOMUXC_GPR2_MODE_ENABLED_DI0<<IOMUXC_GPR2_LVDS_CH0_MODE_OFFSET)
 #define IOMUXC_GPR2_LVDS_CH0_MODE_ENABLED_DI1		(IOMUXC_GPR2_MODE_ENABLED_DI1<<IOMUXC_GPR2_LVDS_CH0_MODE_OFFSET)
 
+#ifdef CONFIG_MX6SX
+#define IMX6SX_GPR5_CSI1_MUX_CTRL_MASK			(0x3 << 4)
+#define IMX6SX_GPR5_CSI1_MUX_CTRL_EXT_PIN		(0x0 << 4)
+#define IMX6SX_GPR5_CSI1_MUX_CTRL_CVD			(0x1 << 4)
+#define IMX6SX_GPR5_CSI1_MUX_CTRL_VDAC_TO_CSI	(0x2 << 4)
+#define IMX6SX_GPR5_CSI1_MUX_CTRL_GND			(0x3 << 4)
+#endif
+
 /* ECSPI registers */
 struct cspi_regs {
 	u32 rxdata;
@@ -1093,6 +1101,10 @@ struct mxs_lcdif_regs {
 
 
 extern void check_cpu_temperature(void);
+#ifdef CONFIG_MX6SX
+extern void vadc_power_up(void);
+extern void vadc_power_down(void);
+#endif
 
 /* If ROM fail back to USB recover mode, USBPH0_PWD will be clear to use USB
  * If boot from the other mode, USB0_PWD will keep reset value
