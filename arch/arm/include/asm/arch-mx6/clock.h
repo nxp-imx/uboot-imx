@@ -68,5 +68,8 @@ void hab_caam_clock_disable(void);
 #if (defined(CONFIG_MX6SX))
 void enable_qspi_clk(int qspi_num);
 void enable_enet_clock(void);
+void enable_lcdif_clock(uint32_t base_addr);
+void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq);
+void enable_lvds(uint32_t lcdif_base);
 #endif
 #endif /* __ASM_ARCH_CLOCK_H */
