@@ -5,7 +5,7 @@
  * on behalf of DENX Software Engineering GmbH
  *
  * Based on code from LTIB:
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2014 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -309,7 +309,7 @@ void mxs_set_ssp_busclock(unsigned int bus, uint32_t freq)
 		bus, tgtclk, freq);
 }
 
-void mxs_set_lcdclk(uint32_t freq)
+void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq)
 {
 	struct mxs_clkctrl_regs *clkctrl_regs =
 		(struct mxs_clkctrl_regs *)MXS_CLKCTRL_BASE;
