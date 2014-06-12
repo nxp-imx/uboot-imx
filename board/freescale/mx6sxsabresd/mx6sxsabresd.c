@@ -763,8 +763,21 @@ int board_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_CMD_BMODE
+static const struct boot_mode board_boot_modes[] = {
+	/* 4 bit bus width */
+	{"sd4", MAKE_CFGVAL(0x40, 0x38, 0x00, 0x00)},
+	{"qspi2", MAKE_CFGVAL(0x18, 0x00, 0x00, 0x00)},
+	{NULL,	 0},
+};
+#endif
+
 int board_late_init(void)
 {
+#ifdef CONFIG_CMD_BMODE
+	add_board_boot_modes(board_boot_modes);
+#endif
+
 #ifdef CONFIG_PFUZE100_PMIC_I2C
 	int ret = 0;
 
