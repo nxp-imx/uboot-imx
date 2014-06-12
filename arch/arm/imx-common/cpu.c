@@ -2,7 +2,7 @@
  * (C) Copyright 2007
  * Sascha Hauer, Pengutronix
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -20,6 +20,10 @@
 #include <ipu_pixfmt.h>
 #include <thermal.h>
 #include <sata.h>
+
+#ifdef CONFIG_VIDEO_GIS
+#include <gis.h>
+#endif
 
 #ifdef CONFIG_FSL_ESDHC
 #include <fsl_esdhc.h>
@@ -278,6 +282,10 @@ void arch_preboot_os(void)
 #if defined(CONFIG_VIDEO_IPUV3)
 	/* disable video before launching O/S */
 	ipuv3_fb_shutdown();
+#endif
+#ifdef CONFIG_VIDEO_GIS
+	/* Entry for GIS */
+	mxc_disable_gis();
 #endif
 #if defined(CONFIG_VIDEO_MXS)
 	lcdif_power_down();
