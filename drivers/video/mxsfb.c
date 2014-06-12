@@ -21,7 +21,11 @@
 #include <linux/string.h>
 #include <linux/list.h>
 #include <linux/fb.h>
+#include <mxsfb.h>
 
+#ifdef CONFIG_VIDEO_GIS
+#include <gis.h>
+#endif
 
 #define	PS2KHZ(ps)	(1000000000UL / (ps))
 
@@ -53,6 +57,15 @@ int mxs_lcd_panel_setup(struct fb_videomode mode, int bpp,
 	setup = 1;
 
 	return 0;
+}
+
+void mxs_lcd_get_panel(struct display_panel *dispanel)
+{
+	dispanel->width = fbmode.xres;
+	dispanel->height = fbmode.yres;
+	dispanel->reg_base = panel.isaBase;
+	dispanel->gdfindex = panel.gdfIndex;
+	dispanel->gdfbytespp = panel.gdfBytesPP;
 }
 
 /*
@@ -149,6 +162,19 @@ static void mxs_lcd_init(GraphicDevice *panel,
 
 	/* RUN! */
 	writel(LCDIF_CTRL_RUN, &regs->hw_lcdif_ctrl_set);
+}
+
+void lcdif_power_down()
+{
+	u32 val;
+	struct mxs_lcdif_regs *regs = (struct mxs_lcdif_regs *)(panel.isaBase);
+
+	writel(panel.frameAdrs, &regs->hw_lcdif_cur_buf);
+	writel(panel.frameAdrs, &regs->hw_lcdif_next_buf);
+
+	/* Stop lcdif */
+	val = LCDIF_CTRL_SFTRST | LCDIF_CTRL_CLKGATE;
+	writel(val, &regs->hw_lcdif_ctrl);
 }
 
 void *video_hw_init(void)
@@ -257,6 +283,11 @@ void *video_hw_init(void)
 
 	/* Execute the DMA chain. */
 	mxs_dma_circ_start(MXS_DMA_CHANNEL_AHB_APBH_LCDIF, &desc);
+#endif
+
+#ifdef CONFIG_VIDEO_GIS
+	/* Entry for GIS */
+	mxc_enable_gis();
 #endif
 
 	return (void *)&panel;
