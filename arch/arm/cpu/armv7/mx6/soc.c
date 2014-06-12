@@ -311,6 +311,52 @@ static void set_preclk_from_osc(void)
 }
 #endif
 
+#ifdef CONFIG_MX6SX
+void vadc_power_up(void)
+{
+	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
+	u32 val;
+
+	/* csi0 */
+	val = readl(&iomux->gpr[5]);
+	val &= ~IMX6SX_GPR5_CSI1_MUX_CTRL_MASK,
+	val |= IMX6SX_GPR5_CSI1_MUX_CTRL_CVD;
+	writel(val, &iomux->gpr[5]);
+
+	/* Power on vadc analog
+	 * Power down vadc ext power */
+	val = readl(GPC_BASE_ADDR + 0);
+	val &= ~0x60000;
+	writel(val, GPC_BASE_ADDR + 0);
+
+	/* software reset afe  */
+	val = readl(&iomux->gpr[1]);
+	writel(val | 0x80000, &iomux->gpr[1]);
+
+	udelay(10*1000);
+
+	/* Release reset bit  */
+	writel(val & ~0x80000, &iomux->gpr[1]);
+
+	/* Power on vadc ext power */
+	val = readl(GPC_BASE_ADDR + 0);
+	val |= 0x40000;
+	writel(val, GPC_BASE_ADDR + 0);
+}
+
+void vadc_power_down(void)
+{
+	u32 val;
+
+	/* Power down vadc ext power
+	 * Power off vadc analog */
+	val = readl(GPC_BASE_ADDR + 0);
+	val &= ~0x40000;
+	val |= 0x20000;
+	writel(val, GPC_BASE_ADDR + 0);
+}
+#endif
+
 int arch_cpu_init(void)
 {
 	init_aips();

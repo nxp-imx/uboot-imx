@@ -57,4 +57,7 @@ int mxs_wait_mask_clr(struct mxs_register_32 *reg, u32 mask, u32 timeout);
 
 int mmc_get_env_dev(void);
 void board_late_mmc_env_init(void);
+
+void vadc_power_up(void);
+void vadc_power_down(void);
 #endif
