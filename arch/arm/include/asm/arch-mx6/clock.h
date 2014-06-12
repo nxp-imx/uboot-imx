@@ -83,4 +83,5 @@ void enable_thermal_clk(void);
 void mxs_set_lcdclk(u32 base_addr, u32 freq);
 void select_ldb_di_clock_source(enum ldb_di_clock clk);
 void enable_eim_clk(unsigned char enable);
+void mxs_set_vadcclk(void);
 #endif /* __ASM_ARCH_CLOCK_H */
