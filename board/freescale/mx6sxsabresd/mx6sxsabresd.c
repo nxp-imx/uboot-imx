@@ -555,6 +555,10 @@ int board_early_init_f(void)
 	imx_rdc_setup_peripherals(shared_resources, ARRAY_SIZE(shared_resources));
 #endif
 
+#ifdef CONFIG_SYS_AUXCORE_FASTUP
+	arch_auxiliary_core_up(0, CONFIG_SYS_AUXCORE_BOOTDATA);
+#endif
+
 	setup_iomux_uart();
 	return 0;
 }

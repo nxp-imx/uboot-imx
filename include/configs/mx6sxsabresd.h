@@ -125,8 +125,10 @@
 #define CONFIG_SYS_TEXT_BASE		0x87800000
 
 #define CONFIG_SYS_AUXCORE_BOOTDATA 0x78000000 /* Set to QSPI2 B flash at default */
-#define CONFIG_CMD_BOOTAUX /* Boot M4 */
+#ifndef CONFIG_SYS_AUXCORE_FASTUP
+#define CONFIG_CMD_BOOTAUX /* Boot M4 by command, disable this when M4 fast up */
 #define CONFIG_CMD_SETEXPR
+#endif
 
 #ifdef CONFIG_CMD_BOOTAUX
 #define UPDATE_M4_ENV \
@@ -274,7 +276,10 @@
 
 #define CONFIG_ENV_SIZE			SZ_8K
 
-#ifdef CONFIG_SYS_BOOT_QSPI
+#ifdef CONFIG_SYS_AUXCORE_FASTUP
+#define CONFIG_MXC_RDC
+#define CONFIG_ENV_IS_IN_MMC  /* Must disable QSPI driver, because M4 run on QSPI */
+#elif defined CONFIG_SYS_BOOT_QSPI
 #define CONFIG_SYS_USE_QSPI
 #define CONFIG_ENV_IS_IN_SPI_FLASH
 #else
