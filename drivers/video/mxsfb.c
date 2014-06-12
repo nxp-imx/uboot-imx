@@ -32,6 +32,9 @@
 #include <linux/fb.h>
 #include <mxsfb.h>
 
+#ifdef CONFIG_VIDEO_GIS
+#include <gis.h>
+#endif
 
 #define	PS2KHZ(ps)	(1000000000UL / (ps))
 #define HZ2PS(hz)	(1000000000UL / ((hz) / 1000))
@@ -338,6 +341,11 @@ void *video_hw_init(void)
 	ret = mxs_probe_common(panel.isaBase, &timings, bpp, (u32)fb);
 	if (ret)
 		goto dealloc_fb;
+
+#ifdef CONFIG_VIDEO_GIS
+	/* Entry for GIS */
+	mxc_enable_gis();
+#endif
 
 	return (void *)&panel;
 
