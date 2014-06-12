@@ -24,6 +24,9 @@
 #include <linux/fb.h>
 #include <mxsfb.h>
 
+#ifdef CONFIG_VIDEO_GIS
+#include <gis.h>
+#endif
 
 #define	PS2KHZ(ps)	(1000000000UL / (ps))
 
@@ -288,6 +291,11 @@ void *video_hw_init(void)
 
 	/* Execute the DMA chain. */
 	mxs_dma_circ_start(MXS_DMA_CHANNEL_AHB_APBH_LCDIF, &desc);
+#endif
+
+#ifdef CONFIG_VIDEO_GIS
+	/* Entry for GIS */
+	mxc_enable_gis();
 #endif
 
 	return (void *)&panel;
