@@ -535,6 +535,14 @@ struct gpc {
 #define IOMUXC_GPR2_LVDS_CH0_MODE_ENABLED_DI0		(IOMUXC_GPR2_MODE_ENABLED_DI0<<IOMUXC_GPR2_LVDS_CH0_MODE_OFFSET)
 #define IOMUXC_GPR2_LVDS_CH0_MODE_ENABLED_DI1		(IOMUXC_GPR2_MODE_ENABLED_DI1<<IOMUXC_GPR2_LVDS_CH0_MODE_OFFSET)
 
+#ifdef CONFIG_MX6SX
+#define IMX6SX_GPR5_CSI1_MUX_CTRL_MASK			(0x3 << 4)
+#define IMX6SX_GPR5_CSI1_MUX_CTRL_EXT_PIN		(0x0 << 4)
+#define IMX6SX_GPR5_CSI1_MUX_CTRL_CVD			(0x1 << 4)
+#define IMX6SX_GPR5_CSI1_MUX_CTRL_VDAC_TO_CSI	(0x2 << 4)
+#define IMX6SX_GPR5_CSI1_MUX_CTRL_GND			(0x3 << 4)
+#endif
+
 /* ECSPI registers */
 struct cspi_regs {
 	u32 rxdata;
@@ -1099,6 +1107,11 @@ struct mxs_lcdif_regs {
 #define	LCDIF_VDCTRL4_SYNC_SIGNALS_ON				(1 << 18)
 #define	LCDIF_VDCTRL4_DOTCLK_H_VALID_DATA_CNT_MASK		0x3ffff
 #define	LCDIF_VDCTRL4_DOTCLK_H_VALID_DATA_CNT_OFFSET		0
+
+#ifdef CONFIG_MX6SX
+extern void vadc_power_up(void);
+extern void vadc_power_down(void);
+#endif
 
 #endif /* __ASSEMBLER__*/
 #endif /* __ASM_ARCH_MX6_IMX_REGS_H__ */
