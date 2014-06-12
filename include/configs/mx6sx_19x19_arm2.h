@@ -10,6 +10,7 @@
 #define __MX6SX_19X19_ARM2_CONFIG_H
 
 #define CONFIG_VIDEO
+#define CONFIG_VIDEO_GIS
 
 #include "mx6sx_arm2.h"
 
