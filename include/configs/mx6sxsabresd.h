@@ -33,7 +33,7 @@
 #define CONFIG_REVISION_TAG
 
 /* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(3 * SZ_1M)
+#define CONFIG_SYS_MALLOC_LEN		(10 * SZ_1M)
 
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_BOARD_LATE_INIT
@@ -114,6 +114,9 @@
 #define CONFIG_PMIC_I2C_SLAVE		0x8
 #endif
 
+/* VIDEO */
+#define CONFIG_VIDEO
+
 /* Command definition */
 #include <config_cmd_default.h>
 
@@ -149,6 +152,13 @@
 #define UPDATE_M4_ENV ""
 #endif
 
+#ifdef CONFIG_VIDEO
+#define CONFIG_VIDEO_MODE \
+	"panel=Hannstar-XGA\0"
+#else
+#define CONFIG_VIDEO_MODE ""
+#endif
+
 #define CONFIG_MFG_ENV_SETTINGS \
 	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
 		"rdinit=/linuxrc " \
@@ -163,6 +173,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
 	UPDATE_M4_ENV \
+	CONFIG_VIDEO_MODE \
 	"script=boot.scr\0" \
 	"uimage=uImage\0" \
 	"console=ttymxc0\0" \
@@ -321,6 +332,21 @@
 
 #ifndef CONFIG_SYS_DCACHE_OFF
 #define CONFIG_CMD_CACHE
+#endif
+
+#ifdef CONFIG_VIDEO
+#define	CONFIG_CFB_CONSOLE
+#define	CONFIG_VIDEO_MXS
+#define	CONFIG_VIDEO_LOGO
+#define	CONFIG_VIDEO_SW_CURSOR
+#define	CONFIG_VGA_AS_SINGLE_DEVICE
+#define	CONFIG_SYS_CONSOLE_IS_IN_ENV
+#define	CONFIG_SPLASH_SCREEN
+#define CONFIG_SPLASH_SCREEN_ALIGN
+#define	CONFIG_CMD_BMP
+#define	CONFIG_BMP_16BPP
+#define	CONFIG_VIDEO_BMP_RLE8
+#define CONFIG_VIDEO_BMP_LOGO
 #endif
 
 #define CONFIG_CMD_USB

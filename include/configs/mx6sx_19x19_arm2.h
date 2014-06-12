@@ -9,6 +9,8 @@
 #ifndef __MX6SX_19X19_ARM2_CONFIG_H
 #define __MX6SX_19X19_ARM2_CONFIG_H
 
+#define CONFIG_VIDEO
+
 #include "mx6sx_arm2.h"
 
 #define CONFIG_SYS_FSL_USDHC_NUM    1
