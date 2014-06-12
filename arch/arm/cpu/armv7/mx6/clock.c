@@ -681,6 +681,16 @@ void enable_qspi_clk(int qspi_num)
 		break;
 	}
 }
+
+void mxs_set_vadcclk()
+{
+	u32 reg = 0;
+
+	reg = readl(&imx_ccm->cscmr2);
+	reg &= ~MXC_CCM_CSCMR2_VID_CLK_SEL_MASK;
+	reg |= 0x19 << MXC_CCM_CSCMR2_VID_CLK_SEL_OFFSET;
+	writel(reg, &imx_ccm->cscmr2);
+}
 #endif
 
 #ifdef CONFIG_FEC_MXC

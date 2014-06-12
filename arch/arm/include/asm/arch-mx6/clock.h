@@ -73,4 +73,5 @@ void enable_enet_clock(void);
 void enable_lcdif_clock(uint32_t base_addr);
 void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq);
 void enable_lvds(uint32_t lcdif_base);
+void mxs_set_vadcclk(void);
 #endif /* __ASM_ARCH_CLOCK_H */
