@@ -24,6 +24,9 @@
 #include <asm/io.h>
 
 #include "videomodes.h"
+#ifdef CONFIG_VIDEO_GIS
+#include <gis.h>
+#endif
 
 #define	PS2KHZ(ps)	(1000000000UL / (ps))
 #define HZ2PS(hz)	(1000000000UL / ((hz) / 1000))
@@ -308,6 +311,11 @@ static int mxs_video_probe(struct udevice *dev)
 	ret = mxs_probe_common(dev, &timings, bpp, plat->base);
 	if (ret)
 		return ret;
+
+#ifdef CONFIG_VIDEO_GIS
+	/* Entry for GIS */
+	mxc_enable_gis();
+#endif
 
 	switch (bpp) {
 	case 32:
