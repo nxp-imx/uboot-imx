@@ -3,6 +3,8 @@
  *
  * Copyright (C) 2011-2013 Marek Vasut <marex@denx.de>
  *
+ * Copyright (C) 2014-2016 Freescale Semiconductor, Inc.
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <common.h>
@@ -18,6 +20,11 @@
 #include <asm/imx-common/dma.h>
 
 #include "videomodes.h"
+#include <linux/string.h>
+#include <linux/list.h>
+#include <linux/fb.h>
+#include <mxsfb.h>
+
 
 #define	PS2KHZ(ps)	(1000000000UL / (ps))
 
@@ -35,6 +42,31 @@ __weak void mxsfb_system_setup(void)
 {
 }
 
+static int setup;
+static struct fb_videomode fbmode;
+static int depth;
+
+int mxs_lcd_panel_setup(struct fb_videomode mode, int bpp,
+	uint32_t base_addr)
+{
+	fbmode = mode;
+	depth  = bpp;
+	panel.isaBase  = base_addr;
+
+	setup = 1;
+
+	return 0;
+}
+
+void mxs_lcd_get_panel(struct display_panel *dispanel)
+{
+	dispanel->width = fbmode.xres;
+	dispanel->height = fbmode.yres;
+	dispanel->reg_base = panel.isaBase;
+	dispanel->gdfindex = panel.gdfIndex;
+	dispanel->gdfbytespp = panel.gdfBytesPP;
+}
+
 /*
  * DENX M28EVK:
  * setenv videomode
@@ -50,12 +82,12 @@ __weak void mxsfb_system_setup(void)
 static void mxs_lcd_init(GraphicDevice *panel,
 			struct ctfb_res_modes *mode, int bpp)
 {
-	struct mxs_lcdif_regs *regs = (struct mxs_lcdif_regs *)MXS_LCDIF_BASE;
+	struct mxs_lcdif_regs *regs = (struct mxs_lcdif_regs *)(panel->isaBase);
 	uint32_t word_len = 0, bus_width = 0;
 	uint8_t valid_data = 0;
 
 	/* Kick in the LCDIF clock */
-	mxs_set_lcdclk(MXS_LCDIF_BASE, PS2KHZ(mode->pixclock));
+	mxs_set_lcdclk(panel->isaBase, PS2KHZ(mode->pixclock));
 
 	/* Restart the LCDIF block */
 	mxs_reset_block(&regs->hw_lcdif_ctrl_reg);
@@ -133,7 +165,7 @@ static void mxs_lcd_init(GraphicDevice *panel,
 
 void lcdif_power_down(void)
 {
-	struct mxs_lcdif_regs *regs = (struct mxs_lcdif_regs *)MXS_LCDIF_BASE;
+	struct mxs_lcdif_regs *regs = (struct mxs_lcdif_regs *)(panel.isaBase);
 	int timeout = 1000000;
 
 	writel(panel.frameAdrs, &regs->hw_lcdif_cur_buf_reg);
@@ -157,18 +189,36 @@ void *video_hw_init(void)
 
 	puts("Video: ");
 
-	/* Suck display configuration from "videomode" variable */
-	penv = getenv("videomode");
-	if (!penv) {
-		puts("MXSFB: 'videomode' variable not set!\n");
-		return NULL;
-	}
+	if (!setup) {
 
-	bpp = video_get_params(&mode, penv);
+		/* Suck display configuration from "videomode" variable */
+		penv = getenv("videomode");
+		if (!penv) {
+			printf("MXSFB: 'videomode' variable not set!\n");
+			return NULL;
+		}
+
+		bpp = video_get_params(&mode, penv);
+		panel.isaBase  = MXS_LCDIF_BASE;
+	} else {
+		mode.xres = fbmode.xres;
+		mode.yres = fbmode.yres;
+		mode.pixclock = fbmode.pixclock;
+		mode.left_margin = fbmode.left_margin;
+		mode.right_margin = fbmode.right_margin;
+		mode.upper_margin = fbmode.upper_margin;
+		mode.lower_margin = fbmode.lower_margin;
+		mode.hsync_len = fbmode.hsync_len;
+		mode.vsync_len = fbmode.vsync_len;
+		mode.sync = fbmode.sync;
+		mode.vmode = fbmode.vmode;
+		bpp = depth;
+	}
 
 	/* fill in Graphic device struct */
 	sprintf(panel.modeIdent, "%dx%dx%d",
 			mode.xres, mode.yres, bpp);
+
 
 	panel.winSizeX = mode.xres;
 	panel.winSizeY = mode.yres;
@@ -195,6 +245,7 @@ void *video_hw_init(void)
 	}
 
 	panel.memSize = mode.xres * mode.yres * panel.gdfBytesPP;
+
 
 	/* Allocate framebuffer */
 	fb = memalign(ARCH_DMA_MINALIGN,
