@@ -156,6 +156,21 @@ static iomux_v3_cfg_t const usdhc4_pads[] = {
 	MX6SX_PAD_SD4_DATA7__GPIO6_IO_21 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
+static iomux_v3_cfg_t const usdhc4_emmc_pads[] = {
+	MX6SX_PAD_SD4_CLK__USDHC4_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_CMD__USDHC4_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA0__USDHC4_DATA0 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA1__USDHC4_DATA1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA2__USDHC4_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA3__USDHC4_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA4__USDHC4_DATA4 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA5__USDHC4_DATA5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA6__USDHC4_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_DATA7__USDHC4_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6SX_PAD_SD4_RESET_B__USDHC4_RESET_B | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+
 static iomux_v3_cfg_t const peri_3v3_pads[] = {
 	MX6SX_PAD_QSPI1A_DATA0__GPIO4_IO_16 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
@@ -259,7 +274,11 @@ int board_qspi_init(void)
 static struct fsl_esdhc_cfg usdhc_cfg[3] = {
 	{USDHC2_BASE_ADDR, 0, 4},
 	{USDHC3_BASE_ADDR},
+#ifdef CONFIG_MX6SXSABRESD_EMMC_REWORK
+	{USDHC4_BASE_ADDR, 0, 8},
+#else
 	{USDHC4_BASE_ADDR, 0, 4},
+#endif
 };
 
 #define USDHC3_CD_GPIO	IMX_GPIO_NR(2, 10)
@@ -299,7 +318,11 @@ int board_mmc_getcd(struct mmc *mmc)
 		ret = !gpio_get_value(USDHC3_CD_GPIO);
 		break;
 	case USDHC4_BASE_ADDR:
+#ifdef CONFIG_MX6SXSABRESD_EMMC_REWORK
+		ret = 1;
+#else
 		ret = !gpio_get_value(USDHC4_CD_GPIO);
+#endif
 		break;
 	}
 
@@ -333,9 +356,14 @@ int board_mmc_init(bd_t *bis)
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 			break;
 		case 2:
+#ifdef CONFIG_MX6SXSABRESD_EMMC_REWORK
+			imx_iomux_v3_setup_multiple_pads(
+				usdhc4_emmc_pads, ARRAY_SIZE(usdhc4_emmc_pads));
+#else
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc4_pads, ARRAY_SIZE(usdhc4_pads));
 			gpio_direction_input(USDHC4_CD_GPIO);
+#endif
 			usdhc_cfg[2].sdhc_clk = mxc_get_clock(MXC_ESDHC4_CLK);
 			break;
 		default:
