@@ -84,6 +84,7 @@ void enable_epdc_clock(void);
 void mxs_set_lcdclk(u32 base_addr, u32 freq);
 void select_ldb_di_clock_source(enum ldb_di_clock clk);
 void enable_eim_clk(unsigned char enable);
+void mxs_set_vadcclk(void);
 int do_mx6_showclocks(struct cmd_tbl *cmdtp, int flag, int argc,
 		      char *const argv[]);
 #endif /* __ASM_ARCH_CLOCK_H */
