@@ -15,6 +15,7 @@
 #include <asm/imx-common/gpio.h>
 
 #define CONFIG_MX6
+#define CONFIG_SYS_GENERIC_BOARD
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
