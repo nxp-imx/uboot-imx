@@ -186,6 +186,37 @@ iomux_v3_cfg_t const usdhc3_pads[] = {
 };
 
 #ifdef CONFIG_SYS_I2C_MXC
+/* set all switches APS in normal and PFM mode in standby */
+static int setup_pmic_mode(int chip)
+{
+	unsigned char offset, i, switch_num, value;
+
+	if (!chip) {
+		/* pfuze100 */
+		switch_num = 6;
+		offset = 0x31;
+	} else {
+		/* pfuze200 */
+		switch_num = 4;
+		offset = 0x38;
+	}
+
+	value = 0xc;
+	if (i2c_write(0x8, 0x23, 1, &value, 1)) {
+		printf("Set SW1AB mode error!\n");
+		return -1;
+	}
+
+	for (i = 0; i < switch_num - 1; i++) {
+		if (i2c_write(0x8, offset + i * 7, 1, &value, 1)) {
+			printf("Set switch%x mode error!\n", offset);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 static int setup_pmic_voltages(void)
 {
 	unsigned char value, rev_id = 0 ;
@@ -200,6 +231,11 @@ static int setup_pmic_voltages(void)
 			return -1;
 		}
 		printf("Found PFUZE100! deviceid=%x,revid=%x\n", value, rev_id);
+
+		if (setup_pmic_mode(value & 0xf)) {
+			printf("setup pmic mode error!\n");
+			return -1;
+		}
 		/* set SW1AB staby volatage 0.975V*/
 		if (i2c_read(0x8, 0x21, 1, &value, 1)) {
 			printf("Read SW1ABSTBY error!\n");

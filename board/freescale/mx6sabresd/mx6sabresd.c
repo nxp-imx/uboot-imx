@@ -253,6 +253,37 @@ static void setup_iomux_uart(void)
 }
 
 #ifdef CONFIG_SYS_I2C_MXC
+/* set all switches APS in normal and PFM mode in standby */
+static int setup_pmic_mode(int chip)
+{
+	unsigned char offset, i, switch_num, value;
+
+	if (!chip) {
+		/* pfuze100 */
+		switch_num = 6;
+		offset = 0x31;
+	} else {
+		/* pfuze200 */
+		switch_num = 4;
+		offset = 0x38;
+	}
+
+	value = 0xc;
+	if (i2c_write(0x8, 0x23, 1, &value, 1)) {
+		printf("Set SW1AB mode error!\n");
+		return -1;
+	}
+
+	for (i = 0; i < switch_num - 1; i++) {
+		if (i2c_write(0x8, offset + i * 7, 1, &value, 1)) {
+			printf("Set switch%x mode error!\n", offset);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 static int setup_pmic_voltages(void)
 {
 	unsigned char value, rev_id = 0 ;
@@ -269,6 +300,11 @@ static int setup_pmic_voltages(void)
 		}
 		printf("Found PFUZE%s deviceid=%x,revid=%x\n",
 			((value & 0xf) == 0) ? "100" : "200", value, rev_id);
+
+		if (setup_pmic_mode(value & 0xf)) {
+			printf("setup pmic mode error!\n");
+			return -1;
+		}
 		/*For camera streaks issue,swap VGEN5 and VGEN3 to power camera.
 		*sperate VDDHIGH_IN and camera 2.8V power supply, after switch:
 		*VGEN5 for VDDHIGH_IN and increase to 3V to align with datasheet
