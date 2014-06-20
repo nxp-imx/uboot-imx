@@ -1910,6 +1910,15 @@ static int bootz_start(cmd_tbl_t *cmdtp, int flag, int argc,
 		return 1;
 #endif
 
+#ifdef CONFIG_SECURE_BOOT
+	extern uint32_t authenticate_image(
+			uint32_t ddr_start, uint32_t image_size);
+	if (authenticate_image(images->ep, zi_end - zi_start) == 0) {
+		printf("Authenticate zImage Fail, Please check\n");
+		return 1;
+	}
+#endif
+
 	return 0;
 }
 
