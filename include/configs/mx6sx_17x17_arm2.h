@@ -20,4 +20,13 @@
 #define CONFIG_SYS_MMC_ENV_DEV		1
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
 #endif
+
+#ifdef CONFIG_SYS_USE_EIMNOR
+#undef CONFIG_SYS_FLASH_SECT_SIZE
+#undef CONFIG_SYS_MAX_FLASH_SECT
+#define CONFIG_SYS_FLASH_SECT_SIZE	(256 * 1024)
+#define CONFIG_SYS_MAX_FLASH_SECT 512   /* max number of sectors on one chip */
+#define CONFIG_SYS_FLASH_PROTECTION
+#endif
+
 #endif
