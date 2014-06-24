@@ -381,6 +381,24 @@ static void imx_set_pcie_phy_power_down(void)
 
 int arch_cpu_init(void)
 {
+#ifndef CONFIG_MX6SX
+	/* this bit is not used by imx6sx anymore */
+	u32 val;
+
+	/*
+	 * There are about 0.02% percentage, random pcie link down
+	 * when warm-reset is used.
+	 * clear the ref_ssp_en bit16 of gpr1 to workaround it.
+	 * then warm-reset imx6q/dl/solo again.
+	 */
+	val = readl(IOMUXC_BASE_ADDR + 0x4);
+	if (val & (0x1 << 16)) {
+		val &= ~(0x1 << 16);
+		writel(val, IOMUXC_BASE_ADDR + 0x4);
+		reset_cpu(0);
+	}
+#endif
+
 	init_aips();
 
 	/* Need to clear MMDC_CHx_MASK to make warm reset work. */
