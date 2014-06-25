@@ -381,8 +381,11 @@ static void imx_set_pcie_phy_power_down(void)
 
 int arch_cpu_init(void)
 {
-#ifndef CONFIG_MX6SX
-	/* this bit is not used by imx6sx anymore */
+#if !defined(CONFIG_MX6SX) && !defined(CONFIG_MX6SL)
+	/*
+	 * imx6sl doesn't have pcie at all.
+	 * this bit is not used by imx6sx anymore
+	 */
 	u32 val;
 
 	/*
@@ -426,7 +429,9 @@ int arch_cpu_init(void)
 
 	imx_set_wdog_powerdown(false); /* Disable PDE bit of WMCR register */
 
+#ifndef CONFIG_MX6SL
 	imx_set_pcie_phy_power_down();
+#endif
 	imx_set_vddpu_power_down();
 
 #ifdef CONFIG_APBH_DMA
