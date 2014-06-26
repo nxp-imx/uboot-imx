@@ -16,7 +16,7 @@
 	ldr r1, =0x00000030
 	str r1, [r0, #0x32c]
 
-	ldr r1, =0x00000030
+	ldr r1, =0x00000020
 	str r1, [r0, #0x300]
 	str r1, [r0, #0x2fc]
 	str r1, [r0, #0x5f4]
@@ -24,21 +24,21 @@
 
 	ldr r1, =0x00000000
 	str r1, [r0, #0x320]
-	ldr r1, =0x00000030
+	ldr r1, =0x00000020
 	str r1, [r0, #0x310]
 	str r1, [r0, #0x314]
 	str r1, [r0, #0x614]
 
 	ldr r1, =0x00020000
 	str r1, [r0, #0x5f8]
-	ldr r1, =0x00000030
+	ldr r1, =0x00000028
 	str r1, [r0, #0x330]
 	str r1, [r0, #0x334]
 	str r1, [r0, #0x338]
 	str r1, [r0, #0x33c]
 	ldr r1, =0x00020000
 	str r1, [r0, #0x608]
-	ldr r1, =0x00000030
+	ldr r1, =0x00000028
 	str r1, [r0, #0x60c]
 	str r1, [r0, #0x610]
 	str r1, [r0, #0x61c]
@@ -51,17 +51,17 @@
 	ldr r0, =MMDC_P0_BASE_ADDR
 	ldr r2, =0xa1390003
 	str r2, [r0, #0x800]
-	ldr r2, =0x00270025
+	ldr r2, =0x00290025
 	str r2, [r0, #0x80c]
-	ldr r2, =0x001B001E
+	ldr r2, =0x00220022
 	str r2, [r0, #0x810]
-	ldr r2, =0x4144013C
+	ldr r2, =0x41480144
 	str r2, [r0, #0x83c]
-	ldr r2, =0x01300128
+	ldr r2, =0x01340130
 	str r2, [r0, #0x840]
-	ldr r2, =0x4044464A
+	ldr r2, =0x3C3E4244
 	str r2, [r0, #0x848]
-	ldr r2, =0x3A383C34
+	ldr r2, =0x34363638
 	str r2, [r0, #0x850]
 
 	ldr r2, =0x33333333
@@ -98,7 +98,7 @@
 	str r2, [r0, #0x01c]
 	ldr r2, =0x00008033
 	str r2, [r0, #0x01c]
-	ldr r2, =0x00068031
+	ldr r2, =0x00048031
 	str r2, [r0, #0x01c]
 	ldr r2, =0x05208030
 	str r2, [r0, #0x01c]
@@ -110,15 +110,6 @@
 	str r2, [r0, #0x818]
 	ldr r2, =0x00000000
 	str r2, [r0, #0x01c]
-
-	ldr r2, =0x41400138
-	str r2, [r0, #0x83c]
-	ldr r2, =0x012C011C
-	str r2, [r0, #0x840]
-	ldr r2, =0x3C3C4044
-	str r2, [r0, #0x848]
-	ldr r2, =0x34343638
-	str r2, [r0, #0x850]
 .endm
 .macro imx6_clock_gating
 	ldr r0, =CCM_BASE_ADDR
