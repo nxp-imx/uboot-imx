@@ -15,7 +15,7 @@
 #define CONFIG_MACH_TYPE	3980
 #define CONFIG_MXC_UART_BASE	UART1_BASE
 #define CONFIG_CONSOLE_DEV		"ttymxc0"
-#define CONFIG_MMCROOT			"/dev/mmcblk0p2"
+#define CONFIG_MMCROOT			"/dev/mmcblk2p2"  /* SDHC3 */
 
 #include "mx6sabre_common.h"
 
