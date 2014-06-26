@@ -51,18 +51,20 @@
 	ldr r0, =MMDC_P0_BASE_ADDR
 	ldr r2, =0xa1390003
 	str r2, [r0, #0x800]
-	ldr r2, =0x00270025
+	ldr r2, =0x002C003D
 	str r2, [r0, #0x80c]
-	ldr r2, =0x001B001E
+	ldr r2, =0x00110046
 	str r2, [r0, #0x810]
-	ldr r2, =0x4144013C
+	ldr r2, =0x4160016C
 	str r2, [r0, #0x83c]
-	ldr r2, =0x01300128
+	ldr r2, =0x013C016C
 	str r2, [r0, #0x840]
-	ldr r2, =0x4044464A
+	ldr r2, =0x46424446
 	str r2, [r0, #0x848]
-	ldr r2, =0x3A383C34
+	ldr r2, =0x3A3C3C3A
 	str r2, [r0, #0x850]
+	ldr r2, =0x2492244A
+	str r2, [r0, #0x8c0]
 
 	ldr r2, =0x33333333
 	str r2, [r0, #0x81c]
@@ -90,9 +92,9 @@
 	str r2, [r0, #0x02c]
 	ldr r2, =0x006b1023
 	str r2, [r0, #0x030]
-	ldr r2, =0x0000005f
+	ldr r2, =0x0000007f
 	str r2, [r0, #0x040]
-	ldr r2, =0x84190000
+	ldr r2, =0x85190000
 	str r2, [r0, #0x000]
 	ldr r2, =0x04008032
 	str r2, [r0, #0x01c]
@@ -106,8 +108,12 @@
 	str r2, [r0, #0x01c]
 	ldr r2, =0x00000800
 	str r2, [r0, #0x020]
-	ldr r2, =0x00011117
+	ldr r2, =0x00022227
 	str r2, [r0, #0x818]
+	ldr r2, =0x0002556d
+	str r2, [r0, #0x004]
+	ldr r2, =0x00011006
+	str r2, [r0, #0x404]
 	ldr r2, =0x00000000
 	str r2, [r0, #0x01c]
 
