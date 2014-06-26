@@ -12,7 +12,7 @@
 #define CONFIG_MACH_TYPE	3529
 #define CONFIG_MXC_UART_BASE	UART4_BASE
 #define CONFIG_CONSOLE_DEV		"ttymxc3"
-#define CONFIG_MMCROOT			"/dev/mmcblk0p2"
+#define CONFIG_MMCROOT			"/dev/mmcblk2p2"  /* SDHC3 */
 
 #define CONFIG_SYS_USE_NAND
 
@@ -40,7 +40,7 @@
 #endif
 
 #define CONFIG_SYS_FSL_USDHC_NUM	2
-#define CONFIG_SYS_MMC_ENV_DEV		1
+#define CONFIG_SYS_MMC_ENV_DEV		1  /* SDHC3 */
 #define CONFIG_SYS_MMC_ENV_PART                0       /* user partition */
 
 #ifdef CONFIG_SYS_USE_SPINOR

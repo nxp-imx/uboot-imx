@@ -15,6 +15,8 @@
 #include "mx6sx_arm2.h"
 
 #define CONFIG_SYS_FSL_USDHC_NUM    1
-#define CONFIG_SYS_MMC_ENV_DEV		0
+#define CONFIG_SYS_MMC_ENV_DEV		0   /* USDHC1 */
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
+#define CONFIG_MMCROOT			"/dev/mmcblk0p2"  /* USDHC1 */
+
 #endif

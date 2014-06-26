@@ -361,12 +361,25 @@ int mmc_get_env_devno(void)
 {
 	u32 soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
 	u32 dev_no;
+	u32 bootsel;
+
+	bootsel = (soc_sbmr & 0x000000FF) >> 6 ;
+
+	/* If not boot from sd/mmc, use default value */
+	if (bootsel != 1)
+		return CONFIG_SYS_MMC_ENV_DEV;
 
 	/* BOOT_CFG2[3] and BOOT_CFG2[4] */
 	dev_no = (soc_sbmr & 0x00001800) >> 11;
 
 	return dev_no;
 }
+
+int mmc_map_to_kernel_blk(int dev_no)
+{
+	return dev_no;
+}
+
 int board_mmc_getcd(struct mmc *mmc)
 {
 	return 1;	/* Assume boot SD always present */
@@ -384,12 +397,33 @@ int board_mmc_init(bd_t *bis)
 	return fsl_esdhc_initialize(bis, &usdhc_cfg[0]);
 }
 
+int check_mmc_autodetect(void)
+{
+	char *autodetect_str = getenv("mmcautodetect");
+
+	if ((autodetect_str != NULL) &&
+		(strcmp(autodetect_str, "yes") == 0)) {
+		return 1;
+	}
+
+	return 0;
+}
+
 void board_late_mmc_init(void)
 {
 	char cmd[32];
+	char mmcblk[32];
 	u32 dev_no = mmc_get_env_devno();
 
+	if (!check_mmc_autodetect())
+		return;
+
 	setenv_ulong("mmcdev", dev_no);
+
+	/* Set mmcblk env */
+	sprintf(mmcblk, "/dev/mmcblk%dp2 rootwait rw",
+		mmc_map_to_kernel_blk(dev_no));
+	setenv("mmcroot", mmcblk);
 
 	sprintf(cmd, "mmc dev %d", dev_no);
 	run_command(cmd, 0);

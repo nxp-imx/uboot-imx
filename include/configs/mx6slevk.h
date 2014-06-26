@@ -120,9 +120,10 @@
 	"fdt_addr=0x83000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
-	"mmcdev=1\0" \
+	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
-	"mmcroot=/dev/mmcblk0p2 rootwait rw\0" \
+	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
+	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
 		"root=${mmcroot}\0" \
 	"loadbootscript=" \
@@ -221,8 +222,9 @@
 #define CONFIG_SYS_NO_FLASH
 
 #define CONFIG_ENV_SIZE			SZ_8K
-#define CONFIG_SYS_MMC_ENV_DEV		1
+#define CONFIG_SYS_MMC_ENV_DEV		1   /* USDHC2 */
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user partition */
+#define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
 
 #if defined CONFIG_SYS_BOOT_SPINOR
 #define CONFIG_SYS_USE_SPINOR
