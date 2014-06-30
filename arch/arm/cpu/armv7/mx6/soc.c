@@ -370,6 +370,7 @@ static void imx_set_vddpu_power_down(void)
 	writel(val, &anatop->reg_core_clr);
 }
 
+#ifndef CONFIG_MX6SL
 static void imx_set_pcie_phy_power_down(void)
 {
 	u32 val;
@@ -378,6 +379,7 @@ static void imx_set_pcie_phy_power_down(void)
 	val |= 0x1 << 18;
 	writel(val, IOMUXC_BASE_ADDR + 0x4);
 }
+#endif
 
 int arch_cpu_init(void)
 {
