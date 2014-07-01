@@ -963,9 +963,9 @@ void board_fastboot_setup(void)
 
 #ifdef CONFIG_ANDROID_RECOVERY
 
-#define GPIO_VOL_DN_KEY IMX_GPIO_NR(1, 18)
+#define GPIO_VOL_DN_KEY IMX_GPIO_NR(1, 19)
 iomux_v3_cfg_t const recovery_key_pads[] = {
-	(MX6SX_PAD_CSI_DATA04__GPIO1_IO_18 | MUX_PAD_CTRL(BUTTON_PAD_CTRL)),
+	(MX6SX_PAD_CSI_DATA05__GPIO1_IO_19 | MUX_PAD_CTRL(BUTTON_PAD_CTRL)),
 };
 
 int check_recovery_cmd_file(void)
