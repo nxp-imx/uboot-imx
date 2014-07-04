@@ -10,6 +10,8 @@
 
 #include <asm/imx-common/mxc_key_defs.h>
 
+#define CONFIG_SERIAL_TAG
+
 #define CONFIG_USB_DEVICE
 #define CONFIG_IMX_UDC		       1
 

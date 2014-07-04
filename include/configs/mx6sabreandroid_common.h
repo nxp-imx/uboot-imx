@@ -7,6 +7,8 @@
 #ifndef MX6_SABRE_ANDROID_COMMON_H
 #define MX6_SABRE_ANDROID_COMMON_H
 
+#define CONFIG_SERIAL_TAG
+
 #define CONFIG_USB_DEVICE
 #define CONFIG_IMX_UDC		       1
 

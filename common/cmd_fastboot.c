@@ -67,6 +67,7 @@
 #include <libfdt.h>
 #include <fdt_support.h>
 #endif
+#include <asm/bootm.h>
 
 #ifdef CONFIG_FASTBOOT
 
@@ -1748,7 +1749,24 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	/* If no bootargs env, just use hdr command line */
 	if (!commandline) {
 		commandline = (char *)hdr->cmdline;
+#ifdef CONFIG_SERIAL_TAG
+		char appended_cmd_line[FASTBOOT_BOOT_ARGS_SIZE];
+		struct tag_serialnr serialnr;
+		get_board_serial(&serialnr);
+		if (strlen((char *)hdr->cmdline) +
+			strlen("androidboot.serialno") + 17 < FASTBOOT_BOOT_ARGS_SIZE) {
+			sprintf(appended_cmd_line,
+							"%s androidboot.serialno=%08x%08x",
+							(char *)hdr->cmdline,
+							serialnr.high,
+							serialnr.low);
+			commandline = appended_cmd_line;
+		} else {
+			printf("Cannot append androidboot.serialno\n");
+		}
+
 		setenv("bootargs", commandline);
+#endif
 	}
 
 	/* XXX: in production, you should always use boot.img 's cmdline !!! */
