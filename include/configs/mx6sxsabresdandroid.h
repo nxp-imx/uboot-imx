@@ -8,6 +8,8 @@
 #ifndef __MX6SX_SABRESD_ANDROID_H
 #define __MX6SX_SABRESD_ANDROID_H
 
+#define CONFIG_SERIAL_TAG
+
 #define CONFIG_USB_DEVICE
 #define CONFIG_IMX_UDC		       1
 
