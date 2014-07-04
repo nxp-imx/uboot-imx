@@ -346,6 +346,7 @@ void vadc_power_up(void)
 
 void vadc_power_down(void)
 {
+	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
 	u32 val;
 
 	/* Power down vadc ext power
@@ -354,6 +355,11 @@ void vadc_power_down(void)
 	val &= ~0x40000;
 	val |= 0x20000;
 	writel(val, GPC_BASE_ADDR + 0);
+
+	/* clean csi0 connect to vadc  */
+	val = readl(&iomux->gpr[5]);
+	val &= ~IMX6SX_GPR5_CSI1_MUX_CTRL_MASK,
+	writel(val, &iomux->gpr[5]);
 }
 #endif
 
