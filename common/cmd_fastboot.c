@@ -1505,7 +1505,7 @@ bootimg_print_image_hdr(struct fastboot_boot_img_hdr *hdr)
 #endif
 }
 
-static unsigned char boothdr[512] __aligned(ARCH_DMA_MINALIGN);
+static struct fastboot_boot_img_hdr boothdr __aligned(ARCH_DMA_MINALIGN);
 
 #define ALIGN_SECTOR(n, pagesz) ((n + (pagesz - 1)) & (~(pagesz - 1)))
 
@@ -1543,7 +1543,7 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	unsigned addr = 0;
 	char *ptn = "boot";
 	int mmcc = -1;
-	struct fastboot_boot_img_hdr *hdr = (void *)boothdr;
+	struct fastboot_boot_img_hdr *hdr = &boothdr;
 #ifdef CONFIG_SECURE_BOOT
     u_int32_t load_addr;
     uint32_t image_size;
