@@ -39,7 +39,18 @@
 #define CONFIG_SF_DEFAULT_CS   (0|(IMX_GPIO_NR(4, 9)<<8))
 #endif
 
-#define CONFIG_CMD_PCI
+/*
+ * imx6 q/dl/solo pcie would be failed to work properly in kernel, if
+ * the pcie module is iniialized/enumerated both in uboot and linux
+ * kernel.
+ * rootcause:imx6 q/dl/solo pcie don't have the reset mechanism.
+ * it is only be RESET by the POR. So, the pcie module only be
+ * initialized/enumerated once in one POR.
+ * Set to use pcie in kernel defaultly, mask the pcie config here.
+ * Remove the mask freely, if the uboot pcie functions, rather than
+ * the kernel's, are required.
+ */
+/* #define CONFIG_CMD_PCI */
 #ifdef CONFIG_CMD_PCI
 #define CONFIG_PCI
 #define CONFIG_PCI_PNP
