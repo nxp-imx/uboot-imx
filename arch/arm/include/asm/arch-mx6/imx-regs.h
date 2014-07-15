@@ -1104,6 +1104,8 @@ extern void check_cpu_temperature(void);
 #ifdef CONFIG_MX6SX
 extern void vadc_power_up(void);
 extern void vadc_power_down(void);
+extern void pcie_power_up(void);
+extern void pcie_power_off(void);
 #endif
 
 /* If ROM fail back to USB recover mode, USBPH0_PWD will be clear to use USB
