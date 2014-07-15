@@ -851,6 +851,15 @@ static void ungate_sata_clock(void)
 	/* Enable SATA clock. */
 	setbits_le32(&imx_ccm->CCGR5, MXC_CCM_CCGR5_SATA_MASK);
 }
+#else
+static void ungate_disp_axi_clock(void)
+{
+	struct mxc_ccm_reg *const imx_ccm =
+		(struct mxc_ccm_reg *)CCM_BASE_ADDR;
+
+	/* Enable display axi clock. */
+	setbits_le32(&imx_ccm->CCGR3, MXC_CCM_CCGR3_DISP_AXI_MASK);
+}
 #endif
 
 static void ungate_pcie_clock(void)
@@ -885,6 +894,9 @@ int enable_pcie_clock(void)
 	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 	u32 lvds1_clk_sel;
 
+	/* PCIe reference clock sourced from AXI. */
+	clrbits_le32(&ccm_regs->cbcmr, MXC_CCM_CBCMR_PCIE_AXI_CLK_SEL);
+
 	/*
 	 * Here be dragons!
 	 *
@@ -908,22 +920,30 @@ int enable_pcie_clock(void)
 	else
 		lvds1_clk_sel = ANADIG_ANA_MISC1_LVDS1_CLK_SEL_SATA_REF;
 
+#ifndef CONFIG_MX6SX
+	/* lvds_clk1 is sourced from sata ref on imx6q/dl/solo */
 	clrsetbits_le32(&anatop_regs->ana_misc1,
 			ANADIG_ANA_MISC1_LVDSCLK1_IBEN |
 			ANADIG_ANA_MISC1_LVDS1_CLK_SEL_MASK,
 			ANADIG_ANA_MISC1_LVDSCLK1_OBEN | lvds1_clk_sel);
 
-	/* PCIe reference clock sourced from AXI. */
-	clrbits_le32(&ccm_regs->cbcmr, MXC_CCM_CBCMR_PCIE_AXI_CLK_SEL);
-
 	/* Party time! Ungate the clock to the PCIe. */
-#ifndef CONFIG_MX6SX
 	ungate_sata_clock();
-#endif
 	ungate_pcie_clock();
 
 	return enable_enet_pll(BM_ANADIG_PLL_ENET_ENABLE_SATA |
-			       BM_ANADIG_PLL_ENET_ENABLE_PCIE);
+			BM_ANADIG_PLL_ENET_ENABLE_PCIE);
+#else
+	/* lvds_clk1 is sourced from pcie ref on imx6sx */
+	clrsetbits_le32(&anatop_regs->ana_misc1,
+			ANADIG_ANA_MISC1_LVDSCLK1_IBEN |
+			ANADIG_ANA_MISC1_LVDS1_CLK_SEL_MASK,
+			ANADIG_ANA_MISC1_LVDSCLK1_OBEN | lvds1_clk_sel);
+
+	ungate_disp_axi_clock();
+	ungate_pcie_clock();
+	return enable_enet_pll(BM_ANADIG_PLL_ENET_ENABLE_PCIE);
+#endif
 }
 
 #ifdef CONFIG_SECURE_BOOT

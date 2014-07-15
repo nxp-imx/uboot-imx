@@ -355,6 +355,16 @@ void vadc_power_down(void)
 	val &= ~IMX6SX_GPR5_CSI1_MUX_CTRL_MASK,
 	writel(val, &iomux->gpr[5]);
 }
+
+void pcie_power_up(void)
+{
+	set_ldo_voltage(LDO_PU, 1100);	/* Set VDDPU to 1.1V */
+}
+
+void pcie_power_off(void)
+{
+	set_ldo_voltage(LDO_PU, 0);	/* Set VDDPU to 1.1V */
+}
 #endif
 
 static void imx_set_vddpu_power_down(void)

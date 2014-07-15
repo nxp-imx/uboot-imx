@@ -1151,6 +1151,8 @@ struct rdc_sema_regs {
 #ifdef CONFIG_MX6SX
 extern void vadc_power_up(void);
 extern void vadc_power_down(void);
+extern void pcie_power_up(void);
+extern void pcie_power_off(void);
 #endif
 
 #endif /* __ASSEMBLER__*/
