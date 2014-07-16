@@ -565,6 +565,19 @@ int arch_auxiliary_core_up(u32 core_id, u32 boot_private_data)
 
 	return 0;
 }
+
+int arch_auxiliary_core_check_up(u32 core_id)
+{
+	struct src *src_reg = (struct src *)SRC_BASE_ADDR;
+	unsigned val;
+
+	val = readl(&src_reg->scr);
+
+	if (val & 0x00000010)
+		return 0;  /* assert in reset */
+
+	return 1;
+}
 #endif
 
 void boot_mode_apply(unsigned cfg_val)

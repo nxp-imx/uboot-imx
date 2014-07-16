@@ -16,13 +16,29 @@ static int __arch_auxiliary_core_up(u32 core_id, u32 boot_private_data)
 int arch_auxiliary_core_up(u32 core_id, u32 boot_private_data)
 	__attribute__((weak, alias("__arch_auxiliary_core_up")));
 
+/* Allow for arch specific config before we boot */
+static int __arch_auxiliary_core_check_up(u32 core_id)
+{
+	/* please define platform specific arch_auxiliary_core_check_up() */
+	return 0;
+}
+
+int arch_auxiliary_core_check_up(u32 core_id)
+	__attribute__((weak, alias("__arch_auxiliary_core_check_up")));
+
 int do_bootaux(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong addr;
-	int ret;
+	int ret, up;
 
 	if (argc < 2)
 		return CMD_RET_USAGE;
+
+	up = arch_auxiliary_core_check_up(0);
+	if (up) {
+		printf("## Auxiliary core is already up\n");
+		return CMD_RET_SUCCESS;
+	}
 
 	addr = simple_strtoul(argv[1], NULL, 16);
 

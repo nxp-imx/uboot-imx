@@ -40,6 +40,7 @@ void finish_anatop_bypass(void);
 
 #ifdef CONFIG_MX6SX
 int arch_auxiliary_core_up(u32 core_id, u32 boot_private_data);
+int arch_auxiliary_core_check_up(u32 core_id);
 #endif
 
 /*
