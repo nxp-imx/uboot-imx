@@ -19,6 +19,7 @@
 #include <ipu_pixfmt.h>
 #include <thermal.h>
 #include <sata.h>
+#include <mxsfb.h>
 
 #ifdef CONFIG_VIDEO_GIS
 #include <gis.h>
@@ -244,6 +245,9 @@ void arch_preboot_os(void)
 #ifdef CONFIG_VIDEO_GIS
 	/* Entry for GIS */
 	mxc_disable_gis();
+#endif
+#ifdef CONFIG_VIDEO_MXS
+	lcdif_power_down();
 #endif
 }
 
