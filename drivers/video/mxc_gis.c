@@ -290,8 +290,6 @@ void mxc_disable_gis(void)
 	csi_disable();
 
 	vadc_power_down();
-
-	lcdif_power_down();
 }
 
 void mxc_enable_gis(void)
