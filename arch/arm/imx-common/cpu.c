@@ -15,6 +15,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/crm_regs.h>
 #include <ipu_pixfmt.h>
+#include <mxsfb.h>
 
 #ifdef CONFIG_VIDEO_GIS
 #include <gis.h>
@@ -208,5 +209,8 @@ void arch_preboot_os(void)
 #ifdef CONFIG_VIDEO_GIS
 	/* Entry for GIS */
 	mxc_disable_gis();
+#endif
+#ifdef CONFIG_VIDEO_MXS
+	lcdif_power_down();
 #endif
 }
