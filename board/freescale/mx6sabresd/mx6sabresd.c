@@ -387,6 +387,9 @@ static int setup_pmic_voltages(void)
 void ldo_mode_set(int ldo_bypass)
 {
 	unsigned char value;
+	int is_400M;
+	unsigned char vddarm;
+
 	/* increase VDDARM/VDDSOC to support 1.2G chip */
 	if (check_1_2G()) {
 		ldo_bypass = 0;	/* ldo_enable on 1.2G chip */
@@ -416,18 +419,68 @@ void ldo_mode_set(int ldo_bypass)
 	}
 	/* switch to ldo_bypass mode , boot on 800Mhz */
 	if (ldo_bypass) {
-		/* decrease VDDARM to 1.175V */
+		prep_anatop_bypass();
+
+		/* decrease VDDARM for 400Mhz DQ:1.1V, DL:1.275V */
 		if (i2c_read(0x8, 0x20, 1, &value, 1)) {
 			printf("Read SW1AB error!\n");
 			return;
 		}
 		value &= ~0x3f;
-		value |= 0x23;
+#if defined(CONFIG_MX6DL)
+		value |= 0x27;
+#else
+		value |= 0x20;
+#endif
 		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
 			printf("Set SW1AB error!\n");
 			return;
 		}
-		/* increase VDDSOC to 1.175V */
+		/* increase VDDSOC to 1.3V */
+		if (i2c_read(0x8, 0x2e, 1, &value, 1)) {
+			printf("Read SW1C error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x28;
+		if (i2c_write(0x8, 0x2e, 1, &value, 1)) {
+			printf("Set SW1C error!\n");
+			return;
+		}
+
+		/*
+		 * MX6Q:
+		 * VDDARM:1.15V@800M; VDDSOC:1.175V@800M
+		 * VDDARM:0.975V@400M; VDDSOC:1.175V@400M
+		 * MX6DL:
+		 * VDDARM:1.175V@800M; VDDSOC:1.175V@800M
+		 * VDDARM:1.075V@400M; VDDSOC:1.175V@400M
+		 */
+		is_400M = set_anatop_bypass();
+		if (is_400M)
+#if defined(CONFIG_MX6DL)
+			vddarm = 0x1f;
+#else
+			vddarm = 0x1b;
+#endif
+		else
+#if defined(CONFIG_MX6DL)
+			vddarm = 0x23;
+#else
+			vddarm = 0x22;
+#endif
+		if (i2c_read(0x8, 0x20, 1, &value, 1)) {
+			printf("Read SW1AB error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= vddarm;
+		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
+			printf("Set SW1AB error!\n");
+			return;
+		}
+
+		/* decrease VDDSOC to 1.175V */
 		if (i2c_read(0x8, 0x2e, 1, &value, 1)) {
 			printf("Read SW1C error!\n");
 			return;
@@ -439,7 +492,7 @@ void ldo_mode_set(int ldo_bypass)
 			return;
 		}
 
-		set_anatop_bypass();
+		finish_anatop_bypass();
 		printf("switch to ldo_bypass mode!\n");
 	}
 }

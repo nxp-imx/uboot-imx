@@ -758,32 +758,68 @@ static int setup_pmic_voltages(void)
 void ldo_mode_set(int ldo_bypass)
 {
 	unsigned char value;
+	int is_400M;
+
 	/* swith to ldo_bypass mode */
 	if (ldo_bypass) {
-		/* decrease VDDARM to 1.15V */
+		prep_anatop_bypass();
+
+		/* decrease VDDARM to 1.1V */
 		if (i2c_read(0x8, 0x20, 1, &value, 1)) {
 			printf("Read SW1AB error!\n");
 			return;
 		}
 		value &= ~0x3f;
-		value |= 0x22;
+		value |= 0x20;
 		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
 			printf("Set SW1AB error!\n");
 			return;
 		}
-		/* increase VDDSOC to 1.15V */
+		/* increase VDDSOC to 1.3V */
 		if (i2c_read(0x8, 0x2e, 1, &value, 1)) {
 			printf("Read SW1C error!\n");
 			return;
 		}
 		value &= ~0x3f;
-		value |= 0x22;
+		value |= 0x28;
 		if (i2c_write(0x8, 0x2e, 1, &value, 1)) {
 			printf("Set SW1C error!\n");
 			return;
 		}
 
-		set_anatop_bypass();
+		is_400M = set_anatop_bypass();
+
+		/*
+		 * MX6SL: VDDARM:1.175V@800M; VDDSOC:1.175V@800M
+		 *        VDDARM:0.975V@400M; VDDSOC:1.175V@400M
+		 */
+		if (i2c_read(0x8, 0x20, 1, &value, 1)) {
+			printf("Read SW1AB error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		if (is_400M)
+			value |= 0x1b;
+		else
+			value |= 0x23;
+		if (i2c_write(0x8, 0x20, 1, &value, 1)) {
+			printf("Set SW1AB error!\n");
+			return;
+		}
+
+		/* decrease VDDSOC to 1.175V */
+		if (i2c_read(0x8, 0x2e, 1, &value, 1)) {
+			printf("Read SW1C error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= 0x23;
+		if (i2c_write(0x8, 0x2e, 1, &value, 1)) {
+			printf("Set SW1C error!\n");
+			return;
+		}
+
+		finish_anatop_bypass();
 		printf("switch to ldo_bypass mode!\n");
 	}
 

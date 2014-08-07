@@ -835,7 +835,41 @@ int check_1_2G(void)
 	return result;
 }
 
-void set_anatop_bypass(void)
+static int arm_orig_podf;
+void set_arm_freq_400M(bool is_400M)
+{
+	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+
+	if (is_400M)
+		writel(0x1, &mxc_ccm->cacrr);
+	else
+		writel(arm_orig_podf, &mxc_ccm->cacrr);
+}
+
+void prep_anatop_bypass(void)
+{
+	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+
+	arm_orig_podf = readl(&mxc_ccm->cacrr);
+	/*
+	 * Downgrade ARM speed to 400Mhz as half of boot 800Mhz before ldo
+	 * bypassed, also downgrade internal vddarm ldo to 0.975V.
+	 * VDDARM_IN 0.975V + 125mV = 1.1V < Max(1.3V)
+	 * otherwise at 800Mhz(i.mx6dl):
+	 * VDDARM_IN 1.175V + 125mV = 1.3V = Max(1.3V)
+	 * We need provide enough gap in this case.
+	 * skip if boot from 400M.
+	 */
+	if (!arm_orig_podf)
+		set_arm_freq_400M(true);
+#ifndef CONFIG_MX6DL
+	set_ldo_voltage(LDO_ARM, 975);
+#else
+	set_ldo_voltage(LDO_ARM, 1150);
+#endif
+}
+
+int set_anatop_bypass(void)
 {
 	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
 	u32 reg = readl(&anatop->reg_core);
@@ -843,7 +877,16 @@ void set_anatop_bypass(void)
 	/* bypass VDDARM/VDDSOC */
 	reg = reg | (0x1F << 18) | 0x1F;
 	writel(reg, &anatop->reg_core);
+
+	return arm_orig_podf;
 }
+
+void finish_anatop_bypass(void)
+{
+	if (!arm_orig_podf)
+		set_arm_freq_400M(false);
+}
+
 #endif
 
 #ifdef CONFIG_IMX_HDMI
