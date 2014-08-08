@@ -69,12 +69,12 @@ DECLARE_GLOBAL_DATA_PTR;
 #define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C1 for PMIC */
 struct i2c_pads_info i2c_pad_info0 = {
-	.scl = {
+	.sda = {
 		.i2c_mode = MX6_PAD_I2C1_SDA__I2C1_SDA | PC,
 		.gpio_mode = MX6_PAD_I2C1_SDA__GPIO_3_13 | PC,
 		.gp = IMX_GPIO_NR(3, 13),
 	},
-	.sda = {
+	.scl = {
 		.i2c_mode = MX6_PAD_I2C1_SCL__I2C1_SCL | PC,
 		.gpio_mode = MX6_PAD_I2C1_SCL__GPIO_3_12 | PC,
 		.gp = IMX_GPIO_NR(3, 12),
