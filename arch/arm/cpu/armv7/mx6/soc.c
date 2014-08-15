@@ -869,14 +869,34 @@ void prep_anatop_bypass(void)
 #endif
 }
 
-int set_anatop_bypass(void)
+int set_anatop_bypass(int wdog_reset_pin)
 {
 	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
+	struct wdog_regs *wdog;
 	u32 reg = readl(&anatop->reg_core);
 
 	/* bypass VDDARM/VDDSOC */
 	reg = reg | (0x1F << 18) | 0x1F;
 	writel(reg, &anatop->reg_core);
+
+	if (wdog_reset_pin == 2)
+		wdog = (struct wdog_regs *) WDOG2_BASE_ADDR;
+	else if (wdog_reset_pin == 1)
+		wdog = (struct wdog_regs *) WDOG1_BASE_ADDR;
+	else
+		return arm_orig_podf;
+	/*
+	 * use WDOG_B mode to reset external pmic because it's risky for the
+	 * following watchdog reboot in case of cpu freq at lowest 400Mhz with
+	 * ldo-bypass mode. Because boot frequency maybe higher 800Mhz i.e. So
+	 * in ldo-bypass mode watchdog reset will only triger POR reset, not
+	 * WDOG reset. But below code depends on hardware design, if HW didn't
+	 * connect WDOG_B pin to external pmic such as i.mx6slevk, we can skip
+	 * these code since it assumed boot from 400Mhz always.
+	 */
+	reg = readw(&wdog->wcr);
+	reg |= 1 << 3;
+	writew(reg, &wdog->wcr);
 
 	return arm_orig_podf;
 }

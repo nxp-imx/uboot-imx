@@ -253,6 +253,7 @@ static void setup_iomux_uart(void)
 }
 
 #ifdef CONFIG_SYS_I2C_MXC
+
 /* set all switches APS in normal and PFM mode in standby */
 static int setup_pmic_mode(int chip)
 {
@@ -456,7 +457,7 @@ void ldo_mode_set(int ldo_bypass)
 		 * VDDARM:1.175V@800M; VDDSOC:1.175V@800M
 		 * VDDARM:1.075V@400M; VDDSOC:1.175V@400M
 		 */
-		is_400M = set_anatop_bypass();
+		is_400M = set_anatop_bypass(2);
 		if (is_400M)
 #if defined(CONFIG_MX6DL)
 			vddarm = 0x1f;

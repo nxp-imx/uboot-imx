@@ -787,7 +787,7 @@ void ldo_mode_set(int ldo_bypass)
 			return;
 		}
 
-		is_400M = set_anatop_bypass();
+		is_400M = set_anatop_bypass(0);
 
 		/*
 		 * MX6SL: VDDARM:1.175V@800M; VDDSOC:1.175V@800M

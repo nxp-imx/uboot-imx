@@ -801,7 +801,7 @@ void ldo_mode_set(int ldo_bypass)
 			return;
 		}
 
-		set_anatop_bypass();
+		set_anatop_bypass(1);
 		printf("switch to ldo_bypass mode!\n");
 	}
 
