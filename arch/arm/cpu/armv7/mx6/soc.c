@@ -376,6 +376,24 @@ static void clear_mmdc_ch_mask(void)
 	writel(0, &mxc_ccm->ccdr);
 }
 
+static void init_bandgap(void)
+{
+	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+
+	/*
+	 * Ensure the bandgap has stabilized.
+	 */
+	while (!(readl(&mxc_ccm->ana_misc0) & 0x80))
+		;
+	/*
+	 * For best noise performance of the analog blocks using the
+	 * outputs of the bandgap, the reftop_selfbiasoff bit should
+	 * be set.
+	 */
+	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF, &mxc_ccm->ana_misc0_set);
+}
+
+
 #ifdef CONFIG_MX6SX
 void vadc_power_up(void)
 {
@@ -505,6 +523,12 @@ int arch_cpu_init(void)
 	/* Need to clear MMDC_CHx_MASK to make warm reset work. */
 	clear_mmdc_ch_mask();
 
+	/*
+	 * Disable self-bias circuit in the analog bandap.
+	 * The self-bias circuit is used by the bandgap during startup.
+	 * This bit should be set after the bandgap has initialized.
+	 */
+	init_bandgap();
 	/*
 	 * When low freq boot is enabled, ROM will not set AHB
 	 * freq, so we need to ensure AHB freq is 132MHz in such
