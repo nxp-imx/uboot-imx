@@ -11,7 +11,7 @@
 #define _IMXIMAGE_H_
 
 #include <config.h>
-#define MAX_HW_CFG_SIZE_V2 121 /* Max number of registers imx can set for v2 */
+#define MAX_HW_CFG_SIZE_V2 377 /* Max number of registers imx can set for v2 */
 #define MAX_PLUGIN_CODE_SIZE (16*1024)
 #define MAX_HW_CFG_SIZE_V1 60  /* Max number of registers imx can set for v1 */
 #define APP_CODE_BARKER	0xB1

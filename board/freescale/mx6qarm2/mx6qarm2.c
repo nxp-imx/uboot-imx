@@ -295,7 +295,11 @@ int board_late_init(void)
 
 int checkboard(void)
 {
+#ifdef CONFIG_MX6DL
+	puts("Board: MX6DL-Armadillo2\n");
+#else
 	puts("Board: MX6Q-Armadillo2\n");
+#endif
 
 	return 0;
 }
