@@ -530,35 +530,41 @@ void enable_qspi_clk(int qspi_num)
     /* Enable QuadSPI clock */
 	switch (qspi_num) {
 	case 0:
-		reg = readl(&imx_ccm->CCGR3);
-	    reg |= MXC_CCM_CCGR3_QSPI1_OFFSET;
-	    writel(reg, &imx_ccm->CCGR3);
+		/*disable the clock gate*/
+		clrbits_le32(&imx_ccm->CCGR3, MXC_CCM_CCGR3_QSPI1_MASK);
 
 		/* set 50M  : (50 = 396 / 2 / 4) */
-	    reg = readl(&imx_ccm->cscmr1);
-	    reg &= ~(MXC_CCM_CSCMR1_QSPI1_PODF_MASK |
+		reg = readl(&imx_ccm->cscmr1);
+		reg &= ~(MXC_CCM_CSCMR1_QSPI1_PODF_MASK |
 			MXC_CCM_CSCMR1_QSPI1_CLK_SEL_MASK);
-	    reg |= ((1 << MXC_CCM_CSCMR1_QSPI1_PODF_OFFSET) |
+		reg |= ((1 << MXC_CCM_CSCMR1_QSPI1_PODF_OFFSET) |
 				(2 << MXC_CCM_CSCMR1_QSPI1_CLK_SEL_OFFSET));
-	    writel(reg, &imx_ccm->cscmr1);
+		writel(reg, &imx_ccm->cscmr1);
+
+		/*enable the clock gate*/
+		setbits_le32(&imx_ccm->CCGR3, MXC_CCM_CCGR3_QSPI1_MASK);
 		break;
 	case 1:
-	    reg = readl(&imx_ccm->CCGR4);
-	    reg |= MXC_CCM_CCGR4_QSPI2_ENFC_OFFSET;
-	    writel(reg, &imx_ccm->CCGR4);
+		/*disable the clock gatei*/
+		/*QSPI2 and GPMI_BCH_INPUT_GPMI_IO share the same clock gate, disable both of them*/
+		clrbits_le32(&imx_ccm->CCGR4, MXC_CCM_CCGR4_QSPI2_ENFC_MASK
+				| MXC_CCM_CCGR4_RAWNAND_U_GPMI_BCH_INPUT_GPMI_IO_MASK);
 
-	    /* set 50M  : (50 = 396 / 2 / 4) */
-	    reg = readl(&imx_ccm->cs2cdr);
-	    reg &= ~(MXC_CCM_CS2CDR_QSPI2_CLK_PODF_MASK |
+		/* set 50M  : (50 = 396 / 2 / 4) */
+		reg = readl(&imx_ccm->cs2cdr);
+		reg &= ~(MXC_CCM_CS2CDR_QSPI2_CLK_PODF_MASK |
 				MXC_CCM_CS2CDR_QSPI2_CLK_PRED_MASK |
 				MXC_CCM_CS2CDR_QSPI2_CLK_SEL_MASK);
-	    reg |= (MXC_CCM_CS2CDR_QSPI2_CLK_PRED(0x1) |
+		reg |= (MXC_CCM_CS2CDR_QSPI2_CLK_PRED(0x1) |
 				MXC_CCM_CS2CDR_QSPI2_CLK_SEL(0x3));
-	    writel(reg, &imx_ccm->cs2cdr);
+		writel(reg, &imx_ccm->cs2cdr);
+
+		/*enable the clock gate*/
+		setbits_le32(&imx_ccm->CCGR4, MXC_CCM_CCGR4_QSPI2_ENFC_MASK
+				| MXC_CCM_CCGR4_RAWNAND_U_GPMI_BCH_INPUT_GPMI_IO_MASK);
 		break;
 	default:
 		break;
-
 	}
 }
 
