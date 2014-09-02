@@ -896,6 +896,11 @@ int set_anatop_bypass(int wdog_reset_pin)
 	 */
 	reg = readw(&wdog->wcr);
 	reg |= 1 << 3;
+	/*
+	 * WDZST bit is write-once only bit. Align this bit in kernel,
+	 * otherwise kernel code will have no chance to set this bit.
+	 */
+	reg |= 1 << 0;
 	writew(reg, &wdog->wcr);
 
 	return arm_orig_podf;
