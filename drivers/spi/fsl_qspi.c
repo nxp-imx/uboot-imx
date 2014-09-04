@@ -478,6 +478,13 @@ static int fsl_qspi_init(struct fsl_qspi *q)
 
 	/* init for AHB read */
 	fsl_qspi_init_abh_read(q);
+
+	/*
+	 * High level code use page_size and max_write_size to calculate
+	 * the number of bytes that should be programmed once.
+	 */
+	q->slave.max_write_size = q->devtype_data->txfifo;
+
 	return 0;
 }
 
@@ -701,7 +708,7 @@ static void fsl_qspi_ip_read(struct fsl_qspi *q, int len, u8 *rxbuf)
 		tmp = fsl_qspi_endian_xchg(q, tmp);
 
 		if (len >= 4) {
-			*((u32 *)rxbuf) = tmp;
+			memcpy(rxbuf, &tmp, 4);
 			rxbuf += 4;
 		} else {
 			memcpy(rxbuf, &tmp, len);
@@ -717,19 +724,32 @@ static void fsl_qspi_ip_read(struct fsl_qspi *q, int len, u8 *rxbuf)
 static void fsl_qspi_write_data(struct fsl_qspi *q, int len, u8* txbuf)
 {
 	u32 tmp;
-	int i, j;
+	u32 t1, t2;
+	int j;
 
-    /* clear the TX FIFO. */
+	/* clear the TX FIFO. */
 	tmp = readl(q->iobase + QUADSPI_MCR);
 	writel(tmp | QUADSPI_MCR_CLR_RXF_MASK, q->iobase + QUADSPI_MCR);
 
 	/* fill the TX data to the FIFO */
-	for (j = 0, i = ((len + 3) / 4); j < i; j++) {
-		tmp = fsl_qspi_endian_xchg(q, *(u32 *)txbuf);
+	t2 = len % 4;
+	t1 = len >> 2; /* 4 Bytes aligned */
+
+	for (j = 0; j < t1; j++) {
+		memcpy(&tmp, txbuf, 4);
+		tmp = fsl_qspi_endian_xchg(q, tmp);
 		writel(tmp, q->iobase + QUADSPI_TBDR);
 		txbuf += 4;
 	}
+
+	if (t2) {
+		tmp = 0;
+		memcpy(&tmp, txbuf, t2);
+		tmp = fsl_qspi_endian_xchg(q, tmp);
+		writel(tmp, q->iobase + QUADSPI_TBDR);
+	}
 }
+
 /* see the spi_flash_read_write() */
 int  spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 		void *din, unsigned long flags)
