@@ -541,12 +541,12 @@ static void esdhc_dll_setup(struct mmc *mmc)
  * CPU and board-specific Ethernet initializations.  Aliased function
  * signals caller to move on
  */
-static int __def_mmc_io_switch(u32 index, u32 clock)
+static int __def_mmc_io_switch(u32 index, u32 uhs_mode)
 {
 	return -1;
 }
 
-int board_mmc_io_switch(u32 index, u32 clock)
+int board_mmc_io_switch(u32 index, u32 uhs_mode)
 	__attribute__((weak, alias("__def_mmc_io_switch")));
 
 static void esdhc_set_ios(struct mmc *mmc)
@@ -556,7 +556,7 @@ static void esdhc_set_ios(struct mmc *mmc)
 	u32 tmp;
 
 	/* Set the io pad*/
-	board_mmc_io_switch(mmc->block_dev.dev, mmc->clock);
+	board_mmc_io_switch(mmc->block_dev.dev, mmc->card_uhs_mode);
 
 	/* Set the clock speed */
 	set_sysctl(mmc, mmc->clock);

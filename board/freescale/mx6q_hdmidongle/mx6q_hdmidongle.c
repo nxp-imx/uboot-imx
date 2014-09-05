@@ -1045,15 +1045,15 @@ static void usdhc_switch_pad(iomux_v3_cfg_t *pad_list, unsigned count,
 	}
 }
 
-int board_mmc_io_switch(u32 index, u32 clock)
+int board_mmc_io_switch(u32 index, u32 uhs_mode)
 {
 	iomux_v3_cfg_t new_pads[14];
 	u32 count;
 	iomux_v3_cfg_t pad_ctrl = USDHC_PAD_CTRL_DEFAULT;
 
-	if (clock >= 200000000)
+	if (uhs_mode == SD_UHSI_FUNC_SDR104)
 		pad_ctrl = USDHC_PAD_CTRL_200MHZ;
-	else if (clock == 100000000)
+	else if (uhs_mode == SD_UHSI_FUNC_SDR50)
 		pad_ctrl = USDHC_PAD_CTRL_100MHZ;
 
 	switch (index) {
