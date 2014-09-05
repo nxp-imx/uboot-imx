@@ -419,6 +419,9 @@ static void imx_set_pcie_phy_power_down(void)
 
 int arch_cpu_init(void)
 {
+	/* Clear the Align bit in SCTLR */
+	set_cr(get_cr() & ~CR_A);
+
 #if !defined(CONFIG_MX6SX) && !defined(CONFIG_MX6SL)
 	/*
 	 * imx6sl doesn't have pcie at all.
