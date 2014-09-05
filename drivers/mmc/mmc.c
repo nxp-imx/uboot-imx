@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2014 Freescale Semiconductor, Inc.
  * Terry Lv
  *
  * Copyright 2008, Freescale Semiconductor, Inc
@@ -1085,7 +1085,8 @@ int sd_send_tuning_cmd(struct mmc *mmc)
 
 void sd_uhsi_tuning(struct mmc *mmc)
 {
-	int min, max, avg;
+	int min, max_len, avg, len, temp;
+	int ret;
 
 	/* Tuning only required for SDR50 and SDR104 modes */
 	if (mmc->card_uhs_mode != SD_UHSI_FUNC_SDR50 &&
@@ -1093,30 +1094,36 @@ void sd_uhsi_tuning(struct mmc *mmc)
 		return;
 
 	/* Start with lowest value, increase it until CMD19 succeeds */
-	min = mmc->tuning_min;
-	while (min < mmc->tuning_max) {
-		mmc->set_tuning(mmc, min);
-		if (!sd_send_tuning_cmd(mmc))
-			break;
-		min += mmc->tuning_step;
-	}
+	len = 0;
+	max_len = 0;
+	temp = mmc->tuning_min;
+	while (temp < mmc->tuning_max) {
+		mmc->set_tuning(mmc, temp);
+		if (!sd_send_tuning_cmd(mmc)) {
+			len++;
+		} else {
 
-	/* Start with last successful value, increase it until CMD19 fails */
-	max = min;
-	while (max < mmc->tuning_max) {
-		mmc->set_tuning(mmc, max);
-		if (sd_send_tuning_cmd(mmc))
-			break;
-		max += mmc->tuning_step;
+			/* Searching the max window where CMD 19 succeeds for every value */
+			if (len > max_len) {
+				min = temp - len;
+				max_len = len;
+			}
+
+			len = 0;
+		}
+		temp += mmc->tuning_step;
 	}
 
 	/* Set tuning value to average of
 	 * [lowest successful val, highest successful val]
 	 */
-	avg = (min + max) / 2;
+	avg = min + (max_len / 2);
 	mmc->set_tuning(mmc, avg);
-	sd_send_tuning_cmd(mmc);
-	sd_send_tuning_cmd(mmc);
+	ret = sd_send_tuning_cmd(mmc);
+	ret |= sd_send_tuning_cmd(mmc);
+
+	if (ret)
+		printf("SD UHS-I tuning failed\n");
 }
 
 /* frequency bases */
