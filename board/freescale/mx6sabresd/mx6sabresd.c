@@ -831,10 +831,10 @@ static void setup_epdc(void)
 	writel(reg, &ccm_regs->cscdr2);
 
 	/* PLL5 enable (defaults to 650) */
-	reg = readl(ANATOP_BASE_ADDR + ANATOP_PLL_VIDEO);
+	reg = readl(&ccm_regs->analog_pll_video);
 	reg &= ~((1 << 16) | (1 << 12));
 	reg |= (1 << 13);
-	writel(reg, ANATOP_BASE_ADDR + ANATOP_PLL_VIDEO);
+	writel(reg, &ccm_regs->analog_pll_video);
 
 	/* EPDC PIX clk enable */
 	reg = readl(&ccm_regs->CCGR3);

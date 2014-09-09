@@ -11,7 +11,7 @@
 #include <linux/compiler.h>
 #include <usb/ehci-fsl.h>
 #include <asm/io.h>
-#include <asm/arch/imx-regs.h>
+#include <asm/arch/crm_regs.h>
 #include <asm/arch/clock.h>
 #include <asm/imx-common/iomux-v3.h>
 
@@ -72,22 +72,22 @@ static void usb_internal_phy_clock_gate(int index, int on)
 
 static void usb_power_config(int index)
 {
-	struct anatop_regs __iomem *anatop =
-		(struct anatop_regs __iomem *)ANATOP_BASE_ADDR;
+	struct mxc_ccm_reg __iomem *ccm_regs =
+		(struct mxc_ccm_reg __iomem *)CCM_BASE_ADDR;
 	void __iomem *chrg_detect;
 	void __iomem *pll_480_ctrl_clr;
 	void __iomem *pll_480_ctrl_set;
 
 	switch (index) {
 	case 0:
-		chrg_detect = &anatop->usb1_chrg_detect;
-		pll_480_ctrl_clr = &anatop->usb1_pll_480_ctrl_clr;
-		pll_480_ctrl_set = &anatop->usb1_pll_480_ctrl_set;
+		chrg_detect = &ccm_regs->usb1_chrg_detect;
+		pll_480_ctrl_clr = &ccm_regs->analog_usb1_pll_480_ctrl_clr;
+		pll_480_ctrl_set = &ccm_regs->analog_usb1_pll_480_ctrl_set;
 		break;
 	case 1:
-		chrg_detect = &anatop->usb2_chrg_detect;
-		pll_480_ctrl_clr = &anatop->usb2_pll_480_ctrl_clr;
-		pll_480_ctrl_set = &anatop->usb2_pll_480_ctrl_set;
+		chrg_detect = &ccm_regs->usb2_chrg_detect;
+		pll_480_ctrl_clr = &ccm_regs->analog_usb2_pll_480_ctrl_clr;
+		pll_480_ctrl_set = &ccm_regs->analog_usb2_pll_480_ctrl_set;
 		break;
 	default:
 		return;

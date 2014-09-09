@@ -59,12 +59,12 @@ static unsigned int fuse = ~0;
 
 u32 get_cpu_rev(void)
 {
-	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
-	u32 reg = readl(&anatop->digprog_sololite);
+	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+	u32 reg = readl(&ccm_regs->digprog_sololite);
 	u32 type = ((reg >> 16) & 0xff);
 
 	if (type != MXC_CPU_MX6SL) {
-		reg = readl(&anatop->digprog);
+		reg = readl(&ccm_regs->digprog);
 		struct scu_regs *scu = (struct scu_regs *)SCU_BASE_ADDR;
 		u32 cfg = readl(&scu->config) & 3;
 		type = ((reg >> 16) & 0xff);
@@ -159,16 +159,16 @@ void init_aips(void)
 
 static void clear_ldo_ramp(void)
 {
-	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
+	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 	int reg;
 
 	/* ROM may modify LDO ramp up time according to fuse setting, so in
 	 * order to be in the safe side we neeed to reset these settings to
 	 * match the reset value: 0'b00
 	 */
-	reg = readl(&anatop->ana_misc2);
+	reg = readl(&ccm_regs->ana_misc2);
 	reg &= ~(0x3f << 24);
-	writel(reg, &anatop->ana_misc2);
+	writel(reg, &ccm_regs->ana_misc2);
 }
 
 /*
@@ -180,8 +180,8 @@ static void clear_ldo_ramp(void)
  */
 static int set_ldo_voltage(enum ldo_reg ldo, u32 mv)
 {
-	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
-	u32 val, step, old, reg = readl(&anatop->reg_core);
+	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+	u32 val, step, old, reg = readl(&ccm_regs->reg_core);
 	u8 shift;
 
 	if (mv < 725)
@@ -213,7 +213,7 @@ static int set_ldo_voltage(enum ldo_reg ldo, u32 mv)
 		return 0;
 
 	reg = (reg & ~(0x1F << shift)) | (val << shift);
-	writel(reg, &anatop->reg_core);
+	writel(reg, &ccm_regs->reg_core);
 
 	/*
 	 * The LDO ramp-up is based on 64 clock cycles of 24 MHz = 2.6 us per
@@ -240,7 +240,6 @@ static int read_cpu_temperature(void)
 	unsigned int ccm_ccgr2;
 	unsigned int reg, tmp;
 	unsigned int raw_25c, raw_n40c, ratio;
-	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
 	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
 	struct fuse_bank *bank = &ocotp->bank[1];
@@ -248,22 +247,22 @@ static int read_cpu_temperature(void)
 			(struct fuse_bank1_regs *)bank->fuse_regs;
 
 	/* need to make sure pll3 is enabled for thermal sensor */
-	if ((readl(&anatop->usb1_pll_480_ctrl) &
+	if ((readl(&mxc_ccm->analog_usb1_pll_480_ctrl) &
 			BM_ANADIG_USB1_PLL_480_CTRL_LOCK) == 0) {
 		/* enable pll's power */
 		writel(BM_ANADIG_USB1_PLL_480_CTRL_POWER,
-				&anatop->usb1_pll_480_ctrl_set);
-		writel(0x80, &anatop->ana_misc2_clr);
+				&mxc_ccm->analog_usb1_pll_480_ctrl_set);
+		writel(0x80, &mxc_ccm->ana_misc2_clr);
 		/* wait for pll lock */
-		while ((readl(&anatop->usb1_pll_480_ctrl) &
+		while ((readl(&mxc_ccm->analog_usb1_pll_480_ctrl) &
 			BM_ANADIG_USB1_PLL_480_CTRL_LOCK) == 0)
 			;
 		/* disable bypass */
 		writel(BM_ANADIG_USB1_PLL_480_CTRL_BYPASS,
-				&anatop->usb1_pll_480_ctrl_clr);
+				&mxc_ccm->analog_usb1_pll_480_ctrl_clr);
 		/* enable pll output */
 		writel(BM_ANADIG_USB1_PLL_480_CTRL_ENABLE,
-				&anatop->usb1_pll_480_ctrl_set);
+				&mxc_ccm->analog_usb1_pll_480_ctrl_set);
 	}
 
 	ccm_ccgr2 = readl(&mxc_ccm->CCGR2);
@@ -303,35 +302,35 @@ static int read_cpu_temperature(void)
 	 * the temperature, we will power on/down anadig thermal
 	 * module
 	 */
-	writel(BM_ANADIG_TEMPSENSE0_POWER_DOWN, &anatop->tempsense0_clr);
-	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF, &anatop->ana_misc0_set);
+	writel(BM_ANADIG_TEMPSENSE0_POWER_DOWN, &mxc_ccm->tempsense0_clr);
+	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF, &mxc_ccm->ana_misc0_set);
 
 	/* write measure freq */
-	reg = readl(&anatop->tempsense1);
+	reg = readl(&mxc_ccm->tempsense1);
 	reg &= ~BM_ANADIG_TEMPSENSE1_MEASURE_FREQ;
 	reg |= MEASURE_FREQ;
-	writel(reg, &anatop->tempsense1);
+	writel(reg, &mxc_ccm->tempsense1);
 
-	writel(BM_ANADIG_TEMPSENSE0_MEASURE_TEMP, &anatop->tempsense0_clr);
-	writel(BM_ANADIG_TEMPSENSE0_FINISHED, &anatop->tempsense0_clr);
-	writel(BM_ANADIG_TEMPSENSE0_MEASURE_TEMP, &anatop->tempsense0_set);
+	writel(BM_ANADIG_TEMPSENSE0_MEASURE_TEMP, &mxc_ccm->tempsense0_clr);
+	writel(BM_ANADIG_TEMPSENSE0_FINISHED, &mxc_ccm->tempsense0_clr);
+	writel(BM_ANADIG_TEMPSENSE0_MEASURE_TEMP, &mxc_ccm->tempsense0_set);
 
-	while ((readl(&anatop->tempsense0) &
+	while ((readl(&mxc_ccm->tempsense0) &
 			BM_ANADIG_TEMPSENSE0_FINISHED) == 0)
 		udelay(10000);
 
-	reg = readl(&anatop->tempsense0);
+	reg = readl(&mxc_ccm->tempsense0);
 	tmp = (reg & BM_ANADIG_TEMPSENSE0_TEMP_VALUE)
 		>> BP_ANADIG_TEMPSENSE0_TEMP_VALUE;
-	writel(BM_ANADIG_TEMPSENSE0_FINISHED, &anatop->tempsense0_clr);
+	writel(BM_ANADIG_TEMPSENSE0_FINISHED, &mxc_ccm->tempsense0_clr);
 
 	if (tmp <= raw_n40c)
 		temperature = REG_VALUE_TO_CEL(ratio, tmp);
 	else
 		temperature = TEMPERATURE_MIN;
 	/* power down anatop thermal sensor */
-	writel(BM_ANADIG_TEMPSENSE0_POWER_DOWN, &anatop->tempsense0_set);
-	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF, &anatop->ana_misc0_clr);
+	writel(BM_ANADIG_TEMPSENSE0_POWER_DOWN, &mxc_ccm->tempsense0_set);
+	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF, &mxc_ccm->ana_misc0_clr);
 
 	return temperature;
 }
@@ -441,7 +440,7 @@ void pcie_power_off(void)
 
 static void imx_set_vddpu_power_down(void)
 {
-	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
+	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 	u32 val;
 
 	/* need to power down xPU in GPC before turn off PU LDO */
@@ -455,7 +454,7 @@ static void imx_set_vddpu_power_down(void)
 
 	/* disable VDDPU */
 	val = 0x3e00;
-	writel(val, &anatop->reg_core_clr);
+	writel(val, &ccm_regs->reg_core_clr);
 }
 
 #ifndef CONFIG_MX6SL
@@ -736,7 +735,6 @@ enum boot_device get_boot_device(void)
 
 void s_init(void)
 {
-	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
 	struct mxc_ccm_reg *ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 	int is_6sx = is_cpu_type(MXC_CPU_MX6SX);
 	u32 mask480;
@@ -774,10 +772,10 @@ void s_init(void)
 		(periph2 != 0x3) && (periph1 != 0x3))
 		mask528 |= ANATOP_PFD_CLKGATE_MASK(2);
 
-	writel(mask480, &anatop->pfd_480_set);
-	writel(mask528, &anatop->pfd_528_set);
-	writel(mask480, &anatop->pfd_480_clr);
-	writel(mask528, &anatop->pfd_528_clr);
+	writel(mask480, &ccm->analog_pfd_480_set);
+	writel(mask528, &ccm->analog_pfd_528_set);
+	writel(mask480, &ccm->analog_pfd_480_clr);
+	writel(mask528, &ccm->analog_pfd_528_clr);
 }
 
 #ifdef CONFIG_LDO_BYPASS_CHECK
@@ -874,13 +872,13 @@ void prep_anatop_bypass(void)
 
 int set_anatop_bypass(int wdog_reset_pin)
 {
-	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
+	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 	struct wdog_regs *wdog;
-	u32 reg = readl(&anatop->reg_core);
+	u32 reg = readl(&ccm_regs->reg_core);
 
 	/* bypass VDDARM/VDDSOC */
 	reg = reg | (0x1F << 18) | 0x1F;
-	writel(reg, &anatop->reg_core);
+	writel(reg, &ccm_regs->reg_core);
 
 	if (wdog_reset_pin == 2)
 		wdog = (struct wdog_regs *) WDOG2_BASE_ADDR;
@@ -1082,12 +1080,14 @@ void set_usboh3_clk(void)
 void set_usb_phy1_clk(void)
 {
 	/* make sure pll3 is enable here */
+	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+
 	writel((BM_ANADIG_USB1_CHRG_DETECT_EN_B |
 		BM_ANADIG_USB1_CHRG_DETECT_CHK_CHRG_B),
-		ANATOP_BASE_ADDR + HW_ANADIG_USB1_CHRG_DETECT_SET);
+		&ccm_regs->usb1_chrg_detect_set);
 
 	writel(BM_ANADIG_USB1_PLL_480_CTRL_EN_USB_CLKS,
-		ANATOP_BASE_ADDR + HW_ANADIG_USB1_PLL_480_CTRL_SET);
+		&ccm_regs->analog_usb1_pll_480_ctrl_set);
 }
 void enable_usb_phy1_clk(unsigned char enable)
 {

@@ -608,13 +608,10 @@ int enable_fec_anatop_clock(int fec_id, enum enet_freq freq)
 	u32 reg = 0;
 	s32 timeout = 100000;
 
-	struct anatop_regs __iomem *anatop =
-		(struct anatop_regs __iomem *)ANATOP_BASE_ADDR;
-
 	if (freq < ENET_25MHz || freq > ENET_125MHz)
 		return -EINVAL;
 
-	reg = readl(&anatop->pll_enet);
+	reg = readl(&imx_ccm->analog_pll_enet);
 	reg &= ~BM_ANADIG_PLL_ENET_DIV_SELECT;
 
 	if (0 == fec_id) {
@@ -628,9 +625,9 @@ int enable_fec_anatop_clock(int fec_id, enum enet_freq freq)
 	if ((reg & BM_ANADIG_PLL_ENET_POWERDOWN) ||
 	    (!(reg & BM_ANADIG_PLL_ENET_LOCK))) {
 		reg &= ~BM_ANADIG_PLL_ENET_POWERDOWN;
-		writel(reg, &anatop->pll_enet);
+		writel(reg, &imx_ccm->analog_pll_enet);
 		while (timeout--) {
-			if (readl(&anatop->pll_enet) & BM_ANADIG_PLL_ENET_LOCK)
+			if (readl(&imx_ccm->analog_pll_enet) & BM_ANADIG_PLL_ENET_LOCK)
 				break;
 		}
 		if (timeout < 0)
@@ -646,7 +643,7 @@ int enable_fec_anatop_clock(int fec_id, enum enet_freq freq)
 #ifdef CONFIG_FEC_MXC_25M_REF_CLK
 	reg |= BM_ANADIG_PLL_ENET_REF_25M_ENABLE;
 #endif
-	writel(reg, &anatop->pll_enet);
+	writel(reg, &imx_ccm->analog_pll_enet);
 
 	return 0;
 }
@@ -769,12 +766,8 @@ int enable_sata_clock(void)
 
 int enable_pcie_clock(void)
 {
-	struct anatop_regs *anatop_regs =
-		(struct anatop_regs *)ANATOP_BASE_ADDR;
-	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
-
 	/* PCIe reference clock sourced from AXI. */
-	clrbits_le32(&ccm_regs->cbcmr, MXC_CCM_CBCMR_PCIE_AXI_CLK_SEL);
+	clrbits_le32(&imx_ccm->cbcmr, MXC_CCM_CBCMR_PCIE_AXI_CLK_SEL);
 
 	/*
 	 * Here be dragons!
@@ -793,7 +786,7 @@ int enable_pcie_clock(void)
 #define ANADIG_ANA_MISC1_LVDS1_CLK_SEL_MASK	0x0000001F
 #ifndef CONFIG_MX6SX
 	/* lvds_clk1 is sourced from sata ref on imx6q/dl/solo */
-	clrsetbits_le32(&anatop_regs->ana_misc1,
+	clrsetbits_le32(&imx_ccm->ana_misc1,
 			ANADIG_ANA_MISC1_LVDSCLK1_IBEN |
 			ANADIG_ANA_MISC1_LVDS1_CLK_SEL_MASK,
 			ANADIG_ANA_MISC1_LVDSCLK1_OBEN | 0xb);
@@ -806,7 +799,7 @@ int enable_pcie_clock(void)
 			BM_ANADIG_PLL_ENET_ENABLE_PCIE);
 #else
 	/* lvds_clk1 is sourced from pcie ref on imx6sx */
-	clrsetbits_le32(&anatop_regs->ana_misc1,
+	clrsetbits_le32(&imx_ccm->ana_misc1,
 			ANADIG_ANA_MISC1_LVDSCLK1_IBEN |
 			ANADIG_ANA_MISC1_LVDS1_CLK_SEL_MASK,
 			ANADIG_ANA_MISC1_LVDSCLK1_OBEN | 0xa);

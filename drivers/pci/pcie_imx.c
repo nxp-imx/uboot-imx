@@ -103,6 +103,7 @@ static void print_regs(int contain_pcie_reg)
 #else
 	struct iomuxc *iomuxc_regs = (struct iomuxc *)IOMUXC_GPR_BASE_ADDR;
 #endif
+	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 	val = readl(&iomuxc_regs->gpr[1]);
 	DBGF("GPR01 a:0x%08x v:0x%08x\n", (u32)&iomuxc_regs->gpr[1], val);
 	val = readl(&iomuxc_regs->gpr[5]);
@@ -111,10 +112,10 @@ static void print_regs(int contain_pcie_reg)
 	DBGF("GPR08 a:0x%08x v:0x%08x\n", (u32)&iomuxc_regs->gpr[8], val);
 	val = readl(&iomuxc_regs->gpr[12]);
 	DBGF("GPR12 a:0x%08x v:0x%08x\n", (u32)&iomuxc_regs->gpr[12], val);
-	val = readl(ANATOP_BASE_ADDR + 0xe0);
-	DBGF("PLL06 a:0x%08x v:0x%08x\n", ANATOP_BASE_ADDR + 0xe0, val);
-	val = readl(ANATOP_BASE_ADDR + 0x160);
-	DBGF("MISC1 a:0x%08x v:0x%08x\n", ANATOP_BASE_ADDR + 0x160, val);
+	val = readl(&ccm_regs->analog_pll_enet);
+	DBGF("PLL06 a:0x%08x v:0x%08x\n", (u32)&ccm_regs->analog_pll_enet, val);
+	val = readl(&ccm_regs->ana_misc1);
+	DBGF("MISC1 a:0x%08x v:0x%08x\n", (u32)&ccm_regs->ana_misc1, val);
 	if (contain_pcie_reg) {
 		val = readl(MX6_DBI_ADDR + 0x728);
 		DBGF("dbr0 offset 0x728 %08x\n", val);

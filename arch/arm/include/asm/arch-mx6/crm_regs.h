@@ -64,8 +64,11 @@ struct mxc_ccm_reg {
 	u32 analog_usb1_pll_480_ctrl_set;
 	u32 analog_usb1_pll_480_ctrl_clr;
 	u32 analog_usb1_pll_480_ctrl_tog;
-	u32 analog_reserved0[4];
-	u32 analog_pll_528;			/* 0x4030 */
+	u32 analog_usb2_pll_480_ctrl;	/* 0x4020 */
+	u32 analog_usb2_pll_480_ctrl_set;
+	u32 analog_usb2_pll_480_ctrl_clr;
+	u32 analog_usb2_pll_480_ctrl_tog;
+	u32 analog_pll_528;			    /* 0x4030 */
 	u32 analog_pll_528_set;
 	u32 analog_pll_528_clr;
 	u32 analog_pll_528_tog;
@@ -90,7 +93,11 @@ struct mxc_ccm_reg {
 	u32 analog_pll_video_num;		/* 0x40b0 */
 	u32 analog_reserved6[3];
 	u32 analog_pll_video_denon;		/* 0x40c0 */
-	u32 analog_reserved7[7];
+	u32 analog_reserved7[3];
+	u32 analog_pll_mlb;		        /* 0x40d0 */
+	u32 analog_pll_mlb_set;
+	u32 analog_pll_mlb_clr;
+	u32 analog_pll_mlb_tog;
 	u32 analog_pll_enet;			/* 0x40e0 */
 	u32 analog_pll_enet_set;
 	u32 analog_pll_enet_clr;
@@ -103,6 +110,93 @@ struct mxc_ccm_reg {
 	u32 analog_pfd_528_set;
 	u32 analog_pfd_528_clr;
 	u32 analog_pfd_528_tog;
+	u32 reg_1p1;		/* 0x4110 */
+	u32 reg_1p1_set;		/* 0x4114 */
+	u32 reg_1p1_clr;		/* 0x4118 */
+	u32 reg_1p1_tog;		/* 0x411c */
+	u32 reg_3p0;		/* 0x4120 */
+	u32 reg_3p0_set;		/* 0x4124 */
+	u32 reg_3p0_clr;		/* 0x4128 */
+	u32 reg_3p0_tog;		/* 0x412c */
+	u32 reg_2p5;		/* 0x4130 */
+	u32 reg_2p5_set;		/* 0x4134 */
+	u32 reg_2p5_clr;		/* 0x4138 */
+	u32 reg_2p5_tog;		/* 0x413c */
+	u32 reg_core;		/* 0x4140 */
+	u32 reg_core_set;		/* 0x4144 */
+	u32 reg_core_clr;		/* 0x4148 */
+	u32 reg_core_tog;		/* 0x414c */
+	u32 ana_misc0;		/* 0x4150 */
+	u32 ana_misc0_set;		/* 0x4154 */
+	u32 ana_misc0_clr;		/* 0x4158 */
+	u32 ana_misc0_tog;		/* 0x415c */
+	u32 ana_misc1;		/* 0x4160 */
+	u32 ana_misc1_set;		/* 0x4164 */
+	u32 ana_misc1_clr;		/* 0x4168 */
+	u32 ana_misc1_tog;		/* 0x416c */
+	u32 ana_misc2;		/* 0x4170 */
+	u32 ana_misc2_set;		/* 0x4174 */
+	u32 ana_misc2_clr;		/* 0x4178 */
+	u32 ana_misc2_tog;		/* 0x417c */
+	u32 tempsense0;		/* 0x4180 */
+	u32 tempsense0_set;		/* 0x4184 */
+	u32 tempsense0_clr;		/* 0x4188 */
+	u32 tempsense0_tog;		/* 0x418c */
+	u32 tempsense1;		/* 0x4190 */
+	u32 tempsense1_set;		/* 0x4194 */
+	u32 tempsense1_clr;		/* 0x4198 */
+	u32 tempsense1_tog;		/* 0x419c */
+	u32 usb1_vbus_detect;	/* 0x41a0 */
+	u32 usb1_vbus_detect_set;	/* 0x41a4 */
+	u32 usb1_vbus_detect_clr;	/* 0x41a8 */
+	u32 usb1_vbus_detect_tog;	/* 0x41ac */
+	u32 usb1_chrg_detect;	/* 0x41b0 */
+	u32 usb1_chrg_detect_set;	/* 0x41b4 */
+	u32 usb1_chrg_detect_clr;	/* 0x41b8 */
+	u32 usb1_chrg_detect_tog;	/* 0x41bc */
+	u32 usb1_vbus_det_stat;	/* 0x41c0 */
+	u32 usb1_vbus_det_stat_set;	/* 0x41c4 */
+	u32 usb1_vbus_det_stat_clr;	/* 0x41c8 */
+	u32 usb1_vbus_det_stat_tog;	/* 0x41cc */
+	u32 usb1_chrg_det_stat;	/* 0x41d0 */
+	u32 usb1_chrg_det_stat_set;	/* 0x41d4 */
+	u32 usb1_chrg_det_stat_clr;	/* 0x41d8 */
+	u32 usb1_chrg_det_stat_tog;	/* 0x41dc */
+	u32 usb1_loopback;		/* 0x41e0 */
+	u32 usb1_loopback_set;	/* 0x41e4 */
+	u32 usb1_loopback_clr;	/* 0x41e8 */
+	u32 usb1_loopback_tog;	/* 0x41ec */
+	u32 usb1_misc;		/* 0x41f0 */
+	u32 usb1_misc_set;		/* 0x41f4 */
+	u32 usb1_misc_clr;		/* 0x41f8 */
+	u32 usb1_misc_tog;		/* 0x41fc */
+	u32 usb2_vbus_detect;	/* 0x4200 */
+	u32 usb2_vbus_detect_set;	/* 0x4204 */
+	u32 usb2_vbus_detect_clr;	/* 0x4208 */
+	u32 usb2_vbus_detect_tog;	/* 0x420c */
+	u32 usb2_chrg_detect;	/* 0x4210 */
+	u32 usb2_chrg_detect_set;	/* 0x4214 */
+	u32 usb2_chrg_detect_clr;	/* 0x4218 */
+	u32 usb2_chrg_detect_tog;	/* 0x421c */
+	u32 usb2_vbus_det_stat;	/* 0x4220 */
+	u32 usb2_vbus_det_stat_set;	/* 0x4224 */
+	u32 usb2_vbus_det_stat_clr;	/* 0x4228 */
+	u32 usb2_vbus_det_stat_tog;	/* 0x422c */
+	u32 usb2_chrg_det_stat;	/* 0x4230 */
+	u32 usb2_chrg_det_stat_set;	/* 0x4234 */
+	u32 usb2_chrg_det_stat_clr;	/* 0x4238 */
+	u32 usb2_chrg_det_stat_tog;	/* 0x423c */
+	u32 usb2_loopback;		/* 0x4240 */
+	u32 usb2_loopback_set;	/* 0x4244 */
+	u32 usb2_loopback_clr;	/* 0x4248 */
+	u32 usb2_loopback_tog;	/* 0x424c */
+	u32 usb2_misc;		/* 0x4250 */
+	u32 usb2_misc_set;		/* 0x4254 */
+	u32 usb2_misc_clr;		/* 0x4258 */
+	u32 usb2_misc_tog;		/* 0x425c */
+	u32 digprog;		/* 0x4260 */
+	u32 reserved1[7];
+	u32 digprog_sololite;	/* 0x4280 */
 };
 #endif
 
