@@ -435,6 +435,15 @@ int arch_cpu_init(void)
 	set_preclk_from_osc();
 #endif
 
+#ifdef CONFIG_MX6SX
+	u32 reg;
+
+	/* set uart clk to OSC */
+	reg = readl(CCM_BASE_ADDR + 0x24);
+	reg |= 0x40;
+	writel(reg, CCM_BASE_ADDR + 0x24);
+#endif
+
 	imx_set_wdog_powerdown(false); /* Disable PDE bit of WMCR register */
 
 #ifndef CONFIG_MX6SL
