@@ -393,6 +393,17 @@ static void init_bandgap(void)
 	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF, &mxc_ccm->ana_misc0_set);
 }
 
+#ifdef CONFIG_MX6SL
+static void set_preclk_from_osc(void)
+{
+	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+	u32 reg;
+
+	reg = readl(&mxc_ccm->cscmr1);
+	reg |= MXC_CCM_CSCMR1_PER_CLK_SEL_MASK;
+	writel(reg, &mxc_ccm->cscmr1);
+}
+#endif
 
 #ifdef CONFIG_MX6SX
 void vadc_power_up(void)
@@ -536,6 +547,11 @@ int arch_cpu_init(void)
 	 */
 	if (mxc_get_clock(MXC_ARM_CLK) == 396000000)
 		set_ahb_rate(132000000);
+
+	/* Set perclk to source from OSC 24MHz */
+#if defined(CONFIG_MX6SL)
+	set_preclk_from_osc();
+#endif
 
 	imx_set_wdog_powerdown(false); /* Disable PDE bit of WMCR register */
 
