@@ -759,32 +759,63 @@ static int setup_pmic_voltages(void)
 void ldo_mode_set(int ldo_bypass)
 {
 	unsigned char value;
+	int is_400M;
+	u32 vddarm;
 	/* swith to ldo_bypass mode */
 	if (ldo_bypass) {
-		/* decrease VDDARM to 1.15V */
+		prep_anatop_bypass();
+		/* decrease VDDARM to 1.275V */
 		if (i2c_read(CONFIG_PMIC_I2C_SLAVE, PFUZE100_SW1ABVOL, 1, &value, 1)) {
 			printf("Read SW1AB error!\n");
 			return;
 		}
 		value &= ~0x3f;
-		value |= PFUZE100_SW1ABC_SETP(11500);
+		value |= PFUZE100_SW1ABC_SETP(12750);
 		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE100_SW1ABVOL, 1, &value, 1)) {
 			printf("Set SW1AB error!\n");
 			return;
 		}
-		/* increase VDDSOC to 1.15V */
+		/* decrease VDDSOC to 1.3V */
 		if (i2c_read(CONFIG_PMIC_I2C_SLAVE, PFUZE100_SW1CVOL, 1, &value, 1)) {
 			printf("Read SW1C error!\n");
 			return;
 		}
 		value &= ~0x3f;
-		value |= PFUZE100_SW1ABC_SETP(11500);
+		value |= PFUZE100_SW1ABC_SETP(13000);
 		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE100_SW1CVOL, 1, &value, 1)) {
 			printf("Set SW1C error!\n");
 			return;
 		}
 
-		set_anatop_bypass(1);
+		is_400M = set_anatop_bypass(1);
+		if (is_400M)
+			vddarm = PFUZE100_SW1ABC_SETP(10750);
+		else
+			vddarm = PFUZE100_SW1ABC_SETP(11750);
+
+		if (i2c_read(CONFIG_PMIC_I2C_SLAVE, PFUZE100_SW1ABVOL, 1, &value, 1)) {
+			printf("Read SW1AB error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= vddarm;
+		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE100_SW1ABVOL, 1, &value, 1)) {
+			printf("Set SW1AB error!\n");
+			return;
+		}
+
+		if (i2c_read(CONFIG_PMIC_I2C_SLAVE, PFUZE100_SW1CVOL, 1, &value, 1)) {
+			printf("Read SW1C error!\n");
+			return;
+		}
+		value &= ~0x3f;
+		value |= PFUZE100_SW1ABC_SETP(11750);
+		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE100_SW1CVOL, 1, &value, 1)) {
+			printf("Set SW1C error!\n");
+			return;
+		}
+
+		finish_anatop_bypass();
 		printf("switch to ldo_bypass mode!\n");
 	}
 

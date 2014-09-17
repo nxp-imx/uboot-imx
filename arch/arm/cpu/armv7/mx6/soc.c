@@ -912,7 +912,7 @@ void prep_anatop_bypass(void)
 	 */
 	if (!arm_orig_podf)
 		set_arm_freq_400M(true);
-#ifndef CONFIG_MX6DL
+#if !defined(CONFIG_MX6DL) && !defined(CONFIG_MX6SX)
 	set_ldo_voltage(LDO_ARM, 975);
 #else
 	set_ldo_voltage(LDO_ARM, 1150);
