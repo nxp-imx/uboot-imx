@@ -554,6 +554,9 @@ static int setup_fec(void)
 	enable_enet_clock();
 
 #ifdef CONFIG_FEC_ENABLE_MAX7322
+	/* release max7322 from reset */
+	gpio_direction_output(IMX_GPIO_NR(4, 22) , 1);
+
 	/* This is needed to drive the pads to 1.8V instead of 1.5V */
 	i2c_set_bus_num(CONFIG_MAX7322_I2C_BUS);
 
@@ -825,7 +828,11 @@ u32 get_board_rev(void)
 
 int checkboard(void)
 {
+#ifdef CONFIG_MX6SX_14x14
+	puts("Board: MX6SX 14x14 ARM2\n");
+#else
 	puts("Board: MX6SX 17x17 ARM2\n");
+#endif
 
 	return 0;
 }
