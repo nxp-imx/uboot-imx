@@ -19,13 +19,15 @@
 
 #ifdef CONFIG_ROM_UNIFIED_SECTIONS
 #define ROM_API_TABLE_BASE_ADDR_LEGACY		0x180
+#define ROM_VERSION_OFFSET               	0x80
 #else
 #define ROM_API_TABLE_BASE_ADDR_LEGACY		0xC0
+#define ROM_VERSION_OFFSET               	0x48
 #endif
 #define ROM_API_TABLE_BASE_ADDR_MX6DQ_TO15	0xC4
 #define ROM_API_TABLE_BASE_ADDR_MX6DL_TO12	0xC4
 #define ROM_API_HWCNFG_SETUP_OFFSET		0x08
-#define ROM_VERSION_OFFSET			0x48
+#define ROM_VERSION_TO10			0x10
 #define ROM_VERSION_TO12			0x12
 #define ROM_VERSION_TO15			0x15
 
@@ -53,6 +55,10 @@ plugin_start:
 
 #ifdef CONFIG_SYS_BOOT_EIMNOR
 #ifdef CONFIG_MX6SX
+	ldr r3, =ROM_VERSION_OFFSET
+	ldr r4, [r3]
+	cmp r4, #ROM_VERSION_TO10
+	bgt before_calling_rom___pu_irom_hwcnfg_setup
 	ldr r3, =0x00900b00
 	ldr r4, =0x50000000
 	str r4, [r3, #0x5c]
