@@ -179,6 +179,7 @@
 #define SEQID_WRSR		8
 #define SEQID_RDCR		9
 #define SEQID_DDR_QUAD_READ	10
+#define SEQID_BE_4K		11
 
 /* Flash opcodes. */
 #define	OPCODE_WREN		0x06	/* Write enable */
@@ -367,6 +368,15 @@ static void fsl_qspi_init_lut(struct fsl_qspi *q)
 			base + QUADSPI_LUT(lut_base + 1));
 	writel(LUT0(JMP_ON_CS, PAD1, 0),
 			base + QUADSPI_LUT(lut_base + 2));
+
+	/* SUB SECTOR 4K ERASE */
+	lut_base = SEQID_BE_4K * 4;
+	cmd = OPCODE_BE_4K;
+	addrlen = ADDR24BIT;
+
+	writel(LUT0(CMD, PAD1, cmd) | LUT1(ADDR, PAD1, addrlen),
+			base + QUADSPI_LUT(lut_base));
+
 
 	fsl_qspi_lock_lut(q);
 }
@@ -570,6 +580,8 @@ static int fsl_qspi_get_seqid(struct fsl_qspi *q, u8 cmd)
 		return SEQID_RDCR;
 	case OPCODE_DDR_QUAD_READ:
 		return SEQID_DDR_QUAD_READ;
+	case OPCODE_BE_4K:
+		return SEQID_BE_4K;
 	default:
 		break;
 	}
@@ -663,7 +675,7 @@ fsl_qspi_runcmd(struct fsl_qspi *q, u8 cmd, unsigned int addr, int len)
 	/* restore the MCR */
 	writel(reg, base + QUADSPI_MCR);
 
-	if (OPCODE_SE == cmd || OPCODE_PP == cmd)
+	if ((OPCODE_SE == cmd) || (OPCODE_PP == cmd) || (OPCODE_BE_4K == cmd))
 		fsl_qspi_invalid(q);
 	return err;
 }
