@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2014 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -916,8 +916,6 @@ static inline int read_cpu_temperature(void)
 	the temperature, we will power on/down the anadig module*/
 	writel(BM_ANADIG_TEMPSENSE0_POWER_DOWN,
 			ANATOP_BASE_ADDR + HW_ANADIG_TEMPSENSE0_CLR);
-	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF,
-			ANATOP_BASE_ADDR + HW_ANADIG_ANA_MISC0_SET);
 
 	/* write measure freq */
 	reg = readl(ANATOP_BASE_ADDR + HW_ANADIG_TEMPSENSE1);
@@ -953,8 +951,6 @@ static inline int read_cpu_temperature(void)
 	/* power down anatop thermal sensor */
 	writel(BM_ANADIG_TEMPSENSE0_POWER_DOWN,
 			ANATOP_BASE_ADDR + HW_ANADIG_TEMPSENSE0_SET);
-	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF,
-			ANATOP_BASE_ADDR + HW_ANADIG_ANA_MISC0_CLR);
 
 	return temperature;
 
@@ -1031,6 +1027,22 @@ int cpu_eth_init(bd_t *bis)
 	return rc;
 }
 
+static void init_bandgap(void)
+{
+	/*
+	* Ensure the bandgap has stabilized.
+	*/
+	while (!(readl(ANATOP_BASE_ADDR + HW_ANADIG_ANA_MISC0) & 0x80))
+		;
+	/*
+	 * For best noise performance of the analog blocks using the
+	 * outputs of the bandgap, the reftop_selfbias_off bit should
+	 * be set.
+	 */
+	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF,
+				ANATOP_BASE_ADDR + HW_ANADIG_ANA_MISC0_SET);
+}
+
 #if defined(CONFIG_ARCH_CPU_INIT)
 int arch_cpu_init(void)
 {
@@ -1038,6 +1050,13 @@ int arch_cpu_init(void)
 
 	/* Clear MMDC channel mask */
 	writel(0, CCM_BASE_ADDR + 0x4);
+
+	/*
+	 * Disable self-bias circuit in the analog bandap.
+	 * The self-bias circuit is used by the bandgap during startup.
+	 * This bit should be set after the bandgap has initialized.
+	 */
+	init_bandgap();
 
 	/* Due to hardware limitation, on MX6Q we need to gate/ungate all PFDs
 	 * to make sure PFD is working right, otherwise, PFDs may
