@@ -180,6 +180,12 @@
 #define SEQID_RDCR		9
 #define SEQID_DDR_QUAD_READ	10
 #define SEQID_BE_4K		11
+#ifdef CONFIG_SPI_FLASH_BAR
+#define SEQID_BRRD		12
+#define SEQID_BRWR		13
+#define SEQID_RDEAR		14
+#define SEQID_WREAR		15
+#endif
 
 /* Flash opcodes. */
 #define	OPCODE_WREN		0x06	/* Write enable */
@@ -214,7 +220,12 @@
 #define	OPCODE_EN4B		0xb7	/* Enter 4-byte mode */
 #define	OPCODE_EX4B		0xe9	/* Exit 4-byte mode */
 
+/* Used for Micron, winbond and Macronix flashes */
+#define	OPCODE_WREAR		0xc5	/* EAR register write */
+#define	OPCODE_RDEAR		0xc8	/* EAR reigster read */
+
 /* Used for Spansion flashes only. */
+#define	OPCODE_BRRD		0x16	/* Bank register read */
 #define	OPCODE_BRWR		0x17	/* Bank register write */
 
 /* Status Register bits. */
@@ -377,6 +388,31 @@ static void fsl_qspi_init_lut(struct fsl_qspi *q)
 	writel(LUT0(CMD, PAD1, cmd) | LUT1(ADDR, PAD1, addrlen),
 			base + QUADSPI_LUT(lut_base));
 
+#ifdef CONFIG_SPI_FLASH_BAR
+	/*
+	 * BRRD BRWR RDEAR WREAR are all supported, because it is hard to
+	 * dynamically check whether to set BRRD BRWR or RDEAR WREAR.
+	 */
+	lut_base = SEQID_BRRD * 4;
+	cmd = OPCODE_BRRD;
+	writel(LUT0(CMD, PAD1, cmd) | LUT1(READ, PAD1, 0x1),
+	       base + QUADSPI_LUT(lut_base));
+
+	lut_base = SEQID_BRWR * 4;
+	cmd = OPCODE_BRWR;
+	writel(LUT0(CMD, PAD1, cmd) | LUT1(WRITE, PAD1, 0x1),
+	       base + QUADSPI_LUT(lut_base));
+
+	lut_base = SEQID_RDEAR * 4;
+	cmd = OPCODE_RDEAR;
+	writel(LUT0(CMD, PAD1, cmd) | LUT1(READ, PAD1, 0x1),
+	       base + QUADSPI_LUT(lut_base));
+
+	lut_base = SEQID_WREAR * 4;
+	cmd = OPCODE_WREAR;
+	writel(LUT0(CMD, PAD1, cmd) | LUT1(WRITE, PAD1, 0x1),
+	       base + QUADSPI_LUT(lut_base));
+#endif
 
 	fsl_qspi_lock_lut(q);
 }
@@ -582,6 +618,16 @@ static int fsl_qspi_get_seqid(struct fsl_qspi *q, u8 cmd)
 		return SEQID_DDR_QUAD_READ;
 	case OPCODE_BE_4K:
 		return SEQID_BE_4K;
+#ifdef CONFIG_SPI_FLASH_BAR
+	case OPCODE_BRRD:
+		return SEQID_BRRD;
+	case OPCODE_BRWR:
+		return SEQID_BRWR;
+	case OPCODE_RDEAR:
+		return SEQID_RDEAR;
+	case OPCODE_WREAR:
+		return SEQID_WREAR;
+#endif
 	default:
 		break;
 	}
@@ -675,7 +721,10 @@ fsl_qspi_runcmd(struct fsl_qspi *q, u8 cmd, unsigned int addr, int len)
 	/* restore the MCR */
 	writel(reg, base + QUADSPI_MCR);
 
-	if ((OPCODE_SE == cmd) || (OPCODE_PP == cmd) || (OPCODE_BE_4K == cmd))
+	/* After switch BANK, AHB buffer should also be invalid. */
+	if ((OPCODE_SE == cmd) || (OPCODE_PP == cmd) ||
+	    (OPCODE_BE_4K == cmd) || (OPCODE_WREAR == cmd) ||
+	    (OPCODE_BRWR == cmd))
 		fsl_qspi_invalid(q);
 	return err;
 }
