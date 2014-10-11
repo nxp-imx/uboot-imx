@@ -305,9 +305,9 @@ static void setup_iomux_fec1(void)
 	imx_iomux_v3_setup_multiple_pads(fec1_pads, ARRAY_SIZE(fec1_pads));
 
 	/* Reset AR8031 PHY */
-	gpio_direction_output(IMX_GPIO_NR(4, 22) , 0);
+	gpio_direction_output(IMX_GPIO_NR(6, 18) , 0);
 	udelay(500);
-	gpio_set_value(IMX_GPIO_NR(4, 22), 1);
+	gpio_set_value(IMX_GPIO_NR(6, 18), 1);
 }
 #endif
 
