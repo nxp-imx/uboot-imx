@@ -303,11 +303,6 @@ static iomux_v3_cfg_t const fec1_pads[] = {
 static void setup_iomux_fec1(void)
 {
 	imx_iomux_v3_setup_multiple_pads(fec1_pads, ARRAY_SIZE(fec1_pads));
-
-	/* Reset AR8031 PHY */
-	gpio_direction_output(IMX_GPIO_NR(6, 18) , 0);
-	udelay(500);
-	gpio_set_value(IMX_GPIO_NR(6, 18), 1);
 }
 #endif
 
@@ -598,6 +593,11 @@ static int setup_fec(void)
 		return ret;
 
 	enable_enet_clock();
+
+	/* Reset AR8031 PHY */
+	gpio_direction_output(IMX_GPIO_NR(6, 18) , 0);
+	udelay(500);
+	gpio_set_value(IMX_GPIO_NR(6, 18), 1);
 
 #ifdef CONFIG_FEC_ENABLE_MAX7322
 	/* This is needed to drive the pads to 1.8V instead of 1.5V */
