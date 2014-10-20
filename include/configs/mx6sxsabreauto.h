@@ -108,6 +108,11 @@
 #define CONFIG_PMIC_I2C_SLAVE		0x8
 #endif
 
+/* MAX7310 configs*/
+#define CONFIG_MAX7310_IOEXP
+#define CONFIG_IOEXP_DEVICES_NUM 2
+#define CONFIG_IOEXP_DEV_PINS_NUM 8
+
 /* VIDEO */
 #define CONFIG_VIDEO
 

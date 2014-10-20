@@ -34,6 +34,10 @@
 #include <mxsfb.h>
 #endif
 
+#ifdef CONFIG_MAX7310_IOEXP
+#include <gpio_exp.h>
+#endif
+
 #ifdef CONFIG_FASTBOOT
 #include <fastboot.h>
 #ifdef CONFIG_ANDROID_RECOVERY
@@ -197,6 +201,26 @@ static void setup_iomux_fec(int fec_id)
 		imx_iomux_v3_setup_multiple_pads(fec1_pads, ARRAY_SIZE(fec1_pads));
 	else
 		imx_iomux_v3_setup_multiple_pads(fec2_pads, ARRAY_SIZE(fec2_pads));
+}
+#endif
+
+#ifdef CONFIG_MAX7310_IOEXP
+
+#define CPU_PER_RST_B	IOEXP_GPIO_NR(1, 4)
+#define LVDS_EN_PIN		IOEXP_GPIO_NR(1, 7)
+#define STEER_ENET		IOEXP_GPIO_NR(2, 2)
+
+int setup_max7310(void)
+{
+	/* Must call this function after i2c has setup */
+#ifdef CONFIG_SYS_I2C_MXC
+	gpio_exp_setup_port(1, 2, 0x30);
+	gpio_exp_setup_port(2, 2, 0x32);
+
+	return 0;
+#else
+	return -EPERM;
+#endif
 }
 #endif
 
@@ -465,6 +489,11 @@ void do_enable_lvds(struct lcd_panel_info_t const *dev)
 
 	imx_iomux_v3_setup_multiple_pads(lvds_ctrl_pads,
 							ARRAY_SIZE(lvds_ctrl_pads));
+
+#ifdef CONFIG_MAX7310_IOEXP
+	/* LVDS Enable pin */
+	gpio_exp_direction_output(LVDS_EN_PIN , 1);
+#endif
 
 	/* Set Brightness to high */
 	gpio_direction_output(IMX_GPIO_NR(6, 3) , 1);
@@ -803,6 +832,18 @@ int board_init(void)
 #ifdef CONFIG_SYS_I2C_MXC
 	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info2);
 	setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info3);
+#endif
+
+#ifdef CONFIG_MAX7310_IOEXP
+	setup_max7310();
+
+	/* Reset CPU_PER_RST_B signal for enet phy and PCIE */
+	gpio_exp_direction_output(CPU_PER_RST_B, 0);
+	udelay(500);
+	gpio_exp_direction_output(CPU_PER_RST_B, 1);
+
+	/* Set steering signal to L for selecting B0 */
+	gpio_exp_direction_output(STEER_ENET, 0);
 #endif
 
 #ifdef	CONFIG_FEC_MXC
