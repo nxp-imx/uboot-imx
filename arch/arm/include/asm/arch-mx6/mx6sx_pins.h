@@ -420,7 +420,7 @@ enum {
 
 	MX6SX_PAD_KEY_COL4__KPP_COL_4                            = IOMUX_PAD(0x03FC, 0x00B4, 0, 0x0000, 0, 0),
 	MX6SX_PAD_KEY_COL4__ENET2_MDC                            = IOMUX_PAD(0x03FC, 0x00B4, 1, 0x0000, 0, 0),
-	MX6SX_PAD_KEY_COL4__I2C3_SCL                             = IOMUX_PAD(0x03FC, 0x00B4, 2, 0x07B8, 2, 0),
+	MX6SX_PAD_KEY_COL4__I2C3_SCL                             = IOMUX_PAD(0x03FC, 0x00B4, IOMUX_CONFIG_SION | 2, 0x07B8, 2, 0),
 	MX6SX_PAD_KEY_COL4__USDHC2_LCTL                          = IOMUX_PAD(0x03FC, 0x00B4, 3, 0x0000, 0, 0),
 	MX6SX_PAD_KEY_COL4__AUDMUX_AUD5_RXC                      = IOMUX_PAD(0x03FC, 0x00B4, 4, 0x0664, 0, 0),
 	MX6SX_PAD_KEY_COL4__GPIO2_IO_14                          = IOMUX_PAD(0x03FC, 0x00B4, 5, 0x0000, 0, 0),
@@ -467,7 +467,7 @@ enum {
 
 	MX6SX_PAD_KEY_ROW4__KPP_ROW_4                            = IOMUX_PAD(0x0410, 0x00C8, 0, 0x0000, 0, 0),
 	MX6SX_PAD_KEY_ROW4__ENET2_MDIO                           = IOMUX_PAD(0x0410, 0x00C8, 1, 0x0770, 3, 0),
-	MX6SX_PAD_KEY_ROW4__I2C3_SDA                             = IOMUX_PAD(0x0410, 0x00C8, 2, 0x07BC, 2, 0),
+	MX6SX_PAD_KEY_ROW4__I2C3_SDA                             = IOMUX_PAD(0x0410, 0x00C8, IOMUX_CONFIG_SION | 2, 0x07BC, 2, 0),
 	MX6SX_PAD_KEY_ROW4__USDHC1_LCTL                          = IOMUX_PAD(0x0410, 0x00C8, 3, 0x0000, 0, 0),
 	MX6SX_PAD_KEY_ROW4__AUDMUX_AUD5_RXFS                     = IOMUX_PAD(0x0410, 0x00C8, 4, 0x0668, 0, 0),
 	MX6SX_PAD_KEY_ROW4__GPIO2_IO_19                          = IOMUX_PAD(0x0410, 0x00C8, 5, 0x0000, 0, 0),
