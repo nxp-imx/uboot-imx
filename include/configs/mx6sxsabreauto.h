@@ -158,17 +158,39 @@
 #define CONFIG_VIDEO_MODE ""
 #endif
 
+#ifdef CONFIG_SYS_BOOT_NAND
+#define CONFIG_MFG_NAND_PARTITION "mtdparts=gpmi-nand:16m(boot),16m(kernel),16m(dtb),-(rootfs) "
+#else
+#define CONFIG_MFG_NAND_PARTITION ""
+#endif
+
 #define CONFIG_MFG_ENV_SETTINGS \
 	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
 		"rdinit=/linuxrc " \
 		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
 		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
 		"g_mass_storage.iSerialNumber=\"\" "\
+		CONFIG_MFG_NAND_PARTITION \
 		"\0" \
 	"initrd_addr=0x83800000\0" \
 	"initrd_high=0xffffffff\0" \
 	"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 
+#if defined(CONFIG_SYS_BOOT_NAND)
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
+	CONFIG_VIDEO_MODE \
+	"fdt_addr=0x83000000\0" \
+	"fdt_high=0xffffffff\0"	  \
+	"console=ttymxc0\0" \
+	"bootargs=console=ttymxc0,115200 ubi.mtd=3 "  \
+		"root=ubi0:rootfs rootfstype=ubifs "		     \
+		"mtdparts=gpmi-nand:16m(boot),16m(kernel),16m(dtb),-(rootfs)\0"\
+	"bootcmd=nand read ${loadaddr} 0x1000000 0x800000;"\
+		"nand read ${fdt_addr} 0x2000000 0x100000;"\
+		"bootz ${loadaddr} - ${fdt_addr}\0"
+
+#else
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
 	UPDATE_M4_ENV \
@@ -246,6 +268,7 @@
 			   "fi; " \
 		   "fi; " \
 	   "else run netboot; fi"
+#endif
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP
