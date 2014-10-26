@@ -238,8 +238,8 @@ static void setup_iomux_uart(void)
 #ifdef CONFIG_QSPI
 
 #define QSPI_PAD_CTRL1	\
-		(PAD_CTL_SRE_FAST | PAD_CTL_SPEED_HIGH | \
-		 PAD_CTL_PKE | PAD_CTL_PUE | PAD_CTL_PUS_47K_UP | PAD_CTL_DSE_40ohm)
+		(PAD_CTL_SRE_FAST | PAD_CTL_SPEED_MED | \
+		 PAD_CTL_PKE | PAD_CTL_PUE | PAD_CTL_PUS_47K_UP | PAD_CTL_DSE_60ohm)
 
 static iomux_v3_cfg_t const quadspi_pads[] = {
 	MX6SX_PAD_NAND_WP_B__QSPI2_A_DATA_0		| MUX_PAD_CTRL(QSPI_PAD_CTRL1),
