@@ -33,7 +33,7 @@
 #define CONFIG_REVISION_TAG
 
 /* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(10 * SZ_1M)
+#define CONFIG_SYS_MALLOC_LEN		(32 * SZ_1M)
 
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_BOARD_LATE_INIT
@@ -115,6 +115,7 @@
 
 /* VIDEO */
 #define CONFIG_VIDEO
+#define CONFIG_VIDEO_GIS
 
 /* Command definition */
 #include <config_cmd_default.h>
@@ -399,6 +400,11 @@
 #define	CONFIG_BMP_16BPP
 #define	CONFIG_VIDEO_BMP_RLE8
 #define CONFIG_VIDEO_BMP_LOGO
+#ifdef CONFIG_VIDEO_GIS
+#define CONFIG_VIDEO_CSI
+#define CONFIG_VIDEO_PXP
+#define CONFIG_VIDEO_VADC
+#endif
 #endif
 
 #define CONFIG_CMD_USB
