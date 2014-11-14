@@ -19,6 +19,13 @@
 #include "mx6sabre_common.h"
 #include <asm/imx-common/gpio.h>
 
+#undef CONFIG_MFG_NAND_PARTITION
+#ifdef CONFIG_SYS_BOOT_NAND
+#define CONFIG_MFG_NAND_PARTITION "mtdparts=8000000.nor:1m(boot),-(rootfs)\\\\;gpmi-nand:16m(boot),16m(kernel),16m(dtb),-(rootfs) "
+#else
+#define CONFIG_MFG_NAND_PARTITION ""
+#endif
+
 /*Since the pin conflicts on EIM D18, disable the USB host if the NOR flash is enabled */
 #if !defined(CONFIG_SYS_USE_SPINOR) && !defined(CONFIG_SYS_USE_EIMNOR)
 /* USB Configs */
