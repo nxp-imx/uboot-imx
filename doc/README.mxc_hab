@@ -44,5 +44,6 @@ objcopy -I binary -O binary --pad-to 0x2000 --gap-fill=0x00 \
 	U-Boot_CSF.bin U-Boot_CSF_pad.bin
 cat u-boot.imx U-Boot_CSF_pad.bin > u-boot-signed.imx
 
-NOTE: U-Boot_CSF.bin needs to be padded to the value specified in
-the imximage.cfg file.
+NOTE: When booting from NAND, the u-boot image must be padded to the
+size indicated in the Boot Data size field. The padding must be
+added to the end of the file, after any U-Boot_CSF.bin.
