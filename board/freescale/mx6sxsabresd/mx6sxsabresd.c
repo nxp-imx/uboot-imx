@@ -905,6 +905,7 @@ int board_init(void)
 #ifdef CONFIG_CMD_BMODE
 static const struct boot_mode board_boot_modes[] = {
 	/* 4 bit bus width */
+	{"sd3", MAKE_CFGVAL(0x42, 0x30, 0x00, 0x00)},
 	{"sd4", MAKE_CFGVAL(0x40, 0x38, 0x00, 0x00)},
 	{"qspi2", MAKE_CFGVAL(0x18, 0x00, 0x00, 0x00)},
 	{NULL,	 0},
