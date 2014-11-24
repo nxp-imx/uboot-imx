@@ -601,7 +601,9 @@ struct fuse_bank0_regs {
 struct fuse_bank1_regs {
 	u32     mem[0x18];
 	u32	ana1;
+	u32	rsvd1[3];
 	u32     ana2;
+	u32	rsvd2[3];
 };
 
 #ifdef CONFIG_MX6SX
