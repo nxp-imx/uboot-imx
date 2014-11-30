@@ -708,7 +708,12 @@ static int setup_pmic_voltages(void)
 			printf("Read Rev ID error!\n");
 			return -1;
 		}
-		printf("Found PFUZE100! deviceid 0x%x, revid 0x%x\n", value, rev_id);
+		/*
+		 * PFUZE200: Die version 0001 = PF0200
+		 * PFUZE100: Die version 0000 = PF0100
+		 */
+		printf("Found %s! deviceid 0x%x, revid 0x%x\n", (value & 0xf) ?
+		       "PFUZE200" : "PFUZE100", value & 0xf, rev_id);
 
 		if (setup_pmic_mode(value & 0xf)) {
 			printf("setup pmic mode error!\n");
