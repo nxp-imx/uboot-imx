@@ -964,8 +964,7 @@ void board_fastboot_setup(void)
 		if (!getenv("fastboot_dev"))
 			setenv("fastboot_dev", "nand");
 		if (!getenv("fbparts"))
-			setenv("fbparts",
-			 "16m@16m(boot) 16m@32m(recovery) 810m@48m(android_root)ubifs");
+			setenv("fbparts", ANDROID_FASTBOOT_NAND_PARTS);
 		if (!getenv("bootcmd"))
 			setenv("bootcmd",
 				"nand read ${loadaddr} ${boot_nand_offset} "
