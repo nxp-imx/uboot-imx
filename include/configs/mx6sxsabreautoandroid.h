@@ -53,4 +53,8 @@
 	"fdt_high=0xffffffff\0"	  \
 	"initrd_high=0xffffffff\0" \
 
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
+#define ANDROID_FASTBOOT_NAND_PARTS "16m@64m(boot) 16m@80m(recovery) 810m@96m(android_root)ubifs"
+#endif
+
 #endif
