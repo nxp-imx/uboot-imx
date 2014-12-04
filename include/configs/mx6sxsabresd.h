@@ -374,7 +374,17 @@
 #define CONFIG_MXC_USB_FLAGS   0
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 2
 
-#define CONFIG_CMD_PCI
+/*
+ * The PCIe support in uboot would bring failures in i.MX6SX PCIe
+ * EP/RC validations. Disable PCIe support in uboot here.
+ * RootCause: The bit10(ltssm_en) of GPR12 would be set in uboot,
+ * thus the i.MX6SX PCIe EP would be cheated that the other i.MX6SX
+ * PCIe RC had been configured and trying to setup PCIe link directly,
+ * although the i.MX6SX RC is not properly configured at that time.
+ * PCIe can be supported in uboot, if the i.MX6SX PCIe EP/RC validation
+ * is not running.
+ */
+/* #define CONFIG_CMD_PCI */
 #ifdef CONFIG_CMD_PCI
 #define CONFIG_PCI
 #define CONFIG_PCI_PNP
