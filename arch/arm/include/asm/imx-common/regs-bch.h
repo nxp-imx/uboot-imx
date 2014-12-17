@@ -5,7 +5,7 @@
  * on behalf of DENX Software Engineering GmbH
  *
  * Based on code from LTIB:
- * Copyright 2008-2010 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2008-2014 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -148,6 +148,7 @@ struct mxs_bch_regs {
 #define	BCH_FLASHLAYOUT0_ECC0_ECC30			(0xf << 12)
 #define	BCH_FLASHLAYOUT0_ECC0_ECC32			(0x10 << 12)
 #define	BCH_FLASHLAYOUT0_GF13_0_GF14_1			(1 << 10)
+#define	BCH_FLASHLAYOUT0_GF13_0_GF14_1_OFFSET	10
 #define	BCH_FLASHLAYOUT0_DATA0_SIZE_MASK		0xfff
 #define	BCH_FLASHLAYOUT0_DATA0_SIZE_OFFSET		0
 
@@ -178,6 +179,7 @@ struct mxs_bch_regs {
 #define	BCH_FLASHLAYOUT1_ECCN_ECC30			(0xf << 12)
 #define	BCH_FLASHLAYOUT1_ECCN_ECC32			(0x10 << 12)
 #define	BCH_FLASHLAYOUT1_GF13_0_GF14_1			(1 << 10)
+#define	BCH_FLASHLAYOUT1_GF13_0_GF14_1_OFFSET	10
 #define	BCH_FLASHLAYOUT1_DATAN_SIZE_MASK		0xfff
 #define	BCH_FLASHLAYOUT1_DATAN_SIZE_OFFSET		0
 
