@@ -923,22 +923,9 @@ void prep_anatop_bypass(void)
 #endif
 }
 
-int set_anatop_bypass(int wdog_reset_pin)
+void set_wdog_reset(struct wdog_regs *wdog)
 {
-	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
-	struct wdog_regs *wdog;
-	u32 reg = readl(&ccm_regs->reg_core);
-
-	/* bypass VDDARM/VDDSOC */
-	reg = reg | (0x1F << 18) | 0x1F;
-	writel(reg, &ccm_regs->reg_core);
-
-	if (wdog_reset_pin == 2)
-		wdog = (struct wdog_regs *) WDOG2_BASE_ADDR;
-	else if (wdog_reset_pin == 1)
-		wdog = (struct wdog_regs *) WDOG1_BASE_ADDR;
-	else
-		return arm_orig_podf;
+	u32 reg = readw(&wdog->wcr);
 	/*
 	 * use WDOG_B mode to reset external pmic because it's risky for the
 	 * following watchdog reboot in case of cpu freq at lowest 400Mhz with
@@ -956,7 +943,25 @@ int set_anatop_bypass(int wdog_reset_pin)
 	 */
 	reg |= 1 << 0;
 	writew(reg, &wdog->wcr);
+}
 
+int set_anatop_bypass(int wdog_reset_pin)
+{
+	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+	struct wdog_regs *wdog;
+	u32 reg = readl(&ccm_regs->reg_core);
+
+	/* bypass VDDARM/VDDSOC */
+	reg = reg | (0x1F << 18) | 0x1F;
+	writel(reg, &ccm_regs->reg_core);
+
+	if (wdog_reset_pin == 2)
+		wdog = (struct wdog_regs *) WDOG2_BASE_ADDR;
+	else if (wdog_reset_pin == 1)
+		wdog = (struct wdog_regs *) WDOG1_BASE_ADDR;
+	else
+		return arm_orig_podf;
+	set_wdog_reset(wdog);
 	return arm_orig_podf;
 }
 

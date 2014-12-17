@@ -22,6 +22,7 @@ u32 get_cpu_rev(void);
 
 const char *get_imx_type(u32 imxtype);
 unsigned imx_ddr_size(void);
+void set_wdog_reset(struct wdog_regs *wdog);
 
 #ifdef CONFIG_LDO_BYPASS_CHECK
 int check_ldo_bypass(void);
