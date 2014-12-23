@@ -70,7 +70,7 @@ void check_recovery_mode(void)
 		puts("Fastboot: Recovery key pressing got!\n");
 		setup_recovery_env();
 	} else if (check_recovery_cmd_file()) {
-		puts("Fastboot: Recovery command file founded!\n");
+		puts("Fastboot: Recovery command file found!\n");
 		setup_recovery_env();
 	} else {
 		puts("Fastboot: Normal\n");
