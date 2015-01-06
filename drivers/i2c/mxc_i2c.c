@@ -406,23 +406,6 @@ int bus_i2c_write(void *base, uchar chip, uint addr, int alen,
 	return ret;
 }
 
-struct i2c_parms {
-	void *base;
-	void *idle_bus_data;
-	int (*idle_bus_fn)(void *p);
-};
-
-struct sram_data {
-	unsigned curr_i2c_bus;
-	struct i2c_parms i2c_data[3];
-};
-
-/*
- * For SPL boot some boards need i2c before SDRAM is initialized so force
- * variables to live in SRAM
- */
-static struct sram_data __attribute__((section(".data"))) srdata;
-
 static void * const i2c_bases[] = {
 #if defined(CONFIG_MX25)
 	(void *)IMX_I2C_BASE,
@@ -448,6 +431,23 @@ static void * const i2c_bases[] = {
 #error "architecture not supported"
 #endif
 };
+
+struct i2c_parms {
+	void *base;
+	void *idle_bus_data;
+	int (*idle_bus_fn)(void *p);
+};
+
+struct sram_data {
+	unsigned curr_i2c_bus;
+	struct i2c_parms i2c_data[ARRAY_SIZE(i2c_bases)];
+};
+
+/*
+ * For SPL boot some boards need i2c before SDRAM is initialized so force
+ * variables to live in SRAM
+ */
+static struct sram_data __attribute__((section(".data"))) srdata;
 
 void *i2c_get_base(struct i2c_adapter *adap)
 {
