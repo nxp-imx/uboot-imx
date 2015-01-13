@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2014 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2015 Freescale Semiconductor, Inc.
  *
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
  *
@@ -111,6 +111,7 @@ iomux_v3_cfg_t const enet_pads[] = {
 	MX6_PAD_RGMII_RD2__RGMII_RD2	| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_RGMII_RD3__RGMII_RD3	| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_RGMII_RX_CTL__RGMII_RX_CTL	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+	MX6_PAD_GPIO_16__ENET_REF_CLK		| MUX_PAD_CTRL(ENET_PAD_CTRL),
 };
 
 /* I2C2 PMIC, iPod, Tuner, Codec, Touch, HDMI EDID, MIPI CSI2 card */
@@ -857,12 +858,26 @@ int overwrite_console(void)
 	return 1;
 }
 
+#ifdef CONFIG_FEC_MXC
 int board_eth_init(bd_t *bis)
 {
 	setup_iomux_enet();
 
 	return cpu_eth_init(bis);
 }
+
+static int setup_fec(void)
+{
+	int ret;
+
+	mxc_iomux_set_gpr_register(1, 21, 1, 1);
+	ret = enable_fec_anatop_clock(0, ENET_125MHz);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+#endif
 
 #define BOARD_REV_B  0x200
 #define BOARD_REV_A  0x100
@@ -968,6 +983,10 @@ int board_late_init(void)
 
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
+#endif
+
+#ifdef CONFIG_FEC_MXC
+	setup_fec();
 #endif
 
 	return 0;
