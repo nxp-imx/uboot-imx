@@ -1,7 +1,7 @@
 /*
  * Freescale QuadSPI driver.
  *
- * Copyright (C) 2014 Freescale Semiconductor, Inc.
+ * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -785,7 +785,7 @@ static void fsl_qspi_ip_read(struct fsl_qspi *q, int len, u8 *rxbuf)
 static void fsl_qspi_write_data(struct fsl_qspi *q, int len, u8* txbuf)
 {
 	u32 tmp;
-	u32 t1, t2;
+	u32 t1, t2, t3;
 	int j;
 
 	/* clear the TX FIFO. */
@@ -795,6 +795,7 @@ static void fsl_qspi_write_data(struct fsl_qspi *q, int len, u8* txbuf)
 	/* fill the TX data to the FIFO */
 	t2 = len % 4;
 	t1 = len >> 2; /* 4 Bytes aligned */
+	t3 = t1 + t2;
 
 	for (j = 0; j < t1; j++) {
 		memcpy(&tmp, txbuf, 4);
@@ -809,6 +810,13 @@ static void fsl_qspi_write_data(struct fsl_qspi *q, int len, u8* txbuf)
 		tmp = fsl_qspi_endian_xchg(q, tmp);
 		writel(tmp, q->iobase + QUADSPI_TBDR);
 	}
+
+#if defined(CONFIG_MX7D)
+	/* iMX7D TXFIFO must be at least 16 bytes*/
+	for (; t3 < 4; t3++)
+		writel(tmp, q->iobase + QUADSPI_TBDR);
+#endif
+
 }
 
 /* see the spi_flash_read_write() */
