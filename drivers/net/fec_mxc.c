@@ -1093,7 +1093,11 @@ int fecmxc_initialize_multi(bd_t *bd, int dev_id, int phy_id, uint32_t addr)
 	 */
 	base_mii = MXS_ENET0_BASE;
 #else
+#ifdef CONFIG_FEC_MXC_MDIO_BASE
+	base_mii = CONFIG_FEC_MXC_MDIO_BASE;
+#else
 	base_mii = addr;
+#endif
 #endif
 	debug("eth_init: fec_probe(bd, %i, %i) @ %08x\n", dev_id, phy_id, addr);
 	bus = fec_get_miibus(base_mii, dev_id);
