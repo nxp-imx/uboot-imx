@@ -11,6 +11,7 @@
 #define _IMXIMAGE_H_
 
 #include <config.h>
+#include <linux/sizes.h>
 #define MAX_HW_CFG_SIZE_V2 220 /* Max number of registers imx can set for v2 */
 #define MAX_PLUGIN_CODE_SIZE (16*1024)
 #define MAX_HW_CFG_SIZE_V1 60  /* Max number of registers imx can set for v1 */
@@ -60,12 +61,20 @@
 #define DCD_VERSION 0x40
 #define DCD_COMMAND_PARAM 0x4
 
+#define DCD_WRITE_DATA_COMMAND_TAG	0xCC
+#define DCD_WRITE_DATA_PARAM		0x4
+#define DCD_CLR_BIT_PARAM		0xC
+#define DCD_CHECK_DATA_COMMAND_TAG	0xCF
+#define DCD_CHECK_DATA_PARAM		0x14
+
 enum imximage_cmd {
 	CMD_INVALID,
 	CMD_IMAGE_VERSION,
 	CMD_BOOT_FROM,
 	CMD_BOOT_OFFSET,
 	CMD_DATA,
+	CMD_CLR_BIT,
+	CMD_CHECK_DATA,
 	CMD_CSF,
 	CMD_PLUGIN,
 };
@@ -138,9 +147,15 @@ typedef struct {
 } __attribute__((packed)) write_dcd_command_t;
 
 typedef struct {
+	uint8_t tag;
+	uint16_t length;
+	uint8_t param;
+	dcd_addr_data_t addr_data[0];
+} __attribute__((packed)) dcd_command_t;
+
+typedef struct {
 	ivt_header_t header;
-	write_dcd_command_t write_dcd_command;
-	dcd_addr_data_t addr_data[MAX_HW_CFG_SIZE_V2];
+	uint32_t dcd_data[SZ_512];
 } dcd_v2_t;
 
 typedef struct {
@@ -181,7 +196,7 @@ struct imx_header {
 
 typedef void (*set_dcd_val_t)(struct imx_header *imxhdr,
 					char *name, int lineno,
-					int fld, uint32_t value,
+					int fld, int cmd, uint32_t value,
 					uint32_t off);
 
 typedef void (*set_dcd_rst_t)(struct imx_header *imxhdr,
