@@ -2,7 +2,7 @@
  * (C) Copyright 2007
  * Sascha Hauer, Pengutronix
  *
- * (C) Copyright 2009-2014 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2015 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -50,6 +50,8 @@ static inline int gpt_has_clk_source_osc(void)
 		return 1;
 
 	return 0;
+#elif defined(CONFIG_MX7)
+	return 1;
 #else
 	return 0;
 #endif
@@ -57,6 +59,9 @@ static inline int gpt_has_clk_source_osc(void)
 
 static inline ulong gpt_get_clk(void)
 {
+#if defined(CONFIG_MX7)
+	return MXC_HCLK >> 3;
+#else
 #ifdef CONFIG_MXC_GPT_HCLK
 	if (gpt_has_clk_source_osc())
 		return MXC_HCLK >> 3;
@@ -64,6 +69,7 @@ static inline ulong gpt_get_clk(void)
 		return mxc_get_clock(MXC_IPG_PERCLK);
 #else
 	return MXC_CLK32;
+#endif
 #endif
 }
 static inline unsigned long long tick_to_time(unsigned long long tick)
@@ -106,7 +112,7 @@ int timer_init(void)
 
 		/* For DL/S, SX, they has 24M OSC Enable bit and need to set prescaler */
 		if (is_cpu_type(MXC_CPU_MX6DL) || is_cpu_type(MXC_CPU_MX6SOLO)
-			|| is_cpu_type(MXC_CPU_MX6SX)) {
+			|| is_cpu_type(MXC_CPU_MX6SX) || is_cpu_type(MXC_CPU_MX7D)) {
 			i |= GPTCR_24MEN;
 
 			/* Produce 3Mhz clock */
