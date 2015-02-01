@@ -6,3 +6,4 @@
 #
 
 obj-y	:= soc.o clock.o clock_slice.o timer.o
+obj-$(CONFIG_SECURE_BOOT)    += hab.o
