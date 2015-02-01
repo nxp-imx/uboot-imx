@@ -5,4 +5,4 @@
 #
 #
 
-obj-y	:= clock.o clock_slice.o
+obj-y	:= soc.o clock.o clock_slice.o

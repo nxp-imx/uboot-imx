@@ -622,7 +622,7 @@ libs-y += test/
 libs-y += test/dm/
 libs-$(CONFIG_DM_DEMO) += drivers/demo/
 
-ifneq (,$(filter $(SOC), mx25 mx27 mx5 mx6 mx31 mx35 mxs vf610))
+ifneq (,$(filter $(SOC), mx25 mx27 mx5 mx6 mx7 mx31 mx35 mxs vf610))
 libs-y += arch/$(ARCH)/imx-common/
 endif
 
