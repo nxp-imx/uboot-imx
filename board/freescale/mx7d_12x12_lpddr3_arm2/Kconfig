@@ -1,0 +1,15 @@
+if TARGET_MX7D_12X12_LPDDR3_ARM2
+
+config SYS_BOARD
+	default "mx7d_12x12_lpddr3_arm2"
+
+config SYS_VENDOR
+	default "freescale"
+
+config SYS_SOC
+	default "mx7"
+
+config SYS_CONFIG_NAME
+	default "mx7d_12x12_lpddr3_arm2"
+
+endif
