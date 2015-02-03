@@ -314,7 +314,22 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 
 int arch_auxiliary_core_up(u32 core_id, u32 boot_private_data)
 {
-	/* TODO */
+	u32 stack, pc;
+
+	if (!boot_private_data)
+		return 1;
+
+	stack = *(u32 *)boot_private_data;
+	pc = *(u32 *)(boot_private_data + 4);
+
+	/* Set the stack and pc to M4 bootROM */
+	writel(stack, M4_BOOTROM_BASE_ADDR);
+	writel(pc, M4_BOOTROM_BASE_ADDR + 4);
+
+	/* Enable M4 */
+	setbits_le32(&src_reg->m4rcr, 0x00000008);
+	clrbits_le32(&src_reg->m4rcr, 0x00000001);
+
 	return 0;
 }
 
@@ -323,7 +338,7 @@ int arch_auxiliary_core_check_up(u32 core_id)
 	uint32_t val;
 
 	val = readl(&src_reg->m4rcr);
-	if (val & 0x1)
+	if (val & 0x00000001)
 		return 0; /* assert in reset */
 
 	return 1;
