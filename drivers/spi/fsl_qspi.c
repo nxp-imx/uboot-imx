@@ -785,17 +785,16 @@ static void fsl_qspi_ip_read(struct fsl_qspi *q, int len, u8 *rxbuf)
 static void fsl_qspi_write_data(struct fsl_qspi *q, int len, u8* txbuf)
 {
 	u32 tmp;
-	u32 t1, t2, t3;
+	u32 t1, t2;
 	int j;
 
 	/* clear the TX FIFO. */
 	tmp = readl(q->iobase + QUADSPI_MCR);
-	writel(tmp | QUADSPI_MCR_CLR_RXF_MASK, q->iobase + QUADSPI_MCR);
+	writel(tmp | QUADSPI_MCR_CLR_TXF_MASK, q->iobase + QUADSPI_MCR);
 
 	/* fill the TX data to the FIFO */
 	t2 = len % 4;
 	t1 = len >> 2; /* 4 Bytes aligned */
-	t3 = t1 + t2;
 
 	for (j = 0; j < t1; j++) {
 		memcpy(&tmp, txbuf, 4);
@@ -812,9 +811,11 @@ static void fsl_qspi_write_data(struct fsl_qspi *q, int len, u8* txbuf)
 	}
 
 #if defined(CONFIG_MX7D)
+	u32 t3;
 	/* iMX7D TXFIFO must be at least 16 bytes*/
+	t3 = t1 + ((t2 + 3) >> 2);
 	for (; t3 < 4; t3++)
-		writel(tmp, q->iobase + QUADSPI_TBDR);
+		writel(0, q->iobase + QUADSPI_TBDR);
 #endif
 
 }
