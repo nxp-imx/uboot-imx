@@ -63,9 +63,8 @@ u32 __weak get_board_rev(void)
 }
 #endif
 
-static int read_cpu_temperature(void)
+static int read_cpu_temperature(int *temperature)
 {
-	int temperature;
 	unsigned int reg, tmp;
 	unsigned int raw_25c, raw_n40c, ratio;
 	struct mxc_ccm_anatop_reg *ccm_anatop = (struct mxc_ccm_anatop_reg *)
@@ -79,7 +78,7 @@ static int read_cpu_temperature(void)
 	fuse = readl(&fuse_bank3->ana1);
 
 	if (fuse == 0 || fuse == 0xffffffff || (fuse & 0xfff00000) == 0)
-		return TEMPERATURE_MIN;
+		return -EINVAL;
 
 	/*
 	 * fuse data layout:
@@ -130,35 +129,38 @@ static int read_cpu_temperature(void)
 	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_FINISHED_MASK, &ccm_anatop->tempsense1_clr);
 
 	if (tmp <= raw_n40c)
-		temperature = REG_VALUE_TO_CEL(ratio, tmp);
+		*temperature = REG_VALUE_TO_CEL(ratio, tmp);
 	else
-		temperature = TEMPERATURE_MIN;
+		*temperature = TEMPERATURE_MIN;
 	/* power down anatop thermal sensor */
 	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_POWER_DOWN_MASK, &ccm_anatop->tempsense0_set);
 	writel(PMU_REF_REFTOP_SELFBIASOFF_MASK, &ccm_anatop->ref_clr);
 
-	return temperature;
+	return 0;
 }
 
 void check_cpu_temperature(void)
 {
 	int cpu_tmp = 0;
+	int ret;
 
-	cpu_tmp = read_cpu_temperature();
-	while (cpu_tmp > TEMPERATURE_MIN && cpu_tmp < TEMPERATURE_MAX) {
+	ret = read_cpu_temperature(&cpu_tmp);
+	while (!ret) {
 		if (cpu_tmp >= TEMPERATURE_HOT) {
 			printf("CPU is %d C, too hot to boot, waiting...\n",
 				cpu_tmp);
 			udelay(5000000);
-			cpu_tmp = read_cpu_temperature();
-		} else
-			break;
-	}
-	if (cpu_tmp > TEMPERATURE_MIN && cpu_tmp < TEMPERATURE_MAX)
-		printf("CPU:   Temperature %d C, calibration data: 0x%x\n",
+			ret = read_cpu_temperature(&cpu_tmp);
+		} else {
+			printf("CPU:   Temperature %d C, calibration data: 0x%x\n",
 			cpu_tmp, fuse);
-	else
+			break;
+		}
+	}
+
+	if (ret) {
 		printf("CPU:   Temperature: can't get valid data!\n");
+	}
 }
 
 static void init_aips(void)
