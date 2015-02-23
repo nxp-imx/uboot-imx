@@ -503,12 +503,10 @@ static int setup_fec(void)
 
 int board_phy_config(struct phy_device *phydev)
 {
-#ifdef CONFIG_FEC_ENABLE_MAX7322
 	/* Enable 1.8V(SEL_1P5_1P8_POS_REG) on
 	   Phy control debug reg 0 */
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x1f);
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x8);
-#endif
 
 	/* rgmii tx clock delay enable */
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x05);
