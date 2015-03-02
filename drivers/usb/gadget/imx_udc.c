@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2014 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2010-2015 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -458,10 +458,9 @@ static void mxc_udc_queue_update(u8 epnum,
 		if (data) {
 			memcpy((void *)tqi->page_vir, (void *)data, send);
 			_dump_buf((u8 *)(tqi->page_vir), send);
-
-			flush_dcache_range((unsigned long)(tqi->page_vir),
-				CACHE_ALIGNED_END(tqi->page_vir, send));
 		}
+		flush_dcache_range((unsigned long)(tqi->page_vir),
+				CACHE_ALIGNED_END(tqi->page_vir, ep->max_pkt_size));
 		if (!head)
 			last = head = tqi;
 		else {
@@ -551,6 +550,7 @@ static void mxc_usb_stop(void)
 
 static void usb_phy_init(void)
 {
+#ifndef CONFIG_MX7
 	u32 temp;
 	/* select 24M clk */
 	temp = readl(USB_PHY1_CTRL);
@@ -563,6 +563,7 @@ static void usb_phy_init(void)
 	temp |= PORTSCX_PTW_16BIT;
 	writel(temp, USB_PORTSC1);
 	DBG("Config PHY  END\n");
+#endif
 }
 
 static void usb_set_mode_device(void)
@@ -584,7 +585,7 @@ static void usb_set_mode_device(void)
 		;
 	DBG("DOORE RESET END\n");
 
-#if defined(CONFIG_MX6)
+#if (defined(CONFIG_MX6) || defined(CONFIG_MX7))
 	reset_usb_phy1();
 #endif
 	DBG("init core to device mode\n");
@@ -984,7 +985,7 @@ int mxc_udc_init(void)
     udc_pins_setting();
 	set_usb_phy1_clk();
 	enable_usboh3_clk(1);
-#if defined(CONFIG_MX6)
+#if (defined(CONFIG_MX6) || defined(CONFIG_MX7))
 	udc_disable_over_current();
 #endif
 	enable_usb_phy1_clk(1);

@@ -16,6 +16,8 @@
      || defined CONFIG_MX53 || defined CONFIG_MX6DL || defined CONFIG_MX6SL)
 #define USB_H3REGS_BASE		(OTG_BASE_ADDR + 0x600)
 #define USB_OTHERREGS_BASE	(OTG_BASE_ADDR + 0x800)
+#elif (defined CONFIG_MX7)
+#define USB_OTHERREGS_BASE	(OTG_BASE_ADDR + 0x200)
 #else
 #define USB_OTHERREGS_BASE	(OTG_BASE_ADDR + 0x600)
 #endif

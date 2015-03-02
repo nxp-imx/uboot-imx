@@ -22,10 +22,6 @@
 #include <recovery.h>
 #endif
 #endif
-#ifdef CONFIG_IMX_UDC
-#include <asm/arch/mx7_usbphy.h>
-#include <usb/imx_udc.h>
-#endif
 
 struct src *src_reg = (struct src *)SRC_BASE_ADDR;
 
@@ -412,30 +408,12 @@ void set_usb_phy1_clk(void)
 }
 void enable_usb_phy1_clk(unsigned char enable)
 {
-	if (enable)
-		writel(BM_USBPHY_CTRL_CLKGATE,
-		       USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL_CLR);
-	else
-		writel(BM_USBPHY_CTRL_CLKGATE,
-		       USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL_SET);
 }
 
 void reset_usb_phy1(void)
 {
 	/* Reset USBPHY module */
-	u32 temp;
-	temp = readl(USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL);
-	temp |= BM_USBPHY_CTRL_SFTRST;
-	writel(temp, USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL);
-	udelay(10);
-
-	/* Remove CLKGATE and SFTRST */
-	temp = readl(USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL);
-	temp &= ~(BM_USBPHY_CTRL_CLKGATE | BM_USBPHY_CTRL_SFTRST);
-	writel(temp, USB_PHY0_BASE_ADDR + HW_USBPHY_CTRL);
-	udelay(10);
-
-	/* Power up the PHY */
-	writel(0, USB_PHY0_BASE_ADDR + HW_USBPHY_PWD);
+	setbits_le32(&src_reg->usbophy1_rcr, 0x00000001);
 }
+
 #endif
