@@ -990,6 +990,8 @@ void clock_init(void)
 	init_clk_wdog();
 
 	enable_usboh3_clk(1);
+
+	clock_enable(CCGR_SNVS, 1);
 }
 
 #ifdef CONFIG_SECURE_BOOT
