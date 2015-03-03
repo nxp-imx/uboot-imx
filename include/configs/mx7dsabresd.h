@@ -435,4 +435,7 @@
 #error "EPDC Pins conflicts QSPI, Either EPDC or QSPI can be enabled!"
 #endif
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx7dsabresdandroid.h"
+#endif
 #endif	/* __CONFIG_H */
