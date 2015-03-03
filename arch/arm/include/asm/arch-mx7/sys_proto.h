@@ -22,6 +22,7 @@ u32 get_cpu_rev(void);
 
 const char *get_imx_type(u32 imxtype);
 unsigned imx_ddr_size(void);
+void set_wdog_reset(struct wdog_regs *wdog);
 
 int arch_auxiliary_core_up(u32 core_id, u32 boot_private_data);
 int arch_auxiliary_core_check_up(u32 core_id);

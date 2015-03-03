@@ -707,9 +707,9 @@ static void init_clk_wdog(void)
 
 	/* enable the clock gate */
 	clock_enable(CCGR_WDOG1, 1);
-	clock_enable(CCGR_WDOG2, 2);
-	clock_enable(CCGR_WDOG3, 3);
-	clock_enable(CCGR_WDOG4, 4);
+	clock_enable(CCGR_WDOG2, 1);
+	clock_enable(CCGR_WDOG3, 1);
+	clock_enable(CCGR_WDOG4, 1);
 
 }
 
