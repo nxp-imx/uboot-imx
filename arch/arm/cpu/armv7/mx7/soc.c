@@ -356,6 +356,24 @@ void boot_mode_apply(uint32_t cfg_val)
 	writel(reg, &src_reg->gpr10);
 }
 
+void set_wdog_reset(struct wdog_regs *wdog)
+{
+	u32 reg = readw(&wdog->wcr);
+	/*
+	 * Output WDOG_B signal to reset external pmic or POR_B decided by
+	 * the board desgin. Without external reset, the peripherals/DDR/
+	 * PMIC are not reset, that may cause system working abnormal.
+	 */
+	reg = readw(&wdog->wcr);
+	reg |= 1 << 3;
+	/*
+	 * WDZST bit is write-once only bit. Align this bit in kernel,
+	 * otherwise kernel code will have no chance to set this bit.
+	 */
+	reg |= 1 << 0;
+	writew(reg, &wdog->wcr);
+}
+
 /*
  * cfg_val will be used for
  * Boot_cfg4[7:0]:Boot_cfg3[7:0]:Boot_cfg2[7:0]:Boot_cfg1[7:0]
