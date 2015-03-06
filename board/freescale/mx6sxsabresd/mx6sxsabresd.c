@@ -719,13 +719,13 @@ static int setup_pmic_voltages(void)
 			printf("setup pmic mode error!\n");
 			return -1;
 		}
-		/* set SW1AB standby volatage 0.975V */
+		/* set SW1AB standby volatage 1.10V */
 		if (i2c_read(CONFIG_PMIC_I2C_SLAVE, PFUZE100_SW1ABSTBY, 1, &value, 1)) {
 			printf("Read SW1ABSTBY error!\n");
 			return -1;
 		}
 		value &= ~0x3f;
-		value |= PFUZE100_SW1ABC_SETP(9750);
+		value |= PFUZE100_SW1ABC_SETP(11000);
 		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE100_SW1ABSTBY, 1, &value, 1)) {
 			printf("Set SW1ABSTBY error!\n");
 			return -1;
@@ -743,13 +743,13 @@ static int setup_pmic_voltages(void)
 			return -1;
 		}
 
-		/* set SW1C standby volatage 0.975V */
+		/* set SW1C standby volatage 1.10V */
 		if (i2c_read(CONFIG_PMIC_I2C_SLAVE, PFUZE100_SW1CSTBY, 1, &value, 1)) {
 			printf("Read SW1CSTBY error!\n");
 			return -1;
 		}
 		value &= ~0x3f;
-		value |= PFUZE100_SW1ABC_SETP(9750);
+		value |= PFUZE100_SW1ABC_SETP(11000);
 		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE100_SW1CSTBY, 1, &value, 1)) {
 			printf("Set SW1CSTBY error!\n");
 			return -1;
