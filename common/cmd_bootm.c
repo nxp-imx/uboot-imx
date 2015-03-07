@@ -127,6 +127,16 @@ int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			return do_bootm_subcommand(cmdtp, flag, argc, argv);
 	}
 
+#ifdef CONFIG_SECURE_BOOT
+	extern uint32_t authenticate_image(
+			uint32_t ddr_start, uint32_t image_size);
+	if (authenticate_image(load_addr,
+		image_get_image_size((image_header_t *)load_addr)) == 0) {
+		printf("Authenticate uImage Fail, Please check\n");
+		return 1;
+	}
+#endif
+
 	return do_bootm_states(cmdtp, flag, argc, argv, BOOTM_STATE_START |
 		BOOTM_STATE_FINDOS | BOOTM_STATE_FINDOTHER |
 		BOOTM_STATE_LOADOS |
@@ -582,6 +592,14 @@ static int bootz_start(cmd_tbl_t *cmdtp, int flag, int argc,
 	if (bootm_find_ramdisk_fdt(flag, argc, argv))
 		return 1;
 
+#ifdef CONFIG_SECURE_BOOT
+	extern uint32_t authenticate_image(
+			uint32_t ddr_start, uint32_t image_size);
+	if (authenticate_image(images->ep, zi_end - zi_start) == 0) {
+		printf("Authenticate zImage Fail, Please check\n");
+		return 1;
+	}
+#endif
 	return 0;
 }
 
