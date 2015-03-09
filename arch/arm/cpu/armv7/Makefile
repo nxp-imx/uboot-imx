@@ -46,6 +46,7 @@ obj-$(CONFIG_ARCH_EXYNOS) += exynos/
 obj-$(if $(filter ls102xa,$(SOC)),y) += ls102xa/
 obj-$(if $(filter mx5,$(SOC)),y) += mx5/
 obj-$(CONFIG_MX6) += mx6/
+obj-$(CONFIG_MX7) += mx7/
 obj-$(CONFIG_OMAP34XX) += omap3/
 obj-$(CONFIG_OMAP44XX) += omap4/
 obj-$(CONFIG_OMAP54XX) += omap5/
