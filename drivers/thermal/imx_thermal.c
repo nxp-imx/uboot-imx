@@ -122,7 +122,7 @@ int imx_thermal_get_temp(struct udevice *dev, int *temp)
 	int cpu_tmp = 0;
 
 	cpu_tmp = read_cpu_temperature(dev);
-	while (cpu_tmp > TEMPERATURE_MIN && cpu_tmp < TEMPERATURE_MAX) {
+	while (cpu_tmp > TEMPERATURE_MIN) {
 		if (cpu_tmp >= TEMPERATURE_HOT) {
 			printf("CPU Temperature is %d C, too hot to boot, waiting...\n",
 			       cpu_tmp);
@@ -153,7 +153,7 @@ static int imx_thermal_probe(struct udevice *dev)
 	fuse_read(pdata->fuse_bank, pdata->fuse_word, &fuse);
 
 	/* Check for valid fuse */
-	if (fuse == 0 || fuse == ~0) {
+	if (fuse == 0 || fuse == ~0 || (fuse & 0xfff00000) == 0) {
 		printf("CPU:   Thermal invalid data, fuse: 0x%x\n", fuse);
 		return -EPERM;
 	}
