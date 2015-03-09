@@ -42,6 +42,11 @@
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE		UART1_IPS_BASE_ADDR
 
+/* allow to overwrite serial and ethaddr */
+#define CONFIG_ENV_OVERWRITE
+#define CONFIG_CONS_INDEX		1
+#define CONFIG_BAUDRATE			115200
+
 #define CONFIG_CMD_FUSE
 #ifdef CONFIG_CMD_FUSE
 #define CONFIG_MXC_OCOTP
@@ -58,13 +63,6 @@
 #define CONFIG_CMD_FAT
 #define CONFIG_DOS_PARTITION
 #define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
-
-#define CONFIG_BAUDRATE			115200
-
-#define CONFIG_SYS_FSL_USDHC_NUM	2
-#define CONFIG_SYS_MMC_ENV_DEV		0   /* USDHC1 */
-#define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
-#define CONFIG_MMCROOT			"/dev/mmcblk0p2"  /* USDHC1 */
 
 #define PHYS_SDRAM_SIZE			SZ_1G
 
@@ -85,34 +83,6 @@
 /* ENET1 */
 #define IMX_FEC_BASE			ENET_IPS_BASE_ADDR
 
-#ifdef CONFIG_SYS_BOOT_QSPI
-#define CONFIG_SYS_USE_QSPI
-#define CONFIG_ENV_IS_IN_SPI_FLASH
-#elif defined CONFIG_SYS_BOOT_NAND
-#define CONFIG_SYS_USE_NAND
-#define CONFIG_ENV_IS_IN_NAND
-#else
-#define CONFIG_SYS_USE_QSPI   /* Enable the QSPI flash at default */
-#define CONFIG_ENV_IS_IN_MMC
-#endif
-
-#ifdef CONFIG_SYS_USE_NAND
-#define CONFIG_CMD_NAND
-#define CONFIG_CMD_NAND_TRIMFFS
-
-/* NAND stuff */
-#define CONFIG_NAND_MXS
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define CONFIG_SYS_NAND_BASE		0x40000000
-#define CONFIG_SYS_NAND_5_ADDR_CYCLE
-#define CONFIG_SYS_NAND_ONFI_DETECTION
-
-/* DMA stuff, needed for GPMI/MXS NAND support */
-#define CONFIG_APBH_DMA
-#define CONFIG_APBH_DMA_BURST
-#define CONFIG_APBH_DMA_BURST8
-#endif
-
 /* PMIC */
 #define CONFIG_PFUZE3000_PMIC_I2C
 #ifdef CONFIG_PFUZE3000_PMIC_I2C
@@ -126,10 +96,6 @@
 
 #undef CONFIG_CMD_EXPORTENV
 #undef CONFIG_CMD_IMPORTENV
-
-/* allow to overwrite serial and ethaddr */
-#define CONFIG_ENV_OVERWRITE
-#define CONFIG_CONS_INDEX		1
 
 /* I2C configs */
 #define CONFIG_CMD_I2C
@@ -330,6 +296,34 @@
 
 #define CONFIG_ENV_SIZE			SZ_8K
 
+#ifdef CONFIG_SYS_BOOT_QSPI
+#define CONFIG_SYS_USE_QSPI
+#define CONFIG_ENV_IS_IN_SPI_FLASH
+#elif defined CONFIG_SYS_BOOT_NAND
+#define CONFIG_SYS_USE_NAND
+#define CONFIG_ENV_IS_IN_NAND
+#else
+#define CONFIG_SYS_USE_QSPI   /* Enable the QSPI flash at default */
+#define CONFIG_ENV_IS_IN_MMC
+#endif
+
+#ifdef CONFIG_SYS_USE_NAND
+#define CONFIG_CMD_NAND
+#define CONFIG_CMD_NAND_TRIMFFS
+
+/* NAND stuff */
+#define CONFIG_NAND_MXS
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_SYS_NAND_BASE		0x40000000
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+
+/* DMA stuff, needed for GPMI/MXS NAND support */
+#define CONFIG_APBH_DMA
+#define CONFIG_APBH_DMA_BURST
+#define CONFIG_APBH_DMA_BURST8
+#endif
+
 #ifdef CONFIG_SYS_USE_QSPI
 #define CONFIG_FSL_QSPI    /* enable the QUADSPI driver */
 #define CONFIG_QSPI_BASE		QSPI1_IPS_BASE_ADDR
@@ -360,6 +354,15 @@
 #define CONFIG_ENV_SECT_SIZE		(128 << 10)
 #define CONFIG_ENV_SIZE			CONFIG_ENV_SECT_SIZE
 #endif
+
+#ifdef CONFIG_SYS_USE_NAND
+#define CONFIG_SYS_FSL_USDHC_NUM	1
+#else
+#define CONFIG_SYS_FSL_USDHC_NUM	2
+#endif
+#define CONFIG_SYS_MMC_ENV_DEV		0   /* USDHC1 */
+#define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
+#define CONFIG_MMCROOT			"/dev/mmcblk0p2"  /* USDHC1 */
 
 #define CONFIG_OF_LIBFDT
 #define CONFIG_CMD_BOOTZ
