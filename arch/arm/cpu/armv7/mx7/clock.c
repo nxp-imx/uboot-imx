@@ -997,6 +997,10 @@ void clock_init(void)
 	enable_usboh3_clk(1);
 
 	clock_enable(CCGR_SNVS, 1);
+
+#ifdef CONFIG_NAND_MXS
+	clock_enable(CCGR_RAWNAND, 1);
+#endif
 }
 
 #ifdef CONFIG_SECURE_BOOT
