@@ -552,6 +552,10 @@ config TARGET_MX7D_19X19_DDR3_ARM2
 	bool "Support mx7d_19x19_ddr3_arm2"
 	select CPU_V7
 
+config TARGET_MX7DSABRESD
+	bool "Support mx7dsabresd"
+	select CPU_V7
+
 config TARGET_GW_VENTANA
 	bool "Support gw_ventana"
 	select CPU_V7
@@ -850,6 +854,7 @@ source "board/freescale/mx6sx_17x17_arm2/Kconfig"
 source "board/freescale/mx6sx_19x19_arm2/Kconfig"
 source "board/freescale/mx7d_12x12_lpddr3_arm2/Kconfig"
 source "board/freescale/mx7d_19x19_ddr3_arm2/Kconfig"
+source "board/freescale/mx7dsabresd/Kconfig"
 source "board/freescale/vf610twr/Kconfig"
 source "board/gateworks/gw_ventana/Kconfig"
 source "board/genesi/mx51_efikamx/Kconfig"
