@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2015 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -59,7 +59,11 @@ iomux_v3_cfg_t const usdhc3_pads[] = {
 	MX6_PAD_SD3_DAT5__SD3_DATA5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD3_DAT6__SD3_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD3_DAT7__SD3_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+#ifdef CONFIG_MX6DQ_POP_LPDDR2
+	MX6_PAD_GPIO_18__SD3_VSELECT | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+#else
 	MX6_PAD_NANDF_CS0__GPIO6_IO11  | MUX_PAD_CTRL(NO_PAD_CTRL), /* CD */
+#endif
 };
 
 iomux_v3_cfg_t const usdhc4_pads[] = {
@@ -110,17 +114,46 @@ struct fsl_esdhc_cfg usdhc_cfg[2] = {
 	{USDHC4_BASE_ADDR},
 };
 
+int mmc_get_env_devno(void)
+{
+	u32 soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	u32 dev_no;
+	u32 bootsel;
+
+	bootsel = (soc_sbmr & 0x000000FF) >> 6 ;
+
+	/* If not boot from sd/mmc, use default value */
+	if (bootsel != 1)
+		return CONFIG_SYS_MMC_ENV_DEV;
+
+	/* BOOT_CFG2[3] and BOOT_CFG2[4] */
+	dev_no = (soc_sbmr & 0x00001800) >> 11;
+
+	/* need ubstract 1 to map to the mmc device id
+	 * see the comments in board_mmc_init function
+	 */
+
+	dev_no -= 2;
+
+	return dev_no;
+}
+
+int mmc_map_to_kernel_blk(int dev_no)
+{
+	return dev_no + 2;
+}
 int board_mmc_getcd(struct mmc *mmc)
 {
+	int ret = 1;
+#ifndef CONFIG_MX6DQ_POP_LPDDR2
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
-	int ret;
 
 	if (cfg->esdhc_base == USDHC3_BASE_ADDR) {
 		gpio_direction_input(IMX_GPIO_NR(6, 11));
 		ret = !gpio_get_value(IMX_GPIO_NR(6, 11));
 	} else /* Don't have the CD GPIO pin on board */
 		ret = 1;
-
+#endif
 	return ret;
 }
 
@@ -156,6 +189,39 @@ int board_mmc_init(bd_t *bis)
 
 	return 0;
 }
+
+int check_mmc_autodetect(void)
+{
+	char *autodetect_str = getenv("mmcautodetect");
+
+	if ((autodetect_str != NULL) &&
+		(strcmp(autodetect_str, "yes") == 0)) {
+		return 1;
+	}
+
+	return 0;
+}
+
+void board_late_mmc_env_init(void)
+{
+	char cmd[32];
+	char mmcblk[32];
+	u32 dev_no = mmc_get_env_devno();
+
+	if (!check_mmc_autodetect())
+		return;
+
+	setenv_ulong("mmcdev", dev_no);
+
+	/* Set mmcblk env */
+	sprintf(mmcblk, "/dev/mmcblk%dp2 rootwait rw",
+		mmc_map_to_kernel_blk(dev_no));
+	setenv("mmcroot", mmcblk);
+
+	sprintf(cmd, "mmc dev %d", dev_no);
+	run_command(cmd, 0);
+}
+
 #endif
 
 #define MII_MMD_ACCESS_CTRL_REG		0xd
@@ -271,6 +337,15 @@ int board_init(void)
 	return 0;
 }
 
+int board_late_init(void)
+{
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
+
+	return 0;
+}
+
 int checkboard(void)
 {
 #ifdef CONFIG_MX6DL
@@ -281,3 +356,10 @@ int checkboard(void)
 
 	return 0;
 }
+#ifdef CONFIG_LDO_BYPASS_CHECK
+/* no external pmic, always ldo_enable */
+void ldo_mode_set(int ldo_bypass)
+{
+	return;
+}
+#endif

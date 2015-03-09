@@ -11,6 +11,12 @@
 
 #define CONFIG_MX6
 
+/* uncomment for PLUGIN mode support */
+/* #define CONFIG_USE_PLUGIN */
+
+/* uncomment for SECURE mode support */
+/* #define CONFIG_SECURE_BOOT */
+
 #include "mx6_common.h"
 
 #define CONFIG_DISPLAY_CPUINFO
@@ -28,10 +34,16 @@
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
 
 #define CONFIG_BOARD_EARLY_INIT_F
+#define CONFIG_BOARD_LATE_INIT
 #define CONFIG_MXC_GPIO
 
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE		UART4_BASE
+#define CONFIG_IMX6_THERMAL
+#define CONFIG_CMD_FUSE
+#if defined(CONFIG_CMD_FUSE) || defined(CONFIG_IMX6_THERMAL)
+#define CONFIG_MXC_OCOTP
+#endif
 
 /* MMC Configs */
 #define CONFIG_FSL_ESDHC
@@ -45,6 +57,8 @@
 #define CONFIG_BOUNCE_BUFFER
 #define CONFIG_CMD_FAT
 #define CONFIG_DOS_PARTITION
+
+#define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
 
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
@@ -81,9 +95,10 @@
 	"initrd_high=0xffffffff\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
-	"mmcdev=1\0" \
+	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
-	"mmcroot=/dev/mmcblk0p2 rootwait rw\0" \
+	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
+	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
 		"root=${mmcroot}\0" \
 	"loadbootscript=" \
@@ -150,12 +165,16 @@
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP
 #define CONFIG_SYS_HUSH_PARSER
+#define CONFIG_SYS_PROMPT		"ARM2 U-Boot > "
 #define CONFIG_AUTO_COMPLETE
-#define CONFIG_SYS_CBSIZE		256
+#define CONFIG_SYS_CBSIZE		1024
 
-#define CONFIG_SYS_MAXARGS		16
+/* Print Buffer Size */
+#define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
+#define CONFIG_SYS_MAXARGS		256
 #define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE
 
+#define CONFIG_CMD_MEMTEST
 #define CONFIG_SYS_MEMTEST_START	0x10000000
 #define CONFIG_SYS_MEMTEST_END		0x10010000
 
@@ -179,10 +198,12 @@
 /* FLASH and environment organization */
 #define CONFIG_SYS_NO_FLASH
 
-#define CONFIG_ENV_OFFSET		(6 * 64 * 1024)
+#define CONFIG_ENV_OFFSET		(8 * 64 * 1024)
 #define CONFIG_ENV_SIZE			(8 * 1024)
 #define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		1
+#define CONFIG_SYS_MMC_ENV_PART		0	/* user partition */
+#define CONFIG_MMCROOT			"/dev/mmcblk3p2"  /* SDHC4 */
 
 #define CONFIG_OF_LIBFDT
 #define CONFIG_CMD_BOOTZ
