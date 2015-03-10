@@ -58,6 +58,9 @@
 #ifdef CONFIG_AVR32
 #include <asm/arch/mmu.h>
 #endif
+#ifdef CONFIG_FASTBOOT
+#include <fastboot.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -673,6 +676,20 @@ static int initr_kbd(void)
 }
 #endif
 
+#ifdef CONFIG_FASTBOOT
+static int initr_fastboot_setup(void)
+{
+	fastboot_setup();
+	return 0;
+}
+
+static int initr_check_fastboot(void)
+{
+	check_fastboot();
+	return 0;
+}
+#endif
+
 static int run_main_loop(void)
 {
 #ifdef CONFIG_SANDBOX
@@ -848,6 +865,9 @@ init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_BOARD_LATE_INIT
 	board_late_init,
 #endif
+#ifdef CONFIG_FASTBOOT
+	initr_fastboot_setup,
+#endif
 #ifdef CONFIG_CMD_SCSI
 	INIT_FUNC_WATCHDOG_RESET
 	initr_scsi,
@@ -890,6 +910,9 @@ init_fnc_t init_sequence_r[] = {
 #endif
 #ifdef CONFIG_PS2KBD
 	initr_kbd,
+#endif
+#ifdef CONFIG_FASTBOOT
+	initr_check_fastboot,
 #endif
 	run_main_loop,
 };

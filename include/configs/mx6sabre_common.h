@@ -439,6 +439,11 @@
 #define CONFIG_IMX_VIDEO_SKIP
 
 #ifndef CONFIG_SPL
+/*
+ * USE our legacy UDC driver, but not CI_UDC
+ * USE our legacy fastboot way, but not gnl
+ */
+#if 0
 #define CONFIG_CI_UDC
 #define CONFIG_USBD_HS
 #define CONFIG_USB_GADGET_DUALSPEED
@@ -452,6 +457,7 @@
 #define CONFIG_G_DNL_VENDOR_NUM		0x0525
 #define CONFIG_G_DNL_PRODUCT_NUM	0xa4a5
 #define CONFIG_G_DNL_MANUFACTURER	"FSL"
+#endif
 #endif
 
 #if defined(CONFIG_ANDROID_SUPPORT)

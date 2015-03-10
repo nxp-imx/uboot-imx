@@ -651,6 +651,7 @@ U_BOOT_CMD(
 );
 #endif	/* CONFIG_CMD_BOOTZ */
 
+#if 0
 #ifdef CONFIG_CMD_BOOTI
 /* See Documentation/arm64/booting.txt in the Linux kernel */
 struct Image_header {
@@ -799,3 +800,4 @@ U_BOOT_CMD(
 	"boot arm64 Linux Image image from memory", booti_help_text
 );
 #endif	/* CONFIG_CMD_BOOTI */
+#endif

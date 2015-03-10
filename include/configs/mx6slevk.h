@@ -319,4 +319,8 @@
 #endif
 #endif /* CONFIG_SPLASH_SCREEN */
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx6slevkandroid.h"
+#endif
+
 #endif				/* __CONFIG_H */

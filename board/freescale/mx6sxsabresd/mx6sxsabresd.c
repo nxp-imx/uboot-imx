@@ -40,6 +40,13 @@
 #include <mxsfb.h>
 #endif
 
+#ifdef CONFIG_FASTBOOT
+#include <fastboot.h>
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif
+#endif /*CONFIG_FASTBOOT*/
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL  (PAD_CTL_PKE | PAD_CTL_PUE |		\
@@ -887,6 +894,115 @@ int checkboard(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_FASTBOOT
+
+void board_fastboot_setup(void)
+{
+	switch (get_boot_device()) {
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	case SD2_BOOT:
+	case MMC2_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "mmc0");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "booti mmc0");
+		break;
+	case SD3_BOOT:
+	case MMC3_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "mmc1");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "booti mmc1");
+		break;
+	case SD4_BOOT:
+	case MMC4_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "mmc2");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "booti mmc2");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
+	default:
+		printf("unsupported boot devices\n");
+		break;
+	}
+}
+
+#ifdef CONFIG_ANDROID_RECOVERY
+
+#define GPIO_VOL_DN_KEY IMX_GPIO_NR(1, 19)
+iomux_v3_cfg_t const recovery_key_pads[] = {
+	(MX6_PAD_CSI_DATA05__GPIO1_IO_19 | MUX_PAD_CTRL(BUTTON_PAD_CTRL)),
+};
+
+int check_recovery_cmd_file(void)
+{
+	int button_pressed = 0;
+	int recovery_mode = 0;
+
+	recovery_mode = recovery_check_and_clean_flag();
+
+	/* Check Recovery Combo Button press or not. */
+	imx_iomux_v3_setup_multiple_pads(recovery_key_pads,
+		ARRAY_SIZE(recovery_key_pads));
+
+	gpio_direction_input(GPIO_VOL_DN_KEY);
+
+	if (gpio_get_value(GPIO_VOL_DN_KEY) == 0) { /* VOL_DN key is low assert */
+		button_pressed = 1;
+		printf("Recovery key pressed\n");
+	}
+
+	return recovery_mode || button_pressed;
+}
+
+void board_recovery_setup(void)
+{
+	int bootdev = get_boot_device();
+
+	switch (bootdev) {
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	case SD2_BOOT:
+	case MMC2_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery", "booti mmc0 recovery");
+		break;
+	case SD3_BOOT:
+	case MMC3_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery", "booti mmc1 recovery");
+		break;
+	case SD4_BOOT:
+	case MMC4_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery", "booti mmc2 recovery");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
+	default:
+		printf("Unsupported bootup device for recovery: dev: %d\n",
+			bootdev);
+		return;
+	}
+
+	printf("setup env for recovery..\n");
+	setenv("bootcmd", "run bootcmd_android_recovery");
+}
+#endif /*CONFIG_ANDROID_RECOVERY*/
+
+#endif /*CONFIG_FASTBOOT*/
+
+#ifdef CONFIG_IMX_UDC
+iomux_v3_cfg_t const otg_udc_pads[] = {
+	(MX6_PAD_GPIO1_IO10__ANATOP_OTG1_ID | MUX_PAD_CTRL(NO_PAD_CTRL)),
+};
+void udc_pins_setting(void)
+{
+	imx_iomux_v3_setup_multiple_pads(otg_udc_pads,
+		ARRAY_SIZE(otg_udc_pads));
+}
+
+#endif /*CONFIG_IMX_UDC*/
 
 #ifdef CONFIG_SPL_BUILD
 #include <libfdt.h>
