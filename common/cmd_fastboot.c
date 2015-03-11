@@ -2,7 +2,7 @@
  * Copyright 2008 - 2009 (C) Wind River Systems, Inc.
  * Tom Rix <Tom.Rix@windriver.com>
  *
- * Copyright (C) 2010-2014 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2015 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -1544,9 +1544,12 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	char *ptn = "boot";
 	int mmcc = -1;
 	struct fastboot_boot_img_hdr *hdr = &boothdr;
-#ifdef CONFIG_SECURE_BOOT
-    u_int32_t load_addr;
     uint32_t image_size;
+    unsigned bootimg_addr;
+#ifdef CONFIG_SECURE_BOOT
+#define IVT_SIZE 0x20
+#define CSF_PAD_SIZE 0x2000
+#define ANDROID_BOOT_AUTH_SIZE 0x740000
 #endif
 	int i = 0;
 	bootm_headers_t images;
@@ -1573,6 +1576,7 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		disk_partition_t info;
 		block_dev_desc_t *dev_desc = NULL;
 		unsigned sector;
+		unsigned bootimg_sectors;
 
 		memset((void *)&info, 0 , sizeof(disk_partition_t));
 		/* i.MX use MBR as partition table, so this will have
@@ -1615,16 +1619,49 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			goto fail;
 		}
 
-		sector = pte->start + (hdr->page_size / 512);
+		image_size = hdr->page_size +
+			ALIGN_SECTOR(hdr->kernel_size, hdr->page_size) +
+			ALIGN_SECTOR(hdr->ramdisk_size, hdr->page_size) +
+			ALIGN_SECTOR(hdr->second_size, hdr->page_size);
+		bootimg_sectors = image_size/512;
+		bootimg_addr = hdr->kernel_addr - hdr->page_size;
 
-		if (mmc->block_dev.block_read(mmcc, sector,
-						(hdr->kernel_size / 512) + 1,
-						(void *)hdr->kernel_addr) < 0) {
+#ifdef CONFIG_SECURE_BOOT
+		/* Default boot.img should be padded to ANDROID_BOOT_AUTH_SIZE
+		   before appended with IVT&CSF data. If the default boot.img exceed the
+		   size, the IVT&CSF data cannot appended to the end of boot.img */
+		if (image_size > ANDROID_BOOT_AUTH_SIZE) {
+			printf("The image size is too large for athenticated boot!\n");
+			return 1;
+		}
+		image_size = ANDROID_BOOT_AUTH_SIZE;
+		/* Make sure all data boot.img + IVT + CSF been read to memory */
+		bootimg_sectors = image_size/512 +
+			ALIGN_SECTOR(IVT_SIZE + CSF_PAD_SIZE, 512)/512;
+#endif
+
+		if (mmc->block_dev.block_read(mmcc, pte->start,
+					bootimg_sectors,
+					(void *)bootimg_addr) < 0) {
 			printf("booti: mmc failed to read kernel\n");
 			goto fail;
 		}
 		/* flush cache after read */
-		flush_cache((ulong)hdr->kernel_addr, hdr->kernel_size); /* FIXME */
+		flush_cache((ulong)bootimg_addr, bootimg_sectors * 512); /* FIXME */
+
+#ifdef CONFIG_SECURE_BOOT
+		extern uint32_t authenticate_image(uint32_t ddr_start,
+				uint32_t image_size);
+
+		if (authenticate_image(bootimg_addr, image_size)) {
+			printf("Authenticate OK\n");
+		} else {
+			printf("Authenticate image Fail, Please check\n\n");
+			return 1;
+		}
+#endif /*CONFIG_SECURE_BOOT*/
+
+		sector = pte->start + (hdr->page_size / 512);
 		sector += ALIGN_SECTOR(hdr->kernel_size, hdr->page_size) / 512;
 		if (mmc->block_dev.block_read(mmcc, sector,
 						(hdr->ramdisk_size / 512) + 1,
@@ -1678,6 +1715,29 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			end = fdtaddr + hdr->second_size;
 		}
 #endif /*CONFIG_OF_LIBFDT*/
+
+#ifdef CONFIG_SECURE_BOOT
+		image_size = hdr->page_size +
+			ALIGN_SECTOR(hdr->kernel_size, hdr->page_size) +
+			ALIGN_SECTOR(hdr->ramdisk_size, hdr->page_size) +
+			ALIGN_SECTOR(hdr->second_size, hdr->page_size);
+		if (image_size > ANDROID_BOOT_AUTH_SIZE) {
+			printf("The image size is too large for athenticated boot!\n");
+			return 1;
+		}
+		image_size = ANDROID_BOOT_AUTH_SIZE;
+		bootimg_addr = addr;
+		extern uint32_t authenticate_image(uint32_t ddr_start,
+				uint32_t image_size);
+
+		if (authenticate_image(bootimg_addr, image_size)) {
+			printf("Authenticate OK\n");
+		} else {
+			printf("Authenticate image Fail, Please check\n\n");
+			return 1;
+		}
+#endif /*CONFIG_SECURE_BOOT*/
+
 		if (kaddr != hdr->kernel_addr) {
 			/*check overlap*/
 			if (((hdr->kernel_addr >= addr) &&
@@ -1726,25 +1786,13 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		printf("fdt      @ %08x (%d)\n", hdr->second_addr, hdr->second_size);
 #endif /*CONFIG_OF_LIBFDT*/
 
-#ifdef CONFIG_SECURE_BOOT
-#define IVT_SIZE 0x20
-#define CSF_PAD_SIZE 0x2000
-	extern uint32_t authenticate_image(uint32_t ddr_start,
-					   uint32_t image_size);
-
-	image_size = hdr->ramdisk_addr + hdr->ramdisk_size - hdr->kernel_addr -
-		IVT_SIZE - CSF_PAD_SIZE;
-
-	if (authenticate_image(hdr->kernel_addr, image_size)) {
-		printf("Authenticate OK\n");
-	} else {
-		printf("Authenticate image Fail, Please check\n\n");
-		return 1;
-	}
-#endif /*CONFIG_SECURE_BOOT*/
-
 #ifdef CONFIG_CMDLINE_TAG
+#ifndef CONFIG_SECURE_BOOT
+    /* not allow to change bootargs in cmd line */
 	char *commandline = getenv("bootargs");
+#else
+	char *commandline = NULL;
+#endif
 
 	/* If no bootargs env, just use hdr command line */
 	if (!commandline) {
