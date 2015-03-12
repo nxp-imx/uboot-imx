@@ -27,6 +27,16 @@ u32 get_cpu_rev(void);
 const char *get_imx_type(u32 imxtype);
 unsigned imx_ddr_size(void);
 void set_chipselect_size(int const);
+void set_wdog_reset(struct wdog_regs *wdog);
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+int check_ldo_bypass(void);
+int check_1_2G(void);
+int set_anatop_bypass(int wdog_reset_pin);
+void ldo_mode_set(int ldo_bypass);
+void prep_anatop_bypass(void);
+void finish_anatop_bypass(void);
+#endif
 
 /*
  * Initializes on-chip ethernet controllers.
