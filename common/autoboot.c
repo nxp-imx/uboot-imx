@@ -13,6 +13,10 @@
 #include <menu.h>
 #include <post.h>
 
+#ifdef is_boot_from_usb
+#include <environment.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #define MAX_DELAY_STOP_STR 32
@@ -246,6 +250,17 @@ const char *bootdelay_process(void)
 	s = getenv("bootdelay");
 	bootdelay = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
 
+#ifdef is_boot_from_usb
+	if (is_boot_from_usb()) {
+		printf("Boot from USB for mfgtools\n");
+		bootdelay = 0;
+		set_default_env("Use default environment for \
+				 mfgtools\n");
+	} else {
+		printf("Normal Boot\n");
+	}
+#endif
+
 #ifdef CONFIG_OF_CONTROL
 	bootdelay = fdtdec_get_config_int(gd->fdt_blob, "bootdelay",
 			bootdelay);
@@ -271,6 +286,13 @@ const char *bootdelay_process(void)
 	} else
 #endif /* CONFIG_BOOTCOUNT_LIMIT */
 		s = getenv("bootcmd");
+
+#ifdef is_boot_from_usb
+	if (is_boot_from_usb()) {
+		s = getenv("bootcmd_mfg");
+		printf("Run bootcmd_mfg: %s\n", s);
+	}
+#endif
 
 	process_fdt_options(gd->fdt_blob);
 	stored_bootdelay = bootdelay;

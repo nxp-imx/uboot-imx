@@ -1154,4 +1154,11 @@ extern void vadc_power_down(void);
 #endif
 
 #endif /* __ASSEMBLER__*/
+
+/*
+ * If ROM fail back to USB recover mode, USBPH0_PWD will be clear to use USB
+ * If boot from the other mode, USB0_PWD will keep reset value
+ */
+#define  is_boot_from_usb(void) (!(readl(USB_PHY0_BASE_ADDR) & (1<<20)))
+
 #endif /* __ASM_ARCH_MX6_IMX_REGS_H__ */

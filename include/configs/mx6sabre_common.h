@@ -100,6 +100,24 @@
 
 #define CONFIG_LOADADDR                        0x12000000
 #define CONFIG_SYS_TEXT_BASE           0x17800000
+#ifdef CONFIG_SYS_BOOT_NAND
+#define CONFIG_MFG_NAND_PARTITION "mtdparts=gpmi-nand:16m(boot),16m(kernel),16m(dtb),-(rootfs) "
+#else
+#define CONFIG_MFG_NAND_PARTITION ""
+#endif
+
+#define CONFIG_MFG_ENV_SETTINGS \
+       "mfgtool_args=setenv bootargs console=" CONFIG_CONSOLE_DEV ",115200 " \
+               "rdinit=/linuxrc " \
+               "g_mass_storage.stall=0 g_mass_storage.removable=1 " \
+               "g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
+               "g_mass_storage.iSerialNumber=\"\" "\
+               "enable_wait_mode=off "\
+               CONFIG_MFG_NAND_PARTITION \
+               "\0" \
+               "initrd_addr=0x12C00000\0" \
+               "initrd_high=0xffffffff\0" \
+               "bootcmd_mfg=run mfgtool_args;bootm ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 
 #ifdef CONFIG_SUPPORT_EMMC_BOOT
 #define EMMC_ENV \
@@ -122,6 +140,7 @@
 #endif
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
