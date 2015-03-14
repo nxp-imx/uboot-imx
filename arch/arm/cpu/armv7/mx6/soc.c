@@ -415,6 +415,29 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 	struct fuse_bank4_regs *fuse =
 			(struct fuse_bank4_regs *)bank->fuse_regs;
 
+#ifdef CONFIG_MX6SX
+	if (0 == dev_id) {
+		u32 value = readl(&fuse->mac_addr1);
+		mac[0] = (value >> 8);
+		mac[1] = value ;
+
+		value = readl(&fuse->mac_addr0);
+		mac[2] = value >> 24 ;
+		mac[3] = value >> 16 ;
+		mac[4] = value >> 8 ;
+		mac[5] = value ;
+	} else {
+		u32 value = readl(&fuse->mac_addr2);
+		mac[0] = value >> 24 ;
+		mac[1] = value >> 16 ;
+		mac[2] = value >> 8 ;
+		mac[3] = value ;
+
+		value = readl(&fuse->mac_addr1);
+		mac[4] = value >> 24 ;
+		mac[5] = value >> 16 ;
+	}
+#else
 	u32 value = readl(&fuse->mac_addr_high);
 	mac[0] = (value >> 8);
 	mac[1] = value ;
@@ -425,6 +448,7 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 	mac[4] = value >> 8 ;
 	mac[5] = value ;
 
+#endif
 }
 #endif
 

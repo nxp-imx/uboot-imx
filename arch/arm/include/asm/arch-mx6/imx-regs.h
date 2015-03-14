@@ -646,9 +646,9 @@ struct fuse_bank4_regs {
 	u32 rsvd0[3];
 	u32 sjc_resp_high;
 	u32 rsvd1[3];
-	u32 mac_addr_low;
+	u32 mac_addr0;
 	u32 rsvd2[3];
-	u32 mac_addr_high;
+	u32 mac_addr1;
 	u32 rsvd3[3];
 	u32 mac_addr2;
 	u32 rsvd4[7];
