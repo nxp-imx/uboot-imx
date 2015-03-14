@@ -25,6 +25,7 @@ extern struct vidinfo panel_info;
 void lcd_ctrl_init(void *lcdbase);
 void lcd_enable(void);
 void lcd_setcolreg(ushort regno, ushort red, ushort green, ushort blue);
+void lcd_initcolregs (void);
 
 struct bmp_image *gunzip_bmp(unsigned long addr, unsigned long *lenp,
 			     void **alloc_addr);
@@ -99,6 +100,11 @@ typedef struct vidinfo {
 	ushort  *cmap;
 	struct epdc_data_struct epdc_data;
 } vidinfo_t;
+
+static __maybe_unused ushort *configuration_get_cmap(void)
+{
+	return panel_info.cmap;
+}
 #else
 typedef struct vidinfo {
 	ushort	vl_col;		/* Number of columns (i.e. 160) */
@@ -214,6 +220,16 @@ void lcd_sync(void);
 #define LCD_BPP			LCD_COLOR8
 #endif
 
+#if LCD_BPP == LCD_MONOCHROME
+# define COLOR_MASK(c)		((c)	  | (c) << 1 | (c) << 2 | (c) << 3 | \
+				 (c) << 4 | (c) << 5 | (c) << 6 | (c) << 7)
+#elif (LCD_BPP == LCD_COLOR8) || (LCD_BPP == LCD_COLOR16) || \
+	(LCD_BPP == LCD_COLOR32)
+# define COLOR_MASK(c)		(c)
+#else
+#error Unsupported LCD BPP.
+#endif
+
 #ifndef LCD_DF
 #define LCD_DF			1
 #endif
@@ -222,7 +238,14 @@ void lcd_sync(void);
 #define NBITS(bit_code)		(1 << (bit_code))
 #define NCOLORS(bit_code)	(1 << NBITS(bit_code))
 
-#if LCD_BPP == LCD_COLOR8
+#if LCD_BPP == LCD_MONOCHROME
+/*
+ * Simple black/white definitions
+ */
+# define CONSOLE_COLOR_BLACK	0
+# define CONSOLE_COLOR_WHITE	1	/* Must remain last / highest	*/
+
+#elif LCD_BPP == LCD_COLOR8
 # define CONSOLE_COLOR_BLACK	0
 # define CONSOLE_COLOR_RED	1
 # define CONSOLE_COLOR_GREEN	2

@@ -38,11 +38,6 @@
 #define CONFIG_LCD_ALIGNMENT PAGE_SIZE
 #endif
 
-#if (LCD_BPP != LCD_COLOR8) && (LCD_BPP != LCD_COLOR16) && \
-	(LCD_BPP != LCD_COLOR32)
-#error Unsupported LCD BPP.
-#endif
-
 DECLARE_GLOBAL_DATA_PTR;
 
 static int lcd_init(void *lcdbase);
@@ -172,7 +167,11 @@ void lcd_clear(void)
 	char *s;
 	ulong addr;
 	static int do_splash = 1;
-#if LCD_BPP == LCD_COLOR8
+#if LCD_BPP == LCD_MONOCHROME
+	/* Setting the palette */
+	lcd_initcolregs();
+
+#elif LCD_BPP == LCD_COLOR8
 	/* Setting the palette */
 	lcd_setcolreg(CONSOLE_COLOR_BLACK, 0, 0, 0);
 	lcd_setcolreg(CONSOLE_COLOR_RED, 0xFF, 0, 0);
@@ -200,14 +199,15 @@ void lcd_clear(void)
 #else
 	/* set framebuffer to background color */
 #if (LCD_BPP != LCD_COLOR32)
-	memset((char *)lcd_base, bg_color, lcd_line_length * panel_info.vl_row);
+	memset((char *)lcd_base, COLOR_MASK(lcd_getbgcolor()),
+	       lcd_line_length * panel_info.vl_row);
 #else
 	u32 *ppix = lcd_base;
 	u32 i;
 	for (i = 0;
 	   i < (lcd_line_length * panel_info.vl_row)/NBYTES(panel_info.vl_bpix);
 	   i++) {
-		*ppix++ = bg_color;
+		*ppix++ = COLOR_MASK(lcd_getbgcolor());
 	}
 #endif
 #endif

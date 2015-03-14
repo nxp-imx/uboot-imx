@@ -61,6 +61,10 @@ static void lcd_drawchars(ushort x, ushort y, uchar *str, int count)
 	ushort row;
 	int fg_color, bg_color;
 
+#if LCD_BPP == LCD_MONOCHROME
+	ushort off  = x * (1 << LCD_BPP) % 8;
+#endif
+
 	dest = (uchar *)(lcd_console_address +
 			 y * lcd_line_length + x * NBITS(LCD_BPP) / 8);
 
@@ -77,17 +81,33 @@ static void lcd_drawchars(ushort x, ushort y, uchar *str, int count)
 
 		fg_color = lcd_getfgcolor();
 		bg_color = lcd_getbgcolor();
+
+#if LCD_BPP == LCD_MONOCHROME
+		uchar rest = *d & -(1 << (8 - off));
+		uchar sym;
+#endif
 		for (i = 0; i < count; ++i) {
 			uchar c, bits;
 
 			c = *s++;
 			bits = video_fontdata[c * VIDEO_FONT_HEIGHT + row];
 
+#if LCD_BPP == LCD_MONOCHROME
+			sym  = (COLOR_MASK(fg_color) & bits) |
+				(COLOR_MASK(bg_color) & ~bits);
+
+			*d++ = rest | (sym >> off);
+			rest = sym << (8-off);
+#else /* LCD_BPP == LCD_COLOR8 or LCD_COLOR16 or LCD_COLOR32 */
 			for (c = 0; c < 8; ++c) {
 				*d++ = (bits & 0x80) ? fg_color : bg_color;
 				bits <<= 1;
 			}
+#endif
 		}
+#if LCD_BPP == LCD_MONOCHROME
+		*d  = rest | (*d & ((1 << (8 - off)) - 1));
+#endif
 	}
 }
 
@@ -109,7 +129,7 @@ static void console_scrollup(void)
 	/* Clear the last rows */
 #if (LCD_BPP != LCD_COLOR32)
 	memset(lcd_console_address + CONSOLE_SIZE - CONSOLE_ROW_SIZE * rows,
-	       bg_color, CONSOLE_ROW_SIZE * rows);
+	       COLOR_MASK(bg_color), CONSOLE_ROW_SIZE * rows);
 #else
 	u32 *ppix = lcd_console_address +
 		    CONSOLE_SIZE - CONSOLE_ROW_SIZE * rows;
@@ -117,7 +137,7 @@ static void console_scrollup(void)
 	for (i = 0;
 	    i < (CONSOLE_ROW_SIZE * rows) / NBYTES(panel_info.vl_bpix);
 	    i++) {
-		*ppix++ = bg_color;
+		*ppix++ = COLOR_MASK(bg_color);
 	}
 #endif
 	lcd_sync();
