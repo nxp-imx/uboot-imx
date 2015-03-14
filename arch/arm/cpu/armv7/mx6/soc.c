@@ -391,9 +391,15 @@ static void imx_set_pcie_phy_power_down(void)
 {
 	u32 val;
 
+#ifndef CONFIG_MX6SX
 	val = readl(IOMUXC_BASE_ADDR + 0x4);
 	val |= 0x1 << 18;
 	writel(val, IOMUXC_BASE_ADDR + 0x4);
+#else
+	val = readl(IOMUXC_GPR_BASE_ADDR + 0x30);
+	val |= 0x1 << 30;
+	writel(val, IOMUXC_GPR_BASE_ADDR + 0x30);
+#endif
 }
 #endif
 
