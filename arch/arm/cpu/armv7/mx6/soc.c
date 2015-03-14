@@ -640,6 +640,49 @@ const struct boot_mode soc_boot_modes[] = {
 	{NULL,		0},
 };
 
+enum boot_device get_boot_device(void)
+{
+	enum boot_device boot_dev = UNKNOWN_BOOT;
+	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	uint bt_mem_ctl = (soc_sbmr & 0x000000FF) >> 4 ;
+	uint bt_mem_type = (soc_sbmr & 0x00000008) >> 3;
+	uint bt_dev_port = (soc_sbmr & 0x00001800) >> 11;
+
+	switch (bt_mem_ctl) {
+	case 0x0:
+		if (bt_mem_type)
+			boot_dev = ONE_NAND_BOOT;
+		else
+			boot_dev = WEIM_NOR_BOOT;
+		break;
+	case 0x2:
+			boot_dev = SATA_BOOT;
+		break;
+	case 0x3:
+		if (bt_mem_type)
+			boot_dev = I2C_BOOT;
+		else
+			boot_dev = SPI_NOR_BOOT;
+		break;
+	case 0x4:
+	case 0x5:
+		boot_dev = bt_dev_port + SD1_BOOT;
+		break;
+	case 0x6:
+	case 0x7:
+		boot_dev = bt_dev_port + MMC1_BOOT;
+		break;
+	case 0x8 ... 0xf:
+		boot_dev = NAND_BOOT;
+		break;
+	default:
+		boot_dev = UNKNOWN_BOOT;
+		break;
+	}
+
+    return boot_dev;
+}
+
 void s_init(void)
 {
 	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
