@@ -28,10 +28,6 @@
 #define APBH_DMA_ARB_END_ADDR           0x0180BFFF
 #define M4_BOOTROM_BASE_ADDR			0x007F8000
 
-#define MXS_APBH_BASE			APBH_DMA_ARB_BASE_ADDR
-#define MXS_GPMI_BASE			(APBH_DMA_ARB_BASE_ADDR + 0x02000)
-#define MXS_BCH_BASE			(APBH_DMA_ARB_BASE_ADDR + 0x04000)
-
 #else
 #define CAAM_ARB_BASE_ADDR              0x00100000
 #define CAAM_ARB_END_ADDR               0x00103FFF
@@ -92,10 +88,10 @@
 #define AIPS3_ARB_END_ADDR              0x022FFFFF
 #define WEIM_ARB_BASE_ADDR              0x50000000
 #define WEIM_ARB_END_ADDR               0x57FFFFFF
-#define QSPI0_AMBA_BASE                0x60000000
-#define QSPI0_AMBA_END                 0x6FFFFFFF
-#define QSPI1_AMBA_BASE                0x70000000
-#define QSPI1_AMBA_END                 0x7FFFFFFF
+#define QSPI1_ARB_BASE_ADDR             0x60000000
+#define QSPI1_ARB_END_ADDR              0x6FFFFFFF
+#define QSPI2_ARB_BASE_ADDR             0x70000000
+#define QSPI2_ARB_END_ADDR              0x7FFFFFFF
 #else
 #define SATA_ARB_BASE_ADDR              0x02200000
 #define SATA_ARB_END_ADDR               0x02203FFF
@@ -194,6 +190,7 @@
 #define SRC_BASE_ADDR               (AIPS1_OFF_BASE_ADDR + 0x58000)
 #define GPC_BASE_ADDR               (AIPS1_OFF_BASE_ADDR + 0x5C000)
 #define IOMUXC_BASE_ADDR            (AIPS1_OFF_BASE_ADDR + 0x60000)
+#define IOMUXC_GPR_BASE_ADDR        (AIPS1_OFF_BASE_ADDR + 0x64000)
 #ifdef CONFIG_MX6SL
 #define CSI_BASE_ADDR               (AIPS1_OFF_BASE_ADDR + 0x64000)
 #define SIPIX_BASE_ADDR             (AIPS1_OFF_BASE_ADDR + 0x68000)
@@ -267,8 +264,8 @@
 #define AUDMUX_BASE_ADDR            (AIPS2_OFF_BASE_ADDR + 0x58000)
 #ifdef CONFIG_MX6SX
 #define SAI2_BASE_ADDR              (AIPS2_OFF_BASE_ADDR + 0x5C000)
-#define QSPI0_BASE_ADDR             (AIPS2_OFF_BASE_ADDR + 0x60000)
-#define QSPI1_BASE_ADDR             (AIPS2_OFF_BASE_ADDR + 0x64000)
+#define QSPI1_BASE_ADDR             (AIPS2_OFF_BASE_ADDR + 0x60000)
+#define QSPI2_BASE_ADDR             (AIPS2_OFF_BASE_ADDR + 0x64000)
 #else
 #define MIPI_CSI2_BASE_ADDR         (AIPS2_OFF_BASE_ADDR + 0x5C000)
 #define MIPI_DSI_BASE_ADDR          (AIPS2_OFF_BASE_ADDR + 0x60000)
@@ -278,8 +275,15 @@
 #define UART3_BASE                  (AIPS2_OFF_BASE_ADDR + 0x6C000)
 #define UART4_BASE                  (AIPS2_OFF_BASE_ADDR + 0x70000)
 #define UART5_BASE                  (AIPS2_OFF_BASE_ADDR + 0x74000)
+#ifdef CONFIG_MX6SX
+#define I2C4_BASE_ADDR              (AIPS2_OFF_BASE_ADDR + 0x78000)
+#define QOSC_BASE_ADDR              (AIPS2_OFF_BASE_ADDR + 0x7C000)
+#else
 #define IP2APB_USBPHY1_BASE_ADDR    (AIPS2_OFF_BASE_ADDR + 0x78000)
 #define IP2APB_USBPHY2_BASE_ADDR    (AIPS2_OFF_BASE_ADDR + 0x7C000)
+#endif
+
+#define OTG_BASE_ADDR               USB_BASE_ADDR
 
 #ifdef CONFIG_MX6SX
 #define GIS_BASE_ADDR               (AIPS3_ARB_BASE_ADDR + 0x04000)
@@ -310,7 +314,10 @@
 #endif
 
 #define CHIP_REV_1_0                 0x10
+#define CHIP_REV_1_1                 0x11
 #define CHIP_REV_1_2                 0x12
+#define CHIP_REV_1_3                 0x13
+#define CHIP_REV_1_4                 0x14
 #define CHIP_REV_1_5                 0x15
 #ifndef CONFIG_MX6SX
 #define IRAM_SIZE                    0x00040000
@@ -318,6 +325,7 @@
 #define IRAM_SIZE                    0x00020000
 #endif
 #define FEC_QUIRK_ENET_MAC
+#define SNVS_LPGPR                   0x68
 
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 #include <asm/types.h>
@@ -651,6 +659,14 @@ struct fuse_bank0_regs {
 	u32	rsvd7[3];
 };
 
+struct fuse_bank1_regs {
+	u32     mem[0x18];
+	u32	ana1;
+	u32	rsvd1[3];
+	u32     ana2;
+	u32	rsvd2[3];
+};
+
 #ifdef CONFIG_MX6SX
 struct fuse_bank4_regs {
 	u32 sjc_resp_low;
@@ -844,6 +860,21 @@ struct anatop_regs {
 #define ANATOP_PFD_STABLE_MASK(n)	(1<<ANATOP_PFD_STABLE_SHIFT(n))
 #define ANATOP_PFD_CLKGATE_SHIFT(n)	(7+((n)*8))
 #define ANATOP_PFD_CLKGATE_MASK(n)	(1<<ANATOP_PFD_CLKGATE_SHIFT(n))
+
+struct iomuxc_gpr_base_regs {
+	u32     gpr[14];        /* 0x000 */
+};
+
+struct iomuxc_base_regs {
+#ifndef CONFIG_MX6SX
+	u32     gpr[14];        /* 0x000 */
+#endif
+	u32     obsrv[5];       /* 0x038 */
+	u32     swmux_ctl[197]; /* 0x04c */
+	u32     swpad_ctl[250]; /* 0x360 */
+	u32     swgrp[26];      /* 0x748 */
+	u32     daisy[104];     /* 0x7b0..94c */
+};
 
 struct wdog_regs {
 	u16	wcr;	/* Control */
