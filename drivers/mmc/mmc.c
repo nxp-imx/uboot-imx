@@ -406,14 +406,23 @@ static int mmc_complete_op_cond(struct mmc *mmc)
 
 	mmc->op_cond_pending = 0;
 	start = get_timer(0);
-	do {
+	/*
+	 * If in mmc_send_op_cond, OCR_BUSY is set in CMD1's response, then
+	 * state is transfered to Ready state, and there is no need to
+	 * send CMD1 again. Otherwise following CMD1 will recieve no response,
+	 * or timeour error from driver such as fsl_esdhc.c.
+	 *
+	 * If not into Ready state in previous CMD1, then continue CMD1
+	 * command.
+	 */
+	while (!(mmc->op_cond_response & OCR_BUSY)) {
 		err = mmc_send_op_cond_iter(mmc, &cmd, 1);
 		if (err)
 			return err;
 		if (get_timer(start) > timeout)
 			return UNUSABLE_ERR;
 		udelay(100);
-	} while (!(mmc->op_cond_response & OCR_BUSY));
+	}
 
 	if (mmc_host_is_spi(mmc)) { /* read OCR for spi */
 		cmd.cmdidx = MMC_CMD_SPI_READ_OCR;
