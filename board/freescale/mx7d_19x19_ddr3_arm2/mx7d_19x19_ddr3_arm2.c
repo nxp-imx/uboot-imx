@@ -300,7 +300,7 @@ static void setup_iomux_uart(void)
 	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
 }
 
-#ifdef CONFIG_QSPI
+#ifdef CONFIG_FSL_QSPI
 
 static iomux_v3_cfg_t const quadspi_pads[] = {
 	MX7D_PAD_EPDC_DATA00__QSPI_A_DATA0 | MUX_PAD_CTRL(QSPI_PAD_CTRL),
@@ -574,7 +574,7 @@ int board_init(void)
 	setup_fec();
 #endif
 
-#ifdef CONFIG_QSPI
+#ifdef CONFIG_FSL_QSPI
 	board_qspi_init();
 #endif
 
