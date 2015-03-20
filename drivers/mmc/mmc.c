@@ -436,7 +436,10 @@ static int mmc_complete_op_cond(struct mmc *mmc)
 	}
 
 	mmc->version = MMC_VERSION_UNKNOWN;
-	mmc->ocr = cmd.response[0];
+	if (mmc_host_is_spi(mmc))
+		mmc->ocr = cmd.response[0];
+	else
+		mmc->ocr = mmc->op_cond_response;
 
 	mmc->high_capacity = ((mmc->ocr & OCR_HCS) == OCR_HCS);
 	mmc->rca = 1;
