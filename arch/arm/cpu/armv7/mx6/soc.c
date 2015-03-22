@@ -970,6 +970,9 @@ void v7_outer_cache_enable(void)
 
 #ifndef CONFIG_MX6Q
 	val |= 0x40800000;
+#else
+	if (is_mx6dqp())
+		val |= 0x40800000;
 #endif
 	writel(val, &pl310->pl310_prefetch_ctrl);
 
