@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2011-2015 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -319,6 +319,7 @@
 #define CHIP_REV_1_3                 0x13
 #define CHIP_REV_1_4                 0x14
 #define CHIP_REV_1_5                 0x15
+#define CHIP_REV_2_0                 0x20
 #ifndef CONFIG_MX6SX
 #define IRAM_SIZE                    0x00040000
 #else

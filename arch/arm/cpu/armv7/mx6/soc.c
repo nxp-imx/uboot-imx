@@ -72,6 +72,7 @@ u32 get_cpu_rev(void)
 	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
 	u32 reg = readl(&anatop->digprog_sololite);
 	u32 type = ((reg >> 16) & 0xff);
+	u32 major;
 
 	if (type != MXC_CPU_MX6SL) {
 		reg = readl(&anatop->digprog);
@@ -89,8 +90,9 @@ u32 get_cpu_rev(void)
 		}
 
 	}
+	major = ((reg >> 8) & 0xff);
 	reg &= 0xff;		/* mx6 silicon revision */
-	return (type << 12) | (reg + 0x10);
+	return (type << 12) | (reg + (0x10 * (major + 1)));
 }
 
 #ifdef CONFIG_REVISION_TAG

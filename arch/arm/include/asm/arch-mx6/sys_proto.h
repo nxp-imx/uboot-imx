@@ -2,6 +2,8 @@
  * (C) Copyright 2009
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de.
  *
+ * (C) Copyright 2009-2015 Freescale Semiconductor, Inc.
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -42,6 +44,9 @@ void finish_anatop_bypass(void);
 int arch_auxiliary_core_up(u32 core_id, u32 boot_private_data);
 int arch_auxiliary_core_check_up(u32 core_id);
 #endif
+
+#define is_mx6dqp() ((is_cpu_type(MXC_CPU_MX6Q) || is_cpu_type(MXC_CPU_MX6D)) \
+	&& (is_soc_rev(CHIP_REV_2_0) >= 0))
 
 /*
  * Initializes on-chip ethernet controllers.
