@@ -452,7 +452,12 @@ static int setup_fec(void)
 {
 	int ret;
 
+#ifdef CONFIG_MX6QP
+	imx_iomux_set_gpr_register(5, 9, 1, 1);
+#else
 	imx_iomux_set_gpr_register(1, 21, 1, 1);
+#endif
+
 	ret = enable_fec_anatop_clock(0, ENET_125MHZ);
 	if (ret)
 		return ret;
@@ -679,9 +684,19 @@ int board_init(void)
 static struct pmic *pfuze;
 int power_init_board(void)
 {
+	unsigned int value;
+
 	pfuze = pfuze_common_init(I2C_PMIC);
 	if (!pfuze)
 		return -ENODEV;
+
+	if (is_mx6dqp()) {
+		/* set SW2 staby volatage 0.975V*/
+		pmic_reg_read(pfuze, PFUZE100_SW2STBY, &value);
+		value &= ~0x3f;
+		value |= 0x17;
+		pmic_reg_write(pfuze, PFUZE100_SW2STBY, value);
+	}
 
 	return pfuze_mode_init(pfuze, APS_PFM);
 }
