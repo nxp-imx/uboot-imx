@@ -283,6 +283,19 @@ static int setup_pmic_voltages(void)
 			printf("Set SW1ABSTBY error!\n");
 			return -1;
 		}
+		if (is_mx6dqp()) {
+			/* set SW2 staby volatage 0.975V*/
+			if (i2c_read(0x8, 0x36, 1, &value, 1)) {
+				printf("Read SW2 error!\n");
+				return -1;
+			}
+			value &= ~0x3f;
+			value |= 0x17;
+			if (i2c_write(0x8, 0x36, 1, &value, 1)) {
+				printf("Set SW2 error!\n");
+				return -1;
+			}
+		}
 	}
 
 	return 0;
@@ -870,7 +883,12 @@ static int setup_fec(void)
 {
 	int ret;
 
+#ifdef CONFIG_MX6QP
+	mxc_iomux_set_gpr_register(5, 9, 1, 1);
+#else
 	mxc_iomux_set_gpr_register(1, 21, 1, 1);
+#endif
+
 	ret = enable_fec_anatop_clock(0, ENET_125MHz);
 	if (ret)
 		return ret;
