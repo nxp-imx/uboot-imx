@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2015 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:    GPL-2.0+
  */
@@ -257,7 +257,8 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 				 * since their ROM doesn't do cache flushes.
 				 * I don't think any exist, so we ignore them.
 				 */
-				writel(1, 0x009024a8);
+				if (!is_mx6dqp())
+					writel(1, 0x009024a8);
 			} else if (is_cpu_type(MXC_CPU_MX6DL) ||
 				   is_cpu_type(MXC_CPU_MX6SOLO)) {
 				writel(1, 0x00901dd0);
