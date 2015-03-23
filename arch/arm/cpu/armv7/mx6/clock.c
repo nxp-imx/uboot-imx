@@ -1105,6 +1105,12 @@ void enable_ipu_clock(void)
 	reg = readl(&mxc_ccm->CCGR3);
 	reg |= MXC_CCM_CCGR3_IPU1_IPU_MASK;
 	writel(reg, &mxc_ccm->CCGR3);
+
+#ifdef CONFIG_MX6QP
+	reg = readl(&mxc_ccm->CCGR6);
+	reg |= MXC_CCM_CCGR6_PRG_CLK0_MASK;
+	writel(reg, &mxc_ccm->CCGR6);
+#endif
 }
 #endif
 /***************************************************/
