@@ -31,5 +31,8 @@
 
 #define CONFIG_MP
 #define CONFIG_MXC_GPT_HCLK
+#ifdef CONFIG_MX6QP
+#define CONFIG_MX6Q
+#endif
 
 #endif

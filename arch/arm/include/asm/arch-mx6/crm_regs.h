@@ -207,7 +207,7 @@ struct mxc_ccm_reg {
 #define MXC_CCM_CCR_WB_COUNT_MASK			0x7
 #define MXC_CCM_CCR_WB_COUNT_OFFSET			(1 << 16)
 #define MXC_CCM_CCR_COSC_EN				(1 << 12)
-#ifdef CONFIG_MX6SX
+#if (defined(CONFIG_MX6SL) || defined(CONFIG_MX6QP))
 #define MXC_CCM_CCR_OSCNT_MASK				0x7F
 #else
 #define MXC_CCM_CCR_OSCNT_MASK				0xFF
@@ -217,6 +217,9 @@ struct mxc_ccm_reg {
 /* Define the bits in register CCDR */
 #define MXC_CCM_CCDR_MMDC_CH1_HS_MASK			(1 << 16)
 #define MXC_CCM_CCDR_MMDC_CH0_HS_MASK			(1 << 17)
+#ifdef CONFIG_MX6QP
+#define MXC_CCM_CCDR_MMDC_CH1_AXI_ROOT_CG	(1 << 18)
+#endif
 
 /* Define the bits in register CSR */
 #define MXC_CCM_CSR_COSC_READY				(1 << 5)
@@ -305,7 +308,11 @@ struct mxc_ccm_reg {
 #define MXC_CCM_CBCMR_GPU3D_SHADER_CLK_SEL_OFFSET	8
 #define MXC_CCM_CBCMR_GPU3D_CORE_CLK_SEL_MASK		(0x3 << 4)
 #define MXC_CCM_CBCMR_GPU3D_CORE_CLK_SEL_OFFSET		4
+#ifdef CONFIG_MX6QP
+#define MXC_CCM_CBCMR_PRE_CLK_SEL			(1 << 1)
+#else
 #define MXC_CCM_CBCMR_GPU3D_AXI_CLK_SEL			(1 << 1)
+#endif
 #define MXC_CCM_CBCMR_GPU2D_AXI_CLK_SEL			(1 << 0)
 #endif
 
@@ -343,7 +350,7 @@ struct mxc_ccm_reg {
 #define MXC_CCM_CSCMR1_QSPI1_CLK_SEL_MASK		(0x7 << 7)
 #define MXC_CCM_CSCMR1_QSPI1_CLK_SEL_OFFSET		7
 #endif
-#if (defined(CONFIG_MX6SL) || defined(CONFIG_MX6SX))
+#if (defined(CONFIG_MX6SL) || defined(CONFIG_MX6SX) || defined(CONFIG_MX6QP))
 #define MXC_CCM_CSCMR1_PER_CLK_SEL_MASK			(1 << 6)
 #define MXC_CCM_CSCMR1_PER_CLK_SEL_OFFSET		6
 #endif
@@ -358,15 +365,12 @@ struct mxc_ccm_reg {
 #define MXC_CCM_CSCMR2_ESAI_PRE_SEL_OFFSET		19
 #define MXC_CCM_CSCMR2_LDB_DI1_IPU_DIV			(1 << 11)
 #define MXC_CCM_CSCMR2_LDB_DI0_IPU_DIV			(1 << 10)
-#ifdef CONFIG_MX6SX
+#if (defined(CONFIG_MX6SX) || defined(CONFIG_MX6QP))
 #define MXC_CCM_CSCMR2_CAN_CLK_SEL_MASK			(0x3 << 8)
 #define MXC_CCM_CSCMR2_CAN_CLK_SEL_OFFSET		8
+#endif
 #define MXC_CCM_CSCMR2_CAN_CLK_PODF_MASK		(0x3F << 2)
 #define MXC_CCM_CSCMR2_CAN_CLK_PODF_OFFSET		2
-#else
-#define MXC_CCM_CSCMR2_CAN_CLK_SEL_MASK			(0x3F << 2)
-#define MXC_CCM_CSCMR2_CAN_CLK_SEL_OFFSET		2
-#endif
 
 /* Define the bits in register CSCDR1 */
 #ifndef CONFIG_MX6SX
@@ -387,15 +391,10 @@ struct mxc_ccm_reg {
 #define MXC_CCM_CSCDR1_USBOH3_CLK_PODF_OFFSET		6
 #define MXC_CCM_CSCDR1_USBOH3_CLK_PODF_MASK		(0x3 << 6)
 #endif
-#ifdef CONFIG_MX6SL
-#define MXC_CCM_CSCDR1_UART_CLK_PODF_MASK		0x1F
+#if (defined(CONFIG_MX6SL) || defined(CONFIG_MX6SX) || defined(CONFIG_MX6QP))
 #define MXC_CCM_CSCDR1_UART_CLK_SEL			(1 << 6)
-#else
+#endif
 #define MXC_CCM_CSCDR1_UART_CLK_PODF_MASK		0x3F
-#ifdef CONFIG_MX6SX
-#define MXC_CCM_CSCDR1_UART_CLK_SEL			(1 << 6)
-#endif
-#endif
 #define MXC_CCM_CSCDR1_UART_CLK_PODF_OFFSET		0
 
 /* Define the bits in register CS1CDR */
@@ -430,9 +429,16 @@ struct mxc_ccm_reg {
 #define MXC_CCM_CS2CDR_ENFC_CLK_PRED_MASK		(0x7 << 18)
 #define MXC_CCM_CS2CDR_ENFC_CLK_PRED_OFFSET		18
 #define MXC_CCM_CS2CDR_ENFC_CLK_PRED(v)			(((v) & 0x7) << 18)
+
+#ifdef CONFIG_MX6QP
+#define MXC_CCM_CS2CDR_ENFC_CLK_SEL_MASK		(0x7 << 15)
+#define MXC_CCM_CS2CDR_ENFC_CLK_SEL_OFFSET		15
+#define MXC_CCM_CS2CDR_ENFC_CLK_SEL(v)			(((v) & 0x7) << 15)
+#else
 #define MXC_CCM_CS2CDR_ENFC_CLK_SEL_MASK		(0x3 << 16)
 #define MXC_CCM_CS2CDR_ENFC_CLK_SEL_OFFSET		16
 #define MXC_CCM_CS2CDR_ENFC_CLK_SEL(v)			(((v) & 0x3) << 16)
+#endif
 #endif
 #define MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_MASK		(0x7 << 12)
 #define MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_OFFSET		12
@@ -498,6 +504,10 @@ struct mxc_ccm_reg {
 /* Define the bits in register CSCDR2 */
 #define MXC_CCM_CSCDR2_ECSPI_CLK_PODF_MASK		(0x3F << 19)
 #define MXC_CCM_CSCDR2_ECSPI_CLK_PODF_OFFSET		19
+#ifdef CONFIG_MX6QP
+#define MXC_CCM_CSCDR2_ECSPI_CLK_SEL_MASK		(0x1 << 18)
+#define MXC_CCM_CSCDR2_ECSPI_CLK_SEL_OFFSET		18
+#endif
 
 #ifdef CONFIG_MX6SX
 #define MXC_CCM_CSCDR2_LCDIF1_PRED_SEL_MASK		(0x7 << 15)
@@ -892,6 +902,22 @@ struct mxc_ccm_reg {
 #else
 #define MXC_CCM_CCGR6_VDOAXICLK_OFFSET		12
 #define MXC_CCM_CCGR6_VDOAXICLK_MASK		(3 << MXC_CCM_CCGR6_VDOAXICLK_OFFSET)
+#ifdef CONFIG_MX6QP
+#define MXC_CCM_CCGR6_VPUCLK_OFFSET		14
+#define MXC_CCM_CCGR6_VPUCLK_MASK		(3 << MXC_CCM_CCGR6_VPUCLK_OFFSET)
+#define MXC_CCM_CCGR6_PRE_CLK0_OFFSET		16
+#define MXC_CCM_CCGR6_PRE_CLK0_MASK		(3 << MXC_CCM_CCGR6_PRE_CLK0_OFFSET)
+#define MXC_CCM_CCGR6_PRE_CLK1_OFFSET		18
+#define MXC_CCM_CCGR6_PRE_CLK1_MASK		(3 << MXC_CCM_CCGR6_PRE_CLK1_OFFSET)
+#define MXC_CCM_CCGR6_PRE_CLK2_OFFSET		20
+#define MXC_CCM_CCGR6_PRE_CLK2_MASK		(3 << MXC_CCM_CCGR6_PRE_CLK2_OFFSET)
+#define MXC_CCM_CCGR6_PRE_CLK3_OFFSET		22
+#define MXC_CCM_CCGR6_PRE_CLK3_MASK		(3 << MXC_CCM_CCGR6_PRE_CLK3_OFFSET)
+#define MXC_CCM_CCGR6_PRG_CLK0_OFFSET		24
+#define MXC_CCM_CCGR6_PRG_CLK0_MASK		(3 << MXC_CCM_CCGR6_PRG_CLK0_OFFSET)
+#define MXC_CCM_CCGR6_PRG_CLK1_OFFSET		26
+#define MXC_CCM_CCGR6_PRG_CLK1_MASK		(3 << MXC_CCM_CCGR6_PRG_CLK1_OFFSET)
+#endif
 #endif
 
 #define BM_ANADIG_PLL_SYS_LOCK 0x80000000
