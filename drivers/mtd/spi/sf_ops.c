@@ -55,6 +55,75 @@ int spi_flash_cmd_write_status(struct spi_flash *flash, u8 ws)
 	return 0;
 }
 
+#if defined(CONFIG_SPI_FLASH_ATMEL)
+/*
+ * For the AT45DB021E, there are an extra eight bytes
+ * of memory in each page for a total of an extra 8KB
+ * (64-Kbits) of user-accessible memory.
+ * In order to be compatible with spi framework, we use 256bytes.
+ */
+
+int spi_flash_cmd_write_config(struct spi_flash *flash, u8 wc)
+{
+	u8 data[3];
+	u8 cmd;
+	int ret;
+
+	ret = spi_flash_cmd_read_status(flash, &data[0]);
+	if (ret < 0)
+		return ret;
+
+	/*
+	 * PAGE SIZE Page Size, bit 0.
+	 * 0 Device is configured for standard DataFlash page size (264 bytes).
+	 * 1 Device is configured for “power of 2” binary page size (256 bytes).
+	 */
+	if (wc == SPI_FLASH_PAGE_256) {
+		/* Already 256? */
+		if (data[0] & 1)
+			return 0;
+	} else if (wc == SPI_FLASH_PAGE_264) {
+		/* Already 264? */
+		if ((data[0] & 1) == 0)
+			return 0;
+	} else {
+		debug("Unsupport page configuration!\n");
+		return -1;
+	}
+
+	/*
+	 * 3D, 2A, 80, A6 command seq will configure flash page size 256.
+	 * 3D, 2A, 80, A7 command seq will configure flash page size 264.
+	 */
+	cmd = 0x3D;
+	if (wc == SPI_FLASH_PAGE_256)
+		data[2] = 0xA6;
+	else if (wc == SPI_FLASH_PAGE_264)
+		data[2] = 0xA7;
+	data[1] = 0x80;
+	data[0] = 0x2A;
+	ret = spi_flash_write_common(flash, &cmd, 1, data, 3);
+	if (ret) {
+		debug("SF: fail to write config register\n");
+		return ret;
+	}
+
+	/* Check again */
+	ret = spi_flash_cmd_read_status(flash, &data[0]);
+	if (ret < 0)
+		return ret;
+
+	/* Means failed to configure page size */
+	if (((wc == SPI_FLASH_PAGE_256) && ((data[0] & 1) == 0)) ||
+	    ((wc == SPI_FLASH_PAGE_264) && (data[0] & 1))) {
+		debug("Failed to configure page size!\n");
+		return -1;
+	}
+
+	return 0;
+}
+#endif
+
 #if defined(CONFIG_SPI_FLASH_SPANSION) || defined(CONFIG_SPI_FLASH_WINBOND)
 int spi_flash_cmd_read_config(struct spi_flash *flash, u8 *rc)
 {
@@ -169,6 +238,11 @@ int spi_flash_cmd_wait_ready(struct spi_flash *flash, unsigned long timeout)
 		poll_bit = STATUS_PEC;
 		check_status = poll_bit;
 	}
+
+#ifdef CONFIG_SPI_FLASH_ATMEL
+	poll_bit = STATUS_PEC;
+	check_status = 1 << 7;
+#endif
 
 #ifdef CONFIG_SF_DUAL_FLASH
 	if (spi->flags & SPI_XFER_U_PAGE)

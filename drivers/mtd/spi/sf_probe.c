@@ -169,7 +169,10 @@ static struct spi_flash *spi_flash_validate_params(struct spi_slave *spi,
 #endif
 
 	/* Compute erase sector and command */
-	if (params->flags & SECT_4K) {
+	if (params->flags & SECT_2K) {
+		flash->erase_cmd = CMD_ERASE_2K;
+		flash->erase_size = 2048 << flash->shift;
+	} else if (params->flags & SECT_4K) {
 		flash->erase_cmd = CMD_ERASE_4K;
 		flash->erase_size = 4096 << flash->shift;
 	} else if (params->flags & SECT_32K) {
@@ -248,6 +251,14 @@ static struct spi_flash *spi_flash_validate_params(struct spi_slave *spi,
 	defined(CONFIG_SPI_FLASH_MACRONIX) || \
 	defined(CONFIG_SPI_FLASH_SST)
 		spi_flash_cmd_write_status(flash, 0);
+#endif
+
+#if defined(CONFIG_SPI_FLASH_ATMEL)
+	/*
+	 * Default configure the page size to 256bytes to
+	 * be compatible with the mtd/spi framework
+	 */
+	spi_flash_cmd_write_config(flash, SPI_FLASH_PAGE_256);
 #endif
 
 	return flash;

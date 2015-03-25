@@ -20,6 +20,7 @@
 #include <linux/compiler.h>
 
 /* sf param flags */
+#define SECT_2K		(1 << 0)
 #define SECT_4K		1 << 1
 #define SECT_32K	1 << 2
 #define E_FSR		1 << 3
