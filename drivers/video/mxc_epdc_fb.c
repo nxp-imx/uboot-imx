@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2014 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2010-2015 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -13,6 +13,7 @@
 #include <linux/list.h>
 #include <linux/err.h>
 #include <linux/types.h>
+#include <malloc.h>
 
 #include <mxc_epdc_fb.h>
 
@@ -353,7 +354,6 @@ void lcd_enable(void)
 
 	epdc_power_on();
 
-	lcd_base = (void *)CONFIG_FB_BASE;
 	/* Draw black border around framebuffer*/
 	memset(lcd_base, 0xFF, panel_info.vl_col * panel_info.vl_row);
 	memset(lcd_base, 0x0, 24 * panel_info.vl_col);
@@ -397,6 +397,22 @@ void lcd_ctrl_init(void *lcdbase)
 	if (!lcdbase)
 		return;
 
+	panel_info.epdc_data.working_buf_addr = (u_long)memalign(ARCH_DMA_MINALIGN,
+		panel_info.vl_col * panel_info.vl_row * 2);
+
+	if (!panel_info.epdc_data.working_buf_addr) {
+		printf("EPDC: Error allocating working buffer!\n");
+		return;
+	}
+
+	panel_info.epdc_data.waveform_buf_addr = (u_long)memalign(ARCH_DMA_MINALIGN,
+		CONFIG_WAVEFORM_BUF_SIZE);
+
+	if (!panel_info.epdc_data.waveform_buf_addr) {
+		printf("EPDC: Error allocating waveform buffer!\n");
+		return;
+	}
+
 	lcd_color_fg = 0xFF;
 	lcd_color_bg = 0xFF;
 
@@ -431,7 +447,7 @@ void lcd_ctrl_init(void *lcdbase)
 		REG_WR(EPDC_BASE, EPDC_WB_ADDR_TCE, panel_info.epdc_data.working_buf_addr);
 
 	/* Get waveform data address and offset */
-	if (setup_waveform_file()) {
+	if (setup_waveform_file(panel_info.epdc_data.waveform_buf_addr)) {
 		printf("Can't load waveform data!\n");
 		return;
 	}
@@ -442,6 +458,8 @@ void lcd_ctrl_init(void *lcdbase)
 
 	/* Initialize EPDC, passing pointer to EPDC registers */
 	epdc_init_settings();
+
+	lcd_base = lcdbase;
 
 	return;
 }

@@ -513,50 +513,6 @@ int board_early_init_f(void)
 }
 
 #ifdef CONFIG_MXC_EPDC
-#ifdef CONFIG_SPLASH_SCREEN
-extern int mmc_get_env_devno(void);
-int setup_splash_img(void)
-{
-#ifdef CONFIG_SPLASH_IS_IN_MMC
-	int mmc_dev = mmc_get_env_devno();
-	ulong offset = CONFIG_SPLASH_IMG_OFFSET;
-	ulong size = CONFIG_SPLASH_IMG_SIZE;
-	ulong addr = 0;
-	char *s = NULL;
-	struct mmc *mmc = find_mmc_device(mmc_dev);
-	uint blk_start, blk_cnt, n;
-
-	s = getenv("splashimage");
-
-	if (NULL == s) {
-		puts("env splashimage not found!\n");
-		return -1;
-	}
-	addr = simple_strtoul(s, NULL, 16);
-
-	if (!mmc) {
-		printf("MMC Device %d not found\n", mmc_dev);
-		return -1;
-	}
-
-	if (mmc_init(mmc)) {
-		puts("MMC init failed\n");
-		return -1;
-	}
-
-	blk_start = ALIGN(offset, mmc->read_bl_len) / mmc->read_bl_len;
-	blk_cnt = ALIGN(size, mmc->read_bl_len) / mmc->read_bl_len;
-	n = mmc->block_dev.block_read(mmc_dev, blk_start,
-				      blk_cnt, (u_char *)addr);
-	flush_cache((ulong)addr, blk_cnt * mmc->read_bl_len);
-
-	return (n == blk_cnt) ? 0 : -1;
-#endif
-
-	return 0;
-}
-#endif
-
 vidinfo_t panel_info = {
 	.vl_refresh = 85,
 	.vl_col = 800,
@@ -617,36 +573,40 @@ static void setup_epdc_power(void)
 	gpio_direction_output(IMX_GPIO_NR(2, 7), 1);
 }
 
-int setup_waveform_file(void)
+int setup_waveform_file(ulong waveform_buf)
 {
-#ifdef CONFIG_WAVEFORM_FILE_IN_MMC
-	int mmc_dev = mmc_get_env_devno();
-	ulong offset = CONFIG_WAVEFORM_FILE_OFFSET;
-	ulong size = CONFIG_WAVEFORM_FILE_SIZE;
-	ulong addr = CONFIG_WAVEFORM_BUF_ADDR;
-	struct mmc *mmc = find_mmc_device(mmc_dev);
-	uint blk_start, blk_cnt, n;
+	char *fs_argv[5];
+	char addr[17];
+	ulong file_len, mmc_dev;
 
-	if (!mmc) {
-		printf("MMC Device %d not found\n", mmc_dev);
+	if (!check_mmc_autodetect())
+		mmc_dev = getenv_ulong("mmcdev", 10, 0);
+	else
+		mmc_dev = mmc_get_env_devno();
+
+	sprintf(addr, "%lx", waveform_buf);
+
+	fs_argv[0] = "fatload";
+	fs_argv[1] = "mmc";
+	fs_argv[2] = simple_itoa(mmc_dev);
+	fs_argv[3] = addr;
+	fs_argv[4] = getenv("epdc_waveform");
+
+	if (!fs_argv[4])
+		fs_argv[4] = "epdc_splash.bin";
+
+	if (do_fat_fsload(NULL, 0, 5, fs_argv)) {
+		printf("MMC Device %lu not found\n", mmc_dev);
 		return -1;
 	}
 
-	if (mmc_init(mmc)) {
-		puts("MMC init failed\n");
+	file_len = getenv_hex("filesize", 0);
+	if (!file_len)
 		return -1;
-	}
 
-	blk_start = ALIGN(offset, mmc->read_bl_len) / mmc->read_bl_len;
-	blk_cnt = ALIGN(size, mmc->read_bl_len) / mmc->read_bl_len;
-	n = mmc->block_dev.block_read(mmc_dev, blk_start,
-				      blk_cnt, (u_char *)addr);
-	flush_cache((ulong)addr, blk_cnt * mmc->read_bl_len);
+	flush_cache((ulong)addr, file_len);
 
-	return (n == blk_cnt) ? 0 : -1;
-#else
-	return -1;
-#endif
+	return 0;
 }
 
 static void epdc_enable_pins(void)
@@ -714,9 +674,6 @@ static void setup_epdc(void)
 	reg |= 0x0C00;
 	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR3);
 
-	panel_info.epdc_data.working_buf_addr = CONFIG_WORKING_BUF_ADDR;
-	panel_info.epdc_data.waveform_buf_addr = CONFIG_WAVEFORM_BUF_ADDR;
-
 	panel_info.epdc_data.wv_modes.mode_init = 0;
 	panel_info.epdc_data.wv_modes.mode_du = 1;
 	panel_info.epdc_data.wv_modes.mode_gc4 = 3;
@@ -727,9 +684,6 @@ static void setup_epdc(void)
 	panel_info.epdc_data.epdc_timings = panel_timings;
 
 	setup_epdc_power();
-
-	/* Assign fb_base */
-	gd->fb_base = CONFIG_FB_BASE;
 }
 
 void epdc_power_on(void)

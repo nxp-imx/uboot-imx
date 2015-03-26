@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013-2015 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6SL EVK board.
  *
@@ -35,7 +35,7 @@
 #define CONFIG_SYS_GENERIC_BOARD
 
 /* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(3 * SZ_1M)
+#define CONFIG_SYS_MALLOC_LEN		(16 * SZ_1M)
 
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_BOARD_LATE_INIT
@@ -113,6 +113,7 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
+	"epdc_waveform=epdc_splash.bin\0" \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"console=ttymxc0\0" \
@@ -298,24 +299,12 @@
 	#define CONFIG_CMD_BMP
 	#define CONFIG_MXC_EPDC				1
 	#define CONFIG_LCD
-	#define CONFIG_FB_BASE				(CONFIG_SYS_TEXT_BASE + 0x300000)
 	#define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #ifdef CONFIG_MXC_EPDC
 	#undef LCD_TEST_PATTERN
-	/* #define CONFIG_SPLASH_IS_IN_MMC			1 */
 	#define LCD_BPP					LCD_MONOCHROME
-	/* #define CONFIG_SPLASH_SCREEN_ALIGN		1 */
 
-	#define CONFIG_WORKING_BUF_ADDR			(CONFIG_SYS_TEXT_BASE + 0x100000)
-	#define CONFIG_WAVEFORM_BUF_ADDR		(CONFIG_SYS_TEXT_BASE + 0x200000)
-	#define CONFIG_WAVEFORM_FILE_OFFSET		0x600000
-	#define CONFIG_WAVEFORM_FILE_SIZE		0xF0A00
-	#define CONFIG_WAVEFORM_FILE_IN_MMC
-
-#ifdef CONFIG_SPLASH_IS_IN_MMC
-	#define CONFIG_SPLASH_IMG_OFFSET		0x4c000
-	#define CONFIG_SPLASH_IMG_SIZE			0x19000
-#endif
+	#define CONFIG_WAVEFORM_BUF_SIZE		0x200000
 #endif
 #endif /* CONFIG_SPLASH_SCREEN */
 
