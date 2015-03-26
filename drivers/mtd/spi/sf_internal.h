@@ -43,7 +43,11 @@ enum {
 	SST_BP		= 1 << 3,
 	SST_WP		= 1 << 4,
 	WR_QPP		= 1 << 5,
+	SECT_2K		= 1 << 6,
 };
+
+#define SPI_FLASH_PAGE_256		(1 << 0)
+#define SPI_FLASH_PAGE_264		(1 << 1)
 
 #define SST_WR		(SST_BP | SST_WP)
 
@@ -58,6 +62,7 @@ enum {
 #define SPI_FLASH_CFI_MFR_WINBOND	0xef
 
 /* Erase commands */
+#define CMD_ERASE_2K			0x50
 #define CMD_ERASE_4K			0x20
 #define CMD_ERASE_32K			0x52
 #define CMD_ERASE_CHIP			0xc7
@@ -67,7 +72,11 @@ enum {
 #define CMD_WRITE_STATUS		0x01
 #define CMD_PAGE_PROGRAM		0x02
 #define CMD_WRITE_DISABLE		0x04
-#define CMD_READ_STATUS		0x05
+#ifdef CONFIG_SPI_FLASH_ATMEL
+#define CMD_READ_STATUS			0xd7
+#else
+#define CMD_READ_STATUS			0x05
+#endif
 #define CMD_QUAD_PAGE_PROGRAM		0x32
 #define CMD_READ_STATUS1		0x35
 #define CMD_WRITE_ENABLE		0x06
