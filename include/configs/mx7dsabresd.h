@@ -302,7 +302,6 @@
 #define CONFIG_SYS_USE_NAND
 #define CONFIG_ENV_IS_IN_NAND
 #else
-#define CONFIG_SYS_USE_QSPI   /* Enable the QSPI flash at default */
 #define CONFIG_ENV_IS_IN_MMC
 #endif
 
@@ -372,38 +371,28 @@
 #define CONFIG_CMD_CACHE
 #endif
 
-/* #define CONFIG_SPLASH_SCREEN */
+/* #define CONFIG_SPLASH_SCREEN*/
+/* #define CONFIG_MXC_EPDC*/
 
 /*
  * SPLASH SCREEN Configs
  */
-#ifdef CONFIG_SPLASH_SCREEN
-	/*
-	 * Framebuffer and LCD
-	 */
-	#define CONFIG_CMD_BMP
-	#define CONFIG_MXC_EPDC				1
-	#define CONFIG_LCD
-	#define CONFIG_FB_BASE				(CONFIG_SYS_TEXT_BASE + 0x300000)
-	#define CONFIG_SYS_CONSOLE_IS_IN_ENV
-#ifdef CONFIG_MXC_EPDC
-	#undef LCD_TEST_PATTERN
-	/* #define CONFIG_SPLASH_IS_IN_MMC			1 */
-	#define LCD_BPP					LCD_MONOCHROME
-	/* #define CONFIG_SPLASH_SCREEN_ALIGN		1 */
+#if defined(CONFIG_SPLASH_SCREEN) && defined(CONFIG_MXC_EPDC)
+/*
+ * Framebuffer and LCD
+ */
+#define	CONFIG_CFB_CONSOLE
+#define CONFIG_CMD_BMP
+#define CONFIG_LCD
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
 
-	#define CONFIG_WORKING_BUF_ADDR			(CONFIG_SYS_TEXT_BASE + 0x100000)
-	#define CONFIG_WAVEFORM_BUF_ADDR		(CONFIG_SYS_TEXT_BASE + 0x200000)
-	#define CONFIG_WAVEFORM_FILE_OFFSET		0x600000
-	#define CONFIG_WAVEFORM_FILE_SIZE		0xF0A00
-	#define CONFIG_WAVEFORM_FILE_IN_MMC
+#undef LCD_TEST_PATTERN
+/* #define CONFIG_SPLASH_IS_IN_MMC			1 */
+#define LCD_BPP					LCD_MONOCHROME
+/* #define CONFIG_SPLASH_SCREEN_ALIGN		1 */
 
-#ifdef CONFIG_SPLASH_IS_IN_MMC
-	#define CONFIG_SPLASH_IMG_OFFSET		0x4c000
-	#define CONFIG_SPLASH_IMG_SIZE			0x19000
+#define CONFIG_WAVEFORM_BUF_SIZE		0x400000
 #endif
-#endif
-#endif /* CONFIG_SPLASH_SCREEN */
 
 #define CONFIG_VIDEO
 #ifdef CONFIG_VIDEO
