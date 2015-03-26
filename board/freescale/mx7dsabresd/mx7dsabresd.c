@@ -203,13 +203,15 @@ static enum qn_level seq[3][2] = {
 };
 
 static enum qn_func qn_output[8] = {
-	qn_disable, qn_reset, qn_reset, qn_reset, qn_reset, qn_enable, qn_enable
+	qn_disable, qn_reset, qn_reset, qn_reset, qn_reset, qn_reset, qn_enable,
+	qn_enable
 };
 
 void iox74lv_init(void)
 {
-	int i = 0;
-	for (i = 0; i < 8; i++) {
+	int i;
+
+	for (i = 7; i >= 0; i--) {
 		gpio_direction_output(IOX_SHCP, 0);
 		gpio_direction_output(IOX_SDI, seq[qn_output[i]][0]);
 		udelay(500);
@@ -224,14 +226,13 @@ void iox74lv_init(void)
 	  */
 	gpio_direction_output(IOX_STCP, 1);
 
-	for (i = 0; i < 8; i++) {
+	for (i = 7; i >= 0; i--) {
 		gpio_direction_output(IOX_SHCP, 0);
 		gpio_direction_output(IOX_SDI, seq[qn_output[i]][1]);
 		udelay(500);
 		gpio_direction_output(IOX_SHCP, 1);
 		udelay(500);
 	}
-
 	gpio_direction_output(IOX_STCP, 0);
 	udelay(500);
 	/*
@@ -242,8 +243,8 @@ void iox74lv_init(void)
 
 void iox74lv_set(int index)
 {
-	int i = 0;
-	for (i = 0; i < 8; i++) {
+	int i;
+	for (i = 7; i >= 0; i--) {
 		gpio_direction_output(IOX_SHCP, 0);
 
 		if (i == index)
@@ -262,7 +263,7 @@ void iox74lv_set(int index)
 	  */
 	gpio_direction_output(IOX_STCP, 1);
 
-	for (i = 0; i < 8; i++) {
+	for (i = 7; i >= 0; i--) {
 		gpio_direction_output(IOX_SHCP, 0);
 		gpio_direction_output(IOX_SDI, seq[qn_output[i]][1]);
 		udelay(500);
