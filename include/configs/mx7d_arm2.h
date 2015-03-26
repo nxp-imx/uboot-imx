@@ -98,7 +98,7 @@
 	"m4image=m4_qspi.bin\0" \
 	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \
 	"update_m4_from_sd=" \
-		"if sf probe 1:0; then " \
+		"if sf probe 0:1; then " \
 			"if run loadm4image; then " \
 				"setexpr fw_sz ${filesize} + 0xffff; " \
 				"setexpr fw_sz ${fw_sz} / 0x10000; "	\
@@ -107,7 +107,7 @@
 				"sf write ${loadaddr} 0x0 ${filesize}; " \
 			"fi; " \
 		"fi\0" \
-	"m4boot=sf probe 1:0; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
+	"m4boot=sf probe 0:1; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
 #else
 #define UPDATE_M4_ENV ""
 #endif
@@ -119,6 +119,13 @@
 	"panel=MCIMX28LCD\0"
 #else
 #define CONFIG_VIDEO_MODE ""
+#endif
+
+#ifdef CONFIG_MXC_EPDC
+#define CONFIG_EPDC_WAVEFORM_FILE \
+	"epdc_waveform=epdc_splash.bin\0"
+#else
+#define CONFIG_EPDC_WAVEFORM_FILE ""
 #endif
 
 #define CONFIG_MFG_ENV_SETTINGS \
@@ -136,6 +143,7 @@
 	CONFIG_MFG_ENV_SETTINGS \
 	UPDATE_M4_ENV \
 	CONFIG_VIDEO_MODE \
+	CONFIG_EPDC_WAVEFORM_FILE \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"console=ttymxc0\0" \
@@ -316,6 +324,23 @@
 #define	CONFIG_BMP_16BPP
 #define	CONFIG_VIDEO_BMP_RLE8
 #define CONFIG_VIDEO_BMP_LOGO
+#endif
+
+#if defined(CONFIG_SPLASH_SCREEN) && defined(CONFIG_MXC_EPDC)
+/*
+ * Framebuffer and LCD
+ */
+#define	CONFIG_CFB_CONSOLE
+#define CONFIG_CMD_BMP
+#define CONFIG_LCD
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+
+#undef LCD_TEST_PATTERN
+/* #define CONFIG_SPLASH_IS_IN_MMC			1 */
+#define LCD_BPP					LCD_MONOCHROME
+/* #define CONFIG_SPLASH_SCREEN_ALIGN		1 */
+
+#define CONFIG_WAVEFORM_BUF_SIZE		0x400000
 #endif
 
 /* USB Configs */
