@@ -718,6 +718,25 @@ static void init_clk_wdog(void)
 
 }
 
+#ifdef CONFIG_MXC_EPDC
+static void init_clk_epdc(void)
+{
+	u32 target;
+
+	/* disable the clock gate first */
+	clock_enable(CCGR_EPDC, 0);
+
+	/* 24Mhz */
+	target = CLK_ROOT_ON | EPDC_PIXEL_CLK_ROOT_FROM_PLL_SYS_MAIN_480M_CLK |
+		 CLK_ROOT_PRE_DIV(CLK_ROOT_PRE_DIV1) |
+		 CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV12);
+	clock_set_target_val(EPDC_PIXEL_CLK_ROOT, target);
+
+	/* enable the clock gate */
+	clock_enable(CCGR_EPDC, 1);
+}
+#endif
+
 static int enable_pll_enet(void)
 {
 	u32 reg;
@@ -993,6 +1012,9 @@ void clock_init(void)
 	init_clk_weim();
 	init_clk_ecspi();
 	init_clk_wdog();
+#ifdef CONFIG_MXC_EPDC
+	init_clk_epdc();
+#endif
 
 	enable_usboh3_clk(1);
 
@@ -1012,6 +1034,17 @@ void hab_caam_clock_enable(void)
 void hab_caam_clock_disable(void)
 {
 	clock_enable(CCGR_CAAM, 0);
+}
+#endif
+
+#ifdef CONFIG_MXC_EPDC
+void epdc_clock_enable(void)
+{
+	clock_enable(CCGR_EPDC, 1);
+}
+void epdc_clock_disable(void)
+{
+	clock_enable(CCGR_EPDC, 0);
 }
 #endif
 
