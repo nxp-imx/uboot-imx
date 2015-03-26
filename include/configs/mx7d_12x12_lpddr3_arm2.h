@@ -63,6 +63,8 @@
 #endif
 
 #define CONFIG_VIDEO
+/* #define CONFIG_SPLASH_SCREEN*/
+/* #define CONFIG_MXC_EPDC*/
 
 #include "mx7d_arm2.h"
 
