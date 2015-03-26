@@ -40,7 +40,7 @@
 #define CONFIG_SYS_MMC_ENV_PART                0       /* user partition */
 
 #ifdef CONFIG_SYS_USE_SPINOR
-#define CONFIG_SF_DEFAULT_CS   (0|(IMX_GPIO_NR(4, 9)<<8))
+#define CONFIG_SF_DEFAULT_CS   0
 #endif
 
 /*

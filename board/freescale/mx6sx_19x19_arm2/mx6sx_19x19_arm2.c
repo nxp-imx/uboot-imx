@@ -507,6 +507,11 @@ void setup_spinor(void)
 					 ARRAY_SIZE(ecspi4_pads));
 	gpio_direction_output(IMX_GPIO_NR(6, 10), 0);
 }
+
+int board_spi_cs_gpio(unsigned bus, unsigned cs)
+{
+	return (bus == 0 && cs == 0) ? (IMX_GPIO_NR(6, 10)) : -1;
+}
 #endif
 
 #ifdef CONFIG_SYS_USE_EIMNOR
