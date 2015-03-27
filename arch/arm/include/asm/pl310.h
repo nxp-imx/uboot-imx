@@ -3,6 +3,8 @@
  * Texas Instruments, <www.ti.com>
  * Aneesh V <aneesh@ti.com>
  *
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 #ifndef _PL310_H_
@@ -78,5 +80,10 @@ void pl310_inval_all(void);
 void pl310_clean_inval_all(void);
 void pl310_inval_range(u32 start, u32 end);
 void pl310_clean_inval_range(u32 start, u32 end);
+
+#define L2X0_CACHE_ID_PART_MASK		(0xf << 6)
+#define L2X0_CACHE_ID_PART_L310		(3 << 6)
+#define L2X0_CACHE_ID_RTL_MASK          0x3f
+#define L2X0_CACHE_ID_RTL_R3P2          0x8
 
 #endif
