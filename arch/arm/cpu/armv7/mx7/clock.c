@@ -774,7 +774,8 @@ static int enable_pll_enet(void)
 
 	return 0;
 }
-static int enable_pll_video(u32 pll_div, u32 pll_num, u32 pll_denom)
+static int enable_pll_video(u32 pll_div, u32 pll_num, u32 pll_denom,
+	u32 post_div)
 {
 	u32 reg = 0;
 	ulong start;
@@ -792,10 +793,39 @@ static int enable_pll_video(u32 pll_div, u32 pll_num, u32 pll_denom)
 		&ccm_anatop->pll_video_clr);
 
 	/* Set div, num and denom */
-	writel(CCM_ANALOG_PLL_VIDEO_SET_DIV_SELECT(pll_div) |
-		CCM_ANALOG_PLL_VIDEO_SET_TEST_DIV_SELECT(0x2) |
-		CCM_ANALOG_PLL_VIDEO_SET_POST_DIV_SEL(0x0),
-		&ccm_anatop->pll_video_set);
+	switch (post_div) {
+	case 1:
+		writel(CCM_ANALOG_PLL_VIDEO_SET_DIV_SELECT(pll_div) |
+			CCM_ANALOG_PLL_VIDEO_SET_TEST_DIV_SELECT(0x1) |
+			CCM_ANALOG_PLL_VIDEO_SET_POST_DIV_SEL(0x0),
+			&ccm_anatop->pll_video_set);
+		break;
+	case 2:
+		writel(CCM_ANALOG_PLL_VIDEO_SET_DIV_SELECT(pll_div) |
+			CCM_ANALOG_PLL_VIDEO_SET_TEST_DIV_SELECT(0x0) |
+			CCM_ANALOG_PLL_VIDEO_SET_POST_DIV_SEL(0x0),
+			&ccm_anatop->pll_video_set);
+		break;
+	case 3:
+		writel(CCM_ANALOG_PLL_VIDEO_SET_DIV_SELECT(pll_div) |
+			CCM_ANALOG_PLL_VIDEO_SET_TEST_DIV_SELECT(0x0) |
+			CCM_ANALOG_PLL_VIDEO_SET_POST_DIV_SEL(0x1),
+			&ccm_anatop->pll_video_set);
+		break;
+	case 4:
+		writel(CCM_ANALOG_PLL_VIDEO_SET_DIV_SELECT(pll_div) |
+			CCM_ANALOG_PLL_VIDEO_SET_TEST_DIV_SELECT(0x0) |
+			CCM_ANALOG_PLL_VIDEO_SET_POST_DIV_SEL(0x3),
+			&ccm_anatop->pll_video_set);
+		break;
+	case 0:
+	default:
+		writel(CCM_ANALOG_PLL_VIDEO_SET_DIV_SELECT(pll_div) |
+			CCM_ANALOG_PLL_VIDEO_SET_TEST_DIV_SELECT(0x2) |
+			CCM_ANALOG_PLL_VIDEO_SET_POST_DIV_SEL(0x0),
+			&ccm_anatop->pll_video_set);
+		break;
+	}
 
 	writel(CCM_ANALOG_PLL_VIDEO_NUM_A(pll_num),
 		&ccm_anatop->pll_video_num);
@@ -868,12 +898,29 @@ void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq)
 	u32 max = hck * 54;
 	u32 temp, best = 0;
 	u32 i, j, pred = 1, postd = 1;
-	u32 pll_div, pll_num, pll_denom;
+	u32 pll_div, pll_num, pll_denom, post_div = 0;
 	u32 target;
 
 	debug("mxs_set_lcdclk, freq = %d\n", freq);
 
 	clock_enable(CCGR_LCDIF, 0);
+
+	temp = (freq * 8 * 8);
+	if (temp < min) {
+
+		for (i = 1; i <= 4; i++) {
+			if ((temp * (1 << i)) > min) {
+				post_div = i;
+				freq = (freq * (1 << i));
+				break;
+			}
+		}
+
+		if (5 == i) {
+			printf("Fail to set rate to %dkhz", freq);
+			return;
+		}
+	}
 
 	for (i = 1; i <= 8; i++) {
 		for (j = 1; j <= 8; j++) {
@@ -900,7 +947,7 @@ void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq)
 	pll_denom = 1000000;
 	pll_num = (best - hck * pll_div) * pll_denom / hck;
 
-	if (enable_pll_video(pll_div, pll_num, pll_denom))
+	if (enable_pll_video(pll_div, pll_num, pll_denom, post_div))
 		return;
 
 	target = CLK_ROOT_ON | LCDIF_PIXEL_CLK_ROOT_FROM_PLL_VIDEO_MAIN_CLK |
