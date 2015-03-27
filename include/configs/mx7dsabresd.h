@@ -144,7 +144,7 @@
 
 #ifdef CONFIG_VIDEO
 #define CONFIG_VIDEO_MODE \
-	"panel=MCIMX28LCD\0"
+	"panel=TFT43AB\0"
 #else
 #define CONFIG_VIDEO_MODE ""
 #endif
