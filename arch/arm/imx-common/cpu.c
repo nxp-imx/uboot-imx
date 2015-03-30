@@ -175,6 +175,7 @@ int print_cpuinfo(void)
 
 	cpurev = get_cpu_rev();
 
+#if defined(CONFIG_MX6)
 	if (is_mx6dqp()) {
 		printf("CPU:   Freescale i.MX%sP rev%d.%d at %d MHz\n",
 			get_imx_type((cpurev & 0xFF000) >> 12),
@@ -182,7 +183,9 @@ int print_cpuinfo(void)
 			(cpurev & 0x0000F) >> 0,
 			mxc_get_clock(MXC_ARM_CLK) / 1000000);
 
-	} else {
+	} else
+#endif
+	{
 		printf("CPU:   Freescale i.MX%s rev%d.%d at %d MHz\n",
 			get_imx_type((cpurev & 0xFF000) >> 12),
 			(cpurev & 0x000F0) >> 4,
