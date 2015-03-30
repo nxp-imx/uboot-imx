@@ -155,11 +155,20 @@ int print_cpuinfo(void)
 
 	cpurev = get_cpu_rev();
 
-	printf("CPU:   Freescale i.MX%s rev%d.%d at %d MHz\n",
-		get_imx_type((cpurev & 0xFF000) >> 12),
-		(cpurev & 0x000F0) >> 4,
-		(cpurev & 0x0000F) >> 0,
-		mxc_get_clock(MXC_ARM_CLK) / 1000000);
+	if (is_mx6dqp()) {
+		printf("CPU:   Freescale i.MX%sP rev%d.%d at %d MHz\n",
+			get_imx_type((cpurev & 0xFF000) >> 12),
+			((cpurev & 0x000F0) >> 4) - 1,
+			(cpurev & 0x0000F) >> 0,
+			mxc_get_clock(MXC_ARM_CLK) / 1000000);
+
+	} else {
+		printf("CPU:   Freescale i.MX%s rev%d.%d at %d MHz\n",
+			get_imx_type((cpurev & 0xFF000) >> 12),
+			(cpurev & 0x000F0) >> 4,
+			(cpurev & 0x0000F) >> 0,
+			mxc_get_clock(MXC_ARM_CLK) / 1000000);
+	}
 
 #if defined(CONFIG_MX6) || defined(CONFIG_MX7)
 	check_cpu_temperature();
