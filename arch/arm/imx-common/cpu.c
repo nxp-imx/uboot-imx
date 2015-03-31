@@ -168,7 +168,7 @@ int print_cpuinfo(void)
 		(struct dbg_monitor_regs *)DEBUG_MONITOR_BASE_ADDR;
 #endif
 
-#if defined(CONFIG_MX6) && defined(CONFIG_IMX6_THERMAL)
+#if defined(CONFIG_IMX_THERMAL)
 	struct udevice *thermal_dev;
 	int cpu_tmp, ret;
 #endif
@@ -181,8 +181,7 @@ int print_cpuinfo(void)
 		(cpurev & 0x0000F) >> 0,
 		mxc_get_clock(MXC_ARM_CLK) / 1000000);
 
-#if (defined(CONFIG_MX6) && defined(CONFIG_IMX6_THERMAL)) || \
-     (defined(CONFIG_MX7) && defined(CONFIG_IMX7_THERMAL))
+#if defined(CONFIG_IMX_THERMAL)
 	ret = uclass_get_device(UCLASS_THERMAL, 0, &thermal_dev);
 	if (!ret) {
 		ret = thermal_get_temp(thermal_dev, &cpu_tmp);

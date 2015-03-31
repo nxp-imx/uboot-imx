@@ -15,6 +15,8 @@
 #include <asm/imx-common/dma.h>
 #include <stdbool.h>
 #include <asm/arch/crm_regs.h>
+#include <dm.h>
+#include <imx_thermal.h>
 #ifdef CONFIG_FASTBOOT
 #ifdef CONFIG_ANDROID_RECOVERY
 #include <recovery.h>
@@ -25,19 +27,20 @@
 #include <usb/imx_udc.h>
 #endif
 
-#define TEMPERATURE_MIN		-40
-#define TEMPERATURE_HOT		80
-#define TEMPERATURE_MAX		125
-#define FACTOR1			15976
-#define FACTOR2			4297157
-#define MEASURE_FREQ		327
-
-#define REG_VALUE_TO_CEL(ratio, raw) \
-	((raw_n40c - raw) * 100 / ratio - 40)
-
-static unsigned int fuse = ~0;
-
 struct src *src_reg = (struct src *)SRC_BASE_ADDR;
+
+#if defined(CONFIG_IMX_THERMAL)
+static const struct imx_thermal_plat imx7_thermal_plat = {
+	.regs = (void *)ANATOP_BASE_ADDR,
+	.fuse_bank = 3,
+	.fuse_word = 3,
+};
+
+U_BOOT_DEVICE(imx7_thermal) = {
+	.name = "imx_thermal",
+	.platdata = &imx7_thermal_plat,
+};
+#endif
 
 u32 get_cpu_rev(void)
 {
@@ -62,104 +65,6 @@ u32 __weak get_board_rev(void)
 	return cpurev;
 }
 #endif
-
-static int read_cpu_temperature(void)
-{
-	int temperature;
-	unsigned int reg, tmp;
-	unsigned int raw_25c, raw_n40c, ratio;
-	struct mxc_ccm_anatop_reg *ccm_anatop = (struct mxc_ccm_anatop_reg *)
-						 ANATOP_BASE_ADDR;
-	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
-	struct fuse_bank *bank = &ocotp->bank[3];
-	struct fuse_bank3_regs *fuse_bank3 =
-			(struct fuse_bank3_regs *)bank->fuse_regs;
-
-	enable_ocotp_clk(1);
-	fuse = readl(&fuse_bank3->ana1);
-
-	if (fuse == 0 || fuse == 0xffffffff || (fuse & 0xfff00000) == 0)
-		return TEMPERATURE_MIN;
-
-	/*
-	 * fuse data layout:
-	 * [31:20] sensor value @ 25C
-	 * [19:8] sensor value of hot
-	 * [7:0] hot temperature value
-	 */
-	raw_25c = fuse >> 20;
-
-	/*
-	 * The universal equation for thermal sensor
-	 * is slope = 0.4297157 - (0.0015976 * 25C fuse),
-	 * here we convert them to integer to make them
-	 * easy for counting, FACTOR1 is 15976,
-	 * FACTOR2 is 4297157. Our ratio = -100 * slope
-	 */
-	ratio = ((FACTOR1 * raw_25c - FACTOR2) + 50000) / 100000;
-
-	debug("Thermal sensor with ratio = %d\n", ratio);
-
-	raw_n40c = raw_25c + (13 * ratio) / 20;
-
-	/*
-	 * now we only use single measure, every time we read
-	 * the temperature, we will power on/down anadig thermal
-	 * module
-	 */
-	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_POWER_DOWN_MASK, &ccm_anatop->tempsense0_clr);
-	writel(PMU_REF_REFTOP_SELFBIASOFF_MASK, &ccm_anatop->ref_set);
-
-	/* write measure freq */
-	reg = readl(&ccm_anatop->tempsense1);
-	reg &= ~TEMPMON_HW_ANADIG_TEMPSENSE1_MEASURE_FREQ_MASK;
-	reg |= TEMPMON_HW_ANADIG_TEMPSENSE1_MEASURE_FREQ(MEASURE_FREQ);
-	writel(reg, &ccm_anatop->tempsense1);
-
-	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_MEASURE_TEMP_MASK, &ccm_anatop->tempsense1_clr);
-	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_FINISHED_MASK, &ccm_anatop->tempsense1_clr);
-	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_MEASURE_TEMP_MASK, &ccm_anatop->tempsense1_set);
-
-	while ((readl(&ccm_anatop->tempsense1) &
-			TEMPMON_HW_ANADIG_TEMPSENSE1_FINISHED_MASK) == 0)
-		udelay(10000);
-
-	reg = readl(&ccm_anatop->tempsense1);
-	tmp = (reg & TEMPMON_HW_ANADIG_TEMPSENSE1_TEMP_VALUE_MASK)
-		>> TEMPMON_HW_ANADIG_TEMPSENSE1_TEMP_VALUE_SHIFT;
-	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_FINISHED_MASK, &ccm_anatop->tempsense1_clr);
-
-	if (tmp <= raw_n40c)
-		temperature = REG_VALUE_TO_CEL(ratio, tmp);
-	else
-		temperature = TEMPERATURE_MIN;
-	/* power down anatop thermal sensor */
-	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_POWER_DOWN_MASK, &ccm_anatop->tempsense0_set);
-	writel(PMU_REF_REFTOP_SELFBIASOFF_MASK, &ccm_anatop->ref_clr);
-
-	return temperature;
-}
-
-void check_cpu_temperature(void)
-{
-	int cpu_tmp = 0;
-
-	cpu_tmp = read_cpu_temperature();
-	while (cpu_tmp > TEMPERATURE_MIN && cpu_tmp < TEMPERATURE_MAX) {
-		if (cpu_tmp >= TEMPERATURE_HOT) {
-			printf("CPU is %d C, too hot to boot, waiting...\n",
-				cpu_tmp);
-			udelay(5000000);
-			cpu_tmp = read_cpu_temperature();
-		} else
-			break;
-	}
-	if (cpu_tmp > TEMPERATURE_MIN && cpu_tmp < TEMPERATURE_MAX)
-		printf("CPU:   Temperature %d C, calibration data: 0x%x\n",
-			cpu_tmp, fuse);
-	else
-		printf("CPU:   Temperature: can't get valid data!\n");
-}
 
 static void init_aips(void)
 {

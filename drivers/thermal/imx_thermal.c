@@ -18,6 +18,7 @@
 #include <thermal.h>
 #include <imx_thermal.h>
 
+#if defined(CONFIG_MX6)
 #define TEMPERATURE_MIN		-40
 #define TEMPERATURE_HOT		80
 #define TEMPERATURE_MAX		125
@@ -116,6 +117,78 @@ static int read_cpu_temperature(struct udevice *dev)
 
 	return temperature;
 }
+#elif defined(CONFIG_MX7)
+#define TEMPERATURE_MIN		-40
+#define TEMPERATURE_HOT		85
+#define TEMPERATURE_MAX		125
+#define MEASURE_FREQ		327
+
+static int read_cpu_temperature(struct udevice *dev)
+{
+	unsigned int reg, tmp, start;
+	unsigned int raw_25c, te1;
+	int temperature;
+	unsigned int *priv = dev_get_priv(dev);
+	u32 fuse = *priv;
+	struct mxc_ccm_anatop_reg *ccm_anatop = (struct mxc_ccm_anatop_reg *)
+						 ANATOP_BASE_ADDR;
+	/*
+	 * fuse data layout:
+	 * [31:21] sensor value @ 25C
+	 * [20:18] hot temperature value
+	 * [17:9] sensor value of room
+	 * [8:0] sensor value of hot
+	 */
+
+	raw_25c = fuse >> 21;
+	if (raw_25c == 0)
+		raw_25c = 25;
+
+	te1 = (fuse >> 9) & 0x1ff;
+
+	/*
+	 * now we only use single measure, every time we read
+	 * the temperature, we will power on/down anadig thermal
+	 * module
+	 */
+	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_POWER_DOWN_MASK, &ccm_anatop->tempsense1_clr);
+	writel(PMU_REF_REFTOP_SELFBIASOFF_MASK, &ccm_anatop->ref_set);
+
+	/* write measure freq */
+	reg = readl(&ccm_anatop->tempsense1);
+	reg &= ~TEMPMON_HW_ANADIG_TEMPSENSE1_MEASURE_FREQ_MASK;
+	reg |= TEMPMON_HW_ANADIG_TEMPSENSE1_MEASURE_FREQ(MEASURE_FREQ);
+	writel(reg, &ccm_anatop->tempsense1);
+
+	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_MEASURE_TEMP_MASK, &ccm_anatop->tempsense1_clr);
+	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_FINISHED_MASK, &ccm_anatop->tempsense1_clr);
+	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_MEASURE_TEMP_MASK, &ccm_anatop->tempsense1_set);
+
+	start = get_timer(0);
+	/* Wait max 2s */
+	do {
+		reg = readl(&ccm_anatop->tempsense1);
+		tmp = (reg & TEMPMON_HW_ANADIG_TEMPSENSE1_TEMP_VALUE_MASK)
+		       >> TEMPMON_HW_ANADIG_TEMPSENSE1_TEMP_VALUE_SHIFT;
+		if (tmp != 0)
+			break;
+	} while (get_timer(0) < (start + 2000));
+	/* Still not get invalid temperature? */
+	if (tmp == 0)
+		return -EINVAL;
+
+	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_FINISHED_MASK, &ccm_anatop->tempsense1_clr);
+
+	/* Single point */
+	temperature = tmp - (te1 - raw_25c);
+
+	/* power down anatop thermal sensor */
+	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_POWER_DOWN_MASK, &ccm_anatop->tempsense1_set);
+	writel(PMU_REF_REFTOP_SELFBIASOFF_MASK, &ccm_anatop->ref_clr);
+
+	return temperature;
+}
+#endif
 
 int imx_thermal_get_temp(struct udevice *dev, int *temp)
 {
@@ -152,11 +225,23 @@ static int imx_thermal_probe(struct udevice *dev)
 	/* Read Temperature calibration data fuse */
 	fuse_read(pdata->fuse_bank, pdata->fuse_word, &fuse);
 
+#if defined(CONFIG_MX6)
 	/* Check for valid fuse */
 	if (fuse == 0 || fuse == ~0 || (fuse & 0xfff00000) == 0) {
 		printf("CPU:   Thermal invalid data, fuse: 0x%x\n", fuse);
 		return -EPERM;
 	}
+#elif defined(CONFIG_MX7)
+	/* No Calibration data in FUSE? */
+	if ((fuse & 0x3ffff) == 0)
+		return -EPERM;
+
+	/* We do not support 105C TE2 */
+	if (((fuse & 0x1c0000) >> 18) == 0x6)
+		return -EPERM;
+#else
+#error "Not support thermal driver"
+#endif
 
 	*priv = fuse;
 

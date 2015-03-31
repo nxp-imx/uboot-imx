@@ -67,6 +67,11 @@ void enable_ocotp_clk(unsigned char enable)
 {
 	clock_enable(CCGR_OCOTP, enable);
 }
+
+void enable_thermal_clk(void)
+{
+	enable_ocotp_clk(1);
+}
 #endif
 
 void enable_usboh3_clk(unsigned char enable)
