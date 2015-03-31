@@ -156,6 +156,7 @@
 		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
 		"g_mass_storage.iSerialNumber=\"\" "\
 		CONFIG_MFG_NAND_PARTITION \
+		"clk_ignore_unused "\
 		"\0" \
 	"initrd_addr=0x83800000\0" \
 	"initrd_high=0xffffffff\0" \

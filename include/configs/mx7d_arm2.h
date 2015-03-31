@@ -134,6 +134,7 @@
 		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
 		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
 		"g_mass_storage.iSerialNumber=\"\" "\
+		"clk_ignore_unused "\
 		"\0" \
 	"initrd_addr=0x83800000\0" \
 	"initrd_high=0xffffffff\0" \
