@@ -13,27 +13,27 @@
 /* -------- start of HAB API updates ------------*/
 #define hab_rvt_report_event_p						\
 (									\
-	((hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT_NEW)		\
+	((hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT)		\
 )
 
 #define hab_rvt_report_status_p						\
 (									\
-	((hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS_NEW)		\
+	((hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS)		\
 )
 
 #define hab_rvt_authenticate_image_p					\
 (									\
-	((hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE_NEW)	\
+	((hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE)	\
 )
 
 #define hab_rvt_entry_p							\
 (									\
-	((hab_rvt_entry_t *)HAB_RVT_ENTRY_NEW)				\
+	((hab_rvt_entry_t *)HAB_RVT_ENTRY)				\
 )
 
 #define hab_rvt_exit_p							\
 (									\
-	((hab_rvt_exit_t *)HAB_RVT_EXIT_NEW)				\
+	((hab_rvt_exit_t *)HAB_RVT_EXIT)				\
 )
 
 #define IVT_SIZE		0x20

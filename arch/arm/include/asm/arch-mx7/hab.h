@@ -60,12 +60,6 @@ typedef void hapi_clock_init_t(void);
 #define HAB_RVT_REPORT_EVENT			(*(uint32_t *) (HAB_RVT_UNIFIED_BASE + 0x20))
 #define HAB_RVT_REPORT_STATUS			(*(uint32_t *) (HAB_RVT_UNIFIED_BASE + 0x24))
 
-#define HAB_RVT_REPORT_EVENT_NEW		(*(uint32_t *) 0x000000B8)
-#define HAB_RVT_REPORT_STATUS_NEW		(*(uint32_t *) 0x000000BC)
-#define HAB_RVT_AUTHENTICATE_IMAGE_NEW		(*(uint32_t *) 0x000000A8)
-#define HAB_RVT_ENTRY_NEW			(*(uint32_t *) 0x0000009C)
-#define HAB_RVT_EXIT_NEW			(*(uint32_t *) 0x000000A0)
-
 #define HAB_RVT_CLOCK_INIT ((hapi_clock_init_t *)0x0000024D)
 
 #define HAB_CID_ROM 0 /**< ROM Caller ID */
