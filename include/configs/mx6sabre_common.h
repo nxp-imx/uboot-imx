@@ -35,7 +35,7 @@
 #define CONFIG_INITRD_TAG
 #define CONFIG_REVISION_TAG
 
-#define CONFIG_IMX6_THERMAL
+#define CONFIG_IMX_THERMAL
 
 #define CONFIG_SYS_GENERIC_BOARD
 
@@ -49,7 +49,7 @@
 #define CONFIG_MXC_UART
 
 #define CONFIG_CMD_FUSE
-#if defined(CONFIG_CMD_FUSE) || defined(CONFIG_IMX6_THERMAL)
+#if defined(CONFIG_CMD_FUSE) || defined(CONFIG_IMX_THERMAL)
 #define CONFIG_MXC_OCOTP
 #endif
 
