@@ -85,6 +85,9 @@ config ARM_ERRATA_833069
 config ARM_ERRATA_833471
 	bool
 
+config ARM_ERRATA_845369
+	bool
+
 config CPU_ARM720T
 	bool
 	select SYS_CACHE_SHIFT_5
