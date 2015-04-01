@@ -337,6 +337,11 @@ ENTRY(cpu_init_cp15)
 	orr	r0, r0, #1 << 21	@ set bit #21
 	mcr	p15, 0, r0, c15, c0, 1	@ write diagnostic register
 #endif
+#ifdef CONFIG_ARM_ERRATA_845369
+	mrc	p15, 0, r0, c15, c0, 1	@ read diagnostic register
+	orr	r0, r0, #1 << 22	@ set bit #22
+	mcr	p15, 0, r0, c15, c0, 1	@ write diagnostic register
+#endif
 
 	mov	pc, lr			@ back to my caller
 ENDPROC(cpu_init_cp15)
