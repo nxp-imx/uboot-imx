@@ -9,6 +9,7 @@
  * Copyright (c) 2003	Richard Woodruff <r-woodruff2@ti.com>
  * Copyright (c) 2003	Kshitij <kshitij@ti.com>
  * Copyright (c) 2006-2008 Syed Mohammed Khasim <x0khasim@ti.com>
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -161,6 +162,11 @@ ENTRY(cpu_init_cp15)
 #ifdef CONFIG_ARM_ERRATA_761320
 	mrc	p15, 0, r0, c15, c0, 1	@ read diagnostic register
 	orr	r0, r0, #1 << 21	@ set bit #21
+	mcr	p15, 0, r0, c15, c0, 1	@ write diagnostic register
+#endif
+#ifdef CONFIG_ARM_ERRATA_845369
+	mrc	p15, 0, r0, c15, c0, 1	@ read diagnostic register
+	orr	r0, r0, #1 << 22	@ set bit #22
 	mcr	p15, 0, r0, c15, c0, 1	@ write diagnostic register
 #endif
 
