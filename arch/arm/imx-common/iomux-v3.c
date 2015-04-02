@@ -48,6 +48,9 @@ void imx_iomux_v3_setup_pad(iomux_v3_cfg_t pad)
 		base = (void *)IOMUXC_LPSR_BASE_ADDR;
 		mux_mode &= ~IOMUX_CONFIG_LPSR;
 	}
+
+	if (sel_input_ofs)
+		sel_input_ofs += IOMUX_LPSR_SEL_INPUT_OFS;
 #endif
 
 	__raw_writel(mux_mode, base + mux_ctrl_ofs);

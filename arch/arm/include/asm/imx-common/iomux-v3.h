@@ -87,6 +87,7 @@ typedef u64 iomux_v3_cfg_t;
 
 #ifdef CONFIG_MX7
 
+#define IOMUX_LPSR_SEL_INPUT_OFS 0x70000
 #define IOMUX_CONFIG_LPSR	0x8
 #define MUX_MODE_LPSR		((iomux_v3_cfg_t)IOMUX_CONFIG_LPSR << \
 	MUX_MODE_SHIFT)
