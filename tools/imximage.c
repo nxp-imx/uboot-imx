@@ -25,7 +25,8 @@ static table_entry_t imximage_cmds[] = {
 	{CMD_BOOT_OFFSET,       "BOOT_OFFSET",          "Boot offset",	  },
 	{CMD_DATA,              "DATA",                 "Reg Write Data", },
 	{CMD_CLR_BIT,           "CLR_BIT",              "Reg clear bit",  },
-	{CMD_CHECK_DATA,        "CHECK_DATA",           "Reg Check Data", },
+	{CMD_CHECK_BITS_SET,    "CHECK_BITS_SET",       "Reg Check bits set", },
+	{CMD_CHECK_BITS_CLR,    "CHECK_BITS_CLR",       "Reg Check bits clr", },
 	{CMD_CSF,               "CSF",           "Command Sequence File", },
 	{CMD_IMAGE_VERSION,     "IMAGE_VERSION",        "image version",  },
 #ifdef CONFIG_USE_PLUGIN
@@ -190,14 +191,22 @@ static void set_dcd_val_v2(struct imx_header *imxhdr, char *name, int lineno,
 			dcd_command_block->length = cpu_to_be16(off *
 					sizeof(dcd_addr_data_t) + 4);
 			dcd_command_block->param = DCD_CLR_BIT_PARAM;
-		} else if (CMD_CHECK_DATA) {
+		} else if (cmd == CMD_CHECK_BITS_SET) {
 			dcd_command_block->tag = DCD_CHECK_DATA_COMMAND_TAG;
 			/*
 			 * check data command only supports one entry,
 			 * so use 0xC = size(address + value + command).
 			 */
 			dcd_command_block->length = cpu_to_be16(0xC);
-			dcd_command_block->param = DCD_CHECK_DATA_PARAM;
+			dcd_command_block->param = DCD_CHECK_BITS_SET_PARAM;
+		} else if (cmd == CMD_CHECK_BITS_CLR) {
+			dcd_command_block->tag = DCD_CHECK_DATA_COMMAND_TAG;
+			/*
+			 * check data command only supports one entry,
+			 * so use 0xC = size(address + value + command).
+			 */
+			dcd_command_block->length = cpu_to_be16(0xC);
+			dcd_command_block->param = DCD_CHECK_BITS_CLR_PARAM;
 		}
 	case CFG_REG_ADDRESS:
 		dcd_command_block->addr_data[off].addr = cpu_to_be32(value);
@@ -612,7 +621,8 @@ static void parse_cfg_fld(struct imx_header *imxhdr, int32_t *cmd,
 		}
 
 		if ((*precmd == CMD_DATA) || (*precmd == CMD_CLR_BIT) ||
-		    (*precmd == CMD_CHECK_DATA)) {
+		    (*precmd == CMD_CHECK_BITS_SET) ||
+		    (*precmd == CMD_CHECK_BITS_CLR)) {
 			if (*cmd != *precmd) {
 				dataindex += ((*dcd_len) *
 					      sizeof(dcd_addr_data_t) + 4) >> 2;
@@ -621,7 +631,8 @@ static void parse_cfg_fld(struct imx_header *imxhdr, int32_t *cmd,
 		}
 
 		if ((*cmd == CMD_DATA) || (*cmd == CMD_CLR_BIT) ||
-		    (*cmd == CMD_CHECK_DATA)) {
+		    (*cmd == CMD_CHECK_BITS_SET) ||
+		    (*cmd == CMD_CHECK_BITS_CLR)) {
 			/*
 			 * Reserve the first entry for command header,
 			 * So use *dcd_len + 1 as the off.
@@ -639,7 +650,8 @@ static void parse_cfg_fld(struct imx_header *imxhdr, int32_t *cmd,
 	case CFG_REG_ADDRESS:
 	case CFG_REG_VALUE:
 		switch (*cmd) {
-		case CMD_CHECK_DATA:
+		case CMD_CHECK_BITS_SET:
+		case CMD_CHECK_BITS_CLR:
 		case CMD_DATA:
 		case CMD_CLR_BIT:
 			value = get_cfg_value(token, name, lineno);
