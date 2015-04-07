@@ -121,7 +121,6 @@ static void imx_set_wdog_powerdown(bool enable)
 	writew(enable, &wdog4->wmcr);
 }
 
-#if defined(CONFIG_MXC_EPDC)
 static void set_epdc_qos(void)
 {
 #define REGS_QOS_BASE     QOSC_IPS_BASE_ADDR
@@ -150,7 +149,6 @@ static void set_epdc_qos(void)
 
 	writel(0xe080, IOMUXC_GPR_BASE_ADDR + 0x0034); /* EPDC AW/AR CACHE ENABLE */
 }
-#endif
 
 int arch_cpu_init(void)
 {
@@ -166,9 +164,8 @@ int arch_cpu_init(void)
 	mxs_dma_init();
 #endif
 
-#if defined(CONFIG_MXC_EPDC)
 	set_epdc_qos();
-#endif
+
 	return 0;
 }
 
