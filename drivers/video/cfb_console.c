@@ -2,6 +2,8 @@
  * (C) Copyright 2002 ELTEC Elektronik AG
  * Frank Gottschling <fgottschling@eltec.de>
  *
+ * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -2036,16 +2038,30 @@ static void *video_logo(void)
 
 	sprintf(info, " %s", version_string);
 
-	space = (VIDEO_LINE_LEN / 2 - VIDEO_INFO_X) / VIDEO_FONT_WIDTH;
+	space = (VIDEO_COLS - VIDEO_INFO_X) / VIDEO_FONT_WIDTH;
 	len = strlen(info);
 
 	if (len > space) {
-		video_drawchars(VIDEO_INFO_X, VIDEO_INFO_Y,
-				(uchar *) info, space);
-		video_drawchars(VIDEO_INFO_X + VIDEO_FONT_WIDTH,
-				VIDEO_INFO_Y + VIDEO_FONT_HEIGHT,
-				(uchar *) info + space, len - space);
-		y_off = 1;
+		int xx = VIDEO_INFO_X, yy = VIDEO_INFO_Y;
+		while (len) {
+			if (len > space) {
+				video_drawchars(xx, yy,
+					(uchar *) info + (y_off * space), space);
+				len -= space;
+
+				if (!y_off) {
+					xx += VIDEO_FONT_WIDTH;
+					space--;
+				}
+				yy += VIDEO_FONT_HEIGHT;
+
+				y_off++;
+			} else {
+				video_drawchars(xx, yy,
+					(uchar *) info + (y_off * space), len);
+				len = 0;
+			}
+		}
 	} else
 		video_drawstring(VIDEO_INFO_X, VIDEO_INFO_Y, (uchar *) info);
 
