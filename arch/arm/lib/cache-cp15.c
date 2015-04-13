@@ -244,11 +244,14 @@ static void cache_disable(uint32_t cache_bit)
 	reg = get_cr();
 
 #ifdef CONFIG_SYS_ARM_MMU
-	if (cache_bit == (CR_C | CR_M))
+	if (cache_bit == (CR_C | CR_M)) {
 #elif defined(CONFIG_SYS_ARM_MPU)
-	if (cache_bit == CR_C)
+	if (cache_bit == CR_C) {
 #endif
 		flush_dcache_all();
+		set_cr(reg & ~CR_C);
+		flush_dcache_all();
+	}
 	set_cr(reg & ~cache_bit);
 }
 #endif
