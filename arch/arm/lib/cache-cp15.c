@@ -146,8 +146,11 @@ static void cache_disable(uint32_t cache_bit)
 	}
 	reg = get_cr();
 	cp_delay();
-	if (cache_bit == (CR_C | CR_M))
+	if (cache_bit == (CR_C | CR_M)) {
 		flush_dcache_all();
+		set_cr(reg & ~CR_C);
+		flush_dcache_all();
+	}
 	set_cr(reg & ~cache_bit);
 }
 #endif
