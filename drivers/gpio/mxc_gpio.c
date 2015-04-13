@@ -52,10 +52,14 @@ static unsigned long gpio_ports[] = {
 #if defined(CONFIG_MX27) || defined(CONFIG_MX53) || defined(CONFIG_MX6) || \
 		defined(CONFIG_MX7)
 	[4] = GPIO5_BASE_ADDR,
+#if !defined(CONFIG_MX6UL)
 	[5] = GPIO6_BASE_ADDR,
 #endif
+#endif
 #if defined(CONFIG_MX53) || defined(CONFIG_MX6) || defined(CONFIG_MX7)
+#if !defined(CONFIG_MX6UL)
 	[6] = GPIO7_BASE_ADDR,
+#endif
 #endif
 };
 
