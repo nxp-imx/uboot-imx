@@ -165,26 +165,26 @@ static int read_cpu_temperature(struct udevice *dev)
 	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_MEASURE_TEMP_MASK, &ccm_anatop->tempsense1_set);
 
 	start = get_timer(0);
-	/* Wait max 2s */
+	/* Wait max 100ms */
 	do {
+		/*
+		 * Since we can not rely on finish bit, use 1ms delay to get
+		 * temperature. From RM, 17us is enough to get data, but
+		 * to gurantee to get the data, delay 100ms here.
+		 */
 		reg = readl(&ccm_anatop->tempsense1);
 		tmp = (reg & TEMPMON_HW_ANADIG_TEMPSENSE1_TEMP_VALUE_MASK)
 		       >> TEMPMON_HW_ANADIG_TEMPSENSE1_TEMP_VALUE_SHIFT;
-		if (tmp != 0)
-			break;
-	} while (get_timer(0) < (start + 2000));
-	/* Still not get invalid temperature? */
-	if (tmp == 0)
-		return -EINVAL;
+	} while (get_timer(0) < (start + 100));
 
 	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_FINISHED_MASK, &ccm_anatop->tempsense1_clr);
-
-	/* Single point */
-	temperature = tmp - (te1 - raw_25c);
 
 	/* power down anatop thermal sensor */
 	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_POWER_DOWN_MASK, &ccm_anatop->tempsense1_set);
 	writel(PMU_REF_REFTOP_SELFBIASOFF_MASK, &ccm_anatop->ref_clr);
+
+	/* Single point */
+	temperature = tmp - (te1 - raw_25c);
 
 	return temperature;
 }
