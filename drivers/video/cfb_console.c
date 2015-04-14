@@ -2043,11 +2043,13 @@ static void *video_logo(void)
 
 	if (len > space) {
 		int xx = VIDEO_INFO_X, yy = VIDEO_INFO_Y;
+		uchar *p = (uchar *) info;
 		while (len) {
 			if (len > space) {
-				video_drawchars(xx, yy,
-					(uchar *) info + (y_off * space), space);
+				video_drawchars(xx, yy, p, space);
 				len -= space;
+
+				p = (uchar *) p + space;
 
 				if (!y_off) {
 					xx += VIDEO_FONT_WIDTH;
@@ -2057,8 +2059,7 @@ static void *video_logo(void)
 
 				y_off++;
 			} else {
-				video_drawchars(xx, yy,
-					(uchar *) info + (y_off * space), len);
+				video_drawchars(xx, yy, p, len);
 				len = 0;
 			}
 		}
