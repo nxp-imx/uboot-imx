@@ -8,15 +8,6 @@
 
 /* DDR script */
 .macro imx7d_12x12_lpddr3_arm2_setting
-	/* down pll_ddr to 800M */
-	ldr r0, =ANATOP_BASE_ADDR
-	ldr r1, =0x00603021
-	str r1, [r0, #0x70]
-wait_freq:
-	ldr r1, [r0, #0x70]
-	tst r1, #0x80000000
-	beq wait_freq
-
 	/* Configure ocram_epdc */
 	ldr r0, =IOMUXC_GPR_BASE_ADDR
 	ldr r1, =0x4f400005
@@ -30,7 +21,7 @@ wait_freq:
 	ldr r0, =DDRC_IPS_BASE_ADDR
 	ldr r1, =0x03040008
 	str r1, [r0]
-	ldr r1, =0x00210038
+	ldr r1, =0x00200038
 	str r1, [r0, #0x64]
 	ldr r1, =0x1
 	str r1, [r0, #0x490]
@@ -38,7 +29,7 @@ wait_freq:
 	str r1, [r0, #0xd0]
 	ldr r1, =0x00c3000a
 	str r1, [r0, #0xdc]
-	ldr r1, =0x00020000
+	ldr r1, =0x00010000
 	str r1, [r0, #0xe0]
 	ldr r1, =0x00110006
 	str r1, [r0, #0xe4]
@@ -60,6 +51,8 @@ wait_freq:
 	str r1, [r0, #0x118]
 	ldr r1, =0x00000202
 	str r1, [r0, #0x11c]
+	ldr r1, =0x00000202
+	str r1, [r0, #0x120]
 	ldr r1, =0x00600018
 	str r1, [r0, #0x180]
 	ldr r1, =0x00e00100
@@ -70,7 +63,7 @@ wait_freq:
 	str r1, [r0, #0x194]
 	ldr r1, =0x80400003
 	str r1, [r0, #0x1a0]
-	ldr r1, =0x00001020
+	ldr r1, =0x00100020
 	str r1, [r0, #0x1a4]
 	ldr r1, =0x80100004
 	str r1, [r0, #0x1a8]
@@ -79,9 +72,11 @@ wait_freq:
 	str r1, [r0, #0x200]
 	ldr r1, =0x00171717
 	str r1, [r0, #0x204]
+	ldr r1, =0x00000f00
+	str r1, [r0, #0x210]
 	ldr r1, =0x05050505
 	str r1, [r0, #0x214]
-	ldr r1, =0x00050505
+	ldr r1, =0x0f0f0505
 	str r1, [r0, #0x218]
 
 	ldr r1, =0x06000601
@@ -103,17 +98,31 @@ wait_freq:
 	str r1, [r0, #0x8]
 	ldr r1, =0x0007080c
 	str r1, [r0, #0x10]
+	ldr r1, =0x1010007e
+	str r1, [r0, #0xb0]
 	ldr r1, =0x01010000
 	str r1, [r0, #0x1c]
-	ldr r1, =0x0db60db6
+	ldr r1, =0x0db60d6e
 	str r1, [r0, #0x9c]
+
+	ldr r1, =0x06060606
+	str r1, [r0, #0x30]
+	ldr r1, =0x0a0a0a0a
+	str r1, [r0, #0x20]
+	ldr r1, =0x01000008
+	str r1, [r0, #0x50]
+	ldr r1, =0x00000008
+	str r1, [r0, #0x50]
+
 	ldr r1, =0x0000000f
 	str r1, [r0, #0x18]
-	ldr r1, =0x0f407304
+	ldr r1, =0x1e487304
 	str r1, [r0, #0xc0]
-	ldr r1, =0x0f447304
+	ldr r1, =0x1e487304
 	str r1, [r0, #0xc0]
-	ldr r1, =0x0f447306
+	ldr r1, =0x1e487306
+	str r1, [r0, #0xc0]
+	ldr r1, =0x1e4c7304
 	str r1, [r0, #0xc0]
 
 wait_zq:
@@ -121,7 +130,7 @@ wait_zq:
 	tst r1, #0x1
 	beq wait_zq
 
-	ldr r1, =0x0f407304
+	ldr r1, =0x1e487304
 	str r1, [r0, #0xc0]
 
 	ldr r0, =CCM_BASE_ADDR
@@ -135,11 +144,6 @@ wait_zq:
 	mov r1, #0x2
 	ldr r2, =0x4130
 	str r1, [r0, r2]
-	ldr r0, =DDRPHY_IPS_BASE_ADDR
-	ldr r1, =0x01000018
-	str r1, [r0, #0x50]
-	ldr r1, =0x00000018
-	str r1, [r0, #0x50]
 
 	ldr r0, =DDRC_IPS_BASE_ADDR
 wait_stat:
