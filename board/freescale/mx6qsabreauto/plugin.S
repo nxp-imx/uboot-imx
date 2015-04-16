@@ -148,6 +148,11 @@
 	str r2, [r3, #0x00c]
 	ldr r2, =0x00000564
 	str r2, [r3, #0x038]
+	ldr r2, =0x00000040
+	str r2, [r3, #0x014]
+	ldr r2, =0x00000020
+	str r2, [r3, #0x028]
+	str r2, [r3, #0x02c]
 
 	ldr r2, =0x04088032
 	str r2, [r0, #0x01c]
