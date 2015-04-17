@@ -1098,6 +1098,32 @@ int do_mx6_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 }
 
 #ifndef CONFIG_MX6SX
+#ifdef CONFIG_MX6QP
+static void pre_misc_setting(void)
+{
+	/* Bypass IPU1 QoS generator */
+	writel(0x00000002, 0x00bb048c);
+	/* Bypass IPU2 QoS generator */
+	writel(0x00000002, 0x00bb050c);
+	/* Bandwidth THR for of PRE0 */
+	writel(0x00000200, 0x00bb0690);
+	/* Bandwidth THR for of PRE1 */
+	writel(0x00000200, 0x00bb0710);
+	/* Bandwidth THR for of PRE2 */
+	writel(0x00000200, 0x00bb0790);
+	/* Bandwidth THR for of PRE3 */
+	writel(0x00000200, 0x00bb0810);
+	/* Saturation THR for of PRE0 */
+	writel(0x00000020, 0x00bb0694);
+	/* Saturation THR for of PRE1 */
+	writel(0x00000020, 0x00bb0714);
+	/* Saturation THR for of PRE2 */
+	writel(0x00000020, 0x00bb0794);
+	/* Saturation THR for of PRE */
+	writel(0x00000020, 0x00bb0814);
+}
+#endif
+
 void enable_ipu_clock(void)
 {
 	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
@@ -1110,8 +1136,20 @@ void enable_ipu_clock(void)
 	reg = readl(&mxc_ccm->CCGR6);
 	reg |= MXC_CCM_CCGR6_PRG_CLK0_MASK;
 	writel(reg, &mxc_ccm->CCGR6);
+
+	reg = readl(&mxc_ccm->CCGR3);
+	reg |= MXC_CCM_CCGR3_IPU2_IPU_MASK;
+	writel(reg, &mxc_ccm->CCGR3);
+
+	/*
+	 * Since CONFIG_VIDEO_IPUV3 is always set in mx6sabre_common.h and
+	 * this misc setting is a must for mx6qp, this position is ok
+	 * to do such settings.
+	 */
+	pre_misc_setting();
 #endif
 }
+
 #endif
 /***************************************************/
 
