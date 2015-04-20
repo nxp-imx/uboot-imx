@@ -138,11 +138,13 @@ static void fec_mii_setspeed(struct ethernet_regs *eth)
 	 * and do not drop the Preamble.
 	 */
 	register u32 speed = DIV_ROUND_UP(imx_get_fecclk(), 5000000);
+	register u32 holdtime = DIV_ROUND_UP(imx_get_fecclk(), 100000000) - 1;
 #ifdef FEC_QUIRK_ENET_MAC
 	speed--;
 #endif
 	speed <<= 1;
-	writel(speed, &eth->mii_speed);
+	holdtime <<= 8;
+	writel(speed | holdtime, &eth->mii_speed);
 	debug("%s: mii_speed %08x\n", __func__, readl(&eth->mii_speed));
 }
 
