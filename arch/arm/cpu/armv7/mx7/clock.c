@@ -59,7 +59,7 @@ u32 imx_get_uartclk(void)
 
 u32 imx_get_fecclk(void)
 {
-	return get_ipg_clk();
+	return get_root_clk(ENET_AXI_CLK_ROOT);
 }
 
 #ifdef CONFIG_MXC_OCOTP
