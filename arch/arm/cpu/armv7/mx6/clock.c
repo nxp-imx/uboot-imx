@@ -456,7 +456,7 @@ static u32 get_mmdc_ch0_clk(void)
 void enable_lvds(uint32_t lcdif_base)
 {
 	u32 reg = 0;
-	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_GPR_BASE_ADDR;
+	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
 
 	/* Turn on LDB DI0 clocks */
 	reg = readl(&imx_ccm->CCGR3);
