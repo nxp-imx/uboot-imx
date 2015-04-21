@@ -1114,13 +1114,13 @@ static void pre_misc_setting(void)
 	/* Bandwidth THR for of PRE3 */
 	writel(0x00000200, 0x00bb0810);
 	/* Saturation THR for of PRE0 */
-	writel(0x00000020, 0x00bb0694);
+	writel(0x00000010, 0x00bb0694);
 	/* Saturation THR for of PRE1 */
-	writel(0x00000020, 0x00bb0714);
+	writel(0x00000010, 0x00bb0714);
 	/* Saturation THR for of PRE2 */
-	writel(0x00000020, 0x00bb0794);
+	writel(0x00000010, 0x00bb0794);
 	/* Saturation THR for of PRE */
-	writel(0x00000020, 0x00bb0814);
+	writel(0x00000010, 0x00bb0814);
 }
 #endif
 
