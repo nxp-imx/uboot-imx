@@ -810,9 +810,9 @@ static void fsl_qspi_write_data(struct fsl_qspi *q, int len, u8* txbuf)
 		writel(tmp, q->iobase + QUADSPI_TBDR);
 	}
 
-#if defined(CONFIG_MX7D)
+#if defined(CONFIG_MX7D) || defined(CONFIG_MX6UL)
 	u32 t3;
-	/* iMX7D TXFIFO must be at least 16 bytes*/
+	/* iMX7D and MX6UL TXFIFO must be at least 16 bytes*/
 	t3 = t1 + ((t2 + 3) >> 2);
 	for (; t3 < 4; t3++)
 		writel(0, q->iobase + QUADSPI_TBDR);
