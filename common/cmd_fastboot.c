@@ -1549,7 +1549,10 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #ifdef CONFIG_SECURE_BOOT
 #define IVT_SIZE 0x20
 #define CSF_PAD_SIZE 0x2000
-#define ANDROID_BOOT_AUTH_SIZE 0x740000
+/* Max of bootimage size to be 16MB */
+#define MAX_ANDROID_BOOT_AUTH_SIZE 0x1000000
+/* Size appended to boot.img with boot_signer */
+#define BOOTIMAGE_SIGNATURE_SIZE 0x100
 #endif
 	int i = 0;
 	bootm_headers_t images;
@@ -1627,14 +1630,16 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		bootimg_addr = hdr->kernel_addr - hdr->page_size;
 
 #ifdef CONFIG_SECURE_BOOT
-		/* Default boot.img should be padded to ANDROID_BOOT_AUTH_SIZE
-		   before appended with IVT&CSF data. If the default boot.img exceed the
-		   size, the IVT&CSF data cannot appended to the end of boot.img */
-		if (image_size > ANDROID_BOOT_AUTH_SIZE) {
+		/* Default boot.img should be padded to 0x1000
+		   before appended with IVT&CSF data. Set the threshold of
+		   boot image for athendication as 16MB
+		*/
+		image_size += BOOTIMAGE_SIGNATURE_SIZE;
+		image_size = ALIGN_SECTOR(image_size, 0x1000);
+		if (image_size > MAX_ANDROID_BOOT_AUTH_SIZE) {
 			printf("The image size is too large for athenticated boot!\n");
 			return 1;
 		}
-		image_size = ANDROID_BOOT_AUTH_SIZE;
 		/* Make sure all data boot.img + IVT + CSF been read to memory */
 		bootimg_sectors = image_size/512 +
 			ALIGN_SECTOR(IVT_SIZE + CSF_PAD_SIZE, 512)/512;
@@ -1720,12 +1725,11 @@ int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		image_size = hdr->page_size +
 			ALIGN_SECTOR(hdr->kernel_size, hdr->page_size) +
 			ALIGN_SECTOR(hdr->ramdisk_size, hdr->page_size) +
-			ALIGN_SECTOR(hdr->second_size, hdr->page_size);
-		if (image_size > ANDROID_BOOT_AUTH_SIZE) {
+			ALIGN_SECTOR(hdr->second_size, hdr->page_size) + BOOTIMAGE_SIGNATURE_SIZE;
+		if (image_size > MAX_ANDROID_BOOT_AUTH_SIZE) {
 			printf("The image size is too large for athenticated boot!\n");
 			return 1;
 		}
-		image_size = ANDROID_BOOT_AUTH_SIZE;
 		bootimg_addr = addr;
 		extern uint32_t authenticate_image(uint32_t ddr_start,
 				uint32_t image_size);
