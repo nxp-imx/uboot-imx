@@ -112,6 +112,11 @@
 #endif
 
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
+#ifdef CONFIG_SYS_BOOT_NAND
+#define CONFIG_MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),-(rootfs) "
+#else
+#define CONFIG_MFG_NAND_PARTITION ""
+#endif
 
 #ifdef CONFIG_VIDEO
 #define CONFIG_VIDEO_MODE \
@@ -133,12 +138,28 @@
 		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
 		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
 		"g_mass_storage.iSerialNumber=\"\" "\
+		CONFIG_MFG_NAND_PARTITION \
 		"clk_ignore_unused "\
 		"\0" \
 	"initrd_addr=0x83800000\0" \
 	"initrd_high=0xffffffff\0" \
 	"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 
+#if defined(CONFIG_SYS_BOOT_NAND)
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
+	CONFIG_VIDEO_MODE \
+	"fdt_addr=0x83000000\0" \
+	"fdt_high=0xffffffff\0"	  \
+	"console=ttymxc0\0" \
+	"bootargs=console=ttymxc0,115200 ubi.mtd=3 "  \
+		"root=ubi0:rootfs rootfstype=ubifs "		     \
+		"mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),-(rootfs)\0"\
+	"bootcmd=nand read ${loadaddr} 0x4000000 0x800000;"\
+		"nand read ${fdt_addr} 0x5000000 0x100000;"\
+		"bootz ${loadaddr} - ${fdt_addr}\0"
+
+#else
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
 	UPDATE_M4_ENV \
@@ -217,6 +238,7 @@
 			   "fi; " \
 		   "fi; " \
 	   "else run netboot; fi"
+#endif
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP
@@ -287,6 +309,23 @@
 #define CONFIG_SYS_FLASH_EMPTY_INFO
 #endif
 
+#ifdef CONFIG_SYS_USE_NAND
+#define CONFIG_CMD_NAND
+#define CONFIG_CMD_NAND_TRIMFFS
+
+/* NAND stuff */
+#define CONFIG_NAND_MXS
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_SYS_NAND_BASE		0x40000000
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+
+/* DMA stuff, needed for GPMI/MXS NAND support */
+#define CONFIG_APBH_DMA
+#define CONFIG_APBH_DMA_BURST
+#define CONFIG_APBH_DMA_BURST8
+#endif
+
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_ENV_OFFSET		(8 * SZ_64K)
@@ -302,7 +341,13 @@
 #define CONFIG_ENV_SIZE			CONFIG_SYS_FLASH_SECT_SIZE
 #define CONFIG_ENV_SECT_SIZE		CONFIG_SYS_FLASH_SECT_SIZE
 #define CONFIG_ENV_OFFSET		(4 * CONFIG_SYS_FLASH_SECT_SIZE)
+#elif defined(CONFIG_ENV_IS_IN_NAND)
+#undef CONFIG_ENV_SIZE
+#define CONFIG_ENV_OFFSET		(8 << 20)
+#define CONFIG_ENV_SECT_SIZE		(128 << 10)
+#define CONFIG_ENV_SIZE			CONFIG_ENV_SECT_SIZE
 #endif
+
 
 #define CONFIG_OF_LIBFDT
 #define CONFIG_CMD_BOOTZ
