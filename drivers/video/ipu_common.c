@@ -212,17 +212,67 @@ static struct clk ipu_clk = {
 };
 
 #if defined(CONFIG_MX6) || defined(CONFIG_MX53)
-static struct clk ldb_clk = {
+static int clk_ldb_clk_enable(struct clk *clk)
+{
+	u32 reg;
+
+	reg = __raw_readl(clk->enable_reg);
+	reg |= MXC_CCM_CCGR_CG_MASK << clk->enable_shift;
+	__raw_writel(reg, clk->enable_reg);
+
+	return 0;
+}
+
+static void clk_ldb_clk_disable(struct clk *clk)
+{
+	u32 reg;
+
+	reg = __raw_readl(clk->enable_reg);
+	reg &= ~(MXC_CCM_CCGR_CG_MASK << clk->enable_shift);
+	__raw_writel(reg, clk->enable_reg);
+}
+
+static struct clk ldb_clk[2] = {
+	{
 	.name = "ldb_clk",
+	.id = 0,
 	.rate = 65000000,
+#ifdef CONFIG_MX6
+	.enable_reg = (u32 *)(CCM_BASE_ADDR +
+		offsetof(struct mxc_ccm_reg, CCGR3)),
+	.enable_shift = MXC_CCM_CCGR3_LDB_DI0_OFFSET,
+#else
+	.enable_reg = (u32 *)(CCM_BASE_ADDR +
+		offsetof(struct mxc_ccm_reg, CCGR6)),
+	.enable_shift = MXC_CCM_CCGR6_LDB_DI0_OFFSET,
+#endif
+	.enable = clk_ldb_clk_enable,
+	.disable = clk_ldb_clk_disable,
 	.usecount = 0,
+	}, {
+	.name = "ldb_clk",
+	.id = 1,
+	.rate = 65000000,
+#ifdef CONFIG_MX6
+	.enable_reg = (u32 *)(CCM_BASE_ADDR +
+		offsetof(struct mxc_ccm_reg, CCGR3)),
+	.enable_shift = MXC_CCM_CCGR3_LDB_DI1_OFFSET,
+#else
+	.enable_reg = (u32 *)(CCM_BASE_ADDR +
+		offsetof(struct mxc_ccm_reg, CCGR6)),
+	.enable_shift = MXC_CCM_CCGR6_LDB_DI1_OFFSET,
+#endif
+	.enable = clk_ldb_clk_enable,
+	.disable = clk_ldb_clk_disable,
+	.usecount = 0,
+	}
 };
 #endif
 
 /* Globals */
 struct clk *g_ipu_clk;
 #if defined(CONFIG_MX6) || defined(CONFIG_MX53)
-struct clk *g_ldb_clk;
+struct clk *g_ldb_clk[2];
 #endif
 unsigned char g_ipu_clk_enabled;
 struct clk *g_di_clk[2];
@@ -377,7 +427,7 @@ static int ipu_pixel_clk_set_parent(struct clk *clk, struct clk *parent)
 	if (parent == g_ipu_clk)
 		di_gen &= ~DI_GEN_DI_CLK_EXT;
 #if defined(CONFIG_MX6) || defined(CONFIG_MX53)
-	else if (!IS_ERR(g_di_clk[clk->id]) && parent == g_ldb_clk)
+	else if (!IS_ERR(g_di_clk[clk->id]) && parent == g_ldb_clk[clk->id])
 		di_gen |= DI_GEN_DI_CLK_EXT;
 #endif
 	else
@@ -474,8 +524,10 @@ int ipu_probe(void)
 	g_ipu_clk = &ipu_clk;
 	debug("ipu_clk = %u\n", clk_get_rate(g_ipu_clk));
 #if defined(CONFIG_MX6) || defined(CONFIG_MX53)
-	g_ldb_clk = &ldb_clk;
-	debug("ldb_clk = %u\n", clk_get_rate(g_ldb_clk));
+	g_ldb_clk[0] = &ldb_clk[0];
+	g_ldb_clk[1] = &ldb_clk[1];
+	debug("ldb_clk[0] = %u\n", clk_get_rate(g_ldb_clk[0]));
+	debug("ldb_clk[1] = %u\n", clk_get_rate(g_ldb_clk[1]));
 #endif
 	ipu_reset();
 
