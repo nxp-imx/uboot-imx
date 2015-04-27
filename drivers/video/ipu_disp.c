@@ -49,7 +49,7 @@ int g_di1_tvout;
 
 extern struct clk *g_ipu_clk;
 #if defined(CONFIG_MX6) || defined(CONFIG_MX53)
-extern struct clk *g_ldb_clk;
+extern struct clk *g_ldb_clk[2];
 #endif
 extern struct clk *g_di_clk[2];
 extern struct clk *g_pixel_clk[2];
@@ -645,6 +645,9 @@ void ipu_dp_dc_enable(ipu_channel_t channel)
 	__raw_writel(reg, DC_WR_CH_CONF(dc_chan));
 
 	clk_enable(g_pixel_clk[di]);
+#if defined(CONFIG_MX6) || defined(CONFIG_MX53)
+	clk_enable(g_ldb_clk[di]);
+#endif
 }
 
 static unsigned char dc_swap;
@@ -735,6 +738,9 @@ void ipu_dp_dc_disable(ipu_channel_t channel, unsigned char swap)
 		/* Clock is already off because it must be done quickly, but
 		   we need to fix the ref count */
 		clk_disable(g_pixel_clk[g_dc_di_assignment[dc_chan]]);
+#if defined(CONFIG_MX6) || defined(CONFIG_MX53)
+		clk_disable(g_ldb_clk[g_dc_di_assignment[dc_chan]]);
+#endif
 	}
 }
 
@@ -886,7 +892,7 @@ int32_t ipu_init_sync_panel(int disp, uint32_t pixel_clk,
 			}
 		}
 #if defined(CONFIG_MX6) || defined(CONFIG_MX53)
-		clk_set_parent(g_pixel_clk[disp], g_ldb_clk);
+		clk_set_parent(g_pixel_clk[disp], g_ldb_clk[disp]);
 #endif
 	} else {
 		if (clk_get_usecount(g_pixel_clk[disp]) != 0)
