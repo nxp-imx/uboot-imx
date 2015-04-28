@@ -186,7 +186,7 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 		printf("\nAuthenticate uImage from DDR location 0x%x...\n",
 			ddr_start);
 
-		hab_caam_clock_enable();
+		hab_caam_clock_enable(1);
 
 		if (hab_rvt_entry() == HAB_SUCCESS) {
 			/* If not already aligned, Align to ALIGN_SIZE */
@@ -222,7 +222,7 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 		} else
 			printf("hab entry function fail\n");
 
-		hab_caam_clock_disable();
+		hab_caam_clock_enable(0);
 
 		get_hab_status();
 	}

@@ -341,8 +341,7 @@ void enable_ocotp_clk(unsigned char enable);
 #endif
 void enable_usboh3_clk(unsigned char enable);
 #ifdef CONFIG_SECURE_BOOT
-void hab_caam_clock_enable(void);
-void hab_caam_clock_disable(void);
+void hab_caam_clock_enable(unsigned char enable);
 #endif
 void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq);
 void enable_thermal_clk(void);

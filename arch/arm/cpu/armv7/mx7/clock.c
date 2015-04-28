@@ -1073,14 +1073,12 @@ void clock_init(void)
 }
 
 #ifdef CONFIG_SECURE_BOOT
-void hab_caam_clock_enable(void)
+void hab_caam_clock_enable(unsigned char enable)
 {
-	clock_enable(CCGR_CAAM, 1);
-}
-
-void hab_caam_clock_disable(void)
-{
-	clock_enable(CCGR_CAAM, 0);
+	if (enable)
+		clock_enable(CCGR_CAAM, 1);
+	else
+		clock_enable(CCGR_CAAM, 0);
 }
 #endif
 
