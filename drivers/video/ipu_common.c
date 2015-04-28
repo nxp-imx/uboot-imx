@@ -223,15 +223,19 @@ static struct clk ipu_clk = {
 #define CONFIG_SYS_LDB_CLOCK 65000000
 #endif
 
+#if defined(CONFIG_MX6) || defined(CONFIG_MX53)
 static struct clk ldb_clk = {
 	.name = "ldb_clk",
 	.rate = CONFIG_SYS_LDB_CLOCK,
 	.usecount = 0,
 };
+#endif
 
 /* Globals */
 struct clk *g_ipu_clk;
+#if defined(CONFIG_MX6) || defined(CONFIG_MX53)
 struct clk *g_ldb_clk;
+#endif
 unsigned char g_ipu_clk_enabled;
 struct clk *g_di_clk[2];
 struct clk *g_pixel_clk[2];
@@ -390,8 +394,10 @@ static int ipu_pixel_clk_set_parent(struct clk *clk, struct clk *parent)
 
 	if (parent == g_ipu_clk)
 		di_gen &= ~DI_GEN_DI_CLK_EXT;
+#if defined(CONFIG_MX6) || defined(CONFIG_MX53)
 	else if (!IS_ERR(g_di_clk[clk->id]) && parent == g_ldb_clk)
 		di_gen |= DI_GEN_DI_CLK_EXT;
+#endif
 	else
 		return -EINVAL;
 
@@ -492,8 +498,10 @@ int ipu_probe(void)
 	g_ipu_clk->rate = is_mx6sdl() ? IPUV3_CLK_MX6DL : IPUV3_CLK_MX6Q;
 #endif
 	debug("ipu_clk = %u\n", clk_get_rate(g_ipu_clk));
+#if defined(CONFIG_MX6) || defined(CONFIG_MX53)
 	g_ldb_clk = &ldb_clk;
 	debug("ldb_clk = %u\n", clk_get_rate(g_ldb_clk));
+#endif
 	ipu_reset();
 
 	clk_set_parent(g_pixel_clk[0], g_ipu_clk);
