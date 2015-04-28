@@ -89,6 +89,47 @@
 #define PCIE_ATU_FUNC(x)		(((x) & 0x7) << 16)
 #define PCIE_ATU_UPPER_TARGET		0x91C
 
+#ifdef DEBUG
+
+#ifdef DEBUG_STRESS_WR /* warm-reset stress tests */
+#define SNVS_LPGRP 0x020cc068
+#endif
+
+#define DBGF(x...) printf(x)
+
+static void print_regs(int contain_pcie_reg)
+{
+	u32 val;
+#ifndef CONFIG_MX6SX
+	struct iomuxc *iomuxc_regs = (struct iomuxc *)IOMUXC_BASE_ADDR;
+#else
+	struct iomuxc *iomuxc_regs = (struct iomuxc *)IOMUXC_GPR_BASE_ADDR;
+#endif
+	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+	val = readl(&iomuxc_regs->gpr[1]);
+	DBGF("GPR01 a:0x%08x v:0x%08x\n", (u32)&iomuxc_regs->gpr[1], val);
+	val = readl(&iomuxc_regs->gpr[5]);
+	DBGF("GPR05 a:0x%08x v:0x%08x\n", (u32)&iomuxc_regs->gpr[5], val);
+	val = readl(&iomuxc_regs->gpr[8]);
+	DBGF("GPR08 a:0x%08x v:0x%08x\n", (u32)&iomuxc_regs->gpr[8], val);
+	val = readl(&iomuxc_regs->gpr[12]);
+	DBGF("GPR12 a:0x%08x v:0x%08x\n", (u32)&iomuxc_regs->gpr[12], val);
+	val = readl(&ccm_regs->analog_pll_enet);
+	DBGF("PLL06 a:0x%08x v:0x%08x\n", (u32)&ccm_regs->analog_pll_enet, val);
+	val = readl(&ccm_regs->ana_misc1);
+	DBGF("MISC1 a:0x%08x v:0x%08x\n", (u32)&ccm_regs->ana_misc1, val);
+	if (contain_pcie_reg) {
+		val = readl(MX6_DBI_ADDR + 0x728);
+		DBGF("dbr0 offset 0x728 %08x\n", val);
+		val = readl(MX6_DBI_ADDR + 0x72c);
+		DBGF("dbr1 offset 0x72c %08x\n", val);
+	}
+}
+#else
+#define DBGF(x...)
+static void print_regs(int contain_pcie_reg) {}
+#endif
+
 /*
  * PHY access functions
  */
@@ -439,6 +480,7 @@ static int imx6_pcie_assert_core_reset(void)
 	setbits_le32(&iomuxc_regs->gpr[5], IOMUXC_GPR5_PCIE_BTNRST);
 	/* Power up PCIe PHY */
 	setbits_le32(&gpc_regs->cntr, PCIE_PHY_PUP_REQ);
+	pcie_power_up();
 #else
 	setbits_le32(&iomuxc_regs->gpr[1], IOMUXC_GPR1_TEST_POWERDOWN);
 	clrbits_le32(&iomuxc_regs->gpr[1], IOMUXC_GPR1_REF_SSP_EN);
@@ -451,7 +493,9 @@ static int imx6_pcie_init_phy(void)
 {
 	struct iomuxc *iomuxc_regs = (struct iomuxc *)IOMUXC_BASE_ADDR;
 
+#ifndef DEBUG
 	clrbits_le32(&iomuxc_regs->gpr[12], IOMUXC_GPR12_APPS_LTSSM_ENABLE);
+#endif
 
 	clrsetbits_le32(&iomuxc_regs->gpr[12],
 			IOMUXC_GPR12_DEVICE_TYPE_MASK,
@@ -459,7 +503,6 @@ static int imx6_pcie_init_phy(void)
 	clrsetbits_le32(&iomuxc_regs->gpr[12],
 			IOMUXC_GPR12_LOS_LEVEL_MASK,
 			IOMUXC_GPR12_LOS_LEVEL_9);
-
 #ifdef CONFIG_MX6SX
 	clrsetbits_le32(&iomuxc_regs->gpr[12],
 			IOMUXC_GPR12_RX_EQ_MASK,
@@ -545,12 +588,24 @@ static int imx6_pcie_deassert_core_reset(void)
 #if defined(CONFIG_MX6SX)
 	/* SSP_EN is not used on MX6SX anymore */
 	clrbits_le32(&iomuxc_regs->gpr[12], IOMUXC_GPR12_TEST_POWERDOWN);
-	/* Clear PCIe PHY reset bit */
+	/*
+	 * iMX6SX PCIe has the stand-alone power domain.
+	 * refer to the initialization for iMX6SX PCIe,
+	 * release the PCIe PHY reset here,
+	 * before LTSSM enable is set
+	 * Clear PCIe PHY reset bit.
+	 */
 	clrbits_le32(&iomuxc_regs->gpr[5], IOMUXC_GPR5_PCIE_BTNRST);
 #else
 	/* Enable PCIe */
 	clrbits_le32(&iomuxc_regs->gpr[1], IOMUXC_GPR1_TEST_POWERDOWN);
 	setbits_le32(&iomuxc_regs->gpr[1], IOMUXC_GPR1_REF_SSP_EN);
+
+	/*
+	 * Wait for the clock to settle a bit, when the clock are sourced
+	 * from the CPU, we need about 30mS to settle.
+	 */
+	mdelay(50);
 #endif
 
 	imx6_pcie_toggle_reset();
@@ -587,9 +642,25 @@ static int imx_pcie_link_up(void)
 	while (!imx6_pcie_link_up()) {
 		udelay(10);
 		count++;
+		if (count == 1000) {
+			print_regs(1);
+			/* link down, try reset ep, and re-try link here */
+			DBGF("pcie link is down, reset ep, then retry!\n");
+			imx6_pcie_toggle_reset();
+			continue;
+		}
+#ifdef DEBUG
+		else if (count >= 2000) {
+			print_regs(1);
+			/* link is down, stop here */
+			setenv("bootcmd", "sleep 2;");
+			DBGF("pcie link is down, stop here!\n");
+			return -EINVAL;
+		}
+#endif
 		if (count >= 2000) {
-			debug("phy link never came up\n");
-			debug("DEBUG_R0: 0x%08x, DEBUG_R1: 0x%08x\n",
+			printf("phy link never came up\n");
+			printf("DEBUG_R0: 0x%08x, DEBUG_R1: 0x%08x\n",
 			      readl(MX6_DBI_ADDR + PCIE_PHY_DEBUG_R0),
 			      readl(MX6_DBI_ADDR + PCIE_PHY_DEBUG_R1));
 			return -EINVAL;
@@ -605,6 +676,10 @@ void imx_pcie_init(void)
 	static struct pci_controller	pcc;
 	struct pci_controller		*hose = &pcc;
 	int ret;
+#ifdef DEBUG_STRESS_WR
+	u32 dbg_reg_addr = SNVS_LPGRP;
+	u32 dbg_reg = readl(dbg_reg_addr) + 1;
+#endif
 
 	memset(&pcc, 0, sizeof(pcc));
 
@@ -639,7 +714,15 @@ void imx_pcie_init(void)
 	if (!ret) {
 		pci_register_hose(hose);
 		hose->last_busno = pci_hose_scan(hose);
+#ifdef DEBUG_STRESS_WR
+		dbg_reg += 1<<16;
+#endif
 	}
+#ifdef DEBUG_STRESS_WR
+	writel(dbg_reg, dbg_reg_addr);
+	DBGF("PCIe Successes/Attempts: %d/%d\n",
+			dbg_reg >> 16, dbg_reg & 0xffff);
+#endif
 }
 
 /* Probe function. */
