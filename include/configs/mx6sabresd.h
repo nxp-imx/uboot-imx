@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2015 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6Q SabreSD board.
  *
@@ -21,24 +21,40 @@
 #define CONFIG_MACH_TYPE	3980
 #define CONFIG_MXC_UART_BASE	UART1_BASE
 #define CONFIG_CONSOLE_DEV		"ttymxc0"
-#define CONFIG_MMCROOT			"/dev/mmcblk1p2"
+#define CONFIG_MMCROOT			"/dev/mmcblk2p2"  /* SDHC3 */
 #if defined(CONFIG_MX6Q)
 #define CONFIG_DEFAULT_FDT_FILE	"imx6q-sabresd.dtb"
+#define PHYS_SDRAM_SIZE		(1u * 1024 * 1024 * 1024)
 #elif defined(CONFIG_MX6DL)
 #define CONFIG_DEFAULT_FDT_FILE	"imx6dl-sabresd.dtb"
-#endif
 #define PHYS_SDRAM_SIZE		(1u * 1024 * 1024 * 1024)
-
-#define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
+#elif defined(CONFIG_MX6SOLO)
+#define CONFIG_DEFAULT_FDT_FILE	"imx6dl-sabresd.dtb"
+#define PHYS_SDRAM_SIZE		(512u * 1024 * 1024)
+#endif
 
 #include "mx6sabre_common.h"
 
 #define CONFIG_SYS_FSL_USDHC_NUM	3
-#if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_SYS_MMC_ENV_DEV		1	/* SDHC3 */
+#define CONFIG_SYS_MMC_ENV_PART                0       /* user partition */
+
+#ifdef CONFIG_SYS_USE_SPINOR
+#define CONFIG_SF_DEFAULT_CS   (0|(IMX_GPIO_NR(4, 9)<<8))
 #endif
 
-#define CONFIG_CMD_PCI
+/*
+ * imx6 q/dl/solo pcie would be failed to work properly in kernel, if
+ * the pcie module is iniialized/enumerated both in uboot and linux
+ * kernel.
+ * rootcause:imx6 q/dl/solo pcie don't have the reset mechanism.
+ * it is only be RESET by the POR. So, the pcie module only be
+ * initialized/enumerated once in one POR.
+ * Set to use pcie in kernel defaultly, mask the pcie config here.
+ * Remove the mask freely, if the uboot pcie functions, rather than
+ * the kernel's, are required.
+ */
+/* #define CONFIG_CMD_PCI */
 #ifdef CONFIG_CMD_PCI
 #define CONFIG_PCI
 #define CONFIG_PCI_PNP
@@ -47,12 +63,6 @@
 #define CONFIG_PCIE_IMX_PERST_GPIO	IMX_GPIO_NR(7, 12)
 #define CONFIG_PCIE_IMX_POWER_GPIO	IMX_GPIO_NR(3, 19)
 #endif
-
-/* I2C Configs */
-#define CONFIG_CMD_I2C
-#define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_MXC
-#define CONFIG_SYS_I2C_SPEED		  100000
 
 /* PMIC */
 #define CONFIG_POWER
