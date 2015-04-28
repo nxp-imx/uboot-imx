@@ -13,7 +13,10 @@
 #define CONFIG_MXC_UART_BASE	UART4_BASE
 #define CONFIG_CONSOLE_DEV		"ttymxc3"
 #define CONFIG_MMCROOT			"/dev/mmcblk2p2"  /* SDHC3 */
-#if defined CONFIG_MX6Q
+#if defined CONFIG_MX6QP
+#define CONFIG_DEFAULT_FDT_FILE	"imx6qp-sabreauto.dtb"
+#define PHYS_SDRAM_SIZE		(2u * 1024 * 1024 * 1024)
+#elif defined CONFIG_MX6Q
 #define CONFIG_DEFAULT_FDT_FILE	"imx6q-sabreauto.dtb"
 #define PHYS_SDRAM_SIZE		(2u * 1024 * 1024 * 1024)
 #elif defined(CONFIG_MX6DL)
