@@ -536,6 +536,14 @@ config TARGET_MX6SXSABREAUTO
 	bool "Support mx6sxsabreauto"
 	select CPU_V7
 
+config TARGET_MX6SX_17X17_ARM2
+	bool "Support mx6sx_17x17_arm2"
+	select CPU_V7
+
+config TARGET_MX6SX_19X19_ARM2
+	bool "Support mx6sx_19x19_arm2"
+	select CPU_V7
+
 config TARGET_GW_VENTANA
 	bool "Support gw_ventana"
 	select CPU_V7
@@ -830,6 +838,8 @@ source "board/freescale/mx6sabresd/Kconfig"
 source "board/freescale/mx6slevk/Kconfig"
 source "board/freescale/mx6sxsabresd/Kconfig"
 source "board/freescale/mx6sxsabreauto/Kconfig"
+source "board/freescale/mx6sx_17x17_arm2/Kconfig"
+source "board/freescale/mx6sx_19x19_arm2/Kconfig"
 source "board/freescale/vf610twr/Kconfig"
 source "board/gateworks/gw_ventana/Kconfig"
 source "board/genesi/mx51_efikamx/Kconfig"
