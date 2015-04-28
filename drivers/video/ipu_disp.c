@@ -6,7 +6,7 @@
  *
  * Linux IPU driver for MX51:
  *
- * (C) Copyright 2005-2014 Freescale Semiconductor, Inc.
+ * (C) Copyright 2005-2015 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -48,7 +48,9 @@ static int dmfc_size_28, dmfc_size_29, dmfc_size_24, dmfc_size_27, dmfc_size_23;
 int g_di1_tvout;
 
 extern struct clk *g_ipu_clk;
+#if defined(CONFIG_MX6) || defined(CONFIG_MX53)
 extern struct clk *g_ldb_clk;
+#endif
 extern struct clk *g_di_clk[2];
 extern struct clk *g_pixel_clk[2];
 
@@ -885,7 +887,9 @@ int32_t ipu_init_sync_panel(int disp, uint32_t pixel_clk,
 				udelay(10000);
 			}
 		}
+#if defined(CONFIG_MX6) || defined(CONFIG_MX53)
 		clk_set_parent(g_pixel_clk[disp], g_ldb_clk);
+#endif
 	} else {
 		if (clk_get_usecount(g_pixel_clk[disp]) != 0)
 			clk_set_parent(g_pixel_clk[disp], g_ipu_clk);
