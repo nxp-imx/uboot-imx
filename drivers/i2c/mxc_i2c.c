@@ -246,6 +246,17 @@ static void i2c_imx_stop(struct mxc_i2c_regs *i2c_regs)
 }
 
 /*
+ * Stub implementations for outer i2c slave operations
+ * Any board has special requirement (i.mx6slevk) can
+ * overwrite the function
+ */
+void __i2c_force_reset_slave(void)
+{
+}
+void i2c_force_reset_slave(void)
+	__attribute__((weak, alias("__i2c_force_reset_slave")));
+
+/*
  * Send start signal, chip address and
  * write register address
  */
@@ -254,6 +265,9 @@ static int i2c_init_transfer_(struct mxc_i2c_regs *i2c_regs,
 {
 	unsigned int temp;
 	int ret;
+
+	/* Reset i2c slave */
+	i2c_force_reset_slave();
 
 	/* Enable I2C controller */
 #ifdef I2C_QUIRK_REG

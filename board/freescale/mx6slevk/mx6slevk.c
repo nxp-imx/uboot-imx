@@ -58,6 +58,8 @@ DECLARE_GLOBAL_DATA_PTR;
 			PAD_CTL_PUS_47K_UP | PAD_CTL_SPEED_LOW |\
 			PAD_CTL_DSE_80ohm | PAD_CTL_HYS |	\
 			PAD_CTL_SRE_FAST)
+#define ELAN_INTR_PAD_CTRL	(PAD_CTL_PUS_47K_UP | PAD_CTL_HYS)
+
 #define EPDC_PAD_CTRL    (PAD_CTL_PKE | PAD_CTL_SPEED_MED |	\
 	PAD_CTL_DSE_40ohm | PAD_CTL_HYS)
 
@@ -128,6 +130,12 @@ static iomux_v3_cfg_t const fec_pads[] = {
 	MX6_PAD_FEC_REF_CLK__FEC_REF_OUT | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_FEC_RX_ER__GPIO_4_19 | MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_FEC_TX_CLK__GPIO_4_21 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const elan_pads[] = {
+	MX6_PAD_EPDC_PWRCTRL2__GPIO_2_9 | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_EPDC_PWRCTRL3__GPIO_2_10 | MUX_PAD_CTRL(ELAN_INTR_PAD_CTRL),
+	MX6_PAD_KEY_COL6__GPIO_4_4 | MUX_PAD_CTRL(EPDC_PAD_CTRL),
 };
 
 #ifdef CONFIG_MXC_SPI
@@ -784,8 +792,42 @@ int board_init(void)
 	return 0;
 }
 
+void setup_elan_pads(void)
+{
+#define TOUCH_CS	IMX_GPIO_NR(2, 9)
+#define TOUCH_INT   IMX_GPIO_NR(2, 10)
+#define TOUCH_RST	IMX_GPIO_NR(4, 4)
+	imx_iomux_v3_setup_multiple_pads(elan_pads, ARRAY_SIZE(elan_pads));
+}
+
+void elan_init(void)
+{
+	gpio_direction_input(TOUCH_INT);
+	gpio_direction_output(TOUCH_CS , 1);
+	gpio_set_value(TOUCH_CS, 0);
+	gpio_direction_output(TOUCH_RST , 1);
+	gpio_set_value(TOUCH_RST, 0);
+	mdelay(10);
+	gpio_set_value(TOUCH_RST, 1);
+	gpio_set_value(TOUCH_CS, 1);
+	mdelay(100);
+}
+
+/*
+ * This function overwrite the function defined in
+ * drivers/i2c/mxc_i2c.c, which is a weak symbol
+ */
+void i2c_force_reset_slave(void)
+{
+	elan_init();
+}
+
 int board_late_init(void)
 {
+#ifdef CONFIG_SYS_I2C_MXC
+	setup_elan_pads();
+#endif
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
