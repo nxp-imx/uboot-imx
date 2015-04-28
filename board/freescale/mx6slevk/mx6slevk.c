@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013-2015 Freescale Semiconductor, Inc.
  *
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
  *
@@ -220,6 +220,30 @@ static struct fsl_esdhc_cfg usdhc_cfg[3] = {
 	{USDHC3_BASE_ADDR, 0, 4},
 };
 
+int mmc_get_env_devno(void)
+{
+	u32 soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	u32 dev_no;
+	u32 bootsel;
+
+	bootsel = (soc_sbmr & 0x000000FF) >> 6 ;
+
+	/* If not boot from sd/mmc, use default value */
+	if (bootsel != 1)
+		return CONFIG_SYS_MMC_ENV_DEV;
+
+	/* BOOT_CFG2[3] and BOOT_CFG2[4] */
+	dev_no = (soc_sbmr & 0x00001800) >> 11;
+
+	return dev_no;
+}
+
+int mmc_map_to_kernel_blk(int dev_no)
+{
+	return dev_no;
+}
+
+
 int board_mmc_getcd(struct mmc *mmc)
 {
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
@@ -288,6 +312,38 @@ int board_mmc_init(bd_t *bis)
 	return 0;
 }
 
+int check_mmc_autodetect(void)
+{
+	char *autodetect_str = getenv("mmcautodetect");
+
+	if ((autodetect_str != NULL) &&
+		(strcmp(autodetect_str, "yes") == 0)) {
+		return 1;
+	}
+
+	return 0;
+}
+
+void board_late_mmc_env_init(void)
+{
+	char cmd[32];
+	char mmcblk[32];
+	u32 dev_no = mmc_get_env_devno();
+
+	if (!check_mmc_autodetect())
+		return;
+
+	setenv_ulong("mmcdev", dev_no);
+
+	/* Set mmcblk env */
+	sprintf(mmcblk, "/dev/mmcblk%dp2 rootwait rw",
+		mmc_map_to_kernel_blk(dev_no));
+	setenv("mmcroot", mmcblk);
+
+	sprintf(cmd, "mmc dev %d", dev_no);
+	run_command(cmd, 0);
+}
+
 #ifdef CONFIG_SYS_I2C_MXC
 #define PC	MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C1 for PMIC */
@@ -304,16 +360,69 @@ struct i2c_pads_info i2c_pad_info1 = {
 	},
 };
 
+static struct pmic *pfuze;
 int power_init_board(void)
 {
-	struct pmic *p;
-
-	p = pfuze_common_init(I2C_PMIC);
-	if (!p)
+	pfuze = pfuze_common_init(I2C_PMIC);
+	if (!pfuze)
 		return -ENODEV;
 
-	return pfuze_mode_init(p, APS_PFM);
+	return pfuze_mode_init(pfuze, APS_PFM);
 }
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	u32 value;
+	int is_400M;
+	struct pmic *p = pfuze;
+
+	if (!p) {
+		printf("No pmic!\n");
+		return;
+	}
+
+	/* swith to ldo_bypass mode */
+	if (ldo_bypass) {
+		prep_anatop_bypass();
+
+		/* decrease VDDARM to 1.1V */
+		pmic_reg_read(p, PFUZE100_SW1ABVOL, &value);
+		value &= ~0x3f;
+		value |= 0x20;
+		pmic_reg_write(p, PFUZE100_SW1ABVOL, value);
+
+		/* increase VDDSOC to 1.3V */
+		pmic_reg_read(p, PFUZE100_SW1CVOL, &value);
+		value &= ~0x3f;
+		value |= 0x28;
+		pmic_reg_write(p, PFUZE100_SW1CVOL, value);
+
+		is_400M = set_anatop_bypass(0);
+
+		/*
+		 * MX6SL: VDDARM:1.175V@800M; VDDSOC:1.175V@800M
+		 *        VDDARM:0.975V@400M; VDDSOC:1.175V@400M
+		 */
+		pmic_reg_read(p, PFUZE100_SW1ABVOL, &value);
+		value &= ~0x3f;
+		if (is_400M)
+			value |= 0x1b;
+		else
+			value |= 0x23;
+		pmic_reg_write(p, PFUZE100_SW1ABVOL, value);
+
+		/* decrease VDDSOC to 1.175V */
+		pmic_reg_read(p, PFUZE100_SW1CVOL, &value);
+		value &= ~0x3f;
+		value |= 0x23;
+		pmic_reg_write(p, PFUZE100_SW1CVOL, value);
+
+		finish_anatop_bypass();
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
+#endif
 #endif
 
 #ifdef CONFIG_FEC_MXC
@@ -331,7 +440,7 @@ static int setup_fec(void)
 	/* clear gpr1[14], gpr1[18:17] to select anatop clock */
 	clrsetbits_le32(&iomuxc_regs->gpr[1], IOMUX_GPR1_FEC_MASK, 0);
 
-	return enable_fec_anatop_clock(ENET_50MHZ);
+	return enable_fec_anatop_clock(0, ENET_50MHZ);
 }
 #endif
 
@@ -667,12 +776,19 @@ int board_init(void)
 #ifdef	CONFIG_MXC_EPDC
 	setup_epdc();
 #endif
-	return 0;
 
 #ifdef CONFIG_USB_EHCI_MX6
 	setup_usb();
 #endif
 
+	return 0;
+}
+
+int board_late_init(void)
+{
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
 	return 0;
 }
 
@@ -687,3 +803,27 @@ int checkboard(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_MXC_KPD
+#define MX6SL_KEYPAD_CTRL (PAD_CTL_HYS | PAD_CTL_PKE | PAD_CTL_PUE | \
+			   PAD_CTL_PUS_100K_UP | PAD_CTL_DSE_120ohm)
+
+iomux_v3_cfg_t const mxc_kpd_pads[] = {
+	(MX6_PAD_KEY_COL0__KPP_COL_0 | MUX_PAD_CTRL(NO_PAD_CTRL)),
+	(MX6_PAD_KEY_COL1__KPP_COL_1 | MUX_PAD_CTRL(NO_PAD_CTRL)),
+	(MX6_PAD_KEY_COL2__KPP_COL_2 | MUX_PAD_CTRL(NO_PAD_CTRL)),
+	(MX6_PAD_KEY_COL3__KPP_COL_3 | MUX_PAD_CTRL(NO_PAD_CTRL)),
+
+	(MX6_PAD_KEY_ROW0__KPP_ROW_0 | MUX_PAD_CTRL(MX6SL_KEYPAD_CTRL)),
+	(MX6_PAD_KEY_ROW1__KPP_ROW_1 | MUX_PAD_CTRL(MX6SL_KEYPAD_CTRL)),
+	(MX6_PAD_KEY_ROW2__KPP_ROW_2 | MUX_PAD_CTRL(MX6SL_KEYPAD_CTRL)),
+	(MX6_PAD_KEY_ROW3__KPP_ROW_3 | MUX_PAD_CTRL(MX6SL_KEYPAD_CTRL)),
+};
+int setup_mxc_kpd(void)
+{
+	imx_iomux_v3_setup_multiple_pads(mxc_kpd_pads,
+					 ARRAY_SIZE(mxc_kpd_pads));
+
+	return 0;
+}
+#endif /*CONFIG_MXC_KPD*/
