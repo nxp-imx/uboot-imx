@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2015 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6Q SabreAuto board.
  *
@@ -12,14 +12,25 @@
 #define CONFIG_MACH_TYPE	3529
 #define CONFIG_MXC_UART_BASE	UART4_BASE
 #define CONFIG_CONSOLE_DEV		"ttymxc3"
+#define CONFIG_MMCROOT			"/dev/mmcblk2p2"  /* SDHC3 */
 #if defined CONFIG_MX6Q
 #define CONFIG_DEFAULT_FDT_FILE	"imx6q-sabreauto.dtb"
-#elif defined CONFIG_MX6DL
-#define CONFIG_DEFAULT_FDT_FILE	"imx6dl-sabreauto.dtb"
-#endif
-#define CONFIG_MMCROOT			"/dev/mmcblk0p2"
 #define PHYS_SDRAM_SIZE		(2u * 1024 * 1024 * 1024)
+#elif defined(CONFIG_MX6DL)
+#define CONFIG_DEFAULT_FDT_FILE	"imx6dl-sabreauto.dtb"
+#define PHYS_SDRAM_SIZE		(2u * 1024 * 1024 * 1024)
+#elif defined(CONFIG_MX6SOLO)
+#define CONFIG_DEFAULT_FDT_FILE	"imx6dl-sabreauto.dtb"
+#define PHYS_SDRAM_SIZE		(1u * 1024 * 1024 * 1024)
+#endif
 
+#define CONFIG_SYS_USE_NAND
+
+#include "mx6sabre_common.h"
+#include <asm/imx-common/gpio.h>
+
+/*Since the pin conflicts on EIM D18, disable the USB host if the NOR flash is enabled */
+#if !defined(CONFIG_SYS_USE_SPINOR) && !defined(CONFIG_SYS_USE_EIMNOR)
 /* USB Configs */
 #define CONFIG_CMD_USB
 #define CONFIG_USB_EHCI
@@ -32,11 +43,20 @@
 #define CONFIG_MXC_USB_PORTSC	(PORT_PTS_UTMI | PORT_PTS_PTW)
 #define CONFIG_MXC_USB_FLAGS	0
 
-#define CONFIG_PCA953X
-#define CONFIG_SYS_I2C_PCA953X_WIDTH	{ {0x30, 8}, {0x32, 8}, {0x34, 8} }
+/* MAX7310 configs */
+#define CONFIG_MAX7310_IOEXP
+#define CONFIG_IOEXP_DEVICES_NUM 3
+#define CONFIG_IOEXP_DEV_PINS_NUM 8
+#endif
 
-#include "mx6sabre_common.h"
+#undef CONFIG_MFG_NAND_PARTITION
+#ifdef CONFIG_SYS_BOOT_NAND
+#define CONFIG_MFG_NAND_PARTITION "mtdparts=8000000.nor:1m(boot),-(rootfs)\\\\;gpmi-nand:64m(boot),16m(kernel),16m(dtb),-(rootfs) "
+#else
+#define CONFIG_MFG_NAND_PARTITION ""
+#endif
 
+#ifdef CONFIG_SYS_USE_EIMNOR
 #undef CONFIG_SYS_NO_FLASH
 #define CONFIG_SYS_FLASH_BASE           WEIM_ARB_BASE_ADDR
 #define CONFIG_SYS_FLASH_SECT_SIZE      (128 * 1024)
@@ -46,12 +66,15 @@
 #define CONFIG_FLASH_CFI_DRIVER         /* Use drivers/cfi_flash.c */
 #define CONFIG_SYS_FLASH_USE_BUFFER_WRITE /* Use buffered writes*/
 #define CONFIG_SYS_FLASH_EMPTY_INFO
-
-#define CONFIG_SYS_FSL_USDHC_NUM	2
-#if defined(CONFIG_ENV_IS_IN_MMC)
-#define CONFIG_SYS_MMC_ENV_DEV		0
 #endif
 
+#define CONFIG_SYS_FSL_USDHC_NUM	2
+#define CONFIG_SYS_MMC_ENV_DEV		1  /* SDHC3 */
+#define CONFIG_SYS_MMC_ENV_PART                0       /* user partition */
+
+#ifdef CONFIG_SYS_USE_SPINOR
+#define CONFIG_SF_DEFAULT_CS   (1|(IMX_GPIO_NR(3, 19)<<8))
+#endif
 /* I2C Configs */
 #define CONFIG_CMD_I2C
 #define CONFIG_SYS_I2C
