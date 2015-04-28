@@ -10,6 +10,7 @@
 #include <asm/arch/crm_regs.h>
 #include <asm/arch/iomux.h>
 #include <asm/arch/imx-regs.h>
+#include <asm/arch/crm_regs.h>
 #include <asm/arch/mx6-pins.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
@@ -626,6 +627,7 @@ static void epdc_disable_pins(void)
 static void setup_epdc(void)
 {
 	unsigned int reg;
+	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 
 	/*** epdc Maxim PMIC settings ***/
 
@@ -648,31 +650,31 @@ static void setup_epdc(void)
 	/*** Set pixel clock rates for EPDC ***/
 
 	/* EPDC AXI clk from PFD_400M, set to 396/2 = 198MHz */
-	reg = readl(CCM_BASE_ADDR + CLKCTL_CHSCCDR);
+	reg = readl(&ccm_regs->chsccdr);
 	reg &= ~0x3F000;
 	reg |= (0x4 << 15) | (1 << 12);
-	writel(reg, CCM_BASE_ADDR + CLKCTL_CHSCCDR);
+	writel(reg, &ccm_regs->chsccdr);
 
 	/* EPDC AXI clk enable */
-	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR3);
+	reg = readl(&ccm_regs->CCGR3);
 	reg |= 0x0030;
-	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR3);
+	writel(reg, &ccm_regs->CCGR3);
 
 	/* EPDC PIX clk from PFD_540M, set to 540/4/5 = 27MHz */
-	reg = readl(CCM_BASE_ADDR + CLKCTL_CSCDR2);
+	reg = readl(&ccm_regs->cscdr2);
 	reg &= ~0x03F000;
 	reg |= (0x5 << 15) | (4 << 12);
-	writel(reg, CCM_BASE_ADDR + CLKCTL_CSCDR2);
+	writel(reg, &ccm_regs->cscdr2);
 
-	reg = readl(CCM_BASE_ADDR + CLKCTL_CBCMR);
+	reg = readl(&ccm_regs->cbcmr);
 	reg &= ~0x03800000;
 	reg |= (0x3 << 23);
-	writel(reg, CCM_BASE_ADDR + CLKCTL_CBCMR);
+	writel(reg, &ccm_regs->cbcmr);
 
 	/* EPDC PIX clk enable */
-	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR3);
+	reg = readl(&ccm_regs->CCGR3);
 	reg |= 0x0C00;
-	writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR3);
+	writel(reg, &ccm_regs->CCGR3);
 
 	panel_info.epdc_data.wv_modes.mode_init = 0;
 	panel_info.epdc_data.wv_modes.mode_du = 1;
@@ -689,6 +691,7 @@ static void setup_epdc(void)
 void epdc_power_on(void)
 {
 	unsigned int reg;
+	struct gpio_regs *gpio_regs = (struct gpio_regs *)GPIO2_BASE_ADDR;
 
 	/* Set EPD_PWR_CTL0 to high - enable EINK_VDD (3.15) */
 	gpio_set_value(IMX_GPIO_NR(2, 7), 1);
@@ -702,7 +705,7 @@ void epdc_power_on(void)
 
 	/* Wait for PWRGOOD == 1 */
 	while (1) {
-		reg = readl(GPIO2_BASE_ADDR + GPIO_PSR);
+		reg = readl(&gpio_regs->gpio_psr);
 		if (!(reg & (1 << 13)))
 			break;
 
