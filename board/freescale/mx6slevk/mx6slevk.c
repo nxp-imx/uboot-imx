@@ -380,11 +380,41 @@ struct i2c_pads_info i2c_pad_info1 = {
 static struct pmic *pfuze;
 int power_init_board(void)
 {
+	unsigned int reg, ret;
+
 	pfuze = pfuze_common_init(I2C_PMIC);
 	if (!pfuze)
 		return -ENODEV;
 
-	return pfuze_mode_init(pfuze, APS_PFM);
+	ret = pfuze_mode_init(pfuze, APS_PFM);
+	if (ret < 0)
+		return ret;
+
+	/* set SW1AB staby volatage 0.975V */
+	pmic_reg_read(pfuze, PFUZE100_SW1ABSTBY, &reg);
+	reg &= ~0x3f;
+	reg |= 0x1b;
+	pmic_reg_write(pfuze, PFUZE100_SW1ABSTBY, reg);
+
+	/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
+	pmic_reg_read(pfuze, PFUZE100_SW1ABCONF, &reg);
+	reg &= ~0xc0;
+	reg |= 0x40;
+	pmic_reg_write(pfuze, PFUZE100_SW1ABCONF, reg);
+
+	/* set SW1C staby volatage 0.975V */
+	pmic_reg_read(pfuze, PFUZE100_SW1CSTBY, &reg);
+	reg &= ~0x3f;
+	reg |= 0x1b;
+	pmic_reg_write(pfuze, PFUZE100_SW1CSTBY, reg);
+
+	/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+	pmic_reg_read(pfuze, PFUZE100_SW1CCONF, &reg);
+	reg &= ~0xc0;
+	reg |= 0x40;
+	pmic_reg_write(pfuze, PFUZE100_SW1CCONF, reg);
+
+	return 0;
 }
 
 #ifdef CONFIG_LDO_BYPASS_CHECK

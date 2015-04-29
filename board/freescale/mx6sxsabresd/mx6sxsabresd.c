@@ -475,11 +475,23 @@ int power_init_board(void)
 	reg |= PFUZE100_SW1ABC_SETP(11000);
 	pmic_reg_write(pfuze, PFUZE100_SW1ABSTBY, reg);
 
+	/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
+	pmic_reg_read(pfuze, PFUZE100_SW1ABCONF, &reg);
+	reg &= ~0xc0;
+	reg |= 0x40;
+	pmic_reg_write(pfuze, PFUZE100_SW1ABCONF, reg);
+
 	/* set SW1C standby volatage 1.10V */
 	pmic_reg_read(pfuze, PFUZE100_SW1CSTBY, &reg);
 	reg &= ~0x3f;
 	reg |= PFUZE100_SW1ABC_SETP(11000);
 	pmic_reg_write(pfuze, PFUZE100_SW1CSTBY, reg);
+
+	/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+	pmic_reg_read(pfuze, PFUZE100_SW1CCONF, &reg);
+	reg &= ~0xc0;
+	reg |= 0x40;
+	pmic_reg_write(pfuze, PFUZE100_SW1CCONF, reg);
 
 	/* Enable power of VGEN5 3V3, needed for SD3 */
 	pmic_reg_read(pfuze, PFUZE100_VGEN5VOL, &reg);
