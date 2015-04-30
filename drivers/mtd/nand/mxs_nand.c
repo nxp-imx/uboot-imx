@@ -41,6 +41,12 @@
 
 #define	MXS_NAND_BCH_TIMEOUT			10000
 
+#if (defined(CONFIG_MX6SX) || defined(CONFIG_MX7))
+#define MXS_NAND_MAX_ECC_STRENGTH 62
+#else
+#define MXS_NAND_MAX_ECC_STRENGTH 40
+#endif
+
 int chunk_data_chunk_size = MXS_NAND_CHUNK_DATA_CHUNK_SIZE;
 int galois_field = 13;
 
@@ -156,7 +162,7 @@ static inline uint32_t mxs_nand_get_ecc_strength(uint32_t page_data_size,
 
 	/* We need the minor even number. */
 	ecc_strength -= ecc_strength & 1;
-	return ecc_strength;
+	return min(ecc_strength, MXS_NAND_MAX_ECC_STRENGTH);
 }
 
 static inline uint32_t mxs_nand_get_mark_offset(uint32_t page_data_size,
