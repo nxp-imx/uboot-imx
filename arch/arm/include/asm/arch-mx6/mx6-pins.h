@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2013 Boundary Devices Inc.
+ * Copyright (C) 2015 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -37,6 +38,8 @@ enum {
 #include "mx6sl_pins.h"
 #elif defined(CONFIG_MX6SX)
 #include "mx6sx_pins.h"
+#elif defined(CONFIG_MX6UL)
+#include "mx6ul_pins.h"
 #else
 #error "Please select cpu"
 #endif	/* CONFIG_MX6Q */
