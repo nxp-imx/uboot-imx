@@ -11,7 +11,7 @@
 #include <div64.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/sys_proto.h>
-#include <asm/arch/timer.h>
+#include <asm/imx-common/syscounter.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

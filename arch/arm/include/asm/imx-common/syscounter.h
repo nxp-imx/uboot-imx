@@ -4,8 +4,8 @@
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
-#ifndef _ASM_ARCH_MX7_TIMER_H
-#define _ASM_ARCH_MX7_TIMER_H
+#ifndef _ASM_ARCH_SYSTEM_COUNTER_H
+#define _ASM_ARCH_SYSTEM_COUNTER_H
 
 /* System Counter */
 struct sctr_regs {
