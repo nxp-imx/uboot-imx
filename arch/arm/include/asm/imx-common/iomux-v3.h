@@ -128,7 +128,7 @@ typedef u64 iomux_v3_cfg_t;
 
 #define PAD_CTL_ODE		(1 << 11)
 
-#ifdef CONFIG_MX6SX
+#if defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL)
 #define PAD_CTL_SPEED_LOW	(0 << 6)
 #else
 #define PAD_CTL_SPEED_LOW	(1 << 6)
