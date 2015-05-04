@@ -2,7 +2,7 @@
  * (C) Copyright 2007
  * Sascha Hauer, Pengutronix
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2015 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -241,7 +241,7 @@ static void imx_set_wdog_powerdown(bool enable)
 	struct wdog_regs *wdog1 = (struct wdog_regs *)WDOG1_BASE_ADDR;
 	struct wdog_regs *wdog2 = (struct wdog_regs *)WDOG2_BASE_ADDR;
 
-#ifdef CONFIG_MX6SX
+#if (defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL))
 	struct wdog_regs *wdog3 = (struct wdog_regs *)WDOG3_BASE_ADDR;
 	writew(enable, &wdog3->wmcr);
 #endif
@@ -251,6 +251,7 @@ static void imx_set_wdog_powerdown(bool enable)
 	writew(enable, &wdog2->wmcr);
 }
 
+#if !defined(CONFIG_MX6UL)
 static void set_ahb_rate(u32 val)
 {
 	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
@@ -262,6 +263,7 @@ static void set_ahb_rate(u32 val)
 	writel((reg & (~MXC_CCM_CBCDR_AHB_PODF_MASK)) |
 		(div << MXC_CCM_CBCDR_AHB_PODF_OFFSET), &mxc_ccm->cbcdr);
 }
+#endif
 
 static void clear_mmdc_ch_mask(void)
 {
@@ -381,6 +383,7 @@ void pcie_power_off(void)
 }
 #endif
 
+#ifndef CONFIG_MX6UL
 static void imx_set_vddpu_power_down(void)
 {
 	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
@@ -399,8 +402,9 @@ static void imx_set_vddpu_power_down(void)
 	val = 0x3e00;
 	writel(val, &anatop->reg_core_clr);
 }
+#endif
 
-#ifndef CONFIG_MX6SL
+#if !(defined(CONFIG_MX6SL) || defined(CONFIG_MX6UL))
 static void imx_set_pcie_phy_power_down(void)
 {
 	u32 val;
@@ -422,7 +426,7 @@ int arch_cpu_init(void)
 	/* Clear the Align bit in SCTLR */
 	set_cr(get_cr() & ~CR_A);
 
-#if !defined(CONFIG_MX6SX) && !defined(CONFIG_MX6SL)
+#if !defined(CONFIG_MX6SX) && !defined(CONFIG_MX6SL) && !defined(CONFIG_MX6UL)
 	/*
 	 * imx6sl doesn't have pcie at all.
 	 * this bit is not used by imx6sx anymore
@@ -455,6 +459,7 @@ int arch_cpu_init(void)
 	 */
 	init_bandgap();
 
+#if !defined(CONFIG_MX6UL)
 	/*
 	 * When low freq boot is enabled, ROM will not set AHB
 	 * freq, so we need to ensure AHB freq is 132MHz in such
@@ -462,8 +467,9 @@ int arch_cpu_init(void)
 	 */
 	if (mxc_get_clock(MXC_ARM_CLK) == 396000000)
 		set_ahb_rate(132000000);
+#endif
 
-		/* Set perclk to source from OSC 24MHz */
+	/* Set perclk to source from OSC 24MHz */
 #if defined(CONFIG_MX6SL)
 	set_preclk_from_osc();
 #endif
@@ -479,10 +485,13 @@ int arch_cpu_init(void)
 
 	imx_set_wdog_powerdown(false); /* Disable PDE bit of WMCR register */
 
-#ifndef CONFIG_MX6SL
+#if !(defined(CONFIG_MX6SL) || defined(CONFIG_MX6UL))
 	imx_set_pcie_phy_power_down();
 #endif
+
+#if !defined(CONFIG_MX6UL)
 	imx_set_vddpu_power_down();
+#endif
 
 #ifdef CONFIG_APBH_DMA
 	/* Start APBH DMA */
@@ -547,7 +556,7 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 	struct fuse_bank4_regs *fuse =
 			(struct fuse_bank4_regs *)bank->fuse_regs;
 
-#ifdef CONFIG_MX6SX
+#if (defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL))
 	if (0 == dev_id) {
 		u32 value = readl(&fuse->mac_addr1);
 		mac[0] = (value >> 8);
@@ -708,7 +717,7 @@ void s_init(void)
 	u32 mask528;
 	u32 reg, periph1, periph2;
 
-	if (is_cpu_type(MXC_CPU_MX6SX))
+	if (is_cpu_type(MXC_CPU_MX6SX) || is_cpu_type(MXC_CPU_MX6UL))
 		return;
 
 	/* Due to hardware limitation, on MX6Q we need to gate/ungate all PFDs
@@ -937,6 +946,7 @@ void imx_setup_hdmi(void)
 #endif
 
 #ifndef CONFIG_SYS_L2CACHE_OFF
+#ifndef CONFIG_MX6UL
 #define IOMUXC_GPR11_L2CACHE_AS_OCRAM 0x00000002
 void v7_outer_cache_enable(void)
 {
@@ -995,6 +1005,7 @@ void v7_outer_cache_disable(void)
 
 	clrbits_le32(&pl310->pl310_ctrl, L2X0_CTRL_EN);
 }
+#endif
 #endif /* !CONFIG_SYS_L2CACHE_OFF */
 
 #ifdef CONFIG_FASTBOOT

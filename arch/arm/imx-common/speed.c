@@ -2,7 +2,7 @@
  * (C) Copyright 2000-2003
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * Copyright (C) 2004-2007 Freescale Semiconductor, Inc.
+ * Copyright (C) 2004-2015 Freescale Semiconductor, Inc.
  * TsiChung Liew (Tsi-Chung.Liew@freescale.com)
  *
  * SPDX-License-Identifier:	GPL-2.0+
@@ -22,10 +22,12 @@ int get_clocks(void)
 #ifdef CONFIG_FSL_USDHC
 #if CONFIG_SYS_FSL_ESDHC_ADDR == USDHC2_BASE_ADDR
 	gd->arch.sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
+#ifndef CONFIG_MX6UL
 #elif CONFIG_SYS_FSL_ESDHC_ADDR == USDHC3_BASE_ADDR
 	gd->arch.sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 #elif CONFIG_SYS_FSL_ESDHC_ADDR == USDHC4_BASE_ADDR
 	gd->arch.sdhc_clk = mxc_get_clock(MXC_ESDHC4_CLK);
+#endif
 #else
 	gd->arch.sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
 #endif
