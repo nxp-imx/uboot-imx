@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2015 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -159,17 +159,34 @@ int enable_i2c_clk(unsigned char enable, unsigned i2c_num)
 	u32 reg;
 	u32 mask;
 
-	if (i2c_num > 2)
+#if defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL)
+	if (i2c_num > 3)
 		return -EINVAL;
+	if (i2c_num == 3) {
+		mask = MXC_CCM_CCGR6_I2C4_SERIAL_MASK;
+		reg = __raw_readl(&imx_ccm->CCGR6);
+	} else
+#endif
+	{
+		if (i2c_num > 2)
+			return -EINVAL;
 
-	mask = MXC_CCM_CCGR_CG_MASK
-		<< (MXC_CCM_CCGR2_I2C1_SERIAL_OFFSET + (i2c_num << 1));
-	reg = __raw_readl(&imx_ccm->CCGR2);
+		mask = MXC_CCM_CCGR_CG_MASK
+			<< (MXC_CCM_CCGR2_I2C1_SERIAL_OFFSET + (i2c_num << 1));
+		reg = __raw_readl(&imx_ccm->CCGR2);
+	}
 	if (enable)
 		reg |= mask;
 	else
 		reg &= ~mask;
-	__raw_writel(reg, &imx_ccm->CCGR2);
+
+#if defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL)
+	if (i2c_num == 3)
+		__raw_writel(reg, &imx_ccm->CCGR6);
+	else
+#endif
+		__raw_writel(reg, &imx_ccm->CCGR2);
+
 	return 0;
 }
 #endif
