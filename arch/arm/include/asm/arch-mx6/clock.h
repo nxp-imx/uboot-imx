@@ -71,10 +71,12 @@ void enable_enet_clk(unsigned char enable);
 void hab_caam_clock_enable(unsigned char enable);
 #endif
 
-#if (defined(CONFIG_MX6SX))
+#if defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL)
 void enable_qspi_clk(int qspi_num);
-void enable_lcdif_clock(uint32_t base_addr);
 void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq);
+void enable_lcdif_clock(uint32_t base_addr);
+#endif
+#if defined(CONFIG_MX6SX)
 void enable_lvds(uint32_t lcdif_base);
 void mxs_set_vadcclk(void);
 #endif

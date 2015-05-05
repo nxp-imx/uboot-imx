@@ -94,16 +94,27 @@ void enable_usboh3_clk(unsigned char enable)
 #if defined(CONFIG_FEC_MXC) && !defined(CONFIG_MX6SX)
 void enable_enet_clk(unsigned char enable)
 {
+#ifdef CONFIG_MX6UL
+	u32 mask = MXC_CCM_CCGR3_ENET_CLK_ENABLE_MASK;
+	/* Set AHB clk, since enet clock is sourced from AHB and IPG */
+	/* ROM has set AHB, just leave here empty */
+	/* Enable enet system clock */
+	if (enable)
+		setbits_le32(&imx_ccm->CCGR3, mask);
+	else
+		clrbits_le32(&imx_ccm->CCGR3, mask);
+#else
 	u32 mask = MXC_CCM_CCGR1_ENET_CLK_ENABLE_MASK;
 
 	if (enable)
 		setbits_le32(&imx_ccm->CCGR1, mask);
 	else
 		clrbits_le32(&imx_ccm->CCGR1, mask);
+#endif
 }
 #endif
 
-#ifdef CONFIG_MXC_UART
+#if defined(CONFIG_MXC_UART) && !defined(CONFIG_MX6UL)
 void enable_uart_clk(unsigned char enable)
 {
 	u32 mask = MXC_CCM_CCGR5_UART_MASK | MXC_CCM_CCGR5_UART_SERIAL_MASK;
@@ -246,10 +257,12 @@ static u32 mxc_get_pll_pfd(enum pll_clocks pll, int pfd_num)
 
 	switch (pll) {
 	case PLL_BUS:
+#if !defined(CONFIG_MX6UL) && !defined(CONFIG_MX6UL)
 		if (pfd_num == 3) {
 			/* No PFD3 on PPL2 */
 			return 0;
 		}
+#endif
 		div = __raw_readl(&imx_ccm->analog_pfd_528);
 		freq = (u64)decode_pll(PLL_BUS, MXC_HCLK);
 		break;
@@ -281,9 +294,12 @@ static u32 get_mcu_main_clk(void)
 u32 get_periph_clk(void)
 {
 	u32 reg, freq = 0;
+	u32 div;
 
 	reg = __raw_readl(&imx_ccm->cbcdr);
 	if (reg & MXC_CCM_CBCDR_PERIPH_CLK_SEL) {
+		div = (reg & MXC_CCM_CBCDR_PERIPH_CLK2_PODF_MASK) >>
+		       MXC_CCM_CBCDR_PERIPH_CLK2_PODF_OFFSET;
 		reg = __raw_readl(&imx_ccm->cbcmr);
 		reg &= MXC_CCM_CBCMR_PERIPH_CLK2_SEL_MASK;
 		reg >>= MXC_CCM_CBCMR_PERIPH_CLK2_SEL_OFFSET;
@@ -321,9 +337,10 @@ u32 get_periph_clk(void)
 		default:
 			break;
 		}
+		div = 0;
 	}
 
-	return freq;
+	return freq / (div + 1);
 }
 
 static u32 get_ipg_clk(void)
@@ -342,7 +359,8 @@ static u32 get_ipg_per_clk(void)
 	u32 reg, perclk_podf;
 
 	reg = __raw_readl(&imx_ccm->cscmr1);
-#if (defined(CONFIG_MX6SL) || defined(CONFIG_MX6SX) || defined(CONFIG_MX6QP))
+#if (defined(CONFIG_MX6SL) || defined(CONFIG_MX6SX) || \
+	defined(CONFIG_MX6QP) || defined(CONFIG_MX6UL))
 	if (reg & MXC_CCM_CSCMR1_PER_CLK_SEL_MASK)
 		return MXC_HCLK; /* OSC 24Mhz */
 #endif
@@ -356,7 +374,8 @@ static u32 get_uart_clk(void)
 	u32 reg, uart_podf;
 	u32 freq = decode_pll(PLL_USBOTG, MXC_HCLK) / 6; /* static divider */
 	reg = __raw_readl(&imx_ccm->cscdr1);
-#if (defined(CONFIG_MX6SL) || defined(CONFIG_MX6SX) || defined(CONFIG_MX6QP))
+#if (defined(CONFIG_MX6SL) || defined(CONFIG_MX6SX) || \
+	defined(CONFIG_MX6QP) || defined(CONFIG_MX6UL))
 	if (reg & MXC_CCM_CSCDR1_UART_CLK_SEL)
 		freq = MXC_HCLK;
 #endif
@@ -374,7 +393,8 @@ static u32 get_cspi_clk(void)
 	cspi_podf = (reg & MXC_CCM_CSCDR2_ECSPI_CLK_PODF_MASK)
 		>> MXC_CCM_CSCDR2_ECSPI_CLK_PODF_OFFSET;
 
-#if defined(CONFIG_MX6QP)
+#if (defined(CONFIG_MX6SL) || defined(CONFIG_MX6SX) || \
+	defined(CONFIG_MX6QP) || defined(CONFIG_MX6UL))
 	if (reg & MXC_CCM_CSCDR2_ECSPI_CLK_SEL_MASK)
 		return MXC_HCLK / (cspi_podf + 1);
 #endif
@@ -429,7 +449,46 @@ static u32 get_emi_slow_clk(void)
 	return root_freq / (emi_slow_podf + 1);
 }
 
-#if (defined(CONFIG_MX6SL) || defined(CONFIG_MX6SX))
+#if defined(CONFIG_MX6UL) || defined(CONFIG_MX6SX)
+static u32 get_mmdc_ch0_clk(void)
+{
+	u32 cbcmr = __raw_readl(&imx_ccm->cbcmr);
+	u32 cbcdr = __raw_readl(&imx_ccm->cbcdr);
+	u32 freq, mmdc_podf, per2_clk2_podf;
+
+	mmdc_podf = (cbcdr & MXC_CCM_CBCDR_MMDC_CH1_PODF_MASK)
+		     >> MXC_CCM_CBCDR_MMDC_CH1_PODF_OFFSET;
+	if (cbcdr & MXC_CCM_CBCDR_PERIPH2_CLK_SEL) {
+		per2_clk2_podf = (cbcdr & MXC_CCM_CBCDR_PERIPH2_CLK2_PODF_MASK)
+				  >> MXC_CCM_CBCDR_PERIPH2_CLK2_PODF_OFFSET;
+		if (cbcmr & MXC_CCM_CBCMR_PERIPH2_CLK2_SEL)
+			freq = MXC_HCLK;
+		else
+			freq = decode_pll(PLL_USBOTG, MXC_HCLK);
+	} else {
+		per2_clk2_podf = 0;
+		switch ((cbcmr & MXC_CCM_CBCMR_PRE_PERIPH2_CLK_SEL_MASK) >>
+			MXC_CCM_CBCMR_PRE_PERIPH2_CLK_SEL_OFFSET) {
+		case 0:
+			freq = decode_pll(PLL_BUS, MXC_HCLK);
+			break;
+		case 1:
+			freq = mxc_get_pll_pfd(PLL_BUS, 2);
+			break;
+		case 2:
+			freq = mxc_get_pll_pfd(PLL_BUS, 0);
+			break;
+		case 3:
+			/* static / 2 divider */
+			freq =  mxc_get_pll_pfd(PLL_BUS, 2) / 2;
+			break;
+		}
+	}
+
+
+	return freq / (mmdc_podf + 1) / (per2_clk2_podf + 1);
+}
+#elif defined(CONFIG_MX6SL)
 static u32 get_mmdc_ch0_clk(void)
 {
 	u32 cbcmr = __raw_readl(&imx_ccm->cbcmr);
@@ -540,7 +599,41 @@ void enable_lcdif_clock(uint32_t base_addr)
 	writel(reg, &imx_ccm->CCGR2);
 }
 
-static int enable_pll_video(u32 pll_div, u32 pll_num, u32 pll_denom)
+void mxs_set_vadcclk(void)
+{
+	u32 reg = 0;
+
+	reg = readl(&imx_ccm->cscmr2);
+	reg &= ~MXC_CCM_CSCMR2_VID_CLK_SEL_MASK;
+	reg |= 0x19 << MXC_CCM_CSCMR2_VID_CLK_SEL_OFFSET;
+	writel(reg, &imx_ccm->cscmr2);
+}
+#endif
+
+#ifdef CONFIG_MX6UL
+void enable_lcdif_clock(uint32_t base_addr)
+{
+	u32 reg = 0;
+
+	/* Set to pre-mux clock at default */
+	reg = readl(&imx_ccm->cscdr2);
+	reg &= ~MXC_CCM_CSCDR2_LCDIF1_CLK_SEL_MASK;
+	writel(reg, &imx_ccm->cscdr2);
+
+	/* Enable the LCDIF pix clock */
+	reg = readl(&imx_ccm->CCGR3);
+	reg |= MXC_CCM_CCGR3_LCDIF1_PIX_MASK;
+	writel(reg, &imx_ccm->CCGR3);
+
+	reg = readl(&imx_ccm->CCGR2);
+	reg |= MXC_CCM_CCGR2_LCD_MASK;
+	writel(reg, &imx_ccm->CCGR2);
+}
+#endif
+
+#if defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL)
+static int enable_pll_video(u32 pll_div, u32 pll_num, u32 pll_denom,
+	u32 test_div)
 {
 	u32 reg = 0;
 	ulong start;
@@ -554,9 +647,23 @@ static int enable_pll_video(u32 pll_div, u32 pll_num, u32 pll_denom)
 		&imx_ccm->analog_pll_video_clr);
 
 	/* Set div, num and denom */
-	writel(BF_ANADIG_PLL_VIDEO_DIV_SELECT(pll_div) |
-		BF_ANADIG_PLL_VIDEO_TEST_DIV_SELECT(0x2),
-		&imx_ccm->analog_pll_video_set);
+	switch (test_div) {
+	case 1:
+		writel(BF_ANADIG_PLL_VIDEO_DIV_SELECT(pll_div) |
+		       BF_ANADIG_PLL_VIDEO_TEST_DIV_SELECT(0x1),
+		       &imx_ccm->analog_pll_video_set);
+		break;
+	case 2:
+		writel(BF_ANADIG_PLL_VIDEO_DIV_SELECT(pll_div) |
+		       BF_ANADIG_PLL_VIDEO_TEST_DIV_SELECT(0x0),
+		       &imx_ccm->analog_pll_video_set);
+		break;
+	default:
+		writel(BF_ANADIG_PLL_VIDEO_DIV_SELECT(pll_div) |
+		       BF_ANADIG_PLL_VIDEO_TEST_DIV_SELECT(0x2),
+		       &imx_ccm->analog_pll_video_set);
+		break;
+	}
 
 	writel(BF_ANADIG_PLL_VIDEO_NUM_A(pll_num),
 		&imx_ccm->analog_pll_video_num);
@@ -590,7 +697,7 @@ void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq)
 	u32 max = hck * 54;
 	u32 temp, best = 0;
 	u32 i, j, pred = 1, postd = 1;
-	u32 pll_div, pll_num, pll_denom;
+	u32 pll_div, pll_num, pll_denom, post_div = 0;
 
 	debug("mxs_set_lcdclk, freq = %d\n", freq);
 
@@ -598,10 +705,29 @@ void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq)
 		reg = readl(&imx_ccm->cscdr2);
 		if ((reg & MXC_CCM_CSCDR2_LCDIF1_CLK_SEL_MASK) != 0)
 			return; /*Can't change clocks when clock not from pre-mux */
-	} else {
+	}
+#ifdef CONFIG_MX6SX
+	else {
 		reg = readl(&imx_ccm->cscdr2);
 		if ((reg & MXC_CCM_CSCDR2_LCDIF2_CLK_SEL_MASK) != 0)
 			return; /*Can't change clocks when clock not from pre-mux */
+	}
+#endif
+
+	temp = (freq * 8 * 8);
+	if (temp < min) {
+		for (i = 1; i <= 2; i++) {
+			if ((temp * (1 << i)) > min) {
+				post_div = i;
+				freq = (freq * (1 << i));
+				break;
+			}
+		}
+
+		if (3 == i) {
+			printf("Fail to set rate to %dkhz", freq);
+			return;
+		}
 	}
 
 	for (i = 1; i <= 8; i++) {
@@ -630,7 +756,7 @@ void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq)
 	pll_num = (best - hck * pll_div) * pll_denom / hck;
 
 	if (base_addr == LCDIF1_BASE_ADDR) {
-		if (enable_pll_video(pll_div, pll_num, pll_denom))
+		if (enable_pll_video(pll_div, pll_num, pll_denom, post_div))
 			return;
 
 		/* Select pre-lcd clock to PLL5 */
@@ -647,8 +773,9 @@ void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq)
 		reg &= ~MXC_CCM_CBCMR_LCDIF1_PODF_MASK;
 		reg |= ((postd - 1) << MXC_CCM_CBCMR_LCDIF1_PODF_OFFSET);
 		writel(reg, &imx_ccm->cbcmr);
-
-	} else {
+	}
+#ifdef CONFIG_MX6SX
+	else {
 		if (enable_pll_video(pll_div, pll_num, pll_denom))
 			return;
 
@@ -667,6 +794,7 @@ void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq)
 		reg |= ((postd - 1) << MXC_CCM_CSCMR1_LCDIF2_PODF_OFFSET);
 		writel(reg, &imx_ccm->cscmr1);
 	}
+#endif
 }
 
 /* qspi_num can be from 0 - 1 */
@@ -690,6 +818,7 @@ void enable_qspi_clk(int qspi_num)
 		/* enable the clock gate */
 		setbits_le32(&imx_ccm->CCGR3, MXC_CCM_CCGR3_QSPI1_MASK);
 		break;
+#ifdef CONFIG_MX6SX
 	case 1:
 		/*
 		 * disable the clock gate
@@ -712,12 +841,13 @@ void enable_qspi_clk(int qspi_num)
 		setbits_le32(&imx_ccm->CCGR4, MXC_CCM_CCGR4_QSPI2_ENFC_MASK |
 			     MXC_CCM_CCGR4_RAWNAND_U_GPMI_BCH_INPUT_GPMI_IO_MASK);
 		break;
+#endif
 	default:
 		break;
 	}
 }
 
-void mxs_set_vadcclk()
+void mxs_set_vadcclk(void)
 {
 	u32 reg = 0;
 
@@ -774,7 +904,7 @@ int enable_fec_anatop_clock(int fec_id, enum enet_freq freq)
 #endif
 	writel(reg, &anatop->pll_enet);
 
-#ifdef CONFIG_MX6SX
+#if defined(CONFIG_MX6SX)
 	/*
 	 * Set enet ahb clock to 200MHz
 	 * pll2_pfd2_396m-> ENET_PODF-> ENET_AHB
@@ -818,6 +948,7 @@ static u32 get_usdhc_clk(u32 port)
 		clk_sel = cscmr1 & MXC_CCM_CSCMR1_USDHC2_CLK_SEL;
 
 		break;
+#ifndef CONFIG_MX6UL
 	case 2:
 		usdhc_podf = (cscdr1 & MXC_CCM_CSCDR1_USDHC3_PODF_MASK) >>
 					MXC_CCM_CSCDR1_USDHC3_PODF_OFFSET;
@@ -830,6 +961,7 @@ static u32 get_usdhc_clk(u32 port)
 		clk_sel = cscmr1 & MXC_CCM_CSCMR1_USDHC4_CLK_SEL;
 
 		break;
+#endif
 	default:
 		break;
 	}
@@ -852,6 +984,7 @@ u32 imx_get_fecclk(void)
 	return mxc_get_clock(MXC_IPG_CLK);
 }
 
+#ifndef CONFIG_MX6UL
 static int enable_enet_pll(uint32_t en)
 {
 	struct mxc_ccm_reg *const imx_ccm
@@ -980,6 +1113,7 @@ int enable_pcie_clock(void)
 	return enable_enet_pll(BM_ANADIG_PLL_ENET_ENABLE_PCIE);
 #endif
 }
+#endif
 
 #ifdef CONFIG_SECURE_BOOT
 void hab_caam_clock_enable(unsigned char enable)
@@ -1114,7 +1248,7 @@ int do_mx6_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-#ifndef CONFIG_MX6SX
+#if !defined(CONFIG_MX6SX) && !defined(CONFIG_MX6UL)
 #ifdef CONFIG_MX6QP
 static void pre_misc_setting(void)
 {
