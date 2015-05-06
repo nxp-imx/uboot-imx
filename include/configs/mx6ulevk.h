@@ -49,9 +49,8 @@
 #define CONFIG_CONS_INDEX		1
 #define CONFIG_BAUDRATE			115200
 
-#define CONFIG_IMX_THERMAL
 #define CONFIG_CMD_FUSE
-#if defined(CONFIG_CMD_FUSE) || defined(CONFIG_IMX_THERMAL)
+#ifdef CONFIG_CMD_FUSE
 #define CONFIG_MXC_OCOTP
 #endif
 

@@ -396,10 +396,8 @@
 #define CONFIG_PCIE_IMX_POWER_GPIO	IMX_GPIO_NR(2, 1)
 #endif
 
-#define CONFIG_IMX_THERMAL
-
 #define CONFIG_CMD_FUSE
-#if defined(CONFIG_CMD_FUSE) || defined(CONFIG_IMX_THERMAL)
+#ifdef CONFIG_CMD_FUSE
 #define CONFIG_MXC_OCOTP
 #endif
 
