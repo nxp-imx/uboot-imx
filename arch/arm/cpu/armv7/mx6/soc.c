@@ -17,6 +17,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/imx-common/boot_mode.h>
 #include <asm/imx-common/dma.h>
+#include <div64.h>
 #include <libfdt.h>
 #include <stdbool.h>
 #include <asm/arch/mxc_hdmi.h>
@@ -48,12 +49,11 @@ struct scu_regs {
 #define TEMPERATURE_MIN		-40
 #define TEMPERATURE_HOT		80
 #define TEMPERATURE_MAX		125
-#define FACTOR1			15976
-#define FACTOR2			4297157
+#define FACTOR0			10000000
+#define FACTOR1			16549
+#define FACTOR2			4445388
+#define OFFSET			3580661
 #define MEASURE_FREQ		327
-
-#define REG_VALUE_TO_CEL(ratio, raw) \
-	((raw_n40c - raw) * 100 / ratio - 40)
 
 static unsigned int fuse = ~0;
 
@@ -243,8 +243,9 @@ static void imx_set_wdog_powerdown(bool enable)
 static int read_cpu_temperature(int *temperature)
 {
 	unsigned int ccm_ccgr2;
-	unsigned int reg, tmp;
-	unsigned int raw_25c, raw_n40c, ratio;
+	unsigned int reg, n_meas;
+	int t1, n1;
+	u64 temp64, c1, c2;
 	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
 	struct fuse_bank *bank = &ocotp->bank[1];
@@ -287,20 +288,33 @@ static int read_cpu_temperature(int *temperature)
 	 * [19:8] sensor value of hot
 	 * [7:0] hot temperature value
 	 */
-	raw_25c = fuse >> 20;
+	n1 = fuse >> 20;
+	t1 = 25; /* t1 always 25C */
 
 	/*
-	 * The universal equation for thermal sensor
-	 * is slope = 0.4297157 - (0.0015976 * 25C fuse),
-	 * here we convert them to integer to make them
-	 * easy for counting, FACTOR1 is 15976,
-	 * FACTOR2 is 4297157. Our ratio = -100 * slope
+	 * Derived from linear interpolation:
+	 * slope = 0.4445388 - (0.0016549 * 25C fuse)
+	 * slope = (FACTOR2 - FACTOR1 * n1) / FACTOR0
+	 * offset = 3.580661
+	 * offset = OFFSET / 1000000
+	 * (Nmeas - n1) / (Tmeas - t1) = slope
+	 * We want to reduce this down to the minimum computation necessary
+	 * for each temperature read.  Also, we want Tmeas in millicelsius
+	 * and we don't want to lose precision from integer division. So...
+	 * Tmeas = (Nmeas - n1) / slope + t1 + offset
+	 * milli_Tmeas = 1000000 * (Nmeas - n1) / slope + 1000000 * t1 + OFFSET
+	 * milli_Tmeas = -1000000 * (n1 - Nmeas) / slope + 1000000 * t1 + OFFSET
+	 * Let constant c1 = (-1000000 / slope)
+	 * milli_Tmeas = (n1 - Nmeas) * c1 + 1000000 * t1 + OFFSET
+	 * Let constant c2 = n1 *c1 + 1000000 * t1
+	 * milli_Tmeas = (c2 - Nmeas * c1) / 1000000 + OFFSET
+	 * Tmeas = ((c2 - Nmeas * c1) + OFFSET) / 1000000
 	 */
-	ratio = ((FACTOR1 * raw_25c - FACTOR2) + 50000) / 100000;
-
-	debug("Thermal sensor with ratio = %d\n", ratio);
-
-	raw_n40c = raw_25c + (13 * ratio) / 20;
+	temp64 = FACTOR0;
+	temp64 *= 1000000;
+	do_div(temp64, FACTOR1 * n1 - FACTOR2);
+	c1 = temp64;
+	c2 = n1 * c1 + 1000000 * t1;
 
 	/*
 	 * now we only use single measure, every time we read
@@ -325,14 +339,13 @@ static int read_cpu_temperature(int *temperature)
 		udelay(10000);
 
 	reg = readl(&mxc_ccm->tempsense0);
-	tmp = (reg & BM_ANADIG_TEMPSENSE0_TEMP_VALUE)
+	n_meas = (reg & BM_ANADIG_TEMPSENSE0_TEMP_VALUE)
 		>> BP_ANADIG_TEMPSENSE0_TEMP_VALUE;
 	writel(BM_ANADIG_TEMPSENSE0_FINISHED, &mxc_ccm->tempsense0_clr);
 
-	if (tmp <= raw_n40c)
-		*temperature = REG_VALUE_TO_CEL(ratio, tmp);
-	else
-		*temperature = TEMPERATURE_MIN;
+	/* Tmeas = (c2 - Nmeas * c1 + OFFSET) / 1000000 */
+	*temperature = lldiv(c2 - n_meas * c1 + OFFSET, 1000000);
+
 	/* power down anatop thermal sensor */
 	writel(BM_ANADIG_TEMPSENSE0_POWER_DOWN, &mxc_ccm->tempsense0_set);
 	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF, &mxc_ccm->ana_misc0_clr);
