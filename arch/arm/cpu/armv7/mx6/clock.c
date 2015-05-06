@@ -598,16 +598,6 @@ void enable_lcdif_clock(uint32_t base_addr)
 	reg |= (MXC_CCM_CCGR2_LCD_MASK);
 	writel(reg, &imx_ccm->CCGR2);
 }
-
-void mxs_set_vadcclk(void)
-{
-	u32 reg = 0;
-
-	reg = readl(&imx_ccm->cscmr2);
-	reg &= ~MXC_CCM_CSCMR2_VID_CLK_SEL_MASK;
-	reg |= 0x19 << MXC_CCM_CSCMR2_VID_CLK_SEL_OFFSET;
-	writel(reg, &imx_ccm->cscmr2);
-}
 #endif
 
 #ifdef CONFIG_MX6UL
@@ -776,7 +766,7 @@ void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq)
 	}
 #ifdef CONFIG_MX6SX
 	else {
-		if (enable_pll_video(pll_div, pll_num, pll_denom))
+		if (enable_pll_video(pll_div, pll_num, pll_denom, post_div))
 			return;
 
 		/* Select pre-lcd clock to PLL5 */
