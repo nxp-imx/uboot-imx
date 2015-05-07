@@ -326,11 +326,11 @@ static iomux_v3_cfg_t const eimnor_pads[] = {
 static void eimnor_cs_setup(void)
 {
 	writel(0x00000120, WEIM_BASE_ADDR + 0x090);
-	writel(0x00610089, WEIM_BASE_ADDR + 0x000);
+	writel(0x00010181, WEIM_BASE_ADDR + 0x000);
 	writel(0x00000001, WEIM_BASE_ADDR + 0x004);
-	writel(0x1c022000, WEIM_BASE_ADDR + 0x008);
-	writel(0x00000000, WEIM_BASE_ADDR + 0x00c);
-	writel(0x1404a38e, WEIM_BASE_ADDR + 0x010);
+	writel(0x0a020000, WEIM_BASE_ADDR + 0x008);
+	writel(0x0000c000, WEIM_BASE_ADDR + 0x00c);
+	writel(0x0804a240, WEIM_BASE_ADDR + 0x010);
 }
 
 static void setup_eimnor(void)
