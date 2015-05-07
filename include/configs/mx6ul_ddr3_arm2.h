@@ -51,26 +51,6 @@
 #define CONFIG_MXC_OCOTP
 #endif
 
-/* MMC Configs */
-#define CONFIG_FSL_USDHC
-#ifdef CONFIG_FSL_USDHC
-#define CONFIG_FSL_ESDHC
-#define CONFIG_SYS_FSL_ESDHC_ADDR	0
-
-#ifdef CONFIG_SYS_USE_NAND
-#define CONFIG_SYS_FSL_USDHC_NUM	1
-#else
-#define CONFIG_SYS_FSL_USDHC_NUM	2
-#endif
-
-#define CONFIG_MMC
-#define CONFIG_CMD_MMC
-#define CONFIG_GENERIC_MMC
-#define CONFIG_CMD_FAT
-#define CONFIG_DOS_PARTITION
-#define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
-#endif
-
 #undef CONFIG_BOOTM_NETBSD
 #undef CONFIG_BOOTM_PLAN9
 #undef CONFIG_BOOTM_RTEMS
@@ -386,6 +366,26 @@
 #define CONFIG_ENV_OFFSET		(8 << 20)
 #define CONFIG_ENV_SECT_SIZE		(128 << 10)
 #define CONFIG_ENV_SIZE			CONFIG_ENV_SECT_SIZE
+#endif
+
+/* MMC Configs */
+#define CONFIG_FSL_USDHC
+#ifdef CONFIG_FSL_USDHC
+#define CONFIG_FSL_ESDHC
+#define CONFIG_SYS_FSL_ESDHC_ADDR	0
+
+#ifdef CONFIG_SYS_USE_NAND
+#define CONFIG_SYS_FSL_USDHC_NUM	1
+#else
+#define CONFIG_SYS_FSL_USDHC_NUM	2
+#endif
+
+#define CONFIG_MMC
+#define CONFIG_CMD_MMC
+#define CONFIG_GENERIC_MMC
+#define CONFIG_CMD_FAT
+#define CONFIG_DOS_PARTITION
+#define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
 #endif
 
 #define CONFIG_SYS_MMC_ENV_DEV		0   /* USDHC1 */
