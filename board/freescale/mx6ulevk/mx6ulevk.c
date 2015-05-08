@@ -27,6 +27,14 @@
 #include <usb.h>
 #include <usb/ehci-fsl.h>
 
+#ifdef CONFIG_FASTBOOT
+#include <fastboot.h>
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif
+#endif /*CONFIG_FASTBOOT*/
+
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL  (PAD_CTL_PKE | PAD_CTL_PUE |		\
@@ -876,3 +884,105 @@ int checkboard(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_FASTBOOT
+
+void board_fastboot_setup(void)
+{
+	switch (get_boot_device()) {
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	case SD1_BOOT:
+	case MMC1_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "mmc0");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "booti mmc0");
+		break;
+	case SD2_BOOT:
+	case MMC2_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "mmc1");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "booti mmc1");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
+	case NAND_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "nand");
+		if (!getenv("fbparts"))
+			setenv("fbparts", ANDROID_FASTBOOT_NAND_PARTS);
+		if (!getenv("bootcmd"))
+			setenv("bootcmd",
+				"nand read ${loadaddr} ${boot_nand_offset} "
+				"${boot_nand_size};booti ${loadaddr}");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
+
+	default:
+		printf("unsupported boot devices\n");
+		break;
+	}
+}
+
+#ifdef CONFIG_ANDROID_RECOVERY
+int check_recovery_cmd_file(void)
+{
+	int recovery_mode = 0;
+
+	recovery_mode = recovery_check_and_clean_flag();
+
+	return recovery_mode;
+}
+
+void board_recovery_setup(void)
+{
+	int bootdev = get_boot_device();
+
+	switch (bootdev) {
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	case SD1_BOOT:
+	case MMC1_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery", "booti mmc0 recovery");
+		break;
+	case SD2_BOOT:
+	case MMC2_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery", "booti mmc1 recovery");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
+	case NAND_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery",
+				"nand read ${loadaddr} ${recovery_nand_offset} "
+				"${recovery_nand_size};booti ${loadaddr}");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
+
+	default:
+		printf("Unsupported bootup device for recovery: dev: %d\n",
+			bootdev);
+		return;
+	}
+
+	printf("setup env for recovery..\n");
+	setenv("bootcmd", "run bootcmd_android_recovery");
+}
+#endif /*CONFIG_ANDROID_RECOVERY*/
+
+#endif /*CONFIG_FASTBOOT*/
+
+#ifdef CONFIG_IMX_UDC
+static iomux_v3_cfg_t const otg_udc_pads[] = {
+	MX6_PAD_GPIO1_IO00__ANATOP_OTG1_ID | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+void udc_pins_setting(void)
+{
+	imx_iomux_v3_setup_multiple_pads(otg_udc_pads,
+		ARRAY_SIZE(otg_udc_pads));
+}
+
+#endif /*CONFIG_IMX_UDC*/
