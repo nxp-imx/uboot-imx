@@ -183,7 +183,13 @@ int board_postclk_init(void)
 #ifdef CONFIG_SERIAL_TAG
 void get_board_serial(struct tag_serialnr *serialnr)
 {
-	/* TODO */
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[0];
+	struct fuse_bank0_regs *fuse =
+		(struct fuse_bank0_regs *)bank->fuse_regs;
+
+	serialnr->low = fuse->tester0;
+	serialnr->high = fuse->tester1;
 }
 #endif
 
