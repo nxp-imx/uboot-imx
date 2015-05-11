@@ -950,14 +950,6 @@ int board_late_init(void)
 	add_board_boot_modes(board_boot_modes);
 #endif
 
-#ifdef CONFIG_PFUZE100_PMIC_I2C
-	int ret = 0;
-
-	ret = setup_pmic_voltages();
-	if (ret)
-		return -1;
-#endif
-
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_init();
 #endif
