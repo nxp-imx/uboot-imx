@@ -18,6 +18,9 @@
 #include <mmc.h>
 #include <miiphy.h>
 #include <netdev.h>
+#include <power/pmic.h>
+#include <power/pfuze300_pmic.h>
+#include "../common/pfuze.h"
 #ifdef CONFIG_SYS_I2C_MXC
 #include <i2c.h>
 #include <asm/imx-common/mxc_i2c.h>
@@ -287,42 +290,31 @@ static const struct boot_mode board_boot_modes[] = {
 };
 #endif
 
-#ifdef CONFIG_PFUZE3000_PMIC_I2C
-#define PFUZE_DEVICEID	0x0
-#define PFUZE_REVID	0x3
-#define PFUZE_FABID	0x4
-
-#define PFUZE_LDOGCTL	0x69
-
-static int setup_pmic_voltages(void)
+#ifdef CONFIG_POWER
+#define I2C_PMIC	0
+int power_init_board(void)
 {
-	unsigned char value, rev_id = 0;
+	struct pmic *p;
+	int ret;
+	unsigned int reg, rev_id;
 
-	i2c_set_bus_num(CONFIG_PMIC_I2C_BUS);
+	ret = power_pfuze300_init(I2C_PMIC);
+	if (ret)
+		return ret;
 
-	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_PMIC_I2C_SLAVE);
-	if (!i2c_probe(CONFIG_PMIC_I2C_SLAVE)) {
-		if (i2c_read(CONFIG_PMIC_I2C_SLAVE, PFUZE_DEVICEID, 1, &value, 1)) {
-			printf("Read device ID error!\n");
-			return -1;
-		}
-		if (i2c_read(CONFIG_PMIC_I2C_SLAVE, PFUZE_REVID, 1, &rev_id, 1)) {
-			printf("Read Rev ID error!\n");
-			return -1;
-		}
-		printf("Found PFUZE300! deviceid 0x%x, revid 0x%x\n", value, rev_id);
+	p = pmic_get("PFUZE300");
+	ret = pmic_probe(p);
+	if (ret)
+		return ret;
 
-		/* disable Low Power Mode during standby mode */
-		if (i2c_read(CONFIG_PMIC_I2C_SLAVE, PFUZE_LDOGCTL, 1, &value, 1)) {
-			printf("Read LDOCTL error!\n");
-			return -1;
-		}
-		value |= 0x1;
-		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE_LDOGCTL, 1, &value, 1)) {
-			printf("Set LDOCTL error!\n");
-			return -1;
-		}
-	}
+	pmic_reg_read(p, PFUZE300_DEVICEID, &reg);
+	pmic_reg_read(p, PFUZE300_REVID, &rev_id);
+	printf("PMIC: PFUZE300 DEV_ID=0x%x REV_ID=0x%x\n", reg, rev_id);
+
+	/* disable Low Power Mode during standby mode */
+	pmic_reg_read(p, PFUZE300_LDOGCTL, &reg);
+	reg |= 0x1;
+	pmic_reg_write(p, PFUZE300_LDOGCTL, reg);
 
 	return 0;
 }
@@ -332,14 +324,6 @@ int board_late_init(void)
 {
 #ifdef CONFIG_CMD_BMODE
 	add_board_boot_modes(board_boot_modes);
-#endif
-
-#ifdef CONFIG_PFUZE3000_PMIC_I2C
-	int ret = 0;
-
-	ret = setup_pmic_voltages();
-	if (ret)
-		return ret;
 #endif
 
 #ifdef CONFIG_ENV_IS_IN_MMC
