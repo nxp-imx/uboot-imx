@@ -100,11 +100,7 @@
 static void print_regs(int contain_pcie_reg)
 {
 	u32 val;
-#ifndef CONFIG_MX6SX
 	struct iomuxc *iomuxc_regs = (struct iomuxc *)IOMUXC_BASE_ADDR;
-#else
-	struct iomuxc *iomuxc_regs = (struct iomuxc *)IOMUXC_GPR_BASE_ADDR;
-#endif
 	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 	val = readl(&iomuxc_regs->gpr[1]);
 	DBGF("GPR01 a:0x%08x v:0x%08x\n", (u32)&iomuxc_regs->gpr[1], val);

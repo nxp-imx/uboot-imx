@@ -324,7 +324,7 @@ static void init_src(void)
 #ifdef CONFIG_MX6SX
 void vadc_power_up(void)
 {
-	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_GPR_BASE_ADDR;
+	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
 	u32 val;
 
 	/* csi0 */
@@ -356,7 +356,7 @@ void vadc_power_up(void)
 
 void vadc_power_down(void)
 {
-	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_GPR_BASE_ADDR;
+	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
 	u32 val;
 
 	/* Power down vadc ext power
