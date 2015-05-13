@@ -67,7 +67,9 @@ DECLARE_GLOBAL_DATA_PTR;
 			PAD_CTL_PUS_47K_UP | PAD_CTL_SPEED_LOW |\
 			PAD_CTL_DSE_80ohm | PAD_CTL_HYS |	\
 			PAD_CTL_SRE_FAST)
-#define ELAN_INTR_PAD_CTRL	(PAD_CTL_PUS_47K_UP | PAD_CTL_HYS)
+
+#define ELAN_INTR_PAD_CTRL (PAD_CTL_PKE | PAD_CTL_PUE | \
+			    PAD_CTL_PUS_47K_UP | PAD_CTL_HYS)
 
 #define EPDC_PAD_CTRL    (PAD_CTL_PKE | PAD_CTL_SPEED_MED |	\
 	PAD_CTL_DSE_40ohm | PAD_CTL_HYS)
@@ -763,6 +765,14 @@ void epdc_power_off(void)
 }
 #endif
 
+void setup_elan_pads(void)
+{
+#define TOUCH_CS	IMX_GPIO_NR(2, 9)
+#define TOUCH_INT   IMX_GPIO_NR(2, 10)
+#define TOUCH_RST	IMX_GPIO_NR(4, 4)
+	imx_iomux_v3_setup_multiple_pads(elan_pads, ARRAY_SIZE(elan_pads));
+}
+
 int board_init(void)
 {
 	/* address of boot parameters */
@@ -770,6 +780,7 @@ int board_init(void)
 
 #ifdef CONFIG_SYS_I2C_MXC
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+	setup_elan_pads();
 #endif
 
 #ifdef	CONFIG_FEC_MXC
@@ -787,17 +798,18 @@ int board_init(void)
 	return 0;
 }
 
-void setup_elan_pads(void)
-{
-#define TOUCH_CS	IMX_GPIO_NR(2, 9)
-#define TOUCH_INT   IMX_GPIO_NR(2, 10)
-#define TOUCH_RST	IMX_GPIO_NR(4, 4)
-	imx_iomux_v3_setup_multiple_pads(elan_pads, ARRAY_SIZE(elan_pads));
-}
-
 void elan_init(void)
 {
 	gpio_direction_input(TOUCH_INT);
+	/*
+	 * If epdc panel not plugged in, gpio_get_value(TOUCH_INT) will
+	 * return 1. And no need to mdelay, which will make i2c operation
+	 * slow.
+	 * If epdc panel plugged in, gpio_get_value(TOUCH_INT) will
+	 * return 0. And elan init flow will be executed.
+	 */
+	if (gpio_get_value(TOUCH_INT))
+		return;
 	gpio_direction_output(TOUCH_CS , 1);
 	gpio_set_value(TOUCH_CS, 0);
 	gpio_direction_output(TOUCH_RST , 1);
@@ -819,10 +831,6 @@ void i2c_force_reset_slave(void)
 
 int board_late_init(void)
 {
-#ifdef CONFIG_SYS_I2C_MXC
-	setup_elan_pads();
-#endif
-
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
