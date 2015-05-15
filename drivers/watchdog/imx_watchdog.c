@@ -9,6 +9,7 @@
 #include <watchdog.h>
 #include <asm/arch/imx-regs.h>
 #include <fsl_wdog.h>
+#include <asm/arch/sys_proto.h>
 
 #ifdef CONFIG_IMX_WATCHDOG
 void hw_watchdog_reset(void)
@@ -43,7 +44,10 @@ void reset_cpu(ulong addr)
 {
 	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
 
-	clrsetbits_le16(&wdog->wcr, WCR_WT_MSK, WCR_WDE);
+	if (is_cpu_type(MXC_CPU_MX7D))
+		clrsetbits_le16(&wdog->wcr, WCR_WT_MSK, (WCR_WDE | WCR_SRS));
+	else
+		clrsetbits_le16(&wdog->wcr, WCR_WT_MSK, WCR_WDE);
 
 	writew(0x5555, &wdog->wsr);
 	writew(0xaaaa, &wdog->wsr);	/* load minimum 1/2 second timeout */
