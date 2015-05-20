@@ -355,18 +355,15 @@ static struct fsl_esdhc_cfg usdhc_cfg[3] = {
 
 int mmc_get_env_devno(void)
 {
-	u32 soc_sbmr = readl(SRC_BASE_ADDR + 0x58);
-	u32 dev_no;
-	u32 bootsel;
+	struct bootrom_sw_info **p =
+		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR;
 
-	bootsel = (soc_sbmr & 0x0000F000) >> 12;
+	u8 boot_type = (*p)->boot_dev_type;
+	u8 dev_no = (*p)->boot_dev_instance;
 
 	/* If not boot from sd/mmc, use default value */
-	if ((bootsel != BOOT_TYPE_SD) && (bootsel != BOOT_TYPE_MMC))
+	if ((boot_type != BOOT_TYPE_SD) && (boot_type != BOOT_TYPE_MMC))
 		return CONFIG_SYS_MMC_ENV_DEV;
-
-	/* BOOT_CFG2[2] and BOOT_CFG2[3] */
-	dev_no = (soc_sbmr & 0x00000C00) >> 10;
 
 	return dev_no;
 }

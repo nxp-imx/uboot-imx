@@ -338,32 +338,30 @@ const struct boot_mode soc_boot_modes[] = {
 
 enum boot_device get_boot_device(void)
 {
-	enum boot_device boot_dev = UNKNOWN_BOOT;
-	uint32_t soc_smbr = readl(&src_reg->sbmr1);
-	uint32_t bt_mem_ctl = (soc_smbr & 0xF000) >> 12;
-	uint32_t bt_dev_port = (soc_smbr & 0xC00) >> 10;
-	uint32_t bt_mem_type = (soc_smbr & 0x800) >> 11;
+	struct bootrom_sw_info **p =
+		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR;
 
-	switch (bt_mem_ctl) {
-	case 0x1:
-		boot_dev = bt_dev_port + SD1_BOOT;
+	enum boot_device boot_dev = SD1_BOOT;
+	u8 boot_type = (*p)->boot_dev_type;
+	u8 boot_instance = (*p)->boot_dev_instance;
+
+	switch (boot_type) {
+	case BOOT_TYPE_SD:
+		boot_dev = boot_instance + SD1_BOOT;
 		break;
-	case 0x2:
-		boot_dev = bt_dev_port + MMC1_BOOT;
+	case BOOT_TYPE_MMC:
+		boot_dev = boot_instance + MMC1_BOOT;
 		break;
-	case 0x3:
+	case BOOT_TYPE_NAND:
 		boot_dev = NAND_BOOT;
 		break;
-	case 0x4:
+	case BOOT_TYPE_QSPI:
 		boot_dev = QSPI_BOOT;
 		break;
-	case 0x5:
-		if (bt_mem_type)
-			boot_dev = ONE_NAND_BOOT;
-		else
-			boot_dev = WEIM_NOR_BOOT;
+	case BOOT_TYPE_WEIM:
+		boot_dev = WEIM_NOR_BOOT;
 		break;
-	case 0x6:
+	case BOOT_TYPE_SPINOR:
 		boot_dev = SPI_NOR_BOOT;
 		break;
 	default:
