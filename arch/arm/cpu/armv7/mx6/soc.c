@@ -50,8 +50,8 @@ struct scu_regs {
 #define TEMPERATURE_HOT		80
 #define TEMPERATURE_MAX		125
 #define FACTOR0			10000000
-#define FACTOR1			16549
-#define FACTOR2			4445388
+#define FACTOR1			15423
+#define FACTOR2			4148468
 #define OFFSET			3580661
 #define MEASURE_FREQ		327
 
