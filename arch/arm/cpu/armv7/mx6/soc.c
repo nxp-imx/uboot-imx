@@ -495,7 +495,8 @@ int arch_cpu_init(void)
 #endif
 
 #if !defined(CONFIG_MX6UL)
-	imx_set_vddpu_power_down();
+	if (!is_mx6dqp())
+		imx_set_vddpu_power_down();
 #endif
 
 #ifdef CONFIG_APBH_DMA
