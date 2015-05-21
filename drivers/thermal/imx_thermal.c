@@ -22,8 +22,8 @@
 /* board will busyloop until this many degrees C below CPU max temperature */
 #define TEMPERATURE_HOT_DELTA   5 /* CPU maxT - 5C */
 #define FACTOR0			10000000
-#define FACTOR1			16549
-#define FACTOR2			4445388
+#define FACTOR1			15423
+#define FACTOR2			4148468
 #define OFFSET			3580661
 #define MEASURE_FREQ		327
 #define TEMPERATURE_MIN         -40
