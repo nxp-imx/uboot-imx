@@ -578,7 +578,8 @@ int arch_cpu_init(void)
 #ifndef CONFIG_MX6SL
 	imx_set_pcie_phy_power_down();
 #endif
-	imx_set_vddpu_power_down();
+	if (!is_mx6dqp())
+		imx_set_vddpu_power_down();
 
 #ifdef CONFIG_APBH_DMA
 	/* Start APBH DMA */
