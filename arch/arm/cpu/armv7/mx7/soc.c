@@ -17,6 +17,7 @@
 #include <asm/arch/crm_regs.h>
 #include <dm.h>
 #include <imx_thermal.h>
+#include <mxsfb.h>
 #if defined(CONFIG_FSL_FASTBOOT) && defined(CONFIG_ANDROID_RECOVERY)
 #include <recovery.h>
 #endif
@@ -459,8 +460,14 @@ void s_init(void)
 	return;
 }
 
-#ifdef CONFIG_FSL_FASTBOOT
+void reset_misc(void)
+{
+#ifdef CONFIG_VIDEO_MXS
+	lcdif_power_down();
+#endif
+}
 
+#ifdef CONFIG_FSL_FASTBOOT
 #ifdef CONFIG_ANDROID_RECOVERY
 #define ANDROID_RECOVERY_BOOT	(1 << 7)
 /*
