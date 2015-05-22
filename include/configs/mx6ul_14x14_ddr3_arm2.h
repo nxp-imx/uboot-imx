@@ -1,12 +1,12 @@
 /*
  * Copyright (C) 2015 Freescale Semiconductor, Inc.
  *
- * Configuration settings for the Freescale i.MX7.
+ * Configuration settings for the Freescale i.MX6UL 14x14 DDR3 ARM2.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-#ifndef __MX6UL_DDR3_ARM2_CONFIG_H
-#define __MX6UL_DDR3_ARM2_CONFIG_H
+#ifndef __MX6UL_14X14_DDR3_ARM2_CONFIG_H
+#define __MX6UL_14X14_DDR3_ARM2_CONFIG_H
 
 
 #include <asm/arch/imx-regs.h>
@@ -165,7 +165,7 @@
 	"console=ttymxc0\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
-	"fdt_file=imx6ul-ddr3-arm2.dtb\0" \
+	"fdt_file=imx6ul-14x14-ddr3-arm2.dtb\0" \
 	"fdt_addr=0x83000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \

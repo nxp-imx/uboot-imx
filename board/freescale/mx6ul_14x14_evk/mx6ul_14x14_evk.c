@@ -880,7 +880,7 @@ u32 get_board_rev(void)
 
 int checkboard(void)
 {
-	puts("Board: MX6UL EVK\n");
+	puts("Board: MX6UL 14x14 EVK\n");
 
 	return 0;
 }

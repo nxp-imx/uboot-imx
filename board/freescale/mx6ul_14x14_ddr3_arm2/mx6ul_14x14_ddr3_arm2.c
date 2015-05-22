@@ -964,7 +964,7 @@ u32 get_board_rev(void)
 
 int checkboard(void)
 {
-	puts("Board: MX6UL DDR3 ARM2\n");
+	puts("Board: MX6UL 14X14 DDR3 ARM2\n");
 
 	return 0;
 }
