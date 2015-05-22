@@ -134,6 +134,11 @@
 #define FASTBOOT_MMC_USER_PARTITION_ID  0
 #define FASTBOOT_MMC_NONE_PARTITION_ID -1
 
+#define FASTBOOT_PARTITION_BOOT "boot"
+#define FASTBOOT_PARTITION_RECOVERY "recovery"
+#define FASTBOOT_PARTITION_SYSTEM "system"
+#define FASTBOOT_PARTITION_BOOTLOADER "bootloader"
+
 enum {
     DEV_SATA,
     DEV_MMC,
@@ -213,6 +218,8 @@ struct fastboot_ptentry {
 	unsigned int flags;
 	/* partition id: 0 - normal partition; 1 - boot partition */
 	unsigned int partition_id;
+	/* partition number in block device */
+	unsigned int partition_index;
 };
 
 struct fastboot_device_info {

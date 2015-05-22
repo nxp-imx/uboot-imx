@@ -23,6 +23,6 @@ static inline int is_sparse_image(void *buf)
 	return 0;
 }
 
-void write_sparse_image(block_dev_desc_t *dev_desc,
+int write_sparse_image(block_dev_desc_t *dev_desc,
 		disk_partition_t *info, const char *part_name,
 		void *data, unsigned sz);

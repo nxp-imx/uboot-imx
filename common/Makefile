@@ -191,6 +191,7 @@ obj-$(CONFIG_MODEM_SUPPORT) += modem.o
 obj-$(CONFIG_UPDATE_TFTP) += update.o
 obj-$(CONFIG_USB_KEYBOARD) += usb_kbd.o
 obj-$(CONFIG_FASTBOOT) += cmd_fastboot.o
+obj-$(CONFIG_FASTBOOT) += aboot.o
 obj-$(CONFIG_CMD_DFU) += cmd_dfu.o
 obj-$(CONFIG_CMD_GPT) += cmd_gpt.o
 obj-$(CONFIG_CMD_BOOTAUX) += cmd_bootaux.o

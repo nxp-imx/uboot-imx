@@ -804,6 +804,7 @@ static int _fastboot_parts_add_ptable_entry(int ptable_index,
 		ptable[ptable_index].start = info.start;
 		ptable[ptable_index].length = info.size;
 		ptable[ptable_index].partition_id = mmc_partition_index;
+		ptable[ptable_index].partition_index = mmc_dos_partition_index;
 	}
 	return 0;
 }
@@ -876,7 +877,7 @@ static int _fastboot_parts_load_from_ptable(void)
 	ptable[PTN_MBR_INDEX].length = ANDROID_MBR_SIZE / dev_desc->blksz;
 	ptable[PTN_MBR_INDEX].partition_id = user_partition;
 	/* Bootloader */
-	strcpy(ptable[PTN_BOOTLOADER_INDEX].name, "bootloader");
+	strcpy(ptable[PTN_BOOTLOADER_INDEX].name, FASTBOOT_PARTITION_BOOTLOADER);
 	ptable[PTN_BOOTLOADER_INDEX].start =
 				ANDROID_BOOTLOADER_OFFSET / dev_desc->blksz;
 	ptable[PTN_BOOTLOADER_INDEX].length =
@@ -885,15 +886,15 @@ static int _fastboot_parts_load_from_ptable(void)
 
 	_fastboot_parts_add_ptable_entry(PTN_KERNEL_INDEX,
 				   CONFIG_ANDROID_BOOT_PARTITION_MMC,
-				   user_partition, "boot", dev_desc, ptable);
+				   user_partition, FASTBOOT_PARTITION_BOOT , dev_desc, ptable);
 	_fastboot_parts_add_ptable_entry(PTN_RECOVERY_INDEX,
 				   CONFIG_ANDROID_RECOVERY_PARTITION_MMC,
 				   user_partition,
-				   "recovery", dev_desc, ptable);
+				   FASTBOOT_PARTITION_RECOVERY, dev_desc, ptable);
 	_fastboot_parts_add_ptable_entry(PTN_SYSTEM_INDEX,
 				   CONFIG_ANDROID_SYSTEM_PARTITION_MMC,
 				   user_partition,
-				   "system", dev_desc, ptable);
+				   FASTBOOT_PARTITION_SYSTEM, dev_desc, ptable);
 
 	for (i = 0; i <= PTN_RECOVERY_INDEX; i++)
 		fastboot_flash_add_ptn(&ptable[i]);
