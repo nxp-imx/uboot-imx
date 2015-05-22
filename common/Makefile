@@ -182,6 +182,9 @@ obj-y += usb.o usb_hub.o
 obj-$(CONFIG_USB_STORAGE) += usb_storage.o
 endif
 obj-$(CONFIG_CMD_FASTBOOT) += cmd_fastboot.o
+ifndef CONFIG_FASTBOOT_FLASH_MMC_DEV
+obj-$(CONFIG_CMD_FASTBOOT) += aboot.o
+endif
 obj-$(CONFIG_CMD_FS_UUID) += cmd_fs_uuid.o
 
 obj-$(CONFIG_CMD_USB_MASS_STORAGE) += cmd_usb_mass_storage.o

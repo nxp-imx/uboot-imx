@@ -62,6 +62,7 @@
 #include <fastboot.h>
 #include <environment.h>
 #include <mmc.h>
+#include <aboot.h>
 
 #if defined(CONFIG_OF_LIBFDT)
 #include <libfdt.h>
@@ -720,6 +721,16 @@ static void process_flash_sata(const char *cmdbuf, char *response)
 #endif
 
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+static int is_sparse_partition(struct fastboot_ptentry *ptn)
+{
+	 if (ptn && !strncmp(ptn->name,
+				 FASTBOOT_PARTITION_SYSTEM, strlen(FASTBOOT_PARTITION_SYSTEM))) {
+		printf("support sparse flash partition for %s\n", ptn->name);
+		return 1;
+	 } else
+		 return 0;
+}
+
 static void process_flash_mmc(const char *cmdbuf, char *response)
 {
 	if (download_bytes) {
@@ -763,31 +774,68 @@ static void process_flash_mmc(const char *cmdbuf, char *response)
 				sprintf(mmc_dev, "mmc dev %x",
 					fastboot_devinfo.dev_id /*slot no*/);
 
-			/* block count */
-			temp = (download_bytes +
-				    MMC_SATA_BLOCK_SIZE - 1) /
-				    MMC_SATA_BLOCK_SIZE;
+			if (is_sparse_partition(ptn) &&
+				is_sparse_image(interface.transfer_buffer)) {
+				int mmc_no = 0;
+				struct mmc *mmc;
+				block_dev_desc_t *dev_desc;
+				disk_partition_t info;
+				mmc_no = fastboot_devinfo.dev_id;
 
-			sprintf(mmc_write, "mmc write 0x%x 0x%x 0x%x",
-					(unsigned int)interface.transfer_buffer, /*source*/
-					ptn->start, /*dest*/
-					temp /*length*/);
+				printf("sparse flash target is MMC:%d\n", mmc_no);
+				mmc = find_mmc_device(mmc_no);
+				if (mmc && mmc_init(mmc))
+					printf("MMC card init failed!\n");
 
-			printf("Initializing '%s'\n", ptn->name);
+				dev_desc = get_dev("mmc", mmc_no);
+				if (NULL == dev_desc) {
+					printf("** Block device MMC %d not supported\n",
+						mmc_no);
+					return;
+				}
 
-			mmcret = run_command(mmc_dev, 0);
-			if (mmcret)
-				sprintf(response, "FAIL:Init of MMC card");
-			else
-				sprintf(response, "OKAY");
+				if (get_partition_info(dev_desc,
+			       ptn->partition_index, &info)) {
+					printf("Bad partition index:%d for partition:%s\n",
+					ptn->partition_index, ptn->name);
+					return;
+				}
 
-			printf("Writing '%s'\n", ptn->name);
-			if (run_command(mmc_write, 0)) {
-				printf("Writing '%s' FAILED!\n", ptn->name);
-				sprintf(response, "FAIL: Write partition");
+				printf("writing to partition '%s' for sparse, buffer size %d\n",
+						ptn->name, download_bytes);
+				mmcret = write_sparse_image(dev_desc, &info, ptn->name,
+						interface.transfer_buffer, download_bytes);
+				if (mmcret)
+					sprintf(response, "FAIL: Write partition");
+				else
+					sprintf(response, "OKAY");
 			} else {
-				printf("Writing '%s' DONE!\n", ptn->name);
-				sprintf(response, "OKAY");
+				/* block count */
+				temp = (download_bytes +
+					    MMC_SATA_BLOCK_SIZE - 1) /
+					    MMC_SATA_BLOCK_SIZE;
+
+				sprintf(mmc_write, "mmc write 0x%x 0x%x 0x%x",
+						(unsigned int)interface.transfer_buffer, /*source*/
+						ptn->start, /*dest*/
+						temp /*length*/);
+
+				printf("Initializing '%s'\n", ptn->name);
+
+				mmcret = run_command(mmc_dev, 0);
+				if (mmcret)
+					sprintf(response, "FAIL:Init of MMC card");
+				else
+					sprintf(response, "OKAY");
+
+				printf("Writing '%s'\n", ptn->name);
+				if (run_command(mmc_write, 0)) {
+					printf("Writing '%s' FAILED!\n", ptn->name);
+					sprintf(response, "FAIL: Write partition");
+				} else {
+					printf("Writing '%s' DONE!\n", ptn->name);
+					sprintf(response, "OKAY");
+				}
 			}
 		}
 	} else {
