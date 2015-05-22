@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2014 Freescale Semiconductor, Inc.
+ * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __MXSFB_H__
 #define __MXSFB_H__
+
+#include <linux/fb.h>
 
 #ifdef CONFIG_VIDEO_MXS
 struct display_panel {
