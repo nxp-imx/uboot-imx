@@ -17,6 +17,7 @@
 #include <asm/arch/crm_regs.h>
 #include <dm.h>
 #include <imx_thermal.h>
+#include <mxsfb.h>
 #ifdef CONFIG_FASTBOOT
 #ifdef CONFIG_ANDROID_RECOVERY
 #include <recovery.h>
@@ -384,6 +385,13 @@ void s_init(void)
 	clock_init();
 
 	return;
+}
+
+void reset_misc(void)
+{
+#ifdef CONFIG_VIDEO_MXS
+	lcdif_power_down();
+#endif
 }
 
 #ifdef CONFIG_FASTBOOT
