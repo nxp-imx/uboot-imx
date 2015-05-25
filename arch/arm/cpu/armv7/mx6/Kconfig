@@ -58,6 +58,12 @@ config MX6_DDRCAL
 	  Say "Y" if your board uses dynamic (per-boot) DDR calibration.
 	  If unsure, say N.
 
+config CMD_BEE
+	bool "Enable commands for Bus Encryption Engine(BEE)"
+	depends on MX6UL
+	help
+	  Set "Y" to enable the bee commands 
+
 choice
 	prompt "MX6 board select"
 	optional
