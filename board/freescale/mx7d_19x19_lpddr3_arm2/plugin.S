@@ -39,7 +39,7 @@
 	str r1, [r0, #0x100]
 	ldr r1, =0x00020211
 	str r1, [r0, #0x104]
-	ldr r1, =0x03060707
+	ldr r1, =0x03060708
 	str r1, [r0, #0x108]
 	ldr r1, =0x00a0500c
 	str r1, [r0, #0x10c]
