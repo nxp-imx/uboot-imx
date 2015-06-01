@@ -50,6 +50,8 @@
 #define CONFIG_SYS_USE_NAND
 #define CONFIG_ENV_IS_IN_NAND
 #else
+#define CONFIG_SYS_USE_EIMNOR
+#undef CONFIG_FEC_MXC
 #define CONFIG_ENV_IS_IN_MMC
 #endif
 

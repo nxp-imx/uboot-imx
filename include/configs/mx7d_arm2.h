@@ -286,6 +286,7 @@
 #define CONFIG_FLASH_CFI_DRIVER         /* Use drivers/cfi_flash.c */
 #define CONFIG_SYS_FLASH_USE_BUFFER_WRITE /* Use buffered writes*/
 #define CONFIG_SYS_FLASH_EMPTY_INFO
+#define CONFIG_SYS_FLASH_PROTECTION
 #endif
 
 #ifdef CONFIG_SYS_USE_NAND
