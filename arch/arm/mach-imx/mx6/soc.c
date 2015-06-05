@@ -487,6 +487,9 @@ int arch_cpu_init(void)
 
 	init_src();
 
+	if (is_mx6dqp())
+		writel(0x80000201, 0xbb0608);
+
 #ifdef CONFIG_IMX_SEC_INIT
 	/* Secure init function such RNG */
 	imx_sec_init();
