@@ -465,6 +465,9 @@ int arch_cpu_init(void)
 
 	init_src();
 
+	if (is_mx6dqp())
+		writel(0x80000201, 0xbb0608);
+
 	return 0;
 }
 
