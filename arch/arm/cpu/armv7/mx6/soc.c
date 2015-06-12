@@ -765,6 +765,28 @@ void s_init(void)
 	writel(mask528, &anatop->pfd_528_clr);
 }
 
+void set_wdog_reset(struct wdog_regs *wdog)
+{
+	u32 reg = readw(&wdog->wcr);
+	/*
+	 * use WDOG_B mode to reset external pmic because it's risky for the
+	 * following watchdog reboot in case of cpu freq at lowest 400Mhz with
+	 * ldo-bypass mode. Because boot frequency maybe higher 800Mhz i.e. So
+	 * in ldo-bypass mode watchdog reset will only triger POR reset, not
+	 * WDOG reset. But below code depends on hardware design, if HW didn't
+	 * connect WDOG_B pin to external pmic such as i.mx6slevk, we can skip
+	 * these code since it assumed boot from 400Mhz always.
+	 */
+	reg = readw(&wdog->wcr);
+	reg |= 1 << 3;
+	/*
+	 * WDZST bit is write-once only bit. Align this bit in kernel,
+	 * otherwise kernel code will have no chance to set this bit.
+	 */
+	reg |= 1 << 0;
+	writew(reg, &wdog->wcr);
+}
+
 #ifdef CONFIG_LDO_BYPASS_CHECK
 DECLARE_GLOBAL_DATA_PTR;
 static int ldo_bypass;
@@ -855,28 +877,6 @@ void prep_anatop_bypass(void)
 #else
 	set_ldo_voltage(LDO_ARM, 1150);
 #endif
-}
-
-void set_wdog_reset(struct wdog_regs *wdog)
-{
-	u32 reg = readw(&wdog->wcr);
-	/*
-	 * use WDOG_B mode to reset external pmic because it's risky for the
-	 * following watchdog reboot in case of cpu freq at lowest 400Mhz with
-	 * ldo-bypass mode. Because boot frequency maybe higher 800Mhz i.e. So
-	 * in ldo-bypass mode watchdog reset will only triger POR reset, not
-	 * WDOG reset. But below code depends on hardware design, if HW didn't
-	 * connect WDOG_B pin to external pmic such as i.mx6slevk, we can skip
-	 * these code since it assumed boot from 400Mhz always.
-	 */
-	reg = readw(&wdog->wcr);
-	reg |= 1 << 3;
-	/*
-	 * WDZST bit is write-once only bit. Align this bit in kernel,
-	 * otherwise kernel code will have no chance to set this bit.
-	 */
-	reg |= 1 << 0;
-	writew(reg, &wdog->wcr);
 }
 
 int set_anatop_bypass(int wdog_reset_pin)
