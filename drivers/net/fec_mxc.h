@@ -97,8 +97,12 @@ struct ethernet_regs {
 	uint32_t t_fdxfc;		/* MBAR_ETH + 0x270 */
 	uint32_t ieee_t_octets_ok;	/* MBAR_ETH + 0x274 */
 
+#if defined(CONFIG_S32V234)
+	uint32_t res13[3];		/* MBAR_ETH + 0x278-280 */
+#else
 	uint32_t res13[2];		/* MBAR_ETH + 0x278-27C */
 	uint32_t rmon_r_drop;		/* MBAR_ETH + 0x280 */
+#endif
 	uint32_t rmon_r_packets;	/* MBAR_ETH + 0x284 */
 	uint32_t rmon_r_bc_pkt;		/* MBAR_ETH + 0x288 */
 	uint32_t rmon_r_mc_pkt;		/* MBAR_ETH + 0x28C */
