@@ -26,8 +26,10 @@
 /* Run by default from DDR1  */
 #ifdef CONFIG_RUN_FROM_DDR0
 #define DDR_BASE_ADDR		0x80000000
+#define DDR_SIZE		(1024 * 1024 * 1024)
 #else
 #define DDR_BASE_ADDR		0xC0000000
+#define DDR_SIZE		(512 * 1024 * 1024)
 #endif
 
 #define CONFIG_MACH_TYPE		4146
@@ -149,7 +151,7 @@
 #define CONFIG_SYS_PROMPT		"=> "
 
 #define CONFIG_SYS_MEMTEST_START	(DDR_BASE_ADDR)
-#define CONFIG_SYS_MEMTEST_END		(DDR_BASE_ADDR + 0x7C00000)
+#define CONFIG_SYS_MEMTEST_END		(DDR_BASE_ADDR + (DDR_SIZE - 1))
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_SYS_HZ				1000
@@ -164,9 +166,9 @@
 #endif
 
 /* Physical memory map */
-/* EVB board has 2x256 MB DDR chips, DDR0 and DDR1, u-boot is using just one */
+#define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM			(DDR_BASE_ADDR)
-#define PHYS_SDRAM_SIZE			(256 * 1024 * 1024)
+#define PHYS_SDRAM_SIZE			(DDR_SIZE)
 
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM
 #define CONFIG_SYS_INIT_RAM_ADDR	IRAM_BASE_ADDR
