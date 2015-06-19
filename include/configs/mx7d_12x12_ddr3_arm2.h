@@ -47,7 +47,7 @@
 #define CONFIG_SF_DEFAULT_BUS  3
 #define CONFIG_SF_DEFAULT_SPEED 20000000
 #define CONFIG_SF_DEFAULT_MODE (SPI_MODE_0)
-#define CONFIG_SF_DEFAULT_CS   (0|(IMX_GPIO_NR(5, 3)<<8))
+#define CONFIG_SF_DEFAULT_CS   0
 #endif
 
 #include "mx7d_arm2.h"
