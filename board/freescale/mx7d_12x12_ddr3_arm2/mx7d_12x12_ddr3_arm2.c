@@ -252,6 +252,11 @@ void setup_spinor(void)
 					 ARRAY_SIZE(ecspi1_pads));
 	gpio_direction_output(IMX_GPIO_NR(5, 3), 0);
 }
+
+int board_spi_cs_gpio(unsigned bus, unsigned cs)
+{
+	return (bus == 3 && cs == 0) ? (IMX_GPIO_NR(5, 3)) : -1;
+}
 #endif
 
 int board_early_init_f(void)
