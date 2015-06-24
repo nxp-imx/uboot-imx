@@ -1091,14 +1091,6 @@ void v7_outer_cache_enable(void)
 	if (((cache_id & L2X0_CACHE_ID_PART_MASK) == L2X0_CACHE_ID_PART_L310)
 	    && ((cache_id & L2X0_CACHE_ID_RTL_MASK) < L2X0_CACHE_ID_RTL_R3P2))
 		val &= ~(1 << 30);
-
-	/*
-	 * To i.MX6DQP, still disable double line fill feature due to system
-	 * reboot issue
-	 */
-	if (is_mx6dqp())
-		val &= ~(1 << 30);
-
 	writel(val, &pl310->pl310_prefetch_ctrl);
 
 	val = readl(&pl310->pl310_power_ctrl);
