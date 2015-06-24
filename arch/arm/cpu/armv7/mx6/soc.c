@@ -985,7 +985,7 @@ void v7_outer_cache_enable(void)
 
 	/* Turn on the L2 I/D prefetch, double linefill */
 	/* Set prefetch offset with any value except 23 as per errata 765569 */
-	val |= 0x70000000;
+	val |= 0x7000000f;
 
 	/*
 	 * The L2 cache controller(PL310) version on the i.MX6D/Q is r3p1-50rel0
