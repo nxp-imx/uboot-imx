@@ -2,6 +2,8 @@
 #
 # (C) Copyright 2013-2016, Freescale Semiconductor, Inc.
 
-obj-y += soc.o
-obj-y += cpu.o
-obj-y += clock.o
+obj-y				+= soc.o
+obj-y				+= cpu.o
+obj-y				+= clock.o
+obj-$(CONFIG_S32V234_LPDDR2)	+= lpddr2.o
+obj-$(CONFIG_S32V234_DDR3)	+= ddr3.o

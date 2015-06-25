@@ -41,6 +41,12 @@ config S32V234_LPDDR2
 	  Enable the support for Micron LPDDR2,
 	  2×32-bit, up to 1066 MHz data rate, 2×1 GB addressable.
 
+config S32V234_DDR3
+	bool "DDR3 Support"
+	help
+	  Enable the support for Micron DDR3,
+	  2×32-bit, up to 1066 MHz data rate, 2×1 GB addressable.
+
 endchoice
 
 config DDR_HANDSHAKE_AT_RESET

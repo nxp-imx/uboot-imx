@@ -13,6 +13,8 @@
 #include <asm/arch/ddr.h>
 #if defined(CONFIG_S32V234_LPDDR2)
 #include <asm/arch/lpddr2.h>
+#elif defined(CONFIG_S32V234_DDR3)
+#include <asm/arch/ddr3.h>
 #else
 #error "Please define the DDR type for S32V234 board!"
 #endif

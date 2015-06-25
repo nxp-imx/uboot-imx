@@ -2,7 +2,6 @@
 #
 # (C) Copyright 2013-2015, Freescale Semiconductor, Inc.
 
-obj-y   += lpddr2.o
 obj-y   += s32v234evb.o
 
 #########################################################################
