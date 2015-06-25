@@ -315,7 +315,7 @@ static u32 mxc_get_pll_enet_derive(int derive)
 		break;
 	case PLL_ENET_MAIN_100M_CLK:
 		if (reg & CCM_ANALOG_PLL_ENET_ENABLE_CLK_100MHZ_MASK)
-			return freq / 16;
+			return freq / 10;
 		break;
 	case PLL_ENET_MAIN_50M_CLK:
 		if (reg & CCM_ANALOG_PLL_ENET_ENABLE_CLK_50MHZ_MASK)
