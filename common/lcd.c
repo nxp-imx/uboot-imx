@@ -163,7 +163,6 @@ int drv_lcd_init(void)
 void lcd_clear(void)
 {
 	short console_rows, console_cols;
-	int bg_color;
 	char *s;
 	ulong addr;
 	static int do_splash = 1;
@@ -187,11 +186,9 @@ void lcd_clear(void)
 #ifndef CONFIG_SYS_WHITE_ON_BLACK
 	lcd_setfgcolor(CONSOLE_COLOR_BLACK);
 	lcd_setbgcolor(CONSOLE_COLOR_WHITE);
-	bg_color = CONSOLE_COLOR_WHITE;
 #else
 	lcd_setfgcolor(CONSOLE_COLOR_WHITE);
 	lcd_setbgcolor(CONSOLE_COLOR_BLACK);
-	bg_color = CONSOLE_COLOR_BLACK;
 #endif	/* CONFIG_SYS_WHITE_ON_BLACK */
 
 #ifdef	LCD_TEST_PATTERN
@@ -293,7 +290,7 @@ ulong lcd_setmem(ulong addr)
 	ulong size;
 	int line_length;
 
-	debug("LCD panel info: %d x %d, %d bit/pix\n", panel_info.vl_col,
+	debug("LCD panel info: %lu x %lu, %d bit/pix\n", panel_info.vl_col,
 		panel_info.vl_row, NBITS(panel_info.vl_bpix));
 
 	size = lcd_get_size(&line_length);
