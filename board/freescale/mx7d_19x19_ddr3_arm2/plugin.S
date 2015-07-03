@@ -142,30 +142,6 @@ wait_stat:
 .endm
 
 .macro imx7_qos_setting
-	ldr r0, =QOSC_IPS_BASE_ADDR
-	ldr r1, =0x0
-	str r1, [r0, #0x0]
-	str r1, [r0, #0x060]
-	str r1, [r0, #0x3400]
-	str r1, [r0, #0x2c00]
-	str r1, [r0, #0x3c00]
-
-	ldr r1, =0x0f020722
-	str r1, [r0, #0x34d0]
-	str r1, [r0, #0x34e0]
-
-	ldr r1, =0x1
-	str r1, [r0, #0x2c00]
-	str r1, [r0, #0x3c00]
-
-	ldr r1, =0x0f020222
-	str r1, [r0, #0x2c50]
-	str r1, [r0, #0x3c50]
-	str r1, [r0, #0x2c60]
-	str r1, [r0, #0x3c60]
-	ldr r1, =0x0f020422
-	str r1, [r0, #0x2c70]
-	str r1, [r0, #0x3c70]
 .endm
 
 .macro imx7_ddr_setting
