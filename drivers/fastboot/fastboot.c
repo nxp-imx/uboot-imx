@@ -65,7 +65,8 @@ enum {
     PTN_KERNEL_INDEX,
     PTN_URAMDISK_INDEX,
     PTN_SYSTEM_INDEX,
-    PTN_RECOVERY_INDEX
+    PTN_RECOVERY_INDEX,
+    PTN_DATA_INDEX
 };
 
 struct fastboot_device_info fastboot_devinfo;
@@ -823,7 +824,7 @@ static int _fastboot_parts_load_from_ptable(void)
 
 	struct mmc *mmc;
 	block_dev_desc_t *dev_desc;
-	struct fastboot_ptentry ptable[PTN_RECOVERY_INDEX + 1];
+	struct fastboot_ptentry ptable[PTN_DATA_INDEX + 1];
 
 	/* sata case in env */
 	if (fastboot_devinfo.type == DEV_SATA) {
@@ -870,7 +871,7 @@ static int _fastboot_parts_load_from_ptable(void)
 	}
 
 	memset((char *)ptable, 0,
-		    sizeof(struct fastboot_ptentry) * (PTN_RECOVERY_INDEX + 1));
+		    sizeof(struct fastboot_ptentry) * (PTN_DATA_INDEX + 1));
 	/* MBR */
 	strcpy(ptable[PTN_MBR_INDEX].name, "mbr");
 	ptable[PTN_MBR_INDEX].start = ANDROID_MBR_OFFSET / dev_desc->blksz;
@@ -895,8 +896,12 @@ static int _fastboot_parts_load_from_ptable(void)
 				   CONFIG_ANDROID_SYSTEM_PARTITION_MMC,
 				   user_partition,
 				   FASTBOOT_PARTITION_SYSTEM, dev_desc, ptable);
+	_fastboot_parts_add_ptable_entry(PTN_DATA_INDEX,
+				   CONFIG_ANDROID_DATA_PARTITION_MMC,
+				   user_partition,
+				   FASTBOOT_PARTITION_DATA, dev_desc, ptable);
 
-	for (i = 0; i <= PTN_RECOVERY_INDEX; i++)
+	for (i = 0; i <= PTN_DATA_INDEX; i++)
 		fastboot_flash_add_ptn(&ptable[i]);
 
 	return 0;

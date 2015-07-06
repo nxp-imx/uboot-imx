@@ -723,8 +723,10 @@ static void process_flash_sata(const char *cmdbuf, char *response)
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
 static int is_sparse_partition(struct fastboot_ptentry *ptn)
 {
-	 if (ptn && !strncmp(ptn->name,
-				 FASTBOOT_PARTITION_SYSTEM, strlen(FASTBOOT_PARTITION_SYSTEM))) {
+	if (ptn && (!strncmp(ptn->name,
+		FASTBOOT_PARTITION_SYSTEM, strlen(FASTBOOT_PARTITION_SYSTEM))
+		||  !strncmp(ptn->name,
+		FASTBOOT_PARTITION_DATA, strlen(FASTBOOT_PARTITION_DATA)))) {
 		printf("support sparse flash partition for %s\n", ptn->name);
 		return 1;
 	 } else

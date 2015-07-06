@@ -138,6 +138,7 @@
 #define FASTBOOT_PARTITION_RECOVERY "recovery"
 #define FASTBOOT_PARTITION_SYSTEM "system"
 #define FASTBOOT_PARTITION_BOOTLOADER "bootloader"
+#define FASTBOOT_PARTITION_DATA "data"
 
 enum {
     DEV_SATA,
