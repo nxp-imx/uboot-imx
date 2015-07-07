@@ -1061,6 +1061,15 @@ int fastboot_check_and_clean_flag(void)
 
 	return flag_set;
 }
+
+void fastboot_enable_flag(void)
+{
+       u32 reg;
+       reg = readl(SNVS_BASE_ADDR + SNVS_LPGPR);
+       reg |= ANDROID_FASTBOOT_BOOT;
+       writel(reg, SNVS_BASE_ADDR + SNVS_LPGPR);
+}
+
 #endif /*CONFIG_FASTBOOT*/
 
 #ifdef CONFIG_IMX_UDC

@@ -988,6 +988,15 @@ static void rx_process_flash(const char *cmdbuf, char *response)
 	}
 }
 
+static void rx_process_reboot_bootloader(const char *cmdbuf, char *response)
+{
+	sprintf(response, "OKAY");
+	fastboot_tx_status(response, strlen(response));
+	udelay(1000000);
+	fastboot_enable_flag();
+	do_reset(NULL, 0, 0, NULL);
+}
+
 static void rx_process_boot(const char *cmdbuf, char *response)
 {
 	if ((download_bytes) &&
@@ -1300,6 +1309,13 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 		/* Generic failed response */
 		sprintf(response, "FAIL");
 
+		/*reboot to bootloader mode*/
+		if (memcmp(cmdbuf, "reboot-bootloader", 17) == 0) {
+			rx_process_reboot_bootloader(cmdbuf, response);
+			return 0;
+		}
+
+
 		/* reboot
 		   Reboot the board. */
 		if (memcmp(cmdbuf, "reboot", 6) == 0) {
@@ -1308,7 +1324,6 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 			   leave it to make the compiler happy */
 			return 0;
 		}
-
 		/* getvar
 		   Get common fastboot variables
 		   Board has a chance to handle other variables */
