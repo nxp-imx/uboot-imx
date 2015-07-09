@@ -36,12 +36,12 @@
 #include <mxsfb.h>
 #endif
 
-#ifdef CONFIG_FASTBOOT
-#include <fastboot.h>
+#ifdef CONFIG_FSL_FASTBOOT
+#include <fsl_fastboot.h>
 #ifdef CONFIG_ANDROID_RECOVERY
 #include <recovery.h>
 #endif
-#endif /*CONFIG_FASTBOOT*/
+#endif /*CONFIG_FSL_FASTBOOT*/
 
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -1051,7 +1051,7 @@ int board_ehci_hcd_init(int port)
 }
 #endif
 
-#ifdef CONFIG_FASTBOOT
+#ifdef CONFIG_FSL_FASTBOOT
 
 void board_fastboot_setup(void)
 {
@@ -1062,14 +1062,14 @@ void board_fastboot_setup(void)
 		if (!getenv("fastboot_dev"))
 			setenv("fastboot_dev", "mmc0");
 		if (!getenv("bootcmd"))
-			setenv("bootcmd", "booti mmc0");
+			setenv("bootcmd", "boota mmc0");
 		break;
 	case SD3_BOOT:
 	case MMC3_BOOT:
 		if (!getenv("fastboot_dev"))
 			setenv("fastboot_dev", "mmc1");
 		if (!getenv("bootcmd"))
-			setenv("bootcmd", "booti mmc1");
+			setenv("bootcmd", "boota mmc1");
 		break;
 #endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
 	default:
@@ -1116,12 +1116,12 @@ void board_recovery_setup(void)
 	case SD1_BOOT:
 	case MMC1_BOOT:
 		if (!getenv("bootcmd_android_recovery"))
-			setenv("bootcmd_android_recovery", "booti mmc0 recovery");
+			setenv("bootcmd_android_recovery", "boota mmc0 recovery");
 		break;
 	case SD3_BOOT:
 	case MMC3_BOOT:
 		if (!getenv("bootcmd_android_recovery"))
-			setenv("bootcmd_android_recovery", "booti mmc1 recovery");
+			setenv("bootcmd_android_recovery", "boota mmc1 recovery");
 		break;
 #endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
 	default:
@@ -1135,11 +1135,4 @@ void board_recovery_setup(void)
 }
 #endif /*CONFIG_ANDROID_RECOVERY*/
 
-#endif /*CONFIG_FASTBOOT*/
-
-#ifdef CONFIG_IMX_UDC
-void udc_pins_setting(void)
-{
-}
-
-#endif /*CONFIG_IMX_UDC*/
+#endif /*CONFIG_FSL_FASTBOOT*/

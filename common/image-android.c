@@ -120,3 +120,22 @@ int android_image_get_ramdisk(const struct andr_img_hdr *hdr,
 	*rd_len = hdr->ramdisk_size;
 	return 0;
 }
+
+int android_image_get_fdt(const struct andr_img_hdr *hdr,
+			      ulong *fdt_data, ulong *fdt_len)
+{
+	if (!hdr->second_size)
+		return -1;
+
+	printf("FDT load addr 0x%08x size %u KiB\n",
+	       hdr->second_addr, DIV_ROUND_UP(hdr->second_size, 1024));
+
+	*fdt_data = (unsigned long)hdr;
+	*fdt_data += hdr->page_size;
+	*fdt_data += ALIGN(hdr->kernel_size, hdr->page_size);
+	*fdt_data += ALIGN(hdr->ramdisk_size, hdr->page_size);
+
+	*fdt_len = hdr->second_size;
+	return 0;
+}
+

@@ -27,12 +27,12 @@
 #include <usb.h>
 #include <usb/ehci-fsl.h>
 
-#ifdef CONFIG_FASTBOOT
-#include <fastboot.h>
+#ifdef CONFIG_FSL_FASTBOOT
+#include <fsl_fastboot.h>
 #ifdef CONFIG_ANDROID_RECOVERY
 #include <recovery.h>
 #endif
-#endif /*CONFIG_FASTBOOT*/
+#endif /*CONFIG_FSL_FASTBOOT*/
 
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -890,7 +890,7 @@ int checkboard(void)
 	return 0;
 }
 
-#ifdef CONFIG_FASTBOOT
+#ifdef CONFIG_FSL_FASTBOOT
 
 void board_fastboot_setup(void)
 {
@@ -901,14 +901,14 @@ void board_fastboot_setup(void)
 		if (!getenv("fastboot_dev"))
 			setenv("fastboot_dev", "mmc0");
 		if (!getenv("bootcmd"))
-			setenv("bootcmd", "booti mmc0");
+			setenv("bootcmd", "boota mmc0");
 		break;
 	case SD2_BOOT:
 	case MMC2_BOOT:
 		if (!getenv("fastboot_dev"))
 			setenv("fastboot_dev", "mmc1");
 		if (!getenv("bootcmd"))
-			setenv("bootcmd", "booti mmc1");
+			setenv("bootcmd", "boota mmc1");
 		break;
 #endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
 #if defined(CONFIG_FASTBOOT_STORAGE_NAND)
@@ -920,7 +920,7 @@ void board_fastboot_setup(void)
 		if (!getenv("bootcmd"))
 			setenv("bootcmd",
 				"nand read ${loadaddr} ${boot_nand_offset} "
-				"${boot_nand_size};booti ${loadaddr}");
+				"${boot_nand_size};boota ${loadaddr}");
 		break;
 #endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
 
@@ -949,12 +949,12 @@ void board_recovery_setup(void)
 	case SD1_BOOT:
 	case MMC1_BOOT:
 		if (!getenv("bootcmd_android_recovery"))
-			setenv("bootcmd_android_recovery", "booti mmc0 recovery");
+			setenv("bootcmd_android_recovery", "boota mmc0 recovery");
 		break;
 	case SD2_BOOT:
 	case MMC2_BOOT:
 		if (!getenv("bootcmd_android_recovery"))
-			setenv("bootcmd_android_recovery", "booti mmc1 recovery");
+			setenv("bootcmd_android_recovery", "boota mmc1 recovery");
 		break;
 #endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
 #if defined(CONFIG_FASTBOOT_STORAGE_NAND)
@@ -962,7 +962,7 @@ void board_recovery_setup(void)
 		if (!getenv("bootcmd_android_recovery"))
 			setenv("bootcmd_android_recovery",
 				"nand read ${loadaddr} ${recovery_nand_offset} "
-				"${recovery_nand_size};booti ${loadaddr}");
+				"${recovery_nand_size};boota ${loadaddr}");
 		break;
 #endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
 
@@ -977,17 +977,4 @@ void board_recovery_setup(void)
 }
 #endif /*CONFIG_ANDROID_RECOVERY*/
 
-#endif /*CONFIG_FASTBOOT*/
-
-#ifdef CONFIG_IMX_UDC
-static iomux_v3_cfg_t const otg_udc_pads[] = {
-	MX6_PAD_GPIO1_IO00__ANATOP_OTG1_ID | MUX_PAD_CTRL(NO_PAD_CTRL),
-};
-
-void udc_pins_setting(void)
-{
-	imx_iomux_v3_setup_multiple_pads(otg_udc_pads,
-		ARRAY_SIZE(otg_udc_pads));
-}
-
-#endif /*CONFIG_IMX_UDC*/
+#endif /*CONFIG_FSL_FASTBOOT*/

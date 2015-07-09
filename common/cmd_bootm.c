@@ -130,9 +130,24 @@ int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #ifdef CONFIG_SECURE_BOOT
 	extern uint32_t authenticate_image(
 			uint32_t ddr_start, uint32_t image_size);
-	if (authenticate_image(load_addr,
-		image_get_image_size((image_header_t *)load_addr)) == 0) {
-		printf("Authenticate uImage Fail, Please check\n");
+
+	switch (genimg_get_format(load_addr)) {
+#if defined(CONFIG_IMAGE_FORMAT_LEGACY)
+	case IMAGE_FORMAT_LEGACY:
+		if (authenticate_image(load_addr,
+			image_get_image_size((image_header_t *)load_addr)) == 0) {
+			printf("Authenticate uImage Fail, Please check\n");
+			return 1;
+		}
+		break;
+#endif
+#ifdef CONFIG_ANDROID_BOOT_IMAGE
+	case IMAGE_FORMAT_ANDROID:
+		/* Do this authentication in boota command */
+		break;
+#endif
+	default:
+		printf("Not valid image format for Authentication, Please check\n");
 		return 1;
 	}
 #endif
@@ -651,7 +666,6 @@ U_BOOT_CMD(
 );
 #endif	/* CONFIG_CMD_BOOTZ */
 
-#if 0
 #ifdef CONFIG_CMD_BOOTI
 /* See Documentation/arm64/booting.txt in the Linux kernel */
 struct Image_header {
@@ -800,4 +814,3 @@ U_BOOT_CMD(
 	"boot arm64 Linux Image image from memory", booti_help_text
 );
 #endif	/* CONFIG_CMD_BOOTI */
-#endif

@@ -18,7 +18,7 @@
 #include <dm.h>
 #include <imx_thermal.h>
 #include <mxsfb.h>
-#ifdef CONFIG_FASTBOOT
+#ifdef CONFIG_FSL_FASTBOOT
 #ifdef CONFIG_ANDROID_RECOVERY
 #include <recovery.h>
 #endif
@@ -394,7 +394,7 @@ void reset_misc(void)
 #endif
 }
 
-#ifdef CONFIG_FASTBOOT
+#ifdef CONFIG_FSL_FASTBOOT
 
 #ifdef CONFIG_ANDROID_RECOVERY
 #define ANDROID_RECOVERY_BOOT	(1 << 7)
@@ -442,21 +442,4 @@ int fastboot_check_and_clean_flag(void)
 
 	return flag_set;
 }
-#endif /*CONFIG_FASTBOOT*/
-
-#ifdef CONFIG_IMX_UDC
-void set_usb_phy1_clk(void)
-{
-	/* TODO */
-}
-void enable_usb_phy1_clk(unsigned char enable)
-{
-}
-
-void reset_usb_phy1(void)
-{
-	/* Reset USBPHY module */
-	setbits_le32(&src_reg->usbophy1_rcr, 0x00000001);
-}
-
-#endif
+#endif /*CONFIG_FSL_FASTBOOT*/
