@@ -19,11 +19,25 @@
 #elif defined CONFIG_SYS_BOOT_EIMNOR
 #define CONFIG_SYS_USE_EIMNOR
 #define CONFIG_ENV_IS_IN_FLASH
+#define CONFIG_SYS_FLASH_PROTECTION
 #elif defined CONFIG_SYS_BOOT_NAND
 #define CONFIG_SYS_USE_NAND
 #define CONFIG_ENV_IS_IN_NAND
 #else
 #define CONFIG_ENV_IS_IN_MMC
+#endif
+
+#define CONFIG_FSL_USDHC
+#define CONFIG_VIDEO
+#ifdef CONFIG_SYS_BOOT_EIMNOR
+/*
+ * Conflicts with SD1/SD2/VIDEO/ENET
+ * ENET is keeped, since only RXER conflicts.
+ * If removed ENET, we can not boot kernel, since sd1/sd2 is disabled
+ * when support weimnor.
+ */
+#undef CONFIG_FSL_USDHC
+#undef CONFIG_VIDEO
 #endif
 
 #include "mx6ul_arm2.h"

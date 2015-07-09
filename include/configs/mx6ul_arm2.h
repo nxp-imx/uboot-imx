@@ -82,8 +82,6 @@
 #define CONFIG_POWER_PFUZE100_I2C_ADDR	0x08
 #endif
 
-#define CONFIG_VIDEO
-
 /* Command definition */
 #include <config_cmd_default.h>
 
@@ -274,9 +272,9 @@
 #ifdef CONFIG_SYS_USE_EIMNOR
 #undef CONFIG_SYS_NO_FLASH
 #define CONFIG_SYS_FLASH_BASE           WEIM_ARB_BASE_ADDR
-#define CONFIG_SYS_FLASH_SECT_SIZE	(128 * 1024)
+#define CONFIG_SYS_FLASH_SECT_SIZE     (256 * 1024)
 #define CONFIG_SYS_MAX_FLASH_BANKS 1    /* max number of memory banks */
-#define CONFIG_SYS_MAX_FLASH_SECT 1024   /* max number of sectors on one chip */
+#define CONFIG_SYS_MAX_FLASH_SECT  512   /* max number of sectors on one chip */
 #define CONFIG_SYS_FLASH_CFI            /* Flash memory is CFI compliant */
 #define CONFIG_FLASH_CFI_DRIVER         /* Use drivers/cfi_flash.c */
 #define CONFIG_SYS_FLASH_USE_BUFFER_WRITE /* Use buffered writes*/
@@ -320,7 +318,6 @@
 #endif
 
 /* MMC Configs */
-#define CONFIG_FSL_USDHC
 #ifdef CONFIG_FSL_USDHC
 #define CONFIG_FSL_ESDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0

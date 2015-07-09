@@ -27,6 +27,8 @@
 #define CONFIG_ENV_IS_IN_MMC
 #endif
 
+#define CONFIG_VIDEO
+#define CONFIG_FSL_USDHC
 #include "mx6ul_arm2.h"
 
 #define PHYS_SDRAM_SIZE			SZ_1G
