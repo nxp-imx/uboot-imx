@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Freescale Semiconductor, Inc.
+ * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
  *
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
  *
@@ -85,6 +85,10 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define WDOG_PAD_CTRL (PAD_CTL_PUE | PAD_CTL_PKE | PAD_CTL_SPEED_MED |	\
 	PAD_CTL_DSE_40ohm)
+
+#define OTG_ID_PAD_CTRL (PAD_CTL_PKE | PAD_CTL_PUE |		\
+	PAD_CTL_PUS_47K_UP  | PAD_CTL_SPEED_LOW |		\
+	PAD_CTL_DSE_80ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
 
 int dram_init(void)
 {
@@ -567,7 +571,7 @@ static rdc_peri_cfg_t const shared_resources[] = {
 static iomux_v3_cfg_t const usb_otg_pads[] = {
 	/* OGT1 */
 	MX6_PAD_GPIO1_IO09__USB_OTG1_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_GPIO1_IO10__ANATOP_OTG1_ID | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_GPIO1_IO10__ANATOP_OTG1_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
 	/* OTG2 */
 	MX6_PAD_GPIO1_IO12__USB_OTG2_PWR | MUX_PAD_CTRL(NO_PAD_CTRL)
 };

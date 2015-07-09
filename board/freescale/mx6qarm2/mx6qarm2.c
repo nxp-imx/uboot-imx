@@ -31,6 +31,10 @@ DECLARE_GLOBAL_DATA_PTR;
 #define ENET_PAD_CTRL  (PAD_CTL_PUS_100K_UP |			\
 	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | PAD_CTL_HYS)
 
+#define OTG_ID_PAD_CTRL (PAD_CTL_PKE | PAD_CTL_PUE |		\
+	PAD_CTL_PUS_47K_UP  | PAD_CTL_SPEED_LOW |		\
+	PAD_CTL_DSE_80ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
+
 int dram_init(void)
 {
 #if defined(CONFIG_MX6DL) && !defined(CONFIG_MX6DL_LPDDR2) && \
@@ -286,7 +290,7 @@ int board_eth_init(bd_t *bis)
 
 static iomux_v3_cfg_t const usb_otg_pads[] = {
 	MX6_PAD_EIM_D22__USB_OTG_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_GPIO_1__USB_OTG_ID | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_GPIO_1__USB_OTG_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
 };
 
 static void setup_usb(void)

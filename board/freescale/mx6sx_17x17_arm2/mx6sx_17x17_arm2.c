@@ -72,6 +72,10 @@ DECLARE_GLOBAL_DATA_PTR;
 	PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED |		\
 	PAD_CTL_DSE_40ohm)
 
+#define OTG_ID_PAD_CTRL (PAD_CTL_PKE | PAD_CTL_PUE |		\
+	PAD_CTL_PUS_47K_UP  | PAD_CTL_SPEED_LOW |		\
+	PAD_CTL_DSE_80ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
+
 #define I2C_PMIC 0
 
 #ifdef CONFIG_SYS_I2C_MXC
@@ -711,7 +715,7 @@ int board_early_init_f(void)
 iomux_v3_cfg_t const usb_otg_pads[] = {
 	/*Only enable OTG1, the OTG2 has pin conflicts with PWM and WDOG*/
 	MX6_PAD_GPIO1_IO09__USB_OTG1_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_GPIO1_IO10__ANATOP_OTG1_ID | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_GPIO1_IO10__ANATOP_OTG1_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
 };
 
 static void setup_usb(void)
