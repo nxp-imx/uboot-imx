@@ -442,4 +442,10 @@ int fastboot_check_and_clean_flag(void)
 
 	return flag_set;
 }
+
+void fastboot_enable_flag(void)
+{
+	setbits_le32(SNVS_BASE_ADDR + SNVS_LPGPR,
+		ANDROID_FASTBOOT_BOOT);
+}
 #endif /*CONFIG_FSL_FASTBOOT*/

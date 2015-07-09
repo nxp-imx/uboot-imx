@@ -1814,10 +1814,7 @@ U_BOOT_CMD(
 	"if no partition give, will going to 'boot' partition\n"
 );
 #endif	/* CONFIG_CMD_BOOTA */
-
-
 #endif
-
 
 static void rx_handler_command(struct usb_ep *ep, struct usb_request *req);
 
@@ -2323,6 +2320,17 @@ static void cb_erase(struct usb_ep *ep, struct usb_request *req)
 }
 #endif
 
+#ifdef CONFIG_FSL_FASTBOOT
+static void cb_reboot_bootloader(struct usb_ep *ep, struct usb_request *req)
+{
+	fastboot_tx_write_str("OKAY");
+
+	udelay(1000000);
+	fastboot_enable_flag();
+	do_reset(NULL, 0, 0, NULL);
+}
+#endif
+
 struct cmd_dispatch_info {
 	char *cmd;
 	void (*cb)(struct usb_ep *ep, struct usb_request *req);
@@ -2358,6 +2366,12 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 		.cmd = "oem",
 		.cb = cb_oem,
 	},
+#ifdef CONFIG_FSL_FASTBOOT
+	{
+		.cmd = "reboot-bootloader",
+		.cb = cb_reboot_bootloader,
+	},
+#endif
 };
 
 static void rx_handler_command(struct usb_ep *ep, struct usb_request *req)
