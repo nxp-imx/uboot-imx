@@ -892,6 +892,12 @@ int board_init(void)
 #endif
 
 #ifdef CONFIG_SYS_USE_EIMNOR
+	/*
+	 * This function should be invoked after setup_fec,
+	 * because ENET2_RX_ER conflicts. However, we rarely need
+	 * ENET2_RX_ER for enet, and when use eimnor, we do not
+	 * have sd1/sd2, enet is a must to boot kernel and nfsrootfs.
+	 */
 	setup_eimnor();
 #endif
 
