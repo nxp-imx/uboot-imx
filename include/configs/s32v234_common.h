@@ -342,4 +342,11 @@
 
 #define CONFIG_BOOTP_BOOTFILESIZE
 
+#ifdef CONFIG_CMD_PCI
+#define CONFIG_PCIE_S32V234
+#define CONFIG_PCI
+#define CONFIG_PCI_PNP
+#define CONFIG_PCI_SCAN_SHOW
+#endif /* CONFIG_CMD_PCI */
+
 #endif
