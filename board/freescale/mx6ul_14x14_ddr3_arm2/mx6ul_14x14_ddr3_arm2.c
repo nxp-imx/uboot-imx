@@ -825,10 +825,10 @@ int power_init_board(void)
 	 * them, when needed, configure them to our requested voltage.
 	 */
 
-	/* set SW1AB standby volatage 1.3V */
+	/* set SW1AB standby volatage 0.975V */
 	pmic_reg_read(pfuze, PFUZE100_SW1ABSTBY, &value);
 	value &= ~0x3f;
-	value |= PFUZE100_SW1ABC_SETP(13000);
+	value |= PFUZE100_SW1ABC_SETP(9750);
 	pmic_reg_write(pfuze, PFUZE100_SW1ABSTBY, value);
 
 	/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
