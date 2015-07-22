@@ -978,7 +978,7 @@ int checkboard(void)
 #define UCTRL_PWR_POL		(1 << 9)
 iomux_v3_cfg_t const usb_otg1_pads[] = {
 	MX6_PAD_GPIO1_IO04__USB_OTG1_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_GPIO1_IO00__ANATOP_OTG1_ID | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_GPIO1_IO00__ANATOP_OTG1_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
 };
 
 /*
