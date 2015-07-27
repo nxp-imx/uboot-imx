@@ -2344,6 +2344,12 @@ struct cmd_dispatch_info {
 };
 
 static const struct cmd_dispatch_info cmd_dispatch_info[] = {
+#ifdef CONFIG_FSL_FASTBOOT
+	{
+		.cmd = "reboot-bootloader",
+		.cb = cb_reboot_bootloader,
+	},
+#endif
 	{
 		.cmd = "reboot",
 		.cb = cb_reboot,
@@ -2373,12 +2379,6 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 		.cmd = "oem",
 		.cb = cb_oem,
 	},
-#ifdef CONFIG_FSL_FASTBOOT
-	{
-		.cmd = "reboot-bootloader",
-		.cb = cb_reboot_bootloader,
-	},
-#endif
 };
 
 static void rx_handler_command(struct usb_ep *ep, struct usb_request *req)
