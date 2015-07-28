@@ -1762,26 +1762,6 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		printf("fdt      @ %08x (%d)\n", hdr->second_addr, hdr->second_size);
 #endif /*CONFIG_OF_LIBFDT*/
 
-#ifdef CONFIG_SERIAL_TAG
-	struct tag_serialnr serialnr;
-	char bootargs[ANDR_BOOT_ARGS_SIZE];
-	char *commandline = getenv("bootargs");
-	get_board_serial(&serialnr);
-
-	if (commandline) {
-		sprintf(bootargs,
-						"%s androidboot.serialno=%08x%08x",
-						commandline,
-						serialnr.high,
-						serialnr.low);
-	} else {
-		sprintf(bootargs,
-				"androidboot.serialno=%08x%08x",
-				serialnr.high,
-				serialnr.low);
-	}
-	setenv("bootargs", bootargs);
-#endif
 
 	char boot_addr_start[12];
 	char ramdisk_addr[25];

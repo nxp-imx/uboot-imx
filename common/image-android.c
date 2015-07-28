@@ -9,6 +9,7 @@
 #include <android_image.h>
 #include <malloc.h>
 #include <errno.h>
+#include <asm/bootm.h>
 
 static char andr_tmp_str[ANDR_BOOT_ARGS_SIZE + 1];
 
@@ -62,12 +63,22 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 
 	if (bootargs) {
 		strcpy(newbootargs, bootargs);
-		strcat(newbootargs, " ");
-	}
-	if (*hdr->cmdline)
+	} else if (*hdr->cmdline) {
 		strcat(newbootargs, hdr->cmdline);
+	}
+#ifdef CONFIG_SERIAL_TAG
+	struct tag_serialnr serialnr;
+	char commandline[ANDR_BOOT_ARGS_SIZE];
+	get_board_serial(&serialnr);
 
-	setenv("bootargs", newbootargs);
+	sprintf(commandline,
+					"%s androidboot.serialno=%08x%08x",
+					newbootargs,
+					serialnr.high,
+					serialnr.low);
+#endif
+
+	setenv("bootargs", commandline);
 
 	if (os_data) {
 		*os_data = (ulong)hdr;
