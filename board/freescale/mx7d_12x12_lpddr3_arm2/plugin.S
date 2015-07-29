@@ -8,6 +8,332 @@
 
 /* DDR script */
 .macro imx7d_12x12_lpddr3_arm2_setting
+
+	/* check whether it is a LPSR resume */
+	ldr	r1, =0x30270000
+	ldr	r7, [r1]
+	cmp	r7, #0
+	beq	16f
+
+	/* initialize AIPs 1-3 port */
+	ldr	r0, =0x301f0000
+	ldr	r1, =0x77777777
+	str	r1, [r0]
+	str	r1, [r0, #0x4]
+	ldr	r1, =0x0
+	str	r1, [r0, #0x40]
+	str	r1, [r0, #0x44]
+	str	r1, [r0, #0x48]
+	str	r1, [r0, #0x4c]
+	str	r1, [r0, #0x50]
+
+	ldr	r0, =0x305f0000
+	ldr	r1, =0x77777777
+	str	r1, [r0]
+	str	r1, [r0, #0x4]
+	ldr	r1, =0x0
+	str	r1, [r0, #0x40]
+	str	r1, [r0, #0x44]
+	str	r1, [r0, #0x48]
+	str	r1, [r0, #0x4c]
+	str	r1, [r0, #0x50]
+
+	ldr	r0, =0x309f0000
+	ldr	r1, =0x77777777
+	str	r1, [r0]
+	str	r1, [r0, #0x4]
+	ldr	r1, =0x0
+	str	r1, [r0, #0x40]
+	str	r1, [r0, #0x44]
+	str	r1, [r0, #0x48]
+	str	r1, [r0, #0x4c]
+	str	r1, [r0, #0x50]
+
+	ldr	r1, =0x30360000
+	ldr	r2, =0x30390000
+	ldr	r3, =0x307a0000
+	ldr	r4, =0x30790000
+	ldr	r10, =0x30380000
+	ldr	r11, =0x30340000
+
+	/* turn on ddr power */
+	ldr	r7, =(0x1 << 29)
+	str	r7, [r1, #0x380]
+
+	ldr	r6, =50
+1:
+	subs	r6, r6, #0x1
+	bne	1b
+
+	ldr	r7, =0x0
+	str	r7, [r1, #0x380]
+
+	/* clear ddr_phy reset */
+	ldr	r6, =0x1000
+	ldr	r7, [r2, r6]
+	orr	r7, r7, #0x3
+	str	r7, [r2, r6]
+	ldr	r7, [r2, r6]
+	bic	r7, r7, #0x1
+	str	r7, [r2, r6]
+
+	/* restore DDRC */
+	ldr	r6, =0x0
+	ldr	r7, =0x03040008
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x1a0
+	ldr	r7, =0x80400003
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x1a4
+	ldr	r7, =0x00100020
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x1a8
+	ldr	r7, =0x80100004
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x64
+	ldr	r7, =0x00200038
+	str	r7, [r3, r6]
+
+	ldr	r6, =0xd0
+	ldr	r7, =0xc0350001
+	str	r7, [r3, r6]
+
+	ldr	r6, =0xdc
+	ldr	r7, =0x00C3000A
+	str	r7, [r3, r6]
+
+	ldr	r6, =0xe0
+	ldr	r7, =0x00010000
+	str	r7, [r3, r6]
+
+	ldr	r6, =0xe4
+	ldr	r7, =0x00110006
+	str	r7, [r3, r6]
+
+	ldr	r6, =0xf4
+	ldr	r7, =0x0000033F
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x100
+	ldr	r7, =0x0A0E110B
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x104
+	ldr	r7, =0x00020211
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x108
+	ldr	r7, =0x03060707
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x10c
+	ldr	r7, =0x00A0500C
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x110
+	ldr	r7, =0x05020307
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x114
+	ldr	r7, =0x02020404
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x118
+	ldr	r7, =0x02020003
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x11c
+	ldr	r7, =0x00000202
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x180
+	ldr	r7, =0x00600018
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x184
+	ldr	r7, =0x00e00100
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x190
+	ldr	r7, =0x02098205
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x194
+	ldr	r7, =0x00060303
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x200
+	ldr	r7, =0x00000016
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x204
+	ldr	r7, =0x00171717
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x214
+	ldr	r7, =0x05050505
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x218
+	ldr	r7, =0x0F0F0505
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x240
+	ldr	r7, =0x06000601
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x244
+	ldr	r7, =0x00000000
+	str	r7, [r3, r6]
+
+	ldr	r7, =0x20
+	str	r7, [r3, #0x30]
+	ldr	r7, =0x0
+	str	r7, [r3, #0x1b0]
+
+	/* do PHY, clear ddr_phy reset */
+	ldr	r6, =0x1000
+	ldr	r7, [r2, r6]
+	bic	r7, r7, #0x2
+	str	r7, [r2, r6]
+
+	ldr	r7, =(0x1 << 30)
+	str	r7, [r1, #0x380]
+
+	/* need to delay ~5mS */
+	ldr	r6, =0x1000000
+2:
+	subs	r6, r6, #0x1
+	bne	2b
+
+	/* restore DDR PHY */
+	ldr	r6, =0x0
+	ldr	r7, =0x17421E40
+	str	r7, [r4, r6]
+
+	ldr	r6, =0x4
+	ldr	r7, =0x10210100
+	str	r7, [r4, r6]
+
+	ldr	r6, =0x8
+	ldr	r7, =0x00010000
+	str	r7, [r4, r6]
+
+	ldr	r6, =0x10
+	ldr	r7, =0x0007080C
+	str	r7, [r4, r6]
+
+	ldr	r6, =0x1c
+	ldr	r7, =0x01010000
+	str	r7, [r4, r6]
+
+	ldr	r6, =0x9c
+	ldr	r7, =0x0DB60D6E
+	str	r7, [r4, r6]
+
+	ldr	r6, =0x20
+	ldr	r7, =0x0a0a0a0a
+	str	r7, [r4, r6]
+
+	ldr	r6, =0x30
+	ldr	r7, =0x06060606
+	str	r7, [r4, r6]
+
+	ldr	r6, =0x50
+	ldr	r7, =0x01000008
+	str	r7, [r4, r6]
+
+	ldr	r6, =0x50
+	ldr	r7, =0x00000008
+	str	r7, [r4, r6]
+
+	ldr	r6, =0xc0
+	ldr	r7, =0x0e407304
+	str	r7, [r4, r6]
+
+	ldr	r6, =0xc0
+	ldr	r7, =0x0e447304
+	str	r7, [r4, r6]
+
+	ldr	r6, =0xc0
+	ldr	r7, =0x0e447306
+	str	r7, [r4, r6]
+
+	ldr	r6, =0xc0
+	ldr	r7, =0x0e4c7304
+	str	r7, [r4, r6]
+
+	ldr	r6, =0xc0
+	ldr	r7, =0x0e487306
+	str	r7, [r4, r6]
+
+	ldr	r7, =0x0
+	add	r9, r10, #0x4000
+	str	r7, [r9, #0x130]
+
+	ldr	r7, =0x170
+	orr	r7, r7, #0x8
+	str	r7, [r11, #0x20]
+
+	ldr	r7, =0x2
+	add	r9, r10, #0x4000
+	str	r7, [r9, #0x130]
+
+	ldr	r7, =0xf
+	str	r7, [r4, #0x18]
+
+	/* wait until self-refresh mode entered */
+11:
+	ldr	r7, [r3, #0x4]
+	and	r7, r7, #0x3
+	cmp	r7, #0x3
+	bne	11b
+	ldr	r7, =0x0
+	str	r7, [r3, #0x320]
+	ldr	r7, =0x1
+	str	r7, [r3, #0x1b0]
+	ldr	r7, =0x1
+	str	r7, [r3, #0x320]
+12:
+	ldr	r7, [r3, #0x324]
+	and	r7, r7, #0x1
+	cmp	r7, #0x1
+	bne	12b
+13:
+	ldr	r7, [r3, #0x4]
+	and	r7, r7, #0x20
+	cmp	r7, #0x20
+	bne	13b
+
+	/* let DDR out of self-refresh */
+	ldr	r7, =0x0
+	str	r7, [r3, #0x30]
+14:
+	ldr	r7, [r3, #0x4]
+	and	r7, r7, #0x30
+	cmp	r7, #0x0
+	bne	14b
+
+15:
+	ldr	r7, [r3, #0x4]
+	and	r7, r7, #0x3
+	cmp	r7, #0x1
+	bne	15b
+
+	/* enable port */
+	ldr	r7, =0x1
+	str	r7, [r3, #0x490]
+
+	/* jump to kernel resume */
+	ldr	r1, =0x30270000
+	ldr	r7, [r1]
+
+	mov	pc, r7
+16:
 	/* Configure ocram_epdc */
 	ldr r0, =IOMUXC_GPR_BASE_ADDR
 	ldr r1, =0x4f400005

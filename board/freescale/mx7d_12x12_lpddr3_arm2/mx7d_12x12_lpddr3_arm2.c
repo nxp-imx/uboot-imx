@@ -843,6 +843,23 @@ int power_init_board(void)
 	pmic_reg_write(p, PFUZE300_SW1ASTBY, reg);
 	pmic_reg_write(p, PFUZE300_SW1BSTBY, reg);
 
+	/* below are for LPSR mode support */
+	pmic_reg_read(p, PFUZE300_SW3MODE, &reg);
+	reg |= 0x20;
+	pmic_reg_write(p, PFUZE300_SW3MODE, reg);
+
+	pmic_reg_read(p, PFUZE300_VLDO1CTL, &reg);
+	reg |= 0x80;
+	pmic_reg_write(p, PFUZE300_VLDO1CTL, reg);
+
+	pmic_reg_read(p, PFUZE300_VLDO3CTL, &reg);
+	reg |= 0x80;
+	pmic_reg_write(p, PFUZE300_VLDO3CTL, reg);
+
+	pmic_reg_read(p, PFUZE300_SW2MODE, &reg);
+	reg |= 0x20;
+	pmic_reg_write(p, PFUZE300_SW2MODE, reg);
+
 	return 0;
 }
 #endif
