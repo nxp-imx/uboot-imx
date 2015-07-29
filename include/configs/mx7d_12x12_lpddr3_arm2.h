@@ -65,6 +65,7 @@
 /* #define CONFIG_SPLASH_SCREEN*/
 /* #define CONFIG_MXC_EPDC*/
 
+#define CONFIG_USE_PLUGIN
 #include "mx7d_arm2.h"
 
 #endif
