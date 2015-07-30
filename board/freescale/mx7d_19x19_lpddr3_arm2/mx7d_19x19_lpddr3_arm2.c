@@ -553,6 +553,11 @@ static const struct boot_mode board_boot_modes[] = {
 #define PFUZE_FABID	0x4
 
 #define PFUZE_LDOGCTL	0x69
+#define PFUZE300_SW1ASTBY	0x21
+#define PFUZE300_SW1AMODE	0x23
+#define PFUZE300_SW1BSTBY	0x2f
+#define PFUZE300_SW1BMODE	0x31
+
 
 static int setup_pmic_voltages(void)
 {
@@ -580,6 +585,28 @@ static int setup_pmic_voltages(void)
 		value |= 0x1;
 		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE_LDOGCTL, 1, &value, 1)) {
 			printf("Set LDOCTL error!\n");
+			return -1;
+		}
+
+		/* SW1A/1B mode set to APS/APS */
+		value = 0x8;
+		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE300_SW1AMODE, 1, &value, 1)) {
+			printf("Set PFUZE300_SW1AMODE error!\n");
+			return -1;
+		}
+		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE300_SW1BMODE, 1, &value, 1)) {
+			printf("Set PFUZE300_SW1BMODE error!\n");
+			return -1;
+		}
+
+		/* SW1A/1B standby voltage set to 1.025V */
+		value = 0xd;
+		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE300_SW1ASTBY, 1, &value, 1)) {
+			printf("Set PFUZE300_SW1ASTBY error!\n");
+			return -1;
+		}
+		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE300_SW1BSTBY, 1, &value, 1)) {
+			printf("Set PFUZE300_SW1BSTBY error!\n");
 			return -1;
 		}
 	}

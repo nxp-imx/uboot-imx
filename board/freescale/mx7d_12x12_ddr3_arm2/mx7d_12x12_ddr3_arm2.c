@@ -316,6 +316,16 @@ int power_init_board(void)
 	reg |= 0x1;
 	pmic_reg_write(p, PFUZE300_LDOGCTL, reg);
 
+	/* SW1A/1B mode set to APS/APS */
+	reg = 0x8;
+	pmic_reg_write(p, PFUZE300_SW1AMODE, reg);
+	pmic_reg_write(p, PFUZE300_SW1BMODE, reg);
+
+	/* SW1A/1B standby voltage set to 1.025V */
+	reg = 0xd;
+	pmic_reg_write(p, PFUZE300_SW1ASTBY, reg);
+	pmic_reg_write(p, PFUZE300_SW1BSTBY, reg);
+
 	return 0;
 }
 #endif
