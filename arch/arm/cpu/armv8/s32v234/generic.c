@@ -231,7 +231,7 @@ static u32 get_fec_clk(void)
 	u32 freq = 0;
 
 	aux2clk_div =
-	    readl(CGM_ACn_DCm(MC_CGM0_BASE_ADDR, 2, 0)) &
+	    readl(CGM_ACn_DCm(MC_CGM2_BASE_ADDR, 2, 0)) &
 	    MC_CGM_ACn_DCm_PREDIV_MASK;
 	aux2clk_div >>= MC_CGM_ACn_DCm_PREDIV_OFFSET;
 	aux2clk_div += 1;
