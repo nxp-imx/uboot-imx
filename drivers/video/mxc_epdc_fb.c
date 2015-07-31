@@ -350,20 +350,12 @@ static void draw_splash_screen(void)
 
 void lcd_enable(void)
 {
-	int i;
+	if (board_setup_logo_file(lcd_base)) {
+		debug("Load logo failed!\n");
+		return;
+	}
 
 	epdc_power_on();
-
-	/* Draw black border around framebuffer*/
-	memset(lcd_base, 0xFF, panel_info.vl_col * panel_info.vl_row);
-	memset(lcd_base, 0x0, 24 * panel_info.vl_col);
-	for (i = 24; i < (panel_info.vl_row - 24); i++) {
-		memset((u8 *)lcd_base + i * panel_info.vl_col, 0x00, 24);
-		memset((u8 *)lcd_base + i * panel_info.vl_col
-			+ panel_info.vl_col - 24, 0x00, 24);
-	}
-	memset((u8 *)lcd_base + panel_info.vl_col * (panel_info.vl_row - 24),
-		0x00, 24 * panel_info.vl_col);
 
 	flush_cache((ulong)lcd_base, panel_info.vl_col * panel_info.vl_row);
 

@@ -306,6 +306,9 @@ void	doc_probe(unsigned long physadr);
 int do_tftpb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 
 /* common/cmd_fat.c */
+int do_fat_size(cmd_tbl_t *, int, int, char * const []);
+
+/* common/cmd_fat.c */
 int do_fat_fsload(cmd_tbl_t *, int, int, char * const []);
 
 /* common/cmd_ext2.c */

@@ -556,7 +556,10 @@ enum {
 };
 
 int setup_waveform_file(ulong waveform_buf);
+int board_setup_logo_file(void *display_buf);
 void epdc_power_on(void);
 void epdc_power_off(void);
+
+extern void *lcd_base;
 
 #endif	/* __EPDC_REGS_INCLUDED__ */
