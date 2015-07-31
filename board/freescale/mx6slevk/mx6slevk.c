@@ -606,42 +606,6 @@ static void setup_epdc_power(void)
 	gpio_direction_output(IMX_GPIO_NR(2, 7), 1);
 }
 
-int setup_waveform_file(ulong waveform_buf)
-{
-	char *fs_argv[5];
-	char addr[17];
-	ulong file_len, mmc_dev;
-
-	if (!check_mmc_autodetect())
-		mmc_dev = getenv_ulong("mmcdev", 10, 0);
-	else
-		mmc_dev = mmc_get_env_devno();
-
-	sprintf(addr, "%lx", waveform_buf);
-
-	fs_argv[0] = "fatload";
-	fs_argv[1] = "mmc";
-	fs_argv[2] = simple_itoa(mmc_dev);
-	fs_argv[3] = addr;
-	fs_argv[4] = getenv("epdc_waveform");
-
-	if (!fs_argv[4])
-		fs_argv[4] = "epdc_splash.bin";
-
-	if (do_fat_fsload(NULL, 0, 5, fs_argv)) {
-		printf("MMC Device %lu not found\n", mmc_dev);
-		return -1;
-	}
-
-	file_len = getenv_hex("filesize", 0);
-	if (!file_len)
-		return -1;
-
-	flush_cache((ulong)addr, file_len);
-
-	return 0;
-}
-
 static void epdc_enable_pins(void)
 {
 	/* epdc iomux settings */

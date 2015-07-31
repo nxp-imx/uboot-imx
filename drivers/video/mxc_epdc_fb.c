@@ -439,7 +439,7 @@ void lcd_ctrl_init(void *lcdbase)
 		REG_WR(EPDC_BASE, EPDC_WB_ADDR_TCE, panel_info.epdc_data.working_buf_addr);
 
 	/* Get waveform data address and offset */
-	if (setup_waveform_file(panel_info.epdc_data.waveform_buf_addr)) {
+	if (board_setup_waveform_file(panel_info.epdc_data.waveform_buf_addr)) {
 		printf("Can't load waveform data!\n");
 		return;
 	}
