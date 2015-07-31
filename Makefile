@@ -1159,6 +1159,9 @@ endif
 %.vyb: %.imx
 	$(Q)$(MAKE) $(build)=arch/arm/cpu/armv7/vf610 $@
 
+%.s32: %.bin
+	$(Q)$(MAKE) $(build)=arch/arm/mach-s32 $@
+
 quiet_cmd_copy = COPY    $@
       cmd_copy = cp $< $@
 
