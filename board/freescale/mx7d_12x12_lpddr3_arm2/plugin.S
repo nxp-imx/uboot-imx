@@ -15,6 +15,11 @@
 	cmp	r7, #0
 	beq	16f
 
+	/* disable wdog powerdown counter */
+	ldr	r0, =0x30280000
+	ldrh	r1, =0x0
+	strh	r1, [r0, #0x8]
+
 	/* initialize AIPs 1-3 port */
 	ldr	r0, =0x301f0000
 	ldr	r1, =0x77777777
