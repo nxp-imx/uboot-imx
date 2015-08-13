@@ -46,7 +46,6 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 
 	int len = 0;
 	if (*hdr->cmdline) {
-		printf("Kernel command line: %s\n", hdr->cmdline);
 		len += strlen(hdr->cmdline);
 	}
 
@@ -66,6 +65,8 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	} else if (*hdr->cmdline) {
 		strcat(newbootargs, hdr->cmdline);
 	}
+
+	printf("Kernel command line: %s\n", newbootargs);
 #ifdef CONFIG_SERIAL_TAG
 	struct tag_serialnr serialnr;
 	char commandline[ANDR_BOOT_ARGS_SIZE];
