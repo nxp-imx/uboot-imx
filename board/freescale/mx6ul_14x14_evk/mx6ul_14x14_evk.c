@@ -27,6 +27,12 @@
 #include <usb.h>
 #include <usb/ehci-fsl.h>
 
+#ifdef CONFIG_POWER
+#include <power/pmic.h>
+#include <power/pfuze300_pmic.h>
+#include "../common/pfuze.h"
+#endif
+
 #ifdef CONFIG_FSL_FASTBOOT
 #include <fsl_fastboot.h>
 #ifdef CONFIG_ANDROID_RECOVERY
@@ -821,6 +827,41 @@ int board_early_init_f(void)
 	return 0;
 }
 
+#ifdef CONFIG_POWER
+#define I2C_PMIC	0
+int power_init_board(void)
+{
+	struct pmic *p;
+	int ret;
+	unsigned int reg, rev_id;
+
+	ret = power_pfuze300_init(I2C_PMIC);
+	if (ret)
+		return ret;
+
+	p = pmic_get("PFUZE300");
+	ret = pmic_probe(p);
+	if (ret)
+		return ret;
+
+	pmic_reg_read(p, PFUZE300_DEVICEID, &reg);
+	pmic_reg_read(p, PFUZE300_REVID, &rev_id);
+	printf("PMIC: PFUZE300 DEV_ID=0x%x REV_ID=0x%x\n", reg, rev_id);
+
+	/* SW1A/1B step ramp up time from 2us to 4us/25mV */
+	reg = 0x40;
+	pmic_reg_write(p, PFUZE300_SW1ACONF, reg);
+	pmic_reg_write(p, PFUZE300_SW1BCONF, reg);
+
+	/* SW1A/1B standby voltage set to 0.975V */
+	reg = 0xb;
+	pmic_reg_write(p, PFUZE300_SW1ASTBY, reg);
+	pmic_reg_write(p, PFUZE300_SW1BSTBY, reg);
+
+	return 0;
+}
+#endif
+
 int board_init(void)
 {
 	/* Address of boot parameters */
@@ -885,7 +926,11 @@ u32 get_board_rev(void)
 
 int checkboard(void)
 {
-	puts("Board: MX6UL 14x14 EVK\n");
+#if defined(CONFIG_MX6UL_9X9_LPDDR2)
+    puts("Board: MX6UL 9x9 EVK\n");
+#else
+    puts("Board: MX6UL 14x14 EVK\n");
+#endif
 
 	return 0;
 }
