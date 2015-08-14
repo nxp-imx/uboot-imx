@@ -124,7 +124,20 @@
 #define CONFIG_SYS_I2C_SPEED		100000
 #endif
 
+#if defined(CONFIG_MX6UL_9X9_LPDDR2)
+#define CONFIG_DEFAULT_FDT_FILE "imx6ul-9x9-evk.dtb"
+#define PHYS_SDRAM_SIZE			SZ_256M
+
+/* PMIC */
+#define CONFIG_POWER
+#define CONFIG_POWER_I2C
+#define CONFIG_POWER_PFUZE300
+#define CONFIG_POWER_PFUZE300_I2C_ADDR	0x08
+#else
+#define CONFIG_DEFAULT_FDT_FILE "imx6ul-14x14-evk.dtb"
 #define PHYS_SDRAM_SIZE			SZ_512M
+#endif
+
 
 #define CONFIG_VIDEO
 
@@ -188,7 +201,7 @@
 	"console=ttymxc0\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
-	"fdt_file=imx6ul-14x14-evk.dtb\0" \
+	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
 	"fdt_addr=0x83000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
