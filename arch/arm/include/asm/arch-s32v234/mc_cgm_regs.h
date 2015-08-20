@@ -58,8 +58,10 @@
  */
 #define CGM_ACn_SC(cgm_addr,ac)			((cgm_addr + 0x00000800) + ((ac) * 0x20))
 #define CGM_ACn_SS(cgm_addr,ac)			((cgm_addr + 0x00000804) + ((ac) * 0x20))
-#define MC_CGM_ACn_SEL_MASK				(0x07000000)
-#define MC_CGM_ACn_SEL_SET(source)		(MC_CGM_ACn_SEL_MASK & (((source) & 0x7) << MC_CGM_ACn_SEL_OFFSET))
+#define MC_CGM_ACn_SEL_MASK			(0x0F000000)
+#define MC_CGM_ACn_SEL_SET(source)		(MC_CGM_ACn_SEL_MASK & \
+						(((source) & 0xF) << \
+						MC_CGM_ACn_SEL_OFFSET))
 #define MC_CGM_ACn_SEL_OFFSET			(24)
 
 #define MC_CGM_ACn_SEL_GET(ac)			(((ac) & MC_CGM_ACn_SEL_MASK) >> \
@@ -80,7 +82,7 @@
 #define MC_CGM_ACn_SEL_DDRPLL			(0x5)
 #define MC_CGM_ACn_SEL_EXTSRCPAD		(0x7)
 #define MC_CGM_ACn_SEL_SYSCLK			(0x8)
-#define MC_CGM_ACn_SEL_VIDEOPLLDIVX		(0x9)
+#define MC_CGM_ACn_SEL_VIDEOPLLDIV2		(0x9)
 #define MC_CGM_ACn_SEL_PERCLK			(0xA)
 
 #define CGM_AC0_SC	0

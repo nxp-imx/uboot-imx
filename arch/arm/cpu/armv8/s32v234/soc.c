@@ -26,6 +26,7 @@
 
 #define PERIPH_PLL_PHI0_DIV3	3
 #define PERIPH_PLL_PHI0_DIV5	5
+#define VIDEO_PLL_PHI0_DIV2	2
 
 #define MHZ			1000000
 
@@ -319,6 +320,34 @@ static u32 get_qspi_clk(void)
 	return freq / auxclk14_div;
 }
 
+static u32 get_dcu_pix_clk(void)
+{
+	u32 auxclk9_div, auxclk9_sel;
+	u32 freq = 0;
+
+	auxclk9_sel = aux_source_clk_get(MC_CGM0_BASE_ADDR, CGM_AC9_SC);
+	auxclk9_div = aux_div_clk_get(MC_CGM0_BASE_ADDR, CGM_AC9_SC,
+					 CGM_ACn_DC1);
+
+	switch (auxclk9_sel) {
+	case MC_CGM_ACn_SEL_FIRC:
+		freq = FIRC_CLK_FREQ;
+		break;
+	case MC_CGM_ACn_SEL_XOSC:
+		freq = XOSC_CLK_FREQ;
+		break;
+	case MC_CGM_ACn_SEL_VIDEOPLLDIV2:
+		freq = decode_pll(VIDEO_PLL, XOSC_CLK_FREQ, DFS_NONE) /
+				VIDEO_PLL_PHI0_DIV2;
+		break;
+	default:
+		printf("unsupported source clock select\n");
+		freq = 0;
+	}
+
+	return freq / auxclk9_div;
+}
+
 static u32 get_dspi_clk(void)
 {
 	return get_sys_clk(MXC_SYS6_CLK);
@@ -342,6 +371,8 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 		return get_usdhc_clk();
 	case MXC_QSPI_CLK:
 		return get_qspi_clk();
+	case MXC_DCU_PIX_CLK:
+		return get_dcu_pix_clk();
 	case MXC_DSPI_CLK:
 		return get_dspi_clk();
 	default:

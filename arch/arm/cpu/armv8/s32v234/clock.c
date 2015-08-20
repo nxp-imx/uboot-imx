@@ -254,6 +254,18 @@ static void setup_aux_clocks(void)
 	aux_div_clk_config(MC_CGM2_BASE_ADDR, CGM_AC2_SC, CGM_ACn_DC0,
 			   PLLDIG_PLLDV_PREDIV_3);
 
+	/* setup the aux clock divider for H264_DEC_CLK  (350MHz) */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC12_SC,
+			      MC_CGM_ACn_SEL_ENETPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC12_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
+	/* setup the aux clock divider for H264_ENC_CLK (350MHz) */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC13_SC,
+			      MC_CGM_ACn_SEL_ENETPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC13_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
 	/* setup the aux clock divider for QSPI_CLK  (target freq 40 MHz)*/
 	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC14_SC,
 			      MC_CGM_ACn_SEL_XOSC);
@@ -276,8 +288,39 @@ static void setup_aux_clocks(void)
 	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC8_SC, CGM_ACn_DC1,
 			   PLLDIG_PLLDV_PREDIV_3);
 
-	entry_to_target_mode(MC_ME_MCTL_RUN0);
+	/* setup the aux clock divider for SEQ_CLK (250MHz)
+	 * and ISP_CLK (500MHz))
+	 */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC0_SC,
+			      MC_CGM_ACn_SEL_DDRPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC0_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
 
+	/* setup the aux clock divider for APEX_APU_CLK (500MHz) */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC1_SC,
+			      MC_CGM_ACn_SEL_DDRPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC1_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
+	/* setup the aux clock divider for MJPEG_CLK (350MHz) */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC2_SC,
+			      MC_CGM_ACn_SEL_DDRPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC2_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
+	/* setup the aux clock source for DCU_AXI_CLK and DCU_PIX_CLK */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC9_SC,
+			      MC_CGM_ACn_SEL_VIDEOPLLDIV2);
+
+	/* setup the aux clock divider for DCU_AXI_CLK (300MHz) */
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC9_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
+	/* setup the aux clock divider for DCU_PIX_CLK (150MHz) */
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC9_SC, CGM_ACn_DC1,
+			   PLLDIG_PLLDV_PREDIV_1);
+
+	entry_to_target_mode(MC_ME_MCTL_RUN0);
 }
 
 static void enable_modules_clock(void)
@@ -312,6 +355,17 @@ static void enable_modules_clock(void)
 	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(DSPI0_PCTL));
 	/* SDHC */
 	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(SDHC_PCTL));
+
+	/*
+	 * The ungating for the clocks of the above IPs should be
+	 * removed from u-boot, because they are used only in kernel
+	 * drivers.
+	 */
+
+	/* DCU */
+	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(DCU_PCTL));
+	/* DEC200 */
+	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(DEC200_PCTL));
 
 	entry_to_target_mode(MC_ME_MCTL_RUN0);
 }
