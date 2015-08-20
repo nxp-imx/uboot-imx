@@ -647,8 +647,11 @@ u32 get_board_rev(void)
 
 int checkboard(void)
 {
+#ifdef CONFIG_MX7D_LPDDR2
+	puts("Board: MX7D 19x19 LPDDR2 ARM2\n");
+#else
 	puts("Board: MX7D 19x19 LPDDR3 ARM2\n");
-
+#endif
 	return 0;
 }
 

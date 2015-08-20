@@ -14,7 +14,11 @@
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
 #define CONFIG_MMCROOT			"/dev/mmcblk0p2"  /* USDHC1 */
 
+#ifdef CONFIG_MX7D_LPDDR2
+#define PHYS_SDRAM_SIZE			SZ_512M
+#else
 #define PHYS_SDRAM_SIZE			SZ_2G
+#endif
 
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
