@@ -21,6 +21,7 @@ ifeq ($(SOC),$(filter $(SOC),mx7))
 obj-y	+= cpu.o
 obj-$(CONFIG_SYS_I2C_MXC) += i2c-mxv7.o
 obj-$(CONFIG_GPT_TIMER) += timer.o
+obj-$(CONFIG_MXC_RDC) += rdc-sema.o
 obj-$(CONFIG_SYSCOUNTER_TIMER) += syscounter.o
 endif
 ifeq ($(SOC),$(filter $(SOC),mx7 mx6 mxs))

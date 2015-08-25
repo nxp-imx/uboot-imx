@@ -1070,6 +1070,12 @@ void clock_init(void)
 #ifdef CONFIG_NAND_MXS
 	clock_enable(CCGR_RAWNAND, 1);
 #endif
+
+#ifdef CONFIG_MXC_RDC
+    clock_enable(CCGR_RDC, 1);
+    clock_enable(CCGR_SEMA1, 1);
+    clock_enable(CCGR_SEMA2, 1);
+#endif
 }
 
 #ifdef CONFIG_SECURE_BOOT
