@@ -20,8 +20,10 @@
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
-/* DCDC used on EVK, no PMIC */
+#if !defined(CONFIG_MX6UL_9X9_LPDDR2)
+/* DCDC used on 14x14 EVK, no PMIC */
 #undef CONFIG_LDO_BYPASS_CHECK
+#endif
 
 /* uncomment for PLUGIN mode support */
 /* #define CONFIG_USE_PLUGIN */

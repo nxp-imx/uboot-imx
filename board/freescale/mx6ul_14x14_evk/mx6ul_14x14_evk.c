@@ -829,9 +829,9 @@ int board_early_init_f(void)
 
 #ifdef CONFIG_POWER
 #define I2C_PMIC	0
+static struct pmic *pfuze;
 int power_init_board(void)
 {
-	struct pmic *p;
 	int ret;
 	unsigned int reg, rev_id;
 
@@ -839,27 +839,66 @@ int power_init_board(void)
 	if (ret)
 		return ret;
 
-	p = pmic_get("PFUZE300");
-	ret = pmic_probe(p);
+	pfuze = pmic_get("PFUZE300");
+	ret = pmic_probe(pfuze);
 	if (ret)
 		return ret;
 
-	pmic_reg_read(p, PFUZE300_DEVICEID, &reg);
-	pmic_reg_read(p, PFUZE300_REVID, &rev_id);
+	pmic_reg_read(pfuze, PFUZE300_DEVICEID, &reg);
+	pmic_reg_read(pfuze, PFUZE300_REVID, &rev_id);
 	printf("PMIC: PFUZE300 DEV_ID=0x%x REV_ID=0x%x\n", reg, rev_id);
 
-	/* SW1A/1B step ramp up time from 2us to 4us/25mV */
+	/* SW1B step ramp up time from 2us to 4us/25mV */
 	reg = 0x40;
-	pmic_reg_write(p, PFUZE300_SW1ACONF, reg);
-	pmic_reg_write(p, PFUZE300_SW1BCONF, reg);
+	pmic_reg_write(pfuze, PFUZE300_SW1BCONF, reg);
 
-	/* SW1A/1B standby voltage set to 0.975V */
+	/* SW1B mode to APS/PFM */
+	reg = 0xc;
+	pmic_reg_write(pfuze, PFUZE300_SW1BMODE, reg);
+
+	/* SW1B standby voltage set to 0.975V */
 	reg = 0xb;
-	pmic_reg_write(p, PFUZE300_SW1ASTBY, reg);
-	pmic_reg_write(p, PFUZE300_SW1BSTBY, reg);
+	pmic_reg_write(pfuze, PFUZE300_SW1BSTBY, reg);
 
 	return 0;
 }
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	unsigned int value;
+	u32 vddarm;
+
+	struct pmic *p = pfuze;
+
+	if (!p) {
+		printf("No PMIC found!\n");
+		return;
+	}
+
+	/* switch to ldo_bypass mode */
+	if (ldo_bypass) {
+		prep_anatop_bypass();
+		/* decrease VDDARM to 1.275V */
+		pmic_reg_read(pfuze, PFUZE300_SW1BVOLT, &value);
+		value &= ~0x1f;
+		value |= PFUZE300_SW1AB_SETP(1275);
+		pmic_reg_write(pfuze, PFUZE300_SW1BVOLT, value);
+
+		set_anatop_bypass(1);
+		vddarm = PFUZE300_SW1AB_SETP(1175);
+
+		pmic_reg_read(pfuze, PFUZE300_SW1BVOLT, &value);
+		value &= ~0x1f;
+		value |= vddarm;
+		pmic_reg_write(pfuze, PFUZE300_SW1BVOLT, value);
+
+		finish_anatop_bypass();
+
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
+#endif
 #endif
 
 int board_init(void)
