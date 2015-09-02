@@ -201,7 +201,7 @@
 	str r1, [r0, #0x02C]
 	ldr r1, =0x009F0010
 	str r1, [r0, #0x030]
-	ldr r1, =0x0000004F
+	ldr r1, =0x00000047
 	str r1, [r0, #0x040]
 	ldr r1, =0x83100000
 	str r1, [r0, #0x000]
