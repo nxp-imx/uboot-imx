@@ -848,6 +848,11 @@ int power_init_board(void)
 	pmic_reg_read(pfuze, PFUZE300_REVID, &rev_id);
 	printf("PMIC: PFUZE300 DEV_ID=0x%x REV_ID=0x%x\n", reg, rev_id);
 
+	/* disable Low Power Mode during standby mode */
+	pmic_reg_read(pfuze, PFUZE300_LDOGCTL, &reg);
+	reg |= 0x1;
+	pmic_reg_write(pfuze, PFUZE300_LDOGCTL, reg);
+
 	/* SW1B step ramp up time from 2us to 4us/25mV */
 	reg = 0x40;
 	pmic_reg_write(pfuze, PFUZE300_SW1BCONF, reg);
