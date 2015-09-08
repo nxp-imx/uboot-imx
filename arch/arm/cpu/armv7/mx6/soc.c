@@ -24,6 +24,7 @@
 #include <asm/arch/crm_regs.h>
 #include <dm.h>
 #include <imx_thermal.h>
+#include <mxsfb.h>
 #ifdef CONFIG_FSL_FASTBOOT
 #ifdef CONFIG_ANDROID_RECOVERY
 #include <recovery.h>
@@ -782,6 +783,14 @@ void set_wdog_reset(struct wdog_regs *wdog)
 	 */
 	reg |= 1 << 0;
 	writew(reg, &wdog->wcr);
+}
+
+void reset_misc(void)
+{    
+#ifdef CONFIG_VIDEO_MXS
+    if (is_cpu_type(MXC_CPU_MX6UL))
+        lcdif_power_down();
+#endif
 }
 
 #ifdef CONFIG_LDO_BYPASS_CHECK
