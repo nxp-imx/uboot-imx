@@ -543,13 +543,27 @@ int print_cpuinfo(void)
 }
 #endif
 
-int cpu_eth_init(bd_t * bis)
+int cpu_eth_init(bd_t *bis)
 {
 	int rc = -ENODEV;
 
 #if defined(CONFIG_FEC_MXC)
-	rc = fecmxc_initialize(bis);
+	volatile struct src *src_regs = (struct src *)SRC_SOC_BASE_ADDR;
+
+	/* enable RGMII mode */
+#if (CONFIG_FEC_XCV_TYPE == RGMII)
+	clrsetbits_le32(&src_regs->gpr3, SRC_GPR3_ENET_MODE,
+			SRC_GPR3_ENET_MODE);
+#else
+	clrsetbits_le32(&src_regs->gpr3, SRC_GPR3_ENET_MODE,
+			0);
 #endif
+
+#ifdef CONFIG_FEC_MXC_PHYADDR
+	rc = fecmxc_initialize(bis);
+#endif /* CONFIG_FEC_MXC_PHYADDR */
+
+#endif /* CONFIG_FEC_MXC */
 
 	return rc;
 }
