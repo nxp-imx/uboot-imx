@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2013-2016 Freescale Semiconductor, Inc.
+ * Copyright 2020 NXP
  */
 
 #include <common.h>
@@ -44,6 +45,41 @@ static void setup_iomux_enet(void)
 
 static void setup_iomux_i2c(void)
 {
+	/* I2C0 - Serial Data Input */
+	writel(SIUL2_PAD_CTRL_I2C0_MSCR_SDA_AC15,
+	       SIUL2_MSCRn(SIUL2_MSCR_PG3));
+	writel(SIUL2_PAD_CTRL_I2C0_IMCR_SDA_AC15,
+	       SIUL2_IMCRn(SIUL2_IMCR_I2C0_DATA));
+
+	/* I2C0 - Serial Clock Input */
+	writel(SIUL2_PAD_CTRL_I2C0_MSCR_SCLK_AE15,
+	       SIUL2_MSCRn(SIUL2_MSCR_PG4));
+	writel(SIUL2_PAD_CTRL_I2C0_IMCR_SCLK_AE15,
+	       SIUL2_IMCRn(SIUL2_IMCR_I2C0_CLK));
+
+	/* I2C1 - Serial Data Input */
+	writel(SIUL2_PAD_CTRL_I2C1_MSCR_SDA,
+	       SIUL2_MSCRn(SIUL2_MSCR_PG5));
+	writel(SIUL2_PAD_CTRL_I2C1_IMCR_SDA,
+	       SIUL2_IMCRn(SIUL2_IMCR_I2C1_DATA));
+
+	/* I2C1 - Serial Clock Input */
+	writel(SIUL2_PAD_CTRL_I2C1_MSCR_SCLK,
+	       SIUL2_MSCRn(SIUL2_MSCR_PG6));
+	writel(SIUL2_PAD_CTRL_I2C1_IMCR_SCLK,
+	       SIUL2_IMCRn(SIUL2_IMCR_I2C1_CLK));
+
+	/* I2C2 - Serial Data Input */
+	writel(SIUL2_PAD_CTRL_I2C2_MSCR_SDA,
+	       SIUL2_MSCRn(SIUL2_MSCR_PB3));
+	writel(SIUL2_PAD_CTRL_I2C2_IMCR_SDA,
+	       SIUL2_IMCRn(SIUL2_IMCR_I2C2_DATA));
+
+	/* I2C2 - Serial Clock Input */
+	writel(SIUL2_PAD_CTRL_I2C2_MSCR_SCLK,
+	       SIUL2_MSCRn(SIUL2_MSCR_PB4));
+	writel(SIUL2_PAD_CTRL_I2C2_IMCR_SCLK,
+	       SIUL2_IMCRn(SIUL2_IMCR_I2C2_CLK));
 }
 
 #ifdef CONFIG_SYS_USE_NAND
