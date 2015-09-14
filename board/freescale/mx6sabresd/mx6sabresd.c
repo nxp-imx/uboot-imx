@@ -1018,6 +1018,14 @@ int power_init_board(void)
 	reg |= 0x40;
 	pmic_reg_write(pfuze, PFUZE100_SW1CCONF, reg);
 
+	if (is_mx6dqp()) {
+		/* set SW2 staby volatage 0.975V*/
+		pmic_reg_read(pfuze, PFUZE100_SW2STBY, &reg);
+		reg &= ~0x3f;
+		reg |= 0x17;
+		pmic_reg_write(pfuze, PFUZE100_SW2STBY, reg);
+	}
+
 	return 0;
 }
 
