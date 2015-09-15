@@ -1102,7 +1102,7 @@ void epdc_clock_disable(void)
 /*
  * Dump some core clockes.
  */
-int do_mx6_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mx7_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	u32 freq;
 	freq = decode_pll(PLL_CORE, MXC_HCLK);
@@ -1130,7 +1130,7 @@ int do_mx6_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 }
 
 U_BOOT_CMD(
-	clocks,	CONFIG_SYS_MAXARGS, 1, do_mx6_showclocks,
+	clocks,	CONFIG_SYS_MAXARGS, 1, do_mx7_showclocks,
 	"display clocks",
 	""
 );
