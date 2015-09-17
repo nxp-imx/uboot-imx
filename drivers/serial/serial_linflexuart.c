@@ -13,24 +13,28 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/clock.h>
 
-#define US1_TDRE            (1 << 7)
-#define US1_RDRF            (1 << 5)
-#define UC2_TE              (1 << 3)
-#define LINCR1_INIT         (1 << 0)
-#define LINCR1_MME          (1 << 4)
-#define LINCR1_BF           (1 << 7)
+#define US1_TDRE            BIT(7)
+#define US1_RDRF            BIT(5)
+#define UC2_TE              BIT(3)
+#define LINCR1_INIT         BIT(0)
+#define LINCR1_MME          BIT(4)
+#define LINCR1_BF           BIT(7)
 #define LINSR_LINS_INITMODE (0x00001000)
 #define LINSR_LINS_MASK     (0x0000F000)
-#define UARTCR_UART         (1 << 0)
-#define UARTCR_WL0          (1 << 1)
-#define UARTCR_PCE          (1 << 2)
-#define UARTCR_PC0          (1 << 3)
-#define UARTCR_TXEN         (1 << 4)
-#define UARTCR_RXEN         (1 << 5)
-#define UARTCR_PC1          (1 << 6)
-#define UARTSR_DTF          (1 << 1)
-#define UARTSR_DRF          (1 << 2)
-#define UARTSR_RMB          (1 << 9)
+#define UARTCR_UART         BIT(0)
+#define UARTCR_WL0          BIT(1)
+#define UARTCR_PCE          BIT(2)
+#define UARTCR_PC0          BIT(3)
+#define UARTCR_TXEN         BIT(4)
+#define UARTCR_RXEN         BIT(5)
+#define UARTCR_PC1          BIT(6)
+#define UARTCR_TFBM         BIT(8)
+#define UARTCR_RFBM         BIT(9)
+#define UARTSR_DTF          BIT(1)
+#define UARTSR_DRF          BIT(2)
+#define UARTSR_RFE          BIT(2)
+#define UARTSR_RFNE         BIT(4)
+#define UARTSR_RMB          BIT(9)
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -51,29 +55,19 @@ static void _linflex_serial_setbrg(struct linflex_fsl *base, int baudrate)
 
 static int _linflex_serial_getc(struct linflex_fsl *base)
 {
-	char c;
+	while (__raw_readl(&base->uartsr) & UARTSR_RFE == UARTSR_RFE)
+		;
 
-	if (!(__raw_readb(&base->uartsr) & UARTSR_DRF))
-		return -EAGAIN;
-
-	if (!(__raw_readl(&base->uartsr) & UARTSR_RMB))
-		return -EAGAIN;
-
-	c = __raw_readl(&base->bdrm);
-	__raw_writeb((__raw_readb(&base->uartsr) | (UARTSR_DRF | UARTSR_RMB)),
-		     &base->uartsr);
-	return c;
+	return __raw_readb(&base->bdrm);
 }
 
 static int _linflex_serial_putc(struct linflex_fsl *base, const char c)
 {
+	/* wait for Tx FIFO not full */
+	while (__raw_readb(&base->uartsr) & UARTSR_DTF)
+		;
+
 	__raw_writeb(c, &base->bdrl);
-
-
-	if (!(__raw_readb(&base->uartsr) & UARTSR_DTF))
-		return -EAGAIN;
-
-	__raw_writeb((__raw_readb(&base->uartsr) | UARTSR_DTF), &base->uartsr);
 
 	return 0;
 }
@@ -106,7 +100,8 @@ static int _linflex_serial_init(struct linflex_fsl *base)
 
 	/* 8 bit data, no parity, Tx and Rx enabled, UART mode */
 	__raw_writel(UARTCR_PC1 | UARTCR_RXEN | UARTCR_TXEN | UARTCR_PC0
-		     | UARTCR_WL0 | UARTCR_UART, &base->uartcr);
+		     | UARTCR_WL0 | UARTCR_UART | UARTCR_RFBM | UARTCR_TFBM,
+		     &base->uartcr);
 
 	ctrl = __raw_readl(&base->lincr1);
 	ctrl &= ~LINCR1_INIT;
