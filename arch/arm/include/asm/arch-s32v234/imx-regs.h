@@ -247,6 +247,7 @@ struct linflex_fsl {
 	u32 ifer;
 	u32 ifmi;
 	u32 ifmr;
+#ifdef CONFIG_LINFLEX_MASTER_SLAVE_MODE
 	u32 ifcr0;
 	u32 ifcr1;
 	u32 ifcr2;
@@ -263,6 +264,7 @@ struct linflex_fsl {
 	u32 ifcr13;
 	u32 ifcr14;
 	u32 ifcr15;
+#endif
 	u32 gcr;
 	u32 uartpto;
 	u32 uartcto;
