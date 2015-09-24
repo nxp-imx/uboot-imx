@@ -148,7 +148,7 @@
 	str r2, [r0, #0x000]
 
 	ldr r3, =0x00bb0000
-	ldr r2, =0x00000007
+	ldr r2, =0x00000004
 	str r2, [r3, #0x008]
 	ldr r2, =0x2891E41A
 	str r2, [r3, #0x00C]
