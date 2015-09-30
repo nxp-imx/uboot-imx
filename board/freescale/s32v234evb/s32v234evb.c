@@ -19,8 +19,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static void setup_iomux_uart(void)
 {
-	/* Muxing for linflex */
-	/* Replace the magic values after bringup */
+	/* Muxing for linflex0 and linflex1 */
 
 	/* set TXD - MSCR[12] PA12 */
 	writel(SIUL2_UART_TXD, SIUL2_MSCRn(SIUL2_UART0_TXD_PAD));
@@ -30,8 +29,16 @@ static void setup_iomux_uart(void)
 
 	/* set RXD - IMCR[200] - 200 */
 	writel(SIUL2_UART_IMCR_RXD, SIUL2_IMCRn(SIUL2_UART0_IMCR_RXD_PAD));
-}
 
+	/* set TXD - MSCR[14] PA14 */
+	writel(SIUL2_UART_TXD, SIUL2_MSCRn(SIUL2_UART1_TXD_PAD));
+
+	/* set RXD - MSCR[13] - PA13*/
+	writel(SIUL2_UART_MSCR_RXD, SIUL2_MSCRn(SIUL2_UART1_MSCR_RXD_PAD));
+
+	/* set RXD - IMCR[202] - 202 */
+	writel(SIUL2_UART_IMCR_RXD, SIUL2_IMCRn(SIUL2_UART1_IMCR_RXD_PAD));
+}
 static void setup_iomux_enet(void)
 {
 }
