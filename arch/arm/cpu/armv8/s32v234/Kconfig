@@ -17,7 +17,6 @@ choice
 	default TARGET_S32V234EVB
 	help
 	  S32V234 Target Board Selection.
-	  At this point, only S32V234EVB is available.
 
 config TARGET_S32V234EVB
 	bool "Support s32v234evb"
@@ -80,5 +79,6 @@ config DDR_HANDSHAKE_AT_RESET
 	  Execute additional checks in case of a functional reset.
 
 source "board/freescale/s32v234evb/Kconfig"
+source "board/freescale/s32v234pcie/Kconfig"
 
 endif
