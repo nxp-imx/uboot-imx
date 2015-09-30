@@ -29,6 +29,8 @@
 
 #define CONFIG_VIDEO
 #define CONFIG_FSL_USDHC
+#define CONFIG_BOOTARGS_CMA_SIZE   ""
+
 #include "mx6ul_arm2.h"
 
 #define PHYS_SDRAM_SIZE			SZ_1G

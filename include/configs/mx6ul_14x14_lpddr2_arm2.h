@@ -40,9 +40,11 @@
 #undef CONFIG_VIDEO
 #endif
 
+#define CONFIG_BOOTARGS_CMA_SIZE   "cma=96M "
+
 #include "mx6ul_arm2.h"
 
-#define PHYS_SDRAM_SIZE			SZ_512M
+#define PHYS_SDRAM_SIZE			SZ_256M
 
 #ifdef CONFIG_SYS_USE_SPINOR
 #define CONFIG_CMD_SF
