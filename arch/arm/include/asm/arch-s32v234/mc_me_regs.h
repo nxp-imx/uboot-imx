@@ -199,6 +199,32 @@
 /* Core status register */
 #define MC_ME_CS               (MC_ME_BASE_ADDR + 0x000001C0)
 
+/* Cortex-M4 Core Control Register */
+#define MC_MC_CCTL0            (MC_ME_BASE_ADDR + 0x000001C6)
+/* Cortex-A53 - Core 0 Core Control Register */
+#define MC_ME_CCTL1            (MC_ME_BASE_ADDR + 0x000001C4)
+/* Cortex-A53 - Core 1 Core Control Register */
+#define MC_ME_CCTL2            (MC_ME_BASE_ADDR + 0x000001CA)
+/* Cortex-A53 - Core 2 Core Control Register */
+#define MC_ME_CCTL3            (MC_ME_BASE_ADDR + 0x000001C8)
+/* Cortex-A53 - Core 3 Control Register */
+#define MC_ME_CCTL4            (MC_ME_BASE_ADDR + 0x000001CE)
+
+#define MC_ME_CCTL_DEASSERT_CORE       (0xFA)
+
+/* Cortex-M4 Core Address Register */
+#define MC_ME_CADDR0   (MC_ME_BASE_ADDR + 0x000001E0)
+/* Cortex-A53 Core 0 - Core Address Register */
+#define MC_ME_CADDR1   (MC_ME_BASE_ADDR + 0x000001E4)
+/* Cortex-A53 Core 1 - Core Address Register */
+#define MC_ME_CADDR2   (MC_ME_BASE_ADDR + 0x000001E8)
+/* Cortex-A53 Core 2 - Core Address Register */
+#define MC_ME_CADDR3   (MC_ME_BASE_ADDR + 0x000001EC)
+/* Cortex-A53 Core 3 - Core Address Register */
+#define MC_ME_CADDR4   (MC_ME_BASE_ADDR + 0x000001F0)
+
+#define MC_ME_CADDRn_ADDR_EN	BIT(0)
+
 #endif
 
 #endif /*__ARCH_ARM_MACH_S32V234_MCME_REGS_H__ */

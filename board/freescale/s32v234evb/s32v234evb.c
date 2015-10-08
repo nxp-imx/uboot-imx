@@ -9,6 +9,8 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/siul.h>
 #include <asm/arch/clock.h>
+#include <fdt_support.h>
+#include <linux/libfdt.h>
 #include <mmc.h>
 #include <fsl_esdhc_imx.h>
 #include <miiphy.h>
@@ -126,6 +128,7 @@ int board_phy_config(struct phy_device *phydev)
 
 int board_early_init_f(void)
 {
+// start_secondary_cores();
 	clock_init();
 	mscm_init();
 
@@ -152,3 +155,11 @@ int checkboard(void)
 
 	return 0;
 }
+
+#if defined(CONFIG_OF_FDT) && defined(CONFIG_OF_BOARD_SETUP)
+int ft_board_setup(void *blob, bd_t *bd)
+{
+	ft_cpu_setup(blob, bd);
+	return 0;
+}
+#endif /* defined(CONFIG_OF_FDT) && defined(CONFIG_OF_BOARD_SETUP) */

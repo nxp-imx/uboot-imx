@@ -42,8 +42,18 @@
 /* Enable passing of ATAGs */
 #define CONFIG_CMDLINE_TAG
 
+/* SMP definitions */
+#define CONFIG_MAX_CPUS				(4)
+#define SECONDARY_CPU_BOOT_PAGE		(CONFIG_SYS_SDRAM_BASE)
+#define CPU_RELEASE_ADDR			SECONDARY_CPU_BOOT_PAGE
+#define CONFIG_FSL_SMP_RELEASE_ALL
+
 /* SMP Spin Table Definitions */
-#define CPU_RELEASE_ADDR                (CONFIG_SYS_SDRAM_BASE + 0x7fff0)
+#define CONFIG_MP
+
+/* Flat device tree definitions */
+#define CONFIG_OF_FDT
+#define CONFIG_OF_BOARD_SETUP
 
 /* Generic Timer Definitions */
 #define COUNTER_FREQUENCY               (1000000000)	/* 1000MHz */
