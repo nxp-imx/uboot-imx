@@ -555,6 +555,7 @@ static const struct boot_mode board_boot_modes[] = {
 #define PFUZE_LDOGCTL	0x69
 #define PFUZE300_SW1ASTBY	0x21
 #define PFUZE300_SW1AMODE	0x23
+#define PFUZE300_SW1BVOLT	0x2e
 #define PFUZE300_SW1BSTBY	0x2f
 #define PFUZE300_SW1BMODE	0x31
 
@@ -607,6 +608,18 @@ static int setup_pmic_voltages(void)
 		}
 		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE300_SW1BSTBY, 1, &value, 1)) {
 			printf("Set PFUZE300_SW1BSTBY error!\n");
+			return -1;
+		}
+
+		/* decrease SW1B normal voltage to 0.975V */
+		if (i2c_read(CONFIG_PMIC_I2C_SLAVE, PFUZE300_SW1BVOLT, 1, &value, 1)) {
+			printf("Read SW1BVOLT error!\n");
+			return -1;
+		}
+		value &= ~0x1f;
+		value |= 0x0b;
+		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE300_SW1BVOLT, 1, &value, 1)) {
+			printf("Set SW1BVOLT error!\n");
 			return -1;
 		}
 	}
