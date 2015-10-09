@@ -5,6 +5,8 @@
  *                        Steven J. Hill <sjhill@realitydiluted.com>
  *		          Thomas Gleixner <tglx@linutronix.de>
  *
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  *
  * Info:
@@ -46,7 +48,7 @@ extern void nand_wait_ready(struct mtd_info *mtd);
  * is supported now. If you add a chip with bigger oobsize/page
  * adjust this accordingly.
  */
-#define NAND_MAX_OOBSIZE       1216
+#define NAND_MAX_OOBSIZE       1280
 #define NAND_MAX_PAGESIZE      16384
 
 /*
