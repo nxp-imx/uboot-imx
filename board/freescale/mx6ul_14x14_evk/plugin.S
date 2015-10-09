@@ -13,7 +13,7 @@
 	str r1, [r0, #0x4B4]
 	ldr r1, =0x00000000
 	str r1, [r0, #0x4AC]
-	ldr r1, =0x00000008
+	ldr r1, =0x00000030
 	str r1, [r0, #0x27C]
 	ldr r1, =0x00000030
 	str r1, [r0, #0x250]
@@ -32,7 +32,7 @@
 	ldr r1, =0x00020000
 	str r1, [r0, #0x494]
 
-	ldr r1, =0x00000038
+	ldr r1, =0x00000030
 	str r1, [r0, #0x280]
 	ldr r1, =0x00000030
 	str r1, [r0, #0x284]
@@ -51,7 +51,7 @@
 	str r1, [r0, #0x1C]
 	ldr r1, =0xA1390003
 	str r1, [r0, #0x800]
-	ldr r1, =0x00070007
+	ldr r1, =0x00000000
 	str r1, [r0, #0x80C]
 	ldr r1, =0x41490145
 	str r1, [r0, #0x83C]
@@ -65,23 +65,21 @@
 	ldr r1, =0xF3333333
 	str r1, [r0, #0x82C]
 	str r1, [r0, #0x830]
-	ldr r1, =0x00922012
+	ldr r1, =0x00921012
 	str r1, [r0, #0x8C0]
-	ldr r1, =0x00000F00
-	str r1, [r0, #0x858]
 	ldr r1, =0x00000800
 	str r1, [r0, #0x8B8]
 	ldr r1, =0x0002002D
 	str r1, [r0, #0x004]
-	ldr r1, =0x1B333000
+	ldr r1, =0x00333030
 	str r1, [r0, #0x008]
-	ldr r1, =0x676B54F3
+	ldr r1, =0x676B52F3
 	str r1, [r0, #0x00C]
-	ldr r1, =0xB68E0A83
+	ldr r1, =0xB66D8B63
 	str r1, [r0, #0x010]
 	ldr r1, =0x01FF00DB
 	str r1, [r0, #0x014]
-	ldr r1, =0x00211740
+	ldr r1, =0x00201740
 	str r1, [r0, #0x018]
 	ldr r1, =0x00008000
 	str r1, [r0, #0x01C]
@@ -239,7 +237,6 @@
 	str r1, [r0, #0x78]
 	str r1, [r0, #0x7C]
 	str r1, [r0, #0x80]
-	str r1, [r0, #0x84]
 .endm
 
 .macro imx6_qos_setting
