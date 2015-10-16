@@ -43,6 +43,9 @@
 /* Config CACHE */
 #define CONFIG_CMD_CACHE
 
+/* Enable DCU QoS fix */
+#define CONFIG_DCU_QOS_FIX
+
 /* Enable passing of ATAGs */
 #define CONFIG_CMDLINE_TAG
 

@@ -22,3 +22,7 @@
 #ifdef CONFIG_FSL_DCU_FB
 void setup_iomux_dcu(void);
 #endif
+
+#ifdef CONFIG_DCU_QOS_FIX
+int board_dcu_qos(void);
+#endif

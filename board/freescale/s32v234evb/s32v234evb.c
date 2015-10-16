@@ -163,6 +163,9 @@ int board_early_init_f(void)
 #ifdef CONFIG_FSL_DCU_FB
 	setup_iomux_dcu();
 #endif
+#ifdef CONFIG_DCU_QOS_FIX
+	board_dcu_qos();
+#endif
 	return 0;
 }
 
