@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2014 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2015 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -109,8 +109,9 @@
 	str r2, [r1, #0x824]
 	str r2, [r1, #0x828]
 
-	ldr r2, =0x24912492
+	ldr r2, =0x24912249
 	str r2, [r0, #0x8c0]
+	ldr r2, =0x24914289
 	str r2, [r1, #0x8c0]
 
 	ldr r2, =0x00000800
@@ -146,6 +147,9 @@
 
 	ldr r2, =0x831A0000
 	str r2, [r0, #0x000]
+
+	ldr r2, =0x00400C58
+	str r2, [r0, #0x890]
 
 	ldr r3, =0x00bb0000
 	ldr r2, =0x00000004
