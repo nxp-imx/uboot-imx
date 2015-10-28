@@ -123,7 +123,7 @@
 	ldr r2, =0x09444040
 	str r2, [r0, #0x008]
 
-	ldr r2, =0x898E7955
+	ldr r2, =0x555A7955
 	str r2, [r0, #0x00c]
 	ldr r2, =0xFF328F64
 	str r2, [r0, #0x010]
@@ -137,7 +137,7 @@
 	str r2, [r0, #0x01c]
 	ldr r2, =0x000026d2
 	str r2, [r0, #0x02c]
-	ldr r2, =0x008E1023
+	ldr r2, =0x005A1023
 	str r2, [r0, #0x030]
 	ldr r2, =0x00000027
 	str r2, [r0, #0x040]
