@@ -90,7 +90,45 @@ ctrl_status:
 
 start_slave_cores:
 
+#if defined(CONFIG_GICV2) || defined(CONFIG_GICV3)
+	branch_if_slave x0, 1f
+	ldr	x0, =GICD_BASE
+	bl	gic_init_secure
+
 1:
+#if defined(CONFIG_GICV3)
+	ldr	x0, =GICR_BASE
+	bl	gic_init_secure_percpu
+#elif defined(CONFIG_GICV2)
+	ldr	x0, =GICD_BASE
+	ldr	x1, =GICC_BASE
+	bl	gic_init_secure_percpu
+#endif
+#endif
+
+	branch_if_master x0, x1, 2f
+
+	/*
+	 * Slave should wait for master clearing spin table.
+	 * This sync prevent salves observing incorrect
+	 * value of spin table and jumping to wrong place.
+	 */
+#if defined(CONFIG_GICV2) || defined(CONFIG_GICV3)
+#ifdef CONFIG_GICV2
+	ldr	x0, =GICC_BASE
+#endif
+	bl	gic_wait_for_interrupt
+#endif
+
+	/*
+	 * All slaves will enter EL2 and optionally EL1.
+	 */
+	bl	armv8_switch_to_el2
+#ifdef CONFIG_ARMV8_SWITCH_TO_EL1
+	bl	armv8_switch_to_el1
+#endif
+
+2:
 	mov	lr, x29			/* Restore LR */
 	ret
 
