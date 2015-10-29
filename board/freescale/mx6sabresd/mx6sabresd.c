@@ -978,7 +978,11 @@ int power_init_board(void)
 	if (!pfuze)
 		return -ENODEV;
 
-	ret = pfuze_mode_init(pfuze, APS_PFM);
+	if (is_mx6dqp())
+		ret = pfuze_mode_init(pfuze, APS_APS);
+	else
+		ret = pfuze_mode_init(pfuze, APS_PFM);
+
 	if (ret < 0)
 		return ret;
 
@@ -995,10 +999,10 @@ int power_init_board(void)
 	pmic_reg_write(pfuze, PFUZE100_VGEN5VOL, reg);
 
 	if (is_mx6dqp()) {
-		/* set SW1C staby volatage 0.975V*/
+		/* set SW1C staby volatage 1.075V*/
 		pmic_reg_read(pfuze, PFUZE100_SW1CSTBY, &reg);
 		reg &= ~0x3f;
-		reg |= 0x1b;
+		reg |= 0x1f;
 		pmic_reg_write(pfuze, PFUZE100_SW1CSTBY, reg);
 
 		/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
