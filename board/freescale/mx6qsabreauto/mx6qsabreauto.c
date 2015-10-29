@@ -812,6 +812,13 @@ int power_init_board(void)
 		value &= ~0x3f;
 		value |= 0x17;
 		pmic_reg_write(pfuze, PFUZE100_SW2STBY, value);
+
+		/* set SW2/VDDARM step ramp up time to from 16us to 4us/25mV */
+		pmic_reg_read(pfuze, PFUZE100_SW2CONF, &value);
+		value &= ~0xc0;
+		value |= 0x40;
+		pmic_reg_write(pfuze, PFUZE100_SW2CONF, value);
+
 	}
 
 	return 0;
@@ -832,12 +839,20 @@ void ldo_mode_set(int ldo_bypass)
 	if (check_1_2G()) {
 		ldo_bypass = 0;	/* ldo_enable on 1.2G chip */
 		printf("1.2G chip, increase VDDARM_IN/VDDSOC_IN\n");
-		/* increase VDDARM to 1.425V */
-		pmic_reg_read(p, PFUZE100_SW1ABVOL, &value);
-		value &= ~0x3f;
-		value |= 0x2d;
-		pmic_reg_write(p, PFUZE100_SW1ABVOL, value);
 
+		if (is_mx6dqp()) {
+			/* increase VDDARM to 1.425V */
+			pmic_reg_read(p, PFUZE100_SW2VOL, &value);
+			value &= ~0x3f;
+			value |= 0x29;
+			pmic_reg_write(p, PFUZE100_SW2VOL, value);
+		} else {
+			/* increase VDDARM to 1.425V */
+			pmic_reg_read(p, PFUZE100_SW1ABVOL, &value);
+			value &= ~0x3f;
+			value |= 0x2d;
+			pmic_reg_write(p, PFUZE100_SW1ABVOL, value);
+		}
 		/* increase VDDSOC to 1.425V */
 		pmic_reg_read(p, PFUZE100_SW1CVOL, &value);
 		value &= ~0x3f;
