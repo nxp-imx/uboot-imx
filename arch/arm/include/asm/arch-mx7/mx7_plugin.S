@@ -30,6 +30,25 @@ plugin_start:
 	imx7_qos_setting
 
 /*
+ * Check if we are in USB serial download mode and immediately return to ROM
+ * Need to check USB CTRL clock firstly, then check the USBx_nASYNCLISTADDR
+ */
+ 	ldr r0, =0x30384680
+ 	ldr r1, [r0]
+ 	cmp r1, #0
+ 	beq normal_boot
+	
+	ldr r0, =0x30B10158
+	ldr r1, [r0]
+	cmp r1, #0
+	beq normal_boot
+
+	pop {r0-r4, lr}
+	bx lr
+
+normal_boot:
+
+/*
  * The following is to fill in those arguments for this ROM function
  * pu_irom_hwcnfg_setup(void **start, size_t *bytes, const void *boot_data)
  * This function is used to copy data from the storage media into DDR.
