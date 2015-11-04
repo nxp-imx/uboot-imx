@@ -888,7 +888,7 @@ int usb_gadget_register_driver(struct usb_gadget_driver *driver)
 		return ret;
 
 	ret = ci_udc_probe();
-#if defined(CONFIG_USB_EHCI_MX6) || defined(CONFIG_USB_EHCI_MXS) || defined(CONFIG_USB_EHCI_MX7)
+#if defined(CONFIG_USB_EHCI_MXS)
 	/*
 	 * FIXME: usb_lowlevel_init()->ehci_hcd_init() should be doing all
 	 * HW-specific initialization, e.g. ULPI-vs-UTMI PHY selection
