@@ -100,8 +100,6 @@
 #define CONFIG_CMD_SETEXPR
 
 #ifdef CONFIG_CMD_BOOTAUX
-#define CONFIG_MXC_RDC /* Enable RDC to isolate the peripherals for A7 and M4 */
-
 #define UPDATE_M4_ENV \
 	"m4image=m4_qspi.bin\0" \
 	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \

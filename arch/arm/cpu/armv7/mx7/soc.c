@@ -18,10 +18,6 @@
 #include <dm.h>
 #include <imx_thermal.h>
 #include <mxsfb.h>
-#ifdef CONFIG_MXC_RDC
-#include <asm/imx-common/rdc-sema.h>
-#include <asm/arch/imx-rdc.h>
-#endif
 #ifdef CONFIG_FSL_FASTBOOT
 #ifdef CONFIG_ANDROID_RECOVERY
 #include <recovery.h>
@@ -41,50 +37,6 @@ U_BOOT_DEVICE(imx7_thermal) = {
 	.name = "imx_thermal",
 	.platdata = &imx7_thermal_plat,
 };
-#endif
-
-#ifdef CONFIG_MXC_RDC
-static rdc_peri_cfg_t const resources[] = {
-    (RDC_PER_SIM1 | RDC_DOMAIN(0)),
-    (RDC_PER_SIM2 | RDC_DOMAIN(0)),
-    (RDC_PER_UART1 | RDC_DOMAIN(0)),
-    (RDC_PER_UART2 | RDC_DOMAIN(0)),
-    (RDC_PER_UART3 | RDC_DOMAIN(0)),
-    (RDC_PER_UART4 | RDC_DOMAIN(0)),
-    (RDC_PER_UART5 | RDC_DOMAIN(0)),
-    (RDC_PER_UART6 | RDC_DOMAIN(0)),
-    (RDC_PER_UART7 | RDC_DOMAIN(0)),
-    (RDC_PER_SAI1 | RDC_DOMAIN(0)),
-    (RDC_PER_SAI2 | RDC_DOMAIN(0)),
-    (RDC_PER_SAI3 | RDC_DOMAIN(0)),
-    (RDC_PER_WDOG1 | RDC_DOMAIN(0)),
-    (RDC_PER_WDOG2 | RDC_DOMAIN(0)),
-    (RDC_PER_WDOG3 | RDC_DOMAIN(0)),
-    (RDC_PER_WDOG4 | RDC_DOMAIN(0)),
-    (RDC_PER_GPT1 | RDC_DOMAIN(0)),
-    (RDC_PER_GPT2 | RDC_DOMAIN(0)),
-    (RDC_PER_GPT3 | RDC_DOMAIN(0)),
-    (RDC_PER_GPT4 | RDC_DOMAIN(0)),
-    (RDC_PER_PWM1 | RDC_DOMAIN(0)),
-    (RDC_PER_PWM2 | RDC_DOMAIN(0)),
-    (RDC_PER_PWM3 | RDC_DOMAIN(0)),
-    (RDC_PER_PWM4 | RDC_DOMAIN(0)),
-    (RDC_PER_ENET1 | RDC_DOMAIN(0)),
-    (RDC_PER_ENET2 | RDC_DOMAIN(0)),
-};
-
-static void isolate_resource(void)
-{
-    /* At default, all resources are in domain 0 - 3. Here we setup 
-     * some resources to domain 0 where M4 codes will move the M4
-     * out of this domain. Then M4 is not able to access them any longer.
-     * This is a workaround for ic issue. In current design, if any peripheral 
-     * was assigned to both A7 and M4, it will receive ipg_stop or ipg_wait 
-     * when any of the 2 platforms enter low power mode. So M4 sleep will cause
-     * some peripherals fail to work at A core side.
-     */
-    imx_rdc_setup_peripherals(resources, ARRAY_SIZE(resources));
-}
 #endif
 
 u32 get_cpu_rev(void)
@@ -215,9 +167,6 @@ int arch_cpu_init(void)
 
 	set_epdc_qos();
 
-#ifdef CONFIG_MXC_RDC
-    isolate_resource();
-#endif
 	return 0;
 }
 
