@@ -13,6 +13,11 @@
 
 static char andr_tmp_str[ANDR_BOOT_ARGS_SIZE + 1];
 
+#ifdef CONFIG_BRILLO_SUPPORT
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include "../drivers/usb/gadget/bootctrl.h"
+#endif
 /**
  * android_image_get_kernel() - processes kernel part of Android boot images
  * @hdr:	Pointer to image header, which is at the start
@@ -78,6 +83,13 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 					serialnr.high,
 					serialnr.low);
 #endif
+
+#ifdef CONFIG_BRILLO_SUPPORT
+	char suffixStr[64];
+	sprintf(suffixStr, " androidboot.slot_suffix=%s", get_slot_suffix());
+	strcat(commandline, suffixStr);
+#endif
+
 	if (getenv("bootcmd_android_recovery")) {
 		char new_commandline[ANDR_BOOT_ARGS_SIZE];
 		char cmd_selinux[30] = "androidboot.selinux=disabled";

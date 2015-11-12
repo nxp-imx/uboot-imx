@@ -427,4 +427,9 @@
 #include "mx6ul_14x14_evk_android.h"
 #endif
 
+#if defined(CONFIG_BRILLO_SUPPORT)
+#include "mx6ul_14x14_evk_brillo.h"
+#endif
+
+
 #endif
