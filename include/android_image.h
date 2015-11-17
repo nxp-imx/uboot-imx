@@ -66,7 +66,4 @@ struct andr_img_hdr {
  * 6. if second_size != 0: jump to second_addr
  *    else: jump to kernel_addr
  */
-
-void del_sub_str(const char *str, const char *sub_str, char *cmdline);
-
 #endif
