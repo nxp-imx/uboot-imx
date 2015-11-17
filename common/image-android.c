@@ -90,14 +90,8 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	strcat(commandline, suffixStr);
 #endif
 
-	if (getenv("bootcmd_android_recovery")) {
-		char new_commandline[ANDR_BOOT_ARGS_SIZE];
-		char cmd_selinux[30] = "androidboot.selinux=disabled";
-		del_sub_str(commandline, cmd_selinux, new_commandline);
-		setenv("bootargs", new_commandline);
-	} else {
-		setenv("bootargs", commandline);
-	}
+	setenv("bootargs", commandline);
+
 	if (os_data) {
 		*os_data = (ulong)hdr;
 		*os_data += hdr->page_size;
@@ -168,26 +162,3 @@ int android_image_get_fdt(const struct andr_img_hdr *hdr,
 	return 0;
 }
 
-void del_sub_str(const char *str, const char *sub_str, char *cmdline)
-{
-	int str_len = strlen(str);
-	int sub_str_len = strlen(sub_str);
-
-	while (*str != '\0') {
-		while (*str != *sub_str && *str != '\0') {
-			*cmdline = *str;
-			str++;
-			cmdline++;
-		}
-		if (strncmp(str, sub_str, sub_str_len) != 0) {
-			*cmdline = *str;
-			str++;
-			cmdline++;
-			continue;
-		}  else {
-			str += sub_str_len;
-		}
-
-	}
-	*cmdline = '\0';
-}
