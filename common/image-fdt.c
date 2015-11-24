@@ -325,7 +325,7 @@ int boot_get_fdt(int flag, int argc, char * const argv[], uint8_t arch,
 
 			if (load == image_start ||
 			    load == image_data) {
-				fdt_blob = (char *)image_data;
+				fdt_addr = load;
 				break;
 			}
 
