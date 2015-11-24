@@ -772,7 +772,8 @@ int board_init(void)
 static struct pmic *pfuze;
 int power_init_board(void)
 {
-	unsigned int value, ret;
+	unsigned int value;
+	int ret;
 
 	pfuze = pfuze_common_init(I2C_PMIC);
 	if (!pfuze)
