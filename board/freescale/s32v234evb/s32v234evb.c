@@ -9,6 +9,7 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/siul.h>
 #include <asm/arch/clock.h>
+#include <asm/arch/xrdc.h>
 #include <fdt_support.h>
 #include <linux/libfdt.h>
 #include <miiphy.h>
@@ -68,6 +69,25 @@ int board_phy_config(struct phy_device *phydev)
 	return 0;
 }
 
+void setup_xrdc(void)
+{
+	writel(XRDC_ADDR_MIN, XRDC_MRGD_W0_16);
+	writel(XRDC_ADDR_MAX, XRDC_MRGD_W1_16);
+	writel(XRDC_VALID, XRDC_MRGD_W3_16);
+
+	writel(XRDC_ADDR_MIN, XRDC_MRGD_W0_17);
+	writel(XRDC_ADDR_MAX, XRDC_MRGD_W1_17);
+	writel(XRDC_VALID, XRDC_MRGD_W3_17);
+
+	writel(XRDC_ADDR_MIN, XRDC_MRGD_W0_18);
+	writel(XRDC_ADDR_MAX, XRDC_MRGD_W1_18);
+	writel(XRDC_VALID, XRDC_MRGD_W3_18);
+
+	writel(XRDC_ADDR_MIN, XRDC_MRGD_W0_19);
+	writel(XRDC_ADDR_MAX, XRDC_MRGD_W1_19);
+	writel(XRDC_VALID, XRDC_MRGD_W3_19);
+}
+
 int board_early_init_f(void)
 {
 // start_secondary_cores();
@@ -80,6 +100,8 @@ int board_early_init_f(void)
 #ifdef CONFIG_SYS_USE_NAND
 	setup_iomux_nfc();
 #endif
+
+	setup_xrdc();
 	return 0;
 }
 
