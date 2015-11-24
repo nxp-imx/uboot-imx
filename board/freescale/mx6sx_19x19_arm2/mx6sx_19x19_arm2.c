@@ -116,7 +116,8 @@ struct i2c_pads_info i2c_pad_info2 = {
 static struct pmic *pfuze;
 int power_init_board(void)
 {
-	unsigned int ret, reg;
+	unsigned int reg;
+	int ret;
 
 	pfuze = pfuze_common_init(I2C_PMIC);
 	if (!pfuze)
