@@ -121,6 +121,43 @@ start_slave_cores:
 #endif
 
 	/*
+	 * MPIDR_EL1 Fields:
+	 * MPIDR[1:0] = AFF0_CPUID <- Core ID (0,1)
+	 * MPIDR[7:2] = AFF0_RES
+	 * MPIDR[15:8] = AFF1_CLUSTERID <- Cluster ID (0,1,2,3)
+	 * MPIDR[23:16] = AFF2_CLUSTERID
+	 * MPIDR[24] = MT
+	 * MPIDR[29:25] = RES0
+	 * MPIDR[30] = U
+	 * MPIDR[31] = ME
+	 * MPIDR[39:32] = AFF3
+	 *
+	 * Linear Processor ID (LPID) calculation from MPIDR_EL1:
+	 * (We only use AFF0_CPUID and AFF1_CLUSTERID for now
+	 * until AFF2_CLUSTERID and AFF3 have non-zero values)
+	 *
+	 * LPID = MPIDR[15:8] | MPIDR[1:0]
+	 */
+	mrs	x0, mpidr_el1
+	ubfm	x1, x0, #8, #15
+	ubfm	x2, x0, #0, #1
+	orr	x10, x2, x1, lsl #2	/* x10 has LPID */
+	ubfm    x9, x0, #0, #15         /* x9 contains MPIDR[15:0] */
+	/*
+	 * offset of the spin table element for this core from start of spin
+	 * table (each elem is padded to 64 bytes)
+	 */
+	lsl	x1, x10, #6
+	ldr	x0, =CPU_RELEASE_ADDR
+	/* physical address of this cpus spin table element */
+	add	x11, x1, x0
+	ldr	x0, =COUNTER_FREQUENCY
+	msr	cntfrq_el0, x0	/* set with real frequency */
+	str	x9, [x11, #16]	/* LPID */
+	mov	x4, #1
+	str	x4, [x11, #8]	/* STATUS */
+	dsb	sy
+	/*
 	 * All slaves will enter EL2 and optionally EL1.
 	 */
 	bl	armv8_switch_to_el2
