@@ -10,6 +10,7 @@
 #include <asm/gic.h>
 #include <asm/macro.h>
 #include "mp.h"
+#include <asm/armv8/mmu.h>
 
 ENTRY(lowlevel_init)
 
@@ -106,19 +107,51 @@ start_slave_cores:
 #endif
 #endif
 
+	mrs	x0, S3_1_c15_c2_1
+	orr	x0, x0, #(1 << 6)
+	msr	S3_1_c15_c2_1, x0
+	isb
 	branch_if_master x0, x1, 2f
 
 	/*
-	 * Slave should wait for master clearing spin table.
+	 * Slave should wait for master clearing spin table and
+	 * the mmu page tables.
 	 * This sync prevent salves observing incorrect
 	 * value of spin table and jumping to wrong place.
 	 */
-#if defined(CONFIG_GICV2) || defined(CONFIG_GICV3)
-#ifdef CONFIG_GICV2
-	ldr	x0, =GICC_BASE
-#endif
-	bl	gic_wait_for_interrupt
-#endif
+
+	wfe
+	tlbi	alle3
+	dsb	sy
+	isb
+	isb
+
+	ldr	x0, =CPU_RELEASE_ADDR
+	ldr	x1, =0x1000
+	add	x0, x0, x1
+	msr	ttbr0_el3, x0
+	msr	ttbr0_el2, x0
+
+	/* PS = 40 bits, 1 Tbyte; SH0 = 2 (Outer shareable);
+	 * ORGN0 = 1 - Normal memory, outer write-back write-allocate cacheable
+	 * IRGN0 = 1 - Normal memory, inner write-back write-allocate cacheable
+	 * T0SZ=24
+	 */
+	ldr	x0, =(2<<16) | (2<<12) | (1<<10) | (1<<8) | (24 << 0)
+	msr	tcr_el3, x0
+	msr	tcr_el2, x0
+
+	ldr	x0,=MEMORY_ATTRIBUTES
+	msr	mair_el3, x0
+	msr	mair_el2, x0
+
+	/* icache & dcache */
+	mrs	x0, sctlr_el3
+	/* bits SA(3)  M(0) */
+	ldr	x1, =(1<<12) | (1<<5) | (1 << 3) | (1<<2) |(1 << 0)
+	orr	x0, x0, x1     /* set bits */
+	msr	sctlr_el3, x0
+	isb
 
 	/*
 	 * MPIDR_EL1 Fields:
@@ -142,7 +175,7 @@ start_slave_cores:
 	ubfm	x1, x0, #8, #15
 	ubfm	x2, x0, #0, #1
 	orr	x10, x2, x1, lsl #2	/* x10 has LPID */
-	ubfm    x9, x0, #0, #15         /* x9 contains MPIDR[15:0] */
+	ubfm	x9, x0, #0, #15         /* x9 contains MPIDR[15:0] */
 	/*
 	 * offset of the spin table element for this core from start of spin
 	 * table (each elem is padded to 64 bytes)
