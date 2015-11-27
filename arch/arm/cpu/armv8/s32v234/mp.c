@@ -34,12 +34,16 @@ phys_addr_t determine_mp_bootpg(void)
 
 int fsl_s32v234_wake_seconday_cores(void)
 {
+	void *boot_loc = (void *)SECONDARY_CPU_BOOT_PAGE;
+	size_t *boot_page_size = &(__secondary_boot_page_size);
 	u64 *table = get_spin_tbl_addr();
 
 	/* Clear spin table so that secondary processors
 	 * observe the correct value after waking up from wfe.
 	 */
 	memset(table, 0, CONFIG_MAX_CPUS * ENTRY_SIZE);
+	flush_dcache_range((unsigned long)boot_loc,
+			   (unsigned long)boot_loc + *boot_page_size);
 
 	/* program the cores possible running modes */
 	writew(MC_ME_CCTL_DEASSERT_CORE, MC_ME_CCTL2);
