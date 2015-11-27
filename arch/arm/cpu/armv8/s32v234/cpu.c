@@ -161,6 +161,7 @@ static int find_table(const struct sys_mmu_table *list,
 static inline void early_mmu_setup(void)
 {
 	unsigned int el, i;
+	volatile struct ccsr_cci400 *cci = (struct ccsr_cci400 *)CCI400_BASE_ADDR;
 	u64 *level0_table = (u64 *)(IRAM_BASE_ADDR + 0x6000);
 	u64 *level1_table0 = (u64 *)(IRAM_BASE_ADDR + 0x7000);
 	u64 *level1_table1 = (u64 *)(IRAM_BASE_ADDR + 0x8000);
@@ -207,7 +208,11 @@ static inline void early_mmu_setup(void)
 			 */
 		}
 	}
+	out_le32(&cci->slave[3].snoop_ctrl,
+		 CCI400_DVM_MESSAGE_REQ_EN | CCI400_SNOOP_REQ_EN);
 
+	out_le32(&cci->slave[4].snoop_ctrl,
+		 CCI400_DVM_MESSAGE_REQ_EN | CCI400_SNOOP_REQ_EN);
 	el = current_el();
 	set_ttbr_tcr_mair(el, (u64)level0_table, S32V_TCR, MEMORY_ATTRIBUTES);
 	set_sctlr(get_sctlr() | CR_M);
