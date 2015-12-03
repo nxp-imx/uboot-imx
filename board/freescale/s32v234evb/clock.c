@@ -56,7 +56,7 @@ static int select_pll_source_clk(enum pll_type pll, u32 refclk_freq)
 	return 0;
 }
 
-static void entry_to_target_mode(u32 mode)
+void entry_to_target_mode(u32 mode)
 {
 	writel(mode | MC_ME_MCTL_KEY, MC_ME_MCTL);
 	writel(mode | MC_ME_MCTL_INVERTEDKEY, MC_ME_MCTL);
