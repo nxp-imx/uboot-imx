@@ -128,6 +128,10 @@ int clk_set_rate(struct clk *clk, unsigned long rate)
 {
 	if (clk && clk->set_rate)
 		clk->set_rate(clk, rate);
+
+	if (!clk)
+		return 0;
+
 	return clk->rate;
 }
 
