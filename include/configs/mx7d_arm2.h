@@ -162,7 +162,7 @@
 	"fdt_addr=0x83000000\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"console=ttymxc0\0" \
-	"bootargs=console=ttymxc0,115200 ubi.mtd=3 "  \
+	"bootargs=console=ttymxc0,115200 ubi.mtd=4 "  \
 		"root=ubi0:rootfs rootfstype=ubifs "		     \
 		"mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),-(rootfs)\0"\
 	"bootcmd=nand read ${loadaddr} 0x4000000 0x800000;"\
