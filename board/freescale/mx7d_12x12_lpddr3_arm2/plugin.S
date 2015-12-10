@@ -70,9 +70,6 @@
 	subs	r6, r6, #0x1
 	bne	1b
 
-	ldr	r7, =0x0
-	str	r7, [r1, #0x380]
-
 	/* clear ddr_phy reset */
 	ldr	r6, =0x1000
 	ldr	r7, [r2, r6]
@@ -206,14 +203,27 @@
 	bic	r7, r7, #0x2
 	str	r7, [r2, r6]
 
+	ldr	r7, [r1, #0x800]
+	and	r7, r7, #0x11
+	cmp	r7, #0x10
+	beq	2f
+
+	/* TO1.1 */
+	ldr	r7, [r11]
+	bic	r7, r7, #(1 << 27)
+	str	r7, [r11]
+	ldr	r7, [r11]
+	bic	r7, r7, #(1 << 29)
+	str	r7, [r11]
+2:
 	ldr	r7, =(0x1 << 30)
 	str	r7, [r1, #0x380]
 
 	/* need to delay ~5mS */
-	ldr	r6, =0x1000000
-2:
+	ldr	r6, =0x100000
+3:
 	subs	r6, r6, #0x1
-	bne	2b
+	bne	3b
 
 	/* restore DDR PHY */
 	ldr	r6, =0x0
