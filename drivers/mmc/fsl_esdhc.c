@@ -608,6 +608,9 @@ static int esdhc_init(struct mmc *mmc)
 
 	/* Put VEND_SPEC to default value */
 	esdhc_write32(&regs->vendorspec, VENDORSPEC_INIT);
+
+	/* Disable DLL_CTRL delay line */
+	esdhc_write32(&regs->dllctrl, 0x0);
 #endif
 
 #ifndef ARCH_MXC
