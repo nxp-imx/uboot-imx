@@ -12,6 +12,8 @@
 #include <fuse.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
+#include <asm/arch/imx-regs.h>
+#include <asm/arch/sys_proto.h>
 #include <dm.h>
 #include <errno.h>
 #include <malloc.h>
@@ -126,6 +128,7 @@ static int read_cpu_temperature(struct udevice *dev)
 #define TEMPERATURE_HOT		85
 #define TEMPERATURE_MAX		125
 #define MEASURE_FREQ		327
+#define TEMPSENSE1_FINISHED	(1 << 11)
 
 static int read_cpu_temperature(struct udevice *dev)
 {
@@ -168,18 +171,30 @@ static int read_cpu_temperature(struct udevice *dev)
 	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_FINISHED_MASK, &ccm_anatop->tempsense1_clr);
 	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_MEASURE_TEMP_MASK, &ccm_anatop->tempsense1_set);
 
-	start = get_timer(0);
-	/* Wait max 100ms */
-	do {
-		/*
-		 * Since we can not rely on finish bit, use 1ms delay to get
-		 * temperature. From RM, 17us is enough to get data, but
-		 * to gurantee to get the data, delay 100ms here.
-		 */
+	if (is_soc_rev(CHIP_REV_1_1) >= 0) {
+		/* make sure that the latest temp is valid */
+		while ((readl(&ccm_anatop->tempsense1) &
+		       TEMPMON_HW_ANADIG_TEMPSENSE1_FINISHED_MASK) == 0)
+			udelay(10000);
 		reg = readl(&ccm_anatop->tempsense1);
 		tmp = (reg & TEMPMON_HW_ANADIG_TEMPSENSE1_TEMP_VALUE_MASK)
 		       >> TEMPMON_HW_ANADIG_TEMPSENSE1_TEMP_VALUE_SHIFT;
-	} while (get_timer(0) < (start + 100));
+	} else {
+		start = get_timer(0);
+		/* Wait max 100ms */
+		do {
+			/*
+			 * Since we can not rely on finish bit, use 100ms
+			 * delay to get temperature. From RM, 17us is
+			 * enough to get data, but to gurantee to get
+			 * the data, delay 100ms here.
+			 */
+			reg = readl(&ccm_anatop->tempsense1);
+			tmp = (reg &
+			       TEMPMON_HW_ANADIG_TEMPSENSE1_TEMP_VALUE_MASK)
+			       >> TEMPMON_HW_ANADIG_TEMPSENSE1_TEMP_VALUE_SHIFT;
+		} while (get_timer(0) < (start + 100));
+	}
 
 	writel(TEMPMON_HW_ANADIG_TEMPSENSE1_FINISHED_MASK, &ccm_anatop->tempsense1_clr);
 
