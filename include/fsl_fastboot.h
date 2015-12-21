@@ -41,7 +41,7 @@
 #define FASTBOOT_PARTITION_DATA "data"
 #define FASTBOOT_PARTITION_BOOT_B "boot_b"
 #define FASTBOOT_PARTITION_SYSTEM_B "system_b"
-#define FASTBOOT_PARTITION_SLOTMETA "slotmeta"
+#define FASTBOOT_PARTITION_MISC "misc"
 #else
 #define FASTBOOT_PARTITION_BOOT "boot"
 #define FASTBOOT_PARTITION_RECOVERY "recovery"

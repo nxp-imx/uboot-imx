@@ -17,33 +17,53 @@
 #include <common.h>
 #include <g_dnl.h>
 #include <fsl_fastboot.h>
-#include <ext_common.h>
 #include "bootctrl.h"
+#include <linux/types.h>
+#include <linux/stat.h>
 
 #define SLOT_NUM (unsigned int)2
-#define META_FILE "slotmeta.data"
-#define META_BAK_FILE ".slotmeta.data.bak"
-#define META_FILE_ABS_PATH "/slotmeta.data"
-#define META_BAK_FILE_ABS_PATH "/.slotmeta.data.bak"
+
+/* keep same as bootable/recovery/bootloader.h */
+struct bootloader_message {
+	char command[32];
+	char status[32];
+	char recovery[768];
+
+	/* The 'recovery' field used to be 1024 bytes.	It has only ever
+	 been used to store the recovery command line, so 768 bytes
+	 should be plenty.  We carve off the last 256 bytes to store the
+	 stage string (for multistage packages) and possible future
+	 expansion. */
+	char stage[32];
+	char slot_suffix[32];
+	char reserved[192];
+};
+
+/* start from bootloader_message.slot_suffix[BOOTCTRL_IDX] */
+#define BOOTCTRL_IDX				0
+#define BOOTCTRL_OFFSET		\
+	(u32)(&(((struct bootloader_message *)0)->slot_suffix[BOOTCTRL_IDX]))
+#define CRC_DATA_OFFSET		\
+	(uint32_t)(&(((struct boot_ctl *)0)->a_slot_meta[0]))
 
 struct slot_meta {
-	unsigned int priority;
-	unsigned int tryremain;
-	unsigned int bootsuc;
-	unsigned int reserved[4];
+	u8 bootsuc:1;
+	u8 tryremain:3;
+	u8 priority:4;
 };
 
 struct boot_ctl {
-	unsigned int crc;
-	unsigned int recovery_tryremain;
+	char magic[4]; /* "\0FSL" */
+	u32 crc;
 	struct slot_meta a_slot_meta[SLOT_NUM];
-	unsigned int reserved[4];
+	u8 recovery_tryremain;
 };
-
 
 static unsigned int g_mmc_id;
 static unsigned int g_slot_selected;
 static const char *g_slot_suffix[SLOT_NUM] = {"_a", "_b"};
+
+static int do_write(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 
 static int strcmp_l1(const char *s1, const char *s2)
 {
@@ -65,11 +85,11 @@ static void dump_slotmeta(struct boot_ctl *ptbootctl)
 		return;
 
 	printf("RecoveryTryRemain %d, crc %u\n",
-	       ptbootctl->recovery_tryremain, ptbootctl->crc);
+		   ptbootctl->recovery_tryremain, ptbootctl->crc);
 
 	for (i = 0; i < SLOT_NUM; i++) {
 		printf("slot %d: pri %d, try %d, suc %d\n", i,
-		       ptbootctl->a_slot_meta[i].priority,
+			   ptbootctl->a_slot_meta[i].priority,
 				ptbootctl->a_slot_meta[i].tryremain,
 				ptbootctl->a_slot_meta[i].bootsuc);
 	}
@@ -88,11 +108,11 @@ static unsigned int slot_find(struct boot_ctl *ptbootctl)
 	unsigned int slot = -1;
 	int i;
 
-	for (i  = 0; i < SLOT_NUM; i++) {
+	for (i	= 0; i < SLOT_NUM; i++) {
 		struct slot_meta *pslot_meta = &(ptbootctl->a_slot_meta[i]);
 		if ((pslot_meta->priority > max_pri) &&
-		    ((pslot_meta->bootsuc > 0) ||
-		    (pslot_meta->tryremain > 0))) {
+			((pslot_meta->bootsuc > 0) ||
+			(pslot_meta->tryremain > 0))) {
 			max_pri = pslot_meta->priority;
 			slot = i;
 			printf("select_slot slot %d\n", slot);
@@ -101,111 +121,178 @@ static unsigned int slot_find(struct boot_ctl *ptbootctl)
 
 	return slot;
 }
-static int read_bootctl(struct boot_ctl *ptbootctl)
+
+static ulong get_block_size(char *ifname, int dev, int part)
+{
+	block_dev_desc_t *dev_desc = NULL;
+	disk_partition_t part_info;
+
+	dev_desc = get_dev(ifname, dev);
+	if (dev_desc == NULL) {
+		printf("Block device %s %d not supported\n", ifname, dev);
+		return 0;
+	}
+
+	if (get_partition_info(dev_desc, part, &part_info)) {
+		printf("Cannot find partition %d\n", part);
+		return 0;
+	}
+
+	return part_info.blksz;
+}
+
+#define ALIGN_BYTES 64 /*armv7 cache line need 64 bytes aligned */
+static int rw_block(bool bread, char **ppblock,
+					uint *pblksize, char *pblock_write)
 {
 	int ret;
 	char *argv[6];
 	char addr_str[20];
-	char len_str[8];
+	char cnt_str[8];
 	char devpart_str[8];
-	unsigned int crc;
-	int load_count = 0;
-	char *pmeta_file = META_FILE;
+	char block_begin_str[8];
+	ulong blk_size = 0;
+	uint blk_begin = 0;
+	uint blk_end = 0;
+	uint block_cnt = 0;
+	char *p_block = NULL;
+
+	if (bread && ((ppblock == NULL) || (pblksize == NULL)))
+		return -1;
+
+	if (!bread && (pblock_write == NULL))
+		return -1;
+
+	blk_size = get_block_size("mmc", g_mmc_id,
+			CONFIG_ANDROID_MISC_PARTITION_MMC);
+	if (blk_size == 0) {
+		printf("rw_block, get_block_size return 0\n");
+		return -1;
+	}
+
+	blk_begin = BOOTCTRL_OFFSET/blk_size;
+	blk_end = (BOOTCTRL_OFFSET + sizeof(struct boot_ctl) - 1)/blk_size;
+	block_cnt = 1 + (blk_end - blk_begin);
+
+	sprintf(devpart_str, "0x%x:0x%x", g_mmc_id,
+		CONFIG_ANDROID_MISC_PARTITION_MMC);
+	sprintf(block_begin_str, "0x%x", blk_begin);
+	sprintf(cnt_str, "0x%x", block_cnt);
+
+	argv[0] = "rw"; /* not care */
+	argv[1] = "mmc";
+	argv[2] = devpart_str;
+	argv[3] = addr_str;
+	argv[4] = block_begin_str;
+	argv[5] = cnt_str;
+
+	if (bread) {
+		p_block = (char *)memalign(ALIGN_BYTES, blk_size * block_cnt);
+		if (NULL == p_block) {
+			printf("rw_block, memalign %d bytes failed\n",
+			       (int)(blk_size * block_cnt));
+			return -1;
+		}
+		sprintf(addr_str, "0x%x", (unsigned int)p_block);
+		ret = do_read(NULL, 0, 6, argv);
+		if (ret) {
+			free(p_block);
+			printf("do_read failed, ret %d\n", ret);
+			return -1;
+		}
+
+		*ppblock = p_block;
+		*pblksize = (uint)blk_size;
+	} else {
+		sprintf(addr_str, "0x%x", (unsigned int)pblock_write);
+		ret = do_write(NULL, 0, 6, argv);
+		if (ret) {
+			printf("do_write failed, ret %d\n", ret);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+static int read_bootctl(struct boot_ctl *ptbootctl)
+{
+	int ret = 0;
+	unsigned int crc = 0;
+	char *p_block = NULL;
+	uint offset_in_block = 0;
+	uint blk_size = 0;
+	char *pmagic = NULL;
 
 	if (ptbootctl == NULL)
 		return -1;
 
-	sprintf(len_str, "0x%x", sizeof(struct boot_ctl));
-	sprintf(addr_str, "0x%x", (unsigned int)ptbootctl);
-	sprintf(devpart_str, "%d:%d", g_mmc_id,
-		CONFIG_ANDROID_SLOTMETA_PARTITION_MMC);
-
-load_meta:
-	argv[0] = "ext4load";
-	argv[1] = "mmc";
-	argv[2] = devpart_str;
-	argv[3] = addr_str;
-	argv[4] = pmeta_file;
-	argv[5] = len_str;
-
-	ret = do_ext4_load(NULL, 0, 5, argv);
+	ret = rw_block(true, &p_block, &blk_size, NULL);
 	if (ret) {
-		printf("do_ext4_load %s failed, ret %d\n", pmeta_file, ret);
+		printf("read_bootctl, rw_block read failed\n");
 		return -1;
 	}
 
-	/* check crc, if faled, load backup meta data */
-	crc = crc32(0, (unsigned char *)ptbootctl + 4,
-		sizeof(struct boot_ctl) - 4);
+	offset_in_block = BOOTCTRL_OFFSET%blk_size;
+	memcpy(ptbootctl, p_block + offset_in_block, sizeof(struct boot_ctl));
+
+	pmagic = ptbootctl->magic;
+	if (!((pmagic[0] == '\0') && (pmagic[1] == 'F') &&
+	      (pmagic[2] == 'S') && (pmagic[3] == 'L'))) {
+		printf("magic error, %c %c %c %c\n",
+		       pmagic[0], pmagic[1], pmagic[2], pmagic[3]);
+
+		free(p_block);
+		return -1;
+	}
+
+	/* check crc */
+	crc = crc32(0, (unsigned char *)ptbootctl + CRC_DATA_OFFSET,
+		sizeof(struct boot_ctl) - CRC_DATA_OFFSET);
 	if (crc != ptbootctl->crc) {
-		printf("%s, crc check failed, caculated %d, read %d\n",
-		       pmeta_file, crc, ptbootctl->crc);
+		printf("crc check failed, caculated %d, read %d\n",
+		       crc, ptbootctl->crc);
 
-		if (load_count == 0) {
-			load_count++;
-			pmeta_file = META_BAK_FILE;
-			printf("load backup meta %s\n", pmeta_file);
-			goto load_meta;
-		}
+		free(p_block);
 		return -1;
 	}
 
-	/* use backup meta to recover */
-	if (load_count > 0) {
-		printf("use backup meta to recover\n");
-		argv[0] = "ext4write";
-		argv[4] = META_FILE_ABS_PATH;
-		do_ext4_write(NULL, 0, 6, argv);
-	}
-
+	free(p_block);
 	return 0;
 }
 
 static int write_bootctl(struct boot_ctl *ptbootctl)
 {
 	int ret = 0;
-	char *argv[6];
-	char addr_str[20];
-	char len_str[8];
-	char devpart_str[8];
+	char *p_block = NULL;
+	uint offset_in_block = 0;
+	uint blk_size = 0;
 
 	if (ptbootctl == NULL)
 		return -1;
 
-	ptbootctl->crc = crc32(0, (unsigned char *)ptbootctl + 4,
-		sizeof(struct boot_ctl) - 4);
+	ptbootctl->crc = crc32(0, (unsigned char *)ptbootctl + CRC_DATA_OFFSET,
+		sizeof(struct boot_ctl) - CRC_DATA_OFFSET);
 
-	sprintf(len_str, "0x%x", sizeof(struct boot_ctl));
-	sprintf(addr_str, "0x%x", (unsigned int)ptbootctl);
-	sprintf(devpart_str, "%d:%d", g_mmc_id,
-		CONFIG_ANDROID_SLOTMETA_PARTITION_MMC);
-
-	argv[0] = "ext4write";
-	argv[1] = "mmc";
-	argv[2] = devpart_str;
-	argv[3] = addr_str;
-	argv[4] = META_FILE_ABS_PATH;
-	argv[5] = len_str;
-
-
-	/* write back t_bootctl */
-	ret = do_ext4_write(NULL, 0, 6, argv);
+	ret = rw_block(true, &p_block, &blk_size, NULL);
 	if (ret) {
-		printf("!!! do_ext4_write %s failed, ret %d\n", argv[4], ret);
-		return ret;
+		printf("write_bootctl, rw_block read failed\n");
+		return -1;
 	}
 
-	/* back up */
-	argv[4] = META_BAK_FILE_ABS_PATH;
-	ret = do_ext4_write(NULL, 0, 6, argv);
+	offset_in_block = BOOTCTRL_OFFSET%blk_size;
+	memcpy(p_block + offset_in_block, ptbootctl, sizeof(struct boot_ctl));
+
+	ret = rw_block(false, NULL, NULL, p_block);
 	if (ret) {
-		printf("!!! do_ext4_write %s failed, ret %d\n", argv[4], ret);
-		return ret;
+		free(p_block);
+		printf("write_bootctl, rw_block write failed\n");
+		return -1;
 	}
 
-	return ret;
+	free(p_block);
+	return 0;
 }
-
 
 char *select_slot(void)
 {
@@ -230,11 +317,11 @@ char *select_slot(void)
 	}
 
 	/* invalid slot, set priority to 0 */
-	for (i  = 0; i < SLOT_NUM; i++) {
+	for (i	= 0; i < SLOT_NUM; i++) {
 		struct slot_meta *pslot_meta = &(t_bootctl.a_slot_meta[i]);
 		if ((pslot_meta->bootsuc == 0) &&
-		    (pslot_meta->tryremain == 0) &&
-		    (pslot_meta->priority > 0)) {
+			(pslot_meta->tryremain == 0) &&
+			(pslot_meta->priority > 0)) {
 			pslot_meta->priority = 0;
 			b_need_write = true;
 		}
@@ -246,7 +333,7 @@ char *select_slot(void)
 	}
 
 	if ((t_bootctl.a_slot_meta[slot].bootsuc == 0) &&
-	    (t_bootctl.a_slot_meta[slot].tryremain > 0)) {
+		(t_bootctl.a_slot_meta[slot].tryremain > 0)) {
 		b_need_write = true;
 		t_bootctl.a_slot_meta[slot].tryremain--;
 	}
@@ -280,11 +367,11 @@ static unsigned int slotidx_from_suffix(char *suffix)
 bool is_sotvar(char *cmd)
 {
 	if (!strcmp_l1("has-slot:", cmd) ||
-	    !strcmp_l1("slot-successful:", cmd) ||
-	    !strcmp_l1("slot-suffixes", cmd) ||
-	    !strcmp_l1("current-slot", cmd) ||
-	    !strcmp_l1("slot-unbootable:", cmd) ||
-	    !strcmp_l1("slot-retry-count:", cmd)) {
+		!strcmp_l1("slot-successful:", cmd) ||
+		!strcmp_l1("slot-suffixes", cmd) ||
+		!strcmp_l1("current-slot", cmd) ||
+		!strcmp_l1("slot-unbootable:", cmd) ||
+		!strcmp_l1("slot-retry-count:", cmd)) {
 		return true;
 	}
 
@@ -401,3 +488,71 @@ void cb_set_active(struct usb_ep *ep, struct usb_request *req)
 
 	return;
 }
+
+static int do_write(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	char *ep;
+	block_dev_desc_t *dev_desc = NULL;
+	int dev;
+	int part = 0;
+	disk_partition_t part_info;
+	ulong offset = 0u;
+	ulong limit = 0u;
+	void *addr;
+	uint blk;
+	uint cnt;
+
+	if (argc != 6) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
+
+	dev = (int)simple_strtoul(argv[2], &ep, 16);
+	if (*ep) {
+		if (*ep != ':') {
+			printf("Invalid block device %s\n", argv[2]);
+			return 1;
+		}
+		part = (int)simple_strtoul(++ep, NULL, 16);
+	}
+
+	dev_desc = get_dev(argv[1], dev);
+	if (dev_desc == NULL) {
+		printf("Block device %s %d not supported\n", argv[1], dev);
+		return 1;
+	}
+
+	addr = (void *)simple_strtoul(argv[3], NULL, 16);
+	blk = simple_strtoul(argv[4], NULL, 16);
+	cnt = simple_strtoul(argv[5], NULL, 16);
+
+	if (part != 0) {
+		if (get_partition_info(dev_desc, part, &part_info)) {
+			printf("Cannot find partition %d\n", part);
+			return 1;
+		}
+		offset = part_info.start;
+		limit = part_info.size;
+	} else {
+		/* Largest address not available in block_dev_desc_t. */
+		limit = ~0;
+	}
+
+	if (cnt + blk > limit) {
+		printf("Write out of range\n");
+		return 1;
+	}
+
+	if (dev_desc->block_write(dev, offset + blk, cnt, addr) < 0) {
+		printf("Error writing blocks\n");
+		return 1;
+	}
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	write,	6,	0,	do_write,
+	"write binary data to a partition",
+	"<interface> <dev[:part]> addr blk# cnt"
+);

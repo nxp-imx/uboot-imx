@@ -169,7 +169,7 @@ enum {
 #ifdef CONFIG_BRILLO_SUPPORT
 	PTN_KERNEL_B_INDEX,
 	PTN_SYSTEM_B_INDEX,
-	PTN_SLOTMETA_INDEX,
+	PTN_MISC_INDEX,
 #endif
 	PTN_NUM
 };
@@ -1251,10 +1251,10 @@ static int _fastboot_parts_load_from_ptable(void)
 					 FASTBOOT_PARTITION_SYSTEM_B,
 					 dev_desc, ptable);
 
-	_fastboot_parts_add_ptable_entry(PTN_SLOTMETA_INDEX,
-					 CONFIG_ANDROID_SLOTMETA_PARTITION_MMC,
+	_fastboot_parts_add_ptable_entry(PTN_MISC_INDEX,
+					 CONFIG_ANDROID_MISC_PARTITION_MMC,
 					 user_partition,
-					 FASTBOOT_PARTITION_SLOTMETA,
+					 FASTBOOT_PARTITION_MISC,
 					 dev_desc, ptable);
 #else
 	_fastboot_parts_add_ptable_entry(PTN_KERNEL_INDEX,
