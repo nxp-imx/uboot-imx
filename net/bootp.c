@@ -6,6 +6,7 @@
  *	Copyright 2000 Roland Borde
  *	Copyright 2000 Paolo Scaffardi
  *	Copyright 2000-2004 Wolfgang Denk, wd@denx.de
+ *      Copyright (C) 2015 Freescale Semiconductor, Inc.
  */
 
 #include <common.h>
@@ -947,6 +948,10 @@ DhcpHandler(uchar *pkt, unsigned dest, IPaddr_t sip, unsigned src,
 
 	/* Filter out pkts we don't want */
 	if (BootpCheckPkt(pkt, dest, src, len))
+		return;
+
+	/* Ignore pkts with ip address which is 0 */
+	if (NetReadIP(&bp->bp_yiaddr) == 0)
 		return;
 
 	debug("DHCPHandler: got DHCP packet: (src=%d, dst=%d, len=%d) state:"
