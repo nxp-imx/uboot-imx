@@ -2,7 +2,7 @@
  * FSL SD/MMC Defines
  *-------------------------------------------------------------------
  *
- * Copyright 2007-2008, 2010-2013 Freescale Semiconductor, Inc.
+ * Copyright 2007-2008, 2010-2015 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -168,6 +168,7 @@ struct fsl_esdhc_cfg {
 	u32	esdhc_base;
 	u32	sdhc_clk;
 	u8	max_bus_width;
+	u8	wp_enable;
 	struct mmc_config cfg;
 };
 
