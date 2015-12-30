@@ -19,6 +19,7 @@
 #define CONFIG_SYS_GENERIC_BOARD
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
+#define CONFIG_SYS_BOOTM_LEN 0x1000000
 
 /* uncomment for SECURE mode support */
 /* #define CONFIG_SECURE_BOOT */
@@ -58,7 +59,7 @@
 #define CONFIG_FSL_USDHC
 #ifdef CONFIG_FSL_USDHC
 #define CONFIG_FSL_ESDHC
-#define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC2_BASE_ADDR
+#define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC1_BASE_ADDR
 
 #define CONFIG_SYS_FSL_USDHC_NUM	1
 
@@ -379,5 +380,10 @@
 #if defined(CONFIG_ANDROID_SUPPORT)
 #include "mx6ul_14x14_evk_android.h"
 #endif
+
+#if defined(CONFIG_BRILLO_SUPPORT)
+#include "mx6ul_14x14_evk_brillo.h"
+#endif
+
 
 #endif
