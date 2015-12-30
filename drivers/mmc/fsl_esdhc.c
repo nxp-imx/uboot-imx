@@ -221,9 +221,12 @@ static int esdhc_setup_data(struct mmc *mmc, struct mmc_data *data)
 #endif
 		if (wml_value > WML_WR_WML_MAX)
 			wml_value = WML_WR_WML_MAX_VAL;
-		if ((esdhc_read32(&regs->prsstat) & PRSSTAT_WPSPL) == 0) {
-			printf("\nThe SD card is locked. Can not write to a locked card.\n\n");
-			return TIMEOUT;
+
+		if (cfg->wp_enable) {
+			if ((esdhc_read32(&regs->prsstat) & PRSSTAT_WPSPL) == 0) {
+				printf("\nThe SD card is locked. Can not write to a locked card.\n\n");
+				return TIMEOUT;
+			}
 		}
 
 		esdhc_clrsetbits32(&regs->wml, WML_WR_WML_MASK,
