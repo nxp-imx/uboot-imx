@@ -1188,10 +1188,10 @@ static int mmc_startup(struct mmc *mmc)
 			 * ext_csd's capacity is valid if the value is more
 			 * than 2GB
 			 */
-			capacity = ext_csd[EXT_CSD_SEC_CNT] << 0
-					| ext_csd[EXT_CSD_SEC_CNT + 1] << 8
-					| ext_csd[EXT_CSD_SEC_CNT + 2] << 16
-					| ext_csd[EXT_CSD_SEC_CNT + 3] << 24;
+			capacity = (u64)ext_csd[EXT_CSD_SEC_CNT] << 0
+					| (u64)ext_csd[EXT_CSD_SEC_CNT + 1] << 8
+					| (u64)ext_csd[EXT_CSD_SEC_CNT + 2] << 16
+					| (u64)ext_csd[EXT_CSD_SEC_CNT + 3] << 24;
 			capacity *= MMC_MAX_BLOCK_LEN;
 			if ((capacity >> 20) > 2 * 1024)
 				mmc->capacity_user = capacity;
@@ -1263,10 +1263,10 @@ static int mmc_startup(struct mmc *mmc)
 			mmc->enh_user_size *= ext_csd[EXT_CSD_HC_WP_GRP_SIZE];
 			mmc->enh_user_size <<= 19;
 			mmc->enh_user_start =
-				(ext_csd[EXT_CSD_ENH_START_ADDR+3] << 24) +
-				(ext_csd[EXT_CSD_ENH_START_ADDR+2] << 16) +
-				(ext_csd[EXT_CSD_ENH_START_ADDR+1] << 8) +
-				ext_csd[EXT_CSD_ENH_START_ADDR];
+				((u64)ext_csd[EXT_CSD_ENH_START_ADDR+3] << 24) +
+				((u64)ext_csd[EXT_CSD_ENH_START_ADDR+2] << 16) +
+				((u64)ext_csd[EXT_CSD_ENH_START_ADDR+1] << 8) +
+				(u64)ext_csd[EXT_CSD_ENH_START_ADDR];
 			if (mmc->high_capacity)
 				mmc->enh_user_start <<= 9;
 		}
@@ -1301,10 +1301,10 @@ static int mmc_startup(struct mmc *mmc)
 			 * JEDEC Standard JESD84-B45, 6.2.4
 			 */
 			if (mmc->high_capacity && part_completed) {
-				capacity = (ext_csd[EXT_CSD_SEC_CNT]) |
-					(ext_csd[EXT_CSD_SEC_CNT + 1] << 8) |
-					(ext_csd[EXT_CSD_SEC_CNT + 2] << 16) |
-					(ext_csd[EXT_CSD_SEC_CNT + 3] << 24);
+				capacity = ((u64)ext_csd[EXT_CSD_SEC_CNT]) |
+					((u64)ext_csd[EXT_CSD_SEC_CNT + 1] << 8) |
+					((u64)ext_csd[EXT_CSD_SEC_CNT + 2] << 16) |
+					((u64)ext_csd[EXT_CSD_SEC_CNT + 3] << 24);
 				capacity *= MMC_MAX_BLOCK_LEN;
 				mmc->capacity_user = capacity;
 			}
