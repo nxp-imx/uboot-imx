@@ -1210,10 +1210,10 @@ err3:
 	for (--j; j >= 0; j--)
 		mxs_dma_release(j);
 err2:
-	free(info->desc);
-err1:
 	for (--i; i >= 0; i--)
 		mxs_dma_desc_free(info->desc[i]);
+	free(info->desc);
+err1:
 	printf("MXS NAND: Unable to allocate DMA descriptors\n");
 	return -ENOMEM;
 }
