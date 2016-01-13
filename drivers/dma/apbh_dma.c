@@ -6,7 +6,8 @@
  * on behalf of DENX Software Engineering GmbH
  *
  * Based on code from LTIB:
- * Copyright (C) 2010 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2010-2016 Freescale Semiconductor, Inc. All Rights Reserved.
+ *
  */
 
 #include <cpu_func.h>
@@ -126,10 +127,10 @@ static int mxs_dma_enable(int channel)
 		return 0;
 	}
 
-	pdesc = list_first_entry(&pchan->active, struct mxs_dma_desc, node);
-	if (pdesc == NULL)
+	if (list_empty(&pchan->active))
 		return -EFAULT;
 
+	pdesc = list_first_entry(&pchan->active, struct mxs_dma_desc, node);
 	if (pchan->flags & MXS_DMA_FLAGS_BUSY) {
 		if (!(pdesc->cmd.data & MXS_DMA_DESC_CHAIN))
 			return 0;
