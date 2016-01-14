@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2014-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX7.
  *
@@ -9,6 +9,8 @@
 
 #ifndef __MX7_COMMON_H
 #define __MX7_COMMON_H
+
+#define CONFIG_SYS_VSNPRINTF
 
 #define CONFIG_BOARD_POSTCLK_INIT
 #define CONFIG_MXC_GPT_HCLK
