@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2014-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -7,7 +7,58 @@
 #include <config.h>
 
 /* DDR script */
+.macro imx7d_ddrphy_latency_setting
+	ldr r2, =ANATOP_BASE_ADDR
+	ldr r3, [r2, #0x800]
+	and r3, r3, #0xFF
+	cmp r3, #0x11
+	bne NO_DELAY
+
+	/*TO 1.1*/
+	ldr r1, =0x00000dee
+	str r1, [r0, #0x9c]
+	ldr r1, =0x18181818
+	str r1, [r0, #0x7c]
+	ldr r1, =0x18181818
+	str r1, [r0, #0x80]
+	ldr r1, =0x40401818
+	str r1, [r0, #0x84]
+	ldr r1, =0x00000040
+	str r1, [r0, #0x88]
+	ldr r1, =0x40404040
+	str r1, [r0, #0x6c]
+	b TUNE_END
+
+NO_DELAY:
+	/*TO 1.0*/
+	ldr r1, =0x00000d6e
+	str r1, [r0, #0x9c]
+
+TUNE_END:
+.endm
+
+.macro imx7d_ddr_freq_setting
+	ldr r2, =ANATOP_BASE_ADDR
+	ldr r3, [r2, #0x800]
+	and r3, r3, #0xFF
+	cmp r3, #0x11
+	bne FREQ_DEFAULT_533
+
+	/* Change to 400Mhz for TO1.1 */
+	ldr r0, =CCM_BASE_ADDR
+	ldr r1, =0x15000000
+	ldr r2, =0xa080
+	str r1, [r0, r2]
+	ldr r1, =0x01000000
+	ldr r2, =0x9880
+	str r1, [r0, r2]
+
+FREQ_DEFAULT_533:
+.endm
+
 .macro imx7d_19x19_ddr3_arm2_ddr_setting
+	imx7d_ddr_freq_setting
+
 	/* Configure ocram_epdc */
 	ldr r0, =IOMUXC_GPR_BASE_ADDR
 	ldr r1, =0x4f400005
@@ -90,8 +141,7 @@
 	str r1, [r0, #0x4]
 	ldr r1, =0x00060807
 	str r1, [r0, #0x10]
-	ldr r1, =0x00000d6e
-	str r1, [r0, #0x9c]
+	imx7d_ddrphy_latency_setting
 	ldr r1, =0x08080808
 	str r1, [r0, #0x20]
 	ldr r1, =0x08080808

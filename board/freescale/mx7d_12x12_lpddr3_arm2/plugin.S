@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2014-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -7,6 +7,28 @@
 #include <config.h>
 
 /* DDR script */
+.macro imx7d_ddrphy_latency_setting
+	ldr r2, =ANATOP_BASE_ADDR
+	ldr r3, [r2, #0x800]
+	and r3, r3, #0xFF
+	cmp r3, #0x11
+	bne TUNE_END
+
+	/*TO 1.1*/
+	ldr r1, =0x1c1c1c1c
+	str r1, [r0, #0x7c]
+	ldr r1, =0x1c1c1c1c
+	str r1, [r0, #0x80]
+	ldr r1, =0x30301c1c
+	str r1, [r0, #0x84]
+	ldr r1, =0x00000030
+	str r1, [r0, #0x88]
+	ldr r1, =0x30303030
+	str r1, [r0, #0x6c]
+
+TUNE_END:
+.endm
+
 .macro imx7d_12x12_lpddr3_arm2_setting
 
 	/* check whether it is a LPSR resume */
@@ -204,7 +226,7 @@
 	str	r7, [r2, r6]
 
 	ldr	r7, [r1, #0x800]
-	and	r7, r7, #0x11
+	and	r7, r7, #0xFF
 	cmp	r7, #0x10
 	beq	2f
 
@@ -242,6 +264,32 @@
 	ldr	r7, =0x0007080C
 	str	r7, [r4, r6]
 
+	ldr     r7, [r1, #0x800]
+	and     r7, r7, #0xFF
+	cmp     r7, #0x10
+	beq     4f
+
+	ldr	r6, =0x7c
+	ldr	r7, =0x1c1c1c1c
+	str	r7, [r4, r6]
+
+	ldr	r6, =0x80
+	ldr	r7, =0x1c1c1c1c
+	str	r7, [r4, r6]
+
+	ldr	r6, =0x84
+	ldr	r7, =0x30301c1c
+	str	r7, [r4, r6]
+
+	ldr	r6, =0x88
+	ldr	r7, =0x00000030
+	str	r7, [r4, r6]
+
+	ldr	r6, =0x6c
+	ldr	r7, =0x30303030
+	str	r7, [r4, r6]
+
+4:
 	ldr	r6, =0x1c
 	ldr	r7, =0x01010000
 	str	r7, [r4, r6]
@@ -439,6 +487,7 @@
 	str r1, [r0, #0x8]
 	ldr r1, =0x0007080c
 	str r1, [r0, #0x10]
+	imx7d_ddrphy_latency_setting
 	ldr r1, =0x1010007e
 	str r1, [r0, #0xb0]
 	ldr r1, =0x01010000
