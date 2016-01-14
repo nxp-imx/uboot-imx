@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2016 Freescale Semiconductor, Inc.
  * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -17,6 +17,8 @@
 
 #ifndef __MX6_COMMON_H
 #define __MX6_COMMON_H
+
+#define CONFIG_SYS_VSNPRINTF
 
 #ifndef CONFIG_MX6UL
 #define CONFIG_ARM_ERRATA_743622
