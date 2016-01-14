@@ -5,7 +5,7 @@
  * (C) Copyright 2001 Sysgo Real-Time Solutions, GmbH <www.elinos.com>
  * Andreas Heppel <aheppel@sysgo.de>
  *
- * Copyright 2011-2014 Freescale Semiconductor, Inc.
+ * Copyright (C) 2011-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -90,6 +90,8 @@ static int env_print(char *name, int flag)
 
 		e.key = name;
 		e.data = NULL;
+		e.callback = NULL;
+		e.flags = 0;
 		hsearch_r(e, FIND, &ep, &env_htab, flag);
 		if (ep == NULL)
 			return 0;
@@ -271,6 +273,8 @@ static int _do_env_set(int flag, int argc, char * const argv[])
 
 	e.key	= name;
 	e.data	= value;
+	e.callback = NULL;
+	e.flags = 0;
 	hsearch_r(e, ENTER, &ep, &env_htab, env_flag);
 	free(value);
 	if (!ep) {
@@ -615,6 +619,8 @@ char *getenv(const char *name)
 
 		e.key	= name;
 		e.data	= NULL;
+		e.callback = NULL;
+		e.flags = 0;
 		hsearch_r(e, FIND, &ep, &env_htab, 0);
 
 		return ep ? ep->data : NULL;
@@ -1089,6 +1095,8 @@ static int do_env_exists(cmd_tbl_t *cmdtp, int flag, int argc,
 
 	e.key = argv[1];
 	e.data = NULL;
+	e.callback = NULL;
+	e.flags = 0;
 	hsearch_r(e, FIND, &ep, &env_htab, 0);
 
 	return (ep == NULL) ? 1 : 0;
