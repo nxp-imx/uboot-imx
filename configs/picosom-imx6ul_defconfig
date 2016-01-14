@@ -1,0 +1,3 @@
+CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/technexion/picosom-imx6ul/imximage.cfg"
+CONFIG_ARM=y
+CONFIG_TARGET_PICOSOM_IMX6UL=y

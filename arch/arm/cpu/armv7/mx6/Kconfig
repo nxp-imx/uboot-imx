@@ -145,6 +145,12 @@ config TARGET_MX6SX_19X19_ARM2
 	select DM
 	select DM_THERMAL
 
+config TARGET_PICOSOM_IMX6UL
+        bool "Support picosom-imx6ul"
+	select MX6UL
+	select DM
+	select DM_THERMAL
+
 config TARGET_NITROGEN6X
 	bool "nitrogen6x"
 
