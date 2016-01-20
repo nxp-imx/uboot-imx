@@ -125,13 +125,28 @@
 #define CONFIG_LOADADDR			0x80800000
 #define CONFIG_SYS_TEXT_BASE		0x87800000
 
-#define CONFIG_SYS_AUXCORE_BOOTDATA 0x60000000 /* Set to QSPI1 A flash at default */
+#ifdef CONFIG_SYS_BOOT_QSPI
+#define CONFIG_SYS_USE_QSPI
+#define CONFIG_ENV_IS_IN_SPI_FLASH
+#elif defined CONFIG_SYS_BOOT_NAND
+#define CONFIG_SYS_USE_NAND
+#define CONFIG_ENV_IS_IN_NAND
+#else
+#define CONFIG_ENV_IS_IN_MMC
+#endif
+
+#ifdef CONFIG_SYS_USE_QSPI
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x60100000 /* Set to QSPI1 A flash, offset 1M */
+#else
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x7F8000 /* Set to TCML address */
+#endif
 #define CONFIG_CMD_BOOTAUX /* Boot M4 */
 #define CONFIG_CMD_SETEXPR
 
 #ifdef CONFIG_CMD_BOOTAUX
 #define CONFIG_MXC_RDC /* Enable RDC to isolate the peripherals for A7 and M4 */
 
+#ifdef CONFIG_SYS_USE_QSPI
 #define UPDATE_M4_ENV \
 	"m4image=m4_qspi.bin\0" \
 	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \
@@ -141,11 +156,17 @@
 				"setexpr fw_sz ${filesize} + 0xffff; " \
 				"setexpr fw_sz ${fw_sz} / 0x10000; "	\
 				"setexpr fw_sz ${fw_sz} * 0x10000; "	\
-				"sf erase 0x0 ${fw_sz}; " \
-				"sf write ${loadaddr} 0x0 ${filesize}; " \
+				"sf erase 0x100000 ${fw_sz}; " \
+				"sf write ${loadaddr} 0x100000 ${filesize}; " \
 			"fi; " \
 		"fi\0" \
 	"m4boot=sf probe 0:0; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
+#else
+#define UPDATE_M4_ENV \
+	"m4image=m4_qspi.bin\0" \
+	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)" ${m4image}\0" \
+	"m4boot=run loadm4image; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
+#endif
 #else
 #define UPDATE_M4_ENV ""
 #endif
@@ -311,16 +332,6 @@
 #define CONFIG_SYS_NO_FLASH
 
 #define CONFIG_ENV_SIZE			SZ_8K
-
-#ifdef CONFIG_SYS_BOOT_QSPI
-#define CONFIG_SYS_USE_QSPI
-#define CONFIG_ENV_IS_IN_SPI_FLASH
-#elif defined CONFIG_SYS_BOOT_NAND
-#define CONFIG_SYS_USE_NAND
-#define CONFIG_ENV_IS_IN_NAND
-#else
-#define CONFIG_ENV_IS_IN_MMC
-#endif
 
 #ifdef CONFIG_SYS_USE_NAND
 #define CONFIG_CMD_NAND
