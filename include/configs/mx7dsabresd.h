@@ -83,7 +83,11 @@
 
 #ifdef CONFIG_IMX_BOOTAUX
 /* Set to QSPI1 A flash at default */
-#define CONFIG_SYS_AUXCORE_BOOTDATA 0x60000000
+#ifdef CONFIG_SYS_USE_QSPI
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x60100000 /* Set to QSPI1 A flash, offset 1M */
+#else
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x7F8000 /* Set to TCML address */
+#endif
 
 #ifdef CONFIG_SYS_USE_QSPI
 #define UPDATE_M4_ENV \
