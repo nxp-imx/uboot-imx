@@ -91,11 +91,17 @@
 #define CONFIG_LOADADDR			0x12000000
 #define CONFIG_SYS_TEXT_BASE		0x17800000
 
+#if defined(CONFIG_MX6DQ_POP_LPDDR2)
+#define CONFIG_DEFAULT_FDT_FILE "imx6q-pop-arm2.dtb"
+#else
+#define CONFIG_DEFAULT_FDT_FILE "imx6q-arm2.dtb"
+#endif
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"console=ttymxc3\0" \
-	"fdt_file=imx6q-arm2.dtb\0" \
+	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
 	"fdt_addr=0x18000000\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
@@ -189,7 +195,13 @@
 #define CONFIG_CMDLINE_EDITING
 
 /* Physical Memory Map */
+#if defined(CONFIG_MX6DQ_POP_LPDDR2)
+#define CONFIG_NR_DRAM_BANKS		2
+#define PHYS_SDRAM_0			MMDC0_ARB_BASE_ADDR
+#define PHYS_SDRAM_1			MMDC1_ARB_BASE_ADDR
+#else
 #define CONFIG_NR_DRAM_BANKS		1
+#endif
 #define PHYS_SDRAM			MMDC0_ARB_BASE_ADDR
 
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM
