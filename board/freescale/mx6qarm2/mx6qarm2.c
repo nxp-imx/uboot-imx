@@ -47,6 +47,15 @@ int dram_init(void)
 	return 0;
 }
 
+#if defined(CONFIG_MX6DQ_POP_LPDDR2)
+void dram_init_banksize(void) {
+	gd->bd->bi_dram[0].start = PHYS_SDRAM_0;
+	gd->bd->bi_dram[0].size = (phys_size_t)CONFIG_DDR_MB * 1024 * 1024;
+	gd->bd->bi_dram[1].start = PHYS_SDRAM_1;
+	gd->bd->bi_dram[1].size = (phys_size_t)CONFIG_DDR_MB * 1024 * 1024;
+}
+#endif
+
 iomux_v3_cfg_t const uart4_pads[] = {
 	MX6_PAD_KEY_COL0__UART4_TX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
 	MX6_PAD_KEY_ROW0__UART4_RX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
