@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#include <vsprintf.h>
 #include <asm/arch/siul.h>
 #include <asm/io.h>
 
@@ -113,6 +114,19 @@
 
 #define QSPI_BASE	QSPI_BASE_ADDR
 #define BURST_SIZE	512
+#define FLASH_HALF_PAGE_SIZE	16
+
+#define QSPI_LUT_0		0
+#define QSPI_LUT_1		1
+#define QSPI_LUT_2		2
+#define QSPI_LUT_60		60
+#define QSPI_LUT_61		61
+#define QSPI_LUT_62		62
+
+enum qspi_addr_t {
+	qspi_real_address = 1,
+	qspi_real_and_all
+};
 
 static void qspi_writel(unsigned int val, unsigned long addr)
 {
@@ -139,9 +153,12 @@ static void quadspi_set_lut(u32 index, u32 value)
 
 static void quadspi_read_hyp(void)
 {
-	quadspi_set_lut(0, QSPI_LUT(ADDR_DDR, 3, 24, CMD_DDR, 3, 0xA0));
-	quadspi_set_lut(1, QSPI_LUT(DUMMY, 3, 15, CADDR_DDR, 3, 16));
-	quadspi_set_lut(2, QSPI_LUT(STOP, 3, 0, READ_DDR, 3, 128));
+	quadspi_set_lut(QSPI_LUT_0,
+			QSPI_LUT(ADDR_DDR, 3, 24, CMD_DDR, 3, 0xA0));
+	quadspi_set_lut(QSPI_LUT_1,
+			QSPI_LUT(DUMMY, 3, 15, CADDR_DDR, 3, 16));
+	quadspi_set_lut(QSPI_LUT_2,
+			QSPI_LUT(STOP, 3, 0, READ_DDR, 3, 128));
 	qspi_writel(0, QUADSPI_BFGENCR);
 }
 
@@ -266,9 +283,12 @@ static void qspi_setup_hyp(void)
 static void quadspi_send_instruction_hyp(unsigned int address, unsigned int cmd)
 {
 	qspi_writel(address & 0xFFFFFFFE, QUADSPI_SFAR);
-	quadspi_set_lut(60, QSPI_LUT(ADDR_DDR, 3, 0x18, CMD_DDR, 3, 0x00));
-	quadspi_set_lut(61, QSPI_LUT(CMD_DDR, 3, cmd >> 8, CADDR_DDR, 3, 0x10));
-	quadspi_set_lut(62, QSPI_LUT(STOP, 0, 0, CMD_DDR, 3, cmd));
+	quadspi_set_lut(QSPI_LUT_60,
+			QSPI_LUT(ADDR_DDR, 3, 0x18, CMD_DDR, 3, 0x00));
+	quadspi_set_lut(QSPI_LUT_61,
+			QSPI_LUT(CMD_DDR, 3, cmd >> 8, CADDR_DDR, 3, 0x10));
+	quadspi_set_lut(QSPI_LUT_62,
+			QSPI_LUT(STOP, 0, 0, CMD_DDR, 3, cmd));
 	qspi_writel(QUADSPI_IPCR_SEQID(SEQID_LUT), QUADSPI_IPCR);
 	while (qspi_readl(QUADSPI_SR) & QUADSPI_SR_IP_ACC)
 		;
@@ -281,9 +301,9 @@ static unsigned int quadspi_status_hyp(void)
 	quadspi_send_instruction_hyp(CONFIG_SYS_FLASH_BASE + 0xAAA, 0x70);
 
 	qspi_writel(CONFIG_SYS_FLASH_BASE + 0x2, QUADSPI_SFAR);
-	quadspi_set_lut(60, QSPI_LUT(ADDR_DDR, 3, 0x18, CMD_DDR, 3, 0x80));
-	quadspi_set_lut(61, QSPI_LUT(DUMMY, 3, 15, CADDR_DDR, 3, 0x10));
-	quadspi_set_lut(62, QSPI_LUT(STOP, 0, 0, READ_DDR, 3, 0x2));
+	quadspi_set_lut(QSPI_LUT_60, QSPI_LUT(ADDR_DDR, 3, 0x18, CMD_DDR, 3, 0x80));
+	quadspi_set_lut(QSPI_LUT_61, QSPI_LUT(DUMMY, 3, 15, CADDR_DDR, 3, 0x10));
+	quadspi_set_lut(QSPI_LUT_62, QSPI_LUT(STOP, 0, 0, READ_DDR, 3, 0x2));
 
 	qspi_writel(qspi_readl(QUADSPI_MCR) |
 		    QUADSPI_MCR_CLR_RXF, QUADSPI_MCR);
@@ -368,11 +388,11 @@ static void quadspi_program_hyp(unsigned int address, uintptr_t pdata,
 #endif
 		/* prepare write/program instruction */
 		qspi_writel(address, QUADSPI_SFAR);
-		quadspi_set_lut(60,
+		quadspi_set_lut(QSPI_LUT_60,
 				QSPI_LUT(ADDR_DDR, 3, 0x18, CMD_DDR, 3, 0x00));
-		quadspi_set_lut(61,
+		quadspi_set_lut(QSPI_LUT_61,
 				QSPI_LUT(WRITE_DDR, 3, 2, CADDR_DDR, 3, 0x10));
-		quadspi_set_lut(62, 0);
+		quadspi_set_lut(QSPI_LUT_62, 0);
 		/* tx buffer */
 		qspi_writel(qspi_readl(QUADSPI_MCR) |
 			    QUADSPI_MCR_CLR_TXF, QUADSPI_MCR);
@@ -396,3 +416,164 @@ static void quadspi_program_hyp(unsigned int address, uintptr_t pdata,
 	while ((quadspi_status_hyp() & 0x8000) == 0)
 		;
 }
+
+int do_qspinor_setup(cmd_tbl_t *cmdtp, int flag, int argc,
+		     char * const argv[])
+{
+	printf("SD/eMMC is disabled. Hyperflash is active and can be used!\n");
+	qspi_setup_hyp();
+	return 0;
+}
+
+static bool is_flash_addr(unsigned int address, enum qspi_addr_t addr_type)
+{
+	bool isflash = 0;
+
+	isflash |= (address >= CONFIG_SYS_FLASH_BASE);
+	isflash |= (address == qspi_real_and_all) && (address == -1);
+	if (!isflash) {
+		printf("Incorrect address '0x%.8x'.\n"
+		       "Must an address above or equal to '0x%.8x' (or '-1',"
+		       " if the command accepts it)\n", address,
+		       CONFIG_SYS_FLASH_BASE);
+		return 0;
+	}
+	return 1;
+}
+
+volatile static bool flash_lock = 1;
+static int do_qspinor_prog(cmd_tbl_t *cmdtp, int flag, int argc,
+			   char * const argv[])
+{
+	unsigned int fladdr, bufaddr, size;
+
+	if (argc != 4) {
+		printf("This command needs exactly three parameters (flashaddr "
+				"buffaddr and size).\n");
+		return 1;
+	}
+
+	fladdr = simple_strtol(argv[1], NULL, 16);
+	if (!is_flash_addr(fladdr, qspi_real_address))
+		return 1;
+
+	if (fladdr % FLASH_HALF_PAGE_SIZE != 0)
+		printf("Address should be %d bytes aligned.\n",
+		       FLASH_HALF_PAGE_SIZE);
+
+	bufaddr = simple_strtol(argv[2], NULL, 16);
+	size = simple_strtol(argv[3], NULL, 16);
+
+	/* It is strongly recommended that a multiple of 16-byte half-pages be
+	 * written and each half-page written only once.
+	 */
+	if (size < FLASH_HALF_PAGE_SIZE || size % FLASH_HALF_PAGE_SIZE != 0) {
+		printf("The written size must be multiple of %d.\n",
+		       FLASH_HALF_PAGE_SIZE);
+		return 1;
+	}
+
+	if (!flash_lock)
+		quadspi_program_hyp(fladdr, (uintptr_t)bufaddr, size);
+	else
+		printf("Flash write and erase operations are locked!\n");
+
+	return 0;
+}
+
+static int do_qspinor_erase(cmd_tbl_t *cmdtp, int flag, int argc,
+			    char * const argv[])
+{
+	long addr_start;
+
+	if (argc != 2) {
+		printf("This command needs exactly one parameter\n");
+		return 1;
+	}
+
+	addr_start = simple_strtol(argv[1], NULL, 16);
+	if (!is_flash_addr(addr_start, qspi_real_and_all))
+		return 1;
+
+	if (!flash_lock)
+		quadspi_erase_hyp(addr_start);
+	else
+		printf("Flash write and erase operations are locked!\n");
+	return 0;
+}
+
+/* we only need our own SW protect until we implement proper protection via HW
+ * mechanisms; until then we need not conflict with those commands
+ */
+#ifndef CONFIG_CMD_FLASH
+/* we clean (set to 0) the LUTs used for write and erase to make sure no
+ * accidental writes or erases can happen
+ */
+void quadspi_rm_write_erase_luts(void)
+{
+	quadspi_set_lut(QSPI_LUT_60, 0);
+	quadspi_set_lut(QSPI_LUT_61, 0);
+	quadspi_set_lut(QSPI_LUT_62, 0);
+}
+
+static int do_swprotect(cmd_tbl_t *cmdtp, int flag, int argc,
+			char * const argv[])
+{
+	if (argc != 2) {
+		printf("This command needs exactly one parameter (on/off).\n");
+		return 1;
+	}
+
+	if (!strcmp(argv[1], "on")) {
+		quadspi_rm_write_erase_luts();
+		flash_lock = 1;
+		return 0;
+	}
+
+	if (!strcmp(argv[1], "off")) {
+		flash_lock = 0;
+		return 0;
+	}
+
+	printf("Unexpected parameter. This command accepts only 'on' and 'off' as parameter.\n");
+	return 1;
+}
+
+/* simple SW protection */
+U_BOOT_CMD(protect, 2, 1, do_swprotect,
+	   "protect on/off the flash memory against write and erase operations",
+	   "on\n"
+	   "    - enable protection and forbid erase and write operations\n"
+	   "protect off\n"
+	   "    - disable protection allowing write and erase operations\n"
+	   ""
+	  );
+
+/* quadspi_erase_hyp */
+U_BOOT_CMD(erase, 3, 1, do_qspinor_erase,
+	   "erase FLASH from address 'START'",
+	   "erase START / -1\n"
+	   "    - erase flash starting from START address\n"
+	   "    - if START=-1, erase the entire chip\n"
+	  );
+#else
+#warning "Using U-Boot's protect and erase commands, not our custom ones"
+#endif
+
+/* qspinor setup */
+U_BOOT_CMD(flsetup, 1, 1, do_qspinor_setup,
+	   "setup qspi pinmuxing and qspi registers for access to hyperflash",
+	   "\n"
+	   "Set up the pinmuxing and qspi registers to access the hyperflash\n"
+	   "    and disconnect from the SD/eMMC.\n"
+	  );
+
+/* quadspi_erase_hyp */
+U_BOOT_CMD(flwrite, 4, 1, do_qspinor_prog,
+	   "write a data buffer into hyperflash",
+	   "ADDR BUFF HEXLEN\n"
+	   "    - write into flash starting with address ADDR\n"
+	   "      the first HEXLEN bytes contained in the memory\n"
+	   "      buffer at address BUFF.\n"
+	   "      Note: all numbers are in hexadecimal format\n"
+	  );
