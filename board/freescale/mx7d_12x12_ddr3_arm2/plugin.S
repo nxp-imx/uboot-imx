@@ -45,13 +45,28 @@ TUNE_END:
 	bne FREQ_DEFAULT_533
 
 	/* Change to 400Mhz for TO1.1 */
+	ldr r0, =ANATOP_BASE_ADDR
+	ldr r1, =0x70
+	ldr r2, =0x00703021
+	str r2, [r0, r1]
+	ldr r1, =0x90
+	ldr r2, =0x0
+	str r2, [r0, r1]
+	ldr r1, =0x70
+	ldr r2, =0x00603021
+	str r2, [r0, r1]
+
+	ldr r3, =0x80000000
+wait_lock:
+	ldr r2, [r0, r1]
+	and r2, r3
+	cmp r2, r3
+	bne wait_lock
+
 	ldr r0, =CCM_BASE_ADDR
-	ldr r1, =0x15000000
-	ldr r2, =0xa080
-	str r1, [r0, r2]
-	ldr r1, =0x01000000
-	ldr r2, =0x9880
-	str r1, [r0, r2]
+	ldr r1, =0x9880
+	ldr r2, =0x1
+	str r2, [r0, r1]
 
 FREQ_DEFAULT_533:
 .endm
