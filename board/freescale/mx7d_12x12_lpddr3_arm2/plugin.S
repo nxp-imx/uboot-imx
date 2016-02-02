@@ -85,7 +85,7 @@ TUNE_END:
 
 	/* turn on ddr power */
 	ldr	r7, =(0x1 << 29)
-	str	r7, [r1, #0x380]
+	str	r7, [r1, #0x388]
 
 	ldr	r6, =50
 1:
@@ -246,8 +246,11 @@ TUNE_END:
 	bic	r7, r7, #(1 << 29)
 	str	r7, [r11]
 2:
+	/* clear/set bit30 of SNVS_MISC_CTRL to ensure exit from ddr retention */
 	ldr	r7, =(0x1 << 30)
-	str	r7, [r1, #0x380]
+	str	r7, [r1, #0x388]
+	ldr	r7, =(0x1 << 30)
+	str	r7, [r1, #0x384]
 
 	/* need to delay ~5mS */
 	ldr	r6, =0x100000
@@ -413,6 +416,12 @@ TUNE_END:
 	ldr r0, =IOMUXC_GPR_BASE_ADDR
 	ldr r1, =0x4f400005
 	str r1, [r0, #0x4]
+
+	/* clear/set bit30 of SNVS_MISC_CTRL to ensure exit from ddr retention */
+	ldr r0, =ANATOP_BASE_ADDR
+	ldr r1, =(0x1 << 30)
+	str r1, [r0, #0x388]
+	str r1, [r0, #0x384]
 
 	ldr r0, =SRC_BASE_ADDR
 	ldr r1, =0x2
