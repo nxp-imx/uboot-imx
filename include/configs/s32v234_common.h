@@ -90,6 +90,12 @@
 #define LINFLEXUART_BASE		LINFLEXD1_BASE_ADDR
 #endif
 
+/* memory mapped external flash */
+#define CONFIG_SYS_FSL_FLASH0_BASE      0x20000000
+#define CONFIG_SYS_FSL_FLASH0_SIZE      0x10000000
+#define CONFIG_SYS_FSL_FLASH1_BASE      0x60000000
+#define CONFIG_SYS_FSL_FLASH1_SIZE      0x10000000
+
 /* Allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_UART_PORT		(1)
