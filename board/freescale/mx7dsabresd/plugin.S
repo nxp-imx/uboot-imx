@@ -79,6 +79,12 @@ FREQ_DEFAULT_533:
 	ldr r1, =0x4f400005
 	str r1, [r0, #0x4]
 
+	/* clear/set bit30 of SNVS_MISC_CTRL to ensure exit from ddr retention */
+	ldr r0, =ANATOP_BASE_ADDR
+	ldr r1, =(0x1 << 30)
+	str r1, [r0, #0x388]
+	str r1, [r0, #0x384]
+
 	ldr r0, =SRC_BASE_ADDR
 	ldr r1, =0x2
 	ldr r2, =0x1000
