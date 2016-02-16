@@ -28,6 +28,10 @@ config MX6SX
 config MX6UL
 	bool
 
+config MX6ULL
+	bool
+	select MX6UL
+
 choice
 	prompt "MX6 board select"
 
