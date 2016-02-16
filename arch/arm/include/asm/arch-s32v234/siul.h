@@ -83,6 +83,15 @@ static inline int get_siul2_midr2_speed(void)
 #define SIUL2_MPGPDO_BASE		(SIUL2_BASE_ADDR + 0x00001780)
 #define SIUL2_MPGPDOn(i)		(SIUL2_MPGPDO_BASE + 4 * (i))
 
+/* GPIO */
+/* 163 GPIOs in output mode, we assume the GPIO number is in range */
+#define SIUL2_GPDO_for_GPIO(i)		(((i) & (~0x3)) >> 2)
+#define SIUL2_GPDO_PDO_off_for_GPIO(i)	(((i) & (0x3))
+#define SIUL2_PDOn(i)			(SIUL2_GPDOn(SIUL2_GPDO_for_GPIO(i) + \
+						SIUL2_GPDO_PDO_off_for_GPIO(i))
+#define SIUL2_GPIO_VALUE0		(0x00)
+#define SIUL2_GPIO_VALUE1		(0x01)
+
 /* SIUL2_MSCR masks */
 #define SIUL2_MSCR_DDR_DO_TRIM(v)	((v) & 0xC0000000)
 #define SIUL2_MSCR_DDR_DO_TRIM_MIN	(0 << 30)
@@ -159,6 +168,7 @@ static inline int get_siul2_midr2_speed(void)
 
 #define SIUL2_MSCR_SMC(v)		((v) & 0x00000020)
 #define SIUL2_MSCR_MUX_MODE(v)		((v) & 0x0000000f)
+#define SIUL2_MSCR_MUX_MODE_ALT0	(0x0)
 #define SIUL2_MSCR_MUX_MODE_ALT1	(0x1)
 #define SIUL2_MSCR_MUX_MODE_ALT2	(0x2)
 #define SIUL2_MSCR_MUX_MODE_ALT3	(0x3)
