@@ -14,3 +14,4 @@ obj-$(CONFIG_OF_LIBFDT)			+= fdt.o
 obj-$(CONFIG_S32V234_FLASH)		+= qspi_driver.o
 obj-$(CONFIG_S32V234_USES_FLASH)	+= qspi_common.o
 obj-$(CONFIG_FSL_DCU_FB)		+= dcu.o
+obj-$(CONFIG_GICSUPPORT)		+= gicsupport.o

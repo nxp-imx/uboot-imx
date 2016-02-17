@@ -2,8 +2,9 @@
 /*
  * Freescale S32V234 PCI Express Root-Complex driver
  *
- * Copyright (C) 2013 Marek Vasut <marex@denx.de>
- * Copyright 2020 NXP
+ * Copyright (C) 2016 Heinz Wrobel <heinz.wrobel@nxp.com>
+ * Copyright (C) 2015 Aurelian Voicu <aurelian.voicu@nxp.com>
+ * Copyright (C) 2016,2020 NXP
  *
  * Based on upstream iMX U-Boot driver:
  * pcie_imx.c:		Marek Vasut <marex@denx.de>
@@ -19,6 +20,7 @@
 #include <asm/arch/mc_me_regs.h>
 #include <asm/arch/mc_cgm_regs.h>
 #include <asm/io.h>
+#include <asm/gicsupport.h>
 #include <linux/sizes.h>
 
 #define PCI_ACCESS_READ  0
@@ -82,30 +84,32 @@
 #define PCIE_ATU_FUNC(x)		(((x) & 0x7) << 16)
 #define PCIE_ATU_UPPER_TARGET		0x91C
 
-#ifdef CONFIG_PCIE_EP_MODE
+/* The following defines are used for EP mode only */
 #define MSI_REGION			0x72FB0000
-#define PCI_BASE_ADDR		0x72000000
-#define PCI_BASE_DBI		0x72FFC000
-#define MSI_REGION_NR	3
-#define NR_REGIONS		4
-#define PCI_REGION_MEM			0x00000000	/* PCI mem space */
-#define PCI_REGION_IO			0x00000001	/* PCI IO space */
-#define PCI_WIDTH_32b			0x00000000	/* 32-bit BAR */
-#define PCI_WIDTH_64b			0x00000004	/* 64-bit BAR */
-#define PCI_REGION_PREFETCH		0x00000008	/* prefetch PCI mem */
-#define PCI_REGION_NON_PREFETCH	0x00000000	/* non-prefetch PCI mem */
-#define PCIE_BAR0_SIZE		SZ_1M	/* 1MB */
-#define PCIE_BAR1_SIZE		0
-#define PCIE_BAR2_SIZE		SZ_1M	/* 1MB */
-#define PCIE_BAR3_SIZE		0		/* 256B Fixed sizing  */
-#define PCIE_BAR4_SIZE		0		/* 4K Fixed sizing  */
-#define PCIE_BAR5_SIZE		0		/* 64K Fixed sizing  */
+#define PCI_BASE_ADDR			0x72000000
+#define PCI_BASE_DBI			0x72FFC000
+#define MSI_REGION_NR			3
+#define NR_REGIONS			4
+#define PCI_REGION_MEM			0x00000000 /* PCI mem space */
+#define PCI_REGION_IO			0x00000001 /* PCI IO space */
+#define PCI_WIDTH_32b			0x00000000 /* 32-bit BAR */
+#define PCI_WIDTH_64b			0x00000004 /* 64-bit BAR */
+#define PCI_REGION_PREFETCH		0x00000008 /* prefetch PCI mem */
+#define PCI_REGION_NON_PREFETCH		0x00000000 /* non-prefetch PCI mem */
+#define PCIE_BAR0_SIZE			SZ_1M		/* 1MB */
+#define PCIE_BAR1_SIZE			0
+#define PCIE_BAR2_SIZE			SZ_1M		/* 1MB */
+#define PCIE_BAR3_SIZE			0
+#define PCIE_BAR4_SIZE			0
+#define PCIE_BAR5_SIZE			0
+#define PCIE_ROM_SIZE			0
 #define PCIE_BAR0_EN_DIS		1
 #define PCIE_BAR1_EN_DIS		0
 #define PCIE_BAR2_EN_DIS		1
 #define PCIE_BAR3_EN_DIS		1
 #define PCIE_BAR4_EN_DIS		1
 #define PCIE_BAR5_EN_DIS		1
+#define PCIE_ROM_EN_DIS			0
 #define PCIE_BAR0_INIT	(PCI_REGION_MEM | PCI_WIDTH_32b | \
 		PCI_REGION_NON_PREFETCH)
 #define PCIE_BAR1_INIT	(PCI_REGION_MEM | PCI_WIDTH_32b | \
@@ -116,10 +120,24 @@
 		PCI_REGION_NON_PREFETCH)
 #define PCIE_BAR4_INIT	0
 #define PCIE_BAR5_INIT	0
-#endif
+#define PCIE_ROM_INIT	0
+
+/* To do proper EP support, we need to have interrupt driven handlers
+ * to keep our EP configuration in proper shape.
+ */
+#define PCIE_INTERRUPT_link_req_rst_not         135
+
+/* Global variables */
+static int ignoreERR009852;
+
 /*
  * PHY access functions
  */
+ /* FIX: The RM does not document any of this. How should it be
+  * possible to understand any of the PHY handling if it is a hard
+  * requirement. Do we have to reinstate PHY docs in the manual?
+  * If so, what parts?
+  */
 static int pcie_phy_poll_ack(void __iomem *dbi_base, int exp_val)
 {
 	u32 val;
@@ -293,10 +311,147 @@ static int s32v234_pcie_link_up(void)
 	return 0;
 }
 
+static void s32v234_pcie_set_bar(int baroffset, int enable, unsigned int size,
+				 unsigned int init)
+{
+	char __iomem *dbi_base = (char __iomem *)S32V234_DBI_ADDR;
+	u32 mask = (enable) ? ((size - 1) & ~1) : 0;
+
+	/* According to the RM, you have to enable the BAR before you
+	 * can modify the mask value. While it appears that this may
+	 * be ok in a single write anyway, we play it safe.
+	 */
+	writel(1, dbi_base + 0x1000 + baroffset);
+
+	writel(enable | mask, dbi_base + 0x1000 + baroffset);
+	writel(init, dbi_base + baroffset);
+}
+
+static void set_non_sticky_config_regs(void)
+{
+	const int socmask_info = readl(SIUL2_MIDR1) & 0x000000ff;
+	const struct src *src_regs = (struct src *)SRC_SOC_BASE_ADDR;
+	const int ep_mode = (readl(&src_regs->gpr5) & 0x0000001c) == 0;
+
+	/* We need this function because the PCIe IP loses some
+	 * configuration values when it loses the link.
+	 * THIS FUNCTION MUST BE INTERRUPT SAFE, so we don't use
+	 * external complex functions.
+	 */
+	if (!ep_mode) {
+		/* Set the CLASS_REV of RC CFG header to PCI_CLASS_BRIDGE_PCI */
+		setbits_le32(S32V234_DBI_ADDR + PCI_CLASS_REVISION,
+			     PCI_CLASS_BRIDGE_PCI << 16);
+
+		/* CMD reg:I/O space, MEM space, and Bus Master Enable */
+		setbits_le32(S32V234_DBI_ADDR | PCI_COMMAND,
+			     PCI_COMMAND_IO | PCI_COMMAND_MEMORY |
+			     PCI_COMMAND_MASTER);
+
+		/* Region #0 is used for Outbound CFG space access. */
+		writel(0, S32V234_DBI_ADDR + PCIE_ATU_VIEWPORT);
+		writel(S32V234_ROOT_ADDR,
+		       S32V234_DBI_ADDR + PCIE_ATU_LOWER_BASE);
+		writel(0, S32V234_DBI_ADDR + PCIE_ATU_UPPER_BASE);
+		writel(S32V234_ROOT_ADDR + S32V234_ROOT_SIZE,
+		       S32V234_DBI_ADDR + PCIE_ATU_LIMIT);
+		writel(0, S32V234_DBI_ADDR + PCIE_ATU_LOWER_TARGET);
+		writel(0, S32V234_DBI_ADDR + PCIE_ATU_UPPER_TARGET);
+		writel(PCIE_ATU_TYPE_CFG0, S32V234_DBI_ADDR + PCIE_ATU_CR1);
+		writel(PCIE_ATU_ENABLE, S32V234_DBI_ADDR + PCIE_ATU_CR2);
+	} else {
+		/* Set the CLASS_REV of RC CFG header to something that
+		 * makes sense for this SoC by itself. For a product,
+		 * the class setting should be board/product specific,
+		 * so we'd technically need a CONFIG_PCIE_CLASS as part
+		 * of the board configuration.
+		 */
+		setbits_le32(S32V234_DBI_ADDR + PCI_CLASS_REVISION,
+			     (PCI_BASE_CLASS_PROCESSOR << 24) |
+			     (0x80 /* other */ << 16));
+
+		/* Preconfigure the BAR registers, so that the RC can
+		 * enumerate us properly and assign address spaces.
+		 * Mask registers are W only!
+		 */
+		if (!ignoreERR009852 && socmask_info == 0x00) {
+			/* Erratum ERR009852 requires us to avoid
+			 * any memory access from the RC! We solve this
+			 * by disabling all BARs and ROM access
+			 */
+			s32v234_pcie_set_bar(PCI_BASE_ADDRESS_0, 0, 0, 0);
+			s32v234_pcie_set_bar(PCI_BASE_ADDRESS_1, 0, 0, 0);
+			s32v234_pcie_set_bar(PCI_BASE_ADDRESS_2, 0, 0, 0);
+			s32v234_pcie_set_bar(PCI_BASE_ADDRESS_3, 0, 0, 0);
+			s32v234_pcie_set_bar(PCI_BASE_ADDRESS_4, 0, 0, 0);
+			s32v234_pcie_set_bar(PCI_BASE_ADDRESS_5, 0, 0, 0);
+			s32v234_pcie_set_bar(PCI_ROM_ADDRESS, 0, 0, 0);
+		} else {
+			s32v234_pcie_set_bar(PCI_BASE_ADDRESS_0,
+					     PCIE_BAR0_EN_DIS, PCIE_BAR0_SIZE,
+					     PCIE_BAR0_INIT);
+			s32v234_pcie_set_bar(PCI_BASE_ADDRESS_1,
+					     PCIE_BAR1_EN_DIS, PCIE_BAR1_SIZE,
+					     PCIE_BAR1_INIT);
+			s32v234_pcie_set_bar(PCI_BASE_ADDRESS_2,
+					     PCIE_BAR2_EN_DIS, PCIE_BAR2_SIZE,
+					     PCIE_BAR2_INIT);
+			s32v234_pcie_set_bar(PCI_BASE_ADDRESS_3,
+					     PCIE_BAR3_EN_DIS, PCIE_BAR3_SIZE,
+					     PCIE_BAR3_INIT);
+			s32v234_pcie_set_bar(PCI_BASE_ADDRESS_4,
+					     PCIE_BAR4_EN_DIS, PCIE_BAR4_SIZE,
+					     PCIE_BAR4_INIT);
+			s32v234_pcie_set_bar(PCI_BASE_ADDRESS_5,
+					     PCIE_BAR5_EN_DIS, PCIE_BAR5_SIZE,
+					     PCIE_BAR5_INIT);
+			s32v234_pcie_set_bar(PCI_ROM_ADDRESS,
+					     PCIE_ROM_EN_DIS, PCIE_ROM_SIZE,
+					     PCIE_ROM_INIT);
+
+			/* Region #0 is used for Inbound Mem
+			 * space access on BAR2.
+			 */
+			writel(0x80000000,
+			       S32V234_DBI_ADDR + PCIE_ATU_VIEWPORT);
+			writel(0xcff00000,
+			       S32V234_DBI_ADDR + PCIE_ATU_LOWER_TARGET);
+			writel(0, S32V234_DBI_ADDR + PCIE_ATU_UPPER_TARGET);
+			writel(PCIE_ATU_TYPE_MEM,
+			       S32V234_DBI_ADDR + PCIE_ATU_CR1);
+			writel(0xC0000200, S32V234_DBI_ADDR + PCIE_ATU_CR2);
+
+			/* CMD reg:I/O space, MEM space, Bus Master Enable */
+			setbits_le32(S32V234_DBI_ADDR | PCI_COMMAND,
+				     PCI_COMMAND_IO | PCI_COMMAND_MEMORY |
+				     PCI_COMMAND_MASTER);
+		}
+	}
+}
+
+static void inthandler_pcie_link_req_rst_not(struct pt_regs *pt_regs,
+					     unsigned int esr)
+{
+	const struct src *src_regs = (struct src *)SRC_SOC_BASE_ADDR;
+
+	/* Clear link_req_rst_not interrupt signal */
+	clrsetbits_le32(&src_regs->pcie_config0, 0x00000001, 0x00000001);
+
+	/* Once we get this interrupt, the link came down and all the
+	 * non sticky registers in our configuration space got reset.
+	 * We reestablish the register values now and finally
+	 * permit configuration transactions
+	 */
+	 set_non_sticky_config_regs();
+
+	/* Accept inbound configuration requests now */
+	clrsetbits_le32(&src_regs->gpr11, 0x00400000, 0x00400000);
+}
+
 /*
  * iATU region setup
  */
-static int s32v234_pcie_regions_setup(void)
+static int s32v234_pcie_regions_setup(const int ep_mode)
 {
 	/*
 	 * S32V234 defines 16MB in the AXI address map for PCIe.
@@ -310,107 +465,74 @@ static int s32v234_pcie_regions_setup(void)
 	 * 0x01F0_0000 --- 0x01FF_FFFF 1MB Cfg + Registers
 	 */
 
-	/* CMD reg:I/O space, MEM space, and Bus Master Enable */
-	setbits_le32(S32V234_DBI_ADDR | PCI_COMMAND,
-		     PCI_COMMAND_IO | PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER);
-#ifndef CONFIG_PCIE_EP_MODE
-	/* Set the CLASS_REV of RC CFG header to PCI_CLASS_BRIDGE_PCI */
-	setbits_le32(S32V234_DBI_ADDR + PCI_CLASS_REVISION,
-		     PCI_CLASS_BRIDGE_PCI << 16);
-#else
-		/* Set the CLASS_REV of RC CFG header to PCI_CLASS_MEMORY_RAM */
-		setbits_le32(S32V234_DBI_ADDR + PCI_CLASS_REVISION,
-			     PCI_CLASS_MEMORY_RAM << 16);
-		/* 1MB  32bit none-prefetchable memory on BAR0 */
-		writel(PCIE_BAR0_INIT, S32V234_DBI_ADDR + PCI_BASE_ADDRESS_0);
-#if PCIE_BAR0_EN_DIS
-		writel((PCIE_BAR0_EN_DIS | (PCIE_BAR0_SIZE - 1)),
-		       S32V234_DBI_ADDR + (1 << 12) + PCI_BASE_ADDRESS_0);
-#else
-		writel((PCIE_BAR0_EN_DIS & (PCIE_BAR0_SIZE - 1)),
-		       S32V234_DBI_ADDR + (1 << 12) + PCI_BASE_ADDRESS_0);
+	/* We set up the ID for all Rev 1.x chips */
+	if (get_siul2_midr1_major() == 0x00) {
+		/*
+		 * Vendor ID is Freescale (now NXP): 0x1957
+		 * Device ID is split as follows
+		 * Family 15:12, Device 11:6, Personality 5:0
+		 * S32V is in the automotive family: 0100
+		 * S32V is the first auto device with PCIe: 000000
+		 * S32V does not have export controlled cryptography: 00001
+		 */
+		printf("Setting PCIE Vendor and Device ID\n");
+		writel((0x4001 << 16) | 0x1957,
+		       S32V234_DBI_ADDR + PCI_VENDOR_ID);
+	}
+
+#if defined(CONFIG_PCIE_SUBSYSTEM_VENDOR_ID) && \
+	defined(CONFIG_PCIE_SUBSYSTEM_ID)
+	writel((CONFIG_PCIE_SUBSYSTEM_ID << 16) |
+	       CONFIG_PCIE_SUBSYSTEM_VENDOR_ID,
+	       S32V234_DBI_ADDR + PCI_SUBSYSTEM_VENDOR_ID);
 #endif
 
-		/* None used BAR1 */
-		writel(PCIE_BAR1_INIT, S32V234_DBI_ADDR + PCI_BASE_ADDRESS_1);
-#if PCIE_BAR1_EN_DIS
-		writel((PCIE_BAR1_EN_DIS | (PCIE_BAR1_SIZE - 1)),
-		       S32V234_DBI_ADDR + (1 << 12) + PCI_BASE_ADDRESS_1);
-#else
-		writel((PCIE_BAR1_EN_DIS & (PCIE_BAR1_SIZE - 1)),
-		       S32V234_DBI_ADDR + (1 << 12) + PCI_BASE_ADDRESS_1);
-#endif
+	ignoreERR009852 = env_get("ignoreERR009852") ? true : false;
 
-		/* 64KB 32bit none-prefetchable memory on BAR2 */
-		writel(PCIE_BAR2_INIT, S32V234_DBI_ADDR + PCI_BASE_ADDRESS_2);
-#if PCIE_BAR2_EN_DIS
-		writel((PCIE_BAR2_EN_DIS | (PCIE_BAR2_SIZE - 1)),
-		       S32V234_DBI_ADDR + (1 << 12) + PCI_BASE_ADDRESS_2);
-#else
-		writel((PCIE_BAR2_EN_DIS & (PCIE_BAR2_SIZE - 1)),
-		       S32V234_DBI_ADDR + (1 << 12) + PCI_BASE_ADDRESS_2);
-#endif
+	set_non_sticky_config_regs();
 
-		/* Default size BAR3 */
-		writel(PCIE_BAR3_INIT, S32V234_DBI_ADDR + PCI_BASE_ADDRESS_3);
-#if PCIE_BAR3_EN_DIS
-		writel((PCIE_BAR3_EN_DIS | (PCIE_BAR3_SIZE - 1)),
-		       S32V234_DBI_ADDR + (1 << 12) + PCI_BASE_ADDRESS_3);
-#else
-		writel((PCIE_BAR3_EN_DIS & (PCIE_BAR3_SIZE - 1)),
-		       S32V234_DBI_ADDR + (1 << 12) + PCI_BASE_ADDRESS_3);
-#endif
+	if (ep_mode) {
+		struct src *src_regs = (struct src *)SRC_SOC_BASE_ADDR;
 
-		/* Default size  BAR4 */
-		writel(PCIE_BAR4_INIT, S32V234_DBI_ADDR + PCI_BASE_ADDRESS_4);
-#if PCIE_BAR4_EN_DIS
-		writel((PCIE_BAR4_EN_DIS | (PCIE_BAR4_SIZE - 1)),
-		       S32V234_DBI_ADDR + (1 << 12) + PCI_BASE_ADDRESS_4);
-#else
-		writel((PCIE_BAR4_EN_DIS & (PCIE_BAR4_SIZE - 1)),
-		       S32V234_DBI_ADDR + (1 << 12) + PCI_BASE_ADDRESS_4);
-#endif
+		if (ignoreERR009852)
+			printf("\n Ignoring errata ERR009852\n");
 
-		/* Default size BAR5 */
-		writel(PCIE_BAR5_INIT, S32V234_DBI_ADDR + PCI_BASE_ADDRESS_5);
-#if PCIE_BAR5_EN_DIS
-		writel((PCIE_BAR5_EN_DIS | (PCIE_BAR5_SIZE - 1)),
-		       S32V234_DBI_ADDR + (1 << 12) + PCI_BASE_ADDRESS_5);
-#else
-		writel((PCIE_BAR5_EN_DIS & (PCIE_BAR5_SIZE - 1)),
-		       S32V234_DBI_ADDR + (1 << 12) + PCI_BASE_ADDRESS_5);
-#endif
-#endif /* CONFIG_PCIE_EP_MODE */
+		/* Ensure that if the link comes down we do not react
+		 * to config accesses anymore until we have reconfigured
+		 * ourselves properly! A link down event unfortunately
+		 * clears non-sticky registers.
+		 * Note that we permit automatic link training. This
+		 * puts the responsibility on us to reconfigure and
+		 * set PCIE_CFG_READY again if the link comes down.
+		 */
+		clrsetbits_le32(&src_regs->gpr10, 0x40000000, 0x40000000);
 
-#ifndef CONFIG_PCIE_EP_MODE
-	/* Region #0 is used for Outbound CFG space access. */
-	writel(0, S32V234_DBI_ADDR + PCIE_ATU_VIEWPORT);
-	writel(S32V234_ROOT_ADDR, S32V234_DBI_ADDR + PCIE_ATU_LOWER_BASE);
-	writel(0, S32V234_DBI_ADDR + PCIE_ATU_UPPER_BASE);
-	writel(S32V234_ROOT_ADDR + S32V234_ROOT_SIZE,
-	       S32V234_DBI_ADDR + PCIE_ATU_LIMIT);
-	writel(0, S32V234_DBI_ADDR + PCIE_ATU_LOWER_TARGET);
-	writel(0, S32V234_DBI_ADDR + PCIE_ATU_UPPER_TARGET);
-	writel(PCIE_ATU_TYPE_CFG0, S32V234_DBI_ADDR + PCIE_ATU_CR1);
-	writel(PCIE_ATU_ENABLE, S32V234_DBI_ADDR + PCIE_ATU_CR2);
-#else
-	/* Region #0 is used for Inbound Mem space access on BAR2. */
-	writel(0x80000000, S32V234_DBI_ADDR + PCIE_ATU_VIEWPORT);
-	writel(0xcff00000, S32V234_DBI_ADDR + PCIE_ATU_LOWER_TARGET);
-	writel(0, S32V234_DBI_ADDR + PCIE_ATU_UPPER_TARGET);
-	writel(PCIE_ATU_TYPE_MEM, S32V234_DBI_ADDR + PCIE_ATU_CR1);
-	writel(0xC0000200, S32V234_DBI_ADDR + PCIE_ATU_CR2);
-#endif
+		/* Assume the link is up and reset the link down event,
+		 * so that we can properly try to set PCIE_CFG_READY.
+		 */
+		clrsetbits_le32(&src_regs->pcie_config0, 0x00000001,
+				0x00000001);
+
+		/* Ensure that we can fix up our configuration again
+		 * if the link came down!
+		 */
+		gic_register_handler(PCIE_INTERRUPT_link_req_rst_not,
+				     inthandler_pcie_link_req_rst_not,
+				     0, "PCIE_INTERRUPT_link_req_rst_not");
+
+		/* Accept inbound configuration requests now */
+		clrsetbits_le32(&src_regs->gpr11, 0x00400000, 0x00400000);
+	}
+
 	return 0;
 }
 
-#ifndef CONFIG_PCIE_EP_MODE
 /*
  * PCI Express accessors
  */
-static u32 get_bus_address(pci_dev_t d, int where)
+static u8 *get_bus_address(pci_dev_t d, int where)
 {
-	u32 va_address;
+	u8 *va_address;
 
 	/* Reconfigure Region #0 */
 	writel(0, S32V234_DBI_ADDR + PCIE_ATU_VIEWPORT);
@@ -421,10 +543,10 @@ static u32 get_bus_address(pci_dev_t d, int where)
 		writel(PCIE_ATU_TYPE_CFG1, S32V234_DBI_ADDR + PCIE_ATU_CR1);
 
 	if (PCI_BUS(d) == 0) {
-		va_address = S32V234_DBI_ADDR;
+		va_address = (u8 *)S32V234_DBI_ADDR;
 	} else {
 		writel(d << 8, S32V234_DBI_ADDR + PCIE_ATU_LOWER_TARGET);
-		va_address = S32V234_IO_ADDR + SZ_16M - SZ_1M;
+		va_address = (u8 *)(S32V234_IO_ADDR + SZ_16M - SZ_1M);
 	}
 
 	va_address += (where & ~0x3);
@@ -444,7 +566,7 @@ static int s32v234_pcie_addr_valid(pci_dev_t d)
 static int s32v234_pcie_read_config(struct pci_controller *hose, pci_dev_t d,
 				    int where, u32 *val)
 {
-	u32 va_address;
+	u8 *va_address;
 	int ret;
 
 	ret = s32v234_pcie_addr_valid(d);
@@ -463,7 +585,7 @@ static int s32v234_pcie_read_config(struct pci_controller *hose, pci_dev_t d,
 static int s32v234_pcie_write_config(struct pci_controller *hose, pci_dev_t d,
 				     int where, u32 val)
 {
-	u32 va_address = 0;
+	void *va_address = 0;
 	int ret;
 
 	ret = s32v234_pcie_addr_valid(d);
@@ -475,31 +597,21 @@ static int s32v234_pcie_write_config(struct pci_controller *hose, pci_dev_t d,
 
 	return 0;
 }
-#endif /* CONFIG_PCIE_EP_MODE */
 
-static int s32v234_pcie_init_phy(void)
+static int s32v234_pcie_init_phy(const int ep_mode)
 {
 	struct src *src_regs = (struct src *)SRC_SOC_BASE_ADDR;
 
 	clrbits_le32(&src_regs->gpr5, SRC_GPR5_PCIE_APP_LTSSM_ENABLE);
 
-#ifndef CONFIG_PCIE_EP_MODE
 	clrsetbits_le32(&src_regs->gpr5,
-			SRC_GPR5_PCIE_DEVICE_TYPE_MASK,
-			SRC_GPR5_PCIE_DEVICE_TYPE_RC);
-#else
+			SRC_GPR5_PCIE_PHY_LOS_LEVEL_MASK,
+			SRC_GPR5_PCIE_PHY_LOS_LEVEL_9);
 	clrsetbits_le32(&src_regs->gpr5,
-			SRC_GPR5_PCIE_DEVICE_TYPE_MASK,
-			SRC_GPR5_PCIE_DEVICE_TYPE_EP);
-#endif
-	 clrsetbits_le32(&src_regs->gpr5,
-			 SRC_GPR5_PCIE_PHY_LOS_LEVEL_MASK,
-			 SRC_GPR5_PCIE_PHY_LOS_LEVEL_9);
-	 clrsetbits_le32(&src_regs->gpr5,
-			 SRC_GPR5_PCIE_PHY_RX0_EQ_MASK,
-			 SRC_GPR5_PCIE_PHY_RX0_EQ_2);
+			SRC_GPR5_PCIE_PHY_RX0_EQ_MASK,
+			SRC_GPR5_PCIE_PHY_RX0_EQ_2);
 
-	 writel((0x0 << SRC_GPR6_PCIE_PCS_TX_DEEMPH_GEN1_OFFSET) |
+	writel((0x0 << SRC_GPR6_PCIE_PCS_TX_DEEMPH_GEN1_OFFSET) |
 		(0x0 << SRC_GPR6_PCIE_PCS_TX_DEEMPH_GEN2_3P5DB_OFFSET) |
 		(20 << SRC_GPR6_PCIE_PCS_TX_DEEMPH_GEN2_6DB_OFFSET) |
 		(127 << SRC_GPR6_PCIE_PCS_TX_SWING_FULL_OFFSET) |
@@ -520,20 +632,16 @@ static int s32v234_pcie_deassert_core_reset(void)
 	return 0;
 }
 
-static int s32v_pcie_link_up(void)
+static int s32v_pcie_link_up(const int ep_mode)
 {
 	struct src *src_regs = (struct src *)SRC_SOC_BASE_ADDR;
 
 	u32 tmp;
 	int count = 0;
 
-	s32v234_pcie_init_phy();
+	s32v234_pcie_init_phy(ep_mode);
 	s32v234_pcie_deassert_core_reset();
-	s32v234_pcie_regions_setup();
-
-#ifdef CONFIG_PCIE_EP_MODE
-	writel(readl(&src_regs->gpr11) | 0x00400000, &src_regs->gpr11);
-#endif
+	s32v234_pcie_regions_setup(ep_mode);
 
 	/*
 	 * FIXME: Force the PCIe RC to Gen1 operation
@@ -541,7 +649,7 @@ static int s32v_pcie_link_up(void)
 	 * up, otherwise no downstream devices are detected. After the
 	 * link is up, a managed Gen1->Gen2 transition can be initiated.
 	 */
-	printf("\n Forcing PCIe RC to Gen1 operation");
+	printf("\nForcing PCIe to Gen1 operation\n");
 
 	tmp = readl(S32V234_DBI_ADDR + 0x7c);
 	tmp &= ~0xf;
@@ -566,56 +674,66 @@ static int s32v_pcie_link_up(void)
 	return 0;
 }
 
-void s32v234_pcie_init(void)
+void s32v234_pcie_init(const int ep_mode)
 {
-#ifndef CONFIG_PCIE_EP_MODE
 	/* Static instance of the controller. */
 	static struct pci_controller	pcc;
 	struct pci_controller		*hose = &pcc;
-#endif
 	int ret;
+	struct src *src_regs = (struct src *)SRC_SOC_BASE_ADDR;
 
-#ifndef CONFIG_PCIE_EP_MODE
-	memset(&pcc, 0, sizeof(pcc));
+	/* Set device type */
+	clrsetbits_le32(&src_regs->gpr5,
+			SRC_GPR5_PCIE_DEVICE_TYPE_MASK,
+			(ep_mode) ? SRC_GPR5_PCIE_DEVICE_TYPE_EP :
+				    SRC_GPR5_PCIE_DEVICE_TYPE_RC);
 
-	/* PCI I/O space */
-	pci_set_region(&hose->regions[0],
-		       S32V234_IO_ADDR, S32V234_IO_ADDR,
-		       S32V234_IO_SIZE, PCI_REGION_IO);
+	if (!ep_mode) {
+		memset(&pcc, 0, sizeof(pcc));
 
-	/* PCI memory space */
-	pci_set_region(&hose->regions[1],
-		       S32V234_MEM_ADDR, S32V234_MEM_ADDR,
-		       S32V234_MEM_SIZE, PCI_REGION_MEM);
+		/* PCI I/O space */
+		pci_set_region(&hose->regions[0],
+			       S32V234_IO_ADDR, S32V234_IO_ADDR,
+			       S32V234_IO_SIZE, PCI_REGION_IO);
 
-	/* System memory space */
-	/* For now, allocating only 1024MB from address 0x80000000 */
+		/* PCI memory space */
+		pci_set_region(&hose->regions[1],
+			       S32V234_MEM_ADDR, S32V234_MEM_ADDR,
+			       S32V234_MEM_SIZE, PCI_REGION_MEM);
 
-	pci_set_region(&hose->regions[2],
-		       MMDC0_ARB_BASE_ADDR, MMDC0_ARB_BASE_ADDR,
-		       0x3FFFFFFF, PCI_REGION_MEM | PCI_REGION_SYS_MEMORY);
+		/* System memory space */
+		pci_set_region(&hose->regions[2],
+			       MMDC0_ARB_BASE_ADDR, MMDC0_ARB_BASE_ADDR,
+			       0x3FFFFFFF,
+			       PCI_REGION_MEM | PCI_REGION_SYS_MEMORY);
 
-	hose->region_count = 3;
+		hose->region_count = 3;
 
-	pci_set_ops(hose,
-		    pci_hose_read_config_byte_via_dword,
-		    pci_hose_read_config_word_via_dword,
-		    s32v234_pcie_read_config,
-		    pci_hose_write_config_byte_via_dword,
-		    pci_hose_write_config_word_via_dword,
-		    s32v234_pcie_write_config);
-#endif
-	/* Start the controller. */
-	ret = s32v_pcie_link_up();
-#ifndef CONFIG_PCIE_EP_MODE
-	if (!ret) {
-		pci_register_hose(hose);
-		hose->last_busno = pci_hose_scan(hose);
+		pci_set_ops(hose,
+			    pci_hose_read_config_byte_via_dword,
+			    pci_hose_read_config_word_via_dword,
+			    s32v234_pcie_read_config,
+			    pci_hose_write_config_byte_via_dword,
+			    pci_hose_write_config_word_via_dword,
+			    s32v234_pcie_write_config);
 	}
-#endif
+
+	/* Start the controller. */
+	ret = s32v_pcie_link_up(ep_mode);
+
+	if (!ep_mode) {
+		if (!ret) {
+			pci_register_hose(hose);
+			hose->last_busno = pci_hose_scan(hose);
+		}
+	}
 }
 
 void pci_init_board(void)
 {
-	s32v234_pcie_init();
+#ifdef CONFIG_PCIE_EP_MODE
+	s32v234_pcie_init(1);
+#else
+	s32v234_pcie_init(0);
+#endif
 }
