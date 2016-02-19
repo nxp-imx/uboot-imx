@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Freescale Semiconductor, Inc.
+ * Copyright 2014-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6SX Sabreauto board.
  *
@@ -187,14 +187,15 @@
 
 #define CONFIG_FSL_QSPI
 #ifdef CONFIG_FSL_QSPI
+#define CONFIG_QSPI_BASE		QSPI0_BASE_ADDR
+#define CONFIG_QSPI_MEMMAP_BASE		QSPI0_AMBA_BASE
+
 #define CONFIG_CMD_SF
 #define CONFIG_SYS_FSL_QSPI_AHB
 #define CONFIG_SF_DEFAULT_BUS		0
 #define CONFIG_SF_DEFAULT_CS		0
 #define CONFIG_SF_DEFAULT_SPEED	40000000
 #define CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
-#define FSL_QSPI_FLASH_SIZE		SZ_32M
-#define FSL_QSPI_FLASH_NUM		2
 #endif
 
 #define CONFIG_ENV_OFFSET		(8 * SZ_64K)

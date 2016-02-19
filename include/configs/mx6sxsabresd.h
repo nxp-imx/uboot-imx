@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Freescale Semiconductor, Inc.
+ * Copyright 2014-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6SX Sabresd board.
  *
@@ -207,17 +207,20 @@
 
 #define CONFIG_CMD_TIME
 
-
+#define CONFIG_FSL_QSPI
 #ifdef CONFIG_FSL_QSPI
+#define CONFIG_QSPI_BASE		QSPI1_BASE_ADDR
+#define CONFIG_QSPI_MEMMAP_BASE		QSPI1_AMBA_BASE
+
 #define CONFIG_CMD_SF
-#define CONFIG_SYS_FSL_QSPI_LE
-#define CONFIG_SYS_FSL_QSPI_AHB
-#ifdef CONFIG_MX6SX_SABRESD_REVA
-#define FSL_QSPI_FLASH_SIZE		SZ_16M
-#else
-#define FSL_QSPI_FLASH_SIZE		SZ_32M
-#endif
-#define FSL_QSPI_FLASH_NUM		2
+#define CONFIG_SPI_FLASH
+#define CONFIG_SPI_FLASH_BAR
+#define CONFIG_SPI_FLASH_SPANSION
+#define CONFIG_SPI_FLASH_STMICRO
+#define	CONFIG_SF_DEFAULT_BUS		0
+#define	CONFIG_SF_DEFAULT_CS		0
+#define	CONFIG_SF_DEFAULT_SPEED		40000000
+#define	CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
 #endif
 
 #ifndef CONFIG_SPL_BUILD

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX7D SABRESD board.
  *
@@ -294,10 +294,8 @@
 #define CONFIG_SF_DEFAULT_CS		0
 #define CONFIG_SF_DEFAULT_SPEED		40000000
 #define CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
-#define FSL_QSPI_FLASH_NUM		1
-#define FSL_QSPI_FLASH_SIZE		SZ_64M
-#define QSPI0_BASE_ADDR			QSPI1_IPS_BASE_ADDR
-#define QSPI0_AMBA_BASE			QSPI0_ARB_BASE_ADDR
+#define CONFIG_QSPI_BASE		QSPI1_IPS_BASE_ADDR
+#define CONFIG_QSPI_MEMMAP_BASE		QSPI0_ARB_BASE_ADDR
 #endif
 
 #endif	/* __CONFIG_H */
