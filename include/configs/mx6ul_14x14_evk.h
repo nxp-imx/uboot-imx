@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6UL 14x14 EVK board.
  *
@@ -17,9 +17,11 @@
 #define is_mx6ul_9x9_evk()	CONFIG_IS_ENABLED(TARGET_MX6UL_9X9_EVK)
 
 /* SPL options */
-#define CONFIG_SPL_LIBCOMMON_SUPPORT
-#define CONFIG_SPL_MMC_SUPPORT
-#include "imx6_spl.h"
+/* We default not support SPL
+ * #define CONFIG_SPL_LIBCOMMON_SUPPORT
+ * #define CONFIG_SPL_MMC_SUPPORT
+ * #include "imx6_spl.h"
+*/
 
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
