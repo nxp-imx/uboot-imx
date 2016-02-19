@@ -32,6 +32,9 @@
 #define DDR_SIZE		(512 * 1024 * 1024)
 #endif
 
+/* Enable DDR handshake at functional reset event */
+#define CONFIG_DDR_HANDSHAKE_AT_RESET
+
 #define CONFIG_MACH_TYPE		4146
 
 #define CONFIG_SKIP_LOWLEVEL_INIT
