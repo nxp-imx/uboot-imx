@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013 - 2016 Freescale Semiconductor, Inc.
  *
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
  *
@@ -29,6 +29,10 @@
 #include "../common/pfuze.h"
 #include <usb.h>
 #include <usb/ehci-fsl.h>
+#if defined(CONFIG_MXC_EPDC)
+#include <lcd.h>
+#include <mxc_epdc_fb.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -56,6 +60,8 @@ DECLARE_GLOBAL_DATA_PTR;
 			PAD_CTL_PUS_47K_UP | PAD_CTL_SPEED_LOW |\
 			PAD_CTL_DSE_80ohm | PAD_CTL_HYS |	\
 			PAD_CTL_SRE_FAST)
+#define EPDC_PAD_CTRL    (PAD_CTL_PKE | PAD_CTL_SPEED_MED |	\
+	PAD_CTL_DSE_40ohm | PAD_CTL_HYS)
 
 #define ETH_PHY_POWER	IMX_GPIO_NR(4, 21)
 
@@ -144,6 +150,52 @@ static void setup_spi(void)
 	imx_iomux_v3_setup_multiple_pads(ecspi1_pads, ARRAY_SIZE(ecspi1_pads));
 }
 #endif
+
+static iomux_v3_cfg_t const epdc_enable_pads[] = {
+	MX6_PAD_EPDC_D0__EPDC_SDDO_0	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_D1__EPDC_SDDO_1	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_D2__EPDC_SDDO_2	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_D3__EPDC_SDDO_3	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_D4__EPDC_SDDO_4	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_D5__EPDC_SDDO_5	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_D6__EPDC_SDDO_6	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_D7__EPDC_SDDO_7	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_GDCLK__EPDC_GDCLK	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_GDSP__EPDC_GDSP	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_GDOE__EPDC_GDOE	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_GDRL__EPDC_GDRL	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_SDCLK__EPDC_SDCLK	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_SDOE__EPDC_SDOE	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_SDLE__EPDC_SDLE	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_SDSHR__EPDC_SDSHR	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_BDR0__EPDC_BDR_0	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_SDCE0__EPDC_SDCE_0	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_SDCE1__EPDC_SDCE_1	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX6_PAD_EPDC_SDCE2__EPDC_SDCE_2	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const epdc_disable_pads[] = {
+	MX6_PAD_EPDC_D0__GPIO_1_7,
+	MX6_PAD_EPDC_D1__GPIO_1_8,
+	MX6_PAD_EPDC_D2__GPIO_1_9,
+	MX6_PAD_EPDC_D3__GPIO_1_10,
+	MX6_PAD_EPDC_D4__GPIO_1_11,
+	MX6_PAD_EPDC_D5__GPIO_1_12,
+	MX6_PAD_EPDC_D6__GPIO_1_13,
+	MX6_PAD_EPDC_D7__GPIO_1_14,
+	MX6_PAD_EPDC_GDCLK__GPIO_1_31,
+	MX6_PAD_EPDC_GDSP__GPIO_2_2,
+	MX6_PAD_EPDC_GDOE__GPIO_2_0,
+	MX6_PAD_EPDC_GDRL__GPIO_2_1,
+	MX6_PAD_EPDC_SDCLK__GPIO_1_23,
+	MX6_PAD_EPDC_SDOE__GPIO_1_25,
+	MX6_PAD_EPDC_SDLE__GPIO_1_24,
+	MX6_PAD_EPDC_SDSHR__GPIO_1_26,
+	MX6_PAD_EPDC_BDR0__GPIO_2_5,
+	MX6_PAD_EPDC_SDCE0__GPIO_1_27,
+	MX6_PAD_EPDC_SDCE1__GPIO_1_28,
+	MX6_PAD_EPDC_SDCE2__GPIO_1_29,
+};
 
 static void setup_iomux_uart(void)
 {
@@ -380,6 +432,191 @@ int board_early_init_f(void)
 	return 0;
 }
 
+#ifdef CONFIG_MXC_EPDC
+vidinfo_t panel_info = {
+	.vl_refresh = 85,
+	.vl_col = 800,
+	.vl_row = 600,
+	.vl_rot = 0,
+	.vl_pixclock = 26666667,
+	.vl_left_margin = 8,
+	.vl_right_margin = 100,
+	.vl_upper_margin = 4,
+	.vl_lower_margin = 8,
+	.vl_hsync = 4,
+	.vl_vsync = 1,
+	.vl_sync = 0,
+	.vl_mode = 0,
+	.vl_flag = 0,
+	.vl_bpix = 3,
+	.cmap = 0,
+};
+
+struct epdc_timing_params panel_timings = {
+	.vscan_holdoff = 4,
+	.sdoed_width = 10,
+	.sdoed_delay = 20,
+	.sdoez_width = 10,
+	.sdoez_delay = 20,
+	.gdclk_hp_offs = 419,
+	.gdsp_offs = 20,
+	.gdoe_offs = 0,
+	.gdclk_offs = 5,
+	.num_ce = 1,
+};
+
+static void setup_epdc_power(void)
+{
+	/* Setup epdc voltage */
+
+	/* EPDC_PWRSTAT - GPIO2[13] for PWR_GOOD status */
+	imx_iomux_v3_setup_pad(MX6_PAD_EPDC_PWRSTAT__GPIO_2_13 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+	gpio_direction_input(IMX_GPIO_NR(2, 13));
+
+	/* EPDC_VCOM0 - GPIO2[3] for VCOM control */
+	imx_iomux_v3_setup_pad(MX6_PAD_EPDC_VCOM0__GPIO_2_3 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+
+	/* Set as output */
+	gpio_direction_output(IMX_GPIO_NR(2, 3), 1);
+
+	/* EPDC_PWRWAKEUP - GPIO2[14] for EPD PMIC WAKEUP */
+	imx_iomux_v3_setup_pad(MX6_PAD_EPDC_PWRWAKEUP__GPIO_2_14 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+	/* Set as output */
+	gpio_direction_output(IMX_GPIO_NR(2, 14), 1);
+
+	/* EPDC_PWRCTRL0 - GPIO2[7] for EPD PWR CTL0 */
+	imx_iomux_v3_setup_pad(MX6_PAD_EPDC_PWRCTRL0__GPIO_2_7 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+	/* Set as output */
+	gpio_direction_output(IMX_GPIO_NR(2, 7), 1);
+}
+
+static void epdc_enable_pins(void)
+{
+	/* epdc iomux settings */
+	imx_iomux_v3_setup_multiple_pads(epdc_enable_pads,
+				ARRAY_SIZE(epdc_enable_pads));
+}
+
+static void epdc_disable_pins(void)
+{
+	/* Configure MUX settings for EPDC pins to GPIO  and drive to 0 */
+	imx_iomux_v3_setup_multiple_pads(epdc_disable_pads,
+				ARRAY_SIZE(epdc_disable_pads));
+}
+
+static void setup_epdc(void)
+{
+	unsigned int reg;
+	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+
+	/*** epdc Maxim PMIC settings ***/
+
+	/* EPDC PWRSTAT - GPIO2[13] for PWR_GOOD status */
+	imx_iomux_v3_setup_pad(MX6_PAD_EPDC_PWRSTAT__GPIO_2_13 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+
+	/* EPDC VCOM0 - GPIO2[3] for VCOM control */
+	imx_iomux_v3_setup_pad(MX6_PAD_EPDC_VCOM0__GPIO_2_3 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+
+	/* UART4 TXD - GPIO2[14] for EPD PMIC WAKEUP */
+	imx_iomux_v3_setup_pad(MX6_PAD_EPDC_PWRWAKEUP__GPIO_2_14 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+
+	/* EIM_A18 - GPIO2[7] for EPD PWR CTL0 */
+	imx_iomux_v3_setup_pad(MX6_PAD_EPDC_PWRCTRL0__GPIO_2_7 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+
+	/*** Set pixel clock rates for EPDC ***/
+
+	/* EPDC AXI clk from PFD_400M, set to 396/2 = 198MHz */
+	reg = readl(&ccm_regs->chsccdr);
+	reg &= ~0x3F000;
+	reg |= (0x4 << 15) | (1 << 12);
+	writel(reg, &ccm_regs->chsccdr);
+
+	/* EPDC AXI clk enable */
+	reg = readl(&ccm_regs->CCGR3);
+	reg |= 0x0030;
+	writel(reg, &ccm_regs->CCGR3);
+
+	/* EPDC PIX clk from PFD_540M, set to 540/4/5 = 27MHz */
+	reg = readl(&ccm_regs->cscdr2);
+	reg &= ~0x03F000;
+	reg |= (0x5 << 15) | (4 << 12);
+	writel(reg, &ccm_regs->cscdr2);
+
+	reg = readl(&ccm_regs->cbcmr);
+	reg &= ~0x03800000;
+	reg |= (0x3 << 23);
+	writel(reg, &ccm_regs->cbcmr);
+
+	/* EPDC PIX clk enable */
+	reg = readl(&ccm_regs->CCGR3);
+	reg |= 0x0C00;
+	writel(reg, &ccm_regs->CCGR3);
+
+	panel_info.epdc_data.wv_modes.mode_init = 0;
+	panel_info.epdc_data.wv_modes.mode_du = 1;
+	panel_info.epdc_data.wv_modes.mode_gc4 = 3;
+	panel_info.epdc_data.wv_modes.mode_gc8 = 2;
+	panel_info.epdc_data.wv_modes.mode_gc16 = 2;
+	panel_info.epdc_data.wv_modes.mode_gc32 = 2;
+
+	panel_info.epdc_data.epdc_timings = panel_timings;
+
+	setup_epdc_power();
+}
+
+void epdc_power_on(void)
+{
+	unsigned int reg;
+	struct gpio_regs *gpio_regs = (struct gpio_regs *)GPIO2_BASE_ADDR;
+
+	/* Set EPD_PWR_CTL0 to high - enable EINK_VDD (3.15) */
+	gpio_set_value(IMX_GPIO_NR(2, 7), 1);
+	udelay(1000);
+
+	/* Enable epdc signal pin */
+	epdc_enable_pins();
+
+	/* Set PMIC Wakeup to high - enable Display power */
+	gpio_set_value(IMX_GPIO_NR(2, 14), 1);
+
+	/* Wait for PWRGOOD == 1 */
+	while (1) {
+		reg = readl(&gpio_regs->gpio_psr);
+		if (!(reg & (1 << 13)))
+			break;
+
+		udelay(100);
+	}
+
+	/* Enable VCOM */
+	gpio_set_value(IMX_GPIO_NR(2, 3), 1);
+
+	udelay(500);
+}
+
+void epdc_power_off(void)
+{
+	/* Set PMIC Wakeup to low - disable Display power */
+	gpio_set_value(IMX_GPIO_NR(2, 14), 0);
+
+	/* Disable VCOM */
+	gpio_set_value(IMX_GPIO_NR(2, 3), 0);
+
+	epdc_disable_pins();
+
+	/* Set EPD_PWR_CTL0 to low - disable EINK_VDD (3.15) */
+	gpio_set_value(IMX_GPIO_NR(2, 7), 0);
+}
+#endif
+
 int board_init(void)
 {
 	/* address of boot parameters */
@@ -391,6 +628,10 @@ int board_init(void)
 
 #ifdef	CONFIG_FEC_MXC
 	setup_fec();
+#endif
+
+#ifdef	CONFIG_MXC_EPDC
+	setup_epdc();
 #endif
 
 #ifdef CONFIG_USB_EHCI_MX6

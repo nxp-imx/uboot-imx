@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Freescale Semiconductor, Inc.
+ * Copyright 2013-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6SL EVK board.
  *
@@ -21,7 +21,7 @@
 #define CONFIG_MACH_TYPE		MACH_TYPE_MX6SLEVK
 
 /* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(3 * SZ_1M)
+#define CONFIG_SYS_MALLOC_LEN		(16 * SZ_1M)
 
 #define CONFIG_BOARD_EARLY_INIT_F
 
@@ -59,6 +59,7 @@
 #define CONFIG_PHY_SMSC
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	"epdc_waveform=epdc_splash.bin\0" \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"console=ttymxc0\0" \
@@ -197,5 +198,26 @@
 #endif
 
 #define CONFIG_IMX_THERMAL
+
+/*#define CONFIG_SPLASH_SCREEN*/
+
+/*
+ * SPLASH SCREEN Configs
+ */
+#ifdef CONFIG_SPLASH_SCREEN
+	/*
+	 * Framebuffer and LCD
+	 */
+	#define CONFIG_CMD_BMP
+	#define CONFIG_MXC_EPDC				1
+	#define CONFIG_LCD
+	#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+#ifdef CONFIG_MXC_EPDC
+	#undef LCD_TEST_PATTERN
+	#define LCD_BPP					LCD_MONOCHROME
+
+	#define CONFIG_WAVEFORM_BUF_SIZE		0x200000
+#endif
+#endif /* CONFIG_SPLASH_SCREEN */
 
 #endif				/* __CONFIG_H */
