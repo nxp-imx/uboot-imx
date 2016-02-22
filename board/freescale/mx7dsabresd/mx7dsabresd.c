@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -200,6 +200,44 @@ static void iox74lv_init(void)
 		gpio_direction_output(IOX_SHCP, 1);
 		udelay(500);
 	}
+	gpio_direction_output(IOX_STCP, 0);
+	udelay(500);
+	/*
+	  * shift register will be output to pins
+	  */
+	gpio_direction_output(IOX_STCP, 1);
+};
+
+static void iox74lv_set(int index)
+{
+	int i;
+	for (i = 7; i >= 0; i--) {
+		gpio_direction_output(IOX_SHCP, 0);
+
+		if (i == index)
+			gpio_direction_output(IOX_SDI, seq[qn_output[i]][0]);
+		else
+			gpio_direction_output(IOX_SDI, seq[qn_output[i]][1]);
+		udelay(500);
+		gpio_direction_output(IOX_SHCP, 1);
+		udelay(500);
+	}
+
+	gpio_direction_output(IOX_STCP, 0);
+	udelay(500);
+	/*
+	  * shift register will be output to pins
+	  */
+	gpio_direction_output(IOX_STCP, 1);
+
+	for (i = 7; i >= 0; i--) {
+		gpio_direction_output(IOX_SHCP, 0);
+		gpio_direction_output(IOX_SDI, seq[qn_output[i]][1]);
+		udelay(500);
+		gpio_direction_output(IOX_SHCP, 1);
+		udelay(500);
+	}
+
 	gpio_direction_output(IOX_STCP, 0);
 	udelay(500);
 	/*
