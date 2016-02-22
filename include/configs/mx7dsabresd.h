@@ -298,4 +298,31 @@
 #define CONFIG_QSPI_MEMMAP_BASE		QSPI0_ARB_BASE_ADDR
 #endif
 
+/* #define CONFIG_SPLASH_SCREEN*/
+/* #define CONFIG_MXC_EPDC*/
+
+/*
+ * SPLASH SCREEN Configs
+ */
+#if defined(CONFIG_SPLASH_SCREEN) && defined(CONFIG_MXC_EPDC)
+/*
+ * Framebuffer and LCD
+ */
+#define	CONFIG_CFB_CONSOLE
+#define CONFIG_CMD_BMP
+#define CONFIG_LCD
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+
+#undef LCD_TEST_PATTERN
+/* #define CONFIG_SPLASH_IS_IN_MMC			1 */
+#define LCD_BPP					LCD_MONOCHROME
+/* #define CONFIG_SPLASH_SCREEN_ALIGN		1 */
+
+#define CONFIG_WAVEFORM_BUF_SIZE		0x400000
+#endif
+
+#if defined(CONFIG_MXC_EPDC) && defined(CONFIG_SYS_USE_QSPI)
+#error "EPDC Pins conflicts QSPI, Either EPDC or QSPI can be enabled!"
+#endif
+
 #endif	/* __CONFIG_H */
