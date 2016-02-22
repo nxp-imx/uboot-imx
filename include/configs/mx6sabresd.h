@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6Q SabreSD board.
  *
@@ -67,5 +67,26 @@
 #define CONFIG_MXC_USB_FLAGS		0
 #define CONFIG_USB_MAX_CONTROLLER_COUNT	1 /* Enabled USB controller number */
 #endif
+
+/*#define CONFIG_SPLASH_SCREEN*/
+/*#define CONFIG_MXC_EPDC*/
+
+/*
+ * SPLASH SCREEN Configs
+ */
+#if defined(CONFIG_SPLASH_SCREEN) && defined(CONFIG_MXC_EPDC)
+	/*
+	 * Framebuffer and LCD
+	 */
+	#define CONFIG_CMD_BMP
+	#define CONFIG_LCD
+	#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+	#undef LCD_TEST_PATTERN
+	/* #define CONFIG_SPLASH_IS_IN_MMC			1 */
+	#define LCD_BPP					LCD_MONOCHROME
+	/* #define CONFIG_SPLASH_SCREEN_ALIGN		1 */
+
+	#define CONFIG_WAVEFORM_BUF_SIZE		0x200000
+#endif /* CONFIG_SPLASH_SCREEN && CONFIG_MXC_EPDC */
 
 #endif                         /* __MX6QSABRESD_CONFIG_H */
