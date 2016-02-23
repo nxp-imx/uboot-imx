@@ -19,7 +19,7 @@
 #endif
 
 /* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(3 * SZ_1M)
+#define CONFIG_SYS_MALLOC_LEN		(32 * SZ_1M)
 
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_BOARD_LATE_INIT
@@ -61,7 +61,7 @@
 	"fdt_addr=0x88000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
-	"videomode=video=ctfb:x:800,y:480,depth:24,pclk:29850,le:89,ri:164,up:23,lo:10,hs:10,vs:10,sync:0,vmode:0\0" \
+	"panel=Hannstar-XGA\0" \
 	"mmcdev=2\0" \
 	"mmcpart=1\0" \
 	"mmcroot=/dev/mmcblk0p2 rootwait rw\0" \
@@ -240,7 +240,7 @@
 #define CONFIG_BMP_16BPP
 #define CONFIG_VIDEO_BMP_RLE8
 #define CONFIG_VIDEO_BMP_LOGO
-#define MXS_LCDIF_BASE MX6SX_LCDIF1_BASE_ADDR
+#define CONFIG_IMX_VIDEO_SKIP
 #endif
 #endif
 

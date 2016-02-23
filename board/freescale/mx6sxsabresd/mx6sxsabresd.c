@@ -28,6 +28,7 @@
 #include "../common/pfuze.h"
 #include <usb.h>
 #include <usb/ehci-fsl.h>
+#include <asm/imx-common/video.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -472,6 +473,14 @@ int board_qspi_init(void)
 #endif
 
 #ifdef CONFIG_VIDEO_MXS
+static iomux_v3_cfg_t const lvds_ctrl_pads[] = {
+	/* CABC enable */
+	MX6_PAD_QSPI1A_DATA2__GPIO4_IO_18 | MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* Use GPIO for Brightness adjustment, duty cycle = period */
+	MX6_PAD_SD1_DATA1__GPIO6_IO_3 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
 static iomux_v3_cfg_t const lcd_pads[] = {
 	MX6_PAD_LCD1_CLK__LCDIF1_CLK | MUX_PAD_CTRL(LCD_PAD_CTRL),
 	MX6_PAD_LCD1_ENABLE__LCDIF1_ENABLE | MUX_PAD_CTRL(LCD_PAD_CTRL),
@@ -507,9 +516,41 @@ static iomux_v3_cfg_t const lcd_pads[] = {
 	MX6_PAD_SD1_DATA2__GPIO6_IO_4 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
-static int setup_lcd(void)
+void do_enable_lvds(struct display_info_t const *dev)
 {
-	enable_lcdif_clock(LCDIF1_BASE_ADDR);
+	int ret;
+
+	ret = enable_lcdif_clock(dev->bus);
+	if (ret) {
+		printf("Enable LCDIF clock failed, %d\n", ret);
+		return;
+	}
+	ret = enable_lvds_bridge(dev->bus);
+	if (ret) {
+		printf("Enable LVDS bridge failed, %d\n", ret);
+		return;
+	}
+
+	imx_iomux_v3_setup_multiple_pads(lvds_ctrl_pads,
+							ARRAY_SIZE(lvds_ctrl_pads));
+
+	/* Enable CABC */
+	gpio_direction_output(IMX_GPIO_NR(4, 18) , 1);
+
+	/* Set Brightness to high */
+	gpio_direction_output(IMX_GPIO_NR(6, 3) , 1);
+}
+
+void do_enable_parallel_lcd(struct display_info_t const *dev)
+
+{
+	int ret;
+
+	ret = enable_lcdif_clock(dev->bus);
+	if (ret) {
+		printf("Enable LCDIF clock failed, %d\n", ret);
+		return;
+	}
 
 	imx_iomux_v3_setup_multiple_pads(lcd_pads, ARRAY_SIZE(lcd_pads));
 
@@ -520,9 +561,48 @@ static int setup_lcd(void)
 
 	/* Set Brightness to high */
 	gpio_direction_output(IMX_GPIO_NR(6, 4) , 1);
-
-	return 0;
 }
+
+struct display_info_t const displays[] = {{
+	.bus = LCDIF2_BASE_ADDR,
+	.addr = 0,
+	.pixfmt = 18,
+	.detect = NULL,
+	.enable	= do_enable_lvds,
+	.mode	= {
+		.name			= "Hannstar-XGA",
+		.xres           = 1024,
+		.yres           = 768,
+		.pixclock       = 15385,
+		.left_margin    = 220,
+		.right_margin   = 40,
+		.upper_margin   = 21,
+		.lower_margin   = 7,
+		.hsync_len      = 60,
+		.vsync_len      = 10,
+		.sync           = 0,
+		.vmode          = FB_VMODE_NONINTERLACED
+} }, {
+	.bus = MX6SX_LCDIF1_BASE_ADDR,
+	.addr = 0,
+	.pixfmt = 24,
+	.detect = NULL,
+	.enable	= do_enable_parallel_lcd,
+	.mode	= {
+		.name			= "MCIMX28LCD",
+		.xres           = 800,
+		.yres           = 480,
+		.pixclock       = 29850,
+		.left_margin    = 89,
+		.right_margin   = 164,
+		.upper_margin   = 23,
+		.lower_margin   = 10,
+		.hsync_len      = 10,
+		.vsync_len      = 10,
+		.sync           = 0,
+		.vmode          = FB_VMODE_NONINTERLACED
+} } };
+size_t display_count = ARRAY_SIZE(displays);
 #endif
 
 int board_init(void)
@@ -536,10 +616,6 @@ int board_init(void)
 
 #ifdef CONFIG_FSL_QSPI
 	board_qspi_init();
-#endif
-
-#ifdef CONFIG_VIDEO_MXS
-	setup_lcd();
 #endif
 
 	return 0;
