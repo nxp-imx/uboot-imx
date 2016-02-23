@@ -153,6 +153,8 @@ config TARGET_MX6CUBOXI
 
 config TARGET_MX6QARM2
 	bool "mx6qarm2"
+	select BOARD_LATE_INIT
+	select BOARD_EARLY_INIT_F
 
 config TARGET_MX6Q_ICORE
 	bool "Support Engicam i.Core"
@@ -196,6 +198,8 @@ config TARGET_MX6SABRESD
 config TARGET_MX6SLEVK
 	bool "mx6slevk"
 	select SUPPORT_SPL
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
 
 config TARGET_MX6SLLEVK
         bool "mx6sll evk"
@@ -211,6 +215,7 @@ config TARGET_MX6SXSABRESD
 	select DM
 	select DM_THERMAL
 	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
 
 config TARGET_MX6SXSABREAUTO
         bool "mx6sxsabreauto"
