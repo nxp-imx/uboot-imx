@@ -60,7 +60,11 @@ iomux_v3_cfg_t const usdhc3_pads[] = {
 	MX6_PAD_SD3_DAT5__SD3_DATA5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD3_DAT6__SD3_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD3_DAT7__SD3_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+#ifdef CONFIG_MX6DQ_POP_LPDDR2
+	MX6_PAD_GPIO_18__SD3_VSELECT | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+#else
 	MX6_PAD_NANDF_CS0__GPIO6_IO11  | MUX_PAD_CTRL(NO_PAD_CTRL), /* CD */
+#endif
 };
 
 iomux_v3_cfg_t const usdhc4_pads[] = {
@@ -123,15 +127,16 @@ int mmc_map_to_kernel_blk(int devno)
 
 int board_mmc_getcd(struct mmc *mmc)
 {
+	int ret = 1;
+#ifndef CONFIG_MX6DQ_POP_LPDDR2
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
-	int ret;
 
 	if (cfg->esdhc_base == USDHC3_BASE_ADDR) {
 		gpio_direction_input(IMX_GPIO_NR(6, 11));
 		ret = !gpio_get_value(IMX_GPIO_NR(6, 11));
 	} else /* Don't have the CD GPIO pin on board */
 		ret = 1;
-
+#endif
 	return ret;
 }
 
