@@ -68,6 +68,9 @@ obj-$(CONFIG_POWER_PFUZE100)	+= pfuze.o
 obj-$(CONFIG_DM_PMIC_PFUZE100)	+= pfuze.o
 obj-$(CONFIG_POWER_MC34VR500)	+= mc34vr500.o
 obj-$(CONFIG_MXC_EPDC)		+= epdc_setup.o
+ifneq (,$(filter $(SOC), mx25 mx31 mx35 mx5 mx6 mx7 mx7ulp imx8 imx8m vf610))
+obj-y				+= mmc.o
+endif
 
 obj-$(CONFIG_LS102XA_STREAM_ID)	+= ls102xa_stream_id.o
 
