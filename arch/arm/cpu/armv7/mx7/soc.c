@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -209,6 +209,35 @@ static void imx_enet_mdio_fixup(void)
 	}
 }
 
+static void set_epdc_qos(void)
+{
+#define REGS_QOS_BASE     QOSC_IPS_BASE_ADDR
+#define REGS_QOS_EPDC     (QOSC_IPS_BASE_ADDR + 0x3400)
+#define REGS_QOS_PXP0     (QOSC_IPS_BASE_ADDR + 0x2C00)
+#define REGS_QOS_PXP1     (QOSC_IPS_BASE_ADDR + 0x3C00)
+
+	writel(0, REGS_QOS_BASE);  /*  Disable clkgate & soft_reset */
+	writel(0, REGS_QOS_BASE + 0x60);  /*  Enable all masters */
+	writel(0, REGS_QOS_EPDC);   /*  Disable clkgate & soft_reset */
+	writel(0, REGS_QOS_PXP0);   /*  Disable clkgate & soft_reset */
+	writel(0, REGS_QOS_PXP1);   /*  Disable clkgate & soft_reset */
+
+	writel(0x0f020722, REGS_QOS_EPDC + 0xd0);   /*  WR, init = 7 with red flag */
+	writel(0x0f020722, REGS_QOS_EPDC + 0xe0);   /*  RD,  init = 7 with red flag */
+
+	writel(1, REGS_QOS_PXP0);   /*  OT_CTRL_EN =1 */
+	writel(1, REGS_QOS_PXP1);   /*  OT_CTRL_EN =1 */
+
+	writel(0x0f020222, REGS_QOS_PXP0 + 0x50);   /*  WR,  init = 2 with red flag */
+	writel(0x0f020222, REGS_QOS_PXP1 + 0x50);   /*  WR,  init = 2 with red flag */
+	writel(0x0f020222, REGS_QOS_PXP0 + 0x60);   /*  rD,  init = 2 with red flag */
+	writel(0x0f020222, REGS_QOS_PXP1 + 0x60);   /*  rD,  init = 2 with red flag */
+	writel(0x0f020422, REGS_QOS_PXP0 + 0x70);   /*  tOTAL,  init = 4 with red flag */
+	writel(0x0f020422, REGS_QOS_PXP1 + 0x70);   /*  TOTAL,  init = 4 with red flag */
+
+	writel(0xe080, IOMUXC_GPR_BASE_ADDR + 0x0034); /* EPDC AW/AR CACHE ENABLE */
+}
+
 int arch_cpu_init(void)
 {
 	init_aips();
@@ -218,6 +247,8 @@ int arch_cpu_init(void)
 	imx_set_wdog_powerdown(false);
 
 	imx_enet_mdio_fixup();
+
+	set_epdc_qos();
 
 #ifdef CONFIG_APBH_DMA
 	/* Start APBH DMA */
