@@ -14,6 +14,9 @@
 #include "mx6_common.h"
 #include <asm/imx-common/gpio.h>
 
+/* uncomment for PLUGIN mode support */
+/* #define CONFIG_USE_PLUGIN */
+
 #define is_mx6ul_9x9_evk()	CONFIG_IS_ENABLED(TARGET_MX6UL_9X9_EVK)
 
 #ifdef CONFIG_TARGET_MX6UL_9X9_EVK
