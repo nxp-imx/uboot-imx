@@ -306,6 +306,30 @@ static void imx_gpcv2_init(void)
 	udelay(65);
 }
 
+static void set_epdc_qos(void)
+{
+	writel(0, REGS_QOS_BASE);  /*  Disable clkgate & soft_reset */
+	writel(0, REGS_QOS_BASE + 0x60);  /*  Enable all masters */
+	writel(0, REGS_QOS_EPDC);   /*  Disable clkgate & soft_reset */
+	writel(0, REGS_QOS_PXP0);   /*  Disable clkgate & soft_reset */
+	writel(0, REGS_QOS_PXP1);   /*  Disable clkgate & soft_reset */
+
+	writel(0x0f020722, REGS_QOS_EPDC + 0xd0);   /*  WR, init = 7 with red flag */
+	writel(0x0f020722, REGS_QOS_EPDC + 0xe0);   /*  RD,  init = 7 with red flag */
+
+	writel(1, REGS_QOS_PXP0);   /*  OT_CTRL_EN =1 */
+	writel(1, REGS_QOS_PXP1);   /*  OT_CTRL_EN =1 */
+
+	writel(0x0f020222, REGS_QOS_PXP0 + 0x50);   /*  WR,  init = 2 with red flag */
+	writel(0x0f020222, REGS_QOS_PXP1 + 0x50);   /*  WR,  init = 2 with red flag */
+	writel(0x0f020222, REGS_QOS_PXP0 + 0x60);   /*  rD,  init = 2 with red flag */
+	writel(0x0f020222, REGS_QOS_PXP1 + 0x60);   /*  rD,  init = 2 with red flag */
+	writel(0x0f020422, REGS_QOS_PXP0 + 0x70);   /*  tOTAL,  init = 4 with red flag */
+	writel(0x0f020422, REGS_QOS_PXP1 + 0x70);   /*  TOTAL,  init = 4 with red flag */
+
+	writel(0xe080, IOMUXC_GPR_BASE_ADDR + 0x0034); /* EPDC AW/AR CACHE ENABLE */
+}
+
 int arch_cpu_init(void)
 {
 	init_aips();
@@ -315,6 +339,8 @@ int arch_cpu_init(void)
 	imx_wdog_disable_powerdown();
 
 	init_cpu_basic();
+
+	set_epdc_qos();
 
 #if CONFIG_IS_ENABLED(IMX_RDC)
 	isolate_resource();
