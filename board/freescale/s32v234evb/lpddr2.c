@@ -11,7 +11,7 @@
 
 volatile int mscr_offset_ck0;
 
-void lpddr2_config_iomux(uint8_t module)
+void ddr_config_iomux(uint8_t module)
 {
 	int i;
 

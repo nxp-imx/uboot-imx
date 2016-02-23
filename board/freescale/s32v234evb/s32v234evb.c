@@ -8,106 +8,14 @@
 #include <asm/io.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/siul.h>
-#include <asm/arch/lpddr2.h>
 #include <asm/arch/clock.h>
 #include <mmc.h>
 #include <fsl_esdhc_imx.h>
 #include <miiphy.h>
 #include <netdev.h>
 #include <i2c.h>
-#include <asm/arch/mc_rgm_regs.h>
-#include <asm/arch/mmdc.h>
-#include <asm/arch/src.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-
-void setup_iomux_ddr(void)
-{
-	lpddr2_config_iomux(DDR0);
-	lpddr2_config_iomux(DDR1);
-
-}
-
-void ddr_phy_init(void)
-{
-}
-
-void ddr_ctrl_init(void)
-{
-	config_mmdc(0);
-	config_mmdc(1);
-}
-
-#ifdef CONFIG_DDR_HANDSHAKE_AT_RESET
-void ddr_check_post_func_reset(uint8_t module)
-{
-	u32 ddr_self_ref_clr, mmdc_mapsr;
-	unsigned long mmdc_addr;
-	volatile struct src *src = (struct src *)SRC_SOC_BASE_ADDR;
-
-	mmdc_addr = (module) ? MMDC1_BASE_ADDR : MMDC0_BASE_ADDR;
-	ddr_self_ref_clr = (module) ? SRC_DDR_EN_SELF_REF_CTRL_DDR1_SLF_REF_CLR
-				    : SRC_DDR_EN_SELF_REF_CTRL_DDR0_SLF_REF_CLR;
-
-	/* Check if DDR is still in refresh mode */
-	if (src->ddr_self_ref_ctrl & ddr_self_ref_clr) {
-		mmdc_mapsr = readl(mmdc_addr + MMDC_MAPSR);
-		writel(mmdc_mapsr | MMDC_MAPSR_EN_SLF_REF,
-		       mmdc_addr + MMDC_MAPSR);
-
-		src->ddr_self_ref_ctrl =
-			src->ddr_self_ref_ctrl | ddr_self_ref_clr;
-
-		mmdc_mapsr = readl(mmdc_addr + MMDC_MAPSR);
-		writel(mmdc_mapsr & ~MMDC_MAPSR_EN_SLF_REF,
-		       mmdc_addr + MMDC_MAPSR);
-	}
-}
-#endif
-
-int dram_init(void)
-{
-#ifdef CONFIG_DDR_HANDSHAKE_AT_RESET
-	u32 enabled_hs_events, func_event;
-
-	if (readl(MC_RGM_DDR_HE) & MC_RGM_DDR_HE_EN) {
-		/* Enable DDR handshake for all functional events */
-		volatile struct src *src = (struct src *)SRC_SOC_BASE_ADDR;
-
-		src->ddr_self_ref_ctrl = src->ddr_self_ref_ctrl |
-					 SRC_DDR_EN_SLF_REF_VALUE;
-
-		/* If reset event was received, check DDR state */
-		func_event = readl(MC_RGM_FES);
-		enabled_hs_events = readl(MC_RGM_FRHE);
-		if (func_event & enabled_hs_events) {
-			if (func_event & MC_RGM_FES_ANY_FUNC_EVENT) {
-				/* Check if DDR handshake was done */
-				while (!(readl(MC_RGM_DDR_HS) &
-				      MC_RGM_DDR_HS_HNDSHK_DONE))
-					;
-
-				ddr_check_post_func_reset(DDR0);
-				ddr_check_post_func_reset(DDR1);
-			}
-		}
-	} else {
-		/*
-		 * First boot so the handshake isn't necessary.
-		 * We should only enable it for future functional resets.
-		 */
-		writel(MC_RGM_DDR_HE_VALUE, MC_RGM_DDR_HE);
-		writel(MC_RGM_FRHE_ALL_VALUE, MC_RGM_FRHE);
-	}
-#endif
-	setup_iomux_ddr();
-
-	ddr_ctrl_init();
-
-	gd->ram_size = get_ram_size((void *)PHYS_SDRAM, PHYS_SDRAM_SIZE);
-
-	return 0;
-}
 
 static void setup_iomux_uart(void)
 {

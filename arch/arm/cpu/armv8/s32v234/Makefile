@@ -2,6 +2,6 @@
 #
 # (C) Copyright 2013-2016, Freescale Semiconductor, Inc.
 
-obj-y += generic.o
+obj-y += soc.o
 obj-y += cpu.o
 obj-y += clock.o

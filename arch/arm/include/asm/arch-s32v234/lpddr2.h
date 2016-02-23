@@ -70,7 +70,7 @@
 #define MMDC_MAPSR_EN_SLF_REF		0x00300000  /* DVFS and LPMD request */
 
 /* set I/O pads for DDR */
-void lpddr2_config_iomux(uint8_t module);
+void ddr_config_iomux(uint8_t module);
 void config_mmdc(uint8_t module);
 
 #endif
