@@ -18,6 +18,9 @@
 #include "imx6_spl.h"
 #endif
 
+/* uncomment for PLUGIN mode support */
+/* #define CONFIG_USE_PLUGIN */
+
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(32 * SZ_1M)
 
