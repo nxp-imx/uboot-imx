@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2016 Freescale Semiconductor, Inc.
  *
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
  *
@@ -269,6 +269,26 @@ static void setup_iomux_uart(void)
 static struct fsl_esdhc_cfg usdhc_cfg[1] = {
 	{USDHC3_BASE_ADDR},
 };
+
+int board_mmc_get_env_dev(int devno)
+{
+	/*
+	 * need ubstract 1 to map to the mmc3 device id
+	 * see the comments in board_mmc_init function
+	 */
+	if (devno == 2)
+		devno--;
+
+	return devno;
+}
+
+int mmc_map_to_kernel_blk(int devno)
+{
+	if (devno == 1)
+		devno = 2;
+
+	return devno;
+}
 
 int board_mmc_getcd(struct mmc *mmc)
 {
@@ -629,6 +649,10 @@ int board_late_init(void)
 		setenv("board_rev", "MX6Q");
 	else if (is_cpu_type(MXC_CPU_MX6DL) || is_cpu_type(MXC_CPU_MX6SOLO))
 		setenv("board_rev", "MX6DL");
+#endif
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
 #endif
 
 	return 0;
