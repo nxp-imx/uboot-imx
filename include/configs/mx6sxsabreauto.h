@@ -213,6 +213,7 @@
 #define CONFIG_SYS_I2C_PCA953X_WIDTH	{ {0x30, 8}, {0x32, 8}, {0x34, 8} }
 
 #define CONFIG_VIDEO
+#define CONFIG_VIDEO_GIS
 #ifdef CONFIG_VIDEO
 #define CONFIG_CFB_CONSOLE
 #define CONFIG_VIDEO_MXS
@@ -227,6 +228,11 @@
 #define CONFIG_VIDEO_BMP_RLE8
 #define CONFIG_VIDEO_BMP_LOGO
 #define CONFIG_IMX_VIDEO_SKIP
+#ifdef CONFIG_VIDEO_GIS
+#define CONFIG_VIDEO_CSI
+#define CONFIG_VIDEO_PXP
+#define CONFIG_VIDEO_VADC
+#endif
 #endif
 
 #endif				/* __CONFIG_H */
