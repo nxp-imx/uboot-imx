@@ -1,4 +1,6 @@
 /*
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -6,7 +8,11 @@
 #define __IMX_VIDEO_H_
 
 #include <linux/fb.h>
+#if defined(CONFIG_VIDEO_IPUV3)
 #include <ipu_pixfmt.h>
+#elif defined(CONFIG_VIDEO_MXS)
+#include <mxsfb.h>
+#endif
 
 struct display_info_t {
 	int	bus;
