@@ -62,6 +62,7 @@ obj-$(CONFIG_POWER_MC34VR500)	+= mc34vr500.o
 ifneq (,$(filter $(SOC), imx8ulp imx9))
 obj-y				+= mmc.o
 endif
+obj-$(CONFIG_MXC_EPDC)		+= epdc_setup.o
 
 obj-$(CONFIG_LS102XA_STREAM_ID)	+= ls102xa_stream_id.o
 

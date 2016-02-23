@@ -687,6 +687,19 @@ config VIDEO_ZYNQMP_DPSUB
 	  is used as placeholder for driver. The main reason is to record
 	  compatible string and calling power domain driver.
 
+config MXC_EPDC
+	bool "i.MX EPDC support"
+	depends on (MX7 || MX6)
+	help
+	  This enable the E-ink EPD panel controller support for i.MX processors
+
+config WAVEFORM_BUF_SIZE
+	hex "The buffer size allocated for i.MX EPDC waveform file"
+	default 0x400000
+	depends on MXC_EPDC
+	help
+	  Set the buffer size for loading waveform file.
+
 source "drivers/video/nexell/Kconfig"
 
 config CONSOLE_SCROLL_LINES
