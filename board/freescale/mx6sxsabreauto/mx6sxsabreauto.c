@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Freescale Semiconductor, Inc.
+ * Copyright (C) 2014-2016 Freescale Semiconductor, Inc.
  *
  * Author: Ye Li <ye.li@nxp.com>
  *
@@ -218,6 +218,20 @@ int board_early_init_f(void)
 	return 0;
 }
 
+int board_mmc_get_env_dev(int devno)
+{
+	/*
+	 * need subtract 2 to map to the mmc device id
+	 * see the comments in board_mmc_init function
+	 */
+	return devno - 2;
+}
+
+int mmc_map_to_kernel_blk(int devno)
+{
+	return devno + 2;
+}
+
 #ifdef CONFIG_FSL_QSPI
 
 #define QSPI_PAD_CTRL1	\
@@ -349,6 +363,10 @@ int board_late_init(void)
 {
 #ifdef CONFIG_CMD_BMODE
 	add_board_boot_modes(board_boot_modes);
+#endif
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
 #endif
 
 	return 0;
