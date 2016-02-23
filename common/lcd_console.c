@@ -47,16 +47,31 @@ static void lcd_putc_xy0(struct console_t *pcons, ushort x, ushort y, char c)
 	int fg_color = lcd_getfgcolor();
 	int bg_color = lcd_getbgcolor();
 	int i, row;
+#if LCD_BPP == LCD_MONOCHROME
+	ushort off  = x * (1 << LCD_BPP) % 8;
+#endif
+
 	fbptr_t *dst = (fbptr_t *)pcons->fbbase +
 				  y * pcons->lcdsizex +
 				  x;
 
 	for (row = 0; row < VIDEO_FONT_HEIGHT; row++) {
 		uchar bits = video_fontdata[c * VIDEO_FONT_HEIGHT + row];
+#if LCD_BPP == LCD_MONOCHROME
+		uchar rest = *dst & -(1 << (8 - off));
+		uchar sym;
+
+		sym  = (COLOR_MASK(fg_color) & bits) |
+			(COLOR_MASK(bg_color) & ~bits);
+		*dst++ = rest | (sym >> off);
+		rest = sym << (8 - off);
+		*dst  = rest | (*dst & ((1 << (8 - off)) - 1));
+#else /* LCD_BPP == LCD_COLOR8 or LCD_COLOR16 or LCD_COLOR32 */
 		for (i = 0; i < VIDEO_FONT_WIDTH; ++i) {
 			*dst++ = (bits & 0x80) ? fg_color : bg_color;
 			bits <<= 1;
 		}
+#endif
 		dst += (pcons->lcdsizex - VIDEO_FONT_WIDTH);
 	}
 }
@@ -114,7 +129,7 @@ static inline void console_newline(void)
 		for (i = 0; i < cons.rows-rows; i++)
 			cons.fp_console_moverow(&cons, i, i+rows);
 		for (i = 0; i < rows; i++)
-			cons.fp_console_setrow(&cons, cons.rows-i-1, bg_color);
+			cons.fp_console_setrow(&cons, cons.rows-i-1, COLOR_MASK(bg_color));
 		cons.curr_row -= rows;
 	}
 	lcd_sync();
