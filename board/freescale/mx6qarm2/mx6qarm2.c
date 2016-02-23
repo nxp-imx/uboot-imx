@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -17,6 +17,7 @@
 #include <miiphy.h>
 #include <netdev.h>
 #include <usb.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -113,6 +114,11 @@ struct fsl_esdhc_cfg usdhc_cfg[2] = {
 int board_mmc_get_env_dev(int devno)
 {
 	return devno - 2;
+}
+
+int mmc_map_to_kernel_blk(int devno)
+{
+	return devno + 2;
 }
 
 int board_mmc_getcd(struct mmc *mmc)
@@ -271,6 +277,15 @@ int board_init(void)
 
 #ifdef CONFIG_USB_EHCI_MX6
 	setup_usb();
+#endif
+
+	return 0;
+}
+
+int board_late_init(void)
+{
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
 #endif
 
 	return 0;
