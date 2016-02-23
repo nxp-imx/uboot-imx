@@ -14,6 +14,8 @@
 #define FS_TYPE_UBIFS	4
 #define FS_TYPE_BTRFS	5
 
+int do_fat_size(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[]);
+
 /**
  * do_fat_fsload - Run the fatload command
  *

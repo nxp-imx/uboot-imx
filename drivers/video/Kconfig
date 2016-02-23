@@ -575,6 +575,18 @@ config VIDEO
 	  model. Video drivers typically provide a colour text console and
 	  cursor.
 
+config MXC_EPDC
+	bool "i.MX EPDC support"
+	depends on LCD && (MX7 || MX6)
+	help
+	  This enable the E-ink EPD panel controller support for i.MX processors
+
+config WAVEFORM_BUF_SIZE
+	bool "The buffer size allocated for i.MX EPDC waveform file"
+	depends on MXC_EPDC
+	help
+	  Set the buffer size for loading waveform file.
+
 config CFB_CONSOLE
 	bool "Enable colour frame buffer console"
 	depends on VIDEO

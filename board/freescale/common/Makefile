@@ -61,6 +61,7 @@ obj-$(CONFIG_ZM7300)		+= zm7300.o
 obj-$(CONFIG_POWER_PFUZE100)	+= pfuze.o
 obj-$(CONFIG_DM_PMIC_PFUZE100)	+= pfuze.o
 obj-$(CONFIG_POWER_MC34VR500)	+= mc34vr500.o
+obj-$(CONFIG_MXC_EPDC)		+= epdc_setup.o
 
 obj-$(CONFIG_LS102XA_STREAM_ID)	+= ls102xa_stream_id.o
 
