@@ -641,6 +641,14 @@ int board_init(void)
 	return 0;
 }
 
+int board_late_init(void)
+{
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
+	return 0;
+}
+
 int checkboard(void)
 {
 	puts("Board: MX6SLEVK\n");
