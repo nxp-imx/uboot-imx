@@ -318,6 +318,11 @@ int board_mmc_get_env_dev(int devno)
 	return devno - 1;
 }
 
+int mmc_map_to_kernel_blk(int devno)
+{
+	return devno + 1;
+}
+
 int board_mmc_getcd(struct mmc *mmc)
 {
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
@@ -981,6 +986,10 @@ int board_late_init(void)
 		setenv("board_rev", "MX6Q");
 	else if (is_mx6sdl())
 		setenv("board_rev", "MX6DL");
+#endif
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
 #endif
 
 	return 0;
