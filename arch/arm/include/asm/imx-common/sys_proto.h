@@ -2,6 +2,8 @@
  * (C) Copyright 2009
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de.
  *
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -52,4 +54,7 @@ void lcdif_power_down(void);
 int mxs_reset_block(struct mxs_register_32 *reg);
 int mxs_wait_mask_set(struct mxs_register_32 *reg, u32 mask, u32 timeout);
 int mxs_wait_mask_clr(struct mxs_register_32 *reg, u32 mask, u32 timeout);
+
+int mmc_get_env_dev(void);
+void board_late_mmc_env_init(void);
 #endif
