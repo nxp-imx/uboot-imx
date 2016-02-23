@@ -9,4 +9,7 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
 	default "mx6qarm2"
 
+config MX6DQ_POP_LPDDR2
+	bool "Select this if it is a MX6Q POP LPDDR2 board"
+
 endif
