@@ -14,6 +14,9 @@
 #define CONFIG_DBG_MONITOR
 #define PHYS_SDRAM_SIZE			SZ_1G
 
+/* uncomment for PLUGIN mode support */
+/* #define CONFIG_USE_PLUGIN */
+
 /* Uncomment to enable secure boot support */
 /* #define CONFIG_SECURE_BOOT */
 #define CONFIG_CSF_SIZE			0x4000
