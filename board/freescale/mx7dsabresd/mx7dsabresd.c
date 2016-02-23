@@ -390,7 +390,7 @@ int board_mmc_get_env_dev(int devno)
 	return devno;
 }
 
-static int mmc_map_to_kernel_blk(int dev_no)
+int mmc_map_to_kernel_blk(int dev_no)
 {
 	if (dev_no == 1)
 		dev_no++;
@@ -459,39 +459,6 @@ int board_mmc_init(bd_t *bis)
 
 	return 0;
 }
-
-static int check_mmc_autodetect(void)
-{
-	char *autodetect_str = getenv("mmcautodetect");
-
-	if ((autodetect_str != NULL) &&
-		(strcmp(autodetect_str, "yes") == 0)) {
-		return 1;
-	}
-
-	return 0;
-}
-
-static void mmc_late_init(void)
-{
-	char cmd[32];
-	char mmcblk[32];
-	u32 dev_no = mmc_get_env_dev();
-
-	if (!check_mmc_autodetect())
-		return;
-
-	setenv_ulong("mmcdev", dev_no);
-
-	/* Set mmcblk env */
-	sprintf(mmcblk, "/dev/mmcblk%dp2 rootwait rw",
-		mmc_map_to_kernel_blk(dev_no));
-	setenv("mmcroot", mmcblk);
-
-	sprintf(cmd, "mmc dev %d", dev_no);
-	run_command(cmd, 0);
-}
-
 #endif
 
 #ifdef CONFIG_FEC_MXC
@@ -849,7 +816,7 @@ int board_late_init(void)
 	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
 
 #ifdef CONFIG_ENV_IS_IN_MMC
-	mmc_late_init();
+	board_late_mmc_env_init();
 #endif
 
 	imx_iomux_v3_setup_multiple_pads(wdog_pads, ARRAY_SIZE(wdog_pads));
