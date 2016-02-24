@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * (C) Copyright 2013-2015, Freescale Semiconductor, Inc.
+ * (C) Copyright 2013-2016 Freescale Semiconductor, Inc.
  */
 
 #include <common.h>
@@ -11,8 +11,6 @@
 #include <asm/arch/clock.h>
 #include <fdt_support.h>
 #include <linux/libfdt.h>
-#include <mmc.h>
-#include <fsl_esdhc_imx.h>
 #include <miiphy.h>
 #include <netdev.h>
 #include <i2c.h>
@@ -45,67 +43,6 @@ static void setup_iomux_i2c(void)
 #ifdef CONFIG_SYS_USE_NAND
 void setup_iomux_nfc(void)
 {
-}
-#endif
-
-#ifdef CONFIG_FSL_ESDHC_IMX
-struct fsl_esdhc_cfg esdhc_cfg[1] = {
-	{USDHC_BASE_ADDR},
-};
-
-int board_mmc_getcd(struct mmc *mmc)
-{
-	/* eSDHC1 is always present */
-	return 1;
-}
-
-int board_mmc_init(bd_t * bis)
-{
-	esdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_USDHC_CLK);
-
-	/* Set iomux PADS for USDHC */
-
-	/* PK6 pad: uSDHC clk */
-	writel(SIUL2_USDHC_PAD_CTRL_CLK, SIUL2_MSCRn(150));
-	writel(0x3, SIUL2_MSCRn(902));
-
-	/* PK7 pad: uSDHC CMD */
-	writel(SIUL2_USDHC_PAD_CTRL_CMD, SIUL2_MSCRn(151));
-	writel(0x3, SIUL2_MSCRn(901));
-
-	/* PK8 pad: uSDHC DAT0 */
-	writel(SIUL2_USDHC_PAD_CTRL_DAT0_3, SIUL2_MSCRn(152));
-	writel(0x3, SIUL2_MSCRn(903));
-
-	/* PK9 pad: uSDHC DAT1 */
-	writel(SIUL2_USDHC_PAD_CTRL_DAT0_3, SIUL2_MSCRn(153));
-	writel(0x3, SIUL2_MSCRn(904));
-
-	/* PK10 pad: uSDHC DAT2 */
-	writel(SIUL2_USDHC_PAD_CTRL_DAT0_3, SIUL2_MSCRn(154));
-	writel(0x3, SIUL2_MSCRn(905));
-
-	/* PK11 pad: uSDHC DAT3 */
-	writel(SIUL2_USDHC_PAD_CTRL_DAT0_3, SIUL2_MSCRn(155));
-	writel(0x3, SIUL2_MSCRn(906));
-
-	/* PK15 pad: uSDHC DAT4 */
-	writel(SIUL2_USDHC_PAD_CTRL_DAT4_7, SIUL2_MSCRn(159));
-	writel(0x3, SIUL2_MSCRn(907));
-
-	/* PL0 pad: uSDHC DAT5 */
-	writel(SIUL2_USDHC_PAD_CTRL_DAT4_7, SIUL2_MSCRn(160));
-	writel(0x3, SIUL2_MSCRn(908));
-
-	/* PL1 pad: uSDHC DAT6 */
-	writel(SIUL2_USDHC_PAD_CTRL_DAT4_7, SIUL2_MSCRn(161));
-	writel(0x3, SIUL2_MSCRn(909));
-
-	/* PL2 pad: uSDHC DAT7 */
-	writel(SIUL2_USDHC_PAD_CTRL_DAT4_7, SIUL2_MSCRn(162));
-	writel(0x3, SIUL2_MSCRn(910));
-
-	return fsl_esdhc_initialize(bis, &esdhc_cfg[0]);
 }
 #endif
 
