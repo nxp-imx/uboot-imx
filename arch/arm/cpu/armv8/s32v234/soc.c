@@ -464,6 +464,37 @@ int board_mmc_init(bd_t *bis)
 	else
 		return 0;
 }
+
+static int do_sdhc_setup(cmd_tbl_t *cmdtp, int flag, int argc,
+			 char * const argv[])
+{
+	int ret;
+	struct mmc *mmc = find_mmc_device(0);
+
+	printf("Hyperflash is disabled. SD/eMMC is active and can be used\n");
+
+	if (!mmc)
+		return sdhc_setup(gd->bd);
+
+	/* set the sdhc pinmuxing */
+	setup_iomux_sdhc();
+
+	/* reforce the mmc's initialization */
+	ret = mmc_init(mmc);
+	if (ret) {
+		printf("Impossible to configure the SDHC controller. Please check the SDHC jumpers\n");
+		return 1;
+	}
+	return 0;
+}
+
+/* sdhc setup */
+U_BOOT_CMD(sdhcsetup, 1, 1, do_sdhc_setup,
+	   "setup sdhc pinmuxing and sdhc registers for access to SD",
+	   "\n"
+	   "Set up the sdhc pinmuxing and sdhc registers to access the SD\n"
+	   "and disconnect from the Hyperflash.\n"
+);
 #endif
 
 void setup_iomux_ddr(void)
