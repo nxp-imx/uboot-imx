@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6Q SabreAuto board.
  *
@@ -29,6 +29,14 @@
 
 #include "mx6sabre_common.h"
 
+#undef MFG_NAND_PARTITION
+#ifdef CONFIG_SYS_BOOT_NAND
+#define MFG_NAND_PARTITION "mtdparts=8000000.nor:1m(boot),-(rootfs)\\\\;gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
+#else
+#define MFG_NAND_PARTITION ""
+#endif
+
+#define CONFIG_MTD_NOR_FLASH
 #define CONFIG_SYS_FLASH_BASE           WEIM_ARB_BASE_ADDR
 #define CONFIG_SYS_FLASH_SECT_SIZE      (128 * 1024)
 #define CONFIG_SYS_MAX_FLASH_BANKS 1    /* max number of memory banks */
