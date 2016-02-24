@@ -52,7 +52,7 @@
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
 	"fdt_file=imx6sx-sabreauto.dtb\0" \
-	"fdt_addr=0x88000000\0" \
+	"fdt_addr=0x83000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
 	"panel=Hannstar-XGA\0" \

@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2012-2016 Freescale Semiconductor, Inc.
  * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
  *
  * SPDX-License-Identifier:	GPL-2.0
@@ -47,7 +48,7 @@
 
 /* Boot options */
 #if (defined(CONFIG_MX6SX) || defined(CONFIG_MX6SL) || defined(CONFIG_MX6UL))
-#define CONFIG_LOADADDR		0x82000000
+#define CONFIG_LOADADDR		0x80800000
 #ifndef CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_TEXT_BASE	0x87800000
 #endif
