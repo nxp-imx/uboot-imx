@@ -60,6 +60,10 @@ DECLARE_GLOBAL_DATA_PTR;
 			PAD_CTL_PUS_47K_UP | PAD_CTL_SPEED_LOW |\
 			PAD_CTL_DSE_80ohm | PAD_CTL_HYS |	\
 			PAD_CTL_SRE_FAST)
+
+#define ELAN_INTR_PAD_CTRL (PAD_CTL_PKE | PAD_CTL_PUE | \
+			    PAD_CTL_PUS_47K_UP | PAD_CTL_HYS)
+
 #define EPDC_PAD_CTRL    (PAD_CTL_PKE | PAD_CTL_SPEED_MED |	\
 	PAD_CTL_DSE_40ohm | PAD_CTL_HYS)
 
@@ -130,6 +134,12 @@ static iomux_v3_cfg_t const fec_pads[] = {
 	MX6_PAD_FEC_REF_CLK__FEC_REF_OUT | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_FEC_RX_ER__GPIO_4_19 | MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_FEC_TX_CLK__GPIO_4_21 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const elan_pads[] = {
+	MX6_PAD_EPDC_PWRCTRL2__GPIO_2_9 | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_EPDC_PWRCTRL3__GPIO_2_10 | MUX_PAD_CTRL(ELAN_INTR_PAD_CTRL),
+	MX6_PAD_KEY_COL6__GPIO_4_4 | MUX_PAD_CTRL(EPDC_PAD_CTRL),
 };
 
 #ifdef CONFIG_MXC_SPI
@@ -351,14 +361,45 @@ struct i2c_pads_info i2c_pad_info1 = {
 
 int power_init_board(void)
 {
-	struct pmic *p;
+	struct pmic *pfuze;
+	unsigned int reg;
+	int ret;
 
-	p = pfuze_common_init(I2C_PMIC);
-	if (!p)
+	pfuze = pfuze_common_init(I2C_PMIC);
+	if (!pfuze)
 		return -ENODEV;
 
-	return pfuze_mode_init(p, APS_PFM);
+	ret = pfuze_mode_init(pfuze, APS_PFM);
+	if (ret < 0)
+		return ret;
+
+	/* set SW1AB staby volatage 0.975V */
+	pmic_reg_read(pfuze, PFUZE100_SW1ABSTBY, &reg);
+	reg &= ~0x3f;
+	reg |= 0x1b;
+	pmic_reg_write(pfuze, PFUZE100_SW1ABSTBY, reg);
+
+	/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
+	pmic_reg_read(pfuze, PFUZE100_SW1ABCONF, &reg);
+	reg &= ~0xc0;
+	reg |= 0x40;
+	pmic_reg_write(pfuze, PFUZE100_SW1ABCONF, reg);
+
+	/* set SW1C staby volatage 0.975V */
+	pmic_reg_read(pfuze, PFUZE100_SW1CSTBY, &reg);
+	reg &= ~0x3f;
+	reg |= 0x1b;
+	pmic_reg_write(pfuze, PFUZE100_SW1CSTBY, reg);
+
+	/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+	pmic_reg_read(pfuze, PFUZE100_SW1CCONF, &reg);
+	reg &= ~0xc0;
+	reg |= 0x40;
+	pmic_reg_write(pfuze, PFUZE100_SW1CCONF, reg);
+
+	return 0;
 }
+
 #endif
 
 #ifdef CONFIG_FEC_MXC
@@ -617,6 +658,14 @@ void epdc_power_off(void)
 }
 #endif
 
+void setup_elan_pads(void)
+{
+#define TOUCH_CS	IMX_GPIO_NR(2, 9)
+#define TOUCH_INT   IMX_GPIO_NR(2, 10)
+#define TOUCH_RST	IMX_GPIO_NR(4, 4)
+	imx_iomux_v3_setup_multiple_pads(elan_pads, ARRAY_SIZE(elan_pads));
+}
+
 int board_init(void)
 {
 	/* address of boot parameters */
@@ -624,6 +673,7 @@ int board_init(void)
 
 #ifdef CONFIG_SYS_I2C_MXC
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+	setup_elan_pads();
 #endif
 
 #ifdef	CONFIG_FEC_MXC
@@ -639,6 +689,37 @@ int board_init(void)
 #endif
 
 	return 0;
+}
+
+void elan_init(void)
+{
+	gpio_direction_input(TOUCH_INT);
+	/*
+	 * If epdc panel not plugged in, gpio_get_value(TOUCH_INT) will
+	 * return 1. And no need to mdelay, which will make i2c operation
+	 * slow.
+	 * If epdc panel plugged in, gpio_get_value(TOUCH_INT) will
+	 * return 0. And elan init flow will be executed.
+	 */
+	if (gpio_get_value(TOUCH_INT))
+		return;
+	gpio_direction_output(TOUCH_CS , 1);
+	gpio_set_value(TOUCH_CS, 0);
+	gpio_direction_output(TOUCH_RST , 1);
+	gpio_set_value(TOUCH_RST, 0);
+	mdelay(10);
+	gpio_set_value(TOUCH_RST, 1);
+	gpio_set_value(TOUCH_CS, 1);
+	mdelay(100);
+}
+
+/*
+ * This function overwrite the function defined in
+ * drivers/i2c/mxc_i2c.c, which is a weak symbol
+ */
+void i2c_force_reset_slave(void)
+{
+	elan_init();
 }
 
 int board_late_init(void)
