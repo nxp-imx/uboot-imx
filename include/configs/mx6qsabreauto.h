@@ -12,9 +12,15 @@
 #define CONFIG_MACH_TYPE	3529
 #define CONFIG_MXC_UART_BASE	UART4_BASE
 #define CONFIG_CONSOLE_DEV		"ttymxc3"
-#define CONFIG_MMCROOT			"/dev/mmcblk0p2"
+#define CONFIG_MMCROOT			"/dev/mmcblk2p2"  /* SDHC3 */
 #define PHYS_SDRAM_SIZE		(2u * 1024 * 1024 * 1024)
+#ifdef CONFIG_MX6SOLO
+#undef PHYS_SDRAM_SIZE
+#define PHYS_SDRAM_SIZE		(1u * 1024 * 1024 * 1024)
+#endif
 
+/*Since the pin conflicts on EIM D18, disable the USB host if the NOR flash is enabled */
+#if !defined(CONFIG_SYS_USE_SPINOR) && !defined(CONFIG_SYS_USE_EIMNOR)
 /* USB Configs */
 #define CONFIG_CMD_USB
 #define CONFIG_USB_EHCI
@@ -29,6 +35,7 @@
 
 #define CONFIG_PCA953X
 #define CONFIG_SYS_I2C_PCA953X_WIDTH	{ {0x30, 8}, {0x32, 8}, {0x34, 8} }
+#endif
 
 #include "mx6sabre_common.h"
 
@@ -39,6 +46,7 @@
 #define CONFIG_MFG_NAND_PARTITION ""
 #endif
 
+#ifdef CONFIG_SYS_USE_EIMNOR
 #undef CONFIG_SYS_NO_FLASH
 #define CONFIG_SYS_FLASH_BASE           WEIM_ARB_BASE_ADDR
 #define CONFIG_SYS_FLASH_SECT_SIZE      (128 * 1024)
@@ -48,12 +56,15 @@
 #define CONFIG_FLASH_CFI_DRIVER         /* Use drivers/cfi_flash.c */
 #define CONFIG_SYS_FLASH_USE_BUFFER_WRITE /* Use buffered writes*/
 #define CONFIG_SYS_FLASH_EMPTY_INFO
-
-#define CONFIG_SYS_FSL_USDHC_NUM	2
-#if defined(CONFIG_ENV_IS_IN_MMC)
-#define CONFIG_SYS_MMC_ENV_DEV		0
 #endif
 
+#define CONFIG_SYS_FSL_USDHC_NUM	2
+#define CONFIG_SYS_MMC_ENV_DEV		1  /* SDHC3 */
+#define CONFIG_SYS_MMC_ENV_PART                0       /* user partition */
+
+#ifdef CONFIG_SYS_USE_SPINOR
+#define CONFIG_SF_DEFAULT_CS   1
+#endif
 /* I2C Configs */
 #define CONFIG_CMD_I2C
 #define CONFIG_SYS_I2C
