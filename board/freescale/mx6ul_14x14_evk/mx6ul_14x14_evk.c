@@ -22,6 +22,7 @@
 #include <miiphy.h>
 #include <linux/sizes.h>
 #include <mmc.h>
+#include <mxsfb.h>
 #include <netdev.h>
 #include <power/pmic.h>
 #include <power/pfuze3000_pmic.h>
@@ -63,6 +64,19 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define ENET_RX_PAD_CTRL  (PAD_CTL_PKE | PAD_CTL_PUE |          \
 	PAD_CTL_SPEED_HIGH   | PAD_CTL_SRE_FAST)
+
+#define GPMI_PAD_CTRL0 (PAD_CTL_PKE | PAD_CTL_PUE | PAD_CTL_PUS_100K_UP)
+#define GPMI_PAD_CTRL1 (PAD_CTL_DSE_40ohm | PAD_CTL_SPEED_MED | \
+			PAD_CTL_SRE_FAST)
+#define GPMI_PAD_CTRL2 (GPMI_PAD_CTRL0 | GPMI_PAD_CTRL1)
+
+#define WEIM_NOR_PAD_CTRL (PAD_CTL_PKE | PAD_CTL_PUE | \
+		PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED | \
+		PAD_CTL_DSE_40ohm   | PAD_CTL_SRE_FAST)
+
+#define SPI_PAD_CTRL (PAD_CTL_HYS |				\
+	PAD_CTL_SPEED_MED |		\
+	PAD_CTL_DSE_40ohm | PAD_CTL_SRE_FAST)
 
 #define IOX_SDI IMX_GPIO_NR(5, 10)
 #define IOX_STCP IMX_GPIO_NR(5, 7)
@@ -159,6 +173,50 @@ static void iox74lv_init(void)
 	gpio_direction_output(IOX_OE, 1);
 };
 
+void iox74lv_set(int index)
+{
+	int i;
+
+	gpio_direction_output(IOX_OE, 0);
+
+	for (i = 7; i >= 0; i--) {
+		gpio_direction_output(IOX_SHCP, 0);
+
+		if (i == index)
+			gpio_direction_output(IOX_SDI, seq[qn_output[i]][0]);
+		else
+			gpio_direction_output(IOX_SDI, seq[qn_output[i]][1]);
+		udelay(500);
+		gpio_direction_output(IOX_SHCP, 1);
+		udelay(500);
+	}
+
+	gpio_direction_output(IOX_STCP, 0);
+	udelay(500);
+	/*
+	  * shift register will be output to pins
+	  */
+	gpio_direction_output(IOX_STCP, 1);
+
+	for (i = 7; i >= 0; i--) {
+		gpio_direction_output(IOX_SHCP, 0);
+		gpio_direction_output(IOX_SDI, seq[qn_output[i]][1]);
+		udelay(500);
+		gpio_direction_output(IOX_SHCP, 1);
+		udelay(500);
+	}
+
+	gpio_direction_output(IOX_STCP, 0);
+	udelay(500);
+	/*
+	  * shift register will be output to pins
+	  */
+	gpio_direction_output(IOX_STCP, 1);
+
+	gpio_direction_output(IOX_OE, 1);
+};
+
+
 #ifdef CONFIG_SYS_I2C_MXC
 #define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C1 for PMIC and EEPROM */
@@ -252,10 +310,10 @@ static iomux_v3_cfg_t const usdhc1_pads[] = {
 /*
  * mx6ul_14x14_evk board default supports sd card. If want to use
  * EMMC, need to do board rework for sd2.
- * Introduce CONFIG_MX6UL_14X14_EVK_EMMC_REWORK, if sd2 reworked to support
+ * Introduce CONFIG_MX6UL_EVK_EMMC_REWORK, if sd2 reworked to support
  * emmc, need to define this macro.
  */
-#if defined(CONFIG_MX6UL_14X14_EVK_EMMC_REWORK)
+#if defined(CONFIG_MX6UL_EVK_EMMC_REWORK)
 static iomux_v3_cfg_t const usdhc2_emmc_pads[] = {
 	MX6_PAD_NAND_RE_B__USDHC2_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_NAND_WE_B__USDHC2_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
@@ -306,7 +364,7 @@ static void setup_iomux_uart(void)
 
 #define QSPI_PAD_CTRL1	\
 	(PAD_CTL_SRE_FAST | PAD_CTL_SPEED_MED | \
-	 PAD_CTL_PKE | PAD_CTL_PUE | PAD_CTL_PUS_47K_UP | PAD_CTL_DSE_60ohm)
+	 PAD_CTL_PKE | PAD_CTL_PUE | PAD_CTL_PUS_47K_UP | PAD_CTL_DSE_120ohm)
 
 static iomux_v3_cfg_t const quadspi_pads[] = {
 	MX6_PAD_NAND_WP_B__QSPI_A_SCLK | MUX_PAD_CTRL(QSPI_PAD_CTRL1),
@@ -332,7 +390,7 @@ static int board_qspi_init(void)
 #ifdef CONFIG_FSL_ESDHC
 static struct fsl_esdhc_cfg usdhc_cfg[2] = {
 	{USDHC1_BASE_ADDR, 0, 4},
-#if defined(CONFIG_MX6UL_14X14_EVK_EMMC_REWORK)
+#if defined(CONFIG_MX6UL_EVK_EMMC_REWORK)
 	{USDHC2_BASE_ADDR, 0, 8},
 #else
 	{USDHC2_BASE_ADDR, 0, 4},
@@ -354,7 +412,7 @@ int board_mmc_getcd(struct mmc *mmc)
 		ret = !gpio_get_value(USDHC1_CD_GPIO);
 		break;
 	case USDHC2_BASE_ADDR:
-#if defined(CONFIG_MX6UL_14X14_EVK_EMMC_REWORK)
+#if defined(CONFIG_MX6UL_EVK_EMMC_REWORK)
 		ret = 1;
 #else
 		imx_iomux_v3_setup_multiple_pads(usdhc2_cd_pads,
@@ -379,7 +437,7 @@ int board_mmc_getcd(struct mmc *mmc)
 int board_mmc_init(bd_t *bis)
 {
 #ifdef CONFIG_SPL_BUILD
-#if defined(CONFIG_MX6UL_14X14_EVK_EMMC_REWORK)
+#if defined(CONFIG_MX6UL_EVK_EMMC_REWORK)
 	imx_iomux_v3_setup_multiple_pads(usdhc2_emmc_pads,
 					 ARRAY_SIZE(usdhc2_emmc_pads));
 #else
@@ -412,7 +470,7 @@ int board_mmc_init(bd_t *bis)
 			gpio_direction_output(USDHC1_PWR_GPIO, 1);
 			break;
 		case 1:
-#if defined(CONFIG_MX6UL_14X14_EVK_EMMC_REWORK)
+#if defined(CONFIG_MX6UL_EVK_EMMC_REWORK)
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc2_emmc_pads, ARRAY_SIZE(usdhc2_emmc_pads));
 #else
