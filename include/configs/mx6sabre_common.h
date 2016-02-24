@@ -11,6 +11,9 @@
 
 #include "mx6_common.h"
 
+/* uncomment for PLUGIN mode support */
+/* #define CONFIG_USE_PLUGIN */
+
 #define CONFIG_IMX_THERMAL
 
 /* Size of malloc() pool */
