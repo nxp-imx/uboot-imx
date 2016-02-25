@@ -11,6 +11,8 @@
 
 #include "mx6_common.h"
 
+#define CONFIG_DBG_MONITOR
+
 #ifdef CONFIG_SPL
 #include "imx6_spl.h"
 #endif
@@ -23,7 +25,7 @@
 
 #ifdef CONFIG_IMX_BOOTAUX
 /* Set to QSPI2 B flash at default */
-#define CONFIG_SYS_AUXCORE_BOOTDATA 0x78000000
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x72000000
 
 #define UPDATE_M4_ENV \
 	"m4image=m4_qspi.bin\0" \
@@ -68,9 +70,9 @@
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
 	"panel=Hannstar-XGA\0" \
-	"mmcdev=2\0" \
+	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
-	"mmcroot=/dev/mmcblk0p2 rootwait rw\0" \
+	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
 	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
 		"root=${mmcroot}\0" \
@@ -153,6 +155,10 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 /* MMC Configuration */
+#define CONFIG_SYS_MMC_ENV_DEV		2  /*USDHC4*/
+#define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
+#define CONFIG_MMCROOT			"/dev/mmcblk3p2"  /* USDHC4 */
+
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC4_BASE_ADDR
 
 /* I2C Configs */
@@ -200,8 +206,18 @@
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 2
 #endif
 
+/*
+ * The PCIe support in uboot would bring failures in i.MX6SX PCIe
+ * EP/RC validations. Disable PCIe support in uboot here.
+ * RootCause: The bit10(ltssm_en) of GPR12 would be set in uboot,
+ * thus the i.MX6SX PCIe EP would be cheated that the other i.MX6SX
+ * PCIe RC had been configured and trying to setup PCIe link directly,
+ * although the i.MX6SX RC is not properly configured at that time.
+ * PCIe can be supported in uboot, if the i.MX6SX PCIe EP/RC validation
+ * is not running.
+ */
+#ifdef CONFIG_PCI
 #define CONFIG_CMD_PCI
-#ifdef CONFIG_CMD_PCI
 #define CONFIG_PCI_SCAN_SHOW
 #define CONFIG_PCIE_IMX
 #define CONFIG_PCIE_IMX_PERST_GPIO	IMX_GPIO_NR(2, 0)
@@ -211,7 +227,6 @@
 #define CONFIG_IMX_THERMAL
 
 #ifdef CONFIG_FSL_QSPI
-#define CONFIG_SYS_FSL_QSPI_LE
 #define CONFIG_SYS_FSL_QSPI_AHB
 #ifdef CONFIG_MX6SX_SABRESD_REVA
 #define FSL_QSPI_FLASH_SIZE		SZ_16M
@@ -219,7 +234,13 @@
 #define FSL_QSPI_FLASH_SIZE		SZ_32M
 #endif
 #define FSL_QSPI_FLASH_NUM		2
+#define CONFIG_SF_DEFAULT_BUS		1
+#define CONFIG_SF_DEFAULT_CS		0
+#define CONFIG_SF_DEFAULT_SPEED	40000000
+#define CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
 #endif
+
+#define CONFIG_CMD_BMODE
 
 #ifndef CONFIG_SPL_BUILD
 #ifdef CONFIG_VIDEO
