@@ -14,6 +14,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
 #include <asm/imx-common/iomux-v3.h>
+#include <asm/imx-common/boot_mode.h>
 #include <asm/io.h>
 #include <asm/imx-common/mxc_i2c.h>
 #include <linux/sizes.h>
@@ -62,6 +63,12 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define LCD_PAD_CTRL    (PAD_CTL_HYS | PAD_CTL_PUS_100K_UP | PAD_CTL_PUE | \
 	PAD_CTL_PKE | PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm)
+
+#define BUTTON_PAD_CTRL    (PAD_CTL_PKE | PAD_CTL_PUE | \
+	PAD_CTL_PUS_22K_UP | PAD_CTL_DSE_40ohm)
+
+#define WDOG_PAD_CTRL (PAD_CTL_PUE | PAD_CTL_PKE | PAD_CTL_SPEED_MED |	\
+	PAD_CTL_DSE_40ohm)
 
 int dram_init(void)
 {
@@ -113,6 +120,23 @@ static iomux_v3_cfg_t const usdhc4_pads[] = {
 	MX6_PAD_SD4_DATA7__GPIO6_IO_21 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
+static iomux_v3_cfg_t const usdhc4_emmc_pads[] = {
+	MX6_PAD_SD4_CLK__USDHC4_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD4_CMD__USDHC4_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD4_DATA0__USDHC4_DATA0 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD4_DATA1__USDHC4_DATA1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD4_DATA2__USDHC4_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD4_DATA3__USDHC4_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD4_DATA4__USDHC4_DATA4 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD4_DATA5__USDHC4_DATA5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD4_DATA6__USDHC4_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD4_DATA7__USDHC4_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD4_RESET_B__USDHC4_RESET_B | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const wdog_b_pad = {
+	MX6_PAD_GPIO1_IO13__GPIO1_IO_13 | MUX_PAD_CTRL(WDOG_PAD_CTRL),
+};
 static iomux_v3_cfg_t const fec1_pads[] = {
 	MX6_PAD_ENET1_MDC__ENET1_MDC | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET1_MDIO__ENET1_MDIO | MUX_PAD_CTRL(ENET_PAD_CTRL),
@@ -204,25 +228,64 @@ static struct i2c_pads_info i2c_pad_info1 = {
 	},
 };
 
+/* I2C2 */
+struct i2c_pads_info i2c_pad_info2 = {
+	.scl = {
+		.i2c_mode = MX6_PAD_GPIO1_IO02__I2C2_SCL | PC,
+		.gpio_mode = MX6_PAD_GPIO1_IO02__GPIO1_IO_2 | PC,
+		.gp = IMX_GPIO_NR(1, 2),
+	},
+	.sda = {
+		.i2c_mode = MX6_PAD_GPIO1_IO03__I2C2_SDA | PC,
+		.gpio_mode = MX6_PAD_GPIO1_IO03__GPIO1_IO_3 | PC,
+		.gp = IMX_GPIO_NR(1, 3),
+	},
+};
+
+
 int power_init_board(void)
 {
-	struct pmic *p;
+	struct pmic *pfuze;
 	unsigned int reg;
 	int ret;
 
-	p = pfuze_common_init(I2C_PMIC);
-	if (!p)
+	pfuze = pfuze_common_init(I2C_PMIC);
+	if (!pfuze)
 		return -ENODEV;
 
-	ret = pfuze_mode_init(p, APS_PFM);
+	ret = pfuze_mode_init(pfuze, APS_PFM);
 	if (ret < 0)
 		return ret;
 
+	/* set SW1AB standby volatage 1.10V */
+	pmic_reg_read(pfuze, PFUZE100_SW1ABSTBY, &reg);
+	reg &= ~0x3f;
+	reg |= PFUZE100_SW1ABC_SETP(11000);
+	pmic_reg_write(pfuze, PFUZE100_SW1ABSTBY, reg);
+
+	/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
+	pmic_reg_read(pfuze, PFUZE100_SW1ABCONF, &reg);
+	reg &= ~0xc0;
+	reg |= 0x40;
+	pmic_reg_write(pfuze, PFUZE100_SW1ABCONF, reg);
+
+	/* set SW1C standby volatage 1.10V */
+	pmic_reg_read(pfuze, PFUZE100_SW1CSTBY, &reg);
+	reg &= ~0x3f;
+	reg |= PFUZE100_SW1ABC_SETP(11000);
+	pmic_reg_write(pfuze, PFUZE100_SW1CSTBY, reg);
+
+	/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+	pmic_reg_read(pfuze, PFUZE100_SW1CCONF, &reg);
+	reg &= ~0xc0;
+	reg |= 0x40;
+	pmic_reg_write(pfuze, PFUZE100_SW1CCONF, reg);
+
 	/* Enable power of VGEN5 3V3, needed for SD3 */
-	pmic_reg_read(p, PFUZE100_VGEN5VOL, &reg);
+	pmic_reg_read(pfuze, PFUZE100_VGEN5VOL, &reg);
 	reg &= ~LDO_VOL_MASK;
 	reg |= (LDOB_3_30V | (1 << LDO_EN));
-	pmic_reg_write(p, PFUZE100_VGEN5VOL, reg);
+	pmic_reg_write(pfuze, PFUZE100_VGEN5VOL, reg);
 
 	return 0;
 }
@@ -293,24 +356,17 @@ int board_early_init_f(void)
 {
 	setup_iomux_uart();
 
-	/* Enable PERI_3V3, which is used by SD2, ENET, LVDS, BT */
-	imx_iomux_v3_setup_multiple_pads(peri_3v3_pads,
-					 ARRAY_SIZE(peri_3v3_pads));
-
-	/* Active high for ncp692 */
-	gpio_direction_output(IMX_GPIO_NR(4, 16) , 1);
-
-#ifdef CONFIG_USB_EHCI_MX6
-	setup_usb();
-#endif
-
 	return 0;
 }
 
 static struct fsl_esdhc_cfg usdhc_cfg[3] = {
 	{USDHC2_BASE_ADDR, 0, 4},
 	{USDHC3_BASE_ADDR},
+#ifdef CONFIG_MX6SXSABRESD_EMMC_REWORK
+	{USDHC4_BASE_ADDR, 0, 8},
+#else
 	{USDHC4_BASE_ADDR},
+#endif
 };
 
 #define USDHC3_CD_GPIO	IMX_GPIO_NR(2, 10)
@@ -340,7 +396,11 @@ int board_mmc_getcd(struct mmc *mmc)
 		ret = !gpio_get_value(USDHC3_CD_GPIO);
 		break;
 	case USDHC4_BASE_ADDR:
+#ifdef CONFIG_MX6SXSABRESD_EMMC_REWORK
+		ret = 1;
+#else
 		ret = !gpio_get_value(USDHC4_CD_GPIO);
+#endif
 		break;
 	}
 
@@ -374,9 +434,14 @@ int board_mmc_init(bd_t *bis)
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 			break;
 		case 2:
+#ifdef CONFIG_MX6SXSABRESD_EMMC_REWORK
+			imx_iomux_v3_setup_multiple_pads(
+				usdhc4_emmc_pads, ARRAY_SIZE(usdhc4_emmc_pads));
+#else
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc4_pads, ARRAY_SIZE(usdhc4_pads));
 			gpio_direction_input(USDHC4_CD_GPIO);
+#endif
 			usdhc_cfg[2].sdhc_clk = mxc_get_clock(MXC_ESDHC4_CLK);
 			break;
 		default:
@@ -470,6 +535,16 @@ int board_qspi_init(void)
 
 	return 0;
 }
+#endif
+
+#ifdef CONFIG_CMD_BMODE
+static const struct boot_mode board_boot_modes[] = {
+	/* 4 bit bus width */
+	{"sd3", MAKE_CFGVAL(0x42, 0x30, 0x00, 0x00)},
+	{"sd4", MAKE_CFGVAL(0x40, 0x38, 0x00, 0x00)},
+	{"qspi2", MAKE_CFGVAL(0x18, 0x00, 0x00, 0x00)},
+	{NULL,	 0},
+};
 #endif
 
 #ifdef CONFIG_VIDEO_MXS
@@ -610,8 +685,29 @@ int board_init(void)
 	/* Address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
+	/*
+	 * Because kernel set WDOG_B mux before pad with the commone pinctrl
+	 * framwork now and wdog reset will be triggered once set WDOG_B mux
+	 * with default pad setting, we set pad setting here to workaround this.
+	 * Since imx_iomux_v3_setup_pad also set mux before pad setting, we set
+	 * as GPIO mux firstly here to workaround it.
+	 */
+	imx_iomux_v3_setup_pad(wdog_b_pad);
+
+	/* Enable PERI_3V3, which is used by SD2, ENET, LVDS, BT */
+	imx_iomux_v3_setup_multiple_pads(peri_3v3_pads,
+					 ARRAY_SIZE(peri_3v3_pads));
+
+	/* Active high for ncp692 */
+	gpio_direction_output(IMX_GPIO_NR(4, 16) , 1);
+
 #ifdef CONFIG_SYS_I2C_MXC
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info2);
+#endif
+
+#ifdef CONFIG_USB_EHCI_MX6
+	setup_usb();
 #endif
 
 #ifdef CONFIG_FSL_QSPI
@@ -623,6 +719,10 @@ int board_init(void)
 
 int board_late_init(void)
 {
+#ifdef CONFIG_CMD_BMODE
+	add_board_boot_modes(board_boot_modes);
+#endif
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
