@@ -4,6 +4,7 @@
  * (C) Copyright 2008 Armadeus Systems nc
  * (C) Copyright 2007 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
  * (C) Copyright 2007 Pengutronix, Juergen Beisert <j.beisert@pengutronix.de>
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -1119,7 +1120,11 @@ int fecmxc_initialize_multi(bd_t *bd, int dev_id, int phy_id, uint32_t addr)
 	 */
 	base_mii = MXS_ENET0_BASE;
 #else
+#ifdef CONFIG_FEC_MXC_MDIO_BASE
+	base_mii = CONFIG_FEC_MXC_MDIO_BASE;
+#else
 	base_mii = addr;
+#endif
 #endif
 	debug("eth_init: fec_probe(bd, %i, %i) @ %08x\n", dev_id, phy_id, addr);
 	bus = fec_get_miibus(base_mii, dev_id);
@@ -1208,7 +1213,7 @@ static int fecmxc_probe(struct udevice *dev)
 	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct fec_priv *priv = dev_get_priv(dev);
 	struct mii_dev *bus = NULL;
-	int dev_id = -1;
+	static int dev_id = 0;
 	uint32_t start;
 	int ret;
 
@@ -1216,7 +1221,11 @@ static int fecmxc_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
+#ifdef CONFIG_FEC_MXC_MDIO_BASE
+	bus = fec_get_miibus((uint32_t)CONFIG_FEC_MXC_MDIO_BASE, dev_id);
+#else
 	bus = fec_get_miibus((uint32_t)priv->eth, dev_id);
+#endif
 	if (!bus)
 		goto err_mii;
 
@@ -1241,6 +1250,7 @@ static int fecmxc_probe(struct udevice *dev)
 
 	fec_reg_setup(priv);
 	priv->dev_id = (dev_id == -1) ? 0 : dev_id;
+	dev_id++;
 
 	return 0;
 
@@ -1295,6 +1305,8 @@ static int fecmxc_ofdata_to_platdata(struct udevice *dev)
 
 static const struct udevice_id fecmxc_ids[] = {
 	{ .compatible = "fsl,imx6q-fec" },
+	{ .compatible = "fsl,imx6sx-fec" },
+	{ .compatible = "fsl,imx7d-fec" },
 	{ }
 };
 

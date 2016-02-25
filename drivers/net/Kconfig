@@ -123,6 +123,17 @@ config FEC_MXC
 	  This driver supports the 10/100 Fast Ethernet controller for
 	  NXP i.MX processors.
 
+config FEC_MXC_SHARE_MDIO
+	bool "Share the MDIO bus for FEC controller"
+	depends on FEC_MXC
+
+config FEC_MXC_MDIO_BASE
+	hex "MDIO base address for the FEC controller"
+	depends on FEC_MXC_SHARE_MDIO
+	help
+	  This specifies the MDIO registers base address. It is used when
+	  two FEC controllers share MDIO bus.
+
 config MVPP2
 	bool "Marvell Armada 375 network interface support"
 	depends on ARMADA_375
