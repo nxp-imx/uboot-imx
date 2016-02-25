@@ -27,13 +27,22 @@
 #define CONFIG_MII
 #define CONFIG_FEC_XCV_TYPE             RGMII
 #define CONFIG_ETHPRIME                 "FEC"
-#define CONFIG_FEC_MXC_PHYADDR          0
 
 #define CONFIG_PHYLIB
 #define CONFIG_PHY_BROADCOM
 /* ENET1 */
-#define IMX_FEC_BASE			ENET_IPS_BASE_ADDR
 
+#define CONFIG_FEC_ENET_DEV 0
+
+#if (CONFIG_FEC_ENET_DEV == 0)
+#define IMX_FEC_BASE			ENET_IPS_BASE_ADDR
+#define CONFIG_FEC_MXC_PHYADDR          0x0
+#elif (CONFIG_FEC_ENET_DEV == 1)
+#define IMX_FEC_BASE			ENET2_IPS_BASE_ADDR
+#define CONFIG_FEC_MXC_PHYADDR          0x1
+#endif
+
+#define CONFIG_FEC_MXC_MDIO_BASE	ENET_IPS_BASE_ADDR
 /* MMC Config*/
 #define CONFIG_SYS_FSL_ESDHC_ADDR       0
 
@@ -278,6 +287,8 @@
 #define CONFIG_USB_FUNCTION_DFU
 #define CONFIG_DFU_MMC
 #define CONFIG_DFU_RAM
+
+#define CONFIG_CMD_BMODE
 
 #define CONFIG_VIDEO
 #ifdef CONFIG_VIDEO
