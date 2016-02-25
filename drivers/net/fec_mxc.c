@@ -4,6 +4,7 @@
  * (C) Copyright 2008 Armadeus Systems nc
  * (C) Copyright 2007 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
  * (C) Copyright 2007 Pengutronix, Juergen Beisert <j.beisert@pengutronix.de>
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -1100,7 +1101,11 @@ int fecmxc_initialize_multi(bd_t *bd, int dev_id, int phy_id, uint32_t addr)
 	 */
 	base_mii = MXS_ENET0_BASE;
 #else
+#ifdef CONFIG_FEC_MXC_MDIO_BASE
+	base_mii = CONFIG_FEC_MXC_MDIO_BASE;
+#else
 	base_mii = addr;
+#endif
 #endif
 	debug("eth_init: fec_probe(bd, %i, %i) @ %08x\n", dev_id, phy_id, addr);
 	bus = fec_get_miibus(base_mii, dev_id);
