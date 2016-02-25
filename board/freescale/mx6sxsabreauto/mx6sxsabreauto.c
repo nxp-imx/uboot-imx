@@ -59,6 +59,9 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define I2C_PMIC	1
 
+#define BUTTON_PAD_CTRL    (PAD_CTL_PKE | PAD_CTL_PUE | \
+	PAD_CTL_PUS_22K_UP | PAD_CTL_DSE_40ohm)
+
 #define GPMI_PAD_CTRL0 (PAD_CTL_PKE | PAD_CTL_PUE | PAD_CTL_PUS_100K_UP)
 #define GPMI_PAD_CTRL1 (PAD_CTL_DSE_40ohm | PAD_CTL_SPEED_MED | \
 			PAD_CTL_SRE_FAST)
@@ -254,11 +257,45 @@ struct i2c_pads_info i2c_pad_info3 = {
 
 int power_init_board(void)
 {
-	struct pmic *p;
-
-	p = pfuze_common_init(I2C_PMIC);
-	if (!p)
+	struct pmic *pfuze;
+	unsigned int reg;
+	int ret;
+	pfuze = pfuze_common_init(I2C_PMIC);
+	if (!pfuze)
 		return -ENODEV;
+	ret = pfuze_mode_init(pfuze, APS_PFM);
+	if (ret < 0)
+		return ret;
+
+	/* set SW1AB standby volatage 0.975V */
+	pmic_reg_read(pfuze, PFUZE100_SW1ABSTBY, &reg);
+	reg &= ~0x3f;
+	reg |= PFUZE100_SW1ABC_SETP(9750);
+	pmic_reg_write(pfuze, PFUZE100_SW1ABSTBY, reg);
+
+	/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
+	pmic_reg_read(pfuze, PFUZE100_SW1ABCONF, &reg);
+	reg &= ~0xc0;
+	reg |= 0x40;
+	pmic_reg_write(pfuze, PFUZE100_SW1ABCONF, reg);
+
+	/* set SW1C standby volatage 1.10V */
+	pmic_reg_read(pfuze, PFUZE100_SW1CSTBY, &reg);
+	reg &= ~0x3f;
+	reg |= PFUZE100_SW1ABC_SETP(11000);
+	pmic_reg_write(pfuze, PFUZE100_SW1CSTBY, reg);
+
+	/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+	pmic_reg_read(pfuze, PFUZE100_SW1CCONF, &reg);
+	reg &= ~0xc0;
+	reg |= 0x40;
+	pmic_reg_write(pfuze, PFUZE100_SW1CCONF, reg);
+
+	/* Enable power of VGEN5 3V3, needed for SD3 */
+	pmic_reg_read(pfuze, PFUZE100_VGEN5VOL, &reg);
+	reg &= ~LDO_VOL_MASK;
+	reg |= (LDOB_3_30V | (1 << LDO_EN));
+	pmic_reg_write(pfuze, PFUZE100_VGEN5VOL, reg);
 
 	return 0;
 }
