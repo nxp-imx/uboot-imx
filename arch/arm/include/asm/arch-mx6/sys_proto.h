@@ -12,6 +12,7 @@
 
 #include <asm/imx-common/regs-common.h>
 #include "../arch-imx/cpu.h"
+#include <asm/arch/module_fuse.h>
 
 #define soc_rev() (get_cpu_rev() & 0xFF)
 #define is_soc_rev(rev)        (int)(soc_rev() - rev)
