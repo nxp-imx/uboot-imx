@@ -14,3 +14,4 @@ obj-$(CONFIG_MP)             += mp.o
 ifdef CONFIG_MX6UL
 obj-$(CONFIG_CMD_BEE)        += bee.o
 endif
+obj-$(CONFIG_MODULE_FUSE)        += module_fuse.o
