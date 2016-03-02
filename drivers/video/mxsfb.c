@@ -170,6 +170,11 @@ void lcdif_power_down()
 	struct mxs_lcdif_regs *regs = (struct mxs_lcdif_regs *)(panel.isaBase);
 	int timeout = WAIT_FOR_VSYNC_TIMEOUT;
 
+#ifdef CONFIG_MX6
+	if (check_module_fused(MX6_MODULE_LCDIF)) {
+		return;
+	}
+#endif
 	writel(panel.frameAdrs, &regs->hw_lcdif_cur_buf);
 	writel(panel.frameAdrs, &regs->hw_lcdif_next_buf);
 	writel(LCDIF_CTRL1_VSYNC_EDGE_IRQ, &regs->hw_lcdif_ctrl1_clr);
@@ -216,6 +221,12 @@ void *video_hw_init(void)
 		bpp = depth;
 	}
 
+#ifdef CONFIG_MX6
+	if (check_module_fused(MX6_MODULE_LCDIF)) {
+		printf("LCDIF@0x%x is fused, disable it\n", MXS_LCDIF_BASE);
+		return NULL;
+	}
+#endif
 	/* fill in Graphic device struct */
 	sprintf(panel.modeIdent, "%dx%dx%d",
 			mode.xres, mode.yres, bpp);
