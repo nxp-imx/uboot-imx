@@ -14,6 +14,7 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/clock.h>
 #include <asm/imx-common/iomux-v3.h>
+#include <asm/arch/sys_proto.h>
 
 #include "ehci.h"
 
@@ -234,6 +235,13 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 
 	if (index > 3)
 		return -EINVAL;
+
+	if (mx6_usb_fused(USB_BASE_ADDR + (0x200 * index))) {
+		printf("USB@0x%x is fused, disable it\n", 
+			USB_BASE_ADDR + (0x200 * index));
+		return -2;
+	}
+	
 	enable_usboh3_clk(1);
 	mdelay(1);
 
