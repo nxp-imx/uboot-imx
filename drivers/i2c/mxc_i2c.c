@@ -21,6 +21,7 @@
 #include <asm/io.h>
 #include <i2c.h>
 #include <watchdog.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -525,6 +526,15 @@ void bus_i2c_init(void *base, int speed, int unused,
 	struct i2c_parms *p = srdata->i2c_data;
 	if (!base)
 		return;
+	
+#ifdef CONFIG_MX6
+	if (mx6_i2c_fused((u32)base)) {
+		printf("I2C@0x%x is fused, disable it\n", 
+			(u32)base);
+		return;
+	}
+#endif
+
 	for (;;) {
 		if (!p->base || (p->base == base)) {
 			p->base = base;

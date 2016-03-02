@@ -20,6 +20,7 @@
 #include <asm/io.h>
 #include <asm/errno.h>
 #include <linux/compiler.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1090,6 +1091,13 @@ int fecmxc_initialize_multi(bd_t *bd, int dev_id, int phy_id, uint32_t addr)
 	struct phy_device *phydev = NULL;
 #endif
 	int ret;
+
+#ifdef CONFIG_MX6
+	if (mx6_enet_fused(addr)) {
+		printf("Ethernet@0x%x is fused, disable it\n", addr);
+		return -2;
+	}
+#endif
 
 #ifdef CONFIG_MX28
 	/*

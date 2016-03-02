@@ -13,6 +13,7 @@
 #include <spi.h>
 
 #include <asm/io.h>
+#include <asm/arch/sys_proto.h>
 
 #define QUADSPI_AHBMAP_BANK_MAXSIZE SZ_64M
 
@@ -543,6 +544,13 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 {
 	struct fsl_qspi *q;
 	int ret;
+
+#ifdef CONFIG_MX6
+	if (mx6_qspi_fused(CONFIG_QSPI_BASE)) {
+		printf("QSPI@0x%x is fused, disable it\n", CONFIG_QSPI_BASE);
+		return NULL;
+	}
+#endif
 
 	if (bus > 1) {
 		puts("FSL_QSPI: Not a valid bus !\n");
