@@ -566,34 +566,8 @@ static void setup_gpmi_nand(void)
 	/* config gpmi nand iomux */
 	imx_iomux_v3_setup_multiple_pads(nand_pads, ARRAY_SIZE(nand_pads));
 
-	clrbits_le32(&mxc_ccm->CCGR4,
-		     MXC_CCM_CCGR4_RAWNAND_U_BCH_INPUT_APB_MASK |
-		     MXC_CCM_CCGR4_RAWNAND_U_GPMI_BCH_INPUT_BCH_MASK |
-		     MXC_CCM_CCGR4_RAWNAND_U_GPMI_BCH_INPUT_GPMI_IO_MASK |
-		     MXC_CCM_CCGR4_RAWNAND_U_GPMI_INPUT_APB_MASK |
-		     MXC_CCM_CCGR4_PL301_MX6QPER1_BCH_MASK);
-
-	/*
-	 * config gpmi and bch clock to 100 MHz
-	 * bch/gpmi select PLL2 PFD2 400M
-	 * 100M = 400M / 4
-	 */
-	clrbits_le32(&mxc_ccm->cscmr1,
-		     MXC_CCM_CSCMR1_BCH_CLK_SEL |
-		     MXC_CCM_CSCMR1_GPMI_CLK_SEL);
-	clrsetbits_le32(&mxc_ccm->cscdr1,
-			MXC_CCM_CSCDR1_BCH_PODF_MASK |
-			MXC_CCM_CSCDR1_GPMI_PODF_MASK,
-			(3 << MXC_CCM_CSCDR1_BCH_PODF_OFFSET) |
-			(3 << MXC_CCM_CSCDR1_GPMI_PODF_OFFSET));
-
-	/* enable gpmi and bch clock gating */
-	setbits_le32(&mxc_ccm->CCGR4,
-		     MXC_CCM_CCGR4_RAWNAND_U_BCH_INPUT_APB_MASK |
-		     MXC_CCM_CCGR4_RAWNAND_U_GPMI_BCH_INPUT_BCH_MASK |
-		     MXC_CCM_CCGR4_RAWNAND_U_GPMI_BCH_INPUT_GPMI_IO_MASK |
-		     MXC_CCM_CCGR4_RAWNAND_U_GPMI_INPUT_APB_MASK |
-		     MXC_CCM_CCGR4_PL301_MX6QPER1_BCH_MASK);
+	setup_gpmi_io_clk((3 << MXC_CCM_CSCDR1_BCH_PODF_OFFSET) |
+			  (3 << MXC_CCM_CSCDR1_GPMI_PODF_OFFSET));
 
 	/* enable apbh clock gating */
 	setbits_le32(&mxc_ccm->CCGR0, MXC_CCM_CCGR0_APBHDMA_MASK);
