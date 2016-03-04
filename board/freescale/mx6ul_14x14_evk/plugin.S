@@ -351,7 +351,7 @@
 .endm
 
 .macro imx6_ddr_setting
-#if defined (CONFIG_MX6UL_9X9_LPDDR2)
+#if defined (CONFIG_TARGET_MX6UL_9X9_EVK)
 	imx6ul_lpddr2_evk_setting
 #elif defined(CONFIG_DDR3L_MT41K256M16HA)
 	imx6ul_ddr3_eol_evk_setting
