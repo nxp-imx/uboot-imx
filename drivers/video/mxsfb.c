@@ -171,9 +171,8 @@ void lcdif_power_down()
 	int timeout = WAIT_FOR_VSYNC_TIMEOUT;
 
 #ifdef CONFIG_MX6
-	if (check_module_fused(MX6_MODULE_LCDIF)) {
+	if (check_module_fused(MX6_MODULE_LCDIF))
 		return;
-	}
 #endif
 	writel(panel.frameAdrs, &regs->hw_lcdif_cur_buf);
 	writel(panel.frameAdrs, &regs->hw_lcdif_next_buf);
