@@ -526,10 +526,10 @@ void bus_i2c_init(void *base, int speed, int unused,
 	struct i2c_parms *p = srdata->i2c_data;
 	if (!base)
 		return;
-	
+
 #ifdef CONFIG_MX6
 	if (mx6_i2c_fused((u32)base)) {
-		printf("I2C@0x%x is fused, disable it\n", 
+		printf("I2C@0x%x is fused, disable it\n",
 			(u32)base);
 		return;
 	}

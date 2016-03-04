@@ -14,14 +14,14 @@
 
 struct fuse_entry_desc {
 	enum fuse_module_type module;
-	const char* node_path;
+	const char *node_path;
 	u32 fuse_word_offset;
 	u32 fuse_bit_offset;
 	u32 status;
 };
 
 static struct fuse_entry_desc mx6_fuse_descs[] = {
-#ifdef CONFIG_MX6UL	
+#ifdef CONFIG_MX6UL
 	{MX6_MODULE_TSC, "/soc/aips-bus@02000000/tsc@02040000", 0x430, 22},
 	{MX6_MODULE_ADC2, "/soc/aips-bus@02100000/adc@0219c000", 0x430, 23},
 	{MX6_MODULE_SIM1, "/soc/aips-bus@02100000/sim@0218c000", 0x430, 24},
@@ -83,23 +83,22 @@ u32 check_module_fused(enum fuse_module_type module)
 void print_fuse_status()
 {
 	u32 i, reg;
-	
+
 	for (i = 0; i < ARRAY_SIZE(mx6_fuse_descs); i++) {
 		reg = readl(OCOTP_BASE_ADDR + mx6_fuse_descs[i].fuse_word_offset);
-		if (reg & (1 << mx6_fuse_descs[i].fuse_bit_offset)) {
+		if (reg & (1 << mx6_fuse_descs[i].fuse_bit_offset))
 			printf("%s, disabled\n", mx6_fuse_descs[i].node_path);
-		}
 	}
 }
 
 void simulate_fuse()
 {
 	u32 i, reg;
-	
+
     for (i = 0; i < ARRAY_SIZE(mx6_fuse_descs); i++) {
 		if (MX6_MODULE_SD2 == mx6_fuse_descs[i].module)
 			continue;
-		
+
 		reg = readl(OCOTP_BASE_ADDR + mx6_fuse_descs[i].fuse_word_offset);
 		reg |= (1 << mx6_fuse_descs[i].fuse_bit_offset);
 		writel(reg, OCOTP_BASE_ADDR + mx6_fuse_descs[i].fuse_word_offset);
@@ -113,7 +112,7 @@ int ft_system_setup(void *blob, bd_t *bd)
 	u32 i, reg;
 	const char *status = "disabled";
 	int rc;
-	
+
 	for (i = 0; i < ARRAY_SIZE(mx6_fuse_descs); i++) {
 		reg = readl(OCOTP_BASE_ADDR + mx6_fuse_descs[i].fuse_word_offset);
 		if (reg & (1 << mx6_fuse_descs[i].fuse_bit_offset)) {
@@ -147,67 +146,67 @@ add_status:
 u32 mx6_esdhc_fused(u32 base_addr)
 {
 	switch (base_addr) {
-		case USDHC1_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_SD1);
-		case USDHC2_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_SD2);
-#ifdef USDHC3_BASE_ADDR			
-		case USDHC3_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_SD3);
+	case USDHC1_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_SD1);
+	case USDHC2_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_SD2);
+#ifdef USDHC3_BASE_ADDR
+	case USDHC3_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_SD3);
 #endif
-#ifdef USDHC4_BASE_ADDR	
-		case USDHC4_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_SD4);
+#ifdef USDHC4_BASE_ADDR
+	case USDHC4_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_SD4);
 #endif
-		default:
-			return 0;
+	default:
+		return 0;
 	}
 }
 
 u32 mx6_ecspi_fused(u32 base_addr)
 {
 	switch (base_addr) {
-		case ECSPI1_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_ECSPI1);
-		case ECSPI2_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_ECSPI2);
-		case ECSPI3_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_ECSPI3);
-		case ECSPI4_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_ECSPI4);
+	case ECSPI1_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_ECSPI1);
+	case ECSPI2_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_ECSPI2);
+	case ECSPI3_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_ECSPI3);
+	case ECSPI4_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_ECSPI4);
 #ifdef ECSPI5_BASE_ADDR
-		case ECSPI5_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_ECSPI5);
+	case ECSPI5_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_ECSPI5);
 #endif
-		default:
-			return 0;
+	default:
+		return 0;
 	}
 }
 
 u32 mx6_uart_fused(u32 base_addr)
 {
 	switch (base_addr) {
-		case UART1_BASE:
-			return check_module_fused(MX6_MODULE_UART1);
-		case UART2_BASE:
-			return check_module_fused(MX6_MODULE_UART2);
-		case UART3_BASE:
-			return check_module_fused(MX6_MODULE_UART3);
-		case UART4_BASE:
-			return check_module_fused(MX6_MODULE_UART4);
-		case UART5_BASE:
-			return check_module_fused(MX6_MODULE_UART5);
+	case UART1_BASE:
+		return check_module_fused(MX6_MODULE_UART1);
+	case UART2_BASE:
+		return check_module_fused(MX6_MODULE_UART2);
+	case UART3_BASE:
+		return check_module_fused(MX6_MODULE_UART3);
+	case UART4_BASE:
+		return check_module_fused(MX6_MODULE_UART4);
+	case UART5_BASE:
+		return check_module_fused(MX6_MODULE_UART5);
 #ifdef UART6_BASE_ADDR
-		case UART6_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_UART6);
+	case UART6_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_UART6);
 #endif
 #ifdef UART7_IPS_BASE_ADDR
-		case UART7_IPS_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_UART7);
+	case UART7_IPS_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_UART7);
 #endif
 #ifdef UART8_IPS_BASE_ADDR
-		case UART8_IPS_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_UART8);
+	case UART8_IPS_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_UART8);
 #endif
 	}
 
@@ -223,32 +222,32 @@ u32 mx6_usb_fused(u32 base_addr)
 u32 mx6_qspi_fused(u32 base_addr)
 {
 	switch (base_addr) {
-#ifdef QSPI1_BASE_ADDR	
-		case QSPI1_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_QSPI1);
+#ifdef QSPI1_BASE_ADDR
+	case QSPI1_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_QSPI1);
 #endif
 
 #ifdef QSPI2_BASE_ADDR
-		case QSPI2_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_QSPI2);
+	case QSPI2_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_QSPI2);
 #endif
-		default:
-			return 0;
+	default:
+		return 0;
 	}
 }
 
 u32 mx6_i2c_fused(u32 base_addr)
 {
 	switch (base_addr) {
-		case I2C1_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_I2C1);
-		case I2C2_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_I2C2);
-		case I2C3_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_I2C3);
-#ifdef I2C4_BASE_ADDR			
-		case I2C4_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_I2C4);
+	case I2C1_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_I2C1);
+	case I2C2_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_I2C2);
+	case I2C3_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_I2C3);
+#ifdef I2C4_BASE_ADDR
+	case I2C4_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_I2C4);
 #endif
 	}
 
@@ -258,14 +257,13 @@ u32 mx6_i2c_fused(u32 base_addr)
 u32 mx6_enet_fused(u32 base_addr)
 {
 	switch (base_addr) {
-		case ENET_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_ENET1);
+	case ENET_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_ENET1);
 #ifdef ENET2_BASE_ADDR
-		case ENET2_BASE_ADDR:
-			return check_module_fused(MX6_MODULE_ENET2);
+	case ENET2_BASE_ADDR:
+		return check_module_fused(MX6_MODULE_ENET2);
 #endif
-		default:
-			return 0;
+	default:
+		return 0;
 	}
 }
-
