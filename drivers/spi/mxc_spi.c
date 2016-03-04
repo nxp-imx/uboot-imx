@@ -414,10 +414,12 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		return NULL;
 	}
 
+#ifdef CONFIG_MX6
 	if (mx6_ecspi_fused(spi_bases[bus])) {
 		printf("ECSPI@0x%lx is fused, disable it\n", spi_bases[bus]);
 		return NULL;
 	}
+#endif
 
 	mxcs = spi_alloc_slave(struct mxc_spi_slave, bus, cs);
 	if (!mxcs) {
