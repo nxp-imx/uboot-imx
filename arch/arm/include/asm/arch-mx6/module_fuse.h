@@ -66,30 +66,38 @@ enum fuse_module_type{
 };
 
 #if !defined(CONFIG_MODULE_FUSE)
-static inline u32 check_module_fused(enum fuse_module_type module) {
+static inline u32 check_module_fused(enum fuse_module_type module)
+{
 	return 0;
 };
 
-static inline u32 mx6_esdhc_fused(u32 base_addr) {
+static inline u32 mx6_esdhc_fused(u32 base_addr)
+{
 	return 0;
 };
 
-static inline u32 mx6_ecspi_fused(u32 base_addr){
+static inline u32 mx6_ecspi_fused(u32 base_addr)
+{
 	return 0;
 };
-static inline u32 mx6_uart_fused(u32 base_addr){
+static inline u32 mx6_uart_fused(u32 base_addr)
+{
 	return 0;
 };
-static inline u32 mx6_usb_fused(u32 base_addr){
+static inline u32 mx6_usb_fused(u32 base_addr)
+{
 	return 0;
 };
-static inline u32 mx6_qspi_fused(u32 base_addr){
+static inline u32 mx6_qspi_fused(u32 base_addr)
+{
 	return 0;
 };
-static inline u32 mx6_i2c_fused(u32 base_addr){
+static inline u32 mx6_i2c_fused(u32 base_addr)
+{
 	return 0;
 };
-static inline u32 mx6_enet_fused(u32 base_addr){
+static inline u32 mx6_enet_fused(u32 base_addr)
+{
 	return 0;
 };
 

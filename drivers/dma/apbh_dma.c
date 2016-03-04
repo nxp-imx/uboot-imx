@@ -128,7 +128,7 @@ static int mxs_dma_enable(int channel)
 
 	if (list_empty(&pchan->active))
 		return -EFAULT;
-		
+
 	pdesc = list_first_entry(&pchan->active, struct mxs_dma_desc, node);
 	if (pchan->flags & MXS_DMA_FLAGS_BUSY) {
 		if (!(pdesc->cmd.data & MXS_DMA_DESC_CHAIN))
@@ -576,7 +576,8 @@ void mxs_dma_init(void)
 
 #ifdef CONFIG_MX6
 	if (check_module_fused(MX6_MODULE_APBHDMA)) {
-		printf("NAND APBH-DMA@0x%x is fused, disable it\n", MXS_APBH_BASE);
+		printf("NAND APBH-DMA@0x%x is fused, disable it\n",
+			MXS_APBH_BASE);
 		return;
 	}
 #endif

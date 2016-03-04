@@ -237,11 +237,11 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 		return -EINVAL;
 
 	if (mx6_usb_fused(USB_BASE_ADDR + (0x200 * index))) {
-		printf("USB@0x%x is fused, disable it\n", 
+		printf("USB@0x%x is fused, disable it\n",
 			USB_BASE_ADDR + (0x200 * index));
 		return -2;
 	}
-	
+
 	enable_usboh3_clk(1);
 	mdelay(1);
 
