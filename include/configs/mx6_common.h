@@ -117,4 +117,6 @@
 #define CONFIG_CMD_FUSE
 #define CONFIG_MXC_OCOTP
 
+/* LDO Bypass */
+#define CONFIG_LDO_BYPASS_CHECK
 #endif

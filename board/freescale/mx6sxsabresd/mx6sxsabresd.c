@@ -315,6 +315,57 @@ int power_init_board(void)
 	return 0;
 }
 
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	unsigned int value;
+	int is_400M;
+	u32 vddarm;
+	struct pmic *p = pmic_get("PFUZE100");
+
+	if (!p) {
+		printf("No PMIC found!\n");
+		return;
+	}
+
+	/* switch to ldo_bypass mode */
+	if (ldo_bypass) {
+		prep_anatop_bypass();
+		/* decrease VDDARM to 1.275V */
+		pmic_reg_read(p, PFUZE100_SW1ABVOL, &value);
+		value &= ~0x3f;
+		value |= PFUZE100_SW1ABC_SETP(12750);
+		pmic_reg_write(p, PFUZE100_SW1ABVOL, value);
+
+		/* decrease VDDSOC to 1.3V */
+		pmic_reg_read(p, PFUZE100_SW1CVOL, &value);
+		value &= ~0x3f;
+		value |= PFUZE100_SW1ABC_SETP(13000);
+		pmic_reg_write(p, PFUZE100_SW1CVOL, value);
+
+		is_400M = set_anatop_bypass(1);
+		if (is_400M)
+			vddarm = PFUZE100_SW1ABC_SETP(10750);
+		else
+			vddarm = PFUZE100_SW1ABC_SETP(11750);
+
+		pmic_reg_read(p, PFUZE100_SW1ABVOL, &value);
+		value &= ~0x3f;
+		value |= vddarm;
+		pmic_reg_write(p, PFUZE100_SW1ABVOL, value);
+
+		pmic_reg_read(p, PFUZE100_SW1CVOL, &value);
+		value &= ~0x3f;
+		value |= PFUZE100_SW1ABC_SETP(11750);
+		pmic_reg_write(p, PFUZE100_SW1CVOL, value);
+
+		finish_anatop_bypass();
+		printf("switch to ldo_bypass mode!\n");
+	}
+
+}
+#endif
+
 #ifdef CONFIG_USB_EHCI_MX6
 #define USB_OTHERREGS_OFFSET	0x800
 #define UCTRL_PWR_POL		(1 << 9)

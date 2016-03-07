@@ -400,6 +400,60 @@ int power_init_board(void)
 	return 0;
 }
 
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	u32 value;
+	int is_400M;
+	struct pmic *p = pmic_get("PFUZE100");
+
+	if (!p) {
+		printf("No pmic!\n");
+		return;
+	}
+
+	/* swith to ldo_bypass mode */
+	if (ldo_bypass) {
+		prep_anatop_bypass();
+
+		/* decrease VDDARM to 1.1V */
+		pmic_reg_read(p, PFUZE100_SW1ABVOL, &value);
+		value &= ~0x3f;
+		value |= 0x20;
+		pmic_reg_write(p, PFUZE100_SW1ABVOL, value);
+
+		/* increase VDDSOC to 1.3V */
+		pmic_reg_read(p, PFUZE100_SW1CVOL, &value);
+		value &= ~0x3f;
+		value |= 0x28;
+		pmic_reg_write(p, PFUZE100_SW1CVOL, value);
+
+		is_400M = set_anatop_bypass(0);
+
+		/*
+		 * MX6SL: VDDARM:1.175V@800M; VDDSOC:1.175V@800M
+		 *        VDDARM:0.975V@400M; VDDSOC:1.175V@400M
+		 */
+		pmic_reg_read(p, PFUZE100_SW1ABVOL, &value);
+		value &= ~0x3f;
+		if (is_400M)
+			value |= 0x1b;
+		else
+			value |= 0x23;
+		pmic_reg_write(p, PFUZE100_SW1ABVOL, value);
+
+		/* decrease VDDSOC to 1.175V */
+		pmic_reg_read(p, PFUZE100_SW1CVOL, &value);
+		value &= ~0x3f;
+		value |= 0x23;
+		pmic_reg_write(p, PFUZE100_SW1CVOL, value);
+
+		finish_anatop_bypass();
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
+#endif
+
 #endif
 
 #ifdef CONFIG_FEC_MXC

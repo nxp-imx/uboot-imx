@@ -948,6 +948,114 @@ int power_init_board(void)
 	return 0;
 }
 
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	unsigned int value;
+	int is_400M;
+	unsigned char vddarm;
+	struct pmic *p = pmic_get("PFUZE100");
+
+	if (!p) {
+		printf("No PMIC found!\n");
+		return;
+	}
+
+	/* increase VDDARM/VDDSOC to support 1.2G chip */
+	if (check_1_2G()) {
+		ldo_bypass = 0;	/* ldo_enable on 1.2G chip */
+		printf("1.2G chip, increase VDDARM_IN/VDDSOC_IN\n");
+		if (is_mx6dqp()) {
+			/* increase VDDARM to 1.425V */
+			pmic_reg_read(p, PFUZE100_SW2VOL, &value);
+			value &= ~0x3f;
+			value |= 0x29;
+			pmic_reg_write(p, PFUZE100_SW2VOL, value);
+		} else {
+			/* increase VDDARM to 1.425V */
+			pmic_reg_read(p, PFUZE100_SW1ABVOL, &value);
+			value &= ~0x3f;
+			value |= 0x2d;
+			pmic_reg_write(p, PFUZE100_SW1ABVOL, value);
+		}
+		/* increase VDDSOC to 1.425V */
+		pmic_reg_read(p, PFUZE100_SW1CVOL, &value);
+		value &= ~0x3f;
+		value |= 0x2d;
+		pmic_reg_write(p, PFUZE100_SW1CVOL, value);
+	}
+	/* switch to ldo_bypass mode , boot on 800Mhz */
+	if (ldo_bypass) {
+		prep_anatop_bypass();
+		if (is_mx6dqp()) {
+			/* decrease VDDARM for 400Mhz DQP:1.1V*/
+			pmic_reg_read(p, PFUZE100_SW2VOL, &value);
+			value &= ~0x3f;
+			value |= 0x1c;
+			pmic_reg_write(p, PFUZE100_SW2VOL, value);
+		} else {
+			/* decrease VDDARM for 400Mhz DQ:1.1V, DL:1.275V */
+			pmic_reg_read(p, PFUZE100_SW1ABVOL, &value);
+			value &= ~0x3f;
+			if (is_cpu_type(MXC_CPU_MX6DL))
+				value |= 0x27;
+			else
+				value |= 0x20;
+
+			pmic_reg_write(p, PFUZE100_SW1ABVOL, value);
+		}
+		/* increase VDDSOC to 1.3V */
+		pmic_reg_read(p, PFUZE100_SW1CVOL, &value);
+		value &= ~0x3f;
+		value |= 0x28;
+		pmic_reg_write(p, PFUZE100_SW1CVOL, value);
+
+		/*
+		 * MX6Q/DQP:
+		 * VDDARM:1.15V@800M; VDDSOC:1.175V@800M
+		 * VDDARM:0.975V@400M; VDDSOC:1.175V@400M
+		 * MX6DL:
+		 * VDDARM:1.175V@800M; VDDSOC:1.175V@800M
+		 * VDDARM:1.075V@400M; VDDSOC:1.175V@400M
+		 */
+		is_400M = set_anatop_bypass(2);
+		if (is_mx6dqp()) {
+			pmic_reg_read(p, PFUZE100_SW2VOL, &value);
+			value &= ~0x3f;
+			if (is_400M)
+				value |= 0x17;
+			else
+				value |= 0x1e;
+			pmic_reg_write(p, PFUZE100_SW2VOL, value);
+		}
+
+		if (is_400M) {
+			if (is_cpu_type(MXC_CPU_MX6DL))
+				vddarm = 0x1f;
+			else
+				vddarm = 0x1b;
+		} else {
+			if (is_cpu_type(MXC_CPU_MX6DL))
+				vddarm = 0x23;
+			else
+				vddarm = 0x22;
+		}
+		pmic_reg_read(p, PFUZE100_SW1ABVOL, &value);
+		value &= ~0x3f;
+		value |= vddarm;
+		pmic_reg_write(p, PFUZE100_SW1ABVOL, value);
+
+		/* decrease VDDSOC to 1.175V */
+		pmic_reg_read(p, PFUZE100_SW1CVOL, &value);
+		value &= ~0x3f;
+		value |= 0x23;
+		pmic_reg_write(p, PFUZE100_SW1CVOL, value);
+
+		finish_anatop_bypass();
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
+#endif
 
 #ifdef CONFIG_CMD_BMODE
 static const struct boot_mode board_boot_modes[] = {

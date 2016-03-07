@@ -276,6 +276,43 @@ int power_init_board(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	unsigned int value;
+	u32 vddarm;
+
+	struct pmic *p = pmic_get("PFUZE3000");
+
+	if (!p) {
+		printf("No PMIC found!\n");
+		return;
+	}
+
+	/* switch to ldo_bypass mode */
+	if (ldo_bypass) {
+		prep_anatop_bypass();
+		/* decrease VDDARM to 1.275V */
+		pmic_reg_read(p, PFUZE3000_SW1BVOLT, &value);
+		value &= ~0x1f;
+		value |= PFUZE3000_SW1AB_SETP(1275);
+		pmic_reg_write(p, PFUZE3000_SW1BVOLT, value);
+
+		set_anatop_bypass(1);
+		vddarm = PFUZE3000_SW1AB_SETP(1175);
+
+		pmic_reg_read(p, PFUZE3000_SW1BVOLT, &value);
+		value &= ~0x1f;
+		value |= vddarm;
+		pmic_reg_write(p, PFUZE3000_SW1BVOLT, value);
+
+		finish_anatop_bypass();
+
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
+#endif
 #endif
 #endif
 
