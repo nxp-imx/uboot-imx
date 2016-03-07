@@ -132,8 +132,14 @@ static iomux_v3_cfg_t const usdhc1_pads[] = {
 	MX6_PAD_SD1_DATA1__USDHC1_DATA1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD1_DATA2__USDHC1_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD1_DATA3__USDHC1_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+#ifndef CONFIG_SYS_USE_NAND
+    MX6_PAD_NAND_READY_B__USDHC1_DATA4 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+    MX6_PAD_NAND_CE0_B__USDHC1_DATA5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+    MX6_PAD_NAND_CE1_B__USDHC1_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+    MX6_PAD_NAND_CLE__USDHC1_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+#endif
 	/* CD */
-	MX6_PAD_UART1_CTS_B__GPIO1_IO18 | MUX_PAD_CTRL(NO_PAD_CTRL),
+    MX6_PAD_UART1_RTS_B__GPIO1_IO19 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
 #ifdef CONFIG_SYS_USE_NAND
@@ -231,10 +237,14 @@ static void setup_iomux_uart(void)
 
 #ifdef CONFIG_FSL_ESDHC
 static struct fsl_esdhc_cfg usdhc_cfg[2] = {
-	{USDHC1_BASE_ADDR, 0, 4},
+#ifdef CONFIG_SYS_USE_NAND
+   { USDHC1_BASE_ADDR, 0, 4 },
+#else
+   { USDHC1_BASE_ADDR, 0, 8 }, /* 8-bit emmc */
+#endif /* CONFIG_SYS_USE_NAND */
 };
 
-#define USDHC1_CD_GPIO	IMX_GPIO_NR(1, 18)
+#define USDHC1_CD_GPIO  IMX_GPIO_NR(1, 19)
 
 int mmc_get_env_devno(void)
 {
@@ -266,7 +276,11 @@ int board_mmc_getcd(struct mmc *mmc)
 
 	switch (cfg->esdhc_base) {
 	case USDHC1_BASE_ADDR:
-		ret = !gpio_get_value(USDHC1_CD_GPIO);
+#ifdef CONFIG_SYS_USE_NAND
+       ret = !gpio_get_value(USDHC1_CD_GPIO);
+#else
+       ret = 1;
+#endif
 		break;
 	}
 
