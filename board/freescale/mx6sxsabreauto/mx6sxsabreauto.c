@@ -181,6 +181,33 @@ int power_init_board(void)
 	return 0;
 }
 
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	struct udevice *dev;
+	int ret;
+
+	ret = pmic_get("pfuze100", &dev);
+	if (ret == -ENODEV) {
+		printf("No PMIC found!\n");
+		return;
+	}
+
+	/* switch to ldo_bypass mode */
+	if (ldo_bypass) {
+		/* decrease VDDARM to 1.15V */
+		pmic_clrsetbits(dev, PFUZE100_SW1ABVOL, 0x3f, SW1x_1_150V);
+
+		/* decrease VDDSOC to 1.15V */
+		pmic_clrsetbits(dev, PFUZE100_SW1CVOL, 0x3f, SW1x_1_150V);
+
+		set_anatop_bypass(1);
+
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
+#endif
+
 #ifdef CONFIG_USB_EHCI_MX6
 #define USB_OTHERREGS_OFFSET	0x800
 #define UCTRL_PWR_POL		(1 << 9)

@@ -54,6 +54,13 @@ config MX6_DDRCAL
 	  Say "Y" if your board uses dynamic (per-boot) DDR calibration.
 	  If unsure, say N.
 
+config LDO_BYPASS_CHECK
+	bool "Enable the LDO bypass checking and setting"
+	help
+	  This feature searches the gpc node in loaded DTB and checking the
+	  "fsl,ldo-bypass" property. When the property is set, board relevant 
+	  PMIC settings are called to adjust for LDO bypass. 
+
 config CMD_BEE
 	bool "Enable commands for Bus Encryption Engine(BEE)"
 	depends on MX6UL
