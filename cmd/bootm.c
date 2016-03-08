@@ -123,6 +123,31 @@ int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			return do_bootm_subcommand(cmdtp, flag, argc, argv);
 	}
 
+#ifdef CONFIG_IMX_HAB
+	extern int authenticate_image(
+			uint32_t ddr_start, uint32_t raw_image_size);
+
+	switch (genimg_get_format((const void *)image_load_addr)) {
+#if defined(CONFIG_LEGACY_IMAGE_FORMAT)
+	case IMAGE_FORMAT_LEGACY:
+		if (authenticate_image(image_load_addr,
+			image_get_image_size((image_header_t *)image_load_addr)) != 0) {
+			printf("Authenticate uImage Fail, Please check\n");
+			return 1;
+		}
+		break;
+#endif
+#ifdef CONFIG_ANDROID_BOOT_IMAGE
+	case IMAGE_FORMAT_ANDROID:
+		/* Do this authentication in boota command */
+		break;
+#endif
+	default:
+		printf("Not valid image format for Authentication, Please check\n");
+		return 1;
+	}
+#endif
+
 	return do_bootm_states(cmdtp, flag, argc, argv, BOOTM_STATE_START |
 		BOOTM_STATE_FINDOS | BOOTM_STATE_FINDOTHER |
 		BOOTM_STATE_LOADOS |
