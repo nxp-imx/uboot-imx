@@ -99,6 +99,7 @@
  * Default boot linux kernel in no secure mode.
  * If want to boot kernel in secure mode, please define CONFIG_MX7_SEC
  */
+#define CONFIG_MX7_SEC
 #ifndef CONFIG_MX7_SEC
 #define CONFIG_ARMV7_NONSEC
 #define CONFIG_ARMV7_PSCI
