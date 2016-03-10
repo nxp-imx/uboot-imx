@@ -40,9 +40,7 @@
 #endif
 
 #define CONFIG_SYS_AUXCORE_BOOTDATA 0x68000000 /* Set to QSPI1 B flash at default */
-#ifndef CONFIG_SYS_AUXCORE_FASTUP
-#define CONFIG_IMX_BOOTAUX /* Boot M4 by command, disable this when M4 fast up */
-#endif
+#define CONFIG_IMX_BOOTAUX
 
 #ifdef CONFIG_IMX_BOOTAUX
 #define UPDATE_M4_ENV \
@@ -190,10 +188,7 @@
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
-#ifdef CONFIG_SYS_AUXCORE_FASTUP
-/*#define CONFIG_IMX_RDC*/   /* Disable the RDC temporarily, will enable it in future */
-#define CONFIG_ENV_IS_IN_MMC  /* Must disable QSPI driver, because M4 run on QSPI */
-#elif defined CONFIG_SYS_BOOT_QSPI
+#if defined CONFIG_SYS_BOOT_QSPI
 #define CONFIG_ENV_IS_IN_SPI_FLASH
 #elif defined CONFIG_SYS_BOOT_NAND
 #define CONFIG_ENV_IS_IN_NAND

@@ -41,13 +41,11 @@
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE		UART1_BASE
 
-#define CONFIG_SYS_AUXCORE_BOOTDATA 0x78000000
-#ifndef CONFIG_SYS_AUXCORE_FASTUP
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x78000000 /* Set to QSPI2 B flash at default */
 #define CONFIG_IMX_BOOTAUX
-/* Set to QSPI2 B flash at default */
-#endif
 
-#ifdef CONFIG_IMX_BOOTAUX
+/* When using M4 fastup demo, no need these M4 env, since QSPI is used by M4 */
+#ifndef CONFIG_SYS_AUXCORE_FASTUP
 #define UPDATE_M4_ENV \
 	"m4image=m4_qspi.bin\0" \
 	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \
@@ -177,7 +175,7 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 #ifdef CONFIG_SYS_AUXCORE_FASTUP
-/*#define CONFIG_IMX_RDC*/   /* Disable the RDC temporarily, will enable it in future */
+/* #define CONFIG_IMX_RDC */   /* Disable the RDC temporarily, will enable it in future */
 #define CONFIG_ENV_IS_IN_MMC  /* Must disable QSPI driver, because M4 run on QSPI */
 #elif defined CONFIG_SYS_BOOT_QSPI
 #define CONFIG_FSL_QSPI

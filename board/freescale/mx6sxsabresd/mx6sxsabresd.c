@@ -32,6 +32,11 @@
 #include <usb/ehci-fsl.h>
 #include <asm/imx-common/video.h>
 
+#ifdef CONFIG_IMX_RDC
+#include <asm/imx-common/rdc-sema.h>
+#include <asm/arch/imx-rdc.h>
+#endif
+
 #ifdef CONFIG_FSL_FASTBOOT
 #include <fsl_fastboot.h>
 #ifdef CONFIG_ANDROID_RECOVERY
@@ -436,8 +441,22 @@ int board_phy_config(struct phy_device *phydev)
 	return 0;
 }
 
+#ifdef CONFIG_IMX_RDC
+static rdc_peri_cfg_t const shared_resources[] = {
+	(RDC_PER_GPIO1 | RDC_DOMAIN(0) | RDC_DOMAIN(1)),
+};
+#endif
+
 int board_early_init_f(void)
 {
+#ifdef CONFIG_IMX_RDC
+	imx_rdc_setup_peripherals(shared_resources, ARRAY_SIZE(shared_resources));
+#endif
+
+#ifdef CONFIG_SYS_AUXCORE_FASTUP
+	arch_auxiliary_core_up(0, CONFIG_SYS_AUXCORE_BOOTDATA);
+#endif
+
 	setup_iomux_uart();
 
 	return 0;
