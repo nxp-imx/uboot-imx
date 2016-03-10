@@ -6,6 +6,8 @@
  * (C) Copyright 2000-2006
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -417,7 +419,34 @@ int boot_get_fdt(int flag, int argc, char * const argv[], uint8_t arch,
 			debug("## No Flattened Device Tree\n");
 			goto no_fdt;
 		}
-	} else {
+	}
+#ifdef CONFIG_ANDROID_BOOT_IMAGE
+	else if (genimg_get_format((void *)images->os.start) ==
+		IMAGE_FORMAT_ANDROID) {
+		ulong fdt_data, fdt_len;
+		android_image_get_fdt((void *)images->os.start,
+		 &fdt_data, &fdt_len);
+
+		if (fdt_len) {
+			fdt_blob = (char *)fdt_data;
+			printf("   Booting using the fdt at 0x%p\n", fdt_blob);
+
+			if (fdt_check_header(fdt_blob) != 0) {
+				fdt_error("image is not a fdt");
+				goto error;
+			}
+
+			if (fdt_totalsize(fdt_blob) != fdt_len) {
+				fdt_error("fdt size != image size");
+				goto error;
+			}
+		} else {
+			debug("## No Flattened Device Tree\n");
+			goto no_fdt;
+		}
+	}
+#endif
+	else {
 		debug("## No Flattened Device Tree\n");
 		goto no_fdt;
 	}
