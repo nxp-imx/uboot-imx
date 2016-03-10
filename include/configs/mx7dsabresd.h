@@ -333,26 +333,6 @@
 
 #define CONFIG_IMX_THERMAL
 
-#define CONFIG_CI_UDC
-#define CONFIG_USBD_HS
-#define CONFIG_USB_GADGET_DUALSPEED
-
-#define CONFIG_USB_GADGET
-#define CONFIG_CMD_USB_MASS_STORAGE
-#define CONFIG_USB_FUNCTION_MASS_STORAGE
-#define CONFIG_USB_GADGET_DOWNLOAD
-#define CONFIG_USB_GADGET_VBUS_DRAW	2
-
-#define CONFIG_G_DNL_VENDOR_NUM		0x0525
-#define CONFIG_G_DNL_PRODUCT_NUM	0xa4a5
-#define CONFIG_G_DNL_MANUFACTURER	"FSL"
-
-/* USB Device Firmware Update support */
-#define CONFIG_CMD_DFU
-#define CONFIG_USB_FUNCTION_DFU
-#define CONFIG_DFU_MMC
-#define CONFIG_DFU_RAM
-
 #define CONFIG_CMD_BMODE
 
 #define CONFIG_VIDEO
@@ -397,6 +377,30 @@
 
 #if defined(CONFIG_MXC_EPDC) && defined(CONFIG_SYS_USE_QSPI)
 #error "EPDC Pins conflicts QSPI, Either EPDC or QSPI can be enabled!"
+#endif
+
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx7dsabresdandroid.h"
+#else
+#define CONFIG_CI_UDC
+#define CONFIG_USBD_HS
+#define CONFIG_USB_GADGET_DUALSPEED
+
+#define CONFIG_USB_GADGET
+#define CONFIG_CMD_USB_MASS_STORAGE
+#define CONFIG_USB_FUNCTION_MASS_STORAGE
+#define CONFIG_USB_GADGET_DOWNLOAD
+#define CONFIG_USB_GADGET_VBUS_DRAW	2
+
+#define CONFIG_G_DNL_VENDOR_NUM		0x0525
+#define CONFIG_G_DNL_PRODUCT_NUM	0xa4a5
+#define CONFIG_G_DNL_MANUFACTURER	"FSL"
+
+/* USB Device Firmware Update support */
+#define CONFIG_CMD_DFU
+#define CONFIG_USB_FUNCTION_DFU
+#define CONFIG_DFU_MMC
+#define CONFIG_DFU_RAM
 #endif
 
 #endif	/* __CONFIG_H */

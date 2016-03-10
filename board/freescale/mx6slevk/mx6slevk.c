@@ -14,6 +14,7 @@
 #include <asm/arch/mx6-pins.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
+#include <asm/imx-common/boot_mode.h>
 #include <asm/imx-common/iomux-v3.h>
 #include <asm/imx-common/mxc_i2c.h>
 #include <asm/imx-common/spi.h>
@@ -33,6 +34,12 @@
 #include <lcd.h>
 #include <mxc_epdc_fb.h>
 #endif
+#ifdef CONFIG_FSL_FASTBOOT
+#include <fsl_fastboot.h>
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif
+#endif /*CONFIG_FSL_FASTBOOT*/
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -790,6 +797,111 @@ int checkboard(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_MXC_KPD
+#define MX6SL_KEYPAD_CTRL (PAD_CTL_HYS | PAD_CTL_PKE | PAD_CTL_PUE | \
+			   PAD_CTL_PUS_100K_UP | PAD_CTL_DSE_120ohm)
+
+iomux_v3_cfg_t const mxc_kpd_pads[] = {
+	(MX6_PAD_KEY_COL0__KPP_COL_0 | MUX_PAD_CTRL(NO_PAD_CTRL)),
+	(MX6_PAD_KEY_COL1__KPP_COL_1 | MUX_PAD_CTRL(NO_PAD_CTRL)),
+	(MX6_PAD_KEY_COL2__KPP_COL_2 | MUX_PAD_CTRL(NO_PAD_CTRL)),
+	(MX6_PAD_KEY_COL3__KPP_COL_3 | MUX_PAD_CTRL(NO_PAD_CTRL)),
+
+	(MX6_PAD_KEY_ROW0__KPP_ROW_0 | MUX_PAD_CTRL(MX6SL_KEYPAD_CTRL)),
+	(MX6_PAD_KEY_ROW1__KPP_ROW_1 | MUX_PAD_CTRL(MX6SL_KEYPAD_CTRL)),
+	(MX6_PAD_KEY_ROW2__KPP_ROW_2 | MUX_PAD_CTRL(MX6SL_KEYPAD_CTRL)),
+	(MX6_PAD_KEY_ROW3__KPP_ROW_3 | MUX_PAD_CTRL(MX6SL_KEYPAD_CTRL)),
+};
+int setup_mxc_kpd(void)
+{
+	imx_iomux_v3_setup_multiple_pads(mxc_kpd_pads,
+					 ARRAY_SIZE(mxc_kpd_pads));
+
+	return 0;
+}
+#endif /*CONFIG_MXC_KPD*/
+
+#ifdef CONFIG_FSL_FASTBOOT
+void board_fastboot_setup(void)
+{
+	switch (get_boot_device()) {
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	case SD1_BOOT:
+	case MMC1_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "mmc0");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "boota mmc0");
+		break;
+	case SD2_BOOT:
+	case MMC2_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "mmc1");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "boota mmc1");
+		break;
+	case SD3_BOOT:
+	case MMC3_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "mmc2");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "boota mmc2");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
+	default:
+		printf("unsupported boot devices\n");
+		break;
+	}
+
+}
+
+#ifdef CONFIG_ANDROID_RECOVERY
+int check_recovery_cmd_file(void)
+{
+    return recovery_check_and_clean_flag();
+}
+
+void board_recovery_setup(void)
+{
+	int bootdev = get_boot_device();
+
+	/*current uboot BSP only supports USDHC2*/
+	switch (bootdev) {
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	case SD1_BOOT:
+	case MMC1_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery",
+					"boota mmc0 recovery");
+		break;
+	case SD2_BOOT:
+	case MMC2_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery",
+					"boota mmc1 recovery");
+		break;
+	case SD3_BOOT:
+	case MMC3_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery",
+					"boota mmc2 recovery");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
+	default:
+		printf("Unsupported bootup device for recovery: dev: %d\n",
+			bootdev);
+		return;
+	}
+
+	printf("setup env for recovery..\n");
+	setenv("bootcmd", "run bootcmd_android_recovery");
+}
+
+#endif /*CONFIG_ANDROID_RECOVERY*/
+
+#endif /*CONFIG_FSL_FASTBOOT*/
+
 
 #ifdef CONFIG_SPL_BUILD
 #include <spl.h>

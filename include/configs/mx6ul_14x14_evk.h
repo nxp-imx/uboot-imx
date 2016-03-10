@@ -365,4 +365,8 @@
 #endif
 #endif
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx6ul_14x14_evk_android.h"
+#endif
+
 #endif

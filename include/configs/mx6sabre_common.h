@@ -403,6 +403,10 @@
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx6sabreandroid_common.h"
+#else
+
 #ifndef CONFIG_SPL
 #define CONFIG_CI_UDC
 #define CONFIG_USBD_HS
@@ -418,12 +422,6 @@
 #define CONFIG_G_DNL_PRODUCT_NUM	0xa4a5
 #define CONFIG_G_DNL_MANUFACTURER	"FSL"
 
-#define CONFIG_USB_FUNCTION_FASTBOOT
-#define CONFIG_CMD_FASTBOOT
-#define CONFIG_ANDROID_BOOT_IMAGE
-#define CONFIG_FASTBOOT_BUF_ADDR   CONFIG_SYS_LOAD_ADDR
-#define CONFIG_FASTBOOT_BUF_SIZE   0x07000000
-
 /* USB Device Firmware Update support */
 #define CONFIG_CMD_DFU
 #define CONFIG_USB_FUNCTION_DFU
@@ -432,5 +430,7 @@
 #define CONFIG_DFU_SF
 #endif
 #endif
+
+#endif /* CONFIG_ANDROID_SUPPORT */
 
 #endif                         /* __MX6QSABRE_COMMON_CONFIG_H */
