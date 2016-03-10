@@ -237,4 +237,8 @@
 #endif
 #endif /* CONFIG_SPLASH_SCREEN */
 
+#if defined(CONFIG_FASTBOOT)
+#include "mx6slevkandroid.h"
+#endif
+
 #endif				/* __CONFIG_H */

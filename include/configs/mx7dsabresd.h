@@ -299,10 +299,6 @@
 
 #define CONFIG_CMD_BMODE
 
-#define CONFIG_USBD_HS
-
-#define CONFIG_USB_FUNCTION_MASS_STORAGE
-
 #ifdef CONFIG_VIDEO
 #define CONFIG_VIDEO_MXS
 #define CONFIG_VIDEO_LOGO
@@ -350,6 +346,13 @@
 #define FSL_QSPI_FLASH_SIZE		SZ_64M
 #define QSPI0_BASE_ADDR			QSPI1_IPS_BASE_ADDR
 #define QSPI0_AMBA_BASE			QSPI0_ARB_BASE_ADDR
+#endif
+
+#if defined(CONFIG_FASTBOOT)
+#include "mx7dsabresdandroid.h"
+#else
+#define CONFIG_USBD_HS
+#define CONFIG_USB_FUNCTION_MASS_STORAGE
 #endif
 
 #endif	/* __CONFIG_H */

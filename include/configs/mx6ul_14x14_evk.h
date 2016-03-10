@@ -330,4 +330,9 @@
 
 #define CONFIG_MODULE_FUSE
 #define CONFIG_OF_SYSTEM_SETUP
+
+#if defined(CONFIG_FASTBOOT)
+#include "mx6ul_14x14_evk_android.h"
+#endif
+
 #endif

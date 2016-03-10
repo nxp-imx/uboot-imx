@@ -318,4 +318,8 @@
 #endif
 #endif
 
+#if defined(CONFIG_FASTBOOT)
+#include "mx6sxsabreautoandroid.h"
+#endif
+
 #endif				/* __CONFIG_H */

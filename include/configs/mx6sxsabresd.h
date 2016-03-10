@@ -306,4 +306,8 @@
 
 #define CONFIG_SYS_FSL_USDHC_NUM	3
 
+#if defined(CONFIG_FASTBOOT)
+#include "mx6sxsabresdandroid.h"
+#endif
+
 #endif				/* __CONFIG_H */
