@@ -390,6 +390,7 @@
 #define IRAM_SIZE                    0x00020000
 #endif
 #define FEC_QUIRK_ENET_MAC
+#define SNVS_LPGPR                   0x68
 
 #include <asm/imx-common/regs-lcdif.h>
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))

@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2012 Boundary Devices Inc.
  *
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -37,5 +39,6 @@ struct boot_mode {
 
 void add_board_boot_modes(const struct boot_mode *p);
 void boot_mode_apply(unsigned cfg_val);
+enum boot_device get_boot_device(void);
 extern const struct boot_mode soc_boot_modes[];
 #endif

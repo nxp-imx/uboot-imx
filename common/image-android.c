@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011 Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  *
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -9,6 +11,7 @@
 #include <android_image.h>
 #include <malloc.h>
 #include <errno.h>
+#include <asm/bootm.h>
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 
@@ -68,7 +71,6 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 
 	int len = 0;
 	if (*hdr->cmdline) {
-		printf("Kernel command line: %s\n", hdr->cmdline);
 		len += strlen(hdr->cmdline);
 	}
 
@@ -85,12 +87,25 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 
 	if (bootargs) {
 		strcpy(newbootargs, bootargs);
-		strcat(newbootargs, " ");
-	}
-	if (*hdr->cmdline)
+	} else if (*hdr->cmdline) {
 		strcat(newbootargs, hdr->cmdline);
+	}
 
+	printf("Kernel command line: %s\n", newbootargs);
+#ifdef CONFIG_SERIAL_TAG
+	struct tag_serialnr serialnr;
+	char commandline[ANDR_BOOT_ARGS_SIZE];
+	get_board_serial(&serialnr);
+
+	sprintf(commandline,
+					"%s androidboot.serialno=%08x%08x",
+					newbootargs,
+					serialnr.high,
+					serialnr.low);
+	setenv("bootargs", commandline);
+#else
 	setenv("bootargs", newbootargs);
+#endif
 
 	if (os_data) {
 		*os_data = (ulong)hdr;
@@ -143,5 +158,23 @@ int android_image_get_ramdisk(const struct andr_img_hdr *hdr,
 	*rd_data += ALIGN(hdr->kernel_size, hdr->page_size);
 
 	*rd_len = hdr->ramdisk_size;
+	return 0;
+}
+
+int android_image_get_fdt(const struct andr_img_hdr *hdr,
+			      ulong *fdt_data, ulong *fdt_len)
+{
+	if (!hdr->second_size)
+		return -1;
+
+	printf("FDT load addr 0x%08x size %u KiB\n",
+	       hdr->second_addr, DIV_ROUND_UP(hdr->second_size, 1024));
+
+	*fdt_data = (unsigned long)hdr;
+	*fdt_data += hdr->page_size;
+	*fdt_data += ALIGN(hdr->kernel_size, hdr->page_size);
+	*fdt_data += ALIGN(hdr->ramdisk_size, hdr->page_size);
+
+	*fdt_len = hdr->second_size;
 	return 0;
 }

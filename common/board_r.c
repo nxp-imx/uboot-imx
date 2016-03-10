@@ -7,6 +7,8 @@
  * Sysgo Real-Time Solutions, GmbH <www.elinos.com>
  * Marius Groeger <mgroeger@sysgo.de>
  *
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -64,6 +66,9 @@
 #include <linux/err.h>
 #ifdef CONFIG_AVR32
 #include <asm/arch/mmu.h>
+#endif
+#ifdef CONFIG_FSL_FASTBOOT
+#include <fsl_fastboot.h>
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -731,6 +736,20 @@ static int initr_kbd(void)
 }
 #endif
 
+#ifdef CONFIG_FSL_FASTBOOT
+static int initr_fastboot_setup(void)
+{
+	fastboot_setup();
+	return 0;
+}
+
+static int initr_check_fastboot(void)
+{
+	check_fastboot();
+	return 0;
+}
+#endif
+
 static int run_main_loop(void)
 {
 #ifdef CONFIG_SANDBOX
@@ -908,6 +927,9 @@ init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_BOARD_LATE_INIT
 	board_late_init,
 #endif
+#ifdef CONFIG_FSL_FASTBOOT
+	initr_fastboot_setup,
+#endif
 #if defined(CONFIG_CMD_AMBAPP)
 	ambapp_init_reloc,
 #if defined(CONFIG_SYS_AMBAPP_PRINT_ON_STARTUP)
@@ -959,6 +981,9 @@ init_fnc_t init_sequence_r[] = {
 #endif
 #if defined(CONFIG_SPARC)
 	prom_init,
+#endif
+#ifdef CONFIG_FSL_FASTBOOT
+	initr_check_fastboot,
 #endif
 	run_main_loop,
 };

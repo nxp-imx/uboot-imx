@@ -22,6 +22,10 @@
 #include <dm.h>
 #include <imx_thermal.h>
 #include <mmc.h>
+#if defined(CONFIG_FSL_FASTBOOT) && defined(CONFIG_ANDROID_RECOVERY)
+#include <recovery.h>
+#endif
+
 
 enum ldo_reg {
 	LDO_ARM,
@@ -470,6 +474,19 @@ int board_postclk_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_SERIAL_TAG
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[0];
+	struct fuse_bank0_regs *fuse =
+		(struct fuse_bank0_regs *)bank->fuse_regs;
+
+	serialnr->low = fuse->uid_low;
+	serialnr->high = fuse->uid_high;
+}
+#endif
+
 #if defined(CONFIG_FEC_MXC)
 void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 {
@@ -527,6 +544,49 @@ const struct boot_mode soc_boot_modes[] = {
 	{"esdhc4",	MAKE_CFGVAL(0x40, 0x38, 0x00, 0x00)},
 	{NULL,		0},
 };
+
+enum boot_device get_boot_device(void)
+{
+	enum boot_device boot_dev = UNKNOWN_BOOT;
+	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	uint bt_mem_ctl = (soc_sbmr & 0x000000FF) >> 4 ;
+	uint bt_mem_type = (soc_sbmr & 0x00000008) >> 3;
+	uint bt_dev_port = (soc_sbmr & 0x00001800) >> 11;
+
+	switch (bt_mem_ctl) {
+	case 0x0:
+		if (bt_mem_type)
+			boot_dev = ONE_NAND_BOOT;
+		else
+			boot_dev = WEIM_NOR_BOOT;
+		break;
+	case 0x2:
+			boot_dev = SATA_BOOT;
+		break;
+	case 0x3:
+		if (bt_mem_type)
+			boot_dev = I2C_BOOT;
+		else
+			boot_dev = SPI_NOR_BOOT;
+		break;
+	case 0x4:
+	case 0x5:
+		boot_dev = bt_dev_port + SD1_BOOT;
+		break;
+	case 0x6:
+	case 0x7:
+		boot_dev = bt_dev_port + MMC1_BOOT;
+		break;
+	case 0x8 ... 0xf:
+		boot_dev = NAND_BOOT;
+		break;
+	default:
+		boot_dev = UNKNOWN_BOOT;
+		break;
+	}
+
+    return boot_dev;
+}
 
 void set_wdog_reset(struct wdog_regs *wdog)
 {
@@ -808,3 +868,56 @@ void finish_anatop_bypass(void)
 		set_arm_freq_400M(false);
 }
 #endif
+
+#ifdef CONFIG_FSL_FASTBOOT
+
+#ifdef CONFIG_ANDROID_RECOVERY
+#define ANDROID_RECOVERY_BOOT  (1 << 7)
+/* check if the recovery bit is set by kernel, it can be set by kernel
+ * issue a command '# reboot recovery' */
+int recovery_check_and_clean_flag(void)
+{
+	int flag_set = 0;
+	u32 reg;
+	reg = readl(SNVS_BASE_ADDR + SNVS_LPGPR);
+
+	flag_set = !!(reg & ANDROID_RECOVERY_BOOT);
+    printf("check_and_clean: reg %x, flag_set %d\n", reg, flag_set);
+	/* clean it in case looping infinite here.... */
+	if (flag_set) {
+		reg &= ~ANDROID_RECOVERY_BOOT;
+		writel(reg, SNVS_BASE_ADDR + SNVS_LPGPR);
+	}
+
+	return flag_set;
+}
+#endif /*CONFIG_ANDROID_RECOVERY*/
+
+#define ANDROID_FASTBOOT_BOOT  (1 << 8)
+/* check if the recovery bit is set by kernel, it can be set by kernel
+ * issue a command '# reboot fastboot' */
+int fastboot_check_and_clean_flag(void)
+{
+	int flag_set = 0;
+	u32 reg;
+
+	reg = readl(SNVS_BASE_ADDR + SNVS_LPGPR);
+
+	flag_set = !!(reg & ANDROID_FASTBOOT_BOOT);
+
+	/* clean it in case looping infinite here.... */
+	if (flag_set) {
+		reg &= ~ANDROID_FASTBOOT_BOOT;
+		writel(reg, SNVS_BASE_ADDR + SNVS_LPGPR);
+	}
+
+	return flag_set;
+}
+
+void fastboot_enable_flag(void)
+{
+	setbits_le32(SNVS_BASE_ADDR + SNVS_LPGPR,
+		ANDROID_FASTBOOT_BOOT);
+}
+#endif /*CONFIG_FSL_FASTBOOT*/
+
