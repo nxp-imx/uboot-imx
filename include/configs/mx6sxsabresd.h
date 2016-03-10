@@ -27,6 +27,8 @@
 /* Set to QSPI2 B flash at default */
 #define CONFIG_SYS_AUXCORE_BOOTDATA 0x72000000
 
+/* When using M4 fastup demo, no need these M4 env, since QSPI is used by M4 */
+#ifndef CONFIG_SYS_AUXCORE_FASTUP
 #define UPDATE_M4_ENV \
 	"m4image=m4_qspi.bin\0" \
 	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \
@@ -43,7 +45,11 @@
 	"m4boot=sf probe 1:0; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
 #else
 #define UPDATE_M4_ENV ""
-#endif
+#endif /* CONFIG_SYS_AUXCORE_FASTUP */
+
+#else
+#define UPDATE_M4_ENV ""
+#endif /* CONFIG_IMX_BOOTAUX */
 
 #define CONFIG_MFG_ENV_SETTINGS \
 	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
@@ -154,7 +160,10 @@
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
-#if defined CONFIG_QSPI_BOOT
+#ifdef CONFIG_SYS_AUXCORE_FASTUP
+/* #define CONFIG_IMX_RDC */   /* Disable the RDC temporarily, will enable it in future */
+#define CONFIG_ENV_IS_IN_MMC  /* Must disable QSPI driver, because M4 run on QSPI */
+#elif defined CONFIG_QSPI_BOOT
 #define CONFIG_ENV_IS_IN_SPI_FLASH
 #else
 #define CONFIG_ENV_IS_IN_MMC
