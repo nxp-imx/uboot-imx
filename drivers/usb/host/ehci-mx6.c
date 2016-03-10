@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2009 Daniel Mack <daniel@caiaq.de>
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -194,8 +194,9 @@ struct usbnc_regs {
 	u32 reserve1[10];
 	u32 phy_cfg1;
 	u32 phy_cfg2;
+	u32 reserve2[1];
 	u32 phy_status;
-	u32 reserve2[4];
+	u32 reserve3[4];
 	u32 adp_cfg1;
 	u32 adp_cfg2;
 	u32 adp_status;
@@ -207,8 +208,8 @@ static void usb_power_config(int index)
 			(0x10000 * index) + USBNC_OFFSET);
 	void __iomem *phy_cfg2 = (void __iomem *)(&usbnc->phy_cfg2);
 
-	/* Enable usb_otg_id detection */
-	setbits_le32(phy_cfg2, USBNC_PHYCFG2_ACAENB);
+	/* Clear the ACAENB to enable usb_otg_id detection, otherwise it is the ACA detection enabled */
+	clrbits_le32(phy_cfg2, USBNC_PHYCFG2_ACAENB);
 }
 
 int usb_phy_mode(int port)
