@@ -292,7 +292,7 @@ static int mx7sabre_rev(void)
 		}
 	} else {
 		/* If the gp1 fuse is not burn, we have to use TO rev for the board rev */
-		if (0 == is_soc_rev(CHIP_REV_1_0))
+		if (is_soc_rev(CHIP_REV_1_0))
 			ret = BOARD_REV_A;
 		else
 			ret = BOARD_REV_B;
