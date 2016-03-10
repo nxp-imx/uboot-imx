@@ -39,6 +39,30 @@
 #define CONFIG_MFG_NAND_PARTITION ""
 #endif
 
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x68000000 /* Set to QSPI1 B flash at default */
+#ifndef CONFIG_SYS_AUXCORE_FASTUP
+#define CONFIG_IMX_BOOTAUX /* Boot M4 by command, disable this when M4 fast up */
+#endif
+
+#ifdef CONFIG_IMX_BOOTAUX
+#define UPDATE_M4_ENV \
+	"m4image=m4_qspi.bin\0" \
+	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \
+	"update_m4_from_sd=" \
+		"if sf probe 1:0; then " \
+			"if run loadm4image; then " \
+				"setexpr fw_sz ${filesize} + 0xffff; " \
+				"setexpr fw_sz ${fw_sz} / 0x10000; "	\
+				"setexpr fw_sz ${fw_sz} * 0x10000; "	\
+				"sf erase 0x0 ${fw_sz}; " \
+				"sf write ${loadaddr} 0x0 ${filesize}; " \
+			"fi; " \
+		"fi\0" \
+	"m4boot=sf probe 1:0; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
+#else
+#define UPDATE_M4_ENV ""
+#endif
+
 #define CONFIG_MFG_ENV_SETTINGS \
 	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
 		"rdinit=/linuxrc " \
@@ -68,6 +92,7 @@
 
 #else
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	UPDATE_M4_ENV \
 	CONFIG_MFG_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
@@ -165,7 +190,10 @@
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
-#if defined CONFIG_SYS_BOOT_QSPI
+#ifdef CONFIG_SYS_AUXCORE_FASTUP
+/*#define CONFIG_IMX_RDC*/   /* Disable the RDC temporarily, will enable it in future */
+#define CONFIG_ENV_IS_IN_MMC  /* Must disable QSPI driver, because M4 run on QSPI */
+#elif defined CONFIG_SYS_BOOT_QSPI
 #define CONFIG_ENV_IS_IN_SPI_FLASH
 #elif defined CONFIG_SYS_BOOT_NAND
 #define CONFIG_ENV_IS_IN_NAND

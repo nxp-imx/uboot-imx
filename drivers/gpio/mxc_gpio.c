@@ -17,7 +17,7 @@
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <errno.h>
-#ifdef CONFIG_MXC_RDC
+#ifdef CONFIG_IMX_RDC
 #include <asm/imx-common/rdc-sema.h>
 #include <asm/arch/imx-rdc.h>
 #endif
@@ -65,7 +65,7 @@ static unsigned long gpio_ports[] = {
 #endif
 };
 
-#ifdef CONFIG_MXC_RDC
+#ifdef CONFIG_IMX_RDC
 static unsigned int gpio_rdc[] = {
 	RDC_PER_GPIO1,
 	RDC_PER_GPIO2,
@@ -76,7 +76,7 @@ static unsigned int gpio_rdc[] = {
 	RDC_PER_GPIO7,
 };
 
-#define RDC_CHECK(x) imx_rdc_check_permission(gpio_rdc[x])
+#define RDC_CHECK(x) imx_rdc_check_permission(gpio_rdc[x], 0)
 #define RDC_SPINLOCK_UP(x) imx_rdc_sema_lock(gpio_rdc[x])
 #define RDC_SPINLOCK_DOWN(x) imx_rdc_sema_unlock(gpio_rdc[x])
 #else

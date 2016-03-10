@@ -85,6 +85,7 @@
 /* Set to QSPI1 A flash at default */
 #define CONFIG_SYS_AUXCORE_BOOTDATA 0x60000000
 
+#ifdef CONFIG_SYS_USE_QSPI
 #define UPDATE_M4_ENV \
 	"m4image=m4_qspi.bin\0" \
 	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \
@@ -94,11 +95,17 @@
 				"setexpr fw_sz ${filesize} + 0xffff; " \
 				"setexpr fw_sz ${fw_sz} / 0x10000; "	\
 				"setexpr fw_sz ${fw_sz} * 0x10000; "	\
-				"sf erase 0x0 ${fw_sz}; " \
-				"sf write ${loadaddr} 0x0 ${filesize}; " \
+				"sf erase 0x100000 ${fw_sz}; " \
+				"sf write ${loadaddr} 0x100000 ${filesize}; " \
 			"fi; " \
 		"fi\0" \
 	"m4boot=sf probe 0:0; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
+#else
+#define UPDATE_M4_ENV \
+	"m4image=m4_qspi.bin\0" \
+	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)" ${m4image}\0" \
+	"m4boot=run loadm4image; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
+#endif
 #else
 #define UPDATE_M4_ENV ""
 #endif
