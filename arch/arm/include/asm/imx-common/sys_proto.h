@@ -72,4 +72,7 @@ void board_late_mmc_env_init(void);
 
 void vadc_power_up(void);
 void vadc_power_down(void);
+
+void pcie_power_up(void);
+void pcie_power_off(void);
 #endif
