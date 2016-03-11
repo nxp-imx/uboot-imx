@@ -367,6 +367,16 @@ void vadc_power_down(void)
 }
 #endif
 
+static void set_uart_from_osc(void)
+{
+	u32 reg;
+
+	/* set uart clk to OSC */
+	reg = readl(CCM_BASE_ADDR + 0x24);
+	reg |= MXC_CCM_CSCDR1_UART_CLK_SEL;
+	writel(reg, CCM_BASE_ADDR + 0x24);
+}
+
 int arch_cpu_init(void)
 {
 	init_aips();
@@ -402,6 +412,9 @@ int arch_cpu_init(void)
 #if defined(CONFIG_MX6SL)
 	set_preclk_from_osc();
 #endif
+
+	if (is_cpu_type(MXC_CPU_MX6SX))
+		set_uart_from_osc();
 
 	imx_set_wdog_powerdown(false); /* Disable PDE bit of WMCR register */
 
