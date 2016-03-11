@@ -403,6 +403,19 @@ static void noc_setup(void)
 }
 #endif
 
+#ifdef CONFIG_MX6SX
+
+void pcie_power_up(void)
+{
+	set_ldo_voltage(LDO_PU, 1100);	/* Set VDDPU to 1.1V */
+}
+
+void pcie_power_off(void)
+{
+	set_ldo_voltage(LDO_PU, 0);	/* Set VDDPU to 1.1V */
+}
+#endif
+
 static void imx_set_vddpu_power_down(void)
 {
 	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
