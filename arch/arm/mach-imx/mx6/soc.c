@@ -403,6 +403,40 @@ static void noc_setup(void)
 }
 #endif
 
+static void imx_set_vddpu_power_down(void)
+{
+	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
+	u32 val;
+
+	/* need to power down xPU in GPC before turn off PU LDO */
+	val = readl(GPC_BASE_ADDR + 0x260);
+	writel(val | 0x1, GPC_BASE_ADDR + 0x260);
+
+	val = readl(GPC_BASE_ADDR + 0x0);
+	writel(val | 0x1, GPC_BASE_ADDR + 0x0);
+	while (readl(GPC_BASE_ADDR + 0x0) & 0x1)
+		;
+
+	/* disable VDDPU */
+	val = 0x3e00;
+	writel(val, &anatop->reg_core_clr);
+}
+
+static void imx_set_pcie_phy_power_down(void)
+{
+	u32 val;
+
+	if (!is_cpu_type(MXC_CPU_MX6SX)) {
+		val = readl(IOMUXC_BASE_ADDR + 0x4);
+		val |= 0x1 << 18;
+		writel(val, IOMUXC_BASE_ADDR + 0x4);
+	} else {
+		val = readl(IOMUXC_GPR_BASE_ADDR + 0x30);
+		val |= 0x1 << 30;
+		writel(val, IOMUXC_GPR_BASE_ADDR + 0x30);
+	}
+}
+
 int arch_cpu_init(void)
 {
 	struct mxc_ccm_reg *ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
@@ -477,6 +511,14 @@ int arch_cpu_init(void)
 
 	if (is_mx6sx())
 		setbits_le32(&ccm->cscdr1, MXC_CCM_CSCDR1_UART_CLK_SEL);
+
+	if (!is_mx6sl() && !is_mx6ul() &&
+		!is_mx6ull() && !is_mx6sll())
+		imx_set_pcie_phy_power_down();
+
+	if (!is_mx6dqp() && !is_mx6ul() &&
+		!is_mx6ull() && !is_mx6sll())
+		imx_set_vddpu_power_down();
 
 	init_src();
 
