@@ -1094,6 +1094,15 @@ void disable_sata_clock(void)
 #endif
 
 #ifdef CONFIG_PCIE_IMX
+static void ungate_disp_axi_clock(void)
+{
+	struct mxc_ccm_reg *const imx_ccm =
+		(struct mxc_ccm_reg *)CCM_BASE_ADDR;
+
+	/* Enable display axi clock. */
+	setbits_le32(&imx_ccm->CCGR3, MXC_CCM_CCGR3_DISP_AXI_MASK);
+}
+
 static void ungate_pcie_clock(void)
 {
 	struct mxc_ccm_reg *const imx_ccm =
@@ -1141,14 +1150,22 @@ int enable_pcie_clock(void)
 	/* PCIe reference clock sourced from AXI. */
 	clrbits_le32(&ccm_regs->cbcmr, MXC_CCM_CBCMR_PCIE_AXI_CLK_SEL);
 
+	if (!is_mx6sx()) {
 	/* Party time! Ungate the clock to the PCIe. */
 #ifdef CONFIG_SATA
-	ungate_sata_clock();
+		ungate_sata_clock();
 #endif
-	ungate_pcie_clock();
+		ungate_pcie_clock();
 
-	return enable_enet_pll(BM_ANADIG_PLL_ENET_ENABLE_SATA |
-			       BM_ANADIG_PLL_ENET_ENABLE_PCIE);
+		return enable_enet_pll(BM_ANADIG_PLL_ENET_ENABLE_SATA |
+				       BM_ANADIG_PLL_ENET_ENABLE_PCIE);
+	} else {
+		/* Party time! Ungate the clock to the PCIe. */
+		ungate_disp_axi_clock();
+		ungate_pcie_clock();
+
+		return enable_enet_pll(BM_ANADIG_PLL_ENET_ENABLE_PCIE);
+	}
 }
 #endif
 
