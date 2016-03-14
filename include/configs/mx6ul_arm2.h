@@ -268,7 +268,6 @@
 #else
 #define CONFIG_SYS_FSL_USDHC_NUM	2
 #endif
-#define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
 
 #define CONFIG_SYS_MMC_ENV_DEV		0   /* USDHC1 */
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user area */

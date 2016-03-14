@@ -120,6 +120,7 @@ defined(CONFIG_MX6DL)) && !defined(CONFIG_MX6SOLO)
 #define CONFIG_BOUNCE_BUFFER
 #define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
+#define CONFIG_SUPPORT_EMMC_BOOT
 
 /* Fuses */
 #define CONFIG_CMD_FUSE

@@ -40,7 +40,6 @@
 
 /* MMC Configs */
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
-#define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
 
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
