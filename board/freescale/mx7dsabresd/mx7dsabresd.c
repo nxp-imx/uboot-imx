@@ -1017,12 +1017,6 @@ int board_late_init(void)
 
 	set_wdog_reset(wdog);
 
-	/*
-	 * Do not assert internal WDOG_RESET_B_DEB(controlled by bit 4),
-	 * since we use PMIC_PWRON to reset the board.
-	 */
-	clrsetbits_le16(&wdog->wcr, 0, 0x10);
-
 	return 0;
 }
 
