@@ -125,6 +125,7 @@
 #define CONFIG_ARP_TIMEOUT	200UL
 
 /* Miscellaneous configurable options */
+#define CONFIG_CMD_MEMTEST
 #define CONFIG_SYS_MEMTEST_START	0x10000000
 #define CONFIG_SYS_MEMTEST_END		0x10010000
 
