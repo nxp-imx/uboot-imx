@@ -30,7 +30,6 @@
 
 #define CONFIG_PHYLIB
 #define CONFIG_PHY_BROADCOM
-/* ENET1 */
 
 #define CONFIG_FEC_ENET_DEV 0
 
@@ -43,6 +42,7 @@
 #endif
 
 #define CONFIG_FEC_MXC_MDIO_BASE	ENET_IPS_BASE_ADDR
+
 /* MMC Config*/
 #define CONFIG_SYS_FSL_ESDHC_ADDR       0
 
