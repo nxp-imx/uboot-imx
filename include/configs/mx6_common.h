@@ -20,6 +20,10 @@
 #endif
 
 #define CONFIG_MP
+#define CONFIG_GPT_TIMER
+#else
+#define CONFIG_SYSCOUNTER_TIMER
+#define CONFIG_SC_TIMER_CLK 8000000 /* 8Mhz */
 #endif
 #define CONFIG_BOARD_POSTCLK_INIT
 #define CONFIG_MXC_GPT_HCLK
