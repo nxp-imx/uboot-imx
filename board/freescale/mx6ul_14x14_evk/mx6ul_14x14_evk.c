@@ -858,6 +858,8 @@ int board_late_init(void)
 	board_late_mmc_env_init();
 #endif
 
+	set_wdog_reset((struct wdog_regs *)WDOG1_BASE_ADDR);
+
 	return 0;
 }
 
