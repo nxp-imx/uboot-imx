@@ -1,6 +1,13 @@
 config IMX_CONFIG
 	string
 
+config GPT_TIMER
+	bool "Using i.MX GPT timer as system tick timer"
+	depends on ARCH_MX6 || ARCH_MX7
+	help
+	  Enable GPT timer driver for system tick timer on i.MX6 and 
+	  i.MX7.
+
 config ROM_UNIFIED_SECTIONS
 	bool
 
