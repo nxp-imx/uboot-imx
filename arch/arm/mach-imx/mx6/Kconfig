@@ -492,6 +492,8 @@ config TARGET_MX6UL_9X9_EVK
 	select DM
 	select DM_THERMAL
 	select SUPPORT_SPL
+	select IMX_MODULE_FUSE
+	select OF_SYSTEM_SETUP
 	imply CMD_DM
 	select FSL_CAAM
 	select ARCH_MISC_INIT
@@ -503,6 +505,8 @@ config TARGET_MX6UL_14X14_EVK
 	select DM
 	select DM_THERMAL
 	select SUPPORT_SPL
+	select IMX_MODULE_FUSE
+	select OF_SYSTEM_SETUP
 	imply CMD_DM
 	select FSL_CAAM
 	select ARCH_MISC_INIT
