@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX7.
  *
@@ -89,6 +89,7 @@
 #define CONFIG_BOUNCE_BUFFER
 #define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
+#define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
 
 /* Fuses */
 #define CONFIG_CMD_FUSE

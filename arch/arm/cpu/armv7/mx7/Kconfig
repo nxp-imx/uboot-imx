@@ -2,7 +2,6 @@ if ARCH_MX7
 
 config MX7
 	bool
-	select ROM_UNIFIED_SECTIONS
 	default y
 
 config MX7D
@@ -19,11 +18,45 @@ config TARGET_MX7DSABRESD
 	select DM
 	select DM_THERMAL
 
+config TARGET_MX7D_12X12_LPDDR3_ARM2
+	bool "mx7d_12x12_lpddr3_arm2"
+	select MX7D
+	select DM
+	select DM_THERMAL
+
+config TARGET_MX7D_12X12_DDR3_ARM2
+	bool "mx7d_12x12_ddr3_arm2"
+	select MX7D
+	select DM
+	select DM_THERMAL
+
+config TARGET_MX7D_19X19_LPDDR2_ARM2
+	bool "mx7d_19x19_lpddr3_arm2"
+	select MX7D
+	select DM
+	select DM_THERMAL
+
+config TARGET_MX7D_19X19_LPDDR3_ARM2
+	bool "mx7d_19x19_lpddr3_arm2"
+	select MX7D
+	select DM
+	select DM_THERMAL
+
+config TARGET_MX7D_19X19_DDR3_ARM2
+	bool "mx7d_19x19_ddr3_arm2"
+	select MX7D
+	select DM
+	select DM_THERMAL
+
 endchoice
 
 config SYS_SOC
 	default "mx7"
 
 source "board/freescale/mx7dsabresd/Kconfig"
+source "board/freescale/mx7d_12x12_lpddr3_arm2/Kconfig"
+source "board/freescale/mx7d_12x12_ddr3_arm2/Kconfig"
+source "board/freescale/mx7d_19x19_lpddr3_arm2/Kconfig"
+source "board/freescale/mx7d_19x19_ddr3_arm2/Kconfig"
 
 endif

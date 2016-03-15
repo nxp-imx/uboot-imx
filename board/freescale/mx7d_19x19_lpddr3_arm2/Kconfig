@@ -1,0 +1,12 @@
+if TARGET_MX7D_19X19_LPDDR3_ARM2 || TARGET_MX7D_19X19_LPDDR2_ARM2
+
+config SYS_BOARD
+	default "mx7d_19x19_lpddr3_arm2"
+
+config SYS_VENDOR
+	default "freescale"
+
+config SYS_CONFIG_NAME
+	default "mx7d_19x19_lpddr3_arm2"
+
+endif
