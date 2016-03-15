@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6UL 14x14 DDR3 ARM2.
  *
@@ -68,4 +68,6 @@
 #define CONFIG_PHY_MICREL
 #endif
 
+#define CONFIG_MODULE_FUSE
+#define CONFIG_OF_SYSTEM_SETUP
 #endif

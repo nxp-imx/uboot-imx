@@ -314,10 +314,24 @@ static void eimnor_cs_setup(void)
 
 static void setup_eimnor(void)
 {
+	if (check_module_fused(MX6_MODULE_EIM)) {
+		printf("WEIM@0x%x is fused, disable it\n", WEIM_BASE_ADDR);
+		return;
+	}
+
 	imx_iomux_v3_setup_multiple_pads(eimnor_pads, ARRAY_SIZE(eimnor_pads));
 
 	eimnor_cs_setup();
 }
+
+int board_flash_wp_on(void)
+{
+	if (check_module_fused(MX6_MODULE_EIM))
+		return 1; /* Skip flash init */
+
+	return 0;
+}
+
 #endif
 
 #ifdef CONFIG_FEC_MXC
@@ -448,6 +462,22 @@ static struct fsl_esdhc_cfg usdhc_cfg[2] = {
 #define USDHC1_VSELECT IMX_GPIO_NR(1, 5)
 #define USDHC2_CD_GPIO	IMX_GPIO_NR(4, 17)
 #define USDHC2_PWR_GPIO	IMX_GPIO_NR(4, 10)
+
+int board_mmc_get_env_dev(int devno)
+{
+	if (devno == 1 && mx6_esdhc_fused(USDHC1_BASE_ADDR))
+		devno = 0;
+
+	return devno;
+}
+
+int mmc_map_to_kernel_blk(int devno)
+{
+	if (devno == 0 && mx6_esdhc_fused(USDHC1_BASE_ADDR))
+		devno = 1;
+
+	return devno;
+}
 
 int board_mmc_getcd(struct mmc *mmc)
 {
@@ -624,6 +654,9 @@ static int setup_fec(int fec_id)
 	int ret;
 
 	if (0 == fec_id) {
+		if (check_module_fused(MX6_MODULE_ENET1))
+			return -1;
+
 		/*
 		 * Use 50M anatop loopback REF_CLK1 for ENET1,
 		 * clear gpr1[13], set gpr1[17]
@@ -635,6 +668,9 @@ static int setup_fec(int fec_id)
 			return ret;
 
 	} else {
+		if (check_module_fused(MX6_MODULE_ENET2))
+			return -1;
+
 		/* clk from phy, set gpr1[14], clear gpr1[18]*/
 		clrsetbits_le32(&iomuxc_gpr_regs->gpr[1], IOMUX_GPR1_FEC2_MASK,
 				IOMUX_GPR1_FEC2_CLOCK_MUX2_SEL_MASK);

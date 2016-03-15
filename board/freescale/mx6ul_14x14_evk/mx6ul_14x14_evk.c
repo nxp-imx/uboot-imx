@@ -450,6 +450,22 @@ static struct fsl_esdhc_cfg usdhc_cfg[2] = {
 #define USDHC2_CD_GPIO	IMX_GPIO_NR(4, 5)
 #define USDHC2_PWR_GPIO	IMX_GPIO_NR(4, 10)
 
+int board_mmc_get_env_dev(int devno)
+{
+	if (devno == 1 && mx6_esdhc_fused(USDHC1_BASE_ADDR))
+		devno = 0;
+
+	return devno;
+}
+
+int mmc_map_to_kernel_blk(int devno)
+{
+	if (devno == 0 && mx6_esdhc_fused(USDHC1_BASE_ADDR))
+		devno = 1;
+
+	return devno;
+}
+
 int board_mmc_getcd(struct mmc *mmc)
 {
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
@@ -538,7 +554,6 @@ int board_mmc_init(bd_t *bis)
 			ret = fsl_esdhc_initialize(bis, &usdhc_cfg[i]);
 			if (ret) {
 				printf("Warning: failed to initialize mmc dev %d\n", i);
-				return ret;
 			}
 	}
 #endif
@@ -679,6 +694,9 @@ static int setup_fec(int fec_id)
 	int ret;
 
 	if (fec_id == 0) {
+		if (check_module_fused(MX6_MODULE_ENET1))
+			return -1;
+
 		/*
 		 * Use 50M anatop loopback REF_CLK1 for ENET1,
 		 * clear gpr1[13], set gpr1[17].
@@ -686,6 +704,9 @@ static int setup_fec(int fec_id)
 		clrsetbits_le32(&iomuxc_regs->gpr[1], IOMUX_GPR1_FEC1_MASK,
 				IOMUX_GPR1_FEC1_CLOCK_MUX1_SEL_MASK);
 	} else {
+		if (check_module_fused(MX6_MODULE_ENET2))
+			return -1;
+
 		/*
 		 * Use 50M anatop loopback REF_CLK2 for ENET2,
 		 * clear gpr1[14], set gpr1[18].
