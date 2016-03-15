@@ -92,7 +92,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define IOX_SDI IMX_GPIO_NR(5, 10)
 #define IOX_STCP IMX_GPIO_NR(5, 7)
 #define IOX_SHCP IMX_GPIO_NR(5, 11)
-#define IOX_OE IMX_GPIO_NR(5, 18)
+#define IOX_OE IMX_GPIO_NR(5, 8)
 
 static iomux_v3_cfg_t const iox_pads[] = {
 	/* IOX_SDI */
@@ -180,15 +180,11 @@ static void iox74lv_init(void)
 	 * shift register will be output to pins
 	 */
 	gpio_direction_output(IOX_STCP, 1);
-
-	gpio_direction_output(IOX_OE, 1);
 };
 
 void iox74lv_set(int index)
 {
 	int i;
-
-	gpio_direction_output(IOX_OE, 0);
 
 	for (i = 7; i >= 0; i--) {
 		gpio_direction_output(IOX_SHCP, 0);
@@ -223,8 +219,6 @@ void iox74lv_set(int index)
 	  * shift register will be output to pins
 	  */
 	gpio_direction_output(IOX_STCP, 1);
-
-	gpio_direction_output(IOX_OE, 1);
 };
 
 
