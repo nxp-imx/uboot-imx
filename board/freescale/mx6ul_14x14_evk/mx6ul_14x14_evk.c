@@ -280,6 +280,7 @@ static int setup_fec(void)
 {
 	struct iomuxc *const iomuxc_regs = (struct iomuxc *)IOMUXC_BASE_ADDR;
 	int ret;
+
 	/*
 	 * Use 50M anatop loopback REF_CLK1 for ENET1,
 	 * clear gpr1[13], set gpr1[17].
@@ -290,17 +291,20 @@ static int setup_fec(void)
 	 * Use 50M anatop loopback REF_CLK2 for ENET2,
 	 * clear gpr1[14], set gpr1[18].
 	 */
-	clrsetbits_le32(&iomuxc_regs->gpr[1], IOMUX_GPR1_FEC2_MASK,
-			IOMUX_GPR1_FEC2_CLOCK_MUX1_SEL_MASK);
-
+	if (!check_module_fused(MX6_MODULE_ENET2)) {
+		clrsetbits_le32(&iomuxc_regs->gpr[1], IOMUX_GPR1_FEC2_MASK,
+				IOMUX_GPR1_FEC2_CLOCK_MUX1_SEL_MASK);
+	}
 
 	ret = enable_fec_anatop_clock(0, ENET_50MHZ);
 	if (ret)
 		return ret;
 
-	ret = enable_fec_anatop_clock(1, ENET_50MHZ);
-	if (ret)
-		return ret;
+	if (!check_module_fused(MX6_MODULE_ENET2)) {
+		ret = enable_fec_anatop_clock(1, ENET_50MHZ);
+		if (ret)
+			return ret;
+	}
 
 	enable_enet_clk(1);
 
