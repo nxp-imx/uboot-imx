@@ -236,4 +236,6 @@
 #endif
 #endif
 
+#define CONFIG_MODULE_FUSE
+#define CONFIG_OF_SYSTEM_SETUP
 #endif
