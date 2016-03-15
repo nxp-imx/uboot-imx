@@ -167,16 +167,16 @@
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user partition */
 #define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
 
-#if defined CONFIG_SYS_BOOT_SPINOR
+#if defined CONFIG_SPI_BOOT
 #define CONFIG_ENV_IS_IN_SPI_FLASH
-#define CONFIG_ENV_OFFSET               (768 * 1024)
+#define CONFIG_ENV_OFFSET               (864 * 1024)
 #define CONFIG_ENV_SECT_SIZE            (64 * 1024)
 #define CONFIG_ENV_SPI_BUS              CONFIG_SF_DEFAULT_BUS
 #define CONFIG_ENV_SPI_CS               CONFIG_SF_DEFAULT_CS
 #define CONFIG_ENV_SPI_MODE             CONFIG_SF_DEFAULT_MODE
 #define CONFIG_ENV_SPI_MAX_HZ           CONFIG_SF_DEFAULT_SPEED
 #else
-#define CONFIG_ENV_OFFSET		(8 * SZ_64K)
+#define CONFIG_ENV_OFFSET		(13 * SZ_64K)
 #define CONFIG_ENV_IS_IN_MMC
 #endif
 
