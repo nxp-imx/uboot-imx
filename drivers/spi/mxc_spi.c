@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2008, Guennadi Liakhovetski <lg@denx.de>
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ *
  */
 
 #include <common.h>
@@ -14,6 +16,7 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/clock.h>
 #include <asm/mach-imx/spi.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -465,6 +468,13 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		printf("Error: desired clock is 0\n");
 		return NULL;
 	}
+
+#ifdef CONFIG_MX6
+	if (mx6_ecspi_fused(spi_bases[bus])) {
+		printf("ECSPI@0x%lx is fused, disable it\n", spi_bases[bus]);
+		return NULL;
+	}
+#endif
 
 	mxcs = spi_alloc_slave(struct mxc_spi_slave, bus, cs);
 	if (!mxcs) {

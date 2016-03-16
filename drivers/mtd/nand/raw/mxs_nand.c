@@ -1243,6 +1243,13 @@ static int mxs_nand_init_dma(struct mxs_nand_info *info)
 {
 	int i = 0, j, ret = 0;
 
+#ifdef CONFIG_MX6
+	if (check_module_fused(MX6_MODULE_GPMI)) {
+		printf("NAND GPMI@0x%x is fused, disable it\n", (u32)info->gpmi_regs);
+		return -EPERM;
+	}
+#endif
+
 	info->desc = malloc(sizeof(struct mxs_dma_desc *) *
 				MXS_NAND_DMA_DESCRIPTOR_COUNT);
 	if (!info->desc) {
