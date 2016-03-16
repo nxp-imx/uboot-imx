@@ -20,6 +20,7 @@
 #include <dm.h>
 #include <asm/mach-types.h>
 #include <power/regulator.h>
+#include <asm/arch/sys_proto.h>
 
 #include "ehci.h"
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
@@ -483,6 +484,13 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	if (index > 3)
 		return -EINVAL;
 
+#if defined(CONFIG_MX6)
+	if (mx6_usb_fused((u32)ehci)) {
+		printf("USB@0x%x is fused, disable it\n", (u32)ehci);
+		return -ENODEV;
+	}
+#endif
+
 	ret = ehci_mx6_common_init(ehci, index);
 	if (ret)
 		return ret;
@@ -712,6 +720,13 @@ static int ehci_usb_probe(struct udevice *dev)
 	struct ehci_hccr *hccr;
 	struct ehci_hcor *hcor;
 	int ret;
+
+#if defined(CONFIG_MX6)
+	if (mx6_usb_fused((u32)ehci)) {
+		printf("USB@0x%x is fused, disable it\n", (u32)ehci);
+		return -ENODEV;
+	}
+#endif
 
 	priv->ehci = ehci;
 	priv->portnr = dev->seq;
