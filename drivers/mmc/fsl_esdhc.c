@@ -20,6 +20,7 @@
 #include <fsl_esdhc.h>
 #include <fdt_support.h>
 #include <asm/io.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -693,6 +694,13 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 		return -1;
 
 	regs = (struct fsl_esdhc *)cfg->esdhc_base;
+
+#ifdef CONFIG_MX6
+	if (mx6_esdhc_fused(cfg->esdhc_base)) {
+		printf("ESDHC@0x%x is fused, disable it\n", cfg->esdhc_base);
+		return -2;
+	}
+#endif
 
 	/* First reset the eSDHC controller */
 	esdhc_reset(regs);

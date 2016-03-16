@@ -1172,6 +1172,13 @@ int mxs_nand_init(struct mxs_nand_info *info)
 		(struct mxs_bch_regs *)MXS_BCH_BASE;
 	int i = 0, j, ret = 0;
 
+#ifdef CONFIG_MX6
+	if (check_module_fused(MX6_MODULE_GPMI)) {
+		printf("NAND GPMI@0x%x is fused, disable it\n", MXS_GPMI_BASE);
+		return -EPERM;
+	}
+#endif
+
 	info->desc = malloc(sizeof(struct mxs_dma_desc *) *
 				MXS_NAND_DMA_DESCRIPTOR_COUNT);
 	if (!info->desc) {
