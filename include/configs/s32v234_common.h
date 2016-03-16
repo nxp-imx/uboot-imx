@@ -20,8 +20,8 @@
 #define CONFIG_REMAKE_ELF
 #undef CONFIG_RUN_FROM_IRAM_ONLY
 
-#define CONFIG_RUN_FROM_DDR1
-#undef CONFIG_RUN_FROM_DDR0
+#define CONFIG_RUN_FROM_DDR0
+#undef CONFIG_RUN_FROM_DDR1
 
 #define CONFIG_SYS_FSL_DRAM_BASE1       0x80000000
 #define CONFIG_SYS_FSL_DRAM_SIZE1       CONFIG_SYS_DDR_SIZE
@@ -61,6 +61,28 @@
 #define CONFIG_OF_FDT
 #define CONFIG_OF_BOARD_SETUP
 
+/* Ramdisk name */
+#define RAMDISK_NAME		rootfs.uimg
+
+#ifdef CONFIG_RUN_FROM_DDR0
+/* Flat device tree definitions */
+#define FDT_ADDR		0x82000000
+
+/*Kernel image load address */
+#define LOADADDR		0x8307FFC0
+
+/* Ramdisk load address */
+#define RAMDISK_ADDR		0x84000000
+#else
+#define FDT_ADDR		0xC2000000
+
+/*Kernel image load address */
+#define LOADADDR		0xC307FFC0
+
+/* Ramdisk load address */
+#define RAMDISK_ADDR		0xC4000000
+#endif
+
 /* Generic Timer Definitions */
 #define COUNTER_FREQUENCY               (1000000000)	/* 1000MHz */
 #define CONFIG_SYS_FSL_ERRATUM_A008585
@@ -99,7 +121,7 @@
 #define CONFIG_SYS_64BIT_VSPRINTF	/* needed for nand_util.c */
 #endif
 
-#define CONFIG_LOADADDR			0xC307FFC0
+#define CONFIG_LOADADDR			LOADADDR
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"boot_scripts=boot.scr.uimg boot.scr\0" \
