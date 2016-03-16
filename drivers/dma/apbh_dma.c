@@ -578,6 +578,14 @@ void mxs_dma_init(void)
 	struct mxs_apbh_regs *apbh_regs =
 		(struct mxs_apbh_regs *)MXS_APBH_BASE;
 
+	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+		if (check_module_fused(MODULE_APBHDMA)) {
+			printf("NAND APBH-DMA@0x%x is fused, disable it\n",
+				MXS_APBH_BASE);
+			return;
+		}
+	}
+
 	mxs_reset_block(&apbh_regs->hw_apbh_ctrl0_reg);
 
 #ifdef CONFIG_APBH_DMA_BURST8
