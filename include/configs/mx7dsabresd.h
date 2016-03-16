@@ -19,7 +19,12 @@
 
 /* Uncomment to enable secure boot support */
 /* #define CONFIG_SECURE_BOOT */
-#define CONFIG_CSF_SIZE			0x4000
+
+#ifdef CONFIG_SECURE_BOOT
+#ifndef CONFIG_CSF_SIZE
+#define CONFIG_CSF_SIZE 0x4000
+#endif
+#endif
 
 /* Network */
 #define CONFIG_CMD_MII
