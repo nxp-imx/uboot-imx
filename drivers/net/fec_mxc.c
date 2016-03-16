@@ -25,6 +25,7 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/imx-common/sys_proto.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1113,6 +1114,13 @@ int fecmxc_initialize_multi(bd_t *bd, int dev_id, int phy_id, uint32_t addr)
 #endif
 	int ret;
 
+#ifdef CONFIG_MX6
+	if (mx6_enet_fused(addr)) {
+		printf("Ethernet@0x%x is fused, disable it\n", addr);
+		return -2;
+	}
+#endif
+
 #ifdef CONFIG_MX28
 	/*
 	 * The i.MX28 has two ethernet interfaces, but they are not equal.
@@ -1217,6 +1225,12 @@ static int fecmxc_probe(struct udevice *dev)
 	uint32_t start;
 	int ret;
 
+#ifdef CONFIG_MX6
+	if (mx6_enet_fused((uint32_t)priv->eth)) {
+		printf("Ethernet@0x%x is fused, disable it\n", (uint32_t)priv->eth);
+		return -ENODEV;
+	}
+#endif
 	ret = fec_alloc_descs(priv);
 	if (ret)
 		return ret;

@@ -25,6 +25,7 @@
 #include <dm.h>
 #include <asm-generic/gpio.h>
 #include <power/regulator.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -858,6 +859,14 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 		return ret;
 	}
 
+#ifdef CONFIG_MX6
+	if (mx6_esdhc_fused(cfg->esdhc_base)) {
+		printf("ESDHC@0x%lx is fused, disable it\n", cfg->esdhc_base);
+		free(priv);
+		return -ENODEV;
+	}
+#endif
+
 	ret = fsl_esdhc_init(priv);
 	if (ret) {
 		debug("%s init failure\n", __func__);
@@ -969,6 +978,13 @@ static int fsl_esdhc_probe(struct udevice *dev)
 	addr = dev_get_addr(dev);
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
+
+#ifdef CONFIG_MX6
+	if (mx6_esdhc_fused(addr)) {
+		printf("ESDHC@0x%lx is fused, disable it\n", addr);
+		return -ENODEV;
+	}
+#endif
 
 	priv->esdhc_regs = (struct fsl_esdhc *)addr;
 	priv->dev = dev;

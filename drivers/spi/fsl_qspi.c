@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <watchdog.h>
 #include "fsl_qspi.h"
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -873,6 +874,13 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	if (bus >= ARRAY_SIZE(spi_bases))
 		return NULL;
 
+#ifdef CONFIG_MX6
+	if (mx6_qspi_fused(spi_bases[bus])) {
+		printf("QSPI@0x%lx is fused, disable it\n", spi_bases[bus]);
+		return NULL;
+	}
+#endif
+
 	if (cs >= FSL_QSPI_FLASH_NUM)
 		return NULL;
 
@@ -984,6 +992,13 @@ static int fsl_qspi_probe(struct udevice *bus)
 	struct fsl_qspi_priv *priv = dev_get_priv(bus);
 	struct dm_spi_bus *dm_spi_bus;
 	int i;
+
+#ifdef CONFIG_MX6
+	if (mx6_qspi_fused(plat->reg_base)) {
+		printf("QSPI@0x%lx is fused, disable it\n", plat->reg_base);
+		return -ENODEV;
+	}
+#endif	
 
 	dm_spi_bus = bus->uclass_priv;
 
