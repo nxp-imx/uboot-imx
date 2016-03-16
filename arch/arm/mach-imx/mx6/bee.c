@@ -269,7 +269,7 @@ static int region_valid(u32 start, u32 size)
 static int do_bee_init(cmd_tbl_t *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
-	u32 start, size, val;
+	u32 start, size;
 	int ret;
 	struct bee_parameters *p = &para;
 
@@ -282,14 +282,12 @@ static int do_bee_init(cmd_tbl_t *cmdtp, int flag, int argc,
 	if (argc > 5)
 		return CMD_RET_USAGE;
 
-	if (fuse_read(0, 4, &val)) {
-		puts("Can not get fuse bank 0, word 4\n");
-	} else {
-		if (val & (1 << 25)) {
-			puts("BEE disabed in fuse!\n");
-			return CMD_RET_FAILURE;
-		}
+#ifdef CONFIG_MX6
+	if (check_module_fused(MX6_MODULE_BEE)) {
+		printf("BEE is fused, disable it!\n");
+		return CMD_RET_FAILURE;
 	}
+#endif
 
 	/* Cache enabled? */
 	if ((get_cr() & (CR_I | CR_C)) != (CR_I | CR_C)) {

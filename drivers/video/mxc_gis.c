@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright (C) 2014 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2014-2016 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  */
 
@@ -300,6 +300,20 @@ void mxc_enable_gis(void)
 	struct display_panel panel;
 	u32 csimemsize, pxpmemsize;
 	char const *gis_input = env_get("gis");
+
+#ifdef CONFIG_MX6
+	if (check_module_fused(MX6_MODULE_CSI)) {
+		printf("CSI@0x%x is fused, disable it\n", CSI1_BASE_ADDR);
+		return;
+	}
+#endif
+
+#ifdef CONFIG_MX6
+	if (check_module_fused(MX6_MODULE_PXP)) {
+		printf("PXP@0x%x is fused, disable it\n", PXP_BASE_ADDR);
+		return;
+	}
+#endif
 
 	gis_regs = (struct mxs_gis_regs *)GIS_BASE_ADDR;
 	pxp_regs = (struct mxs_pxp_regs *)PXP_BASE_ADDR;

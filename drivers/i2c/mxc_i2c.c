@@ -5,6 +5,8 @@
  * (c) 2007 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
  * (c) 2011 Marek Vasut <marek.vasut@gmail.com>
  *
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ *
  * Based on i2c-imx.c from linux kernel:
  *  Copyright (C) 2005 Torsten Koschorrek <koschorrek at synertronixx.de>
  *  Copyright (C) 2005 Matthias Blaschke <blaschke at synertronixx.de>
@@ -25,6 +27,7 @@
 #include <dm.h>
 #include <dm/pinctrl.h>
 #include <fdtdec.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -747,6 +750,14 @@ void bus_i2c_init(int index, int speed, int unused,
 		return;
 	}
 
+#ifdef CONFIG_MX6
+	if (mx6_i2c_fused((u32)mxc_i2c_buses[index].base)) {
+		printf("I2C@0x%x is fused, disable it\n",
+			(u32)mxc_i2c_buses[index].base);
+		return;
+	}
+#endif
+
 	/*
 	 * Warning: Be careful to allow the assignment to a static
 	 * variable here. This function could be called while U-Boot is
@@ -891,6 +902,13 @@ static int mxc_i2c_probe(struct udevice *bus)
 	addr = devfdt_get_addr(bus);
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
+
+#ifdef CONFIG_MX6
+	if (mx6_i2c_fused(addr)) {
+		printf("I2C@0x%lx is fused, disable it\n", addr);
+		return -ENODEV;
+	}
+#endif
 
 	i2c_bus->base = addr;
 	i2c_bus->index = bus->seq;
