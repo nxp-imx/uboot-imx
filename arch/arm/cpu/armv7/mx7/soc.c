@@ -260,8 +260,9 @@ int arch_cpu_init(void)
 	mxs_dma_init();
 #endif
 
-	if (IS_ENABLED(CONFIG_IMX_RDC))
-		isolate_resource();
+#ifdef CONFIG_IMX_RDC
+	isolate_resource();
+#endif
 
 	return 0;
 }
