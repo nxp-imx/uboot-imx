@@ -13,6 +13,9 @@
 #include "mx6_common.h"
 #include <asm/imx-common/gpio.h>
 
+/* uncomment for BEE support, needs to enable CONFIG_CMD_FUSE */
+/* #define CONFIG_CMD_BEE */
+
 #define is_mx6ul_9x9_evk()	CONFIG_IS_ENABLED(TARGET_MX6UL_9X9_EVK)
 
 /* SPL options */
