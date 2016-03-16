@@ -100,6 +100,9 @@ defined(CONFIG_MX6DL)) && !defined(CONFIG_MX6S)
 #define CONFIG_CMD_FUSE
 #define CONFIG_MXC_OCOTP
 
+/* uncomment for SECURE mode support */
+/* #define CONFIG_SECURE_BOOT */
+
 /* Secure boot (HAB) support */
 #ifdef CONFIG_SECURE_BOOT
 #define CONFIG_CSF_SIZE			0x2000
