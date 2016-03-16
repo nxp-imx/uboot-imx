@@ -1307,6 +1307,13 @@ static int mxs_nand_init_dma(struct mxs_nand_info *info)
 {
 	int i = 0, j, ret = 0;
 
+	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+		if (check_module_fused(MODULE_GPMI)) {
+			printf("NAND GPMI@0x%lx is fused, disable it\n", (ulong)info->gpmi_regs);
+			return -EPERM;
+		}
+	}
+
 	info->desc = malloc(sizeof(struct mxs_dma_desc *) *
 				MXS_NAND_DMA_DESCRIPTOR_COUNT);
 	if (!info->desc) {

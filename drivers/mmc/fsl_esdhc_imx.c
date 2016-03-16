@@ -39,6 +39,9 @@
 #include <dm/ofnode.h>
 #include <linux/iopoll.h>
 #include <linux/dma-mapping.h>
+#if CONFIG_IS_ENABLED(IMX_MODULE_FUSE)
+#include <asm/mach-imx/sys_proto.h>
+#endif
 
 #ifndef ESDHCI_QUIRK_BROKEN_TIMEOUT_VALUE
 #ifdef CONFIG_FSL_USDHC
@@ -1263,6 +1266,13 @@ int fsl_esdhc_initialize(struct bd_info *bis, struct fsl_esdhc_cfg *cfg)
 	if (!cfg)
 		return -EINVAL;
 
+#if CONFIG_IS_ENABLED(IMX_MODULE_FUSE)
+	if (esdhc_fused(cfg->esdhc_base)) {
+		printf("ESDHC@0x%lx is fused, disable it\n", cfg->esdhc_base);
+		return -ENODEV;
+	}
+#endif
+
 	priv = calloc(sizeof(struct fsl_esdhc_priv), 1);
 	if (!priv)
 		return -ENOMEM;
@@ -1371,6 +1381,14 @@ static int fsl_esdhc_of_to_plat(struct udevice *dev)
 	addr = dev_read_addr(dev);
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
+
+#if CONFIG_IS_ENABLED(IMX_MODULE_FUSE)
+	if (esdhc_fused(addr)) {
+		printf("ESDHC@0x%lx is fused, disable it\n", addr);
+		return -ENODEV;
+	}
+#endif
+
 	priv->esdhc_regs = (struct fsl_esdhc *)addr;
 	priv->dev = dev;
 	priv->mode = -1;

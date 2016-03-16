@@ -204,6 +204,11 @@ static int mxs_remove_common(phys_addr_t reg_base, u32 fb)
 	struct mxs_lcdif_regs *regs = (struct mxs_lcdif_regs *)(reg_base);
 	int timeout = 1000000;
 
+	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+		if (check_module_fused(MODULE_LCDIF))
+			return -ENODEV;
+	}
+
 	if (!fb)
 		return -EINVAL;
 
@@ -294,6 +299,12 @@ void *video_hw_init(void)
 	mode.pixclock_khz = PS2KHZ(mode.pixclock);
 	mode.pixclock = mode.pixclock_khz * 1000;
 
+	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+		if (check_module_fused(MODULE_LCDIF)) {
+			printf("LCDIF@0x%x is fused, disable it\n", MXS_LCDIF_BASE);
+			return NULL;
+		}
+	}
 	/* fill in Graphic device struct */
 	sprintf(panel.modeIdent, "%dx%dx%d", mode.xres, mode.yres, bpp);
 
