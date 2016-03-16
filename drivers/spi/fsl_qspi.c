@@ -39,6 +39,9 @@
 #include <linux/sizes.h>
 #include <linux/err.h>
 #include <asm/io.h>
+#if CONFIG_IS_ENABLED(IMX_MODULE_FUSE)
+#include <asm/mach-imx/sys_proto.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -808,6 +811,13 @@ static int fsl_qspi_probe(struct udevice *bus)
 	}
 
 	q->iobase = map_physmem(res.start, res.end - res.start, MAP_NOCACHE);
+
+#if CONFIG_IS_ENABLED(IMX_MODULE_FUSE)
+	if (qspi_fused((ulong)(q->iobase))) {
+		printf("QSPI@0x%lx is fused, disable it\n", (ulong)(q->iobase));
+		return -ENODEV;
+	}
+#endif
 
 	ret = fdt_get_named_resource(blob, node, "reg", "reg-names",
 				     "QuadSPI-memory", &res);

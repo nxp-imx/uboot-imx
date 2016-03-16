@@ -238,6 +238,11 @@ static int mxs_remove_common(u32 fb)
 	struct mxs_lcdif_regs *regs = (struct mxs_lcdif_regs *)MXS_LCDIF_BASE;
 	int timeout = 1000000;
 
+	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+		if (check_module_fused(MODULE_LCDIF))
+			return -ENODEV;
+	}
+
 	if (!fb)
 		return -EINVAL;
 
@@ -307,6 +312,13 @@ static int mxs_video_probe(struct udevice *dev)
 	ret = mxs_of_get_timings(dev, &timings, &bpp);
 	if (ret)
 		return ret;
+
+	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+		if (check_module_fused(MODULE_LCDIF)) {
+			printf("LCDIF@0x%x is fused, disable it\n", MXS_LCDIF_BASE);
+			return -ENODEV;
+		}
+	}
 
 	ret = mxs_probe_common(dev, &timings, bpp, plat->base);
 	if (ret)
