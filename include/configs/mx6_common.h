@@ -32,6 +32,10 @@ defined(CONFIG_MX6DL)) && !defined(CONFIG_MX6S)
 #define CONFIG_BOARD_POSTCLK_INIT
 #define CONFIG_MXC_GPT_HCLK
 
+#ifdef CONFIG_MX6QP
+#define CONFIG_MX6Q
+#endif
+
 #ifdef CONFIG_MX6S
 #define CONFIG_MX6DL
 #endif
