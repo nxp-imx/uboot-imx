@@ -129,7 +129,8 @@
 			"fi; "	\
 		"fi\0" \
 	EMMC_ENV	  \
-	"mmcargs=setenv bootargs console=${console},${baudrate} " \
+	"smp=" CONFIG_SYS_NOSMP "\0"\
+	"mmcargs=setenv bootargs console=${console},${baudrate} ${smp}" \
 		"root=${mmcroot}\0" \
 	"loadbootscript=" \
 		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
@@ -152,7 +153,7 @@
 		"else " \
 			"bootz; " \
 		"fi;\0" \
-	"netargs=setenv bootargs console=${console},${baudrate} " \
+	"netargs=setenv bootargs console=${console},${baudrate} ${smp}" \
 		"root=/dev/nfs " \
 		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 	"netboot=echo Booting from net ...; " \
@@ -232,6 +233,10 @@
 
 /* Environment organization */
 #define CONFIG_ENV_SIZE			(8 * 1024)
+
+#ifndef CONFIG_SYS_NOSMP
+#define CONFIG_SYS_NOSMP
+#endif
 
 #define CONFIG_ENV_IS_IN_MMC
 

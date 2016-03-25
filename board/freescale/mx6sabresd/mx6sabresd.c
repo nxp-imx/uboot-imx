@@ -34,6 +34,9 @@
 #include <lcd.h>
 #include <mxc_epdc_fb.h>
 #endif
+#ifdef CONFIG_CMD_SATA
+#include <asm/imx-common/sata.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -147,12 +150,24 @@ static iomux_v3_cfg_t const usdhc4_pads[] = {
 	MX6_PAD_SD4_DAT7__SD4_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 };
 
+#ifdef CONFIG_MXC_SPI
 static iomux_v3_cfg_t const ecspi1_pads[] = {
 	MX6_PAD_KEY_COL0__ECSPI1_SCLK | MUX_PAD_CTRL(SPI_PAD_CTRL),
 	MX6_PAD_KEY_COL1__ECSPI1_MISO | MUX_PAD_CTRL(SPI_PAD_CTRL),
 	MX6_PAD_KEY_ROW0__ECSPI1_MOSI | MUX_PAD_CTRL(SPI_PAD_CTRL),
 	MX6_PAD_KEY_ROW1__GPIO4_IO09 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
+
+static void setup_spi(void)
+{
+	imx_iomux_v3_setup_multiple_pads(ecspi1_pads, ARRAY_SIZE(ecspi1_pads));
+}
+
+int board_spi_cs_gpio(unsigned bus, unsigned cs)
+{
+	return (bus == 0 && cs == 0) ? (IMX_GPIO_NR(4, 9)) : -1;
+}
+#endif
 
 static iomux_v3_cfg_t const rgb_pads[] = {
 	MX6_PAD_DI0_DISP_CLK__IPU1_DI0_DISP_CLK | MUX_PAD_CTRL(NO_PAD_CTRL),
@@ -205,11 +220,6 @@ static struct i2c_pads_info i2c_pad_info1 = {
 		.gp = IMX_GPIO_NR(4, 13)
 	}
 };
-
-static void setup_spi(void)
-{
-	imx_iomux_v3_setup_multiple_pads(ecspi1_pads, ARRAY_SIZE(ecspi1_pads));
-}
 
 iomux_v3_cfg_t const pcie_pads[] = {
 	MX6_PAD_EIM_D19__GPIO3_IO19 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* POWER */
@@ -848,44 +858,96 @@ int board_init(void)
 	setup_epdc();
 #endif
 
+#ifdef CONFIG_CMD_SATA
+	setup_sata();
+#endif
+
 	return 0;
 }
 
 int power_init_board(void)
 {
-	struct pmic *p;
+	struct pmic *pfuze;
 	unsigned int reg;
 	int ret;
 
-	p = pfuze_common_init(I2C_PMIC);
-	if (!p)
+	pfuze = pfuze_common_init(I2C_PMIC);
+	if (!pfuze)
 		return -ENODEV;
 
-	ret = pfuze_mode_init(p, APS_PFM);
+	if (is_mx6dqp())
+		ret = pfuze_mode_init(pfuze, APS_APS);
+	else
+		ret = pfuze_mode_init(pfuze, APS_PFM);
+
 	if (ret < 0)
 		return ret;
 
 	/* Increase VGEN3 from 2.5 to 2.8V */
-	pmic_reg_read(p, PFUZE100_VGEN3VOL, &reg);
+	pmic_reg_read(pfuze, PFUZE100_VGEN3VOL, &reg);
 	reg &= ~LDO_VOL_MASK;
 	reg |= LDOB_2_80V;
-	pmic_reg_write(p, PFUZE100_VGEN3VOL, reg);
+	pmic_reg_write(pfuze, PFUZE100_VGEN3VOL, reg);
 
 	/* Increase VGEN5 from 2.8 to 3V */
-	pmic_reg_read(p, PFUZE100_VGEN5VOL, &reg);
+	pmic_reg_read(pfuze, PFUZE100_VGEN5VOL, &reg);
 	reg &= ~LDO_VOL_MASK;
 	reg |= LDOB_3_00V;
-	pmic_reg_write(p, PFUZE100_VGEN5VOL, reg);
+	pmic_reg_write(pfuze, PFUZE100_VGEN5VOL, reg);
+
+	if (is_mx6dqp()) {
+		/* set SW1C staby volatage 1.075V*/
+		pmic_reg_read(pfuze, PFUZE100_SW1CSTBY, &reg);
+		reg &= ~0x3f;
+		reg |= 0x1f;
+		pmic_reg_write(pfuze, PFUZE100_SW1CSTBY, reg);
+
+		/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+		pmic_reg_read(pfuze, PFUZE100_SW1CCONF, &reg);
+		reg &= ~0xc0;
+		reg |= 0x40;
+		pmic_reg_write(pfuze, PFUZE100_SW1CCONF, reg);
+
+		/* set SW2/VDDARM staby volatage 0.975V*/
+		pmic_reg_read(pfuze, PFUZE100_SW2STBY, &reg);
+		reg &= ~0x3f;
+		reg |= 0x17;
+		pmic_reg_write(pfuze, PFUZE100_SW2STBY, reg);
+
+		/* set SW2/VDDARM step ramp up time to from 16us to 4us/25mV */
+		pmic_reg_read(pfuze, PFUZE100_SW2CONF, &reg);
+		reg &= ~0xc0;
+		reg |= 0x40;
+		pmic_reg_write(pfuze, PFUZE100_SW2CONF, reg);
+	} else {
+		/* set SW1AB staby volatage 0.975V*/
+		pmic_reg_read(pfuze, PFUZE100_SW1ABSTBY, &reg);
+		reg &= ~0x3f;
+		reg |= 0x1b;
+		pmic_reg_write(pfuze, PFUZE100_SW1ABSTBY, reg);
+
+		/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
+		pmic_reg_read(pfuze, PFUZE100_SW1ABCONF, &reg);
+		reg &= ~0xc0;
+		reg |= 0x40;
+		pmic_reg_write(pfuze, PFUZE100_SW1ABCONF, reg);
+
+		/* set SW1C staby volatage 0.975V*/
+		pmic_reg_read(pfuze, PFUZE100_SW1CSTBY, &reg);
+		reg &= ~0x3f;
+		reg |= 0x1b;
+		pmic_reg_write(pfuze, PFUZE100_SW1CSTBY, reg);
+
+		/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+		pmic_reg_read(pfuze, PFUZE100_SW1CCONF, &reg);
+		reg &= ~0xc0;
+		reg |= 0x40;
+		pmic_reg_write(pfuze, PFUZE100_SW1CCONF, reg);
+	}
 
 	return 0;
 }
 
-#ifdef CONFIG_MXC_SPI
-int board_spi_cs_gpio(unsigned bus, unsigned cs)
-{
-	return (bus == 0 && cs == 0) ? (IMX_GPIO_NR(4, 9)) : -1;
-}
-#endif
 
 #ifdef CONFIG_CMD_BMODE
 static const struct boot_mode board_boot_modes[] = {

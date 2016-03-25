@@ -24,6 +24,14 @@
 #define CONFIG_BOARD_POSTCLK_INIT
 #define CONFIG_MXC_GPT_HCLK
 
+#ifdef CONFIG_MX6QP
+#define CONFIG_MX6Q
+#endif
+
+#ifdef CONFIG_MX6SOLO
+#define CONFIG_MX6DL
+#endif
+
 #define CONFIG_SYS_NO_FLASH
 
 #define CONFIG_SYS_BOOTM_LEN	0x1000000
