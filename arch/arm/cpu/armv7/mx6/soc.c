@@ -485,8 +485,8 @@ int arch_cpu_init(void)
 			 * it can be set to 2b'01 to disable internal pull up.
 			 * It can save about 30uA power in SNVS mode.
 			 */
-			writel((readl(SNVS_LP_BASE_ADDR + 0x10) & (~0x1400)) | 0x400,
-				SNVS_LP_BASE_ADDR + 0x10);
+			writel((readl(MX6UL_SNVS_LP_BASE_ADDR + 0x10) & (~0x1400)) | 0x400,
+				MX6UL_SNVS_LP_BASE_ADDR + 0x10);
 		}
 	}
 
