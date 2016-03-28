@@ -149,6 +149,13 @@ config NAND_MXS
 	  This enables NAND driver for the NAND flash controller on the
 	  MXS processors.
 
+config NAND_MXS_BCH_LEGACY_GEO
+	bool "Keep using legacy bch geometry for MXS NAND driver"
+	depends on NAND_MXS
+	help
+	  Users can use legacy bch geometry in u-boot by enabling this configuration.
+	  NOTICE: the feature must be enabled/disabled in both u-boot and kernel.
+
 config NAND_ZYNQ
 	bool "Support for Zynq Nand controller"
 	select SYS_NAND_SELF_INIT
