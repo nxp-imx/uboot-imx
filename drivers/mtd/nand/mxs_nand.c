@@ -254,6 +254,12 @@ static int mxs_nand_get_ecc_strength(struct mtd_info *mtd)
 	} else {
 		ecc_strength = chip->ecc_strength_ds;
 		ecc_strength += ecc_strength & 1;
+#if defined(CONFIG_NAND_MXS_BCH_LEGACY_GEO)
+		ecc_strength = ((page_oob_size - MXS_NAND_METADATA_SIZE) * 8)
+			/(galois_field * mxs_nand_ecc_chunk_cnt(mtd->writesize));
+		ecc_strength += ecc_strength & 1;
+		ecc_strength = min(ecc_strength, MXS_NAND_MAX_ECC_STRENGTH);
+#endif
 	}
 	return 0;
 };
