@@ -712,6 +712,19 @@ config UNIPHIER_SERIAL
 	  If you have a UniPhier based board and want to use the on-chip
 	  serial ports, say Y to this option. If unsure, say N.
 
+config FSL_LINFLEXUART
+	bool "Freescale Linflexuart serial port support"
+	help
+	  If you have enabled the linflexuart serial port on the Freescale SoCs,
+	  you can make it the console by answering Y to this option.
+
+config FSL_LINFLEX_MODULE
+	int "LINFLEX Active Module"
+	depends on FSL_LINFLEXUART
+	default 0
+	help
+	  Select the LINFLEX Module used as serial
+
 config XILINX_UARTLITE
 	bool "Xilinx Uarlite support"
 	depends on DM_SERIAL && (MICROBLAZE || ARCH_ZYNQ || ARCH_ZYNQMP || 4xx)
