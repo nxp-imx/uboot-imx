@@ -36,6 +36,10 @@
 #endif
 #endif
 
+#ifdef CONFIG_BRILLO_SUPPORT
+#include "bootctrl.h"
+#endif
+
 #define FASTBOOT_VERSION		"0.4"
 
 #define FASTBOOT_INTERFACE_CLASS	0xff
@@ -155,13 +159,19 @@ static struct usb_gadget_strings *fastboot_strings[] = {
 
 /*pentry index internally*/
 enum {
-    PTN_MBR_INDEX = 0,
-    PTN_BOOTLOADER_INDEX,
-    PTN_KERNEL_INDEX,
-    PTN_URAMDISK_INDEX,
-    PTN_SYSTEM_INDEX,
-    PTN_RECOVERY_INDEX,
-    PTN_DATA_INDEX
+	PTN_MBR_INDEX = 0,
+	PTN_BOOTLOADER_INDEX,
+	PTN_KERNEL_INDEX,
+	PTN_URAMDISK_INDEX,
+	PTN_SYSTEM_INDEX,
+	PTN_RECOVERY_INDEX,
+	PTN_DATA_INDEX,
+#ifdef CONFIG_BRILLO_SUPPORT
+	PTN_KERNEL_B_INDEX,
+	PTN_SYSTEM_B_INDEX,
+	PTN_SLOTMETA_INDEX,
+#endif
+	PTN_NUM
 };
 
 static unsigned int download_bytes_unpadded;
@@ -811,10 +821,19 @@ static void process_flash_sata(const char *cmdbuf, char *response)
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
 static int is_sparse_partition(struct fastboot_ptentry *ptn)
 {
+#ifdef CONFIG_BRILLO_SUPPORT
+	if (ptn && (!strncmp(ptn->name, FASTBOOT_PARTITION_SYSTEM_A,
+			     strlen(FASTBOOT_PARTITION_SYSTEM_A)) ||
+	    !strncmp(ptn->name, FASTBOOT_PARTITION_SYSTEM_B,
+	    strlen(FASTBOOT_PARTITION_SYSTEM_B)) ||
+	    !strncmp(ptn->name, FASTBOOT_PARTITION_DATA,
+	    strlen(FASTBOOT_PARTITION_DATA)))) {
+#else
 	 if (ptn && (!strncmp(ptn->name,
 				 FASTBOOT_PARTITION_SYSTEM, strlen(FASTBOOT_PARTITION_SYSTEM))
 				 || !strncmp(ptn->name,
 				 FASTBOOT_PARTITION_DATA, strlen(FASTBOOT_PARTITION_DATA)))) {
+#endif
 		printf("support sparse flash partition for %s\n", ptn->name);
 		return 1;
 	 } else
@@ -1078,6 +1097,9 @@ static int _fastboot_setup_dev(void)
 		} else if (!strncmp(fastboot_env, "mmc", 3)) {
 			fastboot_devinfo.type = DEV_MMC;
 			fastboot_devinfo.dev_id = _fastboot_get_mmc_no(fastboot_env);
+#ifdef CONFIG_BRILLO_SUPPORT
+			set_mmc_id(fastboot_devinfo.dev_id);
+#endif
 		}
 	} else {
 		return 1;
@@ -1131,7 +1153,7 @@ static int _fastboot_parts_load_from_ptable(void)
 
 	struct mmc *mmc;
 	block_dev_desc_t *dev_desc;
-	struct fastboot_ptentry ptable[PTN_DATA_INDEX + 1];
+	struct fastboot_ptentry ptable[PTN_NUM];
 
 	/* sata case in env */
 	if (fastboot_devinfo.type == DEV_SATA) {
@@ -1178,7 +1200,7 @@ static int _fastboot_parts_load_from_ptable(void)
 	}
 
 	memset((char *)ptable, 0,
-		    sizeof(struct fastboot_ptentry) * (PTN_DATA_INDEX + 1));
+		    sizeof(struct fastboot_ptentry) * (PTN_NUM));
 	/* MBR */
 	strcpy(ptable[PTN_MBR_INDEX].name, "mbr");
 	ptable[PTN_MBR_INDEX].start = ANDROID_MBR_OFFSET / dev_desc->blksz;
@@ -1192,24 +1214,75 @@ static int _fastboot_parts_load_from_ptable(void)
 				 ANDROID_BOOTLOADER_SIZE / dev_desc->blksz;
 	ptable[PTN_BOOTLOADER_INDEX].partition_id = boot_partition;
 
+#ifdef CONFIG_BRILLO_SUPPORT
 	_fastboot_parts_add_ptable_entry(PTN_KERNEL_INDEX,
-				   CONFIG_ANDROID_BOOT_PARTITION_MMC,
-				   user_partition,
-				   FASTBOOT_PARTITION_BOOT , dev_desc, ptable);
-	_fastboot_parts_add_ptable_entry(PTN_RECOVERY_INDEX,
-				   CONFIG_ANDROID_RECOVERY_PARTITION_MMC,
-				   user_partition,
-				   FASTBOOT_PARTITION_RECOVERY, dev_desc, ptable);
-	_fastboot_parts_add_ptable_entry(PTN_SYSTEM_INDEX,
-				   CONFIG_ANDROID_SYSTEM_PARTITION_MMC,
-				   user_partition,
-				   FASTBOOT_PARTITION_SYSTEM, dev_desc, ptable);
-	_fastboot_parts_add_ptable_entry(PTN_DATA_INDEX,
-				   CONFIG_ANDROID_DATA_PARTITION_MMC,
-				   user_partition,
-				   FASTBOOT_PARTITION_DATA, dev_desc, ptable);
+					 CONFIG_ANDROID_BOOT_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_BOOT_A,
+					 dev_desc, ptable);
 
-	for (i = 0; i <= PTN_DATA_INDEX; i++)
+	_fastboot_parts_add_ptable_entry(PTN_RECOVERY_INDEX,
+					 CONFIG_ANDROID_RECOVERY_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_RECOVERY,
+					 dev_desc, ptable);
+
+	_fastboot_parts_add_ptable_entry(PTN_SYSTEM_INDEX,
+					 CONFIG_ANDROID_SYSTEM_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_SYSTEM_A,
+					 dev_desc, ptable);
+
+	_fastboot_parts_add_ptable_entry(PTN_DATA_INDEX,
+					 CONFIG_ANDROID_DATA_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_DATA,
+					 dev_desc, ptable);
+
+	 _fastboot_parts_add_ptable_entry(PTN_KERNEL_B_INDEX,
+					  CONFIG_ANDROID_BOOT_B_PARTITION_MMC,
+					  user_partition,
+					  FASTBOOT_PARTITION_BOOT_B,
+					  dev_desc, ptable);
+
+	_fastboot_parts_add_ptable_entry(PTN_SYSTEM_B_INDEX,
+					 CONFIG_ANDROID_SYSTEM_B_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_SYSTEM_B,
+					 dev_desc, ptable);
+
+	_fastboot_parts_add_ptable_entry(PTN_SLOTMETA_INDEX,
+					 CONFIG_ANDROID_SLOTMETA_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_SLOTMETA,
+					 dev_desc, ptable);
+#else
+	_fastboot_parts_add_ptable_entry(PTN_KERNEL_INDEX,
+					 CONFIG_ANDROID_BOOT_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_BOOT,
+					 dev_desc, ptable);
+
+	_fastboot_parts_add_ptable_entry(PTN_RECOVERY_INDEX,
+					 CONFIG_ANDROID_RECOVERY_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_RECOVERY,
+					 dev_desc, ptable);
+
+	_fastboot_parts_add_ptable_entry(PTN_SYSTEM_INDEX,
+					 CONFIG_ANDROID_SYSTEM_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_SYSTEM,
+					 dev_desc, ptable);
+
+	_fastboot_parts_add_ptable_entry(PTN_DATA_INDEX,
+					 CONFIG_ANDROID_DATA_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_DATA,
+					 dev_desc, ptable);
+#endif
+
+	for (i = 0; i < PTN_NUM; i++)
 		fastboot_flash_add_ptn(&ptable[i]);
 
 	return 0;
@@ -1553,7 +1626,16 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	if (argc > 2)
 		ptn = argv[2];
-
+#ifdef CONFIG_BRILLO_SUPPORT
+	else {
+		ptn = select_slot();
+		if (ptn == NULL) {
+			printf("no valid slot found, enter to recovery\n");
+			ptn = "recovery";
+		}
+		printf("use slot %s\n", ptn);
+	}
+#endif
 	if (mmcc != -1) {
 #ifdef CONFIG_MMC
 		struct fastboot_ptentry *pte;
@@ -1997,7 +2079,7 @@ static int fastboot_tx_write(const char *buffer, unsigned int buffer_size)
 	return 0;
 }
 
-static int fastboot_tx_write_str(const char *buffer)
+int fastboot_tx_write_str(const char *buffer)
 {
 	return fastboot_tx_write(buffer, strlen(buffer));
 }
@@ -2037,6 +2119,13 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		return;
 	}
 
+#ifdef CONFIG_BRILLO_SUPPORT
+	if (is_sotvar(cmd)) {
+		get_slotvar(cmd, response, chars_left);
+		fastboot_tx_write_str(response);
+		return;
+	}
+#endif
 	if (!strcmp_l1("version", cmd)) {
 		strncat(response, FASTBOOT_VERSION, chars_left);
 	} else if (!strcmp_l1("bootloader-version", cmd)) {
@@ -2361,6 +2450,12 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 		.cmd = "oem",
 		.cb = cb_oem,
 	},
+#ifdef CONFIG_BRILLO_SUPPORT
+	{
+		.cmd = "set_active",
+		.cb = cb_set_active,
+	},
+#endif
 };
 
 static void rx_handler_command(struct usb_ep *ep, struct usb_request *req)

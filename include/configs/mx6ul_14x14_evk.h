@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6UL 14x14 EVK board.
  *
@@ -426,5 +426,10 @@
 #if defined(CONFIG_ANDROID_SUPPORT)
 #include "mx6ul_14x14_evk_android.h"
 #endif
+
+#if defined(CONFIG_BRILLO_SUPPORT)
+#include "mx6ul_14x14_evk_brillo.h"
+#endif
+
 
 #endif

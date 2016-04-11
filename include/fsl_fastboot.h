@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -33,11 +33,22 @@
 #define FASTBOOT_MMC_USER_PARTITION_ID  0
 #define FASTBOOT_MMC_NONE_PARTITION_ID -1
 
+#ifdef CONFIG_BRILLO_SUPPORT
+#define FASTBOOT_PARTITION_BOOT_A "boot_a"
+#define FASTBOOT_PARTITION_RECOVERY "recovery"
+#define FASTBOOT_PARTITION_SYSTEM_A "system_a"
+#define FASTBOOT_PARTITION_BOOTLOADER "bootloader"
+#define FASTBOOT_PARTITION_DATA "data"
+#define FASTBOOT_PARTITION_BOOT_B "boot_b"
+#define FASTBOOT_PARTITION_SYSTEM_B "system_b"
+#define FASTBOOT_PARTITION_SLOTMETA "slotmeta"
+#else
 #define FASTBOOT_PARTITION_BOOT "boot"
 #define FASTBOOT_PARTITION_RECOVERY "recovery"
 #define FASTBOOT_PARTITION_SYSTEM "system"
 #define FASTBOOT_PARTITION_BOOTLOADER "bootloader"
 #define FASTBOOT_PARTITION_DATA "data"
+#endif
 
 enum {
     DEV_SATA,
@@ -168,5 +179,7 @@ void save_parts_values(struct fastboot_ptentry *ptn,
   */
 int check_parts_values(struct fastboot_ptentry *ptn);
 #endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
+
+int fastboot_tx_write_str(const char *buffer);
 
 #endif /* FSL_FASTBOOT_H */
