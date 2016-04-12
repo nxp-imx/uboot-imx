@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -96,7 +96,13 @@ void enable_usboh3_clk(unsigned char enable)
 #if defined(CONFIG_FEC_MXC) && !defined(CONFIG_MX6SX)
 void enable_enet_clk(unsigned char enable)
 {
-#ifdef CONFIG_MX6UL
+#ifdef CONFIG_MX6ULL
+	u32 mask = MXC_CCM_CCGR0_ENET_CLK_ENABLE_MASK;
+	if (enable)
+		setbits_le32(&imx_ccm->CCGR0, mask);
+	else
+		clrbits_le32(&imx_ccm->CCGR0, mask);
+#elif defined(CONFIG_MX6UL)
 	u32 mask = MXC_CCM_CCGR3_ENET_CLK_ENABLE_MASK;
 	/* Set AHB clk, since enet clock is sourced from AHB and IPG */
 	/* ROM has set AHB, just leave here empty */
@@ -1164,6 +1170,15 @@ void hab_caam_clock_enable(unsigned char enable)
 {
 	u32 reg;
 
+#if defined(CONFIG_MX6ULL)
+	/* CG5, DCP clock */
+	reg = __raw_readl(&imx_ccm->CCGR0);
+	if (enable)
+		reg |= MXC_CCM_CCGR0_DCP_CLK_MASK;
+	else
+		reg &= ~MXC_CCM_CCGR0_DCP_CLK_MASK;
+	__raw_writel(reg, &imx_ccm->CCGR0);
+#else
 	/* CG4 ~ CG6, CAAM clocks */
 	reg = __raw_readl(&imx_ccm->CCGR0);
 	if (enable)
@@ -1175,6 +1190,7 @@ void hab_caam_clock_enable(unsigned char enable)
 			MXC_CCM_CCGR0_CAAM_WRAPPER_ACLK_MASK |
 			MXC_CCM_CCGR0_CAAM_SECURE_MEM_MASK);
 	__raw_writel(reg, &imx_ccm->CCGR0);
+#endif
 
 	/* EMI slow clk */
 	reg = __raw_readl(&imx_ccm->CCGR6);
