@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6UL ARM2 common.
  *
@@ -14,7 +14,9 @@
 #include "mx6_common.h"
 #include <asm/imx-common/gpio.h>
 
+#ifndef CONFIG_MX6
 #define CONFIG_MX6
+#endif
 #define CONFIG_ROM_UNIFIED_SECTIONS
 #define CONFIG_SYS_GENERIC_BOARD
 #define CONFIG_DISPLAY_CPUINFO
