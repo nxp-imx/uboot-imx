@@ -170,6 +170,11 @@ config TARGET_PLATINUM_TITANIUM
 	bool "platinum-titanium"
 	select SUPPORT_SPL
 
+config TARGET_MX6ULL_DDR3_ARM2
+	bool "Support mx6ull_ddr3_arm2"
+	select CPU_V7
+	select MX6ULL
+
 config TARGET_SECOMX6
 	bool "secomx6 boards"
 
@@ -217,6 +222,7 @@ source "board/freescale/mx6sx_17x17_arm2/Kconfig"
 source "board/freescale/mx6sx_19x19_arm2/Kconfig"
 source "board/freescale/mx6ul_14x14_ddr3_arm2/Kconfig"
 source "board/freescale/mx6ul_14x14_lpddr2_arm2/Kconfig"
+source "board/freescale/mx6ull_ddr3_arm2/Kconfig"
 source "board/gateworks/gw_ventana/Kconfig"
 source "board/kosagi/novena/Kconfig"
 source "board/seco/Kconfig"
