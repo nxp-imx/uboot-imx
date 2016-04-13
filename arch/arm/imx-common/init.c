@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Freescale Semiconductor, Inc.
+ * Copyright 2015-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -44,7 +44,8 @@ void init_aips(void)
 	writel(0x00000000, &aips2->opacr3);
 	writel(0x00000000, &aips2->opacr4);
 
-	if (is_cpu_type(MXC_CPU_MX6SX) || is_soc_type(MXC_SOC_MX7)) {
+	if (is_cpu_type(MXC_CPU_MX6ULL) || is_cpu_type(MXC_CPU_MX6SX) ||
+	    is_soc_type(MXC_SOC_MX7)) {
 		/*
 		 * Set all MPROTx to be non-bufferable, trusted for R/W,
 		 * not forced to user-mode.
