@@ -21,6 +21,7 @@ obj-$(CONFIG_DFU_FUNCTION) += f_dfu.o
 obj-$(CONFIG_USB_GADGET_MASS_STORAGE) += f_mass_storage.o
 obj-$(CONFIG_CMD_FASTBOOT) += f_fastboot.o
 obj-$(CONFIG_BRILLO_SUPPORT) += bootctrl.o
+obj-$(CONFIG_BCB_SUPPORT) += command.o bcb.o
 endif
 ifdef CONFIG_USB_ETHER
 obj-y += ether.o

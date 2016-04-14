@@ -158,6 +158,7 @@ void fastboot_flash_dump_ptn(void);
 
 /* Check the board special boot mode reboot to fastboot mode. */
 int fastboot_check_and_clean_flag(void);
+int fastboot_check_and_clean_command(void);
 
 /* Set the flag which reboot to fastboot mode*/
 void fastboot_enable_flag(void);

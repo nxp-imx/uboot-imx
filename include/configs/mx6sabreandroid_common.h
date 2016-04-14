@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2013-2016 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -22,6 +22,8 @@
 #define CONFIG_G_DNL_MANUFACTURER	"FSL"
 
 #define CONFIG_CMD_FASTBOOT
+#define CONFIG_CMD_READ
+#define CONFIG_BCB_SUPPORT
 #define CONFIG_ANDROID_BOOT_IMAGE
 #define CONFIG_FASTBOOT_FLASH
 
@@ -42,6 +44,7 @@
 #define CONFIG_ANDROID_RECOVERY_PARTITION_MMC 2
 #define CONFIG_ANDROID_CACHE_PARTITION_MMC 6
 #define CONFIG_ANDROID_DATA_PARTITION_MMC 4
+#define CONFIG_ANDROID_MISC_PARTITION_MMC 8
 
 #if defined(CONFIG_FASTBOOT_STORAGE_NAND)
 #define ANDROID_FASTBOOT_NAND_PARTS "16m@64m(boot) 16m@80m(recovery) 810m@96m(android_root)ubifs"
