@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -23,6 +23,7 @@
 #define CONFIG_G_DNL_MANUFACTURER	"FSL"
 
 #define CONFIG_CMD_FASTBOOT
+#define CONFIG_BCB_SUPPORT
 #define CONFIG_ANDROID_BOOT_IMAGE
 #define CONFIG_FASTBOOT_FLASH
 

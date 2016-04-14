@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2014 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2010-2016 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -72,6 +72,11 @@ void check_recovery_mode(void)
 	} else if (check_recovery_cmd_file()) {
 		puts("Fastboot: Recovery command file found!\n");
 		setup_recovery_env();
+#ifdef CONFIG_BCB_SUPPORT
+	} else if (recovery_check_and_clean_command()) {
+		puts("Fastboot: BCB command found\n");
+		setup_recovery_env();
+#endif
 	} else {
 		puts("Fastboot: Normal\n");
 	}

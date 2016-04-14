@@ -41,7 +41,9 @@
 #ifdef CONFIG_BRILLO_SUPPORT
 #include "bootctrl.h"
 #endif
-
+#ifdef CONFIG_BCB_SUPPORT
+#include "bcb.h"
+#endif
 #define FASTBOOT_VERSION		"0.4"
 
 #define FASTBOOT_INTERFACE_CLASS	0xff
@@ -1099,7 +1101,7 @@ static int _fastboot_setup_dev(void)
 		} else if (!strncmp(fastboot_env, "mmc", 3)) {
 			fastboot_devinfo.type = DEV_MMC;
 			fastboot_devinfo.dev_id = _fastboot_get_mmc_no(fastboot_env);
-#ifdef CONFIG_BRILLO_SUPPORT
+#ifdef CONFIG_BCB_SUPPORT
 			set_mmc_id(fastboot_devinfo.dev_id);
 #endif
 		}
