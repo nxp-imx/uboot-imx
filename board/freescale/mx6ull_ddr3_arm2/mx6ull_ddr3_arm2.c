@@ -119,7 +119,6 @@ static iomux_v3_cfg_t const usdhc1_emmc_pads[] = {
 	MX6_PAD_SD1_DATA1__USDHC1_DATA1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD1_DATA2__USDHC1_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD1_DATA3__USDHC1_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-#if !defined(CONFIG_SYS_USE_NAND) && !defined(CONFIG_SYS_USE_QSPI1A)
 	/*
 	 * The following 4 pins conflicts with qspi and nand flash.
 	 * You can comment out the following 4 pins and change
@@ -130,7 +129,6 @@ static iomux_v3_cfg_t const usdhc1_emmc_pads[] = {
 	MX6_PAD_NAND_CE0_B__USDHC1_DATA5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_NAND_CE1_B__USDHC1_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_NAND_CLE__USDHC1_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-#endif
 
 	/* Default NO WP for emmc, since we use pull down */
 	MX6_PAD_UART1_CTS_B__USDHC1_WP  | MUX_PAD_CTRL(USDHC_PAD_CTRL_WP),
@@ -156,7 +154,7 @@ static iomux_v3_cfg_t const usdhc1_pads[] = {
 };
 #endif
 
-#if !defined(CONFIG_SYS_USE_NAND) && !defined(CONFIG_SYS_USE_QSPI1B)
+#if !defined(CONFIG_SYS_USE_NAND) && !defined(CONFIG_MX6ULL_DDR3_ARM2_QSPIB_REWORK)
 static iomux_v3_cfg_t const usdhc2_pads[] = {
 	/* usdhc2_clk, nand_re_b, qspi1b_clk */
 	MX6_PAD_NAND_RE_B__USDHC2_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
@@ -344,6 +342,7 @@ static iomux_v3_cfg_t const quadspi_pads[] = {
 	MX6_PAD_NAND_DQS__QSPI_A_SS0_B	| MUX_PAD_CTRL(QSPI_PAD_CTRL1),
 	MX6_PAD_NAND_DATA07__QSPI_A_SS1_B	| MUX_PAD_CTRL(QSPI_PAD_CTRL1),
 
+#ifdef CONFIG_MX6ULL_DDR3_ARM2_QSPIB_REWORK
 	MX6_PAD_NAND_RE_B__QSPI_B_SCLK	| MUX_PAD_CTRL(QSPI_PAD_CTRL1),
 	MX6_PAD_NAND_WE_B__QSPI_B_SS0_B	| MUX_PAD_CTRL(QSPI_PAD_CTRL1),
 	MX6_PAD_NAND_DATA00__QSPI_B_SS1_B	| MUX_PAD_CTRL(QSPI_PAD_CTRL1),
@@ -351,6 +350,7 @@ static iomux_v3_cfg_t const quadspi_pads[] = {
 	MX6_PAD_NAND_DATA03__QSPI_B_DATA01	| MUX_PAD_CTRL(QSPI_PAD_CTRL1),
 	MX6_PAD_NAND_DATA04__QSPI_B_DATA02	| MUX_PAD_CTRL(QSPI_PAD_CTRL1),
 	MX6_PAD_NAND_DATA05__QSPI_B_DATA03	| MUX_PAD_CTRL(QSPI_PAD_CTRL1),
+#endif
 };
 
 int board_qspi_init(void)
@@ -368,13 +368,13 @@ int board_qspi_init(void)
 
 #ifdef CONFIG_FSL_ESDHC
 static struct fsl_esdhc_cfg usdhc_cfg[2] = {
-#if !defined(CONFIG_SYS_USE_NAND) && !defined(CONFIG_SYS_USE_QSPI1A)
+#ifdef CONFIG_MX6ULL_DDR3_ARM2_EMMC_REWORK
 	/* If want to use qspi, should change to 4 bit width */
 	{USDHC1_BASE_ADDR, 0, 8},
 #else
 	{USDHC1_BASE_ADDR, 0, 4},
 #endif
-#if !defined(CONFIG_SYS_USE_NAND) && !defined(CONFIG_SYS_USE_QSPI1B)
+#if !defined(CONFIG_SYS_USE_NAND) && !defined(CONFIG_MX6ULL_DDR3_ARM2_QSPIB_REWORK)
 	{USDHC2_BASE_ADDR, 0, 4},
 #endif
 };
@@ -408,7 +408,7 @@ int board_mmc_getcd(struct mmc *mmc)
 		ret = !gpio_get_value(USDHC1_CD_GPIO);
 #endif
 		break;
-#if !defined(CONFIG_SYS_USE_NAND) && !defined(CONFIG_SYS_USE_QSPI1A)
+#if !defined(CONFIG_SYS_USE_NAND) && !defined(CONFIG_MX6ULL_DDR3_ARM2_QSPIB_REWORK)
 	case USDHC2_BASE_ADDR:
 		ret = !gpio_get_value(USDHC2_CD_GPIO);
 		break;
@@ -431,7 +431,7 @@ int board_mmc_init(bd_t *bis)
 	for (i = 0; i < CONFIG_SYS_FSL_USDHC_NUM; i++) {
 		switch (i) {
 		case 0:
-#ifdef CONFIG_MX6UL_DDR3_ARM2_EMMC_REWORK
+#ifdef CONFIG_MX6ULL_DDR3_ARM2_EMMC_REWORK
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc1_emmc_pads, ARRAY_SIZE(usdhc1_emmc_pads));
 #else
@@ -444,7 +444,7 @@ int board_mmc_init(bd_t *bis)
 			gpio_direction_output(USDHC1_VSELECT, 0);
 			gpio_direction_output(USDHC1_PWR_GPIO, 1);
 			break;
-#if !defined(CONFIG_SYS_USE_NAND) && !defined(CONFIG_SYS_USE_QSPI1A)
+#if !defined(CONFIG_SYS_USE_NAND) && !defined(CONFIG_MX6ULL_DDR3_ARM2_QSPIB_REWORK)
 		case 1:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
