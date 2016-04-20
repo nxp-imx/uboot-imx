@@ -20,6 +20,9 @@
 #define CONFIG_SYS_USE_NAND
 #define CONFIG_ENV_IS_IN_NAND
 #else
+#ifndef CONFIG_MX6ULL_DDR3_ARM2_EMMC_REWORK
+#define CONFIG_SYS_USE_QSPI
+#endif
 #define CONFIG_ENV_IS_IN_MMC
 #endif
 
