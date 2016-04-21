@@ -407,7 +407,6 @@ static struct fsl_esdhc_cfg usdhc_cfg[2] = {
 #define USDHC1_CD_GPIO	IMX_GPIO_NR(1, 19)
 #define USDHC1_PWR_GPIO	IMX_GPIO_NR(1, 9)
 #define USDHC1_VSELECT IMX_GPIO_NR(1, 5)
-#define USDHC2_CD_GPIO	IMX_GPIO_NR(1, 19)
 #define USDHC2_PWR_GPIO	IMX_GPIO_NR(4, 10)
 
 int mmc_get_env_devno(void)
@@ -448,7 +447,7 @@ int board_mmc_getcd(struct mmc *mmc)
 		break;
 #if !defined(CONFIG_SYS_USE_NAND) && !defined(CONFIG_MX6ULL_DDR3_ARM2_QSPIB_REWORK)
 	case USDHC2_BASE_ADDR:
-		ret = !gpio_get_value(USDHC2_CD_GPIO);
+		ret = 1;
 		break;
 #endif
 	}
@@ -486,7 +485,6 @@ int board_mmc_init(bd_t *bis)
 		case 1:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
-			gpio_direction_input(USDHC2_CD_GPIO);
 			gpio_direction_output(USDHC2_PWR_GPIO, 1);
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
 			break;
