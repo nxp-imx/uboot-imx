@@ -172,8 +172,9 @@ config TARGET_PLATINUM_TITANIUM
 
 config TARGET_MX6ULL_DDR3_ARM2
 	bool "Support mx6ull_ddr3_arm2"
-	select CPU_V7
 	select MX6ULL
+	select DM
+	select DM_THERMAL
 
 config TARGET_SECOMX6
 	bool "secomx6 boards"
