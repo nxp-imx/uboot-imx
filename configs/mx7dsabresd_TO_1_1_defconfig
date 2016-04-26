@@ -1,4 +1,4 @@
-CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx7dsabresd/imximage_TO_1_0.cfg,MX7D"
+CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx7dsabresd/imximage_TO_1_1.cfg,MX7D"
 CONFIG_ARM=y
 CONFIG_TARGET_MX7DSABRESD=y
 CONFIG_SYS_MALLOC_F=y
