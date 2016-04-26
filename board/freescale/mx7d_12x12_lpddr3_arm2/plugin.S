@@ -230,7 +230,7 @@ TUNE_END:
 	cmp	r7, #0x10
 	beq	2f
 
-	/* TO1.1 */
+	/* from TO1.1 */
 	ldr	r7, [r11]
 	bic	r7, r7, #(1 << 27)
 	str	r7, [r11]
@@ -266,8 +266,8 @@ TUNE_END:
 
 	ldr     r7, [r1, #0x800]
 	and     r7, r7, #0xFF
-	cmp     r7, #0x10
-	beq     4f
+	cmp     r7, #0x11
+	bne     4f
 
 	ldr	r6, =0x7c
 	ldr	r7, =0x1c1c1c1c
