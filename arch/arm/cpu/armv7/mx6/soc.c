@@ -142,14 +142,16 @@ u32 get_cpu_speed_grade_hz(void)
 	switch (val) {
 	/* Valid for IMX6DQ */
 	case OCOTP_CFG3_SPEED_1P2GHZ:
-		if (is_cpu_type(MXC_CPU_MX6Q) || is_cpu_type(MXC_CPU_MX6D))
+		if (is_cpu_type(MXC_CPU_MX6Q) || is_cpu_type(MXC_CPU_MX6D) ||
+			is_cpu_type(MXC_CPU_MX6QP) || is_cpu_type(MXC_CPU_MX6DP))
 			return 1200000000;
 	/* Valid for IMX6SX/IMX6SDL/IMX6DQ */
 	case OCOTP_CFG3_SPEED_1GHZ:
 		return 996000000;
 	/* Valid for IMX6DQ */
 	case OCOTP_CFG3_SPEED_850MHZ:
-		if (is_cpu_type(MXC_CPU_MX6Q) || is_cpu_type(MXC_CPU_MX6D))
+		if (is_cpu_type(MXC_CPU_MX6Q) || is_cpu_type(MXC_CPU_MX6D) ||
+			is_cpu_type(MXC_CPU_MX6QP) || is_cpu_type(MXC_CPU_MX6DP))
 			return 852000000;
 	/* Valid for IMX6SX/IMX6SDL/IMX6DQ */
 	case OCOTP_CFG3_SPEED_800MHZ:
@@ -206,6 +208,9 @@ u32 __weak get_board_rev(void)
 
 	if (type == MXC_CPU_MX6D)
 		cpurev = (MXC_CPU_MX6Q) << 12 | (cpurev & 0xFFF);
+
+	if (type == MXC_CPU_MX6QP || type == MXC_CPU_MX6DP)
+		cpurev = (MXC_CPU_MX6Q) << 12 | ((cpurev + 0x10) & 0xFFF);
 
 	return cpurev;
 }

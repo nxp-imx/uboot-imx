@@ -563,7 +563,8 @@ int init_sata(int dev)
 	struct ahci_probe_ent *probe_ent = NULL;
 
 #if defined(CONFIG_MX6)
-	if (!is_cpu_type(MXC_CPU_MX6Q) && !is_cpu_type(MXC_CPU_MX6D))
+	if (!is_cpu_type(MXC_CPU_MX6Q) && !is_cpu_type(MXC_CPU_MX6D) &&
+		!is_cpu_type(MXC_CPU_MX6QP) && !is_cpu_type(MXC_CPU_MX6DP))
 		return 1;
 #endif
 	if (dev < 0 || dev > (CONFIG_SYS_SATA_MAX_DEVICE - 1)) {
