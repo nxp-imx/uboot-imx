@@ -638,9 +638,15 @@
 	ldr r1, =0xF00000CF
 	str r1, [r0, #0x10]
 
+#if defined(CONFIG_MX6QP)
+	ldr r1, =0x77177717
+	str r1, [r0, #0x18]
+	str r1, [r0, #0x1c]
+#else
 	ldr r1, =0x007F007F
 	str r1, [r0, #0x18]
 	str r1, [r0, #0x1c]
+#endif
 .endm
 
 .macro imx6_ddr_setting
