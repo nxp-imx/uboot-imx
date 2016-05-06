@@ -987,8 +987,8 @@ int power_init_board(void)
 	pmic_reg_write(p, PFUZE3000_SW1AMODE, reg);
 	pmic_reg_write(p, PFUZE3000_SW1BMODE, reg);
 
-	/* SW1A/1B standby voltage set to 1.025V */
-	reg = 0xd;
+	/* SW1A/1B standby voltage set to 0.975V */
+	reg = 0xb;
 	pmic_reg_write(p, PFUZE3000_SW1ASTBY, reg);
 	pmic_reg_write(p, PFUZE3000_SW1BSTBY, reg);
 
