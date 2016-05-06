@@ -625,12 +625,12 @@ int power_init_board(void)
 	pmic_reg_write(p, PFUZE300_SW1AMODE, reg);
 	pmic_reg_write(p, PFUZE300_SW1BMODE, reg);
 
-	/* SW1A/1B standby voltage set to 1.025V */
-	reg = 0xd;
+	/* SW1A/1B standby voltage set to 0.975V */
+	reg = 0xb;
 	pmic_reg_write(p, PFUZE300_SW1ASTBY, reg);
 	pmic_reg_write(p, PFUZE300_SW1BSTBY, reg);
 
-	/* decrease SW1B normal voltage to 0.975V */
+	/* set SW1B normal voltage to 0.975V */
 	pmic_reg_read(p, PFUZE300_SW1BVOLT, &reg);
 	reg &= ~0x1f;
 	reg |= PFUZE300_SW1AB_SETP(975);

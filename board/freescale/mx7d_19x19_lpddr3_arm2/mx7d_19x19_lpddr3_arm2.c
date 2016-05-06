@@ -600,8 +600,8 @@ static int setup_pmic_voltages(void)
 			return -1;
 		}
 
-		/* SW1A/1B standby voltage set to 1.025V */
-		value = 0xd;
+		/* SW1A/1B standby voltage set to 0.975V */
+		value = 0xb;
 		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE300_SW1ASTBY, 1, &value, 1)) {
 			printf("Set PFUZE300_SW1ASTBY error!\n");
 			return -1;
@@ -611,13 +611,13 @@ static int setup_pmic_voltages(void)
 			return -1;
 		}
 
-		/* decrease SW1B normal voltage to 0.975V */
+		/* set SW1B normal voltage to 0.975V */
 		if (i2c_read(CONFIG_PMIC_I2C_SLAVE, PFUZE300_SW1BVOLT, 1, &value, 1)) {
 			printf("Read SW1BVOLT error!\n");
 			return -1;
 		}
 		value &= ~0x1f;
-		value |= 0x0b;
+		value |= 0xb;
 		if (i2c_write(CONFIG_PMIC_I2C_SLAVE, PFUZE300_SW1BVOLT, 1, &value, 1)) {
 			printf("Set SW1BVOLT error!\n");
 			return -1;
