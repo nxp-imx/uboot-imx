@@ -151,7 +151,7 @@ TUNE_END:
 	str	r7, [r3, r6]
 
 	ldr	r6, =0x108
-	ldr	r7, =0x03060707
+	ldr	r7, =0x03060708
 	str	r7, [r3, r6]
 
 	ldr	r6, =0x10c
@@ -171,6 +171,10 @@ TUNE_END:
 	str	r7, [r3, r6]
 
 	ldr	r6, =0x11c
+	ldr	r7, =0x00000202
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x120
 	ldr	r7, =0x00000202
 	str	r7, [r3, r6]
 
@@ -196,6 +200,10 @@ TUNE_END:
 
 	ldr	r6, =0x204
 	ldr	r7, =0x00171717
+	str	r7, [r3, r6]
+
+	ldr	r6, =0x210
+	ldr	r7, =0xF00
 	str	r7, [r3, r6]
 
 	ldr	r6, =0x214
@@ -262,6 +270,10 @@ TUNE_END:
 
 	ldr	r6, =0x10
 	ldr	r7, =0x0007080C
+	str	r7, [r4, r6]
+
+	ldr	r6, =0xb0
+	ldr	r7, =0x1010007e
 	str	r7, [r4, r6]
 
 	ldr     r7, [r1, #0x800]
