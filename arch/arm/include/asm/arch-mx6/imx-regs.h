@@ -412,13 +412,13 @@
 #include <asm/types.h>
 
 /* only for i.MX6SX/UL */
-#define WDOG3_BASE_ADDR ((is_cpu_type(MXC_CPU_MX6UL) ?	\
+#define WDOG3_BASE_ADDR (((is_cpu_type(MXC_CPU_MX6UL) || is_cpu_type(MXC_CPU_MX6ULL)) ?	\
 			 MX6UL_WDOG3_BASE_ADDR :  MX6SX_WDOG3_BASE_ADDR))
 #define LCDIF1_BASE_ADDR ((is_cpu_type(MXC_CPU_MX6UL)) ?	\
 			  MX6UL_LCDIF1_BASE_ADDR :		\
 			  ((is_cpu_type(MXC_CPU_MX6ULL)) ?	\
 			  MX6ULL_LCDIF1_BASE_ADDR : MX6SX_LCDIF1_BASE_ADDR))
-#define UART6_BASE_ADDR ((is_cpu_type(MXC_CPU_MX6UL)) ?	\
+#define UART6_BASE_ADDR (((is_cpu_type(MXC_CPU_MX6UL)) || is_cpu_type(MXC_CPU_MX6ULL)) ? \
 			  MX6UL_UART6_BASE_ADDR : MX6SX_UART6_BASE_ADDR)
 
 #define MXS_LCDIF_BASE LCDIF1_BASE_ADDR

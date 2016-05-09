@@ -80,7 +80,7 @@ void imx_set_wdog_powerdown(bool enable)
 	writew(enable, &wdog2->wmcr);
 
 	if (is_cpu_type(MXC_CPU_MX6SX) || is_cpu_type(MXC_CPU_MX6UL) ||
-			is_soc_type(MXC_SOC_MX7))
+	    is_cpu_type(MXC_CPU_MX6ULL) || is_soc_type(MXC_SOC_MX7))
 		writew(enable, &wdog3->wmcr);
 #ifdef CONFIG_MX7D
 	writew(enable, &wdog4->wmcr);

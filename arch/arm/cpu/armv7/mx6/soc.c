@@ -130,7 +130,7 @@ u32 get_cpu_speed_grade_hz(void)
 	val >>= OCOTP_CFG3_SPEED_SHIFT;
 	val &= 0x3;
 
-	if (is_cpu_type(MXC_CPU_MX6UL)) {
+	if (is_cpu_type(MXC_CPU_MX6UL) || is_cpu_type(MXC_CPU_MX6ULL)) {
 		if (val == OCOTP_CFG3_SPEED_528MHZ)
 			return 528000000;
 		else if (val == OCOTP_CFG3_SPEED_696MHZ)
@@ -302,7 +302,8 @@ static void clear_mmdc_ch_mask(void)
 	reg = readl(&mxc_ccm->ccdr);
 
 	/* Clear MMDC channel mask */
-	if (is_cpu_type(MXC_CPU_MX6SX) || is_cpu_type(MXC_CPU_MX6UL) || is_cpu_type(MXC_CPU_MX6SL))
+	if (is_cpu_type(MXC_CPU_MX6SX) || is_cpu_type(MXC_CPU_MX6UL) ||
+	    is_cpu_type(MXC_CPU_MX6SL) || is_cpu_type(MXC_CPU_MX6ULL))
 		reg &= ~(MXC_CCM_CCDR_MMDC_CH1_HS_MASK);
 	else
 		reg &= ~(MXC_CCM_CCDR_MMDC_CH1_HS_MASK | MXC_CCM_CCDR_MMDC_CH0_HS_MASK);
@@ -446,8 +447,8 @@ static void imx_set_pcie_phy_power_down(void)
 
 int arch_cpu_init(void)
 {
-	if (!is_cpu_type(MXC_CPU_MX6SL) && !!is_cpu_type(MXC_CPU_MX6SX)
-		&& !is_cpu_type(MXC_CPU_MX6UL)) {
+	if (!is_cpu_type(MXC_CPU_MX6SL) && !is_cpu_type(MXC_CPU_MX6SX)
+	    && !is_cpu_type(MXC_CPU_MX6UL) && !is_cpu_type(MXC_CPU_MX6ULL)) {
 		/*
 		 * imx6sl doesn't have pcie at all.
 		 * this bit is not used by imx6sx anymore
@@ -534,10 +535,12 @@ int arch_cpu_init(void)
 
 	imx_set_wdog_powerdown(false); /* Disable PDE bit of WMCR register */
 
-	if (!is_cpu_type(MXC_CPU_MX6SL) && !is_cpu_type(MXC_CPU_MX6UL))
+	if (!is_cpu_type(MXC_CPU_MX6SL) && !is_cpu_type(MXC_CPU_MX6UL) &&
+	    !is_cpu_type(MXC_CPU_MX6ULL))
 		imx_set_pcie_phy_power_down();
 
-	if (!is_mx6dqp() && !is_cpu_type(MXC_CPU_MX6UL))
+	if (!is_mx6dqp() && !is_cpu_type(MXC_CPU_MX6UL) &&
+	    !is_cpu_type(MXC_CPU_MX6ULL))
 		imx_set_vddpu_power_down();
 
 #ifdef CONFIG_APBH_DMA
@@ -642,8 +645,8 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 	struct fuse_bank4_regs *fuse =
 			(struct fuse_bank4_regs *)bank->fuse_regs;
 
-	if ((is_cpu_type(MXC_CPU_MX6SX) || is_cpu_type(MXC_CPU_MX6UL)) &&
-		dev_id == 1) {
+	if ((is_cpu_type(MXC_CPU_MX6SX) || is_cpu_type(MXC_CPU_MX6UL) ||
+	    is_cpu_type(MXC_CPU_MX6ULL)) && dev_id == 1) {
 		u32 value = readl(&fuse->mac_addr2);
 		mac[0] = value >> 24 ;
 		mac[1] = value >> 16 ;
