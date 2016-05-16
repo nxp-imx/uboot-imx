@@ -865,6 +865,16 @@ int overwrite_console(void)
 
 int board_eth_init(bd_t *bis)
 {
+	if (is_mx6dqp()) {
+		int ret;
+
+		/* select ENET MAC0 TX clock from PLL */
+		imx_iomux_set_gpr_register(5, 9, 1, 1);
+		ret = enable_fec_anatop_clock(0, ENET_125MHZ);
+		if (ret)
+		    printf("Error fec anatop clock settings!\n");
+	}
+
 	setup_iomux_enet();
 	setup_pcie();
 
