@@ -272,6 +272,7 @@ void iox74lv_set(int index)
 	gpio_direction_output(IOX_STCP, 1);
 };
 
+#define BOARD_REV_C  0x300
 #define BOARD_REV_B  0x200
 #define BOARD_REV_A  0x100
 
@@ -289,6 +290,9 @@ static int mx7sabre_rev(void)
 
 	if (reg != 0) {
 		switch (reg >> 8 & 0x0F) {
+		case 0x3:
+			ret = BOARD_REV_C;
+			break;
 		case 0x02:
 			ret = BOARD_REV_B;
 			break;
@@ -301,8 +305,10 @@ static int mx7sabre_rev(void)
 		/* If the gp1 fuse is not burn, we have to use TO rev for the board rev */
 		if (is_soc_rev(CHIP_REV_1_0))
 			ret = BOARD_REV_A;
-		else
+		else if (is_soc_rev(CHIP_REV_1_1))
 			ret = BOARD_REV_B;
+		else
+			ret = BOARD_REV_C;
 	}
 
 	return ret;
@@ -562,7 +568,7 @@ static void setup_iomux_fec(void)
 	if (0 == CONFIG_FEC_ENET_DEV) {
 		imx_iomux_v3_setup_multiple_pads(fec1_pads, ARRAY_SIZE(fec1_pads));
 	} else {
-		if (mx7sabre_rev() == BOARD_REV_B) {
+		if (mx7sabre_rev() >= BOARD_REV_B) {
 			/*  On RevB, GPIO1_IO04 is used for ENET2 EN,
 			*  so set its output to low to enable ENET2 signals
 			*/
@@ -873,7 +879,7 @@ static void setup_usb(void)
 	imx_iomux_v3_setup_multiple_pads(usb_otg1_pads,
 						 ARRAY_SIZE(usb_otg1_pads));
 
-	if (mx7sabre_rev() == BOARD_REV_B)
+	if (mx7sabre_rev() >= BOARD_REV_B)
 		imx_iomux_v3_setup_multiple_pads(usb_otg2_revB_pads,
 						 ARRAY_SIZE(usb_otg2_revB_pads));
 	else
@@ -928,7 +934,7 @@ int board_init(void)
 #endif
 
 #ifdef CONFIG_MXC_EPDC
-	if (mx7sabre_rev() == BOARD_REV_B) {
+	if (mx7sabre_rev() >= BOARD_REV_B) {
 		/*  On RevB, GPIO1_IO04 is used for ENET2 EN,
 		*  so set its output to high to isolate the ENET2 signals for EPDC
 		*/
@@ -1026,6 +1032,9 @@ int checkboard(void)
 	char *revname;
 
 	switch (rev) {
+	case BOARD_REV_C:
+		revname = "C";
+		break;
 	case BOARD_REV_B:
 		revname = "B";
 		break;
