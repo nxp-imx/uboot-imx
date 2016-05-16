@@ -4,7 +4,7 @@
  * Copyright (C) 2009 by Jan Weitzel Phytec Messtechnik GmbH,
  *                       <armlinux@phytec.de>
  *
- * Copyright (C) 2004-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2004-2011, 2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -42,6 +42,7 @@ void imx_iomux_v3_setup_pad(iomux_v3_cfg_t pad)
 #ifdef CONFIG_IOMUX_LPSR
 	u32 lpsr = (pad & MUX_MODE_LPSR) >> MUX_MODE_SHIFT;
 
+#ifdef CONFIG_MX7
 	if (lpsr == IOMUX_CONFIG_LPSR) {
 		base = (void *)IOMUXC_LPSR_BASE_ADDR;
 		mux_mode &= ~IOMUX_CONFIG_LPSR;
@@ -49,9 +50,17 @@ void imx_iomux_v3_setup_pad(iomux_v3_cfg_t pad)
 		if (sel_input_ofs)
 			sel_input_ofs += IOMUX_LPSR_SEL_INPUT_OFS;
 	}
+#else
+	if (is_cpu_type(MXC_CPU_MX6ULL)) {
+		if (lpsr == IOMUX_CONFIG_LPSR) {
+			base = (void *)IOMUXC_SNVS_BASE_ADDR;
+			mux_mode &= ~IOMUX_CONFIG_LPSR;
+		}
+	}
+#endif
 #endif
 
-	if (is_soc_type(MXC_SOC_MX7) || mux_ctrl_ofs)
+	if (is_soc_type(MXC_SOC_MX7) || is_cpu_type(MXC_CPU_MX6ULL) || mux_ctrl_ofs)
 		__raw_writel(mux_mode, base + mux_ctrl_ofs);
 
 	if (sel_input_ofs)

@@ -32,6 +32,8 @@
 
 #include "mx6ul_arm2.h"
 
+#define CONFIG_IOMUX_LPSR
+
 #define PHYS_SDRAM_SIZE			SZ_1G
 
 #ifdef CONFIG_SYS_USE_SPINOR
