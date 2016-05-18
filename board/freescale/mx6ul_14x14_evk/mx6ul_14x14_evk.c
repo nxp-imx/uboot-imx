@@ -532,8 +532,10 @@ int board_mmc_init(bd_t *bis)
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc2_emmc_pads, ARRAY_SIZE(usdhc2_emmc_pads));
 #else
+#ifndef CONFIG_SYS_USE_NAND
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
+#endif
 #endif
 			gpio_direction_output(USDHC2_PWR_GPIO, 0);
 			udelay(500);
