@@ -36,6 +36,22 @@
 
 #define PHYS_SDRAM_SIZE			SZ_1G
 
+/*
+ * TSC pins conflict with I2C1 bus, so after TSC
+ * hardware rework, need to disable i2c1 bus, also
+ * need to disable PMIC and ldo bypass check.
+ */
+#ifdef CONFIG_MX6ULL_DDR3_ARM2_TSC_REWORK
+#undef CONFIG_LDO_BYPASS_CHECK
+#undef CONFIG_SYS_I2C_MXC
+#undef CONFIG_SYS_I2C
+#undef CONFIG_CMD_I2C
+#undef CONFIG_POWER_PFUZE100_I2C_ADDR
+#undef CONFIG_POWER_PFUZE100
+#undef CONFIG_POWER_I2C
+#undef CONFIG_POWER
+#endif
+
 #ifdef CONFIG_SYS_USE_SPINOR
 #define CONFIG_CMD_SF
 #define CONFIG_SPI_FLASH
