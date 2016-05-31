@@ -12,6 +12,10 @@ config SYS_SOC
 	string
 	default "s32v234"
 
+config BAUDRATE
+	int "Serial baudrate"
+	default 115200
+
 choice
 	prompt "Select S32V234 Target Board Support"
 	default TARGET_S32V234EVB
