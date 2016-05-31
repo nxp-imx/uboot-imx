@@ -4,3 +4,4 @@
 
 obj-y += generic.o
 obj-y += cpu.o
+obj-y += clock.o
