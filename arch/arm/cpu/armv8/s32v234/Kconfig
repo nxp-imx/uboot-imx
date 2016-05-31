@@ -1,0 +1,33 @@
+if ARCH_S32V234
+
+config SYS_CPU
+	string
+	default "armv8"
+
+config SYS_VENDOR
+	string
+	default "freescale"
+
+config SYS_SOC
+	string
+	default "s32v234"
+
+choice
+	prompt "Select S32V234 Target Board Support"
+	default TARGET_S32V234EVB
+	help
+	  S32V234 Target Board Selection.
+	  At this point, only S32V234EVB is available.
+
+config TARGET_S32V234EVB
+	bool "Support s32v234evb"
+	select SYS_FSL_ERRATUM_ESDHC111
+	help
+	  S32V Evaluation System for high-performance, safe computation-intensive
+	  front vision, surround vision and sensor fusion applications.
+
+endchoice
+
+source "board/freescale/s32v234evb/Kconfig"
+
+endif

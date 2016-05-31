@@ -900,11 +900,6 @@ config ARCH_RMOBILE
 	imply SYS_THUMB_BUILD
 	imply ARCH_MISC_INIT if DISPLAY_CPUINFO
 
-config TARGET_S32V234EVB
-	bool "Support s32v234evb"
-	select ARM64
-	select SYS_FSL_ERRATUM_ESDHC111
-
 config ARCH_SNAPDRAGON
 	bool "Qualcomm Snapdragon SoCs"
 	select ARM64
@@ -1108,6 +1103,15 @@ config ARCH_ZYNQMP
 	imply FAT_WRITE
 	imply MP
 	imply DM_USB_GADGET
+
+config ARCH_S32V234
+	bool "Support S32V234 SOC"
+	select ARM64
+	help
+	  S32V234 is a vision processing MPU,
+	  consisting of multiple ARM® Cortex®-A53, one Cortex-M4,
+	  dedicated modules and processors for acceleration of image vision
+	  processing tasks.
 
 config TEGRA
 	bool "NVIDIA Tegra"
@@ -1808,6 +1812,8 @@ source "arch/arm/mach-zynqmp-r5/Kconfig"
 
 source "arch/arm/cpu/armv7/Kconfig"
 
+source "arch/arm/cpu/armv8/s32v234/Kconfig"
+
 source "arch/arm/cpu/armv8/Kconfig"
 
 source "arch/arm/mach-imx/Kconfig"
@@ -1854,7 +1860,6 @@ source "board/freescale/ls1012ardb/Kconfig"
 source "board/freescale/ls1012afrdm/Kconfig"
 source "board/freescale/lx2160a/Kconfig"
 source "board/freescale/mx35pdk/Kconfig"
-source "board/freescale/s32v234evb/Kconfig"
 source "board/grinn/chiliboard/Kconfig"
 source "board/gumstix/pepper/Kconfig"
 source "board/hisilicon/hikey/Kconfig"
