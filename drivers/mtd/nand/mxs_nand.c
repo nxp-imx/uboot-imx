@@ -800,7 +800,7 @@ static int mxs_nand_ecc_read_page(struct mtd_info *mtd, struct nand_chip *nand,
 
 		if (status[i] == 0xff) {
 #if defined(CONFIG_MX6QP) || defined(CONFIG_MX7) || defined(CONFIG_MX6UL)
-			if (readl(bch_regs->hw_bch_debug1))
+			if (readl(&bch_regs->hw_bch_debug1))
 				flag = 1;
 #endif
 			continue;
