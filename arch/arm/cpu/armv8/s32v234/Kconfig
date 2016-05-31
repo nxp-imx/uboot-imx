@@ -28,6 +28,28 @@ config TARGET_S32V234EVB
 
 endchoice
 
+choice
+	prompt "Select DDR type"
+	default S32V234_LPDDR2
+	help
+	  S32V234 DDR Configuration.
+	  At this point, only Micron LPDDR2 is supported.
+
+config S32V234_LPDDR2
+	bool "LPDDR2 Support"
+	help
+	  Enable the support for Micron LPDDR2,
+	  2×32-bit, up to 1066 MHz data rate, 2×1 GB addressable.
+
+endchoice
+
+config DDR_HANDSHAKE_AT_RESET
+	bool "Enable DDR handshake"
+	default y
+	help
+	  Enable DDR handshake after functional reset.
+	  Execute additional checks in case of a functional reset.
+
 source "board/freescale/s32v234evb/Kconfig"
 
 endif

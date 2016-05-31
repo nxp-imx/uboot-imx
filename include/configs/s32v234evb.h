@@ -26,14 +26,9 @@
 /* Run by default from DDR1  */
 #ifdef CONFIG_RUN_FROM_DDR0
 #define DDR_BASE_ADDR		0x80000000
-#define DDR_SIZE		(1024 * 1024 * 1024)
 #else
 #define DDR_BASE_ADDR		0xC0000000
-#define DDR_SIZE		(512 * 1024 * 1024)
 #endif
-
-/* Enable DDR handshake at functional reset event */
-#define CONFIG_DDR_HANDSHAKE_AT_RESET
 
 #define CONFIG_MACH_TYPE		4146
 
@@ -154,7 +149,8 @@
 #define CONFIG_SYS_PROMPT		"=> "
 
 #define CONFIG_SYS_MEMTEST_START	(DDR_BASE_ADDR)
-#define CONFIG_SYS_MEMTEST_END		(DDR_BASE_ADDR + (DDR_SIZE - 1))
+#define CONFIG_SYS_MEMTEST_END		(DDR_BASE_ADDR + \
+					 (CONFIG_SYS_DDR_SIZE - 1))
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_SYS_HZ				1000
@@ -173,7 +169,7 @@
 /* Physical memory map */
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM			(DDR_BASE_ADDR)
-#define PHYS_SDRAM_SIZE			(DDR_SIZE)
+#define PHYS_SDRAM_SIZE			(CONFIG_SYS_DDR_SIZE)
 
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM
 #define CONFIG_SYS_INIT_RAM_ADDR	IRAM_BASE_ADDR
