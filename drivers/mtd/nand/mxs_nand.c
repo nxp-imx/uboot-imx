@@ -800,7 +800,7 @@ static int mxs_nand_ecc_read_page(struct mtd_info *mtd, struct nand_chip *nand,
 		if (status[i] == 0xff) {
 			if (is_mx6dqp() || is_soc_type(MXC_SOC_MX7) ||
 			    is_cpu_type(MXC_CPU_MX6UL))
-				if (readl(bch_regs->hw_bch_debug1))
+				if (readl(&bch_regs->hw_bch_debug1))
 					flag = 1;
 			continue;
 		}
