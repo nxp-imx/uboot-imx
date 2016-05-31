@@ -30,6 +30,7 @@ struct boot_ctl {
 	u8 recovery_tryremain;
 };
 char *select_slot(void);
+int invalid_curslot(void);
 bool is_sotvar(char *cmd);
 void get_slotvar(char *cmd, char *response, size_t chars_left);
 void cb_set_active(struct usb_ep *ep, struct usb_request *req);

@@ -205,6 +205,35 @@ char *select_slot(void)
 		return FASTBOOT_PARTITION_BOOT_B;
 }
 
+
+int invalid_curslot(void)
+{
+	int ret = 0;
+	struct boot_ctl t_bootctl;
+	unsigned int slot = g_slot_selected;
+
+	printf("invalid_curslot %d\n", slot);
+
+	if (slot >= SLOT_NUM)
+		return -1;
+
+	ret = read_bootctl(&t_bootctl);
+	if (ret) {
+		printf("invalid_slot failed, ret %d\n", ret);
+		return -1;
+	}
+
+	t_bootctl.a_slot_meta[slot].priority = 0;
+	ret = write_bootctl(&t_bootctl);
+	if (ret) {
+		printf("!!! write_bootctl failed, ret %d\n", ret);
+		return -1;
+	}
+
+	return 0;
+}
+
+
 static unsigned int slotidx_from_suffix(char *suffix)
 {
 	unsigned int slot = -1;

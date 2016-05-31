@@ -1628,15 +1628,18 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	else
 		addr = simple_strtoul(argv[1], NULL, 16);
 
+
 	if (argc > 2)
 		ptn = argv[2];
 #ifdef CONFIG_BRILLO_SUPPORT
 	else {
+slot_select:
 		ptn = select_slot();
 		if (ptn == NULL) {
 			printf("no valid slot found, enter to recovery\n");
 			ptn = "recovery";
 		}
+use_given_ptn:
 		printf("use slot %s\n", ptn);
 	}
 #endif
@@ -1867,11 +1870,34 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 1;
 
 fail:
-#ifdef CONFIG_FSL_FASTBOOT
+
+#if defined(CONFIG_BRILLO_SUPPORT)
+	if (argc > 2)
+		return -1;
+
+	if (0 == strcmp(ptn, "recovery")) {
+		printf("boot recovery partition failed\n");
+		return -1;
+	}
+
+	printf("invalid slot %s\n", ptn);
+
+	int ret = 0;
+	ret = invalid_curslot();
+	if (ret == 0) {
+		goto slot_select;
+	} else {
+		ptn = "recovery";
+		goto use_given_ptn;
+	}
+
+#elif defined(CONFIG_FSL_FASTBOOT)
 	return run_command("fastboot", 0);
-#else /*! CONFIG_FSL_FASTBOOT*/
+#else
 	return -1;
-#endif /*! CONFIG_FSL_FASTBOOT*/
+
+#endif
+
 }
 
 U_BOOT_CMD(
