@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX7D 12x12 DDR3 ARM2 board.
  *
@@ -49,6 +49,10 @@
 #define CONFIG_SF_DEFAULT_MODE (SPI_MODE_0)
 #define CONFIG_SF_DEFAULT_CS   0
 #endif
+
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_NET
 
 #include "mx7d_arm2.h"
 
