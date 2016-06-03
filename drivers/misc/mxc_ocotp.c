@@ -268,7 +268,13 @@ static void setup_direct_access(struct ocotp_regs *regs, u32 bank, u32 word,
 #ifdef CONFIG_MX7
 	u32 addr = bank;
 #else
-	u32 addr = bank << 3 | word;
+	u32 addr;
+	/* Bank 7 and Bank 8 only supports 4 words each */
+	if ((is_cpu_type(MXC_CPU_MX6ULL)) && (bank > 7)) {
+		bank = bank - 1;
+		word += 4;
+	}
+	addr = bank << 3 | word;
 #endif
 
 	set_timing(regs);
