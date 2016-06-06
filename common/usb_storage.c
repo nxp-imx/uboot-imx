@@ -18,6 +18,8 @@
  * BBB support based on /sys/dev/usb/umass.c from
  * FreeBSD.
  *
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -103,7 +105,7 @@ struct us_data {
  * enough free heap space left, but the SCSI READ(10) and WRITE(10) commands are
  * limited to 65535 blocks.
  */
-#define USB_MAX_XFER_BLK	65535
+#define USB_MAX_XFER_BLK	256
 #else
 #define USB_MAX_XFER_BLK	20
 #endif
