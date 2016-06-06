@@ -2,6 +2,7 @@
  * Copyright (c) 2007-2008, Juniper Networks, Inc.
  * Copyright (c) 2008, Excito Elektronik i Skåne AB
  * Copyright (c) 2008, Michael Trimarchi <trimarchimichael@yahoo.it>
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
  *
  * All rights reserved.
  *
@@ -210,6 +211,9 @@ static int ehci_shutdown(struct ehci_ctrl *ctrl)
 		return -EINVAL;
 
 	cmd = ehci_readl(&ctrl->hcor->or_usbcmd);
+	/* If not run, directly return */
+	if (!(cmd & CMD_RUN))
+		return 0;
 	cmd &= ~(CMD_PSE | CMD_ASE);
 	ehci_writel(&ctrl->hcor->or_usbcmd, cmd);
 	ret = handshake(&ctrl->hcor->or_usbsts, STS_ASS | STS_PSS, 0,
