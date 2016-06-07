@@ -78,7 +78,7 @@
 	str r1, [r0, #0x010]
 	ldr r1, =0x01FF00DB
 	str r1, [r0, #0x014]
-	ldr r1, =0x00201740
+	ldr r1, =0x00211740
 	str r1, [r0, #0x018]
 	ldr r1, =0x00008000
 	str r1, [r0, #0x01C]
