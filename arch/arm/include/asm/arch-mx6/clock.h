@@ -72,6 +72,7 @@ int enable_lcdif_clock(u32 base_addr);
 int enable_lvds_bridge(u32 lcd_base_addr);
 void enable_qspi_clk(int qspi_num);
 void enable_thermal_clk(void);
+void enable_epdc_clock(void);
 void mxs_set_lcdclk(u32 base_addr, u32 freq);
 void mxs_set_vadcclk(void);
 #endif /* __ASM_ARCH_CLOCK_H */
