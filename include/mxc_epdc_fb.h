@@ -193,7 +193,7 @@
 #define EPDC_PIGEON_16_0		0xC00
 #define EPDC_PIGEON_16_1		0xC10
 #define EPDC_PIGEON_16_2		0xC20
-#ifdef CONFIG_MX7
+#if defined(CONFIG_MX7) || defined(CONFIG_MX6ULL)
 #define EPDC_WB_ADDR_TCE		0x010
 #else
 #define EPDC_WB_ADDR_TCE		0xC10
