@@ -155,6 +155,8 @@ const char *get_imx_type(u32 imxtype)
 		return "6DL";	/* Dual Lite version of the mx6 */
 	case MXC_CPU_MX6SOLO:
 		return "6SOLO";	/* Solo version of the mx6 */
+	case MXC_CPU_MX6SLL:
+		return "6SLL";	/* Solo-Lite-Lite version of the mx6 */
 	case MXC_CPU_MX6SL:
 		return "6SL";	/* Solo-Lite version of the mx6 */
 	case MXC_CPU_MX6SX:
