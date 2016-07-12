@@ -59,6 +59,7 @@ obj-$(CONFIG_ENV_IS_IN_UBI) += env_ubi.o
 obj-$(CONFIG_ENV_IS_NOWHERE) += env_nowhere.o
 
 # command
+obj-$(CONFIG_CMD_FSL_CAAM_KB) += cmd_fsl_caam.o
 obj-$(CONFIG_CMD_AES) += cmd_aes.o
 obj-$(CONFIG_CMD_AMBAPP) += cmd_ambapp.o
 obj-$(CONFIG_CMD_ARMFLASH) += cmd_armflash.o
