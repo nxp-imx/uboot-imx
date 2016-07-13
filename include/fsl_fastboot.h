@@ -42,12 +42,28 @@
 #define FASTBOOT_PARTITION_BOOT_B "boot_b"
 #define FASTBOOT_PARTITION_SYSTEM_B "system_b"
 #define FASTBOOT_PARTITION_MISC "misc"
+
+#define FASTBOOT_PARTITION_BOOT_FS		"emmc"
+#define FASTBOOT_PARTITION_RECOVERY_FS		"emmc"
+#define FASTBOOT_PARTITION_SYSTEM_FS		"ext4"
+#define FASTBOOT_PARTITION_BOOTLOADER_FS 	"emmc"
+#define FASTBOOT_PARTITION_DATA_FS 		"ext4"
+#define FASTBOOT_PARTITION_MISC_FS 		"emmc"
+
 #else
 #define FASTBOOT_PARTITION_BOOT "boot"
 #define FASTBOOT_PARTITION_RECOVERY "recovery"
 #define FASTBOOT_PARTITION_SYSTEM "system"
 #define FASTBOOT_PARTITION_BOOTLOADER "bootloader"
 #define FASTBOOT_PARTITION_DATA "data"
+
+#define FASTBOOT_PARTITION_BOOT_FS		"emmc"
+#define FASTBOOT_PARTITION_RECOVERY_FS		"emmc"
+#define FASTBOOT_PARTITION_SYSTEM_FS		"ext4"
+#define FASTBOOT_PARTITION_BOOTLOADER_FS 	"emmc"
+#define FASTBOOT_PARTITION_DATA_FS 		"ext4"
+#define FASTBOOT_PARTITION_MISC_FS 		"emmc"
+
 #endif
 
 enum {
@@ -131,6 +147,8 @@ struct fastboot_ptentry {
 	unsigned int partition_id;
 	/* partition number in block device */
 	unsigned int partition_index;
+	/* partition file system type in string */
+	char fstype[16];
 };
 
 struct fastboot_device_info {

@@ -1130,11 +1130,13 @@ static int _fastboot_parts_add_ptable_entry(int ptable_index,
 				      int mmc_dos_partition_index,
 				      int mmc_partition_index,
 				      const char *name,
+				      const char *fstype,
 				      block_dev_desc_t *dev_desc,
 				      struct fastboot_ptentry *ptable)
 {
 	disk_partition_t info;
 	strcpy(ptable[ptable_index].name, name);
+	strcpy(ptable[ptable_index].fstype, fstype);
 
 	if (get_partition_info(dev_desc,
 			       mmc_dos_partition_index, &info)) {
@@ -1230,66 +1232,77 @@ static int _fastboot_parts_load_from_ptable(void)
 					 CONFIG_ANDROID_BOOT_PARTITION_MMC,
 					 user_partition,
 					 FASTBOOT_PARTITION_BOOT_A,
+					 FASTBOOT_PARTITION_BOOT_FS,
 					 dev_desc, ptable);
 
 	_fastboot_parts_add_ptable_entry(PTN_RECOVERY_INDEX,
 					 CONFIG_ANDROID_RECOVERY_PARTITION_MMC,
 					 user_partition,
 					 FASTBOOT_PARTITION_RECOVERY,
+					 FASTBOOT_PARTITION_RECOVERY_FS,
 					 dev_desc, ptable);
 
 	_fastboot_parts_add_ptable_entry(PTN_SYSTEM_INDEX,
 					 CONFIG_ANDROID_SYSTEM_PARTITION_MMC,
 					 user_partition,
 					 FASTBOOT_PARTITION_SYSTEM_A,
+					 FASTBOOT_PARTITION_SYSTEM_FS,
 					 dev_desc, ptable);
 
 	_fastboot_parts_add_ptable_entry(PTN_DATA_INDEX,
 					 CONFIG_ANDROID_DATA_PARTITION_MMC,
 					 user_partition,
 					 FASTBOOT_PARTITION_DATA,
+					 FASTBOOT_PARTITION_DATA_FS,
 					 dev_desc, ptable);
 
 	 _fastboot_parts_add_ptable_entry(PTN_KERNEL_B_INDEX,
 					  CONFIG_ANDROID_BOOT_B_PARTITION_MMC,
 					  user_partition,
 					  FASTBOOT_PARTITION_BOOT_B,
+					 FASTBOOT_PARTITION_BOOT_FS,
 					  dev_desc, ptable);
 
 	_fastboot_parts_add_ptable_entry(PTN_SYSTEM_B_INDEX,
 					 CONFIG_ANDROID_SYSTEM_B_PARTITION_MMC,
 					 user_partition,
 					 FASTBOOT_PARTITION_SYSTEM_B,
+					 FASTBOOT_PARTITION_SYSTEM_FS,
 					 dev_desc, ptable);
 
 	_fastboot_parts_add_ptable_entry(PTN_MISC_INDEX,
 					 CONFIG_ANDROID_MISC_PARTITION_MMC,
 					 user_partition,
 					 FASTBOOT_PARTITION_MISC,
+					 FASTBOOT_PARTITION_MISC_FS,
 					 dev_desc, ptable);
 #else
 	_fastboot_parts_add_ptable_entry(PTN_KERNEL_INDEX,
 					 CONFIG_ANDROID_BOOT_PARTITION_MMC,
 					 user_partition,
 					 FASTBOOT_PARTITION_BOOT,
+					 FASTBOOT_PARTITION_BOOT_FS,
 					 dev_desc, ptable);
 
 	_fastboot_parts_add_ptable_entry(PTN_RECOVERY_INDEX,
 					 CONFIG_ANDROID_RECOVERY_PARTITION_MMC,
 					 user_partition,
 					 FASTBOOT_PARTITION_RECOVERY,
+					 FASTBOOT_PARTITION_RECOVERY_FS,
 					 dev_desc, ptable);
 
 	_fastboot_parts_add_ptable_entry(PTN_SYSTEM_INDEX,
 					 CONFIG_ANDROID_SYSTEM_PARTITION_MMC,
 					 user_partition,
 					 FASTBOOT_PARTITION_SYSTEM,
+					 FASTBOOT_PARTITION_SYSTEM_FS,
 					 dev_desc, ptable);
 
 	_fastboot_parts_add_ptable_entry(PTN_DATA_INDEX,
 					 CONFIG_ANDROID_DATA_PARTITION_MMC,
 					 user_partition,
 					 FASTBOOT_PARTITION_DATA,
+					 FASTBOOT_PARTITION_DATA_FS,
 					 dev_desc, ptable);
 #endif
 
@@ -2162,6 +2175,20 @@ static int strcmp_l1(const char *s1, const char *s2)
 	return strncmp(s1, s2, strlen(s1));
 }
 
+static int get_block_size() {
+	int mmc_no = 0;
+	block_dev_desc_t *dev_desc;
+	mmc_no = fastboot_devinfo.dev_id;
+
+	dev_desc = get_dev("mmc", mmc_no);
+	if (NULL == dev_desc) {
+		printf("** Block device MMC %d not supported\n",
+			mmc_no);
+		return 0;
+	}
+	return dev_desc->blksz;
+}
+
 static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 {
 	char *cmd = req->buf;
@@ -2186,10 +2213,51 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		return;
 	}
 #endif
-	if (!strcmp_l1("version", cmd)) {
+	char *str;
+	if (str = strstr(cmd, "partition-size:")) {
+		str+=strlen("partition-size:");
+		struct fastboot_ptentry* fb_part;
+		fb_part = fastboot_flash_find_ptn(str);
+		if (!fb_part)
+			strcpy(response, "FAILWrong partition name.");
+		else {
+			char var[32] = {0};
+			sprintf(var, "OKAY0x%016x", fb_part->length * get_block_size());
+			strcpy(response, var);
+		}
+	} else if (str = strstr(cmd, "partition-type:")) {
+		str+=strlen("partition-type:");
+		struct fastboot_ptentry* fb_part;
+		fb_part = fastboot_flash_find_ptn(str);
+		if (!fb_part)
+			strcpy(response, "FAILWrong partition name.");
+		else {
+			char var[32] = {0};
+			sprintf(var, "OKAY%s", fb_part->fstype);
+			strcpy(response, var);
+		}
+	} else if (!strcmp_l1("all", cmd)) {
+		strcpy(response, "OKAY");
+	} else if (!strcmp_l1("version-baseband", cmd)) {
+		strcpy(response, "OKAYN/A");
+	} else if (!strcmp_l1("version-bootloader", cmd)) {
+		char var[512] = {0};
+		sprintf(var, "OKAY%s", U_BOOT_VERSION);
+		strcpy(response, var);
+	} else if (!strcmp_l1("version", cmd)) {
 		strncat(response, FASTBOOT_VERSION, chars_left);
+	} else if (!strcmp_l1("battery-voltage", cmd)) {
+		strcpy(response, "OKAY0mV");
+	} else if (!strcmp_l1("battery-soc-ok", cmd)) {
+		strcpy(response, "OKAYyes");
+	} else if (!strcmp_l1("variant", cmd)) {
+		strcpy(response, "OKAY");
+	} else if (!strcmp_l1("off-mode-charge", cmd)) {
+		strcpy(response, "OKAY1");
 	} else if (!strcmp_l1("bootloader-version", cmd)) {
-		strncat(response, U_BOOT_VERSION, chars_left);
+		char var[512] = {0};
+		sprintf(var, "OKAY%s", U_BOOT_VERSION);
+		strcpy(response, var);
 	} else if (!strcmp_l1("downloadsize", cmd) ||
 		!strcmp_l1("max-download-size", cmd)) {
 		char str_num[12];
