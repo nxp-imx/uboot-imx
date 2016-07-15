@@ -1142,6 +1142,48 @@ struct usbphy_regs {
 	u32 usb1_pfda_ctrl1_tog;	/* 0x14c */
 };
 
+struct lpuart_fsl {
+	u32 verid;
+	u32 param;
+	u32 global;
+	u32 pincfg;
+	u32 baud;
+	u32 stat;
+	u32 ctrl;
+	u32 data;
+	u32 match;
+	u32 modir;
+	u32 fifo;
+	u32 water;
+};
+
+#define LPUART_BAUD_SBR_MASK                     (0x1FFFU)
+#define LPUART_BAUD_SBR_SHIFT                    (0U)
+#define LPUART_BAUD_SBR(x)                       (((uint32_t)(((uint32_t)(x)) << LPUART_BAUD_SBR_SHIFT)) & LPUART_BAUD_SBR_MASK)
+#define LPUART_BAUD_SBNS_MASK                    (0x2000U)
+#define LPUART_BAUD_SBNS_SHIFT                   (13U)
+#define LPUART_BAUD_SBNS(x)                      (((uint32_t)(((uint32_t)(x)) << LPUART_BAUD_SBNS_SHIFT)) & LPUART_BAUD_SBNS_MASK)
+#define LPUART_BAUD_BOTHEDGE_MASK                (0x20000U)
+#define LPUART_BAUD_BOTHEDGE_SHIFT               (17U)
+#define LPUART_BAUD_BOTHEDGE(x)                  (((uint32_t)(((uint32_t)(x)) << LPUART_BAUD_BOTHEDGE_SHIFT)) & LPUART_BAUD_BOTHEDGE_MASK)
+#define LPUART_BAUD_OSR_MASK                     (0x1F000000U)
+#define LPUART_BAUD_OSR_SHIFT                    (24U)
+#define LPUART_BAUD_OSR(x)                       (((uint32_t)(((uint32_t)(x)) << LPUART_BAUD_OSR_SHIFT)) & LPUART_BAUD_OSR_MASK)
+#define LPUART_BAUD_M10_MASK                     (0x20000000U)
+#define LPUART_BAUD_M10_SHIFT                    (29U)
+#define LPUART_BAUD_M10(x)                       (((uint32_t)(((uint32_t)(x)) << LPUART_BAUD_M10_SHIFT)) & LPUART_BAUD_M10_MASK)
+
+/*! @name CTRL - LPUART Control Register */
+#define LPUART_CTRL_PT_MASK                      (0x1U)
+#define LPUART_CTRL_PT_SHIFT                     (0U)
+#define LPUART_CTRL_PT(x)                        (((uint32_t)(((uint32_t)(x)) << LPUART_CTRL_PT_SHIFT)) & LPUART_CTRL_PT_MASK)
+#define LPUART_CTRL_PE_MASK                      (0x2U)
+#define LPUART_CTRL_PE_SHIFT                     (1U)
+#define LPUART_CTRL_PE(x)                        (((uint32_t)(((uint32_t)(x)) << LPUART_CTRL_PE_SHIFT)) & LPUART_CTRL_PE_MASK)
+#define LPUART_CTRL_M_MASK                       (0x10U)
+#define LPUART_CTRL_M_SHIFT                      (4U)
+#define LPUART_CTRL_M(x)                         (((uint32_t)(((uint32_t)(x)) << LPUART_CTRL_M_SHIFT)) & LPUART_CTRL_M_MASK)
+
 
 #define	is_boot_from_usb(void) (!(readl(USB_PHY0_BASE_ADDR) & (1<<20)))
 #define	disconnect_from_pc(void) writel(0x0, USBOTG0_RBASE + 0x140)
