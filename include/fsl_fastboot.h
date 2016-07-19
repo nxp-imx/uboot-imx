@@ -38,7 +38,7 @@
 #define FASTBOOT_PARTITION_RECOVERY "recovery"
 #define FASTBOOT_PARTITION_SYSTEM_A "system_a"
 #define FASTBOOT_PARTITION_BOOTLOADER "bootloader"
-#define FASTBOOT_PARTITION_DATA "data"
+#define FASTBOOT_PARTITION_DATA "userdata"
 #define FASTBOOT_PARTITION_BOOT_B "boot_b"
 #define FASTBOOT_PARTITION_SYSTEM_B "system_b"
 #define FASTBOOT_PARTITION_MISC "misc"

@@ -2174,9 +2174,10 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 			strcpy(response, "FAILValue not set");
 	} else if (!strcmp_l1("partition-type", cmd)) {
 		strcpy(response, "FAILVariable not implemented");
+	} else if (!strcmp_l1("product", cmd)) {
+		strncat(response, "Freescale i.MX", chars_left);
 	} else {
 		error("unknown variable: %s\n", cmd);
-		strcpy(response, "FAILVariable not implemented");
 	}
 	fastboot_tx_write_str(response);
 }
