@@ -1023,6 +1023,7 @@ static int rx_process_erase(const char *cmdbuf, char *response)
 	return 0;
 #else
 	printf("Not support erase command for EMMC\n");
+	sprintf(response, "OKAY");
 	return -1;
 #endif
 
@@ -2532,6 +2533,7 @@ int do_fastboot_unlock() {
 
 		printf("Start /data wipe process....\n");
 		fastboot_wipe_data_partition();
+		printf("Wipe /data completed.\n");
 
 	} else {
 		printf("It is not able to unlock device.");
@@ -2543,6 +2545,7 @@ int do_fastboot_unlock() {
 
 int do_fastboot_lock() {
 	int status;
+	status = fastboot_get_lock_stat();
 	if (status == FASTBOOT_LOCK) {
 		printf("The device is already locked\n");
 		return 1;
@@ -2553,6 +2556,7 @@ int do_fastboot_lock() {
 
 	printf("Start /data wipe process....\n");
 	fastboot_wipe_data_partition();
+	printf("Wipe /data completed.\n");
 
 	return status;
 
