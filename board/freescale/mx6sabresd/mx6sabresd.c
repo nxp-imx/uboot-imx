@@ -803,7 +803,7 @@ int overwrite_console(void)
 	return 1;
 }
 
-int board_eth_init(bd_t *bis)
+static void setup_fec(void)
 {
 	if (is_mx6dqp()) {
 		int ret;
@@ -814,7 +814,10 @@ int board_eth_init(bd_t *bis)
 		if (ret)
 		    printf("Error fec anatop clock settings!\n");
 	}
+}
 
+int board_eth_init(bd_t *bis)
+{
 	setup_iomux_enet();
 	setup_pcie();
 
@@ -914,6 +917,10 @@ int board_init(void)
 
 #ifdef CONFIG_CMD_SATA
 	setup_sata();
+#endif
+
+#ifdef CONFIG_FEC_MXC
+	setup_fec();
 #endif
 
 	return 0;
