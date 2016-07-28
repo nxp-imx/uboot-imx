@@ -463,13 +463,11 @@ static void setup_fec(void)
 	ret = enable_fec_anatop_clock(0, ENET_125MHZ);
 	if (ret)
 		printf("Error fec anatop clock settings!\n");
-
-	setup_iomux_enet();
 }
 
 int board_eth_init(bd_t *bis)
 {
-	setup_fec();
+	setup_iomux_enet();
 
 	return cpu_eth_init(bis);
 }
@@ -715,6 +713,11 @@ int board_init(void)
 #ifdef CONFIG_MTD_NOR_FLASH
 	setup_iomux_eimnor();
 #endif
+
+#ifdef CONFIG_FEC_MXC
+	setup_fec();
+#endif
+
 	return 0;
 }
 
