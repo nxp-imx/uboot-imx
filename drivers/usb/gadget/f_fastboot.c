@@ -2244,7 +2244,7 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		if (s)
 			strncat(response, s, chars_left);
 		else
-		    strcpy(response, "FAILValue not set");
+			strcpy(response, "FAILValue not set");
 	} else if (!strcmp_l1("product", cmd)) {
 		strncat(response, "Freescale i.MX", chars_left);
 	}
@@ -2254,9 +2254,9 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 	} else if (!strcmp_l1("unlocked",cmd)) {
 		int status = fastboot_get_lock_stat();
 		if (status == FASTBOOT_UNLOCK) {
-		strncat(response, FASTBOOT_VAR_YES, chars_left);
+			strncat(response, FASTBOOT_VAR_YES, chars_left);
 		} else {
-		strncat(response, FASTBOOT_VAR_NO, chars_left);
+			strncat(response, FASTBOOT_VAR_NO, chars_left);
 		}
 	}
 #endif
@@ -2444,12 +2444,12 @@ static void cb_continue(struct usb_ep *ep, struct usb_request *req)
 int do_lock_status(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	int status = fastboot_get_lock_stat();
 	if (status != FASTBOOT_LOCK_ERROR) {
-	if (status == FASTBOOT_LOCK)
-		printf("fastboot lock status: locked.\n");
-	else
-		printf("fastboot lock status: unlocked.\n");
+		if (status == FASTBOOT_LOCK)
+			printf("fastboot lock status: locked.\n");
+		else
+			printf("fastboot lock status: unlocked.\n");
 	} else
-	printf("fastboot lock status error!\n");
+		printf("fastboot lock status error!\n");
 
 	display_lock(status, -1);
 
@@ -2484,8 +2484,8 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 		status = do_fastboot_lock();
 		if (status >= 0)
 			strcpy(response, "OKAY");
-	else
-		strcpy(response, "FAIL lock device failed.");
+		else
+			strcpy(response, "FAIL lock device failed.");
 	} else {
 		printf("Unknown flashing command:%s\n", cmd);
 		strcpy(response, "FAIL command not defined");
@@ -2499,12 +2499,12 @@ int do_fastboot_unlock() {
 		printf("It is able to unlock device. %d\n",fastboot_lock_enable());
 		status = fastboot_get_lock_stat();
 		if (status == FASTBOOT_UNLOCK) {
-		    	printf("The device is already unlocked\n");
+			printf("The device is already unlocked\n");
 			return 1;
 		}
 		status = fastboot_set_lock_stat(FASTBOOT_UNLOCK);
 		if (status < 0)
-		return status;
+			return status;
 
 		printf("Start /data wipe process....\n");
 		fastboot_wipe_data_partition();

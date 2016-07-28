@@ -66,8 +66,8 @@ int sha1sum(unsigned char* data, int len, unsigned char* output) {
 	struct hash_algo *algo;
 	void *buf;
 	if (hash_lookup_algo("sha1", &algo)) {
-	printf("error in lookup sha1 algo!\n");
-	return -1;
+		printf("error in lookup sha1 algo!\n");
+		return -1;
 	}
 	buf = map_sysmem(data, len);
 	algo->hash_func_ws(buf, len, output, algo->chunk_size);
@@ -90,36 +90,36 @@ unsigned char decrypt_lock_store(unsigned char *bdata) {
 	caam_open();
 	ret = caam_decap_blob((uint32_t)plain_data, bdata + ENDATA_LEN, ENDATA_LEN);
 	if (ret != 0) {
-	    printf("Error during blob decap operation: 0x%x\n",ret);
-	    return FASTBOOT_LOCK_ERROR;
+		printf("Error during blob decap operation: 0x%x\n",ret);
+		return FASTBOOT_LOCK_ERROR;
 	}
 #ifdef FASTBOOT_LOCK_DEBUG
 	DEBUG("Decrypt data block are:\n \t=======\t\n");
 	for (p = 0; p < ENDATA_LEN; p++) {
 		DEBUG("0x%2x  ", *(bdata + p));
 		if (p % 16 == 0)
-		DEBUG("\n");
+			DEBUG("\n");
 	}
 	DEBUG("\n \t========\t\n");
 	for (p = ENDATA_LEN; p < (ENDATA_LEN + ENDATA_LEN + 48 ); p++) {
 		DEBUG("0x%2x  ", *(bdata + p));
 		if (p % 16 == 0)
-		DEBUG("\n");
+			DEBUG("\n");
 	}
 
 	DEBUG("\n plain text are:\n");
 	for (p = 0; p < ENDATA_LEN; p++) {
 		DEBUG("0x%2x  ", plain_data[p]);
 		if (p % 16 == 0)
-		DEBUG("\n");
+			DEBUG("\n");
 	}
 	DEBUG("\n");
 #endif
 
 	for (p = 0; p < ENDATA_LEN-1; p++) {
 		if (*(bdata+p) != plain_data[p]) {
-		DEBUG("Verify salt in decrypt error on pointer %d\n", p);
-		return FASTBOOT_LOCK_ERROR;
+			DEBUG("Verify salt in decrypt error on pointer %d\n", p);
+			return FASTBOOT_LOCK_ERROR;
 		}
 	}
 
@@ -135,7 +135,7 @@ int encrypt_lock_store(unsigned char lock, unsigned char* bdata) {
 
     //salt_len cannot be longer than endata block size.
 	if (salt_len >= ENDATA_LEN)
-	salt_len = ENDATA_LEN - 1;
+		salt_len = ENDATA_LEN - 1;
 
 	p = ENDATA_LEN - 1;
 
@@ -156,13 +156,13 @@ int encrypt_lock_store(unsigned char lock, unsigned char* bdata) {
 	for (i = 0; i < ENDATA_LEN; i++) {
 		DEBUG("0x%2x\t", *(bdata+i));
 		if (i % 16 == 0)
-		printf("\n");
+			printf("\n");
 	}
 	printf("\nto:\n");
 	for (i=0; i < ENDATA_LEN + 48; i++) {
 		DEBUG("0x%2x\t", *(bdata + ENDATA_LEN + i));
 		if (i % 16 == 0)
-		printf("\n");
+			printf("\n");
 	}
 	printf("\n");
 
@@ -206,7 +206,7 @@ int fastboot_set_lock_stat(unsigned char lock) {
 	status = get_device_and_partition(FSL_FASTBOOT_FB_DEV,
 		get_mmc_part(FSL_FASTBOOT_FB_PART_NUM),
 		&fs_dev_desc, &fs_partition, 1);
-	if (!status) {
+	if (status < 0) {
 		printf("%s:error in getdevice partition.\n", __FUNCTION__);
 		return -1;
 	}
@@ -240,7 +240,7 @@ unsigned char fastboot_get_lock_stat() {
 		get_mmc_part(FSL_FASTBOOT_FB_PART_NUM),
 		&fs_dev_desc, &fs_partition, 1);
 
-	if (!status) {
+	if (status < 0) {
 		printf("%s:error in getdevice partition.\n", __FUNCTION__);
 		return FASTBOOT_LOCK_ERROR;
 	}
@@ -278,7 +278,7 @@ unsigned char fastboot_lock_enable() {
 	status = get_device_and_partition(FSL_FASTBOOT_FB_DEV,
 		get_mmc_part(FSL_FASTBOOT_PR_DATA_PART_NUM),
 		&fs_dev_desc, &fs_partition, 1);
-	if (!status) {
+	if (status < 0) {
 		printf("%s:error in getdevice partition.\n", __FUNCTION__);
 		return FASTBOOT_UL_ERROR;
 	}
@@ -308,31 +308,30 @@ int display_lock(int lock, int verify) {
 	struct stdio_dev *disp;
 	disp = stdio_get_by_name("vga");
 	if (disp != NULL) {
-	if (lock == FASTBOOT_UNLOCK) {
-		disp->puts(disp, "\n============= NOTICE ============\n");
-		disp->puts(disp,   "|                               |\n");
-		disp->puts(disp,   "|   Your device is NOT locked.  |\n");
-		disp->puts(disp,   "|                               |\n");
-		disp->puts(disp,   "=================================\n");
-	} else {
-		if (verify == -1) {
-		disp->puts(disp, "\n============= NOTICE ============\n");
-		disp->puts(disp,   "|                               |\n");
-		disp->puts(disp,   "| Your device is NOT protected. |\n");
-		disp->puts(disp,   "|                               |\n");
-		disp->puts(disp,   "=================================\n");
-		} else if (verify == 1) {
-		disp->puts(disp, "\n============= NOTICE ============\n");
-		disp->puts(disp,   "|                               |\n");
-		disp->puts(disp,   "|       Boot verify failed!     |\n");
-		disp->puts(disp,   "|                               |\n");
-		disp->puts(disp,   "=================================\n");
+		if (lock == FASTBOOT_UNLOCK) {
+			disp->puts(disp, "\n============= NOTICE ============\n");
+			disp->puts(disp,   "|                               |\n");
+			disp->puts(disp,   "|   Your device is NOT locked.  |\n");
+			disp->puts(disp,   "|                               |\n");
+			disp->puts(disp,   "=================================\n");
+		} else {
+			if (verify == -1) {
+				disp->puts(disp, "\n============= NOTICE ============\n");
+				disp->puts(disp,   "|                               |\n");
+				disp->puts(disp,   "| Your device is NOT protected. |\n");
+				disp->puts(disp,   "|                               |\n");
+				disp->puts(disp,   "=================================\n");
+			} else if (verify == 1) {
+				disp->puts(disp, "\n============= NOTICE ============\n");
+				disp->puts(disp,   "|                               |\n");
+				disp->puts(disp,   "|       Boot verify failed!     |\n");
+				disp->puts(disp,   "|                               |\n");
+				disp->puts(disp,   "=================================\n");
+			}
 		}
-	}
-	return 0;
-	}
-	else
-	printf("not found VGA disp console.\n");
+		return 0;
+	} else
+		printf("not found VGA disp console.\n");
 
 	return -1;
 
@@ -344,7 +343,7 @@ int fastboot_wipe_data_partition() {
 	int status;
 	status = get_device_and_partition(FSL_FASTBOOT_FB_DEV,
 		get_mmc_part(FSL_FASTBOOT_DATA_PART_NUM), &fs_dev_desc, &fs_partition, 1);
-	if (!status) {
+	if (status < 0) {
 		printf("error in get device partition for wipe /data\n");
 		return -1;
 	}
