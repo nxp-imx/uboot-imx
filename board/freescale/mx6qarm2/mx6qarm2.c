@@ -16,12 +16,20 @@
 #include <asm/imx-common/video.h>
 #include <asm/imx-common/mxc_i2c.h>
 #include <asm/imx-common/iomux-v3.h>
+#include <asm/imx-common/boot_mode.h>
 #include <mmc.h>
 #include <fsl_esdhc.h>
 #include <miiphy.h>
 #include <netdev.h>
 #include <usb.h>
 #include <i2c.h>
+
+#ifdef CONFIG_FSL_FASTBOOT
+#include <fsl_fastboot.h>
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif
+#endif /*CONFIG_FSL_FASTBOOT*/
 
 #ifdef CONFIG_MAX7310_IOEXP
 #include <gpio_exp.h>
@@ -589,4 +597,29 @@ void ldo_mode_set(int ldo_bypass)
 {
 	return;
 }
+#endif
+
+#ifdef CONFIG_FSL_FASTBOOT
+void board_fastboot_setup(void)
+{
+	if (!getenv("fastboot_dev"))
+		setenv("fastboot_dev", "mmc0");
+	if (!getenv("bootcmd"))
+		setenv("bootcmd", "boota mmc0");
+}
+
+#ifdef CONFIG_ANDROID_RECOVERY
+int check_recovery_cmd_file(void) {
+	return 0;
+}
+
+void board_recovery_setup(void)
+{
+	if (!getenv("bootcmd_android_recovery"))
+		setenv("bootcmd_android_recovery", "boota mmc0 recovery");
+
+	printf("setup env for recovery..\n");
+	setenv("bootcmd", "run bootcmd_android_recovery");
+}
+#endif
 #endif
