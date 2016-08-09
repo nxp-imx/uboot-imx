@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6SL EVK board.
  *
@@ -246,7 +246,7 @@
 #define CONFIG_ENV_SPI_MODE             CONFIG_SF_DEFAULT_MODE
 #define CONFIG_ENV_SPI_MAX_HZ           CONFIG_SF_DEFAULT_SPEED
 #else
-#define CONFIG_ENV_OFFSET		(8 * SZ_64K)
+#define CONFIG_ENV_OFFSET		(12 * SZ_64K)
 #define CONFIG_ENV_IS_IN_MMC
 #endif
 

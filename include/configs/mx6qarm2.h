@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6Q Armadillo2 board.
  *
@@ -216,7 +216,7 @@
 /* FLASH and environment organization */
 #define CONFIG_SYS_NO_FLASH
 
-#define CONFIG_ENV_OFFSET		(8 * 64 * 1024)
+#define CONFIG_ENV_OFFSET		(12 * SZ_64K)
 #define CONFIG_ENV_SIZE			(8 * 1024)
 #define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		1
