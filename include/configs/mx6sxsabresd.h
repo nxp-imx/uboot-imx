@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 Freescale Semiconductor, Inc.
+ * Copyright 2014-2016 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6SX Sabresd board.
  *
@@ -331,7 +331,7 @@
 #define CONFIG_MMCROOT			"/dev/mmcblk3p2"  /* USDHC4 */
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
-#define CONFIG_ENV_OFFSET		(8 * SZ_64K)
+#define CONFIG_ENV_OFFSET		(12 * SZ_64K)
 #elif defined(CONFIG_ENV_IS_IN_SPI_FLASH)
 #define CONFIG_ENV_OFFSET		(768 * 1024)
 #define CONFIG_ENV_SECT_SIZE		(64 * 1024)
