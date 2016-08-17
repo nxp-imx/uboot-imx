@@ -173,9 +173,9 @@
 	str r1, [r0, #0x830]
 	ldr r1, =0x20000000
 	str r1, [r0, #0x83C]
-	ldr r1, =0x40403238
+	ldr r1, =0x40403439
 	str r1, [r0, #0x848]
-	ldr r1, =0x4040322C
+	ldr r1, =0x4040342D
 	str r1, [r0, #0x850]
 	ldr r1, =0x00921012
 	str r1, [r0, #0x8C0]
