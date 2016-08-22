@@ -82,6 +82,6 @@ void vadc_power_down(void);
 
 void pcie_power_up(void);
 void pcie_power_off(void);
-int arch_auxiliary_core_up(u32 core_id, u32 boot_private_data);
+int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data);
 int arch_auxiliary_core_check_up(u32 core_id);
 #endif

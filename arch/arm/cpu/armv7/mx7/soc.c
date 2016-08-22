@@ -345,7 +345,7 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 #endif
 
 #ifdef CONFIG_IMX_BOOTAUX
-int arch_auxiliary_core_up(u32 core_id, u32 boot_private_data)
+int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 {
 	u32 stack, pc;
 	struct src *src_reg = (struct src *)SRC_BASE_ADDR;

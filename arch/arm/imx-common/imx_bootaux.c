@@ -8,13 +8,13 @@
 #include <command.h>
 
 /* Allow for arch specific config before we boot */
-static int __arch_auxiliary_core_up(u32 core_id, u32 boot_private_data)
+static int __arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 {
 	/* please define platform specific arch_auxiliary_core_up() */
 	return CMD_RET_FAILURE;
 }
 
-int arch_auxiliary_core_up(u32 core_id, u32 boot_private_data)
+int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 	__attribute__((weak, alias("__arch_auxiliary_core_up")));
 
 /* Allow for arch specific config before we boot */
@@ -44,11 +44,15 @@ int do_bootaux(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong addr;
 	int ret, up;
+	u32 core = 0;
 
 	if (argc < 2)
 		return CMD_RET_USAGE;
 
-	up = arch_auxiliary_core_check_up(0);
+	if (argc > 2)
+		core = simple_strtoul(argv[2], NULL, 10);
+
+	up = arch_auxiliary_core_check_up(core);
 	if (up) {
 		printf("## Auxiliary core is already up\n");
 		return CMD_RET_SUCCESS;
@@ -58,7 +62,7 @@ int do_bootaux(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	printf("## Starting auxiliary core at 0x%08lX ...\n", addr);
 
-	ret = arch_auxiliary_core_up(0, addr);
+	ret = arch_auxiliary_core_up(core, addr);
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -68,5 +72,7 @@ int do_bootaux(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 U_BOOT_CMD(
 	bootaux, CONFIG_SYS_MAXARGS, 1,	do_bootaux,
 	"Start auxiliary core",
-	""
+	"<address> [<core>]\n"
+	"   - start auxiliary core [<core>] (default 0),\n"
+	"     at address <address>\n"
 );
