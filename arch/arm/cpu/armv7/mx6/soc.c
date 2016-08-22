@@ -899,7 +899,7 @@ void imx_setup_hdmi(void)
 #endif
 
 #ifdef CONFIG_IMX_BOOTAUX
-int arch_auxiliary_core_up(u32 core_id, u32 boot_private_data)
+int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 {
 	struct src *src_reg;
 	u32 stack, pc;
