@@ -152,6 +152,12 @@ static struct usb_gadget_strings *fastboot_strings[] = {
 
 #ifdef CONFIG_FSL_FASTBOOT
 
+
+#ifdef CONFIG_EFI_PARTITION
+#define ANDROID_GPT_OFFSET	    0
+#define ANDROID_GPT_SIZE	    0x10000
+#endif
+
 #define ANDROID_MBR_OFFSET	    0
 #define ANDROID_MBR_SIZE	    0x200
 #define ANDROID_BOOTLOADER_OFFSET   0x400
@@ -170,6 +176,28 @@ static struct usb_gadget_strings *fastboot_strings[] = {
 
 
 /*pentry index internally*/
+#ifdef CONFIG_BRILLO_SUPPORT
+
+enum {
+#ifdef CONFIG_EFI_PARTITION
+	PTN_GPT_INDEX = 0,
+#endif
+	PTN_MBR_INDEX = 0,
+	PTN_BOOTLOADER_INDEX,
+	PTN_BOOT_A_INDEX,
+	PTN_BOOT_B_INDEX,
+	PTN_SYSTEM_A_INDEX,
+	PTN_SYSTEM_B_INDEX,
+	PTN_ODM_A_INDEX,
+	PTN_ODM_B_INDEX,
+	PTN_MISC_INDEX,
+	PTN_DATA_INDEX,
+	PTN_FBMISC_INDEX,
+	PTN_NUM
+};
+
+#else
+
 enum {
 	PTN_MBR_INDEX = 0,
 	PTN_BOOTLOADER_INDEX,
@@ -178,13 +206,10 @@ enum {
 	PTN_SYSTEM_INDEX,
 	PTN_RECOVERY_INDEX,
 	PTN_DATA_INDEX,
-#ifdef CONFIG_BRILLO_SUPPORT
-	PTN_KERNEL_B_INDEX,
-	PTN_SYSTEM_B_INDEX,
-	PTN_MISC_INDEX,
-#endif
 	PTN_NUM
 };
+
+#endif
 
 static unsigned int download_bytes_unpadded;
 
@@ -1137,20 +1162,32 @@ static int _fastboot_parts_add_ptable_entry(int ptable_index,
 				      struct fastboot_ptentry *ptable)
 {
 	disk_partition_t info;
-	strcpy(ptable[ptable_index].name, name);
-	strcpy(ptable[ptable_index].fstype, fstype);
 
 	if (get_partition_info(dev_desc,
 			       mmc_dos_partition_index, &info)) {
-		printf("Bad partition index:%d for partition:%s\n",
-		       mmc_dos_partition_index, name);
+		printf("%s, Bad partition index:%d for partition:%s\n",
+		       __func__, mmc_dos_partition_index, name);
 		return -1;
-	} else {
-		ptable[ptable_index].start = info.start;
-		ptable[ptable_index].length = info.size;
-		ptable[ptable_index].partition_id = mmc_partition_index;
-		ptable[ptable_index].partition_index = mmc_dos_partition_index;
 	}
+
+	ptable[ptable_index].start = info.start;
+	ptable[ptable_index].length = info.size;
+	ptable[ptable_index].partition_id = mmc_partition_index;
+	ptable[ptable_index].partition_index = mmc_dos_partition_index;
+
+#ifdef CONFIG_EFI_PARTITION
+	strcpy(ptable[ptable_index].name, (const char *)info.name);
+	strcpy(ptable[ptable_index].fstype, (const char *)info.type);
+#else
+	strcpy(ptable[ptable_index].name, name);
+	if (!strcmp(name, "userdata") || !strcmp(name, "system_a") ||
+	    !strcmp(name, "system_b")) {
+		strcpy(ptable[ptable_index].fstype, "ext4");
+	} else {
+		strcpy(ptable[ptable_index].fstype, "emmc");
+	}
+#endif
+
 	return 0;
 }
 
@@ -1216,11 +1253,21 @@ static int _fastboot_parts_load_from_ptable(void)
 
 	memset((char *)ptable, 0,
 		    sizeof(struct fastboot_ptentry) * (PTN_NUM));
+
+#ifdef CONFIG_EFI_PARTITION
+	/* GPT */
+	strcpy(ptable[PTN_GPT_INDEX].name, "gpt");
+	ptable[PTN_GPT_INDEX].start = ANDROID_GPT_OFFSET / dev_desc->blksz;
+	ptable[PTN_GPT_INDEX].length = ANDROID_GPT_SIZE / dev_desc->blksz;
+	ptable[PTN_GPT_INDEX].partition_id = user_partition;
+#else
 	/* MBR */
 	strcpy(ptable[PTN_MBR_INDEX].name, "mbr");
 	ptable[PTN_MBR_INDEX].start = ANDROID_MBR_OFFSET / dev_desc->blksz;
 	ptable[PTN_MBR_INDEX].length = ANDROID_MBR_SIZE / dev_desc->blksz;
 	ptable[PTN_MBR_INDEX].partition_id = user_partition;
+#endif
+
 	/* Bootloader */
 	strcpy(ptable[PTN_BOOTLOADER_INDEX].name, FASTBOOT_PARTITION_BOOTLOADER);
 	ptable[PTN_BOOTLOADER_INDEX].start =
@@ -1230,40 +1277,47 @@ static int _fastboot_parts_load_from_ptable(void)
 	ptable[PTN_BOOTLOADER_INDEX].partition_id = boot_partition;
 
 #ifdef CONFIG_BRILLO_SUPPORT
-	_fastboot_parts_add_ptable_entry(PTN_KERNEL_INDEX,
+
+#ifdef CONFIG_EFI_PARTITION
+
+	int tbl_idx;
+	int part_idx = 1;
+	int ret;
+	for (tbl_idx = 2; tbl_idx < PTN_NUM; tbl_idx++) {
+		ret = _fastboot_parts_add_ptable_entry(tbl_idx,
+					 part_idx++,
+					 user_partition,
+					 NULL,
+					 NULL,
+					 dev_desc, ptable);
+
+		if (ret)
+			break;
+	}
+
+#else
+
+	_fastboot_parts_add_ptable_entry(PTN_BOOT_A_INDEX,
 					 CONFIG_ANDROID_BOOT_PARTITION_MMC,
 					 user_partition,
 					 FASTBOOT_PARTITION_BOOT_A,
 					 FASTBOOT_PARTITION_BOOT_FS,
 					 dev_desc, ptable);
 
-	_fastboot_parts_add_ptable_entry(PTN_RECOVERY_INDEX,
-					 CONFIG_ANDROID_RECOVERY_PARTITION_MMC,
+	_fastboot_parts_add_ptable_entry(PTN_BOOT_B_INDEX,
+					 CONFIG_ANDROID_BOOT_B_PARTITION_MMC,
 					 user_partition,
-					 FASTBOOT_PARTITION_RECOVERY,
-					 FASTBOOT_PARTITION_RECOVERY_FS,
+					 FASTBOOT_PARTITION_BOOT_B,
+					FASTBOOT_PARTITION_BOOT_FS,
 					 dev_desc, ptable);
 
-	_fastboot_parts_add_ptable_entry(PTN_SYSTEM_INDEX,
+
+	_fastboot_parts_add_ptable_entry(PTN_SYSTEM_A_INDEX,
 					 CONFIG_ANDROID_SYSTEM_PARTITION_MMC,
 					 user_partition,
 					 FASTBOOT_PARTITION_SYSTEM_A,
 					 FASTBOOT_PARTITION_SYSTEM_FS,
 					 dev_desc, ptable);
-
-	_fastboot_parts_add_ptable_entry(PTN_DATA_INDEX,
-					 CONFIG_ANDROID_DATA_PARTITION_MMC,
-					 user_partition,
-					 FASTBOOT_PARTITION_DATA,
-					 FASTBOOT_PARTITION_DATA_FS,
-					 dev_desc, ptable);
-
-	 _fastboot_parts_add_ptable_entry(PTN_KERNEL_B_INDEX,
-					  CONFIG_ANDROID_BOOT_B_PARTITION_MMC,
-					  user_partition,
-					  FASTBOOT_PARTITION_BOOT_B,
-					 FASTBOOT_PARTITION_BOOT_FS,
-					  dev_desc, ptable);
 
 	_fastboot_parts_add_ptable_entry(PTN_SYSTEM_B_INDEX,
 					 CONFIG_ANDROID_SYSTEM_B_PARTITION_MMC,
@@ -1278,7 +1332,17 @@ static int _fastboot_parts_load_from_ptable(void)
 					 FASTBOOT_PARTITION_MISC,
 					 FASTBOOT_PARTITION_MISC_FS,
 					 dev_desc, ptable);
-#else
+
+	_fastboot_parts_add_ptable_entry(PTN_DATA_INDEX,
+					 CONFIG_ANDROID_DATA_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_DATA,
+					 FASTBOOT_PARTITION_DATA_FS,
+					 dev_desc, ptable);
+
+#endif /* CONFIG_EFI_PARTITION */
+
+#else /* CONFIG_BRILLO_SUPPORT */
 	_fastboot_parts_add_ptable_entry(PTN_KERNEL_INDEX,
 					 CONFIG_ANDROID_BOOT_PARTITION_MMC,
 					 user_partition,

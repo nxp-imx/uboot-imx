@@ -66,6 +66,7 @@
 #define CONFIG_MMC
 #define CONFIG_CMD_MMC
 #define CONFIG_GENERIC_MMC
+#define CONFIG_EFI_PARTITION
 #define CONFIG_CMD_FAT
 #define CONFIG_DOS_PARTITION
 #define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
@@ -336,7 +337,7 @@
 #endif
 
 #define CONFIG_SYS_MMC_ENV_DEV		1   /* USDHC2 */
-#define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
+#define CONFIG_SYS_MMC_ENV_PART		1	/* boot0 area */
 #define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
 
 #define CONFIG_OF_LIBFDT
