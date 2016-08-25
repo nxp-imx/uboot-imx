@@ -386,5 +386,9 @@
 #include "mx6ul_14x14_evk_brillo.h"
 #endif
 
+#ifdef CONFIG_USB_FASTBOOT_BUF_SIZE
+#undef CONFIG_USB_FASTBOOT_BUF_SIZE
+#define CONFIG_USB_FASTBOOT_BUF_SIZE   0xc800000
+#endif
 
 #endif
