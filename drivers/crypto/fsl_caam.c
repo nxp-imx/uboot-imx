@@ -38,6 +38,7 @@
 /* Input job ring - single entry input ring */
 uint32_t g_input_ring[JOB_RING_ENTRIES] = {0};
 
+
 /* Output job ring - single entry output ring (consists of two words) */    
 uint32_t g_output_ring[2*JOB_RING_ENTRIES] = {0, 0};
 
@@ -85,6 +86,7 @@ static uint8_t skeymod[] = {
 	0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
 };
 
+
 /*!
  * Secure memory run command.
  *
@@ -102,69 +104,6 @@ uint32_t secmem_set_cmd_1(uint32_t sec_mem_cmd)
 	return temp_reg;
 }
 
-/*!
- * CAAM page allocation.
- *
- * @param   page  Number of the page to allocate.
- * @param   partition  Number of the partition to allocate.
- */
-static uint32_t caam_page_alloc(uint8_t page_num, uint8_t partition_num)
-{
-	uint32_t temp_reg;
-
-	/* 
-	 * De-Allocate partition_num if already allocated to ARM core
-	 */
-	if(__raw_readl(CAAM_SMPO_0) & PARTITION_OWNER(partition_num))
-	{
-		temp_reg = secmem_set_cmd_1(PARTITION(partition_num) | CMD_PART_DEALLOC);
-		if(temp_reg & SMCSJR_AERR)
-		{
-		printf("Error: De-allocation status 0x%X\n",temp_reg);
-		return ERROR_IN_PAGE_ALLOC;
-		}
-	}
-
-	/* set the access rights to allow full access */ 
-	__raw_writel(0xF, CAAM_SMAG1JR0(partition_num));
-	__raw_writel(0xF, CAAM_SMAG2JR0(partition_num));
-	__raw_writel(0xFF, CAAM_SMAPJR0(partition_num));
-
-	/* Now need to allocate partition_num of secure RAM. */    
-	/* De-Allocate page_num by starting with a page inquiry command */
-	temp_reg = secmem_set_cmd_1(PAGE(page_num) | CMD_INQUIRY);
-	/* if the page is owned, de-allocate it */
-	if((temp_reg & SMCSJR_PO) == PAGE_OWNED)
-	{
-		temp_reg = secmem_set_cmd_1(PAGE(page_num) | CMD_PAGE_DEALLOC);
-		if(temp_reg & SMCSJR_AERR)
-	{
-	  printf("Error: Allocation status 0x%X\n",temp_reg);
-	  return ERROR_IN_PAGE_ALLOC;
-		}
-	}
-
-	/* Allocate page_num to partition_num */
-	temp_reg = secmem_set_cmd_1(PAGE(page_num) | PARTITION(partition_num)
-		| CMD_PAGE_ALLOC);
-	if(temp_reg & SMCSJR_AERR)
-	{
-		printf("Error: Allocation status 0x%X\n",temp_reg);
-		return ERROR_IN_PAGE_ALLOC;
-	}
-	/* page inquiry command to ensure that the page was allocated */
-	temp_reg = secmem_set_cmd_1(PAGE(page_num) | CMD_INQUIRY);
-	/* if the page is not owned => problem */
-	if((temp_reg & SMCSJR_PO) != PAGE_OWNED)
-	{
-		printf("Error: Allocation of page %d in partition %d failed 0x%X\n"
-		,temp_reg, page_num, partition_num);
-
-		return ERROR_IN_PAGE_ALLOC;
-	}
-
-	return SUCCESS;
-}
 
 /*!
  * Use CAAM to decapsulate a blob to secure memory.
@@ -180,7 +119,6 @@ uint32_t caam_decap_blob(uint32_t plain_text, uint32_t blob_addr, uint32_t size)
 	uint32_t ret = SUCCESS;
 
 	/* Buffer that holds blob */
-	uint8_t *blob = (uint8_t *)blob_addr;
 
 	/**** Prepare partition and page, and start the job to create the blob ***/
 #if 0
@@ -204,8 +142,8 @@ uint32_t caam_decap_blob(uint32_t plain_text, uint32_t blob_addr, uint32_t size)
 	decap_dsc[6] = (uint32_t)(uint8_t*)plain_text;
 	decap_dsc[7] = (uint32_t)0x860D0000;
 
-// uncomment when using descriptor from "fsl_caam_internal.h"
-// does not use key modifier.
+/* uncomment when using descriptor from "fsl_caam_internal.h"
+   does not use key modifier. */
 #if 0  
     /* Fill in input blob addr in decap_dsc */
     decap_dsc[5] = (uint32_t)blob;
@@ -217,10 +155,14 @@ uint32_t caam_decap_blob(uint32_t plain_text, uint32_t blob_addr, uint32_t size)
     /* Add job to input ring */
 	g_input_ring[0] = (uint32_t)decap_dsc;
 
-	flush_dcache_range((uint32_t)blob_addr & 0xffffffe0, ((uint32_t)blob_addr & 0xffffffe0) + 2*size);
-	flush_dcache_range((uint32_t)plain_text& 0xffffffe0, ((uint32_t)plain_text& 0xffffffe0) + 2*size);
-	flush_dcache_range((uint32_t)decap_dsc & 0xffffffe0, ((uint32_t)decap_dsc & 0xffffffe0) + 128); 
-	flush_dcache_range((uint32_t)g_input_ring & 0xffffffe0, ((uint32_t)g_input_ring & 0xffffffe0) + 128);
+	flush_dcache_range((uint32_t)blob_addr & 0xffffffe0,
+			   ((uint32_t)blob_addr & 0xffffffe0) + 2*size);
+	flush_dcache_range((uint32_t)plain_text & 0xffffffe0,
+			   ((uint32_t)plain_text & 0xffffffe0) + 2*size);
+	flush_dcache_range((uint32_t)decap_dsc & 0xffffffe0,
+			   ((uint32_t)decap_dsc & 0xffffffe0) + 128);
+	flush_dcache_range((uint32_t)g_input_ring & 0xffffffe0,
+			   ((uint32_t)g_input_ring & 0xffffffe0) + 128);
     /* Increment jobs added */
 	__raw_writel(1, CAAM_IRJAR0);
 
@@ -228,7 +170,8 @@ uint32_t caam_decap_blob(uint32_t plain_text, uint32_t blob_addr, uint32_t size)
 	while(__raw_readl(CAAM_ORSFR0) != 1);
 
 	// TODO: check if Secure memory is cacheable.
-	invalidate_dcache_range((uint32_t)g_output_ring & 0xffffffe0, ((uint32_t)g_output_ring & 0xffffffe0) + 128);
+	invalidate_dcache_range((uint32_t)g_output_ring & 0xffffffe0,
+				((uint32_t)g_output_ring & 0xffffffe0) + 128);
 	/* check that descriptor address is the one expected in the output ring */
 	if(g_output_ring[0] == (uint32_t)decap_dsc)
 	{
@@ -244,7 +187,8 @@ uint32_t caam_decap_blob(uint32_t plain_text, uint32_t blob_addr, uint32_t size)
 		printf("Error: blob decap job output ring descriptor address does" \
 	                " not match\n");
 	}
-	flush_dcache_range((uint32_t)plain_text& 0xffffffe0, ((uint32_t)plain_text& 0xffffffe0) + 2*size);
+	flush_dcache_range((uint32_t)plain_text & 0xffffffe0,
+			   ((uint32_t)plain_text & 0xffffffe0) + 2*size);
 
 
 	/* Remove job from Job Ring Output Queue */
@@ -264,7 +208,6 @@ uint32_t caam_decap_blob(uint32_t plain_text, uint32_t blob_addr, uint32_t size)
 uint32_t caam_gen_blob(uint32_t plain_data_addr, uint32_t blob_addr, uint32_t size)
 {
 	uint32_t ret = SUCCESS;
-	uint32_t addr;
 
 	/* Buffer to hold the resulting blob */
 	uint8_t *blob = (uint8_t *)blob_addr;
@@ -311,9 +254,12 @@ uint32_t caam_gen_blob(uint32_t plain_data_addr, uint32_t blob_addr, uint32_t si
     /* Add job to input ring */
 	g_input_ring[0] = (uint32_t)encap_dsc;
 
-	flush_dcache_range((uint32_t)plain_data_addr& 0xffffffe0, ((uint32_t)plain_data_addr& 0xffffffe0) + size);
-	flush_dcache_range((uint32_t)encap_dsc & 0xffffffe0, ((uint32_t)encap_dsc & 0xffffffe0) + 128);
-	flush_dcache_range((uint32_t)blob & 0xffffffe0, ((uint32_t)g_input_ring & 0xffffffe0) + 2 * size);
+	flush_dcache_range((uint32_t)plain_data_addr & 0xffffffe0,
+			   ((uint32_t)plain_data_addr & 0xffffffe0) + size);
+	flush_dcache_range((uint32_t)encap_dsc & 0xffffffe0,
+			   ((uint32_t)encap_dsc & 0xffffffe0) + 128);
+	flush_dcache_range((uint32_t)blob & 0xffffffe0,
+			   ((uint32_t)g_input_ring & 0xffffffe0) + 2 * size);
 	/* Increment jobs added */
 	__raw_writel(1, CAAM_IRJAR0);
 
@@ -321,8 +267,10 @@ uint32_t caam_gen_blob(uint32_t plain_data_addr, uint32_t blob_addr, uint32_t si
 	while(__raw_readl(CAAM_ORSFR0) != 1);
 
     // flush cache
-	invalidate_dcache_range((uint32_t)g_output_ring & 0xffffffe0, ((uint32_t)g_output_ring & 0xffffffe0) + 128);
-	invalidate_dcache_range((uint32_t)g_output_ring & 0xffffffe0, ((uint32_t)g_output_ring & 0xffffffe0) + 128);
+	invalidate_dcache_range((uint32_t)g_output_ring & 0xffffffe0,
+				((uint32_t)g_output_ring & 0xffffffe0) + 128);
+	invalidate_dcache_range((uint32_t)g_output_ring & 0xffffffe0,
+				((uint32_t)g_output_ring & 0xffffffe0) + 128);
 	/* check that descriptor address is the one expected in the output ring */
 	if(g_output_ring[0] == (uint32_t)encap_dsc)
 	{
@@ -414,7 +362,8 @@ void caam_open(void)
 	/* Add job to input ring */
 	g_input_ring[0] = (uint32_t)rng_inst_dsc;
 
-	flush_dcache_range((uint32_t)g_input_ring & 0xffffffe0, ((uint32_t)g_input_ring & 0xffffffe0) + 128);
+	flush_dcache_range((uint32_t)g_input_ring & 0xffffffe0,
+			   ((uint32_t)g_input_ring & 0xffffffe0) + 128);
 	/* Increment jobs added */
 	__raw_writel(1, CAAM_IRJAR0); 
 
@@ -422,7 +371,8 @@ void caam_open(void)
 	while(__raw_readl(CAAM_ORSFR0) != 1);
 
 
-	invalidate_dcache_range((uint32_t)g_output_ring & 0xffffffe0, ((uint32_t)g_output_ring & 0xffffffe0) + 128);
+	invalidate_dcache_range((uint32_t)g_output_ring & 0xffffffe0,
+				((uint32_t)g_output_ring & 0xffffffe0) + 128);
 
 	/* check that descriptor address is the one expected in the out ring */
 	if(g_output_ring[0] == (uint32_t)rng_inst_dsc)

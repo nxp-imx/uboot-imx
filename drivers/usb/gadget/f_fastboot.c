@@ -15,6 +15,7 @@
 #include <config.h>
 #include <common.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <malloc.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
@@ -1071,8 +1072,8 @@ static void parameters_setup(void)
 				CONFIG_USB_FASTBOOT_BUF_SIZE;
 }
 
-static struct fastboot_ptentry ptable[MAX_PTN];
-static unsigned int pcount;
+static struct fastboot_ptentry g_ptable[MAX_PTN];
+static unsigned int g_pcount;
 struct fastboot_device_info fastboot_devinfo;
 
 /*
@@ -1453,7 +1454,7 @@ static int _fastboot_parts_load_from_env(void)
 			while (s < e) {
 				if (_fastboot_parts_add_env_entry(s, &s)) {
 					printf("Error:Fastboot: Abort adding partitions\n");
-					pcount = 0;
+					g_pcount = 0;
 					return 1;
 				}
 				/* Skip a bunch of delimiters */
@@ -1478,7 +1479,7 @@ static int _fastboot_parts_load_from_env(void)
 
 static void _fastboot_load_partitions(void)
 {
-	pcount = 0;
+	g_pcount = 0;
 #if defined(CONFIG_FASTBOOT_STORAGE_NAND)
 	_fastboot_parts_load_from_env();
 #elif defined(CONFIG_FASTBOOT_STORAGE_SATA) \
@@ -1491,19 +1492,21 @@ static void _fastboot_load_partitions(void)
  * Android style flash utilties */
 void fastboot_flash_add_ptn(struct fastboot_ptentry *ptn)
 {
-	if (pcount < MAX_PTN) {
-		memcpy(ptable + pcount, ptn, sizeof(struct fastboot_ptentry));
-		pcount++;
+	if (g_pcount < MAX_PTN) {
+		memcpy(g_ptable + g_pcount, ptn,
+		       sizeof(struct fastboot_ptentry));
+		g_pcount++;
 	}
 }
 
 void fastboot_flash_dump_ptn(void)
 {
 	unsigned int n;
-	for (n = 0; n < pcount; n++) {
-		struct fastboot_ptentry *ptn = ptable + n;
-		printf("ptn %d name='%s' start=%d len=%d\n",
-			n, ptn->name, ptn->start, ptn->length);
+	for (n = 0; n < g_pcount; n++) {
+		struct fastboot_ptentry *ptn = g_ptable + n;
+		printf("idx %d, ptn %d name='%s' start=%d len=%d\n",
+		       n, ptn->partition_index, ptn->name,
+		       ptn->start, ptn->length);
 	}
 }
 
@@ -1512,11 +1515,11 @@ struct fastboot_ptentry *fastboot_flash_find_ptn(const char *name)
 {
 	unsigned int n;
 
-	for (n = 0; n < pcount; n++) {
+	for (n = 0; n < g_pcount; n++) {
 		/* Make sure a substring is not accepted */
-		if (strlen(name) == strlen(ptable[n].name)) {
-			if (0 == strcmp(ptable[n].name, name))
-				return ptable + n;
+		if (strlen(name) == strlen(g_ptable[n].name)) {
+			if (0 == strcmp(g_ptable[n].name, name))
+				return g_ptable + n;
 		}
 	}
 
@@ -1527,15 +1530,15 @@ struct fastboot_ptentry *fastboot_flash_find_ptn(const char *name)
 
 struct fastboot_ptentry *fastboot_flash_get_ptn(unsigned int n)
 {
-	if (n < pcount)
-		return ptable + n;
+	if (n < g_pcount)
+		return g_ptable + n;
 	else
 		return 0;
 }
 
 unsigned int fastboot_flash_get_ptn_count(void)
 {
-	return pcount;
+	return g_pcount;
 }
 
 /*
@@ -1610,7 +1613,7 @@ bootimg_print_image_hdr(struct andr_img_hdr *hdr)
 	printf("   page_size:   0x%x\n", hdr->page_size);
 
 	printf("   name:      %s\n", hdr->name);
-	printf("   cmdline:   %s%x\n", hdr->cmdline);
+	printf("   cmdline:   %s\n", hdr->cmdline);
 
 	for (i = 0; i < 8; i++)
 		printf("   id[%d]:   0x%x\n", i, hdr->id[i]);
@@ -2176,7 +2179,8 @@ static int strcmp_l1(const char *s1, const char *s2)
 	return strncmp(s1, s2, strlen(s1));
 }
 
-static int get_block_size() {
+static int get_block_size(void)
+{
 	int mmc_no = 0;
 	block_dev_desc_t *dev_desc;
 	mmc_no = fastboot_devinfo.dev_id;
@@ -2215,7 +2219,8 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 	}
 #endif
 	char *str;
-	if (str = strstr(cmd, "partition-size:")) {
+	str = strstr(cmd, "partition-size:");
+	if (str) {
 		str+=strlen("partition-size:");
 		struct fastboot_ptentry* fb_part;
 		fb_part = fastboot_flash_find_ptn(str);
@@ -2226,7 +2231,8 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 			sprintf(var, "OKAY0x%016x", fb_part->length * get_block_size());
 			strcpy(response, var);
 		}
-	} else if (str = strstr(cmd, "partition-type:")) {
+	} else if (strstr(cmd, "partition-type:")) {
+		str = strstr(cmd, "partition-type:");
 		str+=strlen("partition-type:");
 		struct fastboot_ptentry* fb_part;
 		fb_part = fastboot_flash_find_ptn(str);
@@ -2487,6 +2493,51 @@ U_BOOT_CMD(
 	"lock_status",
 	"lock_status");
 
+static int do_fastboot_unlock(void)
+{
+	int status;
+	if (fastboot_lock_enable() == FASTBOOT_UL_ENABLE) {
+		printf("It is able to unlock device. %d\n",fastboot_lock_enable());
+		status = fastboot_get_lock_stat();
+		if (status == FASTBOOT_UNLOCK) {
+			printf("The device is already unlocked\n");
+			return 1;
+		}
+		status = fastboot_set_lock_stat(FASTBOOT_UNLOCK);
+		if (status < 0)
+			return status;
+
+		printf("Start /data wipe process....\n");
+		fastboot_wipe_data_partition();
+		printf("Wipe /data completed.\n");
+
+	} else {
+		printf("It is not able to unlock device.");
+		return -1;
+	}
+
+	return status;
+}
+
+static int do_fastboot_lock(void)
+{
+	int status;
+	status = fastboot_get_lock_stat();
+	if (status == FASTBOOT_LOCK) {
+		printf("The device is already locked\n");
+		return 1;
+	}
+	status = fastboot_set_lock_stat(FASTBOOT_LOCK);
+	if (status < 0)
+		return status;
+
+	printf("Start /data wipe process....\n");
+	fastboot_wipe_data_partition();
+	printf("Wipe /data completed.\n");
+
+	return status;
+}
+
 static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 {
 	char *cmd = req->buf;
@@ -2517,51 +2568,6 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 	}
 	fastboot_tx_write_str(response);
 }
-
-int do_fastboot_unlock() {
-	int status;
-	if (fastboot_lock_enable() == FASTBOOT_UL_ENABLE) {
-		printf("It is able to unlock device. %d\n",fastboot_lock_enable());
-		status = fastboot_get_lock_stat();
-		if (status == FASTBOOT_UNLOCK) {
-			printf("The device is already unlocked\n");
-			return 1;
-		}
-		status = fastboot_set_lock_stat(FASTBOOT_UNLOCK);
-		if (status < 0)
-			return status;
-
-		printf("Start /data wipe process....\n");
-		fastboot_wipe_data_partition();
-		printf("Wipe /data completed.\n");
-
-	} else {
-		printf("It is not able to unlock device.");
-		return -1;
-	}
-
-	return status;
-}
-
-int do_fastboot_lock() {
-	int status;
-	status = fastboot_get_lock_stat();
-	if (status == FASTBOOT_LOCK) {
-		printf("The device is already locked\n");
-		return 1;
-	}
-	status = fastboot_set_lock_stat(FASTBOOT_LOCK);
-	if (status < 0)
-		return status;
-
-	printf("Start /data wipe process....\n");
-	fastboot_wipe_data_partition();
-	printf("Wipe /data completed.\n");
-
-	return status;
-
-}
-
 
 #endif
 
@@ -2611,6 +2617,7 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 }
 #endif
 
+/*
 static void cb_oem(struct usb_ep *ep, struct usb_request *req)
 {
 	char *cmd = req->buf;
@@ -2632,6 +2639,7 @@ static void cb_oem(struct usb_ep *ep, struct usb_request *req)
 		fastboot_tx_write_str("FAILunknown oem command");
 	}
 }
+*/
 
 #ifdef CONFIG_FASTBOOT_FLASH
 static void cb_erase(struct usb_ep *ep, struct usb_request *req)

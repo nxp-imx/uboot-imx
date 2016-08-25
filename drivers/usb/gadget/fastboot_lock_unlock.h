@@ -56,13 +56,13 @@ enum {
 	FASTBOOT_UL_NUM
 };
 
-unsigned char fastboot_get_lock_stat();
+unsigned char fastboot_get_lock_stat(void);
 
 int fastboot_set_lock_stat(unsigned char lock);
 
-int fastboot_wipe_data_partition();
+int fastboot_wipe_data_partition(void);
 
-unsigned char fastboot_lock_enable();
+unsigned char fastboot_lock_enable(void);
 
 int display_lock(int lock, int verify);
 #endif

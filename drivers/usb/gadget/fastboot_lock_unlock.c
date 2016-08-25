@@ -36,6 +36,7 @@
 #include <part.h>
 #include <ext_common.h>
 #include <stdio_dev.h>
+#include <stdlib.h>
 
 #ifdef FASTBOOT_ENCRYPT_LOCK
 
@@ -69,7 +70,7 @@ int sha1sum(unsigned char* data, int len, unsigned char* output) {
 		printf("error in lookup sha1 algo!\n");
 		return -1;
 	}
-	buf = map_sysmem(data, len);
+	buf = map_sysmem((ulong)data, len);
 	algo->hash_func_ws(buf, len, output, algo->chunk_size);
 	unmap_sysmem(buf);
 
@@ -79,7 +80,7 @@ int sha1sum(unsigned char* data, int len, unsigned char* output) {
 
 int generate_salt(unsigned char* salt) {
 	unsigned long time = get_timer(0);
-	return sha1sum(&time, sizeof(unsigned long), salt);
+	return sha1sum((unsigned char *)&time, sizeof(unsigned long), salt);
 
 }
 
@@ -88,7 +89,8 @@ unsigned char decrypt_lock_store(unsigned char *bdata) {
 	int p = 0, ret;
 
 	caam_open();
-	ret = caam_decap_blob((uint32_t)plain_data, bdata + ENDATA_LEN, ENDATA_LEN);
+	ret = caam_decap_blob((uint32_t)plain_data,
+			      (uint32_t)bdata + ENDATA_LEN, ENDATA_LEN);
 	if (ret != 0) {
 		printf("Error during blob decap operation: 0x%x\n",ret);
 		return FASTBOOT_LOCK_ERROR;
@@ -131,7 +133,7 @@ int encrypt_lock_store(unsigned char lock, unsigned char* bdata) {
 	int ret;
 	int salt_len = generate_salt(bdata);
 	if (salt_len < 0)
-		return;
+		return -1;
 
     //salt_len cannot be longer than endata block size.
 	if (salt_len >= ENDATA_LEN)
@@ -227,7 +229,8 @@ int fastboot_set_lock_stat(unsigned char lock) {
 	return 0;
 }
 
-unsigned char fastboot_get_lock_stat() {
+unsigned char fastboot_get_lock_stat(void)
+{
 
 	block_dev_desc_t *fs_dev_desc;
 	disk_partition_t fs_partition;
@@ -263,7 +266,8 @@ unsigned char fastboot_get_lock_stat() {
 
 #ifdef CONFIG_BRILLO_SUPPORT
 //Brillo has no presist data partition
-unsigned char fastboot_lock_enable() {
+unsigned char fastboot_lock_enable(void)
+{
 	return FASTBOOT_UL_ENABLE;
 }
 #else
@@ -337,7 +341,8 @@ int display_lock(int lock, int verify) {
 
 }
 
-int fastboot_wipe_data_partition() {
+int fastboot_wipe_data_partition(void)
+{
 	block_dev_desc_t *fs_dev_desc;
 	disk_partition_t fs_partition;
 	int status;
