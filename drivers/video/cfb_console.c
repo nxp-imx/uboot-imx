@@ -1176,7 +1176,7 @@ static int display_rle8_bitmap(struct bmp_image *img, int xoff, int yoff,
 	y = __le32_to_cpu(img->header.height) - 1;
 	ncolors = __le32_to_cpu(img->header.colors_used);
 	bpp = VIDEO_PIXEL_SIZE;
-	fbp = (unsigned char *) ((unsigned int) video_fb_address +
+	fbp = (unsigned char *) ((unsigned long) video_fb_address +
 				 (y + yoff) * VIDEO_LINE_LEN +
 				 xoff * bpp);
 
@@ -1231,7 +1231,7 @@ static int display_rle8_bitmap(struct bmp_image *img, int xoff, int yoff,
 				x = 0;
 				y--;
 				fbp = (unsigned char *)
-					((unsigned int) video_fb_address +
+					((unsigned long) video_fb_address +
 					 (y + yoff) * VIDEO_LINE_LEN +
 					 xoff * bpp);
 				continue;
@@ -1244,7 +1244,7 @@ static int display_rle8_bitmap(struct bmp_image *img, int xoff, int yoff,
 				x += bm[2];
 				y -= bm[3];
 				fbp = (unsigned char *)
-					((unsigned int) video_fb_address +
+					((unsigned long) video_fb_address +
 					 (y + yoff) * VIDEO_LINE_LEN +
 					 xoff * bpp);
 				bm += 4;
@@ -2023,7 +2023,7 @@ static int cfg_video_init(void)
 	if (pGD == NULL)
 		return -1;
 
-	video_fb_address = (void *) VIDEO_FB_ADRS;
+	video_fb_address = (void *)(unsigned long) VIDEO_FB_ADRS;
 
 	cfb_do_flush_cache = cfb_fb_is_in_dram() && dcache_status();
 
