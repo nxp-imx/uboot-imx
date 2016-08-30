@@ -349,11 +349,6 @@ static void init_bandgap(void)
 		val >>= OCOTP_MEM0_REFTOP_TRIM_SHIFT;
 		val &= 0x7;
 
-		if (val == 0) {
-			val = 6;
-		} else if (val == 6) {
-			val = 0;
-		}
 		writel(val << BM_ANADIG_ANA_MISC0_REFTOP_VBGADJ_SHIFT,
 		       &anatop->ana_misc0_set);
 	}
