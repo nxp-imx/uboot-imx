@@ -943,18 +943,20 @@ int power_init_board(void)
 
 	if (ret < 0)
 		return ret;
+	/* VGEN3 and VGEN5 corrected on i.mx6qp board */
+	if (!is_mx6dqp()) {
+		/* Increase VGEN3 from 2.5 to 2.8V */
+		pmic_reg_read(pfuze, PFUZE100_VGEN3VOL, &reg);
+		reg &= ~LDO_VOL_MASK;
+		reg |= LDOB_2_80V;
+		pmic_reg_write(pfuze, PFUZE100_VGEN3VOL, reg);
 
-	/* Increase VGEN3 from 2.5 to 2.8V */
-	pmic_reg_read(pfuze, PFUZE100_VGEN3VOL, &reg);
-	reg &= ~LDO_VOL_MASK;
-	reg |= LDOB_2_80V;
-	pmic_reg_write(pfuze, PFUZE100_VGEN3VOL, reg);
-
-	/* Increase VGEN5 from 2.8 to 3V */
-	pmic_reg_read(pfuze, PFUZE100_VGEN5VOL, &reg);
-	reg &= ~LDO_VOL_MASK;
-	reg |= LDOB_3_00V;
-	pmic_reg_write(pfuze, PFUZE100_VGEN5VOL, reg);
+		/* Increase VGEN5 from 2.8 to 3V */
+		pmic_reg_read(pfuze, PFUZE100_VGEN5VOL, &reg);
+		reg &= ~LDO_VOL_MASK;
+		reg |= LDOB_3_00V;
+		pmic_reg_write(pfuze, PFUZE100_VGEN5VOL, reg);
+	}
 
 	if (is_mx6dqp()) {
 		/* set SW1C staby volatage 1.075V*/
