@@ -28,6 +28,7 @@
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
+#include <linux/sizes.h>
 #include <asm/arch/imx-regs.h>
 
 #define CONFIG_CMDLINE_TAG
@@ -266,6 +267,8 @@
 #define CONFIG_IPUV3_CLK 198000000
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
+
+#endif
 
 #if defined(CONFIG_ANDROID_SUPPORT)
 #include "mx6qarm2_android.h"
