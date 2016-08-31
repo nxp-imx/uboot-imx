@@ -92,6 +92,34 @@ before_calling_rom___pu_irom_hwcnfg_setup:
 	blx r4
 after_calling_rom___pu_irom_hwcnfg_setup:
 
+/*
+ * ROM_API_HWCNFG_SETUP function enables MMU & Caches.
+ * Thus disable MMU & Caches.
+ */
+
+#define ENABLE_CACHE 0x01
+
+    MRC     p15, 0, r0, c1, c0, 0   /* read CP15 register 1 into r0 */
+    ANDS    r0, r0, #0x1            /* check if MMU is enabled         */
+    BEQ     mmu_disable_notreq      /* exit if MMU is already disabled */
+
+/* Disable caches, MMU    */
+    MRC     p15, 0, r0, c1, c0, 0           /* read CP15 register 1 into r0 */
+    BIC     r0, r0, #(ENABLE_CACHE << 2)    /* disable D Cache */
+    BIC     r0, r0, #0x1                    /* clear bit 0 ; MMU off */
+
+    BIC     r0, r0, #(0x1 << 11)            /* disable Z, branch prediction */
+    BIC     r0, r0, #(0x1 << 1)             /* disable A, Strict alignment */
+					    /*		check enabled. */
+
+    MCR     p15, 0, r0, c1, c0, 0           /* write CP15 register 1 */
+    MOV     r0, r0
+    MOV     r0, r0
+    MOV     r0, r0
+    MOV     r0, r0
+
+mmu_disable_notreq:
+    NOP
 
 /* To return to ROM from plugin, we need to fill in these argument.
  * Here is what need to do:
