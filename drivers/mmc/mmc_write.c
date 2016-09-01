@@ -98,8 +98,13 @@ unsigned long mmc_berase(block_dev_desc_t *block_dev, lbaint_t start,
 		       & ~(mmc->erase_grp_size - 1)) - 1);
 
 	while (blk < blkcnt) {
-		blk_r = ((blkcnt - blk) > mmc->erase_grp_size) ?
-			mmc->erase_grp_size : (blkcnt - blk);
+		if (IS_SD(mmc) && mmc->ssr.au) {
+			blk_r = ((blkcnt - blk) > mmc->ssr.au) ?
+				mmc->ssr.au : (blkcnt - blk);
+		} else {
+			blk_r = ((blkcnt - blk) > mmc->erase_grp_size) ?
+				mmc->erase_grp_size : (blkcnt - blk);
+		}
 		err = mmc_erase_t(mmc, start + blk, blk_r);
 		if (err)
 			break;
