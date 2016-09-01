@@ -177,6 +177,11 @@
 
 #define MC_ME_CCTL_DEASSERT_CORE       (0xFA)
 
+/* Cortex-M4 core */
+#define MC_MC_CCTL_CORE_ACTIVE		(0xF8)
+/* Cortex-A53 cores */
+#define MC_ME_CCTL_DEASSERT_CORE	(0xFA)
+
 /* Cortex-M4 Core Address Register */
 #define MC_ME_CADDR0   (MC_ME_BASE_ADDR + 0x000001E0)
 /* Cortex-A53 Core 0 - Core Address Register */

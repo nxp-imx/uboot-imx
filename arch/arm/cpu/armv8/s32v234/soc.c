@@ -1017,3 +1017,60 @@ __weak int dram_init(void)
 
 	return 0;
 }
+
+/* start M4 core */
+static int do_start_m4(cmd_tbl_t *cmdtp, int flag, int argc,
+		       char * const argv[])
+{
+	unsigned long addr;
+	char *ep;
+
+	if (argc < 2)
+		return CMD_RET_USAGE;
+
+	addr = simple_strtoul(argv[1], &ep, 16);
+	if (ep == argv[1] || *ep != '\0')
+		return CMD_RET_USAGE;
+
+	if (!IS_ADDR_IN_IRAM(addr)) {
+		printf("ERROR: Address 0x%08lX not in internal SRAM ...\n",
+		       addr);
+		return CMD_RET_USAGE;
+	}
+
+	printf("Starting core M4 at SRAM address 0x%08lX ...\n", addr);
+
+	/* Write the M4 core's start address
+	 * address is required by the hardware to be odd
+	 */
+	writel(addr | 0x1, MC_ME_CADDR0);
+
+	/* enable CM4 to be active during all modes of operation */
+	writew(MC_MC_CCTL_CORE_ACTIVE, MC_MC_CCTL0);
+
+	/* mode_enter(DRUN_M) */
+	writel(MC_ME_MCTL_RUN0 | MC_ME_MCTL_KEY, MC_ME_MCTL);
+	writel(MC_ME_MCTL_RUN0 | MC_ME_MCTL_INVERTEDKEY, MC_ME_MCTL)
+		;
+
+	printf("Wait while mode entry is in progress ...\n");
+
+	/* wait while mode entry is in process */
+	while ((readl(MC_ME_GS) & MC_ME_GS_S_MTRANS) != 0x00000000)
+		;
+
+	printf("Wait for the run mode to be entered ...\n");
+
+	/* check if the mode has been entered */
+	while ((readl(MC_ME_GS) & MC_ME_GS_S_CRT_MODE_DRUN) != 0x00000000)
+		;
+
+	printf("M4 started.\n");
+
+	return CMD_RET_SUCCESS;
+}
+
+U_BOOT_CMD(startm4,	2,	1,	do_start_m4,
+	   "start M4 core from SRAM address",
+	   "startAddress"
+);
