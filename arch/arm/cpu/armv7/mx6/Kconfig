@@ -211,6 +211,11 @@ config TARGET_WANDBOARD
 config TARGET_WARP
 	bool "WaRP"
 
+config TARGET_MX6DQSCM
+	bool "mx6dqscm"
+	select DM
+	select DM_THERMAL
+
 endchoice
 
 config SYS_SOC
@@ -247,5 +252,6 @@ source "board/tqc/tqma6/Kconfig"
 source "board/udoo/Kconfig"
 source "board/wandboard/Kconfig"
 source "board/warp/Kconfig"
+source "board/freescale/mx6dqscm/Kconfig"
 
 endif

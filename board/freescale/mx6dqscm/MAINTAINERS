@@ -1,0 +1,11 @@
+MX6DQSCM BOARDS
+M:	Alejandro Sierra <alejandro.sierra@nxp.com>
+M:	Juan Gutierrez <juan.gutierrez@nxp.com>
+S:	Maintained
+F:	board/freescale/mx6dqscm/
+F:	include/configs/mx6dqscm.h
+F:	configs/mx6dqscm_1gb_fix_evb_defconfig
+F:	configs/mx6dqscm_1gb_fix_qwks_rev2_defconfig
+F:	configs/mx6dqscm_1gb_fix_qwks_rev2_spinor_defconfig
+F:	configs/mx6dqscm_1gb_interleaving_evb_android_defconfig
+F:	configs/mx6dqscm_1gb_interleaving_qwks_rev2_android_defconfig
