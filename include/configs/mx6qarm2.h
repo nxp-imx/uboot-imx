@@ -176,4 +176,8 @@
 #define CONFIG_USB_MAX_CONTROLLER_COUNT	1
 #endif
 
-#endif				/* __CONFIG_H */
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx6qarm2_android.h"
+#endif
+
+#endif                         /* __CONFIG_H */
