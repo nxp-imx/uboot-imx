@@ -46,6 +46,7 @@
 #define CONFIG_CMD_BOOTA
 #define CONFIG_SUPPORT_RAW_INITRD
 #define CONFIG_SERIAL_TAG
+#define CONFIG_RESET_CAUSE
 
 /*keyboard mapping*/
 #define CONFIG_VOL_DOWN_KEY     KEY_BACK

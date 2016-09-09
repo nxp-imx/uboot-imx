@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2014-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -466,7 +466,25 @@ void reset_misc(void)
 }
 
 #ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_RESET_CAUSE
+#define ANDROID_NORMAL_BOOT     6
+#define ANDROID_BOOT_REASON_OFFSET  6
+int read_boot_reason()
+{
+	u32 reg;
+	reg = readl(SNVS_BASE_ADDR + SNVS_LPGPR);
+	if (reg & (1 << ANDROID_NORMAL_BOOT))
+		return ANDROID_NORMAL_BOOT;
+	return 0;
+}
 
+void clear_boot_reason()
+{
+	u32 reg;
+	reg &= ~(1 << ANDROID_BOOT_REASON_OFFSET);
+	writel(reg, SNVS_BASE_ADDR + SNVS_LPGPR);
+}
+#endif
 #ifdef CONFIG_ANDROID_RECOVERY
 #define ANDROID_RECOVERY_BOOT	(1 << 7)
 /*

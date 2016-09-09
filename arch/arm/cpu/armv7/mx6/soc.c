@@ -1055,7 +1055,25 @@ void v7_outer_cache_disable(void)
 #endif /* !CONFIG_SYS_L2CACHE_OFF */
 
 #ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_RESET_CAUSE
+#define ANDROID_NORMAL_BOOT     6
+#define ANDROID_BOOT_REASON_OFFSET  6
+int read_boot_reason()
+{
+	u32 reg;
+	reg = readl(SNVS_BASE_ADDR + SNVS_LPGPR);
+	if (reg & (1 << ANDROID_NORMAL_BOOT))
+		return ANDROID_NORMAL_BOOT;
+	return 0;
+}
 
+void clear_boot_reason()
+{
+	u32 reg;
+	reg &= ~(1 << ANDROID_BOOT_REASON_OFFSET);
+	writel(reg, SNVS_BASE_ADDR + SNVS_LPGPR);
+}
+#endif
 #ifdef CONFIG_ANDROID_RECOVERY
 #define ANDROID_RECOVERY_BOOT  (1 << 7)
 /* check if the recovery bit is set by kernel, it can be set by kernel
