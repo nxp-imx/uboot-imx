@@ -47,4 +47,12 @@ config ZYNQMP_IPI
 	help
 	  This enables support for the Xilinx ZynqMP Inter Processor Interrupt
 	  communication controller.
+
+config IMX_MU
+    bool "Enable i.MX MU support"
+    depends on DM_MAILBOX
+    help
+      Enable support for i.MX Messaging Unit for communication with other
+      processors on the SoC
+
 endmenu
