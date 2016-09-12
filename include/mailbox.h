@@ -122,7 +122,7 @@ int mbox_free(struct mbox_chan *chan);
  *		will ignore this parameter.
  * @return 0 if OK, or a negative error code.
  */
-int mbox_send(struct mbox_chan *chan, const void *data);
+int mbox_send(struct mbox_chan *chan, const void *data, ulong timeout_us);
 
 /**
  * mbox_recv - Receive any available message from a mailbox channel
