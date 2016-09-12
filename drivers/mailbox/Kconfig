@@ -24,4 +24,11 @@ config TEGRA_HSP
 	  This enables support for the NVIDIA Tegra HSP Hw module, which
 	  implements doorbells, mailboxes, semaphores, and shared interrupts.
 
+config IMX_MU
+        bool "Enable i.MX MU support"
+        depends on DM_MAILBOX
+        help
+          Enable support for i.MX Messaging Unit for communication with other
+          processors on the SoC
+
 endmenu
