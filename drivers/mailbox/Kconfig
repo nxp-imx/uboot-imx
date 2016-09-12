@@ -34,4 +34,11 @@ config K3_SEC_PROXY
 	  Select this driver if your platform has support for this hardware
 	  block.
 
+config IMX_MU
+        bool "Enable i.MX MU support"
+        depends on DM_MAILBOX
+        help
+          Enable support for i.MX Messaging Unit for communication with other
+          processors on the SoC
+
 endmenu

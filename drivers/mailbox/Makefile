@@ -8,3 +8,4 @@ obj-$(CONFIG_SANDBOX_MBOX) += sandbox-mbox.o
 obj-$(CONFIG_SANDBOX_MBOX) += sandbox-mbox-test.o
 obj-$(CONFIG_TEGRA_HSP) += tegra-hsp.o
 obj-$(CONFIG_K3_SEC_PROXY) += k3-sec-proxy.o
+obj-$(CONFIG_IMX_MU) += imx-mu.o
