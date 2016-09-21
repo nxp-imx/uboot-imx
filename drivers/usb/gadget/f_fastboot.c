@@ -2258,6 +2258,25 @@ static int get_block_size(void)
 	return dev_desc->blksz;
 }
 
+
+static char *get_serial(void)
+{
+#ifdef CONFIG_SERIAL_TAG
+	struct tag_serialnr serialnr;
+	static char serial[32];
+	get_board_serial(&serialnr);
+	sprintf(serial, "%08x%08x", serialnr.high,	serialnr.low);
+
+	return serial;
+#else
+	return NULL;
+#endif
+}
+
+#if !defined(PRODUCT_NAME)
+#define PRODUCT_NAME "NXP i.MX"
+#endif
+
 static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 {
 	char *cmd = req->buf;
@@ -2336,13 +2355,13 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		sprintf(str_num, "0x%08x", CONFIG_USB_FASTBOOT_BUF_SIZE);
 		strncat(response, str_num, chars_left);
 	} else if (!strcmp_l1("serialno", cmd)) {
-		s = getenv("serial#");
+		s = get_serial();
 		if (s)
 			strncat(response, s, chars_left);
 		else
 			strcpy(response, "FAILValue not set");
 	} else if (!strcmp_l1("product", cmd)) {
-		strncat(response, "Freescale i.MX", chars_left);
+		strncat(response, PRODUCT_NAME, chars_left);
 	}
 #ifdef CONFIG_FASTBOOT_LOCK
 	else if (!strcmp_l1("secure", cmd)) {
