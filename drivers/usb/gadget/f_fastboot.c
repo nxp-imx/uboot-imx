@@ -1623,7 +1623,7 @@ void fastboot_setup(void)
 	char serial[17];
 
 	get_board_serial(&serialnr);
-	sprintf(serial, "%u%u", serialnr.high, serialnr.low);
+	sprintf(serial, "%08x%08x", serialnr.high, serialnr.low);
 	g_dnl_set_serialnumber(serial);
 
 	/*execute board relevant initilizations for preparing fastboot */
