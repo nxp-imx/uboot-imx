@@ -13,6 +13,8 @@
 static unsigned int g_slot_selected;
 static const char *g_slot_suffix[SLOT_NUM] = {"_a", "_b"};
 
+static int init_slotmeta(struct boot_ctl *ptbootctl);
+
 static int strcmp_l1(const char *s1, const char *s2)
 {
 	if (!s1 || !s2)
@@ -66,8 +68,6 @@ static unsigned int slot_find(struct boot_ctl *ptbootctl)
 	return slot;
 }
 
-
-
 static int read_bootctl(struct boot_ctl *ptbootctl)
 {
 	int ret = 0;
@@ -92,11 +92,15 @@ static int read_bootctl(struct boot_ctl *ptbootctl)
 	pmagic = ptbootctl->magic;
 	if (!((pmagic[0] == '\0') && (pmagic[1] == 'F') &&
 	      (pmagic[2] == 'S') && (pmagic[3] == 'L'))) {
-		printf("magic error, %c %c %c %c\n",
+		printf("magic error, 0x%x 0x%x 0x%x 0x%x\n",
 		       pmagic[0], pmagic[1], pmagic[2], pmagic[3]);
 
-		free(p_block);
-		return -1;
+		ret = init_slotmeta(ptbootctl);
+		if (ret) {
+			printf("init_slotmeta failed, ret %d\n", ret);
+			free(p_block);
+			return -1;
+		}
 	}
 
 	/* check crc */
@@ -145,6 +149,36 @@ static int write_bootctl(struct boot_ctl *ptbootctl)
 	}
 	free(p_block);
 	return 0;
+}
+
+static int init_slotmeta(struct boot_ctl *ptbootctl)
+{
+	int ret = 0;
+
+	if (ptbootctl == NULL)
+		return -1;
+
+	memset(ptbootctl, 0, sizeof(struct boot_ctl));
+
+	ptbootctl->recovery_tryremain = 7;
+	ptbootctl->a_slot_meta[0].priority = 8;
+	ptbootctl->a_slot_meta[0].tryremain = 7;
+	ptbootctl->a_slot_meta[0].bootsuc = 0;
+	ptbootctl->a_slot_meta[1].priority = 6;
+	ptbootctl->a_slot_meta[1].tryremain = 7;
+	ptbootctl->a_slot_meta[1].bootsuc = 0;
+
+	ptbootctl->magic[0] = '\0';
+	ptbootctl->magic[1] = 'F';
+	ptbootctl->magic[2] = 'S';
+	ptbootctl->magic[3] = 'L';
+
+	ptbootctl->crc = crc32(0, (uint8_t *)ptbootctl + CRC_DATA_OFFSET,
+		sizeof(struct boot_ctl) - CRC_DATA_OFFSET);
+
+	ret = write_bootctl(ptbootctl);
+
+	return ret;
 }
 
 char *select_slot(void)
