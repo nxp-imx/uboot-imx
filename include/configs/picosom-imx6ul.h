@@ -391,6 +391,6 @@
 #define CONFIG_USB_FASTBOOT_BUF_SIZE   0xc800000
 #endif
 
-#define PRODUCT_NAME "picoimx"
+#define PRODUCT_NAME "imx6ul"
 
 #endif
