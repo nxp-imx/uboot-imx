@@ -232,6 +232,12 @@ config TARGET_MX6DQSCM
 	select DM
 	select DM_THERMAL
 
+config TARGET_MX6SXSCM
+        bool "mx6sxscm"
+        select MX6SX
+        select DM
+        select DM_THERMAL
+
 endchoice
 
 config SYS_SOC
@@ -271,5 +277,6 @@ source "board/udoo/Kconfig"
 source "board/wandboard/Kconfig"
 source "board/warp/Kconfig"
 source "board/freescale/mx6dqscm/Kconfig"
+source "board/freescale/mx6sxscm/Kconfig"
 
 endif
