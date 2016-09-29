@@ -459,4 +459,9 @@
 #if defined(CONFIG_ANDROID_SUPPORT)
 #include "mx7dsabresdandroid.h"
 #endif
+
+#if defined(CONFIG_BRILLO_SUPPORT)
+#include "mx7dsabresdbrillo.h"
+#endif
+
 #endif	/* __CONFIG_H */

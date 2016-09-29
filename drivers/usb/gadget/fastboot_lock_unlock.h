@@ -34,7 +34,6 @@
 #define ALIGN_BYTES 64 /*armv7 cache line need 64 bytes aligned */
 
 //#define FASTBOOT_LOCK_DEBUG
-#define FASTBOOT_ENCRYPT_LOCK
 
 #ifdef FASTBOOT_LOCK_DEBUG
 #define DEBUG(format, ...) printf(format, ##__VA_ARGS__)

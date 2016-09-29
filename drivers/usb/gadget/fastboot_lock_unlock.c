@@ -58,8 +58,10 @@ inline unsigned char decrypt_lock_store(unsigned char* bdata) {
 	return *bdata;
 }
 
-inline void encrypt_lock_store(unsigned char lock, unsigned char* bdata) {
+inline int encrypt_lock_store(unsigned char lock, unsigned char *bdata)
+{
 	*bdata  = lock;
+	return 0;
 }
 #else
 
