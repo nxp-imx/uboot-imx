@@ -33,5 +33,8 @@
 #define CONFIG_SYS_MMC_ENV_PART		1	/* boot0 area */
 #endif
 
+#define CONFIG_CMD_FS_GENERIC
+#define CONFIG_CMD_EXT4
+
 #endif
 
