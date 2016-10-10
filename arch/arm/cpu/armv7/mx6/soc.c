@@ -243,6 +243,10 @@ static int set_ldo_voltage(enum ldo_reg ldo, u32 mv)
 	u32 val, step, old, reg = readl(&anatop->reg_core);
 	u8 shift;
 
+	/* No LDO_SOC/PU/ARM */
+	if (is_cpu_type(MXC_CPU_MX6SLL))
+		return 0;
+
 	if (mv < 725)
 		val = 0x00;	/* Power gated off */
 	else if (mv > 1450)
@@ -303,7 +307,8 @@ static void clear_mmdc_ch_mask(void)
 
 	/* Clear MMDC channel mask */
 	if (is_cpu_type(MXC_CPU_MX6SX) || is_cpu_type(MXC_CPU_MX6UL) ||
-	    is_cpu_type(MXC_CPU_MX6SL) || is_cpu_type(MXC_CPU_MX6ULL))
+	    is_cpu_type(MXC_CPU_MX6SL) || is_cpu_type(MXC_CPU_MX6ULL) ||
+	    is_cpu_type(MXC_CPU_MX6SLL))
 		reg &= ~(MXC_CCM_CCDR_MMDC_CH1_HS_MASK);
 	else
 		reg &= ~(MXC_CCM_CCDR_MMDC_CH1_HS_MASK | MXC_CCM_CCDR_MMDC_CH0_HS_MASK);
@@ -353,6 +358,7 @@ static void init_bandgap(void)
 		       &anatop->ana_misc0_set);
 	}
 }
+
 
 #ifdef CONFIG_MX6SL
 static void set_preclk_from_osc(void)
@@ -475,7 +481,8 @@ static void imx_set_pcie_phy_power_down(void)
 int arch_cpu_init(void)
 {
 	if (!is_cpu_type(MXC_CPU_MX6SL) && !is_cpu_type(MXC_CPU_MX6SX)
-	    && !is_cpu_type(MXC_CPU_MX6UL) && !is_cpu_type(MXC_CPU_MX6ULL)) {
+	    && !is_cpu_type(MXC_CPU_MX6UL) && !is_cpu_type(MXC_CPU_MX6ULL)
+	    && !is_cpu_type(MXC_CPU_MX6SLL)) {
 		/*
 		 * imx6sl doesn't have pcie at all.
 		 * this bit is not used by imx6sx anymore
@@ -563,11 +570,11 @@ int arch_cpu_init(void)
 	imx_set_wdog_powerdown(false); /* Disable PDE bit of WMCR register */
 
 	if (!is_cpu_type(MXC_CPU_MX6SL) && !is_cpu_type(MXC_CPU_MX6UL) &&
-	    !is_cpu_type(MXC_CPU_MX6ULL))
+	    !is_cpu_type(MXC_CPU_MX6ULL) && !is_cpu_type(MXC_CPU_MX6SLL))
 		imx_set_pcie_phy_power_down();
 
 	if (!is_mx6dqp() && !is_cpu_type(MXC_CPU_MX6UL) &&
-	    !is_cpu_type(MXC_CPU_MX6ULL))
+	    !is_cpu_type(MXC_CPU_MX6ULL) && !is_cpu_type(MXC_CPU_MX6SLL))
 		imx_set_vddpu_power_down();
 
 #ifdef CONFIG_APBH_DMA
@@ -646,6 +653,10 @@ uint mmc_get_env_part(struct mmc *mmc)
 
 int board_postclk_init(void)
 {
+	/* NO LDO SOC on i.MX6SLL */
+	if (is_cpu_type(MXC_CPU_MX6SLL))
+		return 0;
+
 	set_ldo_voltage(LDO_SOC, 1175);	/* Set VDDSOC to 1.175V */
 
 	return 0;
@@ -803,7 +814,7 @@ void s_init(void)
 	u32 reg, periph1, periph2;
 
 	if (is_cpu_type(MXC_CPU_MX6SX) || is_cpu_type(MXC_CPU_MX6UL) ||
-	    is_cpu_type(MXC_CPU_MX6ULL))
+	    is_cpu_type(MXC_CPU_MX6ULL) || is_cpu_type(MXC_CPU_MX6SLL))
 		return;
 
 	/* Due to hardware limitation, on MX6Q we need to gate/ungate all PFDs
