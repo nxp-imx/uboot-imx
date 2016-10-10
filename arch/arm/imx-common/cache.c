@@ -55,7 +55,7 @@ void v7_outer_cache_enable(void)
 	 */
 	setbits_le32(&pl310->pl310_aux_ctrl, L310_SHARED_ATT_OVERRIDE_ENABLE);
 
-#if defined CONFIG_MX6SL
+#if defined(CONFIG_MX6SL) || defined(CONFIG_MX6SLL)
 	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
 	val = readl(&iomux->gpr[11]);
 	if (val & IOMUXC_GPR11_L2CACHE_AS_OCRAM) {
