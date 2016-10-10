@@ -63,7 +63,7 @@ defined(CONFIG_MX6DL)) && !defined(CONFIG_MX6SOLO)
 #define CONFIG_REVISION_TAG
 
 /* Boot options */
-#if (defined(CONFIG_MX6SX) || defined(CONFIG_MX6SL) || defined(CONFIG_MX6UL))
+#if (defined(CONFIG_MX6SX) || defined(CONFIG_MX6SL) || defined(CONFIG_MX6UL) || defined(CONFIG_MX6SLL))
 #define CONFIG_LOADADDR		0x80800000
 #ifndef CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_TEXT_BASE	0x87800000
