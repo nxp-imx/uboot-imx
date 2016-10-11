@@ -175,8 +175,9 @@
 	ldr r1, =0x00400000
 	str r1, [r0, #0x890]
 
-	ldr r1, =0x40404040
+	ldr r1, =0x3A383C40
 	str r1, [r0, #0x848]
+	ldr r1, =0x242C3020	
 	str r1, [r0, #0x850]
 
 	ldr r1, =0x33333333
@@ -219,6 +220,10 @@
 	ldr r1, =0x20000000
 	str r1, [r0, #0x83C]
 
+	ldr r1, =0x00008050
+	str r1, [r0, #0x01C]
+	ldr r1, =0x00008058
+	str r1, [r0, #0x01C]
 	ldr r1, =0x003F8030
 	str r1, [r0, #0x01C]
 	ldr r1, =0x003F8038
