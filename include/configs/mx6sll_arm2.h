@@ -109,6 +109,7 @@
 		"root=/dev/nfs " \
 	"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 		"netboot=echo Booting from net ...; " \
+		"usb start; " \
 		"run netargs; " \
 		"if test ${ip_dyn} = yes; then " \
 			"setenv get_cmd dhcp; " \
@@ -191,6 +192,10 @@
 #define CONFIG_ENV_SPI_MODE		CONFIG_SF_DEFAULT_MODE
 #define CONFIG_ENV_SPI_MAX_HZ		CONFIG_SF_DEFAULT_SPEED
 #endif
+
+/* Network */
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_DHCP
 
 /* USB Configs */
 #define CONFIG_CMD_USB
