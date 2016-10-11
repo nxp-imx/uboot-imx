@@ -144,9 +144,10 @@ typedef u64 iomux_v3_cfg_t;
 #define PAD_CTL_DSE_40ohm	(6 << 3)
 #define PAD_CTL_DSE_34ohm	(7 << 3)
 
-#if defined CONFIG_MX6SL
+#if defined(CONFIG_MX6SL) || defined(CONFIG_MX6SLL)
 #define PAD_CTL_LVE		(1 << 1)
 #define PAD_CTL_LVE_BIT		(1 << 22)
+#define PAD_CTL_IPD_BIT		(1 << 27)
 #endif
 
 #elif defined(CONFIG_VF610)
