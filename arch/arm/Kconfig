@@ -568,6 +568,10 @@ config TARGET_MX6UL_14X14_EVK
         bool "Support mx6ul_14x14_evk"
         select CPU_V7
 
+config TARGET_MX6UL_NXPU_IOPB
+        bool "Support mx6ul_nxpu_iopb"
+        select CPU_V7
+
 config TARGET_MX6UL_14X14_DDR3_ARM2
 	bool "Support mx6ul_14x14_ddr3_arm2"
 	select CPU_V7
@@ -882,6 +886,7 @@ source "board/freescale/mx7d_19x19_lpddr3_arm2/Kconfig"
 source "board/freescale/mx7d_19x19_ddr3_arm2/Kconfig"
 source "board/freescale/mx7dsabresd/Kconfig"
 source "board/freescale/mx6ul_14x14_evk/Kconfig"
+source "board/freescale/mx6ul_nxpu_iopb/Kconfig"
 source "board/freescale/mx6ul_14x14_ddr3_arm2/Kconfig"
 source "board/freescale/mx6ul_14x14_lpddr2_arm2/Kconfig"
 source "board/technexion/picosom-imx6ul/Kconfig"
