@@ -96,6 +96,8 @@ DECLARE_GLOBAL_DATA_PTR;
 	PAD_CTL_PUS_47K_UP  | PAD_CTL_SPEED_LOW |		\
 	PAD_CTL_DSE_80ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
 
+#define VERSION_DET_DDR_SIZE   IMX_GPIO_NR(5, 1)
+
 #ifdef CONFIG_SYS_I2C_MXC
 #define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C2 for PMIC */
@@ -140,6 +142,11 @@ static iomux_v3_cfg_t const usdhc1_pads[] = {
 #endif
 	/* CD */
     MX6_PAD_UART1_RTS_B__GPIO1_IO19 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const version_detection_pads[] = {
+	/* dram size detection */
+	MX6_PAD_SNVS_TAMPER1__GPIO5_IO01 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
 #ifdef CONFIG_SYS_USE_NAND
@@ -229,6 +236,11 @@ static void setup_iomux_fec(int fec_id)
 	imx_iomux_v3_setup_multiple_pads(fec_pads, ARRAY_SIZE(fec_pads));
 }
 #endif
+
+static void setup_iomux_version_detection(void)
+{
+	SETUP_IOMUX_PADS(version_detection_pads);
+}
 
 static void setup_iomux_uart(void)
 {
@@ -706,9 +718,21 @@ u32 get_board_rev(void)
 	return get_cpu_rev();
 }
 
+void version_detection(void)
+{
+	setup_iomux_version_detection();
+	gpio_direction_input(VERSION_DET_DDR_SIZE);
+
+	if (gpio_get_value(VERSION_DET_DDR_SIZE))
+		printf("DRAM size is 512MB \r\n");
+	else
+		printf("DRAM size is 256MB \r\n");
+}
+
 int checkboard(void)
 {
-    puts("Board: PicoSOM i.mx6UL\n");
+	version_detection();
+	puts("Board: PicoSOM i.mx6UL\n");
 
 	return 0;
 }
