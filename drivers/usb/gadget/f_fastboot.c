@@ -979,6 +979,13 @@ static void process_flash_mmc(const char *cmdbuf, char *response)
 					printf("Writing '%s' DONE!\n", ptn->name);
 					sprintf(response, "OKAY");
 				}
+
+				if (strncmp(ptn->name, "gpt", 3) == 0) {
+					/* will force scan the device,
+					   so dev_desc can be re-inited
+					   with the latest data */
+					run_command(mmc_dev, 0);
+				}
 			}
 		}
 	} else {
@@ -2654,6 +2661,7 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 
 #endif
 
+
 #ifdef CONFIG_FASTBOOT_FLASH
 static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 {
@@ -2689,7 +2697,20 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 	strcpy(response, "FAILno flash device defined");
 
 #ifdef CONFIG_FSL_FASTBOOT
+	int gpt_valid_pre = 0;
+	int gpt_valid_pst = 0;
+
+	if (strncmp(cmd, "gpt", 3) == 0)
+		gpt_valid_pre = partition_table_valid();
+
 	rx_process_flash(cmd, response);
+
+	/* If gpt invalid -> valid, write unlock status, also wipe data. */
+	if (strncmp(cmd, "gpt", 3) == 0) {
+		gpt_valid_pst = partition_table_valid();
+		if ((gpt_valid_pre == 0) && (gpt_valid_pst == 1))
+			do_fastboot_unlock();
+	}
 #else
 #ifdef CONFIG_FASTBOOT_FLASH_MMC_DEV
 	fb_mmc_flash_write(cmd, (void *)CONFIG_USB_FASTBOOT_BUF_ADDR,

@@ -300,13 +300,7 @@ void get_slotvar(char *cmd, char *response, size_t chars_left)
 	struct boot_ctl t_bootctl;
 	memset(&t_bootctl, 0, sizeof(t_bootctl));
 
-	ret = read_bootctl(&t_bootctl);
-	if (ret) {
-		error("get_slotvar, read_bootctl failed\n");
-		strcpy(response, "get_slotvar read_bootctl failed");
-		return;
-	}
-
+	/* these two var no need to read_bootctl */
 	if (!strcmp_l1("has-slot:", cmd)) {
 		char *ptnname = NULL;
 		ptnname = strchr(cmd, ':') + 1;
@@ -314,14 +308,25 @@ void get_slotvar(char *cmd, char *response, size_t chars_left)
 			strncat(response, "yes", chars_left);
 		else
 			strncat(response, "no", chars_left);
-	} else if (!strcmp_l1("current-slot", cmd)) {
+		return;
+	} else if (!strcmp_l1("slot-suffixes", cmd)) {
+		strncat(response, "_a,_b", chars_left);
+		return;
+	}
+
+	ret = read_bootctl(&t_bootctl);
+	if (ret) {
+		error("get_slotvar, read_bootctl failed\n");
+		strcpy(response, "get_slotvar read_bootctl failed");
+		return;
+	}
+
+	if (!strcmp_l1("current-slot", cmd)) {
 		unsigned int slot = slot_find(&t_bootctl);
 		if (slot < SLOT_NUM)
 			strncat(response, g_slot_suffix[slot], chars_left);
 		else
 			strncat(response, "no valid slot", chars_left);
-	} else if (!strcmp_l1("slot-suffixes", cmd)) {
-		strncat(response, "_a,_b", chars_left);
 	} else if (!strcmp_l1("slot-successful:", cmd)) {
 		char *suffix = strchr(cmd, ':') + 1;
 		unsigned int slot = slotidx_from_suffix(suffix);

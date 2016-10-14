@@ -64,4 +64,7 @@ int fastboot_wipe_data_partition(void);
 unsigned char fastboot_lock_enable(void);
 
 int display_lock(int lock, int verify);
+
+int partition_table_valid(void);
+
 #endif

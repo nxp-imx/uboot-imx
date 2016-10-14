@@ -193,6 +193,7 @@ inline unsigned char lock_enable_parse(unsigned char* bdata) {
 	return *(bdata + SECTOR_SIZE -1);
 }
 
+static unsigned char g_lockstat = FASTBOOT_UNLOCK;
 /*
  * Set status of the lock&unlock to FSL_FASTBOOT_FB_PART
  * Currently use the very first Byte of FSL_FASTBOOT_FB_PART
@@ -212,7 +213,8 @@ int fastboot_set_lock_stat(unsigned char lock) {
 		&fs_dev_desc, &fs_partition, 1);
 	if (status < 0) {
 		printf("%s:error in getdevice partition.\n", __FUNCTION__);
-		return -1;
+		g_lockstat = lock;
+		return 0;
 	}
 	DEBUG("%s %s partition.start=%d, size=%d\n",FSL_FASTBOOT_FB_DEV,
 		get_mmc_part(FSL_FASTBOOT_FB_PART_NUM), fs_partition.start, fs_partition.size);
@@ -247,7 +249,7 @@ unsigned char fastboot_get_lock_stat(void)
 
 	if (status < 0) {
 		printf("%s:error in getdevice partition.\n", __FUNCTION__);
-		return FASTBOOT_LOCK_ERROR;
+		return g_lockstat;
 	}
 	DEBUG("%s %s partition.start=%d, size=%d\n",FSL_FASTBOOT_FB_DEV,
 		get_mmc_part(FSL_FASTBOOT_FB_PART_NUM), fs_partition.start, fs_partition.size);
@@ -352,7 +354,7 @@ int fastboot_wipe_data_partition(void)
 		get_mmc_part(FSL_FASTBOOT_DATA_PART_NUM), &fs_dev_desc, &fs_partition, 1);
 	if (status < 0) {
 		printf("error in get device partition for wipe /data\n");
-		return -1;
+		return 0;
 	}
 	DEBUG("fs->start=%x, size=%d\n", fs_partition.start, fs_partition.size);
 	status = fs_dev_desc->block_erase(fs_dev_desc->dev, fs_partition.start , fs_partition.size );
@@ -363,4 +365,17 @@ int fastboot_wipe_data_partition(void)
 	mdelay(2000);
 
 	return 0;
+}
+
+int partition_table_valid(void)
+{
+	int status;
+	block_dev_desc_t *fs_dev_desc;
+	disk_partition_t fs_partition;
+
+	status = get_device_and_partition(FSL_FASTBOOT_FB_DEV,
+			get_mmc_part(FSL_FASTBOOT_FB_PART_NUM),
+			&fs_dev_desc, &fs_partition, 1);
+
+	return (status < 0) ? 0 : 1;
 }
