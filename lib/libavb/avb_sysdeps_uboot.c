@@ -22,11 +22,9 @@
  * SOFTWARE.
  */
 
-#include <endian.h>
-#include <stdarg.h>
-#include <stdio.h>
+#include <common.h>
 #include <stdlib.h>
-#include <string.h>
+#include <linux/string.h>
 
 #include "avb_sysdeps.h"
 
@@ -46,9 +44,9 @@ int avb_strcmp(const char* s1, const char* s2) { return strcmp(s1, s2); }
 
 size_t avb_strlen(const char* str) { return strlen(str); }
 
-void avb_abort(void) { abort(); }
+void avb_abort(void) { panic("avb_abort!\n"); }
 
-void avb_print(const char* message) { fprintf(stderr, "%s", message); }
+void avb_print(const char* message) { printf("%s", message); }
 
 void avb_printv(const char* message, ...) {
   va_list ap;
@@ -56,7 +54,7 @@ void avb_printv(const char* message, ...) {
 
   va_start(ap, message);
   for (m = message; m != NULL; m = va_arg(ap, const char*)) {
-    fprintf(stderr, "%s", m);
+    printf("%s", m);
   }
   va_end(ap);
 }

@@ -9,7 +9,7 @@ ccflags-y += -D_FILE_OFFSET_BITS=64 \
 			-Wno-psabi \
 			-Wno-unused-parameter \
 			-ffunction-sections \
-			-fstack-protector-strong
+			-std=gnu99
 obj-y += avb_ab_flow.o \
 		avb_descriptor.o \
 		avb_kernel_cmdline_descriptor.o \
@@ -26,4 +26,4 @@ obj-y += avb_ab_flow.o \
 		avb_hashtree_descriptor.o \
 		avb_sha256.o \
 		avb_util.o \
-		avb_sysdeps_posix.o
+		avb_sysdeps_uboot.o
