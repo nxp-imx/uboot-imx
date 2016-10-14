@@ -1,0 +1,188 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
+/*
+ * (C) Copyright 2016 NXP.
+ *
+ * Configuration settings for the Freescale S32V234 EVB board.
+ */
+
+#ifndef __S32V234_COMMON_H
+#define __S32V234_COMMON_H
+
+#include <asm/arch/imx-regs.h>
+
+#define CONFIG_S32V234
+
+/* Config GIC */
+#define CONFIG_GICV2
+#define GICD_BASE 0x7D001000
+#define GICC_BASE 0x7D002000
+
+#define CONFIG_REMAKE_ELF
+#undef CONFIG_RUN_FROM_IRAM_ONLY
+
+#define CONFIG_RUN_FROM_DDR1
+#undef CONFIG_RUN_FROM_DDR0
+
+#define CONFIG_SYS_FSL_DRAM_BASE1       0x80000000
+#define CONFIG_SYS_FSL_DRAM_SIZE1       CONFIG_SYS_DDR_SIZE
+#define CONFIG_SYS_FSL_DRAM_BASE2       0xC0000000
+#define CONFIG_SYS_FSL_DRAM_SIZE2       0x40000000
+
+/* Run by default from DDR1  */
+#ifdef CONFIG_RUN_FROM_DDR0
+#define DDR_BASE_ADDR			CONFIG_SYS_FSL_DRAM_BASE1
+#else
+#define DDR_BASE_ADDR			CONFIG_SYS_FSL_DRAM_BASE2
+#endif
+
+#define CONFIG_MACH_TYPE		4146
+
+#define CONFIG_SKIP_LOWLEVEL_INIT
+
+/* Config CACHE */
+#define CONFIG_CMD_CACHE
+
+#define CONFIG_SYS_FULL_VA
+
+/* Enable passing of ATAGs */
+#define CONFIG_CMDLINE_TAG
+
+/* SMP definitions */
+#define CONFIG_MAX_CPUS				(4)
+#define SECONDARY_CPU_BOOT_PAGE		(CONFIG_SYS_SDRAM_BASE)
+#define CPU_RELEASE_ADDR			SECONDARY_CPU_BOOT_PAGE
+#define CONFIG_FSL_SMP_RELEASE_ALL
+#define CONFIG_ARMV8_SWITCH_TO_EL1
+
+/* SMP Spin Table Definitions */
+#define CONFIG_MP
+
+/* Flat device tree definitions */
+#define CONFIG_OF_FDT
+#define CONFIG_OF_BOARD_SETUP
+
+/* Generic Timer Definitions */
+#define COUNTER_FREQUENCY               (1000000000)	/* 1000MHz */
+#define CONFIG_SYS_FSL_ERRATUM_A008585
+
+/* Size of malloc() pool */
+#ifdef CONFIG_RUN_FROM_IRAM_ONLY
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 1 * 1024 * 1024)
+#else
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
+#endif
+
+#define LINFLEXUART_BASE		LINFLEXD0_BASE_ADDR
+
+#define CONFIG_DEBUG_UART_LINFLEXUART
+#define CONFIG_DEBUG_UART_BASE		LINFLEXUART_BASE
+
+/* Allow to overwrite serial and ethaddr */
+#define CONFIG_ENV_OVERWRITE
+#define CONFIG_SYS_UART_PORT		(1)
+
+#define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC_BASE_ADDR
+#define CONFIG_SYS_FSL_ESDHC_NUM	1
+
+#define CONFIG_CMD_MMC
+/* #define CONFIG_CMD_EXT2 EXT2 Support */
+
+#ifdef CONFIG_SYS_USE_NAND
+/* Nand Flash Configs */
+#define CONFIG_JFFS2_NAND
+#define MTD_NAND_FSL_NFC_SWECC 1
+#define CONFIG_NAND_FSL_NFC
+#define CONFIG_SYS_NAND_BASE		0x400E0000
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define NAND_MAX_CHIPS			CONFIG_SYS_MAX_NAND_DEVICE
+#define CONFIG_SYS_NAND_SELECT_DEVICE
+#define CONFIG_SYS_64BIT_VSPRINTF	/* needed for nand_util.c */
+#endif
+
+#define CONFIG_LOADADDR			0xC307FFC0
+
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	"boot_scripts=boot.scr.uimg boot.scr\0" \
+	"scriptaddr=" __stringify(CONFIG_LOADADDR) "\0" \
+	"console=ttyLF0,115200\0" \
+	"fdt_file=s32v234-evb.dtb\0" \
+	"fdt_high=0xffffffff\0" \
+	"initrd_high=0xffffffff\0" \
+	"fdt_addr_r=0xC2000000\0" \
+	"kernel_addr_r=0xC307FFC0\0" \
+	"ramdisk_addr_r=0xC4000000\0" \
+	"ramdisk=rootfs.uimg\0"\
+	"ip_dyn=yes\0" \
+	"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
+	"update_sd_firmware_filename=u-boot.s32\0" \
+	"update_sd_firmware=" \
+		"if test ${ip_dyn} = yes; then " \
+			"setenv get_cmd dhcp; " \
+		"else " \
+			"setenv get_cmd tftp; " \
+		"fi; " \
+		"if mmc dev ${mmcdev}; then "	\
+			"if ${get_cmd} ${update_sd_firmware_filename}; then " \
+				"setexpr fw_sz ${filesize} / 0x200; " \
+				"setexpr fw_sz ${fw_sz} + 1; "	\
+				"mmc write ${loadaddr} 0x2 ${fw_sz}; " \
+			"fi; "	\
+		"fi\0" \
+	"loadramdisk=fatload mmc ${mmcdev}:${mmcpart} ${ramdisk_addr} \
+		${ramdisk}\0" \
+	"jtagboot=echo Booting using jtag...; " \
+		"bootm ${kernel_addr} ${ramdisk_addr} ${fdt_addr}\0" \
+	"jtagsdboot=echo Booting loading Linux with ramdisk from SD...; " \
+		"run loaduimage; run loadramdisk; run loadfdt;"\
+		"bootm ${kernel_addr} ${ramdisk_addr} ${fdt_addr}\0" \
+	"boot_net_usb_start=true\0" \
+	BOOTENV
+
+#define BOOT_TARGET_DEVICES(func) \
+	func(MMC, mmc, 1) \
+	func(MMC, mmc, 0) \
+	func(DHCP, dhcp, na)
+
+#define CONFIG_BOOTCOMMAND \
+	"run distro_bootcmd"
+
+#include <config_distro_bootcmd.h>
+
+/* Miscellaneous configurable options */
+#define CONFIG_SYS_PROMPT		"=> "
+
+#define CONFIG_SYS_MEMTEST_START	(DDR_BASE_ADDR)
+#define CONFIG_SYS_MEMTEST_END		(DDR_BASE_ADDR + \
+						(CONFIG_SYS_DDR_SIZE - 1))
+
+#define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
+#define CONFIG_SYS_HZ				1000
+
+#define CONFIG_SYS_TEXT_OFFSET		0x00020000
+
+#ifdef CONFIG_RUN_FROM_IRAM_ONLY
+#define CONFIG_SYS_MALLOC_BASE		(DDR_BASE_ADDR)
+#endif
+
+/* Physical memory map */
+#define CONFIG_NR_DRAM_BANKS	1
+#define PHYS_SDRAM			(DDR_BASE_ADDR)
+#define PHYS_SDRAM_SIZE			(CONFIG_SYS_DDR_SIZE)
+
+#define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM
+#define CONFIG_SYS_INIT_RAM_ADDR	IRAM_BASE_ADDR
+#define CONFIG_SYS_INIT_RAM_SIZE	IRAM_SIZE
+
+#define CONFIG_SYS_INIT_SP_OFFSET \
+	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE - \
+	 CONFIG_SYS_TEXT_OFFSET)
+#define CONFIG_SYS_INIT_SP_ADDR \
+	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
+
+/* environment organization */
+
+#define CONFIG_SYS_MMC_ENV_DEV		0
+
+#define CONFIG_BOOTP_BOOTFILESIZE
+
+#endif
