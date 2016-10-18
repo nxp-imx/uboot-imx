@@ -27,3 +27,4 @@ obj-y += avb_ab_flow.o \
 		avb_sha256.o \
 		avb_util.o \
 		avb_sysdeps_uboot.o
+obj-y += fsl/

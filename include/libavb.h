@@ -31,20 +31,22 @@
  */
 
 #define AVB_INSIDE_LIBAVB_H
-#include "avb_ab_flow.h"
-#include "avb_chain_partition_descriptor.h"
-#include "avb_crypto.h"
-#include "avb_descriptor.h"
-#include "avb_footer.h"
-#include "avb_hash_descriptor.h"
-#include "avb_hashtree_descriptor.h"
-#include "avb_kernel_cmdline_descriptor.h"
-#include "avb_ops.h"
-#include "avb_property_descriptor.h"
-#include "avb_slot_verify.h"
-#include "avb_sysdeps.h"
-#include "avb_util.h"
-#include "avb_vbmeta_image.h"
+#include "../lib/libavb/avb_ab_flow.h"
+#include "../lib/libavb/avb_chain_partition_descriptor.h"
+#include "../lib/libavb/avb_crypto.h"
+#include "../lib/libavb/avb_descriptor.h"
+#include "../lib/libavb/avb_footer.h"
+#include "../lib/libavb/avb_hash_descriptor.h"
+#include "../lib/libavb/avb_hashtree_descriptor.h"
+#include "../lib/libavb/avb_kernel_cmdline_descriptor.h"
+#include "../lib/libavb/avb_ops.h"
+#include "../lib/libavb/avb_property_descriptor.h"
+#include "../lib/libavb/avb_slot_verify.h"
+#include "../lib/libavb/avb_sysdeps.h"
+#include "../lib/libavb/avb_util.h"
+#include "../lib/libavb/avb_vbmeta_image.h"
 #undef AVB_INSIDE_LIBAVB_H
+
+#include "../lib/libavb/fsl/fsl_avb.h"
 
 #endif /* LIBAVB_H_ */
