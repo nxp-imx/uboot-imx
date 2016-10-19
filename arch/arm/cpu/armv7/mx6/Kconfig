@@ -102,6 +102,12 @@ config TARGET_MX6SLEVK
 	select DM
 	select DM_THERMAL
 
+config TARGET_MX6SLLEVK
+        bool "mx6sll evk"
+        select MX6SLL
+        select DM
+        select DM_THERMAL
+
 config TARGET_MX6SLL_ARM2
 	bool "mx6sll arm2"
 	select MX6SLL
@@ -249,6 +255,7 @@ source "board/freescale/mx6qarm2/Kconfig"
 source "board/freescale/mx6qsabreauto/Kconfig"
 source "board/freescale/mx6sabresd/Kconfig"
 source "board/freescale/mx6slevk/Kconfig"
+source "board/freescale/mx6sllevk/Kconfig"
 source "board/freescale/mx6sll_arm2/Kconfig"
 source "board/freescale/mx6sxsabresd/Kconfig"
 source "board/freescale/mx6sxsabreauto/Kconfig"
