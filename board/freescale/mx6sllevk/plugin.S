@@ -50,9 +50,9 @@
 	ldr r1, =0x00400000
 	str r1, [r0, #0x890]
 
-	ldr r1, =0x3C3A3C3C
+	ldr r1, =0x3F393B3C
 	str r1, [r0, #0x848]
-	ldr r1, =0x24293625
+	ldr r1, =0x262C3826
 	str r1, [r0, #0x850]
 
 	ldr r1, =0x33333333
