@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013-2016 Freescale Semiconductor, Inc.
  *
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
  *
@@ -876,7 +876,11 @@ void board_fastboot_setup(void)
 #ifdef CONFIG_ANDROID_RECOVERY
 int check_recovery_cmd_file(void)
 {
-    return recovery_check_and_clean_flag();
+#ifdef CONFIG_BCB_SUPPORT
+	return recovery_check_and_clean_command();
+#else
+	return 0;
+#endif
 }
 
 void board_recovery_setup(void)

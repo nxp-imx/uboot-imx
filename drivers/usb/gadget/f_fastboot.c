@@ -1565,13 +1565,13 @@ void fastboot_setup(void)
 	/*get the fastboot dev*/
 	_fastboot_setup_dev();
 
-	/*check if we need to setup recovery*/
-#ifdef CONFIG_ANDROID_RECOVERY
-    check_recovery_mode();
-#endif
-
 	/*load partitions information for the fastboot dev*/
 	_fastboot_load_partitions();
+
+	/*check if we need to setup recovery*/
+#ifdef CONFIG_ANDROID_RECOVERY
+	check_recovery_mode();
+#endif
 
 	parameters_setup();
 }
@@ -1579,7 +1579,7 @@ void fastboot_setup(void)
 /* export to lib_arm/board.c */
 void check_fastboot(void)
 {
-	if (fastboot_check_and_clean_flag())
+	if (fastboot_check_and_clean_command())
 		run_command("fastboot", 0);
 }
 
@@ -2640,7 +2640,7 @@ static void cb_reboot_bootloader(struct usb_ep *ep, struct usb_request *req)
 	fastboot_tx_write_str("OKAY");
 
 	udelay(1000000);
-	fastboot_enable_flag();
+	fastboot_enable_command();
 	do_reset(NULL, 0, 0, NULL);
 }
 #endif

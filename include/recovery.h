@@ -13,8 +13,7 @@ struct reco_envs {
 };
 
 void check_recovery_mode(void);
-int recovery_check_and_clean_flag(void);
-int recovery_check_and_clean_command(void);
+bool recovery_check_and_clean_command(void);
 int check_recovery_cmd_file(void);
 void board_recovery_setup(void);
 int read_boot_reason(void);

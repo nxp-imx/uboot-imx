@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2014-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -886,9 +886,9 @@ void board_fastboot_setup(void)
 int check_recovery_cmd_file(void)
 {
 	int recovery_mode = 0;
-
-	recovery_mode = recovery_check_and_clean_flag();
-
+#ifdef CONFIG_BCB_SUPPORT
+	recovery_mode = recovery_check_and_clean_command();
+#endif
 	return recovery_mode;
 }
 

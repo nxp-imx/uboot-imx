@@ -7,6 +7,7 @@
 #ifndef FSL_FASTBOOT_H
 #define FSL_FASTBOOT_H
 
+#include <common.h>
 #define FASTBOOT_PTENTRY_FLAGS_REPEAT(n)              (n & 0x0f)
 #define FASTBOOT_PTENTRY_FLAGS_REPEAT_MASK            0x0000000F
 
@@ -175,11 +176,10 @@ void fastboot_flash_dump_ptn(void);
 
 
 /* Check the board special boot mode reboot to fastboot mode. */
-int fastboot_check_and_clean_flag(void);
-int fastboot_check_and_clean_command(void);
+bool fastboot_check_and_clean_command(void);
 
 /* Set the flag which reboot to fastboot mode*/
-void fastboot_enable_flag(void);
+void fastboot_enable_command(void);
 
 /*check if fastboot mode is requested by user*/
 void check_fastboot(void);

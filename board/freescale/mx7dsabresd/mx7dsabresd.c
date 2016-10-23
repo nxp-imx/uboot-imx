@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -1187,8 +1187,9 @@ int check_recovery_cmd_file(void)
 	int button_pressed = 0;
 	int recovery_mode = 0;
 
-	recovery_mode = recovery_check_and_clean_flag();
-
+#ifdef CONFIG_BCB_SUPPORT
+	recovery_mode = recovery_check_and_clean_command();
+#endif
 	/* Check Recovery Combo Button press or not. */
 	imx_iomux_v3_setup_multiple_pads(recovery_key_pads,
 		ARRAY_SIZE(recovery_key_pads));
