@@ -53,7 +53,7 @@
 #define CONFIG_CMD_BMODE
 
 #ifdef CONFIG_SYS_BOOT_NAND
-#define CONFIG_MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),-(rootfs) "
+#define CONFIG_MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
 #else
 #define CONFIG_MFG_NAND_PARTITION ""
 #endif
@@ -108,9 +108,9 @@
 	CONFIG_MFG_ENV_SETTINGS \
 	"fdt_addr=0x18000000\0" \
 	"fdt_high=0xffffffff\0"	  \
-	"bootargs=console=" CONFIG_CONSOLE_DEV ",115200 ubi.mtd=4 "  \
+	"bootargs=console=" CONFIG_CONSOLE_DEV ",115200 ubi.mtd=5 "  \
 		"root=ubi0:rootfs rootfstype=ubifs "		     \
-		"mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),-(rootfs)\0"\
+		"mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs)\0"\
 	"bootcmd=nand read ${loadaddr} 0x4000000 0x800000;"\
 		"nand read ${fdt_addr} 0x5000000 0x100000;"\
 		"bootz ${loadaddr} - ${fdt_addr}\0"
