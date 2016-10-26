@@ -145,7 +145,7 @@ static iomux_v3_cfg_t const usdhc2_pads[] = {
 	/* DQS */
 	MX6_PAD_GPIO4_IO21__SD2_STROBE | MUX_PAD_CTRL(NO_PAD_CTRL),
 	/* RST_B */
-	MX6_PAD_SD2_RESET__GPIO4_IO27 | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_SD2_RESET__GPIO4_IO27 | MUX_PAD_CTRL(USDHC_PAD_CTRL | PAD_CTL_LVE),
 };
 
 /* Wifi SD */
@@ -210,7 +210,7 @@ int board_mmc_getcd(struct mmc *mmc)
 
 int board_mmc_init(bd_t *bis)
 {
-	int i;
+	int i, ret;
 
 	/*
 	 * According to the board_mmc_init() the following map is done:
@@ -230,6 +230,10 @@ int board_mmc_init(bd_t *bis)
 		case 1:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
+			/* eMMC connect to 1.8v, so need to set eMMC I/O voltage to 1.8v */
+			ret = readl(usdhc_cfg[1].esdhc_base + 0xc0);	/* vend_spec */
+			ret |= 0x2;
+			writel(ret, (usdhc_cfg[1].esdhc_base + 0xc0));
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
 			gpio_direction_output(USDHC2_PWR_GPIO, 1);
 			break;
