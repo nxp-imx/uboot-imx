@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2014 Freescale Semiconductor, Inc.
+ * Copyright 2014-2016 Freescale Semiconductor, Inc.
  *
  */
 
 #include <common.h>
 #include <linux/libfdt.h>
 #include <fdt_support.h>
+#include <asm/io.h>
+#include <asm/arch/siul.h>
 #include "mp.h"
 
 #ifdef CONFIG_MP
@@ -48,9 +50,29 @@ void ft_fixup_cpu(void *blob)
 }
 #endif
 
+void ft_fixup_soc_revision(void *blob)
+{
+	const u32 socmask_info = readl(SIUL2_MIDR1) &
+		(SIUL2_MIDR1_MINOR_MASK | SIUL2_MIDR1_MAJOR_MASK);
+	const char *path = "/chosen";
+	int ret;
+
+	/* The booting guest may implement its own fixups based on the chip
+	 * revision. One such example is PCIe erratum ERR009852, which can be
+	 * safely ignored iff the chip is newer than revision 0.
+	 * So pass this piece of info along in the FDT.
+	 */
+	ret = fdt_find_and_setprop(blob, path, "soc_revision", &socmask_info,
+				   sizeof(u32), 1);
+	if (ret)
+		printf("WARNING: Could not fix up the S32V234 device-tree, err=%s\n",
+		       fdt_strerror(ret));
+}
+
 void ft_cpu_setup(void *blob, bd_t *bd)
 {
 #ifdef CONFIG_MP
 	ft_fixup_cpu(blob);
 #endif
+	ft_fixup_soc_revision(blob);
 }

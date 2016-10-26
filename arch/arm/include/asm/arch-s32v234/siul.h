@@ -22,6 +22,10 @@
 
 #define SIUL2_IFCPR				(SIUL2_BASE_ADDR + 0x000000C0)
 
+/* SIUL2_MIDR1 masks */
+#define SIUL2_MIDR1_MINOR_MASK		(0xF << 0)
+#define SIUL2_MIDR1_MAJOR_MASK		(0xF << 4)
+
 /* SIUL2_MSCR specifications as stated in Reference Manual:
  * 0 - 359 Output Multiplexed Signal Configuration Registers
  * 512- 1023 Input Multiplexed Signal Configuration Registers */
