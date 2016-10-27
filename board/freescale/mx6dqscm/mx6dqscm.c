@@ -611,7 +611,11 @@ int board_eth_init(bd_t *bis)
 
 static iomux_v3_cfg_t const usb_otg_pads[] = {
 	MX6_PAD_EIM_D22__USB_OTG_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
+#ifdef CONFIG_SCMEVB
+	MX6_PAD_ENET_RX_ER__USB_OTG_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
+#else
 	MX6_PAD_GPIO_1__USB_OTG_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
+#endif
 };
 
 static iomux_v3_cfg_t const usb_hc1_pads[] = {
@@ -627,7 +631,11 @@ static void setup_usb(void)
 	 * set daisy chain for otg_pin_id on 6q.
 	 * for 6dl, this bit is reserved
 	 */
+#ifdef CONFIG_SCMEVB
+	imx_iomux_set_gpr_register(1, 13, 1, 0);
+#else
 	imx_iomux_set_gpr_register(1, 13, 1, 1);
+#endif
 
 	imx_iomux_v3_setup_multiple_pads(usb_hc1_pads,
 					 ARRAY_SIZE(usb_hc1_pads));
