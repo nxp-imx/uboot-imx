@@ -61,7 +61,6 @@
 #define CONFIG_CONSOLE_DEV      "ttymxc0"
 #endif
 #define CONFIG_MMCROOT          "/dev/mmcblk2p2"  /* SDHC3 */
-#define CONFIG_DMFC             "dmfc=3"
 
 #define CONFIG_SYS_MMC_IMG_LOAD_PART    1
 
@@ -346,7 +345,6 @@
 	"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
 	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
-	"dmfc=" CONFIG_DMFC "\0" \
 	"mmcautodetect=yes\0" \
 	"update_sd_firmware=" \
 		"if test ${ip_dyn} = yes; then " \
@@ -364,7 +362,7 @@
 	EMMC_ENV	  \
 	"smp=" CONFIG_SYS_NOSMP "\0"\
 	"mmcargs=setenv bootargs console=${console},${baudrate} ${smp} " \
-		"root=${mmcroot} ${dmfc}\0" \
+		"root=${mmcroot} \0" \
 	"loadbootscript=" \
 		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
@@ -464,7 +462,6 @@
 	"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
 	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
-	"dmfc=" CONFIG_DMFC "\0" \
 	"mmcautodetect=yes\0" \
 	"update_sd_firmware=" \
 		"if test ${ip_dyn} = yes; then " \
@@ -482,7 +479,7 @@
 	EMMC_ENV	  \
 	"smp=" CONFIG_SYS_NOSMP "\0"\
 	"mmcargs=setenv bootargs console=${console},${baudrate} ${smp} " \
-		"root=${mmcroot} ${dmfc} \0" \
+		"root=${mmcroot} \0" \
 	"loadbootscript=" \
 		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
