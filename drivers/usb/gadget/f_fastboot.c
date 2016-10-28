@@ -1830,6 +1830,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			goto fail;
 		}
 		printf(" verify OK, boot '%s%s'\n", avb_loadpart->partition_name, avb_out_data->ab_suffix);
+		setenv("bootargs_sec", avb_out_data->cmdline);
 		image_size = avb_loadpart->data_size;
 		memcpy((void *)load_addr, (void *)hdr, image_size);
 	} else if (lock_status == FASTBOOT_LOCK) { /* && verify fail */
@@ -1865,6 +1866,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			printf("boota: read boot image error\n");
 			goto fail;
 		}
+		setenv("bootargs_sec", "androidboot.slot_suffix=_a");
 #ifdef CONFIG_FASTBOOT_LOCK
 	}
 #endif
