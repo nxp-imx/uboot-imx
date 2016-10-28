@@ -56,7 +56,7 @@ typedef enum {
 const char* avb_slot_verify_result_to_string(AvbSlotVerifyResult result);
 
 /* Maximum number of rollback index slots number supported. */
-#define AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_SLOTS 32
+#define AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_SLOTS 4
 
 /* AvbPartitionData contains data loaded from partitions when using
  * avb_slot_verify(). The |partition_name| field contains the name of
