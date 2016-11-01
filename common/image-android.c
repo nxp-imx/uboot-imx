@@ -15,7 +15,7 @@
 
 static char andr_tmp_str[ANDR_BOOT_ARGS_SIZE + 1];
 
-#ifdef CONFIG_BRILLO_SUPPORT
+#ifdef CONFIG_FSL_BOOTCTL
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include "../drivers/usb/gadget/bootctrl.h"
@@ -86,7 +86,7 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 					serialnr.low);
 #endif
 
-#ifdef CONFIG_BRILLO_SUPPORT
+#ifdef CONFIG_FSL_BOOTCTL
 	char suffixStr[64];
 	sprintf(suffixStr, " androidboot.slot_suffix=%s", get_slot_suffix());
 	strcat(commandline, suffixStr);

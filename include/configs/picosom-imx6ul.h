@@ -36,7 +36,11 @@
 #define CONFIG_REVISION_TAG
 
 /* Size of malloc() pool */
+#ifdef CONFIG_AVB_SUPPORT
+#define CONFIG_SYS_MALLOC_LEN		(32 * SZ_1M)
+#else
 #define CONFIG_SYS_MALLOC_LEN		(16 * SZ_1M)
+#endif
 
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_BOARD_LATE_INIT
@@ -70,6 +74,10 @@
 #define CONFIG_CMD_FAT
 #define CONFIG_DOS_PARTITION
 #define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
+#endif
+
+#ifdef CONFIG_AVB_SUPPORT
+#define CONFIG_PARTITION_UUIDS
 #endif
 
 #undef CONFIG_BOOTM_NETBSD

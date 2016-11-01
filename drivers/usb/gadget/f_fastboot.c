@@ -39,12 +39,18 @@
 #endif
 #endif
 
-#ifdef CONFIG_BRILLO_SUPPORT
+#ifdef CONFIG_FSL_BOOTCTL
 #include "bootctrl.h"
 #endif
+
 #ifdef CONFIG_BCB_SUPPORT
 #include "bcb.h"
 #endif
+
+#ifdef CONFIG_AVB_SUPPORT
+#include <libavb.h>
+#endif
+
 #define FASTBOOT_VERSION		"0.4"
 
 #ifdef CONFIG_FASTBOOT_LOCK
@@ -184,6 +190,11 @@ enum {
 	PTN_SYSTEM_B_INDEX,
 	PTN_ODM_A_INDEX,
 	PTN_ODM_B_INDEX,
+#ifdef CONFIG_AVB_SUPPORT
+	PTN_VBMETA_A_INDEX,
+	PTN_VBMETA_B_INDEX,
+	PTN_AVBKEY_INDEX,
+#endif /* CONFIG_AVB_SUPPORT */
 #else /* CONFIG_BRILLO_SUPPORT */
 	PTN_KERNEL_INDEX,
 	PTN_URAMDISK_INDEX,
@@ -868,10 +879,31 @@ static int is_sparse_partition(struct fastboot_ptentry *ptn)
 		 return 0;
 }
 
+static int strcmp_l1(const char *s1, const char *s2)
+{
+	if (!s1 || !s2)
+		return -1;
+	return strncmp(s1, s2, strlen(s1));
+}
+
 static void process_flash_mmc(const char *cmdbuf, char *response)
 {
 	if (download_bytes) {
 		struct fastboot_ptentry *ptn;
+
+#ifdef CONFIG_AVB_SUPPORT
+		if (!strcmp_l1("avbkey", cmdbuf)) {
+			printf("pubkey len %d\n", download_bytes);
+			if (avbkeyblb_init(interface.transfer_buffer, download_bytes,
+						"avbkey") != 0) {
+				sprintf(response, "FAIL: Write partition");
+			} else {
+				printf("init 'avbkey' DONE!\n");
+				sprintf(response, "OKAY");
+			}
+			return;
+		}
+#endif
 
 		/* Next is the partition name */
 		ptn = fastboot_flash_find_ptn(cmdbuf);
@@ -1189,6 +1221,9 @@ static int _fastboot_parts_add_ptable_entry(int ptable_index,
 		strcpy(ptable[ptable_index].fstype, "emmc");
 	}
 #endif
+#ifdef CONFIG_PARTITION_UUIDS
+	strcpy(ptable[ptable_index].uuid, (const char *)info.uuid);
+#endif
 
 	return 0;
 }
@@ -1349,6 +1384,29 @@ static int _fastboot_parts_load_from_ptable(void)
 					 FASTBOOT_PARTITION_FBMISC_FS,
 					 dev_desc, ptable);
 #endif /* CONFIG_FASTBOOT_LOCK */
+
+#ifdef CONFIG_AVB_SUPPORT
+	_fastboot_parts_add_ptable_entry(PTN_VBMETA_A_INDEX,
+					 CONFIG_ANDROID_VBMETA_A_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_VBMETA_A,
+					 FASTBOOT_PARTITION_VBMETA_FS,
+					 dev_desc, ptable);
+
+	_fastboot_parts_add_ptable_entry(PTN_VBMETA_B_INDEX,
+					 CONFIG_ANDROID_VBMETA_B_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_VBMETA_B,
+					 FASTBOOT_PARTITION_VBMETA_FS,
+					 dev_desc, ptable);
+
+	_fastboot_parts_add_ptable_entry(PTN_AVBKEY_INDEX,
+					 CONFIG_ANDROID_AVBKEY_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_AVBKEY,
+					 FASTBOOT_PARTITION_AVBKEY_FS,
+					 dev_desc, ptable);
+#endif /* CONFIG_AVB_SUPPORT */
 
 #else /* CONFIG_BRILLO_SUPPORT */
 	_fastboot_parts_add_ptable_entry(PTN_KERNEL_INDEX,
@@ -1721,6 +1779,167 @@ bootimg_print_image_hdr(struct andr_img_hdr *hdr)
 
 static struct andr_img_hdr boothdr __aligned(ARCH_DMA_MINALIGN);
 
+#if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
+static AvbOps fsl_avb_ops = {
+	.read_from_partition = fsl_read_from_partition_multi,
+	/* .read_from_partition = fsl_read_from_partition, */
+	.write_to_partition = fsl_write_to_partition,
+	.read_ab_metadata = fsl_read_ab_metadata,
+	.write_ab_metadata = fsl_write_ab_metadata,
+	.validate_vbmeta_public_key = fsl_validate_vbmeta_public_key,
+	.read_rollback_index = fsl_read_rollback_index,
+	.write_rollback_index = fsl_write_rollback_index,
+	.read_is_device_unlocked = fsl_read_is_device_unlocked,
+	.get_unique_guid_for_partition = fsl_get_unique_guid_for_partition
+};
+
+/* we can use avb to verify Trusty if we want */
+const char *requested_partitions[] = {"boot", 0};
+
+int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
+
+	ulong addr = 0;
+	struct andr_img_hdr *hdr = NULL;
+	struct andr_img_hdr *hdrload;
+	ulong image_size;
+
+	AvbABFlowResult avb_result;
+	AvbSlotVerifyData *avb_out_data;
+	AvbPartitionData *avb_loadpart;
+
+#ifdef CONFIG_FASTBOOT_LOCK
+	/* check lock state */
+	FbLockState lock_status = fastboot_get_lock_stat();
+	if (lock_status == FASTBOOT_LOCK_ERROR) {
+		printf("In boota get fastboot lock status error. Set lock status\n");
+		fastboot_set_lock_stat(FASTBOOT_LOCK);
+		lock_status = FASTBOOT_LOCK;
+	}
+	/* if in lock state, do avb verify */
+	avb_result = avb_ab_flow(&fsl_avb_ops, requested_partitions, &avb_out_data);
+	if (avb_result == AVB_AB_FLOW_RESULT_OK) {
+		assert(avb_out_data != NULL);
+		/* load the first partition */
+		avb_loadpart = avb_out_data->loaded_partitions;
+		assert(avb_loadpart != NULL);
+		/* we should use avb_part_data->data as boot image */
+		/* boot image is already read by avb */
+		hdr = (struct andr_img_hdr *)avb_loadpart->data;
+		if (android_image_check_header(hdr)) {
+			printf("boota: bad boot image magic\n");
+			goto fail;
+		}
+		printf(" verify OK, boot '%s%s'\n", avb_loadpart->partition_name, avb_out_data->ab_suffix);
+		image_size = avb_loadpart->data_size;
+		memcpy((void *)load_addr, (void *)hdr, image_size);
+	} else if (lock_status == FASTBOOT_LOCK) { /* && verify fail */
+		/* if in lock state, verify enforce fail */
+		printf(" verify FAIL, state: LOCK\n");
+		goto fail;
+	} else { /* lock_status == FASTBOOT_UNLOCK && verify fail */
+		/* if in unlock state, log the verify state */
+		printf(" verify FAIL, state: UNLOCK\n");
+		printf(" boot 'boot_a' still\n");
+#endif
+		/* if lock/unlock not enabled or verify fail
+		 * in unlock state, will try boot */
+		size_t num_read;
+		hdr = &boothdr;
+
+		/* maybe we should use bootctl to select a/b
+		 * but libavb doesn't export a/b select */
+		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, "boot_a",
+					0, sizeof(boothdr), hdr, &num_read) != AVB_IO_RESULT_OK &&
+				num_read != sizeof(boothdr)) {
+			printf("boota: read bootimage head error\n");
+			goto fail;
+		}
+		if (android_image_check_header(hdr)) {
+			printf("boota: bad boot image magic\n");
+			goto fail;
+		}
+		image_size = android_image_get_end(hdr) - (ulong)hdr;
+		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, "boot_a",
+					0, image_size, (void *)load_addr, &num_read) != AVB_IO_RESULT_OK &&
+				num_read != image_size) {
+			printf("boota: read boot image error\n");
+			goto fail;
+		}
+#ifdef CONFIG_FASTBOOT_LOCK
+	}
+#endif
+
+	flush_cache((ulong)load_addr, image_size);
+	addr = load_addr;
+	hdrload = (struct andr_img_hdr *)load_addr;
+
+	ulong img_ramdisk, img_ramdisk_len;
+	if(android_image_get_ramdisk(hdrload, &img_ramdisk, &img_ramdisk_len) != 0) {
+		printf("boota: mmc failed to read ramdisk\n");
+		goto fail;
+	}
+	memcpy((void *)hdrload->ramdisk_addr, (void *)img_ramdisk, img_ramdisk_len);
+	/* flush cache after read */
+	flush_cache((ulong)hdrload->ramdisk_addr, img_ramdisk_len); /* FIXME */
+
+#ifdef CONFIG_OF_LIBFDT
+	/* load the dtb file */
+	if (hdrload->second_size && hdrload->second_addr) {
+		ulong img_fdt, img_fdt_len;
+		if (android_image_get_fdt(hdrload, &img_fdt, &img_fdt_len) != 0) {
+			printf("boota: mmc failed to dtb\n");
+			goto fail;
+		}
+		memcpy((void *)hdrload->second_addr, (void *)img_fdt, img_fdt_len);
+		/* flush cache after read */
+		flush_cache((ulong)hdrload->second_addr, img_fdt_len); /* FIXME */
+	}
+#endif /*CONFIG_OF_LIBFDT*/
+	printf("kernel   @ %08x (%d)\n", hdrload->kernel_addr, hdrload->kernel_size);
+	printf("ramdisk  @ %08x (%d)\n", hdrload->ramdisk_addr, hdrload->ramdisk_size);
+#ifdef CONFIG_OF_LIBFDT
+	if (hdrload->second_size)
+		printf("fdt      @ %08x (%d)\n", hdrload->second_addr, hdrload->second_size);
+#endif /*CONFIG_OF_LIBFDT*/
+
+	char boot_addr_start[12];
+	char ramdisk_addr[25];
+	char fdt_addr[12];
+
+	char *bootm_args[] = { "bootm", boot_addr_start, ramdisk_addr, fdt_addr};
+
+	sprintf(boot_addr_start, "0x%lx", addr);
+	sprintf(ramdisk_addr, "0x%x:0x%x", hdrload->ramdisk_addr, hdrload->ramdisk_size);
+	sprintf(fdt_addr, "0x%x", hdrload->second_addr);
+
+	if (avb_out_data != NULL)
+		avb_slot_verify_data_free(avb_out_data);
+
+	do_bootm(NULL, 0, 4, bootm_args);
+
+	/* This only happens if image is somehow faulty so we start over */
+	do_reset(NULL, 0, 0, NULL);
+
+	return 1;
+
+fail:
+	/* avb has no recovery */
+	if (avb_out_data != NULL)
+		avb_slot_verify_data_free(avb_out_data);
+
+#if defined(CONFIG_FSL_FASTBOOT)
+	return run_command("fastboot", 0);
+#else
+	return -1;
+#endif
+}
+
+U_BOOT_CMD(
+	boota,	2,	1,	do_boota,
+	"boota   - boot android bootimg \n",
+	"boot from current mmc with avb verify\n"
+);
+#else /* CONFIG_AVB_SUPPORT */
 /* boota <addr> [ mmc0 | mmc1 [ <partition> ] ] */
 int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
@@ -1754,7 +1973,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	if (argc > 2)
 		ptn = argv[2];
-#ifdef CONFIG_BRILLO_SUPPORT
+#ifdef CONFIG_FSL_BOOTCTL
 	else {
 slot_select:
 		ptn = select_slot();
@@ -2016,7 +2235,7 @@ use_given_ptn:
 
 fail:
 
-#if defined(CONFIG_BRILLO_SUPPORT)
+#if defined(CONFIG_FSL_BOOTCTL)
 	if (argc > 2)
 		return -1;
 
@@ -2057,6 +2276,7 @@ U_BOOT_CMD(
 	"\t 'partition' (optional) is the partition id of your device, "
 	"if no partition give, will going to 'boot' partition\n"
 );
+#endif /* CONFIG_AVB_SUPPORT */
 #endif	/* CONFIG_CMD_BOOTA */
 #endif
 
@@ -2270,13 +2490,6 @@ static void cb_reboot(struct usb_ep *ep, struct usb_request *req)
 	fastboot_tx_write_str("OKAY");
 }
 
-static int strcmp_l1(const char *s1, const char *s2)
-{
-	if (!s1 || !s2)
-		return -1;
-	return strncmp(s1, s2, strlen(s1));
-}
-
 static int get_block_size(void)
 {
 	int mmc_no = 0;
@@ -2328,7 +2541,13 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		return;
 	}
 
-#ifdef CONFIG_BRILLO_SUPPORT
+#ifdef CONFIG_AVB_SUPPORT
+	if (is_slotvar_avb(cmd)) {
+		get_slotvar_avb(&fsl_avb_ops, cmd, response, chars_left);
+		fastboot_tx_write_str(response);
+		return;
+	}
+#elif CONFIG_FSL_BOOTCTL
 	if (is_sotvar(cmd)) {
 		get_slotvar(cmd, response, chars_left);
 		fastboot_tx_write_str(response);
@@ -2626,6 +2845,14 @@ static int do_fastboot_unlock(void)
 		fastboot_wipe_data_partition();
 		printf("Wipe /data completed.\n");
 
+#ifdef CONFIG_AVB_SUPPORT
+		printf("Start stored_rollback_index wipe process....\n");
+		status = rbkidx_erase("avbkey");
+		if (status < 0)
+			return status;
+		printf("Wipe stored_rollback_index completed.\n");
+#endif
+
 	} else {
 		printf("It is not able to unlock device.");
 		return -1;
@@ -2812,6 +3039,40 @@ static void cb_erase(struct usb_ep *ep, struct usb_request *req)
 }
 #endif
 
+#ifdef CONFIG_AVB_SUPPORT
+static const char *slot_suffix[2] = {"_a", "_b"};
+static void cb_set_active_avb(struct usb_ep *ep, struct usb_request *req)
+{
+	AvbIOResult ret;
+	unsigned int slot = 0;
+	char *cmd = req->buf;
+
+	strsep(&cmd, ":");
+	if (!cmd) {
+		error("missing slot suffix\n");
+		fastboot_tx_write_str("FAILmissing slot suffix");
+		return;
+	}
+
+	for (slot = 0; slot < 2; slot ++)
+		if (!strcmp(cmd, slot_suffix[slot]))
+			break;
+
+	if (slot >= 2) {
+		fastboot_tx_write_str("FAILerr slot suffix");
+		return;
+	}
+
+	ret = avb_ab_mark_slot_active(&fsl_avb_ops, slot);
+	if (ret != AVB_IO_RESULT_OK)
+		fastboot_tx_write_str("avb IO error");
+	else
+		fastboot_tx_write_str("OKAY");
+
+	return;
+}
+#endif
+
 #ifdef CONFIG_FSL_FASTBOOT
 static void cb_reboot_bootloader(struct usb_ep *ep, struct usb_request *req)
 {
@@ -2872,7 +3133,12 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 		.cb = cb_flashing,
 	},
 #endif
-#ifdef CONFIG_BRILLO_SUPPORT
+#ifdef CONFIG_AVB_SUPPORT
+	{
+		.cmd = "set_active",
+		.cb = cb_set_active_avb,
+	},
+#elif CONFIG_FSL_BOOTCTL
 	{
 		.cmd = "set_active",
 		.cb = cb_set_active,

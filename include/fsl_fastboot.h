@@ -49,6 +49,13 @@
 #define FASTBOOT_PARTITION_DATA "userdata"
 #define FASTBOOT_PARTITION_BOOT_B "boot_b"
 #define FASTBOOT_PARTITION_SYSTEM_B "system_b"
+#ifdef CONFIG_AVB_SUPPORT
+#define FASTBOOT_PARTITION_VBMETA_A "vbmeta_a"
+#define FASTBOOT_PARTITION_VBMETA_B "vbmeta_b"
+#define FASTBOOT_PARTITION_AVBKEY "avbkey"
+#define FASTBOOT_PARTITION_VBMETA_FS		"emmc"
+#define FASTBOOT_PARTITION_AVBKEY_FS		"emmc"
+#endif /* CONFIG_AVB_SUPPORT */
 #else /* CONFIG_BRILLO_SUPPORT */
 #define FASTBOOT_PARTITION_BOOT "boot"
 #define FASTBOOT_PARTITION_RECOVERY "recovery"
@@ -146,6 +153,10 @@ struct fastboot_ptentry {
 	unsigned int partition_index;
 	/* partition file system type in string */
 	char fstype[16];
+	/* filesystem UUID as string, if exists	*/
+#ifdef CONFIG_PARTITION_UUIDS
+	char uuid[37];
+#endif
 };
 
 struct fastboot_device_info {
