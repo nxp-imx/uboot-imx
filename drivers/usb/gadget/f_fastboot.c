@@ -193,7 +193,11 @@ enum {
 	PTN_MISC_INDEX,
 	PTN_DATA_INDEX,
 	PTN_FBMISC_INDEX,
+#ifdef CONFIG_EFI_PARTITION
+	PTN_NUM = 32
+#else
 	PTN_NUM
+#endif
 };
 
 #else
@@ -1172,8 +1176,12 @@ static int _fastboot_parts_add_ptable_entry(int ptable_index,
 
 	if (get_partition_info(dev_desc,
 			       mmc_dos_partition_index, &info)) {
+		/* if part_index exceeds using efi
+		 * fail silently */
+#ifndef CONFIG_EFI_PARTITION
 		printf("%s, Bad partition index:%d for partition:%s\n",
 		       __func__, mmc_dos_partition_index, name);
+#endif
 		return -1;
 	}
 
