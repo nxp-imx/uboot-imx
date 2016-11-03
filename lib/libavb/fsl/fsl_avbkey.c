@@ -7,10 +7,17 @@
 #include <common.h>
 #include <stdlib.h>
 #include <fsl_caam.h>
+#include <fuse.h>
 
 #include "fsl_avb.h"
 #include "fsl_avbkey.h"
 #include "debug.h"
+
+/* bank 15, GP7, 0xc80[31:0] */
+#define AVBKEY_FUSE_BANK 15
+#define AVBKEY_FUSE_WORD 0
+#define AVBKEY_FUSE_MASK 0xffffffff
+#define AVBKEY_FUSE_INIT 0x4156424b /* 'avbk' */
 
 
 static int encrypt_write(uint8_t *plain, uint32_t len, const char * part, size_t offset) {
@@ -93,6 +100,36 @@ int avbkeyblb_init(uint8_t *plainkey, uint32_t keylen, const char * kblb_part) {
 	int i;
 	kblb_hdr_t hdr;
 	kblb_tag_t *tag;
+	uint32_t fuse_val;
+
+	/* read fuse to check enable init */
+	/* fuse_read read the shadow reg of fuse
+	 * use fuse_sense to real read fuse */
+#ifdef CONFIG_AVB_FUSE
+	if (fuse_sense(AVBKEY_FUSE_BANK, AVBKEY_FUSE_WORD, &fuse_val)) {
+#else
+	if (fuse_read(AVBKEY_FUSE_BANK, AVBKEY_FUSE_WORD, &fuse_val)) {
+#endif
+		ERR("read fuse error\n");
+		return -1;
+	}
+	if ((fuse_val & AVBKEY_FUSE_MASK) == AVBKEY_FUSE_INIT) {
+		ERR("key already init\n");
+		return -1;
+	}
+	fuse_val = AVBKEY_FUSE_MASK & AVBKEY_FUSE_INIT;
+
+	/* write fuse to prevent init again */
+	/* fuse_override write the shadow reg of fuse
+	 * use fuse_prog to PERMANENT write fuse */
+#ifdef CONFIG_AVB_FUSE
+	if (fuse_prog(AVBKEY_FUSE_BANK, AVBKEY_FUSE_WORD, fuse_val)) {
+#else
+	if (fuse_override(AVBKEY_FUSE_BANK, AVBKEY_FUSE_WORD, fuse_val)) {
+#endif
+		ERR("write fuse error\n");
+		return -1;
+	}
 
 	assert(plainkey != NULL);
 
