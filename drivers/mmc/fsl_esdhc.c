@@ -644,6 +644,9 @@ static int esdhc_init(struct mmc *mmc)
 	esdhc_setbits32(&regs->vendorspec, ESDHC_VENDORSPEC_VSELECT);
 #endif
 
+	if (cfg->vs18_enable)
+		esdhc_setbits32(&regs->vendorspec, ESDHC_VENDORSPEC_VSELECT);
+
 	return 0;
 }
 
@@ -712,6 +715,8 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	esdhc_setbits32(&regs->vendorspec, VENDORSPEC_PEREN | VENDORSPEC_HCKEN
 				| VENDORSPEC_IPGEN | VENDORSPEC_CKEN);
 #endif
+	if (cfg->vs18_enable)
+                esdhc_setbits32(&regs->vendorspec, ESDHC_VENDORSPEC_VSELECT);
 
 	writel(SDHCI_IRQ_EN_BITS, &regs->irqstaten);
 	memset(&cfg->cfg, 0, sizeof(cfg->cfg));
