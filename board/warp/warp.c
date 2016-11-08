@@ -62,7 +62,7 @@ static void setup_iomux_uart(void)
 }
 
 static struct fsl_esdhc_cfg usdhc_cfg[1] = {
-	{USDHC2_BASE_ADDR},
+	{USDHC2_BASE_ADDR, 0, 8, 0, 1}, /* fixed 1.8v IO voltage for eMMC chip */
 };
 
 int board_mmc_getcd(struct mmc *mmc)
