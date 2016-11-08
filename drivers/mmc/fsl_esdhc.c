@@ -2,6 +2,8 @@
  * Copyright 2007, 2010-2011 Freescale Semiconductor, Inc
  * Andy Fleming
  *
+ * Copyright 2017 NXP
+ *
  * Based vaguely on the pxa mmc code:
  * (C) Copyright 2003
  * Kyle Harris, Nexus Technologies, Inc. kharris@nexus-tech.net
@@ -22,6 +24,7 @@
 #include <asm/io.h>
 #include <dm.h>
 #include <asm-generic/gpio.h>
+#include <power/regulator.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -104,6 +107,7 @@ struct fsl_esdhc_priv {
 	struct udevice *dev;
 	int non_removable;
 	int wp_enable;
+	int vs18_enable;
 #ifdef CONFIG_DM_GPIO
 	struct gpio_desc cd_gpio;
 	struct gpio_desc wp_gpio;
@@ -673,6 +677,9 @@ static int esdhc_init(struct mmc *mmc)
 	esdhc_setbits32(&regs->vendorspec, ESDHC_VENDORSPEC_VSELECT);
 #endif
 
+	if (priv->vs18_enable)
+		esdhc_setbits32(&regs->vendorspec, ESDHC_VENDORSPEC_VSELECT);
+
 	return 0;
 }
 
@@ -733,6 +740,7 @@ static int fsl_esdhc_cfg_to_priv(struct fsl_esdhc_cfg *cfg,
 	priv->bus_width = cfg->max_bus_width;
 	priv->sdhc_clk = cfg->sdhc_clk;
 	priv->wp_enable  = cfg->wp_enable;
+	priv->vs18_enable  = cfg->vs18_enable;
 
 	return 0;
 };
@@ -758,6 +766,8 @@ static int fsl_esdhc_init(struct fsl_esdhc_priv *priv)
 	esdhc_setbits32(&regs->vendorspec, VENDORSPEC_PEREN |
 			VENDORSPEC_HCKEN | VENDORSPEC_IPGEN | VENDORSPEC_CKEN);
 #endif
+	if (priv->vs18_enable)
+		esdhc_setbits32(&regs->vendorspec, ESDHC_VENDORSPEC_VSELECT);
 
 	writel(SDHCI_IRQ_EN_BITS, &regs->irqstaten);
 	memset(&priv->cfg, 0, sizeof(priv->cfg));
@@ -958,6 +968,7 @@ static int fsl_esdhc_probe(struct udevice *dev)
 	fdt_addr_t addr;
 	unsigned int val;
 	int ret;
+	struct udevice *vqmmc_dev;
 
 	addr = dev_get_addr(dev);
 	if (addr == FDT_ADDR_T_NONE)
@@ -992,6 +1003,15 @@ static int fsl_esdhc_probe(struct udevice *dev)
 	if (ret)
 		priv->wp_enable = 0;
 #endif
+
+#ifdef CONFIG_DM_REGULATOR
+	ret = device_get_supply_regulator(dev, "vqmmc-supply", &vqmmc_dev);
+	if (ret) {
+		if (regulator_get_value(vqmmc_dev) == 1800000)
+			priv->vs18_enable = 1;
+	}
+#endif
+
 	/*
 	 * TODO:
 	 * Because lack of clk driver, if SDHC clk is not enabled,

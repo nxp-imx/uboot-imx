@@ -178,6 +178,7 @@ struct fsl_esdhc_cfg {
 	u32	sdhc_clk;
 	u8	max_bus_width;
 	u8	wp_enable;
+	u8	vs18_enable; /*default use 1.8v if this var is not 0*/
 	struct mmc_config cfg;
 };
 
