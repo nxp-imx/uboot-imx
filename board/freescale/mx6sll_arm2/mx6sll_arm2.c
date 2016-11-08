@@ -180,7 +180,7 @@ static void setup_iomux_uart(void)
 #ifdef CONFIG_FSL_ESDHC
 static struct fsl_esdhc_cfg usdhc_cfg[CONFIG_SYS_FSL_USDHC_NUM] = {
 	{USDHC1_BASE_ADDR, 0, 8, 1},
-	{USDHC2_BASE_ADDR, 0, 8},
+	{USDHC2_BASE_ADDR, 0, 8, 0, 1}, /* fixed 1.8v IO voltage for eMMC chip */
 	{USDHC3_BASE_ADDR, 0, 4},
 };
 
@@ -220,7 +220,7 @@ int board_mmc_getcd(struct mmc *mmc)
 
 int board_mmc_init(bd_t *bis)
 {
-	int i, ret;
+	int i;
 
 	/*
 	 * According to the board_mmc_init() the following map is done:
@@ -241,10 +241,6 @@ int board_mmc_init(bd_t *bis)
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
-			/* eMMC connect to 1.8v, so need to set eMMC I/O voltage to 1.8v */
-			ret = readl(usdhc_cfg[1].esdhc_base + 0xc0);	/* vend_spec */
-			ret |= 0x2;
-			writel(ret, (usdhc_cfg[1].esdhc_base + 0xc0));
 			gpio_direction_output(USDHC2_PWR_GPIO, 1);
 			break;
 		case 2:
