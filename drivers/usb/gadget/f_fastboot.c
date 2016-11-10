@@ -2669,6 +2669,19 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 
 #endif
 
+static int partition_table_valid(void)
+{
+	int status, mmc_no;
+	block_dev_desc_t *dev_desc;
+	disk_partition_t info;
+
+	mmc_no = fastboot_devinfo.dev_id;
+	dev_desc = get_dev("mmc", mmc_no);
+
+	status = get_partition_info(dev_desc, 1, &info);
+
+	return (status == 0);
+}
 
 #ifdef CONFIG_FASTBOOT_FLASH
 static void cb_flash(struct usb_ep *ep, struct usb_request *req)

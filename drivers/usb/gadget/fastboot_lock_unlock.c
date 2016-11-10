@@ -366,16 +366,3 @@ int fastboot_wipe_data_partition(void)
 
 	return 0;
 }
-
-int partition_table_valid(void)
-{
-	int status;
-	block_dev_desc_t *fs_dev_desc;
-	disk_partition_t fs_partition;
-
-	status = get_device_and_partition(FSL_FASTBOOT_FB_DEV,
-			get_mmc_part(FSL_FASTBOOT_FB_PART_NUM),
-			&fs_dev_desc, &fs_partition, 1);
-
-	return (status < 0) ? 0 : 1;
-}
