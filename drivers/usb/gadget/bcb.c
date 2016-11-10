@@ -10,29 +10,23 @@
 #include <linux/types.h>
 #include <common.h>
 #include <g_dnl.h>
+#include <fsl_fastboot.h>
 static unsigned int g_mmc_id;
 void set_mmc_id(unsigned int id)
 {
 	g_mmc_id = id;
 }
 #define ALIGN_BYTES 64 /*armv7 cache line need 64 bytes aligned */
-static ulong get_block_size(char *ifname, int dev, int part)
+static ulong get_block_size(char *ifname, int dev)
 {
 	block_dev_desc_t *dev_desc = NULL;
-	disk_partition_t part_info;
 
 	dev_desc = get_dev(ifname, dev);
 	if (dev_desc == NULL) {
 		printf("Block device %s %d not supported\n", ifname, dev);
 		return 0;
 	}
-
-	if (get_partition_info(dev_desc, part, &part_info)) {
-		printf("Cannot find partition %d\n", part);
-		return 0;
-	}
-
-	return part_info.blksz;
+	return dev_desc->blksz;
 }
 
 static int do_write(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -124,8 +118,7 @@ int rw_block(bool bread, char **ppblock,
 	if (!bread && (pblock_write == NULL))
 		return -1;
 
-	blk_size = get_block_size("mmc", g_mmc_id,
-		CONFIG_ANDROID_MISC_PARTITION_MMC);
+	blk_size = get_block_size("mmc", g_mmc_id);
 	if (blk_size == 0) {
 		printf("rw_block, get_block_size return 0\n");
 		return -1;
@@ -135,9 +128,15 @@ int rw_block(bool bread, char **ppblock,
 	blk_end = (offset + size)/blk_size;
 	block_cnt = 1 + (blk_end - blk_begin);
 
+	/* get misc part index from gpt table created by fastboot */
+	struct fastboot_ptentry *ptentry = fastboot_flash_find_ptn(FASTBOOT_PARTITION_MISC);
+	if (ptentry == NULL) {
+		printf("rw_block, cannot get the partion info for %s\n",
+			FASTBOOT_PARTITION_MISC);
+		return -1;
+	}
 
-	sprintf(devpart_str, "0x%x:0x%x", g_mmc_id,
-		CONFIG_ANDROID_MISC_PARTITION_MMC);
+	sprintf(devpart_str, "0x%x:0x%x", g_mmc_id, ptentry->partition_index);
 	sprintf(block_begin_str, "0x%x", blk_begin);
 	sprintf(cnt_str, "0x%x", block_cnt);
 

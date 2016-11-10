@@ -1647,13 +1647,13 @@ void fastboot_setup(void)
 	/*get the fastboot dev*/
 	_fastboot_setup_dev();
 
+	/*load partitions information for the fastboot dev*/
+	_fastboot_load_partitions();
+
 	/*check if we need to setup recovery*/
 #ifdef CONFIG_ANDROID_RECOVERY
     check_recovery_mode();
 #endif
-
-	/*load partitions information for the fastboot dev*/
-	_fastboot_load_partitions();
 
 	parameters_setup();
 }
