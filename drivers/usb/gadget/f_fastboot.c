@@ -171,49 +171,36 @@ static struct usb_gadget_strings *fastboot_strings[] = {
 
 #define MMC_SATA_BLOCK_SIZE 512
 #define FASTBOOT_FBPARTS_ENV_MAX_LEN 1024
-/* To support the Android-style naming of flash */
-#define MAX_PTN		    16
-
 
 /*pentry index internally*/
-#ifdef CONFIG_BRILLO_SUPPORT
-
 enum {
-#ifdef CONFIG_EFI_PARTITION
-	PTN_GPT_INDEX = 0,
-#endif
-	PTN_MBR_INDEX = 0,
+	PTN_MBR_GPT_INDEX = 0,
 	PTN_BOOTLOADER_INDEX,
+#ifndef CONFIG_EFI_PARTITION
+#ifdef CONFIG_BRILLO_SUPPORT
 	PTN_BOOT_A_INDEX,
 	PTN_BOOT_B_INDEX,
 	PTN_SYSTEM_A_INDEX,
 	PTN_SYSTEM_B_INDEX,
 	PTN_ODM_A_INDEX,
 	PTN_ODM_B_INDEX,
-	PTN_MISC_INDEX,
-	PTN_DATA_INDEX,
-	PTN_FBMISC_INDEX,
-#ifdef CONFIG_EFI_PARTITION
-	PTN_NUM = 32
-#else
-	PTN_NUM
-#endif
-};
-
-#else
-
-enum {
-	PTN_MBR_INDEX = 0,
-	PTN_BOOTLOADER_INDEX,
+#else /* CONFIG_BRILLO_SUPPORT */
 	PTN_KERNEL_INDEX,
 	PTN_URAMDISK_INDEX,
 	PTN_SYSTEM_INDEX,
 	PTN_RECOVERY_INDEX,
+#ifdef CONFIG_FASTBOOT_LOCK
+	PTN_PRDATA_INDEX,
+#endif /* CONFIG_FASTBOOT_LOCK */
+#endif /* CONFIG_BRILLO_SUPPORT */
 	PTN_DATA_INDEX,
-	PTN_NUM
+	PTN_MISC_INDEX,
+#ifdef CONFIG_FASTBOOT_LOCK
+	PTN_FBMISC_INDEX,
+#endif /* CONFIG_FASTBOOT_LOCK */
+#endif /* CONFIG_EFI_PARTITION */
+	MAX_PTN_NUM = 32
 };
-
-#endif
 
 static unsigned int download_bytes_unpadded;
 
@@ -1108,7 +1095,7 @@ static void parameters_setup(void)
 				CONFIG_USB_FASTBOOT_BUF_SIZE;
 }
 
-static struct fastboot_ptentry g_ptable[MAX_PTN];
+static struct fastboot_ptentry g_ptable[MAX_PTN_NUM];
 static unsigned int g_pcount;
 struct fastboot_device_info fastboot_devinfo;
 
@@ -1220,7 +1207,7 @@ static int _fastboot_parts_load_from_ptable(void)
 
 	struct mmc *mmc;
 	block_dev_desc_t *dev_desc;
-	struct fastboot_ptentry ptable[PTN_NUM];
+	struct fastboot_ptentry ptable[MAX_PTN_NUM];
 
 	/* sata case in env */
 	if (fastboot_devinfo.type == DEV_SATA) {
@@ -1267,21 +1254,20 @@ static int _fastboot_parts_load_from_ptable(void)
 	}
 
 	memset((char *)ptable, 0,
-		    sizeof(struct fastboot_ptentry) * (PTN_NUM));
+		    sizeof(struct fastboot_ptentry) * (MAX_PTN_NUM));
 
 #ifdef CONFIG_EFI_PARTITION
 	/* GPT */
-	strcpy(ptable[PTN_GPT_INDEX].name, "gpt");
-	ptable[PTN_GPT_INDEX].start = ANDROID_GPT_OFFSET / dev_desc->blksz;
-	ptable[PTN_GPT_INDEX].length = ANDROID_GPT_SIZE / dev_desc->blksz;
-	ptable[PTN_GPT_INDEX].partition_id = user_partition;
+	strcpy(ptable[PTN_MBR_GPT_INDEX].name, "gpt");
+	ptable[PTN_MBR_GPT_INDEX].start = ANDROID_GPT_OFFSET / dev_desc->blksz;
+	ptable[PTN_MBR_GPT_INDEX].length = ANDROID_GPT_SIZE / dev_desc->blksz;
 #else
 	/* MBR */
-	strcpy(ptable[PTN_MBR_INDEX].name, "mbr");
-	ptable[PTN_MBR_INDEX].start = ANDROID_MBR_OFFSET / dev_desc->blksz;
-	ptable[PTN_MBR_INDEX].length = ANDROID_MBR_SIZE / dev_desc->blksz;
-	ptable[PTN_MBR_INDEX].partition_id = user_partition;
+	strcpy(ptable[PTN_MBR_GPT_INDEX].name, "mbr");
+	ptable[PTN_MBR_GPT_INDEX].start = ANDROID_MBR_OFFSET / dev_desc->blksz;
+	ptable[PTN_MBR_GPT_INDEX].length = ANDROID_MBR_SIZE / dev_desc->blksz;
 #endif
+	ptable[PTN_MBR_GPT_INDEX].partition_id = user_partition;
 
 	/* Bootloader */
 	strcpy(ptable[PTN_BOOTLOADER_INDEX].name, FASTBOOT_PARTITION_BOOTLOADER);
@@ -1291,14 +1277,12 @@ static int _fastboot_parts_load_from_ptable(void)
 				 ANDROID_BOOTLOADER_SIZE / dev_desc->blksz;
 	ptable[PTN_BOOTLOADER_INDEX].partition_id = boot_partition;
 
-#ifdef CONFIG_BRILLO_SUPPORT
-
 #ifdef CONFIG_EFI_PARTITION
 
 	int tbl_idx;
 	int part_idx = 1;
 	int ret;
-	for (tbl_idx = 2; tbl_idx < PTN_NUM; tbl_idx++) {
+	for (tbl_idx = 2; tbl_idx < MAX_PTN_NUM; tbl_idx++) {
 		ret = _fastboot_parts_add_ptable_entry(tbl_idx,
 					 part_idx++,
 					 user_partition,
@@ -1310,7 +1294,9 @@ static int _fastboot_parts_load_from_ptable(void)
 			break;
 	}
 
-#else
+#else /* CONFIG_EFI_PARTITION */
+
+#ifdef CONFIG_BRILLO_SUPPORT
 
 	_fastboot_parts_add_ptable_entry(PTN_BOOT_A_INDEX,
 					 CONFIG_ANDROID_BOOT_PARTITION_MMC,
@@ -1355,7 +1341,14 @@ static int _fastboot_parts_load_from_ptable(void)
 					 FASTBOOT_PARTITION_DATA_FS,
 					 dev_desc, ptable);
 
-#endif /* CONFIG_EFI_PARTITION */
+#ifdef CONFIG_FASTBOOT_LOCK
+	_fastboot_parts_add_ptable_entry(PTN_FBMISC_INDEX,
+					 CONFIG_ANDROID_FBMISC_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_FBMISC,
+					 FASTBOOT_PARTITION_FBMISC_FS,
+					 dev_desc, ptable);
+#endif /* CONFIG_FASTBOOT_LOCK */
 
 #else /* CONFIG_BRILLO_SUPPORT */
 	_fastboot_parts_add_ptable_entry(PTN_KERNEL_INDEX,
@@ -1385,10 +1378,37 @@ static int _fastboot_parts_load_from_ptable(void)
 					 FASTBOOT_PARTITION_DATA,
 					 FASTBOOT_PARTITION_DATA_FS,
 					 dev_desc, ptable);
-#endif
 
-	for (i = 0; i < PTN_NUM; i++)
-		fastboot_flash_add_ptn(&ptable[i]);
+	_fastboot_parts_add_ptable_entry(PTN_MISC_INDEX,
+					 CONFIG_ANDROID_MISC_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_MISC,
+					 FASTBOOT_PARTITION_MISC_FS,
+					 dev_desc, ptable);
+
+#ifdef CONFIG_FASTBOOT_LOCK
+	_fastboot_parts_add_ptable_entry(PTN_FBMISC_INDEX,
+					 CONFIG_ANDROID_FBMISC_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_FBMISC,
+					 FASTBOOT_PARTITION_FBMISC_FS,
+					 dev_desc, ptable);
+
+	_fastboot_parts_add_ptable_entry(PTN_PRDATA_INDEX,
+					 CONFIG_ANDROID_PRDATA_PARTITION_MMC,
+					 user_partition,
+					 FASTBOOT_PARTITION_PRDATA,
+					 FASTBOOT_PARTITION_PRDATA_FS,
+					 dev_desc, ptable);
+#endif /* CONFIG_FASTBOOT_LOCK */
+#endif /* CONFIG_BRILLO_SUPPORT */
+
+#endif /* CONFIG_EFI_PARTITION */
+
+	for (i = 0; i < MAX_PTN_NUM; i++) {
+		if(ptable[i].length != 0)
+			fastboot_flash_add_ptn(&ptable[i]);
+	}
 
 	return 0;
 }
@@ -1571,7 +1591,7 @@ static void _fastboot_load_partitions(void)
  * Android style flash utilties */
 void fastboot_flash_add_ptn(struct fastboot_ptentry *ptn)
 {
-	if (g_pcount < MAX_PTN) {
+	if (g_pcount < MAX_PTN_NUM) {
 		memcpy(g_ptable + g_pcount, ptn,
 		       sizeof(struct fastboot_ptentry));
 		g_pcount++;
@@ -2718,20 +2738,24 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 	strcpy(response, "FAILno flash device defined");
 
 #ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_FASTBOOT_LOCK
 	int gpt_valid_pre = 0;
 	int gpt_valid_pst = 0;
 
 	if (strncmp(cmd, "gpt", 3) == 0)
 		gpt_valid_pre = partition_table_valid();
+#endif
 
 	rx_process_flash(cmd, response);
 
+#ifdef CONFIG_FASTBOOT_LOCK
 	/* If gpt invalid -> valid, write unlock status, also wipe data. */
 	if (strncmp(cmd, "gpt", 3) == 0) {
 		gpt_valid_pst = partition_table_valid();
 		if ((gpt_valid_pre == 0) && (gpt_valid_pst == 1))
 			do_fastboot_unlock();
 	}
+#endif
 #else
 #ifdef CONFIG_FASTBOOT_FLASH_MMC_DEV
 	fb_mmc_flash_write(cmd, (void *)CONFIG_USB_FASTBOOT_BUF_ADDR,
