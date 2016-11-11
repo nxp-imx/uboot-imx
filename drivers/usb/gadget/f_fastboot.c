@@ -858,22 +858,38 @@ static void process_flash_sata(const char *cmdbuf, char *response)
 #endif
 
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
-static int is_sparse_partition(struct fastboot_ptentry *ptn)
+static int is_raw_partition(struct fastboot_ptentry *ptn)
 {
 #ifdef CONFIG_BRILLO_SUPPORT
-	if (ptn && (!strncmp(ptn->name, FASTBOOT_PARTITION_SYSTEM_A,
-			     strlen(FASTBOOT_PARTITION_SYSTEM_A)) ||
-	    !strncmp(ptn->name, FASTBOOT_PARTITION_SYSTEM_B,
-	    strlen(FASTBOOT_PARTITION_SYSTEM_B)) ||
-	    !strncmp(ptn->name, FASTBOOT_PARTITION_DATA,
-	    strlen(FASTBOOT_PARTITION_DATA)))) {
-#else
-	 if (ptn && (!strncmp(ptn->name,
-				 FASTBOOT_PARTITION_SYSTEM, strlen(FASTBOOT_PARTITION_SYSTEM))
-				 || !strncmp(ptn->name,
-				 FASTBOOT_PARTITION_DATA, strlen(FASTBOOT_PARTITION_DATA)))) {
+	if (ptn && (!strncmp(ptn->name, FASTBOOT_PARTITION_BOOTLOADER,
+		strlen(FASTBOOT_PARTITION_BOOTLOADER)) ||
+		!strncmp(ptn->name, FASTBOOT_PARTITION_GPT,
+		strlen(FASTBOOT_PARTITION_GPT)) ||
+		!strncmp(ptn->name, FASTBOOT_PARTITION_BOOT_A,
+		strlen(FASTBOOT_PARTITION_BOOT_A)) ||
+		!strncmp(ptn->name, FASTBOOT_PARTITION_BOOT_B,
+		strlen(FASTBOOT_PARTITION_BOOT_B)) ||
+#ifdef CONFIG_FASTBOOT_LOCK
+		!strncmp(ptn->name, FASTBOOT_PARTITION_FBMISC,
+		strlen(FASTBOOT_PARTITION_FBMISC)) ||
 #endif
-		printf("support sparse flash partition for %s\n", ptn->name);
+		!strncmp(ptn->name, FASTBOOT_PARTITION_MISC,
+		strlen(FASTBOOT_PARTITION_MISC)))) {
+#else
+	if (ptn && (!strncmp(ptn->name, FASTBOOT_PARTITION_BOOTLOADER,
+		strlen(FASTBOOT_PARTITION_BOOTLOADER)) ||
+		!strncmp(ptn->name, FASTBOOT_PARTITION_MBR,
+		strlen(FASTBOOT_PARTITION_MBR)) ||
+		!strncmp(ptn->name, FASTBOOT_PARTITION_BOOT,
+		strlen(FASTBOOT_PARTITION_BOOT)) ||
+#ifdef CONFIG_FASTBOOT_LOCK
+		!strncmp(ptn->name, FASTBOOT_PARTITION_FBMISC,
+		strlen(FASTBOOT_PARTITION_FBMISC)) ||
+#endif
+		!strncmp(ptn->name, FASTBOOT_PARTITION_MISC,
+		strlen(FASTBOOT_PARTITION_MISC)))) {
+#endif
+		printf("raw partition for %s\n", ptn->name);
 		return 1;
 	 } else
 		 return 0;
@@ -943,7 +959,7 @@ static void process_flash_mmc(const char *cmdbuf, char *response)
 				sprintf(mmc_dev, "mmc dev %x",
 					fastboot_devinfo.dev_id /*slot no*/);
 
-			if (is_sparse_partition(ptn) &&
+			if (!is_raw_partition(ptn) &&
 				is_sparse_image(interface.transfer_buffer)) {
 				int mmc_no = 0;
 				struct mmc *mmc;
@@ -1293,12 +1309,12 @@ static int _fastboot_parts_load_from_ptable(void)
 
 #ifdef CONFIG_EFI_PARTITION
 	/* GPT */
-	strcpy(ptable[PTN_MBR_GPT_INDEX].name, "gpt");
+	strcpy(ptable[PTN_MBR_GPT_INDEX].name, FASTBOOT_PARTITION_GPT);
 	ptable[PTN_MBR_GPT_INDEX].start = ANDROID_GPT_OFFSET / dev_desc->blksz;
 	ptable[PTN_MBR_GPT_INDEX].length = ANDROID_GPT_SIZE / dev_desc->blksz;
 #else
 	/* MBR */
-	strcpy(ptable[PTN_MBR_GPT_INDEX].name, "mbr");
+	strcpy(ptable[PTN_MBR_GPT_INDEX].name, FASTBOOT_PARTITION_MBR);
 	ptable[PTN_MBR_GPT_INDEX].start = ANDROID_MBR_OFFSET / dev_desc->blksz;
 	ptable[PTN_MBR_GPT_INDEX].length = ANDROID_MBR_SIZE / dev_desc->blksz;
 #endif
