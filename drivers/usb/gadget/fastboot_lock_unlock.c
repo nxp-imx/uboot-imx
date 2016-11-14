@@ -28,15 +28,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <fsl_fastboot.h>
-#include "fastboot_lock_unlock.h"
-
 #include <common.h>
 #include <linux/types.h>
 #include <part.h>
 #include <ext_common.h>
 #include <stdio_dev.h>
 #include <stdlib.h>
+
+#include <fsl_fastboot.h>
+#include "fastboot_lock_unlock.h"
+
 
 #ifdef FASTBOOT_ENCRYPT_LOCK
 
@@ -54,18 +55,21 @@
 /*
  * This will return FASTBOOT_LOCK, FASTBOOT_UNLOCK or FASTBOOT_ERROR
  */
-inline unsigned char decrypt_lock_store(unsigned char* bdata) {
-	return *bdata;
+static inline FbLockState decrypt_lock_store(unsigned char* bdata) {
+	if (*bdata >= FASTBOOT_LOCK_NUM)
+		return FASTBOOT_LOCK_ERROR;
+	else
+		return *bdata;
 }
 
-inline int encrypt_lock_store(unsigned char lock, unsigned char *bdata)
+static inline int encrypt_lock_store(FbLockState lock, unsigned char *bdata)
 {
 	*bdata  = lock;
 	return 0;
 }
 #else
 
-int sha1sum(unsigned char* data, int len, unsigned char* output) {
+static int sha1sum(unsigned char* data, int len, unsigned char* output) {
 	struct hash_algo *algo;
 	void *buf;
 	if (hash_lookup_algo("sha1", &algo)) {
@@ -80,13 +84,13 @@ int sha1sum(unsigned char* data, int len, unsigned char* output) {
 
 }
 
-int generate_salt(unsigned char* salt) {
+static int generate_salt(unsigned char* salt) {
 	unsigned long time = get_timer(0);
 	return sha1sum((unsigned char *)&time, sizeof(unsigned long), salt);
 
 }
 
-unsigned char decrypt_lock_store(unsigned char *bdata) {
+static FbLockState decrypt_lock_store(unsigned char *bdata) {
 	unsigned char plain_data[ENDATA_LEN];
 	int p = 0, ret;
 
@@ -127,10 +131,13 @@ unsigned char decrypt_lock_store(unsigned char *bdata) {
 		}
 	}
 
-	return plain_data[ENDATA_LEN-1];
+	if (plain_data[ENDATA_LEN - 1] >= FASTBOOT_LOCK_NUM)
+		return FASTBOOT_LOCK_ERROR;
+	else
+		return plain_data[ENDATA_LEN-1];
 }
 
-int encrypt_lock_store(unsigned char lock, unsigned char* bdata) {
+static int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
 	unsigned int p = 0;
 	int ret;
 	int salt_len = generate_salt(bdata);
@@ -188,18 +195,21 @@ char* get_mmc_part(int part) {
 /*
  * The enabling value is stored in the last byte of target partition.
  */
-inline unsigned char lock_enable_parse(unsigned char* bdata) {
+static inline FbLockEnableResult lock_enable_parse(unsigned char* bdata) {
 	DEBUG("lock_enable_parse: 0x%x\n", *(bdata + SECTOR_SIZE -1));
-	return *(bdata + SECTOR_SIZE -1);
+	if (*(bdata + SECTOR_SIZE -1) >= FASTBOOT_UL_NUM)
+		return FASTBOOT_UL_ERROR;
+	else
+		return *(bdata + SECTOR_SIZE -1);
 }
 
-static unsigned char g_lockstat = FASTBOOT_UNLOCK;
+static FbLockState g_lockstat = FASTBOOT_UNLOCK;
 /*
  * Set status of the lock&unlock to FSL_FASTBOOT_FB_PART
  * Currently use the very first Byte of FSL_FASTBOOT_FB_PART
  * to store the fastboot lock&unlock status
  */
-int fastboot_set_lock_stat(unsigned char lock) {
+int fastboot_set_lock_stat(FbLockState lock) {
 	block_dev_desc_t *fs_dev_desc;
 	disk_partition_t fs_partition;
 	unsigned char *bdata;
@@ -233,7 +243,7 @@ int fastboot_set_lock_stat(unsigned char lock) {
 	return 0;
 }
 
-unsigned char fastboot_get_lock_stat(void)
+FbLockState fastboot_get_lock_stat(void)
 {
 
 	block_dev_desc_t *fs_dev_desc;
@@ -270,12 +280,12 @@ unsigned char fastboot_get_lock_stat(void)
 
 #ifdef CONFIG_BRILLO_SUPPORT
 //Brillo has no presist data partition
-unsigned char fastboot_lock_enable(void)
+FbLockEnableResult fastboot_lock_enable(void)
 {
 	return FASTBOOT_UL_ENABLE;
 }
 #else
-unsigned char fastboot_lock_enable() {
+FbLockEnableResult fastboot_lock_enable() {
 	block_dev_desc_t *fs_dev_desc;
 	disk_partition_t fs_partition;
 	unsigned char *bdata;
@@ -312,7 +322,7 @@ unsigned char fastboot_lock_enable() {
 }
 #endif
 
-int display_lock(int lock, int verify) {
+int display_lock(FbLockState lock, int verify) {
 	struct stdio_dev *disp;
 	disp = stdio_get_by_name("vga");
 	if (disp != NULL) {

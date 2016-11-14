@@ -41,28 +41,28 @@
 #define DEBUG(format, ...)
 #endif
 
-enum {
+typedef enum {
 	FASTBOOT_UNLOCK,
 	FASTBOOT_LOCK,
 	FASTBOOT_LOCK_ERROR,
 	FASTBOOT_LOCK_NUM
-};
+}FbLockState;
 
-enum {
+typedef enum {
 	FASTBOOT_UL_DISABLE,
 	FASTBOOT_UL_ENABLE,
 	FASTBOOT_UL_ERROR,
 	FASTBOOT_UL_NUM
-};
+}FbLockEnableResult;
 
-unsigned char fastboot_get_lock_stat(void);
+FbLockState fastboot_get_lock_stat(void);
 
-int fastboot_set_lock_stat(unsigned char lock);
+int fastboot_set_lock_stat(FbLockState lock);
 
 int fastboot_wipe_data_partition(void);
 
-unsigned char fastboot_lock_enable(void);
+FbLockEnableResult fastboot_lock_enable(void);
 
-int display_lock(int lock, int verify);
+int display_lock(FbLockState lock, int verify);
 
 #endif

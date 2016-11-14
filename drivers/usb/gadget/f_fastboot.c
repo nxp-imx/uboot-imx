@@ -1872,8 +1872,7 @@ use_given_ptn:
 #endif /*CONFIG_SECURE_BOOT*/
 
 #ifdef CONFIG_FASTBOOT_LOCK
-		int lock_status = fastboot_get_lock_stat();
-		if (lock_status == FASTBOOT_LOCK_ERROR) {
+		if (fastboot_get_lock_stat() == FASTBOOT_LOCK_ERROR) {
 		    printf("In boota get fastboot lock status error. Set lock status\n");
 		    fastboot_set_lock_stat(FASTBOOT_LOCK);
 		}
@@ -2402,8 +2401,7 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 	else if (!strcmp_l1("secure", cmd)) {
 		strncat(response, FASTBOOT_VAR_SECURE, chars_left);
 	} else if (!strcmp_l1("unlocked",cmd)) {
-		int status = fastboot_get_lock_stat();
-		if (status == FASTBOOT_UNLOCK) {
+		if (fastboot_get_lock_stat() == FASTBOOT_UNLOCK) {
 			strncat(response, FASTBOOT_VAR_YES, chars_left);
 		} else {
 			strncat(response, FASTBOOT_VAR_NO, chars_left);
@@ -2591,7 +2589,7 @@ static void cb_continue(struct usb_ep *ep, struct usb_request *req)
 #ifdef CONFIG_FASTBOOT_LOCK
 
 int do_lock_status(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
-	int status = fastboot_get_lock_stat();
+	FbLockState status = fastboot_get_lock_stat();
 	if (status != FASTBOOT_LOCK_ERROR) {
 		if (status == FASTBOOT_LOCK)
 			printf("fastboot lock status: locked.\n");
@@ -2616,8 +2614,7 @@ static int do_fastboot_unlock(void)
 	int status;
 	if (fastboot_lock_enable() == FASTBOOT_UL_ENABLE) {
 		printf("It is able to unlock device. %d\n",fastboot_lock_enable());
-		status = fastboot_get_lock_stat();
-		if (status == FASTBOOT_UNLOCK) {
+		if (fastboot_get_lock_stat() == FASTBOOT_UNLOCK) {
 			printf("The device is already unlocked\n");
 			return 1;
 		}
@@ -2640,8 +2637,7 @@ static int do_fastboot_unlock(void)
 static int do_fastboot_lock(void)
 {
 	int status;
-	status = fastboot_get_lock_stat();
-	if (status == FASTBOOT_LOCK) {
+	if (fastboot_get_lock_stat() == FASTBOOT_LOCK) {
 		printf("The device is already locked\n");
 		return 1;
 	}
@@ -2717,7 +2713,7 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 	}
 
 #ifdef CONFIG_FASTBOOT_LOCK
-	int status;
+	FbLockState status;
 	status = fastboot_get_lock_stat();
 
 	if (status == FASTBOOT_LOCK) {
