@@ -62,8 +62,7 @@ static inline FbLockState decrypt_lock_store(unsigned char* bdata) {
 		return *bdata;
 }
 
-static inline int encrypt_lock_store(FbLockState lock, unsigned char *bdata)
-{
+static inline int encrypt_lock_store(FbLockState lock, unsigned char *bdata) {
 	*bdata  = lock;
 	return 0;
 }
@@ -186,10 +185,15 @@ static int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
 #endif
 
 static char mmc_dev_part[16];
-char* get_mmc_part(int part) {
+static char* get_mmc_part(const char *part_name) {
 	u32 dev_no = mmc_get_env_devno();
-	sprintf(mmc_dev_part,"%x:%x",dev_no, part);
-	return mmc_dev_part;
+	struct fastboot_ptentry *ptentry = fastboot_flash_find_ptn(part_name);
+	if(ptentry != NULL) {
+		sprintf(mmc_dev_part,"%x:%x",dev_no, ptentry->partition_index);
+		return mmc_dev_part;
+	}
+	else
+		return NULL;
 }
 
 /*
@@ -213,13 +217,20 @@ int fastboot_set_lock_stat(FbLockState lock) {
 	block_dev_desc_t *fs_dev_desc;
 	disk_partition_t fs_partition;
 	unsigned char *bdata;
+	const char *mmc_part_str;
+
+	mmc_part_str = get_mmc_part(FASTBOOT_PARTITION_FBMISC);
+	if (mmc_part_str == NULL) {
+		g_lockstat = lock;
+		return 0;
+	}
 
 	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
 	memset(bdata, 0, SECTOR_SIZE);
 
 	int status;
 	status = get_device_and_partition(FSL_FASTBOOT_FB_DEV,
-		get_mmc_part(FSL_FASTBOOT_FB_PART_NUM),
+		mmc_part_str,
 		&fs_dev_desc, &fs_partition, 1);
 	if (status < 0) {
 		printf("%s:error in getdevice partition.\n", __FUNCTION__);
@@ -227,7 +238,7 @@ int fastboot_set_lock_stat(FbLockState lock) {
 		return 0;
 	}
 	DEBUG("%s %s partition.start=%d, size=%d\n",FSL_FASTBOOT_FB_DEV,
-		get_mmc_part(FSL_FASTBOOT_FB_PART_NUM), fs_partition.start, fs_partition.size);
+		mmc_part_str, fs_partition.start, fs_partition.size);
 
 	status = encrypt_lock_store(lock, bdata);
 	if (status < 0)
@@ -243,18 +254,23 @@ int fastboot_set_lock_stat(FbLockState lock) {
 	return 0;
 }
 
-FbLockState fastboot_get_lock_stat(void)
-{
-
+FbLockState fastboot_get_lock_stat(void) {
 	block_dev_desc_t *fs_dev_desc;
 	disk_partition_t fs_partition;
 	unsigned char *bdata;
+	const char *mmc_part_str;
+
+	mmc_part_str = get_mmc_part(FASTBOOT_PARTITION_FBMISC);
+	if (mmc_part_str == NULL) {
+		printf("%s: error in get mmc part\n", __FUNCTION__);
+		return g_lockstat;
+	}
 
 	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
 
 	int status;
 	status = get_device_and_partition(FSL_FASTBOOT_FB_DEV,
-		get_mmc_part(FSL_FASTBOOT_FB_PART_NUM),
+		mmc_part_str,
 		&fs_dev_desc, &fs_partition, 1);
 
 	if (status < 0) {
@@ -262,7 +278,7 @@ FbLockState fastboot_get_lock_stat(void)
 		return g_lockstat;
 	}
 	DEBUG("%s %s partition.start=%d, size=%d\n",FSL_FASTBOOT_FB_DEV,
-		get_mmc_part(FSL_FASTBOOT_FB_PART_NUM), fs_partition.start, fs_partition.size);
+		mmc_part_str, fs_partition.start, fs_partition.size);
 
 	status = fs_dev_desc->block_read(fs_dev_desc->dev, fs_partition.start, 1, bdata);
 	if (!status) {
@@ -280,8 +296,7 @@ FbLockState fastboot_get_lock_stat(void)
 
 #ifdef CONFIG_BRILLO_SUPPORT
 //Brillo has no presist data partition
-FbLockEnableResult fastboot_lock_enable(void)
-{
+FbLockEnableResult fastboot_lock_enable(void) {
 	return FASTBOOT_UL_ENABLE;
 }
 #else
@@ -289,12 +304,19 @@ FbLockEnableResult fastboot_lock_enable() {
 	block_dev_desc_t *fs_dev_desc;
 	disk_partition_t fs_partition;
 	unsigned char *bdata;
+	const char *mmc_part_str;
+
+	mmc_part_str = get_mmc_part(FASTBOOT_PARTITION_PRDATA);
+	if (mmc_part_str == NULL) {
+		printf("%s: error in get mmc part\n", __FUNCTION__);
+		return FASTBOOT_UL_ERROR;
+	}
 
 	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
 
 	int status;
 	status = get_device_and_partition(FSL_FASTBOOT_FB_DEV,
-		get_mmc_part(FSL_FASTBOOT_PR_DATA_PART_NUM),
+		mmc_part_str,
 		&fs_dev_desc, &fs_partition, 1);
 	if (status < 0) {
 		printf("%s:error in getdevice partition.\n", __FUNCTION__);
@@ -355,13 +377,19 @@ int display_lock(FbLockState lock, int verify) {
 
 }
 
-int fastboot_wipe_data_partition(void)
-{
+int fastboot_wipe_data_partition(void) {
 	block_dev_desc_t *fs_dev_desc;
 	disk_partition_t fs_partition;
 	int status;
+	const char *mmc_part_str;
+
+	mmc_part_str = get_mmc_part(FASTBOOT_PARTITION_DATA);
+	if (mmc_part_str == NULL) {
+		printf("%s: error in get mmc part\n", __FUNCTION__);
+		return FASTBOOT_UL_ERROR;
+	}
 	status = get_device_and_partition(FSL_FASTBOOT_FB_DEV,
-		get_mmc_part(FSL_FASTBOOT_DATA_PART_NUM), &fs_dev_desc, &fs_partition, 1);
+		mmc_part_str, &fs_dev_desc, &fs_partition, 1);
 	if (status < 0) {
 		printf("error in get device partition for wipe /data\n");
 		return 0;
