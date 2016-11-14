@@ -218,39 +218,45 @@ int fastboot_set_lock_stat(FbLockState lock) {
 	disk_partition_t fs_partition;
 	unsigned char *bdata;
 	const char *mmc_part_str;
+	int status, ret;
 
 	mmc_part_str = get_mmc_part(FASTBOOT_PARTITION_FBMISC);
 	if (mmc_part_str == NULL) {
-		g_lockstat = lock;
-		return 0;
+		goto fail2;
 	}
 
-	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
-	memset(bdata, 0, SECTOR_SIZE);
-
-	int status;
 	status = get_device_and_partition(FSL_FASTBOOT_FB_DEV,
 		mmc_part_str,
 		&fs_dev_desc, &fs_partition, 1);
 	if (status < 0) {
 		printf("%s:error in getdevice partition.\n", __FUNCTION__);
-		g_lockstat = lock;
-		return 0;
+		goto fail2;
 	}
 	DEBUG("%s %s partition.start=%d, size=%d\n",FSL_FASTBOOT_FB_DEV,
 		mmc_part_str, fs_partition.start, fs_partition.size);
 
+	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
+	if (bdata == NULL)
+		goto fail2;
+	memset(bdata, 0, SECTOR_SIZE);
+
 	status = encrypt_lock_store(lock, bdata);
-	if (status < 0)
-		return -1;
+	if (status < 0) {
+		ret = -1;
+		goto fail;
+	}
 	status = fs_dev_desc->block_write(fs_dev_desc->dev, fs_partition.start, 1, bdata);
 	if (!status) {
 		printf("%s:error in block write.\n", __FUNCTION__);
-		return -1;
+		ret = -1;
+		goto fail;
 	}
-
-
-
+	ret = 0;
+fail:
+	free(bdata);
+	return ret;
+fail2:
+	g_lockstat = lock;
 	return 0;
 }
 
@@ -259,6 +265,8 @@ FbLockState fastboot_get_lock_stat(void) {
 	disk_partition_t fs_partition;
 	unsigned char *bdata;
 	const char *mmc_part_str;
+	int status;
+	FbLockState ret;
 
 	mmc_part_str = get_mmc_part(FASTBOOT_PARTITION_FBMISC);
 	if (mmc_part_str == NULL) {
@@ -266,9 +274,6 @@ FbLockState fastboot_get_lock_stat(void) {
 		return g_lockstat;
 	}
 
-	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
-
-	int status;
 	status = get_device_and_partition(FSL_FASTBOOT_FB_DEV,
 		mmc_part_str,
 		&fs_dev_desc, &fs_partition, 1);
@@ -280,13 +285,20 @@ FbLockState fastboot_get_lock_stat(void) {
 	DEBUG("%s %s partition.start=%d, size=%d\n",FSL_FASTBOOT_FB_DEV,
 		mmc_part_str, fs_partition.start, fs_partition.size);
 
+	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
+	if (bdata == NULL)
+		return g_lockstat;
+
 	status = fs_dev_desc->block_read(fs_dev_desc->dev, fs_partition.start, 1, bdata);
 	if (!status) {
 		printf("%s:error in block read.\n", __FUNCTION__);
-		return FASTBOOT_LOCK_ERROR;
+		ret = FASTBOOT_LOCK_ERROR;
+		goto fail;
 	}
-
-	return decrypt_lock_store(bdata);
+	ret = decrypt_lock_store(bdata);
+fail:
+	free(bdata);
+	return ret;
 }
 
 
@@ -305,6 +317,8 @@ FbLockEnableResult fastboot_lock_enable() {
 	disk_partition_t fs_partition;
 	unsigned char *bdata;
 	const char *mmc_part_str;
+	int status;
+	FbLockEnableResult ret;
 
 	mmc_part_str = get_mmc_part(FASTBOOT_PARTITION_PRDATA);
 	if (mmc_part_str == NULL) {
@@ -312,9 +326,6 @@ FbLockEnableResult fastboot_lock_enable() {
 		return FASTBOOT_UL_ERROR;
 	}
 
-	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
-
-	int status;
 	status = get_device_and_partition(FSL_FASTBOOT_FB_DEV,
 		mmc_part_str,
 		&fs_dev_desc, &fs_partition, 1);
@@ -326,10 +337,15 @@ FbLockEnableResult fastboot_lock_enable() {
     //The data is stored in the last blcok of this partition.
 	lbaint_t target_block = fs_partition.start + fs_partition.size - 1;
 	DEBUG("target_block.start=%d, size=%d target_block=%d\n", fs_partition.start, fs_partition.size, target_block);
+
+	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
+	if (bdata == NULL)
+		return FASTBOOT_UL_ERROR;
 	status = fs_dev_desc->block_read(fs_dev_desc->dev, target_block, 1, bdata);
 	if (!status) {
 		printf("%s: error in block read\n", __FUNCTION__);
-		return FASTBOOT_UL_ERROR;
+		ret = FASTBOOT_UL_ERROR;
+		goto fail;
 	}
 	int i = 0;
 	DEBUG("\n PRIST last sector is:\n");
@@ -339,8 +355,10 @@ FbLockEnableResult fastboot_lock_enable() {
 			DEBUG("\n");
 	}
 	DEBUG("\n");
-	return lock_enable_parse(bdata);
-
+	ret = lock_enable_parse(bdata);
+fail:
+	free(bdata);
+	return ret;
 }
 #endif
 
@@ -386,13 +404,13 @@ int fastboot_wipe_data_partition(void) {
 	mmc_part_str = get_mmc_part(FASTBOOT_PARTITION_DATA);
 	if (mmc_part_str == NULL) {
 		printf("%s: error in get mmc part\n", __FUNCTION__);
-		return FASTBOOT_UL_ERROR;
+		return -1;
 	}
 	status = get_device_and_partition(FSL_FASTBOOT_FB_DEV,
 		mmc_part_str, &fs_dev_desc, &fs_partition, 1);
 	if (status < 0) {
 		printf("error in get device partition for wipe /data\n");
-		return 0;
+		return -1;
 	}
 	DEBUG("fs->start=%x, size=%d\n", fs_partition.start, fs_partition.size);
 	status = fs_dev_desc->block_erase(fs_dev_desc->dev, fs_partition.start , fs_partition.size );
@@ -401,6 +419,5 @@ int fastboot_wipe_data_partition(void) {
 		return -1;
 	}
 	mdelay(2000);
-
 	return 0;
 }
