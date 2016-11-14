@@ -47,3 +47,10 @@ config DBG_MONITOR
 	  This option enables the debug monitor which prints out last 
 	  failed AXI access info when system reboot is caused by AXI 
 	  access failure.
+
+config IMX_M4_BIND
+	bool "Bind ULP M4 image to final u-boot"
+	depends on ARCH_MX7ULP
+	help
+	  Select this to bind a ULP M4 image to final u-boot image
+	  User needs put the M4 image ulp_m4.bin under u-boot directory
