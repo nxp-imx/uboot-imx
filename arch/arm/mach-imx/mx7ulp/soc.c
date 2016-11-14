@@ -7,6 +7,7 @@
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
+#include <asm/sections.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/mach-imx/hab.h>
@@ -73,8 +74,46 @@ enum bt_mode get_boot_mode(void)
 	return LOW_POWER_BOOT;
 }
 
+#ifdef CONFIG_IMX_M4_BIND
+char __firmware_image_start[0] __attribute__((section(".__firmware_image_start")));
+char __firmware_image_end[0] __attribute__((section(".__firmware_image_end")));
+
+int mcore_early_load_and_boot(void)
+{
+	u32 *src_addr = (u32 *)&__firmware_image_start;
+	u32 *dest_addr = (u32 *)TCML_BASE; /*TCML*/
+	u32 image_size = SZ_128K + SZ_64K; /* 192 KB*/
+	u32 pc = 0, tag = 0;
+
+	memcpy(dest_addr, src_addr, image_size);
+
+	/* Set GP register to tell the M4 rom the image entry */
+	/* We assume the M4 image has IVT head and padding which
+	 * should be same as the one programmed into QSPI flash
+	 */
+	tag = *(dest_addr + 1024);
+	if (tag != 0x402000d1 && tag !=0x412000d1)
+		return -1;
+
+	pc = *(dest_addr + 1025);
+
+	writel(pc, SIM0_RBASE + 0x70); /*GP7*/
+
+	return 0;
+}
+#endif
+
 int arch_cpu_init(void)
 {
+#ifdef CONFIG_IMX_M4_BIND
+	int ret;
+	if (get_boot_mode() == SINGLE_BOOT) {
+		ret = mcore_early_load_and_boot();
+		if (ret)
+			puts("Invalid M4 image, boot failed\n");
+	}
+#endif
+
 #ifdef CONFIG_IMX_SEC_INIT
 	/* Secure init function such RNG */
 	imx_sec_init();
@@ -241,6 +280,10 @@ int print_cpuinfo(void)
 	case SINGLE_BOOT:
 	default:
 		printf("Single boot\n");
+#ifdef CONFIG_IMX_M4_BIND
+		if (readl(SIM0_RBASE + 0x70))
+			printf("M4 start at 0x%x\n", readl(SIM0_RBASE + 0x70));
+#endif
 		break;
 	}
 

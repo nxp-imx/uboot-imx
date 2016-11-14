@@ -12,6 +12,12 @@ config MX7ULP
 	select HAS_CAAM
 	bool
 
+config IMX_M4_BIND
+	bool "Bind ULP M4 image to final u-boot"
+	help
+	  Select this to bind a ULP M4 image to final u-boot image
+	  User needs put the M4 image ulp_m4.bin under u-boot directory
+
 choice
 	prompt "MX7ULP board select"
 	optional
