@@ -177,6 +177,22 @@ SECTIONS
 		*(.__image_copy_end)
 	}
 
+#ifdef CONFIG_IMX_M4_BIND
+	.firmware_image_start : {
+                *(.__firmware_image_start)
+        }
+
+	.firmware_image : {
+		KEEP(*(.firmware_image))
+        }
+
+	.firmware_image_end : {
+                *(.__firmware_image_end)
+        }
+
+	. = ALIGN(4);
+#endif
+
 	.rel_dyn_start :
 	{
 		*(.__rel_dyn_start)

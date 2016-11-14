@@ -4,3 +4,4 @@
 #
 
 obj-y	:= soc.o clock.o iomux.o pcc.o scg.o
+obj-$(CONFIG_IMX_M4_BIND) += piggy_m4.o
