@@ -829,8 +829,14 @@ u-boot-dtb.bin: u-boot-nodtb.bin dts/dt.dtb FORCE
 u-boot.bin: u-boot-dtb.bin FORCE
 	$(call if_changed,copy)
 else
+
+ifeq ($(CONFIG_IMX_M4_BIND),y)
+u-boot.bin: u-boot-nodtb.bin ulp_m4.bin FORCE
+	$(call if_changed,cat)
+else
 u-boot.bin: u-boot-nodtb.bin FORCE
 	$(call if_changed,copy)
+endif
 endif
 
 %.imx: %.bin
