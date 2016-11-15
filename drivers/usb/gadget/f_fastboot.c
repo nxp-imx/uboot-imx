@@ -806,8 +806,7 @@ static void process_flash_sata(const char *cmdbuf, char *response)
 
 		/* Next is the partition name */
 		ptn = fastboot_flash_find_ptn(cmdbuf);
-		if (ptn == 0) {
-			printf("Partition:'%s' does not exist\n", ptn->name);
+		if (ptn == NULL) {
 			sprintf(response, "FAILpartition does not exist");
 		} else if ((download_bytes >
 			   ptn->length * MMC_SATA_BLOCK_SIZE) &&
@@ -923,8 +922,7 @@ static void process_flash_mmc(const char *cmdbuf, char *response)
 
 		/* Next is the partition name */
 		ptn = fastboot_flash_find_ptn(cmdbuf);
-		if (ptn == 0) {
-			printf("Partition:'%s' does not exist\n", ptn->name);
+		if (ptn == NULL) {
 			sprintf(response, "FAILpartition does not exist");
 		} else if ((download_bytes >
 			   ptn->length * MMC_SATA_BLOCK_SIZE) &&
