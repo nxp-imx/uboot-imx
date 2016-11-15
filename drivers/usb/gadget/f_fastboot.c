@@ -907,10 +907,10 @@ static void process_flash_mmc(const char *cmdbuf, char *response)
 		struct fastboot_ptentry *ptn;
 
 #ifdef CONFIG_AVB_SUPPORT
-		if (!strcmp_l1("avbkey", cmdbuf)) {
+		if (!strcmp_l1(FASTBOOT_PARTITION_AVBKEY, cmdbuf)) {
 			printf("pubkey len %d\n", download_bytes);
 			if (avbkeyblb_init(interface.transfer_buffer, download_bytes,
-						"avbkey") != 0) {
+					    FASTBOOT_PARTITION_AVBKEY) != 0) {
 				sprintf(response, "FAIL: Write partition");
 			} else {
 				printf("init 'avbkey' DONE!\n");
@@ -2863,7 +2863,7 @@ static int do_fastboot_unlock(void)
 
 #ifdef CONFIG_AVB_SUPPORT
 		printf("Start stored_rollback_index wipe process....\n");
-		status = rbkidx_erase("avbkey");
+		status = rbkidx_erase(FASTBOOT_PARTITION_AVBKEY);
 		if (status < 0)
 			return status;
 		printf("Wipe stored_rollback_index completed.\n");
