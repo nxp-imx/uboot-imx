@@ -8,6 +8,20 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/sections.h>
 #include <asm/arch/sys_proto.h>
+#include <dm.h>
+
+struct lpuart_serial_platdata {
+	void *reg;
+};
+
+static struct lpuart_serial_platdata mx7ulp_lpuart_data = {
+	.reg = (void *)(ulong)LPUART_BASE,
+};
+
+U_BOOT_DEVICE(mx7ulp_lpuart) = {
+	.name = "serial_lpuart32",
+	.platdata = &mx7ulp_lpuart_data,
+};
 
 static char *get_reset_cause(char *);
 

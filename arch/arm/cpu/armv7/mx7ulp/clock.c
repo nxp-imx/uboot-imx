@@ -42,7 +42,35 @@ static u32 get_ipg_clk(void)
 
 u32 imx_get_uartclk(void)
 {
-	return pcc_clock_get_rate(PER_CLK_LPUART4);
+	int index = 0;
+
+	const u32 lpuart_array[] = {
+		LPUART0_RBASE,
+		LPUART1_RBASE,
+		LPUART2_RBASE,
+		LPUART3_RBASE,
+		LPUART4_RBASE,
+		LPUART5_RBASE,
+		LPUART6_RBASE,
+		LPUART7_RBASE,
+	};
+
+	const enum pcc_clk lpuart_pcc_clks[] = {
+		PER_CLK_LPUART4,
+		PER_CLK_LPUART5,
+		PER_CLK_LPUART6,
+		PER_CLK_LPUART7,
+	};
+
+	for (index = 0; index < 8; index++) {
+		if (lpuart_array[index] == LPUART_BASE)
+			break;
+	}
+
+	if (index < 4 || index > 7)
+		return 0;
+
+	return pcc_clock_get_rate(lpuart_pcc_clks[index - 4]);
 }
 
 unsigned int mxc_get_clock(enum mxc_clock clk)
@@ -59,7 +87,7 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	case MXC_I2C_CLK:
 		return pcc_clock_get_rate(PER_CLK_LPI2C4);
 	case MXC_UART_CLK:
-		return pcc_clock_get_rate(PER_CLK_LPUART4);
+		return imx_get_uartclk();
 	case MXC_ESDHC_CLK:
 		return pcc_clock_get_rate(PER_CLK_USDHC0);
 	case MXC_ESDHC2_CLK:
@@ -250,7 +278,7 @@ int do_mx7_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	printf("CORE       %8d kHz\n", scg_clk_get_rate(SCG_CORE_CLK) / 1000);
 	printf("IPG        %8d kHz\n", mxc_get_clock(MXC_IPG_CLK) / 1000);
-	printf("UART       %8d kHz\n", pcc_clock_get_rate(PER_CLK_LPUART4) / 1000);
+	printf("UART       %8d kHz\n", mxc_get_clock(MXC_UART_CLK) / 1000);
 	printf("AHB        %8d kHz\n", mxc_get_clock(MXC_AHB_CLK) / 1000);
 	printf("AXI        %8d kHz\n", mxc_get_clock(MXC_AXI_CLK) / 1000);
 	printf("DDR        %8d kHz\n", mxc_get_clock(MXC_DDR_CLK) / 1000);
