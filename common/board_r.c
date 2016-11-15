@@ -685,7 +685,7 @@ static int initr_fastboot_setup(void)
 
 static int initr_check_fastboot(void)
 {
-	check_fastboot();
+	fastboot_run_bootmode();
 	return 0;
 }
 #endif

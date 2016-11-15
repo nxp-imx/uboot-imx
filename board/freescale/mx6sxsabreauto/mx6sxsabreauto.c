@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2014-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -48,6 +48,7 @@
 #include <fsl_fastboot.h>
 #ifdef CONFIG_ANDROID_RECOVERY
 #include <recovery.h>
+#include "../common/recovery_keypad.h"
 #endif
 #endif /*CONFIG_FSL_FASTBOOT*/
 
@@ -883,13 +884,9 @@ void board_fastboot_setup(void)
 }
 
 #ifdef CONFIG_ANDROID_RECOVERY
-int check_recovery_cmd_file(void)
+int is_recovery_key_pressing(void)
 {
-	int recovery_mode = 0;
-
-	recovery_mode = recovery_check_and_clean_flag();
-
-	return recovery_mode;
+	return is_recovery_keypad_pressing();
 }
 
 void board_recovery_setup(void)

@@ -9,8 +9,7 @@
 #include "bcb.h"
 
 #ifndef CONFIG_FASTBOOT_STORAGE_NAND
-static char command[32];
-static int read_command(char *command)
+int bcb_read_command(char *command)
 {
 	int ret = 0;
 	char *p_block = NULL;
@@ -31,7 +30,8 @@ static int read_command(char *command)
 
 	return 0;
 }
-static int write_command(char *bcb_command)
+
+int bcb_write_command(char *bcb_command)
 {
 	int ret = 0;
 	char *p_block = NULL;
@@ -59,47 +59,6 @@ static int write_command(char *bcb_command)
 	}
 
 	free(p_block);
-	return 0;
-}
-
-int recovery_check_and_clean_command(void)
-{
-	int ret;
-	ret = read_command(command);
-	if (ret < 0) {
-		printf("read command failed\n");
-		return 0;
-	}
-	if (!strcmp(command, "boot-recovery")) {
-		memset(command, 0, 32);
-		write_command(command);
-		return 1;
-	}
-	return 0;
-}
-int fastboot_check_and_clean_command(void)
-{
-	int ret;
-	ret = read_command(command);
-	if (ret < 0) {
-		printf("read command failed\n");
-		return 0;
-	}
-	if (!strcmp(command, "boot-bootloader")) {
-		memset(command, 0, 32);
-		write_command(command);
-		return 1;
-	}
-
-	return 0;
-}
-#else
-int recovery_check_and_clean_command(void)
-{
-	return 0;
-}
-int fastboot_check_and_clean_command(void)
-{
 	return 0;
 }
 #endif

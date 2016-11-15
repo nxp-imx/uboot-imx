@@ -78,6 +78,19 @@ enum {
     DEV_NAND
 };
 
+typedef enum {
+#ifdef CONFIG_ANDROID_RECOVERY
+	/* Revoery boot due to combo keys pressed */
+	BOOTMODE_RECOVERY_KEY_PRESSED,
+	/* Recovery boot due to boot-recovery cmd in misc parition */
+	BOOTMODE_RECOVERY_BCB_CMD,
+#endif
+	/* Fastboot boot due to bootonce-bootloader cmd in misc parition */
+	BOOTMODE_FASTBOOT_BCB_CMD,
+	/* Normal boot */
+	BOOTMODE_NORMAL
+}FbBootMode;
+
 struct cmd_fastboot_interface {
 	/* This function is called when a buffer has been
 	   recieved from the client app.
@@ -183,19 +196,17 @@ struct fastboot_ptentry *fastboot_flash_get_ptn(unsigned n);
 unsigned int fastboot_flash_get_ptn_count(void);
 void fastboot_flash_dump_ptn(void);
 
-
-/* Check the board special boot mode reboot to fastboot mode. */
-int fastboot_check_and_clean_flag(void);
-int fastboot_check_and_clean_command(void);
-
-/* Set the flag which reboot to fastboot mode*/
-void fastboot_enable_flag(void);
-
-/*check if fastboot mode is requested by user*/
-void check_fastboot(void);
+/* Make board into special boot mode  */
+void fastboot_run_bootmode(void);
 
 /*Setup board-relative fastboot environment */
 void board_fastboot_setup(void);
+
+/* Check whether the combo keys pressed
+ * Return 1 if combo keys pressed for recovery boot
+ * Return 0 if no combo keys pressed
+ */
+int is_recovery_key_pressing(void);
 
 #ifdef CONFIG_FASTBOOT_STORAGE_NAND
 /*Save parameters for NAND storage partitions */

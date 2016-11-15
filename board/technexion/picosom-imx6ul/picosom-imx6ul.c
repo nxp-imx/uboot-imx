@@ -778,13 +778,10 @@ void board_fastboot_setup(void)
 }
 
 #ifdef CONFIG_ANDROID_RECOVERY
-int check_recovery_cmd_file(void)
+int is_recovery_key_pressing(void)
 {
-	int recovery_mode = 0;
-
-	recovery_mode = recovery_check_and_clean_flag();
-
-	return recovery_mode;
+	/* No key defined for this board */
+	return 0;
 }
 
 void board_recovery_setup(void)

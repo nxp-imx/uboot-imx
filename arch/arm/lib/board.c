@@ -687,7 +687,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 #endif
 
 #ifdef CONFIG_FSL_FASTBOOT
-	check_fastboot();
+	fastboot_run_bootmode();
 #endif
 
 	/* main_loop() can return to retry autoboot, if so just run it again. */

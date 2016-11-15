@@ -9,6 +9,11 @@
 #include <linux/types.h>
 #include <linux/stat.h>
 
+#define FASTBOOT_BCB_CMD "bootonce-bootloader"
+#ifdef CONFIG_ANDROID_RECOVERY
+#define RECOVERY_BCB_CMD "boot-recovery"
+#endif
+
 /* keep same as bootable/recovery/bootloader.h */
 struct bootloader_message {
 	char command[32];
@@ -49,4 +54,8 @@ int rw_block(bool bread, char **ppblock,
 		uint *pblksize, char *pblock_write, uint offset, uint size);
 
 void set_mmc_id(unsigned int id);
+
+int bcb_write_command(char *bcb_command);
+
+int bcb_read_command(char *command);
 #endif

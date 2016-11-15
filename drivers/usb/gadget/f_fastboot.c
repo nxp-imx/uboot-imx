@@ -1742,20 +1742,78 @@ void fastboot_setup(void)
 	/*load partitions information for the fastboot dev*/
 	_fastboot_load_partitions();
 
-	/*check if we need to setup recovery*/
-#ifdef CONFIG_ANDROID_RECOVERY
-    check_recovery_mode();
-#endif
-
 	parameters_setup();
 }
 
-/* export to lib_arm/board.c */
-void check_fastboot(void)
+/* Write the bcb with fastboot bootloader commands */
+static void enable_fastboot_command(void)
 {
-	if (fastboot_check_and_clean_flag())
-		run_command("fastboot", 0);
+	char fastboot_command[32];
+	memcpy(fastboot_command, FASTBOOT_BCB_CMD, 32);
+	bcb_write_command(fastboot_command);
 }
+
+/* Get the Boot mode from BCB cmd or Key pressed */
+static FbBootMode fastboot_get_bootmode(void)
+{
+	int ret = 0;
+	int boot_mode = BOOTMODE_NORMAL;
+	char command[32];
+
+#ifdef CONFIG_ANDROID_RECOVERY
+	if(is_recovery_key_pressing()) {
+		boot_mode = BOOTMODE_RECOVERY_KEY_PRESSED;
+		return boot_mode;
+	}
+#endif
+
+	ret = bcb_read_command(command);
+	if (ret < 0) {
+		printf("read command failed\n");
+		return boot_mode;
+	}
+	if (!strcmp(command, FASTBOOT_BCB_CMD)) {
+		memset(command, 0, 32);
+		bcb_write_command(command);
+		boot_mode = BOOTMODE_FASTBOOT_BCB_CMD;
+	}
+#ifdef CONFIG_ANDROID_RECOVERY
+	else if (!strcmp(command, RECOVERY_BCB_CMD)) {
+		memset(command, 0, 32);
+		bcb_write_command(command);
+		boot_mode = BOOTMODE_RECOVERY_BCB_CMD;
+	}
+#endif
+
+	return boot_mode;
+}
+
+/* export to lib_arm/board.c */
+void fastboot_run_bootmode(void)
+{
+	FbBootMode boot_mode = fastboot_get_bootmode();
+	switch(boot_mode){
+	case BOOTMODE_FASTBOOT_BCB_CMD:
+		/* Make the boot into fastboot mode*/
+		puts("Fastboot: Got bootloader commands!\n");
+		run_command("fastboot", 0);
+		break;
+#ifdef CONFIG_ANDROID_RECOVERY
+	case BOOTMODE_RECOVERY_BCB_CMD:
+	case BOOTMODE_RECOVERY_KEY_PRESSED:
+		/* Make the boot into recovery mode */
+		puts("Fastboot: Got Recovery key pressing or recovery commands!\n");
+		board_recovery_setup();
+		break;
+#endif
+	default:
+		/* skip special mode boot*/
+		puts("Fastboot: Normal\n");
+		break;
+	}
+}
+
+
 
 #ifdef CONFIG_CMD_BOOTA
   /* Section for Android bootimage format support
@@ -3093,7 +3151,7 @@ static void cb_reboot_bootloader(struct usb_ep *ep, struct usb_request *req)
 	fastboot_tx_write_str("OKAY");
 
 	udelay(1000000);
-	fastboot_enable_flag();
+	enable_fastboot_command();
 	do_reset(NULL, 0, 0, NULL);
 }
 #endif

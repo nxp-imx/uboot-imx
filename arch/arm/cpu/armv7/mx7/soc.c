@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2014-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -464,59 +464,3 @@ void reset_misc(void)
 	lcdif_power_down();
 #endif
 }
-
-#ifdef CONFIG_FSL_FASTBOOT
-
-#ifdef CONFIG_ANDROID_RECOVERY
-#define ANDROID_RECOVERY_BOOT	(1 << 7)
-/*
- * check if the recovery bit is set by kernel, it can be set by kernel
- * issue a command '# reboot recovery'
- */
-int recovery_check_and_clean_flag(void)
-{
-	int flag_set = 0;
-	u32 reg;
-	reg = readl(SNVS_BASE_ADDR + SNVS_LPGPR);
-
-	flag_set = !!(reg & ANDROID_RECOVERY_BOOT);
-	printf("check_and_clean: reg %x, flag_set %d\n", reg, flag_set);
-	/* clean it in case looping infinite here.... */
-	if (flag_set) {
-		reg &= ~ANDROID_RECOVERY_BOOT;
-		writel(reg, SNVS_BASE_ADDR + SNVS_LPGPR);
-	}
-
-	return flag_set;
-}
-#endif /*CONFIG_ANDROID_RECOVERY*/
-
-#define ANDROID_FASTBOOT_BOOT  (1 << 8)
-/*
- * check if the recovery bit is set by kernel, it can be set by kernel
- * issue a command '# reboot fastboot'
- */
-int fastboot_check_and_clean_flag(void)
-{
-	int flag_set = 0;
-	u32 reg;
-
-	reg = readl(SNVS_BASE_ADDR + SNVS_LPGPR);
-
-	flag_set = !!(reg & ANDROID_FASTBOOT_BOOT);
-
-	/* clean it in case looping infinite here.... */
-	if (flag_set) {
-		reg &= ~ANDROID_FASTBOOT_BOOT;
-		writel(reg, SNVS_BASE_ADDR + SNVS_LPGPR);
-	}
-
-	return flag_set;
-}
-
-void fastboot_enable_flag(void)
-{
-	setbits_le32(SNVS_BASE_ADDR + SNVS_LPGPR,
-		ANDROID_FASTBOOT_BOOT);
-}
-#endif /*CONFIG_FSL_FASTBOOT*/
