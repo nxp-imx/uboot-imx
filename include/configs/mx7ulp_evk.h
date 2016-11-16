@@ -176,6 +176,7 @@
 		   "else " \
 			   "if run loadimage; then " \
 				   "run mmcboot; " \
+			   "else run netboot; " \
 			   "fi; " \
 		   "fi; " \
 	   "fi"
