@@ -2863,9 +2863,7 @@ static int do_fastboot_unlock(void)
 
 #ifdef CONFIG_AVB_SUPPORT
 		printf("Start stored_rollback_index wipe process....\n");
-		status = rbkidx_erase(FASTBOOT_PARTITION_AVBKEY);
-		if (status < 0)
-			return status;
+		rbkidx_erase(FASTBOOT_PARTITION_AVBKEY);
 		printf("Wipe stored_rollback_index completed.\n");
 #endif
 
