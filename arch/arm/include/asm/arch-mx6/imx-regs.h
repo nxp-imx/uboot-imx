@@ -151,7 +151,9 @@
 #define MX6SL_UART5_BASE_ADDR       (ATZ1_BASE_ADDR + 0x18000)
 #define MX6SLL_UART4_BASE_ADDR      (ATZ1_BASE_ADDR + 0x18000)
 #define MX6UL_UART7_BASE_ADDR       (ATZ1_BASE_ADDR + 0x18000)
+#ifndef CONFIG_MX6SX
 #define ECSPI5_BASE_ADDR            (ATZ1_BASE_ADDR + 0x18000)
+#endif
 
 #define UART1_BASE                  (ATZ1_BASE_ADDR + 0x20000)
 
