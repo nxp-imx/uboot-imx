@@ -44,6 +44,7 @@ bool is_slotvar_avb(char *cmd) {
 	assert(cmd != NULL);
 	if (!strcmp_l1("has-slot:", cmd) ||
 		!strcmp_l1("slot-successful:", cmd) ||
+		!strcmp_l1("slot-count", cmd) ||
 		!strcmp_l1("slot-suffixes", cmd) ||
 		!strcmp_l1("current-slot", cmd) ||
 		!strcmp_l1("slot-unbootable:", cmd) ||
@@ -86,6 +87,10 @@ void get_slotvar_avb(AvbOps *ops, char *cmd, char *response, size_t chars_left) 
 
 	} else if (!strcmp_l1("slot-suffixes", cmd)) {
 		strncat(response, "_a,_b", chars_left);
+		return;
+
+	} else if (!strcmp_l1("slot-count", cmd)) {
+		strncat(response, "2", chars_left);
 		return;
 	}
 
