@@ -1216,6 +1216,11 @@ static int mmc_startup(struct mmc *mmc)
 		case 7:
 			mmc->version = MMC_VERSION_5_0;
 			break;
+		case 8:
+		/* FIXME should be 5.1 but no official support in
+		 * uboot now, rollback to 5.0  */
+			mmc->version = MMC_VERSION_5_0;
+			break;
 		}
 
 		/* The partition data may be non-zero but it is only
