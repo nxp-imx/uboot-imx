@@ -418,6 +418,7 @@ static void fsl_qspi_init_lut(struct fsl_qspi *q)
 	fsl_qspi_lock_lut(q);
 }
 
+#ifndef CONFIG_MX7ULP
 /*Enable DDR Read Mode*/
 static void fsl_enable_ddr_mode(struct fsl_qspi *q)
 {
@@ -441,6 +442,7 @@ static void fsl_enable_ddr_mode(struct fsl_qspi *q)
 	writel(reg, base + QUADSPI_MCR);
 
 }
+#endif
 
 /*
  * There are two different ways to read out the data from the flash:
@@ -473,8 +475,14 @@ static void fsl_qspi_init_abh_read(struct fsl_qspi *q)
 	writel(QUADSPI_BUFXCR_INVALID_MSTRID, base + QUADSPI_BUF0CR);
 	writel(QUADSPI_BUFXCR_INVALID_MSTRID, base + QUADSPI_BUF1CR);
 	writel(QUADSPI_BUFXCR_INVALID_MSTRID, base + QUADSPI_BUF2CR);
+
+#ifdef CONFIG_MX7ULP
+	writel(QUADSPI_BUF3CR_ALLMST_MASK | (0x10 << QUADSPI_BUF3CR_ADATSZ_SHIFT),
+			base + QUADSPI_BUF3CR);
+#else
 	writel(QUADSPI_BUF3CR_ALLMST_MASK | (0x80 << QUADSPI_BUF3CR_ADATSZ_SHIFT),
 			base + QUADSPI_BUF3CR);
+#endif
 
 	/* We only use the buffer3 */
 	writel(0, base + QUADSPI_BUF0IND);
@@ -485,8 +493,10 @@ static void fsl_qspi_init_abh_read(struct fsl_qspi *q)
 	writel(SEQID_FAST_READ << QUADSPI_BFGENCR_SEQID_SHIFT,
 		base + QUADSPI_BFGENCR);
 
+#ifndef CONFIG_MX7ULP
 	/*Enable DDR Mode*/
 	fsl_enable_ddr_mode(q);
+#endif
 }
 
 static int fsl_qspi_init(struct fsl_qspi *q)
@@ -501,8 +511,13 @@ static int fsl_qspi_init(struct fsl_qspi *q)
 		return 1;
 	}
 	q->devtype_data = ptr;
+#ifdef CONFIG_MX7ULP
+	q->devtype_data->rxfifo = 64;
+	q->devtype_data->txfifo = 64;
+#else
 	q->devtype_data->rxfifo = 128;
 	q->devtype_data->txfifo = 512;
+#endif
 
 	/* init the LUT table */
 	fsl_qspi_init_lut(q);
@@ -818,7 +833,7 @@ static void fsl_qspi_write_data(struct fsl_qspi *q, int len, u8* txbuf)
 		writel(tmp, q->iobase + QUADSPI_TBDR);
 	}
 
-#if defined(CONFIG_MX7D) || defined(CONFIG_MX6UL)
+#if defined(CONFIG_MX7D) || defined(CONFIG_MX6UL) || defined(CONFIG_MX7ULP)
 	u32 t3;
 	/* iMX7D and MX6UL TXFIFO must be at least 16 bytes*/
 	t3 = t1 + ((t2 + 3) >> 2);
