@@ -39,6 +39,13 @@ config ATMEL_PIO4
 	  may be dedicated as a general purpose I/O or be assigned to
 	  a function of an embedded peripheral.
 
+config IMX_RGPIO2P
+	bool "i.MX7ULP RGPIO2P driver"
+	depends on DM
+	default n
+	help
+	  This driver supports i.MX7ULP Rapid GPIO2P controller.
+
 config LPC32XX_GPIO
 	bool "LPC32XX GPIO driver"
 	depends on DM
