@@ -3112,11 +3112,10 @@ static void cb_erase(struct usb_ep *ep, struct usb_request *req)
 #endif
 
 #ifdef CONFIG_AVB_SUPPORT
-static const char *slot_suffix[2] = {"_a", "_b"};
 static void cb_set_active_avb(struct usb_ep *ep, struct usb_request *req)
 {
 	AvbIOResult ret;
-	unsigned int slot = 0;
+	int slot = 0;
 	char *cmd = req->buf;
 
 	strsep(&cmd, ":");
@@ -3126,11 +3125,9 @@ static void cb_set_active_avb(struct usb_ep *ep, struct usb_request *req)
 		return;
 	}
 
-	for (slot = 0; slot < 2; slot ++)
-		if (!strcmp(cmd, slot_suffix[slot]))
-			break;
+	slot = slotidx_from_suffix(cmd);
 
-	if (slot >= 2) {
+	if (slot < 0) {
 		fastboot_tx_write_str("FAILerr slot suffix");
 		return;
 	}

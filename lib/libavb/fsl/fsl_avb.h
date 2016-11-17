@@ -142,6 +142,12 @@ AvbIOResult fsl_get_unique_guid_for_partition(AvbOps* ops,
  * */
 bool is_slotvar_avb(char *cmd);
 
+/* return 0 for the first slot
+ * return 1 for the second slot
+ * return -1 for not supported slot
+ * */
+int slotidx_from_suffix(char *suffix);
+
 /* return fastboot's getvar cmd response
  * cmd is the fastboot getvar's cmd in
  * response is bootctl's slot var out

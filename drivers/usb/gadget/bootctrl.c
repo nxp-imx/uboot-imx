@@ -272,9 +272,11 @@ static unsigned int slotidx_from_suffix(char *suffix)
 {
 	unsigned int slot = -1;
 
-	if (!strcmp(suffix, "_a"))
+	if (!strcmp(suffix, "_a") ||
+			!strcmp(suffix, "a"))
 		slot = 0;
-	else if (!strcmp(suffix, "_b"))
+	else if (!strcmp(suffix, "_b") ||
+			!strcmp(suffix, "b"))
 		slot = 1;
 
 	return slot;

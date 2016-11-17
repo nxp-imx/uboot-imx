@@ -26,12 +26,14 @@ static bool slot_is_bootable(AvbABSlotData* slot) {
          (slot->successful_boot || (slot->tries_remaining > 0));
 }
 
-static unsigned int slotidx_from_suffix(char *suffix) {
-	unsigned int slot = ~0;
+int slotidx_from_suffix(char *suffix) {
+	int slot = -1;
 
-	if (!strcmp(suffix, "_a"))
+	if (!strcmp(suffix, "_a") ||
+			!strcmp(suffix, "a"))
 		slot = 0;
-	else if (!strcmp(suffix, "_b"))
+	else if (!strcmp(suffix, "_b") ||
+			!strcmp(suffix, "b"))
 		slot = 1;
 
 	return slot;
@@ -69,7 +71,7 @@ void get_slotvar_avb(AvbOps *ops, char *cmd, char *response, size_t chars_left) 
 
 	AvbABData ab_data;
 	AvbABSlotData *slot_data;
-	unsigned int slot;
+	int slot;
 
 	assert(ops != NULL && cmd != NULL && response != NULL);
 
@@ -100,7 +102,7 @@ void get_slotvar_avb(AvbOps *ops, char *cmd, char *response, size_t chars_left) 
 	} else if (!strcmp_l1("slot-successful:", cmd)) {
 		char *suffix = strchr(cmd, ':') + 1;
 		slot = slotidx_from_suffix(suffix);
-		if (slot >= SLOT_NUM) {
+		if (slot < 0) {
 			strncat(response, "no such slot", chars_left);
 		} else {
 			slot_data = &ab_data.slots[slot];
@@ -111,7 +113,7 @@ void get_slotvar_avb(AvbOps *ops, char *cmd, char *response, size_t chars_left) 
 	} else if (!strcmp_l1("slot-unbootable:", cmd)) {
 		char *suffix = strchr(cmd, ':') + 1;
 		slot = slotidx_from_suffix(suffix);
-		if (slot >= SLOT_NUM) {
+		if (slot < 0) {
 			strncat(response, "no such slot", chars_left);
 		} else {
 			slot_data = &ab_data.slots[slot];
@@ -122,7 +124,7 @@ void get_slotvar_avb(AvbOps *ops, char *cmd, char *response, size_t chars_left) 
 	} else if (!strcmp_l1("slot-retry-count:", cmd)) {
 		char *suffix = strchr(cmd, ':') + 1;
 		slot = slotidx_from_suffix(suffix);
-		if (slot >= SLOT_NUM)
+		if (slot < 0)
 			strncat(response, "no such slot", chars_left);
 		else {
 			slot_data = &ab_data.slots[slot];
