@@ -30,4 +30,6 @@
 
 #define FASTBOOT_ENCRYPT_LOCK
 
+#define CONFIG_SUPPORT_EMMC_RPMB
+
 #endif
