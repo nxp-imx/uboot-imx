@@ -4,8 +4,19 @@ config MX7ULP
 	bool
 	select ROM_UNIFIED_SECTIONS
 
+choice
+	prompt "MX7ULP board select"
+	optional
+
+config TARGET_MX7ULP_EVK
+        bool "Support mx7ulp EVK board"
+        select MX7ULP
+
+endchoice
+
 config SYS_SOC
 	default "mx7ulp"
 
+source "board/freescale/mx7ulp_evk/Kconfig"
 
 endif
