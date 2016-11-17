@@ -265,6 +265,25 @@ int usb_phy_mode(int port)
 }
 #endif
 
+static void ehci_mx6_powerup_fixup(struct ehci_ctrl *ctrl, uint32_t *status_reg,
+				   uint32_t *reg)
+{
+	uint32_t result;
+	int usec = 2000;
+
+	mdelay(50);
+
+	do {
+		result = ehci_readl(status_reg);
+		udelay(5);
+		if (!(result & EHCI_PS_PR))
+			break;
+		usec--;
+	} while (usec > 0);
+
+	*reg = ehci_readl(status_reg);
+}
+
 static void usb_oc_config(int index)
 {
 #if defined(CONFIG_MX6)
@@ -364,6 +383,10 @@ int ehci_mx6_common_init(struct usb_ehci *ehci, int index)
 }
 
 #if !CONFIG_IS_ENABLED(DM_USB)
+static const struct ehci_ops mx6_ehci_ops = {
+	.powerup_fixup		= ehci_mx6_powerup_fixup,
+};
+
 int ehci_hcd_init(int index, enum usb_init_type init,
 		struct ehci_hccr **hccr, struct ehci_hcor **hcor)
 {
@@ -383,6 +406,8 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	ret = ehci_mx6_common_init(ehci, index);
 	if (ret)
 		return ret;
+
+	ehci_set_controller_priv(index, NULL, &mx6_ehci_ops);
 
 	type = board_usb_phy_mode(index);
 
@@ -457,7 +482,8 @@ static int mx6_init_after_reset(struct ehci_ctrl *dev)
 }
 
 static const struct ehci_ops mx6_ehci_ops = {
-	.init_after_reset = mx6_init_after_reset
+	.powerup_fixup		= ehci_mx6_powerup_fixup,
+	.init_after_reset 	= mx6_init_after_reset
 };
 
 static int ehci_usb_phy_mode(struct udevice *dev)
