@@ -134,7 +134,7 @@ config USB_EHCI_MARVELL
 
 config USB_EHCI_MX6
 	bool "Support for i.MX6 on-chip EHCI USB controller"
-	depends on ARCH_MX6
+	depends on ARCH_MX6 || ARCH_MX7ULP
 	default y
 	---help---
 	  Enables support for the on-chip EHCI controller on i.MX6 SoCs.
@@ -154,7 +154,7 @@ config USB_EHCI_OMAP
 	  Enables support for the on-chip EHCI controller on OMAP3 and later
 	  SoCs.
 
-if USB_EHCI_MX7
+if USB_EHCI_MX7 || USB_EHCI_MX6
 
 config MXC_USB_OTG_HACTIVE
 	bool "USB Power pin high active"
