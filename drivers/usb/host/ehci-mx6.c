@@ -58,10 +58,12 @@
 #define UCMD_RUN_STOP           (1 << 0) /* controller run/stop */
 #define UCMD_RESET		(1 << 1) /* controller reset */
 
-#if defined(CONFIG_MX6)
+#if defined(CONFIG_MX6) || defined(CONFIG_MX7ULP)
 static const unsigned phy_bases[] = {
 	USB_PHY0_BASE_ADDR,
+#if defined(USB_PHY1_BASE_ADDR)
 	USB_PHY1_BASE_ADDR,
+#endif
 };
 
 static void usb_internal_phy_clock_gate(int index, int on)
@@ -78,6 +80,20 @@ static void usb_internal_phy_clock_gate(int index, int on)
 
 static void usb_power_config(int index)
 {
+#if defined(CONFIG_MX7ULP)
+	struct usbphy_regs __iomem *usbphy =
+		(struct usbphy_regs __iomem *)USB_PHY0_BASE_ADDR;
+
+	if (index > 0)
+		return;
+
+	writel(ANADIG_USB2_CHRG_DETECT_EN_B |
+		   ANADIG_USB2_CHRG_DETECT_CHK_CHRG_B,
+		   &usbphy->usb1_chrg_detect);
+
+	scg_enable_usb_pll(true);
+
+#else
 	struct anatop_regs __iomem *anatop =
 		(struct anatop_regs __iomem *)ANATOP_BASE_ADDR;
 	void __iomem *chrg_detect;
@@ -117,6 +133,8 @@ static void usb_power_config(int index)
 		     ANADIG_USB2_PLL_480_CTRL_POWER |
 		     ANADIG_USB2_PLL_480_CTRL_EN_USB_CLKS,
 		     pll_480_ctrl_set);
+
+#endif
 }
 
 /* Return 0 : host node, <>0 : device mode */
@@ -180,6 +198,14 @@ int usb_phy_mode(int port)
 		return USB_INIT_HOST;
 }
 
+#if defined(CONFIG_MX7ULP)
+struct usbnc_regs {
+	u32 ctrl1;
+	u32 ctrl2;
+	u32 reserve0[2];
+	u32 hsic_ctrl;
+};
+#else
 /* Base address for this IP block is 0x02184800 */
 struct usbnc_regs {
 	u32	ctrl[4];	/* otg/host1-3 */
@@ -188,6 +214,8 @@ struct usbnc_regs {
 	u32	otg_phy_ctrl_0;
 	u32	uh1_phy_ctrl_0;
 };
+#endif
+
 #elif defined(CONFIG_MX7)
 struct usbnc_regs {
 	u32 ctrl1;
@@ -235,7 +263,7 @@ static void usb_oc_config(int index)
 	struct usbnc_regs *usbnc = (struct usbnc_regs *)(USB_BASE_ADDR +
 			USB_OTHERREGS_OFFSET);
 	void __iomem *ctrl = (void __iomem *)(&usbnc->ctrl[index]);
-#elif defined(CONFIG_MX7)
+#elif defined(CONFIG_MX7) || defined(CONFIG_MX7ULP)
 	struct usbnc_regs *usbnc = (struct usbnc_regs *)(USB_BASE_ADDR +
 			(0x10000 * index) + USBNC_OFFSET);
 	void __iomem *ctrl = (void __iomem *)(&usbnc->ctrl1);
@@ -250,7 +278,7 @@ static void usb_oc_config(int index)
 
 #if defined(CONFIG_MX6)
 	setbits_le32(ctrl, UCTRL_OVER_CUR_DIS);
-#elif defined(CONFIG_MX7)
+#elif defined(CONFIG_MX7) || defined(CONFIG_MX7ULP)
 	setbits_le32(ctrl, UCTRL_OVER_CUR_DIS | UCTRL_PM);
 #endif
 }
@@ -307,7 +335,7 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	enum usb_init_type type;
 #if defined(CONFIG_MX6)
 	u32 controller_spacing = 0x200;
-#elif defined(CONFIG_MX7)
+#elif defined(CONFIG_MX7) || defined(CONFIG_MX7ULP)
 	u32 controller_spacing = 0x10000;
 #endif
 	struct usb_ehci *ehci = (struct usb_ehci *)(USB_BASE_ADDR +
@@ -333,7 +361,7 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	usb_power_config(index);
 	usb_oc_config(index);
 
-#if defined(CONFIG_MX6)
+#if defined(CONFIG_MX6) || defined(CONFIG_MX7ULP)
 	usb_internal_phy_clock_gate(index, 1);
 	usb_phy_enable(index, ehci);
 #endif
