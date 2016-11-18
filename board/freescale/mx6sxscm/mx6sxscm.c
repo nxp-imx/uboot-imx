@@ -364,7 +364,7 @@ int power_init_board(void)
 	/* set SWBST boost regulator mode */
 	pmic_reg_read(pfuze, PFUZE100_SWBSTCON1, &reg);
 	reg &= ~SWBST_MODE_MASK;
-	reg |= SWBST_MODE_AUTO;
+	reg |= SWBST_MODE_AUTO << SWBST_MODE_SHIFT;
 	reg |= 0x40;
 	pmic_reg_write(pfuze, PFUZE100_SWBSTCON1, reg);
 
