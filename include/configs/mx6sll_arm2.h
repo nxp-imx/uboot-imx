@@ -223,14 +223,10 @@
 	 */
 	#define CONFIG_SPLASH_SCREEN
 	#define CONFIG_CMD_BMP
-	#define CONFIG_LCD
-	#define CONFIG_SYS_CONSOLE_IS_IN_ENV
-#ifdef CONFIG_MXC_EPDC
 	#undef LCD_TEST_PATTERN
 	#define LCD_BPP					LCD_MONOCHROME
 
 	#define CONFIG_WAVEFORM_BUF_SIZE		0x200000
-#endif
-#endif /* CONFIG_SPLASH_SCREEN */
+#endif /* CONFIG_MXC_EPDC */
 
 #endif				/* __CONFIG_H */

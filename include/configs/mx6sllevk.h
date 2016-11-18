@@ -173,4 +173,19 @@
 #define CONFIG_IMX_VIDEO_SKIP
 #endif
 
+/*
+ * EPDC SPLASH SCREEN Configs
+ */
+#ifdef CONFIG_MXC_EPDC
+	/*
+	 * Framebuffer and LCD
+	 */
+	#define CONFIG_SPLASH_SCREEN
+	#define CONFIG_CMD_BMP
+	#undef LCD_TEST_PATTERN
+	#define LCD_BPP					LCD_MONOCHROME
+
+	#define CONFIG_WAVEFORM_BUF_SIZE		0x200000
+#endif /* CONFIG_MXC_EPDC */
+
 #endif				/* __CONFIG_H */

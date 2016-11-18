@@ -193,7 +193,7 @@
 #define EPDC_PIGEON_16_0		0xC00
 #define EPDC_PIGEON_16_1		0xC10
 #define EPDC_PIGEON_16_2		0xC20
-#if defined(CONFIG_MX7) || defined(CONFIG_MX6ULL)
+#if defined(CONFIG_MX7) || defined(CONFIG_MX6ULL) || defined(CONFIG_MX6SLL)
 #define EPDC_WB_ADDR_TCE		0x010
 #else
 #define EPDC_WB_ADDR_TCE		0xC10
@@ -306,7 +306,7 @@ enum {
 
 /* EPDC_UPD_CTRL field values */
 	EPDC_UPD_CTRL_USE_FIXED = 0x80000000,
-#ifdef CONFIG_MX7
+#if defined(CONFIG_MX7) || defined(CONFIG_MX6ULL) || defined(CONFIG_MX6SLL)
 	EPDC_UPD_CTRL_LUT_SEL_MASK = 0x3F0000,
 #else
 	EPDC_UPD_CTRL_LUT_SEL_MASK = 0xF0000,
@@ -331,7 +331,7 @@ enum {
 /* EPDC_AUTOWV_LUT field values */
 	EPDC_AUTOWV_LUT_DATA_MASK = 0xFF0000,
 	EPDC_AUTOWV_LUT_DATA_OFFSET = 16,
-#ifdef CONFIG_MX7
+#if defined(CONFIG_MX7) || defined(CONFIG_MX6ULL) || defined(CONFIG_MX6SLL)
 	EPDC_AUTOWV_LUT_ADDR_MASK = 0x7,
 #else
 	EPDC_AUTOWV_LUT_ADDR_MASK = 0xFF,

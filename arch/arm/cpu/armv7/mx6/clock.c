@@ -1607,7 +1607,8 @@ void enable_eim_clk(unsigned char enable)
 }
 #endif
 
-#if defined(CONFIG_MXC_EPDC) && defined(CONFIG_MX6ULL)
+#if defined(CONFIG_MXC_EPDC)
+#if defined(CONFIG_MX6ULL) || defined(CONFIG_MX6SLL)
 void enable_epdc_clock(void)
 {
 	u32 reg = 0;
@@ -1634,6 +1635,7 @@ void enable_epdc_clock(void)
 	/* enable the clock gate */
 	setbits_le32(&imx_ccm->CCGR3, MXC_CCM_CCGR3_EPDC_CLK_ENABLE_MASK);
 }
+#endif
 #endif
 
 /***************************************************/
