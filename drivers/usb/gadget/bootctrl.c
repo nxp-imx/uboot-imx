@@ -296,7 +296,7 @@ bool is_sotvar(char *cmd)
 	return false;
 }
 
-void get_slotvar(char *cmd, char *response, size_t chars_left)
+int get_slotvar(char *cmd, char *buffer, size_t size)
 {
 	int ret;
 	struct boot_ctl t_bootctl;
@@ -307,59 +307,69 @@ void get_slotvar(char *cmd, char *response, size_t chars_left)
 		char *ptnname = NULL;
 		ptnname = strchr(cmd, ':') + 1;
 		if (!strcmp(ptnname, "system") || !strcmp(ptnname, "boot"))
-			strncat(response, "yes", chars_left);
+			strlcpy(buffer, "yes", size);
 		else
-			strncat(response, "no", chars_left);
-		return;
+			strlcpy(buffer, "no", size);
+		return 0;
 	} else if (!strcmp_l1("slot-suffixes", cmd)) {
-		strncat(response, "_a,_b", chars_left);
-		return;
+		strlcpy(buffer, "_a,_b", size);
+		return 0;
 	}
 
 	ret = read_bootctl(&t_bootctl);
 	if (ret) {
 		error("get_slotvar, read_bootctl failed\n");
-		strcpy(response, "get_slotvar read_bootctl failed");
-		return;
+		strlcpy(buffer, "get_slotvar read_bootctl failed", size);
+		return -1;
 	}
 
 	if (!strcmp_l1("current-slot", cmd)) {
 		unsigned int slot = slot_find(&t_bootctl);
 		if (slot < SLOT_NUM)
-			strncat(response, g_slot_suffix[slot], chars_left);
-		else
-			strncat(response, "no valid slot", chars_left);
+			strlcpy(buffer, g_slot_suffix[slot], size);
+		else {
+			strlcpy(buffer, "no valid slot", size);
+			return -1;
+		}
 	} else if (!strcmp_l1("slot-successful:", cmd)) {
 		char *suffix = strchr(cmd, ':') + 1;
 		unsigned int slot = slotidx_from_suffix(suffix);
 		if (slot >= SLOT_NUM) {
-			strncat(response, "no such slot", chars_left);
+			strlcpy(buffer, "no such slot", size);
+			return -1;
 		} else {
 			bool suc = t_bootctl.a_slot_meta[slot].bootsuc;
-			strncat(response, suc ? "yes" : "no", chars_left);
+			strlcpy(buffer, suc ? "yes" : "no", size);
 		}
 	} else if (!strcmp_l1("slot-unbootable:", cmd)) {
 		char *suffix = strchr(cmd, ':') + 1;
 		unsigned int slot = slotidx_from_suffix(suffix);
 		if (slot >= SLOT_NUM) {
-			strncat(response, "no such slot", chars_left);
+			strlcpy(buffer, "no such slot", size);
+			return -1;
 		} else {
 			unsigned int pri = t_bootctl.a_slot_meta[slot].priority;
-			strncat(response, pri ? "no" : "yes", chars_left);
+			strlcpy(buffer, pri ? "no" : "yes", size);
 		}
 	} else if (!strcmp_l1("slot-retry-count:", cmd)) {
 		char *suffix = strchr(cmd, ':') + 1;
 		unsigned int slot = slotidx_from_suffix(suffix);
-		if (slot >= SLOT_NUM)
-			strncat(response, "no such slot", chars_left);
-		else
-			sprintf(response, "OKAY%d",
+		if (slot >= SLOT_NUM) {
+			strlcpy(buffer, "no such slot", size);
+			return -1;
+		}
+		else {
+			char str_num[7];
+			sprintf(str_num, "%d",
 				t_bootctl.a_slot_meta[slot].tryremain);
+			strlcpy(buffer, str_num, size);
+		}
 	} else {
-		strncat(response, "no such slot command", chars_left);
+		strlcpy(buffer, "no such slot command", size);
+		return -1;
 	}
 
-	return;
+	return 0;
 }
 
 

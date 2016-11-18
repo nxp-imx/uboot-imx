@@ -68,77 +68,85 @@ static char *get_curr_slot(AvbABData *ab_data) {
 		return "no valid slot";
 }
 
-void get_slotvar_avb(AvbOps *ops, char *cmd, char *response, size_t chars_left) {
+int get_slotvar_avb(AvbOps *ops, char *cmd, char *buffer, size_t size) {
 
 	AvbABData ab_data;
 	AvbABSlotData *slot_data;
 	int slot;
 
-	assert(ops != NULL && cmd != NULL && response != NULL);
+	assert(ops != NULL && cmd != NULL && buffer != NULL);
 
+	char *str = cmd;
 	if (!strcmp_l1("has-slot:", cmd)) {
-		char *ptnname = NULL;
-		ptnname = strchr(cmd, ':') + 1;
-		if (!strcmp(ptnname, "system") || !strcmp(ptnname, "boot"))
-			strncat(response, "yes", chars_left);
+		str += strlen("has-slot:");
+		if (!strcmp(str, "system") || !strcmp(str, "boot"))
+			strlcpy(buffer, "yes", size);
 		else
-			strncat(response, "no", chars_left);
-		return;
+			strlcpy(buffer, "no", size);
+		return 0;
 
 	} else if (!strcmp_l1("slot-suffixes", cmd)) {
-		strncat(response, "_a,_b", chars_left);
-		return;
+		strlcpy(buffer, "_a,_b", size);
+		return 0 ;
 
 	} else if (!strcmp_l1("slot-count", cmd)) {
-		strncat(response, "2", chars_left);
-		return;
+		strlcpy(buffer, "2", size);
+		return 0 ;
 	}
 
 	/* load ab meta */
 	if (ops->read_ab_metadata == NULL ||
 			ops->read_ab_metadata(ops, &ab_data) != AVB_IO_RESULT_OK) {
-		strncat(response, "ab data read error", chars_left);
-		return;
+		strlcpy(buffer, "ab data read error", size);
+		return -1 ;
 	}
 
 	if (!strcmp_l1("current-slot", cmd)) {
-		strncat(response, get_curr_slot(&ab_data), chars_left);
+		strlcpy(buffer, get_curr_slot(&ab_data), size);
 
 	} else if (!strcmp_l1("slot-successful:", cmd)) {
-		char *suffix = strchr(cmd, ':') + 1;
-		slot = slotidx_from_suffix(suffix);
+		str += strlen("slot-successful:");
+		slot = slotidx_from_suffix(str);
 		if (slot < 0) {
-			strncat(response, "no such slot", chars_left);
+			strlcpy(buffer, "no such slot", size);
+			return -1;
 		} else {
 			slot_data = &ab_data.slots[slot];
 			bool succ = (slot_data->successful_boot != 0);
-			strncat(response, succ ? "yes" : "no", chars_left);
+			strlcpy(buffer, succ ? "yes" : "no", size);
 		}
 
 	} else if (!strcmp_l1("slot-unbootable:", cmd)) {
-		char *suffix = strchr(cmd, ':') + 1;
-		slot = slotidx_from_suffix(suffix);
+		str += strlen("slot-unbootable:");
+		slot = slotidx_from_suffix(str);
 		if (slot < 0) {
-			strncat(response, "no such slot", chars_left);
+			strlcpy(buffer, "no such slot", size);
+			return -1;
 		} else {
 			slot_data = &ab_data.slots[slot];
 			bool bootable = slot_is_bootable(slot_data);
-			strncat(response, bootable ? "no" : "yes", chars_left);
+			strlcpy(buffer, bootable ? "no" : "yes", size);
 		}
 
 	} else if (!strcmp_l1("slot-retry-count:", cmd)) {
-		char *suffix = strchr(cmd, ':') + 1;
-		slot = slotidx_from_suffix(suffix);
-		if (slot < 0)
-			strncat(response, "no such slot", chars_left);
+		str += strlen("slot-retry-count:");
+		slot = slotidx_from_suffix(str);
+		if (slot < 0) {
+			strlcpy(buffer, "no such slot", size);
+			return -1;
+		}
 		else {
 			slot_data = &ab_data.slots[slot];
-			sprintf(response, "OKAY%d",
+			char var[7];
+			sprintf(var, "%d",
 				slot_data->tries_remaining);
+			strlcpy(buffer, var, size);
 		}
 
-	} else
-		strncat(response, "no such slot command", chars_left);
+	} else {
+		strlcpy(buffer, "no such slot command", size);
+		return -1;
+	}
 
-	return;
+	return 0;
 }

@@ -2615,66 +2615,49 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		return;
 	}
 
-#ifdef CONFIG_AVB_SUPPORT
-	if (is_slotvar_avb(cmd)) {
-		get_slotvar_avb(&fsl_avb_ops, cmd, response, chars_left);
-		fastboot_tx_write_str(response);
-		return;
-	}
-#elif CONFIG_FSL_BOOTCTL
-	if (is_sotvar(cmd)) {
-		get_slotvar(cmd, response, chars_left);
-		fastboot_tx_write_str(response);
-		return;
-	}
-#endif
-	char *str;
-	str = strstr(cmd, "partition-size:");
-	if (str) {
-		str+=strlen("partition-size:");
+	char *str = cmd;
+	if (!strcmp_l1("partition-size:", cmd)) {
+		str += strlen("partition-size:");
 		struct fastboot_ptentry* fb_part;
 		fb_part = fastboot_flash_find_ptn(str);
-		if (!fb_part)
-			strcpy(response, "FAILWrong partition name.");
-		else {
-			char var[32] = {0};
-			sprintf(var, "OKAY0x%016x", fb_part->length * get_block_size());
-			strcpy(response, var);
+		if (!fb_part) {
+			strncat(response, "Wrong partition name.", chars_left);
+			goto fail;
 		}
-	} else if (strstr(cmd, "partition-type:")) {
-		str = strstr(cmd, "partition-type:");
-		str+=strlen("partition-type:");
+		else {
+			char str_num[20];
+
+			sprintf(str_num, "0x%016x", fb_part->length * get_block_size());
+			strncat(response, str_num, chars_left);
+		}
+	} else if (!strcmp_l1("partition-type:", cmd)) {
+		str += strlen("partition-type:");
 		struct fastboot_ptentry* fb_part;
 		fb_part = fastboot_flash_find_ptn(str);
-		if (!fb_part)
-			strcpy(response, "FAILWrong partition name.");
+		if (!fb_part) {
+			strncat(response, "Wrong partition name.", chars_left);
+			goto fail;
+		}
 		else {
-			char var[32] = {0};
-			sprintf(var, "OKAY%s", fb_part->fstype);
-			strcpy(response, var);
+			strncat(response, fb_part->fstype, chars_left);
 		}
 	} else if (!strcmp_l1("all", cmd)) {
-		strcpy(response, "OKAY");
+		/* FIXME need to return all vars here */
 	} else if (!strcmp_l1("version-baseband", cmd)) {
-		strcpy(response, "OKAYN/A");
-	} else if (!strcmp_l1("version-bootloader", cmd)) {
-		char var[512] = {0};
-		sprintf(var, "OKAY%s", U_BOOT_VERSION);
-		strcpy(response, var);
+		strncat(response, "N/A", chars_left);
+	} else if (!strcmp_l1("version-bootloader", cmd) ||
+		!strcmp_l1("bootloader-version", cmd)) {
+		strncat(response, U_BOOT_VERSION, chars_left);
 	} else if (!strcmp_l1("version", cmd)) {
 		strncat(response, FASTBOOT_VERSION, chars_left);
 	} else if (!strcmp_l1("battery-voltage", cmd)) {
-		strcpy(response, "OKAY0mV");
+		strncat(response, "0mV", chars_left);
 	} else if (!strcmp_l1("battery-soc-ok", cmd)) {
-		strcpy(response, "OKAYyes");
+		strncat(response, "yes", chars_left);
 	} else if (!strcmp_l1("variant", cmd)) {
-		strcpy(response, "OKAY");
+		/* just OKAY here */
 	} else if (!strcmp_l1("off-mode-charge", cmd)) {
-		strcpy(response, "OKAY1");
-	} else if (!strcmp_l1("bootloader-version", cmd)) {
-		char var[512] = {0};
-		sprintf(var, "OKAY%s", U_BOOT_VERSION);
-		strcpy(response, var);
+		strncat(response, "1", chars_left);
 	} else if (!strcmp_l1("downloadsize", cmd) ||
 		!strcmp_l1("max-download-size", cmd)) {
 		char str_num[12];
@@ -2685,8 +2668,10 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		s = get_serial();
 		if (s)
 			strncat(response, s, chars_left);
-		else
-			strcpy(response, "FAILValue not set");
+		else {
+			strncat(response, "Value not set", chars_left);
+			goto fail;
+		}
 	} else if (!strcmp_l1("product", cmd)) {
 		strncat(response, PRODUCT_NAME, chars_left);
 	}
@@ -2701,10 +2686,29 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		}
 	}
 #endif
+#ifdef CONFIG_AVB_SUPPORT
+	else if (is_slotvar_avb(cmd)) {
+		if (get_slotvar_avb(&fsl_avb_ops, cmd,
+				response + strlen(response), chars_left + 1) < 0)
+			goto fail;
+	}
+#elif CONFIG_FSL_BOOTCTL
+	else if (is_sotvar(cmd)) {
+		if (get_slotvar(cmd, response + strlen(response), chars_left + 1) < 0)
+			goto fail;
+	}
+#endif
 	else {
+		strncat(response, "No such var", chars_left);
 		error("unknown variable: %s\n", cmd);
+		goto fail;
 	}
 	fastboot_tx_write_str(response);
+	return;
+fail:
+	strncpy(response, "FAIL", 4);
+	fastboot_tx_write_str(response);
+	return;
 }
 
 static unsigned int rx_bytes_expected(unsigned int maxpacket)

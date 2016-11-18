@@ -150,9 +150,10 @@ int slotidx_from_suffix(char *suffix);
 
 /* return fastboot's getvar cmd response
  * cmd is the fastboot getvar's cmd in
- * response is bootctl's slot var out
+ * if return 0, buffer is bootctl's slot var out
+ * if return -1, buffer is error string
  * */
-void get_slotvar_avb(AvbOps *ops, char *cmd, char *response, size_t chars_left);
+int get_slotvar_avb(AvbOps *ops, char *cmd, char *buffer, size_t size);
 
 /* reset rollback_index part in avbkey partition
  * used in the switch from LOCK to UNLOCK
