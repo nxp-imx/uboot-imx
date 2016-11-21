@@ -425,6 +425,6 @@
 #endif
 
 
-#define PRODUCT_NAME "imx6ul"
+#define PRODUCT_NAME "imx6ul_iopb"
 
 #endif
