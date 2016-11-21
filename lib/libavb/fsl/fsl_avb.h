@@ -167,4 +167,8 @@ int rbkidx_erase(const char * kblb_part);
  * */
 int avbkeyblb_init(uint8_t *plainkey, uint32_t keylen, const char *kblb_part /*"avbkey"*/);
 
+/* read a/b metadata to get curr slot
+ * return slot suffix '_a'/'_b' or NULL */
+char *select_slot(AvbOps *ops);
+
 #endif /* __FSL_AVB_H__ */

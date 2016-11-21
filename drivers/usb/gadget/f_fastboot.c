@@ -1912,16 +1912,23 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	} else { /* lock_status == FASTBOOT_UNLOCK && verify fail */
 		/* if in unlock state, log the verify state */
 		printf(" verify FAIL, state: UNLOCK\n");
-		printf(" boot 'boot_a' still\n");
 #endif
 		/* if lock/unlock not enabled or verify fail
 		 * in unlock state, will try boot */
 		size_t num_read;
 		hdr = &boothdr;
 
+		char bootimg[8];
+		char *slot = select_slot(&fsl_avb_ops);
+		if (slot == NULL) {
+			printf("boota: no bootable slot\n");
+			goto fail;
+		}
+		sprintf(bootimg, "boot%s", slot);
+		printf(" boot '%s' still\n", bootimg);
 		/* maybe we should use bootctl to select a/b
 		 * but libavb doesn't export a/b select */
-		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, "boot_a",
+		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, bootimg,
 					0, sizeof(boothdr), hdr, &num_read) != AVB_IO_RESULT_OK &&
 				num_read != sizeof(boothdr)) {
 			printf("boota: read bootimage head error\n");
@@ -1932,7 +1939,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			goto fail;
 		}
 		image_size = android_image_get_end(hdr) - (ulong)hdr;
-		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, "boot_a",
+		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, bootimg,
 					0, image_size, (void *)load_addr, &num_read) != AVB_IO_RESULT_OK &&
 				num_read != image_size) {
 			printf("boota: read boot image error\n");

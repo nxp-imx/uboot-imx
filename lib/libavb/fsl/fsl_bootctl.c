@@ -53,19 +53,19 @@ bool is_slotvar_avb(char *cmd) {
 	return false;
 }
 
-static char *get_curr_slot(AvbABData *ab_data) {
+static int get_curr_slot(AvbABData *ab_data) {
 	if (slot_is_bootable(&ab_data->slots[0]) &&
 		slot_is_bootable(&ab_data->slots[1])) {
 		if (ab_data->slots[1].priority > ab_data->slots[0].priority)
-			return slot_suffix[1];
+			return 1;
 		else
-			return slot_suffix[0];
+			return 0;
 	} else if (slot_is_bootable(&ab_data->slots[0]))
-		return slot_suffix[0];
+		return 0;
 	else if (slot_is_bootable(&ab_data->slots[1]))
-		return slot_suffix[1];
+		return 1;
 	else
-		return "no valid slot";
+		return -1;
 }
 
 int get_slotvar_avb(AvbOps *ops, char *cmd, char *buffer, size_t size) {
@@ -102,7 +102,13 @@ int get_slotvar_avb(AvbOps *ops, char *cmd, char *buffer, size_t size) {
 	}
 
 	if (!strcmp_l1("current-slot", cmd)) {
-		strlcpy(buffer, get_curr_slot(&ab_data), size);
+		int curr = get_curr_slot(&ab_data);
+		if (curr >= 0 && curr < SLOT_NUM)
+			strlcpy(buffer, slot_suffix[curr], size);
+		else {
+			strlcpy(buffer, "no bootable slot", size);
+			return -1;
+		}
 
 	} else if (!strcmp_l1("slot-successful:", cmd)) {
 		str += strlen("slot-successful:");
@@ -149,4 +155,22 @@ int get_slotvar_avb(AvbOps *ops, char *cmd, char *buffer, size_t size) {
 	}
 
 	return 0;
+}
+
+char *select_slot(AvbOps *ops) {
+	AvbABData ab_data;
+	int curr;
+
+	assert(ops != NULL);
+
+	/* load ab meta */
+	if (ops->read_ab_metadata == NULL ||
+			ops->read_ab_metadata(ops, &ab_data) != AVB_IO_RESULT_OK) {
+		return NULL;
+	}
+	curr = get_curr_slot(&ab_data);
+	if (curr >= 0 && curr < SLOT_NUM)
+		return slot_suffix[curr];
+	else
+		return NULL;
 }
