@@ -202,6 +202,7 @@ AvbABFlowResult avb_ab_flow(AvbOps* ops,
   AvbABFlowResult ret;
   AvbABData ab_data, ab_data_orig;
   size_t slot_index_to_boot, n;
+  bool is_device_unlocked;
   AvbIOResult io_ret;
 
   io_ret = load_metadata(ops, &ab_data, &ab_data_orig);
@@ -311,6 +312,20 @@ AvbABFlowResult avb_ab_flow(AvbOps* ops,
   }
 
 out:
+  /* do not touch metadata in UNLOCK state */
+  io_ret = ops->read_is_device_unlocked(ops, &is_device_unlocked);
+  if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
+    ret = AVB_AB_FLOW_RESULT_ERROR_OOM;
+    goto fail;
+  } else if (io_ret != AVB_IO_RESULT_OK) {
+    ret = AVB_SLOT_VERIFY_RESULT_ERROR_IO;
+    avb_error("Error getting device state.\n");
+    goto fail;
+  }
+  if (is_device_unlocked)
+    goto ret;
+
+fail:
   io_ret = save_metadata_if_changed(ops, &ab_data, &ab_data_orig);
   if (io_ret != AVB_IO_RESULT_OK) {
     if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
@@ -324,6 +339,7 @@ out:
     }
   }
 
+ret:
   for (n = 0; n < 2; n++) {
     if (slot_data[n] != NULL) {
       avb_slot_verify_data_free(slot_data[n]);
