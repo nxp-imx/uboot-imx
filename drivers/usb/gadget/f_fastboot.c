@@ -90,6 +90,9 @@ static struct f_fastboot *fastboot_func;
 static unsigned int download_size;
 static unsigned int download_bytes;
 static bool is_high_speed;
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+static bool is_recovery_mode;
+#endif
 
 static struct usb_endpoint_descriptor fs_ep_in = {
 	.bLength            = USB_DT_ENDPOINT_SIZE,
@@ -1788,6 +1791,35 @@ static FbBootMode fastboot_get_bootmode(void)
 	return boot_mode;
 }
 
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+/* Setup booargs for taking the system parition as ramdisk */
+static void fastboot_setup_system_boot_args(const char *slot)
+{
+	const char *system_part_name = NULL;
+	if(slot == NULL)
+		return;
+	if(!strncmp(slot, "_a", strlen("_a"))) {
+		system_part_name = FASTBOOT_PARTITION_SYSTEM_A;
+	}
+	else if(!strncmp(slot, "_b", strlen("_b"))) {
+		system_part_name = FASTBOOT_PARTITION_SYSTEM_B;
+	}
+	struct fastboot_ptentry *ptentry = fastboot_flash_find_ptn(system_part_name);
+	if(ptentry != NULL) {
+		char bootargs_3rd[ANDR_BOOT_ARGS_SIZE];
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+		u32 dev_no = mmc_get_env_devno();
+		sprintf(bootargs_3rd, "skip_initramfs root=/dev/mmcblk%dp%d",
+				dev_no,
+				ptentry->partition_index);
+		setenv("bootargs_3rd", bootargs_3rd);
+#endif
+		//TBD to support NAND ubifs system parition boot directly
+	}
+}
+#endif
+
+
 /* export to lib_arm/board.c */
 void fastboot_run_bootmode(void)
 {
@@ -1796,6 +1828,9 @@ void fastboot_run_bootmode(void)
 	case BOOTMODE_FASTBOOT_BCB_CMD:
 		/* Make the boot into fastboot mode*/
 		puts("Fastboot: Got bootloader commands!\n");
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+		is_recovery_mode = false;
+#endif
 		run_command("fastboot", 0);
 		break;
 #ifdef CONFIG_ANDROID_RECOVERY
@@ -1803,17 +1838,22 @@ void fastboot_run_bootmode(void)
 	case BOOTMODE_RECOVERY_KEY_PRESSED:
 		/* Make the boot into recovery mode */
 		puts("Fastboot: Got Recovery key pressing or recovery commands!\n");
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+		is_recovery_mode = true;
+#else
 		board_recovery_setup();
+#endif
 		break;
 #endif
 	default:
 		/* skip special mode boot*/
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+		is_recovery_mode = false;
+#endif
 		puts("Fastboot: Normal\n");
 		break;
 	}
 }
-
-
 
 #ifdef CONFIG_CMD_BOOTA
   /* Section for Android bootimage format support
@@ -1906,6 +1946,10 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		}
 		printf(" verify OK, boot '%s%s'\n", avb_loadpart->partition_name, avb_out_data->ab_suffix);
 		setenv("bootargs_sec", avb_out_data->cmdline);
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+		if(!is_recovery_mode)
+			fastboot_setup_system_boot_args(avb_out_data->ab_suffix);
+#endif
 		image_size = avb_loadpart->data_size;
 		memcpy((void *)load_addr, (void *)hdr, image_size);
 	} else if (lock_status == FASTBOOT_LOCK) { /* && verify fail */
@@ -1951,6 +1995,10 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		char bootargs_sec[ANDR_BOOT_ARGS_SIZE];
 		sprintf(bootargs_sec, "androidboot.slot_suffix=%s", slot);
 		setenv("bootargs_sec", bootargs_sec);
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+		if(!is_recovery_mode)
+			fastboot_setup_system_boot_args(slot);
+#endif
 #ifdef CONFIG_FASTBOOT_LOCK
 	}
 #endif

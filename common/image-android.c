@@ -101,6 +101,20 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 		strcat(commandline, bootargs_sec);
 	}
 #endif
+
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+    /* Normal boot:
+     * cmdline to bypass ramdisk in boot.img, but use the system.img
+     * Recovery boot:
+     * Use the ramdisk in boot.img
+     * */
+	char *bootargs_3rd = getenv("bootargs_3rd");
+	if (bootargs_3rd) {
+		strcat(commandline, " ");
+		strcat(commandline, bootargs_3rd);
+	}
+#endif
+
 	setenv("bootargs", commandline);
 	if (os_data) {
 		*os_data = (ulong)hdr;
