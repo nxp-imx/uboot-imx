@@ -1945,7 +1945,9 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			printf("boota: read boot image error\n");
 			goto fail;
 		}
-		setenv("bootargs_sec", "androidboot.slot_suffix=_a");
+		char bootargs_sec[ANDR_BOOT_ARGS_SIZE];
+		sprintf(bootargs_sec, "androidboot.slot_suffix=%s", slot);
+		setenv("bootargs_sec", bootargs_sec);
 #ifdef CONFIG_FASTBOOT_LOCK
 	}
 #endif
