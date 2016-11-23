@@ -37,6 +37,7 @@ typedef struct margin_pos margin_pos_t;
 
 static block_dev_desc_t *fs_dev_desc = NULL;
 static block_dev_desc_t *get_mmc_desc(void) {
+	extern int mmc_get_env_devno(void);
 	int dev_no = mmc_get_env_devno();
 	return get_dev(FSL_AVB_DEV, dev_no);
 }
@@ -394,9 +395,9 @@ fail:
  * Implementations will typically want to use avb_ab_data_read()
  * here to use the 'misc' partition for persistent storage.
  */
-AvbIOResult fsl_read_ab_metadata(AvbOps* ops, struct AvbABData* data)
+AvbIOResult fsl_read_ab_metadata(AvbABOps* ab_ops, struct AvbABData* data)
 {
-	return avb_ab_data_read(ops, data);
+	return avb_ab_data_read(ab_ops, data);
 }
 
 /* Writes A/B metadata to persistent storage. This will byteswap and
@@ -406,9 +407,9 @@ AvbIOResult fsl_read_ab_metadata(AvbOps* ops, struct AvbABData* data)
  * Implementations will typically want to use avb_ab_data_write()
  * here to use the 'misc' partition for persistent storage.
  */
-AvbIOResult fsl_write_ab_metadata(AvbOps* ops, const struct AvbABData* data)
+AvbIOResult fsl_write_ab_metadata(AvbABOps* ab_ops, const struct AvbABData* data)
 {
-	return avb_ab_data_write(ops, data);
+	return avb_ab_data_write(ab_ops, data);
 }
 
 /* Checks if the given public key used to sign the 'vbmeta'

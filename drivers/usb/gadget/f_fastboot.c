@@ -48,7 +48,7 @@
 #endif
 
 #ifdef CONFIG_AVB_SUPPORT
-#include <libavb.h>
+#include <libavb_ab.h>
 #endif
 
 #define FASTBOOT_VERSION		"0.4"
@@ -1852,17 +1852,19 @@ bootimg_print_image_hdr(struct andr_img_hdr *hdr)
 static struct andr_img_hdr boothdr __aligned(ARCH_DMA_MINALIGN);
 
 #if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
-static AvbOps fsl_avb_ops = {
-	.read_from_partition = fsl_read_from_partition_multi,
-	/* .read_from_partition = fsl_read_from_partition, */
-	.write_to_partition = fsl_write_to_partition,
+static AvbABOps fsl_avb_ab_ops = {
+	.ops = {
+		.read_from_partition = fsl_read_from_partition_multi,
+		/* .read_from_partition = fsl_read_from_partition, */
+		.write_to_partition = fsl_write_to_partition,
+		.validate_vbmeta_public_key = fsl_validate_vbmeta_public_key,
+		.read_rollback_index = fsl_read_rollback_index,
+		.write_rollback_index = fsl_write_rollback_index,
+		.read_is_device_unlocked = fsl_read_is_device_unlocked,
+		.get_unique_guid_for_partition = fsl_get_unique_guid_for_partition
+	},
 	.read_ab_metadata = fsl_read_ab_metadata,
-	.write_ab_metadata = fsl_write_ab_metadata,
-	.validate_vbmeta_public_key = fsl_validate_vbmeta_public_key,
-	.read_rollback_index = fsl_read_rollback_index,
-	.write_rollback_index = fsl_write_rollback_index,
-	.read_is_device_unlocked = fsl_read_is_device_unlocked,
-	.get_unique_guid_for_partition = fsl_get_unique_guid_for_partition
+	.write_ab_metadata = fsl_write_ab_metadata
 };
 
 /* we can use avb to verify Trusty if we want */
@@ -1878,6 +1880,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	AvbABFlowResult avb_result;
 	AvbSlotVerifyData *avb_out_data;
 	AvbPartitionData *avb_loadpart;
+	AvbOps fsl_avb_ops = fsl_avb_ab_ops.ops;
 
 #ifdef CONFIG_FASTBOOT_LOCK
 	/* check lock state */
@@ -1888,7 +1891,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		lock_status = FASTBOOT_LOCK;
 	}
 	/* if in lock state, do avb verify */
-	avb_result = avb_ab_flow(&fsl_avb_ops, requested_partitions, &avb_out_data);
+	avb_result = avb_ab_flow(&fsl_avb_ab_ops, requested_partitions, &avb_out_data);
 	if (avb_result == AVB_AB_FLOW_RESULT_OK) {
 		assert(avb_out_data != NULL);
 		/* load the first partition */
@@ -1919,7 +1922,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		hdr = &boothdr;
 
 		char bootimg[8];
-		char *slot = select_slot(&fsl_avb_ops);
+		char *slot = select_slot(&fsl_avb_ab_ops);
 		if (slot == NULL) {
 			printf("boota: no bootable slot\n");
 			goto fail;
@@ -2697,7 +2700,7 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 #endif
 #ifdef CONFIG_AVB_SUPPORT
 	else if (is_slotvar_avb(cmd)) {
-		if (get_slotvar_avb(&fsl_avb_ops, cmd,
+		if (get_slotvar_avb(&fsl_avb_ab_ops, cmd,
 				response + strlen(response), chars_left + 1) < 0)
 			goto fail;
 	}
@@ -3145,7 +3148,7 @@ static void cb_set_active_avb(struct usb_ep *ep, struct usb_request *req)
 		return;
 	}
 
-	ret = avb_ab_mark_slot_active(&fsl_avb_ops, slot);
+	ret = avb_ab_mark_slot_active(&fsl_avb_ab_ops, slot);
 	if (ret != AVB_IO_RESULT_OK)
 		fastboot_tx_write_str("avb IO error");
 	else

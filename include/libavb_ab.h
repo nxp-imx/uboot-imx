@@ -22,31 +22,21 @@
  * SOFTWARE.
  */
 
-#ifndef LIBAVB_H_
-#define LIBAVB_H_
+#ifndef LIBAVB_AB_H_
+#define LIBAVB_AB_H_
 
-/* The AVB_INSIDE_LIBAVB_H preprocessor symbol is used to enforce
+#include "../lib/avb/libavb/libavb.h"
+
+/* The AVB_INSIDE_LIBAVB_AB_H preprocessor symbol is used to enforce
  * library users to include only this file. All public interfaces, and
  * only public interfaces, must be included here.
  */
 
-#define AVB_INSIDE_LIBAVB_H
-#include "../lib/libavb/avb_ab_flow.h"
-#include "../lib/libavb/avb_chain_partition_descriptor.h"
-#include "../lib/libavb/avb_crypto.h"
-#include "../lib/libavb/avb_descriptor.h"
-#include "../lib/libavb/avb_footer.h"
-#include "../lib/libavb/avb_hash_descriptor.h"
-#include "../lib/libavb/avb_hashtree_descriptor.h"
-#include "../lib/libavb/avb_kernel_cmdline_descriptor.h"
-#include "../lib/libavb/avb_ops.h"
-#include "../lib/libavb/avb_property_descriptor.h"
-#include "../lib/libavb/avb_slot_verify.h"
-#include "../lib/libavb/avb_sysdeps.h"
-#include "../lib/libavb/avb_util.h"
-#include "../lib/libavb/avb_vbmeta_image.h"
-#undef AVB_INSIDE_LIBAVB_H
+#define AVB_INSIDE_LIBAVB_AB_H
+#include "../lib/avb/libavb_ab/avb_ab_flow.h"
+#include "../lib/avb/libavb_ab/avb_ab_ops.h"
+#undef AVB_INSIDE_LIBAVB_AB_H
 
-#include "../lib/libavb/fsl/fsl_avb.h"
+#include "../lib/avb/fsl/fsl_avb.h"
 
-#endif /* LIBAVB_H_ */
+#endif /* LIBAVB_AB_H_ */

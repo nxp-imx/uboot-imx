@@ -55,7 +55,7 @@ typedef enum {
 /* Get a textual representation of |result|. */
 const char* avb_slot_verify_result_to_string(AvbSlotVerifyResult result);
 
-/* Maximum number of rollback index slots number supported. */
+/* Maximum number of rollback index locations supported. */
 #define AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_SLOTS 4
 
 /* AvbPartitionData contains data loaded from partitions when using
@@ -95,8 +95,13 @@ typedef struct {
  * |vbmeta_size| bytes. You can use this data with
  * e.g. avb_descriptor_get_all().
  *
- * Rollback indexes for the slot are stored in the |rollback_indexes|
- * field.
+ * Rollback indexes for the verified slot are stored in the
+ * |rollback_indexes| field. Note that avb_slot_verify() will NEVER
+ * modify stored_rollback_index[n] locations e.g. it will never use
+ * the write_rollback_index() AvbOps operation. Instead it is the job
+ * of the caller of avb_slot_verify() to do this based on e.g. A/B
+ * policy and other factors. See libavb_ab/avb_ab_flow.c for an
+ * example of how to do this.
  *
  * The |cmdline| field is a NUL-terminated string in UTF-8 resulting
  * from concatenating all |AvbKernelCmdlineDescriptor| and then

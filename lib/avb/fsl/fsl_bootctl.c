@@ -68,13 +68,13 @@ static int get_curr_slot(AvbABData *ab_data) {
 		return -1;
 }
 
-int get_slotvar_avb(AvbOps *ops, char *cmd, char *buffer, size_t size) {
+int get_slotvar_avb(AvbABOps *ab_ops, char *cmd, char *buffer, size_t size) {
 
 	AvbABData ab_data;
 	AvbABSlotData *slot_data;
 	int slot;
 
-	assert(ops != NULL && cmd != NULL && buffer != NULL);
+	assert(ab_ops != NULL && cmd != NULL && buffer != NULL);
 
 	char *str = cmd;
 	if (!strcmp_l1("has-slot:", cmd)) {
@@ -95,8 +95,8 @@ int get_slotvar_avb(AvbOps *ops, char *cmd, char *buffer, size_t size) {
 	}
 
 	/* load ab meta */
-	if (ops->read_ab_metadata == NULL ||
-			ops->read_ab_metadata(ops, &ab_data) != AVB_IO_RESULT_OK) {
+	if (ab_ops->read_ab_metadata == NULL ||
+			ab_ops->read_ab_metadata(ab_ops, &ab_data) != AVB_IO_RESULT_OK) {
 		strlcpy(buffer, "ab data read error", size);
 		return -1 ;
 	}
@@ -157,15 +157,15 @@ int get_slotvar_avb(AvbOps *ops, char *cmd, char *buffer, size_t size) {
 	return 0;
 }
 
-char *select_slot(AvbOps *ops) {
+char *select_slot(AvbABOps *ab_ops) {
 	AvbABData ab_data;
 	int curr;
 
-	assert(ops != NULL);
+	assert(ab_ops != NULL);
 
 	/* load ab meta */
-	if (ops->read_ab_metadata == NULL ||
-			ops->read_ab_metadata(ops, &ab_data) != AVB_IO_RESULT_OK) {
+	if (ab_ops->read_ab_metadata == NULL ||
+			ab_ops->read_ab_metadata(ab_ops, &ab_data) != AVB_IO_RESULT_OK) {
 		return NULL;
 	}
 	curr = get_curr_slot(&ab_data);

@@ -7,7 +7,7 @@
 #ifndef __FSL_AVB_H__
 #define __FSL_AVB_H__
 
-#include <libavb.h>
+#include <libavb_ab.h>
 /* Reads |num_bytes| from offset |offset| from partition with name
  * |partition| (NUL-terminated UTF-8 string). If |offset| is
  * negative, its absolute value should be interpreted as the number
@@ -66,7 +66,7 @@ AvbIOResult fsl_write_to_partition(AvbOps* ops, const char* partition,
  * Implementations will typically want to use avb_ab_data_read()
  * here to use the 'misc' partition for persistent storage.
  */
-AvbIOResult fsl_read_ab_metadata(AvbOps* ops, struct AvbABData* data);
+AvbIOResult fsl_read_ab_metadata(AvbABOps* ab_ops, struct AvbABData* data);
 
 /* Writes A/B metadata to persistent storage. This will byteswap and
  * update the CRC as needed. Returns AVB_IO_RESULT_OK on success,
@@ -75,7 +75,7 @@ AvbIOResult fsl_read_ab_metadata(AvbOps* ops, struct AvbABData* data);
  * Implementations will typically want to use avb_ab_data_write()
  * here to use the 'misc' partition for persistent storage.
  */
-AvbIOResult fsl_write_ab_metadata(AvbOps* ops, const struct AvbABData* data);
+AvbIOResult fsl_write_ab_metadata(AvbABOps* ab_ops, const struct AvbABData* data);
 
 /* Checks if the given public key used to sign the 'vbmeta'
  * partition is trusted. Boot loaders typically compare this with
@@ -153,7 +153,7 @@ int slotidx_from_suffix(char *suffix);
  * if return 0, buffer is bootctl's slot var out
  * if return -1, buffer is error string
  * */
-int get_slotvar_avb(AvbOps *ops, char *cmd, char *buffer, size_t size);
+int get_slotvar_avb(AvbABOps *ab_ops, char *cmd, char *buffer, size_t size);
 
 /* reset rollback_index part in avbkey partition
  * used in the switch from LOCK to UNLOCK
@@ -169,6 +169,6 @@ int avbkeyblb_init(uint8_t *plainkey, uint32_t keylen, const char *kblb_part /*"
 
 /* read a/b metadata to get curr slot
  * return slot suffix '_a'/'_b' or NULL */
-char *select_slot(AvbOps *ops);
+char *select_slot(AvbABOps *ab_ops);
 
 #endif /* __FSL_AVB_H__ */
