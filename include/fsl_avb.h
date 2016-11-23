@@ -7,7 +7,7 @@
 #ifndef __FSL_AVB_H__
 #define __FSL_AVB_H__
 
-#include <libavb_ab.h>
+#include "../lib/avb/libavb_ab/libavb_ab.h"
 /* Reads |num_bytes| from offset |offset| from partition with name
  * |partition| (NUL-terminated UTF-8 string). If |offset| is
  * negative, its absolute value should be interpreted as the number

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <linux/string.h>
 
-#include "fsl_avb.h"
+#include <fsl_avb.h>
 
 /* as libavb's bootctl doesn't have the get_var support
  * we add the getvar support on our side ...*/

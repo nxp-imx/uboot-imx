@@ -25,7 +25,7 @@
 #ifndef LIBAVB_AB_H_
 #define LIBAVB_AB_H_
 
-#include "../lib/avb/libavb/libavb.h"
+#include "../libavb/libavb.h"
 
 /* The AVB_INSIDE_LIBAVB_AB_H preprocessor symbol is used to enforce
  * library users to include only this file. All public interfaces, and
@@ -33,10 +33,8 @@
  */
 
 #define AVB_INSIDE_LIBAVB_AB_H
-#include "../lib/avb/libavb_ab/avb_ab_flow.h"
-#include "../lib/avb/libavb_ab/avb_ab_ops.h"
+#include "avb_ab_flow.h"
+#include "avb_ab_ops.h"
 #undef AVB_INSIDE_LIBAVB_AB_H
-
-#include "../lib/avb/fsl/fsl_avb.h"
 
 #endif /* LIBAVB_AB_H_ */

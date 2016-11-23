@@ -48,7 +48,7 @@
 #endif
 
 #ifdef CONFIG_AVB_SUPPORT
-#include <libavb_ab.h>
+#include <fsl_avb.h>
 #endif
 
 #define FASTBOOT_VERSION		"0.4"

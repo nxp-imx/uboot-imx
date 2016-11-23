@@ -9,7 +9,7 @@
 #include <fsl_caam.h>
 #include <fuse.h>
 
-#include "fsl_avb.h"
+#include <fsl_avb.h>
 #include "fsl_avbkey.h"
 #include "debug.h"
 

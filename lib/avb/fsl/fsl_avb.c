@@ -12,7 +12,7 @@
 #include <fsl_caam.h>
 #include "../../../drivers/usb/gadget/fastboot_lock_unlock.h"
 
-#include "fsl_avb.h"
+#include <fsl_avb.h>
 #include "fsl_avbkey.h"
 #include "debug.h"
 
