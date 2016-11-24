@@ -116,7 +116,11 @@ static iomux_v3_cfg_t const enet_pads[] = {
 	MX6_PAD_RGMII_TD2__RGMII_TD2	| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_RGMII_TD3__RGMII_TD3	| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_RGMII_TX_CTL__RGMII_TX_CTL	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+#ifdef CONFIG_QWKS_REV3
+	MX6_PAD_GPIO_16__ENET_REF_CLK	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+#else
 	MX6_PAD_ENET_REF_CLK__ENET_TX_CLK	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+#endif
 	MX6_PAD_RGMII_RXC__RGMII_RXC	| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_RGMII_RD0__RGMII_RD0	| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_RGMII_RD1__RGMII_RD1	| MUX_PAD_CTRL(ENET_PAD_CTRL),
@@ -163,7 +167,9 @@ static iomux_v3_cfg_t const usdhc3_pads[] = {
 	MX6_PAD_SD3_DAT1__SD3_DATA1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD3_DAT2__SD3_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD3_DAT3__SD3_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_DAT4__SD3_DATA4 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+#ifndef CONFIG_QWKS_REV3
+	MX6_PAD_SD3_DAT4__GPIO7_IO01 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+#endif
 	MX6_PAD_SD3_DAT5__SD3_DATA5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD3_DAT6__SD3_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD3_DAT7__SD3_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
@@ -292,7 +298,11 @@ struct fsl_esdhc_cfg usdhc_cfg[3] = {
 	#define USDHC2_CD_GPIO  IMX_GPIO_NR(1, 4)
 #endif
 
+#ifdef CONFIG_QWKS_REV3
+#define USDHC3_CD_GPIO  IMX_GPIO_NR(7, 1)
+#else
 #define USDHC3_CD_GPIO	IMX_GPIO_NR(2, 0)
+#endif
 
 int board_mmc_get_env_dev(int devno)
 {
@@ -610,7 +620,12 @@ int board_eth_init(bd_t *bis)
 #define UCTRL_PWR_POL		(1 << 9)
 
 static iomux_v3_cfg_t const usb_otg_pads[] = {
+#ifdef CONFIG_QWKS_REV3
+	MX6_PAD_KEY_ROW4__USB_OTG_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_KEY_COL4__USB_OTG_OC | MUX_PAD_CTRL(NO_PAD_CTRL),
+#else
 	MX6_PAD_EIM_D22__USB_OTG_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
+#endif
 #ifdef CONFIG_SCMEVB
 	MX6_PAD_ENET_RX_ER__USB_OTG_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
 #else
@@ -757,7 +772,11 @@ int power_init_board(void)
 	/* set VGEN5 to 3.3V */
 	pmic_reg_read(pfuze, PFUZE100_VGEN5VOL, &reg);
 	reg &= ~0x0f;
+#ifdef CONFIG_QWKS_REV3
+	reg |= 0x07;
+#else
 	reg |= 0x0f;
+#endif
 	pmic_reg_write(pfuze, PFUZE100_VGEN5VOL, reg);
 
 	/* set VGEN6 to 3.2V */
@@ -897,6 +916,8 @@ int checkboard(void)
 	puts("Board: MX6DQSCM-HVB\n");
 #elif CONFIG_SCMEVB
 	puts("Board: MX6DQSCM-EVB\n");
+#elif CONFIG_QWKS_REV3
+	puts("Board: MX6DQSCM-QWKS-REV3\n");
 #else
 	puts("Board: MX6DQSCM-QWKS\n");
 #endif
