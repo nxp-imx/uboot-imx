@@ -12,6 +12,9 @@
 #include <linux/sizes.h>
 #include <asm/arch/imx-regs.h>
 
+/*Uncomment it to use plugin boot*/
+/*#define CONFIG_USE_PLUGIN*/
+
 #define CONFIG_SYS_VSNPRINTF
 #define CONFIG_BOARD_POSTCLK_INIT
 #define CONFIG_IMX_FIXED_IVT_OFFSET
