@@ -2061,11 +2061,7 @@ fail:
 	if (avb_out_data != NULL)
 		avb_slot_verify_data_free(avb_out_data);
 
-#if defined(CONFIG_FSL_FASTBOOT)
 	return run_command("fastboot", 0);
-#else
-	return -1;
-#endif
 }
 
 U_BOOT_CMD(
