@@ -204,6 +204,8 @@
 	str r1, [r0, #0x040]
 	ldr r1, =0x83100000
 	str r1, [r0, #0x000]
+	ldr r1, =0x00008050
+	str r1, [r0, #0x01C]
 	ldr r1, =0x003F8030
 	str r1, [r0, #0x01C]
 	ldr r1, =0xFF0A8030
