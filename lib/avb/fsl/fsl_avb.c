@@ -14,25 +14,10 @@
 
 #include <fsl_avb.h>
 #include "fsl_avbkey.h"
+#include "utils.h"
 #include "debug.h"
 
 #define FSL_AVB_DEV "mmc"
-
-#define ALIGN_BYTES 64 /*mmc block read/write need 64 bytes aligned */
-
-struct margin_pos {
-	/* which blk the read/write starts */
-	lbaint_t blk_start;
-	/* which blk the read/write ends */
-	lbaint_t blk_end;
-	/* start position inside the start blk */
-	unsigned long start;
-	/* end position inside the end blk */
-	unsigned long end;
-	/* how many blks can be read/write one time */
-	unsigned long multi;
-};
-typedef struct margin_pos margin_pos_t;
 
 
 static block_dev_desc_t *fs_dev_desc = NULL;
@@ -42,46 +27,6 @@ static block_dev_desc_t *get_mmc_desc(void) {
 	return get_dev(FSL_AVB_DEV, dev_no);
 }
 
-/* get margin_pos struct from offset [to the partition start/end] and num_bytes to read/write */
-static int32_t get_margin_pos(lbaint_t part_start, lbaint_t part_end, unsigned long blksz,
-				margin_pos_t *margin, int64_t offset, size_t num_bytes, bool allow_partial) {
-	long off;
-	if (offset < 0) {
-		margin->blk_start = (offset + 1) / blksz + part_end;
-		margin->start = (off = offset % blksz) == 0 ? 0 : blksz + off; // offset == -1 means the last byte?, or start need -1
-		if (offset + num_bytes - 1 >= 0) {
-			if (!allow_partial)
-				return -1;
-			margin->blk_end = part_end;
-			margin->end = blksz - 1;
-		} else {
-			margin->blk_end = (num_bytes + offset) / blksz + part_end; // which blk the last byte is in
-			margin->end = (off = (num_bytes + offset - 1) % blksz) == 0 ?
-					0 : blksz + off; // last byte
-		}
-	} else {
-		margin->blk_start = offset / blksz + part_start;
-		margin->start = offset % blksz;
-		margin->blk_end = (offset + num_bytes - 1) / blksz + part_start ;
-		margin->end = (offset + num_bytes - 1) % blksz;
-		if (margin->blk_end > part_end) {
-			if (!allow_partial)
-				return -1;
-			margin->blk_end = part_end;
-			margin->end = blksz - 1;
-		}
-	}
-	VDEBUG("bs=%ld, be=%ld, s=%ld, e=%ld\n",
-			margin->blk_start, margin->blk_end, margin->start, margin->end);
-
-	if (margin->blk_start > part_end || margin->blk_start < part_start)
-		return -1;
-	long multi = margin->blk_end - margin->blk_start - 1 +
-		    (margin->start == 0) + (margin->end == blksz -1);
-	margin->multi = multi > 0 ? multi : 0;
-	VDEBUG("bm=%ld\n", margin->multi);
-	return 0;
-}
  /* Reads |num_bytes| from offset |offset| from partition with name
   * |partition| (NUL-terminated UTF-8 string). If |offset| is
   * negative, its absolute value should be interpreted as the number
@@ -135,12 +80,12 @@ static int32_t get_margin_pos(lbaint_t part_start, lbaint_t part_end, unsigned l
 	VDEBUG("blksz: %ld, part_end: %ld, part_start: %ld:\n",
 			blksz, part_end, part_start);
 
-	if(get_margin_pos(part_start, part_end, blksz,
+	if(get_margin_pos((uint64_t)part_start, (uint64_t)part_end, blksz,
 				&margin, offset, num_bytes, true))
 		return AVB_IO_RESULT_ERROR_RANGE_OUTSIDE_PARTITION;
 
-	bs = margin.blk_start;
-	be = margin.blk_end;
+	bs = (lbaint_t)margin.blk_start;
+	be = (lbaint_t)margin.blk_end;
 	s = margin.start;
 
 	// alloc a blksz mem
@@ -218,12 +163,12 @@ fail:
 	VDEBUG("blksz: %ld, part_end: %ld, part_start: %ld:\n",
 			blksz, part_end, part_start);
 
-	if(get_margin_pos(part_start, part_end, blksz,
+	if(get_margin_pos((uint64_t)part_start, (uint64_t)part_end, blksz,
 				&margin, offset, num_bytes, true))
 		return AVB_IO_RESULT_ERROR_RANGE_OUTSIDE_PARTITION;
 
-	bs = margin.blk_start;
-	be = margin.blk_end;
+	bs = (lbaint_t)margin.blk_start;
+	be = (lbaint_t)margin.blk_end;
 	s = margin.start;
 	bm = margin.multi;
 
@@ -341,11 +286,11 @@ fail:
 	VDEBUG("blksz: %ld, part_end: %ld, part_start: %ld:\n",
 			blksz, part_end, part_start);
 
-	if(get_margin_pos(part_start, part_end, blksz,
+	if(get_margin_pos((uint64_t)part_start, (uint64_t)part_end, blksz,
 				&margin, offset, num_bytes, false))
 		return AVB_IO_RESULT_ERROR_RANGE_OUTSIDE_PARTITION;
 
-	bs = margin.blk_start;
+	bs = (lbaint_t)margin.blk_start;
 	s = margin.start;
 
 	// alloc a blksz mem
