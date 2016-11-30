@@ -70,5 +70,6 @@ uint32_t caam_gen_blob(uint32_t plain_data_addr, uint32_t blob_addr, uint32_t si
 //! @return ERROR_XXX
 ////////////////////////////////////////////////////////////////////////////////
 uint32_t caam_decap_blob(uint32_t plain_text, uint32_t blob_addr, uint32_t size);
+uint32_t caam_hwrng(uint8_t *output_ptr, uint32_t output_len);
 
 #endif /* __CAAM_H__ */
