@@ -24,11 +24,12 @@
 #define MXC_CPU_MX6DP		0x68
 #define MXC_CPU_MX6QP		0x69
 #define MXC_CPU_MX7D		0x72
-#define MXC_CPU_MX7ULP		0x73 /* Temporally hard code */
+#define MXC_CPU_MX7ULP		0x81 /* Temporally hard code */
 #define MXC_CPU_VF610		0xF6 /* dummy ID */
 
 #define MXC_SOC_MX6		0x60
 #define MXC_SOC_MX7		0x70
+#define MXC_SOC_MX7ULP		0x80 /* dummy */
 
 #define CHIP_REV_1_0            0x10
 #define CHIP_REV_1_1            0x11

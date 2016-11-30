@@ -28,7 +28,7 @@ static char *get_reset_cause(char *);
 u32 get_cpu_rev(void)
 {
 	/* Temporally hard code the CPU rev to 0x73, rev 1.0. Fix it later */
-	return (0x73 << 12) | (1 << 4);
+	return (MXC_CPU_MX7ULP << 12) | (1 << 4);
 }
 
 #ifdef CONFIG_REVISION_TAG
@@ -95,31 +95,6 @@ int arch_cpu_init(void)
 
 	return 0;
 }
-
-#ifndef CONFIG_SYS_DCACHE_OFF
-void enable_caches(void)
-{
-#if defined(CONFIG_SYS_ARM_CACHE_WRITETHROUGH)
-	enum dcache_option option = DCACHE_WRITETHROUGH;
-#else
-	enum dcache_option option = DCACHE_WRITEBACK;
-#endif
-
-	/* Avoid random hang when download by usb */
-	invalidate_dcache_all();
-
-	/* Enable D-cache. I-cache is already enabled in start.S */
-	dcache_enable();
-
-	/* Enable caching on OCRAM and ROM */
-	mmu_set_region_dcache_behaviour(CORE_B_ROM_BASE,
-					CORE_B_ROM_SIZE,
-					option);
-	mmu_set_region_dcache_behaviour(OCRAM_0_BASE,
-					SZ_128K + SZ_128K,
-					option);
-}
-#endif
 
 #ifdef CONFIG_BOARD_POSTCLK_INIT
 int board_postclk_init(void)
@@ -279,6 +254,8 @@ int print_cpuinfo(void)
 #define CMC_SRS_POR                       (1 << 1)
 #define CMC_SRS_WUP                       (1 << 0)
 
+static u32 reset_cause = -1;
+
 static char *get_reset_cause(char *ret)
 {
 	u32 cause1, cause = 0, srs = 0;
@@ -291,6 +268,8 @@ static char *get_reset_cause(char *ret)
 	srs = readl(reg_srs);
 	cause1 = readl(reg_ssrs);
 	writel(cause1, reg_ssrs);
+
+	reset_cause = cause1;
 
 	cause = cause1 & (CMC_SRS_POR | CMC_SRS_WUP | CMC_SRS_WARM);
 
@@ -326,6 +305,11 @@ static char *get_reset_cause(char *ret)
 
 	debug("[%X] SRS[%X] %X - ", cause1, srs, srs^cause1);
 	return ret;
+}
+
+u32 get_imx_reset_cause(void)
+{
+	return reset_cause;
 }
 
 #ifdef CONFIG_ENV_IS_IN_MMC

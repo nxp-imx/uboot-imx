@@ -35,6 +35,10 @@ obj-$(CONFIG_SECURE_BOOT)    += hab.o
 obj-$(CONFIG_GPT_TIMER) += timer.o
 obj-$(CONFIG_SYSCOUNTER_TIMER) += syscounter.o
 endif
+ifeq ($(SOC),$(filter $(SOC),mx7ulp))
+obj-y 	+= cache.o
+obj-$(CONFIG_SECURE_BOOT)    += hab.o
+endif
 ifeq ($(SOC),$(filter $(SOC),vf610))
 obj-y += ddrmc-vf610.o
 endif

@@ -97,6 +97,11 @@
 #define CORE_B_ROM_SIZE				(SZ_32K + SZ_64K)
 #define CORE_B_ROM_BASE				(0x00000000)
 
+#define ROMCP_ARB_BASE_ADDR CORE_B_ROM_BASE
+#define ROMCP_ARB_END_ADDR CORE_B_ROM_SIZE
+#define IRAM_BASE_ADDR OCRAM_0_BASE
+#define IRAM_SIZE (SZ_128K + SZ_128K)
+
 #define IOMUXC_PCR_MUX_ALT0                (0<<8)
 #define IOMUXC_PCR_MUX_ALT1                (1<<8)
 #define IOMUXC_PCR_MUX_ALT2                (2<<8)
