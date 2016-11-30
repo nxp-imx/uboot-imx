@@ -9,6 +9,7 @@
 #include <asm/sections.h>
 #include <asm/arch/sys_proto.h>
 #include <dm.h>
+#include <asm/imx-common/hab.h>
 
 struct lpuart_serial_platdata {
 	void *reg;
@@ -22,6 +23,13 @@ U_BOOT_DEVICE(mx7ulp_lpuart) = {
 	.name = "serial_lpuart32",
 	.platdata = &mx7ulp_lpuart_data,
 };
+
+#if defined(CONFIG_SECURE_BOOT)
+struct imx_sec_config_fuse_t const imx_sec_config_fuse = {
+	.bank = 29,
+	.word = 6,
+};
+#endif
 
 static char *get_reset_cause(char *);
 
