@@ -196,7 +196,6 @@ enum {
 #ifdef CONFIG_AVB_SUPPORT
 	PTN_VBMETA_A_INDEX,
 	PTN_VBMETA_B_INDEX,
-	PTN_AVBKEY_INDEX,
 #endif /* CONFIG_AVB_SUPPORT */
 #else /* CONFIG_BRILLO_SUPPORT */
 	PTN_KERNEL_INDEX,
@@ -912,8 +911,7 @@ static void process_flash_mmc(const char *cmdbuf, char *response)
 #ifdef CONFIG_AVB_SUPPORT
 		if (!strcmp_l1(FASTBOOT_PARTITION_AVBKEY, cmdbuf)) {
 			printf("pubkey len %d\n", download_bytes);
-			if (avbkeyblb_init(interface.transfer_buffer, download_bytes,
-					    FASTBOOT_PARTITION_AVBKEY) != 0) {
+			if (avbkey_init(interface.transfer_buffer, download_bytes) != 0) {
 				sprintf(response, "FAIL: Write partition");
 			} else {
 				printf("init 'avbkey' DONE!\n");
@@ -1416,13 +1414,6 @@ static int _fastboot_parts_load_from_ptable(void)
 					 FASTBOOT_PARTITION_VBMETA_B,
 					 FASTBOOT_PARTITION_VBMETA_FS,
 					 dev_desc, ptable);
-
-	_fastboot_parts_add_ptable_entry(PTN_AVBKEY_INDEX,
-					 CONFIG_ANDROID_AVBKEY_PARTITION_MMC,
-					 user_partition,
-					 FASTBOOT_PARTITION_AVBKEY,
-					 FASTBOOT_PARTITION_AVBKEY_FS,
-					 dev_desc, ptable);
 #endif /* CONFIG_AVB_SUPPORT */
 
 #else /* CONFIG_BRILLO_SUPPORT */
@@ -1895,11 +1886,10 @@ static struct andr_img_hdr boothdr __aligned(ARCH_DMA_MINALIGN);
 static AvbABOps fsl_avb_ab_ops = {
 	.ops = {
 		.read_from_partition = fsl_read_from_partition_multi,
-		/* .read_from_partition = fsl_read_from_partition, */
 		.write_to_partition = fsl_write_to_partition,
-		.validate_vbmeta_public_key = fsl_validate_vbmeta_public_key,
-		.read_rollback_index = fsl_read_rollback_index,
-		.write_rollback_index = fsl_write_rollback_index,
+		.validate_vbmeta_public_key = fsl_validate_vbmeta_public_key_rpmb,
+		.read_rollback_index = fsl_read_rollback_index_rpmb,
+		.write_rollback_index = fsl_write_rollback_index_rpmb,
 		.read_is_device_unlocked = fsl_read_is_device_unlocked,
 		.get_unique_guid_for_partition = fsl_get_unique_guid_for_partition
 	},
@@ -2981,7 +2971,7 @@ static int do_fastboot_unlock(void)
 
 #ifdef CONFIG_AVB_SUPPORT
 		printf("Start stored_rollback_index wipe process....\n");
-		rbkidx_erase(FASTBOOT_PARTITION_AVBKEY);
+		rbkidx_erase();
 		printf("Wipe stored_rollback_index completed.\n");
 #endif
 

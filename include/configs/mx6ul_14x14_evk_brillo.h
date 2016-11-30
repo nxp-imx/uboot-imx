@@ -30,6 +30,12 @@
 
 #define FASTBOOT_ENCRYPT_LOCK
 
+#ifdef CONFIG_AVB_SUPPORT
 #define CONFIG_SUPPORT_EMMC_RPMB
+/* fuse bank size in word */
+#define CONFIG_AVB_FUSE_BANK_SIZEW 8
+#define CONFIG_AVB_FUSE_BANK_START 10
+#define CONFIG_AVB_FUSE_BANK_END 15
+#endif
 
 #endif

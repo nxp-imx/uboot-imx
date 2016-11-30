@@ -85,7 +85,7 @@ AvbIOResult fsl_write_ab_metadata(AvbABOps* ab_ops, const struct AvbABData* data
  * If AVB_IO_RESULT_OK is returned then |out_is_trusted| is set -
  * true if trusted or false if untrusted.
  */
-AvbIOResult fsl_validate_vbmeta_public_key(AvbOps* ops,
+AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
                                           const uint8_t* public_key_data,
                                           size_t public_key_length,
                                           bool* out_is_trusted);
@@ -99,7 +99,7 @@ AvbIOResult fsl_validate_vbmeta_public_key(AvbOps* ops,
  * one or four) so may error out if |rollback_index_slot| exceeds
  * this number.
  */
-AvbIOResult fsl_read_rollback_index(AvbOps* ops, size_t rollback_index_slot,
+AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot,
                                    uint64_t* out_rollback_index);
 
 /* Sets the rollback index corresponding to the slot given by
@@ -111,7 +111,7 @@ AvbIOResult fsl_read_rollback_index(AvbOps* ops, size_t rollback_index_slot,
  * one or four) so may error out if |rollback_index_slot| exceeds
  * this number.
  */
-AvbIOResult fsl_write_rollback_index(AvbOps* ops, size_t rollback_index_slot,
+AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot,
                                     uint64_t rollback_index);
 
 /* Gets whether the device is unlocked. The value is returned in
@@ -159,13 +159,13 @@ int get_slotvar_avb(AvbABOps *ab_ops, char *cmd, char *buffer, size_t size);
  * used in the switch from LOCK to UNLOCK
  * return 0 if success, non 0 if fail.
  * */
-int rbkidx_erase(const char * kblb_part);
+int rbkidx_erase(void);
 
-/* init the avbkey partition, include the header/public key/rollback index
+/* init the avbkey in rpmb partition, include the header/public key/rollback index
  * for public key/rollback index part, use caam to do encrypt
  * return 0 if success, non 0 if fail.
  * */
-int avbkeyblb_init(uint8_t *plainkey, uint32_t keylen, const char *kblb_part /*"avbkey"*/);
+int avbkey_init(uint8_t *plainkey, uint32_t keylen);
 
 /* read a/b metadata to get curr slot
  * return slot suffix '_a'/'_b' or NULL */

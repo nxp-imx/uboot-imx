@@ -8,7 +8,7 @@
 #define __FSL_AVBKEY_H__
 
 
-#define AVB_CAAM_PAD 48
+#define CAAM_PAD 48
 
 #define AVB_PUBKY_FLAG 0xABAB
 #define AVB_PUBKY_OFFSET 0x1000
@@ -16,7 +16,7 @@
 #define AVB_RBIDX_FLAG 0xCDCD
 #define AVB_RBIDX_START 0x2000
 #define AVB_RBIDX_ALIGN 0x1000
-#define AVB_RBIDX_LEN 0x1D0
+#define AVB_RBIDX_LEN 0x08
 #define AVB_RBIDX_INITVAL 0
 
 
