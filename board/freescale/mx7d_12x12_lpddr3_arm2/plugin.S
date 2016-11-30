@@ -414,6 +414,8 @@ TUNE_END:
 	cmp	r7, #0x1
 	bne	15b
 
+	imx7_qos_setting
+
 	/* enable port */
 	ldr	r7, =0x1
 	str	r7, [r3, #0x490]
@@ -588,6 +590,57 @@ wait_stat:
 .endm
 
 .macro imx7_qos_setting
+	ldr r0, =REGS_QOS_BASE
+	ldr r1, =0
+	str r1, [r0, #0]
+
+	ldr r1, =0
+	str r1, [r0, #0x60]
+
+	ldr r0, =REGS_QOS_EPDC
+	ldr r1, =0
+	str r1, [r0, #0]
+
+	ldr r0, =REGS_QOS_PXP0
+	ldr r1, =0
+	str r1, [r0, #0]
+
+	ldr r0, =REGS_QOS_PXP1
+	ldr r1, =0
+	str r1, [r0, #0]
+
+	ldr r0, =REGS_QOS_EPDC
+	ldr r1, =0x0f020f22
+	str r1, [r0, #0xd0]
+	str r1, [r0, #0xe0]
+
+	ldr r0, =REGS_QOS_PXP0
+	ldr r1, =0x1
+	str r1, [r0, #0]
+	ldr r0, =REGS_QOS_PXP1
+	str r1, [r0, #0]
+
+	ldr r0, =REGS_QOS_PXP0
+	ldr r1, =0x0f020222
+	str r1, [r0, #0x50]
+	ldr r0, =REGS_QOS_PXP1
+	str r1, [r0, #0x50]
+
+	ldr r0, =REGS_QOS_PXP0
+	ldr r1, =0x0f020222
+	str r1, [r0, #0x60]
+	ldr r0, =REGS_QOS_PXP1
+	str r1, [r0, #0x60]
+
+	ldr r0, =REGS_QOS_PXP0
+	ldr r1, =0x0f020422
+	str r1, [r0, #0x70]
+	ldr r0, =REGS_QOS_PXP1
+	str r1, [r0, #0x70]
+
+	ldr r0, =IOMUXC_GPR_BASE_ADDR
+	ldr r1, =0xe080
+	str r1, [r0, #0x34]
 .endm
 
 .macro imx7_ddr_setting
