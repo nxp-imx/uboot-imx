@@ -122,16 +122,16 @@ TUNE_END:
 
 	ldr r1, =0x00000016
 	str r1, [r0, #0x200]
-	ldr r1, =0x00171717
+	ldr r1, =0x00090909
 	str r1, [r0, #0x204]
 	ldr r1, =0x00000f00
 	str r1, [r0, #0x210]
-	ldr r1, =0x05050505
+	ldr r1, =0x08080808
 	str r1, [r0, #0x214]
-	ldr r1, =0x0f0f0505
+	ldr r1, =0x0f0f0808
 	str r1, [r0, #0x218]
 
-	ldr r1, =0x06000601
+	ldr r1, =0x06000600
 	str r1, [r0, #0x240]
 	mov r1, #0x0
 	str r1, [r0, #0x244]
@@ -155,9 +155,20 @@ TUNE_END:
 	str r1, [r0, #0xb0]
 	ldr r1, =0x01010000
 	str r1, [r0, #0x1c]
+
+	ldr r2, =ANATOP_BASE_ADDR
+	ldr r3, [r2, #0x800]
+	and r3, r3, #0xFF
+	cmp r3, #0x11
+	bne	1f
+
 	ldr r1, =0x0db60d6e
 	str r1, [r0, #0x9c]
-
+	b	2f
+1:
+	ldr r1, =0x00000b24
+	str r1, [r0, #0x9c]
+2:
 	ldr r1, =0x06060606
 	str r1, [r0, #0x30]
 	ldr r1, =0x0a0a0a0a
@@ -169,13 +180,11 @@ TUNE_END:
 
 	ldr r1, =0x0000000f
 	str r1, [r0, #0x18]
-	ldr r1, =0x1e487304
+	ldr r1, =0x0e487304
 	str r1, [r0, #0xc0]
-	ldr r1, =0x1e487304
+	ldr r1, =0x0e4c7304
 	str r1, [r0, #0xc0]
-	ldr r1, =0x1e487306
-	str r1, [r0, #0xc0]
-	ldr r1, =0x1e4c7304
+	ldr r1, =0x0e4c7306
 	str r1, [r0, #0xc0]
 
 wait_zq:
@@ -183,7 +192,7 @@ wait_zq:
 	tst r1, #0x1
 	beq wait_zq
 
-	ldr r1, =0x1e487304
+	ldr r1, =0x0e487304
 	str r1, [r0, #0xc0]
 
 	ldr r0, =CCM_BASE_ADDR
