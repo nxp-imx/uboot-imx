@@ -31,7 +31,7 @@
 
 NO_DELAY:
 	/*TO 1.0*/
-	ldr r1, =0x00000d6e
+	ldr r1, =0x00000b24
 	str r1, [r0, #0x9c]
 
 TUNE_END:
@@ -140,11 +140,13 @@ FREQ_DEFAULT_533:
 
 	ldr r1, =0x00000016
 	str r1, [r0, #0x200]
-	ldr r1, =0x00171717
+	ldr r1, =0x00080808
 	str r1, [r0, #0x204]
-	ldr r1, =0x04040404
+	ldr r1, =0x00000f0f
+	str r1, [r0, #0x210]
+	ldr r1, =0x07070707
 	str r1, [r0, #0x214]
-	ldr r1, =0x0f040404
+	ldr r1, =0x0f070707
 	str r1, [r0, #0x218]
 
 	ldr r1, =0x06000604
@@ -186,8 +188,6 @@ wait_zq:
 	tst r1, #0x1
 	beq wait_zq
 
-	ldr r1, =0x0e447304
-	str r1, [r0, #0xc0]
 	ldr r1, =0x0e407304
 	str r1, [r0, #0xc0]
 
