@@ -20,6 +20,8 @@
 #endif
 #endif
 
+#define FASTBOOT_ENCRYPT_LOCK
+
 #define CONFIG_FSL_CAAM_KB
 #define CONFIG_SHA1
 #define CONFIG_SHA256
@@ -40,6 +42,17 @@
 
 #define CONFIG_CMD_FS_GENERIC
 #define CONFIG_CMD_EXT4
+
+#ifdef CONFIG_AVB_SUPPORT
+#define CONFIG_SUPPORT_EMMC_RPMB
+/* fuse bank size in word */
+/* infact 7D have no enough bits
+ * set this size to 0 will disable
+ * program/read FUSE */
+#define CONFIG_AVB_FUSE_BANK_SIZEW 0
+#define CONFIG_AVB_FUSE_BANK_START 0
+#define CONFIG_AVB_FUSE_BANK_END 0
+#endif
 
 #endif
 
