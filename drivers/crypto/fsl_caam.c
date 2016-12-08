@@ -369,16 +369,21 @@ uint32_t caam_hwrng(uint8_t *output_ptr, uint32_t output_len) {
  */
 void caam_open(void)
 {
-	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 	uint32_t temp_reg;
-	//uint32_t addr;
 
     /* switch on the clock */
+#if defined(CONFIG_MX6)
+	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+	//uint32_t addr;
+
 	temp_reg = __raw_readl(&mxc_ccm->CCGR0);
 	temp_reg |= MXC_CCM_CCGR0_CAAM_SECURE_MEM_MASK |
 		MXC_CCM_CCGR0_CAAM_WRAPPER_ACLK_MASK |
 		MXC_CCM_CCGR0_CAAM_WRAPPER_IPG_MASK;
 	__raw_writel(temp_reg, &mxc_ccm->CCGR0);
+#elif defined(CONFIG_MX7)
+	HW_CCM_CCGR_SET(36,	MXC_CCM_CCGR36_CAAM_DOMAIN0_MASK);
+#endif
 
     /* MID for CAAM - already done by HAB in ROM during preconfigure,
      * That is JROWN for JR0/1 = 1 (TZ, Secure World, ARM)

@@ -218,6 +218,10 @@
 
 #define CHIP_REV_1_0                 0x10
 #define CHIP_REV_1_1                 0x11
+
+#define CONFIG_SYS_FSL_SEC_ADDR         (CAAM_IPS_BASE_ADDR)
+#define CONFIG_SYS_FSL_JR0_ADDR         (CONFIG_SYS_FSL_SEC_ADDR  + 0x1000)
+
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 #include <asm/types.h>
 

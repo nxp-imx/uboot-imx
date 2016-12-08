@@ -20,6 +20,7 @@
 #endif
 #endif
 
+#define CONFIG_FSL_CAAM_KB
 #define CONFIG_SHA1
 #define CONFIG_SHA256
 
