@@ -7,6 +7,7 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/mc_cgm_regs.h>
 #include <asm/arch/mc_me_regs.h>
+#include <asm/arch/mc_rgm_regs.h>
 #include <asm/arch/clock.h>
 
 /*
@@ -54,6 +55,12 @@ static int select_pll_source_clk(enum pll_type pll, u32 refclk_freq)
 	       &src->gpr1);
 
 	return 0;
+}
+
+void reset_misc(void)
+{
+	/*Reset 'Functional' Reset Escalation Threshold Register (MC_RGM_FRET)*/
+	writeb(0xf, MC_RGM_FRET);
 }
 
 void entry_to_target_mode(u32 mode)
