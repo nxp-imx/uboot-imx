@@ -323,4 +323,7 @@
 #define CONFIG_IMX_VIDEO_SKIP
 #endif
 
+#define CONFIG_MODULE_FUSE
+#define CONFIG_OF_SYSTEM_SETUP
+
 #endif

@@ -126,4 +126,7 @@
 #define CONFIG_WAVEFORM_BUF_SIZE		0x400000
 #endif
 
+#define CONFIG_MODULE_FUSE
+#define CONFIG_OF_SYSTEM_SETUP
+
 #endif
