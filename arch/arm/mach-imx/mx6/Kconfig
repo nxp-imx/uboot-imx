@@ -535,6 +535,8 @@ config TARGET_MX6ULL_9X9_EVK
 	select BOARD_LATE_INIT
 	select DM
 	select DM_THERMAL
+	select IMX_MODULE_FUSE
+	select OF_SYSTEM_SETUP
 	imply CMD_DM
 
 config TARGET_MX6ULL_14X14_EVK
@@ -543,6 +545,8 @@ config TARGET_MX6ULL_14X14_EVK
 	select BOARD_LATE_INIT
 	select DM
 	select DM_THERMAL
+	select IMX_MODULE_FUSE
+	select OF_SYSTEM_SETUP
 	imply CMD_DM
 
 config TARGET_MYS_6ULX
