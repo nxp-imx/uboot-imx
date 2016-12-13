@@ -545,6 +545,8 @@ config TARGET_MX6ULL_9X9_EVK
 	select DM
 	select DM_THERMAL
 	select IOMUX_LPSR
+	select IMX_MODULE_FUSE
+	select OF_SYSTEM_SETUP
 	imply CMD_DM
 
 config TARGET_MX6ULL_14X14_EVK
@@ -554,6 +556,8 @@ config TARGET_MX6ULL_14X14_EVK
 	select DM
 	select DM_THERMAL
 	select IOMUX_LPSR
+	select IMX_MODULE_FUSE
+	select OF_SYSTEM_SETUP
 	imply CMD_DM
 
 config TARGET_MX6ULZ_SMM_M2
