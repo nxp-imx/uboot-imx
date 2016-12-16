@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2013-2016 Freescale Semiconductor, Inc.
- * Copyright 2020 NXP
+ * Copyright 2016, 2020 NXP
  */
 
 #include <common.h>
@@ -191,7 +191,7 @@ int board_init(void)
 
 int checkboard(void)
 {
-	puts("Board: s32v234evb\n");
+	printf("Board: %s\n", CONFIG_SYS_CONFIG_NAME);
 
 	return 0;
 }

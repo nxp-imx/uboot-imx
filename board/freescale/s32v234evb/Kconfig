@@ -6,6 +6,7 @@ config SYS_BOARD
 
 config SYS_CONFIG_NAME
 	string
+	default "s32v234bbmini" if S32V234BBMINI_29406
 	default "s32v234evb29288" if S32V234EVB_29288
 	default "s32v234evb28899" if S32V234EVB_28899
 

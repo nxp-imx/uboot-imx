@@ -51,6 +51,11 @@ config S32V234EVB_29288
 	help
 	  Second S32V234EVB generation.
 
+config S32V234BBMINI_29406
+	bool "S32V234BBMINI_29406"
+	help
+	  S32V234EVB mini bluebox.
+
 endchoice
 
 endif
