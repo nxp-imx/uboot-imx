@@ -3094,11 +3094,18 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 	rx_process_flash(cmd, response);
 
 #ifdef CONFIG_FASTBOOT_LOCK
-	/* If gpt invalid -> valid, write unlock status, also wipe data. */
 	if (strncmp(cmd, "gpt", 3) == 0) {
 		gpt_valid_pst = partition_table_valid();
+
+		/* If gpt invalid -> valid, write unlock status, also wipe data. */
 		if ((gpt_valid_pre == 0) && (gpt_valid_pst == 1))
 			do_fastboot_unlock();
+
+		/* If gpt is valid, load partitons table into memory.
+		   So if the next command is "fastboot reboot bootloader",
+		   it can find the "misc" partition to r/w. */
+		if(gpt_valid_pst)
+			_fastboot_load_partitions();
 	}
 #endif
 #else
