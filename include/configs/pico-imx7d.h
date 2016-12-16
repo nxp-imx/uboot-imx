@@ -19,6 +19,7 @@
 #define CONFIG_SYS_GENERIC_BOARD
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
+#define CONFIG_SYS_BOOTM_LEN 0x1000000
 
 #define CONFIG_DBG_MONITOR
 /* uncomment for PLUGIN mode support */
@@ -39,7 +40,11 @@
 #define CONFIG_REVISION_TAG
 
 /* Size of malloc() pool */
+#ifdef CONFIG_AVB_SUPPORT
 #define CONFIG_SYS_MALLOC_LEN		(32 * SZ_1M)
+#else
+#define CONFIG_SYS_MALLOC_LEN		(16 * SZ_1M)
+#endif
 
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_BOARD_LATE_INIT
@@ -71,6 +76,10 @@
 #define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
 
 #define PHYS_SDRAM_SIZE			SZ_1G
+
+#ifdef CONFIG_AVB_SUPPORT
+#define CONFIG_PARTITION_UUIDS
+#endif
 
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
@@ -442,4 +451,17 @@
 #if defined(CONFIG_ANDROID_SUPPORT)
 #include "mx7dsabresdandroid.h"
 #endif
+
+#if defined(CONFIG_BRILLO_SUPPORT)
+#include "mx7dsabresdbrillo.h"
+#endif
+
+#ifdef CONFIG_USB_FASTBOOT_BUF_SIZE
+#undef CONFIG_USB_FASTBOOT_BUF_SIZE
+#define CONFIG_USB_FASTBOOT_BUF_SIZE   0xc800000
+#endif
+
+#define PRODUCT_NAME "imx7d_pico"
+
+
 #endif	/* __CONFIG_H */
