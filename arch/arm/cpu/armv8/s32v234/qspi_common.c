@@ -128,3 +128,11 @@ void qspi_iomux(void)
 	       SIUL2_IMCRn(SIUL2_PK15_IMCR_QSPI_B_DATA0));
 	#endif
 }
+
+/* qspinor setup */
+U_BOOT_CMD(flsetup, 1, 1, do_qspinor_setup,
+	   "setup qspi pinmuxing and qspi registers for access to flash",
+	   "\n"
+	   "Set up the pinmuxing and qspi registers to access the flash\n"
+	   "    and disconnect from the SD/eMMC.\n"
+	  );

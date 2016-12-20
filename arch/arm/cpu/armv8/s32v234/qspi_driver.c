@@ -531,14 +531,6 @@ U_BOOT_CMD(erase, 3, 1, do_qspinor_erase,
 #warning "Using U-Boot's protect and erase commands, not our custom ones"
 #endif
 
-/* qspinor setup */
-U_BOOT_CMD(flsetup, 1, 1, do_qspinor_setup,
-	   "setup qspi pinmuxing and qspi registers for access to hyperflash",
-	   "\n"
-	   "Set up the pinmuxing and qspi registers to access the hyperflash\n"
-	   "    and disconnect from the SD/eMMC.\n"
-	  );
-
 /* quadspi_erase_hyp */
 U_BOOT_CMD(flwrite, 4, 1, do_qspinor_prog,
 	   "write a data buffer into hyperflash",
