@@ -94,6 +94,9 @@ static bool is_high_speed;
 static bool is_recovery_mode;
 #endif
 
+extern int mmc_get_env_devno(void);
+extern int mmc_map_to_kernel_blk(int dev_no);
+
 static struct usb_endpoint_descriptor fs_ep_in = {
 	.bLength            = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType    = USB_DT_ENDPOINT,
@@ -1799,7 +1802,7 @@ static void fastboot_setup_system_boot_args(const char *slot)
 	if(ptentry != NULL) {
 		char bootargs_3rd[ANDR_BOOT_ARGS_SIZE];
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
-		u32 dev_no = mmc_get_env_devno();
+		u32 dev_no = mmc_map_to_kernel_blk(mmc_get_env_devno());
 		sprintf(bootargs_3rd, "skip_initramfs root=/dev/mmcblk%dp%d",
 				dev_no,
 				ptentry->partition_index);
