@@ -105,7 +105,6 @@
 #define CONFIG_SYS_FSL_FLASH1_BASE      0x60000000
 #define CONFIG_SYS_FSL_FLASH1_SIZE      0x10000000
 #define QSPI_BASE_ADDR			0x400A6000
-#define FLASH_BASE_ADR2			(CONFIG_SYS_FSL_FLASH0_BASE + 0x4000000)
 #define CONFIG_SYS_FLASH_BASE		CONFIG_SYS_FSL_FLASH0_BASE
 
 /* Allow to overwrite serial and ethaddr */
@@ -114,8 +113,6 @@
 
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC_BASE_ADDR
 #define CONFIG_SYS_FSL_ESDHC_NUM	1
-
-#define CONFIG_S32V234_FLASH
 
 #define CONFIG_LOADADDR			LOADADDR
 
@@ -127,6 +124,20 @@
 				CONFIG_BOOTARGS_LOGLEVEL " " \
 				CONFIG_EXTRA_KERNEL_BOOT_ARGS
 
+/* flash related definitions */
+#if defined(CONFIG_SPI_FLASH) && defined(CONFIG_FSL_QSPI)
+#define CONFIG_S32V234_USES_FLASH
+
+/* Flash Size and Num need to be updated according to the board's flash type */
+#define FSL_QSPI_FLASH_SIZE            SZ_128M
+#define FSL_QSPI_FLASH_NUM             2
+
+#define QSPI0_BASE_ADDR                QSPI_BASE_ADDR
+#define QSPI0_AMBA_BASE                CONFIG_SYS_FSL_FLASH0_BASE
+
+#else
+#define CONFIG_S32V234_FLASH
+
 /* QSPI/hyperflash configs */
 #ifdef CONFIG_S32V234_FLASH
 #define CONFIG_S32V234_USES_FLASH
@@ -136,6 +147,9 @@
 
 #undef CONFIG_CMD_FLASH
 
+#define FLASH_BASE_ADR2			(CONFIG_SYS_FSL_FLASH0_BASE + 0x4000000)
+
+#endif
 #endif
 
 #ifdef CONFIG_CMD_BOOTI
