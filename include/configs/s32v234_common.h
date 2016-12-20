@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * (C) Copyright 2016,2020 NXP.
+ * (C) Copyright 2016-2017,2020 NXP.
  *
  * Configuration settings for the Freescale S32V234 EVB board.
  */
@@ -117,8 +117,10 @@
 				" root=/dev/ram rw" \
 				CONFIG_BOOTARGS_LOGLEVEL " " \
 				CONFIG_EXTRA_KERNEL_BOOT_ARGS
+
 /* QSPI/hyperflash configs */
 #ifdef CONFIG_S32V234_FLASH
+#define CONFIG_S32V234_USES_FLASH
 
 /* debug stuff for qspi/hyperflash */
 #undef CONFIG_DEBUG_S32V234_QSPI_QSPI
