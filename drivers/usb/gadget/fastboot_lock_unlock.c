@@ -49,6 +49,7 @@
 
 #endif
 
+extern int mmc_get_env_devno(void);
 
 #ifndef FASTBOOT_ENCRYPT_LOCK
 
