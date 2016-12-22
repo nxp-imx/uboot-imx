@@ -124,7 +124,7 @@ struct i2c_pads_info i2c_pad_info4 = {
 
 int dram_init(void)
 {
-	gd->ram_size = PHYS_SDRAM_SIZE;
+	gd->ram_size = ((ulong)CONFIG_DDR_MB * 1024 * 1024);
 
 	return 0;
 }

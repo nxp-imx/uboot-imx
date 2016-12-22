@@ -75,8 +75,6 @@
 #define CONFIG_DOS_PARTITION
 #define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
 
-#define PHYS_SDRAM_SIZE			SZ_1G
-
 #ifdef CONFIG_AVB_SUPPORT
 #define CONFIG_PARTITION_UUIDS
 #endif
