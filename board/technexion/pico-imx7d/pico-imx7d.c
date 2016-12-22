@@ -686,21 +686,27 @@ int board_ehci_hcd_init(int port)
 
 void board_fastboot_setup(void)
 {
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	static char boot_dev_part[32];
+	u32 dev_no;
+#endif
 	switch (get_boot_device()) {
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
 	case SD1_BOOT:
-	case MMC1_BOOT:
-		if (!getenv("fastboot_dev"))
-			setenv("fastboot_dev", "mmc0");
-		if (!getenv("bootcmd"))
-			setenv("bootcmd", "boota mmc0");
-		break;
 	case SD2_BOOT:
+	case SD3_BOOT:
+	case SD4_BOOT:
+	case MMC1_BOOT:
 	case MMC2_BOOT:
+	case MMC3_BOOT:
+	case MMC4_BOOT:
+		dev_no = mmc_get_env_devno();
+		sprintf(boot_dev_part,"mmc%d",dev_no);
 		if (!getenv("fastboot_dev"))
-			setenv("fastboot_dev", "mmc1");
+			setenv("fastboot_dev", boot_dev_part);
+		sprintf(boot_dev_part, "boota mmc%d", dev_no);
 		if (!getenv("bootcmd"))
-			setenv("bootcmd", "boota mmc1");
+			setenv("bootcmd", boot_dev_part);
 		break;
 #endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
 #if defined(CONFIG_FASTBOOT_STORAGE_NAND)
@@ -731,19 +737,27 @@ int is_recovery_key_pressing(void)
 
 void board_recovery_setup(void)
 {
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	static char boot_dev_part[32];
+	u32 dev_no;
+#endif
+
 	int bootdev = get_boot_device();
 
 	switch (bootdev) {
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
 	case SD1_BOOT:
-	case MMC1_BOOT:
-		if (!getenv("bootcmd_android_recovery"))
-			setenv("bootcmd_android_recovery", "boota mmc0 recovery");
-		break;
 	case SD2_BOOT:
+	case SD3_BOOT:
+	case SD4_BOOT:
+	case MMC1_BOOT:
 	case MMC2_BOOT:
+	case MMC3_BOOT:
+	case MMC4_BOOT:
+		dev_no = mmc_get_env_devno();
+		sprintf(boot_dev_part,"boota mmc%d recovery",dev_no);
 		if (!getenv("bootcmd_android_recovery"))
-			setenv("bootcmd_android_recovery", "boota mmc1 recovery");
+			setenv("bootcmd_android_recovery", boot_dev_part);
 		break;
 #endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
 #if defined(CONFIG_FASTBOOT_STORAGE_NAND)
