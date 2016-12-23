@@ -292,4 +292,6 @@
 #define CONFIG_QSPI_MEMMAP_BASE	QSPI0_AMBA_BASE
 #endif
 
+#define CONFIG_OF_SYSTEM_SETUP
+
 #endif	/* __CONFIG_H */
