@@ -179,4 +179,6 @@
 #define CONFIG_CMD_CACHE
 #endif
 
+#define CONFIG_OF_SYSTEM_SETUP
+
 #endif	/* __CONFIG_H */
