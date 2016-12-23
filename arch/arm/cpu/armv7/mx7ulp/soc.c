@@ -10,6 +10,7 @@
 #include <asm/arch/sys_proto.h>
 #include <dm.h>
 #include <asm/imx-common/hab.h>
+#include <fdt_support.h>
 
 struct lpuart_serial_platdata {
 	void *reg;
@@ -339,5 +340,42 @@ int mmc_get_env_dev(void)
 	devno = (bt1_cfg >> 9) & 0x7;
 
 	return board_mmc_get_env_dev(devno);
+}
+#endif
+
+#ifdef CONFIG_OF_SYSTEM_SETUP
+int ft_system_setup(void *blob, bd_t *bd)
+{
+#if !defined(CONFIG_FSL_FASTBOOT) && defined(is_boot_from_usb)
+	if (is_boot_from_usb()) {
+		int rc;
+		int nodeoff = fdt_path_offset(blob, "/ahb-bridge0@40000000/usdhc@40370000");
+		if (nodeoff < 0)
+			return 0; /* Not found, skip it */
+
+		printf("Found usdhc0 node\n");
+		if (fdt_get_property(blob, nodeoff, "vqmmc-supply", NULL) != NULL) {
+			rc = fdt_delprop(blob, nodeoff, "vqmmc-supply");
+			if (!rc) {
+				printf("Removed vqmmc-supply property\n");
+
+add:
+				rc = fdt_setprop(blob, nodeoff, "no-1-8-v", NULL, 0);
+				if (rc == -FDT_ERR_NOSPACE) {
+					rc = fdt_increase_size(blob, 32);
+					if (!rc)
+						goto add;
+				} else if (rc) {
+					printf("Failed to add no-1-8-v property, %d\n", rc);
+				} else {
+					printf("Added no-1-8-v property\n");
+				}
+			} else {
+				printf("Failed to remove vqmmc-supply property, %d\n", rc);
+			}
+		}
+	}
+#endif
+	return 0;
 }
 #endif
