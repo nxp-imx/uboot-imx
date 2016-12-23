@@ -8,6 +8,8 @@
 #include <asm/sections.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/hab.h>
+#include <asm/mach-imx/boot_mode.h>
+#include <fdt_support.h>
 #ifdef CONFIG_IMX_SEC_INIT
 #include <fsl_caam.h>
 #endif
@@ -295,3 +297,64 @@ int mmc_get_env_dev(void)
 	return board_mmc_get_env_dev(devno);
 }
 #endif
+
+#ifdef CONFIG_OF_SYSTEM_SETUP
+int ft_system_setup(void *blob, bd_t *bd)
+{
+	if (get_boot_device() == USB_BOOT) {
+		int rc;
+		int nodeoff = fdt_path_offset(blob, "/ahb-bridge0@40000000/usdhc@40370000");
+		if (nodeoff < 0)
+			return 0; /* Not found, skip it */
+
+		printf("Found usdhc0 node\n");
+		if (fdt_get_property(blob, nodeoff, "vqmmc-supply", NULL) != NULL) {
+			rc = fdt_delprop(blob, nodeoff, "vqmmc-supply");
+			if (!rc) {
+				printf("Removed vqmmc-supply property\n");
+
+add:
+				rc = fdt_setprop(blob, nodeoff, "no-1-8-v", NULL, 0);
+				if (rc == -FDT_ERR_NOSPACE) {
+					rc = fdt_increase_size(blob, 32);
+					if (!rc)
+						goto add;
+				} else if (rc) {
+					printf("Failed to add no-1-8-v property, %d\n", rc);
+				} else {
+					printf("Added no-1-8-v property\n");
+				}
+			} else {
+				printf("Failed to remove vqmmc-supply property, %d\n", rc);
+			}
+		}
+	}
+	return 0;
+}
+#endif
+
+enum boot_device get_boot_device(void)
+{
+	struct bootrom_sw_info **p =
+		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR;
+
+	enum boot_device boot_dev = SD1_BOOT;
+	u8 boot_type = (*p)->boot_dev_type;
+	u8 boot_instance = (*p)->boot_dev_instance;
+
+	switch (boot_type) {
+	case BOOT_TYPE_SD:
+		boot_dev = boot_instance + SD1_BOOT;
+		break;
+	case BOOT_TYPE_MMC:
+		boot_dev = boot_instance + MMC1_BOOT;
+		break;
+	case BOOT_TYPE_USB:
+		boot_dev = USB_BOOT;
+		break;
+	default:
+		break;
+	}
+
+	return boot_dev;
+}
