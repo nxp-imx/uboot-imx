@@ -1033,18 +1033,89 @@ static void process_flash_mmc(const char *cmdbuf, char *response)
 		sprintf(response, "FAILno image downloaded");
 	}
 }
-
 #endif
 
-
-static int rx_process_erase(const char *cmdbuf, char *response)
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+static void process_erase_mmc(const char *cmdbuf, char *response)
 {
+	int mmc_no = 0;
+	lbaint_t blks, blks_start, blks_size, grp_size;
+	struct mmc *mmc;
+	block_dev_desc_t *dev_desc;
+	struct fastboot_ptentry *ptn;
+	disk_partition_t info;
+
+	ptn = fastboot_flash_find_ptn(cmdbuf);
+	if ((ptn == NULL) || (ptn->flags & FASTBOOT_PTENTRY_FLAGS_UNERASEABLE)) {
+		sprintf(response, "FAILpartition does not exist or uneraseable");
+		return;
+	}
+
+	mmc_no = fastboot_devinfo.dev_id;
+	printf("erase target is MMC:%d\n", mmc_no);
+
+	mmc = find_mmc_device(mmc_no);
+	if (mmc && mmc_init(mmc))
+		printf("MMC card init failed!\n");
+
+	dev_desc = get_dev("mmc", mmc_no);
+	if (NULL == dev_desc) {
+		printf("Block device MMC %d not supported\n",
+			mmc_no);
+		sprintf(response, "FAILnot valid MMC card");
+		return;
+	}
+
+	if (get_partition_info(dev_desc,
+				ptn->partition_index, &info)) {
+		printf("Bad partition index:%d for partition:%s\n",
+		ptn->partition_index, ptn->name);
+		sprintf(response, "FAILerasing of MMC card");
+		return;
+	}
+
+	/* Align blocks to erase group size to avoid erasing other partitions */
+	grp_size = mmc->erase_grp_size;
+	blks_start = (info.start + grp_size - 1) & ~(grp_size - 1);
+	if (info.size >= grp_size)
+		blks_size = (info.size - (blks_start - info.start)) &
+				(~(grp_size - 1));
+	else
+		blks_size = 0;
+
+	printf("Erasing blocks " LBAFU " to " LBAFU " due to alignment\n",
+	       blks_start, blks_start + blks_size);
+
+	blks = dev_desc->block_erase(dev_desc->dev, blks_start, blks_size);
+	if (blks != blks_size) {
+		printf("failed erasing from device %d", dev_desc->dev);
+		sprintf(response, "FAILerasing of MMC card");
+		return;
+	}
+
+	printf("........ erased " LBAFU " bytes from '%s'\n",
+	       blks_size * info.blksz, cmdbuf);
+	sprintf(response, "OKAY");
+
+    return;
+}
+#endif
+
+#if defined(CONFIG_FASTBOOT_STORAGE_SATA)
+static void process_erase_sata(const char *cmdbuf, char *response)
+{
+    return;
+}
+#endif
+
 #if defined(CONFIG_FASTBOOT_STORAGE_NAND)
+static void process_erase_nand(const char *cmdbuf, char *response)
+{
 	struct fastboot_ptentry *ptn;
 
 	ptn = fastboot_flash_find_ptn(cmdbuf);
-	if (ptn == 0) {
-		sprintf(response, "FAILpartition does not exist");
+	if ((ptn == NULL) || (ptn->flags & FASTBOOT_PTENTRY_FLAGS_UNERASEABLE)) {
+		sprintf(response, "FAILpartition does not exist or uneraseable");
 	} else {
 		int status, repeat, repeat_max;
 
@@ -1094,13 +1165,35 @@ static int rx_process_erase(const char *cmdbuf, char *response)
 			sprintf(response, "OKAY");
 		}
 	}
-	return 0;
-#else
-	printf("Not support erase command for EMMC\n");
-	sprintf(response, "OKAY");
-	return -1;
+	return;
+}
 #endif
 
+static void rx_process_erase(const char *cmdbuf, char *response)
+{
+	switch (fastboot_devinfo.type) {
+#if defined(CONFIG_FASTBOOT_STORAGE_SATA)
+	case DEV_SATA:
+		process_erase_sata(cmdbuf, response);
+		break;
+#endif
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	case DEV_MMC:
+		process_erase_mmc(cmdbuf, response);
+		break;
+#endif
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
+	case DEV_NAND:
+		process_erase_nand(cmdbuf, response);
+		break;
+#endif
+	default:
+		printf("Not support flash command for current device %d\n",
+			fastboot_devinfo.type);
+		sprintf(response,
+			   "FAILfailed to flash device");
+		break;
+	}
 }
 
 static void rx_process_flash(const char *cmdbuf, char *response)
@@ -1321,6 +1414,7 @@ static int _fastboot_parts_load_from_ptable(void)
 	ptable[PTN_MBR_GPT_INDEX].length = ANDROID_MBR_SIZE / dev_desc->blksz;
 #endif
 	ptable[PTN_MBR_GPT_INDEX].partition_id = user_partition;
+	ptable[PTN_MBR_GPT_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
 
 	/* Bootloader */
 	strcpy(ptable[PTN_BOOTLOADER_INDEX].name, FASTBOOT_PARTITION_BOOTLOADER);
@@ -1329,6 +1423,7 @@ static int _fastboot_parts_load_from_ptable(void)
 	ptable[PTN_BOOTLOADER_INDEX].length =
 				 ANDROID_BOOTLOADER_SIZE / dev_desc->blksz;
 	ptable[PTN_BOOTLOADER_INDEX].partition_id = boot_partition;
+	ptable[PTN_BOOTLOADER_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
 
 #ifdef CONFIG_EFI_PARTITION
 
@@ -3112,39 +3207,10 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 		}
 	}
 #endif
-#else
-#ifdef CONFIG_FASTBOOT_FLASH_MMC_DEV
-	fb_mmc_flash_write(cmd, (void *)CONFIG_USB_FASTBOOT_BUF_ADDR,
-			   download_bytes, response);
-#endif
 #endif
 	fastboot_tx_write_str(response);
 }
 #endif
-
-/*
-static void cb_oem(struct usb_ep *ep, struct usb_request *req)
-{
-	char *cmd = req->buf;
-#if defined(CONFIG_FASTBOOT_FLASH) && defined(CONFIG_FASTBOOT_FLASH_MMC_DEV)
-	if (strncmp("format", cmd + 4, 6) == 0) {
-		char cmdbuf[32];
-                sprintf(cmdbuf, "gpt write mmc %x $partitions",
-			CONFIG_FASTBOOT_FLASH_MMC_DEV);
-                if (run_command(cmdbuf, 0))
-			fastboot_tx_write_str("FAIL");
-                else
-			fastboot_tx_write_str("OKAY");
-	} else
-#endif
-	if (strncmp("unlock", cmd + 4, 8) == 0) {
-		fastboot_tx_write_str("FAILnot implemented");
-	}
-	else {
-		fastboot_tx_write_str("FAILunknown oem command");
-	}
-}
-*/
 
 #ifdef CONFIG_FASTBOOT_FLASH
 static void cb_erase(struct usb_ep *ep, struct usb_request *req)
@@ -3159,15 +3225,26 @@ static void cb_erase(struct usb_ep *ep, struct usb_request *req)
 		return;
 	}
 
-	strcpy(response, "FAILno flash device defined");
+#ifdef CONFIG_FASTBOOT_LOCK
+	FbLockState status;
+	status = fastboot_get_lock_stat();
 
-#ifdef CONFIG_FSL_FASTBOOT
+	if (status == FASTBOOT_LOCK) {
+		error("device is LOCKed!\n");
+		strcpy(response, "FAIL device is locked.");
+		fastboot_tx_write_str(response);
+		return;
+
+	} else if (status == FASTBOOT_LOCK_ERROR) {
+		error("write lock status into device!\n");
+		fastboot_set_lock_stat(FASTBOOT_LOCK);
+		strcpy(response, "FAIL device is locked.");
+		fastboot_tx_write_str(response);
+		return;
+	}
+#endif
+
 	rx_process_erase(cmd, response);
-#else
-#ifdef CONFIG_FASTBOOT_FLASH_MMC_DEV
-	fb_mmc_erase(cmd, response);
-#endif
-#endif
 	fastboot_tx_write_str(response);
 }
 #endif

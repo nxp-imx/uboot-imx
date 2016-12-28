@@ -29,6 +29,9 @@
    using the setenv and saveenv commands */
 #define FASTBOOT_PTENTRY_FLAGS_WRITE_ENV              0x00000400
 
+/* Uneraseable partition */
+#define FASTBOOT_PTENTRY_FLAGS_UNERASEABLE            0x00000800
+
 #define FASTBOOT_MMC_BOOT_PARTITION_ID  1
 #define FASTBOOT_MMC_USER_PARTITION_ID  0
 #define FASTBOOT_MMC_NONE_PARTITION_ID -1
