@@ -2742,6 +2742,10 @@ static char *get_serial(void)
 #define PRODUCT_NAME "NXP i.MX"
 #endif
 
+#if !defined(VARIANT_NAME)
+#define VARIANT_NAME "NXP i.MX"
+#endif
+
 static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 {
 	char *cmd = req->buf;
@@ -2799,7 +2803,7 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 	} else if (!strcmp_l1("battery-soc-ok", cmd)) {
 		strncat(response, "yes", chars_left);
 	} else if (!strcmp_l1("variant", cmd)) {
-		/* just OKAY here */
+		strncat(response, VARIANT_NAME, chars_left);
 	} else if (!strcmp_l1("off-mode-charge", cmd)) {
 		strncat(response, "1", chars_left);
 	} else if (!strcmp_l1("downloadsize", cmd) ||
