@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * (C) Copyright 2013-2016, Freescale Semiconductor, Inc.
+ * (C) Copyright 2013-2016 Freescale Semiconductor, Inc.
+ * (C) Copyright 2017 NXP
  */
 
 #ifndef __ASM_ARCH_IMX_REGS_H__
@@ -130,59 +131,6 @@
 
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 #include <asm/types.h>
-
-/* System Reset Controller (SRC) */
-struct src {
-	u32 bmr1;
-	u32 bmr2;
-	u32 gpr1_boot;
-	u32 reserved_0x00C[61];
-	u32 gpr1;
-	u32 gpr2;
-	u32 gpr3;
-	u32 gpr4;
-	u32 gpr5;
-	u32 gpr6;
-	u32 gpr7;
-	u32 reserved_0x11C[1];
-	u32 gpr9;
-	u32 gpr10;
-	u32 gpr11;
-	u32 gpr12;
-	u32 gpr13;
-	u32 gpr14;
-	u32 gpr15;
-	u32 gpr16;
-	u32 reserved_0x140[1];
-	u32 gpr17;
-	u32 gpr18;
-	u32 gpr19;
-	u32 gpr20;
-	u32 gpr21;
-	u32 gpr22;
-	u32 gpr23;
-	u32 gpr24;
-	u32 gpr25;
-	u32 gpr26;
-	u32 gpr27;
-	u32 reserved_0x16C[5];
-	u32 pcie_config1;
-	u32 ddr_self_ref_ctrl;
-	u32 pcie_config0;
-	u32 reserved_0x18C[4];
-	u32 soc_misc_config2;
-};
-
-/* SRC registers definitions */
-
-/* SRC_GPR1 */
-#define SRC_GPR1_PLL_SOURCE(pll,val)( ((val) & SRC_GPR1_PLL_SOURCE_MASK) << \
-										(SRC_GPR1_PLL_OFFSET + (pll)) )
-#define SRC_GPR1_PLL_SOURCE_MASK	(0x1)
-
-#define SRC_GPR1_PLL_OFFSET			(27)
-#define SRC_GPR1_FIRC_CLK_SOURCE	(0x0)
-#define SRC_GPR1_XOSC_CLK_SOURCE	(0x1)
 
 /* Periodic Interrupt Timer (PIT) */
 struct pit_reg {
