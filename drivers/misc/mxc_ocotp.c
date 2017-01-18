@@ -8,6 +8,7 @@
  * http://git.freescale.com/git/cgit.cgi/imx/uboot-imx.git/tree/drivers/misc/imx_otp.c?h=imx_v2009.08_1.1.0&id=9aa74e6,
  * which is:
  * Copyright (C) 2011-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -343,6 +344,23 @@ int fuse_sense(u32 bank, u32 word, u32 *val)
 static int prepare_write(struct ocotp_regs **regs, u32 bank, u32 word,
 				const char *caller)
 {
+#ifdef CONFIG_MX7ULP
+	u32 val;
+	int ret;
+
+	/* Only bank 0 and 1 are redundancy mode, others are ECC mode */
+	if (bank != 0 && bank != 1) {
+		ret = fuse_sense(bank, word, &val);
+		if (ret)
+			return ret;
+
+		if (val != 0) {
+			printf("mxc_ocotp: The word has been programmed, no more write\n");
+			return -EPERM;
+		}
+	}
+#endif
+
 	return prepare_access(regs, bank, word, true, caller);
 }
 
