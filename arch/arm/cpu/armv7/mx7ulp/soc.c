@@ -157,6 +157,9 @@ void s_init(void)
 	/* clock configuration. */
 	clock_init();
 
+	/* enable dumb pmic */
+	writel((readl(SNVS_LP_LPCR) | 0x20), SNVS_LP_LPCR);
+
 	return;
 }
 
