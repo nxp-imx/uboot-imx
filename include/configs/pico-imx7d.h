@@ -459,7 +459,7 @@
 #define CONFIG_USB_FASTBOOT_BUF_SIZE   0xc800000
 #endif
 
-#define PRODUCT_NAME "imx7d_pico"
-
+#define PRODUCT_NAME "imx7d"
+#define VARIANT_NAME "imx7d_pico"
 
 #endif	/* __CONFIG_H */
