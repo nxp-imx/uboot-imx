@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -22,6 +23,9 @@ DECLARE_GLOBAL_DATA_PTR;
 #define UART_PAD_CTRL	(PAD_CTL_PUS_UP)
 
 #define GPIO_PAD_CTRL	(PAD_CTL_OBE_ENABLE | PAD_CTL_IBE_ENABLE)
+
+#define OTG_ID_GPIO_PAD_CTRL	(PAD_CTL_IBE_ENABLE)
+#define OTG_PWR_GPIO_PAD_CTRL	(PAD_CTL_OBE_ENABLE)
 
 #define QSPI_PAD_CTRL1	(PAD_CTL_PUS_UP | PAD_CTL_DSE)
 
@@ -73,12 +77,12 @@ static void setup_iomux_uart(void)
 static iomux_cfg_t const usb_otg1_pads[] = {
 
 #ifdef CONFIG_TARGET_MX7ULP_10X10_ARM2
-	MX7ULP_PAD_PTC0__PTC0 | MUX_PAD_CTRL(GPIO_PAD_CTRL),  /* gpio for otgid */
-	MX7ULP_PAD_PTC1__PTC1 | MUX_PAD_CTRL(GPIO_PAD_CTRL),  /* gpio for power en */
+	MX7ULP_PAD_PTC0__PTC0 | MUX_PAD_CTRL(OTG_ID_GPIO_PAD_CTRL),  /* gpio for otgid */
+	MX7ULP_PAD_PTC1__PTC1 | MUX_PAD_CTRL(OTG_PWR_GPIO_PAD_CTRL),  /* gpio for power en */
 #else
 	/*Need rework for ID and PWR_EN pins on 14x14 ARM2*/
-	MX7ULP_PAD_PTC18__PTC18 | MUX_PAD_CTRL(GPIO_PAD_CTRL),  /* gpio for otgid */
-	MX7ULP_PAD_PTA31__PTA31 | MUX_PAD_CTRL(GPIO_PAD_CTRL),  /* gpio for power en */
+	MX7ULP_PAD_PTC18__PTC18 | MUX_PAD_CTRL(OTG_ID_GPIO_PAD_CTRL),  /* gpio for otgid */
+	MX7ULP_PAD_PTA31__PTA31 | MUX_PAD_CTRL(OTG_PWR_GPIO_PAD_CTRL),  /* gpio for power en */
 #endif
 };
 

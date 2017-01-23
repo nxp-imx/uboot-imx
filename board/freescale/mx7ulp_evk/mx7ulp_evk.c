@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -23,7 +24,8 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define I2C_PAD_CTRL	(PAD_CTL_PUS_UP | PAD_CTL_ODE)
 
-#define GPIO_PAD_CTRL	(PAD_CTL_OBE_ENABLE | PAD_CTL_IBE_ENABLE)
+#define OTG_ID_GPIO_PAD_CTRL	(PAD_CTL_IBE_ENABLE)
+#define OTG_PWR_GPIO_PAD_CTRL	(PAD_CTL_OBE_ENABLE)
 
 #define QSPI_PAD_CTRL1	(PAD_CTL_PUS_UP | PAD_CTL_DSE)
 
@@ -80,8 +82,8 @@ void i2c_init_board(void)
 #ifdef CONFIG_USB_EHCI_MX7
 /*Need rework for ID and PWR_EN pins*/
 static iomux_cfg_t const usb_otg1_pads[] = {
-	MX7ULP_PAD_PTC0__PTC0 | MUX_PAD_CTRL(GPIO_PAD_CTRL),  /* gpio for power en */
-	MX7ULP_PAD_PTC8__PTC8 | MUX_PAD_CTRL(GPIO_PAD_CTRL),  /* gpio for OTG ID*/
+	MX7ULP_PAD_PTC0__PTC0 | MUX_PAD_CTRL(OTG_PWR_GPIO_PAD_CTRL),  /* gpio for power en */
+	MX7ULP_PAD_PTC8__PTC8 | MUX_PAD_CTRL(OTG_ID_GPIO_PAD_CTRL),  /* gpio for OTG ID*/
 };
 
 static void setup_usb(void)
