@@ -250,6 +250,8 @@
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_MMC_PART			1
 
+#define FLASH_SECTOR_SIZE		0x40000 /* 256 KB */
+
 #define CONFIG_BOOTP_BOOTFILESIZE
 
 #endif
