@@ -362,3 +362,48 @@ enum boot_device get_boot_device(void)
 
 	return boot_dev;
 }
+
+#ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_SERIAL_TAG
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[1];
+	struct fuse_bank1_regs *fuse =
+		(struct fuse_bank1_regs *)bank->fuse_regs;
+	serialnr->low = (fuse->cfg0 & 0xFFFF) + ((fuse->cfg1 & 0xFFFF) << 16);
+	serialnr->high = (fuse->cfg2 & 0xFFFF) + ((fuse->cfg3 & 0xFFFF) << 16);
+}
+#endif
+#ifdef CONFIG_ANDROID_RECOVERY
+/*
+ * check if the recovery filed is set by kernel, it can be set by kernel
+ * issue a command '# reboot recovery'
+ */
+int recovery_check_and_clean_flag(void)
+{
+/*
+ * TODO: will implement this part after porting BCB
+ */
+	return 0;
+}
+#endif /*CONFIG_ANDROID_RECOVERY*/
+/*
+ * check if the recovery field is set by kernel, it can be set by kernel
+ * issue a command '# reboot fastboot'
+ */
+int fastboot_check_and_clean_flag(void)
+{
+/*
+ * TODO: will implement this part after porting BCB
+ */
+	return 0;
+}
+void fastboot_enable_flag(void)
+{
+/*
+ * TODO: will implement this part after porting BCB
+ */
+}
+#endif /*CONFIG_FSL_FASTBOOT*/

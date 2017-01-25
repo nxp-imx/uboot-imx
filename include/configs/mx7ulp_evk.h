@@ -248,4 +248,8 @@
 
 #define CONFIG_OF_SYSTEM_SETUP
 
+#if defined(CONFIG_FASTBOOT)
+#include "mx7ulp_evk_android.h"
+#endif
+
 #endif	/* __CONFIG_H */
