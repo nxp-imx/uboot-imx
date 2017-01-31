@@ -37,7 +37,7 @@
 	str r1, [r0, #0x798]
 	ldr r1, =0x00000000
 	str r1, [r0, #0x758]
-	ldr r1, =0x00000030
+	ldr r1, =0x00000020
 
 	str r1, [r0, #0x588]
 	str r1, [r0, #0x594]
@@ -49,14 +49,14 @@
 	str r1, [r0, #0x57c]
 	ldr r1, =0x00000000
 	str r1, [r0, #0x58c]
-	ldr r1, =0x00000030
+	ldr r1, =0x00000020
 	str r1, [r0, #0x59c]
 	str r1, [r0, #0x5a0]
 	str r1, [r0, #0x78c]
 
 	ldr r1, =0x00020000
 	str r1, [r0, #0x750]
-	ldr r1, =0x00003030
+	ldr r1, =0x00003020
 	str r1, [r0, #0x5a8]
 	str r1, [r0, #0x5b0]
 	str r1, [r0, #0x524]
@@ -69,7 +69,7 @@
 	ldr r1, =0x00020000
 	str r1, [r0, #0x774]
 
-	ldr r1, =0x00000030
+	ldr r1, =0x00000020
 	str r1, [r0, #0x784]
 	str r1, [r0, #0x788]
 	str r1, [r0, #0x794]
@@ -236,7 +236,7 @@
 	str r1, [r0, #0x798]
 	ldr r1, =0x00000000
 	str r1, [r0, #0x758]
-	ldr r1, =0x00000030
+	ldr r1, =0x00000020
 
 	str r1, [r0, #0x588]
 	str r1, [r0, #0x594]
@@ -248,14 +248,14 @@
 	str r1, [r0, #0x57c]
 	ldr r1, =0x00000000
 	str r1, [r0, #0x58c]
-	ldr r1, =0x00000030
+	ldr r1, =0x00000020
 	str r1, [r0, #0x59c]
 	str r1, [r0, #0x5a0]
 	str r1, [r0, #0x78c]
 
 	ldr r1, =0x00020000
 	str r1, [r0, #0x750]
-	ldr r1, =0x00003030
+	ldr r1, =0x00003020
 	str r1, [r0, #0x5a8]
 	str r1, [r0, #0x5b0]
 	str r1, [r0, #0x524]
@@ -268,7 +268,7 @@
 	ldr r1, =0x00020000
 	str r1, [r0, #0x774]
 
-	ldr r1, =0x00000030
+	ldr r1, =0x00000020
 	str r1, [r0, #0x784]
 	str r1, [r0, #0x788]
 	str r1, [r0, #0x794]
@@ -511,7 +511,7 @@
 	str r1, [r0, #0x798]
 	ldr r1, =0x00000000
 	str r1, [r0, #0x758]
-	ldr r1, =0x00000030
+	ldr r1, =0x00000020
 
 	str r1, [r0, #0x588]
 	str r1, [r0, #0x594]
@@ -523,14 +523,14 @@
 	str r1, [r0, #0x57c]
 	ldr r1, =0x00000000
 	str r1, [r0, #0x58c]
-	ldr r1, =0x00000030
+	ldr r1, =0x00000020
 	str r1, [r0, #0x59c]
 	str r1, [r0, #0x5a0]
 	str r1, [r0, #0x78c]
 
 	ldr r1, =0x00020000
 	str r1, [r0, #0x750]
-	ldr r1, =0x00003030
+	ldr r1, =0x00003020
 	str r1, [r0, #0x5a8]
 	str r1, [r0, #0x5b0]
 	str r1, [r0, #0x524]
@@ -543,7 +543,7 @@
 	ldr r1, =0x00020000
 	str r1, [r0, #0x774]
 
-	ldr r1, =0x00000030
+	ldr r1, =0x00000020
 	str r1, [r0, #0x784]
 	str r1, [r0, #0x788]
 	str r1, [r0, #0x794]
