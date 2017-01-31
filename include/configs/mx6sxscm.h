@@ -32,8 +32,12 @@
 #define PHYS_SDRAM_SIZE		SZ_512M
 #endif
 
-#if defined CONFIG_512MB_LPDDR2 && defined CONFIG_MX6SXSCM_EMMC
+#if defined CONFIG_512MB_LPDDR2
+#if defined CONFIG_MX6SXSCM_EMMC
 #define CONFIG_FDT_FILE		"imx6sxscm-epop-evb-ldo.dtb"
+#else
+#define CONFIG_FDT_FILE		"imx6sxscm-512mb-evb-ldo.dtb"
+#endif
 #else
 #define CONFIG_FDT_FILE		"imx6sxscm-1gb-evb-ldo.dtb"
 #endif
