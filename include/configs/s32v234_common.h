@@ -64,6 +64,15 @@
 /* Ramdisk load address */
 #define RAMDISK_ADDR		0x84000000
 
+/* Flash booting */
+#define UBOOT_FLASH_ADDR		(CONFIG_SYS_FSL_FLASH0_BASE + 0x0)
+#define KERNEL_FLASH_ADDR		(CONFIG_SYS_FSL_FLASH0_BASE + 0x100000)
+#define KERNEL_FLASH_MAXSIZE		0xA00000
+#define FDT_FLASH_ADDR			(CONFIG_SYS_FSL_FLASH0_BASE + 0xB00000)
+#define FDT_FLASH_MAXSIZE		0x100000
+#define RAMDISK_FLASH_ADDR		(CONFIG_SYS_FSL_FLASH0_BASE + 0xC00000)
+#define RAMDISK_FLASH_MAXSIZE		0x2000000
+
 /* Generic Timer Definitions */
 /* COUNTER_FREQUENCY value will be used at startup but will be replaced
  * if an older chip version is determined at runtime.
@@ -203,8 +212,30 @@
 		"else " \
 			"echo WARN: Cannot load the DT; " \
 		"fi;\0" \
+	"flashbootargs=setenv bootargs console=${console}" \
+		CONFIG_BOOTARGS_LOGLEVEL " root=/dev/ram rw earlycon " \
+		CONFIG_EXTRA_KERNEL_BOOT_ARGS ";" \
+		"setexpr uboot_flashaddr " __stringify(UBOOT_FLASH_ADDR) ";" \
+		"setexpr kernel_flashaddr " __stringify(KERNEL_FLASH_ADDR) ";" \
+		"setenv kernel_maxsize " __stringify(KERNEL_FLASH_MAXSIZE) ";" \
+		"setexpr fdt_flashaddr " __stringify(FDT_FLASH_ADDR) ";" \
+		"setenv fdt_maxsize " __stringify(FDT_FLASH_MAXSIZE) ";" \
+		"setexpr ramdisk_flashaddr " \
+				__stringify(RAMDISK_FLASH_ADDR) ";" \
+		"setenv ramdisk_maxsize " \
+				__stringify(RAMDISK_FLASH_MAXSIZE) ";\0" \
+	"flashboot=echo Booting from flash...; " \
+		"run flashbootargs;"\
+		"cp.b ${kernel_flashaddr} ${loadaddr} ${kernel_maxsize};"\
+		"cp.b ${fdt_flashaddr} ${fdt_addr} ${fdt_maxsize};"\
+		"cp.b ${ramdisk_flashaddr} ${ramdisk_addr} ${ramdisk_maxsize};"\
+		"${boot_mtd} ${loadaddr} ${ramdisk_addr} ${fdt_addr};\0"
 
 #undef CONFIG_BOOTCOMMAND
+#if defined(CONFIG_FLASH_BOOT)
+#define CONFIG_BOOTCOMMAND \
+	"run flashboot"
+#elif defined(CONFIG_SD_BOOT)
 #define CONFIG_BOOTCOMMAND \
 	   "mmc dev ${mmcdev}; if mmc rescan; then " \
 		   "if run loadimage; then " \
@@ -212,6 +243,7 @@
 		   "else run netboot; " \
 		   "fi; " \
 	   "else run netboot; fi"
+#endif
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_PROMPT_HUSH_PS2      "> "
