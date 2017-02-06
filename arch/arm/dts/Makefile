@@ -361,7 +361,9 @@ dtb-$(CONFIG_MX6) += imx6ul-14x14-ddr3-arm2.dtb \
 	imx6qp-sabresd.dtb \
 	imx6ul-geam-kit.dtb
 
-dtb-$(CONFIG_MX7) += imx7-colibri.dtb
+dtb-$(CONFIG_MX7) += imx7-colibri.dtb \
+		imx7d-sdb.dtb \
+		imx7d-sdb-reva.dtb
 
 dtb-$(CONFIG_SOC_KEYSTONE) += keystone-k2hk-evm.dtb \
 	keystone-k2l-evm.dtb \
