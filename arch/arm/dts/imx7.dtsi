@@ -4,6 +4,7 @@
  * SPDX-License-Identifier:     GPL-2.0+ or X11
  */
 #include "imx7d-pinfunc.h"
+#include "imx7d-pinfunc-lpsr.h"
 #include "skeleton.dtsi"
 
 / {
