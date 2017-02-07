@@ -53,28 +53,26 @@
 #define CONFIG_SYS_I2C_MXC
 #define CONFIG_SYS_I2C_SPEED		100000
 
-#ifdef CONFIG_SYS_BOOT_QSPI
-#define CONFIG_SYS_USE_QSPI
+#define CONFIG_SUPPORT_EMMC_BOOT	/* eMMC specific */
+#define CONFIG_SYS_MMC_IMG_LOAD_PART	1
+
+#ifdef CONFIG_QSPI_BOOT
+#define CONFIG_FSL_QSPI
 #define CONFIG_ENV_IS_IN_SPI_FLASH
-#elif defined CONFIG_SYS_BOOT_NAND
-#define CONFIG_SYS_USE_NAND
+#elif defined CONFIG_NAND_BOOT
+#define CONFIG_NAND_MXS
 #define CONFIG_ENV_IS_IN_NAND
 #else
 #define CONFIG_ENV_IS_IN_MMC
 #endif
 
-#define CONFIG_SUPPORT_EMMC_BOOT	/* eMMC specific */
-#define CONFIG_SYS_MMC_IMG_LOAD_PART	1
-
 #ifdef CONFIG_IMX_BOOTAUX
-/* Set to QSPI1 A flash at default */
-#define CONFIG_SYS_AUXCORE_BOOTDATA 0x60000000
 
 #define UPDATE_M4_ENV \
 	"m4image=m4_qspi.bin\0" \
 	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \
 	"update_m4_from_sd=" \
-		"if sf probe 0:0; then " \
+		"if sf probe 1:0; then " \
 			"if run loadm4image; then " \
 				"setexpr fw_sz ${filesize} + 0xffff; " \
 				"setexpr fw_sz ${fw_sz} / 0x10000; "	\
@@ -83,12 +81,12 @@
 				"sf write ${loadaddr} 0x0 ${filesize}; " \
 			"fi; " \
 		"fi\0" \
-	"m4boot=sf probe 0:0; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
+	"m4boot=sf probe 1:0; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
 #else
 #define UPDATE_M4_ENV ""
 #endif
 
-#ifdef CONFIG_SYS_BOOT_NAND
+#ifdef CONFIG_NAND_BOOT
 #define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
 #else
 #define MFG_NAND_PARTITION ""
@@ -121,9 +119,9 @@
 	"fdt_addr=0x83000000\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"console=ttymxc0\0" \
-	"bootargs=console=ttymxc0,115200 ubi.mtd=3 "  \
+	"bootargs=console=ttymxc0,115200 ubi.mtd=4 "  \
 		"root=ubi0:rootfs rootfstype=ubifs "		     \
-		"mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),-(rootfs)\0"\
+		"mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs)\0"\
 	"bootcmd=nand read ${loadaddr} 0x4000000 0x800000;"\
 		"nand read ${fdt_addr} 0x5000000 0x100000;"\
 		"bootz ${loadaddr} - ${fdt_addr}\0"
@@ -232,18 +230,37 @@
 
 /* environment organization */
 #define CONFIG_ENV_SIZE			SZ_8K
-#define CONFIG_ENV_IS_IN_MMC
 
+#if defined(CONFIG_ENV_IS_IN_MMC)
+#define CONFIG_ENV_OFFSET		(13 * SZ_64K)
+#elif defined(CONFIG_ENV_IS_IN_SPI_FLASH)
+#define CONFIG_ENV_OFFSET		(832 * 1024)
+#define CONFIG_ENV_SECT_SIZE		(64 * 1024)
+#define CONFIG_ENV_SPI_BUS		CONFIG_SF_DEFAULT_BUS
+#define CONFIG_ENV_SPI_CS		CONFIG_SF_DEFAULT_CS
+#define CONFIG_ENV_SPI_MODE		CONFIG_SF_DEFAULT_MODE
+#define CONFIG_ENV_SPI_MAX_HZ		CONFIG_SF_DEFAULT_SPEED
+#elif defined(CONFIG_ENV_IS_IN_NAND)
+#undef CONFIG_ENV_SIZE
+#define CONFIG_ENV_OFFSET		(60 << 20)
+#define CONFIG_ENV_SECT_SIZE		(128 << 10)
+#define CONFIG_ENV_SIZE			CONFIG_ENV_SECT_SIZE
+#endif
+
+#ifdef CONFIG_FSL_QSPI
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x60100000 /* Set to QSPI1 A flash, offset 1M */
+#else
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x7F8000 /* Set to TCML address */
+#endif
 /*
  * If want to use nand, define CONFIG_NAND_MXS and rework board
  * to support nand, since emmc has pin conflicts with nand
  */
-#ifdef CONFIG_SYS_USE_NAND
+#ifdef CONFIG_NAND_MXS
 #define CONFIG_CMD_NAND
 #define CONFIG_CMD_NAND_TRIMFFS
 
 /* NAND stuff */
-#define CONFIG_NAND_MXS
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		0x40000000
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
@@ -255,7 +272,6 @@
 #define CONFIG_APBH_DMA_BURST8
 #endif
 
-#define CONFIG_ENV_OFFSET		(8 * SZ_64K)
 #ifdef CONFIG_NAND_MXS
 #define CONFIG_SYS_FSL_USDHC_NUM	1
 #else
@@ -312,15 +328,13 @@
 #define CONFIG_WAVEFORM_BUF_SIZE		0x400000
 #endif
 
-#if defined(CONFIG_MXC_EPDC) && defined(CONFIG_SYS_USE_QSPI)
+#if defined(CONFIG_MXC_EPDC) && defined(CONFIG_FSL_QSPI)
 #error "EPDC Pins conflicts QSPI, Either EPDC or QSPI can be enabled!"
 #endif
 
 #ifdef CONFIG_FSL_QSPI
-#define CONFIG_SPI_FLASH
-#define CONFIG_SPI_FLASH_MACRONIX
-#define CONFIG_SPI_FLASH_BAR
-#define CONFIG_SF_DEFAULT_BUS		0
+#define CONFIG_SYS_FSL_QSPI_AHB
+#define CONFIG_SF_DEFAULT_BUS		1 /* SOFT SPI occupies the BUS 0, so change the QSPI1 to BUS 1*/
 #define CONFIG_SF_DEFAULT_CS		0
 #define CONFIG_SF_DEFAULT_SPEED		40000000
 #define CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
