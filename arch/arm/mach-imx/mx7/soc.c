@@ -18,6 +18,7 @@
 #include <imx_thermal.h>
 #include <fsl_sec.h>
 #include <asm/setup.h>
+#include <fsl_wdog.h>
 
 #define IOMUXC_GPR1		0x4
 #define BM_IOMUXC_GPR1_IRQ	0x1000
@@ -417,3 +418,16 @@ void reset_misc(void)
 #endif
 }
 
+void reset_cpu(ulong addr)
+{
+	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
+
+	/* Clear WDA to trigger WDOG_B immediately */
+	writew((WCR_WDE | WCR_SRS), &wdog->wcr);
+
+	while (1) {
+		/*
+		 * spin for .5 seconds before reset
+		 */
+	}
+}
