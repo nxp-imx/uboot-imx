@@ -78,6 +78,55 @@ static iomux_v3_cfg_t const uart1_pads[] = {
 	MX7D_PAD_UART1_RX_DATA__UART1_DCE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
+#define BOARD_REV_C  0x300
+#define BOARD_REV_B  0x200
+#define BOARD_REV_A  0x100
+
+static int mx7sabre_rev(void)
+{
+	/*
+	 * Get Board ID information from OCOTP_GP1[15:8]
+	 * i.MX7D SDB RevA: 0x41
+	 * i.MX7D SDB RevB: 0x42
+	 */
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[14];
+	int reg = readl(&bank->fuse_regs[0]);
+	int ret;
+
+	if (reg != 0) {
+		switch (reg >> 8 & 0x0F) {
+		case 0x3:
+			ret = BOARD_REV_C;
+			break;
+		case 0x02:
+			ret = BOARD_REV_B;
+			break;
+		case 0x01:
+		default:
+			ret = BOARD_REV_A;
+			break;
+		}
+	} else {
+		/* If the gp1 fuse is not burn, we have to use TO rev for the board rev */
+		if (is_soc_rev(CHIP_REV_1_0))
+			ret = BOARD_REV_A;
+		else if (is_soc_rev(CHIP_REV_1_1))
+			ret = BOARD_REV_B;
+		else
+			ret = BOARD_REV_C;
+	}
+
+	return ret;
+}
+
+u32 get_board_rev(void)
+{
+	int rev = mx7sabre_rev();
+
+	return (get_cpu_rev() & ~(0xF << 8)) | rev;
+}
+
 #ifdef CONFIG_NAND_MXS
 static iomux_v3_cfg_t const gpmi_pads[] = {
 	MX7D_PAD_SD3_DATA0__NAND_DATA00 | MUX_PAD_CTRL(NAND_PAD_CTRL),
@@ -169,30 +218,6 @@ static int setup_lcd(void)
 }
 #endif
 
-#ifdef CONFIG_FEC_MXC
-static iomux_v3_cfg_t const fec1_pads[] = {
-	MX7D_PAD_ENET1_RGMII_RX_CTL__ENET1_RGMII_RX_CTL | MUX_PAD_CTRL(ENET_RX_PAD_CTRL),
-	MX7D_PAD_ENET1_RGMII_RD0__ENET1_RGMII_RD0 | MUX_PAD_CTRL(ENET_RX_PAD_CTRL),
-	MX7D_PAD_ENET1_RGMII_RD1__ENET1_RGMII_RD1 | MUX_PAD_CTRL(ENET_RX_PAD_CTRL),
-	MX7D_PAD_ENET1_RGMII_RD2__ENET1_RGMII_RD2 | MUX_PAD_CTRL(ENET_RX_PAD_CTRL),
-	MX7D_PAD_ENET1_RGMII_RD3__ENET1_RGMII_RD3 | MUX_PAD_CTRL(ENET_RX_PAD_CTRL),
-	MX7D_PAD_ENET1_RGMII_RXC__ENET1_RGMII_RXC | MUX_PAD_CTRL(ENET_RX_PAD_CTRL),
-	MX7D_PAD_ENET1_RGMII_TX_CTL__ENET1_RGMII_TX_CTL | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX7D_PAD_ENET1_RGMII_TD0__ENET1_RGMII_TD0 | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX7D_PAD_ENET1_RGMII_TD1__ENET1_RGMII_TD1 | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX7D_PAD_ENET1_RGMII_TD2__ENET1_RGMII_TD2 | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX7D_PAD_ENET1_RGMII_TD3__ENET1_RGMII_TD3 | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX7D_PAD_ENET1_RGMII_TXC__ENET1_RGMII_TXC | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX7D_PAD_GPIO1_IO10__ENET1_MDIO | MUX_PAD_CTRL(ENET_PAD_CTRL_MII),
-	MX7D_PAD_GPIO1_IO11__ENET1_MDC | MUX_PAD_CTRL(ENET_PAD_CTRL_MII),
-};
-
-static void setup_iomux_fec(void)
-{
-	imx_iomux_v3_setup_multiple_pads(fec1_pads, ARRAY_SIZE(fec1_pads));
-}
-#endif
-
 static void setup_iomux_uart(void)
 {
 	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
@@ -215,8 +240,11 @@ int mmc_map_to_kernel_blk(int dev_no)
 }
 
 #ifdef CONFIG_FEC_MXC
-int board_eth_init(bd_t *bis)
+static int setup_fec(int fec_id)
 {
+	struct iomuxc_gpr_base_regs *const iomuxc_gpr_regs
+		= (struct iomuxc_gpr_base_regs *) IOMUXC_GPR_BASE_ADDR;
+
 	int ret;
 	unsigned int gpio;
 
@@ -226,7 +254,7 @@ int board_eth_init(bd_t *bis)
 		return -ENODEV;
 	}
 
-	ret = gpio_request(gpio, "fec_rst");
+	ret = gpio_request(gpio, "enet_phy_rst");
 	if (ret && ret != -EBUSY) {
 		printf("gpio: requesting pin %u failed\n", gpio);
 		return ret;
@@ -236,29 +264,28 @@ int board_eth_init(bd_t *bis)
 	udelay(500);
 	gpio_direction_output(gpio, 1);
 
-	setup_iomux_fec();
+	if (0 == fec_id) {
+		/* Use 125M anatop REF_CLK1 for ENET1, clear gpr1[13], gpr1[17]*/
+		clrsetbits_le32(&iomuxc_gpr_regs->gpr[1],
+			(IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL_MASK |
+			 IOMUXC_GPR_GPR1_GPR_ENET1_CLK_DIR_MASK), 0);
+	} else {
+		/* Use 125M anatop REF_CLK2 for ENET2, clear gpr1[14], gpr1[18]*/
+		clrsetbits_le32(&iomuxc_gpr_regs->gpr[1],
+			(IOMUXC_GPR_GPR1_GPR_ENET2_TX_CLK_SEL_MASK |
+			 IOMUXC_GPR_GPR1_GPR_ENET2_CLK_DIR_MASK), 0);
 
-	ret = fecmxc_initialize_multi(bis, 0,
-		CONFIG_FEC_MXC_PHYADDR, IMX_FEC_BASE);
-	if (ret)
-		printf("FEC1 MXC: %s:failed\n", __func__);
-
-	return ret;
-}
-
-static int setup_fec(void)
-{
-	struct iomuxc_gpr_base_regs *const iomuxc_gpr_regs
-		= (struct iomuxc_gpr_base_regs *) IOMUXC_GPR_BASE_ADDR;
-
-	/* Use 125M anatop REF_CLK1 for ENET1, clear gpr1[13], gpr1[17]*/
-	clrsetbits_le32(&iomuxc_gpr_regs->gpr[1],
-		(IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL_MASK |
-		 IOMUXC_GPR_GPR1_GPR_ENET1_CLK_DIR_MASK), 0);
+		if (mx7sabre_rev() >= BOARD_REV_B) {
+			/*  On RevB, GPIO1_IO04 is used for ENET2 EN,
+			*  so set its output to low to enable ENET2 signals
+			*/
+			gpio_request(IMX_GPIO_NR(1, 4), "fec2_en");
+			gpio_direction_output(IMX_GPIO_NR(1, 4), 0);
+		}
+	}
 
 	return set_clk_enet(ENET_125MHZ);
 }
-
 
 int board_phy_config(struct phy_device *phydev)
 {
@@ -297,7 +324,7 @@ int board_init(void)
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
 #ifdef CONFIG_FEC_MXC
-	setup_fec();
+	setup_fec(CONFIG_FEC_ENET_DEV);
 #endif
 
 #ifdef CONFIG_NAND_MXS
@@ -366,14 +393,29 @@ int board_late_init(void)
 
 int checkboard(void)
 {
+	int rev = mx7sabre_rev();
 	char *mode;
+	char *revname;
 
 	if (IS_ENABLED(CONFIG_ARMV7_BOOT_SEC_DEFAULT))
 		mode = "secure";
 	else
 		mode = "non-secure";
 
-	printf("Board: i.MX7D SABRESD in %s mode\n", mode);
+	switch (rev) {
+	case BOARD_REV_C:
+		revname = "C";
+		break;
+	case BOARD_REV_B:
+		revname = "B";
+		break;
+	case BOARD_REV_A:
+	default:
+		revname = "A";
+		break;
+	}
+
+	printf("Board: i.MX7D SABRESD Rev%s in %s mode\n", revname, mode);
 
 	return 0;
 }
