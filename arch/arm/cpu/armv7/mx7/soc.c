@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -17,6 +18,7 @@
 #include <asm/arch/crm_regs.h>
 #include <dm.h>
 #include <imx_thermal.h>
+#include <fsl_wdog.h>
 
 #if defined(CONFIG_IMX_THERMAL)
 static const struct imx_thermal_plat imx7_thermal_plat = {
@@ -463,3 +465,16 @@ void reset_misc(void)
 #endif
 }
 
+void reset_cpu(ulong addr)
+{
+	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
+
+	/* Clear WDA to trigger WDOG_B immediately */
+	writew((WCR_WDE | WCR_SRS), &wdog->wcr);
+
+	while (1) {
+		/*
+		 * spin for .5 seconds before reset
+		 */
+	}
+}
