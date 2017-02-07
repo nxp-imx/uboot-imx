@@ -24,6 +24,10 @@
 #include <i2c.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <asm/arch/crm_regs.h>
+#if defined(CONFIG_MXC_EPDC)
+#include <lcd.h>
+#include <mxc_epdc_fb.h>
+#endif
 #include <asm/mach-imx/video.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -40,6 +44,8 @@ DECLARE_GLOBAL_DATA_PTR;
   (PAD_CTL_HYS | PAD_CTL_DSE_3P3V_49OHM | PAD_CTL_SRE_FAST)
 
 #define NAND_PAD_READY0_CTRL (PAD_CTL_DSE_3P3V_49OHM | PAD_CTL_PUS_PU5KOHM)
+
+#define EPDC_PAD_CTRL	0x0
 
 #ifdef CONFIG_MXC_SPI
 static iomux_v3_cfg_t const ecspi3_pads[] = {
@@ -312,6 +318,263 @@ int board_qspi_init(void)
 }
 #endif
 
+#ifdef CONFIG_MXC_EPDC
+iomux_v3_cfg_t const epdc_en_pads[] = {
+	MX7D_PAD_GPIO1_IO04__GPIO1_IO4 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const epdc_enable_pads[] = {
+	MX7D_PAD_EPDC_DATA00__EPDC_DATA0	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA01__EPDC_DATA1	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA02__EPDC_DATA2	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA03__EPDC_DATA3	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA04__EPDC_DATA4	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA05__EPDC_DATA5	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA06__EPDC_DATA6	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA07__EPDC_DATA7	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_SDCLK__EPDC_SDCLK		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_SDLE__EPDC_SDLE		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_SDOE__EPDC_SDOE		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_SDSHR__EPDC_SDSHR		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_SDCE0__EPDC_SDCE0		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_SDCE1__EPDC_SDCE1		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_GDCLK__EPDC_GDCLK		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_GDOE__EPDC_GDOE		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_GDRL__EPDC_GDRL		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_GDSP__EPDC_GDSP		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_BDR0__EPDC_BDR0		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_BDR1__EPDC_BDR1		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const epdc_disable_pads[] = {
+	MX7D_PAD_EPDC_DATA00__GPIO2_IO0,
+	MX7D_PAD_EPDC_DATA01__GPIO2_IO1,
+	MX7D_PAD_EPDC_DATA02__GPIO2_IO2,
+	MX7D_PAD_EPDC_DATA03__GPIO2_IO3,
+	MX7D_PAD_EPDC_DATA04__GPIO2_IO4,
+	MX7D_PAD_EPDC_DATA05__GPIO2_IO5,
+	MX7D_PAD_EPDC_DATA06__GPIO2_IO6,
+	MX7D_PAD_EPDC_DATA07__GPIO2_IO7,
+	MX7D_PAD_EPDC_SDCLK__GPIO2_IO16,
+	MX7D_PAD_EPDC_SDLE__GPIO2_IO17,
+	MX7D_PAD_EPDC_SDOE__GPIO2_IO18,
+	MX7D_PAD_EPDC_SDSHR__GPIO2_IO19,
+	MX7D_PAD_EPDC_SDCE0__GPIO2_IO20,
+	MX7D_PAD_EPDC_SDCE1__GPIO2_IO21,
+	MX7D_PAD_EPDC_GDCLK__GPIO2_IO24,
+	MX7D_PAD_EPDC_GDOE__GPIO2_IO25,
+	MX7D_PAD_EPDC_GDRL__GPIO2_IO26,
+	MX7D_PAD_EPDC_GDSP__GPIO2_IO27,
+	MX7D_PAD_EPDC_BDR0__GPIO2_IO28,
+	MX7D_PAD_EPDC_BDR1__GPIO2_IO29,
+};
+
+vidinfo_t panel_info = {
+	.vl_refresh = 85,
+	.vl_col = 1024,
+	.vl_row = 758,
+	.vl_pixclock = 40000000,
+	.vl_left_margin = 12,
+	.vl_right_margin = 76,
+	.vl_upper_margin = 4,
+	.vl_lower_margin = 5,
+	.vl_hsync = 12,
+	.vl_vsync = 2,
+	.vl_sync = 0,
+	.vl_mode = 0,
+	.vl_flag = 0,
+	.vl_bpix = 3,
+	.cmap = 0,
+};
+
+struct epdc_timing_params panel_timings = {
+	.vscan_holdoff = 4,
+	.sdoed_width = 10,
+	.sdoed_delay = 20,
+	.sdoez_width = 10,
+	.sdoez_delay = 20,
+	.gdclk_hp_offs = 524,
+	.gdsp_offs = 327,
+	.gdoe_offs = 0,
+	.gdclk_offs = 19,
+	.num_ce = 1,
+};
+
+struct gpio_desc epd_pwrstat_desc;
+struct gpio_desc epd_vcom_desc;
+struct gpio_desc epd_wakeup_desc;
+struct gpio_desc epd_pwr_ctl0_desc;
+
+static void setup_epdc_power(void)
+{
+	int ret;
+
+	/* IOMUX_GPR1: bit30: Disable On-chip RAM EPDC Function */
+	struct iomuxc_gpr_base_regs *const iomuxc_gpr_regs
+		= (struct iomuxc_gpr_base_regs *) IOMUXC_GPR_BASE_ADDR;
+
+	clrsetbits_le32(&iomuxc_gpr_regs->gpr[1],
+		IOMUXC_GPR_GPR1_GPR_ENABLE_OCRAM_EPDC_MASK, 0);
+
+	/* Setup epdc voltage */
+
+	/* EPDC_PWRSTAT - GPIO2[31] for PWR_GOOD status */
+	ret = dm_gpio_lookup_name("GPIO2_31", &epd_pwrstat_desc);
+	if (ret) {
+		printf("%s lookup GPIO2_31 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&epd_pwrstat_desc, "epdc_pwrstat");
+	if (ret) {
+		printf("%s request epdc_pwrstat failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&epd_pwrstat_desc, GPIOD_IS_IN);
+
+	/* EPDC_VCOM0 - GPIO4[14] for VCOM control */
+	/* Set as output */
+	ret = dm_gpio_lookup_name("GPIO4_14", &epd_vcom_desc);
+	if (ret) {
+		printf("%s lookup GPIO4_14 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&epd_vcom_desc, "epdc_vcom");
+	if (ret) {
+		printf("%s request epdc_vcom failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&epd_vcom_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	/* EPDC_PWRWAKEUP - GPIO2[23] for EPD PMIC WAKEUP */
+	/* Set as output */
+	ret = dm_gpio_lookup_name("GPIO2_23", &epd_wakeup_desc);
+	if (ret) {
+		printf("%s lookup GPIO2_23 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&epd_wakeup_desc, "epdc_pmic");
+	if (ret) {
+		printf("%s request epdc_pmic failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&epd_wakeup_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	/* EPDC_PWRCTRL0 - GPIO2[30] for EPD PWR CTL0 */
+	/* Set as output */
+	ret = dm_gpio_lookup_name("GPIO2_30", &epd_pwr_ctl0_desc);
+	if (ret) {
+		printf("%s lookup GPIO2_30 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&epd_pwr_ctl0_desc, "epdc_pwr_ctl0");
+	if (ret) {
+		printf("%s request epdc_pwr_ctl0 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&epd_pwr_ctl0_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+}
+
+static void epdc_enable_pins(void)
+{
+	/* epdc iomux settings */
+	imx_iomux_v3_setup_multiple_pads(epdc_enable_pads,
+				ARRAY_SIZE(epdc_enable_pads));
+}
+
+static void epdc_disable_pins(void)
+{
+	/* Configure MUX settings for EPDC pins to GPIO  and drive to 0 */
+	imx_iomux_v3_setup_multiple_pads(epdc_disable_pads,
+				ARRAY_SIZE(epdc_disable_pads));
+}
+
+static void setup_epdc(void)
+{
+	/*** epdc Maxim PMIC settings ***/
+
+	/* EPDC_PWRSTAT - GPIO2[31] for PWR_GOOD status */
+	imx_iomux_v3_setup_pad(MX7D_PAD_EPDC_PWR_STAT__GPIO2_IO31 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+
+	/* EPDC_VCOM0 - GPIO4[14] for VCOM control */
+	imx_iomux_v3_setup_pad(MX7D_PAD_I2C4_SCL__GPIO4_IO14 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+
+	/* EPDC_PWRWAKEUP - GPIO4[23] for EPD PMIC WAKEUP */
+	imx_iomux_v3_setup_pad(MX7D_PAD_EPDC_SDCE3__GPIO2_IO23 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+
+	/* EPDC_PWRCTRL0 - GPIO4[20] for EPD PWR CTL0 */
+	imx_iomux_v3_setup_pad(MX7D_PAD_EPDC_PWR_COM__GPIO2_IO30 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+
+	/* Set pixel clock rates for EPDC in clock.c */
+
+	panel_info.epdc_data.wv_modes.mode_init = 0;
+	panel_info.epdc_data.wv_modes.mode_du = 1;
+	panel_info.epdc_data.wv_modes.mode_gc4 = 3;
+	panel_info.epdc_data.wv_modes.mode_gc8 = 2;
+	panel_info.epdc_data.wv_modes.mode_gc16 = 2;
+	panel_info.epdc_data.wv_modes.mode_gc32 = 2;
+
+	panel_info.epdc_data.epdc_timings = panel_timings;
+
+	setup_epdc_power();
+}
+
+void epdc_power_on(void)
+{
+	unsigned int reg;
+	struct gpio_regs *gpio_regs = (struct gpio_regs *)GPIO2_BASE_ADDR;
+
+	/* Set EPD_PWR_CTL0 to high - enable EINK_VDD (3.15) */
+	dm_gpio_set_value(&epd_pwr_ctl0_desc, 1);
+	udelay(1000);
+
+	/* Enable epdc signal pin */
+	epdc_enable_pins();
+
+	/* Set PMIC Wakeup to high - enable Display power */
+	dm_gpio_set_value(&epd_wakeup_desc, 1);
+
+	/* Wait for PWRGOOD == 1 */
+	while (1) {
+		reg = readl(&gpio_regs->gpio_psr);
+		if (!(reg & (1 << 31)))
+			break;
+
+		udelay(100);
+	}
+
+	/* Enable VCOM */
+	dm_gpio_set_value(&epd_vcom_desc, 1);
+
+	udelay(500);
+}
+
+void epdc_power_off(void)
+{
+	/* Set PMIC Wakeup to low - disable Display power */
+	dm_gpio_set_value(&epd_wakeup_desc, 0);
+
+	/* Disable VCOM */
+	dm_gpio_set_value(&epd_vcom_desc, 0);
+
+	epdc_disable_pins();
+
+	/* Set EPD_PWR_CTL0 to low - disable EINK_VDD (3.15) */
+	dm_gpio_set_value(&epd_pwr_ctl0_desc, 0);
+}
+#endif
+
 int board_early_init_f(void)
 {
 	setup_iomux_uart();
@@ -334,6 +597,35 @@ int board_init(void)
 
 #ifdef CONFIG_FSL_QSPI
 	board_qspi_init();
+#endif
+
+#ifdef CONFIG_MXC_EPDC
+	if (mx7sabre_rev() >= BOARD_REV_B) {
+		int ret;
+		struct gpio_desc desc;
+		/*
+		 * From RevB, GPIO1_IO04 is used for ENET2 EN,
+		 * so set its output to high to isolate the
+		 * ENET2 signals for EPDC
+		 */
+		imx_iomux_v3_setup_multiple_pads(epdc_en_pads,
+			ARRAY_SIZE(epdc_en_pads));
+
+		ret = dm_gpio_lookup_name("GPIO1_4", &desc);
+		if (ret) {
+			printf("%s lookup GPIO1_4 failed ret = %d\n", __func__, ret);
+			return -ENODEV;
+		}
+
+		ret = dm_gpio_request(&desc, "epdc_en");
+		if (ret) {
+			printf("%s request epdc_en failed ret = %d\n", __func__, ret);
+			return -ENODEV;
+		}
+
+		dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+	}
+	setup_epdc();
 #endif
 
 #ifdef CONFIG_MXC_SPI
