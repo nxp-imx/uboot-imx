@@ -18,6 +18,7 @@
 #define CONFIG_SYS_MALLOC_LEN		(32 * SZ_1M)
 
 /* Network */
+#ifdef CONFIG_DM_ETH
 #define CONFIG_FEC_MXC
 #define CONFIG_FEC_XCV_TYPE             RGMII
 #define CONFIG_FEC_ENET_DEV		0
@@ -35,6 +36,7 @@
 #endif
 
 #define CONFIG_FEC_MXC_MDIO_BASE	ENET_IPS_BASE_ADDR
+#endif
 
 /* MMC Config*/
 #define CONFIG_SYS_FSL_ESDHC_ADDR       0
@@ -230,6 +232,30 @@
 #define CONFIG_BMP_16BPP
 #define CONFIG_VIDEO_BMP_RLE8
 #define CONFIG_VIDEO_BMP_LOGO
+#endif
+
+/* #define CONFIG_SPLASH_SCREEN*/
+/* #define CONFIG_MXC_EPDC*/
+
+/*
+ * SPLASH SCREEN Configs
+ */
+#if defined(CONFIG_MXC_EPDC)
+/*
+ * Framebuffer and LCD
+ */
+#define CONFIG_SPLASH_SCREEN
+
+#undef LCD_TEST_PATTERN
+/* #define CONFIG_SPLASH_IS_IN_MMC			1 */
+#define LCD_BPP					LCD_MONOCHROME
+/* #define CONFIG_SPLASH_SCREEN_ALIGN		1 */
+
+#define CONFIG_WAVEFORM_BUF_SIZE		0x400000
+#endif
+
+#if defined(CONFIG_MXC_EPDC) && defined(CONFIG_FSL_QSPI)
+#error "EPDC Pins conflicts QSPI, Either EPDC or QSPI can be enabled!"
 #endif
 
 #ifdef CONFIG_FSL_QSPI
