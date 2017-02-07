@@ -703,6 +703,7 @@ dtb-$(CONFIG_ARCH_MX6) += \
 
 dtb-$(CONFIG_MX7) += imx7d-sdb.dtb \
 	imx7d-sdb-qspi.dtb \
+	imx7d-sdb-epdc.dtb \
 	imx7d-sdb-gpmi-weim.dtb \
 	imx7d-sdb-reva.dtb \
 	imx7-colibri-emmc.dtb \
