@@ -214,4 +214,24 @@
 #define CONFIG_IMX_VIDEO_SKIP
 #endif
 
+/*
+ * SPLASH SCREEN Configs
+ */
+#if defined(CONFIG_MXC_EPDC)
+/*
+ * Framebuffer and LCD
+ */
+
+#undef LCD_TEST_PATTERN
+/* #define CONFIG_SPLASH_IS_IN_MMC			1 */
+#define LCD_BPP					LCD_MONOCHROME
+/* #define CONFIG_SPLASH_SCREEN_ALIGN		1 */
+
+#define CONFIG_WAVEFORM_BUF_SIZE		0x400000
+#endif
+
+#if defined(CONFIG_MXC_EPDC) && defined(CONFIG_FSL_QSPI)
+#error "EPDC Pins conflicts QSPI, Either EPDC or QSPI can be enabled!"
+#endif
+
 #endif	/* __CONFIG_H */
