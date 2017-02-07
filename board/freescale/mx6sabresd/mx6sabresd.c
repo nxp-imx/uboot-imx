@@ -95,6 +95,7 @@ static void setup_iomux_enet(void)
 	imx_iomux_v3_setup_multiple_pads(enet_pads, ARRAY_SIZE(enet_pads));
 
 	/* Reset AR8031 PHY */
+	gpio_request(IMX_GPIO_NR(1, 25), "ENET PHY Reset");
 	gpio_direction_output(IMX_GPIO_NR(1, 25) , 0);
 	mdelay(10);
 	gpio_set_value(IMX_GPIO_NR(1, 25), 1);
@@ -188,6 +189,7 @@ static iomux_v3_cfg_t const bl_pads[] = {
 static void enable_backlight(void)
 {
 	imx_iomux_v3_setup_multiple_pads(bl_pads, ARRAY_SIZE(bl_pads));
+	gpio_request(DISP0_PWR_EN, "Display Power Enable");
 	gpio_direction_output(DISP0_PWR_EN, 1);
 }
 
@@ -202,6 +204,7 @@ static void enable_lvds(struct display_info_t const *dev)
 	enable_backlight();
 }
 
+#ifdef CONFIG_SYS_I2C
 static struct i2c_pads_info i2c_pad_info1 = {
 	.scl = {
 		.i2c_mode = MX6_PAD_KEY_COL3__I2C2_SCL | I2C_PAD,
@@ -214,10 +217,12 @@ static struct i2c_pads_info i2c_pad_info1 = {
 		.gp = IMX_GPIO_NR(4, 13)
 	}
 };
+#endif
 
 static void setup_spi(void)
 {
 	imx_iomux_v3_setup_multiple_pads(ecspi1_pads, ARRAY_SIZE(ecspi1_pads));
+	gpio_request(IMX_GPIO_NR(4, 9), "ECSPI1 CS");
 }
 
 iomux_v3_cfg_t const pcie_pads[] = {
@@ -228,6 +233,8 @@ iomux_v3_cfg_t const pcie_pads[] = {
 static void setup_pcie(void)
 {
 	imx_iomux_v3_setup_multiple_pads(pcie_pads, ARRAY_SIZE(pcie_pads));
+	gpio_request(CONFIG_PCIE_IMX_POWER_GPIO, "PCIE Power Enable");
+	gpio_request(CONFIG_PCIE_IMX_PERST_GPIO, "PCIE Reset");
 }
 
 iomux_v3_cfg_t const di0_pads[] = {
@@ -294,12 +301,14 @@ int board_mmc_init(bd_t *bis)
 		case 0:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
+			gpio_request(USDHC2_CD_GPIO, "USDHC2 CD");
 			gpio_direction_input(USDHC2_CD_GPIO);
 			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
 			break;
 		case 1:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
+			gpio_request(USDHC3_CD_GPIO, "USDHC3 CD");
 			gpio_direction_input(USDHC3_CD_GPIO);
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 			break;
@@ -545,7 +554,6 @@ int overwrite_console(void)
 int board_eth_init(bd_t *bis)
 {
 	setup_iomux_enet();
-	setup_pcie();
 
 	return cpu_eth_init(bis);
 }
@@ -576,6 +584,7 @@ static void setup_usb(void)
 
 	imx_iomux_v3_setup_multiple_pads(usb_hc1_pads,
 					 ARRAY_SIZE(usb_hc1_pads));
+	gpio_request(IMX_GPIO_NR(1, 29), "USB HC1 Power Enable");
 }
 
 int board_ehci_hcd_init(int port)
@@ -631,15 +640,23 @@ int board_init(void)
 #ifdef CONFIG_MXC_SPI
 	setup_spi();
 #endif
+
+#ifdef CONFIG_SYS_I2C
 	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+#endif
 
 #ifdef CONFIG_USB_EHCI_MX6
 	setup_usb();
 #endif
 
+#ifdef CONFIG_PCIE_IMX
+	setup_pcie();
+#endif
+
 	return 0;
 }
 
+#ifdef CONFIG_POWER
 int power_init_board(void)
 {
 	struct pmic *p;
@@ -668,6 +685,37 @@ int power_init_board(void)
 
 	return 0;
 }
+
+#elif defined(CONFIG_DM_PMIC_PFUZE100)
+int power_init_board(void)
+{
+	struct udevice *dev;
+	unsigned int reg;
+	int ret;
+
+	dev = pfuze_common_init();
+	if (!dev)
+		return -ENODEV;
+
+	ret = pfuze_mode_init(dev, APS_PFM);
+	if (ret < 0)
+		return ret;
+
+	/* Increase VGEN3 from 2.5 to 2.8V */
+	reg = pmic_reg_read(dev, PFUZE100_VGEN3VOL);
+	reg &= ~LDO_VOL_MASK;
+	reg |= LDOB_2_80V;
+	pmic_reg_write(dev, PFUZE100_VGEN3VOL, reg);
+
+	/* Increase VGEN5 from 2.8 to 3V */
+	reg = pmic_reg_read(dev, PFUZE100_VGEN5VOL);
+	reg &= ~LDO_VOL_MASK;
+	reg |= LDOB_3_00V;
+	pmic_reg_write(dev, PFUZE100_VGEN5VOL, reg);
+
+	return 0;
+}
+#endif
 
 #ifdef CONFIG_MXC_SPI
 int board_spi_cs_gpio(unsigned bus, unsigned cs)
@@ -720,6 +768,7 @@ int checkboard(void)
 #ifdef CONFIG_SPL_OS_BOOT
 int spl_start_uboot(void)
 {
+	gpio_request(KEY_VOL_UP, "KEY Volume UP");
 	gpio_direction_input(KEY_VOL_UP);
 
 	/* Only enter in Falcon mode if KEY_VOL_UP is pressed */
