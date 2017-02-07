@@ -30,6 +30,13 @@ config TARGET_MX7D_12X12_LPDDR3_ARM2
 	select DM
 	select DM_THERMAL
 
+config TARGET_MX7D_12X12_DDR3_ARM2
+	bool "Support mx7d_12x12_ddr3_arm2"
+	select BOARD_LATE_INIT
+	select MX7D
+	select DM
+	select DM_THERMAL
+
 config TARGET_WARP7
 	bool "warp7"
 	select BOARD_LATE_INIT
@@ -51,6 +58,7 @@ config SYS_SOC
 
 source "board/freescale/mx7dsabresd/Kconfig"
 source "board/freescale/mx7d_12x12_lpddr3_arm2/Kconfig"
+source "board/freescale/mx7d_12x12_ddr3_arm2/Kconfig"
 source "board/toradex/colibri_imx7/Kconfig"
 source "board/warp7/Kconfig"
 
