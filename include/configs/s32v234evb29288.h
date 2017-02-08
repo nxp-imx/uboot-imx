@@ -16,6 +16,12 @@
  * the ones in the header included at the end, configs/s32v234_common.h.
  */
 
+/* HDMI configs */
+#define CONFIG_FSL_DCU_SII9022A
+#define CONFIG_SYS_I2C_MXC_I2C2         /* enable I2C bus 2 */
+#define CONFIG_SYS_I2C_DVI_BUS_NUM      1
+#define CONFIG_SYS_I2C_DVI_ADDR         0x39
+
 #define FDT_FILE fsl-s32v234-evb.dtb
 
 #define CONFIG_DDR_INIT_DELAY 100

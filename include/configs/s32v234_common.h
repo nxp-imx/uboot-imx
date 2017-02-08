@@ -12,6 +12,14 @@
 
 #define CONFIG_S32V234
 
+/* Config DCU */
+#ifdef CONFIG_FSL_DCU_FB
+#define CONFIG_SYS_DCU_ADDR             0x40028000
+#define DCU_LAYER_MAX_NUM               8
+#define DCU_CTRL_DESC_LAYER_NUM		10
+#define CONFIG_SYS_FSL_DCU_LE
+#endif
+
 /* Config GIC */
 #define CONFIG_GICV2
 #define GICD_BASE		0x7D001000
