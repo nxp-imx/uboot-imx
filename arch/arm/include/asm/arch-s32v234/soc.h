@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * (C) Copyright 2017 NXP.
+ * (C) Copyright 2017,2020 NXP.
  */
 
 #include <asm/arch/imx-regs.h>
@@ -19,3 +19,6 @@
 #error "Please define the DDR type for S32V234 board!"
 #endif
 
+#ifdef CONFIG_FSL_DCU_FB
+void setup_iomux_dcu(void);
+#endif

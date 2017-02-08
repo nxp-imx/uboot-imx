@@ -520,6 +520,68 @@ int get_clocks(void)
 	return 0;
 }
 
+#ifdef CONFIG_FSL_DCU_FB
+__weak void setup_iomux_dcu(void)
+{
+	/* set PH8 - MSCR[120] - for HSYNC_C1 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH8));
+	/* set PH9 - MSCR[121] - for VSYNC_C2 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH9));
+	/* set PH10 - MSCR[122] - for DE_C3 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH10));
+	/* set PH12 - MSCR[124] - for PCLK_D1 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH12));
+	/* set PH13 - MSCR[125] - for R0_D2 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH13));
+	/* set PH14 - MSCR[126] - for R1_D3 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH14));
+	/* set PH15 - MSCR[127] - for R2_D4 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH15));
+	/* set PJ0 - MSCR[128] - for R3_D5 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ0));
+	/* set PJ1 - MSCR[129] - for R4_D6 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ1));
+	/* set PJ2 - MSCR[130] - for R5_D7 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ2));
+	/* set PJ3 - MSCR[131] - for R6_D8 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ3));
+	/* set PJ4 - MSCR[132] - for R7_D9 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ4));
+	/* set PJ5 - MSCR[133] - for G0_D10 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ5));
+	/* set PJ6 - MSCR[134] - for G1_D11 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ6));
+	/* set PJ7 - MSCR[135] - for G2_D12 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ7));
+	/* set PJ8 - MSCR[136] - for G3_D13 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ8));
+	/* set PJ9 - MSCR[137] - for G4_D14 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ9));
+	/* set PJ10 - MSCR[138] - for G5_D15 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ10));
+	/* set PJ11 - MSCR[139] - for G6_D16 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ11));
+	/* set PJ12 - MSCR[140] - for G7_D17 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ12));
+	/* set PJ13 - MSCR[141] - for B0_D18 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ13));
+	/* set PJ14 - MSCR[142] - for B1_D19 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ14));
+	/* set PJ15 - MSCR[143] - for B2_D20 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ15));
+	/* set PK0 - MSCR[144] - for B3_D21 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PK0));
+	/* set PK1 - MSCR[145] - for B4_D22 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PK1));
+	/* set PK2 - MSCR[146] - for B5_D23 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PK2));
+	/* set PK3 - MSCR[147] - for B6_D24 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PK3));
+	/* set PK4 - MSCR[148] - for B7_D25 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PK4));
+}
+#endif
+
 __weak void setup_iomux_sdhc(void)
 {
 	/* Set iomux PADS for USDHC */

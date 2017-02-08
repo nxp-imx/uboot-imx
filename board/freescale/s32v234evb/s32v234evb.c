@@ -7,10 +7,9 @@
 #include <common.h>
 #include <init.h>
 #include <asm/io.h>
-#include <asm/arch/imx-regs.h>
 #include <asm/arch/siul.h>
-#include <asm/arch/clock.h>
 #include <asm/arch/xrdc.h>
+#include <asm/arch/soc.h>
 #include <fdt_support.h>
 #include <linux/libfdt.h>
 #include <miiphy.h>
@@ -161,6 +160,9 @@ int board_early_init_f(void)
 #endif
 
 	setup_xrdc();
+#ifdef CONFIG_FSL_DCU_FB
+	setup_iomux_dcu();
+#endif
 	return 0;
 }
 
