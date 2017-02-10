@@ -1887,10 +1887,10 @@ static void fastboot_setup_system_boot_args(const char *slot)
 	const char *system_part_name = NULL;
 	if(slot == NULL)
 		return;
-	if(!strncmp(slot, "_a", strlen("_a"))) {
+	if(!strncmp(slot, "_a", strlen("_a")) || !strncmp(slot, "boot_a", strlen("boot_a"))) {
 		system_part_name = FASTBOOT_PARTITION_SYSTEM_A;
 	}
-	else if(!strncmp(slot, "_b", strlen("_b"))) {
+	else if(!strncmp(slot, "_b", strlen("_b")) || !strncmp(slot, "boot_b", strlen("boot_b"))) {
 		system_part_name = FASTBOOT_PARTITION_SYSTEM_B;
 	}
 	struct fastboot_ptentry *ptentry = fastboot_flash_find_ptn(system_part_name);
@@ -2036,7 +2036,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		setenv("bootargs_sec", avb_out_data->cmdline);
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if(!is_recovery_mode)
-			fastboot_setup_system_boot_args(avb_out_data->ab_suffix);
+			f,astboot_setup_system_boot_args(avb_out_data->ab_suffix);
 #endif
 		image_size = avb_loadpart->data_size;
 		memcpy((void *)load_addr, (void *)hdr, image_size);
@@ -2199,6 +2199,11 @@ slot_select:
 			printf("no valid slot found, enter to recovery\n");
 			ptn = "recovery";
 		}
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+		else {
+			fastboot_setup_system_boot_args(ptn);
+		}
+#endif
 use_given_ptn:
 		printf("use slot %s\n", ptn);
 	}
