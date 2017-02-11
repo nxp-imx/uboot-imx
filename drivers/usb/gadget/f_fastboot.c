@@ -2036,7 +2036,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		setenv("bootargs_sec", avb_out_data->cmdline);
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if(!is_recovery_mode)
-			f,astboot_setup_system_boot_args(avb_out_data->ab_suffix);
+			fastboot_setup_system_boot_args(avb_out_data->ab_suffix);
 #endif
 		image_size = avb_loadpart->data_size;
 		memcpy((void *)load_addr, (void *)hdr, image_size);
