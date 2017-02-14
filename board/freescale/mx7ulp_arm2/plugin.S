@@ -117,15 +117,6 @@ wait2:
 	ldr r1, =0x33333333
 	str r1, [r0, #0x828]
 
-	ldr r1, =0xf3333333
-	str r1, [r0, #0x82c]
-	ldr r1, =0xf3333333
-	str r1, [r0, #0x830]
-	ldr r1, =0xf3333333
-	str r1, [r0, #0x834]
-	ldr r1, =0xf3333333
-	str r1, [r0, #0x838]
-
 	ldr r1, =0x24922492
 	str r1, [r0, #0x8c0]
 	ldr r1, =0x00000800
@@ -153,7 +144,7 @@ wait2:
 	ldr r1, =0x84190000
 	str r1, [r0, #0x0]
 
-	ldr r1, =0x00008050
+	ldr r1, =0x00008010
 	str r1, [r0, #0x1c]
 	ldr r1, =0x003F8030
 	str r1, [r0, #0x1c]
@@ -255,15 +246,6 @@ wait2:
 	str r1, [r0, #0x824]
 	ldr r1, =0x33333333
 	str r1, [r0, #0x828]
-
-	ldr r1, =0xf3333333
-	str r1, [r0, #0x82c]
-	ldr r1, =0xf3333333
-	str r1, [r0, #0x830]
-	ldr r1, =0xf3333333
-	str r1, [r0, #0x834]
-	ldr r1, =0xf3333333
-	str r1, [r0, #0x838]
 
 	ldr r1, =0x24922492
 	str r1, [r0, #0x8c0]
