@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2013-2016 Freescale Semiconductor, Inc.
+ * (C) Copyright 2017 NXP
  */
 
 #include <common.h>
@@ -36,18 +37,41 @@
 #define UARTSR_RFNE         BIT(4)
 #define UARTSR_RMB          BIT(9)
 
+#define LINFLEXD_UARTCR_OSR_MASK	(0xF << 24)
+#define LINFLEXD_UARTCR_OSR(uartcr)	(((uartcr) \
+					& LINFLEXD_UARTCR_OSR_MASK) >> 24)
+
+#define LINFLEXD_UARTCR_ROSE		BIT(23)
+#define LINFLEX_LDIV_MULTIPLIER		(16)
+
 DECLARE_GLOBAL_DATA_PTR;
+
+static u32 linflex_ldiv_multiplier(struct linflex_fsl *base)
+{
+	u32 mul = LINFLEX_LDIV_MULTIPLIER;
+	u32 cr;
+
+	cr = __raw_readl(&base->uartcr);
+
+	if (cr & LINFLEXD_UARTCR_ROSE)
+		mul = LINFLEXD_UARTCR_OSR(cr);
+
+	return mul;
+}
 
 static void _linflex_serial_setbrg(struct linflex_fsl *base, int baudrate)
 {
 	u32 clk = mxc_get_clock(MXC_UART_CLK);
-	u32 ibr, fbr;
+	u32 ibr, fbr, divisr, dividr;
 
 	if (!baudrate)
 		baudrate = CONFIG_BAUDRATE;
 
-	ibr = (u32) (clk / (16 * gd->baudrate));
-	fbr = (u32) (clk % (16 * gd->baudrate)) * 16;
+	divisr = clk;
+	dividr = (u32)(gd->baudrate * linflex_ldiv_multiplier(base));
+
+	ibr = (u32)(divisr / dividr);
+	fbr = (u32)((divisr % dividr) * 16 / dividr) & 0xF;
 
 	__raw_writel(ibr, &base->linibrr);
 	__raw_writel(fbr, &base->linfbrr);
