@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  */
 
 #ifndef _MX7ULP_REGS_H_
@@ -65,6 +66,8 @@
 #define SIM1_PCC1_SLOT			(48)
 #define MMDC0_AIPS3_SLOT		(43)
 #define IOMUXC_DDR_AIPS3_SLOT		(45)
+#define DSI_AIPS3_SLOT			(41)
+#define LCDIF_AIPS3_SLOT		(42)
 
 #define LPI2C0_AIPS0_SLOT		(51)
 #define LPI2C1_AIPS0_SLOT		(52)
@@ -177,6 +180,10 @@
 
 #define USDHC0_RBASE	((AIPS2_BASE + (AIPS2_SLOT_SIZE * USDHC0_AIPS2_SLOT)))
 #define USDHC1_RBASE	((AIPS2_BASE + (AIPS2_SLOT_SIZE * USDHC1_AIPS2_SLOT)))
+
+#define DSI_RBASE	((AIPS3_BASE + (AIPS3_SLOT_SIZE * DSI_AIPS3_SLOT)))
+#define LCDIF_RBASE	((AIPS3_BASE + (AIPS3_SLOT_SIZE * LCDIF_AIPS3_SLOT)))
+#define MXS_LCDIF_BASE	LCDIF_RBASE
 
 #define SNVS_BASE	((AIPS2_BASE + (AIPS2_SLOT_SIZE * SNVS_AIPS2_SLOT)))
 #define SNVS_LP_LPCR	(SNVS_BASE + 0x38)
@@ -955,6 +962,8 @@
 
 #define SNVS_LPCR_DPEN				(0x20)
 #define SNVS_LPCR_SRTC_ENV			(0x1)
+
+#include <asm/mach-imx/regs-lcdif.h>
 
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 
