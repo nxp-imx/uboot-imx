@@ -26,7 +26,7 @@ obj-y	+= cpu.o speed.o
 obj-$(CONFIG_GPT_TIMER) += timer.o
 obj-$(CONFIG_SYS_I2C_MXC) += i2c-mxv7.o
 endif
-ifeq ($(SOC),$(filter $(SOC),mx7 mx6 mxs imx8m imx8))
+ifeq ($(SOC),$(filter $(SOC),mx7 mx6 mxs mx7ulp imx8m imx8))
 obj-y	+= misc.o
 obj-$(CONFIG_CMD_PRIBLOB) += priblob.o
 obj-$(CONFIG_SPL_BUILD)	+= spl.o
@@ -53,6 +53,7 @@ obj-$(CONFIG_SYSCOUNTER_TIMER) += syscounter.o
 endif
 ifeq ($(SOC),$(filter $(SOC),mx7ulp))
 obj-y  += cache.o
+obj-$(CONFIG_IMX_VIDEO_SKIP) += video.o
 obj-$(CONFIG_SECURE_BOOT) += hab.o
 endif
 ifeq ($(SOC),$(filter $(SOC),vf610))

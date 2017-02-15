@@ -11,12 +11,15 @@
 #include <asm/gpio.h>
 #include <usb.h>
 #include <dm.h>
+#include <asm/mach-imx/video.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL	(PAD_CTL_PUS_UP)
 #define QSPI_PAD_CTRL1	(PAD_CTL_PUS_UP | PAD_CTL_DSE)
 #define OTG_ID_GPIO_PAD_CTRL	(PAD_CTL_IBE_ENABLE)
+
+#define MIPI_GPIO_PAD_CTRL	(PAD_CTL_OBE_ENABLE)
 
 int dram_init(void)
 {
@@ -103,6 +106,73 @@ int board_early_init_f(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_VIDEO_MXS
+
+#define MIPI_RESET_GPIO	IMX_GPIO_NR(3, 19)
+#define LED_PWM_EN_GPIO	IMX_GPIO_NR(6, 2)
+
+static iomux_cfg_t const mipi_reset_pad[] = {
+	MX7ULP_PAD_PTC19__PTC19 | MUX_PAD_CTRL(MIPI_GPIO_PAD_CTRL),
+};
+
+static iomux_cfg_t const led_pwm_en_pad[] = {
+	MX7ULP_PAD_PTF2__PTF2 | MUX_PAD_CTRL(MIPI_GPIO_PAD_CTRL),
+};
+
+int board_mipi_panel_reset(void)
+{
+	gpio_direction_output(MIPI_RESET_GPIO, 0);
+	udelay(1000);
+	gpio_direction_output(MIPI_RESET_GPIO, 1);
+	return 0;
+}
+
+int board_mipi_panel_shutdown(void)
+{
+	gpio_direction_output(MIPI_RESET_GPIO, 0);
+	gpio_direction_output(LED_PWM_EN_GPIO, 0);
+	return 0;
+}
+
+void setup_mipi_reset(void)
+{
+	mx7ulp_iomux_setup_multiple_pads(mipi_reset_pad, ARRAY_SIZE(mipi_reset_pad));
+	gpio_request(MIPI_RESET_GPIO, "mipi_panel_reset");
+}
+
+void do_enable_mipi_dsi(struct display_info_t const *dev)
+{
+	setup_mipi_reset();
+
+	/* Enable backlight */
+	mx7ulp_iomux_setup_multiple_pads(led_pwm_en_pad, ARRAY_SIZE(mipi_reset_pad));
+	gpio_request(LED_PWM_EN_GPIO, "led_pwm_en");
+	gpio_direction_output(LED_PWM_EN_GPIO, 1);
+}
+
+struct display_info_t const displays[] = {{
+	.bus = LCDIF_RBASE,
+	.addr = 0,
+	.pixfmt = 24,
+	.detect = NULL,
+	.enable	= do_enable_mipi_dsi,
+	.mode	= {
+		.name			= "HX8363_WVGA",
+		.xres           = 480,
+		.yres           = 854,
+		.pixclock       = 41042,
+		.left_margin    = 40,
+		.right_margin   = 60,
+		.upper_margin   = 3,
+		.lower_margin   = 3,
+		.hsync_len      = 8,
+		.vsync_len      = 4,
+		.sync           = 0,
+		.vmode          = FB_VMODE_NONINTERLACED
+} } };
+size_t display_count = ARRAY_SIZE(displays);
+#endif
 
 int board_init(void)
 {
