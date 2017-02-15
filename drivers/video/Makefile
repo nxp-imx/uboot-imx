@@ -72,5 +72,6 @@ obj-$(CONFIG_VIDEO_VADC) += mxc_vadc.o
 obj-$(CONFIG_VIDEO_CSI) += mxc_csi.o
 obj-$(CONFIG_VIDEO_PXP) += mxc_pxp.o
 obj-$(CONFIG_VIDEO_GIS) += mxc_gis.o
+obj-$(CONFIG_MXC_MIPI_DSI_NORTHWEST) += mipi_dsi_northwest.o
 
 obj-y += bridge/
