@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -325,6 +326,13 @@ static char *get_reset_cause(char *ret)
 u32 get_imx_reset_cause(void)
 {
 	return reset_cause;
+}
+
+void arch_preboot_os(void)
+{
+#if defined(CONFIG_VIDEO_MXS)
+	lcdif_power_down();
+#endif
 }
 
 #ifdef CONFIG_ENV_IS_IN_MMC

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -40,6 +41,8 @@ void enable_usboh3_clk(unsigned char enable);
 #ifdef CONFIG_SECURE_BOOT
 void hab_caam_clock_enable(unsigned char enable);
 #endif
+void enable_mipi_dsi_clk(unsigned char enable);
+void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq_in_khz);
 void init_clk_usdhc(u32 index);
 void clock_init(void);
 #endif
