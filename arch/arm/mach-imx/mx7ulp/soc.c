@@ -280,6 +280,13 @@ static char *get_reset_cause(char *ret)
 	return ret;
 }
 
+void arch_preboot_os(void)
+{
+#if defined(CONFIG_VIDEO_MXS)
+	lcdif_power_down();
+#endif
+}
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 __weak int board_mmc_get_env_dev(int devno)
 {
