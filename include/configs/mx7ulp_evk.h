@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * Configuration settings for the Freescale i.MX7ULP EVK board.
  *
@@ -290,6 +291,26 @@
 #define QSPI0_AMBA_BASE                 0xC0000000
 #define CONFIG_QSPI_BASE	QSPI0_BASE_ADDR
 #define CONFIG_QSPI_MEMMAP_BASE	QSPI0_AMBA_BASE
+#endif
+
+#define CONFIG_VIDEO
+#ifdef CONFIG_VIDEO
+#define CONFIG_CFB_CONSOLE
+#define CONFIG_VIDEO_MXS
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_VIDEO_SW_CURSOR
+#define CONFIG_VGA_AS_SINGLE_DEVICE
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+#define CONFIG_SPLASH_SCREEN
+#define CONFIG_SPLASH_SCREEN_ALIGN
+#define CONFIG_CMD_BMP
+#define CONFIG_BMP_16BPP
+#define CONFIG_VIDEO_BMP_RLE8
+#define CONFIG_VIDEO_BMP_LOGO
+#define CONFIG_IMX_VIDEO_SKIP
+
+#define CONFIG_MXC_MIPI_DSI_NORTHWEST
+#define CONFIG_HX8363
 #endif
 
 #define CONFIG_OF_SYSTEM_SETUP
