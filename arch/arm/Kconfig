@@ -572,6 +572,10 @@ config TARGET_MX6UL_14X14_EVK
         bool "Support mx6ul_14x14_evk"
         select CPU_V7
 
+config TARGET_MX6UL_AQUILA
+        bool "Support mx6ul_aquila"
+        select CPU_V7
+
 config TARGET_MX6UL_NXPU_IOPB
         bool "Support mx6ul_nxpu_iopb"
         select CPU_V7
@@ -894,6 +898,7 @@ source "board/freescale/mx6ul_14x14_evk/Kconfig"
 source "board/freescale/mx6ul_nxpu_iopb/Kconfig"
 source "board/freescale/mx6ul_14x14_ddr3_arm2/Kconfig"
 source "board/freescale/mx6ul_14x14_lpddr2_arm2/Kconfig"
+source "board/freescale/mx6ul_aquila/Kconfig"
 source "board/technexion/picosom-imx6ul/Kconfig"
 source "board/freescale/vf610twr/Kconfig"
 source "board/gateworks/gw_ventana/Kconfig"
