@@ -229,7 +229,7 @@
 	ldr r2, =0xc3110000
 	str r2, [r0, #0x000]
 
-	ldr r2, =0x00008050
+	ldr r2, =0x00008010
 	str r2, [r0, #0x01c]
 	ldr r2, =0x003f8030
 	str r2, [r0, #0x01c]
@@ -242,7 +242,7 @@
 	ldr r2, =0x01038030
 	str r2, [r0, #0x01c]
 
-	ldr r2, =0x00008058
+	ldr r2, =0x00008018
 	str r2, [r0, #0x01c]
 	ldr r2, =0x003f8038
 	str r2, [r0, #0x01c]
