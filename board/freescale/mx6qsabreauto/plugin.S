@@ -650,7 +650,7 @@
 .endm
 
 .macro imx6_ddr_setting
-#if defined (CONFIG_MX6SOLO)
+#if defined (CONFIG_MX6S)
 	imx6solosabreauto_ddr_setting
 #elif defined (CONFIG_MX6DL)
 	imx6dlsabreauto_ddr_setting

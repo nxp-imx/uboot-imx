@@ -11,7 +11,7 @@
 #ifndef CONFIG_MX6UL
 #define CONFIG_ARM_ERRATA_743622
 #if (defined(CONFIG_MX6QP) || defined(CONFIG_MX6Q) ||\
-defined(CONFIG_MX6DL)) && !defined(CONFIG_MX6SOLO)
+defined(CONFIG_MX6DL)) && !defined(CONFIG_MX6S)
 #define CONFIG_ARM_ERRATA_751472
 #define CONFIG_ARM_ERRATA_794072
 #define CONFIG_ARM_ERRATA_761320
@@ -31,6 +31,10 @@ defined(CONFIG_MX6DL)) && !defined(CONFIG_MX6SOLO)
 #endif
 #define CONFIG_BOARD_POSTCLK_INIT
 #define CONFIG_MXC_GPT_HCLK
+
+#ifdef CONFIG_MX6S
+#define CONFIG_MX6DL
+#endif
 
 #define CONFIG_SYS_BOOTM_LEN	0x1000000
 
