@@ -18,6 +18,14 @@
 
 #define is_mx6ul_9x9_evk()	CONFIG_IS_ENABLED(TARGET_MX6UL_9X9_EVK)
 
+#ifdef CONFIG_TARGET_MX6UL_9X9_EVK
+#define PHYS_SDRAM_SIZE		SZ_256M
+#define BOOTARGS_CMA_SIZE   "cma=96M "
+#else
+#define PHYS_SDRAM_SIZE		SZ_512M
+#define BOOTARGS_CMA_SIZE   ""
+#endif
+
 /* SPL options */
 #include "imx6_spl.h"
 
@@ -75,6 +83,7 @@
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
 	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
+		BOOTARGS_CMA_SIZE \
 		"root=${mmcroot}\0" \
 	"loadbootscript=" \
 		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
@@ -98,6 +107,7 @@
 			"bootz; " \
 		"fi;\0" \
 	"netargs=setenv bootargs console=${console},${baudrate} " \
+		BOOTARGS_CMA_SIZE \
 		"root=/dev/nfs " \
 	"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 		"netboot=echo Booting from net ...; " \
