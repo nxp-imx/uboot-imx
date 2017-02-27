@@ -404,6 +404,80 @@ int xhci_alloc_virt_device(struct xhci_ctrl *ctrl, unsigned int slot_id)
 	return 0;
 }
 
+static int xhci_set_scratch_buffer
+	(struct xhci_hccr *hccr, struct xhci_hcor *hcor)
+{
+	int val, scratch_buf_sz, psz, scratch_buf_num, i;
+	uint64_t tmp_buf, scratch_buf_entry_ba, scratch_buf_entry,
+		 scratch_buf_ptr;
+
+	val = xhci_readl(&hccr->cr_hcsparams2);
+	scratch_buf_num = (((val & 0x03e00000)>>21) << 5) +
+		((val & 0xf8000000) >> 27);
+	val = xhci_readl(&hcor->or_pagesize);
+
+	scratch_buf_sz  = 0x1000;
+
+	/*
+	 * It calculates the PAGESIZE = BUFFER SIZE as per 5.4.3 pg 303 xHCI
+	 * spec. It calculates PSZ also as per 6.6.1 pg 405 xHCI spec.
+	 * PSZ is used below to define the address alignment.
+	 */
+	psz = 0;
+	for (i = 0; i < 16; i++) {
+		if (val & 1) {
+			scratch_buf_sz = 0x1000 << i;
+			psz = 12 + i;
+			break;
+		}
+		val = val >> 1;
+	}
+	debug("%s: buf_num:%d, scratch_buf_sz:0x%x, psz:%d\n",
+			__func__, scratch_buf_num, scratch_buf_sz, psz);
+
+	tmp_buf = xhci_readq(&hcor->or_dcbaap);
+	 *(u64 *)tmp_buf = (u64) kzalloc(scratch_buf_num *
+			sizeof(scratch_buf_ptr), GFP_KERNEL);
+	if (*(u64 *)tmp_buf == 0) {
+		printf("%s: out of memory...\n", __func__);
+		return -ENOMEM;
+	}
+	 /* flush memory region for slot[0], it is allocated at xhci_mem_init*/
+	xhci_flush_cache((uintptr_t)tmp_buf, sizeof(uintptr_t));
+	scratch_buf_entry_ba = *(u64 *)tmp_buf;
+	scratch_buf_entry = scratch_buf_entry_ba;
+	for (i = 0; i < scratch_buf_num; i++) {
+		scratch_buf_ptr = (uint64_t) memalign(1 << psz, scratch_buf_sz);
+		if (!scratch_buf_ptr) {
+			printf("%s: out of memory...\n", __func__);
+			return -ENOMEM;
+		}
+
+		if (scratch_buf_ptr & ((1 << psz) - 1)) {
+			printf("Err: buf_ptr should be 0x%x bytes boundary\n",
+				1 << psz);
+			scratch_buf_ptr = (uint64_t) memalign(1 << psz,
+					scratch_buf_sz);
+		}
+
+		/* clear the least psz positions of scratch_buf_ptr */
+		scratch_buf_ptr = scratch_buf_ptr >> psz;
+		scratch_buf_ptr = scratch_buf_ptr << psz;
+
+		/* Write the single buf pointer into the array entry */
+		*(u64 *)scratch_buf_entry = scratch_buf_ptr;
+		scratch_buf_entry += sizeof(uint64_t);
+	}
+	/*
+	 * flush memory region for array who stores start address
+	 * for scratch buffers.
+	 */
+	xhci_flush_cache((uintptr_t)scratch_buf_entry_ba,
+			scratch_buf_num * sizeof(uintptr_t));
+
+	return 0;
+}
+
 /**
  * Allocates the necessary data structures
  * for XHCI host controller
@@ -422,6 +496,7 @@ int xhci_mem_init(struct xhci_ctrl *ctrl, struct xhci_hccr *hccr,
 	unsigned long deq;
 	int i;
 	struct xhci_segment *seg;
+	int ret;
 
 	/* DCBAA initialization */
 	ctrl->dcbaa = (struct xhci_device_context_array *)
@@ -434,6 +509,11 @@ int xhci_mem_init(struct xhci_ctrl *ctrl, struct xhci_hccr *hccr,
 	val_64 = (uintptr_t)ctrl->dcbaa;
 	/* Set the pointer in DCBAA register */
 	xhci_writeq(&hcor->or_dcbaap, val_64);
+
+	/* setup scratch buffer */
+	ret = xhci_set_scratch_buffer(hccr, hcor);
+	if (ret)
+		return ret;
 
 	/* Command ring control pointer register initialization */
 	ctrl->cmd_ring = xhci_ring_alloc(1, true);
