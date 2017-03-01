@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * Configuration settings for the Freescale i.MX6Q SabreSD board.
  *
@@ -44,7 +45,9 @@
 
 #define CONFIG_SYS_FSL_USDHC_NUM	3
 #define CONFIG_SYS_MMC_ENV_DEV		1	/* SDHC3 */
+#ifndef CONFIG_SYS_MMC_ENV_PART
 #define CONFIG_SYS_MMC_ENV_PART                0       /* user partition */
+#endif
 
 #ifdef CONFIG_CMD_SF
 #define CONFIG_SF_DEFAULT_CS   0
