@@ -406,9 +406,9 @@ enum boot_device get_boot_device(void)
 	type = (bt1_cfg >> 8) & 0x1;
 
 	if (type)
-		boot_dev = MMC1_BOOT;
-	else
 		boot_dev = SD1_BOOT;
+	else
+		boot_dev = MMC1_BOOT;
 	return boot_dev;
 }
 #ifdef CONFIG_SERIAL_TAG

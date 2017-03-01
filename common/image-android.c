@@ -2,6 +2,7 @@
  * Copyright (c) 2011 Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  *
  * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -12,6 +13,7 @@
 #include <malloc.h>
 #include <errno.h>
 #include <asm/bootm.h>
+#include <asm/imx-common/boot_mode.h>
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 
@@ -92,9 +94,10 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	}
 
 	printf("Kernel command line: %s\n", newbootargs);
+	char commandline[ANDR_BOOT_ARGS_SIZE];
+	strcpy(commandline, newbootargs);
 #ifdef CONFIG_SERIAL_TAG
 	struct tag_serialnr serialnr;
-	char commandline[ANDR_BOOT_ARGS_SIZE];
 	get_board_serial(&serialnr);
 
 	sprintf(commandline,
@@ -102,10 +105,27 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 					newbootargs,
 					serialnr.high,
 					serialnr.low);
-	setenv("bootargs", commandline);
-#else
-	setenv("bootargs", newbootargs);
+	strcpy(newbootargs, commandline);
 #endif
+	int bootdev = get_boot_device();
+	if (bootdev == SD1_BOOT || bootdev == SD2_BOOT ||
+		bootdev == SD3_BOOT || bootdev == SD4_BOOT) {
+		sprintf(commandline,
+			"%s androidboot.storage_type=sd gpt",
+			newbootargs);
+	} else if (bootdev == MMC1_BOOT || bootdev == MMC2_BOOT ||
+		bootdev == MMC3_BOOT || bootdev == MMC4_BOOT) {
+		sprintf(commandline,
+			"%s androidboot.storage_type=emmc",
+			newbootargs);
+	} else if (bootdev == NAND_BOOT) {
+		sprintf(commandline,
+			"%s androidboot.storage_type=nand",
+			newbootargs);
+	} else
+		printf("boot device type is incorrect.\n");
+
+	setenv("bootargs", commandline);
 
 	if (os_data) {
 		*os_data = (ulong)hdr;

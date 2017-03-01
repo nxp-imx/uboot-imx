@@ -143,7 +143,7 @@ static int validate_gpt_entries(gpt_header *gpt_h, gpt_entry *gpt_e)
 		le32_to_cpu(gpt_h->sizeof_partition_entry));
 
 	if (calc_crc32 != le32_to_cpu(gpt_h->partition_entry_array_crc32)) {
-		printf("%s: 0x%x != 0x%x\n",
+		debug("%s: 0x%x != 0x%x\n",
 		       "GUID Partition Table Entry Array CRC is wrong",
 		       le32_to_cpu(gpt_h->partition_entry_array_crc32),
 		       calc_crc32);
@@ -252,14 +252,14 @@ int get_partition_info_efi(block_dev_desc_t * dev_desc, int part,
 	/* This function validates AND fills in the GPT header and PTE */
 	if (is_gpt_valid(dev_desc, GPT_PRIMARY_PARTITION_TABLE_LBA,
 			gpt_head, &gpt_pte) != 1) {
-		printf("%s: *** ERROR: Invalid GPT ***\n", __func__);
+		debug("%s: *** ERROR: Invalid GPT ***\n", __func__);
 		if (is_gpt_valid(dev_desc, (dev_desc->lba - 1),
 				 gpt_head, &gpt_pte) != 1) {
 			printf("%s: *** ERROR: Invalid Backup GPT ***\n",
 			       __func__);
 			return -1;
 		} else {
-			printf("%s: ***        Using Backup GPT ***\n",
+			debug("%s: ***        Using Backup GPT ***\n",
 			       __func__);
 		}
 	}
