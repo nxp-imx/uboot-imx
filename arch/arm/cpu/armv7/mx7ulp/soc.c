@@ -10,6 +10,7 @@
 #include <asm/sections.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/imx-common/hab.h>
+#include <asm/imx-common/boot_mode.h>
 #include <fdt_support.h>
 
 static char *get_reset_cause(char *);
@@ -304,8 +305,7 @@ int mmc_get_env_dev(void)
 #ifdef CONFIG_OF_SYSTEM_SETUP
 int ft_system_setup(void *blob, bd_t *bd)
 {
-#if !defined(CONFIG_FSL_FASTBOOT) && defined(is_boot_from_usb)
-	if (is_boot_from_usb()) {
+	if (get_boot_device() == USB_BOOT) {
 		int rc;
 		int nodeoff = fdt_path_offset(blob, "/ahb-bridge0@40000000/usdhc@40370000");
 		if (nodeoff < 0)
@@ -333,7 +333,32 @@ add:
 			}
 		}
 	}
-#endif
 	return 0;
 }
 #endif
+
+enum boot_device get_boot_device(void)
+{
+	struct bootrom_sw_info **p =
+		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR;
+
+	enum boot_device boot_dev = SD1_BOOT;
+	u8 boot_type = (*p)->boot_dev_type;
+	u8 boot_instance = (*p)->boot_dev_instance;
+
+	switch (boot_type) {
+	case BOOT_TYPE_SD:
+		boot_dev = boot_instance + SD1_BOOT;
+		break;
+	case BOOT_TYPE_MMC:
+		boot_dev = boot_instance + MMC1_BOOT;
+		break;
+	case BOOT_TYPE_USB:
+		boot_dev = USB_BOOT;
+		break;
+	default:
+		break;
+	}
+
+	return boot_dev;
+}
