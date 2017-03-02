@@ -10,6 +10,8 @@
 
 #include <linux/sizes.h>
 
+#define ROM_SW_INFO_ADDR        0x000001E8
+
 #define CAAM_SEC_SRAM_BASE      (0x26000000)
 #define CAAM_SEC_SRAM_SIZE      (SZ_32K)
 #define CAAM_SEC_SRAM_END       (CAAM_SEC_SRAM_BASE + CAAM_SEC_SRAM_SIZE - 1)
@@ -1204,6 +1206,23 @@ struct lpuart_fsl {
 
 #define	is_boot_from_usb(void) (!(readl(USB_PHY0_BASE_ADDR) & (1<<20)))
 #define	disconnect_from_pc(void) writel(0x0, USBOTG0_RBASE + 0x140)
+
+/* Boot device type */
+#define BOOT_TYPE_SD		0x1
+#define BOOT_TYPE_MMC		0x2
+#define BOOT_TYPE_USB		0xf
+
+struct bootrom_sw_info {
+	u8 reserved_1;
+	u8 boot_dev_instance;
+	u8 boot_dev_type;
+	u8 reserved_2;
+	u32 core_freq;
+	u32 axi_freq;
+	u32 ddr_freq;
+	u32 rom_tick_freq;
+	u32 reserved_3[3];
+};
 
 #endif
 

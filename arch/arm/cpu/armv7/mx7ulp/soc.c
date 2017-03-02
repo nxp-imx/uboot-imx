@@ -11,9 +11,7 @@
 #include <asm/arch/sys_proto.h>
 #include <dm.h>
 #include <asm/imx-common/hab.h>
-#ifdef CONFIG_FSL_FASTBOOT
 #include <asm/imx-common/boot_mode.h>
-#endif
 #include <fdt_support.h>
 
 struct lpuart_serial_platdata {
@@ -360,8 +358,7 @@ int mmc_get_env_dev(void)
 #ifdef CONFIG_OF_SYSTEM_SETUP
 int ft_system_setup(void *blob, bd_t *bd)
 {
-#if !defined(CONFIG_FSL_FASTBOOT) && defined(is_boot_from_usb)
-	if (is_boot_from_usb()) {
+	if (get_boot_device() == USB_BOOT) {
 		int rc;
 		int nodeoff = fdt_path_offset(blob, "/ahb-bridge0@40000000/usdhc@40370000");
 		if (nodeoff < 0)
@@ -389,28 +386,37 @@ add:
 			}
 		}
 	}
-#endif
 	return 0;
 }
 #endif
 
-
-#ifdef CONFIG_FSL_FASTBOOT
 enum boot_device get_boot_device(void)
 {
-	bool type;
-	u32 bt1_cfg = 0;
-	enum boot_device boot_dev = UNKNOWN_BOOT;
+	struct bootrom_sw_info **p =
+		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR;
 
-	bt1_cfg = readl(CMC1_RBASE + 0x40);
-	type = (bt1_cfg >> 8) & 0x1;
+	enum boot_device boot_dev = SD1_BOOT;
+	u8 boot_type = (*p)->boot_dev_type;
+	u8 boot_instance = (*p)->boot_dev_instance;
 
-	if (type)
-		boot_dev = MMC1_BOOT;
-	else
-		boot_dev = SD1_BOOT;
+	switch (boot_type) {
+	case BOOT_TYPE_SD:
+		boot_dev = boot_instance + SD1_BOOT;
+		break;
+	case BOOT_TYPE_MMC:
+		boot_dev = boot_instance + MMC1_BOOT;
+		break;
+	case BOOT_TYPE_USB:
+		boot_dev = USB_BOOT;
+		break;
+	default:
+		break;
+	}
+
 	return boot_dev;
 }
+
+#ifdef CONFIG_FSL_FASTBOOT
 #ifdef CONFIG_SERIAL_TAG
 void get_board_serial(struct tag_serialnr *serialnr)
 {
