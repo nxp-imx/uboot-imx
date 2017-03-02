@@ -2,6 +2,7 @@
  * Copyright (C) 2012 Boundary Devices Inc.
  *
  * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -28,6 +29,7 @@ enum boot_device {
 	MMC4_BOOT,
 	NAND_BOOT,
 	QSPI_BOOT,
+	USB_BOOT,
 	UNKNOWN_BOOT,
 	BOOT_DEV_NUM = UNKNOWN_BOOT,
 };
