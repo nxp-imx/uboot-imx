@@ -25,6 +25,28 @@
 #define MFG_NAND_PARTITION ""
 #endif
 
+#ifdef CONFIG_IMX_BOOTAUX
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x62000000 /* Set to QSPI1 B flash at default */
+
+#define UPDATE_M4_ENV \
+	"m4image=m4_qspi.bin\0" \
+	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \
+	"update_m4_from_sd=" \
+		"if sf probe 1:0; then " \
+			"if run loadm4image; then " \
+				"setexpr fw_sz ${filesize} + 0xffff; " \
+				"setexpr fw_sz ${fw_sz} / 0x10000; "	\
+				"setexpr fw_sz ${fw_sz} * 0x10000; "	\
+				"sf erase 0x0 ${fw_sz}; " \
+				"sf write ${loadaddr} 0x0 ${filesize}; " \
+			"fi; " \
+		"fi\0" \
+	"m4boot=sf probe 1:0; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
+#else
+#define UPDATE_M4_ENV ""
+#endif
+
+
 #define CONFIG_MFG_ENV_SETTINGS \
 	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
 		"rdinit=/linuxrc " \
@@ -40,6 +62,7 @@
 
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	UPDATE_M4_ENV \
 	CONFIG_MFG_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
@@ -51,9 +74,9 @@
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
 	"panel=Hannstar-XGA\0" \
-	"mmcdev=0\0" \
+	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
-	"mmcroot=/dev/mmcblk0p2 rootwait rw\0" \
+	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
 	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
 		"root=${mmcroot}\0" \
@@ -137,6 +160,9 @@
 
 /* MMC Configuration */
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC3_BASE_ADDR
+#define CONFIG_SYS_MMC_ENV_DEV		0  /*USDHC3*/
+#define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
+#define CONFIG_MMCROOT			"/dev/mmcblk2p2"  /* USDHC3 */
 
 /* I2C Configs */
 #define CONFIG_SYS_I2C_MXC
@@ -216,6 +242,8 @@
 
 #define CONFIG_PCA953X
 #define CONFIG_SYS_I2C_PCA953X_WIDTH	{ {0x30, 8}, {0x32, 8}, {0x34, 8} }
+
+#define CONFIG_CMD_BMODE
 
 #define CONFIG_VIDEO
 #define CONFIG_VIDEO_GIS

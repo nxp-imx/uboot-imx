@@ -160,39 +160,23 @@ int power_init_board(void)
 {
 	struct udevice *dev;
 	int ret;
-	u32 dev_id, rev_id, i;
-	u32 switch_num = 6;
-	u32 offset = PFUZE100_SW1CMODE;
 
-	ret = pmic_get("pfuze100", &dev);
-	if (ret == -ENODEV)
-		return 0;
+	dev = pfuze_common_init();
+	if (!dev)
+		return -ENODEV;
 
-	if (ret != 0)
+	ret = pfuze_mode_init(dev, APS_PFM);
+	if (ret < 0)
 		return ret;
-
-	dev_id = pmic_reg_read(dev, PFUZE100_DEVICEID);
-	rev_id = pmic_reg_read(dev, PFUZE100_REVID);
-	printf("PMIC: PFUZE100! DEV_ID=0x%x REV_ID=0x%x\n", dev_id, rev_id);
-
-
-	/* Init mode to APS_PFM */
-	pmic_reg_write(dev, PFUZE100_SW1ABMODE, APS_PFM);
-
-	for (i = 0; i < switch_num - 1; i++)
-		pmic_reg_write(dev, offset + i * SWITCH_SIZE, APS_PFM);
-
-	/* set SW1AB staby volatage 0.975V */
-	pmic_clrsetbits(dev, PFUZE100_SW1ABSTBY, 0x3f, 0x1b);
-
-	/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
-	pmic_clrsetbits(dev, PFUZE100_SW1ABCONF, 0xc0, 0x40);
 
 	/* set SW1C staby volatage 1.10V */
 	pmic_clrsetbits(dev, PFUZE100_SW1CSTBY, 0x3f, 0x20);
 
 	/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
 	pmic_clrsetbits(dev, PFUZE100_SW1CCONF, 0xc0, 0x40);
+
+	/* Enable power of VGEN5 3V3, needed for SD3 */
+	pmic_clrsetbits(dev, PFUZE100_SW1CCONF, LDO_VOL_MASK, (LDOB_3_30V | (1 << LDO_EN)));
 
 	return 0;
 }
