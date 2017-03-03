@@ -7,8 +7,6 @@
 #ifndef _MXC_KEYPAD_H_
 #define _MXC_KEYPAD_H_
 
-#include <config.h>
-
 #define KEY_1                   2
 #define KEY_2                   3
 #define KEY_3                   4
