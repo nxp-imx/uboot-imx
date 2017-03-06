@@ -26,13 +26,23 @@
 #endif
 
 #ifdef CONFIG_IMX_BOOTAUX
-#define CONFIG_SYS_AUXCORE_BOOTDATA 0x62000000 /* Set to QSPI1 B flash at default */
+
+/* Set to QSPI1 B flash at default */
+#ifdef CONFIG_DM_SPI
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x68000000
+#define SF_QSPI1_B_CS_NUM 2
+#else
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x62000000
+#define SF_QSPI1_B_CS_NUM 1
+#endif
+
 
 #define UPDATE_M4_ENV \
 	"m4image=m4_qspi.bin\0" \
+	"m4_qspi_cs="__stringify(SF_QSPI1_B_CS_NUM)"\0" \
 	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \
 	"update_m4_from_sd=" \
-		"if sf probe 1:0; then " \
+		"if sf probe 0:${m4_qspi_cs}; then " \
 			"if run loadm4image; then " \
 				"setexpr fw_sz ${filesize} + 0xffff; " \
 				"setexpr fw_sz ${fw_sz} / 0x10000; "	\
@@ -41,7 +51,7 @@
 				"sf write ${loadaddr} 0x0 ${filesize}; " \
 			"fi; " \
 		"fi\0" \
-	"m4boot=sf probe 1:0; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
+	"m4boot=sf probe 0:${m4_qspi_cs}; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
 #else
 #define UPDATE_M4_ENV ""
 #endif
@@ -222,17 +232,19 @@
 
 #if (CONFIG_FEC_ENET_DEV == 0)
 #define IMX_FEC_BASE			ENET_BASE_ADDR
-#define CONFIG_FEC_MXC_PHYADDR          0x0
+#define CONFIG_FEC_MXC_PHYADDR          0x1
+#define CONFIG_ETHPRIME                 "FEC0"
 #elif (CONFIG_FEC_ENET_DEV == 1)
 #define IMX_FEC_BASE			ENET2_BASE_ADDR
 #define CONFIG_FEC_MXC_PHYADDR          0x0
+#define CONFIG_ETHPRIME                 "FEC1"
 #endif
 
 #define CONFIG_FEC_XCV_TYPE             RGMII
-#define CONFIG_ETHPRIME                 "FEC"
 
 #define CONFIG_PHYLIB
 #define CONFIG_PHY_ATHEROS
+#define CONFIG_FEC_MXC_MDIO_BASE	ENET_BASE_ADDR
 
 #ifdef CONFIG_CMD_USB
 #define CONFIG_USB_EHCI
@@ -274,9 +286,10 @@
 #define CONFIG_ENV_SIZE			CONFIG_ENV_SECT_SIZE
 #endif
 
-
+#ifndef CONFIG_DM_PCA953X
 #define CONFIG_PCA953X
 #define CONFIG_SYS_I2C_PCA953X_WIDTH	{ {0x30, 8}, {0x32, 8}, {0x34, 8} }
+#endif
 
 #define CONFIG_CMD_BMODE
 

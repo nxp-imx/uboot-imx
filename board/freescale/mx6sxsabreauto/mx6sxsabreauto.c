@@ -131,8 +131,6 @@ int board_eth_init(bd_t *bis)
 	else
 		imx_iomux_v3_setup_multiple_pads(fec2_pads, ARRAY_SIZE(fec2_pads));
 
-	setup_fec(CONFIG_FEC_ENET_DEV);
-
 	ret = fecmxc_initialize_multi(bis, CONFIG_FEC_ENET_DEV,
 		CONFIG_FEC_MXC_PHYADDR, IMX_FEC_BASE);
 	if (ret)
@@ -391,6 +389,7 @@ size_t display_count = ARRAY_SIZE(displays);
 
 #ifdef CONFIG_FSL_QSPI
 
+#ifndef CONFIG_DM_SPI
 #define QSPI_PAD_CTRL1	\
 	(PAD_CTL_SRE_FAST | PAD_CTL_SPEED_HIGH | \
 	 PAD_CTL_PKE | PAD_CTL_PUE | PAD_CTL_PUS_47K_UP | PAD_CTL_DSE_40ohm)
@@ -409,13 +408,15 @@ static iomux_v3_cfg_t const quadspi_pads[] = {
 	MX6_PAD_QSPI1B_DATA2__QSPI1_B_DATA_2  | MUX_PAD_CTRL(QSPI_PAD_CTRL1),
 	MX6_PAD_QSPI1B_DATA3__QSPI1_B_DATA_3  | MUX_PAD_CTRL(QSPI_PAD_CTRL1),
 };
+#endif
 
 int board_qspi_init(void)
 {
+#ifndef CONFIG_DM_SPI
 	/* Set the iomux */
 	imx_iomux_v3_setup_multiple_pads(quadspi_pads,
 					 ARRAY_SIZE(quadspi_pads));
-
+#endif
 	/* Set the clock */
 	enable_qspi_clk(0);
 
@@ -501,6 +502,11 @@ int board_init(void)
 
 #ifdef CONFIG_NAND_MXS
 	setup_gpmi_nand();
+#endif
+
+	/* Also used for OF_CONTROL enabled */
+#ifdef CONFIG_FEC_MXC
+	setup_fec(CONFIG_FEC_ENET_DEV);
 #endif
 
 	return 0;
