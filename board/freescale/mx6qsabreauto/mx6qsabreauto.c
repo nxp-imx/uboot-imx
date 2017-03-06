@@ -109,6 +109,7 @@ static iomux_v3_cfg_t const enet_pads[] = {
 	MX6_PAD_GPIO_16__ENET_REF_CLK		| MUX_PAD_CTRL(ENET_PAD_CTRL),
 };
 
+#ifdef CONFIG_SYS_I2C
 /* I2C2 PMIC, iPod, Tuner, Codec, Touch, HDMI EDID, MIPI CSI2 card */
 static struct i2c_pads_info i2c_pad_info1 = {
 	.scl = {
@@ -122,6 +123,7 @@ static struct i2c_pads_info i2c_pad_info1 = {
 		.gp = IMX_GPIO_NR(4, 13)
 	}
 };
+#endif
 
 #ifndef CONFIG_SYS_FLASH_CFI
 /*
@@ -149,6 +151,8 @@ static iomux_v3_cfg_t const i2c3_pads[] = {
 static iomux_v3_cfg_t const port_exp[] = {
 	MX6_PAD_SD2_DAT0__GPIO1_IO15		| MUX_PAD_CTRL(NO_PAD_CTRL),
 };
+
+#ifdef CONFIG_PCA953X
 
 /*Define for building port exp gpio, pin starts from 0*/
 #define PORTEXP_IO_NR(chip, pin) \
@@ -187,6 +191,7 @@ static int port_exp_direction_output(unsigned gpio, int value)
 
 	return 0;
 }
+#endif
 
 #ifdef CONFIG_MTD_NOR_FLASH
 static iomux_v3_cfg_t const eimnor_pads[] = {
@@ -388,12 +393,14 @@ int board_mmc_init(bd_t *bis)
 		case 0:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc1_pads, ARRAY_SIZE(usdhc1_pads));
+			gpio_request(USDHC1_CD_GPIO, "usdhc1 cd");
 			gpio_direction_input(USDHC1_CD_GPIO);
 			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
 			break;
 		case 1:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
+			gpio_request(USDHC3_CD_GPIO, "usdhc3 cd");
 			gpio_direction_input(USDHC3_CD_GPIO);
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 			break;
@@ -607,6 +614,7 @@ iomux_v3_cfg_t const backlight_pads[] = {
 
 static void setup_iomux_backlight(void)
 {
+	gpio_request(IMX_GPIO_NR(2, 9), "backlight");
 	gpio_direction_output(IMX_GPIO_NR(2, 9), 1);
 	imx_iomux_v3_setup_multiple_pads(backlight_pads,
 					 ARRAY_SIZE(backlight_pads));
@@ -690,6 +698,8 @@ void setup_spinor(void)
 {
 	imx_iomux_v3_setup_multiple_pads(ecspi1_pads,
 					 ARRAY_SIZE(ecspi1_pads));
+
+	gpio_request(IMX_GPIO_NR(3, 19), "escpi cs");
 	gpio_direction_output(IMX_GPIO_NR(5, 4), 0);
 	gpio_direction_output(IMX_GPIO_NR(3, 19), 0);
 }
@@ -697,6 +707,108 @@ void setup_spinor(void)
 int board_spi_cs_gpio(unsigned bus, unsigned cs)
 {
 	return (bus == 0 && cs == 1) ? (IMX_GPIO_NR(3, 19)) : -1;
+}
+#endif
+
+#ifdef CONFIG_USB_EHCI_MX6
+
+iomux_v3_cfg_t const usb_otg_pads[] = {
+	MX6_PAD_ENET_RX_ER__USB_OTG_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
+};
+
+static void setup_usb(void)
+{
+	imx_iomux_v3_setup_multiple_pads(usb_otg_pads,
+			ARRAY_SIZE(usb_otg_pads));
+
+	/*
+	  * Set daisy chain for otg_pin_id on 6q.
+	 *  For 6dl, this bit is reserved.
+	 */
+	imx_iomux_set_gpr_register(1, 13, 1, 0);
+
+#ifdef CONFIG_DM_PCA953X
+	struct gpio_desc desc;
+	int ret;
+	
+	ret = dm_gpio_lookup_name("gpio@32_7", &desc);
+	if (ret)
+		return;
+
+	ret = dm_gpio_request(&desc, "usb_host1_pwr");
+	if (ret)
+		return;
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
+
+	ret = dm_gpio_lookup_name("gpio@34_1", &desc);
+	if (ret)
+		return;
+
+	ret = dm_gpio_request(&desc, "usb_otg_pwr");
+	if (ret)
+		return;
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
+#endif
+
+}
+
+int board_ehci_power(int port, int on)
+{
+#ifdef CONFIG_PCA953X
+
+#define USB_HOST1_PWR     PORTEXP_IO_NR(0x32, 7)
+#define USB_OTG_PWR       PORTEXP_IO_NR(0x34, 1)
+
+	switch (port) {
+	case 0:
+		if (on)
+			port_exp_direction_output(USB_OTG_PWR, 1);
+		else
+			port_exp_direction_output(USB_OTG_PWR, 0);
+		break;
+	case 1:
+		if (on)
+			port_exp_direction_output(USB_HOST1_PWR, 1);
+		else
+			port_exp_direction_output(USB_HOST1_PWR, 0);
+		break;
+	default:
+		printf("MXC USB port %d not yet supported\n", port);
+		return -EINVAL;
+	}
+#elif defined(CONFIG_DM_PCA953X)
+	struct gpio_desc desc;
+	int ret;
+
+	switch (port) {
+	case 0:		
+		ret = dm_gpio_lookup_name("gpio@34_1", &desc);
+		if (ret)
+			return ret;
+		
+		if (on)
+			dm_gpio_set_value(&desc, 1);
+		else
+			dm_gpio_set_value(&desc, 0);
+		break;
+	case 1:
+		ret = dm_gpio_lookup_name("gpio@32_7", &desc);
+		if (ret)
+			return ret;
+		
+		if (on)
+			dm_gpio_set_value(&desc, 1);
+		else
+			dm_gpio_set_value(&desc, 0);
+		break;
+	default:
+		printf("MXC USB port %d not yet supported\n", port);
+		return -EINVAL;
+	}	
+#endif
+	return 0;
 }
 #endif
 
@@ -716,14 +828,21 @@ int board_init(void)
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
+#ifdef CONFIG_SYS_I2C
 	/* I2C 2 and 3 setup - I2C 3 hw mux with EIM */
 	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+#endif
+
 	/* I2C 3 Steer */
+	gpio_request(IMX_GPIO_NR(5, 4), "steer logic");
 	gpio_direction_output(IMX_GPIO_NR(5, 4), 1);
 	imx_iomux_v3_setup_multiple_pads(i2c3_pads, ARRAY_SIZE(i2c3_pads));
+	
 #ifndef CONFIG_SYS_FLASH_CFI
 	setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info2);
 #endif
+
+	gpio_request(IMX_GPIO_NR(1, 15), "expander en");
 	gpio_direction_output(IMX_GPIO_NR(1, 15), 1);
 	imx_iomux_v3_setup_multiple_pads(port_exp, ARRAY_SIZE(port_exp));
 
@@ -751,9 +870,14 @@ int board_init(void)
 	setup_fec();
 #endif
 
+#ifdef CONFIG_USB_EHCI_MX6
+	setup_usb();
+#endif
+
 	return 0;
 }
 
+#ifdef CONFIG_POWER
 int power_init_board(void)
 {
 	struct pmic *pfuze;
@@ -824,8 +948,80 @@ int power_init_board(void)
 
 	return 0;
 }
+#elif defined(CONFIG_DM_PMIC_PFUZE100)
+int power_init_board(void)
+{
+	struct udevice *dev;
+	unsigned int reg;
+	int ret;
+
+	dev = pfuze_common_init();
+	if (!dev)
+		return -ENODEV;
+
+	if (is_mx6dqp())
+		ret = pfuze_mode_init(dev, APS_APS);
+	else
+		ret = pfuze_mode_init(dev, APS_PFM);
+	if (ret < 0)
+		return ret;
+
+	if (is_mx6dqp()) {
+		/* set SW1C staby volatage 1.075V*/
+		reg = pmic_reg_read(dev, PFUZE100_SW1CSTBY);
+		reg &= ~0x3f;
+		reg |= 0x1f;
+		pmic_reg_write(dev, PFUZE100_SW1CSTBY, reg);
+
+		/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+		reg = pmic_reg_read(dev, PFUZE100_SW1CCONF);
+		reg &= ~0xc0;
+		reg |= 0x40;
+		pmic_reg_write(dev, PFUZE100_SW1CCONF, reg);
+
+		/* set SW2/VDDARM staby volatage 0.975V*/
+		reg = pmic_reg_read(dev, PFUZE100_SW2STBY);
+		reg &= ~0x3f;
+		reg |= 0x17;
+		pmic_reg_write(dev, PFUZE100_SW2STBY, reg);
+
+		/* set SW2/VDDARM step ramp up time to from 16us to 4us/25mV */
+		reg = pmic_reg_read(dev, PFUZE100_SW2CONF);
+		reg &= ~0xc0;
+		reg |= 0x40;
+		pmic_reg_write(dev, PFUZE100_SW2CONF, reg);
+	} else {
+		/* set SW1AB staby volatage 0.975V*/
+		reg = pmic_reg_read(dev, PFUZE100_SW1ABSTBY);
+		reg &= ~0x3f;
+		reg |= 0x1b;
+		pmic_reg_write(dev, PFUZE100_SW1ABSTBY, reg);
+
+		/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
+		reg = pmic_reg_read(dev, PFUZE100_SW1ABCONF);
+		reg &= ~0xc0;
+		reg |= 0x40;
+		pmic_reg_write(dev, PFUZE100_SW1ABCONF, reg);
+
+		/* set SW1C staby volatage 0.975V*/
+		reg = pmic_reg_read(dev, PFUZE100_SW1CSTBY);
+		reg &= ~0x3f;
+		reg |= 0x1b;
+		pmic_reg_write(dev, PFUZE100_SW1CSTBY, reg);
+
+		/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+		reg = pmic_reg_read(dev, PFUZE100_SW1CCONF);
+		reg &= ~0xc0;
+		reg |= 0x40;
+		pmic_reg_write(dev, PFUZE100_SW1CCONF, reg);
+	}
+
+	return 0;
+}
+#endif
 
 #ifdef CONFIG_LDO_BYPASS_CHECK
+#ifdef CONFIG_POWER
 void ldo_mode_set(int ldo_bypass)
 {
 	unsigned int value;
@@ -861,6 +1057,35 @@ void ldo_mode_set(int ldo_bypass)
 		pmic_reg_write(p, PFUZE100_SW1CVOL, value);
 	}
 }
+#elif defined(CONFIG_DM_PMIC_PFUZE100)
+void ldo_mode_set(int ldo_bypass)
+{
+	struct udevice *dev;
+	int ret;
+
+	ret = pmic_get("pfuze100", &dev);
+	if (ret == -ENODEV) {
+		printf("No PMIC found!\n");
+		return;
+	}
+
+	/* increase VDDARM/VDDSOC to support 1.2G chip */
+	if (check_1_2G()) {
+		ldo_bypass = 0; /* ldo_enable on 1.2G chip */
+		printf("1.2G chip, increase VDDARM_IN/VDDSOC_IN\n");
+		
+		if (is_mx6dqp()) {
+			/* increase VDDARM to 1.425V */
+			pmic_clrsetbits(dev, PFUZE100_SW2VOL, 0x3f, 0x29);
+		} else {
+			/* increase VDDARM to 1.425V */
+			pmic_clrsetbits(dev, PFUZE100_SW1ABVOL, 0x3f, 0x2d);
+		}
+		/* increase VDDSOC to 1.425V */
+		pmic_clrsetbits(dev, PFUZE100_SW1CVOL, 0x3f, 0x2d);
+	}
+}
+#endif
 #endif
 
 #ifdef CONFIG_CMD_BMODE
@@ -914,57 +1139,3 @@ int checkboard(void)
 
 	return 0;
 }
-
-#ifdef CONFIG_USB_EHCI_MX6
-#define USB_HOST1_PWR     PORTEXP_IO_NR(0x32, 7)
-#define USB_OTG_PWR       PORTEXP_IO_NR(0x34, 1)
-
-iomux_v3_cfg_t const usb_otg_pads[] = {
-	MX6_PAD_ENET_RX_ER__USB_OTG_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
-};
-
-int board_ehci_hcd_init(int port)
-{
-	switch (port) {
-	case 0:
-		imx_iomux_v3_setup_multiple_pads(usb_otg_pads,
-			ARRAY_SIZE(usb_otg_pads));
-
-		/*
-		  * Set daisy chain for otg_pin_id on 6q.
-		 *  For 6dl, this bit is reserved.
-		 */
-		imx_iomux_set_gpr_register(1, 13, 1, 0);
-		break;
-	case 1:
-		break;
-	default:
-		printf("MXC USB port %d not yet supported\n", port);
-		return -EINVAL;
-	}
-	return 0;
-}
-
-int board_ehci_power(int port, int on)
-{
-	switch (port) {
-	case 0:
-		if (on)
-			port_exp_direction_output(USB_OTG_PWR, 1);
-		else
-			port_exp_direction_output(USB_OTG_PWR, 0);
-		break;
-	case 1:
-		if (on)
-			port_exp_direction_output(USB_HOST1_PWR, 1);
-		else
-			port_exp_direction_output(USB_HOST1_PWR, 0);
-		break;
-	default:
-		printf("MXC USB port %d not yet supported\n", port);
-		return -EINVAL;
-	}
-
-	return 0;
-}
-#endif

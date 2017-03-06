@@ -319,6 +319,9 @@ dtb-$(CONFIG_MX6) += imx6ull-14x14-evk.dtb \
 	imx6dl-sabresd.dtb \
 	imx6q-icore.dtb \
 	imx6q-icore-rqs.dtb \
+	imx6q-sabreauto.dtb \
+	imx6q-sabreauto-ecspi.dtb \
+	imx6q-sabreauto-gpmi-weim.dtb \
 	imx6sx-sabreauto.dtb \
 	imx6q-sabresd.dtb \
 	imx6qp-sabresd.dtb \

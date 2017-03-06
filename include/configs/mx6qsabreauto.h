@@ -19,24 +19,6 @@
 #define PHYS_SDRAM_SIZE		(1u * 1024 * 1024 * 1024)
 #endif
 
-/*Since the pin conflicts on EIM D18, disable the USB host if the NOR flash is enabled */
-#if !defined(CONFIG_CMD_SF) && !defined(CONFIG_MTD_NOR_FLASH)
-/* USB Configs */
-#define CONFIG_USB_EHCI
-#define CONFIG_USB_EHCI_MX6
-#define CONFIG_USB_HOST_ETHER
-#define CONFIG_USB_ETHER_ASIX
-#define CONFIG_USB_MAX_CONTROLLER_COUNT 2
-#define CONFIG_EHCI_HCD_INIT_AFTER_RESET	/* For OTG port */
-#define CONFIG_MXC_USB_PORTSC	(PORT_PTS_UTMI | PORT_PTS_PTW)
-#define CONFIG_MXC_USB_FLAGS	0
-
-#define CONFIG_PCA953X
-#define CONFIG_SYS_I2C_PCA953X_WIDTH	{ {0x30, 8}, {0x32, 8}, {0x34, 8} }
-#endif
-
-#define CONFIG_CMD_NAND
-
 #include "mx6sabre_common.h"
 
 #undef MFG_NAND_PARTITION
@@ -52,6 +34,25 @@
 
 #ifdef CONFIG_CMD_SF
 #define CONFIG_SF_DEFAULT_CS   1
+#endif
+
+/*Since the pin conflicts on EIM D18, disable the USB host if the NOR flash is enabled */
+#ifdef CONFIG_USB
+/* USB Configs */
+#define CONFIG_USB_EHCI
+#define CONFIG_USB_EHCI_MX6
+#define CONFIG_USB_HOST_ETHER
+#define CONFIG_USB_ETHER_ASIX
+#define CONFIG_USB_MAX_CONTROLLER_COUNT 2
+#define CONFIG_EHCI_HCD_INIT_AFTER_RESET	/* For OTG port */
+#define CONFIG_MXC_USB_PORTSC	(PORT_PTS_UTMI | PORT_PTS_PTW)
+#define CONFIG_MXC_USB_FLAGS	0
+
+#if !defined(CONFIG_DM_PCA953X) && defined(CONFIG_SYS_I2C)
+#define CONFIG_PCA953X
+#define CONFIG_SYS_I2C_PCA953X_WIDTH	{ {0x30, 8}, {0x32, 8}, {0x34, 8} }
+#endif
+
 #endif
 
 #endif                         /* __MX6QSABREAUTO_CONFIG_H */
