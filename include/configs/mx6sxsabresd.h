@@ -25,15 +25,25 @@
 
 #ifdef CONFIG_IMX_BOOTAUX
 /* Set to QSPI2 B flash at default */
+#ifdef CONFIG_DM_SPI
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x78000000
+#define SF_QSPI2_B_CS_NUM 2
+#elif defined(CONFIG_MX6SX_SABRESD_REVA)
+#define CONFIG_SYS_AUXCORE_BOOTDATA 0x71000000
+#define SF_QSPI2_B_CS_NUM 1
+#else
 #define CONFIG_SYS_AUXCORE_BOOTDATA 0x72000000
+#define SF_QSPI2_B_CS_NUM 1
+#endif
 
 /* When using M4 fastup demo, no need these M4 env, since QSPI is used by M4 */
 #ifndef CONFIG_SYS_AUXCORE_FASTUP
 #define UPDATE_M4_ENV \
 	"m4image=m4_qspi.bin\0" \
+	"m4_qspi_cs="__stringify(SF_QSPI2_B_CS_NUM)"\0" \
 	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \
 	"update_m4_from_sd=" \
-		"if sf probe 1:0; then " \
+		"if sf probe 1:${m4_qspi_cs}; then " \
 			"if run loadm4image; then " \
 				"setexpr fw_sz ${filesize} + 0xffff; " \
 				"setexpr fw_sz ${fw_sz} / 0x10000; "	\
@@ -42,7 +52,7 @@
 				"sf write ${loadaddr} 0x0 ${filesize}; " \
 			"fi; " \
 		"fi\0" \
-	"m4boot=sf probe 1:0; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
+	"m4boot=sf probe 1:${m4_qspi_cs}; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
 #else
 #define UPDATE_M4_ENV ""
 #endif /* CONFIG_SYS_AUXCORE_FASTUP */
@@ -178,38 +188,46 @@
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC4_BASE_ADDR
 
 /* I2C Configs */
+#ifndef CONFIG_DM_I2C
 #define CONFIG_SYS_I2C
+#endif
+#ifdef CONFIG_CMD_I2C
 #define CONFIG_SYS_I2C_MXC
 #define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
 #define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
 #define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
 #define CONFIG_SYS_I2C_SPEED		  100000
+#endif
 
 /* PMIC */
+#ifndef CONFIG_DM_PMIC
 #define CONFIG_POWER
 #define CONFIG_POWER_I2C
 #define CONFIG_POWER_PFUZE100
 #define CONFIG_POWER_PFUZE100_I2C_ADDR	0x08
+#endif
 
 /* Network */
 #define CONFIG_FEC_MXC
 #define CONFIG_MII
 
-#define CONFIG_FEC_ENET_DEV 0
+#define CONFIG_FEC_ENET_DEV 1
 
 #if (CONFIG_FEC_ENET_DEV == 0)
 #define IMX_FEC_BASE			ENET_BASE_ADDR
 #define CONFIG_FEC_MXC_PHYADDR          0x1
+#define CONFIG_ETHPRIME                 "FEC0"
 #elif (CONFIG_FEC_ENET_DEV == 1)
 #define IMX_FEC_BASE			ENET2_BASE_ADDR
 #define CONFIG_FEC_MXC_PHYADDR          0x2
+#define CONFIG_ETHPRIME                 "FEC1"
 #endif
 
 #define CONFIG_FEC_XCV_TYPE             RGMII
-#define CONFIG_ETHPRIME                 "FEC"
 
 #define CONFIG_PHYLIB
 #define CONFIG_PHY_ATHEROS
+#define CONFIG_FEC_MXC_MDIO_BASE	ENET_BASE_ADDR
 
 #ifdef CONFIG_CMD_USB
 #define CONFIG_USB_EHCI
