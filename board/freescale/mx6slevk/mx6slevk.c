@@ -217,6 +217,7 @@ static void setup_iomux_fec(void)
 	imx_iomux_v3_setup_multiple_pads(fec_pads, ARRAY_SIZE(fec_pads));
 
 	/* Power up LAN8720 PHY */
+	gpio_request(ETH_PHY_POWER, "LAN8720 PHY PWR");
 	gpio_direction_output(ETH_PHY_POWER , 1);
 	udelay(15000);
 }
@@ -273,18 +274,21 @@ int board_mmc_init(bd_t *bis)
 		case 0:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc1_pads, ARRAY_SIZE(usdhc1_pads));
+			gpio_request(USDHC1_CD_GPIO, "usdhc1 cd");
 			gpio_direction_input(USDHC1_CD_GPIO);
 			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
 			break;
 		case 1:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
+			gpio_request(USDHC2_CD_GPIO, "usdhc2 cd");
 			gpio_direction_input(USDHC2_CD_GPIO);
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
 			break;
 		case 2:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
+			gpio_request(USDHC3_CD_GPIO, "usdhc3 cd");
 			gpio_direction_input(USDHC3_CD_GPIO);
 			usdhc_cfg[2].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 			break;
@@ -316,6 +320,7 @@ int board_mmc_init(bd_t *bis)
 	case 0:
 		imx_iomux_v3_setup_multiple_pads(usdhc1_pads,
 						 ARRAY_SIZE(usdhc1_pads));
+		gpio_request(USDHC1_CD_GPIO, "usdhc1 cd");
 		gpio_direction_input(USDHC1_CD_GPIO);
 		usdhc_cfg[0].esdhc_base = USDHC1_BASE_ADDR;
 		usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
@@ -323,6 +328,7 @@ int board_mmc_init(bd_t *bis)
 	case 1:
 		imx_iomux_v3_setup_multiple_pads(usdhc2_pads,
 						 ARRAY_SIZE(usdhc2_pads));
+		gpio_request(USDHC2_CD_GPIO, "usdhc2 cd");
 		gpio_direction_input(USDHC2_CD_GPIO);
 		usdhc_cfg[0].esdhc_base = USDHC2_BASE_ADDR;
 		usdhc_cfg[0].max_bus_width = 4;
@@ -331,6 +337,7 @@ int board_mmc_init(bd_t *bis)
 	case 2:
 		imx_iomux_v3_setup_multiple_pads(usdhc3_pads,
 						 ARRAY_SIZE(usdhc3_pads));
+		gpio_request(USDHC3_CD_GPIO, "usdhc3 cd");
 		gpio_direction_input(USDHC3_CD_GPIO);
 		usdhc_cfg[0].esdhc_base = USDHC3_BASE_ADDR;
 		usdhc_cfg[0].max_bus_width = 4;
@@ -343,7 +350,6 @@ int board_mmc_init(bd_t *bis)
 #endif
 }
 
-#ifdef CONFIG_SYS_I2C_MXC
 #define PC	MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C1 for PMIC */
 struct i2c_pads_info i2c_pad_info1 = {
@@ -359,6 +365,7 @@ struct i2c_pads_info i2c_pad_info1 = {
 	},
 };
 
+#ifdef CONFIG_POWER
 int power_init_board(void)
 {
 	struct pmic *pfuze;
@@ -399,8 +406,51 @@ int power_init_board(void)
 
 	return 0;
 }
+#elif defined(CONFIG_DM_PMIC_PFUZE100)
+int power_init_board(void)
+{
+	struct udevice *dev;
+	unsigned int reg;
+	int ret;
+
+	dev = pfuze_common_init();
+	if (!dev)
+		return -ENODEV;
+
+	ret = pfuze_mode_init(dev, APS_PFM);
+	if (ret < 0)
+		return ret;
+
+	/* set SW1AB staby volatage 0.975V*/
+	reg = pmic_reg_read(dev, PFUZE100_SW1ABSTBY);
+	reg &= ~0x3f;
+	reg |= 0x1b;
+	pmic_reg_write(dev, PFUZE100_SW1ABSTBY, reg);
+
+	/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
+	reg = pmic_reg_read(dev, PFUZE100_SW1ABCONF);
+	reg &= ~0xc0;
+	reg |= 0x40;
+	pmic_reg_write(dev, PFUZE100_SW1ABCONF, reg);
+
+	/* set SW1C staby volatage 0.975V*/
+	reg = pmic_reg_read(dev, PFUZE100_SW1CSTBY);
+	reg &= ~0x3f;
+	reg |= 0x1b;
+	pmic_reg_write(dev, PFUZE100_SW1CSTBY, reg);
+
+	/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+	reg = pmic_reg_read(dev, PFUZE100_SW1CCONF);
+	reg &= ~0xc0;
+	reg |= 0x40;
+	pmic_reg_write(dev, PFUZE100_SW1CCONF, reg);
+
+	return 0;
+}
+#endif
 
 #ifdef CONFIG_LDO_BYPASS_CHECK
+#ifdef CONFIG_POWER
 void ldo_mode_set(int ldo_bypass)
 {
 	u32 value;
@@ -447,6 +497,45 @@ void ldo_mode_set(int ldo_bypass)
 		value &= ~0x3f;
 		value |= 0x23;
 		pmic_reg_write(p, PFUZE100_SW1CVOL, value);
+
+		finish_anatop_bypass();
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
+#elif defined(CONFIG_DM_PMIC_PFUZE100)
+void ldo_mode_set(int ldo_bypass)
+{
+	struct udevice *dev;
+	int ret;
+	int is_400M;
+	u32 vddarm;
+
+	ret = pmic_get("pfuze100", &dev);
+	if (ret == -ENODEV) {
+		printf("No PMIC found!\n");
+		return;
+	}
+
+	/* switch to ldo_bypass mode , boot on 800Mhz */
+	if (ldo_bypass) {
+		prep_anatop_bypass();
+
+		/* decrease VDDARM for 400Mhz DQ:1.1V, DL:1.275V */
+		pmic_clrsetbits(dev, PFUZE100_SW1ABVOL, 0x3f, 0x20);
+		
+		/* increase VDDSOC to 1.3V */
+		pmic_clrsetbits(dev, PFUZE100_SW1CVOL, 0x3f, 0x28);
+
+		is_400M = set_anatop_bypass(0);
+		if (is_400M)
+			vddarm = 0x1b;
+		else
+			vddarm = 0x23;
+		
+		pmic_clrsetbits(dev, PFUZE100_SW1ABVOL, 0x3f, vddarm);
+
+		/* decrease VDDSOC to 1.175V */
+		pmic_clrsetbits(dev, PFUZE100_SW1CVOL, 0x3f, 0x23);
 
 		finish_anatop_bypass();
 		printf("switch to ldo_bypass mode!\n");

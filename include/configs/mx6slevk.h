@@ -29,18 +29,24 @@
 #define CONFIG_SYS_MMC_ENV_DEV		1	/* SDHC2*/
 
 /* I2C Configs */
+#ifndef CONFIG_DM_I2C
 #define CONFIG_SYS_I2C
+#endif
+#ifdef CONFIG_CMD_I2C
 #define CONFIG_SYS_I2C_MXC
 #define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
 #define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
 #define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
 #define CONFIG_SYS_I2C_SPEED		  100000
+#endif
 
 /* PMIC */
+#ifndef CONFIG_DM_PMIC
 #define CONFIG_POWER
 #define CONFIG_POWER_I2C
 #define CONFIG_POWER_PFUZE100
 #define CONFIG_POWER_PFUZE100_I2C_ADDR	0x08
+#endif
 
 #define CONFIG_FEC_MXC
 #define CONFIG_MII
