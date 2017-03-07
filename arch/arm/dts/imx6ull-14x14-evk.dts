@@ -23,11 +23,29 @@
 		reg = <0x80000000 0x20000000>;
 	};
 
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		linux,cma {
+			compatible = "shared-dma-pool";
+			reusable;
+			size = <0x14000000>;
+			linux,cma-default;
+		};
+	};
+
 	backlight {
 		compatible = "pwm-backlight";
 		pwms = <&pwm1 0 5000000>;
 		brightness-levels = <0 4 8 16 32 64 128 255>;
 		default-brightness-level = <6>;
+		status = "okay";
+	};
+
+	pxp_v4l2 {
+		compatible = "fsl,imx6ul-pxp-v4l2", "fsl,imx6sx-pxp-v4l2", "fsl,imx6sl-pxp-v4l2";
 		status = "okay";
 	};
 
@@ -67,10 +85,48 @@
 		};
 	};
 
-	spi4 {
+	sound {
+		compatible = "fsl,imx6ul-evk-wm8960",
+			   "fsl,imx-audio-wm8960";
+		model = "wm8960-audio";
+		cpu-dai = <&sai2>;
+		audio-codec = <&codec>;
+		asrc-controller = <&asrc>;
+		codec-master;
+		gpr = <&gpr 4 0x100000 0x100000>;
+		/*
+                 * hp-det = <hp-det-pin hp-det-polarity>;
+		 * hp-det-pin: JD1 JD2  or JD3
+		 * hp-det-polarity = 0: hp detect high for headphone
+		 * hp-det-polarity = 1: hp detect high for speaker
+		 */
+		hp-det = <3 0>;
+		hp-det-gpios = <&gpio5 4 0>;
+		mic-det-gpios = <&gpio5 4 0>;
+		audio-routing =
+			"Headphone Jack", "HP_L",
+			"Headphone Jack", "HP_R",
+			"Ext Spk", "SPK_LP",
+			"Ext Spk", "SPK_LN",
+			"Ext Spk", "SPK_RP",
+			"Ext Spk", "SPK_RN",
+			"LINPUT2", "Mic Jack",
+			"LINPUT3", "Mic Jack",
+			"RINPUT1", "Main MIC",
+			"RINPUT2", "Main MIC",
+			"Mic Jack", "MICB",
+			"Main MIC", "MICB",
+			"CPU-Playback", "ASRC-Playback",
+			"Playback", "CPU-Playback",
+			"ASRC-Capture", "CPU-Capture",
+			"CPU-Capture", "Capture";
+	};
+
+	spi5 {
 		compatible = "spi-gpio";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_spi4>;
+		pinctrl-assert-gpios = <&gpio5 8 GPIO_ACTIVE_LOW>;
 		status = "okay";
 		gpio-sck = <&gpio5 11 0>;
 		gpio-mosi = <&gpio5 10 0>;
@@ -82,7 +138,6 @@
 		gpio_spi: gpio_spi@0 {
 			compatible = "fairchild,74hc595";
 			gpio-controller;
-			oe-gpios = <&gpio5 8 0>;
 			#gpio-cells = <2>;
 			reg = <0>;
 			registers-number = <1>;
@@ -101,6 +156,16 @@
 &clks {
 	assigned-clocks = <&clks IMX6UL_CLK_PLL4_AUDIO_DIV>;
 	assigned-clock-rates = <786432000>;
+};
+
+&csi {
+	status = "okay";
+
+	port {
+		csi1_ep: endpoint {
+			remote-endpoint = <&ov5640_ep>;
+		};
+	};
 };
 
 &fec1 {
@@ -132,6 +197,20 @@
 			reg = <1>;
 		};
 	};
+};
+
+&flexcan1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_flexcan1>;
+	xceiver-supply = <&reg_can_3v3>;
+	status = "okay";
+};
+
+&flexcan2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_flexcan2>;
+	xceiver-supply = <&reg_can_3v3>;
+	status = "okay";
 };
 
 &gpc {
@@ -168,6 +247,34 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_i2c2>;
 	status = "okay";
+
+	codec: wm8960@1a {
+		compatible = "wlf,wm8960";
+		reg = <0x1a>;
+		clocks = <&clks IMX6UL_CLK_SAI2>;
+		clock-names = "mclk";
+		wlf,shared-lrclk;
+	};
+
+	ov5640: ov5640@3c {
+		compatible = "ovti,ov5640";
+		reg = <0x3c>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_csi1>;
+		clocks = <&clks IMX6UL_CLK_CSI>;
+		clock-names = "csi_mclk";
+		pwn-gpios = <&gpio_spi 6 1>;
+		rst-gpios = <&gpio_spi 5 0>;
+		csi_id = <0>;
+		mclk = <24000000>;
+		mclk_source = <0>;
+		status = "okay";
+		port {
+			ov5640_ep: endpoint {
+				remote-endpoint = <&csi1_ep>;
+			};
+		};
+	};
 };
 
 &iomuxc {
@@ -310,6 +417,25 @@
 			>;
 		};
 
+		pinctrl_sai2: sai2grp {
+			fsl,pins = <
+				MX6UL_PAD_JTAG_TDI__SAI2_TX_BCLK	0x17088
+				MX6UL_PAD_JTAG_TDO__SAI2_TX_SYNC	0x17088
+				MX6UL_PAD_JTAG_TRST_B__SAI2_TX_DATA	0x11088
+				MX6UL_PAD_JTAG_TCK__SAI2_RX_DATA	0x11088
+				MX6UL_PAD_JTAG_TMS__SAI2_MCLK		0x17088
+			>;
+		};
+
+		pinctrl_tsc: tscgrp {
+			fsl,pins = <
+				MX6UL_PAD_GPIO1_IO01__GPIO1_IO01	0xb0
+				MX6UL_PAD_GPIO1_IO02__GPIO1_IO02	0xb0
+				MX6UL_PAD_GPIO1_IO03__GPIO1_IO03	0xb0
+				MX6UL_PAD_GPIO1_IO04__GPIO1_IO04	0xb0
+			>;
+		};
+
 		pinctrl_uart1: uart1grp {
 			fsl,pins = <
 				MX6UL_PAD_UART1_TX_DATA__UART1_DCE_TX 0x1b0b1
@@ -346,6 +472,28 @@
 			>;
 		};
 
+		pinctrl_usdhc1_100mhz: usdhc1grp100mhz {
+			fsl,pins = <
+				MX6UL_PAD_SD1_CMD__USDHC1_CMD     0x170b9
+				MX6UL_PAD_SD1_CLK__USDHC1_CLK     0x100b9
+				MX6UL_PAD_SD1_DATA0__USDHC1_DATA0 0x170b9
+				MX6UL_PAD_SD1_DATA1__USDHC1_DATA1 0x170b9
+				MX6UL_PAD_SD1_DATA2__USDHC1_DATA2 0x170b9
+				MX6UL_PAD_SD1_DATA3__USDHC1_DATA3 0x170b9
+			>;
+		};
+
+		pinctrl_usdhc1_200mhz: usdhc1grp200mhz {
+			fsl,pins = <
+				MX6UL_PAD_SD1_CMD__USDHC1_CMD     0x170f9
+				MX6UL_PAD_SD1_CLK__USDHC1_CLK     0x100f9
+				MX6UL_PAD_SD1_DATA0__USDHC1_DATA0 0x170f9
+				MX6UL_PAD_SD1_DATA1__USDHC1_DATA1 0x170f9
+				MX6UL_PAD_SD1_DATA2__USDHC1_DATA2 0x170f9
+				MX6UL_PAD_SD1_DATA3__USDHC1_DATA3 0x170f9
+			>;
+		};
+
 		pinctrl_usdhc2: usdhc2grp {
 			fsl,pins = <
 				MX6UL_PAD_NAND_RE_B__USDHC2_CLK     0x10069
@@ -354,6 +502,51 @@
 				MX6UL_PAD_NAND_DATA01__USDHC2_DATA1 0x17059
 				MX6UL_PAD_NAND_DATA02__USDHC2_DATA2 0x17059
 				MX6UL_PAD_NAND_DATA03__USDHC2_DATA3 0x17059
+			>;
+		};
+
+		pinctrl_usdhc2_8bit: usdhc2grp_8bit {
+			fsl,pins = <
+				MX6UL_PAD_NAND_RE_B__USDHC2_CLK     0x10069
+				MX6UL_PAD_NAND_WE_B__USDHC2_CMD     0x17059
+				MX6UL_PAD_NAND_DATA00__USDHC2_DATA0 0x17059
+				MX6UL_PAD_NAND_DATA01__USDHC2_DATA1 0x17059
+				MX6UL_PAD_NAND_DATA02__USDHC2_DATA2 0x17059
+				MX6UL_PAD_NAND_DATA03__USDHC2_DATA3 0x17059
+				MX6UL_PAD_NAND_DATA04__USDHC2_DATA4 0x17059
+				MX6UL_PAD_NAND_DATA05__USDHC2_DATA5 0x17059
+				MX6UL_PAD_NAND_DATA06__USDHC2_DATA6 0x17059
+				MX6UL_PAD_NAND_DATA07__USDHC2_DATA7 0x17059
+			>;
+		};
+
+		pinctrl_usdhc2_8bit_100mhz: usdhc2grp_8bit_100mhz {
+			fsl,pins = <
+				MX6UL_PAD_NAND_RE_B__USDHC2_CLK     0x100b9
+				MX6UL_PAD_NAND_WE_B__USDHC2_CMD     0x170b9
+				MX6UL_PAD_NAND_DATA00__USDHC2_DATA0 0x170b9
+				MX6UL_PAD_NAND_DATA01__USDHC2_DATA1 0x170b9
+				MX6UL_PAD_NAND_DATA02__USDHC2_DATA2 0x170b9
+				MX6UL_PAD_NAND_DATA03__USDHC2_DATA3 0x170b9
+				MX6UL_PAD_NAND_DATA04__USDHC2_DATA4 0x170b9
+				MX6UL_PAD_NAND_DATA05__USDHC2_DATA5 0x170b9
+				MX6UL_PAD_NAND_DATA06__USDHC2_DATA6 0x170b9
+				MX6UL_PAD_NAND_DATA07__USDHC2_DATA7 0x170b9
+			>;
+		};
+
+		pinctrl_usdhc2_8bit_200mhz: usdhc2grp_8bit_200mhz {
+			fsl,pins = <
+				MX6UL_PAD_NAND_RE_B__USDHC2_CLK     0x100f9
+				MX6UL_PAD_NAND_WE_B__USDHC2_CMD     0x170f9
+				MX6UL_PAD_NAND_DATA00__USDHC2_DATA0 0x170f9
+				MX6UL_PAD_NAND_DATA01__USDHC2_DATA1 0x170f9
+				MX6UL_PAD_NAND_DATA02__USDHC2_DATA2 0x170f9
+				MX6UL_PAD_NAND_DATA03__USDHC2_DATA3 0x170f9
+				MX6UL_PAD_NAND_DATA04__USDHC2_DATA4 0x170f9
+				MX6UL_PAD_NAND_DATA05__USDHC2_DATA5 0x170f9
+				MX6UL_PAD_NAND_DATA06__USDHC2_DATA6 0x170f9
+				MX6UL_PAD_NAND_DATA07__USDHC2_DATA7 0x170f9
 			>;
 		};
 
@@ -380,7 +573,7 @@
                                 MX6ULL_PAD_SNVS_TAMPER3__GPIO5_IO03      0x79
                         >;
                 };
-
+		
 		pinctrl_lcdif_reset: lcdifresetgrp {
                         fsl,pins = <
                                 /* used for lcd reset */
@@ -446,6 +639,10 @@
 	status = "okay";
 };
 
+&pxp {
+	status = "okay";
+};
+
 &qspi {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_qspi>;
@@ -455,11 +652,33 @@
 	flash0: n25q256a@0 {
 		#address-cells = <1>;
 		#size-cells = <1>;
-		compatible = "micron,n25q256a";
+		compatible = "spi-flash";
 		spi-max-frequency = <29000000>;
 		spi-nor,ddr-quad-read-dummy = <6>;
 		reg = <0>;
 	};
+};
+
+&sai2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_sai2
+		     &pinctrl_sai2_hp_det_b>;
+
+	assigned-clocks = <&clks IMX6UL_CLK_SAI2_SEL>,
+			  <&clks IMX6UL_CLK_SAI2>;
+	assigned-clock-parents = <&clks IMX6UL_CLK_PLL4_AUDIO_DIV>;
+	assigned-clock-rates = <0>, <12288000>;
+
+	status = "okay";
+};
+
+&tsc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_tsc>;
+	xnur-gpio = <&gpio1 3 GPIO_ACTIVE_LOW>;
+	measure-delay-time = <0xffff>;
+	pre-charge-time = <0xfff>;
+	status = "okay";
 };
 
 &uart1 {
@@ -501,8 +720,10 @@
 };
 
 &usdhc1 {
-	pinctrl-names = "default";
+	pinctrl-names = "default", "state_100mhz", "state_200mhz";
 	pinctrl-0 = <&pinctrl_usdhc1>;
+	pinctrl-1 = <&pinctrl_usdhc1_100mhz>;
+	pinctrl-2 = <&pinctrl_usdhc1_200mhz>;
 	cd-gpios = <&gpio1 19 GPIO_ACTIVE_LOW>;
 	keep-power-in-suspend;
 	enable-sdio-wakeup;
@@ -513,10 +734,7 @@
 &usdhc2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usdhc2>;
-	no-1-8-v;
 	non-removable;
-	keep-power-in-suspend;
-	enable-sdio-wakeup;
 	status = "okay";
 };
 

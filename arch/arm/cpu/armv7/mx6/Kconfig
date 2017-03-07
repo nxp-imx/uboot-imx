@@ -278,6 +278,13 @@ config TARGET_MX6ULL_14X14_EVK
 	select DM
 	select DM_THERMAL
 
+config TARGET_MX6ULL_9X9_EVK
+	bool "Support mx6ull_9x9_evk"
+	select BOARD_LATE_INIT
+	select MX6ULL
+	select DM
+	select DM_THERMAL
+
 config TARGET_NITROGEN6X
 	bool "nitrogen6x"
 
