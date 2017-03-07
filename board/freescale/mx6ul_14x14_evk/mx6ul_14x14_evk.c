@@ -71,6 +71,7 @@ DECLARE_GLOBAL_DATA_PTR;
 	PAD_CTL_PUS_47K_UP  | PAD_CTL_SPEED_LOW |		\
 	PAD_CTL_DSE_80ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
 
+#ifndef CONFIG_DM_74X164
 #define IOX_SDI IMX_GPIO_NR(5, 10)
 #define IOX_STCP IMX_GPIO_NR(5, 7)
 #define IOX_SHCP IMX_GPIO_NR(5, 11)
@@ -163,8 +164,9 @@ static void iox74lv_init(void)
 	 */
 	gpio_direction_output(IOX_STCP, 1);
 };
+#endif
 
-#ifdef CONFIG_SYS_I2C_MXC
+#ifdef CONFIG_SYS_I2C
 #define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C1 for PMIC and EEPROM */
 static struct i2c_pads_info i2c_pad_info1 = {
@@ -204,7 +206,9 @@ int power_init_board(void)
 		       reg, rev_id);
 
 		/* disable Low Power Mode during standby mode */
-		pmic_reg_write(pfuze, PFUZE3000_LDOGCTL, 0x1);
+		pmic_reg_read(pfuze, PFUZE3000_LDOGCTL, &reg);
+		reg |= 0x1;
+		pmic_reg_write(pfuze, PFUZE3000_LDOGCTL, reg);
 
 		/* SW1B step ramp up time from 2us to 4us/25mV */
 		reg = 0x40;
@@ -258,6 +262,82 @@ void ldo_mode_set(int ldo_bypass)
 	}
 }
 #endif
+#endif
+#endif
+
+#ifdef CONFIG_DM_PMIC
+int power_init_board(void)
+{
+	struct udevice *dev;
+	int ret, dev_id, rev_id;
+	unsigned int reg;
+
+	ret = pmic_get("pfuze3000", &dev);
+	if (ret == -ENODEV)
+		return 0;
+	if (ret != 0)
+		return ret;
+
+	dev_id = pmic_reg_read(dev, PFUZE3000_DEVICEID);
+	rev_id = pmic_reg_read(dev, PFUZE3000_REVID);
+	printf("PMIC: PFUZE3000 DEV_ID=0x%x REV_ID=0x%x\n", dev_id, rev_id);
+
+	/* disable Low Power Mode during standby mode */
+	reg = pmic_reg_read(dev, PFUZE3000_LDOGCTL);
+	reg |= 0x1;
+	pmic_reg_write(dev, PFUZE3000_LDOGCTL, reg);
+
+	/* SW1B step ramp up time from 2us to 4us/25mV */
+	reg = 0x40;
+	pmic_reg_write(dev, PFUZE3000_SW1BCONF, reg);
+
+	/* SW1B mode to APS/PFM */
+	reg = 0xc;
+	pmic_reg_write(dev, PFUZE3000_SW1BMODE, reg);
+
+	/* SW1B standby voltage set to 0.975V */
+	reg = 0xb;
+	pmic_reg_write(dev, PFUZE3000_SW1BSTBY, reg);
+
+	return 0;
+}
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	unsigned int value;
+	u32 vddarm;
+	struct udevice *dev;
+	int ret;
+
+	ret = pmic_get("pfuze3000", &dev);
+	if (ret == -ENODEV) {
+		printf("No PMIC found!\n");
+		return;
+	}
+
+	/* switch to ldo_bypass mode */
+	if (ldo_bypass) {
+		prep_anatop_bypass();
+		/* decrease VDDARM to 1.275V */
+		value = pmic_reg_read(dev, PFUZE3000_SW1BVOLT);
+		value &= ~0x1f;
+		value |= PFUZE3000_SW1AB_SETP(1275);
+		pmic_reg_write(dev, PFUZE3000_SW1BVOLT, value);
+
+		set_anatop_bypass(1);
+		vddarm = PFUZE3000_SW1AB_SETP(1175);
+
+		value = pmic_reg_read(dev, PFUZE3000_SW1BVOLT);
+		value &= ~0x1f;
+		value |= vddarm;
+		pmic_reg_write(dev, PFUZE3000_SW1BVOLT, value);
+
+		finish_anatop_bypass();
+
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
 #endif
 #endif
 
@@ -342,6 +422,7 @@ static void setup_iomux_uart(void)
 
 #ifdef CONFIG_FSL_QSPI
 
+#ifndef CONFIG_DM_SPI
 #define QSPI_PAD_CTRL1	\
 	(PAD_CTL_SRE_FAST | PAD_CTL_SPEED_MED | \
 	 PAD_CTL_PKE | PAD_CTL_PUE | PAD_CTL_PUS_47K_UP | PAD_CTL_DSE_120ohm)
@@ -354,12 +435,15 @@ static iomux_v3_cfg_t const quadspi_pads[] = {
 	MX6_PAD_NAND_CLE__QSPI_A_DATA03 | MUX_PAD_CTRL(QSPI_PAD_CTRL1),
 	MX6_PAD_NAND_DQS__QSPI_A_SS0_B | MUX_PAD_CTRL(QSPI_PAD_CTRL1),
 };
+#endif
 
 static int board_qspi_init(void)
 {
+#ifndef CONFIG_DM_SPI
 	/* Set the iomux */
 	imx_iomux_v3_setup_multiple_pads(quadspi_pads,
 					 ARRAY_SIZE(quadspi_pads));
+#endif
 	/* Set the clock */
 	enable_qspi_clk(0);
 
@@ -412,6 +496,7 @@ int board_mmc_getcd(struct mmc *mmc)
 		ret = 1;
 #else
 		imx_iomux_v3_setup_pad(usdhc2_cd_pad);
+		gpio_request(USDHC2_CD_GPIO, "usdhc2 cd");
 		gpio_direction_input(USDHC2_CD_GPIO);
 
 		/*
@@ -456,6 +541,7 @@ int board_mmc_init(bd_t *bis)
 		case 0:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc1_pads, ARRAY_SIZE(usdhc1_pads));
+			gpio_request(USDHC1_CD_GPIO, "usdhc1 cd");
 			gpio_direction_input(USDHC1_CD_GPIO);
 			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
 
@@ -471,6 +557,7 @@ int board_mmc_init(bd_t *bis)
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
 #endif
+			gpio_request(USDHC2_PWR_GPIO, "usdhc2 pwr");
 			gpio_direction_output(USDHC2_PWR_GPIO, 0);
 			udelay(500);
 			gpio_direction_output(USDHC2_PWR_GPIO, 1);
@@ -710,11 +797,13 @@ void do_enable_parallel_lcd(struct display_info_t const *dev)
 	imx_iomux_v3_setup_multiple_pads(lcd_pads, ARRAY_SIZE(lcd_pads));
 
 	/* Reset the LCD */
+	gpio_request(IMX_GPIO_NR(5, 9), "lcd reset");
 	gpio_direction_output(IMX_GPIO_NR(5, 9) , 0);
 	udelay(500);
 	gpio_direction_output(IMX_GPIO_NR(5, 9) , 1);
 
 	/* Set Brightness to high */
+	gpio_request(IMX_GPIO_NR(1, 8), "backlight");
 	gpio_direction_output(IMX_GPIO_NR(1, 8) , 1);
 }
 
@@ -753,11 +842,13 @@ int board_init(void)
 	/* Address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
+#ifndef CONFIG_DM_74X164
 	imx_iomux_v3_setup_multiple_pads(iox_pads, ARRAY_SIZE(iox_pads));
 
 	iox74lv_init();
+#endif
 
-#ifdef CONFIG_SYS_I2C_MXC
+#ifdef CONFIG_SYS_I2C
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
 #endif
 
