@@ -20,7 +20,7 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 #define RX_BUFFER_SIZE		0x80
-#ifdef CONFIG_MX6SX
+#if defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL) || defined(CONFIG_MX7D)
 #define TX_BUFFER_SIZE		0x200
 #else
 #define TX_BUFFER_SIZE		0x40
@@ -268,7 +268,7 @@ static void qspi_set_lut(struct fsl_qspi_priv *priv)
 			     INSTR0(LUT_CMD) | OPRND1(ADDR32BIT) |
 			     PAD1(LUT_PAD1) | INSTR1(LUT_ADDR));
 #endif
-#ifdef CONFIG_MX6SX
+#if defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL) || defined(CONFIG_MX7D)
 	/*
 	 * To MX6SX, OPRND0(TX_BUFFER_SIZE) can not work correctly.
 	 * So, Use IDATSZ in IPCR to determine the size and here set 0.
@@ -611,6 +611,7 @@ static void qspi_op_write(struct fsl_qspi_priv *priv, u8 *txbuf, u32 len)
 	u32 mcr_reg, data, reg, status_reg, seqid;
 	int i, size, tx_size;
 	u32 to_or_from = 0;
+	u32 total;
 
 	mcr_reg = qspi_read32(priv->flags, &regs->mcr);
 	qspi_write32(priv->flags, &regs->mcr,
@@ -661,6 +662,7 @@ static void qspi_op_write(struct fsl_qspi_priv *priv, u8 *txbuf, u32 len)
 		TX_BUFFER_SIZE : len;
 
 	size = tx_size / 4;
+	total = size;
 	for (i = 0; i < size; i++) {
 		memcpy(&data, txbuf, 4);
 		data = qspi_endian_xchg(data);
@@ -674,7 +676,14 @@ static void qspi_op_write(struct fsl_qspi_priv *priv, u8 *txbuf, u32 len)
 		memcpy(&data, txbuf, size);
 		data = qspi_endian_xchg(data);
 		qspi_write32(priv->flags, &regs->tbdr, data);
+		total += 1;
 	}
+
+#if defined(CONFIG_MX7D) || defined(CONFIG_MX6UL)
+	/* iMX7D and MX6UL TXFIFO must be at least 16 bytes*/
+	for (; total < 4; total++)
+		qspi_write32(priv->flags, &regs->tbdr, 0);
+#endif
 
 	qspi_write32(priv->flags, &regs->ipcr,
 		     (seqid << QSPI_IPCR_SEQID_SHIFT) | tx_size);
@@ -1000,6 +1009,7 @@ static int fsl_qspi_probe(struct udevice *bus)
 	}
 #endif	
 
+
 	dm_spi_bus = bus->uclass_priv;
 
 	dm_spi_bus->max_hz = plat->speed_hz;
@@ -1071,7 +1081,7 @@ static int fsl_qspi_probe(struct udevice *bus)
 			     priv->amba_base[3] + amba_size_per_chip);
 		break;
 	default:
-		debug("Error: Unsupported chipselect number %u!\n",
+		printf("Error: Unsupported chipselect number %u!\n",
 		      priv->num_chipselect);
 		qspi_module_disable(priv, 1);
 		return -EINVAL;
@@ -1207,8 +1217,11 @@ static const struct dm_spi_ops fsl_qspi_ops = {
 static const struct udevice_id fsl_qspi_ids[] = {
 	{ .compatible = "fsl,vf610-qspi" },
 	{ .compatible = "fsl,imx6sx-qspi" },
+	{ .compatible = "fsl,imx6ul-qspi" },
+	{ .compatible = "fsl,imx7d-qspi" },
 	{ }
 };
+
 
 U_BOOT_DRIVER(fsl_qspi) = {
 	.name	= "fsl_qspi",
