@@ -145,6 +145,82 @@ void ldo_mode_set(int ldo_bypass)
 #endif
 #endif
 
+#ifdef CONFIG_DM_PMIC
+int power_init_board(void)
+{
+	struct udevice *dev;
+	int ret, dev_id, rev_id;
+	unsigned int reg;
+
+	ret = pmic_get("pfuze3000", &dev);
+	if (ret == -ENODEV)
+		return 0;
+	if (ret != 0)
+		return ret;
+
+	dev_id = pmic_reg_read(dev, PFUZE3000_DEVICEID);
+	rev_id = pmic_reg_read(dev, PFUZE3000_REVID);
+	printf("PMIC: PFUZE3000 DEV_ID=0x%x REV_ID=0x%x\n", dev_id, rev_id);
+
+	/* disable Low Power Mode during standby mode */
+	reg = pmic_reg_read(dev, PFUZE3000_LDOGCTL);
+	reg |= 0x1;
+	pmic_reg_write(dev, PFUZE3000_LDOGCTL, reg);
+
+	/* SW1B step ramp up time from 2us to 4us/25mV */
+	reg = 0x40;
+	pmic_reg_write(dev, PFUZE3000_SW1BCONF, reg);
+
+	/* SW1B mode to APS/PFM */
+	reg = 0xc;
+	pmic_reg_write(dev, PFUZE3000_SW1BMODE, reg);
+
+	/* SW1B standby voltage set to 0.975V */
+	reg = 0xb;
+	pmic_reg_write(dev, PFUZE3000_SW1BSTBY, reg);
+
+	return 0;
+}
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	unsigned int value;
+	u32 vddarm;
+	struct udevice *dev;
+	int ret;
+
+	ret = pmic_get("pfuze3000", &dev);
+	if (ret == -ENODEV) {
+		printf("No PMIC found!\n");
+		return;
+	}
+
+	/* switch to ldo_bypass mode */
+	if (ldo_bypass) {
+		prep_anatop_bypass();
+		/* decrease VDDARM to 1.275V */
+		value = pmic_reg_read(dev, PFUZE3000_SW1BVOLT);
+		value &= ~0x1f;
+		value |= PFUZE3000_SW1AB_SETP(1275);
+		pmic_reg_write(dev, PFUZE3000_SW1BVOLT, value);
+
+		set_anatop_bypass(1);
+		vddarm = PFUZE3000_SW1AB_SETP(1175);
+
+		value = pmic_reg_read(dev, PFUZE3000_SW1BVOLT);
+		value &= ~0x1f;
+		value |= vddarm;
+		pmic_reg_write(dev, PFUZE3000_SW1BVOLT, value);
+
+		finish_anatop_bypass();
+
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
+#endif
+#endif
+
 int dram_init(void)
 {
 	gd->ram_size = imx_ddr_size();
