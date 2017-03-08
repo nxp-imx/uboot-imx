@@ -14,39 +14,33 @@
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(16 * SZ_1M)
 
-#define CONFIG_BOARD_EARLY_INIT_F
-#define CONFIG_BOARD_LATE_INIT
-
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE		UART1_BASE
 
 /* I2C configs */
-#define CONFIG_CMD_I2C
-#ifdef CONFIG_CMD_I2C
+#ifndef CONFIG_DM_I2C
 #define CONFIG_SYS_I2C
+#endif
+#ifdef CONFIG_CMD_I2C
 #define CONFIG_SYS_I2C_MXC
 #define CONFIG_SYS_I2C_SPEED		100000
 #define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
 
 /* PMIC */
+#ifndef CONFIG_DM_PMIC
 #define CONFIG_POWER
 #define CONFIG_POWER_I2C
 #define CONFIG_POWER_PFUZE100
 #define CONFIG_POWER_PFUZE100_I2C_ADDR	0x08
 #endif
+#endif
 
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
-#ifdef CONFIG_SYS_BOOT_NAND
+
+#ifdef CONFIG_NAND_BOOT
 #define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
 #else
 #define MFG_NAND_PARTITION ""
-#endif
-
-#ifdef CONFIG_VIDEO
-#define CONFIG_VIDEO_MODE \
-	"panel=MCIMX28LCD\0"
-#else
-#define CONFIG_VIDEO_MODE ""
 #endif
 
 #define CONFIG_MFG_ENV_SETTINGS \
@@ -64,10 +58,10 @@
 	"initrd_high=0xffffffff\0" \
 	"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 
-#if defined(CONFIG_SYS_BOOT_NAND)
+#if defined(CONFIG_NAND_BOOT)
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
-	CONFIG_VIDEO_MODE \
+	"panel=MCIMX28LCD\0" \
 	"fdt_addr=0x83000000\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"console=ttymxc0\0" \
@@ -82,7 +76,7 @@
 #else
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
-	CONFIG_VIDEO_MODE \
+	"panel=MCIMX28LCD\0" \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"console=ttymxc0\0" \
@@ -160,10 +154,11 @@
 	   "else run netboot; fi"
 #endif
 
-#define CONFIG_CMD_MEMTEST
+/* Miscellaneous configurable options */
 #define CONFIG_SYS_MEMTEST_START	0x80000000
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 0x20000000)
 
+#define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_SYS_HZ			1000
 
 #define CONFIG_STACKSIZE		SZ_128K
@@ -183,8 +178,7 @@
 
 #define CONFIG_ENV_SIZE			SZ_8K
 
-#ifdef CONFIG_SYS_USE_NAND
-#define CONFIG_CMD_NAND
+#ifdef CONFIG_CMD_NAND
 #define CONFIG_CMD_NAND_TRIMFFS
 
 /* NAND stuff */
@@ -200,8 +194,7 @@
 #define CONFIG_APBH_DMA_BURST8
 #endif
 
-#ifdef CONFIG_SYS_USE_EIMNOR
-#undef CONFIG_SYS_NO_FLASH
+#ifdef CONFIG_MTD_NOR_FLASH
 #define CONFIG_SYS_FLASH_BASE           WEIM_ARB_BASE_ADDR
 #define CONFIG_SYS_FLASH_SECT_SIZE     (256 * 1024)
 #define CONFIG_SYS_MAX_FLASH_BANKS 1    /* max number of memory banks */
@@ -212,25 +205,20 @@
 #define CONFIG_SYS_FLASH_EMPTY_INFO
 #endif
 
-#ifdef CONFIG_SYS_USE_QSPI
-#define CONFIG_FSL_QSPI    /* enable the QUADSPI driver */
-#define CONFIG_QSPI_BASE		QSPI0_BASE_ADDR
-#define CONFIG_QSPI_MEMMAP_BASE		QSPI0_AMBA_BASE
-
-#define CONFIG_CMD_SF
-#define	CONFIG_SPI_FLASH
-#define	CONFIG_SPI_FLASH_STMICRO
-#define	CONFIG_SPI_FLASH_BAR
-#define	CONFIG_SF_DEFAULT_BUS		0
-#define	CONFIG_SF_DEFAULT_CS		0
-#define	CONFIG_SF_DEFAULT_SPEED		40000000
-#define	CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
+#ifdef CONFIG_FSL_QSPI
+#define CONFIG_SYS_FSL_QSPI_AHB
+#define CONFIG_SF_DEFAULT_BUS		0
+#define CONFIG_SF_DEFAULT_CS		0
+#define CONFIG_SF_DEFAULT_SPEED	40000000
+#define CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
+#define FSL_QSPI_FLASH_NUM		1
+#define FSL_QSPI_FLASH_SIZE		SZ_32M
 #endif
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
-#define CONFIG_ENV_OFFSET		(12 * SZ_64K)
+#define CONFIG_ENV_OFFSET		(13 * SZ_64K)
 #elif defined(CONFIG_ENV_IS_IN_SPI_FLASH)
-#define CONFIG_ENV_OFFSET		(768 * 1024)
+#define CONFIG_ENV_OFFSET		(864 * 1024)
 #define CONFIG_ENV_SECT_SIZE		(64 * 1024)
 #define CONFIG_ENV_SPI_BUS		CONFIG_SF_DEFAULT_BUS
 #define CONFIG_ENV_SPI_CS		CONFIG_SF_DEFAULT_CS
@@ -251,7 +239,7 @@
 /* MMC Configs */
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
 
-#ifdef CONFIG_SYS_USE_NAND
+#ifdef CONFIG_CMD_NAND
 #define CONFIG_SYS_FSL_USDHC_NUM	1
 #else
 #define CONFIG_SYS_FSL_USDHC_NUM	2
@@ -264,13 +252,9 @@
 #define CONFIG_CMD_BMODE
 
 #ifdef CONFIG_VIDEO
-#define	CONFIG_CFB_CONSOLE
-#define	CONFIG_VIDEO_MXS
-#define	CONFIG_VIDEO_LOGO
-#define	CONFIG_VIDEO_SW_CURSOR
-#define	CONFIG_VGA_AS_SINGLE_DEVICE
-#define	CONFIG_SYS_CONSOLE_IS_IN_ENV
-#define	CONFIG_SPLASH_SCREEN
+#define CONFIG_VIDEO_MXS
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_SPLASH_SCREEN
 #define CONFIG_SPLASH_SCREEN_ALIGN
 #define	CONFIG_CMD_BMP
 #define	CONFIG_BMP_16BPP
@@ -280,17 +264,10 @@
 #endif
 
 /* USB Configs */
-#define CONFIG_CMD_USB
 #ifdef CONFIG_CMD_USB
-#define CONFIG_USB_EHCI
-#define CONFIG_USB_EHCI_MX6
-#define CONFIG_USB_STORAGE
-#define CONFIG_EHCI_HCD_INIT_AFTER_RESET
 #define CONFIG_USB_HOST_ETHER
 #define CONFIG_USB_ETHER_ASIX
-#define CONFIG_MXC_USB_PORTSC  (PORT_PTS_UTMI | PORT_PTS_PTW)
-#define CONFIG_MXC_USB_FLAGS   0
-#define CONFIG_USB_MAX_CONTROLLER_COUNT 1
+#define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
 #endif
 
 #endif
