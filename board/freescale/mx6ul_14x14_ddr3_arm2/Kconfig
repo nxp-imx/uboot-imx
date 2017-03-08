@@ -1,0 +1,12 @@
+if TARGET_MX6UL_14X14_DDR3_ARM2
+
+config SYS_BOARD
+       default "mx6ul_14x14_ddr3_arm2"
+
+config SYS_VENDOR
+       default "freescale"
+
+config SYS_CONFIG_NAME
+       default "mx6ul_14x14_ddr3_arm2"
+
+endif
