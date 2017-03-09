@@ -9,4 +9,13 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
        default "mx6ull_ddr3_arm2"
 
+config MX6ULL_DDR3_ARM2_EMMC_REWORK
+	bool "Select this for the board with eMMC rework"
+
+config MX6ULL_DDR3_ARM2_TSC_REWORK
+        bool "Select this for the board with screen touch rework"
+
+config MX6ULL_DDR3_ARM2_QSPIB_REWORK
+        bool "Select this for the board with flash on QSPI-B port rework"
+
 endif
