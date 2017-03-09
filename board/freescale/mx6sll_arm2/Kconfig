@@ -9,4 +9,7 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
 	default "mx6sll_arm2"
 
+config LPDDR2
+	bool "set if the board uses the LPDDR2 not default LPDDR3" 
+
 endif

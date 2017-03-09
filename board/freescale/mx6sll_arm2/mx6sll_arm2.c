@@ -24,12 +24,11 @@
 #include <miiphy.h>
 #include <mmc.h>
 #include <mxsfb.h>
-#include <netdev.h>
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
 #include "../common/pfuze.h"
 #include <usb.h>
-#include <usb/ehci-fsl.h>
+#include <usb/ehci-ci.h>
 #if defined(CONFIG_MXC_EPDC)
 #include <lcd.h>
 #include <mxc_epdc_fb.h>
@@ -71,7 +70,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define EPDC_PAD_CTRL    (PAD_CTL_PKE | PAD_CTL_SPEED_MED |	\
 	PAD_CTL_DSE_40ohm | PAD_CTL_SRE_FAST)
 
-#ifdef CONFIG_SYS_I2C_MXC
+#ifdef CONFIG_SYS_I2C
 #define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C1 for PMIC and EPD */
 struct i2c_pads_info i2c_pad_info1 = {
@@ -241,6 +240,7 @@ int board_mmc_init(bd_t *bis)
 		case 0:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc1_pads, ARRAY_SIZE(usdhc1_pads));
+			gpio_request(USDHC1_CD_GPIO, "usdhc1 cd");
 			gpio_direction_input(USDHC1_CD_GPIO);
 			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
 			break;
@@ -248,11 +248,13 @@ int board_mmc_init(bd_t *bis)
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
+			gpio_request(USDHC2_PWR_GPIO, "usdhc2 pwr");
 			gpio_direction_output(USDHC2_PWR_GPIO, 1);
 			break;
 		case 2:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
+			gpio_request(USDHC3_CD_GPIO, "usdhc3 cd");
 			gpio_direction_input(USDHC3_CD_GPIO);
 			usdhc_cfg[2].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 			break;
@@ -323,6 +325,23 @@ int power_init_board(void)
 
 	return 0;
 }
+#elif defined(CONFIG_DM_PMIC_PFUZE100)
+int power_init_board(void)
+{
+	struct udevice *dev;
+	int ret;
+
+	dev = pfuze_common_init();
+	if (!dev)
+		return -ENODEV;
+
+	ret = pfuze_mode_init(dev, APS_PFM);
+	if (ret < 0)
+		return ret;
+
+	return 0;
+}
+
 #endif
 
 #ifdef CONFIG_MXC_SPI
@@ -390,7 +409,7 @@ void do_enable_parallel_lcd(struct display_info_t const *dev)
 {
 	int ret;
 
-	ret = enable_lcdif_clock(dev->bus);
+	ret = enable_lcdif_clock(dev->bus, 1);
 	if (ret) {
 		printf("Enable LCDIF clock failed, %d\n", ret);
 		return;
@@ -399,13 +418,16 @@ void do_enable_parallel_lcd(struct display_info_t const *dev)
 	imx_iomux_v3_setup_multiple_pads(lcd_pads, ARRAY_SIZE(lcd_pads));
 
 	/* Reset the LCD */
+	gpio_request(IMX_GPIO_NR(2, 19), "lcd reset");
 	gpio_direction_output(IMX_GPIO_NR(2, 19) , 0);
 	udelay(500);
 	gpio_direction_output(IMX_GPIO_NR(2, 19) , 1);
 
+	gpio_request(IMX_GPIO_NR(4, 8), "lcd pwr en");
 	gpio_direction_output(IMX_GPIO_NR(4, 8) , 1);
 
 	/* Set Brightness to high */
+	gpio_request(IMX_GPIO_NR(3, 23), "backlight");
 	gpio_direction_output(IMX_GPIO_NR(3, 23) , 1);
 }
 
@@ -526,6 +548,7 @@ static void setup_epdc_power(void)
 	/* EPDC_PWRSTAT - GPIO2[13] for PWR_GOOD status */
 	imx_iomux_v3_setup_pad(MX6_PAD_EPDC_PWR_STAT__GPIO2_IO13 |
 				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+	gpio_request(IMX_GPIO_NR(2, 13), "EPDC_PWRSTAT");
 	gpio_direction_input(IMX_GPIO_NR(2, 13));
 
 	/* EPDC_VCOM0 - GPIO2[03] for VCOM control */
@@ -533,18 +556,21 @@ static void setup_epdc_power(void)
 				MUX_PAD_CTRL(EPDC_PAD_CTRL));
 
 	/* Set as output */
+	gpio_request(IMX_GPIO_NR(2, 3), "EPDC_VCOM0");
 	gpio_direction_output(IMX_GPIO_NR(2, 3), 1);
 
 	/* EPDC_PWRWAKEUP - GPIO2[14] for EPD PMIC WAKEUP */
 	imx_iomux_v3_setup_pad(MX6_PAD_EPDC_PWR_WAKE__GPIO2_IO14 |
 				MUX_PAD_CTRL(EPDC_PAD_CTRL));
 	/* Set as output */
+	gpio_request(IMX_GPIO_NR(2, 14), "EPDC_PWRWAKEUP");
 	gpio_direction_output(IMX_GPIO_NR(2, 14), 1);
 
 	/* EPDC_PWRCTRL0 - GPIO2[07] for EPD PWR CTL0 */
 	imx_iomux_v3_setup_pad(MX6_PAD_EPDC_PWR_CTRL0__GPIO2_IO07 |
 				MUX_PAD_CTRL(EPDC_PAD_CTRL));
 	/* Set as output */
+	gpio_request(IMX_GPIO_NR(2, 7), "EPDC_PWRCTRL0");
 	gpio_direction_output(IMX_GPIO_NR(2, 7), 1);
 }
 
@@ -705,7 +731,7 @@ int board_init(void)
 	/* Address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
-#ifdef CONFIG_SYS_I2C_MXC
+#ifdef CONFIG_SYS_I2C
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
 	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info2);
 #endif
