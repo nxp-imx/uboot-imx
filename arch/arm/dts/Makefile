@@ -326,6 +326,9 @@ dtb-$(CONFIG_MX6) += imx6ul-14x14-ddr3-arm2.dtb \
 	imx6ull-14x14-evk-gpmi-weim.dtb \
 	imx6ul-9x9-evk.dtb \
 	imx6ull-9x9-evk.dtb \
+	imx6sll-lpddr2-arm2.dtb \
+	imx6sll-lpddr3-arm2.dtb \
+	imx6sll-lpddr3-arm2-ecspi.dtb \
 	imx6sll-evk.dtb \
 	imx6dl-icore.dtb \
 	imx6dl-icore-rqs.dtb \
