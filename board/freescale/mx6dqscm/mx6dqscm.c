@@ -739,10 +739,10 @@ int power_init_board(void)
 	if (ret < 0)
 		return ret;
 
-	/* set SW3A to 1.2V for LPDDR2 */
+	/* set SW3A to 1.25V for LPDDR2 */
 	pmic_reg_read(pfuze, PFUZE100_SW3AVOL, &reg);
 	reg &= ~0x3f;
-	reg |= 0x20;
+	reg |= 0x22;
 	pmic_reg_write(pfuze, PFUZE100_SW3AVOL, reg);
 
 	/* set SW2 to 3.2V */
