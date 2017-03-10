@@ -1,0 +1,15 @@
+if TARGET_MX6SX_19X19_ARM2
+
+config SYS_BOARD
+	default "mx6sx_19x19_arm2"
+
+config SYS_VENDOR
+	default "freescale"
+
+config SYS_CONFIG_NAME
+	default "mx6sx_19x19_arm2"
+
+config LPDDR2
+	bool "Select for the board using LPDDR2 not default DDR3"
+
+endif
