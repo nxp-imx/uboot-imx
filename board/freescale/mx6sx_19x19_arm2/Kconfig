@@ -12,4 +12,9 @@ config SYS_CONFIG_NAME
 config LPDDR2
 	bool "Select for the board using LPDDR2 not default DDR3"
 
+config NOR
+	bool "Support for NOR flash"
+	help
+	  The i.MX SoC supports having a NOR flash connected to the WEIM.
+	  Need to set this for NOR_BOOT.
 endif
