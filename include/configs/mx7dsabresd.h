@@ -68,6 +68,7 @@
 
 #ifdef CONFIG_IMX_BOOTAUX
 
+#ifdef CONFIG_FSL_QSPI
 #define UPDATE_M4_ENV \
 	"m4image=m4_qspi.bin\0" \
 	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \
@@ -77,11 +78,17 @@
 				"setexpr fw_sz ${filesize} + 0xffff; " \
 				"setexpr fw_sz ${fw_sz} / 0x10000; "	\
 				"setexpr fw_sz ${fw_sz} * 0x10000; "	\
-				"sf erase 0x0 ${fw_sz}; " \
-				"sf write ${loadaddr} 0x0 ${filesize}; " \
+				"sf erase 0x100000 ${fw_sz}; " \
+				"sf write ${loadaddr} 0x100000 ${filesize}; " \
 			"fi; " \
 		"fi\0" \
 	"m4boot=sf probe 1:0; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
+#else
+#define UPDATE_M4_ENV \
+	"m4image=m4_qspi.bin\0" \
+	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)" ${m4image}\0" \
+	"m4boot=run loadm4image; bootaux "__stringify(CONFIG_SYS_AUXCORE_BOOTDATA)"\0"
+#endif
 #else
 #define UPDATE_M4_ENV ""
 #endif
@@ -113,7 +120,6 @@
 
 #if defined(CONFIG_NAND_BOOT)
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	UPDATE_M4_ENV \
 	CONFIG_MFG_ENV_SETTINGS \
 	"panel=TFT43AB\0" \
 	"fdt_addr=0x83000000\0" \
@@ -290,6 +296,8 @@
 #define CONFIG_MXC_USB_PORTSC  (PORT_PTS_UTMI | PORT_PTS_PTW)
 
 #define CONFIG_IMX_THERMAL
+
+#define CONFIG_CMD_BMODE
 
 #define CONFIG_USBD_HS
 
