@@ -404,6 +404,7 @@ static inline void qspi_ahb_read(struct fsl_qspi_priv *priv, u8 *rxbuf, int len)
 	qspi_write32(priv->flags, &regs->mcr, mcr_reg);
 }
 
+#ifndef CONFIG_MX7ULP
 static void qspi_enable_ddr_mode(struct fsl_qspi_priv *priv)
 {
 	u32 reg, reg2;
@@ -426,6 +427,7 @@ static void qspi_enable_ddr_mode(struct fsl_qspi_priv *priv)
 
 	qspi_write32(priv->flags, &regs->mcr, reg);
 }
+#endif
 
 /*
  * There are two different ways to read out the data from the flash:
@@ -448,8 +450,13 @@ static void qspi_init_ahb_read(struct fsl_qspi_priv *priv)
 	qspi_write32(priv->flags, &regs->buf0cr, QSPI_BUFXCR_INVALID_MSTRID);
 	qspi_write32(priv->flags, &regs->buf1cr, QSPI_BUFXCR_INVALID_MSTRID);
 	qspi_write32(priv->flags, &regs->buf2cr, QSPI_BUFXCR_INVALID_MSTRID);
+#ifdef CONFIG_MX7ULP
+	qspi_write32(priv->flags, &regs->buf3cr, QSPI_BUF3CR_ALLMST_MASK |
+		     (0x10 << QSPI_BUF3CR_ADATSZ_SHIFT));
+#else
 	qspi_write32(priv->flags, &regs->buf3cr, QSPI_BUF3CR_ALLMST_MASK |
 		     (0x80 << QSPI_BUF3CR_ADATSZ_SHIFT));
+#endif
 
 	/* We only use the buffer3 */
 	qspi_write32(priv->flags, &regs->buf0ind, 0);
@@ -463,8 +470,10 @@ static void qspi_init_ahb_read(struct fsl_qspi_priv *priv)
 	qspi_write32(priv->flags, &regs->bfgencr,
 		     SEQID_FAST_READ << QSPI_BFGENCR_SEQID_SHIFT);
 
+#ifndef CONFIG_MX7ULP
 	/*Enable DDR Mode*/
 	qspi_enable_ddr_mode(priv);
+#endif
 }
 #endif
 
@@ -909,7 +918,7 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	mcr_val = qspi_read32(qspi->priv.flags, &regs->mcr);
 
 	/* Set endianness to LE for i.mx */
-	if (IS_ENABLED(CONFIG_MX6) || IS_ENABLED(CONFIG_MX7))
+	if (IS_ENABLED(CONFIG_MX6) || IS_ENABLED(CONFIG_MX7) || IS_ENABLED(CONFIG_MX7ULP))
 		mcr_val = QSPI_MCR_END_CFD_LE;
 
 	qspi_write32(qspi->priv.flags, &regs->mcr,
@@ -921,6 +930,18 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		      QSPI_SMPR_FSPHS_MASK | QSPI_SMPR_HSENA_MASK), 0);
 
 	total_size = FSL_QSPI_FLASH_SIZE * FSL_QSPI_FLASH_NUM;
+
+#if defined(CONFIG_MX7ULP)
+	/*
+	 * mx7ulp QSPI controller does not support parallel mode, it only has port A.
+	 * To support dual die flash and single die flash, we set flash 1 size to CS0 area,
+	 * set flash2 size to CS1 area.
+	*/
+	qspi_write32(qspi->priv.flags, &regs->sfa1ad,
+		     FSL_QSPI_FLASH_SIZE | amba_bases[bus]);
+	qspi_write32(qspi->priv.flags, &regs->sfa2ad,
+		     total_size | amba_bases[bus]);
+#else
 	/*
 	 * Any read access to non-implemented addresses will provide
 	 * undefined results.
@@ -939,6 +960,7 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		     total_size | amba_bases[bus]);
 	qspi_write32(qspi->priv.flags, &regs->sfb2ad,
 		     total_size | amba_bases[bus]);
+#endif
 
 	qspi_set_lut(&qspi->priv);
 
@@ -1032,7 +1054,7 @@ static int fsl_qspi_probe(struct udevice *bus)
 	mcr_val = qspi_read32(priv->flags, &priv->regs->mcr);
 
 	/* Set endianness to LE for i.mx */
-	if (IS_ENABLED(CONFIG_MX6) || IS_ENABLED(CONFIG_MX7))
+	if (IS_ENABLED(CONFIG_MX6) || IS_ENABLED(CONFIG_MX7) || IS_ENABLED(CONFIG_MX7ULP))
 		mcr_val = QSPI_MCR_END_CFD_LE;
 
 	qspi_write32(priv->flags, &priv->regs->mcr,
@@ -1241,6 +1263,7 @@ static const struct udevice_id fsl_qspi_ids[] = {
 	{ .compatible = "fsl,imx6sx-qspi" },
 	{ .compatible = "fsl,imx6ul-qspi" },
 	{ .compatible = "fsl,imx7d-qspi" },
+	{ .compatible = "fsl,imx7ulp-qspi" },
 	{ }
 };
 
