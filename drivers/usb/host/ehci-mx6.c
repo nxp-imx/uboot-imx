@@ -537,6 +537,25 @@ static const struct ehci_ops mx6_ehci_ops = {
 	.init_after_reset 	= mx6_init_after_reset
 };
 
+/**
+ * board_ehci_usb_phy_mode - override usb phy mode
+ * @port:	usb host/otg port
+ *
+ * Target board specific, override usb_phy_mode.
+ * When usb-otg is used as usb host port, iomux pad usb_otg_id can be
+ * left disconnected in this case usb_phy_mode will not be able to identify
+ * the phy mode that usb port is used.
+ * Machine file overrides board_usb_phy_mode.
+ * When the extcon property is set in DTB, machine must provide this function, otherwise
+ * it will default return HOST.
+ *
+ * Return: USB_INIT_DEVICE or USB_INIT_HOST
+ */
+int __weak board_ehci_usb_phy_mode(struct udevice *dev)
+{
+	return USB_INIT_HOST;
+}
+
 static int ehci_usb_phy_mode(struct udevice *dev)
 {
 	struct usb_plat *plat = dev_get_plat(dev);
@@ -589,6 +608,15 @@ static int ehci_usb_of_to_plat(struct udevice *dev)
 {
 	struct usb_plat *plat = dev_get_plat(dev);
 	enum usb_dr_mode dr_mode;
+	const struct fdt_property *extcon;
+
+	extcon = fdt_get_property(gd->fdt_blob, dev_of_offset(dev),
+			"extcon", NULL);
+	if (extcon) {
+		plat->init_type = board_ehci_usb_phy_mode(dev);
+
+		return 0;
+	}
 
 	dr_mode = usb_get_dr_mode(dev_ofnode(dev));
 
