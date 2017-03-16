@@ -181,6 +181,9 @@
 #define QSPI0_AMBA_BASE                 0xC0000000
 #endif
 
+/* USB Configs */
+#define CONFIG_MXC_USB_PORTSC  (PORT_PTS_UTMI | PORT_PTS_PTW)
+
 #define CONFIG_OF_SYSTEM_SETUP
 
 #endif	/* __CONFIG_H */
