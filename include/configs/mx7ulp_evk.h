@@ -150,4 +150,13 @@
 #define CONFIG_CMD_CACHE
 #endif
 
+/* QSPI configs */
+#ifdef CONFIG_FSL_QSPI
+#define CONFIG_SYS_FSL_QSPI_AHB
+#define FSL_QSPI_FLASH_NUM              1
+#define FSL_QSPI_FLASH_SIZE             SZ_8M
+#define QSPI0_BASE_ADDR                 0x410A5000
+#define QSPI0_AMBA_BASE                 0xC0000000
+#endif
+
 #endif	/* __CONFIG_H */
