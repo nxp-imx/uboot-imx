@@ -179,6 +179,19 @@
 #define CONFIG_CMD_CACHE
 #endif
 
+/* QSPI configs */
+#ifdef CONFIG_FSL_QSPI
+#define CONFIG_SYS_FSL_QSPI_AHB
+#define CONFIG_SF_DEFAULT_BUS           0
+#define CONFIG_SF_DEFAULT_CS            0
+#define CONFIG_SF_DEFAULT_SPEED         40000000
+#define CONFIG_SF_DEFAULT_MODE          SPI_MODE_0
+#define FSL_QSPI_FLASH_NUM              1
+#define FSL_QSPI_FLASH_SIZE             SZ_8M
+#define QSPI0_BASE_ADDR                 0x410A5000
+#define QSPI0_AMBA_BASE                 0xC0000000
+#endif
+
 #define CONFIG_OF_SYSTEM_SETUP
 
 #endif	/* __CONFIG_H */
