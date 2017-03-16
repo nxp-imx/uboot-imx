@@ -9,12 +9,16 @@ config IMX_M4_BIND
 	  Select this to bind a ULP M4 image to final u-boot image
 	  User needs put the M4 image ulp_m4.bin under u-boot directory
 
+config MX7ULP
+	bool
+
 choice
 	prompt "MX7ULP board select"
 	optional
 
 config TARGET_MX7ULP_EVK
         bool "Support mx7ulp EVK board"
+	select MX7ULP
 
 endchoice
 
