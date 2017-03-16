@@ -576,7 +576,8 @@ dtb-$(CONFIG_MX7) += imx7d-sdb.dtb \
 	imx7-colibri-rawnand.dtb \
 	imx7s-warp.dtb
 
-dtb-$(CONFIG_ARCH_MX7ULP) += imx7ulp-evk.dtb
+dtb-$(CONFIG_ARCH_MX7ULP) += imx7ulp-evk.dtb \
+		imx7ulp-evk-qspi.dtb
 
 dtb-$(CONFIG_ARCH_IMX8) += fsl-imx8qxp-mek.dtb \
 	fsl-imx8qm-mek.dtb \
