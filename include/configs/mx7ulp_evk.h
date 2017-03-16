@@ -46,7 +46,6 @@
 #define CONFIG_ENV_SIZE			SZ_8K
 
 #define CONFIG_CMD_FAT
-#define CONFIG_DOS_PARTITION
 
 /* Using ULP WDOG for reset */
 #define WDOG_BASE_ADDR			WDG1_RBASE
@@ -207,6 +206,12 @@
 #define QSPI0_BASE_ADDR                 0x410A5000
 #define QSPI0_AMBA_BASE                 0xC0000000
 #endif
+
+/* USB Configs */
+#define CONFIG_USB_HOST_ETHER
+#define CONFIG_USB_ETHER_ASIX
+#define CONFIG_USB_ETHER_RTL8152
+#define CONFIG_MXC_USB_PORTSC  (PORT_PTS_UTMI | PORT_PTS_PTW)
 
 #define CONFIG_OF_SYSTEM_SETUP
 
