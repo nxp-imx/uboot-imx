@@ -166,3 +166,17 @@ add:
 	return 0;
 }
 #endif
+
+int board_mmc_get_env_dev(int devno)
+{
+	return devno;
+}
+
+int board_late_init(void)
+{
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
+
+	return 0;
+}
