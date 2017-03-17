@@ -16,12 +16,21 @@ choice
 	prompt "MX7ULP board select"
 	optional
 
+config TARGET_MX7ULP_10X10_ARM2
+	bool "Support mx7ulp 10x10 validation board"
+	select MX7ULP
+
+config TARGET_MX7ULP_14X14_ARM2
+	bool "Support mx7ulp 14x14 validation board"
+	select MX7ULP
+
 config TARGET_MX7ULP_EVK
         bool "Support mx7ulp EVK board"
 	select MX7ULP
 
 endchoice
 
+source "board/freescale/mx7ulp_arm2/Kconfig"
 source "board/freescale/mx7ulp_evk/Kconfig"
 
 endif
