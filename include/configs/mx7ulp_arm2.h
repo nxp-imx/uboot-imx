@@ -12,9 +12,6 @@
 #include <linux/sizes.h>
 #include <asm/arch/imx-regs.h>
 
-/*Uncomment it to use plugin boot*/
-/*#define CONFIG_USE_PLUGIN*/
-
 /*Uncomment it to use secure boot*/
 /*#define CONFIG_SECURE_BOOT*/
 
@@ -24,10 +21,8 @@
 #endif
 #endif
 
-#define CONFIG_SYS_VSNPRINTF
 #define CONFIG_BOARD_POSTCLK_INIT
-#define CONFIG_IMX_FIXED_IVT_OFFSET
-#define CONFIG_SYS_BOOTM_LEN   0x1000000
+#define CONFIG_SYS_BOOTM_LEN		0x1000000
 
 #define SRC_BASE_ADDR           CMC1_RBASE
 #define IRAM_BASE_ADDR          OCRAM_0_BASE
@@ -37,10 +32,6 @@
 #define CONFIG_CMD_FUSE
 #define CONFIG_MXC_OCOTP
 
-/* MMC Configs */
-#define CONFIG_MMC
-#define CONFIG_CMD_MMC
-#define CONFIG_GENERIC_MMC
 #define CONFIG_BOUNCE_BUFFER
 #define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
@@ -63,20 +54,10 @@
 
 /* Using ULP WDOG for reset */
 #define WDOG_BASE_ADDR		 WDG1_RBASE
-#define CONFIG_ULP_WATCHDOG
 
 
 #define CONFIG_SYS_ARCH_TIMER
 #define CONFIG_SYS_HZ_CLOCK 1000000 /* Fixed at 1Mhz from TSTMR */
-
-#define CONFIG_DISPLAY_CPUINFO
-#define CONFIG_DISPLAY_BOARDINFO
-
-/* uncomment for PLUGIN mode support */
-/* #define CONFIG_USE_PLUGIN */
-
-/* uncomment for SECURE mode support */
-/* #define CONFIG_SECURE_BOOT */
 
 #define CONFIG_INITRD_TAG
 #define CONFIG_CMDLINE_TAG
@@ -86,13 +67,7 @@
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(8 * SZ_1M)
 
-#define CONFIG_BOARD_LATE_INIT
-#define CONFIG_BOARD_EARLY_INIT_F
-
 /* UART */
-#define CONFIG_FSL_LPUART
-#define CONFIG_LPUART_32LE_REG
-
 #ifdef CONFIG_TARGET_MX7ULP_10X10_ARM2
 #define LPUART_BASE     LPUART6_RBASE
 #else
@@ -104,13 +79,10 @@
 #define CONFIG_CONS_INDEX		1
 #define CONFIG_BAUDRATE			115200
 
-
 #undef CONFIG_CMD_IMLS
 #define CONFIG_SYS_LONGHELP
 #define CONFIG_AUTO_COMPLETE
-#define CONFIG_SYS_HUSH_PARSER
 
-#define CONFIG_BOOTDELAY		1
 #define CONFIG_SYS_CACHELINE_SIZE      64
 
 /* Miscellaneous configurable options */
@@ -140,7 +112,6 @@
 #define CONFIG_SYS_MEMTEST_START    PHYS_SDRAM
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM
 #define CONFIG_CMD_BOOTZ
-#define CONFIG_OF_LIBFDT
 
 #define CONFIG_LOADADDR             0x60800000
 
@@ -152,8 +123,6 @@
 #define CONFIG_DEFAULT_FDT_FILE		"imx7ulp-14x14-arm2.dtb"
 #endif
 
-#define CONFIG_MFG_NAND_PARTITION
-
 #define CONFIG_MFG_ENV_SETTINGS \
 	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
 		"rdinit=/linuxrc " \
@@ -161,7 +130,6 @@
 		"g_mass_storage.file=/fat g_mass_storage.ro=1 " \
 		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
 		"g_mass_storage.iSerialNumber=\"\" "\
-		CONFIG_MFG_NAND_PARTITION \
 		"\0" \
 		"initrd_addr=0x63800000\0" \
 		"initrd_high=0xffffffff\0" \
@@ -231,9 +199,6 @@
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
-/* FLASH and environment organization */
-#define CONFIG_SYS_NO_FLASH
-
 #ifndef CONFIG_SYS_DCACHE_OFF
 #define CONFIG_CMD_CACHE
 #endif
@@ -271,8 +236,6 @@
 #endif
 #define QSPI0_BASE_ADDR                 0x410A5000
 #define QSPI0_AMBA_BASE                 0xC0000000
-#define CONFIG_QSPI_BASE	QSPI0_BASE_ADDR
-#define CONFIG_QSPI_MEMMAP_BASE	QSPI0_AMBA_BASE
 #endif
 
 #endif	/* __CONFIG_H */

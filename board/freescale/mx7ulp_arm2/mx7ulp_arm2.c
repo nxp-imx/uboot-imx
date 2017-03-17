@@ -40,18 +40,6 @@ int dram_init(void)
 	return 0;
 }
 
-static int mx7ulp_board_rev(void)
-{
-	return 0x41;
-}
-
-u32 get_board_rev(void)
-{
-	int rev = mx7ulp_board_rev();
-
-	return (get_cpu_rev() & ~(0xF << 8)) | rev;
-}
-
 static iomux_cfg_t const lpuart4_pads[] = {
     MX7ULP_PAD_PTC3__LPUART4_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
     MX7ULP_PAD_PTC2__LPUART4_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
@@ -214,7 +202,7 @@ int board_init(void)
 	return 0;
 }
 
-#ifdef CONFIG_FSL_ESDHC
+#ifndef CONFIG_DM_MMC
 static struct fsl_esdhc_cfg usdhc_cfg[2] = {
 	{USDHC0_RBASE, 0, 8},
 	{USDHC1_RBASE, 0},

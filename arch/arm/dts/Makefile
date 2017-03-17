@@ -376,7 +376,9 @@ dtb-$(CONFIG_MX7) += imx7-colibri.dtb \
 		imx7d-19x19-lpddr3-arm2.dtb
 
 dtb-$(CONFIG_ARCH_MX7ULP) += imx7ulp-evk.dtb \
-		imx7ulp-evk-qspi.dtb
+		imx7ulp-evk-qspi.dtb \
+		imx7ulp-10x10-arm2.dtb \
+		imx7ulp-14x14-arm2.dtb
 
 dtb-$(CONFIG_SOC_KEYSTONE) += keystone-k2hk-evm.dtb \
 	keystone-k2l-evm.dtb \
