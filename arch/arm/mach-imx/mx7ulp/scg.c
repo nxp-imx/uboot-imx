@@ -504,7 +504,10 @@ u32 decode_pll(enum pll_clocks pll)
 
 		infreq = infreq / pre_div;
 
-		return infreq * mult + infreq * num / denom;
+		if (denom)
+			return infreq * mult + infreq * num / denom;
+		else
+			return infreq * mult;
 
 	case PLL_A7_APLL:
 		reg = readl(&scg1_regs->apllcsr);
@@ -533,7 +536,10 @@ u32 decode_pll(enum pll_clocks pll)
 
 		infreq = infreq / pre_div;
 
-		return infreq * mult + infreq * num / denom;
+		if (denom)
+			return infreq * mult + infreq * num / denom;
+		else
+			return infreq * mult;
 
 	case PLL_USB:
 		reg = readl(&scg1_regs->upllcsr);
