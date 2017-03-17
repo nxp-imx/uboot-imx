@@ -28,6 +28,10 @@
 #define IRAM_BASE_ADDR			OCRAM_0_BASE
 #define IOMUXC_BASE_ADDR		IOMUXC1_RBASE
 
+/* Fuses */
+#define CONFIG_CMD_FUSE
+#define CONFIG_MXC_OCOTP
+
 #define CONFIG_FSL_USDHC
 #define CONFIG_SUPPORT_EMMC_BOOT /* eMMC specific */
 
