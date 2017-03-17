@@ -72,7 +72,7 @@ int mcore_early_load_and_boot(void)
 {
 	u32 *src_addr = (u32 *)&_end;
 	u32 *dest_addr = (u32 *)TCML_BASE; /*TCML*/
-	u32 image_size = SIZE_128K + SIZE_64K; /* 192 KB*/
+	u32 image_size = SZ_128K + SZ_64K; /* 192 KB*/
 	u32 pc = 0, tag = 0;
 
 	memcpy(dest_addr, src_addr, image_size);
