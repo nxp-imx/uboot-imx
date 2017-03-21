@@ -42,6 +42,7 @@
 		spi3 = &ecspi2;
 		spi4 = &ecspi3;
 		spi5 = &ecspi4;
+		usb0 = &usbotg1;
 	};
 
 	cpus {

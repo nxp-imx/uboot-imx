@@ -34,6 +34,7 @@
 		i2c2 = &lpi2c6;
 		i2c3 = &lpi2c7;
 		spi0 = &qspi1;
+		usb0 = &usbotg1;
 	};
 
 	cpus {
