@@ -29,11 +29,8 @@
 #define	CONFIG_FEC_XCV_TYPE		RGMII
 #define CONFIG_FEC_MXC_PHYADDR		0
 
-#if defined(CONFIG_MX6DQ_POP_LPDDR2)
-#define CONFIG_DEFAULT_FDT_FILE "imx6q-pop-arm2.dtb"
-#else
-#define CONFIG_DEFAULT_FDT_FILE "imx6q-arm2.dtb"
-#endif
+#define CONFIG_PHYLIB
+#define CONFIG_PHY_ATHEROS
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"script=boot.scr\0" \
@@ -136,7 +133,7 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 /* Environment organization */
-#define CONFIG_ENV_OFFSET		(6 * 64 * 1024)
+#define CONFIG_ENV_OFFSET		(13 * 64 * 1024)
 #define CONFIG_ENV_SIZE			(8 * 1024)
 #define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		1

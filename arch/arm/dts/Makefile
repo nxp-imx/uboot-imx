@@ -330,12 +330,15 @@ dtb-$(CONFIG_MX6) += imx6ul-14x14-ddr3-arm2.dtb \
 	imx6sll-lpddr3-arm2.dtb \
 	imx6sll-lpddr3-arm2-ecspi.dtb \
 	imx6sll-evk.dtb \
+	imx6dl-arm2.dtb \
 	imx6dl-icore.dtb \
 	imx6dl-icore-rqs.dtb \
 	imx6dl-sabreauto.dtb \
 	imx6dl-sabreauto-ecspi.dtb \
 	imx6dl-sabreauto-gpmi-weim.dtb \
 	imx6dl-sabresd.dtb \
+	imx6q-arm2.dtb \
+	imx6q-pop-arm2.dtb \
 	imx6q-icore.dtb \
 	imx6q-icore-rqs.dtb \
 	imx6q-sabreauto.dtb \

@@ -124,20 +124,11 @@ static void setup_iomux_enet(void)
 }
 
 #ifdef CONFIG_FSL_ESDHC
+#ifndef CONFIG_DM_MMC
 struct fsl_esdhc_cfg usdhc_cfg[2] = {
 	{USDHC3_BASE_ADDR},
 	{USDHC4_BASE_ADDR},
 };
-
-int board_mmc_get_env_dev(int devno)
-{
-	return devno - 2;
-}
-
-int mmc_map_to_kernel_blk(int devno)
-{
-	return devno + 2;
-}
 
 int board_mmc_getcd(struct mmc *mmc)
 {
@@ -188,60 +179,55 @@ int board_mmc_init(bd_t *bis)
 }
 #endif
 
-#define MII_MMD_ACCESS_CTRL_REG		0xd
-#define MII_MMD_ACCESS_ADDR_DATA_REG	0xe
-#define MII_DBG_PORT_REG		0x1d
-#define MII_DBG_PORT2_REG		0x1e
+int board_mmc_get_env_dev(int devno)
+{
+	return devno - 2;
+}
 
-int fecmxc_mii_postcall(int phy)
+int mmc_map_to_kernel_blk(int devno)
+{
+	return devno + 2;
+}
+#endif
+
+static int ar8031_phy_fixup(struct phy_device *phydev)
 {
 	unsigned short val;
 
-	/*
-	 * Due to the i.MX6Q Armadillo2 board HW design,there is
-	 * no 125Mhz clock input from SOC. In order to use RGMII,
-	 * We need enable AR8031 ouput a 125MHz clk from CLK_25M
-	 */
-	miiphy_write("FEC", phy, MII_MMD_ACCESS_CTRL_REG, 0x7);
-	miiphy_write("FEC", phy, MII_MMD_ACCESS_ADDR_DATA_REG, 0x8016);
-	miiphy_write("FEC", phy, MII_MMD_ACCESS_CTRL_REG, 0x4007);
-	miiphy_read("FEC", phy, MII_MMD_ACCESS_ADDR_DATA_REG, &val);
+	/* To enable AR8031 ouput a 125MHz clk from CLK_25M */
+	phy_write(phydev, MDIO_DEVAD_NONE, 0xd, 0x7);
+	phy_write(phydev, MDIO_DEVAD_NONE, 0xe, 0x8016);
+	phy_write(phydev, MDIO_DEVAD_NONE, 0xd, 0x4007);
+
+	val = phy_read(phydev, MDIO_DEVAD_NONE, 0xe);
 	val &= 0xffe3;
 	val |= 0x18;
-	miiphy_write("FEC", phy, MII_MMD_ACCESS_ADDR_DATA_REG, val);
+	phy_write(phydev, MDIO_DEVAD_NONE, 0xe, val);
 
-	/* For the RGMII phy, we need enable tx clock delay */
-	miiphy_write("FEC", phy, MII_DBG_PORT_REG, 0x5);
-	miiphy_read("FEC", phy, MII_DBG_PORT2_REG, &val);
+	/* introduce tx clock delay */
+	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x5);
+	val = phy_read(phydev, MDIO_DEVAD_NONE, 0x1e);
 	val |= 0x0100;
-	miiphy_write("FEC", phy, MII_DBG_PORT2_REG, val);
+	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, val);
 
-	miiphy_write("FEC", phy, MII_BMCR, 0xa100);
+	return 0;
+}
+
+int board_phy_config(struct phy_device *phydev)
+{
+	ar8031_phy_fixup(phydev);
+
+	if (phydev->drv->config)
+		phydev->drv->config(phydev);
 
 	return 0;
 }
 
 int board_eth_init(bd_t *bis)
 {
-	struct eth_device *dev;
-	int ret = cpu_eth_init(bis);
+	setup_iomux_enet();
 
-	if (ret)
-		return ret;
-
-	dev = eth_get_dev_by_name("FEC");
-	if (!dev) {
-		printf("FEC MXC: Unable to get FEC device entry\n");
-		return -EINVAL;
-	}
-
-	ret = fecmxc_register_mii_postcall(dev, fecmxc_mii_postcall);
-	if (ret) {
-		printf("FEC MXC: Unable to register FEC mii postcall\n");
-		return ret;
-	}
-
-	return 0;
+	return cpu_eth_init(bis);
 }
 
 #ifdef CONFIG_USB_EHCI_MX6
@@ -284,7 +270,6 @@ int board_ehci_hcd_init(int port)
 int board_early_init_f(void)
 {
 	setup_iomux_uart();
-	setup_iomux_enet();
 
 	return 0;
 }
