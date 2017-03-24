@@ -55,7 +55,8 @@ DECLARE_GLOBAL_DATA_PTR;
 enum lpuart_devtype {
 	DEV_VF610 = 1,
 	DEV_LS1021A,
-	DEV_MX7ULP
+	DEV_MX7ULP,
+	DEV_IMX8
 };
 
 struct lpuart_serial_platdata {
@@ -265,7 +266,7 @@ static int _lpuart32_serial_getc(struct lpuart_serial_platdata *plat)
 
 	lpuart_read32(plat->flags, &base->data, &val);
 
-	if (plat->devtype & DEV_MX7ULP) {
+	if (plat->devtype == DEV_MX7ULP || plat->devtype == DEV_IMX8) {
 		lpuart_read32(plat->flags, &base->stat, &stat);
 		if (stat & STAT_OR)
 			lpuart_write32(plat->flags, &base->stat, STAT_OR);
@@ -280,7 +281,7 @@ static void _lpuart32_serial_putc(struct lpuart_serial_platdata *plat,
 	struct lpuart_fsl_reg32 *base = plat->reg;
 	u32 stat;
 
-	if (plat->devtype & DEV_MX7ULP) {
+	if (plat->devtype == DEV_MX7ULP || plat->devtype == DEV_IMX8) {
 		if (c == '\n')
 			serial_putc('\r');
 	}
@@ -330,7 +331,7 @@ static int _lpuart32_serial_init(struct lpuart_serial_platdata *plat)
 
 	lpuart_write32(plat->flags, &base->match, 0);
 
-	if (plat->devtype & DEV_MX7ULP) {
+	if (plat->devtype == DEV_MX7ULP || plat->devtype == DEV_IMX8) {
 		_lpuart32_serial_setbrg_7ulp(plat, gd->baudrate);
 	} else {
 		/* provide data bits, parity, stop bit, etc */
@@ -347,7 +348,7 @@ static int lpuart_serial_setbrg(struct udevice *dev, int baudrate)
 	struct lpuart_serial_platdata *plat = dev->platdata;
 
 	if (is_lpuart32(dev)) {
-		if (plat->devtype & DEV_MX7ULP)
+		if (plat->devtype == DEV_MX7ULP || plat->devtype == DEV_IMX8)
 			_lpuart32_serial_setbrg_7ulp(plat, baudrate);
 		else
 			_lpuart32_serial_setbrg(plat, baudrate);
@@ -432,6 +433,8 @@ static int lpuart_serial_ofdata_to_platdata(struct udevice *dev)
 		plat->devtype = DEV_MX7ULP;
 	else if (!fdt_node_check_compatible(blob, node, "fsl,vf610-lpuart"))
 		plat->devtype = DEV_VF610;
+	else if (!fdt_node_check_compatible(blob, node, "fsl,imx8qm-lpuart"))
+		plat->devtype = DEV_IMX8;
 
 	return 0;
 }
@@ -449,6 +452,8 @@ static const struct udevice_id lpuart_serial_ids[] = {
 	{ .compatible = "fsl,imx7ulp-lpuart",
 		.data = LPUART_FLAG_REGMAP_32BIT_REG },
 	{ .compatible = "fsl,vf610-lpuart"},
+	{ .compatible = "fsl,imx8qm-lpuart",
+		.data = LPUART_FLAG_REGMAP_32BIT_REG },
 	{ }
 };
 
