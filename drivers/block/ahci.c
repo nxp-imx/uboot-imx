@@ -1,5 +1,6 @@
 /*
  * Copyright (C) Freescale Semiconductor, Inc. 2006.
+ * Copyright 2017 NXP
  * Author: Jason Jin<Jason.jin@freescale.com>
  *         Zhang Wei<wei.zhang@freescale.com>
  *
@@ -21,6 +22,16 @@
 #include <libata.h>
 #include <linux/ctype.h>
 #include <ahci.h>
+
+#ifdef CONFIG_SCSI_AHCI_PLAT
+#ifdef CONFIG_FSL_HSIO
+#define HW_PP2C		0xAC
+#define HW_PP3C		0xB0
+#define HW_PP4C		0xB4
+#define HW_PP5C		0xB8
+#define HW_PAXIC	0xC0
+#endif
+#endif
 
 static int ata_io_flush(u8 port);
 
@@ -186,6 +197,16 @@ static int ahci_host_init(struct ahci_probe_ent *probe_ent)
 
 	debug("ahci_host_init: start\n");
 
+#ifdef CONFIG_SCSI_AHCI_PLAT
+#ifdef CONFIG_FSL_HSIO
+	writel((1 << 28) | (1 << 24) | readl(mmio + HW_PAXIC), mmio + HW_PAXIC);
+	writel(0x2718461C, mmio + HW_PP2C);
+	writel(0x0D081907, mmio + HW_PP3C);
+	writel(0x06000815, mmio + HW_PP4C);
+	writel(0x800C96A4, mmio + HW_PP5C);
+#endif
+#endif
+
 	cap_save = readl(mmio + HOST_CAP);
 	cap_save &= ((1 << 28) | (1 << 17));
 	cap_save |= (1 << 27);  /* Staggered Spin-up. Not needed. */
@@ -265,6 +286,11 @@ static int ahci_host_init(struct ahci_probe_ent *probe_ent)
 		ret = ahci_link_up(probe_ent, i);
 		if (ret) {
 			printf("SATA link %d timeout.\n", i);
+#ifdef CONFIG_SCSI_AHCI_PLAT
+#ifdef CONFIG_FSL_HSIO
+			return -ENODEV;
+#endif
+#endif
 			continue;
 		} else {
 			debug("SATA link ok.\n");
