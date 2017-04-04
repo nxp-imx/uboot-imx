@@ -262,6 +262,13 @@ static int esdhc_setup_data(struct mmc *mmc, struct mmc_data *data)
 				printf("\nThe SD card is locked. Can not write to a locked card.\n\n");
 				return -ETIMEDOUT;
 			}
+		} else {
+#ifdef CONFIG_DM_GPIO
+			if (dm_gpio_is_valid(&priv->wp_gpio) && dm_gpio_get_value(&priv->wp_gpio)) { 
+				printf("\nThe SD card is locked. Can not write to a locked card.\n\n");
+				return -ETIMEDOUT;
+			}
+#endif
 		}
 
 		esdhc_clrsetbits32(&regs->wml, WML_WR_WML_MASK,
@@ -1011,14 +1018,15 @@ static int fsl_esdhc_probe(struct udevice *dev)
 #endif
 	}
 
-	priv->wp_enable = 1;
-
-#ifdef CONFIG_DM_GPIO
-	ret = gpio_request_by_name_nodev(fdt, node, "wp-gpios", 0,
-					 &priv->wp_gpio, GPIOD_IS_IN);
-	if (ret)
+	if (fdt_get_property(fdt, node, "fsl,wp-controller", NULL)) {
+		priv->wp_enable = 1;
+	} else {
 		priv->wp_enable = 0;
+#ifdef CONFIG_DM_GPIO
+		gpio_request_by_name_nodev(fdt, node, "wp-gpios", 0,
+					 &priv->wp_gpio, GPIOD_IS_IN);
 #endif
+	}
 
 #ifdef CONFIG_DM_REGULATOR
 	ret = device_get_supply_regulator(dev, "vqmmc-supply", &vqmmc_dev);
