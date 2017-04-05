@@ -877,9 +877,42 @@ static int is_sparse_partition(struct fastboot_ptentry *ptn)
 static lbaint_t mmc_sparse_write(struct sparse_storage *info,
 		lbaint_t blk, lbaint_t blkcnt, const void *buffer)
 {
-	struct blk_desc *dev_desc = (struct blk_desc *)info->priv;
+#define SPARSE_FILL_BUF_SIZE (2 * 1024 * 1024)
 
-	return blk_dwrite(dev_desc, blk, blkcnt, buffer);
+	struct blk_desc *dev_desc = (struct blk_desc *)info->priv;
+	ulong ret = 0;
+	void *data;
+	int fill_buf_num_blks, cnt;
+
+	if ((unsigned long)buffer & (CONFIG_SYS_CACHELINE_SIZE - 1)) {
+
+		fill_buf_num_blks = SPARSE_FILL_BUF_SIZE / info->blksz;
+
+		data = memalign(CONFIG_SYS_CACHELINE_SIZE, fill_buf_num_blks * info->blksz);
+		
+		while (blkcnt) {
+
+			if (blkcnt > fill_buf_num_blks)
+				cnt = fill_buf_num_blks;
+			else
+				cnt = blkcnt;
+
+			memcpy(data, buffer, cnt * info->blksz);
+
+			ret += blk_dwrite(dev_desc, blk, cnt, data);
+
+			blk += cnt;
+			blkcnt -= cnt;
+			buffer = (void *)((unsigned long)buffer + cnt * info->blksz);
+			
+		}
+
+		free(data);
+	} else {
+		ret = blk_dwrite(dev_desc, blk, blkcnt, buffer);
+	}
+	
+	return ret;
 }
 
 static lbaint_t mmc_sparse_reserve(struct sparse_storage *info,
@@ -1758,7 +1791,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			goto fail;
 		}
 		/* flush cache after read */
-		flush_cache((ulong)hdr->ramdisk_addr, hdr->ramdisk_size); /* FIXME */
+		flush_cache((ulong)hdr->ramdisk_addr, ((hdr->ramdisk_size / 512) + 1) * 512); /* FIXME */
 
 #ifdef CONFIG_OF_LIBFDT
 		/* load the dtb file */
@@ -1771,7 +1804,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 				goto fail;
 			}
 			/* flush cache after read */
-			flush_cache((ulong)hdr->second_addr, hdr->second_size); /* FIXME */
+			flush_cache((ulong)hdr->second_addr, ((hdr->second_size / 512) + 1) * 512); /* FIXME */
 		}
 #endif /*CONFIG_OF_LIBFDT*/
 
