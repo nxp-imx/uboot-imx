@@ -141,7 +141,7 @@
 #define CONFIG_SYS_MMC_ENV_PART		0   /* user partition */
 #define CONFIG_MMCROOT			"/dev/mmcblk0p2"  /* USDHC1 */
 
-#define CONFIG_ENV_OFFSET		(13 * SZ_64K)
+#define CONFIG_ENV_OFFSET		(14 * SZ_64K)
 #define CONFIG_ENV_IS_IN_MMC
 
 /* MMC Configs */
