@@ -924,6 +924,11 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	qspi->slave.max_write_size = TX_BUFFER_SIZE;
 
 	mcr_val = qspi_read32(qspi->priv.flags, &regs->mcr);
+
+	/* Set endianness to LE for i.mx */
+	if (is_mx7() || is_mx6() || is_mx7ulp())
+		mcr_val = QSPI_MCR_END_CFD_LE;
+
 	qspi_write32(qspi->priv.flags, &regs->mcr,
 		     QSPI_MCR_RESERVED_MASK | QSPI_MCR_MDIS_MASK |
 		     (mcr_val & QSPI_MCR_END_CFD_MASK));
@@ -1051,6 +1056,11 @@ static int fsl_qspi_probe(struct udevice *bus)
 	priv->num_chipselect = plat->num_chipselect;
 
 	mcr_val = qspi_read32(priv->flags, &priv->regs->mcr);
+
+	/* Set endianness to LE for i.mx */
+	if (is_mx7() || is_mx6() || is_mx7ulp())
+		mcr_val = QSPI_MCR_END_CFD_LE;
+
 	qspi_write32(priv->flags, &priv->regs->mcr,
 		     QSPI_MCR_RESERVED_MASK | QSPI_MCR_MDIS_MASK |
 		     (mcr_val & QSPI_MCR_END_CFD_MASK));
