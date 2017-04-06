@@ -477,7 +477,7 @@ int board_mmc_init(bd_t *bis)
 			gpio_request(USDHC1_PWR_GPIO, "usdhc1 pwr");
 			gpio_direction_output(USDHC1_PWR_GPIO, 1);
 			break;
-#if !defined(CONFIG_SYS_USE_NAND)
+#if !defined(CONFIG_CMD_NAND)
 		case 1:
 #ifdef CONFIG_MX6UL_LPDDR2_ARM2_USDHC2_REWORK
 			imx_iomux_v3_setup_multiple_pads(

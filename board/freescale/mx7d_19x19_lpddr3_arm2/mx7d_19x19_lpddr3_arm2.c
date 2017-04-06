@@ -493,7 +493,7 @@ int board_init(void)
 	setup_eimnor();
 #endif
 
-#ifdef CONFIG_SYS_USE_NAND
+#ifdef CONFIG_NAND_MXS
 	setup_gpmi_nand();
 #endif
 
