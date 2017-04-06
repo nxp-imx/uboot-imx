@@ -221,20 +221,16 @@
 /*
  * SPLASH SCREEN Configs
  */
-#ifdef CONFIG_SPLASH_SCREEN
+#ifdef CONFIG_MXC_EPDC
 	/*
 	 * Framebuffer and LCD
 	 */
 	#define CONFIG_CMD_BMP
-	#define CONFIG_MXC_EPDC				1
-	#define CONFIG_LCD
-	#define CONFIG_SYS_CONSOLE_IS_IN_ENV
-#ifdef CONFIG_MXC_EPDC
+	#define CONFIG_SPLASH_SCREEN
 	#undef LCD_TEST_PATTERN
 	#define LCD_BPP					LCD_MONOCHROME
 
 	#define CONFIG_WAVEFORM_BUF_SIZE		0x200000
-#endif
 #endif /* CONFIG_SPLASH_SCREEN */
 
 #if defined(CONFIG_FASTBOOT)

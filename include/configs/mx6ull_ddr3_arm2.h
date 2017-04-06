@@ -81,14 +81,12 @@
 /*
  * SPLASH SCREEN Configs
  */
-#if defined(CONFIG_SPLASH_SCREEN) && defined(CONFIG_MXC_EPDC)
+#if defined(CONFIG_MXC_EPDC)
 /*
  * Framebuffer and LCD
  */
-#define	CONFIG_CFB_CONSOLE
+#define	CONFIG_SPLASH_SCREEN
 #define CONFIG_CMD_BMP
-#define CONFIG_LCD
-#define CONFIG_SYS_CONSOLE_IS_IN_ENV
 
 #undef LCD_TEST_PATTERN
 /* #define CONFIG_SPLASH_IS_IN_MMC			1 */
