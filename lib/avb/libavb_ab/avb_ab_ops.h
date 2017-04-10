@@ -23,7 +23,8 @@
  */
 
 #if !defined(AVB_INSIDE_LIBAVB_AB_H) && !defined(AVB_COMPILATION)
-#error "Never include this file directly, include libavb/libavb_ab.h instead."
+#error \
+    "Never include this file directly, include libavb_ab/libavb_ab.h instead."
 #endif
 
 #ifndef AVB_AB_OPS_H_
@@ -41,11 +42,11 @@ typedef struct AvbABOps AvbABOps;
 struct AvbABData;
 
 /* High-level operations/functions/methods for A/B that are platform
- * dependent. This struct extends the AvbOps struct from libavb.
+ * dependent.
  */
 struct AvbABOps {
   /* Operations from libavb. */
-  AvbOps ops;
+  AvbOps* ops;
 
   /* Reads A/B metadata from persistent storage. Returned data is
    * properly byteswapped. Returns AVB_IO_RESULT_OK on success, error

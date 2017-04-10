@@ -77,7 +77,9 @@ Key* parse_key_data(const uint8_t* data, size_t length) {
    * allocation.
    */
   key = (Key*)(avb_malloc(sizeof(Key) + 2 * h.key_num_bits / 8));
-  if (key == NULL) goto fail;
+  if (key == NULL) {
+    goto fail;
+  }
 
   key->len = h.key_num_bits / 32;
   key->n0inv = h.n0inv;
@@ -95,11 +97,15 @@ Key* parse_key_data(const uint8_t* data, size_t length) {
   return key;
 
 fail:
-  if (key != NULL) avb_free(key);
+  if (key != NULL) {
+    avb_free(key);
+  }
   return NULL;
 }
 
-void free_parsed_key(Key* key) { avb_free(key); }
+void free_parsed_key(Key* key) {
+  avb_free(key);
+}
 
 /* a[] -= mod */
 static void subM(const Key* key, uint32_t* a) {
@@ -117,14 +123,20 @@ static int geM(const Key* key, uint32_t* a) {
   uint32_t i;
   for (i = key->len; i;) {
     --i;
-    if (a[i] < key->n[i]) return 0;
-    if (a[i] > key->n[i]) return 1;
+    if (a[i] < key->n[i]) {
+      return 0;
+    }
+    if (a[i] > key->n[i]) {
+      return 1;
+    }
   }
   return 1; /* equal */
 }
 
 /* montgomery c[] += a * b[] / R % mod */
-static void montMulAdd(const Key* key, uint32_t* c, const uint32_t a,
+static void montMulAdd(const Key* key,
+                       uint32_t* c,
+                       const uint32_t a,
                        const uint32_t* b) {
   uint64_t A = (uint64_t)a * b[0] + c[0];
   uint32_t d0 = (uint32_t)A * key->n0inv;
@@ -164,7 +176,9 @@ static void modpowF4(const Key* key, uint8_t* inout) {
   uint32_t* a = (uint32_t*)avb_malloc(key->len * sizeof(uint32_t));
   uint32_t* aR = (uint32_t*)avb_malloc(key->len * sizeof(uint32_t));
   uint32_t* aaR = (uint32_t*)avb_malloc(key->len * sizeof(uint32_t));
-  if (a == NULL || aR == NULL || aaR == NULL) goto out;
+  if (a == NULL || aR == NULL || aaR == NULL) {
+    goto out;
+  }
 
   uint32_t* aaa = aaR; /* Re-use location. */
   int i;
@@ -200,18 +214,28 @@ static void modpowF4(const Key* key, uint8_t* inout) {
   }
 
 out:
-  if (a != NULL) avb_free(a);
-  if (aR != NULL) avb_free(aR);
-  if (aaR != NULL) avb_free(aaR);
+  if (a != NULL) {
+    avb_free(a);
+  }
+  if (aR != NULL) {
+    avb_free(aR);
+  }
+  if (aaR != NULL) {
+    avb_free(aaR);
+  }
 }
 
 /* Verify a RSA PKCS1.5 signature against an expected hash.
  * Returns false on failure, true on success.
  */
-bool avb_rsa_verify(const uint8_t* key, size_t key_num_bytes,
-                    const uint8_t* sig, size_t sig_num_bytes,
-                    const uint8_t* hash, size_t hash_num_bytes,
-                    const uint8_t* padding, size_t padding_num_bytes) {
+bool avb_rsa_verify(const uint8_t* key,
+                    size_t key_num_bytes,
+                    const uint8_t* sig,
+                    size_t sig_num_bytes,
+                    const uint8_t* hash,
+                    size_t hash_num_bytes,
+                    const uint8_t* padding,
+                    size_t padding_num_bytes) {
   uint8_t* buf = NULL;
   Key* parsed_key = NULL;
   bool success = false;
@@ -265,7 +289,11 @@ bool avb_rsa_verify(const uint8_t* key, size_t key_num_bytes,
   success = true;
 
 out:
-  if (parsed_key != NULL) free_parsed_key(parsed_key);
-  if (buf != NULL) avb_free(buf);
+  if (parsed_key != NULL) {
+    free_parsed_key(parsed_key);
+  }
+  if (buf != NULL) {
+    avb_free(buf);
+  }
   return success;
 }

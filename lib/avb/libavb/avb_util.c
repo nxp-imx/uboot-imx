@@ -24,6 +24,8 @@
 
 #include "avb_util.h"
 
+#include <stdarg.h>
+
 uint32_t avb_be32toh(uint32_t in) {
   uint8_t* d = (uint8_t*)&in;
   uint32_t ret;
@@ -83,13 +85,17 @@ int avb_safe_memcmp(const void* s1, const void* s2, size_t n) {
   const unsigned char* us2 = s2;
   int result = 0;
 
-  if (0 == n) return 0;
+  if (0 == n) {
+    return 0;
+  }
 
   /*
    * Code snippet without data-dependent branch due to Nate Lawson
    * (nate@root.org) of Root Labs.
    */
-  while (n--) result |= *us1++ ^ *us2++;
+  while (n--) {
+    result |= *us1++ ^ *us2++;
+  }
 
   return result != 0;
 }
@@ -112,7 +118,9 @@ bool avb_safe_add_to(uint64_t* value, uint64_t value_to_add) {
 
 bool avb_safe_add(uint64_t* out_result, uint64_t a, uint64_t b) {
   uint64_t dummy;
-  if (out_result == NULL) out_result = &dummy;
+  if (out_result == NULL) {
+    out_result = &dummy;
+  }
   *out_result = a;
   return avb_safe_add_to(out_result, b);
 }
@@ -160,8 +168,12 @@ fail:
   return false;
 }
 
-bool avb_str_concat(char* buf, size_t buf_size, const char* str1,
-                    size_t str1_len, const char* str2, size_t str2_len) {
+bool avb_str_concat(char* buf,
+                    size_t buf_size,
+                    const char* str1,
+                    size_t str1_len,
+                    const char* str2,
+                    size_t str2_len) {
   uint64_t combined_len;
 
   if (!avb_safe_add(&combined_len, str1_len, str2_len)) {
@@ -220,21 +232,26 @@ const char* avb_strstr(const char* haystack, const char* needle) {
    * |needle| matches. If so, check the rest of |needle|.
    */
   for (n = 0; haystack[n] != '\0'; n++) {
-    if (haystack[n] != needle[0]) continue;
+    if (haystack[n] != needle[0]) {
+      continue;
+    }
 
     for (m = 1;; m++) {
       if (needle[m] == '\0') {
         return haystack + n;
       }
 
-      if (haystack[n + m] != needle[m]) break;
+      if (haystack[n + m] != needle[m]) {
+        break;
+      }
     }
   }
 
   return NULL;
 }
 
-const char* avb_strv_find_str(const char* const* strings, const char* str,
+const char* avb_strv_find_str(const char* const* strings,
+                              const char* str,
                               size_t str_size) {
   size_t n;
   for (n = 0; strings[n] != NULL; n++) {
@@ -262,7 +279,9 @@ char* avb_replace(const char* str, const char* search, const char* replace) {
     size_t num_new;
 
     s = avb_strstr(str, search);
-    if (s == NULL) break;
+    if (s == NULL) {
+      break;
+    }
 
     num_before = s - str;
 
@@ -305,7 +324,9 @@ char* avb_replace(const char* str, const char* search, const char* replace) {
     size_t num_remaining = avb_strlen(str_after_last_replace);
     size_t num_new = ret_len + num_remaining + 1;
     char* new_str = avb_malloc(num_new);
-    if (ret == NULL) goto out;
+    if (ret == NULL) {
+      goto out;
+    }
     avb_memcpy(new_str, ret, ret_len);
     avb_memcpy(new_str + ret_len, str_after_last_replace, num_remaining);
     new_str[num_new - 1] = '\0';
@@ -316,4 +337,67 @@ char* avb_replace(const char* str, const char* search, const char* replace) {
 
 out:
   return ret;
+}
+
+/* We only support a limited amount of strings in avb_strdupv(). */
+#define AVB_STRDUPV_MAX_NUM_STRINGS 32
+
+char* avb_strdupv(const char* str, ...) {
+  va_list ap;
+  const char* strings[AVB_STRDUPV_MAX_NUM_STRINGS];
+  size_t lengths[AVB_STRDUPV_MAX_NUM_STRINGS];
+  size_t num_strings, n;
+  uint64_t total_length;
+  char *ret = NULL, *dest;
+
+  num_strings = 0;
+  total_length = 0;
+  va_start(ap, str);
+  do {
+    size_t str_len = avb_strlen(str);
+    strings[num_strings] = str;
+    lengths[num_strings] = str_len;
+    if (!avb_safe_add_to(&total_length, str_len)) {
+      avb_fatal("Overflow while determining total length.\n");
+      break;
+    }
+    num_strings++;
+    if (num_strings == AVB_STRDUPV_MAX_NUM_STRINGS) {
+      avb_fatal("Too many strings passed.\n");
+      break;
+    }
+    str = va_arg(ap, const char*);
+  } while (str != NULL);
+  va_end(ap);
+
+  ret = avb_malloc(total_length + 1);
+  if (ret == NULL) {
+    goto out;
+  }
+
+  dest = ret;
+  for (n = 0; n < num_strings; n++) {
+    avb_memcpy(dest, strings[n], lengths[n]);
+    dest += lengths[n];
+  }
+  *dest = '\0';
+  avb_assert(dest == ret + total_length);
+
+out:
+  return ret;
+}
+
+const char* avb_basename(const char* str) {
+  int64_t n;
+  size_t len;
+
+  len = avb_strlen(str);
+  if (len >= 2) {
+    for (n = len - 2; n >= 0; n--) {
+      if (str[n] == '/') {
+        return str + n + 1;
+      }
+    }
+  }
+  return str;
 }

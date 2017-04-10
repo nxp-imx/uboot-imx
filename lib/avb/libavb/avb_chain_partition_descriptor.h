@@ -38,7 +38,7 @@ extern "C" {
 /* A descriptor containing a pointer to signed integrity data stored
  * on another partition. The descriptor contains the partition name in
  * question (without the A/B suffix), the public key used to sign the
- * integrity data, and rollback index slot to use for rollback
+ * integrity data, and rollback index location to use for rollback
  * protection.
  *
  * Following this struct are |partition_name_len| bytes of the
@@ -50,7 +50,7 @@ extern "C" {
  */
 typedef struct AvbChainPartitionDescriptor {
   AvbDescriptor parent_descriptor;
-  uint32_t rollback_index_slot;
+  uint32_t rollback_index_location;
   uint32_t partition_name_len;
   uint32_t public_key_len;
   uint8_t reserved[64];

@@ -23,7 +23,8 @@
  */
 
 #if !defined(AVB_INSIDE_LIBAVB_AB_H) && !defined(AVB_COMPILATION)
-#error "Never include this file directly, include libavb/libavb_ab.h instead."
+#error \
+    "Never include this file directly, include libavb_ab/libavb_ab.h instead."
 #endif
 
 #ifndef AVB_AB_FLOW_H_
@@ -136,10 +137,14 @@ AvbIOResult avb_ab_data_write(AvbABOps* ab_ops, const AvbABData* data);
  */
 typedef enum {
   AVB_AB_FLOW_RESULT_OK,
+  AVB_AB_FLOW_RESULT_OK_WITH_VERIFICATION_ERROR,
   AVB_AB_FLOW_RESULT_ERROR_OOM,
   AVB_AB_FLOW_RESULT_ERROR_IO,
   AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS
 } AvbABFlowResult;
+
+/* Get a textual representation of |result|. */
+const char* avb_ab_flow_result_to_string(AvbABFlowResult result);
 
 /* High-level function to select a slot to boot. The following
  * algorithm is used:
@@ -150,17 +155,18 @@ typedef enum {
  * avb_ab_data_init() and this reset metadata is returned.
  *
  * 2. All bootable slots listed in the A/B metadata are verified using
- * avb_slot_verify(). If a slot fails verification, it will be marked
- * as unbootable in the A/B metadata and the metadata will be saved to
- * disk before returning.
+ * avb_slot_verify(). If a slot is invalid or if it fails verification
+ * (and |allow_verification_error| is false, see below), it will be
+ * marked as unbootable in the A/B metadata and the metadata will be
+ * saved to disk before returning.
  *
  * 3. If there are no bootable slots, the value
  * AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS is returned.
  *
  * 4. For each bootable slot, the Stored Rollback Indexes are updated
- * such that for each rollback index slot, the Stored Rollback Index
- * is the largest number smaller than or equal to the Rollback Index
- * of each slot.
+ * such that for each rollback index location, the Stored Rollback
+ * Index is the largest number smaller than or equal to the Rollback
+ * Index of each slot.
  *
  * 5. The bootable slot with the highest priority is selected and
  * returned in |out_data|. If this slot is already marked as
@@ -174,6 +180,26 @@ typedef enum {
  * |requested_partitions| array only contains a single item for the
  * boot partition, 'boot'.
  *
+ * If the device is unlocked (and _only_ if it's unlocked), true
+ * should be passed in the |allow_verification_error| parameter. This
+ * will allow considering slots as verified even when
+ * avb_slot_verify() returns
+ * AVB_SLOT_VERIFY_RESULT_ERROR_PUBLIC_KEY_REJECTED,
+ * AVB_SLOT_VERIFY_RESULT_ERROR_VERIFICATION, or
+ * AVB_SLOT_VERIFY_RESULT_ERROR_ROLLBACK_INDEX for the slot in
+ * question.
+ *
+ * Note that androidboot.slot_suffix is not set in the |cmdline| field
+ * in |AvbSlotVerifyData| - you will have to pass this command-line
+ * option yourself.
+ *
+ * If a slot was selected and it verified then AVB_AB_FLOW_RESULT_OK
+ * is returned.
+ *
+ * If a slot was selected but it didn't verify then
+ * AVB_AB_FLOW_RESULT_OK_WITH_VERIFICATION_ERROR is returned. This can
+ * only happen when |allow_verification_error| is true.
+ *
  * If an I/O operation - such as loading/saving metadata or checking
  * rollback indexes - fail, the value AVB_AB_FLOW_RESULT_ERROR_IO is
  * returned.
@@ -182,10 +208,11 @@ typedef enum {
  * returned.
  *
  * Reasonable behavior for handling AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS
- * is to initiate device recovery (which is device-dependent).
+ * is to initiate device repair (which is device-dependent).
  */
 AvbABFlowResult avb_ab_flow(AvbABOps* ab_ops,
                             const char* const* requested_partitions,
+                            bool allow_verification_error,
                             AvbSlotVerifyData** out_data);
 
 /* Marks the slot with the given slot number as active. Returns

@@ -42,16 +42,8 @@
 extern "C" {
 #endif
 
+#include "avb_crypto.h"
 #include "avb_sysdeps.h"
-
-/* Size of a RSA-2048 signature. */
-#define AVB_RSA2048_NUM_BYTES 256
-
-/* Size of a RSA-4096 signature. */
-#define AVB_RSA4096_NUM_BYTES 512
-
-/* Size of a RSA-8192 signature. */
-#define AVB_RSA8192_NUM_BYTES 1024
 
 /* Using the key given by |key|, verify a RSA signature |sig| of
  * length |sig_num_bytes| against an expected |hash| of length
@@ -65,9 +57,12 @@ extern "C" {
  *
  * Returns false if verification fails, true otherwise.
  */
-bool avb_rsa_verify(const uint8_t* key, size_t key_num_bytes,
-                    const uint8_t* sig, size_t sig_num_bytes,
-                    const uint8_t* hash, size_t hash_num_bytes,
+bool avb_rsa_verify(const uint8_t* key,
+                    size_t key_num_bytes,
+                    const uint8_t* sig,
+                    size_t sig_num_bytes,
+                    const uint8_t* hash,
+                    size_t hash_num_bytes,
                     const uint8_t* padding,
                     size_t padding_num_bytes) AVB_ATTR_WARN_UNUSED_RESULT;
 

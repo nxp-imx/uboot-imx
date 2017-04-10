@@ -100,7 +100,8 @@ typedef bool AvbDescriptorForeachFunc(const AvbDescriptor* descriptor,
  * avb_vbmeta_image_verify() and reject it unless it's signed by a known
  * good public key. Additionally, |image_data| must be word-aligned.
  */
-bool avb_descriptor_foreach(const uint8_t* image_data, size_t image_size,
+bool avb_descriptor_foreach(const uint8_t* image_data,
+                            size_t image_size,
                             AvbDescriptorForeachFunc foreach_func,
                             void* user_data);
 
@@ -118,9 +119,10 @@ bool avb_descriptor_foreach(const uint8_t* image_data, size_t image_size,
  * avb_vbmeta_image_verify() and reject it unless it's signed by a known
  * good public key. Additionally, |image_data| must be word-aligned.
  */
-const AvbDescriptor** avb_descriptor_get_all(
-    const uint8_t* image_data, size_t image_size,
-    size_t* out_num_descriptors) AVB_ATTR_WARN_UNUSED_RESULT;
+const AvbDescriptor** avb_descriptor_get_all(const uint8_t* image_data,
+                                             size_t image_size,
+                                             size_t* out_num_descriptors)
+    AVB_ATTR_WARN_UNUSED_RESULT;
 
 #ifdef __cplusplus
 }

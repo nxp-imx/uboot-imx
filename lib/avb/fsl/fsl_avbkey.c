@@ -405,7 +405,7 @@ int rbkidx_erase(void) {
 		return -1;
 	memset(rbidx, 0, rbidx_len);
 	*(uint64_t *)rbidx = AVB_RBIDX_INITVAL;
-	for (i = 0; i < AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_SLOTS; i++) {
+	for (i = 0; i < AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS; i++) {
 		tag = &hdr.rbk_tags[i];
 		tag->flag = AVB_RBIDX_FLAG;
 		tag->offset = offset;
@@ -490,7 +490,7 @@ int avbkey_init(uint8_t *plainkey, uint32_t keylen) {
 		return -1;
 	memset(rbidx, 0, rbidx_len);
 	*(uint64_t *)rbidx = AVB_RBIDX_INITVAL;
-	for (i = 0; i < AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_SLOTS; i++) {
+	for (i = 0; i < AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS; i++) {
 		tag = &hdr.rbk_tags[i];
 		tag->flag = AVB_RBIDX_FLAG;
 		tag->offset = offset;
@@ -525,6 +525,8 @@ int avbkey_init(uint8_t *plainkey, uint32_t keylen) {
 AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
 					   const uint8_t* public_key_data,
 					   size_t public_key_length,
+					   const uint8_t* public_key_metadata,
+					   size_t public_key_metadata_length,
 					   bool* out_is_trusted) {
 	kblb_hdr_t hdr;
 	kblb_tag_t *pubk;
@@ -609,7 +611,7 @@ AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot
 
 	DEBUGAVB("[rpmb] read rollback slot: %zu\n", rollback_index_slot);
 
-	if (rollback_index_slot >= AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_SLOTS)
+	if (rollback_index_slot >= AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS)
 		return AVB_IO_RESULT_ERROR_IO;
 
 	if ((mmc_dev = get_mmc()) == NULL) {
@@ -676,7 +678,7 @@ AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slo
 
 	assert(ops != NULL);
 
-	if (rollback_index_slot >= AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_SLOTS)
+	if (rollback_index_slot >= AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS)
 		return AVB_IO_RESULT_ERROR_IO;
 
 	if ((mmc_dev = get_mmc()) == NULL) {

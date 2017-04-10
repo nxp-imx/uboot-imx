@@ -88,6 +88,8 @@ AvbIOResult fsl_write_ab_metadata(AvbABOps* ab_ops, const struct AvbABData* data
 AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
                                           const uint8_t* public_key_data,
                                           size_t public_key_length,
+					  const uint8_t* public_key_metadata,
+					  size_t public_key_metadata_length,
                                           bool* out_is_trusted);
 
 /* Gets the rollback index corresponding to the slot given by

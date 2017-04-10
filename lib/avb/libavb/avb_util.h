@@ -70,23 +70,31 @@ extern "C" {
  *
  * This has no effect unless AVB_ENABLE_DEBUG is defined.
  */
-#define avb_assert_word_aligned(addr) \
-  avb_assert((((uintptr_t)addr) & (AVB_WORD_ALIGNMENT_SIZE - 1)) == 0)
+#define avb_assert_aligned(addr) \
+  avb_assert((((uintptr_t)addr) & (AVB_ALIGNMENT_SIZE - 1)) == 0)
 
 #ifdef AVB_ENABLE_DEBUG
 /* Print functions, used for diagnostics.
  *
  * These have no effect unless AVB_ENABLE_DEBUG is defined.
  */
-#define avb_debug(message)                                       \
-  do {                                                           \
-    avb_print(__FILE__ ":" AVB_TO_STRING(__LINE__) ": DEBUG: "); \
-    avb_print(message);                                          \
+#define avb_debug(message)              \
+  do {                                  \
+    avb_printv(avb_basename(__FILE__),  \
+               ":",                     \
+               AVB_TO_STRING(__LINE__), \
+               ": DEBUG: ",             \
+               message,                 \
+               NULL);                   \
   } while (0)
-#define avb_debugv(message, ...)                                 \
-  do {                                                           \
-    avb_print(__FILE__ ":" AVB_TO_STRING(__LINE__) ": DEBUG: "); \
-    avb_printv(message, ##__VA_ARGS__);                          \
+#define avb_debugv(message, ...)        \
+  do {                                  \
+    avb_printv(avb_basename(__FILE__),  \
+               ":",                     \
+               AVB_TO_STRING(__LINE__), \
+               ": DEBUG: ",             \
+               message,                 \
+               ##__VA_ARGS__);          \
   } while (0)
 #else
 #define avb_debug(message)
@@ -96,30 +104,46 @@ extern "C" {
 /* Prints out a message. This is typically used if a runtime-error
  * occurs.
  */
-#define avb_error(message)                                       \
-  do {                                                           \
-    avb_print(__FILE__ ":" AVB_TO_STRING(__LINE__) ": ERROR: "); \
-    avb_print(message);                                          \
+#define avb_error(message)              \
+  do {                                  \
+    avb_printv(avb_basename(__FILE__),  \
+               ":",                     \
+               AVB_TO_STRING(__LINE__), \
+               ": ERROR: ",             \
+               message,                 \
+               NULL);                   \
   } while (0)
-#define avb_errorv(message, ...)                                 \
-  do {                                                           \
-    avb_print(__FILE__ ":" AVB_TO_STRING(__LINE__) ": ERROR: "); \
-    avb_printv(message, ##__VA_ARGS__);                          \
+#define avb_errorv(message, ...)        \
+  do {                                  \
+    avb_printv(avb_basename(__FILE__),  \
+               ":",                     \
+               AVB_TO_STRING(__LINE__), \
+               ": ERROR: ",             \
+               message,                 \
+               ##__VA_ARGS__);          \
   } while (0)
 
 /* Prints out a message and calls avb_abort().
  */
-#define avb_fatal(message)                                       \
-  do {                                                           \
-    avb_print(__FILE__ ":" AVB_TO_STRING(__LINE__) ": FATAL: "); \
-    avb_print(message);                                          \
-    avb_abort();                                                 \
+#define avb_fatal(message)              \
+  do {                                  \
+    avb_printv(avb_basename(__FILE__),  \
+               ":",                     \
+               AVB_TO_STRING(__LINE__), \
+               ": FATAL: ",             \
+               message,                 \
+               NULL);                   \
+    avb_abort();                        \
   } while (0)
-#define avb_fatalv(message, ...)                                 \
-  do {                                                           \
-    avb_print(__FILE__ ":" AVB_TO_STRING(__LINE__) ": FATAL: "); \
-    avb_printv(message, ##__VA_ARGS__);                          \
-    avb_abort();                                                 \
+#define avb_fatalv(message, ...)        \
+  do {                                  \
+    avb_printv(avb_basename(__FILE__),  \
+               ":",                     \
+               AVB_TO_STRING(__LINE__), \
+               ": FATAL: ",             \
+               message,                 \
+               ##__VA_ARGS__);          \
+    avb_abort();                        \
   } while (0)
 
 /* Converts a 32-bit unsigned integer from big-endian to host byte order. */
@@ -144,7 +168,8 @@ uint64_t avb_htobe64(uint64_t in) AVB_ATTR_WARN_UNUSED_RESULT;
  * Note that unlike avb_memcmp(), this only indicates inequality, not
  * whether |s1| is less than or greater than |s2|.
  */
-int avb_safe_memcmp(const void* s1, const void* s2,
+int avb_safe_memcmp(const void* s1,
+                    const void* s2,
                     size_t n) AVB_ATTR_WARN_UNUSED_RESULT;
 
 /* Adds |value_to_add| to |value| with overflow protection.
@@ -163,7 +188,8 @@ bool avb_safe_add_to(uint64_t* value,
  *
  * Returns false if the addition overflows, true otherwise.
  */
-bool avb_safe_add(uint64_t* out_result, uint64_t a,
+bool avb_safe_add(uint64_t* out_result,
+                  uint64_t a,
                   uint64_t b) AVB_ATTR_WARN_UNUSED_RESULT;
 
 /* Checks if |num_bytes| data at |data| is a valid UTF-8
@@ -180,8 +206,12 @@ bool avb_validate_utf8(const uint8_t* data,
  *
  * Returns true if the operation succeeds, false otherwise.
  */
-bool avb_str_concat(char* buf, size_t buf_size, const char* str1,
-                    size_t str1_len, const char* str2, size_t str2_len);
+bool avb_str_concat(char* buf,
+                    size_t buf_size,
+                    const char* str1,
+                    size_t str1_len,
+                    const char* str2,
+                    size_t str2_len);
 
 /* Like avb_malloc_() but prints a error using avb_error() if memory
  * allocation fails.
@@ -193,6 +223,13 @@ void* avb_calloc(size_t size) AVB_ATTR_WARN_UNUSED_RESULT;
 
 /* Duplicates a NUL-terminated string. Returns NULL on OOM. */
 char* avb_strdup(const char* str) AVB_ATTR_WARN_UNUSED_RESULT;
+
+/* Duplicates a NULL-terminated array of NUL-terminated strings by
+ * concatenating them. The returned string will be
+ * NUL-terminated. Returns NULL on OOM.
+ */
+char* avb_strdupv(const char* str,
+                  ...) AVB_ATTR_WARN_UNUSED_RESULT AVB_ATTR_SENTINEL;
 
 /* Finds the first occurrence of |needle| in the string |haystack|
  * where both strings are NUL-terminated strings. The terminating NUL
@@ -212,18 +249,26 @@ const char* avb_strstr(const char* haystack,
  * Returns NULL if not found, otherwise points into |strings| for the
  * first occurrence of |str|.
  */
-const char* avb_strv_find_str(const char* const* strings, const char* str,
+const char* avb_strv_find_str(const char* const* strings,
+                              const char* str,
                               size_t str_size);
 
 /* Replaces all occurrences of |search| with |replace| in |str|.
  *
  * Returns a newly allocated string or NULL if out of memory.
  */
-char* avb_replace(const char* str, const char* search,
+char* avb_replace(const char* str,
+                  const char* search,
                   const char* replace) AVB_ATTR_WARN_UNUSED_RESULT;
 
 /* Calculates the CRC-32 for data in |buf| of size |buf_size|. */
 uint32_t avb_crc32(const uint8_t* buf, size_t buf_size);
+
+/* Returns the basename of |str|. This is defined as the last path
+ * component, assuming the normal POSIX separator '/'. If there are no
+ * separators, returns |str|.
+ */
+const char* avb_basename(const char* str);
 
 #ifdef __cplusplus
 }

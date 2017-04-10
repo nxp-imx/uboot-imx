@@ -42,9 +42,9 @@ extern "C" {
 /* Size of the footer. */
 #define AVB_FOOTER_SIZE 64
 
-/* The current MAJOR and MINOR versions used - keep in sync with avbtool. */
-#define AVB_FOOTER_MAJOR_VERSION 1
-#define AVB_FOOTER_MINOR_VERSION 0
+/* The current footer version used - keep in sync with avbtool. */
+#define AVB_FOOTER_VERSION_MAJOR 1
+#define AVB_FOOTER_VERSION_MINOR 0
 
 /* The struct used as a footer used on partitions, used to find the
  * AvbVBMetaImageHeader struct. This struct is always stored at the

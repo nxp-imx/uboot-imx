@@ -38,28 +38,32 @@ extern "C" {
  * like uint8_t, uint64_t, and bool (with |false|, |true| keywords)
  * must be present.
  */
-#include <compiler.h>
-#include <inttypes.h>
+
+//#define bool int
+#include <common.h>
+
 /* If you don't have gcc or clang, these attribute macros may need to
  * be adjusted.
  */
 #define AVB_ATTR_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
 #define AVB_ATTR_PACKED __attribute__((packed))
 #define AVB_ATTR_NO_RETURN __attribute__((noreturn))
-#define AVB_ATTR_SENTINEL __attribute__((__sentinel__));
+#define AVB_ATTR_SENTINEL __attribute__((__sentinel__))
 
-/* Size in bytes used for word-alignment.
- *
- * Change this to match your architecture - must be a power of two.
- */
-#define AVB_WORD_ALIGNMENT_SIZE 8
+/* Size in bytes used for alignment. */
+#ifdef __LP64__
+#define AVB_ALIGNMENT_SIZE 8
+#else
+#define AVB_ALIGNMENT_SIZE 4
+#endif
 
 /* Compare |n| bytes in |src1| and |src2|.
  *
  * Returns an integer less than, equal to, or greater than zero if the
  * first |n| bytes of |src1| is found, respectively, to be less than,
  * to match, or be greater than the first |n| bytes of |src2|. */
-int avb_memcmp(const void* src1, const void* src2,
+int avb_memcmp(const void* src1,
+               const void* src2,
                size_t n) AVB_ATTR_WARN_UNUSED_RESULT;
 
 /* Compare two strings.

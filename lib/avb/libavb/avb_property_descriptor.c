@@ -72,11 +72,14 @@ static bool property_lookup_desc_foreach(const AvbDescriptor* header,
   const uint8_t* p;
   bool ret = true;
 
-  if (header->tag != AVB_DESCRIPTOR_TAG_PROPERTY) goto out;
+  if (header->tag != AVB_DESCRIPTOR_TAG_PROPERTY) {
+    goto out;
+  }
 
   if (!avb_property_descriptor_validate_and_byteswap(
-          (const AvbPropertyDescriptor*)header, &prop_desc))
+          (const AvbPropertyDescriptor*)header, &prop_desc)) {
     goto out;
+  }
 
   p = (const uint8_t*)header;
   if (p[sizeof(AvbPropertyDescriptor) + prop_desc.key_num_bytes] != 0) {
@@ -85,7 +88,8 @@ static bool property_lookup_desc_foreach(const AvbDescriptor* header,
   }
 
   if (data->key_size == prop_desc.key_num_bytes) {
-    if (avb_memcmp(p + sizeof(AvbPropertyDescriptor), data->key,
+    if (avb_memcmp(p + sizeof(AvbPropertyDescriptor),
+                   data->key,
                    data->key_size) == 0) {
       data->ret_value = (const char*)(p + sizeof(AvbPropertyDescriptor) +
                                       prop_desc.key_num_bytes + 1);
@@ -100,28 +104,38 @@ out:
   return ret;
 }
 
-const char* avb_property_lookup(const uint8_t* image_data, size_t image_size,
-                                const char* key, size_t key_size,
+const char* avb_property_lookup(const uint8_t* image_data,
+                                size_t image_size,
+                                const char* key,
+                                size_t key_size,
                                 size_t* out_value_size) {
   PropertyIteratorData data;
 
-  if (key_size == 0) key_size = avb_strlen(key);
+  if (key_size == 0) {
+    key_size = avb_strlen(key);
+  }
 
   data.key = key;
   data.key_size = key_size;
 
-  if (avb_descriptor_foreach(image_data, image_size,
-                             property_lookup_desc_foreach, &data) == 0) {
-    if (out_value_size != NULL) *out_value_size = data.ret_value_size;
+  if (avb_descriptor_foreach(
+          image_data, image_size, property_lookup_desc_foreach, &data) == 0) {
+    if (out_value_size != NULL) {
+      *out_value_size = data.ret_value_size;
+    }
     return data.ret_value;
   }
 
-  if (out_value_size != NULL) *out_value_size = 0;
+  if (out_value_size != NULL) {
+    *out_value_size = 0;
+  }
   return NULL;
 }
 
-bool avb_property_lookup_uint64(const uint8_t* image_data, size_t image_size,
-                                const char* key, size_t key_size,
+bool avb_property_lookup_uint64(const uint8_t* image_data,
+                                size_t image_size,
+                                const char* key,
+                                size_t key_size,
                                 uint64_t* out_value) {
   const char* value;
   bool ret = false;
@@ -130,7 +144,9 @@ bool avb_property_lookup_uint64(const uint8_t* image_data, size_t image_size,
   int n;
 
   value = avb_property_lookup(image_data, image_size, key, key_size, NULL);
-  if (value == NULL) goto out;
+  if (value == NULL) {
+    goto out;
+  }
 
   base = 10;
   if (avb_memcmp(value, "0x", 2) == 0) {
@@ -160,7 +176,9 @@ bool avb_property_lookup_uint64(const uint8_t* image_data, size_t image_size,
   }
 
   ret = true;
-  if (out_value != NULL) *out_value = parsed_val;
+  if (out_value != NULL) {
+    *out_value = parsed_val;
+  }
 
 out:
   return ret;

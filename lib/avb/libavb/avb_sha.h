@@ -37,16 +37,12 @@
 extern "C" {
 #endif
 
+#include "avb_crypto.h"
 #include "avb_sysdeps.h"
-
-/* Size in bytes of a SHA-256 digest. */
-#define AVB_SHA256_DIGEST_SIZE 32
 
 /* Block size in bytes of a SHA-256 digest. */
 #define AVB_SHA256_BLOCK_SIZE 64
 
-/* Size in bytes of a SHA-512 digest. */
-#define AVB_SHA512_DIGEST_SIZE 64
 
 /* Block size in bytes of a SHA-512 digest. */
 #define AVB_SHA512_BLOCK_SIZE 128

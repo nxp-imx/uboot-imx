@@ -22,37 +22,57 @@
  * SOFTWARE.
  */
 
-#include "avb_kernel_cmdline_descriptor.h"
-#include "avb_util.h"
+#include <endian.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-bool avb_kernel_cmdline_descriptor_validate_and_byteswap(
-    const AvbKernelCmdlineDescriptor* src, AvbKernelCmdlineDescriptor* dest) {
-  uint64_t expected_size;
+#include "avb_sysdeps.h"
 
-  avb_memcpy(dest, src, sizeof(AvbKernelCmdlineDescriptor));
+int avb_memcmp(const void* src1, const void* src2, size_t n) {
+  return memcmp(src1, src2, n);
+}
 
-  if (!avb_descriptor_validate_and_byteswap((const AvbDescriptor*)src,
-                                            (AvbDescriptor*)dest))
-    return false;
+void* avb_memcpy(void* dest, const void* src, size_t n) {
+  return memcpy(dest, src, n);
+}
 
-  if (dest->parent_descriptor.tag != AVB_DESCRIPTOR_TAG_KERNEL_CMDLINE) {
-    avb_error("Invalid tag for kernel cmdline descriptor.\n");
-    return false;
+void* avb_memset(void* dest, const int c, size_t n) {
+  return memset(dest, c, n);
+}
+
+int avb_strcmp(const char* s1, const char* s2) {
+  return strcmp(s1, s2);
+}
+
+size_t avb_strlen(const char* str) {
+  return strlen(str);
+}
+
+void avb_abort(void) {
+  abort();
+}
+
+void avb_print(const char* message) {
+  fprintf(stderr, "%s", message);
+}
+
+void avb_printv(const char* message, ...) {
+  va_list ap;
+  const char* m;
+
+  va_start(ap, message);
+  for (m = message; m != NULL; m = va_arg(ap, const char*)) {
+    fprintf(stderr, "%s", m);
   }
+  va_end(ap);
+}
 
-  dest->flags = avb_be32toh(dest->flags);
-  dest->kernel_cmdline_length = avb_be32toh(dest->kernel_cmdline_length);
+void* avb_malloc_(size_t size) {
+  return malloc(size);
+}
 
-  /* Check that kernel_cmdline is fully contained. */
-  expected_size = sizeof(AvbKernelCmdlineDescriptor) - sizeof(AvbDescriptor);
-  if (!avb_safe_add_to(&expected_size, dest->kernel_cmdline_length)) {
-    avb_error("Overflow while adding up sizes.\n");
-    return false;
-  }
-  if (expected_size > dest->parent_descriptor.num_bytes_following) {
-    avb_error("Descriptor payload size overflow.\n");
-    return false;
-  }
-
-  return true;
+void avb_free(void* ptr) {
+  free(ptr);
 }

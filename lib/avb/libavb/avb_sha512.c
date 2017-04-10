@@ -91,10 +91,14 @@
     wv[h] = t1 + t2;                                                        \
   }
 
-static const uint64_t sha512_h0[8] = {
-    0x6a09e667f3bcc908ULL, 0xbb67ae8584caa73bULL, 0x3c6ef372fe94f82bULL,
-    0xa54ff53a5f1d36f1ULL, 0x510e527fade682d1ULL, 0x9b05688c2b3e6c1fULL,
-    0x1f83d9abfb41bd6bULL, 0x5be0cd19137e2179ULL};
+static const uint64_t sha512_h0[8] = {0x6a09e667f3bcc908ULL,
+                                      0xbb67ae8584caa73bULL,
+                                      0x3c6ef372fe94f82bULL,
+                                      0xa54ff53a5f1d36f1ULL,
+                                      0x510e527fade682d1ULL,
+                                      0x9b05688c2b3e6c1fULL,
+                                      0x1f83d9abfb41bd6bULL,
+                                      0x5be0cd19137e2179ULL};
 
 static const uint64_t sha512_k[80] = {
     0x428a2f98d728ae22ULL, 0x7137449123ef65cdULL, 0xb5c0fbcfec4d3b2fULL,
@@ -140,14 +144,16 @@ void avb_sha512_init(AvbSHA512Ctx* ctx) {
 #else
   int i;
 
-  for (i = 0; i < 8; i++) ctx->h[i] = sha512_h0[i];
+  for (i = 0; i < 8; i++)
+    ctx->h[i] = sha512_h0[i];
 #endif /* UNROLL_LOOPS_SHA512 */
 
   ctx->len = 0;
   ctx->tot_len = 0;
 }
 
-static void SHA512_transform(AvbSHA512Ctx* ctx, const uint8_t* message,
+static void SHA512_transform(AvbSHA512Ctx* ctx,
+                             const uint8_t* message,
                              unsigned int block_nb) {
   uint64_t w[80];
   uint64_t wv[8];
@@ -306,7 +312,8 @@ static void SHA512_transform(AvbSHA512Ctx* ctx, const uint8_t* message,
       wv[0] = t1 + t2;
     }
 
-    for (j = 0; j < 8; j++) ctx->h[j] += wv[j];
+    for (j = 0; j < 8; j++)
+      ctx->h[j] += wv[j];
 #endif /* UNROLL_LOOPS_SHA512 */
   }
 }
@@ -373,7 +380,8 @@ uint8_t* avb_sha512_final(AvbSHA512Ctx* ctx) {
   UNPACK64(ctx->h[6], &ctx->buf[48]);
   UNPACK64(ctx->h[7], &ctx->buf[56]);
 #else
-  for (i = 0; i < 8; i++) UNPACK64(ctx->h[i], &ctx->buf[i << 3]);
+  for (i = 0; i < 8; i++)
+    UNPACK64(ctx->h[i], &ctx->buf[i << 3]);
 #endif /* UNROLL_LOOPS_SHA512 */
 
   return ctx->buf;

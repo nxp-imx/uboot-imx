@@ -77,9 +77,14 @@
     wv[h] = t1 + t2;                                                        \
   }
 
-static const uint32_t sha256_h0[8] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372,
-                                      0xa54ff53a, 0x510e527f, 0x9b05688c,
-                                      0x1f83d9ab, 0x5be0cd19};
+static const uint32_t sha256_h0[8] = {0x6a09e667,
+                                      0xbb67ae85,
+                                      0x3c6ef372,
+                                      0xa54ff53a,
+                                      0x510e527f,
+                                      0x9b05688c,
+                                      0x1f83d9ab,
+                                      0x5be0cd19};
 
 static const uint32_t sha256_k[64] = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1,
@@ -116,7 +121,8 @@ void avb_sha256_init(AvbSHA256Ctx* ctx) {
   ctx->tot_len = 0;
 }
 
-static void SHA256_transform(AvbSHA256Ctx* ctx, const uint8_t* message,
+static void SHA256_transform(AvbSHA256Ctx* ctx,
+                             const uint8_t* message,
                              unsigned int block_nb) {
   uint32_t w[64];
   uint32_t wv[8];

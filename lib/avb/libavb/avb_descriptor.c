@@ -38,7 +38,8 @@ bool avb_descriptor_validate_and_byteswap(const AvbDescriptor* src,
   return true;
 }
 
-bool avb_descriptor_foreach(const uint8_t* image_data, size_t image_size,
+bool avb_descriptor_foreach(const uint8_t* image_data,
+                            size_t image_size,
                             AvbDescriptorForeachFunc foreach_func,
                             void* user_data) {
   const AvbVBMetaImageHeader* header = NULL;
@@ -70,7 +71,7 @@ bool avb_descriptor_foreach(const uint8_t* image_data, size_t image_size,
   }
 
   /* Careful, not byteswapped - also ensure it's aligned properly. */
-  avb_assert_word_aligned(image_data);
+  avb_assert_aligned(image_data);
   header = (const AvbVBMetaImageHeader*)image_data;
   image_end = image_data + image_size;
 
@@ -88,7 +89,7 @@ bool avb_descriptor_foreach(const uint8_t* image_data, size_t image_size,
 
   for (p = desc_start; p < desc_end;) {
     const AvbDescriptor* dh = (const AvbDescriptor*)p;
-    avb_assert_word_aligned(dh);
+    avb_assert_aligned(dh);
     uint64_t nb_following = avb_be64toh(dh->num_bytes_following);
     uint64_t nb_total = sizeof(AvbDescriptor) + nb_following;
 
@@ -139,8 +140,8 @@ const AvbDescriptor** avb_descriptor_get_all(const uint8_t* image_data,
   size_t num_descriptors = 0;
   SetDescriptorData data;
 
-  avb_descriptor_foreach(image_data, image_size, count_descriptors,
-                         &num_descriptors);
+  avb_descriptor_foreach(
+      image_data, image_size, count_descriptors, &num_descriptors);
 
   data.descriptor_number = 0;
   data.descriptors =

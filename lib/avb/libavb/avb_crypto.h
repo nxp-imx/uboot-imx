@@ -35,6 +35,21 @@
 extern "C" {
 #endif
 
+/* Size of a RSA-2048 signature. */
+#define AVB_RSA2048_NUM_BYTES 256
+
+/* Size of a RSA-4096 signature. */
+#define AVB_RSA4096_NUM_BYTES 512
+
+/* Size of a RSA-8192 signature. */
+#define AVB_RSA8192_NUM_BYTES 1024
+
+/* Size in bytes of a SHA-256 digest. */
+#define AVB_SHA256_DIGEST_SIZE 32
+
+/* Size in bytes of a SHA-512 digest. */
+#define AVB_SHA512_DIGEST_SIZE 64
+
 /* Algorithms that can be used in the vbmeta image for
  * verification. An algorithm consists of a hash type and a signature
  * type.
@@ -87,6 +102,19 @@ typedef enum {
   AVB_ALGORITHM_TYPE_SHA512_RSA8192,
   _AVB_ALGORITHM_NUM_TYPES
 } AvbAlgorithmType;
+
+/* Holds algorithm-specific data. The |padding| is needed by avb_rsa_verify. */
+typedef struct {
+  const uint8_t* padding;
+  size_t padding_len;
+  size_t hash_len;
+} AvbAlgorithmData;
+
+/* Provides algorithm-specific data for a given |algorithm|. Returns NULL if
+ * |algorithm| is invalid.
+ */
+const AvbAlgorithmData* avb_get_algorithm_data(AvbAlgorithmType algorithm)
+    AVB_ATTR_WARN_UNUSED_RESULT;
 
 /* The header for a serialized RSA public key.
  *

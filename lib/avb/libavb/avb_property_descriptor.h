@@ -80,9 +80,12 @@ bool avb_property_descriptor_validate_and_byteswap(
  * avb_vbmeta_image_verify() and reject it unless it's signed by a
  * known good public key.
  */
-const char* avb_property_lookup(
-    const uint8_t* image_data, size_t image_size, const char* key,
-    size_t key_size, size_t* out_value_size) AVB_ATTR_WARN_UNUSED_RESULT;
+const char* avb_property_lookup(const uint8_t* image_data,
+                                size_t image_size,
+                                const char* key,
+                                size_t key_size,
+                                size_t* out_value_size)
+    AVB_ATTR_WARN_UNUSED_RESULT;
 
 /* Like avb_property_lookup() but parses the intial portions of the
  * value as an unsigned 64-bit integer. Both decimal and hexadecimal
@@ -90,9 +93,12 @@ const char* avb_property_lookup(
  * failure and true on success. On success, the parsed value is
  * returned in |out_value|.
  */
-bool avb_property_lookup_uint64(
-    const uint8_t* image_data, size_t image_size, const char* key,
-    size_t key_size, uint64_t* out_value) AVB_ATTR_WARN_UNUSED_RESULT;
+bool avb_property_lookup_uint64(const uint8_t* image_data,
+                                size_t image_size,
+                                const char* key,
+                                size_t key_size,
+                                uint64_t* out_value)
+    AVB_ATTR_WARN_UNUSED_RESULT;
 
 #ifdef __cplusplus
 }
