@@ -2043,7 +2043,9 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			goto fail;
 		}
 		printf(" verify OK, boot '%s%s'\n", avb_loadpart->partition_name, avb_out_data->ab_suffix);
-		setenv("bootargs_sec", avb_out_data->cmdline);
+		char bootargs_sec[2048];
+		sprintf(bootargs_sec, "androidboot.slot_suffix=%s %s", avb_out_data->ab_suffix, avb_out_data->cmdline);
+		setenv("bootargs_sec", bootargs_sec);
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if(!is_recovery_mode)
 			fastboot_setup_system_boot_args(avb_out_data->ab_suffix);
