@@ -169,12 +169,16 @@ static iomux_v3_cfg_t const usdhc3_pads[] = {
 	MX6_PAD_SD3_DAT2__SD3_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD3_DAT3__SD3_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 #ifndef CONFIG_QWKS_REV3
-	MX6_PAD_SD3_DAT4__GPIO7_IO01 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX6_PAD_SD3_DAT4__SD3_DATA4 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 #endif
 	MX6_PAD_SD3_DAT5__SD3_DATA5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD3_DAT6__SD3_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD3_DAT7__SD3_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+#ifdef CONFIG_QWKS_REV3
+	MX6_PAD_SD3_DAT4__GPIO7_IO01 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+#else
 	MX6_PAD_NANDF_D0__GPIO2_IO00 | MUX_PAD_CTRL(NO_PAD_CTRL), /* CD */
+#endif
 };
 
 static iomux_v3_cfg_t const usdhc4_pads[] = {
@@ -632,6 +636,7 @@ static iomux_v3_cfg_t const usb_otg_pads[] = {
 	MX6_PAD_KEY_COL4__USB_OTG_OC | MUX_PAD_CTRL(NO_PAD_CTRL),
 #else
 	MX6_PAD_EIM_D22__USB_OTG_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_EIM_D21__USB_OTG_OC | MUX_PAD_CTRL(NO_PAD_CTRL),
 #endif
 #ifdef CONFIG_SCMEVB
 	MX6_PAD_ENET_RX_ER__USB_OTG_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
@@ -659,10 +664,12 @@ static void setup_usb(void)
 	imx_iomux_set_gpr_register(1, 13, 1, 1);
 #endif
 
+#ifdef CONFIG_SCMEVB
 	imx_iomux_v3_setup_multiple_pads(usb_hc1_pads,
 					 ARRAY_SIZE(usb_hc1_pads));
 
 	gpio_request(IMX_GPIO_NR(1, 29), "USB HC1 Power Enable");
+#endif
 }
 
 int board_ehci_hcd_init(int port)
@@ -686,11 +693,13 @@ int board_ehci_power(int port, int on)
 	case 0:
 		break;
 	case 1:
+#ifdef CONFIG_SCMEVB
 		if (on)
 			gpio_direction_output(IMX_GPIO_NR(1, 29), 1);
 		else
 			gpio_direction_output(IMX_GPIO_NR(1, 29), 0);
 		break;
+#endif
 	default:
 		printf("MXC USB port %d not yet supported\n", port);
 		return -EINVAL;
@@ -1066,6 +1075,25 @@ int board_late_init(void)
 	add_board_boot_modes(board_boot_modes);
 #endif
 
+#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+#ifdef CONFIG_SCMHVB
+	setenv("board_name", "hvb");
+#elif CONFIG_SCMEVB
+	setenv("board_name", "evb");
+#elif CONFIG_QWKS_REV3
+	setenv("board_name", "qwks-rev3");
+#else
+	setenv("board_name", "qwks-rev2");
+#endif
+#ifdef CONFIG_SCM_LPDDR2_512MB
+	setenv("lpddr2_size", "512mb");
+#elif	CONFIG_SCM_LPDDR2_2GB
+	setenv("lpddr2_size", "2gb");
+#else
+	setenv("lpddr2_size", "1gb");
+#endif
+#endif /*CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG*/
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
@@ -1081,7 +1109,7 @@ int checkboard(void)
 #elif CONFIG_QWKS_REV3
 	puts("Board: MX6DQSCM-QWKS-REV3\n");
 #else
-	puts("Board: MX6DQSCM-QWKS\n");
+	puts("Board: MX6DQSCM-QWKS-REV2\n");
 #endif
 	return 0;
 }
@@ -1129,10 +1157,12 @@ void board_fastboot_setup(void)
 
 #ifdef CONFIG_ANDROID_RECOVERY
 
+#ifdef CONFIG_SCM_EVB
 #define GPIO_VOL_DN_KEY IMX_GPIO_NR(1, 5)
 iomux_v3_cfg_t const recovery_key_pads[] = {
 	(MX6_PAD_GPIO_5__GPIO1_IO05 | MUX_PAD_CTRL(NO_PAD_CTRL)),
 };
+#endif
 
 int check_recovery_cmd_file(void)
 {
@@ -1140,7 +1170,8 @@ int check_recovery_cmd_file(void)
 	int recovery_mode = 0;
 
 	recovery_mode = recovery_check_and_clean_flag();
-#ifdef CONFIG_EVB_SETTINGS
+
+#ifdef CONFIG_SCM_EVB
 	/* Check Recovery Combo Button press or not. */
 	imx_iomux_v3_setup_multiple_pads(recovery_key_pads,
 					 ARRAY_SIZE(recovery_key_pads));

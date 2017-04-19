@@ -290,13 +290,15 @@
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 1 /* Enabled USB controller number */
 #endif
 
+#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+
 #if !defined(CONFIG_FASTBOOT)
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
-	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
+	"fdt_file=undefined\0" \
 	"fdt_addr=0x18000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
@@ -367,10 +369,16 @@
 			"fi; " \
 		"else " \
 			"bootz; " \
+		"fi;\0" \
+	"findfdt="\
+		"if test $fdt_file = undefined; then " \
+			"setenv fdt_file " \
+			"imx6dqscm-${lpddr2_size}-${board_name}-fix-ldo.dtb;" \
 		"fi;\0"
 
 #undef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND \
+	"run findfdt;" \
 	"mmc dev ${mmcdev};" \
 	"if mmc rescan; then " \
 		"if run loadbootscript; then " \
@@ -412,7 +420,7 @@
 	CONFIG_MFG_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
-	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
+	"fdt_file=undefined\0" \
 	"fdt_addr=0x18000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
@@ -491,10 +499,16 @@
 		"run spinorargs; sf probe; " \
 		"sf read 0x12000000 0x90000 0x700000; " \
 		"sf read 0x18000000 0x80000 0x10000; " \
-		"bootz 0x12000000 - 0x18000000"
+		"bootz 0x12000000 - 0x18000000\0" \
+	"findfdt="\
+		"if test $fdt_file = undefined; then " \
+			"setenv fdt_file " \
+			"imx6dqscm-${lpddr2_size}-${board_name}-fix-ldo.dtb;" \
+		"fi;\0"
 
 #undef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND \
+	"run findfdt;" \
 	"run spinorboot; " \
 	"mmc dev ${mmcdev};" \
 	"if mmc rescan; then " \
