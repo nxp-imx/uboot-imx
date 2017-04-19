@@ -1,9 +1,9 @@
 How to use U-Boot on Freescale MX6DQSCM boards
 ----------------------------------------------
 
-- Build U-Boot for MX6DQSCM QWKS rev2 board*:
+- Build U-Boot for MX6DQSCM QWKS rev3 board*:
 
-$ make mx6dqscm_1gb_fix_qwks_rev2_defconfig
+$ make mx6dqscm_1gb_fix_qwks_rev3_defconfig
 $ make
 
 This will generate the u-boot image u-boot.imx.
@@ -13,9 +13,9 @@ This will generate the u-boot image u-boot.imx.
 sudo dd if=u-boot.imx of=/dev/sdX bs=1k seek=1; sync
 
 *Other defconfigs availabe are:
-    mx6dqscm_1gb_fix_qwks_rev2_defconfig
-    mx6dqscm_1gb_fix_qwks_rev2_spinor_defconfig
-    mx6dqscm_1gb_interleaving_qwks_rev2_android_defconfig
+    mx6dqscm_1gb_fix_qwks_rev3_defconfig
+    mx6dqscm_1gb_fix_qwks_rev3_spinor_defconfig
+    mx6dqscm_1gb_interleaving_qwks_rev3_android_defconfig
 
 
 - Jumper settings for fix mode images to boot from the top SD:
@@ -38,52 +38,26 @@ Single channel(epop)            SW1: ON  OFF OFF ON  ON  OFF ON  ON
 Additional configurations
 ==========================
 
-For custom configurations like 2GB or 512MB, the CONFIG_SYS_EXTRA_OPTIONS option on the defconfig
-file can be modified according to the customization needed.
+For custom configurations like 2GB or 512MB, the following option can be added on the defconfig
+according with the customization needed. (Check also the Kconfig file at the mx6dqscm directory)
 
-Here are some examples for some combinations among the different supported options:
+ - memory size option: 512MB, 2GB (if not set any, 1GB is the default value)
 
- - memory size option: 512MB, 1GB, 2GB
- - memeory mode: fix, interleave or single(only for 512MB)
- - boot mode: SPI-NOR boot or SD
- - board: evb, qwks
+     CONFIG_SCM_LPDDR2_512MB
+     CONFIG_SCM_LPDDR2_2GB
 
+ - memeory mode: fix or interleave (if not set any, fix/single mode is the default mode)
 
-512mb qwks-rev2:
-----------------
-CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx6dqscm/imximage_scm_lpddr2.cfg,MX6Q,DDR_MB=512,SYS_USE_SPINOR,DEFAULT_FDT_FILE=\"imx6dqscm-512mb-qwks-rev2-ldo.dtb\",SCM_LPDDR2_512MB"
+     CONFIG_INTERLEAVING_MODE
 
+ - boot mode: SPI-NOR boot or SD (if not set any, MMC/SD is the default boot mode)
 
-512mb qwks-rev2 spinor-boot:
-----------------------------
-CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx6dqscm/imximage_scm_lpddr2.cfg,MX6Q,DDR_MB=512,SYS_BOOT_SPINOR,DEFAULT_FDT_FILE=\"imx6dqscm-512mb-qwks-rev2-ldo.dtb\",SCM_LPDDR2_512MB"
+     CONFIG_SPI_BOOT
 
+ - board: evb, qwks (if not set any, qwks-rev2 is the default board)
 
-2gb fix evb:
-------------
-CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx6dqscm/imximage_scm_lpddr2.cfg,MX6Q,DDR_MB=2048,SYS_USE_SPINOR,DEFAULT_FDT_FILE=\"imx6dqscm-2gb-evb-fix-ldo.dtb\",SCMEVB,SCM_LPDDR2_2GB"
-
-
-2gb interleaving evb:
----------------------
-CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx6dqscm/imximage_scm_lpddr2.cfg,MX6Q,DDR_MB=2048,SYS_USE_SPINOR,DEFAULT_FDT_FILE=\"imx6dqscm-2gb-evb-interleave-ldo.dtb\",INTERLEAVING_MODE,SCMEVB,SCM_LPDDR2_2GB"
-
-
-2gb interleaving evb spinor-boot:
----------------------------------
-CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx6dqscm/imximage_scm_lpddr2.cfg,MX6Q,DDR_MB=2048,SYS_BOOT_SPINOR,DEFAULT_FDT_FILE=\"imx6dqscm-2gb-evb-interleave-ldo.dtb\",INTERLEAVING_MODE,SCMEVB,SCM_LPDDR2_2GB"
-
-1gb interleaving evb android:
------------------------------
-CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx6dqscm/imximage_scm_lpddr2.cfg,MX6Q,DDR_MB=1024,SYS_USE_SPINOR,DEFAULT_FDT_FILE=\"imx6dqscm-1gb-evb-interleave-ldo.dtb\",INTERLEAVING_MODE,SCMEVB,ANDROID_SUPPORT"
-
-
-1gb interleaving qwks_rev2:
----------------------------
-CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx6dqscm/imximage_scm_lpddr2.cfg,MX6Q,DDR_MB=1024,SYS_USE_SPINOR,DEFAULT_FDT_FILE=\"imx6dqscm-1gb-qwks-rev2-interleave-ldo.dtb\",INTERLEAVING_MODE"
-
-
-1gb interleaving evb spinor-boot:
----------------------------------
-CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx6dqscm/imximage_scm_lpddr2.cfg,MX6Q,DDR_MB=1024,SYS_BOOT_SPINOR,DEFAULT_FDT_FILE=\"imx6dqscm-1gb-evb-interleave-ldo.dtb\",INTERLEAVING_MODE,SCMEVB"
+     CONFIG_SCMHVB
+     CONFIG_QWKS_REV3
+     CONFIG_SCMEVB
+     CONFIG_SCMHVB
 

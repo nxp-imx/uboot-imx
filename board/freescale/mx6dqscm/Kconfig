@@ -6,10 +6,41 @@ config SYS_BOARD
 config SYS_VENDOR
 	default "freescale"
 
-config SYS_SOC
-	default "mx6"
-
 config SYS_CONFIG_NAME
 	default "mx6dqscm"
+
+config QWKS_REV3
+	bool "Support for SCM QWKS rev3 board"
+	help
+	  Enable this when building for SCM QWKS board rev3 (revC).
+
+config SCMEVB
+	bool "Support for SCM EVB board"
+	help
+	  Enable this when building for SCM EVB board.
+
+config SCMHVB
+	bool "Support for Hardware Evaluation board"
+	help
+	  Enable this when building for SCM HVB board.
+
+config INTERLEAVING_MODE
+	bool "Interleaving mode"
+	help
+	  Enable the MMDC interlaving mode for lpddr2
+	  fix mode is used when this is not enabled.
+
+config SCM_LPDDR2_512MB
+	bool "lpddr2 size of 512MB"
+	help
+	  Set the lpddr2 size to 512 MB
+	  1GB is defaulted size.
+
+
+config SCM_LPDDR2_2GB
+	bool "lpddr2 size of 2GB"
+	help
+	  Set the lpddr2 size to 2GB
+	  1GB is defaulted size.
 
 endif

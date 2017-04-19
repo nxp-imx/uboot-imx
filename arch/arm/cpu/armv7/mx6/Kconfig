@@ -430,6 +430,13 @@ config TARGET_ZC5601
 	select DM
 	select DM_THERMAL
 
+config TARGET_MX6DQSCM
+	bool "mx6dqscm"
+	select BOARD_LATE_INIT
+	select DM
+	select DM_THERMAL
+	select BOARD_EARLY_INIT_F
+
 endchoice
 
 config SYS_SOC
@@ -482,5 +489,6 @@ source "board/udoo/Kconfig"
 source "board/udoo/neo/Kconfig"
 source "board/wandboard/Kconfig"
 source "board/warp/Kconfig"
+source "board/freescale/mx6dqscm/Kconfig"
 
 endif
