@@ -1028,9 +1028,13 @@ static int fsl_esdhc_probe(struct udevice *dev)
 #endif
 	}
 
+	priv->vs18_enable = 0;
+
 #ifdef CONFIG_DM_REGULATOR
 	ret = device_get_supply_regulator(dev, "vqmmc-supply", &vqmmc_dev);
 	if (ret) {
+		dev_dbg(dev, "no vqmmc supply\n");
+	} else {
 		if (regulator_get_value(vqmmc_dev) == 1800000)
 			priv->vs18_enable = 1;
 	}
