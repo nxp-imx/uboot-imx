@@ -1,0 +1,47 @@
+How to use U-Boot on Freescale MX6SXSCM boards
+----------------------------------------------
+
+- Build U-Boot for MX6SXSCM EVB board*:
+
+$ make mx6sxscm_1gb_evb_defconfig
+$ make
+
+This will generate the u-boot image u-boot.imx.
+
+- Flash the u-boot image into the micro SD card:
+
+sudo dd if=u-boot.imx of=/dev/sdX bs=1k seek=1; sync
+
+*Other defconfigs availabe are:
+    mx6sxscm_1gb_evb_defconfig
+    mx6sxscm_1gb_evb_m4fastup_defconfig
+    mx6sxscm_1gb_evb_qspi2_defconfig
+
+- Jumper settings for fix mode images to boot from the top SD3:
+
+ SW2: OFF OFF OFF OFF OFF OFF OFF OFF
+ SW3: OFF OFF ON  ON  OFF OFF OFF OFF
+ SW4: OFF ON  OFF OFF OFF OFF ON  OFF
+
+
+Additional configurations
+==========================
+
+For custom configurations like 512MB or ePOP, the CONFIG_SYS_EXTRA_OPTIONS option on the defconfig
+file can be modified according to the customization needed.
+
+Here are some examples for some combinations among the different supported options:
+
+512mb evb
+---------
+CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx6sxscm/imximage_lpddr2.cfg,MX6SX,512MB_LPDDR2"
+
+
+epop evb:
+---------
+CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx6sxscm/imximage_lpddr2.cfg,MX6SX,512MB_LPDDR2,MX6SXSCM_EMMC"
+
+
+epop evb qspi2-boot:
+--------------------
+CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx6sxscm/imximage_lpddr2.cfg,MX6SX,512MB_LPDDR2,MX6SXSCM_EMMC,SYS_BOOT_QSPI"

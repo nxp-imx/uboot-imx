@@ -1,0 +1,10 @@
+MX6SXSCM BOARD
+M:	Alejandro Sierra <alejandro.sierra@nxp.com>
+M:	Juan Gutierrez <juan gutierrez@nxp.com>
+S:	Maintained
+F:	board/freescale/mx6sxscm/
+F:	include/configs/mx6sxscm.h
+F:	configs/mx6sxscm_1gb_evb_defconfig
+F:	configs/mx6sxscm_1gb_evb_m4fastup_defconfig
+F:	configs/mx6sxscm_1gb_evb_qspi2_defconfig
+F:	configs/mx6sxscm_epop_evb_defconfig
