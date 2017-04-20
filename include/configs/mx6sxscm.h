@@ -20,28 +20,19 @@
 #define CONFIG_PHY_MICREL
 #define CONFIG_FEC_MXC_PHYADDR          3
 
-/* MMC Configuration */
-/*
-#define CONFIG_FSL_ESDHC
-#define CONFIG_FSL_USDHC
-#define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC4_BASE_ADDR
-#define CONFIG_SYS_FSL_USDHC_NUM	3
-*/
-#ifdef CONFIG_512MB_LPDDR2
-#undef PHYS_SDRAM_SIZE
-#define PHYS_SDRAM_SIZE		SZ_512M
-#endif
+
 
 #if defined CONFIG_512MB_LPDDR2
 #if defined CONFIG_MX6SXSCM_EMMC
-#define CONFIG_FDT_FILE		"imx6sxscm-epop-evb-ldo.dtb"
+#define FDT_FILE		"imx6sxscm-epop-evb-ldo.dtb"
 #else
-#define CONFIG_FDT_FILE		"imx6sxscm-512mb-evb-ldo.dtb"
+#define FDT_FILE		"imx6sxscm-512mb-evb-ldo.dtb"
 #endif
 #else
-#define CONFIG_FDT_FILE		"imx6sxscm-1gb-evb-ldo.dtb"
+#define FDT_FILE		"imx6sxscm-1gb-evb-ldo.dtb"
 #endif
 
+#ifndef CONFIG_FASTBOOT
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
@@ -51,7 +42,7 @@
 	"console=ttymxc2\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
-	"fdt_file="CONFIG_FDT_FILE"\0" \
+	"fdt_file="FDT_FILE"\0" \
 	"fdt_addr=0x83000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
@@ -107,5 +98,6 @@
 		"else " \
 			"bootz; " \
 		"fi;\0"
+#endif
 #endif				/* __MX6SXSCM_H */
 

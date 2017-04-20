@@ -9,4 +9,14 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
 	default "mx6sxscm"
 
+config 512MB_LPDDR2
+	bool "lpddr2 size of 512MB"
+	help
+	  Set the lpddr2 size to 512 MB.
+
+config MX6SXSCM_EMMC
+	bool "Select for eMMC support"
+	help
+	  For epop modules with eMMC on SCM.
+
 endif

@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
- * SPDX-License-Identifier: GPL-2.0+
+ * SPDX-License-Identifier:     GPL-2.0+
  */
 
 #include <asm/arch/clock.h>
@@ -27,7 +28,7 @@
 #include <power/pfuze100_pmic.h>
 #include "../common/pfuze.h"
 #include <usb.h>
-#include <usb/ehci-fsl.h>
+#include <usb/ehci-ci.h>
 #include <asm/imx-common/video.h>
 #include <micrel.h>
 
@@ -89,7 +90,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int dram_init(void)
 {
-	gd->ram_size = PHYS_SDRAM_SIZE;
+	gd->ram_size = imx_ddr_size();
 
 	return 0;
 }
@@ -210,9 +211,11 @@ static int setup_fec(int fec_id)
 					 ARRAY_SIZE(phy_control_pads));
 
 	/* Enable the ENET power, active low */
+	gpio_request(IMX_GPIO_NR(4, 25), "fec power en");
 	gpio_direction_output(IMX_GPIO_NR(4, 25) , 0);
 
 	/* Reset AR8031 PHY */
+	gpio_request(IMX_GPIO_NR(4, 26), "ar8031 reset");
 	gpio_direction_output(IMX_GPIO_NR(4, 26) , 0);
 	mdelay(10);
 	gpio_set_value(IMX_GPIO_NR(4, 26), 1);
@@ -228,8 +231,6 @@ int board_eth_init(bd_t *bis)
 {
 	imx_iomux_v3_setup_multiple_pads(fec1_pads,
 					 ARRAY_SIZE(fec1_pads));
-
-	setup_fec(CONFIG_FEC_ENET_DEV);
 
 	return cpu_eth_init(bis);
 }
@@ -313,6 +314,7 @@ struct i2c_pads_info i2c_pad_info4 = {
 	},
 };
 
+#ifdef CONFIG_POWER
 int power_init_board(void)
 {
 	struct pmic *pfuze;
@@ -370,8 +372,68 @@ int power_init_board(void)
 
 	return 0;
 }
+#elif defined(CONFIG_DM_PMIC_PFUZE100)
+int power_init_board(void)
+{
+	struct udevice *dev;
+	unsigned int reg;
+	int ret;
+
+	dev = pfuze_common_init();
+	if (!dev)
+		return -ENODEV;
+
+	ret = pfuze_mode_init(dev, APS_PFM);
+	if (ret < 0)
+		return ret;
+	/* set SW3A to 1.2V for LPDDR2 */
+	reg = pmic_reg_read(dev, PFUZE100_SW3AVOL);
+	reg &= ~0x3f;
+	reg |= 0x20;
+	pmic_reg_write(dev, PFUZE100_SW3AVOL, reg);
+
+	/* set SW3A standby volatage 1.2V */
+	reg = pmic_reg_read(dev, PFUZE100_SW3ASTBY);
+	reg &= ~0x3f;
+	reg |= 0x20;
+	pmic_reg_write(dev, PFUZE100_SW3ASTBY, reg);
+
+	/* set SW1AB normal volatage 1.350V */
+	reg = pmic_reg_read(dev, PFUZE100_SW1ABVOL);
+	reg &= ~0x3f;
+	reg |= PFUZE100_SW1ABC_SETP(13500);
+	pmic_reg_write(dev, PFUZE100_SW1ABVOL, reg);
+
+	/* set SW1AB standby volatage 1.10V */
+	reg = pmic_reg_read(dev, PFUZE100_SW1ABSTBY);
+	reg &= ~0x3f;
+	reg |= PFUZE100_SW1ABC_SETP(11000);
+	pmic_reg_write(dev, PFUZE100_SW1ABSTBY, reg);
+
+	/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
+	reg = pmic_reg_read(dev, PFUZE100_SW1ABCONF);
+	reg &= ~0xc0;
+	reg |= 0x40;
+	pmic_reg_write(dev, PFUZE100_SW1ABCONF, reg);
+
+	reg = pmic_reg_read(dev, PFUZE100_VGEN3VOL);
+	reg &= ~LDO_VOL_MASK;
+	reg |= (LDOB_2_80V | (1 << LDO_EN));
+	pmic_reg_write(dev, PFUZE100_VGEN3VOL, reg);
+
+	/* set SWBST boost regulator mode */
+	reg = pmic_reg_read(dev, PFUZE100_SWBSTCON1);
+	reg &= ~SWBST_MODE_MASK;
+	reg |= SWBST_MODE_AUTO << SWBST_MODE_SHIFT;
+	reg |= 0x40;
+	pmic_reg_write(dev, PFUZE100_SWBSTCON1, reg);
+
+	return 0;
+}
+#endif
 
 #ifdef CONFIG_LDO_BYPASS_CHECK
+#ifdef CONFIG_POWER
 void ldo_mode_set(int ldo_bypass)
 {
 	unsigned int value;
@@ -419,6 +481,49 @@ void ldo_mode_set(int ldo_bypass)
 		printf("switch to ldo_bypass mode!\n");
 	}
 }
+#elif defined(CONFIG_DM_PMIC_PFUZE100)
+void ldo_mode_set(int ldo_bypass)
+{
+	struct udevice *dev;
+	int ret;
+	int is_400M;
+	u32 vddarm;
+
+	ret = pmic_get("pfuze100", &dev);
+
+	if (ret == -ENODEV) {
+		printf("No PMIC found!\n");
+		return;
+	}
+
+	/* switch to ldo_bypass mode */
+	if (ldo_bypass) {
+		prep_anatop_bypass();
+		/* decrease VDDARM to 1.275V */
+		pmic_clrsetbits(dev, PFUZE100_SW1ABVOL, 0x3f,
+				PFUZE100_SW1ABC_SETP(12750));
+
+		/* decrease VDDSOC to 1.3V */
+		pmic_clrsetbits(dev, PFUZE100_SW1CVOL, 0x3f,
+				PFUZE100_SW1ABC_SETP(13000));
+
+		is_400M = set_anatop_bypass(1);
+		if (is_400M)
+			vddarm = PFUZE100_SW1ABC_SETP(10750);
+		else
+			vddarm = PFUZE100_SW1ABC_SETP(11750);
+
+		pmic_clrsetbits(dev, PFUZE100_SW1ABVOL, 0x3f, vddarm);
+
+		/* decrease VDDSOC to 1.175V */
+		pmic_clrsetbits(dev, PFUZE100_SW1CVOL, 0x3f,
+				PFUZE100_SW1ABC_SETP(11750));
+
+		finish_anatop_bypass();
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
+#endif
 #endif
 
 #ifdef CONFIG_USB_EHCI_MX6
@@ -558,6 +663,8 @@ int board_mmc_init(bd_t *bis)
 		case 1:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
+			gpio_request(USDHC3_CD_GPIO, "usdhc3 cd");
+			gpio_request(USDHC3_PWR_GPIO, "usdhc3 pwr");
 			gpio_direction_input(USDHC3_CD_GPIO);
 			gpio_direction_output(USDHC3_PWR_GPIO, 1);
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
@@ -569,6 +676,7 @@ int board_mmc_init(bd_t *bis)
 #else
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc4_pads, ARRAY_SIZE(usdhc4_pads));
+			gpio_request(USDHC4_CD_GPIO, "usdhc4 cd");
 			gpio_direction_input(USDHC4_CD_GPIO);
 #endif
 			usdhc_cfg[2].sdhc_clk = mxc_get_clock(MXC_ESDHC4_CLK);
@@ -592,6 +700,7 @@ int board_mmc_init(bd_t *bis)
 
 #ifdef CONFIG_FSL_QSPI
 
+#ifndef CONFIG_DM_SPI
 #define QSPI_PAD_CTRL1	\
 	(PAD_CTL_SRE_FAST | PAD_CTL_SPEED_HIGH | \
 	 PAD_CTL_PKE | PAD_CTL_PUE | PAD_CTL_PUS_47K_UP | PAD_CTL_DSE_40ohm)
@@ -611,13 +720,15 @@ static iomux_v3_cfg_t const quadspi_pads[] = {
 	MX6_PAD_NAND_DATA02__QSPI2_B_SCLK	| MUX_PAD_CTRL(QSPI_PAD_CTRL1),
 	MX6_PAD_NAND_DATA05__QSPI2_B_DQS	| MUX_PAD_CTRL(QSPI_PAD_CTRL1),
 };
+#endif
 
 int board_qspi_init(void)
 {
+#ifndef CONFIG_DM_SPI
 	/* Set the iomux */
 	imx_iomux_v3_setup_multiple_pads(quadspi_pads,
 					 ARRAY_SIZE(quadspi_pads));
-
+#endif
 	/* Set the clock */
 	enable_qspi_clk(1);
 
@@ -683,7 +794,7 @@ void do_enable_lvds(struct display_info_t const *dev)
 {
 	int ret;
 
-	ret = enable_lcdif_clock(dev->bus);
+	ret = enable_lcdif_clock(dev->bus, 1);
 	if (ret) {
 		printf("Enable LCDIF clock failed, %d\n", ret);
 		return;
@@ -698,9 +809,11 @@ void do_enable_lvds(struct display_info_t const *dev)
 					 ARRAY_SIZE(lvds_ctrl_pads));
 
 	/* Enable CABC */
+	gpio_request(IMX_GPIO_NR(4, 18), "CABC enable");
 	gpio_direction_output(IMX_GPIO_NR(4, 18) , 1);
 
 	/* Set Brightness to high */
+	gpio_request(IMX_GPIO_NR(4, 11), "lvds backlight");
 	gpio_direction_output(IMX_GPIO_NR(4, 11) , 1);
 }
 
@@ -709,7 +822,7 @@ void do_enable_parallel_lcd(struct display_info_t const *dev)
 {
 	int ret;
 
-	ret = enable_lcdif_clock(dev->bus);
+	ret = enable_lcdif_clock(dev->bus, 1);
 	if (ret) {
 		printf("Enable LCDIF clock failed, %d\n", ret);
 		return;
@@ -718,11 +831,13 @@ void do_enable_parallel_lcd(struct display_info_t const *dev)
 	imx_iomux_v3_setup_multiple_pads(lcd_pads, ARRAY_SIZE(lcd_pads));
 
 	/* Reset the LCD */
+	gpio_request(IMX_GPIO_NR(3, 27), "lcd reset");
 	gpio_direction_output(IMX_GPIO_NR(3, 27) , 0);
 	udelay(500);
 	gpio_direction_output(IMX_GPIO_NR(3, 27) , 1);
 
 	/* Set Brightness to high */
+	gpio_request(IMX_GPIO_NR(4, 10), "lcd backlight");
 	gpio_direction_output(IMX_GPIO_NR(4, 10) , 1);
 }
 
@@ -786,6 +901,7 @@ int board_init(void)
 					 ARRAY_SIZE(peri_3v3_pads));
 
 	/* Active high for ncp692 */
+	gpio_request(IMX_GPIO_NR(4, 16), "peri_3v3");
 	gpio_direction_output(IMX_GPIO_NR(4, 16) , 1);
 
 #ifdef CONFIG_SYS_I2C_MXC
@@ -800,6 +916,11 @@ int board_init(void)
 
 #ifdef CONFIG_FSL_QSPI
 	board_qspi_init();
+#endif
+
+	/* Also used for OF_CONTROL enabled */
+#ifdef CONFIG_FEC_MXC
+	setup_fec(CONFIG_FEC_ENET_DEV);
 #endif
 
 	return 0;
@@ -877,6 +998,7 @@ int check_recovery_cmd_file(void)
 	imx_iomux_v3_setup_multiple_pads(recovery_key_pads,
 					 ARRAY_SIZE(recovery_key_pads));
 
+	gpio_request(GPIO_VOL_DN_KEY, "volume_dn_key");
 	gpio_direction_input(GPIO_VOL_DN_KEY);
 
 	/* VOL_DN key is low assert */
