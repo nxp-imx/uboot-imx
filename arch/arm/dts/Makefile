@@ -363,7 +363,8 @@ dtb-$(CONFIG_MX6) += imx6ul-14x14-ddr3-arm2.dtb \
 	imx6dqscm-1gb-qwks-rev2-fix-ldo.dtb \
 	imx6dqscm-1gb-qwks-rev3-fix-ldo.dtb \
 	imx6dqscm-1gb-qwks-rev2-interleave-android-ldo.dtb \
-	imx6dqscm-1gb-qwks-rev3-interleave-android-ldo.dtb
+	imx6dqscm-1gb-qwks-rev3-interleave-android-ldo.dtb \
+	imx6sxscm-1gb-evb-ldo.dtb
 
 dtb-$(CONFIG_MX7) += imx7-colibri.dtb \
 		imx7d-sdb.dtb \
