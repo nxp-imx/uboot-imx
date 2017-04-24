@@ -4,7 +4,7 @@ config SYS_BOARD
 	default "pico-imx7d"
 
 config SYS_VENDOR
-	default "technexion"
+	default "freescale"
 
 config SYS_SOC
 	default "mx7"
