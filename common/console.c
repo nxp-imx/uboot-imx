@@ -41,7 +41,7 @@ static int on_console(const char *name, const char *value, enum env_op op,
 	case env_op_create:
 	case env_op_overwrite:
 
-#if CONFIG_IS_ENABLED(CONSOLE_MUX)
+#ifdef CONFIG_CONSOLE_MUX
 		if (iomux_doenv(console, value))
 			return 1;
 #else
@@ -66,11 +66,11 @@ U_BOOT_ENV_CALLBACK(console, on_console);
 static int on_silent(const char *name, const char *value, enum env_op op,
 	int flags)
 {
-#if !CONFIG_IS_ENABLED(CONFIG_SILENT_CONSOLE_UPDATE_ON_SET)
+#ifndef CONFIG_SILENT_CONSOLE_UPDATE_ON_SET
 	if (flags & H_INTERACTIVE)
 		return 0;
 #endif
-#if !CONFIG_IS_ENABLED(CONFIG_SILENT_CONSOLE_UPDATE_ON_RELOC)
+#ifndef CONFIG_SILENT_CONSOLE_UPDATE_ON_RELOC
 	if ((flags & H_INTERACTIVE) == 0)
 		return 0;
 #endif
@@ -85,7 +85,7 @@ static int on_silent(const char *name, const char *value, enum env_op op,
 U_BOOT_ENV_CALLBACK(silent, on_silent);
 #endif
 
-#if CONFIG_IS_ENABLED(SYS_CONSOLE_IS_IN_ENV)
+#ifdef CONFIG_SYS_CONSOLE_IS_IN_ENV
 /*
  * if overwrite_console returns 1, the stdin, stderr and stdout
  * are switched to the serial port, else the settings in the
@@ -98,7 +98,7 @@ extern int overwrite_console(void);
 #define OVERWRITE_CONSOLE 0
 #endif /* CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE */
 
-#endif /* CONFIG_IS_ENABLED(SYS_CONSOLE_IS_IN_ENV) */
+#endif /* CONFIG_SYS_CONSOLE_IS_IN_ENV */
 
 static int console_setfile(int file, struct stdio_dev * dev)
 {
@@ -145,7 +145,7 @@ static int console_setfile(int file, struct stdio_dev * dev)
 	return error;
 }
 
-#if CONFIG_IS_ENABLED(CONSOLE_MUX)
+#if defined(CONFIG_CONSOLE_MUX)
 /** Console I/O multiplexing *******************************************/
 
 static struct stdio_dev *tstcdev;
@@ -202,7 +202,7 @@ static void console_putc(int file, const char c)
 	}
 }
 
-#if CONFIG_IS_ENABLED(PRE_CONSOLE_BUFFER)
+#ifdef CONFIG_PRE_CONSOLE_BUFFER
 static void console_puts_noserial(int file, const char *s)
 {
 	int i;
@@ -248,7 +248,7 @@ static inline void console_putc(int file, const char c)
 	stdio_devices[file]->putc(stdio_devices[file], c);
 }
 
-#if CONFIG_IS_ENABLED(PRE_CONSOLE_BUFFER)
+#ifdef CONFIG_PRE_CONSOLE_BUFFER
 static inline void console_puts_noserial(int file, const char *s)
 {
 	if (strcmp(stdio_devices[file]->name, "serial") != 0)
@@ -265,7 +265,7 @@ static inline void console_doenv(int file, struct stdio_dev *dev)
 {
 	console_setfile(file, dev);
 }
-#endif /* CONIFIG_IS_ENABLED(CONSOLE_MUX) */
+#endif /* defined(CONFIG_CONSOLE_MUX) */
 
 /** U-Boot INITIAL CONSOLE-NOT COMPATIBLE FUNCTIONS *************************/
 
@@ -290,7 +290,7 @@ int serial_printf(const char *fmt, ...)
 int fgetc(int file)
 {
 	if (file < MAX_FILES) {
-#if CONFIG_IS_ENABLED(CONSOLE_MUX)
+#if defined(CONFIG_CONSOLE_MUX)
 		/*
 		 * Effectively poll for input wherever it may be available.
 		 */
@@ -415,7 +415,7 @@ int tstc(void)
 #define PRE_CONSOLE_FLUSHPOINT1_SERIAL			0
 #define PRE_CONSOLE_FLUSHPOINT2_EVERYTHING_BUT_SERIAL	1
 
-#if CONFIG_IS_ENABLED(PRE_CONSOLE_BUFFER)
+#ifdef CONFIG_PRE_CONSOLE_BUFFER
 #define CIRC_BUF_IDX(idx) ((idx) % (unsigned long)CONFIG_PRE_CON_BUF_SZ)
 
 static void pre_console_putc(const char c)
@@ -736,7 +736,7 @@ void stdio_print_current_devices(void)
 	}
 }
 
-#if CONFIG_IS_ENABLED(SYS_CONSOLE_IS_IN_ENV)
+#ifdef CONFIG_SYS_CONSOLE_IS_IN_ENV
 /* Called after the relocation - use desired console functions */
 int console_init_r(void)
 {
@@ -745,7 +745,7 @@ int console_init_r(void)
 #ifdef CONFIG_SYS_CONSOLE_ENV_OVERWRITE
 	int i;
 #endif /* CONFIG_SYS_CONSOLE_ENV_OVERWRITE */
-#if CONFIG_IS_ENABLED(CONSOLE_MUX)
+#ifdef CONFIG_CONSOLE_MUX
 	int iomux_err = 0;
 #endif
 
@@ -766,7 +766,7 @@ int console_init_r(void)
 		inputdev  = search_device(DEV_FLAGS_INPUT,  stdinname);
 		outputdev = search_device(DEV_FLAGS_OUTPUT, stdoutname);
 		errdev    = search_device(DEV_FLAGS_OUTPUT, stderrname);
-#if CONFIG_IS_ENABLED(CONSOLE_MUX)
+#ifdef CONFIG_CONSOLE_MUX
 		iomux_err = iomux_doenv(stdin, stdinname);
 		iomux_err += iomux_doenv(stdout, stdoutname);
 		iomux_err += iomux_doenv(stderr, stderrname);
@@ -799,7 +799,7 @@ int console_init_r(void)
 		console_doenv(stdin, inputdev);
 	}
 
-#if CONFIG_IS_ENABLED(CONSOLE_MUX)
+#ifdef CONFIG_CONSOLE_MUX
 done:
 #endif
 
@@ -829,7 +829,7 @@ done:
 	return 0;
 }
 
-#else /* !CONFIG_IS_ENABLED(SYS_CONSOLE_IS_IN_ENV) */
+#else /* !CONFIG_SYS_CONSOLE_IS_IN_ENV */
 
 /* Called after the relocation - use desired console functions */
 int console_init_r(void)
@@ -873,7 +873,7 @@ int console_init_r(void)
 	if (outputdev != NULL) {
 		console_setfile(stdout, outputdev);
 		console_setfile(stderr, outputdev);
-#if CONFIG_IS_ENABLED(CONSOLE_MUX)
+#ifdef CONFIG_CONSOLE_MUX
 		console_devices[stdout][0] = outputdev;
 		console_devices[stderr][0] = outputdev;
 #endif
@@ -882,7 +882,7 @@ int console_init_r(void)
 	/* Initializes input console */
 	if (inputdev != NULL) {
 		console_setfile(stdin, inputdev);
-#if CONFIG_IS_ENABLED(CONSOLE_MUX)
+#ifdef CONFIG_CONSOLE_MUX
 		console_devices[stdin][0] = inputdev;
 #endif
 	}
@@ -907,4 +907,4 @@ int console_init_r(void)
 	return 0;
 }
 
-#endif /* CONFIG_IS_ENABLED(SYS_CONSOLE_IS_IN_ENV) */
+#endif /* CONFIG_SYS_CONSOLE_IS_IN_ENV */
