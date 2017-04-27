@@ -9,6 +9,7 @@
  * Rob Herring <robh@kernel.org>
  *
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -1325,13 +1326,18 @@ static int _fastboot_parts_add_ptable_entry(int ptable_index,
 	strcpy(ptable[ptable_index].fstype, (const char *)info.type);
 #else
 	strcpy(ptable[ptable_index].name, name);
-	if (!strcmp(name, "userdata") || !strcmp(name, "system_a") ||
-	    !strcmp(name, "system_b")) {
-		strcpy(ptable[ptable_index].fstype, "ext4");
-	} else {
-		strcpy(ptable[ptable_index].fstype, "emmc");
-	}
+	strcpy(ptable[ptable_index].fstype, "emmc");
 #endif
+	/* For EFI partition, the fs type is from get_partition_info_efi.
+         * But The function does not parse type_guid, just hard code to
+         * "U-Boot", so we hard code here */
+	if (!strcmp(ptable[ptable_index].name, "userdata") ||
+	    !strcmp(ptable[ptable_index].name, "system_a") ||
+	    !strcmp(ptable[ptable_index].name, "system_b") ||
+	    !strcmp(ptable[ptable_index].name, "system")) {
+                strcpy(ptable[ptable_index].fstype, "ext4");
+        }
+
 #ifdef CONFIG_PARTITION_UUIDS
 	strcpy(ptable[ptable_index].uuid, (const char *)info.uuid);
 #endif
