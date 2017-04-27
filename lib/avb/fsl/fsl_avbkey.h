@@ -37,7 +37,7 @@ struct kblb_hdr {
 	/* public key keyblb tag */
 	kblb_tag_t pubk_tag;
 	/* rollback index keyblb tag */
-	kblb_tag_t rbk_tags[AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS];
+	kblb_tag_t rbk_tags[AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_SLOTS];
 };
 typedef struct kblb_hdr kblb_hdr_t;
 

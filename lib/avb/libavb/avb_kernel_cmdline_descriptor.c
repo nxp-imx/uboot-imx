@@ -40,7 +40,6 @@ bool avb_kernel_cmdline_descriptor_validate_and_byteswap(
     return false;
   }
 
-  dest->flags = avb_be32toh(dest->flags);
   dest->kernel_cmdline_length = avb_be32toh(dest->kernel_cmdline_length);
 
   /* Check that kernel_cmdline is fully contained. */

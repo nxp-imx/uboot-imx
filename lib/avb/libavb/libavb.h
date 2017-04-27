@@ -44,7 +44,6 @@
 #include "avb_sysdeps.h"
 #include "avb_util.h"
 #include "avb_vbmeta_image.h"
-#include "avb_version.h"
 #undef AVB_INSIDE_LIBAVB_H
 
 #endif /* LIBAVB_H_ */

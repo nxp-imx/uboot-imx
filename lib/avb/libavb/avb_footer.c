@@ -45,7 +45,7 @@ bool avb_footer_validate_and_byteswap(const AvbFooter* src, AvbFooter* dest) {
   /* Ensure we don't attempt to access any fields if the footer major
    * version is not supported.
    */
-  if (dest->version_major > AVB_FOOTER_VERSION_MAJOR) {
+  if (dest->version_major > AVB_FOOTER_MAJOR_VERSION) {
     avb_error("No support for footer version.\n");
     return false;
   }
