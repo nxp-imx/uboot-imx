@@ -603,8 +603,8 @@ static int fec_init(struct eth_device *dev, bd_t *bd)
 	writel(0x00000000, &fec->eth->gaddr1);
 	writel(0x00000000, &fec->eth->gaddr2);
 
-	/* Do not access reserved register */
-	if (!is_mx6ul() && !is_mx6ull() && !is_imx8m()) {
+	/* Do not access reserved register for i.MX6UL/6ULL/i.MX8/i.MX8M */
+	if (!is_mx6ul() && !is_mx6ull() && !is_imx8() && !is_imx8m()) {
 		/* clear MIB RAM */
 		for (i = mib_ptr; i <= mib_ptr + 0xfc; i += 4)
 			writel(0, i);
