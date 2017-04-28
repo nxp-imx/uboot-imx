@@ -128,7 +128,7 @@ int gpio_get_value(unsigned gpio)
 
 	regs = (struct gpio_regs *)gpio_ports[port];
 
-	val = (readl(&regs->gpio_psr) >> gpio) & 0x01;
+	val = (readl(&regs->gpio_dr) >> gpio) & 0x01;
 
 	return val;
 }
@@ -205,7 +205,7 @@ static void mxc_gpio_bank_set_value(struct gpio_regs *regs, int offset,
 
 static int mxc_gpio_bank_get_value(struct gpio_regs *regs, int offset)
 {
-	return (readl(&regs->gpio_psr) >> offset) & 0x01;
+	return (readl(&regs->gpio_dr) >> offset) & 0x01;
 }
 
 /* set GPIO pin 'gpio' as an input */
