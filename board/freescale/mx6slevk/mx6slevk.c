@@ -74,7 +74,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define EPDC_PAD_CTRL    (PAD_CTL_PKE | PAD_CTL_SPEED_MED |	\
 	PAD_CTL_DSE_40ohm | PAD_CTL_HYS)
 
-#define ETH_PHY_POWER	IMX_GPIO_NR(4, 21)
+#define ETH_PHY_RESET	IMX_GPIO_NR(4, 21)
 
 int dram_init(void)
 {
@@ -223,10 +223,12 @@ static void setup_iomux_fec(void)
 {
 	imx_iomux_v3_setup_multiple_pads(fec_pads, ARRAY_SIZE(fec_pads));
 
-	/* Power up LAN8720 PHY */
-	gpio_request(ETH_PHY_POWER, "LAN8720 PHY PWR");
-	gpio_direction_output(ETH_PHY_POWER , 1);
-	udelay(15000);
+	gpio_request(ETH_PHY_RESET, "LAN8720 PHY RST");
+
+	/* Reset LAN8720 PHY */
+	gpio_direction_output(ETH_PHY_RESET , 0);
+	udelay(500);
+	gpio_set_value(ETH_PHY_RESET, 1);
 }
 
 #define USDHC1_CD_GPIO	IMX_GPIO_NR(4, 7)
@@ -555,8 +557,6 @@ void ldo_mode_set(int ldo_bypass)
 #ifdef CONFIG_FEC_MXC
 int board_eth_init(bd_t *bis)
 {
-	setup_iomux_fec();
-
 	return cpu_eth_init(bis);
 }
 
@@ -564,6 +564,7 @@ static int setup_fec(void)
 {
 	struct iomuxc *iomuxc_regs = (struct iomuxc *)IOMUXC_BASE_ADDR;
 
+	setup_iomux_fec();
 	/* clear gpr1[14], gpr1[18:17] to select anatop clock */
 	clrsetbits_le32(&iomuxc_regs->gpr[1], IOMUX_GPR1_FEC_MASK, 0);
 
