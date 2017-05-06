@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2015, Freescale Semiconductor, Inc.
+ * (C) Copyright 2017 NXP
  */
 
 #include <asm/io.h>
@@ -76,13 +77,10 @@ void config_mmdc(uint8_t module)
 	writel(MMDC_MDMISC_VALUE, mmdc_addr + MMDC_MDMISC);
 	writel(MMDC_MDOR_VALUE, mmdc_addr + MMDC_MDOR);
 	writel(_MDCTL, mmdc_addr + MMDC_MDCTL);
-
 	writel(MMDC_MPMUR0_VALUE, mmdc_addr + MMDC_MPMUR0);
 
 	while (readl(mmdc_addr + MMDC_MPMUR0) & MMDC_MPMUR0_FRC_MSR) {
 	}
-
-	writel(MMDC_MDSCR_RST_VALUE, mmdc_addr + MMDC_MDSCR);
 
 	/* Perform ZQ calibration */
 	writel(MMDC_MPZQLP2CTL_VALUE, mmdc_addr + MMDC_MPZQLP2CTL);
@@ -94,6 +92,7 @@ void config_mmdc(uint8_t module)
 	writel(_MDCTL + 0x80000000, mmdc_addr + MMDC_MDCTL);
 
 	/* Complete the initialization sequence as defined by JEDEC */
+	writel(MMDC_MDSCR_RST_VALUE, mmdc_addr + MMDC_MDSCR);
 	writel(MMDC_MDSCR_MR1_VALUE, mmdc_addr + MMDC_MDSCR);
 	writel(MMDC_MDSCR_MR2_VALUE, mmdc_addr + MMDC_MDSCR);
 	writel(MMDC_MDSCR_MR3_VALUE, mmdc_addr + MMDC_MDSCR);
