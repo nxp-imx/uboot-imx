@@ -733,32 +733,6 @@ static void setup_usb(void)
 	 *  For 6dl, this bit is reserved.
 	 */
 	imx_iomux_set_gpr_register(1, 13, 1, 0);
-
-#ifdef CONFIG_DM_PCA953X
-	struct gpio_desc desc;
-	int ret;
-	
-	ret = dm_gpio_lookup_name("gpio@32_7", &desc);
-	if (ret)
-		return;
-
-	ret = dm_gpio_request(&desc, "usb_host1_pwr");
-	if (ret)
-		return;
-
-	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
-
-	ret = dm_gpio_lookup_name("gpio@34_1", &desc);
-	if (ret)
-		return;
-
-	ret = dm_gpio_request(&desc, "usb_otg_pwr");
-	if (ret)
-		return;
-
-	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
-#endif
-
 }
 
 int board_ehci_power(int port, int on)
@@ -794,6 +768,9 @@ int board_ehci_power(int port, int on)
 		ret = dm_gpio_lookup_name("gpio@34_1", &desc);
 		if (ret)
 			return ret;
+
+		dm_gpio_request(&desc, "usb_otg_pwr");
+		dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
 		
 		if (on)
 			dm_gpio_set_value(&desc, 1);
@@ -804,6 +781,9 @@ int board_ehci_power(int port, int on)
 		ret = dm_gpio_lookup_name("gpio@32_7", &desc);
 		if (ret)
 			return ret;
+
+		dm_gpio_request(&desc, "usb_host1_pwr");
+		dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
 		
 		if (on)
 			dm_gpio_set_value(&desc, 1);
