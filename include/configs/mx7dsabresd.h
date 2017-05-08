@@ -32,11 +32,19 @@
 #if (CONFIG_FEC_ENET_DEV == 0)
 #define IMX_FEC_BASE			ENET_IPS_BASE_ADDR
 #define CONFIG_FEC_MXC_PHYADDR          0x0
+#ifdef CONFIG_DM_ETH
+#define CONFIG_ETHPRIME                 "eth0"
+#else
 #define CONFIG_ETHPRIME                 "FEC0"
+#endif
 #elif (CONFIG_FEC_ENET_DEV == 1)
 #define IMX_FEC_BASE			ENET2_IPS_BASE_ADDR
 #define CONFIG_FEC_MXC_PHYADDR          0x1
+#ifdef CONFIG_DM_ETH
+#define CONFIG_ETHPRIME                 "eth1"
+#else
 #define CONFIG_ETHPRIME                 "FEC1"
+#endif
 #endif
 
 #define CONFIG_FEC_MXC_MDIO_BASE	ENET_IPS_BASE_ADDR

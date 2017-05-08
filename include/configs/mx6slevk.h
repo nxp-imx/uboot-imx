@@ -52,7 +52,11 @@
 #define CONFIG_MII
 #define IMX_FEC_BASE			ENET_BASE_ADDR
 #define CONFIG_FEC_XCV_TYPE		RMII
+#ifdef CONFIG_DM_ETH
+#define CONFIG_ETHPRIME			"eth0"
+#else
 #define CONFIG_ETHPRIME			"FEC"
+#endif
 #define CONFIG_FEC_MXC_PHYADDR		0
 
 #define CONFIG_PHYLIB

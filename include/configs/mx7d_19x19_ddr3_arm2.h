@@ -19,7 +19,11 @@
 #define CONFIG_FEC_MXC
 #define CONFIG_MII
 #define CONFIG_FEC_XCV_TYPE             RGMII
+#ifdef CONFIG_DM_ETH
+#define CONFIG_ETHPRIME                 "eth0"
+#else
 #define CONFIG_ETHPRIME                 "FEC"
+#endif
 #define CONFIG_FEC_MXC_PHYADDR          0
 
 #define CONFIG_PHYLIB
