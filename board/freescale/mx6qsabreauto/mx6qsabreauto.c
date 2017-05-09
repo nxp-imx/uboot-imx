@@ -718,7 +718,7 @@ int board_spi_cs_gpio(unsigned bus, unsigned cs)
 #endif
 
 #ifdef CONFIG_USB_EHCI_MX6
-
+#ifndef CONFIG_DM_USB
 iomux_v3_cfg_t const usb_otg_pads[] = {
 	MX6_PAD_ENET_RX_ER__USB_OTG_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
 };
@@ -798,6 +798,7 @@ int board_ehci_power(int port, int on)
 	return 0;
 }
 #endif
+#endif
 
 int board_early_init_f(void)
 {
@@ -858,7 +859,15 @@ int board_init(void)
 #endif
 
 #ifdef CONFIG_USB_EHCI_MX6
+#ifndef CONFIG_DM_USB
 	setup_usb();
+#else
+	/*
+	  * Set daisy chain for otg_pin_id on 6q.
+	 *  For 6dl, this bit is reserved.
+	 */
+	imx_iomux_set_gpr_register(1, 13, 1, 0);
+#endif
 #endif
 
 	return 0;

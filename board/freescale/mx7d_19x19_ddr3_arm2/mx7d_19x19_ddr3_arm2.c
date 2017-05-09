@@ -456,6 +456,7 @@ int board_spi_cs_gpio(unsigned bus, unsigned cs)
 #endif
 
 #ifdef CONFIG_USB_EHCI_MX7
+#ifndef CONFIG_DM_USB
 iomux_v3_cfg_t const usb_otg1_pads[] = {
 	MX7D_PAD_GPIO1_IO05__USB_OTG1_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
@@ -470,6 +471,7 @@ static void setup_usb(void)
 	imx_iomux_v3_setup_multiple_pads(usb_otg2_pads, ARRAY_SIZE(usb_otg2_pads));
 }
 #endif
+#endif
 
 int board_early_init_f(void)
 {
@@ -481,7 +483,9 @@ int board_early_init_f(void)
 #endif
 
 #ifdef CONFIG_USB_EHCI_MX7
+#ifndef CONFIG_DM_USB
 	setup_usb();
+#endif
 #endif
 
 	return 0;
