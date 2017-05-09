@@ -232,12 +232,13 @@ int print_cpuinfo(void)
 		ret = thermal_get_temp(thermal_dev, &cpu_tmp);
 
 		if (!ret)
-			printf(" at %dC\n", cpu_tmp);
+			printf(" at %dC", cpu_tmp);
 		else
-			debug(" - invalid sensor data\n");
+			debug(" - invalid sensor data");
 	} else {
-		debug(" - invalid sensor device\n");
+		debug(" - invalid sensor device");
 	}
+	printf("\n");
 #endif
 
 #if defined(CONFIG_DBG_MONITOR)
