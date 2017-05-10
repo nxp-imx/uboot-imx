@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Peng Fan <van.freenix@gmail.com>
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -53,6 +54,7 @@ static int imx_pinctrl_set_state(struct udevice *dev, struct udevice *config)
 	if (fdtdec_get_int_array(gd->fdt_blob, node, "fsl,pins",
 				 pin_data, size >> 2)) {
 		dev_err(dev, "Error reading pin data.\n");
+		devm_kfree(dev, pin_data);
 		return -EINVAL;
 	}
 
@@ -78,6 +80,7 @@ static int imx_pinctrl_set_state(struct udevice *dev, struct udevice *config)
 
 		if ((mux_reg == -1) || (conf_reg == -1)) {
 			dev_err(dev, "Error mux_reg or conf_reg\n");
+			devm_kfree(dev, pin_data);
 			return -EINVAL;
 		}
 
@@ -165,6 +168,8 @@ static int imx_pinctrl_set_state(struct udevice *dev, struct udevice *config)
 				conf_reg, config_val);
 		}
 	}
+
+	devm_kfree(dev, pin_data);
 
 	return 0;
 }
