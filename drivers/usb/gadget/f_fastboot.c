@@ -40,17 +40,24 @@
 #include <part.h>
 #include <sparse_format.h>
 #include <image-sparse.h>
+#include <asm/imx-common/boot_mode.h>
 #ifdef CONFIG_ANDROID_RECOVERY
 #include <recovery.h>
 #endif
 #endif
 
+#ifdef CONFIG_FSL_BOOTCTL
+#include "bootctrl.h"
+#endif
+#ifdef CONFIG_BCB_SUPPORT
+#include "bcb.h"
+#endif
+
+
 #define FASTBOOT_VERSION		"0.4"
 
-#ifdef CONFIG_EFI_PARTITION
 #define ANDROID_GPT_OFFSET         0
 #define ANDROID_GPT_SIZE           0x100000
-#endif
 #define FASTBOOT_INTERFACE_CLASS	0xff
 #define FASTBOOT_INTERFACE_SUB_CLASS	0x42
 #define FASTBOOT_INTERFACE_PROTOCOL	0x03
@@ -170,20 +177,6 @@ static struct usb_gadget_strings *fastboot_strings[] = {
 
 #ifdef CONFIG_FSL_FASTBOOT
 
-#ifdef CONFIG_EFI_PARTITION
-#define ANDROID_BOOT_PARTITION_MMC 1
-#define ANDROID_RECOVERY_PARTITION_MMC 2
-#define ANDROID_SYSTEM_PARTITION_MMC 3
-#define ANDROID_CACHE_PARTITION_MMC 4
-#define ANDROID_MISC_PARTITION_MMC 6
-#define ANDROID_DATA_PARTITION_MMC 10
-#else
-#define ANDROID_BOOT_PARTITION_MMC 1
-#define ANDROID_SYSTEM_PARTITION_MMC 5
-#define ANDROID_RECOVERY_PARTITION_MMC 2
-#define ANDROID_CACHE_PARTITION_MMC 6
-#define ANDROID_DATA_PARTITION_MMC 4
-#endif
 
 #define ANDROID_MBR_OFFSET	    0
 #define ANDROID_MBR_SIZE	    0x200
@@ -199,39 +192,13 @@ static struct usb_gadget_strings *fastboot_strings[] = {
 #define MMC_SATA_BLOCK_SIZE 512
 #define FASTBOOT_FBPARTS_ENV_MAX_LEN 1024
 /* To support the Android-style naming of flash */
-#define MAX_PTN		    16
+#define MAX_PTN		    32
 
 
-/*pentry index internally*/
-#ifdef CONFIG_EFI_PARTITION
 enum {
 	PTN_GPT_INDEX = 0,
-	PTN_BOOTLOADER_INDEX,
-	PTN_BOOT_INDEX,
-	PTN_RECOVERY_INDEX,
-	PTN_SYSTEM_INDEX,
-	PTN_CACHE_INDEX,
-	PTN_DEVICE_INDEX,
-	PTN_MISC_INDEX,
-	PTN_DATAFOOTER_INDEX,
-	PTN_VBMETA_INDEX,
-	PTN_PRESISTDATA_INDEX,
-	PTN_DATA_INDEX,
-	PTN_FBMISC_INDEX,
-	PTN_NUM
+	PTN_BOOTLOADER_INDEX
 };
-#else
-enum {
-    PTN_MBR_INDEX = 0,
-    PTN_BOOTLOADER_INDEX,
-    PTN_KERNEL_INDEX,
-    PTN_URAMDISK_INDEX,
-    PTN_SYSTEM_INDEX,
-    PTN_RECOVERY_INDEX,
-    PTN_DATA_INDEX,
-    PTN_NUM
-};
-#endif /*CONFIG_EFI_PARTITION*/
 static unsigned int download_bytes_unpadded;
 
 static struct cmd_fastboot_interface interface = {
@@ -862,16 +829,39 @@ static void process_flash_sata(const char *cmdbuf)
 #endif
 
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
-static int is_sparse_partition(struct fastboot_ptentry *ptn)
+static int is_raw_partition(struct fastboot_ptentry *ptn)
 {
-	 if (ptn && (!strncmp(ptn->name,
-				 FASTBOOT_PARTITION_SYSTEM, strlen(FASTBOOT_PARTITION_SYSTEM))
-				 || !strncmp(ptn->name,
-				 FASTBOOT_PARTITION_DATA, strlen(FASTBOOT_PARTITION_DATA)))) {
+#ifdef CONFIG_ANDROID_AB_SUPPORT
+	if (ptn && (!strncmp(ptn->name, FASTBOOT_PARTITION_BOOTLOADER,
+			strlen(FASTBOOT_PARTITION_BOOTLOADER)) ||
+			!strncmp(ptn->name, FASTBOOT_PARTITION_GPT,
+			strlen(FASTBOOT_PARTITION_GPT)) ||
+			!strncmp(ptn->name, FASTBOOT_PARTITION_BOOT_A,
+			strlen(FASTBOOT_PARTITION_BOOT_A)) ||
+			!strncmp(ptn->name, FASTBOOT_PARTITION_BOOT_B,
+			strlen(FASTBOOT_PARTITION_BOOT_B)) ||
+#ifdef CONFIG_FASTBOOT_LOCK
+			!strncmp(ptn->name, FASTBOOT_PARTITION_FBMISC,
+			strlen(FASTBOOT_PARTITION_FBMISC)) ||
+#endif
+			!strncmp(ptn->name, FASTBOOT_PARTITION_MISC,
+			strlen(FASTBOOT_PARTITION_MISC)))) {
+#else
+	 if (ptn && (!strncmp(ptn->name, FASTBOOT_PARTITION_BOOTLOADER,
+		strlen(FASTBOOT_PARTITION_BOOTLOADER)) ||
+		!strncmp(ptn->name, FASTBOOT_PARTITION_BOOT,
+		strlen(FASTBOOT_PARTITION_BOOT)) ||
+#ifdef CONFIG_FASTBOOT_LOCK
+		!strncmp(ptn->name, FASTBOOT_PARTITION_FBMISC,
+		strlen(FASTBOOT_PARTITION_FBMISC)) ||
+#endif
+		!strncmp(ptn->name, FASTBOOT_PARTITION_MISC,
+		strlen(FASTBOOT_PARTITION_MISC)))) {
+#endif
 		printf("support sparse flash partition for %s\n", ptn->name);
 		return 1;
 	 } else
-		 return 0;
+		return 0;
 }
 
 static lbaint_t mmc_sparse_write(struct sparse_storage *info,
@@ -964,7 +954,7 @@ static void process_flash_mmc(const char *cmdbuf)
 				sprintf(mmc_dev, "mmc dev %x",
 					fastboot_devinfo.dev_id /*slot no*/);
 
-			if (is_sparse_partition(ptn) &&
+			if (!is_raw_partition(ptn) &&
 				is_sparse_image(interface.transfer_buffer)) {
 				int mmc_no = 0;
 				struct mmc *mmc;
@@ -1154,25 +1144,6 @@ static struct fastboot_ptentry ptable[MAX_PTN];
 static unsigned int pcount;
 struct fastboot_device_info fastboot_devinfo;
 
-/*
-   Get mmc control number from passed string, eg, "mmc1" mean device 1. Only
-   support "mmc0" to "mmc9" currently. It will be treated as device 0 for
-   other string.
-*/
-static int _fastboot_get_mmc_no(char *env_str)
-{
-	int digit = 0;
-	unsigned char a;
-
-	if (env_str && (strlen(env_str) >= 4) &&
-	    !strncmp(env_str, "mmc", 3)) {
-		a = env_str[3];
-		if (a >= '0' && a <= '9')
-			digit = a - '0';
-	}
-
-	return digit;
-}
 static int _fastboot_setup_dev(void)
 {
 	char *fastboot_env;
@@ -1187,7 +1158,7 @@ static int _fastboot_setup_dev(void)
 			fastboot_devinfo.dev_id = 0;
 		} else if (!strncmp(fastboot_env, "mmc", 3)) {
 			fastboot_devinfo.type = DEV_MMC;
-			fastboot_devinfo.dev_id = _fastboot_get_mmc_no(fastboot_env);
+			fastboot_devinfo.dev_id = mmc_get_env_dev();
 		}
 	} else {
 		return 1;
@@ -1245,7 +1216,7 @@ static int _fastboot_parts_load_from_ptable(void)
 
 	struct mmc *mmc;
 	struct blk_desc *dev_desc;
-	struct fastboot_ptentry ptable[PTN_NUM + 1];
+	struct fastboot_ptentry ptable[MAX_PTN];
 
 	/* sata case in env */
 	if (fastboot_devinfo.type == DEV_SATA) {
@@ -1292,20 +1263,12 @@ static int _fastboot_parts_load_from_ptable(void)
 	}
 
 	memset((char *)ptable, 0,
-		    sizeof(struct fastboot_ptentry) * (PTN_NUM + 1));
-#ifdef CONFIG_EFI_PARTITION
+		    sizeof(struct fastboot_ptentry) * (MAX_PTN));
 	/* GPT */
-	strcpy(ptable[PTN_GPT_INDEX].name, "gpt");
+	strcpy(ptable[PTN_GPT_INDEX].name, FASTBOOT_PARTITION_GPT);
 	ptable[PTN_GPT_INDEX].start = ANDROID_GPT_OFFSET / dev_desc->blksz;
 	ptable[PTN_GPT_INDEX].length = ANDROID_GPT_SIZE  / dev_desc->blksz;
 	ptable[PTN_GPT_INDEX].partition_id = user_partition;
-#else
-	/* MBR */
-	strcpy(ptable[PTN_MBR_INDEX].name, "mbr");
-	ptable[PTN_MBR_INDEX].start = ANDROID_MBR_OFFSET / dev_desc->blksz;
-	ptable[PTN_MBR_INDEX].length = ANDROID_MBR_SIZE / dev_desc->blksz;
-	ptable[PTN_MBR_INDEX].partition_id = user_partition;
-#endif
 	/* Bootloader */
 	strcpy(ptable[PTN_BOOTLOADER_INDEX].name, FASTBOOT_PARTITION_BOOTLOADER);
 	ptable[PTN_BOOTLOADER_INDEX].start =
@@ -1314,28 +1277,10 @@ static int _fastboot_parts_load_from_ptable(void)
 				 ANDROID_BOOTLOADER_SIZE / dev_desc->blksz;
 	ptable[PTN_BOOTLOADER_INDEX].partition_id = boot_partition;
 
-#ifndef CONFIG_EFI_PARTITION
-	_fastboot_parts_add_ptable_entry(PTN_KERNEL_INDEX,
-				   ANDROID_BOOT_PARTITION_MMC,
-				   user_partition,
-				   FASTBOOT_PARTITION_BOOT , dev_desc, ptable);
-	_fastboot_parts_add_ptable_entry(PTN_RECOVERY_INDEX,
-				   ANDROID_RECOVERY_PARTITION_MMC,
-				   user_partition,
-				   FASTBOOT_PARTITION_RECOVERY, dev_desc, ptable);
-	_fastboot_parts_add_ptable_entry(PTN_SYSTEM_INDEX,
-				   ANDROID_SYSTEM_PARTITION_MMC,
-				   user_partition,
-				   FASTBOOT_PARTITION_SYSTEM, dev_desc, ptable);
-	_fastboot_parts_add_ptable_entry(PTN_DATA_INDEX,
-				   ANDROID_DATA_PARTITION_MMC,
-				   user_partition,
-				   FASTBOOT_PARTITION_DATA, dev_desc, ptable);
-#else
 	int tbl_idx;
 	int part_idx = 1;
 	int ret;
-	for (tbl_idx = 2; tbl_idx < PTN_NUM; tbl_idx++) {
+	for (tbl_idx = 2; tbl_idx < MAX_PTN; tbl_idx++) {
 		ret = _fastboot_parts_add_ptable_entry(tbl_idx,
 				part_idx++,
 				user_partition,
@@ -1344,8 +1289,7 @@ static int _fastboot_parts_load_from_ptable(void)
 		if (ret)
 			break;
 	}
-#endif /*CONFIG_EFI_PARTITION*/
-	for (i = 0; i <= PTN_NUM; i++)
+	for (i = 0; i <= part_idx; i++)
 		fastboot_flash_add_ptn(&ptable[i]);
 
 	return 0;
@@ -1563,6 +1507,16 @@ struct fastboot_ptentry *fastboot_flash_find_ptn(const char *name)
 	return 0;
 }
 
+int fastboot_flash_find_index(const char *name)
+{
+	struct fastboot_ptentry *ptentry = fastboot_flash_find_ptn(name);
+	if (ptentry == NULL) {
+		printf("cannot get the partion info for %s\n",name);
+		return -1;
+	}
+	return ptentry->partition_index;
+}
+
 struct fastboot_ptentry *fastboot_flash_get_ptn(unsigned int n)
 {
 	if (n < pcount)
@@ -1576,17 +1530,93 @@ unsigned int fastboot_flash_get_ptn_count(void)
 	return pcount;
 }
 
-/*
- * CPU and board-specific fastboot initializations.  Aliased function
- * signals caller to move on
- */
-static void __def_fastboot_setup(void)
+#ifdef CONFIG_FSL_FASTBOOT
+void board_fastboot_setup(void)
 {
-	/*do nothing here*/
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	static char boot_dev_part[32];
+	u32 dev_no;
+#endif
+	switch (get_boot_device()) {
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	case SD1_BOOT:
+	case SD2_BOOT:
+	case SD3_BOOT:
+	case SD4_BOOT:
+	case MMC1_BOOT:
+	case MMC2_BOOT:
+	case MMC3_BOOT:
+	case MMC4_BOOT:
+		dev_no = mmc_get_env_dev();
+		sprintf(boot_dev_part,"mmc%d",dev_no);
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", boot_dev_part);
+		sprintf(boot_dev_part, "boota mmc%d", dev_no);
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", boot_dev_part);
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
+	case NAND_BOOT:
+		if (!getenv("fastboot_dev"))
+			setenv("fastboot_dev", "nand");
+		if (!getenv("fbparts"))
+			setenv("fbparts", ANDROID_FASTBOOT_NAND_PARTS);
+		if (!getenv("bootcmd"))
+			setenv("bootcmd",
+				"nand read ${loadaddr} ${boot_nand_offset} "
+				"${boot_nand_size};boota ${loadaddr}");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
+	default:
+		printf("unsupported boot devices\n");
+		break;
+	}
 }
-void board_fastboot_setup(void) \
-	__attribute__((weak, alias("__def_fastboot_setup")));
 
+#ifdef CONFIG_ANDROID_RECOVERY
+void board_recovery_setup(void)
+{
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	static char boot_dev_part[32];
+	u32 dev_no;
+#endif
+	int bootdev = get_boot_device();
+	switch (bootdev) {
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+	case SD1_BOOT:
+	case SD2_BOOT:
+	case SD3_BOOT:
+	case SD4_BOOT:
+	case MMC1_BOOT:
+	case MMC2_BOOT:
+	case MMC3_BOOT:
+	case MMC4_BOOT:
+		dev_no = mmc_get_env_dev();
+		sprintf(boot_dev_part,"boota mmc%d recovery",dev_no);
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery", boot_dev_part);
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
+#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
+	case NAND_BOOT:
+		if (!getenv("bootcmd_android_recovery"))
+			setenv("bootcmd_android_recovery",
+				"nand read ${loadaddr} ${recovery_nand_offset} "
+				"${recovery_nand_size};boota ${loadaddr}");
+		break;
+#endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
+	default:
+		printf("Unsupported bootup device for recovery: dev: %d\n",
+			bootdev);
+		return;
+	}
+
+	printf("setup env for recovery..\n");
+	setenv("bootcmd", "run bootcmd_android_recovery");
+}
+#endif /*CONFIG_ANDROID_RECOVERY*/
+#endif /*CONFIG_FSL_FASTBOOT*/
 
 void fastboot_setup(void)
 {
@@ -1603,10 +1633,6 @@ void fastboot_setup(void)
 	/*get the fastboot dev*/
 	_fastboot_setup_dev();
 
-	/*check if we need to setup recovery*/
-#ifdef CONFIG_ANDROID_RECOVERY
-    check_recovery_mode();
-#endif
 
 	/*load partitions information for the fastboot dev*/
 	_fastboot_load_partitions();
@@ -1614,11 +1640,79 @@ void fastboot_setup(void)
 	parameters_setup();
 }
 
-/* export to lib_arm/board.c */
-void check_fastboot(void)
+/* Write the bcb with fastboot bootloader commands */
+static void enable_fastboot_command(void)
 {
-	if (fastboot_check_and_clean_flag())
-		run_command("fastboot", 0);
+	char fastboot_command[32] = {0};
+	strncpy(fastboot_command, FASTBOOT_BCB_CMD, 31);
+	bcb_write_command(fastboot_command);
+}
+
+/* Get the Boot mode from BCB cmd or Key pressed */
+static FbBootMode fastboot_get_bootmode(void)
+{
+	int ret = 0;
+	int boot_mode = BOOTMODE_NORMAL;
+	char command[32];
+#ifdef CONFIG_ANDROID_RECOVERY
+	if(is_recovery_key_pressing()) {
+		boot_mode = BOOTMODE_RECOVERY_KEY_PRESSED;
+		return boot_mode;
+	}
+#endif
+	ret = bcb_read_command(command);
+	if (ret < 0) {
+		printf("read command failed\n");
+		return boot_mode;
+	}
+	if (!strcmp(command, FASTBOOT_BCB_CMD)) {
+		memset(command, 0, 32);
+		bcb_write_command(command);
+		boot_mode = BOOTMODE_FASTBOOT_BCB_CMD;
+	}
+#ifdef CONFIG_ANDROID_RECOVERY
+	else if (!strcmp(command, RECOVERY_BCB_CMD)) {
+		memset(command, 0, 32);
+		bcb_write_command(command);
+		boot_mode = BOOTMODE_RECOVERY_BCB_CMD;
+	}
+#endif
+	return boot_mode;
+}
+
+/* export to lib_arm/board.c */
+void fastboot_run_bootmode(void)
+{
+	FbBootMode boot_mode = fastboot_get_bootmode();
+	switch(boot_mode){
+	case BOOTMODE_FASTBOOT_BCB_CMD:
+		/* Make the boot into fastboot mode*/
+		puts("Fastboot: Got bootloader commands!\n");
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+		is_recovery_mode = false;
+#endif
+		run_command("fastboot 0", 0);
+		break;
+#ifdef CONFIG_ANDROID_RECOVERY
+	case BOOTMODE_RECOVERY_BCB_CMD:
+	case BOOTMODE_RECOVERY_KEY_PRESSED:
+		/* Make the boot into recovery mode */
+		puts("Fastboot: Got Recovery key pressing or recovery commands!\n");
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+		is_recovery_mode = true;
+#else
+		board_recovery_setup();
+#endif
+		break;
+#endif
+	default:
+		/* skip special mode boot*/
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+		is_recovery_mode = false;
+#endif
+		puts("Fastboot: Normal\n");
+		break;
+	}
 }
 
 #ifdef CONFIG_CMD_BOOTA
@@ -1689,6 +1783,19 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	if (argc > 2)
 		ptn = argv[2];
+
+#ifdef CONFIG_FSL_BOOTCTL
+	else  {
+slot_select:
+		ptn = select_slot();
+		if (ptn == NULL) {
+			printf("no valid slot found, enter to recovery\n");
+			ptn = "recovery";
+		}
+use_given_ptn:
+		printf("use slot %s\n", ptn);
+	}
+#endif
 
 	if (mmcc != -1) {
 #ifdef CONFIG_MMC
@@ -1917,7 +2024,23 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 1;
 
 fail:
-#ifdef CONFIG_FSL_FASTBOOT
+#if defined(CONFIG_FSL_BOOTCTL)
+	if (argc > 2)
+		return -1;
+	if (0 == strcmp(ptn, "recovery")) {
+		printf("boot recovery partition failed\n");
+		return -1;
+	}
+	printf("invalid slot %s\n", ptn);
+	int ret = 0;
+	ret = invalid_curslot();
+	if (ret == 0) {
+		goto slot_select;
+	} else {
+		ptn = "recovery";
+		goto use_given_ptn;
+	}
+#elif defined(CONFIG_FSL_FASTBOOT)
 	return run_command("fastboot", 0);
 #else /*! CONFIG_FSL_FASTBOOT*/
 	return -1;
@@ -2155,7 +2278,7 @@ static int fastboot_tx_write(const char *buffer, unsigned int buffer_size)
 	return 0;
 }
 
-static int fastboot_tx_write_str(const char *buffer)
+int fastboot_tx_write_str(const char *buffer)
 {
 	return fastboot_tx_write(buffer, strlen(buffer));
 }
@@ -2207,6 +2330,13 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		return;
 	}
 
+#ifdef CONFIG_FSL_BOOTCTL
+	if (is_sotvar(cmd)) {
+		get_slotvar(cmd, response, chars_left);
+		fastboot_tx_write_str(response);
+		return;
+	}
+#endif
 	if (!strcmp_l1("version", cmd)) {
 		strncat(response, FASTBOOT_VERSION, chars_left);
 	} else if (!strcmp_l1("bootloader-version", cmd)) {
@@ -2225,6 +2355,8 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 			strcpy(response, "FAILValue not set");
 	} else if (!strcmp_l1("partition-type", cmd)) {
 		strcpy(response, "FAILVariable not implemented");
+	} else if (!strcmp_l1("product", cmd)) {
+		strncat(response, "Freescale i.MX", chars_left);
 	} else {
 		char envstr[32];
 
@@ -2234,7 +2366,6 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 			strncat(response, s, chars_left);
 		} else {
 			printf("WARNING: unknown variable: %s\n", cmd);
-			strcpy(response, "FAILVariable not implemented");
 		}
 	}
 	fastboot_tx_write_str(response);
@@ -2503,7 +2634,7 @@ static void cb_reboot_bootloader(struct usb_ep *ep, struct usb_request *req)
 	fastboot_tx_write_str("OKAY");
 
 	udelay(1000000);
-	fastboot_enable_flag();
+	enable_fastboot_command();
 	do_reset(NULL, 0, 0, NULL);
 }
 #endif
@@ -2549,6 +2680,12 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 		.cmd = "oem",
 		.cb = cb_oem,
 	},
+#ifdef CONFIG_FSL_BOOTCTL
+	{
+		.cmd = "set_active",
+		.cb = cb_set_active,
+	},
+#endif
 };
 
 static void rx_handler_command(struct usb_ep *ep, struct usb_request *req)
