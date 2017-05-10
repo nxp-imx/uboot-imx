@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2010-2016 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -21,7 +22,7 @@ inline int test_key(int value, struct kpp_key_info *ki)
 	return (ki->val == value) && (ki->evt == KDepress);
 }
 
-int check_key_pressing(void)
+int is_recovery_keypad_pressing(void)
 {
 	struct kpp_key_info *key_info = NULL;
 	int state = 0, keys, i;
@@ -52,27 +53,8 @@ int check_key_pressing(void)
 }
 #else
 /* If not using mxc keypad, currently we will detect power key on board */
-int check_key_pressing(void)
+int is_recovery_keypad_pressing(void)
 {
 	return 0;
 }
 #endif
-
-void setup_recovery_env(void)
-{
-	board_recovery_setup();
-}
-
-/* export to lib_arm/board.c */
-void check_recovery_mode(void)
-{
-	if (check_key_pressing()) {
-		puts("Fastboot: Recovery key pressing got!\n");
-		setup_recovery_env();
-	} else if (check_recovery_cmd_file()) {
-		puts("Fastboot: Recovery command file found!\n");
-		setup_recovery_env();
-	} else {
-		puts("Fastboot: Normal\n");
-	}
-}

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2010-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -33,17 +34,45 @@
 #define FASTBOOT_MMC_USER_PARTITION_ID  0
 #define FASTBOOT_MMC_NONE_PARTITION_ID -1
 
+#ifdef CONFIG_ANDROID_THINGS_SUPPORT
+#define FASTBOOT_PARTITION_BOOT_A "boot_a"
+#define FASTBOOT_PARTITION_RECOVERY "recovery"
+#define FASTBOOT_PARTITION_SYSTEM_A "system_a"
+#define FASTBOOT_PARTITION_BOOTLOADER "bootloader"
+#define FASTBOOT_PARTITION_DATA "userdata"
+#define FASTBOOT_PARTITION_BOOT_B "boot_b"
+#define FASTBOOT_PARTITION_SYSTEM_B "system_b"
+#define FASTBOOT_PARTITION_MISC "misc"
+#define FASTBOOT_PARTITION_GPT "gpt"
+#else
 #define FASTBOOT_PARTITION_BOOT "boot"
 #define FASTBOOT_PARTITION_RECOVERY "recovery"
 #define FASTBOOT_PARTITION_SYSTEM "system"
 #define FASTBOOT_PARTITION_BOOTLOADER "bootloader"
-#define FASTBOOT_PARTITION_DATA "data"
+#define FASTBOOT_PARTITION_DATA "userdata"
+#define FASTBOOT_PARTITION_GPT "gpt"
+#define FASTBOOT_PARTITION_MISC "misc"
+#endif
 
 enum {
     DEV_SATA,
     DEV_MMC,
     DEV_NAND
 };
+
+typedef enum {
+#ifdef CONFIG_ANDROID_RECOVERY
+	/* Revoery boot due to combo keys pressed */
+	BOOTMODE_RECOVERY_KEY_PRESSED,
+	/* Recovery boot due to boot-recovery cmd in misc parition */
+	BOOTMODE_RECOVERY_BCB_CMD,
+#endif
+	/* Fastboot boot due to bootonce-bootloader cmd in misc parition */
+	BOOTMODE_FASTBOOT_BCB_CMD,
+	/* Normal boot */
+	BOOTMODE_NORMAL
+}FbBootMode;
+
 
 struct cmd_fastboot_interface {
 	/* This function is called when a buffer has been
@@ -144,18 +173,17 @@ struct fastboot_ptentry *fastboot_flash_get_ptn(unsigned n);
 unsigned int fastboot_flash_get_ptn_count(void);
 void fastboot_flash_dump_ptn(void);
 
-
-/* Check the board special boot mode reboot to fastboot mode. */
-int fastboot_check_and_clean_flag(void);
-
-/* Set the flag which reboot to fastboot mode*/
-void fastboot_enable_flag(void);
-
-/*check if fastboot mode is requested by user*/
-void check_fastboot(void);
+/* Make board into special boot mode  */
+void fastboot_run_bootmode(void);
 
 /*Setup board-relative fastboot environment */
 void board_fastboot_setup(void);
+
+/* Check whether the combo keys pressed
+ * Return 1 if combo keys pressed for recovery boot
+ * Return 0 if no combo keys pressed
+ */
+int is_recovery_key_pressing(void);
 
 #ifdef CONFIG_FASTBOOT_STORAGE_NAND
 /*Save parameters for NAND storage partitions */

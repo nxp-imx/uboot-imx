@@ -375,35 +375,5 @@ void get_board_serial(struct tag_serialnr *serialnr)
 	serialnr->low = (fuse->cfg0 & 0xFFFF) + ((fuse->cfg1 & 0xFFFF) << 16);
 	serialnr->high = (fuse->cfg2 & 0xFFFF) + ((fuse->cfg3 & 0xFFFF) << 16);
 }
-#endif
-#ifdef CONFIG_ANDROID_RECOVERY
-/*
- * check if the recovery filed is set by kernel, it can be set by kernel
- * issue a command '# reboot recovery'
- */
-int recovery_check_and_clean_flag(void)
-{
-/*
- * TODO: will implement this part after porting BCB
- */
-	return 0;
-}
-#endif /*CONFIG_ANDROID_RECOVERY*/
-/*
- * check if the recovery field is set by kernel, it can be set by kernel
- * issue a command '# reboot fastboot'
- */
-int fastboot_check_and_clean_flag(void)
-{
-/*
- * TODO: will implement this part after porting BCB
- */
-	return 0;
-}
-void fastboot_enable_flag(void)
-{
-/*
- * TODO: will implement this part after porting BCB
- */
-}
+#endif /*CONFIG_SERIAL_TAG*/
 #endif /*CONFIG_FSL_FASTBOOT*/
