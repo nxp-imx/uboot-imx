@@ -16,6 +16,7 @@
 #include <config.h>
 #include <common.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <fastboot.h>
 #include <malloc.h>
 #include <linux/usb/ch9.h>
@@ -55,6 +56,12 @@
 
 
 #define FASTBOOT_VERSION		"0.4"
+
+#ifdef CONFIG_FASTBOOT_LOCK
+#include "fastboot_lock_unlock.h"
+#endif
+#define FASTBOOT_VAR_YES    "yes"
+#define FASTBOOT_VAR_NO     "no"
 
 #define ANDROID_GPT_OFFSET         0
 #define ANDROID_GPT_SIZE           0x100000
@@ -1140,8 +1147,8 @@ static void parameters_setup(void)
 				CONFIG_FASTBOOT_BUF_SIZE;
 }
 
-static struct fastboot_ptentry ptable[MAX_PTN];
-static unsigned int pcount;
+static struct fastboot_ptentry g_ptable[MAX_PTN];
+static unsigned int g_pcount;
 struct fastboot_device_info fastboot_devinfo;
 
 static int _fastboot_setup_dev(void)
@@ -1435,7 +1442,7 @@ static int _fastboot_parts_load_from_env(void)
 			while (s < e) {
 				if (_fastboot_parts_add_env_entry(s, &s)) {
 					printf("Error:Fastboot: Abort adding partitions\n");
-					pcount = 0;
+					g_pcount = 0;
 					return 1;
 				}
 				/* Skip a bunch of delimiters */
@@ -1460,7 +1467,7 @@ static int _fastboot_parts_load_from_env(void)
 
 static void _fastboot_load_partitions(void)
 {
-	pcount = 0;
+	g_pcount = 0;
 #if defined(CONFIG_FASTBOOT_STORAGE_NAND)
 	_fastboot_parts_load_from_env();
 #elif defined(CONFIG_FASTBOOT_STORAGE_SATA) \
@@ -1473,19 +1480,19 @@ static void _fastboot_load_partitions(void)
  * Android style flash utilties */
 void fastboot_flash_add_ptn(struct fastboot_ptentry *ptn)
 {
-	if (pcount < MAX_PTN) {
-		memcpy(ptable + pcount, ptn, sizeof(struct fastboot_ptentry));
-		pcount++;
+	if (g_pcount < MAX_PTN) {
+		memcpy(g_ptable + g_pcount, ptn, sizeof(struct fastboot_ptentry));
+		g_pcount++;
 	}
 }
 
 void fastboot_flash_dump_ptn(void)
 {
 	unsigned int n;
-	for (n = 0; n < pcount; n++) {
-		struct fastboot_ptentry *ptn = ptable + n;
-		printf("ptn %d name='%s' start=%d len=%d\n",
-			n, ptn->name, ptn->start, ptn->length);
+	for (n = 0; n < g_pcount; n++) {
+		struct fastboot_ptentry *ptn = g_ptable + n;
+		printf("idx %d, ptn %d name='%s' start=%d len=%d\n",
+			n, ptn->partition_index, ptn->name, ptn->start, ptn->length);
 	}
 }
 
@@ -1494,11 +1501,11 @@ struct fastboot_ptentry *fastboot_flash_find_ptn(const char *name)
 {
 	unsigned int n;
 
-	for (n = 0; n < pcount; n++) {
+	for (n = 0; n < g_pcount; n++) {
 		/* Make sure a substring is not accepted */
-		if (strlen(name) == strlen(ptable[n].name)) {
-			if (0 == strcmp(ptable[n].name, name))
-				return ptable + n;
+		if (strlen(name) == strlen(g_ptable[n].name)) {
+			if (0 == strcmp(g_ptable[n].name, name))
+				return g_ptable + n;
 		}
 	}
 
@@ -1519,15 +1526,15 @@ int fastboot_flash_find_index(const char *name)
 
 struct fastboot_ptentry *fastboot_flash_get_ptn(unsigned int n)
 {
-	if (n < pcount)
-		return ptable + n;
+	if (n < g_pcount)
+		return g_ptable + n;
 	else
 		return 0;
 }
 
 unsigned int fastboot_flash_get_ptn_count(void)
 {
-	return pcount;
+	return g_pcount;
 }
 
 #ifdef CONFIG_FSL_FASTBOOT
@@ -1742,7 +1749,7 @@ bootimg_print_image_hdr(struct andr_img_hdr *hdr)
 	printf("   page_size:   0x%x\n", hdr->page_size);
 
 	printf("   name:      %s\n", hdr->name);
-	printf("   cmdline:   %s%x\n", hdr->cmdline);
+	printf("   cmdline:   %s\n", hdr->cmdline);
 
 	for (i = 0; i < 8; i++)
 		printf("   id[%d]:   0x%x\n", i, hdr->id[i]);
@@ -1876,6 +1883,9 @@ use_given_ptn:
 		flush_cache((ulong)load_addr, bootimg_sectors * 512); /* FIXME */
 
 		addr = load_addr;
+#ifdef CONFIG_FASTBOOT_LOCK
+		int verifyresult = -1;
+#endif
 
 #ifdef CONFIG_SECURE_BOOT
 		extern uint32_t authenticate_image(uint32_t ddr_start,
@@ -1883,11 +1893,28 @@ use_given_ptn:
 
 		if (authenticate_image(load_addr, image_size)) {
 			printf("Authenticate OK\n");
+#ifdef CONFIG_FASTBOOT_LOCK
+			verifyresult = 0;
+#endif
 		} else {
 			printf("Authenticate image Fail, Please check\n\n");
+			/* For Android if the verify not passed we continue the boot process */
+#ifdef CONFIG_FASTBOOT_LOCK
+#ifndef CONFIG_ANDROID_SUPPORT
 			return 1;
+#endif
+			verifyresult = 1;
+#endif
 		}
 #endif /*CONFIG_SECURE_BOOT*/
+#ifdef CONFIG_FASTBOOT_LOCK
+		int lock_status = fastboot_get_lock_stat();
+		if (lock_status == FASTBOOT_LOCK_ERROR) {
+			printf("In boota get fastboot lock status error. Set lock status\n");
+			fastboot_set_lock_stat(FASTBOOT_LOCK);
+		}
+		display_lock(fastboot_get_lock_stat(), verifyresult);
+#endif
 
 		sector = pte->start + (hdr->page_size / 512);
 		sector += ALIGN(hdr->kernel_size, hdr->page_size) / 512;
@@ -2313,6 +2340,20 @@ static int strcmp_l1(const char *s1, const char *s2)
 	return strncmp(s1, s2, strlen(s1));
 }
 
+bool is_slotvar(char *cmd)
+{
+	assert(cmd != NULL);
+	if (!strcmp_l1("has-slot:", cmd) ||
+		!strcmp_l1("slot-successful:", cmd) ||
+		!strcmp_l1("slot-count", cmd) ||
+		!strcmp_l1("slot-suffixes", cmd) ||
+		!strcmp_l1("current-slot", cmd) ||
+		!strcmp_l1("slot-unbootable:", cmd) ||
+		!strcmp_l1("slot-retry-count:", cmd))
+			return true;
+	return false;
+}
+
 static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 {
 	char *cmd = req->buf;
@@ -2330,13 +2371,15 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		return;
 	}
 
+	else if (is_slotvar(cmd)) {
 #ifdef CONFIG_FSL_BOOTCTL
-	if (is_sotvar(cmd)) {
 		get_slotvar(cmd, response, chars_left);
 		fastboot_tx_write_str(response);
 		return;
-	}
+#else
+		strncat(response, FASTBOOT_VAR_NO, chars_left);
 #endif
+	}
 	if (!strcmp_l1("version", cmd)) {
 		strncat(response, FASTBOOT_VERSION, chars_left);
 	} else if (!strcmp_l1("bootloader-version", cmd)) {
@@ -2353,11 +2396,28 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 			strncat(response, s, chars_left);
 		else
 			strcpy(response, "FAILValue not set");
-	} else if (!strcmp_l1("partition-type", cmd)) {
-		strcpy(response, "FAILVariable not implemented");
 	} else if (!strcmp_l1("product", cmd)) {
 		strncat(response, "Freescale i.MX", chars_left);
-	} else {
+	}
+#ifdef CONFIG_FASTBOOT_LOCK
+	else if (!strcmp_l1("secure", cmd)) {
+		strncat(response, FASTBOOT_VAR_YES, chars_left);
+	} else if (!strcmp_l1("unlocked",cmd)){
+		int status = fastboot_get_lock_stat();
+		if (status == FASTBOOT_UNLOCK) {
+			strncat(response, FASTBOOT_VAR_YES, chars_left);
+		} else {
+			strncat(response, FASTBOOT_VAR_NO, chars_left);
+		}
+	}
+#else
+	else if (!strcmp_l1("secure", cmd)) {
+		strncat(response, FASTBOOT_VAR_NO, chars_left);
+	} else if (!strcmp_l1("unlocked",cmd)) {
+		strncat(response, FASTBOOT_VAR_NO, chars_left);
+	}
+#endif
+	else {
 		char envstr[32];
 
 		snprintf(envstr, sizeof(envstr) - 1, "fastboot.%s", cmd);
@@ -2540,6 +2600,113 @@ static void cb_continue(struct usb_ep *ep, struct usb_request *req)
 	fastboot_tx_write_str("OKAY");
 }
 
+
+#ifdef CONFIG_FASTBOOT_LOCK
+
+int do_lock_status(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
+	FbLockState status = fastboot_get_lock_stat();
+	if (status != FASTBOOT_LOCK_ERROR) {
+		if (status == FASTBOOT_LOCK)
+			printf("fastboot lock status: locked.\n");
+		else
+			printf("fastboot lock status: unlocked.\n");
+	} else
+		printf("fastboot lock status error!\n");
+
+	display_lock(status, -1);
+
+	return 0;
+
+}
+
+U_BOOT_CMD(
+	lock_status, 2, 1, do_lock_status,
+	"lock_status",
+	"lock_status");
+
+static int do_fastboot_unlock(bool force)
+{
+	int status;
+	if (force)
+		set_fastboot_lock_disable();
+	if ((fastboot_lock_enable() == FASTBOOT_UL_ENABLE) || force) {
+		printf("It is able to unlock device. %d\n",fastboot_lock_enable());
+		if (fastboot_get_lock_stat() == FASTBOOT_UNLOCK) {
+			printf("The device is already unlocked\n");
+			return 1;
+		}
+		status = fastboot_set_lock_stat(FASTBOOT_UNLOCK);
+		if (status < 0)
+			return status;
+
+		printf("Start /data wipe process....\n");
+		fastboot_wipe_data_partition();
+		printf("Wipe /data completed.\n");
+
+#ifdef CONFIG_AVB_SUPPORT
+		printf("Start stored_rollback_index wipe process....\n");
+		rbkidx_erase();
+		printf("Wipe stored_rollback_index completed.\n");
+#endif
+	} else {
+		printf("It is not able to unlock device.");
+		return -1;
+	}
+
+	return status;
+}
+
+static int do_fastboot_lock(void)
+{
+	int status;
+	if (fastboot_get_lock_stat() == FASTBOOT_LOCK) {
+		printf("The device is already locked\n");
+		return 1;
+	}
+	status = fastboot_set_lock_stat(FASTBOOT_LOCK);
+	if (status < 0)
+		return status;
+
+	printf("Start /data wipe process....\n");
+	fastboot_wipe_data_partition();
+	printf("Wipe /data completed.\n");
+
+	return status;
+}
+
+static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
+{
+	char *cmd = req->buf;
+	char response[FASTBOOT_RESPONSE_LEN];
+	unsigned char len = strlen(cmd);
+	FbLockState status;
+	if (!strncmp(cmd + len - 15, "unlock_critical", 15)) {
+		strcpy(response, "OKAY");
+	} else if (!strncmp(cmd + len - 13, "lock_critical", 13)) {
+		strcpy(response, "OKAY");
+	} else if (!strncmp(cmd + len - 6, "unlock", 6)) {
+		printf("flashing unlock.\n");
+		status = do_fastboot_unlock(false);
+		if (status >= 0)
+			strcpy(response, "OKAY");
+		else
+			strcpy(response, "FAIL unlock device failed.");
+	} else if (!strncmp(cmd + len - 4, "lock", 4)) {
+		printf("flashing lock.\n");
+		status = do_fastboot_lock();
+		if (status >= 0)
+			strcpy(response, "OKAY");
+		else
+			strcpy(response, "FAIL lock device failed.");
+	} else {
+		printf("Unknown flashing command:%s\n", cmd);
+		strcpy(response, "FAIL command not defined");
+	}
+	fastboot_tx_write_str(response);
+}
+
+#endif
+
 #ifdef CONFIG_FASTBOOT_FLASH
 static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 {
@@ -2556,6 +2723,24 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 	/* initialize the response buffer */
 	fb_response_str = response;
 
+#ifdef CONFIG_FASTBOOT_LOCK
+	int status;
+	status = fastboot_get_lock_stat();
+
+	if (status == FASTBOOT_LOCK) {
+		error("device is LOCKed!\n");
+		strcpy(response, "FAIL device is locked.");
+		fastboot_tx_write_str(response);
+		return;
+
+	} else if (status == FASTBOOT_LOCK_ERROR) {
+		error("write lock status into device!\n");
+		fastboot_set_lock_stat(FASTBOOT_LOCK);
+		strcpy(response, "FAIL device is locked.");
+		fastboot_tx_write_str(response);
+		return;
+	}
+#endif
 	fastboot_fail("no flash device defined");
 
 #ifdef CONFIG_FSL_FASTBOOT
@@ -2574,28 +2759,6 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 	fastboot_tx_write_str(response);
 }
 #endif
-
-static void cb_oem(struct usb_ep *ep, struct usb_request *req)
-{
-	char *cmd = req->buf;
-#ifdef CONFIG_FASTBOOT_FLASH_MMC_DEV
-	if (strncmp("format", cmd + 4, 6) == 0) {
-		char cmdbuf[32];
-                sprintf(cmdbuf, "gpt write mmc %x $partitions",
-			CONFIG_FASTBOOT_FLASH_MMC_DEV);
-                if (run_command(cmdbuf, 0))
-			fastboot_tx_write_str("FAIL");
-                else
-			fastboot_tx_write_str("OKAY");
-	} else
-#endif
-	if (strncmp("unlock", cmd + 4, 8) == 0) {
-		fastboot_tx_write_str("FAILnot implemented");
-	}
-	else {
-		fastboot_tx_write_str("FAILunknown oem command");
-	}
-}
 
 #ifdef CONFIG_FASTBOOT_FLASH
 static void cb_erase(struct usb_ep *ep, struct usb_request *req)
@@ -2667,6 +2830,12 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 		.cmd = "continue",
 		.cb = cb_continue,
 	},
+#ifdef CONFIG_FASTBOOT_LOCK
+	{
+		.cmd = "flashing",
+		.cb = cb_flashing,
+	},
+#endif
 #ifdef CONFIG_FASTBOOT_FLASH
 	{
 		.cmd = "flash",
@@ -2676,10 +2845,12 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 		.cb = cb_erase,
 	},
 #endif
+#ifdef CONFIG_FASTBOOT_LOCK
 	{
 		.cmd = "oem",
-		.cb = cb_oem,
+		.cb = cb_flashing,
 	},
+#endif
 #ifdef CONFIG_FSL_BOOTCTL
 	{
 		.cmd = "set_active",

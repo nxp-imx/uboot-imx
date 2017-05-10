@@ -13,6 +13,7 @@
 #include <dm/platform_data/serial_mxc.h>
 #include <serial.h>
 #include <linux/compiler.h>
+#include <asm/imx-common/sys_proto.h>
 
 /* UART Control Register Bit Fields.*/
 #define  URXD_CHARRDY    (1<<15)
