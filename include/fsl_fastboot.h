@@ -44,6 +44,8 @@
 #define FASTBOOT_PARTITION_SYSTEM_B "system_b"
 #define FASTBOOT_PARTITION_MISC "misc"
 #define FASTBOOT_PARTITION_GPT "gpt"
+#define FASTBOOT_PARTITION_PRDATA "prdata"
+#define FASTBOOT_PARTITION_FBMISC "fbmisc"
 #else
 #define FASTBOOT_PARTITION_BOOT "boot"
 #define FASTBOOT_PARTITION_RECOVERY "recovery"
@@ -52,6 +54,8 @@
 #define FASTBOOT_PARTITION_DATA "userdata"
 #define FASTBOOT_PARTITION_GPT "gpt"
 #define FASTBOOT_PARTITION_MISC "misc"
+#define FASTBOOT_PARTITION_PRDATA "presistdata"
+#define FASTBOOT_PARTITION_FBMISC "fbmisc"
 #endif
 
 enum {
