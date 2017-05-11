@@ -3,6 +3,8 @@
  * (C) Copyright 2001-2015
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  * Joe Hershberger, National Instruments
+ * Copyright 2017 NXP
+ *
  */
 
 #include <common.h>
@@ -40,8 +42,12 @@ static int eth_errno;
 static struct eth_uclass_priv *eth_get_uclass_priv(void)
 {
 	struct uclass *uc;
+	int ret;
 
-	uclass_get(UCLASS_ETH, &uc);
+	ret = uclass_get(UCLASS_ETH, &uc);
+	if (ret)
+		return NULL;
+
 	assert(uc);
 	return uc->priv;
 }
@@ -102,6 +108,7 @@ struct udevice *eth_get_dev_by_name(const char *devname)
 	struct udevice *it;
 	struct uclass *uc;
 	int len = strlen("eth");
+	int ret;
 
 	/* Must be longer than 3 to be an alias */
 	if (!strncmp(devname, "eth", len) && strlen(devname) > len) {
@@ -109,7 +116,10 @@ struct udevice *eth_get_dev_by_name(const char *devname)
 		seq = simple_strtoul(startp, &endp, 10);
 	}
 
-	uclass_get(UCLASS_ETH, &uc);
+	ret = uclass_get(UCLASS_ETH, &uc);
+	if (ret)
+		return NULL;
+
 	uclass_foreach_dev(it, uc) {
 		/*
 		 * We need the seq to be valid, so try to probe it.
