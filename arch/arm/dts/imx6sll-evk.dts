@@ -759,7 +759,7 @@
 	pinctrl-2 = <&pinctrl_usdhc2_200mhz>;
 	vqmmc-supply = <&reg_sd2_vmmc>;
 	bus-width = <8>;
-	no-removable;
+	non-removable;
 	status = "okay";
 };
 
