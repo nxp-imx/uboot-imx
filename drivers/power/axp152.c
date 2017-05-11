@@ -6,8 +6,26 @@
  */
 #include <common.h>
 #include <command.h>
-#include <asm/arch/pmic_bus.h>
+#include <i2c.h>
 #include <axp_pmic.h>
+#include <errno.h>
+
+#define AXP152_I2C_ADDR	0x32
+
+static int pmic_bus_init(void)
+{
+	return 0;
+}
+
+static int pmic_bus_read(u8 reg, u8 *data)
+{
+	return i2c_read(AXP152_I2C_ADDR, reg, 1, data, 1);
+}
+
+static int pmic_bus_write(u8 reg, u8 data)
+{
+	return i2c_write(AXP152_I2C_ADDR, reg, 1, &data, 1);
+}
 
 static u8 axp152_mvolt_to_target(int mvolt, int min, int max, int div)
 {
@@ -17,6 +35,14 @@ static u8 axp152_mvolt_to_target(int mvolt, int min, int max, int div)
 		mvolt = max;
 
 	return (mvolt - min) / div;
+}
+
+int axp_set_dcdc1(enum axp152_dcdc1_voltages volt)
+{
+	if (volt < AXP152_DCDC1_1V7 || volt > AXP152_DCDC1_3V5)
+		return -EINVAL;
+
+	return pmic_bus_write(AXP152_DCDC1_VOLTAGE, volt);
 }
 
 int axp_set_dcdc2(unsigned int mvolt)
@@ -54,17 +80,79 @@ int axp_set_dcdc4(unsigned int mvolt)
 	return pmic_bus_write(AXP152_DCDC4_VOLTAGE, target);
 }
 
-int axp_set_aldo2(unsigned int mvolt)
+int axp_set_ldo0(enum axp152_ldo0_volts volt, enum axp152_ldo0_curr_limit curr_limit)
+{
+	u8 target = curr_limit | (volt << 4) | (1 << 7);
+
+	return pmic_bus_write(AXP152_LDO0_VOLTAGE, target);
+}
+
+int axp_disable_ldo0(void)
+{
+	int ret;
+	u8 target;
+
+	ret = pmic_bus_read(AXP152_LDO0_VOLTAGE, &target);
+	if (ret)
+		return ret;
+
+	target &= ~(1 << 7);
+
+	return pmic_bus_write(AXP152_LDO0_VOLTAGE, target);
+}
+
+int axp_set_ldo1(unsigned int mvolt)
+{
+	u8 target = axp152_mvolt_to_target(mvolt, 700, 3500, 100);
+
+	return pmic_bus_write(AXP152_LDO1_VOLTAGE, target);
+}
+
+
+int axp_set_ldo2(unsigned int mvolt)
 {
 	u8 target = axp152_mvolt_to_target(mvolt, 700, 3500, 100);
 
 	return pmic_bus_write(AXP152_LDO2_VOLTAGE, target);
 }
 
+int axp_set_aldo1(enum axp152_aldo_voltages volt)
+{
+	u8 val;
+	int ret;
+
+	ret = pmic_bus_read(AXP152_ALDO1_ALDO2_VOLTAGE, &val);
+	if (ret)
+		return ret;
+
+	val |= (volt << 4);
+	return pmic_bus_write(AXP152_ALDO1_ALDO2_VOLTAGE, val);
+}
+
+int axp_set_aldo2(enum axp152_aldo_voltages volt)
+{
+	u8 val;
+	int ret;
+
+	ret = pmic_bus_read(AXP152_ALDO1_ALDO2_VOLTAGE, &val);
+	if (ret)
+		return ret;
+
+	val |= volt;
+	return pmic_bus_write(AXP152_ALDO1_ALDO2_VOLTAGE, val);
+}
+
+int axp_set_power_output(int val)
+{
+	return pmic_bus_write(AXP152_POWER_CONTROL, val);
+}
+
 int axp_init(void)
 {
 	u8 ver;
 	int rc;
+	int ret;
+	u8 reg;
 
 	rc = pmic_bus_init();
 	if (rc)
@@ -77,7 +165,24 @@ int axp_init(void)
 	if (ver != 0x05)
 		return -EINVAL;
 
-	return 0;
+	/* Set the power off sequence to `reverse of power on sequence` */
+	ret = pmic_bus_read(AXP152_SHUTDOWN, &reg);
+	if (ret)
+		return ret;
+	reg |= AXP152_POWEROFF_SEQ;
+	ret = pmic_bus_write(AXP152_SHUTDOWN, reg);
+	if (ret)
+		return ret;
+
+
+	/* Enable the power recovery */
+	ret = pmic_bus_read(AXP152_POWER_RECOVERY, &reg);
+	if (ret)
+		return ret;
+	reg |= AXP152_POWER_RECOVERY_EN;
+	ret = pmic_bus_write(AXP152_POWER_RECOVERY, reg);
+	return ret;
+
 }
 
 int do_poweroff(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
