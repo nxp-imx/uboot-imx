@@ -1193,14 +1193,18 @@ static inline int bus_width(uint cap)
 }
 
 #ifndef CONFIG_DM_MMC_OPS
-static void mmc_set_ios(struct mmc *mmc)
+static int mmc_set_ios(struct mmc *mmc)
 {
+	int ret = 0;
+
 	if (mmc->cfg->ops->set_ios)
-		mmc->cfg->ops->set_ios(mmc);
+		ret = mmc->cfg->ops->set_ios(mmc);
+
+	return ret;
 }
 #endif
 
-void mmc_set_clock(struct mmc *mmc, uint clock)
+int mmc_set_clock(struct mmc *mmc, uint clock)
 {
 	if (clock > mmc->cfg->f_max)
 		clock = mmc->cfg->f_max;
@@ -1210,14 +1214,14 @@ void mmc_set_clock(struct mmc *mmc, uint clock)
 
 	mmc->clock = clock;
 
-	mmc_set_ios(mmc);
+	return mmc_set_ios(mmc);
 }
 
-static void mmc_set_bus_width(struct mmc *mmc, uint width)
+static int mmc_set_bus_width(struct mmc *mmc, uint width)
 {
 	mmc->bus_width = width;
 
-	mmc_set_ios(mmc);
+	return mmc_set_ios(mmc);
 }
 
 void mmc_dump_capabilities(const char *text, uint caps)
