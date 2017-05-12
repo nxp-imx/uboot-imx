@@ -275,6 +275,8 @@ int mmc_send_status(struct mmc *mmc, int timeout)
 int mmc_set_blocklen(struct mmc *mmc, int len)
 {
 	struct mmc_cmd cmd;
+	int retries = 5;
+	int err;
 
 	if (mmc->ddr_mode)
 		return 0;
@@ -282,8 +284,13 @@ int mmc_set_blocklen(struct mmc *mmc, int len)
 	cmd.cmdidx = MMC_CMD_SET_BLOCKLEN;
 	cmd.resp_type = MMC_RSP_R1;
 	cmd.cmdarg = len;
+	do {
+		err = mmc_send_cmd(mmc, &cmd, NULL);
+		if (!err)
+			break;
+	} while (retries--);
 
-	return mmc_send_cmd(mmc, &cmd, NULL);
+	return err;
 }
 
 static int mmc_read_blocks(struct mmc *mmc, void *dst, lbaint_t start,
@@ -1867,6 +1874,7 @@ static int mmc_startup(struct mmc *mmc)
 	u64 cmult, csize;
 	struct mmc_cmd cmd;
 	struct blk_desc *bdesc;
+	int retries = 3;
 
 #ifdef CONFIG_MMC_SPI_CRC_ON
 	if (mmc_host_is_spi(mmc)) { /* enable CRC check for spi */
@@ -1874,7 +1882,6 @@ static int mmc_startup(struct mmc *mmc)
 		cmd.resp_type = MMC_RSP_R1;
 		cmd.cmdarg = 1;
 		err = mmc_send_cmd(mmc, &cmd, NULL);
-
 		if (err)
 			return err;
 	}
@@ -1886,7 +1893,9 @@ static int mmc_startup(struct mmc *mmc)
 	cmd.resp_type = MMC_RSP_R2;
 	cmd.cmdarg = 0;
 
-	err = mmc_send_cmd(mmc, &cmd, NULL);
+	do {
+		err = mmc_send_cmd(mmc, &cmd, NULL);
+	} while (err && retries-- > 0);
 
 	if (err)
 		return err;
