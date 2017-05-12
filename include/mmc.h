@@ -213,9 +213,10 @@
 #define EXT_CSD_BUS_WIDTH_1	0	/* Card is in 1 bit mode */
 #define EXT_CSD_BUS_WIDTH_4	1	/* Card is in 4 bit mode */
 #define EXT_CSD_BUS_WIDTH_8	2	/* Card is in 8 bit mode */
-#define EXT_CSD_DDR_BUS_WIDTH_4	5	/* Card is in 4 bit DDR mode */
-#define EXT_CSD_DDR_BUS_WIDTH_8	6	/* Card is in 8 bit DDR mode */
+#define EXT_CSD_DDR		4	/* Card is in DDR mode */
 
+#define EXT_CSD_TIMING_LEGACY	0	/* no high speed */
+#define EXT_CSD_TIMING_HS	1	/* HS */
 #define EXT_CSD_BOOT_ACK_ENABLE			(1 << 6)
 #define EXT_CSD_BOOT_PARTITION_ENABLE		(1 << 3)
 #define EXT_CSD_PARTITION_ACCESS_ENABLE		(1 << 0)
@@ -424,6 +425,16 @@ enum bus_mode {
 
 const char *mmc_mode_name(enum bus_mode mode);
 void mmc_dump_capabilities(const char *text, uint caps);
+
+static inline bool mmc_is_mode_ddr(enum bus_mode mode)
+{
+	if ((mode == MMC_DDR_52) || (mode == UHS_DDR50))
+		return true;
+	else
+		return false;
+}
+
+
 /*
  * With CONFIG_DM_MMC enabled, struct mmc can be accessed from the MMC device
  * with mmc_get_mmc_dev().
