@@ -1133,6 +1133,23 @@ static void mmc_set_bus_width(struct mmc *mmc, uint width)
 	mmc_set_ios(mmc);
 }
 
+void mmc_dump_capabilities(const char *text, uint caps)
+{
+	enum bus_mode mode;
+
+	printf("%s: widths [", text);
+	if (caps & MMC_MODE_8BIT)
+		printf("8, ");
+	if (caps & MMC_MODE_4BIT)
+		printf("4, ");
+	printf("1] modes [");
+
+	for (mode = MMC_LEGACY; mode < MMC_MODES_END; mode++)
+		if (MMC_CAP(mode) & caps)
+			printf("%s, ", mmc_mode_name(mode));
+	printf("\b\b]\n");
+}
+
 static int sd_select_bus_freq_width(struct mmc *mmc)
 {
 	int err;

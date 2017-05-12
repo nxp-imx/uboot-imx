@@ -422,6 +422,7 @@ enum bus_mode {
 };
 
 const char *mmc_mode_name(enum bus_mode mode);
+void mmc_dump_capabilities(const char *text, uint caps);
 /*
  * With CONFIG_DM_MMC enabled, struct mmc can be accessed from the MMC device
  * with mmc_get_mmc_dev().
