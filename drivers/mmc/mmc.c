@@ -1194,6 +1194,16 @@ static inline int bus_width(uint cap)
 }
 
 #ifndef CONFIG_DM_MMC_OPS
+static int mmc_set_vdd(struct mmc *mmc, bool enable)
+{
+	int ret = 0;
+
+	if (mmc->cfg->ops->set_vdd)
+		ret = mmc->cfg->ops->set_vdd(mmc, enable);
+
+	return ret;
+}
+
 static int mmc_set_ios(struct mmc *mmc)
 {
 	int ret = 0;
@@ -1942,7 +1952,7 @@ int mmc_start_init(struct mmc *mmc)
 		return err;
 #endif
 	mmc->ddr_mode = 0;
-
+	mmc_set_vdd(mmc, true);
 	/* First try to set 3.3V. If it fails set to 1.8V */
 	err = mmc_set_signal_voltage(mmc, MMC_SIGNAL_VOLTAGE_330);
 	if (err != 0)
