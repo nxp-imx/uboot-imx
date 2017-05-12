@@ -93,6 +93,20 @@ int mmc_getcd(struct mmc *mmc)
 {
 	return dm_mmc_get_cd(mmc->dev);
 }
+
+int dm_mmc_execute_tuning(struct udevice *dev, uint opcode)
+{
+	struct dm_mmc_ops *ops = mmc_get_ops(dev);
+
+	if (!ops->execute_tuning)
+		return -ENOSYS;
+	return ops->execute_tuning(dev, opcode);
+}
+
+int mmc_execute_tuning(struct mmc *mmc, uint opcode)
+{
+	return dm_mmc_execute_tuning(mmc->dev, opcode);
+}
 #endif
 
 struct mmc *mmc_get_mmc_dev(struct udevice *dev)
