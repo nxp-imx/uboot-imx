@@ -1217,6 +1217,16 @@ static int mmc_set_vdd(struct mmc *mmc, bool enable)
 	return ret;
 }
 
+static int mmc_card_busy(struct mmc *mmc)
+{
+	int ret = 0;
+
+	if (mmc->cfg->ops->card_busy)
+		ret = mmc->cfg->ops->card_busy(mmc);
+
+	return ret;
+}
+
 static int mmc_set_ios(struct mmc *mmc)
 {
 	int ret = 0;
