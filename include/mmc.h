@@ -573,6 +573,7 @@ struct mmc {
 #endif
 	u8 *ext_csd;
 	enum bus_mode selected_mode;
+	enum bus_mode best_mode;
 };
 
 struct mmc_hwpart_conf {
