@@ -1216,7 +1216,7 @@ static int mmc_set_ios(struct mmc *mmc)
 }
 #endif
 
-int mmc_set_clock(struct mmc *mmc, uint clock)
+int mmc_set_clock(struct mmc *mmc, uint clock, u8 disable)
 {
 	if (clock > mmc->cfg->f_max)
 		clock = mmc->cfg->f_max;
@@ -1225,6 +1225,7 @@ int mmc_set_clock(struct mmc *mmc, uint clock)
 		clock = mmc->cfg->f_min;
 
 	mmc->clock = clock;
+	mmc->clk_disable = disable;
 
 	return mmc_set_ios(mmc);
 }
@@ -1316,7 +1317,7 @@ static int sd_select_mode_and_width(struct mmc *mmc)
 
 				/* configure the bus mode (host) */
 				mmc_select_mode(mmc, mwt->mode);
-				mmc_set_clock(mmc, mmc->tran_speed);
+				mmc_set_clock(mmc, mmc->tran_speed, false);
 
 				err = sd_read_ssr(mmc);
 				if (!err)
@@ -1327,7 +1328,7 @@ static int sd_select_mode_and_width(struct mmc *mmc)
 error:
 				/* revert to a safer bus speed */
 				mmc_select_mode(mmc, SD_LEGACY);
-				mmc_set_clock(mmc, mmc->tran_speed);
+				mmc_set_clock(mmc, mmc->tran_speed, false);
 			}
 		}
 	}
@@ -1465,7 +1466,7 @@ static int mmc_select_mode_and_width(struct mmc *mmc)
 
 			/* configure the bus mode (host) */
 			mmc_select_mode(mmc, mwt->mode);
-			mmc_set_clock(mmc, mmc->tran_speed);
+			mmc_set_clock(mmc, mmc->tran_speed, false);
 
 			/* do a transfer to check the configuration */
 			err = mmc_read_and_compare_ext_csd(mmc);
@@ -1928,7 +1929,7 @@ static void mmc_set_initial_state(struct mmc *mmc)
 		printf("failed to set signal voltage\n");
 
 	mmc_set_bus_width(mmc, 1);
-	mmc_set_clock(mmc, 1);
+	mmc_set_clock(mmc, 1, false);
 	mmc_select_mode(mmc, MMC_LEGACY);
 }
 
