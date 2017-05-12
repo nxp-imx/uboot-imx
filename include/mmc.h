@@ -454,6 +454,7 @@ struct mmc {
 #ifdef CONFIG_DM_MMC
 	struct udevice *dev;	/* Device for this MMC controller */
 #endif
+	u8 *ext_csd;
 };
 
 struct mmc_hwpart_conf {
