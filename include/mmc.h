@@ -59,6 +59,7 @@
 
 #define MMC_MODE_8BIT		(1 << 30)
 #define MMC_MODE_4BIT		(1 << 29)
+#define MMC_MODE_1BIT		(1 << 28)
 #define MMC_MODE_SPI		(1 << 27)
 
 

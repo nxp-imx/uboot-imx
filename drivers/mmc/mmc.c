@@ -608,7 +608,7 @@ static int mmc_change_freq(struct mmc *mmc)
 	char cardtype;
 	int err;
 
-	mmc->card_caps = 0;
+	mmc->card_caps = MMC_MODE_1BIT;
 
 	if (mmc_host_is_spi(mmc))
 		return 0;
@@ -934,7 +934,7 @@ static int sd_switch(struct mmc *mmc, int mode, int group, u8 value, u8 *resp)
 }
 
 
-static int sd_change_freq(struct mmc *mmc)
+static int sd_get_capabilities(struct mmc *mmc)
 {
 	int err;
 	struct mmc_cmd cmd;
@@ -943,7 +943,7 @@ static int sd_change_freq(struct mmc *mmc)
 	struct mmc_data data;
 	int timeout;
 
-	mmc->card_caps = 0;
+	mmc->card_caps = MMC_MODE_1BIT;
 
 	if (mmc_host_is_spi(mmc))
 		return 0;
@@ -1020,26 +1020,53 @@ retry_scr:
 	}
 
 	/* If high-speed isn't supported, we return */
-	if (!(__be32_to_cpu(switch_status[3]) & SD_HIGHSPEED_SUPPORTED))
-		return 0;
+	if (__be32_to_cpu(switch_status[3]) & SD_HIGHSPEED_SUPPORTED)
+		mmc->card_caps |= MMC_CAP(SD_HS);
 
-	/*
-	 * If the host doesn't support SD_HIGHSPEED, do not switch card to
-	 * HIGHSPEED mode even if the card support SD_HIGHSPPED.
-	 * This can avoid furthur problem when the card runs in different
-	 * mode between the host.
-	 */
-	if (!((mmc->cfg->host_caps & MMC_MODE_HS_52MHz) &&
-		(mmc->cfg->host_caps & MMC_MODE_HS)))
-		return 0;
+	return 0;
+}
+
+static int sd_set_card_speed(struct mmc *mmc, enum bus_mode mode)
+{
+	int err;
+	ALLOC_CACHE_ALIGN_BUFFER(uint, switch_status, 16);
 
 	err = sd_switch(mmc, SD_SWITCH_SWITCH, 0, 1, (u8 *)switch_status);
 
 	if (err)
 		return err;
 
-	if ((__be32_to_cpu(switch_status[4]) & 0x0f000000) == 0x01000000)
-		mmc->card_caps |= MMC_MODE_HS;
+	if ((__be32_to_cpu(switch_status[4]) & 0x0f000000) != 0x01000000)
+		return -ENOTSUPP;
+
+	return 0;
+}
+
+int sd_select_bus_width(struct mmc *mmc, int w)
+{
+	int err;
+	struct mmc_cmd cmd;
+
+	if ((w != 4) && (w != 1))
+		return -EINVAL;
+
+	cmd.cmdidx = MMC_CMD_APP_CMD;
+	cmd.resp_type = MMC_RSP_R1;
+	cmd.cmdarg = mmc->rca << 16;
+
+	err = mmc_send_cmd(mmc, &cmd, NULL);
+	if (err)
+		return err;
+
+	cmd.cmdidx = SD_CMD_APP_SET_BUS_WIDTH;
+	cmd.resp_type = MMC_RSP_R1;
+	if (w == 4)
+		cmd.cmdarg = 2;
+	else if (w == 1)
+		cmd.cmdarg = 0;
+	err = mmc_send_cmd(mmc, &cmd, NULL);
+	if (err)
+		return err;
 
 	return 0;
 }
@@ -1131,6 +1158,19 @@ static const u8 multipliers[] = {
 	80,
 };
 
+
+static inline int bus_width(uint cap)
+{
+	if (cap == MMC_MODE_8BIT)
+		return 8;
+	if (cap == MMC_MODE_4BIT)
+		return 4;
+	if (cap == MMC_MODE_1BIT)
+		return 1;
+	error("invalid bus witdh capability 0x%x\n", cap);
+	return 0;
+}
+
 #ifndef CONFIG_DM_MMC_OPS
 static void mmc_set_ios(struct mmc *mmc)
 {
@@ -1168,55 +1208,89 @@ void mmc_dump_capabilities(const char *text, uint caps)
 		printf("8, ");
 	if (caps & MMC_MODE_4BIT)
 		printf("4, ");
-	printf("1] modes [");
-
+	if (caps & MMC_MODE_1BIT)
+		printf("1, ");
+	printf("\b\b] modes [");
 	for (mode = MMC_LEGACY; mode < MMC_MODES_END; mode++)
 		if (MMC_CAP(mode) & caps)
 			printf("%s, ", mmc_mode_name(mode));
 	printf("\b\b]\n");
 }
 
-static int sd_select_bus_freq_width(struct mmc *mmc)
+struct mode_width_tuning {
+	enum bus_mode mode;
+	uint widths;
+};
+
+static const struct mode_width_tuning sd_modes_by_pref[] = {
+	{
+		.mode = SD_HS,
+		.widths = MMC_MODE_4BIT | MMC_MODE_1BIT,
+	},
+	{
+		.mode = SD_LEGACY,
+		.widths = MMC_MODE_4BIT | MMC_MODE_1BIT,
+	}
+};
+#define for_each_sd_mode_by_pref(caps, mwt) \
+	for (mwt = sd_modes_by_pref;\
+	     mwt < sd_modes_by_pref + ARRAY_SIZE(sd_modes_by_pref);\
+	     mwt++) \
+		if (caps & MMC_CAP(mwt->mode))
+
+static int sd_select_mode_and_width(struct mmc *mmc)
 {
 	int err;
-	struct mmc_cmd cmd;
+	uint widths[] = {MMC_MODE_4BIT, MMC_MODE_1BIT};
+	const struct mode_width_tuning *mwt;
 
-	err = sd_change_freq(mmc);
+	err = sd_get_capabilities(mmc);
 	if (err)
 		return err;
-
 	/* Restrict card's capabilities by what the host can do */
-	mmc->card_caps &= mmc->cfg->host_caps;
+	mmc->card_caps &= (mmc->cfg->host_caps | MMC_MODE_1BIT);
 
-	if (mmc->card_caps & MMC_MODE_4BIT) {
-		cmd.cmdidx = MMC_CMD_APP_CMD;
-		cmd.resp_type = MMC_RSP_R1;
-		cmd.cmdarg = mmc->rca << 16;
+	for_each_sd_mode_by_pref(mmc->card_caps, mwt) {
+		uint *w;
 
-		err = mmc_send_cmd(mmc, &cmd, NULL);
-		if (err)
-			return err;
+		for (w = widths; w < widths + ARRAY_SIZE(widths); w++) {
+			if (*w & mmc->card_caps & mwt->widths) {
+				debug("trying mode %s width %d (at %d MHz)\n",
+				      mmc_mode_name(mwt->mode),
+				      bus_width(*w),
+				      mmc_mode2freq(mmc, mwt->mode) / 1000000);
 
-		cmd.cmdidx = SD_CMD_APP_SET_BUS_WIDTH;
-		cmd.resp_type = MMC_RSP_R1;
-		cmd.cmdarg = 2;
-		err = mmc_send_cmd(mmc, &cmd, NULL);
-		if (err)
-			return err;
+				/* configure the bus width (card + host) */
+				err = sd_select_bus_width(mmc, bus_width(*w));
+				if (err)
+					goto error;
+				mmc_set_bus_width(mmc, bus_width(*w));
 
-		mmc_set_bus_width(mmc, 4);
+				/* configure the bus mode (card) */
+				err = sd_set_card_speed(mmc, mwt->mode);
+				if (err)
+					goto error;
+
+				/* configure the bus mode (host) */
+				mmc_select_mode(mmc, mwt->mode);
+				mmc_set_clock(mmc, mmc->tran_speed);
+
+				err = sd_read_ssr(mmc);
+				if (!err)
+					return 0;
+				else
+					printf("bad ssr\n");
+
+error:
+				/* revert to a safer bus speed */
+				mmc_select_mode(mmc, SD_LEGACY);
+				mmc_set_clock(mmc, mmc->tran_speed);
+			}
+		}
 	}
 
-	err = sd_read_ssr(mmc);
-	if (err)
-		return err;
-
-	if (mmc->card_caps & MMC_MODE_HS)
-		mmc_select_mode(mmc, SD_HS);
-	else
-		mmc_select_mode(mmc, SD_LEGACY);
-
-	return 0;
+	error("unable to select a mode\n");
+	return -ENOTSUPP;
 }
 
 static int mmc_read_and_compare_ext_csd(struct mmc *mmc)
@@ -1277,7 +1351,7 @@ static int mmc_select_bus_freq_width(struct mmc *mmc)
 		return err;
 
 	/* Restrict card's capabilities by what the host can do */
-	mmc->card_caps &= mmc->cfg->host_caps;
+	mmc->card_caps &= (mmc->cfg->host_caps | MMC_MODE_1BIT);
 
 	/* Only version 4 of MMC supports wider bus widths */
 	if (mmc->version < MMC_VERSION_4)
@@ -1671,7 +1745,7 @@ static int mmc_startup(struct mmc *mmc)
 		return err;
 
 	if (IS_SD(mmc))
-		err = sd_select_bus_freq_width(mmc);
+		err = sd_select_mode_and_width(mmc);
 	else
 		err = mmc_select_bus_freq_width(mmc);
 
