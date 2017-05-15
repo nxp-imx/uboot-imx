@@ -358,6 +358,7 @@ void setup_spinor(void)
 {
 	imx_iomux_v3_setup_multiple_pads(ecspi1_pads,
 					 ARRAY_SIZE(ecspi1_pads));
+	gpio_request(IMX_GPIO_NR(4, 11), "escpi cs");
 	gpio_direction_output(IMX_GPIO_NR(4, 11), 0);
 }
 
