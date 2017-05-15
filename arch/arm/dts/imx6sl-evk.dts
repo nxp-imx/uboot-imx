@@ -203,8 +203,11 @@
 
 &i2c1 {
 	clock-frequency = <100000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c1>;
+	pinctrl-1 = <&pinctrl_i2c1_gpio>;
+	scl-gpios = <&gpio3 12 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio3 13 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
 	pmic: pfuze100@08 {
@@ -393,8 +396,11 @@
 
 &i2c2 {
 	clock-frequency = <100000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c2>;
+	pinctrl-1 = <&pinctrl_i2c2_gpio>;
+	scl-gpios = <&gpio3 14 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio3 15 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
 	codec: wm8962@1a {
@@ -565,11 +571,24 @@
 			>;
 		};
 
+		pinctrl_i2c1_gpio: i2c1grp_gpio {
+			fsl,pins = <
+				MX6SL_PAD_I2C1_SCL__GPIO3_IO12  0x1b8b1
+				MX6SL_PAD_I2C1_SDA__GPIO3_IO13  0x1b8b1
+			>;
+		};
 
 		pinctrl_i2c2: i2c2grp {
 			fsl,pins = <
 				MX6SL_PAD_I2C2_SCL__I2C2_SCL	0x4001b8b1
 				MX6SL_PAD_I2C2_SDA__I2C2_SDA	0x4001b8b1
+			>;
+		};
+
+		pinctrl_i2c2_gpio: i2c2grp_gpio {
+			fsl,pins = <
+				MX6SL_PAD_I2C2_SCL__GPIO3_IO14  0x1b8b1
+				MX6SL_PAD_I2C2_SDA__GPIO3_IO15  0x1b8b1
 			>;
 		};
 

@@ -362,6 +362,7 @@ int board_mmc_init(bd_t *bis)
 #endif
 }
 
+#ifdef CONFIG_SYS_I2C
 #define PC	MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C1 for PMIC */
 struct i2c_pads_info i2c_pad_info1 = {
@@ -376,6 +377,7 @@ struct i2c_pads_info i2c_pad_info1 = {
 		.gp = IMX_GPIO_NR(3, 12),
 	},
 };
+#endif
 
 #ifdef CONFIG_POWER
 int power_init_board(void)
@@ -817,10 +819,11 @@ int board_init(void)
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
-#ifdef CONFIG_SYS_I2C_MXC
+#ifdef CONFIG_SYS_I2C
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
-	setup_elan_pads();
 #endif
+
+	setup_elan_pads();
 
 #ifdef	CONFIG_FEC_MXC
 	setup_fec();

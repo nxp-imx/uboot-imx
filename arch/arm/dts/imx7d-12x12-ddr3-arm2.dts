@@ -154,8 +154,11 @@
 
 &i2c1 {
 	clock-frequency = <100000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c1_1>;
+	pinctrl-1 = <&pinctrl_i2c1_1_gpio>;
+	scl-gpios = <&gpio1 5 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
 	pmic: pfuze3000@08 {
@@ -250,8 +253,11 @@
 
 &i2c3 {
 	clock-frequency = <100000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c3_1>;
+	pinctrl-1 = <&pinctrl_i2c3_1_gpio>;
+	scl-gpios = <&gpio7 0 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio7 1 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 };
 
@@ -310,6 +316,13 @@
 			fsl,pins = <
 				MX7D_PAD_ENET1_RGMII_RD0__I2C3_SCL 0x4000007f
 				MX7D_PAD_ENET1_RGMII_RD1__I2C3_SDA 0x4000007f
+			>;
+		};
+
+		pinctrl_i2c3_1_gpio: i2c3grp-1-gpio {
+			fsl,pins = <
+				MX7D_PAD_ENET1_RGMII_RD0__GPIO7_IO0 0x7f
+				MX7D_PAD_ENET1_RGMII_RD1__GPIO7_IO1 0x7f
 			>;
 		};
 
@@ -446,6 +459,13 @@
 			fsl,pins = <
 				MX7D_PAD_GPIO1_IO04__I2C1_SCL 	0x4000007f
 				MX7D_PAD_GPIO1_IO05__I2C1_SDA   0x4000007f
+			>;
+		};
+
+		pinctrl_i2c1_1_gpio: i2c1grp-1-gpio {
+			fsl,pins = <
+				MX7D_PAD_GPIO1_IO05__GPIO1_IO5 	0x7f
+				MX7D_PAD_GPIO1_IO06__GPIO1_IO6   0x7f
 			>;
 		};
 

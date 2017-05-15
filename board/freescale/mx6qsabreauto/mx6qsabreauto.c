@@ -130,7 +130,6 @@ static struct i2c_pads_info i2c_pad_info1 = {
 		.gp = IMX_GPIO_NR(4, 13)
 	}
 };
-#endif
 
 #ifndef CONFIG_SYS_FLASH_CFI
 /*
@@ -149,6 +148,7 @@ static struct i2c_pads_info i2c_pad_info2 = {
 		.gp = IMX_GPIO_NR(3, 18)
 	}
 };
+#endif
 #endif
 
 static iomux_v3_cfg_t const i2c3_pads[] = {
@@ -819,16 +819,15 @@ int board_init(void)
 #ifdef CONFIG_SYS_I2C
 	/* I2C 2 and 3 setup - I2C 3 hw mux with EIM */
 	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+#ifndef CONFIG_SYS_FLASH_CFI
+	setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info2);
+#endif
 #endif
 
 	/* I2C 3 Steer */
 	gpio_request(IMX_GPIO_NR(5, 4), "steer logic");
 	gpio_direction_output(IMX_GPIO_NR(5, 4), 1);
 	imx_iomux_v3_setup_multiple_pads(i2c3_pads, ARRAY_SIZE(i2c3_pads));
-	
-#ifndef CONFIG_SYS_FLASH_CFI
-	setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info2);
-#endif
 
 	gpio_request(IMX_GPIO_NR(1, 15), "expander en");
 	gpio_direction_output(IMX_GPIO_NR(1, 15), 1);

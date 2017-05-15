@@ -223,8 +223,11 @@
 
 &i2c1 {
 	clock-frequency = <100000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c1>;
+	pinctrl-1 = <&pinctrl_i2c1_gpio>;
+	scl-gpios = <&gpio1 28 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio1 29 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
 	mag3110@0e {
@@ -244,8 +247,11 @@
 
 &i2c2 {
 	clock_frequency = <100000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c2>;
+	pinctrl-1 = <&pinctrl_i2c2_gpio>;
+	scl-gpios = <&gpio1 30 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio1 31 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
 	codec: wm8960@1a {
@@ -355,10 +361,24 @@
 			>;
 		};
 
+		pinctrl_i2c1_gpio: i2c1grp_gpio {
+			fsl,pins = <
+				MX6UL_PAD_UART4_TX_DATA__GPIO1_IO28 0x1b8b0
+				MX6UL_PAD_UART4_RX_DATA__GPIO1_IO29 0x1b8b0
+			>;
+		};
+
 		pinctrl_i2c2: i2c2grp {
 			fsl,pins = <
 				MX6UL_PAD_UART5_TX_DATA__I2C2_SCL 0x4001b8b0
 				MX6UL_PAD_UART5_RX_DATA__I2C2_SDA 0x4001b8b0
+			>;
+		};
+
+		pinctrl_i2c2_gpio: i2c2grp_gpio {
+			fsl,pins = <
+				MX6UL_PAD_UART5_TX_DATA__GPIO1_IO30 0x1b8b0
+				MX6UL_PAD_UART5_RX_DATA__GPIO1_IO31 0x1b8b0
 			>;
 		};
 

@@ -271,6 +271,7 @@ int mx6_rgmii_rework(struct phy_device *phydev)
 	return 0;
 }
 
+#ifdef CONFIG_SYS_I2C
 #define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C1 for PMIC */
 static struct i2c_pads_info i2c_pad_info1 = {
@@ -313,6 +314,7 @@ struct i2c_pads_info i2c_pad_info4 = {
 		.gp = IMX_GPIO_NR(1, 21),
 	},
 };
+#endif
 
 #ifdef CONFIG_POWER
 int power_init_board(void)
@@ -907,7 +909,7 @@ int board_init(void)
 	gpio_request(IMX_GPIO_NR(4, 16), "peri_3v3");
 	gpio_direction_output(IMX_GPIO_NR(4, 16) , 1);
 
-#ifdef CONFIG_SYS_I2C_MXC
+#ifdef CONFIG_SYS_I2C
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
 	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info2);
 	setup_i2c(3, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info4);

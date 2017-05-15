@@ -194,8 +194,11 @@
 
 &i2c1 {
 	clock-frequency = <100000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c1>;
+	pinctrl-1 = <&pinctrl_i2c1_gpio>;
+	scl-gpios = <&gpio1 2 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio1 3 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
 	pmic: pfuze100@08 {
@@ -404,6 +407,13 @@
 			fsl,pins = <
 				MX6UL_PAD_GPIO1_IO03__I2C1_SDA	0x4001b8b1
 				MX6UL_PAD_GPIO1_IO02__I2C1_SCL	0x4001b8b1
+			>;
+		};
+
+		pinctrl_i2c1_gpio: i2c1grp_gpio {
+			fsl,pins = <
+				MX6UL_PAD_GPIO1_IO03__GPIO1_IO03  0x1b8b1
+				MX6UL_PAD_GPIO1_IO02__GPIO1_IO02  0x1b8b1
 			>;
 		};
 

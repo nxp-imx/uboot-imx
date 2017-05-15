@@ -210,8 +210,11 @@
 
 &i2c1 {
 	clock-frequency = <100000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c1>;
+	pinctrl-1 = <&pinctrl_i2c1_gpio>;
+	scl-gpios = <&gpio1 2 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio1 3 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
 	pmic: pfuze100@08 {
@@ -320,8 +323,11 @@
 
 &i2c4 {
 	clock-frequency = <100000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c4>;
+	pinctrl-1 = <&pinctrl_i2c4_gpio>;
+	scl-gpios = <&gpio1 20 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio1 21 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
 	max17135: max17135@48 {
@@ -554,10 +560,24 @@
 			>;
 		};
 
+		pinctrl_i2c1_gpio: i2c1grp_gpio {
+			fsl,pins = <
+				MX6UL_PAD_GPIO1_IO03__GPIO1_IO03  0x1b8b1
+				MX6UL_PAD_GPIO1_IO02__GPIO1_IO02  0x1b8b1
+			>;
+		};
+
 		pinctrl_i2c4: i2c4grp {
 			fsl,pins = <
 				MX6UL_PAD_UART2_TX_DATA__I2C4_SCL	0x4001b8b0
 				MX6UL_PAD_UART2_RX_DATA__I2C4_SDA	0x4001b8b0
+			>;
+		};
+
+		pinctrl_i2c4_gpio: i2c4grp_gpio {
+			fsl,pins = <
+				MX6UL_PAD_UART2_TX_DATA__GPIO1_IO20	0x1b8b0
+				MX6UL_PAD_UART2_RX_DATA__GPIO1_IO21	0x1b8b0
 			>;
 		};
 

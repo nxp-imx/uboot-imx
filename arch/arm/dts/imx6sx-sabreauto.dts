@@ -285,8 +285,11 @@
 
 &i2c2 {
 	clock-frequency = <100000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c2_1>;
+	pinctrl-1 = <&pinctrl_i2c2_1_gpio>;
+	scl-gpios = <&gpio1 2 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio1 3 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
 	codec: cs42888@048 {
@@ -435,8 +438,11 @@
 
 &i2c3 {
         clock-frequency = <100000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c3_2>;
+	pinctrl-1 = <&pinctrl_i2c3_2_gpio>;
+	scl-gpios = <&gpio2 14 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio2 19 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
 	max7310_a: gpio@30 {
@@ -746,10 +752,24 @@
 			>;
 		};
 
+		pinctrl_i2c2_1_gpio: i2c2grp-1-gpio {
+			fsl,pins = <
+				MX6SX_PAD_GPIO1_IO03__GPIO1_IO_3        0x1b8b1
+				MX6SX_PAD_GPIO1_IO02__GPIO1_IO_2        0x1b8b1
+			>;
+		};
+
 		pinctrl_i2c3_2: i2c3grp-2 {
 			fsl,pins = <
 				MX6SX_PAD_KEY_ROW4__I2C3_SDA            0x4001b8b1
 				MX6SX_PAD_KEY_COL4__I2C3_SCL            0x4001b8b1
+			>;
+		};
+
+		pinctrl_i2c3_2_gpio: i2c3grp-2-gpio {
+			fsl,pins = <
+				MX6SX_PAD_KEY_ROW4__GPIO2_IO_19         0x1b8b1
+				MX6SX_PAD_KEY_COL4__GPIO2_IO_14         0x1b8b1
 			>;
 		};
 
