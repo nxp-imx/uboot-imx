@@ -42,6 +42,11 @@
 #define FASTBOOT_PARTITION_DATA "userdata"
 #define FASTBOOT_PARTITION_BOOT_B "boot_b"
 #define FASTBOOT_PARTITION_SYSTEM_B "system_b"
+#ifdef CONFIG_AVB_SUPPORT
+#define FASTBOOT_PARTITION_VBMETA_A "vbmeta_a"
+#define FASTBOOT_PARTITION_VBMETA_B "vbmeta_b"
+#define FASTBOOT_PARTITION_AVBKEY "avbkey"
+#endif
 #define FASTBOOT_PARTITION_MISC "misc"
 #define FASTBOOT_PARTITION_GPT "gpt"
 #define FASTBOOT_PARTITION_PRDATA "prdata"
@@ -153,6 +158,10 @@ struct fastboot_ptentry {
 	unsigned int partition_id;
 	/* partition number in block device */
 	unsigned int partition_index;
+	/* filesystem UUID as string, if exists */
+#ifdef CONFIG_PARTITION_UUIDS
+	char uuid[37];
+#endif
 };
 
 struct fastboot_device_info {

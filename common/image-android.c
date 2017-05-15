@@ -128,6 +128,14 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	sprintf(newbootargs, " androidboot.slot_suffix=%s", get_slot_suffix());
 	strcat(commandline, newbootargs);
 #endif
+#ifdef CONFIG_AVB_SUPPORT
+	/* secondary cmdline added by avb */
+	char *bootargs_sec = getenv("bootargs_sec");
+	if (bootargs_sec) {
+		strcat(commandline, " ");
+		strcat(commandline, bootargs_sec);
+	}
+#endif
 	setenv("bootargs", commandline);
 
 	if (os_data) {
