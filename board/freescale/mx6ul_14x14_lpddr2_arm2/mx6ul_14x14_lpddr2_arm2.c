@@ -316,13 +316,16 @@ static iomux_v3_cfg_t const fec2_pads[] = {
 	MX6_PAD_ENET2_RX_DATA1__ENET2_RDATA01 | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET2_RX_ER__ENET2_RX_ER | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET2_RX_EN__ENET2_RX_EN | MUX_PAD_CTRL(ENET_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const fec1_phy_rst[] = {
 	/*
 	 * ALT5 mode is only valid when TAMPER pin is used for GPIO.
 	 * This depends on FUSE settings, TAMPER_PIN_DISABLE[1:0].
 	 *
-	 * ENET2_RST
+	 * ENET1_RST
 	 */
-	MX6_PAD_SNVS_TAMPER4__GPIO5_IO04 | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_SNVS_TAMPER2__GPIO5_IO02 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
 /* Conflict with UART1 */
@@ -346,8 +349,10 @@ static iomux_v3_cfg_t const fec1_pads[] = {
 	MX6_PAD_UART1_CTS_B__ENET1_RX_CLK | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_UART2_RTS_B__ENET1_COL | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_UART2_CTS_B__ENET1_CRS | MUX_PAD_CTRL(ENET_PAD_CTRL),
+};
 
-	MX6_PAD_SNVS_TAMPER2__GPIO5_IO02 | MUX_PAD_CTRL(NO_PAD_CTRL),
+static iomux_v3_cfg_t const fec2_phy_rst[] = {
+	MX6_PAD_SNVS_TAMPER4__GPIO5_IO04 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
 static void setup_iomux_fec(int fec_id)
@@ -355,17 +360,9 @@ static void setup_iomux_fec(int fec_id)
 	if (fec_id == 0) {
 		imx_iomux_v3_setup_multiple_pads(fec1_pads,
 						 ARRAY_SIZE(fec1_pads));
-		gpio_request(IMX_GPIO_NR(5, 4), "fec1 reset");
-		gpio_direction_output(IMX_GPIO_NR(5, 4), 0);
-		udelay(50);
-		gpio_direction_output(IMX_GPIO_NR(5, 4), 1);
 	} else {
 		imx_iomux_v3_setup_multiple_pads(fec2_pads,
 						 ARRAY_SIZE(fec2_pads));
-		gpio_request(IMX_GPIO_NR(5, 2), "fec2 reset");
-		gpio_direction_output(IMX_GPIO_NR(5, 2), 0);
-		udelay(50);
-		gpio_direction_output(IMX_GPIO_NR(5, 2), 1);
 	}
 }
 #endif
@@ -626,10 +623,23 @@ static int setup_fec(int fec_id)
 		if (ret)
 			return ret;
 
+		imx_iomux_v3_setup_multiple_pads(fec1_phy_rst,
+						 ARRAY_SIZE(fec1_phy_rst));
+		gpio_request(IMX_GPIO_NR(5, 2), "fec1 reset");
+		gpio_direction_output(IMX_GPIO_NR(5, 2), 0);
+		udelay(50);
+		gpio_direction_output(IMX_GPIO_NR(5, 2), 1);
 	} else {
 		/* clk from phy, set gpr1[13], clear gpr1[17]*/
 		clrsetbits_le32(&iomuxc_gpr_regs->gpr[1], IOMUX_GPR1_FEC1_MASK,
 				IOMUX_GPR1_FEC1_CLOCK_MUX2_SEL_MASK);
+
+		imx_iomux_v3_setup_multiple_pads(fec2_phy_rst,
+						 ARRAY_SIZE(fec2_phy_rst));
+		gpio_request(IMX_GPIO_NR(5, 4), "fec2 reset");
+		gpio_direction_output(IMX_GPIO_NR(5, 4), 0);
+		udelay(50);
+		gpio_direction_output(IMX_GPIO_NR(5, 4), 1);
 	}
 
 	enable_enet_clk(1);
