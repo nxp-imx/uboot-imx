@@ -842,6 +842,12 @@ config ARCH_ZYNQMP
 	select SPL_CLK
 	select DM_USB if USB
 
+config ARCH_IMX8
+	bool "Support NXP i.MX8 platform"
+	select ARM64
+	select DM
+	select OF_CONTROL
+
 config TEGRA
 	bool "NVIDIA Tegra"
 
@@ -1186,6 +1192,8 @@ source "arch/arm/mach-uniphier/Kconfig"
 source "arch/arm/mach-zynq/Kconfig"
 
 source "arch/arm/cpu/armv7/Kconfig"
+
+source "arch/arm/cpu/armv8/imx8/Kconfig"
 
 source "arch/arm/cpu/armv8/zynqmp/Kconfig"
 

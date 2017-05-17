@@ -1,0 +1,16 @@
+if ARCH_IMX8
+
+config IMX8
+	bool
+	default y
+
+config IMX8QM
+	bool
+
+config IMX8QXP
+	bool
+
+config SYS_SOC
+	default "imx8"
+
+endif
