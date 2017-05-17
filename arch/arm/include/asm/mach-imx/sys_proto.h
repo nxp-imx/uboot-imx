@@ -27,6 +27,7 @@
 
 #define is_mx6() (is_soc_type(MXC_SOC_MX6))
 #define is_mx7() (is_soc_type(MXC_SOC_MX7))
+#define is_imx8() (is_soc_type(MXC_SOC_IMX8))
 #define is_imx8m() (is_soc_type(MXC_SOC_IMX8M))
 
 #define is_mx6dqp() (is_cpu_type(MXC_CPU_MX6QP) || is_cpu_type(MXC_CPU_MX6DP))
@@ -41,6 +42,10 @@
 #define is_mx6sll() (is_cpu_type(MXC_CPU_MX6SLL))
 
 #define is_mx7ulp() (is_cpu_type(MXC_CPU_MX7ULP))
+
+#define is_imx8qm() (is_cpu_type(MXC_CPU_IMX8QM))
+#define is_imx8qxp() (is_cpu_type(MXC_CPU_IMX8QXP))
+#define is_imx8dx() (is_cpu_type(MXC_CPU_IMX8DX))
 
 #ifdef CONFIG_MX6
 #define IMX6_SRC_GPR10_BMODE		BIT(28)
