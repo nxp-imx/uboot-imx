@@ -7,3 +7,4 @@
 obj-y += cpu.o
 obj-y += clock.o
 obj-y += fsl_mu_hal.o
+obj-y += fuse.o
