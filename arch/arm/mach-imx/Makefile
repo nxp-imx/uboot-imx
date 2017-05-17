@@ -54,6 +54,9 @@ endif
 ifeq ($(SOC),$(filter $(SOC),vf610))
 obj-y += ddrmc-vf610.o
 endif
+ifeq ($(SOC),$(filter $(SOC),imx8))
+obj-$(CONFIG_HAVE_SC_FIRMWARE) += sci/
+endif
 ifneq ($(CONFIG_SPL_BUILD),y)
 obj-$(CONFIG_CMD_BMODE) += cmd_bmode.o
 obj-$(CONFIG_CMD_HDMIDETECT) += cmd_hdmidet.o
@@ -143,4 +146,5 @@ obj-$(CONFIG_MX5) += mx5/
 obj-$(CONFIG_MX6) += mx6/
 obj-$(CONFIG_MX7) += mx7/
 obj-$(CONFIG_ARCH_MX7ULP) += mx7ulp/
+obj-$(CONFIG_IMX8) += imx8/
 obj-$(CONFIG_IMX8M) += imx8m/
