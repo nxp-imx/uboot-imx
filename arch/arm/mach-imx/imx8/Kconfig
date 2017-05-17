@@ -1,5 +1,10 @@
 if ARCH_IMX8
 
+config IMX_SMMU
+	bool "Enable SMMU on i.MX8"
+	help
+	  Enable the SMMU for peripherals on i.MX8
+
 config IMX8
 	bool
 

@@ -85,4 +85,9 @@ sc_bool_t sc_rm_is_resource_owned(sc_ipc_t ipc, sc_rsrc_t resource);
 
 /* PAD API */
 int sc_pad_set(sc_ipc_t ipc, sc_pad_t pad, u32 val);
+
+/* SMMU API */
+int sc_rm_set_master_sid(sc_ipc_t ipc, sc_rsrc_t resource,
+    sc_rm_sid_t sid);
+
 #endif

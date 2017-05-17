@@ -12,6 +12,7 @@
 #include <dm/uclass.h>
 #include <errno.h>
 #include <asm/arch/sci/sci.h>
+#include <asm/arch/sid.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch-imx/cpu.h>
 #include <asm/armv8/cpu.h>
@@ -66,7 +67,53 @@ int arch_cpu_init_dm(void)
 		return ret;
 	}
 
+#ifdef CONFIG_IMX_SMMU
+	int sciErr;
+	sciErr = sc_pm_set_resource_power_mode(-1, SC_R_SMMU,
+				SC_PM_PW_MODE_ON);
+	if (sciErr)
+		return 0;
+#endif
+
 	return 0;
+}
+
+#ifdef CONFIG_IMX_SMMU
+struct smmu_sid dev_sids[] = {
+	{ SC_R_SDHC_0, 0x11, "SDHC0" },
+	{ SC_R_SDHC_1, 0x11, "SDHC1" },
+	{ SC_R_SDHC_2, 0x11, "SDHC2" },
+	{ SC_R_ENET_0, 0x12, "FEC0" },
+	{ SC_R_ENET_1, 0x12, "FEC1" },
+};
+
+int imx8_config_smmu_sid(struct smmu_sid *dev_sids, int size)
+{
+	int i;
+	int sciErr = 0;
+
+	if ((dev_sids == NULL) || (size <= 0))
+		return 0;
+
+	for (i = 0; i < size; i++) {
+		sciErr = sc_rm_set_master_sid(-1,
+					      dev_sids[i].rsrc,
+					      dev_sids[i].sid);
+		if (sciErr) {
+			printf("set master sid error\n");
+			return sciErr;
+		}
+	}
+
+	return 0;
+}
+#endif
+
+void arch_preboot_os(void)
+{
+#ifdef CONFIG_IMX_SMMU
+	imx8_config_smmu_sid(dev_sids, ARRAY_SIZE(dev_sids));
+#endif
 }
 
 int print_bootinfo(void)
