@@ -1,14 +1,21 @@
 if ARCH_IMX8
 
+config HAVE_SC_FIRMWARE
+	bool
+	help
+	  Have SCU on the SoC
+
 config IMX8
 	bool
 	default y
 
 config IMX8QM
 	bool
+	select HAVE_SC_FIRMWARE
 
 config IMX8QXP
 	bool
+	select HAVE_SC_FIRMWARE
 
 config SYS_SOC
 	default "imx8"
