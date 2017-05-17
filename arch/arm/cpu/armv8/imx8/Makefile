@@ -4,4 +4,6 @@
 # SPDX-License-Identifier:	GPL-2.0+
 #
 
+obj-y += cpu.o
+obj-y += clock.o
 obj-y += fsl_mu_hal.o

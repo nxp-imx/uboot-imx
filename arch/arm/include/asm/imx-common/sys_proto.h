@@ -28,6 +28,7 @@
 
 #define is_mx6() (is_soc_type(MXC_SOC_MX6))
 #define is_mx7() (is_soc_type(MXC_SOC_MX7))
+#define is_imx8() (is_soc_type(MXC_SOC_IMX8))
 
 #define is_mx6dqp() (is_cpu_type(MXC_CPU_MX6QP) || is_cpu_type(MXC_CPU_MX6DP))
 #define is_mx6dq() (is_cpu_type(MXC_CPU_MX6Q) || is_cpu_type(MXC_CPU_MX6D))
@@ -41,6 +42,10 @@
 #define is_mx6sll() (is_cpu_type(MXC_CPU_MX6SLL))
 
 #define is_mx7ulp() (is_cpu_type(MXC_CPU_MX7ULP))
+
+#define is_imx8qm() (is_cpu_type(MXC_CPU_IMX8QM))
+#define is_imx8qxp() (is_cpu_type(MXC_CPU_IMX8QXP))
+#define is_imx8dx() (is_cpu_type(MXC_CPU_IMX8DX))
 
 u32 get_nr_cpus(void);
 u32 get_cpu_rev(void);
