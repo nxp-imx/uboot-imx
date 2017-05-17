@@ -5,6 +5,11 @@ config HAVE_SC_FIRMWARE
 	help
 	  Have SCU on the SoC
 
+config IMX_SMMU
+	bool "Enable SMMU on i.MX8"
+	help
+	  Enable the SMMU for peripherals on i.MX8
+
 config IMX8
 	bool
 	default y
