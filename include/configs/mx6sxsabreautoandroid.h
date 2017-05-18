@@ -12,6 +12,19 @@
 #define CONFIG_USBD_HS
 #define CONFIG_USB_GADGET_DUALSPEED
 
+#define CONFIG_BCB_SUPPORT
+#define CONFIG_CMD_READ
+/* For NAND we don't support lock/unlock */
+#ifndef CONFIG_NAND_BOOT
+#define CONFIG_FASTBOOT_LOCK
+#define FSL_FASTBOOT_FB_DEV "mmc"
+#define FASTBOOT_ENCRYPT_LOCK
+#define CONFIG_FSL_CAAM_KB
+#define CONFIG_CMD_FSL_CAAM_KB
+#define CONFIG_SHA1
+#define CONFIG_SHA256
+#endif
+
 #define CONFIG_USB_GADGET
 #define CONFIG_CMD_USB_MASS_STORAGE
 #define CONFIG_USB_FUNCTION_MASS_STORAGE
@@ -30,14 +43,14 @@
 #define CONFIG_FSL_FASTBOOT
 #define CONFIG_ANDROID_RECOVERY
 
-#if defined CONFIG_SYS_BOOT_NAND
+#if defined CONFIG_NAND_BOOT
 #define CONFIG_FASTBOOT_STORAGE_NAND
 #else
 #define CONFIG_FASTBOOT_STORAGE_MMC
 #endif
 
 #if defined(CONFIG_FASTBOOT_STORAGE_NAND)
-#define ANDROID_FASTBOOT_NAND_PARTS "16m@64m(boot) 16m@80m(recovery) 810m@96m(android_root)ubifs"
+#define ANDROID_FASTBOOT_NAND_PARTS "16m@64m(boot) 16m@80m(recovery) 1m@96m(misc) 810m@97m(android_root)ubifs"
 #endif
 
 #define CONFIG_CMD_BOOTA
