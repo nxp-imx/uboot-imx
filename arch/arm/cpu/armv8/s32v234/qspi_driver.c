@@ -540,3 +540,79 @@ U_BOOT_CMD(flwrite, 4, 1, do_qspinor_prog,
 	   "      buffer at address BUFF.\n"
 	   "      Note: all numbers are in hexadecimal format\n"
 	  );
+
+#ifdef CONFIG_ENV_IS_IN_FLASH
+
+flash_info_t flash_info[CONFIG_SYS_MAX_FLASH_BANKS];
+
+/*
+ * Wrappers for our flash memory functions, since
+ * common/env_flash.c's saveenv function expects those
+ * with different signatures. Done to enable the saving
+ * of u-boot's environment to flash memory. Temporary
+ * solution until this driver is updated to adhere to
+ * the U-boot Driver Model.
+ */
+
+int flash_sect_protect(int protect_on, unsigned long flash_begin_addr,
+		       unsigned long flash_end_addr)
+{
+	if (protect_on) {
+		quadspi_rm_write_erase_luts();
+		flash_lock = 1;
+	} else {
+		flash_lock = 0;
+	}
+
+	return 0;
+}
+
+int flash_sect_erase(unsigned long flash_begin_addr,
+		     unsigned long flash_end_addr)
+{
+	if (!is_flash_addr((long)flash_begin_addr, qspi_real_and_all))
+		return 1;
+
+	if (!flash_lock)
+		quadspi_erase_hyp(flash_begin_addr);
+	else
+		return -1;
+
+	return 0;
+}
+
+unsigned long flash_init(void)
+{
+	int i;
+
+	flash_info[0].size = CONFIG_SYS_MAX_FLASH_SECT * FLASH_SECTOR_SIZE;
+	flash_info[0].sector_count = CONFIG_SYS_MAX_FLASH_SECT;
+	flash_info[0].flash_id = 0;
+
+	flash_info[0].start[0] = CONFIG_SYS_FLASH_BASE;
+	flash_info[0].protect[0] = 0;
+
+	for (i = 1; i < flash_info[0].sector_count; i++) {
+		flash_info[0].start[i] = flash_info[0].start[i - 1] +
+				CONFIG_ENV_SECT_SIZE; /* 256 KB */
+		flash_info[0].protect[i] = 0;
+	}
+
+	return flash_info[0].size;
+}
+
+int flash_write(char *data, ulong flash_addr, ulong bytes)
+{
+	quadspi_program_hyp((unsigned int)flash_addr, (uintptr_t)data,
+			    (unsigned int)bytes);
+	return 0;
+}
+
+/* The flash_perror() function is only called with return codes from
+ * flash_write(). Since we have a custom implementation for the later
+ * which always returns 0, there is nothing to be done in flash_perror().
+ */
+
+void flash_perror(int rc) {}
+
+#endif
