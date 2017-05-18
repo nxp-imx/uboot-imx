@@ -192,7 +192,7 @@ static int bus_i2c_stop(struct udevice *bus)
 	struct imx_lpi2c_reg *regs = (struct imx_lpi2c_reg *)dev_get_addr(bus);
 	lpi2c_status_t result = LPI2C_SUCESS;
 	u32 status;
-	ulong start_time = get_timer(0);
+	ulong start_time;
 
 	result = bus_i2c_wait_for_tx_ready(bus);
 	if (result) {
@@ -203,6 +203,7 @@ static int bus_i2c_stop(struct udevice *bus)
 	/* send stop command */
 	writel(LPI2C_MTDR_CMD(0x2), &regs->mtdr);
 
+	start_time = get_timer(0);
 	while (1) {
 		status = readl(&regs->msr);
 		result = imx_lpci2c_check_clear_error(bus);
