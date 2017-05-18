@@ -77,64 +77,46 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	printf("Kernel load addr 0x%08x size %u KiB\n",
 	       kernel_addr, DIV_ROUND_UP(hdr->kernel_size, 1024));
 
-	int len = 0;
-	if (*hdr->cmdline) {
-		len += strlen(hdr->cmdline);
-	}
-
+	char newbootargs[512] = {0};
+	char commandline[1024] = {0};
 	char *bootargs = getenv("bootargs");
-	if (bootargs)
-		len += strlen(bootargs);
-
-	char *newbootargs = malloc(len + 2);
-	if (!newbootargs) {
-		puts("Error: malloc in android_image_get_kernel failed!\n");
-		return -ENOMEM;
-	}
-	*newbootargs = '\0';
 
 	if (bootargs) {
-		strcpy(newbootargs, bootargs);
+		strcpy(commandline, bootargs);
 	} else if (*hdr->cmdline) {
-		strcat(newbootargs, hdr->cmdline);
+		strcat(commandline, hdr->cmdline);
 	}
 
-	printf("Kernel command line: %s\n", newbootargs);
-	char commandline[ANDR_BOOT_ARGS_SIZE];
-	strcpy(commandline, newbootargs);
+	printf("Kernel command line: %s\n", commandline);
 #ifdef CONFIG_SERIAL_TAG
 	struct tag_serialnr serialnr;
 	get_board_serial(&serialnr);
 
-	sprintf(commandline,
-					"%s androidboot.serialno=%08x%08x",
-					newbootargs,
+	sprintf(newbootargs,
+					" androidboot.serialno=%08x%08x",
 					serialnr.high,
 					serialnr.low);
-	strcpy(newbootargs, commandline);
+	strcat(commandline, newbootargs);
 #endif
 	int bootdev = get_boot_device();
 	if (bootdev == SD1_BOOT || bootdev == SD2_BOOT ||
 		bootdev == SD3_BOOT || bootdev == SD4_BOOT) {
-		sprintf(commandline,
-			"%s androidboot.storage_type=sd gpt",
-			newbootargs);
+		sprintf(newbootargs,
+			" androidboot.storage_type=sd gpt");
 	} else if (bootdev == MMC1_BOOT || bootdev == MMC2_BOOT ||
 		bootdev == MMC3_BOOT || bootdev == MMC4_BOOT) {
-		sprintf(commandline,
-			"%s androidboot.storage_type=emmc",
-			newbootargs);
+		sprintf(newbootargs,
+			" androidboot.storage_type=emmc");
 	} else if (bootdev == NAND_BOOT) {
-		sprintf(commandline,
-			"%s androidboot.storage_type=nand",
-			newbootargs);
+		sprintf(newbootargs,
+			" androidboot.storage_type=nand");
 	} else
 		printf("boot device type is incorrect.\n");
+	strcat(commandline, newbootargs);
 
 #ifdef CONFIG_FSL_BOOTCTL
-	char suffixStr[64];
-	sprintf(suffixStr, " androidboot.slot_suffix=%s", get_slot_suffix());
-	strcat(commandline, suffixStr);
+	sprintf(newbootargs, " androidboot.slot_suffix=%s", get_slot_suffix());
+	strcat(commandline, newbootargs);
 #endif
 	setenv("bootargs", commandline);
 

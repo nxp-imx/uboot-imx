@@ -424,7 +424,7 @@ static int write_to_ptn(struct fastboot_ptentry *ptn)
 			   transfer_buffer should already be aligned */
 			if (interface.nand_block_size) {
 				if (0 == nand_curr_device) {
-					nand_info_t *nand;
+					struct mtd_info *nand;
 					unsigned long off;
 					unsigned int ok_start;
 
@@ -1137,7 +1137,7 @@ static void parameters_setup(void)
 {
 	interface.nand_block_size = 0;
 #if defined(CONFIG_FASTBOOT_STORAGE_NAND)
-	nand_info_t *nand = &nand_info[0];
+	struct mtd_info *nand = &nand_info[0];
 	if (nand)
 		interface.nand_block_size = nand->writesize;
 #endif
@@ -1163,9 +1163,11 @@ static int _fastboot_setup_dev(void)
 		} else if (!strcmp(fastboot_env, "nand")) {
 			fastboot_devinfo.type = DEV_NAND;
 			fastboot_devinfo.dev_id = 0;
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
 		} else if (!strncmp(fastboot_env, "mmc", 3)) {
 			fastboot_devinfo.type = DEV_MMC;
 			fastboot_devinfo.dev_id = mmc_get_env_dev();
+#endif
 		}
 	} else {
 		return 1;
