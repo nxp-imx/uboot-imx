@@ -73,7 +73,7 @@ int bcb_read_command(char *command)
 	char *addr_str;
 	char *nand_str;
 	ulong misc_info_size;
-	nand_info_t *nand = &nand_info[0];
+	struct mtd_info *nand = &nand_info[0];
 	if (command == NULL)
 		return -1;
 	memset(read_cmd, 0, 128);
@@ -97,7 +97,7 @@ int bcb_write_command(char *command)
 	char *addr_str;
 	char *nand_str;
 	ulong misc_info_size;
-	nand_info_t *nand = &nand_info[0];
+	struct mtd_info *nand = &nand_info[0];
 	if (command == NULL)
 		return -1;
 	memset(cmd, 0, 128);
