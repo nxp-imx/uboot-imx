@@ -488,6 +488,17 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 				}
 			}
 
+			/* Clear the DCD pointer if it is not 0 */
+			unsigned char *dcd_ptr = (unsigned char *)(ddr_start + ivt_offset + 0xC);
+			do {
+				if (*dcd_ptr) {
+					puts("Warning, DCD pointer must be 0\n");
+					memset((void *)(ddr_start + ivt_offset + 0xC), 0, 4);
+					break;
+				}
+				dcd_ptr++;
+			} while (dcd_ptr < (unsigned char *)(ddr_start + ivt_offset + 0x10));
+	
 			load_addr = (uint32_t)hab_rvt_authenticate_image(
 					HAB_CID_UBOOT,
 					ivt_offset, (void **)&start,
