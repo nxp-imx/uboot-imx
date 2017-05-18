@@ -25,4 +25,20 @@ config IMX8QXP
 config SYS_SOC
 	default "imx8"
 
+choice
+	prompt "MX8 board select"
+	optional
+
+config TARGET_IMX8QM_LPDDR4_ARM2
+	bool "Support i.MX8QM lpddr4 validation board"
+	select IMX8QM
+
+config TARGET_IMX8QM_DDR4_ARM2
+	bool "Support i.MX8QM ddr4 validation board"
+	select IMX8QM
+
+endchoice
+
+source "board/freescale/imx8qm_arm2/Kconfig"
+
 endif
