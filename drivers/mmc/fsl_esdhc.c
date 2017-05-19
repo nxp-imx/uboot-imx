@@ -984,7 +984,9 @@ static int fsl_esdhc_probe(struct udevice *dev)
 	fdt_addr_t addr;
 	unsigned int val;
 	int ret;
+#ifdef CONFIG_DM_REGULATOR
 	struct udevice *vqmmc_dev;
+#endif
 
 	addr = dev_get_addr(dev);
 	if (addr == FDT_ADDR_T_NONE)
