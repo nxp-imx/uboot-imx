@@ -285,7 +285,6 @@ int get_slotvar(char *cmd, char *response, size_t chars_left)
 	struct boot_ctl t_bootctl;
 	memset(&t_bootctl, 0, sizeof(t_bootctl));
 
-	/* these two var no need to read_bootctl */
 	if (!strcmp_l1("has-slot:", cmd)) {
 		char *ptnname = NULL;
 		ptnname = strchr(cmd, ':') + 1;
