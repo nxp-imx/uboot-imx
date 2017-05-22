@@ -150,7 +150,11 @@
 #define CONFIG_ENV_OFFSET		(8 * SZ_64K)
 
 #define CONFIG_SYS_MMC_ENV_DEV		0
-#define CONFIG_SYS_MMC_ENV_PART		0
+#define CONFIG_SYS_MMC_ENV_PART		1
 #define CONFIG_MMCROOT			"/dev/mmcblk0p2"
 
+#if defined(CONFIG_ANDROID_THINGS_SUPPORT)
+#include "mx6ul_14x14_evk_android.h"
+#include "mx6ul_14x14_evk_brillo.h"
+#endif
 #endif /* __PICO_IMX6UL_CONFIG_H */

@@ -1,0 +1,6 @@
+MX6ULIOPB BOARD
+M:	Fang Hui <hui.fang@nxp.com>
+S:	Maintained
+F:	board/freescale/mx6ul_nxpu_iopb/
+F:	include/configs/mx6ul_nxpu_iopb.h
+F:	configs/mx6ul_nxpu_iopb_defconfig

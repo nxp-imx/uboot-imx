@@ -30,6 +30,9 @@
    using the setenv and saveenv commands */
 #define FASTBOOT_PTENTRY_FLAGS_WRITE_ENV              0x00000400
 
+/* Uneraseable partition */
+#define FASTBOOT_PTENTRY_FLAGS_UNERASEABLE            0x00000800
+
 #define FASTBOOT_MMC_BOOT_PARTITION_ID  1
 #define FASTBOOT_MMC_USER_PARTITION_ID  0
 #define FASTBOOT_MMC_NONE_PARTITION_ID -1
@@ -55,6 +58,8 @@
 #define FASTBOOT_PARTITION_BOOT "boot"
 #define FASTBOOT_PARTITION_RECOVERY "recovery"
 #define FASTBOOT_PARTITION_SYSTEM "system"
+#define FASTBOOT_PARTITION_CACHE "cache"
+#define FASTBOOT_PARTITION_DEVICE "device"
 #define FASTBOOT_PARTITION_BOOTLOADER "bootloader"
 #define FASTBOOT_PARTITION_DATA "userdata"
 #define FASTBOOT_PARTITION_GPT "gpt"
@@ -158,6 +163,8 @@ struct fastboot_ptentry {
 	unsigned int partition_id;
 	/* partition number in block device */
 	unsigned int partition_index;
+	/* partition file system type in string */
+	char fstype[16];
 	/* filesystem UUID as string, if exists */
 #ifdef CONFIG_PARTITION_UUIDS
 	char uuid[37];

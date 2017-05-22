@@ -87,7 +87,6 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 		strcat(commandline, hdr->cmdline);
 	}
 
-	printf("Kernel command line: %s\n", commandline);
 #ifdef CONFIG_SERIAL_TAG
 	struct tag_serialnr serialnr;
 	get_board_serial(&serialnr);

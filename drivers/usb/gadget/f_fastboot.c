@@ -1321,7 +1321,7 @@ static int _fastboot_parts_add_ptable_entry(int ptable_index,
 
 	if (part_get_info(dev_desc,
 			       mmc_dos_partition_index, &info)) {
-		printf("Bad partition index:%d for partition:%s\n",
+		debug("Bad partition index:%d for partition:%s\n",
 		       mmc_dos_partition_index, name);
 		return -1;
 	}
@@ -1330,11 +1330,23 @@ static int _fastboot_parts_add_ptable_entry(int ptable_index,
 	ptable[ptable_index].partition_id = mmc_partition_index;
 	ptable[ptable_index].partition_index = mmc_dos_partition_index;
 	strcpy(ptable[ptable_index].name, (const char *)info.name);
-	strcpy(ptable[ptable_index].fstype, (const char *)info.type);
 
 #ifdef CONFIG_PARTITION_UUIDS
 	strcpy(ptable[ptable_index].uuid, (const char *)info.uuid);
 #endif
+#ifdef CONFIG_ANDROID_AB_SUPPORT
+	if (!strcmp((const char *)info.name, FASTBOOT_PARTITION_SYSTEM_A) ||
+		!strcmp((const char *)info.name, FASTBOOT_PARTITION_SYSTEM_B) ||
+		!strcmp((const char *)info.name, FASTBOOT_PARTITION_DATA))
+#else
+	if (!strcmp((const char *)info.name, FASTBOOT_PARTITION_SYSTEM) ||
+		!strcmp((const char *)info.name, FASTBOOT_PARTITION_DATA) ||
+		!strcmp((const char *)info.name, FASTBOOT_PARTITION_DEVICE) ||
+		!strcmp((const char *)info.name, FASTBOOT_PARTITION_CACHE))
+#endif
+		strcpy(ptable[ptable_index].fstype, "ext4");
+	else
+		strcpy(ptable[ptable_index].fstype, "emmc");
 	return 0;
 }
 
@@ -2146,7 +2158,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	int mmcc = -1;
 	struct andr_img_hdr *hdr = &boothdr;
     ulong image_size;
-	bool check_image_arm64;
+	bool check_image_arm64 =  false;
 #ifdef CONFIG_SECURE_BOOT
 #define IVT_SIZE 0x20
 #define CSF_PAD_SIZE CONFIG_CSF_SIZE
@@ -2267,7 +2279,7 @@ use_given_ptn:
 		}
 		/* flush cache after read */
 		flush_cache((ulong)load_addr, bootimg_sectors * 512); /* FIXME */
-		check_image_arm64  = image_arm64(load_addr + hdr->page_size);
+		check_image_arm64  = image_arm64((void *)(load_addr + hdr->page_size));
 		addr = load_addr;
 #ifdef CONFIG_FASTBOOT_LOCK
 		int verifyresult = -1;
@@ -2811,19 +2823,6 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		return;
 	}
 
-	else if (is_slotvar(cmd)) {
-#ifdef CONFIG_AVB_SUPPORT
-		if (get_slotvar_avb(&fsl_avb_ab_ops, cmd,
-				response + strlen(response), chars_left + 1) < 0)
-			goto fail;
-#elif CONFIG_FSL_BOOTCTL
-		if (get_slotvar(cmd, response + strlen(response), chars_left + 1) < 0)
-			goto fail;
-#else
-		strncat(response, FASTBOOT_VAR_NO, chars_left);
-#endif
-	}
-
 	char *str = cmd;
 	if ((str = strstr(cmd, "partition-size:"))) {
 		str +=strlen("partition-size:");
@@ -2899,6 +2898,18 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		strncat(response, FASTBOOT_VAR_NO, chars_left);
 	}
 #endif
+	else if (is_slotvar(cmd)) {
+#ifdef CONFIG_AVB_SUPPORT
+		if (get_slotvar_avb(&fsl_avb_ab_ops, cmd,
+				response + strlen(response), chars_left + 1) < 0)
+			goto fail;
+#elif defined(CONFIG_FSL_BOOTCTL)
+		if (get_slotvar(cmd, response + strlen(response), chars_left + 1) < 0)
+			goto fail;
+#else
+		strncat(response, FASTBOOT_VAR_NO, chars_left);
+#endif
+	}
 	else {
 		char envstr[32];
 
@@ -2913,7 +2924,7 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 	fastboot_tx_write_str(response);
 	return;
 fail:
-	strncpy(response, "FAIL", 4);
+	strncpy(response, "FAIL", 5);
 	fastboot_tx_write_str(response);
 	return;
 }
@@ -3201,7 +3212,10 @@ static int partition_table_valid(void)
 	disk_partition_t info;
 	mmc_no = fastboot_devinfo.dev_id;
 	dev_desc = blk_get_dev("mmc", mmc_no);
-	status = part_get_info(dev_desc, 1, &info);
+	if (dev_desc)
+		status = part_get_info(dev_desc, 1, &info);
+	else
+		status = -1;
 	return (status == 0);
 }
 
@@ -3406,7 +3420,7 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 		.cmd = "set_active",
 		.cb = cb_set_active_avb,
 	},
-#elif CONFIG_FSL_BOOTCTL
+#elif defined(CONFIG_FSL_BOOTCTL)
 	{
 		.cmd = "set_active",
 		.cb = cb_set_active,
