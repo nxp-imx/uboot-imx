@@ -237,7 +237,7 @@
 	#define CONFIG_WAVEFORM_BUF_SIZE		0x200000
 #endif /* CONFIG_SPLASH_SCREEN */
 
-#if defined(CONFIG_FASTBOOT)
+#if defined(CONFIG_ANDROID_SUPPORT)
 #include "mx6slevkandroid.h"
 #endif
 

@@ -326,7 +326,7 @@
 #endif
 #endif
 
-#if defined(CONFIG_FASTBOOT)
+#if defined(CONFIG_ANDROID_SUPPORT)
 #include "mx6sxsabreautoandroid.h"
 #endif
 

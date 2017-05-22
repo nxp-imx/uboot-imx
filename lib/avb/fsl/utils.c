@@ -1,4 +1,9 @@
-
+/*
++ * Copyright (C) 2016 Freescale Semiconductor, Inc.
++ * Copyright 2017 NXP
++ *
++ * SPDX-License-Identifier:     GPL-2.0+
++ */
 #include <common.h>
 #include <stdlib.h>
 
@@ -14,23 +19,23 @@ int get_margin_pos(uint64_t part_start, uint64_t part_end, unsigned long blksz,
 		return -1;
 
 	if (offset < 0) {
-		margin->blk_start = (offset + 1) / blksz + part_end;
-		margin->start = (off = offset % blksz) == 0 ? 0 : blksz + off; // offset == -1 means the last byte?, or start need -1
+		margin->blk_start = (offset + 1) / (uint64_t)blksz + part_end;
+		margin->start = (off = offset % (uint64_t)blksz) == 0 ? 0 : blksz + off; // offset == -1 means the last byte?, or start need -1
 		if (offset + num_bytes - 1 >= 0) {
 			if (!allow_partial)
 				return -1;
 			margin->blk_end = part_end;
 			margin->end = blksz - 1;
 		} else {
-			margin->blk_end = (num_bytes + offset) / blksz + part_end; // which blk the last byte is in
-			margin->end = (off = (num_bytes + offset - 1) % blksz) == 0 ?
+			margin->blk_end = (num_bytes + offset) / (uint64_t)blksz + part_end; // which blk the last byte is in
+			margin->end = (off = (num_bytes + offset - 1) % (uint64_t)blksz) == 0 ?
 					0 : blksz + off; // last byte
 		}
 	} else {
-		margin->blk_start = offset / blksz + part_start;
-		margin->start = offset % blksz;
-		margin->blk_end = (offset + num_bytes - 1) / blksz + part_start ;
-		margin->end = (offset + num_bytes - 1) % blksz;
+		margin->blk_start = offset / (uint64_t)blksz + part_start;
+		margin->start = offset % (uint64_t)blksz;
+		margin->blk_end = (offset + num_bytes - 1) / (uint64_t)blksz + part_start ;
+		margin->end = (offset + num_bytes - 1) % (uint64_t)blksz;
 		if (margin->blk_end > part_end) {
 			if (!allow_partial)
 				return -1;

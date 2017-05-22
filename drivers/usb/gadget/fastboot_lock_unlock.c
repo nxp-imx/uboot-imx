@@ -50,6 +50,7 @@
 
 #endif
 
+int fastboot_flash_find_index(const char *name);
 
 #ifndef FASTBOOT_ENCRYPT_LOCK
 
@@ -239,8 +240,6 @@ int fastboot_set_lock_stat(FbLockState lock) {
 		ret = -1;
 		goto fail;
 	}
-	FB_DEBUG("%s %s partition.start=%d, size=%d\n",FSL_FASTBOOT_FB_DEV,
-		get_mmc_part(mmc_id), fs_partition.start, fs_partition.size);
 
 	status = encrypt_lock_store(lock, bdata);
 	if (status < 0) {
@@ -289,8 +288,6 @@ FbLockState fastboot_get_lock_stat(void) {
 		ret = g_lockstat;
 		goto fail;
 	}
-	FB_DEBUG("%s %s partition.start=%d, size=%d\n",FSL_FASTBOOT_FB_DEV,
-		get_mmc_part(mmc_id), fs_partition.start, fs_partition.size);
 
 	status = fs_dev_desc->block_read(fs_dev_desc, fs_partition.start, 1, bdata);
 	if (!status) {
@@ -343,7 +340,6 @@ void set_fastboot_lock_disable(void) {
 	}
 
 	lbaint_t target_block = fs_partition.start + fs_partition.size - 1;
-	FB_DEBUG("target_block.start=%d, size=%d target_block=%d\n", fs_partition.start, fs_partition.size, target_block);
 	status = fs_dev_desc->block_write(fs_dev_desc, target_block, 1, bdata);
 	if (!status) {
 		printf("%s: error in block read\n", __FUNCTION__);
@@ -383,7 +379,6 @@ FbLockEnableResult fastboot_lock_enable() {
 
     //The data is stored in the last blcok of this partition.
 	lbaint_t target_block = fs_partition.start + fs_partition.size - 1;
-	FB_DEBUG("target_block.start=%d, size=%d target_block=%d\n", fs_partition.start, fs_partition.size, target_block);
 	status = fs_dev_desc->block_read(fs_dev_desc, target_block, 1, bdata);
 	if (!status) {
 		printf("%s: error in block read\n", __FUNCTION__);
@@ -456,7 +451,6 @@ int fastboot_wipe_data_partition(void)
 		printf("error in get device partition for wipe /data\n");
 		return -1;
 	}
-	FB_DEBUG("fs->start=%x, size=%d\n", fs_partition.start, fs_partition.size);
 	status = fs_dev_desc->block_erase(fs_dev_desc, fs_partition.start , fs_partition.size );
 	if (status != fs_partition.size ) {
 		printf("erase not complete\n");

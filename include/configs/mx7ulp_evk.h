@@ -248,7 +248,7 @@
 
 #define CONFIG_OF_SYSTEM_SETUP
 
-#if defined(CONFIG_FASTBOOT)
+#if defined(CONFIG_ANDROID_SUPPORT)
 #include "mx7ulp_evk_android.h"
 #endif
 

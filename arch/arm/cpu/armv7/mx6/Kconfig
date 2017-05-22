@@ -290,6 +290,12 @@ config TARGET_MX6UL_14X14_EVK
 	select DM_THERMAL
 	select SUPPORT_SPL
 
+config TARGET_MX6UL_NXPU_IOPB
+	bool "Support mx6ul_nxpu_iopb"
+	select MX6UL
+	select DM
+	select DM_THERMAL
+
 config TARGET_MX6UL_14X14_DDR3_ARM2
 	bool "mx6ul_14x14_ddr3_arm2"
 	select BOARD_LATE_INIT
@@ -334,6 +340,18 @@ config TARGET_MX6ULL_9X9_EVK
 	bool "Support mx6ull_9x9_evk"
 	select BOARD_LATE_INIT
 	select MX6ULL
+	select DM
+	select DM_THERMAL
+
+config TARGET_PICOSOM_IMX6UL
+	bool "Support picosom-imx6ul"
+	select MX6UL
+	select DM
+	select DM_THERMAL
+
+config TARGET_MX6UL_AQUILA
+	bool "Support mx6ul_aquila"
+	select MX6UL
 	select DM
 	select DM_THERMAL
 
@@ -475,6 +493,7 @@ source "board/freescale/mx6sxsabresd/Kconfig"
 source "board/freescale/mx6sxsabreauto/Kconfig"
 source "board/freescale/mx6sx_17x17_arm2/Kconfig"
 source "board/freescale/mx6sx_19x19_arm2/Kconfig"
+source "board/freescale/mx6ul_nxpu_iopb/Kconfig"
 source "board/freescale/mx6ul_14x14_evk/Kconfig"
 source "board/freescale/mx6ul_14x14_ddr3_arm2/Kconfig"
 source "board/freescale/mx6ul_14x14_lpddr2_arm2/Kconfig"
@@ -488,7 +507,8 @@ source "board/samtec/vining_2000/Kconfig"
 source "board/liebherr/mccmon6/Kconfig"
 source "board/seco/Kconfig"
 source "board/solidrun/mx6cuboxi/Kconfig"
-source "board/technexion/pico-imx6ul/Kconfig"
+source "board/freescale/picosom-imx6ul/Kconfig"
+source "board/freescale/mx6ul_aquila/Kconfig"
 source "board/tbs/tbs2910/Kconfig"
 source "board/tqc/tqma6/Kconfig"
 source "board/toradex/apalis_imx6/Kconfig"
