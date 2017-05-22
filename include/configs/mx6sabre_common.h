@@ -388,7 +388,7 @@
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
 
-#if defined(CONFIG_FASTBOOT)
+#if defined(CONFIG_ANDROID_SUPPORT)
 #include "mx6sabreandroid_common.h"
 #else
 

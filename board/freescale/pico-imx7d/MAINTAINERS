@@ -1,0 +1,6 @@
+Technexion PICO-IMX7D board
+M:	Wig Cheng <wig.cheng@technexion.com>
+S:	Maintained
+F:	board/pico-imx7d/
+F:	include/configs/pico-imx7d.h
+F:	configs/pico-imx7d_defconfig
