@@ -538,7 +538,7 @@ void ldo_mode_set(int ldo_bypass)
 
 		/* decrease VDDARM for 400Mhz DQ:1.1V, DL:1.275V */
 		pmic_clrsetbits(dev, PFUZE100_SW1ABVOL, 0x3f, 0x20);
-		
+
 		/* increase VDDSOC to 1.3V */
 		pmic_clrsetbits(dev, PFUZE100_SW1CVOL, 0x3f, 0x28);
 
@@ -547,7 +547,7 @@ void ldo_mode_set(int ldo_bypass)
 			vddarm = 0x1b;
 		else
 			vddarm = 0x23;
-		
+
 		pmic_clrsetbits(dev, PFUZE100_SW1ABVOL, 0x3f, vddarm);
 
 		/* decrease VDDSOC to 1.175V */
@@ -628,9 +628,7 @@ int board_ehci_hcd_init(int port)
 int board_early_init_f(void)
 {
 	setup_iomux_uart();
-#ifdef CONFIG_MXC_SPI
-	setup_spi();
-#endif
+
 	return 0;
 }
 
@@ -839,6 +837,10 @@ int board_init(void)
 #ifndef CONFIG_DM_USB
 	setup_usb();
 #endif
+#endif
+
+#ifdef CONFIG_MXC_SPI
+	setup_spi();
 #endif
 
 	return 0;
