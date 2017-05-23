@@ -48,8 +48,13 @@ static __attribute__((unused)) struct imx_i2c_map i2c_parent_power_desc[] = {
 	{13, SC_R_MIPI_0},
 	{14, SC_R_DC_0},
 	{14, SC_R_MIPI_0},
+#ifdef CONFIG_IMX8QM
 	{15, SC_R_DC_1},
 	{15, SC_R_MIPI_1},
+#else
+	{15, SC_R_DC_0},
+	{15, SC_R_MIPI_1},
+#endif
 	{16, SC_R_DC_1},
 	{16, SC_R_MIPI_1},
 };
