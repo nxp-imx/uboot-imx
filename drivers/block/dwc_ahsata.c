@@ -615,6 +615,9 @@ int reset_sata(int dev)
 	while (readl(&host_mmio->ghc) & SATA_HOST_GHC_HR)
 		udelay(100);
 
+	free(probe_ent);
+	memset(&sata_dev_desc[dev], 0, sizeof(struct blk_desc));
+
 	return 0;
 }
 
