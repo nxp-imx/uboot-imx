@@ -84,7 +84,11 @@
 #endif
 
 /* Generic Timer Definitions */
-#define COUNTER_FREQUENCY               (1000000000)	/* 1000MHz */
+/* COUNTER_FREQUENCY value will be used at startup but will be replaced
+ * if an older chip version is determined at runtime.
+ */
+#define COUNTER_FREQUENCY               (10000000)     /* 10MHz*/
+#define COUNTER_FREQUENCY_CUT1          (12000000)     /* 12MHz*/
 #define CONFIG_SYS_FSL_ERRATUM_A008585
 
 /* Size of malloc() pool */

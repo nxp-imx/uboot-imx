@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2014-2016 Freescale Semiconductor, Inc.
+ * (C) Copyright 2017 NXP
  *
  */
 
@@ -69,10 +70,27 @@ void ft_fixup_soc_revision(void *blob)
 		       fdt_strerror(ret));
 }
 
+void ft_fixup_clock_frequency(void *blob)
+{
+	const u32 cntfrq_be = cpu_to_be32(get_siul2_midr1_major() < 1 ?
+			COUNTER_FREQUENCY_CUT1 : COUNTER_FREQUENCY);
+	const char *path = "/timer";
+	int ret;
+
+	/* Update system clock_frequency according to the cpu detected version.
+	 */
+	ret = fdt_find_and_setprop(blob, path, "clock-frequency", &cntfrq_be,
+				   sizeof(u32), 1);
+	if (ret)
+		printf("WARNING: Could not fix up the S32V234 device-tree clock frequency, err=%s\n",
+		       fdt_strerror(ret));
+}
+
 void ft_cpu_setup(void *blob, bd_t *bd)
 {
 #ifdef CONFIG_MP
 	ft_fixup_cpu(blob);
 #endif
 	ft_fixup_soc_revision(blob);
+	ft_fixup_clock_frequency(blob);
 }

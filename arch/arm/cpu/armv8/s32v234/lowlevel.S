@@ -231,7 +231,8 @@ start_slave_cores:
 	ldr	x0, =CPU_RELEASE_ADDR
 	/* physical address of this cpus spin table element */
 	add	x11, x1, x0
-	ldr	x0, =COUNTER_FREQUENCY
+	ldr	x0, =__real_cntfrq
+	ldr     x0, [x0]
 	msr	cntfrq_el0, x0	/* set with real frequency */
 	str	x9, [x11, #16]	/* LPID */
 	mov	x4, #1
@@ -261,14 +262,16 @@ secondary_boot_page:
 __spin_table:
 	.space CONFIG_MAX_CPUS*ENTRY_SIZE
 
-	.align 4
-
 	/* Ensure that the literals used by the secondary boot page are
 	 * assembled within it
 	 */
 	.ltorg
 
+	/* 64 bit alignment for elements accessed as data */
 	.align 4
+	.global __real_cntfrq
+__real_cntfrq:
+	.quad COUNTER_FREQUENCY
 	.globl __secondary_boot_page_size
 	.type __secondary_boot_page_size, %object
 	/* Secondary Boot Page ends here */

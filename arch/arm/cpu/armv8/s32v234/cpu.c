@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2014-2016, Freescale Semiconductor, Inc.
+ * (C) Copyright 2017 NXP
  */
 
 #include <common.h>
@@ -14,6 +15,7 @@
 #include <asm/system.h>
 #include <asm/io.h>
 #include "cpu.h"
+#include <asm/arch/siul.h>
 #include "mp.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -347,3 +349,23 @@ int arch_early_init_r(void)
 	return 0;
 }
 #endif /* CONFIG_ARCH_EARLY_INIT_R */
+
+int timer_init(void)
+{
+	if (get_siul2_midr1_major() >= 1)
+		return 0;
+
+	/*
+	 * For CUT1 chip version, update with accurate clock
+	 * frequency for all cores.
+	 */
+
+	/* update for secondary cores */
+	__real_cntfrq = COUNTER_FREQUENCY_CUT1;
+	flush_dcache_range((unsigned long)&__real_cntfrq,
+			   (unsigned long)&__real_cntfrq + 8);
+
+	/* Update made for main core. */
+	asm volatile("msr cntfrq_el0, %0" : : "r" (__real_cntfrq) : "memory");
+	return 0;
+}

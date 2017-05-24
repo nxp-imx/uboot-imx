@@ -6,6 +6,7 @@
 #ifndef __ARCH_ARM_MACH_S32V234_SIUL_H__
 #define __ARCH_ARM_MACH_S32V234_SIUL_H__
 
+#include <asm/io.h>
 #include "ddr.h"
 
 #define SIUL2_MIDR1				(SIUL2_BASE_ADDR + 0x00000004)
@@ -24,7 +25,19 @@
 
 /* SIUL2_MIDR1 masks */
 #define SIUL2_MIDR1_MINOR_MASK		(0xF << 0)
-#define SIUL2_MIDR1_MAJOR_MASK		(0xF << 4)
+#define SIUL2_MIDR1_MAJOR_SHIFT		(4)
+#define SIUL2_MIDR1_MAJOR_MASK		(0xF << SIUL2_MIDR1_MAJOR_SHIFT)
+
+static inline int get_siul2_midr1_minor(void)
+{
+	return (readl(SIUL2_MIDR1) & SIUL2_MIDR1_MINOR_MASK);
+}
+
+static inline int get_siul2_midr1_major(void)
+{
+	return ((readl(SIUL2_MIDR1) & SIUL2_MIDR1_MAJOR_MASK)
+			>> SIUL2_MIDR1_MAJOR_SHIFT);
+}
 
 /* SIUL2_MSCR specifications as stated in Reference Manual:
  * 0 - 359 Output Multiplexed Signal Configuration Registers
