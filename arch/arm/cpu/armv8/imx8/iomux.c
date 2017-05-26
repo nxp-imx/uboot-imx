@@ -18,7 +18,7 @@ void imx8_iomux_setup_pad(iomux_cfg_t pad)
 	sc_err_t err;
 	sc_ipc_t ipc;
 
-	sc_pin_t pin_id = pad & PIN_ID_MASK;
+	sc_pad_t pin_id = pad & PIN_ID_MASK;
 
 	uint32_t val = (uint32_t)((pad & MUX_PAD_CTRL_MASK) >> MUX_PAD_CTRL_SHIFT);
 

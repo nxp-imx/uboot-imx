@@ -62,6 +62,16 @@ typedef enum sc_misc_seco_auth_cmd_e
     SC_MISC_SECO_AUTH_HDMI_RX_FW = 2    /*!< HDMI RX Firmware */
 } sc_misc_seco_auth_cmd_t;
 
+/*!
+ * This type is used report boot status.
+ */
+typedef enum sc_misc_temp_e
+{
+    SC_MISC_TEMP      = 0,              /*!< Temp sensor */
+    SC_MISC_TEMP_HIGH = 1,              /*!< Temp high alarm */
+    SC_MISC_TEMP_LOW  = 2               /*!< Temp low alarm */
+} sc_misc_temp_t;
+
 /* Functions */
 
 /*!
@@ -210,7 +220,7 @@ sc_err_t sc_misc_seco_authenticate(sc_ipc_t ipc,
 void sc_misc_debug_out(sc_ipc_t ipc, uint8_t ch);
 
 /*!
- * This function starts/stops emulator waveform capture.
+ * This function starts/stops emulation waveform capture.
  *
  * @param[in]     ipc         IPC handle
  * @param[in]     enable      flag to enable/disable capture
@@ -218,7 +228,7 @@ void sc_misc_debug_out(sc_ipc_t ipc, uint8_t ch);
  * @return Returns an error code (SC_ERR_NONE = success).
  *
  * Return errors:
- * - SC_ERR_UNAVAILABLE if not running on emulator
+ * - SC_ERR_UNAVAILABLE if not running on emulation
  */
 sc_err_t sc_misc_waveform_capture(sc_ipc_t ipc, bool enable);
 
@@ -264,10 +274,10 @@ sc_err_t sc_misc_set_ari(sc_ipc_t ipc, sc_rsrc_t resource,
 void sc_misc_boot_status(sc_ipc_t ipc, sc_misc_boot_status_t status);
 
 /*!
- * This function read a given fuse word index.
+ * This function reads a given fuse word index.
  *
  * @param[in]     word        fuse word index
- * @param[in]     *value      fuse read value
+ * @param[out]    value       fuse read value
  *
  * @return Returns and error code (SC_ERR_NONE = success).
  *
@@ -277,6 +287,38 @@ void sc_misc_boot_status(sc_ipc_t ipc, sc_misc_boot_status_t status);
  * - SC_ERR_LOCKED if read operation is locked
  */
 sc_err_t sc_misc_otp_fuse_read(sc_ipc_t ipc, uint32_t word, uint32_t *val);
+
+/*!
+ * This function sets a temp sensor alarm.
+ *
+ * @param[in]     resource    resource with sensor
+ * @param[in]     temp        alarm to set
+ * @param[in]     celsius     whole part of temp to set
+ * @param[in]     tenths      fractional part of temp to set
+ *
+ * @return Returns and error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_PARM if parameters invalid
+ */
+sc_err_t sc_misc_set_temp(sc_ipc_t ipc, sc_rsrc_t resource,
+    sc_misc_temp_t temp, int16_t celsius, int8_t tenths);
+
+/*!
+ * This function gets a temp sensor value.
+ *
+ * @param[in]     resource    resource with sensor
+ * @param[in]     temp        value to get (sensor or alarm)
+ * @param[out]    celsius     whole part of temp to get
+ * @param[out]    tenths      fractional part of temp to get
+ *
+ * @return Returns and error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_PARM if parameters invalid
+ */
+sc_err_t sc_misc_get_temp(sc_ipc_t ipc, sc_rsrc_t resource,
+    sc_misc_temp_t temp, int16_t *celsius, int8_t *tenths);
 
 /* @} */
 
