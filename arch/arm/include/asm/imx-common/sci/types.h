@@ -27,14 +27,18 @@
 #define SC_20MHZ         20000000   /*!< 20MHz */
 #define SC_25MHZ         25000000   /*!< 25MHz */
 #define SC_40MHZ         40000000   /*!< 40MHz */
+#define SC_45MHZ         45000000   /*!< 45MHz */
 #define SC_50MHZ         50000000   /*!< 50MHz */
 #define SC_60MHZ         60000000   /*!< 60MHz */
 #define SC_66MHZ         66666666   /*!< 66MHz */
+#define SC_74MHZ         74250000   /*!< 74.25MHz */
 #define SC_80MHZ         80000000   /*!< 80MHz */
 #define SC_83MHZ         83333333   /*!< 83MHz */
+#define SC_84MHZ         84375000   /*!< 84.37MHz */
 #define SC_100MHZ       100000000   /*!< 100MHz */
 #define SC_125MHZ       125000000   /*!< 125MHz */
 #define SC_133MHZ       133333333   /*!< 133MHz */
+#define SC_135MHZ       135000000   /*!< 135MHz */
 #define SC_150MHZ       150000000   /*!< 150MHz */
 #define SC_160MHZ       160000000   /*!< 160MHz */
 #define SC_166MHZ       166666666   /*!< 160MHz */
@@ -51,8 +55,10 @@
 #define SC_375MHZ       375000000   /*!< 375MHz */
 #define SC_400MHZ       400000000   /*!< 400MHz */
 #define SC_500MHZ       500000000   /*!< 500MHz */
+#define SC_594MHZ       594000000   /*!< 594MHz */
 #define SC_650MHZ       650000000   /*!< 650MHz */
 #define SC_667MHZ       666666667   /*!< 667MHz */
+#define SC_675MHZ       675000000   /*!< 675MHz */
 #define SC_700MHZ       700000000   /*!< 700MHz */
 #define SC_720MHZ       720000000   /*!< 720MHz */
 #define SC_750MHZ       750000000   /*!< 750MHz */
@@ -118,7 +124,7 @@
 /*@}*/
 
 #define SC_R_ALL        UINT16_MAX  /*!< All resources */
-#define SC_P_ALL        UINT16_MAX  /*!< All pins */
+#define SC_P_ALL        UINT16_MAX  /*!< All pads */
 
 /*!
  * This type is used to store a system (full-size) address.
@@ -559,9 +565,9 @@ typedef enum sc_rsrc_e
     SC_R_CSI_1_PWM_0        = 405,
     SC_R_CSI_1_I2C_0        = 406,
     SC_R_HDMI               = 407,
-    SC_R_HDMI_BYPASS        = 408,
+    SC_R_HDMI_I2S           = 408,
     SC_R_HDMI_I2C_0         = 409,
-    SC_R_AUDIO_PLL_2        = 410,
+    SC_R_HDMI_PLL_0         = 410,
     SC_R_HDMI_RX            = 411,
     SC_R_HDMI_RX_BYPASS     = 412,
     SC_R_HDMI_RX_I2C_0      = 413,
@@ -674,6 +680,7 @@ typedef enum sc_rsrc_e
     SC_R_CAAM_JR0_OUT       = 520,
     SC_R_PMIC_2             = 521,
     SC_R_DBLOGIC            = 522,
+    SC_R_HDMI_PLL_1         = 523,
     SC_R_LAST
 } sc_rsrc_t;
 
@@ -721,15 +728,16 @@ typedef enum sc_ctrl_e
     SC_C_MIPI_RESET         = 35,
     SC_C_DUAL_MODE          = 36,
     SC_C_VOLTAGE            = 37,
+    SC_C_PXL_LINK_SEL       = 38,
     SC_C_LAST
 } sc_ctrl_t;
 
 /*!
- * This type is used to indicate a pin. Valid values are SoC specific.
+ * This type is used to indicate a pad. Valid values are SoC specific.
  *
- * Refer to the SoC [Pin List](@ref PINS) for valid pin values.
+ * Refer to the SoC [Pad List](@ref PADS) for valid pad values.
  */
-typedef uint16_t sc_pin_t;
+typedef uint16_t sc_pad_t;
 
 /* Extra documentation of standard types */
 

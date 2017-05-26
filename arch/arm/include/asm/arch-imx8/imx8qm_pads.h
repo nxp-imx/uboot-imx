@@ -1,24 +1,25 @@
 /*
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:     GPL-2.0+
  */
 
 /*!
- * Header file used to configure SoC pin list.
+ * Header file used to configure SoC pad list.
  */
 
-#ifndef _SC_PINS_H
-#define _SC_PINS_H
+#ifndef _SC_PADS_H
+#define _SC_PADS_H
 
 /* Includes */
 
 /* Defines */
 
-#define SC_P_ALL            UINT16_MAX      /*!< All pins */
+#define SC_P_ALL            UINT16_MAX      /*!< All pads */
 
 /*!
- * @name Pin Definitions
+ * @name Pad Definitions
  */
 /*@{*/
 #define SC_P_SIM0_CLK                            0    /*!< DMA.SIM0.CLK, LSIO.GPIO0.IO00 */
@@ -292,5 +293,5 @@
 #define SC_P_COMP_CTL_GPIO_1V8_3V3_ENET_ENETA    268  /*!<  */
 /*@}*/
 
-#endif /* _SC_PINS_H */
+#endif /* _SC_PADS_H */
 

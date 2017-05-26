@@ -105,7 +105,7 @@ void sc_ipc_read(sc_ipc_t ipc, void *data)
     while (count < msg->size)
     {
         MU_HAL_ReceiveMsg(base, count % MU_RR_COUNT,
-            &(msg->DATA.d32[count - 1]));
+            &(msg->DATA.u32[count - 1]));
 
         count++;
     }
@@ -136,7 +136,7 @@ void sc_ipc_write(sc_ipc_t ipc, void *data)
     while (count < msg->size)
     {
         MU_HAL_SendMsg(base, count % MU_TR_COUNT,
-            msg->DATA.d32[count - 1]);
+            msg->DATA.u32[count - 1]);
 
         count++;
     }

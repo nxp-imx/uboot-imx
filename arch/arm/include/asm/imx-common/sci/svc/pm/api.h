@@ -370,7 +370,6 @@ sc_err_t sc_pm_reset(sc_ipc_t ipc, sc_pm_reset_type_t type);
  */
 sc_err_t sc_pm_reset_reason(sc_ipc_t ipc, sc_pm_reset_reason_t *reason);
 
-
 /*!
  * This function is used to boot a partition.
  *
