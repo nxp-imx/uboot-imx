@@ -28,6 +28,29 @@ config TARGET_S32V234EVB
 
 endchoice
 
+if TARGET_S32V234EVB
+
+choice
+	prompt "S32V234EVB Board Family Member"
+	default S32V234EVB_29288
+	help
+	  S32V234EVB Board Family Members.
+	  Default selection is S32V234EVB_29288.
+
+config S32V234EVB_28899
+	bool "S32V234EVB_28899"
+	help
+	  First S32V234EVB generation.
+
+config S32V234EVB_29288
+	bool "S32V234EVB_29288"
+	help
+	  Second S32V234EVB generation.
+
+endchoice
+
+endif
+
 choice
 	prompt "Select DDR type"
 	default S32V234_LPDDR2
