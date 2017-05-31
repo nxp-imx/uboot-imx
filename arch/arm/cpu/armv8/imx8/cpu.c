@@ -9,12 +9,14 @@
 #include <errno.h>
 #include <asm/io.h>
 #include <asm/imx-common/sci/sci.h>
+#include <asm/imx-common/boot_mode.h>
 #include <asm/arch/i2c.h>
 #include <asm/arch/clock.h>
 #include <asm/armv8/mmu.h>
 #include <elf.h>
 #include <asm/arch/sid.h>
 #include <asm/arch-imx/cpu.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -289,7 +291,7 @@ int init_i2c_power(unsigned i2c_num)
 #define FUSE_MAC0_WORD0 452
 #define FUSE_MAC0_WORD1 453
 #define FUSE_MAC1_WORD0 454
-#define FUSE_MAC1_WORD1 455 
+#define FUSE_MAC1_WORD1 455
 void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 {
 	sc_err_t err;
@@ -584,3 +586,38 @@ void arch_preboot_os(void)
 	imx8_config_smmu_sid(dev_sids, ARRAY_SIZE(dev_sids));
 }
 #endif
+
+enum boot_device get_boot_device(void)
+{
+	struct rom_sw_info_t **p =
+		(struct rom_sw_info_t **)ROM_SW_INFO_ADDR;
+
+	enum boot_device boot_dev = SD1_BOOT;
+	uint8_t boot_type = (*p)->boot_dev_info.dev_type;
+	uint8_t boot_instance = (*p)->boot_dev_info.instance;
+
+	switch (boot_type) {
+	case FLASH_TYPE_SD:
+		boot_dev = boot_instance + SD1_BOOT;
+		break;
+	case FLASH_TYPE_MMC:
+		boot_dev = boot_instance + MMC1_BOOT;
+		break;
+	case FLASH_TYPE_NAND:
+		boot_dev = NAND_BOOT;
+		break;
+	case FLASH_TYPE_FLEXSPINOR:
+		boot_dev = QSPI_BOOT;
+		break;
+	case BT_DEV_TYPE_SATA_DISK:
+		boot_dev = SATA_BOOT;
+		break;
+	case BT_DEV_TYPE_USB:
+		boot_dev = USB_BOOT;
+		break;
+	default:
+		break;
+	}
+
+	return boot_dev;
+}

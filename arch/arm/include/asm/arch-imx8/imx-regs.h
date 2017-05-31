@@ -32,4 +32,6 @@
 #define LPUART_BASE		SCU_LPUART_BASE
 #endif
 
+#define ROM_SW_INFO_ADDR	0x00000890
+
 #endif /* __ASM_ARCH_IMX_REGS_H__ */
