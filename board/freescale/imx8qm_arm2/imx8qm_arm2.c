@@ -713,3 +713,30 @@ int ft_board_setup(void *blob, bd_t *bd)
 	return 0;
 }
 #endif
+
+int board_mmc_get_env_dev(int devno)
+{
+#ifdef CONFIG_TARGET_IMX8QM_LPDDR4_ARM2
+	return devno;
+#else
+	return devno - 1;
+#endif
+}
+
+int mmc_map_to_kernel_blk(int dev_no)
+{
+#ifdef CONFIG_TARGET_IMX8QM_LPDDR4_ARM2
+	return dev_no;
+#else
+	return dev_no + 1;
+#endif
+}
+
+int board_late_init(void)
+{
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
+
+	return 0;
+}
