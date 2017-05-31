@@ -666,3 +666,24 @@ int print_bootinfo(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+__weak int board_mmc_get_env_dev(int devno)
+{
+	return CONFIG_SYS_MMC_ENV_DEV;
+}
+
+int mmc_get_env_dev(void)
+{
+	struct rom_sw_info_t **p = (struct rom_sw_info_t **)ROM_SW_INFO_ADDR;
+
+	int devno = (*p)->boot_dev_info.instance;
+	uint8_t boot_type = (*p)->boot_dev_info.dev_type;
+
+	/* If not boot from sd/mmc, use default value */
+	if ((boot_type != FLASH_TYPE_SD) && (boot_type != FLASH_TYPE_MMC))
+		return CONFIG_SYS_MMC_ENV_DEV;
+
+	return board_mmc_get_env_dev(devno);
+}
+#endif
