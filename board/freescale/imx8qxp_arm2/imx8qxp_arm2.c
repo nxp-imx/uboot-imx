@@ -24,6 +24,7 @@
 #include <imx8_hsio.h>
 #include <usb.h>
 #include <asm/arch/iomux.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -499,6 +500,8 @@ static void board_gpio_init(void)
 int checkboard(void)
 {
 	puts("Board: iMX8QXP LPDDR4 ARM2\n");
+
+	print_bootinfo();
 
 	/* Note:  After reloc, ipcHndl will no longer be valid.  If handle
 	 *        returned by sc_ipc_open matches SC_IPC_CH, use this
