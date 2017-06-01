@@ -28,3 +28,5 @@ void setup_iomux_dcu(void);
 #ifdef CONFIG_DCU_QOS_FIX
 int board_dcu_qos(void);
 #endif
+
+void cpu_pci_clock_init(const int clockexternal);

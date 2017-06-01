@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2016 Heinz Wrobel <heinz.wrobel@nxp.com>
  * Copyright (C) 2015 Aurelian Voicu <aurelian.voicu@nxp.com>
- * Copyright (C) 2016,2020 NXP
+ * Copyright 2016-2017,2020 NXP
  *
  * Based on upstream iMX U-Boot driver:
  * pcie_imx.c:		Marek Vasut <marex@denx.de>
@@ -17,6 +17,7 @@
 #include <hwconfig.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/siul.h>
+#include <asm/arch/soc.h>
 #include <asm/arch/src.h>
 #include <asm/arch/mc_me_regs.h>
 #include <asm/arch/mc_cgm_regs.h>
@@ -733,6 +734,8 @@ void s32v234_pcie_init(const int ep_mode)
 void pci_init_board(void)
 {
 	int epmode;
+	int clockexternal = 0;
+
 #ifdef CONFIG_PCIE_EP_MODE
 	epmode = 1;
 #else
@@ -746,6 +749,13 @@ void pci_init_board(void)
 		epmode = 0;
 	if (hwconfig_subarg_cmp("pcie", "mode", "ep"))
 		epmode = 1;
+
+	if (hwconfig_subarg_cmp("pcie", "clock", "ext"))
+		clockexternal = 1;
+	if (hwconfig_subarg_cmp("pcie", "clock", "int"))
+		clockexternal = 0;
+
+	cpu_pci_clock_init(clockexternal);
 
 	s32v234_pcie_init(epmode);
 }
