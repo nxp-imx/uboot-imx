@@ -174,6 +174,8 @@
 #endif
 #endif
 
+#define CONFIG_HWCONFIG
+
 #ifdef CONFIG_CMD_BOOTI
 
 /*
