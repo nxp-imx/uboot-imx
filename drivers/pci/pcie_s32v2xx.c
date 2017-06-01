@@ -14,6 +14,7 @@
 #include <common.h>
 #include <errno.h>
 #include <pci.h>
+#include <hwconfig.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/siul.h>
 #include <asm/arch/src.h>
@@ -731,9 +732,20 @@ void s32v234_pcie_init(const int ep_mode)
 
 void pci_init_board(void)
 {
+	int epmode;
 #ifdef CONFIG_PCIE_EP_MODE
-	s32v234_pcie_init(1);
+	epmode = 1;
 #else
-	s32v234_pcie_init(0);
+	epmode = 0;
 #endif
+
+	/* We have a build time default, but we allow a custom
+	 * override for configuration flexibility
+	 */
+	if (hwconfig_subarg_cmp("pcie", "mode", "rc"))
+		epmode = 0;
+	if (hwconfig_subarg_cmp("pcie", "mode", "ep"))
+		epmode = 1;
+
+	s32v234_pcie_init(epmode);
 }
