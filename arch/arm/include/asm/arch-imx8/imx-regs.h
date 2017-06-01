@@ -34,4 +34,14 @@
 
 #define ROM_SW_INFO_ADDR	0x00000890
 
+#define OTG_BASE_ADDR		0x5b0d0000
+#define USB_PHY0_BASE_ADDR	0x5b100000
+
+/*
+ * If ROM fail back to USB recover mode, USBPH0_PWD will be clear to use USB
+ * If boot from the other mode, USB0_PWD will keep reset value
+ */
+#define	is_boot_from_usb(void) (!(readl(USB_PHY0_BASE_ADDR) & (1<<20)))
+#define	disconnect_from_pc(void) writel(0x0, OTG_BASE_ADDR + 0x140)
+
 #endif /* __ASM_ARCH_IMX_REGS_H__ */
