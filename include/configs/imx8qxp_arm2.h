@@ -90,8 +90,29 @@
 	"loadm4image_0=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4_0_image}\0" \
 	"m4boot_0=run loadm4image_0; bootaux ${loadaddr} 0\0" \
 
+#ifdef CONFIG_NAND_BOOT
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
+#else
+#define MFG_NAND_PARTITION ""
+#endif
+
+#define CONFIG_MFG_ENV_SETTINGS \
+	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
+		"rdinit=/linuxrc " \
+		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
+		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
+		"g_mass_storage.iSerialNumber=\"\" "\
+		MFG_NAND_PARTITION \
+		"video=imxdpufb5:off video=imxdpufb6:off video=imxdpufb7:off "\
+		"clk_ignore_unused "\
+		"\0" \
+	"initrd_addr=0x83800000\0" \
+	"initrd_high=0xffffffff\0" \
+	"bootcmd_mfg=run mfgtool_args;booti ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
+	CONFIG_MFG_ENV_SETTINGS \
 	M4_BOOT_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
