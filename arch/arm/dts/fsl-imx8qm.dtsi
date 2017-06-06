@@ -49,6 +49,7 @@
 		i2c8 = &i2c1_lvds1;
 		mmc1 = &usdhc2;
 		mmc2 = &usdhc3;
+		usb0 = &usbotg1;
 		usbphy0 = &usbphy1;
 		ethernet0 = &fec1;
 		ethernet1 = &fec2;
