@@ -113,7 +113,7 @@ static iomux_cfg_t lpi2c1_pads[] = {
 	SC_P_GPT0_CAPTURE | MUX_MODE_ALT(1) | MUX_PAD_CTRL(I2C_PAD_CTRL),
 
 	/* Change the default alt function from SCL/SDA to others, to avoid select input conflict with GPT0 */
-	SC_P_USB_SS3_TC0 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPIO_PAD_CTRL), /* Set ALT to OTG1 PWR*/
+	SC_P_USB_SS3_TC0 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL), /* Set ALT to GPIO used as OTG1 PWR in DM driver */
 	SC_P_USB_SS3_TC1 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL), /* Set ALT to GPIO */
 	SC_P_USB_SS3_TC2 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPIO_PAD_CTRL), /* Set ALT to OTG1 OC */
 	SC_P_USB_SS3_TC3 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL), /* Set ALT to GPIO */
@@ -638,6 +638,21 @@ void pci_init_board(void)
 }
 #endif
 
+#ifdef CONFIG_USB_EHCI_MX6
+static iomux_cfg_t otg1_pins[] = {
+	/* Set USB PWR to GPIO used by DM driver */
+	SC_P_USB_SS3_TC0 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
+};
+
+static void setup_otg(void)
+{
+	imx8_iomux_setup_multiple_pads(otg1_pins, ARRAY_SIZE(otg1_pins));
+
+	/* Enable usb power */
+	init_otg_power();
+}
+#endif
+
 int board_init(void)
 {
 #ifdef CONFIG_MXC_GPIO
@@ -668,6 +683,9 @@ int board_init(void)
 	setup_mmc();
 #endif
 
+#ifdef CONFIG_USB_EHCI_MX6
+	setup_otg();
+#endif
 	return 0;
 }
 

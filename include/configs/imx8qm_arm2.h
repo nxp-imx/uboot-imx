@@ -275,4 +275,16 @@
 #define CONFIG_SYS_FSL_FSPI_AHB
 #endif
 
+/* USB OTG controller configs */
+#ifdef CONFIG_CMD_USB
+#define CONFIG_USB_HOST_ETHER
+#define CONFIG_USB_ETHER_ASIX
+#define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
+#endif
+
+#ifdef CONFIG_USB_GADGET
+#define CONFIG_USBD_HS
+#define CONFIG_USB_FUNCTION_MASS_STORAGE
+#endif
+
 #endif /* __IMX8QM_ARM2_H */
