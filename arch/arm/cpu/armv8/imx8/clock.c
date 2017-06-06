@@ -169,28 +169,6 @@ int set_clk_qspi(void)
 
 void enable_usboh3_clk(unsigned char enable)
 {
-	sc_err_t err;
-	sc_ipc_t ipc;
-	sc_rsrc_t usbs[] = {SC_R_USB_0, SC_R_USB_1, SC_R_USB_2};
-
-	int i;
-
-	ipc = gd->arch.ipc_channel_handle;
-	if (enable) {
-		for (i = 0; i < 2; i++) {
-			/* The 24Mhz OTG PHY clock is pd linked, so it has been power up when pd is on */
-			err = sc_pm_clock_enable(ipc, usbs[i], SC_PM_CLK_PHY, true, false);
-			if (err != SC_ERR_NONE)
-				printf("\nSC_R_USB_%d enable clock enable failed! (error = %d)\n", i, err);
-		}
-	} else {
-		for (i = 0; i < 2; i++) {
-			err = sc_pm_clock_enable(ipc, usbs[i], SC_PM_CLK_PHY, false, false);
-			if (err != SC_ERR_NONE)
-				printf("\nSC_R_USB_%d enable clock disable failed! (error = %d)\n", i, err);
-		}
-	}
-
 	return;
 }
 
