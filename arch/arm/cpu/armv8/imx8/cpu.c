@@ -288,6 +288,29 @@ int init_i2c_power(unsigned i2c_num)
 	return 0;
 }
 
+int init_otg_power(void)
+{
+	sc_err_t err;
+	sc_ipc_t ipc;
+	int ret = 0;
+
+	ipc = gd->arch.ipc_channel_handle;
+
+	err = sc_pm_set_resource_power_mode(ipc, SC_R_USB_0, SC_PM_PW_MODE_ON);
+	if (err != SC_ERR_NONE){
+		printf("\nSC_R_USB_0 Power up failed! (error = %d)\n", err);
+		ret = -EPERM;
+	}
+
+	err = sc_pm_set_resource_power_mode(ipc, SC_R_USB_0_PHY, SC_PM_PW_MODE_ON);
+	if (err != SC_ERR_NONE){
+		printf("\nSC_R_USB_0_PHY Power up failed! (error = %d)\n", err);
+		ret = -EPERM;
+	}
+
+	return ret;
+}
+
 #define FUSE_MAC0_WORD0 452
 #define FUSE_MAC0_WORD1 453
 #define FUSE_MAC1_WORD0 454
