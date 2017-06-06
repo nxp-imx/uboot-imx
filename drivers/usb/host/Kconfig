@@ -134,7 +134,7 @@ config USB_EHCI_MARVELL
 
 config USB_EHCI_MX6
 	bool "Support for i.MX6 on-chip EHCI USB controller"
-	depends on ARCH_MX6 || ARCH_MX7ULP
+	depends on ARCH_MX6 || ARCH_MX7ULP || ARCH_IMX8
 	default y
 	---help---
 	  Enables support for the on-chip EHCI controller on i.MX6 SoCs.
