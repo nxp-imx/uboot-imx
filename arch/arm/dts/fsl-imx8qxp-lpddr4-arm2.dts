@@ -34,7 +34,17 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		reg_sd1_vmmc: sd1_vmmc {
+		reg_usb_otg1_vbus: regulator@0 {
+			compatible = "regulator-fixed";
+			reg = <0>;
+			regulator-name = "usb_otg1_vbus";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			gpio = <&gpio4 3 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+		};
+
+		reg_sd1_vmmc: sd1_vmmc@1 {
 			compatible = "regulator-fixed";
 			regulator-name = "SD1_SPWR";
 			regulator-min-microvolt = <3000000>;
@@ -46,7 +56,15 @@
 };
 
 &iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog_1>;
+
 	imx8qxp-arm2 {
+		pinctrl_hog_1: hoggrp-1 {
+			fsl,pins = <
+				SC_P_USB_SS3_TC0_LSIO_GPIO4_IO03	  0x06000048
+			>;
+		};
 
 		pinctrl_fec1: fec1grp {
 			fsl,pins = <
@@ -86,7 +104,7 @@
 
 		pinctrl_lpi2c1: lpi1cgrp {
 			fsl,pins = <
-				SC_P_USB_SS3_TC0_ADMA_I2C1_SCL	0x06000020
+				SC_P_USB_SS3_TC1_ADMA_I2C1_SCL	0x06000020
 				SC_P_USB_SS3_TC3_ADMA_I2C1_SDA	0x06000020
 			>;
 		};
@@ -310,5 +328,13 @@
 	cd-gpios = <&gpio4 22 GPIO_ACTIVE_LOW>;
 	wp-gpios = <&gpio4 21 GPIO_ACTIVE_HIGH>;
 	vmmc-supply = <&reg_sd1_vmmc>;
+	status = "okay";
+};
+
+&usbotg1 {
+	vbus-supply = <&reg_usb_otg1_vbus>;
+	srp-disable;
+	hnp-disable;
+	adp-disable;
 	status = "okay";
 };
