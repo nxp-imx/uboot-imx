@@ -275,8 +275,16 @@
 #define CONFIG_SYS_FSL_FSPI_AHB
 #endif
 
-/* USB OTG controller configs */
+/* USB Config */
 #ifdef CONFIG_CMD_USB
+
+#ifdef CONFIG_USB_XHCI_IMX8
+#define CONFIG_USB_MAX_CONTROLLER_COUNT 1
+#define CONFIG_SYS_USB_XHCI_MAX_ROOT_PORTS	2
+#endif
+
+/* USB OTG controller configs */
+#ifdef CONFIG_USB_EHCI_HCD
 #define CONFIG_USB_HOST_ETHER
 #define CONFIG_USB_ETHER_ASIX
 #define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
@@ -289,5 +297,7 @@
 #if defined(CONFIG_FASTBOOT)
 #include "imx8qm_arm2_android.h"
 #endif
+
+#endif /* CONFIG_CMD_USB */
 
 #endif /* __IMX8QM_ARM2_H */
