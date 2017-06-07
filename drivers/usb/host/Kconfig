@@ -86,6 +86,14 @@ config USB_XHCI_FSL
 	help
 	  Enables support for the on-chip xHCI controller on NXP Layerscape SoCs.
 
+config USB_XHCI_IMX8
+	bool "XHCI support for imx8"
+	depends on ARCH_IMX8
+	default y
+	help
+	  Enables support for the on-chip xHCI controller on imx8qm and
+	  imx8qxp SoCs.
+
 config USB_XHCI_IMX8M
 	bool "XHCI support for imx8M(mscale)"
 	depends on ARCH_IMX8M
