@@ -766,3 +766,39 @@ int is_recovery_key_pressing(void)
 }
 #endif /*CONFIG_ANDROID_RECOVERY*/
 #endif /*CONFIG_FSL_FASTBOOT*/
+
+/* Only Enable USB3 resources currently */
+int board_usb_init(int index, enum usb_init_type init)
+{
+	sc_err_t err;
+	sc_ipc_t ipc;
+	sc_rsrc_t usbs[2] = {SC_R_USB_2, SC_R_USB_2_PHY};
+	int i;
+
+	ipc = gd->arch.ipc_channel_handle;
+
+	/* Power on usb, notify if SCI error occurred */
+	for (i = 0; i < 2; i++) {
+		err = sc_pm_set_resource_power_mode(ipc, usbs[i],
+			SC_PM_PW_MODE_ON);
+		if (err != SC_ERR_NONE)
+			printf("SC_R_USB_%d Power up failed: %d\n", i, err);
+	}
+
+	err = sc_pm_clock_enable(ipc, usbs[0], SC_PM_CLK_MISC, true, false);
+	if (err != SC_ERR_NONE)
+		printf("USB3 set clock failed!, line=%d (error = %d)\n",
+			__LINE__, err);
+
+	err = sc_pm_clock_enable(ipc, usbs[0], SC_PM_CLK_MST_BUS, true, false);
+	if (err != SC_ERR_NONE)
+		printf("USB3 set clock failed!, line=%d (error = %d)\n",
+			__LINE__, err);
+
+	err = sc_pm_clock_enable(ipc, usbs[0], SC_PM_CLK_PER, true, false);
+	if (err != SC_ERR_NONE)
+		printf("USB3 set clock failed!, line=%d (error = %d)\n",
+			__LINE__, err);
+
+	return 0;
+}
