@@ -41,6 +41,7 @@
 #include <part.h>
 #include <sparse_format.h>
 #include <image-sparse.h>
+#include <image.h>
 #include <asm/imx-common/boot_mode.h>
 #ifdef CONFIG_ANDROID_RECOVERY
 #include <recovery.h>
@@ -187,7 +188,11 @@ static struct usb_gadget_strings *fastboot_strings[] = {
 
 #define ANDROID_MBR_OFFSET	    0
 #define ANDROID_MBR_SIZE	    0x200
+#ifdef  CONFIG_BOOTLOADER_OFFSET_33K
+#define ANDROID_BOOTLOADER_OFFSET   0x8400
+#else
 #define ANDROID_BOOTLOADER_OFFSET   0x400
+#endif
 #define ANDROID_BOOTLOADER_SIZE	    0xFFC00
 #define ANDROID_KERNEL_OFFSET	    0x100000
 #define ANDROID_KERNEL_SIZE	    0x500000
@@ -1768,6 +1773,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	int mmcc = -1;
 	struct andr_img_hdr *hdr = &boothdr;
     ulong image_size;
+	bool check_image_arm64;
 #ifdef CONFIG_SECURE_BOOT
 #define IVT_SIZE 0x20
 #define CSF_PAD_SIZE CONFIG_CSF_SIZE
@@ -1883,7 +1889,7 @@ use_given_ptn:
 		}
 		/* flush cache after read */
 		flush_cache((ulong)load_addr, bootimg_sectors * 512); /* FIXME */
-
+		check_image_arm64  = image_arm64(load_addr + hdr->page_size);
 		addr = load_addr;
 #ifdef CONFIG_FASTBOOT_LOCK
 		int verifyresult = -1;
@@ -1919,6 +1925,17 @@ use_given_ptn:
 #endif
 
 		sector = pte->start + (hdr->page_size / 512);
+		if (check_image_arm64) {
+			if (mmc->block_dev.block_read(dev_desc, sector,
+								(hdr->kernel_size / 512) + 1,
+								(void *)hdr->kernel_addr) < 0) {
+				printf("boota: mmc failed to read kernel\n");
+				goto fail;
+			}
+			flush_cache((ulong)hdr->kernel_addr, hdr->kernel_size);
+			android_image_get_kernel(hdr, 0, NULL, NULL);
+			addr = hdr->kernel_addr;
+		}
 		sector += ALIGN(hdr->kernel_size, hdr->page_size) / 512;
 		if (mmc->block_dev.block_read(dev_desc, sector,
 						(hdr->ramdisk_size / 512) + 1,
@@ -2038,15 +2055,24 @@ use_given_ptn:
 	char boot_addr_start[12];
 	char ramdisk_addr[25];
 	char fdt_addr[12];
-
-	char *bootm_args[] = { "bootm", boot_addr_start, ramdisk_addr, fdt_addr};
+	char *boot_args[] = { NULL, boot_addr_start, ramdisk_addr, fdt_addr};
+	if (check_image_arm64)
+		boot_args[0] = "booti";
+	else
+		boot_args[0] = "bootm";
 
 	sprintf(boot_addr_start, "0x%lx", addr);
 	sprintf(ramdisk_addr, "0x%x:0x%x", hdr->ramdisk_addr, hdr->ramdisk_size);
 	sprintf(fdt_addr, "0x%x", hdr->second_addr);
-
-	do_bootm(NULL, 0, 4, bootm_args);
-
+	if (check_image_arm64) {
+#ifdef CONFIG_CMD_BOOTI
+		do_booti(NULL, 0, 4, boot_args);
+#else
+		debug("please enable CONFIG_CMD_BOOTI when kernel are Image");
+#endif
+	} else {
+		do_bootm(NULL, 0, 4, boot_args);
+	}
 	/* This only happens if image is somehow faulty so we start over */
 	do_reset(NULL, 0, 0, NULL);
 

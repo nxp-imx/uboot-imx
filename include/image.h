@@ -1245,6 +1245,7 @@ int android_image_get_fdt(const struct andr_img_hdr *hdr,
 ulong android_image_get_end(const struct andr_img_hdr *hdr);
 ulong android_image_get_kload(const struct andr_img_hdr *hdr);
 void android_print_contents(const struct andr_img_hdr *hdr);
+bool image_arm64(void *images);
 
 #endif /* CONFIG_ANDROID_BOOT_IMAGE */
 
