@@ -690,6 +690,37 @@ int print_bootinfo(void)
 	return 0;
 }
 
+#ifdef CONFIG_SERIAL_TAG
+#define FUSE_UNIQUE_ID_WORD0 16
+#define FUSE_UNIQUE_ID_WORD1 17
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+	sc_err_t err;
+	sc_ipc_t ipc;
+	uint32_t val1 = 0, val2 = 0;
+	uint32_t word1, word2;
+
+	ipc = gd->arch.ipc_channel_handle;
+
+	word1 = FUSE_UNIQUE_ID_WORD0;
+	word2 = FUSE_UNIQUE_ID_WORD1;
+
+	err = sc_misc_otp_fuse_read(ipc, word1, &val1);
+	if (err != SC_ERR_NONE) {
+		printf("%s fuse %d read error: %d\n", __func__,word1, err);
+		return;
+	}
+
+	err = sc_misc_otp_fuse_read(ipc, word2, &val2);
+	if (err != SC_ERR_NONE) {
+		printf("%s fuse %d read error: %d\n", __func__, word2, err);
+		return;
+	}
+	serialnr->low = val1;
+	serialnr->high = val2;
+}
+#endif /*CONFIG_SERIAL_TAG*/
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 __weak int board_mmc_get_env_dev(int devno)
 {
