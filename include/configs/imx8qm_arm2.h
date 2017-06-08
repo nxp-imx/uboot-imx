@@ -286,5 +286,8 @@
 #define CONFIG_USBD_HS
 #define CONFIG_USB_FUNCTION_MASS_STORAGE
 #endif
+#if defined(CONFIG_FASTBOOT)
+#include "imx8qm_arm2_android.h"
+#endif
 
 #endif /* __IMX8QM_ARM2_H */
