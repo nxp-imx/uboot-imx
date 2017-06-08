@@ -220,3 +220,15 @@ int android_image_get_fdt(const struct andr_img_hdr *hdr,
 	*fdt_len = hdr->second_size;
 	return 0;
 }
+
+#define ARM64_IMAGE_MAGIC	0x644d5241
+bool image_arm64(void *images)
+{
+	struct header_image *ih;
+
+	ih = (struct header_image *)images;
+	debug("image magic: %x\n", ih->magic);
+	if (ih->magic == le32_to_cpu(ARM64_IMAGE_MAGIC))
+		return true;
+	return false;
+}

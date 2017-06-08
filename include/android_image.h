@@ -66,4 +66,16 @@ struct andr_img_hdr {
  * 6. if second_size != 0: jump to second_addr
  *    else: jump to kernel_addr
  */
+struct header_image {
+	uint32_t	code0;		/* Executable code */
+	uint32_t	code1;		/* Executable code */
+	uint64_t	text_offset;	/* Image load offset, LE */
+	uint64_t	image_size;	/* Effective Image size, LE */
+	uint64_t	res1;		/* reserved */
+	uint64_t	res2;		/* reserved */
+	uint64_t	res3;		/* reserved */
+	uint64_t	res4;		/* reserved */
+	uint32_t	magic;		/* Magic number */
+	uint32_t	res5;
+};
 #endif
