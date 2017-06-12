@@ -1,0 +1,19 @@
+if TARGET_PICO_IMX6DL
+
+config SYS_CPU
+	default "armv7"
+
+config SYS_BOARD
+	default "pico-imx6dl"
+
+config SYS_VENDOR
+	string
+	default "freescale"
+
+config SYS_SOC
+	default "mx6"
+
+config SYS_CONFIG_NAME
+	default "pico-imx6dl"
+
+endif
