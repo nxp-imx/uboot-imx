@@ -71,7 +71,7 @@ int mcore_early_load_and_boot(void)
 	 * should be same as the one programmed into QSPI flash
 	 */
 	tag = *(dest_addr + 1024);
-	if (tag != 0x402000d1)
+	if (tag != 0x402000d1 && tag !=0x412000d1)
 		return -1;
 
 	pc = *(dest_addr + 1025);
