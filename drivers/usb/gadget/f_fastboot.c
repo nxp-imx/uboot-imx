@@ -33,6 +33,7 @@
 #endif
 
 #ifdef CONFIG_FSL_FASTBOOT
+#include <asm/imx-common/sys_proto.h>
 #include <fsl_fastboot.h>
 #include <mmc.h>
 #include <android_image.h>
@@ -1585,6 +1586,39 @@ void board_fastboot_setup(void)
 	default:
 		printf("unsupported boot devices\n");
 		break;
+	}
+
+	/* add soc type into bootargs */
+	if (is_mx6dqp()) {
+		if (!getenv("soc_type"))
+			setenv("soc_type", "imx6qp");
+	} else if (is_mx6dq()) {
+		if (!getenv("soc_type"))
+			setenv("soc_type", "imx6q");
+	} else if (is_mx6sdl()) {
+		if (!getenv("soc_type"))
+			setenv("soc_type", "imx6dl");
+	} else if (is_mx6sx()) {
+		if (!getenv("soc_type"))
+			setenv("soc_type", "imx6sx");
+	} else if (is_mx6sl()) {
+		if (!getenv("soc_type"))
+			setenv("soc_type", "imx6sl");
+	} else if (is_mx6ul()) {
+		if (!getenv("soc_type"))
+			setenv("soc_type", "imx6ul");
+	} else if (is_mx7()) {
+		if (!getenv("soc_type"))
+			setenv("soc_type", "imx7d");
+	} else if (is_mx7ulp()) {
+		if (!getenv("soc_type"))
+			setenv("soc_type", "imx7ulp");
+	} else if (is_imx8qm()) {
+		if (!getenv("soc_type"))
+			setenv("soc_type", "imx8qm");
+	} else if (is_imx8qxp()) {
+		if (!getenv("soc_type"))
+			setenv("soc_type", "imx8qxp");
 	}
 }
 
