@@ -98,6 +98,16 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 					serialnr.low);
 	strcat(commandline, newbootargs);
 #endif
+
+	/* append soc type into bootargs */
+	char *soc_type = getenv("soc_type");
+	if (soc_type) {
+		sprintf(newbootargs,
+			" androidboot.soc_type=%s",
+			soc_type);
+		strcat(commandline, newbootargs);
+	}
+
 	int bootdev = get_boot_device();
 	if (bootdev == SD1_BOOT || bootdev == SD2_BOOT ||
 		bootdev == SD3_BOOT || bootdev == SD4_BOOT) {
