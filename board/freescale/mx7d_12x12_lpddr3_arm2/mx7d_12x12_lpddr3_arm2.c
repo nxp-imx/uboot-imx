@@ -615,7 +615,7 @@ int power_init_board(void)
 	reg |= 0x80;
 	pmic_reg_write(dev, PFUZE3000_VLDO3CTL, reg);
 
-	pmic_reg_read(dev, PFUZE3000_SW2MODE);
+	reg = pmic_reg_read(dev, PFUZE3000_SW2MODE);
 	reg |= 0x20;
 	pmic_reg_write(dev, PFUZE3000_SW2MODE, reg);
 
