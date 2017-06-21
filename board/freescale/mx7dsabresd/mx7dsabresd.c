@@ -595,6 +595,7 @@ int board_init(void)
 		 */
 		imx_iomux_v3_setup_multiple_pads(epdc_en_pads,
 			ARRAY_SIZE(epdc_en_pads));
+		gpio_request(IMX_GPIO_NR(1, 4), "epdc_en");
 		gpio_direction_output(IMX_GPIO_NR(1, 4), 1);
 	}
 	setup_epdc();
