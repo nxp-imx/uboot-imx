@@ -848,6 +848,11 @@ config ARCH_IMX8
 	select DM
 	select OF_CONTROL
 
+config ARCH_IMX8M
+	bool "Support NXP i.MX8M platform"
+	select ARM64
+	select DM
+
 config TEGRA
 	bool "NVIDIA Tegra"
 
@@ -1194,6 +1199,8 @@ source "arch/arm/mach-zynq/Kconfig"
 source "arch/arm/cpu/armv7/Kconfig"
 
 source "arch/arm/cpu/armv8/imx8/Kconfig"
+
+source "arch/arm/cpu/armv8/imx8m/Kconfig"
 
 source "arch/arm/cpu/armv8/zynqmp/Kconfig"
 
