@@ -627,7 +627,8 @@ UBOOTINCLUDE    := \
 		$(if $(CONFIG_SYS_THUMB_BUILD), $(if $(CONFIG_HAS_THUMB2),, \
 			-I$(srctree)/arch/$(ARCH)/thumb1/include),) \
 		-I$(srctree)/arch/$(ARCH)/include \
-		-include $(srctree)/include/linux/kconfig.h
+		-include $(srctree)/include/linux/kconfig.h \
+		-I$(srctree)
 
 NOSTDINC_FLAGS += -nostdinc -isystem $(shell $(CC) -print-file-name=include)
 CHECKFLAGS     += $(NOSTDINC_FLAGS)
@@ -869,8 +870,14 @@ u-boot-dtb.bin: u-boot-nodtb.bin dts/dt.dtb FORCE
 u-boot.bin: u-boot-dtb.bin FORCE
 	$(call if_changed,copy)
 else
+ifdef CONFIG_ARCH_IMX8M
+u-boot.bin: u-boot-nodtb.bin FORCE
+	dd if=$(srctree)/bl31 of=./u-boot.bin
+	dd if=u-boot-nodtb.bin of=u-boot.bin bs=1K seek=128
+else
 u-boot.bin: u-boot-nodtb.bin FORCE
 	$(call if_changed,copy)
+endif
 endif
 
 %.imx: %.bin
@@ -951,6 +958,11 @@ MKIMAGEFLAGS_u-boot.img = -f auto -A $(ARCH) -T firmware -C none -O u-boot \
 	-n "U-Boot $(UBOOTRELEASE) for $(BOARD) board" -E \
 	$(patsubst %,-b arch/$(ARCH)/dts/%.dtb,$(subst ",,$(CONFIG_OF_LIST)))
 else
+ifdef CONFIG_ARCH_IMX8M
+MKIMAGEFLAGS_u-boot.img = -A $(ARCH) -T firmware -C none -O u-boot \
+	-a 0x40001000 -e 0x40001000 \
+	-n "U-Boot $(UBOOTRELEASE) for $(BOARD) board"
+else
 MKIMAGEFLAGS_u-boot.img = -A $(ARCH) -T firmware -C none -O u-boot \
 	-a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_UBOOT_START) \
 	-n "U-Boot $(UBOOTRELEASE) for $(BOARD) board"
@@ -959,6 +971,7 @@ MKIMAGEFLAGS_u-boot-ivt.img = -A $(ARCH) -T firmware_ivt -C none -O u-boot \
 	-n "U-Boot $(UBOOTRELEASE) for $(BOARD) board"
 u-boot-ivt.img: MKIMAGEOUTPUT = u-boot-ivt.img.log
 CLEAN_FILES += u-boot-ivt.img.log u-boot-dtb.imx.log SPL.log u-boot.imx.log
+endif
 endif
 
 MKIMAGEFLAGS_u-boot-dtb.img = $(MKIMAGEFLAGS_u-boot.img)
