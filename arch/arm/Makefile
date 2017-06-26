@@ -32,6 +32,10 @@ else
 arch-y += -D__LINUX_ARM_ARCH__=$(CONFIG_SYS_ARM_ARCH)
 endif
 
+ifneq ($(CONFIG_ARCH_IMX8)$(CONFIG_ARCH_IMX8M),)
+arch-y += -mgeneral-regs-only
+endif
+
 # Evaluate arch cc-option calls now
 arch-y := $(arch-y)
 
