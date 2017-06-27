@@ -343,7 +343,7 @@ static void check_and_invalidate_dcache_range
 	unsigned size = roundup(ARCH_DMA_MINALIGN,
 				data->blocks*data->blocksize);
 #if defined(CONFIG_FSL_LAYERSCAPE) || defined(CONFIG_S32V234) || \
-	defined(CONFIG_IMX8) || defined(IMX8M)
+	defined(CONFIG_IMX8) || defined(CONFIG_IMX8M)
 	dma_addr_t addr;
 
 	addr = virt_to_phys((void *)(data->dest));
