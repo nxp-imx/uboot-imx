@@ -124,6 +124,31 @@ void lpddr4_800MHz_cfg_umctl2(void)
 	dwc_ddrphy_apb_wr(DDRC_IPS_BASE_ADDR(0) +  0x00000244, 0x00000000);
 	dwc_ddrphy_apb_wr(DDRC_IPS_BASE_ADDR(0) +  0x00000490, 0x00000001);
 	dwc_ddrphy_apb_wr(DDRC_IPS_BASE_ADDR(0) +  0x00000490, 0x00000001);
+        /* performance setting */
+	dwc_ddrphy_apb_wr(DDRC_ODTCFG(0), 0x0b060908);
+	dwc_ddrphy_apb_wr(DDRC_ODTMAP(0), 0x00000000);
+	dwc_ddrphy_apb_wr(DDRC_SCHED(0), 0x29511505);
+	dwc_ddrphy_apb_wr(DDRC_SCHED1(0), 0x0000002c);
+	dwc_ddrphy_apb_wr(DDRC_PERFHPR1(0), 0x5900575b);
+	dwc_ddrphy_apb_wr(DDRC_PERFLPR1(0), 0x900093e7);
+	dwc_ddrphy_apb_wr(DDRC_PERFWR1(0), 0x02005574);
+	dwc_ddrphy_apb_wr(DDRC_DBG0(0), 0x00000016);
+	dwc_ddrphy_apb_wr(DDRC_DBG1(0), 0x00000000);
+	dwc_ddrphy_apb_wr(DDRC_DBGCMD(0), 0x00000000);
+	dwc_ddrphy_apb_wr(DDRC_SWCTL(0), 0x00000001);
+	dwc_ddrphy_apb_wr(DDRC_POISONCFG(0), 0x00000011);
+	dwc_ddrphy_apb_wr(DDRC_PCCFG(0), 0x00000111);
+	dwc_ddrphy_apb_wr(DDRC_PCFGR_0(0), 0x000010f3);
+	dwc_ddrphy_apb_wr(DDRC_PCFGW_0(0), 0x000072ff);
+	dwc_ddrphy_apb_wr(DDRC_PCTRL_0(0), 0x00000001);
+	dwc_ddrphy_apb_wr(DDRC_PCFGQOS0_0(0), 0x01110d00);
+	dwc_ddrphy_apb_wr(DDRC_PCFGQOS1_0(0), 0x00620790);
+	dwc_ddrphy_apb_wr(DDRC_PCFGWQOS0_0(0), 0x00100001);
+	dwc_ddrphy_apb_wr(DDRC_PCFGWQOS1_0(0), 0x0000041f);
+	dwc_ddrphy_apb_wr(DDRC_FREQ1_DERATEEN(0), 0x00000202);
+	dwc_ddrphy_apb_wr(DDRC_FREQ1_DERATEINT(0), 0xec78f4b5);
+	dwc_ddrphy_apb_wr(DDRC_FREQ1_RFSHCTL0(0), 0x00618040);
+	dwc_ddrphy_apb_wr(DDRC_FREQ1_RFSHTMG(0), 0x00610090);
 }
 
 void lpddr4_pub_train(void)
