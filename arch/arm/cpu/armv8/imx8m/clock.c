@@ -34,7 +34,7 @@ u32 decode_frac_pll(enum clk_root_src frac_pll)
 {
 	u32 pll_cfg0, pll_cfg1, pllout;
 	u32 pll_refclk_sel, pll_refclk;
-	u32 divr_val, divq_val, divf_val, pll_newdiv, divff, divfi;
+	u32 divr_val, divq_val, divf_val, divff, divfi;
 	u32 pllout_div_shift, pllout_div_mask, pllout_div;
 
 	switch (frac_pll) {
@@ -77,7 +77,6 @@ u32 decode_frac_pll(enum clk_root_src frac_pll)
 	divr_val = (pll_cfg0 & FRAC_PLL_REFCLK_DIV_VAL_MASK) >>
 		FRAC_PLL_REFCLK_DIV_VAL_SHIFT;
 	divq_val = pll_cfg0 & FRAC_PLL_OUTPUT_DIV_VAL_MASK;
-	pll_newdiv = pll_cfg0 & FRAC_PLL_NEWDIV_VAL_MASK;
 
 	divff = (pll_cfg1 & FRAC_PLL_FRAC_DIV_CTL_MASK) >>
 		FRAC_PLL_FRAC_DIV_CTL_SHIFT;
