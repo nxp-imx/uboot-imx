@@ -13,6 +13,7 @@ endif
 ifeq ($(SOC),$(filter $(SOC),imx8m))
 obj-$(CONFIG_IMX_BOOTAUX) += imx_bootaux.o
 obj-$(CONFIG_SYS_I2C_MXC) += i2c-mxv7.o
+obj-y += cpu.o
 endif
 ifeq ($(SOC),$(filter $(SOC),mx5 mx6))
 obj-y	+= cpu.o speed.o

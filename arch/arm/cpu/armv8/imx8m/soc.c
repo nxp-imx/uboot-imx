@@ -81,43 +81,8 @@ struct mm_region *mem_map = imx8m_mem_map;
 u32 get_cpu_rev(void)
 {
 	/* TODO: */
-	return (MXC_CPU_IMX8MQ << 12) | (0 << 4);
+	return (MXC_CPU_IMX8MQ << 12) | (1 << 4);
 }
-
-#ifdef CONFIG_DISPLAY_CPUINFO
-const char *get_imx8m_type(u32 imxtype)
-{
-	switch (imxtype) {
-	case MXC_CPU_IMX8MQ:
-		return "8MQ";	/* i.MX8 Quad MAX */
-	default:
-		return "??";
-	}
-}
-
-const char *get_imx8m_rev(u32 rev)
-{
-	switch (rev) {
-	case CHIP_REV_A:
-		return "A";
-	default:
-		return "?";
-	}
-}
-
-int print_cpuinfo(void)
-{
-	u32 cpurev;
-	cpurev = get_cpu_rev();
-
-	printf("CPU:   i.MX%s rev%s at %d MHz\n",
-	       get_imx8m_type((cpurev & 0xFF000) >> 12),
-	       get_imx8m_rev((cpurev & 0xFFF)),
-	       mxc_get_clock(MXC_ARM_CLK) / 1000000);
-
-	return 0;
-}
-#endif
 
 int arch_cpu_init(void)
 {
