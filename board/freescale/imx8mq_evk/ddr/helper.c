@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <asm/io.h>
 #include <asm/arch/ddr_memory_map.h>
+#include <asm/sections.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -20,18 +21,14 @@ DECLARE_GLOBAL_DATA_PTR;
 #define DMEM_OFFSET_ADDR 0x00054000
 #define DDR_TRAIN_CODE_BASE_ADDR IP2APB_DDRPHY_IPS_BASE_ADDR(0)
 
-char __firmware_imem_start[0] __attribute__((section(".__firmware_imem_start")));
-char __firmware_imem_end[0] __attribute__((section(".__firmware_imem_end")));
-char __firmware_dmem_start[0] __attribute__((section(".__firmware_dmem_start")));
-char __firmware_dmem_end[0] __attribute__((section(".__firmware_dmem_end")));
+/* We need PHY iMEM PHY is 32KB padded */
 void ddr4_load_train_code(void)
 {
 	u32 tmp32, i;
 	u32 error = 0;
 	unsigned long pr_to32, pr_from32;
-	unsigned long imem_start = (unsigned long)&__firmware_imem_start;
-	unsigned long dmem_start = (unsigned long)&__firmware_dmem_start;
-
+	unsigned long imem_start = (unsigned long)&_end;
+	unsigned long dmem_start = imem_start + IMEM_LEN;
 
 	pr_from32 = imem_start;
 	pr_to32 = DDR_TRAIN_CODE_BASE_ADDR + 4 * IMEM_OFFSET_ADDR;

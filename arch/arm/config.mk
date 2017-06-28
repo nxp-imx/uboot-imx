@@ -140,10 +140,6 @@ ifdef CONFIG_IMX_M4_BIND
 OBJCOPYFLAGS += -j .firmware_image
 endif
 
-ifdef CONFIG_ARCH_IMX8M
-OBJCOPYFLAGS += -j .firmware_imem -j .firmware_dmem
-endif
-
 ifneq ($(CONFIG_IMX_CONFIG),)
 ifdef CONFIG_SPL
 ifndef CONFIG_SPL_BUILD
