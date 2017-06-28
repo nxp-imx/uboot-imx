@@ -4,6 +4,8 @@
  *
  * (C) Copyright 2009-2016 Freescale Semiconductor, Inc.
  *
+ * Copyright 2017 NXP
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -64,6 +66,11 @@ static char *get_reset_cause(void)
 #ifdef CONFIG_MX7
 	case 0x00100:
 		return "WDOG4";
+	case 0x00200:
+		return "TEMPSENSE";
+#elif defined(CONFIG_IMX8M)
+	case 0x00100:
+		return "WDOG2";
 	case 0x00200:
 		return "TEMPSENSE";
 #else
@@ -141,6 +148,8 @@ unsigned imx_ddr_size(void)
 const char *get_imx_type(u32 imxtype)
 {
 	switch (imxtype) {
+	case MXC_CPU_IMX8MQ:
+		return "8MQ";	/* Quad-core version of the imx8m */
 	case MXC_CPU_MX7S:
 		return "7S";	/* Single-core version of the mx7 */
 	case MXC_CPU_MX7D:
@@ -276,7 +285,7 @@ int cpu_mmc_init(bd_t *bis)
 }
 #endif
 
-#ifndef CONFIG_MX7
+#if !(defined(CONFIG_MX7) || defined(CONFIG_IMX8M))
 u32 get_ahb_clk(void)
 {
 	struct mxc_ccm_reg *imx_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
@@ -314,6 +323,7 @@ void arch_preboot_os(void)
 #endif
 }
 
+#ifndef CONFIG_IMX8M
 void set_chipselect_size(int const cs_size)
 {
 	unsigned int reg;
@@ -344,3 +354,4 @@ void set_chipselect_size(int const cs_size)
 
 	writel(reg, &iomuxc_regs->gpr[1]);
 }
+#endif

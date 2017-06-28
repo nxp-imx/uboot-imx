@@ -192,6 +192,47 @@ struct fuse_bank9_regs {
 	u32 rsvd1[11];
 };
 
+/* System Reset Controller (SRC) */
+struct src {
+	u32 scr;
+	u32 a53rcr;
+	u32 a53rcr1;
+	u32 m4rcr;
+	u32 reserved1[4];
+	u32 usbophy1_rcr;
+	u32 usbophy2_rcr;
+	u32 mipiphy_rcr;
+	u32 pciephy_rcr;
+	u32 hdmi_rcr;
+	u32 disp_rcr;
+	u32 reserved2[2];
+	u32 gpu_rcr;
+	u32 vpu_rcr;
+	u32 pcie2_rcr;
+	u32 mipiphy1_rcr;
+	u32 mipiphy2_rcr;
+	u32 reserved3;
+	u32 sbmr1;
+	u32 srsr;
+	u32 reserved4[2];
+	u32 sisr;
+	u32 simr;
+	u32 sbmr2;
+	u32 gpr1;
+	u32 gpr2;
+	u32 gpr3;
+	u32 gpr4;
+	u32 gpr5;
+	u32 gpr6;
+	u32 gpr7;
+	u32 gpr8;
+	u32 gpr9;
+	u32 gpr10;
+	u32 reserved5[985];
+	u32 ddr1_rcr;
+	u32 ddr2_rcr;
+};
+
 #endif
 
 #endif /* __ASM_ARCH_MSCALE_REGS_H__ */
