@@ -49,38 +49,6 @@ SECTIONS
 		*(.__image_copy_end)
 	} >.sram
 
-#ifdef CONFIG_ARCH_IMX8M
-	.firmware_imem_start : {
-		. = ALIGN(8);
-                *(.__firmware_imem_start)
-        }>.sram
-
-	.firmware_imem : {
-		. = ALIGN(8);
-		KEEP(*(.firmware_imem))
-        }>.sram
-
-	.firmware_imem_end : {
-		. = ALIGN(8);
-                *(.__firmware_imem_end)
-        }>.sram
-
-	.firmware_dmem_start : {
-		. = ALIGN(8);
-                *(.__firmware_dmem_start)
-        }>.sram
-
-	.firmware_dmem : {
-		. = ALIGN(8);
-		KEEP(*(.firmware_dmem))
-        }>.sram
-
-	.firmware_dmem_end : {
-		. = ALIGN(8);
-                *(.__firmware_dmem_end)
-        }>.sram
-#endif
-
 	.end : {
 		. = ALIGN(8);
 		*(.__end)
