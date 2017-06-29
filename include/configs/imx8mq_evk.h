@@ -42,6 +42,7 @@
 
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_BOARD_POSTCLK_INIT
+#define CONFIG_BOARD_LATE_INIT
 
 /* Flat Device Tree Definitions */
 #define CONFIG_OF_BOARD_SETUP

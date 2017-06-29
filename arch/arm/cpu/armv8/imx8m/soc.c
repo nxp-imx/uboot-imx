@@ -39,12 +39,32 @@ int timer_init(void)
 	return 0;
 }
 
+void set_wdog_reset(struct wdog_regs *wdog)
+{
+	u32 reg = readw(&wdog->wcr);
+	/*
+	 * Output WDOG_B signal to reset external pmic or POR_B decided by
+	 * the board desgin. Without external reset, the peripherals/DDR/
+	 * PMIC are not reset, that may cause system working abnormal.
+	 */
+	reg = readw(&wdog->wcr);
+	reg |= 1 << 3;
+	/*
+	 * WDZST bit is write-once only bit. Align this bit in kernel,
+	 * otherwise kernel code will have no chance to set this bit.
+	 */
+	reg |= 1 << 0;
+	writew(reg, &wdog->wcr);
+}
+
+#ifdef CONFIG_SPL_BUILD
 void reset_cpu(ulong addr)
 {
 	/* TODO */
 	printf("%s\n", __func__);
 	while (1);
 }
+#endif
 
 static struct mm_region imx8m_mem_map[] = {
 	{
@@ -85,6 +105,18 @@ u32 get_cpu_rev(void)
 	return (MXC_CPU_IMX8MQ << 12) | (1 << 4);
 }
 
+void imx_set_wdog_powerdown(bool enable)
+{
+	struct wdog_regs *wdog1 = (struct wdog_regs *)WDOG1_BASE_ADDR;
+	struct wdog_regs *wdog2 = (struct wdog_regs *)WDOG2_BASE_ADDR;
+	struct wdog_regs *wdog3 = (struct wdog_regs *)WDOG3_BASE_ADDR;
+
+	/* Write to the PDE (Power Down Enable) bit */
+	writew(enable, &wdog1->wmcr);
+	writew(enable, &wdog2->wmcr);
+	writew(enable, &wdog3->wmcr);
+}
+
 int arch_cpu_init(void)
 {
 	/*
@@ -93,6 +125,8 @@ int arch_cpu_init(void)
 	 */
 	timer_init();
 	clock_init();
+
+	imx_set_wdog_powerdown(false);
 
 	return 0;
 }
