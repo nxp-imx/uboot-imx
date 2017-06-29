@@ -580,6 +580,14 @@ int clock_init()
 	clock_enable(CCGR_USB_PHY1, 1);
 	clock_enable(CCGR_USB_PHY2, 1);
 
+	clock_enable(CCGR_WDOG1, 0);
+	clock_enable(CCGR_WDOG2, 0);
+	clock_enable(CCGR_WDOG3, 0);
+	clock_set_target_val(WDOG_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(0));
+	clock_enable(CCGR_WDOG1, 1);
+	clock_enable(CCGR_WDOG2, 1);
+	clock_enable(CCGR_WDOG3, 1);
+
 	return 0;
 };
 

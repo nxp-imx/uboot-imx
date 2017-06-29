@@ -16,6 +16,7 @@
 #include <fsl_esdhc.h>
 #include <mmc.h>
 #include <asm/arch/imx8mq_pins.h>
+#include <asm/arch/sys_proto.h>
 #include <asm/imx-common/gpio.h>
 #include <asm/imx-common/mxc_i2c.h>
 #include <asm/arch/clock.h>
@@ -39,6 +40,12 @@ DECLARE_GLOBAL_DATA_PTR;
 #define ENET_PAD_CTRL_MII_MDIO	(PAD_CTL_ODE | PAD_CTL_DSE3 | PAD_CTL_FSEL0)
 #define ENET_PAD_CTRL_MII_MDC	(PAD_CTL_DSE3 | PAD_CTL_FSEL0)
 #define ENET_RX_PAD_CTRL	(PAD_CTL_DSE7 | PAD_CTL_FSEL3)
+
+#define WDOG_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE)
+
+static iomux_v3_cfg_t const wdog_pads[] = {
+	IMX8MQ_PAD_GPIO1_IO02__WDOG1_WDOG_B | MUX_PAD_CTRL(WDOG_PAD_CTRL),
+};
 
 #ifdef CONFIG_FSL_QSPI
 static iomux_v3_cfg_t const qspi_pads[] = {
@@ -351,6 +358,18 @@ int board_init(void)
 #ifdef CONFIG_FEC_MXC
 	setup_fec();
 #endif
+
+	return 0;
+}
+
+int board_late_init(void)
+{
+	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
+
+	imx_iomux_v3_setup_multiple_pads(wdog_pads, ARRAY_SIZE(wdog_pads));
+
+	set_wdog_reset(wdog);
+
 	return 0;
 }
 

@@ -233,6 +233,14 @@ struct src {
 	u32 ddr2_rcr;
 };
 
+struct wdog_regs {
+	u16	wcr;	/* Control */
+	u16	wsr;	/* Service */
+	u16	wrsr;	/* Reset Status */
+	u16	wicr;	/* Interrupt Control */
+	u16	wmcr;	/* Miscellaneous Control */
+};
+
 #endif
 
 #endif /* __ASM_ARCH_MSCALE_REGS_H__ */
