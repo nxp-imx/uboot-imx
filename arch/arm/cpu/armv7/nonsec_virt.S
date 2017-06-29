@@ -195,7 +195,6 @@ ENTRY(_nonsec_init)
 	ldreq	r1, =CONFIG_TIMER_CLK_FREQ
 	mcreq	p15, 0, r1, c14, c0, 0		@ write CNTFRQ
 #endif
-
 	adr	r1, _monitor_vectors
 	mcr	p15, 0, r1, c12, c0, 1		@ set MVBAR to secure vectors
 	isb

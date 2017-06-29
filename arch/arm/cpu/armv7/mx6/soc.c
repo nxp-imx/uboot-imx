@@ -211,6 +211,35 @@ u32 __weak get_board_rev(void)
 }
 #endif
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+#ifdef CONFIG_MX6UL
+void smp_set_core_boot_addr(unsigned long addr, int corenr)
+{
+           return;
+}
+
+void smp_waitloop(unsigned previous_address)
+{
+           return;
+}
+#endif
+#endif
+
+static void init_csu(void)
+{
+#ifdef CONFIG_ARMV7_NONSEC
+	int i;
+	u32 csu = CSU_BASE_ADDR;
+	/*
+	 * This is to allow device can be accessed in non-secure world.
+	 * All imx6 chips CSU have 40 Config security level registers.
+	 */
+	for (i = 0; i < 40; i ++) {
+	    *((u32 *)csu + i) = 0xffffffff;
+	}
+#endif
+}
+
 static void clear_ldo_ramp(void)
 {
 	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
@@ -416,6 +445,17 @@ void vadc_power_down(void)
 	writel(val, &iomux->gpr[5]);
 }
 
+static void init_csu(void)
+{
+#ifdef CONFIG_ARMV7_NONSEC
+	int i;
+	u32 csu = CSU_IPS_BASE_ADDR;
+	/* This is to allow device can be accessed in non-secure world */
+	for (i = 0; i < 64; i ++) {
+	    *((u32 *)csu + i) = 0xffffffff;
+	}
+#endif
+}
 void pcie_power_up(void)
 {
 	set_ldo_voltage(LDO_PU, 1100);	/* Set VDDPU to 1.1V */
@@ -497,6 +537,8 @@ int arch_cpu_init(void)
 	}
 
 	init_aips();
+
+	init_csu();
 
 	/* Need to clear MMDC_CHx_MASK to make warm reset work. */
 	clear_mmdc_ch_mask();
