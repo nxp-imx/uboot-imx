@@ -240,4 +240,7 @@
 #define CONFIG_POWER_PFUZE100
 #define CONFIG_POWER_PFUZE100_I2C_ADDR	0x08
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "imx8mq_evk_android.h"
+#endif
 #endif
