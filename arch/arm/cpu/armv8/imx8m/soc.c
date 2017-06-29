@@ -9,6 +9,7 @@
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/imx-common/boot_mode.h>
 #include <asm/armv8/mmu.h>
 #include <errno.h>
 
@@ -154,3 +155,18 @@ int arch_auxiliary_core_check_up(u32 core_id)
 	return 1;
 }
 #endif
+
+#ifdef CONFIG_SERIAL_TAG
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+	/* TODO: */
+	serialnr->low = 0;
+	serialnr->high = 0;
+}
+#endif
+
+enum boot_device get_boot_device(void)
+{
+        /* TODO: */
+        return SD2_BOOT;
+}

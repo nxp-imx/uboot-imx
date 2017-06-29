@@ -32,7 +32,15 @@ obj-$(CONFIG_FASTBOOT_LOCK) += fastboot_lock_unlock.o
 obj-$(CONFIG_FSL_BOOTCTL) += bootctrl.o
 obj-$(CONFIG_BCB_SUPPORT) += command.o bcb.o
 endif
+else
+ifdef CONFIG_FSL_FASTBOOT
+obj-$(CONFIG_USB_FUNCTION_FASTBOOT) += f_fastboot.o
+obj-$(CONFIG_FASTBOOT_LOCK) += fastboot_lock_unlock.o
+obj-$(CONFIG_FSL_BOOTCTL) += bootctrl.o
+obj-$(CONFIG_BCB_SUPPORT) += command.o bcb.o
 endif
+endif
+
 ifdef CONFIG_USB_ETHER
 obj-y += ether.o
 obj-$(CONFIG_USB_ETH_RNDIS) += rndis.o
