@@ -84,7 +84,13 @@
  * (64 or 512 or 1024), else we break on certain controllers like DWC3
  * that expect bulk OUT requests to be divisible by maxpacket size.
  */
+static unsigned int download_size;
+static unsigned int download_bytes;
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+static bool is_recovery_mode;
+#endif
 
+#ifdef CONFIG_USB_GADGET
 struct f_fastboot {
 	struct usb_function usb_function;
 
@@ -97,16 +103,9 @@ static inline struct f_fastboot *func_to_fastboot(struct usb_function *f)
 {
 	return container_of(f, struct f_fastboot, usb_function);
 }
-
-static struct f_fastboot *fastboot_func;
-static unsigned int download_size;
-static unsigned int download_bytes;
-#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
-static bool is_recovery_mode;
-#endif
-
 static int strcmp_l1(const char *s1, const char *s2);
 
+static struct f_fastboot *fastboot_func;
 static struct usb_endpoint_descriptor fs_ep_in = {
 	.bLength            = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType    = USB_DT_ENDPOINT,
@@ -171,6 +170,7 @@ fb_ep_desc(struct usb_gadget *g, struct usb_endpoint_descriptor *fs,
 		return hs;
 	return fs;
 }
+#endif
 
 /*
  * static strings, in UTF-8
@@ -1823,13 +1823,14 @@ static AvbOps fsl_avb_ops = {
 
 void fastboot_setup(void)
 {
+#ifdef CONFIG_USB_GADGET
 	struct tag_serialnr serialnr;
 	char serial[17];
 
 	get_board_serial(&serialnr);
 	sprintf(serial, "%08x%08x", serialnr.high, serialnr.low);
 	g_dnl_set_serialnumber(serial);
-
+#endif
 	/*execute board relevant initilizations for preparing fastboot */
 	board_fastboot_setup();
 
@@ -2508,6 +2509,7 @@ U_BOOT_CMD(
 #endif	/* CONFIG_CMD_BOOTA */
 #endif
 
+#ifdef CONFIG_USB_GADGET
 static void rx_handler_command(struct usb_ep *ep, struct usb_request *req);
 
 
@@ -3462,3 +3464,4 @@ static void rx_handler_command(struct usb_ep *ep, struct usb_request *req)
 	req->actual = 0;
 	usb_ep_queue(ep, req, 0);
 }
+#endif
