@@ -190,6 +190,41 @@ int arch_auxiliary_core_check_up(u32 core_id)
 }
 #endif
 
+enum boot_device get_boot_device(void)
+{
+	struct bootrom_sw_info **p =
+		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR;
+
+	enum boot_device boot_dev = SD1_BOOT;
+	u8 boot_type = (*p)->boot_dev_type;
+	u8 boot_instance = (*p)->boot_dev_instance;
+
+	switch (boot_type) {
+	case BOOT_TYPE_SD:
+		boot_dev = boot_instance + SD1_BOOT;
+		break;
+	case BOOT_TYPE_MMC:
+		boot_dev = boot_instance + MMC1_BOOT;
+		break;
+	case BOOT_TYPE_NAND:
+		boot_dev = NAND_BOOT;
+		break;
+	case BOOT_TYPE_QSPI:
+		boot_dev = QSPI_BOOT;
+		break;
+	case BOOT_TYPE_WEIM:
+		boot_dev = WEIM_NOR_BOOT;
+		break;
+	case BOOT_TYPE_SPINOR:
+		boot_dev = SPI_NOR_BOOT;
+		break;
+	default:
+		break;
+	}
+
+	return boot_dev;
+}
+
 #ifdef CONFIG_SERIAL_TAG
 void get_board_serial(struct tag_serialnr *serialnr)
 {
@@ -198,9 +233,3 @@ void get_board_serial(struct tag_serialnr *serialnr)
 	serialnr->high = 0;
 }
 #endif
-
-enum boot_device get_boot_device(void)
-{
-        /* TODO: */
-        return SD2_BOOT;
-}
