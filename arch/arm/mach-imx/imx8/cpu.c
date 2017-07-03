@@ -17,6 +17,7 @@
 #include <asm/arch/sid.h>
 #include <asm/arch-imx/cpu.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/arch/video_common.h>
 #include <linux/libfdt.h>
 #include <fdt_support.h>
 #include <fdtdec.h>
@@ -566,6 +567,9 @@ sc_err_t imx8_config_smmu_sid(struct smmu_sid *dev_sids, int size)
 
 void arch_preboot_os(void)
 {
+#if defined(CONFIG_VIDEO_IMXDPUV1)
+	imxdpuv1_fb_disable();
+#endif
 #ifdef CONFIG_IMX_SMMU
 	imx8_config_smmu_sid(dev_sids, ARRAY_SIZE(dev_sids));
 #endif

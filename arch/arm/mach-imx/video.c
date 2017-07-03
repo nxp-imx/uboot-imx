@@ -39,6 +39,9 @@ int board_video_skip(void)
 #if defined(CONFIG_VIDEO_IPUV3)
 		ret = ipuv3_fb_init(&displays[i].mode, displays[i].di ? 1 : 0,
 				    displays[i].pixfmt);
+#elif defined(CONFIG_VIDEO_IMXDPUV1)
+		ret = imxdpuv1_fb_init(&displays[i].mode, displays[i].bus,
+					displays[i].pixfmt);
 #elif defined(CONFIG_VIDEO_MXS)
 		ret = mxs_lcd_panel_setup(displays[i].mode,
 					displays[i].pixfmt,
@@ -56,7 +59,8 @@ int board_video_skip(void)
 			printf("LCD %s cannot be configured: %d\n",
 			       displays[i].mode.name, ret);
 	} else {
-		printf("unsupported panel %s\n", panel);
+		if (strcmp(panel, "NULL"))
+			printf("unsupported panel %s\n", panel);
 		return -EINVAL;
 	}
 
