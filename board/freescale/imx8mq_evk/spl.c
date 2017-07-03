@@ -19,11 +19,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-u32 spl_boot_device(void)
-{
-	return BOOT_DEVICE_MMC2;
-}
-
 void spl_dram_init(void)
 {
 	/* ddr train */

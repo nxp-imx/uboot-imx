@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2014 Gateworks Corporation
  * Copyright (C) 2011-2012 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * Author: Tim Harvey <tharvey@gateworks.com>
  *
@@ -12,6 +13,7 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/spl.h>
 #include <spl.h>
+#include <asm/imx-common/boot_mode.h>
 #include <asm/imx-common/hab.h>
 
 #if defined(CONFIG_MX6)
@@ -68,6 +70,26 @@ u32 spl_boot_device(void)
 		return BOOT_DEVICE_NAND;
 	}
 	return BOOT_DEVICE_NONE;
+}
+#elif defined(CONFIG_IMX8M)
+u32 spl_boot_device(void)
+{
+	switch (get_boot_device()) {
+	case SD1_BOOT:
+	case MMC1_BOOT:
+		return BOOT_DEVICE_MMC1;
+	case SD2_BOOT:
+	case MMC2_BOOT:
+		return BOOT_DEVICE_MMC2;
+	case NAND_BOOT:
+		return BOOT_DEVICE_NAND;
+	case USB_BOOT:
+		return BOOT_DEVICE_USB;
+	case SPI_NOR_BOOT:
+		return BOOT_DEVICE_SPI;
+	default:
+		return BOOT_DEVICE_NONE;
+	}
 }
 #endif
 
