@@ -375,7 +375,9 @@ int board_late_init(void)
 
 	set_wdog_reset(wdog);
 
+#ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
+#endif
 
 	return 0;
 }
