@@ -362,6 +362,11 @@ int board_init(void)
 	return 0;
 }
 
+int board_mmc_get_env_dev(int devno)
+{
+	return devno;
+}
+
 int board_late_init(void)
 {
 	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
@@ -369,6 +374,8 @@ int board_late_init(void)
 	imx_iomux_v3_setup_multiple_pads(wdog_pads, ARRAY_SIZE(wdog_pads));
 
 	set_wdog_reset(wdog);
+
+	board_late_mmc_env_init();
 
 	return 0;
 }
