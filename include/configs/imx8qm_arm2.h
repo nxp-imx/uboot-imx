@@ -128,7 +128,7 @@
 	M4_BOOT_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
-	"mmcdev=1\0"\
+	"panel=NULL\0" \
 	"console=ttyLP0,115200 earlycon=lpuart32,0x5a060000,115200\0" \
 	"fdtaddr=0x83000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
@@ -222,7 +222,7 @@
 #endif
 
 /* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		((CONFIG_ENV_SIZE + (16*1024)) * 1024)
+#define CONFIG_SYS_MALLOC_LEN		((CONFIG_ENV_SIZE + (32*1024)) * 1024)
 
 #define CONFIG_SYS_SDRAM_BASE		0x80000000
 #define CONFIG_NR_DRAM_BANKS		2
@@ -299,5 +299,17 @@
 #endif
 
 #endif /* CONFIG_CMD_USB */
+
+/* Framebuffer */
+#ifdef CONFIG_VIDEO
+#define CONFIG_VIDEO_IMXDPUV1
+#define CONFIG_VIDEO_BMP_RLE8
+#define CONFIG_SPLASH_SCREEN
+#define CONFIG_SPLASH_SCREEN_ALIGN
+#define CONFIG_BMP_16BPP
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_VIDEO_BMP_LOGO
+#define CONFIG_IMX_VIDEO_SKIP
+#endif
 
 #endif /* __IMX8QM_ARM2_H */
