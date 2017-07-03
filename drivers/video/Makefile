@@ -46,6 +46,7 @@ obj-$(CONFIG_VIDEO_LCD_SSD2828) += ssd2828.o
 obj-$(CONFIG_VIDEO_MB862xx) += mb862xx.o videomodes.o
 obj-$(CONFIG_VIDEO_MX3) += mx3fb.o videomodes.o
 obj-$(CONFIG_VIDEO_IPUV3) += mxc_ipuv3_fb.o ipu_common.o ipu_disp.o
+obj-$(CONFIG_VIDEO_IMXDPUV1) += imxdpuv1.o
 obj-$(CONFIG_VIDEO_MVEBU) += mvebu_lcd.o
 obj-$(CONFIG_VIDEO_MXS) += mxsfb.o videomodes.o
 obj-$(CONFIG_VIDEO_OMAP3) += omap3_dss.o
