@@ -9,3 +9,4 @@ obj-y += clock.o
 obj-y += fsl_mu_hal.o
 obj-y += fuse.o
 obj-y += iomux.o
+obj-$(CONFIG_VIDEO_IMXDPUV1) += video_common.o
