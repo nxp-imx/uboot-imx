@@ -17,6 +17,7 @@
 #include <asm/arch/sid.h>
 #include <asm/arch-imx/cpu.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/arch/video_common.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -603,12 +604,18 @@ sc_err_t imx8_config_smmu_sid(struct smmu_sid *dev_sids, int size)
 
 	return SC_ERR_NONE;
 }
+#endif
 
 void arch_preboot_os(void)
 {
-	imx8_config_smmu_sid(dev_sids, ARRAY_SIZE(dev_sids));
-}
+#if defined(CONFIG_VIDEO_IMXDPUV1)
+	imxdpuv1_fb_disable();
 #endif
+#ifdef CONFIG_IMX_SMMU
+	imx8_config_smmu_sid(dev_sids, ARRAY_SIZE(dev_sids));
+#endif
+}
+
 
 enum boot_device get_boot_device(void)
 {
