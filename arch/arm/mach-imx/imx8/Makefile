@@ -5,3 +5,4 @@
 #
 
 obj-y += cpu.o iomux.o fuse.o
+obj-$(CONFIG_VIDEO_IMXDPUV1) += video_common.o
