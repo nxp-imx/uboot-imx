@@ -241,6 +241,28 @@ struct wdog_regs {
 	u16	wmcr;	/* Miscellaneous Control */
 };
 
+/* Boot device type */
+#define BOOT_TYPE_SD		0x1
+#define BOOT_TYPE_MMC		0x2
+#define BOOT_TYPE_NAND		0x3
+#define BOOT_TYPE_QSPI		0x4
+#define BOOT_TYPE_WEIM		0x5
+#define BOOT_TYPE_SPINOR	0x6
+#define BOOT_TYPE_USB		0xF
+
+#define ROM_SW_INFO_ADDR	0x000009e8
+
+struct bootrom_sw_info {
+	u8 reserved_1;
+	u8 boot_dev_instance;
+	u8 boot_dev_type;
+	u8 reserved_2;
+	u32 core_freq;
+	u32 axi_freq;
+	u32 ddr_freq;
+	u32 tick_freq;
+	u32 reserved_3[3];
+};
 #endif
 
 #endif /* __ASM_ARCH_MSCALE_REGS_H__ */
