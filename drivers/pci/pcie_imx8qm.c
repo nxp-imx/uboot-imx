@@ -75,8 +75,10 @@ int pcie_ctrla_init_rc(int lane)
 			udelay(10);
 		}
 
-		if (val != HW_PHYX2_STTS0_LANE0_TX_PLL_LOCK)
+		if (val != HW_PHYX2_STTS0_LANE0_TX_PLL_LOCK) {
 			printf("TX PLL is not locked.\n");
+			return -ENODEV;
+		}
 		setbits_le32(GPR_LPCG_PHYX2APB_0_APB, BIT(1));
 		/* Set the link_capable to be lane1 */
 		clrbits_le32(PORT0_LINK_CTRL, PORT_LINK_CTRL_LNK_EN_MASK);
@@ -103,8 +105,10 @@ int pcie_ctrla_init_rc(int lane)
 			udelay(10);
 		}
 
-		if (val != (HW_PHYX2_STTS0_LANE0_TX_PLL_LOCK | HW_PHYX2_STTS0_LANE1_TX_PLL_LOCK))
+		if (val != (HW_PHYX2_STTS0_LANE0_TX_PLL_LOCK | HW_PHYX2_STTS0_LANE1_TX_PLL_LOCK)) {
 			printf("TX PLL is not locked.\n");
+			return -ENODEV;
+		}
 		setbits_le32(GPR_LPCG_PHYX2APB_0_APB, BIT(1) + BIT(5));
 		/* Set the link_capable to be lane2 */
 		clrbits_le32(PORT0_LINK_CTRL, PORT_LINK_CTRL_LNK_EN_MASK);
@@ -206,8 +210,10 @@ int pcie_ctrlb_sata_phy_init_rc(void)
 		udelay(10);
 	}
 
-	if (val != HW_PHYX1_STTS0_LANE0_TX_PLL_LOCK)
+	if (val != HW_PHYX1_STTS0_LANE0_TX_PLL_LOCK) {
 		printf("TX PLL is not locked.\n");
+		return -ENODEV;
+	}
 
 	setbits_le32(GPR_LPCG_PHYX1_APB, BIT(1));
 
