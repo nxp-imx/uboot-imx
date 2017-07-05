@@ -2452,7 +2452,7 @@ fail:
 		goto use_given_ptn;
 	}
 #elif defined(CONFIG_FSL_FASTBOOT)
-	return run_command("fastboot", 0);
+	return run_command("fastboot 0", 0);
 #else /*! CONFIG_FSL_FASTBOOT*/
 	return -1;
 #endif /*! CONFIG_FSL_FASTBOOT*/
