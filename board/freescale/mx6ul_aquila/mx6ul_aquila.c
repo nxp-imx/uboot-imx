@@ -800,11 +800,11 @@ void ldo_mode_set(int ldo_bypass)
 		/* decrease VDDARM to 1.275V */
 		pmic_reg_read(pfuze, PFUZE3000_SW1BVOLT, &value);
 		value &= ~0x1f;
-		value |= PFUZE3000_SW1AB_SETP(1275);
+		value |= PFUZE3000_SW1AB_SETP(12750);
 		pmic_reg_write(pfuze, PFUZE3000_SW1BVOLT, value);
 
 		set_anatop_bypass(1);
-		vddarm = PFUZE3000_SW1AB_SETP(1175);
+		vddarm = PFUZE3000_SW1AB_SETP(11750);
 
 		pmic_reg_read(pfuze, PFUZE3000_SW1BVOLT, &value);
 		value &= ~0x1f;
