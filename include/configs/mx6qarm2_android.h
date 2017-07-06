@@ -29,7 +29,7 @@
 #define CONFIG_FASTBOOT_FLASH
 
 /* For NAND we don't support lock/unlock */
-#ifndef CONFIG_SYS_BOOT_NAND
+#ifndef CONFIG_NAND_BOOT
 #define CONFIG_FASTBOOT_LOCK
 #endif
 
@@ -46,7 +46,7 @@
 #define CONFIG_FSL_FASTBOOT
 #define CONFIG_ANDROID_RECOVERY
 
-#if defined CONFIG_SYS_BOOT_NAND
+#if defined CONFIG_NAND_BOOT
 #define CONFIG_FASTBOOT_STORAGE_NAND
 #elif defined CONFIG_SYS_BOOT_SATA
 #define CONFIG_FASTBOOT_STORAGE_SATA
