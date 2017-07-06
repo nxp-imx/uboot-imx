@@ -288,7 +288,9 @@ int get_slotvar(char *cmd, char *response, size_t chars_left)
 	if (!strcmp_l1("has-slot:", cmd)) {
 		char *ptnname = NULL;
 		ptnname = strchr(cmd, ':') + 1;
-		if (!strcmp(ptnname, "system") || !strcmp(ptnname, "boot"))
+		if (!strcmp(ptnname, "system") || !strcmp(ptnname, "boot")
+			!strcmp(str, "oem") || !strcmp(str, "gapps") ||
+			!strcmp(str, "vbmeta"))
 			strlcpy(response, "yes", chars_left);
 		else
 			strlcpy(response, "no", chars_left);

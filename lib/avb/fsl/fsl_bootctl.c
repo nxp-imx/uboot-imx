@@ -79,7 +79,9 @@ int get_slotvar_avb(AvbABOps *ab_ops, char *cmd, char *buffer, size_t size) {
 	char *str = cmd;
 	if (!strcmp_l1("has-slot:", cmd)) {
 		str += strlen("has-slot:");
-		if (!strcmp(str, "system") || !strcmp(str, "boot"))
+		if (!strcmp(str, "system") || !strcmp(str, "boot") ||
+			!strcmp(str, "oem") || !strcmp(str, "gapps") ||
+			!strcmp(str, "vbmeta"))
 			strlcpy(buffer, "yes", size);
 		else
 			strlcpy(buffer, "no", size);
