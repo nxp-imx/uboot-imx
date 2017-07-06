@@ -9,7 +9,7 @@
 #define __MX6UL_14x14_EVKANDROIDTHINGS_H
 #include "mx_android_common.h"
 /* For NAND we don't support lock/unlock */
-#ifndef CONFIG_SYS_BOOT_NAND
+#ifndef CONFIG_NAND_BOOT
 #define CONFIG_FASTBOOT_LOCK
 #define FSL_FASTBOOT_FB_DEV "mmc"
 #endif

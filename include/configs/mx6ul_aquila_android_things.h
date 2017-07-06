@@ -9,7 +9,7 @@
 #define __PICOSOM_IMX6UL_ANDROID_THINGS_H
 #include "mx_android_common.h"
 /* For NAND we don't support lock/unlock */
-#ifndef CONFIG_SYS_BOOT_NAND
+#ifndef CONFIG_NAND_BOOT
 #define CONFIG_FASTBOOT_LOCK
 #define CONFIG_ENABLE_LOCKSTATUS_SUPPORT
 #define FSL_FASTBOOT_FB_DEV "mmc"
