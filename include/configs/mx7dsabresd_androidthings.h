@@ -11,7 +11,7 @@
 #define CONFIG_CMD_FAT
 
 /* For NAND we don't support lock/unlock */
-#ifndef CONFIG_SYS_BOOT_NAND
+#ifndef CONFIG_NAND_BOOT
 #define CONFIG_FASTBOOT_LOCK
 #define CONFIG_ENABLE_LOCKSTATUS_SUPPORT
 #define FSL_FASTBOOT_FB_DEV "mmc"
