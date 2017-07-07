@@ -870,14 +870,8 @@ u-boot-dtb.bin: u-boot-nodtb.bin dts/dt.dtb FORCE
 u-boot.bin: u-boot-dtb.bin FORCE
 	$(call if_changed,copy)
 else
-ifdef CONFIG_ARCH_IMX8M
-u-boot.bin: u-boot-nodtb.bin FORCE
-	dd if=$(srctree)/bl31 of=./u-boot.bin
-	dd if=u-boot-nodtb.bin of=u-boot.bin bs=1K seek=128
-else
 u-boot.bin: u-boot-nodtb.bin FORCE
 	$(call if_changed,copy)
-endif
 endif
 
 %.imx: %.bin
