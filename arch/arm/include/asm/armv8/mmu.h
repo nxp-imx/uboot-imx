@@ -2,6 +2,8 @@
  * (C) Copyright 2013
  * David Feng <fenghua@phytium.com.cn>
  *
+ * Copyright 2017 NXP
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -52,6 +54,7 @@
 #define PTE_TYPE_MASK		(3 << 0)
 #define PTE_TYPE_FAULT		(0 << 0)
 #define PTE_TYPE_TABLE		(3 << 0)
+#define PTE_TYPE_PAGE		(3 << 0)
 #define PTE_TYPE_BLOCK		(1 << 0)
 
 #define PTE_TABLE_PXN		(1UL << 59)
