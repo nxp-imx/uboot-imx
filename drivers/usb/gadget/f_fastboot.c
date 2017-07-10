@@ -442,7 +442,7 @@ static int write_to_ptn(struct fastboot_ptentry *ptn)
 					unsigned long off;
 					unsigned int ok_start;
 
-					nand = &nand_info[nand_curr_device];
+					nand = nand_info[nand_curr_device];
 
 					printf("\nDevice %d bad blocks:\n",
 					       nand_curr_device);
@@ -1263,7 +1263,7 @@ static void parameters_setup(void)
 {
 	interface.nand_block_size = 0;
 #if defined(CONFIG_FASTBOOT_STORAGE_NAND)
-	struct mtd_info *nand = &nand_info[0];
+	struct mtd_info *nand = nand_info[0];
 	if (nand)
 		interface.nand_block_size = nand->writesize;
 #endif
