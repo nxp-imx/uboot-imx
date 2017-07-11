@@ -111,16 +111,20 @@ static iomux_v3_cfg_t const enet_pads[] = {
 	MX6_PAD_ENET_CRS_DV__GPIO1_IO25		| MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
-static void setup_iomux_enet(void)
+static void fec_phy_reset(void)
 {
-	imx_iomux_v3_setup_multiple_pads(enet_pads, ARRAY_SIZE(enet_pads));
-
 	/* Reset AR8031 PHY */
 	gpio_request(IMX_GPIO_NR(1, 25), "ENET PHY Reset");
 	gpio_direction_output(IMX_GPIO_NR(1, 25) , 0);
 	mdelay(10);
 	gpio_set_value(IMX_GPIO_NR(1, 25), 1);
 	udelay(100);
+}
+
+static void setup_iomux_enet(void)
+{
+	imx_iomux_v3_setup_multiple_pads(enet_pads, ARRAY_SIZE(enet_pads));
+	fec_phy_reset();
 }
 
 static iomux_v3_cfg_t const usdhc2_pads[] = {
@@ -459,14 +463,20 @@ static int ar8031_phy_fixup(struct phy_device *phydev)
 	unsigned short val;
 
 	/* To enable AR8031 ouput a 125MHz clk from CLK_25M */
-	phy_write(phydev, MDIO_DEVAD_NONE, 0xd, 0x7);
-	phy_write(phydev, MDIO_DEVAD_NONE, 0xe, 0x8016);
-	phy_write(phydev, MDIO_DEVAD_NONE, 0xd, 0x4007);
+	if (!is_mx6dqp()) {
+		phy_write(phydev, MDIO_DEVAD_NONE, 0xd, 0x7);
+		phy_write(phydev, MDIO_DEVAD_NONE, 0xe, 0x8016);
+		phy_write(phydev, MDIO_DEVAD_NONE, 0xd, 0x4007);
 
-	val = phy_read(phydev, MDIO_DEVAD_NONE, 0xe);
-	val &= 0xffe3;
-	val |= 0x18;
-	phy_write(phydev, MDIO_DEVAD_NONE, 0xe, val);
+		val = phy_read(phydev, MDIO_DEVAD_NONE, 0xe);
+		val &= 0xffe3;
+		val |= 0x18;
+		phy_write(phydev, MDIO_DEVAD_NONE, 0xe, val);
+	}
+
+	/* set the IO voltage to 1.8v */
+	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x1f);
+	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x8);
 
 	/* introduce tx clock delay */
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x5);
@@ -817,6 +827,8 @@ static void setup_fec(void)
 		if (ret)
 		    printf("Error fec anatop clock settings!\n");
 	}
+
+	fec_phy_reset();
 }
 
 int board_eth_init(bd_t *bis)
