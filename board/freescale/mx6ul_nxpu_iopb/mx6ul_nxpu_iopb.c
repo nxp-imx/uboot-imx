@@ -113,8 +113,11 @@ struct i2c_pads_info i2c_pad_info1 = {
 
 int dram_init(void)
 {
+#ifdef CONFIG_IMX_TRUSTY_OS
+	gd->ram_size = PHYS_SDRAM_SIZE - TRUSTY_OS_RAM_SIZE;
+#else
 	gd->ram_size = PHYS_SDRAM_SIZE;
-
+#endif
 	return 0;
 }
 

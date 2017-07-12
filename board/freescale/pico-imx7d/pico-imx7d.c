@@ -124,7 +124,11 @@ struct i2c_pads_info i2c_pad_info4 = {
 
 int dram_init(void)
 {
+#ifdef CONFIG_IMX_TRUSTY_OS
+	gd->ram_size = ((ulong)CONFIG_DDR_MB * 1024 * 1024) - TRUSTY_OS_RAM_SIZE;
+#else
 	gd->ram_size = ((ulong)CONFIG_DDR_MB * 1024 * 1024);
+#endif
 
 	return 0;
 }
