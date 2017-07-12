@@ -42,6 +42,13 @@ config SPI_FLASH_BAR
 	  Bank/Extended address registers are used to access the flash
 	  which has size > 16MiB in 3-byte addressing.
 
+config SPI_FLASH_4BYTES_ADDR
+	bool "SPI flash 4bytes (32) address mode support"
+	depends on SPI_FLASH && !SPI_FLASH_BAR
+	help
+	 Enable the SPI flash 4bytes extend address mode support to access the flash
+	 which has size > 16MiB.
+
 if SPI_FLASH
 
 config SPI_FLASH_ATMEL

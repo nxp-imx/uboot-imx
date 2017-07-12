@@ -64,6 +64,14 @@ enum spi_nor_option_flags {
 #define CMD_READ_CONFIG			0x35
 #define CMD_FLAG_STATUS			0x70
 
+#ifdef CONFIG_SPI_FLASH_4BYTES_ADDR
+#define CMD_READ_ARRAY_FAST_4B  0x0c
+#define CMD_PAGE_PROGRAM_4B  	0x12
+#define CMD_ERASE_64K_4B		0xdc
+#define CMD_ERASE_4K_4B			0x21
+#define CMD_EN4B				0xB7
+#endif
+
 /* Bank addr access commands */
 #ifdef CONFIG_SPI_FLASH_BAR
 # define CMD_BANKADDR_BRWR		0x17
