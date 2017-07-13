@@ -11,6 +11,7 @@
 #include <asm/io.h>
 #include <asm/imx-common/iomux-v3.h>
 #include <asm/arch/ddr_memory_map.h>
+#include <asm/arch/sys_proto.h>
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
 #include "../common/pfuze.h"
@@ -29,6 +30,8 @@ extern struct i2c_pads_info i2c_pad_info1;
 
 void spl_board_init(void)
 {
+	enable_tzc380();
+
 	/* Adjust pmic voltage to 1.0V for 800M */
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
 

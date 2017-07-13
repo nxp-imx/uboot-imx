@@ -39,6 +39,18 @@ int timer_init(void)
 	return 0;
 }
 
+void enable_tzc380(void)
+{
+	u32 val;
+
+	/* Enable TZASC and lock setting */
+	val = readl(IOMUXC_GPR10);
+	val |= GPR_TZASC_EN;
+	writel(val, IOMUXC_GPR10);
+	val |= GPR_TZASC_EN_LOCK;
+	writel(val, IOMUXC_GPR10);
+}
+
 void set_wdog_reset(struct wdog_regs *wdog)
 {
 	u32 reg = readw(&wdog->wcr);
