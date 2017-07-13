@@ -646,7 +646,13 @@ u32 get_board_rev(void)
 
 int checkboard(void)
 {
-	puts("Board: i.MX7D PICOSOM\n");
+	char *mode;
+	if (IS_ENABLED(CONFIG_ARMV7_BOOT_SEC_DEFAULT))
+		mode = "secure";
+	else
+		mode = "non-secure";
+
+	printf("Board: i.MX7D PICOSOM in %s mode\n", mode);
 
 	return 0;
 }
