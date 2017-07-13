@@ -7,3 +7,4 @@
 #include <asm/imx-common/sys_proto.h>
 
 void set_wdog_reset(struct wdog_regs *wdog);
+void enable_tzc380(void);
