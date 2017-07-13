@@ -691,6 +691,58 @@ int board_init(void)
 	return 0;
 }
 
+void board_quiesce_devices()
+{
+	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
+
+	printf("Disable devices powered up by uboot\n");
+#if defined(CONFIG_VIDEO_IMXDPUV1)
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_LVDS_0, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_LVDS_1, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_MIPI_0, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_MIPI_1, SC_PM_PW_MODE_OFF);
+
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_DC_0, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_DC_1, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_DC_0_PLL_0, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_DC_0_PLL_1, SC_PM_PW_MODE_OFF);
+#endif
+#ifdef CONFIG_FSL_HSIO
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_PCIE_A, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_PCIE_B, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_SERDES_0, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_SERDES_1, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_SATA_0, SC_PM_PW_MODE_OFF);
+#endif
+#ifdef CONFIG_MXC_GPIO
+/* Power up all GPIOs */
+	for (int i = 0; i < 8; i++)
+		sc_pm_set_resource_power_mode(ipcHndl, SC_R_GPIO_0 + i, SC_PM_PW_MODE_OFF);
+#endif
+#ifdef CONFIG_FSL_FSPI
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_FSPI_0, SC_PM_PW_MODE_OFF);
+#endif
+#ifdef CONFIG_FEC_MXC
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_ENET_0, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_ENET_1, SC_PM_PW_MODE_OFF);
+#endif
+#ifdef CONFIG_FSL_ESDHC
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_SDHC_0, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_SDHC_1, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_SDHC_2, SC_PM_PW_MODE_OFF);
+#endif
+#ifdef CONFIG_USB_EHCI_MX6
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_USB_0, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_USB_0_PHY, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_USB_2, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_USB_2_PHY, SC_PM_PW_MODE_OFF);
+#endif
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_I2C_1, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_LVDS_0_I2C_1, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_LVDS_1_I2C_1, SC_PM_PW_MODE_OFF);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_GPT_0, SC_PM_PW_MODE_OFF);
+}
+
 void detail_board_ddr_info(void)
 {
 	puts("\nDDR    ");
