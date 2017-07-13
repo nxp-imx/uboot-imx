@@ -70,6 +70,7 @@
 
 #define ANDROID_GPT_OFFSET         0
 #define ANDROID_GPT_SIZE           0x100000
+#define ANDROID_GPT_END	           0x4400
 #define FASTBOOT_INTERFACE_CLASS	0xff
 #define FASTBOOT_INTERFACE_SUB_CLASS	0x42
 #define FASTBOOT_INTERFACE_PROTOCOL	0x03
@@ -214,6 +215,9 @@ static struct usb_gadget_strings *fastboot_strings[] = {
 #define FASTBOOT_FBPARTS_ENV_MAX_LEN 1024
 /* To support the Android-style naming of flash */
 #define MAX_PTN		    32
+static struct fastboot_ptentry g_ptable[MAX_PTN];
+static unsigned int g_pcount;
+struct fastboot_device_info fastboot_devinfo;
 
 
 enum {
@@ -931,6 +935,13 @@ static lbaint_t mmc_sparse_reserve(struct sparse_storage *info,
 	return blkcnt;
 }
 
+/*judge wether the gpt image and bootloader image are overlay*/
+bool bootloader_gpt_overlay(void)
+{
+	return (g_ptable[PTN_GPT_INDEX].partition_id  == g_ptable[PTN_BOOTLOADER_INDEX].partition_id  &&
+		ANDROID_BOOTLOADER_OFFSET < ANDROID_GPT_END);
+}
+
 static void process_flash_mmc(const char *cmdbuf)
 {
 	if (download_bytes) {
@@ -948,6 +959,31 @@ static void process_flash_mmc(const char *cmdbuf)
 		}
 #endif
 
+		if (strncmp(cmdbuf, "gpt", 3) == 0 && bootloader_gpt_overlay()) {
+			int mmc_no = 0;
+			struct mmc *mmc;
+			struct blk_desc *dev_desc;
+			mmc_no = fastboot_devinfo.dev_id;
+			mmc = find_mmc_device(mmc_no);
+			if (mmc == NULL) {
+				printf("invalid mmc device\n");
+				fastboot_tx_write_str("FAILinvalid mmc device");
+			}
+			dev_desc = blk_get_dev("mmc", mmc_no);
+			if (is_valid_gpt_buf(dev_desc, interface.transfer_buffer)) {
+				printf("invalid GPT image\n");
+				fastboot_tx_write_str("FAILinvalid GPT partition image");
+				return;
+			}
+			if (write_backup_gpt_partitions(dev_desc, interface.transfer_buffer)) {
+				printf("writing GPT image fail\n");
+				fastboot_tx_write_str("FAILwriting GPT image fail");
+				return;
+			}
+			printf("flash gpt image successfully\n");
+			fastboot_okay("");
+			return;
+		}
 		/* Next is the partition name */
 		ptn = fastboot_flash_find_ptn(cmdbuf);
 		if (ptn == NULL) {
@@ -1272,10 +1308,6 @@ static void parameters_setup(void)
 	interface.transfer_buffer_size =
 				CONFIG_FASTBOOT_BUF_SIZE;
 }
-
-static struct fastboot_ptentry g_ptable[MAX_PTN];
-static unsigned int g_pcount;
-struct fastboot_device_info fastboot_devinfo;
 
 static int _fastboot_setup_dev(void)
 {
