@@ -715,8 +715,9 @@ void board_quiesce_devices()
 	sc_pm_set_resource_power_mode(ipcHndl, SC_R_SATA_0, SC_PM_PW_MODE_OFF);
 #endif
 #ifdef CONFIG_MXC_GPIO
-/* Power up all GPIOs */
-	for (int i = 0; i < 8; i++)
+	/* Power up all GPIOs */
+	int i;
+	for (i = 0; i < 8; i++)
 		sc_pm_set_resource_power_mode(ipcHndl, SC_R_GPIO_0 + i, SC_PM_PW_MODE_OFF);
 #endif
 #ifdef CONFIG_FSL_FSPI
