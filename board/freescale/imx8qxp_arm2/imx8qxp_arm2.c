@@ -462,10 +462,12 @@ void board_fspi_init(void)
 
 #define DEBUG_LED   IMX_GPIO_NR(3, 23)
 #define IOEXP_RESET IMX_GPIO_NR(0, 19)
+#define BB_PWR_EN IMX_GPIO_NR(5, 9)
 
 static iomux_cfg_t board_gpios[] = {
 	SC_P_QSPI0B_SS0_B | MUX_MODE_ALT(4) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
 	SC_P_MCLK_IN0 | MUX_MODE_ALT(4) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
+	SC_P_ENET0_REFCLK_125M_25M |  MUX_MODE_ALT(4) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
 };
 
 static void setup_gpio(void)
@@ -496,6 +498,10 @@ static void board_gpio_init(void)
 	/* enable i2c port expander assert reset line */
 	gpio_request(IOEXP_RESET, "ioexp_rst");
 	gpio_direction_output(IOEXP_RESET, 1);
+
+	/* Enable base board 1.8V power */
+	gpio_request(BB_PWR_EN, "bb_pwr_en");
+	gpio_direction_output(BB_PWR_EN, 1);
 }
 #endif
 
