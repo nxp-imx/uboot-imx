@@ -7,6 +7,7 @@
  *
  * Based on code from LTIB:
  * Copyright 2008-2010 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2017 NXP
  */
 
 #ifndef __REGS_APBH_H__
@@ -95,7 +96,7 @@ struct mxs_apbh_regs {
 	mxs_reg_32(hw_apbh_version)
 };
 
-#elif (defined(CONFIG_MX28) || defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8M))
+#elif (defined(CONFIG_MX28) || defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M))
 struct mxs_apbh_regs {
 	mxs_reg_32(hw_apbh_ctrl0)
 	mxs_reg_32(hw_apbh_ctrl1)
@@ -274,7 +275,7 @@ struct mxs_apbh_regs {
 #define	APBH_CTRL0_CLKGATE_CHANNEL_NAND7		0x0800
 #define	APBH_CTRL0_CLKGATE_CHANNEL_HSADC		0x1000
 #define	APBH_CTRL0_CLKGATE_CHANNEL_LCDIF		0x2000
-#elif (defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8M))
+#elif (defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M))
 #define	APBH_CTRL0_CLKGATE_CHANNEL_OFFSET		0
 #define	APBH_CTRL0_CLKGATE_CHANNEL_NAND0		0x0001
 #define	APBH_CTRL0_CLKGATE_CHANNEL_NAND1		0x0002
@@ -390,7 +391,7 @@ struct mxs_apbh_regs {
 #define	APBH_CHANNEL_CTRL_FREEZE_CHANNEL_LCDIF		0x2000
 #endif
 
-#if (defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8M))
+#if (defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M))
 #define	APBH_CHANNEL_CTRL_RESET_CHANNEL_OFFSET		16
 #endif
 
