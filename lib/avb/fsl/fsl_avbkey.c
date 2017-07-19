@@ -24,6 +24,7 @@
 #define RPMBKEY_LENGTH 32
 #define RPMBKEY_FUSE_LEN ((RPMBKEY_LENGTH) + (CAAM_PAD))
 #define RPMBKEY_FUSE_LENW (RPMBKEY_FUSE_LEN / 4)
+#define RPMBKEY_BLOB_LEN ((RPMBKEY_LENGTH) + (CAAM_PAD))
 
 static int mmc_dev_no = -1;
 
@@ -108,6 +109,177 @@ static int fsl_fuse_write(const uint32_t *buffer, uint32_t length, uint32_t offs
 		0
 		);
 }
+
+#ifdef TRUSTY_KEYSLOT_PACKAGE
+static void fill_secure_keyslot_package(struct keyslot_package *kp) {
+
+	memcpy((void*)CAAM_ARB_BASE_ADDR, kp, sizeof(struct keyslot_package));
+
+	/* invalidate the cache to make sure no critical information left in it */
+	memset(kp, 0, sizeof(struct keyslot_package));
+	invalidate_dcache_range(((uint32_t)kp) & 0xffffffc0,
+		(((((uint32_t)kp) + sizeof(struct keyslot_package)) & 0xffffff00) + 0x100));
+}
+
+
+static int read_keyslot_package(struct keyslot_package* kp) {
+	char original_part;
+	int blksz;
+
+	int ret = 0;
+	/* load tee from boot1 of eMMC. */
+	int mmcc = mmc_get_env_dev();
+	struct blk_desc *dev_desc = NULL;
+
+	struct mmc *mmc;
+	mmc = find_mmc_device(mmcc);
+	if (!mmc) {
+		printf("boota: cannot find '%d' mmc device\n", mmcc);
+		return -1;
+	}
+	original_part = mmc->block_dev.hwpart;
+
+	dev_desc = blk_get_dev("mmc", mmcc);
+	if (NULL == dev_desc) {
+		printf("** Block device MMC %d not supported\n", mmcc);
+		goto fail;
+	}
+
+	blksz = dev_desc->blksz;
+	unsigned char* fill = (unsigned char *)memalign(ALIGN_BYTES, blksz);
+
+	/* below was i.MX mmc operation code */
+	if (mmc_init(mmc)) {
+		printf("mmc%d init failed\n", mmcc);
+		goto fail;
+	}
+
+	mmc_switch_part(mmc, TEE_HWPARTITION_ID);
+	if (mmc->block_dev.block_read(dev_desc, TRUSTY_OS_MMC_BLKS,
+		    1, fill) != 1) {
+		printf("Failed to read rpmbkeyblob.");
+	}
+
+	memcpy(kp, fill, sizeof(struct keyslot_package));
+
+	ret = 0;
+
+fail:
+	/* Return to original partition */
+	if (mmc->block_dev.hwpart != original_part) {
+		if (mmc_switch_part(mmc, original_part) != 0)
+			return -1;
+		mmc->block_dev.hwpart = original_part;
+	}
+	return ret;
+}
+
+static int gen_rpmb_key(struct keyslot_package *kp) {
+	char original_part;
+	uint8_t plain_key[RPMBKEY_LENGTH];
+	int blksz;
+
+	kp->rpmb_keyblob_len = RPMBKEY_LEN;
+	strcpy(kp->magic, KEYPACK_MAGIC);
+
+	int ret = 0;
+	/* load tee from boot1 of eMMC. */
+	int mmcc = mmc_get_env_dev();
+	struct blk_desc *dev_desc = NULL;
+
+	struct mmc *mmc;
+	mmc = find_mmc_device(mmcc);
+	if (!mmc) {
+		printf("boota: cannot find '%d' mmc device\n", mmcc);
+		return -1;
+	}
+	original_part = mmc->block_dev.hwpart;
+
+	dev_desc = blk_get_dev("mmc", mmcc);
+	if (NULL == dev_desc) {
+		printf("** Block device MMC %d not supported\n", mmcc);
+		goto fail;
+	}
+
+	blksz = dev_desc->blksz;
+	unsigned char* fill = (unsigned char *)memalign(ALIGN_BYTES, blksz);
+
+	/* below was i.MX mmc operation code */
+	if (mmc_init(mmc)) {
+		printf("mmc%d init failed\n", mmcc);
+		goto fail;
+	}
+
+	/* Switch to the RPMB partition */
+
+	/* use caam hwrng to generate */
+	caam_open();
+
+#ifdef TRUSTY_RPMB_RANDOM_KEY
+	/* 
+	 * Since boot1 is a bit easy to be erase during development
+	 * so that before production stage use full 0 rpmb key
+	 */
+	if (caam_hwrng(plain_key, RPMBKEY_LENGTH)) {
+		ERR("ERROR - caam rng\n");
+		ret = -1;
+		goto fail;
+	}
+#else
+	memset(plain_key, 0, RPMBKEY_LENGTH);
+#endif
+
+	/* generate keyblob and program to fuse */
+	if (caam_gen_blob((uint32_t)plain_key, (uint32_t)(kp->rpmb_keyblob), RPMBKEY_LENGTH)) {
+		ERR("gen rpmb key blb error\n");
+		ret = -1;
+		goto fail;
+	}
+	memcpy(fill, kp, sizeof(struct keyslot_package));
+
+	mmc_switch_part(mmc, TEE_HWPARTITION_ID);
+	if (mmc->block_dev.block_write(dev_desc, TRUSTY_OS_MMC_BLKS,
+		    1, (void *)fill) != 1) {
+		printf("Failed to write rpmbkeyblob.");
+	}
+
+	/* program key to mmc */
+	if (mmc->block_dev.hwpart != MMC_PART_RPMB) {
+		if (mmc_switch_part(mmc, MMC_PART_RPMB) != 0)
+			goto fail;
+		mmc->block_dev.hwpart = MMC_PART_RPMB;
+	}
+	if (mmc_rpmb_set_key(mmc, plain_key)) {
+		ERR("Key already programmed ?\n");
+		ret = -1;
+		goto fail;
+	}
+
+	ret = 0;
+
+fail:
+	/* Return to original partition */
+	if (mmc->block_dev.hwpart != original_part) {
+		if (mmc_switch_part(mmc, original_part) != 0)
+			return -1;
+		mmc->block_dev.hwpart = original_part;
+	}
+	return ret;
+
+}
+
+int init_avbkey(void) {
+	struct keyslot_package kp;
+	read_keyslot_package(&kp);
+	if (strcmp(kp.magic, KEYPACK_MAGIC)) {
+		printf("keyslot package magic error. Will generate new one\n");
+		gen_rpmb_key(&kp);
+	}
+	fill_secure_keyslot_package(&kp);
+	return 0;
+}
+
+#endif
 
 static int rpmb_key(struct mmc *mmc) {
 

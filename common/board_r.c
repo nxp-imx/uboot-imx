@@ -737,6 +737,13 @@ static int initr_check_fastboot(void)
 #endif
 
 #ifdef CONFIG_IMX_TRUSTY_OS
+#ifdef TRUSTY_KEYSLOT_PACKAGE
+static int initr_avbkey(void)
+{
+	return init_avbkey();
+}
+#endif
+
 static int initr_tee_setup(void)
 {
 	tee_setup();
@@ -974,6 +981,9 @@ static init_fnc_t init_sequence_r[] = {
 	prom_init,
 #endif
 #ifdef CONFIG_IMX_TRUSTY_OS
+#ifdef TRUSTY_KEYSLOT_PACKAGE
+	initr_avbkey,
+#endif
 	initr_tee_setup,
 #endif
 #ifdef CONFIG_FSL_FASTBOOT

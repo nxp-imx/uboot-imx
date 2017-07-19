@@ -15,6 +15,7 @@
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 #define NON_SECURE_FASTBOOT
+#define TRUSTY_KEYSLOT_PACKAGE
 #endif
 
 /* For NAND we don't support lock/unlock */

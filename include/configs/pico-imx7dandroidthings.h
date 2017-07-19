@@ -14,6 +14,7 @@
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 #define NON_SECURE_FASTBOOT
+#define TRUSTY_KEYSLOT_PACKAGE
 #endif
 #include "mx_android_common.h"
 

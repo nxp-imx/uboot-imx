@@ -41,4 +41,16 @@ struct kblb_hdr {
 };
 typedef struct kblb_hdr kblb_hdr_t;
 
+#ifdef TRUSTY_KEYSLOT_PACKAGE
+#define RPMBKEY_LEN (32 + CAAM_PAD)
+#define KEYPACK_MAGIC "!KS"
+
+struct keyslot_package
+{
+    char magic[4];
+    unsigned int rpmb_keyblob_len;
+    unsigned char rpmb_keyblob[RPMBKEY_LEN];
+};
+#endif
+
 #endif
