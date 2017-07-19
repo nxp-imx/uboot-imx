@@ -62,6 +62,7 @@ endif
 ifeq ($(SOC),$(filter $(SOC),imx8))
 ifneq ($(CONFIG_SPL_BUILD),y)
 obj-$(CONFIG_IMX_BOOTAUX) += imx_bootaux.o
+obj-y  += misc.o
 endif
 endif
 ifneq ($(CONFIG_SPL_BUILD),y)
