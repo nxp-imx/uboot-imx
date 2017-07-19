@@ -58,6 +58,7 @@ ifeq ($(SOC),$(filter $(SOC),imx8))
 obj-$(CONFIG_HAVE_SC_FIRMWARE) += sci/
 obj-$(CONFIG_IMX_BOOTAUX) += imx_bootaux.o
 obj-$(CONFIG_IMX_VIDEO_SKIP) += video.o
+obj-y  += misc.o
 endif
 ifneq ($(CONFIG_SPL_BUILD),y)
 obj-$(CONFIG_CMD_BMODE) += cmd_bmode.o

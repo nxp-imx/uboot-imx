@@ -31,7 +31,7 @@
 #define	MXS_NAND_DMA_DESCRIPTOR_COUNT		4
 
 #define	MXS_NAND_CHUNK_DATA_CHUNK_SIZE		512
-#if (defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8M))
+#if (defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M))
 #define	MXS_NAND_CHUNK_DATA_CHUNK_SIZE_SHIFT	2
 #else
 #define	MXS_NAND_CHUNK_DATA_CHUNK_SIZE_SHIFT	0
@@ -88,21 +88,21 @@ static int galois_field = 13;
 #ifndef	CONFIG_SYS_DCACHE_OFF
 static void mxs_nand_flush_data_buf(struct mxs_nand_info *info)
 {
-	uint32_t addr = (uint32_t)info->data_buf;
+	uint32_t addr = (uintptr_t)info->data_buf;
 
 	flush_dcache_range(addr, addr + info->data_buf_size);
 }
 
 static void mxs_nand_inval_data_buf(struct mxs_nand_info *info)
 {
-	uint32_t addr = (uint32_t)info->data_buf;
+	uint32_t addr = (uintptr_t)info->data_buf;
 
 	invalidate_dcache_range(addr, addr + info->data_buf_size);
 }
 
 static void mxs_nand_flush_cmd_buf(struct mxs_nand_info *info)
 {
-	uint32_t addr = (uint32_t)info->cmd_buf;
+	uint32_t addr = (uintptr_t)info->cmd_buf;
 
 	flush_dcache_range(addr, addr + MXS_NAND_COMMAND_BUFFER_SIZE);
 }
@@ -204,7 +204,7 @@ static int mxs_nand_get_ecc_strength(struct mtd_info *mtd)
 	int max_ecc_strength_supported;
 
 	/* Refer to Chapter 17 for i.MX6DQ, Chapter 18 for i.MX6SX */
-	if (is_mx6sx() || is_mx7() || is_imx8m())
+	if (is_mx6sx() || is_mx7() || is_imx8() || is_imx8m())
 		max_ecc_strength_supported = 62;
 	else
 		max_ecc_strength_supported = 40;
@@ -805,7 +805,7 @@ static int mxs_nand_ecc_read_page(struct mtd_info *mtd, struct nand_chip *nand,
 
 		if (status[i] == 0xff) {
 			if (is_mx6dqp() || is_mx7() ||
-			    is_mx6ul() || is_imx8m())
+			    is_mx6ul() || is_imx8() || is_imx8m())
 				if (readl(&bch_regs->hw_bch_debug1))
 					flag = 1;
 			continue;
@@ -1135,6 +1135,8 @@ static int mxs_nand_scan_bbt(struct mtd_info *mtd)
 	struct mxs_bch_regs *bch_regs = (struct mxs_bch_regs *)MXS_BCH_BASE;
 	uint32_t tmp;
 
+
+
 	/* calculate ecc_strength, bbm_chunk, eec_for meta, if necessary */
 	mxs_nand_get_ecc_strength(mtd);
 
@@ -1168,7 +1170,7 @@ static int mxs_nand_scan_bbt(struct mtd_info *mtd)
 
 	/* Set erase threshold to ecc strength for mx6ul, mx6qp and mx7 */
 	if (is_mx6dqp() || is_mx7() ||
-	    is_mx6ul() || is_imx8m())
+	    is_mx6ul() || is_imx8() || is_imx8m())
 		writel(BCH_MODE_ERASE_THRESHOLD(ecc_strength),
 		       &bch_regs->hw_bch_mode);
 
