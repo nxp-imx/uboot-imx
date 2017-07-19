@@ -168,6 +168,12 @@
 			"booti; " \
 		"fi;\0"
 
+#ifdef CONFIG_NAND_BOOT
+#define CONFIG_BOOTCOMMAND \
+	"nand read ${loadaddr} 0x4000000 0x800000;"\
+	"nand read ${fdtaddr} 0x5000000 0x100000;"\
+	"booti ${loadaddr} - ${fdtaddr}"
+#else
 #define CONFIG_BOOTCOMMAND \
 	   "mmc dev ${mmcdev}; if mmc rescan; then " \
 		   "if run loadbootscript; then " \
@@ -179,6 +185,7 @@
 			   "fi; " \
 		   "fi; " \
 	   "else booti ${loadaddr} - ${fdtaddr}; fi"
+#endif
 
 /* Link Definitions */
 #define CONFIG_LOADADDR			0x80280000
@@ -190,11 +197,17 @@
 
 
 /* Default environment is in SD */
-#define CONFIG_ENV_OFFSET       (14 * SZ_64K)
 #define CONFIG_ENV_SIZE			0x1000
+
+#ifdef CONFIG_NAND_BOOT
+#define CONFIG_ENV_IS_IN_NAND
+#define CONFIG_ENV_OFFSET       (64 << 20)
+#else
+#define CONFIG_ENV_OFFSET       (14 * SZ_64K)
 #define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
+#endif
 
 /* On LPDDR4 board, USDHC1 is for eMMC, USDHC2 is for SD on CPU board
   */
@@ -250,6 +263,23 @@
 #define FSPI0_BASE_ADDR			0x5d120000
 #define FSPI0_AMBA_BASE			0
 #define CONFIG_SYS_FSL_FSPI_AHB
+#endif
+
+#ifdef CONFIG_NAND_BOOT
+#define CONFIG_NAND_MXS
+#define CONFIG_CMD_NAND
+#define CONFIG_CMD_NAND_TRIMFFS
+
+/* NAND stuff */
+#define CONFIG_SYS_MAX_NAND_DEVICE     1
+#define CONFIG_SYS_NAND_BASE           0x40000000
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+
+/* DMA stuff, needed for GPMI/MXS NAND support */
+#define CONFIG_APBH_DMA
+#define CONFIG_APBH_DMA_BURST
+#define CONFIG_APBH_DMA_BURST8
 #endif
 
 /* USB OTG controller configs */

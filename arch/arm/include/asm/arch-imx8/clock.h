@@ -32,5 +32,6 @@ void enable_usboh3_clk(unsigned char enable);
 int set_clk_qspi(void);
 u32 imx_get_fecclk(void);
 void init_clk_usdhc(u32 index);
+void init_clk_gpmi_nand(void);
 
 #endif /* __ASM_ARCH_CLOCK_H__ */

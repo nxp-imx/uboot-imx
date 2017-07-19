@@ -168,6 +168,45 @@ void init_clk_fspi(int index)
 	return;
 }
 
+void init_clk_gpmi_nand(void)
+{
+	sc_err_t sciErr = 0;
+	sc_pm_clock_rate_t rate;
+	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
+
+	/* Set NAND BCH clock root to 50 MHz */
+	rate = 50000000;
+	sciErr = sc_pm_set_clock_rate(ipcHndl, SC_R_NAND, SC_PM_CLK_PER, &rate);
+	if (sciErr != SC_ERR_NONE) {
+		puts("NAND BCH set rate failed\n");
+		return;
+	}
+
+	/* Enable NAND BCH clock root */
+	sciErr = sc_pm_clock_enable(ipcHndl, SC_R_NAND, SC_PM_CLK_PER, true, false);
+	if (sciErr != SC_ERR_NONE) {
+		puts("NAND BCH enable clock failed\n");
+		return;
+	}
+
+	/* Set NAND GPMI clock root to 50 MHz */
+	rate = 50000000;
+	sciErr = sc_pm_set_clock_rate(ipcHndl, SC_R_NAND, SC_PM_CLK_MST_BUS, &rate);
+	if (sciErr != SC_ERR_NONE) {
+		puts("NAND GPMI set rate failed\n");
+		return;
+	 }
+
+	/* Enable NAND GPMI clock root */
+	sciErr = sc_pm_clock_enable(ipcHndl, SC_R_NAND, SC_PM_CLK_MST_BUS, true, false);
+	if (sciErr != SC_ERR_NONE) {
+		puts("NAND GPMI enable clock failed\n");
+		return;
+	}
+
+	return;
+}
+
 void enable_usboh3_clk(unsigned char enable)
 {
 	return;
