@@ -36,6 +36,8 @@
 #define CONFIG_SYS_SPL_MALLOC_SIZE     0x2000	/* 8 KB */
 #define CONFIG_SYS_ICACHE_OFF
 #define CONFIG_SYS_DCACHE_OFF
+
+#define CONFIG_SPL_ABORT_ON_RAW_IMAGE /* For RAW image gives a error info not panic */
 #endif
 
 #define CONFIG_REMAKE_ELF
