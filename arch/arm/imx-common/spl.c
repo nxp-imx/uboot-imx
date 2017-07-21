@@ -71,27 +71,6 @@ u32 spl_boot_device(void)
 	}
 	return BOOT_DEVICE_NONE;
 }
-#elif defined(CONFIG_IMX8M)
-u32 spl_boot_device(void)
-{
-	switch (get_boot_device()) {
-	case SD1_BOOT:
-	case MMC1_BOOT:
-		return BOOT_DEVICE_MMC1;
-	case SD2_BOOT:
-	case MMC2_BOOT:
-		return BOOT_DEVICE_MMC2;
-	case NAND_BOOT:
-		return BOOT_DEVICE_NAND;
-	case USB_BOOT:
-		return BOOT_DEVICE_USB;
-	case SPI_NOR_BOOT:
-		return BOOT_DEVICE_SPI;
-	default:
-		return BOOT_DEVICE_NONE;
-	}
-}
-#endif
 
 #if defined(CONFIG_SPL_MMC_SUPPORT)
 /* called from spl_mmc to see type of boot mode for storage (RAW or FAT) */
@@ -114,6 +93,61 @@ u32 spl_boot_mode(const u32 boot_device)
 		hang();
 	}
 }
+#endif
+
+#elif defined(CONFIG_IMX8M)
+u32 spl_boot_device(void)
+{
+	switch (get_boot_device()) {
+	case SD1_BOOT:
+	case MMC1_BOOT:
+		return BOOT_DEVICE_MMC1;
+	case SD2_BOOT:
+	case MMC2_BOOT:
+		return BOOT_DEVICE_MMC2;
+	case NAND_BOOT:
+		return BOOT_DEVICE_NAND;
+	case USB_BOOT:
+		return BOOT_DEVICE_USB;
+	case SPI_NOR_BOOT:
+		return BOOT_DEVICE_SPI;
+	default:
+		return BOOT_DEVICE_NONE;
+	}
+}
+
+#if defined(CONFIG_SPL_MMC_SUPPORT)
+/* called from spl_mmc to see type of boot mode for storage (RAW or FAT) */
+u32 spl_boot_mode(const u32 boot_device)
+{
+	switch (get_boot_device()) {
+	/* for MMC return either RAW or FAT mode */
+	case SD1_BOOT:
+	case SD2_BOOT:
+#if defined(CONFIG_SPL_FAT_SUPPORT)
+		return MMCSD_MODE_FS;
+#else
+		return MMCSD_MODE_RAW;
+#endif
+		break;
+
+	case MMC1_BOOT:
+	case MMC2_BOOT:
+#if defined(CONFIG_SPL_FAT_SUPPORT)
+		return MMCSD_MODE_FS;
+#elif defined(CONFIG_SUPPORT_EMMC_BOOT)
+		return MMCSD_MODE_EMMCBOOT;
+#else
+		return MMCSD_MODE_RAW;
+#endif
+		break;
+	default:
+		puts("spl: ERROR:  unsupported device\n");
+		hang();
+	}
+}
+#endif
+
 #endif
 
 #if defined(CONFIG_SECURE_BOOT)

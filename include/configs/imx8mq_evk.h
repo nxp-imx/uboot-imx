@@ -201,9 +201,7 @@
 #define CONFIG_CMD_EXT4_WRITE
 #define CONFIG_CMD_FAT
 
-#ifndef CONFIG_SPL_BUILD
 #define CONFIG_SUPPORT_EMMC_BOOT	/* eMMC specific */
-#endif
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
 #define CONFIG_FSL_QSPI    /* enable the QUADSPI driver */
