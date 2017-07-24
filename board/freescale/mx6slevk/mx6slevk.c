@@ -85,6 +85,17 @@ int dram_init(void)
 	return 0;
 }
 
+phys_size_t get_effective_memsize(void)
+{
+	return SZ_512M;
+}
+
+void dram_init_banksize(void)
+{
+	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
+	gd->bd->bi_dram[0].size = gd->ram_size;
+}
+
 static iomux_v3_cfg_t const uart1_pads[] = {
 	MX6_PAD_UART1_TXD__UART1_TXD | MUX_PAD_CTRL(UART_PAD_CTRL),
 	MX6_PAD_UART1_RXD__UART1_RXD | MUX_PAD_CTRL(UART_PAD_CTRL),
