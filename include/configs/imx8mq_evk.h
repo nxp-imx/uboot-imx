@@ -241,6 +241,23 @@
 #define CONFIG_POWER_PFUZE100
 #define CONFIG_POWER_PFUZE100_I2C_ADDR	0x08
 
+/* USB3 */
+#ifndef CONFIG_SPL_BUILD
+#define CONFIG_HAS_FSL_XHCI_USB
+
+#ifdef CONFIG_HAS_FSL_XHCI_USB
+#define CONFIG_USB_XHCI_IMX8M
+#define CONFIG_USB_XHCI_DWC3
+#define CONFIG_USB_XHCI_HCD
+#define CONFIG_USB_MAX_CONTROLLER_COUNT         1
+#define CONFIG_SYS_USB_XHCI_MAX_ROOT_PORTS      2
+#endif
+
+#define CONFIG_CMD_USB
+#define CONFIG_USB_STORAGE
+#define CONFIG_CMD_EXT2
+#endif
+
 #if defined(CONFIG_ANDROID_SUPPORT)
 #include "imx8mq_evk_android.h"
 #endif
