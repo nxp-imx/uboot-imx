@@ -97,6 +97,13 @@ config USB_XHCI_IMX8
 	  Enables support for the on-chip xHCI controller on i.MX8QM and
 	  i.MX8QXP SoCs.
 
+config USB_XHCI_IMX8M
+	bool "XHCI support for imx8M(mscale)"
+	depends on ARCH_IMX8M
+	default y
+	help
+	  Enables support for the on-chip xHCI controller on imx8m(mscale) SoC.
+
 endif # USB_XHCI_HCD
 
 config USB_EHCI_HCD
