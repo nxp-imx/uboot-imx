@@ -109,48 +109,6 @@ int board_early_init_f(void)
 	return 0;
 }
 
-#ifdef CONFIG_SYS_I2C_IMX_LPI2C
-static iomux_cfg_t lpi2c1_pads[] = {
-	SC_P_GPT0_CLK | MUX_MODE_ALT(1) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-	SC_P_GPT0_CAPTURE | MUX_MODE_ALT(1) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-
-	/* Change the default alt function from SCL/SDA to others, to avoid select input conflict with GPT0 */
-	SC_P_USB_SS3_TC0 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL), /* Set ALT to GPIO used as OTG1 PWR in DM driver */
-	SC_P_USB_SS3_TC1 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL), /* Set ALT to GPIO */
-	SC_P_USB_SS3_TC2 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPIO_PAD_CTRL), /* Set ALT to OTG1 OC */
-	SC_P_USB_SS3_TC3 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL), /* Set ALT to GPIO */
-};
-
-static iomux_cfg_t lpi2c2_pads[] = {
-	SC_P_GPT1_CLK | MUX_MODE_ALT(1) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-	SC_P_GPT1_CAPTURE | MUX_MODE_ALT(1) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-};
-
-static iomux_cfg_t lpi2c4_pads[] = {
-	SC_P_ENET1_MDC  | MUX_MODE_ALT(1) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-	SC_P_ENET1_MDIO | MUX_MODE_ALT(1) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-};
-
-static iomux_cfg_t lvds0_lipi2c1_pads[] = {
-	SC_P_LVDS0_I2C1_SCL | MUX_MODE_ALT(0) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-	SC_P_LVDS0_I2C1_SDA | MUX_MODE_ALT(0) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-};
-
-static iomux_cfg_t lvds1_lipi2c1_pads[] = {
-	SC_P_LVDS1_I2C1_SCL | MUX_MODE_ALT(0) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-	SC_P_LVDS1_I2C1_SDA | MUX_MODE_ALT(0) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-};
-
-void i2c_init_board(void)
-{
-	imx8_iomux_setup_multiple_pads(lpi2c1_pads, ARRAY_SIZE(lpi2c1_pads));
-	imx8_iomux_setup_multiple_pads(lpi2c2_pads, ARRAY_SIZE(lpi2c2_pads));
-	imx8_iomux_setup_multiple_pads(lpi2c4_pads, ARRAY_SIZE(lpi2c4_pads));
-	imx8_iomux_setup_multiple_pads(lvds0_lipi2c1_pads, ARRAY_SIZE(lvds0_lipi2c1_pads));
-	imx8_iomux_setup_multiple_pads(lvds1_lipi2c1_pads, ARRAY_SIZE(lvds1_lipi2c1_pads));
-}
-#endif
-
 #ifdef CONFIG_FSL_ESDHC
 
 #define USDHC1_CD_GPIO	IMX_GPIO_NR(5, 22)
@@ -205,17 +163,6 @@ static iomux_cfg_t usdhc2_sd[] = {
 	SC_P_USDHC2_WP | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
 	SC_P_USDHC2_CD_B | MUX_MODE_ALT(3) | MUX_PAD_CTRL(ESDHC_PAD_CTRL),	/* Mux to GPIO4 IO12 */
 };
-
-#ifdef CONFIG_DM_MMC
-void setup_mmc(void)
-{
-#ifdef CONFIG_TARGET_IMX8QM_LPDDR4_ARM2
-	imx8_iomux_setup_multiple_pads(emmc0, ARRAY_SIZE(emmc0));
-#endif
-	imx8_iomux_setup_multiple_pads(usdhc1_sd, ARRAY_SIZE(usdhc1_sd));
-	imx8_iomux_setup_multiple_pads(usdhc2_sd, ARRAY_SIZE(usdhc2_sd));
-}
-#endif
 
 int board_mmc_init(bd_t *bis)
 {
@@ -478,20 +425,6 @@ static int setup_fec(int ind)
 #endif
 
 #ifdef CONFIG_FSL_FSPI
-static iomux_cfg_t pad_fspi[] = {
-	SC_P_QSPI0A_DATA0 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-    SC_P_QSPI0A_DATA1 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-    SC_P_QSPI0A_DATA2 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-    SC_P_QSPI0A_DATA3 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-    SC_P_QSPI0A_DQS | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-    SC_P_QSPI0A_SS0_B | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-    SC_P_QSPI0A_SCLK | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-    SC_P_QSPI0B_DATA0 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-    SC_P_QSPI0B_DATA1 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-    SC_P_QSPI0B_DATA2 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-    SC_P_QSPI0B_DATA3 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-};
-
 void board_fspi_init(void)
 {
 	sc_err_t sciErr = 0;
@@ -519,9 +452,6 @@ void board_fspi_init(void)
 		puts("FSPI0 enable clock failed\n");
 		return;
 	}
-
-	imx8_iomux_setup_multiple_pads(pad_fspi, ARRAY_SIZE(pad_fspi));
-
 }
 #endif
 
@@ -641,15 +571,8 @@ void pci_init_board(void)
 #endif
 
 #ifdef CONFIG_USB_EHCI_MX6
-static iomux_cfg_t otg1_pins[] = {
-	/* Set USB PWR to GPIO used by DM driver */
-	SC_P_USB_SS3_TC0 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
-};
-
 static void setup_otg(void)
 {
-	imx8_iomux_setup_multiple_pads(otg1_pins, ARRAY_SIZE(otg1_pins));
-
 	/* Enable usb power */
 	init_otg_power();
 }
@@ -661,13 +584,8 @@ int board_init(void)
 	board_gpio_init();
 #endif
 
-#ifdef CONFIG_SYS_I2C_IMX_LPI2C
-	i2c_init_board();
-#endif
-
 #ifdef CONFIG_FEC_MXC
 	setup_fec(CONFIG_FEC_ENET_DEV);
-	setup_iomux_fec();
 #endif
 
 #ifdef CONFIG_FSL_FSPI
@@ -679,10 +597,6 @@ int board_init(void)
 #ifdef CONFIG_SCSI_AHCI_PLAT
 	sata_init();
 #endif
-#endif
-
-#ifdef CONFIG_DM_MMC
-	setup_mmc();
 #endif
 
 #ifdef CONFIG_USB_EHCI_MX6

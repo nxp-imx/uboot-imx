@@ -90,8 +90,6 @@
 
 		pinctrl_fec2: fec2grp {
 			fsl,pins = <
-				SC_P_ENET1_MDC_CONN_ENET1_MDC			0x06000048
-				SC_P_ENET1_MDIO_CONN_ENET1_MDIO			0x06000048
 				SC_P_ENET1_RGMII_TX_CTL_CONN_ENET1_RGMII_TX_CTL	0x06000048
 				SC_P_ENET1_RGMII_TXC_CONN_ENET1_RGMII_TXC	0x06000048
 				SC_P_ENET1_RGMII_TXD0_CONN_ENET1_RGMII_TXD0	0x06000048
@@ -104,6 +102,20 @@
 				SC_P_ENET1_RGMII_RXD1_CONN_ENET1_RGMII_RXD1	0x06000048
 				SC_P_ENET1_RGMII_RXD2_CONN_ENET1_RGMII_RXD2	0x06000048
 				SC_P_ENET1_RGMII_RXD3_CONN_ENET1_RGMII_RXD3	0x06000048
+			>;
+		};
+
+		pinctrl_lvds0_lpi2c1: lvds0lpi2c1grp {
+			fsl,pins = <
+				SC_P_LVDS0_I2C1_SCL_LVDS0_I2C1_SCL	0xc600004c
+				SC_P_LVDS0_I2C1_SDA_LVDS0_I2C1_SDA	0xc600004c
+			>;
+		};
+
+		pinctrl_lvds1_lpi2c1: lvds1lpi2c1grp {
+			fsl,pins = <
+				SC_P_LVDS1_I2C1_SCL_LVDS1_I2C1_SCL	0xc600004c
+				SC_P_LVDS1_I2C1_SDA_LVDS1_I2C1_SDA	0xc600004c
 			>;
 		};
 
@@ -319,7 +331,7 @@
 	phy-handle = <&ethphy1>;
 	fsl,ar8031-phy-fixup;
 	fsl,magic-packet;
-	status = "disabled";
+	status = "okay";
 };
 
 &flexspi0 {
@@ -378,6 +390,7 @@
 	#address-cells = <1>;
 	#size-cells = <0>;
 	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lvds0_lpi2c1>;
 	clock-frequency = <100000>;
 	status = "okay";
 
@@ -391,6 +404,7 @@
 	#address-cells = <1>;
 	#size-cells = <0>;
 	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lvds1_lpi2c1>;
 	clock-frequency = <100000>;
 	status = "okay";
 
