@@ -93,36 +93,6 @@ int board_early_init_f(void)
 	return 0;
 }
 
-#ifdef CONFIG_SYS_I2C_IMX_LPI2C
-static iomux_cfg_t lpi2c3_pads[] = {
-	SC_P_SPI3_CS1 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-	SC_P_MCLK_IN1 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-};
-
-static iomux_cfg_t lpi2c1_pads[] = {
-	SC_P_USB_SS3_TC1 | MUX_MODE_ALT(0) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-	SC_P_USB_SS3_TC3 | MUX_MODE_ALT(0) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-};
-
-static iomux_cfg_t mipi0_lpi2c0_pads[] = {
-	SC_P_MIPI_DSI0_I2C0_SCL | MUX_MODE_ALT(0) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-	SC_P_MIPI_DSI0_I2C0_SDA | MUX_MODE_ALT(0) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-};
-
-static iomux_cfg_t mipi1_lpi2c0_pads[] = {
-	SC_P_MIPI_DSI1_I2C0_SCL | MUX_MODE_ALT(0) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-	SC_P_MIPI_DSI1_I2C0_SCL | MUX_MODE_ALT(0) | MUX_PAD_CTRL(I2C_PAD_CTRL),
-};
-
-void i2c_init_board(void)
-{
-	imx8_iomux_setup_multiple_pads(lpi2c1_pads, ARRAY_SIZE(lpi2c1_pads));
-	imx8_iomux_setup_multiple_pads(lpi2c3_pads, ARRAY_SIZE(lpi2c3_pads));
-	imx8_iomux_setup_multiple_pads(mipi0_lpi2c0_pads, ARRAY_SIZE(mipi0_lpi2c0_pads));
-	imx8_iomux_setup_multiple_pads(mipi1_lpi2c0_pads, ARRAY_SIZE(mipi1_lpi2c0_pads));
-}
-#endif
-
 #ifdef CONFIG_FSL_ESDHC
 
 #define USDHC1_CD_GPIO	IMX_GPIO_NR(4, 22)
@@ -159,15 +129,6 @@ static iomux_cfg_t usdhc1_sd[] = {
 	SC_P_USDHC1_RESET_B | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
 	SC_P_USDHC1_VSELECT | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
 };
-
-
-#ifdef CONFIG_DM_MMC
-void setup_mmc(void)
-{
-	imx8_iomux_setup_multiple_pads(emmc0, ARRAY_SIZE(emmc0));
-	imx8_iomux_setup_multiple_pads(usdhc1_sd, ARRAY_SIZE(usdhc1_sd));
-}
-#endif
 
 int board_mmc_init(bd_t *bis)
 {
@@ -411,20 +372,6 @@ static int setup_fec(int ind)
 #endif
 
 #ifdef CONFIG_FSL_FSPI
-static iomux_cfg_t pad_fspi[] = {
-	SC_P_QSPI0A_DATA0 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	SC_P_QSPI0A_DATA1 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	SC_P_QSPI0A_DATA2 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	SC_P_QSPI0A_DATA3 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	SC_P_QSPI0A_DQS   | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	SC_P_QSPI0A_SS0_B | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	SC_P_QSPI0A_SCLK  | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	SC_P_QSPI0B_DATA0 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	SC_P_QSPI0B_DATA1 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	SC_P_QSPI0B_DATA2 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	SC_P_QSPI0B_DATA3 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-};
-
 void board_fspi_init(void)
 {
 	sc_err_t sciErr = 0;
@@ -452,8 +399,6 @@ void board_fspi_init(void)
 		puts("FSPI0 enable clock failed\n");
 		return;
 	}
-
-	imx8_iomux_setup_multiple_pads(pad_fspi, ARRAY_SIZE(pad_fspi));
 
 }
 #endif
@@ -573,15 +518,8 @@ void pci_init_board(void)
 #endif
 
 #ifdef CONFIG_USB_EHCI_MX6
-static iomux_cfg_t otg1_pins[] = {
-	/* Set USB PWR to GPIO used by DM driver */
-	SC_P_USB_SS3_TC0 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
-};
-
 static void setup_otg(void)
 {
-	imx8_iomux_setup_multiple_pads(otg1_pins, ARRAY_SIZE(otg1_pins));
-
 	/* Enable usb power */
 	init_otg_power();
 }
@@ -593,21 +531,12 @@ int board_init(void)
 	board_gpio_init();
 #endif
 
-#ifdef CONFIG_SYS_I2C_IMX_LPI2C
-	i2c_init_board();
-#endif
-
 #ifdef CONFIG_FEC_MXC
 	setup_fec(CONFIG_FEC_ENET_DEV);
-	setup_iomux_fec();
 #endif
 
 #ifdef CONFIG_FSL_FSPI
 	board_fspi_init();
-#endif
-
-#ifdef CONFIG_DM_MMC
-	setup_mmc();
 #endif
 
 #ifdef CONFIG_USB_EHCI_MX6
