@@ -1,7 +1,6 @@
 /*
  * Copyright 2011, Marvell Semiconductor Inc.
  * Lei Wen <leiwen@marvell.com>
- * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  *
@@ -524,11 +523,6 @@ static void ci_ep_submit_next_request(struct ci_ep *ci_ep)
 		bit = EPT_RX(num);
 
 	writel(bit, &udc->epprime);
-	/* Waiting transfer finish */
-	while (readl(&udc->epprime) & bit)
-		;
-	/* Set false to accept following request */
-	ci_ep->req_primed = false;
 }
 
 static int ci_ep_dequeue(struct usb_ep *_ep, struct usb_request *_req)
