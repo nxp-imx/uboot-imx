@@ -33,30 +33,4 @@ static struct imx_i2c_map imx_i2c_desc[] = {
 	{15, SC_R_MIPI_1_I2C_0},
 	{16, SC_R_MIPI_1_I2C_1},
 };
-
-/* The power should write in parent order*/
-static __attribute__((unused)) struct imx_i2c_map i2c_parent_power_desc[] = {
-	{5, SC_R_DC_0},
-	{5, SC_R_LVDS_0},
-	{6, SC_R_DC_0},
-	{6, SC_R_LVDS_0},
-	{7, SC_R_DC_1},
-	{7, SC_R_LVDS_1},
-	{8, SC_R_DC_1},
-	{8, SC_R_LVDS_1},
-	{13, SC_R_DC_0},
-	{13, SC_R_MIPI_0},
-	{14, SC_R_DC_0},
-	{14, SC_R_MIPI_0},
-#ifdef CONFIG_IMX8QM
-	{15, SC_R_DC_1},
-	{15, SC_R_MIPI_1},
-#else
-	{15, SC_R_DC_0},
-	{15, SC_R_MIPI_1},
-#endif
-	{16, SC_R_DC_1},
-	{16, SC_R_MIPI_1},
-};
-
 #endif /* __ASM_ARCH_IMX8_I2C_H__ */

@@ -27,6 +27,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/imx-common/video.h>
 #include <asm/arch/video_common.h>
+#include <power-domain.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -72,23 +73,7 @@ int board_early_init_f(void)
 
 	ipcHndl = gd->arch.ipc_channel_handle;
 
-	/* Power up the GPT */
-	sciErr = sc_pm_set_resource_power_mode(ipcHndl, SC_R_GPT_0, SC_PM_PW_MODE_ON);
-	if (sciErr != SC_ERR_NONE)
-		return 0;
-
-	/* Set GPT clock root to 24 MHz */
-	sc_pm_clock_rate_t gpt_rate = 24000000;
-	sciErr = sc_pm_set_clock_rate(ipcHndl, SC_R_GPT_0, SC_PM_CLK_PER, &gpt_rate);
-	if (sciErr != SC_ERR_NONE)
-		return 0;
-
-	/* Enable GPT clock root */
-	sciErr = sc_pm_clock_enable(ipcHndl, SC_R_GPT_0, SC_PM_CLK_PER, true, false);
-	if (sciErr != SC_ERR_NONE)
-		return 0;
-
-	/* Power up UART0 */
+	/* Power up UART0, this is very early while power domain is not working */
 	sciErr = sc_pm_set_resource_power_mode(ipcHndl, SC_R_UART_0, SC_PM_PW_MODE_ON);
 	if (sciErr != SC_ERR_NONE)
 		return 0;
@@ -167,6 +152,7 @@ static iomux_cfg_t usdhc2_sd[] = {
 int board_mmc_init(bd_t *bis)
 {
 	int i, ret;
+	struct power_domain pd;
 
 	/*
 	 * According to the board_mmc_init() the following map is done:
@@ -179,6 +165,9 @@ int board_mmc_init(bd_t *bis)
 		switch (i) {
 #ifdef CONFIG_TARGET_IMX8QM_LPDDR4_ARM2
 		case 0:
+			if (!power_domain_lookup_name("conn_sdhc0", &pd))
+				power_domain_on(&pd);
+
 			imx8_iomux_setup_multiple_pads(emmc0, ARRAY_SIZE(emmc0));
 			init_clk_usdhc(0);
 			usdhc_cfg[i].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
@@ -187,6 +176,9 @@ int board_mmc_init(bd_t *bis)
 #else
 		case 0:
 #endif
+			if (!power_domain_lookup_name("conn_sdhc1", &pd))
+				power_domain_on(&pd);
+
 			imx8_iomux_setup_multiple_pads(usdhc1_sd, ARRAY_SIZE(usdhc1_sd));
 			init_clk_usdhc(1);
 			usdhc_cfg[i].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
@@ -198,6 +190,9 @@ int board_mmc_init(bd_t *bis)
 #else
 		case 1:
 #endif
+			if (!power_domain_lookup_name("conn_sdhc2", &pd))
+				power_domain_on(&pd);
+
 			imx8_iomux_setup_multiple_pads(usdhc2_sd, ARRAY_SIZE(usdhc2_sd));
 			init_clk_usdhc(2);
 			usdhc_cfg[i].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
@@ -326,8 +321,17 @@ static void enet_device_phy_reset(void)
 int board_eth_init(bd_t *bis)
 {
 	int ret;
+	struct power_domain pd;
 
 	printf("[%s] %d\n", __func__, __LINE__);
+
+	if (CONFIG_FEC_ENET_DEV) {
+		if (!power_domain_lookup_name("conn_enet1", &pd))
+			power_domain_on(&pd);
+	} else {
+		if (!power_domain_lookup_name("conn_enet0", &pd))
+			power_domain_on(&pd);
+	}
 
 	setup_iomux_fec();
 
@@ -373,85 +377,10 @@ int board_phy_config(struct phy_device *phydev)
 
 static int setup_fec(int ind)
 {
-	sc_err_t err;
-	sc_ipc_t ipc;
-	sc_pm_clock_rate_t rate = 24000000;
-	sc_rsrc_t enet[2] = {SC_R_ENET_0, SC_R_ENET_1};
-
-	if (ind > 1)
-		return -EINVAL;
-
-	ipc = gd->arch.ipc_channel_handle;
-	/* Power on ENET, notify if SCI error occurred */
-	err = sc_pm_set_resource_power_mode(ipc, enet[ind], SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE) {
-		printf("\nSC_R_ENET_0 Power up failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	/* Disable SC_R_ENET_0 clock root */
-	err = sc_pm_clock_enable(ipc, enet[ind], 0, false, false);
-	err |= sc_pm_clock_enable(ipc, enet[ind], 2, false, false);
-	err |= sc_pm_clock_enable(ipc, enet[ind], 4, false, false);
-	if (err != SC_ERR_NONE) {
-		printf("\nSC_R_ENET_0 set clock disable failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	/* Set SC_R_ENET_0 clock root to 125 MHz */
-	rate = 125000000;
-
-	/* div = 8 clk_source = PLL_1 ss_slice #7 in verfication codes */
-	err = sc_pm_set_clock_rate(ipc, enet[ind], 2, &rate);
-	if (err != SC_ERR_NONE) {
-		printf("\nSC_R_ENET_0 set clock ref clock 125M failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	/* Enable SC_R_ENET_0 clock root */
-	err = sc_pm_clock_enable(ipc, enet[ind], 0, true, true);
-	err |= sc_pm_clock_enable(ipc, enet[ind], 2, true, true);
-	err |= sc_pm_clock_enable(ipc, enet[ind], 4, true, true);
-	if (err != SC_ERR_NONE) {
-		printf("\nSC_R_ENET_0 set clock enable failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
 	/* Reset ENET PHY */
 	enet_device_phy_reset();
 
 	return 0;
-}
-#endif
-
-#ifdef CONFIG_FSL_FSPI
-void board_fspi_init(void)
-{
-	sc_err_t sciErr = 0;
-	sc_pm_clock_rate_t rate;
-	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
-
-	/* Power up the FSPI0*/
-	sciErr = sc_pm_set_resource_power_mode(ipcHndl, SC_R_FSPI_0, SC_PM_PW_MODE_ON);
-	if (sciErr != SC_ERR_NONE) {
-		puts("FSPI0 power up failed\n");
-		return;
-	}
-
-	/* Set FSPI0 clock root to 29 MHz */
-	rate = 29000000;
-	sciErr = sc_pm_set_clock_rate(ipcHndl, SC_R_FSPI_0, SC_PM_CLK_PER, &rate);
-	if (sciErr != SC_ERR_NONE) {
-		puts("FSPI0 setrate failed\n");
-		return;
-	}
-
-	/* Enable FSPI0 clock root */
-	sciErr = sc_pm_clock_enable(ipcHndl, SC_R_FSPI_0, SC_PM_CLK_PER, true, false);
-	if (sciErr != SC_ERR_NONE) {
-		puts("FSPI0 enable clock failed\n");
-		return;
-	}
 }
 #endif
 
@@ -465,26 +394,8 @@ static iomux_cfg_t board_gpios[] = {
 	SC_P_SPDIF0_TX | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
 };
 
-static void setup_gpio(void)
-{
-	sc_err_t err;
-	sc_ipc_t ipc;
-	u32 i;
-
-	ipc = gd->arch.ipc_channel_handle;
-
-	/* Power up all GPIOs */
-	for (i = 0; i < 8; i++) {
-		err = sc_pm_set_resource_power_mode(ipc, SC_R_GPIO_0 + i, SC_PM_PW_MODE_ON);
-		if (err != SC_ERR_NONE)
-			printf("gpio_%u powerup error\n", i);
-	}
-}
-
 static void board_gpio_init(void)
 {
-	setup_gpio();
-
 	imx8_iomux_setup_multiple_pads(board_gpios, ARRAY_SIZE(board_gpios));
 
 	gpio_request(DEBUG_LED, "debug_led");
@@ -540,24 +451,26 @@ static iomux_cfg_t board_pcie_pins[] = {
 
 static void imx8qm_hsio_initialize(void)
 {
-	sc_err_t err;
-	sc_ipc_t ipc;
+	struct power_domain pd;
+	int ret;
 
-	ipc = gd->arch.ipc_channel_handle;
+	if (!power_domain_lookup_name("hsio_sata0", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret)
+			printf("hsio_sata0 Power up failed! (error = %d)\n", ret);
+	}
 
-	err = sc_pm_set_resource_power_mode(ipc, SC_R_SERDES_0, SC_PM_PW_MODE_ON);
-	err |= sc_pm_set_resource_power_mode(ipc, SC_R_SERDES_1, SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE)
-		printf("\nSC_R_SERDES_0 Power up failed! (error = %d)\n", err);
+	if (!power_domain_lookup_name("hsio_pcie0", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret)
+			printf("hsio_pcie0 Power up failed! (error = %d)\n", ret);
+	}
 
-	err = sc_pm_set_resource_power_mode(ipc, SC_R_SATA_0, SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE)
-		printf("\nSC_R_SATA_0 Power up failed! (error = %d)\n", err);
-
-	err = sc_pm_set_resource_power_mode(ipc, SC_R_PCIE_A, SC_PM_PW_MODE_ON);
-	err |= sc_pm_set_resource_power_mode(ipc, SC_R_PCIE_B, SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE)
-		printf("\nSC_R_PCIE_A/B Power up failed! (error = %d)\n", err);
+	if (!power_domain_lookup_name("hsio_pcie1", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret)
+			printf("hsio_pcie1 Power up failed! (error = %d)\n", ret);
+	}
 
 	imx8_iomux_setup_multiple_pads(board_pcie_pins, ARRAY_SIZE(board_pcie_pins));
 
@@ -588,10 +501,6 @@ int board_init(void)
 	setup_fec(CONFIG_FEC_ENET_DEV);
 #endif
 
-#ifdef CONFIG_FSL_FSPI
-	board_fspi_init();
-#endif
-
 #ifdef CONFIG_FSL_HSIO
 	imx8qm_hsio_initialize();
 #ifdef CONFIG_SCSI_AHCI_PLAT
@@ -607,55 +516,11 @@ int board_init(void)
 
 void board_quiesce_devices()
 {
-	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
+	const char *power_on_devices[] = {
+		"dma_lpuart0",
+	};
 
-	printf("Disable devices powered up by uboot\n");
-#if defined(CONFIG_VIDEO_IMXDPUV1)
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_LVDS_0, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_LVDS_1, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_MIPI_0, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_MIPI_1, SC_PM_PW_MODE_OFF);
-
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_DC_0, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_DC_1, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_DC_0_PLL_0, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_DC_0_PLL_1, SC_PM_PW_MODE_OFF);
-#endif
-#ifdef CONFIG_FSL_HSIO
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_PCIE_A, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_PCIE_B, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_SERDES_0, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_SERDES_1, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_SATA_0, SC_PM_PW_MODE_OFF);
-#endif
-#ifdef CONFIG_MXC_GPIO
-	/* Power up all GPIOs */
-	int i;
-	for (i = 0; i < 8; i++)
-		sc_pm_set_resource_power_mode(ipcHndl, SC_R_GPIO_0 + i, SC_PM_PW_MODE_OFF);
-#endif
-#ifdef CONFIG_FSL_FSPI
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_FSPI_0, SC_PM_PW_MODE_OFF);
-#endif
-#ifdef CONFIG_FEC_MXC
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_ENET_0, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_ENET_1, SC_PM_PW_MODE_OFF);
-#endif
-#ifdef CONFIG_FSL_ESDHC
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_SDHC_0, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_SDHC_1, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_SDHC_2, SC_PM_PW_MODE_OFF);
-#endif
-#ifdef CONFIG_USB_EHCI_MX6
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_USB_0, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_USB_0_PHY, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_USB_2, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_USB_2_PHY, SC_PM_PW_MODE_OFF);
-#endif
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_I2C_1, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_LVDS_0_I2C_1, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_LVDS_1_I2C_1, SC_PM_PW_MODE_OFF);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_GPT_0, SC_PM_PW_MODE_OFF);
+	power_off_pd_devices(power_on_devices, ARRAY_SIZE(power_on_devices));
 }
 
 void detail_board_ddr_info(void)
@@ -723,16 +588,22 @@ int board_usb_init(int index, enum usb_init_type init)
 	sc_err_t err;
 	sc_ipc_t ipc;
 	sc_rsrc_t usbs[2] = {SC_R_USB_2, SC_R_USB_2_PHY};
-	int i;
+	struct power_domain pd;
+	int ret;
 
 	ipc = gd->arch.ipc_channel_handle;
 
-	/* Power on usb, notify if SCI error occurred */
-	for (i = 0; i < 2; i++) {
-		err = sc_pm_set_resource_power_mode(ipc, usbs[i],
-			SC_PM_PW_MODE_ON);
-		if (err != SC_ERR_NONE)
-			printf("SC_R_USB_%d Power up failed: %d\n", i, err);
+	/* Power on usb */
+	if (!power_domain_lookup_name("conn_usb2", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret)
+			printf("conn_usb2 Power up failed! (error = %d)\n", ret);
+	}
+
+	if (!power_domain_lookup_name("conn_usb2_phy", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret)
+			printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
 	}
 
 	err = sc_pm_clock_enable(ipc, usbs[0], SC_PM_CLK_MISC, true, false);
@@ -786,4 +657,3 @@ struct display_info_t const displays[] = {{
 size_t display_count = ARRAY_SIZE(displays);
 
 #endif /* CONFIG_VIDEO_IMXDPUV1 */
-

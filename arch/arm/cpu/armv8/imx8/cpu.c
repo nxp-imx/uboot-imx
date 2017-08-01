@@ -8,9 +8,11 @@
 #include <common.h>
 #include <errno.h>
 #include <asm/io.h>
+#include <power-domain.h>
+#include <dm/device.h>
+#include <dm/uclass-internal.h>
 #include <asm/imx-common/sci/sci.h>
 #include <asm/imx-common/boot_mode.h>
-#include <asm/arch/i2c.h>
 #include <asm/arch/clock.h>
 #include <asm/armv8/mmu.h>
 #include <elf.h>
@@ -223,53 +225,22 @@ int imx8qxp_wake_secondary_cores(void)
 	return 0;
 }
 
-int init_i2c_power(unsigned i2c_num)
-{
-	sc_ipc_t ipc;
-	sc_err_t err;
-	u32 i;
-
-	if (i2c_num >= ARRAY_SIZE(imx_i2c_desc))
-		return -EINVAL;
-
-	ipc = gd->arch.ipc_channel_handle;
-
-	for (i = 0; i < ARRAY_SIZE(i2c_parent_power_desc); i++) {
-		if (i2c_parent_power_desc[i].index == i2c_num) {
-			err = sc_pm_set_resource_power_mode(ipc,
-				i2c_parent_power_desc[i].rsrc, SC_PM_PW_MODE_ON);
-			if (err != SC_ERR_NONE)
-				return -EPERM;
-		}
-	}
-
-	/* power up i2c resource */
-	err = sc_pm_set_resource_power_mode(ipc,
-			imx_i2c_desc[i2c_num].rsrc, SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE)
-		return -EPERM;
-
-	return 0;
-}
-
 int init_otg_power(void)
 {
-	sc_err_t err;
-	sc_ipc_t ipc;
+	struct power_domain pd;
 	int ret = 0;
 
-	ipc = gd->arch.ipc_channel_handle;
-
-	err = sc_pm_set_resource_power_mode(ipc, SC_R_USB_0, SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE){
-		printf("\nSC_R_USB_0 Power up failed! (error = %d)\n", err);
-		ret = -EPERM;
+	/* Power on usb */
+	if (!power_domain_lookup_name("conn_usb0", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret)
+			printf("conn_usb0 Power up failed! (error = %d)\n", ret);
 	}
 
-	err = sc_pm_set_resource_power_mode(ipc, SC_R_USB_0_PHY, SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE){
-		printf("\nSC_R_USB_0_PHY Power up failed! (error = %d)\n", err);
-		ret = -EPERM;
+	if (!power_domain_lookup_name("conn_usb0_phy", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret)
+			printf("conn_usb0_phy Power up failed! (error = %d)\n", ret);
 	}
 
 	return ret;
@@ -471,17 +442,25 @@ int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 	}
 
 	if (core_id == 1) {
+		struct power_domain pd;
+
 		if (sc_pm_clock_enable(ipcHndl, core_rsrc, SC_PM_CLK_PER, true, false) != SC_ERR_NONE) {
 			printf("Error enable clock\n");
 			return -EIO;
 		}
-		if (sc_pm_set_resource_power_mode(ipcHndl, SC_R_SAI_0, SC_PM_PW_MODE_ON) != SC_ERR_NONE) {
-			printf("Error power on SAI0\n");
-			return -EIO;
+
+		if (!power_domain_lookup_name("audio_sai0", &pd)) {
+			if (power_domain_on(&pd)) {
+				printf("Error power on SAI0\n");
+				return -EIO;
+			}
 		}
-		if (sc_pm_set_resource_power_mode(ipcHndl, SC_R_HIFI_RAM, SC_PM_PW_MODE_ON) != SC_ERR_NONE) {
-			printf("Error power on HIFI RAM\n");
-			return -EIO;
+
+		if (!power_domain_lookup_name("audio_ocram", &pd)) {
+			if (power_domain_on(&pd)) {
+				printf("Error power on HIFI RAM\n");
+				return -EIO;
+			}
 		}
 	}
 
@@ -1090,3 +1069,34 @@ u64 get_page_table_size(void)
 	return size;
 }
 #endif
+
+static bool check_device_power_off(struct udevice *dev,
+	const char* permanent_on_devices[], int size)
+{
+	int i;
+
+	for (i = 0; i < size; i++) {
+		if (!strcmp(dev->name, permanent_on_devices[i]))
+			return false;
+	}
+
+	return true;
+}
+
+void power_off_pd_devices(const char* permanent_on_devices[], int size)
+{
+	struct udevice *dev;
+	struct power_domain pd;
+
+	for (uclass_find_first_device(UCLASS_POWER_DOMAIN, &dev); dev;
+		uclass_find_next_device(&dev)) {
+
+		if (device_active(dev)) {
+			/* Power off active pd devices except the permanent power on devices */
+			if (check_device_power_off(dev, permanent_on_devices, size)) {
+				pd.dev = dev;
+				power_domain_off(&pd);
+			}
+		}
+	}
+}
