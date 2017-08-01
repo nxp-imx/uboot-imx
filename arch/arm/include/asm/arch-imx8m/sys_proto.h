@@ -8,3 +8,4 @@
 
 void set_wdog_reset(struct wdog_regs *wdog);
 void enable_tzc380(void);
+void restore_boot_params(void);

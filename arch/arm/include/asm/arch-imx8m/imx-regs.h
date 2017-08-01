@@ -117,6 +117,8 @@
 
 #define USB1_BASE_ADDR		0x38100000
 #define USB2_BASE_ADDR		0x38200000
+#define USB1_PHY_BASE_ADDR	0x381F0000
+#define USB2_PHY_BASE_ADDR	0x382F0000
 
 #define IOMUXC_GPR0		(IOMUXC_GPR_BASE_ADDR + 0x00)
 #define IOMUXC_GPR1		(IOMUXC_GPR_BASE_ADDR + 0x04)
@@ -268,6 +270,11 @@ struct bootrom_sw_info {
 	u32 tick_freq;
 	u32 reserved_3[3];
 };
-#endif
 
+#include <stdbool.h>
+bool is_usb_boot(void);
+#define is_boot_from_usb  is_usb_boot
+#define disconnect_from_pc(void) clrbits_le32(USB1_BASE_ADDR + 0xc704, (1 << 31));
+
+#endif
 #endif /* __ASM_ARCH_MSCALE_REGS_H__ */
