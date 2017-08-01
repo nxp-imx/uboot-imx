@@ -243,11 +243,19 @@ enum boot_device get_boot_device(void)
 	case BOOT_TYPE_SPINOR:
 		boot_dev = SPI_NOR_BOOT;
 		break;
+	case BOOT_TYPE_USB:
+		boot_dev = USB_BOOT;
+		break;
 	default:
 		break;
 	}
 
 	return boot_dev;
+}
+
+bool is_usb_boot(void)
+{
+	return get_boot_device() == USB_BOOT;
 }
 
 #ifdef CONFIG_ENV_IS_IN_MMC
