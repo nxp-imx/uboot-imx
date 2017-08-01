@@ -355,7 +355,7 @@
 	};
 };
 
-&i2c0_mipi0 {
+&i2c0_mipi_lvds0 {
 	#address-cells = <1>;
 	#size-cells = <0>;
 	pinctrl-names = "default";
@@ -364,7 +364,7 @@
 	status = "okay";
 };
 
-&i2c0_mipi1 {
+&i2c0_mipi_lvds1 {
 	#address-cells = <1>;
 	#size-cells = <0>;
 	pinctrl-names = "default";
