@@ -1026,6 +1026,10 @@ struct mii_dev *fec_get_miibus(uint32_t base_addr, int dev_id)
 	return bus;
 }
 
+__weak void init_clk_fec(int index)
+{
+}
+
 #ifndef CONFIG_DM_ETH
 #ifdef CONFIG_PHYLIB
 int fec_probe(bd_t *bd, int dev_id, uint32_t base_addr,
@@ -1154,6 +1158,7 @@ int fecmxc_initialize_multi(bd_t *bd, int dev_id, int phy_id, uint32_t addr)
 	base_mii = addr;
 #endif
 #endif
+	init_clk_fec(dev_id);
 	debug("eth_init: fec_probe(bd, %i, %i) @ %08x\n", dev_id, phy_id, addr);
 	bus = fec_get_miibus(base_mii, dev_id);
 	if (!bus)
@@ -1250,6 +1255,8 @@ static int fecmxc_probe(struct udevice *dev)
 		return -ENODEV;
 	}
 #endif
+	init_clk_fec(dev->seq);
+
 	ret = fec_alloc_descs(priv);
 	if (ret)
 		return ret;
