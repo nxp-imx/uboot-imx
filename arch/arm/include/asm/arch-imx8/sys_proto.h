@@ -40,4 +40,4 @@ struct rom_sw_info_t {
 
 int print_bootinfo(void);
 int init_otg_power(void);
-int init_i2c_power(unsigned i2c_num);
+void power_off_pd_devices(const char* permanent_on_devices[], int size);

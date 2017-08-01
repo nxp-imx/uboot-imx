@@ -27,6 +27,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/imx-common/video.h>
 #include <asm/arch/video_common.h>
+#include <power-domain.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -132,6 +133,7 @@ static iomux_cfg_t usdhc1_sd[] = {
 int board_mmc_init(bd_t *bis)
 {
 	int i, ret;
+	struct power_domain pd;
 
 	/*
 	 * According to the board_mmc_init() the following map is done:
@@ -142,11 +144,15 @@ int board_mmc_init(bd_t *bis)
 	for (i = 0; i < CONFIG_SYS_FSL_USDHC_NUM; i++) {
 		switch (i) {
 		case 0:
+			if (!power_domain_lookup_name("conn_sdhc0", &pd))
+				power_domain_on(&pd);
 			imx8_iomux_setup_multiple_pads(emmc0, ARRAY_SIZE(emmc0));
 			init_clk_usdhc(0);
 			usdhc_cfg[i].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
 			break;
 		case 1:
+			if (!power_domain_lookup_name("conn_sdhc1", &pd))
+				power_domain_on(&pd);
 			imx8_iomux_setup_multiple_pads(usdhc1_sd, ARRAY_SIZE(usdhc1_sd));
 			init_clk_usdhc(1);
 			usdhc_cfg[i].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
@@ -266,8 +272,17 @@ static void enet_device_phy_reset(void)
 int board_eth_init(bd_t *bis)
 {
 	int ret;
+	struct power_domain pd;
 
 	printf("[%s] %d\n", __func__, __LINE__);
+
+	if (CONFIG_FEC_ENET_DEV) {
+		if (!power_domain_lookup_name("conn_enet1", &pd))
+			power_domain_on(&pd);
+	} else {
+		if (!power_domain_lookup_name("conn_enet0", &pd))
+			power_domain_on(&pd);
+	}
 
 	setup_iomux_fec();
 
@@ -313,85 +328,10 @@ int board_phy_config(struct phy_device *phydev)
 
 static int setup_fec(int ind)
 {
-	sc_err_t err;
-	sc_ipc_t ipc;
-	sc_pm_clock_rate_t rate = 24000000;
-	sc_rsrc_t enet[2] = {SC_R_ENET_0, SC_R_ENET_1};
-
-	if (ind > 1)
-		return -EINVAL;
-
-	ipc = gd->arch.ipc_channel_handle;
-	/* Power on ENET, notify if SCI error occurred */
-	err = sc_pm_set_resource_power_mode(ipc, enet[ind], SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE) {
-		printf("\nSC_R_ENET_0 Power up failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	/* Disable SC_R_ENET_0 clock root */
-	err = sc_pm_clock_enable(ipc, enet[ind], 0, false, false);
-	err |= sc_pm_clock_enable(ipc, enet[ind], 2, false, false);
-	err |= sc_pm_clock_enable(ipc, enet[ind], 4, false, false);
-	if (err != SC_ERR_NONE) {
-		printf("\nSC_R_ENET_0 set clock disable failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	/* Set SC_R_ENET_0 clock root to 125 MHz */
-	rate = 125000000;
-
-	/* div = 8 clk_source = PLL_1 ss_slice #7 in verfication codes */
-	err = sc_pm_set_clock_rate(ipc, enet[ind], 2, &rate);
-	if (err != SC_ERR_NONE) {
-		printf("\nSC_R_ENET_0 set clock ref clock 125M failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	/* Enable SC_R_ENET_0 clock root */
-	err = sc_pm_clock_enable(ipc, enet[ind], 0, true, true);
-	err |= sc_pm_clock_enable(ipc, enet[ind], 2, true, true);
-	err |= sc_pm_clock_enable(ipc, enet[ind], 4, true, true);
-	if (err != SC_ERR_NONE) {
-		printf("\nSC_R_ENET_0 set clock enable failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
 	/* Reset ENET PHY */
 	enet_device_phy_reset();
 
 	return 0;
-}
-#endif
-
-#ifdef CONFIG_FSL_FSPI
-void board_fspi_init(void)
-{
-	sc_err_t sciErr = 0;
-	sc_pm_clock_rate_t rate;
-	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
-
-	/* Power up the FSPI0*/
-	sciErr = sc_pm_set_resource_power_mode(ipcHndl, SC_R_FSPI_0, SC_PM_PW_MODE_ON);
-	if (sciErr != SC_ERR_NONE) {
-		puts("FSPI0 power up failed\n");
-		return;
-	}
-
-	/* Set FSPI0 clock root to 24 MHz */
-	rate = 24000000;
-	sciErr = sc_pm_set_clock_rate(ipcHndl, SC_R_FSPI_0, SC_PM_CLK_PER, &rate);
-	if (sciErr != SC_ERR_NONE) {
-		puts("FSPI0 setrate failed\n");
-		return;
-	}
-
-	/* Enable FSPI0 clock root */
-	sciErr = sc_pm_clock_enable(ipcHndl, SC_R_FSPI_0, SC_PM_CLK_PER, true, false);
-	if (sciErr != SC_ERR_NONE) {
-		puts("FSPI0 enable clock failed\n");
-		return;
-	}
 }
 #endif
 
@@ -402,26 +342,8 @@ static iomux_cfg_t board_gpios[] = {
 	SC_P_SPI2_SDO | MUX_MODE_ALT(4) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
 };
 
-static void setup_gpio(void)
-{
-	sc_err_t err;
-	sc_ipc_t ipc;
-	u32 i;
-
-	ipc = gd->arch.ipc_channel_handle;
-
-	/* Power up all GPIOs */
-	for (i = 0; i < 8; i++) {
-		err = sc_pm_set_resource_power_mode(ipc, SC_R_GPIO_0 + i, SC_PM_PW_MODE_ON);
-		if (err != SC_ERR_NONE)
-			printf("gpio_%u powerup error\n", i);
-	}
-}
-
 static void board_gpio_init(void)
 {
-	setup_gpio();
-
 	imx8_iomux_setup_multiple_pads(board_gpios, ARRAY_SIZE(board_gpios));
 
 	/* enable i2c port expander assert reset line */
@@ -469,23 +391,17 @@ static iomux_cfg_t board_pcie_pins[] = {
 
 static void imx8qxp_hsio_initialize(void)
 {
-	sc_err_t err;
-	sc_ipc_t ipc;
+	struct power_domain pd;
+	int ret;
 
-	ipc = gd->arch.ipc_channel_handle;
-
-	err = sc_pm_set_resource_power_mode(ipc, SC_R_SERDES_1, SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE)
-		printf("\nSC_R_SERDES_0 Power up failed! (error = %d)\n", err);
-
-	err = sc_pm_set_resource_power_mode(ipc, SC_R_PCIE_B, SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE)
-		printf("\nSC_R_PCIE_A/B Power up failed! (error = %d)\n", err);
+	if (!power_domain_lookup_name("hsio_pcie1", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret)
+			printf("hsio_pcie1 Power up failed! (error = %d)\n", ret);
+	}
 
 	imx8_iomux_setup_multiple_pads(board_pcie_pins, ARRAY_SIZE(board_pcie_pins));
-
 }
-
 
 void pci_init_board(void)
 {
@@ -517,15 +433,24 @@ int board_init(void)
 	setup_fec(CONFIG_FEC_ENET_DEV);
 #endif
 
-#ifdef CONFIG_FSL_FSPI
-	board_fspi_init();
-#endif
-
 #ifdef CONFIG_USB_EHCI_MX6
 	setup_otg();
 #endif
 
 	return 0;
+}
+
+void board_quiesce_devices()
+{
+	const char *power_on_devices[] = {
+		"dma_lpuart0",
+
+		/* HIFI DSP boot */
+		"audio_sai0",
+		"audio_ocram",
+	};
+
+	power_off_pd_devices(power_on_devices, ARRAY_SIZE(power_on_devices));
 }
 
 void detail_board_ddr_info(void)

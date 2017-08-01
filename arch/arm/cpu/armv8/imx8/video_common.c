@@ -21,6 +21,7 @@
 #include <video_fb.h>
 #include <asm/arch/imx8_mipi_dsi.h>
 #include <asm/arch/video_common.h>
+#include <power-domain.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -191,19 +192,36 @@ int lvds_soc_setup(int lvds_id, sc_pm_clock_rate_t pixel_clock)
 {
 	sc_err_t err;
 	sc_rsrc_t lvds_rsrc, mipi_rsrc;
+	const char *pd_name;
 	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
+
+	struct power_domain pd;
+	int ret;
 
 	if (lvds_id == 0) {
 		lvds_rsrc = SC_R_LVDS_0;
 		mipi_rsrc = SC_R_MIPI_0;
+		if (is_imx8qxp())
+			pd_name = "mipi0_dsi_power_domain";
+		else
+			pd_name = "lvds0_power_domain";
 	} else {
 		lvds_rsrc = SC_R_LVDS_1;
 		mipi_rsrc = SC_R_MIPI_1;
+		if (is_imx8qxp())
+			pd_name = "mipi1_dsi_power_domain";
+		else
+			pd_name = "lvds1_power_domain";
 	}
 	/* Power up LVDS */
-	err = sc_pm_set_resource_power_mode(ipcHndl, lvds_rsrc, SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE) {
-		printf("LVDS Power up failed! (error = %d)\n", err);
+	if (!power_domain_lookup_name(pd_name, &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret) {
+			printf("%s Power up failed! (error = %d)\n", pd_name, ret);
+			return -EIO;
+		}
+	} else {
+		printf("%s lookup failed!\n", pd_name);
 		return -EIO;
 	}
 
@@ -328,38 +346,34 @@ int display_controller_setup(sc_pm_clock_rate_t pixel_clock)
 	sc_err_t err;
 	sc_rsrc_t dc_rsrc, pll0_rsrc, pll1_rsrc;
 	sc_pm_clock_rate_t pll_clk;
+	const char *dc_pd_name;
 	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
 
 	int dc_id = gdc;
+
+	struct power_domain pd;
+	int ret;
 
 	if (dc_id == 0) {
 		dc_rsrc = SC_R_DC_0;
 		pll0_rsrc = SC_R_DC_0_PLL_0;
 		pll1_rsrc = SC_R_DC_0_PLL_1;
+		dc_pd_name = "dc0_power_domain";
 	} else {
 		dc_rsrc = SC_R_DC_1;
 		pll0_rsrc = SC_R_DC_1_PLL_0;
 		pll1_rsrc = SC_R_DC_1_PLL_1;
+		dc_pd_name = "dc1_power_domain";
 	}
 
-	/* Power up DC */
-	err = sc_pm_set_resource_power_mode(ipcHndl, dc_rsrc, SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE) {
-		printf("DC Power up failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	/* Power up PLL1 (user PLL) */
-	err = sc_pm_set_resource_power_mode(ipcHndl, pll0_rsrc, SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE) {
-		printf("PLL0 Power up failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	/* Power up PLL2 */
-	err = sc_pm_set_resource_power_mode(ipcHndl, pll1_rsrc, SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE) {
-		printf("PLL1 Power up failed! (error = %d)\n", err);
+	if (!power_domain_lookup_name(dc_pd_name, &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret) {
+			printf("%s Power up failed! (error = %d)\n", dc_pd_name, ret);
+			return -EIO;
+		}
+	} else {
+		printf("%s lookup failed!\n", dc_pd_name);
 		return -EIO;
 	}
 

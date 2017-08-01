@@ -144,27 +144,28 @@ u32 imx_get_i2cclk(unsigned i2c_num)
 	return clock_rate;
 }
 
-int set_clk_qspi(void)
+void init_clk_fspi(int index)
 {
-	u32 err;
-	u32 rate = 40000000;
-	sc_ipc_t ipc;
+	sc_err_t sciErr = 0;
+	sc_pm_clock_rate_t rate;
+	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
 
-	ipc = gd->arch.ipc_channel_handle;
-
-	err = sc_pm_set_clock_rate(ipc, SC_R_QSPI_0, SC_PM_CLK_PER, &rate);
-	if (err != SC_ERR_NONE) {
-		printf("\nqspi set  clock rate (error = %d)\n", err);
-		return -EPERM;
+	/* Set FSPI0 clock root to 29 MHz */
+	rate = 29000000;
+	sciErr = sc_pm_set_clock_rate(ipcHndl, SC_R_FSPI_0, SC_PM_CLK_PER, &rate);
+	if (sciErr != SC_ERR_NONE) {
+		puts("FSPI0 setrate failed\n");
+		return;
 	}
 
-	err = sc_pm_clock_enable(ipc, SC_R_QSPI_0 , SC_PM_CLK_PER, true, false);
-	if (err != SC_ERR_NONE) {
-		printf("\nqspi enable clock enable (error = %d)\n", err);
-		return -EPERM;
+	/* Enable FSPI0 clock root */
+	sciErr = sc_pm_clock_enable(ipcHndl, SC_R_FSPI_0, SC_PM_CLK_PER, true, false);
+	if (sciErr != SC_ERR_NONE) {
+		puts("FSPI0 enable clock failed\n");
+		return;
 	}
 
-	return 0;
+	return;
 }
 
 void enable_usboh3_clk(unsigned char enable)
@@ -191,14 +192,6 @@ void init_clk_usdhc(u32 index)
 	if (index >= instances)
 		return;
 
-	/* Power on the usdhc */
-	err = sc_pm_set_resource_power_mode(ipc, usdhcs[index],
-				SC_PM_PW_MODE_ON);
-	if (err != SC_ERR_NONE) {
-		printf("SDHC_%d Power on failed! (error = %d)\n", index, err);
-		return;
-	}
-
 	err = sc_pm_set_clock_rate(ipc, usdhcs[index], 2, &actual);
 	if (err != SC_ERR_NONE) {
 		printf("SDHC_%d set clock failed! (error = %d)\n", index, err);
@@ -214,3 +207,48 @@ void init_clk_usdhc(u32 index)
 		return;
 	}
 }
+
+void init_clk_fec(int index)
+{
+	sc_err_t err;
+	sc_ipc_t ipc;
+	sc_pm_clock_rate_t rate = 24000000;
+	sc_rsrc_t enet[2] = {SC_R_ENET_0, SC_R_ENET_1};
+
+	if (index > 1)
+		return;
+
+	if (index == -1)
+		index = 0;
+
+	ipc = gd->arch.ipc_channel_handle;
+
+	/* Disable SC_R_ENET_0 clock root */
+	err = sc_pm_clock_enable(ipc, enet[index], 0, false, false);
+	err |= sc_pm_clock_enable(ipc, enet[index], 2, false, false);
+	err |= sc_pm_clock_enable(ipc, enet[index], 4, false, false);
+	if (err != SC_ERR_NONE) {
+		printf("\nSC_R_ENET_0 set clock disable failed! (error = %d)\n", err);
+		return;
+	}
+
+	/* Set SC_R_ENET_0 clock root to 125 MHz */
+	rate = 125000000;
+
+	/* div = 8 clk_source = PLL_1 ss_slice #7 in verfication codes */
+	err = sc_pm_set_clock_rate(ipc, enet[index], 2, &rate);
+	if (err != SC_ERR_NONE) {
+		printf("\nSC_R_ENET_0 set clock ref clock 125M failed! (error = %d)\n", err);
+		return;
+	}
+
+	/* Enable SC_R_ENET_0 clock root */
+	err = sc_pm_clock_enable(ipc, enet[index], 0, true, true);
+	err |= sc_pm_clock_enable(ipc, enet[index], 2, true, true);
+	err |= sc_pm_clock_enable(ipc, enet[index], 4, true, true);
+	if (err != SC_ERR_NONE) {
+		printf("\nSC_R_ENET_0 set clock enable failed! (error = %d)\n", err);
+		return;
+	}
+}
+
