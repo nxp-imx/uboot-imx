@@ -65,6 +65,7 @@
 #ifdef CONFIG_FASTBOOT_LOCK
 #include "fastboot_lock_unlock.h"
 #endif
+#define FASTBOOT_VAR_NUM	(24 + 2 * (MAX_PTN))
 #define FASTBOOT_VAR_YES    "yes"
 #define FASTBOOT_VAR_NO     "no"
 
@@ -2840,31 +2841,73 @@ static int get_block_size(void) {
 	return dev_desc->blksz;
 }
 
-static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
+static bool is_exist(char (*partition_base_name)[16], char *buffer, int count)
 {
-	char *cmd = req->buf;
-	char response[FASTBOOT_RESPONSE_LEN];
-	const char *s;
-	size_t chars_left;
+	int n;
 
-	strcpy(response, "OKAY");
-	chars_left = sizeof(response) - strlen(response) - 1;
-
-	strsep(&cmd, ":");
-	if (!cmd) {
-		error("missing variable");
-		fastboot_tx_write_str("FAILmissing var");
-		return;
+	for (n = 0; n < count; n++) {
+		if (!strcmp(partition_base_name[n],buffer))
+			return true;
 	}
+	return false;
+}
+/*get partition base name from gpt without "_a/_b"*/
+static int get_partition_base_name(char (*partition_base_name)[16])
+{
+	int n = 0;
+	int count = 0;
+	char *ptr1, *ptr2;
+	char buffer[16];
 
+	for (n = 0; n < g_pcount; n++) {
+		strcpy(buffer,g_ptable[n].name);
+		ptr1 = strstr(buffer, "_a");
+		ptr2 = strstr(buffer, "_b");
+		if (ptr1 != NULL) {
+			*ptr1 = '\0';
+			if (!is_exist(partition_base_name,buffer,count)) {
+				strcpy(partition_base_name[count++],buffer);
+			}
+		} else if (ptr2 != NULL) {
+			*ptr2 = '\0';
+			if (!is_exist(partition_base_name,buffer,count)) {
+				strcpy(partition_base_name[count++],buffer);
+			}
+		} else {
+			strcpy(partition_base_name[count++],buffer);
+		}
+	}
+	return count;
+}
+
+static bool is_slot(void)
+{
+	char slot_suffix[2][5] = {"_a","_b"};
+	int n;
+
+	for (n = 0; n < g_pcount; n++) {
+		if (strstr(g_ptable[n].name, slot_suffix[0]) ||
+		strstr(g_ptable[n].name, slot_suffix[1]))
+			return true;
+	}
+	return false;
+}
+
+static int get_single_var(char *cmd, char *response)
+{
 	char *str = cmd;
+	size_t chars_left;
+	const char *s;
+
+	chars_left = FASTBOOT_RESPONSE_LEN - strlen(response) - 1;
+
 	if ((str = strstr(cmd, "partition-size:"))) {
 		str +=strlen("partition-size:");
 		struct fastboot_ptentry* fb_part;
 		fb_part = fastboot_flash_find_ptn(str);
 		if (!fb_part) {
 			strncat(response, "Wrong partition name.", chars_left);
-			goto fail;
+			return -1;
 		} else {
 			char str_num[20];
 			sprintf(str_num, "0x%016x", fb_part->length * get_block_size());
@@ -2876,12 +2919,10 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		fb_part = fastboot_flash_find_ptn(str);
 		if (!fb_part) {
 			strncat(response, "Wrong partition name.", chars_left);
-			goto fail;
+			return -1;
 		} else {
 			strncat(response, fb_part->fstype, chars_left);
 		}
-	} else if (!strcmp_l1("all", cmd)) {
-		/* FIXME need to return all vars here */
 	} else if (!strcmp_l1("version-baseband", cmd)) {
 		strncat(response, "N/A", chars_left);
 	} else if (!strcmp_l1("version-bootloader", cmd) ||
@@ -2909,7 +2950,7 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 			strncat(response, s, chars_left);
 		else {
 			strncat(response, "FAILValue not set", chars_left);
-			goto fail;
+			return -1;
 		}
 	} else if (!strcmp_l1("product", cmd)) {
 		strncat(response, PRODUCT_NAME, chars_left);
@@ -2936,10 +2977,10 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 #ifdef CONFIG_AVB_SUPPORT
 		if (get_slotvar_avb(&fsl_avb_ab_ops, cmd,
 				response + strlen(response), chars_left + 1) < 0)
-			goto fail;
+			return -1;
 #elif defined(CONFIG_FSL_BOOTCTL)
 		if (get_slotvar(cmd, response + strlen(response), chars_left + 1) < 0)
-			goto fail;
+			return -1;
 #else
 		strncat(response, FASTBOOT_VAR_NO, chars_left);
 #endif
@@ -2952,15 +2993,150 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		if (s) {
 			strncat(response, s, chars_left);
 		} else {
+			sprintf(response,"FAILunknow variable:%s",cmd);
 			printf("WARNING: unknown variable: %s\n", cmd);
+			return -1;
 		}
 	}
-	fastboot_tx_write_str(response);
-	return;
-fail:
-	strncpy(response, "FAIL", 5);
-	fastboot_tx_write_str(response);
-	return;
+	return 0;
+}
+
+static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
+{
+	char *cmd = req->buf;
+
+	strsep(&cmd, ":");
+	if (!cmd) {
+		error("missing variable");
+		fastboot_tx_write_str("FAILmissing var");
+	}
+
+	if (!strcmp_l1("all", cmd)) {
+		int num = 0;
+		int n = 0;
+		char var_name[30];
+		char response[FASTBOOT_VAR_NUM + 1][FASTBOOT_RESPONSE_LEN - 1];
+		char partition_base_name[MAX_PTN][16];
+		char slot_suffix[2][5] = {"_a","_b"};
+
+		memset(response,'\0',(FASTBOOT_VAR_NUM + 1) * (FASTBOOT_RESPONSE_LEN - 1));
+
+		/*get all variables*/
+		strcat(response[num], "INFOversion:");
+		get_single_var("version",response[num]);
+
+		num++;
+		strcat(response[num], "INFOversion-bootloader:");
+		get_single_var("version-bootloader",response[num]);
+
+		num++;
+		strcat(response[num], "INFOversion-baseband:");
+		get_single_var("version-baseband",response[num]);
+
+		num++;
+		strcat(response[num], "INFOproduct:");
+		get_single_var("product",response[num]);
+
+		num++;
+		strcat(response[num], "INFOsecure:");
+		get_single_var("secure",response[num]);
+
+		num++;
+		strcat(response[num], "INFOmax-download-size:");
+		get_single_var("max-download-size",response[num]);
+
+		num++;
+		strcat(response[num], "INFOunlocked:");
+		get_single_var("unlocked",response[num]);
+
+		num++;
+		strcat(response[num], "INFOoff-mode-charge:");
+		get_single_var("off-mode-charge",response[num]);
+
+		num++;
+		strcat(response[num], "INFObattery-voltage:");
+		get_single_var("battery-voltage",response[num]);
+
+		num++;
+		strcat(response[num], "INFOvariant:");
+		get_single_var("variant",response[num]);
+
+		num++;
+		strcat(response[num], "INFObattery-soc-ok:");
+		get_single_var("battery-soc-ok",response[num]);
+		/*get partition type*/
+		for (n = 0; n < g_pcount; n++) {
+			num++;
+			sprintf(response[num],"INFOpartition-type:%s:",g_ptable[n].name);
+			sprintf(var_name,"partition-type:%s",g_ptable[n].name);
+			get_single_var(var_name,response[num]);
+		}
+		/*get partition size*/
+		for (n = 0; n < g_pcount; n++) {
+			num++;
+			sprintf(response[num],"INFOpartition-size:%s:",g_ptable[n].name);
+			sprintf(var_name,"partition-size:%s",g_ptable[n].name);
+			get_single_var(var_name,response[num]);
+		}
+		/*slot related variables*/
+		if (is_slot()){
+			/*get has-slot variables*/
+			int count = 0;
+			count = get_partition_base_name(partition_base_name);
+			for (n = 0; n < count; n++) {
+				num++;
+				sprintf(response[num],"INFOhas-slot:%s:",partition_base_name[n]);
+				sprintf(var_name,"has-slot:%s",partition_base_name[n]);
+				get_single_var(var_name,response[num]);
+			}
+
+			num++;
+			strcat(response[num], "INFOcurrent-slot:");
+			get_single_var("current-slot",response[num]);
+
+			num++;
+			strcat(response[num], "INFOslot-count:");
+			get_single_var("slot-count",response[num]);
+			/*get slot-successful variable*/
+			for (n = 0; n < 2; n++) {
+				num++;
+				sprintf(response[num],"INFOslot-successful:%s:",slot_suffix[n]);
+				sprintf(var_name,"slot-successful:%s",slot_suffix[n]);
+				get_single_var(var_name,response[num]);
+			}
+			/*get slot-unbootable variable*/
+			for (n = 0; n < 2; n++) {
+				num++;
+				sprintf(response[num],"INFOslot-unbootable:%s:",slot_suffix[n]);
+				sprintf(var_name,"slot-unbootable:%s",slot_suffix[n]);
+				get_single_var(var_name,response[num]);
+			}
+			/*get slot-retry-count variable*/
+			for (n = 0; n < 2; n++) {
+				num++;
+				sprintf(response[num],"INFOslot-retry-count:%s:",slot_suffix[n]);
+				sprintf(var_name,"slot-retry-count:%s",slot_suffix[n]);
+				get_single_var(var_name,response[num]);
+			}
+		}
+
+		num++;
+		strncpy(response[num], "OKAYDone!", 10);
+
+		fastboot_tx_write((const char *)response,(num + 1) * (FASTBOOT_RESPONSE_LEN - 1));
+		return;
+	} else {
+		char response[FASTBOOT_RESPONSE_LEN - 1];
+		int status;
+
+		strcpy(response, "OKAY");
+		status = get_single_var(cmd,response);
+		if (status != 0) {
+			strncpy(response,"FAIL",4);
+		}
+		fastboot_tx_write_str(response);
+		return;
+	}
 }
 
 static unsigned int rx_bytes_expected(struct usb_ep *ep)
