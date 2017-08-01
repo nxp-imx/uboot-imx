@@ -1014,6 +1014,10 @@ void fspi_cfg_smpr(struct fsl_fspi_priv *priv, u32 clear_bits, u32 set_bits)
 #endif
 }
 
+__weak void init_clk_fspi(int index)
+{
+}
+
 #ifndef CONFIG_DM_SPI
 static unsigned long spi_bases[] = {
 	FSPI0_BASE_ADDR,
@@ -1048,6 +1052,8 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 #ifdef CONFIG_SYS_FSL_FSPI_BE
 	fspi->priv.flags |= FSPI_FLAG_REGMAP_ENDIAN_BIG;
 #endif
+
+	init_clk_fspi(bus);
 
 	regs = (struct fsl_fspi_regs *)spi_bases[bus];
 	fspi->priv.regs = regs;
@@ -1159,6 +1165,8 @@ static int fsl_fspi_probe(struct udevice *bus)
 	struct fsl_fspi_platdata *plat = dev_get_platdata(bus);
 	struct fsl_fspi_priv *priv = dev_get_priv(bus);
 	struct dm_spi_bus *dm_spi_bus;
+
+	init_clk_fspi(bus->seq);
 
 	dm_spi_bus = bus->uclass_priv;
 
