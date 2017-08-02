@@ -1473,7 +1473,7 @@ static int _fastboot_parts_load_from_ptable(void)
 		if (ret)
 			break;
 	}
-	for (i = 0; i <= part_idx; i++)
+	for (i = 0; i < part_idx; i++)
 		fastboot_flash_add_ptn(&ptable[i]);
 
 	return 0;
