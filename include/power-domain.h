@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION.
+ * Copyright 2017 NXP
+ *
  */
 
 #ifndef _POWER_DOMAIN_H
@@ -62,6 +64,19 @@ struct power_domain {
 	unsigned long id;
 	void *priv;
 };
+
+/**
+ * power_domain_lookup_name - Lookup the power domain device by name and request it.
+ *
+ * This looks up and requests a provider power domain by using its device name. This
+ * skip the associated client device, but directly get the power domain device.
+ *
+ * @name:        The power domain device's name.
+ * @power_domain        A pointer to a power domain struct to initialize.
+ * @return 0 if OK, or a negative error code.
+ */
+
+int power_domain_lookup_name(const char *name, struct power_domain *power_domain);
 
 /**
  * power_domain_get - Get/request the power domain for a device.
