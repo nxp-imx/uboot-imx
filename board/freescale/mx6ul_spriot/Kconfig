@@ -1,7 +1,7 @@
-if TARGET_MX6UL_AQUILA
+if TARGET_MX6UL_SPRIOT
 
 config SYS_BOARD
-	default "mx6ul_aquila"
+	default "mx6ul_spriot"
 
 config SYS_VENDOR
 	default "freescale"
@@ -10,6 +10,6 @@ config SYS_SOC
 	default "mx6"
 
 config SYS_CONFIG_NAME
-	default "mx6ul_aquila"
+	default "mx6ul_spriot"
 
 endif

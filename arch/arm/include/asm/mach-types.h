@@ -2643,7 +2643,7 @@
 #define MACH_TYPE_HTCPANTHER           2673
 #define MACH_TYPE_HTCPANTHER_CDMA      2674
 #define MACH_TYPE_REB01                2675
-#define MACH_TYPE_AQUILA               2676
+#define MACH_TYPE_SPRIOT               2676
 #define MACH_TYPE_SPARK_SLS_HW2        2677
 #define MACH_TYPE_ESATA_SHEEVAPLUG     2678
 #define MACH_TYPE_MSM7X30_SURF         2679

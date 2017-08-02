@@ -355,8 +355,8 @@ config TARGET_PICO_IMX6DL
         select DM
         select DM_THERMAL
 
-config TARGET_MX6UL_AQUILA
-	bool "Support mx6ul_aquila"
+config TARGET_MX6UL_SPRIOT
+	bool "Support mx6ul_spriot"
 	select MX6UL
 	select DM
 	select DM_THERMAL
@@ -515,7 +515,7 @@ source "board/seco/Kconfig"
 source "board/solidrun/mx6cuboxi/Kconfig"
 source "board/freescale/picosom-imx6ul/Kconfig"
 source "board/freescale/pico-imx6dl/Kconfig"
-source "board/freescale/mx6ul_aquila/Kconfig"
+source "board/freescale/mx6ul_spriot/Kconfig"
 source "board/tbs/tbs2910/Kconfig"
 source "board/tqc/tqma6/Kconfig"
 source "board/toradex/apalis_imx6/Kconfig"

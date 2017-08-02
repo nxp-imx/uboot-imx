@@ -3,12 +3,12 @@
  * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  * Copyright 2017 NXP
  *
- * Configuration settings for the Murata AQUILA + i.MX6UL-BB board.
+ * Configuration settings for the Murata SPRIOT + i.MX6UL-BB board.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-#ifndef __MX6UL_AQUILA_CONFIG_H
-#define __MX6UL_AQUILA_CONFIG_H
+#ifndef __MX6UL_SPRIOT_CONFIG_H
+#define __MX6UL_SPRIOT_CONFIG_H
 
 
 #include <asm/arch/imx-regs.h>
@@ -358,11 +358,11 @@
 #define CONFIG_USB_FASTBOOT_BUF_SIZE   0xc800000
 #endif
 
-#define PRODUCT_NAME "imx6ul_aquila"
-#define VARIANT_NAME "imx6ul_aquila"
+#define PRODUCT_NAME "imx6ul_spriot"
+#define VARIANT_NAME "imx6ul_spriot"
 
 #if defined(CONFIG_ANDROID_THINGS_SUPPORT)
-#include "mx6ul_aquila_android_things.h"
+#include "mx6ul_spriot_android_things.h"
 #endif
 
 #endif

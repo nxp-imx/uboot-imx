@@ -3,7 +3,7 @@
  * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  * Copyright 2017 NXP
  *
- * Specified for EVK consisting of Murata Aquila (iMX6UL + PMIC + eMMC + WiFi/BT) + iMX6UL-Base board
+ * Specified for EVK consisting of Murata spriot (iMX6UL + PMIC + eMMC + WiFi/BT) + iMX6UL-Base board
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -252,7 +252,7 @@ struct i2c_pads_info i2c_pad_info1 = {
 	},
 };
 #else
-/* Murata Aquila uses PMIC */
+/* Murata spriot uses PMIC */
 	#error "Need to define CONFIG_SYS_I2C_MXC"
 #endif
 
@@ -276,10 +276,10 @@ static iomux_v3_cfg_t const usdhc1_pads[] = {
 	MX6_PAD_SD1_DATA2__USDHC1_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD1_DATA3__USDHC1_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 
-/* Murata Aquila does not use VSELECT, CD and RST_B for WiFi control */
+/* Murata spriot does not use VSELECT, CD and RST_B for WiFi control */
 };
 
-/* Murata Aquila uses 8-bit eMMC at uSDHC2 */
+/* Murata spriot uses 8-bit eMMC at uSDHC2 */
 static iomux_v3_cfg_t const usdhc2_emmc_pads[] = {
 	MX6_PAD_NAND_RE_B__USDHC2_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_NAND_WE_B__USDHC2_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
@@ -299,7 +299,7 @@ static iomux_v3_cfg_t const usdhc2_emmc_pads[] = {
 };
 
 #ifdef CONFIG_SYS_USE_NAND
-/* Murata Aquila uses NAND pads for eMMC at uSDHC2 */
+/* Murata spriot uses NAND pads for eMMC at uSDHC2 */
 #error "Cannot define CONFIG_SYS_USE_NAND"
 #endif
 
@@ -383,7 +383,7 @@ static struct fsl_esdhc_cfg usdhc_cfg[2] = {
 	{USDHC2_BASE_ADDR, 0, 8},
 };
 
-/* Murata Aquila eMMC reset */
+/* Murata spriot eMMC reset */
 #define USDHC2_PWR_GPIO	IMX_GPIO_NR(4, 10)
 
 int mmc_get_env_devno(void)
@@ -401,7 +401,7 @@ int mmc_get_env_devno(void)
 	/* BOOT_CFG2[3] and BOOT_CFG2[4] */
 	dev_no = (soc_sbmr & 0x00001800) >> 11;
 
-	/* Murata Aquila always use uSDHC2 for eMMC.  Note the 1 difference in mapping. */
+	/* Murata spriot always use uSDHC2 for eMMC.  Note the 1 difference in mapping. */
 	if (dev_no == 2 && mx6_esdhc_fused(USDHC2_BASE_ADDR))
 	{
 		dev_no = 1;
@@ -412,7 +412,7 @@ int mmc_get_env_devno(void)
 
 int mmc_map_to_kernel_blk(int dev_no)
 {
-	/* Murata Aquila always use uSDHC2 for eMMC and uSDHC1 for WiFi.  Note the 1 difference in mapping. */
+	/* Murata spriot always use uSDHC2 for eMMC and uSDHC1 for WiFi.  Note the 1 difference in mapping. */
 	if (dev_no == 1 && mx6_esdhc_fused(USDHC2_BASE_ADDR))
 	{
 		dev_no = 2;
@@ -428,11 +428,11 @@ int board_mmc_getcd(struct mmc *mmc)
 
 	switch (cfg->esdhc_base) {
 	case USDHC1_BASE_ADDR:
-		/* Murata Aquila always has WiFi connected to uSDHC1 which is not available for storage*/
+		/* Murata spriot always has WiFi connected to uSDHC1 which is not available for storage*/
 		ret = 0;
 		break;
 	case USDHC2_BASE_ADDR:
-		/* Murata Aquila always has eMMC connected to uSDHC2 */
+		/* Murata spriot always has eMMC connected to uSDHC2 */
 		ret = 1;
 		break;
 	}
@@ -879,7 +879,7 @@ u32 get_board_rev(void)
 
 int checkboard(void)
 {
-    puts("Board: Murata MX6UL-Aquila\n");
+    puts("Board: Murata MX6UL-spriot\n");
 
 	return 0;
 }
