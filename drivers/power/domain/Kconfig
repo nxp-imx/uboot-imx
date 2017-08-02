@@ -24,4 +24,10 @@ config TEGRA186_POWER_DOMAIN
 	  Enable support for manipulating Tegra's on-SoC power domains via IPC
 	  requests to the BPMP (Boot and Power Management Processor).
 
+config IMX8_POWER_DOMAIN
+	bool "Enable i.MX8 power domain driver"
+        depends on ARCH_IMX8
+        help
+          Enable support for manipulating NXP i.MX8 on-SoC power domains via IPC
+          requests to the SCU.
 endmenu
