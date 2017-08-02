@@ -216,8 +216,8 @@ static struct usb_gadget_strings *fastboot_strings[] = {
 #define FASTBOOT_FBPARTS_ENV_MAX_LEN 1024
 /* To support the Android-style naming of flash */
 #define MAX_PTN		    32
-static struct fastboot_ptentry g_ptable[MAX_PTN];
-static unsigned int g_pcount;
+struct fastboot_ptentry g_ptable[MAX_PTN];
+unsigned int g_pcount;
 struct fastboot_device_info fastboot_devinfo;
 
 

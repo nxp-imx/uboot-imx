@@ -7,11 +7,14 @@
 #include <common.h>
 #include <stdlib.h>
 #include <linux/string.h>
-
+#include <fsl_fastboot.h>
 #include <fsl_avb.h>
 
 /* as libavb's bootctl doesn't have the get_var support
  * we add the getvar support on our side ...*/
+#ifndef MAX_PTN
+#define MAX_PTN 32
+#endif
 #define SLOT_NUM 2
 static char *slot_suffix[SLOT_NUM] = {"_a", "_b"};
 
@@ -68,6 +71,24 @@ static int get_curr_slot(AvbABData *ab_data) {
 		return -1;
 }
 
+extern struct fastboot_ptentry g_ptable[MAX_PTN];
+extern unsigned int g_pcount;
+
+static bool has_slot(char *cmd) {
+	unsigned int n;
+	char *ptr;
+
+	for (n = 0; n < g_pcount; n++) {
+		ptr = strstr(g_ptable[n].name, cmd);
+		if (ptr != NULL) {
+			ptr += strlen(cmd);
+			if (!strcmp(ptr, "_a") || !strcmp(ptr, "_b"))
+				return true;
+		}
+	}
+	return false;
+}
+
 int get_slotvar_avb(AvbABOps *ab_ops, char *cmd, char *buffer, size_t size) {
 
 	AvbABData ab_data;
@@ -79,9 +100,7 @@ int get_slotvar_avb(AvbABOps *ab_ops, char *cmd, char *buffer, size_t size) {
 	char *str = cmd;
 	if (!strcmp_l1("has-slot:", cmd)) {
 		str += strlen("has-slot:");
-		if (!strcmp(str, "system") || !strcmp(str, "boot") ||
-			!strcmp(str, "oem") || !strcmp(str, "gapps") ||
-			!strcmp(str, "vbmeta"))
+		if (has_slot(str))
 			strlcpy(buffer, "yes", size);
 		else
 			strlcpy(buffer, "no", size);
