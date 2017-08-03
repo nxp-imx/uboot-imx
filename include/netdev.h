@@ -134,7 +134,7 @@ static inline int pci_eth_init(bd_t *bis)
 	return num;
 }
 
-struct mii_dev *fec_get_miibus(uint32_t base_addr, int dev_id);
+struct mii_dev *fec_get_miibus(ulong base_addr, int dev_id);
 #ifdef CONFIG_PHYLIB
 struct phy_device;
 int fec_probe(bd_t *bd, int dev_id, uint32_t base_addr,
