@@ -117,7 +117,7 @@ config SYS_I2C_IMX_LPI2C
 
 config SYS_I2C_MXC
 	bool "NXP i.MX I2C driver"
-	depends on MX6
+	depends on MX6 || MX7 || ARCH_IMX8M
 	help
 	  Add support for the NXP i.MX I2C driver. This supports upto for bus
 	  channels and operating on standard mode upto 100 kbits/s and fast
