@@ -31,11 +31,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_FSEL1)
 
-#define ENET_PAD_CTRL		(PAD_CTL_DSE7 | PAD_CTL_FSEL3)
-#define ENET_PAD_CTRL_MII_MDIO	(PAD_CTL_ODE | PAD_CTL_DSE3 | PAD_CTL_FSEL0)
-#define ENET_PAD_CTRL_MII_MDC	(PAD_CTL_DSE3 | PAD_CTL_FSEL0)
-#define ENET_RX_PAD_CTRL	(PAD_CTL_DSE7 | PAD_CTL_FSEL3)
-
 #define WDOG_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE)
 
 static iomux_v3_cfg_t const wdog_pads[] = {
@@ -103,23 +98,6 @@ static iomux_v3_cfg_t const fec1_rst_pads[] = {
 	IMX8MQ_PAD_GPIO1_IO09__GPIO1_IO9 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
-static iomux_v3_cfg_t const fec1_pads[] = {
-	IMX8MQ_PAD_ENET_MDC__ENET_MDC | MUX_PAD_CTRL(ENET_PAD_CTRL_MII_MDC),
-	IMX8MQ_PAD_ENET_MDIO__ENET_MDIO | MUX_PAD_CTRL(ENET_PAD_CTRL_MII_MDIO),
-	IMX8MQ_PAD_ENET_TD3__ENET_RGMII_TD3 | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	IMX8MQ_PAD_ENET_TD2__ENET_RGMII_TD2 | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	IMX8MQ_PAD_ENET_TD1__ENET_RGMII_TD1 | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	IMX8MQ_PAD_ENET_TD0__ENET_RGMII_TD0 | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	IMX8MQ_PAD_ENET_TX_CTL__ENET_RGMII_TX_CTL | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	IMX8MQ_PAD_ENET_TXC__ENET_RGMII_TXC | MUX_PAD_CTRL(ENET_PAD_CTRL),
-	IMX8MQ_PAD_ENET_RX_CTL__ENET_RGMII_RX_CTL | MUX_PAD_CTRL(ENET_RX_PAD_CTRL),
-	IMX8MQ_PAD_ENET_RXC__ENET_RGMII_RXC | MUX_PAD_CTRL(ENET_RX_PAD_CTRL),
-	IMX8MQ_PAD_ENET_RD3__ENET_RGMII_RD3 | MUX_PAD_CTRL(ENET_RX_PAD_CTRL),
-	IMX8MQ_PAD_ENET_RD2__ENET_RGMII_RD2 | MUX_PAD_CTRL(ENET_RX_PAD_CTRL),
-	IMX8MQ_PAD_ENET_RD1__ENET_RGMII_RD1 | MUX_PAD_CTRL(ENET_RX_PAD_CTRL),
-	IMX8MQ_PAD_ENET_RD0__ENET_RGMII_RD0 | MUX_PAD_CTRL(ENET_RX_PAD_CTRL),
-};
-
 static void setup_iomux_fec(void)
 {
 	imx_iomux_v3_setup_multiple_pads(fec1_rst_pads, ARRAY_SIZE(fec1_rst_pads));
@@ -128,25 +106,12 @@ static void setup_iomux_fec(void)
 	gpio_direction_output(IMX_GPIO_NR(1, 9), 0);
 	udelay(500);
 	gpio_direction_output(IMX_GPIO_NR(1, 9), 1);
-
-	imx_iomux_v3_setup_multiple_pads(fec1_pads, ARRAY_SIZE(fec1_pads));
-}
-
-int board_eth_init(bd_t *bis)
-{
-	int ret;
-
-	setup_iomux_fec();
-
-	ret = fecmxc_initialize_multi(bis, 0, CONFIG_FEC_MXC_PHYADDR, IMX_FEC_BASE);
-	if (ret)
-		printf("FEC1 MXC: %s:failed\n", __func__);
-
-	return ret;
 }
 
 static int setup_fec(void)
 {
+	setup_iomux_fec();
+
 	/* Use 125M anatop REF_CLK1 for ENET1, not from external */
 	clrsetbits_le32(IOMUXC_GPR1,
 			BIT(13) | BIT(17), 0);
