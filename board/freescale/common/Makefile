@@ -62,7 +62,7 @@ obj-$(CONFIG_IDT8T49N222A)	+= idt8t49n222a_serdes_clk.o
 obj-$(CONFIG_ZM7300)		+= zm7300.o
 obj-$(CONFIG_POWER_PFUZE100)	+= pfuze.o
 obj-$(CONFIG_POWER_MC34VR500)	+= mc34vr500.o
-obj-$(CONFIG_DM_PMIC_PFUZE100)	+= pfuze_dm.o
+obj-$(CONFIG_$(SPL_)DM_PMIC_PFUZE100)	+= pfuze_dm.o
 obj-$(CONFIG_MXC_EPDC)		+= epdc_setup.o
 obj-y				+= mmc.o
 ifdef CONFIG_FSL_FASTBOOT
