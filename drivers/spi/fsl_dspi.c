@@ -4,9 +4,11 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
  * Copyright (C) 2004-2009, 2015 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  * TsiChung Liew (Tsi-Chung.Liew@freescale.com)
  * Chao Fu (B44548@freescale.com)
  * Haikun Wang (B53464@freescale.com)
+ *
  */
 
 #include <common.h>
@@ -411,6 +413,7 @@ static int fsl_dspi_cfg_speed(struct fsl_dspi_priv *priv, uint speed)
 
 	return 0;
 }
+
 #ifndef CONFIG_DM_SPI
 int spi_cs_is_valid(unsigned int bus, unsigned int cs)
 {
@@ -425,6 +428,7 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 {
 	struct fsl_dspi *dspi;
 	uint mcr_cfg_val;
+	int i;
 
 	dspi = spi_alloc_slave(struct fsl_dspi, bus, cs);
 	if (!dspi)
@@ -526,7 +530,7 @@ void spi_release_bus(struct spi_slave *slave)
 	struct fsl_dspi *dspi = (struct fsl_dspi *)slave;
 
 	dspi_halt(&dspi->priv, 1);
-	cpu_dspi_release_bus(slave->bus.slave->cs);
+	cpu_dspi_release_bus(slave->bus, slave->cs);
 }
 
 int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
@@ -727,6 +731,7 @@ static const struct dm_spi_ops fsl_dspi_ops = {
 
 static const struct udevice_id fsl_dspi_ids[] = {
 	{ .compatible = "fsl,vf610-dspi" },
+	{ .compatible = "fsl,s32v234-dspi" },
 	{ }
 };
 

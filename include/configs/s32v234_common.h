@@ -133,6 +133,8 @@
 				CONFIG_BOOTARGS_LOGLEVEL " " \
 				CONFIG_EXTRA_KERNEL_BOOT_ARGS
 
+#define MMAP_DSPI		SPI0_BASE_ADDR
+
 /* flash related definitions */
 #if defined(CONFIG_SPI_FLASH) && defined(CONFIG_FSL_QSPI)
 #define CONFIG_S32V234_USES_FLASH
