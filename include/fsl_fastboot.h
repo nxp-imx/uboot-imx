@@ -200,6 +200,9 @@ void fastboot_run_bootmode(void);
 /*Setup board-relative fastboot environment */
 void board_fastboot_setup(void);
 
+/*return partition index according name*/
+int fastboot_flash_find_index(const char *name);
+
 /*check whether bootloader is overlay with GPT table*/
 bool bootloader_gpt_overlay(void);
 /* Check whether the combo keys pressed
@@ -208,6 +211,7 @@ bool bootloader_gpt_overlay(void);
  */
 int is_recovery_key_pressing(void);
 
+int fastboot_tx_write_str(const char *buffer);
 #ifdef CONFIG_FASTBOOT_STORAGE_NAND
 /*Save parameters for NAND storage partitions */
 void save_parts_values(struct fastboot_ptentry *ptn,
