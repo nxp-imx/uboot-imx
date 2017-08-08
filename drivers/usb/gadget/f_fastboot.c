@@ -1073,7 +1073,7 @@ static void process_flash_mmc(const char *cmdbuf)
 					    MMC_SATA_BLOCK_SIZE;
 
 				sprintf(mmc_write, "mmc write 0x%x 0x%x 0x%x",
-						(unsigned int)interface.transfer_buffer, /*source*/
+						(unsigned int)(uintptr_t)interface.transfer_buffer, /*source*/
 						ptn->start, /*dest*/
 						temp /*length*/);
 
@@ -2352,7 +2352,7 @@ use_given_ptn:
 		if (check_image_arm64) {
 			if (mmc->block_dev.block_read(dev_desc, sector,
 								(hdr->kernel_size / 512) + 1,
-								(void *)hdr->kernel_addr) < 0) {
+								(void *)(uintptr_t)hdr->kernel_addr) < 0) {
 				printf("boota: mmc failed to read kernel\n");
 				goto fail;
 			}
@@ -2363,7 +2363,7 @@ use_given_ptn:
 		sector += ALIGN(hdr->kernel_size, hdr->page_size) / 512;
 		if (mmc->block_dev.block_read(dev_desc, sector,
 						(hdr->ramdisk_size / 512) + 1,
-						(void *)hdr->ramdisk_addr) < 0) {
+						(void *)(uintptr_t)hdr->ramdisk_addr) < 0) {
 			printf("boota: mmc failed to read ramdisk\n");
 			goto fail;
 		}
@@ -2376,7 +2376,7 @@ use_given_ptn:
 			sector += ALIGN(hdr->ramdisk_size, hdr->page_size) / 512;
 			if (mmc->block_dev.block_read(dev_desc, sector,
 						(hdr->second_size / 512) + 1,
-						(void *)hdr->second_addr) < 0) {
+						(void *)(uintptr_t)hdr->second_addr) < 0) {
 				printf("boota: mmc failed to dtb\n");
 				goto fail;
 			}
@@ -2448,8 +2448,8 @@ use_given_ptn:
 				printf("Fail: boota address overlap with ramdisk address\n");
 				return 1;
 			}
-			memmove((void *) hdr->ramdisk_addr,
-				(void *)raddr, hdr->ramdisk_size);
+			memmove((void *)(uintptr_t)hdr->ramdisk_addr,
+				(void *)(uintptr_t)raddr, hdr->ramdisk_size);
 		}
 
 #ifdef CONFIG_OF_LIBFDT
@@ -2462,8 +2462,8 @@ use_given_ptn:
 				printf("Fail: boota address overlap with FDT address\n");
 				return 1;
 			}
-			memmove((void *) hdr->second_addr,
-				(void *)fdtaddr, hdr->second_size);
+			memmove((void *)(uintptr_t)hdr->second_addr,
+				(void *)(uintptr_t)fdtaddr, hdr->second_size);
 		}
 #endif /*CONFIG_OF_LIBFDT*/
 	}

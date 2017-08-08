@@ -48,7 +48,7 @@ struct bootloader_message_ab {
 #define BOOTCTRL_OFFSET         \
 	(u32)(&(((struct bootloader_message_ab *)0)->slot_suffix[BOOTCTRL_IDX]))
 #define MISC_COMMAND \
-	(u32)(&(((struct bootloader_message *)0)->command[MISC_COMMAND_IDX]))
+	(u32)(uintptr_t)(&(((struct bootloader_message *)0)->command[MISC_COMMAND_IDX]))
 int bcb_rw_block(bool bread, char **ppblock,
 		uint *pblksize, char *pblock_write, uint offset, uint size);
 
