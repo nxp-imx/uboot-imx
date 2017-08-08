@@ -7,6 +7,7 @@
 
 #ifndef FSL_FASTBOOT_H
 #define FSL_FASTBOOT_H
+#include <stdbool.h>
 
 #define FASTBOOT_PTENTRY_FLAGS_REPEAT(n)              (n & 0x0f)
 #define FASTBOOT_PTENTRY_FLAGS_REPEAT_MASK            0x0000000F
@@ -199,6 +200,8 @@ void fastboot_run_bootmode(void);
 /*Setup board-relative fastboot environment */
 void board_fastboot_setup(void);
 
+/*check whether bootloader is overlay with GPT table*/
+bool bootloader_gpt_overlay(void);
 /* Check whether the combo keys pressed
  * Return 1 if combo keys pressed for recovery boot
  * Return 0 if no combo keys pressed

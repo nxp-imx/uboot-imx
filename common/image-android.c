@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <asm/bootm.h>
 #include <asm/imx-common/boot_mode.h>
+#include <fsl_fastboot.h>
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 
@@ -111,7 +112,7 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	if (bootdev == SD1_BOOT || bootdev == SD2_BOOT ||
 		bootdev == SD3_BOOT || bootdev == SD4_BOOT) {
 		sprintf(newbootargs,
-			" androidboot.storage_type=sd gpt");
+			" androidboot.storage_type=sd");
 	} else if (bootdev == MMC1_BOOT || bootdev == MMC2_BOOT ||
 		bootdev == MMC3_BOOT || bootdev == MMC4_BOOT) {
 		sprintf(newbootargs,
@@ -122,6 +123,10 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	} else
 		printf("boot device type is incorrect.\n");
 	strcat(commandline, newbootargs);
+	if (bootloader_gpt_overlay()) {
+		sprintf(newbootargs, " gpt");
+		strcat(commandline, newbootargs);
+	}
 
 #ifdef CONFIG_FSL_BOOTCTL
 	sprintf(newbootargs, " androidboot.slot_suffix=%s", get_slot_suffix());
