@@ -148,7 +148,7 @@ int bcb_rw_block(bool bread, char **ppblock,
 			(int)(blk_size * block_cnt));
 			return -1;
 		}
-		sprintf(addr_str, "0x%x", (unsigned int)p_block);
+		sprintf(addr_str, "0x%x", (unsigned int)(uintptr_t)p_block);
 		ret = do_raw_read(NULL, 0, 6, argv);
 		if (ret) {
 			free(p_block);
@@ -159,7 +159,7 @@ int bcb_rw_block(bool bread, char **ppblock,
 		*ppblock = p_block;
 		*pblksize = (uint)blk_size;
 	} else {
-		sprintf(addr_str, "0x%x", (unsigned int)pblock_write);
+		sprintf(addr_str, "0x%x", (unsigned int)(uintptr_t)pblock_write);
 		ret = do_write(NULL, 0, 6, argv);
 		if (ret) {
 			printf("do_write failed, ret %d\n", ret);
