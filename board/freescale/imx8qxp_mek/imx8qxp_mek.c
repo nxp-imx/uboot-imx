@@ -418,8 +418,6 @@ static void setup_otg(void)
 {
 	/* power control by IO expander 2 IO02*/
 
-	/* Enable usb power */
-	init_otg_power();
 }
 #endif
 
