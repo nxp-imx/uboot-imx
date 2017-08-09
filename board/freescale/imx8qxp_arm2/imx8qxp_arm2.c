@@ -496,14 +496,6 @@ void pci_init_board(void)
 
 #endif
 
-#ifdef CONFIG_USB_EHCI_MX6
-static void setup_otg(void)
-{
-	/* Enable usb power */
-	init_otg_power();
-}
-#endif
-
 int board_init(void)
 {
 #ifdef CONFIG_MXC_GPIO
@@ -517,11 +509,6 @@ int board_init(void)
 #ifdef CONFIG_NAND_BOOT
 	imx8qm_gpmi_nand_initialize();
 #endif
-
-#ifdef CONFIG_USB_EHCI_MX6
-	setup_otg();
-#endif
-
 	return 0;
 }
 
