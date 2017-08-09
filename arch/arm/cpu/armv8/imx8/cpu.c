@@ -225,27 +225,6 @@ int imx8qxp_wake_secondary_cores(void)
 	return 0;
 }
 
-int init_otg_power(void)
-{
-	struct power_domain pd;
-	int ret = 0;
-
-	/* Power on usb */
-	if (!power_domain_lookup_name("conn_usb0", &pd)) {
-		ret = power_domain_on(&pd);
-		if (ret)
-			printf("conn_usb0 Power up failed! (error = %d)\n", ret);
-	}
-
-	if (!power_domain_lookup_name("conn_usb0_phy", &pd)) {
-		ret = power_domain_on(&pd);
-		if (ret)
-			printf("conn_usb0_phy Power up failed! (error = %d)\n", ret);
-	}
-
-	return ret;
-}
-
 #define FUSE_MAC0_WORD0 452
 #define FUSE_MAC0_WORD1 453
 #define FUSE_MAC1_WORD0 454
