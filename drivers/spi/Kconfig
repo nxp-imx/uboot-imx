@@ -133,14 +133,6 @@ config EXYNOS_SPI
 	  access the SPI NOR flash on platforms embedding this Samsung
 	  Exynos IP core.
 
-config FSL_DSPI
-	bool "Freescale DSPI driver"
-	help
-	  Enable the Freescale DSPI driver. This driver can be used to
-	  access the SPI NOR flash and SPI Data flash on platforms embedding
-	  this Freescale DSPI IP core. LS102xA and Colibri VF50/VF61 platforms
-	  use this driver.
-
 config ICH_SPI
 	bool "Intel ICH SPI driver"
 	help
@@ -397,6 +389,14 @@ config FSL_ESPI
 	  Enable the Freescale eSPI driver. This driver can be used to
 	  access the SPI interface and SPI NOR flash on platforms embedding
 	  this Freescale eSPI IP core.
+
+config FSL_DSPI
+	bool "Freescale DSPI driver"
+	help
+	  Enable the Freescale DSPI driver. This driver can be used to
+	  access the SPI NOR flash and SPI Data flash on platforms embedding
+	  this Freescale DSPI IP core. LS102xA and Colibri VF50/VF61 platforms
+	  use this driver.
 
 config FSL_FSPI
 	bool "Freescale FlexSPI driver"
