@@ -88,7 +88,7 @@
 #define M4_BOOT_ENV \
 	"m4_0_image=m4_0.bin\0" \
 	"loadm4image_0=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4_0_image}\0" \
-	"m4boot_0=run loadm4image_0; bootaux ${loadaddr} 0\0" \
+	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
 
 #ifdef CONFIG_NAND_BOOT
 #define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
