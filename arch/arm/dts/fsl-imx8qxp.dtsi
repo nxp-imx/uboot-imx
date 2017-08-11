@@ -1935,6 +1935,8 @@
 		assigned-clocks = <&clk IMX8QXP_SDHC2_DIV>;
 		assigned-clock-rates = <200000000>;
 		power-domains = <&pd_conn_sdch2>;
+		fsl,tuning-start-tap = <20>;
+		fsl,tuning-step = <2>;
 		status = "disabled";
 	};
 
