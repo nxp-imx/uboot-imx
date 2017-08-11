@@ -202,11 +202,22 @@
 
 
 /* Default environment is in SD */
-#define CONFIG_ENV_OFFSET       (14 * SZ_64K)
 #define CONFIG_ENV_SIZE			0x1000
+
+#ifdef CONFIG_QSPI_BOOT
+#define CONFIG_ENV_IS_IN_SPI_FLASH
+#define CONFIG_ENV_OFFSET       (1024 * 1024)
+#define CONFIG_ENV_SECT_SIZE	(128 * 1024)
+#define CONFIG_ENV_SPI_BUS	CONFIG_SF_DEFAULT_BUS
+#define CONFIG_ENV_SPI_CS	CONFIG_SF_DEFAULT_CS
+#define CONFIG_ENV_SPI_MODE	CONFIG_SF_DEFAULT_MODE
+#define CONFIG_ENV_SPI_MAX_HZ	CONFIG_SF_DEFAULT_SPEED
+#else
+#define CONFIG_ENV_OFFSET       (14 * SZ_64K)
 #define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
+#endif
 
 /* On LPDDR4 board, USDHC1 is for eMMC, USDHC2 is for SD on CPU board, USDHC3 is for SD on base board
   * On DDR4 board, USDHC1 is mux for NAND, USDHC2 is for SD, USDHC3 is for SD on base board
