@@ -1186,6 +1186,10 @@ static int fsl_fspi_probe(struct udevice *bus)
 	fspi_write32(priv->flags, &priv->regs->mcr0,
 		     0xFFFF0000);
 
+	/* Reset the DLL register to default value */
+	fspi_write32(priv->flags, &priv->regs->dllacr, 0x0100);
+	fspi_write32(priv->flags, &priv->regs->dllbcr, 0x0100);
+
 	/* Flash Size in KByte */
 	total_size = FSL_FSPI_FLASH_SIZE * FSL_FSPI_FLASH_NUM >> 10;
 
