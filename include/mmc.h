@@ -623,6 +623,7 @@ void mmc_destroy(struct mmc *mmc);
 int mmc_unbind(struct udevice *dev);
 int mmc_initialize(bd_t *bis);
 int mmc_init(struct mmc *mmc);
+int mmc_send_tuning(struct mmc *mmc, u32 opcode, int *cmd_error);
 int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size);
 int mmc_set_clock(struct mmc *mmc, uint clock, u8 disable);
 struct mmc *find_mmc_device(int dev_num);
