@@ -234,9 +234,6 @@ static int bus_i2c_read(struct udevice *bus, u32 chip, u8 *buf, int len)
 	result = bus_i2c_receive(bus, buf, len);
 	if (result)
 		return result;
-	result = bus_i2c_stop(bus);
-	if (result)
-		return result;
 
 	return result;
 }
@@ -249,9 +246,6 @@ static int bus_i2c_write(struct udevice *bus, u32 chip, u8 *buf, int len)
 	if (result)
 		return result;
 	result = bus_i2c_send(bus, buf, len);
-	if (result)
-		return result;
-	result = bus_i2c_stop(bus);
 	if (result)
 		return result;
 
@@ -382,7 +376,7 @@ static int imx_lpi2c_probe_chip(struct udevice *bus, u32 chip,
 
 static int imx_lpi2c_xfer(struct udevice *bus, struct i2c_msg *msg, int nmsgs)
 {
-	int ret = 0;
+	int ret = 0, ret_stop;
 
 	for (; nmsgs > 0; nmsgs--, msg++) {
 		debug("i2c_xfer: chip=0x%x, len=0x%x\n", msg->addr, msg->len);
@@ -399,6 +393,12 @@ static int imx_lpi2c_xfer(struct udevice *bus, struct i2c_msg *msg, int nmsgs)
 
 	if (ret)
 		debug("i2c_write: error sending\n");
+
+	ret_stop = bus_i2c_stop(bus);
+	if (ret_stop)
+		debug("i2c_xfer: stop bus error\n");
+
+	ret |= ret_stop;
 
 	return ret;
 }
