@@ -24,6 +24,13 @@
 	model = "Freescale i.MX8QXP MEK";
 	compatible = "fsl,imx8qxp-mek", "fsl,imx8qxp";
 
+	aliases {
+		i2c4 = &bb_i2c1;
+		i2c5 = &mfi_i2c1;
+		i2c6 = &i2cexp1_i2c1;
+		i2c7 = &i2cexp2_i2c1;
+	};
+
 	chosen {
 		bootargs = "console=ttyLP0,115200 earlycon=lpuart32,0x5a060000,115200";
 		stdout-path = &lpuart0;
@@ -331,6 +338,12 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x2>;
+		};
+
+		i2cexp2_i2c1: i2c@3 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x3>;
 
 			pca9557_a: gpio@1a {
 				compatible = "nxp,pca9557";
@@ -338,12 +351,6 @@
 				gpio-controller;
 				#gpio-cells = <2>;
 			};
-		};
-
-		i2cexp2_i2c1: i2c@3 {
-			#address-cells = <1>;
-			#size-cells = <0>;
-			reg = <0x3>;
 
 			pca9557_b: gpio@1d {
 				compatible = "nxp,pca9557";
