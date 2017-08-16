@@ -571,6 +571,30 @@ int is_recovery_key_pressing(void)
 #endif /*CONFIG_ANDROID_RECOVERY*/
 #endif /*CONFIG_FSL_FASTBOOT*/
 
+/* Only Enable USB3 resources currently */
+int board_usb_init(int index, enum usb_init_type init)
+{
+#ifndef CONFIG_DM_USB
+	struct power_domain pd;
+	int ret;
+
+	/* Power on usb */
+	if (!power_domain_lookup_name("conn_usb2", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret)
+			printf("conn_usb2 Power up failed! (error = %d)\n", ret);
+	}
+
+	if (!power_domain_lookup_name("conn_usb2_phy", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret)
+			printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
+	}
+#endif
+
+	return 0;
+}
+
 #if defined(CONFIG_VIDEO_IMXDPUV1)
 static void enable_lvds(struct display_info_t const *dev)
 {

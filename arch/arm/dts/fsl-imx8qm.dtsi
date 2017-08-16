@@ -71,6 +71,8 @@
 		mmc2 = &usdhc3;
 		usb0 = &usbotg1;
 		usbphy0 = &usbphy1;
+		usb1 = &usb2;
+		usbphy1 = &usb2_phy;
 		spi0 = &flexspi0;
 	};
 
@@ -2254,6 +2256,20 @@
 		status = "disabled";
 		#stream-id-cells = <1>;
 		power-domains = <&pd_conn_usbotg0>;
+	};
+
+	usb2_phy: phy@0x5b160000 {
+		compatible = "fsl,imx8-usb-phy";
+		reg = <0x0 0x5b160000 0x0 0x10000>;
+		power-domains = <&pd_conn_usb2_phy>;
+       };
+
+	usb2: usb@0x5b110000 {
+		compatible = "fsl,imx8-usb3";
+		reg = <0x0 0x5b110000 0x0 0x38000>;
+		fsl,usbphy = <&usb2_phy>;
+		status = "disabled";
+		power-domains = <&pd_conn_usb2>;
 	};
 
 	ddr_pmu0: ddr_pmu@5c020000 {
