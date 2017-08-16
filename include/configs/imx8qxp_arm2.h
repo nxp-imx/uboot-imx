@@ -290,12 +290,22 @@
 #define CONFIG_APBH_DMA_BURST8
 #endif
 
-/* USB OTG controller configs */
+/* USB Config */
 #ifdef CONFIG_CMD_USB
+#define CONFIG_USB_MAX_CONTROLLER_COUNT 2
+
+/* USB 3.0 controller configs */
+#ifdef CONFIG_USB_XHCI_IMX8
+#define CONFIG_SYS_USB_XHCI_MAX_ROOT_PORTS	2
+#endif
+
+/* USB OTG controller configs */
+#ifdef CONFIG_USB_EHCI_HCD
 #define CONFIG_USB_HOST_ETHER
 #define CONFIG_USB_ETHER_ASIX
 #define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
 #endif
+#endif /* CONFIG_CMD_USB */
 
 #ifdef CONFIG_USB_GADGET
 #define CONFIG_USBD_HS
