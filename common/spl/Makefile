@@ -27,4 +27,5 @@ obj-$(CONFIG_SPL_SATA_SUPPORT) += spl_sata.o
 obj-$(CONFIG_SPL_DFU_SUPPORT) += spl_dfu.o
 obj-$(CONFIG_SPL_SPI_LOAD) += spl_spi.o
 obj-$(CONFIG_SPL_RAM_SUPPORT) += spl_ram.o
+obj-$(CONFIG_SPL_USB_SDP_SUPPORT) += spl_sdp.o
 endif
