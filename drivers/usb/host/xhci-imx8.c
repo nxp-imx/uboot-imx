@@ -147,6 +147,13 @@ void imx8_xhci_init(void)
 	debug("check CNR has finished\n");
 }
 
+void imx8_xhci_reset(void)
+{
+	/* Set CORE ctrl to default value, that all rst are hold */
+	writel(0xfc000001, USB3_CORE_CTRL1);
+}
+
+
 #ifdef CONFIG_DM_USB
 static int xhci_imx8_probe(struct udevice *dev)
 {
@@ -198,7 +205,11 @@ static int xhci_imx8_probe(struct udevice *dev)
 
 static int xhci_imx8_remove(struct udevice *dev)
 {
-	return xhci_deregister(dev);
+	int ret = xhci_deregister(dev);
+	if (!ret)
+		imx8_xhci_reset();
+
+	return ret;
 }
 
 static const struct udevice_id xhci_usb_ids[] = {
@@ -250,5 +261,6 @@ int xhci_hcd_init(int index, struct xhci_hccr **ret_hccr,
 
 void xhci_hcd_stop(int index)
 {
+	imx8_xhci_reset();
 }
 #endif
