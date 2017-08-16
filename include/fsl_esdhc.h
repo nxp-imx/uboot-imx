@@ -41,6 +41,27 @@
 #define VENDORSPEC_IPGEN	0x00000800
 #define VENDORSPEC_INIT		0x20007809
 
+#define	MIX_CTRL_DDREN		(1 << 3)
+#define MIX_CTRL_DTDSEL_READ	(1 << 4)
+#define	MIX_CTRL_AC23EN		(1 << 7)
+#define	MIX_CTRL_EXE_TUNE	(1 << 22)
+#define	MIX_CTRL_SMPCLK_SEL	(1 << 23)
+#define	MIX_CTRL_AUTO_TUNE_EN	(1 << 24)
+#define	MIX_CTRL_FBCLK_SEL	(1 << 25)
+#define	MIX_CTRL_HS400_EN	(1 << 26)
+#define	MIX_CTRL_HS400_ES	(1 << 27)
+/* Bits 3 and 6 are not SDHCI standard definitions */
+#define	MIX_CTRL_SDHCI_MASK	0xb7
+/* Tuning bits */
+#define	MIX_CTRL_TUNING_MASK	0x03c00000
+
+#define ESDHC_STD_TUNING_EN             (1 << 24)
+/* NOTE: the minimum valid tuning start tap for mx6sl is 1 */
+#define ESDHC_TUNING_START_TAP_DEFAULT	0x1
+#define ESDHC_TUNING_START_TAP_MASK	0xff
+#define ESDHC_TUNING_STEP_MASK		0x00070000
+#define ESDHC_TUNING_STEP_SHIFT		16
+
 #define IRQSTAT			0x0002e030
 #define IRQSTAT_DMAE		(0x10000000)
 #define IRQSTAT_AC12E		(0x01000000)
