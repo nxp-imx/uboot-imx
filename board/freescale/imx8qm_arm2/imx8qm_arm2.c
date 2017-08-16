@@ -386,10 +386,14 @@ static int setup_fec(int ind)
 
 #ifdef CONFIG_MXC_GPIO
 
+#define LVDS_ENABLE IMX_GPIO_NR(1, 6)
+#define MIPI_ENABLE IMX_GPIO_NR(1, 7)
 #define DEBUG_LED   IMX_GPIO_NR(2, 15)
 #define IOEXP_RESET IMX_GPIO_NR(1, 12)
 
 static iomux_cfg_t board_gpios[] = {
+	SC_P_LVDS0_I2C0_SCL | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
+	SC_P_LVDS0_I2C0_SDA | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
 	SC_P_LVDS1_I2C0_SCL | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
 	SC_P_SPDIF0_TX | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
 };
@@ -404,6 +408,14 @@ static void board_gpio_init(void)
 	/* enable i2c port expander assert reset line */
 	gpio_request(IOEXP_RESET, "ioexp_rst");
 	gpio_direction_output(IOEXP_RESET, 1);
+
+	/* enable LVDS SAS boards */
+	gpio_request(LVDS_ENABLE, "lvds_enable");
+	gpio_direction_output(LVDS_ENABLE, 1);
+
+	/* enable MIPI SAS boards */
+	gpio_request(MIPI_ENABLE, "mipi_enable");
+	gpio_direction_output(MIPI_ENABLE, 1);
 }
 #endif
 
