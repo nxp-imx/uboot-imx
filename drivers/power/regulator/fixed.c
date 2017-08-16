@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2015 Samsung Electronics
+ *  Copyright 2017 NXP
  *
  *  Przemyslaw Marczak <p.marczak@samsung.com>
  *
@@ -19,6 +20,7 @@ DECLARE_GLOBAL_DATA_PTR;
 struct fixed_regulator_platdata {
 	struct gpio_desc gpio; /* GPIO for regulator enable control */
 	unsigned int startup_delay_us;
+	unsigned int off_on_delay_us;
 };
 
 static int fixed_regulator_ofdata_to_platdata(struct udevice *dev)
@@ -53,6 +55,8 @@ static int fixed_regulator_ofdata_to_platdata(struct udevice *dev)
 	/* Get optional ramp up delay */
 	dev_pdata->startup_delay_us = dev_read_u32_default(dev,
 							"startup-delay-us", 0);
+	dev_pdata->off_on_delay_us = dev_read_u32_default(dev,
+						     "off-on-delay-us", 0);
 
 	return 0;
 }
@@ -125,6 +129,10 @@ static int fixed_regulator_set_enable(struct udevice *dev, bool enable)
 	if (enable && dev_pdata->startup_delay_us)
 		udelay(dev_pdata->startup_delay_us);
 	debug("%s: done\n", __func__);
+
+	if (!enable && dev_pdata->off_on_delay_us) {
+		udelay(dev_pdata->off_on_delay_us);
+	}
 
 	return 0;
 }
