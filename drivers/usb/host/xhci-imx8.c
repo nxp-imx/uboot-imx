@@ -16,6 +16,7 @@
 #include <usb/imx8_usb3_reg_def.h>
 #include <dm.h>
 #include <power-domain.h>
+#include <asm/arch/clock.h>
 
 /* Declare global data pointer */
 DECLARE_GLOBAL_DATA_PTR;
@@ -181,6 +182,8 @@ static int xhci_imx8_probe(struct udevice *dev)
 		return ret;
 	}
 
+	init_clk_usb3(dev->seq);
+
 	imx8_xhci_init();
 
 	hccr = (struct xhci_hccr *)HCIVERSION_CAPLENGTH;
@@ -227,6 +230,8 @@ int xhci_hcd_init(int index, struct xhci_hccr **ret_hccr,
 		printf("Failed to initialize board for USB\n");
 		return ret;
 	}
+
+	init_clk_usb3(index);
 
 	imx8_xhci_init();
 

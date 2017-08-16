@@ -212,6 +212,32 @@ void enable_usboh3_clk(unsigned char enable)
 	return;
 }
 
+void init_clk_usb3(int index)
+{
+	sc_err_t err;
+	sc_ipc_t ipc;
+
+	ipc = gd->arch.ipc_channel_handle;
+
+	err = sc_pm_clock_enable(ipc, SC_R_USB_2, SC_PM_CLK_MISC, true, false);
+	if (err != SC_ERR_NONE)
+		printf("USB3 set clock failed!, line=%d (error = %d)\n",
+			__LINE__, err);
+
+	err = sc_pm_clock_enable(ipc, SC_R_USB_2, SC_PM_CLK_MST_BUS, true, false);
+	if (err != SC_ERR_NONE)
+		printf("USB3 set clock failed!, line=%d (error = %d)\n",
+			__LINE__, err);
+
+	err = sc_pm_clock_enable(ipc, SC_R_USB_2, SC_PM_CLK_PER, true, false);
+	if (err != SC_ERR_NONE)
+		printf("USB3 set clock failed!, line=%d (error = %d)\n",
+			__LINE__, err);
+
+	return;
+}
+
+
 void init_clk_usdhc(u32 index)
 {
 #ifdef CONFIG_IMX8QM

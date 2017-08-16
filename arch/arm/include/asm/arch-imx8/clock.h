@@ -33,5 +33,6 @@ int set_clk_qspi(void);
 u32 imx_get_fecclk(void);
 void init_clk_usdhc(u32 index);
 void init_clk_gpmi_nand(void);
+void init_clk_usb3(int index);
 
 #endif /* __ASM_ARCH_CLOCK_H__ */
