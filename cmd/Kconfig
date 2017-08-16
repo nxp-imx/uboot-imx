@@ -475,6 +475,13 @@ config CMD_DFU
 	  Enables the command "dfu" which is used to have U-Boot create a DFU
 	  class device via USB.
 
+config CMD_USB_SDP
+	bool "sdp"
+	select USB_FUNCTION_SDP
+	help
+	  Enables the command "sdp" which is used to have U-Boot emulating the
+	  Serial Download Protocol (SDP) via USB.
+
 config CMD_USB_MASS_STORAGE
 	bool "UMS usb mass storage"
 	help
