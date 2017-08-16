@@ -23,6 +23,8 @@
 #include <libfdt.h>
 #include <fdt_support.h>
 #include <fdtdec.h>
+#include <thermal.h>
+#include <asm/arch/cpu.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -71,16 +73,53 @@ const char *get_imx8_rev(u32 rev)
 	}
 }
 
+const char *get_core_name(void)
+{
+	if (is_cortex_a53())
+		return "A53";
+	else if (is_cortex_a35())
+		return "A35";
+	else if (is_cortex_a72())
+		return "A72";
+	else
+		return "?";
+}
+
+
 int print_cpuinfo(void)
 {
 	u32 cpurev;
+
 	cpurev = get_cpu_rev();
 
-	printf("CPU:   Freescale i.MX%s rev%s at %d MHz\n",
+	printf("CPU:   Freescale i.MX%s rev%s %s at %d MHz",
 			get_imx8_type((cpurev & 0xFF000) >> 12),
 			get_imx8_rev((cpurev & 0xFFF)),
+			get_core_name(),
 		mxc_get_clock(MXC_ARM_CLK) / 1000000);
 
+#if defined(CONFIG_IMX_SC_THERMAL)
+	struct udevice *thermal_dev;
+	int cpu_tmp, ret;
+
+	if (is_imx8qm() && is_cortex_a72())
+		ret = uclass_get_device_by_name(UCLASS_THERMAL, "cpu-thermal1", &thermal_dev);
+	else
+		ret = uclass_get_device_by_name(UCLASS_THERMAL, "cpu-thermal0", &thermal_dev);
+
+	if (!ret) {
+		ret = thermal_get_temp(thermal_dev, &cpu_tmp);
+
+		if (!ret)
+			printf(" at %dC", cpu_tmp);
+		else
+			debug(" - invalid sensor data");
+	} else {
+		debug(" - invalid sensor device");
+	}
+#endif
+
+	printf("\n");
 	return 0;
 }
 #endif
