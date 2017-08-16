@@ -585,13 +585,9 @@ int is_recovery_key_pressing(void)
 /* Only Enable USB3 resources currently */
 int board_usb_init(int index, enum usb_init_type init)
 {
-	sc_err_t err;
-	sc_ipc_t ipc;
-	sc_rsrc_t usbs[2] = {SC_R_USB_2, SC_R_USB_2_PHY};
+#ifndef CONFIG_DM_USB
 	struct power_domain pd;
 	int ret;
-
-	ipc = gd->arch.ipc_channel_handle;
 
 	/* Power on usb */
 	if (!power_domain_lookup_name("conn_usb2", &pd)) {
@@ -605,21 +601,7 @@ int board_usb_init(int index, enum usb_init_type init)
 		if (ret)
 			printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
 	}
-
-	err = sc_pm_clock_enable(ipc, usbs[0], SC_PM_CLK_MISC, true, false);
-	if (err != SC_ERR_NONE)
-		printf("USB3 set clock failed!, line=%d (error = %d)\n",
-			__LINE__, err);
-
-	err = sc_pm_clock_enable(ipc, usbs[0], SC_PM_CLK_MST_BUS, true, false);
-	if (err != SC_ERR_NONE)
-		printf("USB3 set clock failed!, line=%d (error = %d)\n",
-			__LINE__, err);
-
-	err = sc_pm_clock_enable(ipc, usbs[0], SC_PM_CLK_PER, true, false);
-	if (err != SC_ERR_NONE)
-		printf("USB3 set clock failed!, line=%d (error = %d)\n",
-			__LINE__, err);
+#endif
 
 	return 0;
 }

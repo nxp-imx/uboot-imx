@@ -418,3 +418,7 @@
 	adp-disable;
 	status = "okay";
 };
+
+&usb2 {
+	status = "okay";
+};
