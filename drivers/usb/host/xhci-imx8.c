@@ -14,6 +14,8 @@
 #include <linux/compat.h>
 #include "xhci.h"
 #include <usb/imx8_usb3_reg_def.h>
+#include <dm.h>
+#include <power-domain.h>
 
 /* Declare global data pointer */
 DECLARE_GLOBAL_DATA_PTR;
@@ -144,6 +146,75 @@ void imx8_xhci_init(void)
 	debug("check CNR has finished\n");
 }
 
+#ifdef CONFIG_DM_USB
+static int xhci_imx8_probe(struct udevice *dev)
+{
+	struct xhci_hccr *hccr;
+	struct xhci_hcor *hcor;
+
+	int ret = 0;
+	int len;
+
+	/* Need to power on the PHY before access it */
+#if CONFIG_IS_ENABLED(POWER_DOMAIN)
+	struct udevice phy_dev;
+	struct power_domain pd;
+	const void *blob = gd->fdt_blob;
+	int offset = dev_of_offset(dev), phy_off;
+
+	phy_off = fdtdec_lookup_phandle(blob,
+						offset,
+						"fsl,usbphy");
+	if (phy_off < 0)
+		return -EINVAL;
+
+	phy_dev.of_offset = phy_off;
+	if (!power_domain_get(&phy_dev, &pd)) {
+		if (power_domain_on(&pd))
+			return -EINVAL;
+	}
+#endif
+
+	ret = board_usb_init(dev->seq, USB_INIT_HOST);
+	if (ret != 0) {
+		printf("Failed to initialize board for USB\n");
+		return ret;
+	}
+
+	imx8_xhci_init();
+
+	hccr = (struct xhci_hccr *)HCIVERSION_CAPLENGTH;
+	len = HC_LENGTH(xhci_readl(&hccr->cr_capbase));
+	hcor = (struct xhci_hcor *)((uintptr_t) hccr + len);
+
+	printf("XHCI-imx8 init hccr 0x%p and hcor 0x%p hc_length %d\n",
+	      (uint32_t *)hccr, (uint32_t *)hcor, len);
+
+	return xhci_register(dev, hccr, hcor);
+}
+
+static int xhci_imx8_remove(struct udevice *dev)
+{
+	return xhci_deregister(dev);
+}
+
+static const struct udevice_id xhci_usb_ids[] = {
+	{ .compatible = "fsl,imx8-usb3", },
+	{ }
+};
+
+U_BOOT_DRIVER(xhci_imx8) = {
+	.name	= "xhci_imx8",
+	.id	= UCLASS_USB,
+	.of_match = xhci_usb_ids,
+	.probe = xhci_imx8_probe,
+	.remove = xhci_imx8_remove,
+	.ops	= &xhci_usb_ops,
+	.platdata_auto_alloc_size = sizeof(struct usb_platdata),
+	.priv_auto_alloc_size = sizeof(struct xhci_ctrl),
+	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
+};
+#else
 int xhci_hcd_init(int index, struct xhci_hccr **ret_hccr,
 		  struct xhci_hcor **ret_hcor)
 {
@@ -175,3 +246,4 @@ int xhci_hcd_init(int index, struct xhci_hccr **ret_hccr,
 void xhci_hcd_stop(int index)
 {
 }
+#endif
