@@ -11,6 +11,7 @@
 #include <asm/arch/imx8-pins.h>
 #include <asm/arch/i2c.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/arch/cpu.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -24,10 +25,13 @@ static u32 get_arm_main_clk(void)
 	sc_err_t err;
 	sc_pm_clock_rate_t clkrate;
 
-	if (is_imx8qm())
+	if (is_cortex_a53())
 		err = sc_pm_get_clock_rate((sc_ipc_t)gd->arch.ipc_channel_handle,
 				SC_R_A53, SC_PM_CLK_CPU, &clkrate);
-	else if (is_imx8qxp())
+	else if (is_cortex_a72())
+		err = sc_pm_get_clock_rate((sc_ipc_t)gd->arch.ipc_channel_handle,
+				SC_R_A72, SC_PM_CLK_CPU, &clkrate);
+	else if (is_cortex_a35())
 		err = sc_pm_get_clock_rate((sc_ipc_t)gd->arch.ipc_channel_handle,
 				SC_R_A35, SC_PM_CLK_CPU, &clkrate);
 	else
