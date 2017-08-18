@@ -132,6 +132,26 @@ static int pca953x_read_regs(struct udevice *dev, int reg, u8 *val)
 	return ret;
 }
 
+static int pca953x_write_regs(struct udevice *dev, int reg, u8 *val)
+{
+	struct pca953x_info *info = dev_get_platdata(dev);
+	int ret = 0;
+
+	if (info->gpio_count <= 8) {
+		ret = dm_i2c_write(dev, reg, val, 1);
+	} else if (info->gpio_count <= 16) {
+		ret = dm_i2c_write(dev, reg << 1, val, info->bank_count);
+	} else if (info->gpio_count == 40) {
+		/* Auto increment */
+		ret = dm_i2c_write(dev, (reg << 3) | 0x80, val, info->bank_count);
+	} else {
+		dev_err(dev, "Unsupported now\n");
+		return -EINVAL;
+	}
+
+	return ret;
+}
+
 static int pca953x_is_output(struct udevice *dev, int offset)
 {
 	struct pca953x_info *info = dev_get_platdata(dev);
@@ -254,6 +274,7 @@ static int pca953x_probe(struct udevice *dev)
 	int addr;
 	ulong driver_data;
 	int ret;
+	u8 val[MAX_BANK];
 
 	if (!info) {
 		dev_err(dev, "platdata not ready\n");
@@ -296,6 +317,14 @@ static int pca953x_probe(struct udevice *dev)
 	ret = pca953x_read_regs(dev, PCA953X_DIRECTION, info->reg_direction);
 	if (ret) {
 		dev_err(dev, "Error reading direction register\n");
+		return ret;
+	}
+
+	/* Clear the polarity registers to no invert */
+	memset(val, 0, MAX_BANK);
+	ret = pca953x_write_regs(dev, PCA953X_INVERT, &val);
+	if (ret) {
+		dev_err(dev, "Error writing invert register\n");
 		return ret;
 	}
 
