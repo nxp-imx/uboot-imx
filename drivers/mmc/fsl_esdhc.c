@@ -104,14 +104,6 @@ struct esdhc_soc_data {
 	u32 caps;
 };
 
-static struct esdhc_soc_data usdhc_imx8qm_data = {
-	.flags = ESDHC_FLAG_USDHC | ESDHC_FLAG_STD_TUNING
-			| ESDHC_FLAG_HAVE_CAP1 | ESDHC_FLAG_HS200
-			| ESDHC_FLAG_HS400 | ESDHC_FLAG_HS400_ES,
-	.caps = UHS_CAPS | MMC_MODE_HS200 | MMC_MODE_DDR_52MHz
-		| MMC_MODE_HS_52MHz | MMC_MODE_HS,
-};
-
 /**
  * struct fsl_esdhc_priv
  *
@@ -870,9 +862,13 @@ static int esdhc_execute_tuning(struct mmc *mmc, uint32_t opcode)
 
 static int esdhc_set_vdd(struct mmc *mmc, bool enable)
 {
+#if CONFIG_IS_ENABLED(DM_REGULATOR)
 	struct fsl_esdhc_priv *priv = mmc->priv;
 
 	return regulator_set_enable(priv->vmmc_dev, enable);
+#else
+	return 0;
+#endif
 }
 #endif
 
@@ -880,7 +876,7 @@ static int esdhc_set_ios(struct mmc *mmc)
 {
 	struct fsl_esdhc_priv *priv = mmc->priv;
 	struct fsl_esdhc *regs = priv->esdhc_regs;
-	int ret;
+	int ret __maybe_unused;
 
 #ifdef CONFIG_FSL_ESDHC_USE_PERIPHERAL_CLK
 	/* Select to use peripheral clock */
@@ -1038,8 +1034,6 @@ static const struct mmc_ops esdhc_ops = {
 	.getcd		= esdhc_getcd,
 #if CONFIG_IS_ENABLED(DM_MMC)
 	.execute_tuning	= esdhc_execute_tuning,
-#endif
-#if CONFIG_IS_ENABLED(DM_REGULATOR)
 	.set_vdd = esdhc_set_vdd,
 #endif
 };
@@ -1432,6 +1426,14 @@ static int fsl_esdhc_probe(struct udevice *dev)
 
 	return 0;
 }
+
+static struct esdhc_soc_data usdhc_imx8qm_data = {
+	.flags = ESDHC_FLAG_USDHC | ESDHC_FLAG_STD_TUNING
+			| ESDHC_FLAG_HAVE_CAP1 | ESDHC_FLAG_HS200
+			| ESDHC_FLAG_HS400 | ESDHC_FLAG_HS400_ES,
+	.caps = UHS_CAPS | MMC_MODE_HS200 | MMC_MODE_DDR_52MHz
+		| MMC_MODE_HS_52MHz | MMC_MODE_HS,
+};
 
 static const struct udevice_id fsl_esdhc_ids[] = {
 	{ .compatible = "fsl,imx6ul-usdhc", },
