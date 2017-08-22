@@ -15,6 +15,84 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/*
+ * OCOTP_TESTER3[9:8] (see Fusemap Description Table offset 0x440)
+ * defines a 2-bit SPEED_GRADING
+ */
+#define OCOTP_TESTER3_SPEED_SHIFT	8
+#define OCOTP_TESTER3_SPEED_800MHZ	0
+#define OCOTP_TESTER3_SPEED_1GHZ	1
+#define OCOTP_TESTER3_SPEED_1300HZ	2
+#define OCOTP_TESTER3_SPEED_1500HZ	3
+
+u32 get_cpu_speed_grade_hz(void)
+{
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[1];
+	struct fuse_bank1_regs *fuse =
+		(struct fuse_bank1_regs *)bank->fuse_regs;
+	uint32_t val;
+
+	val = readl(&fuse->tester3);
+	val >>= OCOTP_TESTER3_SPEED_SHIFT;
+	val &= 0x3;
+
+	switch(val) {
+	case OCOTP_TESTER3_SPEED_800MHZ:
+		return 792000000;
+	case OCOTP_TESTER3_SPEED_1GHZ:
+		return 996000000;
+	case OCOTP_TESTER3_SPEED_1300HZ:
+		return 1300000000;
+	case OCOTP_TESTER3_SPEED_1500HZ:
+		return 1500000000;
+	}
+	return 0;
+}
+
+/*
+ * OCOTP_TESTER3[7:6] (see Fusemap Description Table offset 0x440)
+ * defines a 2-bit SPEED_GRADING
+ */
+#define OCOTP_TESTER3_TEMP_SHIFT	6
+
+/* CPU Temperature Grades */
+#define TEMP_COMMERCIAL         0
+#define TEMP_EXTCOMMERCIAL      1
+#define TEMP_INDUSTRIAL         2
+#define TEMP_AUTOMOTIVE         3
+
+
+u32 get_cpu_temp_grade(int *minc, int *maxc)
+{
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[1];
+	struct fuse_bank1_regs *fuse =
+		(struct fuse_bank1_regs *)bank->fuse_regs;
+	uint32_t val;
+
+	val = readl(&fuse->tester3);
+	val >>= OCOTP_TESTER3_TEMP_SHIFT;
+	val &= 0x3;
+
+	if (minc && maxc) {
+		if (val == TEMP_AUTOMOTIVE) {
+			*minc = -40;
+			*maxc = 125;
+		} else if (val == TEMP_INDUSTRIAL) {
+			*minc = -40;
+			*maxc = 105;
+		} else if (val == TEMP_EXTCOMMERCIAL) {
+			*minc = -20;
+			*maxc = 105;
+		} else {
+			*minc = 0;
+			*maxc = 95;
+		}
+	}
+	return val;
+}
+
 int timer_init(void)
 {
 #ifdef CONFIG_SPL_BUILD

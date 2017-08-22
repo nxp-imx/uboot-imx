@@ -590,6 +590,8 @@ int clock_init()
 	clock_enable(CCGR_WDOG2, 1);
 	clock_enable(CCGR_WDOG3, 1);
 
+	clock_enable(CCGR_TSENSOR, 1);
+
 	return 0;
 };
 

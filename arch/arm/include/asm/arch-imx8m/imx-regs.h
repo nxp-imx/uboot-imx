@@ -192,6 +192,17 @@ struct ocotp_regs {
 	} bank[0];
 };
 
+struct fuse_bank1_regs {
+	u32 tester3;
+	u32 rsvd0[3];
+	u32 tester4;
+	u32 rsvd1[3];
+	u32 tester5;
+	u32 rsvd2[3];
+	u32 cfg0;
+	u32 rsvd3[3];
+};
+
 struct fuse_bank9_regs {
 	u32 mac_addr0;
 	u32 rsvd0[3];

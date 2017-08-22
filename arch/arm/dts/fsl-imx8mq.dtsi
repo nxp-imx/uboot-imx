@@ -224,6 +224,7 @@
 		reg = <0x0 0x30260000 0x0 0x10000>;
 		interrupt = <GIC_SPI 49 IRQ_TYPE_LEVEL_HIGH>;
 		little-endian;
+		u-boot,dm-pre-reloc;
 		fsl,tmu-range = <0xa0000 0x90026 0x8004a 0x1006a>;
 		fsl,tmu-calibration = <0x00000000 0x00000020
 				       0x00000001 0x00000028
