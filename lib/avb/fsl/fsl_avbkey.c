@@ -12,6 +12,7 @@
 
 #include <fsl_avb.h>
 #include "fsl_avbkey.h"
+#include "fsl_public_key.h"
 #include "utils.h"
 #include "debug.h"
 
@@ -110,7 +111,63 @@ static int fsl_fuse_write(const uint32_t *buffer, uint32_t length, uint32_t offs
 		);
 }
 
-#ifdef TRUSTY_KEYSLOT_PACKAGE
+#ifdef AVB_RPMB
+static int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset);
+static int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset);
+
+static int rpmb_init(void) {
+	int i;
+	kblb_hdr_t hdr;
+	kblb_tag_t *tag;
+	struct mmc *mmc_dev;
+	uint32_t offset;
+	uint32_t rbidx_len;
+	uint8_t *rbidx;
+
+	/* check init status first */
+	if ((mmc_dev = get_mmc()) == NULL) {
+		ERR("ERROR - get mmc device\n");
+		return -1;
+	}
+	if (rpmb_read(mmc_dev, (uint8_t *)&hdr, sizeof(hdr), 0) != 0) {
+		ERR("read RPMB error\n");
+		return -1;
+	}
+	if (!memcmp(hdr.magic, AVB_KBLB_MAGIC, AVB_KBLB_MAGIC_LEN))
+		return 0;
+	/* init RPMB if not inited before */
+	/* init rollback index */
+	offset = AVB_RBIDX_START;
+	rbidx_len = AVB_RBIDX_LEN;
+	rbidx = malloc(rbidx_len);
+	if (rbidx == NULL)
+		return -1;
+	memset(rbidx, 0, rbidx_len);
+	*(uint64_t *)rbidx = AVB_RBIDX_INITVAL;
+	for (i = 0; i < AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS; i++) {
+		tag = &hdr.rbk_tags[i];
+		tag->flag = AVB_RBIDX_FLAG;
+		tag->offset = offset;
+		tag->len = rbidx_len;
+		if (rpmb_write(mmc_dev, rbidx, tag->len, tag->offset) != 0) {
+			ERR("write RBKIDX RPMB error\n");
+			free(rbidx);
+			return -1;
+		}
+		offset += AVB_RBIDX_ALIGN;
+	}
+	free(rbidx);
+
+	/* init hdr */
+	memcpy(hdr.magic, AVB_KBLB_MAGIC, AVB_KBLB_MAGIC_LEN);
+	if (rpmb_write(mmc_dev, (uint8_t *)&hdr, sizeof(hdr), 0) != 0) {
+		ERR("write RPMB hdr error\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 static void fill_secure_keyslot_package(struct keyslot_package *kp) {
 
 	memcpy((void*)CAAM_ARB_BASE_ADDR, kp, sizeof(struct keyslot_package));
@@ -153,8 +210,8 @@ static int read_keyslot_package(struct keyslot_package* kp) {
 		return -1;
 	}
 
-	mmc_switch_part(mmc, TEE_HWPARTITION_ID);
-	if (mmc->block_dev.block_read(dev_desc, TRUSTY_OS_MMC_BLKS,
+	mmc_switch_part(mmc, KEYSLOT_HWPARTITION_ID);
+	if (mmc->block_dev.block_read(dev_desc, KEYSLOT_BLKS,
 		    1, fill) != 1) {
 		printf("Failed to read rpmbkeyblob.");
 		ret = -1;
@@ -237,8 +294,8 @@ static int gen_rpmb_key(struct keyslot_package *kp) {
 	}
 	memcpy(fill, kp, sizeof(struct keyslot_package));
 
-	mmc_switch_part(mmc, TEE_HWPARTITION_ID);
-	if (mmc->block_dev.block_write(dev_desc, TRUSTY_OS_MMC_BLKS,
+	mmc_switch_part(mmc, KEYSLOT_HWPARTITION_ID);
+	if (mmc->block_dev.block_write(dev_desc, KEYSLOT_BLKS,
 		    1, (void *)fill) != 1) {
 		printf("Failed to write rpmbkeyblob.");
 	}
@@ -275,6 +332,8 @@ int init_avbkey(void) {
 		printf("keyslot package magic error. Will generate new one\n");
 		gen_rpmb_key(&kp);
 	}
+	if (rpmb_init())
+		return -1;
 	fill_secure_keyslot_package(&kp);
 	return 0;
 }
@@ -373,7 +432,11 @@ static int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t
 	margin_pos_t margin;
 	char original_part;
 	uint8_t extract_key[RPMBKEY_LENGTH];
-	uint8_t blob[RPMBKEY_FUSE_LEN];
+	uint8_t *blob = NULL;
+
+#ifdef AVB_RPMB
+	struct keyslot_package kp;
+#endif
 
 	int ret;
 
@@ -401,11 +464,20 @@ static int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t
 	}
 
 	/* get rpmb key */
+	blob = (uint8_t *)memalign(ALIGN_BYTES, RPMBKEY_BLOB_LEN);
+#ifdef AVB_RPMB
+	if (read_keyslot_package(&kp)) {
+#else
 	if (fsl_fuse_read((uint32_t *)blob, RPMBKEY_FUSE_LENW, RPMBKEY_FUSE_OFFSET)){
+#endif
 		ERR("read rpmb key error\n");
 		ret = -1;
 		goto fail;
 	}
+	/* copy rpmb key to blob */
+#ifdef AVB_RPMB
+	memcpy(blob, kp.rpmb_keyblob, RPMBKEY_BLOB_LEN);
+#endif
 	caam_open();
 	if (caam_decap_blob((uint32_t)extract_key, (uint32_t)blob, RPMBKEY_LENGTH)) {
 		ERR("decap rpmb key error\n");
@@ -413,13 +485,13 @@ static int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t
 		goto fail;
 	}
 
-	// alloc a blksz mem
+	/* alloc a blksz mem */
 	bdata = (unsigned char *)memalign(ALIGN_BYTES, blksz);
 	if (bdata == NULL) {
 		ret = -1;
 		goto fail;
 	}
-	// one block a time
+	/* one block a time */
 	while (bs <= be) {
 		memset(bdata, 0, blksz);
 		if (mmc_rpmb_read(mmc, bdata, bs, 1, extract_key) != 1) {
@@ -446,6 +518,8 @@ fail:
 			return -1;
 		mmc->block_dev.hwpart = original_part;
 	}
+	if (blob != NULL)
+		free(blob);
 	if (bdata != NULL)
 		free(bdata);
 	return ret;
@@ -462,7 +536,11 @@ static int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_
 	margin_pos_t margin;
 	char original_part;
 	uint8_t extract_key[RPMBKEY_LENGTH];
-	uint8_t blob[RPMBKEY_FUSE_LEN];
+	uint8_t *blob = NULL;
+
+#ifdef AVB_RPMB
+	struct keyslot_package kp;
+#endif
 
 	int ret;
 
@@ -491,19 +569,27 @@ static int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_
 	}
 
 	/* get rpmb key */
+	blob = (uint8_t *)memalign(ALIGN_BYTES, RPMBKEY_BLOB_LEN);
+#ifdef AVB_RPMB
+	if (read_keyslot_package(&kp)) {
+#else
 	if (fsl_fuse_read((uint32_t *)blob, RPMBKEY_FUSE_LENW, RPMBKEY_FUSE_OFFSET)){
+#endif
 		ERR("read rpmb key error\n");
 		ret = -1;
 		goto fail;
 	}
+	/* copy rpmb key to blob */
+#ifdef AVB_RPMB
+	memcpy(blob, kp.rpmb_keyblob, RPMBKEY_BLOB_LEN);
+#endif
 	caam_open();
 	if (caam_decap_blob((uint32_t)extract_key, (uint32_t)blob, RPMBKEY_LENGTH)) {
 		ERR("decap rpmb key error\n");
 		ret = -1;
 		goto fail;
 	}
-
-	// alloc a blksz mem
+	/* alloc a blksz mem */
 	bdata = (unsigned char *)memalign(ALIGN_BYTES, blksz);
 	if (bdata == NULL) {
 		ret = -1;
@@ -514,14 +600,14 @@ static int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_
 		cnt = blksz - s;
 		if (num_write + cnt >  num_bytes)
 			cnt = num_bytes - num_write;
-		if (!s || cnt != blksz) { //read blk first
+		if (!s || cnt != blksz) { /* read blk first */
 			if (mmc_rpmb_read(mmc, bdata, bs, 1, extract_key) != 1) {
 				ERR("mmc_rpmb_read err, mmc= 0x%08x\n", (unsigned int)mmc);
 				ret = -1;
 				goto fail;
 			}
 		}
-		memcpy(bdata + s, in_buf, cnt); //change data
+		memcpy(bdata + s, in_buf, cnt); /* change data */
 		VDEBUG("cur: bs=%d, start=%ld, cnt=%ld\n",	bs, s, cnt);
 		if (mmc_rpmb_write(mmc, bdata, bs, 1, extract_key) != 1) {
 			ret = -1;
@@ -542,8 +628,11 @@ fail:
 			return -1;
 		mmc->block_dev.hwpart = original_part;
 	}
+	if (blob != NULL)
+		free(blob);
 	if (bdata != NULL)
 		free(bdata);
+
 	return ret;
 
 }
@@ -700,64 +789,20 @@ AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
 					   const uint8_t* public_key_metadata,
 					   size_t public_key_metadata_length,
 					   bool* out_is_trusted) {
-	kblb_hdr_t hdr;
-	kblb_tag_t *pubk;
-	uint8_t *extract_key = NULL;
-	struct mmc *mmc_dev;
 	AvbIOResult ret;
-
 	assert(ops != NULL && out_is_trusted != NULL);
 	*out_is_trusted = false;
 
-	if ((mmc_dev = get_mmc()) == NULL) {
-		ERR("err get mmc device\n");
-		return AVB_IO_RESULT_ERROR_IO;
-	}
-	/* read the kblb header */
-	if (rpmb_read(mmc_dev, (uint8_t *)&hdr, sizeof(hdr), 0) != 0) {
-		ERR("read RPMB error\n");
-		return AVB_IO_RESULT_ERROR_IO;
-	}
-
-	if (memcmp(hdr.magic, AVB_KBLB_MAGIC, AVB_KBLB_MAGIC_LEN) != 0) {
-		ERR("magic not match\n");
-		return AVB_IO_RESULT_ERROR_IO;
-	}
-
-	/* read public key */
-	pubk = &hdr.pubk_tag;
-	if (pubk->len != public_key_length){
-		ERR("avbkey len not match\n");
-		return AVB_IO_RESULT_ERROR_IO;
-	}
-	extract_key = malloc(pubk->len);
-	if (extract_key == NULL)
-		return AVB_IO_RESULT_ERROR_OOM;
-
-	if (rpmb_read(mmc_dev, extract_key, pubk->len, pubk->offset) != 0) {
-		ERR("read public keyblob error\n");
-		ret = AVB_IO_RESULT_ERROR_IO;
-		goto fail;
-	}
-
 	/* match given public key */
-	if (memcmp(extract_key, public_key_data, public_key_length)) {
-		ret = AVB_IO_RESULT_OK;
-		goto fail;
+	if (memcmp(fsl_public_key, public_key_data, public_key_length)) {
+		ret = AVB_IO_RESULT_ERROR_IO;
+		ERR("public key not match\n");
+		return AVB_IO_RESULT_ERROR_IO;
 	}
-#ifdef AVB_VDEBUG
-	printf("\n----key dump: stored---\n");
-	print_buffer(0, extract_key, HEXDUMP_WIDTH, pubk->len, 0);
-	printf("\n----key dump: vbmeta---\n");
-	print_buffer(0, public_key_data, HEXDUMP_WIDTH, public_key_length, 0);
-	printf("--- end ---\n");
-#endif
 
 	*out_is_trusted = true;
 	ret = AVB_IO_RESULT_OK;
-fail:
-	if (extract_key != NULL)
-		free(extract_key);
+
 	return ret;
 }
 
@@ -818,7 +863,6 @@ AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot
 	print_buffer(0, extract_idx, HEXDUMP_WIDTH, rbk->len, 0);
 	printf("--- end ---\n");
 #endif
-
 	*out_rollback_index = *extract_idx;
 	DEBUGAVB("rollback_index = %" PRIu64 "\n", *out_rollback_index);
 	ret = AVB_IO_RESULT_OK;
