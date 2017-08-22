@@ -121,11 +121,10 @@ static void fill_secure_keyslot_package(struct keyslot_package *kp) {
 		(((((uint32_t)kp) + sizeof(struct keyslot_package)) & 0xffffff00) + 0x100));
 }
 
-
 static int read_keyslot_package(struct keyslot_package* kp) {
 	char original_part;
 	int blksz;
-
+	unsigned char* fill = NULL;
 	int ret = 0;
 	/* load tee from boot1 of eMMC. */
 	int mmcc = mmc_get_env_dev();
@@ -142,35 +141,36 @@ static int read_keyslot_package(struct keyslot_package* kp) {
 	dev_desc = blk_get_dev("mmc", mmcc);
 	if (NULL == dev_desc) {
 		printf("** Block device MMC %d not supported\n", mmcc);
-		goto fail;
+		return -1;
 	}
 
 	blksz = dev_desc->blksz;
-	unsigned char* fill = (unsigned char *)memalign(ALIGN_BYTES, blksz);
+	fill = (unsigned char *)memalign(ALIGN_BYTES, blksz);
 
 	/* below was i.MX mmc operation code */
 	if (mmc_init(mmc)) {
 		printf("mmc%d init failed\n", mmcc);
-		goto fail;
+		return -1;
 	}
 
 	mmc_switch_part(mmc, TEE_HWPARTITION_ID);
 	if (mmc->block_dev.block_read(dev_desc, TRUSTY_OS_MMC_BLKS,
 		    1, fill) != 1) {
 		printf("Failed to read rpmbkeyblob.");
+		ret = -1;
+	} else {
+		memcpy(kp, fill, sizeof(struct keyslot_package));
 	}
 
-	memcpy(kp, fill, sizeof(struct keyslot_package));
-
-	ret = 0;
-
-fail:
 	/* Return to original partition */
 	if (mmc->block_dev.hwpart != original_part) {
 		if (mmc_switch_part(mmc, original_part) != 0)
 			return -1;
 		mmc->block_dev.hwpart = original_part;
 	}
+	if (fill != NULL)
+		free(fill);
+
 	return ret;
 }
 
