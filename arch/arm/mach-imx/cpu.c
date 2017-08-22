@@ -154,7 +154,7 @@ int print_cpuinfo(void)
 
 	cpurev = get_cpu_rev();
 
-#if defined(CONFIG_IMX_THERMAL)
+#if defined(CONFIG_IMX_THERMAL) || defined(CONFIG_NXP_TMU)
 	struct udevice *thermal_dev;
 	int cpu_tmp, minc, maxc, ret;
 
@@ -177,7 +177,7 @@ int print_cpuinfo(void)
 		mxc_get_clock(MXC_ARM_CLK) / 1000000);
 #endif
 
-#if defined(CONFIG_IMX_THERMAL)
+#if defined(CONFIG_IMX_THERMAL) || defined(CONFIG_NXP_TMU)
 	puts("CPU:   ");
 	switch (get_cpu_temp_grade(&minc, &maxc)) {
 	case TEMP_AUTOMOTIVE:
@@ -194,7 +194,11 @@ int print_cpuinfo(void)
 		break;
 	}
 	printf("(%dC to %dC)", minc, maxc);
+#if	defined(CONFIG_NXP_TMU)
+	ret = uclass_get_device_by_name(UCLASS_THERMAL, "cpu-thermal", &thermal_dev);
+#else
 	ret = uclass_get_device(UCLASS_THERMAL, 0, &thermal_dev);
+#endif
 	if (!ret) {
 		ret = thermal_get_temp(thermal_dev, &cpu_tmp);
 
