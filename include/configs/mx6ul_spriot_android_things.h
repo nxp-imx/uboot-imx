@@ -8,6 +8,13 @@
 #ifndef __PICOSOM_IMX6UL_ANDROID_THINGS_H
 #define __PICOSOM_IMX6UL_ANDROID_THINGS_H
 #include "mx_android_common.h"
+
+#define AVB_RPMB
+#ifdef AVB_RPMB
+#define KEYSLOT_BLKS 0xFFF
+#define KEYSLOT_HWPARTITION_ID 2
+#endif
+
 /* For NAND we don't support lock/unlock */
 #ifndef CONFIG_NAND_BOOT
 #define CONFIG_FASTBOOT_LOCK
