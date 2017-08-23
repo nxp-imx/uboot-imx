@@ -350,6 +350,40 @@ int ft_system_setup(void *blob, bd_t *bd)
 	int rc;
 	int nodeoff;
 
+	if (get_boot_device() == USB_BOOT) {
+		static const char *nodes_path[] = {
+			"/dcss@32e00000",
+			"/hdmi@32c00000",
+			"/hdmi_cec@32c33800",
+			"/hdmi_drm@32c00000",
+			"/display-subsystem",
+			"/sound-hdmi"
+		};
+		const char *status = "disabled";
+
+		for (i = 0; i < ARRAY_SIZE(nodes_path); i++) {
+			nodeoff = fdt_path_offset(blob, nodes_path[i]);
+			if (nodeoff < 0)
+				continue; /* Not found, skip it */
+
+			printf("Found %s node\n", nodes_path[i]);
+
+add_status:
+			rc = fdt_setprop(blob, nodeoff, "status", status, strlen(status) + 1);
+			if (rc) {
+				if (rc == -FDT_ERR_NOSPACE) {
+					rc = fdt_increase_size(blob, 512);
+					if (!rc)
+						goto add_status;
+				}
+				printf("Unable to update property %s:%s, err=%s\n",
+					nodes_path[i], "status", fdt_strerror(rc));
+			} else {
+				printf("Modify %s:%s disabled\n",
+					nodes_path[i], "status");
+			}
+		}
+
 	/* Disable the CPU idle for A0 chip since the HW does not support it */
 	if (is_soc_rev(CHIP_REV_1_0)) {
 		static const char * const nodes_path[] = {
