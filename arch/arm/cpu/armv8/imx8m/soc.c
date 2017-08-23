@@ -12,6 +12,7 @@
 #include <asm/imx-common/boot_mode.h>
 #include <asm/armv8/mmu.h>
 #include <errno.h>
+#include <fdt_support.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -363,5 +364,46 @@ void get_board_serial(struct tag_serialnr *serialnr)
 	/* TODO: */
 	serialnr->low = 0;
 	serialnr->high = 0;
+}
+#endif
+
+#ifdef CONFIG_OF_SYSTEM_SETUP
+int ft_system_setup(void *blob, bd_t *bd)
+{
+	if (get_boot_device() == USB_BOOT) {
+		const char *nodes_path[] = {
+			"/dcss@32e00000",
+			"/hdmi@32c00000",
+		};
+
+		int i = 0;
+		int rc;
+		int nodeoff;
+		const char *status = "disabled";
+
+		for (i = 0; i < ARRAY_SIZE(nodes_path); i++) {
+			nodeoff = fdt_path_offset(blob, nodes_path[i]);
+			if (nodeoff < 0)
+				continue; /* Not found, skip it */
+
+			printf("Found %s node\n", nodes_path[i]);
+
+add_status:
+			rc = fdt_setprop(blob, nodeoff, "status", status, strlen(status) + 1);
+			if (rc) {
+				if (rc == -FDT_ERR_NOSPACE) {
+					rc = fdt_increase_size(blob, 512);
+					if (!rc)
+						goto add_status;
+				}
+				printf("Unable to update property %s:%s, err=%s\n",
+					nodes_path[i], "status", fdt_strerror(rc));
+			} else {
+				printf("Modify %s:%s disabled\n",
+					nodes_path[i], "status");
+			}
+		}
+	}
+	return 0;
 }
 #endif
