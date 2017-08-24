@@ -1,0 +1,12 @@
+if TARGET_MULTA_IMX7D
+
+config SYS_BOARD
+	default "multa-imx7d"
+
+config SYS_VENDOR
+	default "freescale"
+
+config SYS_CONFIG_NAME
+	default "multa-imx7d"
+
+endif
