@@ -665,6 +665,7 @@ struct dwc3_scratchpad_array {
  *		- USBPHY_INTERFACE_MODE_UTMIW
  * @dcfg: saved contents of DCFG register
  * @gctl: saved contents of GCTL register
+ * @power_down_scale: 16KHz clock periods for suspend_clk
  * @isoch_delay: wValue from Set Isochronous Delay request;
  * @u2sel: parameter from Set SEL request.
  * @u2pel: parameter from Set SEL request.
@@ -791,6 +792,7 @@ struct dwc3 {
 	enum dwc3_ep0_state	ep0state;
 	enum dwc3_link_state	link_state;
 
+	u16			power_down_scale;
 	u16			isoch_delay;
 	u16			u2sel;
 	u16			u2pel;
