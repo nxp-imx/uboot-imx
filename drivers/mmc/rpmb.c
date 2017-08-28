@@ -39,12 +39,6 @@
 #define RPMB_ERR_CNT_EXPIRED	0x80
 #define RPMB_ERR_MSK		0x7
 
-/* Sizes of RPMB data frame */
-#define RPMB_SZ_STUFF		196
-#define RPMB_SZ_MAC		32
-#define RPMB_SZ_DATA		256
-#define RPMB_SZ_NONCE		16
-
 #define SHA256_BLOCK_SIZE	64
 
 /* Error messages */
@@ -57,20 +51,6 @@ static const char * const rpmb_err_msg[] = {
 	"Write failure",
 	"Read failure",
 	"Authentication key not yet programmed",
-};
-
-
-/* Structure of RPMB data frame. */
-struct s_rpmb {
-	unsigned char stuff[RPMB_SZ_STUFF];
-	unsigned char mac[RPMB_SZ_MAC];
-	unsigned char data[RPMB_SZ_DATA];
-	unsigned char nonce[RPMB_SZ_NONCE];
-	unsigned int write_counter;
-	unsigned short address;
-	unsigned short block_count;
-	unsigned short result;
-	unsigned short request;
 };
 
 static int mmc_set_blockcount(struct mmc *mmc, unsigned int blockcount,
@@ -86,7 +66,7 @@ static int mmc_set_blockcount(struct mmc *mmc, unsigned int blockcount,
 
 	return mmc_send_cmd(mmc, &cmd, NULL);
 }
-static int mmc_rpmb_request(struct mmc *mmc, const struct s_rpmb *s,
+int mmc_rpmb_request(struct mmc *mmc, const struct s_rpmb *s,
 			    unsigned int count, bool is_rel_write)
 {
 	struct mmc_cmd cmd = {0};
@@ -106,7 +86,7 @@ static int mmc_rpmb_request(struct mmc *mmc, const struct s_rpmb *s,
 	cmd.resp_type = MMC_RSP_R1b;
 
 	data.src = (const char *)s;
-	data.blocks = 1;
+	data.blocks = count;
 	data.blocksize = MMC_MAX_BLOCK_LEN;
 	data.flags = MMC_DATA_WRITE;
 
@@ -119,14 +99,14 @@ static int mmc_rpmb_request(struct mmc *mmc, const struct s_rpmb *s,
 	}
 	return 0;
 }
-static int mmc_rpmb_response(struct mmc *mmc, struct s_rpmb *s,
-			     unsigned short expected)
+int mmc_rpmb_response(struct mmc *mmc, struct s_rpmb *s,
+			     unsigned int count, unsigned short expected)
 {
 	struct mmc_cmd cmd = {0};
 	struct mmc_data data;
 	int ret;
 
-	ret = mmc_set_blockcount(mmc, 1, false);
+	ret = mmc_set_blockcount(mmc, count, false);
 	if (ret) {
 #ifdef CONFIG_MMC_RPMB_TRACE
 		printf("%s:mmc_set_blockcount-> %d\n", __func__, ret);
@@ -138,7 +118,7 @@ static int mmc_rpmb_response(struct mmc *mmc, struct s_rpmb *s,
 	cmd.resp_type = MMC_RSP_R1;
 
 	data.dest = (char *)s;
-	data.blocks = 1;
+	data.blocks = count;
 	data.blocksize = MMC_MAX_BLOCK_LEN;
 	data.flags = MMC_DATA_READ;
 
@@ -150,7 +130,7 @@ static int mmc_rpmb_response(struct mmc *mmc, struct s_rpmb *s,
 		return -1;
 	}
 	/* Check the response and the status */
-	if (be16_to_cpu(s->request) != expected) {
+	if (expected && be16_to_cpu(s->request) != expected) {
 #ifdef CONFIG_MMC_RPMB_TRACE
 		printf("%s:response= %x\n", __func__,
 		       be16_to_cpu(s->request));
@@ -177,7 +157,7 @@ static int mmc_rpmb_status(struct mmc *mmc, unsigned short expected)
 		return -1;
 
 	/* Read the result */
-	return mmc_rpmb_response(mmc, rpmb_frame, expected);
+	return mmc_rpmb_response(mmc, rpmb_frame, 1, expected);
 }
 static void rpmb_hmac(unsigned char *key, unsigned char *buff, int len,
 		      unsigned char *output)
@@ -235,7 +215,7 @@ int mmc_rpmb_get_counter(struct mmc *mmc, unsigned long *pcounter)
 		return -1;
 
 	/* Read the result */
-	ret = mmc_rpmb_response(mmc, rpmb_frame, RPMB_RESP_WCOUNTER);
+	ret = mmc_rpmb_response(mmc, rpmb_frame, 1, RPMB_RESP_WCOUNTER);
 	if (ret)
 		return ret;
 
@@ -271,7 +251,7 @@ int mmc_rpmb_read(struct mmc *mmc, void *addr, unsigned short blk,
 			break;
 
 		/* Read the result */
-		if (mmc_rpmb_response(mmc, rpmb_frame, RPMB_RESP_READ_DATA))
+		if (mmc_rpmb_response(mmc, rpmb_frame, 1, RPMB_RESP_READ_DATA))
 			break;
 
 		/* Check the HMAC if key is provided */
