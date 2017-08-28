@@ -798,6 +798,24 @@ int mmc_set_boot_bus_width(struct mmc *mmc, u8 width, u8 reset, u8 mode);
 /* Function to modify the RST_n_FUNCTION field of EXT_CSD */
 int mmc_set_rst_n_function(struct mmc *mmc, u8 enable);
 /* Functions to read / write the RPMB partition */
+/* Sizes of RPMB data frame */
+#define RPMB_SZ_STUFF		196
+#define RPMB_SZ_MAC		32
+#define RPMB_SZ_DATA		256
+#define RPMB_SZ_NONCE		16
+
+/* Structure of RPMB data frame. */
+struct s_rpmb {
+	unsigned char stuff[RPMB_SZ_STUFF];
+	unsigned char mac[RPMB_SZ_MAC];
+	unsigned char data[RPMB_SZ_DATA];
+	unsigned char nonce[RPMB_SZ_NONCE];
+	unsigned long write_counter;
+	unsigned short address;
+	unsigned short block_count;
+	unsigned short result;
+	unsigned short request;
+};
 int mmc_rpmb_set_key(struct mmc *mmc, void *key);
 int mmc_rpmb_get_counter(struct mmc *mmc, unsigned long *counter);
 int mmc_rpmb_read(struct mmc *mmc, void *addr, unsigned short blk,
@@ -822,6 +840,11 @@ int mmc_rpmb_write(struct mmc *mmc, void *addr, unsigned short blk,
  */
 int mmc_rpmb_route_frames(struct mmc *mmc, void *req, unsigned long reqlen,
 			  void *rsp, unsigned long rsplen);
+
+int mmc_rpmb_request(struct mmc *mmc, const struct s_rpmb *s,
+			    unsigned int count, bool is_rel_write);
+int mmc_rpmb_response(struct mmc *mmc, struct s_rpmb *s,
+			     unsigned int count, unsigned short expected);
 
 #ifdef CONFIG_CMD_BKOPS_ENABLE
 int mmc_set_bkops_enable(struct mmc *mmc);
