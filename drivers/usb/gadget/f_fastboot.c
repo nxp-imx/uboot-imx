@@ -32,6 +32,7 @@
 #ifdef CONFIG_IMX_TRUSTY_OS
 extern int armv7_init_nonsec(void);
 extern void trusty_os_init(void);
+#include <trusty/libtipc.h>
 #endif
 
 #ifdef CONFIG_FSL_FASTBOOT
@@ -1302,6 +1303,7 @@ void tee_setup(void)
 #ifdef NON_SECURE_FASTBOOT
 	armv7_init_nonsec();
 	trusty_os_init();
+	trusty_ipc_init();
 #endif
 
 fail:
@@ -1629,6 +1631,10 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	if (avb_out_data != NULL)
 		avb_slot_verify_data_free(avb_out_data);
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+	/* put ql-tipc to release resource for Linux */
+	trusty_ipc_shutdown();
+#endif
 	do_bootm(NULL, 0, 4, bootm_args);
 
 	/* This only happens if image is somehow faulty so we start over */
