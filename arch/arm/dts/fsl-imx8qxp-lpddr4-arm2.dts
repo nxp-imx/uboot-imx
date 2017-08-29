@@ -52,7 +52,7 @@
 			gpio = <&gpio4 19 GPIO_ACTIVE_HIGH>;
 			enable-active-high;
 			startup-delay-us = <300>;
-			off-on-delay-us = <3500>;
+			off-on-delay-us = <5000>;
 		};
 	};
 };
