@@ -1201,7 +1201,7 @@ void ldo_mode_set(int ldo_bypass)
 		 * VDDARM:0.975V@400M; VDDSOC:1.175V@400M
 		 * MX6DL:
 		 * VDDARM:1.175V@800M; VDDSOC:1.175V@800M
-		 * VDDARM:1.075V@400M; VDDSOC:1.175V@400M
+		 * VDDARM:1.15V@400M; VDDSOC:1.175V@400M
 		 */
 		is_400M = set_anatop_bypass(2);
 		if (is_mx6dqp()) {
@@ -1216,7 +1216,7 @@ void ldo_mode_set(int ldo_bypass)
 
 		if (is_400M) {
 			if (is_mx6dl())
-				vddarm = 0x1f;
+				vddarm = 0x22;
 			else
 				vddarm = 0x1b;
 		} else {
@@ -1290,7 +1290,7 @@ void ldo_mode_set(int ldo_bypass)
 		 * VDDARM:0.975V@400M; VDDSOC:1.175V@400M
 		 * MX6DL:
 		 * VDDARM:1.175V@800M; VDDSOC:1.175V@800M
-		 * VDDARM:1.075V@400M; VDDSOC:1.175V@400M
+		 * VDDARM:1.15V@400M; VDDSOC:1.175V@400M
 		 */
 		is_400M = set_anatop_bypass(2);
 		if (is_mx6dqp()) {
@@ -1302,7 +1302,7 @@ void ldo_mode_set(int ldo_bypass)
 
 		if (is_400M) {
 			if (is_mx6dl())
-				vddarm = 0x1f;
+				vddarm = 0x22;
 			else
 				vddarm = 0x1b;
 		} else {
