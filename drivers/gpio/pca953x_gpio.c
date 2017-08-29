@@ -322,7 +322,7 @@ static int pca953x_probe(struct udevice *dev)
 
 	/* Clear the polarity registers to no invert */
 	memset(val, 0, MAX_BANK);
-	ret = pca953x_write_regs(dev, PCA953X_INVERT, &val);
+	ret = pca953x_write_regs(dev, PCA953X_INVERT, val);
 	if (ret) {
 		dev_err(dev, "Error writing invert register\n");
 		return ret;
