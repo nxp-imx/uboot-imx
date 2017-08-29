@@ -120,7 +120,7 @@
 		"\0" \
 	"initrd_addr=0x83800000\0" \
 	"initrd_high=0xffffffff\0" \
-	"bootcmd_mfg=run mfgtool_args;booti ${loadaddr} ${initrd_addr} ${fdtaddr};\0" \
+	"bootcmd_mfg=run mfgtool_args;booti ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
@@ -130,7 +130,7 @@
 	"image=Image\0" \
 	"panel=NULL\0" \
 	"console=ttyLP0,115200 earlycon=lpuart32,0x5a060000,115200\0" \
-	"fdtaddr=0x83000000\0"			\
+	"fdt_addr=0x83000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
 	"boot_fdt=try\0" \
 	"fdt_file=fsl-imx8qm-lpddr4-arm2.dtb\0" \
@@ -146,12 +146,12 @@
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
 	"loadimage=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
-	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdtaddr} ${fdt_file}\0" \
+	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"run mmcargs; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 			"if run loadfdt; then " \
-				"booti ${loadaddr} - ${fdtaddr}; " \
+				"booti ${loadaddr} - ${fdt_addr}; " \
 			"else " \
 				"echo WARN: Cannot load the DT; " \
 			"fi; " \
@@ -171,8 +171,8 @@
 		"fi; " \
 		"${get_cmd} ${loadaddr} ${image}; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
-			"if ${get_cmd} ${fdtaddr} ${fdt_file}; then " \
-				"booti ${loadaddr} - ${fdtaddr}; " \
+			"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
+				"booti ${loadaddr} - ${fdt_addr}; " \
 			"else " \
 				"echo WARN: Cannot load the DT; " \
 			"fi; " \
@@ -187,10 +187,10 @@
 		   "else " \
 			   "if run loadimage; then " \
 				   "run mmcboot; " \
-			   "else booti ${loadaddr} - ${fdtaddr}; " \
+			   "else booti ${loadaddr} - ${fdt_addr}; " \
 			   "fi; " \
 		   "fi; " \
-	   "else booti ${loadaddr} - ${fdtaddr}; fi"
+	   "else booti ${loadaddr} - ${fdt_addr}; fi"
 
 /* Link Definitions */
 #define CONFIG_LOADADDR			0x80280000
