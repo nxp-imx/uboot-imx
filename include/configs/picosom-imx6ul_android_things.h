@@ -15,6 +15,14 @@
 #endif
 
 #include "mx_android_common.h"
+#define TRUSTY_OS_ENTRY 0x9e000000
+#define TRUSTY_OS_RAM_SIZE 0x2000000
+#define TRUSTY_OS_MMC_BLKS 0xFFF
+#define TEE_HWPARTITION_ID 2
+
+#ifdef CONFIG_IMX_TRUSTY_OS
+#define NON_SECURE_FASTBOOT
+#endif
 /* For NAND we don't support lock/unlock */
 #ifndef CONFIG_NAND_BOOT
 #define CONFIG_FASTBOOT_LOCK
