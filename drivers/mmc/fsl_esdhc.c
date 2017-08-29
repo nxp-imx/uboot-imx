@@ -27,6 +27,7 @@
 #include <power/regulator.h>
 #include <asm/arch/sys_proto.h>
 #include <dm/pinctrl.h>
+#include "mmc_private.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -147,6 +148,29 @@ struct fsl_esdhc_priv {
 	struct gpio_desc wp_gpio;
 #endif
 };
+
+static void esdhc_dump(struct mmc *mmc)
+{
+#ifdef DEBUG
+	struct fsl_esdhc_priv *priv = mmc->priv;
+	struct fsl_esdhc *regs = priv->esdhc_regs;
+	ulong addr = (ulong)regs;
+
+	int i = 0;
+
+	for (i = 0; i < 0xd0; i+=4) {
+
+		if (i % 16 == 0) {
+			printf("\n");
+			printf("0x%08x: ", addr + i);
+		}
+
+		printf("0x%08x ", readl(addr + i));
+	}
+
+	printf("\n");
+#endif
+}
 
 /* Return the XFERTYP flags for a given command and data packet */
 static uint esdhc_xfertyp(struct mmc_cmd *cmd, struct mmc_data *data)
@@ -299,7 +323,7 @@ static int esdhc_setup_data(struct mmc *mmc, struct mmc_data *data)
 			}
 		} else {
 #ifdef CONFIG_DM_GPIO
-			if (dm_gpio_is_valid(&priv->wp_gpio) && dm_gpio_get_value(&priv->wp_gpio)) { 
+			if (dm_gpio_is_valid(&priv->wp_gpio) && dm_gpio_get_value(&priv->wp_gpio)) {
 				printf("\nThe SD card is locked. Can not write to a locked card.\n\n");
 				return -ETIMEDOUT;
 			}
@@ -559,6 +583,8 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 out:
 	/* Reset CMD and DATA portions on error */
 	if (err) {
+		esdhc_dump(mmc);
+
 		esdhc_write32(&regs->sysctl, esdhc_read32(&regs->sysctl) |
 			      SYSCTL_RSTC);
 		while (esdhc_read32(&regs->sysctl) & SYSCTL_RSTC)
@@ -786,6 +812,16 @@ static int esdhc_set_voltage(struct mmc *mmc)
 	}
 }
 
+static void esdhc_stop_tuning(struct mmc *mmc)
+{
+	struct mmc_cmd cmd;
+
+	cmd.cmdidx = MMC_CMD_STOP_TRANSMISSION;
+	cmd.cmdarg = 0;
+	cmd.resp_type = MMC_RSP_R1b;
+	mmc_send_cmd(mmc, &cmd, NULL);
+}
+
 static int esdhc_execute_tuning(struct mmc *mmc, uint32_t opcode)
 {
 	struct fsl_esdhc_priv *priv = mmc->priv;
@@ -856,6 +892,8 @@ static int esdhc_execute_tuning(struct mmc *mmc, uint32_t opcode)
 
 	writel(irqstaten, &regs->irqstaten);
 	writel(irqsigen, &regs->irqsigen);
+
+	esdhc_stop_tuning(mmc);
 
 	return ret;
 }
@@ -1154,7 +1192,6 @@ static int fsl_esdhc_init(struct fsl_esdhc_priv *priv)
 		if (priv->flags & ESDHC_FLAG_STD_TUNING) {
 			val = readl(&regs->tuning_ctrl);
 			val |= ESDHC_STD_TUNING_EN;
-			val |= ESDHC_TUNING_START_TAP_DEFAULT;
 			val &= ~ESDHC_TUNING_START_TAP_MASK;
 			val |= priv->tuning_start_tap;
 			val &= ~ESDHC_TUNING_STEP_MASK;
@@ -1343,8 +1380,8 @@ static int fsl_esdhc_probe(struct udevice *dev)
 
 	val = fdtdec_get_int(fdt, node, "fsl,tuning-step", 1);
 	priv->tuning_step = val;
-	val = fdtdec_get_int(fdt, node, "fsl,tuning-start-tap", 0);
-	priv->tuning_step = val;
+	val = fdtdec_get_int(fdt, node, "fsl,tuning-start-tap", ESDHC_TUNING_START_TAP_DEFAULT);
+	priv->tuning_start_tap = val;
 
 	if (fdt_get_property(fdt, node, "non-removable", NULL)) {
 		priv->non_removable = 1;
