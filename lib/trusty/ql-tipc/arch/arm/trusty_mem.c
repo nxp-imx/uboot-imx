@@ -79,9 +79,28 @@ typedef uintptr_t paddr_t;
 /*
  * ARM64
  */
-static void arm64_write_ATS1E1W(uint64_t vaddr)
+
+/* Note: this will crash if called from user space */
+static void arm64_write_ATS1ExW(uint64_t vaddr)
 {
-    __asm__ volatile("at S1E1W, %0" :: "r" (vaddr));
+    uint32_t _current_el;
+
+    __asm__ volatile("mrs %0, CurrentEL" : "=r" (_current_el));
+
+    _current_el = (_current_el >> 2) & 0x3;
+    switch (_current_el) {
+    case 0x1:
+        __asm__ volatile("at S1E1W, %0" :: "r" (vaddr));
+        break;
+    case 0x2:
+        __asm__ volatile("at S1E2W, %0" :: "r" (vaddr));
+        break;
+    case 0x3:
+    default:
+        trusty_fatal("Unsupported execution state: EL%u\n", _current_el );
+        break;
+    }
+
     __asm__ volatile("isb" ::: "memory");
 }
 
@@ -99,7 +118,7 @@ static uint64_t va2par(vaddr_t va)
     unsigned long irq_state;
 
     trusty_local_irq_disable(&irq_state);
-    arm64_write_ATS1E1W(va);
+    arm64_write_ATS1ExW(va);
     par = arm64_read_par64();
     trusty_local_irq_restore(&irq_state);
 
@@ -136,12 +155,18 @@ static uint64_t par2attr(uint64_t par)
 /*
  * ARM32
  */
-static void arm_write_ATS1CPW(uint64_t vaddr)
+
+/* Note: this will crash if called from user space */
+static void arm_write_ATS1xW(uint64_t vaddr)
 {
-    __asm__ volatile(
-        "mcr    p15, 0, %0, c7, c8, 1   \n"
-        : : "r"(vaddr)
-    );
+    uint32_t _cpsr;
+
+    __asm__ volatile("mrs %0, cpsr" : "=r"(_cpsr));
+
+    if ((_cpsr & 0xF) == 0xa)
+        __asm__ volatile("mcr    p15, 4, %0, c7, c8, 1" : : "r"(vaddr));
+    else
+        __asm__ volatile("mcr    p15, 0, %0, c7, c8, 1" : : "r"(vaddr));
 }
 
 static uint64_t arm_read_par64(void)
@@ -234,7 +259,7 @@ static uint64_t va2par(vaddr_t va)
     unsigned long irq_state;
 
     trusty_local_irq_disable(&irq_state);
-    arm_write_ATS1CPW(va); /* need to call the right one */
+    arm_write_ATS1xW(va);
     par = arm_read_par64();
     trusty_local_irq_restore(&irq_state);
 
