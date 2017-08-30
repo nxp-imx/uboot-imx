@@ -192,6 +192,13 @@ struct ocotp_regs {
 	} bank[0];
 };
 
+struct fuse_bank0_regs {
+	u32 lock;
+	u32 uid_low;
+	u32 uid_high;
+	u32 rsvd;
+};
+
 struct fuse_bank1_regs {
 	u32 tester3;
 	u32 rsvd0[3];

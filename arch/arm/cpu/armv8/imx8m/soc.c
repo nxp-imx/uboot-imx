@@ -361,9 +361,13 @@ int mmc_get_env_dev(void)
 #ifdef CONFIG_SERIAL_TAG
 void get_board_serial(struct tag_serialnr *serialnr)
 {
-	/* TODO: */
-	serialnr->low = 0;
-	serialnr->high = 0;
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[0];
+	struct fuse_bank0_regs *fuse =
+		(struct fuse_bank0_regs *)bank->fuse_regs;
+
+	serialnr->low = fuse->uid_low;
+	serialnr->high = fuse->uid_high;
 }
 #endif
 
