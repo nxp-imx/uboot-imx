@@ -496,3 +496,51 @@ int is_recovery_key_pressing(void)
 }
 #endif /*CONFIG_ANDROID_RECOVERY*/
 #endif /*CONFIG_FSL_FASTBOOT*/
+
+#if defined(CONFIG_VIDEO_IMXDPUV1)
+static void enable_lvds(struct display_info_t const *dev)
+{
+	struct gpio_desc desc;
+	int ret;
+
+	/* MIPI_DSI0_EN on IOEXP 0x1a port 6, MIPI_DSI1_EN on IOEXP 0x1d port 7 */
+	ret = dm_gpio_lookup_name("gpio@1a_6", &desc);
+	if (ret)
+		return;
+
+	ret = dm_gpio_request(&desc, "lvds0_en");
+	if (ret)
+		return;
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	display_controller_setup((PS2KHZ(dev->mode.pixclock) * 1000));
+	lvds_soc_setup(dev->bus, (PS2KHZ(dev->mode.pixclock) * 1000));
+	lvds_configure(dev->bus);
+	lvds2hdmi_setup(13);
+}
+
+struct display_info_t const displays[] = {{
+	.bus	= 0, /* LVDS0 */
+	.addr	= 0, /* LVDS0 */
+	.pixfmt	= IMXDPUV1_PIX_FMT_BGRA32,
+	.detect	= NULL,
+	.enable	= enable_lvds,
+	.mode	= {
+		.name           = "IT6263", /* 720P60 */
+		.refresh        = 60,
+		.xres           = 1280,
+		.yres           = 720,
+		.pixclock       = 13468, /* 74250000 */
+		.left_margin    = 110,
+		.right_margin   = 220,
+		.upper_margin   = 5,
+		.lower_margin   = 20,
+		.hsync_len      = 40,
+		.vsync_len      = 5,
+		.sync           = FB_SYNC_EXT,
+		.vmode          = FB_VMODE_NONINTERLACED
+} } };
+size_t display_count = ARRAY_SIZE(displays);
+
+#endif /* CONFIG_VIDEO_IMXDPUV1 */
