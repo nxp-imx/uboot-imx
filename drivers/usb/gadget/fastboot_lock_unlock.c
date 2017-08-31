@@ -37,6 +37,9 @@
 #include <stdlib.h>
 #include "fastboot_lock_unlock.h"
 #include <fsl_fastboot.h>
+#ifdef CONFIG_IMX_TRUSTY_OS
+#include <trusty/libtipc.h>
+#endif
 
 #ifdef FASTBOOT_ENCRYPT_LOCK
 
@@ -214,6 +217,30 @@ static inline unsigned char lock_enable_parse(unsigned char* bdata) {
 }
 
 static FbLockState g_lockstat = FASTBOOT_UNLOCK;
+
+#ifdef CONFIG_IMX_TRUSTY_OS
+FbLockState fastboot_get_lock_stat(void) {
+	uint8_t l_status;
+	int ret;
+	ret = trusty_read_lock_state(&l_status);
+	if (ret < 0)
+		return g_lockstat;
+	else
+		return l_status;
+
+}
+
+int fastboot_set_lock_stat(FbLockState lock) {
+	int ret;
+	ret = trusty_write_lock_state(lock);
+	if (ret < 0) {
+		printf("cannot set lock status due Trusty return %d\n", ret);
+		return ret;
+	}
+	return 0;
+}
+#else
+
 /*
  * Set status of the lock&unlock to FSL_FASTBOOT_FB_PART
  * Currently use the very first Byte of FSL_FASTBOOT_FB_PART
@@ -306,6 +333,7 @@ fail:
 	free(bdata);
 	return ret;
 }
+#endif
 
 
 /* Return the last byte of of FSL_FASTBOOT_PR_DATA

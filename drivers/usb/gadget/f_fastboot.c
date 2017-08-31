@@ -2217,6 +2217,8 @@ dt_read_done:
 #ifdef CONFIG_IMX_TRUSTY_OS
 	/* Trusty keymaster needs some parameters before it work */
 	trusty_setbootparameter(hdr, avb_result);
+	/* lock the boot status and rollback_idx preventing Linux modify it */
+	trusty_lock_boot_state();
 	/* put ql-tipc to release resource for Linux */
 	trusty_ipc_shutdown();
 #endif
@@ -3132,7 +3134,7 @@ static FbLockState do_fastboot_unlock(bool force)
 		fastboot_wipe_data_partition();
 		printf("Wipe /data completed.\n");
 
-#ifdef CONFIG_AVB_SUPPORT
+#if defined(CONFIG_AVB_SUPPORT) && !defined(CONFIG_IMX_TRUSTY_OS)
 		printf("Start stored_rollback_index wipe process....\n");
 		rbkidx_erase();
 		printf("Wipe stored_rollback_index completed.\n");

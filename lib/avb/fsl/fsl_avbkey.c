@@ -16,6 +16,9 @@
 #include <mapmem.h>
 
 #include <fsl_avb.h>
+#ifdef CONFIG_IMX_TRUSTY_OS
+#include <trusty/libtipc.h>
+#endif
 #include "fsl_avbkey.h"
 #include "fsl_public_key.h"
 #include "fsl_atx_attributes.h"
@@ -968,11 +971,20 @@ AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
  */
 AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot,
 				    uint64_t* out_rollback_index) {
+	AvbIOResult ret;
+#ifdef CONFIG_IMX_TRUSTY_OS
+	if (trusty_read_rollback_index(rollback_index_slot, out_rollback_index)) {
+		ERR("read rollback from Trusty error!");
+		ret = AVB_IO_RESULT_ERROR_IO;
+	} else {
+		ret = AVB_IO_RESULT_OK;
+	}
+	return ret;
+#else
 	kblb_hdr_t hdr;
 	kblb_tag_t *rbk;
 	uint64_t *extract_idx = NULL;
 	struct mmc *mmc_dev;
-	AvbIOResult ret;
 #ifdef CONFIG_AVB_ATX
 	static const uint32_t kTypeMask = 0xF000;
 	static const unsigned int kTypeShift = 12;
@@ -1016,7 +1028,7 @@ AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot
 	}
 #else
 	rbk = &hdr.rbk_tags[rollback_index_slot];
-#endif
+#endif /* CONFIG_AVB_ATX */
 	extract_idx = malloc(rbk->len);
 	if (extract_idx == NULL)
 		return AVB_IO_RESULT_ERROR_OOM;
@@ -1040,6 +1052,7 @@ fail:
 	if (extract_idx != NULL)
 		free(extract_idx);
 	return ret;
+#endif /* CONFIG_IMX_TRUSTY_OS */
 }
 
 /* Sets the rollback index corresponding to the slot given by
@@ -1053,11 +1066,20 @@ fail:
  */
 AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot,
 				     uint64_t rollback_index) {
+	AvbIOResult ret;
+#ifdef CONFIG_IMX_TRUSTY_OS
+	if (trusty_write_rollback_index(rollback_index_slot, rollback_index)) {
+		ERR("write rollback from Trusty error!");
+		ret = AVB_IO_RESULT_ERROR_IO;
+	} else {
+		ret = AVB_IO_RESULT_OK;
+	}
+	return ret;
+#else
 	kblb_hdr_t hdr;
 	kblb_tag_t *rbk;
 	uint64_t *plain_idx = NULL;
 	struct mmc *mmc_dev;
-	AvbIOResult ret;
 #ifdef CONFIG_AVB_ATX
 	static const uint32_t kTypeMask = 0xF000;
 	static const unsigned int kTypeShift = 12;
@@ -1072,7 +1094,7 @@ AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slo
 	if ((rollback_index_slot & ~kTypeMask) >= AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS)
 #else
 	if (rollback_index_slot >= AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS)
-#endif
+#endif /* CONFIG_AVB_ATX */
 		return AVB_IO_RESULT_ERROR_IO;
 
 	if ((mmc_dev = get_mmc()) == NULL) {
@@ -1100,7 +1122,7 @@ AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slo
 	}
 #else
 	rbk = &hdr.rbk_tags[rollback_index_slot];
-#endif
+#endif /* CONFIG_AVB_ATX */
 	plain_idx = malloc(rbk->len);
 	if (plain_idx == NULL)
 		return AVB_IO_RESULT_ERROR_OOM;
@@ -1119,6 +1141,7 @@ fail:
 	if (plain_idx != NULL)
 		free(plain_idx);
 	return ret;
+#endif /* CONFIG_IMX_TRUSTY_OS */
 }
 #endif /* CONFIG_FSL_CAAM_KB */
 
