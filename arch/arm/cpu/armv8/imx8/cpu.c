@@ -992,8 +992,7 @@ void dram_init_banksize(void)
 static u64 get_block_attrs(sc_faddr_t addr_start)
 {
 	if ((addr_start >= PHYS_SDRAM_1 && addr_start <= ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
-		|| (addr_start >= PHYS_SDRAM_2 && addr_start <= ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE))
-		|| (addr_start >= 0x0 && addr_start <= ((sc_faddr_t)0x20000000)))
+		|| (addr_start >= PHYS_SDRAM_2 && addr_start <= ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE)))
 		return (PTE_BLOCK_MEMTYPE(MT_NORMAL) | PTE_BLOCK_OUTER_SHARE);
 
 	return (PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) | PTE_BLOCK_NON_SHARE | PTE_BLOCK_PXN | PTE_BLOCK_UXN);
