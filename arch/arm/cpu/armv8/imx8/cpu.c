@@ -124,10 +124,23 @@ int print_cpuinfo(void)
 }
 #endif
 
+#define BT_PASSOVER_TAG             (0x504F)
+struct pass_over_info_t *get_pass_over_info(void)
+{
+	struct pass_over_info_t *p = (struct pass_over_info_t *)PASS_OVER_INFO_ADDR;
+
+	if (p->barker != BT_PASSOVER_TAG || p->len != sizeof(struct pass_over_info_t))
+		return NULL;
+
+	return p;
+}
+
 int arch_cpu_init(void)
 {
 	sc_ipc_t ipcHndl = 0;
 	sc_err_t sciErr = 0;
+	struct pass_over_info_t *pass_over;
+
 	gd->arch.ipc_channel_handle = 0;
 
 	/* Open IPC channel */
@@ -136,6 +149,12 @@ int arch_cpu_init(void)
 		return -EPERM;
 
 	gd->arch.ipc_channel_handle = ipcHndl;
+
+	pass_over = get_pass_over_info();
+	if (pass_over && pass_over->g_ap_mu == 0) {
+		/* When ap_mu is 0, means the u-boot is boot from first container */
+		sc_misc_boot_status(ipcHndl, SC_MISC_BOOT_STATUS_SUCCESS);
+	}
 
 #ifdef CONFIG_IMX_SMMU
 	sciErr = sc_pm_set_resource_power_mode(ipcHndl, SC_R_SMMU,
