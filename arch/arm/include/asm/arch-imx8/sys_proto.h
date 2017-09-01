@@ -7,5 +7,14 @@
 #include <asm/mach-imx/sys_proto.h>
 #include <linux/types.h>
 
+struct pass_over_info_t {
+	uint16_t barker;
+	uint16_t len;
+	uint32_t g_bt_cfg_shadow;
+	uint32_t card_address_mode;
+	uint32_t bad_block_count_met;
+	uint32_t g_ap_mu;
+};
+
 int print_bootinfo(void);
 int init_otg_power(void);
