@@ -11,4 +11,5 @@ subdir-ccflags-y += -D_FILE_OFFSET_BITS=64 \
 			-std=gnu99
 obj-y += libavb/
 obj-y += libavb_ab/
+obj-$(CONFIG_AVB_ATX) += libavb_atx/
 obj-y += fsl/

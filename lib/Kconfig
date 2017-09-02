@@ -52,6 +52,9 @@ config LIB_RAND
 	help
 	  This library provides pseudo-random number generator functions.
 
+config AVB_ATX
+	bool "Enable AVB_ATX support"
+
 source lib/dhry/Kconfig
 
 source lib/rsa/Kconfig

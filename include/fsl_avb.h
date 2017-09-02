@@ -8,6 +8,7 @@
 #define __FSL_AVB_H__
 
 #include "../lib/avb/libavb_ab/libavb_ab.h"
+#include "../lib/avb/libavb_atx/libavb_atx.h"
 /* Reads |num_bytes| from offset |offset| from partition with name
  * |partition| (NUL-terminated UTF-8 string). If |offset| is
  * negative, its absolute value should be interpreted as the number
@@ -173,4 +174,17 @@ int avbkey_init(uint8_t *plainkey, uint32_t keylen);
  * return slot suffix '_a'/'_b' or NULL */
 char *select_slot(AvbABOps *ab_ops);
 
+/* Reads permanent |attributes| data. There are no restrictions on where this
+ * data is stored. On success, returns AVB_IO_RESULT_OK and populates
+ * |attributes|.
+ */
+AvbIOResult fsl_read_permanent_attributes(
+    AvbAtxOps* atx_ops, AvbAtxPermanentAttributes* attributes);
+
+/* Reads a |hash| of permanent attributes. This hash MUST be retrieved from a
+ * permanently read-only location (e.g. fuses) when a device is LOCKED. On
+ * success, returned AVB_IO_RESULT_OK and populates |hash|.
+ */
+AvbIOResult fsl_read_permanent_attributes_hash(
+    AvbAtxOps* atx_ops, uint8_t hash[AVB_SHA256_DIGEST_SIZE]);
 #endif /* __FSL_AVB_H__ */
