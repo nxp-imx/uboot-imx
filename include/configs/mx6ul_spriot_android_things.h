@@ -1,13 +1,18 @@
 
 /*
  * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
-#ifndef __PICOSOM_IMX6UL_ANDROID_THINGS_H
-#define __PICOSOM_IMX6UL_ANDROID_THINGS_H
+#ifndef __MX6UL_SPRIOT_ANDROID_THINGS_H
+#define __MX6UL_SPRIOT_ANDROID_THINGS_H
 #include "mx_android_common.h"
+
+#ifdef CONFIG_AVB_ATX
+#define PERMANENT_ATTRIBUTE_HASH_OFFSET 32
+#endif
 
 #define AVB_RPMB
 #ifdef AVB_RPMB
@@ -30,7 +35,6 @@
 
 #define CONFIG_AVB_SUPPORT
 #define CONFIG_SYSTEM_RAMDISK_SUPPORT
-#define CONFIG_AVB_FUSE
 #ifdef CONFIG_AVB_SUPPORT
 
 #ifdef CONFIG_SYS_MALLOC_LEN
@@ -46,3 +50,4 @@
 #endif
 
 #endif
+/* __MX6UL_SPRIOT_ANDROID_THINGS_H */

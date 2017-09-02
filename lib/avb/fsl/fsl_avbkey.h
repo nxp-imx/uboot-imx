@@ -19,6 +19,13 @@
 #define AVB_RBIDX_LEN 0x08
 #define AVB_RBIDX_INITVAL 0
 
+#ifdef CONFIG_AVB_ATX
+#define ATX_RBIDX_FLAG 0xEFEF
+#define ATX_RBIDX_START 0x22000
+#define ATX_RBIDX_ALIGN 0x1000
+#define ATX_RBIDX_LEN 0x08
+#define ATX_RBIDX_INITVAL 0
+#endif
 
 #define AVB_KBLB_MAGIC "\0KBLB!"
 #define AVB_KBLB_MAGIC_LEN 6
@@ -36,8 +43,12 @@ struct kblb_hdr {
 	char magic[AVB_KBLB_MAGIC_LEN];
 	/* public key keyblb tag */
 	kblb_tag_t pubk_tag;
-	/* rollback index keyblb tag */
+	/* vbmeta rollback index keyblb tag */
 	kblb_tag_t rbk_tags[AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS];
+#ifdef CONFIG_AVB_ATX
+	/* Android Things key versions rollback index keyblb tag */
+	kblb_tag_t atx_rbk_tags[AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS];
+#endif
 };
 typedef struct kblb_hdr kblb_hdr_t;
 

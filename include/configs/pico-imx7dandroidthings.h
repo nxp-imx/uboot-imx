@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -11,6 +12,10 @@
 #define TRUSTY_OS_RAM_SIZE 0x2000000
 #define TEE_HWPARTITION_ID 2
 #define TRUSTY_OS_MMC_BLKS 0xFFF
+
+#ifdef CONFIG_AVB_ATX
+#define PERMANENT_ATTRIBUTE_HASH_OFFSET 0
+#endif
 
 #define AVB_RPMB
 #ifdef AVB_RPMB
@@ -63,10 +68,10 @@
 /* infact 7D have no enough bits
  * set this size to 0 will disable
  * program/read FUSE */
-#define CONFIG_AVB_FUSE_BANK_SIZEW 0
-#define CONFIG_AVB_FUSE_BANK_START 0
-#define CONFIG_AVB_FUSE_BANK_END 0
+#define CONFIG_AVB_FUSE_BANK_SIZEW 4
+#define CONFIG_AVB_FUSE_BANK_START 14
+#define CONFIG_AVB_FUSE_BANK_END 14
 #endif
 
 #endif
-
+/* __PICO_IMX7DANDROIDTHINGS_H */

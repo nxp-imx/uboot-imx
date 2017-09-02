@@ -914,7 +914,7 @@ static lbaint_t mmc_sparse_write(struct sparse_storage *info,
 		fill_buf_num_blks = SPARSE_FILL_BUF_SIZE / info->blksz;
 
 		data = memalign(CONFIG_SYS_CACHELINE_SIZE, fill_buf_num_blks * info->blksz);
-		
+
 		while (blkcnt) {
 
 			if (blkcnt > fill_buf_num_blks)
@@ -929,14 +929,14 @@ static lbaint_t mmc_sparse_write(struct sparse_storage *info,
 			blk += cnt;
 			blkcnt -= cnt;
 			buffer = (void *)((unsigned long)buffer + cnt * info->blksz);
-			
+
 		}
 
 		free(data);
 	} else {
 		ret = blk_dwrite(dev_desc, blk, blkcnt, buffer);
 	}
-	
+
 	return ret;
 }
 
@@ -1039,7 +1039,7 @@ static void process_flash_mmc(const char *cmdbuf)
 				struct blk_desc *dev_desc;
 				disk_partition_t info;
 				struct sparse_storage sparse;
-				
+
 				mmc_no = fastboot_devinfo.dev_id;
 
 				printf("sparse flash target is MMC:%d\n", mmc_no);
@@ -1861,12 +1861,25 @@ static AvbABOps fsl_avb_ab_ops = {
 	.write_ab_metadata = fsl_write_ab_metadata,
 	.ops = NULL
 };
-
+#ifdef CONFIG_AVB_ATX
+static AvbAtxOps fsl_avb_atx_ops = {
+	.ops = NULL,
+	.read_permanent_attributes = fsl_read_permanent_attributes,
+	.read_permanent_attributes_hash = fsl_read_permanent_attributes_hash
+};
+#endif
 static AvbOps fsl_avb_ops = {
 	.ab_ops = &fsl_avb_ab_ops,
+#ifdef CONFIG_AVB_ATX
+	.atx_ops = &fsl_avb_atx_ops,
+#endif
 	.read_from_partition = fsl_read_from_partition_multi,
 	.write_to_partition = fsl_write_to_partition,
+#ifdef CONFIG_AVB_ATX
+	.validate_vbmeta_public_key = avb_atx_validate_vbmeta_public_key,
+#else
 	.validate_vbmeta_public_key = fsl_validate_vbmeta_public_key_rpmb,
+#endif
 	.read_rollback_index = fsl_read_rollback_index_rpmb,
 	.write_rollback_index = fsl_write_rollback_index_rpmb,
 	.read_is_device_unlocked = fsl_read_is_device_unlocked,
@@ -1948,6 +1961,9 @@ void fastboot_setup(void)
 	parameters_setup();
 #ifdef CONFIG_AVB_SUPPORT
 	fsl_avb_ab_ops.ops = &fsl_avb_ops;
+#ifdef CONFIG_AVB_ATX
+	fsl_avb_atx_ops.ops = &fsl_avb_ops;
+#endif
 #endif
 }
 

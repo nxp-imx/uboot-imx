@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
- *
+ * Copyright 2017 NXP
  * SPDX-License-Identifier:     GPL-2.0+
+ *
  */
 
 #include <common.h>
@@ -9,10 +10,13 @@
 #include <fsl_caam.h>
 #include <fuse.h>
 #include <mmc.h>
+#include <hash.h>
+#include <mapmem.h>
 
 #include <fsl_avb.h>
 #include "fsl_avbkey.h"
 #include "fsl_public_key.h"
+#include "fsl_atx_attributes.h"
 #include "utils.h"
 #include "debug.h"
 
@@ -26,6 +30,15 @@
 #define RPMBKEY_FUSE_LEN ((RPMBKEY_LENGTH) + (CAAM_PAD))
 #define RPMBKEY_FUSE_LENW (RPMBKEY_FUSE_LEN / 4)
 #define RPMBKEY_BLOB_LEN ((RPMBKEY_LENGTH) + (CAAM_PAD))
+
+#ifdef CONFIG_AVB_ATX
+#define ATX_FUSE_BANK_NUM  4
+#define ATX_FUSE_BANK_MASK 0xFFFF
+#define ATX_HASH_LENGTH    14
+#endif
+
+#define RESULT_ERROR -1
+#define RESULT_OK     0
 
 static int mmc_dev_no = -1;
 
@@ -63,11 +76,7 @@ static int fsl_fuse_ops(uint32_t *buffer, uint32_t length, uint32_t offset,
 		for (i = 0; i < cnt; i++) {
 			VDEBUG("cur: bank=%d, word=%d\n",bs, ws);
 			if (read) {
-#ifdef CONFIG_AVB_FUSE
 				if (fuse_sense(bs, ws, buffer)) {
-#else
-				if (fuse_read(bs, ws, buffer)) {
-#endif
 					ERR("read fuse bank %d, word %d error\n", bs, ws);
 					return -1;
 				}
@@ -110,6 +119,77 @@ static int fsl_fuse_write(const uint32_t *buffer, uint32_t length, uint32_t offs
 		0
 		);
 }
+
+#if defined(AVB_RPMB) && defined(CONFIG_AVB_ATX)
+static int sha256(unsigned char* data, int len, unsigned char* output) {
+	struct hash_algo *algo;
+	void *buf;
+
+	if (hash_lookup_algo("sha256", &algo)) {
+		printf("error in lookup sha256 algo!\n");
+		return RESULT_ERROR;
+	}
+	buf = map_sysmem((ulong)data, len);
+	algo->hash_func_ws(buf, len, output, algo->chunk_size);
+	unmap_sysmem(buf);
+
+	return algo->digest_size;
+}
+
+static int permanent_attributes_sha256_hash(unsigned char* output) {
+	AvbAtxPermanentAttributes attributes;
+
+	/* get permanent attributes */
+	attributes.version = fsl_version;
+	memcpy(attributes.product_root_public_key, fsl_product_root_public_key,
+			sizeof(fsl_product_root_public_key));
+	memcpy(attributes.product_id, fsl_atx_product_id,
+			sizeof(fsl_atx_product_id));
+	/* calculate sha256(permanent attributes) hash */
+	if (sha256((unsigned char *)&attributes, sizeof(AvbAtxPermanentAttributes),
+			output) == RESULT_ERROR) {
+		printf("ERROR - calculate permanent attributes hash error");
+		return RESULT_ERROR;
+	}
+
+	return RESULT_OK;
+}
+
+static int init_permanent_attributes_fuse(void) {
+	uint8_t sha256_hash[AVB_SHA256_DIGEST_SIZE];
+	uint32_t buffer[ATX_FUSE_BANK_NUM];
+	int num = 0;
+
+	/* read first 112 bits of sha256(permanent attributes) from fuse */
+	if (fsl_fuse_read(buffer, ATX_FUSE_BANK_NUM, PERMANENT_ATTRIBUTE_HASH_OFFSET)) {
+		printf("ERROR - read permanent attributes hash from fuse error\n");
+		return RESULT_ERROR;
+	}
+	/* only take the lower 2 bytes of the last bank */
+	buffer[ATX_FUSE_BANK_NUM - 1] &= ATX_FUSE_BANK_MASK;
+
+	/* return RESULT_OK if fuse has been initialized before */
+	for (num = 0; num < ATX_FUSE_BANK_NUM; num++) {
+		if (buffer[num])
+		    return RESULT_OK;
+	}
+
+	/* calculate sha256(permanent attributes) */
+	if (permanent_attributes_sha256_hash(sha256_hash) != RESULT_OK) {
+		return RESULT_ERROR;
+	}
+
+	/* write first 112 bits of sha256(permanent attributes) into fuse */
+	memset(buffer, 0, sizeof(buffer));
+	memcpy(buffer, sha256_hash, ATX_HASH_LENGTH);
+	if (fsl_fuse_write(buffer, ATX_FUSE_BANK_NUM, PERMANENT_ATTRIBUTE_HASH_OFFSET)) {
+		printf("ERROR - write permanent attributes hash to fuse error\n");
+		return RESULT_ERROR;
+	}
+
+	return RESULT_OK;
+}
+#endif
 
 #ifdef AVB_RPMB
 static int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset);
@@ -156,6 +236,28 @@ static int rpmb_init(void) {
 		}
 		offset += AVB_RBIDX_ALIGN;
 	}
+#ifdef CONFIG_AVB_ATX
+	/* init rollback index for Android Things key versions */
+	offset = ATX_RBIDX_START;
+	rbidx_len = ATX_RBIDX_LEN;
+	rbidx = malloc(rbidx_len);
+	if (rbidx == NULL)
+		return -1;
+	memset(rbidx, 0, rbidx_len);
+	*(uint64_t *)rbidx = ATX_RBIDX_INITVAL;
+	for (i = 0; i < AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS; i++) {
+		tag = &hdr.atx_rbk_tags[i];
+		tag->flag = ATX_RBIDX_FLAG;
+		tag->offset = offset;
+		tag->len = rbidx_len;
+		if (rpmb_write(mmc_dev, rbidx, tag->len, tag->offset) != 0) {
+			ERR("write ATX_RBKIDX RPMB error\n");
+			free(rbidx);
+			return -1;
+		}
+		offset += ATX_RBIDX_ALIGN;
+	}
+#endif
 	free(rbidx);
 
 	/* init hdr */
@@ -333,9 +435,13 @@ int init_avbkey(void) {
 		gen_rpmb_key(&kp);
 	}
 	if (rpmb_init())
-		return -1;
+		return RESULT_ERROR;
+#ifdef CONFIG_AVB_ATX
+	if (init_permanent_attributes_fuse())
+		return RESULT_ERROR;
+#endif
 	fill_secure_keyslot_package(&kp);
-	return 0;
+	return RESULT_OK;
 }
 
 #endif
@@ -822,13 +928,22 @@ AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot
 	uint64_t *extract_idx = NULL;
 	struct mmc *mmc_dev;
 	AvbIOResult ret;
+#ifdef CONFIG_AVB_ATX
+	static const uint32_t kTypeMask = 0xF000;
+	static const unsigned int kTypeShift = 12;
+#endif
 
 	assert(ops != NULL && out_rollback_index != NULL);
 	*out_rollback_index = ~0;
 
 	DEBUGAVB("[rpmb] read rollback slot: %zu\n", rollback_index_slot);
 
+	/* check if the rollback index location exceed the limit */
+#ifdef CONFIG_AVB_ATX
+	if ((rollback_index_slot & ~kTypeMask) >= AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS)
+#else
 	if (rollback_index_slot >= AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS)
+#endif
 		return AVB_IO_RESULT_ERROR_IO;
 
 	if ((mmc_dev = get_mmc()) == NULL) {
@@ -845,8 +960,18 @@ AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot
 		ERR("magic not match\n");
 		return AVB_IO_RESULT_ERROR_IO;
 	}
-
+	/* choose rollback index type */
+#ifdef CONFIG_AVB_ATX
+	if ((rollback_index_slot & kTypeMask) >> kTypeShift) {
+		/* rollback index for Android Things key versions */
+		rbk = &hdr.atx_rbk_tags[rollback_index_slot & ~kTypeMask];
+	} else {
+		/* rollback index for vbmeta */
+		rbk = &hdr.rbk_tags[rollback_index_slot & ~kTypeMask];
+	}
+#else
 	rbk = &hdr.rbk_tags[rollback_index_slot];
+#endif
 	extract_idx = malloc(rbk->len);
 	if (extract_idx == NULL)
 		return AVB_IO_RESULT_ERROR_OOM;
@@ -888,13 +1013,21 @@ AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slo
 	uint64_t *plain_idx = NULL;
 	struct mmc *mmc_dev;
 	AvbIOResult ret;
+#ifdef CONFIG_AVB_ATX
+	static const uint32_t kTypeMask = 0xF000;
+	static const unsigned int kTypeShift = 12;
+#endif
 
 	DEBUGAVB("[rpmb] write to rollback slot: (%zu, %" PRIu64 ")\n",
 			rollback_index_slot, rollback_index);
 
 	assert(ops != NULL);
-
+	/* check if the rollback index location exceed the limit */
+#ifdef CONFIG_AVB_ATX
+	if ((rollback_index_slot & ~kTypeMask) >= AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS)
+#else
 	if (rollback_index_slot >= AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS)
+#endif
 		return AVB_IO_RESULT_ERROR_IO;
 
 	if ((mmc_dev = get_mmc()) == NULL) {
@@ -911,8 +1044,18 @@ AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slo
 		ERR("magic not match\n");
 		return AVB_IO_RESULT_ERROR_IO;
 	}
-
+	/* choose rollback index type */
+#ifdef CONFIG_AVB_ATX
+	if ((rollback_index_slot & kTypeMask) >> kTypeShift) {
+		/* rollback index for Android Things key versions */
+		rbk = &hdr.atx_rbk_tags[rollback_index_slot & ~kTypeMask];
+	} else {
+		/* rollback index for vbmeta */
+		rbk = &hdr.rbk_tags[rollback_index_slot & ~kTypeMask];
+	}
+#else
 	rbk = &hdr.rbk_tags[rollback_index_slot];
+#endif
 	plain_idx = malloc(rbk->len);
 	if (plain_idx == NULL)
 		return AVB_IO_RESULT_ERROR_OOM;
@@ -931,3 +1074,52 @@ fail:
 		free(plain_idx);
 	return ret;
 }
+
+#if defined(AVB_RPMB) && defined(CONFIG_AVB_ATX)
+/* Reads permanent |attributes| data. There are no restrictions on where this
+ * data is stored. On success, returns AVB_IO_RESULT_OK and populates
+ * |attributes|.
+ */
+AvbIOResult fsl_read_permanent_attributes(
+    AvbAtxOps* atx_ops, AvbAtxPermanentAttributes* attributes) {
+	/* use hard code permanent attributes due to limited fuse and RPMB */
+	attributes->version = fsl_version;
+	memcpy(attributes->product_root_public_key, fsl_product_root_public_key,
+		sizeof(fsl_product_root_public_key));
+	memcpy(attributes->product_id, fsl_atx_product_id, sizeof(fsl_atx_product_id));
+
+	return AVB_IO_RESULT_OK;
+}
+
+/* Reads a |hash| of permanent attributes. This hash MUST be retrieved from a
+ * permanently read-only location (e.g. fuses) when a device is LOCKED. On
+ * success, returned AVB_IO_RESULT_OK and populates |hash|.
+ */
+AvbIOResult fsl_read_permanent_attributes_hash(
+    AvbAtxOps* atx_ops, uint8_t hash[AVB_SHA256_DIGEST_SIZE]) {
+	uint8_t sha256_hash_buf[AVB_SHA256_DIGEST_SIZE];
+	uint32_t sha256_hash_fuse[ATX_FUSE_BANK_NUM];
+
+	/* read first 112 bits of sha256(permanent attributes) from fuse */
+	if (fsl_fuse_read(sha256_hash_fuse, ATX_FUSE_BANK_NUM,
+		    PERMANENT_ATTRIBUTE_HASH_OFFSET)) {
+		printf("ERROR - read permanent attributes hash from fuse error\n");
+		return AVB_IO_RESULT_ERROR_IO;
+	}
+	/* only take the lower 2 bytes of last bank */
+	sha256_hash_fuse[ATX_FUSE_BANK_NUM - 1] &= ATX_FUSE_BANK_MASK;
+
+	/* calculate sha256(permanent attributes) */
+	if (permanent_attributes_sha256_hash(sha256_hash_buf) != RESULT_OK) {
+		return AVB_IO_RESULT_ERROR_IO;
+	}
+	/* check if the sha256(permanent attributes) hash match */
+	if (memcmp(sha256_hash_fuse, sha256_hash_buf, ATX_HASH_LENGTH)) {
+		printf("ERROR - sha256(permanent attributes) does not match\n");
+		return AVB_IO_RESULT_ERROR_IO;
+	}
+
+	memcpy(hash, sha256_hash_buf, AVB_SHA256_DIGEST_SIZE);
+	return AVB_IO_RESULT_OK;
+}
+#endif

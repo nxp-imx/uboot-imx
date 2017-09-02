@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -17,6 +18,10 @@
 #ifdef AVB_RPMB
 #define KEYSLOT_BLKS 0xFFF
 #define KEYSLOT_HWPARTITION_ID 2
+#endif
+
+#ifdef CONFIG_AVB_ATX
+#define PERMANENT_ATTRIBUTE_HASH_OFFSET 32
 #endif
 
 #ifdef CONFIG_IMX_TRUSTY_OS
@@ -39,7 +44,6 @@
 #define CONFIG_SHA256
 
 #define CONFIG_AVB_SUPPORT
-#define CONFIG_AVB_FUSE
 #ifdef CONFIG_AVB_SUPPORT
 #ifdef CONFIG_SYS_MALLOC_LEN
 #undef CONFIG_SYS_MALLOC_LEN
@@ -53,3 +57,4 @@
 #endif
 
 #endif
+/* __MX6UL_NXPU_IOPB_ANDROID_THINGS_H */
