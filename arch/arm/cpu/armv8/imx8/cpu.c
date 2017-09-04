@@ -631,6 +631,11 @@ enum boot_device get_boot_device(void)
 	return boot_dev;
 }
 
+bool is_usb_boot(void)
+{
+	return get_boot_device() == USB_BOOT;
+}
+
 int print_bootinfo(void)
 {
 	enum boot_device bt_dev;
