@@ -61,12 +61,10 @@
 
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 #include <asm/types.h>
+#include <stdbool.h>
 
-/*
- * If ROM fail back to USB recover mode, USBPH0_PWD will be clear to use USB
- * If boot from the other mode, USB0_PWD will keep reset value
- */
-#define	is_boot_from_usb(void) (!(readl(USB_PHY0_BASE_ADDR) & (1<<20)))
+bool is_usb_boot(void);
+#define is_boot_from_usb  is_usb_boot
 #define	disconnect_from_pc(void) writel(0x0, USB_BASE_ADDR + 0x140)
 
 struct usbphy_regs {
