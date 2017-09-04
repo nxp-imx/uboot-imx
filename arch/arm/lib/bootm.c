@@ -369,6 +369,9 @@ static void boot_jump_linux(bootm_headers_t *images, int flag)
 
 	if (!fake) {
 #ifdef CONFIG_ARMV7_NONSEC
+#ifdef CONFIG_IMX_TRUSTY_OS
+		kernel_entry(0, machid, r2);
+#endif
 		if (armv7_boot_nonsec()) {
 			armv7_init_nonsec();
 			secure_ram_addr(_do_nonsec_entry)(kernel_entry,
