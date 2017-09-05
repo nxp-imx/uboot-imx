@@ -15,6 +15,7 @@
 #include <spl.h>
 #include <asm/imx-common/boot_mode.h>
 #include <asm/imx-common/hab.h>
+#include <g_dnl.h>
 
 #if defined(CONFIG_MX6)
 /* determine boot device from SRC_SBMR1 (BOOT_CFG[4:1]) or SRC_GPR9 register */
@@ -161,6 +162,15 @@ u32 spl_boot_mode(const u32 boot_device)
 }
 #endif
 
+#endif
+
+#ifdef CONFIG_SPL_USB_GADGET_SUPPORT
+int g_dnl_bind_fixup(struct usb_device_descriptor *dev, const char *name)
+{
+	put_unaligned(CONFIG_G_DNL_PRODUCT_NUM + 0xfff, &dev->idProduct);
+
+	return 0;
+}
 #endif
 
 #if defined(CONFIG_SECURE_BOOT)
