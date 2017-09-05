@@ -1555,6 +1555,7 @@ static int sd_select_mode_and_width(struct mmc *mmc, uint card_caps)
 
 	/* Restrict card's capabilities by what the host can do */
 	caps = card_caps & (mmc->cfg->host_caps | MMC_MODE_1BIT);
+	caps |= MMC_CAP(SD_LEGACY);
 
 	if (!uhs_en)
 		caps &= ~UHS_CAPS;
@@ -1693,6 +1694,7 @@ static int mmc_select_mode_and_width(struct mmc *mmc, uint card_caps)
 
 	/* Restrict card's capabilities by what the host can do */
 	card_caps &= (mmc->cfg->host_caps | MMC_MODE_1BIT);
+	card_caps |= MMC_CAP(MMC_LEGACY);
 
 	/* Only version 4 of MMC supports wider bus widths */
 	if (mmc->version < MMC_VERSION_4)
