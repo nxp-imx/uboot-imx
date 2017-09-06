@@ -194,6 +194,10 @@ static int fsl_dspi_cfg_ctar_mode(struct fsl_dspi_priv *priv,
 		bus_setup |= DSPI_CTAR_CPHA;
 	if (mode & SPI_LSB_FIRST)
 		bus_setup |= DSPI_CTAR_LSBFE;
+	if (mode & SPI_FMSZ_8)
+		bus_setup |= DSPI_CTAR_TRSZ(7);
+	if (mode & SPI_FMSZ_16)
+		bus_setup |= DSPI_CTAR_TRSZ(15);
 
 	dspi_write32(priv->flags, &priv->regs->ctar[0], bus_setup);
 
