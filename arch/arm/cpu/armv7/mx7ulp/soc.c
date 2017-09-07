@@ -151,6 +151,10 @@ void s_init(void)
 	/* enable dumb pmic */
 	writel((readl(SNVS_LP_LPCR) | 0x20), SNVS_LP_LPCR);
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+        /* Enable RTC */
+        writel(0x21, 0x40230038);
+#endif
 	return;
 }
 
