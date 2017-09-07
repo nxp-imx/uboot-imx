@@ -483,6 +483,10 @@ void s_init(void)
 	/* clock configuration. */
 	clock_init();
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+        /* Enable RTC */
+        writel(0x21, 0x30370038);
+#endif
 	return;
 }
 
