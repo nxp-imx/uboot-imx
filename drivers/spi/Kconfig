@@ -446,6 +446,13 @@ config SH_QSPI
 	  Enable the Renesas Quad SPI controller driver. This driver can be
 	  used on Renesas SoCs.
 
+config SJA1105
+	bool "NXP SJA1105x driver"
+	depends on FSL_DSPI
+	help
+	  Enable the NXP SJA1105x driver.
+	  The NXP SJA1105x switch is used on several boards, such as S32V234EVB.
+
 config KIRKWOOD_SPI
 	bool "Marvell Kirkwood SPI Driver"
 	help
