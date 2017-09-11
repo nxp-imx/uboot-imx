@@ -636,6 +636,83 @@ bool is_usb_boot(void)
 	return get_boot_device() == USB_BOOT;
 }
 
+#define FSL_SIP_BUILDINFO		0xC2000003
+#define FSL_SIP_BUILDINFO_GET_COMMITHASH	0x00
+extern uint32_t _end_ofs;
+
+static unsigned long call_imx_sip(unsigned long id, unsigned long reg0, unsigned long reg1, unsigned long reg2)
+{
+	struct pt_regs regs;
+	regs.regs[0] = id;
+	regs.regs[1] = reg0;
+	regs.regs[2] = reg1;
+	regs.regs[3] = reg2;
+
+	smc_call(&regs);
+
+	return regs.regs[0];
+}
+
+static void set_buildinfo_to_env(uint32_t scfw, char *mkimage, char *atf)
+{
+	if (!mkimage || !atf)
+		return;
+
+	setenv("commit_mkimage", mkimage);
+	setenv("commit_atf", atf);
+	setenv_hex("commit_scfw", (ulong)scfw);
+}
+
+static void acquire_buildinfo(void)
+{
+	sc_ipc_t ipc;
+	uint32_t sc_build = 0, sc_commit = 0;
+	char *mkimage_commit, *temp;
+	uint64_t atf_commit = 0;
+
+	ipc = gd->arch.ipc_channel_handle;
+
+	/* Get SCFW build and commit id */
+	sc_misc_build_info(ipc, &sc_build, &sc_commit);
+	if (sc_build == 0) {
+		debug("SCFW does not support build info\n");
+		sc_commit = 0; /* Display 0 when the build info is not supported*/
+	}
+
+	/* Get imx-mkimage commit id.
+	 * The imx-mkimage puts the commit hash behind the end of u-boot.bin
+	 */
+	mkimage_commit = (char *)(ulong)(CONFIG_SYS_TEXT_BASE + _end_ofs + fdt_totalsize(gd->fdt_blob));
+	temp = mkimage_commit + 8;
+	*temp = '\0';
+
+	if (strlen(mkimage_commit) == 0) {
+		debug("IMX-MKIMAGE does not support build info\n");
+		mkimage_commit = "0"; /* Display 0 */
+	}
+
+	/* Get ARM Trusted Firmware commit id */
+	atf_commit = call_imx_sip(FSL_SIP_BUILDINFO, FSL_SIP_BUILDINFO_GET_COMMITHASH, 0, 0);
+	if (atf_commit == 0xffffffff) {
+		debug("ATF does not support build info\n");
+		atf_commit = 0x30; /* Display 0, 0 ascii is 0x30 */
+	}
+
+	/* Set all to env */
+	set_buildinfo_to_env(sc_commit, mkimage_commit, (char *)&atf_commit);
+
+	printf("BuildInfo: SCFW %x, IMX-MKIMAGE %s, ATF %s\n", sc_commit, mkimage_commit, (char *)&atf_commit);
+}
+
+#if defined(CONFIG_ARCH_MISC_INIT)
+int arch_misc_init(void)
+{
+	acquire_buildinfo();
+
+	return 0;
+}
+#endif
+
 int print_bootinfo(void)
 {
 	enum boot_device bt_dev;
