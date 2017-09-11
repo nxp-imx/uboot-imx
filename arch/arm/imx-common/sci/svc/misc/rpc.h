@@ -35,6 +35,7 @@ typedef enum misc_func_e
     MISC_FUNC_SECO_AUTHENTICATE = 9, /*!< Index for misc_seco_authenticate() RPC call */
     MISC_FUNC_DEBUG_OUT = 10, /*!< Index for misc_debug_out() RPC call */
     MISC_FUNC_WAVEFORM_CAPTURE = 6, /*!< Index for misc_waveform_capture() RPC call */
+    MISC_FUNC_BUILD_INFO = 15, /*!< Index for misc_build_info() RPC call */
     MISC_FUNC_SET_ARI = 3, /*!< Index for misc_set_ari() RPC call */
     MISC_FUNC_BOOT_STATUS = 7, /*!< Index for misc_boot_status() RPC call */
     MISC_FUNC_BOOT_DONE = 14, /*!< Index for misc_boot_done() RPC call */

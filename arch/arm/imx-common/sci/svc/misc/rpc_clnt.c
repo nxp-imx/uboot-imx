@@ -178,6 +178,25 @@ sc_err_t sc_misc_waveform_capture(sc_ipc_t ipc, bool enable)
     return (sc_err_t) result;
 }
 
+void sc_misc_build_info(sc_ipc_t ipc, uint32_t *build,
+    uint32_t *commit)
+{
+    sc_rpc_msg_t msg;
+
+    RPC_VER(&msg) = SC_RPC_VERSION;
+    RPC_SVC(&msg) = SC_RPC_SVC_MISC;
+    RPC_FUNC(&msg) = MISC_FUNC_BUILD_INFO;
+    RPC_SIZE(&msg) = 1;
+
+    sc_call_rpc(ipc, &msg, false);
+
+    if (build != NULL)
+        *build = RPC_U32(&msg, 0);
+    if (commit != NULL)
+        *commit = RPC_U32(&msg, 4);
+    return;
+}
+
 sc_err_t sc_misc_set_ari(sc_ipc_t ipc, sc_rsrc_t resource,
     sc_rsrc_t resource_mst, uint16_t ari, bool enable)
 {
