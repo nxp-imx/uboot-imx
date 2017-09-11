@@ -219,4 +219,8 @@ AvbABFlowResult avb_single_flow(AvbABOps* ab_ops,
                             AvbSlotVerifyFlags flags,
                             AvbHashtreeErrorMode hashtree_error_mode,
                             AvbSlotVerifyData** out_data);
+
+/* Program ATX perm_attr into RPMB partition */
+int avb_atx_fuse_perm_attr(uint8_t *staged_buffer, uint32_t size);
+
 #endif /* __FSL_AVB_H__ */
