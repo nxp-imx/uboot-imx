@@ -209,6 +209,8 @@ static int xhci_imx8_remove(struct udevice *dev)
 	if (!ret)
 		imx8_xhci_reset();
 
+	board_usb_cleanup(dev->seq, USB_INIT_HOST);
+
 	return ret;
 }
 
@@ -262,5 +264,7 @@ int xhci_hcd_init(int index, struct xhci_hccr **ret_hccr,
 void xhci_hcd_stop(int index)
 {
 	imx8_xhci_reset();
+
+	board_usb_cleanup(index, USB_INIT_HOST);
 }
 #endif
