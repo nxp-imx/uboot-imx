@@ -13,6 +13,7 @@
 #define CONFIG_REMAKE_ELF
 
 #define CONFIG_BOARD_EARLY_INIT_F
+#define CONFIG_ARCH_MISC_INIT
 
 /* Flat Device Tree Definitions */
 #define CONFIG_OF_BOARD_SETUP
