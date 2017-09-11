@@ -225,6 +225,11 @@ int board_late_init(void)
 
 	set_wdog_reset(wdog);
 
+#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+	setenv("board_name", "EVK");
+	setenv("board_rev", "iMX8MQ");
+#endif
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif

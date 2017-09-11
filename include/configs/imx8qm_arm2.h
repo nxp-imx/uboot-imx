@@ -54,6 +54,7 @@
 #define CONFIG_PCI_PNP
 #define CONFIG_PCI_SCAN_SHOW
 
+#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 /* FUSE command */
 #define CONFIG_CMD_FUSE
 
