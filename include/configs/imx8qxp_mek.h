@@ -45,6 +45,8 @@
 #define CONFIG_CMD_PCI_ENUM
 #endif
 
+#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+
 /* FUSE command */
 #define CONFIG_CMD_FUSE
 

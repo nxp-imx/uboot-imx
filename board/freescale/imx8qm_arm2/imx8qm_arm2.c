@@ -566,6 +566,11 @@ int mmc_map_to_kernel_blk(int dev_no)
 
 int board_late_init(void)
 {
+#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+	setenv("board_name", "ARM2");
+	setenv("board_rev", "iMX8QM");
+#endif
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
