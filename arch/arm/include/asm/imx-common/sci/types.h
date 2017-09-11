@@ -26,6 +26,7 @@
 #define SC_10MHZ         10000000   /*!< 10MHz */
 #define SC_20MHZ         20000000   /*!< 20MHz */
 #define SC_25MHZ         25000000   /*!< 25MHz */
+#define SC_27MHZ         27000000   /*!< 27MHz */
 #define SC_40MHZ         40000000   /*!< 40MHz */
 #define SC_45MHZ         45000000   /*!< 45MHz */
 #define SC_50MHZ         50000000   /*!< 50MHz */
@@ -89,6 +90,7 @@
 #define SC_24MHZ         24000000   /*!< 24MHz */
 #define SC_120MHZ       120000000   /*!< 120MHz */
 #define SC_132MHZ       132000000   /*!< 132MHz */
+#define SC_144MHZ       144000000   /*!< 144MHz */
 #define SC_192MHZ       192000000   /*!< 192MHz */
 #define SC_211MHZ       211200000   /*!< 211.2MHz */
 #define SC_240MHZ       240000000   /*!< 240MHz */
@@ -101,6 +103,7 @@
 #define SC_600MHZ       600000000   /*!< 600MHz */
 #define SC_744MHZ       744000000   /*!< 744MHz */
 #define SC_792MHZ       792000000   /*!< 792MHz */
+#define SC_864MHZ       864000000   /*!< 864MHz */
 #define SC_960MHZ       960000000   /*!< 960MHz */
 #define SC_1056MHZ     1056000000   /*!< 1056MHz */
 #define SC_1200MHZ     1200000000   /*!< 1.2GHz */

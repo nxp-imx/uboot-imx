@@ -249,6 +249,16 @@ void sc_misc_debug_out(sc_ipc_t ipc, uint8_t ch);
  */
 sc_err_t sc_misc_waveform_capture(sc_ipc_t ipc, bool enable);
 
+/*!
+ * This function is used to return the SCFW build info.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[out]    build       pointer to return build number
+ * @param[out]    commit      pointer to return commit ID (git SHA-1)
+ */
+void sc_misc_build_info(sc_ipc_t ipc, uint32_t *build,
+    uint32_t *commit);
+
 /* @} */
 
 /*!
