@@ -184,12 +184,19 @@ static int sha256(unsigned char* data, int len, unsigned char* output) {
 static int permanent_attributes_sha256_hash(unsigned char* output) {
 	AvbAtxPermanentAttributes attributes;
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+	if(trusty_read_permanent_attributes((uint8_t *)(&attributes),
+		sizeof(AvbAtxPermanentAttributes))) {
+		return RESULT_ERROR;
+	}
+#else
 	/* get permanent attributes */
 	attributes.version = fsl_version;
 	memcpy(attributes.product_root_public_key, fsl_product_root_public_key,
 			sizeof(fsl_product_root_public_key));
 	memcpy(attributes.product_id, fsl_atx_product_id,
 			sizeof(fsl_atx_product_id));
+#endif
 	/* calculate sha256(permanent attributes) hash */
 	if (sha256((unsigned char *)&attributes, sizeof(AvbAtxPermanentAttributes),
 			output) == RESULT_ERROR) {
@@ -221,6 +228,7 @@ static int init_permanent_attributes_fuse(void) {
 
 	/* calculate sha256(permanent attributes) */
 	if (permanent_attributes_sha256_hash(sha256_hash) != RESULT_OK) {
+		printf("ERROR - calculating permanent attributes SHA256 error!\n");
 		return RESULT_ERROR;
 	}
 
@@ -233,6 +241,37 @@ static int init_permanent_attributes_fuse(void) {
 	}
 
 	return RESULT_OK;
+}
+#endif
+
+#ifdef CONFIG_AVB_ATX
+int avb_atx_fuse_perm_attr(uint8_t *staged_buffer, uint32_t size) {
+
+	if (staged_buffer == NULL) {
+		ERR("Error. Get null staged_buffer\n");
+		return -1;
+	}
+	if (size != sizeof(AvbAtxPermanentAttributes)) {
+		ERR("Error. expect perm_attr length %d, but get %d.\n",
+		sizeof(AvbAtxPermanentAttributes), size);
+		return -1;
+	}
+#ifdef CONFIG_IMX_TRUSTY_OS
+	if (trusty_write_permanent_attributes(staged_buffer, size)) {
+		ERR("Error. Failed to write permanent attributes into secure storage\n");
+		return -1;
+	}
+	else
+		return init_permanent_attributes_fuse();
+#else
+	/*
+	 * TODO:
+	 * Need to handle this when no Trusty OS support.
+	 * But now every Android Things will have Trusty OS support.
+	 */
+	ERR("No Trusty OS enabled in bootloader.\n");
+	return 0;
+#endif
 }
 #endif
 
@@ -481,7 +520,7 @@ int init_avbkey(void) {
 	}
 	if (rpmb_init())
 		return RESULT_ERROR;
-#ifdef CONFIG_AVB_ATX
+#if defined(CONFIG_AVB_ATX) && !defined(CONFIG_IMX_TRUSTY_OS)
 	if (init_permanent_attributes_fuse())
 		return RESULT_ERROR;
 #endif
@@ -1152,6 +1191,14 @@ fail:
  */
 AvbIOResult fsl_read_permanent_attributes(
     AvbAtxOps* atx_ops, AvbAtxPermanentAttributes* attributes) {
+#ifdef CONFIG_IMX_TRUSTY_OS
+	if (trusty_read_permanent_attributes((uint8_t *)attributes,
+			sizeof(AvbAtxPermanentAttributes))) {
+		ERR("Error. Failed to read permanent attributes from secure storage\n");
+		return AVB_IO_RESULT_ERROR_IO;
+	} else
+		return AVB_IO_RESULT_OK;
+#else
 	/* use hard code permanent attributes due to limited fuse and RPMB */
 	attributes->version = fsl_version;
 	memcpy(attributes->product_root_public_key, fsl_product_root_public_key,
@@ -1160,6 +1207,7 @@ AvbIOResult fsl_read_permanent_attributes(
 	       sizeof(fsl_atx_product_id));
 
 	return AVB_IO_RESULT_OK;
+#endif /* CONFIG_IMX_TRUSTY_OS */
 }
 
 /* Reads a |hash| of permanent attributes. This hash MUST be retrieved from a

@@ -2983,7 +2983,7 @@ static int get_single_var(char *cmd, char *response)
 		if (s) {
 			strncat(response, s, chars_left);
 		} else {
-			sprintf(response,"FAILunknow variable:%s",cmd);
+			snprintf(response, chars_left, "FAILunknown variable:%s",cmd);
 			printf("WARNING: unknown variable: %s\n", cmd);
 			return -1;
 		}
@@ -3165,46 +3165,59 @@ static FbLockState do_fastboot_lock(void)
 	return FASTBOOT_LOCK;
 }
 
+static bool endswith(char* s, char* subs) {
+	if (!s || !subs)
+		return false;
+	uint32_t len = strlen(s);
+	uint32_t sublen = strlen(subs);
+	if (len < sublen) {
+		return false;
+	}
+	if (strncmp(s + len - sublen, subs, sublen)) {
+		return false;
+	}
+	return true;
+}
+
 static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 {
 	char *cmd = req->buf;
 	char response[FASTBOOT_RESPONSE_LEN];
-	unsigned char len = strlen(cmd);
 	FbLockState status;
 	FbLockEnableResult result;
-
+	if (endswith(cmd, "lock_critical")) {
+		strcpy(response, "OKAY");
+	}
+#ifdef CONFIG_AVB_ATX
+	else if (endswith(cmd, FASTBOOT_AVB_AT_PERM_ATTR)) {
+		if (avb_atx_fuse_perm_attr(interface.transfer_buffer, download_bytes))
+			strcpy(response, "FAILInternal error!");
+		else
+			strcpy(response, "OKAY");
+	}
+#endif /* CONFIG_AVB_ATX */
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
-	if (!strncmp(cmd + len - strlen(FASTBOOT_BOOTLOADER_VBOOT_KEY),
-		    FASTBOOT_BOOTLOADER_VBOOT_KEY,
-		    strlen(FASTBOOT_BOOTLOADER_VBOOT_KEY))) {
+		else if (endswith(cmd, FASTBOOT_BOOTLOADER_VBOOT_KEY)) {
 		strcpy(response, "OKAY");
-	} else if (!strncmp(cmd + len - strlen("unlock_critical"),
-				"unlock_critical", strlen("unlock_critical"))) {
-#else
-	if (!strncmp(cmd + len - strlen("unlock_critical"),
-				"unlock_critical", strlen("unlock_critical"))) {
-#endif
+	}
+#endif /* CONFIG_ANDROID_THINGS_SUPPORT */
+	else if (endswith(cmd, "unlock_critical")) {
 		strcpy(response, "OKAY");
-	} else if (!strncmp(cmd + len - strlen("lock_critical"),
-				"lock_critical", strlen("lock_critical"))) {
-		strcpy(response, "OKAY");
-	} else if (!strncmp(cmd + len - strlen("unlock"),
-				"unlock", strlen("unlock"))) {
+	} else if (endswith(cmd, "unlock")) {
 		printf("flashing unlock.\n");
 		status = do_fastboot_unlock(false);
 		if (status != FASTBOOT_LOCK_ERROR)
 			strcpy(response, "OKAY");
 		else
-			strcpy(response, "FAIL unlock device failed.");
-	} else if (!strncmp(cmd + len - strlen("lock"), "lock", strlen("lock"))) {
+			strcpy(response, "FAILunlock device failed.");
+	} else if (endswith(cmd, "lock")) {
 		printf("flashing lock.\n");
 		status = do_fastboot_lock();
 		if (status != FASTBOOT_LOCK_ERROR)
 			strcpy(response, "OKAY");
 		else
-			strcpy(response, "FAIL lock device failed.");
-	} else if (!strncmp(cmd + len - strlen("get_unlock_ability"),
-				"get_unlock_ability", strlen("get_unlock_ability"))) {
+			strcpy(response, "FAILlock device failed.");
+	} else if (endswith(cmd, "get_unlock_ability")) {
 		result = fastboot_lock_enable();
 		if (result == FASTBOOT_UL_ENABLE) {
 			fastboot_tx_write_more("INFO1");
@@ -3214,15 +3227,19 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 			strcpy(response, "OKAY");
 		} else {
 			printf("flashing get_unlock_ability fail!\n");
-			strcpy(response, "FAIL get unlock ability failed.");
+			strcpy(response, "FAILget unlock ability failed.");
 		}
 	} else {
 		printf("Unknown flashing command:%s\n", cmd);
-		strcpy(response, "FAIL command not defined");
+		strcpy(response, "FAILcommand not defined");
 	}
 	fastboot_tx_write_more(response);
 }
 
+#endif /* CONFIG_FASTBOOT_LOCK */
+
+#ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_FASTBOOT_LOCK
 static int partition_table_valid(void)
 {
 	int status, mmc_no;
@@ -3236,7 +3253,7 @@ static int partition_table_valid(void)
 		status = -1;
 	return (status == 0);
 }
-
+#endif
 #endif /* CONFIG_FASTBOOT_LOCK */
 
 #ifdef CONFIG_FASTBOOT_FLASH
@@ -3268,7 +3285,7 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 	} else if (status == FASTBOOT_LOCK_ERROR) {
 		pr_err("write lock status into device!\n");
 		fastboot_set_lock_stat(FASTBOOT_LOCK);
-		strcpy(response, "FAIL device is locked.");
+		strcpy(response, "FAILdevice is locked.");
 		fastboot_tx_write_str(response);
 		return;
 	}
@@ -3327,7 +3344,7 @@ static void cb_erase(struct usb_ep *ep, struct usb_request *req)
 	} else if (status == FASTBOOT_LOCK_ERROR) {
 		pr_err("write lock status into device!\n");
 		fastboot_set_lock_stat(FASTBOOT_LOCK);
-		strcpy(response, "FAIL device is locked.");
+		strcpy(response, "FAILdevice is locked.");
 		fastboot_tx_write_str(response);
 		return;
 	}
@@ -3784,6 +3801,12 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 	{
 		.cmd = "oem",
 		.cb = cb_oem,
+	},
+#endif
+#ifdef CONFIG_AVB_ATX
+	{
+		.cmd = "stage",
+		.cb = cb_download,
 	},
 #endif
 };
