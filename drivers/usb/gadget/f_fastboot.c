@@ -1909,17 +1909,18 @@ static FbBootMode fastboot_get_bootmode(void)
 		return boot_mode;
 	}
 	if (!strcmp(command, FASTBOOT_BCB_CMD)) {
-		memset(command, 0, 32);
-		bcb_write_command(command);
 		boot_mode = BOOTMODE_FASTBOOT_BCB_CMD;
 	}
 #ifdef CONFIG_ANDROID_RECOVERY
 	else if (!strcmp(command, RECOVERY_BCB_CMD)) {
-		memset(command, 0, 32);
-		bcb_write_command(command);
 		boot_mode = BOOTMODE_RECOVERY_BCB_CMD;
 	}
 #endif
+
+	/* Clean the mode once its read out,
+	   no matter what in the mode string */
+	memset(command, 0, 32);
+	bcb_write_command(command);
 	return boot_mode;
 }
 
