@@ -85,4 +85,5 @@ obj-$(CONFIG_CMD_ESBC_VALIDATE) += fsl_validate.o cmd_esbc_validate.o
 endif
 obj-$(CONFIG_CHAIN_OF_TRUST) += fsl_chain_of_trust.o
 
+obj-$(CONFIG_USB_XHCI_IMX8) += tcpc.o
 endif
