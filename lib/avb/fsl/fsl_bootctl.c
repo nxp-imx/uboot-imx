@@ -104,7 +104,7 @@ int get_slotvar_avb(AvbABOps *ab_ops, char *cmd, char *buffer, size_t size) {
 	if (!strcmp_l1("current-slot", cmd)) {
 		int curr = get_curr_slot(&ab_data);
 		if (curr >= 0 && curr < SLOT_NUM)
-			strlcpy(buffer, slot_suffix[curr], size);
+			strlcpy(buffer, slot_suffix[curr] + sizeof(unsigned char), size);
 		else {
 			strlcpy(buffer, "no bootable slot", size);
 			return -1;
