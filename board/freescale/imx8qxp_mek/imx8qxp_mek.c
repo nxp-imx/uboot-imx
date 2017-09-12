@@ -28,6 +28,7 @@
 #include <asm/imx-common/video.h>
 #include <asm/arch/video_common.h>
 #include <power-domain.h>
+#include "../common/tcpc.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -340,6 +341,7 @@ static int setup_fec(int ind)
 
 static iomux_cfg_t board_gpios[] = {
 	SC_P_SPI2_SDO | MUX_MODE_ALT(4) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
+	SC_P_ENET0_REFCLK_125M_25M | MUX_MODE_ALT(4) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
 };
 
 static void board_gpio_init(void)
@@ -421,6 +423,86 @@ static void setup_otg(void)
 }
 #endif
 
+#ifdef CONFIG_USB_XHCI_IMX8
+
+#define USB_TYPEC_SEL IMX_GPIO_NR(5, 9)
+static iomux_cfg_t ss_mux_gpio[] = {
+	SC_P_ENET0_REFCLK_125M_25M | MUX_MODE_ALT(4) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
+};
+
+struct udevice *tcpc_i2c_dev = NULL;
+
+static void setup_typec(void)
+{
+	struct udevice *bus;
+	uint8_t chip = 0x50;
+	int ret;
+	struct gpio_desc typec_en_desc;
+
+	imx8_iomux_setup_multiple_pads(ss_mux_gpio, ARRAY_SIZE(ss_mux_gpio));
+	gpio_request(USB_TYPEC_SEL, "typec_sel");
+
+	ret = dm_gpio_lookup_name("gpio@1a_7", &typec_en_desc);
+	if (ret) {
+		printf("%s lookup gpio@1a_7 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&typec_en_desc, "typec_en");
+	if (ret) {
+		printf("%s request typec_en failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	/* Enable SS MUX */
+	dm_gpio_set_dir_flags(&typec_en_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	ret = uclass_get_device_by_seq(UCLASS_I2C, 1, &bus);
+	if (ret) {
+		printf("%s: Can't find bus\n", __func__);
+		return;
+	}
+
+	ret = dm_i2c_probe(bus, chip, 0, &tcpc_i2c_dev);
+	if (ret) {
+		printf("%s: Can't find device id=0x%x\n",
+			__func__, chip);
+		return;
+	}
+
+	tcpc_init(tcpc_i2c_dev);
+}
+
+void ss_mux_select(enum typec_cc_polarity pol)
+{
+	if (pol == TYPEC_POLARITY_CC1)
+		gpio_direction_output(USB_TYPEC_SEL, 0);
+	else
+		gpio_direction_output(USB_TYPEC_SEL, 1);
+}
+
+int board_usb_init(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	if (init == USB_INIT_HOST && tcpc_i2c_dev)
+		ret = tcpc_setup_dfp_mode(tcpc_i2c_dev, &ss_mux_select);
+
+	return ret;
+
+}
+
+int board_usb_cleanup(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	if (init == USB_INIT_HOST && tcpc_i2c_dev)
+		ret = tcpc_disable_vbus(tcpc_i2c_dev);
+
+	return ret;
+}
+#endif
+
 int board_init(void)
 {
 #ifdef CONFIG_MXC_GPIO
@@ -433,6 +515,10 @@ int board_init(void)
 
 #ifdef CONFIG_USB_EHCI_MX6
 	setup_otg();
+#endif
+
+#ifdef CONFIG_USB_XHCI_IMX8
+	setup_typec();
 #endif
 
 	return 0;
