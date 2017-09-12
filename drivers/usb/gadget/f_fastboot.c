@@ -1389,7 +1389,7 @@ static int _fastboot_parts_add_ptable_entry(int ptable_index,
 #endif
 		strcpy(ptable[ptable_index].fstype, "ext4");
 	else
-		strcpy(ptable[ptable_index].fstype, "emmc");
+		strcpy(ptable[ptable_index].fstype, "raw");
 	return 0;
 }
 
@@ -1461,12 +1461,14 @@ static int _fastboot_parts_load_from_ptable(void)
 	ptable[PTN_GPT_INDEX].length = ANDROID_GPT_SIZE  / dev_desc->blksz;
 	ptable[PTN_GPT_INDEX].partition_id = user_partition;
 	ptable[PTN_GPT_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
+	strcpy(ptable[PTN_GPT_INDEX].fstype, "raw");
 
 	/* Trusty OS */
 	strcpy(ptable[PTN_TEE_INDEX].name, FASTBOOT_PARTITION_TEE);
 	ptable[PTN_TEE_INDEX].start = 0;
 	ptable[PTN_TEE_INDEX].length = TRUSTY_OS_MMC_BLKS;
 	ptable[PTN_TEE_INDEX].partition_id = TEE_HWPARTITION_ID;
+	strcpy(ptable[PTN_TEE_INDEX].fstype, "raw");
 
 	/* Bootloader */
 	strcpy(ptable[PTN_BOOTLOADER_INDEX].name, FASTBOOT_PARTITION_BOOTLOADER);
@@ -1476,6 +1478,7 @@ static int _fastboot_parts_load_from_ptable(void)
 				 ANDROID_BOOTLOADER_SIZE / dev_desc->blksz;
 	ptable[PTN_BOOTLOADER_INDEX].partition_id = boot_partition;
 	ptable[PTN_BOOTLOADER_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
+	strcpy(ptable[PTN_BOOTLOADER_INDEX].fstype, "raw");
 
 	int tbl_idx;
 	int part_idx = 1;
