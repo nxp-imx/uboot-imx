@@ -62,7 +62,7 @@
 #ifdef CONFIG_FASTBOOT_LOCK
 #include "fastboot_lock_unlock.h"
 #endif
-#define FASTBOOT_VAR_NUM	(24 + 2 * (MAX_PTN))
+#define FASTBOOT_VAR_NUM	(26 + 2 * (MAX_PTN))
 #define FASTBOOT_VAR_YES    "yes"
 #define FASTBOOT_VAR_NO     "no"
 
@@ -2159,6 +2159,9 @@ static int get_single_var(char *cmd, char *response)
 	char *str = cmd;
 	size_t chars_left;
 	const char *s;
+	char string_buffer[12];
+	int mmc_no = 0;
+	struct blk_desc *dev_desc;
 
 	chars_left = FASTBOOT_RESPONSE_LEN - strlen(response) - 1;
 
@@ -2205,6 +2208,16 @@ static int get_single_var(char *cmd, char *response)
 
 		sprintf(str_num, "0x%08x", CONFIG_FASTBOOT_BUF_SIZE);
 		strncat(response, str_num, chars_left);
+	} else if (!strcmp_l1("erase-block-size", cmd)) {
+		mmc_no = fastboot_devinfo.dev_id;
+		dev_desc = blk_get_dev("mmc", mmc_no);
+		sprintf(string_buffer, "0x%08x", dev_desc->blksz);
+		strncat(response, string_buffer, chars_left);
+	} else if (!strcmp_l1("logical-block-size", cmd)) {
+		mmc_no = fastboot_devinfo.dev_id;
+		dev_desc = blk_get_dev("mmc", mmc_no);
+		sprintf(string_buffer, "0x%08x", dev_desc->blksz);
+		strncat(response, string_buffer, chars_left);
 	} else if (!strcmp_l1("serialno", cmd)) {
 		s = get_serial();
 		if (s)
@@ -2305,6 +2318,14 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		num++;
 		strcat(response[num], "INFOmax-download-size:");
 		get_single_var("max-download-size",response[num]);
+
+		num++;
+		strcat(response[num], "INFOerase-block-size:");
+		get_single_var("erase-block-size",response[num]);
+
+		num++;
+		strcat(response[num], "INFOlogical-block-size:");
+		get_single_var("logical-block-size",response[num]);
 
 		num++;
 		strcat(response[num], "INFOunlocked:");
