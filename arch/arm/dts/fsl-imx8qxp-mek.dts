@@ -403,3 +403,7 @@
 	vmmc-supply = <&reg_usdhc2_vmmc>;
 	status = "okay";
 };
+
+&usb2 {
+	status = "okay";
+};
