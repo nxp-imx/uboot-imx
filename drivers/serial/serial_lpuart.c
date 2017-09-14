@@ -42,7 +42,7 @@
 #define CTRL_RE		(1 << 18)
 
 #define FIFO_TXFE		0x80
-#define FIFO_RXFE		0x40
+#define FIFO_RXFE		0x08
 
 #define WATER_TXWATER_OFF	1
 #define WATER_RXWATER_OFF	16
