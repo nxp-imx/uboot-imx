@@ -169,6 +169,8 @@ const char *mmc_mode_name(enum bus_mode mode)
 	      [MMC_HS_52]	= "MMC High Speed (52MHz)",
 	      [MMC_DDR_52]	= "MMC DDR52 (52MHz)",
 	      [MMC_HS_200]	= "HS200 (200MHz)",
+	      [MMC_HS_400]	= "HS400 (200MHz)",
+	      [MMC_HS_400_ES]	= "HS400ES (200MHz)",
 	};
 
 	if (mode >= MMC_MODES_END)
@@ -191,6 +193,8 @@ static uint mmc_mode2freq(struct mmc *mmc, enum bus_mode mode)
 	      [MMC_HS_52]	= 52000000,
 	      [MMC_DDR_52]	= 52000000,
 	      [MMC_HS_200]	= 200000000,
+	      [MMC_HS_400]	= 200000000,
+	      [MMC_HS_400_ES]	= 200000000,
 	};
 
 	if (mode == MMC_LEGACY)
@@ -804,6 +808,7 @@ static int mmc_get_capabilities(struct mmc *mmc)
 {
 	u8 *ext_csd = mmc->ext_csd;
 	char cardtype;
+	char strobe_support;
 
 	mmc->card_caps = MMC_MODE_1BIT;
 
@@ -821,11 +826,16 @@ static int mmc_get_capabilities(struct mmc *mmc)
 
 	mmc->card_caps |= MMC_MODE_4BIT | MMC_MODE_8BIT;
 
-	cardtype = ext_csd[EXT_CSD_CARD_TYPE] & 0x3f;
+	cardtype = ext_csd[EXT_CSD_CARD_TYPE];
+	strobe_support = ext_csd[EXT_CSD_STROBE_SUPPORT];
 
 	if (cardtype & (EXT_CSD_CARD_TYPE_HS200_1_2V |
 			EXT_CSD_CARD_TYPE_HS200_1_8V)) {
 		mmc->card_caps |= MMC_MODE_HS200;
+	}
+	if (cardtype & (EXT_CSD_CARD_TYPE_HS400_1_2V |
+			EXT_CSD_CARD_TYPE_HS400_1_8V)) {
+		mmc->card_caps |= MMC_MODE_HS400;
 	}
 	if (cardtype & EXT_CSD_CARD_TYPE_52) {
 		if (cardtype & EXT_CSD_CARD_TYPE_DDR_52)
@@ -834,6 +844,9 @@ static int mmc_get_capabilities(struct mmc *mmc)
 	}
 	if (cardtype & EXT_CSD_CARD_TYPE_26)
 		mmc->card_caps |= MMC_MODE_HS;
+
+	if (strobe_support && (mmc->card_caps & MMC_MODE_HS400))
+		mmc->card_caps |= MMC_MODE_HS400_ES;
 
 	return 0;
 }
@@ -1642,6 +1655,10 @@ static int mmc_read_and_compare_ext_csd(struct mmc *mmc)
 
 static const struct mode_width_tuning mmc_modes_by_pref[] = {
 	{
+		.mode = MMC_HS_400_ES,
+		.widths = MMC_MODE_8BIT,
+	},
+	{
 		.mode = MMC_HS_200,
 		.widths = MMC_MODE_8BIT | MMC_MODE_4BIT,
 		.tuning = MMC_SEND_TUNING_BLOCK_HS200
@@ -1686,6 +1703,40 @@ static const struct ext_csd_bus_width {
 	    ecbv++) \
 		if ((ddr == ecbv->is_ddr) && (caps & ecbv->cap))
 
+static int mmc_select_hs400es(struct mmc *mmc)
+{
+	int err;
+
+	err = mmc_set_card_speed(mmc, MMC_HS);
+	if (err)
+		return err;
+
+	/* configure the bus mode (host) */
+	mmc_select_mode(mmc, MMC_HS);
+	mmc_set_clock(mmc, mmc->tran_speed, false);
+
+	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
+		EXT_CSD_BUS_WIDTH, EXT_CSD_BUS_WIDTH_8 |
+		EXT_CSD_DDR | EXT_CSD_BUS_WIDTH_STROBE);
+	if (err) {
+		printf("switch to bus width for hs400 failed\n");
+		return err;
+	}
+	/* TODO: driver strength */
+	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
+		EXT_CSD_HS_TIMING, EXT_CSD_TIMING_HS400 | (0 << EXT_CSD_DRV_STR_SHIFT));
+	if (err) {
+		printf("switch to hs400 failed\n");
+		return err;
+	}
+
+	mmc_select_mode(mmc, MMC_HS_400_ES);
+	mmc_set_clock(mmc, mmc->tran_speed, false);
+	mmc->cfg->ops->hs400_enhanced_strobe(mmc);
+
+	return 0;
+}
+
 static int mmc_select_mode_and_width(struct mmc *mmc, uint card_caps)
 {
 	int err;
@@ -1724,32 +1775,38 @@ static int mmc_select_mode_and_width(struct mmc *mmc, uint card_caps)
 				goto error;
 			mmc_set_bus_width(mmc, bus_width(ecbw->cap));
 
-			/* configure the bus speed (card) */
-			err = mmc_set_card_speed(mmc, mwt->mode);
-			if (err)
-				goto error;
-
-			/*
-			 * configure the bus width AND the ddr mode (card)
-			 * The host side will be taken care of in the next step
-			 */
-			if (ecbw->ext_csd_bits & EXT_CSD_DDR) {
-				err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
-					EXT_CSD_BUS_WIDTH, ecbw->ext_csd_bits);
+			if (mwt->mode == MMC_HS_400_ES) {
+				err = mmc_select_hs400es(mmc);
 				if (err)
 					goto error;
-			}
-
-			/* configure the bus mode (host) */
-			mmc_select_mode(mmc, mwt->mode);
-			mmc_set_clock(mmc, mmc->tran_speed, false);
-
-			/* execute tuning if needed */
-			if (mwt->tuning) {
-				err = mmc_execute_tuning(mmc, mwt->tuning);
-				if (err) {
-					debug("tuning failed\n");
+			} else {
+				/* configure the bus speed (card) */
+				err = mmc_set_card_speed(mmc, mwt->mode);
+				if (err)
 					goto error;
+
+				/*
+				 * configure the bus width AND the ddr mode (card)
+				 * The host side will be taken care of in the next step
+				 */
+				if (ecbw->ext_csd_bits & EXT_CSD_DDR) {
+					err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
+						EXT_CSD_BUS_WIDTH, ecbw->ext_csd_bits);
+					if (err)
+						goto error;
+				}
+
+				/* configure the bus mode (host) */
+				mmc_select_mode(mmc, mwt->mode);
+				mmc_set_clock(mmc, mmc->tran_speed, false);
+
+				/* execute tuning if needed */
+				if (mwt->tuning) {
+					err = mmc_execute_tuning(mmc, mwt->tuning);
+					if (err) {
+						debug("tuning failed\n");
+						goto error;
+					}
 				}
 			}
 

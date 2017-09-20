@@ -79,7 +79,10 @@ struct fsl_esdhc {
 	uint    dllctrl;
 	uint    dllstat;
 	uint    clktunectrlstatus;
-	char    reserved3[84];
+	char	reserved[4];
+	uint	strobe_dllctrl;
+	uint	strobe_dllstat;
+	char    reserved3[72];
 	uint    vendorspec;
 	uint    mmcboot;
 	uint    vendorspec2;
@@ -137,6 +140,7 @@ struct fsl_esdhc_priv {
 	int is_ddr;
 	u32 tuning_step;
 	u32 tuning_start_tap;
+	u32 strobe_dll_delay_target;
 	u32 delay_line;
 	uint signal_voltage;
 #if CONFIG_IS_ENABLED(DM_REGULATOR)
@@ -698,6 +702,8 @@ static int esdhc_change_pinstate(struct mmc *mmc)
 		break;
 	case UHS_SDR104:
 	case MMC_HS_200:
+	case MMC_HS_400:
+	case MMC_HS_400_ES:
 		ret = pinctrl_select_state(dev, "state_200mhz");
 		break;
 	default:
@@ -726,6 +732,32 @@ static void esdhc_reset_tuning(struct mmc *mmc)
 	}
 }
 
+static void esdhc_set_strobe_dll(struct mmc *mmc)
+{
+	struct fsl_esdhc_priv *priv = mmc->priv;
+	struct fsl_esdhc *regs = priv->esdhc_regs;
+	u32 v;
+
+	if (priv->clock > ESDHC_STROBE_DLL_CLK_FREQ) {
+		writel(ESDHC_STROBE_DLL_CTRL_RESET, &regs->strobe_dllctrl);
+
+		/*
+		 * enable strobe dll ctrl and adjust the delay target
+		 * for the uSDHC loopback read clock
+		 */
+		v = ESDHC_STROBE_DLL_CTRL_ENABLE |
+			(priv->strobe_dll_delay_target << ESDHC_STROBE_DLL_CTRL_SLV_DLY_TARGET_SHIFT);
+		writel(v, &regs->strobe_dllctrl);
+		/* wait 1us to make sure strobe dll status register stable */
+		udelay(1);
+		v = readl(&regs->strobe_dllstat);
+		if (!(v & ESDHC_STROBE_DLL_STS_REF_LOCK))
+			printf("warning! HS400 strobe DLL status REF not lock!\n");
+		if (!(v & ESDHC_STROBE_DLL_STS_SLV_LOCK))
+			printf("warning! HS400 strobe DLL status SLV not lock!\n");
+	}
+}
+
 static int esdhc_set_timing(struct mmc *mmc)
 {
 	struct fsl_esdhc_priv *priv = mmc->priv;
@@ -740,6 +772,14 @@ static int esdhc_set_timing(struct mmc *mmc)
 	case MMC_LEGACY:
 	case SD_LEGACY:
 		esdhc_reset_tuning(mmc);
+		break;
+	case MMC_HS_400:
+	case MMC_HS_400_ES:
+		m |= MIX_CTRL_DDREN | MIX_CTRL_HS400_EN;
+		writel(m, &regs->mixctrl);
+		priv->is_ddr = 1;
+		set_sysctl(mmc, mmc->clock);
+		esdhc_set_strobe_dll(mmc);
 		break;
 	case MMC_HS:
 	case MMC_HS_52:
@@ -896,6 +936,17 @@ static int esdhc_execute_tuning(struct mmc *mmc, uint32_t opcode)
 	esdhc_stop_tuning(mmc);
 
 	return ret;
+}
+
+static void esdhc_hs400_enhanced_strobe(struct mmc *mmc)
+{
+	struct fsl_esdhc_priv *priv = mmc->priv;
+	struct fsl_esdhc *regs = priv->esdhc_regs;
+	u32 m;
+
+	m = readl(&regs->mixctrl);
+	m |= MIX_CTRL_HS400_ES;
+	writel(m, &regs->mixctrl);
 }
 
 static int esdhc_set_vdd(struct mmc *mmc, bool enable)
@@ -1073,6 +1124,7 @@ static const struct mmc_ops esdhc_ops = {
 #if CONFIG_IS_ENABLED(DM_MMC)
 	.execute_tuning	= esdhc_execute_tuning,
 	.set_vdd = esdhc_set_vdd,
+	.hs400_enhanced_strobe = esdhc_hs400_enhanced_strobe,
 #endif
 };
 
@@ -1382,6 +1434,8 @@ static int fsl_esdhc_probe(struct udevice *dev)
 	priv->tuning_step = val;
 	val = fdtdec_get_int(fdt, node, "fsl,tuning-start-tap", ESDHC_TUNING_START_TAP_DEFAULT);
 	priv->tuning_start_tap = val;
+	val = fdtdec_get_int(fdt, node, "fsl,strobe-dll-delay-target", ESDHC_STROBE_DLL_CTRL_SLV_DLY_TARGET_DEFAULT);
+	priv->strobe_dll_delay_target = val;
 
 	if (fdt_get_property(fdt, node, "non-removable", NULL)) {
 		priv->non_removable = 1;
@@ -1421,8 +1475,10 @@ static int fsl_esdhc_probe(struct udevice *dev)
 		dev_dbg(dev, "no vmmc supply\n");
 #endif
 
-	if (fdt_get_property(fdt, node, "no-1-8-v", NULL))
-		priv->caps &= ~UHS_CAPS;
+	if (fdt_get_property(fdt, node, "no-1-8-v", NULL)) {
+		priv->caps &= ~(UHS_CAPS | MMC_MODE_HS400 | MMC_MODE_HS400_ES |
+				MMC_MODE_HS200);
+	}
 
 	/*
 	 * TODO:
@@ -1468,8 +1524,9 @@ static struct esdhc_soc_data usdhc_imx8qm_data = {
 	.flags = ESDHC_FLAG_USDHC | ESDHC_FLAG_STD_TUNING
 			| ESDHC_FLAG_HAVE_CAP1 | ESDHC_FLAG_HS200
 			| ESDHC_FLAG_HS400 | ESDHC_FLAG_HS400_ES,
-	.caps = UHS_CAPS | MMC_MODE_HS200 | MMC_MODE_DDR_52MHz
-		| MMC_MODE_HS_52MHz | MMC_MODE_HS,
+	.caps = UHS_CAPS | MMC_MODE_HS400 | MMC_MODE_HS400_ES |
+		MMC_MODE_HS200 | MMC_MODE_DDR_52MHz | MMC_MODE_HS_52MHz |
+		MMC_MODE_HS,
 };
 
 static const struct udevice_id fsl_esdhc_ids[] = {

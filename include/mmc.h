@@ -57,6 +57,8 @@
 #define MMC_MODE_HS_52MHz	MMC_CAP(MMC_HS_52)
 #define MMC_MODE_DDR_52MHz	MMC_CAP(MMC_DDR_52)
 #define MMC_MODE_HS200		MMC_CAP(MMC_HS_200)
+#define MMC_MODE_HS400		MMC_CAP(MMC_HS_400)
+#define MMC_MODE_HS400_ES	MMC_CAP(MMC_HS_400_ES)
 
 #define MMC_MODE_8BIT		(1 << 30)
 #define MMC_MODE_4BIT		(1 << 29)
@@ -211,6 +213,7 @@ static inline bool mmc_is_tuning_cmd(uint cmdidx)
 #define EXT_CSD_BOOT_BUS_WIDTH		177
 #define EXT_CSD_PART_CONF		179	/* R/W */
 #define EXT_CSD_BUS_WIDTH		183	/* R/W */
+#define EXT_CSD_STROBE_SUPPORT		184	/* R/W */
 #define EXT_CSD_HS_TIMING		185	/* R/W */
 #define EXT_CSD_REV			192	/* RO */
 #define EXT_CSD_CARD_TYPE		196	/* RO */
@@ -241,14 +244,23 @@ static inline bool mmc_is_tuning_cmd(uint cmdidx)
 #define EXT_CSD_CARD_TYPE_HS200		(EXT_CSD_CARD_TYPE_HS200_1_8V | \
 					 EXT_CSD_CARD_TYPE_HS200_1_2V)
 
+#define EXT_CSD_CARD_TYPE_HS400_1_8V	(1<<6)
+#define EXT_CSD_CARD_TYPE_HS400_1_2V	(1<<7)
+#define EXT_CSD_CARD_TYPE_HS400		(EXT_CSD_CARD_TYPE_HS400_1_8V | \
+					 EXT_CSD_CARD_TYPE_HS400_1_2V)
+#define EXT_CSD_CARD_TYPE_HS400ES	(1<<8)
+
 #define EXT_CSD_BUS_WIDTH_1	0	/* Card is in 1 bit mode */
 #define EXT_CSD_BUS_WIDTH_4	1	/* Card is in 4 bit mode */
 #define EXT_CSD_BUS_WIDTH_8	2	/* Card is in 8 bit mode */
 #define EXT_CSD_DDR		4	/* Card is in DDR mode */
+#define EXT_CSD_BUS_WIDTH_STROBE (1 << 7) /* Enhanced strobe mode */
 
 #define EXT_CSD_TIMING_LEGACY	0	/* no high speed */
 #define EXT_CSD_TIMING_HS	1	/* HS */
 #define EXT_CSD_TIMING_HS200	2	/* HS200 */
+#define EXT_CSD_TIMING_HS400	3	/* HS400 */
+#define EXT_CSD_DRV_STR_SHIFT	4	/* Driver Strength shift */
 
 #define EXT_CSD_BOOT_ACK_ENABLE			(1 << 6)
 #define EXT_CSD_BOOT_PARTITION_ENABLE		(1 << 3)
@@ -425,6 +437,9 @@ struct dm_mmc_ops {
 	 * @return 1 if busy, O if not busy
 	 */
 	int (*card_busy)(struct udevice *dev);
+
+	/* hs400_enhanced_strobe() - set enhanced strobe */
+	void (*hs400_enhanced_strobe)(struct udevice *dev);
 };
 
 #define mmc_get_ops(dev)        ((struct dm_mmc_ops *)(dev)->driver->ops)
@@ -457,6 +472,7 @@ struct mmc_ops {
 	int (*getwp)(struct mmc *mmc);
 	int (*execute_tuning)(struct mmc *mmc, uint opcode);
 	int (*card_busy)(struct mmc *mmc);
+	void (*hs400_enhanced_strobe)(struct mmc *mmc);
 };
 #endif
 
@@ -492,6 +508,8 @@ enum bus_mode {
 	MMC_HS_52	= 9,
 	MMC_DDR_52	= 10,
 	MMC_HS_200	= 11,
+	MMC_HS_400	= 12,
+	MMC_HS_400_ES	= 13,
 	MMC_MODES_END
 };
 
@@ -500,7 +518,8 @@ void mmc_dump_capabilities(const char *text, uint caps);
 
 static inline bool mmc_is_mode_ddr(enum bus_mode mode)
 {
-	if ((mode == MMC_DDR_52) || (mode == UHS_DDR50))
+	if ((mode == MMC_HS_400) || (mode == MMC_HS_400_ES) || \
+	    (mode == MMC_DDR_52) || (mode == UHS_DDR50))
 		return true;
 	else
 		return false;

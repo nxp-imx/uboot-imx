@@ -55,6 +55,18 @@
 /* Tuning bits */
 #define	MIX_CTRL_TUNING_MASK	0x03c00000
 
+/* strobe dll register */
+#define ESDHC_STROBE_DLL_CTRL		0x70
+#define ESDHC_STROBE_DLL_CTRL_ENABLE	(1 << 0)
+#define ESDHC_STROBE_DLL_CTRL_RESET	(1 << 1)
+#define ESDHC_STROBE_DLL_CTRL_SLV_DLY_TARGET_DEFAULT	0x7
+#define ESDHC_STROBE_DLL_CTRL_SLV_DLY_TARGET_SHIFT	3
+
+#define ESDHC_STROBE_DLL_STATUS		0x74
+#define ESDHC_STROBE_DLL_STS_REF_LOCK	(1 << 1)
+#define ESDHC_STROBE_DLL_STS_SLV_LOCK	0x1
+#define ESDHC_STROBE_DLL_CLK_FREQ	100000000
+
 #define ESDHC_STD_TUNING_EN             (1 << 24)
 /* NOTE: the minimum valid tuning start tap for mx6sl is 1 */
 #define ESDHC_TUNING_START_TAP_DEFAULT	0x1
