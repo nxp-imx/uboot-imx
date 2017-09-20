@@ -778,7 +778,6 @@ static int esdhc_set_timing(struct mmc *mmc)
 		m |= MIX_CTRL_DDREN | MIX_CTRL_HS400_EN;
 		writel(m, &regs->mixctrl);
 		priv->is_ddr = 1;
-		set_sysctl(mmc, mmc->clock);
 		esdhc_set_strobe_dll(mmc);
 		break;
 	case MMC_HS:
