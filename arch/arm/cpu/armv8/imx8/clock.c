@@ -254,7 +254,7 @@ void init_clk_usdhc(u32 index)
 
 	sc_err_t err;
 	sc_ipc_t ipc;
-	sc_pm_clock_rate_t actual = 200000000;
+	sc_pm_clock_rate_t actual = 400000000;
 
 	ipc = gd->arch.ipc_channel_handle;
 
@@ -267,8 +267,8 @@ void init_clk_usdhc(u32 index)
 		return;
 	}
 
-	if (actual != 200000000)
-		debug("Actual rate for SDHC_%d is %d\n", index, actual);
+	if (actual != 400000000)
+		printf("Actual rate for SDHC_%d is %d\n", index, actual);
 
 	err = sc_pm_clock_enable(ipc, usdhcs[index], SC_PM_CLK_PER, true, false);
 	if (err != SC_ERR_NONE) {
