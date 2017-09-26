@@ -1286,20 +1286,7 @@ static int fecmxc_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
-#ifdef CONFIG_FEC_MXC_MDIO_BASE
-	bus = fec_get_miibus((ulong)CONFIG_FEC_MXC_MDIO_BASE, dev->seq);
-#else
-	bus = fec_get_miibus((ulong)priv->eth, dev->seq);
-#endif
-	if (!bus)
-		goto err_mii;
-
-	priv->bus = bus;
 	priv->xcv_type = CONFIG_FEC_XCV_TYPE;
-	priv->interface = pdata->phy_interface;
-	ret = fec_phy_init(priv, dev);
-	if (ret)
-		goto err_phy;
 
 	/* Reset chip. */
 	writel(readl(&priv->eth->ecntrl) | FEC_ECNTRL_RESET,
@@ -1314,16 +1301,30 @@ static int fecmxc_probe(struct udevice *dev)
 	}
 
 	fec_reg_setup(priv);
+
+#ifdef CONFIG_FEC_MXC_MDIO_BASE
+	bus = fec_get_miibus((ulong)CONFIG_FEC_MXC_MDIO_BASE, dev->seq);
+#else
+	bus = fec_get_miibus((ulong)priv->eth, dev->seq);
+#endif
+	if (!bus)
+		goto err_mii;
+
+	priv->bus = bus;
+	priv->interface = pdata->phy_interface;
+	ret = fec_phy_init(priv, dev);
+	if (ret)
+		goto err_phy;
+
 	priv->dev_id = dev->seq;
 
 	return 0;
 
-err_timeout:
-	free(priv->phydev);
 err_phy:
 	mdio_unregister(bus);
 	free(bus);
 err_mii:
+err_timeout:
 	fec_free_descs(priv);
 	return ret;
 }
