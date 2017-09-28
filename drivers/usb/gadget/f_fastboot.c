@@ -2039,9 +2039,13 @@ static int fastboot_tx_write(const char *buffer, unsigned int buffer_size)
 	struct usb_request *in_req = fastboot_func->in_req;
 	int ret;
 
+	/* TODO: Investigate why this is necessary */
+	udelay(8500);
+
 	memcpy(in_req->buf, buffer, buffer_size);
 	in_req->length = buffer_size;
 
+	usb_gadget_handle_interrupts(0);
 	usb_ep_dequeue(fastboot_func->in_ep, in_req);
 
 	ret = usb_ep_queue(fastboot_func->in_ep, in_req, 0);
