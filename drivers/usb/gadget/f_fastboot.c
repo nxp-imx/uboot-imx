@@ -65,7 +65,7 @@ extern void trusty_os_init(void);
 #ifdef CONFIG_FASTBOOT_LOCK
 #include "fastboot_lock_unlock.h"
 #endif
-#define FASTBOOT_VAR_NUM	(26 + 2 * (MAX_PTN))
+#define FASTBOOT_COMMON_VAR_NUM	13
 #define FASTBOOT_VAR_YES    "yes"
 #define FASTBOOT_VAR_NO     "no"
 
@@ -91,6 +91,23 @@ static unsigned int download_bytes;
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 static bool is_recovery_mode;
 #endif
+
+/* common variables of fastboot getvar command */
+char *fastboot_common_var[FASTBOOT_COMMON_VAR_NUM] = {
+	"version",
+	"version-bootloader",
+	"version-baseband",
+	"product",
+	"secure",
+	"max-download-size",
+	"erase-block-size",
+	"logical-block-size",
+	"unlocked",
+	"off-mode-charge",
+	"battery-voltage",
+	"variant",
+	"battery-soc-ok"
+};
 
 #ifdef CONFIG_USB_GADGET
 struct f_fastboot {
@@ -2302,7 +2319,14 @@ static int get_single_var(char *cmd, char *response)
 
 static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 {
+	int n = 0;
+	int status = 0;
+	int count = 0;
 	char *cmd = req->buf;
+	char var_name[FASTBOOT_RESPONSE_LEN - 1];
+	char partition_base_name[MAX_PTN][16];
+	char slot_suffix[2][5] = {"_a","_b"};
+	char response[FASTBOOT_RESPONSE_LEN - 1];
 
 	strsep(&cmd, ":");
 	if (!cmd) {
@@ -2311,135 +2335,81 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 	}
 
 	if (!strcmp_l1("all", cmd)) {
-		int num = 0;
-		int n = 0;
-		char var_name[30];
-		char response[FASTBOOT_VAR_NUM + 1][FASTBOOT_RESPONSE_LEN - 1];
-		char partition_base_name[MAX_PTN][16];
-		char slot_suffix[2][5] = {"_a","_b"};
 
-		memset(response,'\0',(FASTBOOT_VAR_NUM + 1) * (FASTBOOT_RESPONSE_LEN - 1));
+		memset(response, '\0', FASTBOOT_RESPONSE_LEN - 1);
 
-		/*get all variables*/
-		strcat(response[num], "INFOversion:");
-		get_single_var("version",response[num]);
-
-		num++;
-		strcat(response[num], "INFOversion-bootloader:");
-		get_single_var("version-bootloader",response[num]);
-
-		num++;
-		strcat(response[num], "INFOversion-baseband:");
-		get_single_var("version-baseband",response[num]);
-
-		num++;
-		strcat(response[num], "INFOproduct:");
-		get_single_var("product",response[num]);
-
-		num++;
-		strcat(response[num], "INFOsecure:");
-		get_single_var("secure",response[num]);
-
-		num++;
-		strcat(response[num], "INFOmax-download-size:");
-		get_single_var("max-download-size",response[num]);
-
-		num++;
-		strcat(response[num], "INFOerase-block-size:");
-		get_single_var("erase-block-size",response[num]);
-
-		num++;
-		strcat(response[num], "INFOlogical-block-size:");
-		get_single_var("logical-block-size",response[num]);
-
-		num++;
-		strcat(response[num], "INFOunlocked:");
-		get_single_var("unlocked",response[num]);
-
-		num++;
-		strcat(response[num], "INFOoff-mode-charge:");
-		get_single_var("off-mode-charge",response[num]);
-
-		num++;
-		strcat(response[num], "INFObattery-voltage:");
-		get_single_var("battery-voltage",response[num]);
-
-		num++;
-		strcat(response[num], "INFOvariant:");
-		get_single_var("variant",response[num]);
-
-		num++;
-		strcat(response[num], "INFObattery-soc-ok:");
-		get_single_var("battery-soc-ok",response[num]);
-		/*get partition type*/
-		for (n = 0; n < g_pcount; n++) {
-			num++;
-			sprintf(response[num],"INFOpartition-type:%s:",g_ptable[n].name);
-			sprintf(var_name,"partition-type:%s",g_ptable[n].name);
-			get_single_var(var_name,response[num]);
+		/* get common variables */
+		for (n = 0; n < FASTBOOT_COMMON_VAR_NUM; n++) {
+			snprintf(response, sizeof(response), "INFO%s:", fastboot_common_var[n]);
+			get_single_var(fastboot_common_var[n], response);
+			fastboot_tx_write_str(response);
 		}
-		/*get partition size*/
+
+		/* get partition type */
 		for (n = 0; n < g_pcount; n++) {
-			num++;
-			sprintf(response[num],"INFOpartition-size:%s:",g_ptable[n].name);
-			sprintf(var_name,"partition-size:%s",g_ptable[n].name);
-			get_single_var(var_name,response[num]);
+			snprintf(response, sizeof(response), "INFOpartition-type:%s:", g_ptable[n].name);
+			snprintf(var_name, sizeof(var_name), "partition-type:%s", g_ptable[n].name);
+			get_single_var(var_name, response);
+			fastboot_tx_write_str(response);
 		}
-		/*slot related variables*/
-		if (is_slot()){
-			/*get has-slot variables*/
-			int count = 0;
+		/* get partition size */
+		for (n = 0; n < g_pcount; n++) {
+			snprintf(response, sizeof(response), "INFOpartition-size:%s:", g_ptable[n].name);
+			snprintf(var_name, sizeof(var_name), "partition-size:%s", g_ptable[n].name);
+			get_single_var(var_name,response);
+			fastboot_tx_write_str(response);
+		}
+		/* slot related variables */
+		if (is_slot()) {
+			/* get has-slot variables */
 			count = get_partition_base_name(partition_base_name);
 			for (n = 0; n < count; n++) {
-				num++;
-				sprintf(response[num],"INFOhas-slot:%s:",partition_base_name[n]);
-				sprintf(var_name,"has-slot:%s",partition_base_name[n]);
-				get_single_var(var_name,response[num]);
+				snprintf(response, sizeof(response), "INFOhas-slot:%s:", partition_base_name[n]);
+				snprintf(var_name, sizeof(var_name), "has-slot:%s", partition_base_name[n]);
+				get_single_var(var_name,response);
+				fastboot_tx_write_str(response);
 			}
-
-			num++;
-			strcat(response[num], "INFOcurrent-slot:");
-			get_single_var("current-slot",response[num]);
-
-			num++;
-			strcat(response[num], "INFOslot-count:");
-			get_single_var("slot-count",response[num]);
-			/*get slot-successful variable*/
+			/* get current slot */
+			strncpy(response, "INFOcurrent-slot:", sizeof(response));
+			get_single_var("current-slot", response);
+			fastboot_tx_write_str(response);
+			/* get slot count */
+			strncpy(response, "INFOslot-count:", sizeof(response));
+			get_single_var("slot-count", response);
+			fastboot_tx_write_str(response);
+			/* get slot-successful variable */
 			for (n = 0; n < 2; n++) {
-				num++;
-				sprintf(response[num],"INFOslot-successful:%s:",slot_suffix[n]);
-				sprintf(var_name,"slot-successful:%s",slot_suffix[n]);
-				get_single_var(var_name,response[num]);
+				snprintf(response, sizeof(response), "INFOslot-successful:%s:", slot_suffix[n]);
+				snprintf(var_name, sizeof(var_name), "slot-successful:%s", slot_suffix[n]);
+				get_single_var(var_name, response);
+				fastboot_tx_write_str(response);
 			}
 			/*get slot-unbootable variable*/
 			for (n = 0; n < 2; n++) {
-				num++;
-				sprintf(response[num],"INFOslot-unbootable:%s:",slot_suffix[n]);
-				sprintf(var_name,"slot-unbootable:%s",slot_suffix[n]);
-				get_single_var(var_name,response[num]);
+				snprintf(response, sizeof(response), "INFOslot-unbootable:%s:", slot_suffix[n]);
+				snprintf(var_name, sizeof(var_name), "slot-unbootable:%s", slot_suffix[n]);
+				get_single_var(var_name, response);
+				fastboot_tx_write_str(response);
 			}
 			/*get slot-retry-count variable*/
 			for (n = 0; n < 2; n++) {
-				num++;
-				sprintf(response[num],"INFOslot-retry-count:%s:",slot_suffix[n]);
-				sprintf(var_name,"slot-retry-count:%s",slot_suffix[n]);
-				get_single_var(var_name,response[num]);
+				snprintf(response, sizeof(response), "INFOslot-retry-count:%s:", slot_suffix[n]);
+				snprintf(var_name, sizeof(var_name), "slot-retry-count:%s", slot_suffix[n]);
+				get_single_var(var_name, response);
+				fastboot_tx_write_str(response);
 			}
 		}
 
-		num++;
-		strncpy(response[num], "OKAYDone!", 10);
+		strncpy(response, "OKAYDone!", 10);
+		fastboot_tx_write_str(response);
 
-		fastboot_tx_write((const char *)response,(num + 1) * (FASTBOOT_RESPONSE_LEN - 1));
 		return;
 	} else {
-		char response[FASTBOOT_RESPONSE_LEN - 1];
-		int status;
 
-		strcpy(response, "OKAY");
-		status = get_single_var(cmd,response);
+		strncpy(response, "OKAY", 5);
+		status = get_single_var(cmd, response);
 		if (status != 0) {
-			strncpy(response,"FAIL",4);
+			strncpy(response, "FAIL", 5);
 		}
 		fastboot_tx_write_str(response);
 		return;
