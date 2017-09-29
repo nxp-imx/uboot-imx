@@ -2203,7 +2203,7 @@ static int get_single_var(char *cmd, char *response)
 			strncat(response, "Wrong partition name.", chars_left);
 			return -1;
 		} else {
-			snprintf(response + strlen(response), chars_left, "0x%016x", fb_part->length * get_block_size());
+			snprintf(response + strlen(response), chars_left, "0x%x", fb_part->length * get_block_size());
 		}
 	} else if ((str = strstr(cmd, "partition-type:"))) {
 		str +=strlen("partition-type:");
@@ -2233,15 +2233,15 @@ static int get_single_var(char *cmd, char *response)
 	} else if (!strcmp_l1("downloadsize", cmd) ||
 		!strcmp_l1("max-download-size", cmd)) {
 
-		snprintf(response + strlen(response), chars_left, "0x%08x", CONFIG_FASTBOOT_BUF_SIZE);
+		snprintf(response + strlen(response), chars_left, "0x%x", CONFIG_FASTBOOT_BUF_SIZE);
 	} else if (!strcmp_l1("erase-block-size", cmd)) {
 		mmc_no = fastboot_devinfo.dev_id;
 		dev_desc = blk_get_dev("mmc", mmc_no);
-		snprintf(response + strlen(response), chars_left, "0x%08x", (unsigned int)dev_desc->blksz);
+		snprintf(response + strlen(response), chars_left, "0x%x", (unsigned int)dev_desc->blksz);
 	} else if (!strcmp_l1("logical-block-size", cmd)) {
 		mmc_no = fastboot_devinfo.dev_id;
 		dev_desc = blk_get_dev("mmc", mmc_no);
-		snprintf(response + strlen(response), chars_left, "0x%08x", (unsigned int)dev_desc->blksz);
+		snprintf(response + strlen(response), chars_left, "0x%x", (unsigned int)dev_desc->blksz);
 	} else if (!strcmp_l1("serialno", cmd)) {
 		s = get_serial();
 		if (s)
