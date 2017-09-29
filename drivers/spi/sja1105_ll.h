@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * AVB switch driver module for SJA1105
- * Copyright 2017 NXP
+ * Copyright 2017,2020 NXP
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -177,6 +177,44 @@
 #define SJA1105_REG_PORT_MAC_STATUS(_port_)     (0x200UL + ((_port_) * 2))
 #define SJA1105_REG_PORT_HIGH_STATUS1(_port_)	(0x400UL + (_port_) * 16)
 #define SJA1105_REG_PORT_HIGH_STATUS2(_port_)	(0x600UL + (_port_) * 16)
+
+/* CGU Registers */
+
+#define SJA1105_CGU_IDIV_ADDR			0x10000B
+#define SJA1105_CGU_IDIV_PORT(port)		(SJA1105_CGU_IDIV_ADDR + (port))
+
+#define SJA1105_CGU_MII_TX_CLK_ADDR		0x100016
+#define SJA1105_CGU_MII_TX_CLK_PORT(port)	(SJA1105_CGU_MII_TX_CLK_ADDR + \
+						 (port) * 6)
+
+/* Configuration registers */
+
+#define SJA1105_CFG_PAD_MIIX_TX_ADDR		0x100800
+#define SJA1105_CFG_PAD_MIIX_TX_PORT(port)	(SJA1105_CFG_PAD_MIIX_TX_ADDR \
+						 + (port) * 2)
+
+#define SJA1105_CFG_PAD_MIIX_ID_ADDR		0x100810
+#define SJA1105_CFG_PAD_MIIX_ID_PORT(port)	(SJA1105_CFG_PAD_MIIX_ID_ADDR \
+						 + (port))
+
+#define SJA1105_PORT_STATUS_MII_ADDR		0x100900
+#define SJA1105_PORT_STATUS_MII_PORT(port)	(SJA1105_PORT_STATUS_MII_ADDR \
+						 + (port))
+
+#define SJA1105_CFG_PAD_MIIX_ID_RXC_DELAY(delay)	((delay) << 10)
+#define SJA1105_CFG_PAD_MIIX_ID_RXC_BYPASS		BIT(9)
+#define SJA1105_CFG_PAD_MIIX_ID_RXC_PD			BIT(8)
+
+#define SJA1105_PORT_STATUS_MII_MODE		(0x00000003)
+
+enum sja1105_mii_mode {
+	e_mii_mode_mii = 0,
+	e_mii_mode_rmii,
+	e_mii_mode_rgmii,
+	e_mii_mode_sgmii,
+};
+
+#define SJA1105_PORT_NB 5
 
 int sja1105_get_cfg(u32 devid, u32 cs, u32 *bin_len, u8 **cfg_bin);
 

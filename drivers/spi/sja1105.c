@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2017-2018 NXP
+ * Copyright 2017-2018,2020 NXP
  *
  */
 
@@ -127,6 +127,53 @@ static u32 sja1105_read_reg32(struct sja_parms *sjap, u32 reg_addr)
 
 	rc = spi_xfer(slave, bitlen, cmd, resp,
 		      SPI_XFER_BEGIN | SPI_XFER_END);
+	if (rc)
+		printf("Error %d during SPI transaction\n", rc);
+	spi_release_bus(slave);
+	spi_free_slave(slave);
+
+	upper = (resp[1] & 0x0000FFFF) << 16;
+	down = (resp[1] & 0xFFFF0000) >> 16;
+	resp[1] = upper | down;
+
+	return le32_to_cpu(resp[1]);
+done:
+	return rc;
+}
+
+static u32 sja1105_write_reg32(struct sja_parms *sjap, u32 reg_addr, u32 val)
+{
+	u32 cmd[2], resp[2], upper, down;
+	struct spi_slave *slave;
+	int bitlen = sizeof(cmd) << 3;
+	int rc;
+
+	sja_debug("writing 4bytes @0x%08x tlen %d t.bits_per_word %d\n",
+		  reg_addr, 8, 64);
+
+	slave = spi_setup_slave(sjap->bus, sjap->cs, SJA_DSPI_HZ,
+				SJA_DSPI_MODE);
+	if (!slave) {
+		printf("Invalid device %d:%d\n", sjap->bus, sjap->cs);
+		return -EINVAL;
+	}
+
+	rc = spi_claim_bus(slave);
+	if (rc)
+		goto done;
+
+	cmd[0] = cpu_to_le32 (CMD_ENCODE_RWOP(CMD_WR_OP) |
+		CMD_ENCODE_ADDR(reg_addr) | CMD_ENCODE_WRD_CNT(1));
+	upper = (cmd[0] & 0x0000FFFF) << 16;
+	down = (cmd[0] & 0xFFFF0000) >> 16;
+	cmd[0] = upper | down;
+
+	cmd[1] = val;
+	upper = (cmd[1] & 0x0000FFFF) << 16;
+	down = (cmd[1] & 0xFFFF0000) >> 16;
+	cmd[1] = upper | down;
+
+	rc = spi_xfer(slave, bitlen, cmd, resp, SPI_XFER_BEGIN | SPI_XFER_END);
 	if (rc)
 		printf("Error %d during SPI transaction\n", rc);
 	spi_release_bus(slave);
@@ -275,6 +322,34 @@ static int sja1105_configuration_load(struct sja_parms *sjap)
 		return -ENXIO;
 	}
 	return 0;
+}
+
+void sja1105_reset_ports(u32 cs, u32 bus)
+{
+	struct sja_parms sjap;
+	int i, val;
+
+	sjap.cs = cs;
+	sjap.bus = bus;
+
+	for (i = 0; i < SJA1105_PORT_NB; i++) {
+		val = sja1105_read_reg32(&sjap,
+					 SJA1105_CFG_PAD_MIIX_ID_PORT(i));
+
+		/* Toggle RX Clock PullDown and Bypass */
+
+		val |= SJA1105_CFG_PAD_MIIX_ID_RXC_PD;
+		val |= SJA1105_CFG_PAD_MIIX_ID_RXC_BYPASS;
+
+		sja1105_write_reg32(&sjap, SJA1105_CFG_PAD_MIIX_ID_PORT(i),
+				    val);
+
+		val &= ~SJA1105_CFG_PAD_MIIX_ID_RXC_PD;
+		val &= ~SJA1105_CFG_PAD_MIIX_ID_RXC_BYPASS;
+
+		sja1105_write_reg32(&sjap, SJA1105_CFG_PAD_MIIX_ID_PORT(i),
+				    val);
+	}
 }
 
 int sja1105_probe(u32 cs, u32 bus)
