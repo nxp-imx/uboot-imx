@@ -9,6 +9,10 @@
 #include <spi.h>
 #include "sja1105_ll.h"
 
+#ifndef CONFIG_DEFAULT_SPI_BUS
+#   define CONFIG_DEFAULT_SPI_BUS	0
+#endif
+
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 #define SJA_DSPI_MODE	(SPI_CPHA | SPI_FMSZ_16)
@@ -16,6 +20,56 @@
 
 #define sja_debug(fmt, ...)	debug("[SJA1105]%s:%d " fmt, __func__, \
 				__LINE__, ##__VA_ARGS__)
+
+#define NUM_MAC_LVL_COUNTERS1 4
+static char *mac_lvl_counters1[NUM_MAC_LVL_COUNTERS1] = {
+	"N_RUNT         ",
+	"N_SOFERR       ",
+	"N_ALIGNERR     ",
+	"N_MIIERR       ",
+};
+
+#define NUM_MAC_LVL_COUNTERS2 10
+static char *mac_lvl_counters2[NUM_MAC_LVL_COUNTERS2] = {
+	"RSVD           ",
+	"SPCERRS        ",
+	"DRN664ERRS     ",
+	"RSVD           ",
+	"BAGDROP        ",
+	"LENDROPS       ",
+	"PORTDROPS      ",
+	"RSVD           ",
+	"SPCPRIOR       ",
+	"RSVD           ",
+};
+
+#define NUM_ETH_HIGH_LVL_COUNTERS1 16
+static char *eth_high_lvl_counters1[NUM_ETH_HIGH_LVL_COUNTERS1] = {
+	"N_TXBYTE       ",
+	"N_TXBYTESH     ",
+	"N_TXFRM        ",
+	"N_TXFRMSH      ",
+	"N_RXBYTE       ",
+	"N_RXBYTESH     ",
+	"N_RXFRM        ",
+	"N_RXFRMSH      ",
+	"N_POLERR       ",
+	"RSVD           ",
+	"RSVD           ",
+	"N_CRCERR       ",
+	"N_SIZERR       ",
+	"RSVD           ",
+	"N_VLANERR      ",
+	"N_N664ERR      ",
+};
+
+#define NUM_ETH_HIGH_LVL_COUNTERS2 4
+static char *eth_high_lvl_counters2[NUM_ETH_HIGH_LVL_COUNTERS2] = {
+	"N_NOT_REACH    ",
+	"N_ERG_DISABLED ",
+	"N_PART_DROP    ",
+	"N_QFULL        ",
+};
 
 struct sja_parms {
 	u32 bus;
@@ -378,3 +432,82 @@ int sja1105_probe(u32 cs, u32 bus)
 
 	return sja1105_configuration_load(&sjap);
 }
+
+int do_sja_regs(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	u32 val32;
+	char  *cp = 0;
+	int i, j;
+	struct sja_parms sjap;
+
+	if (argc == 2) {
+		sjap.bus = simple_strtoul(argv[1], &cp, 10);
+		if (*cp == ':') {
+			sjap.cs = simple_strtoul(cp + 1, &cp, 10);
+		} else {
+			sjap.cs = sjap.bus;
+			sjap.bus = CONFIG_DEFAULT_SPI_BUS;
+		}
+	}
+
+	printf("\nGeneral Status\n");
+	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS1);
+	printf("general_status_1    = %08x\n", val32);
+	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS2);
+	printf("general_status_2    = %08x\n", val32);
+	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS3);
+	printf("general_status_3    = %08x\n", val32);
+	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS4);
+	printf("general_status_4    = %08x\n", val32);
+	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS5);
+	printf("general_status_5    = %08x\n", val32);
+	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS6);
+	printf("general_status_6    = %08x\n", val32);
+	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS7);
+	printf("general_status_7    = %08x\n", val32);
+	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS8);
+	printf("general_status_8    = %08x\n", val32);
+	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS9);
+	printf("general_status_9    = %08x\n", val32);
+
+	for (i = 0; i < SJA1105_PORT_NB; i++) {
+		printf("\nEthernet MAC-level status port%d\n", i);
+		val32 = sja1105_read_reg32(&sjap,
+					   SJA1105_REG_PORT_MAC_STATUS(i));
+		for (j = 0; j < NUM_MAC_LVL_COUNTERS1; j++)
+			printf("port%d %s    = %u\n", i, mac_lvl_counters1[j],
+			       (val32 >> (j * 8)) & 0xFF);
+
+		val32 = sja1105_read_reg32(&sjap,
+					   SJA1105_REG_PORT_MAC_STATUS(i) + 1);
+		for (j = 0; j < NUM_MAC_LVL_COUNTERS2; j++)
+			printf("port%d %s    = %u\n", i, mac_lvl_counters2[j],
+			       (val32 >> j) & 1);
+	}
+
+	for (i = 0; i < SJA1105_PORT_NB; i++) {
+		printf("\nEthernet High-level status port%d\n", i);
+		for (j = 0; j < NUM_ETH_HIGH_LVL_COUNTERS1; j++) {
+			val32 = sja1105_read_reg32(&sjap,
+						SJA1105_REG_PORT_HIGH_STATUS1(i)
+						+ j);
+			printf("port%d %s    = %u\n", i,
+			       eth_high_lvl_counters1[j], val32);
+		}
+		for (j = 0; j < NUM_ETH_HIGH_LVL_COUNTERS2; j++) {
+			val32 = sja1105_read_reg32(&sjap,
+						SJA1105_REG_PORT_HIGH_STATUS2(i)
+						+ j);
+			printf("port%d %s    = %u\n", i,
+			       eth_high_lvl_counters2[j], val32);
+		}
+	}
+
+	return 0;
+}
+
+U_BOOT_CMD(sja, 2, 1, do_sja_regs,
+	   "SJA1105 register dump",
+	   "[<bus>:]<cs> - View registers for SJA\n"
+);
+
