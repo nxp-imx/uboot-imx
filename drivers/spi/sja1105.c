@@ -294,6 +294,45 @@ bool sja1105_post_cfg_load_check(struct sja_parms *sjap)
 	return status;
 }
 
+void sja1105_port_cfg(struct sja_parms *sjap)
+{
+	u32 i;
+
+	for (i = 0; i < SJA1105_PORT_NB; i++) {
+		u32 port_status;
+
+		/* Get port type / speed */
+		port_status = sja1105_read_reg32(sjap,
+					SJA1105_PORT_STATUS_MII_PORT(i));
+
+		switch (port_status & SJA1105_PORT_STATUS_MII_MODE) {
+		case e_mii_mode_rgmii:
+			/* Set slew rate of TX Pins to high speed */
+			sja1105_write_reg32(sjap,
+					    SJA1105_CFG_PAD_MIIX_TX_PORT(i),
+					    SJA1105_CFG_PAD_MIIX_TX_SLEW_RGMII);
+
+			/* Set Clock delay */
+			sja1105_write_reg32(sjap,
+					    SJA1105_CFG_PAD_MIIX_ID_PORT(i),
+					    SJA1105_CFG_PAD_MIIX_ID_RGMII);
+
+			/* Disable IDIV */
+			sja1105_write_reg32(sjap, SJA1105_CGU_IDIV_PORT(i),
+					    SJA1105_CGU_IDIV_DISABLE);
+
+			/* Set Clock source to PLL0 */
+			sja1105_write_reg32(sjap,
+					    SJA1105_CGU_MII_TX_CLK_PORT(i),
+					    SJA1105_CGU_MII_CLK_SRC_PLL0);
+			break;
+
+		default:
+			break;
+		}
+	}
+}
+
 static int sja1105_configuration_load(struct sja_parms *sjap)
 {
 	int remaining_words;
@@ -371,10 +410,13 @@ static int sja1105_configuration_load(struct sja_parms *sjap)
 			sja1105_post_cfg_load_check(sjap);
 	}
 
-	if (!sja1105_post_cfg_load_check(sjap))  {
+	if (!sja1105_post_cfg_load_check(sjap)) {
 		printf("SJA1105 configuration failed\n");
 		return -ENXIO;
 	}
+
+	sja1105_port_cfg(sjap);
+
 	return 0;
 }
 
@@ -416,7 +458,7 @@ int sja1105_probe(u32 cs, u32 bus)
 	sjap.cs = cs;
 	sjap.bus = bus;
 
-	printf("Loading SJA1105 firmware over SPI\n");
+	printf("Loading SJA1105 firmware over SPI %d:%d\n", bus, cs);
 
 	sjap.devid = sja1105_check_device_id(&sjap);
 
