@@ -2658,6 +2658,7 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 	char response[FASTBOOT_RESPONSE_LEN];
 	unsigned char len = strlen(cmd);
 	FbLockState status;
+	FbLockEnableResult result;
 	if (!strncmp(cmd + len - 15, "unlock_critical", 15)) {
 		strcpy(response, "OKAY");
 	} else if (!strncmp(cmd + len - 13, "lock_critical", 13)) {
@@ -2676,6 +2677,18 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 			strcpy(response, "OKAY");
 		else
 			strcpy(response, "FAIL lock device failed.");
+	} else if (!strncmp(cmd + len - 18, "get_unlock_ability", 18)) {
+		result = fastboot_lock_enable();
+		if (result == FASTBOOT_UL_ENABLE) {
+			fastboot_tx_write_str("INFO1");
+			strcpy(response, "OKAY");
+		} else if (result == FASTBOOT_UL_DISABLE) {
+			fastboot_tx_write_str("INFO0");
+			strcpy(response, "OKAY");
+		} else {
+			printf("flashing get_unlock_ability fail!\n");
+			strcpy(response, "FAIL get unlock ability failed.");
+		}
 	} else {
 		printf("Unknown flashing command:%s\n", cmd);
 		strcpy(response, "FAIL command not defined");
