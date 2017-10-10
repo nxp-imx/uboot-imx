@@ -2403,16 +2403,13 @@ use_given_ptn:
 			ALIGN(IVT_SIZE + CSF_PAD_SIZE, 512)/512;
 #endif
 
-		if (mmc->block_dev.block_read(dev_desc, pte->start,
+		if (mmc->block_dev.block_read(dev_desc,	pte->start,
 					bootimg_sectors,
-					(void *)load_addr) < 0) {
-			printf("boota: mmc failed to read kernel\n");
+					(void *)(hdr->kernel_addr - hdr->page_size)) < 0) {
+			printf("boota: mmc failed to read bootimage\n");
 			goto fail;
 		}
-		/* flush cache after read */
-		flush_cache((ulong)load_addr, bootimg_sectors * 512); /* FIXME */
-		check_image_arm64  = image_arm64((void *)(load_addr + hdr->page_size));
-		addr = load_addr;
+		check_image_arm64  = image_arm64((void *)hdr->kernel_addr);
 #ifdef CONFIG_FASTBOOT_LOCK
 		int verifyresult = -1;
 #endif
@@ -2445,41 +2442,16 @@ use_given_ptn:
 		}
 		display_lock(fastboot_get_lock_stat(), verifyresult);
 #endif
-
-		sector = pte->start + (hdr->page_size / 512);
-		if (check_image_arm64) {
-			if (mmc->block_dev.block_read(dev_desc, sector,
-								(hdr->kernel_size / 512) + 1,
-								(void *)(uintptr_t)hdr->kernel_addr) < 0) {
-				printf("boota: mmc failed to read kernel\n");
-				goto fail;
-			}
-			flush_cache((ulong)hdr->kernel_addr, hdr->kernel_size);
-			android_image_get_kernel(hdr, 0, NULL, NULL);
-			addr = hdr->kernel_addr;
-		}
-		sector += ALIGN(hdr->kernel_size, hdr->page_size) / 512;
-		if (mmc->block_dev.block_read(dev_desc, sector,
-						(hdr->ramdisk_size / 512) + 1,
-						(void *)(uintptr_t)hdr->ramdisk_addr) < 0) {
-			printf("boota: mmc failed to read ramdisk\n");
-			goto fail;
-		}
-		/* flush cache after read */
-		flush_cache((ulong)hdr->ramdisk_addr, ((hdr->ramdisk_size / 512) + 1) * 512); /* FIXME */
+		/* load the ramdisk file */
+		memcpy((void *)hdr->ramdisk_addr, (void *)hdr->kernel_addr
+			+ ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
 
 #ifdef CONFIG_OF_LIBFDT
 		/* load the dtb file */
 		if (hdr->second_size && hdr->second_addr) {
-			sector += ALIGN(hdr->ramdisk_size, hdr->page_size) / 512;
-			if (mmc->block_dev.block_read(dev_desc, sector,
-						(hdr->second_size / 512) + 1,
-						(void *)(uintptr_t)hdr->second_addr) < 0) {
-				printf("boota: mmc failed to dtb\n");
-				goto fail;
-			}
-			/* flush cache after read */
-			flush_cache((ulong)hdr->second_addr, ((hdr->second_size / 512) + 1) * 512); /* FIXME */
+			memcpy((void *)hdr->second_addr, (void *)hdr->kernel_addr
+				+ ALIGN(hdr->kernel_size, hdr->page_size)
+				+ ALIGN(hdr->ramdisk_size, hdr->page_size), hdr->second_size);
 		}
 #endif /*CONFIG_OF_LIBFDT*/
 
@@ -2578,15 +2550,19 @@ use_given_ptn:
 	char ramdisk_addr[25];
 	char fdt_addr[12];
 	char *boot_args[] = { NULL, boot_addr_start, ramdisk_addr, fdt_addr};
-	if (check_image_arm64)
+	if (check_image_arm64 ) {
+		addr = hdr->kernel_addr;
 		boot_args[0] = "booti";
-	else
+	} else {
+		addr = hdr->kernel_addr - hdr->page_size;
 		boot_args[0] = "bootm";
+	}
 
 	sprintf(boot_addr_start, "0x%lx", addr);
 	sprintf(ramdisk_addr, "0x%x:0x%x", hdr->ramdisk_addr, hdr->ramdisk_size);
 	sprintf(fdt_addr, "0x%x", hdr->second_addr);
 	if (check_image_arm64) {
+		android_image_get_kernel(hdr, 0, NULL, NULL);
 #ifdef CONFIG_CMD_BOOTI
 		do_booti(NULL, 0, 4, boot_args);
 #else
