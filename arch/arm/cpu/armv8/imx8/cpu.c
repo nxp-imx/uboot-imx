@@ -284,10 +284,18 @@ int imx8qxp_wake_secondary_cores(void)
 	return 0;
 }
 
+#if defined(CONFIG_IMX8QM)
 #define FUSE_MAC0_WORD0 452
 #define FUSE_MAC0_WORD1 453
 #define FUSE_MAC1_WORD0 454
 #define FUSE_MAC1_WORD1 455
+#elif defined(CONFIG_IMX8QXP)
+#define FUSE_MAC0_WORD0 708
+#define FUSE_MAC0_WORD1 709
+#define FUSE_MAC1_WORD0 710
+#define FUSE_MAC1_WORD1 711
+#endif
+
 void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 {
 	sc_err_t err;
