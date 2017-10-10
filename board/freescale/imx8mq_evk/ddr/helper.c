@@ -12,22 +12,26 @@
 #include <asm/arch/ddr_memory_map.h>
 #include <asm/sections.h>
 
+#include "lpddr4.h"
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #define IMEM_LEN 32768//23400	//byte
 #define DMEM_LEN 16384//1720	//byte
+#define IMEM_2D_OFFSET 	49152
 
 #define IMEM_OFFSET_ADDR 0x00050000
 #define DMEM_OFFSET_ADDR 0x00054000
 #define DDR_TRAIN_CODE_BASE_ADDR IP2APB_DDRPHY_IPS_BASE_ADDR(0)
 
 /* We need PHY iMEM PHY is 32KB padded */
-void ddr4_load_train_code(void)
+void ddr4_load_train_code(enum fw_type type)
 {
 	u32 tmp32, i;
 	u32 error = 0;
 	unsigned long pr_to32, pr_from32;
-	unsigned long imem_start = (unsigned long)&_end;
+	unsigned long fw_offset = type ? IMEM_2D_OFFSET : 0;
+	unsigned long imem_start = (unsigned long)&_end + fw_offset;
 	unsigned long dmem_start = imem_start + IMEM_LEN;
 
 	pr_from32 = imem_start;
