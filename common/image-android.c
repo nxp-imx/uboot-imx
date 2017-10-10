@@ -57,6 +57,7 @@ static ulong android_image_get_kernel_addr(const struct andr_img_hdr *hdr)
 int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 			     ulong *os_data, ulong *os_len)
 {
+	extern boot_metric metrics;
 	u32 kernel_addr = android_image_get_kernel_addr(hdr);
 
 	/*
@@ -73,7 +74,7 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	       kernel_addr, DIV_ROUND_UP(hdr->kernel_size, 1024));
 
 	char newbootargs[512] = {0};
-	char commandline[1024] = {0};
+	char commandline[2048] = {0};
 	char *bootargs = getenv("bootargs");
 
 	if (bootargs) {
@@ -121,6 +122,14 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 		sprintf(newbootargs, " gpt");
 		strcat(commandline, newbootargs);
 	}
+
+	/* boot metric variables */
+	metrics.ble_1 = get_timer(0);
+	sprintf(newbootargs,
+		" androidboot.boottime=1BLL:%d,1BLE:%d,KL:%d,KD:%d,AVB:%d,ODT:%d,SW:%d",
+		metrics.bll_1, metrics.ble_1, metrics.kl, metrics.kd, metrics.avb,
+		metrics.odt, metrics.sw);
+	strcat(commandline, newbootargs);
 
 #ifdef CONFIG_AVB_SUPPORT
 	/* secondary cmdline added by avb */

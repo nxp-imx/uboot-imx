@@ -109,6 +109,17 @@ char *fastboot_common_var[FASTBOOT_COMMON_VAR_NUM] = {
 	"battery-soc-ok"
 };
 
+/* Boot metric variables */
+boot_metric metrics = {
+	.bll_1 = 0,
+	.ble_1 = 0,
+	.kl    = 0,
+	.kd    = 0,
+	.avb   = 0,
+	.odt   = 0,
+	.sw    = 0
+};
+
 #ifdef CONFIG_USB_GADGET
 struct f_fastboot {
 	struct usb_function usb_function;
@@ -1506,6 +1517,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	struct andr_img_hdr *hdr = NULL;
 	struct andr_img_hdr *hdrload;
 	ulong image_size;
+	u32 avb_metric;
 
 	AvbABFlowResult avb_result;
 	AvbSlotVerifyData *avb_out_data;
@@ -1520,8 +1532,12 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		lock_status = FASTBOOT_LOCK;
 	}
 	bool allow_fail = (lock_status == FASTBOOT_UNLOCK ? true : false);
+	avb_metric = get_timer(0);
 	/* if in lock state, do avb verify */
 	avb_result = avb_ab_flow(&fsl_avb_ab_ops, requested_partitions, allow_fail, &avb_out_data);
+	/* get the duration of avb */
+	metrics.avb = get_timer(avb_metric);
+
 	if (avb_result == AVB_AB_FLOW_RESULT_OK) {
 		assert(avb_out_data != NULL);
 		/* load the first partition */

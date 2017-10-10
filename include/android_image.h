@@ -17,6 +17,19 @@
 #define ANDR_BOOT_NAME_SIZE 16
 #define ANDR_BOOT_ARGS_SIZE 512
 
+/* Boot metric variables (in millisecond) */
+struct boot_metric
+{
+	u32 bll_1;	/* 1th bootloader load duration */
+	u32 ble_1;	/* 1th bootloader exec duration */
+	u32 kl;		/* kernel image load duration */
+	u32 kd;		/* kernel image decompress duration */
+	u32 avb;	/* avb verify boot.img duration */
+	u32 odt;	/* overlay device tree duration */
+	u32 sw;		/* system wait for UI interaction duration*/
+};
+typedef struct boot_metric boot_metric;
+
 struct andr_img_hdr {
 	char magic[ANDR_BOOT_MAGIC_SIZE];
 
