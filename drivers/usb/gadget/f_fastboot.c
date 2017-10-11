@@ -1542,7 +1542,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		setenv("bootargs_sec", bootargs_sec);
 		/*
 		char bootargs_sec[2048];
-		sprintf(bootargs_sec, "androidboot.slot_suffix=%s %s", avb_out_data->ab_suffix, avb_out_data->cmdline);
+		sprintf(bootargs_sec, "androidboot.slot_suffix=%s %s",
+			(avb_out_data->ab_suffix + sizeof(char)), avb_out_data->cmdline);
 		setenv("bootargs_sec", bootargs_sec);
 		*/
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
@@ -1592,7 +1593,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			goto fail;
 		}
 		char bootargs_sec[ANDR_BOOT_ARGS_SIZE];
-		sprintf(bootargs_sec, "androidboot.slot_suffix=%s", slot);
+		sprintf(bootargs_sec, "androidboot.slot_suffix=%s", (slot + sizeof(char)));
 		setenv("bootargs_sec", bootargs_sec);
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if(!is_recovery_mode)
@@ -2325,7 +2326,7 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 	char *cmd = req->buf;
 	char var_name[FASTBOOT_RESPONSE_LEN - 1];
 	char partition_base_name[MAX_PTN][16];
-	char slot_suffix[2][5] = {"_a","_b"};
+	char slot_suffix[2][5] = {"a","b"};
 	char response[FASTBOOT_RESPONSE_LEN - 1];
 
 	strsep(&cmd, ":");
