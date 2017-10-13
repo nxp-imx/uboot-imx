@@ -37,6 +37,7 @@ typedef enum timer_func_e
     TIMER_FUNC_GET_RTC_TIME = 7, /*!< Index for timer_get_rtc_time() RPC call */
     TIMER_FUNC_GET_RTC_SEC1970 = 9, /*!< Index for timer_get_rtc_sec1970() RPC call */
     TIMER_FUNC_SET_RTC_ALARM = 8, /*!< Index for timer_set_rtc_alarm() RPC call */
+    TIMER_FUNC_SET_RTC_CALB = 11, /*!< Index for timer_set_rtc_calb() RPC call */
 } timer_func_t;
 
 /* Functions */

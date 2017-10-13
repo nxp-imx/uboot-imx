@@ -27,7 +27,6 @@
 #include <asm/imx-common/sci/types.h>
 #include <asm/imx-common/sci/ipc.h>
 #include <asm/imx-common/sci/svc/misc/api.h>
-#include <asm/imx-common/sci/svc/otp/api.h>
 #include <asm/imx-common/sci/svc/pad/api.h>
 #include <asm/imx-common/sci/svc/pm/api.h>
 #include <asm/imx-common/sci/svc/rm/api.h>

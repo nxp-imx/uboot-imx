@@ -697,6 +697,8 @@ typedef enum sc_rsrc_e
     SC_R_BOARD_R5           = 529,
     SC_R_BOARD_R6           = 530,
     SC_R_BOARD_R7           = 531,
+    SC_R_MJPEG_DEC_MP       = 532,
+    SC_R_MJPEG_ENC_MP       = 533,
     SC_R_LAST
 } sc_rsrc_t;
 
