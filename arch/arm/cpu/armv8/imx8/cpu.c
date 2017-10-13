@@ -599,33 +599,38 @@ void arch_preboot_os(void)
 #endif
 }
 
-
 enum boot_device get_boot_device(void)
 {
-	struct rom_sw_info_t **p =
-		(struct rom_sw_info_t **)ROM_SW_INFO_ADDR;
-
 	enum boot_device boot_dev = SD1_BOOT;
-	uint8_t boot_type = (*p)->boot_dev_info.dev_type;
-	uint8_t boot_instance = (*p)->boot_dev_info.instance;
 
-	switch (boot_type) {
-	case FLASH_TYPE_SD:
-		boot_dev = boot_instance + SD1_BOOT;
+	sc_ipc_t ipcHndl = 0;
+	sc_rsrc_t dev_rsrc;
+
+	ipcHndl = gd->arch.ipc_channel_handle;
+	sc_misc_get_boot_dev(ipcHndl, &dev_rsrc);
+
+	switch (dev_rsrc) {
+	case SC_R_SDHC_0:
+		boot_dev = MMC1_BOOT;
 		break;
-	case FLASH_TYPE_MMC:
-		boot_dev = boot_instance + MMC1_BOOT;
+	case SC_R_SDHC_1:
+		boot_dev = SD2_BOOT;
 		break;
-	case FLASH_TYPE_NAND:
+	case SC_R_SDHC_2:
+		boot_dev = SD3_BOOT;
+		break;
+	case SC_R_NAND:
 		boot_dev = NAND_BOOT;
 		break;
-	case FLASH_TYPE_FLEXSPINOR:
+	case SC_R_FSPI_0:
 		boot_dev = QSPI_BOOT;
 		break;
-	case BT_DEV_TYPE_SATA_DISK:
+	case SC_R_SATA_0:
 		boot_dev = SATA_BOOT;
 		break;
-	case BT_DEV_TYPE_USB:
+	case SC_R_USB_0:
+	case SC_R_USB_1:
+	case SC_R_USB_2:
 		boot_dev = USB_BOOT;
 		break;
 	default:
