@@ -369,6 +369,14 @@ sc_err_t sc_misc_set_temp(sc_ipc_t ipc, sc_rsrc_t resource,
 sc_err_t sc_misc_get_temp(sc_ipc_t ipc, sc_rsrc_t resource,
     sc_misc_temp_t temp, int16_t *celsius, int8_t *tenths);
 
+/*!
+ * This function returns the boot device.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[out]    dev         pointer to return boot device
+ */
+void sc_misc_get_boot_dev(sc_ipc_t ipc, sc_rsrc_t *dev);
+
 /* @} */
 
 #endif /* _SC_MISC_API_H */

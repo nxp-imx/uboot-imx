@@ -313,5 +313,21 @@ sc_err_t sc_misc_get_temp(sc_ipc_t ipc, sc_rsrc_t resource,
     return (sc_err_t) result;
 }
 
+void sc_misc_get_boot_dev(sc_ipc_t ipc, sc_rsrc_t *dev)
+{
+    sc_rpc_msg_t msg;
+
+    RPC_VER(&msg) = SC_RPC_VERSION;
+    RPC_SVC(&msg) = SC_RPC_SVC_MISC;
+    RPC_FUNC(&msg) = MISC_FUNC_GET_BOOT_DEV;
+    RPC_SIZE(&msg) = 1;
+
+    sc_call_rpc(ipc, &msg, false);
+
+    if (dev != NULL)
+        *dev = RPC_U16(&msg, 0);
+    return;
+}
+
 /**@}*/
 
