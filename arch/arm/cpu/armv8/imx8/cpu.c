@@ -806,14 +806,27 @@ __weak int board_mmc_get_env_dev(int devno)
 
 int mmc_get_env_dev(void)
 {
-	struct rom_sw_info_t **p = (struct rom_sw_info_t **)ROM_SW_INFO_ADDR;
+	sc_ipc_t ipcHndl = 0;
+	sc_rsrc_t dev_rsrc;
+	int devno;
 
-	int devno = (*p)->boot_dev_info.instance;
-	uint8_t boot_type = (*p)->boot_dev_info.dev_type;
+	ipcHndl = gd->arch.ipc_channel_handle;
+	sc_misc_get_boot_dev(ipcHndl, &dev_rsrc);
 
-	/* If not boot from sd/mmc, use default value */
-	if ((boot_type != FLASH_TYPE_SD) && (boot_type != FLASH_TYPE_MMC))
+	switch(dev_rsrc) {
+	case SC_R_SDHC_0:
+		devno = 0;
+		break;
+	case SC_R_SDHC_1:
+		devno = 1;
+		break;
+	case SC_R_SDHC_2:
+		devno = 2;
+		break;
+	default:
+		/* If not boot from sd/mmc, use default value */
 		return CONFIG_SYS_MMC_ENV_DEV;
+	}
 
 	return board_mmc_get_env_dev(devno);
 }
