@@ -458,11 +458,16 @@ int sja1105_probe(u32 cs, u32 bus)
 	sjap.cs = cs;
 	sjap.bus = bus;
 
-	printf("Loading SJA1105 firmware over SPI %d:%d\n", bus, cs);
-
 	sjap.devid = sja1105_check_device_id(&sjap);
 
 	sja_debug("devid %X\n", sjap.devid);
+
+	if (sja1105_post_cfg_load_check(&sjap)) {
+		sja_debug("SJA1105 configuration already done. Skipping switch configuration\n");
+		return 0;
+	}
+
+	printf("Loading SJA1105 firmware over SPI %d:%d\n", bus, cs);
 
 	ret = sja1105_get_cfg(sjap.devid, sjap.cs, &sjap.bin_len,
 			      &sjap.cfg_bin);
