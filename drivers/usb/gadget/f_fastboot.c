@@ -2289,16 +2289,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	char *ptn = "boot";
 	int mmcc = -1;
 	struct andr_img_hdr *hdr = &boothdr;
-    ulong image_size;
+	ulong image_size;
 	bool check_image_arm64 =  false;
-#ifdef CONFIG_SECURE_BOOT
-#define IVT_SIZE 0x20
-#define CSF_PAD_SIZE CONFIG_CSF_SIZE
-/* Max of bootimage size to be 16MB */
-#define MAX_ANDROID_BOOT_AUTH_SIZE 0x1000000
-/* Size appended to boot.img with boot_signer */
-#define BOOTIMAGE_SIGNATURE_SIZE 0x100
-#endif
 	int i = 0;
 
 	for (i = 0; i < argc; i++)
@@ -2387,22 +2379,6 @@ use_given_ptn:
 		image_size = android_image_get_end(hdr) - (ulong)hdr;
 		bootimg_sectors = image_size/512;
 
-#ifdef CONFIG_SECURE_BOOT
-		/* Default boot.img should be padded to 0x1000
-		   before appended with IVT&CSF data. Set the threshold of
-		   boot image for athendication as 16MB
-		*/
-		image_size += BOOTIMAGE_SIGNATURE_SIZE;
-		image_size = ALIGN(image_size, 0x1000);
-		if (image_size > MAX_ANDROID_BOOT_AUTH_SIZE) {
-			printf("The image size is too large for athenticated boot!\n");
-			return 1;
-		}
-		/* Make sure all data boot.img + IVT + CSF been read to memory */
-		bootimg_sectors = image_size/512 +
-			ALIGN(IVT_SIZE + CSF_PAD_SIZE, 512)/512;
-#endif
-
 		if (mmc->block_dev.block_read(dev_desc,	pte->start,
 					bootimg_sectors,
 					(void *)(hdr->kernel_addr - hdr->page_size)) < 0) {
@@ -2414,26 +2390,6 @@ use_given_ptn:
 		int verifyresult = -1;
 #endif
 
-#ifdef CONFIG_SECURE_BOOT
-		extern uint32_t authenticate_image(uint32_t ddr_start,
-				uint32_t image_size);
-
-		if (authenticate_image(load_addr, image_size)) {
-			printf("Authenticate OK\n");
-#ifdef CONFIG_FASTBOOT_LOCK
-			verifyresult = 0;
-#endif
-		} else {
-			printf("Authenticate image Fail, Please check\n\n");
-			/* For Android if the verify not passed we continue the boot process */
-#ifdef CONFIG_FASTBOOT_LOCK
-#ifndef CONFIG_ANDROID_SUPPORT
-			return 1;
-#endif
-			verifyresult = 1;
-#endif
-		}
-#endif /*CONFIG_SECURE_BOOT*/
 #ifdef CONFIG_FASTBOOT_LOCK
 		int lock_status = fastboot_get_lock_stat();
 		if (lock_status == FASTBOOT_LOCK_ERROR) {
@@ -2478,26 +2434,6 @@ use_given_ptn:
 			ALIGN(hdr->kernel_size, hdr->page_size) +
 			ALIGN(hdr->ramdisk_size, hdr->page_size) +
 			ALIGN(hdr->second_size, hdr->page_size);
-
-#ifdef CONFIG_SECURE_BOOT
-		image_size = image_size + BOOTIMAGE_SIGNATURE_SIZE;
-		if (image_size > MAX_ANDROID_BOOT_AUTH_SIZE) {
-			printf("The image size is too large for athenticated boot!\n");
-			return 1;
-		}
-#endif /*CONFIG_SECURE_BOOT*/
-
-#ifdef CONFIG_SECURE_BOOT
-		extern uint32_t authenticate_image(uint32_t ddr_start,
-				uint32_t image_size);
-
-		if (authenticate_image(addr, image_size)) {
-			printf("Authenticate OK\n");
-		} else {
-			printf("Authenticate image Fail, Please check\n\n");
-			return 1;
-		}
-#endif
 
 		raddr = addr + hdr->page_size;
 		raddr += ALIGN(hdr->kernel_size, hdr->page_size);
