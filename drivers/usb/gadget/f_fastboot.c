@@ -28,9 +28,6 @@
 #ifdef CONFIG_FASTBOOT_FLASH_MMC_DEV
 #include <fb_mmc.h>
 #endif
-#ifdef CONFIG_FASTBOOT_FLASH_NAND_DEV
-#include <fb_nand.h>
-#endif
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 extern int armv7_init_nonsec(void);
@@ -247,329 +244,12 @@ static struct cmd_fastboot_interface interface = {
 	.transfer_buffer_size  = 0,
 };
 
-
-#ifdef CONFIG_FASTBOOT_STORAGE_NAND
-static void save_env(struct fastboot_ptentry *ptn,
-		     char *var, char *val)
-{
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-	char lock[128], unlock[128];
-#endif
-
-	setenv(var, val);
-
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-	sprintf(lock, "nand lock 0x%x 0x%x", ptn->start, ptn->length);
-	sprintf(unlock, "nand unlock 0x%x 0x%x", ptn->start, ptn->length);
-
-	/* This could be a problem is there is an outstanding lock */
-	run_command(unlock, 0);
-#endif
-	saveenv();
-
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-	run_command(lock, 0);
-#endif
-}
-
-void save_parts_values(struct fastboot_ptentry *ptn,
-			      unsigned int offset,
-			      unsigned int size)
-{
-	char var[64], val[32];
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-	char lock[128], unlock[128];
-	struct fastboot_ptentry *env_ptn;
-#endif
-
-	printf("saving it..\n");
-
-
-	sprintf(var, "%s_nand_offset", ptn->name);
-	sprintf(val, "0x%x", offset);
-
-	printf("setenv %s %s\n", var, val);
-
-	setenv(var, val);
-
-	sprintf(var, "%s_nand_size", ptn->name);
-	sprintf(val, "0x%x", size);
-
-	printf("setenv %s %s\n", var, val);
-
-	setenv(var, val);
-
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-	/* Warning :
-	   The environment is assumed to be in a partition named 'enviroment'.
-	   It is very possible that your board stores the enviroment
-	   someplace else. */
-	env_ptn = fastboot_flash_find_ptn("environment");
-
-	if (env_ptn) {
-		sprintf(lock, "nand lock 0x%x 0x%x",
-			env_ptn->start, env_ptn->length);
-		sprintf(unlock, "nand unlock 0x%x 0x%x",
-			env_ptn->start, env_ptn->length);
-
-		run_command(unlock, 0);
-	}
-#endif
-	saveenv();
-
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-	if (env_ptn)
-		run_command(lock, 0);
-#endif
-}
-
-int check_parts_values(struct fastboot_ptentry *ptn)
-{
-	char var[64];
-
-	sprintf(var, "%s_nand_offset", ptn->name);
-	if (!getenv(var))
-		return 1;
-
-	sprintf(var, "%s_nand_size", ptn->name);
-	if (!getenv(var))
-		return 1;
-
-	return 0;
-}
-
-static int write_to_ptn(struct fastboot_ptentry *ptn)
-{
-	int ret = 1;
-	char length[32];
-	char write_type[32];
-	int repeat, repeat_max;
-
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-	char lock[128];
-	char unlock[128];
-#endif
-	char write[128];
-	char erase[128];
-
-	printf("flashing '%s'\n", ptn->name);
-
-	/* Which flavor of write to use */
-	if (ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_I)
-		sprintf(write_type, "write.i");
-#ifdef CONFIG_CMD_NAND_TRIMFFS
-	else if (ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_TRIMFFS)
-		sprintf(write_type, "write.trimffs");
-#endif
-	else
-		sprintf(write_type, "write");
-
-	/* Some flashing requires writing the same data in multiple,
-	   consecutive flash partitions */
-	repeat_max = 1;
-	if (ptn->flags & FASTBOOT_PTENTRY_FLAGS_REPEAT_MASK) {
-		if (ptn->flags &
-		    FASTBOOT_PTENTRY_FLAGS_WRITE_CONTIGUOUS_BLOCK) {
-			printf("Warning can not do both 'contiguous block' "
-				"and 'repeat' writes for for partition '%s'\n", ptn->name);
-			printf("Ignoring repeat flag\n");
-		} else {
-			repeat_max = ptn->flags &
-				FASTBOOT_PTENTRY_FLAGS_REPEAT_MASK;
-		}
-	}
-
-	/* Unlock the whole partition instead of trying to
-	   manage special cases */
-	sprintf(length, "0x%x", ptn->length * repeat_max);
-
-	for (repeat = 0; repeat < repeat_max; repeat++) {
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-		sprintf(lock, "nand lock 0x%x %s",
-			ptn->start + (repeat * ptn->length), length);
-		sprintf(unlock, "nand unlock 0x%x %s",
-			ptn->start + (repeat * ptn->length), length);
-#endif
-		sprintf(erase, "nand erase 0x%x %s",
-			ptn->start + (repeat * ptn->length), length);
-
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-		run_command(unlock, 0);
-#endif
-		run_command(erase, 0);
-
-		if ((ptn->flags &
-		     FASTBOOT_PTENTRY_FLAGS_WRITE_NEXT_GOOD_BLOCK) &&
-		    (ptn->flags &
-		     FASTBOOT_PTENTRY_FLAGS_WRITE_CONTIGUOUS_BLOCK)) {
-			/* Both can not be true */
-			printf("Warning can not do 'next good block' and \
-				'contiguous block' for partition '%s'\n",
-				ptn->name);
-			printf("Ignoring these flags\n");
-		} else if (ptn->flags &
-			   FASTBOOT_PTENTRY_FLAGS_WRITE_NEXT_GOOD_BLOCK) {
-			/* Keep writing until you get a good block
-			   transfer_buffer should already be aligned */
-			if (interface.nand_block_size) {
-				unsigned int blocks = download_bytes /
-					interface.nand_block_size;
-				unsigned int i = 0;
-				unsigned int offset = 0;
-
-				while (i < blocks) {
-					/* Check for overflow */
-					if (offset >= ptn->length)
-						break;
-
-					/* download's address only advance
-					   if last write was successful */
-
-					/* nand's address always advances */
-					sprintf(write, "nand %s 0x%p 0x%x 0x%x", write_type,
-						interface.transfer_buffer +
-						(i * interface.nand_block_size),
-						ptn->start + (repeat * ptn->length) + offset,
-						interface.nand_block_size);
-
-					ret = run_command(write, 0);
-					if (ret)
-						break;
-					else
-						i++;
-
-					/* Go to next nand block */
-					offset += interface.nand_block_size;
-				}
-			} else {
-				printf("Warning nand block size can not be 0 \
-					when using 'next good block' for \
-					partition '%s'\n", ptn->name);
-				printf("Ignoring write request\n");
-			}
-		} else if (ptn->flags &
-			 FASTBOOT_PTENTRY_FLAGS_WRITE_CONTIGUOUS_BLOCK) {
-			/* Keep writing until you get a good block
-			   transfer_buffer should already be aligned */
-			if (interface.nand_block_size) {
-				if (0 == nand_curr_device) {
-					struct mtd_info *nand;
-					unsigned long off;
-					unsigned int ok_start;
-
-					nand = nand_info[nand_curr_device];
-
-					printf("\nDevice %d bad blocks:\n",
-					       nand_curr_device);
-
-					/* Initialize the ok_start to the
-					   start of the partition
-					   Then try to find a block large
-					   enough for the download */
-					ok_start = ptn->start;
-
-					/* It is assumed that the start and
-					   length are multiples of block size */
-					for (off = ptn->start;
-					     off < ptn->start + ptn->length;
-					     off += nand->erasesize) {
-						if (nand_block_isbad(nand, off)) {
-							/* Reset the ok_start
-							   to the next block */
-							ok_start = off +
-								nand->erasesize;
-						}
-
-						/* Check if we have enough
-						   blocks */
-						if ((ok_start - off) >=
-						    download_bytes)
-							break;
-					}
-
-					/* Check if there is enough space */
-					if (ok_start + download_bytes <=
-					    ptn->start + ptn->length) {
-
-						sprintf(write, "nand %s 0x%p 0x%x 0x%x", write_type,
-							interface.transfer_buffer,
-							ok_start,
-							download_bytes);
-
-						ret = run_command(write, 0);
-
-						/* Save the results into an
-						   environment variable on the
-						   format
-						   ptn_name + 'offset'
-						   ptn_name + 'size'  */
-						if (ret) {
-							/* failed */
-							save_parts_values(ptn, ptn->start, 0);
-						} else {
-							/* success */
-							save_parts_values(ptn, ok_start, download_bytes);
-						}
-					} else {
-						printf("Error could not find enough contiguous space "
-							"in partition '%s'\n", ptn->name);
-						printf("Ignoring write request\n");
-					}
-				} else {
-					/* TBD : Generalize flash handling */
-					printf("Error only handling 1 NAND per board");
-					printf("Ignoring write request\n");
-				}
-			} else {
-				printf("Warning nand block size can not be 0 \
-					when using 'continuous block' for \
-					partition '%s'\n", ptn->name);
-				printf("Ignoring write request\n");
-			}
-		} else {
-			/* Normal case */
-			sprintf(write, "nand %s 0x%p 0x%x 0x%x", write_type,
-							interface.transfer_buffer,
-							ptn->start + (repeat * ptn->length),
-							download_bytes);
-#ifdef CONFIG_CMD_NAND_TRIMFFS
-			if (ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_TRIMFFS) {
-				sprintf(write, "nand %s 0x%p 0x%x 0x%x", write_type,
-							interface.transfer_buffer,
-							ptn->start + (repeat * ptn->length),
-							download_bytes_unpadded);
-			}
-#endif
-
-			ret = run_command(write, 0);
-
-			if (0 == repeat) {
-				if (ret) /* failed */
-					save_parts_values(ptn, ptn->start, 0);
-				else     /* success */
-					save_parts_values(ptn, ptn->start,
-							  download_bytes);
-			}
-		}
-
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-		run_command(lock, 0);
-#endif
-
-		if (ret)
-			break;
-	}
-
-	return ret;
-}
-#else
 static void save_env(struct fastboot_ptentry *ptn,
 		     char *var, char *val)
 {
 	setenv(var, val);
 	saveenv();
 }
-#endif
 
 /* When save = 0, just parse.  The input is unchanged
    When save = 1, parse and do the save.  The input is changed */
@@ -758,53 +438,6 @@ static int saveenv_to_ptn(struct fastboot_ptentry *ptn, char *err_string)
 	}
 	return ret;
 }
-
-#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
-
-static void process_flash_nand(const char *cmdbuf)
-{
-	if (download_bytes) {
-		struct fastboot_ptentry *ptn;
-
-		ptn = fastboot_flash_find_ptn(cmdbuf);
-		if (ptn == 0) {
-			fastboot_fail("partition does not exist");
-		} else if ((download_bytes > ptn->length) &&
-			   !(ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_ENV)) {
-			fastboot_fail("image too large for partition");
-			/* TODO : Improve check for yaffs write */
-		} else {
-			/* Check if this is not really a flash write
-			   but rather a saveenv */
-			if (ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_ENV) {
-				/* Since the response can only be 64 bytes,
-				   there is no point in having a large error message. */
-				char err_string[32];
-				if (saveenv_to_ptn(ptn, &err_string[0])) {
-					printf("savenv '%s' failed : %s\n",
-						ptn->name, err_string);
-					fastboot_fail(err_string);
-				} else {
-					printf("partition '%s' saveenv-ed\n", ptn->name);
-					fastboot_okay("");
-				}
-			} else {
-				/* Normal case */
-				if (write_to_ptn(ptn)) {
-					printf("flashing '%s' failed\n", ptn->name);
-					fastboot_fail("failed to flash partition");
-				} else {
-					printf("partition '%s' flashed\n", ptn->name);
-					fastboot_okay("");
-				}
-			}
-		}
-	} else {
-		fastboot_fail("no image downloaded");
-	}
-
-}
-#endif
 
 #if defined(CONFIG_FASTBOOT_STORAGE_SATA)
 static void process_flash_sata(const char *cmdbuf)
@@ -1192,65 +825,6 @@ static void process_erase_sata(const char *cmdbuf, char *response)
     return;
 }
 #endif
-#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
-static int process_erase_nand(const char *cmdbuf, char *response)
-{
-	struct fastboot_ptentry *ptn;
-
-	ptn = fastboot_flash_find_ptn(cmdbuf);
-	if (ptn == NULL ||  (ptn->flags & FASTBOOT_PTENTRY_FLAGS_UNERASEABLE)) {
-		fastboot_fail("partition does not exist");
-	} else {
-		int status, repeat, repeat_max;
-
-		printf("erasing '%s'\n", ptn->name);
-
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-		char lock[128];
-		char unlock[128];
-#endif
-		char erase[128];
-
-		repeat_max = 1;
-		if (ptn->flags & FASTBOOT_PTENTRY_FLAGS_REPEAT_MASK)
-			repeat_max = ptn->flags & FASTBOOT_PTENTRY_FLAGS_REPEAT_MASK;
-
-		for (repeat = 0; repeat < repeat_max;
-			repeat++) {
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-			sprintf(lock, "nand lock 0x%x 0x%x",
-				ptn->start + (repeat * ptn->length),
-				ptn->length);
-			sprintf(unlock, "nand unlock 0x%x 0x%x",
-				ptn->start + (repeat * ptn->length),
-				ptn->length);
-#endif
-			sprintf(erase, "nand erase 0x%x 0x%x",
-				ptn->start + (repeat * ptn->length),
-				ptn->length);
-
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-			run_command(unlock, 0);
-#endif
-			status = run_command(erase, 0);
-#ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
-			run_command(lock, 0);
-#endif
-
-			if (status)
-				break;
-		}
-
-		if (status) {
-			fastboot_fail("failed to erase partition");
-		} else {
-			printf("partition '%s' erased\n", ptn->name);
-			fastboot_okay("");
-		}
-	}
-	return;
-}
-#endif
 
 static void rx_process_erase(const char *cmdbuf, char *response)
 {
@@ -1263,11 +837,6 @@ static void rx_process_erase(const char *cmdbuf, char *response)
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
 	case DEV_MMC:
 		process_erase_mmc(cmdbuf, response);
-		break;
-#endif
-#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
-	case DEV_NAND:
-		process_erase_nand(cmdbuf, response);
 		break;
 #endif
 	default:
@@ -1292,11 +861,6 @@ static void rx_process_flash(const char *cmdbuf)
 		process_flash_mmc(cmdbuf);
 		break;
 #endif
-#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
-	case DEV_NAND:
-		process_flash_nand(cmdbuf);
-		break;
-#endif
 	default:
 		printf("Not support flash command for current device %d\n",
 			fastboot_devinfo.type);
@@ -1309,11 +873,6 @@ static void rx_process_flash(const char *cmdbuf)
 static void parameters_setup(void)
 {
 	interface.nand_block_size = 0;
-#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
-	struct mtd_info *nand = nand_info[0];
-	if (nand)
-		interface.nand_block_size = nand->writesize;
-#endif
 	interface.transfer_buffer =
 				(unsigned char *)CONFIG_FASTBOOT_BUF_ADDR;
 	interface.transfer_buffer_size =
@@ -1328,9 +887,6 @@ static int _fastboot_setup_dev(void)
 	if (fastboot_env) {
 		if (!strcmp(fastboot_env, "sata")) {
 			fastboot_devinfo.type = DEV_SATA;
-			fastboot_devinfo.dev_id = 0;
-		} else if (!strcmp(fastboot_env, "nand")) {
-			fastboot_devinfo.type = DEV_NAND;
 			fastboot_devinfo.dev_id = 0;
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
 		} else if (!strncmp(fastboot_env, "mmc", 3)) {
@@ -1500,174 +1056,10 @@ static int _fastboot_parts_load_from_ptable(void)
 }
 #endif /*CONFIG_FASTBOOT_STORAGE_SATA || CONFIG_FASTBOOT_STORAGE_MMC*/
 
-#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
-static unsigned long long _memparse(char *ptr, char **retptr)
-{
-	char *endptr;	/* local pointer to end of parsed string */
-
-	unsigned long ret = simple_strtoul(ptr, &endptr, 0);
-
-	switch (*endptr) {
-	case 'M':
-	case 'm':
-		ret <<= 10;
-	case 'K':
-	case 'k':
-		ret <<= 10;
-		endptr++;
-	default:
-		break;
-	}
-
-	if (retptr)
-		*retptr = endptr;
-
-	return ret;
-}
-
-static int _fastboot_parts_add_env_entry(char *s, char **retptr)
-{
-	unsigned long size;
-	unsigned long offset = 0;
-	char *name;
-	int name_len;
-	int delim;
-	unsigned int flags;
-	struct fastboot_ptentry part;
-
-	size = _memparse(s, &s);
-	if (0 == size) {
-		printf("Error:FASTBOOT size of parition is 0\n");
-		return 1;
-	}
-
-	/* fetch partition name and flags */
-	flags = 0; /* this is going to be a regular partition */
-	delim = 0;
-	/* check for offset */
-	if (*s == '@') {
-		s++;
-		offset = _memparse(s, &s);
-	} else {
-		printf("Error:FASTBOOT offset of parition is not given\n");
-		return 1;
-	}
-
-	/* now look for name */
-	if (*s == '(')
-		delim = ')';
-
-	if (delim) {
-		char *p;
-
-		name = ++s;
-		p = strchr((const char *)name, delim);
-		if (!p) {
-			printf("Error:FASTBOOT no closing %c found in partition name\n",
-				delim);
-			return 1;
-		}
-		name_len = p - name;
-		s = p + 1;
-	} else {
-		printf("Error:FASTBOOT no partition name for \'%s\'\n", s);
-		return 1;
-	}
-
-	/* check for options */
-	while (1) {
-		if (strncmp(s, "i", 1) == 0) {
-			flags |= FASTBOOT_PTENTRY_FLAGS_WRITE_I;
-			s += 1;
-		} else if (strncmp(s, "ubifs", 5) == 0) {
-			/* ubifs */
-			flags |= FASTBOOT_PTENTRY_FLAGS_WRITE_TRIMFFS;
-			s += 5;
-		} else {
-			break;
-		}
-		if (strncmp(s, "|", 1) == 0)
-			s += 1;
-	}
-
-	/* enter this partition (offset will be calculated later if it is zero at this point) */
-	part.length = size;
-	part.start = offset;
-	part.flags = flags;
-
-	if (name) {
-		if (name_len >= sizeof(part.name)) {
-			printf("Error:FASTBOOT partition name is too long\n");
-			return 1;
-		}
-		strncpy(&part.name[0], name, name_len);
-		/* name is not null terminated */
-		part.name[name_len] = '\0';
-	} else {
-		printf("Error:FASTBOOT no name\n");
-		return 1;
-	}
-
-	fastboot_flash_add_ptn(&part);
-
-	/*if the nand partitions envs are not initialized, try to init them*/
-	if (check_parts_values(&part))
-		save_parts_values(&part, part.start, part.length);
-
-	/* return (updated) pointer command line string */
-	*retptr = s;
-
-	/* return partition table */
-	return 0;
-}
-
-static int _fastboot_parts_load_from_env(void)
-{
-	char fbparts[FASTBOOT_FBPARTS_ENV_MAX_LEN], *env;
-
-	env = getenv("fbparts");
-	if (env) {
-		unsigned int len;
-		len = strlen(env);
-		if (len && len < FASTBOOT_FBPARTS_ENV_MAX_LEN) {
-			char *s, *e;
-
-			memcpy(&fbparts[0], env, len + 1);
-			printf("Fastboot: Adding partitions from environment\n");
-			s = &fbparts[0];
-			e = s + len;
-			while (s < e) {
-				if (_fastboot_parts_add_env_entry(s, &s)) {
-					printf("Error:Fastboot: Abort adding partitions\n");
-					g_pcount = 0;
-					return 1;
-				}
-				/* Skip a bunch of delimiters */
-				while (s < e) {
-					if ((' ' == *s) ||
-					    ('\t' == *s) ||
-					    ('\n' == *s) ||
-					    ('\r' == *s) ||
-					    (',' == *s)) {
-						s++;
-					} else {
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	return 0;
-}
-#endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
-
 static void _fastboot_load_partitions(void)
 {
 	g_pcount = 0;
-#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
-	_fastboot_parts_load_from_env();
-#elif defined(CONFIG_FASTBOOT_STORAGE_SATA) \
+#if defined(CONFIG_FASTBOOT_STORAGE_SATA) \
 	|| defined(CONFIG_FASTBOOT_STORAGE_MMC)
 	_fastboot_parts_load_from_ptable();
 #endif
@@ -1760,18 +1152,6 @@ void board_fastboot_setup(void)
 			setenv("bootcmd", boot_dev_part);
 		break;
 #endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
-#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
-	case NAND_BOOT:
-		if (!getenv("fastboot_dev"))
-			setenv("fastboot_dev", "nand");
-		if (!getenv("fbparts"))
-			setenv("fbparts", ANDROID_FASTBOOT_NAND_PARTS);
-		if (!getenv("bootcmd"))
-			setenv("bootcmd",
-				"nand read ${loadaddr} ${boot_nand_offset} "
-				"${boot_nand_size};boota ${loadaddr}");
-		break;
-#endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
 	default:
 		printf("unsupported boot devices\n");
 		break;
@@ -1838,14 +1218,6 @@ void board_recovery_setup(void)
 			setenv("bootcmd_android_recovery", boot_dev_part);
 		break;
 #endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
-#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
-	case NAND_BOOT:
-		if (!getenv("bootcmd_android_recovery"))
-			setenv("bootcmd_android_recovery",
-				"nand read ${loadaddr} ${recovery_nand_offset} "
-				"${recovery_nand_size};boota ${loadaddr}");
-		break;
-#endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
 	default:
 		printf("Unsupported bootup device for recovery: dev: %d\n",
 			bootdev);
@@ -2034,7 +1406,6 @@ static void fastboot_setup_system_boot_args(const char *slot)
 				ptentry->partition_index);
 		setenv("bootargs_3rd", bootargs_3rd);
 #endif
-		//TBD to support NAND ubifs system parition boot directly
 	}
 }
 #endif
@@ -2300,10 +1671,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if (argc < 2)
 		return -1;
 
-	if (!strncmp(argv[1], "mmc", 3))
-		mmcc = simple_strtoul(argv[1]+3, NULL, 10);
-	else
-		addr = simple_strtoul(argv[1], NULL, 16);
+	mmcc = simple_strtoul(argv[1]+3, NULL, 10);
 
 	if (argc > 2)
 		ptn = argv[2];
@@ -2415,63 +1783,8 @@ use_given_ptn:
 		return -1;
 #endif /*! CONFIG_MMC*/
 	} else {
-		unsigned raddr, end;
-#ifdef CONFIG_OF_LIBFDT
-		unsigned fdtaddr = 0;
-#endif
-
-		/* set this aside somewhere safe */
-		memcpy(hdr, (void *)addr, sizeof(*hdr));
-
-		if (android_image_check_header(hdr)) {
-			printf("boota: bad boot image magic\n");
-			return 1;
-		}
-
-		bootimg_print_image_hdr(hdr);
-
-		image_size = hdr->page_size +
-			ALIGN(hdr->kernel_size, hdr->page_size) +
-			ALIGN(hdr->ramdisk_size, hdr->page_size) +
-			ALIGN(hdr->second_size, hdr->page_size);
-
-		raddr = addr + hdr->page_size;
-		raddr += ALIGN(hdr->kernel_size, hdr->page_size);
-		end = raddr + hdr->ramdisk_size;
-#ifdef CONFIG_OF_LIBFDT
-		if (hdr->second_size) {
-			fdtaddr = raddr + ALIGN(hdr->ramdisk_size, hdr->page_size);
-			end = fdtaddr + hdr->second_size;
-		}
-#endif /*CONFIG_OF_LIBFDT*/
-
-		if (raddr != hdr->ramdisk_addr) {
-			/*check overlap*/
-			if (((hdr->ramdisk_addr >= addr) &&
-					(hdr->ramdisk_addr <= end)) ||
-				((addr >= hdr->ramdisk_addr) &&
-					(addr <= hdr->ramdisk_addr + hdr->ramdisk_size))) {
-				printf("Fail: boota address overlap with ramdisk address\n");
-				return 1;
-			}
-			memmove((void *)(uintptr_t)hdr->ramdisk_addr,
-				(void *)(uintptr_t)raddr, hdr->ramdisk_size);
-		}
-
-#ifdef CONFIG_OF_LIBFDT
-		if (hdr->second_size && fdtaddr != hdr->second_addr) {
-			/*check overlap*/
-			if (((hdr->second_addr >= addr) &&
-					(hdr->second_addr <= end)) ||
-				((addr >= hdr->second_addr) &&
-					(addr <= hdr->second_addr + hdr->second_size))) {
-				printf("Fail: boota address overlap with FDT address\n");
-				return 1;
-			}
-			memmove((void *)(uintptr_t)hdr->second_addr,
-				(void *)(uintptr_t)fdtaddr, hdr->second_size);
-		}
-#endif /*CONFIG_OF_LIBFDT*/
+		printf("boota: parameters is invalid. only support mmcX device\n");
+		return -1;
 	}
 
 	printf("kernel   @ %08x (%d)\n", hdr->kernel_addr, hdr->kernel_size);
@@ -3232,39 +2545,6 @@ static void rx_handler_dl_image(struct usb_ep *ep, struct usb_request *req)
 
 		printf("\ndownloading of %d bytes finished\n", download_bytes);
 
-#ifdef CONFIG_FSL_FASTBOOT
-#ifdef CONFIG_FASTBOOT_STORAGE_NAND
-		/* Pad to block length
-		   In most cases, padding the download to be
-		   block aligned is correct. The exception is
-		   when the following flash writes to the oob
-		   area.  This happens when the image is a
-		   YAFFS image.  Since we do not know what
-		   the download is until it is flashed,
-		   go ahead and pad it, but save the true
-		   size in case if should have
-		   been unpadded */
-		download_bytes_unpadded = download_bytes;
-		if (interface.nand_block_size) {
-			if (download_bytes %
-				interface.nand_block_size) {
-				unsigned int pad =
-					interface.nand_block_size -
-					(download_bytes % interface.nand_block_size);
-				unsigned int i;
-
-				for (i = 0; i < pad; i++) {
-					if (download_bytes >=
-						interface.transfer_buffer_size)
-						break;
-
-					interface.transfer_buffer[download_bytes] = 0;
-					download_bytes++;
-				}
-			}
-		}
-#endif
-#endif
 	} else {
 		req->length = rx_bytes_expected(ep);
 	}
@@ -3510,11 +2790,6 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 			do_fastboot_unlock(true);
 	}
 
-#endif
-#ifdef CONFIG_FASTBOOT_FLASH_NAND_DEV
-	fb_nand_flash_write(cmd,
-			    (void *)CONFIG_FASTBOOT_BUF_ADDR,
-			    download_bytes);
 #endif
 #endif
 	fastboot_tx_write_str(response);
