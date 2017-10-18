@@ -6,8 +6,61 @@
 
 #include <common.h>
 #include <asm/io.h>
+#include <asm/arch/clock.h>
 #include <asm/arch/ddr_memory_map.h>
 #include "lpddr4.h"
+
+void ddr_pll_bypass_100mts(void) {
+	/* change the clock source of dram_alt_clk_root to source 2 --100MHz */
+	reg32_write(CCM_IP_CLK_ROOT_GEN_TAGET_CLR(0),(0x7<<24)|(0x7<<16));
+	reg32_write(CCM_IP_CLK_ROOT_GEN_TAGET_SET(0),(0x2<<24));
+
+	/* change the clock source of dram_apb_clk_root to source 2 --40MHz */
+	reg32_write(CCM_IP_CLK_ROOT_GEN_TAGET_CLR(1),(0x7<<24)|(0x7<<16));
+	reg32_write(CCM_IP_CLK_ROOT_GEN_TAGET_SET(1),(0x2<<24)|(0x1<<16));
+
+	/* disable the clock gating */
+	reg32_write(0x303A00EC,0x0000ffff); /* PGC_CPU_MAPPING */
+	reg32setbit(0x303A00F8,5);          /* PU_PGC_SW_PUP_REQ */
+
+	/* configure pll bypass mode */
+	reg32_write(0x30389804, 1<<24);
+
+	printf("PLL bypass to 100MTS setting done \n");
+}
+
+void ddr_pll_bypass_400mts(void) {
+    /* change the clock source of dram_alt_clk_root to source 2 --400MHz */
+    reg32_write(CCM_IP_CLK_ROOT_GEN_TAGET_CLR(0),(0x7<<24)|(0x7<<16));
+    reg32_write(CCM_IP_CLK_ROOT_GEN_TAGET_SET(0),(0x5<<24));
+
+    /* change the clock source of dram_apb_clk_root to source 2 --40MHz/2 */
+    reg32_write(CCM_IP_CLK_ROOT_GEN_TAGET_CLR(1),(0x7<<24)|(0x7<<16));
+    reg32_write(CCM_IP_CLK_ROOT_GEN_TAGET_SET(1),(0x2<<24)|(0x1<<16));
+
+    /* disable the clock gating */
+    reg32_write(0x303A00EC,0x0000ffff); /* PGC_CPU_MAPPING */
+    reg32setbit(0x303A00F8,5);          /* PU_PGC_SW_PUP_REQ */
+
+    /* configure pll bypass mode */
+    reg32_write(0x30389804, 1<<24);
+
+    printf("PLL bypass to 400MTS setting done \n");
+}
+
+
+void dwc_ddrphy_phyinit_userCustom_E_setDfiClk(int pstate)
+{
+	if (pstate == 2)
+		ddr_pll_bypass_100mts();
+	else if (pstate == 1)
+		ddr_pll_bypass_400mts();
+	else {
+		reg32_write(CCM_IP_CLK_ROOT_GEN_TAGET_CLR(1), (0x7 << 24) | (0x7 << 16));
+		reg32_write(CCM_IP_CLK_ROOT_GEN_TAGET_SET(1), (0x4 << 24) | (0x3 << 16));
+		reg32_write(0x30389808, 1 << 24);
+	}
+}
 
 void lpddr4_800M_cfg_phy(void) {
 	unsigned int tmp, tmp_t;
@@ -26,6 +79,22 @@ void lpddr4_800M_cfg_phy(void) {
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1215f, 0x1ff);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1305f, 0x1ff);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1315f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11005f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11015f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11105f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11115f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11205f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11215f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11305f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11315f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21005f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21015f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21105f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21115f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21205f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21215f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21305f, 0x1ff);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21315f, 0x1ff);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x55, 0x1ff);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1055, 0x1ff);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x2055, 0x1ff);
@@ -37,11 +106,23 @@ void lpddr4_800M_cfg_phy(void) {
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x8055, 0x1ff);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x9055, 0x1ff);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x200c5, 0x19);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1200c5, 0x7);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x2200c5, 0x7);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x2002e, 0x2);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x12002e, 0x2);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x22002e, 0x2);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x90204, 0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x190204, 0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x290204, 0x0);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x20024, 0xab);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x2003a, 0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x120024, 0xab);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x2003a, 0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x220024, 0xab);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x2003a, 0x0);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x20056, 0x3);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x120056, 0xa);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x220056, 0xa);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1004d, 0xe00);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1014d, 0xe00);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1104d, 0xe00);
@@ -50,6 +131,22 @@ void lpddr4_800M_cfg_phy(void) {
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1214d, 0xe00);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1304d, 0xe00);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1314d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11004d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11014d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11104d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11114d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11204d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11214d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11304d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11314d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21004d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21014d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21104d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21114d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21204d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21214d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21304d, 0xe00);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x21314d, 0xe00);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x10049, 0xe38);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x10149, 0xe38);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x11049, 0xe38);
@@ -58,6 +155,22 @@ void lpddr4_800M_cfg_phy(void) {
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x12149, 0xe38);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x13049, 0xe38);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x13149, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x110049, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x110149, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x111049, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x111149, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x112049, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x112149, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x113049, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x113149, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x210049, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x210149, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x211049, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x211149, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x212049, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x212149, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x213049, 0xe38);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x213149, 0xe38);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x43, 0x21);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1043, 0x21);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x2043, 0x21);
@@ -72,6 +185,8 @@ void lpddr4_800M_cfg_phy(void) {
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x20075, 0x4);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x20050, 0x0);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x20008, 0x320);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x120008, 0x64);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x220008, 0x19);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x20088, 0x9);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x200b2, 0x19c);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x10043, 0x5a1);
@@ -82,9 +197,31 @@ void lpddr4_800M_cfg_phy(void) {
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x12143, 0x5a1);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x13043, 0x5a1);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x13143, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1200b2, 0x19c);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x110043, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x110143, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x111043, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x111143, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x112043, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x112143, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x113043, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x113143, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x2200b2, 0x19c);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x210043, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x210143, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x211043, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x211143, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x212043, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x212143, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x213043, 0x5a1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x213143, 0x5a1);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x200fa, 0x1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x1200fa, 0x1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x2200fa, 0x1);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x20019, 0x1);
-	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x200f0, 0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x120019, 0x1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x220019, 0x1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x200f0, 0x660);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x200f1, 0x0);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x200f2, 0x4444);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x200f3, 0x8888);
@@ -96,13 +233,180 @@ void lpddr4_800M_cfg_phy(void) {
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x2000c, 0xc9);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x2000d, 0x7d1);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x2000e, 0x2c);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x12000b, 0xd);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x12000c, 0x1a);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x12000d, 0xfb);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x12000e, 0x10);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x22000b, 0x4);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x22000c, 0x7);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x22000d, 0x3f);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x22000e, 0x10);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x20025, 0x0);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x2002d, 0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x12002d, 0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x22002d, 0x0);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x20060, 0x2);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x0);
 	/* load the 1D training image */
 	ddr4_load_train_code(FW_1D_IMAGE);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x0);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x1);
+
+	/* set the PHY input clock to the desired frequency for pstate 2 */
+	dwc_ddrphy_phyinit_userCustom_E_setDfiClk(2);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54000,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54001,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54002,0x102);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54003,0x64);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54004,0x2);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54005,0x2828);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54006,0x14);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54007,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54008,0x121f);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54009,0xc8);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5400a,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5400b,0x2);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5400c,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5400d,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5400e,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5400f,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54010,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54011,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54012,0x310);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54013,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54014,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54015,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54016,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54017,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54018,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54019,0x4);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5401a,0x31);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5401b,0x4d46);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5401c,0x4d08);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5401d,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5401e,0x5);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5401f,0x4);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54020,0x31);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54021,0x4d46);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54022,0x4d08);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54023,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54024,0x5);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54025,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54026,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54027,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54028,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54029,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5402a,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5402b,0x1000);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5402c,0x3);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5402d,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5402e,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5402f,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54030,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54031,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54032,0x400);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54033,0x3100);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54034,0x4600);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54035,0x84d);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54036,0x4d);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54037,0x500);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54038,0x400);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54039,0x3100);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5403a,0x4600);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5403b,0x84d);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5403c, 0x4d);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5403d, 0x500);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0099, 0x9);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0099, 0x1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0099, 0x0);
+extern void wait_ddrphy_training_complete(void);
+	wait_ddrphy_training_complete();
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0099, 0x1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x1);
+
+	/* set the PHY input clock to the desired frequency for pstate 1 */
+	dwc_ddrphy_phyinit_userCustom_E_setDfiClk(1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54000,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54001,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54002,0x101);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54003,0x190);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54004,0x2);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54005,0x2828);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54006,0x14);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54007,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54008,0x121f);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54009,0xc8);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5400a,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5400b,0x2);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5400c,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5400d,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5400e,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5400f,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54010,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54011,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54012,0x310);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54013,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54014,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54015,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54016,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54017,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54018,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54019,0x4);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5401a,0x31);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5401b,0x4d46);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5401c,0x4d08);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5401d,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5401e,0x5);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5401f,0x4);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54020,0x31);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54021,0x4d46);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54022,0x4d08);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54023,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54024,0x5);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54025,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54026,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54027,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54028,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54029,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5402a,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5402b,0x1000);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5402c,0x3);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5402d,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5402e,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5402f,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54030,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54031,0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54032,0x400);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54033,0x3100);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54034,0x4600);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54035,0x84d);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54036,0x4d);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54037,0x500);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54038,0x400);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54039,0x3100);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5403a,0x4600);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5403b,0x84d);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5403c,0x4d);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x5403d,0x500);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0099, 0x9);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0099, 0x1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0099, 0x0);
+extern void wait_ddrphy_training_complete(void);
+	wait_ddrphy_training_complete();
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0099, 0x1);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x0);
+	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x1);
+
+	/* set the PHY input clock to the desired frequency for pstate 0 */
+	dwc_ddrphy_phyinit_userCustom_E_setDfiClk(0);
+
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x0);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54000, 0x0);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x54001, 0x0);
