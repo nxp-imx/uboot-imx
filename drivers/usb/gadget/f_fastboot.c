@@ -51,9 +51,6 @@ extern void trusty_os_init(void);
 #endif
 #endif
 
-#ifdef CONFIG_FSL_BOOTCTL
-#include "bootctrl.h"
-#endif
 #ifdef CONFIG_BCB_SUPPORT
 #include "bcb.h"
 #endif
@@ -1676,24 +1673,6 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if (argc > 2)
 		ptn = argv[2];
 
-#ifdef CONFIG_FSL_BOOTCTL
-	else  {
-slot_select:
-		ptn = select_slot();
-		if (ptn == NULL) {
-			printf("no valid slot found, enter to recovery\n");
-			ptn = "recovery";
-		}
-#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
-		else {
-			fastboot_setup_system_boot_args(ptn);
-		}
-#endif
-use_given_ptn:
-		printf("use slot %s\n", ptn);
-	}
-#endif
-
 	if (mmcc != -1) {
 #ifdef CONFIG_MMC
 		struct fastboot_ptentry *pte;
@@ -1826,23 +1805,7 @@ use_given_ptn:
 	return 1;
 
 fail:
-#if defined(CONFIG_FSL_BOOTCTL)
-	if (argc > 2)
-		return -1;
-	if (0 == strcmp(ptn, "recovery")) {
-		printf("boot recovery partition failed\n");
-		return -1;
-	}
-	printf("invalid slot %s\n", ptn);
-	int ret = 0;
-	ret = invalid_curslot();
-	if (ret == 0) {
-		goto slot_select;
-	} else {
-		ptn = "recovery";
-		goto use_given_ptn;
-	}
-#elif defined(CONFIG_FSL_FASTBOOT)
+#if defined(CONFIG_FSL_FASTBOOT)
 	return run_command("fastboot 0", 0);
 #else /*! CONFIG_FSL_FASTBOOT*/
 	return -1;
@@ -2306,9 +2269,6 @@ static int get_single_var(char *cmd, char *response)
 #ifdef CONFIG_AVB_SUPPORT
 		if (get_slotvar_avb(&fsl_avb_ab_ops, cmd,
 				response + strlen(response), chars_left + 1) < 0)
-			return -1;
-#elif defined(CONFIG_FSL_BOOTCTL)
-		if (get_slotvar(cmd, response + strlen(response), chars_left + 1) < 0)
 			return -1;
 #else
 		strncat(response, FASTBOOT_VAR_NO, chars_left);
@@ -2928,11 +2888,6 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 	{
 		.cmd = "set_active",
 		.cb = cb_set_active_avb,
-	},
-#elif defined(CONFIG_FSL_BOOTCTL)
-	{
-		.cmd = "set_active",
-		.cb = cb_set_active,
 	},
 #endif
 };
