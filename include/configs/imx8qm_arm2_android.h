@@ -23,17 +23,11 @@
 #define CONFIG_FSL_FASTBOOT
 #define CONFIG_ANDROID_RECOVERY
 
-#if defined CONFIG_NAND_BOOT
-#define CONFIG_FASTBOOT_STORAGE_NAND
-#elif defined CONFIG_SYS_BOOT_SATA
+#if defined CONFIG_SYS_BOOT_SATA
 #define CONFIG_FASTBOOT_STORAGE_SATA
 #define CONFIG_FASTBOOT_SATA_NO 0
 #else
 #define CONFIG_FASTBOOT_STORAGE_MMC
-#endif
-
-#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
-#define ANDROID_FASTBOOT_NAND_PARTS "16m@64m(boot) 16m@80m(recovery) 1m@96m(misc) 810m@97m(android_root)ubifs"
 #endif
 
 #define CONFIG_CMD_BOOTA
