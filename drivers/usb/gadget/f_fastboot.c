@@ -2743,7 +2743,16 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 	unsigned char len = strlen(cmd);
 	FbLockState status;
 	FbLockEnableResult result;
+
+#ifdef CONFIG_ANDROID_THINGS_SUPPORT
+	if (!strncmp(cmd + len - strlen(FASTBOOT_BOOTLOADER_VBOOT_KEY),
+		    FASTBOOT_BOOTLOADER_VBOOT_KEY,
+		    strlen(FASTBOOT_BOOTLOADER_VBOOT_KEY))) {
+		strcpy(response, "OKAY");
+	} else if (!strncmp(cmd + len - 15, "unlock_critical", 15)) {
+#else
 	if (!strncmp(cmd + len - 15, "unlock_critical", 15)) {
+#endif
 		strcpy(response, "OKAY");
 	} else if (!strncmp(cmd + len - 13, "lock_critical", 13)) {
 		strcpy(response, "OKAY");

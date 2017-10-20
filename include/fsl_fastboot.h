@@ -72,6 +72,10 @@
 #define FASTBOOT_PARTITION_FBMISC "fbmisc"
 #endif
 
+#ifdef CONFIG_ANDROID_THINGS_SUPPORT
+#define FASTBOOT_BOOTLOADER_VBOOT_KEY "fuse at-bootloader-vboot-key"
+#endif
+
 enum {
     DEV_SATA,
     DEV_MMC,
