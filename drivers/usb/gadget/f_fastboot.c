@@ -2055,6 +2055,15 @@ static int fastboot_set_alt(struct usb_function *f,
 		ret = -EINVAL;
 		goto err;
 	}
+#ifdef CONFIG_ANDROID_THINGS_SUPPORT
+	/*
+	 * fastboot host end implement to get data in one bulk package so need
+	 * large buffer for the "fastboot upload" and "fastboot get_staged".
+	 */
+	if (f_fb->in_req->buf)
+		free(f_fb->in_req->buf);
+	f_fb->in_req->buf = memalign(CONFIG_SYS_CACHELINE_SIZE, EP_BUFFER_SIZE * 32);
+#endif
 	f_fb->in_req->complete = fastboot_complete;
 
 	for (i = 0; i < MAX_REQ_NUM; i++) {
@@ -2576,6 +2585,25 @@ static void rx_handler_dl_image(struct usb_ep *ep, struct usb_request *req)
 	usb_ep_queue(ep, req, 0);
 }
 
+static void cb_upload(struct usb_ep *ep, struct usb_request *req)
+{
+	char response[FASTBOOT_RESPONSE_LEN];
+
+	if (!download_bytes || download_bytes > (EP_BUFFER_SIZE * 32)) {
+		sprintf(response, "FAIL");
+		fastboot_tx_write_str(response);
+		return;
+	}
+
+	printf("Will upload %d bytes.\n", download_bytes);
+	snprintf(response, FASTBOOT_RESPONSE_LEN, "DATA%08x", download_bytes);
+	fastboot_tx_write_str(response);
+
+	fastboot_tx_write((const char *)(interface.transfer_buffer), download_bytes);
+
+	snprintf(response,FASTBOOT_RESPONSE_LEN, "OKAY");
+	fastboot_tx_write_str(response);
+}
 static void cb_download(struct usb_ep *ep, struct usb_request *req)
 {
 	char *cmd = req->buf;
@@ -2932,6 +2960,9 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 	}, {
 		.cmd = "getvar:",
 		.cb = cb_getvar,
+	}, {
+		.cmd = "upload",
+		.cb = cb_upload,
 	}, {
 		.cmd = "download:",
 		.cb = cb_download,
