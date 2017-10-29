@@ -1518,6 +1518,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	struct andr_img_hdr *hdrload;
 	ulong image_size;
 	u32 avb_metric;
+	bool check_image_arm64 =  false;
 
 	AvbABFlowResult avb_result;
 	AvbSlotVerifyData *avb_out_data;
@@ -1554,20 +1555,14 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		/* The dm-verity commandline has conflicts with system bootargs and we can't
 		 * determine whether dm-verity is opened by the commandline for now. */
 		char bootargs_sec[ANDR_BOOT_ARGS_SIZE];
-		sprintf(bootargs_sec, "androidboot.slot_suffix=%s", avb_out_data->ab_suffix);
+		sprintf(bootargs_sec, "androidboot.slot_suffix=%s ", avb_out_data->ab_suffix);
 		setenv("bootargs_sec", bootargs_sec);
-		/*
-		char bootargs_sec[2048];
-		sprintf(bootargs_sec, "androidboot.slot_suffix=%s %s",
-			avb_out_data->ab_suffix, avb_out_data->cmdline);
-		setenv("bootargs_sec", bootargs_sec);
-		*/
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if(!is_recovery_mode)
 			fastboot_setup_system_boot_args(avb_out_data->ab_suffix);
 #endif
 		image_size = avb_loadpart->data_size;
-		memcpy((void *)load_addr, (void *)hdr, image_size);
+		memcpy((void *)(hdr->kernel_addr - hdr->page_size), (void *)hdr, image_size);
 	} else if (lock_status == FASTBOOT_LOCK) { /* && verify fail */
 		/* if in lock state, verify enforce fail */
 		printf(" verify FAIL, state: LOCK\n");
@@ -1603,7 +1598,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		}
 		image_size = android_image_get_end(hdr) - (ulong)hdr;
 		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, bootimg,
-					0, image_size, (void *)load_addr, &num_read) != AVB_IO_RESULT_OK &&
+					0, image_size, (void *)(hdr->kernel_addr - hdr->page_size), &num_read) != AVB_IO_RESULT_OK &&
 				num_read != image_size) {
 			printf("boota: read boot image error\n");
 			goto fail;
@@ -1620,31 +1615,26 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 #endif
 
 	flush_cache((ulong)load_addr, image_size);
-	addr = load_addr;
-	hdrload = (struct andr_img_hdr *)load_addr;
+	hdrload = (struct andr_img_hdr *)(hdr->kernel_addr - hdr->page_size);
+	check_image_arm64  = image_arm64((void *)hdrload->kernel_addr);
 
-	ulong img_ramdisk, img_ramdisk_len;
-	if(android_image_get_ramdisk(hdrload, &img_ramdisk, &img_ramdisk_len) != 0) {
-		printf("boota: mmc failed to read ramdisk\n");
-		goto fail;
-	}
-	memcpy((void *)hdrload->ramdisk_addr, (void *)img_ramdisk, img_ramdisk_len);
-	/* flush cache after read */
-	flush_cache((ulong)hdrload->ramdisk_addr, img_ramdisk_len); /* FIXME */
+	memcpy((void *)hdrload->ramdisk_addr, (void *)hdrload->kernel_addr
+			+ ALIGN(hdrload->kernel_size,hdrload->page_size), hdrload->ramdisk_size);
 
 #ifdef CONFIG_OF_LIBFDT
 	/* load the dtb file */
 	if (hdrload->second_size && hdrload->second_addr) {
-		ulong img_fdt, img_fdt_len;
-		if (android_image_get_fdt(hdrload, &img_fdt, &img_fdt_len) != 0) {
-			printf("boota: mmc failed to dtb\n");
-			goto fail;
-		}
-		memcpy((void *)hdrload->second_addr, (void *)img_fdt, img_fdt_len);
-		/* flush cache after read */
-		flush_cache((ulong)hdrload->second_addr, img_fdt_len); /* FIXME */
+		memcpy((void *)hdrload->second_addr, (void *)hdrload->kernel_addr
+			+ ALIGN(hdrload->kernel_size, hdrload->page_size)
+			+ ALIGN(hdrload->ramdisk_size, hdrload->page_size), hdr->second_size);
 	}
 #endif /*CONFIG_OF_LIBFDT*/
+	if (check_image_arm64) {
+		android_image_get_kernel(hdrload, 0, NULL, NULL);
+		addr = hdrload->kernel_addr;
+	} else {
+		addr = hdrload;
+	}
 	printf("kernel   @ %08x (%d)\n", hdrload->kernel_addr, hdrload->kernel_size);
 	printf("ramdisk  @ %08x (%d)\n", hdrload->ramdisk_addr, hdrload->ramdisk_size);
 #ifdef CONFIG_OF_LIBFDT
@@ -1656,7 +1646,11 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	char ramdisk_addr[25];
 	char fdt_addr[12];
 
-	char *bootm_args[] = { "bootm", boot_addr_start, ramdisk_addr, fdt_addr};
+	char *boot_args[] = { NULL, boot_addr_start, ramdisk_addr, fdt_addr};
+	if (check_image_arm64)
+		boot_args[0] = "booti";
+	else
+		boot_args[0] = "bootm";
 
 	sprintf(boot_addr_start, "0x%lx", addr);
 	sprintf(ramdisk_addr, "0x%x:0x%x", hdrload->ramdisk_addr, hdrload->ramdisk_size);
@@ -1669,7 +1663,15 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	/* put ql-tipc to release resource for Linux */
 	trusty_ipc_shutdown();
 #endif
-	do_bootm(NULL, 0, 4, bootm_args);
+	if (check_image_arm64) {
+#ifdef CONFIG_CMD_BOOTI
+		do_booti(NULL, 0, 4, boot_args);
+#else
+		debug("please enable CONFIG_CMD_BOOTI when kernel are Image");
+#endif
+	} else {
+		do_bootm(NULL, 0, 4, boot_args);
+	}
 
 	/* This only happens if image is somehow faulty so we start over */
 	do_reset(NULL, 0, 0, NULL);
