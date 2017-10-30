@@ -6,7 +6,9 @@
 
 #include <common.h>
 #include <stdlib.h>
+#ifdef CONFIG_FSL_CAAM_KB
 #include <fsl_caam.h>
+#endif
 #include <fuse.h>
 #include <mmc.h>
 
@@ -25,6 +27,42 @@
 #define RPMBKEY_FUSE_LEN ((RPMBKEY_LENGTH) + (CAAM_PAD))
 #define RPMBKEY_FUSE_LENW (RPMBKEY_FUSE_LEN / 4)
 
+#ifndef CONFIG_FSL_CAAM_KB
+/* ARM64 won't avbkey and rollback index in this stage directly. */
+int avbkey_init(uint8_t *plainkey, uint32_t keylen) {
+	return 0;
+}
+
+int rbkidx_erase(void) {
+	return 0;
+}
+
+/*
+ * In no security enhanced ARM64, we cannot protect public key.
+ * So that we choose to trust the key from vbmeta image
+ */
+AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
+					   const uint8_t* public_key_data,
+					   size_t public_key_length,
+					   const uint8_t* public_key_metadata,
+					   size_t public_key_metadata_length,
+					   bool* out_is_trusted) {
+	*out_is_trusted = true;
+	return AVB_IO_RESULT_OK;
+}
+
+/* In no security enhanced ARM64, rollback index has no protection so no use it */
+AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot,
+				     uint64_t rollback_index) {
+	return AVB_IO_RESULT_OK;
+
+}
+AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot,
+				    uint64_t* out_rollback_index) {
+	*out_rollback_index = 0;
+	return AVB_IO_RESULT_OK;
+}
+#else
 static int mmc_dev_no = -1;
 
 static struct mmc *get_mmc(void) {
@@ -715,3 +753,4 @@ fail:
 		free(plain_idx);
 	return ret;
 }
+#endif /* CONFIG_FSL_CAAM_KB */
