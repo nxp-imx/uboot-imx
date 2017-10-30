@@ -40,9 +40,9 @@ u32 get_cpu_speed_grade_hz(void)
 
 	switch(val) {
 	case OCOTP_TESTER3_SPEED_800MHZ:
-		return 792000000;
+		return 800000000;
 	case OCOTP_TESTER3_SPEED_1GHZ:
-		return 996000000;
+		return 1000000000;
 	case OCOTP_TESTER3_SPEED_1300HZ:
 		return 1300000000;
 	case OCOTP_TESTER3_SPEED_1500HZ:
