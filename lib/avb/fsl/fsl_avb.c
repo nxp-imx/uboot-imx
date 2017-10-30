@@ -9,7 +9,6 @@
 #include <stdlib.h>
 
 #include <fsl_fastboot.h>
-#include <fsl_caam.h>
 #include "../../../drivers/usb/gadget/fastboot_lock_unlock.h"
 
 #include <fsl_avb.h>

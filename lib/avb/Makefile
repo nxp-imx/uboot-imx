@@ -5,6 +5,7 @@ subdir-ccflags-y += -D_FILE_OFFSET_BITS=64 \
 			-Wall \
 			-Wextra \
 			-Wformat=2 \
+			-Wno-type-limits \
 			-Wno-psabi \
 			-Wno-unused-parameter \
 			-ffunction-sections \
