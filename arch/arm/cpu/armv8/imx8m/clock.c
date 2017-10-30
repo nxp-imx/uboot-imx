@@ -82,7 +82,7 @@ u32 decode_frac_pll(enum clk_root_src frac_pll)
 		FRAC_PLL_FRAC_DIV_CTL_SHIFT;
 	divfi = pll_cfg1 & FRAC_PLL_INT_DIV_CTL_MASK;
 
-	divf_val = 1 + (divfi + 1) + (divff + 1) / (1 << 24);
+	divf_val = 1 + divfi + divff / (1 << 24);
 
 	pllout = pll_refclk / (divr_val + 1) * 8 * divf_val / ((divq_val + 1) * 2);
 
