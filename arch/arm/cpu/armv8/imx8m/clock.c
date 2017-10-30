@@ -9,6 +9,7 @@
 #include <asm/arch/clock.h>
 #include <asm/io.h>
 #include <errno.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -341,7 +342,12 @@ u32 imx_get_uartclk(void)
 	return mxc_get_clock(UART1_CLK_ROOT);
 }
 
-int frac_pll_init(u32 pll)
+enum frac_pll_out_val {
+	FRAC_PLL_OUT_1000M,
+	FRAC_PLL_OUT_1600M,
+};
+
+int frac_pll_init(u32 pll, enum frac_pll_out_val val)
 {
 	void __iomem *pll_cfg0, __iomem *pll_cfg1;
 	uint32_t val_cfg0, val_cfg1;
@@ -350,7 +356,11 @@ int frac_pll_init(u32 pll)
 	case ANATOP_ARM_PLL:
 		pll_cfg0 = (void * __iomem)ARM_PLL_CFG0;
 		pll_cfg1 = (void * __iomem)ARM_PLL_CFG1;
-		val_cfg1 = FRAC_PLL_INT_DIV_CTL_VAL(79);
+
+		if (val == FRAC_PLL_OUT_1000M)
+			val_cfg1 = FRAC_PLL_INT_DIV_CTL_VAL(49);
+		else
+			val_cfg1 = FRAC_PLL_INT_DIV_CTL_VAL(79);
 		val_cfg0 = FRAC_PLL_CLKE_MASK | FRAC_PLL_REFCLK_SEL_OSC_25M |
 			FRAC_PLL_LOCK_SEL_MASK | FRAC_PLL_NEWDIV_VAL_MASK |
 			FRAC_PLL_REFCLK_DIV_VAL(4) |
@@ -499,13 +509,26 @@ void dram_pll_init(void)
 int clock_init()
 {
 	uint32_t val_cfg0;
+	u32 grade;
 
 	clock_set_target_val(ARM_A53_CLK_ROOT, CLK_ROOT_ON | \
 			     CLK_ROOT_SOURCE_SEL(0));
-	frac_pll_init(ANATOP_ARM_PLL);
-	clock_set_target_val(ARM_A53_CLK_ROOT, CLK_ROOT_ON | \
+
+	/* 8MQ only supports two grades: consumer and industrial.
+	  * We set ARM clock to 1Ghz for consumer, 800Mhz for industrial
+	  */
+	grade = get_cpu_temp_grade(NULL, NULL);
+	if (!grade) {
+		frac_pll_init(ANATOP_ARM_PLL, FRAC_PLL_OUT_1000M);
+		clock_set_target_val(ARM_A53_CLK_ROOT, CLK_ROOT_ON | \
+			     CLK_ROOT_SOURCE_SEL(1) | \
+			     CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1));
+	} else {
+		frac_pll_init(ANATOP_ARM_PLL, FRAC_PLL_OUT_1600M);
+		clock_set_target_val(ARM_A53_CLK_ROOT, CLK_ROOT_ON | \
 			     CLK_ROOT_SOURCE_SEL(1) | \
 			     CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV2));
+	}
 	/*
 	 * According to ANAMIX SPEC
 	 * sys pll1 fixed at 800MHz
