@@ -2291,8 +2291,9 @@ static int get_single_var(char *cmd, char *response)
 	char *str = cmd;
 	size_t chars_left;
 	const char *s;
-	int mmc_no = 0;
-	struct blk_desc *dev_desc;
+	struct mmc *mmc;
+	int mmc_dev_no;
+	int blksz;
 
 	chars_left = FASTBOOT_RESPONSE_LEN - strlen(response) - 1;
 
@@ -2336,13 +2337,14 @@ static int get_single_var(char *cmd, char *response)
 
 		snprintf(response + strlen(response), chars_left, "0x%x", CONFIG_FASTBOOT_BUF_SIZE);
 	} else if (!strcmp_l1("erase-block-size", cmd)) {
-		mmc_no = fastboot_devinfo.dev_id;
-		dev_desc = blk_get_dev("mmc", mmc_no);
-		snprintf(response + strlen(response), chars_left, "0x%x", (unsigned int)dev_desc->blksz);
+		mmc_dev_no = mmc_get_env_dev();
+		mmc = find_mmc_device(mmc_dev_no);
+		blksz = get_block_size();
+		snprintf(response + strlen(response), chars_left, "0x%x",
+				(blksz * mmc->erase_grp_size));
 	} else if (!strcmp_l1("logical-block-size", cmd)) {
-		mmc_no = fastboot_devinfo.dev_id;
-		dev_desc = blk_get_dev("mmc", mmc_no);
-		snprintf(response + strlen(response), chars_left, "0x%x", (unsigned int)dev_desc->blksz);
+		blksz = get_block_size();
+		snprintf(response + strlen(response), chars_left, "0x%x", blksz);
 	} else if (!strcmp_l1("serialno", cmd)) {
 		s = get_serial();
 		if (s)
