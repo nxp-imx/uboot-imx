@@ -82,7 +82,11 @@ int board_postclk_init(void)
 
 int dram_init(void)
 {
-	gd->ram_size = PHYS_SDRAM_SIZE;
+	/* rom_pointer[1] contains the size of TEE occupies */
+	if (rom_pointer[1])
+		gd->ram_size = PHYS_SDRAM_SIZE - rom_pointer[1];
+	else
+		gd->ram_size = PHYS_SDRAM_SIZE;
 
 	return 0;
 }
