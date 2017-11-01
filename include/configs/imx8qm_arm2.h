@@ -217,9 +217,10 @@
 #else
 #define CONFIG_ENV_OFFSET       (64 * SZ_64K)
 #define CONFIG_ENV_IS_IN_MMC
-#define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
 #endif
+
+#define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
 /* On LPDDR4 board, USDHC1 is for eMMC, USDHC2 is for SD on CPU board, USDHC3 is for SD on base board
   * On DDR4 board, USDHC1 is mux for NAND, USDHC2 is for SD, USDHC3 is for SD on base board
