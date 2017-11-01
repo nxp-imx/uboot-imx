@@ -216,9 +216,10 @@
 #else
 #define CONFIG_ENV_OFFSET       (64 * SZ_64K)
 #define CONFIG_ENV_IS_IN_MMC
-#define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
 #endif
+
+#define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
 #define CONFIG_SYS_MMC_ENV_DEV		1   /* USDHC2 */
 #define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
