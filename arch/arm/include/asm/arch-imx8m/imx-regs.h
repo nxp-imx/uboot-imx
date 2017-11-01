@@ -277,7 +277,8 @@ struct wdog_regs {
 #define BOOT_TYPE_SPINOR	0x6
 #define BOOT_TYPE_USB		0xF
 
-#define ROM_SW_INFO_ADDR	0x000009e8
+#define ROM_SW_INFO_ADDR	0x00000968
+#define ROM_SW_INFO_ADDR_A0	0x000009e8
 
 struct bootrom_sw_info {
 	u8 reserved_1;

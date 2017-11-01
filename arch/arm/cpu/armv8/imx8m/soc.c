@@ -205,8 +205,25 @@ struct mm_region *mem_map = imx8m_mem_map;
 
 u32 get_cpu_rev(void)
 {
-	/* TODO: */
-	return (MXC_CPU_IMX8MQ << 12) | (1 << 4);
+	u32 reg = readl((void __iomem *)DIGPROG);
+	u32 type = (reg >> 16) & 0xff;
+
+	reg &= 0xff;
+
+	if (reg == 0x10) {
+		/* For B0 chip, the DIGPROG is not updated, still TO1.0.
+		 * we have to check ROM version further
+		 */
+		uint32_t rom_version;
+		rom_version = readl((void __iomem *)0x800);
+		if (rom_version != 0x10) {
+			rom_version = readl((void __iomem *)0x83c);
+			if (rom_version >= 0x20)
+				reg = 0x20;
+		}
+	}
+
+	return (type << 12) | reg;
 }
 
 void imx_set_wdog_powerdown(bool enable)
@@ -288,6 +305,7 @@ int arch_auxiliary_core_check_up(u32 core_id)
 enum boot_device get_boot_device(void)
 {
 	struct bootrom_sw_info **p =
+		is_soc_rev(CHIP_REV_1_0)? (struct bootrom_sw_info **)ROM_SW_INFO_ADDR_A0 :
 		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR;
 
 	enum boot_device boot_dev = SD1_BOOT;
@@ -337,6 +355,7 @@ __weak int board_mmc_get_env_dev(int devno)
 int mmc_get_env_dev(void)
 {
 	struct bootrom_sw_info **p =
+		is_soc_rev(CHIP_REV_1_0)? (struct bootrom_sw_info **)ROM_SW_INFO_ADDR_A0 :
 		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR;
 	int devno = (*p)->boot_dev_instance;
 	u8 boot_type = (*p)->boot_dev_type;
