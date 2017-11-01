@@ -15,6 +15,9 @@ obj-$(CONFIG_IMX_BOOTAUX) += imx_bootaux.o
 obj-$(CONFIG_SYS_I2C_MXC) += i2c-mxv7.o
 obj-y += cpu.o
 endif
+
+obj-$(CONFIG_ARM64) += sip.o
+
 ifeq ($(SOC),$(filter $(SOC),mx5 mx6))
 obj-y	+= cpu.o speed.o
 obj-$(CONFIG_SYS_I2C_MXC) += i2c-mxv7.o

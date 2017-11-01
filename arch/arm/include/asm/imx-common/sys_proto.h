@@ -85,4 +85,8 @@ void pcie_power_up(void);
 void pcie_power_off(void);
 int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data);
 int arch_auxiliary_core_check_up(u32 core_id);
+
+#ifdef CONFIG_ARM64
+unsigned long call_imx_sip(unsigned long id, unsigned long reg0, unsigned long reg1, unsigned long reg2);
+#endif
 #endif

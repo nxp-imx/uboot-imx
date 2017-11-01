@@ -256,11 +256,12 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 #endif
 
 #ifdef CONFIG_IMX_BOOTAUX
-#define M4RCR (0xC)
+#define FSL_SIP_SRC		0xC2000005
+#define FSL_SIP_SRC_M4_START	0x00
+#define FSL_SIP_SRC_M4_STARTED	0x01
 int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 {
 	u32 stack, pc;
-	u32 val;
 
 	if (!boot_private_data)
 		return -EINVAL;
@@ -273,24 +274,14 @@ int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 	writel(pc, M4_BOOTROM_BASE_ADDR + 4);
 
 	/* Enable M4 */
-	val = readl(SRC_BASE_ADDR + M4RCR);
-	val &= ~SRC_SCR_M4C_NON_SCLR_RST_MASK;
-	val |= SRC_SCR_M4_ENABLE_MASK;
-	writel(val, SRC_BASE_ADDR + M4RCR);
+	call_imx_sip(FSL_SIP_SRC, FSL_SIP_SRC_M4_START, 0, 0);
 
 	return 0;
 }
 
 int arch_auxiliary_core_check_up(u32 core_id)
 {
-	unsigned val;
-
-	val = readl(SRC_BASE_ADDR + M4RCR);
-
-	if (val & 0x00000001)
-		return 0;  /* assert in reset */
-
-	return 1;
+	return call_imx_sip(FSL_SIP_SRC, FSL_SIP_SRC_M4_STARTED, 0, 0);
 }
 #endif
 
