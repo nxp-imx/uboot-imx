@@ -1,6 +1,11 @@
 config IMX_CONFIG
 	string
 
+config IMX_OPTEE
+	bool "Support OP-TEE"
+	help
+	 Enable support for OP-TEE
+
 config GPT_TIMER
 	bool "Using i.MX GPT timer as system tick timer"
 	depends on ARCH_MX6 || ARCH_MX7
