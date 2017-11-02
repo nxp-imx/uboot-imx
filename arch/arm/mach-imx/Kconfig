@@ -4,6 +4,11 @@ config HAS_CAAM
 config IMX_CONFIG
 	string
 
+config IMX_OPTEE
+	bool "Support OP-TEE"
+	help
+	 Enable support for OP-TEE
+
 config ROM_UNIFIED_SECTIONS
 	bool
 
