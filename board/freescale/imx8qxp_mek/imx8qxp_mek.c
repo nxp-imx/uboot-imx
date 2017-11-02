@@ -415,14 +415,6 @@ void pci_init_board(void)
 
 #endif
 
-#ifdef CONFIG_USB_EHCI_MX6
-static void setup_otg(void)
-{
-	/* power control by IO expander 2 IO02*/
-
-}
-#endif
-
 #ifdef CONFIG_USB_XHCI_IMX8
 
 #define USB_TYPEC_SEL IMX_GPIO_NR(5, 9)
@@ -511,10 +503,6 @@ int board_init(void)
 
 #ifdef CONFIG_FEC_MXC
 	setup_fec(CONFIG_FEC_ENET_DEV);
-#endif
-
-#ifdef CONFIG_USB_EHCI_MX6
-	setup_otg();
 #endif
 
 #ifdef CONFIG_USB_XHCI_IMX8
