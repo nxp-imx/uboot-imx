@@ -38,10 +38,6 @@
  */
 int rpmb_storage_proxy_init(struct trusty_ipc_dev *dev, void *rpmb_dev);
 /*
- * Poll for and handle RPMB storange events. Returns one of trusty_err.
- */
-int rpmb_storage_proxy_poll(void);
-/*
  * Shutdown RPMB storage proxy
  *
  * @dev: initialized with trusty_ipc_dev_create

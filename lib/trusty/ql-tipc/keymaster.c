@@ -185,9 +185,8 @@ static int km_read_data_response(uint32_t cmd, int32_t *error,
  * caller expects an additional data buffer to be returned from the secure
  * side.
  */
-static int km_do_tipc(uint32_t cmd, bool handle_rpmb, void* req,
-                      uint32_t req_len, void* resp_data,
-                      uint32_t* resp_data_len)
+static int km_do_tipc(uint32_t cmd, void* req, uint32_t req_len,
+                      void* resp_data, uint32_t* resp_data_len)
 {
     int rc = TRUSTY_ERR_GENERIC;
     struct km_no_response resp_header;
@@ -196,15 +195,6 @@ static int km_do_tipc(uint32_t cmd, bool handle_rpmb, void* req,
     if (rc < 0) {
         trusty_error("%s: failed (%d) to send km request\n", __func__, rc);
         return rc;
-    }
-
-    if (handle_rpmb) {
-        /* handle any incoming RPMB requests */
-        rc = rpmb_storage_proxy_poll();
-        if (rc < 0) {
-            trusty_error("%s: failed (%d) to get RPMB requests\n", __func__, rc);
-            return rc;
-        }
     }
 
     if (!resp_data) {
@@ -343,7 +333,7 @@ int trusty_set_boot_params(uint32_t os_version, uint32_t os_patchlevel,
         trusty_error("failed (%d) to serialize request\n", rc);
         goto end;
     }
-    rc = km_do_tipc(KM_SET_BOOT_PARAMS, false, req, req_size, NULL, NULL);
+    rc = km_do_tipc(KM_SET_BOOT_PARAMS, req, req_size, NULL, NULL);
 
 end:
     if (req) {
@@ -369,7 +359,7 @@ static int trusty_send_attestation_data(uint32_t cmd, const uint8_t *data,
         trusty_error("failed (%d) to serialize request\n", rc);
         goto end;
     }
-    rc = km_do_tipc(cmd, true, req, req_size, NULL, NULL);
+    rc = km_do_tipc(cmd, req, req_size, NULL, NULL);
 
 end:
     if (req) {
@@ -393,7 +383,7 @@ static int trusty_send_raw_buffer(uint32_t cmd, const uint8_t *req_data,
         trusty_error("failed (%d) to serialize request\n", rc);
         goto end;
     }
-    rc = km_do_tipc(cmd, false, req, req_size, resp_data, resp_data_size);
+    rc = km_do_tipc(cmd, req, req_size, resp_data, resp_data_size);
 
 end:
     if (req) {
@@ -445,7 +435,7 @@ int trusty_atap_set_ca_response(const uint8_t *ca_response,
 
     /* Tell the Trusty Keymaster TA the size of CA Response message */
     begin_req.ca_response_size = ca_response_size;
-    rc = km_do_tipc(KM_ATAP_SET_CA_RESPONSE_BEGIN, false, &begin_req,
+    rc = km_do_tipc(KM_ATAP_SET_CA_RESPONSE_BEGIN, &begin_req,
                     sizeof(begin_req), NULL, NULL);
     if (rc != TRUSTY_ERR_NONE) {
         return rc;
@@ -464,7 +454,7 @@ int trusty_atap_set_ca_response(const uint8_t *ca_response,
     }
 
     /* Tell Trusty Keymaster to parse the CA Response message */
-    return km_do_tipc(KM_ATAP_SET_CA_RESPONSE_FINISH, true, NULL, 0, NULL, NULL);
+    return km_do_tipc(KM_ATAP_SET_CA_RESPONSE_FINISH, NULL, 0, NULL, NULL);
 }
 
 
@@ -473,7 +463,7 @@ int trusty_atap_read_uuid_str(char **uuid_p)
     *uuid_p = (char*) trusty_calloc(1, kUuidSize);
 
     uint32_t response_size = kUuidSize;
-    int rc = km_do_tipc(KM_ATAP_READ_UUID, true, NULL, 0, *uuid_p,
+    int rc = km_do_tipc(KM_ATAP_READ_UUID, NULL, 0, *uuid_p,
                         &response_size);
     if (rc < 0) {
         trusty_error("failed to read uuid: %d\n", rc);

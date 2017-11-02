@@ -300,10 +300,20 @@ int rpmb_storage_proxy_init(struct trusty_ipc_dev *dev, void *rpmb_dev)
     /* override default ops */
     proxy_chan.ops = &proxy_ops;
 
-    rc = rpmb_storage_proxy_poll();
-    if (rc < 0) {
-        return rc;
+    do {
+        /* Check for RPMB events */
+        rc = trusty_ipc_poll_for_event(proxy_chan.dev);
+        if (rc < 0) {
+            trusty_error("%s: failed (%d) to get rpmb event\n", __func__, rc);
+            return rc;
+        }
+
+        if (proxy_chan.handle == INVALID_IPC_HANDLE) {
+            trusty_error("%s: unexpected proxy channel close\n");
+            return TRUSTY_ERR_CHANNEL_CLOSED;
+        }
     }
+    while (rc != TRUSTY_EVENT_NONE);
 
     /* mark as initialized */
     initialized = true;
@@ -311,24 +321,9 @@ int rpmb_storage_proxy_init(struct trusty_ipc_dev *dev, void *rpmb_dev)
     return TRUSTY_ERR_NONE;
 }
 
-int rpmb_storage_proxy_poll(void)
-{
-    int rc = 0;
-    while ((rc != TRUSTY_EVENT_NONE) && (proxy_chan.handle != INVALID_IPC_HANDLE)){
-        /* Check for RPMB events */
-        rc = trusty_ipc_poll_for_event(&proxy_chan);
-        if (rc < 0) {
-            trusty_error("%s: failed (%d) to get rpmb event\n", __func__, rc);
-            return rc;
-        }
-    }
-    return (proxy_chan.handle)? TRUSTY_ERR_NONE : TRUSTY_ERR_CHANNEL_CLOSED;
-}
-
 void rpmb_storage_proxy_shutdown(struct trusty_ipc_dev *dev)
 {
-    if (!initialized)
-        return; /* nothing to do */
+    trusty_assert(initialized);
 
     /* close channel */
     trusty_ipc_close(&proxy_chan);

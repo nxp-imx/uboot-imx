@@ -57,14 +57,15 @@ static int wait_for_complete(struct trusty_ipc_chan *chan)
 
     chan->complete = 0;
     for (;;) {
-        rc = trusty_ipc_poll_for_event(chan);
+        rc = trusty_ipc_poll_for_event(chan->dev);
         if (rc < 0)
             return rc;
 
         if (chan->complete)
             break;
 
-        trusty_ipc_dev_idle(chan->dev);
+        if (rc == TRUSTY_EVENT_NONE)
+            trusty_ipc_dev_idle(chan->dev);
     }
 
     return chan->complete;
@@ -185,29 +186,30 @@ int trusty_ipc_recv(struct trusty_ipc_chan *chan,
     trusty_assert(chan->dev);
     trusty_assert(chan->handle);
 
-Again:
-    rc = trusty_ipc_dev_recv(chan->dev, chan->handle, iovs, iovs_cnt);
-    if (rc == TRUSTY_ERR_NO_MSG) {
-        if (wait) {
-            rc = wait_for_reply(chan);
-            if (rc < 0) {
-                trusty_error("%s: wait to reply failed (%d)\n", __func__, rc);
-                return rc;
-            }
-            goto Again;
+    if (wait) {
+        rc = wait_for_reply(chan);
+        if (rc < 0) {
+            trusty_error("%s: wait to reply failed (%d)\n", __func__, rc);
+            return rc;
         }
     }
+
+    rc = trusty_ipc_dev_recv(chan->dev, chan->handle, iovs, iovs_cnt);
+    if (rc < 0)
+        trusty_error("%s: ipc recv failed (%d)\n", __func__, rc);
 
     return rc;
 }
 
-int trusty_ipc_poll_for_event(struct trusty_ipc_chan *chan)
+int trusty_ipc_poll_for_event(struct trusty_ipc_dev *ipc_dev)
 {
     int rc;
     struct trusty_ipc_event evt;
-    trusty_assert(chan && chan->ops);
+    struct trusty_ipc_chan *chan;
 
-    rc = trusty_ipc_dev_get_event(chan->dev, chan->handle, &evt);
+    trusty_assert(dev);
+
+    rc = trusty_ipc_dev_get_event(ipc_dev, 0, &evt);
     if (rc) {
         trusty_error("%s: get event failed (%d)\n", __func__, rc);
         return rc;
@@ -218,6 +220,9 @@ int trusty_ipc_poll_for_event(struct trusty_ipc_chan *chan)
         trusty_debug("%s: no event\n", __func__);
         return TRUSTY_EVENT_NONE;
     }
+
+    chan = (struct trusty_ipc_chan *)(uintptr_t)evt.cookie;
+    trusty_assert(chan && chan->ops);
 
     /* check if we have raw event handler */
     if (chan->ops->on_raw_event) {
