@@ -145,6 +145,7 @@ int pcie_ctrla_init_rc(int lane)
 		printf("[%s] LNK UP %x\r\n", __func__, val);
 	else {
 		printf("[%s] LNK DOWN %x\r\n", __func__, val);
+		clrbits_le32(HW_PCIEX2_CTRL2_ADDR, HW_PCIEX2_CTRL2_APP_LTSSM_ENABLE);
 		return -ENODEV;
 	}
 
@@ -243,6 +244,7 @@ int pcie_ctrlb_sata_phy_init_rc(void)
 		printf("[%s] LNK UP %x\r\n", __func__, val);
 	} else {
 		printf("[%s] LNK DOWN %x\r\n", __func__, val);
+		clrbits_le32(HW_PCIEX1_CTRL2_ADDR, HW_PCIEX1_CTRL2_APP_LTSSM_ENABLE);
 		return -ENODEV;
 	}
 	clrbits_le32(PORT1_LINK_CTRL, PORT_LINK_CTRL_LNK_FAST_LNK);
