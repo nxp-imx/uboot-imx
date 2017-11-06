@@ -1570,7 +1570,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			fastboot_setup_system_boot_args(avb_out_data->ab_suffix);
 #endif
 		image_size = avb_loadpart->data_size;
-		memcpy((void *)(hdr->kernel_addr - hdr->page_size), (void *)hdr, image_size);
+		memcpy((void *)(ulong)(hdr->kernel_addr - hdr->page_size), (void *)hdr, image_size);
 	} else if (lock_status == FASTBOOT_LOCK) { /* && verify fail */
 		/* if in lock state, verify enforce fail */
 		printf(" verify FAIL, state: LOCK\n");
@@ -1606,8 +1606,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		}
 		image_size = android_image_get_end(hdr) - (ulong)hdr;
 		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, bootimg,
-					0, image_size, (void *)(hdr->kernel_addr - hdr->page_size), &num_read) != AVB_IO_RESULT_OK &&
-				num_read != image_size) {
+				0, image_size, (void *)(ulong)(hdr->kernel_addr - hdr->page_size), &num_read) != AVB_IO_RESULT_OK
+				&& num_read != image_size) {
 			printf("boota: read boot image error\n");
 			goto fail;
 		}
@@ -1624,16 +1624,16 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 #endif
 
 	flush_cache((ulong)load_addr, image_size);
-	hdrload = (struct andr_img_hdr *)(hdr->kernel_addr - hdr->page_size);
-	check_image_arm64  = image_arm64((void *)hdrload->kernel_addr);
+	hdrload = (struct andr_img_hdr *)(ulong)(hdr->kernel_addr - hdr->page_size);
+	check_image_arm64  = image_arm64((void *)(ulong)hdrload->kernel_addr);
 
-	memcpy((void *)hdrload->ramdisk_addr, (void *)hdrload->kernel_addr
+	memcpy((void *)(ulong)hdrload->ramdisk_addr, (void *)(ulong)hdrload->kernel_addr
 			+ ALIGN(hdrload->kernel_size,hdrload->page_size), hdrload->ramdisk_size);
 
 #ifdef CONFIG_OF_LIBFDT
 	/* load the dtb file */
 	if (hdrload->second_size && hdrload->second_addr) {
-		memcpy((void *)hdrload->second_addr, (void *)hdrload->kernel_addr
+		memcpy((void *)(ulong)hdrload->second_addr, (void *)(ulong)hdrload->kernel_addr
 			+ ALIGN(hdrload->kernel_size, hdrload->page_size)
 			+ ALIGN(hdrload->ramdisk_size, hdrload->page_size), hdr->second_size);
 	}
@@ -1642,7 +1642,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		android_image_get_kernel(hdrload, 0, NULL, NULL);
 		addr = hdrload->kernel_addr;
 	} else {
-		addr = hdrload;
+		addr = (ulong)hdrload;
 	}
 	printf("kernel   @ %08x (%d)\n", hdrload->kernel_addr, hdrload->kernel_size);
 	printf("ramdisk  @ %08x (%d)\n", hdrload->ramdisk_addr, hdrload->ramdisk_size);
@@ -1730,7 +1730,6 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		struct mmc *mmc;
 		disk_partition_t info;
 		struct blk_desc *dev_desc = NULL;
-		unsigned sector;
 		unsigned bootimg_sectors;
 
 		memset((void *)&info, 0 , sizeof(disk_partition_t));
@@ -2700,6 +2699,8 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 
 #endif
 
+#ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_FASTBOOT_LOCK
 static int partition_table_valid(void)
 {
 	int status, mmc_no;
@@ -2713,6 +2714,8 @@ static int partition_table_valid(void)
 		status = -1;
 	return (status == 0);
 }
+#endif
+#endif
 
 #ifdef CONFIG_FASTBOOT_FLASH
 static void cb_flash(struct usb_ep *ep, struct usb_request *req)
