@@ -1555,7 +1555,15 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		/* The dm-verity commandline has conflicts with system bootargs and we can't
 		 * determine whether dm-verity is opened by the commandline for now. */
 		char bootargs_sec[ANDR_BOOT_ARGS_SIZE];
-		sprintf(bootargs_sec, "androidboot.slot_suffix=%s ", avb_out_data->ab_suffix);
+		if (lock_status == FASTBOOT_LOCK) {
+			sprintf(bootargs_sec,
+					"androidboot.verifiedbootstate=green androidboot.slot_suffix=%s",
+					avb_out_data->ab_suffix);
+		} else {
+			sprintf(bootargs_sec,
+					"androidboot.verifiedbootstate=orange androidboot.slot_suffix=%s",
+					avb_out_data->ab_suffix);
+		}
 		setenv("bootargs_sec", bootargs_sec);
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if(!is_recovery_mode)
@@ -1604,7 +1612,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			goto fail;
 		}
 		char bootargs_sec[ANDR_BOOT_ARGS_SIZE];
-		sprintf(bootargs_sec, "androidboot.slot_suffix=%s", slot);
+		sprintf(bootargs_sec,
+				"androidboot.verifiedbootstate=orange androidboot.slot_suffix=%s", slot);
 		setenv("bootargs_sec", bootargs_sec);
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if(!is_recovery_mode)
