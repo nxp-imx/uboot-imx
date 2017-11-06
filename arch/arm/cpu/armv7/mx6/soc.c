@@ -445,17 +445,6 @@ void vadc_power_down(void)
 	writel(val, &iomux->gpr[5]);
 }
 
-static void init_csu(void)
-{
-#ifdef CONFIG_ARMV7_NONSEC
-	int i;
-	u32 csu = CSU_IPS_BASE_ADDR;
-	/* This is to allow device can be accessed in non-secure world */
-	for (i = 0; i < 64; i ++) {
-	    *((u32 *)csu + i) = 0xffffffff;
-	}
-#endif
-}
 void pcie_power_up(void)
 {
 	set_ldo_voltage(LDO_PU, 1100);	/* Set VDDPU to 1.1V */
