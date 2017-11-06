@@ -40,7 +40,7 @@ static int do_caam(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	data_addr = (void *)simple_strtoul(argv[2], NULL, 16);
 	blob_addr = (void *)simple_strtoul(argv[3], NULL, 16);
-	size      = (void *)simple_strtoul(argv[4], NULL, 10);
+	size      = simple_strtoul(argv[4], NULL, 10);
 	if (size <= 48)
 		return CMD_RET_USAGE;
 
@@ -74,7 +74,7 @@ static int do_caam(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	blob_addr = (void *)simple_strtoul(argv[2], NULL, 16);
 	data_addr = (void *)simple_strtoul(argv[3], NULL, 16);
-	size      = (void *)simple_strtoul(argv[4], NULL, 10);
+	size      = simple_strtoul(argv[4], NULL, 10);
 	if (size <= 48)
 		return CMD_RET_USAGE;
 
