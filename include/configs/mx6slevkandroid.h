@@ -12,6 +12,10 @@
 
 #include <asm/imx-common/mxc_key_defs.h>
 
+/* lock/unlock stuff */
+#define CONFIG_FASTBOOT_LOCK
+#define FSL_FASTBOOT_FB_DEV "mmc"
+
 /*keyboard mapping*/
 #define CONFIG_VOL_DOWN_KEY     KEY_BACK
 #define CONFIG_POWER_KEY        KEY_5
