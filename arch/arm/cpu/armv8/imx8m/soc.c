@@ -148,15 +148,6 @@ void set_wdog_reset(struct wdog_regs *wdog)
 	writew(reg, &wdog->wcr);
 }
 
-#ifdef CONFIG_SPL_BUILD
-void reset_cpu(ulong addr)
-{
-	/* TODO */
-	printf("%s\n", __func__);
-	while (1);
-}
-#endif
-
 static struct mm_region imx8m_mem_map[] = {
 	{
 		.virt = 0x0UL,

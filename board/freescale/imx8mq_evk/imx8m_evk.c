@@ -67,6 +67,12 @@ static iomux_v3_cfg_t const uart_pads[] = {
 
 int board_early_init_f(void)
 {
+	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
+
+	imx_iomux_v3_setup_multiple_pads(wdog_pads, ARRAY_SIZE(wdog_pads));
+
+	set_wdog_reset(wdog);
+
 	imx_iomux_v3_setup_multiple_pads(uart_pads, ARRAY_SIZE(uart_pads));
 
 	return 0;
@@ -223,12 +229,6 @@ int board_mmc_get_env_dev(int devno)
 
 int board_late_init(void)
 {
-	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
-
-	imx_iomux_v3_setup_multiple_pads(wdog_pads, ARRAY_SIZE(wdog_pads));
-
-	set_wdog_reset(wdog);
-
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	setenv("board_name", "EVK");
 	setenv("board_rev", "iMX8MQ");
