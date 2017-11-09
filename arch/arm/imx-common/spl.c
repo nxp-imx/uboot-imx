@@ -161,15 +161,37 @@ __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 
 	debug("image entry point: 0x%lX\n", spl_image->entry_point);
 
-	/* HAB looks for the CSF at the end of the authenticated data therefore,
-	 * we need to subtract the size of the CSF from the actual filesize */
-	if (authenticate_image(spl_image->load_addr,
-			       spl_image->size - CONFIG_CSF_SIZE)) {
+	if (spl_image->flags & SPL_FIT_FOUND) {
 		image_entry();
 	} else {
+		/* HAB looks for the CSF at the end of the authenticated data therefore,
+		 * we need to subtract the size of the CSF from the actual filesize */
+		if (authenticate_image(spl_image->load_addr,
+				       spl_image->size - CONFIG_CSF_SIZE)) {
+			image_entry();
+		} else {
+			puts("spl: ERROR:  image authentication unsuccessful\n");
+			hang();
+		}
+	}
+}
+
+ulong board_spl_fit_size_align(ulong size)
+{
+	/* HAB authenticate_image requests the IVT offset is aligned to 0x1000 */
+#define ALIGN_SIZE		0x1000
+
+	size = ALIGN(size, ALIGN_SIZE);
+	size += CONFIG_CSF_SIZE;
+
+	return size;
+}
+
+void board_spl_fit_post_load(ulong load_addr, size_t length)
+{
+	if (!authenticate_image(load_addr, length - CONFIG_CSF_SIZE)) {
 		puts("spl: ERROR:  image authentication unsuccessful\n");
 		hang();
 	}
 }
-
 #endif
