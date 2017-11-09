@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
  *
@@ -1338,6 +1339,11 @@ int board_late_init(void)
 {
 #ifdef CONFIG_CMD_BMODE
 	add_board_boot_modes(board_boot_modes);
+#endif
+
+	setenv("tee", "no");
+#ifdef CONFIG_IMX_OPTEE
+	setenv("tee", "yes");
 #endif
 
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
