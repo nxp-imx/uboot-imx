@@ -94,7 +94,7 @@
 	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
 
 #ifdef CONFIG_NAND_BOOT
-#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:128m(boot),32m(kernel),16m(dtb),8m(misc),-(rootfs) "
 #else
 #define MFG_NAND_PARTITION ""
 #endif
@@ -173,8 +173,8 @@
 
 #ifdef CONFIG_NAND_BOOT
 #define CONFIG_BOOTCOMMAND \
-	"nand read ${loadaddr} 0x4000000 0x800000;"\
-	"nand read ${fdt_addr} 0x5000000 0x100000;"\
+	"nand read ${loadaddr} 0x8000000 0x1400000;"\
+	"nand read ${fdt_addr} 0xA000000 0x100000;"\
 	"booti ${loadaddr} - ${fdt_addr}"
 #else
 #define CONFIG_BOOTCOMMAND \
