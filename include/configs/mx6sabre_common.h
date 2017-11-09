@@ -51,8 +51,12 @@
 		"\0" \
 		"initrd_addr=0x12C00000\0" \
 		"initrd_high=0xffffffff\0" \
-		"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
-
+		"bootcmd_mfg=run mfgtool_args; " \
+			"if test ${tee} = yes; then " \
+				"bootm ${tee_addr} ${initrd_addr} ${fdt_addr}; " \
+			"else " \
+				"bootz ${loadaddr} ${initrd_addr} ${fdt_addr}; " \
+			"fi;\0"
 
 #ifdef CONFIG_SUPPORT_EMMC_BOOT
 #define EMMC_ENV \
@@ -87,7 +91,9 @@
 	 */
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
+	TEE_ENV \
 	"fdt_addr=0x18000000\0" \
+	"tee_addr=0x20000000\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"console=" CONSOLE_DEV "\0" \
 	"bootargs=console=" CONSOLE_DEV ",115200 ubi.mtd=6 "  \
@@ -96,16 +102,24 @@
 		"\0" \
 	"bootcmd=nand read ${loadaddr} 0x4000000 0xc00000;"\
 		"nand read ${fdt_addr} 0x5000000 0x100000;"\
-		"bootz ${loadaddr} - ${fdt_addr}\0"
+		"if test ${tee} = yes; then " \
+			"nand read ${tee_addr} 0x4000000 0x400000;"\
+			"bootm ${tee_addr} - ${fdt_addr};" \
+		"else " \
+			"bootz ${loadaddr} - ${fdt_addr};" \
+		"fi\0"
 
 #elif defined(CONFIG_SATA_BOOT)
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 		CONFIG_MFG_ENV_SETTINGS \
+		TEE_ENV \
 		"image=zImage\0" \
 		"fdt_file=undefined\0" \
 		"fdt_addr=0x18000000\0" \
 		"fdt_high=0xffffffff\0"   \
+		"tee_addr=0x20000000\0" \
+		"tee_file=undefined\0" \
 		"findfdt="\
 			"if test $fdt_file = undefined; then " \
 				"if test $board_name = SABREAUTO && test $board_rev = MX6QP; then " \
@@ -125,25 +139,49 @@
 				"fi; " \
 			"fi;\0" \
 		"findtee="\
+			"if test $tee_file = undefined; then " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6QP; then " \
+					"setenv tee_file uTee-6qpauto; fi; " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6Q; then " \
+					"setenv tee_file uTee-6qauto; fi; " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6DL; then " \
+					"setenv tee_file uTee-6dlauto; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6QP; then " \
+					"setenv tee_file uTee-6qpsdb; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6Q; then " \
+					"setenv tee_file uTee-6qsdb; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6DL; then " \
+					"setenv tee_file uTee-6dlsdb; fi; " \
+				"if test $tee_file = undefined; then " \
+					"echo WARNING: Could not determine tee to use; fi; " \
+			"fi;\0" \
 		"bootargs=console=" CONSOLE_DEV ",115200 \0"\
 		"bootargs_sata=setenv bootargs ${bootargs} " \
 			"root=/dev/sda2 rootwait rw \0" \
 		"bootcmd_sata=run bootargs_sata; sata init; " \
-			"run findfdt;" \
+			"run findfdt; run findtee;" \
 			"fatload sata 0:1 ${loadaddr} ${image}; " \
 			"fatload sata 0:1 ${fdt_addr} ${fdt_file}; " \
-			"bootz ${loadaddr} - ${fdt_addr} \0" \
+			"if test ${tee} = yes; then " \
+				"fatload sata 0:1 ${tee_addr} ${tee_file}; " \
+				"bootm ${tee_addr} - ${fdt_addr}; " \
+			"else " \
+				"bootz ${loadaddr} - ${fdt_addr}; " \
+			"fi \0"\
 		"bootcmd=run bootcmd_sata \0"
 
 #else
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
+	TEE_ENV \
 	"epdc_waveform=epdc_splash.bin\0" \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"fdt_file=undefined\0" \
 	"fdt_addr=0x18000000\0" \
+	"tee_addr=0x20000000\0" \
+	"tee_file=undefined\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
 	"console=" CONSOLE_DEV "\0" \
@@ -182,20 +220,25 @@
 		"source\0" \
 	"loadimage=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
 	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
+	"loadtee=fatload mmc ${mmcdev}:${mmcpart} ${tee_addr} ${tee_file}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"run mmcargs; " \
-		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
-			"if run loadfdt; then " \
-				"bootz ${loadaddr} - ${fdt_addr}; " \
-			"else " \
-				"if test ${boot_fdt} = try; then " \
-					"bootz; " \
-				"else " \
-					"echo WARN: Cannot load the DT; " \
-				"fi; " \
-			"fi; " \
+		"if test ${tee} = yes; then " \
+			"run loadfdt; run loadtee; bootm ${tee_addr} - ${fdt_addr}; " \
 		"else " \
-			"bootz; " \
+			"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
+				"if run loadfdt; then " \
+					"bootz ${loadaddr} - ${fdt_addr}; " \
+				"else " \
+					"if test ${boot_fdt} = try; then " \
+						"bootz; " \
+					"else " \
+						"echo WARN: Cannot load the DT; " \
+					"fi; " \
+				"fi; " \
+			"else " \
+				"bootz; " \
+			"fi;" \
 		"fi;\0" \
 	"netargs=setenv bootargs console=${console},${baudrate} ${smp} " \
 		"root=/dev/nfs " \
@@ -208,18 +251,24 @@
 			"setenv get_cmd tftp; " \
 		"fi; " \
 		"${get_cmd} ${image}; " \
-		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
-			"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
-				"bootz ${loadaddr} - ${fdt_addr}; " \
-			"else " \
-				"if test ${boot_fdt} = try; then " \
-					"bootz; " \
-				"else " \
-					"echo WARN: Cannot load the DT; " \
-				"fi; " \
-			"fi; " \
+		"if test ${tee} = yes; then " \
+			"${get_cmd} ${tee_addr} ${tee_file}; " \
+			"${get_cmd} ${fdt_addr} ${fdt_file}; " \
+			"bootm ${tee_addr} - ${fdt_addr}; " \
 		"else " \
-			"bootz; " \
+			"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
+				"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
+					"bootz ${loadaddr} - ${fdt_addr}; " \
+				"else " \
+					"if test ${boot_fdt} = try; then " \
+						"bootz; " \
+					"else " \
+						"echo WARN: Cannot load the DT; " \
+					"fi; " \
+				"fi; " \
+			"else " \
+				"bootz; " \
+			"fi; " \
 		"fi;\0" \
 		"findfdt="\
 			"if test $fdt_file = undefined; then " \
@@ -238,9 +287,27 @@
 				"if test $fdt_file = undefined; then " \
 					"echo WARNING: Could not determine dtb to use; fi; " \
 			"fi;\0" \
+		"findtee="\
+			"if test $tee_file = undefined; then " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6QP; then " \
+					"setenv tee_file uTee-6qpauto; fi; " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6Q; then " \
+					"setenv tee_file uTee-6qauto; fi; " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6DL; then " \
+					"setenv tee_file uTee-6dlauto; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6QP; then " \
+					"setenv tee_file uTee-6qpsdb; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6Q; then " \
+					"setenv tee_file uTee-6qsdb; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6DL; then " \
+					"setenv tee_file uTee-6dlsdb; fi; " \
+				"if test $tee_file = undefined; then " \
+					"echo WARNING: Could not determine tee to use; fi; " \
+			"fi;\0" \
 
 #define CONFIG_BOOTCOMMAND \
 	"run findfdt;" \
+	"run findtee;" \
 	"mmc dev ${mmcdev};" \
 	"if mmc rescan; then " \
 		"if run loadbootscript; then " \
