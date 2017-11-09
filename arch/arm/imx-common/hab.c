@@ -13,10 +13,14 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/imx-common/hab.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 /* -------- start of HAB API updates ------------*/
 
 #define hab_rvt_report_event_p					\
 (								\
+	(is_imx8m()) ?						\
+	((hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT_ARM64) :	\
 	(is_mx6dqp()) ?						\
 	((hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT_NEW) :	\
 	(is_mx6dq() && (soc_rev() >= CHIP_REV_1_5)) ?		\
@@ -28,6 +32,8 @@
 
 #define hab_rvt_report_status_p					\
 (								\
+	(is_imx8m()) ?						\
+	((hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS_ARM64) :\
 	(is_mx6dqp()) ?						\
 	((hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS_NEW) :\
 	(is_mx6dq() && (soc_rev() >= CHIP_REV_1_5)) ?		\
@@ -39,6 +45,8 @@
 
 #define hab_rvt_authenticate_image_p				\
 (								\
+	(is_imx8m()) ?						\
+	((hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE_ARM64) : \
 	(is_mx6dqp()) ?						\
 	((hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE_NEW) : \
 	(is_mx6dq() && (soc_rev() >= CHIP_REV_1_5)) ?		\
@@ -50,6 +58,8 @@
 
 #define hab_rvt_entry_p						\
 (								\
+	(is_imx8m()) ?						\
+	((hab_rvt_entry_t *)HAB_RVT_ENTRY_ARM64) :		\
 	(is_mx6dqp()) ?						\
 	((hab_rvt_entry_t *)HAB_RVT_ENTRY_NEW) :		\
 	(is_mx6dq() && (soc_rev() >= CHIP_REV_1_5)) ?		\
@@ -61,6 +71,8 @@
 
 #define hab_rvt_exit_p						\
 (								\
+	(is_imx8m()) ?						\
+	((hab_rvt_exit_t *)HAB_RVT_EXIT_ARM64) :			\
 	(is_mx6dqp()) ?						\
 	((hab_rvt_exit_t *)HAB_RVT_EXIT_NEW) :			\
 	(is_mx6dq() && (soc_rev() >= CHIP_REV_1_5)) ?		\
@@ -78,7 +90,7 @@
 #define MX6SL_PU_IROM_MMU_EN_VAR	0x00900a18
 #define IS_HAB_ENABLED_BIT \
 	(is_soc_type(MXC_SOC_MX7ULP) ? 0x80000000 :	\
-	 (is_soc_type(MXC_SOC_MX7) ? 0x2000000 : 0x2))
+	 ((is_soc_type(MXC_SOC_MX7) || is_soc_type(MXC_SOC_IMX8M)) ? 0x2000000 : 0x2))
 
 /*
  * +------------+  0x0 (DDR_UIMAGE_START) -
@@ -111,7 +123,96 @@
  * +------------+ + CSF_PAD_SIZE
  */
 
+static volatile gd_t *gd_save;
+
 static bool is_hab_enabled(void);
+
+static inline void save_gd(void)
+{
+#ifdef CONFIG_ARM64
+	gd_save = gd;
+#endif
+}
+
+static inline void restore_gd(void)
+{
+#ifdef CONFIG_ARM64
+	/*
+	 * Make will already error that reserving x18 is not supported at the
+	 * time of writing, clang: error: unknown argument: '-ffixed-x18'
+	 */
+	__asm__ volatile("mov x18, %0\n" : : "r" (gd_save));
+#endif
+}
+
+enum hab_status hab_rvt_report_event(enum hab_status status, uint32_t index,
+		uint8_t *event, size_t *bytes)
+{
+	enum hab_status ret;
+	hab_rvt_report_event_t *hab_rvt_report_event_func;
+	hab_rvt_report_event_func = hab_rvt_report_event_p;
+
+	save_gd();
+	ret = hab_rvt_report_event_func(status, index, event, bytes);
+	restore_gd();
+
+	return ret;
+
+}
+
+enum hab_status hab_rvt_report_status(enum hab_config *config,
+		enum hab_state *state)
+{
+	enum hab_status ret;
+	hab_rvt_report_status_t *hab_rvt_report_status_func;
+	hab_rvt_report_status_func = hab_rvt_report_status_p;
+
+	save_gd();
+	ret = hab_rvt_report_status_func(config, state);
+	restore_gd();
+
+	return ret;
+}
+
+enum hab_status hab_rvt_entry(void)
+{
+	enum hab_status ret;
+	hab_rvt_entry_t *hab_rvt_entry_func;
+	hab_rvt_entry_func = hab_rvt_entry_p;
+
+	save_gd();
+	ret = hab_rvt_entry_func();
+	restore_gd();
+
+	return ret;
+}
+
+enum hab_status hab_rvt_exit(void)
+{
+	enum hab_status ret;
+	hab_rvt_exit_t *hab_rvt_exit_func;
+	hab_rvt_exit_func = hab_rvt_exit_p;
+
+	save_gd();
+	ret = hab_rvt_exit_func();
+	restore_gd();
+
+	return ret;
+}
+
+void *hab_rvt_authenticate_image(uint8_t cid, ptrdiff_t ivt_offset,
+		void **start, size_t *bytes, hab_loader_callback_f_t loader)
+{
+	void *ret;
+	hab_rvt_authenticate_image_t *hab_rvt_authenticate_image_func;
+	hab_rvt_authenticate_image_func = hab_rvt_authenticate_image_p;
+
+	save_gd();
+	ret = hab_rvt_authenticate_image_func(cid, ivt_offset, start, bytes, loader);
+	restore_gd();
+
+	return ret;
+}
 
 #if !defined(CONFIG_SPL_BUILD)
 
@@ -310,11 +411,6 @@ int get_hab_status(void)
 	size_t bytes = sizeof(event_data); /* Event size in bytes */
 	enum hab_config config = 0;
 	enum hab_state state = 0;
-	hab_rvt_report_event_t *hab_rvt_report_event;
-	hab_rvt_report_status_t *hab_rvt_report_status;
-
-	hab_rvt_report_event = hab_rvt_report_event_p;
-	hab_rvt_report_status = hab_rvt_report_status_p;
 
 	if (is_hab_enabled())
 		puts("\nSecure boot enabled\n");
@@ -412,18 +508,11 @@ static bool is_hab_enabled(void)
 
 uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 {
-	uint32_t load_addr = 0;
+	ulong load_addr = 0;
 	size_t bytes;
 	ptrdiff_t ivt_offset = 0;
 	int result = 0;
 	ulong start;
-	hab_rvt_authenticate_image_t *hab_rvt_authenticate_image;
-	hab_rvt_entry_t *hab_rvt_entry;
-	hab_rvt_exit_t *hab_rvt_exit;
-
-	hab_rvt_authenticate_image = hab_rvt_authenticate_image_p;
-	hab_rvt_entry = hab_rvt_entry_p;
-	hab_rvt_exit = hab_rvt_exit_p;
 
 	if (is_hab_enabled()) {
 		printf("\nAuthenticate image from DDR location 0x%x...\n",
@@ -460,6 +549,8 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 			printf("\tstart = 0x%08lx\n", start);
 			printf("\tbytes = 0x%x\n", bytes);
 #endif
+
+#ifndef CONFIG_ARM64
 			/*
 			 * If the MMU is enabled, we have to notify the ROM
 			 * code, or it won't flush the caches when needed.
@@ -487,11 +578,12 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 					writel(1, MX6SL_PU_IROM_MMU_EN_VAR);
 				}
 			}
-
-			load_addr = (uint32_t)hab_rvt_authenticate_image(
+#endif
+			load_addr = (ulong)hab_rvt_authenticate_image(
 					HAB_CID_UBOOT,
 					ivt_offset, (void **)&start,
 					(size_t *)&bytes, NULL);
+
 			if (hab_rvt_exit() != HAB_SUCCESS) {
 				puts("hab exit function fail\n");
 				load_addr = 0;

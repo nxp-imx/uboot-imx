@@ -123,22 +123,29 @@ typedef void hapi_clock_init_t(void);
 #define HAB_ENG_SW		0xff   /* Software engine */
 
 #ifdef CONFIG_ROM_UNIFIED_SECTIONS
+#define HAB_RVT_BASE_ARM64		0x00000880
 #define HAB_RVT_BASE			0x00000100
 #else
 #define HAB_RVT_BASE			0x00000094
 #endif
 
-#define HAB_RVT_ENTRY			(*(uint32_t *)(HAB_RVT_BASE + 0x04))
-#define HAB_RVT_EXIT			(*(uint32_t *)(HAB_RVT_BASE + 0x08))
-#define HAB_RVT_AUTHENTICATE_IMAGE	(*(uint32_t *)(HAB_RVT_BASE + 0x10))
-#define HAB_RVT_REPORT_EVENT		(*(uint32_t *)(HAB_RVT_BASE + 0x20))
-#define HAB_RVT_REPORT_STATUS		(*(uint32_t *)(HAB_RVT_BASE + 0x24))
+#define HAB_RVT_ENTRY_ARM64			((ulong)*(uint32_t *)(HAB_RVT_BASE_ARM64 + 0x08))
+#define HAB_RVT_EXIT_ARM64			((ulong)*(uint32_t *)(HAB_RVT_BASE_ARM64 + 0x10))
+#define HAB_RVT_AUTHENTICATE_IMAGE_ARM64	((ulong)*(uint32_t *)(HAB_RVT_BASE_ARM64 + 0x20))
+#define HAB_RVT_REPORT_EVENT_ARM64		((ulong)*(uint32_t *)(HAB_RVT_BASE_ARM64 + 0x40))
+#define HAB_RVT_REPORT_STATUS_ARM64		((ulong)*(uint32_t *)(HAB_RVT_BASE_ARM64 + 0x48))
 
-#define HAB_RVT_REPORT_EVENT_NEW               (*(uint32_t *)0x000000B8)
-#define HAB_RVT_REPORT_STATUS_NEW              (*(uint32_t *)0x000000BC)
-#define HAB_RVT_AUTHENTICATE_IMAGE_NEW         (*(uint32_t *)0x000000A8)
-#define HAB_RVT_ENTRY_NEW                      (*(uint32_t *)0x0000009C)
-#define HAB_RVT_EXIT_NEW                       (*(uint32_t *)0x000000A0)
+#define HAB_RVT_ENTRY			((ulong)*(uint32_t *)(HAB_RVT_BASE + 0x04))
+#define HAB_RVT_EXIT			((ulong)*(uint32_t *)(HAB_RVT_BASE + 0x08))
+#define HAB_RVT_AUTHENTICATE_IMAGE	((ulong)*(uint32_t *)(HAB_RVT_BASE + 0x10))
+#define HAB_RVT_REPORT_EVENT		((ulong)*(uint32_t *)(HAB_RVT_BASE + 0x20))
+#define HAB_RVT_REPORT_STATUS		((ulong)*(uint32_t *)(HAB_RVT_BASE + 0x24))
+
+#define HAB_RVT_REPORT_EVENT_NEW               ((ulong)*(uint32_t *)0x000000B8)
+#define HAB_RVT_REPORT_STATUS_NEW              ((ulong)*(uint32_t *)0x000000BC)
+#define HAB_RVT_AUTHENTICATE_IMAGE_NEW         ((ulong)*(uint32_t *)0x000000A8)
+#define HAB_RVT_ENTRY_NEW                      ((ulong)*(uint32_t *)0x0000009C)
+#define HAB_RVT_EXIT_NEW                       ((ulong)*(uint32_t *)0x000000A0)
 
 #define HAB_CID_ROM 0 /**< ROM Caller ID */
 #define HAB_CID_UBOOT 1 /**< UBOOT Caller ID*/
