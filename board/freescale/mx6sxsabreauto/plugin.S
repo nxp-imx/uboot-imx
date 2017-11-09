@@ -130,6 +130,11 @@
 	str r1, [r0, #0x07c]
 	str r1, [r0, #0x080]
 	str r1, [r0, #0x084]
+#ifdef CONFIG_IMX_OPTEE
+	ldr r0, =0x20e4024
+	ldr r1, =0x1
+	str r1, [r0]
+#endif
 .endm
 
 .macro imx6_qos_setting
