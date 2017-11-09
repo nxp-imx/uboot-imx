@@ -9,12 +9,20 @@
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/imx-common/hab.h>
 #include <asm/imx-common/boot_mode.h>
 #include <asm/armv8/mmu.h>
 #include <errno.h>
 #include <fdt_support.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+#if defined(CONFIG_SECURE_BOOT)
+struct imx_sec_config_fuse_t const imx_sec_config_fuse = {
+	.bank = 1,
+	.word = 3,
+};
+#endif
 
 /*
  * OCOTP_TESTER3[9:8] (see Fusemap Description Table offset 0x440)
@@ -155,6 +163,13 @@ static struct mm_region imx8m_mem_map[] = {
 		.size = 0x100000UL,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
 			 PTE_BLOCK_OUTER_SHARE
+	}, {
+		.virt = 0x100000UL,
+		.phys = 0x100000UL,
+		.size = 0x8000UL,
+		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+			 PTE_BLOCK_NON_SHARE |
+			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
 	}, {
 		.virt = 0x7C0000UL,
 		.phys = 0x7C0000UL,

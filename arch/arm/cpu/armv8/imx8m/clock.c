@@ -13,6 +13,13 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#ifdef CONFIG_SECURE_BOOT
+void hab_caam_clock_enable(unsigned char enable)
+{
+	/* The CAAM clock is always on for iMX8M */
+}
+#endif
+
 #ifdef CONFIG_MXC_OCOTP
 void enable_ocotp_clk(unsigned char enable)
 {

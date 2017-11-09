@@ -859,5 +859,5 @@ int enable_i2c_clk(unsigned char enable, unsigned i2c_num);
 #ifdef CONFIG_FEC_MXC
 int set_clk_enet(enum enet_freq type);
 #endif
-
+void hab_caam_clock_enable(unsigned char enable);
 #endif

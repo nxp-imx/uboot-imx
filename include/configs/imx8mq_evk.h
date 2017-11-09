@@ -10,6 +10,10 @@
 #include <linux/sizes.h>
 #include <asm/arch/imx-regs.h>
 
+#ifdef CONFIG_SECURE_BOOT
+#define CONFIG_CSF_SIZE			0x2000 /* 8K region */
+#endif
+
 #define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TEXT_BASE		0x7E1000
 #define CONFIG_SPL_MAX_SIZE		(124 * 1024)
@@ -21,6 +25,7 @@
 #ifdef CONFIG_SPL_BUILD
 /*#define CONFIG_ENABLE_DDR_TRAINING_DEBUG*/
 #define CONFIG_SPL_WATCHDOG_SUPPORT
+#define CONFIG_SPL_DRIVERS_MISC_SUPPORT
 #define CONFIG_SPL_POWER_SUPPORT
 #define CONFIG_SPL_I2C_SUPPORT
 #define CONFIG_SPL_BOARD_INIT
