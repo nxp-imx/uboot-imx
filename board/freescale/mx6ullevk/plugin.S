@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -240,6 +241,12 @@
 	str r1, [r0, #0x78]
 	str r1, [r0, #0x7C]
 	str r1, [r0, #0x80]
+
+#ifdef CONFIG_IMX_OPTEE
+	ldr r0, =0x20e4024
+	ldr r1, =0x1
+	str r1, [r0]
+#endif
 .endm
 
 .macro imx6_qos_setting

@@ -900,6 +900,11 @@ int board_late_init(void)
 	add_board_boot_modes(board_boot_modes);
 #endif
 
+	setenv("tee", "no");
+#ifdef CONFIG_IMX_OPTEE
+	setenv("tee", "yes");
+#endif
+
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	setenv("board_name", "EVK");
 
