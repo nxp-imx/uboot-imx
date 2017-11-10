@@ -21,14 +21,14 @@
 #include <asm/imx-common/mxc_i2c.h>
 #include <fsl_esdhc.h>
 #include <mmc.h>
-#include "ddr/lpddr4.h"
+#include "ddr/ddr.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
 void spl_dram_init(void)
 {
-	/* ddr train */
-	lpddr4_pub_train();
+	/* ddr init */
+	ddr_init();
 }
 
 #define I2C_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE)

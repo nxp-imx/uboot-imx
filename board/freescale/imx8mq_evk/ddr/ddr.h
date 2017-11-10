@@ -9,8 +9,8 @@ enum fw_type {
 	FW_2D_IMAGE,
 };
 
-void lpddr4_pub_train(void);
-void ddr4_load_train_code(enum fw_type type);
+void ddr_init(void);
+void ddr_load_train_code(enum fw_type type);
 void lpddr4_800M_cfg_phy(void);
 extern void dram_pll_init(void);
 

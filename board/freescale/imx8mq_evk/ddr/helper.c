@@ -12,7 +12,7 @@
 #include <asm/arch/ddr_memory_map.h>
 #include <asm/sections.h>
 
-#include "lpddr4.h"
+#include "ddr.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -25,7 +25,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define DDR_TRAIN_CODE_BASE_ADDR IP2APB_DDRPHY_IPS_BASE_ADDR(0)
 
 /* We need PHY iMEM PHY is 32KB padded */
-void ddr4_load_train_code(enum fw_type type)
+void ddr_load_train_code(enum fw_type type)
 {
 	u32 tmp32, i;
 	u32 error = 0;

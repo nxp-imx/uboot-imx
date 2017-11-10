@@ -8,7 +8,7 @@
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/ddr_memory_map.h>
-#include "lpddr4.h"
+#include "ddr.h"
 
 void ddr_pll_bypass_100mts(void) {
 	/* change the clock source of dram_alt_clk_root to source 2 --100MHz */
@@ -248,7 +248,7 @@ void lpddr4_800M_cfg_phy(void) {
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0x20060, 0x2);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x0);
 	/* load the 1D training image */
-	ddr4_load_train_code(FW_1D_IMAGE);
+	ddr_load_train_code(FW_1D_IMAGE);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x0);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x1);
 
@@ -482,7 +482,7 @@ wait_ddrphy_training_complete();
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x1);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000, 0x0);
 	/* load the 2D training image */
-	ddr4_load_train_code(FW_2D_IMAGE);
+	ddr_load_train_code(FW_2D_IMAGE);
 
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000,0x0);
 	dwc_ddrphy_apb_wr(IP2APB_DDRPHY_IPS_BASE_ADDR(0) + 4 * 0xd0000,0x1);

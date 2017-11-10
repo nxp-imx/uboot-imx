@@ -9,7 +9,7 @@
 #include <asm/io.h>
 #include <asm/arch/ddr_memory_map.h>
 #include <asm/arch/clock.h>
-#include "lpddr4.h"
+#include "ddr.h"
 
 #ifdef CONFIG_ENABLE_DDR_TRAINING_DEBUG
 #define ddr_printf(args...) printf(args)
@@ -135,7 +135,7 @@ void lpddr4_25MHz_cfg_umctl2(void)
 	reg32_write(DDRC_FREQ2_INIT4(0), 0x00310000);
 }
 
-void lpddr4_pub_train(void)
+void ddr_init(void)
 {
 	/* change the clock source of dram_apb_clk_root  */
 	reg32_write(CCM_IP_CLK_ROOT_GEN_TAGET_CLR(1),(0x7<<24)|(0x7<<16));
@@ -149,7 +149,7 @@ void lpddr4_pub_train(void)
 	dram_pll_init();
 
 	reg32_write(SRC_DDRC_RCR_ADDR, 0x8F000006);
-   
+
 	/* Configure uMCTL2's registers */
 	lpddr4_800MHz_cfg_umctl2();
 
@@ -170,8 +170,8 @@ void lpddr4_pub_train(void)
 	reg32_write(DDRC_RFSHCTL3(0), 0x00000000);
 	reg32_write(DDRC_SWCTL(0), 0x0000);
 	/*
-	 * ------------------- 9 -------------------  
-	 * Set DFIMISC.dfi_init_start to 1 
+	 * ------------------- 9 -------------------
+	 * Set DFIMISC.dfi_init_start to 1
 	 *  -----------------------------------------
 	 */
 	reg32_write(DDRC_DFIMISC(0), 0x00000030);
