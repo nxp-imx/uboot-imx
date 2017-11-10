@@ -123,4 +123,8 @@ defined(CONFIG_MX6DL)) && !defined(CONFIG_MX6S)
 #ifndef CONFIG_MX6SLL
 #define CONFIG_LDO_BYPASS_CHECK
 #endif
+
+#ifdef CONFIG_IMX_OPTEE
+#define CONFIG_SYS_MEM_TOP_HIDE	SZ_32M
+#endif
 #endif
