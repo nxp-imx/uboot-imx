@@ -84,4 +84,7 @@
 #endif
 #endif
 
+#ifdef CONFIG_IMX_OPTEE
+#define CONFIG_SYS_MEM_TOP_HIDE	SZ_32M
+#endif
 #endif
