@@ -1105,7 +1105,7 @@ phys_size_t get_effective_memsize(void)
 			if (start >= PHYS_SDRAM_1 && start <= ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)
 				&& (start <= CONFIG_SYS_TEXT_BASE && CONFIG_SYS_TEXT_BASE <= end)){
 				if ((end + 1) <= ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
-					return (end - start + 1);
+					return (end - PHYS_SDRAM_1 + 1);
 				else
 					return PHYS_SDRAM_1_SIZE;
 			}
@@ -1133,14 +1133,14 @@ int dram_init(void)
 				if ((end + 1) <= ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
 					gd->ram_size += end - start + 1;
 				else
-					gd->ram_size += PHYS_SDRAM_1_SIZE;
+					gd->ram_size += ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE) - start;
 
 			} else if (start >= PHYS_SDRAM_2 && start <= ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE)) {
 
 				if ((end + 1) <= ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE))
 					gd->ram_size += end - start + 1;
 				else
-					gd->ram_size += PHYS_SDRAM_2_SIZE;
+					gd->ram_size += ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE) - start;
 			}
 		}
 	}
@@ -1193,7 +1193,7 @@ void dram_init_banksize(void)
 				if ((end + 1) <= ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
 					gd->bd->bi_dram[i].size = end - start + 1;
 				else
-					gd->bd->bi_dram[i].size = PHYS_SDRAM_1_SIZE;
+					gd->bd->bi_dram[i].size = ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE) - start;
 
 				dram_bank_sort(i);
 				i++;
@@ -1203,7 +1203,7 @@ void dram_init_banksize(void)
 				if ((end + 1) <= ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE))
 					gd->bd->bi_dram[i].size = end - start + 1;
 				else
-					gd->bd->bi_dram[i].size = PHYS_SDRAM_2_SIZE;
+					gd->bd->bi_dram[i].size = ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE) - start;
 
 				dram_bank_sort(i);
 				i++;
@@ -1234,12 +1234,12 @@ static u64 get_block_size(sc_faddr_t addr_start, sc_faddr_t addr_end)
 {
 	if (addr_start >= PHYS_SDRAM_1 && addr_start <= ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)) {
 		if ((addr_end + 1) > ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
-			return PHYS_SDRAM_1_SIZE;
+			return ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE) - addr_start;
 
 	} else if (addr_start >= PHYS_SDRAM_2 && addr_start <= ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE)) {
 
 		if ((addr_end + 1) > ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE))
-			return PHYS_SDRAM_2_SIZE;
+			return ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE) - addr_start;
 	}
 
 	return (addr_end - addr_start + 1);
