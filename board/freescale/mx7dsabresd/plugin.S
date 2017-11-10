@@ -215,6 +215,11 @@ wait_stat:
 .endm
 
 .macro imx7_clock_gating
+#ifdef CONFIG_IMX_OPTEE
+	ldr r0, =0x30340024
+	ldr r1, =0x1
+	str r1, [r0]
+#endif
 .endm
 
 .macro imx7_qos_setting

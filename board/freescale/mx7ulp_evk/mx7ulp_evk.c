@@ -15,6 +15,7 @@
 #include <asm/gpio.h>
 #include <usb.h>
 #include <dm.h>
+#include <env.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -145,6 +146,11 @@ int board_mmc_get_env_dev(int devno)
 
 int board_late_init(void)
 {
+	env_set("tee", "no");
+#ifdef CONFIG_IMX_OPTEE
+	env_set("tee", "yes");
+#endif
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
