@@ -234,9 +234,15 @@
 #define CONFIG_NR_DRAM_BANKS		3
 #define PHYS_SDRAM_1			0x80000000
 #define PHYS_SDRAM_2			0x880000000
+#ifdef CONFIG_TARGET_IMX8QXP_DDR3_ARM2
+#define PHYS_SDRAM_1_SIZE		0x40000000	/* 1 GB */
+/* LPDDR4 board total DDR is 3GB */
+#define PHYS_SDRAM_2_SIZE		0x00000000
+#else
 #define PHYS_SDRAM_1_SIZE		0x80000000	/* 2 GB */
 /* LPDDR4 board total DDR is 3GB */
 #define PHYS_SDRAM_2_SIZE		0x40000000	/* 1 GB */
+#endif
 
 /* Serial */
 #define CONFIG_BAUDRATE			115200

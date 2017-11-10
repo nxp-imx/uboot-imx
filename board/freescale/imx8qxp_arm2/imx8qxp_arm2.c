@@ -437,7 +437,11 @@ static void board_gpio_init(void)
 
 int checkboard(void)
 {
+#ifdef CONFIG_TARGET_IMX8QXP_DDR3_ARM2
+	puts("Board: iMX8QXP DDR3 ARM2\n");
+#else
 	puts("Board: iMX8QXP LPDDR4 ARM2\n");
+#endif
 
 	print_bootinfo();
 
