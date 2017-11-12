@@ -176,9 +176,9 @@ static struct mm_region imx8m_mem_map[] = {
 			 PTE_BLOCK_NON_SHARE |
 			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
 	}, {
-		.virt = 0x40020000UL,
-		.phys = 0x40020000UL,
-		.size = 0xbffe0000UL,
+		.virt = 0x40000000UL,
+		.phys = 0x40000000UL,
+		.size = 0xC0000000UL,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
 			 PTE_BLOCK_OUTER_SHARE
 	}, {
