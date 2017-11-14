@@ -76,6 +76,15 @@ config CMD_HDMIDETECT
 	  This enables the 'hdmidet' command which detects if an HDMI monitor
 	  is connected.
 
+config FSL_MFGPROT
+	bool "Support the 'mfgprot' command"
+	depends on SECURE_BOOT && ARCH_MX7
+	help
+	  This option enables the manufacturing protection command
+	  which can be used has a protection feature for Manufacturing
+	  process. With this tool is possible to authenticate the
+	  chip to the OEM's server.
+
 config DBG_MONITOR
 	bool "Enable the AXI debug monitor"
 	depends on ARCH_MX6 || ARCH_MX7
