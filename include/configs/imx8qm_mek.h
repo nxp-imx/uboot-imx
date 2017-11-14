@@ -269,6 +269,10 @@
 #define CONFIG_SYS_FSL_FSPI_AHB
 #endif
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "imx8qm_mek_android.h"
+#endif
+
 /* USB Config */
 #ifdef CONFIG_CMD_USB
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 2
