@@ -215,6 +215,11 @@ AvbABFlowResult avb_ab_flow(AvbABOps* ab_ops,
                             bool allow_verification_error,
                             AvbSlotVerifyData** out_data);
 
+AvbABFlowResult avb_ab_flow_fast(AvbABOps* ab_ops,
+                            const char* const* requested_partitions,
+                            bool allow_verification_error,
+                            AvbSlotVerifyData** out_data);
+
 /* Marks the slot with the given slot number as active. Returns
  * AVB_IO_RESULT_OK on success, error code otherwise.
  *
