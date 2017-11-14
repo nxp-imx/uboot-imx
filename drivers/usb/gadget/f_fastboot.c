@@ -1555,7 +1555,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	bool allow_fail = (lock_status == FASTBOOT_UNLOCK ? true : false);
 	avb_metric = get_timer(0);
 	/* if in lock state, do avb verify */
-	avb_result = avb_ab_flow(&fsl_avb_ab_ops, requested_partitions, allow_fail, &avb_out_data);
+	avb_result = avb_ab_flow_fast(&fsl_avb_ab_ops, requested_partitions, allow_fail, &avb_out_data);
 	/* get the duration of avb */
 	metrics.avb = get_timer(avb_metric);
 
