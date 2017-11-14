@@ -21,6 +21,8 @@
 #define CONFIG_DSPI_CS_SCK_DELAY 100
 #define CONFIG_DSPI_SCK_CS_DELAY 100
 
+#define CONFIG_BOARD_USE_RAMFS_IN_NFSBOOT
+
 /* we include this file here because it depends on the above definitions */
 #include <configs/s32v234evb_2016q4.h>
 
