@@ -45,6 +45,15 @@ config SECURE_BOOT
 	  This option enables the support for secure boot (HAB).
 	  See doc/README.mxc_hab for more details.
 
+config FSL_MFGPROT
+	bool "Support the 'mfgprot' command"
+	depends on SECURE_BOOT && ARCH_MX7
+	help
+	  This option enables the manufacturing protection command
+	  which can be used has a protection feature for Manufacturing
+	  process. With this tool is possible to authenticate the
+	  chip to the OEM's server.
+
 config DBG_MONITOR
 	bool "Enable the AXI debug monitor"
 	depends on ARCH_MX6 || ARCH_MX7

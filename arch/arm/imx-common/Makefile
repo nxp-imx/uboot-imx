@@ -33,6 +33,7 @@ endif
 ifeq ($(SOC),$(filter $(SOC),mx7))
 obj-y 	+= cpu.o
 obj-$(CONFIG_SYS_I2C_MXC) += i2c-mxv7.o
+obj-$(CONFIG_FSL_MFGPROT) += cmd_mfgprot.o
 endif
 ifeq ($(SOC),$(filter $(SOC),mx6 mx7))
 obj-y 	+= cache.o init.o
