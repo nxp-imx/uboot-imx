@@ -536,10 +536,11 @@ u32 imx_get_fecclk(void)
 }
 
 #ifdef CONFIG_SPL_BUILD
-void dram_pll_init(void)
+void dram_pll_init(enum sscg_pll_out_val pll_val)
 {
 	struct src *src = (struct src *)SRC_BASE_ADDR;
 	void __iomem *pll_control_reg = &ana_pll->dram_pll_cfg0;
+	void __iomem *pll_cfg_reg2 = &ana_pll->dram_pll_cfg2;
 	u32 pwdn_mask = 0, pll_clke = 0, bypass1 = 0, bypass2 = 0;
 	u32 val;
 	int ret;
@@ -555,6 +556,34 @@ void dram_pll_init(void)
 	/* Enable DDR1 and DDR2 domain */
 	writel(SRC_DDR1_ENABLE_MASK, &src->ddr1_rcr);
 	writel(SRC_DDR1_ENABLE_MASK, &src->ddr2_rcr);
+
+	/* Bypass */
+	setbits_le32(pll_control_reg, bypass1);
+	setbits_le32(pll_control_reg, bypass2);
+
+	switch (pll_val) {
+		case SSCG_PLL_OUT_400M:
+			val = readl(pll_cfg_reg2);
+			val &= ~(SSCG_PLL_OUTPUT_DIV_VAL_MASK | SSCG_PLL_FEEDBACK_DIV_F2_MASK);
+			val |= SSCG_PLL_OUTPUT_DIV_VAL(1);
+			val |= SSCG_PLL_FEEDBACK_DIV_F2_VAL(11);
+			writel(val, pll_cfg_reg2);
+			break;
+		case SSCG_PLL_OUT_600M:
+			val = readl(pll_cfg_reg2);
+			val &= ~(SSCG_PLL_OUTPUT_DIV_VAL_MASK | SSCG_PLL_FEEDBACK_DIV_F2_MASK);
+			val |= SSCG_PLL_OUTPUT_DIV_VAL(1);
+			val |= SSCG_PLL_FEEDBACK_DIV_F2_VAL(17);
+			writel(val, pll_cfg_reg2);
+			break;
+		case SSCG_PLL_OUT_800M:
+			val = readl(pll_cfg_reg2);
+			val &= ~(SSCG_PLL_OUTPUT_DIV_VAL_MASK | SSCG_PLL_FEEDBACK_DIV_F2_MASK);
+			val |= SSCG_PLL_OUTPUT_DIV_VAL(0);
+			val |= SSCG_PLL_FEEDBACK_DIV_F2_VAL(11);
+			writel(val, pll_cfg_reg2);
+			break;
+	}
 
 	/* Clear power down bit */
 	clrbits_le32(pll_control_reg, pwdn_mask);

@@ -163,7 +163,7 @@ void ddr_init(void)
 	reg32_write(0x303A00EC, 0x0000ffff); /* PGC_CPU_MAPPING */
 	reg32setbit(0x303A00F8, 5); /* PU_PGC_SW_PUP_REQ */
 
-	dram_pll_init();
+	dram_pll_init(SSCG_PLL_OUT_800M);
 
 	reg32_write(SRC_DDRC_RCR_ADDR, 0x8F000006);
 

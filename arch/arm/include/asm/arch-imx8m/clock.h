@@ -638,6 +638,13 @@ enum frac_pll_out_val {
 	FRAC_PLL_OUT_1600M,
 };
 
+enum sscg_pll_out_val {
+	SSCG_PLL_OUT_400M,
+	SSCG_PLL_OUT_600M,
+	SSCG_PLL_OUT_800M,
+};
+
+void dram_pll_init(enum sscg_pll_out_val pll_val);
 u32 imx_get_fecclk(void);
 u32 imx_get_uartclk(void);
 int clock_init(void);
