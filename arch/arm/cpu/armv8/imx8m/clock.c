@@ -475,13 +475,15 @@ void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq)
 	*reg = (0x4 << 24) | (0x7 << 16);
 }
 
-void dram_pll_init(void)
+void dram_pll_init(enum sscg_pll_out_val pll_val)
 {
 	unsigned long pll_control_reg = DRAM_PLL_CFG0;
+	unsigned long pll_cfg_reg2 = DRAM_PLL_CFG2;
 	u32 pwdn_mask = 0;
 	u32 pll_clke = 0;
 	u32 bypass1 = 0;
 	u32 bypass2 = 0;
+	u32 val;
 
 	#define SRC_DDR1_ENABLE_MASK (0x8F000000UL)
 	#define SRC_DDR2_ENABLE_MASK (0x8F000000UL)
@@ -498,6 +500,34 @@ void dram_pll_init(void)
 	/* Enable DDR1 and DDR2 domain */
 	writel(SRC_DDR1_ENABLE_MASK, SRC_BASE_ADDR + 0x1000);
 	writel(SRC_DDR1_ENABLE_MASK, SRC_BASE_ADDR + 0x1004);
+
+	/* Bypass */
+	setbits_le32(pll_control_reg, bypass1);
+	setbits_le32(pll_control_reg, bypass2);
+
+	switch (pll_val) {
+		case SSCG_PLL_OUT_400M:
+			val = readl(pll_cfg_reg2);
+			val &= ~(SSCG_PLL_OUTPUT_DIV_VAL_MASK | SSCG_PLL_FEEDBACK_DIV_F2_MASK);
+			val |= SSCG_PLL_OUTPUT_DIV_VAL(1);
+			val |= SSCG_PLL_FEEDBACK_DIV_F2_VAL(11);
+			writel(val, pll_cfg_reg2);
+			break;
+		case SSCG_PLL_OUT_600M:
+			val = readl(pll_cfg_reg2);
+			val &= ~(SSCG_PLL_OUTPUT_DIV_VAL_MASK | SSCG_PLL_FEEDBACK_DIV_F2_MASK);
+			val |= SSCG_PLL_OUTPUT_DIV_VAL(1);
+			val |= SSCG_PLL_FEEDBACK_DIV_F2_VAL(17);
+			writel(val, pll_cfg_reg2);
+			break;
+		case SSCG_PLL_OUT_800M:
+			val = readl(pll_cfg_reg2);
+			val &= ~(SSCG_PLL_OUTPUT_DIV_VAL_MASK | SSCG_PLL_FEEDBACK_DIV_F2_MASK);
+			val |= SSCG_PLL_OUTPUT_DIV_VAL(0);
+			val |= SSCG_PLL_FEEDBACK_DIV_F2_VAL(11);
+			writel(val, pll_cfg_reg2);
+			break;
+	}
 
 	/* Clear power down bit */
 	clrbits_le32(pll_control_reg, pwdn_mask);
