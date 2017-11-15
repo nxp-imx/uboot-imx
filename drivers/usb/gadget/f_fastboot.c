@@ -2603,7 +2603,7 @@ U_BOOT_CMD(
 	"lock_status",
 	"lock_status");
 
-static int do_fastboot_unlock(bool force)
+static FbLockState do_fastboot_unlock(bool force)
 {
 	int status;
 	if (force)
@@ -2612,11 +2612,11 @@ static int do_fastboot_unlock(bool force)
 		printf("It is able to unlock device. %d\n",fastboot_lock_enable());
 		if (fastboot_get_lock_stat() == FASTBOOT_UNLOCK) {
 			printf("The device is already unlocked\n");
-			return 1;
+			return FASTBOOT_UNLOCK;
 		}
 		status = fastboot_set_lock_stat(FASTBOOT_UNLOCK);
 		if (status < 0)
-			return status;
+			return FASTBOOT_LOCK_ERROR;
 
 		printf("Start /data wipe process....\n");
 		fastboot_wipe_data_partition();
@@ -2629,28 +2629,28 @@ static int do_fastboot_unlock(bool force)
 #endif
 	} else {
 		printf("It is not able to unlock device.");
-		return -1;
+		return FASTBOOT_LOCK_ERROR;
 	}
 
-	return status;
+	return FASTBOOT_UNLOCK;
 }
 
-static int do_fastboot_lock(void)
+static FbLockState do_fastboot_lock(void)
 {
 	int status;
 	if (fastboot_get_lock_stat() == FASTBOOT_LOCK) {
 		printf("The device is already locked\n");
-		return 1;
+		return FASTBOOT_LOCK;
 	}
 	status = fastboot_set_lock_stat(FASTBOOT_LOCK);
 	if (status < 0)
-		return status;
+		return FASTBOOT_LOCK_ERROR;
 
 	printf("Start /data wipe process....\n");
 	fastboot_wipe_data_partition();
 	printf("Wipe /data completed.\n");
 
-	return status;
+	return FASTBOOT_LOCK;
 }
 
 static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
@@ -2667,14 +2667,14 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 	} else if (!strncmp(cmd + len - 6, "unlock", 6)) {
 		printf("flashing unlock.\n");
 		status = do_fastboot_unlock(false);
-		if (status >= 0)
+		if (status != FASTBOOT_LOCK_ERROR)
 			strcpy(response, "OKAY");
 		else
 			strcpy(response, "FAIL unlock device failed.");
 	} else if (!strncmp(cmd + len - 4, "lock", 4)) {
 		printf("flashing lock.\n");
 		status = do_fastboot_lock();
-		if (status >= 0)
+		if (status != FASTBOOT_LOCK_ERROR)
 			strcpy(response, "OKAY");
 		else
 			strcpy(response, "FAIL lock device failed.");
