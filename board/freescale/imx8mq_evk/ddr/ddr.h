@@ -12,7 +12,6 @@ enum fw_type {
 void ddr_init(void);
 void ddr_load_train_code(enum fw_type type);
 void lpddr4_800M_cfg_phy(void);
-extern void dram_pll_init(void);
 
 static inline void reg32_write(unsigned long addr, u32 val)
 {

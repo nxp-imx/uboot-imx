@@ -785,7 +785,7 @@ struct clk_root_map {
 					 SSCG_PLL_FEEDBACK_DIV_F2_MASK)
 #define SSCG_PLL_OUTPUT_DIV_VAL_MASK	(0x3f << 1)
 #define SSCG_PLL_OUTPUT_DIV_VAL_SHIFT	(1)
-#define SSCG_PLL_OUTPUT_DIV_VAL(n)	((n) << 1) & \
+#define SSCG_PLL_OUTPUT_DIV_VAL(n)	(((n) << 1) & \
 					 SSCG_PLL_OUTPUT_DIV_VAL_MASK)
 #define SSCG_PLL_FILTER_RANGE_MASK	(0x1)
 
@@ -838,6 +838,13 @@ enum enet_freq {
 	ENET_125MHz,
 };
 
+enum sscg_pll_out_val {
+	SSCG_PLL_OUT_400M,
+	SSCG_PLL_OUT_600M,
+	SSCG_PLL_OUT_800M,
+};
+
+void dram_pll_init(enum sscg_pll_out_val pll_val);
 u32 imx_get_fecclk(void);
 u32 imx_get_uartclk(void);
 int clock_init(void);
