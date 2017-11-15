@@ -625,6 +625,14 @@ int clock_init()
 	clock_set_target_val(QSPI_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(7));
 	clock_enable(CCGR_QSPI, 1);
 
+	/*
+	 * set rawnand root
+	 * sys pll1 400M
+	 */
+	clock_enable(CCGR_RAWNAND, 0);
+	clock_set_target_val(NAND_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(3) | CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV4)); /* 100M */
+	clock_enable(CCGR_RAWNAND, 1);
+
 	if (!is_usb_boot()) {
 		clock_enable(CCGR_USB_CTRL1, 0);
 		clock_enable(CCGR_USB_CTRL2, 0);
