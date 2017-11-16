@@ -445,9 +445,9 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 
 	/* Workaround for ESDHC errata ENGcm03648 */
 	if (!data && (cmd->resp_type & MMC_RSP_BUSY)) {
-		int timeout = 6000;
+		int timeout = 12000;
 
-		/* Poll on DATA0 line for cmd with busy signal for 600 ms */
+		/* Poll on DATA0 line for cmd with busy signal for 1200 ms */
 		while (timeout > 0 && !(esdhc_read32(&regs->prsstat) &
 					PRSSTAT_DAT0)) {
 			udelay(100);
