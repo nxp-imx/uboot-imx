@@ -473,6 +473,37 @@ add_status:
 		}
 	}
 
+	/* Disable the CPU idle for A0 chip since the HW does not support it */
+	if (is_soc_rev(CHIP_REV_1_0)) {
+		const char *nodes_path[] = {
+			"/cpus/cpu@0",
+			"/cpus/cpu@1",
+			"/cpus/cpu@2",
+			"/cpus/cpu@3",
+		};
+
+		int i = 0;
+		int rc;
+		int nodeoff;
+
+		for (i = 0; i < ARRAY_SIZE(nodes_path); i++) {
+			nodeoff = fdt_path_offset(blob, nodes_path[i]);
+			if (nodeoff < 0)
+				continue; /* Not found, skip it */
+
+			printf("Found %s node\n", nodes_path[i]);
+
+			rc = fdt_delprop(blob, nodeoff, "cpu-idle-states");
+			if (rc) {
+				printf("Unable to update property %s:%s, err=%s\n",
+					nodes_path[i], "status", fdt_strerror(rc));
+			} else {
+				printf("Remove %s:%s\n",
+					nodes_path[i], "cpu-idle-states");
+			}
+		}
+	}
+
 	return ft_add_optee_node(blob, bd);
 }
 #endif
