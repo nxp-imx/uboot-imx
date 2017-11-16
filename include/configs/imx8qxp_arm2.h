@@ -114,6 +114,15 @@
 	"bootcmd_mfg=run mfgtool_args;booti ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 
 /* Initial environment variables */
+#ifdef CONFIG_NAND_BOOT
+#define CONFIG_EXTRA_ENV_SETTINGS		\
+	CONFIG_MFG_ENV_SETTINGS \
+	"bootargs=console=ttyLP0,115200 ubi.mtd=5 "  \
+		"root=ubi0:rootfs rootfstype=ubifs "		     \
+		"mtdparts=gpmi-nand:128m(boot),32m(kernel),16m(dtb),8m(misc),-(rootfs)\0"\
+	"console=ttyLP0,115200 earlycon=lpuart32,0x5a060000,115200\0" \
+	"fdt_addr=0x83000000\0"
+#else
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
 	M4_BOOT_ENV \
@@ -170,6 +179,7 @@
 		"else " \
 			"booti; " \
 		"fi;\0"
+#endif
 
 #ifdef CONFIG_NAND_BOOT
 #define CONFIG_BOOTCOMMAND \
