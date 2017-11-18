@@ -671,6 +671,18 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 				}
 			}
 #endif
+
+			/* Report boot failure if DCD pointer is found in IVT */
+			unsigned char *dcd_ptr = (unsigned char *)(ddr_start + ivt_offset + 0xC);
+
+			do {
+				if (*dcd_ptr) {
+					puts("Error: DCD pointer must be 0\n");
+					return result;
+				}
+				dcd_ptr++;
+			} while (dcd_ptr < (unsigned char *)(ddr_start + ivt_offset + 0x10));
+
 			load_addr = (ulong)hab_rvt_authenticate_image(
 					HAB_CID_UBOOT,
 					ivt_offset, (void **)&start,
