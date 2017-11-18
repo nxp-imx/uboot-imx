@@ -90,6 +90,23 @@ struct imx_sec_config_fuse_t {
 	int word;
 };
 
+struct __packed hab_hdr {
+	uint8_t tag;              /* Tag field */
+	uint8_t len[2];           /* Length field in bytes (big-endian) */
+	uint8_t par;              /* Parameters field */
+};
+
+struct hab_ivt {
+	struct hab_hdr hdr;
+	uint32_t entry;
+	uint32_t reserved1;
+	uint32_t dcd;
+	uint32_t boot_data;
+	uint32_t self;
+	uint32_t csf;
+	uint32_t reserved2;
+};
+
 #if defined(CONFIG_SECURE_BOOT)
 extern struct imx_sec_config_fuse_t const imx_sec_config_fuse;
 #endif
@@ -149,6 +166,13 @@ typedef void hapi_clock_init_t(void);
 
 #define HAB_CID_ROM 0 /**< ROM Caller ID */
 #define HAB_CID_UBOOT 1 /**< UBOOT Caller ID*/
+
+#define HAB_CMD_HDR       0xD4  /* CSF Header */
+#define HAB_CMD_WRT_DAT   0xCC  /* Write Data */
+
+#define HAB_HDR_LEN(hdr)				\
+		((size_t)(((const struct hab_hdr *)&(hdr))->len[0] << 8) \
+		 + (size_t)((const struct hab_hdr *)&(hdr))->len[1])
 
 /* ----------- end of HAB API updates ------------*/
 

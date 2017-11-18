@@ -506,6 +506,92 @@ static bool is_hab_enabled(void)
 	return (reg & IS_HAB_ENABLED_BIT) == IS_HAB_ENABLED_BIT;
 }
 
+/*
+ * Check whether addr lies between start and end and is within
+ * the length of the image
+ */
+static inline int chk_bounds(const uint8_t *addr, size_t bytes,
+				const uint8_t *start, const uint8_t *end)
+{
+	return (addr && (addr >= start) && (addr <= end) &&
+		((size_t)((end + 1) - addr) >= bytes))
+		? 1 : 0;
+}
+
+/* Get Length of each command in CSF */
+static inline int get_csf_cmd_hdr_len(const uint8_t *csf_hdr)
+{
+	if (*csf_hdr == HAB_CMD_HDR)
+		return sizeof(struct hab_hdr);
+
+	return HAB_HDR_LEN(*(const struct hab_hdr *)csf_hdr);
+}
+
+/*
+ * Check if CSF has Write data command
+ *
+ * If WRITE DATA command exists, then return failure
+ */
+static int csf_is_valid(int ivt_offset, ulong start_addr, size_t bytes)
+{
+	size_t offset = 0;
+	size_t cmd_hdr_len = 0;
+	size_t csf_hdr_len = 0;
+
+	const struct hab_ivt *ivt_initial = NULL;
+	const uint8_t *csf_hdr = NULL;
+	const uint8_t *end = NULL;
+	const uint8_t *start = (const uint8_t *)start_addr;
+
+	ivt_initial = (const struct hab_ivt *)(start + ivt_offset);
+
+	if (bytes != 0)
+		end = start + bytes - 1;
+	else
+		end = start;
+
+	/* Check that the CSF lies within the image bounds */
+	if ((start == 0) || (ivt_initial == NULL) ||
+	    (ivt_initial->csf == 0) ||
+	    !chk_bounds((const uint8_t *)ivt_initial->csf,
+			HAB_HDR_LEN(*(const struct hab_hdr *)ivt_initial->csf),
+			start, end)) {
+		puts("Error - CSF lies outside the image bounds\n");
+		return 0;
+	}
+
+	csf_hdr = (const uint8_t *)ivt_initial->csf;
+
+	if (*csf_hdr == HAB_CMD_HDR) {
+		csf_hdr_len = HAB_HDR_LEN(*(const struct hab_hdr *)csf_hdr);
+	} else {
+		puts("Error - CSF header command not found\n");
+		return 0;
+	}
+
+	/* Check for Write data command in CSF */
+	do {
+		switch (csf_hdr[offset]) {
+		case (HAB_CMD_WRT_DAT):
+			puts("Error - WRITE Data command found\n");
+			return 0;
+		default:
+			break;
+		}
+
+		cmd_hdr_len = get_csf_cmd_hdr_len(&csf_hdr[offset]);
+		if (!cmd_hdr_len) {
+			puts("Error - Invalid command length\n");
+			return 0;
+		}
+		offset += cmd_hdr_len;
+
+	} while (offset < csf_hdr_len);
+
+	/* Write Data command not found */
+	return 1;
+}
+
 uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 {
 	ulong load_addr = 0;
@@ -527,6 +613,12 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 
 			start = ddr_start;
 			bytes = ivt_offset + IVT_SIZE + CSF_PAD_SIZE;
+
+			puts("Check CSF for Write Data command before ");
+			puts("authenticating image\n");
+			if (!csf_is_valid(ivt_offset, start, bytes))
+				return result;
+
 #ifdef DEBUG
 			printf("\nivt_offset = 0x%x, ivt addr = 0x%x\n",
 			       ivt_offset, ddr_start + ivt_offset);
