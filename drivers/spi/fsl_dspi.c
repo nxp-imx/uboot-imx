@@ -23,6 +23,8 @@
 #include <asm/arch/clock.h>
 #endif
 #include <fsl_dspi.h>
+#include <linux/math64.h>
+#include <linux/time.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -58,6 +60,14 @@ DECLARE_GLOBAL_DATA_PTR;
 					DSPI_CTAR_CSSCK(15) | \
 					DSPI_CTAR_ASC(15) | \
 					DSPI_CTAR_DT(15))
+
+#ifndef CONFIG_DSPI_CS_SCK_DELAY
+#define CONFIG_DSPI_CS_SCK_DELAY 0
+#endif
+
+#ifndef CONFIG_DSPI_SCK_CS_DELAY
+#define CONFIG_DSPI_SCK_CS_DELAY 0
+#endif
 
 /**
  * struct fsl_dspi_platdata - platform data for Freescale DSPI
@@ -105,6 +115,40 @@ struct fsl_dspi {
 	struct fsl_dspi_priv priv;
 };
 #endif
+
+static void ns_delay_scale(char *psc, char *sc, int delay_ns,
+			   unsigned long clkrate)
+{
+	int pscale_tbl[4] = {1, 3, 5, 7};
+	int scale_needed, scale, minscale = INT_MAX;
+	int i, j;
+	u32 remainder;
+
+	scale_needed = div_u64_rem((u64)delay_ns * clkrate, NSEC_PER_SEC,
+				   &remainder);
+	if (remainder)
+		scale_needed++;
+
+	for (i = 0; i < ARRAY_SIZE(pscale_tbl); i++)
+		for (j = 0; j <= DSPI_CTAR_SCALE_BITS; j++) {
+			scale = pscale_tbl[i] * (2 << j);
+			if (scale >= scale_needed) {
+				if (scale < minscale) {
+					minscale = scale;
+					*psc = i;
+					*sc = j;
+				}
+				break;
+			}
+		}
+
+	if (minscale == INT_MAX) {
+		debug("Cannot find correct scale values for %dns delay at clkrate %ld, using max prescaler value",
+		      delay_ns, clkrate);
+		*psc = ARRAY_SIZE(pscale_tbl) - 1;
+		*sc = DSPI_CTAR_SCALE_BITS;
+	}
+}
 
 __weak void cpu_dspi_port_conf(void)
 {
@@ -181,6 +225,8 @@ static int fsl_dspi_cfg_ctar_mode(struct fsl_dspi_priv *priv,
 		uint cs, uint mode)
 {
 	uint bus_setup;
+	char pcssck = 0, cssck = 0;
+	char pasc = 0, asc = 0;
 
 	bus_setup = dspi_read32(priv->flags, &priv->regs->ctar[0]);
 
@@ -198,6 +244,15 @@ static int fsl_dspi_cfg_ctar_mode(struct fsl_dspi_priv *priv,
 		bus_setup |= DSPI_CTAR_TRSZ(7);
 	if (mode & SPI_FMSZ_16)
 		bus_setup |= DSPI_CTAR_TRSZ(15);
+
+	ns_delay_scale(&pcssck, &cssck, CONFIG_DSPI_CS_SCK_DELAY,
+		       priv->bus_clk);
+	ns_delay_scale(&pasc, &asc, CONFIG_DSPI_SCK_CS_DELAY, priv->bus_clk);
+
+	bus_setup |= DSPI_CTAR_PCSSCK(pcssck);
+	bus_setup |= DSPI_CTAR_PASC(pasc);
+	bus_setup |= DSPI_CTAR_CSSCK(cssck);
+	bus_setup |= DSPI_CTAR_ASC(asc);
 
 	dspi_write32(priv->flags, &priv->regs->ctar[0], bus_setup);
 

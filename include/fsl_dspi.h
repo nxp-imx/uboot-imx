@@ -95,6 +95,8 @@ struct dspi {
 #define DSPI_CTAR_DT(x)			(((x) & 0x0F) << 4)
 #define DSPI_CTAR_BR(x)			((x) & 0x0F)
 
+#define DSPI_CTAR_SCALE_BITS		0xf
+
 /* Status */
 #define DSPI_SR_TCF			0x80000000
 #define DSPI_SR_TXRXS			0x40000000
