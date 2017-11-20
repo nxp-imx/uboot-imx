@@ -14,6 +14,7 @@
 #include <asm/armv8/mmu.h>
 #include <errno.h>
 #include <fdt_support.h>
+#include <fsl_wdog.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -507,3 +508,17 @@ add_status:
 	return ft_add_optee_node(blob, bd);
 }
 #endif
+
+void reset_cpu(ulong addr)
+{
+	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
+
+	/* Clear WDA to trigger WDOG_B immediately */
+	writew((WCR_WDE | WCR_SRS), &wdog->wcr);
+
+	while (1) {
+		/*
+		 * spin for .5 seconds before reset
+		 */
+	}
+}
