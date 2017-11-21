@@ -188,7 +188,7 @@
 		   "else " \
 			   "if run loadimage; then " \
 				   "run mmcboot; " \
-			   "else booti ${loadaddr} - ${fdt_addr}; " \
+			   "else run netboot; " \
 			   "fi; " \
 		   "fi; " \
 	   "else booti ${loadaddr} - ${fdt_addr}; fi"
