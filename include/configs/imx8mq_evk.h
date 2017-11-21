@@ -177,7 +177,7 @@
 	   "else booti ${loadaddr} - ${fdt_addr}; fi"
 
 /* Link Definitions */
-#define CONFIG_LOADADDR			0x40280000
+#define CONFIG_LOADADDR			0x40480000
 #define CONFIG_SYS_TEXT_BASE		0x40200000
 
 #define CONFIG_SYS_LOAD_ADDR           CONFIG_LOADADDR
