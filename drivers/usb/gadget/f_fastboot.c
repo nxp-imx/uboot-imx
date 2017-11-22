@@ -121,12 +121,15 @@ boot_metric metrics = {
 };
 
 #ifdef CONFIG_USB_GADGET
+#define MAX_REQ_NUM 100
+
 struct f_fastboot {
 	struct usb_function usb_function;
 
 	/* IN/OUT EP's and corresponding requests */
 	struct usb_ep *in_ep, *out_ep;
-	struct usb_request *in_req, *out_req;
+	struct usb_request *in_req, *in_req_more[MAX_REQ_NUM], *out_req;
+	int next_req;
 };
 
 static inline struct f_fastboot *func_to_fastboot(struct usb_function *f)
@@ -1957,6 +1960,7 @@ static void fastboot_unbind(struct usb_configuration *c, struct usb_function *f)
 
 static void fastboot_disable(struct usb_function *f)
 {
+	int i = 0;
 	struct f_fastboot *f_fb = func_to_fastboot(f);
 
 	usb_ep_disable(f_fb->out_ep);
@@ -1971,6 +1975,11 @@ static void fastboot_disable(struct usb_function *f)
 		free(f_fb->in_req->buf);
 		usb_ep_free_request(f_fb->in_ep, f_fb->in_req);
 		f_fb->in_req = NULL;
+	}
+	for (i = 0; i < MAX_REQ_NUM; i++) {
+		if (f_fb->in_req_more[i]) {
+			usb_ep_free_request(f_fb->in_ep, f_fb->in_req_more[i]);
+		}
 	}
 }
 
@@ -1996,7 +2005,7 @@ static struct usb_request *fastboot_start_ep(struct usb_ep *ep)
 static int fastboot_set_alt(struct usb_function *f,
 			    unsigned interface, unsigned alt)
 {
-	int ret;
+	int i, ret;
 	struct usb_composite_dev *cdev = f->config->cdev;
 	struct usb_gadget *gadget = cdev->gadget;
 	struct f_fastboot *f_fb = func_to_fastboot(f);
@@ -2034,6 +2043,16 @@ static int fastboot_set_alt(struct usb_function *f,
 		goto err;
 	}
 	f_fb->in_req->complete = fastboot_complete;
+
+	for (i = 0; i < MAX_REQ_NUM; i++) {
+		f_fb->in_req_more[i] = fastboot_start_ep(f_fb->in_ep);
+		if (!f_fb->in_req_more[i]) {
+			puts("failed alloc req in\n");
+			ret = -EINVAL;
+			goto err;
+		}
+		f_fb->in_req_more[i]->complete = fastboot_complete;
+	}
 
 	ret = usb_ep_queue(f_fb->out_ep, f_fb->out_req, 0);
 	if (ret)
@@ -2078,18 +2097,39 @@ static int fastboot_add(struct usb_configuration *c)
 }
 DECLARE_GADGET_BIND_CALLBACK(usb_dnl_fastboot, fastboot_add);
 
+static int fastboot_tx_write_more(const char *buffer)
+{
+	int next_req = fastboot_func->next_req;
+	struct usb_request *in_req = fastboot_func->in_req_more[next_req];
+	unsigned int buffer_size = strlen(buffer);
+	int ret = 0;
+
+	memcpy(in_req->buf, buffer, buffer_size);
+	in_req->length = buffer_size;
+
+	ret = usb_ep_queue(fastboot_func->in_ep, in_req, 0);
+	if (ret)
+		printf("Error %d on queue\n", ret);
+
+	if (in_req == fastboot_func->in_req_more[MAX_REQ_NUM-1]) {
+		fastboot_func->next_req = 0;
+		return -EINVAL;
+	} else {
+		fastboot_func->next_req++;
+	}
+
+	return ret;
+}
+
 static int fastboot_tx_write(const char *buffer, unsigned int buffer_size)
 {
 	struct usb_request *in_req = fastboot_func->in_req;
 	int ret;
 
-	/* TODO: Investigate why this is necessary */
-	udelay(8500);
 
 	memcpy(in_req->buf, buffer, buffer_size);
 	in_req->length = buffer_size;
 
-	usb_gadget_handle_interrupts(0);
 	usb_ep_dequeue(fastboot_func->in_ep, in_req);
 
 	ret = usb_ep_queue(fastboot_func->in_ep, in_req, 0);
@@ -2365,11 +2405,12 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 
 		memset(response, '\0', FASTBOOT_RESPONSE_LEN - 1);
 
+
 		/* get common variables */
 		for (n = 0; n < FASTBOOT_COMMON_VAR_NUM; n++) {
 			snprintf(response, sizeof(response), "INFO%s:", fastboot_common_var[n]);
 			get_single_var(fastboot_common_var[n], response);
-			fastboot_tx_write_str(response);
+			fastboot_tx_write_more(response);
 		}
 
 		/* get partition type */
@@ -2377,14 +2418,14 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 			snprintf(response, sizeof(response), "INFOpartition-type:%s:", g_ptable[n].name);
 			snprintf(var_name, sizeof(var_name), "partition-type:%s", g_ptable[n].name);
 			get_single_var(var_name, response);
-			fastboot_tx_write_str(response);
+			fastboot_tx_write_more(response);
 		}
 		/* get partition size */
 		for (n = 0; n < g_pcount; n++) {
 			snprintf(response, sizeof(response), "INFOpartition-size:%s:", g_ptable[n].name);
 			snprintf(var_name, sizeof(var_name), "partition-size:%s", g_ptable[n].name);
 			get_single_var(var_name,response);
-			fastboot_tx_write_str(response);
+			fastboot_tx_write_more(response);
 		}
 		/* slot related variables */
 		if (is_slot()) {
@@ -2394,41 +2435,41 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 				snprintf(response, sizeof(response), "INFOhas-slot:%s:", partition_base_name[n]);
 				snprintf(var_name, sizeof(var_name), "has-slot:%s", partition_base_name[n]);
 				get_single_var(var_name,response);
-				fastboot_tx_write_str(response);
+				fastboot_tx_write_more(response);
 			}
 			/* get current slot */
 			strncpy(response, "INFOcurrent-slot:", sizeof(response));
 			get_single_var("current-slot", response);
-			fastboot_tx_write_str(response);
+			fastboot_tx_write_more(response);
 			/* get slot count */
 			strncpy(response, "INFOslot-count:", sizeof(response));
 			get_single_var("slot-count", response);
-			fastboot_tx_write_str(response);
+			fastboot_tx_write_more(response);
 			/* get slot-successful variable */
 			for (n = 0; n < 2; n++) {
 				snprintf(response, sizeof(response), "INFOslot-successful:%s:", slot_suffix[n]);
 				snprintf(var_name, sizeof(var_name), "slot-successful:%s", slot_suffix[n]);
 				get_single_var(var_name, response);
-				fastboot_tx_write_str(response);
+				fastboot_tx_write_more(response);
 			}
 			/*get slot-unbootable variable*/
 			for (n = 0; n < 2; n++) {
 				snprintf(response, sizeof(response), "INFOslot-unbootable:%s:", slot_suffix[n]);
 				snprintf(var_name, sizeof(var_name), "slot-unbootable:%s", slot_suffix[n]);
 				get_single_var(var_name, response);
-				fastboot_tx_write_str(response);
+				fastboot_tx_write_more(response);
 			}
 			/*get slot-retry-count variable*/
 			for (n = 0; n < 2; n++) {
 				snprintf(response, sizeof(response), "INFOslot-retry-count:%s:", slot_suffix[n]);
 				snprintf(var_name, sizeof(var_name), "slot-retry-count:%s", slot_suffix[n]);
 				get_single_var(var_name, response);
-				fastboot_tx_write_str(response);
+				fastboot_tx_write_more(response);
 			}
 		}
 
 		strncpy(response, "OKAYDone!", 10);
-		fastboot_tx_write_str(response);
+		fastboot_tx_write_more(response);
 
 		return;
 	} else {
@@ -2921,6 +2962,8 @@ static void rx_handler_command(struct usb_ep *ep, struct usb_request *req)
 	char *cmdbuf = req->buf;
 	void (*func_cb)(struct usb_ep *ep, struct usb_request *req) = NULL;
 	int i;
+	/*init the next_req if need muti USB request*/
+	fastboot_func->next_req = 0;
 
 	if (req->status != 0 || req->length == 0)
 		return;
