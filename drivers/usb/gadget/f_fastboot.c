@@ -2635,12 +2635,12 @@ static void cb_upload(struct usb_ep *ep, struct usb_request *req)
 
 	printf("Will upload %d bytes.\n", download_bytes);
 	snprintf(response, FASTBOOT_RESPONSE_LEN, "DATA%08x", download_bytes);
-	fastboot_tx_write_str(response);
+	fastboot_tx_write_more(response);
 
 	fastboot_tx_write((const char *)(interface.transfer_buffer), download_bytes);
 
 	snprintf(response,FASTBOOT_RESPONSE_LEN, "OKAY");
-	fastboot_tx_write_str(response);
+	fastboot_tx_write_more(response);
 }
 static void cb_download(struct usb_ep *ep, struct usb_request *req)
 {
@@ -2811,10 +2811,10 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 	} else if (!strncmp(cmd + len - 18, "get_unlock_ability", 18)) {
 		result = fastboot_lock_enable();
 		if (result == FASTBOOT_UL_ENABLE) {
-			fastboot_tx_write_str("INFO1");
+			fastboot_tx_write_more("INFO1");
 			strcpy(response, "OKAY");
 		} else if (result == FASTBOOT_UL_DISABLE) {
-			fastboot_tx_write_str("INFO0");
+			fastboot_tx_write_more("INFO0");
 			strcpy(response, "OKAY");
 		} else {
 			printf("flashing get_unlock_ability fail!\n");
@@ -2824,7 +2824,7 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 		printf("Unknown flashing command:%s\n", cmd);
 		strcpy(response, "FAIL command not defined");
 	}
-	fastboot_tx_write_str(response);
+	fastboot_tx_write_more(response);
 }
 
 #endif
