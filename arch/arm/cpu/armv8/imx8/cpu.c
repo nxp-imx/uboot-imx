@@ -697,7 +697,7 @@ static void acquire_buildinfo(void)
 	/* Set all to env */
 	set_buildinfo_to_env(sc_commit, mkimage_commit, (char *)&atf_commit);
 
-	printf("\n BuildInfo: \n  - SCFW %x, IMX-MKIMAGE %s, ATF %s\n  - %s \n\n", sc_commit, mkimage_commit, (char *)&atf_commit, U_BOOT_VERSION);
+	printf("\n BuildInfo: \n  - SCFW %08x, IMX-MKIMAGE %s, ATF %s\n  - %s \n\n", sc_commit, mkimage_commit, (char *)&atf_commit, U_BOOT_VERSION);
 }
 
 #if defined(CONFIG_ARCH_MISC_INIT)
