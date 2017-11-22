@@ -443,6 +443,10 @@ int ft_system_setup(void *blob, bd_t *bd)
 		const char *nodes_path[] = {
 			"/dcss@32e00000",
 			"/hdmi@32c00000",
+			"/hdmi_cec@32c33800",
+			"/hdmi_drm@32c00000",
+			"/display-subsystem",
+			"/sound-hdmi"
 		};
 
 		int i = 0;
