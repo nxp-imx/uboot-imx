@@ -122,8 +122,9 @@ DECLARE_GLOBAL_DATA_PTR;
  * |            |
  * +------------+ + CSF_PAD_SIZE
  */
-
+#ifdef CONFIG_ARM64
 static volatile gd_t *gd_save;
+#endif
 
 static bool is_hab_enabled(void);
 
