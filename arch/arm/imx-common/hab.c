@@ -554,14 +554,14 @@ static int csf_is_valid(int ivt_offset, ulong start_addr, size_t bytes)
 	/* Check that the CSF lies within the image bounds */
 	if ((start == 0) || (ivt_initial == NULL) ||
 	    (ivt_initial->csf == 0) ||
-	    !chk_bounds((const uint8_t *)ivt_initial->csf,
-			HAB_HDR_LEN(*(const struct hab_hdr *)ivt_initial->csf),
+	    !chk_bounds((const uint8_t *)(ulong)ivt_initial->csf,
+			HAB_HDR_LEN(*(const struct hab_hdr *)(ulong)ivt_initial->csf),
 			start, end)) {
 		puts("Error - CSF lies outside the image bounds\n");
 		return 0;
 	}
 
-	csf_hdr = (const uint8_t *)ivt_initial->csf;
+	csf_hdr = (const uint8_t *)(ulong)ivt_initial->csf;
 
 	if (*csf_hdr == HAB_CMD_HDR) {
 		csf_hdr_len = HAB_HDR_LEN(*(const struct hab_hdr *)csf_hdr);
