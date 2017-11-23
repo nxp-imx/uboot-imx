@@ -624,6 +624,7 @@ int power_init_board(void)
 {
 	struct udevice *dev;
 	int ret, dev_id, rev_id;
+	u32 sw3mode;
 
 	ret = pmic_get("pfuze3000", &dev);
 	if (ret == -ENODEV)
@@ -636,6 +637,12 @@ int power_init_board(void)
 	printf("PMIC: PFUZE3000 DEV_ID=0x%x REV_ID=0x%x\n", dev_id, rev_id);
 
 	pmic_clrsetbits(dev, PFUZE3000_LDOGCTL, 0, 1);
+
+	/* change sw3 mode to avoid DDR power off */
+	sw3mode = pmic_reg_read(dev, PFUZE3000_SW3MODE);
+	ret = pmic_reg_write(dev, PFUZE3000_SW3MODE, sw3mode | 0x20);
+	if (ret < 0)
+		printf("PMIC: PFUZE3000 change sw3 mode failed\n");
 
 	return 0;
 }
