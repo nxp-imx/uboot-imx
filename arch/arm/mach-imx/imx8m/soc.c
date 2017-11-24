@@ -384,6 +384,32 @@ add_status:
 			}
 		}
 
+		const char *usb_dwc3_path = "/usb@38100000/dwc3";
+		nodeoff = fdt_path_offset(blob, usb_dwc3_path);
+		if (nodeoff >= 0) {
+			const char *speed = "high-speed";
+			printf("Found %s node\n", usb_dwc3_path);
+
+usb_modify_speed:
+
+			rc = fdt_setprop(blob, nodeoff, "maximum-speed", speed, strlen(speed) + 1);
+			if (rc) {
+				if (rc == -FDT_ERR_NOSPACE) {
+					rc = fdt_increase_size(blob, 512);
+					if (!rc)
+						goto usb_modify_speed;
+				}
+				printf("Unable to set property %s:%s, err=%s\n",
+					usb_dwc3_path, "maximum-speed", fdt_strerror(rc));
+			} else {
+				printf("Modify %s:%s = %s\n",
+					usb_dwc3_path, "maximum-speed", speed);
+			}
+		}else {
+			printf("Can't found %s node\n", usb_dwc3_path);
+		}
+	}
+
 	/* Disable the CPU idle for A0 chip since the HW does not support it */
 	if (is_soc_rev(CHIP_REV_1_0)) {
 		static const char * const nodes_path[] = {
