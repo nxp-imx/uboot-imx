@@ -623,7 +623,7 @@ enum boot_device get_boot_device(void)
 		boot_dev = NAND_BOOT;
 		break;
 	case SC_R_FSPI_0:
-		boot_dev = QSPI_BOOT;
+		boot_dev = FLEXSPI_BOOT;
 		break;
 	case SC_R_SATA_0:
 		boot_dev = SATA_BOOT;
