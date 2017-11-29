@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
  * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
