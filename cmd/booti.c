@@ -42,13 +42,23 @@ static int booti_setup(bootm_headers_t *images)
 		puts("Bad Linux ARM64 Image magic!\n");
 		return 1;
 	}
-	
+
 	if (ih->image_size == 0) {
 		puts("Image lacks image_size field, assuming 16MiB\n");
 		image_size = 16 << 20;
 	} else {
 		image_size = le64_to_cpu(ih->image_size);
 	}
+
+#ifdef CONFIG_SECURE_BOOT
+	extern uint32_t authenticate_image(
+			uint32_t ddr_start, uint32_t image_size);
+	if (authenticate_image(images->ep, image_size) == 0) {
+		printf("Authenticate Image Fail, Please check\n");
+		return 1;
+	}
+
+#endif
 
 	/*
 	 * If we are not at the correct run-time location, set the new
