@@ -14,6 +14,8 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/hab.h>
+#include <imx_sip.h>
+#include <linux/arm-smccc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -79,6 +81,18 @@ enum hab_status hab_rvt_report_event(enum hab_status status, uint32_t index,
 	hab_rvt_report_event_t *hab_rvt_report_event_func;
 	hab_rvt_report_event_func =  (hab_rvt_report_event_t *)HAB_RVT_REPORT_EVENT;
 
+#if defined(CONFIG_ARM64)
+	if (current_el() != 3) {
+		/* call sip */
+		struct arm_smccc_res res;
+		arm_smccc_smc(IMX_SIP_HAB, IMX_SIP_HAB_REPORT_EVENT, (unsigned long)index,
+			(unsigned long)event, (unsigned long)bytes, 0, 0, 0, &res);
+		ret = (enum hab_status)res.a0;
+
+		return ret;
+	}
+#endif
+
 	save_gd();
 	ret = hab_rvt_report_event_func(status, index, event, bytes);
 	restore_gd();
@@ -94,6 +108,17 @@ enum hab_status hab_rvt_report_status(enum hab_config *config,
 	hab_rvt_report_status_t *hab_rvt_report_status_func;
 	hab_rvt_report_status_func = (hab_rvt_report_status_t *)HAB_RVT_REPORT_STATUS;
 
+#if defined(CONFIG_ARM64)
+	if (current_el() != 3) {
+		/* call sip */
+		struct arm_smccc_res res;
+		arm_smccc_smc(IMX_SIP_HAB, IMX_SIP_HAB_REPORT_STATUS,
+			(unsigned long)config, (unsigned long)state, 0, 0, 0, 0, &res);
+		ret = (enum hab_status)res.a0;
+		return ret;
+	}
+#endif
+
 	save_gd();
 	ret = hab_rvt_report_status_func(config, state);
 	restore_gd();
@@ -106,6 +131,16 @@ enum hab_status hab_rvt_entry(void)
 	enum hab_status ret;
 	hab_rvt_entry_t *hab_rvt_entry_func;
 	hab_rvt_entry_func = (hab_rvt_entry_t *)HAB_RVT_ENTRY;
+
+#if defined(CONFIG_ARM64)
+	if (current_el() != 3) {
+		/* call sip */
+		struct arm_smccc_res res;
+		arm_smccc_smc(IMX_SIP_HAB, IMX_SIP_HAB_ENTRY, 0, 0, 0, 0, 0, 0, &res);
+		ret = (enum hab_status)res.a0;
+		return ret;
+	}
+#endif
 
 	save_gd();
 	ret = hab_rvt_entry_func();
@@ -120,6 +155,16 @@ enum hab_status hab_rvt_exit(void)
 	hab_rvt_exit_t *hab_rvt_exit_func;
 	hab_rvt_exit_func =  (hab_rvt_exit_t *)HAB_RVT_EXIT;
 
+#if defined(CONFIG_ARM64)
+	if (current_el() != 3) {
+		/* call sip */
+		struct arm_smccc_res res;
+		arm_smccc_smc(IMX_SIP_HAB, IMX_SIP_HAB_EXIT, 0, 0, 0, 0, 0, 0, &res);
+		ret = (enum hab_status)res.a0;
+		return ret;
+	}
+#endif
+
 	save_gd();
 	ret = hab_rvt_exit_func();
 	restore_gd();
@@ -132,6 +177,14 @@ void hab_rvt_failsafe(void)
 	hab_rvt_failsafe_t *hab_rvt_failsafe_func;
 	hab_rvt_failsafe_func = (hab_rvt_failsafe_t *)HAB_RVT_FAILSAFE;
 
+#if defined(CONFIG_ARM64)
+	if (current_el() != 3) {
+		/* call sip */
+		arm_smccc_smc(IMX_SIP_HAB, IMX_SIP_HAB_FAILSAFE, 0, 0, 0, 0, 0, 0, NULL);
+		return;
+	}
+#endif
+
 	save_gd();
 	hab_rvt_failsafe_func();
 	restore_gd();
@@ -143,6 +196,17 @@ enum hab_status hab_rvt_check_target(enum hab_target type, const void *start,
 	enum hab_status ret;
 	hab_rvt_check_target_t *hab_rvt_check_target_func;
 	hab_rvt_check_target_func =  (hab_rvt_check_target_t *)HAB_RVT_CHECK_TARGET;
+
+#if defined(CONFIG_ARM64)
+	if (current_el() != 3) {
+		/* call sip */
+		struct arm_smccc_res res;
+		arm_smccc_smc(IMX_SIP_HAB, IMX_SIP_HAB_CHECK_TARGET, (unsigned long)type,
+			(unsigned long)start, (unsigned long)bytes, 0, 0, 0, &res);
+		ret = (enum hab_status)res.a0;
+		return ret;
+	}
+#endif
 
 	save_gd();
 	ret = hab_rvt_check_target_func(type, start, bytes);
@@ -157,6 +221,17 @@ void *hab_rvt_authenticate_image(uint8_t cid, ptrdiff_t ivt_offset,
 	void *ret;
 	hab_rvt_authenticate_image_t *hab_rvt_authenticate_image_func;
 	hab_rvt_authenticate_image_func = (hab_rvt_authenticate_image_t *)HAB_RVT_AUTHENTICATE_IMAGE;
+
+#if defined(CONFIG_ARM64)
+	if (current_el() != 3) {
+		/* call sip */
+		struct arm_smccc_res res;
+		arm_smccc_smc(IMX_SIP_HAB, IMX_SIP_HAB_AUTHENTICATE, (unsigned long)ivt_offset,
+			(unsigned long)start, (unsigned long)bytes, 0, 0, 0, &res);
+		ret = (void *)res.a0;
+		return ret;
+	}
+#endif
 
 	save_gd();
 	ret = hab_rvt_authenticate_image_func(cid, ivt_offset, start, bytes, loader);
