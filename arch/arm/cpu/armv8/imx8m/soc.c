@@ -298,14 +298,14 @@ int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 	writel(pc, M4_BOOTROM_BASE_ADDR + 4);
 
 	/* Enable M4 */
-	call_imx_sip(FSL_SIP_SRC, FSL_SIP_SRC_M4_START, 0, 0);
+	call_imx_sip(FSL_SIP_SRC, FSL_SIP_SRC_M4_START, 0, 0, 0);
 
 	return 0;
 }
 
 int arch_auxiliary_core_check_up(u32 core_id)
 {
-	return call_imx_sip(FSL_SIP_SRC, FSL_SIP_SRC_M4_STARTED, 0, 0);
+	return call_imx_sip(FSL_SIP_SRC, FSL_SIP_SRC_M4_STARTED, 0, 0, 0);
 }
 #endif
 

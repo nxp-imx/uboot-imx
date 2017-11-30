@@ -688,7 +688,7 @@ static void acquire_buildinfo(void)
 	}
 
 	/* Get ARM Trusted Firmware commit id */
-	atf_commit = call_imx_sip(FSL_SIP_BUILDINFO, FSL_SIP_BUILDINFO_GET_COMMITHASH, 0, 0);
+	atf_commit = call_imx_sip(FSL_SIP_BUILDINFO, FSL_SIP_BUILDINFO_GET_COMMITHASH, 0, 0, 0);
 	if (atf_commit == 0xffffffff) {
 		debug("ATF does not support build info\n");
 		atf_commit = 0x30; /* Display 0, 0 ascii is 0x30 */
