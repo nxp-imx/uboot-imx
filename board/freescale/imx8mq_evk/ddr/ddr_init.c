@@ -90,7 +90,7 @@ void lpddr4_800MHz_cfg_umctl2(void)
 	dwc_ddrphy_apb_wr(DDRC_SCHED(0), 0x29511505);
 	dwc_ddrphy_apb_wr(DDRC_SCHED1(0), 0x0000002c);
 	dwc_ddrphy_apb_wr(DDRC_PERFHPR1(0), 0x5900575b);
-	dwc_ddrphy_apb_wr(DDRC_PERFLPR1(0), 0x900093e7);
+	dwc_ddrphy_apb_wr(DDRC_PERFLPR1(0), 0x00000009);
 	dwc_ddrphy_apb_wr(DDRC_PERFWR1(0), 0x02005574);
 	dwc_ddrphy_apb_wr(DDRC_DBG0(0), 0x00000016);
 	dwc_ddrphy_apb_wr(DDRC_DBG1(0), 0x00000000);
