@@ -628,7 +628,7 @@ static void set_sysctl(struct mmc *mmc, uint clock)
 			if ((sdhc_clk / pre_div) <= (clock * 16))
 				break;
 	} else
-		pre_div = 2;
+		pre_div = 1;
 
 	for (div = 1; div <= 16; div++)
 		if ((sdhc_clk / (div * pre_div)) <= clock)
