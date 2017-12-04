@@ -427,6 +427,12 @@ int board_init(void)
 
 int board_late_init(void)
 {
+
+	env_set("tee", "no");
+#ifdef CONFIG_IMX_OPTEE
+	env_set("tee", "yes");
+#endif
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
