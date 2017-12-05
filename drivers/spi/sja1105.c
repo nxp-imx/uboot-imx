@@ -84,8 +84,6 @@ static int sja1105_write(struct sja_parms *sjap, u32 *cmd, u8 nb_words)
 	struct spi_slave *slave;
 	int bitlen = (nb_words << 3) << 2;
 	int ret = 0;
-	u32 resp[4] = {0, };
-	int i, maxtries = 3;
 
 	slave = spi_setup_slave(sjap->bus, sjap->cs, SJA_DSPI_HZ,
 				SJA_DSPI_MODE);
@@ -100,24 +98,11 @@ static int sja1105_write(struct sja_parms *sjap, u32 *cmd, u8 nb_words)
 		goto done;
 	}
 
-tryagain:
-	ret = spi_xfer(slave, bitlen, cmd, resp,
+	ret = spi_xfer(slave, bitlen, cmd, NULL,
 		       SPI_XFER_BEGIN | SPI_XFER_END);
 
 	if (ret)
 		printf("Error %d during SPI transaction\n", ret);
-
-	/* Sometimes the write can fail silently. Try again */
-	if (maxtries) {
-		maxtries--;
-		for (i = 0; i < MIN(4, nb_words); i++) {
-			if (cmd[i] != resp[i]) {
-				sja_debug("cmd 0x%X 0x%X / resp 0x%X 0x%X\n",
-					  cmd[0], cmd[1], resp[0], resp[1]);
-				goto tryagain;
-			}
-		}
-	}
 
 done:
 	spi_release_bus(slave);
