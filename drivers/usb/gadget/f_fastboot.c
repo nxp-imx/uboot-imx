@@ -615,6 +615,30 @@ bool bootloader_gpt_overlay(void)
 		ANDROID_BOOTLOADER_OFFSET < ANDROID_GPT_END);
 }
 
+int write_backup_gpt(void)
+{
+	int mmc_no = 0;
+	struct mmc *mmc;
+	struct blk_desc *dev_desc;
+
+	mmc_no = fastboot_devinfo.dev_id;
+	mmc = find_mmc_device(mmc_no);
+	if (mmc == NULL) {
+		printf("invalid mmc device\n");
+		return -1;
+	}
+	dev_desc = blk_get_dev("mmc", mmc_no);
+
+	/* write backup get partition */
+	if (write_backup_gpt_partitions(dev_desc, interface.transfer_buffer)) {
+		printf("writing GPT image fail\n");
+		return -1;
+	}
+
+	printf("flash backup gpt image successfully\n");
+	return 0;
+}
+
 static void process_flash_mmc(const char *cmdbuf)
 {
 	if (download_bytes) {
@@ -632,31 +656,6 @@ static void process_flash_mmc(const char *cmdbuf)
 		}
 #endif
 
-		if (strncmp(cmdbuf, "gpt", 3) == 0 && bootloader_gpt_overlay()) {
-			int mmc_no = 0;
-			struct mmc *mmc;
-			struct blk_desc *dev_desc;
-			mmc_no = fastboot_devinfo.dev_id;
-			mmc = find_mmc_device(mmc_no);
-			if (mmc == NULL) {
-				printf("invalid mmc device\n");
-				fastboot_tx_write_str("FAILinvalid mmc device");
-			}
-			dev_desc = blk_get_dev("mmc", mmc_no);
-			if (is_valid_gpt_buf(dev_desc, interface.transfer_buffer)) {
-				printf("invalid GPT image\n");
-				fastboot_tx_write_str("FAILinvalid GPT partition image");
-				return;
-			}
-			if (write_backup_gpt_partitions(dev_desc, interface.transfer_buffer)) {
-				printf("writing GPT image fail\n");
-				fastboot_tx_write_str("FAILwriting GPT image fail");
-				return;
-			}
-			printf("flash gpt image successfully\n");
-			fastboot_okay("");
-			return;
-		}
 		/* Next is the partition name */
 		ptn = fastboot_flash_find_ptn(cmdbuf);
 		if (ptn == NULL) {
@@ -739,36 +738,54 @@ static void process_flash_mmc(const char *cmdbuf)
 						   download_bytes);
 
 			} else {
-				/* block count */
-				temp = (download_bytes +
-					    MMC_SATA_BLOCK_SIZE - 1) /
-					    MMC_SATA_BLOCK_SIZE;
+				/* Will flash images in below case:
+				 * 1. Is not gpt partition.
+				 * 2. Is gpt partition but no overlay detected.
+				 * */
+				if (strncmp(ptn->name, "gpt", 3) || !bootloader_gpt_overlay()) {
+					/* block count */
+					if (strncmp(ptn->name, "gpt", 3) == 0) {
+						temp = (ANDROID_GPT_END +
+								MMC_SATA_BLOCK_SIZE - 1) /
+								MMC_SATA_BLOCK_SIZE;
+					} else {
+						temp = (download_bytes +
+								MMC_SATA_BLOCK_SIZE - 1) /
+								MMC_SATA_BLOCK_SIZE;
+					}
 
-				sprintf(mmc_write, "mmc write 0x%x 0x%x 0x%x",
-						(unsigned int)(uintptr_t)interface.transfer_buffer, /*source*/
-						ptn->start, /*dest*/
-						temp /*length*/);
+					sprintf(mmc_write, "mmc write 0x%x 0x%x 0x%x",
+							(unsigned int)(uintptr_t)interface.transfer_buffer, /*source*/
+							ptn->start, /*dest*/
+							temp /*length*/);
 
-				printf("Initializing '%s'\n", ptn->name);
+					printf("Initializing '%s'\n", ptn->name);
 
-				mmcret = run_command(mmc_dev, 0);
-				if (mmcret)
-					fastboot_fail("Init of MMC card failed");
-				else
-					fastboot_okay("");
+					mmcret = run_command(mmc_dev, 0);
+					if (mmcret)
+						fastboot_fail("Init of MMC card failed");
+					else
+						fastboot_okay("");
 
-				printf("Writing '%s'\n", ptn->name);
-				if (run_command(mmc_write, 0)) {
-					printf("Writing '%s' FAILED!\n", ptn->name);
-					fastboot_fail("Write partition failed");
-				} else {
-					printf("Writing '%s' DONE!\n", ptn->name);
-					fastboot_okay("");
+					printf("Writing '%s'\n", ptn->name);
+					if (run_command(mmc_write, 0)) {
+						printf("Writing '%s' FAILED!\n", ptn->name);
+						fastboot_fail("Write partition failed");
+					} else {
+						printf("Writing '%s' DONE!\n", ptn->name);
+						fastboot_okay("");
+					}
 				}
+				/* Write backup gpt image */
 				if (strncmp(ptn->name, "gpt", 3) == 0) {
+					if (write_backup_gpt())
+						fastboot_fail("write backup GPT image fail");
+					else
+						fastboot_okay("");
+
 					/* will force scan the device,
-					   so dev_desc can be re-inited
-					   with the latest data */
+					 * so dev_desc can be re-inited
+					 * with the latest data */
 					run_command(mmc_dev, 0);
 				}
 			}
