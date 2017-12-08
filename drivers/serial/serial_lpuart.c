@@ -41,10 +41,16 @@
 #define CTRL_TE		(1 << 19)
 #define CTRL_RE		(1 << 18)
 
+#define FIFO_RXFLUSH		(1 << 14)
+#define FIFO_TXFLUSH		(1 << 15)
+#define FIFO_TXSIZE_MASK 	0x70
+#define FIFO_TXSIZE_OFF 	4
+#define FIFO_RXSIZE_MASK 	0x7
+#define FIFO_RXSIZE_OFF 	0
 #define FIFO_TXFE		0x80
 #define FIFO_RXFE		0x08
 
-#define WATER_TXWATER_OFF	1
+#define WATER_TXWATER_OFF	0
 #define WATER_RXWATER_OFF	16
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -315,15 +321,25 @@ static int _lpuart32_serial_tstc(struct lpuart_serial_platdata *plat)
 static int _lpuart32_serial_init(struct lpuart_serial_platdata *plat)
 {
 	struct lpuart_fsl_reg32 *base = (struct lpuart_fsl_reg32 *)plat->reg;
-	u32 ctrl;
+	u32 val, tx_fifo_size;
 
-	lpuart_read32(plat->flags, &base->ctrl, &ctrl);
-	ctrl &= ~CTRL_RE;
-	ctrl &= ~CTRL_TE;
-	lpuart_write32(plat->flags, &base->ctrl, ctrl);
+	lpuart_read32(plat->flags, &base->ctrl, &val);
+	val &= ~CTRL_RE;
+	val &= ~CTRL_TE;
+	lpuart_write32(plat->flags, &base->ctrl, val);
 
 	lpuart_write32(plat->flags, &base->modir, 0);
-	lpuart_write32(plat->flags, &base->fifo, ~(FIFO_TXFE | FIFO_RXFE));
+
+	lpuart_read32(plat->flags, &base->fifo, &val);
+	tx_fifo_size = (val & FIFO_TXSIZE_MASK) >> FIFO_TXSIZE_OFF;
+	if (tx_fifo_size > 1)
+		tx_fifo_size = tx_fifo_size >> 1; /* Set the TX water to half of FIFO size */
+
+	/* Set RX water to 0, to be triggered by any receive data */
+	lpuart_write32(plat->flags, &base->water, (tx_fifo_size << WATER_TXWATER_OFF));
+
+	val |= (FIFO_TXFE | FIFO_RXFE | FIFO_TXFLUSH | FIFO_RXFLUSH); /* Enable TX and RX FIFO */
+	lpuart_write32(plat->flags, &base->fifo, val);
 
 	lpuart_write32(plat->flags, &base->match, 0);
 
