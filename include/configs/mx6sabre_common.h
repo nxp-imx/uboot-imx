@@ -66,8 +66,8 @@
 			"if test ${tee} = yes; then " \
 				"bootm ${tee_addr} ${initrd_addr} ${fdt_addr}; " \
 			"else " \
-				"bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
-
+				"bootz ${loadaddr} ${initrd_addr} ${fdt_addr}; " \
+			"fi;\0"
 
 #ifdef CONFIG_SUPPORT_EMMC_BOOT
 #define EMMC_ENV \
@@ -102,6 +102,7 @@
 	 */
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
+	TEE_ENV \
 	"fdt_addr=0x18000000\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"bootargs=console=" CONSOLE_DEV ",115200 ubi.mtd=5 "  \
@@ -121,6 +122,7 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 		CONFIG_MFG_ENV_SETTINGS \
+		TEE_ENV \
 		"fdt_addr=0x18000000\0" \
 		"fdt_high=0xffffffff\0"   \
 		"bootargs=console=" CONSOLE_DEV ",115200 \0"\
@@ -140,6 +142,7 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
+	TEE_ENV \
 	"epdc_waveform=epdc_splash.bin\0" \
 	"script=boot.scr\0" \
 	"image=zImage\0" \

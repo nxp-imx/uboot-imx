@@ -131,7 +131,8 @@
 		"if test ${tee} = yes; then " \
 			"bootm ${tee_addr} ${initrd_addr} ${fdt_addr}; " \
 		"else " \
-			"bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+			"bootz ${loadaddr} ${initrd_addr} ${fdt_addr}; " \
+		"fi;\0"
 
 #define CONFIG_DFU_ENV_SETTINGS \
 	"dfu_alt_info=image raw 0 0x800000;"\
@@ -142,6 +143,7 @@
 #if defined(CONFIG_NAND_BOOT)
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
+	TEE_ENV \
 	"panel=TFT43AB\0" \
 	"fdt_addr=0x83000000\0" \
 	"fdt_high=0xffffffff\0"	  \
@@ -163,6 +165,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	UPDATE_M4_ENV \
 	CONFIG_MFG_ENV_SETTINGS \
+	TEE_ENV \
 	CONFIG_DFU_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
