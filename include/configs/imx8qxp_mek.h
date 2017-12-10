@@ -55,10 +55,22 @@
 	"emmc_dev=0\0" \
 	"sd_dev=1\0"
 
+#define XEN_ENV \
+	"xen_addr=0x80200000\0" \
+	"xen_file=xen\0" \
+	"xenargs=setenv bootargs console=dtuart dtuart=/serial@5a060000 dom0_mem=1024M \0" \
+	"loadxen=fatload mmc ${mmcdev}:${mmcpart} ${xen_addr} ${xen_file}\0" \
+	"xenboot=setenv loadaddr 0x80a00000; setenv fdt_file fsl-imx8qxp-mek-dom0.dtb; "\
+	"setenv bootargs console=dtuart dtuart=/serial@5a060000 dom0_mem=1024M; " \
+	"run loadfdt; run loadxen; run loadimage; fdt addr ${fdt_addr}; "\
+	"fdt set /chosen/module@0 reg <0x00000000 ${loadaddr} 0x00000000 0x${filesize}>; " \
+	"booti ${xen_addr} - ${fdt_addr} \0" \
+
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
 	M4_BOOT_ENV \
+	XEN_ENV \
 	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
