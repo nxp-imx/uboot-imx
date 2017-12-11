@@ -31,7 +31,9 @@
 #define USDHC1_BASE_ADDR                0x5B010000
 #define USDHC2_BASE_ADDR                0x5B020000
 #define USDHC3_BASE_ADDR                0x5B030000
-#define CONFIG_SUPPORT_EMMC_BOOT	/* eMMC specific */
+#ifdef CONFIG_TARGET_IMX8QM_LPDDR4_ARM2
+#define CONFIG_SUPPORT_EMMC_BOOT   /* eMMC specific */
+#endif
 
 #define CONFIG_ENV_OVERWRITE
 
@@ -135,7 +137,7 @@
 	"fdt_addr=0x83000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
 	"boot_fdt=try\0" \
-	"fdt_file=fsl-imx8qm-lpddr4-arm2.dtb\0" \
+	"fdt_file="__stringify(CONFIG_DEFAULT_DEVICE_TREE)".dtb\0" \
 	"initrd_addr=0x83800000\0"		\
 	"initrd_high=0xffffffffffffffff\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
@@ -226,13 +228,16 @@
   * On DDR4 board, USDHC1 is mux for NAND, USDHC2 is for SD, USDHC3 is for SD on base board
   */
 #ifdef CONFIG_TARGET_IMX8QM_LPDDR4_ARM2
-#define CONFIG_SYS_MMC_ENV_DEV		1   /* USDHC2 */
-#define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
+#define CONFIG_SYS_MMC_ENV_DEV		1   /* USDHC1 */
+#define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC1 */
 #define CONFIG_SYS_FSL_USDHC_NUM	3
+
 #else
+
 #define CONFIG_SYS_MMC_ENV_DEV		0   /* USDHC2 */
-#define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
-#define CONFIG_SYS_FSL_USDHC_NUM	2
+#define CONFIG_MMCROOT			"/dev/mmcblk2p2"  /* USDHC2 */
+#define CONFIG_SYS_FSL_USDHC_NUM	1
+
 #endif
 
 /* Size of malloc() pool */

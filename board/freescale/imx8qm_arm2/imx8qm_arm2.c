@@ -102,8 +102,8 @@ int board_early_init_f(void)
 static struct fsl_esdhc_cfg usdhc_cfg[CONFIG_SYS_FSL_USDHC_NUM] = {
 #ifdef CONFIG_TARGET_IMX8QM_LPDDR4_ARM2
 	{USDHC1_BASE_ADDR, 0, 8},
-#endif
 	{USDHC2_BASE_ADDR, 0, 4},
+#endif
 	{USDHC3_BASE_ADDR, 0, 4},
 };
 
@@ -122,8 +122,6 @@ static iomux_cfg_t emmc0[] = {
 	SC_P_EMMC0_RESET_B | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
 	SC_P_EMMC0_STROBE | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
 };
-#endif
-
 static iomux_cfg_t usdhc1_sd[] = {
 	SC_P_USDHC1_CLK | MUX_PAD_CTRL(ESDHC_CLK_PAD_CTRL),
 	SC_P_USDHC1_CMD | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
@@ -136,7 +134,7 @@ static iomux_cfg_t usdhc1_sd[] = {
 	SC_P_USDHC1_RESET_B | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
 	SC_P_USDHC1_VSELECT | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
 };
-
+#endif
 static iomux_cfg_t usdhc2_sd[] = {
 	SC_P_USDHC2_CLK | MUX_PAD_CTRL(ESDHC_CLK_PAD_CTRL),
 	SC_P_USDHC2_CMD | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
@@ -173,9 +171,6 @@ int board_mmc_init(bd_t *bis)
 			usdhc_cfg[i].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
 			break;
 		case 1:
-#else
-		case 0:
-#endif
 			if (!power_domain_lookup_name("conn_sdhc1", &pd))
 				power_domain_on(&pd);
 
@@ -185,11 +180,11 @@ int board_mmc_init(bd_t *bis)
 			gpio_request(USDHC1_CD_GPIO, "sd1_cd");
 			gpio_direction_input(USDHC1_CD_GPIO);
 			break;
-#ifdef CONFIG_TARGET_IMX8QM_LPDDR4_ARM2
 		case 2:
 #else
-		case 1:
+		case 0:
 #endif
+
 			if (!power_domain_lookup_name("conn_sdhc2", &pd))
 				power_domain_on(&pd);
 
@@ -221,7 +216,11 @@ int board_mmc_getcd(struct mmc *mmc)
 
 	switch (cfg->esdhc_base) {
 	case USDHC1_BASE_ADDR:
+#ifdef CONFIG_TARGET_IMX8QM_LPDDR4_ARM2
 		ret = 1; /* eMMC */
+#else
+                ret = 0; /* eMMC not present on DDR4 board */
+#endif
 		break;
 	case USDHC2_BASE_ADDR:
 		ret = !gpio_get_value(USDHC1_CD_GPIO);
@@ -553,7 +552,7 @@ int board_mmc_get_env_dev(int devno)
 #ifdef CONFIG_TARGET_IMX8QM_LPDDR4_ARM2
 	return devno;
 #else
-	return devno - 1;
+	return devno - 2;
 #endif
 }
 
@@ -562,7 +561,7 @@ int mmc_map_to_kernel_blk(int dev_no)
 #ifdef CONFIG_TARGET_IMX8QM_LPDDR4_ARM2
 	return dev_no;
 #else
-	return dev_no + 1;
+	return dev_no + 2;
 #endif
 }
 
