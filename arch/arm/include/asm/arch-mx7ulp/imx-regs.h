@@ -949,6 +949,9 @@
 #define MMDC_MPWRDQBY3DL_WR_DQ25_DEL_MASK	((0x3f  << MMDC_MPWRDQBY3DL_WR_DQ25_DEL))
 #define MMDC_MPWRDQBY3DL_WR_DQ24_DEL_MASK	((0x3f  << MMDC_MPWRDQBY3DL_WR_DQ24_DEL))
 
+#define SNVS_LPCR_DPEN				(0x20)
+#define SNVS_LPCR_SRTC_ENV			(0x1)
+
 #include <asm/imx-common/regs-lcdif.h>
 
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))

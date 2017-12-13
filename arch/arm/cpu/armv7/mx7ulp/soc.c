@@ -152,13 +152,15 @@ void s_init(void)
 	/* clock configuration. */
 	clock_init();
 
-	/* enable dumb pmic */
-	writel((readl(SNVS_LP_LPCR) | 0x20), SNVS_LP_LPCR);
+	if (soc_rev() < CHIP_REV_2_0) {
+		/* enable dumb pmic */
+		writel((readl(SNVS_LP_LPCR) | SNVS_LPCR_DPEN), SNVS_LP_LPCR);
 
 #if defined(CONFIG_ANDROID_SUPPORT)
-        /* Enable RTC */
-        writel(0x21, 0x40230038);
+		/* Enable RTC */
+		writel((readl(SNVS_LP_LPCR) | SNVS_LPCR_SRTC_ENV), SNVS_LP_LPCR);
 #endif
+	}
 	return;
 }
 
