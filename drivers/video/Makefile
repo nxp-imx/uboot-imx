@@ -68,3 +68,4 @@ obj-$(CONFIG_HX8363) += hx8363_wvga.o
 
 obj-y += bridge/
 obj-y += sunxi/
+obj-y += imx/
