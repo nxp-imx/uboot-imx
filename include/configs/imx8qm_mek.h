@@ -142,13 +142,16 @@
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
 	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} root=${mmcroot} " \
-	"video=imxdpufb5:off video=imxdpufb6:off video=imxdpufb7:off\0" \
 	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
 	"loadimage=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
 	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
+	"hdp_addr=0x84000000\0" \
+	"hdp_file=hdmitxfw.bin\0" \
+	"loadhdp=fatload mmc ${mmcdev}:${mmcpart} ${hdp_addr} ${hdp_file}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
+		"run loadhdp; hdp load ${hdp_addr}; " \
 		"run mmcargs; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 			"if run loadfdt; then " \
@@ -170,6 +173,7 @@
 		"else " \
 			"setenv get_cmd tftp; " \
 		"fi; " \
+		"${get_cmd} ${hdp_addr} ${hdp_file}; hdp load ${hdp_addr}; " \
 		"${get_cmd} ${loadaddr} ${image}; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 			"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
