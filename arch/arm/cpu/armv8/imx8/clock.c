@@ -261,6 +261,23 @@ void init_clk_usdhc(u32 index)
 	if (index >= instances)
 		return;
 
+	/*
+	 * IMX8QXP USDHC_CLK_ROOT default source from DPLL, but this DPLL
+	 * do not stable, will cause usdhc data transfer crc error. So here
+	 * is a workaround, let USDHC_CLK_ROOT source from AVPLL. Due to
+	 * AVPLL is fixed to 1000MHz, so here config USDHC1_CLK_ROOT to 333MHz,
+	 * USDHC2_CLK_ROOT to 200MHz, make eMMC HS400ES work at 166MHz, and SD
+	 * SDR104 work at 200MHz.
+	 */
+#ifdef CONFIG_IMX8QXP
+	err = sc_pm_set_clock_parent(ipc, usdhcs[index], 2, SC_PM_PARENT_PLL1);
+	if (err != SC_ERR_NONE)
+		printf("SDHC_%d set clock parent failed!(error = %d)\n", index, err);
+
+	if (index == 1)
+		actual = 200000000;
+#endif
+
 	err = sc_pm_set_clock_rate(ipc, usdhcs[index], 2, &actual);
 	if (err != SC_ERR_NONE) {
 		printf("SDHC_%d set clock failed! (error = %d)\n", index, err);
