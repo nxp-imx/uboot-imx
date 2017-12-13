@@ -91,6 +91,11 @@ void config_mmdc(uint8_t module)
 	/* Enable MMDC with CS0 */
 	writel(_MDCTL + 0x80000000, mmdc_addr + MMDC_MDCTL);
 
+	/* Precharge all command per JEDEC */
+	/* Ensures robust DRAM initialization */
+	writel(MMDC_MDSCR_CS0_VALUE, mmdc_addr + MMDC_MDSCR);
+	writel(MMDC_MDSCR_CS1_VALUE, mmdc_addr + MMDC_MDSCR);
+
 	/* Complete the initialization sequence as defined by JEDEC */
 	writel(MMDC_MDSCR_RST_VALUE, mmdc_addr + MMDC_MDSCR);
 	writel(MMDC_MDSCR_MR1_VALUE, mmdc_addr + MMDC_MDSCR);

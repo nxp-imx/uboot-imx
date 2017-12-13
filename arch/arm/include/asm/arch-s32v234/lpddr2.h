@@ -37,6 +37,10 @@
 
 /* Set MDSCR[CON_REQ] (configuration request) */
 #define MMDC_MDSCR_CFG_VALUE		0x00008000
+/* Precharge-all command CS0 */
+#define MMDC_MDSCR_CS0_VALUE				0x00008010
+/* Precharge-all command CS1 */
+#define MMDC_MDSCR_CS1_VALUE				0x00008018
 /* tRFCab=70 (=130ns),tXSR=80 (=tRFCab+10ns),tXP=4 (=7.5ns),
  * tXPDLL=n/a,tFAW=27 (50 ns),tCL(RL)=8
  */
