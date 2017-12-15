@@ -197,16 +197,29 @@ static void dwc3_nxp_usb_phy_init(struct dwc3_device *dwc3)
 	RegData &= ~(USB_PHY_CTRL1_RESET | USB_PHY_CTRL1_ATERESET);
 	writel(RegData, dwc3->base + USB_PHY_CTRL1);
 }
+#endif
 
+#if defined(CONFIG_USB_DWC3) || defined(CONFIG_USB_XHCI_IMX8M)
 int board_usb_init(int index, enum usb_init_type init)
 {
-	dwc3_nxp_usb_phy_init(&dwc3_device_data);
-	return dwc3_uboot_init(&dwc3_device_data);
+	imx8m_usb_power(index, true);
+
+	if (index == 0 && init == USB_INIT_DEVICE) {
+		dwc3_nxp_usb_phy_init(&dwc3_device_data);
+		return dwc3_uboot_init(&dwc3_device_data);
+	}
+
+	return 0;
 }
 
 int board_usb_cleanup(int index, enum usb_init_type init)
 {
-	dwc3_uboot_exit(index);
+	if (index == 0 && init == USB_INIT_DEVICE) {
+		dwc3_uboot_exit(index);
+	}
+
+	imx8m_usb_power(index, false);
+
 	return 0;
 }
 #endif
