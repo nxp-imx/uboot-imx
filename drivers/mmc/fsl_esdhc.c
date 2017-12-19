@@ -137,7 +137,6 @@ struct fsl_esdhc_priv {
 	int non_removable;
 	int wp_enable;
 	int vs18_enable;
-	int is_ddr;
 	u32 tuning_step;
 	u32 tuning_start_tap;
 	u32 strobe_dll_delay_target;
@@ -620,6 +619,15 @@ static void set_sysctl(struct mmc *mmc, uint clock)
 	int sdhc_clk = priv->sdhc_clk;
 	uint clk;
 
+	/*
+	 * For ddr mode, usdhc need to enable DDR mode first, after select
+	 * this DDR mode, usdhc will automatically divide the usdhc clock
+	 */
+	if (mmc->ddr_mode) {
+		writel(readl(&regs->mixctrl) | MIX_CTRL_DDREN, &regs->mixctrl);
+		sdhc_clk >>= 1;
+	}
+
 	if (clock < mmc->cfg->f_min)
 		clock = mmc->cfg->f_min;
 
@@ -634,7 +642,7 @@ static void set_sysctl(struct mmc *mmc, uint clock)
 		if ((sdhc_clk / (div * pre_div)) <= clock)
 			break;
 
-	pre_div >>= mmc->ddr_mode ? 2 : 1;
+	pre_div >>= 1;
 	div -= 1;
 
 	clk = (pre_div << 8) | (div << 4);
@@ -766,7 +774,6 @@ static int esdhc_set_timing(struct mmc *mmc)
 
 	m = readl(&regs->mixctrl);
 	m &= ~(MIX_CTRL_DDREN | MIX_CTRL_HS400_EN);
-	priv->is_ddr = 0;
 
 	switch (mmc->selected_mode) {
 	case MMC_LEGACY:
@@ -777,7 +784,6 @@ static int esdhc_set_timing(struct mmc *mmc)
 	case MMC_HS_400_ES:
 		m |= MIX_CTRL_DDREN | MIX_CTRL_HS400_EN;
 		writel(m, &regs->mixctrl);
-		priv->is_ddr = 1;
 		esdhc_set_strobe_dll(mmc);
 		break;
 	case MMC_HS:
@@ -794,7 +800,6 @@ static int esdhc_set_timing(struct mmc *mmc)
 	case MMC_DDR_52:
 		m |= MIX_CTRL_DDREN;
 		writel(m, &regs->mixctrl);
-		priv->is_ddr = 1;
 		break;
 	default:
 		printf("Not supported %d\n", mmc->selected_mode);
