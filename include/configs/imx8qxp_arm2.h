@@ -214,7 +214,7 @@
 
 #ifdef CONFIG_NAND_BOOT
 #define CONFIG_ENV_IS_IN_NAND
-#define CONFIG_ENV_OFFSET       (64 << 20)
+#define CONFIG_ENV_OFFSET       (120 << 20)
 #elif defined(CONFIG_QSPI_BOOT)
 #define CONFIG_ENV_IS_IN_SPI_FLASH
 #define CONFIG_ENV_OFFSET       (4 * 1024 * 1024)
