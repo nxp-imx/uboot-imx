@@ -263,6 +263,10 @@ enum {
 };
 static unsigned int download_bytes_unpadded;
 
+#ifdef IMX_LOAD_HDMI_FIMRWARE
+int hdmi_firmware_load(char* slot);
+#endif
+
 static struct cmd_fastboot_interface interface = {
 	.rx_handler            = NULL,
 	.reset_handler         = NULL,
@@ -1585,6 +1589,10 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 					avb_out_data->ab_suffix);
 		}
 		setenv("bootargs_sec", bootargs_sec);
+#ifdef IMX_LOAD_HDMI_FIMRWARE
+		hdmi_firmware_load(avb_out_data->ab_suffix);
+#endif
+
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if(!is_recovery_mode)
 			fastboot_setup_system_boot_args(avb_out_data->ab_suffix);
@@ -1635,6 +1643,9 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		sprintf(bootargs_sec,
 				"androidboot.verifiedbootstate=orange androidboot.slot_suffix=%s", slot);
 		setenv("bootargs_sec", bootargs_sec);
+#ifdef IMX_LOAD_HDMI_FIMRWARE
+		hdmi_firmware_load(slot);
+#endif
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if(!is_recovery_mode)
 			fastboot_setup_system_boot_args(slot);
@@ -2637,6 +2648,37 @@ static void cb_continue(struct usb_ep *ep, struct usb_request *req)
 	fastboot_tx_write_str("OKAY");
 }
 
+#ifdef IMX_LOAD_HDMI_FIMRWARE
+int hdmi_firmware_load(char *slot) {
+	int mmcc = mmc_get_env_dev();
+	int mmc_id;
+	char part_str[32];
+	char command[256];
+	int ret;
+
+	sprintf(part_str, "%s%s", IMX_HDMI_FIRMWARE_PART, slot);
+	mmc_id = fastboot_flash_find_index(part_str);
+	if (mmc_id <= 0)
+		return -1;
+
+	sprintf(command, "ext4load mmc %x:%x 0x%x %s",
+		mmcc, mmc_id, IMX_HDMI_FIRMWARE_LOAD_ADDR, IMX_HDMI_FIRMWARE_PATH);
+
+	ret = run_command(command, 0);
+	if (ret) {
+	    printf("execute command '%s' error!\n", command);
+	    return -1;
+	}
+
+	sprintf(command, "hdp load 0x%x", IMX_HDMI_FIRMWARE_LOAD_ADDR);
+
+	ret = run_command(command, 0);
+	if (ret) {
+	    printf("execute command '%s' error!\n", command);
+	    return -1;
+	}
+}
+#endif
 
 #ifdef CONFIG_FASTBOOT_LOCK
 

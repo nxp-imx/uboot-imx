@@ -25,6 +25,11 @@
 #define CONFIG_FASTBOOT_LOCK
 #define FSL_FASTBOOT_FB_DEV "mmc"
 
+#define IMX_LOAD_HDMI_FIMRWARE
+#define IMX_HDMI_FIRMWARE_PATH "etc/firmware/hdmi/hdmitxfw.bin"
+#define IMX_HDMI_FIRMWARE_PART "system"
+#define IMX_HDMI_FIRMWARE_LOAD_ADDR (CONFIG_SYS_SDRAM_BASE + SZ_256M)
+
 #ifdef CONFIG_SYS_MALLOC_LEN
 #undef CONFIG_SYS_MALLOC_LEN
 #define CONFIG_SYS_MALLOC_LEN           (64 * SZ_1M)
