@@ -163,24 +163,6 @@ int board_eth_init(bd_t *bis)
 
 int board_phy_config(struct phy_device *phydev)
 {
-#ifdef CONFIG_FEC_ENABLE_MAX7322
-	uint8_t value;
-
-	/* This is needed to drive the pads to 1.8V instead of 1.5V */
-	i2c_set_bus_num(CONFIG_MAX7322_I2C_BUS);
-
-	if (!i2c_probe(CONFIG_MAX7322_I2C_ADDR)) {
-		/* Write 0x1 to enable O0 output, this device has no addr */
-		/* hence addr length is 0 */
-		value = 0x1;
-		if (i2c_write(CONFIG_MAX7322_I2C_ADDR, 0, 0, &value, 1))
-			printf("MAX7322 write failed\n");
-	} else {
-		printf("MAX7322 Not found\n");
-	}
-	mdelay(1);
-#endif
-
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x1f);
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x8);
 

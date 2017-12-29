@@ -81,18 +81,11 @@
 #elif (CONFIG_FEC_ENET_DEV == 1)
 #define IMX_FEC_BASE			0x5B050000
 #define CONFIG_FEC_MXC_PHYADDR          0x1
-#define CONFIG_FEC_ENABLE_MAX7322
 #define CONFIG_ETHPRIME                 "eth1"
 #endif
 
 /* ENET0 MDIO are shared */
 #define CONFIG_FEC_MXC_MDIO_BASE	0x5B040000
-
-/* MAX7322 */
-#ifdef CONFIG_FEC_ENABLE_MAX7322
-#define CONFIG_MAX7322_I2C_ADDR		0x68
-#define CONFIG_MAX7322_I2C_BUS		0 /* I2C0 */
-#endif
 
 /* Boot M4 */
 #define M4_BOOT_ENV \
