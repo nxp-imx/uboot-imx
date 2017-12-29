@@ -30,6 +30,16 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
+		reg_usb_otg1_vbus: regulator@0 {
+			compatible = "regulator-fixed";
+			reg = <0>;
+			regulator-name = "usb_otg1_vbus";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			gpio = <&gpio4 3 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+		};
+
 		reg_usdhc2_vmmc: usdhc2_vmmc {
 			compatible = "regulator-fixed";
 			regulator-name = "sw-3p3-sd1";
@@ -50,6 +60,7 @@
 	imx8qm-mek {
 		pinctrl_hog_1: hoggrp-1 {
 			fsl,pins = <
+				SC_P_USB_SS3_TC0_LSIO_GPIO4_IO03	  0x06000048
 				SC_P_LVDS0_I2C0_SCL_LSIO_GPIO1_IO06	  0x06000021
 				SC_P_LVDS0_I2C0_SDA_LSIO_GPIO1_IO07	  0x06000021
 				SC_P_QSPI1A_SS1_B_LSIO_GPIO4_IO20		  0x06000021
@@ -282,6 +293,15 @@
 	cd-gpios = <&gpio5 22 GPIO_ACTIVE_LOW>;
 	wp-gpios = <&gpio5 21 GPIO_ACTIVE_HIGH>;
 	vmmc-supply = <&reg_usdhc2_vmmc>;
+	status = "okay";
+};
+
+&usbotg1 {
+	vbus-supply = <&reg_usb_otg1_vbus>;
+	srp-disable;
+	hnp-disable;
+	adp-disable;
+	disable-over-current;
 	status = "okay";
 };
 
