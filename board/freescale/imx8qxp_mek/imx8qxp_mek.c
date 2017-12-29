@@ -249,6 +249,7 @@ static void enet_device_phy_reset(void)
 	struct gpio_desc desc;
 	int ret;
 
+	/* The BB_PER_RST_B will reset the ENET1 PHY */
 	if (0 == CONFIG_FEC_ENET_DEV) {
 		ret = dm_gpio_lookup_name("gpio@1a_4", &desc);
 		if (ret)
@@ -257,14 +258,12 @@ static void enet_device_phy_reset(void)
 		ret = dm_gpio_request(&desc, "enet0_reset");
 		if (ret)
 			return;
+
+		dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
+		dm_gpio_set_value(&desc, 0);
+		udelay(50);
+		dm_gpio_set_value(&desc, 1);
 	}
-
-	/* The BB_PER_RST_B will reset the ENET1 PHY */
-
-	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
-	dm_gpio_set_value(&desc, 0);
-	udelay(50);
-	dm_gpio_set_value(&desc, 1);
 
 	/* The board has a long delay for this reset to become stable */
 	mdelay(200);
@@ -297,24 +296,6 @@ int board_eth_init(bd_t *bis)
 
 int board_phy_config(struct phy_device *phydev)
 {
-#ifdef CONFIG_FEC_ENABLE_MAX7322
-	uint8_t value;
-
-	/* This is needed to drive the pads to 1.8V instead of 1.5V */
-	i2c_set_bus_num(CONFIG_MAX7322_I2C_BUS);
-
-	if (!i2c_probe(CONFIG_MAX7322_I2C_ADDR)) {
-		/* Write 0x1 to enable O0 output, this device has no addr */
-		/* hence addr length is 0 */
-		value = 0x1;
-		if (i2c_write(CONFIG_MAX7322_I2C_ADDR, 0, 0, &value, 1))
-			printf("MAX7322 write failed\n");
-	} else {
-		printf("MAX7322 Not found\n");
-	}
-	mdelay(1);
-#endif
-
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x1f);
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x8);
 
@@ -348,6 +329,22 @@ static iomux_cfg_t board_gpios[] = {
 
 static void board_gpio_init(void)
 {
+	int ret;
+	struct gpio_desc desc;
+
+	ret = dm_gpio_lookup_name("gpio@1a_3", &desc);
+	if (ret)
+		return;
+
+	ret = dm_gpio_request(&desc, "bb_per_rst_b");
+	if (ret)
+		return;
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
+	dm_gpio_set_value(&desc, 0);
+	udelay(50);
+	dm_gpio_set_value(&desc, 1);
+
 	imx8_iomux_setup_multiple_pads(board_gpios, ARRAY_SIZE(board_gpios));
 
 	/* enable i2c port expander assert reset line */
