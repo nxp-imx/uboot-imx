@@ -151,6 +151,20 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 		strcat(commandline, bootargs_3rd);
 	}
 #endif
+
+	/* Add 'append_bootargs' to hold some paramemters which need to be appended
+	 * to bootargs */
+	char *append_bootargs = getenv("append_bootargs");
+	if (append_bootargs) {
+		if (strlen(append_bootargs) + 2 >
+				(sizeof(commandline) - strlen(commandline))) {
+			printf("The 'append_bootargs' is too long to be appended to bootargs\n");
+		} else {
+			strcat(commandline, " ");
+			strcat(commandline, append_bootargs);
+		}
+	}
+
 	printf("Kernel command line: %s\n", commandline);
 	setenv("bootargs", commandline);
 
