@@ -467,6 +467,29 @@ union xhci_trb *xhci_wait_for_event(struct xhci_ctrl *ctrl, trb_type expected)
 	BUG();
 }
 
+static void reset_ep(struct usb_device *udev, int ep_index)
+{
+	struct xhci_ctrl *ctrl = xhci_get_ctrl(udev);
+	struct xhci_ring *ring =  ctrl->devs[udev->slot_id]->eps[ep_index].ring;
+	union xhci_trb *event;
+
+	xhci_queue_command(ctrl, NULL, udev->slot_id, ep_index, TRB_RESET_EP);
+
+	event = xhci_wait_for_event(ctrl, TRB_COMPLETION);
+	BUG_ON(TRB_TO_SLOT_ID(le32_to_cpu(event->event_cmd.flags))
+		!= udev->slot_id || GET_COMP_CODE(le32_to_cpu(
+		event->event_cmd.status)) != COMP_SUCCESS);
+	xhci_acknowledge_event(ctrl);
+
+	xhci_queue_command(ctrl, (void *)((uintptr_t)ring->enqueue |
+		ring->cycle_state), udev->slot_id, ep_index, TRB_SET_DEQ);
+	event = xhci_wait_for_event(ctrl, TRB_COMPLETION);
+	BUG_ON(TRB_TO_SLOT_ID(le32_to_cpu(event->event_cmd.flags))
+		!= udev->slot_id || GET_COMP_CODE(le32_to_cpu(
+		event->event_cmd.status)) != COMP_SUCCESS);
+	xhci_acknowledge_event(ctrl);
+}
+
 /*
  * Stops transfer processing for an endpoint and throws away all unprocessed
  * TRBs by setting the xHC's dequeue pointer to our enqueue pointer. The next
@@ -554,6 +577,7 @@ int xhci_bulk_tx(struct usb_device *udev, unsigned long pipe,
 	int start_cycle;
 	u32 field = 0;
 	u32 length_field = 0;
+	u32 ep_state;
 	struct xhci_ctrl *ctrl = xhci_get_ctrl(udev);
 	int slot_id = udev->slot_id;
 	int ep_index;
@@ -611,10 +635,14 @@ int xhci_bulk_tx(struct usb_device *udev, unsigned long pipe,
 	 * prepare_trasfer() as there in 'Linux' since we are not
 	 * maintaining multiple TDs/transfer at the same time.
 	 */
-	ret = prepare_ring(ctrl, ring,
-			   le32_to_cpu(ep_ctx->ep_info) & EP_STATE_MASK);
+	ep_state = le32_to_cpu(ep_ctx->ep_info) & EP_STATE_MASK;
+	ret = prepare_ring(ctrl, ring, ep_state);
 	if (ret < 0)
 		return ret;
+
+	/* For halted EP, reset it to stopped state and set TR Dequeue Pointer */
+	if (ep_state == EP_STATE_HALTED)
+		reset_ep(udev, ep_index);
 
 	/*
 	 * Don't give the first TRB to the hardware (by toggling the cycle bit)
@@ -746,6 +774,7 @@ int xhci_ctrl_tx(struct usb_device *udev, unsigned long pipe,
 	int num_trbs;
 	u32 field;
 	u32 length_field;
+	u32 ep_state;
 	u64 buf_64 = 0;
 	struct xhci_generic_trb *start_trb;
 	struct xhci_ctrl *ctrl = xhci_get_ctrl(udev);
@@ -797,11 +826,15 @@ int xhci_ctrl_tx(struct usb_device *udev, unsigned long pipe,
 	 * prepare_trasfer() as there in 'Linux' since we are not
 	 * maintaining multiple TDs/transfer at the same time.
 	 */
-	ret = prepare_ring(ctrl, ep_ring,
-				le32_to_cpu(ep_ctx->ep_info) & EP_STATE_MASK);
 
+	ep_state = le32_to_cpu(ep_ctx->ep_info) & EP_STATE_MASK;
+	ret = prepare_ring(ctrl, ep_ring, ep_state);
 	if (ret < 0)
 		return ret;
+
+	/* For halted EP, reset it to stopped state and set TR Dequeue Pointer */
+	if (ep_state == EP_STATE_HALTED)
+		reset_ep(udev, ep_index);
 
 	/*
 	 * Don't give the first TRB to the hardware (by toggling the cycle bit)
