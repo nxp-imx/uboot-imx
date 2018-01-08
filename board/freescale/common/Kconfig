@@ -3,3 +3,9 @@ config CHAIN_OF_TRUST
 	select FSL_CAAM
 	bool
 	default y
+
+config USB_TCPC
+	bool "USB Typec port controller simple driver"
+	default n
+	help
+	  Enable USB type-c port controller (TCPC) driver
