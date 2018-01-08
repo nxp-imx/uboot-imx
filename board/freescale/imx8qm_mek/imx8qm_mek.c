@@ -288,35 +288,12 @@ static iomux_cfg_t ss_mux_gpio[] = {
 	SC_P_QSPI1A_SS0_B | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
 };
 
-struct udevice *tcpc_i2c_dev = NULL;
-
-static void setup_typec(void)
-{
-	struct udevice *bus;
-	uint8_t chip = 0x51;
-	int ret;
-
-	imx8_iomux_setup_multiple_pads(ss_mux_gpio, ARRAY_SIZE(ss_mux_gpio));
-	gpio_request(USB_TYPEC_SEL, "typec_sel");
-	gpio_request(USB_TYPEC_EN, "typec_en");
-
-	gpio_direction_output(USB_TYPEC_EN, 1);
-
-	ret = uclass_get_device_by_seq(UCLASS_I2C, 0, &bus);
-	if (ret) {
-		printf("%s: Can't find bus\n", __func__);
-		return;
-	}
-
-	ret = dm_i2c_probe(bus, chip, 0, &tcpc_i2c_dev);
-	if (ret) {
-		printf("%s: Can't find device id=0x%x\n",
-			__func__, chip);
-		return;
-	}
-
-	tcpc_init(tcpc_i2c_dev);
-}
+struct tcpc_port port;
+struct tcpc_port_config port_config = {
+	.i2c_bus = 0,
+	.addr = 0x51,
+	.port_type = TYPEC_PORT_DFP,
+};
 
 void ss_mux_select(enum typec_cc_polarity pol)
 {
@@ -326,12 +303,23 @@ void ss_mux_select(enum typec_cc_polarity pol)
 		gpio_direction_output(USB_TYPEC_SEL, 1);
 }
 
+static void setup_typec(void)
+{
+	imx8_iomux_setup_multiple_pads(ss_mux_gpio, ARRAY_SIZE(ss_mux_gpio));
+	gpio_request(USB_TYPEC_SEL, "typec_sel");
+	gpio_request(USB_TYPEC_EN, "typec_en");
+
+	gpio_direction_output(USB_TYPEC_EN, 1);
+
+	tcpc_init(&port, port_config, &ss_mux_select);
+}
+
 int board_usb_init(int index, enum usb_init_type init)
 {
 	int ret = 0;
 
-	if (init == USB_INIT_HOST && tcpc_i2c_dev)
-		ret = tcpc_setup_dfp_mode(tcpc_i2c_dev, &ss_mux_select);
+	if (init == USB_INIT_HOST)
+		ret = tcpc_setup_dfp_mode(&port);
 
 	return ret;
 }
@@ -340,8 +328,8 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 {
 	int ret = 0;
 
-	if (init == USB_INIT_HOST && tcpc_i2c_dev)
-		ret = tcpc_disable_vbus(tcpc_i2c_dev);
+	if (init == USB_INIT_HOST)
+		ret = tcpc_disable_src_vbus(&port);
 
 	return ret;
 }
@@ -350,7 +338,7 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 int board_init(void)
 {
 	/* Power up base board */
-	sc_pm_set_resource_power_mode(gd->arch.ipc_channel_handle, 
+	sc_pm_set_resource_power_mode(gd->arch.ipc_channel_handle,
 		SC_R_BOARD_R1, SC_PM_PW_MODE_ON);
 
 #ifdef CONFIG_MXC_GPIO

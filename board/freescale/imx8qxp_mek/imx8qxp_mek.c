@@ -421,12 +421,23 @@ static iomux_cfg_t ss_mux_gpio[] = {
 	SC_P_ENET0_REFCLK_125M_25M | MUX_MODE_ALT(4) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
 };
 
-struct udevice *tcpc_i2c_dev = NULL;
+struct tcpc_port port;
+struct tcpc_port_config port_config = {
+	.i2c_bus = 1,
+	.addr = 0x50,
+	.port_type = TYPEC_PORT_DFP,
+};
+
+void ss_mux_select(enum typec_cc_polarity pol)
+{
+	if (pol == TYPEC_POLARITY_CC1)
+		gpio_direction_output(USB_TYPEC_SEL, 0);
+	else
+		gpio_direction_output(USB_TYPEC_SEL, 1);
+}
 
 static void setup_typec(void)
 {
-	struct udevice *bus;
-	uint8_t chip = 0x50;
 	int ret;
 	struct gpio_desc typec_en_desc;
 
@@ -448,36 +459,15 @@ static void setup_typec(void)
 	/* Enable SS MUX */
 	dm_gpio_set_dir_flags(&typec_en_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
 
-	ret = uclass_get_device_by_seq(UCLASS_I2C, 1, &bus);
-	if (ret) {
-		printf("%s: Can't find bus\n", __func__);
-		return;
-	}
-
-	ret = dm_i2c_probe(bus, chip, 0, &tcpc_i2c_dev);
-	if (ret) {
-		printf("%s: Can't find device id=0x%x\n",
-			__func__, chip);
-		return;
-	}
-
-	tcpc_init(tcpc_i2c_dev);
-}
-
-void ss_mux_select(enum typec_cc_polarity pol)
-{
-	if (pol == TYPEC_POLARITY_CC1)
-		gpio_direction_output(USB_TYPEC_SEL, 0);
-	else
-		gpio_direction_output(USB_TYPEC_SEL, 1);
+	tcpc_init(&port, port_config, &ss_mux_select);
 }
 
 int board_usb_init(int index, enum usb_init_type init)
 {
 	int ret = 0;
 
-	if (init == USB_INIT_HOST && tcpc_i2c_dev)
-		ret = tcpc_setup_dfp_mode(tcpc_i2c_dev, &ss_mux_select);
+	if (init == USB_INIT_HOST)
+		ret = tcpc_setup_dfp_mode(&port);
 
 	return ret;
 
@@ -487,8 +477,8 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 {
 	int ret = 0;
 
-	if (init == USB_INIT_HOST && tcpc_i2c_dev)
-		ret = tcpc_disable_vbus(tcpc_i2c_dev);
+	if (init == USB_INIT_HOST)
+		ret = tcpc_disable_src_vbus(&port);
 
 	return ret;
 }
