@@ -23,6 +23,8 @@
 #include <spl.h>
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
+#include <dm.h>
+#include "../common/tcpc.h"
 #include "../common/pfuze.h"
 #include <usb.h>
 #include <dwc3-uboot.h>
@@ -224,6 +226,32 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 }
 #endif
 
+#ifdef CONFIG_USB_TCPC
+struct tcpc_port port;
+struct tcpc_port_config port_config = {
+	.i2c_bus = 0,
+	.addr = 0x50,
+	.port_type = TYPEC_PORT_UFP,
+	.max_snk_mv = 20000,
+	.max_snk_ma = 3000,
+	.max_snk_mw = 15000,
+	.op_snk_mv = 9000,
+};
+
+static int setup_typec(void)
+{
+	int ret;
+
+	ret = tcpc_init(&port, port_config, NULL);
+	if (ret) {
+		printf("%s: tcpc init failed, err=%d\n",
+			__func__, ret);
+	}
+
+	return ret;
+}
+#endif
+
 int board_init(void)
 {
 	board_qspi_init();
@@ -232,6 +260,9 @@ int board_init(void)
 	setup_fec();
 #endif
 
+#ifdef CONFIG_USB_TCPC
+	setup_typec();
+#endif
 	return 0;
 }
 
