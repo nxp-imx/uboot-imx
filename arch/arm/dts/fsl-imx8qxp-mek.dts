@@ -331,6 +331,7 @@
 	pca9646_switch: mux@71 {
 		compatible = "nxp,pca9544";
 		reg = <0x71>;
+		u-boot,i2c-offset-len = <0>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 
