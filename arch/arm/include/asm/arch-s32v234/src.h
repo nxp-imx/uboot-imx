@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * (C) Copyright 2017-2018 NXP
+ * (C) Copyright 2017-2018,2020 NXP
  */
 
 #ifndef __ASM_ARCH_SRC_H__
@@ -49,8 +49,9 @@ struct src {
 	u32 gpr4;
 	u32 gpr5;
 	u32 gpr6;
-	u32 gpr7;
-	u32 reserved_0x11C[2];
+	u32 gpr7;		/* TREERUNNER_GENERATION_1 specific */
+	u32 gpr8;		/* TREERUNNER_GENERATION_2 specific */
+	u32 reserved_0x120[1];
 	u32 gpr10;
 	u32 gpr11;
 	u32 gpr12;

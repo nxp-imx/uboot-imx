@@ -30,6 +30,8 @@
 #define SIUL2_MIDR1_MAJOR_SHIFT		(4)
 #define SIUL2_MIDR1_MAJOR_MASK		(0xF << SIUL2_MIDR1_MAJOR_SHIFT)
 
+#define TREERUNNER_GENERATION_2_MAJOR   1
+
 static inline int get_siul2_midr1_minor(void)
 {
 	return (readl(SIUL2_MIDR1) & SIUL2_MIDR1_MINOR_MASK);

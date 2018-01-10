@@ -69,6 +69,11 @@
 #define S32V234_NIC_FASTDMA0_WRITE_QOS		(0x40013484)
 
 #define S32V234_NIC_RESET			(0x0)
+
+/* SRC_GPR8 bit fields */
+#define SRC_GPR8_2D_ACE_QOS_OFFSET				0
+#define MIN_DCU_QOS_PRIORITY					0xD
+
 #endif /* CONFIG_DCU_QOS_FIX */
 
 u32 get_cpu_rev(void)
@@ -626,6 +631,23 @@ __weak void setup_iomux_dcu(void)
 #ifdef CONFIG_DCU_QOS_FIX
 int board_dcu_qos(void)
 {
+	/*
+	 * SRC_GPR8.2D_ACE_QOS was introduced in TR2.0 and is used to set
+	 * the minimum QOS value for DCU DMA master. Depending on the pixel
+	 * output rate of the display, the real time requirements of the 2D-ACE
+	 * have to be ensured to avoid underruns of its local buffers. This
+	 * requires that other masters of the device interconnect should receive
+	 * a lower QoS than programmed by SRC_GPR8.
+	 */
+	if (get_siul2_midr1_major() == TREERUNNER_GENERATION_2_MAJOR) {
+		struct src *src_regs = (struct src *)SRC_SOC_BASE_ADDR;
+		u32 val = readl(&src_regs->gpr8);
+
+		writel(val |
+		       (MIN_DCU_QOS_PRIORITY << SRC_GPR8_2D_ACE_QOS_OFFSET),
+		       &src_regs->gpr8);
+	}
+
 	/* m_fastdma1_ib */
 	writel(S32V234_NIC_RESET, S32V234_NIC_FASTDMA1_IB_READ_QOS);
 	writel(S32V234_NIC_RESET, S32V234_NIC_FASTDMA1_IB_WRITE_QOS);
