@@ -20,6 +20,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define LPI2C_NACK_TOUT_MS 1
 #define LPI2C_TIMEOUT_MS 100
 
+static int bus_i2c_init(struct udevice *bus, int speed);
+
 /* Weak linked function for overridden by some SoC power function */
 int __weak init_i2c_power(unsigned i2c_num)
 {
@@ -168,7 +170,14 @@ static int bus_i2c_start(struct udevice *bus, u8 addr, u8 dir)
 	result = imx_lpci2c_check_busy_bus(bus);
 	if (result) {
 		debug("i2c: start check busy bus: 0x%x\n", result);
-		return result;
+
+		/* Try to init the lpi2c then check the bus busy again */
+		bus_i2c_init(bus, 100000);
+		result = imx_lpci2c_check_busy_bus(bus);
+		if (result) {
+			printf("i2c: Error check busy bus: 0x%x\n", result);
+			return result;
+		}
 	}
 	/* clear all status flags */
 	writel(0x7f00, &regs->msr);
