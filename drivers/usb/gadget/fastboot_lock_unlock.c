@@ -27,10 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <fsl_fastboot.h>
-#include "fastboot_lock_unlock.h"
-
 #include <common.h>
 #include <mapmem.h>
 #include <linux/types.h>
@@ -39,6 +35,8 @@
 #include <ext_common.h>
 #include <stdio_dev.h>
 #include <stdlib.h>
+#include "fastboot_lock_unlock.h"
+#include <fsl_fastboot.h>
 
 #ifdef FASTBOOT_ENCRYPT_LOCK
 
