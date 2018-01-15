@@ -171,6 +171,13 @@ int board_init(void)
 
 	rtc_init();
 
+	/*
+	 * Enable HDMI output
+	 */
+
+	i2c_set_bus_num(2);
+	i2c_reg_write(0x3f, 0x8, 0x35);
+
 	return 0;
 }
 
