@@ -10,6 +10,7 @@
 #include <i2c.h>
 #include <miiphy.h>
 #include <netdev.h>
+#include <rtc.h>
 #include <asm/io.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/siul.h>
@@ -167,6 +168,8 @@ int board_init(void)
 {
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
+
+	rtc_init();
 
 	return 0;
 }
