@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -62,7 +62,7 @@ int do_hdp(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	if (strncmp(argv[1], "tracescfw", 9) == 0) {
 		g_debug_scfw = 1;
 		printf("Enabled SCFW API tracing\n");
-	} else if (strncmp(argv[1], "load", 7) == 0) {
+	} else if (strncmp(argv[1], "load", 4) == 0) {
 		unsigned long address = 0;
 		unsigned long offset  = 0x2000;
 		const int iram_size   = 0x10000;
