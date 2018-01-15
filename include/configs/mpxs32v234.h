@@ -40,6 +40,8 @@
 
 #define	FDT_FILE fsl-s32v234sbc.dtb
 
+#define CONFIG_BOARD_EXTRA_ENV_SETTINGS "dvi_on=i2c dev 2; i2c mw 3f 8 35\0"
+
 /* we include this file here because it depends on the above definitions */
 #include <configs/s32v234_common.h>
 
