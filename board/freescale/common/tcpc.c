@@ -614,6 +614,7 @@ static void tcpc_pd_sink_process(struct tcpc_port *port)
 
 		switch (pd_state) {
 		case WAIT_SOURCE_CAP:
+		case SINK_READY:
 			if (msgtype != PD_DATA_SOURCE_CAP)
 				continue;
 
@@ -656,9 +657,8 @@ static void tcpc_pd_sink_process(struct tcpc_port *port)
 				continue;
 
 			if (msgtype == PD_CTRL_PS_RDY) {
-			    tcpc_log(port, "PD source ready! \n");
-			    pd_state = SINK_READY;
-				return;
+				tcpc_log(port, "PD source ready!\n");
+				pd_state = SINK_READY;
 			}
 
 			break;
