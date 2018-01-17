@@ -255,31 +255,35 @@ static void setup_iomux_fec(void)
 
 static void enet_device_phy_reset(void)
 {
-	struct gpio_desc desc;
+	struct gpio_desc desc_enet0;
+	struct gpio_desc desc_enet1;
 	int ret;
 
-	if (0 == CONFIG_FEC_ENET_DEV) {
-		ret = dm_gpio_lookup_name("gpio@18_1", &desc);
-		if (ret)
-			return;
+	ret = dm_gpio_lookup_name("gpio@18_1", &desc_enet0);
+	if (ret)
+		return;
 
-		ret = dm_gpio_request(&desc, "enet0_reset");
-		if (ret)
-			return;
-	} else {
-		ret = dm_gpio_lookup_name("gpio@18_4", &desc);
-		if (ret)
-			return;
+	ret = dm_gpio_request(&desc_enet0, "enet0_reset");
+	if (ret)
+		return;
 
-		ret = dm_gpio_request(&desc, "enet1_reset");
-		if (ret)
-			return;
-	}
+	ret = dm_gpio_lookup_name("gpio@18_4", &desc_enet1);
+	if (ret)
+		return;
 
-	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
-	dm_gpio_set_value(&desc, 0);
+	ret = dm_gpio_request(&desc_enet1, "enet1_reset");
+	if (ret)
+		return;
+
+	dm_gpio_set_dir_flags(&desc_enet0, GPIOD_IS_OUT);
+	dm_gpio_set_value(&desc_enet0, 0);
 	udelay(50);
-	dm_gpio_set_value(&desc, 1);
+	dm_gpio_set_value(&desc_enet0, 1);
+
+	dm_gpio_set_dir_flags(&desc_enet1, GPIOD_IS_OUT);
+	dm_gpio_set_value(&desc_enet1, 0);
+	udelay(50);
+	dm_gpio_set_value(&desc_enet1, 1);
 
 	/* The board has a long delay for this reset to become stable */
 	mdelay(200);
