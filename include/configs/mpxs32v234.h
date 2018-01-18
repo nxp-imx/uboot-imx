@@ -42,6 +42,8 @@
 
 #define CONFIG_BOARD_EXTRA_ENV_SETTINGS "dvi_on=i2c dev 2; i2c mw 3f 8 35\0"
 
+#define CONFIG_PCIE_EXT_CLOCK
+
 /* we include this file here because it depends on the above definitions */
 #include <configs/s32v234_common.h>
 
