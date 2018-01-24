@@ -67,7 +67,7 @@
 #define CONFIG_SPL_NAND_SUPPORT
 #define CONFIG_SPL_DMA_SUPPORT
 #define CONFIG_SPL_NAND_MXS
-#define CONFIG_SYS_NAND_U_BOOT_OFFS 	0x8000000 /* Put the FIT out of first 128MB boot area */
+#define CONFIG_SYS_NAND_U_BOOT_OFFS 	0x4000000 /* Put the FIT out of first 64MB boot area */
 #endif
 #define CONFIG_SPL_DMA_SUPPORT
 
