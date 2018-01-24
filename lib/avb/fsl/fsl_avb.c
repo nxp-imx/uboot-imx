@@ -62,7 +62,7 @@ static struct blk_desc *get_mmc_desc(void) {
 
 	assert(buffer != NULL && out_num_read != NULL);
 
-	if (!fs_dev_desc && (fs_dev_desc = get_mmc_desc()) == NULL) {
+	if ((fs_dev_desc = get_mmc_desc()) == NULL) {
 		ERR("mmc device not found\n");
 		return AVB_IO_RESULT_ERROR_NO_SUCH_PARTITION;
 	}
@@ -145,7 +145,7 @@ fail:
 
 	assert(buffer != NULL && out_num_read != NULL);
 
-	if (!fs_dev_desc && (fs_dev_desc = get_mmc_desc()) == NULL) {
+	if ((fs_dev_desc = get_mmc_desc()) == NULL) {
 		ERR("mmc device not found\n");
 		return AVB_IO_RESULT_ERROR_NO_SUCH_PARTITION;
 	}
@@ -268,7 +268,7 @@ fail:
 
 	assert(buffer != NULL);
 
-	if (!fs_dev_desc && (fs_dev_desc = get_mmc_desc()) == NULL) {
+	if ((fs_dev_desc = get_mmc_desc()) == NULL) {
 		ERR("mmc device not found\n");
 		return AVB_IO_RESULT_ERROR_NO_SUCH_PARTITION;
 	}
