@@ -2787,28 +2787,33 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 		    FASTBOOT_BOOTLOADER_VBOOT_KEY,
 		    strlen(FASTBOOT_BOOTLOADER_VBOOT_KEY))) {
 		strcpy(response, "OKAY");
-	} else if (!strncmp(cmd + len - 15, "unlock_critical", 15)) {
+	} else if (!strncmp(cmd + len - strlen("unlock_critical"),
+				"unlock_critical", strlen("unlock_critical"))) {
 #else
-	if (!strncmp(cmd + len - 15, "unlock_critical", 15)) {
+	if (!strncmp(cmd + len - strlen("unlock_critical"),
+				"unlock_critical", strlen("unlock_critical"))) {
 #endif
 		strcpy(response, "OKAY");
-	} else if (!strncmp(cmd + len - 13, "lock_critical", 13)) {
+	} else if (!strncmp(cmd + len - strlen("lock_critical"),
+				"lock_critical", strlen("lock_critical"))) {
 		strcpy(response, "OKAY");
-	} else if (!strncmp(cmd + len - 6, "unlock", 6)) {
+	} else if (!strncmp(cmd + len - strlen("unlock"),
+				"unlock", strlen("unlock"))) {
 		printf("flashing unlock.\n");
 		status = do_fastboot_unlock(false);
 		if (status != FASTBOOT_LOCK_ERROR)
 			strcpy(response, "OKAY");
 		else
 			strcpy(response, "FAIL unlock device failed.");
-	} else if (!strncmp(cmd + len - 4, "lock", 4)) {
+	} else if (!strncmp(cmd + len - strlen("lock"), "lock", strlen("lock"))) {
 		printf("flashing lock.\n");
 		status = do_fastboot_lock();
 		if (status != FASTBOOT_LOCK_ERROR)
 			strcpy(response, "OKAY");
 		else
 			strcpy(response, "FAIL lock device failed.");
-	} else if (!strncmp(cmd + len - 18, "get_unlock_ability", 18)) {
+	} else if (!strncmp(cmd + len - strlen("get_unlock_ability"),
+				"get_unlock_ability", strlen("get_unlock_ability"))) {
 		result = fastboot_lock_enable();
 		if (result == FASTBOOT_UL_ENABLE) {
 			fastboot_tx_write_more("INFO1");
