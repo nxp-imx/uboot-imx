@@ -40,6 +40,7 @@
 #define FASTBOOT_MMC_BOOT1_PARTITION_ID  2
 
 #define FASTBOOT_PARTITION_TEE "tos"
+#define FASTBOOT_PARTITION_PRDATA "presistdata"
 
 #ifdef CONFIG_ANDROID_AB_SUPPORT
 #define FASTBOOT_PARTITION_BOOT_A "boot_a"
@@ -56,7 +57,6 @@
 #endif
 #define FASTBOOT_PARTITION_MISC "misc"
 #define FASTBOOT_PARTITION_GPT "gpt"
-#define FASTBOOT_PARTITION_PRDATA "prdata"
 #define FASTBOOT_PARTITION_FBMISC "fbmisc"
 #else
 #define FASTBOOT_PARTITION_BOOT "boot"
@@ -68,7 +68,6 @@
 #define FASTBOOT_PARTITION_DATA "userdata"
 #define FASTBOOT_PARTITION_GPT "gpt"
 #define FASTBOOT_PARTITION_MISC "misc"
-#define FASTBOOT_PARTITION_PRDATA "presistdata"
 #define FASTBOOT_PARTITION_FBMISC "fbmisc"
 #endif
 
