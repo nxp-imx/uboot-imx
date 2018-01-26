@@ -9,6 +9,7 @@
 #define _PCIE_LAYERSCAPE_H_
 #include <pci.h>
 #include <dm.h>
+#include <linux/sizes.h>
 
 #ifndef CONFIG_SYS_PCI_MEMORY_BUS
 #define CONFIG_SYS_PCI_MEMORY_BUS CONFIG_SYS_SDRAM_BASE
@@ -85,11 +86,17 @@
 
 #define PCIE_PF_NUM		2
 #define PCIE_VF_NUM		64
+#define BAR_NUM			4
 
-#define PCIE_BAR0_SIZE		(4 * 1024) /* 4K */
-#define PCIE_BAR1_SIZE		(8 * 1024) /* 8K for MSIX */
-#define PCIE_BAR2_SIZE		(4 * 1024) /* 4K */
-#define PCIE_BAR4_SIZE		(1 * 1024 * 1024) /* 1M */
+#define PCIE_BAR0_SIZE		SZ_4K /* 4K */
+#define PCIE_BAR1_SIZE		SZ_8K /* 8K for MSIX */
+#define PCIE_BAR2_SIZE		SZ_4K /* 4K */
+#define PCIE_BAR4_SIZE		SZ_1M /* 1M */
+
+#define PCIE_SRIOV_VFBAR0	0x19C
+#define PCIE_CTRL1_FUNC_NUM	0x00100000
+
+#define PCIE_MASK_OFFSET(flag, pf) ((flag) ? 0 : (0x1000 + 0x20000 * (pf)))
 
 /* LUT registers */
 #define PCIE_LUT_UDR(n)		(0x800 + (n) * 8)
@@ -144,6 +151,8 @@ struct ls_pcie {
 	bool big_endian;
 	bool enabled;
 	int next_lut_index;
+	uint sriov_flag;
+	uint cfg2_flag;
 	int stream_id_cur;
 	int mode;
 };
