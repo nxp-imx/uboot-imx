@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -79,6 +79,9 @@
 
 /* ENET0 MDIO are shared */
 #define CONFIG_FEC_MXC_MDIO_BASE	0x5B040000
+
+#define CONFIG_LIB_RAND
+#define CONFIG_NET_RANDOM_ETHADDR
 
 /* Boot M4 */
 #define M4_BOOT_ENV \
