@@ -3,6 +3,8 @@
  * Copyright (C) 2016-2017 Cadence Design Systems, Inc.
  * All rights reserved worldwide.
  *
+ * Copyright 2017-2018 NXP
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -25,7 +27,7 @@
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT  (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. THE SOFTWARE IS PROVIDED "AS IS",
  * WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -35,47 +37,79 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Copyright 2017-2018 NXP
- *
  ******************************************************************************
  *
- * externs.h
+ * API_AFE.c
  *
  ******************************************************************************
  */
 
-#ifndef EXTERNS_H_
-#define EXTERNS_H_
-
+#include "address.h"
+#include "API_AFE.h"
+#include "util.h"
 #ifndef __UBOOT__
-#include <stdint.h>
+#include <stdio.h>
+#endif
 
+void afe_write(unsigned int offset, unsigned short val)
+{
+#ifdef EXTERNAL_AFE
+	cdn_phapb_write(offset << 2, val);
 #else
-#include <common.h>
+	CDN_API_STATUS sts;
+
+	sts = cdn_api_general_write_register_blocking(
+		ADDR_AFE + (offset << 2), val);
+
+	if (sts != CDN_OK) {
+		printf("CDN_API_General_Write_Register_blocking(0x%.8X, 0x%.8X) returned %d\n",
+		       offset,
+		       val,
+		       (int)sts);
+	}
 #endif
-/**
- * \addtogroup UTILS
- * \{
- */
-/**
- * \brief read from apb
- * \param addr - address to read
- * \param value - pointer to store value
- * \return non-zero value if error
- */
-/*extern int cdn_bus_read(unsigned int addr, unsigned int* value);*/
+}
 
-/**
- * \brief write to apb
- * \param addr - address to write
- * \param value - value to write
- * \return non-zero if error
- */
-/*extern int cdn_bus_write(unsigned int addr, unsigned int value);*/
+unsigned short afe_read(unsigned int offset)
+{
+	GENERAL_READ_REGISTER_RESPONSE resp;
 
-uint32_t cdn_apb_read(uint32_t addr, uint32_t *value);
-uint32_t cdn_sapb_read(uint32_t addr, uint32_t *value);
-uint32_t cdn_apb_write(uint32_t addr, uint32_t value);
-uint32_t cdn_sapb_write(uint32_t addr, uint32_t value);
+#ifdef EXTERNAL_AFE
+	cdn_phapb_read(offset << 2, &resp.val);
+#else
+	CDN_API_STATUS sts;
+
+	sts = cdn_api_general_read_register_blocking(
+		ADDR_AFE + (offset << 2), &resp);
+
+	if (sts != CDN_OK) {
+		printf("CDN_API_General_Read_Register_blocking(0x%.8X) returned %d\n",
+		       offset,
+		       (int)sts);
+	}
 #endif
+	return resp.val;
+}
 
+void set_field_value(reg_field_t *reg_field, u32 value)
+{
+	u8 length;
+	u32 max_value;
+	u32 trunc_val;
+	length = (reg_field->msb - reg_field->lsb + 1);
+
+	max_value = (1 << length) - 1;
+	if (value > max_value) {
+		trunc_val = value;
+		trunc_val &= (1 << length) - 1;
+		printf("set_field_value() Error! Specified value (0x%0X) exceeds field capacity - it will by truncated to 0x%0X (%0d-bit field - max value: %0d dec)\n",
+		       value, trunc_val, length, max_value);
+	} else {
+		reg_field->value = value;
+	}
+}
+
+int set_reg_value(reg_field_t reg_field)
+{
+	return reg_field.value << reg_field.lsb;
+}
