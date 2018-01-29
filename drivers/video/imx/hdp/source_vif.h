@@ -1,7 +1,9 @@
 /******************************************************************************
  *
- * Copyright (C) 2016-2017 Cadence Design Systems, Inc.
+ * Copyright (C) 2017 Cadence Design Systems, Inc.
  * All rights reserved worldwide.
+ *
+ * Copyright 2017-2018 NXP
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -25,7 +27,7 @@
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT  (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. THE SOFTWARE IS PROVIDED "AS IS",
  * WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -35,47 +37,57 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Copyright 2017-2018 NXP
+ ******************************************************************************
+ *
+ * This file was auto-generated. Do not edit it manually.
  *
  ******************************************************************************
  *
- * externs.h
+ * source_vif.h
  *
  ******************************************************************************
  */
 
-#ifndef EXTERNS_H_
-#define EXTERNS_H_
+#ifndef SOURCE_VIF_H_
+#define SOURCE_VIF_H_
 
-#ifndef __UBOOT__
-#include <stdint.h>
+/* register BND_HSYNC2VSYNC */
+#define BND_HSYNC2VSYNC 0
+#define F_IP_DTCT_WIN(x) (((x) & ((1 << 12) - 1)) << 0)
+#define F_IP_DTCT_WIN_RD(x) (((x) & (((1 << 12) - 1) << 0)) >> 0)
+#define F_IP_DET_EN(x) (((x) & ((1 << 1) - 1)) << 12)
+#define F_IP_DET_EN_RD(x) (((x) & (((1 << 1) - 1) << 12)) >> 12)
+#define F_IP_VIF_BYPASS(x) (((x) & ((1 << 1) - 1)) << 13)
+#define F_IP_VIF_BYPASS_RD(x) (((x) & (((1 << 1) - 1) << 13)) >> 13)
 
-#else
-#include <common.h>
-#endif
-/**
- * \addtogroup UTILS
- * \{
- */
-/**
- * \brief read from apb
- * \param addr - address to read
- * \param value - pointer to store value
- * \return non-zero value if error
- */
-/*extern int cdn_bus_read(unsigned int addr, unsigned int* value);*/
+/* register HSYNC2VSYNC_F1_L1 */
+#define HSYNC2VSYNC_F1_L1 1
+#define F_IP_DTCT_HSYNC2VSYNC_F1(x) (((x) & ((1 << 16) - 1)) << 0)
+#define F_IP_DTCT_HSYNC2VSYNC_F1_RD(x) (((x) & (((1 << 16) - 1) << 0)) >> 0)
 
-/**
- * \brief write to apb
- * \param addr - address to write
- * \param value - value to write
- * \return non-zero if error
- */
-/*extern int cdn_bus_write(unsigned int addr, unsigned int value);*/
+/* register HSYNC2VSYNC_F2_L1 */
+#define HSYNC2VSYNC_F2_L1 2
+#define F_IP_DTCT_HSYNC2VSYNC_F2(x) (((x) & ((1 << 16) - 1)) << 0)
+#define F_IP_DTCT_HSYNC2VSYNC_F2_RD(x) (((x) & (((1 << 16) - 1) << 0)) >> 0)
 
-uint32_t cdn_apb_read(uint32_t addr, uint32_t *value);
-uint32_t cdn_sapb_read(uint32_t addr, uint32_t *value);
-uint32_t cdn_apb_write(uint32_t addr, uint32_t value);
-uint32_t cdn_sapb_write(uint32_t addr, uint32_t value);
-#endif
+/* register HSYNC2VSYNC_STATUS */
+#define HSYNC2VSYNC_STATUS 3
+#define F_IP_DTCT_ERR(x) (((x) & ((1 << 1) - 1)) << 0)
+#define F_IP_DTCT_ERR_RD(x) (((x) & (((1 << 1) - 1) << 0)) >> 0)
+#define F_IP_DCT_IP(x) (((x) & ((1 << 1) - 1)) << 1)
+#define F_IP_DCT_IP_RD(x) (((x) & (((1 << 1) - 1) << 1)) >> 1)
+#define F_IP_DTCT_VJITTER(x) (((x) & ((1 << 1) - 1)) << 2)
+#define F_IP_DTCT_VJITTER_RD(x) (((x) & (((1 << 1) - 1) << 2)) >> 2)
+#define F_IP_DTCT_HJITTER(x) (((x) & ((1 << 1) - 1)) << 3)
+#define F_IP_DTCT_HJITTER_RD(x) (((x) & (((1 << 1) - 1) << 3)) >> 3)
 
+/* register HSYNC2VSYNC_POL_CTRL */
+#define HSYNC2VSYNC_POL_CTRL 4
+#define F_VPOL(x) (((x) & ((1 << 1) - 1)) << 2)
+#define F_VPOL_RD(x) (((x) & (((1 << 1) - 1) << 2)) >> 2)
+#define F_HPOL(x) (((x) & ((1 << 1) - 1)) << 1)
+#define F_HPOL_RD(x) (((x) & (((1 << 1) - 1) << 1)) >> 1)
+#define F_VIF_AUTO_MODE(x) (((x) & ((1 << 1) - 1)) << 0)
+#define F_VIF_AUTO_MODE_RD(x) (((x) & (((1 << 1) - 1) << 0)) >> 0)
+
+#endif				/*SOURCE_VIF */

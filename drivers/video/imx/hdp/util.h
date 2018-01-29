@@ -273,6 +273,9 @@ typedef struct {
 	unsigned int tmp;
 } state_struct;
 
+extern state_struct state;
+extern int cdn_bus_read(unsigned int addr, unsigned int* value);
+extern int cdn_bus_write(unsigned int addr, unsigned int value);
 unsigned short internal_get_msg_len(void);
 
 #endif

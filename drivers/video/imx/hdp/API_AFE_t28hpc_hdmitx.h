@@ -3,6 +3,8 @@
  * Copyright (C) 2016-2017 Cadence Design Systems, Inc.
  * All rights reserved worldwide.
  *
+ * Copyright 2017-2018 NXP
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -25,7 +27,7 @@
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT  (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. THE SOFTWARE IS PROVIDED "AS IS",
  * WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -35,47 +37,28 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Copyright 2017-2018 NXP
- *
  ******************************************************************************
  *
- * externs.h
+ * API_AFE_t28hpc_hdmitx.h
  *
  ******************************************************************************
  */
 
-#ifndef EXTERNS_H_
-#define EXTERNS_H_
+#ifndef API_AFE_T28HPC_HDMITX_H_
+#define API_AFE_T28HPC_HDMITX_H_
 
 #ifndef __UBOOT__
+#include <assert.h>
 #include <stdint.h>
-
 #else
 #include <common.h>
 #endif
-/**
- * \addtogroup UTILS
- * \{
- */
-/**
- * \brief read from apb
- * \param addr - address to read
- * \param value - pointer to store value
- * \return non-zero value if error
- */
-/*extern int cdn_bus_read(unsigned int addr, unsigned int* value);*/
+#include "vic_table.h"
+#include "API_AFE.h"
+#include "externs.h"
 
-/**
- * \brief write to apb
- * \param addr - address to write
- * \param value - value to write
- * \return non-zero if error
- */
-/*extern int cdn_bus_write(unsigned int addr, unsigned int value);*/
+int phy_cfg_t28hpc(int num_lanes, VIC_MODES vic_mode, int bpp,
+		VIC_PXL_ENCODING_FORMAT format, bool pixel_clk_from_phy);
+int hdmi_tx_t28hpc_power_config_seq(int num_lanes);
 
-uint32_t cdn_apb_read(uint32_t addr, uint32_t *value);
-uint32_t cdn_sapb_read(uint32_t addr, uint32_t *value);
-uint32_t cdn_apb_write(uint32_t addr, uint32_t value);
-uint32_t cdn_sapb_write(uint32_t addr, uint32_t value);
 #endif
-
