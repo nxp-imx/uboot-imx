@@ -3,6 +3,8 @@
  * Copyright (C) 2016-2017 Cadence Design Systems, Inc.
  * All rights reserved worldwide.
  *
+ * Copyright 2017-2018 NXP
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -25,7 +27,7 @@
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT  (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. THE SOFTWARE IS PROVIDED "AS IS",
  * WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -35,47 +37,32 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Copyright 2017-2018 NXP
+ ******************************************************************************
+ *
+ * This file was auto-generated. Do not edit it manually.
  *
  ******************************************************************************
  *
- * externs.h
+ * vic_table.c
  *
  ******************************************************************************
  */
+#include "vic_table.h"
 
-#ifndef EXTERNS_H_
-#define EXTERNS_H_
-
-#ifndef __UBOOT__
-#include <stdint.h>
-
-#else
-#include <common.h>
-#endif
-/**
- * \addtogroup UTILS
- * \{
- */
-/**
- * \brief read from apb
- * \param addr - address to read
- * \param value - pointer to store value
- * \return non-zero value if error
- */
-/*extern int cdn_bus_read(unsigned int addr, unsigned int* value);*/
-
-/**
- * \brief write to apb
- * \param addr - address to write
- * \param value - value to write
- * \return non-zero if error
- */
-/*extern int cdn_bus_write(unsigned int addr, unsigned int value);*/
-
-uint32_t cdn_apb_read(uint32_t addr, uint32_t *value);
-uint32_t cdn_sapb_read(uint32_t addr, uint32_t *value);
-uint32_t cdn_apb_write(uint32_t addr, uint32_t value);
-uint32_t cdn_sapb_write(uint32_t addr, uint32_t value);
-#endif
-
+const unsigned int vic_table[VIC_MODE_COUNT][27] = {
+	{858, 720, 138, 62, 16, 60, 525, 480, 45, 6, 9, 30, 59, 27000,
+	 PROGRESSIVE, ACTIVE_LOW, ACTIVE_LOW, 1, 65535, 1, 46, 65535, 65535, 3,
+	 8, 0},
+	{1650, 1280, 370, 40, 110, 220, 750, 720, 30, 5, 5, 20, 60, 74250,
+	 PROGRESSIVE, ACTIVE_HIGH, ACTIVE_HIGH, 1, 65535, 1, 31, 65535, 65535,
+	 4, 8, 0},
+	{2200, 1920, 280, 44, 88, 148, 1125, 1080, 45, 5, 4,
+	 36, 60, 148500, PROGRESSIVE, ACTIVE_HIGH,
+	 ACTIVE_HIGH, 1, 65535, 1, 46, 65535, 65535, 16, 8, 0},
+	{4400, 3840, 560, 88, 176, 296, 2250, 2160, 90, 10, 8, 72, 60,
+	 594000, PROGRESSIVE, ACTIVE_HIGH, ACTIVE_HIGH, 4, 266, 262, 22, 525,
+	 285, 97, 8, 0},
+	{4400, 3840, 560, 88, 176, 296, 2250, 2160, 90, 10, 8, 72, 30,
+	 297000, PROGRESSIVE, ACTIVE_HIGH, ACTIVE_HIGH, 4, 266, 262, 22, 525,
+	 285, 95, 8, 0},
+};
