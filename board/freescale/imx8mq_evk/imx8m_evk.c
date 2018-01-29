@@ -1,6 +1,6 @@
 /*
  * Copyright 2016 Freescale Semiconductor, Inc.
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -20,6 +20,8 @@
 #include <asm/imx-common/gpio.h>
 #include <asm/imx-common/mxc_i2c.h>
 #include <asm/arch/clock.h>
+#include <asm/imx-common/video.h>
+#include <asm/arch/video_common.h>
 #include <spl.h>
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
@@ -114,7 +116,8 @@ static iomux_v3_cfg_t const fec1_rst_pads[] = {
 
 static void setup_iomux_fec(void)
 {
-	imx_iomux_v3_setup_multiple_pads(fec1_rst_pads, ARRAY_SIZE(fec1_rst_pads));
+	imx_iomux_v3_setup_multiple_pads(fec1_rst_pads,
+					 ARRAY_SIZE(fec1_rst_pads));
 
 	gpio_request(IMX_GPIO_NR(1, 9), "fec1_rst");
 	gpio_direction_output(IMX_GPIO_NR(1, 9), 0);
@@ -216,9 +219,8 @@ int board_usb_init(int index, enum usb_init_type init)
 
 int board_usb_cleanup(int index, enum usb_init_type init)
 {
-	if (index == 0 && init == USB_INIT_DEVICE) {
+	if (index == 0 && init == USB_INIT_DEVICE)
 		dwc3_uboot_exit(index);
-	}
 
 	imx8m_usb_power(index, false);
 
@@ -245,7 +247,7 @@ static int setup_typec(void)
 	ret = tcpc_init(&port, port_config, NULL);
 	if (ret) {
 		printf("%s: tcpc init failed, err=%d\n",
-			__func__, ret);
+		       __func__, ret);
 	}
 
 	return ret;
@@ -293,3 +295,50 @@ int is_recovery_key_pressing(void)
 }
 #endif /*CONFIG_ANDROID_RECOVERY*/
 #endif /*CONFIG_FSL_FASTBOOT*/
+
+#if defined(CONFIG_VIDEO_IMXDCSS)
+
+struct display_info_t const displays[] = {{
+	.bus	= 0, /* Unused */
+	.addr	= 0, /* Unused */
+	.pixfmt	= GDF_32BIT_X888RGB,
+	.detect	= NULL,
+	.enable	= NULL,
+#ifndef CONFIG_VIDEO_IMXDCSS_1080P
+	.mode	= {
+		.name           = "HDMI", /* 720P60 */
+		.refresh        = 60,
+		.xres           = 1280,
+		.yres           = 720,
+		.pixclock       = 13468, /* 74250  kHz */
+		.left_margin    = 110,
+		.right_margin   = 220,
+		.upper_margin   = 5,
+		.lower_margin   = 20,
+		.hsync_len      = 40,
+		.vsync_len      = 5,
+		.sync           = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		.vmode          = FB_VMODE_NONINTERLACED
+	}
+#else
+	.mode	= {
+		.name           = "HDMI", /* 1080P60 */
+		.refresh        = 60,
+		.xres           = 1920,
+		.yres           = 1080,
+		.pixclock       = 6734, /* 148500 kHz */
+		.left_margin    = 148,
+		.right_margin   = 88,
+		.upper_margin   = 36,
+		.lower_margin   = 4,
+		.hsync_len      = 44,
+		.vsync_len      = 5,
+		.sync           = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		.vmode          = FB_VMODE_NONINTERLACED
+	}
+#endif
+} };
+size_t display_count = ARRAY_SIZE(displays);
+
+#endif /* CONFIG_VIDEO_IMXDCSS */
+
