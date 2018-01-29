@@ -18,6 +18,9 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/crm_regs.h>
+#if defined(CONFIG_VIDEO_IMXDCSS)
+#include <asm/arch/video_common.h>
+#endif
 #include <imx_thermal.h>
 #include <ipu_pixfmt.h>
 #include <thermal.h>
@@ -324,6 +327,9 @@ void arch_preboot_os(void)
 #endif
 #if defined(CONFIG_VIDEO_MXS)
 	lcdif_power_down();
+#endif
+#if defined(CONFIG_VIDEO_IMXDCSS)
+	imx8m_fb_disable();
 #endif
 }
 
