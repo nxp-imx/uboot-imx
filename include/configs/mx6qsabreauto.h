@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012-2016 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
  *
  * Configuration settings for the Freescale i.MX6Q SabreAuto board.
  *
@@ -23,11 +24,7 @@
 
 #undef MFG_NAND_PARTITION
 #ifdef CONFIG_NAND_BOOT
-#ifdef CONFIG_IMX_OPTEE
-#define MFG_NAND_PARTITION "mtdparts=8000000.nor:1m(boot),-(rootfs)\\\\;gpmi-nand:64m(boot),16m(tee),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
-#else
-#define MFG_NAND_PARTITION "mtdparts=8000000.nor:1m(boot),-(rootfs)\\\\;gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
-#endif
+#define MFG_NAND_PARTITION "mtdparts=8000000.nor:1m(boot),-(rootfs)\\\\;gpmi-nand:64m(boot),16m(kernel),16m(dtb),16m(tee),-(rootfs) "
 #else
 #define MFG_NAND_PARTITION ""
 #endif

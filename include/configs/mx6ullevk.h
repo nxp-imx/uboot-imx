@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * Configuration settings for the Freescale i.MX6UL 14x14 EVK board.
  *
@@ -69,19 +69,10 @@
 
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
-#ifdef CONFIG_IMX_OPTEE
 #ifdef CONFIG_NAND_BOOT
-#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(tee),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),16m(tee),-(rootfs) "
 #else
 #define MFG_NAND_PARTITION ""
-#endif
-
-#else
-#ifdef CONFIG_NAND_BOOT
-#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
-#else
-#define MFG_NAND_PARTITION ""
-#endif
 #endif
 
 #define CONFIG_MFG_ENV_SETTINGS \
@@ -117,10 +108,10 @@
 		BOOTARGS_CMA_SIZE \
 		MFG_NAND_PARTITION \
 		"\0" \
-	"bootcmd=nand read ${loadaddr} 0x5000000 0x800000;"\
-		"nand read ${fdt_addr} 0x6000000 0x100000;"\
+	"bootcmd=nand read ${loadaddr} 0x4000000 0x800000;"\
+		"nand read ${fdt_addr} 0x5000000 0x100000;"\
 		"if test ${tee} = yes; then " \
-			"nand read ${tee_addr} 0x4000000 0x400000;"\
+			"nand read ${tee_addr} 0x6000000 0x400000;"\
 			"bootm ${teeaddr} - ${fdt_addr};" \
 		"else " \
 			"bootz ${loadaddr} - ${fdt_addr};" \
