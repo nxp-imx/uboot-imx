@@ -61,6 +61,10 @@ extern void trusty_os_init(void);
 #include <fsl_avb.h>
 #endif
 
+#ifdef CONFIG_ANDROID_THINGS_SUPPORT
+#include <fs.h>
+#endif
+
 #define FASTBOOT_VERSION		"0.4"
 
 #ifdef CONFIG_FASTBOOT_LOCK
@@ -98,6 +102,11 @@ struct fastboot_device_info fastboot_firmwareinfo;
  */
 static unsigned int download_size;
 static unsigned int download_bytes;
+
+#define AT_OEM_DTB	"/kernel.dtb"
+#define AT_OEM_PART_NAME	"oem_bootloader"
+#define AT_OEM_PART_SIZE	17
+#define AT_OEM_DEV_SIZE	6
 
 /* common variables of fastboot getvar command */
 char *fastboot_common_var[FASTBOOT_COMMON_VAR_NUM] = {
@@ -1823,6 +1832,33 @@ bootimg_print_image_hdr(struct andr_img_hdr *hdr)
 #endif
 }
 
+#ifdef CONFIG_ANDROID_THINGS_SUPPORT
+static int android_things_load_fdt(const char *slot, struct andr_img_hdr *hdrload) {
+	/* check for kernel.dtb in oem_bootloader */
+	char oem_bootloader[AT_OEM_PART_SIZE];
+	snprintf(oem_bootloader, AT_OEM_PART_SIZE, AT_OEM_PART_NAME "%s", slot);
+	struct fastboot_ptentry *pte = fastboot_flash_find_ptn(oem_bootloader);
+	if (pte == NULL) {
+		printf("boota: no partition found for '%s'\n", oem_bootloader);
+		return -1;
+	}
+
+	char dev_part[AT_OEM_DEV_SIZE];
+	snprintf(dev_part, AT_OEM_DEV_SIZE, "%x:%x", fastboot_devinfo.dev_id,
+					 pte->partition_index);
+	if (fs_set_blk_dev("mmc", dev_part, FS_TYPE_EXT) != 0)
+		return -1;
+
+	loff_t dtb_size;
+	if (!fs_read(AT_OEM_DTB, hdrload->second_addr, 0, 0, &dtb_size) && dtb_size) {
+		hdrload->second_size = dtb_size;
+		return 0;
+	}
+
+	return -1;
+}
+#endif
+
 static struct andr_img_hdr boothdr __aligned(ARCH_DMA_MINALIGN);
 
 #if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
@@ -1836,6 +1872,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	u32 avb_metric;
 	bool check_image_arm64 =  false;
 	bool is_recovery_mode = false;
+	char *slot = NULL;
 
 #if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
 	size_t lz4_len = DST_DECOMPRESS_LEN;
@@ -1895,6 +1932,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			printf("boota: bad boot image magic\n");
 			goto fail;
 		}
+		slot = avb_out_data->ab_suffix;
 		if (avb_result == AVB_AB_FLOW_RESULT_OK)
 			printf(" verify OK, boot '%s%s'\n",
 					avb_loadpart->partition_name, avb_out_data->ab_suffix);
@@ -1963,7 +2001,6 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		char bootimg[10];
 		/* we don't have a/b slot for imx6 on normal Android*/
 #ifndef CONFIG_ANDROID_AB_SUPPORT
-		char *slot = "";
 		if (!is_recovery_mode) {
 			sprintf(bootimg, "boot");
 		} else {
@@ -1971,7 +2008,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		}
 		printf("boot '%s' still\n", bootimg);
 #else
-		char *slot = select_slot(&fsl_avb_ab_ops);
+		slot = select_slot(&fsl_avb_ab_ops);
 		if (slot == NULL) {
 			printf("boota: no bootable slot\n");
 			goto fail;
@@ -2052,9 +2089,13 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			+ ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
 #endif
 #ifdef CONFIG_OF_LIBFDT
+	bool fdt_loaded = false;
+#ifdef CONFIG_ANDROID_THINGS_SUPPORT
+	fdt_loaded = !android_things_load_fdt(slot, hdr);
+#endif /* CONFIG_ANDROID_THINGS_SUPPORT */
 	/* load the dtb file */
-	if (hdr->second_size && hdr->second_addr) {
-		memcpy((void *)(ulong)hdr->second_addr, (void *)(ulong)hdr + hdr->page_size
+	if (!fdt_loaded && hdr->second_size && hdr->second_addr) {
+		memcpy((void *)(ulong)hdr->second_addr, (void *)(ulong)hdr->kernel_addr
 			+ ALIGN(hdr->kernel_size, hdr->page_size)
 			+ ALIGN(hdr->ramdisk_size, hdr->page_size), hdr->second_size);
 	}
