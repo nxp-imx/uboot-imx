@@ -99,6 +99,7 @@ struct pmic *pmic_get(const char *s)
 	struct pmic *p;
 
 	list_for_each_entry(p, &pmic_list, list) {
+	    	printf("pmic debug: name=%s\n", p->name);
 		if (strcmp(p->name, s) == 0) {
 			debug("%s: pmic %s -> 0x%p\n", __func__, p->name, p);
 			return p;
