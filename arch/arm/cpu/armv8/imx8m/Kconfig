@@ -12,6 +12,11 @@ config TARGET_IMX8MQ_EVK
 	select IMX8M
 	select SUPPORT_SPL
 
+config TARGET_IMX8MQ_PHANBELL
+	bool "imx8mq_phanbell"
+	select IMX8M
+	select SUPPORT_SPL
+
 config TARGET_IMX8MQ_DDR3L_ARM2
 	bool "imx8mq_ddr3l_arm2"
 	select IMX8M
@@ -27,6 +32,7 @@ endchoice
 config SYS_SOC
 	default "imx8m"
 
+source "board/freescale/imx8mq_phanbell/Kconfig"
 source "board/freescale/imx8mq_evk/Kconfig"
 source "board/freescale/imx8mq_arm2/Kconfig"
 
