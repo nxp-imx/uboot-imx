@@ -1,0 +1,6 @@
+S32V234 Evaluation BOARD
+M:	-
+S:	Maintained
+F:	board/microsys/mpxs32v234/
+F:	include/configs/mpxs32v234.h
+F:	configs/s32v234sbc_defconfig
