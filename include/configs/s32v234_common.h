@@ -260,7 +260,7 @@
 			"if ${get_cmd} ${update_sd_firmware_filename}; then " \
 				"setexpr fw_sz ${filesize} / 0x200; " \
 				"setexpr fw_sz ${fw_sz} + 1; "	\
-				"mmc write ${loadaddr} 0x2 ${fw_sz}; " \
+				"mmc write ${loadaddr} 0x8 ${fw_sz}; " \
 			"fi; "	\
 		"fi\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
