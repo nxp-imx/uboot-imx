@@ -1647,8 +1647,14 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	hdrload = (struct andr_img_hdr *)(ulong)(hdr->kernel_addr - hdr->page_size);
 	check_image_arm64  = image_arm64((void *)(ulong)hdrload->kernel_addr);
 
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+	if (is_recovery_mode)
+		memcpy((void *)(ulong)hdrload->ramdisk_addr, (void *)(ulong)hdrload->kernel_addr
+				+ ALIGN(hdrload->kernel_size,hdrload->page_size), hdrload->ramdisk_size);
+#else
 	memcpy((void *)(ulong)hdrload->ramdisk_addr, (void *)(ulong)hdrload->kernel_addr
 			+ ALIGN(hdrload->kernel_size,hdrload->page_size), hdrload->ramdisk_size);
+#endif
 
 #ifdef CONFIG_OF_LIBFDT
 	/* load the dtb file */
@@ -1684,6 +1690,12 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	sprintf(boot_addr_start, "0x%lx", addr);
 	sprintf(ramdisk_addr, "0x%x:0x%x", hdrload->ramdisk_addr, hdrload->ramdisk_size);
 	sprintf(fdt_addr, "0x%x", hdrload->second_addr);
+
+/* no need to pass ramdisk addr for normal boot mode when enable CONFIG_SYSTEM_RAMDISK_SUPPORT*/
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+	if (!is_recovery_mode)
+		boot_args[2] = NULL;
+#endif
 
 	if (avb_out_data != NULL)
 		avb_slot_verify_data_free(avb_out_data);
