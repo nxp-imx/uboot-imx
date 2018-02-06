@@ -460,7 +460,7 @@ int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 		size = SZ_128K;
 		break;
 	case 1:
-		core_rsrc = SC_R_HIFI;
+		core_rsrc = SC_R_DSP;
 		aux_core_ram = 0x596f8000;
 		size = SZ_2K;
 		break;

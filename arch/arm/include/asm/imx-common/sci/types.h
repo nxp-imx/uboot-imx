@@ -53,6 +53,7 @@
 #define SC_325MHZ       325000000   /*!< 325MHz */
 #define SC_333MHZ       333333333   /*!< 333MHz */
 #define SC_350MHZ       350000000   /*!< 350MHz */
+#define SC_372MHZ       372000000   /*!< 372MHz */
 #define SC_375MHZ       375000000   /*!< 375MHz */
 #define SC_400MHZ       400000000   /*!< 400MHz */
 #define SC_500MHZ       500000000   /*!< 500MHz */
@@ -88,6 +89,7 @@
 #define SC_12MHZ         12000000   /*!< 12MHz */
 #define SC_19MHZ         19800000   /*!< 19.8MHz */
 #define SC_24MHZ         24000000   /*!< 24MHz */
+#define SC_48MHZ         48000000   /*!< 48MHz */
 #define SC_120MHZ       120000000   /*!< 120MHz */
 #define SC_132MHZ       132000000   /*!< 132MHz */
 #define SC_144MHZ       144000000   /*!< 144MHz */
@@ -99,6 +101,7 @@
 #define SC_360MHZ       360000000   /*!< 360MHz */
 #define SC_384MHZ       384000000   /*!< 384MHz */
 #define SC_396MHZ       396000000   /*!< 396MHz */
+#define SC_432MHZ       432000000   /*!< 432MHz */
 #define SC_480MHZ       480000000   /*!< 480MHz */
 #define SC_600MHZ       600000000   /*!< 600MHz */
 #define SC_744MHZ       744000000   /*!< 744MHz */
@@ -305,10 +308,10 @@ typedef enum sc_rsrc_e
     SC_R_DMA_1_CH29         = 137,
     SC_R_DMA_1_CH30         = 138,
     SC_R_DMA_1_CH31         = 139,
-    SC_R_DRC_0_V            = 140,
-    SC_R_DRC_0_H            = 141,
-    SC_R_DRC_1_V            = 142,
-    SC_R_DRC_1_H            = 143,
+    SC_R_UNUSED1            = 140,
+    SC_R_UNUSED2            = 141,
+    SC_R_UNUSED3            = 142,
+    SC_R_UNUSED4            = 143,
     SC_R_GPU_0_PID0         = 144,
     SC_R_GPU_0_PID1         = 145,
     SC_R_GPU_0_PID2         = 146,
@@ -486,10 +489,10 @@ typedef enum sc_rsrc_e
     SC_R_SAI_0              = 318,
     SC_R_SAI_1              = 319,
     SC_R_SAI_2              = 320,
-    SC_R_SPBA               = 321,
-    SC_R_QSPI_0             = 322,
-    SC_R_SDMA               = 323,
-    SC_R_IRQSTR_MW          = 324,
+    SC_R_IRQSTR_SCU2        = 321,
+    SC_R_IRQSTR_DSP         = 322,
+    SC_R_UNUSED5            = 323,
+    SC_R_UNUSED6            = 324,
     SC_R_AUDIO_PLL_0        = 325,
     SC_R_PI_0               = 326,
     SC_R_PI_0_PWM_0         = 327,
@@ -677,13 +680,13 @@ typedef enum sc_rsrc_e
     SC_R_A35_1              = 509,
     SC_R_A35_2              = 510,
     SC_R_A35_3              = 511,
-    SC_R_HIFI               = 512,
-    SC_R_HIFI_RAM           = 513,
+    SC_R_DSP                = 512,
+    SC_R_DSP_RAM            = 513,
     SC_R_CAAM_JR1_OUT       = 514,
     SC_R_CAAM_JR2_OUT       = 515,
     SC_R_CAAM_JR3_OUT       = 516,
-    SC_R_VPU_DEC            = 517,
-    SC_R_VPU_ENC            = 518,
+    SC_R_VPU_DEC_0          = 517,
+    SC_R_VPU_ENC_0          = 518,
     SC_R_CAAM_JR0           = 519,
     SC_R_CAAM_JR0_OUT       = 520,
     SC_R_PMIC_2             = 521,
@@ -699,8 +702,17 @@ typedef enum sc_rsrc_e
     SC_R_BOARD_R7           = 531,
     SC_R_MJPEG_DEC_MP       = 532,
     SC_R_MJPEG_ENC_MP       = 533,
+    SC_R_VPU_TS_0           = 534,
+    SC_R_VPU_MU_0           = 535,
+    SC_R_VPU_MU_1           = 536,
+    SC_R_VPU_MU_2           = 537,
+    SC_R_VPU_MU_3           = 538,
+    SC_R_VPU_ENC_1          = 539,
+    SC_R_VPU                = 540,
     SC_R_LAST
 } sc_rsrc_t;
+
+/* NOTE - please add by replacing some of the UNUSED from above! */
 
 /*!
  * This type is used to indicate a control.

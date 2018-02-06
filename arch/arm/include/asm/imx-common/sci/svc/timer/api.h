@@ -32,7 +32,7 @@
  * @name Defines for type widths
  */
 /*@{*/
-#define SC_TIMER_ACTION_W   2       /*!< Width of sc_timer_wdog_action_t */
+#define SC_TIMER_ACTION_W   3       /*!< Width of sc_timer_wdog_action_t */
 /*@}*/
 
 /*!
@@ -43,6 +43,7 @@
 #define SC_TIMER_WDOG_ACTION_WARM           1   /*!< Warm reset system */
 #define SC_TIMER_WDOG_ACTION_COLD           2   /*!< Cold reset system */
 #define SC_TIMER_WDOG_ACTION_BOARD          3   /*!< Reset board */
+#define SC_TIMER_WDOG_ACTION_IRQ            4   /*!< Only generate IRQs */
 /*@}*/
 
 /* Types */
@@ -77,6 +78,23 @@ typedef uint32_t sc_timer_wdog_time_t;
  */
 sc_err_t sc_timer_set_wdog_timeout(sc_ipc_t ipc,
     sc_timer_wdog_time_t timeout);
+
+/*!
+ * This function sets the watchdog pre-timeout in milliseconds. If not
+ * set then the pre-timeout defaults to the max. Once locked this value
+ * cannot be changed.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     pre_timeout pre-timeout period for the watchdog
+ *
+ * When the pre-timout expires an IRQ will be generated. Note this timeout
+ * clears when the IRQ is triggered. An IRQ is generated for the failing
+ * partition and all of its child partitions.
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ */
+sc_err_t sc_timer_set_wdog_pre_timeout(sc_ipc_t ipc,
+    sc_timer_wdog_time_t pre_timeout);
 
 /*!
  * This function starts the watchdog.
@@ -115,7 +133,7 @@ sc_err_t sc_timer_ping_wdog(sc_ipc_t ipc);
  * This function gets the status of the watchdog. All arguments are
  * in milliseconds.
  *
- * @param[in]     ipc         IPC handle
+ * @param[in]     ipc             IPC handle
  * @param[out]    timeout         pointer to return the timeout
  * @param[out]    max_timeout     pointer to return the max timeout
  * @param[out]    remaining_time  pointer to return the time remaining
@@ -128,6 +146,22 @@ sc_err_t sc_timer_get_wdog_status(sc_ipc_t ipc,
     sc_timer_wdog_time_t *remaining_time);
 
 /*!
+ * This function gets the status of the watchdog of a partition. All
+ * arguments are in milliseconds.
+ *
+ * @param[in]     ipc             IPC handle
+ * @param[in]     pt              partition to query
+ * @param[out]    enb             pointer to return enable status
+ * @param[out]    timeout         pointer to return the timeout
+ * @param[out]    remaining_time  pointer to return the time remaining
+ *                                until trigger
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ */
+sc_err_t sc_timer_pt_get_wdog_status(sc_ipc_t ipc, sc_rm_pt_t pt, bool *enb,
+    sc_timer_wdog_time_t *timeout, sc_timer_wdog_time_t *remaining_time);
+
+/*!
  * This function configures the action to be taken when a watchdog
  * expires.
  *
@@ -135,12 +169,13 @@ sc_err_t sc_timer_get_wdog_status(sc_ipc_t ipc,
  * @param[in]     pt          partition to affect
  * @param[in]     action      action to take
  *
+ * Default action is inherited from the parent.
+ *
  * @return Returns an error code (SC_ERR_NONE = success).
  *
  * Return errors:
  * - SC_ERR_PARM if invalid parameters,
  * - SC_ERR_NOACCESS if caller's partition is not the SYSTEM owner,
- * - SC_ERR_NOACCESS if caller's partition is not the parent of \a pt,
  * - SC_ERR_LOCKED if the watchdog is locked
  */
 sc_err_t sc_timer_set_wdog_action(sc_ipc_t ipc,
@@ -201,8 +236,7 @@ sc_err_t sc_timer_get_rtc_time(sc_ipc_t ipc, uint16_t *year, uint8_t *mon,
 sc_err_t sc_timer_get_rtc_sec1970(sc_ipc_t ipc, uint32_t *sec);
 
 /*!
- * This function sets the RTC alarm. Only the owner of the SC_R_SYSTEM
- * resource can set the alarm.
+ * This function sets the RTC alarm.
  *
  * @param[in]     ipc         IPC handle
  * @param[in]     year        year (min 1970)
@@ -211,6 +245,8 @@ sc_err_t sc_timer_get_rtc_sec1970(sc_ipc_t ipc, uint32_t *sec);
  * @param[in]     hour        hour (0-23)
  * @param[in]     min         minute (0-59)
  * @param[in]     sec         second (0-59)
+ *
+ * Note this alarm setting clears when the alarm is triggered.
  *
  * @return Returns an error code (SC_ERR_NONE = success).
  *

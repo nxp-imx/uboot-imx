@@ -36,7 +36,6 @@
 /*! Max DMA channel priority group */
 #define SC_MISC_DMA_GRP_MAX     31
 
-
 /*!
  * @name Defines for sc_misc_boot_status_t
  */
@@ -61,6 +60,15 @@
 #define SC_MISC_TEMP                    0   /*!< Temp sensor */
 #define SC_MISC_TEMP_HIGH               1   /*!< Temp high alarm */
 #define SC_MISC_TEMP_LOW                2   /*!< Temp low alarm */
+/*@}*/
+
+/*!
+ * @name Defines for sc_misc_seco_auth_cmd_t
+ */
+/*@{*/
+#define SC_MISC_AUTH_CONTAINER          0   /*!< Authenticate container */
+#define SC_MISC_VERIFY_IMAGE            1   /*!< Verify image */
+#define SC_MISC_REL_CONTAINER           2   /*!< Release container */
 /*@}*/
 
 /* Types */
@@ -211,12 +219,13 @@ sc_err_t sc_misc_seco_image_load(sc_ipc_t ipc, uint32_t addr_src,
  *
  * @param[in]     ipc         IPC handle
  * @param[in]     cmd         authenticate command
- * @param[in]     addr_meta   address of metadata
+ * @param[in]     addr_meta   address of/or metadata
  *
  * @return Returns an error code (SC_ERR_NONE = success).
  *
  * This is used to authenticate a SECO image or issue a security
- * command. \a addr_meta often points to an IVT in SECO TCM.
+ * command. \a addr_meta often points to an container. It is also
+ * just data (or even unused) for some commands.
  */
 sc_err_t sc_misc_seco_authenticate(sc_ipc_t ipc,
     sc_misc_seco_auth_cmd_t cmd, uint32_t addr_meta);
@@ -258,6 +267,16 @@ sc_err_t sc_misc_waveform_capture(sc_ipc_t ipc, bool enable);
  */
 void sc_misc_build_info(sc_ipc_t ipc, uint32_t *build,
     uint32_t *commit);
+
+/*!
+ * This function is used to return the device's unique ID.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[out]    id_l        pointer to return lower 32-bit of ID [31:0]
+ * @param[out]    id_h        pointer to return upper 32-bits of ID [63:32]
+ */
+void sc_misc_unique_id(sc_ipc_t ipc, uint32_t *id_l,
+    uint32_t *id_h);
 
 /* @} */
 
@@ -330,10 +349,26 @@ sc_err_t sc_misc_boot_done(sc_ipc_t ipc, sc_rsrc_t cpu);
  *
  * Return errors codes:
  * - SC_ERR_PARM if word fuse index param out of range or invalid
- * - SC_ERR_NOACCESS if read operation fail
+ * - SC_ERR_NOACCESS if read operation failed
  * - SC_ERR_LOCKED if read operation is locked
  */
 sc_err_t sc_misc_otp_fuse_read(sc_ipc_t ipc, uint32_t word, uint32_t *val);
+
+/*!
+ * This function writes a given fuse word index.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     word        fuse word index
+ * @param[in]     val         fuse write value
+ *
+ * @return Returns and error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_PARM if word fuse index param out of range or invalid
+ * - SC_ERR_NOACCESS if write operation failed
+ * - SC_ERR_LOCKED if write operation is locked
+ */
+sc_err_t sc_misc_otp_fuse_write(sc_ipc_t ipc, uint32_t word, uint32_t val);
 
 /*!
  * This function sets a temp sensor alarm.
@@ -376,6 +411,14 @@ sc_err_t sc_misc_get_temp(sc_ipc_t ipc, sc_rsrc_t resource,
  * @param[out]    dev         pointer to return boot device
  */
 void sc_misc_get_boot_dev(sc_ipc_t ipc, sc_rsrc_t *dev);
+
+/*!
+ * This function returns the current status of the ON/OFF button.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[out]    status      pointer to return button status
+ */
+void sc_misc_get_button_status(sc_ipc_t ipc, bool *status);
 
 /* @} */
 
