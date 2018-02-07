@@ -388,7 +388,9 @@ out:
     *out_data = data;
   } else {
     if (data != NULL) {
-      avb_slot_verify_data_free(data);
+      /* the address of bootimage isn't alloced by malloc,
+       * we should not free it. */
+      avb_slot_verify_data_free_fast(data);
     }
   }
 
