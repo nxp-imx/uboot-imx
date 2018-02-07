@@ -176,7 +176,7 @@ typedef struct {
 
 /* Frees a |AvbSlotVerifyData| including all data it points to. */
 void avb_slot_verify_data_free(AvbSlotVerifyData* data);
-
+void avb_slot_verify_data_free_fast(AvbSlotVerifyData* data);
 /* Performs a full verification of the slot identified by |ab_suffix|
  * and load the contents of the partitions whose name is in the
  * NULL-terminated string array |requested_partitions| (each partition

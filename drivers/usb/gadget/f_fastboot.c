@@ -1559,7 +1559,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	/* get the duration of avb */
 	metrics.avb = get_timer(avb_metric);
 
-	if (avb_result == AVB_AB_FLOW_RESULT_OK) {
+	if ((avb_result == AVB_AB_FLOW_RESULT_OK) ||
+			(avb_result == AVB_AB_FLOW_RESULT_OK_WITH_VERIFICATION_ERROR)) {
 		assert(avb_out_data != NULL);
 		/* load the first partition */
 		avb_loadpart = avb_out_data->loaded_partitions;
@@ -1567,11 +1568,14 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		/* we should use avb_part_data->data as boot image */
 		/* boot image is already read by avb */
 		hdr = (struct andr_img_hdr *)avb_loadpart->data;
-		if (android_image_check_header(hdr)) {
-			printf("boota: bad boot image magic\n");
-			goto fail;
+		if (avb_result == AVB_AB_FLOW_RESULT_OK)
+			printf(" verify OK, boot '%s%s'\n",
+					avb_loadpart->partition_name, avb_out_data->ab_suffix);
+		else {
+			printf(" verify FAIL, state: UNLOCK\n");
+			printf(" boot '%s%s' still\n",
+					avb_loadpart->partition_name, avb_out_data->ab_suffix);
 		}
-		printf(" verify OK, boot '%s%s'\n", avb_loadpart->partition_name, avb_out_data->ab_suffix);
 		/* The dm-verity commandline has conflicts with system bootargs and we can't
 		 * determine whether dm-verity is opened by the commandline for now. */
 		char bootargs_sec[ANDR_BOOT_ARGS_SIZE];
@@ -1590,12 +1594,11 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			fastboot_setup_system_boot_args(avb_out_data->ab_suffix);
 #endif
 		image_size = avb_loadpart->data_size;
-		memcpy((void *)(ulong)(hdr->kernel_addr - hdr->page_size), (void *)hdr, image_size);
 	} else if (lock_status == FASTBOOT_LOCK) { /* && verify fail */
 		/* if in lock state, verify enforce fail */
 		printf(" verify FAIL, state: LOCK\n");
 		goto fail;
-	} else { /* lock_status == FASTBOOT_UNLOCK && verify fail */
+	} else { /* lock_status == FASTBOOT_UNLOCK && get unacceptable verify fail */
 		/* if in unlock state, log the verify state */
 		printf(" verify FAIL, state: UNLOCK\n");
 #endif
@@ -1696,9 +1699,9 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	if (!is_recovery_mode)
 		boot_args[2] = NULL;
 #endif
-
+	/* we should free the avb_out_data but should not free the bootimage */
 	if (avb_out_data != NULL)
-		avb_slot_verify_data_free(avb_out_data);
+		avb_slot_verify_data_free_fast(avb_out_data);
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 	/* put ql-tipc to release resource for Linux */
