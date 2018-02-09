@@ -333,9 +333,16 @@ void clock_init(void)
 		MC_ME_RUN_PCn(0));
 
 	/* turn on FXOSC */
+#if defined(CONFIG_S32V234_FAST_BOOT)
+	writel(MC_ME_RUNMODE_MC_PLL(ARM_PLL) | MC_ME_RUNMODE_MC_PLL(ENET_PLL) |
+			MC_ME_RUNMODE_MC_MVRON | MC_ME_RUNMODE_MC_XOSCON |
+			MC_ME_RUNMODE_MC_FIRCON | MC_ME_RUNMODE_MC_SYSCLK(0x1),
+			MC_ME_RUNn_MC(0));
+#else
 	writel(MC_ME_RUNMODE_MC_MVRON | MC_ME_RUNMODE_MC_XOSCON |
 	       MC_ME_RUNMODE_MC_FIRCON | MC_ME_RUNMODE_MC_SYSCLK(0x1),
 	       MC_ME_RUNn_MC(0));
+#endif
 
 	entry_to_target_mode(MC_ME_MCTL_RUN0);
 
