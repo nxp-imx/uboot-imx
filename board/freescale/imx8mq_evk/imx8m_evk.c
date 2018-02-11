@@ -204,30 +204,6 @@ static void dwc3_nxp_usb_phy_init(struct dwc3_device *dwc3)
 }
 #endif
 
-#if defined(CONFIG_USB_DWC3) || defined(CONFIG_USB_XHCI_IMX8M)
-int board_usb_init(int index, enum usb_init_type init)
-{
-	imx8m_usb_power(index, true);
-
-	if (index == 0 && init == USB_INIT_DEVICE) {
-		dwc3_nxp_usb_phy_init(&dwc3_device_data);
-		return dwc3_uboot_init(&dwc3_device_data);
-	}
-
-	return 0;
-}
-
-int board_usb_cleanup(int index, enum usb_init_type init)
-{
-	if (index == 0 && init == USB_INIT_DEVICE)
-		dwc3_uboot_exit(index);
-
-	imx8m_usb_power(index, false);
-
-	return 0;
-}
-#endif
-
 #ifdef CONFIG_USB_TCPC
 struct tcpc_port port;
 struct tcpc_port_config port_config = {
@@ -240,11 +216,28 @@ struct tcpc_port_config port_config = {
 	.op_snk_mv = 9000,
 };
 
+#define USB_TYPEC_SEL IMX_GPIO_NR(3, 15)
+
+static iomux_v3_cfg_t ss_mux_gpio[] = {
+	IMX8MQ_PAD_NAND_RE_B__GPIO3_IO15 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+void ss_mux_select(enum typec_cc_polarity pol)
+{
+	if (pol == TYPEC_POLARITY_CC1)
+		gpio_direction_output(USB_TYPEC_SEL, 1);
+	else
+		gpio_direction_output(USB_TYPEC_SEL, 0);
+}
+
 static int setup_typec(void)
 {
 	int ret;
 
-	ret = tcpc_init(&port, port_config, NULL);
+	imx_iomux_v3_setup_multiple_pads(ss_mux_gpio, ARRAY_SIZE(ss_mux_gpio));
+	gpio_request(USB_TYPEC_SEL, "typec_sel");
+
+	ret = tcpc_init(&port, port_config, &ss_mux_select);
 	if (ret) {
 		printf("%s: tcpc init failed, err=%d\n",
 		       __func__, ret);
@@ -253,6 +246,46 @@ static int setup_typec(void)
 	return ret;
 }
 #endif
+
+#if defined(CONFIG_USB_DWC3) || defined(CONFIG_USB_XHCI_IMX8M)
+int board_usb_init(int index, enum usb_init_type init)
+{
+	int ret = 0;
+	imx8m_usb_power(index, true);
+
+	if (index == 0 && init == USB_INIT_DEVICE) {
+#ifdef CONFIG_USB_TCPC
+		ret = tcpc_setup_ufp_mode(&port);
+#endif
+		dwc3_nxp_usb_phy_init(&dwc3_device_data);
+		return dwc3_uboot_init(&dwc3_device_data);
+	} else if (index == 0 && init == USB_INIT_HOST) {
+#ifdef CONFIG_USB_TCPC
+		ret = tcpc_setup_dfp_mode(&port);
+#endif
+		return ret;
+	}
+
+	return 0;
+}
+
+int board_usb_cleanup(int index, enum usb_init_type init)
+{
+	int ret = 0;
+	if (index == 0 && init == USB_INIT_DEVICE) {
+		dwc3_uboot_exit(index);
+	} else if (index == 0 && init == USB_INIT_HOST) {
+#ifdef CONFIG_USB_TCPC
+		ret = tcpc_disable_src_vbus(&port);
+#endif
+	}
+
+	imx8m_usb_power(index, false);
+
+	return ret;
+}
+#endif
+
 
 int board_init(void)
 {
