@@ -432,6 +432,7 @@ struct tcpc_port {
 };
 
 int tcpc_set_cc_to_source(struct tcpc_port *port);
+int tcpc_set_cc_to_sink(struct tcpc_port *port);
 int tcpc_set_plug_orientation(struct tcpc_port *port, enum typec_cc_polarity polarity);
 int tcpc_get_cc_status(struct tcpc_port *port, enum typec_cc_polarity *polarity, enum typec_cc_state *state);
 int tcpc_clear_alert(struct tcpc_port *port, uint16_t clear_mask);
@@ -439,6 +440,7 @@ int tcpc_send_command(struct tcpc_port *port, uint8_t command);
 int tcpc_polling_reg(struct tcpc_port *port, uint8_t reg,
 	uint8_t reg_width, uint16_t mask, uint16_t value, ulong timeout_ms);
 int tcpc_setup_dfp_mode(struct tcpc_port *port);
+int tcpc_setup_ufp_mode(struct tcpc_port *port);
 int tcpc_disable_src_vbus(struct tcpc_port *port);
 int tcpc_init(struct tcpc_port *port, struct tcpc_port_config config, ss_mux_sel ss_sel_func);
 void tcpc_print_log(struct tcpc_port *port);
