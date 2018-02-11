@@ -1,8 +1,12 @@
+if !ARCH_IMX8M && !ARCH_IMX8
+
 config CHAIN_OF_TRUST
 	depends on !FIT_SIGNATURE && SECURE_BOOT
 	select FSL_CAAM
 	bool
 	default y
+
+endif
 
 config USB_TCPC
 	bool "USB Typec port controller simple driver"
