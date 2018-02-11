@@ -49,6 +49,7 @@ struct imx8m_usbctrl_data {
 };
 static struct imx8m_xhci imx8m_xhci;
 static struct imx8m_usbctrl_data ctr_data[] = {
+	{0, USB1_BASE_ADDR},
 	{1, USB2_BASE_ADDR},
 };
 
