@@ -14,6 +14,8 @@
 #define tcpc_debug_log(port, fmt, args...)
 #endif
 
+static bool tcpc_pd_sink_check_charging(struct tcpc_port *port);
+
 static int tcpc_log(struct tcpc_port *port, const char *fmt, ...)
 {
 	va_list args;
@@ -47,6 +49,24 @@ int tcpc_set_cc_to_source(struct tcpc_port *port)
 		tcpc_log(port, "%s dm_i2c_write failed, err %d\n", __func__, err);
 	return err;
 }
+
+int tcpc_set_cc_to_sink(struct tcpc_port *port)
+{
+	uint8_t valb;
+	int err;
+
+	if (port == NULL)
+		return -EINVAL;
+
+	valb = (TCPC_ROLE_CTRL_CC_RD << TCPC_ROLE_CTRL_CC1_SHIFT) |
+			(TCPC_ROLE_CTRL_CC_RD << TCPC_ROLE_CTRL_CC2_SHIFT);
+
+	err = dm_i2c_write(port->i2c_dev, TCPC_ROLE_CTRL, &valb, 1);
+	if (err)
+		tcpc_log(port, "%s dm_i2c_write failed, err %d\n", __func__, err);
+	return err;
+}
+
 
 int tcpc_set_plug_orientation(struct tcpc_port *port, enum typec_cc_polarity polarity)
 {
@@ -280,6 +300,12 @@ int tcpc_setup_dfp_mode(struct tcpc_port *port)
 	if (port == NULL)
 		return -EINVAL;
 
+	if (tcpc_pd_sink_check_charging(port)) {
+		tcpc_log(port, "%s: Can't apply DFP mode when PD is charging\n",
+			__func__);
+		return -EPERM;
+	}
+
 	tcpc_set_cc_to_source(port);
 
 	ret = tcpc_send_command(port, TCPC_CMD_LOOK4CONNECTION);
@@ -327,6 +353,69 @@ int tcpc_setup_dfp_mode(struct tcpc_port *port)
 		/* The max vbus on time is 200ms, we add margin 100ms */
 		mdelay(300);
 
+	}
+
+	return 0;
+}
+
+int tcpc_setup_ufp_mode(struct tcpc_port *port)
+{
+	enum typec_cc_polarity pol;
+	enum typec_cc_state state;
+	int ret;
+
+	if (port == NULL)
+		return -EINVAL;
+
+	/* Check if the PD charge is working. If not, need to configure CC role for UFP */
+	if (!tcpc_pd_sink_check_charging(port)) {
+
+		/* Disable the source vbus once it is enabled by DFP mode */
+		tcpc_disable_src_vbus(port);
+
+		tcpc_set_cc_to_sink(port);
+
+		ret = tcpc_send_command(port, TCPC_CMD_LOOK4CONNECTION);
+		if (ret)
+			return ret;
+
+		/* At least wait tCcStatusDelay + tTCPCFilter + tCcTCPCSampleRate (max) = 200us + 500us + ?ms
+		 * PTN5110 datasheet does not contain the sample rate value, according other productions,
+		 * the sample rate is at ms level, about 2 ms -10ms. So wait 100ms should be enough.
+		 */
+		mdelay(100);
+
+		ret = tcpc_polling_reg(port, TCPC_ALERT, 2, TCPC_ALERT_CC_STATUS, TCPC_ALERT_CC_STATUS, 100);
+		if (ret) {
+			tcpc_log(port, "%s: Polling ALERT register, TCPC_ALERT_CC_STATUS bit failed, ret = %d\n",
+				__func__, ret);
+			return ret;
+		}
+
+		ret = tcpc_get_cc_status(port, &pol, &state);
+		tcpc_clear_alert(port, TCPC_ALERT_CC_STATUS);
+
+	} else {
+		ret = tcpc_get_cc_status(port, &pol, &state);
+	}
+
+	if (!ret) {
+		/* If presenting not as sink, then return */
+		if (state != TYPEC_STATE_SNK_DEFAULT && state != TYPEC_STATE_SNK_POWER15 &&
+			state != TYPEC_STATE_SNK_POWER30)
+			return -EPERM;
+
+		if (pol == TYPEC_POLARITY_CC1)
+			tcpc_debug_log(port, "polarity cc1\n");
+		else
+			tcpc_debug_log(port, "polarity cc2\n");
+
+		if (port->ss_sel_func)
+			port->ss_sel_func(pol);
+
+		ret = tcpc_set_plug_orientation(port, pol);
+		if (ret)
+			return ret;
 	}
 
 	return 0;
@@ -667,6 +756,46 @@ static void tcpc_pd_sink_process(struct tcpc_port *port)
 			break;
 		}
 	}
+}
+
+static bool tcpc_pd_sink_check_charging(struct tcpc_port *port)
+{
+	uint8_t valb;
+	int err;
+	enum typec_cc_polarity pol;
+	enum typec_cc_state state;
+
+	if (port == NULL)
+		return false;
+
+	/* Check the CC status, must be sink */
+	err = tcpc_get_cc_status(port, &pol, &state);
+	if (err || (state != TYPEC_STATE_SNK_POWER15
+		&& state != TYPEC_STATE_SNK_POWER30
+		&& state != TYPEC_STATE_SNK_DEFAULT)) {
+		tcpc_debug_log(port, "TCPC wrong state for PD charging, err = %d, CC = 0x%x\n",
+			err, state);
+		return false;
+	}
+
+	/* Check the VBUS PRES and SINK VBUS for dead battery */
+	err = dm_i2c_read(port->i2c_dev, TCPC_POWER_STATUS, &valb, 1);
+	if (err) {
+		tcpc_debug_log(port, "%s dm_i2c_read failed, err %d\n", __func__, err);
+		return false;
+	}
+
+	if (!(valb & TCPC_POWER_STATUS_VBUS_PRES)) {
+		tcpc_debug_log(port, "VBUS NOT PRES \n");
+		return false;
+	}
+
+	if (!(valb & TCPC_POWER_STATUS_SINKING_VBUS)) {
+		tcpc_debug_log(port, "SINK VBUS is not enabled for dead battery\n");
+		return false;
+	}
+
+	return true;
 }
 
 static int tcpc_pd_sink_init(struct tcpc_port *port)
