@@ -334,6 +334,16 @@
 #define CONFIG_APBH_DMA
 #define CONFIG_APBH_DMA_BURST
 #define CONFIG_APBH_DMA_BURST8
+
+#ifdef CONFIG_CMD_UBI
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_MTD_DEVICE
+#define CONFIG_RBTREE
+#define CONFIG_LZO
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_CMD_UBIFS
+#endif
+
 #endif
 
 /* USB configs */
