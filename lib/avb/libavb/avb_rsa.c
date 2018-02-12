@@ -37,16 +37,16 @@
 #include "avb_util.h"
 #include "avb_vbmeta_image.h"
 
-typedef struct Key {
+typedef struct IAvbKey {
   unsigned int len; /* Length of n[] in number of uint32_t */
   uint32_t n0inv;   /* -1 / n[0] mod 2^32 */
   uint32_t* n;      /* modulus as array (host-byte order) */
   uint32_t* rr;     /* R^2 as array (host-byte order) */
-} Key;
+} IAvbKey;
 
-Key* parse_key_data(const uint8_t* data, size_t length) {
+static IAvbKey* iavb_parse_key_data(const uint8_t* data, size_t length) {
   AvbRSAPublicKeyHeader h;
-  Key* key = NULL;
+  IAvbKey* key = NULL;
   size_t expected_length;
   unsigned int i;
   const uint8_t* n;
@@ -76,14 +76,14 @@ Key* parse_key_data(const uint8_t* data, size_t length) {
   /* Store n and rr following the key header so we only have to do one
    * allocation.
    */
-  key = (Key*)(avb_malloc(sizeof(Key) + 2 * h.key_num_bits / 8));
+  key = (IAvbKey*)(avb_malloc(sizeof(IAvbKey) + 2 * h.key_num_bits / 8));
   if (key == NULL) {
     goto fail;
   }
 
   key->len = h.key_num_bits / 32;
   key->n0inv = h.n0inv;
-  key->n = (uint32_t*)(key + 1); /* Skip ahead sizeof(Key) bytes. */
+  key->n = (uint32_t*)(key + 1); /* Skip ahead sizeof(IAvbKey) bytes. */
   key->rr = key->n + key->len;
 
   /* Crypto-code below (modpowF4() and friends) expects the key in
@@ -103,12 +103,12 @@ fail:
   return NULL;
 }
 
-void free_parsed_key(Key* key) {
+static void iavb_free_parsed_key(IAvbKey* key) {
   avb_free(key);
 }
 
 /* a[] -= mod */
-static void subM(const Key* key, uint32_t* a) {
+static void subM(const IAvbKey* key, uint32_t* a) {
   int64_t A = 0;
   uint32_t i;
   for (i = 0; i < key->len; ++i) {
@@ -119,7 +119,7 @@ static void subM(const Key* key, uint32_t* a) {
 }
 
 /* return a[] >= mod */
-static int geM(const Key* key, uint32_t* a) {
+static int geM(const IAvbKey* key, uint32_t* a) {
   uint32_t i;
   for (i = key->len; i;) {
     --i;
@@ -134,7 +134,7 @@ static int geM(const Key* key, uint32_t* a) {
 }
 
 /* montgomery c[] += a * b[] / R % mod */
-static void montMulAdd(const Key* key,
+static void montMulAdd(const IAvbKey* key,
                        uint32_t* c,
                        const uint32_t a,
                        const uint32_t* b) {
@@ -159,7 +159,7 @@ static void montMulAdd(const Key* key,
 }
 
 /* montgomery c[] = a[] * b[] / R % mod */
-static void montMul(const Key* key, uint32_t* c, uint32_t* a, uint32_t* b) {
+static void montMul(const IAvbKey* key, uint32_t* c, uint32_t* a, uint32_t* b) {
   uint32_t i;
   for (i = 0; i < key->len; ++i) {
     c[i] = 0;
@@ -172,7 +172,7 @@ static void montMul(const Key* key, uint32_t* c, uint32_t* a, uint32_t* b) {
 /* In-place public exponentiation. (65537}
  * Input and output big-endian byte array in inout.
  */
-static void modpowF4(const Key* key, uint8_t* inout) {
+static void modpowF4(const IAvbKey* key, uint8_t* inout) {
   uint32_t* a = (uint32_t*)avb_malloc(key->len * sizeof(uint32_t));
   uint32_t* aR = (uint32_t*)avb_malloc(key->len * sizeof(uint32_t));
   uint32_t* aaR = (uint32_t*)avb_malloc(key->len * sizeof(uint32_t));
@@ -237,7 +237,7 @@ bool avb_rsa_verify(const uint8_t* key,
                     const uint8_t* padding,
                     size_t padding_num_bytes) {
   uint8_t* buf = NULL;
-  Key* parsed_key = NULL;
+  IAvbKey* parsed_key = NULL;
   bool success = false;
 
   if (key == NULL || sig == NULL || hash == NULL || padding == NULL) {
@@ -245,7 +245,7 @@ bool avb_rsa_verify(const uint8_t* key,
     goto out;
   }
 
-  parsed_key = parse_key_data(key, key_num_bytes);
+  parsed_key = iavb_parse_key_data(key, key_num_bytes);
   if (parsed_key == NULL) {
     avb_error("Error parsing key.\n");
     goto out;
@@ -290,7 +290,7 @@ bool avb_rsa_verify(const uint8_t* key,
 
 out:
   if (parsed_key != NULL) {
-    free_parsed_key(parsed_key);
+    iavb_free_parsed_key(parsed_key);
   }
   if (buf != NULL) {
     avb_free(buf);

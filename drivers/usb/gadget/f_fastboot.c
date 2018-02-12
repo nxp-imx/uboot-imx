@@ -1304,7 +1304,8 @@ static AvbOps fsl_avb_ops = {
 	.read_rollback_index = fsl_read_rollback_index_rpmb,
 	.write_rollback_index = fsl_write_rollback_index_rpmb,
 	.read_is_device_unlocked = fsl_read_is_device_unlocked,
-	.get_unique_guid_for_partition = fsl_get_unique_guid_for_partition
+	.get_unique_guid_for_partition = fsl_get_unique_guid_for_partition,
+	.get_size_of_partition = fsl_get_size_of_partition
 };
 #endif
 
@@ -1555,7 +1556,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	bool allow_fail = (lock_status == FASTBOOT_UNLOCK ? true : false);
 	avb_metric = get_timer(0);
 	/* if in lock state, do avb verify */
-	avb_result = avb_ab_flow_fast(&fsl_avb_ab_ops, requested_partitions, allow_fail, &avb_out_data);
+	avb_result = avb_ab_flow_fast(&fsl_avb_ab_ops, requested_partitions, allow_fail,
+			AVB_HASHTREE_ERROR_MODE_RESTART_AND_INVALIDATE, &avb_out_data);
 	/* get the duration of avb */
 	metrics.avb = get_timer(avb_metric);
 

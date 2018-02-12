@@ -38,8 +38,6 @@ extern "C" {
  * like uint8_t, uint64_t, and bool (with |false|, |true| keywords)
  * must be present.
  */
-
-//#define bool int
 #include <common.h>
 
 /* If you don't have gcc or clang, these attribute macros may need to
