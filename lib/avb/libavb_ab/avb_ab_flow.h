@@ -140,7 +140,8 @@ typedef enum {
   AVB_AB_FLOW_RESULT_OK_WITH_VERIFICATION_ERROR,
   AVB_AB_FLOW_RESULT_ERROR_OOM,
   AVB_AB_FLOW_RESULT_ERROR_IO,
-  AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS
+  AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS,
+  AVB_AB_FLOW_RESULT_ERROR_INVALID_ARGUMENT
 } AvbABFlowResult;
 
 /* Get a textual representation of |result|. */
@@ -156,9 +157,9 @@ const char* avb_ab_flow_result_to_string(AvbABFlowResult result);
  *
  * 2. All bootable slots listed in the A/B metadata are verified using
  * avb_slot_verify(). If a slot is invalid or if it fails verification
- * (and |allow_verification_error| is false, see below), it will be
- * marked as unbootable in the A/B metadata and the metadata will be
- * saved to disk before returning.
+ * (and AVB_SLOT_VERIFY_FLAGS_ALLOW_VERIFICATION_ERROR is not set, see
+ * below), it will be marked as unbootable in the A/B metadata and the
+ * metadata will be saved to disk before returning.
  *
  * 3. If there are no bootable slots, the value
  * AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS is returned.
@@ -180,25 +181,26 @@ const char* avb_ab_flow_result_to_string(AvbABFlowResult result);
  * |requested_partitions| array only contains a single item for the
  * boot partition, 'boot'.
  *
- * If the device is unlocked (and _only_ if it's unlocked), true
- * should be passed in the |allow_verification_error| parameter. This
- * will allow considering slots as verified even when
- * avb_slot_verify() returns
+ * If the device is unlocked (and _only_ if it's unlocked), the
+ * AVB_SLOT_VERIFY_FLAGS_ALLOW_VERIFICATION_ERROR flag should be set
+ * in the |flags| parameter. This will allow considering slots as
+ * verified even when avb_slot_verify() returns
  * AVB_SLOT_VERIFY_RESULT_ERROR_PUBLIC_KEY_REJECTED,
  * AVB_SLOT_VERIFY_RESULT_ERROR_VERIFICATION, or
  * AVB_SLOT_VERIFY_RESULT_ERROR_ROLLBACK_INDEX for the slot in
  * question.
  *
- * Note that androidboot.slot_suffix is not set in the |cmdline| field
- * in |AvbSlotVerifyData| - you will have to pass this command-line
- * option yourself.
+ * Note that neither androidboot.slot_suffix nor androidboot.slot are
+ * set in the |cmdline| field in |AvbSlotVerifyData| - you will have
+ * to pass these yourself.
  *
  * If a slot was selected and it verified then AVB_AB_FLOW_RESULT_OK
  * is returned.
  *
  * If a slot was selected but it didn't verify then
  * AVB_AB_FLOW_RESULT_OK_WITH_VERIFICATION_ERROR is returned. This can
- * only happen when |allow_verification_error| is true.
+ * only happen when the AVB_SLOT_VERIFY_FLAGS_ALLOW_VERIFICATION_ERROR
+ * flag is set.
  *
  * If an I/O operation - such as loading/saving metadata or checking
  * rollback indexes - fail, the value AVB_AB_FLOW_RESULT_ERROR_IO is
@@ -207,17 +209,24 @@ const char* avb_ab_flow_result_to_string(AvbABFlowResult result);
  * If memory allocation fails, AVB_AB_FLOW_RESULT_ERROR_OOM is
  * returned.
  *
+ * If invalid arguments are passed,
+ * AVB_AB_FLOW_RESULT_ERROR_INVALID_ARGUMENT is returned. For example
+ * this can happen if using AVB_HASHTREE_ERROR_MODE_LOGGING without
+ * AVB_SLOT_VERIFY_FLAGS_ALLOW_VERIFICATION_ERROR.
+ *
  * Reasonable behavior for handling AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS
  * is to initiate device repair (which is device-dependent).
  */
 AvbABFlowResult avb_ab_flow(AvbABOps* ab_ops,
                             const char* const* requested_partitions,
-                            bool allow_verification_error,
+                            AvbSlotVerifyFlags flags,
+                            AvbHashtreeErrorMode hashtree_error_mode,
                             AvbSlotVerifyData** out_data);
 
 AvbABFlowResult avb_ab_flow_fast(AvbABOps* ab_ops,
                             const char* const* requested_partitions,
-                            bool allow_verification_error,
+                            AvbSlotVerifyFlags flags,
+                            AvbHashtreeErrorMode hashtree_error_mode,
                             AvbSlotVerifyData** out_data);
 
 /* Marks the slot with the given slot number as active. Returns
