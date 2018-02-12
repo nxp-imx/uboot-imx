@@ -1433,7 +1433,7 @@ static FbBootMode fastboot_get_bootmode(void)
 
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 /* Setup booargs for taking the system parition as ramdisk */
-static void fastboot_setup_system_boot_args(const char *slot)
+static void fastboot_setup_system_boot_args(const char *slot, bool append_root)
 {
 	const char *system_part_name = NULL;
 	if(slot == NULL)
@@ -1448,10 +1448,14 @@ static void fastboot_setup_system_boot_args(const char *slot)
 	if(ptentry != NULL) {
 		char bootargs_3rd[ANDR_BOOT_ARGS_SIZE];
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
-		u32 dev_no = mmc_map_to_kernel_blk(mmc_get_env_dev());
-		sprintf(bootargs_3rd, "skip_initramfs root=/dev/mmcblk%dp%d",
-				dev_no,
-				ptentry->partition_index);
+		if (append_root) {
+			u32 dev_no = mmc_map_to_kernel_blk(mmc_get_env_dev());
+			sprintf(bootargs_3rd, "skip_initramfs root=/dev/mmcblk%dp%d",
+					dev_no,
+					ptentry->partition_index);
+		} else {
+			sprintf(bootargs_3rd, "skip_initramfs");
+		}
 		setenv("bootargs_3rd", bootargs_3rd);
 #endif
 	}
@@ -1590,8 +1594,12 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		}
 		setenv("bootargs_sec", bootargs_sec);
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
-		if(!is_recovery_mode)
-			fastboot_setup_system_boot_args(avb_out_data->ab_suffix);
+		if(!is_recovery_mode) {
+			if(avb_out_data->cmdline != NULL && strstr(avb_out_data->cmdline, "root="))
+				fastboot_setup_system_boot_args(avb_out_data->ab_suffix, false);
+			else
+				fastboot_setup_system_boot_args(avb_out_data->ab_suffix, true);
+		}
 #endif
 		image_size = avb_loadpart->data_size;
 	} else if (lock_status == FASTBOOT_LOCK) { /* && verify fail */
@@ -1640,7 +1648,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		setenv("bootargs_sec", bootargs_sec);
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if(!is_recovery_mode)
-			fastboot_setup_system_boot_args(slot);
+			fastboot_setup_system_boot_args(slot, true);
 #endif
 #ifdef CONFIG_FASTBOOT_LOCK
 	}
