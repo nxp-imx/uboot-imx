@@ -52,10 +52,6 @@ extern "C" {
  */
 const char* avb_version_string(void);
 
-/* TODO: remove when there are no more users of AVB_{MAJOR,MINOR}_VERSION. */
-#define AVB_MAJOR_VERSION AVB_VERSION_MAJOR
-#define AVB_MINOR_VERSION AVB_VERSION_MINOR
-
 #ifdef __cplusplus
 }
 #endif

@@ -139,6 +139,14 @@ AvbIOResult fsl_get_unique_guid_for_partition(AvbOps* ops,
                                              char* guid_buf,
                                              size_t guid_buf_size);
 
+/* Gets the size of a partition with the name in |partition|
+ * (NUL-terminated UTF-8 string). Returns the value in
+ * |out_size_num_bytes|.
+ * Returns AVB_IO_RESULT_OK on success, otherwise an error code.
+ */
+AvbIOResult fsl_get_size_of_partition(AvbOps* ops,
+                                             const char* partition,
+					     uint64_t* out_size_num_bytes);
 /* check if the fastboot getvar cmd is for query [avb] bootctl's slot var
  * cmd is the fastboot getvar's cmd in
  * return true if it is a bootctl related cmd, false if it's not.
