@@ -6,7 +6,9 @@
 #ifndef __ASM_ARCH_CLOCK_H
 #define __ASM_ARCH_CLOCK_H
 
+#ifdef __KERNEL__
 #include <common.h>
+#endif
 
 enum mxc_clock {
 	MXC_ARM_CLK = 0,
@@ -26,10 +28,12 @@ enum pll_type {
 	VIDEO_PLL,
 };
 
+#ifdef __KERNEL__
 unsigned int mxc_get_clock(enum mxc_clock clk);
 void clock_init(void);
 void entry_to_target_mode(u32 mode);
 
 #define imx_get_fecclk() mxc_get_clock(MXC_FEC_CLK)
+#endif
 
 #endif /* __ASM_ARCH_CLOCK_H */

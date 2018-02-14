@@ -6,6 +6,7 @@
 #include <config.h>
 #include "imagetool.h"
 #include "s32v234image.h"
+#include <asm/arch/clock.h>
 #include <asm/arch/mc_me_regs.h>
 #include <asm/arch/mc_cgm_regs.h>
 
@@ -28,6 +29,8 @@
 #  define S32V234_HEADER_SIZE	0x1000U
 #endif
 #define S32V234_INITLOAD_SIZE	0x2000U
+
+#define BIT(nr)			(1UL << (nr))
 
 static struct program_image image_layout = {
 #ifdef CONFIG_FLASH_BOOT
@@ -67,9 +70,17 @@ static uint32_t dcd_data[] = {
 	DCD_WRITE_HEADER(4, PARAMS_BYTES(4)),
 	DCD_ADDR(FXOSC_CTL), DCD_MASK(FXOSC_CTL_FASTBOOT_VALUE),
 
+#ifdef CONFIG_S32V234_FAST_BOOT
+	DCD_ADDR(MC_ME_DRUN_MC),
+	DCD_MASK(DRUN_MC_RESETVAL | MC_ME_RUNMODE_MC_XOSCON |
+		 MC_ME_RUNMODE_MC_PLL(ARM_PLL) |
+		 MC_ME_RUNMODE_MC_PLL(ENET_PLL) |
+		 MC_ME_RUNMODE_MC_SYSCLK(SYSCLK_ARM_PLL_DFS_1)),
+#else
 	DCD_ADDR(MC_ME_DRUN_MC),
 	DCD_MASK(DRUN_MC_RESETVAL | MC_ME_RUNMODE_MC_XOSCON |
 		 MC_ME_RUNMODE_MC_SYSCLK(SYSCLK_FXOSC)),
+#endif
 
 	DCD_ADDR(MC_ME_MCTL),
 	DCD_MASK(MC_ME_MCTL_KEY | MC_ME_MCTL_DRUN),
