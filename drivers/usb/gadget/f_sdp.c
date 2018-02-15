@@ -238,12 +238,12 @@ static void sdp_rx_command_complete(struct usb_ep *ep, struct usb_request *req)
 	u8 report = data[0];
 
 	if (status != 0) {
-		error("Status: %d", status);
+		error("Status: %d\n", status);
 		return;
 	}
 
 	if (report != 1) {
-		error("Unexpected report %d", report);
+		error("Unexpected report %d\n", report);
 		return;
 	}
 
@@ -323,12 +323,12 @@ static void sdp_rx_data_complete(struct usb_ep *ep, struct usb_request *req)
 	int datalen = req->length - 1;
 
 	if (status != 0) {
-		error("Status: %d", status);
+		error("Status: %d\n", status);
 		return;
 	}
 
 	if (report != 2) {
-		error("Unexpected report %d", report);
+		error("Unexpected report %d\n", report);
 		return;
 	}
 
@@ -361,7 +361,7 @@ static void sdp_rx_data_complete(struct usb_ep *ep, struct usb_request *req)
 		sdp->state = SDP_STATE_TX_SEC_CONF;
 		break;
 	default:
-		error("Invalid state: %d", sdp->state);
+		error("Invalid state: %d\n", sdp->state);
 	}
 }
 
@@ -371,7 +371,7 @@ static void sdp_tx_complete(struct usb_ep *ep, struct usb_request *req)
 	int status = req->status;
 
 	if (status != 0) {
-		error("Status: %d", status);
+		error("Status: %d\n", status);
 		return;
 	}
 
@@ -394,7 +394,7 @@ static void sdp_tx_complete(struct usb_ep *ep, struct usb_request *req)
 			sdp->state = SDP_STATE_IDLE;
 		break;
 	default:
-		error("Wrong State: %d", sdp->state);
+		error("Wrong State: %d\n", sdp->state);
 		sdp->state = SDP_STATE_IDLE;
 		break;
 	}

@@ -24,13 +24,13 @@ static int spl_sdp_load_image(struct spl_image_info *spl_image,
 
 	ret = sdp_init(controller_index);
 	if (ret) {
-		error("SDP init failed: %d", ret);
+		error("SDP init failed: %d\n", ret);
 		return -ENODEV;
 	}
 
 	/* This command typically does not return but jumps to an image */
 	sdp_handle(controller_index);
-	error("SDP ended");
+	error("SDP ended\n");
 
 	return -EINVAL;
 }

@@ -28,13 +28,13 @@ static int do_sdp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	ret = sdp_init(controller_index);
 	if (ret) {
-		error("SDP init failed: %d", ret);
+		error("SDP init failed: %d\n", ret);
 		goto exit;
 	}
 
 	/* This command typically does not return but jumps to an image */
 	sdp_handle(controller_index);
-	error("SDP ended");
+	error("SDP ended\n");
 
 exit:
 	g_dnl_unregister();
