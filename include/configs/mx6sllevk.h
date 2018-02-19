@@ -1,5 +1,6 @@
 /*
  * Copyright 2013-2016 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
  *
  * Configuration settings for the Freescale i.MX6SL EVK board.
  *
@@ -52,7 +53,7 @@
 	"console=ttymxc0\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
-	"fdt_file=imx6sll-evk.dtb\0" \
+	"fdt_file=undefined\0" \
 	"fdt_addr=0x83000000\0" \
 	"tee_addr=0x84000000\0" \
 	"tee_file=undefined\0" \
@@ -119,10 +120,18 @@
 				"fi; " \
 			"else " \
 				"bootz; " \
-			"fi; " \
-		"fi;\0"
+			"fi;" \
+		"findfdt="\
+			"if test $fdt_file = undefined; then " \
+				"if test ${tee} = yes; then " \
+					"setenv fdt_file imx6sll-evk-optee.dtb; " \
+				"else " \
+					"setenv fdt_file imx6sll-evk.dtb; " \
+				"fi; " \
+			"fi;\0" \
 
 #define CONFIG_BOOTCOMMAND \
+	   "run findfdt;" \
 	   "mmc dev ${mmcdev};" \
 	   "mmc dev ${mmcdev}; if mmc rescan; then " \
 		   "if run loadbootscript; then " \

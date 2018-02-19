@@ -214,15 +214,23 @@
 		"findfdt="\
 			"if test $fdt_file = undefined; then " \
 				"if test $board_name = EVK && test $board_rev = 9X9; then " \
-					"setenv fdt_file imx6ul-9x9-evk.dtb; fi; " \
+					"setenv fdt_file imx6ul-9x9-evk; fi; " \
 				"if test $board_name = EVK && test $board_rev = 14X14; then " \
-					"setenv fdt_file imx6ul-14x14-evk.dtb; fi; " \
+					"setenv fdt_file imx6ul-14x14-evk; fi; " \
 				"if test $fdt_file = undefined; then " \
-					"echo WARNING: Could not determine dtb to use; fi; " \
+					"echo WARNING: Could not determine dtb to use; " \
+				"else " \
+					"if test ${tee} = yes; then " \
+						"setenv fdt_file $fdt_file-optee.dtb; " \
+					"else " \
+						"setenv fdt_file $fdt_file.dtb; " \
+					"fi; " \
+				"fi; " \
 			"fi;\0" \
 
 #define CONFIG_BOOTCOMMAND \
 	   "run findfdt;" \
+	   "run findtee;" \
 	   "mmc dev ${mmcdev};" \
 	   "mmc dev ${mmcdev}; if mmc rescan; then " \
 		   "if run loadbootscript; then " \

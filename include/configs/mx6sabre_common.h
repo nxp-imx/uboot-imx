@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
  *
  * Configuration settings for the Freescale i.MX6Q SabreSD board.
  *
@@ -239,19 +240,26 @@
 		"findfdt="\
 			"if test $fdt_file = undefined; then " \
 				"if test $board_name = SABREAUTO && test $board_rev = MX6QP; then " \
-					"setenv fdt_file imx6qp-sabreauto.dtb; fi; " \
+					"setenv fdt_file imx6qp-sabreauto; fi; " \
 				"if test $board_name = SABREAUTO && test $board_rev = MX6Q; then " \
-					"setenv fdt_file imx6q-sabreauto.dtb; fi; " \
+					"setenv fdt_file imx6q-sabreauto; fi; " \
 				"if test $board_name = SABREAUTO && test $board_rev = MX6DL; then " \
-					"setenv fdt_file imx6dl-sabreauto.dtb; fi; " \
+					"setenv fdt_file imx6dl-sabreauto; fi; " \
 				"if test $board_name = SABRESD && test $board_rev = MX6QP; then " \
-					"setenv fdt_file imx6qp-sabresd.dtb; fi; " \
+					"setenv fdt_file imx6qp-sabresd; fi; " \
 				"if test $board_name = SABRESD && test $board_rev = MX6Q; then " \
-					"setenv fdt_file imx6q-sabresd.dtb; fi; " \
+					"setenv fdt_file imx6q-sabresd; fi; " \
 				"if test $board_name = SABRESD && test $board_rev = MX6DL; then " \
-					"setenv fdt_file imx6dl-sabresd.dtb; fi; " \
+					"setenv fdt_file imx6dl-sabresd; fi; " \
 				"if test $fdt_file = undefined; then " \
-					"echo WARNING: Could not determine dtb to use; fi; " \
+					"echo WARNING: Could not determine dtb to use; " \
+				"else " \
+					"if test ${tee} = yes; then " \
+						"setenv fdt_file $fdt_file-optee.dtb; " \
+					"else " \
+						"setenv fdt_file $fdt_file.dtb; " \
+					"fi; " \
+				"fi; " \
 			"fi;\0" \
 		"findtee="\
 			"if test $tee_file = undefined; then " \
