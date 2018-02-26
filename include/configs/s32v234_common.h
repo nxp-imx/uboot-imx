@@ -380,4 +380,6 @@
 #define CONFIG_PCI_SCAN_SHOW
 #endif /* CONFIG_CMD_PCI */
 
+#define CONFIG_SYS_LDSCRIPT  "arch/arm/cpu/armv8/s32v234/u-boot.lds"
+
 #endif

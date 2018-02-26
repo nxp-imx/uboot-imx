@@ -41,8 +41,11 @@ ENTRY(dma_mem_clr)
 	str w10, [x9]
 
 	/* DMA_TCDn_SOFF */
+	/* DMA_TCDn_ATTR */
 	ldr x9, =DMA_TCD_N_SOFF(DMA_CHANNEL_1)
-	ldr x10, =0x03030000
+	/* no offset reread same source address each interation */
+	/* 32 byte burst */
+	ldr x10, =0x05050000
 	str w10, [x9]
 
 	/* DMA_TCDn_NBYTES_MLNO */
@@ -58,20 +61,20 @@ ENTRY(dma_mem_clr)
 	str x10, [x9]
 
 	/* DMA_TCDn_DOFF */
+	/* DMA_TCDn_CITER_ELINKNO */
 	ldr x9, =DMA_TCD_N_DOFF(DMA_CHANNEL_1)
-	ldr w10, =0x8
+	/* Increment destination address by 0x20 each interation */
+	/* ELINKNO CITER = 0X0001 single service request */
+	ldr w10, =0x00010020
 	str w10, [x9]
 
-	/* DMA_TCDn_CITER_ELINKNO */
-	ldr x9, =DMA_TCD_N_CITER_ELINKNO(DMA_CHANNEL_1)
-	ldr w10, =0x1
-	strb w10, [x9]
-
 	/* DMA_TCDn_BITER_ELINKNO */
+	/* ELINKNO BITER = 0X0001 single service request */
 	ldr x9, =DMA_TCD_N_BITER_ELINKNO(DMA_CHANNEL_1)
 	ldr w10, =0x1
 	strb w10, [x9]
 
+	/* Start transfer */
 	/* DMA_TCDn_CSR */
 	ldr x9, =DMA_TCD_N_CSR(DMA_CHANNEL_1)
 	ldr w10, =0x1
@@ -286,4 +289,7 @@ __secondary_boot_page_size:
 
 	.data
 initvar:
+	.quad 0x0
+	.quad 0x0
+	.quad 0x0
 	.quad 0x0
