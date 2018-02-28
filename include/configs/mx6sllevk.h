@@ -121,14 +121,15 @@
 			"else " \
 				"bootz; " \
 			"fi;" \
-		"findfdt="\
-			"if test $fdt_file = undefined; then " \
-				"if test ${tee} = yes; then " \
-					"setenv fdt_file imx6sll-evk-optee.dtb; " \
-				"else " \
-					"setenv fdt_file imx6sll-evk.dtb; " \
-				"fi; " \
-			"fi;\0" \
+		"fi;\0" \
+	"findfdt="\
+		"if test $fdt_file = undefined; then " \
+			"if test ${tee} = yes; then " \
+				"setenv fdt_file imx6sll-evk-optee.dtb; " \
+			"else " \
+				"setenv fdt_file imx6sll-evk.dtb; " \
+			"fi; " \
+		"fi;\0" \
 
 #define CONFIG_BOOTCOMMAND \
 	   "run findfdt;" \
