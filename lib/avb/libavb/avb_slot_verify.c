@@ -31,8 +31,6 @@
 #include "avb_util.h"
 #include "avb_vbmeta_image.h"
 #include "avb_version.h"
-#include <common.h>
-#include "android_image.h"
 
 /* Maximum allow length (in bytes) of a partition name, including
  * ab_suffix.
@@ -70,8 +68,6 @@ static inline bool result_should_continue(AvbSlotVerifyResult result) {
 
   return false;
 }
-
-static struct andr_img_hdr boothdr __aligned(ARCH_DMA_MINALIGN);
 
 static AvbSlotVerifyResult load_and_verify_hash_partition(
     AvbOps* ops,
@@ -163,36 +159,10 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
     }
   }
 
-  /* If we are going to load bootimage, load it to
-   * hdr->kernel_addr - hdr->page_size address directly,
-   * so we don't need to copy it again!*/
-  if (strstr(part_name, "boot") != NULL) {
-    struct andr_img_hdr *hdr = &boothdr;
-    /* read boot header first so we can get the address */
-    if (ops->read_from_partition(ops, part_name,
-			    0, sizeof(boothdr), hdr, &part_num_read) != AVB_IO_RESULT_OK &&
-				part_num_read != sizeof(boothdr)) {
-    printf("Error! read bootimage head error\n");
-    ret = AVB_SLOT_VERIFY_RESULT_ERROR_IO;
-    goto out;
-    }
-    /* check bootimg header to make sure we have a vaild bootimage */
-    if (android_image_check_header(hdr)) {
-      printf("Error! bad boot image magic\n");
-      /* bad boot image magic is critical so we will return
-       * AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA here,
-       * it will make this slot be marked as unbootable.*/
-      ret = AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
-      goto out;
-    }
-
-    image_buf = (uint8_t*)(unsigned long)(hdr->kernel_addr - hdr->page_size);
-  } else {
-    image_buf = avb_malloc(hash_desc.image_size);
-    if (image_buf == NULL) {
+  image_buf = avb_malloc(image_size);
+  if (image_buf == NULL) {
     ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
     goto out;
-    }
   }
 
   io_ret = ops->read_from_partition(
@@ -1105,7 +1075,7 @@ static AvbSlotVerifyResult append_options(
     AvbAlgorithmType algorithm_type,
     AvbHashtreeErrorMode hashtree_error_mode) {
   AvbSlotVerifyResult ret;
-  const char* verity_mode = "enforcing";
+  const char* verity_mode = NULL;
   bool is_device_unlocked;
   AvbIOResult io_ret;
 
@@ -1207,7 +1177,7 @@ static AvbSlotVerifyResult append_options(
   if (toplevel_vbmeta->flags & AVB_VBMETA_IMAGE_FLAGS_HASHTREE_DISABLED) {
     verity_mode = "disabled";
   } else {
-    const char* dm_verity_mode = "restart_on_corruption";
+    const char* dm_verity_mode = NULL;
     char* new_ret;
 
     switch (hashtree_error_mode) {
@@ -1413,52 +1383,9 @@ AvbSlotVerifyResult avb_slot_verify(AvbOps* ops,
 
 fail:
   if (slot_data != NULL) {
-    /* the address of bootimage isn't alloced by malloc,
-     * we should not free it. */
-    avb_slot_verify_data_free_fast(slot_data);
+    avb_slot_verify_data_free(slot_data);
   }
   return ret;
-}
-
-void avb_slot_verify_data_free_fast(AvbSlotVerifyData* data) {
-  if (data->ab_suffix != NULL) {
-    avb_free(data->ab_suffix);
-  }
-  if (data->cmdline != NULL) {
-    avb_free(data->cmdline);
-  }
-  if (data->vbmeta_images != NULL) {
-    size_t n;
-    for (n = 0; n < data->num_vbmeta_images; n++) {
-      AvbVBMetaData* vbmeta_image = &data->vbmeta_images[n];
-      if (vbmeta_image->partition_name != NULL) {
-        avb_free(vbmeta_image->partition_name);
-      }
-      if (vbmeta_image->vbmeta_data != NULL) {
-        avb_free(vbmeta_image->vbmeta_data);
-      }
-    }
-    avb_free(data->vbmeta_images);
-  }
-  if (data->loaded_partitions != NULL) {
-    size_t n;
-    for (n = 0; n < data->num_loaded_partitions; n++) {
-      AvbPartitionData* loaded_partition = &data->loaded_partitions[n];
-      if (loaded_partition->partition_name != NULL) {
-	/* the address of bootimage isn't alloced by malloc, we don't
-	 * need to free it. */
-        if (strstr(loaded_partition->partition_name, "boot") != NULL)
-	  continue;
-	else
-          avb_free(loaded_partition->partition_name);
-      }
-      if (loaded_partition->data != NULL) {
-        avb_free(loaded_partition->data);
-      }
-    }
-    avb_free(data->loaded_partitions);
-  }
-  avb_free(data);
 }
 
 void avb_slot_verify_data_free(AvbSlotVerifyData* data) {

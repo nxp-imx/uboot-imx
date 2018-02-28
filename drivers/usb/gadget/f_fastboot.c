@@ -1574,6 +1574,10 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		/* we should use avb_part_data->data as boot image */
 		/* boot image is already read by avb */
 		hdr = (struct andr_img_hdr *)avb_loadpart->data;
+		if (android_image_check_header(hdr)) {
+			printf("boota: bad boot image magic\n");
+			goto fail;
+		}
 		if (avb_result == AVB_AB_FLOW_RESULT_OK)
 			printf(" verify OK, boot '%s%s'\n",
 					avb_loadpart->partition_name, avb_out_data->ab_suffix);
@@ -1602,6 +1606,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		}
 #endif
 		image_size = avb_loadpart->data_size;
+		memcpy((void *)(ulong)(hdr->kernel_addr - hdr->page_size), (void *)hdr, image_size);
 	} else if (lock_status == FASTBOOT_LOCK) { /* && verify fail */
 		/* if in lock state, verify enforce fail */
 		printf(" verify FAIL, state: LOCK\n");
@@ -1707,9 +1712,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	if (!is_recovery_mode)
 		boot_args[2] = NULL;
 #endif
-	/* we should free the avb_out_data but should not free the bootimage */
 	if (avb_out_data != NULL)
-		avb_slot_verify_data_free_fast(avb_out_data);
+		avb_slot_verify_data_free(avb_out_data);
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 	/* put ql-tipc to release resource for Linux */
