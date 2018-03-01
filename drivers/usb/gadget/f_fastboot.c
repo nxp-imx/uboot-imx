@@ -81,6 +81,11 @@ extern void trusty_os_init(void);
 #define TX_ENDPOINT_MAXIMUM_PACKET_SIZE      (0x0040)
 
 #define EP_BUFFER_SIZE			4096
+
+#if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
+#define DST_DECOMPRESS_LEN 1024*1024*32
+#endif
+
 /*
  * EP_BUFFER_SIZE must always be an integral multiple of maxpacket size
  * (64 or 512 or 1024), else we break on certain controllers like DWC3
@@ -1540,10 +1545,14 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 
 	ulong addr = 0;
 	struct andr_img_hdr *hdr = NULL;
-	struct andr_img_hdr *hdrload;
+	void *boot_buf = NULL;
 	ulong image_size;
 	u32 avb_metric;
 	bool check_image_arm64 =  false;
+
+#if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
+	size_t lz4_len = DST_DECOMPRESS_LEN;
+#endif
 
 	AvbABFlowResult avb_result;
 	AvbSlotVerifyData *avb_out_data;
@@ -1606,7 +1615,30 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		}
 #endif
 		image_size = avb_loadpart->data_size;
-		memcpy((void *)(ulong)(hdr->kernel_addr - hdr->page_size), (void *)hdr, image_size);
+#if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
+		/* If we are using uncompressed kernel image, copy it directly to
+		 * hdr->kernel_addr, if we are using compressed lz4 kernel image,
+		 * we need to decompress the kernel image first. */
+		if (image_arm64((void *)((ulong)hdr + hdr->page_size))) {
+			memcpy((void *)(long)hdr->kernel_addr,
+					(void *)((ulong)hdr + hdr->page_size), hdr->kernel_size);
+		} else {
+#ifdef CONFIG_LZ4
+			if (ulz4fn((void *)((ulong)hdr + hdr->page_size),
+						hdr->kernel_size, (void *)(ulong)hdr->kernel_addr, &lz4_len) != 0) {
+				printf("Decompress kernel fail!\n");
+				goto fail;
+			}
+#else /* CONFIG_LZ4 */
+			printf("please enable CONFIG_LZ4 if we're using compressed lz4 kernel image!\n");
+			goto fail;
+#endif /* CONFIG_LZ4 */
+		}
+#else /* CONFIG_ARCH_IMX8 || CONFIG_ARCH_IMX8M */
+		/* copy kernel image and boot header to hdr->kernel_addr - hdr->page_size */
+		memcpy((void *)(ulong)(hdr->kernel_addr - hdr->page_size), (void *)hdr,
+				hdr->page_size + ALIGN(hdr->kernel_size, hdr->page_size));
+#endif /* CONFIG_ARCH_IMX8 || CONFIG_ARCH_IMX8M */
 	} else if (lock_status == FASTBOOT_LOCK) { /* && verify fail */
 		/* if in lock state, verify enforce fail */
 		printf(" verify FAIL, state: LOCK\n");
@@ -1641,12 +1673,44 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			goto fail;
 		}
 		image_size = android_image_get_end(hdr) - (ulong)hdr;
+#if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
+		boot_buf = malloc(image_size);
+		/* Load boot image */
+		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, bootimg,
+				0, image_size, boot_buf, &num_read) != AVB_IO_RESULT_OK
+				&& num_read != image_size) {
+			printf("boota: read boot image error\n");
+			goto fail;
+		}
+		/* If we are using uncompressed kernel image, copy it directly to
+		 * hdr->kernel_addr, if we are using compressed lz4 kernel image,
+		 * we need to decompress the kernel image first. */
+		if (image_arm64((void *)((ulong)boot_buf + hdr->page_size))) {
+			memcpy((void *)(ulong)hdr->kernel_addr,
+					(void *)((ulong)boot_buf + hdr->page_size), hdr->kernel_size);
+		} else {
+#ifdef CONFIG_LZ4
+			if (ulz4fn((void *)((ulong)boot_buf + hdr->page_size),
+						hdr->kernel_size, (void *)(ulong)hdr->kernel_addr, &lz4_len) != 0) {
+				printf("Decompress kernel fail!\n");
+				goto fail;
+			}
+#else /* CONFIG_LZ4 */
+			printf("please enable CONFIG_LZ4 if we're using compressed lz4 kernel image!\n");
+			goto fail;
+#endif /* CONFIG_LZ4 */
+		}
+		hdr = (struct andr_img_hdr *)boot_buf;
+#else /* CONFIG_ARCH_IMX8 || CONFIG_ARCH_IMX8M */
 		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, bootimg,
 				0, image_size, (void *)(ulong)(hdr->kernel_addr - hdr->page_size), &num_read) != AVB_IO_RESULT_OK
 				&& num_read != image_size) {
 			printf("boota: read boot image error\n");
 			goto fail;
 		}
+		hdr = (struct andr_img_hdr *)(ulong)(hdr->kernel_addr - hdr->page_size);
+#endif /* CONFIG_ARCH_IMX8 || CONFIG_ARCH_IMX8M */
+
 		char bootargs_sec[ANDR_BOOT_ARGS_SIZE];
 		sprintf(bootargs_sec,
 				"androidboot.verifiedbootstate=orange androidboot.slot_suffix=%s", slot);
@@ -1660,37 +1724,34 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 #endif
 
 	flush_cache((ulong)load_addr, image_size);
-	hdrload = (struct andr_img_hdr *)(ulong)(hdr->kernel_addr - hdr->page_size);
-	check_image_arm64  = image_arm64((void *)(ulong)hdrload->kernel_addr);
-
+	check_image_arm64  = image_arm64((void *)(ulong)hdr->kernel_addr);
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 	if (is_recovery_mode)
-		memcpy((void *)(ulong)hdrload->ramdisk_addr, (void *)(ulong)hdrload->kernel_addr
-				+ ALIGN(hdrload->kernel_size,hdrload->page_size), hdrload->ramdisk_size);
+		memcpy((void *)(ulong)hdr->ramdisk_addr, (void *)(ulong)hdr + hdr->page_size
+				+ ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
 #else
-	memcpy((void *)(ulong)hdrload->ramdisk_addr, (void *)(ulong)hdrload->kernel_addr
-			+ ALIGN(hdrload->kernel_size,hdrload->page_size), hdrload->ramdisk_size);
+	memcpy((void *)(ulong)hdr->ramdisk_addr, (void *)(ulong)hdr + hdr->page_size
+			+ ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
 #endif
-
 #ifdef CONFIG_OF_LIBFDT
 	/* load the dtb file */
-	if (hdrload->second_size && hdrload->second_addr) {
-		memcpy((void *)(ulong)hdrload->second_addr, (void *)(ulong)hdrload->kernel_addr
-			+ ALIGN(hdrload->kernel_size, hdrload->page_size)
-			+ ALIGN(hdrload->ramdisk_size, hdrload->page_size), hdr->second_size);
+	if (hdr->second_size && hdr->second_addr) {
+		memcpy((void *)(ulong)hdr->second_addr, (void *)(ulong)hdr + hdr->page_size
+			+ ALIGN(hdr->kernel_size, hdr->page_size)
+			+ ALIGN(hdr->ramdisk_size, hdr->page_size), hdr->second_size);
 	}
 #endif /*CONFIG_OF_LIBFDT*/
 	if (check_image_arm64) {
-		android_image_get_kernel(hdrload, 0, NULL, NULL);
-		addr = hdrload->kernel_addr;
+		android_image_get_kernel(hdr, 0, NULL, NULL);
+		addr = hdr->kernel_addr;
 	} else {
-		addr = (ulong)hdrload;
+		addr = (ulong)(hdr->kernel_addr - hdr->page_size);
 	}
-	printf("kernel   @ %08x (%d)\n", hdrload->kernel_addr, hdrload->kernel_size);
-	printf("ramdisk  @ %08x (%d)\n", hdrload->ramdisk_addr, hdrload->ramdisk_size);
+	printf("kernel   @ %08x (%d)\n", hdr->kernel_addr, hdr->kernel_size);
+	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
 #ifdef CONFIG_OF_LIBFDT
-	if (hdrload->second_size)
-		printf("fdt      @ %08x (%d)\n", hdrload->second_addr, hdrload->second_size);
+	if (hdr->second_size)
+		printf("fdt      @ %08x (%d)\n", hdr->second_addr, hdr->second_size);
 #endif /*CONFIG_OF_LIBFDT*/
 
 	char boot_addr_start[12];
@@ -1704,8 +1765,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		boot_args[0] = "bootm";
 
 	sprintf(boot_addr_start, "0x%lx", addr);
-	sprintf(ramdisk_addr, "0x%x:0x%x", hdrload->ramdisk_addr, hdrload->ramdisk_size);
-	sprintf(fdt_addr, "0x%x", hdrload->second_addr);
+	sprintf(ramdisk_addr, "0x%x:0x%x", hdr->ramdisk_addr, hdr->ramdisk_size);
+	sprintf(fdt_addr, "0x%x", hdr->second_addr);
 
 /* no need to pass ramdisk addr for normal boot mode when enable CONFIG_SYSTEM_RAMDISK_SUPPORT*/
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
@@ -1714,6 +1775,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 #endif
 	if (avb_out_data != NULL)
 		avb_slot_verify_data_free(avb_out_data);
+	if (boot_buf != NULL)
+		free(boot_buf);
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 	/* put ql-tipc to release resource for Linux */
@@ -1738,6 +1801,8 @@ fail:
 	/* avb has no recovery */
 	if (avb_out_data != NULL)
 		avb_slot_verify_data_free(avb_out_data);
+	if (boot_buf != NULL)
+		free(boot_buf);
 
 	return run_command("fastboot 0", 0);
 }
