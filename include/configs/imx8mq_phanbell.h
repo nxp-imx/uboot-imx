@@ -283,4 +283,7 @@
 #if defined (CONFIG_ANDROID_THINGS_SUPPORT)
 #include "imx8mq_evk_androidthings.h"
 #endif
+
+#define PRODUCT_NAME "imx8m"
+#define VARIANT_NAME "imx8m_phanbell"
 #endif
