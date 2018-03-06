@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -19,11 +20,11 @@
 
 	ldr r3, =0x80808080
 	str r3, [r2, #0x50c]
-	ldr r3, =0x00160000
+	ldr r3, =0x00160002
 	str r3, [r2, #0x508]
-	ldr r3, =0x00000002
+	ldr r3, =0x00000001
 	str r3, [r2, #0x510]
-	ldr r3, =0x00000005
+	ldr r3, =0x00000014
 	str r3, [r2, #0x514]
 	ldr r3, =0x00000001
 	str r3, [r2, #0x500]
@@ -35,7 +36,7 @@ wait1:
 	cmp r4, r3
 	bne wait1
 
-	ldr r3, =0x80808020
+	ldr r3, =0x8080801B
 	str r3, [r2, #0x50c]
 
 	ldr r3, =0x00000040
