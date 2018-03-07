@@ -37,7 +37,7 @@ u32 get_cpu_rev(void)
 
 	ipcHndl = gd->arch.ipc_channel_handle;
 
-	err = sc_misc_get_control(ipcHndl, SC_R_SC_PID0, SC_C_ID, &id);
+	err = sc_misc_get_control(ipcHndl, SC_R_SYSTEM, SC_C_ID, &id);
 	if (err != SC_ERR_NONE)
 		return 0;
 
