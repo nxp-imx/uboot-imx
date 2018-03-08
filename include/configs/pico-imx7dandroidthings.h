@@ -72,5 +72,8 @@
 #define CONFIG_AVB_FUSE_BANK_END 14
 #endif
 
+/* Disable U-Boot logo */
+#undef CONFIG_VIDEO_LOGO
+
 #endif
 /* __PICO_IMX7DANDROIDTHINGS_H */
