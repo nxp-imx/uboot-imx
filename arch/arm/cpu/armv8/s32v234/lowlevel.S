@@ -42,6 +42,7 @@ ENTRY(dma_mem_clr)
 	/*
 	 * x0: start address of memory to clear
 	 * x1: size of memory area to clear
+	 * x0: return 0 on error or size of memory cleared on success
 	 */
 dma_mem_clr:
 
@@ -90,12 +91,28 @@ dma_mem_clr:
 
 	/* loop until write is done */
 ctrl_status:
+	/* DMA_ES */
+	ldr x9, =DMA_ES
+	ldr w10, [x9]
+	ldr x11, =0x80000000
+	/* Check error bit */
+	and w10, w10, w11
+	sub w10, w10, w11
+	cbz w10, ret_error
 	ldr x9, =DMA_TCDn_CSR(DMA_CHANNEL)
 	ldr w10, [x9]
 	/* Check transfer done */
 	and w10, w10, #0x0080
 	sub w10, w10, #0x0080
 	cbnz w10, ctrl_status
+	/* return bytes written */
+	mov x0, x1
+
+	ret
+
+ret_error:
+	/* error return zero bytes written */
+	ldr x0, =0x0
 
 	ret
 
