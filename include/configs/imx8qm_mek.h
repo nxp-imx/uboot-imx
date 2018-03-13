@@ -75,6 +75,34 @@
 #define AHAB_ENV "sec_boot=no\0"
 #endif
 
+
+#define XEN_BOOT_ENV \
+            "xenhyper_bootargs=console=dtuart dtuart=/serial@5a060000 dom0_mem=2048M dom0_max_vcpus=2 dom0_vcpus_pin=true hmp-unsafe=true\0" \
+            "xenlinux_bootargs= \0" \
+            "xenlinux_console=hvc0 earlycon=xen\0" \
+            "xenboot_common=" \
+                "${get_cmd} ${loadaddr} xen;" \
+                "${get_cmd} ${fdt_addr} fsl-imx8qm-mek-dom0.dtb;" \
+                "${get_cmd} ${initrd_addr} ${image};" \
+                "fdt addr ${fdt_addr};" \
+                "fdt resize 256;" \
+                "fdt set /chosen/module@0 reg <0x00000000 ${initrd_addr} 0x00000000 0x${filesize}>; " \
+                "fdt set /chosen/module@0 bootargs \"${bootargs} ${xenlinux_bootargs}\"; " \
+                "setenv bootargs ${xenhyper_bootargs};" \
+                "booti ${loadaddr} - ${fdt_addr};" \
+            "\0" \
+            "xennetboot=" \
+                "setenv get_cmd dhcp;" \
+                "setenv console ${xenlinux_console};" \
+                "run netargs;" \
+                "run xenboot_common;" \
+            "\0" \
+            "xenmmcboot=" \
+                "setenv get_cmd \"fatload mmc ${mmcdev}:${mmcpart}\";" \
+                "setenv console ${xenlinux_console};" \
+                "run mmcargs;" \
+                "run xenboot_common;" \
+            "\0" \
 /* Boot M4 */
 #define M4_BOOT_ENV \
 	"m4_0_image=m4_0.bin\0" \
@@ -93,6 +121,7 @@
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	M4_BOOT_ENV \
+	XEN_BOOT_ENV \
 	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
