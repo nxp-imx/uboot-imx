@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  *
@@ -861,6 +861,7 @@ static void update_fdt_with_owned_resources(void *blob)
 	int depth, next_depth;
 	unsigned int rsrc_id;
 	const fdt32_t *php;
+	const char *name;
 	int rc;
 
 	for (offset = fdt_next_node(blob, offset, &depth); offset > 0;
@@ -897,6 +898,12 @@ static void update_fdt_with_owned_resources(void *blob)
 		} else {
 			addr = fdt_node_offset_by_phandle(blob, fdt32_to_cpu(*php));
 			rsrc_id = fdtdec_get_uint(blob, addr, "reg", 0);
+
+			if (rsrc_id == SC_R_LAST) {
+				name = fdt_get_name(blob, offset, NULL);
+				printf("%s's power domain use SC_R_LAST\n", name);
+				continue;
+			}
 
 			debug("power-domains phandle 0x%x, addr 0x%x, resource id %u\n",
 				fdt32_to_cpu(*php), addr, rsrc_id);
