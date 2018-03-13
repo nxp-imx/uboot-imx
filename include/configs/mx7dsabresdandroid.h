@@ -9,6 +9,8 @@
 #define __MX7D_SABRESD_ANDROID_H
 #include "mx_android_common.h"
 
+#define CONFIG_CMD_FASTBOOT
+#define CONFIG_ANDROID_BOOT_IMAGE
 /* lock/unlock stuff */
 #define FASTBOOT_ENCRYPT_LOCK
 #define CONFIG_FASTBOOT_LOCK

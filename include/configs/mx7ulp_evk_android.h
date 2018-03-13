@@ -9,6 +9,8 @@
 #define __MX7ULP_EVK_ANDROID_H
 #include "mx_android_common.h"
 
+#define CONFIG_CMD_FASTBOOT
+#define CONFIG_ANDROID_BOOT_IMAGE
 #define CONFIG_CMD_FS_GENERIC
 #define CONFIG_CMD_EXT4
 #define CONFIG_CMD_EXT4_WRITE

@@ -10,6 +10,8 @@
 #define __MX6SX_SABREAUTO_ANDROID_H
 #include "mx_android_common.h"
 
+#define CONFIG_CMD_FASTBOOT
+#define CONFIG_ANDROID_BOOT_IMAGE
 #define CONFIG_FASTBOOT_LOCK
 #define FSL_FASTBOOT_FB_DEV "mmc"
 #define FASTBOOT_ENCRYPT_LOCK

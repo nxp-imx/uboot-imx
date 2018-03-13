@@ -12,6 +12,8 @@
 
 #include <asm/imx-common/mxc_key_defs.h>
 
+#define CONFIG_CMD_FASTBOOT
+#define CONFIG_ANDROID_BOOT_IMAGE
 /* lock/unlock stuff */
 #define CONFIG_FASTBOOT_LOCK
 #define FSL_FASTBOOT_FB_DEV "mmc"
