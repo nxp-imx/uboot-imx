@@ -325,6 +325,7 @@ typedef struct scg_regs {
 
 u32 scg_clk_get_rate(enum scg_clk clk);
 int scg_enable_pll_pfd(enum scg_clk clk, u32 frac);
+int scg_disable_pll_pfd(enum scg_clk clk);
 int scg_enable_usb_pll(bool usb_control);
 u32 decode_pll(enum pll_clocks pll);
 

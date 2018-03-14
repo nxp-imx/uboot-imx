@@ -713,6 +713,61 @@ int scg_enable_pll_pfd(enum scg_clk clk, u32 frac)
 	return 0;
 }
 
+int scg_disable_pll_pfd(enum scg_clk clk)
+{
+	u32 reg;
+	u32 gate;
+	u32 addr;
+
+	switch (clk) {
+	case SCG_SPLL_PFD0_CLK:
+	case SCG_APLL_PFD0_CLK:
+		gate = SCG_PLL_PFD0_GATE_MASK;
+
+		if (clk == SCG_SPLL_PFD0_CLK)
+			addr = (u32)(&scg1_regs->spllpfd);
+		else
+			addr = (u32)(&scg1_regs->apllpfd);
+		break;
+	case SCG_SPLL_PFD1_CLK:
+	case SCG_APLL_PFD1_CLK:
+		gate = SCG_PLL_PFD1_GATE_MASK;
+
+		if (clk == SCG_SPLL_PFD1_CLK)
+			addr = (u32)(&scg1_regs->spllpfd);
+		else
+			addr = (u32)(&scg1_regs->apllpfd);
+		break;
+	case SCG_SPLL_PFD2_CLK:
+	case SCG_APLL_PFD2_CLK:
+		gate = SCG_PLL_PFD2_GATE_MASK;
+
+		if (clk == SCG_SPLL_PFD2_CLK)
+			addr = (u32)(&scg1_regs->spllpfd);
+		else
+			addr = (u32)(&scg1_regs->apllpfd);
+		break;
+	case SCG_SPLL_PFD3_CLK:
+	case SCG_APLL_PFD3_CLK:
+		gate = SCG_PLL_PFD3_GATE_MASK;
+
+		if (clk == SCG_SPLL_PFD3_CLK)
+			addr = (u32)(&scg1_regs->spllpfd);
+		else
+			addr = (u32)(&scg1_regs->apllpfd);
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	/* Gate the PFD */
+	reg = readl(addr);
+	reg |= gate;
+	writel(reg, addr);
+
+	return 0;
+}
+
 #define SIM_MISC_CTRL0_USB_PLL_EN_MASK (0x1 << 2)
 int scg_enable_usb_pll(bool usb_control)
 {
