@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017-2018 NXP
  */
 #include <cpu_func.h>
 #include <init.h>
@@ -362,6 +363,13 @@ static char *get_reset_cause(char *ret)
 
 	debug("[%X] SRS[%X] %X - ", cause1, srs, srs^cause1);
 	return ret;
+}
+
+void arch_preboot_os(void)
+{
+	scg_disable_pll_pfd(SCG_APLL_PFD1_CLK);
+	scg_disable_pll_pfd(SCG_APLL_PFD2_CLK);
+	scg_disable_pll_pfd(SCG_APLL_PFD3_CLK);
 }
 
 #ifdef CONFIG_ENV_IS_IN_MMC

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017-2018 NXP
  */
 
 #include <common.h>
@@ -149,8 +150,8 @@ void init_clk_usdhc(u32 index)
 		/*Disable the clock before configure it */
 		pcc_clock_enable(PER_CLK_USDHC0, false);
 
-		/* 158MHz / 1 = 158MHz */
-		pcc_clock_sel(PER_CLK_USDHC0, SCG_NIC1_CLK);
+		/* 352.8MHz / 1 = 352.8MHz */
+		pcc_clock_sel(PER_CLK_USDHC0, SCG_APLL_PFD1_CLK);
 		pcc_clock_div_config(PER_CLK_USDHC0, false, 1);
 		pcc_clock_enable(PER_CLK_USDHC0, true);
 		break;
@@ -158,9 +159,9 @@ void init_clk_usdhc(u32 index)
 		/*Disable the clock before configure it */
 		pcc_clock_enable(PER_CLK_USDHC1, false);
 
-		/* 158MHz / 1 = 158MHz */
-		pcc_clock_sel(PER_CLK_USDHC1, SCG_NIC1_CLK);
-		pcc_clock_div_config(PER_CLK_USDHC1, false, 1);
+		/* 352.8MHz / 2 = 176.4MHz */
+		pcc_clock_sel(PER_CLK_USDHC1, SCG_APLL_PFD1_CLK);
+		pcc_clock_div_config(PER_CLK_USDHC1, false, 2);
 		pcc_clock_enable(PER_CLK_USDHC1, true);
 		break;
 	default:
@@ -303,8 +304,8 @@ void clock_init(void)
 
 	scg_a7_init_core_clk();
 
-	/* APLL PFD1 = 270Mhz, PFD2=345.6Mhz, PFD3=800Mhz */
-	scg_enable_pll_pfd(SCG_APLL_PFD1_CLK, 35);
+	/* APLL PFD1 = 352.8Mhz, PFD2=340.2Mhz, PFD3=793.8Mhz */
+	scg_enable_pll_pfd(SCG_APLL_PFD1_CLK, 27);
 	scg_enable_pll_pfd(SCG_APLL_PFD2_CLK, 28);
 	scg_enable_pll_pfd(SCG_APLL_PFD3_CLK, 12);
 
