@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -282,6 +283,9 @@ void arch_preboot_os(void)
 #if defined(CONFIG_VIDEO_MXS)
 	lcdif_power_down();
 #endif
+	scg_disable_pll_pfd(SCG_APLL_PFD1_CLK);
+	scg_disable_pll_pfd(SCG_APLL_PFD2_CLK);
+	scg_disable_pll_pfd(SCG_APLL_PFD3_CLK);
 }
 
 #ifdef CONFIG_ENV_IS_IN_MMC
