@@ -143,11 +143,11 @@ struct trusty_ipc_chan {
  *
  * @ipc_dev:  new Trusty IPC device to be initialized
  * @tdev:     associated Trusty device
- * @buf_size: size of shared buffer to be allocated
+ * @shared_buf_size: size of shared buffer to be allocated
  */
 int trusty_ipc_dev_create(struct trusty_ipc_dev **ipc_dev,
                           struct trusty_dev *tdev,
-                          size_t buf_size);
+                          size_t shared_buf_size);
 /*
  * Shutdown @dev. Frees shared buffer, and calls trusty_dev_shutdown_ipc
  * to shutdown on the secure side.

@@ -156,14 +156,15 @@ static int check_response(struct trusty_ipc_dev *dev,
 
 int trusty_ipc_dev_create(struct trusty_ipc_dev **idev,
                           struct trusty_dev *tdev,
-                          size_t buf_size)
+                          size_t shared_buf_size)
 {
     int rc;
     struct trusty_ipc_dev *dev;
 
     trusty_assert(idev);
-
-    trusty_debug("%s: Create new Trusty IPC device (%zu)\n", __func__, buf_size);
+    trusty_assert(!(shared_buf_size % PAGE_SIZE));
+    trusty_debug("%s: Create new Trusty IPC device (%zu)\n", __func__,
+                 shared_buf_size);
 
     /* allocate device context */
     dev = trusty_calloc(1, sizeof(*dev));
@@ -174,14 +175,14 @@ int trusty_ipc_dev_create(struct trusty_ipc_dev **idev,
     dev->tdev = tdev;
 
     /* allocate shared buffer */
-    dev->buf_size = buf_size;
-    dev->buf_vaddr = trusty_membuf_alloc(&dev->buf_ns, buf_size);
+    dev->buf_size = shared_buf_size;
+    dev->buf_vaddr = trusty_alloc_pages(&dev->buf_ns,
+                                        shared_buf_size / PAGE_SIZE);
     if (!dev->buf_vaddr) {
         trusty_error("%s: failed to allocate shared memory\n", __func__);
         rc = TRUSTY_ERR_NO_MEMORY;
-        goto err_alloc_membuf;
+        goto err_alloc_pages;
     }
-
     /* call secure OS to register shared buffer */
     rc = trusty_dev_init_ipc(dev->tdev, &dev->buf_ns, dev->buf_size);
     if (rc != 0) {
@@ -197,8 +198,8 @@ int trusty_ipc_dev_create(struct trusty_ipc_dev **idev,
     return TRUSTY_ERR_NONE;
 
 err_create_sec_dev:
-    trusty_membuf_free(dev->buf_vaddr);
-err_alloc_membuf:
+    trusty_free_pages(dev->buf_vaddr, dev->buf_size / PAGE_SIZE);
+err_alloc_pages:
     trusty_free(dev);
     return rc;
 }
@@ -217,7 +218,7 @@ void trusty_ipc_dev_shutdown(struct trusty_ipc_dev *dev)
         trusty_error("%s: failed (%d) to shutdown Trusty IPC device\n",
                      __func__, rc);
     }
-    trusty_membuf_free(dev->buf_vaddr);
+    trusty_free_pages(dev->buf_vaddr, dev->buf_size / PAGE_SIZE);
     trusty_free(dev);
 }
 

@@ -108,16 +108,16 @@ void *trusty_calloc(size_t n, size_t size) TRUSTY_ATTR_WARN_UNUSED_RESULT;
  */
 void trusty_free(void *addr);
 /*
- * Allocate @size bytes of page aligned memory to be shared with secure side.
+ * Allocate @count contiguous pages to be shared with secure side.
  *
  * @mem_inf:  Stores cache attributes
  * Returns:   vaddr of allocated memory
  */
-void *trusty_membuf_alloc(struct ns_mem_page_info *mem_inf,
-                          size_t size) TRUSTY_ATTR_WARN_UNUSED_RESULT;
+void *trusty_alloc_pages(struct ns_mem_page_info *mem_inf,
+                         unsigned count) TRUSTY_ATTR_WARN_UNUSED_RESULT;
 /*
- * Frees memory at @vaddr allocated by trusty_membuf_alloc
+ * Free @count pages at @vaddr allocated by trusty_alloc_pages
  */
-void trusty_membuf_free(void *vaddr);
+void trusty_free_pages(void *vaddr, unsigned count);
 
 #endif /* TRUSTY_SYSDEPS_H_ */

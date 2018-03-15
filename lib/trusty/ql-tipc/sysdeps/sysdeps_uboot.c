@@ -99,25 +99,25 @@ void trusty_free(void *addr)
         free(addr);
 }
 
-void *trusty_membuf_alloc(struct ns_mem_page_info *page_info, size_t size)
+void *trusty_alloc_pages(struct ns_mem_page_info *page_info, unsigned count)
 {
     void *va = NULL;
     int res;
 
-    va = memalign(4096, size);
+    va = memalign(PAGE_SIZE, count * PAGE_SIZE);
     if (!va)
         return NULL;
 
     /* get memory attibutes */
     res = trusty_encode_page_info(page_info, va);
     if (res) {
-        trusty_membuf_free(va);
+        trusty_free_pages(va, count);
         return NULL;
     }
     return va;
 }
 
-void trusty_membuf_free(void *va)
+void trusty_free_pages(void *va, unsigned count)
 {
     if (va)
         free(va);
