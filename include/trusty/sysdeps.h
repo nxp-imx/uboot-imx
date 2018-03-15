@@ -75,8 +75,8 @@ void trusty_idle(struct trusty_dev *dev);
  */
 void trusty_abort(void) TRUSTY_ATTR_NO_RETURN;
 /*
- * Print a formatted string. @format must point to a NULL-terminated UTF-8
- * string, and is followed by arguments to be printed.
+ * Print a formatted string. @format must point to a NULL-terminated string, and
+ * is followed by arguments to be printed.
  */
 void trusty_printf(const char *format, ...);
 /*
