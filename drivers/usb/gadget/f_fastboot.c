@@ -3497,11 +3497,9 @@ static void cb_set_active_avb(struct usb_ep *ep, struct usb_request *req)
 #ifdef CONFIG_FSL_FASTBOOT
 static void cb_reboot_bootloader(struct usb_ep *ep, struct usb_request *req)
 {
-	fastboot_tx_write_str("OKAY");
-
-	udelay(1000000);
 	enable_fastboot_command();
-	do_reset(NULL, 0, 0, NULL);
+        fastboot_func->in_req->complete = compl_do_reset;
+        fastboot_tx_write_str("OKAY");
 }
 #endif
 
