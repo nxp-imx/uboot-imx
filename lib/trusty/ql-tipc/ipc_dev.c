@@ -24,6 +24,7 @@
 
 #include <trusty/trusty_dev.h>
 #include <trusty/trusty_ipc.h>
+#include <trusty/trusty_mem.h>
 #include <trusty/util.h>
 
 #define NS_PTE_PHYSADDR(pte)       ((pte) & 0xFFFFFFFFF000ULL)
@@ -176,12 +177,19 @@ int trusty_ipc_dev_create(struct trusty_ipc_dev **idev,
 
     /* allocate shared buffer */
     dev->buf_size = shared_buf_size;
-    dev->buf_vaddr = trusty_alloc_pages(&dev->buf_ns,
-                                        shared_buf_size / PAGE_SIZE);
+    dev->buf_vaddr = trusty_alloc_pages(shared_buf_size / PAGE_SIZE);
     if (!dev->buf_vaddr) {
         trusty_error("%s: failed to allocate shared memory\n", __func__);
         rc = TRUSTY_ERR_NO_MEMORY;
         goto err_alloc_pages;
+    }
+
+    /* Get memory attributes */
+    rc = trusty_encode_page_info(&dev->buf_ns, dev->buf_vaddr);
+    if (rc != 0) {
+        trusty_error("%s: failed to get shared memory attributes\n", __func__);
+        rc = TRUSTY_ERR_GENERIC;
+        goto err_page_info;
     }
     /* call secure OS to register shared buffer */
     rc = trusty_dev_init_ipc(dev->tdev, &dev->buf_ns, dev->buf_size);
@@ -197,6 +205,7 @@ int trusty_ipc_dev_create(struct trusty_ipc_dev **idev,
     *idev = dev;
     return TRUSTY_ERR_NONE;
 
+err_page_info:
 err_create_sec_dev:
     trusty_free_pages(dev->buf_vaddr, dev->buf_size / PAGE_SIZE);
 err_alloc_pages:

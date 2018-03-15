@@ -99,22 +99,9 @@ void trusty_free(void *addr)
         free(addr);
 }
 
-void *trusty_alloc_pages(struct ns_mem_page_info *page_info, unsigned count)
+void *trusty_alloc_pages(unsigned count)
 {
-    void *va = NULL;
-    int res;
-
-    va = memalign(PAGE_SIZE, count * PAGE_SIZE);
-    if (!va)
-        return NULL;
-
-    /* get memory attibutes */
-    res = trusty_encode_page_info(page_info, va);
-    if (res) {
-        trusty_free_pages(va, count);
-        return NULL;
-    }
-    return va;
+    return memalign(PAGE_SIZE, count * PAGE_SIZE);
 }
 
 void trusty_free_pages(void *va, unsigned count)

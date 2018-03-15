@@ -110,11 +110,9 @@ void trusty_free(void *addr);
 /*
  * Allocate @count contiguous pages to be shared with secure side.
  *
- * @mem_inf:  Stores cache attributes
  * Returns:   vaddr of allocated memory
  */
-void *trusty_alloc_pages(struct ns_mem_page_info *mem_inf,
-                         unsigned count) TRUSTY_ATTR_WARN_UNUSED_RESULT;
+void *trusty_alloc_pages(unsigned count) TRUSTY_ATTR_WARN_UNUSED_RESULT;
 /*
  * Free @count pages at @vaddr allocated by trusty_alloc_pages
  */
