@@ -62,7 +62,6 @@
 #define CONFIG_FASTBOOT_BUF_SIZE   0x19000000
 
 /* Undefine some macros to save boot time */
-#undef CONFIG_MXC_GPIO
 #undef CONFIG_FEC_MXC
 #undef CONFIG_USB_HOST_ETHER
 #undef CONFIG_ARCH_MISC_INIT
