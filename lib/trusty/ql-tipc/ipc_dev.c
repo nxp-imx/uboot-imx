@@ -197,8 +197,8 @@ int trusty_ipc_dev_create(struct trusty_ipc_dev **idev,
     return TRUSTY_ERR_NONE;
 
 err_create_sec_dev:
-err_alloc_membuf:
     trusty_membuf_free(dev->buf_vaddr);
+err_alloc_membuf:
     trusty_free(dev);
     return rc;
 }
