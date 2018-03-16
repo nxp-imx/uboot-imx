@@ -447,6 +447,9 @@ struct usb_gadget_ops {
 	int	(*udc_start)(struct usb_gadget *,
 			     struct usb_gadget_driver *);
 	int	(*udc_stop)(struct usb_gadget *);
+	int   (*match_ep)(struct usb_gadget *,
+			struct usb_ep *,
+			struct usb_endpoint_descriptor *);
 };
 
 /**

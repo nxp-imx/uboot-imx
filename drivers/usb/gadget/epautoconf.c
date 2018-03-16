@@ -167,6 +167,10 @@ static int ep_matches(
 			size = 64;
 		put_unaligned(cpu_to_le16(size), &desc->wMaxPacketSize);
 	}
+
+	if (gadget->ops->match_ep)
+		return gadget->ops->match_ep(gadget, ep, desc);
+
 	return 1;
 }
 
