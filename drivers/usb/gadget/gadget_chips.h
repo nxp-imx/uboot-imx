@@ -162,6 +162,11 @@
 #define gadget_is_dwc3(g)        0
 #endif
 
+#ifdef CONFIG_USB_CDNS3_GADGET
+#define gadget_is_cdns3(g)        (!strcmp("cdns3-gadget", (g)->name))
+#else
+#define gadget_is_cdns3(g)        0
+#endif
 
 
 /*
@@ -231,5 +236,7 @@ static inline int usb_gadget_controller_number(struct usb_gadget *gadget)
 		return 0x21;
 	else if (gadget_is_fotg210(gadget))
 		return 0x22;
+	else if (gadget_is_cdns3(gadget))
+		return 0x23;
 	return -ENOENT;
 }
