@@ -28,6 +28,7 @@
 #include <asm/mach-imx/video.h>
 #include <asm/arch/video_common.h>
 #include <power-domain.h>
+#include <cdns3-uboot.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -484,6 +485,82 @@ void pci_init_board(void)
 {
 	/* test the 1 lane mode of the PCIe A controller */
 	mx8qm_pcie_init();
+}
+#endif
+
+#ifdef CONFIG_USB_CDNS3_GADGET
+
+static struct cdns3_device cdns3_device_data = {
+	.none_core_base = 0x5B110000,
+	.xhci_base = 0x5B130000,
+	.dev_base = 0x5B140000,
+	.phy_base = 0x5B160000,
+	.otg_base = 0x5B120000,
+	.dr_mode = USB_DR_MODE_PERIPHERAL,
+	.index = 1,
+};
+
+int usb_gadget_handle_interrupts(void)
+{
+	cdns3_uboot_handle_interrupt(1);
+	return 0;
+}
+
+int board_usb_init(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	if (index == 1) {
+		if (init == USB_INIT_DEVICE) {
+			struct power_domain pd;
+			int ret;
+
+			/* Power on usb */
+			if (!power_domain_lookup_name("conn_usb2", &pd)) {
+				ret = power_domain_on(&pd);
+				if (ret)
+					printf("conn_usb2 Power up failed! (error = %d)\n", ret);
+			}
+
+			if (!power_domain_lookup_name("conn_usb2_phy", &pd)) {
+				ret = power_domain_on(&pd);
+				if (ret)
+					printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
+			}
+
+			ret = cdns3_uboot_init(&cdns3_device_data);
+			printf("%d cdns3_uboot_initmode %d\n", index, ret);
+		}
+	}
+	return ret;
+}
+
+int board_usb_cleanup(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	if (index == 1) {
+		if (init == USB_INIT_DEVICE) {
+			struct power_domain pd;
+			int ret;
+
+			cdns3_uboot_exit(1);
+
+			/* Power off usb */
+			if (!power_domain_lookup_name("conn_usb2", &pd)) {
+				ret = power_domain_off(&pd);
+				if (ret)
+					printf("conn_usb2 Power up failed! (error = %d)\n", ret);
+			}
+
+			if (!power_domain_lookup_name("conn_usb2_phy", &pd)) {
+				ret = power_domain_off(&pd);
+				if (ret)
+					printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
+			}
+		}
+	}
+	return ret;
 }
 #endif
 
