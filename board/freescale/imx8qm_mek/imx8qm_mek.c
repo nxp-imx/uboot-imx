@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -28,6 +28,7 @@
 #include <asm/arch/video_common.h>
 #include <power-domain.h>
 #include "../common/tcpc.h"
+#include <cdns3-uboot.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -314,13 +315,53 @@ static void setup_typec(void)
 	tcpc_init(&port, port_config, &ss_mux_select);
 }
 
+static struct cdns3_device cdns3_device_data = {
+	.none_core_base = 0x5B110000,
+	.xhci_base = 0x5B130000,
+	.dev_base = 0x5B140000,
+	.phy_base = 0x5B160000,
+	.otg_base = 0x5B120000,
+	.dr_mode = USB_DR_MODE_PERIPHERAL,
+	.index = 1,
+};
+
+int usb_gadget_handle_interrupts(void)
+{
+	cdns3_uboot_handle_interrupt(1);
+	return 0;
+}
+
 int board_usb_init(int index, enum usb_init_type init)
 {
 	int ret = 0;
 
-	if (init == USB_INIT_HOST)
-		ret = tcpc_setup_dfp_mode(&port);
+	if (index == 1) {
+		if (init == USB_INIT_HOST) {
+			ret = tcpc_setup_dfp_mode(&port);
+		} else {
+			struct power_domain pd;
+			int ret;
 
+			/* Power on usb */
+			if (!power_domain_lookup_name("conn_usb2", &pd)) {
+				ret = power_domain_on(&pd);
+				if (ret)
+					printf("conn_usb2 Power up failed! (error = %d)\n", ret);
+			}
+
+			if (!power_domain_lookup_name("conn_usb2_phy", &pd)) {
+				ret = power_domain_on(&pd);
+				if (ret)
+					printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
+			}
+
+			ret = tcpc_setup_ufp_mode(&port);
+			printf("%d setufp mode %d\n", index, ret);
+
+			ret = cdns3_uboot_init(&cdns3_device_data);
+			printf("%d cdns3_uboot_initmode %d\n", index, ret);
+		}
+	}
 	return ret;
 }
 
@@ -328,9 +369,29 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 {
 	int ret = 0;
 
-	if (init == USB_INIT_HOST)
-		ret = tcpc_disable_src_vbus(&port);
+	if (index == 1) {
+		if (init == USB_INIT_HOST) {
+			ret = tcpc_disable_src_vbus(&port);
+		} else {
+			struct power_domain pd;
+			int ret;
 
+			cdns3_uboot_exit(1);
+
+			/* Power off usb */
+			if (!power_domain_lookup_name("conn_usb2", &pd)) {
+				ret = power_domain_off(&pd);
+				if (ret)
+					printf("conn_usb2 Power up failed! (error = %d)\n", ret);
+			}
+
+			if (!power_domain_lookup_name("conn_usb2_phy", &pd)) {
+				ret = power_domain_off(&pd);
+				if (ret)
+					printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
+			}
+		}
+	}
 	return ret;
 }
 #endif
