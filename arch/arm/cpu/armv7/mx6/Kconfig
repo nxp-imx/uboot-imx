@@ -213,6 +213,7 @@ config TARGET_MX6SABRESD
 
 config TARGET_MX6SLEVK
 	bool "mx6slevk"
+	select MX6SL
 	select SUPPORT_SPL
 	select DM
 	select DM_THERMAL
