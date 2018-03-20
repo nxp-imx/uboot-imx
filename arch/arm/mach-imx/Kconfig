@@ -67,7 +67,7 @@ config USE_IMXIMG_PLUGIN
 
 config IMX_HAB
 	bool "Support i.MX HAB features"
-	depends on ARCH_MX7 || ARCH_MX6 || ARCH_MX5 || ARCH_IMX8M
+	depends on ARCH_MX7 || ARCH_MX6 || ARCH_MX5 || ARCH_MX7ULP || ARCH_IMX8M
 	select FSL_CAAM if HAS_CAAM
 	imply CMD_DEKBLOB if HAS_CAAM
 	help
@@ -141,8 +141,8 @@ config DBG_MONITOR
 	bool "Enable the AXI debug monitor"
 	depends on ARCH_MX6 || ARCH_MX7
 	help
-	  This option enables the debug monitor which prints out last 
-	  failed AXI access info when system reboot is caused by AXI 
+	  This option enables the debug monitor which prints out last
+	  failed AXI access info when system reboot is caused by AXI
 	  access failure.
 
 config NXP_BOARD_REVISION
