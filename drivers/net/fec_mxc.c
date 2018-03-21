@@ -1342,6 +1342,10 @@ static int fecmxc_ofdata_to_platdata(struct udevice *dev)
 
 static const struct udevice_id fecmxc_ids[] = {
 	{ .compatible = "fsl,imx6q-fec" },
+	{ .compatible = "fsl,imx6sl-fec" },
+	{ .compatible = "fsl,imx6sx-fec" },
+	{ .compatible = "fsl,imx6ul-fec" },
+	{ .compatible = "fsl,imx7d-fec" },
 	{ }
 };
 
