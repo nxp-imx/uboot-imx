@@ -1011,18 +1011,9 @@ static void fec_free_descs(struct fec_priv *fec)
 	free(fec->tbd_base);
 }
 
-#ifdef CONFIG_DM_ETH
-struct mii_dev *fec_get_miibus(struct udevice *dev, int dev_id)
-#else
-struct mii_dev *fec_get_miibus(uint32_t base_addr, int dev_id)
-#endif
+struct mii_dev *fec_get_miibus(ulong base_addr, int dev_id)
 {
-#ifdef CONFIG_DM_ETH
-	struct fec_priv *priv = dev_get_priv(dev);
-	struct ethernet_regs *eth = priv->eth;
-#else
-	struct ethernet_regs *eth = (struct ethernet_regs *)(ulong)base_addr;
-#endif
+	struct ethernet_regs *eth = (struct ethernet_regs *)base_addr;
 	struct mii_dev *bus;
 	int ret;
 
@@ -1164,7 +1155,7 @@ int fecmxc_initialize_multi(bd_t *bd, int dev_id, int phy_id, uint32_t addr)
 	base_mii = addr;
 #endif
 	debug("eth_init: fec_probe(bd, %i, %i) @ %08x\n", dev_id, phy_id, addr);
-	bus = fec_get_miibus(base_mii, dev_id);
+	bus = fec_get_miibus((ulong)base_mii, dev_id);
 	if (!bus)
 		return -ENOMEM;
 #ifdef CONFIG_PHYLIB
@@ -1282,7 +1273,7 @@ static int fecmxc_probe(struct udevice *dev)
 	fec_reg_setup(priv);
 	priv->dev_id = (dev_id == -1) ? 0 : dev_id;
 
-	bus = fec_get_miibus(dev, dev_id);
+	bus = fec_get_miibus((ulong)priv->eth, dev_id);
 	if (!bus) {
 		ret = -ENOMEM;
 		goto err_mii;
