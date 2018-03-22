@@ -28,7 +28,6 @@
 #endif /* ifdef CONFIG_SPL_BUILD */
 
 #ifndef CONFIG_SPL_BUILD
-#define CONFIG_CMD_BLOB
 #define CONFIG_CMD_HASH
 #define CONFIG_KEY_REVOCATION
 #ifndef CONFIG_SYS_RAMBOOT
