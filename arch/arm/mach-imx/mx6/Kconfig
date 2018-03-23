@@ -15,8 +15,7 @@ config MX6
 	imply CMD_FUSE
 
 config MX6D
-	select HAS_CAAM
-	select MX6_SMP
+	select MX6Q
 	bool
 
 config MX6DL
