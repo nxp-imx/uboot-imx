@@ -24,8 +24,11 @@
 #include <asm/arch/mxc_hdmi.h>
 #include <asm/arch/crm_regs.h>
 #include <dm.h>
+#include <fsl_sec.h>
 #include <imx_thermal.h>
 #include <mmc.h>
+#include <hang.h>
+#include <cpu_func.h>
 
 #define has_err007805() \
 	(is_mx6sl() || is_mx6dl() || is_mx6solo() || is_mx6ull())
@@ -234,6 +237,21 @@ u32 __weak get_board_rev(void)
 }
 #endif
 
+static void init_csu(void)
+{
+#ifdef CONFIG_ARMV7_NONSEC
+	int i;
+	u32 csu = CSU_BASE_ADDR;
+	/*
+	 * This is to allow device can be accessed in non-secure world.
+	 * All imx6 chips CSU have 40 Config security level registers.
+	 */
+	for (i = 0; i < 40; i ++) {
+	    *((u32 *)csu + i) = 0xffffffff;
+	}
+#endif
+}
+
 static void clear_ldo_ramp(void)
 {
 	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
@@ -407,7 +425,6 @@ static void noc_setup(void)
 #endif
 
 #ifdef CONFIG_MX6SX
-
 void pcie_power_up(void)
 {
 	set_ldo_voltage(LDO_PU, 1100);	/* Set VDDPU to 1.1V */
@@ -481,6 +498,8 @@ int arch_cpu_init(void)
 	}
 
 	init_aips();
+
+	init_csu();
 
 	/* Need to clear MMDC_CHx_MASK to make warm reset work. */
 	clear_mmdc_ch_mask();
@@ -642,6 +661,19 @@ int board_postclk_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_SERIAL_TAG
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[0];
+	struct fuse_bank0_regs *fuse =
+		(struct fuse_bank0_regs *)bank->fuse_regs;
+
+	serialnr->low = fuse->uid_low;
+	serialnr->high = fuse->uid_high;
+}
+#endif
+
 #ifndef CONFIG_SPL_BUILD
 /*
  * cfg_val will be used for
@@ -670,6 +702,49 @@ const struct boot_mode soc_boot_modes[] = {
 	{NULL,		0},
 };
 #endif
+
+enum boot_device get_boot_device(void)
+{
+	enum boot_device boot_dev = UNKNOWN_BOOT;
+	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	uint bt_mem_ctl = (soc_sbmr & 0x000000FF) >> 4 ;
+	uint bt_mem_type = (soc_sbmr & 0x00000008) >> 3;
+	uint bt_dev_port = (soc_sbmr & 0x00001800) >> 11;
+
+	switch (bt_mem_ctl) {
+	case 0x0:
+		if (bt_mem_type)
+			boot_dev = ONE_NAND_BOOT;
+		else
+			boot_dev = WEIM_NOR_BOOT;
+		break;
+	case 0x2:
+			boot_dev = SATA_BOOT;
+		break;
+	case 0x3:
+		if (bt_mem_type)
+			boot_dev = I2C_BOOT;
+		else
+			boot_dev = SPI_NOR_BOOT;
+		break;
+	case 0x4:
+	case 0x5:
+		boot_dev = bt_dev_port + SD1_BOOT;
+		break;
+	case 0x6:
+	case 0x7:
+		boot_dev = bt_dev_port + MMC1_BOOT;
+		break;
+	case 0x8 ... 0xf:
+		boot_dev = NAND_BOOT;
+		break;
+	default:
+		boot_dev = UNKNOWN_BOOT;
+		break;
+	}
+
+    return boot_dev;
+}
 
 void set_wdog_reset(struct wdog_regs *wdog)
 {
