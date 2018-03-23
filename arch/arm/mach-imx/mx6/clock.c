@@ -1337,7 +1337,7 @@ int do_mx6_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6D) || defined(CONFIG_MX6DL) || \
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL) || \
 	defined(CONFIG_MX6S)
 static void disable_ldb_di_clock_sources(void)
 {
