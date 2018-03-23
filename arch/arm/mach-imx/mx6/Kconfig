@@ -112,6 +112,12 @@ config LDO_BYPASS_CHECK
 	  "fsl,ldo-bypass" property. When the property is set, board relevant 
 	  PMIC settings are called to adjust for LDO bypass. 
 
+config CMD_BEE
+	bool "Enable commands for Bus Encryption Engine(BEE)"
+	depends on MX6UL
+	help
+	  Set "Y" to enable the bee commands 
+
 choice
 	prompt "MX6 board select"
 	optional
