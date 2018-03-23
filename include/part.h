@@ -103,6 +103,7 @@ struct disk_part {
 struct blk_desc *blk_get_dev(const char *ifname, int dev);
 
 struct blk_desc *mg_disk_get_dev(int dev);
+struct blk_desc *sata_get_dev(int dev);
 int host_get_dev_err(int dev, struct blk_desc **blk_devp);
 
 /* disk/part.c */
@@ -257,6 +258,7 @@ extern const struct block_drvr block_drvr[];
 static inline struct blk_desc *blk_get_dev(const char *ifname, int dev)
 { return NULL; }
 static inline struct blk_desc *mg_disk_get_dev(int dev) { return NULL; }
+static inline struct blk_desc *sata_get_dev(int dev) { return NULL; }
 
 static inline int part_get_info(struct blk_desc *dev_desc, int part,
 				struct disk_partition *info) { return -1; }

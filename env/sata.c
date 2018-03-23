@@ -89,7 +89,7 @@ static inline int read_env(struct blk_desc *sata, unsigned long size,
 	return (n == blk_cnt) ? 0 : -1;
 }
 
-static void env_sata_load(void)
+static int env_sata_load(void)
 {
 	ALLOC_CACHE_ALIGN_BUFFER(char, buf, CONFIG_ENV_SIZE);
 	struct blk_desc *sata = NULL;
