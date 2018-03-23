@@ -179,6 +179,7 @@ enum env_valid {
 enum env_location {
 	ENVL_UNKNOWN,
 	ENVL_EEPROM,
+	ENVL_ESATA,
 	ENVL_EXT4,
 	ENVL_FAT,
 	ENVL_FLASH,
