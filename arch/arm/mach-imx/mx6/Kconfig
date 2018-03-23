@@ -29,6 +29,10 @@ config MX6Q
 	select MX6_SMP
 	bool
 
+config MX6QP
+	select MX6Q
+	bool
+
 config MX6QDL
 	select HAS_CAAM
 	select MX6_SMP
