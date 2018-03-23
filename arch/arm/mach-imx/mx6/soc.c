@@ -393,7 +393,7 @@ static void init_bandgap(void)
 	}
 }
 
-#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6QDL)
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6QDL) || defined(CONFIG_MX6QP)
 static void noc_setup(void)
 {
 	enable_ipu_clock();
@@ -580,7 +580,7 @@ int arch_cpu_init(void)
 
 	init_src();
 
-#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6QDL)
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6QDL) || defined(CONFIG_MX6QP)
 	if (is_mx6dqp())
 		noc_setup();
 #endif

@@ -829,7 +829,7 @@ dtb-y += \
 
 endif
 
-ifneq ($(CONFIG_MX6Q)$(CONFIG_MX6QDL),)
+ifneq ($(CONFIG_MX6Q)$(CONFIG_MX6QDL)$(CONFIG_MX6QP),)
 dtb-y += \
 	imx6q-apalis-eval.dtb \
 	imx6q-bosch-acc.dtb \

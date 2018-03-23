@@ -33,6 +33,11 @@ config MX6Q
 	select HAS_CAAM
 	select MX6_SMP
 
+config MX6QP
+	bool "i.MX 6QuadPlus SoC support"
+	select HAS_CAAM
+	select MX6_SMP
+
 config MX6QDL
 	bool "i.MX 6Dual and 6Quad SoC support"
 	select HAS_CAAM
