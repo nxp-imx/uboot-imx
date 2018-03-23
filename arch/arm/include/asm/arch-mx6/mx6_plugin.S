@@ -68,7 +68,7 @@ before_calling_rom___pu_irom_hwcnfg_setup:
 	cmp r4, r3
 	ldrge r3, =ROM_API_TABLE_BASE_ADDR_MX6DL_TO12
 	ldrlt r3, =ROM_API_TABLE_BASE_ADDR_LEGACY
-#elif defined(CONFIG_MX6Q)
+#elif defined(CONFIG_MX6Q) || defined(CONFIG_MX6QP)
 	ldr r3, =ROM_VERSION_TO15
 	cmp r4, r3
 	ldrge r3, =ROM_API_TABLE_BASE_ADDR_MX6DQ_TO15
