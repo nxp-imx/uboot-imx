@@ -763,7 +763,7 @@ void mx6sl_dram_iocfg(unsigned width,
 }
 #endif
 
-#if defined(CONFIG_MX6QDL) || defined(CONFIG_MX6Q) || defined(CONFIG_MX6D)
+#if defined(CONFIG_MX6QDL) || defined(CONFIG_MX6Q)
 /* Configure MX6DQ mmdc iomux */
 void mx6dq_dram_iocfg(unsigned width,
 		      const struct mx6dq_iomux_ddr_regs *ddr,
