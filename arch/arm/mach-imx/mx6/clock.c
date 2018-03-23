@@ -1327,7 +1327,7 @@ void enable_ipu_clock(void)
 }
 #endif
 
-#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6D) || defined(CONFIG_MX6DL) || \
+#if defined(CONFIG_MX6Q) || defined(CONFIG_MX6DL) || \
 	defined(CONFIG_MX6S)
 static void disable_ldb_di_clock_sources(void)
 {
