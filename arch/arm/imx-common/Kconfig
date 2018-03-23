@@ -45,6 +45,16 @@ config SECURE_BOOT
 	  This option enables the support for secure boot (HAB).
 	  See doc/README.mxc_hab for more details.
 
+config CMD_DEKBLOB
+	bool "Support the 'dek_blob' command"
+	depends on !MX6ULL && !MX6SLL && !MX6SL && !IMX8M && !MX7ULP
+	depends on SECURE_BOOT
+	help
+	  This enables the 'dek_blob' command which is used with the
+	  Freescale secure boot mechanism. This command encapsulates and
+	  creates a blob of data. See also CMD_BLOB and doc/README.mxc_hab for
+	  more information.
+
 config FSL_MFGPROT
 	bool "Support the 'mfgprot' command"
 	depends on SECURE_BOOT && ARCH_MX7
