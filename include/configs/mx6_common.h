@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
+ * Copyright (C) 2012-2016 Freescale Semiconductor, Inc.
  * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright 2018 NXP
  */
 
 #ifndef __MX6_COMMON_H
@@ -30,7 +32,9 @@
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_CBSIZE	512
 #define CONFIG_SYS_MAXARGS	32
+#define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE
 
 /* MMC */
+#define CONFIG_SUPPORT_EMMC_BOOT
 
 #endif
