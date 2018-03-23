@@ -63,7 +63,7 @@ plugin_start:
 before_calling_rom___pu_irom_hwcnfg_setup:
 	ldr r3, =ROM_VERSION_OFFSET
 	ldr r4, [r3]
-#if defined(CONFIG_MX6SOLO) || defined(CONFIG_MX6DL)
+#if defined(CONFIG_MX6S) || defined(CONFIG_MX6DL)
 	ldr r3, =ROM_VERSION_TO12
 	cmp r4, r3
 	ldrge r3, =ROM_API_TABLE_BASE_ADDR_MX6DL_TO12
