@@ -104,6 +104,14 @@ config MX6_DDRCAL
 	  Say "Y" if your board uses dynamic (per-boot) DDR calibration.
 	  If unsure, say N.
 
+config LDO_BYPASS_CHECK
+	bool "Enable the LDO bypass checking and setting"
+	default y if !MX6SLL
+	help
+	  This feature searches the gpc node in loaded DTB and checking the
+	  "fsl,ldo-bypass" property. When the property is set, board relevant 
+	  PMIC settings are called to adjust for LDO bypass. 
+
 choice
 	prompt "MX6 board select"
 	optional
