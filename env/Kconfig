@@ -10,7 +10,7 @@ config ENV_IS_NOWHERE
 		     !ENV_IS_IN_MMC && !ENV_IS_IN_NAND && \
 		     !ENV_IS_IN_NVRAM && !ENV_IS_IN_ONENAND && \
 		     !ENV_IS_IN_REMOTE && !ENV_IS_IN_SPI_FLASH && \
-		     !ENV_IS_IN_UBI
+		     !ENV_IS_IN_UBI && !ENV_IS_IN_SATA
 	help
 	  Define this if you don't want to or can't have an environment stored
 	  on a storage medium. In this case the environment will still exist
@@ -281,6 +281,20 @@ config ENV_IS_IN_REMOTE
 	  local device can get the environment from remote memory
 	  space by SRIO or PCIE links.
 
+config ENV_IS_IN_SATA
+    bool "Environment is in SATA disk"
+    depends on !CHAIN_OF_TRUST
+    help
+      Define this if you have a SATA disk device which you
+      want to use for the environment.
+
+      - CONFIG_ENV_OFFSET:
+      - CONFIG_ENV_SIZE:
+
+      These two #defines specify the offset and size of the
+      environment area within the SATA disk. CONFIG_ENV_OFFSET must be
+      aligned to an disk sector boundary.
+
 config ENV_IS_IN_SPI_FLASH
 	bool "Environment is in SPI flash"
 	depends on !CHAIN_OF_TRUST && SPI
@@ -490,7 +504,7 @@ config ENV_ADDR_REDUND
 config ENV_OFFSET
 	hex "Environment offset"
 	depends on ENV_IS_IN_EEPROM || ENV_IS_IN_MMC || ENV_IS_IN_NAND || \
-		    ENV_IS_IN_SPI_FLASH
+		    ENV_IS_IN_SPI_FLASH || ENV_IS_IN_SATA
 	default 0x3f8000 if ARCH_ROCKCHIP && ENV_IS_IN_MMC
 	default 0x140000 if ARCH_ROCKCHIP && ENV_IS_IN_SPI_FLASH
 	default 0x88000 if ARCH_SUNXI
