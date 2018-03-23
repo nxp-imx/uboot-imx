@@ -497,7 +497,29 @@ dtb-$(CONFIG_MX53) += imx53-cx9020.dtb \
 
 dtb-$(CONFIG_MX6Q) += \
 	imx6q-display5.dtb \
-	imx6q-logicpd.dtb
+	imx6q-logicpd.dtb \
+	imx6q-sabreauto.dtb \
+	imx6q-sabreauto-ecspi.dtb \
+	imx6q-sabreauto-gpmi-weim.dtb \
+	imx6q-sabresd.dtb
+
+dtb-$(CONFIG_MX6DL) += \
+	imx6dl-sabreauto.dtb \
+	imx6dl-sabreauto-ecspi.dtb \
+	imx6dl-sabreauto-gpmi-weim.dtb \
+	imx6dl-sabresd.dtb
+
+dtb-$(CONFIG_MX6S) += \
+	imx6dl-sabreauto.dtb \
+	imx6dl-sabreauto-ecspi.dtb \
+	imx6dl-sabreauto-gpmi-weim.dtb \
+	imx6dl-sabresd.dtb
+
+dtb-$(CONFIG_MX6QP) += \
+	imx6qp-sabreauto.dtb \
+	imx6qp-sabreauto-ecspi.dtb \
+	imx6qp-sabreauto-gpmi-weim.dtb \
+	imx6qp-sabresd.dtb
 
 dtb-$(CONFIG_MX6QDL) += \
 	imx6dl-icore.dtb \
