@@ -1,4 +1,4 @@
-if TARGET_MX6SABRESD
+if TARGET_MX6SABRESD || TARGET_MX6SABRESD_COMMON
 
 config SYS_BOARD
 	default "mx6sabresd"
@@ -8,5 +8,8 @@ config SYS_VENDOR
 
 config SYS_CONFIG_NAME
 	default "mx6sabresd"
+
+config SYS_TEXT_BASE
+    default 0x17800000
 
 endif
