@@ -248,6 +248,8 @@ int mxs_wait_mask_set(struct mxs_register_32 *reg, u32 mask, u32 timeout);
 int mxs_wait_mask_clr(struct mxs_register_32 *reg, u32 mask, u32 timeout);
 
 void board_late_mmc_env_init(void);
+void vadc_power_up(void);
+void vadc_power_down(void);
 
 void pcie_power_up(void);
 void pcie_power_off(void);
