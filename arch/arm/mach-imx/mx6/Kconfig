@@ -121,6 +121,24 @@ config CMD_BEE
 	help
 	  Set "Y" to enable the bee commands 
 
+config TARGET_MX6SABREAUTO_COMMON
+    bool
+    select BOARD_LATE_INIT
+    select DM
+    select DM_THERMAL
+    select BOARD_EARLY_INIT_F
+    select NXP_BOARD_REVISION
+    imply CMD_DM
+
+config TARGET_MX6SABRESD_COMMON
+    bool
+    select BOARD_LATE_INIT
+    select DM
+    select DM_THERMAL
+    select BOARD_EARLY_INIT_F
+    select NXP_BOARD_REVISION
+    imply CMD_DM
+
 choice
 	prompt "MX6 board select"
 	optional
@@ -401,6 +419,46 @@ config TARGET_MX6SABRESD
 	select MX6QDL
 	select SUPPORT_SPL
 	imply CMD_DM
+
+config TARGET_MX6QSABREAUTO
+    bool "mx6qsabreauto"
+    select TARGET_MX6SABREAUTO_COMMON
+    select MX6Q
+
+config TARGET_MX6QPSABREAUTO
+    bool "mx6qpsabreauto"
+    select TARGET_MX6SABREAUTO_COMMON
+    select MX6QP
+
+config TARGET_MX6DLSABREAUTO
+    bool "mx6dlsabreauto"
+    select TARGET_MX6SABREAUTO_COMMON
+    select MX6DL
+
+config TARGET_MX6SOLOSABREAUTO
+    bool "mx6solosabreauto"
+    select TARGET_MX6SABREAUTO_COMMON
+    select MX6S
+
+config TARGET_MX6QSABRESD
+	bool "mx6qsabresd"
+    select TARGET_MX6SABRESD_COMMON
+    select MX6Q
+
+config TARGET_MX6QPSABRESD
+	bool "mx6qpsabresd"
+    select TARGET_MX6SABRESD_COMMON
+    select MX6QP
+
+config TARGET_MX6DLSABRESD
+	bool "mx6dlsabresd"
+    select TARGET_MX6SABRESD_COMMON
+    select MX6DL
+
+config TARGET_MX6SOLOSABRESD
+	bool "mx6solosabresd"
+    select TARGET_MX6SABRESD_COMMON
+    select MX6S
 
 config TARGET_MX6SLEVK
 	bool "mx6slevk"
