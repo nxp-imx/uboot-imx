@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
  *
  * Configuration settings for the Freescale i.MX6Q SabreSD board.
  *
@@ -14,7 +15,7 @@
 #define CONFIG_IMX_THERMAL
 
 /* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(10 * SZ_1M)
+#define CONFIG_SYS_MALLOC_LEN		(16 * SZ_1M)
 
 #define CONFIG_MXC_UART
 
@@ -25,17 +26,42 @@
 #define CONFIG_MII
 #define IMX_FEC_BASE			ENET_BASE_ADDR
 #define CONFIG_FEC_XCV_TYPE		RGMII
+#ifdef CONFIG_DM_ETH
+#define CONFIG_ETHPRIME			"eth0"
+#else
 #define CONFIG_ETHPRIME			"FEC"
+#endif
 #define CONFIG_FEC_MXC_PHYADDR		1
 
+#define CONFIG_PHYLIB
 #define CONFIG_PHY_ATHEROS
 
-#ifdef CONFIG_CMD_SF
-#define CONFIG_SF_DEFAULT_BUS		0
-#define CONFIG_SF_DEFAULT_CS		0
-#define CONFIG_SF_DEFAULT_SPEED		20000000
-#define CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
+#ifdef CONFIG_MX6S
+#define SYS_NOSMP "nosmp"
+#else
+#define SYS_NOSMP
 #endif
+
+#ifdef CONFIG_NAND_BOOT
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
+#else
+#define MFG_NAND_PARTITION ""
+#endif
+
+#define CONFIG_MFG_ENV_SETTINGS \
+	"mfgtool_args=setenv bootargs console=" CONSOLE_DEV ",115200 " \
+		"rdinit=/linuxrc " \
+		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
+		"g_mass_storage.file=/fat g_mass_storage.ro=1 " \
+		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
+		"g_mass_storage.iSerialNumber=\"\" "\
+		"enable_wait_mode=off "\
+		MFG_NAND_PARTITION \
+		"\0" \
+		"initrd_addr=0x12C00000\0" \
+		"initrd_high=0xffffffff\0" \
+		"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+
 
 #ifdef CONFIG_SUPPORT_EMMC_BOOT
 #define EMMC_ENV \
@@ -59,7 +85,46 @@
 
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
+#if defined(CONFIG_NAND_BOOT)
+	/*
+	 * The dts also enables the WEIN NOR which is mtd0.
+	 * So the partions' layout for NAND is:
+	 *     mtd1: 16M      (uboot)
+	 *     mtd2: 16M      (kernel)
+	 *     mtd3: 16M      (dtb)
+	 *     mtd4: left     (rootfs)
+	 */
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
+	"fdt_addr=0x18000000\0" \
+	"fdt_high=0xffffffff\0"	  \
+	"bootargs=console=" CONSOLE_DEV ",115200 ubi.mtd=5 "  \
+		"root=ubi0:rootfs rootfstype=ubifs "		     \
+		"mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs)\0"\
+	"bootcmd=nand read ${loadaddr} 0x4000000 0x800000;"\
+		"nand read ${fdt_addr} 0x5000000 0x100000;"\
+		"bootz ${loadaddr} - ${fdt_addr}\0"
+
+#elif defined(CONFIG_SATA_BOOT)
+
+#define CONFIG_EXTRA_ENV_SETTINGS \
+		CONFIG_MFG_ENV_SETTINGS \
+		"fdt_addr=0x18000000\0" \
+		"fdt_high=0xffffffff\0"   \
+		"bootargs=console=" CONSOLE_DEV ",115200 \0"\
+		"bootargs_sata=setenv bootargs ${bootargs} " \
+			"root=/dev/sda1 rootwait rw \0" \
+		"bootcmd_sata=run bootargs_sata; sata init; " \
+			"sata read ${loadaddr} 0x800  0x4000; " \
+			"sata read ${fdt_addr} 0x8000 0x800; " \
+			"bootz ${loadaddr} - ${fdt_addr} \0" \
+		"bootcmd=run bootcmd_sata \0"
+
+#else
+
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
+	"epdc_waveform=epdc_splash.bin\0" \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"fdt_file=undefined\0" \
@@ -76,6 +141,8 @@
 	"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
 	"mmcpart=1\0" \
 	"finduuid=part uuid mmc ${mmcdev}:2 uuid\0" \
+	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
+	"mmcautodetect=yes\0" \
 	"update_sd_firmware=" \
 		"if test ${ip_dyn} = yes; then " \
 			"setenv get_cmd dhcp; " \
@@ -90,8 +157,9 @@
 			"fi; "	\
 		"fi\0" \
 	EMMC_ENV	  \
-	"mmcargs=setenv bootargs console=${console},${baudrate} " \
-		"root=PARTUUID=${uuid} rootwait rw\0" \
+	"smp=" SYS_NOSMP "\0"\
+	"mmcargs=setenv bootargs console=${console},${baudrate} ${smp} " \
+		"root=${mmcroot}\0" \
 	"loadbootscript=" \
 		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
@@ -99,7 +167,6 @@
 	"loadimage=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
 	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
-		"run finduuid; " \
 		"run mmcargs; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 			"if run loadfdt; then " \
@@ -114,7 +181,7 @@
 		"else " \
 			"bootz; " \
 		"fi;\0" \
-	"netargs=setenv bootargs console=${console},${baudrate} " \
+	"netargs=setenv bootargs console=${console},${baudrate} ${smp} " \
 		"root=/dev/nfs " \
 		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 	"netboot=echo Booting from net ...; " \
@@ -169,6 +236,7 @@
 			"fi; " \
 		"fi; " \
 	"else run netboot; fi"
+#endif
 
 #define CONFIG_ARP_TIMEOUT     200UL
 
@@ -192,8 +260,96 @@
 /* Environment organization */
 #define CONFIG_ENV_SIZE			(8 * 1024)
 
+#ifdef CONFIG_SATA
+#define CONFIG_DWC_AHSATA
+#define CONFIG_SYS_SATA_MAX_DEVICE	1
+#define CONFIG_DWC_AHSATA_PORT_ID	0
+#define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
+#define CONFIG_LBA48
+#define CONFIG_LIBATA
+#endif
+
+#ifdef CONFIG_CMD_SF
+#define CONFIG_SPI_FLASH
+#define CONFIG_SPI_FLASH_STMICRO
+#define CONFIG_MXC_SPI
+#define CONFIG_SF_DEFAULT_BUS  0
+#define CONFIG_SF_DEFAULT_SPEED 20000000
+#define CONFIG_SF_DEFAULT_MODE (SPI_MODE_0)
+#endif
+
+#ifdef CONFIG_MTD_NOR_FLASH
+#define CONFIG_SYS_FLASH_BASE           WEIM_ARB_BASE_ADDR
+#define CONFIG_SYS_FLASH_SECT_SIZE      (128 * 1024)
+#define CONFIG_SYS_MAX_FLASH_BANKS 1    /* max number of memory banks */
+#define CONFIG_SYS_MAX_FLASH_SECT 256   /* max number of sectors on one chip */
+#define CONFIG_SYS_FLASH_CFI            /* Flash memory is CFI compliant */
+#define CONFIG_FLASH_CFI_DRIVER         /* Use drivers/cfi_flash.c */
+#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE /* Use buffered writes*/
+#define CONFIG_SYS_FLASH_EMPTY_INFO
+#define CONFIG_SYS_FLASH_CFI_WIDTH	FLASH_CFI_16BIT
+#endif
+
+#ifdef CONFIG_CMD_NAND
+/* NAND flash command */
+#define CONFIG_CMD_NAND_TRIMFFS
+
+/* NAND stuff */
+#define CONFIG_NAND_MXS
+#define CONFIG_SYS_MAX_NAND_DEVICE     1
+#define CONFIG_SYS_NAND_BASE           0x40000000
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+
+/* DMA stuff, needed for GPMI/MXS NAND support */
+#define CONFIG_APBH_DMA
+#define CONFIG_APBH_DMA_BURST
+#define CONFIG_APBH_DMA_BURST8
+#endif
+
 #if defined(CONFIG_ENV_IS_IN_MMC)
-#define CONFIG_ENV_OFFSET		(768 * 1024)
+#define CONFIG_ENV_OFFSET		(896 * 1024)
+#elif defined(CONFIG_ENV_IS_IN_SPI_FLASH)
+#define CONFIG_ENV_OFFSET              (896 * 1024)
+#define CONFIG_ENV_SECT_SIZE           (64 * 1024)
+#define CONFIG_ENV_SPI_BUS             CONFIG_SF_DEFAULT_BUS
+#define CONFIG_ENV_SPI_CS              CONFIG_SF_DEFAULT_CS
+#define CONFIG_ENV_SPI_MODE            CONFIG_SF_DEFAULT_MODE
+#define CONFIG_ENV_SPI_MAX_HZ          CONFIG_SF_DEFAULT_SPEED
+#elif defined(CONFIG_ENV_IS_IN_FLASH)
+#undef CONFIG_ENV_SIZE
+#define CONFIG_ENV_SIZE                        CONFIG_SYS_FLASH_SECT_SIZE
+#define CONFIG_ENV_SECT_SIZE           CONFIG_SYS_FLASH_SECT_SIZE
+#define CONFIG_ENV_OFFSET              (7 * CONFIG_SYS_FLASH_SECT_SIZE)
+#elif defined(CONFIG_ENV_IS_IN_NAND)
+#undef CONFIG_ENV_SIZE
+#define CONFIG_ENV_OFFSET              (60 << 20)
+#define CONFIG_ENV_SECT_SIZE           (128 << 10)
+#define CONFIG_ENV_SIZE                        CONFIG_ENV_SECT_SIZE
+#elif defined(CONFIG_ENV_IS_IN_SATA)
+#define CONFIG_ENV_OFFSET		(896 * 1024)
+#define CONFIG_SYS_SATA_ENV_DEV		0
+#define CONFIG_SYS_DCACHE_OFF /* remove when sata driver support cache */
+#endif
+
+/* I2C Configs */
+#ifndef CONFIG_DM_I2C
+#define CONFIG_SYS_I2C
+#endif
+#ifdef CONFIG_CMD_I2C
+#define CONFIG_SYS_I2C_MXC
+#define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
+#define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
+#define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
+#define CONFIG_SYS_I2C_SPEED		  100000
+#endif
+
+/* PMIC */
+#ifndef CONFIG_DM_PMIC
+#define CONFIG_POWER
+#define CONFIG_POWER_I2C
+#define CONFIG_POWER_PFUZE100
+#define CONFIG_POWER_PFUZE100_I2C_ADDR 0x08
 #endif
 
 /* Framebuffer */
@@ -207,6 +363,10 @@
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx6sabreandroid_common.h"
+#else
 #define CONFIG_USBD_HS
 
+#endif /* CONFIG_ANDROID_SUPPORT */
 #endif                         /* __MX6QSABRE_COMMON_CONFIG_H */
