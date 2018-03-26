@@ -121,6 +121,14 @@ config CMD_BEE
 	help
 	  Set "Y" to enable the bee commands 
 
+config MODULE_FUSE
+	bool "Enable the module disable fuse checking on i.MX6"
+	default n
+	select OF_SYSTEM_SETUP
+	help
+	  Once the module is checked as fused to disable, this module driver
+	  won't be called. And it will be modified to disable in kernel DTB.
+
 config TARGET_MX6SABREAUTO_COMMON
     bool
     select BOARD_LATE_INIT
