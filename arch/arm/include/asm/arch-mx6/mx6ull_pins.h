@@ -429,6 +429,7 @@ enum {
 	MX6_PAD_ENET2_RX_DATA0__GPIO2_IO08                    = IOMUX_PAD(0x0370, 0x00E4, 5, 0x0000, 0, 0),
 	MX6_PAD_ENET2_RX_DATA0__KPP_ROW04                     = IOMUX_PAD(0x0370, 0x00E4, 6, 0x0000, 0, 0),
 	MX6_PAD_ENET2_RX_DATA0__USB_OTG1_PWR                  = IOMUX_PAD(0x0370, 0x00E4, 8, 0x0000, 0, 0),
+	MX6_PAD_ENET2_RX_DATA0__EPDC_SDDO08                   = IOMUX_PAD(0x0370, 0x00E4, 9, 0x0000, 0, 0),
 
 	MX6_PAD_ENET2_RX_DATA1__ENET2_RDATA01                 = IOMUX_PAD(0x0374, 0x00E8, 0, 0x0000, 0, 0),
 	MX6_PAD_ENET2_RX_DATA1__UART6_DCE_RX                  = IOMUX_PAD(0x0374, 0x00E8, 1, 0x064C, 2, 0),
@@ -439,6 +440,7 @@ enum {
 	MX6_PAD_ENET2_RX_DATA1__GPIO2_IO09                    = IOMUX_PAD(0x0374, 0x00E8, 5, 0x0000, 0, 0),
 	MX6_PAD_ENET2_RX_DATA1__KPP_COL04                     = IOMUX_PAD(0x0374, 0x00E8, 6, 0x0000, 0, 0),
 	MX6_PAD_ENET2_RX_DATA1__USB_OTG1_OC                   = IOMUX_PAD(0x0374, 0x00E8, 8, 0x0664, 1, 0),
+	MX6_PAD_ENET2_RX_DATA1__EPDC_SDDO09                   = IOMUX_PAD(0x0374, 0x00E8, 9, 0x0000, 0, 0),
 
 	MX6_PAD_ENET2_RX_EN__ENET2_RX_EN                      = IOMUX_PAD(0x0378, 0x00EC, 0, 0x0000, 0, 0),
 	MX6_PAD_ENET2_RX_EN__UART7_DCE_TX                     = IOMUX_PAD(0x0378, 0x00EC, 1, 0x0000, 0, 0),
@@ -449,6 +451,7 @@ enum {
 	MX6_PAD_ENET2_RX_EN__GPIO2_IO10                       = IOMUX_PAD(0x0378, 0x00EC, 5, 0x0000, 0, 0),
 	MX6_PAD_ENET2_RX_EN__KPP_ROW05                        = IOMUX_PAD(0x0378, 0x00EC, 6, 0x0000, 0, 0),
 	MX6_PAD_ENET2_RX_EN__ENET1_REF_CLK_25M                = IOMUX_PAD(0x0378, 0x00EC, 8, 0x0000, 0, 0),
+	MX6_PAD_ENET2_RX_EN__EPDC_SDDO10                      = IOMUX_PAD(0x0378, 0x00EC, 9, 0x0000, 0, 0),
 
 	MX6_PAD_ENET2_TX_DATA0__ENET2_TDATA00                 = IOMUX_PAD(0x037C, 0x00F0, 0, 0x0000, 0, 0),
 	MX6_PAD_ENET2_TX_DATA0__UART7_DCE_RX                  = IOMUX_PAD(0x037C, 0x00F0, 1, 0x0654, 1, 0),
@@ -458,6 +461,7 @@ enum {
 	MX6_PAD_ENET2_TX_DATA0__EIM_EB_B02                    = IOMUX_PAD(0x037C, 0x00F0, 4, 0x0000, 0, 0),
 	MX6_PAD_ENET2_TX_DATA0__GPIO2_IO11                    = IOMUX_PAD(0x037C, 0x00F0, 5, 0x0000, 0, 0),
 	MX6_PAD_ENET2_TX_DATA0__KPP_COL05                     = IOMUX_PAD(0x037C, 0x00F0, 6, 0x0000, 0, 0),
+	MX6_PAD_ENET2_TX_DATA0__EPDC_SDDO11                   = IOMUX_PAD(0x037C, 0x00F0, 9, 0x0000, 0, 0),
 
 	MX6_PAD_ENET2_TX_DATA1__ENET2_TDATA01                 = IOMUX_PAD(0x0380, 0x00F4, 0, 0x0000, 0, 0),
 	MX6_PAD_ENET2_TX_DATA1__UART8_DCE_TX                  = IOMUX_PAD(0x0380, 0x00F4, 1, 0x0000, 0, 0),
@@ -468,6 +472,7 @@ enum {
 	MX6_PAD_ENET2_TX_DATA1__GPIO2_IO12                    = IOMUX_PAD(0x0380, 0x00F4, 5, 0x0000, 0, 0),
 	MX6_PAD_ENET2_TX_DATA1__KPP_ROW06                     = IOMUX_PAD(0x0380, 0x00F4, 6, 0x0000, 0, 0),
 	MX6_PAD_ENET2_TX_DATA1__USB_OTG2_PWR                  = IOMUX_PAD(0x0380, 0x00F4, 8, 0x0000, 0, 0),
+	MX6_PAD_ENET2_TX_DATA1__EPDC_SDDO12                   = IOMUX_PAD(0x0380, 0x00F4, 9, 0x0000, 0, 0),
 
 	MX6_PAD_ENET2_TX_EN__ENET2_TX_EN                      = IOMUX_PAD(0x0384, 0x00F8, 0, 0x0000, 0, 0),
 	MX6_PAD_ENET2_TX_EN__UART8_DCE_RX                     = IOMUX_PAD(0x0384, 0x00F8, 1, 0x065C, 1, 0),
@@ -478,6 +483,7 @@ enum {
 	MX6_PAD_ENET2_TX_EN__GPIO2_IO13                       = IOMUX_PAD(0x0384, 0x00F8, 5, 0x0000, 0, 0),
 	MX6_PAD_ENET2_TX_EN__KPP_COL06                        = IOMUX_PAD(0x0384, 0x00F8, 6, 0x0000, 0, 0),
 	MX6_PAD_ENET2_TX_EN__USB_OTG2_OC                      = IOMUX_PAD(0x0384, 0x00F8, 8, 0x0660, 1, 0),
+	MX6_PAD_ENET2_TX_EN__EPDC_SDDO13                      = IOMUX_PAD(0x0384, 0x00F8, 9, 0x0000, 0, 0),
 
 	MX6_PAD_ENET2_TX_CLK__ENET2_TX_CLK                    = IOMUX_PAD(0x0388, 0x00FC, IOMUX_CONFIG_SION | 0, 0x0000, 0, 0),
 	MX6_PAD_ENET2_TX_CLK__UART8_DCE_CTS                   = IOMUX_PAD(0x0388, 0x00FC, 1, 0x0000, 0, 0),
@@ -488,6 +494,7 @@ enum {
 	MX6_PAD_ENET2_TX_CLK__GPIO2_IO14                      = IOMUX_PAD(0x0388, 0x00FC, 5, 0x0000, 0, 0),
 	MX6_PAD_ENET2_TX_CLK__KPP_ROW07                       = IOMUX_PAD(0x0388, 0x00FC, 6, 0x0000, 0, 0),
 	MX6_PAD_ENET2_TX_CLK__ANATOP_OTG2_ID                  = IOMUX_PAD(0x0388, 0x00FC, 8, 0x04BC, 1, 0),
+	MX6_PAD_ENET2_TX_CLK__EPDC_SDDO14                     = IOMUX_PAD(0x0388, 0x00FC, 9, 0x0000, 0, 0),
 
 	MX6_PAD_ENET2_RX_ER__ENET2_RX_ER                      = IOMUX_PAD(0x038C, 0x0100, 0, 0x0000, 0, 0),
 	MX6_PAD_ENET2_RX_ER__UART8_DCE_RTS                    = IOMUX_PAD(0x038C, 0x0100, 1, 0x0658, 1, 0),
@@ -498,6 +505,7 @@ enum {
 	MX6_PAD_ENET2_RX_ER__GPIO2_IO15                       = IOMUX_PAD(0x038C, 0x0100, 5, 0x0000, 0, 0),
 	MX6_PAD_ENET2_RX_ER__KPP_COL07                        = IOMUX_PAD(0x038C, 0x0100, 6, 0x0000, 0, 0),
 	MX6_PAD_ENET2_RX_ER__WDOG1_WDOG_ANY                   = IOMUX_PAD(0x038C, 0x0100, 8, 0x0000, 0, 0),
+	MX6_PAD_ENET2_RX_ER__EPDC_SDDO15                      = IOMUX_PAD(0x038C, 0x0100, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_CLK__LCDIF_CLK                            = IOMUX_PAD(0x0390, 0x0104, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_CLK__LCDIF_WR_RWN                         = IOMUX_PAD(0x0390, 0x0104, 1, 0x0000, 0, 0),
@@ -507,6 +515,7 @@ enum {
 	MX6_PAD_LCD_CLK__EIM_CS2_B                            = IOMUX_PAD(0x0390, 0x0104, 4, 0x0000, 0, 0),
 	MX6_PAD_LCD_CLK__GPIO3_IO00                           = IOMUX_PAD(0x0390, 0x0104, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_CLK__WDOG1_WDOG_RST_B_DEB                 = IOMUX_PAD(0x0390, 0x0104, 8, 0x0000, 0, 0),
+	MX6_PAD_LCD_CLK__EPDC_SDCLK                           = IOMUX_PAD(0x0390, 0x0104, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_ENABLE__LCDIF_ENABLE                      = IOMUX_PAD(0x0394, 0x0108, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_ENABLE__LCDIF_RD_E                        = IOMUX_PAD(0x0394, 0x0108, 1, 0x0000, 0, 0),
@@ -516,6 +525,7 @@ enum {
 	MX6_PAD_LCD_ENABLE__EIM_CS3_B                         = IOMUX_PAD(0x0394, 0x0108, 4, 0x0000, 0, 0),
 	MX6_PAD_LCD_ENABLE__GPIO3_IO01                        = IOMUX_PAD(0x0394, 0x0108, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_ENABLE__ECSPI2_RDY                        = IOMUX_PAD(0x0394, 0x0108, 8, 0x0000, 0, 0),
+	MX6_PAD_LCD_ENABLE__EPDC_SDLE                         = IOMUX_PAD(0x0394, 0x0108, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_HSYNC__LCDIF_HSYNC                        = IOMUX_PAD(0x0398, 0x010C, 0, 0x05DC, 0, 0),
 	MX6_PAD_LCD_HSYNC__LCDIF_RS                           = IOMUX_PAD(0x0398, 0x010C, 1, 0x0000, 0, 0),
@@ -525,6 +535,7 @@ enum {
 	MX6_PAD_LCD_HSYNC__WDOG3_WDOG_RST_B_DEB               = IOMUX_PAD(0x0398, 0x010C, 4, 0x0000, 0, 0),
 	MX6_PAD_LCD_HSYNC__GPIO3_IO02                         = IOMUX_PAD(0x0398, 0x010C, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_HSYNC__ECSPI2_SS1                         = IOMUX_PAD(0x0398, 0x010C, 8, 0x0000, 0, 0),
+	MX6_PAD_LCD_HSYNC__EPDC_SDOE                          = IOMUX_PAD(0x0398, 0x010C, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_VSYNC__LCDIF_VSYNC                        = IOMUX_PAD(0x039C, 0x0110, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_VSYNC__LCDIF_BUSY                         = IOMUX_PAD(0x039C, 0x0110, 1, 0x05DC, 1, 0),
@@ -534,6 +545,7 @@ enum {
 	MX6_PAD_LCD_VSYNC__WDOG2_WDOG_B                       = IOMUX_PAD(0x039C, 0x0110, 4, 0x0000, 0, 0),
 	MX6_PAD_LCD_VSYNC__GPIO3_IO03                         = IOMUX_PAD(0x039C, 0x0110, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_VSYNC__ECSPI2_SS2                         = IOMUX_PAD(0x039C, 0x0110, 8, 0x0000, 0, 0),
+	MX6_PAD_LCD_VSYNC__EPDC_SDCE0                         = IOMUX_PAD(0x039C, 0x0110, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_RESET__LCDIF_RESET                        = IOMUX_PAD(0x03A0, 0x0114, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_RESET__LCDIF_CS                           = IOMUX_PAD(0x03A0, 0x0114, 1, 0x0000, 0, 0),
@@ -542,6 +554,7 @@ enum {
 	MX6_PAD_LCD_RESET__WDOG1_WDOG_ANY                     = IOMUX_PAD(0x03A0, 0x0114, 4, 0x0000, 0, 0),
 	MX6_PAD_LCD_RESET__GPIO3_IO04                         = IOMUX_PAD(0x03A0, 0x0114, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_RESET__ECSPI2_SS3                         = IOMUX_PAD(0x03A0, 0x0114, 8, 0x0000, 0, 0),
+	MX6_PAD_LCD_RESET__EPDC_GDOE                          = IOMUX_PAD(0x03A0, 0x0114, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA00__LCDIF_DATA00                      = IOMUX_PAD(0x03A4, 0x0118, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA00__PWM1_OUT                          = IOMUX_PAD(0x03A4, 0x0118, 1, 0x0000, 0, 0),
@@ -550,6 +563,7 @@ enum {
 	MX6_PAD_LCD_DATA00__GPIO3_IO05                        = IOMUX_PAD(0x03A4, 0x0118, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA00__SRC_BT_CFG00                      = IOMUX_PAD(0x03A4, 0x0118, 6, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA00__SAI1_MCLK                         = IOMUX_PAD(0x03A4, 0x0118, 8, 0x05E0, 1, 0),
+	MX6_PAD_LCD_DATA00__EPDC_SDDO00                       = IOMUX_PAD(0x03A4, 0x0118, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA01__LCDIF_DATA01                      = IOMUX_PAD(0x03A8, 0x011C, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA01__PWM2_OUT                          = IOMUX_PAD(0x03A8, 0x011C, 1, 0x0000, 0, 0),
@@ -558,6 +572,7 @@ enum {
 	MX6_PAD_LCD_DATA01__GPIO3_IO06                        = IOMUX_PAD(0x03A8, 0x011C, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA01__SRC_BT_CFG01                      = IOMUX_PAD(0x03A8, 0x011C, 6, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA01__SAI1_TX_SYNC                      = IOMUX_PAD(0x03A8, 0x011C, 8, 0x05EC, 0, 0),
+	MX6_PAD_LCD_DATA01__EPDC_SDDO01                       = IOMUX_PAD(0x03A8, 0x011C, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA02__LCDIF_DATA02                      = IOMUX_PAD(0x03AC, 0x0120, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA02__PWM3_OUT                          = IOMUX_PAD(0x03AC, 0x0120, 1, 0x0000, 0, 0),
@@ -566,6 +581,7 @@ enum {
 	MX6_PAD_LCD_DATA02__GPIO3_IO07                        = IOMUX_PAD(0x03AC, 0x0120, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA02__SRC_BT_CFG02                      = IOMUX_PAD(0x03AC, 0x0120, 6, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA02__SAI1_TX_BCLK                      = IOMUX_PAD(0x03AC, 0x0120, 8, 0x05E8, 0, 0),
+	MX6_PAD_LCD_DATA02__EPDC_SDDO02                       = IOMUX_PAD(0x03AC, 0x0120, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA03__LCDIF_DATA03                      = IOMUX_PAD(0x03B0, 0x0124, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA03__PWM4_OUT                          = IOMUX_PAD(0x03B0, 0x0124, 1, 0x0000, 0, 0),
@@ -574,6 +590,7 @@ enum {
 	MX6_PAD_LCD_DATA03__GPIO3_IO08                        = IOMUX_PAD(0x03B0, 0x0124, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA03__SRC_BT_CFG03                      = IOMUX_PAD(0x03B0, 0x0124, 6, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA03__SAI1_RX_DATA                      = IOMUX_PAD(0x03B0, 0x0124, 8, 0x05E4, 0, 0),
+	MX6_PAD_LCD_DATA03__EPDC_SDDO03                       = IOMUX_PAD(0x03B0, 0x0124, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA04__LCDIF_DATA04                      = IOMUX_PAD(0x03B4, 0x0128, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA04__UART8_DCE_CTS                     = IOMUX_PAD(0x03B4, 0x0128, 1, 0x0000, 0, 0),
@@ -583,6 +600,7 @@ enum {
 	MX6_PAD_LCD_DATA04__GPIO3_IO09                        = IOMUX_PAD(0x03B4, 0x0128, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA04__SRC_BT_CFG04                      = IOMUX_PAD(0x03B4, 0x0128, 6, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA04__SAI1_TX_DATA                      = IOMUX_PAD(0x03B4, 0x0128, 8, 0x0000, 0, 0),
+	MX6_PAD_LCD_DATA04__EPDC_SDDO04                       = IOMUX_PAD(0x03B4, 0x0128, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA05__LCDIF_DATA05                      = IOMUX_PAD(0x03B8, 0x012C, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA05__UART8_DCE_RTS                     = IOMUX_PAD(0x03B8, 0x012C, 1, 0x0658, 3, 0),
@@ -592,6 +610,7 @@ enum {
 	MX6_PAD_LCD_DATA05__GPIO3_IO10                        = IOMUX_PAD(0x03B8, 0x012C, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA05__SRC_BT_CFG05                      = IOMUX_PAD(0x03B8, 0x012C, 6, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA05__ECSPI1_SS1                        = IOMUX_PAD(0x03B8, 0x012C, 8, 0x0000, 0, 0),
+	MX6_PAD_LCD_DATA05__EPDC_SDDO05                       = IOMUX_PAD(0x03B8, 0x012C, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA06__LCDIF_DATA06                      = IOMUX_PAD(0x03BC, 0x0130, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA06__UART7_DCE_CTS                     = IOMUX_PAD(0x03BC, 0x0130, 1, 0x0000, 0, 0),
@@ -601,6 +620,7 @@ enum {
 	MX6_PAD_LCD_DATA06__GPIO3_IO11                        = IOMUX_PAD(0x03BC, 0x0130, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA06__SRC_BT_CFG06                      = IOMUX_PAD(0x03BC, 0x0130, 6, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA06__ECSPI1_SS2                        = IOMUX_PAD(0x03BC, 0x0130, 8, 0x0000, 0, 0),
+	MX6_PAD_LCD_DATA06__EPDC_SDDO06                       = IOMUX_PAD(0x03BC, 0x0130, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA07__LCDIF_DATA07                      = IOMUX_PAD(0x03C0, 0x0134, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA07__UART7_DCE_RTS                     = IOMUX_PAD(0x03C0, 0x0134, 1, 0x0650, 3, 0),
@@ -610,6 +630,7 @@ enum {
 	MX6_PAD_LCD_DATA07__GPIO3_IO12                        = IOMUX_PAD(0x03C0, 0x0134, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA07__SRC_BT_CFG07                      = IOMUX_PAD(0x03C0, 0x0134, 6, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA07__ECSPI1_SS3                        = IOMUX_PAD(0x03C0, 0x0134, 8, 0x0000, 0, 0),
+	MX6_PAD_LCD_DATA07__EPDC_SDDO07                       = IOMUX_PAD(0x03C0, 0x0134, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA08__LCDIF_DATA08                      = IOMUX_PAD(0x03C4, 0x0138, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA08__SPDIF_IN                          = IOMUX_PAD(0x03C4, 0x0138, 1, 0x0618, 2, 0),
@@ -666,6 +687,7 @@ enum {
 	MX6_PAD_LCD_DATA14__GPIO3_IO19                        = IOMUX_PAD(0x03DC, 0x0150, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA14__SRC_BT_CFG14                      = IOMUX_PAD(0x03DC, 0x0150, 6, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA14__USDHC2_DATA4                      = IOMUX_PAD(0x03DC, 0x0150, 8, 0x068C, 0, 0),
+	MX6_PAD_LCD_DATA14__EPDC_SDSHR                        = IOMUX_PAD(0x03DC, 0x0150, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA15__LCDIF_DATA15                      = IOMUX_PAD(0x03E0, 0x0154, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA15__SAI3_TX_DATA                      = IOMUX_PAD(0x03E0, 0x0154, 1, 0x0000, 0, 0),
@@ -674,6 +696,7 @@ enum {
 	MX6_PAD_LCD_DATA15__GPIO3_IO20                        = IOMUX_PAD(0x03E0, 0x0154, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA15__SRC_BT_CFG15                      = IOMUX_PAD(0x03E0, 0x0154, 6, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA15__USDHC2_DATA5                      = IOMUX_PAD(0x03E0, 0x0154, 8, 0x0690, 0, 0),
+	MX6_PAD_LCD_DATA15__EPDC_GDRL                         = IOMUX_PAD(0x03E0, 0x0154, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA16__LCDIF_DATA16                      = IOMUX_PAD(0x03E4, 0x0158, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA16__UART7_DCE_TX                      = IOMUX_PAD(0x03E4, 0x0158, 1, 0x0000, 0, 0),
@@ -683,6 +706,7 @@ enum {
 	MX6_PAD_LCD_DATA16__GPIO3_IO21                        = IOMUX_PAD(0x03E4, 0x0158, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA16__SRC_BT_CFG24                      = IOMUX_PAD(0x03E4, 0x0158, 6, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA16__USDHC2_DATA6                      = IOMUX_PAD(0x03E4, 0x0158, 8, 0x0694, 0, 0),
+	MX6_PAD_LCD_DATA16__EPDC_GDCLK                        = IOMUX_PAD(0x03E4, 0x0158, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA17__LCDIF_DATA17                      = IOMUX_PAD(0x03E8, 0x015C, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA17__UART7_DCE_RX                      = IOMUX_PAD(0x03E8, 0x015C, 1, 0x0654, 3, 0),
@@ -692,6 +716,7 @@ enum {
 	MX6_PAD_LCD_DATA17__GPIO3_IO22                        = IOMUX_PAD(0x03E8, 0x015C, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA17__SRC_BT_CFG25                      = IOMUX_PAD(0x03E8, 0x015C, 6, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA17__USDHC2_DATA7                      = IOMUX_PAD(0x03E8, 0x015C, 8, 0x0698, 0, 0),
+	MX6_PAD_LCD_DATA17__EPDC_GDSP                         = IOMUX_PAD(0x03E8, 0x015C, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA18__LCDIF_DATA18                      = IOMUX_PAD(0x03EC, 0x0160, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA18__PWM5_OUT                          = IOMUX_PAD(0x03EC, 0x0160, 1, 0x0000, 0, 0),
@@ -730,6 +755,7 @@ enum {
 	MX6_PAD_LCD_DATA21__GPIO3_IO26                        = IOMUX_PAD(0x03F8, 0x016C, 5, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA21__SRC_BT_CFG29                      = IOMUX_PAD(0x03F8, 0x016C, 6, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA21__USDHC2_DATA1                      = IOMUX_PAD(0x03F8, 0x016C, 8, 0x0680, 1, 0),
+	MX6_PAD_LCD_DATA21__EPDC_SDCE1                        = IOMUX_PAD(0x03F8, 0x016C, 9, 0x0000, 0, 0),
 
 	MX6_PAD_LCD_DATA22__LCDIF_DATA22                      = IOMUX_PAD(0x03FC, 0x0170, 0, 0x0000, 0, 0),
 	MX6_PAD_LCD_DATA22__MQS_RIGHT                         = IOMUX_PAD(0x03FC, 0x0170, 1, 0x0000, 0, 0),
