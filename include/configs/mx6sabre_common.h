@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
  *
  * Configuration settings for the Freescale i.MX6Q SabreSD board.
  */
@@ -14,6 +15,33 @@
 
 /* MMC Configs */
 #define CFG_SYS_FSL_ESDHC_ADDR      0
+
+#ifdef CONFIG_MX6S
+#define SYS_NOSMP "nosmp"
+#else
+#define SYS_NOSMP
+#endif
+
+#ifdef CONFIG_NAND_BOOT
+#define MFG_NAND_PARTITION "mtdparts=8000000.nor:1m(boot),-(rootfs)\\;gpmi-nand:64m(nandboot),16m(nandkernel),16m(nanddtb),16m(nandtee),-(nandrootfs) "
+#else
+#define MFG_NAND_PARTITION ""
+#endif
+
+#define CFG_MFG_ENV_SETTINGS \
+	"mfgtool_args=setenv bootargs console=" CONSOLE_DEV ",115200 " \
+		"rdinit=/linuxrc " \
+		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
+		"g_mass_storage.file=/fat g_mass_storage.ro=1 " \
+		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
+		"g_mass_storage.iSerialNumber=\"\" "\
+		"enable_wait_mode=off "\
+		MFG_NAND_PARTITION \
+		"\0" \
+		"initrd_addr=0x12C00000\0" \
+		"initrd_high=0xffffffff\0" \
+		"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+
 
 #ifdef CONFIG_SUPPORT_EMMC_BOOT
 #define EMMC_ENV \
@@ -35,10 +63,73 @@
 #define EMMC_ENV ""
 #endif
 
+#if defined(CONFIG_NAND_BOOT)
+	/*
+	 * The dts also enables the WEIN NOR which is mtd0.
+	 * So the partions' layout for NAND is:
+	 *     mtd1: 16M      (uboot)
+	 *     mtd2: 16M      (kernel)
+	 *     mtd3: 16M      (dtb)
+	 *     mtd4: left     (rootfs)
+	 */
 #define CFG_EXTRA_ENV_SETTINGS \
+	CFG_MFG_ENV_SETTINGS \
+	"fdt_addr=0x18000000\0" \
+	"fdt_high=0xffffffff\0"	  \
+	"console=" CONSOLE_DEV "\0" \
+	"bootargs=console=" CONSOLE_DEV ",115200 ubi.mtd=6 "  \
+		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
+		MFG_NAND_PARTITION \
+		"\0" \
+	"bootcmd=nand read ${loadaddr} 0x4000000 0xc00000;"\
+		"nand read ${fdt_addr} 0x5000000 0x100000;"\
+		"bootz ${loadaddr} - ${fdt_addr}\0"
+
+#elif defined(CONFIG_SATA_BOOT)
+
+#define CFG_EXTRA_ENV_SETTINGS \
+		CFG_MFG_ENV_SETTINGS \
+		"image=zImage\0" \
+		"fdt_file=undefined\0" \
+		"fdt_addr=0x18000000\0" \
+		"fdt_high=0xffffffff\0"   \
+		"findfdt="\
+			"if test $fdt_file = undefined; then " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6QP; then " \
+					"setenv fdt_file imx6qp-sabreauto.dtb; fi; " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6Q; then " \
+					"setenv fdt_file imx6q-sabreauto.dtb; fi; " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6DL; then " \
+					"setenv fdt_file imx6dl-sabreauto.dtb; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6QP; then " \
+					"setenv fdt_file imx6qp-sabresd.dtb; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6Q; then " \
+					"setenv fdt_file imx6q-sabresd.dtb; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6DL; then " \
+					"setenv fdt_file imx6dl-sabresd.dtb; fi; " \
+				"if test $fdt_file = undefined; then " \
+					"echo WARNING: Could not determine dtb to use; " \
+				"fi; " \
+			"fi;\0" \
+		"findtee="\
+		"bootargs=console=" CONSOLE_DEV ",115200 \0"\
+		"bootargs_sata=setenv bootargs ${bootargs} " \
+			"root=/dev/sda2 rootwait rw \0" \
+		"bootcmd_sata=run bootargs_sata; sata init; " \
+			"run findfdt;" \
+			"fatload sata 0:1 ${loadaddr} ${image}; " \
+			"fatload sata 0:1 ${fdt_addr} ${fdt_file}; " \
+			"bootz ${loadaddr} - ${fdt_addr} \0" \
+		"bootcmd=run bootcmd_sata \0"
+
+#else
+
+#define CFG_EXTRA_ENV_SETTINGS \
+	CFG_MFG_ENV_SETTINGS \
+	"epdc_waveform=epdc_splash.bin\0" \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
-	"fdtfile=undefined\0" \
+	"fdt_file=undefined\0" \
 	"fdt_addr=0x18000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
@@ -53,6 +144,8 @@
 	"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
 	"mmcpart=1\0" \
 	"finduuid=part uuid mmc ${mmcdev}:2 uuid\0" \
+	"mmcroot=/dev/mmcblk2p2 rootwait rw\0" \
+	"mmcautodetect=yes\0" \
 	"update_sd_firmware=" \
 		"if test ${ip_dyn} = yes; then " \
 			"setenv get_cmd dhcp; " \
@@ -67,8 +160,9 @@
 			"fi; "	\
 		"fi\0" \
 	EMMC_ENV	  \
-	"mmcargs=setenv bootargs console=${console},${baudrate} " \
-		"root=PARTUUID=${uuid} rootwait rw\0" \
+	"smp=" SYS_NOSMP "\0"\
+	"mmcargs=setenv bootargs console=${console},${baudrate} ${smp} " \
+		"root=${mmcroot}\0" \
 	"loadbootscript=" \
 		"load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script} || " \
 		"load mmc ${mmcdev}:${mmcpart} ${loadaddr} boot/${script};\0" \
@@ -76,10 +170,9 @@
 		"source\0" \
 	"loadimage=load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image} || " \
 		"load mmc ${mmcdev}:${mmcpart} ${loadaddr} boot/${image}\0" \
-	"loadfdt=load mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdtfile} || " \
-		"load mmc ${mmcdev}:${mmcpart} ${fdt_addr} boot/${fdtfile}\0" \
+	"loadfdt=load mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file} || " \
+		"load mmc ${mmcdev}:${mmcpart} ${fdt_addr} boot/${fdt_file}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
-		"run finduuid; " \
 		"run mmcargs; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 			"if run loadfdt; then " \
@@ -94,7 +187,7 @@
 		"else " \
 			"bootz; " \
 		"fi;\0" \
-	"netargs=setenv bootargs console=${console},${baudrate} " \
+	"netargs=setenv bootargs console=${console},${baudrate} ${smp} " \
 		"root=/dev/nfs " \
 		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 	"netboot=echo Booting from net ...; " \
@@ -106,7 +199,7 @@
 		"fi; " \
 		"${get_cmd} ${image}; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
-			"if ${get_cmd} ${fdt_addr} ${fdtfile}; then " \
+			"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
 				"bootz ${loadaddr} - ${fdt_addr}; " \
 			"else " \
 				"if test ${boot_fdt} = try; then " \
@@ -119,22 +212,24 @@
 			"bootz; " \
 		"fi;\0" \
 		"findfdt="\
-			"if test $fdtfile = undefined; then " \
+			"if test $fdt_file = undefined; then " \
 				"if test $board_name = SABREAUTO && test $board_rev = MX6QP; then " \
-					"setenv fdtfile imx6qp-sabreauto.dtb; fi; " \
+					"setenv fdt_file imx6qp-sabreauto.dtb; fi; " \
 				"if test $board_name = SABREAUTO && test $board_rev = MX6Q; then " \
-					"setenv fdtfile imx6q-sabreauto.dtb; fi; " \
+					"setenv fdt_file imx6q-sabreauto.dtb; fi; " \
 				"if test $board_name = SABREAUTO && test $board_rev = MX6DL; then " \
-					"setenv fdtfile imx6dl-sabreauto.dtb; fi; " \
+					"setenv fdt_file imx6dl-sabreauto.dtb; fi; " \
 				"if test $board_name = SABRESD && test $board_rev = MX6QP; then " \
-					"setenv fdtfile imx6qp-sabresd.dtb; fi; " \
+					"setenv fdt_file imx6qp-sabresd.dtb; fi; " \
 				"if test $board_name = SABRESD && test $board_rev = MX6Q; then " \
-					"setenv fdtfile imx6q-sabresd.dtb; fi; " \
+					"setenv fdt_file imx6q-sabresd.dtb; fi; " \
 				"if test $board_name = SABRESD && test $board_rev = MX6DL; then " \
-					"setenv fdtfile imx6dl-sabresd.dtb; fi; " \
-				"if test $fdtfile = undefined; then " \
+					"setenv fdt_file imx6dl-sabresd.dtb; fi; " \
+				"if test $fdt_file = undefined; then " \
 					"echo WARNING: Could not determine dtb to use; fi; " \
 			"fi;\0" \
+
+#endif
 
 /* Physical Memory Map */
 #define PHYS_SDRAM                     MMDC0_ARB_BASE_ADDR
@@ -142,7 +237,5 @@
 #define CFG_SYS_SDRAM_BASE          PHYS_SDRAM
 #define CFG_SYS_INIT_RAM_ADDR       IRAM_BASE_ADDR
 #define CFG_SYS_INIT_RAM_SIZE       IRAM_SIZE
-
-/* Environment organization */
 
 #endif                         /* __MX6QSABRE_COMMON_CONFIG_H */

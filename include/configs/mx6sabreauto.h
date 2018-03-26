@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
  *
  * Configuration settings for the Freescale i.MX6Q SabreAuto board.
  */
@@ -10,6 +11,12 @@
 
 #define CFG_MXC_UART_BASE	UART4_BASE
 #define CONSOLE_DEV		"ttymxc3"
+
+#define PHYS_SDRAM_SIZE		(2u * 1024 * 1024 * 1024)
+#ifdef CONFIG_MX6S
+#undef PHYS_SDRAM_SIZE
+#define PHYS_SDRAM_SIZE		(1u * 1024 * 1024 * 1024)
+#endif
 
 /* USB Configs */
 #define CFG_MXC_USB_PORTSC	(PORT_PTS_UTMI | PORT_PTS_PTW)
