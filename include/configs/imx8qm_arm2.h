@@ -186,7 +186,7 @@
 	"hdp_file=dpfw.bin\0" \
 	"loadhdp=fatload mmc ${mmcdev}:${mmcpart} ${hdp_addr} ${hdp_file}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
-		"run loadhdp; hdp load ${hdp_addr}; " \
+		"if run loadhdp; then; hdp load ${hdp_addr}; fi;" \
 		"run mmcargs; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 			"if run loadfdt; then " \
@@ -208,7 +208,7 @@
 		"else " \
 			"setenv get_cmd tftp; " \
 		"fi; " \
-		"${get_cmd} ${hdp_addr} ${hdp_file}; hdp load ${hdp_addr}; " \
+		"if ${get_cmd} ${hdp_addr} ${hdp_file}; then; hdp load ${hdp_addr}; fi;" \
 		"${get_cmd} ${loadaddr} ${image}; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 			"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
