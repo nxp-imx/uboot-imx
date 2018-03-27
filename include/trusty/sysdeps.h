@@ -78,7 +78,7 @@ void trusty_abort(void) TRUSTY_ATTR_NO_RETURN;
  * Print a formatted string. @format must point to a NULL-terminated UTF-8
  * string, and is followed by arguments to be printed.
  */
-void trusty_printv(const char *format, ...);
+void trusty_printf(const char *format, ...);
 /*
  * Copy @n bytes from @src to @dest.
  */

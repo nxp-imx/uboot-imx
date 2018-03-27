@@ -27,7 +27,7 @@
 #include <trusty/util.h>
 #include <interface/storage/storage.h>
 
-#define LOCAL_LOG 1
+#define LOCAL_LOG 0
 
 static bool initialized;
 /* Address of rpmb device */
@@ -314,7 +314,7 @@ int rpmb_storage_proxy_init(struct trusty_ipc_dev *dev, void *rpmb_dev)
 int rpmb_storage_proxy_poll(void)
 {
     int rc = 0;
-    while (rc != TRUSTY_EVENT_NONE) {
+    while ((rc != TRUSTY_EVENT_NONE) && (proxy_chan.handle != INVALID_IPC_HANDLE)){
         /* Check for RPMB events */
         rc = trusty_ipc_poll_for_event(&proxy_chan);
         if (rc < 0) {
@@ -322,7 +322,7 @@ int rpmb_storage_proxy_poll(void)
             return rc;
         }
     }
-    return TRUSTY_ERR_NONE;
+    return (proxy_chan.handle)? TRUSTY_ERR_NONE : TRUSTY_ERR_CHANNEL_CLOSED;
 }
 
 void rpmb_storage_proxy_shutdown(struct trusty_ipc_dev *dev)

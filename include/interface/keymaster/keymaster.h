@@ -53,9 +53,14 @@ enum keymaster_command {
     KM_GET_SUPPORTED_EXPORT_FORMATS = (14 << KEYMASTER_REQ_SHIFT),
     KM_GET_KEY_CHARACTERISTICS      = (15 << KEYMASTER_REQ_SHIFT),
 
+    // Bootloader calls.
     KM_SET_BOOT_PARAMS                 = (0x1000 << KEYMASTER_REQ_SHIFT),
     KM_SET_ATTESTATION_KEY             = (0x2000 << KEYMASTER_REQ_SHIFT),
     KM_APPEND_ATTESTATION_CERT_CHAIN   = (0x3000 << KEYMASTER_REQ_SHIFT),
+    KM_ATAP_GET_CA_REQUEST             = (0x4000 << KEYMASTER_REQ_SHIFT),
+    KM_ATAP_SET_CA_RESPONSE_BEGIN      = (0x5000 << KEYMASTER_REQ_SHIFT),
+    KM_ATAP_SET_CA_RESPONSE_UPDATE     = (0x6000 << KEYMASTER_REQ_SHIFT),
+    KM_ATAP_SET_CA_RESPONSE_FINISH     = (0x7000 << KEYMASTER_REQ_SHIFT),
 };
 
 typedef enum {
@@ -196,6 +201,24 @@ struct km_get_version_resp {
 } TRUSTY_ATTR_PACKED;
 
 /**
+ * km_raw_buffer_resp - response format for a raw buffer
+ */
+struct km_raw_buffer_resp {
+    int32_t error;
+    uint32_t data_size;
+    int8_t data[0];
+} TRUSTY_ATTR_PACKED;
+
+/**
+ * km_set_ca_response_begin_req - starts the process to set the ATAP CA Response
+ *
+ * @ca_response_size: total size of the CA Response message
+ */
+struct km_set_ca_response_begin_req {
+    uint32_t ca_response_size;
+} TRUSTY_ATTR_PACKED;
+
+/**
  * km_boot_params - Parameters sent from the bootloader to the Keymaster TA
  *
  * Since verified_boot_key_hash and verified_boot_hash have variable sizes, this
@@ -236,19 +259,14 @@ struct km_attestation_data {
 } TRUSTY_ATTR_PACKED;
 
 /**
- * Serializes a km_boot_params structure. On success, allocates |*out_size|
- * bytes to |*out| and writes the serialized |params| to |*out|. Caller takes
- * ownership of |*out|. Returns one of trusty_err.
+ * km_raw_buffer - represents a single raw buffer
+ *
+ * @data_size: size of |data|
+ * @data: pointer to the buffer
  */
-int km_boot_params_serialize(const struct km_boot_params *params, uint8_t **out,
-                             uint32_t *out_size);
-
-/**
- * Serializes a km_attestation_data structure. On success, allocates |*out_size|
- * bytes to |*out| and writes the serialized |data| to |*out|. Caller takes
- * ownership of |*out|. Returns one of trusty_err.
- */
-int km_attestation_data_serialize(const struct km_attestation_data *data,
-                                  uint8_t **out, uint32_t *out_size);
+struct km_raw_buffer {
+    uint32_t data_size;
+    const uint8_t *data;
+} TRUSTY_ATTR_PACKED;
 
 #endif /* TRUSTY_INTERFACE_KEYMASTER_H_ */
