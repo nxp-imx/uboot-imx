@@ -85,5 +85,27 @@ int trusty_set_attestation_key(const uint8_t *key, uint32_t key_size,
 int trusty_append_attestation_cert_chain(const uint8_t *cert,
                                          uint32_t cert_size,
                                          keymaster_algorithm_t algorithm);
+/*
+ * Reads a CA Request from Keymaster. On success allocates a new CA Request
+ * message at |*ca_request_p|, and the caller takes ownership. Returns one
+ * of trusty_err.
+ *
+ * @operation_start: Operation Start message
+ * @operation_start_size: size of operation_start
+ * @ca_request_p: location of newly allocated CA Request message
+ * @ca_request_size_p: location of size of the CA Request message
+ */
+int trusty_atap_get_ca_request(const uint8_t *operation_start,
+                               uint32_t operation_start_size,
+                               uint8_t** ca_request_p,
+                               uint32_t* ca_request_size_p);
+/*
+ * Sends the CA Response to Keymaster. Returns one of trusty_err.
+ *
+ * @ca_response: CA Response message
+ * @ca_response_size: size of ca_response
+ */
+int trusty_atap_set_ca_response(const uint8_t *ca_response,
+                                uint32_t ca_response_size);
 
 #endif /* TRUSTY_KEYMASTER_H_ */

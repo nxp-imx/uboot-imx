@@ -30,14 +30,16 @@ TRUSTY_DIR = lib/trusty
 #ccflags-y += -I$(TRUSTY_DIR)/ql-tipc/include
 ccflags-y += -I$(TRUSTY_DIR)/interface/include
 
-QL_TIPC = ../
+QL_TIPC = ..
 obj-y += \
     $(QL_TIPC)/avb.o \
     $(QL_TIPC)/keymaster.o \
+    $(QL_TIPC)/keymaster_serializable.o \
     $(QL_TIPC)/ipc.o \
     $(QL_TIPC)/ipc_dev.o \
     $(QL_TIPC)/libtipc.o \
     $(QL_TIPC)/rpmb_proxy.o \
+    $(QL_TIPC)/util.o \
     sysdeps_uboot.o \
     storage_ops_uboot.o
 

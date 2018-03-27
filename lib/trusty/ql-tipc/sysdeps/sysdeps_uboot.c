@@ -59,12 +59,12 @@ void trusty_abort(void)
     __builtin_unreachable();
 }
 
-void trusty_printv(const char *message, ...)
+void trusty_printf(const char *format, ...)
 {
     va_list ap;
 
-    va_start(ap, message);
-    vprintf(message, ap);
+    va_start(ap, format);
+    vprintf(format, ap);
     va_end(ap);
 }
 

@@ -27,6 +27,12 @@
 
 #include <trusty/sysdeps.h>
 
+/* Returns the basename of |str|. This is defined as the last path
+ * component, assuming the normal POSIX separator '/'. If there are no
+ * separators, returns |str|.
+ */
+const char* trusty_basename(const char* str);
+
 #define TRUSTY_STRINGIFY(x) #x
 #define TRUSTY_TO_STRING(x) TRUSTY_STRINGIFY(x)
 
@@ -52,12 +58,13 @@
  * This has no effect unless TIPC_ENABLE_DEBUG and LOCAL_LOG is defined.
  */
 #ifdef TIPC_ENABLE_DEBUG
-#define trusty_debug(message, ...)                                       \
-  do {                                                                   \
-    if (LOCAL_LOG) {                                                     \
-      trusty_printv(__FILE__ ":" TRUSTY_TO_STRING(__LINE__) ": DEBUG "); \
-      trusty_printv(message, ##__VA_ARGS__, NULL);                       \
-    }                                                                    \
+#define trusty_debug(message, ...)                              \
+  do {                                                          \
+    if (LOCAL_LOG) {                                            \
+      trusty_printf(trusty_basename(__FILE__));                 \
+      trusty_printf(":" TRUSTY_TO_STRING(__LINE__) ": DEBUG "); \
+      trusty_printf(message, ##__VA_ARGS__);                    \
+    }                                                           \
   } while(0)
 #else
 #define trusty_debug(message, ...)
@@ -66,29 +73,32 @@
 /*
  * Prints info message.
  */
-#define trusty_info(message, ...)                \
-  do {                                           \
-    trusty_printv(__FILE__ ": INFO ");           \
-    trusty_printv(message, ##__VA_ARGS__, NULL); \
+#define trusty_info(message, ...)             \
+  do {                                        \
+    trusty_printf(trusty_basename(__FILE__)); \
+    trusty_printf(": INFO ");                 \
+    trusty_printf(message, ##__VA_ARGS__);    \
   } while(0)
 
 /*
  * Prints error message.
  */
-#define trusty_error(message, ...)                                     \
-  do {                                                                 \
-    trusty_printv(__FILE__ ":" TRUSTY_TO_STRING(__LINE__) ": ERROR "); \
-    trusty_printv(message, ##__VA_ARGS__, NULL);                       \
+#define trusty_error(message, ...)                            \
+  do {                                                        \
+    trusty_printf(trusty_basename(__FILE__));                 \
+    trusty_printf(":" TRUSTY_TO_STRING(__LINE__) ": ERROR "); \
+    trusty_printf(message, ##__VA_ARGS__);                    \
   } while(0)
 
 /*
  * Prints message and calls trusty_abort.
  */
-#define trusty_fatal(message, ...)                                     \
-  do {                                                                 \
-    trusty_printv(__FILE__ ":" TRUSTY_TO_STRING(__LINE__) ": FATAL "); \
-    trusty_printv(message, ##__VA_ARGS__, NULL);                       \
-    trusty_abort();                                                    \
+#define trusty_fatal(message, ...)                             \
+  do {                                                         \
+    trusty_printf(trusty_basename(__FILE__));                  \
+    trusty_printf(":" TRUSTY_TO_STRING(__LINE__) ": FATAL ");  \
+    trusty_printf(message, ##__VA_ARGS__);                     \
+    trusty_abort();                                            \
   } while(0)
 
 #endif /* TRUSTY_UTIL_H_ */

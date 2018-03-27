@@ -23,6 +23,7 @@
  */
 
 #include <trusty/keymaster.h>
+#include <trusty/keymaster_serializable.h>
 #include <trusty/rpmb.h>
 #include <trusty/trusty_ipc.h>
 #include <trusty/util.h>
@@ -32,50 +33,165 @@
 static struct trusty_ipc_chan km_chan;
 static bool initialized;
 static int trusty_km_version = 2;
+static const size_t max_ca_request_size = 10000;
+static const size_t max_send_size = 4000;
 
-static int km_send_request(struct keymaster_message *msg, void *req,
-                           size_t req_len)
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
+#ifndef NELEMS
+#define NELEMS(x) (sizeof(x) / sizeof((x)[0]))
+#endif
+
+static int km_send_request(uint32_t cmd, const void *req, size_t req_len)
 {
+    struct keymaster_message header = { .cmd = cmd };
     int num_iovecs = req ? 2 : 1;
 
     struct trusty_ipc_iovec req_iovs[2] = {
-        { .base = msg, .len = sizeof(*msg) },
-        { .base = req, .len = req_len },
+        { .base = &header, .len = sizeof(header) },
+        { .base = (void*)req, .len = req_len },
     };
 
     return trusty_ipc_send(&km_chan, req_iovs, num_iovecs, true);
 }
 
-static int km_read_response(struct keymaster_message *msg, uint32_t cmd,
-                            void *resp, size_t resp_len)
+/* Checks that the command opcode in |header| matches |ex-ected_cmd|. Checks
+ * that |tipc_result| is a valid response size. Returns negative on error.
+ */
+static int check_response_error(uint32_t expected_cmd,
+                                struct keymaster_message header,
+                                int32_t tipc_result)
 {
-    int rc = TRUSTY_ERR_GENERIC;
-    struct trusty_ipc_iovec resp_iovs[2] = {
-        { .base = msg, .len = sizeof(*msg) },
-        { .base = resp, .len = resp_len },
-    };
-
-    rc = trusty_ipc_recv(&km_chan, resp_iovs, resp ? 2 : 1, true);
-    if (rc < 0) {
-        trusty_error("failed (%d) to recv response\n", rc);
-        return rc;
+    if (tipc_result < 0) {
+        trusty_error("failed (%d) to recv response\n", tipc_result);
+        return tipc_result;
     }
-    if ((msg->cmd & ~(KEYMASTER_STOP_BIT)) != (cmd | KEYMASTER_RESP_BIT)) {
+    if ((size_t) tipc_result < sizeof(struct keymaster_message)) {
+        trusty_error("invalid response size (%d)\n", tipc_result);
+        return TRUSTY_ERR_GENERIC;
+    }
+    if ((header.cmd & ~(KEYMASTER_STOP_BIT)) !=
+        (expected_cmd | KEYMASTER_RESP_BIT)) {
         trusty_error("malformed response\n");
         return TRUSTY_ERR_GENERIC;
     }
-
-    return rc;
+    return tipc_result;
 }
 
-static int km_do_tipc(uint32_t cmd, void *req, uint32_t req_len,
-                      bool handle_rpmb)
+/* Reads the raw response to |resp| up to a maximum size of |resp_len|. Format
+ * of each message frame read from the secure side:
+ *
+ * command header : 4 bytes
+ * opaque bytes   : MAX(KEYMASTER_MAX_BUFFER_LENGTH, x) bytes
+ *
+ * The individual message frames from the secure side are reassembled
+ * into |resp|, stripping each frame's command header. Returns the number
+ * of bytes written to |resp| on success, negative on error.
+ */
+static int km_read_raw_response(uint32_t cmd, void *resp, size_t resp_len)
+{
+    struct keymaster_message header = { .cmd = cmd };
+    int rc = TRUSTY_ERR_GENERIC;
+    size_t max_resp_len = resp_len;
+    struct trusty_ipc_iovec resp_iovs[2] = {
+        { .base = &header, .len = sizeof(header) },
+        { .base = resp, .len = MIN(KEYMASTER_MAX_BUFFER_LENGTH, max_resp_len) }
+    };
+
+    if (!resp) {
+        return TRUSTY_ERR_GENERIC;
+    }
+    resp_len = 0;
+    while (true) {
+        resp_iovs[1].base = (uint8_t*)resp + resp_len;
+        resp_iovs[1].len = MIN(KEYMASTER_MAX_BUFFER_LENGTH,
+                               (int)max_resp_len - (int)resp_len);
+
+        rc = trusty_ipc_recv(&km_chan, resp_iovs, NELEMS(resp_iovs), true);
+        rc = check_response_error(cmd, header, rc);
+        if (rc < 0) {
+            return rc;
+        }
+        resp_len += ((size_t)rc - sizeof(struct keymaster_message));
+        if (header.cmd & KEYMASTER_STOP_BIT || resp_len >= max_resp_len) {
+            break;
+        }
+    }
+
+    return resp_len;
+}
+
+/* Reads a Keymaster Response message with a sized buffer. The format
+ * of the response is as follows:
+ *
+ * command header : 4 bytes
+ * error          : 4 bytes
+ * data length    : 4 bytes
+ * data           : |data length| bytes
+ *
+ * On success, |error|, |resp_data|, and |resp_data_len| are filled
+ * successfully. Returns a trusty_err.
+ */
+static int km_read_data_response(uint32_t cmd, int32_t *error,
+                                 uint8_t* resp_data, uint32_t* resp_data_len)
+{
+    struct keymaster_message header = { .cmd = cmd };
+    int rc = TRUSTY_ERR_GENERIC;
+    size_t max_resp_len = *resp_data_len;
+    uint32_t resp_data_bytes = 0;
+    /* On the first read, recv the keymaster_message header, error code,
+     * response data length, and response data. On subsequent iterations,
+     * only recv the keymaster_message header and response data.
+     */
+    struct trusty_ipc_iovec resp_iovs[4] = {
+        { .base = &header, .len = sizeof(header) },
+        { .base = error, .len = sizeof(int32_t) },
+        { .base = resp_data_len, .len = sizeof(uint32_t) },
+        { .base = resp_data, .len = MIN(KEYMASTER_MAX_BUFFER_LENGTH, max_resp_len) }
+    };
+
+    rc = trusty_ipc_recv(&km_chan, resp_iovs, NELEMS(resp_iovs), true);
+    rc = check_response_error(cmd, header, rc);
+    if (rc < 0) {
+        return rc;
+    }
+    /* resp_data_bytes does not include the error or response data length */
+    resp_data_bytes += ((size_t)rc - sizeof(struct keymaster_message) -
+                        2 * sizeof(uint32_t));
+    if (header.cmd & KEYMASTER_STOP_BIT) {
+        return TRUSTY_ERR_NONE;
+    }
+
+    /* Read the remaining response data */
+    uint8_t* resp_data_start = resp_data + resp_data_bytes;
+    size_t resp_data_remaining = *resp_data_len - resp_data_bytes;
+    rc = km_read_raw_response(cmd, resp_data_start, resp_data_remaining);
+    if (rc < 0) {
+        return rc;
+    }
+    resp_data_bytes += rc;
+    if (*resp_data_len != resp_data_bytes) {
+        return TRUSTY_ERR_GENERIC;
+    }
+    return TRUSTY_ERR_NONE;
+}
+
+/**
+ * Convenience method to send a request to the secure side, handle rpmb
+ * operations, and receive the response. If |resp_data| is not NULL, the
+ * caller expects an additional data buffer to be returned from the secure
+ * side.
+ */
+static int km_do_tipc(uint32_t cmd, bool handle_rpmb, void* req,
+                      uint32_t req_len, void* resp_data,
+                      uint32_t* resp_data_len)
 {
     int rc = TRUSTY_ERR_GENERIC;
-    struct keymaster_message msg = { .cmd = cmd };
-    struct km_no_response resp;
+    struct km_no_response resp_header;
 
-    rc = km_send_request(&msg, req, req_len);
+    rc = km_send_request(cmd, req, req_len);
     if (rc < 0) {
         trusty_error("%s: failed (%d) to send km request\n", __func__, rc);
         return rc;
@@ -85,18 +201,28 @@ static int km_do_tipc(uint32_t cmd, void *req, uint32_t req_len,
         /* handle any incoming RPMB requests */
         rc = rpmb_storage_proxy_poll();
         if (rc < 0) {
-            trusty_error("%s: failed (%d) to get RPMB requests\n", __func__,
-                         rc);
+            trusty_error("%s: failed (%d) to get RPMB requests\n", __func__, rc);
             return rc;
         }
     }
 
-    rc = km_read_response(&msg, cmd, &resp, sizeof(resp));
+    if (!resp_data) {
+        rc = km_read_raw_response(cmd, &resp_header, sizeof(resp_header));
+    } else {
+        rc = km_read_data_response(cmd, &resp_header.error, resp_data,
+                                   resp_data_len);
+    }
+
     if (rc < 0) {
         trusty_error("%s: failed (%d) to read km response\n", __func__, rc);
         return rc;
     }
-    return resp.error;
+    if (resp_header.error != KM_ERROR_OK) {
+        trusty_error("%s: keymaster returned error (%d)\n", __func__,
+                     resp_header.error);
+        return TRUSTY_ERR_GENERIC;
+    }
+    return TRUSTY_ERR_NONE;
 }
 
 static int32_t MessageVersion(uint8_t major_ver, uint8_t minor_ver,
@@ -126,16 +252,15 @@ static int32_t MessageVersion(uint8_t major_ver, uint8_t minor_ver,
 static int km_get_version(int32_t *version)
 {
     int rc = TRUSTY_ERR_GENERIC;
-    struct keymaster_message msg = { .cmd = KM_GET_VERSION };
     struct km_get_version_resp resp;
 
-    rc = km_send_request(&msg, NULL, 0);
+    rc = km_send_request(KM_GET_VERSION, NULL, 0);
     if (rc < 0) {
         trusty_error("failed to send km version request", rc);
         return rc;
     }
 
-    rc = km_read_response(&msg, KM_GET_VERSION, &resp, sizeof(resp));
+    rc = km_read_raw_response(KM_GET_VERSION, &resp, sizeof(resp));
     if (rc < 0) {
         trusty_error("%s: failed (%d) to read km response\n", __func__, rc);
         return rc;
@@ -143,7 +268,7 @@ static int km_get_version(int32_t *version)
 
     *version = MessageVersion(resp.major_ver, resp.minor_ver,
                               resp.subminor_ver);
-    return rc;
+    return TRUSTY_ERR_NONE;
 }
 
 int km_tipc_init(struct trusty_ipc_dev *dev)
@@ -187,92 +312,6 @@ void km_tipc_shutdown(struct trusty_ipc_dev *dev)
     initialized = false;
 }
 
-/**
- * Appends |data_len| bytes at |data| to |buf|. Performs no bounds checking,
- * assumes sufficient memory allocated at |buf|. Returns |buf| + |data_len|.
- */
-static uint8_t *append_to_buf(uint8_t *buf, const void *data, size_t data_len)
-{
-    if (data && data_len) {
-        trusty_memcpy(buf, data, data_len);
-    }
-    return buf + data_len;
-}
-
-/**
- * Appends |val| to |buf|. Performs no bounds checking. Returns |buf| +
- * sizeof(uint32_t).
- */
-static uint8_t *append_uint32_to_buf(uint8_t *buf, uint32_t val)
-{
-    return append_to_buf(buf, &val, sizeof(val));
-}
-
-/**
- * Appends a sized buffer to |buf|. First appends |data_len| to |buf|, then
- * appends |data_len| bytes at |data| to |buf|. Performs no bounds checking.
- * Returns |buf| + sizeof(uint32_t) + |data_len|.
- */
-static uint8_t *append_sized_buf_to_buf(uint8_t *buf, const uint8_t *data,
-                                        uint32_t data_len)
-{
-    buf = append_uint32_to_buf(buf, data_len);
-    return append_to_buf(buf, data, data_len);
-}
-
-int km_boot_params_serialize(const struct km_boot_params *params, uint8_t** out,
-                             uint32_t *out_size)
-{
-    uint8_t *tmp;
-
-    if (!out || !params || !out_size) {
-        return TRUSTY_ERR_INVALID_ARGS;
-    }
-    *out_size = (sizeof(params->os_version) + sizeof(params->os_patchlevel) +
-                 sizeof(params->device_locked) +
-                 sizeof(params->verified_boot_state) +
-                 sizeof(params->verified_boot_key_hash_size) +
-                 sizeof(params->verified_boot_hash_size) +
-                 params->verified_boot_key_hash_size +
-                 params->verified_boot_hash_size);
-    *out = trusty_calloc(*out_size, 1);
-    if (!*out) {
-        return TRUSTY_ERR_NO_MEMORY;
-    }
-
-    tmp = append_uint32_to_buf(*out, params->os_version);
-    tmp = append_uint32_to_buf(tmp, params->os_patchlevel);
-    tmp = append_uint32_to_buf(tmp, params->device_locked);
-    tmp = append_uint32_to_buf(tmp, params->verified_boot_state);
-    tmp = append_sized_buf_to_buf(tmp, params->verified_boot_key_hash,
-                                  params->verified_boot_key_hash_size);
-    tmp = append_sized_buf_to_buf(tmp, params->verified_boot_hash,
-                                  params->verified_boot_hash_size);
-
-    return TRUSTY_ERR_NONE;
-}
-
-int km_attestation_data_serialize(const struct km_attestation_data *data,
-                                 uint8_t** out, uint32_t *out_size)
-{
-    uint8_t *tmp;
-
-    if (!out || !data || !out_size) {
-        return TRUSTY_ERR_INVALID_ARGS;
-    }
-    *out_size = (sizeof(data->algorithm) + sizeof(data->data_size) +
-                 data->data_size);
-    *out = trusty_calloc(*out_size, 1);
-    if (!*out) {
-        return TRUSTY_ERR_NO_MEMORY;
-    }
-
-    tmp = append_uint32_to_buf(*out, data->algorithm);
-    tmp = append_sized_buf_to_buf(tmp, data->data, data->data_size);
-
-    return TRUSTY_ERR_NONE;
-}
-
 int trusty_set_boot_params(uint32_t os_version, uint32_t os_patchlevel,
                            keymaster_verified_boot_t verified_boot_state,
                            bool device_locked,
@@ -299,7 +338,7 @@ int trusty_set_boot_params(uint32_t os_version, uint32_t os_patchlevel,
         trusty_error("failed (%d) to serialize request\n", rc);
         goto end;
     }
-    rc = km_do_tipc(KM_SET_BOOT_PARAMS, req, req_size, false);
+    rc = km_do_tipc(KM_SET_BOOT_PARAMS, false, req, req_size, NULL, NULL);
 
 end:
     if (req) {
@@ -325,7 +364,31 @@ static int trusty_send_attestation_data(uint32_t cmd, const uint8_t *data,
         trusty_error("failed (%d) to serialize request\n", rc);
         goto end;
     }
-    rc = km_do_tipc(cmd, req, req_size, true);
+    rc = km_do_tipc(cmd, true, req, req_size, NULL, NULL);
+
+end:
+    if (req) {
+        trusty_free(req);
+    }
+    return rc;
+}
+
+static int trusty_send_raw_buffer(uint32_t cmd, const uint8_t *req_data,
+                                  uint32_t req_data_size, uint8_t *resp_data,
+                                  uint32_t *resp_data_size)
+{
+    struct km_raw_buffer buf = {
+        .data_size = req_data_size,
+        .data = req_data,
+    };
+    uint8_t *req = NULL;
+    uint32_t req_size = 0;
+    int rc = km_raw_buffer_serialize(&buf, &req, &req_size);
+    if (rc < 0) {
+        trusty_error("failed (%d) to serialize request\n", rc);
+        goto end;
+    }
+    rc = km_do_tipc(cmd, false, req, req_size, resp_data, resp_data_size);
 
 end:
     if (req) {
@@ -347,4 +410,54 @@ int trusty_append_attestation_cert_chain(const uint8_t *cert,
 {
     return trusty_send_attestation_data(KM_APPEND_ATTESTATION_CERT_CHAIN,
                                         cert, cert_size, algorithm);
+}
+
+int trusty_atap_get_ca_request(const uint8_t *operation_start,
+                               uint32_t operation_start_size,
+                               uint8_t **ca_request_p,
+                               uint32_t *ca_request_size_p)
+{
+    *ca_request_p = trusty_calloc(1, max_ca_request_size);
+    if (!*ca_request_p) {
+        return TRUSTY_ERR_NO_MEMORY;
+    }
+    *ca_request_size_p = max_ca_request_size;
+    int rc = trusty_send_raw_buffer(KM_ATAP_GET_CA_REQUEST, operation_start,
+                                    operation_start_size, *ca_request_p,
+                                    ca_request_size_p);
+    if (rc != TRUSTY_ERR_NONE) {
+        trusty_free(*ca_request_p);
+    }
+    return rc;
+}
+
+int trusty_atap_set_ca_response(const uint8_t *ca_response,
+                                uint32_t ca_response_size)
+{
+    struct km_set_ca_response_begin_req begin_req;
+    int rc = TRUSTY_ERR_GENERIC;
+    uint32_t bytes_sent = 0, send_size = 0;
+
+    /* Tell the Trusty Keymaster TA the size of CA Response message */
+    begin_req.ca_response_size = ca_response_size;
+    rc = km_do_tipc(KM_ATAP_SET_CA_RESPONSE_BEGIN, false, &begin_req,
+                    sizeof(begin_req), NULL, NULL);
+    if (rc != TRUSTY_ERR_NONE) {
+        return rc;
+    }
+
+    /* Send the CA Response message in chunks */
+    while (bytes_sent < ca_response_size) {
+        send_size = MIN(max_send_size, ca_response_size - bytes_sent);
+        rc = trusty_send_raw_buffer(KM_ATAP_SET_CA_RESPONSE_UPDATE,
+                                    ca_response + bytes_sent, send_size,
+                                    NULL, NULL);
+        if (rc != TRUSTY_ERR_NONE) {
+            return rc;
+        }
+        bytes_sent += send_size;
+    }
+
+    /* Tell Trusty Keymaster to parse the CA Response message */
+    return km_do_tipc(KM_ATAP_SET_CA_RESPONSE_FINISH, true, NULL, 0, NULL, NULL);
 }
