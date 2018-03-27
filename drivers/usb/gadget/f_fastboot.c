@@ -1899,6 +1899,35 @@ static int android_things_load_fdt(const char *slot, struct andr_img_hdr *hdrloa
 
 static struct andr_img_hdr boothdr __aligned(ARCH_DMA_MINALIGN);
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+void trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_result) {
+	u32 os_ver = hdr->os_version >> 11;
+	u32 os_ver_km = (((os_ver >> 14) & 0x7F) * 100 + ((os_ver >> 7) & 0x7F)) * 100
+	    + (os_ver & 0x7F);
+	u32 os_lvl = hdr->os_version & ((1U << 11) - 1);
+	u32 os_lvl_km = ((os_lvl >> 4) + 2000) * 100 + (os_lvl & 0x0F);
+	keymaster_verified_boot_t vbstatus;
+	FbLockState lock_status = fastboot_get_lock_stat();
+
+	uint8_t permanent_attributes_hash[AVB_SHA256_DIGEST_SIZE];
+	if (fsl_read_permanent_attributes_hash(&fsl_avb_atx_ops, permanent_attributes_hash)) {
+		printf("ERROR - failed to read permanent attributes hash for keymaster\n");
+		memset(permanent_attributes_hash, 0, AVB_SHA256_DIGEST_SIZE);
+	}
+
+	bool lock = (lock_status == FASTBOOT_LOCK)? true: false;
+	if (avb_result == AVB_AB_FLOW_RESULT_OK)
+		vbstatus = KM_VERIFIED_BOOT_VERIFIED;
+	else
+		vbstatus = KM_VERIFIED_BOOT_FAILED;
+
+	/* TODO: Need VBH added in the last parameter */
+	trusty_set_boot_params(os_ver_km, os_lvl_km, vbstatus, lock,
+		permanent_attributes_hash, AVB_SHA256_DIGEST_SIZE,
+		NULL, 0);
+}
+#endif
+
 #if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
 
 int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
@@ -2176,6 +2205,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		free(boot_buf);
 
 #ifdef CONFIG_IMX_TRUSTY_OS
+	/* Trusty keymaster needs some parameters before it work */
+	trusty_setbootparameter(hdrload, avb_result);
 	/* put ql-tipc to release resource for Linux */
 	trusty_ipc_shutdown();
 #endif
