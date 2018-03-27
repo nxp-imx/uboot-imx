@@ -30,7 +30,7 @@ TRUSTY_DIR = lib/trusty
 #ccflags-y += -I$(TRUSTY_DIR)/ql-tipc/include
 ccflags-y += -I$(TRUSTY_DIR)/interface/include
 
-QL_TIPC = ..
+QL_TIPC = .
 obj-y += \
     $(QL_TIPC)/avb.o \
     $(QL_TIPC)/keymaster.o \
@@ -40,8 +40,8 @@ obj-y += \
     $(QL_TIPC)/libtipc.o \
     $(QL_TIPC)/rpmb_proxy.o \
     $(QL_TIPC)/util.o \
-    sysdeps_uboot.o \
-    storage_ops_uboot.o
+    sysdeps/sysdeps_uboot.o \
+    sysdeps/storage_ops_uboot.o
 
 obj-$(CONFIG_ARM) += \
     $(QL_TIPC)/arch/arm/trusty_mem.o \
