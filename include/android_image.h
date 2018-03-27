@@ -16,6 +16,7 @@
 #define ANDR_BOOT_MAGIC_SIZE 8
 #define ANDR_BOOT_NAME_SIZE 16
 #define ANDR_BOOT_ARGS_SIZE 512
+#define ANDR_BOOT_EXTRA_ARGS_SIZE 1024
 
 /* Boot metric variables (in millisecond) */
 struct boot_metric
@@ -44,14 +45,25 @@ struct andr_img_hdr {
 
 	u32 tags_addr;		/* physical addr for kernel tags */
 	u32 page_size;		/* flash page size we assume */
-	u32 unused[2];		/* future expansion: should be 0 */
+	u32 unused;		/* reserved for future expansion: MUST be 0 */
+
+	/* operating system version and security patch level; for
+	 * version "A.B.C" and patch level "Y-M-D":
+	 * ver = A << 14 | B << 7 | C         (7 bits for each of A, B, C)
+	 * lvl = ((Y - 2000) & 127) << 4 | M  (7 bits for Y, 4 bits for M)
+	 * os_version = ver << 11 | lvl */
+	u32 os_version;
 
 	char name[ANDR_BOOT_NAME_SIZE]; /* asciiz product name */
 
 	char cmdline[ANDR_BOOT_ARGS_SIZE];
 
 	u32 id[8]; /* timestamp / checksum / sha1 / etc */
-};
+
+	/* Supplemental command line data; kept here to maintain
+	 * binary compatibility with older versions of mkbootimg */
+	char extra_cmdline[ANDR_BOOT_EXTRA_ARGS_SIZE];
+} __attribute__((packed));
 
 /*
  * +-----------------+
