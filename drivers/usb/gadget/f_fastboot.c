@@ -1461,6 +1461,7 @@ static void fastboot_setup_system_boot_args(const char *slot, bool append_root)
 		} else {
 			sprintf(bootargs_3rd, "skip_initramfs");
 		}
+		strcat(bootargs_3rd, " rootwait");
 		setenv("bootargs_3rd", bootargs_3rd);
 #endif
 	}
