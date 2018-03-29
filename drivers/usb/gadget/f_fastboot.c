@@ -93,9 +93,6 @@ extern void trusty_os_init(void);
  */
 static unsigned int download_size;
 static unsigned int download_bytes;
-#if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
-static bool is_recovery_mode = false;
-#endif
 
 /* common variables of fastboot getvar command */
 char *fastboot_common_var[FASTBOOT_COMMON_VAR_NUM] = {
@@ -1248,6 +1245,11 @@ void board_fastboot_setup(void)
 #ifdef CONFIG_ANDROID_RECOVERY
 void board_recovery_setup(void)
 {
+/* boot from current mmc with avb verify */
+#ifdef CONFIG_AVB_SUPPORT
+	if (!getenv("bootcmd_android_recovery"))
+		setenv("bootcmd_android_recovery", "boota recovery");
+#else
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
 	static char boot_dev_part[32];
 	u32 dev_no;
@@ -1274,7 +1276,7 @@ void board_recovery_setup(void)
 			bootdev);
 		return;
 	}
-
+#endif /* CONFIG_AVB_SUPPORT */
 	printf("setup env for recovery..\n");
 	setenv("bootcmd", "run bootcmd_android_recovery");
 }
@@ -1481,11 +1483,7 @@ void fastboot_run_bootmode(void)
 	case BOOTMODE_RECOVERY_KEY_PRESSED:
 		/* Make the boot into recovery mode */
 		puts("Fastboot: Got Recovery key pressing or recovery commands!\n");
-#if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
-		is_recovery_mode = true;
-#else
 		board_recovery_setup();
-#endif
 		break;
 #endif
 	default:
@@ -1541,14 +1539,20 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	ulong image_size;
 	u32 avb_metric;
 	bool check_image_arm64 =  false;
+	bool is_recovery_mode = false;
 
 #if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
 	size_t lz4_len = DST_DECOMPRESS_LEN;
 #endif
-
 	AvbABFlowResult avb_result;
 	AvbSlotVerifyData *avb_out_data;
 	AvbPartitionData *avb_loadpart;
+
+	/* get bootmode, default to boot "boot" */
+	if (argc > 1) {
+		is_recovery_mode =
+			(strncmp(argv[1], "recovery", sizeof("recovery")) != 0) ? false: true;
+	}
 
 #ifdef CONFIG_FASTBOOT_LOCK
 	/* check lock state */
