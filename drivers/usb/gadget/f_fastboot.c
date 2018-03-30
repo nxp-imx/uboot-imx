@@ -93,8 +93,8 @@ extern void trusty_os_init(void);
  */
 static unsigned int download_size;
 static unsigned int download_bytes;
-#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
-static bool is_recovery_mode;
+#if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
+static bool is_recovery_mode = false;
 #endif
 
 /* common variables of fastboot getvar command */
@@ -1474,9 +1474,6 @@ void fastboot_run_bootmode(void)
 	case BOOTMODE_FASTBOOT_BCB_CMD:
 		/* Make the boot into fastboot mode*/
 		puts("Fastboot: Got bootloader commands!\n");
-#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
-		is_recovery_mode = false;
-#endif
 		run_command("fastboot 0", 0);
 		break;
 #ifdef CONFIG_ANDROID_RECOVERY
@@ -1484,7 +1481,7 @@ void fastboot_run_bootmode(void)
 	case BOOTMODE_RECOVERY_KEY_PRESSED:
 		/* Make the boot into recovery mode */
 		puts("Fastboot: Got Recovery key pressing or recovery commands!\n");
-#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+#if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
 		is_recovery_mode = true;
 #else
 		board_recovery_setup();
@@ -1493,9 +1490,6 @@ void fastboot_run_bootmode(void)
 #endif
 	default:
 		/* skip special mode boot*/
-#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
-		is_recovery_mode = false;
-#endif
 		puts("Fastboot: Normal\n");
 		break;
 	}
@@ -1538,8 +1532,6 @@ bootimg_print_image_hdr(struct andr_img_hdr *hdr)
 static struct andr_img_hdr boothdr __aligned(ARCH_DMA_MINALIGN);
 
 #if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
-/* we can use avb to verify Trusty if we want */
-const char *requested_partitions[] = {"boot", 0};
 
 int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 
@@ -1568,9 +1560,25 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	}
 	bool allow_fail = (lock_status == FASTBOOT_UNLOCK ? true : false);
 	avb_metric = get_timer(0);
-	/* if in lock state, do avb verify */
+	/* For imx6 on Android, we don't have a/b slot and we want to verify
+	 * boot/recovery with AVB. For imx8 and Android Things we don't have
+	 * recovery and support a/b slot for boot */
+#ifdef CONFIG_ANDROID_AB_SUPPORT
+	/* we can use avb to verify Trusty if we want */
+	const char *requested_partitions[] = {"boot", 0};
 	avb_result = avb_ab_flow_fast(&fsl_avb_ab_ops, requested_partitions, allow_fail,
 			AVB_HASHTREE_ERROR_MODE_RESTART_AND_INVALIDATE, &avb_out_data);
+#else /* CONFIG_ANDROID_AB_SUPPORT */
+	if (!is_recovery_mode) {
+		const char *requested_partitions[] = {"boot", 0};
+		avb_result = avb_single_flow(&fsl_avb_ab_ops, requested_partitions, allow_fail,
+				AVB_HASHTREE_ERROR_MODE_RESTART, &avb_out_data);
+	} else {
+		const char *requested_partitions[] = {"recovery", 0};
+		avb_result = avb_single_flow(&fsl_avb_ab_ops, requested_partitions, allow_fail,
+				AVB_HASHTREE_ERROR_MODE_RESTART, &avb_out_data);
+	}
+#endif /* CONFIG_ANDROID_AB_SUPPORT */
 	/* get the duration of avb */
 	metrics.avb = get_timer(avb_metric);
 
@@ -1613,7 +1621,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			else
 				fastboot_setup_system_boot_args(avb_out_data->ab_suffix, true);
 		}
-#endif
+#endif /* CONFIG_SYSTEM_RAMDISK_SUPPORT */
 		image_size = avb_loadpart->data_size;
 #if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
 		/* If we are using uncompressed kernel image, copy it directly to
@@ -1652,7 +1660,17 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		size_t num_read;
 		hdr = &boothdr;
 
-		char bootimg[8];
+		char bootimg[10];
+		/* we don't have a/b slot for imx6 on normal Android*/
+#ifndef CONFIG_ANDROID_AB_SUPPORT
+		char *slot = "";
+		if (!is_recovery_mode) {
+			sprintf(bootimg, "boot");
+		} else {
+			sprintf(bootimg, "recovery");
+		}
+		printf("boot '%s' still\n", bootimg);
+#else
 		char *slot = select_slot(&fsl_avb_ab_ops);
 		if (slot == NULL) {
 			printf("boota: no bootable slot\n");
@@ -1660,6 +1678,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		}
 		sprintf(bootimg, "boot%s", slot);
 		printf(" boot '%s' still\n", bootimg);
+#endif
 		/* maybe we should use bootctl to select a/b
 		 * but libavb doesn't export a/b select */
 		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, bootimg,
@@ -1710,7 +1729,6 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		}
 		hdr = (struct andr_img_hdr *)(ulong)(hdr->kernel_addr - hdr->page_size);
 #endif /* CONFIG_ARCH_IMX8 || CONFIG_ARCH_IMX8M */
-
 		char bootargs_sec[ANDR_BOOT_ARGS_SIZE];
 		sprintf(bootargs_sec,
 				"androidboot.verifiedbootstate=orange androidboot.slot_suffix=%s", slot);
@@ -1718,7 +1736,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if(!is_recovery_mode)
 			fastboot_setup_system_boot_args(slot, true);
-#endif
+#endif /* CONFIG_SYSTEM_RAMDISK_SUPPORT */
 #ifdef CONFIG_FASTBOOT_LOCK
 	}
 #endif

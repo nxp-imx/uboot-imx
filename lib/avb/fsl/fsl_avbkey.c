@@ -42,8 +42,12 @@
 #define RESULT_ERROR -1
 #define RESULT_OK     0
 
-#ifndef CONFIG_FSL_CAAM_KB
+#if !defined(CONFIG_FSL_CAAM_KB) || !defined(ANDROID_AB_SUPPORT)
 /* ARM64 won't avbkey and rollback index in this stage directly. */
+/* For legacy imx6/7, we won't enable A/B due to the limitation of
+ * storage capacity, but we still want to verify the boot/recovery
+ * with AVB. In this case, we won't check and store the rollback
+ * index. */
 int avbkey_init(uint8_t *plainkey, uint32_t keylen) {
 	return 0;
 }
