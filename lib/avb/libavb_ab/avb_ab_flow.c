@@ -406,6 +406,103 @@ out:
   return ret;
 }
 
+/* For legacy i.mx6/7, we won't enable A/B due to the limitation of
+ * storage capacity, but we still want to verify boot/recovery with
+ * AVB. */
+AvbABFlowResult avb_single_flow(AvbABOps* ab_ops,
+                            const char* const* requested_partitions,
+                            AvbSlotVerifyFlags flags,
+                            AvbHashtreeErrorMode hashtree_error_mode,
+                            AvbSlotVerifyData** out_data) {
+  AvbOps* ops = ab_ops->ops;
+  AvbSlotVerifyData* slot_data = NULL;
+  AvbSlotVerifyData* data = NULL;
+  AvbABFlowResult ret;
+  bool saw_and_allowed_verification_error = false;
+
+  /* Validate boot/recovery. */
+  AvbSlotVerifyResult verify_result;
+
+  verify_result = avb_slot_verify(ops,
+                    requested_partitions,
+                    "",
+                    flags,
+                    hashtree_error_mode,
+                    &slot_data);
+  switch (verify_result) {
+      case AVB_SLOT_VERIFY_RESULT_ERROR_OOM:
+        ret = AVB_AB_FLOW_RESULT_ERROR_OOM;
+        goto out;
+
+      case AVB_SLOT_VERIFY_RESULT_ERROR_IO:
+        ret = AVB_AB_FLOW_RESULT_ERROR_IO;
+        goto out;
+
+      case AVB_SLOT_VERIFY_RESULT_OK:
+        break;
+
+      case AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA:
+      case AVB_SLOT_VERIFY_RESULT_ERROR_UNSUPPORTED_VERSION:
+          /* Even with AVB_SLOT_VERIFY_FLAGS_ALLOW_VERIFICATION_ERROR
+           * these mean game over.
+           */
+        ret = AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS;
+        goto out;
+
+      /* explicit fallthrough. */
+      case AVB_SLOT_VERIFY_RESULT_ERROR_VERIFICATION:
+      case AVB_SLOT_VERIFY_RESULT_ERROR_ROLLBACK_INDEX:
+      case AVB_SLOT_VERIFY_RESULT_ERROR_PUBLIC_KEY_REJECTED:
+        if (flags & AVB_SLOT_VERIFY_FLAGS_ALLOW_VERIFICATION_ERROR) {
+          /* Do nothing since we allow this. */
+          avb_debugv("Allowing slot ",
+                     slot_suffixes[n],
+                     " which verified "
+                     "with result ",
+                     avb_slot_verify_result_to_string(verify_result),
+                     " because "
+                     "AVB_SLOT_VERIFY_FLAGS_ALLOW_VERIFICATION_ERROR "
+                     "is set.\n",
+                     NULL);
+          saw_and_allowed_verification_error = true;
+        } else {
+            ret = AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS;
+            goto out;
+        }
+        break;
+
+      case AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_ARGUMENT:
+        ret = AVB_AB_FLOW_RESULT_ERROR_INVALID_ARGUMENT;
+        goto out;
+        /* Do not add a 'default:' case here because of -Wswitch. */
+      }
+
+  avb_assert(slot_data != NULL);
+  data = slot_data;
+  slot_data = NULL;
+  if (saw_and_allowed_verification_error) {
+    avb_assert(flags & AVB_SLOT_VERIFY_FLAGS_ALLOW_VERIFICATION_ERROR);
+    ret = AVB_AB_FLOW_RESULT_OK_WITH_VERIFICATION_ERROR;
+  } else {
+    ret = AVB_AB_FLOW_RESULT_OK;
+  }
+
+out:
+  if (slot_data != NULL) {
+    avb_slot_verify_data_free(slot_data);
+  }
+
+  if (out_data != NULL) {
+    *out_data = data;
+  } else {
+    if (data != NULL) {
+      avb_slot_verify_data_free(data);
+    }
+  }
+
+  return ret;
+}
+
 AvbABFlowResult avb_ab_flow_fast(AvbABOps* ab_ops,
                             const char* const* requested_partitions,
                             AvbSlotVerifyFlags flags,

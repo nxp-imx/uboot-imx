@@ -42,6 +42,10 @@
 #define FASTBOOT_PARTITION_TEE "tos"
 #define FASTBOOT_PARTITION_PRDATA "presistdata"
 
+#ifdef CONFIG_AVB_SUPPORT
+#define FASTBOOT_PARTITION_AVBKEY "avbkey"
+#endif
+
 #ifdef CONFIG_ANDROID_AB_SUPPORT
 #define FASTBOOT_PARTITION_BOOT_A "boot_a"
 #define FASTBOOT_PARTITION_RECOVERY "recovery"
@@ -53,7 +57,6 @@
 #ifdef CONFIG_AVB_SUPPORT
 #define FASTBOOT_PARTITION_VBMETA_A "vbmeta_a"
 #define FASTBOOT_PARTITION_VBMETA_B "vbmeta_b"
-#define FASTBOOT_PARTITION_AVBKEY "avbkey"
 #endif
 #define FASTBOOT_PARTITION_MISC "misc"
 #define FASTBOOT_PARTITION_GPT "gpt"
