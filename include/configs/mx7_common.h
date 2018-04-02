@@ -33,8 +33,9 @@
 #define CONFIG_ENV_OVERWRITE
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_CBSIZE		512
+#define CONFIG_SYS_CBSIZE		2048
 #define CONFIG_SYS_MAXARGS		32
+#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
 /* UART */
 #define CONFIG_MXC_UART
