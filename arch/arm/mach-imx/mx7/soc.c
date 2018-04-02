@@ -367,7 +367,7 @@ int arch_cpu_init(void)
 #ifdef CONFIG_ARCH_MISC_INIT
 int arch_misc_init(void)
 {
-#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+#if defined(CONFIG_SERIAL_TAG) || defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
 	struct tag_serialnr serialnr;
 	char serial_string[0x20];
 
@@ -395,7 +395,7 @@ int arch_misc_init(void)
 }
 #endif
 
-#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+#if defined(CONFIG_SERIAL_TAG) || defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
 /*
  * OCOTP_TESTER
  * i.MX 7Solo Applications Processor Reference Manual, Rev. 0.1, 08/2016
