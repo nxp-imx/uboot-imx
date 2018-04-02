@@ -31,8 +31,9 @@
 #define CONFIG_LOADADDR                 0x80800000
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_CBSIZE		512
+#define CONFIG_SYS_CBSIZE		2048
 #define CONFIG_SYS_MAXARGS		32
+#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
 /* UART */
 
