@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -10,6 +11,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
 #include <asm/mach-imx/iomux-v3.h>
+#include <asm/mach-imx/boot_mode.h>
 #include <asm/io.h>
 #include <linux/sizes.h>
 #include <common.h>
@@ -334,6 +336,7 @@ int board_phy_config(struct phy_device *phydev)
 #endif
 
 #ifdef CONFIG_FSL_QSPI
+#ifndef CONFIG_DM_SPI
 static iomux_v3_cfg_t const quadspi_pads[] = {
 	MX7D_PAD_EPDC_DATA00__QSPI_A_DATA0 | MUX_PAD_CTRL(QSPI_PAD_CTRL),
 	MX7D_PAD_EPDC_DATA01__QSPI_A_DATA1 | MUX_PAD_CTRL(QSPI_PAD_CTRL),
@@ -342,12 +345,15 @@ static iomux_v3_cfg_t const quadspi_pads[] = {
 	MX7D_PAD_EPDC_DATA05__QSPI_A_SCLK  | MUX_PAD_CTRL(QSPI_PAD_CTRL),
 	MX7D_PAD_EPDC_DATA06__QSPI_A_SS0_B | MUX_PAD_CTRL(QSPI_PAD_CTRL),
 };
+#endif
 
 int board_qspi_init(void)
 {
+#ifndef CONFIG_DM_SPI
 	/* Set the iomux */
 	imx_iomux_v3_setup_multiple_pads(quadspi_pads,
 					 ARRAY_SIZE(quadspi_pads));
+#endif
 
 	/* Set the clock */
 	set_clk_qspi();
@@ -617,6 +623,17 @@ int board_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_CMD_BMODE
+static const struct boot_mode board_boot_modes[] = {
+	/* 4 bit bus width */
+	{"sd1", MAKE_CFGVAL(0x10, 0x10, 0x00, 0x00)},
+	{"emmc", MAKE_CFGVAL(0x10, 0x2a, 0x00, 0x00)},
+	/* TODO: Nand */
+	{"qspi", MAKE_CFGVAL(0x00, 0x40, 0x00, 0x00)},
+	{NULL,   0},
+};
+#endif
+
 #ifdef CONFIG_DM_PMIC
 int power_init_board(void)
 {
@@ -648,16 +665,17 @@ int power_init_board(void)
 int board_late_init(void)
 {
 	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
+#ifdef CONFIG_CMD_BMODE
+	add_board_boot_modes(board_boot_modes);
+#endif
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
 
 	imx_iomux_v3_setup_multiple_pads(wdog_pads, ARRAY_SIZE(wdog_pads));
 
 	set_wdog_reset(wdog);
-
-	/*
-	 * Do not assert internal WDOG_RESET_B_DEB(controlled by bit 4),
-	 * since we use PMIC_PWRON to reset the board.
-	 */
-	clrsetbits_le16(&wdog->wcr, 0, 0x10);
 
 	return 0;
 }

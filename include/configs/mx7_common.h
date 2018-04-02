@@ -33,10 +33,12 @@
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX               1
+#define CONFIG_BAUDRATE                 115200
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_CBSIZE		512
 #define CONFIG_SYS_MAXARGS		32
+#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
 #ifndef CONFIG_SYS_DCACHE_OFF
 #endif
@@ -58,7 +60,7 @@
 
 /* Secure boot (HAB) support */
 #ifdef CONFIG_SECURE_BOOT
-#define CONFIG_CSF_SIZE			0x2000
+#define CONFIG_CSF_SIZE			0x4000
 #endif
 
 #endif
