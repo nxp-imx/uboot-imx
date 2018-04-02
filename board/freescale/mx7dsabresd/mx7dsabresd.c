@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  */
 
 #include <init.h>
@@ -10,6 +11,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
 #include <asm/mach-imx/iomux-v3.h>
+#include <asm/mach-imx/boot_mode.h>
 #include <asm/io.h>
 #include <linux/sizes.h>
 #include <common.h>
@@ -73,6 +75,55 @@ static iomux_v3_cfg_t const uart1_pads[] = {
 	MX7D_PAD_UART1_TX_DATA__UART1_DCE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
 	MX7D_PAD_UART1_RX_DATA__UART1_DCE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
+
+#define BOARD_REV_C  0x300
+#define BOARD_REV_B  0x200
+#define BOARD_REV_A  0x100
+
+static int mx7sabre_rev(void)
+{
+	/*
+	 * Get Board ID information from OCOTP_GP1[15:8]
+	 * i.MX7D SDB RevA: 0x41
+	 * i.MX7D SDB RevB: 0x42
+	 */
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[14];
+	int reg = readl(&bank->fuse_regs[0]);
+	int ret;
+
+	if (reg != 0) {
+		switch (reg >> 8 & 0x0F) {
+		case 0x3:
+			ret = BOARD_REV_C;
+			break;
+		case 0x02:
+			ret = BOARD_REV_B;
+			break;
+		case 0x01:
+		default:
+			ret = BOARD_REV_A;
+			break;
+		}
+	} else {
+		/* If the gp1 fuse is not burn, we have to use TO rev for the board rev */
+		if (is_soc_rev(CHIP_REV_1_0))
+			ret = BOARD_REV_A;
+		else if (is_soc_rev(CHIP_REV_1_1))
+			ret = BOARD_REV_B;
+		else
+			ret = BOARD_REV_C;
+	}
+
+	return ret;
+}
+
+u32 get_board_rev(void)
+{
+	int rev = mx7sabre_rev();
+
+	return (get_cpu_rev() & ~(0xF << 8)) | rev;
+}
 
 #ifdef CONFIG_NAND_MXS
 static iomux_v3_cfg_t const gpmi_pads[] = {
@@ -219,22 +270,6 @@ static void setup_iomux_uart(void)
 	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
 }
 
-int board_mmc_get_env_dev(int devno)
-{
-	if (devno == 2)
-		devno--;
-
-	return devno;
-}
-
-int mmc_map_to_kernel_blk(int dev_no)
-{
-	if (dev_no == 1)
-		dev_no++;
-
-	return dev_no;
-}
-
 #ifdef CONFIG_FEC_MXC
 static int setup_fec(void)
 {
@@ -308,11 +343,13 @@ int board_init(void)
 	return 0;
 }
 
+
 #ifdef CONFIG_DM_PMIC
 int power_init_board(void)
 {
 	struct udevice *dev;
 	int ret, dev_id, rev_id;
+	u32 sw3mode;
 
 	ret = pmic_get("pfuze3000@8", &dev);
 	if (ret == -ENODEV)
@@ -332,6 +369,12 @@ int power_init_board(void)
 	 */
 	pmic_clrsetbits(dev, PFUZE3000_VLD4CTL, 0xF, 0xA);
 
+	/* change sw3 mode to avoid DDR power off */
+	sw3mode = pmic_reg_read(dev, PFUZE3000_SW3MODE);
+	ret = pmic_reg_write(dev, PFUZE3000_SW3MODE, sw3mode | 0x20);
+	if (ret < 0)
+		printf("PMIC: PFUZE3000 change sw3 mode failed\n");
+
 	return 0;
 }
 #endif
@@ -340,29 +383,42 @@ int board_late_init(void)
 {
 	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
 
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
+
 	imx_iomux_v3_setup_multiple_pads(wdog_pads, ARRAY_SIZE(wdog_pads));
 
 	set_wdog_reset(wdog);
-
-	/*
-	 * Do not assert internal WDOG_RESET_B_DEB(controlled by bit 4),
-	 * since we use PMIC_PWRON to reset the board.
-	 */
-	clrsetbits_le16(&wdog->wcr, 0, 0x10);
 
 	return 0;
 }
 
 int checkboard(void)
 {
+	int rev = mx7sabre_rev();
 	char *mode;
+	char *revname;
 
 	if (IS_ENABLED(CONFIG_ARMV7_BOOT_SEC_DEFAULT))
 		mode = "secure";
 	else
 		mode = "non-secure";
 
-	printf("Board: i.MX7D SABRESD in %s mode\n", mode);
+	switch (rev) {
+	case BOARD_REV_C:
+		revname = "C";
+		break;
+	case BOARD_REV_B:
+		revname = "B";
+		break;
+	case BOARD_REV_A:
+	default:
+		revname = "A";
+		break;
+	}
+
+	printf("Board: i.MX7D SABRESD Rev%s in %s mode\n", revname, mode);
 
 	return 0;
 }
