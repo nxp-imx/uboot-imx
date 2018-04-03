@@ -12,19 +12,89 @@
 
 #define CFG_MXC_UART_BASE		UART1_BASE
 
+#ifdef CONFIG_NAND_BOOT
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
+#else
+#define MFG_NAND_PARTITION ""
+#endif
+
+#ifdef CONFIG_IMX_BOOTAUX
+
+/* Set to QSPI1 B flash at default */
+#ifdef CONFIG_DM_SPI
+#define CFG_SYS_AUXCORE_BOOTDATA 0x68000000
+#define SF_QSPI1_B_CS_NUM 2
+#else
+#define CFG_SYS_AUXCORE_BOOTDATA 0x62000000
+#define SF_QSPI1_B_CS_NUM 1
+#endif
+
+
+#define UPDATE_M4_ENV \
+	"m4image=m4_qspi.bin\0" \
+	"m4_qspi_cs="__stringify(SF_QSPI1_B_CS_NUM)"\0" \
+	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4image}\0" \
+	"update_m4_from_sd=" \
+		"if sf probe 0:${m4_qspi_cs}; then " \
+			"if run loadm4image; then " \
+				"setexpr fw_sz ${filesize} + 0xffff; " \
+				"setexpr fw_sz ${fw_sz} / 0x10000; "	\
+				"setexpr fw_sz ${fw_sz} * 0x10000; "	\
+				"sf erase 0x0 ${fw_sz}; " \
+				"sf write ${loadaddr} 0x0 ${filesize}; " \
+			"fi; " \
+		"fi\0" \
+	"m4boot=sf probe 0:${m4_qspi_cs}; bootaux "__stringify(CFG_SYS_AUXCORE_BOOTDATA)"\0"
+#else
+#define UPDATE_M4_ENV ""
+#endif
+
+
+#define CFG_MFG_ENV_SETTINGS \
+	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
+		"rdinit=/linuxrc " \
+		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
+		"g_mass_storage.file=/fat g_mass_storage.ro=1 " \
+		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
+		"g_mass_storage.iSerialNumber=\"\" "\
+		MFG_NAND_PARTITION \
+		"\0" \
+	"initrd_addr=0x83800000\0" \
+	"initrd_high=0xffffffff\0" \
+	"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+
+#if defined(CONFIG_NAND_BOOT)
 #define CFG_EXTRA_ENV_SETTINGS \
+	CFG_MFG_ENV_SETTINGS \
+	"panel=Hannstar-XGA\0" \
+	"fdt_addr=0x83000000\0" \
+	"fdt_high=0xffffffff\0"	  \
+	"console=ttymxc0\0" \
+	"bootargs=console=ttymxc0,115200 ubi.mtd=6 "  \
+		"root=ubi0:rootfs rootfstype=ubifs "		     \
+		"mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs)\0"\
+	"bootcmd=nand read ${loadaddr} 0x4000000 0xc00000;"\
+		"nand read ${fdt_addr} 0x5000000 0x100000;"\
+		"bootz ${loadaddr} - ${fdt_addr}\0"
+
+#else
+#define CFG_EXTRA_ENV_SETTINGS \
+	UPDATE_M4_ENV \
+	CFG_MFG_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"console=ttymxc0\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
 	"fdt_file=imx6sx-sabreauto.dtb\0" \
-	"fdt_addr=0x88000000\0" \
+	"fdt_addr=0x83000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
-	"mmcdev=0\0" \
+	"panel=Hannstar-XGA\0" \
+	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
-	"mmcroot=/dev/mmcblk0p2 rootwait rw\0" \
+	"mmcroot=/dev/mmcblk2p2 rootwait rw\0" \
+	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
 		"root=${mmcroot}\0" \
 	"loadbootscript=" \
@@ -72,6 +142,7 @@
 		"else " \
 			"bootz; " \
 		"fi;\0"
+#endif
 
 /* Miscellaneous configurable options */
 
@@ -92,14 +163,13 @@
 
 /* Network */
 
-#define IMX_FEC_BASE			ENET2_BASE_ADDR
-#define CFG_FEC_MXC_PHYADDR          0x0
-
 #ifdef CONFIG_CMD_USB
 #define CFG_MXC_USB_PORTSC  (PORT_PTS_UTMI | PORT_PTS_PTW)
 #define CFG_MXC_USB_FLAGS   0
 #endif
 
 #define CFG_SYS_FSL_USDHC_NUM	2
+
+#define CFG_SYS_I2C_PCA953X_WIDTH	{ {0x30, 8}, {0x32, 8}, {0x34, 8} }
 
 #endif				/* __CONFIG_H */
