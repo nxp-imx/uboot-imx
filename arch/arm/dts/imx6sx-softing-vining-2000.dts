@@ -270,7 +270,7 @@
 	status = "okay";
 };
 
-&reg_pcie {
+&reg_pcie_phy {
 	regulator-always-on;
 };
 
