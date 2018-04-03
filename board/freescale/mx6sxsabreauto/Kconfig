@@ -12,4 +12,6 @@ config SYS_CONFIG_NAME
 config IMX_CONFIG
 	default "board/freescale/mx6sxsabreauto/imximage.cfg"
 
+config SYS_TEXT_BASE
+	default 0x87800000
 endif
