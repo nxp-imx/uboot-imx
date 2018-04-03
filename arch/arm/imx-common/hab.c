@@ -643,6 +643,54 @@ static int csf_is_valid(int ivt_offset, ulong start_addr, size_t bytes)
 	return 1;
 }
 
+/*
+ * Validate IVT structure of the image being authenticated
+ */
+static int validate_ivt(int ivt_offset, ulong start_addr)
+{
+	const struct hab_ivt *ivt_initial = NULL;
+	const uint8_t *start = (const uint8_t *)start_addr;
+
+	if (start_addr & 0x3) {
+		puts("Error: Image's start address is not 4 byte aligned\n");
+		return 0;
+	}
+
+	ivt_initial = (const struct hab_ivt *)(start + ivt_offset);
+
+	const struct hab_hdr *ivt_hdr = &ivt_initial->hdr;
+
+	/* Check IVT fields before allowing authentication */
+	if ((ivt_hdr->tag == HAB_TAG_IVT && \
+	    ((ivt_hdr->len[0] << 8) + ivt_hdr->len[1]) == IVT_HDR_LEN && \
+	    (ivt_hdr->par & HAB_MAJ_MASK) == HAB_MAJ_VER) && \
+	    (ivt_initial->entry != 0x0) && \
+	    (ivt_initial->reserved1 == 0x0) && \
+	    (ivt_initial->self == (uint32_t)ivt_initial) && \
+	    (ivt_initial->csf != 0x0) && \
+	    (ivt_initial->reserved2 == 0x0)) {
+		/* Report boot failure if DCD pointer is found in IVT */
+		if (ivt_initial->dcd != 0x0)
+			puts("Error: DCD pointer must be 0\n");
+		else
+			return 1;
+	}
+
+	puts("Error: Invalid IVT structure\n");
+	puts("\nAllowed IVT structure:\n");
+	puts("IVT HDR       = 0x4X2000D1\n");
+	puts("IVT ENTRY     = 0xXXXXXXXX\n");
+	puts("IVT RSV1      = 0x0\n");
+	puts("IVT DCD       = 0x0\n");		/* Recommended */
+	puts("IVT BOOT_DATA = 0xXXXXXXXX\n");	/* Commonly 0x0 */
+	puts("IVT SELF      = 0xXXXXXXXX\n");	/* = ddr_start + ivt_offset */
+	puts("IVT CSF       = 0xXXXXXXXX\n");
+	puts("IVT RSV2      = 0x0\n");
+
+	/* Invalid IVT structure */
+	return 0;
+}
+
 uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 {
 	ulong load_addr = 0;
@@ -664,6 +712,10 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 
 			start = ddr_start;
 			bytes = ivt_offset + IVT_SIZE + CSF_PAD_SIZE;
+
+			/* Validate IVT structure */
+			if (!validate_ivt(ivt_offset, start))
+				return result;
 
 			puts("Check CSF for Write Data command before ");
 			puts("authenticating image\n");
@@ -722,18 +774,6 @@ uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size)
 				}
 			}
 #endif
-
-			/* Report boot failure if DCD pointer is found in IVT */
-			unsigned char *dcd_ptr = (unsigned char *)(ddr_start + ivt_offset + 0xC);
-
-			do {
-				if (*dcd_ptr) {
-					puts("Error: DCD pointer must be 0\n");
-					return result;
-				}
-				dcd_ptr++;
-			} while (dcd_ptr < (unsigned char *)(ddr_start + ivt_offset + 0x10));
-
 			load_addr = (ulong)hab_rvt_authenticate_image(
 					HAB_CID_UBOOT,
 					ivt_offset, (void **)&start,
