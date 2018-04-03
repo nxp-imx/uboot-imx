@@ -177,6 +177,10 @@ typedef void hapi_clock_init_t(void);
 		((size_t)(((const struct hab_hdr *)&(hdr))->len[0] << 8) \
 		 + (size_t)((const struct hab_hdr *)&(hdr))->len[1])
 
+#define HAB_TAG_IVT       0xD1
+#define IVT_HDR_LEN       0x20
+#define HAB_MAJ_VER       0x40
+#define HAB_MAJ_MASK      0xF0
 /* ----------- end of HAB API updates ------------*/
 
 uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size);
