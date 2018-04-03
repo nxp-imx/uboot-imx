@@ -9,4 +9,6 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
 	default "mx6sxsabreauto"
 
+config SYS_TEXT_BASE
+	default 0x87800000
 endif
