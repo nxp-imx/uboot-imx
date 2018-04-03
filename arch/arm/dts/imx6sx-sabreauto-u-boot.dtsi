@@ -14,3 +14,27 @@
 		compatible = "jedec,spi-nor";
 	};
 };
+
+&fec1 {
+	phy-mode = "rgmii-txid";
+};
+
+&fec2 {
+	phy-mode = "rgmii-txid";
+};
+
+&ethphy0 {
+	vddio0: vddio-regulator {
+		regulator-name = "VDDIO";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+};
+
+&ethphy1 {
+	vddio1: vddio-regulator {
+		regulator-name = "VDDIO";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+};
