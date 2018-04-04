@@ -29,8 +29,6 @@
 		i2c1 = &i2c2;
 		i2c2 = &i2c3;
 		i2c3 = &i2c4;
-		mmc0 = &usdhc1;
-		mmc1 = &usdhc2;
 		serial0 = &uart1;
 		serial1 = &uart2;
 		serial2 = &uart3;
@@ -46,6 +44,8 @@
 		spi4 = &ecspi4;
 		usbphy0 = &usbphy1;
 		usbphy1 = &usbphy2;
+		usb0 = &usbotg1;
+		usb1 = &usbotg2;  
 	};
 
 	cpus {
