@@ -535,6 +535,14 @@ config TARGET_MX6UL_ENGICAM
 	select SUPPORT_SPL
 	imply CMD_DM
 
+config TARGET_MX6ULL_9X9_EVK
+	bool "Support mx6ull_9x9_evk"
+	select BOARD_LATE_INIT
+	select MX6ULL
+	select DM
+	select DM_THERMAL
+	imply CMD_DM
+
 config TARGET_MX6ULL_14X14_EVK
 	bool "Support mx6ull_14x14_evk"
 	select BOARD_LATE_INIT

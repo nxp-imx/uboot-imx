@@ -1,4 +1,4 @@
-if TARGET_MX6ULL_14X14_EVK
+if TARGET_MX6ULL_14X14_EVK || TARGET_MX6ULL_9X9_EVK
 
 config SYS_BOARD
 	default "mx6ullevk"
@@ -9,4 +9,6 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
 	default "mx6ullevk"
 
+config SYS_TEXT_BASE
+	default 0x87800000
 endif
