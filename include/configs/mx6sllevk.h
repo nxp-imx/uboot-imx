@@ -8,11 +8,25 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include <linux/stringify.h>
 #include "mx6_common.h"
 
 #define CONFIG_MXC_UART_BASE		UART1_BASE
 
+#define CONFIG_MFG_ENV_SETTINGS \
+	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
+		"rdinit=/linuxrc " \
+		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
+		"g_mass_storage.file=/fat g_mass_storage.ro=1 " \
+		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
+		"g_mass_storage.iSerialNumber=\"\" "\
+		"\0" \
+	"initrd_addr=0x83800000\0" \
+	"initrd_high=0xffffffff\0" \
+	"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
 	"epdc_waveform=epdc_splash.bin\0" \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
@@ -105,5 +119,24 @@
 #define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
 #endif
 
-#include <linux/stringify.h>
+#ifdef CONFIG_DM_VIDEO
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_BMP_16BPP
+#define CONFIG_VIDEO_BMP_RLE8
+#define CONFIG_IMX_VIDEO_SKIP
+#endif
+
+/*
+ * EPDC SPLASH SCREEN Configs
+ */
+#ifdef CONFIG_MXC_EPDC
+	/*
+	 * Framebuffer and LCD
+	 */
+	#undef LCD_TEST_PATTERN
+	#define LCD_BPP					LCD_MONOCHROME
+
+	#define CONFIG_WAVEFORM_BUF_SIZE		0x400000
+#endif /* CONFIG_MXC_EPDC */
+
 #endif				/* __CONFIG_H */
