@@ -14,7 +14,17 @@
 #include "mx6_common.h"
 #include <asm/mach-imx/gpio.h>
 
-#define PHYS_SDRAM_SIZE	SZ_512M
+#define is_mx6ull_9x9_evk()	CONFIG_IS_ENABLED(TARGET_MX6ULL_9X9_EVK)
+
+#ifdef CONFIG_TARGET_MX6ULL_9X9_EVK
+#define PHYS_SDRAM_SIZE		SZ_256M
+#define BOOTARGS_CMA_SIZE   "cma=96M "
+#else
+#define PHYS_SDRAM_SIZE		SZ_512M
+#define BOOTARGS_CMA_SIZE   ""
+/* DCDC used on 14x14 EVK, no PMIC */
+#undef CONFIG_LDO_BYPASS_CHECK
+#endif
 
 #define CONFIG_MXC_UART_BASE		UART1_BASE
 
@@ -23,14 +33,55 @@
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC2_BASE_ADDR
 
 /* NAND pin conflicts with usdhc2 */
-#ifdef CONFIG_SYS_USE_NAND
+#ifdef CONFIG_NAND_MXS
 #define CONFIG_SYS_FSL_USDHC_NUM	1
 #else
 #define CONFIG_SYS_FSL_USDHC_NUM	2
 #endif
+
 #endif
 
+
+#ifdef CONFIG_NAND_BOOT
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
+#else
+#define MFG_NAND_PARTITION ""
+#endif
+
+#define CONFIG_MFG_ENV_SETTINGS \
+	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
+	    BOOTARGS_CMA_SIZE \
+		"rdinit=/linuxrc " \
+		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
+		"g_mass_storage.file=/fat g_mass_storage.ro=1 " \
+		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
+		"g_mass_storage.iSerialNumber=\"\" "\
+		MFG_NAND_PARTITION \
+		"clk_ignore_unused "\
+		"\0" \
+	"initrd_addr=0x83800000\0" \
+	"initrd_high=0xffffffff\0" \
+	"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+
+#if defined(CONFIG_NAND_BOOT)
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
+	"splashimage=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
+	"videomode=video=ctfb:x:480,y:272,depth:24,pclk:108695,le:8,ri:4,up:2,lo:4,hs:41,vs:10,sync:0,vmode:0\0" \
+	"fdt_addr=0x83000000\0" \
+	"fdt_high=0xffffffff\0"	  \
+	"console=ttymxc0\0" \
+	"bootargs=console=ttymxc0,115200 ubi.mtd=4 "  \
+		"root=ubi0:rootfs rootfstype=ubifs "		     \
+		BOOTARGS_CMA_SIZE \
+		"mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs)\0"\
+	"bootcmd=nand read ${loadaddr} 0x4000000 0xc00000;"\
+		"nand read ${fdt_addr} 0x5000000 0x100000;"\
+		"bootz ${loadaddr} - ${fdt_addr}\0"
+
+#else
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"console=ttymxc0\0" \
@@ -40,12 +91,14 @@
 	"fdt_addr=0x83000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
+	"splashimage=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"videomode=video=ctfb:x:480,y:272,depth:24,pclk:108695,le:8,ri:4,up:2,lo:4,hs:41,vs:10,sync:0,vmode:0\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
 	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
+		BOOTARGS_CMA_SIZE \
 		"root=${mmcroot}\0" \
 	"loadbootscript=" \
 		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
@@ -68,17 +121,8 @@
 		"else " \
 			"bootz; " \
 		"fi;\0" \
-		"findfdt="\
-			"if test $fdt_file = undefined; then " \
-				"if test $board_name = ULZ-EVK && test $board_rev = 14X14; then " \
-					"setenv fdt_file imx6ulz-14x14-evk.dtb; fi; " \
-				"if test $board_name = EVK && test $board_rev = 14X14; then " \
-					"setenv fdt_file imx6ull-14x14-evk.dtb; fi; " \
-				"if test $fdt_file = undefined; then " \
-					"echo WARNING: Could not determine dtb to use; " \
-				"fi; " \
-			"fi;\0" \
 	"netargs=setenv bootargs console=${console},${baudrate} " \
+		BOOTARGS_CMA_SIZE \
 		"root=/dev/nfs " \
 	"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 		"netboot=echo Booting from net ...; " \
@@ -102,6 +146,20 @@
 		"else " \
 			"bootz; " \
 		"fi;\0" \
+		"findfdt="\
+			"if test $fdt_file = undefined; then " \
+				"if test $board_name = ULZ-EVK && test $board_rev = 14X14; then " \
+					"setenv fdt_file imx6ulz-14x14-evk.dtb; fi; " \
+				"if test $board_name = EVK && test $board_rev = 9X9; then " \
+					"setenv fdt_file imx6ull-9x9-evk.dtb; fi; " \
+				"if test $board_name = EVK && test $board_rev = 14X14; then " \
+					"setenv fdt_file imx6ull-14x14-evk.dtb; fi; " \
+				"if test $fdt_file = undefined; then " \
+					"echo WARNING: Could not determine dtb to use; " \
+				"fi; " \
+			"fi;\0" \
+
+#endif
 
 /* Miscellaneous configurable options */
 
@@ -122,13 +180,24 @@
 
 #define CONFIG_IOMUX_LPSR
 
-#ifdef CONFIG_CMD_NET
-#define CONFIG_FEC_ENET_DEV		1
-#if (CONFIG_FEC_ENET_DEV == 0)
-#define CONFIG_ETHPRIME			"eth0"
-#elif (CONFIG_FEC_ENET_DEV == 1)
+/* NAND stuff */
+#ifdef CONFIG_NAND_MXS
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_SYS_NAND_BASE		0x40000000
+#define CONFIG_SYS_NAND_USE_FLASH_BBT
+
+/* DMA stuff, needed for GPMI/MXS NAND support */
+#endif
+
+/* USB Configs */
+#ifdef CONFIG_CMD_USB
+#define CONFIG_EHCI_HCD_INIT_AFTER_RESET
+#define CONFIG_MXC_USB_PORTSC  (PORT_PTS_UTMI | PORT_PTS_PTW)
+#define CONFIG_MXC_USB_FLAGS   0
+#define CONFIG_USB_MAX_CONTROLLER_COUNT 2
+#endif
+
+#define CONFIG_FEC_XCV_TYPE             RMII
 #define CONFIG_ETHPRIME			"eth1"
-#endif
-#endif
 
 #endif
