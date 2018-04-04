@@ -31,4 +31,11 @@
 #define CONFIG_SYS_MALLOC_LEN           (96 * SZ_1M)
 #endif
 
+/* Enable mcu firmware flash */
+#ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
+#define ANDROID_MCU_FRIMWARE_DEV_TYPE DEV_SF
+#define ANDROID_MCU_FIRMWARE_START 0
+#define ANDROID_MCU_FIRMWARE_SIZE  0x4000000
+#endif
+
 #endif
