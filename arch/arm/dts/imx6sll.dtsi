@@ -1,5 +1,6 @@
 /*
  * Copyright 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017-2018 NXP
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -37,6 +38,8 @@
 		spi4 = &ecspi4;
 		usbphy0 = &usbphy1;
 		usbphy1 = &usbphy2;
+		usb0 = &usbotg1;
+		usb1 = &usbotg2;
 	};
 
 	cpus {
@@ -50,14 +53,14 @@
 			next-level-cache = <&L2>;
 			operating-points = <
 				/* kHz    uV */
-				996000  1225000
+				996000  1275000
 				792000  1175000
 				396000  1075000
 				198000	975000
 			>;
 			fsl,soc-operating-points = <
 				/* ARM kHz      SOC-PU uV */
-				996000          1225000
+				996000          1175000
 				792000          1175000
 				396000          1175000
 				198000		1175000
@@ -166,6 +169,12 @@
 			reg = <0x00905000 0x1B000>;
 		};
 
+		ocram_optee: sram@00918000 {
+			compatible = "fsl,optee-lpm-sram";
+			reg = <0x00918000 0x8000>;
+			overw_reg = <&ocram 0x00905000 0x13000>;
+		};
+
 		L2: l2-cache@00a02000 {
 			compatible = "arm,pl310-cache";
 			reg = <0x00a02000 0x1000>;
@@ -210,7 +219,7 @@
 						      "rxtx1", "rxtx2",
 						      "rxtx3", "rxtx4",
 						      "rxtx5", "rxtx6",
-						      "rxtx7", "dma";
+						      "rxtx7", "spba";
 					status = "disabled";
 				};
 
@@ -395,8 +404,8 @@
 				reg = <0x02098000 0x4000>;
 				interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clks IMX6SLL_CLK_GPT_BUS>,
-					 <&clks IMX6SLL_CLK_GPT_SERIAL>;
-				clock-names = "ipg", "per";
+					 <&clks IMX6SLL_CLK_GPT_3M>;
+				clock-names = "ipg", "osc_per";
 			};
 
 			gpio1: gpio@0209c000 {
@@ -528,7 +537,6 @@
 				fsl,tempmon = <&anatop>;
 				fsl,tempmon-data = <&ocotp>;
 				clocks = <&clks IMX6SLL_CLK_PLL3_USB_OTG>;
-				status = "disabled";
 			};
 
 			usbphy1: usbphy@020c9000 {
@@ -574,7 +582,7 @@
 					regmap = <&snvs>;
 					interrupts = <GIC_SPI 4 IRQ_TYPE_LEVEL_HIGH>;
 					linux,keycode = <KEY_POWER>;
-					wakeup;
+					wakeup-source;
 				};
 			};
 
@@ -629,7 +637,7 @@
 			};
 
 			sdma: sdma@020ec000 {
-				compatible = "fsl,imx6sll-sdma", "fsl,imx35-sdma";
+				compatible = "fsl,imx6ul-sdma", "fsl,imx35-sdma";
 				reg = <0x020ec000 0x4000>;
 				interrupts = <GIC_SPI 2 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clks IMX6SLL_CLK_SDMA>,
@@ -726,7 +734,7 @@
 			};
 
 			usdhc1: usdhc@02190000 {
-				compatible = "fsl,imx6sll-usdhc", "fsl,imx6sx-usdhc";
+				compatible = "fsl,imx6sll-usdhc", "fsl,imx7d-usdhc";
 				reg = <0x02190000 0x4000>;
 				interrupts = <GIC_SPI 22 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clks IMX6SLL_CLK_USDHC1>,
@@ -740,7 +748,7 @@
 			};
 
 			usdhc2: usdhc@02194000 {
-				compatible = "fsl,imx6sll-usdhc", "fsl,imx6sx-usdhc";
+				compatible = "fsl,imx6sll-usdhc", "fsl,imx7d-usdhc";
 				reg = <0x02194000 0x4000>;
 				interrupts = <GIC_SPI 23 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clks IMX6SLL_CLK_USDHC2>,
@@ -754,7 +762,7 @@
 			};
 
 			usdhc3: usdhc@02198000 {
-				compatible = "fsl,imx6sll-usdhc", "fsl,imx6sx-usdhc";
+				compatible = "fsl,imx6sll-usdhc", "fsl,imx7d-usdhc";
 				reg = <0x02198000 0x4000>;
 				interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clks IMX6SLL_CLK_USDHC3>,
