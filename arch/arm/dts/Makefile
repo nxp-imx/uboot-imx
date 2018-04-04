@@ -382,7 +382,11 @@ dtb-$(CONFIG_VF610) += vf500-colibri.dtb \
 
 dtb-$(CONFIG_MX53) += imx53-cx9020.dtb
 
-dtb-$(CONFIG_MX6) += imx6ull-14x14-evk.dtb \
+dtb-$(CONFIG_MX6) += imx6ul-14x14-evk.dtb \
+	imx6ul-14x14-evk-emmc.dtb \
+	imx6ul-14x14-evk-gpmi-weim.dtb \
+	imx6ul-9x9-evk.dtb \
+	imx6ull-14x14-evk.dtb \
 	imx6sl-evk.dtb \
 	imx6sll-evk.dtb \
 	imx6dl-icore.dtb \
