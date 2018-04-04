@@ -1,5 +1,6 @@
 /*
  * Copyright 2015-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017-2018 NXP
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -8,11 +9,11 @@
 
 #include <dt-bindings/clock/imx6ul-clock.h>
 #include <dt-bindings/gpio/gpio.h>
-#include <dt-bindings/input/input.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include "imx6ull-pinfunc.h"
 #include "imx6ull-pinfunc-snvs.h"
 #include "skeleton.dtsi"
+#include <dt-bindings/input/input.h>
 
 / {
 	aliases {
@@ -46,6 +47,8 @@
 		spi4 = &ecspi4;
 		usbphy0 = &usbphy1;
 		usbphy1 = &usbphy2;
+		usb0 = &usbotg1;
+		usb1 = &usbotg2;
 	};
 
 	cpus {
@@ -59,14 +62,21 @@
 			clock-latency = <61036>; /* two CLK32 periods */
 			operating-points = <
 				/* kHz	uV */
+				900000	1275000
+				792000	1225000
 				528000	1175000
-				99000	950000
+				396000	1025000
+				198000	950000
 			>;
 			fsl,soc-operating-points = <
 				/* KHz	uV */
+				900000	1250000
+				792000	1175000
 				528000	1175000
-				99000	1175000
+				396000	1175000
+				198000	1175000
 			>;
+			fsl,low-power-run;
 			clocks = <&clks IMX6UL_CLK_ARM>,
 				 <&clks IMX6UL_CLK_PLL2_BUS>,
 				 <&clks IMX6UL_CLK_PLL2_PFD2>,
@@ -80,6 +90,8 @@
 				 <&clks IMX6UL_CLK_OSC>;
 			clock-names = "arm", "pll2_bus",  "pll2_pfd2_396m", "secondary_sel", "step",
 				      "pll1_sw", "pll1_sys", "pll1_bypass", "pll1", "pll1_bypass_src", "osc";
+			arm-supply = <&reg_arm>;
+			soc-supply = <&reg_soc>;
 		};
 	};
 
@@ -176,6 +188,12 @@
 			reg = <0x00905000 0x1B000>;
 		};
 
+		ocram_optee: sram@00918000 {
+			compatible = "fsl,optee-lpm-sram";
+			reg = <0x00918000 0x8000>;
+			overw_reg = <&ocram 0x00905000 0x13000>;
+		};
+
 		dma_apbh: dma-apbh@01804000 {
 			compatible = "fsl,imx6ul-dma-apbh", "fsl,imx28-dma-apbh";
 			reg = <0x01804000 0x2000>;
@@ -241,7 +259,7 @@
 						      "rxtx1", "rxtx2",
 						      "rxtx3", "rxtx4",
 						      "rxtx5", "rxtx6",
-						      "rxtx7", "dma";
+						      "rxtx7", "spba";
 					status = "disabled";
 				};
 
@@ -329,13 +347,13 @@
 					compatible = "fsl,imx6ull-esai";
 					reg = <0x02024000 0x4000>;
 					interrupts = <GIC_SPI 51 IRQ_TYPE_LEVEL_HIGH>;
-					clocks = <&clks IMX6UL_CLK_ESAI_IPG>,
-						 <&clks IMX6UL_CLK_ESAI_MEM>,
-						 <&clks IMX6UL_CLK_ESAI_EXTAL>,
-						 <&clks IMX6UL_CLK_ESAI_IPG>,
+					clocks = <&clks IMX6ULL_CLK_ESAI_IPG>,
+						 <&clks IMX6ULL_CLK_ESAI_MEM>,
+						 <&clks IMX6ULL_CLK_ESAI_EXTAL>,
+						 <&clks IMX6ULL_CLK_ESAI_IPG>,
 						 <&clks IMX6UL_CLK_SPBA>;
 					clock-names = "core", "mem", "extal",
-						      "fsys", "dma";
+						      "fsys", "spba";
 					dmas = <&sdma 0 21 0>, <&sdma 47 21 0>;
 					dma-names = "rx", "tx";
 					dma-source = <&gpr 0 14 0 15>;
@@ -402,7 +420,7 @@
 						"asrck_1", "asrck_2", "asrck_3", "asrck_4",
 						"asrck_5", "asrck_6", "asrck_7", "asrck_8",
 						"asrck_9", "asrck_a", "asrck_b", "asrck_c",
-						"asrck_d", "asrck_e", "asrck_f", "dma";
+						"asrck_d", "asrck_e", "asrck_f", "spba";
 					dmas = <&sdma 17 23 1>, <&sdma 18 23 1>, <&sdma 19 23 1>,
 						<&sdma 20 23 1>, <&sdma 21 23 1>, <&sdma 22 23 1>;
 					dma-names = "rxa", "rxb", "rxc",
@@ -491,8 +509,8 @@
 				reg = <0x02098000 0x4000>;
 				interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clks IMX6UL_CLK_GPT1_BUS>,
-					 <&clks IMX6UL_CLK_GPT1_SERIAL>;
-				clock-names = "ipg", "per";
+					 <&clks IMX6UL_CLK_GPT_3M>;
+				clock-names = "ipg", "osc_per";
 			};
 
 			gpio1: gpio@0209c000 {
@@ -715,7 +733,7 @@
 					regmap = <&snvs>;
 					interrupts = <GIC_SPI 4 IRQ_TYPE_LEVEL_HIGH>;
 					linux,keycode = <KEY_POWER>;
-					wakeup;
+					wakeup-source;
 				};
 			};
 
@@ -753,7 +771,8 @@
 			};
 
 			gpr: iomuxc-gpr@020e4000 {
-				compatible = "fsl,imx6ul-iomuxc-gpr", "syscon";
+				compatible = "fsl,imx6ul-iomuxc-gpr",
+					"fsl,imx6q-iomuxc-gpr", "syscon";
 				reg = <0x020e4000 0x4000>;
 			};
 
@@ -886,26 +905,32 @@
                         };
 
 			usdhc1: usdhc@02190000 {
-				compatible = "fsl,imx6ul-usdhc", "fsl,imx6sx-usdhc";
+				compatible = "fsl,imx6ull-usdhc", "fsl,imx6sx-usdhc";
 				reg = <0x02190000 0x4000>;
 				interrupts = <GIC_SPI 22 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clks IMX6UL_CLK_USDHC1>,
 					 <&clks IMX6UL_CLK_USDHC1>,
 					 <&clks IMX6UL_CLK_USDHC1>;
 				clock-names = "ipg", "ahb", "per";
+				assigned-clocks = <&clks IMX6UL_CLK_USDHC1_SEL>, <&clks IMX6UL_CLK_USDHC1>;
+				assigned-clock-parents = <&clks IMX6UL_CLK_PLL2_PFD2>;
+				assigned-clock-rates = <0>, <132000000>;
 				bus-width = <4>;
 				fsl,tuning-step= <2>;
 				status = "disabled";
 			};
 
 			usdhc2: usdhc@02194000 {
-				compatible = "fsl,imx6ul-usdhc", "fsl,imx6sx-usdhc";
+				compatible = "fsl,imx6ull-usdhc", "fsl,imx6sx-usdhc";
 				reg = <0x02194000 0x4000>;
 				interrupts = <GIC_SPI 23 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clks IMX6UL_CLK_USDHC2>,
 					 <&clks IMX6UL_CLK_USDHC2>,
 					 <&clks IMX6UL_CLK_USDHC2>;
 				clock-names = "ipg", "ahb", "per";
+				assigned-clocks = <&clks IMX6UL_CLK_USDHC2_SEL>, <&clks IMX6UL_CLK_USDHC2>;
+				assigned-clock-parents = <&clks IMX6UL_CLK_PLL2_PFD2>;
+				assigned-clock-rates = <0>, <132000000>;
 				bus-width = <4>;
 				fsl,tuning-step= <2>;
 				status = "disabled";
@@ -1118,18 +1143,20 @@
 			ranges;
 
 			dcp: dcp@02280000 {
+				compatible = "fsl,imx6sl-dcp";
 				reg = <0x02280000 0x4000>;
 				interrupts = <GIC_SPI 46 IRQ_TYPE_LEVEL_HIGH>,
 					     <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>,
 					     <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
-				/*clocks = <&clks IMX6UL_CLK_DCP>;*/
+				clocks = <&clks IMX6ULL_CLK_DCP_CLK>;
 				clock-names = "dcp";
-				status = "disabled";
 			};
 
 			rngb: rngb@02284000 {
+				compatible = "fsl,imx6sl-rng", "fsl,imx-rng", "imx-rng";
 				reg = <0x02284000 0x4000>;
 				interrupts = <GIC_SPI 6 IRQ_TYPE_LEVEL_HIGH>;
+				clocks =  <&clks IMX6UL_CLK_DUMMY>;
 			};
 
 			uart8: serial@02288000 {
@@ -1149,8 +1176,8 @@
 				compatible = "fsl,imx7d-epdc";
 				interrupts = <GIC_SPI 112 IRQ_TYPE_LEVEL_HIGH>;
 				reg = <0x0228c000 0x4000>;
-				clocks = <&clks IMX6UL_CLK_EPDC_ACLK>,
-					 <&clks IMX6UL_CLK_EPDC_PIX>;
+				clocks = <&clks IMX6ULL_CLK_EPDC_ACLK>,
+					 <&clks IMX6ULL_CLK_EPDC_PIX>;
 				clock-names = "epdc_axi", "epdc_pix";
 				/* Need to fix epdc-ram */
 				/* epdc-ram = <&gpr 0x4 30>; */
