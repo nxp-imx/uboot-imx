@@ -79,6 +79,12 @@ config IMX_M4_BIND
 	  Select this to bind a ULP M4 image to final u-boot image
 	  User needs put the M4 image ulp_m4.bin under u-boot directory
 
+config FLASH_MCUFIRMWARE_SUPPORT
+	bool "Enable mcu firmware flash support"
+	depends on ARCH_MX7ULP || ARCH_IMX8M
+	help
+	  This enables the mcu firmware flash support for some SOCs.
+
 config IMX_TRUSTY_OS
 	bool "Support Trusty OS related feature"
 	depends on ARCH_MX6 || ARCH_MX7
