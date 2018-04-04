@@ -25,6 +25,7 @@
 #include <linux/compiler.h>
 #include <version.h>
 #include <g_dnl.h>
+#include "lib/avb/fsl/utils.h"
 #ifdef CONFIG_FASTBOOT_FLASH_MMC_DEV
 #include <fb_mmc.h>
 #endif
@@ -81,6 +82,10 @@ extern void trusty_os_init(void);
 #define TX_ENDPOINT_MAXIMUM_PACKET_SIZE      (0x0040)
 
 #define EP_BUFFER_SIZE			4096
+
+#ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
+struct fastboot_device_info fastboot_firmwareinfo;
+#endif
 
 #if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
 #define DST_DECOMPRESS_LEN 1024*1024*32
@@ -261,6 +266,9 @@ struct fastboot_device_info fastboot_devinfo;
 enum {
 	PTN_GPT_INDEX = 0,
 	PTN_TEE_INDEX,
+#ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
+	PTN_M4_OS_INDEX,
+#endif
 	PTN_BOOTLOADER_INDEX,
 };
 static unsigned int download_bytes_unpadded;
@@ -274,6 +282,98 @@ static struct cmd_fastboot_interface interface = {
 	.transfer_buffer       = (unsigned char *)0xffffffff,
 	.transfer_buffer_size  = 0,
 };
+
+int read_from_partition_multi(const char* partition,
+		int64_t offset, size_t num_bytes, void* buffer, size_t* out_num_read)
+{
+	struct fastboot_ptentry *pte;
+	unsigned char *bdata;
+	unsigned char *out_buf = (unsigned char *)buffer;
+	unsigned char *dst, *dst64 = NULL;
+	unsigned long blksz;
+	unsigned long s, cnt;
+	size_t num_read = 0;
+	lbaint_t part_start, part_end, bs, be, bm, blk_num;
+	margin_pos_t margin;
+	struct blk_desc *fs_dev_desc = NULL;
+	int dev_no;
+	int ret;
+
+	assert(buffer != NULL && out_num_read != NULL);
+
+	dev_no = mmc_get_env_dev();
+	if ((fs_dev_desc = blk_get_dev("mmc", dev_no)) == NULL) {
+		printf("mmc device not found\n");
+		return -1;
+	}
+
+	pte = fastboot_flash_find_ptn(partition);
+	if (!pte) {
+		printf("no %s partition\n", partition);
+		return -1;
+	}
+
+	blksz = fs_dev_desc->blksz;
+	part_start = pte->start;
+	part_end = pte->start + pte->length - 1;
+
+	if (get_margin_pos((uint64_t)part_start, (uint64_t)part_end, blksz,
+				&margin, offset, num_bytes, true))
+		return -1;
+
+	bs = (lbaint_t)margin.blk_start;
+	be = (lbaint_t)margin.blk_end;
+	s = margin.start;
+	bm = margin.multi;
+
+	/* alloc a blksz mem */
+	bdata = (unsigned char *)memalign(ALIGN_BYTES, blksz);
+	if (bdata == NULL) {
+		printf("Failed to allocate memory!\n");
+		return -1;
+	}
+
+	/* support multi blk read */
+	while (bs <= be) {
+		if (!s && bm > 1) {
+			dst = out_buf;
+			dst64 = PTR_ALIGN(out_buf, 64); /* for mmc blk read alignment */
+			if (dst64 != dst) {
+				dst = dst64;
+				bm--;
+			}
+			blk_num = bm;
+			cnt = bm * blksz;
+			bm = 0; /* no more multi blk */
+		} else {
+			blk_num = 1;
+			cnt = blksz - s;
+			if (num_read + cnt > num_bytes)
+				cnt = num_bytes - num_read;
+			dst = bdata;
+		}
+		if (!fs_dev_desc->block_read(fs_dev_desc, bs, blk_num, dst)) {
+			ret = -1;
+			goto fail;
+		}
+
+		if (dst == bdata)
+			memcpy(out_buf, bdata + s, cnt);
+		else if (dst == dst64)
+			memcpy(out_buf, dst, cnt); /* internal copy */
+
+		s = 0;
+		bs += blk_num;
+		num_read += cnt;
+		out_buf += cnt;
+	}
+	*out_num_read = num_read;
+	ret = 0;
+
+fail:
+	free(bdata);
+	return ret;
+}
 
 static void save_env(struct fastboot_ptentry *ptn,
 		     char *var, char *val)
@@ -469,6 +569,105 @@ static int saveenv_to_ptn(struct fastboot_ptentry *ptn, char *err_string)
 	}
 	return ret;
 }
+
+#ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
+static void process_flash_sf(const char *cmdbuf)
+{
+	if (download_bytes) {
+		struct fastboot_ptentry *ptn;
+		ptn = fastboot_flash_find_ptn(cmdbuf);
+		if (ptn == 0) {
+			fastboot_fail("partition does not exist");
+		} else if ((download_bytes > ptn->length)) {
+			fastboot_fail("image too large for partition");
+		/* TODO : Improve check for yaffs write */
+		} else {
+			int ret;
+			char sf_command[128];
+			/* Normal case */
+			/* Probe device */
+			sprintf(sf_command, "sf probe");
+			ret = run_command(sf_command, 0);
+			if (ret){
+				fastboot_fail("Probe sf failed");
+				return;
+			}
+			/* Erase */
+			sprintf(sf_command, "sf erase 0x%x 0x%x",ptn->start, /*start*/
+			ptn->length /*size*/);
+			ret = run_command(sf_command, 0);
+			if (ret) {
+				fastboot_fail("Erasing sf failed");
+				return;
+			}
+			/* Write image */
+			sprintf(sf_command, "sf write 0x%x 0x%x 0x%x",
+					(unsigned int)(ulong)interface.transfer_buffer, /* source */
+					ptn->start, /* start */
+					download_bytes /*size*/);
+			printf("sf write '%s'\n", ptn->name);
+			ret = run_command(sf_command, 0);
+			if (ret){
+				fastboot_fail("Writing sf failed");
+				return;
+			}
+			printf("sf write finished '%s'\n", ptn->name);
+			fastboot_okay("");
+		}
+	} else {
+		fastboot_fail("no image downloaded");
+	}
+}
+
+#ifdef CONFIG_ARCH_IMX8M
+/* Check if the mcu image is built for running from TCM */
+static bool is_tcm_image(char *image_addr)
+{
+	u32 stack, pc;
+
+	stack = *(u32 *)image_addr;
+	pc    = *(u32 *)(image_addr + 4);
+
+	if ((stack != (u32)ANDROID_MCU_FIRMWARE_HEADER_STACK) ||
+				(pc != (u32)ANDROID_MCU_FIRMWARE_HEADER_PC)) {
+		printf("Please flash mcu firmware images for running from TCM\n");
+		return false;
+	} else
+		return true;
+}
+
+static int do_bootmcu(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	int ret;
+	size_t out_num_read;
+	void *m4_base_addr = (void *)M4_BOOTROM_BASE_ADDR;
+	char command[32];
+
+	ret = read_from_partition_multi(FASTBOOT_MCU_FIRMWARE_PARTITION,
+			0, ANDROID_MCU_FIRMWARE_SIZE, (void *)m4_base_addr, &out_num_read);
+	if ((ret != 0) || (out_num_read != ANDROID_MCU_FIRMWARE_SIZE)) {
+		printf("Read M4 images failed!\n");
+		return 1;
+	} else {
+		printf("run command: 'bootaux 0x%x'\n",(unsigned int)(ulong)m4_base_addr);
+
+		sprintf(command, "bootaux 0x%x", (unsigned int)(ulong)m4_base_addr);
+		ret = run_command(command, 0);
+		if (ret) {
+			printf("run 'bootaux' command failed!\n");
+			return 1;
+		}
+	}
+	return 0;
+}
+
+U_BOOT_CMD(
+	bootmcu, 1, 0, do_bootmcu,
+	"boot mcu images\n",
+	"boot mcu images from 'm4_os' partition, only support images run from TCM"
+);
+#endif
+#endif /* CONFIG_FLASH_MCUFIRMWARE_SUPPORT */
 
 #if defined(CONFIG_FASTBOOT_STORAGE_SATA)
 static void process_flash_sata(const char *cmdbuf)
@@ -898,6 +1097,27 @@ static void rx_process_erase(const char *cmdbuf, char *response)
 
 static void rx_process_flash(const char *cmdbuf)
 {
+/* Check if we need to flash mcu firmware */
+#ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
+	if (!strncmp(cmdbuf, FASTBOOT_MCU_FIRMWARE_PARTITION,
+				sizeof(FASTBOOT_MCU_FIRMWARE_PARTITION))) {
+		switch (fastboot_firmwareinfo.type) {
+		case DEV_SF:
+			process_flash_sf(cmdbuf);
+			break;
+#ifdef CONFIG_ARCH_IMX8M
+		case DEV_MMC:
+			if (is_tcm_image(interface.transfer_buffer))
+				process_flash_mmc(cmdbuf);
+			break;
+#endif
+		default:
+			printf("Don't support flash firmware\n");
+		}
+		return;
+	}
+#endif
+	/* Normal case */
 	switch (fastboot_devinfo.type) {
 #if defined(CONFIG_FASTBOOT_STORAGE_SATA)
 	case DEV_SATA:
@@ -945,6 +1165,12 @@ static int _fastboot_setup_dev(void)
 	} else {
 		return 1;
 	}
+#ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
+	/* For imx7ulp, flash m4 images directly to spi nor-flash, M4 will
+	 * run automatically after powered on. For imx8mq, flash m4 images to
+	 * physical partition 'm4_os', m4 will be kicked off by A core. */
+	fastboot_firmwareinfo.type = ANDROID_MCU_FRIMWARE_DEV_TYPE;
+#endif
 
 	return 0;
 }
@@ -1074,6 +1300,16 @@ static int _fastboot_parts_load_from_ptable(void)
 	ptable[PTN_TEE_INDEX].partition_id = TEE_HWPARTITION_ID;
 	strcpy(ptable[PTN_TEE_INDEX].fstype, "raw");
 
+	/* Add m4_os partition if we support mcu firmware image flash */
+#ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
+	strcpy(ptable[PTN_M4_OS_INDEX].name, FASTBOOT_MCU_FIRMWARE_PARTITION);
+	ptable[PTN_M4_OS_INDEX].start = ANDROID_MCU_FIRMWARE_START / dev_desc->blksz;
+	ptable[PTN_M4_OS_INDEX].length = ANDROID_MCU_FIRMWARE_SIZE / dev_desc->blksz;
+	ptable[PTN_M4_OS_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
+	ptable[PTN_M4_OS_INDEX].partition_id = user_partition;
+	strcpy(ptable[PTN_M4_OS_INDEX].fstype, "raw");
+#endif
+
 	/* Bootloader */
 	strcpy(ptable[PTN_BOOTLOADER_INDEX].name, FASTBOOT_PARTITION_BOOTLOADER);
 	ptable[PTN_BOOTLOADER_INDEX].start =
@@ -1097,7 +1333,7 @@ static int _fastboot_parts_load_from_ptable(void)
 		if (ret)
 			break;
 	}
-	for (i = 0; i <= part_idx; i++)
+	for (i = 0; i < tbl_idx; i++)
 		fastboot_flash_add_ptn(&ptable[i]);
 
 	return 0;
