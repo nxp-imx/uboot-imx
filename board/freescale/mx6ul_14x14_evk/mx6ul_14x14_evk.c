@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017-2018 NXP
  */
 
 #include <asm/arch/clock.h>
@@ -21,12 +22,14 @@
 #include <miiphy.h>
 #include <linux/sizes.h>
 #include <mmc.h>
+#include <mxsfb.h>
 #include <netdev.h>
 #include <power/pmic.h>
 #include <power/pfuze3000_pmic.h>
 #include "../common/pfuze.h"
 #include <usb.h>
 #include <usb/ehci-ci.h>
+#include <asm/mach-imx/video.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -50,6 +53,11 @@ DECLARE_GLOBAL_DATA_PTR;
 #define ENET_PAD_CTRL  (PAD_CTL_PUS_100K_UP | PAD_CTL_PUE |     \
 	PAD_CTL_SPEED_HIGH   |                                  \
 	PAD_CTL_DSE_48ohm   | PAD_CTL_SRE_FAST)
+
+#define GPMI_PAD_CTRL0 (PAD_CTL_PKE | PAD_CTL_PUE | PAD_CTL_PUS_100K_UP)
+#define GPMI_PAD_CTRL1 (PAD_CTL_DSE_40ohm | PAD_CTL_SPEED_MED | \
+			PAD_CTL_SRE_FAST)
+#define GPMI_PAD_CTRL2 (GPMI_PAD_CTRL0 | GPMI_PAD_CTRL1)
 
 #define LCD_PAD_CTRL    (PAD_CTL_HYS | PAD_CTL_PUS_100K_UP | PAD_CTL_PUE | \
 	PAD_CTL_PKE | PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm)
@@ -96,6 +104,44 @@ int power_init_board(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	unsigned int value;
+	u32 vddarm;
+	struct udevice *dev;
+	int ret;
+
+	ret = pmic_get("pfuze3000", &dev);
+	if (ret == -ENODEV) {
+		printf("No PMIC found!\n");
+		return;
+	}
+
+	/* switch to ldo_bypass mode */
+	if (ldo_bypass) {
+		prep_anatop_bypass();
+		/* decrease VDDARM to 1.275V */
+		value = pmic_reg_read(dev, PFUZE3000_SW1BVOLT);
+		value &= ~0x1f;
+		value |= PFUZE3000_SW1AB_SETP(12750);
+		pmic_reg_write(dev, PFUZE3000_SW1BVOLT, value);
+
+		set_anatop_bypass(1);
+		vddarm = PFUZE3000_SW1AB_SETP(11750);
+
+		value = pmic_reg_read(dev, PFUZE3000_SW1BVOLT);
+		value &= ~0x1f;
+		value |= vddarm;
+		pmic_reg_write(dev, PFUZE3000_SW1BVOLT, value);
+
+		finish_anatop_bypass();
+
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
+#endif
 #endif
 
 int dram_init(void)
@@ -204,6 +250,22 @@ static struct fsl_esdhc_cfg usdhc_cfg[2] = {
 #define USDHC2_CD_GPIO	IMX_GPIO_NR(4, 5)
 #define USDHC2_PWR_GPIO	IMX_GPIO_NR(4, 10)
 
+int board_mmc_get_env_dev(int devno)
+{
+	if (devno == 1 && mx6_esdhc_fused(USDHC1_BASE_ADDR))
+		devno = 0;
+
+	return devno;
+}
+
+int mmc_map_to_kernel_blk(int devno)
+{
+	if (devno == 0 && mx6_esdhc_fused(USDHC1_BASE_ADDR))
+		devno = 1;
+
+	return devno;
+}
+
 int board_mmc_getcd(struct mmc *mmc)
 {
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
@@ -293,7 +355,6 @@ int board_mmc_init(bd_t *bis)
 			ret = fsl_esdhc_initialize(bis, &usdhc_cfg[i]);
 			if (ret) {
 				printf("Warning: failed to initialize mmc dev %d\n", i);
-				return ret;
 			}
 	}
 #endif
@@ -342,6 +403,42 @@ int board_ehci_hcd_init(int port)
 	return 0;
 }
 #endif
+#endif
+
+#ifdef CONFIG_NAND_MXS
+static iomux_v3_cfg_t const nand_pads[] = {
+	MX6_PAD_NAND_DATA00__RAWNAND_DATA00 | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_DATA01__RAWNAND_DATA01 | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_DATA02__RAWNAND_DATA02 | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_DATA03__RAWNAND_DATA03 | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_DATA04__RAWNAND_DATA04 | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_DATA05__RAWNAND_DATA05 | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_DATA06__RAWNAND_DATA06 | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_DATA07__RAWNAND_DATA07 | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_CLE__RAWNAND_CLE | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_ALE__RAWNAND_ALE | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_CE0_B__RAWNAND_CE0_B | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_CE1_B__RAWNAND_CE1_B | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_RE_B__RAWNAND_RE_B | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_WE_B__RAWNAND_WE_B | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_WP_B__RAWNAND_WP_B | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_READY_B__RAWNAND_READY_B | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+	MX6_PAD_NAND_DQS__RAWNAND_DQS | MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+};
+
+static void setup_gpmi_nand(void)
+{
+	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+
+	/* config gpmi nand iomux */
+	imx_iomux_v3_setup_multiple_pads(nand_pads, ARRAY_SIZE(nand_pads));
+
+	setup_gpmi_io_clk((3 << MXC_CCM_CSCDR1_BCH_PODF_OFFSET) |
+			  (3 << MXC_CCM_CSCDR1_GPMI_PODF_OFFSET));
+
+	/* enable apbh clock gating */
+	setbits_le32(&mxc_ccm->CCGR0, MXC_CCM_CCGR0_APBHDMA_MASK);
+}
 #endif
 
 #ifdef CONFIG_FEC_MXC
@@ -474,9 +571,9 @@ static iomux_v3_cfg_t const lcd_pads[] = {
 	MX6_PAD_GPIO1_IO08__GPIO1_IO08 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
-static int setup_lcd(void)
+void do_enable_parallel_lcd(struct display_info_t const *dev)
 {
-	enable_lcdif_clock(LCDIF1_BASE_ADDR, 1);
+	enable_lcdif_clock(dev->bus, 1);
 
 	imx_iomux_v3_setup_multiple_pads(lcd_pads, ARRAY_SIZE(lcd_pads));
 
@@ -489,9 +586,29 @@ static int setup_lcd(void)
 	/* Set Brightness to high */
 	gpio_request(IMX_GPIO_NR(1, 8), "backlight");
 	gpio_direction_output(IMX_GPIO_NR(1, 8) , 1);
-
-	return 0;
 }
+
+struct display_info_t const displays[] = {{
+	.bus = MX6UL_LCDIF1_BASE_ADDR,
+	.addr = 0,
+	.pixfmt = 24,
+	.detect = NULL,
+	.enable	= do_enable_parallel_lcd,
+	.mode	= {
+		.name			= "TFT43AB",
+		.xres           = 480,
+		.yres           = 272,
+		.pixclock       = 108695,
+		.left_margin    = 8,
+		.right_margin   = 4,
+		.upper_margin   = 2,
+		.lower_margin   = 4,
+		.hsync_len      = 41,
+		.vsync_len      = 10,
+		.sync           = 0,
+		.vmode          = FB_VMODE_NONINTERLACED
+} } };
+size_t display_count = ARRAY_SIZE(displays);
 #endif
 
 int board_early_init_f(void)
@@ -520,8 +637,8 @@ int board_init(void)
 	board_qspi_init();
 #endif
 
-#ifdef CONFIG_VIDEO_MXS
-	setup_lcd();
+#ifdef CONFIG_NAND_MXS
+	setup_gpmi_nand();
 #endif
 
 	return 0;
@@ -551,6 +668,12 @@ int board_late_init(void)
 	else
 		env_set("board_rev", "14X14");
 #endif
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
+
+	set_wdog_reset((struct wdog_regs *)WDOG1_BASE_ADDR);
 
 	return 0;
 }
