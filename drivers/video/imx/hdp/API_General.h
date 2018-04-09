@@ -298,5 +298,8 @@ CDN_API_STATUS cdn_api_general_write_field_blocking(unsigned int addr,
 						    unsigned int val);
 CDN_API_STATUS cdn_api_general_phy_test_access(uint8_t *resp);
 CDN_API_STATUS cdn_api_general_phy_test_access_blocking(uint8_t *resp);
+CDN_API_STATUS hdp_rx_loadfirmware(unsigned char *imem,
+				    int imemsize,
+				    unsigned char *dmem, int dmemsize);
 
 #endif
