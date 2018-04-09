@@ -61,6 +61,7 @@ enum keymaster_command {
     KM_ATAP_SET_CA_RESPONSE_BEGIN      = (0x5000 << KEYMASTER_REQ_SHIFT),
     KM_ATAP_SET_CA_RESPONSE_UPDATE     = (0x6000 << KEYMASTER_REQ_SHIFT),
     KM_ATAP_SET_CA_RESPONSE_FINISH     = (0x7000 << KEYMASTER_REQ_SHIFT),
+    KM_ATAP_READ_UUID                  = (0x8000 << KEYMASTER_REQ_SHIFT),
 };
 
 typedef enum {

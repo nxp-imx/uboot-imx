@@ -108,4 +108,13 @@ int trusty_atap_get_ca_request(const uint8_t *operation_start,
 int trusty_atap_set_ca_response(const uint8_t *ca_response,
                                 uint32_t ca_response_size);
 
+/*
+* Reads the UUID from the certificate of the last provisioned attestation
+* credentials as a c-string into |*uuid_p|. Caller takes ownership of
+* |*uuid_p|. Returns one of trusty_err.
+*
+* @uuid_p: location of newly allocated UUID c-string
+*/
+int trusty_atap_read_uuid_str(char **uuid_p);
+
 #endif /* TRUSTY_KEYMASTER_H_ */
