@@ -33,8 +33,9 @@
 static struct trusty_ipc_chan km_chan;
 static bool initialized;
 static int trusty_km_version = 2;
-static const size_t max_ca_request_size = 10000;
-static const size_t max_send_size = 4000;
+static const size_t kMaxCaRequestSize = 10000;
+static const size_t kMaxSendSize = 4000;
+static const size_t kUuidSize = 32;
 
 #ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -417,11 +418,11 @@ int trusty_atap_get_ca_request(const uint8_t *operation_start,
                                uint8_t **ca_request_p,
                                uint32_t *ca_request_size_p)
 {
-    *ca_request_p = trusty_calloc(1, max_ca_request_size);
+    *ca_request_p = trusty_calloc(1, kMaxCaRequestSize);
     if (!*ca_request_p) {
         return TRUSTY_ERR_NO_MEMORY;
     }
-    *ca_request_size_p = max_ca_request_size;
+    *ca_request_size_p = kMaxCaRequestSize;
     int rc = trusty_send_raw_buffer(KM_ATAP_GET_CA_REQUEST, operation_start,
                                     operation_start_size, *ca_request_p,
                                     ca_request_size_p);
@@ -448,7 +449,7 @@ int trusty_atap_set_ca_response(const uint8_t *ca_response,
 
     /* Send the CA Response message in chunks */
     while (bytes_sent < ca_response_size) {
-        send_size = MIN(max_send_size, ca_response_size - bytes_sent);
+        send_size = MIN(kMaxSendSize, ca_response_size - bytes_sent);
         rc = trusty_send_raw_buffer(KM_ATAP_SET_CA_RESPONSE_UPDATE,
                                     ca_response + bytes_sent, send_size,
                                     NULL, NULL);
@@ -460,4 +461,25 @@ int trusty_atap_set_ca_response(const uint8_t *ca_response,
 
     /* Tell Trusty Keymaster to parse the CA Response message */
     return km_do_tipc(KM_ATAP_SET_CA_RESPONSE_FINISH, true, NULL, 0, NULL, NULL);
+}
+
+
+int trusty_atap_read_uuid_str(char **uuid_p)
+{
+    *uuid_p = (char*) trusty_calloc(1, kUuidSize);
+
+    uint32_t response_size = kUuidSize;
+    int rc = km_do_tipc(KM_ATAP_READ_UUID, true, NULL, 0, *uuid_p,
+                        &response_size);
+    if (rc < 0) {
+        trusty_error("failed to read uuid: %d\n", rc);
+        trusty_free(*uuid_p);
+        return rc;
+    }
+    if (response_size != kUuidSize) {
+        trusty_error("keymaster returned wrong uuid size: %d\n", response_size);
+        trusty_free(*uuid_p);
+        rc = TRUSTY_ERR_GENERIC;
+    }
+    return rc;
 }
