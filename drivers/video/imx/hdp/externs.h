@@ -77,5 +77,9 @@ uint32_t cdn_apb_read(uint32_t addr, uint32_t *value);
 uint32_t cdn_sapb_read(uint32_t addr, uint32_t *value);
 uint32_t cdn_apb_write(uint32_t addr, uint32_t value);
 uint32_t cdn_sapb_write(uint32_t addr, uint32_t value);
+uint32_t hdp_rx_apb_read(uint32_t addr, uint32_t *value);
+uint32_t hdp_rx_sapb_read(uint32_t addr, uint32_t *value);
+uint32_t hdp_rx_apb_write(uint32_t addr, uint32_t value);
+uint32_t hdp_rx_sapb_write(uint32_t addr, uint32_t value);
 #endif
 
