@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2013-2016 Freescale Semiconductor, Inc.
- * (C) Copyright 2017 NXP
+ * (C) Copyright 2017-2018 NXP
  */
 
 #ifndef __ASM_ARCH_IMX_REGS_H__
@@ -326,5 +326,6 @@ struct ccsr_cci400 {
 	u8 res_e004[0x10000 - 0xe004];
 };
 #endif	/* __ASSEMBLER__*/
+#include "dma_macros.h"
 
 #endif /* __ASM_ARCH_IMX_REGS_H__ */

@@ -6,26 +6,15 @@
  * Extracted from armv8/start.S
  */
 
+/* Allow inclusion assembly macros */
+#define __INCLUDE_ASSEMBLY_MACROS__
+
 #include <config.h>
 #include <linux/linkage.h>
 #include <asm/gic.h>
 #include <asm/macro.h>
 #include "mp.h"
 #include <asm/armv8/mmu.h>
-
-#define DMA_CHANNEL 1
-#define DMA_CR					(EDMA_BASE_ADDR)
-#define DMA_ES					(EDMA_BASE_ADDR + 0x4)
-#define DMA_TCDn(channel)			(EDMA_BASE_ADDR + 0x1000 + \
-							0x20 * (channel))
-#define DMA_TCDn_SADDR(channel)			(DMA_TCDn(channel))
-#define DMA_TCDn_SOFF(channel)			(DMA_TCDn(channel) + 0x4)
-#define DMA_TCDn_NBYTES_MLNO(channel)		(DMA_TCDn(channel) + 0x8)
-#define DMA_TCDn_DADDR(channel)			(DMA_TCDn(channel) + 0x10)
-#define DMA_TCDn_DOFF(channel)			(DMA_TCDn(channel) + 0x14)
-#define DMA_TCDn_CITER_ELINKNO(channel)		(DMA_TCDn(channel) + 0x16)
-#define DMA_TCDn_CSR(channel)			(DMA_TCDn(channel) + 0x1C)
-#define DMA_TCDn_BITER_ELINKNO(channel)		(DMA_TCDn(channel) + 0x1E)
 
 #define SWT_SR(SWTn_BASE_ADDR) (SWTn_BASE_ADDR + 0x10)
 
@@ -44,48 +33,47 @@ ENTRY(dma_mem_clr)
 	 * x1: size of memory area to clear
 	 * x0: return 0 on error or size of memory cleared on success
 	 */
-dma_mem_clr:
 
 	/* DMA_TCDn_SADDR */
-	ldr x9, =DMA_TCDn_SADDR(DMA_CHANNEL)
+	ldr x9, =DMA_TCD_N_SADDR(DMA_CHANNEL_1)
 	ldr x10, =initvar
 	/* Point DMA source address to initialization data block */
 	str w10, [x9]
 
 	/* DMA_TCDn_SOFF */
-	ldr x9, =DMA_TCDn_SOFF(DMA_CHANNEL)
+	ldr x9, =DMA_TCD_N_SOFF(DMA_CHANNEL_1)
 	ldr x10, =0x03030000
 	str w10, [x9]
 
 	/* DMA_TCDn_NBYTES_MLNO */
-	ldr x9, =DMA_TCDn_NBYTES_MLNO(DMA_CHANNEL)
+	ldr x9, =DMA_TCD_N_NBYTES_MLNO(DMA_CHANNEL_1)
 	/* load the size */
 	mov x10, x1
 	str x10, [x9]
 
 	/* DMA_TCDn_DADDR */
-	ldr x9, =DMA_TCDn_DADDR(DMA_CHANNEL)
+	ldr x9, =DMA_TCD_N_DADDR(DMA_CHANNEL_1)
 	/* load the start address */
 	mov x10, x0
 	str x10, [x9]
 
 	/* DMA_TCDn_DOFF */
-	ldr x9, =DMA_TCDn_DOFF(DMA_CHANNEL)
+	ldr x9, =DMA_TCD_N_DOFF(DMA_CHANNEL_1)
 	ldr w10, =0x8
 	str w10, [x9]
 
 	/* DMA_TCDn_CITER_ELINKNO */
-	ldr x9, =DMA_TCDn_CITER_ELINKNO(DMA_CHANNEL)
-	ldr w10, =0x1
-	strb w10, [x9]
-
-	/* DMA_TCDn_CSR */
-	ldr x9, =DMA_TCDn_CSR(DMA_CHANNEL)
+	ldr x9, =DMA_TCD_N_CITER_ELINKNO(DMA_CHANNEL_1)
 	ldr w10, =0x1
 	strb w10, [x9]
 
 	/* DMA_TCDn_BITER_ELINKNO */
-	ldr x9, =DMA_TCDn_BITER_ELINKNO(DMA_CHANNEL)
+	ldr x9, =DMA_TCD_N_BITER_ELINKNO(DMA_CHANNEL_1)
+	ldr w10, =0x1
+	strb w10, [x9]
+
+	/* DMA_TCDn_CSR */
+	ldr x9, =DMA_TCD_N_CSR(DMA_CHANNEL_1)
 	ldr w10, =0x1
 	strb w10, [x9]
 
@@ -99,12 +87,11 @@ ctrl_status:
 	and w10, w10, w11
 	sub w10, w10, w11
 	cbz w10, ret_error
-	ldr x9, =DMA_TCDn_CSR(DMA_CHANNEL)
-	ldr w10, [x9]
 	/* Check transfer done */
-	and w10, w10, #0x0080
-	sub w10, w10, #0x0080
+	check_done_bit
 	cbnz w10, ctrl_status
+	/* clear DONE bit */
+	clear_done_bit
 	/* return bytes written */
 	mov x0, x1
 
@@ -113,7 +100,7 @@ ctrl_status:
 ret_error:
 	/* error return zero bytes written */
 	ldr x0, =0x0
-
+	clear_channel_err
 	ret
 
 ENDPROC(dma_mem_clr)
