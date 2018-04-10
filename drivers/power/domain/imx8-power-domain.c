@@ -105,6 +105,10 @@ static int imx8_power_domain_off_node(struct power_domain *power_domain)
 	}
 
 	if (pdata->resource_id != SC_R_LAST) {
+		if (!sc_rm_is_resource_owned(ipcHndl, pdata->resource_id)) {
+			printf("%s not owned by curr partition\n", dev->name);
+			return 0;
+		}
 		ret = sc_pm_set_resource_power_mode(ipcHndl, pdata->resource_id, SC_PM_PW_MODE_OFF);
 		if (ret) {
 			printf("Error: %s Power off failed! (error = %d)\n", dev->name, ret);
