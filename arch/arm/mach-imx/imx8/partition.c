@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
+
 #include <common.h>
 #include <linux/errno.h>
 #include <asm/io.h>
@@ -12,6 +13,11 @@
 #include <command.h>
 #include <asm/arch-imx/cpu.h>
 #include <asm/arch/sys_proto.h>
+#include <fdt_support.h>
+#include <fdtdec.h>
+#include <linux/libfdt.h>
+#include <linux/io.h>
+#include <linux/compat.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -30,13 +36,12 @@ struct scu_rm_part_data {
 
 static struct scu_rm_part_data rm_part_data[SC_MAX_PARTS];
 
-static int do_part_alloc(int argc, char * const argv[])
+static int partition_alloc(bool isolated, bool restricted, bool grant, sc_rm_pt_t *pt)
 {
 	sc_rm_pt_t parent_part, os_part;
 	sc_ipc_t ipc_handle;
 	sc_err_t err;
 	int i;
-	bool restricted = false, isolated = false, grant = false;
 
 	for (i = 0; i < SC_MAX_PARTS; i++) {
 		if (!rm_part_data[i].used)
@@ -45,7 +50,7 @@ static int do_part_alloc(int argc, char * const argv[])
 
 	if (i == SC_MAX_PARTS) {
 		puts("No empty slots\n");
-		return CMD_RET_FAILURE;
+		return -EINVAL;
 	}
 
 	ipc_handle = gd->arch.ipc_channel_handle;
@@ -53,24 +58,21 @@ static int do_part_alloc(int argc, char * const argv[])
 	err = sc_rm_get_partition(ipc_handle, &parent_part);
 	if (err != SC_ERR_NONE) {
 		puts("sc_rm_get_partition failure\n");
-		return CMD_RET_FAILURE;
+		return -EINVAL;
 	}
 
-	isolated = simple_strtoul(argv[0], NULL, 10);
-	restricted = simple_strtoul(argv[1], NULL, 10);
-	grant = simple_strtoul(argv[2], NULL, 10);
-	/* Refine here */
+	debug("isolated %d, restricted %d, grant %d\n", isolated, restricted, grant);
 	err = sc_rm_partition_alloc(ipc_handle, &os_part, false, isolated,
 				    restricted, grant, false);
 	if (err != SC_ERR_NONE) {
 		printf("sc_rm_partition_alloc failure %d\n", err);
-		return CMD_RET_FAILURE;
+		return -EINVAL;
 	}
 
 	err = sc_rm_set_parent(ipc_handle, os_part, parent_part);
 	if (err != SC_ERR_NONE) {
 		sc_rm_partition_free(ipc_handle, os_part);
-		return CMD_RET_FAILURE;
+		return -EINVAL;
 	}
 
 
@@ -81,10 +83,126 @@ static int do_part_alloc(int argc, char * const argv[])
 	rm_part_data[i].isolated = isolated;
 	rm_part_data[i].grant = grant;
 
+	if (pt)
+		*pt = os_part;
+
 	printf("%s: os_part, %d: parent_part, %d\n", __func__, os_part,
 	       parent_part);
 
+	return 0;
+}
+
+static int do_part_alloc(int argc, char * const argv[])
+{
+	bool restricted = false, isolated = false, grant = false;
+	int ret;
+
+	if (argv[0])
+		isolated = simple_strtoul(argv[0], NULL, 10);
+	if (argv[1])
+		restricted = simple_strtoul(argv[1], NULL, 10);
+	if (argv[2])
+		grant = simple_strtoul(argv[2], NULL, 10);
+
+	ret = partition_alloc(isolated, restricted, grant, NULL);
+	if (ret)
+		return CMD_RET_FAILURE;
+
 	return CMD_RET_SUCCESS;
+}
+
+static int do_part_dtb(int argc, char * const argv[])
+{
+	sc_ipc_t ipc_handle;
+	sc_err_t err;
+	sc_rm_pt_t pt;
+	char *pathp = "/domu";
+	int nodeoffset, subnode;
+	int rsrc_size = 0, pad_size = 0;
+	int i, ret;
+	u32 *rsrc_data = NULL, *pad_data = NULL;
+	const struct fdt_property *prop;
+	void *fdt;
+
+	ipc_handle = gd->arch.ipc_channel_handle;
+
+	if (argc)
+		fdt = (void *)simple_strtoul(argv[0], NULL, 16);
+	else
+		fdt = working_fdt;
+	printf("fdt addr %p\n", fdt);
+	nodeoffset = fdt_path_offset(fdt, pathp);
+	debug("%s %s %p\n", __func__, fdt_get_name(fdt, nodeoffset, NULL), fdt);
+	fdt_for_each_subnode(subnode, fdt, nodeoffset) {
+		if (!fdtdec_get_is_enabled(fdt, subnode))
+			continue;
+		if (!fdt_node_check_compatible(fdt, subnode, "xen,domu")) {
+			prop = fdt_getprop(fdt, subnode, "rsrcs", &rsrc_size);
+			if (!prop)
+				debug("No rsrcs %s\n", fdt_get_name(fdt, subnode, NULL));
+			if (rsrc_size > 0) {
+				rsrc_data = kmalloc(rsrc_size, __GFP_ZERO);
+				if (!rsrc_data) {
+					debug("No mem\n");
+					return CMD_RET_FAILURE;
+				}
+				if (fdtdec_get_int_array(fdt, subnode, "rsrcs",
+							 rsrc_data, rsrc_size >> 2)) {
+					debug("Error reading rsrcs\n");
+					free(rsrc_data);
+					return CMD_RET_FAILURE;
+				}
+			}
+
+			prop = fdt_getprop(fdt, subnode, "pads", &pad_size);
+			if (!prop)
+				debug("No pads %s %d\n", fdt_get_name(fdt, subnode, NULL), pad_size);
+			if (pad_size > 0) {
+				pad_data = kmalloc(pad_size, __GFP_ZERO);
+				if (!pad_data) {
+					debug("No mem\n");
+					free(rsrc_data);
+					return CMD_RET_FAILURE;
+				}
+				if (fdtdec_get_int_array(fdt, subnode, "pads",
+							 pad_data, pad_size >> 2)) {
+					debug("Error reading pad\n");
+					free(pad_data);
+					free(rsrc_data);
+					return CMD_RET_FAILURE;
+				}
+			}
+
+			ret = partition_alloc(false, false, false, &pt);
+			if (ret)
+				goto free_data;
+			if (rsrc_size > 0) {
+				for (i = 0; i < rsrc_size >> 2; i++) {
+					err = sc_pm_set_resource_power_mode(ipc_handle, rsrc_data[i], SC_PM_PW_MODE_OFF);
+					if (err)
+						debug("power off resource %d, err %d\n", rsrc_data[i], err);
+					err = sc_rm_assign_resource(ipc_handle, pt, rsrc_data[i]);
+					debug("pt %d, resource %d, err %d\n", pt, rsrc_data[i], err);
+				}
+			}
+
+			if (pad_size > 0) {
+				for (i = 0; i < pad_size >> 2; i++) {
+					err = sc_rm_assign_pad(ipc_handle, pt, pad_data[i]);
+					debug("pt %d, pad %d, err %d\n", pt, pad_data[i], err);
+				}
+			}
+
+			free_data:
+				if (pad_size > 0)
+					free(pad_data);
+				if (rsrc_size > 0)
+					free(rsrc_data);
+		}
+
+	}
+
+	return 0;
 }
 
 static int do_part_free(int argc, char * const argv[])
@@ -93,6 +211,7 @@ static int do_part_free(int argc, char * const argv[])
 	sc_ipc_t ipc_handle;
 	sc_err_t err;
 	ipc_handle = gd->arch.ipc_channel_handle;
+	int i;
 
 	if (argc == 0)
 		return CMD_RET_FAILURE;
@@ -105,7 +224,12 @@ static int do_part_free(int argc, char * const argv[])
 		return CMD_RET_FAILURE;
 	}
 
-	rm_part_data[os_part].used = false;
+	for (i = 0; i < SC_MAX_PARTS; i++) {
+		if ((rm_part_data[i].self == os_part) && rm_part_data[i].used) {
+			rm_part_data[i].used = false;
+			break;
+		}
+	}
 
 	return CMD_RET_SUCCESS;
 }
@@ -169,6 +293,23 @@ static int do_part_list(int argc, char * const argv[])
 	return CMD_RET_SUCCESS;
 }
 
+static int do_part_test(int argc, char * const argv[])
+{
+	sc_err_t err;
+	sc_rsrc_t resource;
+
+	if (argc < 1)
+		return CMD_RET_FAILURE;
+
+	resource = simple_strtoul(argv[0], NULL, 10);
+
+	err = sc_pm_set_resource_power_mode(gd->arch.ipc_channel_handle, resource, SC_PM_PW_MODE_ON);
+	if (err == SC_ERR_NOACCESS)
+		puts("NO ACCESS\n");
+
+	return CMD_RET_SUCCESS;
+}
+
 static int do_scu_rm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	if (argc < 2)
@@ -176,10 +317,14 @@ static int do_scu_rm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	if (!strcmp(argv[1], "alloc"))
 		return do_part_alloc(argc - 2, argv + 2);
-	if (!strcmp(argv[1], "free"))
+	else if (!strcmp(argv[1], "dtb"))
+		return do_part_dtb(argc - 2, argv + 2);
+	else if (!strcmp(argv[1], "free"))
 		return do_part_free(argc - 2, argv + 2);
 	else if (!strcmp(argv[1], "assign"))
 		return do_resource_assign(argc - 2, argv + 2);
+	else if (!strcmp(argv[1], "test"))
+		return do_part_test(argc - 2, argv + 2);
 	else if (!strcmp(argv[1], "print"))
 		return do_part_list(argc - 2, argv + 2);
 
@@ -191,8 +336,10 @@ U_BOOT_CMD(
 	"scu partition function",
 	"\n"
 	"scu_rm alloc [isolated] [restricted] [grant]\n"
+	"scu_rm dtb [fdt]\n"
 	"scu_rm free pt\n"
 	"scu_rm assign pt 0 resource\n"
 	"scu_rm assign pt 1 pad\n"
+	"scu_rm test resource\n"
 	"scu_rm print\n"
 );
