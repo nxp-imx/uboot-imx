@@ -81,6 +81,8 @@
 
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
 #define FASTBOOT_BOOTLOADER_VBOOT_KEY "fuse at-bootloader-vboot-key"
+#define FASTBOOT_SET_CA_RESP "at-set-ca-response"
+#define FASTBOOT_GET_CA_REQ  "at-get-ca-request"
 #ifdef CONFIG_AVB_ATX
 #define FASTBOOT_AVB_AT_PERM_ATTR "fuse at-perm-attr"
 #endif /* CONFIG_AVB_ATX */

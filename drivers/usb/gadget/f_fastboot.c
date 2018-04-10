@@ -31,6 +31,9 @@
 #endif
 
 #ifdef CONFIG_IMX_TRUSTY_OS
+#define ATAP_UUID_SIZE 32
+#define ATAP_UUID_STR_SIZE ((ATAP_UUID_SIZE*2) + 1)
+
 extern int armv7_init_nonsec(void);
 extern void trusty_os_init(void);
 #include <trusty/libtipc.h>
@@ -2877,6 +2880,18 @@ static bool is_slot(void)
 	}
 	return false;
 }
+#ifdef CONFIG_IMX_TRUSTY_OS
+static void uuid_hex2string(uint8_t *uuid, char* buf, uint32_t uuid_len, uint32_t uuid_strlen) {
+	uint32_t i;
+	if (!uuid || !buf)
+		return;
+	char *cp = buf;
+	char *buf_end = buf + uuid_strlen;
+	for (i = 0; i < uuid_len; i++) {
+		cp += snprintf(cp, buf_end - cp, "%02x", uuid[i]);
+	}
+}
+#endif
 
 static int get_single_var(char *cmd, char *response)
 {
@@ -2948,6 +2963,21 @@ static int get_single_var(char *cmd, char *response)
 	} else if (!strcmp_l1("product", cmd)) {
 		strncat(response, PRODUCT_NAME, chars_left);
 	}
+#ifdef CONFIG_IMX_TRUSTY_OS
+        else if(!strcmp_l1("at-attest-uuid", cmd)) {
+		char *uuid;
+		char uuid_str[ATAP_UUID_STR_SIZE];
+		if (trusty_atap_read_uuid_str(&uuid)) {
+			printf("ERROR read uuid failed!\n");
+			strncat(response, "FAILCannot get uuid!", chars_left);
+			return -1;
+		} else {
+			uuid_hex2string((uint8_t*)uuid, uuid_str,ATAP_UUID_SIZE, ATAP_UUID_STR_SIZE);
+			strncat(response, uuid_str, chars_left);
+			trusty_free(uuid);
+		}
+	}
+#endif
 #ifdef CONFIG_FASTBOOT_LOCK
 	else if (!strcmp_l1("secure", cmd)) {
 		strncat(response, FASTBOOT_VAR_YES, chars_left);
@@ -3201,6 +3231,30 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 		strcpy(response, "OKAY");
 	}
 #endif /* CONFIG_ANDROID_THINGS_SUPPORT */
+#ifdef CONFIG_IMX_TRUSTY_OS
+	else if (endswith(cmd, FASTBOOT_GET_CA_REQ)) {
+		uint8_t *ca_output;
+		uint32_t ca_length, cp_length;
+		if (trusty_atap_get_ca_request(interface.transfer_buffer, download_bytes,
+						&(ca_output), &ca_length)) {
+			printf("ERROR get_ca_request failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			cp_length = min((uint32_t)CONFIG_FASTBOOT_BUF_SIZE, ca_length);
+			memcpy(interface.transfer_buffer, ca_output, cp_length);
+			download_bytes = ca_length;
+			strcpy(response, "OKAY");
+		}
+
+	}
+	else if (endswith(cmd, FASTBOOT_SET_CA_RESP)) {
+		if (trusty_atap_set_ca_response(interface.transfer_buffer,download_bytes)) {
+			printf("ERROR set_ca_response failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else
+			strcpy(response, "OKAY");
+	}
+#endif /* CONFIG_IMX_TRUSTY_OS */
 	else if (endswith(cmd, "unlock_critical")) {
 		strcpy(response, "OKAY");
 	} else if (endswith(cmd, "unlock")) {
@@ -3746,6 +3800,10 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 	},
 	{
 		.cmd = "upload",
+		.cb = cb_upload,
+	},
+	{
+		.cmd = "get_staged",
 		.cb = cb_upload,
 	},
 #ifdef CONFIG_FASTBOOT_LOCK
