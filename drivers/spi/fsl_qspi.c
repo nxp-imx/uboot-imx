@@ -20,7 +20,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define RX_BUFFER_SIZE		0x80
 #if defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL) || \
-	defined(CONFIG_MX6ULL) || defined(CONFIG_MX7D)
+	defined(CONFIG_MX6ULL) || defined(CONFIG_MX7D) || defined(CONFIG_IMX8M)
 #define TX_BUFFER_SIZE		0x200
 #else
 #define TX_BUFFER_SIZE		0x40
@@ -280,7 +280,7 @@ static void qspi_set_lut(struct fsl_qspi_priv *priv)
 			     PAD1(LUT_PAD1) | INSTR1(LUT_ADDR));
 #endif
 #if defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL) || \
-	defined(CONFIG_MX6ULL) || defined(CONFIG_MX7D)
+	defined(CONFIG_MX6ULL) || defined(CONFIG_MX7D) || defined(CONFIG_IMX8M)
 	/*
 	 * To MX6SX, OPRND0(TX_BUFFER_SIZE) can not work correctly.
 	 * So, Use IDATSZ in IPCR to determine the size and here set 0.
