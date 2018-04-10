@@ -55,3 +55,9 @@ config VOL_MONITOR_ISL68233_SET
 	help
 	 This option enables ISL68233 voltage monitor set
 	 functionality. It is used by the common VID driver.
+
+config USB_TCPC
+	bool "USB Typec port controller simple driver"
+	default n
+	help
+	  Enable USB type-c port controller (TCPC) driver
