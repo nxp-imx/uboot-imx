@@ -570,15 +570,19 @@ static int saveenv_to_ptn(struct fastboot_ptentry *ptn, char *err_string)
 	return ret;
 }
 
+static int get_block_size(void);
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
 static void process_flash_sf(const char *cmdbuf)
 {
+	int blksz = 0;
+	blksz = get_block_size();
+
 	if (download_bytes) {
 		struct fastboot_ptentry *ptn;
 		ptn = fastboot_flash_find_ptn(cmdbuf);
 		if (ptn == 0) {
 			fastboot_fail("partition does not exist");
-		} else if ((download_bytes > ptn->length)) {
+		} else if ((download_bytes > ptn->length * blksz)) {
 			fastboot_fail("image too large for partition");
 		/* TODO : Improve check for yaffs write */
 		} else {
@@ -593,8 +597,8 @@ static void process_flash_sf(const char *cmdbuf)
 				return;
 			}
 			/* Erase */
-			sprintf(sf_command, "sf erase 0x%x 0x%x",ptn->start, /*start*/
-			ptn->length /*size*/);
+			sprintf(sf_command, "sf erase 0x%x 0x%x", ptn->start * blksz, /*start*/
+			ptn->length * blksz /*size*/);
 			ret = run_command(sf_command, 0);
 			if (ret) {
 				fastboot_fail("Erasing sf failed");
@@ -603,7 +607,7 @@ static void process_flash_sf(const char *cmdbuf)
 			/* Write image */
 			sprintf(sf_command, "sf write 0x%x 0x%x 0x%x",
 					(unsigned int)(ulong)interface.transfer_buffer, /* source */
-					ptn->start, /* start */
+					ptn->start * blksz, /* start */
 					download_bytes /*size*/);
 			printf("sf write '%s'\n", ptn->name);
 			ret = run_command(sf_command, 0);
