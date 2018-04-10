@@ -428,6 +428,8 @@ dtb-$(CONFIG_ARCH_MX7ULP) += imx7ulp-evk.dtb \
 	imx7ulp-evk-emmc.dtb \
 	imx7ulp-evk-qspi.dtb
 
+dtb-$(CONFIG_ARCH_IMX8M) += fsl-imx8mq-evk.dtb
+
 dtb-$(CONFIG_RCAR_GEN3) += \
 	r8a7795-h3ulcb.dtb \
 	r8a7795-salvator-x.dtb \
