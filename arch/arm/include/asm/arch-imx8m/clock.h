@@ -503,6 +503,12 @@ struct ccm_reg {
 #define CLK_ROOT_POST_DIV_SHIFT		0
 #define CLK_ROOT_POST_DIV(n)		((n) & 0x3f)
 
+/* IP clock generation: i ranges from 0 to 77 */
+#define CCM_IP_CLK_ROOT_GEN_TAGET(i)		(0x3038a000UL + 0x80 * (i) + 0x00)
+#define CCM_IP_CLK_ROOT_GEN_TAGET_SET(i)	(0x3038a000UL + 0x80 * (i) + 0x04)
+#define CCM_IP_CLK_ROOT_GEN_TAGET_CLR(i)	(0x3038a000UL + 0x80 * (i) + 0x08)
+#define CCM_IP_CLK_ROOT_GEN_TAGET_TOGGLE(i)	(0x3038a000UL + 0x80 * (i) + 0x0c)
+
 /* AUDIO PLL1/2 VIDEO PLL1 GPU PLL VPU PLL ARM PLL*/
 #define FRAC_PLL_LOCK_MASK		BIT(31)
 #define FRAC_PLL_CLKE_MASK		BIT(21)
