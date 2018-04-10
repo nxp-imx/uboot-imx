@@ -36,3 +36,9 @@ config VOL_MONITOR_LTC3882_SET
 	help
 	 This option enables LTC3882 voltage monitor set
 	 functionality. It is used by common VID driver.
+
+config USB_TCPC
+	bool "USB Typec port controller simple driver"
+	default n
+	help
+	  Enable USB type-c port controller (TCPC) driver
