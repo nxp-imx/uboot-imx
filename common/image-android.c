@@ -78,9 +78,19 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	char *bootargs = getenv("bootargs");
 
 	if (bootargs) {
-		strcpy(commandline, bootargs);
+		if (strlen(bootargs) + 1 > sizeof(commandline)) {
+			printf("bootargs is too long!\n");
+			return -1;
+		}
+		else
+			strncpy(commandline, bootargs, sizeof(commandline) - 1);
 	} else if (*hdr->cmdline) {
-		strcat(commandline, hdr->cmdline);
+		if (strlen(hdr->cmdline) + 1 > sizeof(commandline)) {
+			printf("cmdline in bootimg is too long!\n");
+			return -1;
+		}
+		else
+			strncpy(commandline, hdr->cmdline, strlen(commandline) - 1);
 	}
 
 #ifdef CONFIG_SERIAL_TAG
@@ -91,7 +101,7 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 					" androidboot.serialno=%08x%08x",
 					serialnr.high,
 					serialnr.low);
-	strcat(commandline, newbootargs);
+	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
 #endif
 
 	/* append soc type into bootargs */
@@ -100,7 +110,7 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 		sprintf(newbootargs,
 			" androidboot.soc_type=%s",
 			soc_type);
-		strcat(commandline, newbootargs);
+		strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
 	}
 
 	int bootdev = get_boot_device();
@@ -117,10 +127,10 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 			" androidboot.storage_type=nand");
 	} else
 		printf("boot device type is incorrect.\n");
-	strcat(commandline, newbootargs);
+	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
 	if (bootloader_gpt_overlay()) {
 		sprintf(newbootargs, " gpt");
-		strcat(commandline, newbootargs);
+		strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
 	}
 
 	/* boot metric variables */
@@ -129,14 +139,14 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 		" androidboot.boottime=1BLL:%d,1BLE:%d,KL:%d,KD:%d,AVB:%d,ODT:%d,SW:%d",
 		metrics.bll_1, metrics.ble_1, metrics.kl, metrics.kd, metrics.avb,
 		metrics.odt, metrics.sw);
-	strcat(commandline, newbootargs);
+	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
 
 #ifdef CONFIG_AVB_SUPPORT
 	/* secondary cmdline added by avb */
 	char *bootargs_sec = getenv("bootargs_sec");
 	if (bootargs_sec) {
-		strcat(commandline, " ");
-		strcat(commandline, bootargs_sec);
+		strncat(commandline, " ", sizeof(commandline) - strlen(commandline));
+		strncat(commandline, bootargs_sec, sizeof(commandline) - strlen(commandline));
 	}
 #endif
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
@@ -147,8 +157,8 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	 */
 	char *bootargs_3rd = getenv("bootargs_3rd");
 	if (bootargs_3rd) {
-		strcat(commandline, " ");
-		strcat(commandline, bootargs_3rd);
+		strncat(commandline, " ", sizeof(commandline) - strlen(commandline));
+		strncat(commandline, bootargs_3rd, sizeof(commandline) - strlen(commandline));
 	}
 #endif
 
@@ -160,8 +170,8 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 				(sizeof(commandline) - strlen(commandline))) {
 			printf("The 'append_bootargs' is too long to be appended to bootargs\n");
 		} else {
-			strcat(commandline, " ");
-			strcat(commandline, append_bootargs);
+			strncat(commandline, " ", sizeof(commandline) - strlen(commandline));
+			strncat(commandline, append_bootargs, sizeof(commandline) - strlen(commandline));
 		}
 	}
 
