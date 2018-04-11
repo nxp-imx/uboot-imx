@@ -1691,6 +1691,9 @@ static void fastboot_setup_system_boot_args(const char *slot, bool append_root)
 	}
 	else if(!strncmp(slot, "_b", strlen("_b")) || !strncmp(slot, "boot_b", strlen("boot_b"))) {
 		system_part_name = FASTBOOT_PARTITION_SYSTEM_B;
+	} else {
+		printf("slot invalid!\n");
+		return;
 	}
 	struct fastboot_ptentry *ptentry = fastboot_flash_find_ptn(system_part_name);
 	if(ptentry != NULL) {
