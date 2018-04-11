@@ -697,3 +697,15 @@ hab_authentication_exit:
 
 	return result;
 }
+
+int authenticate_image(uint32_t ddr_start, uint32_t raw_image_size)
+{
+	uint32_t ivt_offset;
+	size_t bytes;
+
+	ivt_offset = (raw_image_size + ALIGN_SIZE - 1) &
+					~(ALIGN_SIZE - 1);
+	bytes = ivt_offset + IVT_SIZE + CSF_PAD_SIZE;
+
+	return imx_hab_authenticate_image(ddr_start, bytes, ivt_offset);
+}
