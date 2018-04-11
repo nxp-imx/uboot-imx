@@ -29,6 +29,7 @@
 #include <fdt_support.h>
 #include <fsl_wdog.h>
 #include <imx_sip.h>
+#include <linux/arm-smccc.h>
 #include <linux/bitops.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -1460,6 +1461,21 @@ int arch_misc_init(void)
 	return 0;
 }
 #endif
+
+int imx8m_usb_power(int usb_id, bool on)
+{
+	struct arm_smccc_res res;
+
+	if (usb_id > 1)
+		return -EINVAL;
+
+	arm_smccc_smc(IMX_SIP_GPC, IMX_SIP_GPC_PM_DOMAIN,
+			2 + usb_id, on, 0, 0, 0, 0, &res);
+	if (res.a0)
+		return -EPERM;
+
+	return 0;
+}
 
 void imx_tmu_arch_init(void *reg_base)
 {
