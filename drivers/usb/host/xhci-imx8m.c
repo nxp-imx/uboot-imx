@@ -14,6 +14,7 @@
 #include <linux/compat.h>
 #include <linux/usb/dwc3.h>
 #include <asm/arch/sys_proto.h>
+#include <dm.h>
 #include <usb/xhci.h>
 
 /* Declare global data pointer */
@@ -110,6 +111,70 @@ static int imx8m_xhci_core_init(struct imx8m_xhci *imx8m_xhci)
 	return ret;
 }
 
+#ifdef CONFIG_DM_USB
+static int xhci_imx8m_probe(struct udevice *dev)
+{
+	struct xhci_hccr *hccr;
+	struct xhci_hcor *hcor;
+	struct imx8m_xhci *ctx = &imx8m_xhci;
+	int ret = 0;
+
+	ctx->hcd = (struct xhci_hccr *)(ctr_data[dev->seq].ctr_addr);
+	ctx->dwc3_reg = (struct dwc3 *)((char *)(ctx->hcd) + DWC3_REG_OFFSET);
+	ctx->usbmix_reg = (struct imx8m_usbmix *)((char *)(ctx->hcd) +
+							USBMIX_PHY_OFFSET);
+
+	ret = board_usb_init(ctr_data[dev->seq].usb_id, USB_INIT_HOST);
+	if (ret != 0) {
+		imx8m_usb_power(ctr_data[dev->seq].usb_id, false);
+		puts("Failed to initialize board for imx8m USB\n");
+		return ret;
+	}
+
+	ret = imx8m_xhci_core_init(ctx);
+	if (ret < 0) {
+		puts("Failed to initialize imx8m xhci\n");
+		return ret;
+	}
+
+	hccr = (struct xhci_hccr *)ctx->hcd;
+	hcor = (struct xhci_hcor *)((uintptr_t) hccr
+				+ HC_LENGTH(xhci_readl(&(hccr)->cr_capbase)));
+
+	debug("imx8m-xhci: init hccr %lx and hcor %lx hc_length %lx\n",
+	      (uintptr_t)hccr, (uintptr_t)hcor,
+	      (uintptr_t)HC_LENGTH(xhci_readl(&(hccr)->cr_capbase)));
+
+	return xhci_register(dev, hccr, hcor);
+}
+
+static int xhci_imx8m_remove(struct udevice *dev)
+{
+	int ret = xhci_deregister(dev);
+
+	board_usb_cleanup(dev->seq, USB_INIT_HOST);
+
+	return ret;
+}
+
+static const struct udevice_id xhci_usb_ids[] = {
+	{ .compatible = "fsl,imx8mq-dwc3", },
+	{ }
+};
+
+U_BOOT_DRIVER(xhci_imx8m) = {
+	.name	= "xhci_imx8m",
+	.id	= UCLASS_USB,
+	.of_match = xhci_usb_ids,
+	.probe = xhci_imx8m_probe,
+	.remove = xhci_imx8m_remove,
+	.ops	= &xhci_usb_ops,
+	.platdata_auto_alloc_size = sizeof(struct usb_platdata),
+	.priv_auto_alloc_size = sizeof(struct xhci_ctrl),
+	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
+};
+
+#else
 int xhci_hcd_init(int index, struct xhci_hccr **hccr, struct xhci_hcor **hcor)
 {
 	struct imx8m_xhci *ctx = &imx8m_xhci;
@@ -148,3 +213,4 @@ void xhci_hcd_stop(int index)
 {
 	board_usb_cleanup(ctr_data[index].usb_id, USB_INIT_HOST);
 }
+#endif
