@@ -65,21 +65,38 @@
 	"loadm4image_0=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4_0_image}\0" \
 	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
 
-#define XEN_ENV \
-	"xen_addr=0x80200000\0" \
-	"xen_file=xen\0" \
-	"xenargs=setenv bootargs console=dtuart dtuart=/serial@5a060000 dom0_mem=1024M \0" \
-	"loadxen=fatload mmc ${mmcdev}:${mmcpart} ${xen_addr} ${xen_file}\0" \
-	"xenboot=setenv loadaddr 0x80a00000; setenv fdt_file fsl-imx8qxp-mek-dom0.dtb; "\
-	"setenv bootargs console=dtuart dtuart=/serial@5a060000 dom0_mem=1024M; " \
-	"run loadfdt; run loadxen; run loadimage; fdt addr ${fdt_addr}; "\
-	"fdt set /chosen/module@0 reg <0x00000000 ${loadaddr} 0x00000000 0x${filesize}>; " \
-	"booti ${xen_addr} - ${fdt_addr} \0" \
+#define XEN_BOOT_ENV \
+            "xenhyper_bootargs=console=dtuart dtuart=/serial@5a060000 dom0_mem=1024M dom0_max_vcpus=2 dom0_vcpus_pin=true\0" \
+            "xenlinux_bootargs= \0" \
+            "xenlinux_console=hvc0 earlycon=xen\0" \
+            "xenboot_common=" \
+                "${get_cmd} ${loadaddr} xen;" \
+                "${get_cmd} ${fdt_addr} fsl-imx8qxp-mek-dom0.dtb;" \
+                "${get_cmd} ${initrd_addr} ${image};" \
+                "fdt addr ${fdt_addr};" \
+                "fdt resize 256;" \
+                "fdt set /chosen/module@0 reg <0x00000000 ${initrd_addr} 0x00000000 0x${filesize}>; " \
+                "fdt set /chosen/module@0 bootargs \"${bootargs} ${xenlinux_bootargs}\"; " \
+                "setenv bootargs ${xenhyper_bootargs};" \
+                "booti ${loadaddr} - ${fdt_addr};" \
+            "\0" \
+            "xennetboot=" \
+                "setenv get_cmd dhcp;" \
+                "setenv console ${xenlinux_console};" \
+                "run netargs;" \
+                "run xenboot_common;" \
+            "\0" \
+            "xenmmcboot=" \
+                "setenv get_cmd \"fatload mmc ${mmcdev}:${mmcpart}\";" \
+                "setenv console ${xenlinux_console};" \
+                "run mmcargs;" \
+                "run xenboot_common;" \
+            "\0" \
 
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	M4_BOOT_ENV \
-	XEN_ENV \
+	XEN_BOOT_ENV \
 	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
