@@ -1206,7 +1206,8 @@ static int _fastboot_parts_add_ptable_entry(int ptable_index,
 	ptable[ptable_index].length = info.size;
 	ptable[ptable_index].partition_id = mmc_partition_index;
 	ptable[ptable_index].partition_index = mmc_dos_partition_index;
-	strcpy(ptable[ptable_index].name, (const char *)info.name);
+	strncpy(ptable[ptable_index].name, (const char *)info.name,
+			sizeof(ptable[ptable_index].name) - 1);
 
 #ifdef CONFIG_PARTITION_UUIDS
 	strcpy(ptable[ptable_index].uuid, (const char *)info.uuid);
