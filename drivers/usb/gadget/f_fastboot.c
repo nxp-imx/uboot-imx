@@ -2820,6 +2820,7 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 	if (!cmd) {
 		error("missing variable");
 		fastboot_tx_write_str("FAILmissing var");
+		return;
 	}
 
 	if (!strcmp_l1("all", cmd)) {
