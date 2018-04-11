@@ -1,3 +1,5 @@
+if !ARCH_IMX8M && !ARCH_IMX8
+
 config CHAIN_OF_TRUST
 	depends on !FIT_SIGNATURE && SECURE_BOOT
 	imply CMD_BLOB
@@ -20,6 +22,8 @@ config CMD_ESBC_VALIDATE
 
 	    esbc_validate - validate signature using RSA verification
 	    esbc_halt - put the core in spin loop (Secure Boot Only)
+
+endif
 
 config VOL_MONITOR_LTC3882_READ
 	depends on VID
