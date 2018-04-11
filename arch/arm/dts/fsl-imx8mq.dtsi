@@ -42,6 +42,8 @@
 		i2c1 = &i2c2;
 		i2c2 = &i2c3;
 		i2c3 = &i2c4;
+		usb0 = &usb3_0;
+		usb1 = &usb3_1;
 	};
 
 	memory@40000000 {
