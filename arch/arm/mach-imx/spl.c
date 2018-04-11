@@ -176,6 +176,35 @@ int g_dnl_bind_fixup(struct usb_device_descriptor *dev, const char *name)
 /* called from spl_mmc to see type of boot mode for storage (RAW or FAT) */
 u32 spl_boot_mode(const u32 boot_device)
 {
+#if defined(CONFIG_MX7) || defined(CONFIG_IMX8M) || defined(CONFIG_IMX8)
+	switch (get_boot_device()) {
+	/* for MMC return either RAW or FAT mode */
+	case SD1_BOOT:
+	case SD2_BOOT:
+	case SD3_BOOT:
+#if defined(CONFIG_SPL_FAT_SUPPORT)
+		return MMCSD_MODE_FS;
+#else
+		return MMCSD_MODE_RAW;
+#endif
+		break;
+	case MMC1_BOOT:
+	case MMC2_BOOT:
+	case MMC3_BOOT:
+#if defined(CONFIG_SPL_FAT_SUPPORT)
+		return MMCSD_MODE_FS;
+#elif defined(CONFIG_SUPPORT_EMMC_BOOT)
+		return MMCSD_MODE_EMMCBOOT;
+#else
+		return MMCSD_MODE_RAW;
+#endif
+		break;
+	default:
+		puts("spl: ERROR:  unsupported device\n");
+		hang();
+	}
+
+#else /* defined(CONFIG_MX7) || defined(CONFIG_IMX8M) */
 	switch (spl_boot_device()) {
 	/* for MMC return either RAW or FAT mode */
 	case BOOT_DEVICE_MMC1:
@@ -193,6 +222,7 @@ u32 spl_boot_mode(const u32 boot_device)
 		puts("spl: ERROR:  unsupported device\n");
 		hang();
 	}
+#endif
 }
 #endif
 
