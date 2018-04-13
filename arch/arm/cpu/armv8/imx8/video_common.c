@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -201,17 +201,11 @@ int lvds_soc_setup(int lvds_id, sc_pm_clock_rate_t pixel_clock)
 	if (lvds_id == 0) {
 		lvds_rsrc = SC_R_LVDS_0;
 		mipi_rsrc = SC_R_MIPI_0;
-		if (is_imx8qxp())
-			pd_name = "mipi0_dsi_power_domain";
-		else
-			pd_name = "lvds0_power_domain";
+		pd_name = "lvds0_power_domain";
 	} else {
 		lvds_rsrc = SC_R_LVDS_1;
 		mipi_rsrc = SC_R_MIPI_1;
-		if (is_imx8qxp())
-			pd_name = "mipi1_dsi_power_domain";
-		else
-			pd_name = "lvds1_power_domain";
+		pd_name = "lvds1_power_domain";
 	}
 	/* Power up LVDS */
 	if (!power_domain_lookup_name(pd_name, &pd)) {
@@ -346,7 +340,7 @@ int display_controller_setup(sc_pm_clock_rate_t pixel_clock)
 	sc_err_t err;
 	sc_rsrc_t dc_rsrc, pll0_rsrc, pll1_rsrc;
 	sc_pm_clock_rate_t pll_clk;
-	const char *dc_pd_name;
+	const char *pll1_pd_name;
 	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
 
 	int dc_id = gdc;
@@ -358,22 +352,22 @@ int display_controller_setup(sc_pm_clock_rate_t pixel_clock)
 		dc_rsrc = SC_R_DC_0;
 		pll0_rsrc = SC_R_DC_0_PLL_0;
 		pll1_rsrc = SC_R_DC_0_PLL_1;
-		dc_pd_name = "dc0_power_domain";
+		pll1_pd_name = "dc0_pll1";
 	} else {
 		dc_rsrc = SC_R_DC_1;
 		pll0_rsrc = SC_R_DC_1_PLL_0;
 		pll1_rsrc = SC_R_DC_1_PLL_1;
-		dc_pd_name = "dc1_power_domain";
+		pll1_pd_name = "dc1_pll1";
 	}
 
-	if (!power_domain_lookup_name(dc_pd_name, &pd)) {
+	if (!power_domain_lookup_name(pll1_pd_name, &pd)) {
 		ret = power_domain_on(&pd);
 		if (ret) {
-			printf("%s Power up failed! (error = %d)\n", dc_pd_name, ret);
+			printf("%s Power up failed! (error = %d)\n", pll1_pd_name, ret);
 			return -EIO;
 		}
 	} else {
-		printf("%s lookup failed!\n", dc_pd_name);
+		printf("%s lookup failed!\n", pll1_pd_name);
 		return -EIO;
 	}
 
