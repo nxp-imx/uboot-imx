@@ -629,10 +629,34 @@ static int config_smmu_fdt_device_sid(void *blob, int device_offset, int sid)
 /* assign master sid based on iommu properties in fdt */
 static int config_smmu_fdt(void *blob)
 {
-	int offset, proplen;
+	int offset, proplen, i;
 	const fdt32_t *prop;
 	const char *name;
 
+	/* Legacy smmu bindings, still used by xen. */
+	offset = fdt_node_offset_by_compatible(blob, 0, "arm,mmu-500");
+	if (offset > 0 && (prop = fdt_getprop(blob, offset, "mmu-masters", &proplen)))
+	{
+		debug("found legacy mmu-masters property\n");
+
+		for (i = 0; i < proplen / 8; ++i) {
+			uint32_t phandle = fdt32_to_cpu(prop[2 * i]);
+			int sid = fdt32_to_cpu(prop[2 * i + 1]);
+			int device_offset;
+
+			device_offset = fdt_node_offset_by_phandle(blob, phandle);
+			if (device_offset < 0) {
+				pr_err("Failed to fetch device reference from mmu_masters: %d", device_offset);
+				continue;
+			}
+			config_smmu_fdt_device_sid(blob, device_offset, sid);
+		}
+
+		/* Ignore new bindings if old bindings found, just like linux. */
+		return 0;
+	}
+
+	/* Generic smmu bindings */
 	offset = 0;
 	while ((offset = fdt_next_node(blob, offset, NULL)) > 0)
 	{
