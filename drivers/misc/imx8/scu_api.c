@@ -13,6 +13,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define B2U8(X)     (((X) != SC_FALSE) ? (u8)(0x01U) : (u8)(0x00U))
+
 /* CLK and PM */
 int sc_pm_set_clock_rate(sc_ipc_t ipc, sc_rsrc_t resource, sc_pm_clk_t clk,
 			 sc_pm_clock_rate_t *rate)
@@ -385,6 +387,58 @@ int sc_rm_set_master_sid(sc_ipc_t ipc, sc_rsrc_t resource,
 	if (ret)
 		printf("%s: resource:%d sid:%d: res:%d\n",
 		       __func__, resource, sid, RPC_R8(&msg));
+
+	return ret;
+}
+
+int sc_pm_cpu_start(sc_ipc_t ipc, sc_rsrc_t resource, sc_bool_t enable,
+	sc_faddr_t address)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	struct sc_rpc_msg_s msg;
+	int size = sizeof(struct sc_rpc_msg_s);
+	int ret;
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_PM);
+	RPC_FUNC(&msg) = (u8)(PM_FUNC_CPU_START);
+	RPC_U32(&msg, 0U) = (u32)(address >> 32ULL);
+	RPC_U32(&msg, 4U) = (u32)(address);
+	RPC_U16(&msg, 8U) = (u16)(resource);
+	RPC_U8(&msg, 10U) = B2U8(enable);
+	RPC_SIZE(&msg) = 4U;
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: resource:%d address:0x%llx: res:%d\n",
+		       __func__, resource, address, RPC_R8(&msg));
+
+	return ret;
+}
+
+int sc_pm_get_resource_power_mode(sc_ipc_t ipc, sc_rsrc_t resource,
+	sc_pm_power_mode_t *mode)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	struct sc_rpc_msg_s msg;
+	int size = sizeof(struct sc_rpc_msg_s);
+	int ret;
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_PM);
+	RPC_FUNC(&msg) = (u8)(PM_FUNC_GET_RESOURCE_POWER_MODE);
+	RPC_U16(&msg, 0U) = (u16)(resource);
+	RPC_SIZE(&msg) = 2U;
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: resource:%d: res:%d\n",
+		       __func__, resource, RPC_R8(&msg));
+
+	if (mode != NULL)
+	{
+	    *mode = RPC_U8(&msg, 0U);
+	}
 
 	return ret;
 }
