@@ -22,46 +22,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static struct mm_region imx8_mem_map[] = {
-	{
-		.virt = 0x0UL,
-		.phys = 0x0UL,
-		.size = 0x2000000UL,
-		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
-			 PTE_BLOCK_OUTER_SHARE
-	}, {
-		.virt = 0x2000000UL,
-		.phys = 0x2000000UL,
-		.size = 0x7E000000UL,
-		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
-			 PTE_BLOCK_NON_SHARE |
-			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
-	}, {
-		.virt = 0x80000000UL,
-		.phys = 0x80000000UL,
-		.size = 0x80000000UL,
-		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
-			 PTE_BLOCK_OUTER_SHARE
-	}, {
-		.virt = 0x100000000UL,
-		.phys = 0x100000000UL,
-		.size = 0x700000000UL,
-		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
-			 PTE_BLOCK_NON_SHARE |
-			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
-	}, {
-		.virt = 0x880000000UL,
-		.phys = 0x880000000UL,
-		.size = 0x780000000UL,
-		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
-			 PTE_BLOCK_OUTER_SHARE
-	}, {
-		/* List terminator */
-		0,
-	}
-};
-struct mm_region *mem_map = imx8_mem_map;
-
 u32 get_cpu_rev(void)
 {
 	sc_ipc_t ipcHndl;
@@ -931,3 +891,101 @@ int dram_init_banksize(void)
 
 	return 0;
 }
+
+static u64 get_block_attrs(sc_faddr_t addr_start)
+{
+	if ((addr_start >= PHYS_SDRAM_1 && addr_start <= ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
+		|| (addr_start >= PHYS_SDRAM_2 && addr_start <= ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE)))
+		return (PTE_BLOCK_MEMTYPE(MT_NORMAL) | PTE_BLOCK_OUTER_SHARE);
+
+	return (PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) | PTE_BLOCK_NON_SHARE | PTE_BLOCK_PXN | PTE_BLOCK_UXN);
+}
+
+static u64 get_block_size(sc_faddr_t addr_start, sc_faddr_t addr_end)
+{
+	if (addr_start >= PHYS_SDRAM_1 && addr_start <= ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)) {
+		if ((addr_end + 1) > ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE))
+			return ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE) - addr_start;
+
+	} else if (addr_start >= PHYS_SDRAM_2 && addr_start <= ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE)) {
+
+		if ((addr_end + 1) > ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE))
+			return ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE) - addr_start;
+	}
+
+	return (addr_end - addr_start + 1);
+}
+
+#define MAX_PTE_ENTRIES 512
+#define MAX_MEM_MAP_REGIONS 16
+
+static struct mm_region imx8_mem_map[MAX_MEM_MAP_REGIONS];
+struct mm_region *mem_map = imx8_mem_map;
+
+void enable_caches(void)
+{
+	sc_rm_mr_t mr;
+	sc_faddr_t start, end;
+	int err, i;
+
+	/* Create map for registers access from 0x1c000000 to 0x80000000*/
+	imx8_mem_map[0].virt = 0x1c000000UL;
+	imx8_mem_map[0].phys = 0x1c000000UL;
+	imx8_mem_map[0].size = 0x64000000UL;
+	imx8_mem_map[0].attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+			 PTE_BLOCK_NON_SHARE | PTE_BLOCK_PXN | PTE_BLOCK_UXN;
+
+	i = 1;
+	for (mr = 0; mr < 64 && i < MAX_MEM_MAP_REGIONS; mr++) {
+		err = get_owned_memreg(mr, &start, &end);
+		if (!err) {
+			imx8_mem_map[i].virt = start;
+			imx8_mem_map[i].phys = start;
+			imx8_mem_map[i].size = get_block_size(start, end);
+			imx8_mem_map[i].attrs = get_block_attrs(start);
+			i++;
+		}
+	}
+
+	if (i < MAX_MEM_MAP_REGIONS) {
+		imx8_mem_map[i].size = 0;
+		imx8_mem_map[i].attrs = 0;
+	} else {
+		printf("Error, need more MEM MAP REGIONS reserved\n");
+		icache_enable();
+		return;
+	}
+
+	for (i = 0;i < MAX_MEM_MAP_REGIONS;i++) {
+		debug("[%d] vir = 0x%llx phys = 0x%llx size = 0x%llx attrs = 0x%llx\n", i,
+			imx8_mem_map[i].virt, imx8_mem_map[i].phys, imx8_mem_map[i].size, imx8_mem_map[i].attrs);
+	}
+
+	icache_enable();
+	dcache_enable();
+}
+
+#ifndef CONFIG_SYS_DCACHE_OFF
+u64 get_page_table_size(void)
+{
+	u64 one_pt = MAX_PTE_ENTRIES * sizeof(u64);
+	u64 size = 0;
+
+	/* For each memory region, the max table size:  2 level 3 tables + 2 level 2 tables + 1 level 1 table*/
+	size = (2 + 2 + 1) * one_pt * MAX_MEM_MAP_REGIONS + one_pt;
+
+	/*
+	 * We need to duplicate our page table once to have an emergency pt to
+	 * resort to when splitting page tables later on
+	 */
+	size *= 2;
+
+	/*
+	 * We may need to split page tables later on if dcache settings change,
+	 * so reserve up to 4 (random pick) page tables for that.
+	 */
+	size += one_pt * 4;
+
+	return size;
+}
+#endif
