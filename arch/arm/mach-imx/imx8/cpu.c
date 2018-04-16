@@ -21,6 +21,8 @@
 #include <asm/armv8/mmu.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <linux/libfdt.h>
+#include <fdt_support.h>
+#include <fdtdec.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -456,6 +458,107 @@ int mmc_get_env_dev(void)
 }
 #endif
 
+static bool check_owned_resource(sc_rsrc_t rsrc_id)
+{
+	bool owned;
+
+	owned = sc_rm_is_resource_owned(-1, rsrc_id);
+
+	return owned;
+}
+
+static int disable_fdt_node(void *blob, int nodeoffset)
+{
+	int rc, ret;
+	const char *status = "disabled";
+
+	do {
+		rc = fdt_setprop(blob, nodeoffset, "status", status, strlen(status) + 1);
+		if (rc) {
+			if (rc == -FDT_ERR_NOSPACE) {
+				ret = fdt_increase_size(blob, 512);
+				if (ret)
+					return ret;
+			}
+		}
+	} while (rc == -FDT_ERR_NOSPACE);
+
+	return rc;
+}
+
+static void update_fdt_with_owned_resources(void *blob)
+{
+	/* Traverses the fdt nodes,
+	  * check its power domain and use the resource id in the power domain
+	  * for checking whether it is owned by current partition
+	  */
+
+	int offset = 0, next_off, addr;
+	int depth = 0, next_depth;
+	unsigned int rsrc_id;
+	const fdt32_t *php;
+	const char *name;
+	int rc;
+
+	for (offset = fdt_next_node(blob, offset, &depth); offset > 0;
+		 offset = fdt_next_node(blob, offset, &depth)) {
+
+		debug("Node name: %s, depth %d\n", fdt_get_name(blob, offset, NULL), depth);
+
+		if (!fdtdec_get_is_enabled(blob, offset)) {
+			debug("   - ignoring disabled device\n");
+			continue;
+		}
+
+		if (!fdt_node_check_compatible(blob, offset, "nxp,imx8-pd")) {
+			/* Skip to next depth=1 node*/
+			next_off = offset;
+			next_depth = depth;
+			do {
+				offset = next_off;
+				depth = next_depth;
+				next_off = fdt_next_node(blob, offset, &next_depth);
+				if (next_off < 0 || next_depth < 1)
+					break;
+
+				debug("PD name: %s, offset %d, depth %d\n",
+					fdt_get_name(blob, next_off, NULL), next_off, next_depth);
+			} while (next_depth > 1);
+
+			continue;
+		}
+
+		php = fdt_getprop(blob, offset, "power-domains", NULL);
+		if (!php) {
+			debug("   - ignoring no power-domains\n");
+		} else {
+			addr = fdt_node_offset_by_phandle(blob, fdt32_to_cpu(*php));
+			rsrc_id = fdtdec_get_uint(blob, addr, "reg", 0);
+
+			if (rsrc_id == SC_R_LAST) {
+				name = fdt_get_name(blob, offset, NULL);
+				printf("%s's power domain use SC_R_LAST\n", name);
+				continue;
+			}
+
+			debug("power-domains phandle 0x%x, addr 0x%x, resource id %u\n",
+				fdt32_to_cpu(*php), addr, rsrc_id);
+
+			if (!check_owned_resource(rsrc_id)) {
+
+				/* If the resource is not owned, disable it in FDT */
+				rc = disable_fdt_node(blob, offset);
+				if (!rc)
+					printf("Disable %s, resource id %u, pd phandle 0x%x\n",
+						fdt_get_name(blob, offset, NULL), rsrc_id, fdt32_to_cpu(*php));
+				else
+					printf("Unable to disable %s, err=%s\n",
+						fdt_get_name(blob, offset, NULL), fdt_strerror(rc));
+			}
+		}
+	}
+}
+
 #ifdef CONFIG_OF_SYSTEM_SETUP
 int ft_system_setup(void *blob, bd_t *bd)
 {
@@ -467,6 +570,8 @@ int ft_system_setup(void *blob, bd_t *bd)
 			printf("Failed  to reserve memory for bootaux: %s\n",
 			       fdt_strerror(off));
 #endif
+
+	update_fdt_with_owned_resources(blob);
 
 	return 0;
 }
