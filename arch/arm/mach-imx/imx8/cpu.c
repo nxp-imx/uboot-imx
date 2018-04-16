@@ -307,11 +307,6 @@ int arch_auxiliary_core_check_up(u32 core_id)
 
 #ifdef CONFIG_IMX_SMMU
 struct smmu_sid dev_sids[] = {
-	{ SC_R_SDHC_0, 0x11, "SDHC0" },
-	{ SC_R_SDHC_1, 0x11, "SDHC1" },
-	{ SC_R_SDHC_2, 0x11, "SDHC2" },
-	{ SC_R_ENET_0, 0x12, "FEC0" },
-	{ SC_R_ENET_1, 0x12, "FEC1" },
 };
 
 int imx8_config_smmu_sid(struct smmu_sid *dev_sids, int size)
