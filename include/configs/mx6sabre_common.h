@@ -240,25 +240,19 @@
 		"findfdt="\
 			"if test $fdt_file = undefined; then " \
 				"if test $board_name = SABREAUTO && test $board_rev = MX6QP; then " \
-					"setenv fdt_file imx6qp-sabreauto; fi; " \
+					"setenv fdt_file imx6qp-sabreauto.dtb; fi; " \
 				"if test $board_name = SABREAUTO && test $board_rev = MX6Q; then " \
-					"setenv fdt_file imx6q-sabreauto; fi; " \
+					"setenv fdt_file imx6q-sabreauto.dtb; fi; " \
 				"if test $board_name = SABREAUTO && test $board_rev = MX6DL; then " \
-					"setenv fdt_file imx6dl-sabreauto; fi; " \
+					"setenv fdt_file imx6dl-sabreauto.dtb; fi; " \
 				"if test $board_name = SABRESD && test $board_rev = MX6QP; then " \
-					"setenv fdt_file imx6qp-sabresd; fi; " \
+					"setenv fdt_file imx6qp-sabresd.dtb; fi; " \
 				"if test $board_name = SABRESD && test $board_rev = MX6Q; then " \
-					"setenv fdt_file imx6q-sabresd; fi; " \
+					"setenv fdt_file imx6q-sabresd.dtb; fi; " \
 				"if test $board_name = SABRESD && test $board_rev = MX6DL; then " \
-					"setenv fdt_file imx6dl-sabresd; fi; " \
+					"setenv fdt_file imx6dl-sabresd.dtb; fi; " \
 				"if test $fdt_file = undefined; then " \
 					"echo WARNING: Could not determine dtb to use; " \
-				"else " \
-					"if test ${tee} = yes; then " \
-						"setenv fdt_file $fdt_file-optee.dtb; " \
-					"else " \
-						"setenv fdt_file $fdt_file.dtb; " \
-					"fi; " \
 				"fi; " \
 			"fi;\0" \
 		"findtee="\

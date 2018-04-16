@@ -214,17 +214,11 @@
 		"findfdt="\
 			"if test $fdt_file = undefined; then " \
 				"if test $board_name = EVK && test $board_rev = 9X9; then " \
-					"setenv fdt_file imx6ul-9x9-evk; fi; " \
+					"setenv fdt_file imx6ul-9x9-evk.dtb; fi; " \
 				"if test $board_name = EVK && test $board_rev = 14X14; then " \
-					"setenv fdt_file imx6ul-14x14-evk; fi; " \
+					"setenv fdt_file imx6ul-14x14-evk.dtb; fi; " \
 				"if test $fdt_file = undefined; then " \
 					"echo WARNING: Could not determine dtb to use; " \
-				"else " \
-					"if test ${tee} = yes; then " \
-						"setenv fdt_file $fdt_file-optee.dtb; " \
-					"else " \
-						"setenv fdt_file $fdt_file.dtb; " \
-					"fi; " \
 				"fi; " \
 			"fi;\0" \
 
