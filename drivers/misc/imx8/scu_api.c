@@ -442,3 +442,30 @@ int sc_pm_get_resource_power_mode(sc_ipc_t ipc, sc_rsrc_t resource,
 
 	return ret;
 }
+
+void sc_seco_build_info(sc_ipc_t ipc, uint32_t *version,
+	uint32_t *commit)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	struct sc_rpc_msg_s msg;
+	int size = sizeof(struct sc_rpc_msg_s);
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_SECO);
+	RPC_FUNC(&msg) = (u8)(SECO_FUNC_BUILD_INFO);
+	RPC_SIZE(&msg) = 1U;
+
+	misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+
+	if (version != NULL)
+	{
+	    *version = RPC_U32(&msg, 0U);
+	}
+
+	if (commit != NULL)
+	{
+	    *commit = RPC_U32(&msg, 4U);
+	}
+
+	return;
+}

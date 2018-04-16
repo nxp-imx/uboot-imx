@@ -94,4 +94,8 @@ int sc_pad_set(sc_ipc_t ipc, sc_pad_t pad, u32 val);
 int sc_rm_set_master_sid(sc_ipc_t ipc, sc_rsrc_t resource,
     sc_rm_sid_t sid);
 
+/* SECO API */
+void sc_seco_build_info(sc_ipc_t ipc, uint32_t *version,
+	uint32_t *commit);
+
 #endif
