@@ -249,6 +249,9 @@ static struct usb_gadget_strings *fastboot_strings[] = {
 #define ANDROID_MBR_SIZE	    0x200
 #ifdef  CONFIG_BOOTLOADER_OFFSET_33K
 #define ANDROID_BOOTLOADER_OFFSET   0x8400
+/* The Bootloader offset of imx8qxp B0 board is set to 32K */
+#elif defined(CONFIG_BOOTLOADER_OFFSET_32K)
+#define ANDROID_BOOTLOADER_OFFSET 0x8000
 #else
 #define ANDROID_BOOTLOADER_OFFSET   0x400
 #endif
