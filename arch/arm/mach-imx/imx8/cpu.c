@@ -559,6 +559,86 @@ static void update_fdt_with_owned_resources(void *blob)
 	}
 }
 
+#ifdef CONFIG_IMX_SMMU
+static int get_srsc_from_fdt_node_power_domain(void *blob, int device_offset)
+{
+	const fdt32_t *prop;
+	int pdnode_offset;
+
+	prop = fdt_getprop(blob, device_offset, "power-domains", NULL);
+	if (!prop) {
+		debug("node %s has no power-domains\n",
+				fdt_get_name(blob, device_offset, NULL));
+		return -ENOENT;
+	}
+
+	pdnode_offset = fdt_node_offset_by_phandle(blob, fdt32_to_cpu(*prop));
+	if (pdnode_offset < 0) {
+		pr_err("failed to fetch node %s power-domain",
+				fdt_get_name(blob, device_offset, NULL));
+		return pdnode_offset;
+	}
+
+	return fdtdec_get_uint(blob, pdnode_offset, "reg", -ENOENT);
+}
+
+static int config_smmu_resource_sid(int rsrc, int sid)
+{
+	int err;
+
+	err = sc_rm_set_master_sid(-1, rsrc, sid);
+	debug("set_master_sid rsrc=%d sid=0x%x err=%d\n", rsrc, sid, err);
+	if (err != SC_ERR_NONE) {
+		pr_err("fail set_master_sid rsrc=%d sid=0x%x err=%d", rsrc, sid, err);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int config_smmu_fdt_device_sid(void *blob, int device_offset, int sid)
+{
+	int rsrc;
+	const char *name = fdt_get_name(blob, device_offset, NULL);
+
+	rsrc = get_srsc_from_fdt_node_power_domain(blob, device_offset);
+	debug("configure node %s sid 0x%x rsrc=%d\n", name, sid, rsrc);
+	if (rsrc < 0) {
+		debug("failed to determine SC_R_* for node %s\n", name);
+		return rsrc;
+	}
+
+	return config_smmu_resource_sid(rsrc, sid);
+}
+
+/* assign master sid based on iommu properties in fdt */
+static int config_smmu_fdt(void *blob)
+{
+	int offset, proplen;
+	const fdt32_t *prop;
+	const char *name;
+
+	offset = 0;
+	while ((offset = fdt_next_node(blob, offset, NULL)) > 0)
+	{
+		name = fdt_get_name(blob, offset, NULL);
+		prop = fdt_getprop(blob, offset, "iommus", &proplen);
+		if (!prop)
+			continue;
+		debug("node %s iommus proplen %d\n", name, proplen);
+
+		if (proplen == 12) {
+			int sid = fdt32_to_cpu(prop[1]);
+			config_smmu_fdt_device_sid(blob, offset, sid);
+		} else if (proplen != 4) {
+			debug("node %s ignore unexpected iommus proplen=%d\n", name, proplen);
+		}
+	}
+
+	return 0;
+}
+#endif
+
 #ifdef CONFIG_OF_SYSTEM_SETUP
 int ft_system_setup(void *blob, bd_t *bd)
 {
@@ -572,6 +652,9 @@ int ft_system_setup(void *blob, bd_t *bd)
 #endif
 
 	update_fdt_with_owned_resources(blob);
+#ifdef CONFIG_IMX_SMMU
+	config_smmu_fdt(blob);
+#endif
 
 	return 0;
 }
