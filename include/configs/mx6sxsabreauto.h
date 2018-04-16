@@ -178,11 +178,7 @@
 		"fi;\0" \
 	"findfdt="\
 		"if test $fdt_file = undefined; then " \
-			"if test ${tee} = yes; then " \
-				"setenv fdt_file imx6sx-sdb-optee.dtb; " \
-			"else " \
-				"setenv fdt_file imx6sx-sdb.dtb; " \
-			"fi; " \
+			"setenv fdt_file imx6sx-sdb.dtb; " \
 		"fi;\0" \
 
 #define CONFIG_BOOTCOMMAND \
