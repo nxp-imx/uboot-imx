@@ -599,7 +599,22 @@ static int config_smmu_resource_sid(int rsrc, int sid)
 static int config_smmu_fdt_device_sid(void *blob, int device_offset, int sid)
 {
 	int rsrc;
+	int proplen;
+	const fdt32_t *prop;
 	const char *name = fdt_get_name(blob, device_offset, NULL);
+
+	prop = fdt_getprop(blob, device_offset, "fsl,sc_rsrc_id", &proplen);
+	if (prop) {
+		int i;
+
+		debug("configure node %s sid 0x%x for %d resources\n",
+				name, sid, (int)(proplen / sizeof(fdt32_t)));
+		for (i = 0; i < proplen / sizeof(fdt32_t); ++i) {
+			config_smmu_resource_sid(fdt32_to_cpu(prop[i]), sid);
+		}
+
+		return 0;
+	}
 
 	rsrc = get_srsc_from_fdt_node_power_domain(blob, device_offset);
 	debug("configure node %s sid 0x%x rsrc=%d\n", name, sid, rsrc);
