@@ -12,6 +12,7 @@
 #include <asm/mach-imx/sci/sci.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/arch/clock.h>
+#include <thermal.h>
 #include <asm/armv8/mmu.h>
 #include <elf.h>
 #include <asm/arch/sid.h>
@@ -95,6 +96,27 @@ int print_cpuinfo(void)
 			get_imx8_rev((cpurev & 0xFFF)),
 			get_core_name(),
 		mxc_get_clock(MXC_ARM_CLK) / 1000000);
+
+#if defined(CONFIG_IMX_SC_THERMAL)
+	struct udevice *thermal_dev;
+	int cpu_tmp, ret;
+
+	if (is_imx8qm() && is_cortex_a72())
+		ret = uclass_get_device_by_name(UCLASS_THERMAL, "cpu-thermal1", &thermal_dev);
+	else
+		ret = uclass_get_device_by_name(UCLASS_THERMAL, "cpu-thermal0", &thermal_dev);
+
+	if (!ret) {
+		ret = thermal_get_temp(thermal_dev, &cpu_tmp);
+
+		if (!ret)
+			printf(" at %dC", cpu_tmp);
+		else
+			debug(" - invalid sensor data");
+	} else {
+		debug(" - invalid sensor device");
+	}
+#endif
 
 	printf("\n");
 	return 0;
