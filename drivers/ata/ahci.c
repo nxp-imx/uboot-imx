@@ -26,6 +26,16 @@
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 
+#ifdef CONFIG_SCSI_AHCI_PLAT
+#ifdef CONFIG_FSL_HSIO
+#define HW_PP2C		0xAC
+#define HW_PP3C		0xB0
+#define HW_PP4C		0xB4
+#define HW_PP5C		0xB8
+#define HW_PAXIC	0xC0
+#endif
+#endif
+
 static int ata_io_flush(struct ahci_uc_priv *uc_priv, u8 port);
 
 #ifndef CONFIG_DM_SCSI
@@ -191,6 +201,16 @@ static int ahci_host_init(struct ahci_uc_priv *uc_priv)
 
 	debug("ahci_host_init: start\n");
 
+#ifdef CONFIG_SCSI_AHCI_PLAT
+#ifdef CONFIG_FSL_HSIO
+	writel((1 << 28) | (1 << 24) | readl(mmio + HW_PAXIC), mmio + HW_PAXIC);
+	writel(0x2718461C, mmio + HW_PP2C);
+	writel(0x0D081907, mmio + HW_PP3C);
+	writel(0x06000815, mmio + HW_PP4C);
+	writel(0x800C96A4, mmio + HW_PP5C);
+#endif
+#endif
+
 	cap_save = readl(mmio + HOST_CAP);
 	cap_save &= ((1 << 28) | (1 << 17));
 	cap_save |= (1 << 27);  /* Staggered Spin-up. Not needed. */
@@ -272,6 +292,11 @@ static int ahci_host_init(struct ahci_uc_priv *uc_priv)
 		ret = ahci_link_up(uc_priv, i);
 		if (ret) {
 			printf("SATA link %d timeout.\n", i);
+#ifdef CONFIG_SCSI_AHCI_PLAT
+#ifdef CONFIG_FSL_HSIO
+			return -ENODEV;
+#endif
+#endif
 			continue;
 		} else {
 			debug("SATA link ok.\n");
