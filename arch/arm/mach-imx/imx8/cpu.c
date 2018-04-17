@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <asm/arch/sci/sci.h>
 #include <power-domain.h>
+#include <thermal.h>
 #include <elf.h>
 #include <asm/arch/sid.h>
 #include <asm/arch/sys_proto.h>
@@ -1200,12 +1201,36 @@ const char *get_core_name(struct udevice *dev)
 int cpu_imx_get_desc(struct udevice *dev, char *buf, int size)
 {
 	struct cpu_imx_platdata *plat = dev_get_platdata(dev);
+	int len;
 
 	if (size < 100)
 		return -ENOSPC;
 
-	snprintf(buf, size, "NXP i.MX8%s Rev%s %s at %u MHz\n",
+	len = snprintf(buf, size, "NXP i.MX8%s Rev%s %s at %u MHz",
 		 plat->type, plat->rev, plat->name, plat->freq_mhz);
+
+#if defined(CONFIG_IMX_SC_THERMAL)
+	struct udevice *thermal_dev;
+	int cpu_tmp, ret;
+
+	if (!strcmp(plat->name, "A72"))
+		ret = uclass_get_device_by_name(UCLASS_THERMAL, "cpu-thermal1", &thermal_dev);
+	else
+		ret = uclass_get_device_by_name(UCLASS_THERMAL, "cpu-thermal0", &thermal_dev);
+
+	if (!ret) {
+		ret = thermal_get_temp(thermal_dev, &cpu_tmp);
+
+		if (!ret)
+			len += snprintf(buf + len, size," at %dC", cpu_tmp);
+		else
+			len += snprintf(buf + len, size," - invalid sensor data");
+	} else {
+		len += snprintf(buf + len, size, " - invalid sensor device");
+	}
+#endif
+
+	len += snprintf(buf + len, size, "\n");
 
 	return 0;
 }
