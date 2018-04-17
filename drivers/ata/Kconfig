@@ -79,6 +79,12 @@ config MVSATA_IDE
 	  Enable this driver to support the SATA controller found in
 	  some Marvell SoCs, running in IDE compatibility mode using PIO.
 
+config SATA_IMX
+	bool "Enable SATA driver support for i.MX8QM"
+	select LIBATA
+	help
+	  Enable this driver to support the SATA controller found in i.MX8QM SoCs.
+
 config SATA_MV
 	bool "Enable Marvell SATA controller driver support"
 	select LIBATA
