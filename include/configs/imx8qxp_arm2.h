@@ -115,6 +115,15 @@
 	"bootcmd_mfg=run mfgtool_args;booti ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 
 /* Initial environment variables */
+#ifdef CONFIG_NAND_BOOT
+#define CONFIG_EXTRA_ENV_SETTINGS		\
+	CONFIG_MFG_ENV_SETTINGS \
+	"bootargs=console=ttyLP0,115200 ubi.mtd=5 "  \
+		"root=ubi0:rootfs rootfstype=ubifs "		     \
+		"mtdparts=gpmi-nand:128m(boot),32m(kernel),16m(dtb),8m(misc),-(rootfs)\0"\
+	"console=ttyLP0,115200 earlycon=lpuart32,0x5a060000,115200\0" \
+	"fdt_addr=0x83000000\0"
+#else
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
 	M4_BOOT_ENV \
@@ -169,7 +178,14 @@
 		"else " \
 			"booti; " \
 		"fi;\0"
+#endif
 
+#ifdef CONFIG_NAND_BOOT
+#define CONFIG_BOOTCOMMAND \
+	"nand read ${loadaddr} 0x8000000 0x1400000;"\
+	"nand read ${fdt_addr} 0xA000000 0x100000;"\
+	"booti ${loadaddr} - ${fdt_addr}"
+#else
 #define CONFIG_BOOTCOMMAND \
 	   "mmc dev ${mmcdev}; if mmc rescan; then " \
 		   "if run loadbootscript; then " \
@@ -181,6 +197,7 @@
 			   "fi; " \
 		   "fi; " \
 	   "else booti ${loadaddr} - ${fdt_addr}; fi"
+#endif
 
 /* Link Definitions */
 #define CONFIG_LOADADDR			0x80280000
@@ -193,7 +210,9 @@
 /* Default environment is in SD */
 #define CONFIG_ENV_SIZE			0x1000
 
-#ifdef CONFIG_QSPI_BOOT
+#ifdef CONFIG_NAND_BOOT
+#define CONFIG_ENV_OFFSET       (120 << 20)
+#elif defined(CONFIG_QSPI_BOOT)
 #define CONFIG_ENV_OFFSET       (4 * 1024 * 1024)
 #define CONFIG_ENV_SECT_SIZE	(128 * 1024)
 #define CONFIG_ENV_SPI_BUS	CONFIG_SF_DEFAULT_BUS
@@ -264,6 +283,22 @@
 #define FSPI0_BASE_ADDR			0x5d120000
 #define FSPI0_AMBA_BASE			0
 #define CONFIG_SYS_FSL_FSPI_AHB
+#endif
+
+#ifdef CONFIG_CMD_NAND
+#define CONFIG_NAND_MXS
+#define CONFIG_CMD_NAND_TRIMFFS
+
+/* NAND stuff */
+#define CONFIG_SYS_MAX_NAND_DEVICE     1
+#define CONFIG_SYS_NAND_BASE           0x40000000
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+
+/* DMA stuff, needed for GPMI/MXS NAND support */
+#define CONFIG_APBH_DMA
+#define CONFIG_APBH_DMA_BURST
+#define CONFIG_APBH_DMA_BURST8
 #endif
 
 /* USB Config */
