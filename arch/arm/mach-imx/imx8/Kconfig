@@ -39,6 +39,17 @@ config TARGET_IMX8QM_DDR4_ARM2
 	select BOARD_LATE_INIT
 	select IMX8QM
 
+config TARGET_IMX8QXP_LPDDR4_ARM2
+	bool "Support i.MX8QXP lpddr4 validation board"
+	select BOARD_LATE_INIT
+	select IMX8QXP
+
+config TARGET_IMX8QXP_DDR3_ARM2
+	bool "Support i.MX8QXP ddr3 validation board"
+	select BOARD_LATE_INIT
+	select IMX8QXP
+
 endchoice
 source "board/freescale/imx8qm_arm2/Kconfig"
+source "board/freescale/imx8qxp_arm2/Kconfig"
 endif
