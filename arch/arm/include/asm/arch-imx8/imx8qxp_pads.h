@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:     GPL-2.0+
  */
@@ -9,14 +9,12 @@
  * Header file used to configure SoC pad list.
  */
 
-#ifndef _SC_PADS_H
-#define _SC_PADS_H
+#ifndef SC_PADS_H
+#define SC_PADS_H
 
 /* Includes */
 
 /* Defines */
-
-#define SC_P_ALL            UINT16_MAX      /*!< All pads */
 
 /*!
  * @name Pad Definitions
@@ -198,5 +196,5 @@
 #define SC_P_COMP_CTL_GPIO_1V8_3V3_QSPI0B        173  /*!<  */
 /*@}*/
 
-#endif /* _SC_PADS_H */
+#endif /* SC_PADS_H */
 

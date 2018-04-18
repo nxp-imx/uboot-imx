@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:     GPL-2.0+
  */
@@ -16,8 +16,8 @@
  * @{
  */
 
-#ifndef _SC_MISC_API_H
-#define _SC_MISC_API_H
+#ifndef SC_MISC_API_H
+#define SC_MISC_API_H
 
 /* Includes */
 
@@ -34,41 +34,41 @@
 /*@}*/
 
 /*! Max DMA channel priority group */
-#define SC_MISC_DMA_GRP_MAX     31
+#define SC_MISC_DMA_GRP_MAX     31U
 
 /*!
  * @name Defines for sc_misc_boot_status_t
  */
 /*@{*/
-#define SC_MISC_BOOT_STATUS_SUCCESS     0   /*!< Success */
-#define SC_MISC_BOOT_STATUS_SECURITY    1   /*!< Security violation */
+#define SC_MISC_BOOT_STATUS_SUCCESS     0U   /*!< Success */
+#define SC_MISC_BOOT_STATUS_SECURITY    1U   /*!< Security violation */
 /*@}*/
 
 /*!
  * @name Defines for sc_misc_seco_auth_cmd_t
  */
 /*@{*/
-#define SC_MISC_SECO_AUTH_SECO_FW       0   /*!< SECO Firmware */
-#define SC_MISC_SECO_AUTH_HDMI_TX_FW    1   /*!< HDMI TX Firmware */
-#define SC_MISC_SECO_AUTH_HDMI_RX_FW    2   /*!< HDMI RX Firmware */
+#define SC_MISC_SECO_AUTH_SECO_FW       0U   /*!< SECO Firmware */
+#define SC_MISC_SECO_AUTH_HDMI_TX_FW    1U   /*!< HDMI TX Firmware */
+#define SC_MISC_SECO_AUTH_HDMI_RX_FW    2U   /*!< HDMI RX Firmware */
 /*@}*/
 
 /*!
  * @name Defines for sc_misc_temp_t
  */
 /*@{*/
-#define SC_MISC_TEMP                    0   /*!< Temp sensor */
-#define SC_MISC_TEMP_HIGH               1   /*!< Temp high alarm */
-#define SC_MISC_TEMP_LOW                2   /*!< Temp low alarm */
+#define SC_MISC_TEMP                    0U   /*!< Temp sensor */
+#define SC_MISC_TEMP_HIGH               1U   /*!< Temp high alarm */
+#define SC_MISC_TEMP_LOW                2U   /*!< Temp low alarm */
 /*@}*/
 
 /*!
  * @name Defines for sc_misc_seco_auth_cmd_t
  */
 /*@{*/
-#define SC_MISC_AUTH_CONTAINER          0   /*!< Authenticate container */
-#define SC_MISC_VERIFY_IMAGE            1   /*!< Verify image */
-#define SC_MISC_REL_CONTAINER           2   /*!< Release container */
+#define SC_MISC_AUTH_CONTAINER          0U   /*!< Authenticate container */
+#define SC_MISC_VERIFY_IMAGE            1U   /*!< Verify image */
+#define SC_MISC_REL_CONTAINER           2U   /*!< Release container */
 /*@}*/
 
 /* Types */
@@ -203,32 +203,123 @@ sc_err_t sc_misc_set_dma_group(sc_ipc_t ipc, sc_rsrc_t resource,
  * @param[in]     addr_src    address of image source
  * @param[in]     addr_dst    address of image destination
  * @param[in]     len         lenth of image to load
- * @param[in]     fw          true = firmware load
+ * @param[in]     fw          SC_TRUE = firmware load
  *
  * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_PARM if word fuse index param out of range or invalid
+ * - SC_ERR_UNAVAILABLE if SECO not available
  *
  * This is used to load images via the SECO. Examples include SECO
  * Firmware and IVT/CSF data used for authentication. These are usually
  * loaded into SECO TCM. \a addr_src is in secure memory.
+ *
+ * See the Security Reference Manual (SRM) for more info.
  */
-sc_err_t sc_misc_seco_image_load(sc_ipc_t ipc, uint32_t addr_src,
-    uint32_t addr_dst, uint32_t len, bool fw);
+sc_err_t sc_misc_seco_image_load(sc_ipc_t ipc, sc_faddr_t addr_src,
+    sc_faddr_t addr_dst, uint32_t len, sc_bool_t fw);
 
 /*!
  * This function is used to authenticate a SECO image or command.
  *
  * @param[in]     ipc         IPC handle
  * @param[in]     cmd         authenticate command
- * @param[in]     addr_meta   address of/or metadata
+ * @param[in]     addr        address of/or metadata
  *
  * @return Returns an error code (SC_ERR_NONE = success).
  *
+ * Return errors codes:
+ * - SC_ERR_PARM if word fuse index param out of range or invalid
+ * - SC_ERR_UNAVAILABLE if SECO not available
+ *
  * This is used to authenticate a SECO image or issue a security
- * command. \a addr_meta often points to an container. It is also
+ * command. \a addr often points to an container. It is also
  * just data (or even unused) for some commands.
+ *
+ * See the Security Reference Manual (SRM) for more info.
  */
 sc_err_t sc_misc_seco_authenticate(sc_ipc_t ipc,
-    sc_misc_seco_auth_cmd_t cmd, uint32_t addr_meta);
+    sc_misc_seco_auth_cmd_t cmd, sc_faddr_t addr);
+
+/*!
+ * This function securely writes a group of fuse words.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     addr        address of message block
+ *
+ * @return Returns and error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_UNAVAILABLE if SECO not available
+ *
+ * Note \a addr must be a pointer into secure RAM. The contents at
+ * this location are a signed fuse command message block.
+ *
+ * See the Security Reference Manual (SRM) for more info.
+ */
+sc_err_t sc_misc_seco_fuse_write(sc_ipc_t ipc, sc_faddr_t addr);
+
+/*!
+ * This function securely enables debug.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     addr        address of message block
+ *
+ * @return Returns and error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_UNAVAILABLE if SECO not available
+ *
+ * Note \a addr must be a pointer into secure RAM. The contents at
+ * this location are a signed fuse command message block.
+ *
+ * See the Security Reference Manual (SRM) for more info.
+ */
+sc_err_t sc_misc_seco_enable_debug(sc_ipc_t ipc, sc_faddr_t addr);
+
+/*!
+ * This function updates the lifecycle of the device.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     lifecycle   new lifecycle
+ *
+ * @return Returns and error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_UNAVAILABLE if SECO not available
+ *
+ * See the Security Reference Manual (SRM) for more info.
+ */
+sc_err_t sc_misc_seco_forward_lifecycle(sc_ipc_t ipc, uint32_t lifecycle);
+
+/*!
+ * This function securely reverses the lifecycle.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     addr        address of message block
+ *
+ * @return Returns and error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_UNAVAILABLE if SECO not available
+ *
+ * Note \a addr must be a pointer into secure RAM. The contents at
+ * this location are a signed fuse command message block.
+ *
+ * See the Security Reference Manual (SRM) for more info.
+ */
+sc_err_t sc_misc_seco_return_lifecycle(sc_ipc_t ipc, sc_faddr_t addr);
+
+/*!
+ * This function is used to return the SECO FW build info.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[out]    version     pointer to return build number
+ * @param[out]    commit      pointer to return commit ID (git SHA-1)
+ */
+void sc_misc_seco_build_info(sc_ipc_t ipc, uint32_t *version,
+    uint32_t *commit);
 
 /* @} */
 
@@ -256,7 +347,7 @@ void sc_misc_debug_out(sc_ipc_t ipc, uint8_t ch);
  * Return errors:
  * - SC_ERR_UNAVAILABLE if not running on emulation
  */
-sc_err_t sc_misc_waveform_capture(sc_ipc_t ipc, bool enable);
+sc_err_t sc_misc_waveform_capture(sc_ipc_t ipc, sc_bool_t enable);
 
 /*!
  * This function is used to return the SCFW build info.
@@ -306,7 +397,7 @@ void sc_misc_unique_id(sc_ipc_t ipc, uint32_t *id_l,
  * FISType and PM_Port.
  */
 sc_err_t sc_misc_set_ari(sc_ipc_t ipc, sc_rsrc_t resource,
-    sc_rsrc_t resource_mst, uint16_t ari, bool enable);
+    sc_rsrc_t resource_mst, uint16_t ari, sc_bool_t enable);
 
 /*!
  * This function reports boot status.
@@ -381,6 +472,10 @@ sc_err_t sc_misc_otp_fuse_write(sc_ipc_t ipc, uint32_t word, uint32_t val);
  *
  * @return Returns and error code (SC_ERR_NONE = success).
  *
+ * This function will enable the alarm interrupt if the temp requested is
+ * not the min/max temp. This enable automatically clears when the alarm
+ * occurs and this function has to be called again to re-enable.
+ *
  * Return errors codes:
  * - SC_ERR_PARM if parameters invalid
  */
@@ -418,11 +513,11 @@ void sc_misc_get_boot_dev(sc_ipc_t ipc, sc_rsrc_t *dev);
  * @param[in]     ipc         IPC handle
  * @param[out]    status      pointer to return button status
  */
-void sc_misc_get_button_status(sc_ipc_t ipc, bool *status);
+void sc_misc_get_button_status(sc_ipc_t ipc, sc_bool_t *status);
 
 /* @} */
 
-#endif /* _SC_MISC_API_H */
+#endif /* SC_MISC_API_H */
 
 /**@}*/
 

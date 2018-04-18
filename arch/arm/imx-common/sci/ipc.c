@@ -32,7 +32,7 @@
 /*----------------------------------------------------------------------*/
 /* RPC command/response                                                 */
 /*----------------------------------------------------------------------*/
-void sc_call_rpc(sc_ipc_t ipc, sc_rpc_msg_t *msg, bool no_resp)
+void sc_call_rpc(sc_ipc_t ipc, sc_rpc_msg_t *msg, sc_bool_t no_resp)
 {
     sc_ipc_write(ipc, msg);
     if (!no_resp)

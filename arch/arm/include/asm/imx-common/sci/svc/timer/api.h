@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:     GPL-2.0+
  */
@@ -18,8 +18,8 @@
  * @{
  */
 
-#ifndef _SC_TIMER_API_H
-#define _SC_TIMER_API_H
+#ifndef SC_TIMER_API_H
+#define SC_TIMER_API_H
 
 /* Includes */
 
@@ -39,11 +39,11 @@
  * @name Defines for sc_timer_wdog_action_t
  */
 /*@{*/
-#define SC_TIMER_WDOG_ACTION_PARTITION      0   /*!< Reset partition */
-#define SC_TIMER_WDOG_ACTION_WARM           1   /*!< Warm reset system */
-#define SC_TIMER_WDOG_ACTION_COLD           2   /*!< Cold reset system */
-#define SC_TIMER_WDOG_ACTION_BOARD          3   /*!< Reset board */
-#define SC_TIMER_WDOG_ACTION_IRQ            4   /*!< Only generate IRQs */
+#define SC_TIMER_WDOG_ACTION_PARTITION      0U   /*!< Reset partition */
+#define SC_TIMER_WDOG_ACTION_WARM           1U   /*!< Warm reset system */
+#define SC_TIMER_WDOG_ACTION_COLD           2U   /*!< Cold reset system */
+#define SC_TIMER_WDOG_ACTION_BOARD          3U   /*!< Reset board */
+#define SC_TIMER_WDOG_ACTION_IRQ            4U   /*!< Only generate IRQs */
 /*@}*/
 
 /* Types */
@@ -107,7 +107,7 @@ sc_err_t sc_timer_set_wdog_pre_timeout(sc_ipc_t ipc,
  * If \a lock is set then the watchdog cannot be stopped or the timeout
  * period changed.
  */
-sc_err_t sc_timer_start_wdog(sc_ipc_t ipc, bool lock);
+sc_err_t sc_timer_start_wdog(sc_ipc_t ipc, sc_bool_t lock);
 
 /*!
  * This function stops the watchdog if it is not locked.
@@ -158,7 +158,7 @@ sc_err_t sc_timer_get_wdog_status(sc_ipc_t ipc,
  *
  * @return Returns an error code (SC_ERR_NONE = success).
  */
-sc_err_t sc_timer_pt_get_wdog_status(sc_ipc_t ipc, sc_rm_pt_t pt, bool *enb,
+sc_err_t sc_timer_pt_get_wdog_status(sc_ipc_t ipc, sc_rm_pt_t pt, sc_bool_t *enb,
     sc_timer_wdog_time_t *timeout, sc_timer_wdog_time_t *remaining_time);
 
 /*!
@@ -257,6 +257,33 @@ sc_err_t sc_timer_set_rtc_alarm(sc_ipc_t ipc, uint16_t year, uint8_t mon,
     uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
 
 /*!
+ * This function sets the RTC alarm.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     sec         period in seconds
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors:
+ * - SC_ERR_PARM if invalid time/date parameters
+ */
+sc_err_t sc_timer_set_rtc_periodic_alarm(sc_ipc_t ipc, uint32_t sec);
+
+/*!
+ * This function sets the RTC alarm.
+ *
+ * @param[in]     ipc         IPC handle
+ *
+ * Note this alarm setting clears when the alarm is triggered.
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors:
+ * - SC_ERR_PARM if invalid time/date parameters
+ */
+sc_err_t sc_timer_cancel_rtc_alarm(sc_ipc_t ipc);
+
+/*!
  * This function sets the RTC calibration value. Only the owner of the SC_R_SYSTEM
  * resource can set the calibration.
  *
@@ -273,7 +300,7 @@ sc_err_t sc_timer_set_rtc_calb(sc_ipc_t ipc, int8_t count);
 
 /* @} */
 
-#endif /* _SC_TIMER_API_H */
+#endif /* SC_TIMER_API_H */
 
 /**@}*/
 
