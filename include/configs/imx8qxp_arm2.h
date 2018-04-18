@@ -283,8 +283,7 @@
 
 #define CONFIG_SERIAL_TAG
 
-#ifdef CONFIG_CMD_NAND
-#define CONFIG_NAND_MXS
+#ifdef CONFIG_NAND_MXS
 #define CONFIG_CMD_NAND_TRIMFFS
 
 /* NAND stuff */
@@ -293,10 +292,9 @@
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 
-/* DMA stuff, needed for GPMI/MXS NAND support */
-#define CONFIG_APBH_DMA
-#define CONFIG_APBH_DMA_BURST
-#define CONFIG_APBH_DMA_BURST8
+#ifdef CONFIG_CMD_UBI
+#define CONFIG_MTD_DEVICE
+#endif
 #endif
 
 /* USB Config */

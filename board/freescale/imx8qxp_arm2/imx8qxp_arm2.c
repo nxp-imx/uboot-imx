@@ -60,6 +60,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define UART_PAD_CTRL	((SC_PAD_CONFIG_OUT_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
 						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
 
+#ifdef CONFIG_SPL_BUILD
 #ifdef CONFIG_NAND_MXS
 static iomux_cfg_t gpmi_nand_pads[] = {
 	SC_P_EMMC0_CLK | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
@@ -92,40 +93,15 @@ static void setup_iomux_gpmi_nand(void)
 static void imx8qxp_gpmi_nand_initialize(void)
 {
 	int ret;
-#ifdef CONFIG_SPL_BUILD
-	sc_ipc_t ipcHndl = 0;
 
-	ipcHndl = gd->arch.ipc_channel_handle;
-
-	ret = sc_pm_set_resource_power_mode(ipcHndl, SC_R_DMA_4_CH0, SC_PM_PW_MODE_ON);
-                        if (ret != SC_ERR_NONE)
-                                return;
-
-
-    ret = sc_pm_set_resource_power_mode(ipcHndl, SC_R_NAND, SC_PM_PW_MODE_ON);
-                        if (ret != SC_ERR_NONE)
-                                return;
-#else
-	struct power_domain pd;
-
-	if (!power_domain_lookup_name("conn_dma4_ch0", &pd)) {
-		ret = power_domain_on(&pd);
-		if (ret)
-			printf("conn_dma4_ch0 Power up failed! (error = %d)\n", ret);
-	}
-
-	if (!power_domain_lookup_name("conn_nand", &pd)) {
-		ret = power_domain_on(&pd);
-		if (ret)
-			printf("conn_nand Power up failed! (error = %d)\n", ret);
-	}
-#endif
+	ret = sc_pm_set_resource_power_mode(-1, SC_R_NAND, SC_PM_PW_MODE_ON);
+	if (ret != SC_ERR_NONE)
+		return;
 
 	init_clk_gpmi_nand();
 	setup_iomux_gpmi_nand();
-	mxs_dma_init();
-
 }
+#endif
 #endif
 
 static iomux_cfg_t uart0_pads[] = {
@@ -429,7 +405,6 @@ int board_phy_config(struct phy_device *phydev)
 }
 #endif
 
-
 #define DEBUG_LED   IMX_GPIO_NR(3, 23)
 #define IOEXP_RESET IMX_GPIO_NR(0, 19)
 #define BB_PWR_EN IMX_GPIO_NR(5, 9)
@@ -595,10 +570,6 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 int board_init(void)
 {
 	board_gpio_init();
-
-#ifdef CONFIG_NAND_MXS
-	imx8qxp_gpmi_nand_initialize();
-#endif
 
 	return 0;
 }
