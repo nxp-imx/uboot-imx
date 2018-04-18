@@ -649,7 +649,7 @@ bool is_usb_boot(void)
 #define FSL_SIP_BUILDINFO_GET_COMMITHASH	0x00
 extern uint32_t _end_ofs;
 
-static void set_buildinfo_to_env(uint32_t scfw, char *mkimage, char *atf)
+static void set_buildinfo_to_env(uint32_t scfw, uint32_t secofw, char *mkimage, char *atf)
 {
 	if (!mkimage || !atf)
 		return;
@@ -657,12 +657,14 @@ static void set_buildinfo_to_env(uint32_t scfw, char *mkimage, char *atf)
 	env_set("commit_mkimage", mkimage);
 	env_set("commit_atf", atf);
 	env_set_hex("commit_scfw", (ulong)scfw);
+	env_set_hex("commit_secofw", (ulong)secofw);
 }
 
 static void acquire_buildinfo(void)
 {
 	sc_ipc_t ipc;
 	uint32_t sc_build = 0, sc_commit = 0;
+	uint32_t seco_build = 0, seco_commit = 0;
 	char *mkimage_commit, *temp;
 	uint64_t atf_commit = 0;
 
@@ -673,6 +675,13 @@ static void acquire_buildinfo(void)
 	if (sc_build == 0) {
 		debug("SCFW does not support build info\n");
 		sc_commit = 0; /* Display 0 when the build info is not supported*/
+	}
+
+	/* Get SECO FW build and commit id */
+	sc_misc_seco_build_info(ipc, &seco_build, &seco_commit);
+	if (seco_build == 0) {
+		debug("SECO FW does not support build info\n");
+		seco_commit = 0; /* Display 0 when the build info is not supported*/
 	}
 
 	/* Get imx-mkimage commit id.
@@ -695,9 +704,10 @@ static void acquire_buildinfo(void)
 	}
 
 	/* Set all to env */
-	set_buildinfo_to_env(sc_commit, mkimage_commit, (char *)&atf_commit);
+	set_buildinfo_to_env(sc_commit, seco_commit, mkimage_commit, (char *)&atf_commit);
 
-	printf("\n BuildInfo: \n  - SCFW %08x, IMX-MKIMAGE %s, ATF %s\n  - %s \n\n", sc_commit, mkimage_commit, (char *)&atf_commit, U_BOOT_VERSION);
+	printf("\n BuildInfo: \n  - SCFW %08x, SECO-FW %08x, IMX-MKIMAGE %s, ATF %s\n  - %s \n\n",
+		sc_commit, seco_commit, mkimage_commit, (char *)&atf_commit, U_BOOT_VERSION);
 }
 
 #if defined(CONFIG_ARCH_MISC_INIT)
