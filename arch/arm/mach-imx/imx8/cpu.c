@@ -13,6 +13,9 @@
 #include <dm/lists.h>
 #include <dm/uclass.h>
 #include <errno.h>
+#include <power-domain.h>
+#include <dm/device.h>
+#include <dm/uclass-internal.h>
 #include <thermal.h>
 #include <asm/arch/sci/sci.h>
 #include <power-domain.h>
@@ -793,4 +796,35 @@ u32 get_cpu_rev(void)
 	id = (id & 0x1f) + MXC_SOC_IMX8;  /* Dummy ID for chip */
 
 	return (id << 12) | rev;
+}
+
+static bool check_device_power_off(struct udevice *dev,
+	const char* permanent_on_devices[], int size)
+{
+	int i;
+
+	for (i = 0; i < size; i++) {
+		if (!strcmp(dev->name, permanent_on_devices[i]))
+			return false;
+	}
+
+	return true;
+}
+
+void power_off_pd_devices(const char* permanent_on_devices[], int size)
+{
+	struct udevice *dev;
+	struct power_domain pd;
+
+	for (uclass_find_first_device(UCLASS_POWER_DOMAIN, &dev); dev;
+		uclass_find_next_device(&dev)) {
+
+		if (device_active(dev)) {
+			/* Power off active pd devices except the permanent power on devices */
+			if (check_device_power_off(dev, permanent_on_devices, size)) {
+				pd.dev = dev;
+				power_domain_off(&pd);
+			}
+		}
+	}
 }
