@@ -9,6 +9,8 @@
 #include <errno.h>
 #include <asm/io.h>
 #include <power-domain.h>
+#include <dm/device.h>
+#include <dm/uclass-internal.h>
 #include <asm/mach-imx/sci/sci.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/arch/clock.h>
@@ -1325,3 +1327,34 @@ u64 get_page_table_size(void)
 	return size;
 }
 #endif
+
+static bool check_device_power_off(struct udevice *dev,
+	const char* permanent_on_devices[], int size)
+{
+	int i;
+
+	for (i = 0; i < size; i++) {
+		if (!strcmp(dev->name, permanent_on_devices[i]))
+			return false;
+	}
+
+	return true;
+}
+
+void power_off_pd_devices(const char* permanent_on_devices[], int size)
+{
+	struct udevice *dev;
+	struct power_domain pd;
+
+	for (uclass_find_first_device(UCLASS_POWER_DOMAIN, &dev); dev;
+		uclass_find_next_device(&dev)) {
+
+		if (device_active(dev)) {
+			/* Power off active pd devices except the permanent power on devices */
+			if (check_device_power_off(dev, permanent_on_devices, size)) {
+				pd.dev = dev;
+				power_domain_off(&pd);
+			}
+		}
+	}
+}
