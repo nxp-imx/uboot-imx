@@ -29,6 +29,7 @@
 #include "../common/tcpc.h"
 #include <cdns3-uboot.h>
 #include <asm/arch/lpcg.h>
+#include <bootm.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -442,6 +443,15 @@ int board_init(void)
 #endif
 
 	return 0;
+}
+
+void board_quiesce_devices(void)
+{
+	const char *power_on_devices[] = {
+		"dma_lpuart0",
+	};
+
+	power_off_pd_devices(power_on_devices, ARRAY_SIZE(power_on_devices));
 }
 
 void detail_board_ddr_info(void)
