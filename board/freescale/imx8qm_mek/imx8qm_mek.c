@@ -331,6 +331,15 @@ int board_init(void)
 	return 0;
 }
 
+void board_quiesce_devices(void)
+{
+	const char *power_on_devices[] = {
+		"dma_lpuart0",
+	};
+
+	power_off_pd_devices(power_on_devices, ARRAY_SIZE(power_on_devices));
+}
+
 /*
  * Board specific reset that is system reset.
  */
