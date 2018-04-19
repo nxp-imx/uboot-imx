@@ -707,6 +707,7 @@ static int esdhc_change_pinstate(struct udevice *dev)
 	case UHS_SDR104:
 	case MMC_HS_200:
 	case MMC_HS_400:
+	case MMC_HS_400_ES:
 		ret = pinctrl_select_state(dev, "state_200mhz");
 		break;
 	default:
@@ -777,6 +778,7 @@ static int esdhc_set_timing(struct mmc *mmc)
 		writel(mixctrl, &regs->mixctrl);
 		break;
 	case MMC_HS_400:
+	case MMC_HS_400_ES:
 		mixctrl |= MIX_CTRL_DDREN | MIX_CTRL_HS400_EN;
 		writel(mixctrl, &regs->mixctrl);
 		esdhc_set_strobe_dll(mmc);
@@ -1534,7 +1536,7 @@ static int fsl_esdhc_probe(struct udevice *dev)
 #endif
 
 	if (fdt_get_property(fdt, node, "no-1-8-v", NULL))
-		priv->caps &= ~(UHS_CAPS | MMC_MODE_HS200 | MMC_MODE_HS400);
+		priv->caps &= ~(UHS_CAPS | MMC_MODE_HS200 | MMC_MODE_HS400 | MMC_MODE_HS400_ES);
 
 	/*
 	 * TODO:
@@ -1619,12 +1621,28 @@ static int fsl_esdhc_set_ios(struct udevice *dev)
 	return esdhc_set_ios_common(priv, &plat->mmc);
 }
 
+#if CONFIG_IS_ENABLED(MMC_HS400_ES_SUPPORT)
+static void fsl_esdhc_set_enhanced_strobe(struct udevice *dev)
+{
+	struct fsl_esdhc_priv *priv = dev_get_priv(dev);
+	struct fsl_esdhc *regs = priv->esdhc_regs;
+	u32 m;
+
+	m = readl(&regs->mixctrl);
+	m |= MIX_CTRL_HS400_ES;
+	writel(m, &regs->mixctrl);
+}
+#endif
+
 static const struct dm_mmc_ops fsl_esdhc_ops = {
 	.get_cd		= fsl_esdhc_get_cd,
 	.send_cmd	= fsl_esdhc_send_cmd,
 	.set_ios	= fsl_esdhc_set_ios,
 #ifdef MMC_SUPPORTS_TUNING
 	.execute_tuning	= fsl_esdhc_execute_tuning,
+#endif
+#if CONFIG_IS_ENABLED(MMC_HS400_ES_SUPPORT)
+	.set_enhanced_strobe = fsl_esdhc_set_enhanced_strobe,
 #endif
 };
 #endif
@@ -1637,6 +1655,15 @@ static struct esdhc_soc_data usdhc_imx7d_data = {
 		MMC_MODE_HS_52MHz | MMC_MODE_HS,
 };
 
+static struct esdhc_soc_data usdhc_imx8qm_data = {
+	.flags = ESDHC_FLAG_USDHC | ESDHC_FLAG_STD_TUNING
+			| ESDHC_FLAG_HAVE_CAP1 | ESDHC_FLAG_HS200
+			| ESDHC_FLAG_HS400 |ESDHC_FLAG_HS400_ES,
+	.caps = UHS_CAPS | MMC_MODE_HS400 | MMC_MODE_HS400_ES |
+		MMC_MODE_HS200 | MMC_MODE_DDR_52MHz |
+		MMC_MODE_HS_52MHz | MMC_MODE_HS,
+};
+
 static const struct udevice_id fsl_esdhc_ids[] = {
 	{ .compatible = "fsl,imx53-esdhc", },
 	{ .compatible = "fsl,imx6ul-usdhc", },
@@ -1645,6 +1672,7 @@ static const struct udevice_id fsl_esdhc_ids[] = {
 	{ .compatible = "fsl,imx6q-usdhc", },
 	{ .compatible = "fsl,imx7d-usdhc", .data = (ulong)&usdhc_imx7d_data,},
 	{ .compatible = "fsl,imx7ulp-usdhc", },
+	{ .compatible = "fsl,imx8qm-usdhc", .data = (ulong)&usdhc_imx8qm_data,},
 	{ .compatible = "fsl,esdhc", },
 	{ /* sentinel */ }
 };
