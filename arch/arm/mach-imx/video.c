@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017-2018 NXP
  *
  */
 
@@ -41,6 +42,9 @@ int board_video_skip(void)
 				    displays[i].pixfmt);
 #elif defined(CONFIG_VIDEO_IMXDPUV1)
 		ret = imxdpuv1_fb_init(&displays[i].mode, displays[i].bus,
+					displays[i].pixfmt);
+#elif defined(CONFIG_VIDEO_IMXDCSS)
+		ret = imx8m_fb_init(&displays[i].mode, displays[i].bus,
 					displays[i].pixfmt);
 #elif defined(CONFIG_VIDEO_MXS)
 		ret = mxs_lcd_panel_setup(displays[i].mode,
