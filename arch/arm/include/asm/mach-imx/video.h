@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -15,6 +16,8 @@
 #include <asm/arch/video_common.h>
 #elif defined(CONFIG_VIDEO_MXS)
 #include <mxsfb.h>
+#elif defined(CONFIG_VIDEO_IMXDCSS)
+#include <asm/arch/video_common.h>
 #endif
 
 struct display_info_t {
