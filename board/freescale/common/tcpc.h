@@ -417,6 +417,7 @@ struct tcpc_port_config {
 	uint32_t max_snk_ma;
 	uint32_t max_snk_mw;
 	uint32_t op_snk_mv;
+	bool disable_pd;
 };
 
 struct tcpc_port {
@@ -443,6 +444,7 @@ int tcpc_setup_dfp_mode(struct tcpc_port *port);
 int tcpc_setup_ufp_mode(struct tcpc_port *port);
 int tcpc_disable_src_vbus(struct tcpc_port *port);
 int tcpc_init(struct tcpc_port *port, struct tcpc_port_config config, ss_mux_sel ss_sel_func);
+bool tcpc_pd_sink_check_charging(struct tcpc_port *port);
 void tcpc_print_log(struct tcpc_port *port);
 
 #endif /* __TCPCI_H */
