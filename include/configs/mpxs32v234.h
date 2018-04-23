@@ -2,7 +2,7 @@
 /*
  * (C) Copyright 2015-2016 Freescale Semiconductor, Inc.
  * (C) Copyright 2017 MicroSys Electronics GmbH
- * Copyright 2020 NXP
+ * Copyright 2018-2020 NXP
  */
 
 /*
@@ -17,6 +17,8 @@
  */
 
 #define CONFIG_MPXS32V234_R2
+
+#define CONFIG_DDR_INIT_DELAY 100
 
 /* Config DCU */
 #define CONFIG_FSL_DCU_FB
