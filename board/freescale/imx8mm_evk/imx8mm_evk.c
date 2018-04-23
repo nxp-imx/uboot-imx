@@ -23,6 +23,7 @@
 #include <asm/mach-imx/dma.h>
 #include <power/pmic.h>
 #include <power/bd71837.h>
+#include "../common/tcpc.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -192,8 +193,117 @@ int board_phy_config(struct phy_device *phydev)
 }
 #endif
 
+#ifdef CONFIG_USB_TCPC
+struct tcpc_port port1;
+struct tcpc_port port2;
+
+struct tcpc_port_config port1_config = {
+	.i2c_bus = 1, /*i2c2*/
+	.addr = 0x50,
+	.port_type = TYPEC_PORT_UFP,
+	.max_snk_mv = 5000,
+	.max_snk_ma = 3000,
+	.max_snk_mw = 40000,
+	.op_snk_mv = 9000,
+};
+
+struct tcpc_port_config port2_config = {
+	.i2c_bus = 1, /*i2c2*/
+	.addr = 0x52,
+	.port_type = TYPEC_PORT_UFP,
+	.max_snk_mv = 5000,
+	.max_snk_ma = 3000,
+	.max_snk_mw = 40000,
+	.op_snk_mv = 9000,
+};
+
+static int setup_pd_switch(uint8_t i2c_bus, uint8_t addr)
+{
+	struct udevice *bus;
+	struct udevice *i2c_dev = NULL;
+	int ret;
+	uint8_t valb;
+
+	ret = uclass_get_device_by_seq(UCLASS_I2C, i2c_bus, &bus);
+	if (ret) {
+		printf("%s: Can't find bus\n", __func__);
+		return -EINVAL;
+	}
+
+	ret = dm_i2c_probe(bus, addr, 0, &i2c_dev);
+	if (ret) {
+		printf("%s: Can't find device id=0x%x\n",
+			__func__, addr);
+		return -ENODEV;
+	}
+
+	ret = dm_i2c_read(i2c_dev, 0xB, &valb, 1);
+	if (ret) {
+		printf("%s dm_i2c_read failed, err %d\n", __func__, ret);
+		return -EIO;
+	}
+	valb |= 0x4; /* Set DB_EXIT to exit dead battery mode */
+	ret = dm_i2c_write(i2c_dev, 0xB, (const uint8_t *)&valb, 1);
+	if (ret) {
+		printf("%s dm_i2c_write failed, err %d\n", __func__, ret);
+		return -EIO;
+	}
+
+	/* Set OVP threshold to 23V */
+	valb = 0x6;
+	ret = dm_i2c_write(i2c_dev, 0x8, (const uint8_t *)&valb, 1);
+	if (ret) {
+		printf("%s dm_i2c_write failed, err %d\n", __func__, ret);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+static int setup_typec(void)
+{
+	int ret;
+
+	ret = setup_pd_switch(1, 0x73);
+	if (ret)
+		printf("%s: NX20P3484 setup 0x%x failed, err=%d\n",
+		       __func__, 0x73, ret);
+
+	ret = setup_pd_switch(1, 0x72);
+	if (ret)
+		printf("%s: NX20P3484 setup 0x%x failed, err=%d\n",
+		       __func__, 0x72, ret);
+
+	ret = tcpc_init(&port2, port2_config, NULL);
+	if (ret) {
+		printf("%s: tcpc port2 init failed, err=%d\n",
+		       __func__, ret);
+	} else if (tcpc_pd_sink_check_charging(&port2)) {
+		/* Disable PD for USB1, since USB2 has priority */
+		port1_config.disable_pd = true;
+		printf("Power supply on USB2\n");
+	}
+
+	ret = tcpc_init(&port1, port1_config, NULL);
+	if (ret) {
+		printf("%s: tcpc port1 init failed, err=%d\n",
+		       __func__, ret);
+	} else {
+		if (!port1_config.disable_pd)
+			printf("Power supply on USB1\n");
+		return ret;
+	}
+
+	return ret;
+}
+#endif
+
 int board_init(void)
 {
+#ifdef CONFIG_USB_TCPC
+	setup_typec();
+#endif
+
 #ifdef CONFIG_MXC_SPI
 	setup_spi();
 #endif
