@@ -14,8 +14,6 @@
 #define tcpc_debug_log(port, fmt, args...)
 #endif
 
-static bool tcpc_pd_sink_check_charging(struct tcpc_port *port);
-
 static int tcpc_log(struct tcpc_port *port, const char *fmt, ...)
 {
 	va_list args;
@@ -758,7 +756,7 @@ static void tcpc_pd_sink_process(struct tcpc_port *port)
 	}
 }
 
-static bool tcpc_pd_sink_check_charging(struct tcpc_port *port)
+bool tcpc_pd_sink_check_charging(struct tcpc_port *port)
 {
 	uint8_t valb;
 	int err;
@@ -939,10 +937,11 @@ int tcpc_init(struct tcpc_port *port, struct tcpc_port_config config, ss_mux_sel
 		return -EIO;
 	}
 
-	tcpc_log(port, "TCPC:  Vendor ID [0x%x], Product ID [0x%x]\n", vid, pid);
+	tcpc_log(port, "TCPC:  Vendor ID [0x%x], Product ID [0x%x], Addr [I2C%u 0x%x]\n",
+		vid, pid, port->cfg.i2c_bus, port->cfg.addr);
 
-	if (port->cfg.port_type == TYPEC_PORT_UFP
-		|| port->cfg.port_type == TYPEC_PORT_DRP)
+	if (!port->cfg.disable_pd && (port->cfg.port_type == TYPEC_PORT_UFP
+		|| port->cfg.port_type == TYPEC_PORT_DRP))
 		tcpc_pd_sink_init(port);
 
 	tcpc_clear_alert(port, 0xffff);
