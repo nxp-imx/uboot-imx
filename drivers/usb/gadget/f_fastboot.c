@@ -37,6 +37,7 @@
 extern int armv7_init_nonsec(void);
 extern void trusty_os_init(void);
 #include <trusty/libtipc.h>
+extern bool tos_flashed;
 #endif
 
 #ifdef CONFIG_FASTBOOT_FLASH_NAND_DEV
@@ -1695,6 +1696,13 @@ void tee_setup(void)
 	}
 	mmc_switch_part(mmc, FASTBOOT_MMC_USER_PARTITION_ID);
 
+	tos_flashed = false;
+	if(!valid_tos()) {
+		printf("TOS not flashed! Will enter TOS recovery mode. Everything will be wiped!\n");
+		fastboot_wipe_all();
+		run_command("fastboot 0", 0);
+		goto fail;
+	}
 #ifdef NON_SECURE_FASTBOOT
 	armv7_init_nonsec();
 	trusty_os_init();
@@ -3298,6 +3306,11 @@ static int partition_table_valid(void)
 {
 	int status, mmc_no;
 	struct blk_desc *dev_desc;
+#ifdef CONFIG_IMX_TRUSTY_OS
+	//Prevent other partition accessing when no TOS flashed.
+	if (!tos_flashed)
+		return 0;
+#endif
 	disk_partition_t info;
 	mmc_no = fastboot_devinfo.dev_id;
 	dev_desc = blk_get_dev("mmc", mmc_no);

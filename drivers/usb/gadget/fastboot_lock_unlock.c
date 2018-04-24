@@ -39,6 +39,7 @@
 #include <fsl_fastboot.h>
 #ifdef CONFIG_IMX_TRUSTY_OS
 #include <trusty/libtipc.h>
+#include <asm/imx-common/hab.h>
 #endif
 
 #ifdef FASTBOOT_ENCRYPT_LOCK
@@ -52,6 +53,68 @@
 #endif
 
 int fastboot_flash_find_index(const char *name);
+
+#ifdef CONFIG_IMX_TRUSTY_OS
+#define HAB_TAG_IVT       0xD1
+#define IVT_HDR_LEN       0x20
+#define HAB_MAJ_VER       0x40
+#define HAB_MAJ_MASK      0xF0
+
+bool tos_flashed;
+
+static bool tos_ivt_check(ulong start_addr, int ivt_offset) {
+	const struct hab_ivt *ivt_initial = NULL;
+	const uint8_t *start = (const uint8_t *)start_addr;
+
+	if (start_addr & 0x3) {
+		puts("Error: tos's start address is not 4 byte aligned\n");
+		return false;
+	}
+
+	ivt_initial = (const struct hab_ivt *)(start + ivt_offset);
+
+	const struct hab_hdr *ivt_hdr = &ivt_initial->hdr;
+
+	if ((ivt_hdr->tag == HAB_TAG_IVT && \
+		((ivt_hdr->len[0] << 8) + ivt_hdr->len[1]) == IVT_HDR_LEN && \
+		(ivt_hdr->par & HAB_MAJ_MASK) == HAB_MAJ_VER) && \
+		(ivt_initial->entry != 0x0) && \
+		(ivt_initial->reserved1 == 0x0) && \
+		(ivt_initial->self == (uint32_t)ivt_initial) && \
+		(ivt_initial->csf != 0x0) && \
+		(ivt_initial->reserved2 == 0x0)) {
+		if (ivt_initial->dcd != 0x0)
+			return false;
+		else
+			return true;
+	}
+
+	return false;
+}
+
+bool valid_tos() {
+	/*
+	 * If enabled SECURE_BOOT then use HAB to verify tos.
+	 * Or check the IVT only.
+	 */
+	bool valid = false;
+#ifdef CONFIG_SECURE_BOOT
+	if (is_hab_enabled()) {
+		valid = authenticate_image(TRUSTY_OS_ENTRY, TRUSTY_OS_PADDED_SZ);
+	} else
+#endif
+	valid = tos_ivt_check(TRUSTY_OS_ENTRY, TRUSTY_OS_PADDED_SZ);
+
+	if (valid) {
+		tos_flashed = true;
+		return true;
+	} else {
+		tos_flashed = false;
+		return false;
+	}
+}
+
+#endif
 
 #if !defined(FASTBOOT_ENCRYPT_LOCK) || defined(NON_SECURE_FASTBOOT)
 
@@ -222,6 +285,13 @@ static FbLockState g_lockstat = FASTBOOT_UNLOCK;
 FbLockState fastboot_get_lock_stat(void) {
 	uint8_t l_status;
 	int ret;
+	/*
+	 * If Trusty OS not flashed, then must return
+	 * unlock status to make device been able
+	 * to flash Trusty OS binary.
+	 */
+	if (!tos_flashed)
+		return FASTBOOT_UNLOCK;
 	ret = trusty_read_lock_state(&l_status);
 	if (ret < 0)
 		return g_lockstat;
@@ -232,6 +302,12 @@ FbLockState fastboot_get_lock_stat(void) {
 
 int fastboot_set_lock_stat(FbLockState lock) {
 	int ret;
+	/*
+	 * If Trusty OS not flashed, we must prevent set lock
+	 * status. Due the Trusty IPC won't work here.
+	 */
+	if (!tos_flashed)
+		return 0;
 	ret = trusty_write_lock_state(lock);
 	if (ret < 0) {
 		printf("cannot set lock status due Trusty return %d\n", ret);
@@ -492,4 +568,28 @@ int fastboot_wipe_data_partition(void)
 	mdelay(2000);
 
 	return 0;
+}
+
+void fastboot_wipe_all(void) {
+	struct blk_desc *fs_dev_desc;
+	disk_partition_t fs_partition;
+	int status;
+	int mmc_id;
+	mmc_id = fastboot_flash_find_index(FASTBOOT_PARTITION_GPT);
+	if (mmc_id < 0) {
+		printf("%s: error in get mmc part\n", __FUNCTION__);
+		return;
+	}
+	status = blk_get_device_part_str(FSL_FASTBOOT_FB_DEV,
+		get_mmc_part(mmc_id), &fs_dev_desc, &fs_partition, 1);
+	if (status < 0) {
+		printf("error in get device partition for wipe user partition\n");
+		return;
+	}
+	status = blk_derase(fs_dev_desc, fs_partition.start , fs_partition.size );
+	if (status != fs_partition.size ) {
+		printf("erase not complete\n");
+		return;
+	}
+	printf("fastboot wiped all.\n");
 }
