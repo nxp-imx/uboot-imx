@@ -63,9 +63,12 @@ FbLockState fastboot_get_lock_stat(void);
 int fastboot_set_lock_stat(FbLockState lock);
 
 int fastboot_wipe_data_partition(void);
+void fastboot_wipe_all(void);
 
 FbLockEnableResult fastboot_lock_enable(void);
 void set_fastboot_lock_disable(void);
 
 int display_lock(FbLockState lock, int verify);
+
+bool valid_tos(void);
 #endif

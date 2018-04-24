@@ -174,12 +174,14 @@ int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif
 #ifdef CONFIG_ANDROID_BOOT_IMAGE
 	case IMAGE_FORMAT_ANDROID:
-		/* Do this authentication in boota command */
+	default:
+		/* Android use AVB verify. Also here we cannot get IMAGE_FORMAT_ANDROID */
 		break;
-#endif
+#else
 	default:
 		printf("Not valid image format for Authentication, Please check\n");
 		return 1;
+#endif /* CONFIG_ANDROID_BOOT_IMAGE */
 	}
 #endif
 #endif

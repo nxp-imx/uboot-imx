@@ -185,6 +185,7 @@ typedef void hapi_clock_init_t(void);
 #define HAB_MAJ_MASK      0xF0
 /* ----------- end of HAB API updates ------------*/
 
+bool is_hab_enabled(void);
 uint32_t authenticate_image(uint32_t ddr_start, uint32_t image_size);
 
 #endif

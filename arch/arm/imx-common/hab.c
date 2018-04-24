@@ -134,7 +134,6 @@ DECLARE_GLOBAL_DATA_PTR;
 static volatile gd_t *gd_save;
 #endif
 
-static bool is_hab_enabled(void);
 
 static inline void save_gd(void)
 {
@@ -542,7 +541,7 @@ U_BOOT_CMD(
 
 #endif /* !defined(CONFIG_SPL_BUILD) */
 
-static bool is_hab_enabled(void)
+bool is_hab_enabled(void)
 {
 	struct imx_sec_config_fuse_t *fuse =
 		(struct imx_sec_config_fuse_t *)&imx_sec_config_fuse;
