@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012-2016, Freescale Semiconductor, Inc.
  * All rights reserved.
+ * Copyright 2018 NXP
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -29,68 +30,84 @@
  */
 
 #include <common.h>
+#include <malloc.h>
+#include <memalign.h>
 #include <asm/io.h>
+#ifndef CONFIG_ARCH_MX7ULP
 #include <asm/arch/crm_regs.h>
+#else
+#include <asm/arch/pcc.h>
+#endif /* CONFIG_ARCH_MX7ULP */
 #include "fsl_caam_internal.h"
+#include "fsl/desc_constr.h"
 #include <fsl_caam.h>
 #include <cpu_func.h>
 
-/*---------- Global variables ----------*/
-/* Input job ring - single entry input ring */
-uint32_t g_input_ring[JOB_RING_ENTRIES] = {0};
+DECLARE_GLOBAL_DATA_PTR;
 
+static void rng_init(void);
+static void caam_clock_enable(void);
+static int do_cfg_jrqueue(void);
+static int do_job(u32 *desc);
+static int jr_reset(void);
 
-/* Output job ring - single entry output ring (consists of two words) */
-uint32_t g_output_ring[2*JOB_RING_ENTRIES] = {0, 0};
-
-uint32_t decap_dsc[] =
-{
-	DECAP_BLOB_DESC1,
-	DECAP_BLOB_DESC2,
-	DECAP_BLOB_DESC3,
-	DECAP_BLOB_DESC4,
-	DECAP_BLOB_DESC5,
-	DECAP_BLOB_DESC6,
-	DECAP_BLOB_DESC7,
-	DECAP_BLOB_DESC8,
-	DECAP_BLOB_DESC9
+/*
+ * Structures
+ */
+/* Definition of input ring object */
+struct inring_entry {
+	u32 desc; /* Pointer to input descriptor */
 };
 
-uint32_t encap_dsc[] =
-{
-	ENCAP_BLOB_DESC1,
-	ENCAP_BLOB_DESC2,
-	ENCAP_BLOB_DESC3,
-	ENCAP_BLOB_DESC4,
-	ENCAP_BLOB_DESC5,
-	ENCAP_BLOB_DESC6,
-	ENCAP_BLOB_DESC7,
-	ENCAP_BLOB_DESC8,
-	ENCAP_BLOB_DESC9
+/* Definition of output ring object */
+struct outring_entry {
+	u32 desc;   /* Pointer to output descriptor */
+	u32 status; /* Status of the Job Ring       */
 };
 
-uint32_t hwrng_dsc[6] = {0};
-uint32_t rng_inst_dsc[] =
-{
-	RNG_INST_DESC1,
-	RNG_INST_DESC2,
-	RNG_INST_DESC3,
-	RNG_INST_DESC4,
-	RNG_INST_DESC5,
-	RNG_INST_DESC6,
-	RNG_INST_DESC7,
-	RNG_INST_DESC8,
-	RNG_INST_DESC9
+/* Main job ring data structure */
+struct jr_data_st {
+	struct inring_entry  *inrings;
+	struct outring_entry *outrings;
+	u32 status;  /* Ring buffers init status */
+	u32 *desc;   /* Pointer to output descriptor */
+	u32 raw_addr[DESC_MAX_SIZE * 2];
 };
 
-static uint8_t skeymod[] = {
+/*
+ * Global variables
+ */
+#if defined(CONFIG_SPL_BUILD)
+static struct jr_data_st g_jrdata = {0};
+#else
+static struct jr_data_st g_jrdata = {0, 0, 0xFFFFFFFF};
+#endif
+
+static u8 skeymod[] = {
 	0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
 	0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
 };
 
+/*
+ * Local functions
+ */
+static void dump_error(void)
+{
+	int i;
 
-/* arm v7 need 64 align */
-#define ALIGN_MASK 0xffffffc0
+	debug("Dump CAAM Error\n");
+	debug("MCFGR 0x%08X\n", __raw_readl(CAAM_MCFGR));
+	debug("FAR  0x%08X\n", __raw_readl(CAAM_FAR));
+	debug("FAMR 0x%08X\n", __raw_readl(CAAM_FAMR));
+	debug("FADR 0x%08X\n", __raw_readl(CAAM_FADR));
+	debug("CSTA 0x%08X\n", __raw_readl(CAAM_STA));
+	debug("RTMCTL 0x%X\n", __raw_readl(CAAM_RTMCTL));
+	debug("RTSTATUS 0x%X\n", __raw_readl(CAAM_RTSTATUS));
+	debug("RDSTA 0x%X\n", __raw_readl(CAAM_RDSTA));
+
+	for (i = 0; i < desc_len(g_jrdata.desc); i++)
+		debug("desc[%d]: 0x%08x\n", i, g_jrdata.desc[i]);
+}
 
 /*!
  * Secure memory run command.
@@ -98,13 +115,13 @@ static uint8_t skeymod[] = {
  * @param   sec_mem_cmd  Secure memory command register
  * @return  cmd_status  Secure memory command status register
  */
-uint32_t secmem_set_cmd_1(uint32_t sec_mem_cmd)
+u32 secmem_set_cmd_1(u32 sec_mem_cmd)
 {
-	uint32_t temp_reg;
+	u32 temp_reg;
 	__raw_writel(sec_mem_cmd, CAAM_SMCJR0);
 	do {
-	temp_reg = __raw_readl(CAAM_SMCSJR0);
-	} while(temp_reg & CMD_COMPLETE);
+		temp_reg = __raw_readl(CAAM_SMCSJR0);
+	} while (temp_reg & CMD_COMPLETE);
 
 	return temp_reg;
 }
@@ -119,77 +136,33 @@ uint32_t secmem_set_cmd_1(uint32_t sec_mem_cmd)
  *
  * @return  SUCCESS or ERROR_XXX
  */
-uint32_t caam_decap_blob(uint32_t plain_text, uint32_t blob_addr, uint32_t size)
+u32 caam_decap_blob(u32 plain_text, u32 blob_addr, u32 size)
 {
-	uint32_t ret = SUCCESS;
+	u32 ret = SUCCESS;
+	u32 key_sz = sizeof(skeymod);
+	u32 *decap_desc = g_jrdata.desc;
 
-	/* Buffer that holds blob */
+	/* prepare job descriptor */
+	init_job_desc(decap_desc, 0);
+	append_load(decap_desc, PTR2CAAMDMA(skeymod), key_sz,
+		    LDST_CLASS_2_CCB | LDST_SRCDST_BYTE_KEY);
+	append_seq_in_ptr_intlen(decap_desc, blob_addr, size + 48, 0);
+	append_seq_out_ptr_intlen(decap_desc, plain_text, size, 0);
+	append_operation(decap_desc, OP_TYPE_DECAP_PROTOCOL | OP_PCLID_BLOB);
 
+	flush_dcache_range((uintptr_t)blob_addr & ALIGN_MASK,
+			   ((uintptr_t)blob_addr & ALIGN_MASK)
+			    + ROUND(2 * size, ARCH_DMA_MINALIGN));
+	flush_dcache_range((uintptr_t)plain_text & ALIGN_MASK,
+			   (plain_text & ALIGN_MASK)
+			   + ROUND(2 * size, ARCH_DMA_MINALIGN));
 
-	/* TODO: Fix Hardcoded Descriptor */
-	decap_dsc[0] = (uint32_t)0xB0800008;
-	decap_dsc[1] = (uint32_t)0x14400010;
-	decap_dsc[2] = (uint32_t)skeymod;
-	decap_dsc[3] = (uint32_t)0xF0000000 | (0x0000ffff & (size+48) );
-	decap_dsc[4] = blob_addr;
-	decap_dsc[5] = (uint32_t)0xF8000000 | (0x0000ffff & (size));
-	decap_dsc[6] = (uint32_t)(uint8_t*)plain_text;
-	decap_dsc[7] = (uint32_t)0x860D0000;
+	/* Run descriptor with result written to blob buffer */
+	ret = do_job(decap_desc);
 
-/* uncomment when using descriptor from "fsl_caam_internal.h"
-   does not use key modifier. */
-
-    /* Run descriptor with result written to blob buffer */
-    /* Add job to input ring */
-	g_input_ring[0] = (uint32_t)decap_dsc;
-
-	flush_dcache_range((uint32_t)blob_addr & ALIGN_MASK,
-			   (((uint32_t)blob_addr + 2 * size + 64) & ALIGN_MASK));
-	flush_dcache_range((uint32_t)plain_text & ALIGN_MASK,
-			   (((uint32_t)plain_text + 2 * size + 64) & ALIGN_MASK));
-	flush_dcache_range((uint32_t)decap_dsc & ALIGN_MASK,
-			   ((uint32_t)decap_dsc & ALIGN_MASK) + 128);
-	flush_dcache_range((uint32_t)g_input_ring & ALIGN_MASK,
-			   ((uint32_t)g_input_ring & ALIGN_MASK) + 128);
-
-	invalidate_dcache_range((uint32_t)decap_dsc & ALIGN_MASK,
-			   ((uint32_t)decap_dsc & ALIGN_MASK) + 128);
-	invalidate_dcache_range((uint32_t)g_input_ring & ALIGN_MASK,
-			   ((uint32_t)g_input_ring & ALIGN_MASK) + 128);
-	invalidate_dcache_range((uint32_t)blob_addr & ALIGN_MASK,
-			   (((uint32_t)blob_addr + 2 * size + 64) & ALIGN_MASK));
-	invalidate_dcache_range((uint32_t)plain_text & ALIGN_MASK,
-				(((uint32_t)plain_text + 2 * size + 64) & ALIGN_MASK));
-    /* Increment jobs added */
-	__raw_writel(1, CAAM_IRJAR0);
-
-    /* Wait for job ring to complete the job: 1 completed job expected */
-	while(__raw_readl(CAAM_ORSFR0) != 1);
-
-	// TODO: check if Secure memory is cacheable.
-	flush_dcache_range((uint32_t)g_output_ring & ALIGN_MASK,
-				((uint32_t)g_output_ring & ALIGN_MASK) + 128);
-	invalidate_dcache_range((uint32_t)g_output_ring & ALIGN_MASK,
-				((uint32_t)g_output_ring & ALIGN_MASK) + 128);
-	/* check that descriptor address is the one expected in the output ring */
-	if(g_output_ring[0] == (uint32_t)decap_dsc)
-	{
-		/* check if any error is reported in the output ring */
-		if ((g_output_ring[1] & JOB_RING_STS) != 0)
-		{
-			printf("Error: blob decap job completed with errors 0x%X\n",
-						g_output_ring[1]);
-		}
+	if (ret != SUCCESS) {
+		printf("Error: blob decap job failed 0x%x\n", ret);
 	}
-	else
-	{
-		printf("Error: blob decap job output ring descriptor address does" \
-	                " not match\n");
-	}
-
-
-	/* Remove job from Job Ring Output Queue */
-	__raw_writel(1, CAAM_ORJRR0);
 
 	return ret;
 }
@@ -202,129 +175,71 @@ uint32_t caam_decap_blob(uint32_t plain_text, uint32_t blob_addr, uint32_t size)
  *
  * @return  SUCCESS or ERROR_XXX
  */
-uint32_t caam_gen_blob(uint32_t plain_data_addr, uint32_t blob_addr, uint32_t size)
+u32 caam_gen_blob(u32 plain_data_addr, u32 blob_addr, u32 size)
 {
-	uint32_t ret = SUCCESS;
-
+	u32 ret = SUCCESS;
+	u32 key_sz = sizeof(skeymod);
+	u32 *encap_desc = g_jrdata.desc;
 	/* Buffer to hold the resulting blob */
-	uint8_t *blob = (uint8_t *)blob_addr;
+	u8 *blob = (u8 *)CAAMDMA2PTR(blob_addr);
 
 	/* initialize the blob array */
 	memset(blob,0,size);
 
+	/* prepare job descriptor */
+	init_job_desc(encap_desc, 0);
+	append_load(encap_desc, PTR2CAAMDMA(skeymod), key_sz,
+		    LDST_CLASS_2_CCB | LDST_SRCDST_BYTE_KEY);
+	append_seq_in_ptr_intlen(encap_desc, plain_data_addr, size, 0);
+	append_seq_out_ptr_intlen(encap_desc, PTR2CAAMDMA(blob), size + 48, 0);
+	append_operation(encap_desc, OP_TYPE_ENCAP_PROTOCOL | OP_PCLID_BLOB);
 
-    /* TODO: Fix Hardcoded Descriptor */
-	encap_dsc[0] = (uint32_t)0xB0800008;
-	encap_dsc[1] = (uint32_t)0x14400010;
-	encap_dsc[2] = (uint32_t)skeymod;
-	encap_dsc[3] = (uint32_t)0xF0000000 | (0x0000ffff & (size));
-	encap_dsc[4] = (uint32_t)plain_data_addr;
-	encap_dsc[5] = (uint32_t)0xF8000000 | (0x0000ffff & (size+48));
-	encap_dsc[6] = (uint32_t)blob;
-	encap_dsc[7] = (uint32_t)0x870D0000;
+	flush_dcache_range((uintptr_t)plain_data_addr & ALIGN_MASK,
+			   (plain_data_addr & ALIGN_MASK)
+			   + ROUND(2 * size, ARCH_DMA_MINALIGN));
+	flush_dcache_range((uintptr_t)blob & ALIGN_MASK,
+			   ((uintptr_t)blob & ALIGN_MASK)
+			   + ROUND(2 * size, ARCH_DMA_MINALIGN));
 
-    /* Run descriptor with result written to blob buffer */
-    /* Add job to input ring */
-	g_input_ring[0] = (uint32_t)encap_dsc;
+	ret = do_job(encap_desc);
 
-	flush_dcache_range((uint32_t)plain_data_addr & ALIGN_MASK,
-			   (((uint32_t)plain_data_addr + 2 * size + 64) & ALIGN_MASK));
-	flush_dcache_range((uint32_t)encap_dsc & ALIGN_MASK,
-			   ((uint32_t)encap_dsc & ALIGN_MASK) + 128);
-	flush_dcache_range((uint32_t)blob & ALIGN_MASK,
-			   (((uint32_t)blob + 2 * size + 64) & ALIGN_MASK));
-	flush_dcache_range((uint32_t)g_input_ring & ALIGN_MASK,
-			   ((uint32_t)g_input_ring & ALIGN_MASK) + 128);
-
-	invalidate_dcache_range((uint32_t)blob & ALIGN_MASK,
-			   (((uint32_t)blob + 2 * size + 64) & ALIGN_MASK));
-	/* Increment jobs added */
-	__raw_writel(1, CAAM_IRJAR0);
-
-    /* Wait for job ring to complete the job: 1 completed job expected */
-	while(__raw_readl(CAAM_ORSFR0) != 1);
-
-    // flush cache
-	flush_dcache_range((uint32_t)g_output_ring & ALIGN_MASK,
-				((uint32_t)g_output_ring & ALIGN_MASK) + 128);
-	/* check that descriptor address is the one expected in the output ring */
-	if(g_output_ring[0] == (uint32_t)encap_dsc)
-	{
-	/* check if any error is reported in the output ring */
-		if ((g_output_ring[1] & JOB_RING_STS) != 0)
-		{
-			printf("Error: blob encap job completed with errors 0x%X\n",
-			      g_output_ring[1]);
-		}
+	if (ret != SUCCESS) {
+		printf("Error: blob encap job failed 0x%x\n", ret);
 	}
-	else
-	{
-	printf("Error: blob encap job output ring descriptor address does" \
-		" not match\n");
-	}
-
-	/* Remove job from Job Ring Output Queue */
-	__raw_writel(1, CAAM_ORJRR0);
 
 	return ret;
 }
 
-uint32_t caam_hwrng(uint8_t *output_ptr, uint32_t output_len) {
-	uint32_t ret = SUCCESS;
-
+u32 caam_hwrng(u8 *output_ptr, u32 output_len)
+{
+	u32 ret = SUCCESS;
+	u32 *hwrng_desc = g_jrdata.desc;
 	/* Buffer to hold the resulting output*/
-	uint8_t *output = (uint8_t *)output_ptr;
+	u8 *output = (u8 *)output_ptr;
 
 	/* initialize the output array */
 	memset(output,0,output_len);
 
-	int n = 0;
-	hwrng_dsc[n++] = (uint32_t)0xB0800004;
-	hwrng_dsc[n++] = (uint32_t)0x82500000;
-	hwrng_dsc[n++] = (uint32_t)0x60340000| (0x0000ffff & output_len);
-	hwrng_dsc[n++] = (uint32_t)output;
+	/* prepare job descriptor */
+	init_job_desc(hwrng_desc, 0);
+	append_operation(hwrng_desc, OP_ALG_ALGSEL_RNG | OP_TYPE_CLASS1_ALG);
+	append_fifo_store(hwrng_desc, PTR2CAAMDMA(output),
+			  output_len, FIFOST_TYPE_RNGSTORE);
 
-	/* Run descriptor with result written to blob buffer */
-	/* Add job to input ring */
-	// flush cache
-	g_input_ring[0] = (uint32_t)hwrng_dsc;
+	/* flush cache */
+	flush_dcache_range((uintptr_t)hwrng_desc & ALIGN_MASK,
+			   ((uintptr_t)hwrng_desc & ALIGN_MASK)
+			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
 
-	flush_dcache_range((uint32_t)hwrng_dsc & ALIGN_MASK,
-			   ((uint32_t)hwrng_dsc & ALIGN_MASK) + 128);
-	flush_dcache_range((uint32_t)g_input_ring & ALIGN_MASK,
-			   ((uint32_t)g_input_ring & ALIGN_MASK) + 128);
-	invalidate_dcache_range((uint32_t)hwrng_dsc & ALIGN_MASK,
-			   ((uint32_t)hwrng_dsc & ALIGN_MASK) + 128);
-	invalidate_dcache_range((uint32_t)g_input_ring & ALIGN_MASK,
-			   ((uint32_t)g_input_ring & ALIGN_MASK) + 128);
-	invalidate_dcache_range((uint32_t)output & ALIGN_MASK,
-			   (((uint32_t)output + 2 * output_len + 64) & ALIGN_MASK));
-	/* Increment jobs added */
-	__raw_writel(1, CAAM_IRJAR0);
+	ret = do_job(hwrng_desc);
 
-	/* Wait for job ring to complete the job: 1 completed job expected */
-	size_t timeout = 100000;
-	while(__raw_readl(CAAM_ORSFR0) != 1 && timeout--);
-	flush_dcache_range((uint32_t)g_output_ring & ALIGN_MASK,
-				((uint32_t)g_output_ring & ALIGN_MASK) + 128);
+	flush_dcache_range((uintptr_t)output & ALIGN_MASK,
+			   ((uintptr_t)output & ALIGN_MASK)
+			   + ROUND(2 * output_len, ARCH_DMA_MINALIGN));
 
-	/* check that descriptor address is the one expected in the output ring */
-	if(g_output_ring[0] == (uint32_t)hwrng_dsc) {
-	/* check if any error is reported in the output ring */
-		if ((g_output_ring[1] & JOB_RING_STS) != 0) {
-			printf("Error: RNG job completed with errors 0x%X\n",
-			g_output_ring[1]);
-			ret = -1;
-		}
-	} else {
-		printf("Error: RNG output ring descriptor address does" \
-			" not match\n");
-		ret = -1;
-
+	if (ret != SUCCESS) {
+		printf("Error: RNG generate failed 0x%x\n", ret);
 	}
-
-	/* Remove job from Job Ring Output Queue */
-	__raw_writel(1, CAAM_ORJRR0);
 
 	return ret;
 }
@@ -335,112 +250,495 @@ uint32_t caam_hwrng(uint8_t *output_ptr, uint32_t output_len) {
  */
 void caam_open(void)
 {
-	uint32_t temp_reg;
-	//uint32_t addr;
+	u32 temp_reg;
+	int ret;
 
-    /* switch on the clock */
-#if defined(CONFIG_MX6)
-	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
-	temp_reg = __raw_readl(&mxc_ccm->CCGR0);
-	temp_reg |= MXC_CCM_CCGR0_CAAM_SECURE_MEM_MASK |
-		MXC_CCM_CCGR0_CAAM_WRAPPER_ACLK_MASK |
-		MXC_CCM_CCGR0_CAAM_WRAPPER_IPG_MASK;
-	__raw_writel(temp_reg, &mxc_ccm->CCGR0);
-#elif defined(CONFIG_MX7)
-	HW_CCM_CCGR_SET(36,	MXC_CCM_CCGR36_CAAM_DOMAIN0_MASK);
+	/* switch on the clock */
+#ifndef CONFIG_ARCH_IMX8
+	caam_clock_enable();
 #endif
 
-    /* MID for CAAM - already done by HAB in ROM during preconfigure,
-     * That is JROWN for JR0/1 = 1 (TZ, Secure World, ARM)
-     * JRNSMID and JRSMID for JR0/1 = 2 (TZ, Secure World, CAAM)
-     *
-     * However, still need to initialize Job Rings as these are torn
-     * down by HAB for each command
-     */
+	/* reset the CAAM */
+	temp_reg = __raw_readl(CAAM_MCFGR) |
+			CAAM_MCFGR_DMARST | CAAM_MCFGR_SWRST;
+	__raw_writel(temp_reg,  CAAM_MCFGR);
+	while (__raw_readl(CAAM_MCFGR) & CAAM_MCFGR_DMARST)
+		;
 
-    /* Initialize job ring addresses */
-	__raw_writel((uint32_t)g_input_ring, CAAM_IRBAR0);   // input ring address
-	__raw_writel((uint32_t)g_output_ring, CAAM_ORBAR0);  // output ring address
+	jr_reset();
+	ret = do_cfg_jrqueue();
 
-	/* Initialize job ring sizes to 1 */
-	__raw_writel(JOB_RING_ENTRIES, CAAM_IRSR0);
-	__raw_writel(JOB_RING_ENTRIES, CAAM_ORSR0);
+	if (ret != SUCCESS) {
+		printf("Error CAAM JR initialization\n");
+		return;
+	}
 
-    /* HAB disables interrupts for JR0 so do the same here */
-	temp_reg = __raw_readl(CAAM_JRCFGR0_LS) | JRCFG_LS_IMSK;
-	__raw_writel(temp_reg, CAAM_JRCFGR0_LS);
+	/* Check if the RNG is already instantiated */
+	temp_reg = __raw_readl(CAAM_RDSTA);
+	if (temp_reg == (RDSTA_IF0 | RDSTA_IF1 | RDSTA_SKVN)) {
+		printf("RNG already instantiated 0x%X\n", temp_reg);
+		return;
+	}
 
-    /********* Initialize and instantiate the RNG *******************/
-    /* if RNG already instantiated then skip it */
-	if ((__raw_readl(CAAM_RDSTA) & RDSTA_IF0) != RDSTA_IF0)
-	{
-	/* Enter TRNG Program mode */
-	__raw_writel(RTMCTL_PGM, CAAM_RTMCTL);
+	rng_init();
+}
 
-	/* Set OSC_DIV field to TRNG */
-	temp_reg = __raw_readl(CAAM_RTMCTL) | (RNG_TRIM_OSC_DIV << 2);
-	__raw_writel(temp_reg, CAAM_RTMCTL);
+static void caam_clock_enable(void)
+{
+#if defined(CONFIG_ARCH_MX6)
+	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+	u32 reg;
 
-	/* Set delay */
-	__raw_writel(((RNG_TRIM_ENT_DLY << 16) | 0x09C4), CAAM_RTSDCTL);
-	__raw_writel((RNG_TRIM_ENT_DLY >> 1), CAAM_RTFRQMIN);
-	__raw_writel((RNG_TRIM_ENT_DLY << 4), CAAM_RTFRQMAX);
+	reg = __raw_readl(&mxc_ccm->CCGR0);
 
-	/* Resume TRNG Run mode */
-	temp_reg = __raw_readl(CAAM_RTMCTL) ^ RTMCTL_PGM;
-	__raw_writel(temp_reg, CAAM_RTMCTL);
+	reg |= (MXC_CCM_CCGR0_CAAM_SECURE_MEM_MASK |
+		MXC_CCM_CCGR0_CAAM_WRAPPER_ACLK_MASK |
+		MXC_CCM_CCGR0_CAAM_WRAPPER_IPG_MASK);
+
+	__raw_writel(reg, &mxc_ccm->CCGR0);
+
+#ifndef CONFIG_MX6UL
+	/* EMI slow clk */
+	reg = __raw_readl(&mxc_ccm->CCGR6);
+	reg |= MXC_CCM_CCGR6_EMI_SLOW_MASK;
+
+	__raw_writel(reg, &mxc_ccm->CCGR6);
+#endif
+
+#elif defined(CONFIG_ARCH_MX7)
+	HW_CCM_CCGR_SET(36, MXC_CCM_CCGR36_CAAM_DOMAIN0_MASK);
+#elif defined(CONFIG_ARCH_MX7ULP)
+	pcc_clock_enable(PER_CLK_CAAM, true);
+#endif
+}
+
+static void kick_trng(u32 ent_delay)
+{
+	u32 samples  = 512; /* number of bits to generate and test */
+	u32 mono_min = 195;
+	u32 mono_max = 317;
+	u32 mono_range  = mono_max - mono_min;
+	u32 poker_min = 1031;
+	u32 poker_max = 1600;
+	u32 poker_range = poker_max - poker_min + 1;
+	u32 retries    = 2;
+	u32 lrun_max   = 32;
+	s32 run_1_min   = 27;
+	s32 run_1_max   = 107;
+	s32 run_1_range = run_1_max - run_1_min;
+	s32 run_2_min   = 7;
+	s32 run_2_max   = 62;
+	s32 run_2_range = run_2_max - run_2_min;
+	s32 run_3_min   = 0;
+	s32 run_3_max   = 39;
+	s32 run_3_range = run_3_max - run_3_min;
+	s32 run_4_min   = -1;
+	s32 run_4_max   = 26;
+	s32 run_4_range = run_4_max - run_4_min;
+	s32 run_5_min   = -1;
+	s32 run_5_max   = 18;
+	s32 run_5_range = run_5_max - run_5_min;
+	s32 run_6_min   = -1;
+	s32 run_6_max   = 17;
+	s32 run_6_range = run_6_max - run_6_min;
+	u32 val;
+
+	/* Put RNG in program mode */
+	setbits_le32(CAAM_RTMCTL, RTMCTL_PGM);
+	/* Configure the RNG Entropy Delay
+	 * Performance-wise, it does not make sense to
+	 * set the delay to a value that is lower
+	 * than the last one that worked (i.e. the state handles
+	 * were instantiated properly. Thus, instead of wasting
+	 * time trying to set the values controlling the sample
+	 * frequency, the function simply returns.
+	 */
+	val = __raw_readl(CAAM_RTSDCTL);
+	val &= BM_TRNG_ENT_DLY;
+	val >>= BS_TRNG_ENT_DLY;
+	if (ent_delay < val) {
+		/* Put RNG4 into run mode */
+		clrbits_le32(CAAM_RTMCTL, RTMCTL_PGM);
+		return;
+	}
+
+	val = (ent_delay << BS_TRNG_ENT_DLY) | samples;
+	__raw_writel(val, CAAM_RTSDCTL);
+
+	/* min. freq. count, equal to 1/2 of the entropy sample length */
+	__raw_writel(ent_delay >> 1, CAAM_RTFRQMIN);
+
+	/* max. freq. count, equal to 32 times the entropy sample length */
+	__raw_writel(ent_delay << 5, CAAM_RTFRQMAX);
+
+	__raw_writel((retries << 16) | lrun_max, CAAM_RTSCMISC);
+	__raw_writel(poker_max, CAAM_RTPKRMAX);
+	__raw_writel(poker_range, CAAM_RTPKRRNG);
+	__raw_writel((mono_range << 16) | mono_max, CAAM_RTSCML);
+	__raw_writel((run_1_range << 16) | run_1_max, CAAM_RTSCR1L);
+	__raw_writel((run_2_range << 16) | run_2_max, CAAM_RTSCR2L);
+	__raw_writel((run_3_range << 16) | run_3_max, CAAM_RTSCR3L);
+	__raw_writel((run_4_range << 16) | run_4_max, CAAM_RTSCR4L);
+	__raw_writel((run_5_range << 16) | run_5_max, CAAM_RTSCR5L);
+	__raw_writel((run_6_range << 16) | run_6_max, CAAM_RTSCR6PL);
+
+	val = __raw_readl(CAAM_RTMCTL);
+	/*
+	 * Select raw sampling in both entropy shifter
+	 * and statistical checker
+	 */
+	val &= ~BM_TRNG_SAMP_MODE;
+	val |= TRNG_SAMP_MODE_RAW_ES_SC;
+	/* Put RNG4 into run mode */
+	val &= ~RTMCTL_PGM;
+/*test with sample mode only */
+	__raw_writel(val, CAAM_RTMCTL);
 
 	/* Clear the ERR bit in RTMCTL if set. The TRNG error can occur when the
 	 * RNG clock is not within 1/2x to 8x the system clock.
 	 * This error is possible if ROM code does not initialize the system PLLs
 	 * immediately after PoR.
 	 */
-	temp_reg = __raw_readl(CAAM_RTMCTL) | RTMCTL_ERR;
-	__raw_writel(temp_reg, CAAM_RTMCTL);
+	/* setbits_le32(CAAM_RTMCTL, RTMCTL_ERR); */
+}
 
-	/* Run descriptor to instantiate the RNG */
-	/* Add job to input ring */
-	g_input_ring[0] = (uint32_t)rng_inst_dsc;
+/*
+ *  Descriptors to instantiate SH0, SH1, load the keys
+ */
+static const u32 rng_inst_sh0_desc[] = {
+	/* Header, don't setup the size */
+	CAAM_HDR_CTYPE | CAAM_HDR_ONE | CAAM_HDR_START_INDEX(0),
+	/* Operation instantiation (sh0) */
+	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | ALGO_RNG_SH(0) | ALGO_RNG_INSTANTIATE,
+};
 
-	flush_dcache_range((uint32_t)g_input_ring & 0xffffffe0,
-			   ((uint32_t)g_input_ring & 0xffffffe0) + 128);
-	/* Increment jobs added */
-	__raw_writel(1, CAAM_IRJAR0);
+static const u32 rng_inst_sh1_desc[] = {
+	/* wait for done - Jump to next entry */
+	CAAM_C1_JUMP | CAAM_JUMP_LOCAL | CAAM_JUMP_TST_ALL_COND_TRUE
+		| CAAM_JUMP_OFFSET(1),
+	/* Clear written register (write 1) */
+	CAAM_C0_LOAD_IMM | CAAM_DST_CLEAR_WRITTEN | sizeof(u32),
+	0x00000001,
+	/* Operation instantiation (sh1) */
+	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | ALGO_RNG_SH(1)
+		| ALGO_RNG_INSTANTIATE,
+};
 
-	/* Wait for job ring to complete the job: 1 completed job expected */
-	while(__raw_readl(CAAM_ORSFR0) != 1);
+static const u32 rng_inst_load_keys[] = {
+	/* wait for done - Jump to next entry */
+	CAAM_C1_JUMP | CAAM_JUMP_LOCAL | CAAM_JUMP_TST_ALL_COND_TRUE
+		| CAAM_JUMP_OFFSET(1),
+	/* Clear written register (write 1) */
+	CAAM_C0_LOAD_IMM | CAAM_DST_CLEAR_WRITTEN | sizeof(u32),
+	0x00000001,
+	/* Generate the Key */
+	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | BM_ALGO_RNG_SK | ALGO_RNG_GENERATE,
+};
 
+static void do_inst_desc(u32 *desc, u32 status)
+{
+	u32 *pdesc = desc;
+	u8  desc_len;
+	bool add_sh0   = false;
+	bool add_sh1   = false;
+	bool load_keys = false;
 
-	invalidate_dcache_range((uint32_t)g_output_ring & 0xffffffe0,
-				((uint32_t)g_output_ring & 0xffffffe0) + 128);
+	/*
+	 * Modify the the descriptor to remove if necessary:
+	 *  - The key loading
+	 *  - One of the SH already instantiated
+	 */
+	desc_len = RNG_DESC_SH0_SIZE;
+	if ((status & RDSTA_IF0) != RDSTA_IF0)
+		add_sh0 = true;
 
-	/* check that descriptor address is the one expected in the out ring */
-	if(g_output_ring[0] == (uint32_t)rng_inst_dsc)
-	{
-		/* check if any error is reported in the output ring */
-		if ((g_output_ring[1] & JOB_RING_STS) != 0)
-		{
-		printf("Error: RNG instantiation errors g_output_ring[1]: 0x%X\n"
-			, g_output_ring[1]);
-		printf("RTMCTL 0x%X\n", __raw_readl(CAAM_RTMCTL));
-		printf("RTSTATUS 0x%X\n", __raw_readl(CAAM_RTSTATUS));
-		printf("RTSTA 0x%X\n", __raw_readl(CAAM_RDSTA));
-            }
+	if ((status & RDSTA_IF1) != RDSTA_IF1) {
+		add_sh1 = true;
+		if (add_sh0)
+			desc_len += RNG_DESC_SH1_SIZE;
 	}
-	else
-	{
-		printf("Error: RNG job output ring descriptor address does " \
-				"not match: 0x%X != 0x%X \n", g_output_ring[0], rng_inst_dsc[0]);
+
+	if ((status & RDSTA_SKVN) != RDSTA_SKVN) {
+		load_keys = true;
+		desc_len += RNG_DESC_KEYS_SIZE;
 	}
 
-		/* ensure that the RNG was correctly instantiated */
-		temp_reg = __raw_readl(CAAM_RDSTA);
-		if (temp_reg != (RDSTA_IF0 | RDSTA_SKVN))
-		{
-			printf("Error: RNG instantiation failed 0x%X\n", temp_reg);
+	/* Copy the SH0 descriptor anyway */
+	memcpy(pdesc, rng_inst_sh0_desc, sizeof(rng_inst_sh0_desc));
+	pdesc += RNG_DESC_SH0_SIZE;
+
+	if (load_keys) {
+		debug("RNG - Load keys\n");
+		memcpy(pdesc, rng_inst_load_keys, sizeof(rng_inst_load_keys));
+		pdesc += RNG_DESC_KEYS_SIZE;
+	}
+
+	if (add_sh1) {
+		if (add_sh0) {
+			debug("RNG - Instantiation of SH0 and SH1\n");
+			/* Add the sh1 descriptor */
+			memcpy(pdesc, rng_inst_sh1_desc,
+			       sizeof(rng_inst_sh1_desc));
+		} else {
+			debug("RNG - Instantiation of SH1 only\n");
+			/* Modify the SH0 descriptor to instantiate only SH1 */
+			desc[1] &= ~BM_ALGO_RNG_SH;
+			desc[1] |= ALGO_RNG_SH(1);
 		}
-		/* Remove job from Job Ring Output Queue */
-		__raw_writel(1, CAAM_ORJRR0);
 	}
+
+	/* Setup the descriptor size */
+	desc[0] &= ~(0x3F);
+	desc[0] |= CAAM_HDR_DESCLEN(desc_len);
+}
+
+static int jr_reset(void)
+{
+	/*
+	 * Function reset the Job Ring HW
+	 * Reset is done in 2 steps:
+	 *  - Flush all pending jobs (Set RESET bit)
+	 *  - Reset the Job Ring (Set RESET bit second time)
+	 */
+	u16 timeout = 10000;
+	u32 reg_val;
+
+	/* Mask interrupts to poll for reset completion status */
+	setbits_le32(CAAM_JRCFGR0_LS, BM_JRCFGR_LS_IMSK);
+
+	/* Initiate flush (required prior to reset) */
+	__raw_writel(JRCR_RESET, CAAM_JRCR0);
+	do {
+		reg_val = __raw_readl(CAAM_JRINTR0);
+		reg_val &= BM_JRINTR_HALT;
+	} while ((reg_val == JRINTR_HALT_ONGOING) && --timeout);
+
+	if (!timeout  || reg_val != JRINTR_HALT_DONE) {
+		printf("Failed to flush job ring\n");
+		return ERROR_ANY;
+	}
+
+	/* Initiate reset */
+	timeout = 100;
+	__raw_writel(JRCR_RESET, CAAM_JRCR0);
+	do {
+		reg_val = __raw_readl(CAAM_JRCR0);
+	} while ((reg_val & JRCR_RESET) && --timeout);
+
+	if (!timeout) {
+		printf("Failed to reset job ring\n");
+		return ERROR_ANY;
+	}
+
+	return 0;
+}
+
+static int do_job(u32 *desc)
+{
+	int ret;
+	phys_addr_t p_desc = virt_to_phys(desc);
+
+	if (__raw_readl(CAAM_IRSAR0) == 0)
+		return ERROR_ANY;
+	g_jrdata.inrings[0].desc = p_desc;
+
+	flush_dcache_range((uintptr_t)g_jrdata.inrings & ALIGN_MASK,
+			   ((uintptr_t)g_jrdata.inrings & ALIGN_MASK)
+			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
+	flush_dcache_range((uintptr_t)desc & ALIGN_MASK,
+			   ((uintptr_t)desc & ALIGN_MASK)
+			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
+
+	/* Inform HW that a new JR is available */
+	__raw_writel(1, CAAM_IRJAR0);
+	while (__raw_readl(CAAM_ORSFR0) == 0)
+		;
+
+	flush_dcache_range((uintptr_t)g_jrdata.outrings & ALIGN_MASK,
+			   ((uintptr_t)g_jrdata.outrings & ALIGN_MASK)
+			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
+
+	if (PTR2CAAMDMA(desc) == g_jrdata.outrings[0].desc) {
+		ret = g_jrdata.outrings[0].status;
+	} else {
+		dump_error();
+		ret = ERROR_ANY;
+	}
+
+	/* Acknowledge interrupt */
+	setbits_le32(CAAM_JRINTR0, JRINTR_JRI);
+
+	/* Remove the JR from the output list even if no JR caller found */
+	__raw_writel(1, CAAM_ORJRR0);
+
+	return ret;
+}
+
+static int do_cfg_jrqueue(void)
+{
+	u32 value = 0;
+	phys_addr_t ip_base;
+	phys_addr_t op_base;
+
+	/* check if already configured after relocation */
+	if (g_jrdata.status == RING_RELOC_INIT)
+		return 0;
+
+	/*
+	 * jr configuration needs to be updated once, after relocation to ensure
+	 * using the right buffers.
+	 * When buffers are updated after relocation the flag RING_RELOC_INIT
+	 * is used to prevent extra updates
+	 */
+	if (gd->flags & GD_FLG_RELOC) {
+		g_jrdata.inrings  = (struct inring_entry *)
+				    memalign(ARCH_DMA_MINALIGN,
+					     ARCH_DMA_MINALIGN);
+		g_jrdata.outrings = (struct outring_entry *)
+				    memalign(ARCH_DMA_MINALIGN,
+					     ARCH_DMA_MINALIGN);
+		g_jrdata.desc = (u32 *)
+				memalign(ARCH_DMA_MINALIGN, ARCH_DMA_MINALIGN);
+		g_jrdata.status = RING_RELOC_INIT;
+	} else {
+		u32 align_idx = 0;
+
+		/* Ensure 64bits buffers addresses alignment */
+		if ((uintptr_t)g_jrdata.raw_addr & 0x7)
+			align_idx = 1;
+		g_jrdata.inrings  = (struct inring_entry *)
+				    (&g_jrdata.raw_addr[align_idx]);
+		g_jrdata.outrings = (struct outring_entry *)
+				    (&g_jrdata.raw_addr[align_idx + 2]);
+		g_jrdata.desc = (u32 *)(&g_jrdata.raw_addr[align_idx + 4]);
+		g_jrdata.status = RING_EARLY_INIT;
+	}
+
+	if (!g_jrdata.inrings || !g_jrdata.outrings)
+		return ERROR_ANY;
+
+	/* Configure the HW Job Rings */
+	ip_base = virt_to_phys((void *)g_jrdata.inrings);
+	op_base = virt_to_phys((void *)g_jrdata.outrings);
+	__raw_writel(ip_base, CAAM_IRBAR0);
+	__raw_writel(1, CAAM_IRSR0);
+
+	__raw_writel(op_base, CAAM_ORBAR0);
+	__raw_writel(1, CAAM_ORSR0);
+
+	setbits_le32(CAAM_JRINTR0, JRINTR_JRI);
+
+	/*
+	 * Configure interrupts but disable it:
+	 * Optimization to generate an interrupt either when there are
+	 * half of the job done or when there is a job done and
+	 * 10 clock cycles elapse without new job complete
+	 */
+	value = 10 << BS_JRCFGR_LS_ICTT;
+	value |= (1 << BS_JRCFGR_LS_ICDCT) & BM_JRCFGR_LS_ICDCT;
+	value |= BM_JRCFGR_LS_ICEN;
+	value |= BM_JRCFGR_LS_IMSK;
+	__raw_writel(value, CAAM_JRCFGR0_LS);
+
+	/* Enable deco watchdog */
+	setbits_le32(CAAM_MCFGR, BM_MCFGR_WDE);
+
+	return 0;
+}
+
+static void do_clear_rng_error(void)
+{
+	u32 val;
+
+	val = __raw_readl(CAAM_RTMCTL);
+
+	if (val & (RTMCTL_ERR | RTMCTL_FCT_FAIL)) {
+		setbits_le32(CAAM_RTMCTL, RTMCTL_ERR);
+	val = __raw_readl(CAAM_RTMCTL);
+	}
+}
+
+static int do_instantiation(void)
+{
+	int ret = ERROR_ANY;
+	u32 cha_vid_ls;
+	u32 ent_delay;
+	u32 status;
+
+	if (!g_jrdata.desc) {
+		printf("%d: CAAM Descriptor allocation error\n", __LINE__);
+		return ERROR_ANY;
+	}
+
+	cha_vid_ls = __raw_readl(CAAM_CHAVID_LS);
+
+	/*
+	 * If SEC has RNG version >= 4 and RNG state handle has not been
+	 * already instantiated, do RNG instantiation
+	 */
+	if (((cha_vid_ls & BM_CHAVID_LS_RNGVID) >> BS_CHAVID_LS_RNGVID) < 4) {
+		printf("%d: RNG already instantiated\n", __LINE__);
+		return 0;
+	}
+
+	ent_delay = TRNG_SDCTL_ENT_DLY_MIN;
+
+	do {
+		/* Read the CAAM RNG status */
+		status = __raw_readl(CAAM_RDSTA);
+
+		if ((status & RDSTA_IF0) != RDSTA_IF0) {
+			/* Configure the RNG entropy delay */
+			kick_trng(ent_delay);
+			ent_delay += 400;
+		}
+
+		do_clear_rng_error();
+
+		if ((status & (RDSTA_IF0 | RDSTA_IF1)) !=
+				(RDSTA_IF0 | RDSTA_IF1)) {
+			/* Prepare the instantiation descriptor */
+			do_inst_desc(g_jrdata.desc, status);
+
+			/* Run Job */
+			ret = do_job(g_jrdata.desc);
+
+			if (ret == ERROR_ANY) {
+				/* CAAM JR failure ends here */
+				printf("RNG Instantiation error\n");
+				goto end_instantation;
+			}
+		} else {
+			ret = SUCCESS;
+			printf("RNG instantiation done (%d)\n", ent_delay);
+			goto end_instantation;
+		}
+	} while (ent_delay < TRNG_SDCTL_ENT_DLY_MAX);
+
+	printf("RNG Instantation Failure - Entropy delay (%d)\n", ent_delay);
+	ret = ERROR_ANY;
+
+end_instantation:
+	return ret;
+}
+
+static void rng_init(void)
+{
+	int  ret;
+
+	ret = jr_reset();
+	if (ret != SUCCESS) {
+		printf("Error CAAM JR reset\n");
+		return;
+	}
+
+	ret = do_instantiation();
+
+	if (ret != SUCCESS)
+		printf("Error do_instantiation\n");
+
+	jr_reset();
+
 	return;
 }
+
