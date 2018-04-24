@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012-2016, Freescale Semiconductor, Inc.
  * All rights reserved.
+ * Copyright 2018 NXP
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -37,6 +38,7 @@
 #define SUCCESS (0)
 #endif
 
+#define ERROR_ANY           (-1)
 #define ERROR_IN_PAGE_ALLOC (1)
 
 
