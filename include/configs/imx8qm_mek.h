@@ -120,6 +120,8 @@
 	"console=ttyLP0\0" \
 	"fdt_addr=0x83000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
+	"cntr_addr=0x98000000\0"			\
+	"cntr_file=os_cntr_signed.bin\0" \
 	"boot_fdt=try\0" \
 	"fdt_file=undefined\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
