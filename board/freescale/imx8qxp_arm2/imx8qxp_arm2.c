@@ -647,6 +647,11 @@ int board_late_init(void)
 	setenv("board_rev", "iMX8QXP");
 #endif
 
+	setenv("sec_boot", "no");
+#ifdef CONFIG_AHAB_BOOT
+	setenv("sec_boot", "yes");
+#endif
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
