@@ -127,8 +127,10 @@ void lpddr4_800MHz_cfg_umctl2(void)
 	dwc_ddrphy_apb_wr(DDRC_SCHED(0), 0x29511505);
 	dwc_ddrphy_apb_wr(DDRC_SCHED1(0), 0x0000002c);
 	dwc_ddrphy_apb_wr(DDRC_PERFHPR1(0), 0x5900575b);
-	dwc_ddrphy_apb_wr(DDRC_PERFLPR1(0), 0x00000009);
-	dwc_ddrphy_apb_wr(DDRC_PERFWR1(0), 0x02005574);
+	/* 150T starve and 0x90 max tran len */
+	dwc_ddrphy_apb_wr(DDRC_PERFLPR1(0), 0x90000096);
+	/* 300T starve and 0x10 max tran len */
+	dwc_ddrphy_apb_wr(DDRC_PERFWR1(0), 0x1000012c);
 	dwc_ddrphy_apb_wr(DDRC_DBG0(0), 0x00000016);
 	dwc_ddrphy_apb_wr(DDRC_DBG1(0), 0x00000000);
 	dwc_ddrphy_apb_wr(DDRC_DBGCMD(0), 0x00000000);
@@ -138,10 +140,12 @@ void lpddr4_800MHz_cfg_umctl2(void)
 	dwc_ddrphy_apb_wr(DDRC_PCFGR_0(0), 0x000010f3);
 	dwc_ddrphy_apb_wr(DDRC_PCFGW_0(0), 0x000072ff);
 	dwc_ddrphy_apb_wr(DDRC_PCTRL_0(0), 0x00000001);
-	dwc_ddrphy_apb_wr(DDRC_PCFGQOS0_0(0), 0x01110d00);
-	dwc_ddrphy_apb_wr(DDRC_PCFGQOS1_0(0), 0x00620790);
-	dwc_ddrphy_apb_wr(DDRC_PCFGWQOS0_0(0), 0x00100001);
-	dwc_ddrphy_apb_wr(DDRC_PCFGWQOS1_0(0), 0x0000041f);
+	/* disable Read Qos*/
+	dwc_ddrphy_apb_wr(DDRC_PCFGQOS0_0(0), 0x00000e00);
+	dwc_ddrphy_apb_wr(DDRC_PCFGQOS1_0(0), 0x0062ffff);
+	/* disable Write Qos*/
+	dwc_ddrphy_apb_wr(DDRC_PCFGWQOS0_0(0), 0x00000e00);
+	dwc_ddrphy_apb_wr(DDRC_PCFGWQOS1_0(0), 0x0000ffff);
 	dwc_ddrphy_apb_wr(DDRC_FREQ1_DERATEEN(0), 0x00000202);
 	dwc_ddrphy_apb_wr(DDRC_FREQ1_DERATEINT(0), 0xec78f4b5);
 	dwc_ddrphy_apb_wr(DDRC_FREQ1_RFSHCTL0(0), 0x00618040);
