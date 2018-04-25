@@ -10,6 +10,11 @@ config IMX_SMMU
 	help
 	  Enable the SMMU for peripherals on i.MX8
 
+config AHAB_BOOT
+	bool "Support i.MX8 AHAB features"
+	help
+	  This option enables the support for AHAB secure boot.
+
 config IMX8
 	bool
 	default y
