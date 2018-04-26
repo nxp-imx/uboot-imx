@@ -117,6 +117,10 @@ struct fastboot_device_info fastboot_firmwareinfo;
 #define AT_OEM_PART_SIZE	17
 #define AT_OEM_DEV_SIZE	6
 
+/* Offset (in u32's) of start and end fields in the zImage header. */
+#define ZIMAGE_START_ADDR	10
+#define ZIMAGE_END_ADDR	11
+
 /* common variables of fastboot getvar command */
 char *fastboot_common_var[FASTBOOT_COMMON_VAR_NUM] = {
 	"version",
@@ -1871,7 +1875,8 @@ bootimg_print_image_hdr(struct andr_img_hdr *hdr)
 }
 
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
-static int android_things_load_fdt(const char *slot, struct andr_img_hdr *hdrload) {
+static int android_things_load_fdt(const char *slot,
+		struct andr_img_hdr *hdrload, u32 *fdt_size) {
 	/* check for kernel.dtb in oem_bootloader */
 	char oem_bootloader[AT_OEM_PART_SIZE];
 	snprintf(oem_bootloader, AT_OEM_PART_SIZE, AT_OEM_PART_NAME "%s", slot);
@@ -1887,9 +1892,9 @@ static int android_things_load_fdt(const char *slot, struct andr_img_hdr *hdrloa
 	if (fs_set_blk_dev("mmc", dev_part, FS_TYPE_EXT) != 0)
 		return -1;
 
-	loff_t dtb_size;
-	if (!fs_read(AT_OEM_DTB, hdrload->second_addr, 0, 0, &dtb_size) && dtb_size) {
-		hdrload->second_size = dtb_size;
+	loff_t size;
+	if (!fs_read(AT_OEM_DTB, hdrload->second_addr, 0, 0, &size) && size) {
+		*fdt_size = size;
 		return 0;
 	}
 
@@ -2156,15 +2161,21 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			+ ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
 #endif
 #ifdef CONFIG_OF_LIBFDT
+	u32 fdt_size = 0;
 	bool fdt_loaded = false;
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
-	fdt_loaded = !android_things_load_fdt(slot, hdr);
+	fdt_loaded = !android_things_load_fdt(slot, hdr, &fdt_size);
 #endif /* CONFIG_ANDROID_THINGS_SUPPORT */
 	/* load the dtb file */
-	if (!fdt_loaded && hdr->second_size && hdr->second_addr) {
-		memcpy((void *)(ulong)hdr->second_addr, (void *)(ulong)hdr->kernel_addr
-			+ ALIGN(hdr->kernel_size, hdr->page_size)
-			+ ALIGN(hdr->ramdisk_size, hdr->page_size), hdr->second_size);
+	if (!fdt_loaded && hdr->second_addr) {
+		/* The fdt is appended to the zImage. Use the address and size of the kernel
+		   section of the boot image and the kernel size from the zImage to
+		   calculate the address and size of the fdt. */
+		u32 zimage_size = ((u32 *)hdr->kernel_addr)[ZIMAGE_END_ADDR]
+				- ((u32 *)hdr->kernel_addr)[ZIMAGE_START_ADDR];
+		fdt_size = hdr->kernel_size - zimage_size;
+		memcpy((void *)(ulong)hdr->second_addr,
+				(void*)(ulong)hdr->kernel_addr + zimage_size, fdt_size);
 	}
 #endif /*CONFIG_OF_LIBFDT*/
 	if (check_image_arm64) {
@@ -2176,8 +2187,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	printf("kernel   @ %08x (%d)\n", hdr->kernel_addr, hdr->kernel_size);
 	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
 #ifdef CONFIG_OF_LIBFDT
-	if (hdr->second_size)
-		printf("fdt      @ %08x (%d)\n", hdr->second_addr, hdr->second_size);
+	if (fdt_size)
+		printf("fdt      @ %08x (%d)\n", hdr->second_addr, fdt_size);
 #endif /*CONFIG_OF_LIBFDT*/
 
 	char boot_addr_start[12];
@@ -2206,7 +2217,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 	/* Trusty keymaster needs some parameters before it work */
-	trusty_setbootparameter(hdrload, avb_result);
+	trusty_setbootparameter(hdr, avb_result);
 	/* put ql-tipc to release resource for Linux */
 	trusty_ipc_shutdown();
 #endif
@@ -2340,11 +2351,14 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			+ ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
 
 #ifdef CONFIG_OF_LIBFDT
+		u32 fdt_size = 0;
 		/* load the dtb file */
-		if (hdr->second_size && hdr->second_addr) {
-			memcpy((void *)hdr->second_addr, (void *)hdr->kernel_addr
-				+ ALIGN(hdr->kernel_size, hdr->page_size)
-				+ ALIGN(hdr->ramdisk_size, hdr->page_size), hdr->second_size);
+		if (hdr->second_addr) {
+			u32 zimage_size = ((u32 *)hdrload->kernel_addr)[ZIMAGE_END_ADDR]
+					- ((u32 *)hdrload->kernel_addr)[ZIMAGE_START_ADDR];
+			fdt_size = hdrload->kernel_size - zimage_size;
+			memcpy((void *)(ulong)hdrload->second_addr,
+					(void*)(ulong)hdrload->kernel_addr + zimage_size, fdt_size);
 		}
 #endif /*CONFIG_OF_LIBFDT*/
 
@@ -2359,8 +2373,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	printf("kernel   @ %08x (%d)\n", hdr->kernel_addr, hdr->kernel_size);
 	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
 #ifdef CONFIG_OF_LIBFDT
-	if (hdr->second_size)
-		printf("fdt      @ %08x (%d)\n", hdr->second_addr, hdr->second_size);
+	if (fdt_size)
+		printf("fdt      @ %08x (%d)\n", hdr->second_addr, fdt_size);
 #endif /*CONFIG_OF_LIBFDT*/
 
 
