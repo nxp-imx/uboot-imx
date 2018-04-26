@@ -64,19 +64,16 @@ extern void trusty_os_init(void);
 #endif
 
 #ifdef CONFIG_AVB_SUPPORT
+#include <dt_table.h>
 #include <fsl_avb.h>
 #endif
 
-#ifdef CONFIG_ANDROID_THINGS_SUPPORT
-#include <fs.h>
-#endif
+#define FASTBOOT_VERSION		"0.4"
 
 #ifdef CONFIG_FASTBOOT_LOCK
 #include "fastboot_lock_unlock.h"
 #endif
 #endif
-
-#define FASTBOOT_VERSION		"0.4"
 
 #define FASTBOOT_COMMON_VAR_NUM	13
 #define FASTBOOT_VAR_YES    "yes"
@@ -112,10 +109,9 @@ struct fastboot_device_info fastboot_firmwareinfo;
  * that expect bulk OUT requests to be divisible by maxpacket size.
  */
 
-#define AT_OEM_DTB	"/kernel.dtb"
-#define AT_OEM_PART_NAME	"oem_bootloader"
-#define AT_OEM_PART_SIZE	17
-#define AT_OEM_DEV_SIZE	6
+#define AT_OEM_BL_PART_NAME_BASE	"oem_bootloader"
+#define AT_OEM_BL_PART_SIZE	(sizeof(AT_OEM_BL_PART_NAME_BASE) + \
+		sizeof("_a") - 1)
 
 /* Offset (in u32's) of start and end fields in the zImage header. */
 #define ZIMAGE_START_ADDR	10
@@ -1874,34 +1870,6 @@ bootimg_print_image_hdr(struct andr_img_hdr *hdr)
 #endif
 }
 
-#ifdef CONFIG_ANDROID_THINGS_SUPPORT
-static int android_things_load_fdt(const char *slot,
-		struct andr_img_hdr *hdrload, u32 *fdt_size) {
-	/* check for kernel.dtb in oem_bootloader */
-	char oem_bootloader[AT_OEM_PART_SIZE];
-	snprintf(oem_bootloader, AT_OEM_PART_SIZE, AT_OEM_PART_NAME "%s", slot);
-	struct fastboot_ptentry *pte = fastboot_flash_find_ptn(oem_bootloader);
-	if (pte == NULL) {
-		printf("boota: no partition found for '%s'\n", oem_bootloader);
-		return -1;
-	}
-
-	char dev_part[AT_OEM_DEV_SIZE];
-	snprintf(dev_part, AT_OEM_DEV_SIZE, "%x:%x", fastboot_devinfo.dev_id,
-					 pte->partition_index);
-	if (fs_set_blk_dev("mmc", dev_part, FS_TYPE_EXT) != 0)
-		return -1;
-
-	loff_t size;
-	if (!fs_read(AT_OEM_DTB, hdrload->second_addr, 0, 0, &size) && size) {
-		*fdt_size = size;
-		return 0;
-	}
-
-	return -1;
-}
-#endif
-
 static struct andr_img_hdr boothdr __aligned(ARCH_DMA_MINALIGN);
 
 #ifdef CONFIG_IMX_TRUSTY_OS
@@ -2162,21 +2130,51 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 #endif
 #ifdef CONFIG_OF_LIBFDT
 	u32 fdt_size = 0;
-	bool fdt_loaded = false;
-#ifdef CONFIG_ANDROID_THINGS_SUPPORT
-	fdt_loaded = !android_things_load_fdt(slot, hdr, &fdt_size);
-#endif /* CONFIG_ANDROID_THINGS_SUPPORT */
-	/* load the dtb file */
-	if (!fdt_loaded && hdr->second_addr) {
-		/* The fdt is appended to the zImage. Use the address and size of the kernel
-		   section of the boot image and the kernel size from the zImage to
-		   calculate the address and size of the fdt. */
-		u32 zimage_size = ((u32 *)hdr->kernel_addr)[ZIMAGE_END_ADDR]
-				- ((u32 *)hdr->kernel_addr)[ZIMAGE_START_ADDR];
-		fdt_size = hdr->kernel_size - zimage_size;
-		memcpy((void *)(ulong)hdr->second_addr,
-				(void*)(ulong)hdr->kernel_addr + zimage_size, fdt_size);
+	char oemimage[AT_OEM_BL_PART_SIZE];
+	snprintf(oemimage, sizeof(oemimage), "%s%s",
+			AT_OEM_BL_PART_NAME_BASE, slot);
+
+	struct dt_table_header *dt_img = NULL;
+	size_t num_read;
+	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, oemimage, 0,
+			sizeof(*dt_img), dt_img, &num_read) !=
+			AVB_IO_RESULT_OK &&
+			num_read != sizeof(*dt_img)) {
+		printf("boota: read dt table header error\n");
+		goto dt_read_done;
 	}
+
+	if (be32_to_cpu(dt_img->magic) != DT_TABLE_MAGIC) {
+		printf("boota: bad dt table magic %08x\n",
+				be32_to_cpu(dt_img->magic));
+		goto dt_read_done;
+	} else if (!be32_to_cpu(dt_img->dt_entry_count)) {
+		printf("boota: no dt entries\n");
+		goto dt_read_done;
+	}
+
+	struct dt_table_entry *dt_entry = NULL;
+	assert(be32_to_cpu(dt_img->dt_entry_size) == sizeof(*dt_entry));
+	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, oemimage,
+			be32_to_cpu(dt_img->dt_entries_offset),
+			be32_to_cpu(dt_img->dt_entry_size), dt_entry,
+			&num_read) != AVB_IO_RESULT_OK &&
+			num_read != sizeof(*dt_entry)) {
+		printf("boota: read dt entry error\n");
+		goto dt_read_done;
+	}
+
+	/* Read the fdt from oem_bootloader into hdr->second_addr. */
+	fdt_size = be32_to_cpu(dt_entry->dt_size);
+	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, oemimage,
+			be32_to_cpu(dt_entry->dt_offset), fdt_size,
+			(void *)hdr->second_addr, &num_read) !=
+			AVB_IO_RESULT_OK && num_read != fdt_size) {
+		printf("boota: read fdt error\n");
+	}
+
+dt_read_done:
+	;
 #endif /*CONFIG_OF_LIBFDT*/
 	if (check_image_arm64) {
 		android_image_get_kernel(hdr, 0, NULL, NULL);
