@@ -98,8 +98,8 @@
             "xenboot_common=" \
                 "${get_cmd} ${loadaddr} xen;" \
                 "${get_cmd} ${fdt_addr} fsl-imx8qm-mek-dom0.dtb;" \
+                "if ${get_cmd} ${hdp_addr} ${hdp_file}; then; hdp load ${hdp_addr}; fi;" \
                 "${get_cmd} ${initrd_addr} ${image};" \
-		"if ${get_cmd} ${hdp_addr} ${hdp_file}; then; hdp load ${hdp_addr}; fi;" \
                 "fdt addr ${fdt_addr};" \
                 "fdt resize 256;" \
                 "fdt set /chosen/module@0 reg <0x00000000 ${initrd_addr} 0x00000000 0x${filesize}>; " \
