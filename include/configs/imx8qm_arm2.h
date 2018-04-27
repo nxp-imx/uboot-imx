@@ -130,13 +130,14 @@
             "xenhyper_bootargs=console=dtuart dtuart=/serial@5a060000 dom0_mem=1024M\0" \
             "xenlinux_bootargs=clk_ignore_unused\0" \
             "xenlinux_console=hvc0 earlycon=xen\0" \
+            "xenlinux_addr=0x85000000\0" \
             "xenboot_common=" \
                 "${get_cmd} ${loadaddr} xen;" \
                 "${get_cmd} ${fdt_addr} ${fdt_file};" \
-                "${get_cmd} ${initrd_addr} ${image};" \
+                "${get_cmd} ${xenlinux_addr} ${image};" \
                 "fdt addr ${fdt_addr};" \
                 "fdt resize 256;" \
-                "fdt set /chosen/module@0 reg <0x00000000 ${initrd_addr} 0x00000000 0x${filesize}>; " \
+                "fdt set /chosen/module@0 reg <0x00000000 ${xenlinux_addr} 0x00000000 0x${filesize}>; " \
                 "fdt set /chosen/module@0 bootargs \"${bootargs} ${xenlinux_bootargs}\"; " \
                 "setenv bootargs ${xenhyper_bootargs};" \
                 "booti ${loadaddr} - ${fdt_addr};" \
