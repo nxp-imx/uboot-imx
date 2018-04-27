@@ -80,14 +80,15 @@
             "xenhyper_bootargs=console=dtuart dtuart=/serial@5a060000 dom0_mem=2048M dom0_max_vcpus=2 dom0_vcpus_pin=true hmp-unsafe=true\0" \
             "xenlinux_bootargs= \0" \
             "xenlinux_console=hvc0 earlycon=xen\0" \
+            "xenlinux_addr=0x9e000000\0" \
             "xenboot_common=" \
                 "${get_cmd} ${loadaddr} xen;" \
                 "${get_cmd} ${fdt_addr} fsl-imx8qm-mek-dom0.dtb;" \
                 "if ${get_cmd} ${hdp_addr} ${hdp_file}; then; hdp load ${hdp_addr}; fi;" \
-                "${get_cmd} ${initrd_addr} ${image};" \
+                "${get_cmd} ${xenlinux_addr} ${image};" \
                 "fdt addr ${fdt_addr};" \
                 "fdt resize 256;" \
-                "fdt set /chosen/module@0 reg <0x00000000 ${initrd_addr} 0x00000000 0x${filesize}>; " \
+                "fdt set /chosen/module@0 reg <0x00000000 ${xenlinux_addr} 0x00000000 0x${filesize}>; " \
                 "fdt set /chosen/module@0 bootargs \"${bootargs} ${xenlinux_bootargs}\"; " \
                 "setenv bootargs ${xenhyper_bootargs};" \
 		"scu_rm dtb ${fdt_addr};" \
