@@ -4,6 +4,7 @@
  * Basic job descriptor construction
  *
  * Copyright 2014 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
  *
  */
 
@@ -14,7 +15,8 @@
 #include "jobdesc.h"
 #include "rsa_caam.h"
 
-#if defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_MX7ULP)
+#if defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_MX7ULP) || \
+		defined(CONFIG_IMX8M)
 /*!
  * Secure memory run command
  *
