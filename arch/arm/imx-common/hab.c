@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2010-2015 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
  *
  * SPDX-License-Identifier:    GPL-2.0+
  */
@@ -666,7 +667,8 @@ static int validate_ivt(int ivt_offset, ulong start_addr)
 	    (ivt_hdr->par & HAB_MAJ_MASK) == HAB_MAJ_VER) && \
 	    (ivt_initial->entry != 0x0) && \
 	    (ivt_initial->reserved1 == 0x0) && \
-	    (ivt_initial->self == (uint32_t)ivt_initial) && \
+	    (ivt_initial->self == \
+		   (uint32_t)((ulong)ivt_initial & 0xffffffff)) && \
 	    (ivt_initial->csf != 0x0) && \
 	    (ivt_initial->reserved2 == 0x0)) {
 		/* Report boot failure if DCD pointer is found in IVT */
