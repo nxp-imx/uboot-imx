@@ -350,8 +350,8 @@ static void desc_done(uint32_t status, void *arg)
 
 static inline int run_descriptor_jr_idx(uint32_t *desc, uint8_t sec_idx)
 {
-	unsigned long long timeval = get_ticks();
-	unsigned long long timeout = usec2ticks(CONFIG_SEC_DEQ_TIMEOUT);
+	unsigned long long timeval = 0;
+	unsigned long long timeout = CONFIG_USEC_DEQ_TIMEOUT;
 	struct result op;
 	int ret = 0;
 
@@ -364,9 +364,10 @@ static inline int run_descriptor_jr_idx(uint32_t *desc, uint8_t sec_idx)
 		goto out;
 	}
 
-	timeval = get_ticks();
-	timeout = usec2ticks(CONFIG_SEC_DEQ_TIMEOUT);
 	while (op.done != 1) {
+		udelay(1);
+		timeval += 1;
+
 		ret = jr_dequeue(sec_idx);
 		if (ret) {
 			debug("Error in SEC deq\n");
@@ -374,7 +375,7 @@ static inline int run_descriptor_jr_idx(uint32_t *desc, uint8_t sec_idx)
 			goto out;
 		}
 
-		if ((get_ticks() - timeval) > timeout) {
+		if (timeval > timeout) {
 			debug("SEC Dequeue timed out\n");
 			ret = JQ_DEQ_TO_ERR;
 			goto out;
