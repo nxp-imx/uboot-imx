@@ -47,7 +47,7 @@ config SECURE_BOOT
 
 config CMD_DEKBLOB
 	bool "Support the 'dek_blob' command"
-	depends on !MX6ULL && !MX6SLL && !MX6SL && !IMX8M && !MX7ULP
+	depends on !MX6ULL && !MX6SLL && !MX6SL && !IMX8M
 	depends on SECURE_BOOT
 	help
 	  This enables the 'dek_blob' command which is used with the
