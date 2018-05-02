@@ -14,7 +14,7 @@
 #include "jobdesc.h"
 #include "rsa_caam.h"
 
-#if defined(CONFIG_MX6) || defined(CONFIG_MX7)
+#if defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_MX7ULP)
 /*!
  * Secure memory run command
  *
