@@ -11,7 +11,7 @@
 #include <asm/byteorder.h>
 #include <linux/compiler.h>
 #if defined(CONFIG_ARCH_MX6) || defined(CONFIG_ARCH_MX7) || \
-	defined(CONFIG_ARCH_MX7ULP)
+	defined(CONFIG_ARCH_MX7ULP) || defined(CONFIG_ARCH_IMX8M)
 #include <fsl_sec.h>
 #include <asm/arch/clock.h>
 #endif
@@ -80,7 +80,7 @@ static int do_blob(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	dst_ptr = (uint8_t *)(uintptr_t)dst_addr;
 
 #if defined(CONFIG_ARCH_MX6) || defined(CONFIG_ARCH_MX7) || \
-	defined(CONFIG_ARCH_MX7ULP)
+	defined(CONFIG_ARCH_MX7ULP) || defined(CONFIG_ARCH_IMX8M)
 
 	hab_caam_clock_enable(1);
 
