@@ -666,6 +666,11 @@
 					power-domains =<&pd_serdes1>;
 				};
 			};
+                        pd_gpio: PD_HSIO_GPIO {
+                                reg = <SC_R_HSIO_GPIO>;
+                                #power-domain-cells = <0>;
+                                power-domains =<&pd_hsio>;
+                        };
 		};
 
 		pd_cm40: PD_CM40 {

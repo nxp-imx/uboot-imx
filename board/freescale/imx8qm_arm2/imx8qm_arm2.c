@@ -477,6 +477,12 @@ static void imx8qm_hsio_initialize(void)
 			printf("hsio_pcie1 Power up failed! (error = %d)\n", ret);
 	}
 
+	if (!power_domain_lookup_name("hsio_gpio", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret)
+			 printf("hsio_gpio Power up failed! (error = %d)\n", ret);
+	}
+
 	imx8_iomux_setup_multiple_pads(board_pcie_pins, ARRAY_SIZE(board_pcie_pins));
 
 }
