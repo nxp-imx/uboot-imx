@@ -21,7 +21,11 @@ DECLARE_GLOBAL_DATA_PTR;
 #define TX_BUFFER_SIZE		0x400
 #define AHB_BUFFER_SIZE		0x800
 
+#ifdef CONFIG_SPI_FLASH_4BYTES_ADDR
 #define OFFSET_BITS_MASK	GENMASK(31, 0)
+#else
+#define OFFSET_BITS_MASK	GENMASK(23, 0)
+#endif
 
 #define FLASH_STATUS_WEL	0x02
 
@@ -925,8 +929,10 @@ int fspi_xfer(struct fsl_fspi_priv *priv, unsigned int bitlen,
 	if (dout) {
 		if (flags & SPI_XFER_BEGIN) {
 			priv->cur_seqid = *(u8 *)dout;
+#ifdef CONFIG_SPI_FLASH_4BYTES_ADDR
 			if (FSL_FSPI_FLASH_SIZE  > SZ_16M)
 				dout = (u8 *)dout + 1;
+#endif
 			memcpy(&txbuf, dout, 4);
 		}
 
