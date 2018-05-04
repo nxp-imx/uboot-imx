@@ -633,10 +633,8 @@ static bool is_tcm_image(char *image_addr)
 	u32 stack, pc;
 
 	stack = *(u32 *)image_addr;
-	pc    = *(u32 *)(image_addr + 4);
 
-	if ((stack != (u32)ANDROID_MCU_FIRMWARE_HEADER_STACK) ||
-				(pc != (u32)ANDROID_MCU_FIRMWARE_HEADER_PC)) {
+	if ((stack != (u32)ANDROID_MCU_FIRMWARE_HEADER_STACK)) {
 		printf("Please flash mcu firmware images for running from TCM\n");
 		return false;
 	} else
