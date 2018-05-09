@@ -119,7 +119,7 @@ static struct mm_region imx8m_mem_map[] = {
 		/* DRAM2 */
 		.virt = 0x100000000UL,
 		.phys = 0x100000000UL,
-		.size = 0x040000000UL,
+		.size = 0x140000000UL,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
 			 PTE_BLOCK_OUTER_SHARE
 	}, {
@@ -242,7 +242,7 @@ int ft_system_setup(void *blob, bd_t *bd)
 	int i = 0;
 	int rc;
 	int nodeoff;
-	
+
 	if (get_boot_device() == USB_BOOT) {
 		static const char *nodes_path[] = {
 			"/dcss@32e00000",
