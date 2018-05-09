@@ -55,15 +55,22 @@ int fastboot_flash_find_index(const char *name);
 /*
  * This will return FASTBOOT_LOCK, FASTBOOT_UNLOCK or FASTBOOT_ERROR
  */
-static inline unsigned char decrypt_lock_store(unsigned char* bdata) {
-	if (*bdata >= FASTBOOT_LOCK_NUM)
-		return FASTBOOT_LOCK_ERROR;
+static FbLockState decrypt_lock_store(unsigned char* bdata) {
+	if (!strncmp(bdata, "locked", strlen("locked")))
+		return FASTBOOT_LOCK;
+	else if (!strncmp(bdata, "unlocked", strlen("unlocked")))
+		return FASTBOOT_UNLOCK;
 	else
-		return *bdata;
+		return FASTBOOT_LOCK_ERROR;
 }
 
 static inline int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
-	*bdata  = lock;
+	if (FASTBOOT_LOCK == lock)
+		strncpy(bdata, "locked", strlen("locked"));
+	else if (FASTBOOT_UNLOCK == lock)
+		strncpy(bdata, "unlocked", strlen("unlocked"));
+	else
+		return -1;
 	return 0;
 }
 #else
@@ -89,7 +96,7 @@ static int generate_salt(unsigned char* salt) {
 
 }
 
-static unsigned char decrypt_lock_store(unsigned char *bdata) {
+static FbLockState decrypt_lock_store(unsigned char *bdata) {
 	unsigned char plain_data[ENDATA_LEN];
 	int p = 0, ret;
 
