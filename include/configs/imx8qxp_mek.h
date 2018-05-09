@@ -107,7 +107,9 @@
 		"\0" \
 	"initrd_addr=0x83100000\0" \
 	"initrd_high=0xffffffff\0" \
-	"bootcmd_mfg=run mfgtool_args;booti ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+	"bootcmd_mfg=run mfgtool_args;  if iminfo ${initrd_addr}; then "\
+					     "booti ${loadaddr} ${initrd_addr} ${fdt_addr};"\
+					"else fastboot 1; fi\0" \
 
 #define XEN_BOOT_ENV \
             "xenhyper_bootargs=console=dtuart dtuart=/serial@5a060000 dom0_mem=1024M dom0_max_vcpus=2 dom0_vcpus_pin=true\0" \
