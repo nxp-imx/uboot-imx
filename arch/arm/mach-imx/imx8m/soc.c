@@ -149,24 +149,31 @@ u32 get_cpu_rev(void)
 	struct anamix_pll *ana_pll = (struct anamix_pll *)ANATOP_BASE_ADDR;
 	u32 reg = readl(&ana_pll->digprog);
 	u32 type = (reg >> 16) & 0xff;
+	u32 major_low = (reg >> 8) & 0xff;
 	u32 rom_version;
 
 	reg &= 0xff;
 
-	if (reg == CHIP_REV_1_0) {
-		/*
-		 * For B0 chip, the DIGPROG is not updated, still TO1.0.
-		 * we have to check ROM version further
-		 */
-		rom_version = readl((void __iomem *)ROM_VERSION_A0);
-		if (rom_version != CHIP_REV_1_0) {
-			rom_version = readl((void __iomem *)ROM_VERSION_B0);
-			if (rom_version >= CHIP_REV_2_0)
-				reg = CHIP_REV_2_0;
+	/* iMX8MM */
+	 if (major_low == 0x41) {
+		return ((type + 1) << 12) | reg;
+	} else {
+		/* iMX8MQ */
+		if (reg == CHIP_REV_1_0) {
+			/*
+			 * For B0 chip, the DIGPROG is not updated, still TO1.0.
+			 * we have to check ROM version further
+			 */
+			rom_version = readl((void __iomem *)ROM_VERSION_A0);
+			if (rom_version != CHIP_REV_1_0) {
+				rom_version = readl((void __iomem *)ROM_VERSION_B0);
+				if (rom_version >= CHIP_REV_2_0)
+					reg = CHIP_REV_2_0;
+			}
 		}
-	}
 
-	return (type << 12) | reg;
+		return (type << 12) | reg;
+	}
 }
 
 static void imx_set_wdog_powerdown(bool enable)
