@@ -4,7 +4,7 @@
  *
  * (C) Copyright 2009-2016 Freescale Semiconductor, Inc.
  *
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -151,8 +151,10 @@ unsigned imx_ddr_size(void)
 const char *get_imx_type(u32 imxtype)
 {
 	switch (imxtype) {
+	case MXC_CPU_IMX8MM:
+		return "8MM";	/* Quad-core version of the imx8mm */
 	case MXC_CPU_IMX8MQ:
-		return "8MQ";	/* Quad-core version of the imx8m */
+		return "8MQ";	/* Quad-core version of the imx8mq */
 	case MXC_CPU_MX7S:
 		return "7S";	/* Single-core version of the mx7 */
 	case MXC_CPU_MX7D:
