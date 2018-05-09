@@ -2,6 +2,7 @@
 /*
  * (C) Copyright 2009
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de.
+ * Copyright 2018 NXP
  */
 
 #ifndef _SYS_PROTO_H_
@@ -43,6 +44,7 @@
 #define is_mx7ulp() (is_cpu_type(MXC_CPU_MX7ULP))
 
 #define is_imx8mq() (is_cpu_type(MXC_CPU_IMX8MQ))
+#define is_imx8mm() (is_cpu_type(MXC_CPU_IMX8MM))
 #define is_imx8qm() (is_cpu_type(MXC_CPU_IMX8QM))
 #define is_imx8qxp() (is_cpu_type(MXC_CPU_IMX8QXP))
 
