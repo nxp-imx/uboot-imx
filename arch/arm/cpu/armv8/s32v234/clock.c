@@ -247,7 +247,7 @@ static void setup_aux_clocks(void)
 
 	/* setup the aux clock divider for SDHC_CLK (50 MHz). */
 	aux_source_clk_config(MC_CGM0_BASE_ADDR, 15, MC_CGM_ACn_SEL_ENETPLL);
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 15, 0, 9);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, 15, 0, 0);
 
 	/* setup the aux clock divider for DDR_CLK (533MHz) and APEX_SYS_CLK (266MHz) */
 	aux_source_clk_config(MC_CGM0_BASE_ADDR, 8, MC_CGM_ACn_SEL_DDRPLL);
