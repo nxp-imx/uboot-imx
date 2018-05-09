@@ -15,6 +15,8 @@
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_ARCH_MISC_INIT
 
+#define CONFIG_CMD_READ
+
 /* Flat Device Tree Definitions */
 #define CONFIG_OF_BOARD_SETUP
 
@@ -309,6 +311,9 @@
 #define FSPI0_AMBA_BASE			0
 #define CONFIG_SYS_FSL_FSPI_AHB
 #endif
+
+#define CONFIG_SERIAL_TAG
+#undef CONFIG_FASTBOOT_USB_DEV
 
 /* USB Config */
 #ifdef CONFIG_CMD_USB
