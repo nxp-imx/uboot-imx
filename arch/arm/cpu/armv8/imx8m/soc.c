@@ -253,7 +253,9 @@ int arch_cpu_init(void)
 	 * will use it
 	 */
 	timer_init();
+#ifdef CONFIG_SPL_BUILD
 	clock_init();
+#endif
 
 	imx_set_wdog_powerdown(false);
 
