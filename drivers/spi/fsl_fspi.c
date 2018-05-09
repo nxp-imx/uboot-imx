@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -192,6 +192,8 @@ static void fspi_set_lut(struct fsl_fspi_priv *priv)
 	fspi_write32(priv->flags, &regs->lut[lut_base + 1],
 		     OPRND0(0) | PAD0(LUT_PAD1) |
 		     INSTR0(LUT_READ));
+	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
 
 	/* Write Enable */
 	lut_base = SEQID_WREN * 4;
@@ -317,6 +319,9 @@ static void fspi_set_lut(struct fsl_fspi_priv *priv)
 		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD) | OPRND1(ADDR32BIT) |
 		     PAD1(LUT_PAD1) | INSTR1(LUT_ADDR));
 #endif
+	fspi_write32(priv->flags, &regs->lut[lut_base + 1], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
 
 #ifdef CONFIG_SPI_FLASH_BAR
 	/*
@@ -328,29 +333,47 @@ static void fspi_set_lut(struct fsl_fspi_priv *priv)
 	fspi_write32(priv->flags, &regs->lut[lut_base], OPRND0(FSPI_CMD_BRRD) |
 		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD) | OPRND1(1) |
 		     PAD1(LUT_PAD1) | INSTR1(LUT_READ));
+	fspi_write32(priv->flags, &regs->lut[lut_base + 1], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
 
 	lut_base = SEQID_BRWR * 4;
 	fspi_write32(priv->flags, &regs->lut[lut_base], OPRND0(FSPI_CMD_BRWR) |
 		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD) | OPRND1(1) |
 		     PAD1(LUT_PAD1) | INSTR1(LUT_WRITE));
+	fspi_write32(priv->flags, &regs->lut[lut_base + 1], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
 
 	lut_base = SEQID_RDEAR * 4;
 	fspi_write32(priv->flags, &regs->lut[lut_base], OPRND0(FSPI_CMD_RDEAR) |
 		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD) | OPRND1(1) |
 		     PAD1(LUT_PAD1) | INSTR1(LUT_READ));
+	fspi_write32(priv->flags, &regs->lut[lut_base + 1], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
 
 	lut_base = SEQID_WREAR * 4;
 	fspi_write32(priv->flags, &regs->lut[lut_base], OPRND0(FSPI_CMD_WREAR) |
 		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD) | OPRND1(1) |
 		     PAD1(LUT_PAD1) | INSTR1(LUT_WRITE));
+	fspi_write32(priv->flags, &regs->lut[lut_base + 1], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
 #endif
 	lut_base = SEQID_RDEVCR * 4;
 	fspi_write32(priv->flags, &regs->lut[lut_base], OPRND0(FSPI_CMD_RD_EVCR) |
 		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD));
+	fspi_write32(priv->flags, &regs->lut[lut_base + 1], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
 
 	lut_base = SEQID_WREVCR * 4;
 	fspi_write32(priv->flags, &regs->lut[lut_base], OPRND0(FSPI_CMD_WR_EVCR) |
 		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD));
+	fspi_write32(priv->flags, &regs->lut[lut_base + 1], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
 
 #ifdef CONFIG_FSPI_QUAD_SUPPORT
 	/* QUAD OUTPUT READ */
@@ -363,6 +386,8 @@ static void fspi_set_lut(struct fsl_fspi_priv *priv)
 		     OPRND0(0xc) | PAD0(LUT_PAD4) |
 		     INSTR0(LUT_DUMMY_DDR) | OPRND1(0) |
 		     PAD1(LUT_PAD4) | INSTR1(LUT_READ_DDR));
+	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
 #endif
 
 	/* Read Flag Status */
