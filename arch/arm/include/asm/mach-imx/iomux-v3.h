@@ -5,6 +5,7 @@
  *			<armlinux@phytec.de>
  *
  * Copyright (C) 2011 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
  */
 
 #ifndef __MACH_IOMUX_V3_H__
@@ -104,7 +105,11 @@ typedef u64 iomux_v3_cfg_t;
 #define PAD_CTL_ODE		(0x1 << 5)
 #define PAD_CTL_PUE		(0x1 << 6)
 #define PAD_CTL_HYS		(0x1 << 7)
+#if defined(CONFIG_IMX8MM)
+#define PAD_CTL_PE		(0x1 << 8)
+#else
 #define PAD_CTL_LVTTL		(0x1 << 8)
+#endif
 
 #elif defined CONFIG_MX7
 
