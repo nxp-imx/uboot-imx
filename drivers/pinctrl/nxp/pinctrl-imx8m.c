@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -22,6 +22,7 @@ static int imx8mq_pinctrl_probe(struct udevice *dev)
 
 static const struct udevice_id imx8m_pinctrl_match[] = {
 	{ .compatible = "fsl,imx8mq-iomuxc", .data = (ulong)&imx8mq_pinctrl_soc_info },
+	{ .compatible = "fsl,imx8mm-iomuxc", .data = (ulong)&imx8mq_pinctrl_soc_info },
 	{ /* sentinel */ }
 };
 
