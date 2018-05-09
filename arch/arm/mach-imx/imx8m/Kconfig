@@ -8,23 +8,31 @@ config IMX8M
 config SYS_SOC
 	default "imx8m"
 
+config IMX8MQ
+	bool
+	select IMX8M
+
+config IMX8MM
+	bool
+	select IMX8M
+
 choice
 	prompt  "NXP i.MX8M board select"
 	optional
 
 config TARGET_IMX8MQ_EVK
 	bool "imx8mq_evk"
-	select IMX8M
+	select IMX8MQ
 	select IMX8M_LPDDR4
 
 config TARGET_IMX8MQ_DDR3L_ARM2
 	bool "imx8mq_ddr3l_arm2"
-	select IMX8M
+	select IMX8MQ
 	select SUPPORT_SPL
 
 config TARGET_IMX8MQ_DDR4_ARM2
 	bool "imx8mq_ddr4_arm2"
-	select IMX8M
+	select IMX8MQ
 	select SUPPORT_SPL
 
 endchoice
