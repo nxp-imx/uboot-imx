@@ -184,9 +184,11 @@ static void imx_set_wdog_powerdown(bool enable)
 int arch_cpu_init(void)
 {
 	/*
-	 * Init timer at very early state, because sscg pll setting
-	 * will use it
+	 * Init timer at very early state, because pll setting will use it,
+	 * Rom Turnned off SCTR, enable it before timer_init
 	 */
+
+	clock_enable(CCGR_SCTR, 1);
 	timer_init();
 
 	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
