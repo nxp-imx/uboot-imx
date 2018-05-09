@@ -1,6 +1,7 @@
 /*
  * (C) Copyright 2009
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de.
+ * Copyright 2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -43,6 +44,8 @@
 
 #define is_mx7ulp() (is_cpu_type(MXC_CPU_MX7ULP))
 
+#define is_imx8mq() (is_cpu_type(MXC_CPU_IMX8MQ))
+#define is_imx8mm() (is_cpu_type(MXC_CPU_IMX8MM))
 #define is_imx8qm() (is_cpu_type(MXC_CPU_IMX8QM))
 #define is_imx8qxp() (is_cpu_type(MXC_CPU_IMX8QXP))
 #define is_imx8dx() (is_cpu_type(MXC_CPU_IMX8DX))
