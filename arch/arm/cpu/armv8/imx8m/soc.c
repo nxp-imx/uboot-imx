@@ -312,9 +312,14 @@ int arch_auxiliary_core_check_up(u32 core_id)
 
 enum boot_device get_boot_device(void)
 {
+#ifdef CONFIG_IMX8MM
+	struct bootrom_sw_info **p =
+		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR;
+#else
 	struct bootrom_sw_info **p =
 		is_soc_rev(CHIP_REV_1_0)? (struct bootrom_sw_info **)ROM_SW_INFO_ADDR_A0 :
 		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR;
+#endif
 
 	enum boot_device boot_dev = SD1_BOOT;
 	u8 boot_type = (*p)->boot_dev_type;
