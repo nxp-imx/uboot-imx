@@ -140,8 +140,10 @@ typedef void hapi_clock_init_t(void);
 #define HAB_ENG_SW		0xff   /* Software engine */
 
 #ifdef CONFIG_ROM_UNIFIED_SECTIONS
-#ifdef CONFIG_ARM64
+#ifdef CONFIG_IMX8MQ
 #define HAB_RVT_BASE			0x00000880
+#elif defined(CONFIG_IMX8MM)
+#define HAB_RVT_BASE			0x00000900
 #else
 #define HAB_RVT_BASE			0x00000100
 #endif
