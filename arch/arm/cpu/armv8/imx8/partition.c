@@ -178,9 +178,20 @@ static int do_part_dtb(int argc, char * const argv[])
 				goto free_data;
 			if (rsrc_size > 0) {
 				for (i = 0; i < rsrc_size >> 2; i++) {
-					err = sc_pm_set_resource_power_mode(ipc_handle, rsrc_data[i], SC_PM_PW_MODE_OFF);
-					if (err)
-						debug("power off resource %d, err %d\n", rsrc_data[i], err);
+					switch (rsrc_data[i]) {
+					case SC_R_MU_2A:
+					case SC_R_MU_3A:
+					case SC_R_MU_4A:
+						err = sc_pm_set_resource_power_mode(ipc_handle, rsrc_data[i], SC_PM_PW_MODE_ON);
+						if (err)
+							debug("power on resource %d, err %d\n", rsrc_data[i], err);
+						break;
+					default:
+						err = sc_pm_set_resource_power_mode(ipc_handle, rsrc_data[i], SC_PM_PW_MODE_OFF);
+						if (err)
+							debug("power off resource %d, err %d\n", rsrc_data[i], err);
+						break;
+					}
 					err = sc_rm_assign_resource(ipc_handle, pt, rsrc_data[i]);
 					debug("pt %d, resource %d, err %d\n", pt, rsrc_data[i], err);
 				}
