@@ -1147,7 +1147,7 @@ static void parameters_setup(void)
 {
 	interface.nand_block_size = 0;
 	interface.transfer_buffer =
-				(unsigned char *)CONFIG_FASTBOOT_BUF_ADDR;
+				(unsigned char *)getenv_ulong("fastboot_buffer", 16, CONFIG_FASTBOOT_BUF_ADDR);
 	interface.transfer_buffer_size =
 				CONFIG_FASTBOOT_BUF_SIZE;
 }
@@ -2942,6 +2942,7 @@ static void rx_handler_dl_image(struct usb_ep *ep, struct usb_request *req)
 	const unsigned char *buffer = req->buf;
 	unsigned int buffer_size = req->actual;
 	unsigned int pre_dot_num, now_dot_num;
+	void * base_addr = (void*)getenv_ulong("fastboot_buffer", 16, CONFIG_FASTBOOT_BUF_ADDR);
 
 	if (req->status != 0) {
 		printf("Bad status: %d\n", req->status);
@@ -2951,7 +2952,7 @@ static void rx_handler_dl_image(struct usb_ep *ep, struct usb_request *req)
 	if (buffer_size < transfer_size)
 		transfer_size = buffer_size;
 
-	memcpy((void *)CONFIG_FASTBOOT_BUF_ADDR + download_bytes,
+	memcpy(base_addr + download_bytes,
 	       buffer, transfer_size);
 
 	pre_dot_num = download_bytes / BYTES_PER_DOT;
@@ -3316,6 +3317,49 @@ static void cb_erase(struct usb_ep *ep, struct usb_request *req)
 }
 #endif
 
+#ifdef CONFIG_FSL_FASTBOOT
+static void cb_run_uboot_cmd(struct usb_ep *ep, struct usb_request *req)
+{
+	char *cmd = req->buf;
+	strsep(&cmd, ":");
+	if (!cmd) {
+		error("missing slot suffix\n");
+		fastboot_tx_write_str("FAILmissing command");
+		return;
+	}
+	if(run_command(cmd, 0))
+		fastboot_tx_write_str("FAIL");
+	else
+		fastboot_tx_write_str("OKAY");
+	return ;
+}
+
+static char g_a_cmd_buff[64];
+static void do_acmd_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	/* When usb dequeue complete will be called
+	 * Meed status value before call run_command.
+	 * otherwise, host can't get last message.
+	 */
+	if(req->status == 0)
+		run_command(g_a_cmd_buff, 0);
+}
+
+static void cb_run_uboot_acmd(struct usb_ep *ep, struct usb_request *req)
+{
+	char *cmd = req->buf;
+        strsep(&cmd, ":");
+        if (!cmd) {
+                error("missing slot suffix\n");
+                fastboot_tx_write_str("FAILmissing command");
+                return;
+        }
+	strcpy(g_a_cmd_buff, cmd);
+	fastboot_func->in_req->complete = do_acmd_complete;
+	fastboot_tx_write_str("OKAY");
+}
+#endif
+
 #ifdef CONFIG_AVB_SUPPORT
 static void cb_set_active_avb(struct usb_ep *ep, struct usb_request *req)
 {
@@ -3414,6 +3458,15 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 	{
 		.cmd = "set_active",
 		.cb = cb_set_active_avb,
+	},
+#endif
+#ifdef CONFIG_FSL_FASTBOOT
+	{
+		.cmd = "UCmd:",
+		.cb = cb_run_uboot_cmd,
+	},
+	{	.cmd ="ACmd:",
+		.cb = cb_run_uboot_acmd,
 	},
 #endif
 };
