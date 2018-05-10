@@ -23,6 +23,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define SEC_SECURE_RAM_END_BASE         (SEC_SECURE_RAM_BASE + 0xFFFFUL)
 #define SECO_LOCAL_SEC_SEC_SECURE_RAM_BASE  (0x60000000UL)
 
+#define SECO_PT                 2U
+
 struct container_hdr {
 	uint8_t version;
 	uint16_t length;
@@ -52,6 +54,8 @@ int authenticate_os_container(ulong addr)
 	int i, ret = 0;
 	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
 	sc_err_t err;
+	sc_rm_mr_t mr;
+	sc_faddr_t start, end;
 
 	if (addr % 4)
 		return -EINVAL;
@@ -73,7 +77,7 @@ int authenticate_os_container(ulong addr)
 	err = sc_misc_seco_authenticate(ipcHndl, SC_MISC_AUTH_CONTAINER, SECO_LOCAL_SEC_SEC_SECURE_RAM_BASE);
 	if (err) {
 		printf("authenticate container hdr failed, return %d\n", err);
-		ret = EIO;
+		ret = -EIO;
 		goto exit;
 	}
 
@@ -87,12 +91,41 @@ int authenticate_os_container(ulong addr)
 		flush_dcache_range(img->dst & ~(CONFIG_SYS_CACHELINE_SIZE - 1),
 				ALIGN(img->dst + img->size, CONFIG_SYS_CACHELINE_SIZE));
 
+		/* Find the memreg and set permission for seco pt */
+		err = sc_rm_find_memreg(ipcHndl, &mr,
+			img->dst & ~(CONFIG_SYS_CACHELINE_SIZE - 1), ALIGN(img->dst + img->size, CONFIG_SYS_CACHELINE_SIZE));
+
+		if (err) {
+			printf("can't find memreg for image load address %d, error %d\n", i, err);
+			ret = -ENOMEM;
+			goto exit;
+		}
+
+		err = sc_rm_get_memreg_info(ipcHndl, mr, &start, &end);
+		if (!err)
+			debug("memreg %u 0x%llx -- 0x%llx\n", mr, start, end);
+
+		err = sc_rm_set_memreg_permissions(ipcHndl, mr, SECO_PT, SC_RM_PERM_FULL);
+		if (err) {
+			printf("set permission failed for img %d, error %d\n", i, err);
+			ret = -EPERM;
+			goto exit;
+		}
+
 		err = sc_misc_seco_authenticate(ipcHndl, SC_MISC_VERIFY_IMAGE, (1 << i));
 		if (err) {
 			printf("authenticate img %d failed, return %d\n", i, err);
-			ret = EIO;
-			goto exit;
+			ret = -EIO;
 		}
+
+		err = sc_rm_set_memreg_permissions(ipcHndl, mr, SECO_PT, SC_RM_PERM_NONE);
+		if (err) {
+			printf("remove permission failed for img %d, error %d\n", i, err);
+			ret = -EPERM;
+		}
+
+		if (ret)
+			goto exit;
 	}
 
 exit:
