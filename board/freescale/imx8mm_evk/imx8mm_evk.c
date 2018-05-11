@@ -24,6 +24,7 @@
 #include <power/pmic.h>
 #include <power/bd71837.h>
 #include "../common/tcpc.h"
+#include <usb.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -294,6 +295,44 @@ static int setup_typec(void)
 		return ret;
 	}
 
+	return ret;
+}
+
+int board_usb_init(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	if (init == USB_INIT_HOST) {
+		imx8m_usb_power(index, true);
+
+		if (index == 0)
+			ret = tcpc_setup_dfp_mode(&port1);
+		else
+			ret = tcpc_setup_dfp_mode(&port2);
+	} else {
+		if (index == 0) {
+			imx8m_usb_power(index, true);
+			ret = tcpc_setup_ufp_mode(&port1);
+		} else {
+			ret = -EPERM; /* UDC driver is hard coded to use device 0 */
+		}
+	}
+
+	return ret;
+}
+
+int board_usb_cleanup(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	if (init == USB_INIT_HOST) {
+		if (index == 0)
+			ret = tcpc_disable_src_vbus(&port1);
+		else
+			ret = tcpc_disable_src_vbus(&port2);
+	}
+
+	imx8m_usb_power(index, false);
 	return ret;
 }
 #endif
