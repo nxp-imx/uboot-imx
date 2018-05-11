@@ -155,7 +155,7 @@ static void __maybe_unused
 usb_power_config_mx6(void *anatop, int anatop_bits_index) { }
 #endif
 
-#if defined(CONFIG_MX7) && !defined(CONFIG_PHY)
+#if defined(CONFIG_USB_EHCI_MX7) && !defined(CONFIG_PHY)
 static void usb_power_config_mx7(struct usbnc_regs *usbnc)
 {
 	void __iomem *phy_cfg2 = (void __iomem *)(&usbnc->phy_cfg2);
@@ -315,7 +315,7 @@ int usb_phy_mode(int port)
 		return USB_INIT_HOST;
 }
 
-#elif defined(CONFIG_MX7)
+#elif defined(CONFIG_USB_EHCI_MX7)
 int usb_phy_mode(int port)
 {
 	struct usbnc_regs *usbnc = (struct usbnc_regs *)(ulong)(USB_BASE_ADDR +
@@ -357,7 +357,7 @@ static void usb_oc_config(struct usbnc_regs *usbnc, int index)
 {
 #if defined(CONFIG_MX6)
 	void __iomem *ctrl = (void __iomem *)(&usbnc->ctrl[index]);
-#elif defined(CONFIG_MX7) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8)
+#elif defined(CONFIG_USB_EHCI_MX7) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8)
 	void __iomem *ctrl = (void __iomem *)(&usbnc->ctrl[0]);
 #endif
 
@@ -443,7 +443,7 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 		(struct anatop_regs __iomem *)ANATOP_BASE_ADDR;
 	struct usbnc_regs *usbnc = (struct usbnc_regs *)(USB_BASE_ADDR +
 			USB_OTHERREGS_OFFSET);
-#elif defined(CONFIG_MX7)
+#elif defined(CONFIG_USB_EHCI_MX7)
 	if (index > 1)
 		return -EINVAL;
 
@@ -484,7 +484,7 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 
 #if defined(CONFIG_MX6) || defined(CONFIG_IMXRT)
 	usb_power_config_mx6(anatop, index);
-#elif defined (CONFIG_MX7)
+#elif defined (CONFIG_USB_EHCI_MX7)
 	usb_power_config_mx7(usbnc);
 #elif defined (CONFIG_MX7ULP)
 	usb_power_config_mx7ulp(usbphy);
@@ -571,6 +571,13 @@ static int mx6_init_after_reset(struct ehci_ctrl *dev)
 	struct ehci_mx6_priv_data *priv = dev->priv;
 	enum usb_init_type type = priv->init_type;
 	struct usb_ehci *ehci = priv->ehci;
+	int ret;
+
+	ret = board_usb_init(priv->portnr, priv->init_type);
+	if (ret) {
+		printf("Failed to initialize board for USB\n");
+		return ret;
+	}
 
 #if !defined(CONFIG_PHY)
 	usb_power_config_mx6(priv->anatop_addr, priv->portnr);
@@ -807,6 +814,12 @@ static int ehci_usb_probe(struct udevice *dev)
 	priv->init_type = type;
 	priv->phy_type = usb_get_phy_mode(dev_ofnode(dev));
 
+	ret = board_usb_init(priv->portnr, priv->init_type);
+	if (ret) {
+		printf("Failed to initialize board for USB\n");
+		return ret;
+	}
+
 #if CONFIG_IS_ENABLED(CLK)
 	ret = clk_get_by_index(dev, 0, &priv->clk);
 	if (ret < 0)
@@ -930,7 +943,7 @@ int ehci_usb_remove(struct udevice *dev)
 	clk_disable(&priv->clk);
 #endif
 
-	return 0;
+	return board_usb_cleanup(dev_seq(dev), priv->init_type);
 }
 
 static const struct udevice_id mx6_usb_ids[] = {
