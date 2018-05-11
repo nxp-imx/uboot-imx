@@ -41,6 +41,8 @@
 		gpio3 = &gpio4;
 		gpio4 = &gpio5;
 		spi0 = &flexspi0;
+		usb0 = &usbotg1;
+		usb1 = &usbotg2;
 	};
 
 	cpus {
