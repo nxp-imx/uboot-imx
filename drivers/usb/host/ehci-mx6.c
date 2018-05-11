@@ -294,7 +294,7 @@ struct usbnc_regs {
 };
 #endif
 
-#elif defined(CONFIG_MX7)
+#elif defined(CONFIG_USB_EHCI_MX7)
 struct usbnc_regs {
 	u32 ctrl1;
 	u32 ctrl2;
@@ -363,7 +363,7 @@ static void usb_oc_config(int index)
 	struct usbnc_regs *usbnc = (struct usbnc_regs *)(USB_BASE_ADDR +
 			USB_OTHERREGS_OFFSET);
 	void __iomem *ctrl = (void __iomem *)(&usbnc->ctrl[index]);
-#elif defined(CONFIG_MX7) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8)
+#elif defined(CONFIG_USB_EHCI_MX7) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8)
 	struct usbnc_regs *usbnc = (struct usbnc_regs *)(ulong)(USB_BASE_ADDR +
 			(0x10000 * index) + USBNC_OFFSET);
 	void __iomem *ctrl = (void __iomem *)(&usbnc->ctrl1);
@@ -466,7 +466,7 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	enum usb_init_type type;
 #if defined(CONFIG_MX6)
 	u32 controller_spacing = 0x200;
-#elif defined(CONFIG_MX7) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8)
+#elif defined(CONFIG_USB_EHCI_MX7) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8)
 	u32 controller_spacing = 0x10000;
 #endif
 	struct usb_ehci *ehci = (struct usb_ehci *)(ulong)(USB_BASE_ADDR +
@@ -525,6 +525,12 @@ static int mx6_init_after_reset(struct ehci_ctrl *dev)
 	enum usb_init_type type = priv->init_type;
 	struct usb_ehci *ehci = priv->ehci;
 	int ret;
+
+	ret = board_usb_init(priv->portnr, priv->init_type);
+	if (ret) {
+		printf("Failed to initialize board for USB\n");
+		return ret;
+	}
 
 	ret = ehci_mx6_common_init(priv->ehci, priv->portnr);
 	if (ret)
@@ -622,7 +628,7 @@ static int ehci_usb_phy_mode(struct udevice *dev)
 			plat->init_type = USB_INIT_DEVICE;
 		else
 			plat->init_type = USB_INIT_HOST;
-	} else if (is_mx7()) {
+	} else if (is_mx7() || is_imx8mm()) {
 		phy_status = (void __iomem *)(addr +
 					      USBNC_PHY_STATUS_OFFSET);
 		val = readl(phy_status);
@@ -682,6 +688,12 @@ static int ehci_usb_probe(struct udevice *dev)
 	priv->portnr = dev->seq;
 	priv->init_type = type;
 
+	ret = board_usb_init(priv->portnr, priv->init_type);
+	if (ret) {
+		printf("Failed to initialize board for USB\n");
+		return ret;
+	}
+
 #if CONFIG_IS_ENABLED(DM_REGULATOR)
 	ret = device_get_supply_regulator(dev, "vbus-supply",
 					  &priv->vbus_supply);
@@ -719,6 +731,13 @@ static int ehci_usb_probe(struct udevice *dev)
 	return ehci_register(dev, hccr, hcor, &mx6_ehci_ops, 0, priv->init_type);
 }
 
+int ehci_usb_remove(struct udevice *dev)
+{
+	ehci_deregister(dev);
+
+	return board_usb_cleanup(dev->seq, USB_INIT_HOST);
+}
+
 static const struct udevice_id mx6_usb_ids[] = {
 	{ .compatible = "fsl,imx27-usb" },
 	{ }
@@ -730,7 +749,7 @@ U_BOOT_DRIVER(usb_mx6) = {
 	.of_match = mx6_usb_ids,
 	.ofdata_to_platdata = ehci_usb_ofdata_to_platdata,
 	.probe	= ehci_usb_probe,
-	.remove = ehci_deregister,
+	.remove = ehci_usb_remove,
 	.ops	= &ehci_usb_ops,
 	.platdata_auto_alloc_size = sizeof(struct usb_platdata),
 	.priv_auto_alloc_size = sizeof(struct ehci_mx6_priv_data),
