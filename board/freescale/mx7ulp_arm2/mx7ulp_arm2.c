@@ -178,6 +178,10 @@ int board_qspi_init(void)
 		writel(0x43000003, (PCC1_RBASE + 0x94));
 	}
 
+	/* Enable QSPI as a wakeup source on B0 */
+	if (soc_rev() >= CHIP_REV_2_0)
+		setbits_le32(SIM0_RBASE + WKPU_WAKEUP_EN, WKPU_QSPI_CHANNEL);
+
 	gpio_request(QSPI_RST_GPIO, "qspi_reset");
 	gpio_direction_output(QSPI_RST_GPIO, 0);
 	mdelay(10);
