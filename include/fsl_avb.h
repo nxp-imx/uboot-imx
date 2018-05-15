@@ -195,4 +195,28 @@ AvbIOResult fsl_read_permanent_attributes(
  */
 AvbIOResult fsl_read_permanent_attributes_hash(
     AvbAtxOps* atx_ops, uint8_t hash[AVB_SHA256_DIGEST_SIZE]);
+
+/* Provides the key version of a key used during verification. This may be
+ * useful for managing the minimum key version.
+ */
+void fsl_set_key_version(AvbAtxOps* atx_ops,
+                          size_t rollback_index_location,
+                          uint64_t key_version);
+
+/* This is the fast version of avb_ab_flow(), this function will
+ * not check another slot if one slot can pass the verify (or verify
+ * fail is acceptable). */
+AvbABFlowResult avb_ab_flow_fast(AvbABOps* ab_ops,
+                            const char* const* requested_partitions,
+                            AvbSlotVerifyFlags flags,
+                            AvbHashtreeErrorMode hashtree_error_mode,
+                            AvbSlotVerifyData** out_data);
+
+/* This is for legacy i.mx6/7 which don't enable A/B but want to
+ * verify boot/recovery with AVB */
+AvbABFlowResult avb_single_flow(AvbABOps* ab_ops,
+                            const char* const* requested_partitions,
+                            AvbSlotVerifyFlags flags,
+                            AvbHashtreeErrorMode hashtree_error_mode,
+                            AvbSlotVerifyData** out_data);
 #endif /* __FSL_AVB_H__ */

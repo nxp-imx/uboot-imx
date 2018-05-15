@@ -108,6 +108,10 @@ void avb_free(void* ptr);
 /* Returns the lenght of |str|, excluding the terminating NUL-byte. */
 size_t avb_strlen(const char* str) AVB_ATTR_WARN_UNUSED_RESULT;
 
+/* Divide the |dividend| by 10 and saves back to the pointer. Return the
+ * remainder. */
+uint32_t avb_div_by_10(uint64_t* dividend);
+
 #ifdef __cplusplus
 }
 #endif

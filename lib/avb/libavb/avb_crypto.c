@@ -355,8 +355,7 @@ static AvbAlgorithmData algorithm_data[_AVB_ALGORITHM_NUM_TYPES] = {
 };
 
 const AvbAlgorithmData* avb_get_algorithm_data(AvbAlgorithmType algorithm) {
-  if (algorithm >= AVB_ALGORITHM_TYPE_NONE &&
-      algorithm < _AVB_ALGORITHM_NUM_TYPES) {
+  if ((size_t)algorithm < _AVB_ALGORITHM_NUM_TYPES) {
     return &algorithm_data[algorithm];
   }
   return NULL;

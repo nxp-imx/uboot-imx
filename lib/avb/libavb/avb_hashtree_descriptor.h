@@ -35,6 +35,16 @@
 extern "C" {
 #endif
 
+/* Flags for hashtree descriptors.
+ *
+ * AVB_HASHTREE_DESCRIPTOR_FLAGS_DO_NOT_USE_AB: Do not apply the default A/B
+ *   partition logic to this partition. This is intentionally a negative boolean
+ *   because A/B should be both the default and most used in practice.
+ */
+typedef enum {
+  AVB_HASHTREE_DESCRIPTOR_FLAGS_DO_NOT_USE_AB = (1 << 0),
+} AvbHashtreeDescriptorFlags;
+
 /* A descriptor containing information about a dm-verity hashtree.
  *
  * Hash-trees are used to verify large partitions typically containing
@@ -48,6 +58,10 @@ extern "C" {
  *
  * The |reserved| field is for future expansion and must be set to NUL
  * bytes.
+ *
+ * Changes in v1.1:
+ *   - flags field is added which supports AVB_HASHTREE_DESCRIPTOR_FLAGS_USE_AB
+ *   - digest_len may be zero, which indicates the use of a persistent digest
  */
 typedef struct AvbHashtreeDescriptor {
   AvbDescriptor parent_descriptor;
@@ -64,7 +78,8 @@ typedef struct AvbHashtreeDescriptor {
   uint32_t partition_name_len;
   uint32_t salt_len;
   uint32_t root_digest_len;
-  uint8_t reserved[64];
+  uint32_t flags;
+  uint8_t reserved[60];
 } AVB_ATTR_PACKED AvbHashtreeDescriptor;
 
 /* Copies |src| to |dest| and validates, byte-swapping fields in the

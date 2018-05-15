@@ -30,8 +30,8 @@
 #ifndef AVB_ATX_VALIDATE_H_
 #define AVB_ATX_VALIDATE_H_
 
-#include "../libavb_atx/avb_atx_ops.h"
-#include "../libavb_atx/avb_atx_types.h"
+#include "avb_atx_ops.h"
+#include "avb_atx_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,6 +68,20 @@ AvbIOResult avb_atx_validate_vbmeta_public_key(
     size_t public_key_length,
     const uint8_t* public_key_metadata,
     size_t public_key_metadata_length,
+    bool* out_is_trusted);
+
+/* Generates a challenge which can be used to create an unlock credential. */
+AvbIOResult avb_atx_generate_unlock_challenge(
+    AvbAtxOps* atx_ops, AvbAtxUnlockChallenge* out_unlock_challenge);
+
+/* Validates an unlock credential. The certificate validation is very similar to
+ * the validation of public key metadata except in place of the PSK is a Product
+ * Unlock Key (PUK) and the certificate usage field identifies it as such. The
+ * challenge signature field is verified against this PUK.
+ */
+AvbIOResult avb_atx_validate_unlock_credential(
+    AvbAtxOps* atx_ops,
+    const AvbAtxUnlockCredential* unlock_credential,
     bool* out_is_trusted);
 
 #ifdef __cplusplus

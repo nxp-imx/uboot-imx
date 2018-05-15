@@ -14,4 +14,4 @@ obj-y += avb_descriptor.o \
 		avb_hashtree_descriptor.o \
 		avb_sha256.o \
 		avb_util.o \
-		avb_sysdeps_uboot.o
+		avb_cmdline.o

@@ -5,6 +5,8 @@
 # SPDX-License-Identifier:	GPL-2.0+
 #
 
+ccflags-y += -I./lib/avb
+
 obj-$(CONFIG_USB_GADGET) += epautoconf.o config.o usbstring.o
 obj-$(CONFIG_USB_ETHER) += epautoconf.o config.o usbstring.o
 

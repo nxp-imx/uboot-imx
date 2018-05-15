@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <linux/string.h>
 
-#include "avb_sysdeps.h"
+#include "../libavb/libavb.h"
 
 int avb_memcmp(const void* src1, const void* src2, size_t n) {
   return memcmp(src1, src2, n);
@@ -62,3 +62,9 @@ void avb_printv(const char* message, ...) {
 void* avb_malloc_(size_t size) { return malloc(size); }
 
 void avb_free(void* ptr) { free(ptr); }
+
+uint32_t avb_div_by_10(uint64_t* dividend) {
+  uint32_t rem = (uint32_t)(*dividend % 10);
+  *dividend /= 10;
+  return rem;
+}
