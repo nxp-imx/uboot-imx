@@ -63,8 +63,8 @@
 #include <stdbool.h>
 
 bool is_usb_boot(void);
+void disconnect_from_pc(void);
 #define is_boot_from_usb  is_usb_boot
-#define	disconnect_from_pc(void) writel(0x0, USB_BASE_ADDR + 0x140)
 
 struct usbphy_regs {
 	u32	usbphy_pwd;			/* 0x000 */
