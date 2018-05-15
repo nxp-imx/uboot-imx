@@ -223,19 +223,6 @@ AvbABFlowResult avb_ab_flow(AvbABOps* ab_ops,
                             AvbHashtreeErrorMode hashtree_error_mode,
                             AvbSlotVerifyData** out_data);
 
-AvbABFlowResult avb_ab_flow_fast(AvbABOps* ab_ops,
-                            const char* const* requested_partitions,
-                            AvbSlotVerifyFlags flags,
-                            AvbHashtreeErrorMode hashtree_error_mode,
-                            AvbSlotVerifyData** out_data);
-/* This is for legacy i.mx6/7 which don't enable A/B but want to
- * verify boot/recovery with AVB */
-AvbABFlowResult avb_single_flow(AvbABOps* ab_ops,
-                            const char* const* requested_partitions,
-                            AvbSlotVerifyFlags flags,
-                            AvbHashtreeErrorMode hashtree_error_mode,
-                            AvbSlotVerifyData** out_data);
-
 /* Marks the slot with the given slot number as active. Returns
  * AVB_IO_RESULT_OK on success, error code otherwise.
  *

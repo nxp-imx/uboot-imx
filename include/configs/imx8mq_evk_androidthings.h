@@ -51,4 +51,6 @@
 	"fdt_high=0xffffffffffffffff\0"		\
 	"initrd_high=0xffffffffffffffff\0"	\
 
+#define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
+
 #endif /* IMX8MQ_EVK_ANDROID_THINGS_H */

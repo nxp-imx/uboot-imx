@@ -52,6 +52,7 @@ bool avb_hashtree_descriptor_validate_and_byteswap(
   dest->partition_name_len = avb_be32toh(dest->partition_name_len);
   dest->salt_len = avb_be32toh(dest->salt_len);
   dest->root_digest_len = avb_be32toh(dest->root_digest_len);
+  dest->flags = avb_be32toh(dest->flags);
 
   /* Check that partition_name, salt, and root_digest are fully contained. */
   expected_size = sizeof(AvbHashtreeDescriptor) - sizeof(AvbDescriptor);

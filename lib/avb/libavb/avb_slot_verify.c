@@ -24,18 +24,15 @@
 
 #include "avb_slot_verify.h"
 #include "avb_chain_partition_descriptor.h"
+#include "avb_cmdline.h"
 #include "avb_footer.h"
 #include "avb_hash_descriptor.h"
+#include "avb_hashtree_descriptor.h"
 #include "avb_kernel_cmdline_descriptor.h"
 #include "avb_sha.h"
 #include "avb_util.h"
 #include "avb_vbmeta_image.h"
 #include "avb_version.h"
-
-/* Maximum allow length (in bytes) of a partition name, including
- * ab_suffix.
- */
-#define PART_NAME_MAX_SIZE 32
 
 /* Maximum number of partitions that can be loaded with avb_slot_verify(). */
 #define MAX_NUMBER_OF_LOADED_PARTITIONS 32
@@ -69,6 +66,114 @@ static inline bool result_should_continue(AvbSlotVerifyResult result) {
   return false;
 }
 
+static AvbSlotVerifyResult load_full_partition(AvbOps* ops,
+                                               const char* part_name,
+                                               uint64_t image_size,
+                                               uint8_t** out_image_buf,
+                                               bool* out_image_preloaded) {
+  size_t part_num_read;
+  AvbIOResult io_ret;
+
+  /* Make sure that we do not overwrite existing data. */
+  avb_assert(*out_image_buf == NULL);
+  avb_assert(!*out_image_preloaded);
+
+  /* We are going to implicitly cast image_size from uint64_t to size_t in the
+   * following code, so we need to make sure that the cast is safe. */
+  if (image_size != (size_t)(image_size)) {
+    avb_errorv(part_name, ": Partition size too large to load.\n", NULL);
+    return AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
+  }
+
+  /* Try use a preloaded one. */
+  if (ops->get_preloaded_partition != NULL) {
+    io_ret = ops->get_preloaded_partition(
+        ops, part_name, image_size, out_image_buf, &part_num_read);
+    if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
+      return AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
+    } else if (io_ret != AVB_IO_RESULT_OK) {
+      avb_errorv(part_name, ": Error loading data from partition.\n", NULL);
+      return AVB_SLOT_VERIFY_RESULT_ERROR_IO;
+    }
+
+    if (*out_image_buf != NULL) {
+      if (part_num_read != image_size) {
+        avb_errorv(part_name, ": Read incorrect number of bytes.\n", NULL);
+        return AVB_SLOT_VERIFY_RESULT_ERROR_IO;
+      }
+      *out_image_preloaded = true;
+    }
+  }
+
+  /* Allocate and copy the partition. */
+  if (!*out_image_preloaded) {
+    *out_image_buf = avb_malloc(image_size);
+    if (*out_image_buf == NULL) {
+      return AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
+    }
+
+    io_ret = ops->read_from_partition(ops,
+                                      part_name,
+                                      0 /* offset */,
+                                      image_size,
+                                      *out_image_buf,
+                                      &part_num_read);
+    if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
+      return AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
+    } else if (io_ret != AVB_IO_RESULT_OK) {
+      avb_errorv(part_name, ": Error loading data from partition.\n", NULL);
+      return AVB_SLOT_VERIFY_RESULT_ERROR_IO;
+    }
+    if (part_num_read != image_size) {
+      avb_errorv(part_name, ": Read incorrect number of bytes.\n", NULL);
+      return AVB_SLOT_VERIFY_RESULT_ERROR_IO;
+    }
+  }
+
+  return AVB_SLOT_VERIFY_RESULT_OK;
+}
+
+static AvbSlotVerifyResult read_persistent_digest(AvbOps* ops,
+                                                  const char* part_name,
+                                                  size_t expected_digest_size,
+                                                  uint8_t* out_digest) {
+  char* persistent_value_name = NULL;
+  AvbIOResult io_ret = AVB_IO_RESULT_OK;
+  size_t stored_digest_size = 0;
+
+  if (ops->read_persistent_value == NULL) {
+    avb_errorv(part_name, ": Persistent values are not implemented.\n", NULL);
+    return AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
+  }
+  persistent_value_name =
+      avb_strdupv(AVB_NPV_PERSISTENT_DIGEST_PREFIX, part_name, NULL);
+  if (persistent_value_name == NULL) {
+    return AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
+  }
+  io_ret = ops->read_persistent_value(ops,
+                                      persistent_value_name,
+                                      expected_digest_size,
+                                      out_digest,
+                                      &stored_digest_size);
+  avb_free(persistent_value_name);
+  if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
+    return AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
+  } else if (io_ret == AVB_IO_RESULT_ERROR_NO_SUCH_VALUE) {
+    avb_errorv(part_name, ": Persistent digest does not exist.\n", NULL);
+    return AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
+  } else if (io_ret == AVB_IO_RESULT_ERROR_INVALID_VALUE_SIZE ||
+             io_ret == AVB_IO_RESULT_ERROR_INSUFFICIENT_SPACE ||
+             expected_digest_size != stored_digest_size) {
+    avb_errorv(
+        part_name, ": Persistent digest is not of expected size.\n", NULL);
+    return AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
+  } else if (io_ret != AVB_IO_RESULT_OK) {
+    avb_errorv(part_name, ": Error reading persistent digest.\n", NULL);
+    return AVB_SLOT_VERIFY_RESULT_ERROR_IO;
+  }
+  return AVB_SLOT_VERIFY_RESULT_OK;
+}
+
 static AvbSlotVerifyResult load_and_verify_hash_partition(
     AvbOps* ops,
     const char* const* requested_partitions,
@@ -80,15 +185,18 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
   const uint8_t* desc_partition_name = NULL;
   const uint8_t* desc_salt;
   const uint8_t* desc_digest;
-  char part_name[PART_NAME_MAX_SIZE];
+  char part_name[AVB_PART_NAME_MAX_SIZE];
   AvbSlotVerifyResult ret;
   AvbIOResult io_ret;
   uint8_t* image_buf = NULL;
-  size_t part_num_read;
+  bool image_preloaded = false;
   uint8_t* digest;
   size_t digest_len;
   const char* found;
   uint64_t image_size;
+  size_t expected_digest_len = 0;
+  uint8_t expected_digest_buf[AVB_SHA512_DIGEST_SIZE];
+  const uint8_t* expected_digest = NULL;
 
   if (!avb_hash_descriptor_validate_and_byteswap(
           (const AvbHashDescriptor*)descriptor, &hash_desc)) {
@@ -118,15 +226,35 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
     goto out;
   }
 
-  if (!avb_str_concat(part_name,
-                      sizeof part_name,
-                      (const char*)desc_partition_name,
-                      hash_desc.partition_name_len,
-                      ab_suffix,
-                      avb_strlen(ab_suffix))) {
-    avb_error("Partition name and suffix does not fit.\n");
+  if ((hash_desc.flags & AVB_HASH_DESCRIPTOR_FLAGS_DO_NOT_USE_AB) != 0) {
+    /* No ab_suffix, just copy the partition name as is. */
+    if (hash_desc.partition_name_len >= AVB_PART_NAME_MAX_SIZE) {
+      avb_error("Partition name does not fit.\n");
+      ret = AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
+      goto out;
+    }
+    avb_memcpy(part_name, desc_partition_name, hash_desc.partition_name_len);
+    part_name[hash_desc.partition_name_len] = '\0';
+  } else if (hash_desc.digest_len == 0 && avb_strlen(ab_suffix) != 0) {
+    /* No ab_suffix allowed for partitions without a digest in the descriptor
+     * because these partitions hold data unique to this device and are not
+     * updated using an A/B scheme.
+     */
+    avb_error("Cannot use A/B with a persistent digest.\n");
     ret = AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
     goto out;
+  } else {
+    /* Add ab_suffix to the partition name. */
+    if (!avb_str_concat(part_name,
+                        sizeof part_name,
+                        (const char*)desc_partition_name,
+                        hash_desc.partition_name_len,
+                        ab_suffix,
+                        avb_strlen(ab_suffix))) {
+      avb_error("Partition name and suffix does not fit.\n");
+      ret = AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
+      goto out;
+    }
   }
 
   /* If we're allowing verification errors then hash_desc.image_size
@@ -159,25 +287,9 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
     }
   }
 
-  image_buf = avb_malloc(image_size);
-  if (image_buf == NULL) {
-    ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-    goto out;
-  }
-
-  io_ret = ops->read_from_partition(
-      ops, part_name, 0 /* offset */, image_size, image_buf, &part_num_read);
-  if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
-    ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-    goto out;
-  } else if (io_ret != AVB_IO_RESULT_OK) {
-    avb_errorv(part_name, ": Error loading data from partition.\n", NULL);
-    ret = AVB_SLOT_VERIFY_RESULT_ERROR_IO;
-    goto out;
-  }
-  if (part_num_read != image_size) {
-    avb_errorv(part_name, ": Read fewer than requested bytes.\n", NULL);
-    ret = AVB_SLOT_VERIFY_RESULT_ERROR_IO;
+  ret = load_full_partition(
+      ops, part_name, image_size, &image_buf, &image_preloaded);
+  if (ret != AVB_SLOT_VERIFY_RESULT_OK) {
     goto out;
   }
 
@@ -201,14 +313,31 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
     goto out;
   }
 
-  if (digest_len != hash_desc.digest_len) {
+  if (hash_desc.digest_len == 0) {
+    // Expect a match to a persistent digest.
+    avb_debugv(part_name, ": No digest, using persistent digest.\n", NULL);
+    expected_digest_len = digest_len;
+    expected_digest = expected_digest_buf;
+    avb_assert(expected_digest_len <= sizeof(expected_digest_buf));
+    ret =
+        read_persistent_digest(ops, part_name, digest_len, expected_digest_buf);
+    if (ret != AVB_SLOT_VERIFY_RESULT_OK) {
+      goto out;
+    }
+  } else {
+    // Expect a match to the digest in the descriptor.
+    expected_digest_len = hash_desc.digest_len;
+    expected_digest = desc_digest;
+  }
+
+  if (digest_len != expected_digest_len) {
     avb_errorv(
         part_name, ": Digest in descriptor not of expected size.\n", NULL);
     ret = AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
     goto out;
   }
 
-  if (avb_safe_memcmp(digest, desc_digest, digest_len) != 0) {
+  if (avb_safe_memcmp(digest, expected_digest, digest_len) != 0) {
     avb_errorv(part_name,
                ": Hash of data does not match digest in descriptor.\n",
                NULL);
@@ -234,11 +363,12 @@ out:
     loaded_partition->partition_name = avb_strdup(found);
     loaded_partition->data_size = image_size;
     loaded_partition->data = image_buf;
+    loaded_partition->preloaded = image_preloaded;
     image_buf = NULL;
   }
 
 fail:
-  if (image_buf != NULL) {
+  if (image_buf != NULL && !image_preloaded) {
     avb_free(image_buf);
   }
   return ret;
@@ -251,6 +381,7 @@ static AvbSlotVerifyResult load_requested_partitions(
     AvbSlotVerifyData* slot_data) {
   AvbSlotVerifyResult ret;
   uint8_t* image_buf = NULL;
+  bool image_preloaded = false;
   size_t n;
 
   if (ops->get_size_of_partition == NULL) {
@@ -260,10 +391,9 @@ static AvbSlotVerifyResult load_requested_partitions(
   }
 
   for (n = 0; requested_partitions[n] != NULL; n++) {
-    char part_name[PART_NAME_MAX_SIZE];
+    char part_name[AVB_PART_NAME_MAX_SIZE];
     AvbIOResult io_ret;
     uint64_t image_size;
-    size_t part_num_read;
     AvbPartitionData* loaded_partition;
 
     if (!avb_str_concat(part_name,
@@ -288,25 +418,9 @@ static AvbSlotVerifyResult load_requested_partitions(
     }
     avb_debugv(part_name, ": Loading entire partition.\n", NULL);
 
-    image_buf = avb_malloc(image_size);
-    if (image_buf == NULL) {
-      ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-      goto out;
-    }
-
-    io_ret = ops->read_from_partition(
-        ops, part_name, 0 /* offset */, image_size, image_buf, &part_num_read);
-    if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
-      ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-      goto out;
-    } else if (io_ret != AVB_IO_RESULT_OK) {
-      avb_errorv(part_name, ": Error loading data from partition.\n", NULL);
-      ret = AVB_SLOT_VERIFY_RESULT_ERROR_IO;
-      goto out;
-    }
-    if (part_num_read != image_size) {
-      avb_errorv(part_name, ": Read fewer than requested bytes.\n", NULL);
-      ret = AVB_SLOT_VERIFY_RESULT_ERROR_IO;
+    ret = load_full_partition(
+        ops, part_name, image_size, &image_buf, &image_preloaded);
+    if (ret != AVB_SLOT_VERIFY_RESULT_OK) {
       goto out;
     }
 
@@ -324,16 +438,21 @@ static AvbSlotVerifyResult load_requested_partitions(
       goto out;
     }
     loaded_partition->data_size = image_size;
-    loaded_partition->data = image_buf;
+    loaded_partition->data = image_buf; /* Transferring the owner. */
+    loaded_partition->preloaded = image_preloaded;
     image_buf = NULL;
+    image_preloaded = false;
   }
 
   ret = AVB_SLOT_VERIFY_RESULT_OK;
 
 out:
-  if (image_buf != NULL) {
+  /* Free the current buffer if any. */
+  if (image_buf != NULL && !image_preloaded) {
     avb_free(image_buf);
   }
+  /* Buffers that are already saved in slot_data will be handled by the caller
+   * even on failure. */
   return ret;
 }
 
@@ -349,8 +468,9 @@ static AvbSlotVerifyResult load_and_verify_vbmeta(
     const uint8_t* expected_public_key,
     size_t expected_public_key_length,
     AvbSlotVerifyData* slot_data,
-    AvbAlgorithmType* out_algorithm_type) {
-  char full_partition_name[PART_NAME_MAX_SIZE];
+    AvbAlgorithmType* out_algorithm_type,
+    AvbCmdlineSubstList* out_additional_cmdline_subst) {
+  char full_partition_name[AVB_PART_NAME_MAX_SIZE];
   AvbSlotVerifyResult ret;
   AvbIOResult io_ret;
   size_t vbmeta_offset;
@@ -485,7 +605,8 @@ static AvbSlotVerifyResult load_and_verify_vbmeta(
                                    NULL /* expected_public_key */,
                                    0 /* expected_public_key_length */,
                                    slot_data,
-                                   out_algorithm_type);
+                                   out_algorithm_type,
+                                   out_additional_cmdline_subst);
       goto out;
     } else {
       avb_errorv(full_partition_name, ": Error loading vbmeta data.\n", NULL);
@@ -681,7 +802,8 @@ static AvbSlotVerifyResult load_and_verify_vbmeta(
    *   checks that it matches what's in the hash descriptor.
    *
    * - hashtree descriptor: Do nothing since verification happens
-   *   on-the-fly from within the OS.
+   *   on-the-fly from within the OS. (Unless the descriptor uses a
+   *   persistent digest, in which case we need to find it).
    *
    * - chained partition descriptor: Load the footer, load the vbmeta
    *   image, verify vbmeta image (includes rollback checks, hash
@@ -752,18 +874,20 @@ static AvbSlotVerifyResult load_and_verify_vbmeta(
                                sizeof(AvbChainPartitionDescriptor);
         chain_public_key = chain_partition_name + chain_desc.partition_name_len;
 
-        sub_ret = load_and_verify_vbmeta(ops,
-                                         requested_partitions,
-                                         ab_suffix,
-                                         allow_verification_error,
-                                         toplevel_vbmeta_flags,
-                                         chain_desc.rollback_index_location,
-                                         (const char*)chain_partition_name,
-                                         chain_desc.partition_name_len,
-                                         chain_public_key,
-                                         chain_desc.public_key_len,
-                                         slot_data,
-                                         NULL /* out_algorithm_type */);
+        sub_ret =
+            load_and_verify_vbmeta(ops,
+                                   requested_partitions,
+                                   ab_suffix,
+                                   allow_verification_error,
+                                   toplevel_vbmeta_flags,
+                                   chain_desc.rollback_index_location,
+                                   (const char*)chain_partition_name,
+                                   chain_desc.partition_name_len,
+                                   chain_public_key,
+                                   chain_desc.public_key_len,
+                                   slot_data,
+                                   NULL, /* out_algorithm_type */
+                                   NULL /* out_additional_cmdline_subst */);
         if (sub_ret != AVB_SLOT_VERIFY_RESULT_OK) {
           ret = sub_ret;
           if (!result_should_continue(ret)) {
@@ -849,9 +973,90 @@ static AvbSlotVerifyResult load_and_verify_vbmeta(
         }
       } break;
 
-      /* Explicit fall-through */
+      case AVB_DESCRIPTOR_TAG_HASHTREE: {
+        AvbHashtreeDescriptor hashtree_desc;
+
+        if (!avb_hashtree_descriptor_validate_and_byteswap(
+                (AvbHashtreeDescriptor*)descriptors[n], &hashtree_desc)) {
+          avb_errorv(
+              full_partition_name, ": Hashtree descriptor is invalid.\n", NULL);
+          ret = AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
+          goto out;
+        }
+
+        /* We only need to continue when there is no digest in the descriptor.
+         * This is because the only processing here is to find the digest and
+         * make it available on the kernel command line.
+         */
+        if (hashtree_desc.root_digest_len == 0) {
+          char part_name[AVB_PART_NAME_MAX_SIZE];
+          size_t digest_len = 0;
+          uint8_t digest_buf[AVB_SHA512_DIGEST_SIZE];
+          const uint8_t* desc_partition_name =
+              ((const uint8_t*)descriptors[n]) + sizeof(AvbHashtreeDescriptor);
+
+          if (!avb_validate_utf8(desc_partition_name,
+                                 hashtree_desc.partition_name_len)) {
+            avb_error("Partition name is not valid UTF-8.\n");
+            ret = AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
+            goto out;
+          }
+
+          /* No ab_suffix for partitions without a digest in the descriptor
+           * because these partitions hold data unique to this device and are
+           * not updated using an A/B scheme.
+           */
+          if ((hashtree_desc.flags &
+               AVB_HASHTREE_DESCRIPTOR_FLAGS_DO_NOT_USE_AB) == 0 &&
+              avb_strlen(ab_suffix) != 0) {
+            avb_error("Cannot use A/B with a persistent root digest.\n");
+            ret = AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
+            goto out;
+          }
+          if (hashtree_desc.partition_name_len >= AVB_PART_NAME_MAX_SIZE) {
+            avb_error("Partition name does not fit.\n");
+            ret = AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
+            goto out;
+          }
+          avb_memcpy(
+              part_name, desc_partition_name, hashtree_desc.partition_name_len);
+          part_name[hashtree_desc.partition_name_len] = '\0';
+
+          /* Determine the expected digest size from the hash algorithm. */
+          if (avb_strcmp((const char*)hashtree_desc.hash_algorithm, "sha1") ==
+              0) {
+            digest_len = AVB_SHA1_DIGEST_SIZE;
+          } else if (avb_strcmp((const char*)hashtree_desc.hash_algorithm,
+                                "sha256") == 0) {
+            digest_len = AVB_SHA256_DIGEST_SIZE;
+          } else if (avb_strcmp((const char*)hashtree_desc.hash_algorithm,
+                                "sha512") == 0) {
+            digest_len = AVB_SHA512_DIGEST_SIZE;
+          } else {
+            avb_errorv(part_name, ": Unsupported hash algorithm.\n", NULL);
+            ret = AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA;
+            goto out;
+          }
+
+          ret = read_persistent_digest(ops, part_name, digest_len, digest_buf);
+          if (ret != AVB_SLOT_VERIFY_RESULT_OK) {
+            goto out;
+          }
+
+          if (out_additional_cmdline_subst) {
+            ret =
+                avb_add_root_digest_substitution(part_name,
+                                                 digest_buf,
+                                                 digest_len,
+                                                 out_additional_cmdline_subst);
+            if (ret != AVB_SLOT_VERIFY_RESULT_OK) {
+              goto out;
+            }
+          }
+        }
+      } break;
+
       case AVB_DESCRIPTOR_TAG_PROPERTY:
-      case AVB_DESCRIPTOR_TAG_HASHTREE:
         /* Do nothing. */
         break;
     }
@@ -886,350 +1091,6 @@ out:
   return ret;
 }
 
-#define NUM_GUIDS 3
-
-/* Substitutes all variables (e.g. $(ANDROID_SYSTEM_PARTUUID)) with
- * values. Returns NULL on OOM, otherwise the cmdline with values
- * replaced.
- */
-static char* sub_cmdline(AvbOps* ops,
-                         const char* cmdline,
-                         const char* ab_suffix,
-                         bool using_boot_for_vbmeta) {
-  const char* part_name_str[NUM_GUIDS] = {"system", "boot", "vbmeta"};
-  const char* replace_str[NUM_GUIDS] = {"$(ANDROID_SYSTEM_PARTUUID)",
-                                        "$(ANDROID_BOOT_PARTUUID)",
-                                        "$(ANDROID_VBMETA_PARTUUID)"};
-  char* ret = NULL;
-  AvbIOResult io_ret;
-
-  /* Special-case for when the top-level vbmeta struct is in the boot
-   * partition.
-   */
-  if (using_boot_for_vbmeta) {
-    part_name_str[2] = "boot";
-  }
-
-  /* Replace unique partition GUIDs */
-  for (size_t n = 0; n < NUM_GUIDS; n++) {
-    char part_name[PART_NAME_MAX_SIZE];
-    char guid_buf[37];
-
-    if (!avb_str_concat(part_name,
-                        sizeof part_name,
-                        part_name_str[n],
-                        avb_strlen(part_name_str[n]),
-                        ab_suffix,
-                        avb_strlen(ab_suffix))) {
-      avb_error("Partition name and suffix does not fit.\n");
-      goto fail;
-    }
-
-    io_ret = ops->get_unique_guid_for_partition(
-        ops, part_name, guid_buf, sizeof guid_buf);
-    if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
-      return NULL;
-    } else if (io_ret != AVB_IO_RESULT_OK) {
-      avb_error("Error getting unique GUID for partition.\n");
-      goto fail;
-    }
-
-    if (ret == NULL) {
-      ret = avb_replace(cmdline, replace_str[n], guid_buf);
-    } else {
-      char* new_ret = avb_replace(ret, replace_str[n], guid_buf);
-      avb_free(ret);
-      ret = new_ret;
-    }
-    if (ret == NULL) {
-      goto fail;
-    }
-  }
-
-  return ret;
-
-fail:
-  if (ret != NULL) {
-    avb_free(ret);
-  }
-  return NULL;
-}
-
-static int cmdline_append_option(AvbSlotVerifyData* slot_data,
-                                 const char* key,
-                                 const char* value) {
-  size_t offset, key_len, value_len;
-  char* new_cmdline;
-
-  key_len = avb_strlen(key);
-  value_len = avb_strlen(value);
-
-  offset = 0;
-  if (slot_data->cmdline != NULL) {
-    offset = avb_strlen(slot_data->cmdline);
-    if (offset > 0) {
-      offset += 1;
-    }
-  }
-
-  new_cmdline = avb_calloc(offset + key_len + value_len + 2);
-  if (new_cmdline == NULL) {
-    return 0;
-  }
-  if (offset > 0) {
-    avb_memcpy(new_cmdline, slot_data->cmdline, offset - 1);
-    new_cmdline[offset - 1] = ' ';
-  }
-  avb_memcpy(new_cmdline + offset, key, key_len);
-  new_cmdline[offset + key_len] = '=';
-  avb_memcpy(new_cmdline + offset + key_len + 1, value, value_len);
-  if (slot_data->cmdline != NULL) {
-    avb_free(slot_data->cmdline);
-  }
-  slot_data->cmdline = new_cmdline;
-
-  return 1;
-}
-
-#define AVB_MAX_DIGITS_UINT64 32
-
-/* Writes |value| to |digits| in base 10 followed by a NUL byte.
- * Returns number of characters written excluding the NUL byte.
- */
-static size_t uint64_to_base10(uint64_t value,
-                               char digits[AVB_MAX_DIGITS_UINT64]) {
-  char rev_digits[AVB_MAX_DIGITS_UINT64];
-  size_t n, num_digits;
-
-  for (num_digits = 0; num_digits < AVB_MAX_DIGITS_UINT64 - 1;) {
-    rev_digits[num_digits++] = (value % 10) + '0';
-    value /= 10;
-    if (value == 0) {
-      break;
-    }
-  }
-
-  for (n = 0; n < num_digits; n++) {
-    digits[n] = rev_digits[num_digits - 1 - n];
-  }
-  digits[n] = '\0';
-  return n;
-}
-
-static int cmdline_append_version(AvbSlotVerifyData* slot_data,
-                                  const char* key,
-                                  uint64_t major_version,
-                                  uint64_t minor_version) {
-  char major_digits[AVB_MAX_DIGITS_UINT64];
-  char minor_digits[AVB_MAX_DIGITS_UINT64];
-  char combined[AVB_MAX_DIGITS_UINT64 * 2 + 1];
-  size_t num_major_digits, num_minor_digits;
-
-  num_major_digits = uint64_to_base10(major_version, major_digits);
-  num_minor_digits = uint64_to_base10(minor_version, minor_digits);
-  avb_memcpy(combined, major_digits, num_major_digits);
-  combined[num_major_digits] = '.';
-  avb_memcpy(combined + num_major_digits + 1, minor_digits, num_minor_digits);
-  combined[num_major_digits + 1 + num_minor_digits] = '\0';
-
-  return cmdline_append_option(slot_data, key, combined);
-}
-
-static int cmdline_append_uint64_base10(AvbSlotVerifyData* slot_data,
-                                        const char* key,
-                                        uint64_t value) {
-  char digits[AVB_MAX_DIGITS_UINT64];
-  uint64_to_base10(value, digits);
-  return cmdline_append_option(slot_data, key, digits);
-}
-
-static int cmdline_append_hex(AvbSlotVerifyData* slot_data,
-                              const char* key,
-                              const uint8_t* data,
-                              size_t data_len) {
-  char hex_digits[17] = "0123456789abcdef";
-  char* hex_data;
-  int ret;
-  size_t n;
-
-  hex_data = avb_malloc(data_len * 2 + 1);
-  if (hex_data == NULL) {
-    return 0;
-  }
-
-  for (n = 0; n < data_len; n++) {
-    hex_data[n * 2] = hex_digits[data[n] >> 4];
-    hex_data[n * 2 + 1] = hex_digits[data[n] & 0x0f];
-  }
-  hex_data[n * 2] = '\0';
-
-  ret = cmdline_append_option(slot_data, key, hex_data);
-  avb_free(hex_data);
-  return ret;
-}
-
-static AvbSlotVerifyResult append_options(
-    AvbOps* ops,
-    AvbSlotVerifyData* slot_data,
-    AvbVBMetaImageHeader* toplevel_vbmeta,
-    AvbAlgorithmType algorithm_type,
-    AvbHashtreeErrorMode hashtree_error_mode) {
-  AvbSlotVerifyResult ret;
-  const char* verity_mode = NULL;
-  bool is_device_unlocked;
-  AvbIOResult io_ret;
-
-  /* Add androidboot.vbmeta.device option. */
-  if (!cmdline_append_option(slot_data,
-                             "androidboot.vbmeta.device",
-                             "PARTUUID=$(ANDROID_VBMETA_PARTUUID)")) {
-    ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-    goto out;
-  }
-
-  /* Add androidboot.vbmeta.avb_version option. */
-  if (!cmdline_append_version(slot_data,
-                              "androidboot.vbmeta.avb_version",
-                              AVB_VERSION_MAJOR,
-                              AVB_VERSION_MINOR)) {
-    ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-    goto out;
-  }
-
-  /* Set androidboot.avb.device_state to "locked" or "unlocked". */
-  io_ret = ops->read_is_device_unlocked(ops, &is_device_unlocked);
-  if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
-    ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-    goto out;
-  } else if (io_ret != AVB_IO_RESULT_OK) {
-    avb_error("Error getting device state.\n");
-    ret = AVB_SLOT_VERIFY_RESULT_ERROR_IO;
-    goto out;
-  }
-  if (!cmdline_append_option(slot_data,
-                             "androidboot.vbmeta.device_state",
-                             is_device_unlocked ? "unlocked" : "locked")) {
-    ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-    goto out;
-  }
-
-  /* Set androidboot.vbmeta.{hash_alg, size, digest} - use same hash
-   * function as is used to sign vbmeta.
-   */
-  switch (algorithm_type) {
-    /* Explicit fallthrough. */
-    case AVB_ALGORITHM_TYPE_NONE:
-    case AVB_ALGORITHM_TYPE_SHA256_RSA2048:
-    case AVB_ALGORITHM_TYPE_SHA256_RSA4096:
-    case AVB_ALGORITHM_TYPE_SHA256_RSA8192: {
-      AvbSHA256Ctx ctx;
-      size_t n, total_size = 0;
-      avb_sha256_init(&ctx);
-      for (n = 0; n < slot_data->num_vbmeta_images; n++) {
-        avb_sha256_update(&ctx,
-                          slot_data->vbmeta_images[n].vbmeta_data,
-                          slot_data->vbmeta_images[n].vbmeta_size);
-        total_size += slot_data->vbmeta_images[n].vbmeta_size;
-      }
-      if (!cmdline_append_option(
-              slot_data, "androidboot.vbmeta.hash_alg", "sha256") ||
-          !cmdline_append_uint64_base10(
-              slot_data, "androidboot.vbmeta.size", total_size) ||
-          !cmdline_append_hex(slot_data,
-                              "androidboot.vbmeta.digest",
-                              avb_sha256_final(&ctx),
-                              AVB_SHA256_DIGEST_SIZE)) {
-        ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-        goto out;
-      }
-    } break;
-    /* Explicit fallthrough. */
-    case AVB_ALGORITHM_TYPE_SHA512_RSA2048:
-    case AVB_ALGORITHM_TYPE_SHA512_RSA4096:
-    case AVB_ALGORITHM_TYPE_SHA512_RSA8192: {
-      AvbSHA512Ctx ctx;
-      size_t n, total_size = 0;
-      avb_sha512_init(&ctx);
-      for (n = 0; n < slot_data->num_vbmeta_images; n++) {
-        avb_sha512_update(&ctx,
-                          slot_data->vbmeta_images[n].vbmeta_data,
-                          slot_data->vbmeta_images[n].vbmeta_size);
-        total_size += slot_data->vbmeta_images[n].vbmeta_size;
-      }
-      if (!cmdline_append_option(
-              slot_data, "androidboot.vbmeta.hash_alg", "sha512") ||
-          !cmdline_append_uint64_base10(
-              slot_data, "androidboot.vbmeta.size", total_size) ||
-          !cmdline_append_hex(slot_data,
-                              "androidboot.vbmeta.digest",
-                              avb_sha512_final(&ctx),
-                              AVB_SHA512_DIGEST_SIZE)) {
-        ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-        goto out;
-      }
-    } break;
-    case _AVB_ALGORITHM_NUM_TYPES:
-      avb_assert_not_reached();
-      break;
-  }
-
-  /* Set androidboot.veritymode and androidboot.vbmeta.invalidate_on_error */
-  if (toplevel_vbmeta->flags & AVB_VBMETA_IMAGE_FLAGS_HASHTREE_DISABLED) {
-    verity_mode = "disabled";
-  } else {
-    const char* dm_verity_mode = NULL;
-    char* new_ret;
-
-    switch (hashtree_error_mode) {
-      case AVB_HASHTREE_ERROR_MODE_RESTART_AND_INVALIDATE:
-        if (!cmdline_append_option(
-                slot_data, "androidboot.vbmeta.invalidate_on_error", "yes")) {
-          ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-          goto out;
-        }
-        verity_mode = "enforcing";
-        dm_verity_mode = "restart_on_corruption";
-        break;
-      case AVB_HASHTREE_ERROR_MODE_RESTART:
-        verity_mode = "enforcing";
-        dm_verity_mode = "restart_on_corruption";
-        break;
-      case AVB_HASHTREE_ERROR_MODE_EIO:
-        verity_mode = "eio";
-        /* For now there's no option to specify the EIO mode. So
-         * just use 'ignore_zero_blocks' since that's already set
-         * and dm-verity-target.c supports specifying this multiple
-         * times.
-         */
-        dm_verity_mode = "ignore_zero_blocks";
-        break;
-      case AVB_HASHTREE_ERROR_MODE_LOGGING:
-        verity_mode = "logging";
-        dm_verity_mode = "ignore_corruption";
-        break;
-    }
-    new_ret = avb_replace(
-        slot_data->cmdline, "$(ANDROID_VERITY_MODE)", dm_verity_mode);
-    avb_free(slot_data->cmdline);
-    slot_data->cmdline = new_ret;
-    if (slot_data->cmdline == NULL) {
-      ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-      goto out;
-    }
-  }
-  if (!cmdline_append_option(
-          slot_data, "androidboot.veritymode", verity_mode)) {
-    ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-    goto out;
-  }
-
-  ret = AVB_SLOT_VERIFY_RESULT_OK;
-
-out:
-
-  return ret;
-}
-
 AvbSlotVerifyResult avb_slot_verify(AvbOps* ops,
                                     const char* const* requested_partitions,
                                     const char* ab_suffix,
@@ -1243,6 +1104,7 @@ AvbSlotVerifyResult avb_slot_verify(AvbOps* ops,
   AvbVBMetaImageHeader toplevel_vbmeta;
   bool allow_verification_error =
       (flags & AVB_SLOT_VERIFY_FLAGS_ALLOW_VERIFICATION_ERROR);
+  AvbCmdlineSubstList* additional_cmdline_subst = NULL;
 
   /* Fail early if we're missing the AvbOps needed for slot verification.
    *
@@ -1254,7 +1116,6 @@ AvbSlotVerifyResult avb_slot_verify(AvbOps* ops,
   avb_assert(ops->validate_vbmeta_public_key != NULL);
   avb_assert(ops->read_rollback_index != NULL);
   avb_assert(ops->get_unique_guid_for_partition != NULL);
-  /* avb_assert(ops->get_size_of_partition != NULL); */
 
   if (out_data != NULL) {
     *out_data = NULL;
@@ -1288,6 +1149,12 @@ AvbSlotVerifyResult avb_slot_verify(AvbOps* ops,
     goto fail;
   }
 
+  additional_cmdline_subst = avb_new_cmdline_subst_list();
+  if (additional_cmdline_subst == NULL) {
+    ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
+    goto fail;
+  }
+
   ret = load_and_verify_vbmeta(ops,
                                requested_partitions,
                                ab_suffix,
@@ -1299,7 +1166,8 @@ AvbSlotVerifyResult avb_slot_verify(AvbOps* ops,
                                NULL /* expected_public_key */,
                                0 /* expected_public_key_length */,
                                slot_data,
-                               &algorithm_type);
+                               &algorithm_type,
+                               additional_cmdline_subst);
   if (!allow_verification_error && ret != AVB_SLOT_VERIFY_RESULT_OK) {
     goto fail;
   }
@@ -1341,14 +1209,14 @@ AvbSlotVerifyResult avb_slot_verify(AvbOps* ops,
         goto fail;
       }
     } else {
-      /* Add options - any failure in append_options() is either an
+      /* Add options - any failure in avb_append_options() is either an
        * I/O or OOM error.
        */
-      AvbSlotVerifyResult sub_ret = append_options(ops,
-                                                   slot_data,
-                                                   &toplevel_vbmeta,
-                                                   algorithm_type,
-                                                   hashtree_error_mode);
+      AvbSlotVerifyResult sub_ret = avb_append_options(ops,
+                                                       slot_data,
+                                                       &toplevel_vbmeta,
+                                                       algorithm_type,
+                                                       hashtree_error_mode);
       if (sub_ret != AVB_SLOT_VERIFY_RESULT_OK) {
         ret = sub_ret;
         goto fail;
@@ -1358,14 +1226,19 @@ AvbSlotVerifyResult avb_slot_verify(AvbOps* ops,
     /* Substitute $(ANDROID_SYSTEM_PARTUUID) and friends. */
     if (slot_data->cmdline != NULL) {
       char* new_cmdline;
-      new_cmdline = sub_cmdline(
-          ops, slot_data->cmdline, ab_suffix, using_boot_for_vbmeta);
-      if (new_cmdline == NULL) {
-        ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-        goto fail;
+      new_cmdline = avb_sub_cmdline(ops,
+                                    slot_data->cmdline,
+                                    ab_suffix,
+                                    using_boot_for_vbmeta,
+                                    additional_cmdline_subst);
+      if (new_cmdline != slot_data->cmdline) {
+        if (new_cmdline == NULL) {
+          ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
+          goto fail;
+        }
+        avb_free(slot_data->cmdline);
+        slot_data->cmdline = new_cmdline;
       }
-      avb_free(slot_data->cmdline);
-      slot_data->cmdline = new_cmdline;
     }
 
     if (out_data != NULL) {
@@ -1374,6 +1247,9 @@ AvbSlotVerifyResult avb_slot_verify(AvbOps* ops,
       avb_slot_verify_data_free(slot_data);
     }
   }
+
+  avb_free_cmdline_subst_list(additional_cmdline_subst);
+  additional_cmdline_subst = NULL;
 
   if (!allow_verification_error) {
     avb_assert(ret == AVB_SLOT_VERIFY_RESULT_OK);
@@ -1384,6 +1260,9 @@ AvbSlotVerifyResult avb_slot_verify(AvbOps* ops,
 fail:
   if (slot_data != NULL) {
     avb_slot_verify_data_free(slot_data);
+  }
+  if (additional_cmdline_subst != NULL) {
+    avb_free_cmdline_subst_list(additional_cmdline_subst);
   }
   return ret;
 }
@@ -1415,7 +1294,7 @@ void avb_slot_verify_data_free(AvbSlotVerifyData* data) {
       if (loaded_partition->partition_name != NULL) {
         avb_free(loaded_partition->partition_name);
       }
-      if (loaded_partition->data != NULL) {
+      if (loaded_partition->data != NULL && !loaded_partition->preloaded) {
         avb_free(loaded_partition->data);
       }
     }
@@ -1464,4 +1343,43 @@ const char* avb_slot_verify_result_to_string(AvbSlotVerifyResult result) {
   }
 
   return ret;
+}
+
+void avb_slot_verify_data_calculate_vbmeta_digest(AvbSlotVerifyData* data,
+                                                  AvbDigestType digest_type,
+                                                  uint8_t* out_digest) {
+  bool ret = false;
+  size_t n;
+
+  switch (digest_type) {
+    case AVB_DIGEST_TYPE_SHA256: {
+      AvbSHA256Ctx ctx;
+      avb_sha256_init(&ctx);
+      for (n = 0; n < data->num_vbmeta_images; n++) {
+        avb_sha256_update(&ctx,
+                          data->vbmeta_images[n].vbmeta_data,
+                          data->vbmeta_images[n].vbmeta_size);
+      }
+      avb_memcpy(out_digest, avb_sha256_final(&ctx), AVB_SHA256_DIGEST_SIZE);
+      ret = true;
+    } break;
+
+    case AVB_DIGEST_TYPE_SHA512: {
+      AvbSHA512Ctx ctx;
+      avb_sha512_init(&ctx);
+      for (n = 0; n < data->num_vbmeta_images; n++) {
+        avb_sha512_update(&ctx,
+                          data->vbmeta_images[n].vbmeta_data,
+                          data->vbmeta_images[n].vbmeta_size);
+      }
+      avb_memcpy(out_digest, avb_sha512_final(&ctx), AVB_SHA512_DIGEST_SIZE);
+      ret = true;
+    } break;
+
+      /* Do not add a 'default:' case here because of -Wswitch. */
+  }
+
+  if (!ret) {
+    avb_fatal("Unknown digest type");
+  }
 }

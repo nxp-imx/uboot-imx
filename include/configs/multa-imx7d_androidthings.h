@@ -61,4 +61,6 @@
 #define CONFIG_AVB_FUSE_BANK_END 0
 #endif
 
+#define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
+
 #endif

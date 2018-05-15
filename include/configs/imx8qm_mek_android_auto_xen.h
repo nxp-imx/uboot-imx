@@ -35,4 +35,6 @@
 /* This needs to be stay same in iomem in domu.cfg */
 #define SC_IPC_CH			0x15d1d0000
 
+#define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
+
 #endif /* IMX8QM_MEK_ANDROID_AUTO_XEN_H */

@@ -114,7 +114,10 @@ const char* avb_slot_verify_result_to_string(AvbSlotVerifyResult result);
 /* AvbPartitionData contains data loaded from partitions when using
  * avb_slot_verify(). The |partition_name| field contains the name of
  * the partition (without A/B suffix), |data| points to the loaded
- * data which is |data_size| bytes long.
+ * data which is |data_size| bytes long. If |preloaded| is set to true,
+ * this structure dose not own |data|. The caller of |avb_slot_verify|
+ * needs to make sure that the preloaded data outlives this
+ * |AvbPartitionData| structure.
  *
  * Note that this is strictly less than the partition size - it's only
  * the image stored there, not the entire partition nor any of the
@@ -124,6 +127,7 @@ typedef struct {
   char* partition_name;
   uint8_t* data;
   size_t data_size;
+  bool preloaded;
 } AvbPartitionData;
 
 /* AvbVBMetaData contains a vbmeta struct loaded from a partition when
@@ -256,9 +260,15 @@ typedef struct {
   uint64_t rollback_indexes[AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS];
 } AvbSlotVerifyData;
 
-/* Fast version of avb_slot_verify_data_free, this method will not
- * free bootimage */
-void avb_slot_verify_data_free_fast(AvbSlotVerifyData* data);
+/* Calculates a digest of all vbmeta images in |data| using
+ * the digest indicated by |digest_type|. Stores the result
+ * in |out_digest| which must be large enough to hold a digest
+ * of the requested type.
+ */
+void avb_slot_verify_data_calculate_vbmeta_digest(AvbSlotVerifyData* data,
+                                                  AvbDigestType digest_type,
+                                                  uint8_t* out_digest);
+
 /* Frees a |AvbSlotVerifyData| including all data it points to. */
 void avb_slot_verify_data_free(AvbSlotVerifyData* data);
 

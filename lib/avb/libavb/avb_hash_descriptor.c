@@ -44,6 +44,7 @@ bool avb_hash_descriptor_validate_and_byteswap(const AvbHashDescriptor* src,
   dest->partition_name_len = avb_be32toh(dest->partition_name_len);
   dest->salt_len = avb_be32toh(dest->salt_len);
   dest->digest_len = avb_be32toh(dest->digest_len);
+  dest->flags = avb_be32toh(dest->flags);
 
   /* Check that partition_name, salt, and digest are fully contained. */
   expected_size = sizeof(AvbHashDescriptor) - sizeof(AvbDescriptor);

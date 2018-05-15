@@ -1108,7 +1108,8 @@ AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slo
 	*plain_idx = rollback_index;
 
 	/* write rollback_index keyblob */
-	if (rpmb_write(mmc_dev, (uint8_t *)plain_idx, rbk->len, rbk->offset) != 0) {
+	if (rpmb_write(mmc_dev, (uint8_t *)plain_idx, rbk->len, rbk->offset) !=
+	    0) {
 		ERR("write rollback index error\n");
 		ret = AVB_IO_RESULT_ERROR_IO;
 		goto fail;
@@ -1131,8 +1132,9 @@ AvbIOResult fsl_read_permanent_attributes(
 	/* use hard code permanent attributes due to limited fuse and RPMB */
 	attributes->version = fsl_version;
 	memcpy(attributes->product_root_public_key, fsl_product_root_public_key,
-		sizeof(fsl_product_root_public_key));
-	memcpy(attributes->product_id, fsl_atx_product_id, sizeof(fsl_atx_product_id));
+	       sizeof(fsl_product_root_public_key));
+	memcpy(attributes->product_id, fsl_atx_product_id,
+	       sizeof(fsl_atx_product_id));
 
 	return AVB_IO_RESULT_OK;
 }
@@ -1148,8 +1150,9 @@ AvbIOResult fsl_read_permanent_attributes_hash(
 
 	/* read first 112 bits of sha256(permanent attributes) from fuse */
 	if (fsl_fuse_read(sha256_hash_fuse, ATX_FUSE_BANK_NUM,
-		    PERMANENT_ATTRIBUTE_HASH_OFFSET)) {
-		printf("ERROR - read permanent attributes hash from fuse error\n");
+			  PERMANENT_ATTRIBUTE_HASH_OFFSET)) {
+		printf("ERROR - read permanent attributes hash from "
+		       "fuse error\n");
 		return AVB_IO_RESULT_ERROR_IO;
 	}
 	/* only take the lower 2 bytes of last bank */
@@ -1168,4 +1171,54 @@ AvbIOResult fsl_read_permanent_attributes_hash(
 	memcpy(hash, sha256_hash_buf, AVB_SHA256_DIGEST_SIZE);
 	return AVB_IO_RESULT_OK;
 }
+
+/* Provides the key version of a key used during verification. This may be
+ * useful for managing the minimum key version.
+ */
+void fsl_set_key_version(AvbAtxOps* atx_ops,
+			 size_t rollback_index_location,
+			 uint64_t key_version) {
+	kblb_hdr_t hdr;
+	kblb_tag_t *rbk;
+	uint64_t *plain_idx = NULL;
+	struct mmc *mmc_dev;
+	static const uint32_t kTypeMask = 0xF000;
+
+	DEBUGAVB("[rpmb] write to rollback slot: (%zu, %" PRIu64 ")\n",
+		 rollback_index_location, key_version);
+
+	assert(atx_ops != NULL);
+
+	if ((mmc_dev = get_mmc()) == NULL) {
+		ERR("err get mmc device\n");
+	}
+	/* read the kblb header */
+	if (rpmb_read(mmc_dev, (uint8_t *)&hdr, sizeof(hdr), 0) != 0) {
+		ERR("read RPMB error\n");
+	}
+
+	if (memcmp(hdr.magic, AVB_KBLB_MAGIC, AVB_KBLB_MAGIC_LEN) != 0) {
+		ERR("magic not match\n");
+	}
+
+	/* rollback index for Android Things key versions */
+	rbk = &hdr.atx_rbk_tags[rollback_index_location & ~kTypeMask];
+
+	plain_idx = malloc(rbk->len);
+	if (plain_idx == NULL)
+		printf("\nError! allocate memory fail!\n");
+	memset(plain_idx, 0, rbk->len);
+	*plain_idx = key_version;
+
+	/* write rollback_index keyblob */
+	if (rpmb_write(mmc_dev, (uint8_t *)plain_idx, rbk->len, rbk->offset) !=
+	    0) {
+		ERR("write rollback index error\n");
+		goto fail;
+	}
+fail:
+	if (plain_idx != NULL)
+		free(plain_idx);
+}
+
 #endif

@@ -49,4 +49,6 @@
 
 #endif /* CONFIG_AVB_SUPPORT */
 
+#define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
+
 #endif

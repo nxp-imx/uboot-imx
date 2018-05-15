@@ -270,6 +270,16 @@ uint32_t avb_crc32(const uint8_t* buf, size_t buf_size);
  */
 const char* avb_basename(const char* str);
 
+/* Converts any ascii lowercase characters in |str| to uppercase in-place.
+ * |str| must be NUL-terminated and valid UTF-8.
+ */
+void avb_uppercase(char* str);
+
+/* Converts |data_len| bytes of |data| to hex and returns the result. Returns
+ * NULL on OOM. Caller must free the returned string with avb_free.
+ */
+char* avb_bin2hex(const uint8_t* data, size_t data_len);
+
 #ifdef __cplusplus
 }
 #endif

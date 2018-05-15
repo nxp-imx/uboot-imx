@@ -30,9 +30,9 @@
 #ifndef AVB_ATX_OPS_H_
 #define AVB_ATX_OPS_H_
 
-#include "../libavb/libavb.h"
+#include <libavb/libavb.h>
 
-#include "../libavb_atx/avb_atx_types.h"
+#include "avb_atx_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,6 +59,22 @@ struct AvbAtxOps {
    */
   AvbIOResult (*read_permanent_attributes_hash)(
       AvbAtxOps* atx_ops, uint8_t hash[AVB_SHA256_DIGEST_SIZE]);
+
+  /* Provides the key version of a key used during verification. This may be
+   * useful for managing the minimum key version.
+   */
+  void (*set_key_version)(AvbAtxOps* atx_ops,
+                          size_t rollback_index_location,
+                          uint64_t key_version);
+
+  /* Generates |num_bytes| random bytes and stores them in |output|,
+   * which must point to a buffer large enough to store the bytes.
+   *
+   * Returns AVB_IO_RESULT_OK on success, otherwise an error code.
+   */
+  AvbIOResult (*get_random)(AvbAtxOps* atx_ops,
+                            size_t num_bytes,
+                            uint8_t* output);
 };
 
 #ifdef __cplusplus

@@ -61,7 +61,7 @@
 
 #ifdef CONFIG_SYS_MALLOC_LEN
 #undef CONFIG_SYS_MALLOC_LEN
-#define CONFIG_SYS_MALLOC_LEN	 	(32 * SZ_1M)
+#define CONFIG_SYS_MALLOC_LEN	 	(64 * SZ_1M)
 #endif
 /* fuse bank size in word */
 /* infact 7D have no enough bits
@@ -71,6 +71,8 @@
 #define CONFIG_AVB_FUSE_BANK_START 14
 #define CONFIG_AVB_FUSE_BANK_END 14
 #endif
+
+#define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
 
 /* Disable U-Boot logo */
 #undef CONFIG_VIDEO_LOGO

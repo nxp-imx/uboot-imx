@@ -76,3 +76,9 @@ void* avb_malloc_(size_t size) {
 void avb_free(void* ptr) {
   free(ptr);
 }
+
+uint32_t avb_div_by_10(uint64_t* dividend) {
+  uint32_t rem = (uint32_t)(*dividend % 10);
+  *dividend /= 10;
+  return rem;
+}

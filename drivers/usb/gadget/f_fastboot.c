@@ -1628,7 +1628,8 @@ static AvbABOps fsl_avb_ab_ops = {
 static AvbAtxOps fsl_avb_atx_ops = {
 	.ops = NULL,
 	.read_permanent_attributes = fsl_read_permanent_attributes,
-	.read_permanent_attributes_hash = fsl_read_permanent_attributes_hash
+	.read_permanent_attributes_hash = fsl_read_permanent_attributes_hash,
+	.set_key_version = fsl_set_key_version
 };
 #endif
 static AvbOps fsl_avb_ops = {

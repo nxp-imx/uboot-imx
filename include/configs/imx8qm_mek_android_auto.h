@@ -93,4 +93,6 @@
 #include "imx8qm_mek_android_auto_xen.h"
 #endif
 
+#define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
+
 #endif /* IMX8QM_MEK_ANDROID_AUTO_H */
