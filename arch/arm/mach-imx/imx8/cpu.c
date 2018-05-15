@@ -839,3 +839,28 @@ bool m4_parts_booted(void)
 
 	return false;
 }
+
+void disconnect_from_pc(void)
+{
+	int ret;
+	struct power_domain pd;
+
+	if (!power_domain_lookup_name("conn_usb0", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret) {
+			printf("conn_usb0 Power up failed! (error = %d)\n", ret);
+			return;
+		}
+
+		writel(0x0, USB_BASE_ADDR + 0x140);
+
+		ret = power_domain_off(&pd);
+		if (ret) {
+			printf("conn_usb0 Power off failed! (error = %d)\n", ret);
+			return;
+		}
+	} else {
+		printf("conn_usb0 finding failed!\n");
+		return;
+	}
+}
