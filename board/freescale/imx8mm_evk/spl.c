@@ -13,8 +13,7 @@
 #include <asm/arch/imx8mm_pins.h>
 #include <asm/arch/sys_proto.h>
 #include <power/pmic.h>
-#include <power/pfuze100_pmic.h>
-#include "../common/pfuze.h"
+#include <power/bd71837.h>
 #include <asm/arch/clock.h>
 #include <asm/mach-imx/gpio.h>
 #include <asm/mach-imx/mxc_i2c.h>
@@ -29,6 +28,21 @@ void spl_dram_init(void)
 	/* ddr train */
 	ddr_init();
 }
+
+#define I2C_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE)
+#define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
+struct i2c_pads_info i2c_pad_info1 = {
+	.scl = {
+		.i2c_mode = IMX8MM_PAD_I2C1_SCL_I2C1_SCL | PC,
+		.gpio_mode = IMX8MM_PAD_I2C1_SCL_GPIO5_IO14 | PC,
+		.gp = IMX_GPIO_NR(5, 14),
+	},
+	.sda = {
+		.i2c_mode = IMX8MM_PAD_I2C1_SDA_I2C1_SDA | PC,
+		.gpio_mode = IMX8MM_PAD_I2C1_SDA_GPIO5_IO15 | PC,
+		.gp = IMX_GPIO_NR(5, 15),
+	},
+};
 
 #define USDHC2_CD_GPIO	IMX_GPIO_NR(2, 18)
 #define USDHC2_PWR_GPIO IMX_GPIO_NR(2, 19)
@@ -143,12 +157,45 @@ int board_mmc_getcd(struct mmc *mmc)
 	return 1;
 }
 
+#ifdef CONFIG_POWER
+#define I2C_PMIC	0
+int power_init_board(void)
+{
+	struct pmic *p;
+	int ret;
+
+	ret = power_bd71837_init(I2C_PMIC);
+	if (ret)
+		printf("power init failed");
+
+	p = pmic_get("BD71837");
+	pmic_probe(p);
+
+
+	/* decrease RESET key long push time from the default 10s to 10ms */
+	pmic_reg_write(p, BD71837_PWRONCONFIG1, 0x0);
+
+	/* unlock the PMIC regs */
+	pmic_reg_write(p, BD71837_REGLOCK, 0x1);
+
+	/* increase VDD_DRAM to 0.9v for 3Ghz DDR */
+	pmic_reg_write(p, BD71837_BUCK5_VOLT, 0x2);
+
+	/* lock the PMIC regs */
+	pmic_reg_write(p, BD71837_REGLOCK, 0x11);
+
+	return 0;
+}
+#endif
 
 void spl_board_init(void)
 {
 	/* TODO */
 	/* enable_tzc380(); */
 
+	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+
+	power_init_board();
 	/* DDR initialization */
 	spl_dram_init();
 

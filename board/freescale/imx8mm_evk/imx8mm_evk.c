@@ -379,34 +379,3 @@ int board_late_init(void)
 
 	return 0;
 }
-
-#ifdef CONFIG_POWER
-#define I2C_PMIC	0
-int power_init_board(void)
-{
-	struct pmic *p;
-	int ret;
-	unsigned int reg;
-
-	return 0;
-
-	ret = power_bd71837_init(I2C_PMIC);
-	if (ret)
-		printf("power init failed");
-
-	p = pmic_get("BD71837");
-	pmic_probe(p);
-
-#if 0
-	/* unlock the PMIC regs */
-	pmic_reg_write(p, BD71837_REGLOCK, 0x1);
-
-	/* Set BUCK5 output for DRAM to 1.0V */
-	pmic_reg_write(p, BD71837_BUCK5_VOLT, 0x3);
-
-	/* lock the PMIC regs */
-	pmic_reg_write(p, BD71837_REGLOCK, 0x11);
-#endif
-	return 0;
-}
-#endif

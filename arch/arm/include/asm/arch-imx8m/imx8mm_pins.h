@@ -607,11 +607,11 @@ enum {
          IMX8MM_PAD_ECSPI2_SS0_UART4_CTS_B                             =  IOMUX_PAD(0x0478, 0x0210, 1, 0x0000, 0, 0),
          IMX8MM_PAD_ECSPI2_SS0_GPIO5_IO13                              =  IOMUX_PAD(0x0478, 0x0210, 5, 0x0000, 0, 0),
 
-         IMX8MM_PAD_I2C1_SCL_I2C1_SCL                                  =  IOMUX_PAD(0x047C, 0x0214, 0, 0x0000, 0, 0),
+         IMX8MM_PAD_I2C1_SCL_I2C1_SCL                                  =  IOMUX_PAD(0x047C, 0x0214, 0 | IOMUX_CONFIG_SION, 0x0000, 0, 0),
          IMX8MM_PAD_I2C1_SCL_ENET1_MDC                                 =  IOMUX_PAD(0x047C, 0x0214, 1, 0x0000, 0, 0),
          IMX8MM_PAD_I2C1_SCL_GPIO5_IO14                                =  IOMUX_PAD(0x047C, 0x0214, 5, 0x0000, 0, 0),
 
-         IMX8MM_PAD_I2C1_SDA_I2C1_SDA                                  =  IOMUX_PAD(0x0480, 0x0218, 0, 0x0000, 0, 0),
+         IMX8MM_PAD_I2C1_SDA_I2C1_SDA                                  =  IOMUX_PAD(0x0480, 0x0218, 0 | IOMUX_CONFIG_SION, 0x0000, 0, 0),
          IMX8MM_PAD_I2C1_SDA_ENET1_MDIO                                =  IOMUX_PAD(0x0480, 0x0218, 1, 0x04C0, 2, 0),
          IMX8MM_PAD_I2C1_SDA_GPIO5_IO15                                =  IOMUX_PAD(0x0480, 0x0218, 5, 0x0000, 0, 0),
 
