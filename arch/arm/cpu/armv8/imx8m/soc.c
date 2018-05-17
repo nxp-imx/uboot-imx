@@ -459,6 +459,7 @@ static int ft_add_optee_node(void *fdt, bd_t *bd)
 
 int ft_system_setup(void *blob, bd_t *bd)
 {
+#ifndef CONFIG_IMX8MM
 	if (get_boot_device() == USB_BOOT) {
 		const char *nodes_path[] = {
 			"/dcss@32e00000",
@@ -553,7 +554,7 @@ usb_modify_speed:
 			}
 		}
 	}
-
+#endif
 	return ft_add_optee_node(blob, bd);
 }
 #endif
