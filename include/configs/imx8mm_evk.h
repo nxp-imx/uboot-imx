@@ -316,4 +316,6 @@
 
 #endif
 
+#define CONFIG_OF_SYSTEM_SETUP
+
 #endif

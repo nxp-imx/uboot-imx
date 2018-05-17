@@ -248,6 +248,7 @@ static int ft_add_optee_node(void *fdt, bd_t *bd)
 
 int ft_system_setup(void *blob, bd_t *bd)
 {
+#ifdef CONFIG_IMX8MQ
 	int i = 0;
 	int rc;
 	int nodeoff;
@@ -339,6 +340,7 @@ usb_modify_speed:
 			       "cpu-idle-states");
 		}
 	}
+#endif
 
 	return ft_add_optee_node(blob, bd);
 }
