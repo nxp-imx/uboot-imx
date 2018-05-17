@@ -323,6 +323,7 @@ int arch_auxiliary_core_check_up(u32 core_id)
 
 enum boot_device get_boot_device(void)
 {
+	u32 soc_sbmr = readl(SRC_BASE_ADDR + 0x58);
 #ifdef CONFIG_IMX8MM
 	struct bootrom_sw_info **p =
 		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR;
@@ -359,6 +360,8 @@ enum boot_device get_boot_device(void)
 		boot_dev = USB_BOOT;
 		break;
 	default:
+		if (((soc_sbmr & 0x00007FFF) >> 12) == 0x4)
+			boot_dev = QSPI_BOOT;
 		break;
 	}
 
