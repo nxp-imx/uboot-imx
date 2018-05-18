@@ -20,12 +20,16 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 #define SITES_MAX	16
+#define FLAGS_VER2 	0x1
 
 #define TMR_DISABLE	0x0
 #define TMR_ME		0x80000000
 #define TMR_ALPF	0x0c000000
 #define TMTMIR_DEFAULT	0x00000002
 #define TIER_DISABLE	0x0
+
+#define TER_EN			0x80000000
+#define TER_ALPF		0x3
 
 /*
  * NXP TMU Registers
@@ -67,22 +71,47 @@ struct nxp_tmu_regs {
 	u32 ttr3cr;		/* Temperature Range 3 Control Register */
 };
 
+struct nxp_tmu_regs_v2 {
+	u32 ter;		/* TMU enable Register */
+	u32 tsr;		/* Status Register */
+	u32 tier;		/* Interrupt enable register */
+	u32 tidr;		/* Interrupt detect  register */
+	u32 tmhtitr;		/* Monitor high temperature immediate threshold register */
+	u32 tmhtatr;		/* Monitor high temperature average threshold register */
+	u32 tmhtactr;	/* TMU monitor high temperature average critical  threshold register */
+	u32 tscr;		/* Sensor value capture register */
+	u32 tritsr;		/* Report immediate temperature site register 0 */
+	u32 tratsr;		/* Report average temperature site register 0 */
+	u32 tasr;			/* Amplifier setting register */
+	u32 ttmc;		/* Test MUX control */
+	u32 tcaliv;
+};
+
+union tmu_regs {
+	struct nxp_tmu_regs regs_v1;
+	struct nxp_tmu_regs_v2 regs_v2;
+};
+
 struct nxp_tmu_plat {
 	int critical;
 	int alert;
 	int polling_delay;
 	int id;
 	bool zone_node;
-	struct nxp_tmu_regs *regs;
+	union tmu_regs *regs;
 };
 
 static int read_temperature(struct udevice *dev, int *temp)
 {
 	struct nxp_tmu_plat *pdata = dev_get_platdata(dev);
+	ulong drv_data = dev_get_driver_data(dev);
 	u32 val;
 
 	do {
-		val = readl(&pdata->regs->site[pdata->id].tritsr);
+		if (drv_data & FLAGS_VER2)
+			val = readl(&pdata->regs->regs_v2.tritsr);
+		else
+			val = readl(&pdata->regs->regs_v1.site[pdata->id].tritsr);
 	} while (!(val & 0x80000000));
 
 	*temp = (val & 0xff) * 1000;
@@ -125,8 +154,12 @@ static int nxp_tmu_calibration(struct udevice *dev)
 	u32 range[4];
 	const fdt32_t *calibration;
 	struct nxp_tmu_plat *pdata = dev_get_platdata(dev);
+	ulong drv_data = dev_get_driver_data(dev);
 
 	debug("%s\n", __func__);
+
+	if (drv_data & FLAGS_VER2)
+		return 0;
 
 	ret = fdtdec_get_int_array(gd->fdt_blob, dev_of_offset(dev),
 		"fsl,tmu-range", range, 4);
@@ -136,10 +169,10 @@ static int nxp_tmu_calibration(struct udevice *dev)
 	}
 
 	/* Init temperature range registers */
-	writel(range[0], &pdata->regs->ttr0cr);
-	writel(range[1], &pdata->regs->ttr1cr);
-	writel(range[2], &pdata->regs->ttr2cr);
-	writel(range[3], &pdata->regs->ttr3cr);
+	writel(range[0], &pdata->regs->regs_v1.ttr0cr);
+	writel(range[1], &pdata->regs->regs_v1.ttr1cr);
+	writel(range[2], &pdata->regs->regs_v1.ttr2cr);
+	writel(range[3], &pdata->regs->regs_v1.ttr3cr);
 
 	calibration = fdt_getprop(gd->fdt_blob, dev_of_offset(dev),
 		"fsl,tmu-calibration", &len);
@@ -150,31 +183,43 @@ static int nxp_tmu_calibration(struct udevice *dev)
 
 	for (i = 0; i < len; i += 8, calibration += 2) {
 		val = fdt32_to_cpu(*calibration);
-		writel(val, &pdata->regs->ttcfgr);
+		writel(val, &pdata->regs->regs_v1.ttcfgr);
 		val = fdt32_to_cpu(*(calibration + 1));
-		writel(val, &pdata->regs->tscfgr);
+		writel(val, &pdata->regs->regs_v1.tscfgr);
 	}
 
 	return 0;
 }
 
-static void nxp_tmu_init(struct nxp_tmu_plat *pdata)
+static void nxp_tmu_init(struct udevice *dev)
 {
+	struct nxp_tmu_plat *pdata = dev_get_platdata(dev);
+	ulong drv_data = dev_get_driver_data(dev);
+
 	debug("%s\n", __func__);
 
-	/* Disable monitoring */
-	writel(TMR_DISABLE, &pdata->regs->tmr);
+	if (drv_data & FLAGS_VER2) {
+		/* Disable monitoring */
+		writel(0x0, &pdata->regs->regs_v2.ter);
 
-	/* Disable interrupt, using polling instead */
-	writel(TIER_DISABLE, &pdata->regs->tier);
+		/* Disable interrupt, using polling instead */
+		writel(0x0, &pdata->regs->regs_v2.tier);
+	} else {
+		/* Disable monitoring */
+		writel(TMR_DISABLE, &pdata->regs->regs_v1.tmr);
 
-	/* Set update_interval */
-	writel(TMTMIR_DEFAULT, &pdata->regs->tmtmir);
+		/* Disable interrupt, using polling instead */
+		writel(TIER_DISABLE, &pdata->regs->regs_v1.tier);
+
+		/* Set update_interval */
+		writel(TMTMIR_DEFAULT, &pdata->regs->regs_v1.tmtmir);
+	}
 }
 
 static int nxp_tmu_enable_msite(struct udevice *dev)
 {
 	struct nxp_tmu_plat *pdata = dev_get_platdata(dev);
+	ulong drv_data = dev_get_driver_data(dev);
 	u32 reg;
 
 	debug("%s\n", __func__);
@@ -182,18 +227,32 @@ static int nxp_tmu_enable_msite(struct udevice *dev)
 	if (!pdata->regs)
 		return -EIO;
 
-	/* Clear the ME before setting MSITE and ALPF*/
-	reg = readl(&pdata->regs->tmr);
-	reg &= ~TMR_ME;
-	writel(reg, &pdata->regs->tmr);
+	if (drv_data & FLAGS_VER2) {
+		reg = readl(&pdata->regs->regs_v2.ter);
+		reg &= ~TER_EN;
+		writel(reg, &pdata->regs->regs_v2.ter);
 
-	reg |= 1 << (15 - pdata->id);
-	reg |= TMR_ALPF;
-	writel(reg, &pdata->regs->tmr);
+		reg &= ~TER_ALPF;
+		reg |= 0x1;
+		writel(reg, &pdata->regs->regs_v2.ter);
 
-	/* Enable ME */
-	reg |= TMR_ME;
-	writel(reg, &pdata->regs->tmr);
+		/* Enable monitor */
+		reg |= TER_EN;
+		writel(reg, &pdata->regs->regs_v2.ter);
+	} else {
+		/* Clear the ME before setting MSITE and ALPF*/
+		reg = readl(&pdata->regs->regs_v1.tmr);
+		reg &= ~TMR_ME;
+		writel(reg, &pdata->regs->regs_v1.tmr);
+
+		reg |= 1 << (15 - pdata->id);
+		reg |= TMR_ALPF;
+		writel(reg, &pdata->regs->regs_v1.tmr);
+
+		/* Enable ME */
+		reg |= TMR_ME;
+		writel(reg, &pdata->regs->regs_v1.tmr);
+	}
 
 	return 0;
 }
@@ -240,7 +299,7 @@ static int nxp_tmu_parse_fdt(struct udevice *dev)
 	debug("%s dev name %s\n", __func__, dev->name);
 
 	if (pdata->zone_node) {
-		pdata->regs = (struct nxp_tmu_regs *)devfdt_get_addr(dev);
+		pdata->regs = (union tmu_regs *)devfdt_get_addr(dev);
 
 		if ((fdt_addr_t)pdata->regs == FDT_ADDR_T_NONE)
 			return -EINVAL;
@@ -299,7 +358,7 @@ static int nxp_tmu_probe(struct udevice *dev)
 	}
 
 	if (pdata->zone_node) {
-		nxp_tmu_init(pdata);
+		nxp_tmu_init(dev);
 		nxp_tmu_calibration(dev);
 	} else {
 		nxp_tmu_enable_msite(dev);
@@ -310,6 +369,7 @@ static int nxp_tmu_probe(struct udevice *dev)
 
 static const struct udevice_id nxp_tmu_ids[] = {
 	{ .compatible = "fsl,imx8mq-tmu", },
+	{ .compatible = "fsl,imx8mm-tmu", .data=FLAGS_VER2, },
 	{ }
 };
 
