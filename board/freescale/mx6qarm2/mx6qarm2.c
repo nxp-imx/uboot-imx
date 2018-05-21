@@ -19,6 +19,13 @@
 #include <usb.h>
 #include <asm/arch/sys_proto.h>
 
+#ifdef CONFIG_FSL_FASTBOOT
+#include <fb_fsl.h>
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif
+#endif /*CONFIG_FSL_FASTBOOT*/
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL  (PAD_CTL_PUS_100K_UP |			\
@@ -321,4 +328,29 @@ void ldo_mode_set(int ldo_bypass)
 {
 	return;
 }
+#endif
+
+#ifdef CONFIG_FSL_FASTBOOT
+void board_fastboot_setup(void)
+{
+	if (!getenv("fastboot_dev"))
+		setenv("fastboot_dev", "mmc0");
+	if (!getenv("bootcmd"))
+		setenv("bootcmd", "boota mmc0");
+}
+
+#ifdef CONFIG_ANDROID_RECOVERY
+int check_recovery_cmd_file(void) {
+	return 0;
+}
+
+void board_recovery_setup(void)
+{
+	if (!getenv("bootcmd_android_recovery"))
+		setenv("bootcmd_android_recovery", "boota mmc0 recovery");
+
+	printf("setup env for recovery..\n");
+	setenv("bootcmd", "run bootcmd_android_recovery");
+}
+#endif
 #endif

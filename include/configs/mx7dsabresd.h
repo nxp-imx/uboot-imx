@@ -345,4 +345,12 @@
 #define QSPI0_AMBA_BASE			QSPI0_ARB_BASE_ADDR
 #endif
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx7dsabresdandroid.h"
+#elif defined(CONFIG_ANDROID_THINGS_SUPPORT)
+#include "mx7dsabresd_androidthings.h"
+#else
+#define CONFIG_USBD_HS
+#endif
+
 #endif	/* __CONFIG_H */

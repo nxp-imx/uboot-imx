@@ -30,6 +30,13 @@
 #endif
 #include <asm/mach-imx/video.h>
 
+#ifdef CONFIG_FSL_FASTBOOT
+#include <fb_fsl.h>
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif
+#endif /*CONFIG_FSL_FASTBOOT*/
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL  (PAD_CTL_DSE_3P3V_49OHM | \
@@ -49,6 +56,8 @@ DECLARE_GLOBAL_DATA_PTR;
   (PAD_CTL_HYS | PAD_CTL_DSE_3P3V_49OHM | PAD_CTL_SRE_FAST)
 
 #define NAND_PAD_READY0_CTRL (PAD_CTL_DSE_3P3V_49OHM | PAD_CTL_PUS_PU5KOHM)
+
+#define BUTTON_PAD_CTRL    (PAD_CTL_PUS_PU5KOHM | PAD_CTL_DSE_3P3V_98OHM)
 
 #define EPDC_PAD_CTRL	0x0
 
@@ -592,6 +601,7 @@ int power_init_board(void)
 {
 	struct udevice *dev;
 	int ret, dev_id, rev_id;
+	u32 sw3mode;
 
 	ret = pmic_get("pfuze3000", &dev);
 	if (ret == -ENODEV)
@@ -610,6 +620,12 @@ int power_init_board(void)
 	 * the MIPI DSI and MIPI CSI inputs.
 	 */
 	pmic_clrsetbits(dev, PFUZE3000_VLD4CTL, 0xF, 0xA);
+	
+	/* change sw3 mode to avoid DDR power off */
+	sw3mode = pmic_reg_read(dev, PFUZE3000_SW3MODE);
+	ret = pmic_reg_write(dev, PFUZE3000_SW3MODE, sw3mode | 0x20);
+	if (ret < 0)
+		printf("PMIC: PFUZE3000 change sw3 mode failed\n");
 
 	return 0;
 }
@@ -663,3 +679,34 @@ int checkboard(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_ANDROID_RECOVERY
+
+/* Use S3 button for recovery key */
+#define GPIO_VOL_DN_KEY IMX_GPIO_NR(5, 10)
+iomux_v3_cfg_t const recovery_key_pads[] = {
+	(MX7D_PAD_SD2_WP__GPIO5_IO10 | MUX_PAD_CTRL(BUTTON_PAD_CTRL)),
+};
+
+int is_recovery_key_pressing(void)
+{
+	int button_pressed = 0;
+
+	/* Check Recovery Combo Button press or not. */
+	imx_iomux_v3_setup_multiple_pads(recovery_key_pads,
+		ARRAY_SIZE(recovery_key_pads));
+
+	gpio_request(GPIO_VOL_DN_KEY, "volume_dn_key");
+	gpio_direction_input(GPIO_VOL_DN_KEY);
+
+	if (gpio_get_value(GPIO_VOL_DN_KEY) == 0) { /* VOL_DN key is low assert */
+		button_pressed = 1;
+		printf("Recovery key pressed\n");
+	}
+
+	return  button_pressed;
+}
+
+#endif /*CONFIG_ANDROID_RECOVERY*/
+#endif /*CONFIG_FSL_FASTBOOT*/

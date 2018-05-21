@@ -227,6 +227,10 @@
 
 #define CONFIG_OF_SYSTEM_SETUP
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx7ulp_evk_android.h"
+#endif
+
 #ifdef CONFIG_IMX_OPTEE
 #define TEE_ENV "tee=yes\0"
 #else

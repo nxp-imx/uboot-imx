@@ -16,6 +16,14 @@
 #include <imx_mipi_dsi_bridge.h>
 #include <mipi_dsi_panel.h>
 
+#ifdef CONFIG_FSL_FASTBOOT
+#include <fastboot.h>
+#include <asm/mach-imx/boot_mode.h>
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif /*CONFIG_ANDROID_RECOVERY*/
+#endif /*CONFIG_FSL_FASTBOOT*/
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL	(PAD_CTL_PUS_UP)
@@ -225,3 +233,14 @@ int board_late_init(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_ANDROID_RECOVERY
+int is_recovery_key_pressing(void)
+{
+	/* TODO: uboot can get the key event from M4 core*/
+	return 0;
+}
+
+#endif /*CONFIG_ANDROID_RECOVERY*/
+#endif /*CONFIG_FSL_FASTBOOT*/

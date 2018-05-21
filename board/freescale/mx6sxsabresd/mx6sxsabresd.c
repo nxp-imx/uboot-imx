@@ -35,6 +35,14 @@
 #include <asm/mach-imx/rdc-sema.h>
 #include <asm/arch/imx-rdc.h>
 #endif
+
+#ifdef CONFIG_FSL_FASTBOOT
+#include <fb_fsl.h>
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#endif
+#endif /*CONFIG_FSL_FASTBOOT*/
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL  (PAD_CTL_PKE | PAD_CTL_PUE |		\
@@ -67,6 +75,9 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define LCD_PAD_CTRL    (PAD_CTL_HYS | PAD_CTL_PUS_100K_UP | PAD_CTL_PUE | \
 	PAD_CTL_PKE | PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm)
+
+#define BUTTON_PAD_CTRL    (PAD_CTL_PKE | PAD_CTL_PUE | \
+	PAD_CTL_PUS_22K_UP | PAD_CTL_DSE_40ohm)
 
 #define WDOG_PAD_CTRL (PAD_CTL_PUE | PAD_CTL_PKE | PAD_CTL_SPEED_MED |	\
 	PAD_CTL_DSE_40ohm)
@@ -896,6 +907,35 @@ int checkboard(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_ANDROID_RECOVERY
+
+#define GPIO_VOL_DN_KEY IMX_GPIO_NR(1, 19)
+iomux_v3_cfg_t const recovery_key_pads[] = {
+	(MX6_PAD_CSI_DATA05__GPIO1_IO_19 | MUX_PAD_CTRL(BUTTON_PAD_CTRL)),
+};
+
+int is_recovery_key_pressing(void)
+{
+	int button_pressed = 0;
+
+	/* Check Recovery Combo Button press or not. */
+	imx_iomux_v3_setup_multiple_pads(recovery_key_pads,
+		ARRAY_SIZE(recovery_key_pads));
+
+	gpio_request(GPIO_VOL_DN_KEY, "volume_dn_key");
+	gpio_direction_input(GPIO_VOL_DN_KEY);
+
+	if (gpio_get_value(GPIO_VOL_DN_KEY) == 0) { /* VOL_DN key is low assert */
+		button_pressed = 1;
+		printf("Recovery key pressed\n");
+	}
+
+	return  button_pressed;
+}
+#endif /*CONFIG_ANDROID_RECOVERY*/
+#endif /*CONFIG_FSL_FASTBOOT*/
 
 #ifdef CONFIG_SPL_BUILD
 #include <linux/libfdt.h>

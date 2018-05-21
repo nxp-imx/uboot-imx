@@ -33,6 +33,13 @@
 #include <lcd.h>
 #include <mxc_epdc_fb.h>
 #endif
+#ifdef CONFIG_FSL_FASTBOOT
+#include <fb_fsl.h>
+#ifdef CONFIG_ANDROID_RECOVERY
+#include "../common/recovery_keypad.h"
+#include <recovery.h>
+#endif
+#endif /*CONFIG_FSL_FASTBOOT*/
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -798,6 +805,16 @@ int setup_mxc_kpd(void)
 	return 0;
 }
 #endif /*CONFIG_MXC_KPD*/
+
+#ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_ANDROID_RECOVERY
+int is_recovery_key_pressing(void)
+{
+    return is_recovery_keypad_pressing();
+}
+
+#endif /*CONFIG_ANDROID_RECOVERY*/
+#endif /*CONFIG_FSL_FASTBOOT*/
 
 #ifdef CONFIG_SPL_BUILD
 #include <spl.h>

@@ -28,6 +28,13 @@
 #include <usb/ehci-ci.h>
 #include <pca953x.h>
 #include <asm/mach-imx/video.h>
+#ifdef CONFIG_FSL_FASTBOOT
+#include <fb_fsl.h>
+#ifdef CONFIG_ANDROID_RECOVERY
+#include <recovery.h>
+#include "../common/recovery_keypad.h"
+#endif
+#endif /*CONFIG_FSL_FASTBOOT*/
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -513,3 +520,15 @@ int checkboard(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_ANDROID_RECOVERY
+int is_recovery_key_pressing(void)
+{
+	return is_recovery_keypad_pressing();
+}
+
+#endif /*CONFIG_ANDROID_RECOVERY*/
+
+#endif /*CONFIG_FSL_FASTBOOT*/
+
