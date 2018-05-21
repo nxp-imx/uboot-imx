@@ -333,4 +333,8 @@
 #endif
 #endif
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx6sxsabreautoandroid.h"
+#endif
+
 #endif				/* __CONFIG_H */

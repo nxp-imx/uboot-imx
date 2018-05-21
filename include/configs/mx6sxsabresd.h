@@ -311,4 +311,8 @@
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
 #endif
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "mx6sxsabresdandroid.h"
+#endif
+
 #endif				/* __CONFIG_H */

@@ -1383,7 +1383,7 @@ int is_recovery_key_pressing(void)
 	int button_pressed = 0;
 
 	/* Check Recovery Combo Button press or not. */
-	SET_IOMUX_PADS(recovery_key_pads);
+	SETUP_IOMUX_PADS(recovery_key_pads);
 
 	gpio_request(GPIO_VOL_DN_KEY, "volume_dn_key");
 	gpio_direction_input(GPIO_VOL_DN_KEY);
