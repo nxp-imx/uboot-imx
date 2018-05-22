@@ -488,8 +488,6 @@ int clock_init()
 {
 	uint32_t val_cfg0;
 
-	clock_enable(CCGR_GIC, 1);
-
 	/* Configure ARM at 1GHz */
 	clock_set_target_val(ARM_A53_CLK_ROOT, CLK_ROOT_ON | \
 			     CLK_ROOT_SOURCE_SEL(0));
@@ -523,6 +521,12 @@ int clock_init()
 	writel(val_cfg0, SYS_PLL2_GNRL_CTL);
 
 	intpll_configure(ANATOP_SYSTEM_PLL3, INTPLL_OUT_800M);
+
+	/* config GIC to sys_pll2_100m */
+	clock_enable(CCGR_GIC, 0);
+	clock_set_target_val(GIC_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(3));
+	clock_enable(CCGR_GIC, 1);
+
 	/*
 	 * set uart clock root
 	 * 24M OSC
