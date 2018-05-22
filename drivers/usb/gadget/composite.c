@@ -14,6 +14,10 @@
 #define USB_BUFSIZ	4096
 
 static struct usb_composite_driver *composite;
+static struct usb_configuration *os_desc_config;
+
+/* Microsoft OS String Descriptor */
+static char qw_sign_buf[OS_STRING_QW_SIGN_LEN / 2] = {'M', 'S', 'F', 'T', '1', '0', '0'};
 
 /**
  * struct usb_os_string - represents OS String to be reported by a gadget
@@ -384,6 +388,10 @@ static int set_config(struct usb_composite_dev *cdev,
 		goto done;
 
 	cdev->config = c;
+	if (cdev->use_os_string) {
+		cdev->os_desc_config = c;
+		os_desc_config = c;
+	}
 
 	/* Initialize all interfaces by setting them to altsetting zero. */
 	for (tmp = 0; tmp < MAX_CONFIG_INTERFACES; tmp++) {
@@ -1290,6 +1298,18 @@ static int composite_bind(struct usb_gadget *gadget)
 	memcpy(&cdev->desc, composite->dev,
 	       sizeof(struct usb_device_descriptor));
 	cdev->desc.bMaxPacketSize0 = gadget->ep0->maxpacket;
+
+	if (cdev->use_os_string) {
+		/* TODO: Do we want to pass this via platform? */
+		cdev->b_vendor_code = 0x40;
+
+		/* Microsoft OS String Descriptor */
+		utf8_to_utf16le(qw_sign_buf, (__le16 *)cdev->qw_sign,
+				OS_STRING_QW_SIGN_LEN / 2);
+
+		if (os_desc_config)
+			cdev->os_desc_config = os_desc_config;
+	}
 
 	debug("%s: ready\n", composite->name);
 	return 0;
