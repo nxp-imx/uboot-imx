@@ -476,5 +476,11 @@ struct bootrom_sw_info {
 #define ROM_SW_INFO_ADDR is_soc_rev(CHIP_REV_1_0) ? \
 		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR_A0 : \
 		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR_B0
+
+#include <stdbool.h>
+bool is_usb_boot(void);
+#define is_boot_from_usb  is_usb_boot
+#define disconnect_from_pc(void) clrbits_le32(USB1_BASE_ADDR + 0xc704, (1 << 31));
+
 #endif
 #endif
