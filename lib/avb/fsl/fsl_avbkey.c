@@ -1162,13 +1162,16 @@ AvbIOResult fsl_read_permanent_attributes_hash(
 	if (permanent_attributes_sha256_hash(sha256_hash_buf) != RESULT_OK) {
 		return AVB_IO_RESULT_ERROR_IO;
 	}
-	/* check if the sha256(permanent attributes) hash match */
+	/* check if the sha256(permanent attributes) hash match the calculated one,
+	 * if not match, just return all zeros hash.
+	 */
 	if (memcmp(sha256_hash_fuse, sha256_hash_buf, ATX_HASH_LENGTH)) {
 		printf("ERROR - sha256(permanent attributes) does not match\n");
-		return AVB_IO_RESULT_ERROR_IO;
+		memset(hash, 0, AVB_SHA256_DIGEST_SIZE);
+	} else {
+		memcpy(hash, sha256_hash_buf, AVB_SHA256_DIGEST_SIZE);
 	}
 
-	memcpy(hash, sha256_hash_buf, AVB_SHA256_DIGEST_SIZE);
 	return AVB_IO_RESULT_OK;
 }
 
