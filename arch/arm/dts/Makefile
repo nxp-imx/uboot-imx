@@ -542,6 +542,9 @@ dtb-$(CONFIG_MX6SL) += imx6sl-evk.dtb
 dtb-$(CONFIG_MX6SLL) += imx6sll-evk.dtb
 
 dtb-$(CONFIG_MX6SX) += \
+	imx6sx-17x17-arm2.dtb \
+	imx6sx-17x17-arm2-ecspi.dtb \
+	imx6sx-17x17-arm2-gpmi-weim.dtb \
 	imx6sx-sabreauto.dtb \
 	imx6sx-sdb.dtb \
 	imx6sx-sdb-emmc.dtb
