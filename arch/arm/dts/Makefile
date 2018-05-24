@@ -410,6 +410,7 @@ dtb-$(CONFIG_MX6) += imx6ul-14x14-evk.dtb \
 	imx6qp-sabreauto.dtb \
 	imx6qp-sabreauto-ecspi.dtb \
 	imx6qp-sabreauto-gpmi-weim.dtb \
+	imx6sx-14x14-arm2.dtb \
 	imx6sx-17x17-arm2.dtb \
 	imx6sx-17x17-arm2-ecspi.dtb \
 	imx6sx-17x17-arm2-gpmi-weim.dtb \
