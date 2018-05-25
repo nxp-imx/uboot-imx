@@ -279,6 +279,8 @@ static char *fb_response_str;
 #define TEE_HWPARTITION_ID 2
 #endif
 
+#define FASTBOOT_PARTITION_ALL "all"
+
 #define ANDROID_MBR_OFFSET	    0
 #define ANDROID_MBR_SIZE	    0x200
 #ifdef  CONFIG_BOOTLOADER_OFFSET_33K
@@ -306,6 +308,7 @@ enum {
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
 	PTN_M4_OS_INDEX,
 #endif
+	PTN_ALL_INDEX,
 	PTN_BOOTLOADER_INDEX,
 };
 static unsigned int download_bytes_unpadded;
@@ -806,6 +809,7 @@ static lbaint_t mmc_sparse_write(struct sparse_storage *info,
 {
 #define SPARSE_FILL_BUF_SIZE (2 * 1024 * 1024)
 
+
 	struct blk_desc *dev_desc = (struct blk_desc *)info->priv;
 	ulong ret = 0;
 	void *data;
@@ -983,13 +987,20 @@ static void process_flash_mmc(const char *cmdbuf)
 					return;
 				}
 
-				if (part_get_info(dev_desc,
-			       ptn->partition_index, &info)) {
-					printf("Bad partition index:%d for partition:%s\n",
-					ptn->partition_index, ptn->name);
-					return;
-				}
+				if( strncmp(ptn->name, FASTBOOT_PARTITION_ALL,
+					    strlen(FASTBOOT_PARTITION_ALL)) == 0) {
+					info.blksz = dev_desc->blksz;
+					info.size = dev_desc->lba;
+					info.start = 0;
+				} else {
 
+					if (part_get_info(dev_desc,
+							  ptn->partition_index, &info)) {
+						printf("Bad partition index:%d for partition:%s\n",
+						ptn->partition_index, ptn->name);
+						return;
+					}
+				}
 				printf("writing to partition '%s' for sparse, buffer size %d\n",
 						ptn->name, download_bytes);
 
@@ -1377,6 +1388,12 @@ static int _fastboot_parts_load_from_ptable(void)
 	ptable[PTN_M4_OS_INDEX].partition_id = user_partition;
 	strcpy(ptable[PTN_M4_OS_INDEX].fstype, "raw");
 #endif
+
+	strcpy(ptable[PTN_ALL_INDEX].name, FASTBOOT_PARTITION_ALL);
+	ptable[PTN_ALL_INDEX].start = 0;
+	ptable[PTN_ALL_INDEX].length = dev_desc->lba;
+	ptable[PTN_ALL_INDEX].partition_id = user_partition;
+	strcpy(ptable[PTN_ALL_INDEX].fstype, "device");
 
 	/* Bootloader */
 	strcpy(ptable[PTN_BOOTLOADER_INDEX].name, FASTBOOT_PARTITION_BOOTLOADER);
@@ -3236,10 +3253,13 @@ static void cb_run_uboot_cmd(struct usb_ep *ep, struct usb_request *req)
 		fastboot_tx_write_str("FAILmissing command");
 		return;
 	}
-	if(run_command(cmd, 0))
+	if(run_command(cmd, 0)) {
 		fastboot_tx_write_str("FAIL");
-	else
+	} else {
 		fastboot_tx_write_str("OKAY");
+		/* cmd may impact fastboot related environment*/
+		fastboot_setup();
+	}
 	return ;
 }
 
