@@ -26,6 +26,7 @@
 #include <asm/setup.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <spl.h>
+#include <env.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -244,7 +245,7 @@ int mmc_get_env_dev(void)
 		break;
 	default:
 		/* If not boot from sd/mmc, use default value */
-		return CONFIG_SYS_MMC_ENV_DEV;
+		return env_get_ulong("mmcdev", 10, CONFIG_SYS_MMC_ENV_DEV);
 	}
 
 	return board_mmc_get_env_dev(devno);
