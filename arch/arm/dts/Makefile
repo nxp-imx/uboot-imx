@@ -572,6 +572,11 @@ dtb-$(CONFIG_MX6UL) += \
 	imx6ul-pico-pi.dtb
 
 dtb-$(CONFIG_MX6ULL) += \
+	imx6ull-14x14-ddr3-arm2.dtb \
+	imx6ull-14x14-ddr3-arm2-epdc.dtb \
+	imx6ull-14x14-ddr3-arm2-emmc.dtb \
+	imx6ull-14x14-ddr3-arm2-gpmi-weim.dtb \
+	imx6ull-14x14-ddr3-arm2-tsc.dtb \
 	imx6ull-14x14-evk.dtb \
 	imx6ull-14x14-evk-emmc.dtb \
 	imx6ull-14x14-evk-gpmi-weim.dtb \
