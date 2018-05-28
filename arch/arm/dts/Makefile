@@ -539,7 +539,10 @@ dtb-$(CONFIG_MX6QDL) += \
 
 dtb-$(CONFIG_MX6SL) += imx6sl-evk.dtb
 
-dtb-$(CONFIG_MX6SLL) += imx6sll-evk.dtb
+dtb-$(CONFIG_MX6SLL) += imx6sll-evk.dtb \
+	imx6sll-lpddr2-arm2.dtb \
+	imx6sll-lpddr3-arm2.dtb \
+	imx6sll-lpddr3-arm2-ecspi.dtb
 
 dtb-$(CONFIG_MX6SX) += \
 	imx6sx-14x14-arm2.dtb \
