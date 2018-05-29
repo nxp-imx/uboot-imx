@@ -859,7 +859,40 @@ int write_backup_gpt(void)
 	printf("flash backup gpt image successfully\n");
 	return 0;
 }
+static int get_fastboot_target_dev(char *mmc_dev, struct fastboot_ptentry *ptn)
+{
+	int dev = 0;
+	struct mmc *target_mmc;
 
+	/* Support flash bootloader to mmc 'target_ubootdev' devices, if the
+	* 'target_ubootdev' env is not set just flash bootloader to current
+	* mmc device.
+	*/
+	if ((!strncmp(ptn->name, FASTBOOT_PARTITION_BOOTLOADER,
+					sizeof(FASTBOOT_PARTITION_BOOTLOADER))) &&
+					(env_get("target_ubootdev"))) {
+		dev = simple_strtoul(env_get("target_ubootdev"), NULL, 10);
+		target_mmc = find_mmc_device(dev);
+		if ((target_mmc == NULL) || mmc_init(target_mmc)) {
+			printf("MMC card init failed!\n");
+			return -1;
+		} else {
+			printf("Flash target is mmc%d\n", dev);
+			if (target_mmc->part_config != MMCPART_NOAVAILABLE)
+				sprintf(mmc_dev, "mmc dev %x %x", dev, /*slot no*/
+						FASTBOOT_MMC_BOOT_PARTITION_ID/*part no*/);
+			else
+				sprintf(mmc_dev, "mmc dev %x", dev);
+			}
+	} else if (ptn->partition_id != FASTBOOT_MMC_NONE_PARTITION_ID)
+		sprintf(mmc_dev, "mmc dev %x %x",
+				fastboot_devinfo.dev_id, /*slot no*/
+				ptn->partition_id /*part no*/);
+	else
+		sprintf(mmc_dev, "mmc dev %x",
+				fastboot_devinfo.dev_id /*slot no*/);
+	return 0;
+}
 static void process_flash_mmc(const char *cmdbuf)
 {
 	if (download_bytes) {
@@ -905,14 +938,9 @@ static void process_flash_mmc(const char *cmdbuf)
 			int mmcret;
 
 			printf("writing to partition '%s'\n", ptn->name);
-
-			if (ptn->partition_id != FASTBOOT_MMC_NONE_PARTITION_ID)
-				sprintf(mmc_dev, "mmc dev %x %x",
-					fastboot_devinfo.dev_id, /*slot no*/
-					ptn->partition_id /*part no*/);
-			else
-				sprintf(mmc_dev, "mmc dev %x",
-					fastboot_devinfo.dev_id /*slot no*/);
+			/* Get target flash device. */
+			if (get_fastboot_target_dev(mmc_dev, ptn) != 0)
+				return;
 
 			if (!is_raw_partition(ptn) &&
 				is_sparse_image(interface.transfer_buffer)) {
