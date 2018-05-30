@@ -401,7 +401,10 @@ static inline unsigned int rdo_max_power(u32 rdo)
 
 #define TCPC_LOG_BUFFER_SIZE 1024
 
+struct tcpc_port;
+
 typedef void (*ss_mux_sel)(enum typec_cc_polarity pol);
+typedef int (*ext_pd_switch_setup)(struct tcpc_port *port_p);
 
 enum tcpc_port_type {
 	TYPEC_PORT_DFP,
@@ -418,6 +421,7 @@ struct tcpc_port_config {
 	uint32_t max_snk_mw;
 	uint32_t op_snk_mv;
 	bool disable_pd;
+	ext_pd_switch_setup switch_setup_func;
 };
 
 struct tcpc_port {
