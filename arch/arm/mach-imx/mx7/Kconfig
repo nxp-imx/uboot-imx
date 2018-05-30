@@ -52,6 +52,30 @@ config TARGET_MX7D_12X12_DDR3_ARM2
 	select DM_THERMAL
 	imply CMD_DM
 
+config TARGET_MX7D_19X19_DDR3_ARM2
+	bool "Support mx7d_19x19_ddr3_arm2"
+	select BOARD_LATE_INIT
+	select MX7D
+	select DM
+	select DM_THERMAL
+	imply CMD_DM
+
+config TARGET_MX7D_19X19_LPDDR3_ARM2
+	bool "Support mx7d_19x19_lpddr3_arm2"
+	select BOARD_LATE_INIT
+	select MX7D
+	select DM
+	select DM_THERMAL
+	imply CMD_DM
+
+config TARGET_MX7D_19X19_LPDDR2_ARM2
+	bool "Support mx7d_19x19_lpddr2_arm2"
+	select BOARD_LATE_INIT
+	select MX7D
+	select DM
+	select DM_THERMAL
+	imply CMD_DM
+
 config TARGET_PICO_IMX7D
 	bool "pico-imx7d"
 	select BOARD_LATE_INIT
@@ -85,6 +109,8 @@ source "board/compulab/cl-som-imx7/Kconfig"
 source "board/freescale/mx7dsabresd/Kconfig"
 source "board/freescale/mx7d_12x12_lpddr3_arm2/Kconfig"
 source "board/freescale/mx7d_12x12_ddr3_arm2/Kconfig"
+source "board/freescale/mx7d_19x19_ddr3_arm2/Kconfig"
+source "board/freescale/mx7d_19x19_lpddr3_arm2/Kconfig"
 source "board/technexion/pico-imx7d/Kconfig"
 source "board/toradex/colibri_imx7/Kconfig"
 source "board/warp7/Kconfig"
