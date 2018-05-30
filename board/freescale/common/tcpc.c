@@ -40,7 +40,7 @@ int tcpc_set_cc_to_source(struct tcpc_port *port)
 	valb = (TCPC_ROLE_CTRL_CC_RP << TCPC_ROLE_CTRL_CC1_SHIFT) |
 			(TCPC_ROLE_CTRL_CC_RP << TCPC_ROLE_CTRL_CC2_SHIFT) |
 			(TCPC_ROLE_CTRL_RP_VAL_DEF <<
-			 TCPC_ROLE_CTRL_RP_VAL_SHIFT);
+			 TCPC_ROLE_CTRL_RP_VAL_SHIFT) | TCPC_ROLE_CTRL_DRP;
 
 	err = dm_i2c_write(port->i2c_dev, TCPC_ROLE_CTRL, &valb, 1);
 	if (err)
@@ -57,7 +57,7 @@ int tcpc_set_cc_to_sink(struct tcpc_port *port)
 		return -EINVAL;
 
 	valb = (TCPC_ROLE_CTRL_CC_RD << TCPC_ROLE_CTRL_CC1_SHIFT) |
-			(TCPC_ROLE_CTRL_CC_RD << TCPC_ROLE_CTRL_CC2_SHIFT);
+			(TCPC_ROLE_CTRL_CC_RD << TCPC_ROLE_CTRL_CC2_SHIFT) | TCPC_ROLE_CTRL_DRP;
 
 	err = dm_i2c_write(port->i2c_dev, TCPC_ROLE_CTRL, &valb, 1);
 	if (err)
