@@ -733,9 +733,11 @@ static int ehci_usb_probe(struct udevice *dev)
 
 int ehci_usb_remove(struct udevice *dev)
 {
+	struct ehci_mx6_priv_data *priv = dev_get_priv(dev);
+
 	ehci_deregister(dev);
 
-	return board_usb_cleanup(dev->seq, USB_INIT_HOST);
+	return board_usb_cleanup(dev->seq, priv->init_type);
 }
 
 static const struct udevice_id mx6_usb_ids[] = {
