@@ -596,7 +596,11 @@ dtb-$(CONFIG_MX7) += imx7d-sdb.dtb \
 	imx7d-sdb-reva.dtb \
 	imx7-colibri-emmc.dtb \
 	imx7-colibri-rawnand.dtb \
-	imx7s-warp.dtb
+	imx7s-warp.dtb \
+	imx7d-12x12-lpddr3-arm2.dtb \
+	imx7d-12x12-lpddr3-arm2-ecspi.dtb \
+	imx7d-12x12-lpddr3-arm2-qspi.dtb \
+	imx7d-12x12-ddr3-arm2.dtb
 
 dtb-$(CONFIG_ARCH_MX7ULP) += imx7ulp-evk.dtb \
 	imx7ulp-evk-emmc.dtb \
