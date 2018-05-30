@@ -173,7 +173,7 @@ static int do_part_dtb(int argc, char * const argv[])
 				}
 			}
 
-			ret = partition_alloc(false, false, false, &pt);
+			ret = partition_alloc(false, false, true, &pt);
 			if (ret)
 				goto free_data;
 			if (rsrc_size > 0) {
