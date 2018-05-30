@@ -437,6 +437,25 @@ int tcpc_disable_src_vbus(struct tcpc_port *port)
 	return 0;
 }
 
+int tcpc_disable_sink_vbus(struct tcpc_port *port)
+{
+	int ret;
+
+	if (port == NULL)
+		return -EINVAL;
+
+	/* Disable SINK VBUS*/
+	ret = tcpc_send_command(port, TCPC_CMD_DISABLE_SINK_VBUS);
+	if (ret)
+		return ret;
+
+	/* The max vbus off time is 0.5ms, we add margin 0.5 ms */
+	mdelay(1);
+
+	return 0;
+}
+
+
 static int tcpc_pd_receive_message(struct tcpc_port *port, struct pd_message *msg)
 {
 	int ret;
@@ -796,6 +815,37 @@ bool tcpc_pd_sink_check_charging(struct tcpc_port *port)
 	return true;
 }
 
+static int tcpc_pd_sink_disable(struct tcpc_port *port)
+{
+	uint8_t valb;
+	int err;
+
+	if (port == NULL)
+		return -EINVAL;
+
+	port->pd_state = UNATTACH;
+
+	/* Check the VBUS PRES and SINK VBUS for dead battery */
+	err = dm_i2c_read(port->i2c_dev, TCPC_POWER_STATUS, &valb, 1);
+	if (err) {
+		tcpc_log(port, "%s dm_i2c_read failed, err %d\n", __func__, err);
+		return -EIO;
+	}
+
+	if ((valb & TCPC_POWER_STATUS_VBUS_PRES) && (valb & TCPC_POWER_STATUS_SINKING_VBUS)) {
+		dm_i2c_read(port->i2c_dev, TCPC_POWER_CTRL, (uint8_t *)&valb, 1);
+		valb &= ~TCPC_POWER_CTRL_AUTO_DISCH_DISCO; /* disable AutoDischargeDisconnect */
+		dm_i2c_write(port->i2c_dev, TCPC_POWER_CTRL, (const uint8_t *)&valb, 1);
+
+		tcpc_disable_sink_vbus(port);
+	}
+
+	if (port->cfg.switch_setup_func)
+		port->cfg.switch_setup_func(port);
+
+	return 0;
+}
+
 static int tcpc_pd_sink_init(struct tcpc_port *port)
 {
 	uint8_t valb;
@@ -850,6 +900,9 @@ static int tcpc_pd_sink_init(struct tcpc_port *port)
 	dm_i2c_read(port->i2c_dev, TCPC_POWER_CTRL, (uint8_t *)&valb, 1);
 	valb &= ~TCPC_POWER_CTRL_AUTO_DISCH_DISCO; /* disable AutoDischargeDisconnect */
 	dm_i2c_write(port->i2c_dev, TCPC_POWER_CTRL, (const uint8_t *)&valb, 1);
+
+	if (port->cfg.switch_setup_func)
+		port->cfg.switch_setup_func(port);
 
 	/* As sink role */
 	valb = 0x00;
@@ -916,6 +969,9 @@ int tcpc_init(struct tcpc_port *port, struct tcpc_port_config config, ss_mux_sel
 		return ret;
 	}
 
+	dm_i2c_read(port->i2c_dev, TCPC_POWER_STATUS, &valb, 1);
+	tcpc_debug_log("POWER STATUS: 0x%x\n", valb);
+
 	/* Clear AllRegistersResetToDefault */
 	valb = 0x80;
 	ret = dm_i2c_write(port->i2c_dev, TCPC_FAULT_STATUS, (const uint8_t *)&valb, 1);
@@ -940,9 +996,13 @@ int tcpc_init(struct tcpc_port *port, struct tcpc_port_config config, ss_mux_sel
 	tcpc_log(port, "TCPC:  Vendor ID [0x%x], Product ID [0x%x], Addr [I2C%u 0x%x]\n",
 		vid, pid, port->cfg.i2c_bus, port->cfg.addr);
 
-	if (!port->cfg.disable_pd && (port->cfg.port_type == TYPEC_PORT_UFP
-		|| port->cfg.port_type == TYPEC_PORT_DRP))
-		tcpc_pd_sink_init(port);
+	if (!port->cfg.disable_pd) {
+		if  (port->cfg.port_type == TYPEC_PORT_UFP
+			|| port->cfg.port_type == TYPEC_PORT_DRP)
+			tcpc_pd_sink_init(port);
+	} else {
+		tcpc_pd_sink_disable(port);
+	}
 
 	tcpc_clear_alert(port, 0xffff);
 
