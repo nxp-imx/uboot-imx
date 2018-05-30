@@ -2135,40 +2135,40 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	snprintf(oemimage, sizeof(oemimage), "%s%s",
 			AT_OEM_BL_PART_NAME_BASE, slot);
 
-	struct dt_table_header *dt_img = NULL;
+	struct dt_table_header dt_img;
 	size_t num_read;
 	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, oemimage, 0,
-			sizeof(*dt_img), dt_img, &num_read) !=
+			sizeof(dt_img), &dt_img, &num_read) !=
 			AVB_IO_RESULT_OK &&
-			num_read != sizeof(*dt_img)) {
+			num_read != sizeof(dt_img)) {
 		printf("boota: read dt table header error\n");
 		goto dt_read_done;
 	}
 
-	if (be32_to_cpu(dt_img->magic) != DT_TABLE_MAGIC) {
+	if (be32_to_cpu(dt_img.magic) != DT_TABLE_MAGIC) {
 		printf("boota: bad dt table magic %08x\n",
-				be32_to_cpu(dt_img->magic));
+				be32_to_cpu(dt_img.magic));
 		goto dt_read_done;
-	} else if (!be32_to_cpu(dt_img->dt_entry_count)) {
+	} else if (!be32_to_cpu(dt_img.dt_entry_count)) {
 		printf("boota: no dt entries\n");
 		goto dt_read_done;
 	}
 
-	struct dt_table_entry *dt_entry = NULL;
-	assert(be32_to_cpu(dt_img->dt_entry_size) == sizeof(*dt_entry));
+	struct dt_table_entry dt_entry;
+	assert(be32_to_cpu(dt_img.dt_entry_size) == sizeof(dt_entry));
 	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, oemimage,
-			be32_to_cpu(dt_img->dt_entries_offset),
-			be32_to_cpu(dt_img->dt_entry_size), dt_entry,
+			be32_to_cpu(dt_img.dt_entries_offset),
+			be32_to_cpu(dt_img.dt_entry_size), &dt_entry,
 			&num_read) != AVB_IO_RESULT_OK &&
-			num_read != sizeof(*dt_entry)) {
+			num_read != sizeof(dt_entry)) {
 		printf("boota: read dt entry error\n");
 		goto dt_read_done;
 	}
 
 	/* Read the fdt from oem_bootloader into hdr->second_addr. */
-	fdt_size = be32_to_cpu(dt_entry->dt_size);
+	fdt_size = be32_to_cpu(dt_entry.dt_size);
 	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, oemimage,
-			be32_to_cpu(dt_entry->dt_offset), fdt_size,
+			be32_to_cpu(dt_entry.dt_offset), fdt_size,
 			(void *)hdr->second_addr, &num_read) !=
 			AVB_IO_RESULT_OK && num_read != fdt_size) {
 		printf("boota: read fdt error\n");
