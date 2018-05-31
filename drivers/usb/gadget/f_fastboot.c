@@ -1633,7 +1633,11 @@ static AvbAtxOps fsl_avb_atx_ops = {
 	.ops = NULL,
 	.read_permanent_attributes = fsl_read_permanent_attributes,
 	.read_permanent_attributes_hash = fsl_read_permanent_attributes_hash,
+#ifdef CONFIG_IMX_TRUSTY_OS
+	.set_key_version = fsl_write_rollback_index_rpmb
+#else
 	.set_key_version = fsl_set_key_version
+#endif
 };
 #endif
 static AvbOps fsl_avb_ops = {
