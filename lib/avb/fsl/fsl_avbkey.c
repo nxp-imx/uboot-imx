@@ -279,6 +279,7 @@ int avb_atx_fuse_perm_attr(uint8_t *staged_buffer, uint32_t size) {
 static int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset);
 static int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset);
 
+#ifndef CONFIG_IMX_TRUSTY_OS
 static int rpmb_init(void) {
 	int i;
 	kblb_hdr_t hdr;
@@ -353,6 +354,7 @@ static int rpmb_init(void) {
 
 	return 0;
 }
+#endif
 
 static void fill_secure_keyslot_package(struct keyslot_package *kp) {
 
@@ -518,8 +520,10 @@ int init_avbkey(void) {
 		printf("keyslot package magic error. Will generate new one\n");
 		gen_rpmb_key(&kp);
 	}
+#ifndef CONFIG_IMX_TRUSTY_OS
 	if (rpmb_init())
 		return RESULT_ERROR;
+#endif
 #if defined(CONFIG_AVB_ATX) && !defined(CONFIG_IMX_TRUSTY_OS)
 	if (init_permanent_attributes_fuse())
 		return RESULT_ERROR;
