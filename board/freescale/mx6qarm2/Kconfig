@@ -1,4 +1,4 @@
-if TARGET_MX6QARM2
+if TARGET_MX6QARM2 || TARGET_MX6DLARM2
 
 config SYS_BOARD
 	default "mx6qarm2"
@@ -8,5 +8,11 @@ config SYS_VENDOR
 
 config SYS_CONFIG_NAME
 	default "mx6qarm2"
+
+config SYS_TEXT_BASE
+    default 0x17800000
+
+config MX6DQ_POP_LPDDR2
+	bool "Select this if it is a MX6Q POP LPDDR2 board"
 
 endif

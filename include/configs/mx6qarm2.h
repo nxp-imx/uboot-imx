@@ -10,6 +10,8 @@
 
 #include "mx6_common.h"
 
+#define CONFIG_IMX_THERMAL
+
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
 
@@ -24,19 +26,23 @@
 #define	CONFIG_FEC_XCV_TYPE		RGMII
 #define CONFIG_FEC_MXC_PHYADDR		0
 
+#define CONFIG_PHYLIB
+#define CONFIG_PHY_ATHEROS
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"console=ttymxc3\0" \
-	"fdt_file=imx6q-arm2.dtb\0" \
+	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
 	"fdt_addr=0x18000000\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
-	"mmcdev=1\0" \
+	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
-	"mmcroot=/dev/mmcblk0p2 rootwait rw\0" \
+	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
+	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
 		"root=${mmcroot}\0" \
 	"loadbootscript=" \
@@ -103,6 +109,10 @@
 /* Miscellaneous configurable options */
 
 /* Physical Memory Map */
+#if defined(CONFIG_MX6DQ_POP_LPDDR2)
+#define PHYS_SDRAM_0			MMDC0_ARB_BASE_ADDR
+#define PHYS_SDRAM_1			MMDC1_ARB_BASE_ADDR
+#endif
 #define PHYS_SDRAM			MMDC0_ARB_BASE_ADDR
 
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM
@@ -115,6 +125,7 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 /* Environment organization */
+#define CONFIG_MMCROOT			"/dev/mmcblk3p2"  /* SDHC4 */
 
 /* USB Configs */
 #ifdef CONFIG_CMD_USB
