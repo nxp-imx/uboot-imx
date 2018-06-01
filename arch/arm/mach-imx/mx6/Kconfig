@@ -147,6 +147,14 @@ config TARGET_MX6SABRESD_COMMON
     select NXP_BOARD_REVISION
     imply CMD_DM
 
+config TARGET_MX6QDLARM2
+    bool
+    select BOARD_LATE_INIT
+    select DM
+    select DM_THERMAL
+    select BOARD_EARLY_INIT_F
+    imply CMD_DM
+
 choice
 	prompt "MX6 board select"
 	optional
@@ -356,6 +364,13 @@ config TARGET_MX6MEMCAL
 
 config TARGET_MX6QARM2
 	bool "mx6qarm2"
+	select TARGET_MX6QDLARM2
+	select MX6Q
+
+config TARGET_MX6DLARM2
+	bool "mx6dlarm2"
+	select TARGET_MX6QDLARM2
+	select MX6DL
 
 config TARGET_MX6DL_MAMOJ
 	bool "Support BTicino Mamoj"
