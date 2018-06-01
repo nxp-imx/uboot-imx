@@ -137,6 +137,7 @@ static int do_part_dtb(int argc, char * const argv[])
 		if (!fdtdec_get_is_enabled(fdt, subnode))
 			continue;
 		if (!fdt_node_check_compatible(fdt, subnode, "xen,domu")) {
+			u32 temp;
 			prop = fdt_getprop(fdt, subnode, "rsrcs", &rsrc_size);
 			if (!prop)
 				debug("No rsrcs %s\n", fdt_get_name(fdt, subnode, NULL));
@@ -176,6 +177,16 @@ static int do_part_dtb(int argc, char * const argv[])
 			ret = partition_alloc(false, false, true, &pt);
 			if (ret)
 				goto free_data;
+
+			temp = cpu_to_fdt32(pt);
+			ret = fdt_setprop(fdt, subnode, "reg", &temp,
+					  sizeof(u32));
+			if (ret) {
+				printf("Could not set reg property %d\n", ret);
+				sc_rm_partition_free(ipc_handle, pt);
+				goto free_data;
+			}
+
 			if (rsrc_size > 0) {
 				for (i = 0; i < rsrc_size >> 2; i++) {
 					switch (rsrc_data[i]) {
