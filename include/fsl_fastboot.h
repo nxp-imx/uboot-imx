@@ -59,6 +59,10 @@
 #define FASTBOOT_PARTITION_DATA "userdata"
 #define FASTBOOT_PARTITION_BOOT_B "boot_b"
 #define FASTBOOT_PARTITION_SYSTEM_B "system_b"
+#define FASTBOOT_PARTITION_OEM_A "oem_a"
+#define FASTBOOT_PARTITION_VENDOR_A "vendor_a"
+#define FASTBOOT_PARTITION_OEM_B "oem_b"
+#define FASTBOOT_PARTITION_VENDOR_B "vendor_b"
 #ifdef CONFIG_AVB_SUPPORT
 #define FASTBOOT_PARTITION_VBMETA_A "vbmeta_a"
 #define FASTBOOT_PARTITION_VBMETA_B "vbmeta_b"
