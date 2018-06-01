@@ -191,16 +191,16 @@ int env_load(void)
 int env_save(void)
 {
 	struct env_driver *drv;
-	int prio;
 
-	for (prio = 0; (drv = env_driver_lookup(ENVOP_SAVE, prio)); prio++) {
+	drv = env_driver_lookup(ENVOP_SAVE, 0);
+	if (drv) {
 		int ret;
 
 		if (!drv->save)
-			continue;
+			return -ENODEV;
 
 		if (!env_has_inited(drv->location))
-			continue;
+			return -EPERM;
 
 		printf("Saving Environment to %s... ", drv->name);
 		ret = drv->save();
