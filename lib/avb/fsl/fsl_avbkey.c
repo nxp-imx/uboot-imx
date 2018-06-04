@@ -1209,9 +1209,8 @@ AvbIOResult fsl_read_permanent_attributes(
 	       sizeof(fsl_product_root_public_key));
 	memcpy(attributes->product_id, fsl_atx_product_id,
 	       sizeof(fsl_atx_product_id));
-
-	return AVB_IO_RESULT_OK;
 #endif /* CONFIG_IMX_TRUSTY_OS */
+	return AVB_IO_RESULT_OK;
 }
 
 /* Reads a |hash| of permanent attributes. This hash MUST be retrieved from a

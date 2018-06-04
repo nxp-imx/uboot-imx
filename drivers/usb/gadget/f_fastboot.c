@@ -3243,7 +3243,7 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 	}
 #endif /* CONFIG_AVB_ATX */
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
-		else if (endswith(cmd, FASTBOOT_BOOTLOADER_VBOOT_KEY)) {
+	else if (endswith(cmd, FASTBOOT_BOOTLOADER_VBOOT_KEY)) {
 		strcpy(response, "OKAY");
 	}
 #endif /* CONFIG_ANDROID_THINGS_SUPPORT */
