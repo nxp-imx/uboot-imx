@@ -461,7 +461,7 @@ static int gen_rpmb_key(struct keyslot_package *kp) {
 	caam_open();
 
 #ifdef TRUSTY_RPMB_RANDOM_KEY
-	/* 
+	/*
 	 * Since boot1 is a bit easy to be erase during development
 	 * so that before production stage use full 0 rpmb key
 	 */
@@ -1206,9 +1206,8 @@ AvbIOResult fsl_read_permanent_attributes(
 	       sizeof(fsl_product_root_public_key));
 	memcpy(attributes->product_id, fsl_atx_product_id,
 	       sizeof(fsl_atx_product_id));
-
-	return AVB_IO_RESULT_OK;
 #endif /* CONFIG_IMX_TRUSTY_OS */
+	return AVB_IO_RESULT_OK;
 }
 
 /* Reads a |hash| of permanent attributes. This hash MUST be retrieved from a
