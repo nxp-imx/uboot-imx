@@ -100,3 +100,9 @@ config NXP_BOARD_REVISION
 	  NXP boards based on i.MX6/7 contain the board revision information
 	  stored in the fuses. Select this option if you want to be able to
 	  retrieve the board revision information.
+
+config FLASH_MCUFIRMWARE_SUPPORT
+	bool "Enable mcu firmware flash support"
+	depends on ARCH_MX7ULP || ARCH_IMX8M
+	help
+	  This enables the mcu firmware flash support for some SOCs.

@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2011 Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  *
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -9,6 +12,11 @@
 #include <android_image.h>
 #include <malloc.h>
 #include <errno.h>
+#include <asm/bootm.h>
+#include <asm/mach-imx/boot_mode.h>
+#include <asm/arch/sys_proto.h>
+#include <fsl_fastboot.h>
+#include <asm/setup.h>
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 
@@ -51,6 +59,7 @@ static ulong android_image_get_kernel_addr(const struct andr_img_hdr *hdr)
 int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 			     ulong *os_data, ulong *os_len)
 {
+	extern boot_metric metrics;
 	u32 kernel_addr = android_image_get_kernel_addr(hdr);
 
 	/*
@@ -66,31 +75,110 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	printf("Kernel load addr 0x%08x size %u KiB\n",
 	       kernel_addr, DIV_ROUND_UP(hdr->kernel_size, 1024));
 
-	int len = 0;
-	if (*hdr->cmdline) {
-		printf("Kernel command line: %s\n", hdr->cmdline);
-		len += strlen(hdr->cmdline);
-	}
-
+	char newbootargs[512] = {0};
+	char commandline[2048] = {0};
 	char *bootargs = env_get("bootargs");
-	if (bootargs)
-		len += strlen(bootargs);
-
-	char *newbootargs = malloc(len + 2);
-	if (!newbootargs) {
-		puts("Error: malloc in android_image_get_kernel failed!\n");
-		return -ENOMEM;
-	}
-	*newbootargs = '\0';
 
 	if (bootargs) {
-		strcpy(newbootargs, bootargs);
-		strcat(newbootargs, " ");
+		if (strlen(bootargs) + 1 > sizeof(commandline)) {
+			printf("bootargs is too long!\n");
+			return -1;
+		}
+		else
+			strncpy(commandline, bootargs, sizeof(commandline) - 1);
+	} else if (*hdr->cmdline) {
+		if (strlen(hdr->cmdline) + 1 > sizeof(commandline)) {
+			printf("cmdline in bootimg is too long!\n");
+			return -1;
+		}
+		else
+			strncpy(commandline, hdr->cmdline, strlen(commandline) - 1);
 	}
-	if (*hdr->cmdline)
-		strcat(newbootargs, hdr->cmdline);
 
-	env_set("bootargs", newbootargs);
+#ifdef CONFIG_SERIAL_TAG
+	struct tag_serialnr serialnr;
+	get_board_serial(&serialnr);
+
+	sprintf(newbootargs,
+					" androidboot.serialno=%08x%08x",
+					serialnr.high,
+					serialnr.low);
+	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+#endif
+
+	/* append soc type into bootargs */
+	char *soc_type = env_get("soc_type");
+	if (soc_type) {
+		sprintf(newbootargs,
+			" androidboot.soc_type=%s",
+			soc_type);
+		strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+	}
+
+	int bootdev = get_boot_device();
+	if (bootdev == SD1_BOOT || bootdev == SD2_BOOT ||
+		bootdev == SD3_BOOT || bootdev == SD4_BOOT) {
+		sprintf(newbootargs,
+			" androidboot.storage_type=sd");
+	} else if (bootdev == MMC1_BOOT || bootdev == MMC2_BOOT ||
+		bootdev == MMC3_BOOT || bootdev == MMC4_BOOT) {
+		sprintf(newbootargs,
+			" androidboot.storage_type=emmc");
+	} else if (bootdev == NAND_BOOT) {
+		sprintf(newbootargs,
+			" androidboot.storage_type=nand");
+	} else
+		printf("boot device type is incorrect.\n");
+	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+	if (bootloader_gpt_overlay()) {
+		sprintf(newbootargs, " gpt");
+		strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+	}
+
+	/* boot metric variables */
+	metrics.ble_1 = get_timer(0);
+	sprintf(newbootargs,
+		" androidboot.boottime=1BLL:%d,1BLE:%d,KL:%d,KD:%d,AVB:%d,ODT:%d,SW:%d",
+		metrics.bll_1, metrics.ble_1, metrics.kl, metrics.kd, metrics.avb,
+		metrics.odt, metrics.sw);
+	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+
+#ifdef CONFIG_AVB_SUPPORT
+	/* secondary cmdline added by avb */
+	char *bootargs_sec = env_get("bootargs_sec");
+	if (bootargs_sec) {
+		strncat(commandline, " ", sizeof(commandline) - strlen(commandline));
+		strncat(commandline, bootargs_sec, sizeof(commandline) - strlen(commandline));
+	}
+#endif
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+	/* Normal boot:
+	 * cmdline to bypass ramdisk in boot.img, but use the system.img
+	 * Recovery boot:
+	 * Use the ramdisk in boot.img
+	 */
+	char *bootargs_3rd = env_get("bootargs_3rd");
+	if (bootargs_3rd) {
+		strncat(commandline, " ", sizeof(commandline) - strlen(commandline));
+		strncat(commandline, bootargs_3rd, sizeof(commandline) - strlen(commandline));
+	}
+#endif
+
+	/* Add 'append_bootargs' to hold some paramemters which need to be appended
+	 * to bootargs */
+	char *append_bootargs = env_get("append_bootargs");
+	if (append_bootargs) {
+		if (strlen(append_bootargs) + 2 >
+				(sizeof(commandline) - strlen(commandline))) {
+			printf("The 'append_bootargs' is too long to be appended to bootargs\n");
+		} else {
+			strncat(commandline, " ", sizeof(commandline) - strlen(commandline));
+			strncat(commandline, append_bootargs, sizeof(commandline) - strlen(commandline));
+		}
+	}
+
+	printf("Kernel command line: %s\n", commandline);
+	env_set("bootargs", commandline);
 
 	if (os_data) {
 		*os_data = (ulong)hdr;
@@ -202,3 +290,15 @@ void android_print_contents(const struct andr_img_hdr *hdr)
 	printf("%scmdline:          %s\n", p, hdr->cmdline);
 }
 #endif
+
+#define ARM64_IMAGE_MAGIC	0x644d5241
+bool image_arm64(void *images)
+{
+	struct header_image *ih;
+
+	ih = (struct header_image *)images;
+	debug("image magic: %x\n", ih->magic);
+	if (ih->magic == le32_to_cpu(ARM64_IMAGE_MAGIC))
+		return true;
+	return false;
+}

@@ -20,6 +20,7 @@
 #include <imx_thermal.h>
 #include <fsl_sec.h>
 #include <fsl_wdog.h>
+#include <asm/setup.h>
 
 #if defined(CONFIG_IMX_THERMAL)
 static const struct imx_thermal_plat imx7_thermal_plat = {
@@ -293,6 +294,10 @@ void s_init(void)
 	/* clock configuration. */
 	clock_init();
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+        /* Enable RTC */
+        writel(0x21, 0x30370038);
+#endif
 	return;
 }
 

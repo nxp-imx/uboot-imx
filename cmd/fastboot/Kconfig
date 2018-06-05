@@ -26,6 +26,48 @@ config CMD_FASTBOOT
 
 	  See doc/README.android-fastboot for more information.
 
+config FSL_FASTBOOT
+	bool "Enable FSL fastboot support"
+	select BCB_SUPPORT
+	help
+	  This enables FSL implementation for Android fastboot.
+
+if FSL_FASTBOOT
+
+config ANDROID_RECOVERY
+	bool "Enable the recovery boot function"
+	help
+	  This enables the Android Recovery boot function.
+
+config CMD_BOOTA
+	bool "Enable the boota command"
+	help
+	  This enables the boota command for booting android images.
+
+config BCB_SUPPORT
+	bool
+
+choice
+        prompt "Android Image Storage select"
+        default FASTBOOT_STORAGE_MMC
+
+config FASTBOOT_STORAGE_MMC
+	bool "Using eMMC/SD for Android fastboot storage media"
+
+config FASTBOOT_STORAGE_NAND
+	bool "Using NAND flash for Android fastboot storage media"
+
+config FASTBOOT_STORAGE_SATA
+	bool "Using SATA disk for Android fastboot storage media"
+
+endchoice
+
+config FASTBOOT_SATA_NO
+	int "Sata device index"
+	depends on FASTBOOT_STORAGE_SATA
+
+endif #FSL_FASTBOOT
+
 if USB_FUNCTION_FASTBOOT
 
 config FASTBOOT_BUF_ADDR
