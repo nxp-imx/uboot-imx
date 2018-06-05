@@ -15,6 +15,10 @@
 #include "avb_vbmeta_image.h"
 #include "avb_version.h"
 #include <malloc.h>
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
+#include "trusty/hwcrypto.h"
+#include <memalign.h>
+#endif
 
 /* Maximum number of partitions that can be loaded with avb_slot_verify(). */
 #define MAX_NUMBER_OF_LOADED_PARTITIONS 32
@@ -280,6 +284,11 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
   size_t expected_digest_len = 0;
   uint8_t expected_digest_buf[AVB_SHA512_DIGEST_SIZE];
   const uint8_t* expected_digest = NULL;
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
+  uint8_t* hash_out = NULL;
+  uint8_t* hash_buf = NULL;
+#endif
+
 
   if (!avb_hash_descriptor_validate_and_byteswap(
           (const AvbHashDescriptor*)descriptor, &hash_desc)) {
@@ -379,10 +388,46 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
     image_size_to_hash = image_size;
   }
   if (avb_strcmp((const char*)hash_desc.hash_algorithm, "sha256") == 0) {
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
+    /* DMA requires cache aligned input/output buffer */
+    hash_out = memalign(ARCH_DMA_MINALIGN, AVB_SHA256_DIGEST_SIZE);
+    if (hash_out == NULL) {
+        avb_error("failed to alloc memory!\n");
+        ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
+        goto out;
+    }
+    uint32_t round_buf_size = ROUND(hash_desc.salt_len + image_size_to_hash,
+                                ARCH_DMA_MINALIGN);
+    hash_buf = memalign(ARCH_DMA_MINALIGN, round_buf_size);
+    if (hash_buf == NULL) {
+        avb_error("failed to alloc memory!\n");
+        ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
+        goto out;
+    }
+
+    avb_memcpy(hash_buf, desc_salt, hash_desc.salt_len);
+    avb_memcpy(hash_buf + hash_desc.salt_len,
+               image_buf, image_size_to_hash);
+    /* calculate sha256 hash by caam */
+    if (hwcrypto_hash((uint32_t)(ulong)hash_buf,
+                  (hash_desc.salt_len + image_size_to_hash),
+                  (uint32_t)(ulong)hash_out,
+                  AVB_SHA256_DIGEST_SIZE,
+                  SHA256) != 0) {
+        avb_error("Failed to calculate sha256 hash with caam.\n");
+	ret = AVB_SLOT_VERIFY_RESULT_ERROR_VERIFICATION;
+	goto out;
+    }
+
+    digest = hash_out;
+    free(hash_buf);
+    hash_buf = NULL;
+#else
     avb_sha256_init(&sha256_ctx);
     avb_sha256_update(&sha256_ctx, desc_salt, hash_desc.salt_len);
     avb_sha256_update(&sha256_ctx, image_buf, image_size_to_hash);
     digest = avb_sha256_final(&sha256_ctx);
+#endif
     digest_len = AVB_SHA256_DIGEST_SIZE;
   } else if (avb_strcmp((const char*)hash_desc.hash_algorithm, "sha512") == 0) {
     avb_sha512_init(&sha512_ctx);
@@ -435,6 +480,16 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
 
 out:
 
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
+  if (hash_out != NULL) {
+    free(hash_out);
+    hash_out = NULL;
+  }
+  if (hash_buf != NULL) {
+    free(hash_buf);
+    hash_buf = NULL;
+  }
+#endif
   /* If it worked and something was loaded, copy to slot_data. */
   if ((ret == AVB_SLOT_VERIFY_RESULT_OK || result_should_continue(ret)) &&
       image_buf != NULL) {
