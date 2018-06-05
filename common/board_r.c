@@ -646,6 +646,15 @@ static int initr_check_fastboot(void)
 }
 #endif
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+extern void tee_setup(void);
+static int initr_tee_setup(void)
+{
+	tee_setup();
+	return 0;
+}
+#endif
+
 static int run_main_loop(void)
 {
 #ifdef CONFIG_SANDBOX
@@ -854,6 +863,9 @@ static init_fnc_t init_sequence_r[] = {
 #endif
 #if defined(AVB_RPMB) && !defined(CONFIG_SPL)
 	initr_avbkey,
+#endif
+#ifdef CONFIG_IMX_TRUSTY_OS
+	initr_tee_setup,
 #endif
 #ifdef CONFIG_FSL_FASTBOOT
 	initr_check_fastboot,

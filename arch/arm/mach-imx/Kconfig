@@ -156,3 +156,11 @@ config DDRMC_VF610_CALIBRATION
 	  NXP does NOT recommend to perform this calibration at each boot. One
 	  shall perform it on a new PCB and then use those values to program
 	  the ddrmc_cr_setting on relevant board file.
+
+config IMX_TRUSTY_OS
+	bool "Support Trusty OS related feature"
+	depends on ARCH_MX6 || ARCH_MX7 || ARCH_IMX8 || ARCH_IMX8M
+	select SYS_ARM_CACHE_WRITEALLOC
+
+config SYS_ARM_CACHE_WRITEALLOC
+	bool "support cache write alloc"

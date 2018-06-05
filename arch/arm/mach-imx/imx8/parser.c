@@ -28,6 +28,11 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#if defined(CONFIG_IMX_TRUSTY_OS)
+/* Pre-declaration of check_rpmb_blob. */
+int check_rpmb_blob(struct mmc *mmc);
+#endif
+
 static int current_dev_type = MMC_DEV;
 static int start_offset;
 static void *device;
@@ -270,6 +275,16 @@ int mmc_load_image_parse_container(struct spl_image_info *spl_image,
 
 	ret = read_auth_container(spl_image);
 
+	if (!ret)
+	{
+		/* Images loaded, now check the rpmb keyblob for Trusty OS.
+		 * Skip this step when the dual bootloader feature is enabled
+		 * since the blob should be checked earlier.
+		 */
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_DUAL_BOOTLOADER)
+		ret = check_rpmb_blob(mmc);
+#endif
+	}
 	return ret;
 }
 
