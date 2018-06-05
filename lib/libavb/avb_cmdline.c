@@ -203,7 +203,7 @@ AvbSlotVerifyResult avb_append_options(
     AvbAlgorithmType algorithm_type,
     AvbHashtreeErrorMode hashtree_error_mode) {
   AvbSlotVerifyResult ret;
-  const char* verity_mode;
+  const char* verity_mode = NULL;
   bool is_device_unlocked;
   AvbIOResult io_ret;
 
@@ -301,7 +301,7 @@ AvbSlotVerifyResult avb_append_options(
   if (toplevel_vbmeta->flags & AVB_VBMETA_IMAGE_FLAGS_HASHTREE_DISABLED) {
     verity_mode = "disabled";
   } else {
-    const char* dm_verity_mode;
+    const char* dm_verity_mode = NULL;
     char* new_ret;
 
     switch (hashtree_error_mode) {
