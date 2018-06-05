@@ -29,6 +29,13 @@
 #ifdef CONFIG_FASTBOOT_FLASH_MMC_DEV
 #include <fb_mmc.h>
 #endif
+
+#ifdef CONFIG_IMX_TRUSTY_OS
+extern int armv7_init_nonsec(void);
+extern void trusty_os_init(void);
+#include <trusty/libtipc.h>
+#endif
+
 #ifdef CONFIG_FASTBOOT_FLASH_NAND_DEV
 #include <fb_nand.h>
 #endif
@@ -246,6 +253,13 @@ static char *fb_response_str;
 
 #ifdef CONFIG_FSL_FASTBOOT
 
+#ifndef TRUSTY_OS_MMC_BLKS
+#define TRUSTY_OS_MMC_BLKS 0x7FF
+#endif
+#ifndef TEE_HWPARTITION_ID
+#define TEE_HWPARTITION_ID 2
+#endif
+
 #define ANDROID_MBR_OFFSET	    0
 #define ANDROID_MBR_SIZE	    0x200
 #ifdef  CONFIG_BOOTLOADER_OFFSET_33K
@@ -269,6 +283,7 @@ struct fastboot_device_info fastboot_devinfo;
 
 enum {
 	PTN_GPT_INDEX = 0,
+	PTN_TEE_INDEX,
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
 	PTN_M4_OS_INDEX,
 #endif
@@ -1299,6 +1314,13 @@ static int _fastboot_parts_load_from_ptable(void)
 	ptable[PTN_GPT_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
 	strcpy(ptable[PTN_GPT_INDEX].fstype, "raw");
 
+	/* Trusty OS */
+	strcpy(ptable[PTN_TEE_INDEX].name, FASTBOOT_PARTITION_TEE);
+	ptable[PTN_TEE_INDEX].start = 0;
+	ptable[PTN_TEE_INDEX].length = TRUSTY_OS_MMC_BLKS;
+	ptable[PTN_TEE_INDEX].partition_id = TEE_HWPARTITION_ID;
+	strcpy(ptable[PTN_TEE_INDEX].fstype, "raw");
+
 	/* Add m4_os partition if we support mcu firmware image flash */
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
 	strcpy(ptable[PTN_M4_OS_INDEX].name, FASTBOOT_MCU_FIRMWARE_PARTITION);
@@ -1552,6 +1574,58 @@ static AvbOps fsl_avb_ops = {
 	.get_unique_guid_for_partition = fsl_get_unique_guid_for_partition,
 	.get_size_of_partition = fsl_get_size_of_partition
 };
+#endif
+
+#ifdef CONFIG_IMX_TRUSTY_OS
+void tee_setup(void)
+{
+	/* load tee from boot1 of eMMC. */
+	int mmcc = mmc_get_env_dev();
+	struct blk_desc *dev_desc = NULL;
+
+	struct mmc *mmc;
+	mmc = find_mmc_device(mmcc);
+	if (!mmc) {
+	            printf("boota: cannot find '%d' mmc device\n", mmcc);
+		            goto fail;
+	}
+
+	dev_desc = blk_get_dev("mmc", mmcc);
+	if (NULL == dev_desc) {
+	            printf("** Block device MMC %d not supported\n", mmcc);
+		            goto fail;
+	}
+
+	/* below was i.MX mmc operation code */
+	if (mmc_init(mmc)) {
+	            printf("mmc%d init failed\n", mmcc);
+		            goto fail;
+	}
+
+	struct fastboot_ptentry *tee_pte;
+	char *tee_ptn = FASTBOOT_PARTITION_TEE;
+	tee_pte = fastboot_flash_find_ptn(tee_ptn);
+	mmc_switch_part(mmc, TEE_HWPARTITION_ID);
+	if (!tee_pte) {
+		printf("boota: cannot find tee partition!\n");
+	}
+
+	if (blk_dread(dev_desc, tee_pte->start,
+		    tee_pte->length, (void *)TRUSTY_OS_ENTRY) < 0) {
+		printf("Failed to load tee.");
+	}
+	mmc_switch_part(mmc, FASTBOOT_MMC_USER_PARTITION_ID);
+
+#ifdef NON_SECURE_FASTBOOT
+	armv7_init_nonsec();
+	trusty_os_init();
+	trusty_ipc_init();
+#endif
+
+fail:
+	return;
+
+}
 #endif
 
 void fastboot_setup(void)
@@ -1990,6 +2064,10 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	if (boot_buf != NULL)
 		free(boot_buf);
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+	/* put ql-tipc to release resource for Linux */
+	trusty_ipc_shutdown();
+#endif
 	if (check_image_arm64) {
 #ifdef CONFIG_CMD_BOOTI
 		do_booti(NULL, 0, 4, boot_args);

@@ -50,7 +50,7 @@
 
 int fastboot_flash_find_index(const char *name);
 
-#ifndef FASTBOOT_ENCRYPT_LOCK
+#if !defined(FASTBOOT_ENCRYPT_LOCK) || defined(NON_SECURE_FASTBOOT)
 
 /*
  * This will return FASTBOOT_LOCK, FASTBOOT_UNLOCK or FASTBOOT_ERROR

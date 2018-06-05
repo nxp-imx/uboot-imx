@@ -106,3 +106,11 @@ config FLASH_MCUFIRMWARE_SUPPORT
 	depends on ARCH_MX7ULP || ARCH_IMX8M
 	help
 	  This enables the mcu firmware flash support for some SOCs.
+
+config IMX_TRUSTY_OS
+	bool "Support Trusty OS related feature"
+	depends on ARCH_MX6 || ARCH_MX7
+	select SYS_ARM_CACHE_WRITEALLOC
+
+config SYS_ARM_CACHE_WRITEALLOC
+	bool "support cache write alloc"
