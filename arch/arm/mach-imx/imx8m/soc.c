@@ -130,7 +130,11 @@ static struct mm_region imx8m_mem_map[] = {
 		.phys = 0x40000000UL,
 		.size = PHYS_SDRAM_SIZE,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
+#ifdef CONFIG_IMX_TRUSTY_OS
+			 PTE_BLOCK_INNER_SHARE
+#else
 			 PTE_BLOCK_OUTER_SHARE
+#endif
 #ifdef PHYS_SDRAM_2_SIZE
 	}, {
 		/* DRAM2 */
@@ -138,7 +142,11 @@ static struct mm_region imx8m_mem_map[] = {
 		.phys = 0x100000000UL,
 		.size = PHYS_SDRAM_2_SIZE,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
+#ifdef CONFIG_IMX_TRUSTY_OS
+			 PTE_BLOCK_INNER_SHARE
+#else
 			 PTE_BLOCK_OUTER_SHARE
+#endif
 #endif
 	}, {
 		/* List terminator */

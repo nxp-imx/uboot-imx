@@ -189,3 +189,11 @@ config IMX_DCD_ADDR
 	  the ROM code to configure the device at early boot stage, is located.
 	  This information is shared with the user via mkimage -l just so the
 	  image can be signed.
+
+config IMX_TRUSTY_OS
+	bool "Support Trusty OS related feature"
+	depends on ARCH_MX6 || ARCH_MX7 || ARCH_IMX8 || ARCH_IMX8M
+	select SYS_ARM_CACHE_WRITEALLOC
+
+config SYS_ARM_CACHE_WRITEALLOC
+	bool "support cache write alloc"

@@ -662,7 +662,11 @@ static u64 get_block_attrs(sc_faddr_t addr_start)
 	     addr_start <= ((sc_faddr_t)PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)) ||
 	    (addr_start >= PHYS_SDRAM_2 &&
 	     addr_start <= ((sc_faddr_t)PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE)))
+#ifdef CONFIG_IMX_TRUSTY_OS
+		return (PTE_BLOCK_MEMTYPE(MT_NORMAL) | PTE_BLOCK_INNER_SHARE);
+#else
 		return (PTE_BLOCK_MEMTYPE(MT_NORMAL) | PTE_BLOCK_OUTER_SHARE);
+#endif
 
 	return attr;
 }

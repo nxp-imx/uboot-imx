@@ -59,6 +59,11 @@ static __maybe_unused unsigned long spl_mmc_raw_uboot_offset(int part)
 	return 0;
 }
 
+#if defined(CONFIG_IMX_TRUSTY_OS)
+/* Pre-declaration of check_rpmb_blob. */
+int check_rpmb_blob(struct mmc *mmc);
+#endif
+
 static __maybe_unused
 int mmc_load_image_raw_sector(struct spl_image_info *spl_image,
 			      struct mmc *mmc, unsigned long sector)
@@ -111,7 +116,23 @@ end:
 		return -1;
 	}
 
-	return 0;
+	/* Images loaded, now check the rpmb keyblob for Trusty OS.
+	 * Skip this step when the dual bootloader feature is enabled
+	 * since the blob should be checked earlier.
+	 */
+#if defined(CONFIG_IMX_TRUSTY_OS)
+	if (IS_ENABLED(CONFIG_SPL_LOAD_IMX_CONTAINER)) {
+#if !defined(CONFIG_DUAL_BOOTLOADER)
+		ret = check_rpmb_blob(mmc);
+#endif
+	} else {
+#if !defined(CONFIG_AVB_ATX)
+		ret = check_rpmb_blob(mmc);
+#endif
+	}
+#endif
+
+	return ret;
 }
 
 static int spl_mmc_get_device_index(u32 boot_device)
@@ -178,7 +199,7 @@ static int mmc_load_image_raw_partition(struct spl_image_info *spl_image,
 		err = part_get_info(mmc_get_blk_desc(mmc), type_part, &info);
 		if (err)
 			continue;
-		if (info.sys_ind == 
+		if (info.sys_ind ==
 			CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_PARTITION_TYPE) {
 			partition = type_part;
 			break;
