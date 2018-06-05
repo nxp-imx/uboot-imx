@@ -456,6 +456,20 @@ void reset_misc(void)
 #endif
 }
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+#ifdef CONFIG_MX7D
+void smp_set_core_boot_addr(unsigned long addr, int corenr)
+{
+            return;
+}
+
+void smp_waitloop(unsigned previous_address)
+{
+            return;
+}
+#endif
+#endif
+
 void reset_cpu(ulong addr)
 {
 	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
