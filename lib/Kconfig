@@ -1,5 +1,12 @@
 menu "Library routines"
 
+config AVB_SUPPORT
+	bool "Enable Android AVB lib support"
+
+config AVB_ATX
+	bool "Enable AVB_ATX support"
+	depends on AVB_SUPPORT
+
 config BCH
 	bool "Enable Software based BCH ECC"
 	help

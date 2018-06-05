@@ -20,6 +20,7 @@ obj-$(CONFIG_CMD_DHRYSTONE) += dhry/
 obj-$(CONFIG_ARCH_AT91) += at91/
 
 obj-$(CONFIG_AES) += aes.o
+obj-$(CONFIG_AVB_SUPPORT) += avb/
 obj-y += charset.o
 obj-$(CONFIG_USB_TTY) += circbuf.o
 obj-y += crc7.o

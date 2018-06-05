@@ -651,6 +651,14 @@ static int initr_kbd(void)
 }
 #endif
 
+#ifdef AVB_RPMB
+extern int init_avbkey(void);
+static int initr_avbkey(void)
+{
+	return init_avbkey();
+}
+#endif
+
 static int run_main_loop(void)
 {
 #ifdef CONFIG_SANDBOX
@@ -861,6 +869,9 @@ static init_fnc_t init_sequence_r[] = {
 #endif
 #ifdef CONFIG_PS2KBD
 	initr_kbd,
+#endif
+#ifdef AVB_RPMB
+	initr_avbkey,
 #endif
 	run_main_loop,
 };
