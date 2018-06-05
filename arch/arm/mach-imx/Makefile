@@ -52,6 +52,7 @@ endif
 obj-$(CONFIG_SATA) += sata.o
 obj-$(CONFIG_IMX_HAB)    += hab.o
 obj-$(CONFIG_SYSCOUNTER_TIMER) += syscounter.o
+obj-$(CONFIG_IMX_TRUSTY_OS) += trusty.o
 endif
 ifeq ($(SOC),$(filter $(SOC),mx7ulp))
 obj-y  += cache.o mmdc_size.o
