@@ -132,7 +132,7 @@ int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	int ret;
 	ulong zi_start, zi_end;
 
-	tee_addr = getenv_ulong("tee_addr", 16, tee_addr);
+	tee_addr = env_get_ulong("tee_addr", 16, tee_addr);
 	if (!tee_addr) {
 		printf("Not valid tee_addr, Please check\n");
 		return 1;
