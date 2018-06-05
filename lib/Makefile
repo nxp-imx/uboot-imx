@@ -85,6 +85,7 @@ obj-$(CONFIG_$(SPL_)LZ4) += lz4_wrapper.o
 obj-$(CONFIG_$(SPL_)LIB_RATIONAL) += rational.o
 
 obj-$(CONFIG_LIBAVB) += libavb/
+obj-$(CONFIG_AVB_SUPPORT) += avb/
 
 obj-$(CONFIG_$(SPL_TPL_)OF_LIBFDT) += libfdt/
 obj-$(CONFIG_$(SPL_TPL_)OF_REAL) += fdtdec_common.o fdtdec.o

@@ -574,6 +574,14 @@ static int dm_announce(void)
 	return 0;
 }
 
+#if defined(AVB_RPMB) && !defined(CONFIG_SPL)
+extern int init_avbkey(void);
+static int initr_avbkey(void)
+{
+	return init_avbkey();
+}
+#endif
+
 static int run_main_loop(void)
 {
 #ifdef CONFIG_SANDBOX
@@ -790,6 +798,9 @@ static init_fnc_t init_sequence_r[] = {
 #endif
 #ifdef CONFIG_EFI_SETUP_EARLY
 	(init_fnc_t)efi_init_obj_list,
+#endif
+#if defined(AVB_RPMB) && !defined(CONFIG_SPL)
+	initr_avbkey,
 #endif
 	run_main_loop,
 };
