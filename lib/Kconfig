@@ -466,6 +466,44 @@ config LIBAVB
 	  device. Introduces such features as boot chain of trust, rollback
 	  protection etc.
 
+config AVB_SUPPORT
+	bool "Enable Android AVB lib support"
+	select LIBAVB
+
+config AVB_ATX
+	bool "Enable AVB_ATX support"
+	depends on AVB_SUPPORT
+
+config AVB_FUSE
+	bool "Enable AVB_FUSE program support"
+	depends on AVB_ATX
+
+config AVB_FUSE_BANK_START
+	hex "The start index of fuse bank for AVB fuse"
+	default 0
+	depends on AVB_ATX
+
+config AVB_FUSE_BANK_END
+	hex "The end index of fuse bank for AVB fuse"
+	default 0
+	depends on AVB_ATX
+
+config AVB_FUSE_BANK_SIZEW
+	hex "The words number in one fuse bank used"
+	default 8
+	depends on AVB_ATX
+
+config APPEND_BOOTARGS
+	bool "Append bootargs support"
+
+config DUAL_BOOTLOADER
+	bool "Enable dual bootloader support"
+	help
+	  Enable A/B bootloader select in SPL.
+
+config AT_AUTHENTICATE_UNLOCK
+	bool "Enable authenticate unlock for Android Things devices"
+
 endmenu
 
 menu "Hashing Support"
