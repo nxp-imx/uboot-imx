@@ -185,18 +185,20 @@ static int permanent_attributes_sha256_hash(unsigned char* output) {
 	AvbAtxPermanentAttributes attributes;
 
 #ifdef CONFIG_IMX_TRUSTY_OS
-	if(trusty_read_permanent_attributes((uint8_t *)(&attributes),
+	if(!trusty_read_permanent_attributes((uint8_t *)(&attributes),
 		sizeof(AvbAtxPermanentAttributes))) {
-		return RESULT_ERROR;
+		goto calc_sha256;
+	} else {
+		ERR("No perm-attr fused. Will use hard code one.\n");
 	}
-#else
+#endif
 	/* get permanent attributes */
 	attributes.version = fsl_version;
 	memcpy(attributes.product_root_public_key, fsl_product_root_public_key,
 			sizeof(fsl_product_root_public_key));
 	memcpy(attributes.product_id, fsl_atx_product_id,
 			sizeof(fsl_atx_product_id));
-#endif
+calc_sha256:
 	/* calculate sha256(permanent attributes) hash */
 	if (sha256((unsigned char *)&attributes, sizeof(AvbAtxPermanentAttributes),
 			output) == RESULT_ERROR) {
@@ -1196,20 +1198,20 @@ fail:
 AvbIOResult fsl_read_permanent_attributes(
     AvbAtxOps* atx_ops, AvbAtxPermanentAttributes* attributes) {
 #ifdef CONFIG_IMX_TRUSTY_OS
-	if (trusty_read_permanent_attributes((uint8_t *)attributes,
+	if (!trusty_read_permanent_attributes((uint8_t *)attributes,
 			sizeof(AvbAtxPermanentAttributes))) {
-		ERR("Error. Failed to read permanent attributes from secure storage\n");
-		return AVB_IO_RESULT_ERROR_IO;
-	} else
 		return AVB_IO_RESULT_OK;
-#else
+	}
+	ERR("No perm-attr fused. Will use hard code one.\n");
+#endif /* CONFIG_IMX_TRUSTY_OS */
+
 	/* use hard code permanent attributes due to limited fuse and RPMB */
 	attributes->version = fsl_version;
 	memcpy(attributes->product_root_public_key, fsl_product_root_public_key,
 	       sizeof(fsl_product_root_public_key));
 	memcpy(attributes->product_id, fsl_atx_product_id,
 	       sizeof(fsl_atx_product_id));
-#endif /* CONFIG_IMX_TRUSTY_OS */
+
 	return AVB_IO_RESULT_OK;
 }
 
