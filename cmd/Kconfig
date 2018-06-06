@@ -480,6 +480,12 @@ config CMD_FITUPD
 	  Implements the 'fitupd' command, which allows to automatically
 	  store software updates present on a TFTP server in NOR Flash
 
+config CMD_FSL_CAAM_KB
+    bool "Freescale i.MX CAAM command"
+    help
+      Implement the "caam" command to generate DEK blob for one block of data
+      or decap the DEK blob to its original data.
+
 config CMD_THOR_DOWNLOAD
 	bool "thor - TIZEN 'thor' download"
 	select DFU
