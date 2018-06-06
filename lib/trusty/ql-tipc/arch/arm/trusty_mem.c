@@ -83,7 +83,7 @@ typedef uintptr_t paddr_t;
 /* Note: this will crash if called from user space */
 static void arm64_write_ATS1ExW(uint64_t vaddr)
 {
-    uint32_t _current_el;
+    uint64_t _current_el;
 
     __asm__ volatile("mrs %0, CurrentEL" : "=r" (_current_el));
 

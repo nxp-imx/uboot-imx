@@ -32,7 +32,8 @@
 #include <compiler.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include <linux/types.h>
+#include <stddef.h>
+
 /*
  * These attribute macros may need to be adjusted if not using gcc or clang.
  */
