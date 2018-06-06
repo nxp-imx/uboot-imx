@@ -397,6 +397,12 @@ config CMD_SPL_WRITE_SIZE
 	  flash used by Falcon-mode boot. See the documentation until CMD_SPL
 	  for detail.
 
+config CMD_FSL_CAAM_KB
+    bool "Freescale i.MX CAAM command"
+    help
+      Implement the "caam" command to generate DEK blob for one block of data
+      or decap the DEK blob to its original data.
+
 config CMD_THOR_DOWNLOAD
 	bool "thor - TIZEN 'thor' download"
 	select DFU
