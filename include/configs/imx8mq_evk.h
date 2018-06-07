@@ -292,4 +292,7 @@
 #define CONFIG_IMX_VIDEO_SKIP
 #endif
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "imx8mq_evk_android.h"
+#endif
 #endif
