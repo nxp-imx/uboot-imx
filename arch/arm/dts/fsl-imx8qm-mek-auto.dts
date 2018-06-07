@@ -1,0 +1,69 @@
+/*
+ * Copyright 2017 NXP
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/dts-v1/;
+
+#include "fsl-imx8qm-mek.dts"
+#include "fsl-imx8qm-mek-u-boot.dtsi"
+
+/ {
+	chosen {
+		bootargs = "console=ttyLP0,115200 earlycon=lpuart32,0x5a060000,115200 androidboot.console=ttyLP0 androidboot.xen_boot=default";
+		stdout-path = &lpuart0;
+	};
+
+	config {
+		load-environment = <0>;
+	};
+};
+
+&gpio2 {
+	status = "disabled";
+};
+
+&gpio4 {
+	status = "disabled";
+};
+
+&gpio5 {
+	status = "disabled";
+};
+
+&usdhc2 {
+	status = "disabled";
+};
+
+&fec1 {
+	status = "disabled";
+};
+
+&fec2 {
+	status = "disabled";
+};
+
+&flexspi0 {
+	status = "disabled";
+};
+
+&i2c1_lvds0 {
+	status = "disabled";
+};
+
+&i2c1_lvds1 {
+	status = "disabled";
+};
+
+&lpspi0 {
+	status = "disabled";
+};

@@ -374,4 +374,11 @@
 #endif
 
 #define CONFIG_OF_SYSTEM_SETUP
+
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "imx8qxp_mek_android.h"
+#elif defined (CONFIG_ANDROID_AUTO_SUPPORT)
+#include "imx8qxp_mek_android_auto.h"
+#endif
+
 #endif /* __IMX8QXP_MEK_H */

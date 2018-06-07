@@ -289,6 +289,15 @@ int mmc_load_image_parse_container(struct spl_image_info *spl_image,
 #if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_DUAL_BOOTLOADER)
 		ret = check_rpmb_blob(mmc);
 #endif
+#if defined(CONFIG_IMX8_TRUSTY_XEN)
+	struct mmc *rpmb_mmc;
+
+	rpmb_mmc = find_mmc_device(0);
+	if (ret = mmc_init(rpmb_mmc))
+		printf("mmc init failed %s\n", __func__);
+	else
+	ret = check_rpmb_blob(rpmb_mmc);
+#endif
 	}
 	return ret;
 }

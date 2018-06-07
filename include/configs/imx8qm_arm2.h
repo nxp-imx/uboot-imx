@@ -394,6 +394,10 @@
 #define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
 #endif
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "imx8qm_arm2_android.h"
+#endif
+
 /* Framebuffer */
 #ifdef CONFIG_VIDEO
 #define CONFIG_VIDEO_IMXDPUV1
