@@ -56,7 +56,7 @@ static inline ulong mmc_bwrite(struct udevice *dev, lbaint_t start,
 {
 	return 0;
 }
-#else
+#elif !defined(CONFIG_DUAL_BOOTLOADER)
 static inline unsigned long mmc_berase(struct blk_desc *block_dev,
 				       lbaint_t start, lbaint_t blkcnt)
 {
@@ -68,6 +68,10 @@ static inline ulong mmc_bwrite(struct blk_desc *block_dev, lbaint_t start,
 {
 	return 0;
 }
+#else /* CONFIG_DUAL_BOOTLOADER && !CONFIG_BLK*/
+ulong mmc_bwrite(struct blk_desc *block_dev, lbaint_t start, lbaint_t blkcnt,
+		 const void *src);
+ulong mmc_berase(struct blk_desc *block_dev, lbaint_t start, lbaint_t blkcnt);
 #endif
 
 #endif /* CONFIG_SPL_BUILD */

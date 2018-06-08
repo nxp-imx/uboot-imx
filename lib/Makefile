@@ -16,7 +16,6 @@ obj-$(CONFIG_BZIP2) += bzip2/
 obj-$(CONFIG_TIZEN) += tizen/
 obj-$(CONFIG_FIT) += libfdt/
 obj-$(CONFIG_CMD_DHRYSTONE) += dhry/
-obj-$(CONFIG_AVB_SUPPORT) += avb/
 obj-$(CONFIG_IMX_TRUSTY_OS) += trusty/ql-tipc/
 obj-$(CONFIG_AES) += aes.o
 obj-$(CONFIG_USB_TTY) += circbuf.o
@@ -48,6 +47,7 @@ endif
 obj-$(CONFIG_$(SPL_)RSA) += rsa/
 obj-$(CONFIG_$(SPL_)SHA1) += sha1.o
 obj-$(CONFIG_$(SPL_)SHA256) += sha256.o
+obj-$(CONFIG_AVB_SUPPORT) += avb/
 
 obj-$(CONFIG_SPL_SAVEENV) += qsort.o
 obj-$(CONFIG_$(SPL_)OF_LIBFDT) += libfdt/

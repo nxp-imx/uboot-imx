@@ -55,6 +55,11 @@ config LIB_RAND
 config AVB_ATX
 	bool "Enable AVB_ATX support"
 
+config DUAL_BOOTLOADER
+	bool "Enable dual bootloader support"
+	help
+	  Enable A/B bootloader select in SPL.
+
 source lib/dhry/Kconfig
 
 source lib/rsa/Kconfig
