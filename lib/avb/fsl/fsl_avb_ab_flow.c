@@ -353,6 +353,155 @@ static AvbIOResult fsl_load_metadata(AvbABOps* ab_ops,
 	return AVB_IO_RESULT_OK;
 }
 
+#ifdef CONFIG_DUAL_BOOTLOADER
+AvbABFlowResult avb_flow_dual_uboot(AvbABOps* ab_ops,
+				    const char* const* requested_partitions,
+				    AvbSlotVerifyFlags flags,
+				    AvbHashtreeErrorMode hashtree_error_mode,
+				    AvbSlotVerifyData** out_data) {
+	AvbOps* ops = ab_ops->ops;
+	AvbSlotVerifyData* slot_data = NULL;
+	AvbSlotVerifyData* data = NULL;
+	AvbABFlowResult ret;
+	AvbABData ab_data, ab_data_orig;
+	AvbIOResult io_ret;
+	bool saw_and_allowed_verification_error = false;
+	AvbSlotVerifyResult verify_result;
+	bool set_slot_unbootable = false;
+	int target_slot;
+
+	io_ret = fsl_load_metadata(ab_ops, &ab_data, &ab_data_orig);
+	if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
+		ret = AVB_AB_FLOW_RESULT_ERROR_OOM;
+		goto out;
+	} else if (io_ret != AVB_IO_RESULT_OK) {
+		ret = AVB_AB_FLOW_RESULT_ERROR_IO;
+		goto out;
+	}
+
+	/* Choose the target slot, it should be the same with the one in SPL. */
+	target_slot = get_curr_slot(&ab_data);
+	if (target_slot == -1) {
+		ret = AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS;
+		printf("No bootable slot found!\n");
+		goto out;
+	}
+
+	printf("Verifying slot %s ...\n", slot_suffixes[target_slot]);
+	verify_result = avb_slot_verify(ops,
+					requested_partitions,
+					slot_suffixes[target_slot],
+					flags,
+					hashtree_error_mode,
+					&slot_data);
+
+	switch (verify_result) {
+		case AVB_SLOT_VERIFY_RESULT_ERROR_OOM:
+			ret = AVB_AB_FLOW_RESULT_ERROR_OOM;
+			goto out;
+
+		case AVB_SLOT_VERIFY_RESULT_ERROR_IO:
+			ret = AVB_AB_FLOW_RESULT_ERROR_IO;
+			goto out;
+
+		case AVB_SLOT_VERIFY_RESULT_OK:
+			ret = AVB_AB_FLOW_RESULT_OK;
+			break;
+
+		case AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_METADATA:
+		case AVB_SLOT_VERIFY_RESULT_ERROR_UNSUPPORTED_VERSION:
+			/* Even with AVB_SLOT_VERIFY_FLAGS_ALLOW_VERIFICATION_ERROR
+			 * these mean game over.
+			 */
+			set_slot_unbootable = true;
+			break;
+
+		case AVB_SLOT_VERIFY_RESULT_ERROR_VERIFICATION:
+		case AVB_SLOT_VERIFY_RESULT_ERROR_ROLLBACK_INDEX:
+		case AVB_SLOT_VERIFY_RESULT_ERROR_PUBLIC_KEY_REJECTED:
+			if (flags & AVB_SLOT_VERIFY_FLAGS_ALLOW_VERIFICATION_ERROR) {
+				/* Do nothing since we allow this. */
+				avb_debugv("Allowing slot ",
+					   slot_suffixes[target_slot],
+					   " which verified "
+					   "with result ",
+					   avb_slot_verify_result_to_string(verify_result),
+					   " because "
+					   "AVB_SLOT_VERIFY_FLAGS_ALLOW_VERIFICATION_ERROR "
+					   "is set.\n",
+					   NULL);
+				saw_and_allowed_verification_error =
+					 true;
+			} else {
+				set_slot_unbootable = true;
+			}
+			break;
+
+		case AVB_SLOT_VERIFY_RESULT_ERROR_INVALID_ARGUMENT:
+			ret = AVB_AB_FLOW_RESULT_ERROR_INVALID_ARGUMENT;
+			goto out;
+			/* Do not add a 'default:' case here because
+			 * of -Wswitch.
+			 */
+	}
+
+	if (set_slot_unbootable) {
+		avb_errorv("Error verifying slot ",
+			   slot_suffixes[target_slot],
+			   " with result ",
+			   avb_slot_verify_result_to_string(verify_result),
+			   " - setting unbootable.\n",
+			   NULL);
+		fsl_slot_set_unbootable(&ab_data.slots[target_slot]);
+
+		/* Only the slot chosen by SPL will be verified here so we
+		 * return AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS if the
+		 * slot should be set unbootable.
+		 */
+		ret = AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS;
+		goto out;
+	}
+
+	/* Finally, select this slot. */
+	avb_assert(slot_data != NULL);
+	data = slot_data;
+	slot_data = NULL;
+	if (saw_and_allowed_verification_error) {
+		avb_assert(
+			flags & AVB_SLOT_VERIFY_FLAGS_ALLOW_VERIFICATION_ERROR);
+		ret = AVB_AB_FLOW_RESULT_OK_WITH_VERIFICATION_ERROR;
+	} else {
+		ret = AVB_AB_FLOW_RESULT_OK;
+	}
+
+out:
+	io_ret = fsl_save_metadata_if_changed(ab_ops, &ab_data, &ab_data_orig);
+	if (io_ret != AVB_IO_RESULT_OK) {
+		if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
+			ret = AVB_AB_FLOW_RESULT_ERROR_OOM;
+		} else {
+			ret = AVB_AB_FLOW_RESULT_ERROR_IO;
+		}
+		if (data != NULL) {
+			avb_slot_verify_data_free(data);
+			data = NULL;
+		}
+	}
+
+	if (slot_data != NULL)
+		avb_slot_verify_data_free(slot_data);
+
+	if (out_data != NULL) {
+		*out_data = data;
+	} else {
+		if (data != NULL) {
+			avb_slot_verify_data_free(data);
+		}
+	}
+
+	return ret;
+}
+#else /* CONFIG_DUAL_BOOTLOADER */
 /* For legacy i.mx6/7, we won't enable A/B due to the limitation of
  * storage capacity, but we still want to verify boot/recovery with
  * AVB. */
@@ -664,5 +813,6 @@ out:
 
 	return ret;
 }
+#endif /* CONFIG_DUAL_BOOTLOADER */
 
 #endif /* CONFIG_DUAL_BOOTLOADER && CONFIG_SPL_BUILD */

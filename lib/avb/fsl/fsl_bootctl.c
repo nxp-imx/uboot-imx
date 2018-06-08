@@ -56,7 +56,7 @@ bool is_slotvar_avb(char *cmd) {
 	return false;
 }
 
-static int get_curr_slot(AvbABData *ab_data) {
+int get_curr_slot(AvbABData *ab_data) {
 	if (slot_is_bootable(&ab_data->slots[0]) &&
 		slot_is_bootable(&ab_data->slots[1])) {
 		if (ab_data->slots[1].priority > ab_data->slots[0].priority)

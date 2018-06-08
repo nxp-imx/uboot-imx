@@ -1978,6 +1978,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	}
 	bool allow_fail = (lock_status == FASTBOOT_UNLOCK ? true : false);
 	avb_metric = get_timer(0);
+	/* if in lock state, do avb verify */
+#ifndef CONFIG_DUAL_BOOTLOADER
 	/* For imx6 on Android, we don't have a/b slot and we want to verify
 	 * boot/recovery with AVB. For imx8 and Android Things we don't have
 	 * recovery and support a/b slot for boot */
@@ -1986,7 +1988,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	const char *requested_partitions[] = {"boot", 0};
 	avb_result = avb_ab_flow_fast(&fsl_avb_ab_ops, requested_partitions, allow_fail,
 			AVB_HASHTREE_ERROR_MODE_RESTART_AND_INVALIDATE, &avb_out_data);
-#else /* CONFIG_ANDROID_AB_SUPPORT */
+#else
 	if (!is_recovery_mode) {
 		const char *requested_partitions[] = {"boot", 0};
 		avb_result = avb_single_flow(&fsl_avb_ab_ops, requested_partitions, allow_fail,
@@ -1996,7 +1998,20 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		avb_result = avb_single_flow(&fsl_avb_ab_ops, requested_partitions, allow_fail,
 				AVB_HASHTREE_ERROR_MODE_RESTART, &avb_out_data);
 	}
-#endif /* CONFIG_ANDROID_AB_SUPPORT */
+#endif
+#else /* !CONFIG_DUAL_BOOTLOADER */
+	/* We will only verify single one slot which has been selected in SPL */
+	const char *requested_partitions[] = {"boot", 0};
+	avb_result = avb_flow_dual_uboot(&fsl_avb_ab_ops, requested_partitions, allow_fail,
+			AVB_HASHTREE_ERROR_MODE_RESTART_AND_INVALIDATE, &avb_out_data);
+
+	/* Goto fail early if current slot is not bootable. */
+	if (avb_result == AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS) {
+		printf("boota: slot verify fail!\n");
+		goto fail;
+	}
+#endif /* !CONFIG_DUAL_BOOTLOADER */
+
 	/* get the duration of avb */
 	metrics.avb = get_timer(avb_metric);
 
