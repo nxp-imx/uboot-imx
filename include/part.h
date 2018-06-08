@@ -250,7 +250,8 @@ static inline int blk_get_device_part_str(const char *ifname,
 #ifdef CONFIG_SPL_BUILD
 # define part_print_ptr(x)	NULL
 # if defined(CONFIG_SPL_EXT_SUPPORT) || defined(CONFIG_SPL_FAT_SUPPORT) || \
-	defined(CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_PARTITION)
+	defined(CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_PARTITION) || \
+	defined(CONFIG_DUAL_BOOTLOADER)
 #  define part_get_info_ptr(x)	x
 # else
 #  define part_get_info_ptr(x)	NULL

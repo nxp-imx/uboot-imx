@@ -33,8 +33,8 @@ AvbIOResult fsl_read_from_partition(AvbOps* ops, const char* partition,
 /* multi block read version
  * */
 AvbIOResult fsl_read_from_partition_multi(AvbOps* ops, const char* partition,
-                                    int64_t offset, size_t num_bytes,
-                                    void* buffer, size_t* out_num_read);
+                                          int64_t offset, size_t num_bytes,
+                                          void* buffer, size_t* out_num_read);
 
 /* Writes |num_bytes| from |bffer| at offset |offset| to partition
  * with name |partition| (NUL-terminated UTF-8 string). If |offset|
@@ -87,11 +87,11 @@ AvbIOResult fsl_write_ab_metadata(AvbABOps* ab_ops, const struct AvbABData* data
  * true if trusted or false if untrusted.
  */
 AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
-                                          const uint8_t* public_key_data,
-                                          size_t public_key_length,
-					  const uint8_t* public_key_metadata,
-					  size_t public_key_metadata_length,
-                                          bool* out_is_trusted);
+                                                const uint8_t* public_key_data,
+                                                size_t public_key_length,
+                                                const uint8_t* public_key_metadata,
+                                                size_t public_key_metadata_length,
+                                                bool* out_is_trusted);
 
 /* Gets the rollback index corresponding to the slot given by
  * |rollback_index_slot|. The value is returned in
@@ -103,7 +103,7 @@ AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
  * this number.
  */
 AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot,
-                                   uint64_t* out_rollback_index);
+                                         uint64_t* out_rollback_index);
 
 /* Sets the rollback index corresponding to the slot given by
  * |rollback_index_slot| to |rollback_index|. Returns
@@ -115,7 +115,7 @@ AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot
  * this number.
  */
 AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot,
-                                    uint64_t rollback_index);
+                                          uint64_t rollback_index);
 
 /* Gets whether the device is unlocked. The value is returned in
  * |out_is_unlocked| (true if unlocked, false otherwise). Returns
@@ -135,9 +135,9 @@ AvbIOResult fsl_read_is_device_unlocked(AvbOps* ops, bool* out_is_unlocked);
  * Returns AVB_IO_RESULT_OK on success, otherwise an error code.
  */
 AvbIOResult fsl_get_unique_guid_for_partition(AvbOps* ops,
-                                             const char* partition,
-                                             char* guid_buf,
-                                             size_t guid_buf_size);
+                                              const char* partition,
+                                              char* guid_buf,
+                                              size_t guid_buf_size);
 
 /* Gets the size of a partition with the name in |partition|
  * (NUL-terminated UTF-8 string). Returns the value in
@@ -145,8 +145,8 @@ AvbIOResult fsl_get_unique_guid_for_partition(AvbOps* ops,
  * Returns AVB_IO_RESULT_OK on success, otherwise an error code.
  */
 AvbIOResult fsl_get_size_of_partition(AvbOps* ops,
-                                             const char* partition,
-					     uint64_t* out_size_num_bytes);
+                                      const char* partition,
+                                      uint64_t* out_size_num_bytes);
 /* check if the fastboot getvar cmd is for query [avb] bootctl's slot var
  * cmd is the fastboot getvar's cmd in
  * return true if it is a bootctl related cmd, false if it's not.
@@ -193,32 +193,42 @@ AvbIOResult fsl_read_permanent_attributes(
  * permanently read-only location (e.g. fuses) when a device is LOCKED. On
  * success, returned AVB_IO_RESULT_OK and populates |hash|.
  */
-AvbIOResult fsl_read_permanent_attributes_hash(
-    AvbAtxOps* atx_ops, uint8_t hash[AVB_SHA256_DIGEST_SIZE]);
+AvbIOResult fsl_read_permanent_attributes_hash(AvbAtxOps* atx_ops,
+                                               uint8_t hash[AVB_SHA256_DIGEST_SIZE]);
 
 /* Provides the key version of a key used during verification. This may be
  * useful for managing the minimum key version.
  */
 void fsl_set_key_version(AvbAtxOps* atx_ops,
-                          size_t rollback_index_location,
-                          uint64_t key_version);
+                         size_t rollback_index_location,
+                         uint64_t key_version);
 
 /* This is the fast version of avb_ab_flow(), this function will
  * not check another slot if one slot can pass the verify (or verify
- * fail is acceptable). */
+ * fail is acceptable).
+ */
 AvbABFlowResult avb_ab_flow_fast(AvbABOps* ab_ops,
-                            const char* const* requested_partitions,
-                            AvbSlotVerifyFlags flags,
-                            AvbHashtreeErrorMode hashtree_error_mode,
-                            AvbSlotVerifyData** out_data);
+                                 const char* const* requested_partitions,
+                                 AvbSlotVerifyFlags flags,
+                                 AvbHashtreeErrorMode hashtree_error_mode,
+                                 AvbSlotVerifyData** out_data);
 
 /* This is for legacy i.mx6/7 which don't enable A/B but want to
  * verify boot/recovery with AVB */
 AvbABFlowResult avb_single_flow(AvbABOps* ab_ops,
-                            const char* const* requested_partitions,
-                            AvbSlotVerifyFlags flags,
-                            AvbHashtreeErrorMode hashtree_error_mode,
-                            AvbSlotVerifyData** out_data);
+                                 const char* const* requested_partitions,
+                                 AvbSlotVerifyFlags flags,
+                                 AvbHashtreeErrorMode hashtree_error_mode,
+                                 AvbSlotVerifyData** out_data);
+
+/* Avb verify flow for dual bootloader, only the slot chosen by SPL will
+ * be verified.
+ */
+AvbABFlowResult avb_flow_dual_uboot(AvbABOps* ab_ops,
+                                    const char* const* requested_partitions,
+                                    AvbSlotVerifyFlags flags,
+                                    AvbHashtreeErrorMode hashtree_error_mode,
+                                    AvbSlotVerifyData** out_data);
 
 /* Program ATX perm_attr into RPMB partition */
 int avb_atx_fuse_perm_attr(uint8_t *staged_buffer, uint32_t size);

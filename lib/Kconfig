@@ -122,6 +122,11 @@ config RBTREE
 config BITREVERSE
 	bool "Bit reverse library from Linux"
 
+config DUAL_BOOTLOADER
+	bool "Enable dual bootloader support"
+	help
+	  Enable A/B bootloader select in SPL.
+
 source lib/dhry/Kconfig
 
 menu "Security support"

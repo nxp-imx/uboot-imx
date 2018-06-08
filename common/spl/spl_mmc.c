@@ -4,6 +4,8 @@
  *
  * Aneesh V <aneesh@ti.com>
  *
+ * Copyright 2018 NXP
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <common.h>
@@ -18,7 +20,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static int mmc_load_legacy(struct spl_image_info *spl_image, struct mmc *mmc,
+int mmc_load_legacy(struct spl_image_info *spl_image, struct mmc *mmc,
 			   ulong sector, struct image_header *header)
 {
 	u32 image_size_sectors;
@@ -44,7 +46,7 @@ static int mmc_load_legacy(struct spl_image_info *spl_image, struct mmc *mmc,
 	return 0;
 }
 
-static ulong h_spl_load_read(struct spl_load_info *load, ulong sector,
+ulong h_spl_load_read(struct spl_load_info *load, ulong sector,
 			     ulong count, void *buf)
 {
 	struct mmc *mmc = load->dev;
@@ -52,9 +54,15 @@ static ulong h_spl_load_read(struct spl_load_info *load, ulong sector,
 	return blk_dread(mmc_get_blk_desc(mmc), sector, count, buf);
 }
 
+#ifdef CONFIG_DUAL_BOOTLOADER
+/* Pre-declaration of mmc_load_image_raw_sector_dual_uboot().
+ */
+extern int mmc_load_image_raw_sector_dual_uboot(struct spl_image_info *spl_image,
+						struct mmc *mmc);
+#else
 static __maybe_unused
 int mmc_load_image_raw_sector(struct spl_image_info *spl_image,
-			      struct mmc *mmc, unsigned long sector)
+				     struct mmc *mmc, unsigned long sector)
 {
 	struct image_header *header = (struct image_header *)(CONFIG_SYS_TEXT_BASE -
 					 sizeof(struct image_header));
@@ -97,6 +105,8 @@ int mmc_load_image_raw_sector(struct spl_image_info *spl_image,
 
 	return 0;
 }
+
+#endif /* CONFIG_DUAL_BOOTLOADER */
 
 static int spl_mmc_get_device_index(u32 boot_device)
 {
@@ -329,10 +339,15 @@ int spl_mmc_load_image(struct spl_image_info *spl_image,
 			 * 1 and 2 match up to boot0 / boot1 and 7 is user data
 			 * which is the first physical partition (0).
 			 */
+#ifdef CONFIG_DUAL_BOOTLOADER
+			/* Bootloader is stored in eMMC user partition for dual bootloader */
+			part = 0;
+#else
 			part = (mmc->part_config >> 3) & PART_ACCESS_MASK;
 
 			if (part == 7)
 				part = 0;
+#endif
 
 			if (CONFIG_IS_ENABLED(MMC_TINY))
 				err = mmc_switch_part(mmc, part);
@@ -361,8 +376,13 @@ int spl_mmc_load_image(struct spl_image_info *spl_image,
 			return err;
 #endif
 #ifdef CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
+#ifdef CONFIG_DUAL_BOOTLOADER
+		err = mmc_load_image_raw_sector_dual_uboot(spl_image,
+							   mmc);
+#else
 		err = mmc_load_image_raw_sector(spl_image, mmc,
 			spl_mmc_get_uboot_raw_sector(mmc));
+#endif
 		if (!err)
 			return err;
 #endif

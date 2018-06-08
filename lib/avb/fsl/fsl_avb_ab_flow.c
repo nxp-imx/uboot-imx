@@ -4,13 +4,19 @@
 
 #include <common.h>
 #include <fsl_avb.h>
+#include <mmc.h>
+#include <spl.h>
+#include <part.h>
+#include <image.h>
+#include "utils.h"
 
+#if defined(CONFIG_DUAL_BOOTLOADER) || !defined(CONFIG_SPL_BUILD)
 static const char* slot_suffixes[2] = {"_a", "_b"};
 
 /* This is a copy of slot_set_unbootable() form
- * lib/avb/libavb_ab/avb_ab_flow.c.
+ * external/avb/libavb_ab/avb_ab_flow.c.
  */
-static void fsl_slot_set_unbootable(AvbABSlotData* slot) {
+void fsl_slot_set_unbootable(AvbABSlotData* slot) {
 	slot->priority = 0;
 	slot->tries_remaining = 0;
 	slot->successful_boot = 0;
@@ -18,10 +24,10 @@ static void fsl_slot_set_unbootable(AvbABSlotData* slot) {
 
 /* Ensure all unbootable and/or illegal states are marked as the
  * canonical 'unbootable' state, e.g. priority=0, tries_remaining=0,
- * and successful_boot=0. This is a copy of fsl_slot_normalize from
- * lib/avb/libavb_ab/avb_ab_flow.c.
+ * and successful_boot=0. This is a copy of slot_normalize from
+ * external/avb/libavb_ab/avb_ab_flow.c.
  */
-static void fsl_slot_normalize(AvbABSlotData* slot) {
+void fsl_slot_normalize(AvbABSlotData* slot) {
 	if (slot->priority > 0) {
 		if ((slot->tries_remaining == 0) && (!slot->successful_boot)) {
 			/* We've exhausted all tries -> unbootable. */
@@ -38,9 +44,279 @@ static void fsl_slot_normalize(AvbABSlotData* slot) {
 	}
 }
 
-/* Writes A/B metadata to disk only if it has changed - returns
- * AVB_IO_RESULT_OK on success, error code otherwise. This is a
- * copy of save_metadata_if_changed form lib/avb/libavb_ab/avb_ab_flow.c.
+/* This is a copy of slot_is_bootable() from
+ * externel/avb/libavb_ab/avb_ab_flow.c.
+ */
+bool fsl_slot_is_bootable(AvbABSlotData* slot) {
+	return (slot->priority > 0) &&
+		(slot->successful_boot || (slot->tries_remaining > 0));
+}
+#endif /* CONFIG_DUAL_BOOTLOADER || !CONFIG_SPL_BUILD */
+
+#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_SPL_BUILD)
+
+#define FSL_AB_METADATA_MISC_PARTITION_OFFSET 2048
+#define PARTITION_NAME_LEN 13
+#define PARTITION_MISC "misc"
+#define PARTITION_BOOTLOADER "bootloader"
+
+/* Pre-declaration of h_spl_load_read(), see detail implementation in
+ * common/spl/spl_mmc.c.
+ */
+ulong h_spl_load_read(struct spl_load_info *load, ulong sector,
+		      ulong count, void *buf);
+
+void fsl_avb_ab_data_update_crc_and_byteswap(const AvbABData* src,
+					     AvbABData* dest) {
+	memcpy(dest, src, sizeof(AvbABData));
+	dest->crc32 = cpu_to_be32(
+			avb_crc32((const uint8_t*)dest,
+				  sizeof(AvbABData) - sizeof(uint32_t)));
+}
+
+void fsl_avb_ab_data_init(AvbABData* data) {
+	memset(data, '\0', sizeof(AvbABData));
+	memcpy(data->magic, AVB_AB_MAGIC, AVB_AB_MAGIC_LEN);
+	data->version_major = AVB_AB_MAJOR_VERSION;
+	data->version_minor = AVB_AB_MINOR_VERSION;
+	data->slots[0].priority = AVB_AB_MAX_PRIORITY;
+	data->slots[0].tries_remaining = AVB_AB_MAX_TRIES_REMAINING;
+	data->slots[0].successful_boot = 0;
+	data->slots[1].priority = AVB_AB_MAX_PRIORITY - 1;
+	data->slots[1].tries_remaining = AVB_AB_MAX_TRIES_REMAINING;
+	data->slots[1].successful_boot = 0;
+}
+
+bool fsl_avb_ab_data_verify_and_byteswap(const AvbABData* src,
+					 AvbABData* dest) {
+	/* Ensure magic is correct. */
+	if (memcmp(src->magic, AVB_AB_MAGIC, AVB_AB_MAGIC_LEN) != 0) {
+		printf("Magic is incorrect.\n");
+		return false;
+	}
+
+	memcpy(dest, src, sizeof(AvbABData));
+	dest->crc32 = be32_to_cpu(dest->crc32);
+
+	/* Ensure we don't attempt to access any fields if the major version
+	* is not supported.
+	*/
+	if (dest->version_major > AVB_AB_MAJOR_VERSION) {
+		printf("No support for given major version.\n");
+		return false;
+	}
+
+	/* Fail if CRC32 doesn't match. */
+	if (dest->crc32 !=
+		avb_crc32((const uint8_t*)dest, sizeof(AvbABData) - sizeof(uint32_t))) {
+		printf("CRC32 does not match.\n");
+		return false;
+	}
+
+	return true;
+}
+
+/* Writes A/B metadata to disk only if it has changed.
+ */
+int fsl_save_metadata_if_changed_dual_uboot(struct blk_desc *dev_desc,
+					    AvbABData* ab_data,
+					    AvbABData* ab_data_orig) {
+	AvbABData serialized;
+	size_t num_bytes;
+	disk_partition_t info;
+
+	/* Save metadata if changed. */
+	if (memcmp(ab_data, ab_data_orig, sizeof(AvbABData)) != 0) {
+		/* Get misc partition info */
+		if (part_get_info_by_name(dev_desc, PARTITION_MISC, &info) == -1) {
+			printf("Can't get partition info of partition: misc\n");
+			return -1;
+		}
+
+		/* Writing A/B metadata to disk. */
+		fsl_avb_ab_data_update_crc_and_byteswap(ab_data, &serialized);
+		if (write_to_partition_in_bytes(dev_desc, &info,
+				FSL_AB_METADATA_MISC_PARTITION_OFFSET,
+				sizeof(AvbABData),
+				(void *)&serialized, &num_bytes) ||
+				(num_bytes != sizeof(AvbABData))) {
+			printf("Error--write metadata fail!\n");
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/* Load metadate from misc partition.
+ */
+int fsl_load_metadata_dual_uboot(struct blk_desc *dev_desc,
+				 AvbABData* ab_data,
+				 AvbABData* ab_data_orig) {
+	disk_partition_t info;
+	AvbABData serialized;
+	size_t num_bytes;
+
+	if (part_get_info_by_name(dev_desc, PARTITION_MISC, &info) == -1) {
+		printf("Can't get partition info of partition: misc\n");
+		return -1;
+	} else {
+		read_from_partition_in_bytes(
+		    dev_desc, &info, FSL_AB_METADATA_MISC_PARTITION_OFFSET,
+		    sizeof(AvbABData),
+				(void *)ab_data, &num_bytes );
+		if (num_bytes != sizeof(AvbABData)) {
+			printf("Error--read metadata fail!\n");
+			return -1;
+		} else {
+			if (!fsl_avb_ab_data_verify_and_byteswap(ab_data, &serialized)) {
+				printf("Error validating A/B metadata from disk.\n");
+				printf("Resetting and writing new A/B metadata to disk.\n");
+				fsl_avb_ab_data_init(ab_data);
+				fsl_avb_ab_data_update_crc_and_byteswap(ab_data, &serialized);
+				num_bytes = 0;
+				if (write_to_partition_in_bytes(
+					dev_desc, &info,
+					FSL_AB_METADATA_MISC_PARTITION_OFFSET,
+					sizeof(AvbABData),
+					(void *)&serialized, &num_bytes) ||
+					(num_bytes != sizeof(AvbABData))) {
+					printf("Error--write metadata fail!\n");
+					return -1;
+				} else
+					return 0;
+			} else {
+				memcpy(ab_data_orig, ab_data, sizeof(AvbABData));
+				/* Ensure data is normalized, e.g. illegal states will be marked as
+				 * unbootable and all unbootable states are represented with
+				 * (priority=0, tries_remaining=0, successful_boot=0).
+				 */
+				fsl_slot_normalize(&ab_data->slots[0]);
+				fsl_slot_normalize(&ab_data->slots[1]);
+				return 0;
+			}
+		}
+	}
+}
+
+int mmc_load_image_raw_sector_dual_uboot(
+		struct spl_image_info *spl_image, struct mmc *mmc)
+{
+	unsigned long count;
+	disk_partition_t info;
+	int ret = 0, n = 0;
+	char partition_name[PARTITION_NAME_LEN];
+	struct blk_desc *dev_desc;
+	struct image_header *header;
+	AvbABData ab_data, ab_data_orig;
+	size_t slot_index_to_boot, target_slot;
+
+	/* Check if gpt is valid */
+	dev_desc = mmc_get_blk_desc(mmc);
+	if (dev_desc) {
+		if (part_get_info(dev_desc, 1, &info)) {
+			printf("GPT is invalid, please flash correct GPT!\n");
+			ret = -EIO;
+			goto end;
+		}
+	} else {
+		printf("Get block desc fail!\n");
+		ret = -EIO;
+		goto end;
+	}
+
+	/* Load AB metadata from misc partition */
+	if (fsl_load_metadata_dual_uboot(dev_desc, &ab_data,
+					 &ab_data_orig)) {
+		ret = -1;
+		goto end;
+	}
+
+	slot_index_to_boot = 2;  // Means not 0 or 1
+	target_slot =
+	    (ab_data.slots[1].priority > ab_data.slots[0].priority) ? 1 : 0;
+
+	for (n = 0; n < 2; n++) {
+		if (!fsl_slot_is_bootable(&ab_data.slots[target_slot])) {
+			target_slot = (target_slot == 1 ? 0 : 1);
+			continue;
+		}
+		/* Choose slot to load. */
+		snprintf(partition_name, PARTITION_NAME_LEN,
+			 PARTITION_BOOTLOADER"%s",
+			 slot_suffixes[target_slot]);
+
+		/* Read part info from gpt */
+		if (part_get_info_by_name(dev_desc, partition_name, &info) == -1) {
+			printf("Can't get partition info of partition bootloader%s\n",
+			       slot_suffixes[target_slot]);
+		} else {
+			header = (struct image_header *)(CONFIG_SYS_TEXT_BASE -
+				 sizeof(struct image_header));
+
+			/* read image header to find the image size & load address */
+			count = blk_dread(dev_desc, info.start, 1, header);
+			if (count == 0) {
+				ret = -EIO;
+				goto end;
+			}
+
+			if (IS_ENABLED(CONFIG_SPL_LOAD_FIT) &&
+				       image_get_magic(header) == FDT_MAGIC) {
+				struct spl_load_info load;
+
+				debug("Found FIT\n");
+				load.dev = mmc;
+				load.priv = NULL;
+				load.filename = NULL;
+				load.bl_len = mmc->read_bl_len;
+				load.read = h_spl_load_read;
+				ret = spl_load_simple_fit(spl_image, &load,
+							  info.start, header);
+			} else {
+				ret = -1;
+			}
+		}
+
+		/* Set current slot to unbootable if load/verify fail. */
+		if (ret != 0) {
+			printf("Load or verify bootloader%s fail, setting unbootable..\n",
+			       slot_suffixes[target_slot]);
+			fsl_slot_set_unbootable(&ab_data.slots[target_slot]);
+			/* Switch to another slot. */
+			target_slot = (target_slot == 1 ? 0 : 1);
+		} else {
+			slot_index_to_boot = target_slot;
+			n = 2;
+		}
+	}
+
+	if (slot_index_to_boot == 2) {
+		/* No bootable slots! */
+		printf("No bootable slots found.\n");
+		ret = -1;
+		goto end;
+	} else if (!ab_data.slots[slot_index_to_boot].successful_boot &&
+		   (ab_data.slots[slot_index_to_boot].tries_remaining > 0)) {
+		ab_data.slots[slot_index_to_boot].tries_remaining -= 1;
+	}
+	printf("Booting from bootloader%s...\n", slot_suffixes[slot_index_to_boot]);
+
+end:
+	/* Save metadata if changed. */
+	if (fsl_save_metadata_if_changed_dual_uboot(dev_desc, &ab_data, &ab_data_orig)) {
+		ret = -1;
+	}
+
+	if (ret)
+		return -1;
+	else
+		return 0;
+}
+
+/* For normal build */
+#elif !defined(CONFIG_SPL_BUILD)
+
+/* Writes A/B metadata to disk only if it has been changed.
  */
 static AvbIOResult fsl_save_metadata_if_changed(AvbABOps* ab_ops,
 						AvbABData* ab_data,
@@ -50,14 +326,6 @@ static AvbIOResult fsl_save_metadata_if_changed(AvbABOps* ab_ops,
 		return ab_ops->write_ab_metadata(ab_ops, ab_data);
 	}
 	return AVB_IO_RESULT_OK;
-}
-
-/* This is a copy of slot_is_bootable() from
- * lib/avb/libavb_ab/avb_ab_flow.c.
- */
-static bool fsl_slot_is_bootable(AvbABSlotData* slot) {
-	return (slot->priority > 0) &&
-		(slot->successful_boot || (slot->tries_remaining > 0));
 }
 
 /* Helper function to load metadata - returns AVB_IO_RESULT_OK on
@@ -396,3 +664,5 @@ out:
 
 	return ret;
 }
+
+#endif /* CONFIG_DUAL_BOOTLOADER && CONFIG_SPL_BUILD */

@@ -20,7 +20,6 @@ obj-$(CONFIG_CMD_DHRYSTONE) += dhry/
 obj-$(CONFIG_ARCH_AT91) += at91/
 obj-$(CONFIG_IMX_TRUSTY_OS) += trusty/ql-tipc/
 obj-$(CONFIG_AES) += aes.o
-obj-$(CONFIG_AVB_SUPPORT) += avb/
 obj-y += charset.o
 obj-$(CONFIG_USB_TTY) += circbuf.o
 obj-y += crc7.o
@@ -50,6 +49,7 @@ endif
 obj-$(CONFIG_RSA) += rsa/
 obj-$(CONFIG_SHA1) += sha1.o
 obj-$(CONFIG_SHA256) += sha256.o
+obj-$(CONFIG_AVB_SUPPORT) += avb/
 
 obj-$(CONFIG_$(SPL_)ZLIB) += zlib/
 obj-$(CONFIG_$(SPL_)GZIP) += gunzip.o

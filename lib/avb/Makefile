@@ -10,7 +10,10 @@ subdir-ccflags-y += -I./lib/avb \
 			-Wno-unused-parameter \
 			-ffunction-sections \
 			-std=gnu99
-obj-y += libavb/
+
+ifndef CONFIG_SPL_BUILD
 obj-y += libavb_ab/
 obj-$(CONFIG_AVB_ATX) += libavb_atx/
+endif
+obj-y += libavb/
 obj-y += fsl/
