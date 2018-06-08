@@ -1,0 +1,6 @@
+Technexion PICO-IMX6 board
+M:	Richard Hu <richard.hu@technexion.com>
+S:	Maintained
+F:	board/pico-imx6dl/
+F:	include/configs/pico-imx6dl.h
+F:	configs/pico-imx6dl_defconfig
