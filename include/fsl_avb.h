@@ -153,6 +153,13 @@ AvbIOResult fsl_get_size_of_partition(AvbOps* ops,
  * */
 bool is_slotvar_avb(char *cmd);
 
+/* Get current bootable slot with higher priority.
+ * return 0 for the first slot
+ * return 1 for the second slot
+ * return -1 for not supported slot
+ * */
+int get_curr_slot(AvbABData *ab_data);
+
 /* return 0 for the first slot
  * return 1 for the second slot
  * return -1 for not supported slot
