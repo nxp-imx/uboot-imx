@@ -1,0 +1,6 @@
+Technexion PICOSOM-IMX6UL board
+M:	Richard Hu <richard.hu@technexion.com>
+S:	Maintained
+F:	board/picosom-imx6ul/
+F:	include/configs/picosom-imx6ul.h
+F:	configs/picosom-imx6ul_defconfig
