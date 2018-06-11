@@ -1,0 +1,6 @@
+MULTA IMX7D BOARD
+M:	Fang Hui <hui.fang@nxp.com>
+S:	Maintained
+F:	board/freescale/multa-imx7d
+F:	include/configs/multa-imx7d.h
+F:	configs/multa-imx7d_defconfig

@@ -76,6 +76,13 @@ config TARGET_PICO_IMX7D
 	select DM
 	select DM_THERMAL
 
+config TARGET_MULTA_IMX7D
+	bool "Support multa-imx7d"
+	select BOARD_LATE_INIT
+	select MX7D
+	select DM
+	select DM_THERMAL
+
 config TARGET_WARP7
 	bool "warp7"
 	select BOARD_LATE_INIT
@@ -101,6 +108,7 @@ source "board/freescale/mx7d_12x12_lpddr3_arm2/Kconfig"
 source "board/freescale/mx7d_12x12_ddr3_arm2/Kconfig"
 source "board/freescale/mx7d_19x19_ddr3_arm2/Kconfig"
 source "board/freescale/mx7d_19x19_lpddr3_arm2/Kconfig"
+source "board/freescale/multa-imx7d/Kconfig"
 source "board/technexion/pico-imx7d/Kconfig"
 source "board/toradex/colibri_imx7/Kconfig"
 source "board/warp7/Kconfig"
