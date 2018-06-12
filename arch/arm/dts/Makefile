@@ -762,6 +762,7 @@ dtb-$(CONFIG_ARCH_IMX8) += \
 	fsl-imx8qm-mek.dtb \
 	fsl-imx8qm-ddr4-val.dtb \
 	fsl-imx8qm-lpddr4-val.dtb \
+	fsl-imx8qm-mek-xen.dtb \
 	fsl-imx8qm-mek-auto.dtb \
 	fsl-imx8qm-mek-auto2.dtb \
 	imx8qm-rom7720-a1.dtb \
