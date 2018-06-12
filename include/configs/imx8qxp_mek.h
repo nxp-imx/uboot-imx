@@ -84,6 +84,12 @@
 #define CONFIG_LIB_RAND
 #define CONFIG_NET_RANDOM_ETHADDR
 
+#ifdef CONFIG_AHAB_BOOT
+#define AHAB_ENV "sec_boot=yes\0"
+#else
+#define AHAB_ENV "sec_boot=no\0"
+#endif
+
 /* Boot M4 */
 #define M4_BOOT_ENV \
 	"m4_0_image=m4_0.bin\0" \
@@ -145,6 +151,7 @@
 	CONFIG_MFG_ENV_SETTINGS \
 	M4_BOOT_ENV \
 	XEN_BOOT_ENV \
+	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
 	"panel=NULL\0" \
