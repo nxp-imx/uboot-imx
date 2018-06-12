@@ -159,6 +159,9 @@ int arch_cpu_init(void)
 
 	gd->arch.ipc_channel_handle = ipcHndl;
 
+	if (IS_ENABLED(CONFIG_XEN))
+		return 0;
+
 	pass_over = get_pass_over_info();
 	if (pass_over && pass_over->g_ap_mu == 0) {
 		/* When ap_mu is 0, means the u-boot is boot from first container */
@@ -613,6 +616,10 @@ enum boot_device get_boot_device(void)
 
 	sc_ipc_t ipcHndl = 0;
 	sc_rsrc_t dev_rsrc;
+
+	/* Note we only support android in EMMC SDHC0 */
+	if (IS_ENABLED(CONFIG_XEN))
+		return MMC1_BOOT;
 
 	ipcHndl = gd->arch.ipc_channel_handle;
 	sc_misc_get_boot_dev(ipcHndl, &dev_rsrc);
@@ -1355,6 +1362,9 @@ phys_size_t get_effective_memsize(void)
 	sc_faddr_t start, end;
 	int err;
 
+	if (IS_ENABLED(CONFIG_XEN))
+		return PHYS_SDRAM_1_SIZE;
+
 	for (mr = 0; mr < 64; mr++) {
 		err = get_owned_memreg(mr, &start, &end);
 		if (!err) {
@@ -1381,6 +1391,13 @@ int dram_init(void)
 	sc_rm_mr_t mr;
 	sc_faddr_t start, end;
 	int err;
+
+	if (IS_ENABLED(CONFIG_XEN)) {
+		gd->ram_size = PHYS_SDRAM_1_SIZE;
+		gd->ram_size += PHYS_SDRAM_2_SIZE;
+
+		return 0;
+	}
 
 	for (mr = 0; mr < 64; mr++) {
 		err = get_owned_memreg(mr, &start, &end);
@@ -1440,6 +1457,15 @@ int dram_init_banksize(void)
 	sc_faddr_t start, end;
 	int i = 0;
 	int err;
+
+	if (IS_ENABLED(CONFIG_XEN)) {
+		gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
+		gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
+		gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
+		gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
+
+		return 0;
+	}
 
 	for (mr = 0; mr < 64 && i < CONFIG_NR_DRAM_BANKS; mr++) {
 		err = get_owned_memreg(mr, &start, &end);
@@ -1519,6 +1545,29 @@ void enable_caches(void)
 	sc_rm_mr_t mr;
 	sc_faddr_t start, end;
 	int err, i;
+
+	if (IS_ENABLED(CONFIG_XEN)) {
+		imx8_mem_map[0].virt = 0x00000000UL;
+		imx8_mem_map[0].phys = 0x00000000UL;
+		imx8_mem_map[0].size = 0x40000000UL;
+		imx8_mem_map[0].attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+				 PTE_BLOCK_NON_SHARE | PTE_BLOCK_PXN | PTE_BLOCK_UXN;
+		imx8_mem_map[1].virt = 0x40000000UL;
+		imx8_mem_map[1].phys = 0x40000000UL;
+		imx8_mem_map[1].size = 0xC0000000UL;
+		imx8_mem_map[1].attrs = (PTE_BLOCK_MEMTYPE(MT_NORMAL) | PTE_BLOCK_OUTER_SHARE);
+
+		imx8_mem_map[2].virt = 0x100000000UL;
+		imx8_mem_map[2].phys = 0x100000000UL;
+		imx8_mem_map[2].size = 0x100000000UL;
+		imx8_mem_map[2].attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+				 PTE_BLOCK_NON_SHARE | PTE_BLOCK_PXN | PTE_BLOCK_UXN;
+
+		icache_enable();
+		dcache_enable();
+
+		return;
+	}
 
 	/* Create map for registers access from 0x1c000000 to 0x80000000*/
 	imx8_mem_map[0].virt = 0x1c000000UL;
