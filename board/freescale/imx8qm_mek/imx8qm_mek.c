@@ -65,6 +65,10 @@ int board_early_init_f(void)
 	sc_ipc_t ipcHndl = 0;
 	sc_err_t sciErr = 0;
 
+	/* When start u-boot in XEN VM, directly return */
+	if (IS_ENABLED(CONFIG_XEN))
+		return 0;
+
 	ipcHndl = gd->arch.ipc_channel_handle;
 
 	/* Power up UART0, this is very early while power domain is not working */
@@ -273,7 +277,7 @@ void pci_init_board(void)
 }
 #endif
 
-#ifdef CONFIG_USB
+#ifdef CONFIG_USB_XHCI_IMX8
 
 #define USB_TYPEC_SEL IMX_GPIO_NR(4, 6)
 #define USB_TYPEC_EN IMX_GPIO_NR(4, 19)
@@ -392,6 +396,9 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 
 int board_init(void)
 {
+	if (IS_ENABLED(CONFIG_XEN))
+		return 0;
+
 	/* Power up base board */
 	sc_pm_set_resource_power_mode(gd->arch.ipc_channel_handle,
 		SC_R_BOARD_R1, SC_PM_PW_MODE_ON);
@@ -407,7 +414,7 @@ int board_init(void)
 #endif
 #endif
 
-#ifdef CONFIG_USB
+#ifdef CONFIG_USB_XHCI_IMX8
 	setup_typec();
 #endif
 
@@ -419,6 +426,9 @@ void board_quiesce_devices(void)
 	const char *power_on_devices[] = {
 		"dma_lpuart0",
 	};
+
+	if (IS_ENABLED(CONFIG_XEN))
+		return;
 
 	power_off_pd_devices(power_on_devices, ARRAY_SIZE(power_on_devices));
 }
@@ -448,11 +458,19 @@ int ft_board_setup(void *blob, bd_t *bd)
 
 int board_mmc_get_env_dev(int devno)
 {
+	/* Use EMMC */
+	if (IS_ENABLED(CONFIG_XEN))
+		return 0;
+
 	return devno;
 }
 
 int mmc_map_to_kernel_blk(int dev_no)
 {
+	/* Use EMMC */
+	if (IS_ENABLED(CONFIG_XEN))
+		return 0;
+
 	return dev_no;
 }
 
