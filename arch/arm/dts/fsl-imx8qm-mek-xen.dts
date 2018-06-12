@@ -1,0 +1,76 @@
+/*
+ * Copyright 2018 NXP
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/dts-v1/;
+
+#include "fsl-imx8qm-mek.dts"
+
+&usdhc1 {
+	/* Need to be same as iomem for sdhc1 in domu.cfg */
+	reg = <0x1 0x5b010000 0x0 0x10000>;
+};
+
+&usdhc2 {
+	/* Need to be same as iomem for sdhc2 in domu.cfg */
+	reg = <0x1 0x5b020000 0x0 0x10000>;
+	status = "disabled";
+};
+
+&gpio2 {
+	status = "disabled";
+};
+
+&gpio4 {
+	status = "disabled";
+};
+
+&gpio5 {
+	status = "disabled";
+};
+
+&usbotg3 {
+	status = "disabled";
+};
+
+&fec1 {
+	status = "disabled";
+};
+
+&fec2 {
+	status = "disabled";
+};
+
+&flexspi0 {
+	status = "disabled";
+};
+
+&i2c0 {
+	status = "disabled";
+};
+
+&i2c1_lvds0 {
+	status = "disabled";
+};
+
+&i2c1_lvds1 {
+	status = "disabled";
+};
+
+&lpspi0 {
+	status = "disabled";
+};
+
+&lpuart0 {
+	status = "disabled";
+};
