@@ -285,7 +285,7 @@ void pci_init_board(void)
 }
 #endif
 
-#ifdef CONFIG_USB
+#ifdef CONFIG_USB_XHCI_IMX8
 
 #ifdef CONFIG_USB_TCPC
 #define USB_TYPEC_SEL IMX_GPIO_NR(4, 6)
@@ -364,6 +364,9 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 
 int board_init(void)
 {
+	if (IS_ENABLED(CONFIG_XEN))
+		return 0;
+
 	board_gpio_init();
 
 #ifdef CONFIG_FSL_HSIO
@@ -421,6 +424,24 @@ int ft_board_setup(void *blob, bd_t *bd)
 	return 0;
 }
 #endif
+
+int board_mmc_get_env_dev(int devno)
+{
+	/* Use EMMC */
+	if (IS_ENABLED(CONFIG_XEN))
+		return 0;
+
+	return devno;
+}
+
+int mmc_map_to_kernel_blk(int dev_no)
+{
+	/* Use EMMC */
+	if (IS_ENABLED(CONFIG_XEN))
+		return 0;
+
+	return dev_no;
+}
 
 extern uint32_t _end_ofs;
 int board_late_init(void)

@@ -616,6 +616,7 @@ dtb-$(CONFIG_ARCH_MX7ULP) += imx7ulp-evk.dtb \
 
 dtb-$(CONFIG_ARCH_IMX8) += fsl-imx8qxp-mek.dtb \
 	fsl-imx8qm-mek.dtb \
+	fsl-imx8qm-mek-xen.dtb \
 	fsl-imx8qm-mek-auto.dtb \
 	fsl-imx8qm-mek-auto2.dtb \
 	fsl-imx8qxp-mek-auto.dtb \
