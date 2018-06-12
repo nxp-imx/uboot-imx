@@ -90,4 +90,8 @@
 #undef CONFIG_PHY_ATHEROS
 #undef CONFIG_USB_FUNCTION_MASS_STORAGE
 
+#if defined(CONFIG_XEN)
+#include "imx8qm_mek_android_auto_xen.h"
+#endif
+
 #endif /* IMX8QM_MEK_ANDROID_AUTO_H */
