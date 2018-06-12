@@ -935,6 +935,7 @@ dtb-$(CONFIG_ARCH_IMX8) += \
 	fsl-imx8qm-lpddr4-val.dtb \
 	fsl-imx8qm-mek-cockpit-a53.dtb \
 	fsl-imx8qm-mek-cockpit-a72.dtb \
+	fsl-imx8qm-mek-xen.dtb \
 	imx8qm-cgtqmx8.dtb \
 	imx8qm-rom7720-a1.dtb \
 	fsl-imx8qxp-ai_ml.dtb \
