@@ -1890,7 +1890,9 @@ bootimg_print_image_hdr(struct andr_img_hdr *hdr)
 #endif
 }
 
+#if !defined(CONFIG_AVB_SUPPORT) || !defined(CONFIG_MMC)
 static struct andr_img_hdr boothdr __aligned(ARCH_DMA_MINALIGN);
+#endif
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 void trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_result) {
@@ -1947,7 +1949,6 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			(strncmp(argv[1], "recovery", sizeof("recovery")) != 0) ? false: true;
 	}
 
-#ifdef CONFIG_FASTBOOT_LOCK
 	/* check lock state */
 	FbLockState lock_status = fastboot_get_lock_stat();
 	if (lock_status == FASTBOOT_LOCK_ERROR) {
@@ -2045,98 +2046,15 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		memcpy((void *)(ulong)(hdr->kernel_addr - hdr->page_size), (void *)hdr,
 				hdr->page_size + ALIGN(hdr->kernel_size, hdr->page_size));
 #endif /* CONFIG_ARCH_IMX8 || CONFIG_ARCH_IMX8M */
-	} else if (lock_status == FASTBOOT_LOCK) { /* && verify fail */
-		/* if in lock state, verify enforce fail */
-		printf(" verify FAIL, state: LOCK\n");
-		goto fail;
-	} else { /* lock_status == FASTBOOT_UNLOCK && get unacceptable verify fail */
-		/* if in unlock state, log the verify state */
-		printf(" verify FAIL, state: UNLOCK\n");
-#endif
-		/* if lock/unlock not enabled or verify fail
-		 * in unlock state, will try boot */
-		size_t num_read;
-		hdr = &boothdr;
+	} else {
+		/* Fall into fastboot mode if get unacceptable error from avb
+		 * or verify fail in lock state.
+		 */
+		if (lock_status == FASTBOOT_LOCK)
+			printf(" verify FAIL, state: LOCK\n");
 
-		char bootimg[10];
-		/* we don't have a/b slot for imx6 on normal Android*/
-#ifndef CONFIG_ANDROID_AB_SUPPORT
-		if (!is_recovery_mode) {
-			sprintf(bootimg, "boot");
-		} else {
-			sprintf(bootimg, "recovery");
-		}
-		printf("boot '%s' still\n", bootimg);
-#else
-		slot = select_slot(&fsl_avb_ab_ops);
-		if (slot == NULL) {
-			printf("boota: no bootable slot\n");
-			goto fail;
-		}
-		sprintf(bootimg, "boot%s", slot);
-		printf(" boot '%s' still\n", bootimg);
-#endif
-		/* maybe we should use bootctl to select a/b
-		 * but libavb doesn't export a/b select */
-		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, bootimg,
-					0, sizeof(boothdr), hdr, &num_read) != AVB_IO_RESULT_OK &&
-				num_read != sizeof(boothdr)) {
-			printf("boota: read bootimage head error\n");
-			goto fail;
-		}
-		if (android_image_check_header(hdr)) {
-			printf("boota: bad boot image magic\n");
-			goto fail;
-		}
-		image_size = android_image_get_end(hdr) - (ulong)hdr;
-#if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
-		boot_buf = malloc(image_size);
-		/* Load boot image */
-		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, bootimg,
-				0, image_size, boot_buf, &num_read) != AVB_IO_RESULT_OK
-				&& num_read != image_size) {
-			printf("boota: read boot image error\n");
-			goto fail;
-		}
-		/* If we are using uncompressed kernel image, copy it directly to
-		 * hdr->kernel_addr, if we are using compressed lz4 kernel image,
-		 * we need to decompress the kernel image first. */
-		if (image_arm64((void *)((ulong)boot_buf + hdr->page_size))) {
-			memcpy((void *)(ulong)hdr->kernel_addr,
-					(void *)((ulong)boot_buf + hdr->page_size), hdr->kernel_size);
-		} else {
-#ifdef CONFIG_LZ4
-			if (ulz4fn((void *)((ulong)boot_buf + hdr->page_size),
-						hdr->kernel_size, (void *)(ulong)hdr->kernel_addr, &lz4_len) != 0) {
-				printf("Decompress kernel fail!\n");
-				goto fail;
-			}
-#else /* CONFIG_LZ4 */
-			printf("please enable CONFIG_LZ4 if we're using compressed lz4 kernel image!\n");
-			goto fail;
-#endif /* CONFIG_LZ4 */
-		}
-		hdr = (struct andr_img_hdr *)boot_buf;
-#else /* CONFIG_ARCH_IMX8 || CONFIG_ARCH_IMX8M */
-		if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, bootimg,
-				0, image_size, (void *)(ulong)(hdr->kernel_addr - hdr->page_size), &num_read) != AVB_IO_RESULT_OK
-				&& num_read != image_size) {
-			printf("boota: read boot image error\n");
-			goto fail;
-		}
-		hdr = (struct andr_img_hdr *)(ulong)(hdr->kernel_addr - hdr->page_size);
-#endif /* CONFIG_ARCH_IMX8 || CONFIG_ARCH_IMX8M */
-		char bootargs_sec[ANDR_BOOT_ARGS_SIZE];
-		sprintf(bootargs_sec,
-				"androidboot.verifiedbootstate=orange androidboot.slot_suffix=%s", slot);
-		env_set("bootargs_sec", bootargs_sec);
-#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
-		if(!is_recovery_mode)
-			fastboot_setup_system_boot_args(slot, true);
-#endif /* CONFIG_SYSTEM_RAMDISK_SUPPORT */
-#ifdef CONFIG_FASTBOOT_LOCK
+		goto fail;
 	}
-#endif
 
 	flush_cache((ulong)load_addr, image_size);
 	check_image_arm64  = image_arm64((void *)(ulong)hdr->kernel_addr);
@@ -2260,8 +2178,6 @@ fail:
 	/* avb has no recovery */
 	if (avb_out_data != NULL)
 		avb_slot_verify_data_free(avb_out_data);
-	if (boot_buf != NULL)
-		free(boot_buf);
 
 	return run_command("fastboot 0", 0);
 }
