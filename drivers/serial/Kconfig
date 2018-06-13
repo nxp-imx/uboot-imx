@@ -791,4 +791,10 @@ config SYS_SDMR
 	depends on MPC8XX_CONS
 	default 0
 
+config XEN_DEBUG_SERIAL
+	bool "XEN debug serial support"
+	depends on XEN
+	help
+	  This is not pv console, it needs CONFIG_VERBOSE_DEBUG in XEN.
+
 endmenu
