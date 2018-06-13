@@ -2787,7 +2787,7 @@ static int get_single_var(char *cmd, char *response)
 			strncat(response, "Wrong partition name.", chars_left);
 			return -1;
 		} else {
-			snprintf(response + strlen(response), chars_left, "0x%x", fb_part->length * get_block_size());
+			snprintf(response + strlen(response), chars_left, "0x%lx", (unsigned long int)fb_part->length * get_block_size());
 		}
 	} else if ((str = strstr(cmd, "partition-type:"))) {
 		str +=strlen("partition-type:");
