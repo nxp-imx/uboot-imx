@@ -413,4 +413,10 @@ config PXA_SERIAL
 	  If you have a machine based on a Marvell XScale PXA2xx CPU you
 	  can enable its onboard serial ports by enabling this option.
 
+config XEN_DEBUG_SERIAL
+	bool "XEN debug serial support"
+	depends on XEN
+	help
+	  This is not pv console, it needs CONFIG_VERBOSE_DEBUG in XEN.
+
 endmenu
