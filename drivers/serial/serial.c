@@ -150,6 +150,7 @@ serial_initfunc(sconsole_serial_initialize);
 serial_initfunc(sh_serial_initialize);
 serial_initfunc(stm32_serial_initialize);
 serial_initfunc(uartlite_serial_initialize);
+serial_initfunc(xen_debug_serial_initialize);
 serial_initfunc(zynq_serial_initialize);
 
 /**
@@ -237,6 +238,7 @@ void serial_initialize(void)
 	sh_serial_initialize();
 	stm32_serial_initialize();
 	uartlite_serial_initialize();
+	xen_debug_serial_initialize();
 	zynq_serial_initialize();
 
 	serial_assign(default_serial_console()->name);
