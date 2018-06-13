@@ -174,6 +174,9 @@ static int do_part_dtb(int argc, char * const argv[])
 				}
 			}
 
+			if ((rsrc_size <= 0) && (pad_size <= 0))
+				continue;
+
 			ret = partition_alloc(false, false, true, &pt);
 			if (ret)
 				goto free_data;
