@@ -190,8 +190,7 @@ int power_init_board(void)
 
 void spl_board_init(void)
 {
-	/* TODO */
-	/* enable_tzc380(); */
+	enable_tzc380();
 
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
 
