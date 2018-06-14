@@ -320,7 +320,6 @@
 #endif
 
 #define CONFIG_SERIAL_TAG
-#undef CONFIG_FASTBOOT_USB_DEV
 
 /* USB Config */
 #ifdef CONFIG_CMD_USB
