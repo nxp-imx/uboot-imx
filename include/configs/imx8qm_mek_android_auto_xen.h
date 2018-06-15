@@ -29,6 +29,9 @@
 #undef CONFIG_REQUIRE_SERIAL_CONSOLE
 #undef CONFIG_IMX_SMMU
 
+#undef CONFIG_FASTBOOT_USB_DEV
+#define CONFIG_FASTBOOT_USB_DEV 0 /* Use OTG port, not typec port */
+
 /* This needs to be stay same in iomem in domu.cfg */
 #define SC_IPC_CH			0x15d1d0000
 
