@@ -9,6 +9,8 @@
 #include <part.h>
 #include <image.h>
 #include "utils.h"
+#include "fsl_caam.h"
+#include "fsl_avbkey.h"
 
 #if defined(CONFIG_DUAL_BOOTLOADER) || !defined(CONFIG_SPL_BUILD)
 static const char* slot_suffixes[2] = {"_a", "_b"};
@@ -198,6 +200,53 @@ int fsl_load_metadata_dual_uboot(struct blk_desc *dev_desc,
 	}
 }
 
+static int spl_verify_rbidx(struct mmc *mmc, AvbABSlotData *slot,
+			struct spl_image_info *spl_image)
+{
+	kblb_hdr_t hdr;
+	kblb_tag_t *rbk;
+	uint64_t extract_idx;
+
+	/* Make sure rollback index has been initialized before verify */
+	if (rpmb_init()) {
+		printf("RPMB init failed!\n");
+		return -1;
+	}
+
+	/* Read bootloader rollback index header first. */
+	if (rpmb_read(mmc, (uint8_t *)&hdr, sizeof(hdr),
+			BOOTLOADER_RBIDX_OFFSET) != 0) {
+		printf("Read RPMB error!\n");
+		return -1;
+	}
+
+	/* Read bootloader rollback index. */
+	rbk = &(hdr.bootloader_rbk_tags);
+	if (rpmb_read(mmc, (uint8_t *)&extract_idx, rbk->len, rbk->offset) != 0) {
+		printf("Read rollback index error!\n");
+		return -1;
+	}
+
+	/* Verify bootloader rollback index. */
+	if (spl_image->rbindex >= extract_idx) {
+		/* Rollback index verify pass, update it only when current slot
+		 * has been marked as successful.
+		 */
+		if ((slot->successful_boot != 0) && (spl_image->rbindex != extract_idx) &&
+				rpmb_write(mmc, (uint8_t *)(&(spl_image->rbindex)),
+				rbk->len, rbk->offset)) {
+			printf("Update bootloader rollback index failed!\n");
+			return -1;
+		}
+
+		return 0;
+	} else {
+		printf("Rollback index verify rejected!\n");
+		return -1;
+	}
+
+}
+
 int mmc_load_image_raw_sector_dual_uboot(
 		struct spl_image_info *spl_image, struct mmc *mmc)
 {
@@ -209,26 +258,34 @@ int mmc_load_image_raw_sector_dual_uboot(
 	struct image_header *header;
 	AvbABData ab_data, ab_data_orig;
 	size_t slot_index_to_boot, target_slot;
+	struct keyslot_package kp;
 
 	/* Check if gpt is valid */
 	dev_desc = mmc_get_blk_desc(mmc);
 	if (dev_desc) {
 		if (part_get_info(dev_desc, 1, &info)) {
 			printf("GPT is invalid, please flash correct GPT!\n");
-			ret = -EIO;
-			goto end;
+			return -1;
 		}
 	} else {
 		printf("Get block desc fail!\n");
-		ret = -EIO;
-		goto end;
+		return -1;
+	}
+
+	/* Init RPMB keyslot package if not initialized before. */
+	read_keyslot_package(&kp);
+	if (strcmp(kp.magic, KEYPACK_MAGIC)) {
+		printf("keyslot package magic error. Will generate new one\n");
+		if (gen_rpmb_key(&kp)) {
+			printf("Generate keyslot package fail!\n");
+			return -1;
+		}
 	}
 
 	/* Load AB metadata from misc partition */
 	if (fsl_load_metadata_dual_uboot(dev_desc, &ab_data,
-					 &ab_data_orig)) {
-		ret = -1;
-		goto end;
+					&ab_data_orig)) {
+		return -1;
 	}
 
 	slot_index_to_boot = 2;  // Means not 0 or 1
@@ -248,7 +305,9 @@ int mmc_load_image_raw_sector_dual_uboot(
 		/* Read part info from gpt */
 		if (part_get_info_by_name(dev_desc, partition_name, &info) == -1) {
 			printf("Can't get partition info of partition bootloader%s\n",
-			       slot_suffixes[target_slot]);
+				slot_suffixes[target_slot]);
+			ret = -1;
+			goto end;
 		} else {
 			header = (struct image_header *)(CONFIG_SYS_TEXT_BASE -
 				 sizeof(struct image_header));
@@ -256,12 +315,13 @@ int mmc_load_image_raw_sector_dual_uboot(
 			/* read image header to find the image size & load address */
 			count = blk_dread(dev_desc, info.start, 1, header);
 			if (count == 0) {
-				ret = -EIO;
+				ret = -1;
 				goto end;
 			}
 
+			/* Load fit and check HAB */
 			if (IS_ENABLED(CONFIG_SPL_LOAD_FIT) &&
-				       image_get_magic(header) == FDT_MAGIC) {
+					image_get_magic(header) == FDT_MAGIC) {
 				struct spl_load_info load;
 
 				debug("Found FIT\n");
@@ -275,6 +335,14 @@ int mmc_load_image_raw_sector_dual_uboot(
 			} else {
 				ret = -1;
 			}
+
+			/* Fit image loaded successfully, go to verify rollback index */
+			if (!ret)
+				ret = spl_verify_rbidx(mmc, &ab_data.slots[target_slot], spl_image);
+
+			/* Copy rpmb keyslot to secure memory. */
+			if (!ret)
+				fill_secure_keyslot_package(&kp);
 		}
 
 		/* Set current slot to unbootable if load/verify fail. */
@@ -311,6 +379,37 @@ end:
 		return -1;
 	else
 		return 0;
+}
+
+/*
+ * spl_fit_get_rbindex(): Get rollback index of the bootloader.
+ * @fit:	Pointer to the FDT blob.
+ * @images:	Offset of the /images subnode.
+ *
+ * Return:	the rollback index value of bootloader or a negative
+ * 		error number.
+ */
+int spl_fit_get_rbindex(const void *fit, int images)
+{
+	const char *str;
+	uint64_t index;
+	int conf_node;
+	int len;
+
+	conf_node = fit_find_config_node(fit);
+	if (conf_node < 0) {
+		return conf_node;
+	}
+
+	str = fdt_getprop(fit, conf_node, "rbindex", &len);
+	if (!str) {
+		debug("cannot find property 'rbindex'\n");
+		return -EINVAL;
+	}
+
+	index = simple_strtoul(str, NULL, 10);
+
+	return index;
 }
 
 /* For normal build */

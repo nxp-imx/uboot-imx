@@ -33,6 +33,9 @@ struct spl_image_info {
 	u32 size;
 	u32 flags;
 	void *arg;
+#ifdef CONFIG_DUAL_BOOTLOADER
+	uint64_t rbindex;
+#endif
 };
 
 /*

@@ -59,4 +59,20 @@
 #define WIBO_3G                0x00
 #define IMX8M_REF_3G           0x00
 
+#ifdef CONFIG_SPL_BUILD
+
+#define CONFIG_SPL_SHA256
+
+#define AVB_RPMB
+#ifdef AVB_RPMB
+#define BOOTLOADER_RBIDX_OFFSET  0x1E000
+#define BOOTLOADER_RBIDX_START   0x1F000
+#define BOOTLOADER_RBIDX_LEN     0x08
+#define BOOTLOADER_RBIDX_INITVAL 0
+#define KEYSLOT_HWPARTITION_ID   2
+#define KEYSLOT_BLKS             0x1FFF
+#endif
+
+#endif
+
 #endif /* IMX8MQ_EVK_ANDROID_THINGS_H */
