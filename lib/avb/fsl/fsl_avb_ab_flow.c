@@ -62,6 +62,8 @@ bool fsl_slot_is_bootable(AvbABSlotData* slot) {
 #define PARTITION_MISC "misc"
 #define PARTITION_BOOTLOADER "bootloader"
 
+extern int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value);
+
 /* Pre-declaration of h_spl_load_read(), see detail implementation in
  * common/spl/spl_mmc.c.
  */
@@ -280,6 +282,11 @@ int mmc_load_image_raw_sector_dual_uboot(
 			printf("Generate keyslot package fail!\n");
 			return -1;
 		}
+	}
+	/* Set power-on write protection to boot1 partition. */
+	if (mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_BOOT_WP, BOOT1_PWR_WP)) {
+		printf("Unable to set power-on write protection to boot1!\n");
+		return -1;
 	}
 
 	/* Load AB metadata from misc partition */
