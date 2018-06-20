@@ -465,6 +465,12 @@ enum dram_pll_out_val {
 	DRAM_PLL_OUT_800M,
 };
 
+enum dram_bypassclk_val {
+	DRAM_BYPASSCLK_100M,
+	DRAM_BYPASSCLK_250M,
+	DRAM_BYPASSCLK_400M,
+};
+
 #define AUDIO_PLL1_GNRL_CTL			(0x30360000)
 #define AUDIO_PLL1_FDIV_CTL0			(0x30360004)
 #define AUDIO_PLL1_FDIV_CTL1			(0x30360008)
@@ -856,6 +862,8 @@ enum enet_freq {
 	ENET_125MHZ,
 };
 void dram_pll_init(enum dram_pll_out_val pll_val);
+void dram_enable_bypass(enum dram_bypassclk_val clk_val);
+void dram_disable_bypass(void);
 u32 imx_get_fecclk(void);
 u32 imx_get_uartclk(void);
 int clock_init(void);

@@ -299,6 +299,29 @@ static struct imx_int_pll_rate_table imx8mm_fracpll_tbl[] = {
 	PLL_1443X_RATE(100000000U, 300, 9, 3, 0),
 };
 
+#define DRAM_BYPASS_ROOT_CONFIG(_rate, _m, _p, _s, _k)			\
+	{							\
+		.clk	=	(_rate),			\
+		.alt_root_sel	=	(_m),				\
+		.alt_pre_div	=	(_p),				\
+		.apb_root_sel	=	(_s),				\
+		.apb_pre_div	=	(_k),				\
+	}
+
+struct dram_bypass_clk_setting {
+	enum dram_bypassclk_val clk;
+	int alt_root_sel;
+	enum root_pre_div alt_pre_div;
+	int apb_root_sel;
+	enum root_pre_div apb_pre_div;
+};
+
+static struct dram_bypass_clk_setting imx8mm_dram_bypass_tbl[] = {
+	DRAM_BYPASS_ROOT_CONFIG(DRAM_BYPASSCLK_100M, 2, CLK_ROOT_PRE_DIV1, 2, CLK_ROOT_PRE_DIV2),
+	DRAM_BYPASS_ROOT_CONFIG(DRAM_BYPASSCLK_250M, 3, CLK_ROOT_PRE_DIV2, 2, CLK_ROOT_PRE_DIV2),
+	DRAM_BYPASS_ROOT_CONFIG(DRAM_BYPASSCLK_400M, 1, CLK_ROOT_PRE_DIV2, 3, CLK_ROOT_PRE_DIV2),
+};
+
 int fracpll_configure(enum pll_clocks pll, u32 freq)
 {
 	int i;
@@ -389,6 +412,34 @@ void dram_pll_init(enum dram_pll_out_val pll_val)
 	}
 
 	fracpll_configure(ANATOP_DRAM_PLL, freq);
+}
+
+void dram_enable_bypass(enum dram_bypassclk_val clk_val)
+{
+	int i;
+	struct dram_bypass_clk_setting *config;
+
+	for (i = 0; i < ARRAY_SIZE(imx8mm_dram_bypass_tbl); i++) {
+		if (clk_val == imx8mm_dram_bypass_tbl[i].clk)
+			break;
+	}
+
+	if (i == ARRAY_SIZE(imx8mm_dram_bypass_tbl)) {
+		printf("No matched freq table %u\n", clk_val);
+		return;
+	}
+
+	config = &imx8mm_dram_bypass_tbl[i];
+
+	clock_set_target_val(DRAM_ALT_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(config->alt_root_sel) | CLK_ROOT_PRE_DIV(config->alt_pre_div));
+	clock_set_target_val(DRAM_APB_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(config->apb_root_sel) | CLK_ROOT_PRE_DIV(config->apb_pre_div));
+	clock_set_target_val(DRAM_SEL_CFG, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(1));
+}
+
+void dram_disable_bypass(void)
+{
+	clock_set_target_val(DRAM_SEL_CFG, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(0));
+	clock_set_target_val(DRAM_APB_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(4) | CLK_ROOT_PRE_DIV(CLK_ROOT_PRE_DIV5));
 }
 
 int intpll_configure(enum pll_clocks pll, enum intpll_out_freq freq)
