@@ -638,6 +638,14 @@ static u32 sdp_jump_imxheader(void *address)
 	return 0;
 }
 
+static ulong sdp_spl_fit_read(struct spl_load_info *load, ulong sector,
+			      ulong count, void *buf)
+{
+	memcpy(buf, (void *)sector, count);
+
+	return count;
+}
+
 static void sdp_handle_in_ep(void)
 {
 	u8 *data = sdp_func->in_req->buf;
@@ -690,10 +698,30 @@ static void sdp_handle_in_ep(void)
 		/* If imx header fails, try some U-Boot specific headers */
 		if (status) {
 #ifdef CONFIG_SPL_BUILD
-			/* In SPL, allow jumps to U-Boot images */
+			struct image_header *header;
 			struct spl_image_info spl_image = {};
-			spl_parse_image_header(&spl_image,
-				(struct image_header *)sdp_func->jmp_address);
+
+			header = (struct image_header *)(ulong)(sdp_func->jmp_address);
+
+			if (IS_ENABLED(CONFIG_SPL_LOAD_FIT) &&
+			    image_get_magic(header) == FDT_MAGIC) {
+				struct spl_load_info load;
+
+				debug("Found FIT\n");
+				load.dev = NULL;
+				load.priv = NULL;
+				load.filename = NULL;
+				load.bl_len = 1;
+				load.read = sdp_spl_fit_read;
+				spl_load_simple_fit(&spl_image, &load,
+							  sdp_func->jmp_address,
+							  (void *)header);
+			} else {
+				/* In SPL, allow jumps to U-Boot images */
+				spl_parse_image_header(&spl_image,
+					(struct image_header *)(ulong)(sdp_func->jmp_address));
+			}
+
 			jump_to_image_no_args(&spl_image);
 #else
 			/* In U-Boot, allow jumps to scripts */
