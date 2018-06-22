@@ -118,7 +118,7 @@ u32 spl_boot_device(void)
 	case NAND_BOOT:
 		return BOOT_DEVICE_NAND;
 	case USB_BOOT:
-		return BOOT_DEVICE_USB;
+		return BOOT_DEVICE_BOARD;
 	case SPI_NOR_BOOT:
 		return BOOT_DEVICE_SPI;
 	case QSPI_BOOT:
