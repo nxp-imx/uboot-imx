@@ -14,6 +14,7 @@
 #undef CONFIG_DM_SERIAL
 #undef CONFIG_DM_I2C
 #undef CONFIG_DM_SPI
+#undef CONFIG_DM_USB
 #endif
 
 #undef CONFIG_DM_WARN
