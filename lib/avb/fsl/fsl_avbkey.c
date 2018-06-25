@@ -198,7 +198,9 @@ static int permanent_attributes_sha256_hash(unsigned char* output) {
 			sizeof(fsl_product_root_public_key));
 	memcpy(attributes.product_id, fsl_atx_product_id,
 			sizeof(fsl_atx_product_id));
+#ifdef CONFIG_IMX_TRUSTY_OS
 calc_sha256:
+#endif
 	/* calculate sha256(permanent attributes) hash */
 	if (sha256((unsigned char *)&attributes, sizeof(AvbAtxPermanentAttributes),
 			output) == RESULT_ERROR) {
