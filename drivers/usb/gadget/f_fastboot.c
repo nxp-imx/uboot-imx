@@ -62,6 +62,7 @@ extern bool tos_flashed;
 #ifdef CONFIG_ANDROID_RECOVERY
 #include <recovery.h>
 #endif
+#endif
 
 #ifdef CONFIG_BCB_SUPPORT
 #include "bcb.h"
@@ -72,14 +73,23 @@ extern bool tos_flashed;
 #include <fsl_avb.h>
 #endif
 
+#ifdef CONFIG_ANDROID_THINGS_SUPPORT
+#include <asm-generic/gpio.h>
+#include <asm/mach-imx/gpio.h>
+#endif
+
 #define FASTBOOT_VERSION		"0.4"
 
 #ifdef CONFIG_FASTBOOT_LOCK
 #include "fastboot_lock_unlock.h"
 #endif
+
+#if defined(CONFIG_ANDROID_THINGS_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
+#define FASTBOOT_COMMON_VAR_NUM 14
+#else
+#define FASTBOOT_COMMON_VAR_NUM 13
 #endif
 
-#define FASTBOOT_COMMON_VAR_NUM	13
 #define FASTBOOT_VAR_YES    "yes"
 #define FASTBOOT_VAR_NO     "no"
 #define FASTBOOT_INTERFACE_CLASS	0xff
@@ -121,6 +131,16 @@ struct fastboot_device_info fastboot_firmwareinfo;
 #define ZIMAGE_START_ADDR	10
 #define ZIMAGE_END_ADDR	11
 
+#if defined(CONFIG_ANDROID_THINGS_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
+#define IMX8MQ_GPIO3_IO25 IMX_GPIO_NR(3, 25)  //board_id[6]:6
+#define IMX8MQ_GPIO3_IO19 IMX_GPIO_NR(3, 19)  //board_id[6]:5
+#define IMX8MQ_GPIO3_IO20 IMX_GPIO_NR(3, 20)  //board_id[6]:4
+#define IMX8MQ_GPIO3_IO24 IMX_GPIO_NR(3, 24)  //board_id[6]:3
+#define IMX8MQ_GPIO3_IO23 IMX_GPIO_NR(3, 23)  //board_id[6]:2
+#define IMX8MQ_GPIO3_IO22 IMX_GPIO_NR(3, 22)  //board_id[6]:1
+#define IMX8MQ_GPIO3_IO21 IMX_GPIO_NR(3, 21)  //board_id[6]:0
+#endif
+
 /* common variables of fastboot getvar command */
 char *fastboot_common_var[FASTBOOT_COMMON_VAR_NUM] = {
 	"version",
@@ -135,7 +155,10 @@ char *fastboot_common_var[FASTBOOT_COMMON_VAR_NUM] = {
 	"off-mode-charge",
 	"battery-voltage",
 	"variant",
-	"battery-soc-ok"
+	"battery-soc-ok",
+#if defined(CONFIG_ANDROID_THINGS_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
+	"baseboard_id"
+#endif
 };
 
 /* Boot metric variables */
@@ -2825,6 +2848,47 @@ static void uuid_hex2string(uint8_t *uuid, char* buf, uint32_t uuid_len, uint32_
 }
 #endif
 
+#if defined(CONFIG_ANDROID_THINGS_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
+static int get_imx8m_baseboard_id(void)
+{
+	int  i = 0, value = 0;
+	int baseboard_id;
+	int pin[7];
+
+	/* initialize the pin array */
+	pin[0] = IMX8MQ_GPIO3_IO21;
+	pin[1] = IMX8MQ_GPIO3_IO22;
+	pin[2] = IMX8MQ_GPIO3_IO23;
+	pin[3] = IMX8MQ_GPIO3_IO24;
+	pin[4] = IMX8MQ_GPIO3_IO20;
+	pin[5] = IMX8MQ_GPIO3_IO19;
+	pin[6] = IMX8MQ_GPIO3_IO25;
+
+	/* request gpio */
+	gpio_request(IMX8MQ_GPIO3_IO21, "GPIO3_IO21");
+	gpio_request(IMX8MQ_GPIO3_IO22, "GPIO3_IO22");
+	gpio_request(IMX8MQ_GPIO3_IO23, "GPIO3_IO23");
+	gpio_request(IMX8MQ_GPIO3_IO24, "GPIO3_IO24");
+	gpio_request(IMX8MQ_GPIO3_IO20, "GPIO3_IO20");
+	gpio_request(IMX8MQ_GPIO3_IO19, "GPIO3_IO19");
+	gpio_request(IMX8MQ_GPIO3_IO25, "GPIO3_IO25");
+
+	/* Set gpio direction as input and get the input value */
+	baseboard_id = 0;
+	for (i = 0; i < 7; i++) {
+		gpio_direction_input(pin[i]);
+		if ((value = gpio_get_value(pin[i])) < 0) {
+			printf("Error! Read gpio port: %d failed!\n", pin[i]);
+			return -1;
+		}
+		else
+			baseboard_id |= ((value & 0x01) << i);
+	}
+
+	return baseboard_id;
+}
+#endif
+
 static int get_single_var(char *cmd, char *response)
 {
 	char *str = cmd;
@@ -2937,6 +3001,19 @@ static int get_single_var(char *cmd, char *response)
 		strncat(response, FASTBOOT_VAR_NO, chars_left);
 #endif
 	}
+#if defined(CONFIG_ANDROID_THINGS_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
+	else if (!strcmp_l1("baseboard_id", cmd)) {
+		int baseboard_id;
+
+		baseboard_id = get_imx8m_baseboard_id();
+		if (baseboard_id < 0) {
+			printf("Get baseboard id failed!\n");
+			strncat(response, "Get baseboard id failed!", chars_left);
+			return -1;
+		} else
+			snprintf(response + strlen(response), chars_left, "0x%x", baseboard_id);
+	}
+#endif
 	else {
 		char envstr[32];
 
