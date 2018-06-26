@@ -181,7 +181,8 @@ static const sc_rsrc_t imx8qm_sensor_rsrc[] = {
 };
 
 static const sc_rsrc_t imx8qxp_sensor_rsrc[] = {
-	SC_R_DRC_0,
+	SC_R_SYSTEM, SC_R_DRC_0, SC_R_PMIC_0,
+	SC_R_PMIC_1, SC_R_PMIC_2,
 };
 
 static const struct udevice_id imx_sc_thermal_ids[] = {
