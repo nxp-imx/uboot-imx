@@ -48,7 +48,7 @@ static int read_temperature(struct udevice *dev, int *temp)
 		return -EIO;
 	}
 
-	*temp = celsius * 1000 + tenths;
+	*temp = celsius * 1000 + tenths * 100;
 
 	return 0;
 }
