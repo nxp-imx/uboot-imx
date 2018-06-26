@@ -47,7 +47,6 @@
 #define RESULT_ERROR -1
 #define RESULT_OK     0
 
-
 #ifndef CONFIG_SPL_BUILD
 #if defined(CONFIG_AVB_ATX) && !defined(CONFIG_ARM64)
 static int fsl_fuse_ops(uint32_t *buffer, uint32_t length, uint32_t offset,
@@ -1337,7 +1336,6 @@ fail:
 }
 #endif /* CONFIG_SPL_BUILD */
 #endif /* AVB_RPMB */
-
 
 #if defined(AVB_RPMB) && defined(CONFIG_AVB_ATX) && !defined(CONFIG_SPL_BUILD)
 /* Provides the key version of a key used during verification. This may be

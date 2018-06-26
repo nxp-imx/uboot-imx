@@ -1,0 +1,78 @@
+config IMX_CONFIG
+	string
+
+config IMX_OPTEE
+	bool "Support OP-TEE"
+	help
+	 Enable support for OP-TEE
+
+config GPT_TIMER
+	bool "Using i.MX GPT timer as system tick timer"
+	depends on ARCH_MX6 || ARCH_MX7
+	help
+	  Enable GPT timer driver for system tick timer on i.MX6 and 
+	  i.MX7.
+
+config ROM_UNIFIED_SECTIONS
+	bool
+
+config IMX_RDC
+	bool "i.MX Resource domain controller driver"
+	depends on ARCH_MX6 || ARCH_MX7
+	help
+	  i.MX Resource domain controller is used to assign masters
+	  and peripherals to differet domains. This can be used to
+	  isolate resources.
+
+config IMX_BOOTAUX
+	bool "Support boot auxiliary core"
+	depends on ARCH_MX7 || ARCH_MX6 || ARCH_IMX8
+	help
+	  bootaux [addr] to boot auxiliary core.
+
+config USE_IMXIMG_PLUGIN
+	bool "Use imximage plugin code"
+	depends on ARCH_MX7 || ARCH_MX6 || ARCH_MX7ULP
+	help
+	  i.MX6/7 supports DCD and Plugin. Enable this configuration
+	  to use Plugin, otherwise DCD will be used.
+
+config SECURE_BOOT
+	bool "Support i.MX HAB features"
+	depends on ARCH_MX7 || ARCH_MX6 || ARCH_MX5 || ARCH_IMX8M
+	select FSL_CAAM if !MX6ULL && !MX6SLL && !MX6SL && !IMX8M
+	help
+	  This option enables the support for secure boot (HAB).
+	  See doc/README.mxc_hab for more details.
+
+config FSL_MFGPROT
+	bool "Support the 'mfgprot' command"
+	depends on SECURE_BOOT && ARCH_MX7
+	help
+	  This option enables the manufacturing protection command
+	  which can be used has a protection feature for Manufacturing
+	  process. With this tool is possible to authenticate the
+	  chip to the OEM's server.
+
+config DBG_MONITOR
+	bool "Enable the AXI debug monitor"
+	depends on ARCH_MX6 || ARCH_MX7
+	help
+	  This option enables the debug monitor which prints out last 
+	  failed AXI access info when system reboot is caused by AXI 
+	  access failure.
+
+config IMX_M4_BIND
+	bool "Bind ULP M4 image to final u-boot"
+	depends on ARCH_MX7ULP
+	help
+	  Select this to bind a ULP M4 image to final u-boot image
+	  User needs put the M4 image ulp_m4.bin under u-boot directory
+
+config IMX_TRUSTY_OS
+	bool "Support Trusty OS related feature"
+	depends on ARCH_MX6 || ARCH_MX7 || ARCH_IMX8 || ARCH_IMX8M
+	select SYS_ARM_CACHE_WRITEALLOC
+
+config SYS_ARM_CACHE_WRITEALLOC
+	bool "support cache write alloc"
