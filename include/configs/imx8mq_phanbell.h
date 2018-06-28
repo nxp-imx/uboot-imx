@@ -14,6 +14,14 @@
 #define CONFIG_CSF_SIZE			0x2000 /* 8K region */
 #endif
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+#define NS_ARCH_ARM64 1
+#endif
+#ifdef CONFIG_AVB_ATX
+#define PERMANENT_ATTRIBUTE_HASH_OFFSET 0
+#endif
+#define CONFIG_MMC_RPMB_TRACE
+
 #define CONFIG_SPL_TEXT_BASE		0x7E1000
 /* 124k spl max size */
 #define CONFIG_SPL_MAX_SIZE		126976
@@ -195,6 +203,7 @@
 
 #define CONFIG_SYS_SDRAM_BASE           0x40000000
 #define PHYS_SDRAM                      0x40000000
+#define PHYS_SDRAM_SIZE			0xBE000000 /* (3GB - 32M) DDR for uboot */
 #define CONFIG_NR_DRAM_BANKS		1
 
 #define CONFIG_BAUDRATE			115200
