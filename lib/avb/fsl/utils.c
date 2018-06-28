@@ -14,7 +14,9 @@
 int get_margin_pos(uint64_t part_start, uint64_t part_end, unsigned long blksz,
 				margin_pos_t *margin, int64_t offset, size_t num_bytes, bool allow_partial) {
 	long off;
-	assert(margin != NULL);
+	if (margin == NULL)
+		return -1;
+
 	if (blksz == 0 || part_start > part_end)
 		return -1;
 

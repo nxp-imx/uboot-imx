@@ -95,7 +95,8 @@ int get_slotvar_avb(AvbABOps *ab_ops, char *cmd, char *buffer, size_t size) {
 	AvbABSlotData *slot_data;
 	int slot;
 
-	assert(ab_ops != NULL && cmd != NULL && buffer != NULL);
+	if ((ab_ops == NULL) || (cmd == NULL) || (buffer == NULL))
+		return -1;
 
 	char *str = cmd;
 	if (!strcmp_l1("has-slot:", cmd)) {
@@ -182,7 +183,9 @@ char *select_slot(AvbABOps *ab_ops) {
 	AvbABData ab_data;
 	int curr;
 
-	assert(ab_ops != NULL);
+	if (ab_ops == NULL) {
+		return NULL;
+	}
 
 	/* load ab meta */
 	if (ab_ops->read_ab_metadata == NULL ||

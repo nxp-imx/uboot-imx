@@ -215,8 +215,11 @@ static int on_bootfile(const char *name, const char *value, enum env_op op,
 	switch (op) {
 	case env_op_create:
 	case env_op_overwrite:
-		copy_filename(net_boot_file_name, value,
-			      sizeof(net_boot_file_name));
+		if (value == NULL)
+			return -1;
+		else
+			copy_filename(net_boot_file_name, value,
+				      sizeof(net_boot_file_name));
 		break;
 	default:
 		break;
