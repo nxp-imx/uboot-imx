@@ -58,6 +58,10 @@
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 #endif
 
+#define CONFIG_CMD_READ
+#define CONFIG_SERIAL_TAG
+#define CONFIG_FASTBOOT_USB_DEV 0
+
 #define CONFIG_REMAKE_ELF
 
 #define CONFIG_BOARD_EARLY_INIT_F
@@ -105,7 +109,9 @@
 		"\0" \
 	"initrd_addr=0x43800000\0" \
 	"initrd_high=0xffffffff\0" \
-	"bootcmd_mfg=run mfgtool_args;booti ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+	"bootcmd_mfg=run mfgtool_args;  if iminfo ${initrd_addr}; then "\
+					   "booti ${loadaddr} ${initrd_addr} ${fdt_addr};"\
+					"else echo \"Run fastboot ...\"; fastboot 0; fi\0" \
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
@@ -305,7 +311,6 @@
 
 #endif
 
-#define CONFIG_USB_GADGET
 #define CONFIG_USB_GADGET_DUALSPEED
 #define CONFIG_USB_GADGET_VBUS_DRAW 2
 #define CONFIG_USB_GADGET_VENDOR_NUM	0x0525
