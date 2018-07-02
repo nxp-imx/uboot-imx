@@ -148,4 +148,6 @@ int arch_auxiliary_core_check_up(u32 core_id);
 
 unsigned long call_imx_sip(unsigned long id, unsigned long reg0,
 			   unsigned long reg1, unsigned long reg2, unsigned long reg3);
+unsigned long call_imx_sip_ret2(unsigned long id, unsigned long reg0,
+                                unsigned long *reg1, unsigned long reg2, unsigned long reg3);
 #endif
