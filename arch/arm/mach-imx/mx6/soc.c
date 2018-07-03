@@ -22,6 +22,9 @@
 #include <dm.h>
 #include <imx_thermal.h>
 #include <mmc.h>
+#ifdef CONFIG_IMX_SEC_INIT
+#include <fsl_caam.h>
+#endif
 
 enum ldo_reg {
 	LDO_ARM,
@@ -441,6 +444,11 @@ int arch_cpu_init(void)
 		setbits_le32(&ccm->cscdr1, MXC_CCM_CSCDR1_UART_CLK_SEL);
 
 	init_src();
+
+#ifdef CONFIG_IMX_SEC_INIT
+	/* Secure init function such RNG */
+	imx_sec_init();
+#endif
 
 	return 0;
 }

@@ -710,6 +710,7 @@ config ARCH_IMX8M
 	select DM
 	select SUPPORT_SPL
 	imply CMD_DM
+	select IMX_SEC_INIT if HAS_CAAM
 
 config ARCH_MX23
 	bool "NXP i.MX23 family"
@@ -740,6 +741,7 @@ config ARCH_MX7ULP
 	select SYS_FSL_SEC_LE
 	select ROM_UNIFIED_SECTIONS
 	imply MXC_GPIO
+	select IMX_SEC_INIT if HAS_CAAM
 
 config ARCH_MX7
 	bool "Freescale MX7"
@@ -749,6 +751,7 @@ config ARCH_MX7
 	select SYS_FSL_HAS_SEC if SECURE_BOOT
 	select SYS_FSL_SEC_COMPAT_4
 	select SYS_FSL_SEC_LE
+	select IMX_SEC_INIT if HAS_CAAM
 	imply MXC_GPIO
 
 config ARCH_MX6
@@ -757,6 +760,7 @@ config ARCH_MX6
 	select SYS_FSL_HAS_SEC if SECURE_BOOT
 	select SYS_FSL_SEC_COMPAT_4
 	select SYS_FSL_SEC_LE
+	select IMX_SEC_INIT if HAS_CAAM
 	select SYS_THUMB_BUILD if SPL
 	imply MXC_GPIO
 

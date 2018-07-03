@@ -7,6 +7,9 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/hab.h>
+#ifdef CONFIG_IMX_SEC_INIT
+#include <fsl_caam.h>
+#endif
 
 static char *get_reset_cause(char *);
 
@@ -50,6 +53,11 @@ enum bt_mode get_boot_mode(void)
 
 int arch_cpu_init(void)
 {
+#ifdef CONFIG_IMX_SEC_INIT
+	/* Secure init function such RNG */
+	imx_sec_init();
+#endif
+
 	return 0;
 }
 

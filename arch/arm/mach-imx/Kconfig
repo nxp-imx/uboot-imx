@@ -13,6 +13,17 @@ config SYSCOUNTER_TIMER
 config GPT_TIMER
 	bool
 
+config FSL_CAAM_KB
+	bool
+
+config IMX_SEC_INIT
+	bool
+	help
+		In most of i.MX board with CAAM this option is used
+		to init RNG from U-Boot
+	select FSL_CAAM_KB
+	select SPL_CRYPTO_SUPPORT if SPL
+
 config IMX_RDC
 	bool "i.MX Resource domain controller driver"
 	depends on ARCH_MX6 || ARCH_MX7
