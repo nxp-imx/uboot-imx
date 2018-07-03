@@ -258,6 +258,12 @@ config OF_LIBFDT
 	  particular compatible nodes. The library operates on a flattened
 	  version of the device tree.
 
+config LOAD_FDT_FROM_PART
+	bool "Enable load FDT from single partition"
+	depends on OF_LIBFDT
+	help
+	  This enables load FDT from a single partition like "oem_bootloader".
+
 config OF_LIBFDT_OVERLAY
 	bool "Enable the FDT library overlay support"
 	help

@@ -2090,6 +2090,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			+ ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
 #endif
 #ifdef CONFIG_OF_LIBFDT
+	/* load the dtb file */
+#ifdef CONFIG_LOAD_FDT_FROM_PART
 	u32 fdt_size = 0;
 	char oemimage[AT_OEM_BL_PART_SIZE];
 	snprintf(oemimage, sizeof(oemimage), "%s%s",
@@ -2136,6 +2138,13 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 
 dt_read_done:
 	;
+#else /* CONFIG_LOAD_FDT_FROM_PART */
+	if (hdr->second_size && hdr->second_addr) {
+		memcpy((void *)(ulong)hdr->second_addr, (void *)(ulong)hdr + hdr->page_size
+			+ ALIGN(hdr->kernel_size, hdr->page_size)
+			+ ALIGN(hdr->ramdisk_size, hdr->page_size), hdr->second_size);
+	}
+#endif /* CONFIG_LOAD_FDT_FROM_PART */
 #endif /*CONFIG_OF_LIBFDT*/
 	if (check_image_arm64) {
 		android_image_get_kernel(hdr, 0, NULL, NULL);
@@ -2146,8 +2155,13 @@ dt_read_done:
 	printf("kernel   @ %08x (%d)\n", hdr->kernel_addr, hdr->kernel_size);
 	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
 #ifdef CONFIG_OF_LIBFDT
+#ifdef CONFIG_LOAD_FDT_FROM_PART
 	if (fdt_size)
 		printf("fdt      @ %08x (%d)\n", hdr->second_addr, fdt_size);
+#else
+	if (hdr->second_size)
+		printf("fdt      @ %08x (%d)\n", hdr->second_addr, hdr->second_size);
+#endif
 #endif /*CONFIG_OF_LIBFDT*/
 
 	char boot_addr_start[12];
