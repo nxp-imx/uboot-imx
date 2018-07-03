@@ -23,6 +23,9 @@
 #include <dm.h>
 #include <imx_thermal.h>
 #include <mmc.h>
+#ifdef CONFIG_IMX_SEC_INIT
+#include <fsl_caam.h>
+#endif
 
 struct scu_regs {
 	u32	ctrl;
@@ -481,6 +484,12 @@ int arch_cpu_init(void)
 	if (is_mx6dqp())
 		noc_setup();
 #endif
+
+#ifdef CONFIG_IMX_SEC_INIT
+	/* Secure init function such RNG */
+	imx_sec_init();
+#endif
+
 	return 0;
 }
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017-2018 NXP
  */
 
 #include <common.h>
@@ -50,6 +51,9 @@
 #define BM_GPC_PGC_ACK_SEL_A7_DUMMY_PDN_ACK	0x8000
 
 #define BM_GPC_PGC_CORE_PUPSCR			0x7fff80
+#ifdef CONFIG_IMX_SEC_INIT
+#include <fsl_caam.h>
+#endif
 
 #if defined(CONFIG_IMX_THERMAL)
 static const struct imx_thermal_plat imx7_thermal_plat = {
@@ -319,6 +323,10 @@ int arch_cpu_init(void)
 	init_snvs();
 
 	imx_gpcv2_init();
+#ifdef CONFIG_IMX_SEC_INIT
+	/* Secure init function such RNG */
+	imx_sec_init();
+#endif
 
 	return 0;
 }
