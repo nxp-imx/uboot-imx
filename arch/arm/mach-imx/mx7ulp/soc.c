@@ -13,6 +13,9 @@
 #include <asm/mach-imx/boot_mode.h>
 #include <fdt_support.h>
 #include <asm/setup.h>
+#ifdef CONFIG_IMX_SEC_INIT
+#include <fsl_caam.h>
+#endif
 
 static char *get_reset_cause(char *);
 
@@ -96,6 +99,11 @@ int arch_cpu_init(void)
 		if (ret)
 			puts("Invalid M4 image, boot failed\n");
 	}
+#endif
+
+#ifdef CONFIG_IMX_SEC_INIT
+	/* Secure init function such RNG */
+	imx_sec_init();
 #endif
 
 	return 0;

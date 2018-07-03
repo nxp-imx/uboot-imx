@@ -25,6 +25,9 @@
 #include <imx_thermal.h>
 #include <mmc.h>
 #include <asm/setup.h>
+#ifdef CONFIG_IMX_SEC_INIT
+#include <fsl_caam.h>
+#endif
 
 enum ldo_reg {
 	LDO_ARM,
@@ -636,6 +639,11 @@ int arch_cpu_init(void)
 
 	if (is_mx6dqp())
 		writel(0x80000201, 0xbb0608);
+
+#ifdef CONFIG_IMX_SEC_INIT
+	/* Secure init function such RNG */
+	imx_sec_init();
+#endif
 
 	return 0;
 }

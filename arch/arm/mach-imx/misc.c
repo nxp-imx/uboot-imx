@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Stefan Roese <sr@denx.de>
+ * Copyright 2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -9,6 +10,7 @@
 #include <linux/errno.h>
 #include <asm/io.h>
 #include <asm/mach-imx/regs-common.h>
+#include <fsl_caam.h>
 
 /* 1 second delay should be plenty of time for block reset. */
 #define	RESET_MAX_TIMEOUT	1000000
@@ -72,3 +74,11 @@ int mxs_reset_block(struct mxs_register_32 *reg)
 
 	return 0;
 }
+
+void imx_sec_init(void)
+{
+#if defined(CONFIG_SPL_BUILD) || !defined(CONFIG_SPL)
+	caam_open();
+#endif
+}
+
