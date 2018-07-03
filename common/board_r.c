@@ -737,6 +737,7 @@ static int initr_check_fastboot(void)
 #endif
 
 #ifdef AVB_RPMB
+int init_avbkey(void);
 static int initr_avbkey(void)
 {
 	return init_avbkey();
@@ -744,6 +745,7 @@ static int initr_avbkey(void)
 #endif
 
 #ifdef CONFIG_IMX_TRUSTY_OS
+void tee_setup(void);
 static int initr_tee_setup(void)
 {
 	tee_setup();
