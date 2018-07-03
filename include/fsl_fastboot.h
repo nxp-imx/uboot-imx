@@ -179,7 +179,7 @@ struct cmd_fastboot_interface {
 */
 struct fastboot_ptentry {
 	/* The logical name for this partition, null terminated */
-	char name[16];
+	char name[20];
 	/* The start wrt the nand part, must be multiple of nand block size */
 	unsigned int start;
 	/* The length of the partition, must be multiple of nand block size */
