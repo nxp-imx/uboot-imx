@@ -29,6 +29,9 @@
 #include <imx_sip.h>
 #include <linux/arm-smccc.h>
 #include <linux/bitops.h>
+#ifdef CONFIG_IMX_SEC_INIT
+#include <fsl_caam.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -485,6 +488,11 @@ int arch_cpu_init(void)
 			}
 		}
 	}
+
+#ifdef CONFIG_IMX_SEC_INIT
+	/* Secure init function such RNG */
+	imx_sec_init();
+#endif
 
 	if (is_imx8mq()) {
 		clock_enable(CCGR_OCOTP, 1);

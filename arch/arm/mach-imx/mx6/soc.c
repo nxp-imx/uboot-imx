@@ -26,6 +26,9 @@
 #include <fsl_sec.h>
 #include <imx_thermal.h>
 #include <mmc.h>
+#ifdef CONFIG_IMX_SEC_INIT
+#include <fsl_caam.h>
+#endif
 
 #define has_err007805() \
 	(is_mx6sl() || is_mx6dl() || is_mx6solo() || is_mx6ull())
@@ -487,6 +490,12 @@ int arch_cpu_init(void)
 	if (is_mx6dqp())
 		noc_setup();
 #endif
+
+#ifdef CONFIG_IMX_SEC_INIT
+	/* Secure init function such RNG */
+	imx_sec_init();
+#endif
+
 	return 0;
 }
 

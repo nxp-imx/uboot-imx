@@ -14,6 +14,9 @@
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/mach-imx/hab.h>
 #include <linux/bitops.h>
+#ifdef CONFIG_IMX_SEC_INIT
+#include <fsl_caam.h>
+#endif
 
 #define PMC0_BASE_ADDR		0x410a1000
 #define PMC0_CTRL		0x28
@@ -76,6 +79,11 @@ enum bt_mode get_boot_mode(void)
 
 int arch_cpu_init(void)
 {
+#ifdef CONFIG_IMX_SEC_INIT
+	/* Secure init function such RNG */
+	imx_sec_init();
+#endif
+
 	return 0;
 }
 
