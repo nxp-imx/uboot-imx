@@ -678,6 +678,7 @@ static int initr_check_fastboot(void)
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 extern void tee_setup(void);
+void tee_setup(void);
 static int initr_tee_setup(void)
 {
 	tee_setup();

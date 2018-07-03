@@ -149,7 +149,6 @@ int power_init_board(void)
 {
 	struct pmic *p;
 	int ret;
-	unsigned int reg;
 
 	ret = power_bd71837_init(I2C_PMIC);
 	if (ret)

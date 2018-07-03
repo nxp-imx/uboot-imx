@@ -1959,9 +1959,6 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	bool is_recovery_mode = false;
 	char *slot = NULL;
 
-#if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
-	size_t lz4_len = DST_DECOMPRESS_LEN;
-#endif
 	AvbABFlowResult avb_result;
 	AvbSlotVerifyData *avb_out_data;
 	AvbPartitionData *avb_loadpart;
@@ -2054,6 +2051,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 					(void *)((ulong)hdr + hdr->page_size), hdr->kernel_size);
 		} else {
 #ifdef CONFIG_LZ4
+			size_t lz4_len = DST_DECOMPRESS_LEN;
 			if (ulz4fn((void *)((ulong)hdr + hdr->page_size),
 						hdr->kernel_size, (void *)(ulong)hdr->kernel_addr, &lz4_len) != 0) {
 				printf("Decompress kernel fail!\n");
@@ -2131,7 +2129,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	fdt_size = be32_to_cpu(dt_entry.dt_size);
 	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, oemimage,
 			be32_to_cpu(dt_entry.dt_offset), fdt_size,
-			(void *)hdr->second_addr, &num_read) !=
+			(void *)(ulong)hdr->second_addr, &num_read) !=
 			AVB_IO_RESULT_OK && num_read != fdt_size) {
 		printf("boota: read fdt error\n");
 	}

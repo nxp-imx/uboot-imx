@@ -37,6 +37,7 @@ static struct trusty_ipc_dev *_ipc_dev;
 static struct trusty_dev _tdev; /* There should only be one trusty device */
 static void *rpmb_ctx;
 
+void rpmb_storage_put_ctx(void *dev);
 void trusty_ipc_shutdown(void)
 {
     (void)rpmb_storage_proxy_shutdown(_ipc_dev);

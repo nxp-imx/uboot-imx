@@ -121,6 +121,7 @@ bool valid_tos() {
 /*
  * This will return FASTBOOT_LOCK, FASTBOOT_UNLOCK or FASTBOOT_ERROR
  */
+#ifndef CONFIG_IMX_TRUSTY_OS
 static FbLockState decrypt_lock_store(unsigned char* bdata) {
 	if (!strncmp((const char *)bdata, "locked", strlen("locked")))
 		return FASTBOOT_LOCK;
@@ -129,7 +130,6 @@ static FbLockState decrypt_lock_store(unsigned char* bdata) {
 	else
 		return FASTBOOT_LOCK_ERROR;
 }
-
 static inline int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
 	if (FASTBOOT_LOCK == lock)
 		strncpy((char *)bdata, "locked", strlen("locked"));
@@ -139,6 +139,7 @@ static inline int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
 		return -1;
 	return 0;
 }
+#endif
 #else
 
 static int sha1sum(unsigned char* data, int len, unsigned char* output) {
