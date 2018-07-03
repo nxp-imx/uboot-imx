@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2013 Stefan Roese <sr@denx.de>
+ * Copyright 2018 NXP
  */
 
 #include <common.h>
@@ -8,6 +9,7 @@
 #include <linux/errno.h>
 #include <asm/io.h>
 #include <asm/mach-imx/regs-common.h>
+#include <fsl_caam.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -102,4 +104,11 @@ void board_lmb_reserve(struct lmb *lmb)
 		lmb_reserve(lmb, sp, bank_end - sp);
 		break;
 	}
+}
+
+void imx_sec_init(void)
+{
+#if defined(CONFIG_SPL_BUILD) || !defined(CONFIG_SPL)
+	caam_open();
+#endif
 }
