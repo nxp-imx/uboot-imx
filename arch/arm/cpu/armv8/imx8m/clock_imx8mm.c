@@ -253,6 +253,7 @@ u32 decode_fracpll(enum clk_root_src frac_pll)
 }
 
 enum intpll_out_freq {
+	INTPLL_OUT_750M,
 	INTPLL_OUT_800M,
 	INTPLL_OUT_1200M,
 	INTPLL_OUT_1000M,
@@ -491,6 +492,11 @@ int intpll_configure(enum pll_clocks pll, enum intpll_out_freq freq)
 	};
 
 	switch (freq) {
+	case INTPLL_OUT_750M:
+		/* 24 * 0xfa / 2 / 2 ^ 2 */
+		pll_div_ctl_val = INTPLL_MAIN_DIV_VAL(0xfa) |
+			INTPLL_PRE_DIV_VAL(2) | INTPLL_POST_DIV_VAL(2);
+		break;
 	case INTPLL_OUT_800M:
 		/* 24 * 0x190 / 3 / 2 ^ 2 */
 		pll_div_ctl_val = INTPLL_MAIN_DIV_VAL(0x190) |
@@ -571,7 +577,8 @@ int clock_init()
 		INTPLL_DIV20_CLKE_MASK;
 	writel(val_cfg0, SYS_PLL2_GNRL_CTL);
 
-	intpll_configure(ANATOP_SYSTEM_PLL3, INTPLL_OUT_800M);
+	intpll_configure(ANATOP_SYSTEM_PLL3, INTPLL_OUT_750M);
+	clock_set_target_val(NOC_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(2));
 
 	/* config GIC to sys_pll2_100m */
 	clock_enable(CCGR_GIC, 0);
