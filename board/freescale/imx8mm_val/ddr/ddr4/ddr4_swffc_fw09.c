@@ -220,8 +220,7 @@ void ddr4_pub_train(void)
 	reg32_write(SRC_DDRC_RCR_ADDR, 0x8F00000F); /*  deassert [4]src_system_rst_b! */
 
 	/* change the clock source of dram_apb_clk_root */
-	reg32_write(CCM_IP_CLK_ROOT_GEN_TAGET_CLR(1), (0x7 << 24) | (0x7 << 16));
-	reg32_write(CCM_IP_CLK_ROOT_GEN_TAGET_SET(1), (0x4 << 24) | (0x3 << 16)); /* to source 4 --800MHz/4 */
+	clock_set_target_val(DRAM_APB_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(4) | CLK_ROOT_PRE_DIV(CLK_ROOT_PRE_DIV4)); /* to source 4 --800MHz/4 */
 
 	/* DDR_PLL_CONFIG_600MHz(); */
 	dram_pll_init(DRAM_PLL_OUT_600M);
