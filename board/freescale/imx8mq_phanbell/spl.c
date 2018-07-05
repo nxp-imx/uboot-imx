@@ -160,8 +160,8 @@ int power_init_board(void)
 	/* unlock the PMIC regs */
 	pmic_reg_write(p, BD71837_REGLOCK, 0x1);
 
-	/* Set BUCK5 output for DRAM to 1.0V */
-	pmic_reg_write(p, BD71837_BUCK5_VOLT, 0x3);
+	/* Set BUCK5 output for DRAM to 0.9V */
+	pmic_reg_write(p, BD71837_BUCK5_VOLT, 0x2);
 
 	/* Set BUCK6 output for VDD_3V3 to 3.1V */
 	pmic_reg_write(p, BD71837_BUCK6_VOLT, 0x1);
