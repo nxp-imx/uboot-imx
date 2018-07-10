@@ -84,13 +84,114 @@ int board_postclk_init(void)
 }
 #endif
 
+/* layout of baseboard id */
+#define IMX8MQ_GPIO3_IO25 IMX_GPIO_NR(3, 25)  //board_id[6]:6
+#define IMX8MQ_GPIO3_IO19 IMX_GPIO_NR(3, 19)  //board_id[6]:5
+#define IMX8MQ_GPIO3_IO20 IMX_GPIO_NR(3, 20)  //board_id[6]:4
+#define IMX8MQ_GPIO3_IO24 IMX_GPIO_NR(3, 24)  //board_id[6]:3
+#define IMX8MQ_GPIO3_IO23 IMX_GPIO_NR(3, 23)  //board_id[6]:2
+#define IMX8MQ_GPIO3_IO22 IMX_GPIO_NR(3, 22)  //board_id[6]:1
+#define IMX8MQ_GPIO3_IO21 IMX_GPIO_NR(3, 21)  //board_id[6]:0
+
+/* GPIO port description */
+static unsigned long imx8m_gpio_ports[] = {
+	[0] = GPIO1_BASE_ADDR,
+	[1] = GPIO2_BASE_ADDR,
+	[2] = GPIO3_BASE_ADDR,
+	[3] = GPIO4_BASE_ADDR,
+	[4] = GPIO5_BASE_ADDR,
+};
+
+/* use legacy gpio operations before device model is ready. */
+static int gpio_direction_input_legacy(unsigned int gpio)
+{
+	unsigned int port;
+	struct gpio_regs *regs;
+	u32 l;
+
+	port = gpio/32;
+
+	gpio &= 0x1f;
+
+	regs = (struct gpio_regs *)imx8m_gpio_ports[port];
+
+	l = readl(&regs->gpio_dir);
+	/* set direction as input. */
+	l &= ~(1 << gpio);
+	writel(l, &regs->gpio_dir);
+
+	return 0;
+}
+
+static int gpio_get_value_legacy(unsigned gpio)
+{
+	unsigned int port;
+	struct gpio_regs *regs;
+	u32 val;
+
+	port = gpio/32;
+
+	gpio &= 0x1f;
+
+	regs = (struct gpio_regs *)imx8m_gpio_ports[port];
+
+	val = (readl(&regs->gpio_dr) >> gpio) & 0x01;
+
+	return val;
+}
+
+int get_imx8m_baseboard_id(void)
+{
+	int  i = 0, value = 0;
+	int baseboard_id;
+	int pin[7];
+
+	/* initialize the pin array */
+	pin[0] = IMX8MQ_GPIO3_IO21;
+	pin[1] = IMX8MQ_GPIO3_IO22;
+	pin[2] = IMX8MQ_GPIO3_IO23;
+	pin[3] = IMX8MQ_GPIO3_IO24;
+	pin[4] = IMX8MQ_GPIO3_IO20;
+	pin[5] = IMX8MQ_GPIO3_IO19;
+	pin[6] = IMX8MQ_GPIO3_IO25;
+
+	/* Set gpio direction as input and get the input value */
+	baseboard_id = 0;
+	for (i = 0; i < 7; i++) {
+		gpio_direction_input_legacy(pin[i]);
+		if ((value = gpio_get_value_legacy(pin[i])) < 0) {
+			printf("Error! Read gpio port: %d failed!\n", pin[i]);
+			return -1;
+		}
+		else
+			baseboard_id |= ((value & 0x01) << i);
+	}
+
+	return baseboard_id;
+}
+
 int dram_init(void)
 {
+	int baseboard_id;
+	uint32_t ddr_size = 0;
+	/* different boards have different DDR type, distinguish the DDR
+	 * type by board id.
+	 */
+	baseboard_id = get_imx8m_baseboard_id();
+	if ((baseboard_id == ENTERPRISE_MICRON_1G) ||
+			(baseboard_id == ENTERPRISE_HYNIX_1G)) {
+		/* 1G DDR size */
+		ddr_size = 0x40000000;
+	} else{
+		/* Default to use 3G DDR size */
+		ddr_size = 0xc0000000;
+	}
+
 	/* rom_pointer[1] contains the size of TEE occupies */
 	if (rom_pointer[1])
-		gd->ram_size = PHYS_SDRAM_SIZE - rom_pointer[1];
+		gd->ram_size = ddr_size - rom_pointer[1];
 	else
-		gd->ram_size = PHYS_SDRAM_SIZE;
+		gd->ram_size = ddr_size;
 
 	return 0;
 }

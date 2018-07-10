@@ -380,3 +380,11 @@ struct display_info_t const displays[] = {{
 size_t display_count = ARRAY_SIZE(displays);
 
 #endif /* CONFIG_VIDEO_IMXDCSS */
+
+/* return hard code board id for imx8m_ref */
+#if defined(CONFIG_ANDROID_THINGS_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
+int get_imx8m_baseboard_id(void)
+{
+	return IMX8M_REF_3G;
+}
+#endif

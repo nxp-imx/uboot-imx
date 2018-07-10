@@ -53,4 +53,10 @@
 
 #define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
 
+#define ENTERPRISE_MICRON_1G   0x5c
+#define ENTERPRISE_HYNIX_1G    0x56
+#define ENTERPRISE_MIRCONB_3G  0x40
+#define WIBO_3G                0x00
+#define IMX8M_REF_3G           0x00
+
 #endif /* IMX8MQ_EVK_ANDROID_THINGS_H */
