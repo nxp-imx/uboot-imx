@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012-2016 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
  *
  *
  * See file CREDITS for list of people who contributed to this
@@ -48,7 +49,7 @@ static int do_caam(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	ret = caam_gen_blob((uint32_t)data_addr, (uint32_t)blob_addr, (uint32_t)size);
 
 	if(ret != SUCCESS){
-		printf("Error during blob decap operation: 0x%d\n",ret);
+		printf("Error during blob encap operation: 0x%x\n", ret);
 		return 0;
 	}
 
@@ -81,7 +82,7 @@ static int do_caam(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	caam_open();
 	ret = caam_decap_blob((uint32_t)(data_addr), (uint32_t)(blob_addr), (uint32_t)size);
 	if(ret != SUCCESS)
-		printf("Error during blob decap operation: 0x%d\n",ret);
+		printf("Error during blob decap operation: 0x%x\n", ret);
 	else {
 		printf("Success, blob decap at SM PAGE1 original data is:\n");
 		int i = 0;
