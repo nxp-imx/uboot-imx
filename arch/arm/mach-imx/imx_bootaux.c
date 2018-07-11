@@ -13,7 +13,7 @@
 #ifndef CONFIG_IMX8
 int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 {
-	ulong stack, pc;
+	u32 stack, pc;
 
 	if (!boot_private_data)
 		return -EINVAL;
