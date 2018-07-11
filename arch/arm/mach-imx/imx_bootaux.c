@@ -16,7 +16,7 @@
 
 int arch_auxiliary_core_up(u32 core_id, ulong addr)
 {
-	ulong stack, pc;
+	u32 stack, pc;
 
 	if (!addr)
 		return -EINVAL;
@@ -45,7 +45,7 @@ int arch_auxiliary_core_up(u32 core_id, ulong addr)
 		pc = *(u32 *)(addr + 4);
 	}
 #endif
-	printf("## Starting auxiliary core stack = 0x%08lX, pc = 0x%08lX...\n",
+	printf("## Starting auxiliary core stack = 0x%08X, pc = 0x%08X...\n",
 	       stack, pc);
 
 	/* Set the stack and pc to MCU bootROM */
