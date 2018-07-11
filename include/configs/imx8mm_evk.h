@@ -111,6 +111,8 @@
 		"\0" \
 	"initrd_addr=0x43800000\0" \
 	"initrd_high=0xffffffff\0" \
+	"emmc_dev=1\0" \
+	"sd_dev=0\0" \
 	"bootcmd_mfg=run mfgtool_args;  if iminfo ${initrd_addr}; then "\
 					   "booti ${loadaddr} ${initrd_addr} ${fdt_addr};"\
 					"else echo \"Run fastboot ...\"; fastboot 0; fi\0" \
