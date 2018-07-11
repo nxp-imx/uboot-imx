@@ -4,6 +4,7 @@
  * Sascha Hauer, Pengutronix
  *
  * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
  */
 
 #include <common.h>
@@ -623,6 +624,19 @@ int arch_cpu_init(void)
 		 */
 		writel(readl(MX6UL_SNVS_LP_BASE_ADDR) |
 			0x3, MX6UL_SNVS_LP_BASE_ADDR);
+	}
+
+	if (is_mx6ull() || is_mx6ul()) {
+		struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
+		if (iomux->gpr[9] & 0x1) {
+			/* When trust zone is enabled,
+			 * set Region 0 attribute to allow secure and non-secure read/write permission
+			 * Because PL301 hard code to non-secure for some masters on m_3/4/5 ports.
+			 * Like LCDIF, PXP, CSI can't work with secure memory.
+			 */
+
+			writel(0xf0000000, IP2APB_TZASC1_BASE_ADDR + 0x108);
+		}
 	}
 
 	/* Set perclk to source from OSC 24MHz */
