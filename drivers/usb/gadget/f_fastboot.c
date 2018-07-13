@@ -3389,24 +3389,19 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 #endif
 	fastboot_fail("no flash device defined");
 
-#ifdef CONFIG_FASTBOOT_LOCK
-	int gpt_valid_pre = 0;
-	int gpt_valid_pst = 0;
-	if (strncmp(cmd, "gpt", 3) == 0)
-		gpt_valid_pre = partition_table_valid();
-#endif
 	rx_process_flash(cmd);
 #ifdef CONFIG_FASTBOOT_LOCK
 	if (strncmp(cmd, "gpt", 3) == 0) {
-		gpt_valid_pst = partition_table_valid();
+		int gpt_valid = 0;
+		gpt_valid = partition_table_valid();
 		/* If gpt is valid, load partitons table into memory.
 		   So if the next command is "fastboot reboot bootloader",
 		   it can find the "misc" partition to r/w. */
-		if(gpt_valid_pst)
+		if(gpt_valid) {
 			_fastboot_load_partitions();
-		/* If gpt invalid -> valid, write unlock status, also wipe data. */
-		if ((gpt_valid_pre == 0) && (gpt_valid_pst == 1))
+			/* Unlock device if the gpt is valid */
 			do_fastboot_unlock(true);
+		}
 	}
 
 #endif
