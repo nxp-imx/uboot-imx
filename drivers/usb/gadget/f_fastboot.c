@@ -1604,7 +1604,7 @@ void board_recovery_setup(void)
 	}
 #endif /* CONFIG_AVB_SUPPORT */
 	printf("setup env for recovery..\n");
-	env_set("bootcmd", "run bootcmd_android_recovery");
+	env_set("bootcmd", env_get("bootcmd_android_recovery"));
 }
 #endif /*CONFIG_ANDROID_RECOVERY*/
 #endif /*CONFIG_FSL_FASTBOOT*/
