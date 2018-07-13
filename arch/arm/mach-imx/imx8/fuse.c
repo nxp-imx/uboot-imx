@@ -24,13 +24,16 @@ int fuse_read(u32 bank, u32 word, u32 *val)
 
 int fuse_sense(u32 bank, u32 word, u32 *val)
 {
-    if (bank != 0) {
-        printf("Invalid bank argument, ONLY bank 0 is supported\n");
-	return -EINVAL;
-    }
+	if (bank != 0) {
+		printf("Invalid bank argument, ONLY bank 0 is supported\n");
+		return -EINVAL;
+	}
 #if defined(CONFIG_SMC_FUSE)
-    return call_imx_sip_ret2(FSL_SIP_OTP_READ, (unsigned long)word,\
-                        (unsigned long)val, 0, 0);
+	unsigned long ret, value;
+	ret = call_imx_sip_ret2(FSL_SIP_OTP_READ, (unsigned long)word,
+		&value, 0, 0);
+	*val = (u32)value;
+	return ret;
 #else
 	sc_err_t err;
 	sc_ipc_t ipc;
@@ -49,14 +52,14 @@ int fuse_sense(u32 bank, u32 word, u32 *val)
 
 int fuse_prog(u32 bank, u32 word, u32 val)
 {
-    if (bank != 0) {
-        printf("Invalid bank argument, ONLY bank 0 is supported\n");
-        return -EINVAL;
-    }
+	if (bank != 0) {
+		printf("Invalid bank argument, ONLY bank 0 is supported\n");
+		return -EINVAL;
+	}
 
 #if defined(CONFIG_SMC_FUSE)
-        return call_imx_sip(FSL_SIP_OTP_WRITE, (unsigned long)word,\
-                            (unsigned long)val, 0, 0);
+	return call_imx_sip(FSL_SIP_OTP_WRITE, (unsigned long)word,\
+		(unsigned long)val, 0, 0);
 #else
 	printf("Program fuse to i.MX8 in u-boot is forbidden\n");
 	return -EPERM;
