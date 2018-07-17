@@ -283,14 +283,6 @@ static char *fb_response_str;
 
 #define ANDROID_MBR_OFFSET	    0
 #define ANDROID_MBR_SIZE	    0x200
-#ifdef  CONFIG_BOOTLOADER_OFFSET_33K
-#define ANDROID_BOOTLOADER_OFFSET   0x8400
-/* The Bootloader offset of imx8qxp B0 board is set to 32K */
-#elif defined(CONFIG_BOOTLOADER_OFFSET_32K)
-#define ANDROID_BOOTLOADER_OFFSET 0x8000
-#else
-#define ANDROID_BOOTLOADER_OFFSET   0x400
-#endif
 #define ANDROID_BOOTLOADER_SIZE	    0x1FFC00
 
 #define MMC_SATA_BLOCK_SIZE 512
@@ -768,6 +760,16 @@ static void process_flash_sata(const char *cmdbuf)
 }
 #endif
 
+static ulong bootloader_mmc_offset(void)
+{
+	if (is_imx8m() || (is_imx8() && is_soc_rev(CHIP_REV_A)))
+		return 0x8400;
+	else if (is_imx8())
+		return 0x8000;
+	else
+		return 0x400;
+}
+
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
 static int is_raw_partition(struct fastboot_ptentry *ptn)
 {
@@ -856,7 +858,7 @@ static lbaint_t mmc_sparse_reserve(struct sparse_storage *info,
 bool bootloader_gpt_overlay(void)
 {
 	return (g_ptable[PTN_GPT_INDEX].partition_id  == g_ptable[PTN_BOOTLOADER_INDEX].partition_id  &&
-		ANDROID_BOOTLOADER_OFFSET < ANDROID_GPT_END);
+		bootloader_mmc_offset() < ANDROID_GPT_END);
 }
 
 int write_backup_gpt(void)
@@ -1398,7 +1400,7 @@ static int _fastboot_parts_load_from_ptable(void)
 	/* Bootloader */
 	strcpy(ptable[PTN_BOOTLOADER_INDEX].name, FASTBOOT_PARTITION_BOOTLOADER);
 	ptable[PTN_BOOTLOADER_INDEX].start =
-				ANDROID_BOOTLOADER_OFFSET / dev_desc->blksz;
+				bootloader_mmc_offset() / dev_desc->blksz;
 	ptable[PTN_BOOTLOADER_INDEX].length =
 				 ANDROID_BOOTLOADER_SIZE / dev_desc->blksz;
 	ptable[PTN_BOOTLOADER_INDEX].partition_id = boot_partition;
