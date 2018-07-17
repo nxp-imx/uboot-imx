@@ -584,6 +584,11 @@ config VIDEO_IMX8_HDMI
 	help
 	  Support for HDMI i.MX8 processors.
 
+config IMX_MIPI_DSI_BRIDGE
+	bool
+	help
+	  Enable MIPI DSI bridge interface for display controller.
+
 config MXC_EPDC
 	bool "i.MX EPDC support"
 	depends on LCD && (MX7 || MX6)
