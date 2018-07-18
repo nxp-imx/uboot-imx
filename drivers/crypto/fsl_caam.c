@@ -33,7 +33,11 @@
 #include <malloc.h>
 #include <memalign.h>
 #include <asm/io.h>
+#ifndef CONFIG_ARCH_MX7ULP
 #include <asm/arch/crm_regs.h>
+#else
+#include <asm/arch/pcc.h>
+#endif /* CONFIG_ARCH_MX7ULP */
 #include "fsl_caam_internal.h"
 #include "fsl/desc_constr.h"
 #include <fsl_caam.h>
@@ -111,7 +115,7 @@ u32 secmem_set_cmd_1(u32 sec_mem_cmd)
 	u32 temp_reg;
 	__raw_writel(sec_mem_cmd, CAAM_SMCJR0);
 	do {
-	temp_reg = __raw_readl(CAAM_SMCSJR0);
+		temp_reg = __raw_readl(CAAM_SMCSJR0);
 	} while (temp_reg & CMD_COMPLETE);
 
 	return temp_reg;
@@ -152,7 +156,6 @@ u32 caam_decap_blob(u32 plain_text, u32 blob_addr, u32 size)
 	ret = do_job(decap_desc);
 
 	if (ret != SUCCESS) {
-		dump_error();
 		printf("Error: blob decap job failed 0x%x\n", ret);
 	}
 
@@ -196,7 +199,6 @@ u32 caam_gen_blob(u32 plain_data_addr, u32 blob_addr, u32 size)
 	ret = do_job(encap_desc);
 
 	if (ret != SUCCESS) {
-		dump_error();
 		printf("Error: blob encap job failed 0x%x\n", ret);
 	}
 
@@ -231,7 +233,6 @@ u32 caam_hwrng(u8 *output_ptr, u32 output_len)
 			   + ROUND(2 * output_len, ARCH_DMA_MINALIGN));
 
 	if (ret != SUCCESS) {
-		dump_error();
 		printf("Error: RNG generate failed 0x%x\n", ret);
 	}
 
@@ -575,7 +576,7 @@ static int do_cfg_jrqueue(void)
 	phys_addr_t op_base;
 
 	/* check if already configured after relocation */
-	if (g_jrdata.status & RING_RELOC_INIT)
+	if (g_jrdata.status == RING_RELOC_INIT)
 		return 0;
 
 	/*
@@ -593,7 +594,7 @@ static int do_cfg_jrqueue(void)
 					     ARCH_DMA_MINALIGN);
 		g_jrdata.desc = (u32 *)
 				memalign(ARCH_DMA_MINALIGN, ARCH_DMA_MINALIGN);
-		g_jrdata.status |= RING_RELOC_INIT;
+		g_jrdata.status = RING_RELOC_INIT;
 	} else {
 		u32 align_idx = 0;
 
@@ -605,7 +606,7 @@ static int do_cfg_jrqueue(void)
 		g_jrdata.outrings = (struct outring_entry *)
 				    (&g_jrdata.raw_addr[align_idx + 2]);
 		g_jrdata.desc = (u32 *)(&g_jrdata.raw_addr[align_idx + 4]);
-		g_jrdata.status |= RING_EARLY_INIT;
+		g_jrdata.status = RING_EARLY_INIT;
 	}
 
 	if (!g_jrdata.inrings || !g_jrdata.outrings)
@@ -700,7 +701,6 @@ static int do_instantiation(void)
 			if (ret == ERROR_ANY) {
 				/* CAAM JR failure ends here */
 				printf("RNG Instantiation error\n");
-				dump_error();
 				goto end_instantation;
 			}
 		} else {
