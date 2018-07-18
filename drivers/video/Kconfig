@@ -589,6 +589,14 @@ config IMX_MIPI_DSI_BRIDGE
 	help
 	  Enable MIPI DSI bridge interface for display controller.
 
+config IMX_NORTHWEST_MIPI_DSI
+	bool "i.MX northwest's MIPI DSI"
+	default n
+	select IMX_MIPI_DSI_BRIDGE
+	depends on VIDEO && MX7ULP
+	help
+	  Support for i.MX7ULP MIPI DSI controller.
+
 config MXC_EPDC
 	bool "i.MX EPDC support"
 	depends on LCD && (MX7 || MX6)

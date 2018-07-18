@@ -17,6 +17,7 @@
 #include "mipi_dsi_northwest_regs.h"
 #include <mipi_dsi_northwest.h>
 #include <mipi_display.h>
+#include <imx_mipi_dsi_bridge.h>
 
 #define MIPI_LCD_SLEEP_MODE_DELAY	(120)
 #define MIPI_FIFO_TIMEOUT		250000 /* 250ms */
@@ -32,6 +33,18 @@ enum mipi_dsi_mode {
 enum mipi_dsi_payload {
 	DSI_PAYLOAD_CMD,
 	DSI_PAYLOAD_VIDEO,
+};
+
+/*
+ * mipi-dsi northwest driver information structure, holds useful data for the driver.
+ */
+struct mipi_dsi_northwest_info {
+	u32			mmio_base;
+	u32			sim_base;
+	int			enabled;
+	struct mipi_dsi_client_dev *dsi_panel_dev;
+	struct mipi_dsi_client_driver *dsi_panel_drv;
+	struct fb_videomode mode;
 };
 
 /**
@@ -141,7 +154,7 @@ static int mipi_dsi_host_init(struct mipi_dsi_northwest_info *mipi_dsi)
 {
 	uint32_t lane_num;
 
-	switch (mipi_dsi->dsi_panel_dev->data_lane_num) {
+	switch (mipi_dsi->dsi_panel_dev->lanes) {
 	case 1:
 		lane_num = 0x0;
 		break;
@@ -171,9 +184,11 @@ static int mipi_dsi_host_init(struct mipi_dsi_northwest_info *mipi_dsi)
 static int mipi_dsi_dpi_init(struct mipi_dsi_northwest_info *mipi_dsi)
 {
 	uint32_t bpp, color_coding, pixel_fmt;
-	struct fb_videomode *mode = &(mipi_dsi->dsi_panel_dev->mode);
+	struct fb_videomode *mode = &(mipi_dsi->mode);
 
-	bpp = mipi_dsi->dsi_panel_dev->bpp;
+	bpp = mipi_dsi_pixel_format_to_bpp(mipi_dsi->dsi_panel_dev->format);
+	if (bpp < 0)
+		return -EINVAL;
 
 	writel(mode->xres, mipi_dsi->mmio_base + DPI_PIXEL_PAYLOAD_SIZE);
 	writel(mode->xres, mipi_dsi->mmio_base + DPI_PIXEL_FIFO_SEND_LEVEL);
@@ -293,8 +308,8 @@ static int mipi_dsi_enable(struct mipi_dsi_northwest_info *mipi_dsi)
 	mipi_dsi_init_interrupt(mipi_dsi);
 
 	/* Call panel driver's setup */
-	if (mipi_dsi->dsi_panel_drv->mipi_panel_setup) {
-		ret = mipi_dsi->dsi_panel_drv->mipi_panel_setup(mipi_dsi->dsi_panel_dev);
+	if (mipi_dsi->dsi_panel_drv->dsi_client_setup) {
+		ret = mipi_dsi->dsi_panel_drv->dsi_client_setup(mipi_dsi->dsi_panel_dev);
 		if (ret < 0) {
 			printf("failed to init mipi lcd.\n");
 			return ret;
@@ -393,7 +408,7 @@ static int wait_for_pkt_done(struct mipi_dsi_northwest_info *mipi_dsi, unsigned 
 }
 
 static int mipi_dsi_pkt_write(struct mipi_dsi_northwest_info *mipi_dsi,
-			u8 data_type, const u32 *buf, int len)
+			u8 data_type, const u8 *buf, int len)
 {
 	int ret = 0;
 	const uint8_t *data = (const uint8_t *)buf;
@@ -437,7 +452,7 @@ static int mipi_dsi_dcs_cmd(struct mipi_dsi_northwest_info *mipi_dsi,
 		buf[0] = cmd;
 		buf[1] = 0x0;
 		err = mipi_dsi_pkt_write(mipi_dsi,
-				MIPI_DSI_DCS_SHORT_WRITE, buf, 0);
+				MIPI_DSI_DCS_SHORT_WRITE, (u8 *)buf, 0);
 		break;
 
 	default:
@@ -468,34 +483,11 @@ static void mipi_dsi_shutdown(struct mipi_dsi_northwest_info *mipi_dsi)
 	clrbits_le32(mipi_dsi->sim_base + SIM_SOPT1CFG, DSI_RST_DPI_N);
 }
 
-struct mipi_dsi_northwest_info *dsi_info = NULL;
-
-int mipi_dsi_northwest_setup(u32 base_addr, u32 sim_addr)
+/* Attach a LCD panel device */
+int mipi_dsi_northwest_bridge_attach(struct mipi_dsi_bridge_driver *bridge_driver, struct mipi_dsi_client_dev *panel_dev)
 {
-	if (dsi_info != NULL) {
-		printf("mipi_dsi_northwest has been initialized.\n");
-		return -EBUSY;
-	}
+	struct mipi_dsi_northwest_info *dsi_info = (struct mipi_dsi_northwest_info *)bridge_driver->driver_private;
 
-	dsi_info = (struct mipi_dsi_northwest_info *)malloc(sizeof(struct mipi_dsi_northwest_info));
-	if (!dsi_info) {
-		printf("failed to allocate mipi_dsi_northwest_info object.\n");
-		return -ENOMEM;
-	}
-
-	dsi_info->mmio_base = base_addr;
-	dsi_info->sim_base = sim_addr;
-	dsi_info->mipi_dsi_pkt_write = &mipi_dsi_pkt_write;
-	dsi_info->dsi_panel_dev = NULL;
-	dsi_info->dsi_panel_drv = NULL;
-	dsi_info->enabled = 0;
-
-	return 0;
-}
-
-/* Register a LCD panel device */
-int mipi_dsi_northwest_register_panel_device(struct mipi_dsi_northwest_panel_device *panel_dev)
-{
 	if (!panel_dev) {
 		printf("mipi_dsi_northwest_panel_device is NULL.\n");
 		return -EFAULT;
@@ -503,11 +495,6 @@ int mipi_dsi_northwest_register_panel_device(struct mipi_dsi_northwest_panel_dev
 
 	if (!panel_dev->name) {
 		printf("mipi_dsi_northwest_panel_device name is NULL.\n");
-		return -EFAULT;
-	}
-
-	if (!dsi_info) {
-		printf("mipi_dsi_northwest is not initialized\n");
 		return -EFAULT;
 	}
 
@@ -520,14 +507,17 @@ int mipi_dsi_northwest_register_panel_device(struct mipi_dsi_northwest_panel_dev
 	}
 
 	dsi_info->dsi_panel_dev = panel_dev;
-	panel_dev->host = dsi_info;
 
 	return 0;
 }
 
-/* Register a LCD panel driver, will search the panel device to bind with them */
-int mipi_dsi_northwest_register_panel_driver(struct mipi_dsi_northwest_panel_driver *panel_drv)
+
+/* Add a LCD panel driver, will search the panel device to bind with them */
+int mipi_dsi_northwest_bridge_add_client_driver(struct mipi_dsi_bridge_driver *bridge_driver,
+	struct mipi_dsi_client_driver *panel_drv)
 {
+	struct mipi_dsi_northwest_info *dsi_info = (struct mipi_dsi_northwest_info *)bridge_driver->driver_private;
+
 	if (!panel_drv) {
 		printf("mipi_dsi_northwest_panel_driver is NULL.\n");
 		return -EFAULT;
@@ -535,11 +525,6 @@ int mipi_dsi_northwest_register_panel_driver(struct mipi_dsi_northwest_panel_dri
 
 	if (!panel_drv->name) {
 		printf("mipi_dsi_northwest_panel_driver name is NULL.\n");
-		return -EFAULT;
-	}
-
-	if (!dsi_info) {
-		printf("mipi_dsi_northwest is not initialized\n");
 		return -EFAULT;
 	}
 
@@ -557,8 +542,10 @@ int mipi_dsi_northwest_register_panel_driver(struct mipi_dsi_northwest_panel_dri
 }
 
 /* Enable the mipi dsi display */
-int mipi_dsi_northwest_enable(void)
+static int mipi_dsi_northwest_bridge_enable(struct mipi_dsi_bridge_driver *bridge_driver)
 {
+	struct mipi_dsi_northwest_info *dsi_info = (struct mipi_dsi_northwest_info *)bridge_driver->driver_private;
+
 	if (!dsi_info->dsi_panel_dev || !dsi_info->dsi_panel_drv)
 		return -ENODEV;
 
@@ -570,8 +557,10 @@ int mipi_dsi_northwest_enable(void)
 }
 
 /* Disable and shutdown the mipi dsi display */
-int mipi_dsi_northwest_shutdown(void)
+static int mipi_dsi_northwest_bridge_disable(struct mipi_dsi_bridge_driver *bridge_driver)
 {
+	struct mipi_dsi_northwest_info *dsi_info = (struct mipi_dsi_northwest_info *)bridge_driver->driver_private;
+
 	if (!dsi_info->enabled)
 		return 0;
 
@@ -581,4 +570,52 @@ int mipi_dsi_northwest_shutdown(void)
 	dsi_info->enabled = 0;
 
 	return 0;
+}
+
+static int mipi_dsi_northwest_bridge_mode_set(struct mipi_dsi_bridge_driver *bridge_driver,
+	struct fb_videomode *fbmode)
+{
+	struct mipi_dsi_northwest_info *dsi_info = (struct mipi_dsi_northwest_info *)bridge_driver->driver_private;
+
+	dsi_info->mode = *fbmode;
+
+	return 0;
+}
+
+static int mipi_dsi_northwest_bridge_pkt_write(struct mipi_dsi_bridge_driver *bridge_driver,
+			u8 data_type, const u8 *buf, int len)
+{
+	struct mipi_dsi_northwest_info *mipi_dsi = (struct mipi_dsi_northwest_info *)bridge_driver->driver_private;
+
+	return mipi_dsi_pkt_write(mipi_dsi, data_type, buf, len);
+}
+
+struct mipi_dsi_bridge_driver imx_northwest_dsi_driver = {
+	.attach    = mipi_dsi_northwest_bridge_attach,
+	.enable   = mipi_dsi_northwest_bridge_enable,
+	.disable   = mipi_dsi_northwest_bridge_disable,
+	.mode_set   = mipi_dsi_northwest_bridge_mode_set,
+	.pkt_write = mipi_dsi_northwest_bridge_pkt_write,
+	.add_client_driver = mipi_dsi_northwest_bridge_add_client_driver,
+	.name = "imx_northwest_mipi_dsi",
+};
+
+int mipi_dsi_northwest_setup(u32 base_addr, u32 sim_addr)
+{
+	struct mipi_dsi_northwest_info *dsi_info;
+
+	dsi_info = (struct mipi_dsi_northwest_info *)malloc(sizeof(struct mipi_dsi_northwest_info));
+	if (!dsi_info) {
+		printf("failed to allocate mipi_dsi_northwest_info object.\n");
+		return -ENOMEM;
+	}
+
+	dsi_info->mmio_base = base_addr;
+	dsi_info->sim_base = sim_addr;
+	dsi_info->dsi_panel_dev = NULL;
+	dsi_info->dsi_panel_drv = NULL;
+	dsi_info->enabled = 0;
+
+	imx_northwest_dsi_driver.driver_private = dsi_info;
+	return imx_mipi_dsi_bridge_register_driver(&imx_northwest_dsi_driver);
 }
