@@ -1,12 +1,12 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc. All Rights Reserved.
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
-#include <mipi_dsi_northwest.h>
+#include <imx_mipi_dsi_bridge.h>
 #include <mipi_display.h>
 
 #define HX8363_TWO_DATA_LANE				(0x2)
@@ -49,15 +49,15 @@ static void parse_variadic(int n, u8 *buf, ...)
 	parse_variadic(n, buf, ##__VA_ARGS__);			\
 								\
 	if (n >= 2)						\
-		err = mipi_dsi->mipi_dsi_pkt_write(mipi_dsi,		\
-			MIPI_DSI_DCS_LONG_WRITE, (u32 *)buf, n + 1);	\
+		err = imx_mipi_dsi_bridge_pkt_write(		\
+			MIPI_DSI_DCS_LONG_WRITE, (u8 *)buf, n + 1);	\
 	else if (n == 1)					\
-		err = mipi_dsi->mipi_dsi_pkt_write(mipi_dsi,	\
-			MIPI_DSI_DCS_SHORT_WRITE_PARAM, (u32 *)buf, 0);	\
+		err = imx_mipi_dsi_bridge_pkt_write(	\
+			MIPI_DSI_DCS_SHORT_WRITE_PARAM, (u8 *)buf, 0);	\
 	else if (n == 0) {						\
 		buf[1] = 0;					\
-		err = mipi_dsi->mipi_dsi_pkt_write(mipi_dsi,	\
-			MIPI_DSI_DCS_SHORT_WRITE, (u32 *)buf, 0);	\
+		err = imx_mipi_dsi_bridge_pkt_write(	\
+			MIPI_DSI_DCS_SHORT_WRITE, (u8 *)buf, 0);	\
 	}							\
 	CHECK_RETCODE(err);					\
 }
@@ -102,11 +102,9 @@ static void parse_variadic(int n, u8 *buf, ...)
 	TC358763_DCS_write_1A_nP(127, addr, __VA_ARGS__)
 
 
-int mipid_hx8363_lcd_setup(struct mipi_dsi_northwest_panel_device *panel_dev)
+int mipid_hx8363_lcd_setup(struct mipi_dsi_client_dev *panel_dev)
 {
 	u8 buf[DSI_CMD_BUF_MAXSIZE];
-
-	struct mipi_dsi_northwest_info *mipi_dsi = panel_dev->host;
 
 	debug("MIPI DSI LCD HX8363 setup.\n");
 
@@ -136,13 +134,12 @@ int mipid_hx8363_lcd_setup(struct mipi_dsi_northwest_panel_device *panel_dev)
 	return 0;
 }
 
-static struct mipi_dsi_northwest_panel_driver hx8363_drv = {
+static struct mipi_dsi_client_driver hx8363_drv = {
 	.name = "HX8363_WVGA",
-	.mipi_panel_setup = mipid_hx8363_lcd_setup,
+	.dsi_client_setup = mipid_hx8363_lcd_setup,
 };
 
 void hx8363_init(void)
 {
-	mipi_dsi_northwest_register_panel_driver(&hx8363_drv);
+	imx_mipi_dsi_bridge_add_client_driver(&hx8363_drv);
 }
-
