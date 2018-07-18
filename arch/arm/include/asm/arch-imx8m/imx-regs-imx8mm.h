@@ -7,6 +7,8 @@
 #ifndef __ARCH_IMX8M_REGS_H
 #define __ARCH_IMX8M_REGS_H
 
+#include <asm/mach-imx/regs-lcdif.h>
+
 /* Based on version 0.2.2 */
 
 #define ROM_VERSION_A0		0x800
@@ -107,6 +109,8 @@
 #define MXS_BCH_BASE		0x33004000
 
 #define USB_BASE_ADDR		USB1_BASE_ADDR
+
+#define MXS_LCDIF_BASE		LCDIF_BASE_ADDR
 
 #define IOMUXC_GPR0		(IOMUXC_GPR_BASE_ADDR + 0x00)
 #define IOMUXC_GPR1		(IOMUXC_GPR_BASE_ADDR + 0x04)
