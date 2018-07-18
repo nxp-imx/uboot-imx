@@ -89,7 +89,7 @@ void mxs_lcd_get_panel(struct display_panel *dispanel)
 static void mxs_lcd_init(GraphicDevice *panel,
 			struct ctfb_res_modes *mode, int bpp)
 {
-	struct mxs_lcdif_regs *regs = (struct mxs_lcdif_regs *)(panel->isaBase);
+	struct mxs_lcdif_regs *regs = (struct mxs_lcdif_regs *)(ulong)(panel->isaBase);
 	uint32_t word_len = 0, bus_width = 0;
 	uint8_t valid_data = 0;
 
@@ -129,15 +129,26 @@ static void mxs_lcd_init(GraphicDevice *panel,
 	writel(valid_data << LCDIF_CTRL1_BYTE_PACKING_FORMAT_OFFSET,
 		&regs->hw_lcdif_ctrl1);
 
+#ifdef CONFIG_IMX_MIPI_DSI_BRIDGE
+	writel(LCDIF_CTRL2_OUTSTANDING_REQS_REQ_16, &regs->hw_lcdif_ctrl2);
+#endif
+
 	mxsfb_system_setup();
 
 	writel((mode->yres << LCDIF_TRANSFER_COUNT_V_COUNT_OFFSET) | mode->xres,
 		&regs->hw_lcdif_transfer_count);
 
+#ifdef CONFIG_IMX_SEC_MIPI_DSI
+	writel(LCDIF_VDCTRL0_ENABLE_PRESENT |
+		LCDIF_VDCTRL0_VSYNC_PERIOD_UNIT |
+		LCDIF_VDCTRL0_VSYNC_PULSE_WIDTH_UNIT |
+		mode->vsync_len, &regs->hw_lcdif_vdctrl0);
+#else
 	writel(LCDIF_VDCTRL0_ENABLE_PRESENT | LCDIF_VDCTRL0_ENABLE_POL |
 		LCDIF_VDCTRL0_VSYNC_PERIOD_UNIT |
 		LCDIF_VDCTRL0_VSYNC_PULSE_WIDTH_UNIT |
 		mode->vsync_len, &regs->hw_lcdif_vdctrl0);
+#endif
 	writel(mode->upper_margin + mode->lower_margin +
 		mode->vsync_len + mode->yres,
 		&regs->hw_lcdif_vdctrl1);
@@ -172,7 +183,7 @@ static void mxs_lcd_init(GraphicDevice *panel,
 
 void lcdif_power_down(void)
 {
-	struct mxs_lcdif_regs *regs = (struct mxs_lcdif_regs *)(panel.isaBase);
+	struct mxs_lcdif_regs *regs = (struct mxs_lcdif_regs *)(ulong)(panel.isaBase);
 	int timeout = 1000000;
 
 #ifdef CONFIG_MX6
@@ -282,7 +293,7 @@ void *video_hw_init(void)
 	/* Wipe framebuffer */
 	memset(fb, 0, panel.memSize);
 
-	panel.frameAdrs = (u32)fb;
+	panel.frameAdrs = (ulong)fb;
 
 	printf("%s\n", panel.modeIdent);
 
