@@ -68,7 +68,7 @@ obj-$(CONFIG_VIDEO_VADC) += mxc_vadc.o
 obj-$(CONFIG_VIDEO_CSI) += mxc_csi.o
 obj-$(CONFIG_VIDEO_PXP) += mxc_pxp.o
 obj-$(CONFIG_VIDEO_GIS) += mxc_gis.o
-obj-$(CONFIG_MXC_MIPI_DSI_NORTHWEST) += mipi_dsi_northwest.o
+obj-$(CONFIG_IMX_NORTHWEST_MIPI_DSI) += mipi_dsi_northwest.o
 obj-$(CONFIG_IMX_MIPI_DSI_BRIDGE) += imx_mipi_dsi_bridge.o
 obj-$(CONFIG_HX8363) += hx8363_wvga.o
 
