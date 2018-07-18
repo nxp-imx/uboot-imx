@@ -46,6 +46,7 @@ config TARGET_IMX8MM_EVK
 	bool "imx8mm evk"
 	select IMX8MM
 	select SUPPORT_SPL
+	select IMX8M_LPDDR4
 
 endchoice
 
