@@ -8,6 +8,8 @@
 
 #include <asm/mach-imx/regs-lcdif.h>
 
+#include <asm/mach-imx/regs-lcdif.h>
+
 /* Based on version 0.2.2 */
 
 #define ROM_VERSION_A0		0x800
