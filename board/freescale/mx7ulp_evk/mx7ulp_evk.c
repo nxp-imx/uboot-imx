@@ -12,6 +12,9 @@
 #include <usb.h>
 #include <dm.h>
 #include <asm/mach-imx/video.h>
+#include <mipi_dsi_northwest.h>
+#include <imx_mipi_dsi_bridge.h>
+#include <mipi_dsi_panel.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -124,6 +127,14 @@ static iomux_cfg_t const led_pwm_en_pad[] = {
 	MX7ULP_PAD_PTF2__PTF2 | MUX_PAD_CTRL(MIPI_GPIO_PAD_CTRL),
 };
 
+struct mipi_dsi_client_dev hx8363_dev = {
+	.channel	= 0,
+	.lanes = 2,
+	.format  = MIPI_DSI_FMT_RGB888,
+	.mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
+			  MIPI_DSI_MODE_EOT_PACKET | MIPI_DSI_MODE_VIDEO_HSE,
+};
+
 int board_mipi_panel_reset(void)
 {
 	gpio_direction_output(MIPI_RESET_GPIO, 0);
@@ -153,6 +164,15 @@ void do_enable_mipi_dsi(struct display_info_t const *dev)
 	mx7ulp_iomux_setup_multiple_pads(led_pwm_en_pad, ARRAY_SIZE(mipi_reset_pad));
 	gpio_request(LED_PWM_EN_GPIO, "led_pwm_en");
 	gpio_direction_output(LED_PWM_EN_GPIO, 1);
+
+	/* Setup DSI host driver */
+	mipi_dsi_northwest_setup(DSI_RBASE, SIM0_RBASE);
+
+	/* Init hx8363 driver, must after dsi host driver setup */
+	hx8363_init();
+	hx8363_dev.name = displays[0].mode.name;
+	imx_mipi_dsi_bridge_attach(&hx8363_dev); /* attach hx8363 device */
+
 }
 
 struct display_info_t const displays[] = {{
