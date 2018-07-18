@@ -27,6 +27,7 @@ obj-$(CONFIG_SPL_MPC8XXX_INIT_DDR_SUPPORT) += ddr/fsl/
 obj-$(CONFIG_ARMADA_38X) += ddr/marvell/a38x/
 obj-$(CONFIG_ARMADA_XP) += ddr/marvell/axp/
 obj-$(CONFIG_ALTERA_SDRAM) += ddr/altera/
+obj-$(CONFIG_ARCH_IMX8M) += ddr/imx8m/
 obj-$(CONFIG_SPL_POWER_SUPPORT) += power/ power/pmic/
 obj-$(CONFIG_SPL_POWER_SUPPORT) += power/regulator/
 obj-$(CONFIG_SPL_MTD_SUPPORT) += mtd/
