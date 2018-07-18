@@ -2112,7 +2112,9 @@
 #define DDRPHY_PrbsChkStateHi(X)             (IP2APB_DDRPHY_IPS_BASE_ADDR(X) + 4*0x070064)
 #define DDRPHY_PrbsGenCtl1(X)                (IP2APB_DDRPHY_IPS_BASE_ADDR(X) + 4*0x070065)
 #define DDRPHY_PrbsGenCtl2(X)                (IP2APB_DDRPHY_IPS_BASE_ADDR(X) + 4*0x070066)
+#endif
 
+#define DDRPHY_CalBusy(X)                    (IP2APB_DDRPHY_IPS_BASE_ADDR(X) + 4*0x020097)
 
 #define DRC_PERF_MON_BASE_ADDR(X)            (0x3d800000 + (X * 0x2000000))
 #define DRC_PERF_MON_CNT0_CTL(X)             (DRC_PERF_MON_BASE_ADDR(X) + 0x0)
@@ -2139,4 +2141,3 @@
 #define DRC_PERF_MON_MRR13_DAT(X)            (DRC_PERF_MON_BASE_ADDR(X) + 0x74)
 #define DRC_PERF_MON_MRR14_DAT(X)            (DRC_PERF_MON_BASE_ADDR(X) + 0x78)
 #define DRC_PERF_MON_MRR15_DAT(X)            (DRC_PERF_MON_BASE_ADDR(X) + 0x7C)
-#endif
