@@ -29,8 +29,8 @@
 #include <gis.h>
 #endif
 
-#ifdef CONFIG_MXC_MIPI_DSI_NORTHWEST
-#include <mipi_dsi_northwest.h>
+#ifdef CONFIG_IMX_MIPI_DSI_BRIDGE
+#include <imx_mipi_dsi_bridge.h>
 #endif
 
 #define	PS2KHZ(ps)	(1000000000UL / (ps))
@@ -182,8 +182,8 @@ void lcdif_power_down(void)
 	if (!panel.frameAdrs)
 		return;
 
-#ifdef CONFIG_MXC_MIPI_DSI_NORTHWEST
-	mipi_dsi_northwest_shutdown();
+#ifdef CONFIG_IMX_MIPI_DSI_BRIDGE
+	imx_mipi_dsi_bridge_disable();
 #endif
 
 	writel(panel.frameAdrs, &regs->hw_lcdif_cur_buf_reg);
@@ -286,39 +286,10 @@ void *video_hw_init(void)
 
 	printf("%s\n", panel.modeIdent);
 
-#ifdef CONFIG_MXC_MIPI_DSI_NORTHWEST
-	struct mipi_dsi_northwest_panel_device *pdevice;
-
-	/* Setup DSI host driver */
-	mipi_dsi_northwest_setup(DSI_RBASE, SIM0_RBASE);
-
-#ifdef CONFIG_HX8363
-	/* Setup hx8363 panel driver */
-	hx8363_init();
+#ifdef CONFIG_IMX_MIPI_DSI_BRIDGE
+	imx_mipi_dsi_bridge_mode_set(&fbmode);
+	imx_mipi_dsi_bridge_enable();
 #endif
-
-	pdevice = (struct mipi_dsi_northwest_panel_device *)malloc(sizeof(struct mipi_dsi_northwest_panel_device));
-	if (!pdevice) {
-		printf("Error allocating MIPI panel device!\n");
-		free(fb);
-		return NULL;
-	}
-
-	/* Using the panel parameters to create a DSI panel device */
-	pdevice->bpp = bpp;
-	pdevice->data_lane_num = 2;
-	pdevice->mode = fbmode;
-	pdevice->name = fbmode.name;
-	pdevice->virtual_ch_id = 0;
-	pdevice->host = NULL;
-
-	/* Register a panel device */
-	mipi_dsi_northwest_register_panel_device(pdevice);
-
-	/* Enable the MIPI DSI host to work */
-	mipi_dsi_northwest_enable();
-#endif
-
 
 	/* Start framebuffer */
 	mxs_lcd_init(&panel, &mode, bpp);
