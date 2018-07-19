@@ -431,7 +431,7 @@ static int gen_rpmb_key(struct keyslot_package *kp) {
 #endif
 
 	/* generate keyblob and program to fuse */
-	if (caam_gen_blob((uint32_t)plain_key, (uint32_t)(kp->rpmb_keyblob), RPMBKEY_LENGTH)) {
+	if (caam_gen_blob((uint32_t)(ulong)plain_key, (uint32_t)(kp->rpmb_keyblob), RPMBKEY_LENGTH)) {
 		ERR("gen rpmb key blb error\n");
 		ret = -1;
 		goto fail;
@@ -516,7 +516,7 @@ static int rpmb_key(struct mmc *mmc) {
 	}
 
 	/* generate keyblob and program to fuse */
-	if (caam_gen_blob((uint32_t)plain_key, (uint32_t)blob, RPMBKEY_LENGTH)) {
+	if (caam_gen_blob((uint32_t)(ulong)plain_key, (uint32_t)(ulong)blob, RPMBKEY_LENGTH)) {
 		ERR("gen rpmb key blb error\n");
 		ret = -1;
 		goto fail;
@@ -629,7 +629,7 @@ static int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t
 	memcpy(blob, kp.rpmb_keyblob, RPMBKEY_BLOB_LEN);
 #endif
 	caam_open();
-	if (caam_decap_blob((uint32_t)extract_key, (uint32_t)blob, RPMBKEY_LENGTH)) {
+	if (caam_decap_blob((uint32_t)(ulong)extract_key, (uint32_t)(ulong)blob, RPMBKEY_LENGTH)) {
 		ERR("decap rpmb key error\n");
 		ret = -1;
 		goto fail;
@@ -735,7 +735,7 @@ static int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_
 	memcpy(blob, kp.rpmb_keyblob, RPMBKEY_BLOB_LEN);
 #endif
 	caam_open();
-	if (caam_decap_blob((uint32_t)extract_key, (uint32_t)blob, RPMBKEY_LENGTH)) {
+	if (caam_decap_blob((uint32_t)(ulong)extract_key, (uint32_t)(ulong)blob, RPMBKEY_LENGTH)) {
 		ERR("decap rpmb key error\n");
 		ret = -1;
 		goto fail;
@@ -753,7 +753,7 @@ static int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_
 			cnt = num_bytes - num_write;
 		if (!s || cnt != blksz) { /* read blk first */
 			if (mmc_rpmb_read(mmc, bdata, bs, 1, extract_key) != 1) {
-				ERR("mmc_rpmb_read err, mmc= 0x%08x\n", (unsigned int)mmc);
+				ERR("mmc_rpmb_read err, mmc= 0x%08x\n", (uint32_t)(ulong)mmc);
 				ret = -1;
 				goto fail;
 			}

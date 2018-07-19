@@ -101,8 +101,8 @@ static FbLockState decrypt_lock_store(unsigned char *bdata) {
 	int p = 0, ret;
 
 	caam_open();
-	ret = caam_decap_blob((uint32_t)plain_data,
-			      (uint32_t)bdata + ENDATA_LEN, ENDATA_LEN);
+	ret = caam_decap_blob((uint32_t)(ulong)plain_data,
+			      (uint32_t)(ulong)bdata + ENDATA_LEN, ENDATA_LEN);
 	if (ret != 0) {
 		printf("Error during blob decap operation: 0x%x\n",ret);
 		return FASTBOOT_LOCK_ERROR;
@@ -160,7 +160,7 @@ static int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
 	*(bdata + p) = lock;
 
 	caam_open();
-	ret = caam_gen_blob((uint32_t)bdata, (uint32_t)(bdata + ENDATA_LEN), ENDATA_LEN);
+	ret = caam_gen_blob((uint32_t)(ulong)bdata, (uint32_t)(ulong)(bdata + ENDATA_LEN), ENDATA_LEN);
 	if (ret != 0) {
 		printf("error in caam_gen_blob:0x%x\n", ret);
 		return -1;
