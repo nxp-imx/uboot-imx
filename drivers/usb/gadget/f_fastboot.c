@@ -117,15 +117,22 @@ struct fastboot_device_info fastboot_firmwareinfo;
 #endif
 
 #endif
+
+#ifdef CONFIG_LOAD_FDT_FROM_PART
+#ifdef CONFIG_ANDROID_THINGS_SUPPORT
+#define FDT_PART_NAME "oem_bootloader"
+#else
+#define FDT_PART_NAME "dtbo"
+#endif
+#else
+#define FDT_PART_NAME NULL
+#endif
+
 /*
  * EP_BUFFER_SIZE must always be an integral multiple of maxpacket size
  * (64 or 512 or 1024), else we break on certain controllers like DWC3
  * that expect bulk OUT requests to be divisible by maxpacket size.
  */
-
-#define AT_OEM_BL_PART_NAME_BASE	"oem_bootloader"
-#define AT_OEM_BL_PART_SIZE	(sizeof(AT_OEM_BL_PART_NAME_BASE) + \
-		sizeof("_a") - 1)
 
 /* Offset (in u32's) of start and end fields in the zImage header. */
 #define ZIMAGE_START_ADDR	10
@@ -1937,6 +1944,32 @@ void trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_resul
 #endif
 
 #if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
+/* we can use avb to verify Trusty if we want */
+const char *requested_partitions_boot[] = {"boot", FDT_PART_NAME, NULL};
+const char *requested_partitions_recovery[] = {"recovery", FDT_PART_NAME, NULL};
+
+static int find_partition_data_by_name(char* part_name,
+		AvbSlotVerifyData* avb_out_data, AvbPartitionData** avb_loadpart)
+{
+	int num = 0;
+	AvbPartitionData* loadpart = NULL;
+
+	for (num = 0; num < avb_out_data->num_loaded_partitions; num++) {
+		loadpart = &(avb_out_data->loaded_partitions[num]);
+		if (!(strncmp(loadpart->partition_name,
+			part_name, strlen(part_name)))) {
+			*avb_loadpart = loadpart;
+			break;
+		}
+	}
+	if (num == avb_out_data->num_loaded_partitions) {
+		printf("Error! Can't find %s partition from avb partition data!\n",
+				part_name);
+		return -1;
+	}
+	else
+		return 0;
+}
 
 int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 
@@ -1947,11 +1980,10 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	u32 avb_metric;
 	bool check_image_arm64 =  false;
 	bool is_recovery_mode = false;
-	char *slot = NULL;
 
 	AvbABFlowResult avb_result;
-	AvbSlotVerifyData *avb_out_data;
-	AvbPartitionData *avb_loadpart;
+	AvbSlotVerifyData *avb_out_data = NULL;
+	AvbPartitionData *avb_loadpart = NULL;
 
 	/* get bootmode, default to boot "boot" */
 	if (argc > 1) {
@@ -1975,24 +2007,20 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	 * recovery and support a/b slot for boot */
 #ifdef CONFIG_ANDROID_AB_SUPPORT
 	/* we can use avb to verify Trusty if we want */
-	const char *requested_partitions[] = {"boot", 0};
-	avb_result = avb_ab_flow_fast(&fsl_avb_ab_ops, requested_partitions, allow_fail,
+	avb_result = avb_ab_flow_fast(&fsl_avb_ab_ops, requested_partitions_boot, allow_fail,
 			AVB_HASHTREE_ERROR_MODE_RESTART_AND_INVALIDATE, &avb_out_data);
 #else
 	if (!is_recovery_mode) {
-		const char *requested_partitions[] = {"boot", 0};
-		avb_result = avb_single_flow(&fsl_avb_ab_ops, requested_partitions, allow_fail,
+		avb_result = avb_single_flow(&fsl_avb_ab_ops, requested_partitions_boot, allow_fail,
 				AVB_HASHTREE_ERROR_MODE_RESTART, &avb_out_data);
 	} else {
-		const char *requested_partitions[] = {"recovery", 0};
-		avb_result = avb_single_flow(&fsl_avb_ab_ops, requested_partitions, allow_fail,
+		avb_result = avb_single_flow(&fsl_avb_ab_ops, requested_partitions_recovery, allow_fail,
 				AVB_HASHTREE_ERROR_MODE_RESTART, &avb_out_data);
 	}
 #endif
 #else /* !CONFIG_DUAL_BOOTLOADER */
 	/* We will only verify single one slot which has been selected in SPL */
-	const char *requested_partitions[] = {"boot", 0};
-	avb_result = avb_flow_dual_uboot(&fsl_avb_ab_ops, requested_partitions, allow_fail,
+	avb_result = avb_flow_dual_uboot(&fsl_avb_ab_ops, requested_partitions_boot, allow_fail,
 			AVB_HASHTREE_ERROR_MODE_RESTART_AND_INVALIDATE, &avb_out_data);
 
 	/* Goto fail early if current slot is not bootable. */
@@ -2008,8 +2036,21 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	if ((avb_result == AVB_AB_FLOW_RESULT_OK) ||
 			(avb_result == AVB_AB_FLOW_RESULT_OK_WITH_VERIFICATION_ERROR)) {
 		assert(avb_out_data != NULL);
-		/* load the first partition */
-		avb_loadpart = avb_out_data->loaded_partitions;
+		/* We may have more than one partition loaded by AVB, find the boot
+		 * partition first.
+		 */
+#ifdef CONFIG_ANDROID_AB_SUPPORT
+		if (find_partition_data_by_name("boot", avb_out_data, &avb_loadpart))
+			goto fail;
+#else
+		if (!is_recovery_mode) {
+			if (find_partition_data_by_name("boot", avb_out_data, &avb_loadpart))
+				goto fail;
+		} else {
+			if (find_partition_data_by_name("recovery", avb_out_data, &avb_loadpart))
+				goto fail;
+		}
+#endif
 		assert(avb_loadpart != NULL);
 		/* we should use avb_part_data->data as boot image */
 		/* boot image is already read by avb */
@@ -2018,7 +2059,6 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			printf("boota: bad boot image magic\n");
 			goto fail;
 		}
-		slot = avb_out_data->ab_suffix;
 		if (avb_result == AVB_AB_FLOW_RESULT_OK)
 			printf(" verify OK, boot '%s%s'\n",
 					avb_loadpart->partition_name, avb_out_data->ab_suffix);
@@ -2095,52 +2135,35 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 #ifdef CONFIG_OF_LIBFDT
 	/* load the dtb file */
 #ifdef CONFIG_LOAD_FDT_FROM_PART
-	u32 fdt_size = 0;
-	char oemimage[AT_OEM_BL_PART_SIZE];
-	snprintf(oemimage, sizeof(oemimage), "%s%s",
-			AT_OEM_BL_PART_NAME_BASE, slot);
-
-	struct dt_table_header dt_img;
-	size_t num_read;
-	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, oemimage, 0,
-			sizeof(dt_img), &dt_img, &num_read) !=
-			AVB_IO_RESULT_OK &&
-			num_read != sizeof(dt_img)) {
-		printf("boota: read dt table header error\n");
-		goto dt_read_done;
+#ifdef CONFIG_ANDROID_THINGS_SUPPORT
+	if (find_partition_data_by_name("oem_bootloader",
+				avb_out_data, &avb_loadpart)) {
+		goto fail;
 	}
-
-	if (be32_to_cpu(dt_img.magic) != DT_TABLE_MAGIC) {
+#else
+	if (find_partition_data_by_name("dtbo",
+				avb_out_data, &avb_loadpart)) {
+		goto fail;
+	}
+#endif
+	struct dt_table_header *dt_img;
+	dt_img = (struct dt_table_header *)avb_loadpart->data;
+	if (be32_to_cpu(dt_img->magic) != DT_TABLE_MAGIC) {
 		printf("boota: bad dt table magic %08x\n",
-				be32_to_cpu(dt_img.magic));
-		goto dt_read_done;
-	} else if (!be32_to_cpu(dt_img.dt_entry_count)) {
+				be32_to_cpu(dt_img->magic));
+		goto fail;
+	} else if (!be32_to_cpu(dt_img->dt_entry_count)) {
 		printf("boota: no dt entries\n");
-		goto dt_read_done;
+		goto fail;
 	}
 
-	struct dt_table_entry dt_entry;
-	assert(be32_to_cpu(dt_img.dt_entry_size) == sizeof(dt_entry));
-	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, oemimage,
-			be32_to_cpu(dt_img.dt_entries_offset),
-			be32_to_cpu(dt_img.dt_entry_size), &dt_entry,
-			&num_read) != AVB_IO_RESULT_OK &&
-			num_read != sizeof(dt_entry)) {
-		printf("boota: read dt entry error\n");
-		goto dt_read_done;
-	}
-
-	/* Read the fdt from oem_bootloader into hdr->second_addr. */
-	fdt_size = be32_to_cpu(dt_entry.dt_size);
-	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, oemimage,
-			be32_to_cpu(dt_entry.dt_offset), fdt_size,
-			(void *)(ulong)hdr->second_addr, &num_read) !=
-			AVB_IO_RESULT_OK && num_read != fdt_size) {
-		printf("boota: read fdt error\n");
-	}
-
-dt_read_done:
-	;
+	u32 fdt_size = 0;
+	struct dt_table_entry *dt_entry;
+	dt_entry = (struct dt_table_entry *)((ulong)dt_img +
+			be32_to_cpu(dt_img->dt_entries_offset));
+	fdt_size = be32_to_cpu(dt_entry->dt_size);
+	memcpy((void *)(ulong)hdr->second_addr, (void *)((ulong)dt_img +
+			be32_to_cpu(dt_entry->dt_offset)), fdt_size);
 #else /* CONFIG_LOAD_FDT_FROM_PART */
 	if (hdr->second_size && hdr->second_addr) {
 		memcpy((void *)(ulong)hdr->second_addr, (void *)(ulong)hdr + hdr->page_size
@@ -2149,6 +2172,7 @@ dt_read_done:
 	}
 #endif /* CONFIG_LOAD_FDT_FROM_PART */
 #endif /*CONFIG_OF_LIBFDT*/
+
 	if (check_image_arm64) {
 		android_image_get_kernel(hdr, 0, NULL, NULL);
 		addr = hdr->kernel_addr;
