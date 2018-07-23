@@ -76,6 +76,16 @@
 #endif
 
 
+#define JAILHOUSE_ENV \
+	"jh_mmcboot=" \
+		"setenv fdt_file fsl-imx8qm-mek-root.dtb;"\
+		"setenv boot_os 'scu_rm dtb ${fdt_addr}; booti ${loadaddr} - ${fdt_addr};'; " \
+		"run mmcboot; \0" \
+	"jh_netboot=" \
+		"setenv fdt_file fsl-imx8qm-mek-root.dtb;"\
+		"setenv boot_os 'scu_rm dtb ${fdt_addr}; booti ${loadaddr} - ${fdt_addr};'; " \
+		"run netboot; \0"
+
 #define XEN_BOOT_ENV \
             "xenhyper_bootargs=console=dtuart dtuart=/serial@5a060000 dom0_mem=2048M dom0_max_vcpus=2 dom0_vcpus_pin=true hmp-unsafe=true\0" \
             "xenlinux_bootargs= \0" \
@@ -125,6 +135,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	M4_BOOT_ENV \
 	XEN_BOOT_ENV \
+	JAILHOUSE_ENV\
 	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
