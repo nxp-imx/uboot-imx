@@ -119,6 +119,16 @@
 					     "booti ${loadaddr} ${initrd_addr} ${fdt_addr};"\
 					"else fastboot 1; fi\0" \
 
+#define JAILHOUSE_ENV \
+	"jh_mmcboot=" \
+		"setenv fdt_file fsl-imx8qxp-mek-root.dtb;"\
+		"setenv boot_os 'scu_rm dtb ${fdt_addr}; booti ${loadaddr} - ${fdt_addr};'; " \
+		"run mmcboot; \0" \
+	"jh_netboot=" \
+		"setenv fdt_file fsl-imx8qxp-mek-root.dtb;"\
+		"setenv boot_os 'scu_rm dtb ${fdt_addr}; booti ${loadaddr} - ${fdt_addr};'; " \
+		"run netboot; \0"
+
 #define XEN_BOOT_ENV \
             "xenhyper_bootargs=console=dtuart dtuart=/serial@5a060000 dom0_mem=1024M dom0_max_vcpus=2 dom0_vcpus_pin=true\0" \
             "xenlinux_bootargs= \0" \
@@ -153,6 +163,7 @@
 	CONFIG_MFG_ENV_SETTINGS \
 	M4_BOOT_ENV \
 	XEN_BOOT_ENV \
+	JAILHOUSE_ENV\
 	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
@@ -179,18 +190,19 @@
 	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
 	"loadcntr=fatload mmc ${mmcdev}:${mmcpart} ${cntr_addr} ${cntr_file}\0" \
 	"auth_os=auth_cntr ${cntr_addr}\0" \
+	"boot_os=booti ${loadaddr} - ${fdt_addr};\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"run mmcargs; " \
 		"if test ${sec_boot} = yes; then " \
 			"if run auth_os; then " \
-				"booti ${loadaddr} - ${fdt_addr}; " \
+				"run boot_os; " \
 			"else " \
 				"echo ERR: failed to authenticate; " \
 			"fi; " \
 		"else " \
 			"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 				"if run loadfdt; then " \
-					"booti ${loadaddr} - ${fdt_addr}; " \
+					"run boot_os; " \
 				"else " \
 					"echo WARN: Cannot load the DT; " \
 				"fi; " \
@@ -212,7 +224,7 @@
 		"if test ${sec_boot} = yes; then " \
 			"${get_cmd} ${cntr_addr} ${cntr_file}; " \
 			"if run auth_os; then " \
-				"booti ${loadaddr} - ${fdt_addr}; " \
+				"run boot_os; " \
 			"else " \
 				"echo ERR: failed to authenticate; " \
 			"fi; " \
@@ -220,7 +232,7 @@
 			"${get_cmd} ${loadaddr} ${image}; " \
 			"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 				"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
-					"booti ${loadaddr} - ${fdt_addr}; " \
+					"run boot_os; " \
 				"else " \
 					"echo WARN: Cannot load the DT; " \
 				"fi; " \
