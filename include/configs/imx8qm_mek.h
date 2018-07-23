@@ -102,6 +102,16 @@
 #define CONFIG_NET_RANDOM_ETHADDR
 
 
+#define JAILHOUSE_ENV \
+	"jh_mmcboot=" \
+		"setenv fdt_file fsl-imx8qm-mek-root.dtb;"\
+		"setenv boot_os 'scu_rm dtb ${fdt_addr}; booti ${loadaddr} - ${fdt_addr};'; " \
+		"run mmcboot; \0" \
+	"jh_netboot=" \
+		"setenv fdt_file fsl-imx8qm-mek-root.dtb;"\
+		"setenv boot_os 'scu_rm dtb ${fdt_addr}; booti ${loadaddr} - ${fdt_addr};'; " \
+		"run netboot; \0"
+
 #define XEN_BOOT_ENV \
             "xenhyper_bootargs=console=dtuart dtuart=/serial@5a060000 dom0_mem=2048M dom0_max_vcpus=2 dom0_vcpus_pin=true hmp-unsafe=true\0" \
             "xenlinux_bootargs= \0" \
@@ -152,6 +162,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	M4_BOOT_ENV \
 	XEN_BOOT_ENV \
+	JAILHOUSE_ENV\
 	"script=boot.scr\0" \
 	"image=Image\0" \
 	"panel=NULL\0" \
@@ -179,13 +190,14 @@
 	"hdprx_file=hdmirxfw.bin\0" \
 	"loadhdp=fatload mmc ${mmcdev}:${mmcpart} ${hdp_addr} ${hdp_file}\0" \
 	"loadhdprx=fatload mmc ${mmcdev}:${mmcpart} ${hdprx_addr} ${hdprx_file}\0" \
+	"boot_os=booti ${loadaddr} - ${fdt_addr};\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"if run loadhdp; then; hdp load ${hdp_addr}; fi;" \
 		"if run loadhdprx; then; hdprx load ${hdprx_addr}; fi;" \
 		"run mmcargs; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 			"if run loadfdt; then " \
-				"booti ${loadaddr} - ${fdt_addr}; " \
+				"run boot_os; " \
 			"else " \
 				"echo WARN: Cannot load the DT; " \
 			"fi; " \
@@ -207,7 +219,7 @@
 		"${get_cmd} ${loadaddr} ${image}; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 			"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
-				"booti ${loadaddr} - ${fdt_addr}; " \
+				"run boot_os; " \
 			"else " \
 				"echo WARN: Cannot load the DT; " \
 			"fi; " \
