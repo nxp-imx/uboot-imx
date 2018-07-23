@@ -36,8 +36,6 @@
 #endif
 
 #define CONFIG_ANDROID_AB_SUPPORT
-#define CONFIG_FSL_CAAM_KB
-#define CONFIG_CMD_FSL_CAAM_KB
 #define CONFIG_SHA1
 #define CONFIG_SHA256
 
