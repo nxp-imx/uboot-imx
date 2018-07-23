@@ -13,11 +13,13 @@ void lpddr4_cfg_phy(struct dram_timing_info *dram_timing)
 	struct dram_cfg_param *dram_cfg;
 	struct dram_fsp_msg *fsp_msg;
 	unsigned int num;
+	int i = 0;
+	int j = 0;
 
 	/* initialize PHY configuration */
 	dram_cfg = dram_timing->ddrphy_cfg;
 	num  = dram_timing->ddrphy_cfg_num;
-	for (int i = 0; i < num; i++) {
+	for (i = 0; i < num; i++) {
 		/* config phy reg */
 		dwc_ddrphy_apb_wr(dram_cfg->reg, dram_cfg->val);
 		dram_cfg++;
@@ -25,7 +27,7 @@ void lpddr4_cfg_phy(struct dram_timing_info *dram_timing)
 
 	/* load the frequency setpoint message block config */
 	fsp_msg = dram_timing->fsp_msg;
-	for (int i = 0; i < dram_timing->fsp_msg_num; i++) {
+	for (i = 0; i < dram_timing->fsp_msg_num; i++) {
 		printf("DRAM PHY training for %dMTS\n", fsp_msg->drate);
 		/* set dram PHY input clocks to desired frequency */
 		ddrphy_init_set_dfi_clk(fsp_msg->drate);
@@ -37,7 +39,7 @@ void lpddr4_cfg_phy(struct dram_timing_info *dram_timing)
 		/* load the frequency set point message block parameter */
 		dram_cfg = fsp_msg->fsp_cfg;
 		num = fsp_msg->fsp_cfg_num;
-		for (int j = 0; j < num; j++) {
+		for (j = 0; j < num; j++) {
 			dwc_ddrphy_apb_wr(dram_cfg->reg, dram_cfg->val);
 			dram_cfg++;
 		}
@@ -74,7 +76,7 @@ void lpddr4_cfg_phy(struct dram_timing_info *dram_timing)
 	/* Load PHY Init Engine Image */
 	dram_cfg = dram_timing->ddrphy_pie;
 	num = dram_timing->ddrphy_pie_num;
-	for (int i = 0; i < num; i++) {
+	for (i = 0; i < num; i++) {
 		dwc_ddrphy_apb_wr(dram_cfg->reg, dram_cfg->val);
 		dram_cfg++;
 	}

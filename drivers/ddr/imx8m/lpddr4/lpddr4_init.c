@@ -15,7 +15,9 @@
 
 void lpddr4_cfg_umctl2(struct dram_cfg_param *ddrc_cfg, int num)
 {
-	for (int i = 0; i < num; i++) {
+	int i = 0;
+
+	for (i = 0; i < num; i++) {
 		reg32_write(ddrc_cfg->reg, ddrc_cfg->val);
 		ddrc_cfg++;
 	}
