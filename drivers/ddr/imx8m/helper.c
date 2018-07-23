@@ -105,10 +105,12 @@ void ddr_load_train_firmware(enum fw_type type)
 
 void ddrphy_trained_csr_save(struct dram_cfg_param *ddrphy_csr, unsigned int num)
 {
+	int i = 0;
+
 	/* enable the ddrphy apb */
 	dwc_ddrphy_apb_wr(0xd0000, 0x0);
 	dwc_ddrphy_apb_wr(0xc0080, 0x3);
-	for (int i = 0; i < num; i++) {
+	for (i = 0; i < num; i++) {
 		ddrphy_csr->val = dwc_ddrphy_apb_rd(ddrphy_csr->reg);
 		ddrphy_csr++;
 	}
@@ -120,6 +122,7 @@ void ddrphy_trained_csr_save(struct dram_cfg_param *ddrphy_csr, unsigned int num
 void dram_config_save(struct dram_timing_info *timing_info,
 		      unsigned long saved_timing_base)
 {
+	int i = 0;
 	struct dram_timing_info *saved_timing = (struct dram_timing_info *)saved_timing_base;
 	struct dram_cfg_param *cfg;
 
@@ -132,7 +135,7 @@ void dram_config_save(struct dram_timing_info *timing_info,
 
 	/* save ddrc config */
 	saved_timing->ddrc_cfg = cfg;
-	for (int i = 0; i < timing_info->ddrc_cfg_num; i++) {
+	for (i = 0; i < timing_info->ddrc_cfg_num; i++) {
 		cfg->reg = timing_info->ddrc_cfg[i].reg;
 		cfg->val = timing_info->ddrc_cfg[i].val;
 		cfg++;
@@ -140,7 +143,7 @@ void dram_config_save(struct dram_timing_info *timing_info,
 
 	/* save ddrphy config */
 	saved_timing->ddrphy_cfg = cfg;
-	for (int i = 0; i < timing_info->ddrphy_cfg_num; i++) {
+	for (i = 0; i < timing_info->ddrphy_cfg_num; i++) {
 		cfg->reg = timing_info->ddrphy_cfg[i].reg;
 		cfg->val = timing_info->ddrphy_cfg[i].val;
 		cfg++;
@@ -148,7 +151,7 @@ void dram_config_save(struct dram_timing_info *timing_info,
 
 	/* save the ddrphy csr */
 	saved_timing->ddrphy_trained_csr = cfg;
-	for (int i = 0; i < timing_info->ddrphy_trained_csr_num; i++) {
+	for (i = 0; i < timing_info->ddrphy_trained_csr_num; i++) {
 		cfg->reg = timing_info->ddrphy_trained_csr[i].reg;
 		cfg->val = timing_info->ddrphy_trained_csr[i].val;
 		cfg++;
@@ -156,7 +159,7 @@ void dram_config_save(struct dram_timing_info *timing_info,
 
 	/* save the ddrphy pie */
 	saved_timing->ddrphy_pie = cfg;
-	for (int i = 0; i < timing_info->ddrphy_pie_num; i++) {
+	for (i = 0; i < timing_info->ddrphy_pie_num; i++) {
 		cfg->reg = timing_info->ddrphy_pie[i].reg;
 		cfg->val = timing_info->ddrphy_pie[i].val;
 		cfg++;
