@@ -75,4 +75,10 @@
 
 #endif
 
+/* Enlarge the spl max size to 172k */
+#ifdef CONFIG_SPL_MAX_SIZE
+#undef CONFIG_SPL_MAX_SIZE
+#define CONFIG_SPL_MAX_SIZE 176128
+#endif
+
 #endif /* IMX8MQ_EVK_ANDROID_THINGS_H */
