@@ -46,7 +46,7 @@
 #define CONFIG_CMD_BMODE
 
 #ifdef CONFIG_NAND_BOOT
-#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
+#define MFG_NAND_PARTITION "mtdparts=8000000.nor:1m(boot),-(rootfs)\\\\;gpmi-nand:64m(boot),16m(kernel),16m(dtb),16m(tee),-(rootfs) "
 #else
 #define MFG_NAND_PARTITION ""
 #endif
@@ -106,7 +106,7 @@
 	TEE_ENV \
 	"fdt_addr=0x18000000\0" \
 	"fdt_high=0xffffffff\0"	  \
-	"bootargs=console=" CONSOLE_DEV ",115200 ubi.mtd=5 "  \
+	"bootargs=console=" CONSOLE_DEV ",115200 ubi.mtd=6 "  \
 		"root=ubi0:rootfs rootfstype=ubifs "		     \
 		MFG_NAND_PARTITION \
 		"\0" \
