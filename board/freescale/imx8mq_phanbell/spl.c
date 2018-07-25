@@ -160,6 +160,15 @@ int power_init_board(void)
 	/* unlock the PMIC regs */
 	pmic_reg_write(p, BD71837_REGLOCK, 0x1);
 
+	/* Set BUCK2 output for ARM to 0.85v */
+	pmic_reg_write(p, BD71837_BUCK2_VOLT_RUN, 0x0f);
+
+	/* Set BUCK3 output for GPU off */
+	pmic_reg_write(p, BD71837_BUCK3_CTRL, 0x46);
+
+	/* Set BUCK4 output for VPU off */
+	pmic_reg_write(p, BD71837_BUCK4_CTRL, 0x46);
+
 	/* Set BUCK5 output for DRAM to 0.9V */
 	pmic_reg_write(p, BD71837_BUCK5_VOLT, 0x2);
 
