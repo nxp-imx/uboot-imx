@@ -553,6 +553,11 @@ struct mipi_dsi_client_dev rm67191_dev = {
 			  MIPI_DSI_MODE_EOT_PACKET | MIPI_DSI_MODE_VIDEO_HSE,
 };
 
+#define FSL_SIP_GPC			0xC2000000
+#define FSL_SIP_CONFIG_GPC_PM_DOMAIN	0x3
+#define DISPMIX				9
+#define MIPI				10
+
 void do_enable_mipi2hdmi(struct display_info_t const *dev)
 {
 	gpio_request(IMX_GPIO_NR(1, 8), "DSI EN");
@@ -560,6 +565,10 @@ void do_enable_mipi2hdmi(struct display_info_t const *dev)
 
 	/* ADV7353 initialization */
 	adv7535_init();
+
+	/* enable the dispmix & mipi phy power domain */
+	call_imx_sip(FSL_SIP_GPC, FSL_SIP_CONFIG_GPC_PM_DOMAIN, DISPMIX, true, 0);
+	call_imx_sip(FSL_SIP_GPC, FSL_SIP_CONFIG_GPC_PM_DOMAIN, MIPI, true, 0);
 
 	/* Put lcdif out of reset */
 	disp_mix_bus_rstn_reset(imx8mm_mipi_dsim_plat_data.gpr_base, false);
@@ -576,6 +585,10 @@ void do_enable_mipi_led(struct display_info_t const *dev)
 	gpio_direction_output(IMX_GPIO_NR(1, 8), 0);
 	mdelay(100);
 	gpio_direction_output(IMX_GPIO_NR(1, 8), 1);
+
+	/* enable the dispmix & mipi phy power domain */
+	call_imx_sip(FSL_SIP_GPC, FSL_SIP_CONFIG_GPC_PM_DOMAIN, DISPMIX, true, 0);
+	call_imx_sip(FSL_SIP_GPC, FSL_SIP_CONFIG_GPC_PM_DOMAIN, MIPI, true, 0);
 
 	/* Put lcdif out of reset */
 	disp_mix_bus_rstn_reset(imx8mm_mipi_dsim_plat_data.gpr_base, false);
