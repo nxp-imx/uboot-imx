@@ -21,7 +21,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define MX6SL_PU_IROM_MMU_EN_VAR	0x00900a18
 #define IS_HAB_ENABLED_BIT \
 	(is_soc_type(MXC_SOC_MX7ULP) ? 0x80000000 :	\
-	 (is_soc_type(MXC_SOC_MX7) ? 0x2000000 : 0x2))
+	 ((is_soc_type(MXC_SOC_MX7) || is_soc_type(MXC_SOC_IMX8M))? 0x2000000 : 0x2))
 
 static int ivt_header_error(const char *err_str, struct ivt_header *ivt_hdr)
 {
