@@ -100,6 +100,12 @@
 #define CONFIG_MAX7322_I2C_BUS		2 /* I2C2 */
 #endif
 
+#ifdef CONFIG_AHAB_BOOT
+#define AHAB_ENV "sec_boot=yes\0"
+#else
+#define AHAB_ENV "sec_boot=no\0"
+#endif
+
 /* Boot M4 */
 #define M4_BOOT_ENV \
 	"m4_0_image=m4_0.bin\0" \
@@ -162,6 +168,7 @@
 	CONFIG_MFG_ENV_SETTINGS \
 	XEN_BOOT_ENV \
 	M4_BOOT_ENV \
+	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
 	"panel=NULL\0" \
@@ -169,6 +176,8 @@
 	"earlycon=lpuart32,0x5a060000\0" \
 	"fdt_addr=0x83000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
+	"cntr_addr=0x88000000\0"			\
+	"cntr_file=os_cntr_signed.bin\0" \
 	"boot_fdt=try\0" \
 	"fdt_file="__stringify(CONFIG_DEFAULT_DEVICE_TREE)".dtb\0" \
 	"initrd_addr=0x83800000\0"		\
@@ -186,17 +195,27 @@
 	"hdp_addr=0x84000000\0" \
 	"hdp_file=dpfw.bin\0" \
 	"loadhdp=fatload mmc ${mmcdev}:${mmcpart} ${hdp_addr} ${hdp_file}\0" \
+	"loadcntr=fatload mmc ${mmcdev}:${mmcpart} ${cntr_addr} ${cntr_file}\0" \
+	"auth_os=auth_cntr ${cntr_addr}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"if run loadhdp; then; hdp load ${hdp_addr}; fi;" \
 		"run mmcargs; " \
-		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
-			"if run loadfdt; then " \
+		"if test ${sec_boot} = yes; then " \
+			"if run auth_os; then " \
 				"booti ${loadaddr} - ${fdt_addr}; " \
 			"else " \
-				"echo WARN: Cannot load the DT; " \
+				"echo ERR: failed to authenticate; " \
 			"fi; " \
 		"else " \
-			"echo wait for boot; " \
+			"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
+				"if run loadfdt; then " \
+					"booti ${loadaddr} - ${fdt_addr}; " \
+				"else " \
+					"echo WARN: Cannot load the DT; " \
+				"fi; " \
+			"else " \
+				"echo wait for boot; " \
+			"fi;" \
 		"fi;\0" \
 	"netargs=setenv bootargs console=${console},${baudrate} earlycon=${earlycon},${baudrate} " \
 		"root=/dev/nfs " \
@@ -209,15 +228,24 @@
 			"setenv get_cmd tftp; " \
 		"fi; " \
 		"if ${get_cmd} ${hdp_addr} ${hdp_file}; then; hdp load ${hdp_addr}; fi;" \
-		"${get_cmd} ${loadaddr} ${image}; " \
-		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
-			"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
+		"if test ${sec_boot} = yes; then " \
+			"${get_cmd} ${cntr_addr} ${cntr_file}; " \
+			"if run auth_os; then " \
 				"booti ${loadaddr} - ${fdt_addr}; " \
 			"else " \
-				"echo WARN: Cannot load the DT; " \
+				"echo ERR: failed to authenticate; " \
 			"fi; " \
 		"else " \
-			"booti; " \
+			"${get_cmd} ${loadaddr} ${image}; " \
+			"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
+				"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
+					"booti ${loadaddr} - ${fdt_addr}; " \
+				"else " \
+					"echo WARN: Cannot load the DT; " \
+				"fi; " \
+			"else " \
+				"booti; " \
+			"fi;" \
 		"fi;\0"
 
 #define CONFIG_BOOTCOMMAND \
@@ -225,10 +253,17 @@
 		   "if run loadbootscript; then " \
 			   "run bootscript; " \
 		   "else " \
-			   "if run loadimage; then " \
-				   "run mmcboot; " \
-			   "else run netboot; " \
-			   "fi; " \
+			   "if test ${sec_boot} = yes; then " \
+				   "if run loadcntr; then " \
+					   "run mmcboot; " \
+				   "else run netboot; " \
+				   "fi; " \
+			    "else " \
+				   "if run loadimage; then " \
+					   "run mmcboot; " \
+				   "else run netboot; " \
+				   "fi; " \
+			 "fi; " \
 		   "fi; " \
 	   "else booti ${loadaddr} - ${fdt_addr}; fi"
 
