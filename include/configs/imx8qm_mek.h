@@ -101,6 +101,11 @@
 #define CONFIG_LIB_RAND
 #define CONFIG_NET_RANDOM_ETHADDR
 
+#ifdef CONFIG_AHAB_BOOT
+#define AHAB_ENV "sec_boot=yes\0"
+#else
+#define AHAB_ENV "sec_boot=no\0"
+#endif
 
 #define JAILHOUSE_ENV \
 	"jh_mmcboot=" \
@@ -163,6 +168,7 @@
 	M4_BOOT_ENV \
 	XEN_BOOT_ENV \
 	JAILHOUSE_ENV\
+	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
 	"panel=NULL\0" \
@@ -170,6 +176,8 @@
 	"earlycon=lpuart32,0x5a060000\0" \
 	"fdt_addr=0x83000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
+	"cntr_addr=0x98000000\0"			\
+	"cntr_file=os_cntr_signed.bin\0" \
 	"boot_fdt=try\0" \
 	"fdt_file=fsl-imx8qm-mek.dtb\0" \
 	"initrd_addr=0x83100000\0" \
@@ -191,18 +199,28 @@
 	"loadhdp=fatload mmc ${mmcdev}:${mmcpart} ${hdp_addr} ${hdp_file}\0" \
 	"loadhdprx=fatload mmc ${mmcdev}:${mmcpart} ${hdprx_addr} ${hdprx_file}\0" \
 	"boot_os=booti ${loadaddr} - ${fdt_addr};\0" \
+	"loadcntr=fatload mmc ${mmcdev}:${mmcpart} ${cntr_addr} ${cntr_file}\0" \
+	"auth_os=auth_cntr ${cntr_addr}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"if run loadhdp; then; hdp load ${hdp_addr}; fi;" \
 		"if run loadhdprx; then; hdprx load ${hdprx_addr}; fi;" \
 		"run mmcargs; " \
-		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
-			"if run loadfdt; then " \
+		"if test ${sec_boot} = yes; then " \
+			"if run auth_os; then " \
 				"run boot_os; " \
 			"else " \
-				"echo WARN: Cannot load the DT; " \
+				"echo ERR: failed to authenticate; " \
 			"fi; " \
 		"else " \
-			"echo wait for boot; " \
+			"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
+				"if run loadfdt; then " \
+					"run boot_os; " \
+				"else " \
+					"echo WARN: Cannot load the DT; " \
+				"fi; " \
+			"else " \
+				"echo wait for boot; " \
+			"fi;" \
 		"fi;\0" \
 	"netargs=setenv bootargs console=${console},${baudrate} earlycon=${earlycon},${baudrate} " \
 		"root=/dev/nfs " \
@@ -216,15 +234,24 @@
 		"fi; " \
 		"if ${get_cmd} ${hdp_addr} ${hdp_file}; then; hdp load ${hdp_addr}; fi;" \
 		"if ${get_cmd} ${hdprx_addr} ${hdprx_file}; then; hdprx load ${hdprx_addr}; fi;" \
-		"${get_cmd} ${loadaddr} ${image}; " \
-		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
-			"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
+		"if test ${sec_boot} = yes; then " \
+			"${get_cmd} ${cntr_addr} ${cntr_file}; " \
+			"if run auth_os; then " \
 				"run boot_os; " \
 			"else " \
-				"echo WARN: Cannot load the DT; " \
+				"echo ERR: failed to authenticate; " \
 			"fi; " \
 		"else " \
-			"booti; " \
+			"${get_cmd} ${loadaddr} ${image}; " \
+			"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
+				"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
+					"run boot_os; " \
+				"else " \
+					"echo WARN: Cannot load the DT; " \
+				"fi; " \
+			"else " \
+				"booti; " \
+			"fi;" \
 		"fi;\0"
 
 #define CONFIG_BOOTCOMMAND \
@@ -232,10 +259,17 @@
 		   "if run loadbootscript; then " \
 			   "run bootscript; " \
 		   "else " \
-			   "if run loadimage; then " \
-				   "run mmcboot; " \
-			   "else run netboot; " \
-			   "fi; " \
+			   "if test ${sec_boot} = yes; then " \
+				   "if run loadcntr; then " \
+					   "run mmcboot; " \
+				   "else run netboot; " \
+				   "fi; " \
+			    "else " \
+				   "if run loadimage; then " \
+					   "run mmcboot; " \
+				   "else run netboot; " \
+				   "fi; " \
+			 "fi; " \
 		   "fi; " \
 	   "else booti ${loadaddr} - ${fdt_addr}; fi"
 
