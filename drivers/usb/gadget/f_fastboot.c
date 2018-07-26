@@ -3198,11 +3198,40 @@ U_BOOT_CMD(
 	"lock_status",
 	"lock_status");
 
+static void wipe_all_userdata(void)
+{
+	char response[FASTBOOT_RESPONSE_LEN];
+
+	/* Erase all user data */
+	printf("Start userdata wipe process....\n");
+	/* Erase /data partition */
+	fastboot_wipe_data_partition();
+
+#ifdef CONFIG_ANDROID_SUPPORT
+	/* Erase the misc partition. */
+	process_erase_mmc(FASTBOOT_PARTITION_MISC, response);
+#endif
+
+#ifndef CONFIG_ANDROID_AB_SUPPORT
+	/* Erase the cache partition for legacy imx6/7 */
+	process_erase_mmc(FASTBOOT_PARTITION_CACHE, response);
+#endif
+	/* The unlock permissive flag is set by user and should be wiped here. */
+	set_fastboot_lock_disable();
+
+
+#if defined(CONFIG_AVB_SUPPORT) && !defined(CONFIG_IMX_TRUSTY_OS)
+	printf("Start stored_rollback_index wipe process....\n");
+	rbkidx_erase();
+	printf("Wipe stored_rollback_index completed.\n");
+#endif
+	printf("Wipe userdata completed.\n");
+}
+
 static FbLockState do_fastboot_unlock(bool force)
 {
 	int status;
-	if (force)
-		set_fastboot_lock_disable();
+
 	if ((fastboot_lock_enable() == FASTBOOT_UL_ENABLE) || force) {
 		printf("It is able to unlock device. %d\n",fastboot_lock_enable());
 		if (fastboot_get_lock_stat() == FASTBOOT_UNLOCK) {
@@ -3213,15 +3242,8 @@ static FbLockState do_fastboot_unlock(bool force)
 		if (status < 0)
 			return FASTBOOT_LOCK_ERROR;
 
-		printf("Start /data wipe process....\n");
-		fastboot_wipe_data_partition();
-		printf("Wipe /data completed.\n");
+		wipe_all_userdata();
 
-#if defined(CONFIG_AVB_SUPPORT) && !defined(CONFIG_IMX_TRUSTY_OS)
-		printf("Start stored_rollback_index wipe process....\n");
-		rbkidx_erase();
-		printf("Wipe stored_rollback_index completed.\n");
-#endif
 	} else {
 		printf("It is not able to unlock device.");
 		return FASTBOOT_LOCK_ERROR;
@@ -3233,6 +3255,7 @@ static FbLockState do_fastboot_unlock(bool force)
 static FbLockState do_fastboot_lock(void)
 {
 	int status;
+
 	if (fastboot_get_lock_stat() == FASTBOOT_LOCK) {
 		printf("The device is already locked\n");
 		return FASTBOOT_LOCK;
@@ -3241,9 +3264,7 @@ static FbLockState do_fastboot_lock(void)
 	if (status < 0)
 		return FASTBOOT_LOCK_ERROR;
 
-	printf("Start /data wipe process....\n");
-	fastboot_wipe_data_partition();
-	printf("Wipe /data completed.\n");
+	wipe_all_userdata();
 
 	return FASTBOOT_LOCK;
 }
