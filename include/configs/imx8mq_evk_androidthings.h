@@ -48,6 +48,9 @@
 #define WIBO_3G                0x00
 #define IMX8M_REF_3G           0x00
 
+#define TEE_LOAD_ADDR_1G 0x7e000000
+#define TEE_LOAD_ADDR_3G 0xfe000000
+
 #ifdef CONFIG_SPL_BUILD
 
 #define CONFIG_SPL_SHA256

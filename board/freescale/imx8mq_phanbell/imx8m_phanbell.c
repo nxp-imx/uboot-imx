@@ -169,6 +169,25 @@ int get_imx8m_baseboard_id(void)
 
 	return baseboard_id;
 }
+#ifdef CONFIG_IMX_TRUSTY_OS
+int get_tee_load(ulong *load)
+{
+	int board_id;
+
+	board_id = get_imx8m_baseboard_id();
+	/* load TEE to the last 32M of DDR */
+	if ((board_id == ENTERPRISE_MICRON_1G) ||
+			(board_id == ENTERPRISE_HYNIX_1G)) {
+		/* for 1G DDR board */
+		*load = (ulong)TEE_LOAD_ADDR_1G;
+	} else {
+		/* for 3G DDR board  */
+		*load = (ulong)TEE_LOAD_ADDR_3G;
+	}
+
+	return 0;
+}
+#endif
 
 int dram_init(void)
 {
