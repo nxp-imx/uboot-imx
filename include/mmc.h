@@ -154,7 +154,7 @@ static inline bool mmc_is_tuning_cmd(uint cmdidx)
 #define OCR_BUSY		0x80000000
 #define OCR_HCS			0x40000000
 #define OCR_S18R		0x1000000
-#define OCR_VOLTAGE_MASK	0x007FFF80
+#define OCR_VOLTAGE_MASK	0x00FFFF80
 #define OCR_ACCESS_MODE		0x60000000
 
 #define MMC_ERASE_ARG		0x00000000
