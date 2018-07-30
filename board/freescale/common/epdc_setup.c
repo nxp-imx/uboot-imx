@@ -53,7 +53,7 @@ int board_setup_waveform_file(ulong waveform_buf)
 	if (!file_len)
 		return -1;
 
-	flush_cache(waveform_buf, file_len);
+	flush_cache(waveform_buf, roundup(file_len, ARCH_DMA_MINALIGN));
 
 	return 0;
 }
