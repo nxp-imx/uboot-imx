@@ -299,7 +299,7 @@ void init_clk_usdhc(u32 index)
 	 * USDHC2_CLK_ROOT to 200MHz, make eMMC HS400ES work at 166MHz, and SD
 	 * SDR104 work at 200MHz.
 	 */
-	if (is_imx8qxp() && is_soc_rev(CHIP_REV_A)) {
+	if (is_imx8qxp()) {
 		err = sc_pm_set_clock_parent(ipc, usdhcs[index], 2, SC_PM_PARENT_PLL1);
 		if (err != SC_ERR_NONE)
 			printf("SDHC_%d set clock parent failed!(error = %d)\n", index, err);
