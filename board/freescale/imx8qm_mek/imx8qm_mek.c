@@ -497,9 +497,15 @@ int board_late_init(void)
 	end_of_uboot = (char *)(ulong)(CONFIG_SYS_TEXT_BASE + _end_ofs + fdt_totalsize(gd->fdt_blob));
 	end_of_uboot += 9;
 
-	memcpy(IMX_HDMI_FIRMWARE_LOAD_ADDR, end_of_uboot, IMX_HDMI_FIRMWARE_SIZE);
+	/* load hdmitxfw.bin and hdmirxfw.bin*/
+	memcpy(IMX_HDMI_FIRMWARE_LOAD_ADDR, end_of_uboot,
+			IMX_HDMITX_FIRMWARE_SIZE + IMX_HDMIRX_FIRMWARE_SIZE);
 
 	sprintf(command, "hdp load 0x%x", IMX_HDMI_FIRMWARE_LOAD_ADDR);
+	run_command(command, 0);
+
+	sprintf(command, "hdprx load 0x%x",
+			IMX_HDMI_FIRMWARE_LOAD_ADDR + IMX_HDMITX_FIRMWARE_SIZE);
 	run_command(command, 0);
 #endif
 
