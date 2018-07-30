@@ -204,7 +204,7 @@
 	#undef LCD_TEST_PATTERN
 	#define LCD_BPP					LCD_MONOCHROME
 
-	#define CONFIG_WAVEFORM_BUF_SIZE		0x200000
+	#define CONFIG_WAVEFORM_BUF_SIZE		0x400000
 #endif /* CONFIG_MXC_EPDC */
 
 #endif				/* __CONFIG_H */
