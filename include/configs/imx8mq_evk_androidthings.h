@@ -62,6 +62,9 @@
 #ifdef CONFIG_SPL_BUILD
 
 #define CONFIG_SPL_SHA256
+#undef CONFIG_ENV_IS_IN_MMC
+#undef CONFIG_BLK
+#define CONFIG_ENV_IS_NOWHERE
 
 #define AVB_RPMB
 #ifdef AVB_RPMB
