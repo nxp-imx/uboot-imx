@@ -101,13 +101,6 @@ u32 __weak get_lpuart_clk(void)
 	return CONFIG_SYS_CLK_FREQ;
 }
 
-static bool is_lpuart32(struct udevice *dev)
-{
-	struct lpuart_serial_platdata *plat = dev->platdata;
-
-	return plat->flags & LPUART_FLAG_REGMAP_32BIT_REG;
-}
-
 static void _lpuart_serial_setbrg(struct lpuart_serial_platdata *plat,
 				  int baudrate)
 {
@@ -142,17 +135,6 @@ static void _lpuart_serial_putc(struct lpuart_serial_platdata *plat,
 		WATCHDOG_RESET();
 
 	__raw_writeb(c, &base->ud);
-}
-
-/* Test whether a character is in the RX buffer */
-static int _lpuart_serial_tstc(struct lpuart_serial_platdata *plat)
-{
-	struct lpuart_fsl *base = plat->reg;
-
-	if (__raw_readb(&base->urcfifo) == 0)
-		return 0;
-
-	return 1;
 }
 
 /*
@@ -300,20 +282,6 @@ static void _lpuart32_serial_putc(struct lpuart_serial_platdata *plat,
 	lpuart_write32(plat->flags, &base->data, c);
 }
 
-/* Test whether a character is in the RX buffer */
-static int _lpuart32_serial_tstc(struct lpuart_serial_platdata *plat)
-{
-	struct lpuart_fsl_reg32 *base = plat->reg;
-	u32 water;
-
-	lpuart_read32(plat->flags, &base->water, &water);
-
-	if ((water >> 24) == 0)
-		return 0;
-
-	return 1;
-}
-
 /*
  * Initialise the serial port with the given baudrate. The settings
  * are always 8 data bits, no parity, 1 stop bit, no start bits.
@@ -353,6 +321,133 @@ static int _lpuart32_serial_init(struct lpuart_serial_platdata *plat)
 	lpuart_write32(plat->flags, &base->ctrl, CTRL_RE | CTRL_TE);
 
 	return 0;
+}
+
+#ifndef CONFIG_DM_SERIAL
+
+#ifndef CONFIG_SERIAL_LPUART_BASE
+#error "define CONFIG_SERIAL_LPUART_BASE to use the MXC UART driver"
+#endif
+
+#define lpuart_base        ((struct mxc_uart *)CONFIG_SERIAL_LPUART_BASE)
+
+struct lpuart_serial_platdata lpuart_serial_data = {
+	.reg = lpuart_base,
+	.devtype = DEV_IMX8,
+	.flags = LPUART_FLAG_REGMAP_32BIT_REG,
+};
+
+static void serial_lpuart_setbrg(void)
+{
+	struct lpuart_serial_platdata *plat = &lpuart_serial_data;
+
+	if (plat->flags & LPUART_FLAG_REGMAP_32BIT_REG) {
+		if (plat->devtype == DEV_MX7ULP || plat->devtype == DEV_IMX8)
+			_lpuart32_serial_setbrg_7ulp(plat, gd->baudrate);
+		else
+			_lpuart32_serial_setbrg(plat, gd->baudrate);
+	} else {
+		_lpuart_serial_setbrg(plat, gd->baudrate);
+	}
+
+}
+
+static int serial_lpuart_init(void)
+{
+	struct lpuart_serial_platdata *plat = &lpuart_serial_data;
+
+	if (plat->flags & LPUART_FLAG_REGMAP_32BIT_REG)
+		return _lpuart32_serial_init(plat);
+	else
+		return _lpuart_serial_init(plat);
+
+	return 0;
+}
+
+static int serial_lpuart_getc(void)
+{
+	struct lpuart_serial_platdata *plat = &lpuart_serial_data;
+
+	if (plat->flags & LPUART_FLAG_REGMAP_32BIT_REG)
+		return _lpuart32_serial_getc(plat);
+
+	return _lpuart_serial_getc(plat);
+}
+
+static void serial_lpuart_putc(const char c)
+{
+	struct lpuart_serial_platdata *plat = &lpuart_serial_data;
+
+	if (plat->flags & LPUART_FLAG_REGMAP_32BIT_REG)
+		_lpuart32_serial_putc(plat, c);
+	else
+		_lpuart_serial_putc(plat, c);
+}
+
+static int serial_lpuart_tstc(void)
+{
+	struct lpuart_serial_platdata *plat = &lpuart_serial_data;
+	struct lpuart_fsl *base = plat->reg;
+
+	if (__raw_readb(&base->urcfifo) == 0)
+		return 0;
+
+	return 1;
+}
+
+static struct serial_device serial_lpuart_drv = {
+        .name   = "serial_lpuart",
+        .start  = serial_lpuart_init,
+        .stop   = NULL,
+        .setbrg = serial_lpuart_setbrg,
+        .putc   = serial_lpuart_putc,
+	.puts   = default_serial_puts,
+        .getc   = serial_lpuart_getc,
+	.tstc   = serial_lpuart_tstc,
+};
+
+__weak struct serial_device *default_serial_console(void)
+{
+        return &serial_lpuart_drv;
+}
+
+void serial_lpuart_initialize(void)
+{
+	serial_register(&serial_lpuart_drv);
+}
+
+#else /* CONFIG_DM_SERIAL */
+
+static bool is_lpuart32(struct udevice *dev)
+{
+	struct lpuart_serial_platdata *plat = dev->platdata;
+
+	return plat->flags & LPUART_FLAG_REGMAP_32BIT_REG;
+}
+
+/* Test whether a character is in the RX buffer */
+static int _lpuart_serial_tstc(struct lpuart_serial_platdata *plat)
+{
+	struct lpuart_fsl *base = plat->reg;
+
+	if (__raw_readb(&base->urcfifo) == 0)
+		return 0;
+
+	return 1;
+}
+
+/* Test whether a character is in the RX buffer */
+static int _lpuart32_serial_tstc(struct lpuart_serial_platdata *plat)
+{
+	struct lpuart_fsl_reg32 *base = plat->reg;
+	u32 water;
+
+	lpuart_read32(plat->flags, &base->water, &water);
+
+	if ((water >> 24) == 0)
+		return 0;
+
+	return 1;
 }
 
 static int lpuart_serial_setbrg(struct udevice *dev, int baudrate)
@@ -414,6 +509,7 @@ static int lpuart_serial_pending(struct udevice *dev, bool input)
 	else
 		return __raw_readb(&reg->us1) & US1_TDRE ? 0 : 1;
 }
+
 
 static int lpuart_serial_probe(struct udevice *dev)
 {
@@ -479,3 +575,5 @@ U_BOOT_DRIVER(serial_lpuart) = {
 	.ops	= &lpuart_serial_ops,
 	.flags = DM_FLAG_PRE_RELOC,
 };
+
+#endif
