@@ -59,7 +59,9 @@ obj-y += ddrmc-vf610.o
 endif
 ifeq ($(SOC),$(filter $(SOC),imx8))
 obj-$(CONFIG_HAVE_SC_FIRMWARE) += sci/
+ifneq ($(CONFIG_SPL_BUILD),y)
 obj-$(CONFIG_IMX_BOOTAUX) += imx_bootaux.o
+endif
 obj-$(CONFIG_IMX_VIDEO_SKIP) += video.o
 obj-y  += misc.o
 endif
