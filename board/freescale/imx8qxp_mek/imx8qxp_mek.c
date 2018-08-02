@@ -100,6 +100,7 @@ int board_early_init_f(void)
 
 #define USDHC1_CD_GPIO	IMX_GPIO_NR(4, 22)
 
+#ifndef CONFIG_SPL_BUILD
 static struct fsl_esdhc_cfg usdhc_cfg[CONFIG_SYS_FSL_USDHC_NUM] = {
 	{USDHC1_BASE_ADDR, 0, 8},
 	{USDHC2_BASE_ADDR, 0, 4},
@@ -193,6 +194,7 @@ int board_mmc_getcd(struct mmc *mmc)
 	return ret;
 }
 
+#endif /* CONFIG_SPL_BUILD */
 #endif /* CONFIG_FSL_ESDHC */
 
 
