@@ -139,6 +139,25 @@ void spl_set_header_raw_uboot(struct spl_image_info *spl_image)
 	spl_image->name = "U-Boot";
 }
 
+#if defined(CONFIG_SPL_RAW_IMAGE_ARM_TRUSTED_FIRMWARE)
+void spl_set_header_raw_atf(struct spl_image_info *spl_image)
+{
+	ulong u_boot_pos = binman_sym(ulong, u_boot_any, pos);
+
+	spl_image->size = CONFIG_SYS_MONITOR_LEN;
+	if (u_boot_pos != BINMAN_SYM_MISSING) {
+		/* biman does not support separate entry addresses at present */
+		spl_image->entry_point = u_boot_pos;
+		spl_image->load_addr = u_boot_pos;
+	} else {
+		spl_image->entry_point = CONFIG_SYS_ATF_START;
+		spl_image->load_addr = CONFIG_ATF_TEXT_BASE;
+	}
+	spl_image->os = IH_OS_ARM_TRUSTED_FIRMWARE;
+	spl_image->name = "Arm Trusted Firmware";
+}
+#endif
+
 int spl_parse_image_header(struct spl_image_info *spl_image,
 			   const struct image_header *header)
 {
@@ -205,7 +224,11 @@ int spl_parse_image_header(struct spl_image_info *spl_image,
 		/* Signature not found - assume u-boot.bin */
 		debug("mkimage signature not found - ih_magic = %x\n",
 			header->ih_magic);
+#if defined(CONFIG_SPL_RAW_IMAGE_ARM_TRUSTED_FIRMWARE)
+		spl_set_header_raw_atf(spl_image);
+#else
 		spl_set_header_raw_uboot(spl_image);
+#endif
 #else
 		/* RAW image not supported, proceed to other boot methods. */
 		debug("Raw boot image support not enabled, proceeding to other boot methods\n");
@@ -430,10 +453,12 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	case IH_OS_U_BOOT:
 		debug("Jumping to U-Boot\n");
 		break;
-#if CONFIG_IS_ENABLED(ATF)
+#if CONFIG_IS_ENABLED(ATF) || defined(CONFIG_SPL_RAW_IMAGE_ARM_TRUSTED_FIRMWARE)
 	case IH_OS_ARM_TRUSTED_FIRMWARE:
 		debug("Jumping to U-Boot via ARM Trusted Firmware\n");
+#if !defined(CONFIG_SPL_RAW_IMAGE_ARM_TRUSTED_FIRMWARE)
 		spl_invoke_atf(&spl_image);
+#endif
 		break;
 #endif
 #ifdef CONFIG_SPL_OS_BOOT
