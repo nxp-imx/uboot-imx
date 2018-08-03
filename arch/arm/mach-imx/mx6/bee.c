@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -255,7 +256,8 @@ static int region_valid(u32 start, u32 size)
 		return -EINVAL;
 	}
 
-	if ((start + size - 1) >= (gd->start_addr_sp - CONFIG_STACKSIZE)) {
+	/* 128K for U-Boot Stack */
+	if ((start + size - 1) >= (gd->start_addr_sp - SZ_128K)) {
 		printf("Overlap with uboot execution environment!\n"
 		       "Decrease size or start\n");
 		return -EINVAL;
