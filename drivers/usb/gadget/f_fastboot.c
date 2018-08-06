@@ -1548,6 +1548,10 @@ void board_fastboot_setup(void)
 		if (!getenv("bootcmd"))
 			setenv("bootcmd", boot_dev_part);
 		break;
+	case USB_BOOT:
+		printf("Detect USB boot. Will enter fastboot mode!\n");
+		if (!getenv("bootcmd"))
+			setenv("bootcmd", "fastboot 0");
 #endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
 	default:
 		printf("unsupported boot devices\n");
