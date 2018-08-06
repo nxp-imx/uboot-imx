@@ -71,6 +71,15 @@
 #define BOOTENV
 #endif
 
+/*
+ * Another approach is add the clocks for inmates into clks_init_on
+ * in clk-imx8mm.c, then clk_ingore_unused could be removed.
+ */
+#define JAILHOUSE_ENV \
+	"jh_clk= \0 " \
+	"jh_mmcboot=setenv fdt_file fsl-imx8mm-evk-root.dtb; setenv jh_clk clk_ignore_unused; run mmcboot\0 " \
+	"jh_netboot=setenv fdt_file fsl-imx8mm-evk-root.dtb; setenv jh_clk clk_ignore_unused; run netboot\0 "
+
 /* Initial environment variables */
 #if defined(CONFIG_NAND_BOOT)
 #define CONFIG_EXTRA_ENV_SETTINGS \
@@ -89,6 +98,7 @@
 #else
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	BOOTENV \
+	JAILHOUSE_ENV \
 	"scriptaddr=0x43500000\0" \
 	"kernel_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"bsp_script=boot.scr\0" \
@@ -104,7 +114,7 @@
 	"mmcpart=1\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
 	"mmcautodetect=yes\0" \
-	"mmcargs=setenv bootargs console=${console} root=${mmcroot}\0 " \
+	"mmcargs=setenv bootargs ${jh_clk} console=${console} root=${mmcroot}\0 " \
 	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${bsp_script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
@@ -121,7 +131,7 @@
 				"echo WARN: Cannot load the DT; " \
 			"fi; " \
 		"fi;\0" \
-	"netargs=setenv bootargs console=${console} " \
+	"netargs=setenv bootargs ${jh_clk} console=${console} " \
 		"root=/dev/nfs " \
 		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 	"netboot=echo Booting from net ...; " \
