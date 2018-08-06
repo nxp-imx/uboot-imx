@@ -356,6 +356,16 @@ int board_late_init(void)
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
+	int baseboard_id;
+	baseboard_id = get_imx8m_baseboard_id();
+	if ((baseboard_id == ENTERPRISE_MICRON_1G) ||
+			(baseboard_id == ENTERPRISE_HYNIX_1G)) {
+		/* 1G DDR size */
+		env_set("bootargs_ram_capacity", "cma=296M galcore.contiguousSize=8388608");
+	} else {
+		/* 3G DDR size */
+		env_set("bootargs_ram_capacity", "cma=384M");
+	}
 
 	return 0;
 }

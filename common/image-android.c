@@ -108,6 +108,14 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 		}
 	}
 
+	/* Add 'bootargs_ram_capacity' to hold the parameters based on different ram capacity */
+	char *bootargs_ram_capacity = env_get("bootargs_ram_capacity");
+	if (bootargs_ram_capacity) {
+		strncat(commandline, " ", sizeof(commandline) - strlen(commandline));
+		strncat(commandline, bootargs_ram_capacity,
+			sizeof(commandline) - strlen(commandline));
+	}
+
 #ifdef CONFIG_SERIAL_TAG
 	struct tag_serialnr serialnr;
 	get_board_serial(&serialnr);
