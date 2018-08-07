@@ -11,6 +11,7 @@
 #define __MX7D_SABRESD_CONFIG_H
 
 #include "mx7_common.h"
+#include "imx_env.h"
 
 #define CONFIG_DBG_MONITOR
 #define PHYS_SDRAM_SIZE			SZ_1G
@@ -89,23 +90,16 @@
 #define MFG_NAND_PARTITION ""
 #endif
 
+#define CONFIG_CMD_READ
+#define CONFIG_SERIAL_TAG
+#define CONFIG_FASTBOOT_USB_DEV 0
+
 #define CONFIG_MFG_ENV_SETTINGS \
-	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
-		"rdinit=/linuxrc " \
-		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
-		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
-		"g_mass_storage.iSerialNumber=\"\" "\
-		MFG_NAND_PARTITION \
-		"clk_ignore_unused "\
-		"\0" \
+	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x83800000\0" \
 	"initrd_high=0xffffffff\0" \
-	"bootcmd_mfg=run mfgtool_args; " \
-		"if test ${tee} = yes; then " \
-			"bootm ${tee_addr} ${initrd_addr} ${fdt_addr}; " \
-		"else " \
-			"bootz ${loadaddr} ${initrd_addr} ${fdt_addr}; " \
-		"fi;\0"
+	"emmc_dev=1\0"\
+	"sd_dev=0\0" \
 
 #define CONFIG_DFU_ENV_SETTINGS \
 	"dfu_alt_info=image raw 0 0x800000;"\
