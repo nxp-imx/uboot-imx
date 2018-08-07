@@ -76,7 +76,7 @@ struct jr_data_st {
 /*
  * Global variables
  */
-static struct jr_data_st g_jrdata = {0};
+static struct jr_data_st g_jrdata = {0, 0, 0xFFFFFFFF};
 
 static u8 skeymod[] = {
 	0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
