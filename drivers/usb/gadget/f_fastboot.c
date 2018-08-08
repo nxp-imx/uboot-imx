@@ -1726,23 +1726,26 @@ void fastboot_setup(void)
 /* Write the bcb with fastboot bootloader commands */
 static void enable_fastboot_command(void)
 {
+#ifdef CONFIG_BCB_SUPPORT
 	char fastboot_command[32] = {0};
 	strncpy(fastboot_command, FASTBOOT_BCB_CMD, 31);
 	bcb_write_command(fastboot_command);
+#endif
 }
 
 /* Get the Boot mode from BCB cmd or Key pressed */
 static FbBootMode fastboot_get_bootmode(void)
 {
-	int ret = 0;
 	int boot_mode = BOOTMODE_NORMAL;
-	char command[32];
 #ifdef CONFIG_ANDROID_RECOVERY
 	if(is_recovery_key_pressing()) {
 		boot_mode = BOOTMODE_RECOVERY_KEY_PRESSED;
 		return boot_mode;
 	}
 #endif
+#ifdef CONFIG_BCB_SUPPORT
+	int ret = 0;
+	char command[32];
 	ret = bcb_read_command(command);
 	if (ret < 0) {
 		printf("read command failed\n");
@@ -1761,6 +1764,7 @@ static FbBootMode fastboot_get_bootmode(void)
 	   no matter what in the mode string */
 	memset(command, 0, 32);
 	bcb_write_command(command);
+#endif
 	return boot_mode;
 }
 
