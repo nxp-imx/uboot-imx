@@ -373,7 +373,6 @@ bool is_usb_boot(void)
 	return get_boot_device() == USB_BOOT;
 }
 
-#ifdef CONFIG_ENV_IS_IN_MMC
 __weak int board_mmc_get_env_dev(int devno)
 {
 	return CONFIG_SYS_MMC_ENV_DEV;
@@ -393,7 +392,6 @@ int mmc_get_env_dev(void)
 
 	return board_mmc_get_env_dev(devno);
 }
-#endif
 
 #ifdef CONFIG_SERIAL_TAG
 void get_board_serial(struct tag_serialnr *serialnr)
