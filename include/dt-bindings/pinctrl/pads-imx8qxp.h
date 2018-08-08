@@ -764,6 +764,9 @@
 #define SC_P_QSPI0B_SS1_B_LSIO_QSPI1A_SS1_B                     SC_P_QSPI0B_SS1_B                  1
 #define SC_P_QSPI0B_SS1_B_LSIO_KPP0_ROW3                        SC_P_QSPI0B_SS1_B                  2
 #define SC_P_QSPI0B_SS1_B_LSIO_GPIO3_IO24                       SC_P_QSPI0B_SS1_B                  4
+#define SC_P_COMP_CTL_GPIO_1V8_3V3_ENET_ENETB0_PAD              SC_P_COMP_CTL_GPIO_1V8_3V3_ENET_ENETB0                  0
+#define SC_P_COMP_CTL_GPIO_1V8_3V3_ENET_ENETB1_PAD              SC_P_COMP_CTL_GPIO_1V8_3V3_ENET_ENETB1                  0
+#define SC_P_COMP_CTL_GPIO_1V8_3V3_GPIORHB_PAD                  SC_P_COMP_CTL_GPIO_1V8_3V3_GPIORHB                      0
 /*@}*/
 
 #endif /* SC_PADS_H */
