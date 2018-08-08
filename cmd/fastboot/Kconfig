@@ -26,7 +26,6 @@ config ANDROID_BOOT_IMAGE
 
 config FSL_FASTBOOT
 	bool "Enable FSL fastboot support"
-	select BCB_SUPPORT
 	help
 	  This enables FSL implementation for Android fastboot.
 
@@ -43,7 +42,9 @@ config CMD_BOOTA
 	  This enables the boota command for booting android images.
 
 config BCB_SUPPORT
-	bool
+	bool "Enable the boot control block support"
+    help
+      This enables the boot control block support for android reboot command
 
 choice
         prompt "Android Image Storage select"
