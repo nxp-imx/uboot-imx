@@ -762,17 +762,59 @@ int arch_misc_init(void)
 
 #define FSL_SIP_GPC			0xC2000000
 #define FSL_SIP_CONFIG_GPC_PM_DOMAIN	0x03
+
+#ifdef CONFIG_SPL_BUILD
+static uint32_t gpc_pu_m_core_offset[11] = {
+	0xc00, 0xc40, 0xc80, 0xcc0,
+	0xdc0, 0xe00, 0xe40, 0xe80,
+	0xec0, 0xf00, 0xf40,
+};
+
+#define PGC_PCR				0
+
+void imx_gpc_set_m_core_pgc(unsigned int offset, bool pdn)
+{
+	uint32_t val;
+	uintptr_t reg = GPC_BASE_ADDR + offset;
+
+	val = readl(reg);
+	val &= ~(0x1 << PGC_PCR);
+
+	if(pdn)
+		val |= 0x1 << PGC_PCR;
+	writel(val, reg);
+}
+
+void imx8m_usb_power_domain(uint32_t domain_id, bool on)
+{
+	uint32_t val;
+	uintptr_t reg;
+
+	imx_gpc_set_m_core_pgc(gpc_pu_m_core_offset[domain_id], true);
+
+	reg = GPC_BASE_ADDR + (on ? 0xf8 : 0x104);
+	val = 1 << (domain_id > 3 ? (domain_id + 3) : domain_id);
+	writel(val, reg);
+	while (readl(reg) & val)
+		;
+	imx_gpc_set_m_core_pgc(gpc_pu_m_core_offset[domain_id], false);
+}
+#endif
+
 int imx8m_usb_power(int usb_id, bool on)
 {
-	unsigned long ret;
-
 	if (usb_id > 1)
 		return -EINVAL;
 
+#ifdef CONFIG_SPL_BUILD
+	imx8m_usb_power_domain(2 + usb_id, on);
+#else
+	unsigned long ret;
 	ret = call_imx_sip(FSL_SIP_GPC,
 			FSL_SIP_CONFIG_GPC_PM_DOMAIN, 2 + usb_id, on, 0);
 	if (ret)
 		return -EPERM;
+#endif
 
 	return 0;
 }
