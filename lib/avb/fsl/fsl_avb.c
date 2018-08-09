@@ -70,6 +70,7 @@ static struct blk_desc *get_mmc_desc(void) {
 	pte = fastboot_flash_find_ptn(partition);
 	if (!pte) {
 		ERR("no %s partition\n", partition);
+		fastboot_flash_dump_ptn();
 		return AVB_IO_RESULT_ERROR_NO_SUCH_PARTITION;
 	}
 
@@ -153,6 +154,7 @@ fail:
 	pte = fastboot_flash_find_ptn(partition);
 	if (!pte) {
 		ERR("no %s partition\n", partition);
+		fastboot_flash_dump_ptn();
 		return AVB_IO_RESULT_ERROR_NO_SUCH_PARTITION;
 	}
 
@@ -276,6 +278,7 @@ fail:
 	pte = fastboot_flash_find_ptn(partition);
 	if (!pte) {
 		ERR("no %s partition\n", partition);
+		fastboot_flash_dump_ptn();
 		return AVB_IO_RESULT_ERROR_NO_SUCH_PARTITION;
 	}
 
@@ -401,6 +404,7 @@ AvbIOResult fsl_get_unique_guid_for_partition(AvbOps* ops,
 	pte = fastboot_flash_find_ptn(partition);
 	if (!pte) {
 		ERR("no %s partition\n", partition);
+		fastboot_flash_dump_ptn();
 		return AVB_IO_RESULT_ERROR_NO_SUCH_PARTITION;
 	}
 	strncpy(guid_buf, (const char *)pte->uuid, guid_buf_size);
@@ -425,6 +429,7 @@ AvbIOResult fsl_get_size_of_partition(AvbOps* ops,
 	pte = fastboot_flash_find_ptn(partition);
 	if (!pte) {
 		ERR("no %s partition\n", partition);
+		fastboot_flash_dump_ptn();
 		return AVB_IO_RESULT_ERROR_NO_SUCH_PARTITION;
 	}
 	*out_size_num_bytes = (uint64_t)(pte->length * 512);
