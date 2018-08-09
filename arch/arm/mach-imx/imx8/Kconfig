@@ -64,6 +64,11 @@ config TARGET_IMX8QXP_DDR3_ARM2
 	select BOARD_LATE_INIT
 	select IMX8QXP
 
+config TARGET_IMX8DX_DDR3_ARM2
+	bool "Support i.MX8DX ddr3 validation board"
+	select BOARD_LATE_INIT
+	select IMX8QXP
+
 config TARGET_IMX8QXP_MEK
 	bool "Support i.MX8QXP MEK board"
 	select BOARD_LATE_INIT

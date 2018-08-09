@@ -118,7 +118,9 @@
 		"\0" \
 	"initrd_addr=0x83100000\0" \
 	"initrd_high=0xffffffff\0" \
-	"bootcmd_mfg=run mfgtool_args;booti ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+	"bootcmd_mfg=run mfgtool_args;  if iminfo ${initrd_addr}; then "\
+					     "booti ${loadaddr} ${initrd_addr} ${fdt_addr};"\
+					"else fastboot 1; fi\0" \
 
 /* Initial environment variables */
 #ifdef CONFIG_NAND_BOOT
@@ -262,9 +264,15 @@
 
 /* On LPDDR4 board, USDHC1 is for eMMC, USDHC2 is for SD on CPU board
   */
+#ifdef CONFIG_TARGET_IMX8DX_DDR3_ARM2
+#define CONFIG_SYS_MMC_ENV_DEV		0   /* USDHC1 */
+#define CONFIG_MMCROOT			"/dev/mmcblk0p2"  /* USDHC1 */
+#define CONFIG_SYS_FSL_USDHC_NUM	1
+#else
 #define CONFIG_SYS_MMC_ENV_DEV		1   /* USDHC2 */
 #define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
 #define CONFIG_SYS_FSL_USDHC_NUM	2
+#endif
 
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		((CONFIG_ENV_SIZE + (32*1024)) * 1024)
@@ -273,7 +281,7 @@
 #define CONFIG_NR_DRAM_BANKS		3
 #define PHYS_SDRAM_1			0x80000000
 #define PHYS_SDRAM_2			0x880000000
-#ifdef CONFIG_TARGET_IMX8QXP_DDR3_ARM2
+#if defined(CONFIG_TARGET_IMX8QXP_DDR3_ARM2) || defined(CONFIG_TARGET_IMX8DX_DDR3_ARM2)
 #define PHYS_SDRAM_1_SIZE		0x40000000	/* 1 GB */
 /* LPDDR4 board total DDR is 3GB */
 #define PHYS_SDRAM_2_SIZE		0x00000000
@@ -370,5 +378,8 @@
 #define CONFIG_OF_SYSTEM_SETUP
 #define BOOTAUX_RESERVED_MEM_BASE 0x88000000
 #define BOOTAUX_RESERVED_MEM_SIZE 0x08000000 /* Reserve from second 128MB */
+
+#define CONFIG_CMD_READ
+#define CONFIG_SERIAL_TAG
 
 #endif /* __IMX8QXP_ARM2_H */
