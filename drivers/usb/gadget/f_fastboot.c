@@ -118,14 +118,10 @@ struct fastboot_device_info fastboot_firmwareinfo;
 
 #endif
 
-#ifdef CONFIG_LOAD_FDT_FROM_PART
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
 #define FDT_PART_NAME "oem_bootloader"
 #else
 #define FDT_PART_NAME "dtbo"
-#endif
-#else
-#define FDT_PART_NAME NULL
 #endif
 
 /*
@@ -1948,6 +1944,21 @@ void trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_resul
 const char *requested_partitions_boot[] = {"boot", FDT_PART_NAME, NULL};
 const char *requested_partitions_recovery[] = {"recovery", FDT_PART_NAME, NULL};
 
+static bool is_load_fdt_from_part(void)
+{
+#ifdef CONFIG_ANDROID_THINGS_SUPPORT
+	if (fastboot_flash_find_ptn("oem_bootloader_a") &&
+		fastboot_flash_find_ptn("oem_bootloader_b")) {
+#else
+	if (fastboot_flash_find_ptn("dtbo_a") &&
+		fastboot_flash_find_ptn("dtbo_b")) {
+#endif
+		return true;
+	} else {
+		return false;
+	}
+}
+
 static int find_partition_data_by_name(char* part_name,
 		AvbSlotVerifyData* avb_out_data, AvbPartitionData** avb_loadpart)
 {
@@ -2000,6 +2011,11 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	}
 	bool allow_fail = (lock_status == FASTBOOT_UNLOCK ? true : false);
 	avb_metric = get_timer(0);
+	/* we don't need to verify fdt partition if we don't have it. */
+	if (!is_load_fdt_from_part()) {
+		requested_partitions_boot[1] = NULL;
+		requested_partitions_recovery[1] = NULL;
+	}
 	/* if in lock state, do avb verify */
 #ifndef CONFIG_DUAL_BOOTLOADER
 	/* For imx6 on Android, we don't have a/b slot and we want to verify
@@ -2134,43 +2150,45 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 #endif
 #ifdef CONFIG_OF_LIBFDT
 	/* load the dtb file */
-#ifdef CONFIG_LOAD_FDT_FROM_PART
+		u32 fdt_size = 0;
+	if (is_load_fdt_from_part()) {
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
-	if (find_partition_data_by_name("oem_bootloader",
-				avb_out_data, &avb_loadpart)) {
-		goto fail;
-	}
+		if (find_partition_data_by_name("oem_bootloader",
+					avb_out_data, &avb_loadpart)) {
+			goto fail;
+		}
 #else
-	if (find_partition_data_by_name("dtbo",
-				avb_out_data, &avb_loadpart)) {
-		goto fail;
-	}
+		if (find_partition_data_by_name("dtbo",
+					avb_out_data, &avb_loadpart)) {
+			goto fail;
+		}
 #endif
-	struct dt_table_header *dt_img;
-	dt_img = (struct dt_table_header *)avb_loadpart->data;
-	if (be32_to_cpu(dt_img->magic) != DT_TABLE_MAGIC) {
-		printf("boota: bad dt table magic %08x\n",
-				be32_to_cpu(dt_img->magic));
-		goto fail;
-	} else if (!be32_to_cpu(dt_img->dt_entry_count)) {
-		printf("boota: no dt entries\n");
-		goto fail;
-	}
+		struct dt_table_header *dt_img;
+		dt_img = (struct dt_table_header *)avb_loadpart->data;
+		if (be32_to_cpu(dt_img->magic) != DT_TABLE_MAGIC) {
+			printf("boota: bad dt table magic %08x\n",
+					be32_to_cpu(dt_img->magic));
+			goto fail;
+		} else if (!be32_to_cpu(dt_img->dt_entry_count)) {
+			printf("boota: no dt entries\n");
+			goto fail;
+		}
 
-	u32 fdt_size = 0;
-	struct dt_table_entry *dt_entry;
-	dt_entry = (struct dt_table_entry *)((ulong)dt_img +
-			be32_to_cpu(dt_img->dt_entries_offset));
-	fdt_size = be32_to_cpu(dt_entry->dt_size);
-	memcpy((void *)(ulong)hdr->second_addr, (void *)((ulong)dt_img +
-			be32_to_cpu(dt_entry->dt_offset)), fdt_size);
-#else /* CONFIG_LOAD_FDT_FROM_PART */
-	if (hdr->second_size && hdr->second_addr) {
-		memcpy((void *)(ulong)hdr->second_addr, (void *)(ulong)hdr + hdr->page_size
-			+ ALIGN(hdr->kernel_size, hdr->page_size)
-			+ ALIGN(hdr->ramdisk_size, hdr->page_size), hdr->second_size);
+		struct dt_table_entry *dt_entry;
+		dt_entry = (struct dt_table_entry *)((ulong)dt_img +
+				be32_to_cpu(dt_img->dt_entries_offset));
+		fdt_size = be32_to_cpu(dt_entry->dt_size);
+		memcpy((void *)(ulong)hdr->second_addr, (void *)((ulong)dt_img +
+				be32_to_cpu(dt_entry->dt_offset)), fdt_size);
+	} else {
+		if (hdr->second_size && hdr->second_addr) {
+			memcpy((void *)(ulong)hdr->second_addr,
+				(void *)(ulong)hdr + hdr->page_size
+				+ ALIGN(hdr->kernel_size, hdr->page_size)
+				+ ALIGN(hdr->ramdisk_size, hdr->page_size),
+				hdr->second_size);
+		}
 	}
-#endif /* CONFIG_LOAD_FDT_FROM_PART */
 #endif /*CONFIG_OF_LIBFDT*/
 
 	if (check_image_arm64) {
@@ -2182,13 +2200,13 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	printf("kernel   @ %08x (%d)\n", hdr->kernel_addr, hdr->kernel_size);
 	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
 #ifdef CONFIG_OF_LIBFDT
-#ifdef CONFIG_LOAD_FDT_FROM_PART
-	if (fdt_size)
-		printf("fdt      @ %08x (%d)\n", hdr->second_addr, fdt_size);
-#else
-	if (hdr->second_size)
-		printf("fdt      @ %08x (%d)\n", hdr->second_addr, hdr->second_size);
-#endif
+	if (is_load_fdt_from_part()) {
+		if (fdt_size)
+			printf("fdt      @ %08x (%d)\n", hdr->second_addr, fdt_size);
+	} else {
+		if (hdr->second_size)
+			printf("fdt      @ %08x (%d)\n", hdr->second_addr, hdr->second_size);
+	}
 #endif /*CONFIG_OF_LIBFDT*/
 
 	char boot_addr_start[12];
