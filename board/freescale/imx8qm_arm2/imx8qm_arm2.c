@@ -100,6 +100,8 @@ int board_early_init_f(void)
 #define USDHC1_CD_GPIO	IMX_GPIO_NR(5, 22)
 #define USDHC2_CD_GPIO	IMX_GPIO_NR(4, 12)
 
+#ifndef CONFIG_SPL_BUILD
+
 static struct fsl_esdhc_cfg usdhc_cfg[CONFIG_SYS_FSL_USDHC_NUM] = {
 #ifdef CONFIG_TARGET_IMX8QM_LPDDR4_ARM2
 	{USDHC1_BASE_ADDR, 0, 8},
@@ -233,7 +235,7 @@ int board_mmc_getcd(struct mmc *mmc)
 
 	return ret;
 }
-
+#endif /* CONFIG_SPL_BUILD */
 #endif /* CONFIG_FSL_ESDHC */
 
 
