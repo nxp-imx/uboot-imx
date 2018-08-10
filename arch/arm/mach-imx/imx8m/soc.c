@@ -422,14 +422,15 @@ static uint32_t gpc_pu_m_core_offset[11] = {
 
 void imx_gpc_set_m_core_pgc(unsigned int offset, bool pdn)
 {
-	uintptr_t val;
+	uint32_t val;
+	uintptr_t reg = GPC_BASE_ADDR + offset;
 
-	val = readl(GPC_BASE_ADDR + offset);
+	val = readl(reg);
 	val &= ~(0x1 << PGC_PCR);
 
 	if(pdn)
 		val |= 0x1 << PGC_PCR;
-	writel(val, GPC_BASE_ADDR + offset);
+	writel(val, reg);
 }
 
 void imx8m_usb_power_domain(uint32_t domain_id, bool on)
@@ -450,16 +451,13 @@ void imx8m_usb_power_domain(uint32_t domain_id, bool on)
 
 int imx8m_usb_power(int usb_id, bool on)
 {
-	unsigned long ret;
-
 	if (usb_id > 1)
 		return -EINVAL;
 #ifdef CONFIG_SPL_BUILD
 	imx8m_usb_power_domain(2 + usb_id, on);
 #else
-	ret = call_imx_sip(FSL_SIP_GPC,
-			FSL_SIP_CONFIG_GPC_PM_DOMAIN, 2 + usb_id, on, 0);
-	if (ret)
+	if (call_imx_sip(FSL_SIP_GPC, FSL_SIP_CONFIG_GPC_PM_DOMAIN,
+			 2 + usb_id, on, 0))
 		return -EPERM;
 #endif
 	return 0;
