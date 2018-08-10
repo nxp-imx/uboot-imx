@@ -697,6 +697,8 @@ static int imx_pcie_link_up(void)
 			/* link is down, stop here */
 			setenv("bootcmd", "sleep 2;");
 			DBGF("pcie link is down, stop here!\n");
+			clrbits_le32(&iomuxc_regs->gpr[12],
+				     IOMUXC_GPR12_APPS_LTSSM_ENABLE);
 			return -EINVAL;
 		}
 #endif
@@ -707,6 +709,8 @@ static int imx_pcie_link_up(void)
 			debug("DEBUG_R0: 0x%08x, DEBUG_R1: 0x%08x\n",
 			      readl(MX6_DBI_ADDR + PCIE_PHY_DEBUG_R0),
 			      readl(MX6_DBI_ADDR + PCIE_PHY_DEBUG_R1));
+			clrbits_le32(&iomuxc_regs->gpr[12],
+				     IOMUXC_GPR12_APPS_LTSSM_ENABLE);
 			return -EINVAL;
 		}
 	}
