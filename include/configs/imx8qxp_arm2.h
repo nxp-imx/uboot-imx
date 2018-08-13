@@ -15,6 +15,8 @@
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_ARCH_MISC_INIT
 
+#define CONFIG_MMC_TRACE
+
 #define CONFIG_CMD_READ
 
 /* Flat Device Tree Definitions */
