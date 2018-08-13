@@ -3536,6 +3536,7 @@ static void rx_handler_dl_image(struct usb_ep *ep, struct usb_request *req)
 
 		strcpy(response, "OKAY");
 		fastboot_tx_write_str(response);
+		env_set_hex("fastboot_bytes", download_bytes);
 
 		printf("\ndownloading of %d bytes finished\n", download_bytes);
 	} else {
