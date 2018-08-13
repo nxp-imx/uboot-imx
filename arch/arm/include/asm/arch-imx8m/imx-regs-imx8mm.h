@@ -125,6 +125,7 @@
 #define IOMUXC_GPR22		(IOMUXC_GPR_BASE_ADDR + 0x58)
 
 #define GPR_TZASC_EN		(1 << 0)
+#define GPR_TZASC_SWAP_ID	(1 << 1)
 #define GPR_TZASC_EN_LOCK	(1 << 16)
 
 #define CNTCR_OFF	0x00

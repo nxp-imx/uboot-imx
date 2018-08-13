@@ -135,6 +135,9 @@ void enable_tzc380(void)
 	/* Enable TZASC and lock setting */
 	val = readl(IOMUXC_GPR10);
 	val |= GPR_TZASC_EN;
+#ifdef CONFIG_IMX8MM
+	val |= GPR_TZASC_SWAP_ID;
+#endif
 	writel(val, IOMUXC_GPR10);
 	val |= GPR_TZASC_EN_LOCK;
 	writel(val, IOMUXC_GPR10);
