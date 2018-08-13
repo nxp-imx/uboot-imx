@@ -660,6 +660,12 @@ void do_enable_mipi_led(struct display_info_t const *dev)
 	imx_mipi_dsi_bridge_attach(&rm67191_dev); /* attach rm67191 device */
 }
 
+void board_quiesce_devices(void)
+{
+	gpio_request(IMX_GPIO_NR(1, 8), "DSI EN");
+	gpio_direction_output(IMX_GPIO_NR(1, 8), 0);
+}
+
 struct display_info_t const displays[] = {{
 	.bus = LCDIF_BASE_ADDR,
 	.addr = 0,
