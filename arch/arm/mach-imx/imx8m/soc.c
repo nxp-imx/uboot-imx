@@ -59,6 +59,9 @@ void enable_tzc380(void)
 	/* Enable TZASC and lock setting */
 	setbits_le32(&gpr->gpr[10], GPR_TZASC_EN);
 	setbits_le32(&gpr->gpr[10], GPR_TZASC_EN_LOCK);
+#ifdef CONFIG_IMX8MM
+	setbits_le32(&gpr->gpr[10], GPR_TZASC_SWAP_ID);
+#endif
 }
 
 void set_wdog_reset(struct wdog_regs *wdog)
