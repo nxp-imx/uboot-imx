@@ -15,10 +15,6 @@
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_ARCH_MISC_INIT
 
-#define CONFIG_MMC_TRACE
-
-#define CONFIG_CMD_READ
-
 /* Flat Device Tree Definitions */
 #define CONFIG_OF_BOARD_SETUP
 
@@ -346,8 +342,6 @@
 #define CONFIG_APBH_DMA_BURST
 #define CONFIG_APBH_DMA_BURST8
 #endif
-
-#define CONFIG_SERIAL_TAG
 
 /* USB Config */
 #ifdef CONFIG_CMD_USB

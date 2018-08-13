@@ -647,14 +647,11 @@ static int mmc_send_op_cond_iter(struct mmc *mmc, int use_arg)
 	cmd.resp_type = MMC_RSP_R3;
 	cmd.cmdarg = 0;
 	if (use_arg && !mmc_host_is_spi(mmc))
-		#if 0
 		cmd.cmdarg = OCR_HCS |
 			(mmc->cfg->voltages &
 			(mmc->ocr & OCR_VOLTAGE_MASK)) |
 			(mmc->ocr & OCR_ACCESS_MODE);
-		#endif
 
-		cmd.cmdarg = 0x40FF8000;
 	err = mmc_send_cmd(mmc, &cmd, NULL);
 	if (err)
 		return err;
@@ -670,8 +667,8 @@ static int mmc_send_op_cond(struct mmc *mmc)
 	mmc_go_idle(mmc);
 
  	/* Asking to the card its capabilities */
-	for (i = 0; i < 10; i++) {
-		err = mmc_send_op_cond_iter(mmc, 1);
+	for (i = 0; i < 2; i++) {
+		err = mmc_send_op_cond_iter(mmc, i != 0);
 		if (err)
 			return err;
 
