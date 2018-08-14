@@ -5,6 +5,7 @@
 #
 
 obj-y += cpu.o iomux.o fuse.o lpcg.o clock.o
+obj-y += image.o
 ifneq ($(CONFIG_SPL_BUILD),y)
 obj-y += partition.o
 endif
