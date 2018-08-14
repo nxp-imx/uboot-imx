@@ -13,40 +13,15 @@
 #include <asm/arch-imx/cpu.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/cpu.h>
+#include <asm/arch/image.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-
-#define IV_MAX_LEN			32
-#define HASH_MAX_LEN			64
 
 #define SEC_SECURE_RAM_BASE             (0x31800000UL)
 #define SEC_SECURE_RAM_END_BASE         (SEC_SECURE_RAM_BASE + 0xFFFFUL)
 #define SECO_LOCAL_SEC_SEC_SECURE_RAM_BASE  (0x60000000UL)
 
 #define SECO_PT                 2U
-
-struct container_hdr {
-	uint8_t version;
-	uint16_t length;
-	uint8_t tag;
-	uint32_t flags;
-	uint16_t sw_version;
-	uint8_t fuse_version;
-	uint8_t num_images;
-	uint16_t sig_blk_offset;
-	uint16_t reserved;
-} __attribute__((packed));
-
-struct boot_img_t{
-	uint32_t offset;
-	uint32_t size;
-	uint64_t dst;
-	uint64_t entry;
-	uint32_t hab_flags;
-	uint32_t meta;
-	uint8_t hash[HASH_MAX_LEN];
-	uint8_t iv[IV_MAX_LEN];
-}__attribute__((packed));
 
 int authenticate_os_container(ulong addr)
 {
@@ -56,6 +31,7 @@ int authenticate_os_container(ulong addr)
 	sc_err_t err;
 	sc_rm_mr_t mr;
 	sc_faddr_t start, end;
+	uint16_t length;
 
 	if (addr % 4)
 		return -EINVAL;
@@ -71,8 +47,10 @@ int authenticate_os_container(ulong addr)
 		return -EFAULT;
 	}
 
-	debug("container length %u\n", phdr->length);
-	memcpy((void *)SEC_SECURE_RAM_BASE, (const void *)addr, ALIGN(phdr->length, CONFIG_SYS_CACHELINE_SIZE));
+	length = phdr->length_lsb + (phdr->length_msb << 8);
+
+	debug("container length %u\n", length);
+	memcpy((void *)SEC_SECURE_RAM_BASE, (const void *)addr, ALIGN(length, CONFIG_SYS_CACHELINE_SIZE));
 
 	err = sc_misc_seco_authenticate(ipcHndl, SC_MISC_AUTH_CONTAINER, SECO_LOCAL_SEC_SEC_SECURE_RAM_BASE);
 	if (err) {
