@@ -29,9 +29,6 @@
 #include <asm/mach-imx/video.h>
 #include <asm/arch/video_common.h>
 #include <power-domain.h>
-#include "../common/tcpc.h"
-#include <cdns3-uboot.h>
-
 
 
 DECLARE_GLOBAL_DATA_PTR;
