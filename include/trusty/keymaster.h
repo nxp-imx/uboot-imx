@@ -117,4 +117,14 @@ int trusty_atap_set_ca_response(const uint8_t *ca_response,
 */
 int trusty_atap_read_uuid_str(char **uuid_p);
 
+/*
+ * SetProductId is only called once to set the secure product id. Caller should
+ * read the product id from permanent attributes structure and set the product
+ * id while fusing the permanent attributes.
+ *
+ * @product_id: The product id to be set.
+ * @size: The size of the product id.
+ */
+int trusty_set_product_id(const uint8_t *product_id, uint32_t size);
+
 #endif /* TRUSTY_KEYMASTER_H_ */
