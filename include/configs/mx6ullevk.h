@@ -207,7 +207,6 @@
 
 #define CONFIG_BOOTCOMMAND \
 	   "run findfdt;" \
-	   "run findtee;" \
 	   "mmc dev ${mmcdev};" \
 	   "mmc dev ${mmcdev}; if mmc rescan; then " \
 		   "if run loadbootscript; then " \
