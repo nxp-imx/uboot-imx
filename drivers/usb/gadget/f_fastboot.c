@@ -1958,12 +1958,15 @@ const char *requested_partitions_recovery[] = {"recovery", FDT_PART_NAME, NULL};
 
 static bool is_load_fdt_from_part(void)
 {
-#ifdef CONFIG_ANDROID_THINGS_SUPPORT
+#if defined(CONFIG_ANDROID_THINGS_SUPPORT)
 	if (fastboot_flash_find_ptn("oem_bootloader_a") &&
 		fastboot_flash_find_ptn("oem_bootloader_b")) {
-#else
+#elif defined(CONFIG_ANDROID_AB_SUPPORT)
 	if (fastboot_flash_find_ptn("dtbo_a") &&
 		fastboot_flash_find_ptn("dtbo_b")) {
+#else
+	/* for legacy platfrom (imx6/7), we don't support A/B slot. */
+	if (fastboot_flash_find_ptn("dtbo")) {
 #endif
 		return true;
 	} else {
