@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include "fastboot_lock_unlock.h"
 #include <fsl_fastboot.h>
+#include <memalign.h>
 #ifdef CONFIG_IMX_TRUSTY_OS
 #include <trusty/libtipc.h>
 #include <asm/mach-imx/hab.h>
@@ -164,12 +165,13 @@ static int generate_salt(unsigned char* salt) {
 }
 
 static FbLockState decrypt_lock_store(unsigned char *bdata) {
-	unsigned char plain_data[ENDATA_LEN];
 	int p = 0, ret;
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, plain_data, ENDATA_LEN);
 
 	caam_open();
 	ret = caam_decap_blob((uint32_t)(ulong)plain_data,
-			      (uint32_t)(ulong)bdata + ENDATA_LEN, ENDATA_LEN);
+			      (uint32_t)(ulong)bdata + ROUND(ENDATA_LEN, ARCH_DMA_MINALIGN),
+			      ENDATA_LEN);
 	if (ret != 0) {
 		printf("Error during blob decap operation: 0x%x\n",ret);
 		return FASTBOOT_LOCK_ERROR;
@@ -227,7 +229,9 @@ static int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
 	*(bdata + p) = lock;
 
 	caam_open();
-	ret = caam_gen_blob((uint32_t)(ulong)bdata, (uint32_t)(ulong)(bdata + ENDATA_LEN), ENDATA_LEN);
+	ret = caam_gen_blob((uint32_t)(ulong)bdata,
+			(uint32_t)(ulong)bdata + ROUND(ENDATA_LEN, ARCH_DMA_MINALIGN),
+			ENDATA_LEN);
 	if (ret != 0) {
 		printf("error in caam_gen_blob:0x%x\n", ret);
 		return -1;
@@ -330,7 +334,7 @@ int fastboot_set_lock_stat(FbLockState lock) {
 	int mmc_id;
 	int status, ret;
 
-	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
+	bdata = (unsigned char *)memalign(ARCH_DMA_MINALIGN, SECTOR_SIZE);
 	if (bdata == NULL)
 		goto fail2;
 	memset(bdata, 0, SECTOR_SIZE);
@@ -377,7 +381,7 @@ FbLockState fastboot_get_lock_stat(void) {
 	int mmc_id;
 	FbLockState ret;
 
-	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
+	bdata = (unsigned char *)memalign(ARCH_DMA_MINALIGN, SECTOR_SIZE);
 	if (bdata == NULL)
 		return g_lockstat;
 

@@ -24,6 +24,7 @@
 #include "fsl_atx_attributes.h"
 #include "utils.h"
 #include "debug.h"
+#include <memalign.h>
 
 #define INITFLAG_FUSE_OFFSET 0
 #define INITFLAG_FUSE_MASK 0x00000001
@@ -470,9 +471,9 @@ int read_keyslot_package(struct keyslot_package* kp) {
 
 int gen_rpmb_key(struct keyslot_package *kp) {
 	char original_part;
-	uint8_t plain_key[RPMBKEY_LENGTH];
 	unsigned char* fill = NULL;
 	int blksz;
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, plain_key, RPMBKEY_LENGTH);
 
 	kp->rpmb_keyblob_len = RPMBKEY_LEN;
 	strcpy(kp->magic, KEYPACK_MAGIC);
@@ -595,9 +596,9 @@ int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset
 	unsigned short part_start, part_length, part_end, bs, be;
 	margin_pos_t margin;
 	char original_part;
-	uint8_t extract_key[RPMBKEY_LENGTH];
 	uint8_t *blob = NULL;
 	struct blk_desc *desc = mmc_get_blk_desc(mmc);
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, extract_key, RPMBKEY_LENGTH);
 
 #ifdef AVB_RPMB
 	struct keyslot_package kp;
@@ -629,7 +630,7 @@ int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset
 	}
 
 	/* get rpmb key */
-	blob = (uint8_t *)memalign(ALIGN_BYTES, RPMBKEY_BLOB_LEN);
+	blob = (uint8_t *)memalign(ARCH_DMA_MINALIGN, RPMBKEY_BLOB_LEN);
 #ifdef AVB_RPMB
 	if (read_keyslot_package(&kp)) {
 #else
@@ -701,9 +702,9 @@ int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offse
 	unsigned short part_start, part_length, part_end, bs;
 	margin_pos_t margin;
 	char original_part;
-	uint8_t extract_key[RPMBKEY_LENGTH];
 	uint8_t *blob = NULL;
 	struct blk_desc *desc = mmc_get_blk_desc(mmc);
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, extract_key, RPMBKEY_LENGTH);
 
 #ifdef AVB_RPMB
 	struct keyslot_package kp;
@@ -736,7 +737,7 @@ int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offse
 	}
 
 	/* get rpmb key */
-	blob = (uint8_t *)memalign(ALIGN_BYTES, RPMBKEY_BLOB_LEN);
+	blob = (uint8_t *)memalign(ARCH_DMA_MINALIGN, RPMBKEY_BLOB_LEN);
 #ifdef AVB_RPMB
 	if (read_keyslot_package(&kp)) {
 #else
@@ -809,10 +810,10 @@ fail:
 
 static int rpmb_key(struct mmc *mmc) {
 	char original_part;
-	uint8_t blob[RPMBKEY_FUSE_LEN];
-	uint8_t plain_key[RPMBKEY_LENGTH];
 	int ret = 0;
 	struct blk_desc *desc = mmc_get_blk_desc(mmc);
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, blob, RPMBKEY_FUSE_LEN);
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, plain_key, RPMBKEY_LENGTH);
 
 	DEBUGAVB("[rpmb]: set kley\n");
 
@@ -859,7 +860,7 @@ static int rpmb_key(struct mmc *mmc) {
 
 #ifdef CONFIG_AVB_DEBUG
 	/* debug */
-	uint8_t ext_key[RPMBKEY_LENGTH];
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, ext_key, RPMBKEY_LENGTH);
 	printf(" RPMB plain kay---\n");
 	print_buffer(0, plain_key, HEXDUMP_WIDTH, RPMBKEY_LENGTH, 0);
 	if (fsl_fuse_read((uint32_t *)blob, RPMBKEY_FUSE_LENW, RPMBKEY_FUSE_OFFSET)){
