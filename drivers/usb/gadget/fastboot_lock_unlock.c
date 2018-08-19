@@ -39,7 +39,7 @@
 #include <fsl_fastboot.h>
 #ifdef CONFIG_IMX_TRUSTY_OS
 #include <trusty/libtipc.h>
-#include <asm/imx-common/hab.h>
+#include <asm/mach-imx/hab.h>
 #endif
 
 #ifdef FASTBOOT_ENCRYPT_LOCK
@@ -55,7 +55,7 @@
 int fastboot_flash_find_index(const char *name);
 
 #ifdef CONFIG_IMX_TRUSTY_OS
-#define HAB_TAG_IVT       0xD1
+#define IVT_HEADER_MAGIC       0xD1
 #define IVT_HDR_LEN       0x20
 #define HAB_MAJ_VER       0x40
 #define HAB_MAJ_MASK      0xF0
@@ -63,7 +63,7 @@ int fastboot_flash_find_index(const char *name);
 bool tos_flashed;
 
 static bool tos_ivt_check(ulong start_addr, int ivt_offset) {
-	const struct hab_ivt *ivt_initial = NULL;
+	const struct ivt *ivt_initial = NULL;
 	const uint8_t *start = (const uint8_t *)start_addr;
 
 	if (start_addr & 0x3) {
@@ -71,13 +71,13 @@ static bool tos_ivt_check(ulong start_addr, int ivt_offset) {
 		return false;
 	}
 
-	ivt_initial = (const struct hab_ivt *)(start + ivt_offset);
+	ivt_initial = (const struct ivt *)(start + ivt_offset);
 
-	const struct hab_hdr *ivt_hdr = &ivt_initial->hdr;
+	const struct ivt_header *ivt_hdr = &ivt_initial->hdr;
 
-	if ((ivt_hdr->tag == HAB_TAG_IVT && \
-		((ivt_hdr->len[0] << 8) + ivt_hdr->len[1]) == IVT_HDR_LEN && \
-		(ivt_hdr->par & HAB_MAJ_MASK) == HAB_MAJ_VER) && \
+	if ((ivt_hdr->magic == IVT_HEADER_MAGIC && \
+		(be16_to_cpu(ivt_hdr->length) == IVT_HDR_LEN) && \
+		(ivt_hdr->version & HAB_MAJ_MASK) == HAB_MAJ_VER) && \
 		(ivt_initial->entry != 0x0) && \
 		(ivt_initial->reserved1 == 0x0) && \
 		(ivt_initial->self == (uint32_t)ivt_initial) && \
