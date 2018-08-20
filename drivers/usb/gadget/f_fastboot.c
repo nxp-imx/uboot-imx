@@ -2015,6 +2015,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	if (argc > 1) {
 		is_recovery_mode =
 			(strncmp(argv[1], "recovery", sizeof("recovery")) != 0) ? false: true;
+		if (is_recovery_mode)
+			printf("Will boot from recovery!\n");
 	}
 
 	/* check lock state */
