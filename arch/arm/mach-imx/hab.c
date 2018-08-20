@@ -531,14 +531,11 @@ static int do_authenticate_image(cmd_tbl_t *cmdtp, int flag, int argc,
 static int do_hab_failsafe(cmd_tbl_t *cmdtp, int flag, int argc,
 			   char * const argv[])
 {
-	hab_rvt_failsafe_t *hab_rvt_failsafe;
-
 	if (argc != 1) {
 		cmd_usage(cmdtp);
 		return 1;
 	}
 
-	hab_rvt_failsafe = (hab_rvt_failsafe_t *)HAB_RVT_FAILSAFE;
 	hab_rvt_failsafe();
 
 	return 0;
