@@ -9,6 +9,19 @@
 #ifndef _ASM_ARCH_IMX8MM_CLOCK_H
 #define _ASM_ARCH_IMX8MM_CLOCK_H
 
+/* Mainly for compatible to imx common code. */
+enum mxc_clock {
+	MXC_ARM_CLK = 0,
+	MXC_IPG_CLK,
+	MXC_CSPI_CLK,
+	MXC_ESDHC_CLK,
+	MXC_ESDHC2_CLK,
+	MXC_ESDHC3_CLK,
+	MXC_I2C_CLK,
+	MXC_UART_CLK,
+	MXC_QSPI_CLK,
+};
+
 enum pll_clocks {
 	ANATOP_ARM_PLL,
 	ANATOP_VPU_PLL,
@@ -33,7 +46,6 @@ enum clk_slice_type {
 };
 
 enum clk_root_index {
-	MXC_ARM_CLK			= 0,
 	ARM_A53_CLK_ROOT		= 0,
 	ARM_M4_CLK_ROOT			= 1,
 	VPU_A53_CLK_ROOT		= 2,
@@ -54,7 +66,6 @@ enum clk_root_index {
 	AHB_CLK_ROOT			= 32,
 	/* TODO: IPG Not sure */
 	IPG_CLK_ROOT			= 33,
-	MXC_IPG_CLK			= 33,
 	AUDIO_AHB_CLK_ROOT		= 34,
 	MIPI_DSI_ESC_RX_CLK_ROOT	= 36,
 	DRAM_SEL_CFG			= 48,
@@ -83,12 +94,9 @@ enum clk_root_index {
 	ENET_PHY_REF_CLK_ROOT		= 85,
 	NAND_CLK_ROOT			= 86,
 	QSPI_CLK_ROOT			= 87,
-	MXC_ESDHC_CLK			= 88,
 	USDHC1_CLK_ROOT			= 88,
-	MXC_ESDHC2_CLK			= 89,
 	USDHC2_CLK_ROOT			= 89,
 	I2C1_CLK_ROOT			= 90,
-	MXC_I2C_CLK			= 90,
 	I2C2_CLK_ROOT			= 91,
 	I2C3_CLK_ROOT			= 92,
 	I2C4_CLK_ROOT			= 93,
@@ -99,7 +107,6 @@ enum clk_root_index {
 	USB_CORE_REF_CLK_ROOT		= 98,
 	USB_PHY_REF_CLK_ROOT		= 99,
 	GIC_CLK_ROOT			= 100,
-	MXC_CSPI_CLK			= 101,
 	ECSPI1_CLK_ROOT			= 101,
 	ECSPI2_CLK_ROOT			= 102,
 	PWM1_CLK_ROOT			= 103,
@@ -812,7 +819,7 @@ void dram_disable_bypass(void);
 u32 imx_get_fecclk(void);
 u32 imx_get_uartclk(void);
 int clock_init(void);
-unsigned int mxc_get_clock(enum clk_root_index clk);
+u32 mxc_get_clock(enum mxc_clock clk);
 int clock_enable(enum clk_ccgr_index index, bool enable);
 int clock_root_enabled(enum clk_root_index clock_id);
 int clock_root_cfg(enum clk_root_index clock_id, enum root_pre_div pre_div,
