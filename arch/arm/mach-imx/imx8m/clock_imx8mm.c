@@ -853,29 +853,42 @@ u32 get_root_clk(enum clk_root_index clock_id)
 	return root_src_clk / (post_podf + 1) / (pre_podf + 1);
 }
 
-unsigned int mxc_get_clock(enum clk_root_index clk)
+u32 mxc_get_clock(enum mxc_clock clk)
 {
 	u32 val;
 
-	if (clk >= CLK_ROOT_MAX)
-		return 0;
-
-	if (clk == MXC_ARM_CLK) {
-		return get_root_clk(ARM_A53_CLK_ROOT);
+	switch (clk) {
+		case MXC_ARM_CLK:
+			return get_root_clk(ARM_A53_CLK_ROOT);
+		case MXC_IPG_CLK:
+			clock_get_target_val(IPG_CLK_ROOT, &val);
+			val = val & 0x3;
+			return get_root_clk(AHB_CLK_ROOT) / 2 / (val + 1);
+		case MXC_CSPI_CLK:
+			return get_root_clk(ECSPI1_CLK_ROOT);
+		case MXC_ESDHC_CLK:
+			return get_root_clk(USDHC1_CLK_ROOT);
+		case MXC_ESDHC2_CLK:
+			return get_root_clk(USDHC2_CLK_ROOT);
+		case MXC_ESDHC3_CLK:
+			return get_root_clk(USDHC3_CLK_ROOT);
+		case MXC_I2C_CLK:
+			return get_root_clk(I2C1_CLK_ROOT);
+		case MXC_UART_CLK:
+			return get_root_clk(UART1_CLK_ROOT);
+		case MXC_QSPI_CLK:
+			return get_root_clk(QSPI_CLK_ROOT);
+		default:
+			printf("Unsupported mxc_clock %d\n", clk);
+			break;
 	}
 
-	if (clk == MXC_IPG_CLK) {
-		clock_get_target_val(IPG_CLK_ROOT, &val);
-		val = val & 0x3;
-		return get_root_clk(AHB_CLK_ROOT) / 2 / (val + 1);
-	}
-
-	return get_root_clk(clk);
+	return 0;
 }
 
 u32 imx_get_uartclk(void)
 {
-	return mxc_get_clock(UART1_CLK_ROOT);
+	return mxc_get_clock(MXC_UART_CLK);
 }
 
 u32 imx_get_fecclk(void)
@@ -945,11 +958,11 @@ int do_mscale_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
 	printf("SYS_PLL2_50    %8d MHz\n", freq / 1000000);
 	freq = decode_intpll(SYSTEM_PLL3_CLK);
 	printf("SYS_PLL3       %8d MHz\n", freq / 1000000);
-	freq = mxc_get_clock(UART1_CLK_ROOT);
+	freq = mxc_get_clock(MXC_UART_CLK);
 	printf("UART1          %8d MHz\n", freq / 1000000);
-	freq = mxc_get_clock(USDHC1_CLK_ROOT);
+	freq = mxc_get_clock(MXC_ESDHC_CLK);
 	printf("USDHC1         %8d MHz\n", freq / 1000000);
-	freq = mxc_get_clock(QSPI_CLK_ROOT);
+	freq = mxc_get_clock(MXC_QSPI_CLK);
 	printf("QSPI           %8d MHz\n", freq / 1000000);
 
 	return 0;

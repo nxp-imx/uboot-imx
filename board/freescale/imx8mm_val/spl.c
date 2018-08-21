@@ -103,7 +103,7 @@ int board_mmc_init(bd_t *bis)
 	for (i = 0; i < CONFIG_SYS_FSL_USDHC_NUM; i++) {
 		switch (i) {
 		case 0:
-			usdhc_cfg[0].sdhc_clk = mxc_get_clock(USDHC2_CLK_ROOT);
+			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
 			gpio_request(USDHC2_PWR_GPIO, "usdhc2_reset");
@@ -112,7 +112,7 @@ int board_mmc_init(bd_t *bis)
 			gpio_direction_output(USDHC2_PWR_GPIO, 1);
 			break;
 		case 1:
-			usdhc_cfg[1].sdhc_clk = mxc_get_clock(USDHC3_CLK_ROOT);
+			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
 			break;
