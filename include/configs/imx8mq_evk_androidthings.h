@@ -76,6 +76,9 @@
 #define KEYSLOT_BLKS             0x1FFF
 #endif
 
+#else
+/* imx8m won't touch CAAM in non-secure world. */
+#undef CONFIG_FSL_CAAM_KB
 #endif
 
 /* Enlarge the spl max size to 172k */
