@@ -368,8 +368,8 @@ int board_mmc_get_env_dev(int devno)
 int board_late_init(void)
 {
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-	setenv("board_name", "Phanbell");
-	setenv("board_rev", "iMX8MQ");
+	env_set("board_name", "Phanbell");
+	env_set("board_rev", "iMX8MQ");
 #endif
 
 #ifdef CONFIG_ENV_IS_IN_MMC

@@ -236,11 +236,26 @@ AvbABFlowResult avb_flow_dual_uboot(AvbABOps* ab_ops,
                                     AvbSlotVerifyFlags flags,
                                     AvbHashtreeErrorMode hashtree_error_mode,
                                     AvbSlotVerifyData** out_data);
+/* Generates |num_bytes| random bytes and stores them in |output|,
+ * which must point to a buffer large enough to store the bytes.
+ *
+ * Returns AVB_IO_RESULT_OK on success, otherwise an error code.
+ */
+AvbIOResult fsl_get_random(AvbAtxOps* atx_ops,
+				size_t num_bytes,
+				uint8_t* output);
 
 /* Program ATX perm_attr into RPMB partition */
 int avb_atx_fuse_perm_attr(uint8_t *staged_buffer, uint32_t size);
 
 /* Initialize rpmb key with the staged key */
 int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size);
+
+/* Generate ATX unlock challenge */
+int avb_atx_get_unlock_challenge(struct AvbAtxOps* atx_ops,
+				uint8_t *upload_buffer, uint32_t *size);
+/* Verify ATX unlock credential */
+int avb_atx_verify_unlock_credential(struct AvbAtxOps* atx_ops,
+					uint8_t *staged_buffer);
 
 #endif /* __FSL_AVB_H__ */

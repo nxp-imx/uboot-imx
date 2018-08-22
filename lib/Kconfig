@@ -127,6 +127,9 @@ config DUAL_BOOTLOADER
 	help
 	  Enable A/B bootloader select in SPL.
 
+config AT_AUTHENTICATE_UNLOCK
+	bool "Enable authenticate unlock for Android Things devices"
+
 source lib/dhry/Kconfig
 
 menu "Security support"

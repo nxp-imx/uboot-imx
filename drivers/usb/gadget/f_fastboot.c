@@ -1640,10 +1640,11 @@ static AvbAtxOps fsl_avb_atx_ops = {
 	.read_permanent_attributes = fsl_read_permanent_attributes,
 	.read_permanent_attributes_hash = fsl_read_permanent_attributes_hash,
 #ifdef CONFIG_IMX_TRUSTY_OS
-	.set_key_version = fsl_write_rollback_index_rpmb
+	.set_key_version = fsl_write_rollback_index_rpmb,
 #else
-	.set_key_version = fsl_set_key_version
+	.set_key_version = fsl_set_key_version,
 #endif
+	.get_random = fsl_get_random
 };
 #endif
 static AvbOps fsl_avb_ops = {
@@ -3320,6 +3321,27 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 			strcpy(response, "FAILInternal error!");
 		else
 			strcpy(response, "OKAY");
+	} else if (endswith(cmd, FASTBOOT_AT_GET_UNLOCK_CHALLENGE)) {
+		if (avb_atx_get_unlock_challenge(fsl_avb_ops.atx_ops,
+						interface.transfer_buffer, &download_bytes))
+			strcpy(response, "FAILInternal error!");
+		else
+			strcpy(response, "OKAY");
+	} else if (endswith(cmd, FASTBOOT_AT_UNLOCK_VBOOT)) {
+#ifdef CONFIG_AT_AUTHENTICATE_UNLOCK
+		if (avb_atx_verify_unlock_credential(fsl_avb_ops.atx_ops,
+							interface.transfer_buffer))
+			strcpy(response, "FAILIncorrect unlock credential!");
+		else {
+#endif
+			status = do_fastboot_unlock(true);
+			if (status != FASTBOOT_LOCK_ERROR)
+				strcpy(response, "OKAY");
+			else
+				strcpy(response, "FAILunlock device failed.");
+#ifdef CONFIG_AT_AUTHENTICATE_UNLOCK
+		}
+#endif
 	}
 #endif /* CONFIG_AVB_ATX */
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
@@ -3366,11 +3388,18 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 		strcpy(response, "OKAY");
 	} else if (endswith(cmd, "unlock")) {
 		printf("flashing unlock.\n");
+#ifdef CONFIG_AVB_ATX
+		/* We should do nothing here For Android Things which
+		 * enables the authenticated unlock feature.
+		 */
+		strcpy(response, "OKAY");
+#else
 		status = do_fastboot_unlock(false);
 		if (status != FASTBOOT_LOCK_ERROR)
 			strcpy(response, "OKAY");
 		else
 			strcpy(response, "FAILunlock device failed.");
+#endif
 	} else if (endswith(cmd, "lock")) {
 		printf("flashing lock.\n");
 		status = do_fastboot_lock();
@@ -3438,7 +3467,8 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 	/* initialize the response buffer */
 	fb_response_str = response;
 
-#ifdef CONFIG_FASTBOOT_LOCK
+	/* Always enable image flash for Android Things. */
+#if defined(CONFIG_FASTBOOT_LOCK) && !defined(CONFIG_AVB_ATX)
 	/* for imx8 boot from USB, lock status can be ignored for uuu.*/
 	if (!(is_imx8() || is_imx8m()) || !(is_boot_from_usb())) {
 		int status;
@@ -3462,6 +3492,7 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 	fastboot_fail("no flash device defined");
 
 	rx_process_flash(cmd);
+
 #ifdef CONFIG_FASTBOOT_LOCK
 	if (strncmp(cmd, "gpt", 3) == 0) {
 		int gpt_valid = 0;
@@ -3497,7 +3528,7 @@ static void cb_erase(struct usb_ep *ep, struct usb_request *req)
 	/* initialize the response buffer */
 	fb_response_str = response;
 
-#ifdef CONFIG_FASTBOOT_LOCK
+#if defined(CONFIG_FASTBOOT_LOCK) && !defined(CONFIG_AVB_ATX)
 	FbLockState status;
 	status = fastboot_get_lock_stat();
 	if (status == FASTBOOT_LOCK) {

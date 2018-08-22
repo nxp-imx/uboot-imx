@@ -235,6 +235,54 @@ int avb_atx_fuse_perm_attr(uint8_t *staged_buffer, uint32_t size) {
 #endif
 }
 
+int avb_atx_get_unlock_challenge(struct AvbAtxOps* atx_ops,
+				uint8_t *upload_buffer, uint32_t *upload_size)
+{
+	struct AvbAtxUnlockChallenge *buf = NULL;
+	int ret, size;
+
+	size = sizeof(struct AvbAtxUnlockChallenge);
+	buf = (struct AvbAtxUnlockChallenge *)malloc(size);
+	if (buf == NULL) {
+		ERR("unable to alloc memory!\n");
+		return -1;
+	}
+
+	if (avb_atx_generate_unlock_challenge(atx_ops, buf) !=
+			AVB_IO_RESULT_OK) {
+		ERR("generate unlock challenge fail!\n");
+		ret = -1;
+		goto fail;
+	}
+	/* Current avbtool only accept 16 bytes random numbers as unlock
+	 * challenge, need to return the whole 'AvbAtxUnlockChallenge'
+	 * when avbtool is ready.
+	 */
+	memcpy(upload_buffer, buf->challenge, AVB_ATX_UNLOCK_CHALLENGE_SIZE);
+	*upload_size = AVB_ATX_UNLOCK_CHALLENGE_SIZE;
+	ret = 0;
+fail:
+	if (buf != NULL)
+		free(buf);
+	return ret;
+}
+
+int avb_atx_verify_unlock_credential(struct AvbAtxOps* atx_ops,
+					uint8_t *staged_buffer)
+{
+	bool out_is_trusted;
+	AvbIOResult ret;
+	const AvbAtxUnlockCredential* buf = NULL;
+
+	buf = (const AvbAtxUnlockCredential*)staged_buffer;
+	ret = avb_atx_validate_unlock_credential(atx_ops, buf, &out_is_trusted);
+	if ((ret != AVB_IO_RESULT_OK) || (out_is_trusted != true)) {
+		ERR("validate unlock credential fail!\n");
+		return -1;
+	} else
+		return 0;
+}
+
 /* Reads permanent |attributes| data. There are no restrictions on where this
  * data is stored. On success, returns AVB_IO_RESULT_OK and populates
  * |attributes|.
@@ -302,6 +350,33 @@ AvbIOResult fsl_read_permanent_attributes_hash(
 
 	return AVB_IO_RESULT_OK;
 #endif /* CONFIG_ARM64 */
+}
+
+ /* Generates |num_bytes| random bytes and stores them in |output|,
+   * which must point to a buffer large enough to store the bytes.
+   *
+   * Returns AVB_IO_RESULT_OK on success, otherwise an error code.
+   */
+AvbIOResult fsl_get_random(AvbAtxOps* atx_ops,
+				size_t num_bytes,
+				uint8_t* output)
+{
+	uint32_t num = 0;
+	uint32_t i;
+
+	if (output == NULL) {
+		ERR("Output buffer is NULL!\n");
+		return AVB_IO_RESULT_ERROR_INSUFFICIENT_SPACE;
+	}
+
+	/* set the seed as device boot time. */
+	srand((uint32_t)get_timer(0));
+	for (i = 0; i < num_bytes; i++) {
+		num = rand() % 256;
+		output[i] = (uint8_t)num;
+	}
+
+	return AVB_IO_RESULT_OK;
 }
 
 #endif /* CONFIG_AVB_ATX */
@@ -1386,7 +1461,6 @@ fail:
 	if (plain_idx != NULL)
 		free(plain_idx);
 }
-
 #endif /* AVB_RPMB && CONFIG_AVB_ATX */
 
 #if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
