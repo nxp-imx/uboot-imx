@@ -97,6 +97,7 @@
 #ifdef CONFIG_AVB_ATX
 #define FASTBOOT_AVB_AT_PERM_ATTR "fuse at-perm-attr"
 #define FASTBOOT_AT_UNLOCK_VBOOT "at-unlock-vboot"
+#define FASTBOOT_AT_LOCK_VBOOT "at-lock-vboot"
 #define FASTBOOT_AT_GET_UNLOCK_CHALLENGE "at-get-vboot-unlock-challenge"
 #endif /* CONFIG_AVB_ATX */
 #endif /* CONFIG_ANDROID_THINGS_SUPPORT */

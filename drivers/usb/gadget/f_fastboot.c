@@ -2014,9 +2014,14 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	/* check lock state */
 	FbLockState lock_status = fastboot_get_lock_stat();
 	if (lock_status == FASTBOOT_LOCK_ERROR) {
+#ifdef CONFIG_AVB_ATX
+		printf("In boota get fastboot lock status error, enter fastboot mode.\n");
+		goto fail;
+#else
 		printf("In boota get fastboot lock status error. Set lock status\n");
 		fastboot_set_lock_stat(FASTBOOT_LOCK);
 		lock_status = FASTBOOT_LOCK;
+#endif
 	}
 	bool allow_fail = (lock_status == FASTBOOT_UNLOCK ? true : false);
 	avb_metric = get_timer(0);
@@ -3342,6 +3347,15 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 #ifdef CONFIG_AT_AUTHENTICATE_UNLOCK
 		}
 #endif
+	} else if (endswith(cmd, FASTBOOT_AT_LOCK_VBOOT)) {
+		if (perm_attr_are_fused()) {
+			status = do_fastboot_lock();
+			if (status != FASTBOOT_LOCK_ERROR)
+				strcpy(response, "OKAY");
+			else
+				strcpy(response, "FAILlock device failed.");
+		} else
+			strcpy(response, "FAILpermanent attributes not fused!");
 	}
 #endif /* CONFIG_AVB_ATX */
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
@@ -3401,12 +3415,19 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 			strcpy(response, "FAILunlock device failed.");
 #endif
 	} else if (endswith(cmd, "lock")) {
+#ifdef CONFIG_AVB_ATX
+		/* We should do nothing here For Android Things which
+		 * enables the at-lock-vboot feature.
+		 */
+		strcpy(response, "OKAY");
+#else
 		printf("flashing lock.\n");
 		status = do_fastboot_lock();
 		if (status != FASTBOOT_LOCK_ERROR)
 			strcpy(response, "OKAY");
 		else
 			strcpy(response, "FAILlock device failed.");
+#endif
 	} else if (endswith(cmd, "get_unlock_ability")) {
 		result = fastboot_lock_enable();
 		if (result == FASTBOOT_UL_ENABLE) {

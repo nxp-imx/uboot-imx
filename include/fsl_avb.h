@@ -257,5 +257,7 @@ int avb_atx_get_unlock_challenge(struct AvbAtxOps* atx_ops,
 /* Verify ATX unlock credential */
 int avb_atx_verify_unlock_credential(struct AvbAtxOps* atx_ops,
 					uint8_t *staged_buffer);
+/* Check if the perm-attr have been fused. */
+bool perm_attr_are_fused(void);
 
 #endif /* __FSL_AVB_H__ */

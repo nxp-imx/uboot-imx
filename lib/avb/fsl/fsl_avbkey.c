@@ -283,6 +283,23 @@ int avb_atx_verify_unlock_credential(struct AvbAtxOps* atx_ops,
 		return 0;
 }
 
+bool perm_attr_are_fused(void)
+{
+#ifdef CONFIG_IMX_TRUSTY_OS
+	AvbAtxPermanentAttributes attributes;
+	if(!trusty_read_permanent_attributes((uint8_t *)(&attributes),
+		sizeof(AvbAtxPermanentAttributes))) {
+		return true;
+	} else {
+		ERR("No perm-attr fused, please fuse your perm-attr first!.\n");
+		return false;
+	}
+#else
+	/* We hard code the perm-attr if trusty is not enabled. */
+	return true;
+#endif
+}
+
 /* Reads permanent |attributes| data. There are no restrictions on where this
  * data is stored. On success, returns AVB_IO_RESULT_OK and populates
  * |attributes|.
