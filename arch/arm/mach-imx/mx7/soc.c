@@ -168,11 +168,6 @@ static void imx_enet_mdio_fixup(void)
 
 static void set_epdc_qos(void)
 {
-#define REGS_QOS_BASE     QOSC_IPS_BASE_ADDR
-#define REGS_QOS_EPDC     (QOSC_IPS_BASE_ADDR + 0x3400)
-#define REGS_QOS_PXP0     (QOSC_IPS_BASE_ADDR + 0x2C00)
-#define REGS_QOS_PXP1     (QOSC_IPS_BASE_ADDR + 0x3C00)
-
 	writel(0, REGS_QOS_BASE);  /*  Disable clkgate & soft_reset */
 	writel(0, REGS_QOS_BASE + 0x60);  /*  Enable all masters */
 	writel(0, REGS_QOS_EPDC);   /*  Disable clkgate & soft_reset */
