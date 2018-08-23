@@ -70,6 +70,8 @@
 	"initrd_high=0xffffffff\0" \
     "emmc_dev=2\0"\
     "sd_dev=1\0" \
+	"spi_bus=1\0"\
+	"spi_uboot=0x400\0"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \

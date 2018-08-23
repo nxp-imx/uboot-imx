@@ -59,6 +59,10 @@
 	"initrd_high=0xffffffff\0" \
 	"emmc_dev=2\0"\
 	"sd_dev=1\0" \
+	"weim_uboot=0x08001000\0"\
+	"weim_base=0x08000000\0"\
+	"spi_bus=1\0"\
+	"spi_uboot=0x400\0"
 
 #ifdef CONFIG_SUPPORT_EMMC_BOOT
 #define EMMC_ENV \
