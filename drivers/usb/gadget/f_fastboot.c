@@ -3036,6 +3036,9 @@ static int get_single_var(char *cmd, char *response)
 			trusty_free(uuid);
 		}
 	}
+	else if(!strcmp_l1("at-attest-dh", cmd)) {
+		strncat(response, "1:P256,2:curve25519", chars_left);
+	}
 #endif
 #ifdef CONFIG_FASTBOOT_LOCK
 	else if (!strcmp_l1("secure", cmd)) {
