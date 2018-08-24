@@ -2097,13 +2097,13 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			printf(" boot '%s%s' still\n",
 					avb_loadpart->partition_name, avb_out_data->ab_suffix);
 		}
-		char bootargs_sec[ANDR_BOOT_ARGS_SIZE];
+		char bootargs_sec[ANDR_BOOT_EXTRA_ARGS_SIZE];
 		if (lock_status == FASTBOOT_LOCK) {
-			sprintf(bootargs_sec,
+			snprintf(bootargs_sec, sizeof(bootargs_sec),
 					"androidboot.verifiedbootstate=green androidboot.slot_suffix=%s %s",
 					avb_out_data->ab_suffix, avb_out_data->cmdline);
 		} else {
-			sprintf(bootargs_sec,
+			snprintf(bootargs_sec, sizeof(bootargs_sec),
 					"androidboot.verifiedbootstate=orange androidboot.slot_suffix=%s %s",
 					avb_out_data->ab_suffix, avb_out_data->cmdline);
 		}
