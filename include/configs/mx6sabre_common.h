@@ -44,7 +44,7 @@
 #endif
 
 #ifdef CONFIG_NAND_BOOT
-#define MFG_NAND_PARTITION "mtdparts=8000000.nor:1m(boot),-(rootfs)\\\\;gpmi-nand:64m(boot),16m(kernel),16m(dtb),16m(tee),-(rootfs) "
+#define MFG_NAND_PARTITION "mtdparts=8000000.nor:1m(boot),-(rootfs)\\;gpmi-nand:64m(nandboot),16m(nandkernel),16m(nanddtb),16m(nandtee),-(nandrootfs) "
 #else
 #define MFG_NAND_PARTITION ""
 #endif
@@ -62,7 +62,9 @@
 	"weim_uboot=0x08001000\0"\
 	"weim_base=0x08000000\0"\
 	"spi_bus=1\0"\
-	"spi_uboot=0x400\0"
+	"spi_uboot=0x400\0" \
+	"mtdparts=" MFG_NAND_PARTITION \
+	"\0"\
 
 #ifdef CONFIG_SUPPORT_EMMC_BOOT
 #define EMMC_ENV \
@@ -100,12 +102,13 @@
 	TEE_ENV \
 	"fdt_addr=0x18000000\0" \
 	"fdt_high=0xffffffff\0"	  \
+	"console=" CONSOLE_DEV "\0" \
 	"bootargs=console=" CONSOLE_DEV ",115200 ubi.mtd=6 "  \
-		"root=ubi0:rootfs rootfstype=ubifs "		     \
+		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
 		MFG_NAND_PARTITION \
 		"\0" \
-	"bootcmd=nand read ${loadaddr} 0x5000000 0x800000;"\
-		"nand read ${fdt_addr} 0x6000000 0x100000;"\
+	"bootcmd=nand read ${loadaddr} 0x4000000 0x800000;"\
+		"nand read ${fdt_addr} 0x5000000 0x100000;"\
 		"if test ${tee} = yes; then " \
 			"nand read ${tee_addr} 0x4000000 0x400000;"\
 			"bootm ${teeaddr} - ${fdt_addr};" \
