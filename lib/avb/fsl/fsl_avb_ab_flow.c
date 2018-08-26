@@ -208,6 +208,9 @@ static int spl_verify_rbidx(struct mmc *mmc, AvbABSlotData *slot,
 	kblb_hdr_t hdr;
 	kblb_tag_t *rbk;
 	uint64_t extract_idx;
+#ifdef CONFIG_AVB_ATX
+	struct bl_rbindex_package *bl_rbindex;
+#endif
 
 	/* Make sure rollback index has been initialized before verify */
 	if (rpmb_init()) {
@@ -240,6 +243,16 @@ static int spl_verify_rbidx(struct mmc *mmc, AvbABSlotData *slot,
 			printf("Update bootloader rollback index failed!\n");
 			return -1;
 		}
+
+#ifdef CONFIG_AVB_ATX
+		/* Pass bootloader rbindex to u-boot here. */
+		bl_rbindex = (struct bl_rbindex_package *)BL_RBINDEX_LOAD_ADDR;
+		memcpy(bl_rbindex->magic, BL_RBINDEX_MAGIC, BL_RBINDEX_MAGIC_LEN);
+		if (slot->successful_boot != 0)
+			bl_rbindex->rbindex = spl_image->rbindex;
+		else
+			bl_rbindex->rbindex = extract_idx;
+#endif
 
 		return 0;
 	} else {

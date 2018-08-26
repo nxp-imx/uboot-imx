@@ -31,6 +31,15 @@
 #define AVB_KBLB_MAGIC "\0KBLB!"
 #define AVB_KBLB_MAGIC_LEN 6
 
+#if defined(CONFIG_AVB_ATX) && defined(CONFIG_DUAL_BOOTLOADER)
+#define BL_RBINDEX_MAGIC "BL_RBINDEX" 
+#define BL_RBINDEX_MAGIC_LEN 11
+struct bl_rbindex_package {
+	char magic[BL_RBINDEX_MAGIC_LEN];
+	uint32_t rbindex;
+};
+#endif
+
 #ifdef CONFIG_ANDROID_AUTO_SUPPORT
 #define RPMB_KEY_MAGIC "RPMB"
 #endif

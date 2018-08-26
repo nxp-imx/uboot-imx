@@ -75,6 +75,8 @@ extern void trusty_os_init(void);
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
 #include <asm-generic/gpio.h>
 #include <asm/mach-imx/gpio.h>
+#include "../lib/avb/fsl/fsl_avbkey.h"
+#include "../arch/arm/include/asm/mach-imx/hab.h"
 #endif
 
 #define FASTBOOT_VERSION		"0.4"
@@ -154,6 +156,22 @@ char *fastboot_common_var[FASTBOOT_COMMON_VAR_NUM] = {
 	"baseboard_id"
 #endif
 };
+
+/* at-vboot-state variable list */
+#ifdef CONFIG_AVB_ATX
+#define AT_VBOOT_STATE_VAR_NUM 6
+extern struct imx_sec_config_fuse_t const imx_sec_config_fuse;
+extern int fuse_read(u32 bank, u32 word, u32 *val);
+
+char *fastboot_at_vboot_state_var[AT_VBOOT_STATE_VAR_NUM] = {
+	"bootloader-locked",
+	"bootloader-min-versions",
+	"avb-perm-attr-set",
+	"avb-locked",
+	"avb-unlock-disabled",
+	"avb-min-versions"
+};
+#endif
 
 /* Boot metric variables */
 boot_metric metrics = {
@@ -2957,7 +2975,7 @@ int get_imx8m_baseboard_id(void);
 static int get_single_var(char *cmd, char *response)
 {
 	char *str = cmd;
-	size_t chars_left;
+	int chars_left;
 	const char *s;
 	struct mmc *mmc;
 	int mmc_dev_no;
@@ -3086,6 +3104,138 @@ static int get_single_var(char *cmd, char *response)
 			snprintf(response + strlen(response), chars_left, "0x%x", baseboard_id);
 	}
 #endif
+#ifdef CONFIG_AVB_ATX
+	else if (!strcmp_l1("bootloader-locked", cmd)) {
+
+		/* Below is basically copied from is_hab_enabled() */
+		struct imx_sec_config_fuse_t *fuse =
+			(struct imx_sec_config_fuse_t *)&imx_sec_config_fuse;
+		uint32_t reg;
+		int ret;
+
+		/* Read the secure boot status from fuse. */
+		ret = fuse_read(fuse->bank, fuse->word, &reg);
+		if (ret) {
+			printf("\nSecure boot fuse read error!\n");
+			strncat(response, "Secure boot fuse read error!", chars_left);
+			return -1;
+		}
+		/* Check if the secure boot bit is enabled */
+		if ((reg & 0x2000000) == 0x2000000)
+			strncat(response, "1", chars_left);
+		else
+			strncat(response, "0", chars_left);
+	} else if (!strcmp_l1("bootloader-min-versions", cmd)) {
+#ifndef CONFIG_ARM64
+		/* We don't support bootloader rbindex protection for
+		 * ARM32(like imx7d) and the format is: "bootloader,tee". */
+		strncat(response, "-1,-1", chars_left);
+
+#elif defined(CONFIG_DUAL_BOOTLOADER)
+		/* Rbindex protection for bootloader is supported only when the
+		 * 'dual bootloader' feature is enabled. U-boot will get the rbindx
+		 * from RAM which is passed by spl because we can only get the rbindex
+		 * at spl stage. The format in this case is: "spl,atf,tee,u-boot".
+		 */
+		struct bl_rbindex_package *bl_rbindex;
+		uint32_t rbindex;
+
+		bl_rbindex = (struct bl_rbindex_package *)BL_RBINDEX_LOAD_ADDR;
+		if (!strncmp(bl_rbindex->magic, BL_RBINDEX_MAGIC,
+				BL_RBINDEX_MAGIC_LEN)) {
+			rbindex = bl_rbindex->rbindex;
+			snprintf(response + strlen(response), chars_left,
+					"-1,%d,%d,%d",rbindex, rbindex, rbindex);
+		} else {
+			printf("Error bootloader rbindex magic!\n");
+			strncat(response, "Get bootloader rbindex fail!", chars_left);
+			return -1;
+		}
+#else
+		/* Return -1 for all partition if 'dual bootloader' feature
+		 * is not enabled */
+		strncat(response, "-1,-1,-1,-1", chars_left);
+#endif
+	} else if (!strcmp_l1("avb-perm-attr-set", cmd)) {
+		if (perm_attr_are_fused())
+			strncat(response, "1", chars_left);
+		else
+			strncat(response, "0", chars_left);
+	} else if (!strcmp_l1("avb-locked", cmd)) {
+		FbLockState status;
+
+		status = fastboot_get_lock_stat();
+		if (status == FASTBOOT_LOCK)
+			strncat(response, "1", chars_left);
+		else if (status == FASTBOOT_UNLOCK)
+			strncat(response, "0", chars_left);
+		else {
+			printf("Get lock state error!\n");
+			strncat(response, "Get lock state failed!", chars_left);
+			return -1;
+		}
+	} else if (!strcmp_l1("avb-unlock-disabled", cmd)) {
+		if (at_unlock_vboot_is_disabled())
+			strncat(response, "1", chars_left);
+		else
+			strncat(response, "0", chars_left);
+	} else if (!strcmp_l1("avb-min-versions", cmd)) {
+		int i = 0;
+		/* rbindex location/value can be very large
+		 * number so we reserve enough space here.
+		 */
+		char buffer[35];
+		uint32_t rbindex_location[AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS + 2];
+		uint32_t location;
+		uint64_t rbindex;
+
+		memset(buffer, '\0', sizeof(buffer));
+
+		/* Set rbindex locations. */
+		for (i = 0; i < AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS; i++)
+			rbindex_location[i] = i;
+
+		/* Set Android Things key version rbindex locations */
+		rbindex_location[AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS]
+						= AVB_ATX_PIK_VERSION_LOCATION;
+		rbindex_location[AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS + 1]
+						= AVB_ATX_PSK_VERSION_LOCATION;
+
+		/* Read rollback index and set the reponse*/
+		for (i = 0; i < AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS + 2; i++) {
+			location = rbindex_location[i];
+			if (fsl_avb_ops.read_rollback_index(&fsl_avb_ops,
+								location, &rbindex)
+								!= AVB_IO_RESULT_OK) {
+				printf("Read rollback index error!\n");
+				snprintf(response, sizeof(response),
+					"INFOread rollback index error when get avb-min-versions");
+				return -1;
+			}
+			/* Generate the "location:value" pair */
+			snprintf(buffer, sizeof(buffer), "%d:%lld", location, rbindex);
+			if (i != AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS + 1)
+				strncat(buffer, ",", strlen(","));
+
+			if ((chars_left - (int)strlen(buffer)) >= 0) {
+				strncat(response, buffer, strlen(buffer));
+				chars_left -= strlen(buffer);
+			} else {
+				strncat(response, buffer, chars_left);
+				/* reponse buffer is full, send it first */
+				fastboot_tx_write_more(response);
+				/* reset the reponse buffer for next round */
+				memset(response, '\0', sizeof(response));
+				strncpy(response, "INFO", 5);
+				/* Copy left strings from 'buffer' to 'response' */
+				strncat(response, buffer + chars_left, strlen(buffer));
+				chars_left = FASTBOOT_RESPONSE_LEN -
+						strlen(response) - 1;
+			}
+		}
+
+	}
+#endif
 	else {
 		char envstr[32];
 
@@ -3108,10 +3258,10 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 	int status = 0;
 	int count = 0;
 	char *cmd = req->buf;
-	char var_name[FASTBOOT_RESPONSE_LEN - 1];
+	char var_name[FASTBOOT_RESPONSE_LEN];
 	char partition_base_name[MAX_PTN][16];
 	char slot_suffix[2][5] = {"a","b"};
-	char response[FASTBOOT_RESPONSE_LEN - 1];
+	char response[FASTBOOT_RESPONSE_LEN];
 
 	strsep(&cmd, ":");
 	if (!cmd) {
@@ -3122,7 +3272,7 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 
 	if (!strcmp_l1("all", cmd)) {
 
-		memset(response, '\0', FASTBOOT_RESPONSE_LEN - 1);
+		memset(response, '\0', FASTBOOT_RESPONSE_LEN);
 
 
 		/* get common variables */
@@ -3132,6 +3282,14 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 			fastboot_tx_write_more(response);
 		}
 
+		/* get at-vboot-state variables */
+#ifdef CONFIG_AVB_ATX
+		for (n = 0; n < AT_VBOOT_STATE_VAR_NUM; n++) {
+			snprintf(response, sizeof(response), "INFO%s:", fastboot_at_vboot_state_var[n]);
+			get_single_var(fastboot_at_vboot_state_var[n], response);
+			fastboot_tx_write_more(response);
+		}
+#endif
 		/* get partition type */
 		for (n = 0; n < g_pcount; n++) {
 			snprintf(response, sizeof(response), "INFOpartition-type:%s:", g_ptable[n].name);
@@ -3191,7 +3349,35 @@ static void cb_getvar(struct usb_ep *ep, struct usb_request *req)
 		fastboot_tx_write_more(response);
 
 		return;
-	} else {
+	}
+#ifdef CONFIG_AVB_ATX
+	else if (!strcmp_l1("at-vboot-state", cmd)) {
+			/* get at-vboot-state variables */
+		for (n = 0; n < AT_VBOOT_STATE_VAR_NUM; n++) {
+			snprintf(response, sizeof(response), "INFO%s:", fastboot_at_vboot_state_var[n]);
+			get_single_var(fastboot_at_vboot_state_var[n], response);
+			fastboot_tx_write_more(response);
+		}
+
+		strncpy(response, "OKAY", 5);
+		fastboot_tx_write_more(response);
+
+		return;
+	} else if ((!strcmp_l1("bootloader-locked", cmd)) ||
+			(!strcmp_l1("bootloader-min-versions", cmd)) ||
+			(!strcmp_l1("avb-perm-attr-set", cmd)) ||
+			(!strcmp_l1("avb-locked", cmd)) ||
+			(!strcmp_l1("avb-unlock-disabled", cmd)) ||
+			(!strcmp_l1("avb-min-versions", cmd))) {
+
+		printf("Can't get this variable alone, get 'at-vboot-state' instead!\n");
+		snprintf(response, sizeof(response),
+			"FAILCan't get this variable alone, get 'at-vboot-state' instead.");
+		fastboot_tx_write_str(response);
+		return;
+	}
+#endif
+	else {
 
 		strncpy(response, "OKAY", 5);
 		status = get_single_var(cmd, response);

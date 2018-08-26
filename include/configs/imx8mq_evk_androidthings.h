@@ -32,6 +32,13 @@
 
 #define CONFIG_ANDROID_RECOVERY
 
+/* Use below address to store the bootloader rbindex,
+ * it's 4k offset to CONFIG_SYS_SPL_PTE_RAM_BASE
+ * */
+#if defined(CONFIG_AVB_ATX) && defined(CONFIG_DUAL_BOOTLOADER)
+#define BL_RBINDEX_LOAD_ADDR 0x4157F000
+#endif
+
 #define CONFIG_CMD_BOOTA
 #define CONFIG_SUPPORT_RAW_INITRD
 #define CONFIG_SERIAL_TAG
