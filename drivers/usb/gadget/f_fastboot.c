@@ -3333,20 +3333,25 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 		else
 			strcpy(response, "OKAY");
 	} else if (endswith(cmd, FASTBOOT_AT_UNLOCK_VBOOT)) {
+		if (at_unlock_vboot_is_disabled()) {
+			printf("unlock vboot already disabled, can't unlock the device!\n");
+			strcpy(response, "FAILunlock vboot already disabled!.");
+		} else {
 #ifdef CONFIG_AT_AUTHENTICATE_UNLOCK
-		if (avb_atx_verify_unlock_credential(fsl_avb_ops.atx_ops,
-							interface.transfer_buffer))
-			strcpy(response, "FAILIncorrect unlock credential!");
-		else {
+			if (avb_atx_verify_unlock_credential(fsl_avb_ops.atx_ops,
+								interface.transfer_buffer))
+				strcpy(response, "FAILIncorrect unlock credential!");
+			else {
 #endif
-			status = do_fastboot_unlock(true);
-			if (status != FASTBOOT_LOCK_ERROR)
-				strcpy(response, "OKAY");
-			else
-				strcpy(response, "FAILunlock device failed.");
+				status = do_fastboot_unlock(true);
+				if (status != FASTBOOT_LOCK_ERROR)
+					strcpy(response, "OKAY");
+				else
+					strcpy(response, "FAILunlock device failed.");
 #ifdef CONFIG_AT_AUTHENTICATE_UNLOCK
+			}
+#endif
 		}
-#endif
 	} else if (endswith(cmd, FASTBOOT_AT_LOCK_VBOOT)) {
 		if (perm_attr_are_fused()) {
 			status = do_fastboot_lock();
@@ -3356,6 +3361,22 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 				strcpy(response, "FAILlock device failed.");
 		} else
 			strcpy(response, "FAILpermanent attributes not fused!");
+	} else if (endswith(cmd, FASTBOOT_AT_DISABLE_UNLOCK_VBOOT)) {
+		/* This command can only be called after 'oem at-lock-vboot' */
+		status = fastboot_get_lock_stat();
+		if (status == FASTBOOT_LOCK) {
+			if (at_unlock_vboot_is_disabled()) {
+				printf("unlock vboot already disabled!\n");
+				strcpy(response, "OKAY");
+			}
+			else {
+				if (!at_disable_vboot_unlock())
+					strcpy(response, "OKAY");
+				else
+					strcpy(response, "FAILdisable unlock vboot fail!");
+			}
+		} else
+			strcpy(response, "FAILplease lock the device first!");
 	}
 #endif /* CONFIG_AVB_ATX */
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT

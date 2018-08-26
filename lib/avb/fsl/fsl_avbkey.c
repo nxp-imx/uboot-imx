@@ -48,7 +48,7 @@
 #define RESULT_OK     0
 
 #ifndef CONFIG_SPL_BUILD
-#if defined(CONFIG_AVB_ATX) && !defined(CONFIG_ARM64)
+#if defined(CONFIG_AVB_ATX)
 static int fsl_fuse_ops(uint32_t *buffer, uint32_t length, uint32_t offset,
 			const uint8_t read) {
 
@@ -300,6 +300,45 @@ bool perm_attr_are_fused(void)
 #endif
 }
 
+bool at_unlock_vboot_is_disabled(void)
+{
+	uint32_t unlock_vboot_status;
+
+	if (fsl_fuse_read(&unlock_vboot_status, 1,
+				UNLOCK_VBOOT_STATUS_OFFSET_IN_WORD)) {
+		printf("Read at unlock vboot status error!\n");
+		return false;
+	}
+
+	if (unlock_vboot_status & (1 << UNLOCK_VBOOT_STATUS_OFFSET_IN_BIT))
+		return true;
+	else
+		return false;
+}
+
+int at_disable_vboot_unlock(void)
+{
+	uint32_t unlock_vboot_status = 0;
+
+	/* Read the status first */
+	if (fsl_fuse_read(&unlock_vboot_status, 1,
+				UNLOCK_VBOOT_STATUS_OFFSET_IN_WORD)) {
+		ERR("Read unlock vboot status error!\n");
+		return -1;
+	}
+
+	/* Set the disable unlock vboot bit */
+	unlock_vboot_status |= (1 << UNLOCK_VBOOT_STATUS_OFFSET_IN_BIT);
+
+	/* Write disable unlock vboot bit to fuse */
+	if (fsl_fuse_write(&unlock_vboot_status, 1,
+				UNLOCK_VBOOT_STATUS_OFFSET_IN_WORD)) {
+		ERR("Write unlock vboot status fail!\n");
+		return -1;
+	}
+
+	return 0;
+}
 /* Reads permanent |attributes| data. There are no restrictions on where this
  * data is stored. On success, returns AVB_IO_RESULT_OK and populates
  * |attributes|.

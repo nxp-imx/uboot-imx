@@ -260,4 +260,9 @@ int avb_atx_verify_unlock_credential(struct AvbAtxOps* atx_ops,
 /* Check if the perm-attr have been fused. */
 bool perm_attr_are_fused(void);
 
+/* Check if the unlock vboot is already disabled */
+bool at_unlock_vboot_is_disabled(void);
+
+/* disable at unlock vboot */
+int at_disable_vboot_unlock(void);
 #endif /* __FSL_AVB_H__ */
