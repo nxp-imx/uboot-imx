@@ -90,6 +90,22 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 			return 0;
 		}
 		return clkrate;
+	case MXC_FSPI_CLK:
+		err = sc_pm_get_clock_rate((sc_ipc_t)gd->arch.ipc_channel_handle,
+				SC_R_FSPI_0, 2, &clkrate);
+		if (err != SC_ERR_NONE) {
+			printf("sc get FSPI clk failed! err=%d\n", err);
+			return 0;
+		}
+		return clkrate;
+	case MXC_DDR_CLK:
+		err = sc_pm_get_clock_rate((sc_ipc_t)gd->arch.ipc_channel_handle,
+				SC_R_DRC_0, 0, &clkrate);
+		if (err != SC_ERR_NONE) {
+			printf("sc get DRC0 clk failed! err=%d\n", err);
+			return 0;
+		}
+		return clkrate;
 	case MXC_ARM_CLK:
 		return get_arm_main_clk();
 	default:
@@ -368,3 +384,25 @@ void init_clk_fec(int index)
 	}
 }
 
+/*
+ * Dump some core clockes.
+ */
+int do_mx8_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	printf("ARM        %8d kHz\n", mxc_get_clock(MXC_ARM_CLK) / 1000);
+	printf("DRC        %8d kHz\n", mxc_get_clock(MXC_DDR_CLK) / 1000);
+	printf("USDHC1     %8d kHz\n", mxc_get_clock(MXC_ESDHC_CLK) / 1000);
+	printf("USDHC2     %8d kHz\n", mxc_get_clock(MXC_ESDHC2_CLK) / 1000);
+	printf("USDHC3     %8d kHz\n", mxc_get_clock(MXC_ESDHC3_CLK) / 1000);
+	printf("UART0     %8d kHz\n", mxc_get_clock(MXC_UART_CLK) / 1000);
+	printf("FEC0     %8d kHz\n", mxc_get_clock(MXC_FEC_CLK) / 1000);
+	printf("FLEXSPI0     %8d kHz\n", mxc_get_clock(MXC_FSPI_CLK) / 1000);
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	clocks,	CONFIG_SYS_MAXARGS, 1, do_mx8_showclocks,
+	"display clocks",
+	""
+);
