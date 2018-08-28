@@ -271,6 +271,11 @@ int arch_cpu_init(void)
 
 	imx_set_wdog_powerdown(false);
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+	/* Enable RTC */
+	writel(0x21, 0x30370038);
+#endif
+
 	return 0;
 }
 
