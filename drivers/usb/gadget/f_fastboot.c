@@ -320,7 +320,7 @@ static char *fb_response_str;
 #define MAX_PTN		    32
 struct fastboot_ptentry g_ptable[MAX_PTN];
 unsigned int g_pcount;
-struct fastboot_device_info fastboot_devinfo;
+struct fastboot_device_info fastboot_devinfo = {0xff, 0xff};
 
 
 enum {
@@ -1261,20 +1261,23 @@ static void parameters_setup(void)
 				CONFIG_FASTBOOT_BUF_SIZE;
 }
 
-static int _fastboot_setup_dev(void)
+static int _fastboot_setup_dev(int *switched)
 {
 	char *fastboot_env;
+	struct fastboot_device_info devinfo;;
 	fastboot_env = env_get("fastboot_dev");
 
 	if (fastboot_env) {
 		if (!strcmp(fastboot_env, "sata")) {
-			fastboot_devinfo.type = DEV_SATA;
-			fastboot_devinfo.dev_id = 0;
+			devinfo.type = DEV_SATA;
+			devinfo.dev_id = 0;
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
 		} else if (!strncmp(fastboot_env, "mmc", 3)) {
-			fastboot_devinfo.type = DEV_MMC;
-			fastboot_devinfo.dev_id = mmc_get_env_dev();
+			devinfo.type = DEV_MMC;
+			devinfo.dev_id = mmc_get_env_dev();
 #endif
+		} else {
+			return 1;
 		}
 	} else {
 		return 1;
@@ -1285,6 +1288,16 @@ static int _fastboot_setup_dev(void)
 	 * physical partition 'm4_os', m4 will be kicked off by A core. */
 	fastboot_firmwareinfo.type = ANDROID_MCU_FRIMWARE_DEV_TYPE;
 #endif
+
+	if (switched) {
+		if (devinfo.type != fastboot_devinfo.type || devinfo.dev_id != fastboot_devinfo.dev_id)
+			*switched = 1;
+		else
+			*switched = 0;
+	}
+
+	fastboot_devinfo.type	 = devinfo.type;
+	fastboot_devinfo.dev_id = devinfo.dev_id;
 
 	return 0;
 }
@@ -1381,6 +1394,9 @@ static int _fastboot_parts_load_from_ptable(void)
 
 		printf("flash target is MMC:%d\n", mmc_no);
 		mmc = find_mmc_device(mmc_no);
+
+		/* Force to init mmc */
+		mmc->has_init = 0;
 		if (mmc && mmc_init(mmc))
 			printf("MMC card init failed!\n");
 
@@ -1751,6 +1767,7 @@ fail:
 
 void fastboot_setup(void)
 {
+	int sw, ret;
 #ifdef CONFIG_USB_GADGET
 	struct tag_serialnr serialnr;
 	char serial[17];
@@ -1763,11 +1780,11 @@ void fastboot_setup(void)
 	board_fastboot_setup();
 
 	/*get the fastboot dev*/
-	_fastboot_setup_dev();
-
+	ret = _fastboot_setup_dev(&sw);
 
 	/*load partitions information for the fastboot dev*/
-	_fastboot_load_partitions();
+	if (!ret && sw)
+		_fastboot_load_partitions();
 
 	parameters_setup();
 #ifdef CONFIG_AVB_SUPPORT
