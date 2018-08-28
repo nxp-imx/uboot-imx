@@ -187,11 +187,13 @@ void spl_board_init(void)
 	/* DDR initialization */
 	spl_dram_init();
 
+#ifndef CONFIG_SPL_USB_SDP_SUPPORT
 	/* Serial download mode */
 	if (is_usb_boot()) {
 		puts("Back to ROM, SDP\n");
 		restore_boot_params();
 	}
+#endif
 	puts("Normal Boot\n");
 }
 
@@ -207,6 +209,7 @@ int board_fit_config_name_match(const char *name)
 
 void board_init_f(ulong dummy)
 {
+
 	/* Clear global data */
 	memset((void *)gd, 0, sizeof(gd_t));
 

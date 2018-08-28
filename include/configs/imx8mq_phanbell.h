@@ -98,16 +98,12 @@
 #endif
 
 #define CONFIG_MFG_ENV_SETTINGS \
-	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
-		"rdinit=/linuxrc " \
-		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
-		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
-		"g_mass_storage.iSerialNumber=\"\" "\
-		"clk_ignore_unused "\
-		"\0" \
+	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x43800000\0" \
 	"initrd_high=0xffffffff\0" \
-	"bootcmd_mfg=run mfgtool_args;booti ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+	"emmc_dev=0\0"\
+	"sd_dev=1\0" \
+
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
@@ -251,32 +247,25 @@
 
 /* USB configs */
 #ifndef CONFIG_SPL_BUILD
-#define CONFIG_USB_XHCI_IMX8M
-#define CONFIG_USB_XHCI_DWC3
-#define CONFIG_USB_XHCI_HCD
-#define CONFIG_USB_MAX_CONTROLLER_COUNT         1
 
 #define CONFIG_CMD_USB
 #define CONFIG_USB_STORAGE
 
-#define CONFIG_USB_DWC3
-#define CONFIG_USB_DWC3_GADGET
-#define CONFIG_USBD_HS
 
-#define CONFIG_USB_GADGET
 #define CONFIG_CMD_USB_MASS_STORAGE
 #define CONFIG_USB_GADGET_MASS_STORAGE
-#define CONFIG_USB_GADGET_DOWNLOAD
-#define CONFIG_USB_GADGET_VBUS_DRAW 2
-#define CONFIG_USB_GADGET_DUALSPEED
 #define CONFIG_USB_FUNCTION_MASS_STORAGE
-
-#define CONFIG_USB_GADGET_VENDOR_NUM	0x18d1
-#define CONFIG_USB_GADGET_PRODUCT_NUM	0x0d02
-#define CONFIG_USB_GADGET_MANUFACTURER	"FSL"
 
 #endif
 
+#define CONFIG_SERIAL_TAG
+#define CONFIG_FASTBOOT_USB_DEV 0
+
+
+#define CONFIG_USB_MAX_CONTROLLER_COUNT         2
+
+#define CONFIG_USBD_HS
+#define CONFIG_USB_GADGET_VBUS_DRAW 2
 #define CONFIG_OF_SYSTEM_SETUP
 
 #if defined (CONFIG_ANDROID_THINGS_SUPPORT)
