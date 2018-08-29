@@ -47,6 +47,9 @@ static void display_enable_clocks(int enable)
 	SC_PM_CLOCK_ENABLE(-1, SC_R_HDMI_PLL_0, SC_PM_CLK_PLL, enable);
 	SC_PM_CLOCK_ENABLE(-1, SC_R_HDMI, SC_PM_CLK_MISC2, enable);
 	SC_PM_CLOCK_ENABLE(-1, SC_R_HDMI, SC_PM_CLK_MISC4, enable);
+	if (enable == OFF)
+		SC_PM_SET_RESOURCE_POWER_MODE(-1,
+				SC_R_HDMI_PLL_0, SC_PM_PW_MODE_OFF);
 }
 
 int do_hdp(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
