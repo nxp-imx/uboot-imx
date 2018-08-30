@@ -29,10 +29,8 @@
  * types available in a normal C runtime. At least things like uint64_t,
  * uintptr_t, and bool (with |false|, |true| keywords) must be present.
  */
+#include <common.h>
 #include <compiler.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stddef.h>
 
 /*
  * These attribute macros may need to be adjusted if not using gcc or clang.
