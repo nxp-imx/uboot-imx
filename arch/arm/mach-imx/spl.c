@@ -113,6 +113,8 @@ u32 spl_boot_device(void)
 	case MMC3_BOOT:
 		return BOOT_DEVICE_MMC1;
 #elif defined(CONFIG_IMX8)
+	case MMC1_BOOT:
+                return BOOT_DEVICE_MMC1;
 	case SD2_BOOT:
 		return BOOT_DEVICE_MMC2_2;
         case SD3_BOOT:
