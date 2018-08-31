@@ -63,6 +63,10 @@
 #define TEE_LOAD_ADDR_3G 0xfe000000
 
 
+#if defined(CONFIG_SPL_BUILD) || defined(CONFIG_IMX_TRUSTY_OS)
+#define AVB_RPMB
+#endif
+
 #define KEYSLOT_HWPARTITION_ID   2
 #define KEYSLOT_BLKS             0x1FFF
 
@@ -73,7 +77,6 @@
 #undef CONFIG_BLK
 #define CONFIG_ENV_IS_NOWHERE
 
-#define AVB_RPMB
 #ifdef AVB_RPMB
 #define BOOTLOADER_RBIDX_OFFSET  0x1E000
 #define BOOTLOADER_RBIDX_START   0x1F000

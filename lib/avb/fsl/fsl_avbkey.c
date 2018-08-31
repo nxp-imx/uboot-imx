@@ -4,7 +4,6 @@
  * SPDX-License-Identifier:     GPL-2.0+
  *
  */
-
 #include <common.h>
 #include <stdlib.h>
 #ifdef CONFIG_FSL_CAAM_KB
@@ -522,7 +521,7 @@ fail:
 #endif
 	return ret;
 }
-#endif
+#endif /* (AVB_RPMB) || defined(CONFIG_IMX_TRUSTY_OS) */
 
 #ifndef AVB_RPMB
 /* ARM64 won't avbkey and rollback index in this stage directly. */
@@ -576,7 +575,7 @@ struct mmc *get_mmc(void) {
 int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset);
 int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset);
 
-#if defined(CONFIG_IMX_TRUSTY_OS) || defined(CONFIG_SPL_BUILD)
+#if !defined(CONFIG_IMX_TRUSTY_OS) || defined(CONFIG_SPL_BUILD)
 int rpmb_init(void) {
 #if !defined(CONFIG_SPL_BUILD) || !defined(CONFIG_DUAL_BOOTLOADER)
 	int i;
@@ -693,8 +692,9 @@ int rpmb_init(void) {
 
 	return 0;
 }
-#endif /* CONFIG_IMX_TRUSTY_OS */
+#endif /* !CONFIG_IMX_TRUSTY_OS || CONFIG_SPL_BUILD */
 
+#if defined(CONFIG_SPL_BUILD) || !defined(CONFIG_ARM64)
 int gen_rpmb_key(struct keyslot_package *kp) {
 	char original_part;
 	unsigned char* fill = NULL;
@@ -790,25 +790,6 @@ fail:
 	}
 	return ret;
 
-}
-
-int init_avbkey(void) {
-	struct keyslot_package kp;
-	read_keyslot_package(&kp);
-	if (strcmp(kp.magic, KEYPACK_MAGIC)) {
-		printf("keyslot package magic error. Will generate new one\n");
-		gen_rpmb_key(&kp);
-	}
-#ifndef CONFIG_IMX_TRUSTY_OS
-	if (rpmb_init())
-		return RESULT_ERROR;
-#endif
-#if defined(CONFIG_AVB_ATX) && !defined(CONFIG_IMX_TRUSTY_OS)
-	if (init_permanent_attributes_fuse())
-		return RESULT_ERROR;
-#endif
-	fill_secure_keyslot_package(&kp);
-	return RESULT_OK;
 }
 
 int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset) {
@@ -1030,8 +1011,32 @@ fail:
 	return ret;
 
 }
-#ifndef CONFIG_SPL_BUILD
+#endif /* CONFIG_SPL_BUILD || !CONFIG_ARM64 */
+//#ifndef CONFIG_SPL_BUILD
 
+int init_avbkey(void) {
+#ifndef CONFIG_ARM64
+	struct keyslot_package kp;
+	read_keyslot_package(&kp);
+	if (strcmp(kp.magic, KEYPACK_MAGIC)) {
+		printf("keyslot package magic error. Will generate new one\n");
+		gen_rpmb_key(&kp);
+	}
+#ifndef CONFIG_IMX_TRUSTY_OS
+	if (rpmb_init())
+		return RESULT_ERROR;
+#endif
+#if defined(CONFIG_AVB_ATX) && !defined(CONFIG_IMX_TRUSTY_OS)
+	if (init_permanent_attributes_fuse())
+		return RESULT_ERROR;
+#endif
+	fill_secure_keyslot_package(&kp);
+#endif
+	return RESULT_OK;
+}
+
+#ifndef CONFIG_SPL_BUILD
+#ifndef CONFIG_ARM64
 static int rpmb_key(struct mmc *mmc) {
 	char original_part;
 	int ret = 0;
@@ -1250,6 +1255,7 @@ int avbkey_init(uint8_t *plainkey, uint32_t keylen) {
 
 	return 0;
 }
+#endif /* CONFIG_ARM64 */
 
 /* Checks if the given public key used to sign the 'vbmeta'
  * partition is trusted. Boot loaders typically compare this with

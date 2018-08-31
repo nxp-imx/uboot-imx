@@ -487,7 +487,9 @@ AvbABFlowResult avb_flow_dual_uboot(AvbABOps* ab_ops,
 	bool saw_and_allowed_verification_error = false;
 	AvbSlotVerifyResult verify_result;
 	bool set_slot_unbootable = false;
-	int target_slot;
+	int target_slot, n;
+	uint64_t rollback_index_value = 0;
+	uint64_t current_rollback_index_value = 0;
 
 	io_ret = fsl_load_metadata(ab_ops, &ab_data, &ab_data_orig);
 	if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
@@ -579,6 +581,41 @@ AvbABFlowResult avb_flow_dual_uboot(AvbABOps* ab_ops,
 		 */
 		ret = AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS;
 		goto out;
+	}
+
+	/* Update stored rollback index only when the slot has been marked
+	 * as successful. Do this for every rollback index location.
+	*/
+	if (ab_data.slots[target_slot].successful_boot != 0) {
+		for (n = 0; n < AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS; n++) {
+
+			rollback_index_value = slot_data->rollback_indexes[n];
+
+			if (rollback_index_value != 0) {
+				io_ret = ops->read_rollback_index(
+						ops, n, &current_rollback_index_value);
+				if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
+					ret = AVB_AB_FLOW_RESULT_ERROR_OOM;
+					goto out;
+				} else if (io_ret != AVB_IO_RESULT_OK) {
+					avb_error("Error getting rollback index for slot.\n");
+					ret = AVB_AB_FLOW_RESULT_ERROR_IO;
+					goto out;
+				}
+				if (current_rollback_index_value != rollback_index_value) {
+					io_ret = ops->write_rollback_index(
+							ops, n, rollback_index_value);
+					if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
+						ret = AVB_AB_FLOW_RESULT_ERROR_OOM;
+						goto out;
+					} else if (io_ret != AVB_IO_RESULT_OK) {
+						avb_error("Error setting stored rollback index.\n");
+						ret = AVB_AB_FLOW_RESULT_ERROR_IO;
+						goto out;
+					}
+				}
+			}
+		}
 	}
 
 	/* Finally, select this slot. */
@@ -734,6 +771,8 @@ AvbABFlowResult avb_ab_flow_fast(AvbABOps* ab_ops,
 	size_t target_slot;
 	AvbSlotVerifyResult verify_result;
 	bool set_slot_unbootable = false;
+	uint64_t rollback_index_value = 0;
+	uint64_t current_rollback_index_value = 0;
 
 	io_ret = fsl_load_metadata(ab_ops, &ab_data, &ab_data_orig);
 	if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
@@ -834,51 +873,36 @@ AvbABFlowResult avb_ab_flow_fast(AvbABOps* ab_ops,
 		goto out;
 	}
 
-	/* Update stored rollback index such that the stored rollback index
-	* is the largest value supporting all currently bootable slots. Do
-	* this for every rollback index location.
+	/* Update stored rollback index only when the slot has been marked
+	 * as successful. Do this for every rollback index location.
 	*/
-	for (n = 0; n < AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS; n++) {
-		uint64_t rollback_index_value = 0;
+	if (ab_data.slots[slot_index_to_boot].successful_boot != 0) {
+		for (n = 0; n < AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS; n++) {
 
-		if ((slot_data[0] != NULL) && (slot_data[1] != NULL)) {
-			uint64_t a_rollback_index =
-				 slot_data[0]->rollback_indexes[n];
-			uint64_t b_rollback_index =
-				 slot_data[1]->rollback_indexes[n];
-			rollback_index_value =
-				(a_rollback_index < b_rollback_index ?
-					 a_rollback_index : b_rollback_index);
-		} else if (slot_data[0] != NULL) {
-			rollback_index_value =
-				 slot_data[0]->rollback_indexes[n];
-		} else if (slot_data[1] != NULL) {
-			rollback_index_value =
-				 slot_data[1]->rollback_indexes[n];
-		}
+			rollback_index_value = slot_data[slot_index_to_boot]->rollback_indexes[n];
 
-		if (rollback_index_value != 0) {
-			uint64_t current_rollback_index_value;
-			io_ret = ops->read_rollback_index(
-					ops, n, &current_rollback_index_value);
-			if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
-				ret = AVB_AB_FLOW_RESULT_ERROR_OOM;
-				goto out;
-			} else if (io_ret != AVB_IO_RESULT_OK) {
-				avb_error("Error getting rollback index for slot.\n");
-				ret = AVB_AB_FLOW_RESULT_ERROR_IO;
-				goto out;
-			}
-			if (current_rollback_index_value != rollback_index_value) {
-				io_ret = ops->write_rollback_index(
-						ops, n, rollback_index_value);
+			if (rollback_index_value != 0) {
+				io_ret = ops->read_rollback_index(
+						ops, n, &current_rollback_index_value);
 				if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
 					ret = AVB_AB_FLOW_RESULT_ERROR_OOM;
 					goto out;
 				} else if (io_ret != AVB_IO_RESULT_OK) {
-					avb_error("Error setting stored rollback index.\n");
+					avb_error("Error getting rollback index for slot.\n");
 					ret = AVB_AB_FLOW_RESULT_ERROR_IO;
 					goto out;
+				}
+				if (current_rollback_index_value != rollback_index_value) {
+					io_ret = ops->write_rollback_index(
+							ops, n, rollback_index_value);
+					if (io_ret == AVB_IO_RESULT_ERROR_OOM) {
+						ret = AVB_AB_FLOW_RESULT_ERROR_OOM;
+						goto out;
+					} else if (io_ret != AVB_IO_RESULT_OK) {
+						avb_error("Error setting stored rollback index.\n");
+						ret = AVB_AB_FLOW_RESULT_ERROR_IO;
+						goto out;
+					}
 				}
 			}
 		}

@@ -928,7 +928,7 @@ static void process_flash_mmc(const char *cmdbuf)
 {
 	if (download_bytes) {
 		struct fastboot_ptentry *ptn;
-#ifdef CONFIG_AVB_SUPPORT
+#if defined(AVB_RPMB) && !defined(CONFIG_ARM64)
 		if (!strcmp_l1(FASTBOOT_PARTITION_AVBKEY, cmdbuf)) {
 			printf("pubkey len %d\n", download_bytes);
 			if (avbkey_init(interface.transfer_buffer, download_bytes) != 0) {
