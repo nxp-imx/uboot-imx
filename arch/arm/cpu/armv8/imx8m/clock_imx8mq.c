@@ -659,6 +659,7 @@ int clock_init()
 	clock_enable(CCGR_WDOG3, 1);
 
 	clock_enable(CCGR_TSENSOR, 1);
+	clock_enable(CCGR_OCOTP, 1);
 
 	return 0;
 };
