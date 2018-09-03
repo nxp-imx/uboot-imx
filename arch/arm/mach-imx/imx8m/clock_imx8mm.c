@@ -717,6 +717,8 @@ int clock_init()
 	clock_enable(CCGR_ECSPI2, 1);
 	clock_enable(CCGR_ECSPI3, 1);
 
+	clock_enable(CCGR_SEC_DEBUG, 1);
+
 	enable_display_clk(1);
 	return 0;
 };
