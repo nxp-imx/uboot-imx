@@ -838,6 +838,7 @@ int clock_init(void)
 
 	init_wdog_clk();
 	clock_enable(CCGR_TSENSOR, 1);
+	clock_enable(CCGR_OCOTP, 1);
 
 	return 0;
 }
