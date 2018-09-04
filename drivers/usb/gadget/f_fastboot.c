@@ -2051,6 +2051,12 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		requested_partitions_boot[1] = NULL;
 		requested_partitions_recovery[1] = NULL;
 	}
+#ifndef CONFIG_ANDROID_AB_SUPPORT
+	else if (is_recovery_mode){
+		requested_partitions_recovery[1] = NULL;
+	}
+#endif
+
 	/* if in lock state, do avb verify */
 #ifndef CONFIG_DUAL_BOOTLOADER
 	/* For imx6 on Android, we don't have a/b slot and we want to verify
@@ -2185,21 +2191,41 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 #endif
 #ifdef CONFIG_OF_LIBFDT
 	/* load the dtb file */
-		u32 fdt_size = 0;
+	u32 fdt_size = 0;
+	struct dt_table_header *dt_img = NULL;
+
 	if (is_load_fdt_from_part()) {
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
 		if (find_partition_data_by_name("oem_bootloader",
 					avb_out_data, &avb_loadpart)) {
 			goto fail;
-		}
-#else
+		} else
+			dt_img = (struct dt_table_header *)avb_loadpart->data;
+#elif defined(CONFIG_ANDROID_AB_SUPPORT)
 		if (find_partition_data_by_name("dtbo",
 					avb_out_data, &avb_loadpart)) {
 			goto fail;
-		}
+		} else
+			dt_img = (struct dt_table_header *)avb_loadpart->data;
+#else
+		if (is_recovery_mode) {
+			if (hdr->header_version != 1) {
+				printf("boota: boot image header version error!\n");
+				goto fail;
+			}
+
+			dt_img = (struct dt_table_header *)((void *)(ulong)hdr +
+						hdr->page_size +
+						ALIGN(hdr->kernel_size, hdr->page_size) +
+						ALIGN(hdr->ramdisk_size, hdr->page_size) +
+						ALIGN(hdr->second_size, hdr->page_size));
+		} else if (find_partition_data_by_name("dtbo",
+						avb_out_data, &avb_loadpart)) {
+			goto fail;
+		} else
+			dt_img = (struct dt_table_header *)avb_loadpart->data;
 #endif
-		struct dt_table_header *dt_img;
-		dt_img = (struct dt_table_header *)avb_loadpart->data;
+
 		if (be32_to_cpu(dt_img->magic) != DT_TABLE_MAGIC) {
 			printf("boota: bad dt table magic %08x\n",
 					be32_to_cpu(dt_img->magic));
