@@ -121,16 +121,57 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 		CONFIG_MFG_ENV_SETTINGS \
 		TEE_ENV \
+		"image=zImage\0" \
+		"fdt_file=undefined\0" \
 		"fdt_addr=0x18000000\0" \
 		"fdt_high=0xffffffff\0"   \
+		"tee_addr=0x20000000\0" \
+		"tee_file=undefined\0" \
+		"findfdt="\
+			"if test $fdt_file = undefined; then " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6QP; then " \
+					"setenv fdt_file imx6qp-sabreauto.dtb; fi; " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6Q; then " \
+					"setenv fdt_file imx6q-sabreauto.dtb; fi; " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6DL; then " \
+					"setenv fdt_file imx6dl-sabreauto.dtb; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6QP; then " \
+					"setenv fdt_file imx6qp-sabresd.dtb; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6Q; then " \
+					"setenv fdt_file imx6q-sabresd.dtb; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6DL; then " \
+					"setenv fdt_file imx6dl-sabresd.dtb; fi; " \
+				"if test $fdt_file = undefined; then " \
+					"echo WARNING: Could not determine dtb to use; " \
+				"fi; " \
+			"fi;\0" \
+		"findtee="\
+			"if test $tee_file = undefined; then " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6QP; then " \
+					"setenv tee_file uTee-6qpauto; fi; " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6Q; then " \
+					"setenv tee_file uTee-6qauto; fi; " \
+				"if test $board_name = SABREAUTO && test $board_rev = MX6DL; then " \
+					"setenv tee_file uTee-6dlauto; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6QP; then " \
+					"setenv tee_file uTee-6qpsdb; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6Q; then " \
+					"setenv tee_file uTee-6qsdb; fi; " \
+				"if test $board_name = SABRESD && test $board_rev = MX6DL; then " \
+					"setenv tee_file uTee-6dlsdb; fi; " \
+				"if test $tee_file = undefined; then " \
+					"echo WARNING: Could not determine tee to use; fi; " \
+			"fi;\0" \
 		"bootargs=console=" CONSOLE_DEV ",115200 \0"\
 		"bootargs_sata=setenv bootargs ${bootargs} " \
-			"root=/dev/sda1 rootwait rw \0" \
+			"root=/dev/sda2 rootwait rw \0" \
 		"bootcmd_sata=run bootargs_sata; sata init; " \
-			"sata read ${loadaddr} 0x800  0x4000; " \
-			"sata read ${fdt_addr} 0x8000 0x800; " \
+			"run findfdt; run findtee;" \
+			"fatload sata 0:1 ${loadaddr} ${image}; " \
+			"fatload sata 0:1 ${fdt_addr} ${fdt_file}; " \
 			"if test ${tee} = yes; then " \
-				"sata read ${tee_addr} 0x9000 0x2000; " \
+				"fatload sata 0:1 ${tee_addr} ${tee_file}; " \
+				"bootm ${tee_addr} - ${fdt_addr}; " \
 			"else " \
 				"bootz ${loadaddr} - ${fdt_addr}; " \
 			"fi \0"\
