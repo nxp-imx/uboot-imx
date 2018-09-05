@@ -104,7 +104,7 @@
 		"clk_ignore_unused "\
 		"\0" \
 	"initrd_addr=0x43800000\0" \
-	"initrd_high=0xffffffff\0" \
+	"initrd_high=0xffffffffffffffff\0" \
 	"bootcmd_mfg=run mfgtool_args;booti ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\

@@ -113,7 +113,7 @@
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x43800000\0" \
-	"initrd_high=0xffffffff\0" \
+	"initrd_high=0xffffffffffffffff\0" \
 	"emmc_dev=1\0"\
 	"sd_dev=0\0" \
 

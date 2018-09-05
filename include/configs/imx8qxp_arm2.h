@@ -117,7 +117,7 @@
 		"clk_ignore_unused "\
 		"\0" \
 	"initrd_addr=0x83100000\0" \
-	"initrd_high=0xffffffff\0" \
+	"initrd_high=0xffffffffffffffff\0" \
 	"bootcmd_mfg=run mfgtool_args;  if iminfo ${initrd_addr}; then "\
 					     "booti ${loadaddr} ${initrd_addr} ${fdt_addr};"\
 					"else fastboot 1; fi\0" \

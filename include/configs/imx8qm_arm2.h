@@ -171,7 +171,7 @@
 		"clk_ignore_unused "\
 		"\0" \
 	"initrd_addr=0x83800000\0" \
-	"initrd_high=0xffffffff\0" \
+	"initrd_high=0xffffffffffffffff\0" \
 	"bootcmd_mfg=run mfgtool_args;booti ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 
 #define XEN_BOOT_ENV \
