@@ -736,64 +736,6 @@ U_BOOT_CMD(
 #endif
 #endif /* CONFIG_FLASH_MCUFIRMWARE_SUPPORT */
 
-#if defined(CONFIG_FASTBOOT_STORAGE_SATA)
-static void process_flash_sata(const char *cmdbuf)
-{
-	if (download_bytes) {
-		struct fastboot_ptentry *ptn;
-
-		/* Next is the partition name */
-		ptn = fastboot_flash_find_ptn(cmdbuf);
-		if (ptn == NULL) {
-			fastboot_fail("partition does not exist");
-			fastboot_flash_dump_ptn();
-		} else if ((download_bytes >
-			   ptn->length * MMC_SATA_BLOCK_SIZE) &&
-				!(ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_ENV)) {
-			printf("Image too large for the partition\n");
-			fastboot_fail("image too large for partition");
-		} else if (ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_ENV) {
-			/* Since the response can only be 64 bytes,
-			   there is no point in having a large error message. */
-			char err_string[32];
-			if (saveenv_to_ptn(ptn, &err_string[0])) {
-				printf("savenv '%s' failed : %s\n", ptn->name, err_string);
-				fastboot_fail(err_string);
-			} else {
-				printf("partition '%s' saveenv-ed\n", ptn->name);
-				fastboot_okay("");
-			}
-		} else {
-			unsigned int temp;
-			char sata_write[128];
-
-			/* block count */
-			temp = (download_bytes +
-				MMC_SATA_BLOCK_SIZE - 1) /
-					MMC_SATA_BLOCK_SIZE;
-
-			sprintf(sata_write, "sata write 0x%x 0x%x 0x%x",
-				(unsigned int)interface.transfer_buffer,
-				ptn->start,
-				temp);
-
-			if (run_command(sata_write, 0)) {
-				printf("Writing '%s' FAILED!\n",
-					 ptn->name);
-				fastboot_fail("Write partition failed");
-			} else {
-				printf("Writing '%s' DONE!\n",
-					ptn->name);
-				fastboot_okay("");
-			}
-		}
-	} else {
-		fastboot_fail("no image downloaded");
-	}
-
-}
-#endif
-
 static ulong bootloader_mmc_offset(void)
 {
 	if (is_imx8m() || (is_imx8() && is_soc_rev(CHIP_REV_A)))
@@ -813,7 +755,7 @@ static ulong bootloader_mmc_offset(void)
 		return 0x400;
 }
 
-#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+#if defined(CONFIG_FASTBOOT_STORAGE_MMC) || defined(CONFIG_FASTBOOT_STORAGE_SATA)
 static int is_raw_partition(struct fastboot_ptentry *ptn)
 {
 #ifdef CONFIG_ANDROID_AB_SUPPORT
@@ -1002,34 +944,39 @@ static void process_flash_mmc(const char *cmdbuf)
 		} else {
 			unsigned int temp;
 
-			char mmc_dev[128];
-			char mmc_write[128];
-			int mmcret;
+			char blk_dev[128];
+			char blk_write[128];
+			int blkret;
 
 			printf("writing to partition '%s'\n", ptn->name);
 			/* Get target flash device. */
-			if (get_fastboot_target_dev(mmc_dev, ptn) != 0)
+			if (get_fastboot_target_dev(blk_dev, ptn) != 0)
 				return;
 
 			if (!is_raw_partition(ptn) &&
 				is_sparse_image(interface.transfer_buffer)) {
-				int mmc_no = 0;
+				int dev_no = 0;
 				struct mmc *mmc;
 				struct blk_desc *dev_desc;
 				disk_partition_t info;
 				struct sparse_storage sparse;
 
-				mmc_no = fastboot_devinfo.dev_id;
+				dev_no = fastboot_devinfo.dev_id;
 
-				printf("sparse flash target is MMC:%d\n", mmc_no);
-				mmc = find_mmc_device(mmc_no);
-				if (mmc && mmc_init(mmc))
-					printf("MMC card init failed!\n");
+				printf("sparse flash target is %s:%d\n",
+				       fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc",
+				       dev_no);
+				if (fastboot_devinfo.type == DEV_MMC) {
+					mmc = find_mmc_device(dev_no);
+					if (mmc && mmc_init(mmc))
+						printf("MMC card init failed!\n");
+				}
 
-				dev_desc = blk_get_dev("mmc", mmc_no);
+				dev_desc = blk_get_dev(fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc", dev_no);
 				if (!dev_desc || dev_desc->type == DEV_TYPE_UNKNOWN) {
-					printf("** Block device MMC %d not supported\n",
-						mmc_no);
+					printf("** Block device %s %d not supported\n",
+					       fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc",
+					       dev_no);
 					return;
 				}
 
@@ -1079,21 +1026,22 @@ static void process_flash_mmc(const char *cmdbuf)
 								MMC_SATA_BLOCK_SIZE;
 					}
 
-					sprintf(mmc_write, "mmc write 0x%x 0x%x 0x%x",
-							(unsigned int)(uintptr_t)interface.transfer_buffer, /*source*/
-							ptn->start, /*dest*/
-							temp /*length*/);
+					sprintf(blk_write, "%s write 0x%x 0x%x 0x%x",
+						fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc",
+						(unsigned int)(uintptr_t)interface.transfer_buffer, /*source*/
+						ptn->start, /*dest*/
+						temp /*length*/);
 
 					printf("Initializing '%s'\n", ptn->name);
 
-					mmcret = run_command(mmc_dev, 0);
-					if (mmcret)
-						fastboot_fail("Init of MMC card failed");
+					blkret = run_command(blk_dev, 0);
+					if (blkret)
+						fastboot_fail("Init of BLK device failed");
 					else
 						fastboot_okay("");
 
 					printf("Writing '%s'\n", ptn->name);
-					if (run_command(mmc_write, 0)) {
+					if (run_command(blk_write, 0)) {
 						printf("Writing '%s' FAILED!\n", ptn->name);
 						fastboot_fail("Write partition failed");
 					} else {
@@ -1111,7 +1059,7 @@ static void process_flash_mmc(const char *cmdbuf)
 					/* will force scan the device,
 					 * so dev_desc can be re-inited
 					 * with the latest data */
-					run_command(mmc_dev, 0);
+					run_command(blk_dev, 0);
 				}
 			}
 		}
@@ -1246,7 +1194,7 @@ static void rx_process_flash(const char *cmdbuf)
 	switch (fastboot_devinfo.type) {
 #if defined(CONFIG_FASTBOOT_STORAGE_SATA)
 	case DEV_SATA:
-		process_flash_sata(cmdbuf);
+		process_flash_mmc(cmdbuf);
 		break;
 #endif
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
@@ -2904,13 +2852,15 @@ static char *get_serial(void)
 #endif
 
 static int get_block_size(void) {
-	int mmc_no = 0;
+	int dev_no = 0;
 	struct blk_desc *dev_desc;
-	mmc_no = fastboot_devinfo.dev_id;
-	dev_desc = blk_get_dev("mmc", mmc_no);
+
+	dev_no = fastboot_devinfo.dev_id;
+	dev_desc = blk_get_dev(fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc", dev_no);
 	if (NULL == dev_desc) {
-		printf("** Block device MMC %d not supported\n",
-			mmc_no);
+		printf("** Block device %s %d not supported\n",
+		       fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc",
+		       dev_no);
 		return 0;
 	}
 	return dev_desc->blksz;
