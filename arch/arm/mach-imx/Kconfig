@@ -120,7 +120,7 @@ config FLASH_MCUFIRMWARE_SUPPORT
 
 config IMX_TRUSTY_OS
 	bool "Support Trusty OS related feature"
-	depends on ARCH_MX6 || ARCH_MX7
+	depends on ARCH_MX6 || ARCH_MX7 || ARCH_IMX8 || ARCH_IMX8M
 	select SYS_ARM_CACHE_WRITEALLOC
 
 config SYS_ARM_CACHE_WRITEALLOC

@@ -46,60 +46,9 @@
 #define RESULT_ERROR -1
 #define RESULT_OK     0
 
-#if !defined(CONFIG_FSL_CAAM_KB) || !defined(CONFIG_ANDROID_AB_SUPPORT)
-/* ARM64 won't avbkey and rollback index in this stage directly. */
-/* For legacy imx6/7, we won't enable A/B due to the limitation of
- * storage capacity, but we still want to verify the boot/recovery
- * with AVB. In this case, we won't check and store the rollback
- * index. */
-int avbkey_init(uint8_t *plainkey, uint32_t keylen) {
-	return 0;
-}
-
-int rbkidx_erase(void) {
-	return 0;
-}
-
-/*
- * In no security enhanced ARM64, we cannot protect public key.
- * So that we choose to trust the key from vbmeta image
- */
-AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
-					   const uint8_t* public_key_data,
-					   size_t public_key_length,
-					   const uint8_t* public_key_metadata,
-					   size_t public_key_metadata_length,
-					   bool* out_is_trusted) {
-	*out_is_trusted = true;
-	return AVB_IO_RESULT_OK;
-}
-
-/* In no security enhanced ARM64, rollback index has no protection so no use it */
-AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot,
-				     uint64_t rollback_index) {
-	return AVB_IO_RESULT_OK;
-
-}
-AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot,
-				    uint64_t* out_rollback_index) {
-	*out_rollback_index = 0;
-	return AVB_IO_RESULT_OK;
-}
-#else /* CONFIG_FSL_CAAM_KB */
-static int mmc_dev_no = -1;
-
-static struct mmc *get_mmc(void) {
-	extern int mmc_get_env_devno(void);
-	struct mmc *mmc;
-	if (mmc_dev_no < 0 && (mmc_dev_no = mmc_get_env_dev()) < 0)
-		return NULL;
-	mmc = find_mmc_device(mmc_dev_no);
-	if (!mmc || mmc_init(mmc))
-		return NULL;
-	return mmc;
-}
 
 #ifndef CONFIG_SPL_BUILD
+#if defined(CONFIG_AVB_ATX) && !defined(CONFIG_ARM64)
 static int fsl_fuse_ops(uint32_t *buffer, uint32_t length, uint32_t offset,
 			const uint8_t read) {
 
@@ -166,8 +115,9 @@ static int fsl_fuse_write(const uint32_t *buffer, uint32_t length, uint32_t offs
 		0
 		);
 }
+#endif /* defined(CONFIG_AVB_ATX) && !defined(CONFIG_ARM64) */
 
-#if defined(AVB_RPMB) && defined(CONFIG_AVB_ATX)
+#if defined(CONFIG_AVB_ATX)
 static int sha256(unsigned char* data, int len, unsigned char* output) {
 	struct hash_algo *algo;
 	void *buf;
@@ -214,6 +164,10 @@ calc_sha256:
 }
 
 static int init_permanent_attributes_fuse(void) {
+
+#ifdef CONFIG_ARM64
+       return RESULT_OK;
+#else
 	uint8_t sha256_hash[AVB_SHA256_DIGEST_SIZE];
 	uint32_t buffer[ATX_FUSE_BANK_NUM];
 	int num = 0;
@@ -247,6 +201,7 @@ static int init_permanent_attributes_fuse(void) {
 	}
 
 	return RESULT_OK;
+#endif /* CONFIG_ARM64 */
 }
 #endif
 
@@ -258,8 +213,8 @@ int avb_atx_fuse_perm_attr(uint8_t *staged_buffer, uint32_t size) {
 		return -1;
 	}
 	if (size != sizeof(AvbAtxPermanentAttributes)) {
-		ERR("Error. expect perm_attr length %d, but get %d.\n",
-		sizeof(AvbAtxPermanentAttributes), size);
+		ERR("Error. expect perm_attr length %u, but get %u.\n",
+		(uint32_t)sizeof(AvbAtxPermanentAttributes), size);
 		return -1;
 	}
 #ifdef CONFIG_IMX_TRUSTY_OS
@@ -279,14 +234,133 @@ int avb_atx_fuse_perm_attr(uint8_t *staged_buffer, uint32_t size) {
 	return 0;
 #endif
 }
+
+/* Reads permanent |attributes| data. There are no restrictions on where this
+ * data is stored. On success, returns AVB_IO_RESULT_OK and populates
+ * |attributes|.
+ */
+AvbIOResult fsl_read_permanent_attributes(
+    AvbAtxOps* atx_ops, AvbAtxPermanentAttributes* attributes) {
+#ifdef CONFIG_IMX_TRUSTY_OS
+	if (!trusty_read_permanent_attributes((uint8_t *)attributes,
+			sizeof(AvbAtxPermanentAttributes))) {
+		return AVB_IO_RESULT_OK;
+	}
+	ERR("No perm-attr fused. Will use hard code one.\n");
+#endif /* CONFIG_IMX_TRUSTY_OS */
+
+	/* use hard code permanent attributes due to limited fuse and RPMB */
+	attributes->version = fsl_version;
+	memcpy(attributes->product_root_public_key, fsl_product_root_public_key,
+	       sizeof(fsl_product_root_public_key));
+	memcpy(attributes->product_id, fsl_atx_product_id,
+	       sizeof(fsl_atx_product_id));
+
+	return AVB_IO_RESULT_OK;
+}
+
+/* Reads a |hash| of permanent attributes. This hash MUST be retrieved from a
+ * permanently read-only location (e.g. fuses) when a device is LOCKED. On
+ * success, returned AVB_IO_RESULT_OK and populates |hash|.
+ */
+AvbIOResult fsl_read_permanent_attributes_hash(
+    AvbAtxOps* atx_ops, uint8_t hash[AVB_SHA256_DIGEST_SIZE]) {
+#ifdef CONFIG_ARM64
+	/* calculate sha256(permanent attributes) */
+	if (permanent_attributes_sha256_hash(hash) != RESULT_OK) {
+		return AVB_IO_RESULT_ERROR_IO;
+	} else {
+	    return AVB_IO_RESULT_OK;
+	}
+#else
+	uint8_t sha256_hash_buf[AVB_SHA256_DIGEST_SIZE];
+	uint32_t sha256_hash_fuse[ATX_FUSE_BANK_NUM];
+
+	/* read first 112 bits of sha256(permanent attributes) from fuse */
+	if (fsl_fuse_read(sha256_hash_fuse, ATX_FUSE_BANK_NUM,
+			  PERMANENT_ATTRIBUTE_HASH_OFFSET)) {
+		printf("ERROR - read permanent attributes hash from "
+		       "fuse error\n");
+		return AVB_IO_RESULT_ERROR_IO;
+	}
+	/* only take the lower 2 bytes of last bank */
+	sha256_hash_fuse[ATX_FUSE_BANK_NUM - 1] &= ATX_FUSE_BANK_MASK;
+
+	/* calculate sha256(permanent attributes) */
+	if (permanent_attributes_sha256_hash(sha256_hash_buf) != RESULT_OK) {
+		return AVB_IO_RESULT_ERROR_IO;
+	}
+	/* check if the sha256(permanent attributes) hash match the calculated one,
+	 * if not match, just return all zeros hash.
+	 */
+	if (memcmp(sha256_hash_fuse, sha256_hash_buf, ATX_HASH_LENGTH)) {
+		printf("ERROR - sha256(permanent attributes) does not match\n");
+		memset(hash, 0, AVB_SHA256_DIGEST_SIZE);
+	} else {
+		memcpy(hash, sha256_hash_buf, AVB_SHA256_DIGEST_SIZE);
+	}
+
+	return AVB_IO_RESULT_OK;
+#endif /* CONFIG_ARM64 */
+}
+
 #endif /* CONFIG_AVB_ATX */
 #endif /* CONFIG_SPL_BUILD */
+
+#ifndef CONFIG_FSL_CAAM_KB
+/* ARM64 won't avbkey and rollback index in this stage directly. */
+int avbkey_init(uint8_t *plainkey, uint32_t keylen) {
+	return 0;
+}
+
+int rbkidx_erase(void) {
+	return 0;
+}
+
+/*
+ * In no security enhanced ARM64, we cannot protect public key.
+ * So that we choose to trust the key from vbmeta image
+ */
+AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
+					   const uint8_t* public_key_data,
+					   size_t public_key_length,
+					   const uint8_t* public_key_metadata,
+					   size_t public_key_metadata_length,
+					   bool* out_is_trusted) {
+	*out_is_trusted = true;
+	return AVB_IO_RESULT_OK;
+}
+
+/* In no security enhanced ARM64, rollback index has no protection so no use it */
+AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot,
+				     uint64_t rollback_index) {
+	return AVB_IO_RESULT_OK;
+
+}
+AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot,
+				    uint64_t* out_rollback_index) {
+	*out_rollback_index = 0;
+	return AVB_IO_RESULT_OK;
+}
+#else /* CONFIG_FSL_CAAM_KB */
+static int mmc_dev_no = -1;
+
+struct mmc *get_mmc(void) {
+	extern int mmc_get_env_devno(void);
+	struct mmc *mmc;
+	if (mmc_dev_no < 0 && (mmc_dev_no = mmc_get_env_dev()) < 0)
+		return NULL;
+	mmc = find_mmc_device(mmc_dev_no);
+	if (!mmc || mmc_init(mmc))
+		return NULL;
+	return mmc;
+}
 
 #ifdef AVB_RPMB
 int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset);
 int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset);
 
-#ifndef CONFIG_IMX_TRUSTY_OS
+#if defined(CONFIG_IMX_TRUSTY_OS) || defined(CONFIG_SPL_BUILD)
 int rpmb_init(void) {
 #if !defined(CONFIG_SPL_BUILD) || !defined(CONFIG_DUAL_BOOTLOADER)
 	int i;
@@ -1244,67 +1318,7 @@ fail:
 #endif /* CONFIG_SPL_BUILD */
 #endif /* CONFIG_FSL_CAAM_KB */
 
-#if defined(AVB_RPMB) && defined(CONFIG_AVB_ATX)
-/* Reads permanent |attributes| data. There are no restrictions on where this
- * data is stored. On success, returns AVB_IO_RESULT_OK and populates
- * |attributes|.
- */
-AvbIOResult fsl_read_permanent_attributes(
-    AvbAtxOps* atx_ops, AvbAtxPermanentAttributes* attributes) {
-#ifdef CONFIG_IMX_TRUSTY_OS
-	if (!trusty_read_permanent_attributes((uint8_t *)attributes,
-			sizeof(AvbAtxPermanentAttributes))) {
-		return AVB_IO_RESULT_OK;
-	}
-	ERR("No perm-attr fused. Will use hard code one.\n");
-#endif /* CONFIG_IMX_TRUSTY_OS */
-
-	/* use hard code permanent attributes due to limited fuse and RPMB */
-	attributes->version = fsl_version;
-	memcpy(attributes->product_root_public_key, fsl_product_root_public_key,
-	       sizeof(fsl_product_root_public_key));
-	memcpy(attributes->product_id, fsl_atx_product_id,
-	       sizeof(fsl_atx_product_id));
-
-	return AVB_IO_RESULT_OK;
-}
-
-/* Reads a |hash| of permanent attributes. This hash MUST be retrieved from a
- * permanently read-only location (e.g. fuses) when a device is LOCKED. On
- * success, returned AVB_IO_RESULT_OK and populates |hash|.
- */
-AvbIOResult fsl_read_permanent_attributes_hash(
-    AvbAtxOps* atx_ops, uint8_t hash[AVB_SHA256_DIGEST_SIZE]) {
-	uint8_t sha256_hash_buf[AVB_SHA256_DIGEST_SIZE];
-	uint32_t sha256_hash_fuse[ATX_FUSE_BANK_NUM];
-
-	/* read first 112 bits of sha256(permanent attributes) from fuse */
-	if (fsl_fuse_read(sha256_hash_fuse, ATX_FUSE_BANK_NUM,
-			  PERMANENT_ATTRIBUTE_HASH_OFFSET)) {
-		printf("ERROR - read permanent attributes hash from "
-		       "fuse error\n");
-		return AVB_IO_RESULT_ERROR_IO;
-	}
-	/* only take the lower 2 bytes of last bank */
-	sha256_hash_fuse[ATX_FUSE_BANK_NUM - 1] &= ATX_FUSE_BANK_MASK;
-
-	/* calculate sha256(permanent attributes) */
-	if (permanent_attributes_sha256_hash(sha256_hash_buf) != RESULT_OK) {
-		return AVB_IO_RESULT_ERROR_IO;
-	}
-	/* check if the sha256(permanent attributes) hash match the calculated one,
-	 * if not match, just return all zeros hash.
-	 */
-	if (memcmp(sha256_hash_fuse, sha256_hash_buf, ATX_HASH_LENGTH)) {
-		printf("ERROR - sha256(permanent attributes) does not match\n");
-		memset(hash, 0, AVB_SHA256_DIGEST_SIZE);
-	} else {
-		memcpy(hash, sha256_hash_buf, AVB_SHA256_DIGEST_SIZE);
-	}
-
-	return AVB_IO_RESULT_OK;
-}
-
+#if defined(AVB_RPMB) && defined(CONFIG_AVB_ATX) && !defined(CONFIG_SPL_BUILD)
 /* Provides the key version of a key used during verification. This may be
  * useful for managing the minimum key version.
  */

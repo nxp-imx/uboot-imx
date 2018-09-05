@@ -55,7 +55,7 @@
 
 int fastboot_flash_find_index(const char *name);
 
-#ifdef CONFIG_IMX_TRUSTY_OS
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_ARM64)
 #define IVT_HEADER_MAGIC       0xD1
 #define IVT_HDR_LEN       0x20
 #define HAB_MAJ_VER       0x40
@@ -295,8 +295,10 @@ FbLockState fastboot_get_lock_stat(void) {
 	 * unlock status to make device been able
 	 * to flash Trusty OS binary.
 	 */
+#ifndef CONFIG_ARM64
 	if (!tos_flashed)
 		return FASTBOOT_UNLOCK;
+#endif
 	ret = trusty_read_lock_state(&l_status);
 	if (ret < 0)
 		return g_lockstat;
@@ -311,8 +313,10 @@ int fastboot_set_lock_stat(FbLockState lock) {
 	 * If Trusty OS not flashed, we must prevent set lock
 	 * status. Due the Trusty IPC won't work here.
 	 */
+#ifndef CONFIG_ARM64
 	if (!tos_flashed)
 		return 0;
+#endif
 	ret = trusty_write_lock_state(lock);
 	if (ret < 0) {
 		printf("cannot set lock status due Trusty return %d\n", ret);

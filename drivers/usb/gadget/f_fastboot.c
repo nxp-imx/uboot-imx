@@ -37,7 +37,6 @@
 extern int armv7_init_nonsec(void);
 extern void trusty_os_init(void);
 #include <trusty/libtipc.h>
-extern bool tos_flashed;
 #endif
 
 #ifdef CONFIG_FASTBOOT_FLASH_NAND_DEV
@@ -314,7 +313,7 @@ static char *fb_response_str;
 
 #define ANDROID_MBR_OFFSET	    0
 #define ANDROID_MBR_SIZE	    0x200
-#define ANDROID_BOOTLOADER_SIZE	    0x1FFC00
+#define ANDROID_BOOTLOADER_SIZE	    0x400000
 
 #define MMC_SATA_BLOCK_SIZE 512
 #define FASTBOOT_FBPARTS_ENV_MAX_LEN 1024
@@ -1387,12 +1386,14 @@ static int _fastboot_parts_load_from_ptable(void)
 	ptable[PTN_GPT_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
 	strcpy(ptable[PTN_GPT_INDEX].fstype, "raw");
 
+#ifndef CONFIG_ARM64
 	/* Trusty OS */
 	strcpy(ptable[PTN_TEE_INDEX].name, FASTBOOT_PARTITION_TEE);
 	ptable[PTN_TEE_INDEX].start = 0;
 	ptable[PTN_TEE_INDEX].length = TRUSTY_OS_MMC_BLKS;
 	ptable[PTN_TEE_INDEX].partition_id = TEE_HWPARTITION_ID;
 	strcpy(ptable[PTN_TEE_INDEX].fstype, "raw");
+#endif
 
 	/* Add m4_os partition if we support mcu firmware image flash */
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
@@ -1665,6 +1666,15 @@ static AvbOps fsl_avb_ops = {
 #endif
 
 #ifdef CONFIG_IMX_TRUSTY_OS
+#ifdef CONFIG_ARM64
+void tee_setup(void)
+{
+	trusty_ipc_init();
+}
+
+#else
+extern bool tos_flashed;
+
 void tee_setup(void)
 {
 	/* load tee from boot1 of eMMC. */
@@ -1722,7 +1732,8 @@ fail:
 	return;
 
 }
-#endif
+#endif /* CONFIG_ARM64 */
+#endif /* CONFIG_IMX_TRUSTY_OS */
 
 void fastboot_setup(void)
 {
@@ -1910,10 +1921,12 @@ void trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_resul
 	FbLockState lock_status = fastboot_get_lock_stat();
 
 	uint8_t permanent_attributes_hash[AVB_SHA256_DIGEST_SIZE];
+#ifdef CONFIG_AVB_ATX
 	if (fsl_read_permanent_attributes_hash(&fsl_avb_atx_ops, permanent_attributes_hash)) {
 		printf("ERROR - failed to read permanent attributes hash for keymaster\n");
 		memset(permanent_attributes_hash, 0, AVB_SHA256_DIGEST_SIZE);
 	}
+#endif
 
 	bool lock = (lock_status == FASTBOOT_LOCK)? true: false;
 	if (avb_result == AVB_AB_FLOW_RESULT_OK)
@@ -3311,6 +3324,7 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 	}
 #endif /* CONFIG_ANDROID_THINGS_SUPPORT */
 #ifdef CONFIG_IMX_TRUSTY_OS
+#if defined(CONFIG_AVB_ATX) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
 	else if (endswith(cmd, FASTBOOT_GET_CA_REQ)) {
 		uint8_t *ca_output;
 		uint32_t ca_length, cp_length;
@@ -3333,6 +3347,7 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 		} else
 			strcpy(response, "OKAY");
 	}
+#endif /* CONFIG_AVB_ATX || CONFIG_ANDROID_AUTO_SUPPORT */
 #endif /* CONFIG_IMX_TRUSTY_OS */
 	else if (endswith(cmd, "unlock_critical")) {
 		strcpy(response, "OKAY");
@@ -3377,7 +3392,7 @@ static int partition_table_valid(void)
 {
 	int status, mmc_no;
 	struct blk_desc *dev_desc;
-#ifdef CONFIG_IMX_TRUSTY_OS
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_ARM64)
 	//Prevent other partition accessing when no TOS flashed.
 	if (!tos_flashed)
 		return 0;

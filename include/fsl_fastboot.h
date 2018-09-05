@@ -83,10 +83,12 @@
 #define FASTBOOT_PARTITION_FBMISC "fbmisc"
 #endif
 
-#ifdef CONFIG_ANDROID_THINGS_SUPPORT
-#define FASTBOOT_BOOTLOADER_VBOOT_KEY "fuse at-bootloader-vboot-key"
+#if defined(CONFIG_AVB_ATX) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
 #define FASTBOOT_SET_CA_RESP "at-set-ca-response"
 #define FASTBOOT_GET_CA_REQ  "at-get-ca-request"
+#endif /* CONFIG_AVB_ATX || CONFIG_ANDROID_AUTO_SUPPORT */
+#ifdef CONFIG_ANDROID_THINGS_SUPPORT
+#define FASTBOOT_BOOTLOADER_VBOOT_KEY "fuse at-bootloader-vboot-key"
 #ifdef CONFIG_AVB_ATX
 #define FASTBOOT_AVB_AT_PERM_ATTR "fuse at-perm-attr"
 #endif /* CONFIG_AVB_ATX */
