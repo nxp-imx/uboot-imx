@@ -127,7 +127,7 @@
 	"fdt_addr=0x43000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
 	"boot_fdt=try\0" \
-	"fdt_file=fsl-imx8mm-evk.dtb\0" \
+	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
 	"initrd_addr=0x43800000\0"		\
 	"initrd_high=0xffffffffffffffff\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
@@ -244,7 +244,11 @@
 #define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
 
+#ifdef CONFIG_TARGET_IMX8MM_DDR4_EVK
+#define CONFIG_SYS_FSL_USDHC_NUM	1
+#else
 #define CONFIG_SYS_FSL_USDHC_NUM	2
+#endif
 #define CONFIG_SYS_FSL_ESDHC_ADDR       0
 
 #define CONFIG_SUPPORT_EMMC_BOOT	/* eMMC specific */
@@ -279,7 +283,8 @@
 #endif
 #endif
 
-#ifdef CONFIG_NAND_MXS
+#ifdef CONFIG_CMD_NAND
+#define CONFIG_NAND_MXS
 #define CONFIG_CMD_NAND_TRIMFFS
 
 /* NAND stuff */
@@ -292,7 +297,13 @@
 #define CONFIG_APBH_DMA
 #define CONFIG_APBH_DMA_BURST
 #define CONFIG_APBH_DMA_BURST8
+
+#ifdef CONFIG_CMD_UBI
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_MTD_DEVICE
 #endif
+#endif /* CONFIG_CMD_NAND */
+
 
 #define CONFIG_MXC_GPIO
 

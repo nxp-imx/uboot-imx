@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: GPL-2.0+
+ /*
+  * Copyright 2018 NXP
+  */
+
+#include "fsl-imx8mm-evk.dts"
+
+/ {
+	model = "FSL i.MX8MM DDR4 EVK board";
+};
+
+&usdhc3 {
+	status = "disabled";
+};
+
+&flexspi0{
+	status = "disabled";
+};

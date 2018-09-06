@@ -123,7 +123,6 @@ static iomux_v3_cfg_t const gpmi_pads[] = {
 static void setup_gpmi_nand(void)
 {
 	imx_iomux_v3_setup_multiple_pads(gpmi_pads, ARRAY_SIZE(gpmi_pads));
-	mxs_dma_init();
 }
 #endif
 
@@ -136,6 +135,10 @@ int board_early_init_f(void)
 	set_wdog_reset(wdog);
 
 	imx_iomux_v3_setup_multiple_pads(uart_pads, ARRAY_SIZE(uart_pads));
+
+#ifdef CONFIG_NAND_MXS
+	setup_gpmi_nand(); /* SPL will call the board_early_init_f */
+#endif
 
 	return 0;
 }
@@ -405,9 +408,6 @@ int board_init(void)
 	board_qspi_init();
 #endif
 
-#ifdef CONFIG_NAND_MXS
-	setup_gpmi_nand(); /* SPL will call the board_early_init_f */
-#endif
 	return 0;
 }
 

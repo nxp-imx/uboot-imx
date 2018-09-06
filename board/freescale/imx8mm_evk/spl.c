@@ -19,14 +19,22 @@
 #include <asm/mach-imx/mxc_i2c.h>
 #include <fsl_esdhc.h>
 #include <mmc.h>
+#ifdef CONFIG_IMX8M_LPDDR4
 #include <asm/arch/imx8m_ddr.h>
+#else
+#include "ddr/ddr.h"
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
 void spl_dram_init(void)
 {
+#ifdef CONFIG_IMX8M_LPDDR4
 	/* ddr train */
 	ddr_init(&lpddr4_timing);
+#else
+	ddr_init();
+#endif
 }
 
 #define I2C_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE)
@@ -180,6 +188,11 @@ int power_init_board(void)
 
 	/* increase VDD_DRAM to 0.9v for 3Ghz DDR */
 	pmic_reg_write(p, BD71837_BUCK5_VOLT, 0x2);
+
+#ifndef CONFIG_IMX8M_LPDDR4
+	/* increase NVCC_DRAM_1V2 to 1.2v for DDR4 */
+	pmic_reg_write(p, BD71837_BUCK8_VOLT, 0x28);
+#endif
 
 	/* lock the PMIC regs */
 	pmic_reg_write(p, BD71837_REGLOCK, 0x11);
