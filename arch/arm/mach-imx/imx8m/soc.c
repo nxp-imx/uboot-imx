@@ -181,9 +181,9 @@ u32 get_cpu_rev(void)
 				/* 0xff0055aa is magic number for B1 */
 				reg = CHIP_REV_2_1;
 			} else {
-				rom_version = readl((void __iomem *)ROM_VERSION_A0);
+				rom_version = readb((void __iomem *)ROM_VERSION_A0);
 				if (rom_version != CHIP_REV_1_0) {
-					rom_version = readl((void __iomem *)ROM_VERSION_B0);
+					rom_version = readb((void __iomem *)ROM_VERSION_B0);
 					if (rom_version == CHIP_REV_2_0)
 						reg = CHIP_REV_2_0;
 				}
