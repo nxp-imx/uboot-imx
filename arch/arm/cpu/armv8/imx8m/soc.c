@@ -237,9 +237,9 @@ u32 get_cpu_rev(void)
 				reg = 0x21;
 			} else {
 				uint32_t rom_version;
-				rom_version = readl((void __iomem *)0x800);
+				rom_version = readb((void __iomem *)0x800);
 				if (rom_version != 0x10) {
-					rom_version = readl((void __iomem *)0x83c);
+					rom_version = readb((void __iomem *)0x83c);
 					if (rom_version == 0x20)
 						reg = 0x20;
 				}
