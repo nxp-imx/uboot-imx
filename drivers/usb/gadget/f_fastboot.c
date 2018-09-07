@@ -124,6 +124,8 @@ struct fastboot_device_info fastboot_firmwareinfo;
 #define FDT_PART_NAME "dtbo"
 #endif
 
+#define MEK_8QM_EMMC 0
+
 /*
  * EP_BUFFER_SIZE must always be an integral multiple of maxpacket size
  * (64 or 512 or 1024), else we break on certain controllers like DWC3
@@ -796,6 +798,15 @@ static ulong bootloader_mmc_offset(void)
 {
 	if (is_imx8m() || (is_imx8() && is_soc_rev(CHIP_REV_A)))
 		return 0x8400;
+	else if (is_imx8qm()) {
+		int dev_no = mmc_get_env_dev();
+		if (MEK_8QM_EMMC == dev_no)
+		/* target device is eMMC boot0 partition, bootloader offset is 0x0 */
+			return 0x0;
+		else
+		/* target device is SD card, bootloader offset is 0x8000 */
+			return 0x8000;
+	}
 	else if (is_imx8())
 		return 0x8000;
 	else
