@@ -10,6 +10,8 @@
 #include <linux/sizes.h>
 #include <asm/arch/imx-regs.h>
 
+#include "imx_env.h"
+
 #define CONFIG_REMAKE_ELF
 
 #define CONFIG_BOARD_EARLY_INIT_F
@@ -102,33 +104,28 @@
 	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
 
 #ifdef CONFIG_NAND_BOOT
-#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:128m(boot),32m(kernel),16m(dtb),8m(misc),-(rootfs) "
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:128m(nandboot),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs) "
 #else
 #define MFG_NAND_PARTITION ""
 #endif
 
 #define CONFIG_MFG_ENV_SETTINGS \
-	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
-		"rdinit=/linuxrc " \
-		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
-		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
-		"g_mass_storage.iSerialNumber=\"\" "\
-		MFG_NAND_PARTITION \
-		"clk_ignore_unused "\
-		"\0" \
+	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
+	"clk_ignore_unused "\
+	"\0" \
 	"initrd_addr=0x83100000\0" \
 	"initrd_high=0xffffffffffffffff\0" \
-	"bootcmd_mfg=run mfgtool_args;  if iminfo ${initrd_addr}; then "\
-					     "booti ${loadaddr} ${initrd_addr} ${fdt_addr};"\
-					"else fastboot 1; fi\0" \
+	"mtdparts=" MFG_NAND_PARTITION \
+	"\0"\
 
 /* Initial environment variables */
 #ifdef CONFIG_NAND_BOOT
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
 	"bootargs=console=ttyLP0,115200 ubi.mtd=5 "  \
-		"root=ubi0:rootfs rootfstype=ubifs "		     \
-		"mtdparts=gpmi-nand:128m(boot),32m(kernel),16m(dtb),8m(misc),-(rootfs)\0"\
+		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
+		MFG_NAND_PARTITION \
+		"\0"\
 	"console=ttyLP0,115200 earlycon=lpuart32,0x5a060000,115200\0" \
 	"fdt_addr=0x83000000\0"
 #else
