@@ -143,6 +143,23 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 		metrics.odt, metrics.sw);
 	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
 
+#if defined(CONFIG_ARCH_MX6) || defined(CONFIG_ARCH_MX7) || \
+	defined(CONFIG_ARCH_MX7ULP) || defined(CONFIG_ARCH_IMX8M)
+	char cause[18];
+
+	memset(cause, '\0', sizeof(cause));
+	get_reboot_reason(cause);
+	if (strstr(cause, "POR"))
+		sprintf(newbootargs," androidboot.bootreason=cold,powerkey");
+	else if (strstr(cause, "WDOG") || strstr(cause, "WDG"))
+		sprintf(newbootargs," androidboot.bootreason=watchdog");
+	else
+		sprintf(newbootargs," androidboot.bootreason=reboot");
+#else
+	sprintf(newbootargs," androidboot.bootreason=reboot");
+#endif
+	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+
 #ifdef CONFIG_AVB_SUPPORT
 	/* secondary cmdline added by avb */
 	char *bootargs_sec = env_get("bootargs_sec");

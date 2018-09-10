@@ -252,7 +252,12 @@ static char *get_reset_cause(char *ret)
 
 	srs = readl(reg_srs);
 	cause1 = readl(reg_ssrs);
+#ifndef CONFIG_ANDROID_BOOT_IMAGE
+	/* We will read the ssrs states later for android so we don't
+	 * clear the states here.
+	 */
 	writel(cause1, reg_ssrs);
+#endif
 
 	reset_cause = cause1;
 
@@ -291,6 +296,17 @@ static char *get_reset_cause(char *ret)
 	debug("[%X] SRS[%X] %X - ", cause1, srs, srs^cause1);
 	return ret;
 }
+
+#ifdef CONFIG_ANDROID_BOOT_IMAGE
+void get_reboot_reason(char *ret)
+{
+	u32 *reg_ssrs = (u32 *)(SRC_BASE_ADDR + 0x28);
+
+	get_reset_cause(ret);
+	/* clear the ssrs here, its state has been recorded in reset_cause */
+	writel(reset_cause, reg_ssrs);
+}
+#endif
 
 void arch_preboot_os(void)
 {
