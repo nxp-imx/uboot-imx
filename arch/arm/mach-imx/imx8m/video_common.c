@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 NXP
+ * Copyright 2018-2019 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -708,6 +708,11 @@ int imx8m_fb_init(struct fb_videomode const *mode,
 		    uint8_t disp, uint32_t pixfmt)
 {
 	debug("entering %s()\n", __func__);
+
+	if (is_imx8mql() && check_dcss_fused()) {
+		printf("dcss is diabled on i.MX8MQL\n");
+		return -EPERM;
+	}
 
 	if (disp > 1) {
 		debug("Invalid disp parameter %d for imxdcss_fb_init()\n",
