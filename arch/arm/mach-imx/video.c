@@ -12,7 +12,7 @@
 int board_video_skip(void)
 {
 	int i;
-	int ret;
+	int ret = 0;
 	char const *panel = env_get("panel");
 
 	if (!panel) {
@@ -68,7 +68,7 @@ int board_video_skip(void)
 		return -EINVAL;
 	}
 
-	return 0;
+	return ret;
 }
 
 #ifdef CONFIG_IMX_HDMI
