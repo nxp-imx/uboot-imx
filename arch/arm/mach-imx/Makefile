@@ -132,11 +132,12 @@ IMAGE_TYPE := imximage
 DEPFILE_EXISTS := 0
 endif
 
-MKIMAGEFLAGS_u-boot.imx = -n $(filter-out $(PLUGIN).bin $< $(PHONY),$^) \
+MKIMAGEFLAGS_u-boot.imx = -n $(filter-out $(PLUGIN).bin $(QSPI_HEADER) $< $(PHONY),$^) \
 	-T $(IMAGE_TYPE) -e $(CONFIG_SYS_TEXT_BASE)
 u-boot.imx: MKIMAGEOUTPUT = u-boot.imx.log
 
-QSPI_HEADER = board/freescale/common/qspi_header
+QSPI_HEADER_SOURCE = board/freescale/common/qspi_header
+QSPI_HEADER = qspi_header
 QSPI_HEADER_OFF = 1
 QSPI_UBOOT_OFF = 4
 ifeq ($(SOC),$(filter $(SOC),mx7))
@@ -144,7 +145,16 @@ QSPI_HEADER_OFF = 0
 QSPI_UBOOT_OFF = 1
 endif
 
-u-boot.imx: u-boot.bin u-boot.cfgout $(PLUGIN).bin FORCE
+ifeq ($(CONFIG_QSPI_BOOT),y)
+$(QSPI_HEADER): $(QSPI_HEADER_SOURCE) FORCE
+	@cp $< $@
+
+else
+$(QSPI_HEADER):
+
+endif
+
+u-boot.imx: u-boot.bin u-boot.cfgout $(PLUGIN).bin $(QSPI_HEADER) FORCE
 	$(call if_changed,mkimage)
 	$(BOARD_SIZE_CHECK)
 ifeq ($(CONFIG_QSPI_BOOT),y)
@@ -152,21 +162,32 @@ ifeq ($(CONFIG_QSPI_BOOT),y)
 		for(i=1;i<8;i+=2)printf " %s",substr(s,l-i,2);if(!(NR%4))printf "\n";}' \
 		$(QSPI_HEADER) > qspi.tmp
 	@xxd -r qspi.tmp qspi.bin
-	@dd if=u-boot.imx of=u-boot.tmp bs=1k seek=$(QSPI_UBOOT_OFF)
+	@dd if=$@ of=u-boot.tmp bs=1k seek=$(QSPI_UBOOT_OFF)
 	@dd if=qspi.bin of=u-boot.tmp bs=1k seek=$(QSPI_HEADER_OFF) conv=notrunc
-	@mv u-boot.tmp u-boot.imx
+	@mv u-boot.tmp $@
 	@rm qspi.tmp qspi.bin
-	@echo "Packed QSPI header with U-boot"
+	@echo "Packed QSPI header with $@"
 endif
 
 ifeq ($(CONFIG_OF_SEPARATE),y)
-MKIMAGEFLAGS_u-boot-dtb.imx = -n $(filter-out $(PLUGIN).bin $< $(PHONY),$^) \
+MKIMAGEFLAGS_u-boot-dtb.imx = -n $(filter-out $(PLUGIN).bin $(QSPI_HEADER) $< $(PHONY),$^) \
 	-T $(IMAGE_TYPE) -e $(CONFIG_SYS_TEXT_BASE)
 u-boot-dtb.imx: MKIMAGEOUTPUT = u-boot-dtb.imx.log
 
-u-boot-dtb.imx: u-boot-dtb.bin u-boot-dtb.cfgout $(PLUGIN).bin FORCE
+u-boot-dtb.imx: u-boot-dtb.bin u-boot-dtb.cfgout $(PLUGIN).bin $(QSPI_HEADER) FORCE
 ifeq ($(DEPFILE_EXISTS),0)
 	$(call if_changed,mkimage)
+ifeq ($(CONFIG_QSPI_BOOT),y)
+	@awk '{s="0000000"$$1;l=length(s);if(!((NR-1)%4))printf "%08x ",(NR-1)*4; \
+		for(i=1;i<8;i+=2)printf " %s",substr(s,l-i,2);if(!(NR%4))printf "\n";}' \
+		$(QSPI_HEADER) > qspi.tmp
+	@xxd -r qspi.tmp qspi.bin
+	@dd if=$@ of=u-boot.tmp bs=1k seek=$(QSPI_UBOOT_OFF)
+	@dd if=qspi.bin of=u-boot.tmp bs=1k seek=$(QSPI_HEADER_OFF) conv=notrunc
+	@mv u-boot.tmp $@
+	@rm qspi.tmp qspi.bin
+	@echo "Packed QSPI header with $@"
+endif
 endif
 endif
 
