@@ -156,6 +156,25 @@ void enable_caches(void)
 	dcache_enable();
 }
 
+static u32 get_cpu_variant_type(u32 type)
+{
+	if (type == MXC_CPU_IMX8MQ) {
+		struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+		struct fuse_bank *bank = &ocotp->bank[1];
+		struct fuse_bank1_regs *fuse =
+			(struct fuse_bank1_regs *)bank->fuse_regs;
+
+		u32 value = readl(&fuse->tester4);
+
+		if ((value & 0x3) == 0x2)
+			return MXC_CPU_IMX8MD;
+		else if (value & 0x200000)
+			return MXC_CPU_IMX8MQL;
+	}
+
+	return type;
+}
+
 u32 get_cpu_rev(void)
 {
 	struct anamix_pll *ana_pll = (struct anamix_pll *)ANATOP_BASE_ADDR;
@@ -168,7 +187,7 @@ u32 get_cpu_rev(void)
 
 	/* iMX8MM */
 	 if (major_low == 0x41) {
-		return ((type + 1) << 12) | reg;
+		return (MXC_CPU_IMX8MM << 12) | reg;
 	} else {
 		/* iMX8MQ */
 		if (reg == CHIP_REV_1_0) {
@@ -189,6 +208,8 @@ u32 get_cpu_rev(void)
 				}
 			}
 		}
+
+		type = get_cpu_variant_type(type);
 
 		return (type << 12) | reg;
 	}
