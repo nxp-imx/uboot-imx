@@ -31,7 +31,7 @@
 #define LOCAL_LOG 0
 
 static struct trusty_ipc_chan km_chan;
-static bool initialized;
+static bool initialized = false;
 static int trusty_km_version = 2;
 static const size_t kMaxCaRequestSize = 10000;
 static const size_t kMaxSendSize = 4000;
@@ -321,6 +321,10 @@ int trusty_set_boot_params(uint32_t os_version, uint32_t os_patchlevel,
                            const uint8_t *verified_boot_hash,
                            uint32_t verified_boot_hash_size)
 {
+    if (!initialized) {
+	trusty_error("Keymaster TIPC client not initialized!\n");
+	return -1;
+    }
     struct km_boot_params params = {
         .os_version = os_version,
         .os_patchlevel = os_patchlevel,
