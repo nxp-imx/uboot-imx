@@ -1357,7 +1357,7 @@ static int get_owned_memreg(sc_rm_mr_t mr, sc_faddr_t *addr_start, sc_faddr_t *a
 phys_size_t get_effective_memsize(void)
 {
 	sc_rm_mr_t mr;
-	sc_faddr_t start, end;
+	sc_faddr_t start, end, start_aligned;
 	int err;
 
 	if (IS_ENABLED(CONFIG_XEN))
@@ -1366,8 +1366,8 @@ phys_size_t get_effective_memsize(void)
 	for (mr = 0; mr < 64; mr++) {
 		err = get_owned_memreg(mr, &start, &end);
 		if (!err) {
-			start = roundup(start, MEMSTART_ALIGNMENT);
-			if (start > end) /* Too small memory region, not use it */
+			start_aligned = roundup(start, MEMSTART_ALIGNMENT);
+			if (start_aligned > end) /* Too small memory region, not use it */
 				continue;
 
 			/* Find the memory region runs the u-boot */
