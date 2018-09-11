@@ -459,6 +459,15 @@ struct gpc_reg {
 	u32 slt19_cfg_pu;
 };
 
+struct pgc_reg {
+	u32 pgcr;
+	u32 pgpupscr;
+	u32 pgpdnscr;
+	u32 pgsr;
+	u32 pgauxsw;
+	u32 pgdr;
+};
+
 #define WDOG_WDT_MASK	BIT(3)
 #define WDOG_WDZST_MASK	BIT(0)
 struct wdog_regs {
