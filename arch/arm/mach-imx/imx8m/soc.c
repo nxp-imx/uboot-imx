@@ -292,6 +292,17 @@ int arch_cpu_init(void)
 	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
 		clock_init();
 		imx_set_wdog_powerdown(false);
+
+		if (is_imx8md()) {
+			/* Power down cpu core 2 and 3 for iMX8MD */
+			struct pgc_reg *pgc_core2 = (struct pgc_reg *)(GPC_BASE_ADDR + 0x880);
+			struct pgc_reg *pgc_core3 = (struct pgc_reg *)(GPC_BASE_ADDR + 0x8C0);
+			struct gpc_reg *gpc = (struct gpc_reg *)GPC_BASE_ADDR;
+
+			writel(0x1, &pgc_core2->pgcr);
+			writel(0x1, &pgc_core3->pgcr);
+			writel(0xC, &gpc->cpu_pgc_dn_trg);
+		}
 	}
 
 #ifdef CONFIG_IMX_SEC_INIT
