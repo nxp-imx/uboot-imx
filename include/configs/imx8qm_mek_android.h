@@ -62,7 +62,7 @@
 	"fdt_high=0xffffffffffffffff\0"	  \
 	"initrd_high=0xffffffffffffffff\0" \
 
-#define CONFIG_FASTBOOT_BUF_ADDR   CONFIG_SYS_LOAD_ADDR
+#define CONFIG_FASTBOOT_BUF_ADDR   0x98000000
 #define CONFIG_FASTBOOT_BUF_SIZE   0x19000000
 
 #define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
