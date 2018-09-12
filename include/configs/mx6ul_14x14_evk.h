@@ -199,7 +199,7 @@
 				"if test $board_name = EVK && test $board_rev = 9X9; then " \
 					"setenv tee_file uTee-6ul9x9; fi; " \
 				"if test $board_name = EVK && test $board_rev = 14X14; then " \
-					"setenv tee_file uTee-6ul; fi; " \
+					"setenv tee_file uTee-6ulevk; fi; " \
 				"if test $fdt_file = undefined; then " \
 					"echo WARNING: Could not determine tee to use; fi; " \
 			"fi;\0" \

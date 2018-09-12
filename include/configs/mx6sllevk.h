@@ -56,7 +56,7 @@
 	"fdt_file=undefined\0" \
 	"fdt_addr=0x83000000\0" \
 	"tee_addr=0x84000000\0" \
-	"tee_file=undefined\0" \
+	"tee_file=uTee-6sllevk\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
