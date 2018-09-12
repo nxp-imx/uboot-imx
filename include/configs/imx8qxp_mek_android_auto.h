@@ -13,6 +13,10 @@
 #define CONFIG_CMD_READ
 #define CONFIG_USB_GADGET_VBUS_DRAW	2
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+#define NS_ARCH_ARM64 1
+#endif
+
 /* USB OTG controller configs */
 #ifdef CONFIG_USB_EHCI_HCD
 #ifndef CONFIG_MXC_USB_PORTSC
