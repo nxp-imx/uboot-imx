@@ -413,6 +413,7 @@ void pci_init_board(void)
 
 #ifdef CONFIG_USB
 
+#ifdef CONFIG_USB_TCPC
 #define USB_TYPEC_SEL IMX_GPIO_NR(5, 9)
 static iomux_cfg_t ss_mux_gpio[] = {
 	SC_P_ENET0_REFCLK_125M_25M | MUX_MODE_ALT(4) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
@@ -458,6 +459,7 @@ static void setup_typec(void)
 
 	tcpc_init(&port, port_config, &ss_mux_select);
 }
+#endif
 
 static struct cdns3_device cdns3_device_data = {
 	.none_core_base = 0x5B110000,
@@ -481,7 +483,9 @@ int board_usb_init(int index, enum usb_init_type init)
 
 	if (index == 1) {
 		if (init == USB_INIT_HOST) {
+#ifdef CONFIG_USB_TCPC
 			ret = tcpc_setup_dfp_mode(&port);
+#endif
 		} else {
 			struct power_domain pd;
 			int ret;
@@ -498,9 +502,10 @@ int board_usb_init(int index, enum usb_init_type init)
 				if (ret)
 					printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
 			}
-
+#ifdef CONFIG_USB_TCPC
 			ret = tcpc_setup_ufp_mode(&port);
 			printf("%d setufp mode %d\n", index, ret);
+#endif
 
 			ret = cdns3_uboot_init(&cdns3_device_data);
 			printf("%d cdns3_uboot_initmode %d\n", index, ret);
@@ -517,7 +522,9 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 
 	if (index == 1) {
 		if (init == USB_INIT_HOST) {
+#ifdef CONFIG_USB_TCPC
 			ret = tcpc_disable_src_vbus(&port);
+#endif
 		} else {
 			struct power_domain pd;
 			int ret;
@@ -553,7 +560,7 @@ int board_init(void)
 	setup_fec(CONFIG_FEC_ENET_DEV);
 #endif
 
-#ifdef CONFIG_USB
+#if defined(CONFIG_USB) && defined(CONFIG_USB_TCPC)
 	setup_typec();
 #endif
 
