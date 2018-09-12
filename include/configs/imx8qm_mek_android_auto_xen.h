@@ -13,13 +13,13 @@
 #undef PHYS_SDRAM_1_SIZE
 #undef PHYS_SDRAM_2_SIZE
 
-#define CFG_SYS_SDRAM_BASE		0x40000000
+#define CFG_SYS_SDRAM_BASE		0x80000000
 #define PHYS_SDRAM_1			0x80000000
 #define PHYS_SDRAM_2			0x200000000
 #define PHYS_SDRAM_1_SIZE		0x40000000	/* 2 GB */
 #define PHYS_SDRAM_2_SIZE		0x60000000	/* 1536 MB */
 
 /* This needs to be stay same in iomem in domu.cfg */
-#define SC_IPC_CH			0x15d1d0000
+#define SC_IPC_CH			0x5d1d0000
 
 #endif /* IMX8QM_MEK_ANDROID_AUTO_XEN_H */
