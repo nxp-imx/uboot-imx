@@ -14,14 +14,7 @@
 
 #include "fsl-imx8qm-mek.dts"
 
-&usdhc1 {
-	/* Need to be same as iomem for sdhc1 in domu.cfg */
-	reg = <0x1 0x5b010000 0x0 0x10000>;
-};
-
 &usdhc2 {
-	/* Need to be same as iomem for sdhc2 in domu.cfg */
-	reg = <0x1 0x5b020000 0x0 0x10000>;
 	status = "disabled";
 };
 
