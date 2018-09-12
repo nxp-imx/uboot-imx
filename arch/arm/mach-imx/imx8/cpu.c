@@ -753,12 +753,12 @@ void enable_caches(void)
 	if (IS_ENABLED(CONFIG_XEN)) {
 		imx8_mem_map[0].virt = 0x00000000UL;
 		imx8_mem_map[0].phys = 0x00000000UL;
-		imx8_mem_map[0].size = 0x40000000UL;
+		imx8_mem_map[0].size = 0x80000000UL;
 		imx8_mem_map[0].attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
 				 PTE_BLOCK_NON_SHARE | PTE_BLOCK_PXN | PTE_BLOCK_UXN;
-		imx8_mem_map[1].virt = 0x40000000UL;
-		imx8_mem_map[1].phys = 0x40000000UL;
-		imx8_mem_map[1].size = 0xC0000000UL;
+		imx8_mem_map[1].virt = 0x80000000UL;
+		imx8_mem_map[1].phys = 0x80000000UL;
+		imx8_mem_map[1].size = 0x80000000UL;
 		imx8_mem_map[1].attrs = (PTE_BLOCK_MEMTYPE(MT_NORMAL) | PTE_BLOCK_OUTER_SHARE);
 
 		imx8_mem_map[2].virt = 0x100000000UL;
