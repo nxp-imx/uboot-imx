@@ -14,6 +14,13 @@
 
 #include "fsl-imx8qm-mek.dts"
 
+/ {
+	chosen {
+		bootargs = "console=hvc0 earlycon=hvc0 androidboot.console=hvc0 androidboot.xen_boot=xen androidboot.android_dt_dir=/proc/device-tree/passthrough/firmware/android/";
+		stdout-path = &lpuart0;
+	};
+};
+
 &usdhc2 {
 	status = "disabled";
 };
