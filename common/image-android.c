@@ -17,6 +17,7 @@
 #include <asm/arch/sys_proto.h>
 #include <fsl_fastboot.h>
 #include <asm/setup.h>
+#include <dm.h>
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 
@@ -77,6 +78,7 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 
 	char newbootargs[512] = {0};
 	char commandline[2048] = {0};
+	int offset;
 	char *bootargs = env_get("bootargs");
 
 	if (bootargs) {
@@ -86,13 +88,24 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 		}
 		else
 			strncpy(commandline, bootargs, sizeof(commandline) - 1);
-	} else if (*hdr->cmdline) {
-		if (strlen(hdr->cmdline) + 1 > sizeof(commandline)) {
-			printf("cmdline in bootimg is too long!\n");
-			return -1;
+	} else {
+		offset = fdt_path_offset(gd->fdt_blob, "/chosen");
+		if (offset > 0) {
+			bootargs = (char *)fdt_getprop(gd->fdt_blob, offset,
+							"bootargs", NULL);
+			if (bootargs)
+				sprintf(commandline, "%s ", bootargs);
 		}
-		else
-			strncpy(commandline, hdr->cmdline, strlen(commandline) - 1);
+
+		if (*hdr->cmdline) {
+			if (strlen(hdr->cmdline) + 1 >
+				sizeof(commandline) - strlen(commandline)) {
+				printf("cmdline in bootimg is too long!\n");
+				return -1;
+			}
+			else
+				strncat(commandline, hdr->cmdline, sizeof(commandline) - strlen(commandline));
+		}
 	}
 
 #ifdef CONFIG_SERIAL_TAG
