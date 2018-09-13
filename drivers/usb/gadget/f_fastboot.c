@@ -3238,7 +3238,7 @@ static void wipe_all_userdata(void)
 	set_fastboot_lock_disable();
 
 
-#if defined(CONFIG_AVB_SUPPORT) && !defined(CONFIG_IMX_TRUSTY_OS)
+#if defined(AVB_RPMB) && !defined(CONFIG_IMX_TRUSTY_OS)
 	printf("Start stored_rollback_index wipe process....\n");
 	rbkidx_erase();
 	printf("Wipe stored_rollback_index completed.\n");

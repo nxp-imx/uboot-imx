@@ -307,7 +307,7 @@ AvbIOResult fsl_read_permanent_attributes_hash(
 #endif /* CONFIG_AVB_ATX */
 #endif /* CONFIG_SPL_BUILD */
 
-#ifndef CONFIG_FSL_CAAM_KB
+#ifndef AVB_RPMB
 /* ARM64 won't avbkey and rollback index in this stage directly. */
 int avbkey_init(uint8_t *plainkey, uint32_t keylen) {
 	return 0;
@@ -342,7 +342,7 @@ AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot
 	*out_rollback_index = 0;
 	return AVB_IO_RESULT_OK;
 }
-#else /* CONFIG_FSL_CAAM_KB */
+#else /* AVB_RPMB */
 static int mmc_dev_no = -1;
 
 struct mmc *get_mmc(void) {
@@ -356,7 +356,6 @@ struct mmc *get_mmc(void) {
 	return mmc;
 }
 
-#ifdef AVB_RPMB
 int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset);
 int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset);
 
@@ -658,7 +657,6 @@ int init_avbkey(void) {
 	fill_secure_keyslot_package(&kp);
 	return RESULT_OK;
 }
-#endif /* AVB_RPMB */
 
 int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset) {
 
@@ -1316,7 +1314,8 @@ fail:
 #endif /* CONFIG_IMX_TRUSTY_OS */
 }
 #endif /* CONFIG_SPL_BUILD */
-#endif /* CONFIG_FSL_CAAM_KB */
+#endif /* AVB_RPMB */
+
 
 #if defined(AVB_RPMB) && defined(CONFIG_AVB_ATX) && !defined(CONFIG_SPL_BUILD)
 /* Provides the key version of a key used during verification. This may be
