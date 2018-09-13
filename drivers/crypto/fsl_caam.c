@@ -344,7 +344,12 @@ static void kick_trng(u32 ent_delay)
 	u32 val;
 
 	/* Put RNG in program mode */
-	setbits_le32(CAAM_RTMCTL, RTMCTL_PGM);
+	/* Setting both RTMCTL:PRGM and RTMCTL:TRNG_ACC causes TRNG to
+	 * properly invalidate the entropy in the entropy register and
+	 * force re-generation.
+	 */
+	setbits_le32(CAAM_RTMCTL, RTMCTL_PGM | RTMCTL_ACC);
+
 	/* Configure the RNG Entropy Delay
 	 * Performance-wise, it does not make sense to
 	 * set the delay to a value that is lower
@@ -358,7 +363,7 @@ static void kick_trng(u32 ent_delay)
 	val >>= BS_TRNG_ENT_DLY;
 	if (ent_delay < val) {
 		/* Put RNG4 into run mode */
-		clrbits_le32(CAAM_RTMCTL, RTMCTL_PGM);
+		clrbits_le32(CAAM_RTMCTL, RTMCTL_PGM | RTMCTL_ACC);
 		return;
 	}
 
@@ -390,7 +395,7 @@ static void kick_trng(u32 ent_delay)
 	val &= ~BM_TRNG_SAMP_MODE;
 	val |= TRNG_SAMP_MODE_RAW_ES_SC;
 	/* Put RNG4 into run mode */
-	val &= ~RTMCTL_PGM;
+	val &= ~(RTMCTL_PGM | RTMCTL_ACC);
 /*test with sample mode only */
 	__raw_writel(val, CAAM_RTMCTL);
 
