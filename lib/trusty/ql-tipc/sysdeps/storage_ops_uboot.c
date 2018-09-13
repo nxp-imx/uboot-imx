@@ -49,7 +49,15 @@ int rpmb_storage_send(void *rpmb_dev, const void *rel_write_data,
     ALLOC_CACHE_ALIGN_BUFFER(uint8_t, rpmb_read_data, read_size);
     int ret = TRUSTY_ERR_NONE;
     struct mmc *mmc = find_mmc_device(mmc_get_env_dev());
+    if (!mmc) {
+	trusty_error("failed to get mmc device.\n");
+	return -1;
+    }
     struct blk_desc *desc = mmc_get_blk_desc(mmc);
+    if (!desc) {
+	trusty_error("failed to get mmc desc.\n");
+	return -1;
+    }
     char original_part = desc->hwpart;
 
     /* Switch to RPMB partition */
