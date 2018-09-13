@@ -147,6 +147,7 @@
 #define RTMCTL_PGM       BIT(16)
 #define RTMCTL_ERR       BIT(12)
 #define RTMCTL_RST       BIT(6)
+#define RTMCTL_ACC       BIT(5)
 #define RDSTA_IF0        (1)
 #define RDSTA_IF1        (2)
 #define RDSTA_SKVN       BIT(30)
