@@ -146,7 +146,7 @@
 		"root=ubi0:rootfs rootfstype=ubifs "		     \
 		MFG_NAND_PARTITION \
 		"\0" \
-	"bootcmd=nand read ${loadaddr} 0x5000000 0x1400000;"\
+	"bootcmd=nand read ${loadaddr} 0x5000000 0x2000000;"\
 		"nand read ${fdt_addr} 0x7000000 0x100000;"\
 		"booti ${loadaddr} - ${fdt_addr}"
 

@@ -115,7 +115,7 @@
 	"\0" \
 	"initrd_addr=0x83100000\0" \
 	"initrd_high=0xffffffffffffffff\0" \
-	"mtdparts=" MFG_NAND_PARTITION \
+	MFG_NAND_PARTITION \
 	"\0"\
 
 /* Initial environment variables */
@@ -208,7 +208,7 @@
 
 #ifdef CONFIG_NAND_BOOT
 #define CONFIG_BOOTCOMMAND \
-	"nand read ${loadaddr} 0x8000000 0x1400000;"\
+	"nand read ${loadaddr} 0x8000000 0x2000000;"\
 	"nand read ${fdt_addr} 0xA000000 0x100000;"\
 	"booti ${loadaddr} - ${fdt_addr}"
 #else
