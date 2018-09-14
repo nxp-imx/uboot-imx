@@ -67,7 +67,7 @@
 	"fdt_file=imx7ulp-evk.dtb\0" \
 	"fdt_addr=0x63000000\0" \
 	"boot_fdt=try\0" \
-	"earlycon=lpuart32,0x402D0010\0" \
+	"earlycon=lpuart32,0x402D0000\0" \
 	"ip_dyn=yes\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
