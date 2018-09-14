@@ -16,7 +16,7 @@
 #define CONFIG_CSF_SIZE			0x2000 /* 8K region */
 #endif
 
-#define CONFIG_SPL_MAX_SIZE		(124 * 1024)
+#define CONFIG_SPL_MAX_SIZE		(148 * 1024)
 #define CONFIG_SYS_MONITOR_LEN		(512 * 1024)
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x300
@@ -36,11 +36,13 @@
 #define CONFIG_SPL_SERIAL_SUPPORT
 #define CONFIG_SPL_GPIO_SUPPORT
 #define CONFIG_SPL_BSS_START_ADDR      0x00910000
-#define CONFIG_SPL_BSS_MAX_SIZE        0x1000	/* 4 KB */
-#define CONFIG_SYS_SPL_MALLOC_START    0x00911000
-#define CONFIG_SYS_SPL_MALLOC_SIZE     0x3000	/* 12 KB */
+#define CONFIG_SPL_BSS_MAX_SIZE        0x2000	/* 8 KB */
+#define CONFIG_SYS_SPL_MALLOC_START    0x42200000
+#define CONFIG_SYS_SPL_MALLOC_SIZE     0x80000	/* 512 KB */
 #define CONFIG_SYS_ICACHE_OFF
 #define CONFIG_SYS_DCACHE_OFF
+
+#define CONFIG_MALLOC_F_ADDR		0x912000 /* malloc f used before GD_FLG_FULL_MALLOC_INIT set */
 
 #define CONFIG_SPL_ABORT_ON_RAW_IMAGE /* For RAW image gives a error info not panic */
 
@@ -58,6 +60,14 @@
 #define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
 
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+
+#if defined(CONFIG_NAND_BOOT)
+#define CONFIG_SPL_NAND_SUPPORT
+#define CONFIG_SPL_DMA_SUPPORT
+#define CONFIG_SPL_NAND_MXS
+#define CONFIG_SYS_NAND_U_BOOT_OFFS 	0x4000000 /* Put the FIT out of first 64MB boot area */
+#endif
+
 #endif
 
 #define CONFIG_CMD_READ
@@ -110,6 +120,10 @@
 	"jh_mmcboot=setenv fdt_file fsl-imx8mm-evk-root.dtb; setenv jh_clk clk_ignore_unused; run mmcboot\0 " \
 	"jh_netboot=setenv fdt_file fsl-imx8mm-evk-root.dtb; setenv jh_clk clk_ignore_unused; run netboot\0 "
 
+#ifdef CONFIG_NAND_BOOT
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs) "
+#endif
+
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x43800000\0" \
@@ -118,6 +132,22 @@
 	"sd_dev=0\0" \
 
 /* Initial environment variables */
+#if defined(CONFIG_NAND_BOOT)
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
+	"fdt_addr=0x43000000\0"			\
+	"fdt_high=0xffffffffffffffff\0" \
+	"mtdparts=" MFG_NAND_PARTITION "\0" \
+	"console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200\0" \
+	"bootargs=console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200 ubi.mtd=5 "  \
+		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
+		MFG_NAND_PARTITION \
+		"\0" \
+	"bootcmd=nand read ${loadaddr} 0x5000000 0x2000000;"\
+		"nand read ${fdt_addr} 0x7000000 0x100000;"\
+		"booti ${loadaddr} - ${fdt_addr}"
+
+#else
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
 	JAILHOUSE_ENV \
@@ -183,6 +213,7 @@
 			   "fi; " \
 		   "fi; " \
 	   "else booti ${loadaddr} - ${fdt_addr}; fi"
+#endif
 
 /* Link Definitions */
 #define CONFIG_LOADADDR			0x40480000
@@ -206,6 +237,8 @@
 #define CONFIG_ENV_SPI_CS		CONFIG_SF_DEFAULT_CS
 #define CONFIG_ENV_SPI_MODE		CONFIG_SF_DEFAULT_MODE
 #define CONFIG_ENV_SPI_MAX_HZ		CONFIG_SF_DEFAULT_SPEED
+#elif defined(CONFIG_ENV_IS_IN_NAND)
+#define CONFIG_ENV_OFFSET       (60 << 20)
 #endif
 #define CONFIG_ENV_SIZE			0x1000
 #define CONFIG_SYS_MMC_ENV_DEV		0   /* USDHC2 */
