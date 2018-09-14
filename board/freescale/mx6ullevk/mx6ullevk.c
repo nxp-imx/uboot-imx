@@ -395,6 +395,9 @@ int board_late_init(void)
 		env_set("board_rev", "9X9");
 	else
 		env_set("board_rev", "14X14");
+
+	if (is_cpu_type(MXC_CPU_MX6ULZ))
+		env_set("fdt_file", "imx6ulz-14x14-evk.dtb");
 #endif
 
 #ifdef CONFIG_ENV_IS_IN_MMC
@@ -410,6 +413,8 @@ int checkboard(void)
 {
 	if (is_mx6ull_9x9_evk())
 		puts("Board: MX6ULL 9x9 EVK\n");
+	else if (is_cpu_type(MXC_CPU_MX6ULZ))
+		puts("Board: MX6ULZ 14x14 EVK\n");
 	else
 		puts("Board: MX6ULL 14x14 EVK\n");
 
