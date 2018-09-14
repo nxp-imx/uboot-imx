@@ -115,8 +115,7 @@
 	"\0" \
 	"initrd_addr=0x83100000\0" \
 	"initrd_high=0xffffffffffffffff\0" \
-	MFG_NAND_PARTITION \
-	"\0"\
+	"mtdparts=mtdparts=gpmi-nand:128m(nandboot),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)\0"
 
 /* Initial environment variables */
 #ifdef CONFIG_NAND_BOOT
