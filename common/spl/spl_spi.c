@@ -50,6 +50,13 @@ static int spi_load_image_os(struct spl_image_info *spl_image,
 }
 #endif
 
+#ifdef CONFIG_SYS_SPI_U_BOOT_OFFS
+unsigned long  __weak spl_spi_get_uboot_raw_sector(struct spi_flash *flash)
+{
+	return CONFIG_SYS_SPI_U_BOOT_OFFS;
+}
+#endif
+
 static ulong spl_spi_fit_read(struct spl_load_info *load, ulong sector,
 			      ulong count, void *buf)
 {
@@ -71,7 +78,7 @@ static int spl_spi_load_image(struct spl_image_info *spl_image,
 			      struct spl_boot_device *bootdev)
 {
 	int err = 0;
-	unsigned payload_offs = CONFIG_SYS_SPI_U_BOOT_OFFS;
+	unsigned payload_offs = 0;
 	struct spi_flash *flash;
 	struct image_header *header;
 
@@ -87,6 +94,8 @@ static int spl_spi_load_image(struct spl_image_info *spl_image,
 		puts("SPI probe failed.\n");
 		return -ENODEV;
 	}
+
+	payload_offs = spl_spi_get_uboot_raw_sector(flash);
 
 	header = spl_get_load_buffer(-sizeof(*header), sizeof(*header));
 

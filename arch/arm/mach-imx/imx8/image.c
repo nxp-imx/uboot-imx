@@ -8,9 +8,13 @@
 #include <asm/io.h>
 #include <dm.h>
 #include <mmc.h>
+#include <spi_flash.h>
 #include <asm/arch/image.h>
 
-static int get_container_size(ulong addr)
+#define MMC_DEV		0
+#define QSPI_DEV	1
+
+static int __get_container_size(ulong addr)
 {
 	struct container_hdr *phdr;
 	struct boot_img_t *img_entry;
@@ -50,23 +54,58 @@ static int get_container_size(ulong addr)
 	return max_offset;
 }
 
-static int mmc_get_imageset_end(struct mmc *mmc)
+static int get_container_size(void *dev, int dev_type, unsigned long offset)
 {
-	int value_container[2];
-	unsigned long count;
 	uint8_t *buf = malloc(CONTAINER_HDR_ALIGNMENT);
+	unsigned long count = 0;
+	int ret = 0;
+
 	if (!buf) {
 		printf("Malloc buffer failed\n");
 		return -ENOMEM;
 	}
 
-	count = blk_dread(mmc_get_blk_desc(mmc), CONTAINER_HDR_MMCSD_OFFSET/mmc->read_bl_len, CONTAINER_HDR_ALIGNMENT/mmc->read_bl_len, buf);
-	if (count == 0) {
-		printf("Read container image from MMC/SD failed\n");
-		return -EIO;
+	if (dev_type == MMC_DEV) {
+		struct mmc *mmc = (struct mmc*)dev;
+		count = blk_dread(mmc_get_blk_desc(mmc), offset/mmc->read_bl_len,
+					CONTAINER_HDR_ALIGNMENT/mmc->read_bl_len, buf);
+		if (count == 0) {
+			printf("Read container image from MMC/SD failed\n");
+			return -EIO;
+		}
+#ifdef CONFIG_SPL_SPI_LOAD
+	} else if (dev_type == QSPI_DEV) {
+		struct spi_flash *flash = (struct spi_flash *)dev;
+		ret = spi_flash_read(flash, offset,
+					CONTAINER_HDR_ALIGNMENT, buf);
+		if (ret != 0) {
+			printf("Read container image from QSPI failed\n");
+			return -EIO;
+		}
+#endif
 	}
 
-	value_container[0] = get_container_size((ulong)buf);
+	ret = __get_container_size((ulong)buf);
+
+	free(buf);
+
+	return ret;
+}
+
+static int get_imageset_end(void *dev, int dev_type)
+{
+	unsigned long offset1 = 0, offset2 = 0;
+	int value_container[2];
+
+	if (dev_type == MMC_DEV) {
+		offset1 = CONTAINER_HDR_MMCSD_OFFSET;
+		offset2 = CONTAINER_HDR_ALIGNMENT + offset1;
+	} else if (dev_type == QSPI_DEV) {
+		offset1 = CONTAINER_HDR_QSPI_OFFSET;
+		offset2 = CONTAINER_HDR_ALIGNMENT + offset1;
+	}
+
+	value_container[0] = get_container_size(dev, dev_type, offset1);
 	if (value_container[0] < 0) {
 		printf("Parse seco container failed %d\n", value_container[0]);
 		return value_container[0];
@@ -74,30 +113,37 @@ static int mmc_get_imageset_end(struct mmc *mmc)
 
 	debug("seco container size 0x%x\n", value_container[0]);
 
-	count = blk_dread(mmc_get_blk_desc(mmc), (CONTAINER_HDR_ALIGNMENT + CONTAINER_HDR_MMCSD_OFFSET)/mmc->read_bl_len,
-		CONTAINER_HDR_ALIGNMENT/mmc->read_bl_len, buf);
-	if (count == 0) {
-		printf("Read container image from MMC/SD failed\n");
-		return -EIO;
-	}
-
-	value_container[1] = get_container_size((ulong)buf);
+	value_container[1] = get_container_size(dev, dev_type, offset2);
 	if (value_container[1] < 0) {
 		debug("Parse scu container image failed %d, only seco container\n", value_container[1]);
-		return value_container[0] + CONTAINER_HDR_MMCSD_OFFSET; /* return seco container total size */
+		return value_container[0] + offset1; /* return seco container total size */
 	}
 
 	debug("scu container size 0x%x\n", value_container[1]);
 
-	return value_container[1] + (CONTAINER_HDR_ALIGNMENT + CONTAINER_HDR_MMCSD_OFFSET);
+	return value_container[1] + offset2;
 }
+
+#ifdef CONFIG_SPL_SPI_LOAD
+unsigned long spl_spi_get_uboot_raw_sector(struct spi_flash *flash)
+{
+	int end;
+
+	end = get_imageset_end(flash, QSPI_DEV);
+	end = ROUND(end, SZ_1K);
+
+	printf("Load image from QSPI 0x%x\n", end);
+
+	return end;
+}
+#endif
 
 #ifdef CONFIG_SPL_MMC_SUPPORT
 unsigned long spl_mmc_get_uboot_raw_sector(struct mmc *mmc)
 {
 	int end;
 
-	end = mmc_get_imageset_end(mmc);
+	end = get_imageset_end(mmc, MMC_DEV);
 	end = ROUND(end, SZ_1K);
 
 	printf("Load image from MMC/SD 0x%x\n", end);
