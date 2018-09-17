@@ -8,6 +8,7 @@
 
 #define CONTAINER_HDR_ALIGNMENT 0x400
 #define CONTAINER_HDR_MMCSD_OFFSET SZ_32K
+#define CONTAINER_HDR_QSPI_OFFSET SZ_4K
 
  struct container_hdr{
 	 uint8_t version;
