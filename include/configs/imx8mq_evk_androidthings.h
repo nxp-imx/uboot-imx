@@ -92,4 +92,10 @@
 #define CONFIG_SPL_MAX_SIZE 176128
 #endif
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+#ifdef CONFIG_DUAL_BOOTLOADER
+#define ANDROID_SPL_SIZE 0x80000
+#endif
+#endif
+
 #endif /* IMX8MQ_EVK_ANDROID_THINGS_H */

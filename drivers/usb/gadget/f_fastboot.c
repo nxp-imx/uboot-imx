@@ -79,11 +79,15 @@ extern void trusty_os_init(void);
 #include "../arch/arm/include/asm/mach-imx/hab.h"
 #endif
 
-#define FASTBOOT_VERSION		"0.4"
-
 #ifdef CONFIG_FASTBOOT_LOCK
 #include "fastboot_lock_unlock.h"
 #endif
+
+#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_DUAL_BOOTLOADER)
+#include "u-boot/sha256.h"
+#endif
+
+#define FASTBOOT_VERSION		"0.4"
 
 #if defined(CONFIG_ANDROID_THINGS_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
 #define FASTBOOT_COMMON_VAR_NUM 14
@@ -1931,7 +1935,147 @@ static struct andr_img_hdr boothdr __aligned(ARCH_DMA_MINALIGN);
 #endif
 
 #ifdef CONFIG_IMX_TRUSTY_OS
-void trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_result) {
+#ifdef CONFIG_DUAL_BOOTLOADER
+static int sha256_concatenation(uint8_t *hash_buf, uint8_t *vbh, uint8_t *image_hash)
+{
+	if ((hash_buf == NULL) || (vbh == NULL) || (image_hash == NULL)) {
+		printf("sha256_concatenation: null buffer found!\n");
+		return -1;
+	}
+
+	memcpy(hash_buf, vbh, AVB_SHA256_DIGEST_SIZE);
+	memcpy(hash_buf + AVB_SHA256_DIGEST_SIZE,
+	       image_hash, AVB_SHA256_DIGEST_SIZE);
+	sha256_csum_wd((unsigned char *)hash_buf, 2 * AVB_SHA256_DIGEST_SIZE,
+		       (unsigned char *)vbh, CHUNKSZ_SHA256);
+
+	return 0;
+}
+
+/* Since we use fit format to organize the atf, tee, u-boot and u-boot dtb,
+ * so calculate the hash of fit is enough.
+ */
+static int vbh_bootloader(uint8_t *image_hash)
+{
+	char* slot_suffixes[2] = {"_a", "_b"};
+	char partition_name[20];
+	AvbABData ab_data;
+	uint8_t *image_buf = NULL;
+	uint32_t image_size;
+	size_t image_num_read;
+	int target_slot;
+	int ret = 0;
+
+	/* Load A/B metadata and decide which slot we are going to load */
+	if (fsl_avb_ab_ops.read_ab_metadata(&fsl_avb_ab_ops, &ab_data) !=
+					    AVB_IO_RESULT_OK) {
+		ret = -1;
+		goto fail ;
+	}
+	target_slot = get_curr_slot(&ab_data);
+	sprintf(partition_name, "bootloader%s", slot_suffixes[target_slot]);
+
+	/* Read image header to find the image size */
+	image_buf = (uint8_t *)malloc(MMC_SATA_BLOCK_SIZE);
+	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, partition_name,
+					    0, MMC_SATA_BLOCK_SIZE,
+					    image_buf, &image_num_read)) {
+		printf("bootloader image load error!\n");
+		ret = -1;
+		goto fail;
+	}
+	image_size = fdt_totalsize((struct image_header *)image_buf);
+	image_size = (image_size + 3) & ~3;
+	free(image_buf);
+
+	/* Load full fit image */
+	image_buf = (uint8_t *)malloc(image_size);
+	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, partition_name,
+					    0, image_size,
+					    image_buf, &image_num_read)) {
+		printf("bootloader image load error!\n");
+		ret = -1;
+		goto fail;
+	}
+	/* Calculate hash */
+	sha256_csum_wd((unsigned char *)image_buf, image_size,
+		       (unsigned char *)image_hash, CHUNKSZ_SHA256);
+
+fail:
+	if (image_buf != NULL)
+		free(image_buf);
+	return ret;
+}
+
+int vbh_calculate(uint8_t *vbh, AvbSlotVerifyData *avb_out_data)
+{
+	uint8_t image_hash[AVB_SHA256_DIGEST_SIZE];
+	uint8_t hash_buf[2 * AVB_SHA256_DIGEST_SIZE];
+	uint8_t* image_buf = NULL;
+	uint32_t image_size;
+	size_t image_num_read;
+	int ret = 0;
+
+	if (vbh == NULL)
+		return -1;
+
+	/* Initial VBH (VBH0) should be 32 bytes 0 */
+	memset(vbh, 0, AVB_SHA256_DIGEST_SIZE);
+	/* Load and calculate the sha256 hash of spl.bin */
+	image_size = (ANDROID_SPL_SIZE + MMC_SATA_BLOCK_SIZE -1) /
+		      MMC_SATA_BLOCK_SIZE;
+	image_buf = (uint8_t *)malloc(image_size);
+	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops,
+					    FASTBOOT_PARTITION_BOOTLOADER,
+					    0, image_size,
+					    image_buf, &image_num_read)) {
+		printf("spl image load error!\n");
+		ret = -1;
+		goto fail;
+	}
+	sha256_csum_wd((unsigned char *)image_buf, image_size,
+		       (unsigned char *)image_hash, CHUNKSZ_SHA256);
+	/* Calculate VBH1 */
+	if (sha256_concatenation(hash_buf, vbh, image_hash)) {
+		ret = -1;
+		goto fail;
+	}
+	free(image_buf);
+
+	/* Load and calculate hash of bootloader.img */
+	if (vbh_bootloader(image_hash)) {
+		ret = -1;
+		goto fail;
+	}
+	/* Calculate VBH2 */
+	if (sha256_concatenation(hash_buf, vbh, image_hash)) {
+		ret = -1;
+		goto fail;
+	}
+
+	/* Calculate the hash of vbmeta.img */
+	avb_slot_verify_data_calculate_vbmeta_digest(avb_out_data,
+						     AVB_DIGEST_TYPE_SHA256,
+						     image_hash);
+	/* Calculate VBH3 */
+	if (sha256_concatenation(hash_buf, vbh, image_hash)) {
+		ret = -1;
+		goto fail;
+	}
+
+fail:
+	if (image_buf != NULL)
+		free(image_buf);
+	return ret;
+}
+
+#endif
+int trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_result,
+			    AvbSlotVerifyData *avb_out_data) {
+#ifdef CONFIG_DUAL_BOOTLOADER
+	uint8_t vbh[AVB_SHA256_DIGEST_SIZE];
+#endif
+	int ret = 0;
 	u32 os_ver = hdr->os_version >> 11;
 	u32 os_ver_km = (((os_ver >> 14) & 0x7F) * 100 + ((os_ver >> 7) & 0x7F)) * 100
 	    + (os_ver & 0x7F);
@@ -1954,10 +2098,24 @@ void trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_resul
 	else
 		vbstatus = KM_VERIFIED_BOOT_FAILED;
 
-	/* TODO: Need VBH added in the last parameter */
+	/* Calculate VBH */
+#ifdef CONFIG_DUAL_BOOTLOADER
+	if (vbh_calculate(vbh, avb_out_data)) {
+		ret = -1;
+		goto fail;
+	}
+
 	trusty_set_boot_params(os_ver_km, os_lvl_km, vbstatus, lock,
-		permanent_attributes_hash, AVB_SHA256_DIGEST_SIZE,
-		NULL, 0);
+			       permanent_attributes_hash, AVB_SHA256_DIGEST_SIZE,
+			       vbh, AVB_SHA256_DIGEST_SIZE);
+#else
+	trusty_set_boot_params(os_ver_km, os_lvl_km, vbstatus, lock,
+			       permanent_attributes_hash, AVB_SHA256_DIGEST_SIZE,
+			       NULL, 0);
+#endif
+
+fail:
+	return ret;
 }
 #endif
 
@@ -2286,19 +2444,22 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	if (!is_recovery_mode)
 		boot_args[2] = NULL;
 #endif
-	if (avb_out_data != NULL)
-		avb_slot_verify_data_free(avb_out_data);
-	if (boot_buf != NULL)
-		free(boot_buf);
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 	/* Trusty keymaster needs some parameters before it work */
-	trusty_setbootparameter(hdr, avb_result);
+	if (trusty_setbootparameter(hdr, avb_result, avb_out_data))
+		goto fail;
 	/* lock the boot status and rollback_idx preventing Linux modify it */
 	trusty_lock_boot_state();
 	/* put ql-tipc to release resource for Linux */
 	trusty_ipc_shutdown();
 #endif
+
+	if (avb_out_data != NULL)
+		avb_slot_verify_data_free(avb_out_data);
+	if (boot_buf != NULL)
+		free(boot_buf);
+
 	if (check_image_arm64) {
 #ifdef CONFIG_CMD_BOOTI
 		do_booti(NULL, 0, 4, boot_args);
