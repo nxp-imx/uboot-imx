@@ -162,6 +162,7 @@
 		"root=/dev/nfs " \
 	"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 		"netboot=echo Booting from net ...; " \
+		"${usb_net_cmd}; " \
 		"run netargs; " \
 		"if test ${ip_dyn} = yes; then " \
 			"setenv get_cmd dhcp; " \
@@ -282,9 +283,8 @@
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 2
 #endif
 
-#ifdef CONFIG_CMD_NET
+#ifdef CONFIG_FEC_MXC
 #define CONFIG_CMD_MII
-#define CONFIG_FEC_MXC
 #define CONFIG_FEC_ENET_DEV		1
 
 #if (CONFIG_FEC_ENET_DEV == 0)
