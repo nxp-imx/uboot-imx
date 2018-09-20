@@ -397,7 +397,7 @@ int board_late_init(void)
 		env_set("board_rev", "14X14");
 
 	if (is_cpu_type(MXC_CPU_MX6ULZ)) {
-		env_set("fdt_file", "imx6ulz-14x14-evk.dtb");
+		env_set("board_name", "ULZ-EVK");
 		env_set("usb_net_cmd", "usb start");
     }
 #endif
