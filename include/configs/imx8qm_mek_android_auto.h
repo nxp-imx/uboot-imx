@@ -17,6 +17,7 @@
 #define NS_ARCH_ARM64 1
 #endif
 
+#define CONFIG_SKIP_RESOURCE_CHECING
 /* USB OTG controller configs */
 #ifdef CONFIG_USB_EHCI_HCD
 #ifndef CONFIG_MXC_USB_PORTSC
