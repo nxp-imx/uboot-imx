@@ -1311,7 +1311,9 @@ int ft_system_setup(void *blob, bd_t *bd)
 			       fdt_strerror(off));
 #endif
 
+#ifndef CONFIG_SKIP_RESOURCE_CHECING
 	update_fdt_with_owned_resources(blob);
+#endif
 
 	update_fdt_edma_nodes(blob);
 #ifdef CONFIG_IMX_SMMU
