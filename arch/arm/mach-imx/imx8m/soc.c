@@ -245,6 +245,10 @@ int arch_cpu_init(void)
 	/* Secure init function such RNG */
 	imx_sec_init();
 #endif
+#if defined(CONFIG_ANDROID_SUPPORT)
+	/* Enable RTC */
+	writel(0x21, 0x30370038);
+#endif
 
 	return 0;
 }
