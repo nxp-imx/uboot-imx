@@ -194,6 +194,12 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	}
 #endif
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+	char *bootargs_trusty = "androidboot.keystore=trusty";
+	strncat(commandline, " ", sizeof(commandline) - strlen(commandline));
+	strncat(commandline, bootargs_trusty, sizeof(commandline) - strlen(commandline));
+#endif
+
 	/* Add 'append_bootargs' to hold some paramemters which need to be appended
 	 * to bootargs */
 	char *append_bootargs = env_get("append_bootargs");
