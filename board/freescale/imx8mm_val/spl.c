@@ -189,6 +189,9 @@ int power_init_board(void)
 #ifdef CONFIG_TARGET_IMX8MM_DDR4_VAL
 	/* increase NVCC_DRAM_1V2 to 1.2v for DDR4 */
 	pmic_reg_write(p, BD71837_BUCK8_VOLT, 0x28);
+#elif defined(CONFIG_TARGET_IMX8MM_DDR3L_VAL)
+	/* increase NVCC_DRAM_1V35 to 1.35v for DDR3L */
+	pmic_reg_write(p, BD71837_BUCK8_VOLT, 0x37);
 #endif
 
 	/* lock the PMIC regs */

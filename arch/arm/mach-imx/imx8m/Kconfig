@@ -36,7 +36,12 @@ config TARGET_IMX8MQ_DDR4_ARM2
 	select SUPPORT_SPL
 
 config TARGET_IMX8MM_DDR4_VAL
-	bool "imx8mm validation board"
+	bool "imx8mm DDR4 validation board"
+	select IMX8MM
+	select SUPPORT_SPL
+
+config TARGET_IMX8MM_DDR3L_VAL
+	bool "imx8mm DDR3L validation board"
 	select IMX8MM
 	select SUPPORT_SPL
 

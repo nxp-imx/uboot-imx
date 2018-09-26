@@ -8,4 +8,5 @@ ifdef CONFIG_SPL_BUILD
 obj-y += helper.o
 obj-y += wait_ddrphy_training_complete.o
 obj-$(CONFIG_TARGET_IMX8MM_DDR4_VAL) += ddr4/
+obj-$(CONFIG_TARGET_IMX8MM_DDR3L_VAL) += ddr3l/
 endif

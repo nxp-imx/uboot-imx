@@ -79,15 +79,22 @@
 #define CONFIG_ETHPRIME                 "FEC"
 
 #define CONFIG_FEC_MXC
-#define CONFIG_FEC_XCV_TYPE             RGMII
-#define CONFIG_FEC_MXC_PHYADDR          0
 #define FEC_QUIRK_ENET_MAC
 
-#define CONFIG_PHY_GIGE
 #define IMX_FEC_BASE			0x30BE0000
-
 #define CONFIG_PHYLIB
+
+#ifdef CONFIG_TARGET_IMX8MM_DDR3L_VAL
+#define CONFIG_FEC_XCV_TYPE             RMII
+#define CONFIG_PHY_REALTEK
+#define CONFIG_FEC_MXC_PHYADDR          3
+#else
+#define CONFIG_FEC_MXC_PHYADDR          0
+#define CONFIG_FEC_XCV_TYPE             RGMII
 #define CONFIG_PHY_ATHEROS
+#define CONFIG_PHY_GIGE
+#endif
+
 #endif
 
 #define CONFIG_MFG_ENV_SETTINGS \
@@ -226,7 +233,11 @@
 #define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
 
+#ifdef CONFIG_TARGET_IMX8MM_DDR3L_VAL
+#define CONFIG_SYS_FSL_USDHC_NUM	1
+#else
 #define CONFIG_SYS_FSL_USDHC_NUM	2
+#endif
 #define CONFIG_SYS_FSL_ESDHC_ADDR       0
 
 #define CONFIG_SUPPORT_EMMC_BOOT	/* eMMC specific */
@@ -241,6 +252,21 @@
 
 #define CONFIG_SYS_FSL_FSPI_AHB
 #endif
+
+#ifdef CONFIG_NAND_MXS
+#define CONFIG_CMD_NAND_TRIMFFS
+
+/* NAND stuff */
+#define CONFIG_SYS_MAX_NAND_DEVICE     1
+#define CONFIG_SYS_NAND_BASE           0x20000000
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+
+#ifdef CONFIG_CMD_UBI
+#define CONFIG_MTD_DEVICE
+#endif
+#endif /* CONFIG_NAND_MXS */
+
 
 #define CONFIG_MXC_GPIO
 
