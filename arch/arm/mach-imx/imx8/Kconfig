@@ -52,6 +52,7 @@ config TARGET_IMX8QM_DDR4_ARM2
 config TARGET_IMX8QM_MEK
 	bool "Support i.MX8QM MEK board"
 	select BOARD_LATE_INIT
+	select SUPPORT_SPL
 	select IMX8QM
 
 config TARGET_IMX8QXP_LPDDR4_ARM2
