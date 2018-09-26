@@ -36,9 +36,11 @@ static iomux_v3_cfg_t const uart_pads[] = {
 	IMX8MM_PAD_UART2_TXD_UART2_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
+#ifndef CONFIG_TARGET_IMX8MM_DDR3L_VAL
 static iomux_v3_cfg_t const wdog_pads[] = {
 	IMX8MM_PAD_GPIO1_IO02_WDOG1_WDOG_B  | MUX_PAD_CTRL(WDOG_PAD_CTRL),
 };
+#endif
 
 #ifdef CONFIG_FSL_FSPI
 #define QSPI_PAD_CTRL	(PAD_CTL_DSE2 | PAD_CTL_HYS)
@@ -119,19 +121,24 @@ static iomux_v3_cfg_t const gpmi_pads[] = {
 static void setup_gpmi_nand(void)
 {
 	imx_iomux_v3_setup_multiple_pads(gpmi_pads, ARRAY_SIZE(gpmi_pads));
-	mxs_dma_init();
 }
 #endif
 
 int board_early_init_f(void)
 {
+#ifndef CONFIG_TARGET_IMX8MM_DDR3L_VAL
 	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
 
 	imx_iomux_v3_setup_multiple_pads(wdog_pads, ARRAY_SIZE(wdog_pads));
 
 	set_wdog_reset(wdog);
+#endif
 
 	imx_iomux_v3_setup_multiple_pads(uart_pads, ARRAY_SIZE(uart_pads));
+
+#ifdef CONFIG_NAND_MXS
+	setup_gpmi_nand(); /* SPL will call the board_early_init_f */
+#endif
 
 	return 0;
 }
@@ -163,6 +170,7 @@ int ft_board_setup(void *blob, bd_t *bd)
 #endif
 
 #ifdef CONFIG_FEC_MXC
+#ifndef CONFIG_TARGET_IMX8MM_DDR3L_VAL
 #define FEC_RST_PAD IMX_GPIO_NR(4, 22)
 static iomux_v3_cfg_t const fec1_rst_pads[] = {
 	IMX8MM_PAD_SAI2_RXC_GPIO4_IO22 | MUX_PAD_CTRL(NO_PAD_CTRL),
@@ -178,9 +186,24 @@ static void setup_iomux_fec(void)
 	udelay(500);
 	gpio_direction_output(FEC_RST_PAD, 1);
 }
+#endif
 
 static int setup_fec(void)
 {
+#ifdef CONFIG_TARGET_IMX8MM_DDR3L_VAL
+	struct iomuxc_gpr_base_regs *const iomuxc_gpr_regs
+		= (struct iomuxc_gpr_base_regs *) IOMUXC_GPR_BASE_ADDR;
+	/*
+	* GPR1 bit 13:
+	* 1:enet1 rmii clock comes from ccm->pad->loopback, SION bit for the pad (iomuxc_sw_input_on_pad_enet_td2) should be set also;
+	* 0:enet1 rmii clock comes from external phy or osc
+	*/
+
+	setbits_le32(&iomuxc_gpr_regs->gpr[1],
+			IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL_SHIFT);
+	return set_clk_enet(ENET_50MHZ);
+#else
+
 	struct iomuxc_gpr_base_regs *const iomuxc_gpr_regs
 		= (struct iomuxc_gpr_base_regs *) IOMUXC_GPR_BASE_ADDR;
 
@@ -190,10 +213,12 @@ static int setup_fec(void)
 	clrsetbits_le32(&iomuxc_gpr_regs->gpr[1],
 			IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL_SHIFT, 0);
 	return set_clk_enet(ENET_125MHZ);
+#endif
 }
 
 int board_phy_config(struct phy_device *phydev)
 {
+#ifndef CONFIG_TARGET_IMX8MM_DDR3L_VAL
 	/* enable rgmii rxc skew and phy mode select to RGMII copper */
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x1f);
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x8);
@@ -202,6 +227,7 @@ int board_phy_config(struct phy_device *phydev)
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x82ee);
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x05);
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x100);
+#endif
 
 	if (phydev->drv->config)
 		phydev->drv->config(phydev);
@@ -318,25 +344,31 @@ static int setup_typec(void)
 
 	return ret;
 }
+#endif
 
+#ifdef CONFIG_USB_EHCI_HCD
 int board_usb_init(int index, enum usb_init_type init)
 {
 	int ret = 0;
+#ifdef CONFIG_USB_TCPC
 	struct tcpc_port *port_ptr;
+#endif
 
 	debug("board_usb_init %d, type %d\n", index, init);
 
+	imx8m_usb_power(index, true);
+
+#ifdef CONFIG_USB_TCPC
 	if (index == 0)
 		port_ptr = &port1;
 	else
 		port_ptr = &port2;
 
-	imx8m_usb_power(index, true);
-
 	if (init == USB_INIT_HOST)
 		tcpc_setup_dfp_mode(port_ptr);
 	else
 		tcpc_setup_ufp_mode(port_ptr);
+#endif
 
 	return ret;
 }
@@ -347,17 +379,20 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 
 	debug("board_usb_cleanup %d, type %d\n", index, init);
 
+#ifdef CONFIG_USB_TCPC
 	if (init == USB_INIT_HOST) {
 		if (index == 0)
 			ret = tcpc_disable_src_vbus(&port1);
 		else
 			ret = tcpc_disable_src_vbus(&port2);
 	}
+#endif
 
 	imx8m_usb_power(index, false);
 	return ret;
 }
 
+#ifdef CONFIG_USB_TCPC
 int board_ehci_usb_phy_mode(struct udevice *dev)
 {
 	int ret = 0;
@@ -380,7 +415,7 @@ int board_ehci_usb_phy_mode(struct udevice *dev)
 
 	return USB_INIT_DEVICE;
 }
-
+#endif
 #endif
 
 int board_init(void)
@@ -401,9 +436,6 @@ int board_init(void)
 	board_qspi_init();
 #endif
 
-#ifdef CONFIG_NAND_MXS
-	setup_gpmi_nand(); /* SPL will call the board_early_init_f */
-#endif
 	return 0;
 }
 

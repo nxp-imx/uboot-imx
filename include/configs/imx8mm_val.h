@@ -14,7 +14,7 @@
 #define CONFIG_CSF_SIZE			0x2000 /* 8K region */
 #endif
 
-#define CONFIG_SPL_MAX_SIZE		(124 * 1024)
+#define CONFIG_SPL_MAX_SIZE		(148 * 1024)
 #define CONFIG_SYS_MONITOR_LEN		(512 * 1024)
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x300
@@ -84,15 +84,22 @@
 #define CONFIG_ETHPRIME                 "FEC"
 
 #define CONFIG_FEC_MXC
-#define CONFIG_FEC_XCV_TYPE             RGMII
-#define CONFIG_FEC_MXC_PHYADDR          0
 #define FEC_QUIRK_ENET_MAC
 
-#define CONFIG_PHY_GIGE
 #define IMX_FEC_BASE			0x30BE0000
-
 #define CONFIG_PHYLIB
+
+#ifdef CONFIG_TARGET_IMX8MM_DDR3L_VAL
+#define CONFIG_FEC_XCV_TYPE             RMII
+#define CONFIG_PHY_REALTEK
+#define CONFIG_FEC_MXC_PHYADDR          3
+#else
+#define CONFIG_FEC_MXC_PHYADDR          0
+#define CONFIG_FEC_XCV_TYPE             RGMII
 #define CONFIG_PHY_ATHEROS
+#define CONFIG_PHY_GIGE
+#endif
+
 #endif
 
 #define CONFIG_MFG_ENV_SETTINGS \
@@ -232,7 +239,11 @@
 #define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
 
+#ifdef CONFIG_TARGET_IMX8MM_DDR3L_VAL
+#define CONFIG_SYS_FSL_USDHC_NUM	1
+#else
 #define CONFIG_SYS_FSL_USDHC_NUM	2
+#endif
 #define CONFIG_SYS_FSL_ESDHC_ADDR       0
 
 #define CONFIG_SUPPORT_EMMC_BOOT	/* eMMC specific */
@@ -267,7 +278,8 @@
 #endif
 #endif
 
-#ifdef CONFIG_NAND_MXS
+#ifdef CONFIG_CMD_NAND
+#define CONFIG_NAND_MXS
 #define CONFIG_CMD_NAND_TRIMFFS
 
 /* NAND stuff */
@@ -280,7 +292,12 @@
 #define CONFIG_APBH_DMA
 #define CONFIG_APBH_DMA_BURST
 #define CONFIG_APBH_DMA_BURST8
+
+#ifdef CONFIG_CMD_UBI
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_MTD_DEVICE
 #endif
+#endif /* CONFIG_CMD_NAND */
 
 #define CONFIG_MXC_GPIO
 
