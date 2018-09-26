@@ -213,7 +213,7 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 		}
 	}
 
-	printf("Kernel command line: %s\n", commandline);
+	debug("Kernel command line: %s\n", commandline);
 	env_set("bootargs", commandline);
 
 	if (os_data) {
