@@ -38,6 +38,7 @@
 #include "fastboot_lock_unlock.h"
 #include <fsl_fastboot.h>
 #include <memalign.h>
+#include <asm/mach-imx/sys_proto.h>
 #ifdef CONFIG_IMX_TRUSTY_OS
 #include <trusty/libtipc.h>
 #include <asm/mach-imx/hab.h>
@@ -475,6 +476,12 @@ FbLockEnableResult fastboot_lock_enable() {
 	unsigned char *bdata;
 	int mmc_id;
 	FbLockEnableResult ret;
+
+	/* for imx6 and imx7 platforms, ignore presistdata partition
+	 * for the convenience of using uuu
+	 */
+	if (is_mx6() || is_mx7() || is_mx7ulp())
+		return FASTBOOT_UL_ENABLE;
 
 	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
 	if (bdata == NULL)
