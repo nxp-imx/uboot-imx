@@ -175,11 +175,33 @@ void spl_dram_init(void)
 
 void spl_board_init(void)
 {
+#if defined(CONFIG_QSPI_BOOT)
+	sc_ipc_t ipcHndl = 0;
+
+	ipcHndl = gd->arch.ipc_channel_handle;
+	if (sc_pm_set_resource_power_mode(ipcHndl, SC_R_FSPI_0, SC_PM_PW_MODE_ON)) {
+		puts("Warning: failed to initialize FSPI0\n");
+	}
+#endif
+
         /* DDR initialization */
         spl_dram_init();
 
         puts("Normal Boot\n");
 }
+
+void spl_board_prepare_for_boot(void)
+{
+#if defined(CONFIG_QSPI_BOOT)
+	sc_ipc_t ipcHndl = 0;
+
+	ipcHndl = gd->arch.ipc_channel_handle;
+	if (sc_pm_set_resource_power_mode(ipcHndl, SC_R_FSPI_0, SC_PM_PW_MODE_OFF)) {
+		puts("Warning: failed to turn off FSPI0\n");
+	}
+#endif
+}
+
 
 void board_init_f(ulong dummy)
 {
