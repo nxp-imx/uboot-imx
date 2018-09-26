@@ -5,3 +5,8 @@
 #
 
 obj-y += imx8qm_mek.o
+
+ifdef CONFIG_SPL_BUILD
+obj-y += spl.o
+endif
+
