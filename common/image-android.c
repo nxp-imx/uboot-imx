@@ -194,6 +194,15 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	}
 #endif
 
+	/* VTS need this commandline to verify fdt overlay. Pass the
+	 * dtb index as "0" here since we only have one dtb in dtbo
+	 * partition and haven't enabled the dtb overlay.
+	 */
+#if defined(CONFIG_ANDROID_SUPPORT) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
+	sprintf(newbootargs," androidboot.dtbo_idx=0");
+	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+#endif
+
 #ifdef CONFIG_IMX_TRUSTY_OS
 	char *bootargs_trusty = "androidboot.keystore=trusty";
 	strncat(commandline, " ", sizeof(commandline) - strlen(commandline));
