@@ -62,7 +62,7 @@
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x83800000\0" \
 	"initrd_high=0xffffffff\0" \
-	"sd_dev=2\0" \
+	"sd_dev=0\0" \
 	"mtdparts=" MFG_NAND_PARTITION \
 	"\0"\
 
