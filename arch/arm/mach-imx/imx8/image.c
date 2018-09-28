@@ -10,6 +10,8 @@
 #include <mmc.h>
 #include <spi_flash.h>
 #include <asm/arch/image.h>
+#include <asm/arch/sys_proto.h>
+#include <asm/mach-imx/boot_mode.h>
 
 #define MMC_DEV		0
 #define QSPI_DEV	1
@@ -92,18 +94,40 @@ static int get_container_size(void *dev, int dev_type, unsigned long offset)
 	return ret;
 }
 
+static unsigned long get_boot_device_offset(void *dev, int dev_type)
+{
+	unsigned long offset = 0;
+	if (dev_type == MMC_DEV) {
+		struct mmc *mmc = (struct mmc*)dev;
+
+		if (IS_SD(mmc) || mmc->part_config == MMCPART_NOAVAILABLE) {
+			offset = CONTAINER_HDR_MMCSD_OFFSET;
+		} else {
+			u8 part = EXT_CSD_EXTRACT_BOOT_PART(mmc->part_config);
+
+			if (part == 1 || part == 2) {
+				if (is_imx8qxp() && is_soc_rev(CHIP_REV_B))
+					offset = CONTAINER_HDR_MMCSD_OFFSET;
+				else
+					offset = CONTAINER_HDR_EMMC_OFFSET;
+			} else {
+				offset = CONTAINER_HDR_MMCSD_OFFSET;
+			}
+		}
+	} else if (dev_type == QSPI_DEV) {
+		offset = CONTAINER_HDR_QSPI_OFFSET;
+	}
+
+	return offset;
+}
+
 static int get_imageset_end(void *dev, int dev_type)
 {
 	unsigned long offset1 = 0, offset2 = 0;
 	int value_container[2];
 
-	if (dev_type == MMC_DEV) {
-		offset1 = CONTAINER_HDR_MMCSD_OFFSET;
-		offset2 = CONTAINER_HDR_ALIGNMENT + offset1;
-	} else if (dev_type == QSPI_DEV) {
-		offset1 = CONTAINER_HDR_QSPI_OFFSET;
-		offset2 = CONTAINER_HDR_ALIGNMENT + offset1;
-	}
+	offset1 = get_boot_device_offset(dev, dev_type);
+	offset2 = CONTAINER_HDR_ALIGNMENT + offset1;
 
 	value_container[0] = get_container_size(dev, dev_type, offset1);
 	if (value_container[0] < 0) {
