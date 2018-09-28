@@ -153,7 +153,7 @@
 		"fi;\0" \
 	"findfdt="\
 		"if test $fdt_file = undefined; then " \
-			"setenv fdt_file imx6sx-sdb.dtb; " \
+			"setenv fdt_file " CONFIG_DEFAULT_DEVICE_TREE ".dtb; " \
 		"fi;\0" \
 
 #define CONFIG_BOOTCOMMAND \
