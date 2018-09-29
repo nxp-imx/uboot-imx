@@ -31,7 +31,7 @@ void spl_dram_init(void)
 {
 #ifdef CONFIG_IMX8M_LPDDR4
 	/* ddr train */
-	ddr_init(&lpddr4_timing);
+	ddr_init(&dram_timing);
 #else
 	ddr_init();
 #endif

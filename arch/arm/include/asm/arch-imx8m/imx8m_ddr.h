@@ -48,7 +48,7 @@ struct dram_timing_info {
 	unsigned int ddrphy_pie_num;
 };
 
-extern struct dram_timing_info lpddr4_timing;
+extern struct dram_timing_info dram_timing;
 
 void ddr_load_train_firmware(enum fw_type type);
 void ddr_init(struct dram_timing_info *timing_info);
