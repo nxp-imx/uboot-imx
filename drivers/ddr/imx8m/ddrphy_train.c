@@ -8,7 +8,7 @@
 #include <asm/arch/imx8m_ddr.h>
 #include <asm/arch/lpddr4_define.h>
 
-void lpddr4_cfg_phy(struct dram_timing_info *dram_timing)
+void ddr_cfg_phy(struct dram_timing_info *dram_timing)
 {
 	struct dram_cfg_param *dram_cfg;
 	struct dram_fsp_msg *fsp_msg;

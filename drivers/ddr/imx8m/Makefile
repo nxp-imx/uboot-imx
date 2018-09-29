@@ -5,6 +5,6 @@
 #
 
 ifdef CONFIG_SPL_BUILD
-obj-$(CONFIG_IMX8M_DRAM) += helper.o ddrphy_utils.o
-obj-$(CONFIG_IMX8M_LPDDR4) += lpddr4/
+obj-$(CONFIG_IMX8M_DRAM) += helper.o ddrphy_utils.o ddrphy_train.o
+obj-$(CONFIG_IMX8M_LPDDR4) += lpddr4_init.o
 endif

@@ -103,7 +103,7 @@ void ddr_init(struct dram_timing_info *dram_timing)
 
 	/* step8 Configure LPDDR4 PHY's registers */
 	debug("DDRINFO:ddrphy config start\n");
-	lpddr4_cfg_phy(dram_timing);
+	ddr_cfg_phy(dram_timing);
 	debug("DDRINFO: ddrphy config done\n");
 
 	/*
