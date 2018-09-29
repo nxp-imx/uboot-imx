@@ -8,9 +8,6 @@ obj-y += imx8mm_evk.o
 
 ifdef CONFIG_SPL_BUILD
 obj-y += spl.o
-ifdef CONFIG_IMX8M_LPDDR4
-obj-y += lpddr4_timing.o
-else
-obj-y += ddr/
-endif
+obj-$(CONFIG_IMX8M_LPDDR4) += lpddr4_timing.o
+obj-$(CONFIG_IMX8M_DDR4) += ddr4_timing.o
 endif
