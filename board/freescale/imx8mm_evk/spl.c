@@ -19,22 +19,13 @@
 #include <asm/mach-imx/mxc_i2c.h>
 #include <fsl_esdhc.h>
 #include <mmc.h>
-#ifdef CONFIG_IMX8M_LPDDR4
 #include <asm/arch/imx8m_ddr.h>
-#else
-#include "ddr/ddr.h"
-#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
 void spl_dram_init(void)
 {
-#ifdef CONFIG_IMX8M_LPDDR4
-	/* ddr train */
 	ddr_init(&dram_timing);
-#else
-	ddr_init();
-#endif
 }
 
 #define I2C_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE | PAD_CTL_PE)
