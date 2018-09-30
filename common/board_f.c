@@ -910,7 +910,9 @@ static const init_fnc_t init_sequence_f[] = {
 #endif
 	env_init,		/* initialize environment */
 	init_baud_rate,		/* initialze baudrate settings */
+#ifndef CONFIG_ANDROID_AUTO_SUPPORT
 	serial_init,		/* serial communications setup */
+#endif
 	console_init_f,		/* stage 1 init of console */
 	display_options,	/* say that we are here */
 	display_text_info,	/* show debugging info if required */
