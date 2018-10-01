@@ -105,7 +105,7 @@
 	"console=ttyLP0\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
-	"fdt_file=imx7ulp-evk.dtb\0" \
+	"fdt_file=" CONFIG_DEFAULT_FDT_FILE ".dtb\0" \
 	"fdt_addr=0x63000000\0" \
 	"tee_addr=0x64000000\0" \
 	"tee_file=uTee-7ulp\0" \
