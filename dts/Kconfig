@@ -29,10 +29,6 @@ config OF_CONTROL
 	  This feature provides for run-time configuration of U-Boot
 	  via a flattened device tree.
 
-config KERNEL_USE_STD_DTB
-	string "Specify the dtb file name for Linux kernel"
-	default DEFAULT_DEVICE_TREE
-
 config OF_BOARD_FIXUP
 	bool "Board-specific manipulation of Device Tree"
 	help

@@ -90,13 +90,6 @@
 #define CONFIG_CMD_MEMTEST
 #define CONFIG_SYS_MEMTEST_END      (CONFIG_SYS_MEMTEST_START + (PHYS_SDRAM_SIZE >> 1))
 
-
-#ifdef CONFIG_KERNEL_USE_STD_DTB
-#define LD_FDT_FILE			CONFIG_KERNEL_USE_STD_DTB
-#else
-#define LD_FDT_FILE			CONFIG_DEFAULT_DEVICE_TREE
-#endif
-
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT  \
 	"initrd_addr=0x63800000\0" \
@@ -112,7 +105,7 @@
 	"console=ttyLP0\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
-	"fdt_file=" LD_FDT_FILE ".dtb\0" \
+	"fdt_file=imx7ulp-evk.dtb\0" \
 	"fdt_addr=0x63000000\0" \
 	"tee_addr=0x64000000\0" \
 	"tee_file=uTee-7ulp\0" \
