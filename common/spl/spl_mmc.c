@@ -68,7 +68,7 @@ int mmc_load_image_raw_sector(struct spl_image_info *spl_image,
 					 sizeof(struct image_header));
 	int ret = 0;
 
-#if !defined(CONFIG_SPL_RAW_IMAGE_ARM_TRUSTED_FIRMWARE)
+#if !defined(CONFIG_SPL_RAW_IMAGE_ARM_TRUSTED_FIRMWARE) || defined(CONFIG_SPL_LOAD_FIT)
 	unsigned long count = 0;
 
 	/* read image header to find the image size & load address */
