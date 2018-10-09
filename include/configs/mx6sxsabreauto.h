@@ -275,10 +275,8 @@
 
 #define CONFIG_SYS_FSL_USDHC_NUM	2
 #define CONFIG_MMCROOT			"/dev/mmcblk2p2"  /* USDHC3 */
-#if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_SYS_MMC_ENV_DEV		0  /*USDHC3*/
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
-#endif
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_ENV_OFFSET		(14 * SZ_64K)
