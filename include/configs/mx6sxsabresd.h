@@ -301,10 +301,8 @@
 
 #define CONFIG_SYS_FSL_USDHC_NUM	3
 #define CONFIG_MMCROOT			"/dev/mmcblk3p2"  /* USDHC4 */
-#if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_SYS_MMC_ENV_DEV		2  /*USDHC4*/
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
-#endif
 
 #if defined(CONFIG_ANDROID_SUPPORT)
 #include "mx6sxsabresdandroid.h"
