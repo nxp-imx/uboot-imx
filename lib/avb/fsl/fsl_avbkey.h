@@ -31,6 +31,9 @@
 #define AVB_KBLB_MAGIC "\0KBLB!"
 #define AVB_KBLB_MAGIC_LEN 6
 
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#define RPMB_KEY_MAGIC "RPMB"
+#endif
 
 struct kblb_tag {
 	uint32_t flag;
