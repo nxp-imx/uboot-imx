@@ -240,4 +240,7 @@ AvbABFlowResult avb_flow_dual_uboot(AvbABOps* ab_ops,
 /* Program ATX perm_attr into RPMB partition */
 int avb_atx_fuse_perm_attr(uint8_t *staged_buffer, uint32_t size);
 
+/* Initialize rpmb key with the staged key */
+int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size);
+
 #endif /* __FSL_AVB_H__ */

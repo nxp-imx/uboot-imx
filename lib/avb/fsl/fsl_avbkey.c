@@ -1368,3 +1368,63 @@ fail:
 }
 
 #endif /* AVB_RPMB && CONFIG_AVB_ATX */
+
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size)
+{
+	int ret = 0;
+	int mmcc;
+	struct mmc *mmc;
+	char original_part;
+	struct blk_desc *desc = NULL;
+	uint8_t rpmb_key[RPMBKEY_LENGTH];
+
+	if (memcmp(staged_buf, RPMB_KEY_MAGIC, strlen(RPMB_KEY_MAGIC))) {
+		printf("ERROR - rpmb magic doesn't match!\n");
+		return -1;
+	}
+
+	/* Get current mmc device. */
+	mmcc = mmc_get_env_dev();
+	mmc = find_mmc_device(mmcc);
+	if (!mmc) {
+		printf("error - cannot find '%d' mmc device\n", mmcc);
+		return -1;
+	}
+	desc = mmc_get_blk_desc(mmc);
+	original_part = desc->hwpart;
+
+	/* Switch to the RPMB partition */
+	if (desc->hwpart != MMC_PART_RPMB) {
+		if (mmc_switch_part(mmc, MMC_PART_RPMB) != 0) {
+			printf("ERROR - can't switch to rpmb partition \n");
+			return -1;
+		}
+		desc->hwpart = MMC_PART_RPMB;
+	}
+
+	/* Set rpmb key. */
+	memset(rpmb_key, 0, RPMBKEY_LENGTH);
+	memcpy(rpmb_key, staged_buf + strlen(RPMB_KEY_MAGIC), RPMBKEY_LENGTH);
+
+	if (mmc_rpmb_set_key(mmc, rpmb_key)) {
+		printf("ERROR - Key already programmed ?\n");
+		ret = -1;
+		goto fail;
+	} else
+		printf("RPMB key programed successfully!");
+
+	/* TODO Generate keyblob with CAAM and store it to boot1,
+	 * this requires CAAM is ready for Android Auto.
+	 */
+fail:
+	/* Return to original partition */
+	if (desc->hwpart != original_part) {
+		if (mmc_switch_part(mmc, original_part) != 0)
+			return -1;
+		desc->hwpart = original_part;
+	}
+
+	return ret;
+}
+#endif

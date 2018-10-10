@@ -3348,6 +3348,15 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 			strcpy(response, "OKAY");
 	}
 #endif /* CONFIG_AVB_ATX || CONFIG_ANDROID_AUTO_SUPPORT */
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+	else if (endswith(cmd, FASTBOOT_SET_RPMB_KEY)) {
+		if (fastboot_set_rpmb_key(interface.transfer_buffer, download_bytes)) {
+			printf("ERROR set rpmb key failed!\n");
+			strcpy(response, "FAILset rpmb key failed!");
+		} else
+			strcpy(response, "OKAY");
+	}
+#endif
 #endif /* CONFIG_IMX_TRUSTY_OS */
 	else if (endswith(cmd, "unlock_critical")) {
 		strcpy(response, "OKAY");
