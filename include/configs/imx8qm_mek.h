@@ -105,6 +105,7 @@
             "xenboot_common=" \
                 "${get_cmd} ${loadaddr} xen;" \
                 "${get_cmd} ${fdt_addr} ${dom0fdt_file};" \
+		"scu_rm dtb ${fdt_addr};" \
                 "if ${get_cmd} ${hdp_addr} ${hdp_file}; then; hdp load ${hdp_addr}; fi;" \
                 "${get_cmd} ${xenlinux_addr} ${image};" \
                 "fdt addr ${fdt_addr};" \
@@ -112,7 +113,6 @@
                 "fdt set /chosen/module@0 reg <0x00000000 ${xenlinux_addr} 0x00000000 0x${filesize}>; " \
                 "fdt set /chosen/module@0 bootargs \"${bootargs} ${xenlinux_bootargs}\"; " \
                 "setenv bootargs ${xenhyper_bootargs};" \
-		"scu_rm dtb ${fdt_addr};" \
                 "booti ${loadaddr} - ${fdt_addr};" \
             "\0" \
             "xennetboot=" \
