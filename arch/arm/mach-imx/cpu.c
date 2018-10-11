@@ -150,7 +150,17 @@ const char *get_imx_type(u32 imxtype)
 {
 	switch (imxtype) {
 	case MXC_CPU_IMX8MM:
-		return "8MM";	/* Quad-core version of the imx8mm */
+		return "8MMQ";	/* Quad-core version of the imx8mm */
+	case MXC_CPU_IMX8MML:
+		return "8MMQL";	/* Quad-core Lite version of the imx8mm */
+	case MXC_CPU_IMX8MMD:
+		return "8MMD";	/* Dual-core version of the imx8mm */
+	case MXC_CPU_IMX8MMDL:
+		return "8MMDL";	/* Dual-core Lite version of the imx8mm */
+	case MXC_CPU_IMX8MMS:
+		return "8MMS";	/* Single-core version of the imx8mm */
+	case MXC_CPU_IMX8MMSL:
+		return "8MMSL";	/* Single-core Lite version of the imx8mm */
 	case MXC_CPU_IMX8MQ:
 		return "8MQ";	/* Quad-core version of the imx8mq */
 	case MXC_CPU_IMX8MQL:

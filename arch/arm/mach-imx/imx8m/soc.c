@@ -159,18 +159,36 @@ void enable_caches(void)
 
 static u32 get_cpu_variant_type(u32 type)
 {
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[1];
+	struct fuse_bank1_regs *fuse =
+		(struct fuse_bank1_regs *)bank->fuse_regs;
+
+	u32 value = readl(&fuse->tester4);
+
 	if (type == MXC_CPU_IMX8MQ) {
-		struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
-		struct fuse_bank *bank = &ocotp->bank[1];
-		struct fuse_bank1_regs *fuse =
-			(struct fuse_bank1_regs *)bank->fuse_regs;
-
-		u32 value = readl(&fuse->tester4);
-
 		if ((value & 0x3) == 0x2)
 			return MXC_CPU_IMX8MD;
 		else if (value & 0x200000)
 			return MXC_CPU_IMX8MQL;
+
+	} else if (type == MXC_CPU_IMX8MM) {
+		switch (value & 0x3) {
+		case 2:
+			if (value & 0x1c0000)
+				return MXC_CPU_IMX8MMDL;
+			else
+				return MXC_CPU_IMX8MMD;
+		case 3:
+			if (value & 0x1c0000)
+				return MXC_CPU_IMX8MMSL;
+			else
+				return MXC_CPU_IMX8MMS;
+		default:
+			if (value & 0x1c0000)
+				return MXC_CPU_IMX8MML;
+			break;
+		}
 	}
 
 	return type;
@@ -188,7 +206,8 @@ u32 get_cpu_rev(void)
 
 	/* iMX8MM */
 	 if (major_low == 0x41) {
-		return (MXC_CPU_IMX8MM << 12) | reg;
+		type = get_cpu_variant_type(MXC_CPU_IMX8MM);
+		return (type << 12) | reg;
 	} else {
 		/* iMX8MQ */
 		if (reg == CHIP_REV_1_0) {
