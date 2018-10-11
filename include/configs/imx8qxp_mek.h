@@ -80,9 +80,10 @@
             "xenlinux_bootargs= \0" \
             "xenlinux_console=hvc0 earlycon=xen\0" \
             "xenlinux_addr=0x9e000000\0" \
+	    "dom0fdt_file=fsl-imx8qxp-mek-dom0.dtb\0" \
             "xenboot_common=" \
                 "${get_cmd} ${loadaddr} xen;" \
-                "${get_cmd} ${fdt_addr} fsl-imx8qxp-mek-dom0.dtb;" \
+                "${get_cmd} ${fdt_addr} ${dom0fdt_file};" \
                 "${get_cmd} ${xenlinux_addr} ${image};" \
                 "fdt addr ${fdt_addr};" \
                 "fdt resize 256;" \
