@@ -48,7 +48,7 @@ void ddr_init(struct dram_timing_info *dram_timing)
 	/* config the uMCTL2's registers */
 	ddr4_cfg_umctl2(dram_timing->ddrc_cfg, dram_timing->ddrc_cfg_num);
 
-	reg32_write(DDRC_RFSHCTL3(0), 0x00000011);
+	reg32_write(DDRC_RFSHCTL3(0), 0x00000001);
 	/* RESET: <ctn> DEASSERTED */
 	/* RESET: <a Port 0  DEASSERTED(0) */
 	reg32_write(SRC_DDRC_RCR_ADDR, 0x8F000004);
@@ -91,7 +91,7 @@ void ddr_init(struct dram_timing_info *dram_timing)
 
 	reg32_write(DDRC_PWRCTL(0), 0x0000088);
 	reg32_write(DDRC_PCTRL_0(0), 0x00000001);
-	reg32_write(DDRC_RFSHCTL3(0), 0x00000010); /* dis_auto-refresh is set to 0 */
+	reg32_write(DDRC_RFSHCTL3(0), 0x00000000); /* dis_auto-refresh is set to 0 */
 
 	/* save the dram timing config into memory */
 	dram_config_save(dram_timing, CONFIG_SAVED_DRAM_TIMING_BASE);
