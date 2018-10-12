@@ -1,0 +1,53 @@
+[Header]
+    Version = 4.2
+    Hash Algorithm = sha256
+    Engine Configuration = 0
+    Certificate Format = X509
+    Signature Format = CMS
+    Engine = CAAM
+
+[Install SRK]
+    # Index of the key location in the SRK table to be installed
+    File = "../crts/SRK_1_2_3_4_table.bin"
+    Source index = 0
+
+[Install CSFK]
+    # Key used to authenticate the CSF data
+    File = "../crts/CSF1_1_sha256_2048_65537_v3_usr_crt.pem"
+
+[Authenticate CSF]
+
+[Install Key]
+    # Key slot index used to authenticate the key to be installed
+    Verification index = 0
+    # Target key slot in HAB key store where key will be installed
+    Target Index = 2
+    # Key to install
+    File= "../crts/IMG1_1_sha256_2048_65537_v3_usr_crt.pem"
+
+[Authenticate Data]
+    # This Authenticate Data commandcovers both clear and encrypted data.
+    # The image file referenced will remain unmodified by CST.
+    # Key slot index used to authenticate the image data
+    Verification index = 2
+    # Authenticate Start Address, Offset, Length and file
+    Blocks = 0x877ff400 0x000 0x0009ec00 "u-boot-dtb.imx-enc"
+
+[Install Secret Key]
+    # Install the blob - This will manage a new key that will not be used in
+    # the final image, so the file name has to be different
+    Verification Index = 0
+    Target Index = 0
+    Key = "dek-dummy.bin"
+    Key Length = 128
+    # Start address + padding 0x2000 + length
+    Blob Address = 0x878a000
+
+[Decrypt Data]
+    # The decrypt Data command is a place holder to ensure the
+    # CSF includes the decrypt data command from the first pass.
+    # The file that CST will encrypt will not be used, so the file
+    # name has to be different.
+    Verification Index = 0
+    Mac Bytes = 16
+    Blocks = 0x87800000 0x00000c00 0x9e000 "u-boot-dtb.imx-dummy"
