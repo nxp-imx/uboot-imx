@@ -9,12 +9,14 @@
 #include <dm.h>
 #include <mmc.h>
 #include <spi_flash.h>
+#include <nand.h>
 #include <asm/arch/image.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/boot_mode.h>
 
 #define MMC_DEV		0
 #define QSPI_DEV	1
+#define NAND_DEV	2
 
 static int __get_container_size(ulong addr)
 {
@@ -59,7 +61,6 @@ static int __get_container_size(ulong addr)
 static int get_container_size(void *dev, int dev_type, unsigned long offset)
 {
 	uint8_t *buf = malloc(CONTAINER_HDR_ALIGNMENT);
-	unsigned long count = 0;
 	int ret = 0;
 
 	if (!buf) {
@@ -67,7 +68,9 @@ static int get_container_size(void *dev, int dev_type, unsigned long offset)
 		return -ENOMEM;
 	}
 
+#ifdef CONFIG_SPL_MMC_SUPPORT
 	if (dev_type == MMC_DEV) {
+		unsigned long count = 0;
 		struct mmc *mmc = (struct mmc*)dev;
 		count = blk_dread(mmc_get_blk_desc(mmc), offset/mmc->read_bl_len,
 					CONTAINER_HDR_ALIGNMENT/mmc->read_bl_len, buf);
@@ -75,8 +78,11 @@ static int get_container_size(void *dev, int dev_type, unsigned long offset)
 			printf("Read container image from MMC/SD failed\n");
 			return -EIO;
 		}
+	}
+#endif
+
 #ifdef CONFIG_SPL_SPI_LOAD
-	} else if (dev_type == QSPI_DEV) {
+	if (dev_type == QSPI_DEV) {
 		struct spi_flash *flash = (struct spi_flash *)dev;
 		ret = spi_flash_read(flash, offset,
 					CONTAINER_HDR_ALIGNMENT, buf);
@@ -84,8 +90,18 @@ static int get_container_size(void *dev, int dev_type, unsigned long offset)
 			printf("Read container image from QSPI failed\n");
 			return -EIO;
 		}
-#endif
 	}
+#endif
+
+#ifdef CONFIG_SPL_NAND_SUPPORT
+	if (dev_type == NAND_DEV) {
+		ret = nand_spl_load_image(offset, CONTAINER_HDR_ALIGNMENT, buf);
+		if (ret != 0) {
+			printf("Read container image from NAND failed\n");
+			return -EIO;
+		}
+	}
+#endif
 
 	ret = __get_container_size((ulong)buf);
 
@@ -116,6 +132,8 @@ static unsigned long get_boot_device_offset(void *dev, int dev_type)
 		}
 	} else if (dev_type == QSPI_DEV) {
 		offset = CONTAINER_HDR_QSPI_OFFSET;
+	} else if (dev_type == NAND_DEV) {
+		offset = CONTAINER_HDR_NAND_OFFSET;
 	}
 
 	return offset;
@@ -173,5 +191,19 @@ unsigned long spl_mmc_get_uboot_raw_sector(struct mmc *mmc)
 	printf("Load image from MMC/SD 0x%x\n", end);
 
 	return end/mmc->read_bl_len;
+}
+#endif
+
+#ifdef CONFIG_SPL_NAND_SUPPORT
+uint32_t spl_nand_get_uboot_raw_page(void)
+{
+	int end;
+
+	end = get_imageset_end((void *)NULL, NAND_DEV);
+	end = ROUND(end, SZ_16K);
+
+	printf("Load image from NAND 0x%x\n", end);
+
+	return end;
 }
 #endif
