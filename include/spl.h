@@ -99,6 +99,19 @@ void spl_set_bd(void);
  */
 void spl_set_header_raw_uboot(struct spl_image_info *spl_image);
 
+
+
+/**
+ * spl_set_header_raw_atf() - Set up a standard SPL image structure for ATF
+ *
+ * This sets up the given spl_image which the standard values obtained from
+ * config options: CONFIG_SYS_MONITOR_LEN, CONFIG_SYS_UBOOT_START,
+ * CONFIG_SYS_TEXT_BASE.
+ *
+ * @spl_image: Image description to set up
+ */
+void spl_set_header_raw_atf(struct spl_image_info *spl_image);
+
 /**
  * spl_parse_image_header() - parse the image header and set up info
  *
