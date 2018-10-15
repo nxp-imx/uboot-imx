@@ -65,7 +65,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static struct fsl_esdhc_cfg usdhc_cfg[CONFIG_SYS_FSL_USDHC_NUM] = {
 	{USDHC1_BASE_ADDR, 0, 8},
-#ifndef CONFIG_TARGET_IMX8DX_DDR3_ARM2 
+#ifndef CONFIG_TARGET_IMX8DX_DDR3_ARM2
 	{USDHC2_BASE_ADDR, 0, 4},
 #endif
 };
@@ -102,6 +102,7 @@ void spl_dram_init(void)
 {
     /* do nothing for now */
 }
+
 
 int board_mmc_init(bd_t *bis)
 {

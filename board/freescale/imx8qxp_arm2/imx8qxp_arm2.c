@@ -61,6 +61,74 @@ DECLARE_GLOBAL_DATA_PTR;
 #define UART_PAD_CTRL	((SC_PAD_CONFIG_OUT_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
 						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
 
+#ifdef CONFIG_NAND_MXS
+static iomux_cfg_t gpmi_nand_pads[] = {
+	SC_P_EMMC0_CLK | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA0 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA1 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA2 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA3 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA4 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA5 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA6 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA7 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_STROBE | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_RESET_B | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_USDHC1_CMD | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_USDHC1_DATA2 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_USDHC1_DATA3 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_USDHC1_DATA0 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+
+	/* i.MX8QXP NAND use nand_re_dqs_pins */
+	SC_P_USDHC1_CD_B | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_USDHC1_VSELECT | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+
+};
+
+static void setup_iomux_gpmi_nand(void)
+{
+	imx8_iomux_setup_multiple_pads(gpmi_nand_pads, ARRAY_SIZE(gpmi_nand_pads));
+}
+
+static void imx8qxp_gpmi_nand_initialize(void)
+{
+	int ret;
+#ifdef CONFIG_SPL_BUILD
+	sc_ipc_t ipcHndl = 0;
+
+	ipcHndl = gd->arch.ipc_channel_handle;
+
+	ret = sc_pm_set_resource_power_mode(ipcHndl, SC_R_DMA_4_CH0, SC_PM_PW_MODE_ON);
+                        if (ret != SC_ERR_NONE)
+                                return;
+
+
+    ret = sc_pm_set_resource_power_mode(ipcHndl, SC_R_NAND, SC_PM_PW_MODE_ON);
+                        if (ret != SC_ERR_NONE)
+                                return;
+#else
+	struct power_domain pd;
+
+	if (!power_domain_lookup_name("conn_dma4_ch0", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret)
+			printf("conn_dma4_ch0 Power up failed! (error = %d)\n", ret);
+	}
+
+	if (!power_domain_lookup_name("conn_nand", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret)
+			printf("conn_nand Power up failed! (error = %d)\n", ret);
+	}
+#endif
+
+	init_clk_gpmi_nand();
+	setup_iomux_gpmi_nand();
+	mxs_dma_init();
+
+}
+#endif
+
 static iomux_cfg_t uart0_pads[] = {
 	SC_P_UART0_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 	SC_P_UART0_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
@@ -96,6 +164,10 @@ int board_early_init_f(void)
 
 	setup_iomux_uart();
 
+#ifdef CONFIG_NAND_MXS
+	imx8qxp_gpmi_nand_initialize();
+#endif
+
 	return 0;
 }
 
@@ -106,7 +178,7 @@ int board_early_init_f(void)
 #ifndef CONFIG_SPL_BUILD
 static struct fsl_esdhc_cfg usdhc_cfg[CONFIG_SYS_FSL_USDHC_NUM] = {
 	{USDHC1_BASE_ADDR, 0, 8},
-#ifndef CONFIG_TARGET_IMX8DX_DDR3_ARM2 
+#ifndef CONFIG_TARGET_IMX8DX_DDR3_ARM2
 	{USDHC2_BASE_ADDR, 0, 4},
 #endif
 };
@@ -352,59 +424,6 @@ int board_phy_config(struct phy_device *phydev)
 }
 
 
-#ifdef CONFIG_NAND_MXS
-static iomux_cfg_t gpmi_nand_pads[] = {
-	SC_P_EMMC0_CLK | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_EMMC0_DATA0 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_EMMC0_DATA1 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_EMMC0_DATA2 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_EMMC0_DATA3 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_EMMC0_DATA4 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_EMMC0_DATA5 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_EMMC0_DATA6 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_EMMC0_DATA7 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_EMMC0_STROBE | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_EMMC0_RESET_B | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_USDHC1_CMD | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_USDHC1_DATA2 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_USDHC1_DATA3 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_USDHC1_DATA0 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-
-	/* i.MX8QXP NAND use nand_re_dqs_pins */
-	SC_P_USDHC1_CD_B | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-	SC_P_USDHC1_VSELECT | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
-
-};
-
-static void setup_iomux_gpmi_nand(void)
-{
-	imx8_iomux_setup_multiple_pads(gpmi_nand_pads, ARRAY_SIZE(gpmi_nand_pads));
-}
-
-static void imx8qm_gpmi_nand_initialize(void)
-{
-	int ret;
-	struct power_domain pd;
-
-	if (!power_domain_lookup_name("conn_dma4_ch0", &pd)) {
-		ret = power_domain_on(&pd);
-		if (ret)
-			printf("conn_dma4_ch0 Power up failed! (error = %d)\n", ret);
-	}
-
-	if (!power_domain_lookup_name("conn_nand", &pd)) {
-		ret = power_domain_on(&pd);
-		if (ret)
-			printf("conn_nand Power up failed! (error = %d)\n", ret);
-	}
-
-	init_clk_gpmi_nand();
-	setup_iomux_gpmi_nand();
-	mxs_dma_init();
-
-}
-#endif
-
 
 static int setup_fec(int ind)
 {
@@ -590,9 +609,6 @@ int board_init(void)
 	setup_fec(CONFIG_FEC_ENET_DEV);
 #endif
 
-#ifdef CONFIG_NAND_MXS
-	imx8qm_gpmi_nand_initialize();
-#endif
 	return 0;
 }
 

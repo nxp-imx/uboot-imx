@@ -13,15 +13,23 @@
 #include <fdt.h>
 
 #if defined(CONFIG_SPL_NAND_RAW_ONLY)
+uint32_t __weak spl_nand_get_uboot_raw_page(void)
+{
+       return CONFIG_SYS_NAND_U_BOOT_OFFS;
+}
+
 int spl_nand_load_image(struct spl_image_info *spl_image,
 			struct spl_boot_device *bootdev)
 {
 	nand_init();
-
-	nand_spl_load_image(CONFIG_SYS_NAND_U_BOOT_OFFS,
-			    CONFIG_SYS_NAND_U_BOOT_SIZE,
-			    (void *)CONFIG_SYS_NAND_U_BOOT_DST);
+	nand_spl_load_image(spl_nand_get_uboot_raw_page(),
+						CONFIG_SYS_NAND_U_BOOT_SIZE,
+						(void *)CONFIG_SYS_NAND_U_BOOT_DST);
+#if defined(CONFIG_SPL_RAW_IMAGE_ARM_TRUSTED_FIRMWARE)
+	spl_set_header_raw_atf(spl_image);
+#else
 	spl_set_header_raw_uboot(spl_image);
+#endif
 	nand_deselect();
 
 	return 0;

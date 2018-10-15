@@ -10,6 +10,7 @@
 #define CONTAINER_HDR_EMMC_OFFSET 0
 #define CONTAINER_HDR_MMCSD_OFFSET SZ_32K
 #define CONTAINER_HDR_QSPI_OFFSET SZ_4K
+#define CONTAINER_HDR_NAND_OFFSET SZ_64M
 
  struct container_hdr{
 	 uint8_t version;
