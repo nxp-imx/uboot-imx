@@ -122,9 +122,17 @@ static int do_part_dtb(int argc, char * const argv[])
 	int i, ret;
 	u32 *rsrc_data = NULL, *pad_data = NULL;
 	const struct fdt_property *prop;
+	bool init_ignore_domu_power = false;
+	char *tmp;
 	void *fdt;
 
 	ipc_handle = gd->arch.ipc_channel_handle;
+
+	tmp = env_get("domu-init-ignore-poweroff");
+	if (tmp && !strncmp(tmp, "yes", 3)) {
+		init_ignore_domu_power = true;
+		printf("ignore init power off domu power\n");
+	}
 
 	if (argc)
 		fdt = (void *)simple_strtoul(argv[0], NULL, 16);
@@ -201,6 +209,8 @@ static int do_part_dtb(int argc, char * const argv[])
 							debug("power on resource %d, err %d\n", rsrc_data[i], err);
 						break;
 					default:
+						if (init_ignore_domu_power)
+							break;
 						err = sc_pm_set_resource_power_mode(ipc_handle, rsrc_data[i], SC_PM_PW_MODE_OFF);
 						if (err)
 							debug("power off resource %d, err %d\n", rsrc_data[i], err);
