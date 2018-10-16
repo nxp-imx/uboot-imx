@@ -207,6 +207,10 @@
 #define FEC_EXTRA_ENV_SETTINGS	""
 #endif
 
+#ifndef CONFIG_DCU_EXTRA_ENV_SETTINGS
+#define CONFIG_DCU_EXTRA_ENV_SETTINGS	""
+#endif
+
 /*
  * Enable CONFIG_BOARD_USE_RAMFS_IN_NFSBOOT if u-boot should use a ramdisk
  * for nfsbooting.
@@ -223,6 +227,7 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_BOARD_EXTRA_ENV_SETTINGS  \
+	CONFIG_DCU_EXTRA_ENV_SETTINGS   \
 	"ipaddr=10.0.0.100\0" \
 	"serverip=10.0.0.1\0" \
 	"netmask=255.255.255.0\0" \
