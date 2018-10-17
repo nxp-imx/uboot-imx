@@ -55,7 +55,7 @@ int write_sparse_image(struct sparse_storage *info,
 	uint32_t bytes_written = 0;
 	unsigned int chunk;
 	unsigned int offset;
-	unsigned int chunk_data_sz;
+	uint64_t chunk_data_sz;
 	uint32_t *fill_buf = NULL;
 	uint32_t fill_val;
 	sparse_header_t *sparse_header;
@@ -129,7 +129,7 @@ int write_sparse_image(struct sparse_storage *info,
 				 sizeof(chunk_header_t));
 		}
 
-		chunk_data_sz = sparse_header->blk_sz * chunk_header->chunk_sz;
+		chunk_data_sz = (uint64_t)sparse_header->blk_sz * (uint64_t)chunk_header->chunk_sz;
 		blkcnt = chunk_data_sz / info->blksz;
 		switch (chunk_header->chunk_type) {
 		case CHUNK_TYPE_RAW:
