@@ -421,7 +421,6 @@ static int ft_add_optee_node(void *fdt, bd_t *bd)
 	return 0;
 }
 
-#ifdef CONFIG_IMX8MQ
 static int disable_fdt_nodes(void *blob, const char *nodes_path[], int size_array)
 {
 	int i = 0;
@@ -455,6 +454,7 @@ add_status:
 	return 0;
 }
 
+#ifdef CONFIG_IMX8MQ
 bool check_dcss_fused(void)
 {
 	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
@@ -496,45 +496,6 @@ static int disable_dcss_nodes(void *blob)
 	return disable_fdt_nodes(blob, nodes_path, ARRAY_SIZE(nodes_path));
 }
 
-static int disable_vpu_nodes(void *blob)
-{
-	const char *nodes_path[] = {
-		"/vpu@38300000"
-	};
-
-	return disable_fdt_nodes(blob, nodes_path, ARRAY_SIZE(nodes_path));
-}
-
-static int disable_cpu_nodes(void *blob)
-{
-	const char *nodes_path[] = {
-			"/cpus/cpu@2",
-			"/cpus/cpu@3",
-	};
-
-	int i = 0;
-	int rc;
-	int nodeoff;
-
-	for (i = 0; i < ARRAY_SIZE(nodes_path); i++) {
-		nodeoff = fdt_path_offset(blob, nodes_path[i]);
-		if (nodeoff < 0)
-			continue; /* Not found, skip it */
-
-		printf("Found %s node\n", nodes_path[i]);
-
-		rc = fdt_del_node(blob, nodeoff);
-		if (rc < 0) {
-			printf("Unable to delete node %s, err=%s\n",
-				nodes_path[i], fdt_strerror(rc));
-		} else {
-			printf("Delete node %s\n", nodes_path[i]);
-		}
-	}
-
-	return 0;
-}
-
 static int check_mipi_dsi_nodes(void *blob)
 {
 	const char *lcdif_path = "/lcdif@30320000";
@@ -573,6 +534,63 @@ static int check_mipi_dsi_nodes(void *blob)
 
 }
 #endif
+
+int disable_vpu_nodes(void *blob)
+{
+	const char *nodes_path_8mq[] = {
+		"/vpu@38300000"
+	};
+
+	const char *nodes_path_8mm[] = {
+		"/vpu_g1@38300000",
+		"/vpu_g2@38310000",
+		"/vpu_h1@38320000"
+	};
+
+	if (is_imx8mq())
+		return disable_fdt_nodes(blob, nodes_path_8mq, ARRAY_SIZE(nodes_path_8mq));
+	else if (is_imx8mm())
+		return disable_fdt_nodes(blob, nodes_path_8mm, ARRAY_SIZE(nodes_path_8mm));
+	else
+		return -EPERM;
+
+}
+
+static int disable_cpu_nodes(void *blob, u32 disabled_cores)
+{
+	const char *nodes_path[] = {
+			"/cpus/cpu@1",
+			"/cpus/cpu@2",
+			"/cpus/cpu@3",
+	};
+
+	u32 i = 0;
+	int rc;
+	int nodeoff;
+
+	if (disabled_cores > 3)
+		return -EINVAL;
+
+	i = 3 - disabled_cores;
+
+	for (; i < 3; i++) {
+		nodeoff = fdt_path_offset(blob, nodes_path[i]);
+		if (nodeoff < 0)
+			continue; /* Not found, skip it */
+
+		printf("Found %s node\n", nodes_path[i]);
+
+		rc = fdt_del_node(blob, nodeoff);
+		if (rc < 0) {
+			printf("Unable to delete node %s, err=%s\n",
+				nodes_path[i], fdt_strerror(rc));
+		} else {
+			printf("Delete node %s\n", nodes_path[i]);
+		}
+	}
+
+	return 0;
+}
 
 int ft_system_setup(void *blob, bd_t *bd)
 {
@@ -649,8 +667,16 @@ usb_modify_speed:
 	}
 
 	if (is_imx8md())
-		disable_cpu_nodes(blob);
+		disable_cpu_nodes(blob, 2);
 
+#elif defined(CONFIG_IMX8MM)
+	if (is_imx8mml() || is_imx8mmdl() ||  is_imx8mmsl())
+		disable_vpu_nodes(blob);
+
+	if (is_imx8mmd() || is_imx8mmdl())
+		disable_cpu_nodes(blob, 2);
+	else if (is_imx8mms() || is_imx8mmsl())
+		disable_cpu_nodes(blob, 3);
 #endif
 
 	return ft_add_optee_node(blob, bd);
