@@ -33,6 +33,9 @@
 #define CONFIG_FASTBOOT_USB_DEV 0 /* Use OTG port, not typec port */
 
 /* This needs to be stay same in iomem in domu.cfg */
+#ifdef SC_IPC_CH
+#undef SC_IPC_CH
+#endif
 #define SC_IPC_CH			0x5d1d0000
 
 #define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
