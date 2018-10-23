@@ -485,6 +485,14 @@ static int check_mipi_dsi_nodes(void *blob)
 	}
 
 }
+
+void board_quiesce_devices(void)
+{
+#ifdef CONFIG_USB_DWC3
+	if (is_usb_boot())
+		disconnect_from_pc();
+#endif
+}
 #endif
 
 static int disable_vpu_nodes(void *blob)
