@@ -512,6 +512,8 @@ int ehci_hcd_stop(int index)
 	return 0;
 }
 #else
+#define  USB_INIT_UNKNOWN (USB_INIT_DEVICE + 1)
+
 struct ehci_mx6_priv_data {
 	struct ehci_ctrl ctrl;
 	struct usb_ehci *ehci;
@@ -587,7 +589,7 @@ int __weak board_ehci_usb_phy_mode(struct udevice *dev)
 
 static int ehci_usb_phy_mode(struct udevice *dev)
 {
-	struct usb_platdata *plat = dev_get_platdata(dev);
+	struct ehci_mx6_priv_data *priv = dev_get_priv(dev);
 	void *__iomem addr = (void *__iomem)devfdt_get_addr(dev);
 	void *__iomem phy_ctrl, *__iomem phy_status;
 	const void *blob = gd->fdt_blob;
@@ -626,18 +628,18 @@ static int ehci_usb_phy_mode(struct udevice *dev)
 		val = readl(phy_ctrl);
 
 		if (val & USBPHY_CTRL_OTG_ID)
-			plat->init_type = USB_INIT_DEVICE;
+			priv->init_type = USB_INIT_DEVICE;
 		else
-			plat->init_type = USB_INIT_HOST;
+			priv->init_type = USB_INIT_HOST;
 	} else if (is_mx7() || is_imx8mm() || is_imx8mn()) {
 		phy_status = (void __iomem *)(addr +
 					      USBNC_PHY_STATUS_OFFSET);
 		val = readl(phy_status);
 
 		if (val & USBNC_PHYSTATUS_ID_DIG)
-			plat->init_type = USB_INIT_DEVICE;
+			priv->init_type = USB_INIT_DEVICE;
 		else
-			plat->init_type = USB_INIT_HOST;
+			priv->init_type = USB_INIT_HOST;
 	} else {
 		return -EINVAL;
 	}
@@ -648,30 +650,38 @@ static int ehci_usb_phy_mode(struct udevice *dev)
 static int ehci_usb_ofdata_to_platdata(struct udevice *dev)
 {
 	struct usb_platdata *plat = dev_get_platdata(dev);
+	struct ehci_mx6_priv_data *priv = dev_get_priv(dev);
 	enum usb_dr_mode dr_mode;
 	const struct fdt_property *extcon;
 
 	extcon = fdt_get_property(gd->fdt_blob, dev_of_offset(dev),
 			"extcon", NULL);
 	if (extcon) {
-		plat->init_type = board_ehci_usb_phy_mode(dev);
-
-		return 0;
+		priv->init_type = board_ehci_usb_phy_mode(dev);
+		goto check_type;
 	}
 
 	dr_mode = usb_get_dr_mode(dev_of_offset(dev));
 
 	switch (dr_mode) {
 	case USB_DR_MODE_HOST:
-		plat->init_type = USB_INIT_HOST;
+		priv->init_type = USB_INIT_HOST;
 		break;
 	case USB_DR_MODE_PERIPHERAL:
-		plat->init_type = USB_INIT_DEVICE;
+		priv->init_type = USB_INIT_DEVICE;
 		break;
 	case USB_DR_MODE_OTG:
 	case USB_DR_MODE_UNKNOWN:
-		return ehci_usb_phy_mode(dev);
+		priv->init_type = USB_INIT_UNKNOWN;
+		break;
 	};
+
+check_type:
+	if (priv->init_type != USB_INIT_UNKNOWN && priv->init_type != plat->init_type) {
+		debug("Request USB type is %u, board forced type is %u\n",
+			plat->init_type, priv->init_type);
+		return -ENODEV;
+	}
 
 	return 0;
 }
@@ -729,9 +739,9 @@ static int ehci_usb_probe(struct udevice *dev)
 
 	priv->ehci = ehci;
 	priv->portnr = dev->req_seq;
-	priv->init_type = type;
 
-	ret = board_usb_init(priv->portnr, priv->init_type);
+	/* Init usb board level according to the requested init type */
+	ret = board_usb_init(priv->portnr, type);
 	if (ret) {
 		printf("Failed to initialize board for USB\n");
 		return ret;
@@ -747,10 +757,19 @@ static int ehci_usb_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
+	/* If the init_type is unknown due to it is not forced in DTB, we use USB ID to detect */
+	if (priv->init_type == USB_INIT_UNKNOWN) {
+		ret = ehci_usb_phy_mode(dev);
+		if (ret)
+			return ret;
+		if (priv->init_type != type)
+			return -ENODEV;
+	}
+
 #if CONFIG_IS_ENABLED(DM_REGULATOR)
 	if (priv->vbus_supply) {
 		ret = regulator_set_enable(priv->vbus_supply,
-					   (type == USB_INIT_DEVICE) ?
+					   (priv->init_type == USB_INIT_DEVICE) ?
 					   false : true);
 		if (ret) {
 			puts("Error enabling VBUS supply\n");
@@ -777,8 +796,11 @@ static int ehci_usb_probe(struct udevice *dev)
 int ehci_usb_remove(struct udevice *dev)
 {
 	struct ehci_mx6_priv_data *priv = dev_get_priv(dev);
+	struct usb_platdata *plat = dev_get_platdata(dev);
 
 	ehci_deregister(dev);
+
+	plat->init_type = 0; /* Clean the requested usb type to host mode */
 
 	return board_usb_cleanup(dev->req_seq, priv->init_type);
 }
