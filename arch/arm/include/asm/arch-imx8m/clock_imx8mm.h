@@ -464,6 +464,7 @@ struct ccm_reg {
 
 enum dram_pll_out_val {
 	DRAM_PLL_OUT_100M,
+	DRAM_PLL_OUT_167M,
 	DRAM_PLL_OUT_266M,
 	DRAM_PLL_OUT_667M,
 	DRAM_PLL_OUT_400M,

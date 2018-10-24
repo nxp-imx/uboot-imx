@@ -298,6 +298,8 @@ static struct imx_int_pll_rate_table imx8mm_fracpll_tbl[] = {
 	PLL_1443X_RATE(600000000U, 300, 3, 2, 0),
 	PLL_1443X_RATE(594000000U, 99, 1, 2, 0),
 	PLL_1443X_RATE(400000000U, 300, 9, 1, 0),
+	PLL_1443X_RATE(266666667U, 400, 9, 2, 0),
+	PLL_1443X_RATE(167000000U, 334, 3, 4, 0),
 	PLL_1443X_RATE(100000000U, 300, 9, 3, 0),
 };
 
@@ -396,6 +398,12 @@ void dram_pll_init(enum dram_pll_out_val pll_val)
 	switch (pll_val) {
 	case DRAM_PLL_OUT_100M:
 		freq = 100000000UL;
+		break;
+	case DRAM_PLL_OUT_167M:
+		freq = 167000000UL;
+		break;
+	case DRAM_PLL_OUT_266M:
+		freq = 266666667UL;
 		break;
 	case DRAM_PLL_OUT_667M:
 		freq = 667000000UL;
