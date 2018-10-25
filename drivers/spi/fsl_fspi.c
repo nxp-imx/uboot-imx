@@ -1375,21 +1375,11 @@ static int fsl_fspi_claim_bus(struct udevice *dev)
 	priv->cur_amba_base =
 		priv->amba_base[0] + FSL_FSPI_FLASH_SIZE * slave_plat->cs;
 
-	fspi_module_disable(priv, 0);
-
 	return 0;
 }
 
 static int fsl_fspi_release_bus(struct udevice *dev)
 {
-	struct fsl_fspi_priv *priv;
-	struct udevice *bus;
-
-	bus = dev->parent;
-	priv = dev_get_priv(bus);
-
-	fspi_module_disable(priv, 1);
-
 	return 0;
 }
 
