@@ -33,6 +33,10 @@
 #include "avb_util.h"
 #include "avb_vbmeta_image.h"
 #include "avb_version.h"
+#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
+#include "trusty/hwcrypto.h"
+#include <memalign.h>
+#endif
 
 /* Maximum number of partitions that can be loaded with avb_slot_verify(). */
 #define MAX_NUMBER_OF_LOADED_PARTITIONS 32
@@ -294,11 +298,41 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
   }
 
   if (avb_strcmp((const char*)hash_desc.hash_algorithm, "sha256") == 0) {
+#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
+    /* DMA requires cache aligned input/output buffer */
+    ALLOC_CACHE_ALIGN_BUFFER(uint8_t, hash_out, AVB_SHA256_DIGEST_SIZE);
+    uint32_t round_buf_size = ROUND(hash_desc.salt_len + hash_desc.image_size,
+                                ARCH_DMA_MINALIGN);
+    uint8_t *hash_buf = memalign(ARCH_DMA_MINALIGN, round_buf_size);
+    if (hash_buf == NULL) {
+        avb_error("failed to alloc memory!\n");
+        return AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
+        goto out;
+    }
+
+    avb_memcpy(hash_buf, desc_salt, hash_desc.salt_len);
+    avb_memcpy(hash_buf + hash_desc.salt_len,
+               image_buf, hash_desc.image_size);
+    /* calculate sha256 hash by caam */
+    if (hwcrypto_hash((uint32_t)(ulong)hash_buf,
+                  (hash_desc.salt_len + hash_desc.image_size),
+                  (uint32_t)(ulong)hash_out,
+                  AVB_SHA256_DIGEST_SIZE,
+                  SHA256) != 0) {
+        avb_error("Failed to calculate sha256 hash with caam.\n");
+	ret = AVB_SLOT_VERIFY_RESULT_ERROR_VERIFICATION;
+	goto out;
+    }
+
+    digest = hash_out;
+    free(hash_buf);
+#else
     AvbSHA256Ctx sha256_ctx;
     avb_sha256_init(&sha256_ctx);
     avb_sha256_update(&sha256_ctx, desc_salt, hash_desc.salt_len);
     avb_sha256_update(&sha256_ctx, image_buf, hash_desc.image_size);
     digest = avb_sha256_final(&sha256_ctx);
+#endif
     digest_len = AVB_SHA256_DIGEST_SIZE;
   } else if (avb_strcmp((const char*)hash_desc.hash_algorithm, "sha512") == 0) {
     AvbSHA512Ctx sha512_ctx;
