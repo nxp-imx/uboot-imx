@@ -33,6 +33,7 @@ ccflags-y += -I$(TRUSTY_DIR)/interface/include
 QL_TIPC = .
 obj-y += \
     $(QL_TIPC)/avb.o \
+    $(QL_TIPC)/hwcrypto.o \
     $(QL_TIPC)/keymaster.o \
     $(QL_TIPC)/keymaster_serializable.o \
     $(QL_TIPC)/ipc.o \

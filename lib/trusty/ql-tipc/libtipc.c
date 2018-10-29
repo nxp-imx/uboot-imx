@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 The Android Open Source Project
+ * Copyright NXP 2018
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,6 +24,7 @@
  */
 
 #include <trusty/avb.h>
+#include <trusty/hwcrypto.h>
 #include <trusty/keymaster.h>
 #include <trusty/rpmb.h>
 #include <trusty/trusty_dev.h>
@@ -45,6 +47,7 @@ void trusty_ipc_shutdown(void)
 
     (void)avb_tipc_shutdown(_ipc_dev);
     (void)km_tipc_shutdown(_ipc_dev);
+    (void)hwcrypto_tipc_shutdown(_ipc_dev);
 
     /* shutdown Trusty IPC device */
     (void)trusty_ipc_dev_shutdown(_ipc_dev);
@@ -93,6 +96,13 @@ int trusty_ipc_init(void)
 
     trusty_info("Initializing Trusty Keymaster client\n");
     rc = km_tipc_init(_ipc_dev);
+    if (rc != 0) {
+        trusty_error("Initlializing Trusty Keymaster client failed (%d)\n", rc);
+        return rc;
+    }
+
+    trusty_info("Initializing Trusty Hardware Crypto client\n");
+    rc = hwcrypto_tipc_init(_ipc_dev);
     if (rc != 0) {
         trusty_error("Initlializing Trusty Keymaster client failed (%d)\n", rc);
         return rc;
