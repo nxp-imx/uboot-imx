@@ -216,15 +216,19 @@ static int do_part_dtb(int argc, char * const argv[])
 							debug("power off resource %d, err %d\n", rsrc_data[i], err);
 						break;
 					}
-					err = sc_rm_assign_resource(ipc_handle, pt, rsrc_data[i]);
-					debug("pt %d, resource %d, err %d\n", pt, rsrc_data[i], err);
+					if (sc_rm_is_resource_owned(ipc_handle, rsrc_data[i])) {
+						err = sc_rm_assign_resource(ipc_handle, pt, rsrc_data[i]);
+						debug("pt %d, resource %d, err %d\n", pt, rsrc_data[i], err);
+					}
 				}
 			}
 
 			if (pad_size > 0) {
 				for (i = 0; i < pad_size >> 2; i++) {
-					err = sc_rm_assign_pad(ipc_handle, pt, pad_data[i]);
-					debug("pt %d, pad %d, err %d\n", pt, pad_data[i], err);
+					if (sc_rm_is_pad_owned(ipc_handle, pad_data[i])) {
+						err = sc_rm_assign_pad(ipc_handle, pt, pad_data[i]);
+						debug("pt %d, pad %d, err %d\n", pt, pad_data[i], err);
+					}
 				}
 			}
 
