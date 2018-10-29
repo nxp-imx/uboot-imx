@@ -61,21 +61,33 @@
 #define SC_594MHZ       594000000U   /*!< 594MHz */
 #define SC_625MHZ       625000000U   /*!< 625MHz */
 #define SC_640MHZ       640000000U   /*!< 640MHz */
+#define SC_648MHZ       648000000U   /*!< 648MHz */
 #define SC_650MHZ       650000000U   /*!< 650MHz */
 #define SC_667MHZ       666666667U   /*!< 667MHz */
 #define SC_675MHZ       675000000U   /*!< 675MHz */
 #define SC_700MHZ       700000000U   /*!< 700MHz */
 #define SC_720MHZ       720000000U   /*!< 720MHz */
 #define SC_750MHZ       750000000U   /*!< 750MHz */
+#define SC_753MHZ       753000000U   /*!< 753MHz */
+#define SC_793MHZ       793000000U   /*!< 793MHz */
 #define SC_800MHZ       800000000U   /*!< 800MHz */
 #define SC_850MHZ       850000000U   /*!< 850MHz */
+#define SC_858MHZ       858000000U   /*!< 858MHz */
 #define SC_900MHZ       900000000U   /*!< 900MHz */
+#define SC_953MHZ       953000000U   /*!< 953MHz */
+#define SC_963MHZ       963000000U   /*!< 963MHz */
 #define SC_1000MHZ     1000000000U   /*!< 1GHz */
-#define SC_1056MHZ     1056000000U   /*!< 1.056GHz */
+#define SC_1060MHZ     1060000000U   /*!< 1.06GHz */
+#define SC_1068MHZ     1068000000U   /*!< 1.068GHz */
+#define SC_1121MHZ     1121000000U   /*!< 1.121GHz */
+#define SC_1173MHZ     1173000000U   /*!< 1.173GHz */
 #define SC_1188MHZ     1188000000U   /*!< 1.188GHz */
 #define SC_1260MHZ     1260000000U   /*!< 1.26GHz */
+#define SC_1278MHZ     1278000000U   /*!< 1.278GHz */
 #define SC_1280MHZ     1280000000U   /*!< 1.28GHz */
 #define SC_1300MHZ     1300000000U   /*!< 1.3GHz */
+#define SC_1313MHZ     1313000000U   /*!< 1.313GHz */
+#define SC_1345MHZ     1345000000U   /*!< 1.345GHz */
 #define SC_1400MHZ     1400000000U   /*!< 1.4GHz */
 #define SC_1500MHZ     1500000000U   /*!< 1.5GHz */
 #define SC_1600MHZ     1600000000U   /*!< 1.6GHz */
@@ -112,6 +124,7 @@
 #define SC_864MHZ       864000000U   /*!< 864MHz */
 #define SC_960MHZ       960000000U   /*!< 960MHz */
 #define SC_1056MHZ     1056000000U   /*!< 1056MHz */
+#define SC_1104MHZ     1104000000U   /*!< 1104MHz */
 #define SC_1200MHZ     1200000000U   /*!< 1.2GHz */
 #define SC_1464MHZ     1464000000U   /*!< 1.464GHz */
 #define SC_2400MHZ     2400000000U   /*!< 2.4GHz */
@@ -129,7 +142,6 @@
  * @name Defines for type widths
  */
 /*@{*/
-#define SC_FADDR_W      36U          /*!< Width of sc_faddr_t */
 #define SC_BOOL_W       1U           /*!< Width of sc_bool_t */
 #define SC_ERR_W        4U           /*!< Width of sc_err_t */
 #define SC_RSRC_W       10U          /*!< Width of sc_rsrc_t */
@@ -140,8 +152,8 @@
  * @name Defines for sc_bool_t
  */
 /*@{*/
-#define SC_FALSE        ((sc_bool_t) 0U)    /*!< True */
-#define SC_TRUE         ((sc_bool_t) 1U)    /*!< False */
+#define SC_FALSE        ((sc_bool_t) 0U)    /*!< False */
+#define SC_TRUE         ((sc_bool_t) 1U)    /*!< True */
 /*@}*/
 
 /*!
@@ -490,7 +502,7 @@
 #define SC_R_SAI_2                320U
 #define SC_R_IRQSTR_SCU2          321U
 #define SC_R_IRQSTR_DSP           322U
-#define SC_R_UNUSED5              323U
+#define SC_R_ELCDIF_PLL           323U
 #define SC_R_OCRAM                324U
 #define SC_R_AUDIO_PLL_0          325U
 #define SC_R_PI_0                 326U
@@ -708,7 +720,13 @@
 #define SC_R_VPU_MU_3             538U
 #define SC_R_VPU_ENC_1            539U
 #define SC_R_VPU                  540U
-#define SC_R_LAST                 541U
+#define SC_R_DMA_5_CH0            541U
+#define SC_R_DMA_5_CH1            542U
+#define SC_R_DMA_5_CH2            543U
+#define SC_R_DMA_5_CH3            544U
+#define SC_R_ATTESTATION          545U
+#define SC_R_PERF                 546U
+#define SC_R_LAST                 547U
 #define SC_R_ALL                  ((sc_rsrc_t) UINT16_MAX)  /*!< All resources */
 /*@}*/
 
@@ -763,7 +781,17 @@
 #define SC_C_RST0                       43U
 #define SC_C_RST1                       44U
 #define SC_C_SEL0                       45U
-#define SC_C_LAST                       46U
+#define SC_C_CALIB0                     46U
+#define SC_C_CALIB1                     47U
+#define SC_C_CALIB2                     48U
+#define SC_C_IPG_DEBUG                  49U
+#define SC_C_IPG_DOZE                   50U
+#define SC_C_IPG_WAIT                   51U
+#define SC_C_IPG_STOP                   52U
+#define SC_C_IPG_STOP_MODE              53U
+#define SC_C_IPG_STOP_ACK               54U
+#define SC_C_SYNC_CTRL                  55U
+#define SC_C_LAST                       56U
 
 #define SC_P_ALL        ((sc_pad_t) UINT16_MAX)   /*!< All pads */
 
@@ -794,7 +822,7 @@ typedef uint16_t sc_rsrc_t;
 /*!
  * This type is used to indicate a control.
  */
-typedef uint8_t sc_ctrl_t;
+typedef uint32_t sc_ctrl_t;
 
 /*!
  * This type is used to indicate a pad. Valid values are SoC specific.

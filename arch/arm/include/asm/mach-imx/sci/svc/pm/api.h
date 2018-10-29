@@ -14,6 +14,8 @@
  *
  * Module for the Power Management (PM) service.
  *
+ * @includedoc pm/details.dox
+ *
  * @{
  */
 
@@ -31,10 +33,10 @@
  * @name Defines for type widths
  */
 /*@{*/
-#define SC_PM_POWER_MODE_W      2       /*!< Width of sc_pm_power_mode_t */
-#define SC_PM_CLOCK_MODE_W      3       /*!< Width of sc_pm_clock_mode_t */
-#define SC_PM_RESET_TYPE_W      2       /*!< Width of sc_pm_reset_type_t */
-#define SC_PM_RESET_REASON_W    3       /*!< Width of sc_pm_reset_reason_t */
+#define SC_PM_POWER_MODE_W      2U      /*!< Width of sc_pm_power_mode_t */
+#define SC_PM_CLOCK_MODE_W      3U      /*!< Width of sc_pm_clock_mode_t */
+#define SC_PM_RESET_TYPE_W      2U      /*!< Width of sc_pm_reset_type_t */
+#define SC_PM_RESET_REASON_W    4U      /*!< Width of sc_pm_reset_reason_t */
 /*@}*/
 
 /*!
@@ -47,7 +49,7 @@
  * @name Defines for ALL parameters
  */
 /*@{*/
-#define SC_PM_CLK_ALL   UINT8_MAX       /*!< All clocks */
+#define SC_PM_CLK_ALL   ((sc_pm_clk_t) UINT8_MAX)   /*!< All clocks */
 /*@}*/
 
 /*!
@@ -112,28 +114,22 @@
 /*@}*/
 
 /*!
- * @name Defines for sc_pm_reset_cause_t
- */
-/*@{*/
-#define SC_PM_RESET_CAUSE_TEMP         0U    /*!< Reset due to temp panic alarm */
-#define SC_PM_RESET_CAUSE_FAULT        1U    /*!< Reset due to fault exception */
-#define SC_PM_RESET_CAUSE_IRQ          2U    /*!< Reset due to SCU reset IRQ */
-#define SC_PM_RESET_CAUSE_WDOG         3U    /*!< Reset due to SW WDOG */
-#define SC_PM_RESET_CAUSE_API          4U    /*!< Reset due to pm_reset() or monitor */
-/*@}*/
-
-/*!
  * @name Defines for sc_pm_reset_reason_t
  */
 /*@{*/
 #define SC_PM_RESET_REASON_POR         0U    /*!< Power on reset */
-#define SC_PM_RESET_REASON_WARM        1U    /*!< Warm reset */
+#define SC_PM_RESET_REASON_JTAG        1U    /*!< JTAG reset */
 #define SC_PM_RESET_REASON_SW          2U    /*!< Software reset */
-#define SC_PM_RESET_REASON_WDOG        3U    /*!< Watchdog reset */
-#define SC_PM_RESET_REASON_LOCKUP      4U    /*!< Lockup reset */
-#define SC_PM_RESET_REASON_TAMPER      5U    /*!< Tamper reset */
-#define SC_PM_RESET_REASON_TEMP        6U    /*!< Temp reset */
-#define SC_PM_RESET_REASON_LOW_VOLT    7U    /*!< Low voltage reset */
+#define SC_PM_RESET_REASON_WDOG        3U    /*!< Partition watchdog reset */
+#define SC_PM_RESET_REASON_LOCKUP      4U    /*!< SCU lockup reset */
+#define SC_PM_RESET_REASON_SNVS        5U    /*!< SNVS reset */
+#define SC_PM_RESET_REASON_TEMP        6U    /*!< Temp panic reset */
+#define SC_PM_RESET_REASON_MSI         7U    /*!< MSI reset */
+#define SC_PM_RESET_REASON_UECC        8U    /*!< ECC reset */
+#define SC_PM_RESET_REASON_SCFW_WDOG   9U    /*!< SCFW watchdog reset */
+#define SC_PM_RESET_REASON_ROM_WDOG    10U   /*!< SCU ROM watchdog reset */
+#define SC_PM_RESET_REASON_SECO        11U   /*!< SECO reset */
+#define SC_PM_RESET_REASON_SCFW_FAULT  12U   /*!< SCFW fault reset */
 /*@}*/
 
 /*!
@@ -190,11 +186,6 @@ typedef uint32_t sc_pm_clock_rate_t;
  * This type is used to declare a desired reset type.
  */
 typedef uint8_t sc_pm_reset_type_t;
-
-/*!
- * This type is used to declare a desired reset type.
- */
-typedef uint8_t sc_pm_reset_cause;
 
 /*!
  * This type is used to declare a reason for a reset.
@@ -286,6 +277,9 @@ sc_err_t sc_pm_get_sys_power_mode(sc_ipc_t ipc, sc_rm_pt_t pt,
  * - SC_ERR_NOACCESS if caller's partition is not the resource owner
  *   or parent of the owner
  *
+ * Resources must be at SC_PM_PW_MODE_LP mode or higher to access them,
+ * otherwise the master will get a bus error or hang.
+ *
  * This function will record the individual resource power mode
  * and change it if the requested mode is lower than or equal to the
  * partition power mode set with sc_pm_set_partition_power_mode().
@@ -306,6 +300,32 @@ sc_err_t sc_pm_get_sys_power_mode(sc_ipc_t ipc, sc_rm_pt_t pt,
  */
 sc_err_t sc_pm_set_resource_power_mode(sc_ipc_t ipc, sc_rsrc_t resource,
     sc_pm_power_mode_t mode);
+
+/*!
+* This function sets the power mode for all the resources owned
+* by a child partition.
+*
+* @param[in]     ipc         IPC handle
+* @param[in]     pt          handle of child partition
+* @param[in]     mode        power mode to apply
+* @param[in]     exclude     resource to exclude
+*
+* @return Returns an error code (SC_ERR_NONE = success).
+*
+* Return errors:
+* - SC_ERR_PARM if invalid partition or mode,
+* - SC_ERR_NOACCESS if caller's partition is not the parent
+*   of \a pt
+*
+* This functions loops through all the resources owned by \a pt
+* and sets the power mode to \a mode. It will skip setting
+* \a exclude (SC_R_LAST to skip none).
+*
+* This function can only be called by the parent. It is used to
+* implement some aspects of virtualization.
+*/
+sc_err_t sc_pm_set_resource_power_mode_all(sc_ipc_t ipc,
+    sc_rm_pt_t pt, sc_pm_power_mode_t mode, sc_rsrc_t exclude);
 
 /*!
  * This function gets the power mode of a resource.
@@ -576,6 +596,13 @@ sc_err_t sc_pm_reset(sc_ipc_t ipc, sc_pm_reset_type_t type);
  * @param[in]     ipc         IPC handle
  * @param[out]    reason      pointer to return reset reason
  *
+ * This function returns the reason a partition was reset. If the reason
+ * is POR, then the system reset reason will be returned.
+ *
+ * Note depending on the connection of the WDOG_OUT signal and the OTP
+ * programming of the PMIC, some resets may trigger a system POR
+ * and the original reason will be lost.
+ *
  * @return Returns an error code (SC_ERR_NONE = success).
  */
 sc_err_t sc_pm_reset_reason(sc_ipc_t ipc, sc_pm_reset_reason_t *reason);
@@ -596,6 +623,10 @@ sc_err_t sc_pm_reset_reason(sc_ipc_t ipc, sc_pm_reset_reason_t *reason);
  * - SC_ERR_PARM if invalid partition, resource, or addr,
  * - SC_ERR_NOACCESS if caller's partition is not the parent of the
  *   partition to boot
+ *
+ * This must be used to boot a partition. Only a partition booted this
+ * way can be rebooted using the watchdog, sc_pm_boot() or
+ * sc_pm_reboot_partition().
  */
 sc_err_t sc_pm_boot(sc_ipc_t ipc, sc_rm_pt_t pt,
     sc_rsrc_t resource_cpu, sc_faddr_t boot_addr,
@@ -671,9 +702,38 @@ sc_err_t sc_pm_reboot_partition(sc_ipc_t ipc, sc_rm_pt_t pt,
  * - SC_ERR_PARM if invalid resource or address,
  * - SC_ERR_NOACCESS if caller's partition is not the parent of the
  *   resource (CPU) owner
+ *
+ * This function is usually used to start a secondar CPU in the
+ * same partition as the caller.  It is not used to start the first
+ * CPU in a dedicated partition.  That would be started by calling
+ * sc_pm_boot().
+ *
+ * A CPU started with sc_pm_cpu_start() will not restart as a result
+ * of a watchdog event or calling sc_pm_reboot() or sc_pm_reboot_partition().
+ * Those will reboot that partition which will start the CPU started with
+ * sc_pm_boot().
  */
 sc_err_t sc_pm_cpu_start(sc_ipc_t ipc, sc_rsrc_t resource, sc_bool_t enable,
     sc_faddr_t address);
+
+/*!
+ * This function is used to reset a CPU.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     resource    ID of the CPU resource
+ * @param[in]     address     64-bit boot address
+ *
+ * This function does not return anything as the calling core may have been
+ * reset. It can still fail if the resource or address is invalid. It can also
+ * fail if the caller's partition is not the owner of the CPU or not the
+ * parent of the CPU resource owner. Will also fail if the resource is not
+ * powered on. No indication of failure is returned.
+ *
+ * Note this just resets the CPU. None of the peripherals or bus fabric used by
+ * the CPU is reset. State configured in the SCFW is not reset. The SW running
+ * on the core has to understand and deal with this.
+ */
+void sc_pm_cpu_reset(sc_ipc_t ipc, sc_rsrc_t resource, sc_faddr_t address);
 
 /* @} */
 

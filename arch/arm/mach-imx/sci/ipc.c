@@ -114,7 +114,7 @@ void sc_ipc_read(sc_ipc_t ipc, void *data)
 /*--------------------------------------------------------------------------*/
 /* Write a message to an IPC channel                                        */
 /*--------------------------------------------------------------------------*/
-void sc_ipc_write(sc_ipc_t ipc, void *data)
+void sc_ipc_write(sc_ipc_t ipc, const void *data)
 {
     MU_Type *base = (MU_Type*) ipc;
     sc_rpc_msg_t *msg = (sc_rpc_msg_t*) data;

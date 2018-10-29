@@ -50,6 +50,9 @@
  *
  * Note muxing two input pads to the same IP functional signal will
  * result in undefined behavior.
+ *
+ * @includedoc pad/details.dox
+ *
  * @{
  */
 
@@ -67,7 +70,7 @@
  * @name Defines for type widths
  */
 /*@{*/
-#define SC_PAD_MUX_W            3    /*!< Width of mux parameter */
+#define SC_PAD_MUX_W            3U    /*!< Width of mux parameter */
 /*@}*/
 
 /*!

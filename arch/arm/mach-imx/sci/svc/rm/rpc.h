@@ -45,6 +45,7 @@
 #define RM_FUNC_GET_RESOURCE_INFO 16U /*!< Index for rm_get_resource_info() RPC call */
 #define RM_FUNC_MEMREG_ALLOC 17U /*!< Index for rm_memreg_alloc() RPC call */
 #define RM_FUNC_MEMREG_SPLIT 29U /*!< Index for rm_memreg_split() RPC call */
+#define RM_FUNC_MEMREG_FRAG 32U /*!< Index for rm_memreg_frag() RPC call */
 #define RM_FUNC_MEMREG_FREE 18U /*!< Index for rm_memreg_free() RPC call */
 #define RM_FUNC_FIND_MEMREG 30U /*!< Index for rm_find_memreg() RPC call */
 #define RM_FUNC_ASSIGN_MEMREG 19U /*!< Index for rm_assign_memreg() RPC call */
@@ -68,14 +69,6 @@
  * @param[in]     msg         pointer to RPC message
  */
 void rm_dispatch(sc_rm_pt_t caller_pt, sc_rpc_msg_t *msg);
-
-/*!
- * This function translates and dispatches an RM RPC request.
- *
- * @param[in]     ipc         IPC handle
- * @param[in]     msg         pointer to RPC message
- */
-void rm_xlate(sc_ipc_t ipc, sc_rpc_msg_t *msg);
 
 #endif /* SC_RM_RPC_H */
 

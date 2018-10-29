@@ -336,7 +336,7 @@
 #define SC_R_SAI_2                      320
 #define SC_R_IRQSTR_SCU2                321
 #define SC_R_IRQSTR_DSP                 322
-#define SC_R_UNUSED5                    323
+#define SC_R_ELCDIF_PLL                 323
 #define SC_R_OCRAM                      324
 #define SC_R_AUDIO_PLL_0                325
 #define SC_R_PI_0                       326
@@ -554,7 +554,13 @@
 #define SC_R_VPU_MU_3                   538
 #define SC_R_VPU_ENC_1                  539
 #define SC_R_VPU                        540
-#define SC_R_LAST                       541
+#define SC_R_DMA_5_CH0                  541
+#define SC_R_DMA_5_CH1                  542
+#define SC_R_DMA_5_CH2                  543
+#define SC_R_DMA_5_CH3                  544
+#define SC_R_ATTESTATION                545
+#define SC_R_PERF                       546
+#define SC_R_LAST                       547
 
 #endif /* DT_BINDINGS_RSCRC_IMX_H */
 

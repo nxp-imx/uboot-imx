@@ -30,7 +30,7 @@
  * @name Defines for type widths
  */
 /*@{*/
-#define SC_MISC_DMA_GRP_W       5       /*!< Width of sc_misc_dma_group_t */
+#define SC_MISC_DMA_GRP_W       5U      /*!< Width of sc_misc_dma_group_t */
 /*@}*/
 
 /*! Max DMA channel priority group */
@@ -42,15 +42,6 @@
 /*@{*/
 #define SC_MISC_BOOT_STATUS_SUCCESS     0U   /*!< Success */
 #define SC_MISC_BOOT_STATUS_SECURITY    1U   /*!< Security violation */
-/*@}*/
-
-/*!
- * @name Defines for sc_misc_seco_auth_cmd_t
- */
-/*@{*/
-#define SC_MISC_SECO_AUTH_SECO_FW       0U   /*!< SECO Firmware */
-#define SC_MISC_SECO_AUTH_HDMI_TX_FW    1U   /*!< HDMI TX Firmware */
-#define SC_MISC_SECO_AUTH_HDMI_RX_FW    2U   /*!< HDMI RX Firmware */
 /*@}*/
 
 /*!
@@ -69,6 +60,20 @@
 #define SC_MISC_AUTH_CONTAINER          0U   /*!< Authenticate container */
 #define SC_MISC_VERIFY_IMAGE            1U   /*!< Verify image */
 #define SC_MISC_REL_CONTAINER           2U   /*!< Release container */
+#define SC_MISC_SECO_AUTH_SECO_FW       3U   /*!< SECO Firmware */
+#define SC_MISC_SECO_AUTH_HDMI_TX_FW    4U   /*!< HDMI TX Firmware */
+#define SC_MISC_SECO_AUTH_HDMI_RX_FW    5U   /*!< HDMI RX Firmware */
+/*@}*/
+
+/*!
+ * @name Defines for sc_misc_bt_t
+ */
+/*@{*/
+#define SC_MISC_BT_PRIMARY              0U
+#define SC_MISC_BT_SECONDARY            1U
+#define SC_MISC_BT_RECOVERY             2U
+#define SC_MISC_BT_MANUFACTURE          3U
+#define SC_MISC_BT_SERIAL               4U
 /*@}*/
 
 /* Types */
@@ -92,6 +97,11 @@ typedef uint8_t sc_misc_seco_auth_cmd_t;
  * This type is used report boot status.
  */
 typedef uint8_t sc_misc_temp_t;
+
+/*!
+ * This type is used report the boot type.
+ */
+typedef uint8_t sc_misc_bt_t;
 
 /* Functions */
 
@@ -253,8 +263,7 @@ sc_err_t sc_misc_seco_authenticate(sc_ipc_t ipc,
  * Return errors codes:
  * - SC_ERR_UNAVAILABLE if SECO not available
  *
- * Note \a addr must be a pointer into secure RAM. The contents at
- * this location are a signed fuse command message block.
+ * Note \a addr must be a pointer to a signed message block.
  *
  * See the Security Reference Manual (SRM) for more info.
  */
@@ -271,8 +280,7 @@ sc_err_t sc_misc_seco_fuse_write(sc_ipc_t ipc, sc_faddr_t addr);
  * Return errors codes:
  * - SC_ERR_UNAVAILABLE if SECO not available
  *
- * Note \a addr must be a pointer into secure RAM. The contents at
- * this location are a signed fuse command message block.
+ * Note \a addr must be a pointer to a signed message block.
  *
  * See the Security Reference Manual (SRM) for more info.
  */
@@ -282,19 +290,28 @@ sc_err_t sc_misc_seco_enable_debug(sc_ipc_t ipc, sc_faddr_t addr);
  * This function updates the lifecycle of the device.
  *
  * @param[in]     ipc         IPC handle
- * @param[in]     lifecycle   new lifecycle
+ * @param[in]     change      desired lifecycle transistion
  *
  * @return Returns and error code (SC_ERR_NONE = success).
  *
  * Return errors codes:
  * - SC_ERR_UNAVAILABLE if SECO not available
  *
- * See the Security Reference Manual (SRM) for more info.
+ * This message is used for going from Open to NXP Closed to OEM Closed.
+ * Note \a change is NOT the new desired lifecycle. It is a lifecycle
+ * transition as documented in the Security Reference Manual (SRM).
+ *
+ * If any SECO request fails or only succeeds because the part is in an
+ * "OEM open" lifecycle, then a request to transition from "NXP closed"
+ * to "OEM closed" will also fail. For example, booting a signed container
+ * when the OEM SRK is not fused will succeed, but as it is an abnormal
+ * situation, a subsequent request to transition the lifecycle will return
+ * an error.
  */
-sc_err_t sc_misc_seco_forward_lifecycle(sc_ipc_t ipc, uint32_t lifecycle);
+sc_err_t sc_misc_seco_forward_lifecycle(sc_ipc_t ipc, uint32_t change);
 
 /*!
- * This function securely reverses the lifecycle.
+ * This function updates the lifecycle to one of the return lifecycles.
  *
  * @param[in]     ipc         IPC handle
  * @param[in]     addr        address of message block
@@ -304,8 +321,11 @@ sc_err_t sc_misc_seco_forward_lifecycle(sc_ipc_t ipc, uint32_t lifecycle);
  * Return errors codes:
  * - SC_ERR_UNAVAILABLE if SECO not available
  *
- * Note \a addr must be a pointer into secure RAM. The contents at
- * this location are a signed fuse command message block.
+ * Note \a addr must be a pointer to a signed message block.
+ *
+ * To switch back to NXP states (Full Field Return), message must be signed
+ * by NXP SRK. For OEM States (Partial Field Return), must be signed by OEM
+ * SRK.
  *
  * See the Security Reference Manual (SRM) for more info.
  */
@@ -320,6 +340,145 @@ sc_err_t sc_misc_seco_return_lifecycle(sc_ipc_t ipc, sc_faddr_t addr);
  */
 void sc_misc_seco_build_info(sc_ipc_t ipc, uint32_t *version,
     uint32_t *commit);
+
+/*!
+ * This function is used to return SECO chip info.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[out]    lc          pointer to return lifecycle
+ * @param[out]    monotonic   pointer to return monotonic counter
+ * @param[out]    uid_l       pointer to return UID (lower 32 bits)
+ * @param[out]    uid_h       pointer to return UID (upper 32 bits)
+ */
+sc_err_t sc_misc_seco_chip_info(sc_ipc_t ipc, uint16_t *lc,
+    uint16_t *monotonic, uint32_t *uid_l, uint32_t *uid_h);
+
+/*!
+ * This function is used to set the attestation mode. Only the owner of
+ * the SC_R_ATTESTATION resource may make this call.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     mode        mode
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_PARM if \a mode is invalid
+ * - SC_ERR_NOACCESS if SC_R_ATTESTATON not owned by caller
+ * - SC_ERR_UNAVAILABLE if SECO not available
+ *
+ * This is used to set the SECO attestation mode. This can be prover
+ * or verfier. See the Security Reference Manual (SRM) for more on the
+ * suported modes, mode values, and mode behavior.
+ */
+sc_err_t sc_misc_seco_attest_mode(sc_ipc_t ipc, uint32_t mode);
+
+/*!
+ * This function is used to request atestation. Only the owner of
+ * the SC_R_ATTESTATION resource may make this call.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     nonce       unique value
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_NOACCESS if SC_R_ATTESTATON not owned by caller
+ * - SC_ERR_UNAVAILABLE if SECO not available
+ *
+ * This is used to ask SECO to perform an attestation. The result depends
+ * on the attestation mode. After this call, the signature can be
+ * requested or a verify can be requested.
+ *
+ * See the Security Reference Manual (SRM) for more info.
+ */
+sc_err_t sc_misc_seco_attest(sc_ipc_t ipc, uint64_t nonce);
+
+/*!
+ * This function is used to retrieve the attestation public key.
+ * Mode must be verifier. Only the owner of the SC_R_ATTESTATION resource
+ * may make this call.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     addr        address to write response
+ *
+ * Result will be written to \a addr. The \a addr parmater must point
+ * to an address SECO can access. It must be 64-bit aligned. There
+ * should be 96 bytes of space.
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_PARM if \a addr bad or attestation has not been requested
+ * - SC_ERR_NOACCESS if SC_R_ATTESTATON not owned by caller
+ * - SC_ERR_UNAVAILABLE if SECO not available
+ *
+ * See the Security Reference Manual (SRM) for more info.
+ */
+sc_err_t sc_misc_seco_get_attest_pkey(sc_ipc_t ipc, sc_faddr_t addr);
+
+/*!
+ * This function is used to retrieve attestation signature and parameters.
+ * Mode must be provider. Only the owner of the SC_R_ATTESTATION resource
+ * may make this call.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     addr        address to write response
+ *
+ * Result will be written to \a addr. The \a addr parmater must point
+ * to an address SECO can access. It must be 64-bit aligned. There
+ * should be 120 bytes of space.
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_PARM if \a addr bad or attestation has not been requested
+ * - SC_ERR_NOACCESS if SC_R_ATTESTATON not owned by caller
+ * - SC_ERR_UNAVAILABLE if SECO not available
+ *
+ * See the Security Reference Manual (SRM) for more info.
+ */
+sc_err_t sc_misc_seco_get_attest_sign(sc_ipc_t ipc, sc_faddr_t addr);
+
+/*!
+ * This function is used to verify attestation. Mode must be verifier.
+ * Only the owner of the SC_R_ATTESTATION resource may make this call.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     addr        address of signature
+ *
+ * The \a addr parmater must point to an address SECO can access. It must be
+ * 64-bit aligned.
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_PARM if \a addr bad or attestation has not been requested
+ * - SC_ERR_NOACCESS if SC_R_ATTESTATON not owned by caller
+ * - SC_ERR_UNAVAILABLE if SECO not available
+ * - SC_ERR_FAIL if signature doesn't match
+ *
+ * See the Security Reference Manual (SRM) for more info.
+ */
+sc_err_t sc_misc_seco_attest_verify(sc_ipc_t ipc, sc_faddr_t addr);
+
+/*!
+ * This function is used to commit into the fuses any new SRK revocation
+ * and FW version information that have been found in the primary and
+ * secondary containers.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in,out] info        pointer to information type to be committed
+ *
+ * The return \a info will contain what was actually committed.
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors codes:
+ * - SC_ERR_PARM if \a info is invalid
+ * - SC_ERR_UNAVAILABLE if SECO not available
+ */
+sc_err_t sc_misc_seco_commit(sc_ipc_t ipc, uint32_t *info);
 
 /* @} */
 
@@ -452,6 +611,11 @@ sc_err_t sc_misc_otp_fuse_read(sc_ipc_t ipc, uint32_t word, uint32_t *val);
  * @param[in]     word        fuse word index
  * @param[in]     val         fuse write value
  *
+ * The command is passed as is to SECO. SECO uses part of the
+ * \a word parameter to indicate if the fuse should be locked
+ * after programming. See the "Write common fuse" section of
+ * the Security Reference Manual (SRM) for more info.
+ *
  * @return Returns and error code (SC_ERR_NONE = success).
  *
  * Return errors codes:
@@ -495,6 +659,7 @@ sc_err_t sc_misc_set_temp(sc_ipc_t ipc, sc_rsrc_t resource,
  *
  * Return errors codes:
  * - SC_ERR_PARM if parameters invalid
+ * - SC_ERR_BUSY if temp not ready yet (time delay after power on)
  */
 sc_err_t sc_misc_get_temp(sc_ipc_t ipc, sc_rsrc_t resource,
     sc_misc_temp_t temp, int16_t *celsius, int8_t *tenths);
@@ -508,12 +673,35 @@ sc_err_t sc_misc_get_temp(sc_ipc_t ipc, sc_rsrc_t resource,
 void sc_misc_get_boot_dev(sc_ipc_t ipc, sc_rsrc_t *dev);
 
 /*!
+ * This function returns the boot type.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[out]    type        pointer to return boot type
+ *
+ * @return Returns and error code (SC_ERR_NONE = success).
+ *
+ * Return errors code:
+ * - SC_ERR_UNAVAILABLE if type not passed by ROM
+ */
+sc_err_t sc_misc_get_boot_type(sc_ipc_t ipc, sc_misc_bt_t *type);
+
+/*!
  * This function returns the current status of the ON/OFF button.
  *
  * @param[in]     ipc         IPC handle
  * @param[out]    status      pointer to return button status
  */
 void sc_misc_get_button_status(sc_ipc_t ipc, sc_bool_t *status);
+
+/*!
+ * This function returns the ROM patch checksum.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[out]    checksum    pointer to return checksum
+ *
+ * @return Returns and error code (SC_ERR_NONE = success).
+ */
+sc_err_t sc_misc_rompatch_checksum(sc_ipc_t ipc, uint32_t *checksum);
 
 /* @} */
 

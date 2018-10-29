@@ -35,6 +35,13 @@
 #define MISC_FUNC_SECO_FORWARD_LIFECYCLE 22U /*!< Index for misc_seco_forward_lifecycle() RPC call */
 #define MISC_FUNC_SECO_RETURN_LIFECYCLE 23U /*!< Index for misc_seco_return_lifecycle() RPC call */
 #define MISC_FUNC_SECO_BUILD_INFO 24U /*!< Index for misc_seco_build_info() RPC call */
+#define MISC_FUNC_SECO_CHIP_INFO 25U /*!< Index for misc_seco_chip_info() RPC call */
+#define MISC_FUNC_SECO_ATTEST_MODE 27U /*!< Index for misc_seco_attest_mode() RPC call */
+#define MISC_FUNC_SECO_ATTEST 28U /*!< Index for misc_seco_attest() RPC call */
+#define MISC_FUNC_SECO_GET_ATTEST_PKEY 31U /*!< Index for misc_seco_get_attest_pkey() RPC call */
+#define MISC_FUNC_SECO_GET_ATTEST_SIGN 29U /*!< Index for misc_seco_get_attest_sign() RPC call */
+#define MISC_FUNC_SECO_ATTEST_VERIFY 30U /*!< Index for misc_seco_attest_verify() RPC call */
+#define MISC_FUNC_SECO_COMMIT 32U /*!< Index for misc_seco_commit() RPC call */
 #define MISC_FUNC_DEBUG_OUT 10U /*!< Index for misc_debug_out() RPC call */
 #define MISC_FUNC_WAVEFORM_CAPTURE 6U /*!< Index for misc_waveform_capture() RPC call */
 #define MISC_FUNC_BUILD_INFO 15U /*!< Index for misc_build_info() RPC call */
@@ -47,7 +54,9 @@
 #define MISC_FUNC_SET_TEMP 12U /*!< Index for misc_set_temp() RPC call */
 #define MISC_FUNC_GET_TEMP 13U /*!< Index for misc_get_temp() RPC call */
 #define MISC_FUNC_GET_BOOT_DEV 16U /*!< Index for misc_get_boot_dev() RPC call */
+#define MISC_FUNC_GET_BOOT_TYPE 33U /*!< Index for misc_get_boot_type() RPC call */
 #define MISC_FUNC_GET_BUTTON_STATUS 18U /*!< Index for misc_get_button_status() RPC call */
+#define MISC_FUNC_ROMPATCH_CHECKSUM 26U /*!< Index for misc_rompatch_checksum() RPC call */
 /*@}*/
 
 /* Types */
@@ -61,14 +70,6 @@
  * @param[in]     msg         pointer to RPC message
  */
 void misc_dispatch(sc_rm_pt_t caller_pt, sc_rpc_msg_t *msg);
-
-/*!
- * This function translates and dispatches an MISC RPC request.
- *
- * @param[in]     ipc         IPC handle
- * @param[in]     msg         pointer to RPC message
- */
-void misc_xlate(sc_ipc_t ipc, sc_rpc_msg_t *msg);
 
 #endif /* SC_MISC_RPC_H */
 

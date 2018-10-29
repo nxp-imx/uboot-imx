@@ -32,12 +32,12 @@
  * @name Defines for type widths
  */
 /*@{*/
-#define SC_RM_PARTITION_W   5       /*!< Width of sc_rm_pt_t */
-#define SC_RM_MEMREG_W      6       /*!< Width of sc_rm_mr_t */
-#define SC_RM_DID_W         4       /*!< Width of sc_rm_did_t */
-#define SC_RM_SID_W         6       /*!< Width of sc_rm_sid_t */
-#define SC_RM_SPA_W         2       /*!< Width of sc_rm_spa_t */
-#define SC_RM_PERM_W        3       /*!< Width of sc_rm_perm_t */
+#define SC_RM_PARTITION_W   5U      /*!< Width of sc_rm_pt_t */
+#define SC_RM_MEMREG_W      6U      /*!< Width of sc_rm_mr_t */
+#define SC_RM_DID_W         4U      /*!< Width of sc_rm_did_t */
+#define SC_RM_SID_W         6U      /*!< Width of sc_rm_sid_t */
+#define SC_RM_SPA_W         2U      /*!< Width of sc_rm_spa_t */
+#define SC_RM_PERM_W        3U      /*!< Width of sc_rm_perm_t */
 /*@}*/
 
 /*!
@@ -562,6 +562,32 @@ sc_err_t sc_rm_memreg_alloc(sc_ipc_t ipc, sc_rm_mr_t *mr,
  */
 sc_err_t sc_rm_memreg_split(sc_ipc_t ipc, sc_rm_mr_t mr,
     sc_rm_mr_t *mr_ret, sc_faddr_t addr_start, sc_faddr_t addr_end);
+
+/*!
+ * This function requests that the SC fragment a memory region.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[out]    mr_ret      return handle for new region; used for
+ *                            subsequent function calls
+ *                            associated with this region
+ * @param[in]     addr_start  start address of region (physical)
+ * @param[in]     addr_end    end address of region (physical)
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors:
+ * - SC_ERR_LOCKED if caller's partition is locked,
+ * - SC_ERR_PARM if the new memory region spans multiple existing regions,
+ * - SC_ERR_NOACCESS if caller's partition does not own the memory containing
+ *   the new region,
+ * - SC_ERR_UNAVAILABLE if memory region table is full (no more allocation
+ *   space)
+ *
+ * This function finds the memory region containing the address range.
+ * It then splits it as required and returns the extracted region.
+ */
+sc_err_t sc_rm_memreg_frag(sc_ipc_t ipc, sc_rm_mr_t *mr_ret,
+    sc_faddr_t addr_start, sc_faddr_t addr_end);
 
 /*!
  * This function frees a memory region.

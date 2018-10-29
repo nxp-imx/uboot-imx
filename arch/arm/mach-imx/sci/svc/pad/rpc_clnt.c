@@ -34,12 +34,12 @@ sc_err_t sc_pad_set_mux(sc_ipc_t ipc, sc_pad_t pad,
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_SET_MUX;
-    RPC_U16(&msg, 0U) = (uint16_t) pad;
-    RPC_U8(&msg, 2U) = (uint8_t) mux;
-    RPC_U8(&msg, 3U) = (uint8_t) config;
-    RPC_U8(&msg, 4U) = (uint8_t) iso;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_SET_MUX);
+    RPC_U16(&msg, 0U) = U16(pad);
+    RPC_U8(&msg, 2U) = U8(mux);
+    RPC_U8(&msg, 3U) = U8(config);
+    RPC_U8(&msg, 4U) = U8(iso);
     RPC_SIZE(&msg) = 3U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -55,9 +55,9 @@ sc_err_t sc_pad_get_mux(sc_ipc_t ipc, sc_pad_t pad,
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_GET_MUX;
-    RPC_U16(&msg, 0U) = (uint16_t) pad;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_GET_MUX);
+    RPC_U16(&msg, 0U) = U16(pad);
     RPC_SIZE(&msg) = 2U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -87,10 +87,10 @@ sc_err_t sc_pad_set_gp(sc_ipc_t ipc, sc_pad_t pad, uint32_t ctrl)
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_SET_GP;
-    RPC_U32(&msg, 0U) = (uint32_t) ctrl;
-    RPC_U16(&msg, 4U) = (uint16_t) pad;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_SET_GP);
+    RPC_U32(&msg, 0U) = U32(ctrl);
+    RPC_U16(&msg, 4U) = U16(pad);
     RPC_SIZE(&msg) = 3U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -105,9 +105,9 @@ sc_err_t sc_pad_get_gp(sc_ipc_t ipc, sc_pad_t pad, uint32_t *ctrl)
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_GET_GP;
-    RPC_U16(&msg, 0U) = (uint16_t) pad;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_GET_GP);
+    RPC_U16(&msg, 0U) = U16(pad);
     RPC_SIZE(&msg) = 2U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -128,10 +128,10 @@ sc_err_t sc_pad_set_wakeup(sc_ipc_t ipc, sc_pad_t pad,
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_SET_WAKEUP;
-    RPC_U16(&msg, 0U) = (uint16_t) pad;
-    RPC_U8(&msg, 2U) = (uint8_t) wakeup;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_SET_WAKEUP);
+    RPC_U16(&msg, 0U) = U16(pad);
+    RPC_U8(&msg, 2U) = U8(wakeup);
     RPC_SIZE(&msg) = 2U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -147,9 +147,9 @@ sc_err_t sc_pad_get_wakeup(sc_ipc_t ipc, sc_pad_t pad,
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_GET_WAKEUP;
-    RPC_U16(&msg, 0U) = (uint16_t) pad;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_GET_WAKEUP);
+    RPC_U16(&msg, 0U) = U16(pad);
     RPC_SIZE(&msg) = 2U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -171,14 +171,14 @@ sc_err_t sc_pad_set_all(sc_ipc_t ipc, sc_pad_t pad, uint8_t mux,
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_SET_ALL;
-    RPC_U32(&msg, 0U) = (uint32_t) ctrl;
-    RPC_U16(&msg, 4U) = (uint16_t) pad;
-    RPC_U8(&msg, 6U) = (uint8_t) mux;
-    RPC_U8(&msg, 7U) = (uint8_t) config;
-    RPC_U8(&msg, 8U) = (uint8_t) iso;
-    RPC_U8(&msg, 9U) = (uint8_t) wakeup;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_SET_ALL);
+    RPC_U32(&msg, 0U) = U32(ctrl);
+    RPC_U16(&msg, 4U) = U16(pad);
+    RPC_U8(&msg, 6U) = U8(mux);
+    RPC_U8(&msg, 7U) = U8(config);
+    RPC_U8(&msg, 8U) = U8(iso);
+    RPC_U8(&msg, 9U) = U8(wakeup);
     RPC_SIZE(&msg) = 4U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -195,9 +195,9 @@ sc_err_t sc_pad_get_all(sc_ipc_t ipc, sc_pad_t pad, uint8_t *mux,
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_GET_ALL;
-    RPC_U16(&msg, 0U) = (uint16_t) pad;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_GET_ALL);
+    RPC_U16(&msg, 0U) = U16(pad);
     RPC_SIZE(&msg) = 2U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -237,10 +237,10 @@ sc_err_t sc_pad_set(sc_ipc_t ipc, sc_pad_t pad, uint32_t val)
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_SET;
-    RPC_U32(&msg, 0U) = (uint32_t) val;
-    RPC_U16(&msg, 4U) = (uint16_t) pad;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_SET);
+    RPC_U32(&msg, 0U) = U32(val);
+    RPC_U16(&msg, 4U) = U16(pad);
     RPC_SIZE(&msg) = 3U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -255,9 +255,9 @@ sc_err_t sc_pad_get(sc_ipc_t ipc, sc_pad_t pad, uint32_t *val)
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_GET;
-    RPC_U16(&msg, 0U) = (uint16_t) pad;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_GET);
+    RPC_U16(&msg, 0U) = U16(pad);
     RPC_SIZE(&msg) = 2U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -278,11 +278,11 @@ sc_err_t sc_pad_set_gp_28fdsoi(sc_ipc_t ipc, sc_pad_t pad,
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_SET_GP_28FDSOI;
-    RPC_U16(&msg, 0U) = (uint16_t) pad;
-    RPC_U8(&msg, 2U) = (uint8_t) dse;
-    RPC_U8(&msg, 3U) = (uint8_t) ps;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_SET_GP_28FDSOI);
+    RPC_U16(&msg, 0U) = U16(pad);
+    RPC_U8(&msg, 2U) = U8(dse);
+    RPC_U8(&msg, 3U) = U8(ps);
     RPC_SIZE(&msg) = 2U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -298,9 +298,9 @@ sc_err_t sc_pad_get_gp_28fdsoi(sc_ipc_t ipc, sc_pad_t pad,
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_GET_GP_28FDSOI;
-    RPC_U16(&msg, 0U) = (uint16_t) pad;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_GET_GP_28FDSOI);
+    RPC_U16(&msg, 0U) = U16(pad);
     RPC_SIZE(&msg) = 2U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -327,14 +327,14 @@ sc_err_t sc_pad_set_gp_28fdsoi_hsic(sc_ipc_t ipc, sc_pad_t pad,
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_SET_GP_28FDSOI_HSIC;
-    RPC_U16(&msg, 0U) = (uint16_t) pad;
-    RPC_U8(&msg, 2U) = (uint8_t) dse;
-    RPC_U8(&msg, 3U) = (uint8_t) pus;
-    RPC_U8(&msg, 4U) = (uint8_t) hys;
-    RPC_U8(&msg, 5U) = (uint8_t) pke;
-    RPC_U8(&msg, 6U) = (uint8_t) pue;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_SET_GP_28FDSOI_HSIC);
+    RPC_U16(&msg, 0U) = U16(pad);
+    RPC_U8(&msg, 2U) = U8(dse);
+    RPC_U8(&msg, 3U) = U8(pus);
+    RPC_U8(&msg, 4U) = B2U8(hys);
+    RPC_U8(&msg, 5U) = B2U8(pke);
+    RPC_U8(&msg, 6U) = B2U8(pue);
     RPC_SIZE(&msg) = 3U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -351,9 +351,9 @@ sc_err_t sc_pad_get_gp_28fdsoi_hsic(sc_ipc_t ipc, sc_pad_t pad,
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_GET_GP_28FDSOI_HSIC;
-    RPC_U16(&msg, 0U) = (uint16_t) pad;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_GET_GP_28FDSOI_HSIC);
+    RPC_U16(&msg, 0U) = U16(pad);
     RPC_SIZE(&msg) = 2U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -371,17 +371,17 @@ sc_err_t sc_pad_get_gp_28fdsoi_hsic(sc_ipc_t ipc, sc_pad_t pad,
 
     if (hys != NULL)
     {
-        *hys = RPC_U8(&msg, 2U);
+        *hys = U2B(RPC_U8(&msg, 2U));
     }
 
     if (pke != NULL)
     {
-        *pke = RPC_U8(&msg, 3U);
+        *pke = U2B(RPC_U8(&msg, 3U));
     }
 
     if (pue != NULL)
     {
-        *pue = RPC_U8(&msg, 4U);
+        *pue = U2B(RPC_U8(&msg, 4U));
     }
 
     return (sc_err_t) result;
@@ -395,15 +395,15 @@ sc_err_t sc_pad_set_gp_28fdsoi_comp(sc_ipc_t ipc, sc_pad_t pad,
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_SET_GP_28FDSOI_COMP;
-    RPC_U16(&msg, 0U) = (uint16_t) pad;
-    RPC_U8(&msg, 2U) = (uint8_t) compen;
-    RPC_U8(&msg, 3U) = (uint8_t) rasrcp;
-    RPC_U8(&msg, 4U) = (uint8_t) rasrcn;
-    RPC_U8(&msg, 5U) = (uint8_t) fastfrz;
-    RPC_U8(&msg, 6U) = (uint8_t) nasrc_sel;
-    RPC_U8(&msg, 7U) = (uint8_t) psw_ovr;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_SET_GP_28FDSOI_COMP);
+    RPC_U16(&msg, 0U) = U16(pad);
+    RPC_U8(&msg, 2U) = U8(compen);
+    RPC_U8(&msg, 3U) = U8(rasrcp);
+    RPC_U8(&msg, 4U) = U8(rasrcn);
+    RPC_U8(&msg, 5U) = B2U8(fastfrz);
+    RPC_U8(&msg, 6U) = B2U8(nasrc_sel);
+    RPC_U8(&msg, 7U) = B2U8(psw_ovr);
     RPC_SIZE(&msg) = 3U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -420,9 +420,9 @@ sc_err_t sc_pad_get_gp_28fdsoi_comp(sc_ipc_t ipc, sc_pad_t pad,
     uint8_t result;
 
     RPC_VER(&msg) = SC_RPC_VERSION;
-    RPC_SVC(&msg) = (uint8_t) SC_RPC_SVC_PAD;
-    RPC_FUNC(&msg) = (uint8_t) PAD_FUNC_GET_GP_28FDSOI_COMP;
-    RPC_U16(&msg, 0U) = (uint16_t) pad;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PAD);
+    RPC_FUNC(&msg) = U8(PAD_FUNC_GET_GP_28FDSOI_COMP);
+    RPC_U16(&msg, 0U) = U16(pad);
     RPC_SIZE(&msg) = 2U;
 
     sc_call_rpc(ipc, &msg, SC_FALSE);
@@ -450,22 +450,22 @@ sc_err_t sc_pad_get_gp_28fdsoi_comp(sc_ipc_t ipc, sc_pad_t pad,
 
     if (fastfrz != NULL)
     {
-        *fastfrz = RPC_U8(&msg, 4U);
+        *fastfrz = U2B(RPC_U8(&msg, 4U));
     }
 
     if (nasrc_sel != NULL)
     {
-        *nasrc_sel = RPC_U8(&msg, 5U);
+        *nasrc_sel = U2B(RPC_U8(&msg, 5U));
     }
 
     if (compok != NULL)
     {
-        *compok = RPC_U8(&msg, 6U);
+        *compok = U2B(RPC_U8(&msg, 6U));
     }
 
     if (psw_ovr != NULL)
     {
-        *psw_ovr = RPC_U8(&msg, 7U);
+        *psw_ovr = U2B(RPC_U8(&msg, 7U));
     }
 
     return (sc_err_t) result;

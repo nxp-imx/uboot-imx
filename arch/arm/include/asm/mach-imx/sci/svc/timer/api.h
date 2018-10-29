@@ -32,7 +32,7 @@
  * @name Defines for type widths
  */
 /*@{*/
-#define SC_TIMER_ACTION_W   3       /*!< Width of sc_timer_wdog_action_t */
+#define SC_TIMER_ACTION_W   3U      /*!< Width of sc_timer_wdog_action_t */
 /*@}*/
 
 /*!
@@ -257,7 +257,7 @@ sc_err_t sc_timer_set_rtc_alarm(sc_ipc_t ipc, uint16_t year, uint8_t mon,
     uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
 
 /*!
- * This function sets the RTC alarm.
+ * This function sets the RTC alarm (periodic mode).
  *
  * @param[in]     ipc         IPC handle
  * @param[in]     sec         period in seconds
@@ -270,7 +270,7 @@ sc_err_t sc_timer_set_rtc_alarm(sc_ipc_t ipc, uint16_t year, uint8_t mon,
 sc_err_t sc_timer_set_rtc_periodic_alarm(sc_ipc_t ipc, uint32_t sec);
 
 /*!
- * This function sets the RTC alarm.
+ * This function cancels the RTC alarm.
  *
  * @param[in]     ipc         IPC handle
  *
@@ -297,6 +297,56 @@ sc_err_t sc_timer_cancel_rtc_alarm(sc_ipc_t ipc);
  * @return Returns an error code (SC_ERR_NONE = success).
  */
 sc_err_t sc_timer_set_rtc_calb(sc_ipc_t ipc, int8_t count);
+
+/* @} */
+
+/*!
+ * @name System Counter (SYSCTR) Functions
+ * @{
+ */
+
+/*!
+ * This function sets the SYSCTR alarm.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     ticks       number of 8MHz cycles
+ *
+ * Note this alarm setting clears when the alarm is triggered.
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors:
+ * - SC_ERR_PARM if invalid time/date parameters
+ */
+sc_err_t sc_timer_set_sysctr_alarm(sc_ipc_t ipc, uint64_t ticks);
+
+/*!
+ * This function sets the SYSCTR alarm (periodic mode).
+ *
+ * @param[in]     ipc          IPC handle
+ * @param[in]     ticks        number of 8MHz cycles
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors:
+ * - SC_ERR_PARM if invalid time/date parameters
+ */
+sc_err_t sc_timer_set_sysctr_periodic_alarm(sc_ipc_t ipc,
+    uint64_t ticks);
+
+/*!
+ * This function cancels the SYSCTR alarm.
+ *
+ * @param[in]     ipc         IPC handle
+ *
+ * Note this alarm setting clears when the alarm is triggered.
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors:
+ * - SC_ERR_PARM if invalid time/date parameters
+ */
+sc_err_t sc_timer_cancel_sysctr_alarm(sc_ipc_t ipc);
 
 /* @} */
 

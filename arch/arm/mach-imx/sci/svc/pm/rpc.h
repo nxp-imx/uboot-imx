@@ -28,6 +28,7 @@
 #define PM_FUNC_SET_PARTITION_POWER_MODE 1U /*!< Index for pm_set_partition_power_mode() RPC call */
 #define PM_FUNC_GET_SYS_POWER_MODE 2U /*!< Index for pm_get_sys_power_mode() RPC call */
 #define PM_FUNC_SET_RESOURCE_POWER_MODE 3U /*!< Index for pm_set_resource_power_mode() RPC call */
+#define PM_FUNC_SET_RESOURCE_POWER_MODE_ALL 22U /*!< Index for pm_set_resource_power_mode_all() RPC call */
 #define PM_FUNC_GET_RESOURCE_POWER_MODE 4U /*!< Index for pm_get_resource_power_mode() RPC call */
 #define PM_FUNC_REQ_LOW_POWER_MODE 16U /*!< Index for pm_req_low_power_mode() RPC call */
 #define PM_FUNC_REQ_CPU_LOW_POWER_MODE 20U /*!< Index for pm_req_cpu_low_power_mode() RPC call */
@@ -45,6 +46,7 @@
 #define PM_FUNC_REBOOT 9U /*!< Index for pm_reboot() RPC call */
 #define PM_FUNC_REBOOT_PARTITION 12U /*!< Index for pm_reboot_partition() RPC call */
 #define PM_FUNC_CPU_START 11U /*!< Index for pm_cpu_start() RPC call */
+#define PM_FUNC_CPU_RESET 23U /*!< Index for pm_cpu_reset() RPC call */
 /*@}*/
 
 /* Types */
@@ -58,14 +60,6 @@
  * @param[in]     msg         pointer to RPC message
  */
 void pm_dispatch(sc_rm_pt_t caller_pt, sc_rpc_msg_t *msg);
-
-/*!
- * This function translates and dispatches an PM RPC request.
- *
- * @param[in]     ipc         IPC handle
- * @param[in]     msg         pointer to RPC message
- */
-void pm_xlate(sc_ipc_t ipc, sc_rpc_msg_t *msg);
 
 #endif /* SC_PM_RPC_H */
 

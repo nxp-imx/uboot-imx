@@ -39,6 +39,9 @@
 #define TIMER_FUNC_SET_RTC_PERIODIC_ALARM 14U /*!< Index for timer_set_rtc_periodic_alarm() RPC call */
 #define TIMER_FUNC_CANCEL_RTC_ALARM 15U /*!< Index for timer_cancel_rtc_alarm() RPC call */
 #define TIMER_FUNC_SET_RTC_CALB 11U /*!< Index for timer_set_rtc_calb() RPC call */
+#define TIMER_FUNC_SET_SYSCTR_ALARM 16U /*!< Index for timer_set_sysctr_alarm() RPC call */
+#define TIMER_FUNC_SET_SYSCTR_PERIODIC_ALARM 17U /*!< Index for timer_set_sysctr_periodic_alarm() RPC call */
+#define TIMER_FUNC_CANCEL_SYSCTR_ALARM 18U /*!< Index for timer_cancel_sysctr_alarm() RPC call */
 /*@}*/
 
 /* Types */
@@ -52,14 +55,6 @@
  * @param[in]     msg         pointer to RPC message
  */
 void timer_dispatch(sc_rm_pt_t caller_pt, sc_rpc_msg_t *msg);
-
-/*!
- * This function translates and dispatches an TIMER RPC request.
- *
- * @param[in]     ipc         IPC handle
- * @param[in]     msg         pointer to RPC message
- */
-void timer_xlate(sc_ipc_t ipc, sc_rpc_msg_t *msg);
 
 #endif /* SC_TIMER_RPC_H */
 
