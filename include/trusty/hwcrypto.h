@@ -56,4 +56,14 @@ void hwcrypto_tipc_shutdown(struct trusty_ipc_dev *dev);
 int hwcrypto_hash(uint32_t in_addr, uint32_t in_len, uint32_t out_addr,
                   uint32_t out_len, enum hwcrypto_hash_algo algo);
 
+/*
+ * Send request to secure side to generate blob with caam.
+ * Returns one of trusty_err.
+ *
+ * @plain_pa:   physical start address of the plain blob buffer.
+ * @plain_size: size of the plain blob buffer.
+ * @blob_pa:    physical start address of the generated blob buffer.
+ */
+int hwcrypto_gen_blob(uint32_t plain_pa,
+                      uint32_t plain_size, uint32_t blob_pa);
 #endif /* TRUSTY_HWCRYPTO_H_ */

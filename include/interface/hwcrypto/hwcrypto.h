@@ -37,6 +37,7 @@ enum hwcrypto_command {
     HWCRYPTO_RESP_BIT  = 1,
 
     HWCRYPTO_HASH            = (1 << HWCRYPTO_REQ_SHIFT),
+    HWCRYPTO_ENCAP_BLOB      = (2 << HWCRYPTO_REQ_SHIFT),
 };
 
 /**
@@ -83,5 +84,16 @@ typedef struct hwcrypto_hash_msg {
     uint32_t out_len;
     enum hwcrypto_hash_algo algo;
 } hwcrypto_hash_msg;
+
+/**
+ * @plain_pa:  physical start address of the plain blob buf.
+ * @plain_size:   size of the plain blob.
+ * @blob: physical start addrss of the output buf.
+ */
+typedef struct hwcrypto_blob_msg {
+    uint32_t plain_pa;
+    uint32_t plain_size;
+    uint32_t blob_pa;
+}hwcrypto_blob_msg;
 
 #endif /* TRUSTY_INTERFACE_HWCRYPTO_H_ */

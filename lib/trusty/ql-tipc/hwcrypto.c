@@ -30,6 +30,7 @@
 #include "common.h"
 
 #define LOCAL_LOG 0
+#define CAAM_KB_HEADER_LEN 48
 
 static bool initialized;
 static struct trusty_ipc_chan hwcrypto_chan;
@@ -185,5 +186,35 @@ int hwcrypto_hash(uint32_t in_addr, uint32_t in_len, uint32_t out_addr,
 
     int rc = hwcrypto_do_tipc(HWCRYPTO_HASH, (void*)&req,
                               sizeof(req), NULL, 0, false);
+    return rc;
+}
+
+int hwcrypto_gen_blob(uint32_t plain_pa,
+                      uint32_t plain_size, uint32_t blob_pa)
+{
+    hwcrypto_blob_msg req;
+    unsigned long start, end;
+
+    /* check the address */
+    if (plain_pa == 0 || blob_pa == 0)
+        return TRUSTY_ERR_INVALID_ARGS;
+    /* fill the request buffer */
+    req.plain_pa   = plain_pa;
+    req.plain_size = plain_size;
+    req.blob_pa    = blob_pa;
+
+    /* flush dcache for input buffer */
+    start = (unsigned long)plain_pa & ~(ARCH_DMA_MINALIGN - 1);
+    end   = ALIGN((unsigned long)plain_pa + plain_size, ARCH_DMA_MINALIGN);
+    flush_dcache_range(start, end);
+
+    /* invalidate dcache for output buffer */
+    start = (unsigned long)blob_pa & ~(ARCH_DMA_MINALIGN - 1);
+    end   = ALIGN((unsigned long)blob_pa + plain_size +
+                  CAAM_KB_HEADER_LEN, ARCH_DMA_MINALIGN);
+    invalidate_dcache_range(start, end);
+
+    int rc = hwcrypto_do_tipc(HWCRYPTO_ENCAP_BLOB, (void*)&req,
+		              sizeof(req), NULL, 0, false);
     return rc;
 }
