@@ -126,16 +126,18 @@ static struct mm_region imx8m_mem_map[] = {
 		/* DRAM1 */
 		.virt = 0x40000000UL,
 		.phys = 0x40000000UL,
-		.size = 0xC0000000UL,
+		.size = PHYS_SDRAM_SIZE,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
 			 PTE_BLOCK_OUTER_SHARE
+#if CONFIG_NR_DRAM_BANKS > 1
 	}, {
 		/* DRAM2 */
 		.virt = 0x100000000UL,
 		.phys = 0x100000000UL,
-		.size = 0x140000000UL,
+		.size = PHYS_SDRAM_2_SIZE,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
 			 PTE_BLOCK_OUTER_SHARE
+#endif
 	}, {
 		/* List terminator */
 		0,
@@ -143,6 +145,17 @@ static struct mm_region imx8m_mem_map[] = {
 };
 
 struct mm_region *mem_map = imx8m_mem_map;
+
+void enable_caches(void)
+{
+	/* If OPTEE runs, remove OPTEE memory from MMU table to avoid speculative prefetch */
+	if (rom_pointer[1]) {
+		imx8m_mem_map[5].size -= rom_pointer[1];
+	}
+
+	icache_enable();
+	dcache_enable();
+}
 
 static u32 get_cpu_variant_type(u32 type)
 {
