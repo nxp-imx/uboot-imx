@@ -23,6 +23,7 @@
  * SOFTWARE.
  */
 
+#include <common.h>
 #include <trusty/avb.h>
 #include <trusty/hwcrypto.h>
 #include <trusty/keymaster.h>
@@ -38,6 +39,9 @@ typedef uintptr_t vaddr_t;
 static struct trusty_ipc_dev *_ipc_dev;
 static struct trusty_dev _tdev; /* There should only be one trusty device */
 static void *rpmb_ctx;
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+bool rpmbkey_is_set(void);
+#endif
 
 void rpmb_storage_put_ctx(void *dev);
 void trusty_ipc_shutdown(void)
@@ -84,7 +88,22 @@ int trusty_ipc_init(void)
     if (rc != 0) {
         trusty_error("Initlializing RPMB storage proxy service failed (%d)\n",
                      rc);
-        return rc;
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+        /* check if rpmb key has been fused. */
+        if(rpmbkey_is_set()) {
+            /* Go to hang if the key has been destroyed. */
+            trusty_error("RPMB key was destroyed!\n");
+            hang();
+        } else {
+            /* rpmb key hasn't been set, use software
+             * keymaster and return earily.
+             */
+            env_set("keystore", "software");
+            return rc;
+        }
+#else
+    return rc;
+#endif
     }
 
     trusty_info("Initializing Trusty AVB client\n");

@@ -215,6 +215,6 @@ int hwcrypto_gen_blob(uint32_t plain_pa,
     invalidate_dcache_range(start, end);
 
     int rc = hwcrypto_do_tipc(HWCRYPTO_ENCAP_BLOB, (void*)&req,
-		              sizeof(req), NULL, 0, false);
+                              sizeof(req), NULL, 0, false);
     return rc;
 }

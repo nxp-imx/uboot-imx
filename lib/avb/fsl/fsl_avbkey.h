@@ -82,4 +82,6 @@ int rpmb_read(struct mmc *mmc, uint8_t *buffer,
 int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes,
 		int64_t offset);
 
+int check_rpmb_blob(struct mmc *mmc);
+bool rpmbkey_is_set(void);
 #endif

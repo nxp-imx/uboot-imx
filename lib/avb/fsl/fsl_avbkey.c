@@ -25,6 +25,7 @@
 #include "utils.h"
 #include "debug.h"
 #include <memalign.h>
+#include "trusty/hwcrypto.h"
 
 #define INITFLAG_FUSE_OFFSET 0
 #define INITFLAG_FUSE_MASK 0x00000001
@@ -307,6 +308,92 @@ AvbIOResult fsl_read_permanent_attributes_hash(
 #endif /* CONFIG_AVB_ATX */
 #endif /* CONFIG_SPL_BUILD */
 
+#if defined(AVB_RPMB) || defined(CONFIG_IMX_TRUSTY_OS)
+void fill_secure_keyslot_package(struct keyslot_package *kp) {
+
+	memcpy((void*)CAAM_ARB_BASE_ADDR, kp, sizeof(struct keyslot_package));
+
+	/* invalidate the cache to make sure no critical information left in it */
+	memset(kp, 0, sizeof(struct keyslot_package));
+	invalidate_dcache_range(((ulong)kp) & 0xffffffc0,(((((ulong)kp) +
+				sizeof(struct keyslot_package)) & 0xffffff00) +
+				0x100));
+}
+
+int read_keyslot_package(struct keyslot_package* kp) {
+	char original_part;
+	int blksz;
+	unsigned char* fill = NULL;
+	int ret = 0;
+	/* load tee from boot1 of eMMC. */
+	int mmcc = mmc_get_env_dev();
+	struct blk_desc *dev_desc = NULL;
+
+	struct mmc *mmc;
+	mmc = find_mmc_device(mmcc);
+	if (!mmc) {
+		printf("boota: cannot find '%d' mmc device\n", mmcc);
+		return -1;
+	}
+#ifndef CONFIG_BLK
+	original_part = mmc->block_dev.hwpart;
+	dev_desc = blk_get_dev("mmc", mmcc);
+#else
+	dev_desc = mmc_get_blk_desc(mmc);
+	original_part = dev_desc->hwpart;
+#endif
+	if (NULL == dev_desc) {
+		printf("** Block device MMC %d not supported\n", mmcc);
+		return -1;
+	}
+
+	blksz = dev_desc->blksz;
+	fill = (unsigned char *)memalign(ALIGN_BYTES, blksz);
+
+	/* below was i.MX mmc operation code */
+	if (mmc_init(mmc)) {
+		printf("mmc%d init failed\n", mmcc);
+		ret = -1;
+		goto fail;;
+	}
+
+	mmc_switch_part(mmc, KEYSLOT_HWPARTITION_ID);
+#ifndef CONFIG_BLK
+	mmc->block_dev.hwpart = KEYSLOT_HWPARTITION_ID;
+#else
+	dev_desc->hwpart = KEYSLOT_HWPARTITION_ID;
+#endif
+	if (blk_dread(dev_desc, KEYSLOT_BLKS,
+		    1, fill) != 1) {
+		printf("Failed to read rpmbkeyblob.");
+		ret = -1;
+		goto fail;
+	} else {
+		memcpy(kp, fill, sizeof(struct keyslot_package));
+	}
+
+fail:
+	/* Free allocated memory. */
+	if (fill != NULL)
+		free(fill);
+	/* Return to original partition */
+#ifndef CONFIG_BLK
+	if (mmc->block_dev.hwpart != original_part) {
+		if (mmc_switch_part(mmc, original_part) != 0)
+			return -1;
+		mmc->block_dev.hwpart = original_part;
+	}
+#else
+	if (dev_desc->hwpart != original_part) {
+		if (mmc_switch_part(mmc, original_part) != 0)
+			return -1;
+		dev_desc->hwpart = original_part;
+	}
+#endif
+	return ret;
+}
+#endif
+
 #ifndef AVB_RPMB
 /* ARM64 won't avbkey and rollback index in this stage directly. */
 int avbkey_init(uint8_t *plainkey, uint32_t keylen) {
@@ -477,70 +564,6 @@ int rpmb_init(void) {
 	return 0;
 }
 #endif /* CONFIG_IMX_TRUSTY_OS */
-
-void fill_secure_keyslot_package(struct keyslot_package *kp) {
-
-	memcpy((void*)CAAM_ARB_BASE_ADDR, kp, sizeof(struct keyslot_package));
-
-	/* invalidate the cache to make sure no critical information left in it */
-	memset(kp, 0, sizeof(struct keyslot_package));
-	invalidate_dcache_range(((ulong)kp) & 0xffffffc0,(((((ulong)kp) +
-				sizeof(struct keyslot_package)) & 0xffffff00) +
-				0x100));
-}
-
-int read_keyslot_package(struct keyslot_package* kp) {
-	char original_part;
-	int blksz;
-	unsigned char* fill = NULL;
-	int ret = 0;
-	/* load tee from boot1 of eMMC. */
-	int mmcc = mmc_get_env_dev();
-	struct blk_desc *dev_desc = NULL;
-
-	struct mmc *mmc;
-	mmc = find_mmc_device(mmcc);
-	if (!mmc) {
-		printf("boota: cannot find '%d' mmc device\n", mmcc);
-		return -1;
-	}
-	original_part = mmc->block_dev.hwpart;
-
-	dev_desc = blk_get_dev("mmc", mmcc);
-	if (NULL == dev_desc) {
-		printf("** Block device MMC %d not supported\n", mmcc);
-		return -1;
-	}
-
-	blksz = dev_desc->blksz;
-	fill = (unsigned char *)memalign(ALIGN_BYTES, blksz);
-
-	/* below was i.MX mmc operation code */
-	if (mmc_init(mmc)) {
-		printf("mmc%d init failed\n", mmcc);
-		return -1;
-	}
-
-	mmc_switch_part(mmc, KEYSLOT_HWPARTITION_ID);
-	if (blk_dread(dev_desc, KEYSLOT_BLKS,
-		    1, fill) != 1) {
-		printf("Failed to read rpmbkeyblob.");
-		ret = -1;
-	} else {
-		memcpy(kp, fill, sizeof(struct keyslot_package));
-	}
-
-	/* Return to original partition */
-	if (mmc->block_dev.hwpart != original_part) {
-		if (mmc_switch_part(mmc, original_part) != 0)
-			return -1;
-		mmc->block_dev.hwpart = original_part;
-	}
-	if (fill != NULL)
-		free(fill);
-
-	return ret;
-}
 
 int gen_rpmb_key(struct keyslot_package *kp) {
 	char original_part;
@@ -877,7 +900,6 @@ fail:
 	return ret;
 
 }
-
 #ifndef CONFIG_SPL_BUILD
 
 static int rpmb_key(struct mmc *mmc) {
@@ -1369,15 +1391,113 @@ fail:
 
 #endif /* AVB_RPMB && CONFIG_AVB_ATX */
 
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
+
+extern int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value);
+
+#ifdef CONFIG_SPL_BUILD
+int check_rpmb_blob(struct mmc *mmc)
+{
+	int ret = 0;
+	char original_part;
+	struct keyslot_package kp;
+
+	read_keyslot_package(&kp);
+	if (strcmp(kp.magic, KEYPACK_MAGIC)) {
+		printf("keyslot package magic error, do nothing here!\n");
+		return 0;
+	}
+	/* If keyslot package valid, copy it to secure memory */
+	fill_secure_keyslot_package(&kp);
+
+	/* switch to boot1 partition. */
+	original_part = mmc->block_dev.hwpart;
+	if (mmc_switch_part(mmc, KEYSLOT_HWPARTITION_ID) != 0) {
+		printf("ERROR - can't switch to boot1 partition! \n");
+		ret = -1;
+		goto fail;
+	} else
+		mmc->block_dev.hwpart = KEYSLOT_HWPARTITION_ID;
+	/* write power-on write protection for boot1 partition. */
+	if (mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
+			EXT_CSD_BOOT_WP, BOOT1_PWR_WP)) {
+		printf("ERROR - unable to set power-on write protection!\n");
+		ret = -1;
+		goto fail;
+	}
+fail:
+	/* return to original partition. */
+	if (mmc->block_dev.hwpart != original_part) {
+		if (mmc_switch_part(mmc, original_part) != 0)
+			return -1;
+		mmc->block_dev.hwpart = original_part;
+	}
+
+	return ret;
+}
+#else /* CONFIG_SPL_BUILD */
+bool rpmbkey_is_set(void)
+{
+	int mmcc;
+	bool ret;
+	uint8_t *buf;
+	struct mmc *mmc;
+	char original_part;
+	struct blk_desc *desc = NULL;
+
+	/* Get current mmc device. */
+	mmcc = mmc_get_env_dev();
+	mmc = find_mmc_device(mmcc);
+	if (!mmc) {
+		printf("error - cannot find '%d' mmc device\n", mmcc);
+		return false;
+	}
+
+	desc = mmc_get_blk_desc(mmc);
+	original_part = desc->hwpart;
+
+	/* Switch to the RPMB partition */
+	if (desc->hwpart != MMC_PART_RPMB) {
+		if (mmc_switch_part(mmc, MMC_PART_RPMB) != 0) {
+			printf("ERROR - can't switch to rpmb partition \n");
+			return false;
+		}
+		desc->hwpart = MMC_PART_RPMB;
+	}
+
+	/* Try to read the first one block, return count '1' means the rpmb
+	 * key has been set, otherwise means the key hasn't been set.
+	 */
+	buf = (uint8_t *)memalign(ALIGN_BYTES, desc->blksz);
+	if (mmc_rpmb_read(mmc, buf, 0, 1, NULL) != 1)
+		ret = false;
+	else
+		ret = true;
+
+	/* return to original partition. */
+	if (desc->hwpart != original_part) {
+		if (mmc_switch_part(mmc, original_part) != 0)
+			ret = false;
+		desc->hwpart = original_part;
+	}
+	/* remember to free the buffer */
+	if (buf != NULL)
+		free(buf);
+
+	return ret;
+}
+
 int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size)
 {
 	int ret = 0;
 	int mmcc;
 	struct mmc *mmc;
 	char original_part;
+	struct keyslot_package kp;
 	struct blk_desc *desc = NULL;
-	uint8_t rpmb_key[RPMBKEY_LENGTH];
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, rpmb_key, RPMBKEY_LENGTH);
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, blob,
+                                 RPMBKEY_LENGTH + CAAM_PAD);
 
 	if (memcmp(staged_buf, RPMB_KEY_MAGIC, strlen(RPMB_KEY_MAGIC))) {
 		printf("ERROR - rpmb magic doesn't match!\n");
@@ -1405,7 +1525,8 @@ int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size)
 
 	/* Set rpmb key. */
 	memset(rpmb_key, 0, RPMBKEY_LENGTH);
-	memcpy(rpmb_key, staged_buf + strlen(RPMB_KEY_MAGIC), RPMBKEY_LENGTH);
+	memcpy(rpmb_key,
+		staged_buf + strlen(RPMB_KEY_MAGIC), RPMBKEY_LENGTH);
 
 	if (mmc_rpmb_set_key(mmc, rpmb_key)) {
 		printf("ERROR - Key already programmed ?\n");
@@ -1414,9 +1535,40 @@ int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size)
 	} else
 		printf("RPMB key programed successfully!");
 
-	/* TODO Generate keyblob with CAAM and store it to boot1,
-	 * this requires CAAM is ready for Android Auto.
-	 */
+	/* Generate keyblob with CAAM. */
+	kp.rpmb_keyblob_len = RPMBKEY_LENGTH + CAAM_PAD;
+	strcpy(kp.magic, KEYPACK_MAGIC);
+	if (hwcrypto_gen_blob((uint32_t)(ulong)rpmb_key, RPMBKEY_LENGTH,
+				(uint32_t)(ulong)blob) != 0) {
+		printf("ERROR - generate rpmb key blob error!\n");
+		ret = -1;
+		goto fail;
+	}
+	memcpy(kp.rpmb_keyblob, blob, kp.rpmb_keyblob_len);
+
+	/* Store the rpmb key blob to last block of boot1 partition. */
+	if (mmc_switch_part(mmc, KEYSLOT_HWPARTITION_ID) != 0) {
+		printf("ERROR - can't switch to boot1 partition! \n");
+		ret = -1;
+		goto fail;
+	} else
+		desc->hwpart = KEYSLOT_HWPARTITION_ID;
+	if (blk_dwrite(desc, KEYSLOT_BLKS, 1, (void *)&kp) != 1) {
+		printf("ERROR - failed to write rpmbkeyblob!");
+		ret = -1;
+		goto fail;
+	}
+	/* Set power-on write protection to boot1 partition. */
+	if (mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
+			EXT_CSD_BOOT_WP, BOOT1_PWR_WP)) {
+		printf("ERROR - unable to set power-on write protection!\n");
+		ret = -1;
+		goto fail;
+	}
+
+	/* Erase the key buffer. */
+	memset(rpmb_key, 0, RPMBKEY_LENGTH);
+
 fail:
 	/* Return to original partition */
 	if (desc->hwpart != original_part) {
@@ -1427,4 +1579,5 @@ fail:
 
 	return ret;
 }
+#endif /* CONFIG_SPL_BUILD */
 #endif

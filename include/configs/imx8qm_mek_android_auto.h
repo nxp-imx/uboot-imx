@@ -35,6 +35,9 @@
 #define CONFIG_FASTBOOT_LOCK
 #define FSL_FASTBOOT_FB_DEV "mmc"
 
+#define KEYSLOT_HWPARTITION_ID   2
+#define KEYSLOT_BLKS             0x3FFF
+
 #ifdef CONFIG_SYS_MALLOC_LEN
 #undef CONFIG_SYS_MALLOC_LEN
 #define CONFIG_SYS_MALLOC_LEN           (96 * SZ_1M)
@@ -96,6 +99,10 @@
 
 #if defined(CONFIG_XEN)
 #include "imx8qm_mek_android_auto_xen.h"
+#endif
+
+#ifdef CONFIG_SPL_BUILD
+#undef CONFIG_BLK
 #endif
 
 #define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED

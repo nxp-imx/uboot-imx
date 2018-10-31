@@ -54,6 +54,11 @@ ulong h_spl_load_read(struct spl_load_info *load, ulong sector,
 	return blk_dread(mmc_get_blk_desc(mmc), sector, count, buf);
 }
 
+#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
+/* Pre-declaration of check_rpmb_blob. */
+int check_rpmb_blob(struct mmc *mmc);
+#endif
+
 #ifdef CONFIG_DUAL_BOOTLOADER
 /* Pre-declaration of mmc_load_image_raw_sector_dual_uboot().
  */
@@ -103,6 +108,10 @@ int mmc_load_image_raw_sector(struct spl_image_info *spl_image,
 		return -1;
 	}
 
+	/* Images loaded, now check the rpmb keyblob for Trusty OS. */
+#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
+	ret = check_rpmb_blob(mmc);
+#endif
 	return 0;
 }
 
