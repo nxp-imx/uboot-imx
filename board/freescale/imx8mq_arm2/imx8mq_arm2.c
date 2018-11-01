@@ -108,13 +108,25 @@ int dram_init(void)
 	else
 		gd->ram_size = PHYS_SDRAM_SIZE;
 
+#if CONFIG_NR_DRAM_BANKS > 1
+	gd->ram_size += PHYS_SDRAM_2_SIZE;
+#endif
+
 	return 0;
 }
 
 int dram_init_banksize(void)
 {
 	gd->bd->bi_dram[0].start = PHYS_SDRAM;
-	gd->bd->bi_dram[0].size = PHYS_SDRAM_SIZE;
+	if (rom_pointer[1])
+		gd->bd->bi_dram[0].size = PHYS_SDRAM_SIZE -rom_pointer[1];
+	else
+		gd->bd->bi_dram[0].size = PHYS_SDRAM_SIZE;
+
+#if CONFIG_NR_DRAM_BANKS > 1
+	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
+	gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
+#endif
 
 	return 0;
 }
@@ -280,8 +292,8 @@ int board_late_init(void)
 
 phys_size_t get_effective_memsize(void)
 {
-	if (PHYS_SDRAM_SIZE > 0xc0000000)
-		return 0xc0000000;
-
-	return PHYS_SDRAM_SIZE;
+	if (rom_pointer[1])
+		return (PHYS_SDRAM_SIZE - rom_pointer[1]);
+	else
+		return PHYS_SDRAM_SIZE;
 }

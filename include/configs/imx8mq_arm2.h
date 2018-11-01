@@ -230,7 +230,9 @@
 #ifdef CONFIG_TARGET_IMX8MQ_DDR3L_ARM2
 #define PHYS_SDRAM_SIZE			0x80000000 /* 2GB DDR3L for two rank */
 #else
-#define PHYS_SDRAM_SIZE			0x100000000 /* 4GB DDR4 */
+#define PHYS_SDRAM_SIZE			0xc0000000 /* 3GB */
+#define PHYS_SDRAM_2				0x100000000
+#define PHYS_SDRAM_2_SIZE			0x40000000 /* 1GB */
 #endif
 
 
