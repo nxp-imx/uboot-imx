@@ -46,6 +46,8 @@ struct dram_timing_info {
 	/* ddr phy PIE */
 	struct dram_cfg_param *ddrphy_pie;
 	unsigned int ddrphy_pie_num;
+	/* initialized drate table */
+	unsigned int fsp_table[4];
 };
 
 extern struct dram_timing_info dram_timing;

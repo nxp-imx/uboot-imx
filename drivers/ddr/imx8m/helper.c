@@ -131,6 +131,10 @@ void dram_config_save(struct dram_timing_info *timing_info,
 	saved_timing->ddrphy_trained_csr_num = timing_info->ddrphy_trained_csr_num;
 	saved_timing->ddrphy_pie_num = timing_info->ddrphy_pie_num;
 
+	/* save the fsp table */
+	for (i = 0; i < 4; i++)
+		saved_timing->fsp_table[i] = timing_info->fsp_table[i];
+
 	cfg = (struct dram_cfg_param *)(saved_timing_base + sizeof(*timing_info));
 
 	/* save ddrc config */
