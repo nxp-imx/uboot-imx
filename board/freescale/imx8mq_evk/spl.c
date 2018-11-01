@@ -21,14 +21,19 @@
 #include <asm/mach-imx/mxc_i2c.h>
 #include <fsl_esdhc.h>
 #include <mmc.h>
-#include "ddr/ddr.h"
+#include <asm/arch/imx8m_ddr.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+extern struct dram_timing_info dram_timing_b0;
 
 void spl_dram_init(void)
 {
 	/* ddr init */
-	ddr_init();
+	if ((get_cpu_rev() & 0xfff) == CHIP_REV_2_1)
+		ddr_init(&dram_timing);
+	else
+		ddr_init(&dram_timing_b0);
 }
 
 #define I2C_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE)

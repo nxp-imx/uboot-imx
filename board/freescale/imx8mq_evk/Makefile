@@ -8,5 +8,5 @@ obj-y += imx8mq_evk.o
 
 ifdef CONFIG_SPL_BUILD
 obj-y += spl.o
-obj-y += ddr/ddr_init.o ddr/ddrphy_train.o ddr/helper.o
+obj-$(CONFIG_IMX8M_LPDDR4) += lpddr4_timing.o lpddr4_timing_b0.o
 endif
