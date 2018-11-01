@@ -308,6 +308,14 @@ unsigned long __weak spl_mmc_get_uboot_raw_sector(struct mmc *mmc)
 }
 #endif
 
+#ifdef CONFIG_PARSE_CONTAINER
+int __weak mmc_load_image_parse_container(struct spl_image_info *spl_image,
+				     struct mmc *mmc, unsigned long sector)
+{
+	return -ENODEV;
+};
+#endif
+
 int spl_mmc_load_image(struct spl_image_info *spl_image,
 		       struct spl_boot_device *bootdev)
 {
@@ -372,8 +380,13 @@ int spl_mmc_load_image(struct spl_image_info *spl_image,
 			return err;
 #endif
 #ifdef CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
+#ifdef CONFIG_PARSE_CONTAINER
+		err = mmc_load_image_parse_container(spl_image, mmc,
+				spl_mmc_get_uboot_raw_sector(mmc));
+#else
 		err = mmc_load_image_raw_sector(spl_image, mmc,
 			spl_mmc_get_uboot_raw_sector(mmc));
+#endif
 		if (!err)
 			return err;
 #endif
