@@ -644,7 +644,27 @@ enum sscg_pll_out_val {
 	SSCG_PLL_OUT_800M,
 };
 
-void dram_pll_init(enum sscg_pll_out_val pll_val);
+enum dram_pll_out_val {
+	DRAM_PLL_OUT_100M,
+	DRAM_PLL_OUT_167M,
+	DRAM_PLL_OUT_266M,
+	DRAM_PLL_OUT_667M,
+	DRAM_PLL_OUT_400M,
+	DRAM_PLL_OUT_600M,
+	DRAM_PLL_OUT_700M,
+	DRAM_PLL_OUT_750M,
+	DRAM_PLL_OUT_800M,
+};
+
+enum dram_bypassclk_val {
+	DRAM_BYPASSCLK_100M,
+	DRAM_BYPASSCLK_250M,
+	DRAM_BYPASSCLK_400M,
+};
+
+void dram_pll_init(enum dram_pll_out_val pll_val);
+void dram_enable_bypass(enum dram_bypassclk_val clk_val);
+void dram_disable_bypass(void);
 u32 imx_get_fecclk(void);
 u32 imx_get_uartclk(void);
 int clock_init(void);

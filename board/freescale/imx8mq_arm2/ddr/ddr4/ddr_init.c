@@ -137,7 +137,7 @@ void ddr_init(void)
 	reg32setbit(0x303A00F8,5);
 	reg32_write(SRC_DDRC_RCR_ADDR + 0x04, 0x8F000000);
 
-	dram_pll_init(SSCG_PLL_OUT_600M);
+	dram_pll_init(DRAM_PLL_OUT_600M);
 
 	reg32_write(SRC_DDRC_RCR_ADDR, 0x8F000006);
 
