@@ -461,6 +461,7 @@ static void setup_typec(void)
 }
 #endif
 
+#ifdef CONFIG_USB_CDNS3_GADGET
 static struct cdns3_device cdns3_device_data = {
 	.none_core_base = 0x5B110000,
 	.xhci_base = 0x5B130000,
@@ -476,6 +477,7 @@ int usb_gadget_handle_interrupts(void)
 	cdns3_uboot_handle_interrupt(1);
 	return 0;
 }
+#endif
 
 int board_usb_init(int index, enum usb_init_type init)
 {
@@ -486,6 +488,7 @@ int board_usb_init(int index, enum usb_init_type init)
 #ifdef CONFIG_USB_TCPC
 			ret = tcpc_setup_dfp_mode(&port);
 #endif
+#ifdef CONFIG_USB_CDNS3_GADGET
 		} else {
 			struct power_domain pd;
 			int ret;
@@ -509,6 +512,7 @@ int board_usb_init(int index, enum usb_init_type init)
 
 			ret = cdns3_uboot_init(&cdns3_device_data);
 			printf("%d cdns3_uboot_initmode %d\n", index, ret);
+#endif
 		}
 	}
 
@@ -525,6 +529,7 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 #ifdef CONFIG_USB_TCPC
 			ret = tcpc_disable_src_vbus(&port);
 #endif
+#ifdef CONFIG_USB_CDNS3_GADGET
 		} else {
 			struct power_domain pd;
 			int ret;
@@ -543,6 +548,7 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 				if (ret)
 					printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
 			}
+#endif
 		}
 	}
 
