@@ -73,27 +73,15 @@ static iomux_v3_cfg_t const ecspi1_pads[] = {
 	IMX8MM_PAD_ECSPI1_SS0_GPIO5_IO9 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
-static iomux_v3_cfg_t const ecspi2_pads[] = {
-	IMX8MM_PAD_ECSPI2_SCLK_ECSPI2_SCLK | MUX_PAD_CTRL(SPI_PAD_CTRL),
-	IMX8MM_PAD_ECSPI2_MOSI_ECSPI2_MOSI | MUX_PAD_CTRL(SPI_PAD_CTRL),
-	IMX8MM_PAD_ECSPI2_MISO_ECSPI2_MISO | MUX_PAD_CTRL(SPI_PAD_CTRL),
-	IMX8MM_PAD_ECSPI2_SS0_GPIO5_IO13 | MUX_PAD_CTRL(NO_PAD_CTRL),
-};
-
 static void setup_spi(void)
 {
 	imx_iomux_v3_setup_multiple_pads(ecspi1_pads, ARRAY_SIZE(ecspi1_pads));
-	imx_iomux_v3_setup_multiple_pads(ecspi2_pads, ARRAY_SIZE(ecspi2_pads));
 	gpio_request(IMX_GPIO_NR(5, 9), "ECSPI1 CS");
-	gpio_request(IMX_GPIO_NR(5, 13), "ECSPI2 CS");
 }
 
 int board_spi_cs_gpio(unsigned bus, unsigned cs)
 {
-	if (bus == 0)
-		return IMX_GPIO_NR(5, 9);
-	else
-		return IMX_GPIO_NR(5, 13);
+	return IMX_GPIO_NR(5, 9);
 }
 #endif
 

@@ -265,17 +265,11 @@
 #endif
 
 /* Enable SPI */
-#ifndef CONFIG_NAND_MXS
-#ifndef CONFIG_FSL_FSPI
-#ifdef CONFIG_CMD_SF
-#define CONFIG_SPI_FLASH
-#define CONFIG_SPI_FLASH_STMICRO
-#define CONFIG_MXC_SPI
-#define CONFIG_SF_DEFAULT_BUS  0
-#define CONFIG_SF_DEFAULT_SPEED 20000000
-#define CONFIG_SF_DEFAULT_MODE (SPI_MODE_0)
-#endif
-#endif
+#ifdef CONFIG_MXC_SPI
+#define CONFIG_SF_DEFAULT_BUS           0
+#define CONFIG_SF_DEFAULT_CS            0
+#define CONFIG_SF_DEFAULT_SPEED     8000000
+#define CONFIG_SF_DEFAULT_MODE      (SPI_MODE_0)
 #endif
 
 #ifdef CONFIG_CMD_NAND
