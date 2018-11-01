@@ -519,6 +519,7 @@ struct ehci_mx6_priv_data {
 	struct usb_ehci *ehci;
 	struct udevice *vbus_supply;
 	enum usb_init_type init_type;
+	void *__iomem phy_base;
 	int portnr;
 };
 
@@ -590,11 +591,39 @@ int __weak board_ehci_usb_phy_mode(struct udevice *dev)
 static int ehci_usb_phy_mode(struct udevice *dev)
 {
 	struct ehci_mx6_priv_data *priv = dev_get_priv(dev);
-	void *__iomem addr = (void *__iomem)devfdt_get_addr(dev);
 	void *__iomem phy_ctrl, *__iomem phy_status;
+	u32 val;
+
+	if (is_mx6() || is_mx7ulp() || is_imx8()) {
+		phy_ctrl = (void __iomem *)(priv->phy_base + USBPHY_CTRL);
+		val = readl(phy_ctrl);
+
+		if (val & USBPHY_CTRL_OTG_ID)
+			priv->init_type = USB_INIT_DEVICE;
+		else
+			priv->init_type = USB_INIT_HOST;
+	} else if (is_mx7() || is_imx8mm() || is_imx8mn()) {
+		phy_status = (void __iomem *)(priv->phy_base +
+					      USBNC_PHY_STATUS_OFFSET);
+		val = readl(phy_status);
+
+		if (val & USBNC_PHYSTATUS_ID_DIG)
+			priv->init_type = USB_INIT_DEVICE;
+		else
+			priv->init_type = USB_INIT_HOST;
+	} else {
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int ehci_get_usb_phy(struct udevice *dev)
+{
+	struct ehci_mx6_priv_data *priv = dev_get_priv(dev);
+	void *__iomem addr = (void *__iomem)devfdt_get_addr(dev);
 	const void *blob = gd->fdt_blob;
 	int offset = dev_of_offset(dev), phy_off;
-	u32 val;
 
 	/*
 	 * About fsl,usbphy, Refer to
@@ -623,23 +652,9 @@ static int ehci_usb_phy_mode(struct udevice *dev)
 				return -EINVAL;
 		}
 #endif
-
-		phy_ctrl = (void __iomem *)(addr + USBPHY_CTRL);
-		val = readl(phy_ctrl);
-
-		if (val & USBPHY_CTRL_OTG_ID)
-			priv->init_type = USB_INIT_DEVICE;
-		else
-			priv->init_type = USB_INIT_HOST;
+		priv->phy_base = addr;
 	} else if (is_mx7() || is_imx8mm() || is_imx8mn()) {
-		phy_status = (void __iomem *)(addr +
-					      USBNC_PHY_STATUS_OFFSET);
-		val = readl(phy_status);
-
-		if (val & USBNC_PHYSTATUS_ID_DIG)
-			priv->init_type = USB_INIT_DEVICE;
-		else
-			priv->init_type = USB_INIT_HOST;
+		priv->phy_base = addr;
 	} else {
 		return -EINVAL;
 	}
@@ -753,6 +768,13 @@ static int ehci_usb_probe(struct udevice *dev)
 	if (ret)
 		debug("%s: No vbus supply\n", dev->name);
 #endif
+
+	ret = ehci_get_usb_phy(dev);
+	if (ret) {
+		debug("%s: fail to get USB PHY base\n", dev->name);
+		return ret;
+	}
+
 	ret = ehci_mx6_common_init(ehci, priv->portnr);
 	if (ret)
 		return ret;
