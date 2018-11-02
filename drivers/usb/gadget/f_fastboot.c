@@ -2968,8 +2968,8 @@ static int get_single_var(char *cmd, char *response)
 			return -1;
 		} else {
 			snprintf(response + strlen(response), chars_left,
-				 "0x%lx",
-				 (ulong)fb_part->length * get_block_size());
+				 "0x%llx",
+				 (uint64_t)fb_part->length * get_block_size());
 		}
 	} else if ((str = strstr(cmd, "partition-type:"))) {
 		str +=strlen("partition-type:");
