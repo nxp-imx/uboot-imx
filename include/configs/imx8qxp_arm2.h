@@ -173,6 +173,8 @@
 	"\0" \
 	"initrd_addr=0x83100000\0" \
 	"initrd_high=0xffffffffffffffff\0" \
+	"emmc_dev=0\0" \
+	"sd_dev=1\0" \
 	"mtdparts=mtdparts=gpmi-nand:128m(nandboot),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)\0"
 
 /* Initial environment variables */
