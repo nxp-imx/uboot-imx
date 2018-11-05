@@ -1542,7 +1542,8 @@ void board_fastboot_setup(void)
 		break;
 #endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
 	default:
-		printf("unsupported boot devices\n");
+		if (!env_get("bootcmd"))
+			printf("unsupported boot devices\n");
 		break;
 	}
 
