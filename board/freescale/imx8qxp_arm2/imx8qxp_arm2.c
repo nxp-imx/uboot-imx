@@ -164,8 +164,10 @@ int board_early_init_f(void)
 
 	setup_iomux_uart();
 
+#ifdef CONFIG_SPL_BUILD
 #ifdef CONFIG_NAND_MXS
 	imx8qxp_gpmi_nand_initialize();
+#endif
 #endif
 
 	return 0;
@@ -607,6 +609,10 @@ int board_init(void)
 
 #ifdef CONFIG_FEC_MXC
 	setup_fec(CONFIG_FEC_ENET_DEV);
+#endif
+
+#ifdef CONFIG_NAND_MXS
+	imx8qxp_gpmi_nand_initialize();
 #endif
 
 	return 0;
