@@ -57,6 +57,15 @@ unsigned long  __weak spl_spi_get_uboot_raw_sector(struct spi_flash *flash)
 }
 #endif
 
+#ifdef CONFIG_PARSE_CONTAINER
+int __weak spi_load_image_parse_container(struct spl_image_info *spl_image,
+					  struct spi_flash *flash,
+					  unsigned long offset)
+{
+	return -EINVAL;
+}
+#endif
+
 static ulong spl_spi_fit_read(struct spl_load_info *load, ulong sector,
 			      ulong count, void *buf)
 {
@@ -141,12 +150,18 @@ static int spl_spi_load_image(struct spl_image_info *spl_image,
 						  payload_offs,
 						  header);
 		} else {
+#ifdef CONFIG_PARSE_CONTAINER
+			err = spi_load_image_parse_container(spl_image,
+							     flash,
+							     payload_offs);
+#else
 			err = spl_parse_image_header(spl_image, header);
 			if (err)
 				return err;
 			err = spi_flash_read(flash, payload_offs,
 					     spl_image->size,
 					     (void *)spl_image->load_addr);
+#endif
 		}
 	}
 

@@ -229,3 +229,19 @@ int mmc_load_image_parse_container(struct spl_image_info *spl_image,
 
 	return ret;
 }
+
+int spi_load_image_parse_container(struct spl_image_info *spl_image,
+				   struct spi_flash *flash,
+				   unsigned long offset)
+{
+	int ret = 0;
+
+	current_dev_type = QSPI_DEV;
+	device = flash;
+
+	start_offset = offset;
+
+	ret = read_auth_container(spl_image);
+
+	return ret;
+}
