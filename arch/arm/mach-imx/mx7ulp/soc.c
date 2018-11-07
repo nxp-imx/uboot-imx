@@ -47,7 +47,22 @@ u32 get_cpu_rev(void)
 	/* Check the ROM version for cpu revision */
 	u32 rom_version = readl((void __iomem *)ROM_VERSION_ADDR);
 
-	return (MXC_CPU_MX7ULP << 12) | (rom_version & 0xFF);
+	rom_version &= 0xFF;
+	if (rom_version == CHIP_REV_1_0) {
+		return (MXC_CPU_MX7ULP << 12) | (rom_version);
+	} else {
+		/* Check the "Mirror of JTAG ID" SIM register since RevB */
+		uint32_t id;
+		id = readl(SIM0_RBASE + 0x8c);
+		id = (id >> 28) & 0xFF;
+
+		/* Revision Number ULP1 Version
+		 * 0000				A0
+		 * 0001				B0
+		 * 0010				B1
+		 */
+		return (MXC_CPU_MX7ULP << 12) | (CHIP_REV_2_0 + (id - 1));
+	}
 }
 
 #ifdef CONFIG_REVISION_TAG
