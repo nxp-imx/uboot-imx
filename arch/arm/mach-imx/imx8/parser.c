@@ -55,12 +55,13 @@ static int read(int start, int len, void *load_addr)
 			return -EIO;
 		}
 	}
-#elif CONFIG_SPL_SPI_LOAD
+#endif
+#ifdef CONFIG_SPL_SPI_LOAD
 	if (current_dev_type == QSPI_DEV) {
 		struct spi_flash *flash = (struct spi_flash *)device;
 
-		int ret = spi_flash_read(flash, start,
-					CONTAINER_HDR_ALIGNMENT, load_addr);
+		ret = spi_flash_read(flash, start,
+				     len, load_addr);
 		if (ret != 0) {
 			debug("Read container image from QSPI failed\n");
 			return -EIO;
