@@ -307,6 +307,13 @@ void init_clk_usdhc(u32 index)
 	if (index >= instances)
 		return;
 
+	/* Must disable the clock before set clock parent */
+	err = sc_pm_clock_enable(ipc, usdhcs[index], SC_PM_CLK_PER, false, false);
+	if (err != SC_ERR_NONE) {
+		printf("SDHC_%d per clk enable failed!\n", index);
+		return;
+	}
+
 	/*
 	 * IMX8QXP USDHC_CLK_ROOT default source from DPLL, but this DPLL
 	 * do not stable, will cause usdhc data transfer crc error. So here
