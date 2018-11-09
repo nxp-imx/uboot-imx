@@ -51,7 +51,10 @@ void trusty_ipc_shutdown(void)
 
     (void)avb_tipc_shutdown(_ipc_dev);
     (void)km_tipc_shutdown(_ipc_dev);
+
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
     (void)hwcrypto_tipc_shutdown(_ipc_dev);
+#endif
 
     /* shutdown Trusty IPC device */
     (void)trusty_ipc_dev_shutdown(_ipc_dev);
@@ -119,12 +122,14 @@ int trusty_ipc_init(void)
         return rc;
     }
 
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
     trusty_info("Initializing Trusty Hardware Crypto client\n");
     rc = hwcrypto_tipc_init(_ipc_dev);
     if (rc != 0) {
         trusty_error("Initlializing Trusty Keymaster client failed (%d)\n", rc);
         return rc;
     }
+#endif
 
     return TRUSTY_ERR_NONE;
 }
