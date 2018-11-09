@@ -58,7 +58,6 @@ static ulong __maybe_unused end_addr =
 		CONFIG_ENV_ADDR + CONFIG_ENV_SECT_SIZE - 1;
 
 #ifdef CONFIG_ENV_ADDR_REDUND
-
 static env_t __maybe_unused *flash_addr_new = (env_t *)CONFIG_ENV_ADDR_REDUND;
 
 /* CONFIG_ENV_ADDR_REDUND is supposed to be on sector boundary */
@@ -115,7 +114,7 @@ static int env_flash_init(void)
 }
 #endif
 
-#ifdef CMD_SAVEENV
+#ifdef CONFIG_CMD_SAVEENV
 static int env_flash_save(void)
 {
 	env_t	env_new;
@@ -216,7 +215,7 @@ done:
 
 	return rc;
 }
-#endif /* CMD_SAVEENV */
+#endif /* CONFIG_CMD_SAVEENV */
 
 #else /* ! CONFIG_ENV_ADDR_REDUND */
 
@@ -235,7 +234,7 @@ static int env_flash_init(void)
 }
 #endif
 
-#ifdef CMD_SAVEENV
+#ifdef CONFIG_CMD_SAVEENV
 static int env_flash_save(void)
 {
 	env_t	env_new;
@@ -302,7 +301,7 @@ done:
 	flash_sect_protect(1, (long)flash_addr, end_addr);
 	return rc;
 }
-#endif /* CMD_SAVEENV */
+#endif /* CONFIG_CMD_SAVEENV */
 
 #endif /* CONFIG_ENV_ADDR_REDUND */
 
@@ -360,7 +359,7 @@ U_BOOT_ENV_LOCATION(flash) = {
 #ifdef LOADENV
 	.load		= env_flash_load,
 #endif
-#ifdef CMD_SAVEENV
+#ifdef CONFIG_CMD_SAVEENV
 	.save		= env_save_ptr(env_flash_save),
 #endif
 #ifdef INITENV
