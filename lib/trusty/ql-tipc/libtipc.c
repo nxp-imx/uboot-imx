@@ -95,11 +95,10 @@ int trusty_ipc_init(void)
             trusty_error("RPMB key was destroyed!\n");
             hang();
         } else {
-            /* rpmb key hasn't been set, use software
-             * keymaster and return earily.
-             */
+            /* rpmb key hasn't been set, use software keymaster.
+             * Don't return here because we want to initalize the
+             * hardware crypto service to set rpmb key. */
             env_set("keystore", "software");
-            return rc;
         }
 #else
     return rc;

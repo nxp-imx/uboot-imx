@@ -1533,7 +1533,7 @@ int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size)
 		ret = -1;
 		goto fail;
 	} else
-		printf("RPMB key programed successfully!");
+		printf("RPMB key programed successfully!\n");
 
 	/* Generate keyblob with CAAM. */
 	kp.rpmb_keyblob_len = RPMBKEY_LENGTH + CAAM_PAD;
@@ -1543,7 +1543,9 @@ int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size)
 		printf("ERROR - generate rpmb key blob error!\n");
 		ret = -1;
 		goto fail;
-	}
+	} else
+		printf("RPMB key blob generated!\n");
+
 	memcpy(kp.rpmb_keyblob, blob, kp.rpmb_keyblob_len);
 
 	/* Store the rpmb key blob to last block of boot1 partition. */
