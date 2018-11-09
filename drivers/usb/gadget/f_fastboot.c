@@ -2738,10 +2738,10 @@ static int fastboot_bind(struct usb_configuration *c, struct usb_function *f)
 	f->os_desc_table->if_id = id;
 	INIT_LIST_HEAD(&fb_os_desc.ext_prop);
 	fb_ext_prop.name_len = strlen(fb_ext_prop.name) * 2 + 2;
-	fb_os_desc.ext_prop_len = 14 + fb_ext_prop.name_len;
+	fb_os_desc.ext_prop_len = 10 + fb_ext_prop.name_len;
 	fb_os_desc.ext_prop_count = 1;
-	fb_ext_prop.data_len = strlen(fb_ext_prop.data);
-	fb_os_desc.ext_prop_len += fb_ext_prop.data_len;
+	fb_ext_prop.data_len = strlen(fb_ext_prop.data) * 2 + 2;
+	fb_os_desc.ext_prop_len += fb_ext_prop.data_len + 4;
 	list_add_tail(&fb_ext_prop.entry, &fb_os_desc.ext_prop);
 
 	id = usb_string_id(c->cdev);
