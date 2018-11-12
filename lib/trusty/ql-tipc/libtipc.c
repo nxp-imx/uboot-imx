@@ -106,20 +106,20 @@ int trusty_ipc_init(void)
 #else
     return rc;
 #endif
-    }
+    } else {
+        trusty_info("Initializing Trusty AVB client\n");
+        rc = avb_tipc_init(_ipc_dev);
+        if (rc != 0) {
+            trusty_error("Initlializing Trusty AVB client failed (%d)\n", rc);
+            return rc;
+        }
 
-    trusty_info("Initializing Trusty AVB client\n");
-    rc = avb_tipc_init(_ipc_dev);
-    if (rc != 0) {
-        trusty_error("Initlializing Trusty AVB client failed (%d)\n", rc);
-        return rc;
-    }
-
-    trusty_info("Initializing Trusty Keymaster client\n");
-    rc = km_tipc_init(_ipc_dev);
-    if (rc != 0) {
-        trusty_error("Initlializing Trusty Keymaster client failed (%d)\n", rc);
-        return rc;
+        trusty_info("Initializing Trusty Keymaster client\n");
+        rc = km_tipc_init(_ipc_dev);
+        if (rc != 0) {
+            trusty_error("Initlializing Trusty Keymaster client failed (%d)\n", rc);
+            return rc;
+        }
     }
 
 #ifdef CONFIG_ANDROID_AUTO_SUPPORT
