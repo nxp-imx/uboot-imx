@@ -56,6 +56,7 @@ static void pxp_set_ctrl(struct pxp_config_data *pxp_conf)
 	case FMT_YUYV:
 		fmt_ctrl = BV_PXP_PS_CTRL_FORMAT__UYVY1P422;
 		need_swap = 1;
+		break;
 	default:
 		fmt_ctrl = 0;
 	}
