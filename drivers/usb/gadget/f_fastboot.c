@@ -880,6 +880,11 @@ int write_backup_gpt(void)
 		return -1;
 	}
 	dev_desc = blk_get_dev("mmc", mmc_no);
+	if (dev_desc == NULL) {
+		printf("Can't get Block device MMC %d\n",
+			mmc_no);
+		return -ENODEV;
+	}
 
 	/* write backup get partition */
 	if (write_backup_gpt_partitions(dev_desc, interface.transfer_buffer)) {
