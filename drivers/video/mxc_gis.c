@@ -321,7 +321,7 @@ void mxc_enable_gis(void)
 
 	gis_running = false;
 
-	if (!strcmp(gis_input, "vadc")) {
+	if (gis_input != NULL && !strcmp(gis_input, "vadc")) {
 		printf("gis input --- vadc\n");
 		/* vadc_in 0 */
 		vadc_config(0);
