@@ -3081,7 +3081,7 @@ static int get_partition_base_name(char (*partition_base_name)[16])
 	int n = 0;
 	int count = 0;
 	char *ptr1, *ptr2;
-	char buffer[16];
+	char buffer[20];
 
 	for (n = 0; n < g_pcount; n++) {
 		strcpy(buffer,g_ptable[n].name);
