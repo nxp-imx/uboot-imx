@@ -1380,9 +1380,14 @@ static int _fastboot_parts_load_from_ptable(void)
 		printf("flash target is MMC:%d\n", mmc_no);
 		mmc = find_mmc_device(mmc_no);
 
+		if (mmc == NULL) {
+			printf("invalid mmc device %d\n", mmc_no);
+			return -1;
+		}
+
 		/* Force to init mmc */
 		mmc->has_init = 0;
-		if (mmc && mmc_init(mmc))
+		if (mmc_init(mmc))
 			printf("MMC card init failed!\n");
 
 		dev_desc = blk_get_dev("mmc", mmc_no);
