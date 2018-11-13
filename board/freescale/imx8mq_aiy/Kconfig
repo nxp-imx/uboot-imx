@@ -1,0 +1,14 @@
+if TARGET_IMX8MQ_AIY
+
+config SYS_BOARD
+	default "imx8mq_aiy"
+
+config SYS_VENDOR
+	default "freescale"
+
+config SYS_CONFIG_NAME
+	default "imx8mq_aiy"
+
+source "board/freescale/common/Kconfig"
+
+endif
