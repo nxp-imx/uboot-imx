@@ -690,14 +690,6 @@ int clock_init()
 	clock_enable(CCGR_DDR1, 1);
 
 	/*
-	 * set qspi root
-	 * sys pll1 100M
-	 */
-	clock_enable(CCGR_QSPI, 0);
-	clock_set_target_val(QSPI_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(0));
-	clock_enable(CCGR_QSPI, 1);
-
-	/*
 	 * set rawnand root
 	 * sys pll1 400M
 	 */
@@ -733,10 +725,13 @@ int clock_init()
 
 int set_clk_qspi(void)
 {
-	clock_enable(CCGR_QSPI, 0);
 	/*
-	 * TODO: configure clock
+	 * set qspi root
+	 * sys pll1 100M
 	 */
+	clock_enable(CCGR_QSPI, 0);
+	clock_set_target_val(QSPI_CLK_ROOT, CLK_ROOT_ON |
+			     CLK_ROOT_SOURCE_SEL(7));
 	clock_enable(CCGR_QSPI, 1);
 
 	return 0;
