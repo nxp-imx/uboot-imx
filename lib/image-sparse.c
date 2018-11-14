@@ -197,6 +197,7 @@ int write_sparse_image(struct sparse_storage *info,
 				    __func__);
 				info->mssg("Request would exceed partition size!",
 					   response);
+				free(fill_buf);
 				return -1;
 			}
 
