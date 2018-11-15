@@ -184,6 +184,14 @@ struct dm_serial_ops {
 	 */
 	int (*getc)(struct udevice *dev);
 	/**
+	 * puts() - puts a string
+	 *
+	 * @dev: Device pointer
+	 * @str: string to write
+	 * @return 0 if OK, -ve on error
+	 */
+	int (*puts)(struct udevice *dev, const char *str);
+	/**
 	 * putc() - Write a character
 	 *
 	 * @dev: Device pointer
