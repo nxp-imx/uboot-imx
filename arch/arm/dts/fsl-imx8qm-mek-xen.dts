@@ -70,5 +70,6 @@
 };
 
 &lpuart0 {
-	status = "disabled";
+	compatible = "xen,xen";
+	u-boot,dm-pre-reloc;
 };
