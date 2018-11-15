@@ -188,8 +188,17 @@ static void _serial_putc(struct udevice *dev, char ch)
 
 static void _serial_puts(struct udevice *dev, const char *str)
 {
-	while (*str)
-		_serial_putc(dev, *str++);
+	struct dm_serial_ops *ops = serial_get_ops(dev);
+	int err;
+
+	if (ops->puts) {
+		do {
+			err = ops->puts(dev, str);
+		} while (err == -EAGAIN);
+	} else {
+		while (*str)
+			_serial_putc(dev, *str++);
+	}
 }
 
 static int __serial_getc(struct udevice *dev)
