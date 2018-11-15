@@ -23,7 +23,7 @@
 };
 
 &gpio4 {
-	status = "disabled";
+	status = "okay";
 };
 
 &gpio5 {
