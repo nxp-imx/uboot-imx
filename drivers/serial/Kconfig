@@ -187,6 +187,9 @@ choice
 	depends on DEBUG_UART
 	default DEBUG_UART_NS16550
 
+config DEBUG_UART_XEN
+	bool "debug uart xen"
+
 config DEBUG_UART_ALTERA_JTAGUART
 	bool "Altera JTAG UART"
 	help
@@ -394,6 +397,7 @@ config DEBUG_UART_BASE
 	hex "Base address of UART"
 	depends on DEBUG_UART
 	default 0 if DEBUG_UART_SANDBOX
+	default 0 if DEBUG_UART_XEN
 	help
 	  This is the base address of your UART for memory-mapped UARTs.
 
@@ -404,6 +408,7 @@ config DEBUG_UART_CLOCK
 	int "UART input clock"
 	depends on DEBUG_UART
 	default 0 if DEBUG_UART_SANDBOX
+	default 0 if DEBUG_UART_XEN
 	help
 	  The UART input clock determines the speed of the internal UART
 	  circuitry. The baud rate is derived from this by dividing the input
