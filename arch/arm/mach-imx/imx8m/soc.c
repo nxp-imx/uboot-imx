@@ -61,7 +61,7 @@ void enable_tzc380(void)
 	/* Enable TZASC and lock setting */
 	setbits_le32(&gpr->gpr[10], GPR_TZASC_EN);
 	setbits_le32(&gpr->gpr[10], GPR_TZASC_EN_LOCK);
-#ifdef CONFIG_IMX8MM
+#if defined(CONFIG_IMX8MM) || defined(CONFIG_IMX8MN)
 	setbits_le32(&gpr->gpr[10], GPR_TZASC_SWAP_ID);
 #endif
 
@@ -213,8 +213,11 @@ u32 get_cpu_rev(void)
 
 	reg &= 0xff;
 
-	/* iMX8MM */
-	 if (major_low == 0x41) {
+	/* iMX8MN */
+	 if (major_low == 0x42) {
+		return (MXC_CPU_IMX8MN << 12) | reg;
+	 } else if (major_low == 0x41) {
+		/* iMX8MM */
 		type = get_cpu_variant_type(MXC_CPU_IMX8MM);
 		return (type << 12) | reg;
 	} else {
@@ -495,7 +498,7 @@ void board_quiesce_devices(void)
 }
 #endif
 
-static int disable_vpu_nodes(void *blob)
+int disable_vpu_nodes(void *blob)
 {
 	const char *nodes_path_8mq[] = {
 		"/vpu@38300000"
@@ -516,7 +519,7 @@ static int disable_vpu_nodes(void *blob)
 
 }
 
-static int disable_cpu_nodes(void *blob, u32 disabled_cores)
+int disable_cpu_nodes(void *blob, u32 disabled_cores)
 {
 	const char *nodes_path[] = {
 			"/cpus/cpu@1",

@@ -421,6 +421,11 @@ int intpll_configure(enum pll_clocks pll, ulong freq)
 	};
 
 	switch (freq) {
+	case MHZ(600):
+		/* 24 * 0x12c / 3 / 2 ^ 2 */
+		pll_div_ctl_val = INTPLL_MAIN_DIV_VAL(0x12c) |
+			INTPLL_PRE_DIV_VAL(3) | INTPLL_POST_DIV_VAL(2);
+		break;
 	case MHZ(750):
 		/* 24 * 0xfa / 2 / 2 ^ 2 */
 		pll_div_ctl_val = INTPLL_MAIN_DIV_VAL(0xfa) |
@@ -496,7 +501,12 @@ void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq)
 find:
 	/* Select to video PLL */
 	debug("mxs_set_lcdclk, pre = %d, post = %d\n", pre, post);
+
+#ifdef CONFIG_IMX8MN
+	clock_set_target_val(DISPLAY_PIXEL_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(1) | CLK_ROOT_PRE_DIV(pre - 1) | CLK_ROOT_POST_DIV(post - 1));
+#else
 	clock_set_target_val(LCDIF_PIXEL_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(1) | CLK_ROOT_PRE_DIV(pre - 1) | CLK_ROOT_POST_DIV(post - 1));
+#endif
 
 }
 
@@ -517,8 +527,11 @@ void enable_display_clk(unsigned char enable)
 		clock_set_target_val(MIPI_DSI_CORE_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(1));
 
 		/* 27Mhz MIPI DPHY PLL ref from video PLL */
+#ifdef CONFIG_IMX8MN
+		clock_set_target_val(DISPLAY_DSI_PHY_REF_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(7) |CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV22));
+#else
 		clock_set_target_val(MIPI_DSI_PHY_REF_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(7) |CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV22));
-
+#endif
 		clock_enable(CCGR_DISPMIX, true);
 	} else {
 		clock_enable(CCGR_DISPMIX, false);
@@ -679,7 +692,10 @@ int clock_init()
 			     CLK_ROOT_SOURCE_SEL(1) | \
 			     CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1));
 
-	intpll_configure(ANATOP_SYSTEM_PLL3, MHZ(750));
+	if (is_imx8mn())
+		intpll_configure(ANATOP_SYSTEM_PLL3, MHZ(600));
+	else
+		intpll_configure(ANATOP_SYSTEM_PLL3, MHZ(750));
 	clock_set_target_val(NOC_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(2));
 
 	/* config GIC to sys_pll2_100m */

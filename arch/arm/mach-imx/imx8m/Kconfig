@@ -16,6 +16,10 @@ config IMX8MM
 	bool
 	select IMX8M
 
+config IMX8MN
+	bool
+	select IMX8M
+
 choice
 	prompt  "NXP i.MX8M board select"
 	optional
