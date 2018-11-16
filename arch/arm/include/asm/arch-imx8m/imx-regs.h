@@ -11,7 +11,7 @@
 
 #ifdef CONFIG_IMX8MQ
 #include <asm/arch/imx-regs-imx8mq.h>
-#elif defined(CONFIG_IMX8MM)
+#elif defined(CONFIG_IMX8MM) || defined(CONFIG_IMX8MN)
 #include <asm/arch/imx-regs-imx8mm.h>
 #else
 #error "Error no imx-regs.h"
