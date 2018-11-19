@@ -48,6 +48,7 @@
 		lcdif0 = &lcdif1;
 		lcdif1 = &lcdif2;
 		usb0 = &usbotg1;
+		usb1 = &usbotg2;
 	};
 
 	cpus {

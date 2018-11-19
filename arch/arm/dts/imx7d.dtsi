@@ -45,6 +45,10 @@
 #include "imx7s.dtsi"
 
 / {
+	aliases {
+		usb1 = &usbotg2;
+	};
+
 	cpus {
 		cpu0: cpu@0 {
 			operating-points = <

@@ -43,6 +43,7 @@
 		usbphy0 = &usbphy1;
 		usbphy1 = &usbphy2;
 		usb0 = &usbotg;
+		usb1 = &usbh1;
 	};
 
 	intc: interrupt-controller@00a01000 {
