@@ -45,6 +45,10 @@
 #include <dt-bindings/reset/imx7-reset.h>
 
 / {
+	aliases {
+		usb1 = &usbotg2;
+	};
+
 	cpus {
 		cpu0: cpu@0 {
 			operating-points = <
