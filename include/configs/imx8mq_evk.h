@@ -63,8 +63,12 @@
  */
 #define JAILHOUSE_ENV \
 	"jh_clk= \0 " \
-	"jh_mmcboot=setenv fdt_file fsl-imx8mq-evk-root.dtb; setenv jh_clk clk_ignore_unused; run mmcboot\0 " \
-	"jh_netboot=setenv fdt_file fsl-imx8mq-evk-root.dtb; setenv jh_clk clk_ignore_unused; run netboot\0 "
+	"jh_mmcboot=setenv fdtfile imx8mq-evk-root.dtb; " \
+		"setenv jh_clk clk_ignore_unused; " \
+			   "if run loadimage; then " \
+				   "run mmcboot; " \
+			   "else run jh_netboot; fi; \0" \
+	"jh_netboot=setenv fdtfile imx8mq-evk-root.dtb; setenv jh_clk clk_ignore_unused; run netboot; \0 "
 
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
