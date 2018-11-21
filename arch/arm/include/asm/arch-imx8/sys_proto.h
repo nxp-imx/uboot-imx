@@ -19,4 +19,5 @@ struct pass_over_info_t {
 int print_bootinfo(void);
 int init_otg_power(void);
 void power_off_pd_devices(const char* permanent_on_devices[], int size);
+extern unsigned long rom_pointer[];
 enum boot_device get_boot_device(void);
