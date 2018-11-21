@@ -95,6 +95,7 @@
 #undef CONFIG_USB_FUNCTION_MASS_STORAGE
 
 #ifdef CONFIG_SPL_BUILD
+#define AVB_RPMB
 #undef CONFIG_BLK
 #endif
 
