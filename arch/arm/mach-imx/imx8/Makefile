@@ -5,6 +5,7 @@
 #
 
 obj-y += cpu.o iomux.o fuse.o lpcg.o clock.o
+obj-y += lowlevel_init.o
 obj-y += image.o
 obj-$(CONFIG_SPL_BUILD) += parser.o
 ifneq ($(CONFIG_SPL_BUILD),y)
