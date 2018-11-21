@@ -933,18 +933,6 @@ static void process_flash_mmc(const char *cmdbuf)
 {
 	if (download_bytes) {
 		struct fastboot_ptentry *ptn;
-#if defined(AVB_RPMB) && !defined(CONFIG_ARM64)
-		if (!strcmp_l1(FASTBOOT_PARTITION_AVBKEY, cmdbuf)) {
-			printf("pubkey len %d\n", download_bytes);
-			if (avbkey_init(interface.transfer_buffer, download_bytes) != 0) {
-				fastboot_fail("fail to Write partition");
-			} else {
-				printf("init 'avbkey' DONE!\n");
-				fastboot_okay("OKAY");
-			}
-			return;
-		}
-#endif
 
 		/* Next is the partition name */
 		ptn = fastboot_flash_find_ptn(cmdbuf);

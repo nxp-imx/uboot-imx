@@ -44,6 +44,15 @@ struct bl_rbindex_package {
 #define RPMB_KEY_MAGIC "RPMB"
 #endif
 
+#ifdef CONFIG_AVB_ATX
+#define ATX_FUSE_BANK_NUM  4
+#define ATX_FUSE_BANK_MASK 0xFFFF
+#define ATX_HASH_LENGTH    14
+#endif
+
+#define RESULT_ERROR -1
+#define RESULT_OK     0
+
 struct kblb_tag {
 	uint32_t flag;
 	uint32_t offset;
@@ -59,7 +68,7 @@ struct kblb_hdr {
 	 */
 #if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_SPL_BUILD)
 	kblb_tag_t bootloader_rbk_tags;
-#else
+#endif
 	/* public key keyblb tag */
 	kblb_tag_t pubk_tag;
 	/* vbmeta rollback index keyblb tag */
@@ -67,7 +76,6 @@ struct kblb_hdr {
 #ifdef CONFIG_AVB_ATX
 	/* Android Things key versions rollback index keyblb tag */
 	kblb_tag_t atx_rbk_tags[AVB_MAX_NUMBER_OF_ROLLBACK_INDEX_LOCATIONS];
-#endif
 #endif
 };
 typedef struct kblb_hdr kblb_hdr_t;
@@ -93,4 +101,8 @@ int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes,
 
 int check_rpmb_blob(struct mmc *mmc);
 bool rpmbkey_is_set(void);
+int fsl_fuse_write(const uint32_t *buffer, uint32_t length, uint32_t offset);
+int fsl_fuse_read(uint32_t *buffer, uint32_t length, uint32_t offset);
+int permanent_attributes_sha256_hash(unsigned char* output);
+struct mmc *get_mmc(void);
 #endif
