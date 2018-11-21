@@ -97,16 +97,14 @@ int trusty_ipc_init(void)
             /* Go to hang if the key has been destroyed. */
             trusty_error("RPMB key was destroyed!\n");
             hang();
-        } else {
-            /* rpmb key hasn't been set, use software keymaster.
-             * Don't return here because we want to initalize the
-             * hardware crypto service to set rpmb key. */
-            env_set("keystore", "software");
         }
 #else
     return rc;
 #endif
     } else {
+        /* secure storage service init ok, use trusty backed keystore */
+        env_set("keystore", "trusty");
+
         trusty_info("Initializing Trusty AVB client\n");
         rc = avb_tipc_init(_ipc_dev);
         if (rc != 0) {
