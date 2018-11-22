@@ -185,7 +185,7 @@ static int mmc_load_image_raw_partition(struct spl_image_info *spl_image,
 		err = part_get_info(mmc_get_blk_desc(mmc), type_part, &info);
 		if (err)
 			continue;
-		if (info.sys_ind == 
+		if (info.sys_ind ==
 			CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_PARTITION_TYPE) {
 			partition = type_part;
 			break;
@@ -400,12 +400,10 @@ int spl_mmc_load_image(struct spl_image_info *spl_image,
 #ifdef CONFIG_PARSE_CONTAINER
 		err = mmc_load_image_parse_container(spl_image, mmc,
 				spl_mmc_get_uboot_raw_sector(mmc));
-
-		if (!err)
-			return err;
-#endif
+#else
 		err = mmc_load_image_raw_sector(spl_image, mmc,
 			spl_mmc_get_uboot_raw_sector(mmc));
+#endif
 #endif
 		if (!err)
 			return err;
