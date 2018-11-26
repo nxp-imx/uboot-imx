@@ -113,6 +113,14 @@ struct mipi_dsi_client_dev hx8363_dev = {
 			  MIPI_DSI_MODE_EOT_PACKET | MIPI_DSI_MODE_VIDEO_HSE,
 };
 
+struct mipi_dsi_client_dev rm68200_dev = {
+	.channel	= 0,
+	.lanes = 2,
+	.format  = MIPI_DSI_FMT_RGB888,
+	.mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
+			  MIPI_DSI_MODE_EOT_PACKET | MIPI_DSI_MODE_VIDEO_HSE,
+};
+
 int board_mipi_panel_reset(void)
 {
 	gpio_direction_output(MIPI_RESET_GPIO, 0);
@@ -139,21 +147,46 @@ void do_enable_mipi_dsi(struct display_info_t const *dev)
 	setup_mipi_reset();
 
 	/* Enable backlight */
-	mx7ulp_iomux_setup_multiple_pads(led_pwm_en_pad, ARRAY_SIZE(mipi_reset_pad));
+	mx7ulp_iomux_setup_multiple_pads(led_pwm_en_pad, ARRAY_SIZE(led_pwm_en_pad));
 	gpio_request(LED_PWM_EN_GPIO, "led_pwm_en");
 	gpio_direction_output(LED_PWM_EN_GPIO, 1);
 
 	/* Setup DSI host driver */
 	mipi_dsi_northwest_setup(DSI_RBASE, SIM0_RBASE);
 
-	/* Init hx8363 driver, must after dsi host driver setup */
-	hx8363_init();
-	hx8363_dev.name = displays[0].mode.name;
-	imx_mipi_dsi_bridge_attach(&hx8363_dev); /* attach hx8363 device */
+	if (!strcmp(dev->mode.name, "HX8363_WVGA")) {
+		/* Init hx8363 driver, must after dsi host driver setup */
+		hx8363_init();
+		hx8363_dev.name = dev->mode.name;
+		imx_mipi_dsi_bridge_attach(&hx8363_dev); /* attach hx8363 device */
+	} else {
+		rm68200_init();
+		rm68200_dev.name = dev->mode.name;
+		imx_mipi_dsi_bridge_attach(&rm68200_dev);
+	}
 
 }
 
 struct display_info_t const displays[] = {{
+	.bus = LCDIF_RBASE,
+	.addr = 0,
+	.pixfmt = 24,
+	.detect = NULL,
+	.enable = do_enable_mipi_dsi,
+	.mode	= {
+		.name			= "RM68200_WXGA",
+		.xres			= 720,
+		.yres			= 1280,
+		.pixclock		= 16040,
+		.left_margin	= 32,
+		.right_margin	= 32,
+		.upper_margin	= 14,
+		.lower_margin	= 16,
+		.hsync_len		= 8,
+		.vsync_len		= 2,
+		.sync			= 0,
+		.vmode			= FB_VMODE_NONINTERLACED
+} }, {
 	.bus = LCDIF_RBASE,
 	.addr = 0,
 	.pixfmt = 24,
