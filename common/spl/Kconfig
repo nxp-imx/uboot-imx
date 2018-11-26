@@ -602,6 +602,16 @@ config SPL_ONENAND_SUPPORT
 	  load U-Boot from supported devices. This enables the drivers in
 	  drivers/mtd/onenand as part of an SPL build.
 
+config SPL_IMX_ROMAPI_SUPPORT
+	bool "Support call ROMAPI"
+	depends on SPL
+	help
+	 Enable support call ROMAPI to load uboot from boot devices.
+
+config SPL_IMX_ROMAPI_LOADADDR
+	hex "Default load address to load image through ROM API"
+	depends on SPL_IMX_ROMAPI_SUPPORT
+
 config SPL_OS_BOOT
 	bool "Activate Falcon Mode"
 	depends on !TI_SECURE_DEVICE
