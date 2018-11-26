@@ -197,6 +197,7 @@
 #define CONFIG_IMX_VIDEO_SKIP
 
 #define CONFIG_HX8363
+#define CONFIG_RM68200
 #endif
 
 #define CONFIG_OF_SYSTEM_SETUP
