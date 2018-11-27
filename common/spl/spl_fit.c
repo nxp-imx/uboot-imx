@@ -33,6 +33,13 @@ __weak ulong board_spl_fit_size_align(ulong size)
 	return size;
 }
 
+__weak void* board_spl_fit_buffer_addr(ulong fit_size, int bl_len)
+{
+	int align_len = ARCH_DMA_MINALIGN - 1;
+	return  (void *)((CONFIG_SYS_TEXT_BASE - fit_size - bl_len -
+			align_len) & ~align_len);
+}
+
 static int find_node_from_desc(const void *fit, int node, const char *str)
 {
 	int child;
@@ -514,7 +521,7 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	struct spl_image_info image_info;
 	int node = -1;
 	int images, ret;
-	int base_offset, hsize, align_len = ARCH_DMA_MINALIGN - 1;
+	int base_offset;
 	int index = 0;
 	int firmware_node;
 
@@ -545,8 +552,7 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	 * For FIT with data embedded, data is loaded as part of FIT image.
 	 * For FIT with external data, data is not loaded in this step.
 	 */
-	hsize = (size + info->bl_len + align_len) & ~align_len;
-	fit = spl_get_load_buffer(-hsize, hsize);
+	fit = board_spl_fit_buffer_addr(size, info->bl_len);
 	sectors = get_aligned_image_size(info, size, 0);
 	count = info->read(info, sector, sectors, fit);
 	debug("fit read sector %lx, sectors=%d, dst=%p, count=%lu, size=0x%lx\n",
