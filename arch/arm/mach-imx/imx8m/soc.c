@@ -230,6 +230,7 @@ static void imx_set_wdog_powerdown(bool enable)
 
 int arch_cpu_init(void)
 {
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
 	/*
 	 * Init timer at very early state, because pll setting will use it,
 	 * Rom Turnned off SCTR, enable it before timer_init
@@ -258,6 +259,12 @@ int arch_cpu_init(void)
 	/* Secure init function such RNG */
 	imx_sec_init();
 #endif
+
+	if (is_imx8mq()) {
+		clock_enable(CCGR_OCOTP, 1);
+		if (readl(&ocotp->ctrl) & 0x200)
+			writel(0x200, &ocotp->ctrl_clr);
+	}
 
 	return 0;
 }
