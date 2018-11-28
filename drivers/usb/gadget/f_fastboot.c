@@ -3605,12 +3605,12 @@ static FbLockState do_fastboot_unlock(bool force)
 {
 	int status;
 
+	if (fastboot_get_lock_stat() == FASTBOOT_UNLOCK) {
+		printf("The device is already unlocked\n");
+		return FASTBOOT_UNLOCK;
+	}
 	if ((fastboot_lock_enable() == FASTBOOT_UL_ENABLE) || force) {
 		printf("It is able to unlock device. %d\n",fastboot_lock_enable());
-		if (fastboot_get_lock_stat() == FASTBOOT_UNLOCK) {
-			printf("The device is already unlocked\n");
-			return FASTBOOT_UNLOCK;
-		}
 		status = fastboot_set_lock_stat(FASTBOOT_UNLOCK);
 		if (status < 0)
 			return FASTBOOT_LOCK_ERROR;
