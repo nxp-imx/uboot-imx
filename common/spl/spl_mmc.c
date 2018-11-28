@@ -112,7 +112,7 @@ int mmc_load_image_raw_sector(struct spl_image_info *spl_image,
 #if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
 	ret = check_rpmb_blob(mmc);
 #endif
-	return 0;
+	return ret;
 }
 
 #endif /* CONFIG_DUAL_BOOTLOADER */
