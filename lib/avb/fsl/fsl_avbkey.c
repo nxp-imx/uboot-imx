@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
- * Copyright 2017 NXP
+ * Copyright 2017-2019 NXP
  * SPDX-License-Identifier:     GPL-2.0+
  *
  */
@@ -71,6 +71,9 @@ int read_keyslot_package(struct keyslot_package* kp) {
 	struct blk_desc *dev_desc = NULL;
 
 	struct mmc *mmc;
+#ifdef CONFIG_IMX8_TRUSTY_XEN
+	mmcc = 0;
+#endif
 	mmc = find_mmc_device(mmcc);
 	if (!mmc) {
 		printf("boota: cannot find '%d' mmc device\n", mmcc);
@@ -702,7 +705,8 @@ int rbkidx_erase(void) {
 #endif /* AVB_RPMB */
 
 #ifdef CONFIG_SPL_BUILD
-#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
+#if defined (CONFIG_IMX8_TRUSTY_XEN) || \
+	(defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX))
 int check_rpmb_blob(struct mmc *mmc)
 {
 	int ret = 0;

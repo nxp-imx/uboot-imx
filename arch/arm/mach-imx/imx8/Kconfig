@@ -40,6 +40,9 @@ config SYS_SOC
 config SMC_FUSE
         bool "Call fuse commands through SMC"
 
+config IMX8_TRUSTY_XEN
+	bool "Support Trusty Xen feature"
+
 choice
 	prompt "MX8 board select"
 	optional
