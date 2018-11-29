@@ -477,12 +477,6 @@ FbLockEnableResult fastboot_lock_enable() {
 	int mmc_id;
 	FbLockEnableResult ret;
 
-	/* for imx6 and imx7 platforms, ignore presistdata partition
-	 * for the convenience of using uuu
-	 */
-	if (is_mx6() || is_mx7() || is_mx7ulp())
-		return FASTBOOT_UL_ENABLE;
-
 	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
 	if (bdata == NULL)
 		return FASTBOOT_UL_ERROR;
