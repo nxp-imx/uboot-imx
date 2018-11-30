@@ -631,8 +631,16 @@ AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slo
 	AvbIOResult ret;
 #ifdef CONFIG_IMX_TRUSTY_OS
 	if (trusty_write_rollback_index(rollback_index_slot, rollback_index)) {
-		ERR("write rollback from Trusty error!");
-		ret = AVB_IO_RESULT_ERROR_IO;
+		ERR("write rollback from Trusty error!\n");
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+		/* Read/write rollback index from rpmb will fail if the rpmb
+		 * key hasn't been set, return AVB_IO_RESULT_OK in this case.
+		 */
+		if (!rpmbkey_is_set())
+			ret = AVB_IO_RESULT_OK;
+		else
+#endif
+			ret = AVB_IO_RESULT_ERROR_IO;
 	} else {
 		ret = AVB_IO_RESULT_OK;
 	}
@@ -720,8 +728,14 @@ AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot
 	AvbIOResult ret;
 #ifdef CONFIG_IMX_TRUSTY_OS
 	if (trusty_read_rollback_index(rollback_index_slot, out_rollback_index)) {
-		ERR("read rollback from Trusty error!");
-		ret = AVB_IO_RESULT_ERROR_IO;
+		ERR("read rollback from Trusty error!\n");
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+		if (!rpmbkey_is_set()) {
+			*out_rollback_index = 0;
+			ret = AVB_IO_RESULT_OK;
+		} else
+#endif
+			ret = AVB_IO_RESULT_ERROR_IO;
 	} else {
 		ret = AVB_IO_RESULT_OK;
 	}

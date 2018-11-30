@@ -572,7 +572,6 @@ fail:
 }
 
 int init_avbkey(void) {
-#ifndef CONFIG_ARM64
 	struct keyslot_package kp;
 	read_keyslot_package(&kp);
 	if (strcmp(kp.magic, KEYPACK_MAGIC)) {
@@ -588,7 +587,6 @@ int init_avbkey(void) {
 		return RESULT_ERROR;
 #endif
 	fill_secure_keyslot_package(&kp);
-#endif
 	return RESULT_OK;
 }
 
