@@ -15,6 +15,7 @@
 #include <mapmem.h>
 
 #include <fsl_avb.h>
+#include "trusty/avb.h"
 #ifdef CONFIG_IMX_TRUSTY_OS
 #include <trusty/libtipc.h>
 #endif
@@ -1126,6 +1127,21 @@ fail:
 	}
 
 	return ret;
+}
+
+int avb_set_public_key(uint8_t *staged_buffer, uint32_t size) {
+
+	if ((staged_buffer == NULL) || (size <= 0)) {
+		ERR("Error. Get null staged_buffer\n");
+		return -1;
+	}
+	if (trusty_write_vbmeta_public_key(staged_buffer, size)) {
+		ERR("Error. Failed to write vbmeta public key into secure storage\n");
+		return -1;
+	} else
+		printf("Set vbmeta public key successfully!\n");
+
+	return 0;
 }
 #endif /* CONFIG_IMX_TRUSTY_OS && CONFIG_ANDROID_AUTO_SUPPORT */
 #endif /* CONFIG_SPL_BUILD */

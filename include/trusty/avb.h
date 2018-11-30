@@ -78,6 +78,24 @@ int trusty_read_permanent_attributes(uint8_t *attributes, uint32_t size);
  */
 int trusty_write_permanent_attributes(uint8_t *attributes, uint32_t size);
 /*
+ * Send request to secure side to read vbmeta public key.
+ *
+ * Copies public key received by secure side to |publickey|. If |size| does not
+ * match the size returned by the secure side, an error is returned. Returns one
+ * of trusty_err.
+ *
+ * @publickey:   caller allocated buffer
+ * @size:        size of |publickey|
+ */
+int trusty_read_vbmeta_public_key(uint8_t *publickey, uint32_t size);
+/*
+ * Send request to secure side to write vbmeta public key. Public key
+ * can only be written to storage once.
+ *
+ * Returns one of trusty_err.
+ */
+int trusty_write_vbmeta_public_key(uint8_t *publickey, uint32_t size);
+/*
  * Send request to secure side to read device lock state from RPMB.
  *
  * Returns one of trusty_err.

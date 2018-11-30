@@ -3761,8 +3761,14 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 			strcpy(response, "FAILset rpmb key failed!");
 		} else
 			strcpy(response, "OKAY");
+	} else if (endswith(cmd, FASTBOOT_SET_VBMETA_PUBLIC_KEY)) {
+		if (avb_set_public_key(interface.transfer_buffer,
+					download_bytes))
+			strcpy(response, "FAILcan't set public key!");
+		else
+			strcpy(response, "OKAY");
 	}
-#endif
+#endif /* CONFIG_ANDROID_AUTO_SUPPORT */
 #endif /* CONFIG_IMX_TRUSTY_OS */
 	else if (endswith(cmd, "unlock_critical")) {
 		strcpy(response, "OKAY");
