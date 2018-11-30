@@ -94,8 +94,11 @@
 #undef CONFIG_USB_HOST_ETHER
 #undef CONFIG_USB_FUNCTION_MASS_STORAGE
 
-#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_IMX_TRUSTY_OS
 #define AVB_RPMB
+#endif
+
+#ifdef CONFIG_SPL_BUILD
 #undef CONFIG_BLK
 #endif
 

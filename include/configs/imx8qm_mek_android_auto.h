@@ -102,8 +102,11 @@
 #include "imx8qm_mek_android_auto_xen.h"
 #endif
 
-#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_IMX_TRUSTY_OS
 #define AVB_RPMB
+#endif
+
+#ifdef CONFIG_SPL_BUILD
 #undef CONFIG_BLK
 #endif
 

@@ -654,7 +654,7 @@ static int initr_kbd(void)
 }
 #endif
 
-#ifdef AVB_RPMB
+#if defined(AVB_RPMB) && !defined(CONFIG_SPL)
 extern int init_avbkey(void);
 static int initr_avbkey(void)
 {
@@ -899,7 +899,7 @@ static init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_PS2KBD
 	initr_kbd,
 #endif
-#ifdef AVB_RPMB
+#if defined(AVB_RPMB) && !defined(CONFIG_SPL)
 	initr_avbkey,
 #endif
 #ifdef CONFIG_IMX_TRUSTY_OS
