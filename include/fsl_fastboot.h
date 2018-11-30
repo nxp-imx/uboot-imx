@@ -83,8 +83,11 @@
 #define FASTBOOT_PARTITION_FBMISC "fbmisc"
 #endif
 
+#ifdef CONFIG_IMX_TRUSTY_OS
 #ifdef CONFIG_ANDROID_AUTO_SUPPORT
 #define FASTBOOT_SET_RPMB_KEY "set-rpmb-key"
+#define FASTBOOT_SET_VBMETA_PUBLIC_KEY "set-public-key"
+#endif
 #endif
 
 #if defined(CONFIG_AVB_ATX) || defined(CONFIG_ANDROID_AUTO_SUPPORT)

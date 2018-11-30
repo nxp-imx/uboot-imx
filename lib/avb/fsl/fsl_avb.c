@@ -20,7 +20,7 @@
 #include "fsl_atx_attributes.h"
 
 #define FSL_AVB_DEV "mmc"
-
+#define AVB_MAX_BUFFER_LENGTH 2048
 
 static struct blk_desc *fs_dev_desc = NULL;
 static struct blk_desc *get_mmc_desc(void) {
@@ -604,11 +604,27 @@ AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
 	assert(ops != NULL && out_is_trusted != NULL);
 	*out_is_trusted = false;
 
+#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
+	uint8_t public_key_buf[AVB_MAX_BUFFER_LENGTH];
+	if (trusty_read_vbmeta_public_key(public_key_buf,
+						public_key_length) != 0) {
+		ERR("Read public key error\n");
+		/* We're not going to return error code here because it will
+		 * abort the following avb verify process even we allow the
+		 * verification error. Return AVB_IO_RESULT_OK and keep the
+		 * 'out_is_trusted' as false, avb will handle the error
+		 * depends on the 'allow_verification_error' flag.
+		 */
+		return AVB_IO_RESULT_OK;
+	}
+
+	if (memcmp(public_key_buf, public_key_data, public_key_length)) {
+#else
 	/* match given public key */
 	if (memcmp(fsl_public_key, public_key_data, public_key_length)) {
-		ret = AVB_IO_RESULT_ERROR_IO;
+#endif
 		ERR("public key not match\n");
-		return AVB_IO_RESULT_ERROR_IO;
+		return AVB_IO_RESULT_OK;
 	}
 
 	*out_is_trusted = true;

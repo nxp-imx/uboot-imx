@@ -42,6 +42,8 @@ enum avb_command {
     READ_LOCK_STATE            = (5 << AVB_REQ_SHIFT),
     WRITE_LOCK_STATE           = (6 << AVB_REQ_SHIFT),
     LOCK_BOOT_STATE            = (7 << AVB_REQ_SHIFT),
+    READ_VBMETA_PUBLIC_KEY     = (8 << AVB_REQ_SHIFT),
+    WRITE_VBMETA_PUBLIC_KEY    = (9 << AVB_REQ_SHIFT),
 };
 
 /**
