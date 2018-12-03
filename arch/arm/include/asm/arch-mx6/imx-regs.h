@@ -1102,9 +1102,6 @@ struct dbg_monitor_regs {
 	u32	version[4];		/* Version */
 };
 
- /* gd->flags reserves high 16 bits for arch-specific flags */
-#define GD_FLG_ARCH_MX6_USB_BOOT		0x80000000	 /* If set, the u-boot is booting from USB serial download */
-
 /*
  * If ROM fail back to USB recover mode, USBPH0_PWD will be clear to use USB
  * If boot from the other mode, USB0_PWD will keep reset value

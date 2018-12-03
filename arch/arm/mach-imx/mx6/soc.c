@@ -529,7 +529,7 @@ static void imx_set_pcie_phy_power_down(void)
 
 bool is_usb_boot(void)
 {
-	if (gd->flags & GD_FLG_ARCH_MX6_USB_BOOT)
+	if (gd->flags & GD_FLG_ARCH_IMX_USB_BOOT)
 		return true;
 
 	return false;
@@ -538,7 +538,7 @@ bool is_usb_boot(void)
 int arch_cpu_init(void)
 {
 	if (is_usbphy_power_on())
-		gd->flags |= GD_FLG_ARCH_MX6_USB_BOOT;
+		gd->flags |= GD_FLG_ARCH_IMX_USB_BOOT;
 
 	if (!is_mx6sl() && !is_mx6sx()
 		&& !is_mx6ul() && !is_mx6ull()
