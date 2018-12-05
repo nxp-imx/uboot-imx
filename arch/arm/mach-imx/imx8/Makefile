@@ -4,5 +4,5 @@
 # SPDX-License-Identifier:	GPL-2.0+
 #
 
-obj-y += cpu.o iomux.o fuse.o
+obj-y += cpu.o iomux.o fuse.o lpcg.o
 obj-$(CONFIG_VIDEO_IMXDPUV1) += video_common.o
