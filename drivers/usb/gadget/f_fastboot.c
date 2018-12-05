@@ -3580,7 +3580,7 @@ static void wipe_all_userdata(void)
 	/* Erase /data partition */
 	fastboot_wipe_data_partition();
 
-#ifdef CONFIG_ANDROID_SUPPORT
+#if defined (CONFIG_ANDROID_SUPPORT) || defined (CONFIG_ANDROID_AUTO_SUPPORT)
 	/* Erase the misc partition. */
 	process_erase_mmc(FASTBOOT_PARTITION_MISC, response);
 #endif
