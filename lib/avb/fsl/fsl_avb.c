@@ -16,7 +16,9 @@
 #include "utils.h"
 #include "debug.h"
 #include "trusty/avb.h"
+#if !defined(CONFIG_IMX_TRUSTY_OS) || !defined(CONFIG_ANDROID_AUTO_SUPPORT)
 #include "fsl_public_key.h"
+#endif
 #include "fsl_atx_attributes.h"
 
 #define FSL_AVB_DEV "mmc"
