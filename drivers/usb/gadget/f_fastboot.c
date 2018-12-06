@@ -3862,24 +3862,21 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
 
 	/* Always enable image flash for Android Things. */
 #if defined(CONFIG_FASTBOOT_LOCK) && !defined(CONFIG_AVB_ATX)
-	/* for imx8 boot from USB, lock status can be ignored for uuu.*/
-	if (!(is_imx8() || is_imx8m()) || !(is_boot_from_usb())) {
-		int status;
-		status = fastboot_get_lock_stat();
+	int status;
+	status = fastboot_get_lock_stat();
 
-		if (status == FASTBOOT_LOCK) {
-			pr_err("device is LOCKed!\n");
-			strcpy(response, "FAIL device is locked.");
-			fastboot_tx_write_str(response);
-			return;
+	if (status == FASTBOOT_LOCK) {
+		pr_err("device is LOCKed!\n");
+		strcpy(response, "FAIL device is locked.");
+		fastboot_tx_write_str(response);
+		return;
 
-		} else if (status == FASTBOOT_LOCK_ERROR) {
-			pr_err("write lock status into device!\n");
-			fastboot_set_lock_stat(FASTBOOT_LOCK);
-			strcpy(response, "FAILdevice is locked.");
-			fastboot_tx_write_str(response);
-			return;
-		}
+	} else if (status == FASTBOOT_LOCK_ERROR) {
+		pr_err("write lock status into device!\n");
+		fastboot_set_lock_stat(FASTBOOT_LOCK);
+		strcpy(response, "FAILdevice is locked.");
+		fastboot_tx_write_str(response);
+		return;
 	}
 #endif
 	fastboot_fail("no flash device defined");
