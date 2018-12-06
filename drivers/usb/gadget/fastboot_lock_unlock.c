@@ -385,6 +385,9 @@ FbLockState fastboot_get_lock_stat(void) {
 	unsigned char *bdata;
 	int mmc_id;
 	FbLockState ret;
+	/* uboot used by uuu will boot from USB, always return UNLOCK state */
+	if (is_boot_from_usb())
+		return g_lockstat;
 
 	bdata = (unsigned char *)memalign(ARCH_DMA_MINALIGN, SECTOR_SIZE);
 	if (bdata == NULL)
