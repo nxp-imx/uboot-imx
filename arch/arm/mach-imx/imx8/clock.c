@@ -12,6 +12,7 @@
 #include <asm/arch/i2c.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/cpu.h>
+#include <asm/arch/lpcg.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -121,26 +122,45 @@ u32 imx_get_fecclk(void)
 	return mxc_get_clock(MXC_FEC_CLK);
 }
 
+static struct imx_i2c_map *get_i2c_desc(unsigned i2c_num)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(imx_i2c_desc); i++) {
+		if (imx_i2c_desc[i].index == i2c_num)
+			return &imx_i2c_desc[i];
+	}
+	return NULL;
+}
+
 int enable_i2c_clk(unsigned char enable, unsigned i2c_num)
 {
 	sc_ipc_t ipc;
 	sc_err_t err;
+	struct imx_i2c_map *desc;
+	int i;
 
-	if (i2c_num >= ARRAY_SIZE(imx_i2c_desc))
+	desc = get_i2c_desc(i2c_num);
+	if (!desc)
 		return -EINVAL;
 
 	ipc = gd->arch.ipc_channel_handle;
 
 	if (enable)
 		err = sc_pm_clock_enable(ipc,
-			imx_i2c_desc[i2c_num].rsrc, 2, true, false);
+			desc->rsrc, 2, true, false);
 	else
 		err = sc_pm_clock_enable(ipc,
-			imx_i2c_desc[i2c_num].rsrc, 2, false, false);
+			desc->rsrc, 2, false, false);
 
 	if (err != SC_ERR_NONE) {
 		printf("i2c clock error %d\n", err);
 		return -EPERM;
+	}
+
+	for (i = 0; i < 4; i++) {
+		if (desc->lpcg[i] == 0)
+			break;
+		LPCG_AllClockOn(desc->lpcg[i]);
 	}
 
 	return 0;
@@ -151,12 +171,14 @@ u32 imx_get_i2cclk(unsigned i2c_num)
 	sc_err_t err;
 	sc_ipc_t ipc;
 	u32 clock_rate;
+	struct imx_i2c_map *desc;
 
-	if (i2c_num >= ARRAY_SIZE(imx_i2c_desc))
-		return 0;
+	desc = get_i2c_desc(i2c_num);
+	if (!desc)
+		return -EINVAL;
 
 	ipc = gd->arch.ipc_channel_handle;
-	err = sc_pm_get_clock_rate(ipc, imx_i2c_desc[i2c_num].rsrc, 2,
+	err = sc_pm_get_clock_rate(ipc, desc->rsrc, 2,
 		&clock_rate);
 	if (err != SC_ERR_NONE)
 		return 0;
@@ -184,6 +206,8 @@ void init_clk_fspi(int index)
 		puts("FSPI0 enable clock failed\n");
 		return;
 	}
+
+	LPCG_AllClockOn(FSPI_0_LPCG);
 
 	return;
 }
@@ -224,11 +248,14 @@ void init_clk_gpmi_nand(void)
 		return;
 	}
 
+	LPCG_AllClockOn(NAND_LPCG);
+
 	return;
 }
 
 void enable_usboh3_clk(unsigned char enable)
 {
+	LPCG_AllClockOn(USB_2_LPCG);
 	return;
 }
 
@@ -254,6 +281,7 @@ void init_clk_usb3(int index)
 		printf("USB3 set clock failed!, line=%d (error = %d)\n",
 			__LINE__, err);
 
+	LPCG_AllClockOn(USB_3_LPCG);
 	return;
 }
 
@@ -269,6 +297,8 @@ int cdns3_disable_clks(int index)
 	sc_ipc_t ipc;
 
 	ipc = gd->arch.ipc_channel_handle;
+
+	LPCG_AllClockOff(USB_3_LPCG);
 
 	err = sc_pm_clock_enable(ipc, SC_R_USB_2, SC_PM_CLK_MISC, false, false);
 	if (err != SC_ERR_NONE)
@@ -345,6 +375,8 @@ void init_clk_usdhc(u32 index)
 		printf("SDHC_%d per clk enable failed!\n", index);
 		return;
 	}
+
+	LPCG_AllClockOn(USDHC_0_LPCG + index * 0x10000);
 }
 
 void init_clk_fec(int index)
@@ -389,6 +421,8 @@ void init_clk_fec(int index)
 		printf("\nSC_R_ENET_0 set clock enable failed! (error = %d)\n", err);
 		return;
 	}
+
+	LPCG_AllClockOn(ENET_0_LPCG + index * 0x10000);
 }
 
 /*

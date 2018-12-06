@@ -6,6 +6,7 @@
 obj-y += lowlevel_init.o
 obj-y += cpu.o
 obj-y += clock.o
+obj-y += lpcg.o
 obj-y += fsl_mu_hal.o
 obj-y += fuse.o
 obj-y += iomux.o
