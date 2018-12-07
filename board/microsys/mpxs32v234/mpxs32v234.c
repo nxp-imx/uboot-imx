@@ -2,7 +2,7 @@
 /*
  * (C) Copyright 2013-2016 Freescale Semiconductor, Inc.
  * (C) Copyright 2017 MicroSys Electronics GmbH
- * Copyright 2020 NXP
+ * Copyright 2018-2020 NXP
  */
 
 #include <common.h>
@@ -156,6 +156,9 @@ int board_early_init_f(void)
 	setup_iomux_enet();
 	setup_iomux_i2c();
 
+#ifdef CONFIG_FSL_DCU_FB
+	setup_iomux_dcu();
+#endif
 #ifdef CONFIG_DCU_QOS_FIX
 	board_dcu_qos();
 #endif
@@ -175,8 +178,11 @@ int board_init(void)
 	 * Enable HDMI output
 	 */
 
-	i2c_set_bus_num(2);
-	i2c_reg_write(0x3f, 0x8, 0x35);
+	i2c_set_bus_num(CONFIG_SYS_HDMI_BUS_NUM);
+	i2c_reg_write(CONFIG_SYS_I2C_HDMI_ADDR, CONFIG_SYS_HDMI_REG_CTL_1_MODE,
+		      TFP410P_CTL_1_MODE_VEN | TFP410P_CTL_1_MODE_HEN |
+		      TFP410P_CTL_1_MODE_BSEL | TFP410P_CTL_1_MODE_EDGE |
+		      TFP410P_CTL_1_MODE_PD);
 
 	return 0;
 }
