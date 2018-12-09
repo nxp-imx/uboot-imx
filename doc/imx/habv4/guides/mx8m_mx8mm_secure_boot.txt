@@ -225,7 +225,7 @@ The CSF contains all the commands that the ROM executes during the secure
 boot. These commands instruct the HAB code on which memory areas of the image
 to authenticate, which keys to install, use and etc.
 
-CSF examples are available under doc/imx/hab/habv4/csf_examples/ directory.
+CSF examples are available under doc/imx/habv4/csf_examples/ directory.
 
 As explained in sections above the SPL is first authenticated by the ROM code
 and the root of trust is extended to the FIT image, hence two CSF files are
