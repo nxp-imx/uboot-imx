@@ -10,7 +10,7 @@ secure boot concept. Due to the multi-core architecture the Security
 Controller (SECO) and System Control Unit (SCU) are heavily involved in
 the secure boot process.
 
-Step-by-step guides are available under doc/imx/hab/ahab/guides/ directory,
+Step-by-step guides are available under doc/imx/ahab/guides/ directory,
 users familiar with AHAB architecture and CST PKI tree generation should
 refer to this directory instead.
 
@@ -167,7 +167,7 @@ The sequence below explains the i.MX8 and i.MX8x boot flow:
      SCU by calling the sc_misc_seco_authenticate() API function. In current
      U-Boot implementation the additional image can be the Linux Kernel binary
      or the U-Boot proper and ATF. Details about current U-Boot implementation
-     can be found in AHAB guides included in doc/imx/hab/ahab/guides/ directory.
+     can be found in AHAB guides included in doc/imx/ahab/guides/ directory.
 
 2. Generating a PKI tree
 -------------------------
@@ -297,5 +297,5 @@ Table Hash.
   SRK_1_2_3_4_table.bin
 
 The SRK_1_2_3_4_table.bin and SRK_1_2_3_4_fuse.bin files can be used in further
-steps as explained in AHAB guides available under doc/imx/hab/ahab/guides/
+steps as explained in AHAB guides available under doc/imx/ahab/guides/
 directory.

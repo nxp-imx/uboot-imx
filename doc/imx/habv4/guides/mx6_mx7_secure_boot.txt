@@ -75,7 +75,7 @@ The CSF contains all the commands that the ROM executes during the secure
 boot. These commands instruct the HAB on which memory areas of the image
 to authenticate, which keys to install, use and etc.
 
-CSF examples are available under doc/imx/hab/habv4/csf_examples/ directory.
+CSF examples are available under doc/imx/habv4/csf_examples/ directory.
 
 A build log containing the "Authenticate Data" parameters is available after
 the U-Boot build, the example below is a log for mx7dsabresd_defconfig target:

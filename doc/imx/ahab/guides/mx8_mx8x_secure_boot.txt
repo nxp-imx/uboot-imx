@@ -168,7 +168,7 @@ The CSF contains all the commands that the AHAB executes during the secure
 boot. These commands instruct the AHAB on which memory areas of the image
 to authenticate, which keys to install, use and etc.
 
-CSF examples are available under doc/imx/hab/ahab/csf_examples/
+CSF examples are available under doc/imx/ahab/csf_examples/
 directory.
 
 This csf_boot_image.txt file example should be updated with the offset values
@@ -350,7 +350,7 @@ Keep in mind the offsets above to be used with CST/CSF
 2.2 Creating the CSF description file for OS container image
 -------------------------------------------------------------
 
-CSF examples are available under doc/imx/hab/ahab/csf_examples/
+CSF examples are available under doc/imx/ahab/csf_examples/
 directory.
 
 This csf_linux_img.txt file example should be updated with the offset values

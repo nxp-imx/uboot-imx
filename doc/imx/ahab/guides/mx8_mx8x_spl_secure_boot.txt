@@ -168,7 +168,7 @@ during the secure boot procedure. These commands instruct the AHAB code on
 which memory areas of the image to authenticate, which keys to install, use
 and etc.
 
-CSF examples are available under doc/imx/hab/ahab/csf_examples/ directory.
+CSF examples are available under doc/imx/ahab/csf_examples/ directory.
 
 As explained in section above the mkimage log provides the container and
 signature block offsets used by the CSF description file:
@@ -351,7 +351,7 @@ The lifecycle value should now be 128 (0x80) OEM closed.
 
 The procedure for authenticating the OS container is similar as in Non-SPL
 targets, for a complete procedure please refer to mx8_mx8x_secure_boot.txt
-document available under doc/imx/hab/ahab/guides/ directory.
+document available under doc/imx/ahab/guides/ directory.
 
 References:
 [1] AN12212: "Software Solutions for Migration Guide from Aarch32 to

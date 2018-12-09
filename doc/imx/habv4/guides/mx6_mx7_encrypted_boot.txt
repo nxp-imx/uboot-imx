@@ -98,7 +98,7 @@ secure boot. These commands instruct the HAB on which memory areas
 of the image to authenticate, which keys to install, use, etc...
 
 CSF examples for encrypted boot are available under
-doc/imx/hab/habv4/csf_examples/ directory.
+doc/imx/habv4/csf_examples/ directory.
 
 For both CSF, first part is same compared to the CSF used for
 the secure boot step.
