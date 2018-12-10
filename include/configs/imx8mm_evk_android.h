@@ -62,4 +62,16 @@
 #endif
 #define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+#define AVB_RPMB
+#define KEYSLOT_HWPARTITION_ID 2
+#define KEYSLOT_BLKS             0x1FFF
+#define NS_ARCH_ARM64 1
+
+#ifdef CONFIG_SPL_BUILD
+#undef CONFIG_BLK
+#endif
+
+#endif
+
 #endif /* IMX8MM_EVK_ANDROID_H */

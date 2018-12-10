@@ -40,7 +40,7 @@ struct bl_rbindex_package {
 };
 #endif
 
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_AVB_ATX
 #define RPMB_KEY_MAGIC "RPMB"
 #endif
 

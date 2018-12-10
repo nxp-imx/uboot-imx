@@ -3730,7 +3730,6 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 	}
 #endif /* CONFIG_ANDROID_THINGS_SUPPORT */
 #ifdef CONFIG_IMX_TRUSTY_OS
-#if defined(CONFIG_AVB_ATX) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
 	else if (endswith(cmd, FASTBOOT_GET_CA_REQ)) {
 		uint8_t *ca_output;
 		uint32_t ca_length, cp_length;
@@ -3753,8 +3752,7 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 		} else
 			strcpy(response, "OKAY");
 	}
-#endif /* CONFIG_AVB_ATX || CONFIG_ANDROID_AUTO_SUPPORT */
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_AVB_ATX
 	else if (endswith(cmd, FASTBOOT_SET_RPMB_KEY)) {
 		if (fastboot_set_rpmb_key(interface.transfer_buffer, download_bytes)) {
 			printf("ERROR set rpmb key failed!\n");
@@ -3768,7 +3766,7 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 		else
 			strcpy(response, "OKAY");
 	}
-#endif /* CONFIG_ANDROID_AUTO_SUPPORT */
+#endif /* !CONFIG_AVB_ATX */
 #endif /* CONFIG_IMX_TRUSTY_OS */
 	else if (endswith(cmd, "unlock_critical")) {
 		strcpy(response, "OKAY");

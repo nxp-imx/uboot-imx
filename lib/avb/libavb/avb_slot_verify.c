@@ -33,7 +33,7 @@
 #include "avb_util.h"
 #include "avb_vbmeta_image.h"
 #include "avb_version.h"
-#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
 #include "trusty/hwcrypto.h"
 #include <memalign.h>
 #endif
@@ -298,7 +298,7 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
   }
 
   if (avb_strcmp((const char*)hash_desc.hash_algorithm, "sha256") == 0) {
-#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
     /* DMA requires cache aligned input/output buffer */
     ALLOC_CACHE_ALIGN_BUFFER(uint8_t, hash_out, AVB_SHA256_DIGEST_SIZE);
     uint32_t round_buf_size = ROUND(hash_desc.salt_len + hash_desc.image_size,

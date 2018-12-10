@@ -84,16 +84,14 @@
 #endif
 
 #ifdef CONFIG_IMX_TRUSTY_OS
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_AVB_ATX
 #define FASTBOOT_SET_RPMB_KEY "set-rpmb-key"
 #define FASTBOOT_SET_VBMETA_PUBLIC_KEY "set-public-key"
 #endif
-#endif
 
-#if defined(CONFIG_AVB_ATX) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
 #define FASTBOOT_SET_CA_RESP "at-set-ca-response"
 #define FASTBOOT_GET_CA_REQ  "at-get-ca-request"
-#endif /* CONFIG_AVB_ATX || CONFIG_ANDROID_AUTO_SUPPORT */
+#endif
 
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
 #define FASTBOOT_BOOTLOADER_VBOOT_KEY "fuse at-bootloader-vboot-key"
