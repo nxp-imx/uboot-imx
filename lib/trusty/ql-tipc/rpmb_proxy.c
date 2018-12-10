@@ -309,7 +309,7 @@ int rpmb_storage_proxy_init(struct trusty_ipc_dev *dev, void *rpmb_dev)
         }
 
         if (proxy_chan.handle == INVALID_IPC_HANDLE) {
-            trusty_error("%s: unexpected proxy channel close\n");
+            trusty_error("%s: unexpected proxy channel close\n", __func__);
             return TRUSTY_ERR_CHANNEL_CLOSED;
         }
     }
