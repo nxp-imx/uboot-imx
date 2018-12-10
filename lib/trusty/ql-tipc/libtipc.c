@@ -39,7 +39,7 @@ typedef uintptr_t vaddr_t;
 static struct trusty_ipc_dev *_ipc_dev;
 static struct trusty_dev _tdev; /* There should only be one trusty device */
 static void *rpmb_ctx;
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_AVB_ATX
 bool rpmbkey_is_set(void);
 #endif
 
@@ -52,7 +52,7 @@ void trusty_ipc_shutdown(void)
     (void)avb_tipc_shutdown(_ipc_dev);
     (void)km_tipc_shutdown(_ipc_dev);
 
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_AVB_ATX
     (void)hwcrypto_tipc_shutdown(_ipc_dev);
 #endif
 
@@ -91,7 +91,7 @@ int trusty_ipc_init(void)
     if (rc != 0) {
         trusty_error("Initlializing RPMB storage proxy service failed (%d)\n",
                      rc);
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_AVB_ATX
         /* check if rpmb key has been fused. */
         if(rpmbkey_is_set()) {
             /* Go to hang if the key has been destroyed. */
@@ -120,7 +120,7 @@ int trusty_ipc_init(void)
         }
     }
 
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_AVB_ATX
     trusty_info("Initializing Trusty Hardware Crypto client\n");
     rc = hwcrypto_tipc_init(_ipc_dev);
     if (rc != 0) {

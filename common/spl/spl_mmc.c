@@ -54,7 +54,7 @@ ulong h_spl_load_read(struct spl_load_info *load, ulong sector,
 	return blk_dread(mmc_get_blk_desc(mmc), sector, count, buf);
 }
 
-#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
 /* Pre-declaration of check_rpmb_blob. */
 int check_rpmb_blob(struct mmc *mmc);
 #endif
@@ -109,7 +109,7 @@ int mmc_load_image_raw_sector(struct spl_image_info *spl_image,
 	}
 
 	/* Images loaded, now check the rpmb keyblob for Trusty OS. */
-#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
 	ret = check_rpmb_blob(mmc);
 #endif
 	return ret;

@@ -16,7 +16,7 @@
 #include "utils.h"
 #include "debug.h"
 #include "trusty/avb.h"
-#if !defined(CONFIG_IMX_TRUSTY_OS) || !defined(CONFIG_ANDROID_AUTO_SUPPORT)
+#if !defined(CONFIG_IMX_TRUSTY_OS)
 #include "fsl_public_key.h"
 #endif
 #include "fsl_atx_attributes.h"
@@ -606,7 +606,7 @@ AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
 	assert(ops != NULL && out_is_trusted != NULL);
 	*out_is_trusted = false;
 
-#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
 	uint8_t public_key_buf[AVB_MAX_BUFFER_LENGTH];
 	if (trusty_read_vbmeta_public_key(public_key_buf,
 						public_key_length) != 0) {
@@ -650,7 +650,7 @@ AvbIOResult fsl_write_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slo
 #ifdef CONFIG_IMX_TRUSTY_OS
 	if (trusty_write_rollback_index(rollback_index_slot, rollback_index)) {
 		ERR("write rollback from Trusty error!\n");
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_AVB_ATX
 		/* Read/write rollback index from rpmb will fail if the rpmb
 		 * key hasn't been set, return AVB_IO_RESULT_OK in this case.
 		 */
@@ -747,7 +747,7 @@ AvbIOResult fsl_read_rollback_index_rpmb(AvbOps* ops, size_t rollback_index_slot
 #ifdef CONFIG_IMX_TRUSTY_OS
 	if (trusty_read_rollback_index(rollback_index_slot, out_rollback_index)) {
 		ERR("read rollback from Trusty error!\n");
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_AVB_ATX
 		if (!rpmbkey_is_set()) {
 			*out_rollback_index = 0;
 			ret = AVB_IO_RESULT_OK;

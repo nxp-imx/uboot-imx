@@ -651,7 +651,7 @@ int rbkidx_erase(void) {
 #endif /* AVB_RPMB */
 
 #ifdef CONFIG_SPL_BUILD
-#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
 int check_rpmb_blob(struct mmc *mmc)
 {
 	int ret = 0;
@@ -691,7 +691,7 @@ fail:
 
 	return ret;
 }
-#endif /* CONFIG_IMX_TRUSTY_OS && CONFIG_ANDROID_AUTO_SUPPORT */
+#endif /* CONFIG_IMX_TRUSTY_OS && !defined(CONFIG_AVB_ATX) */
 #else /* CONFIG_SPL_BUILD */
 #ifdef CONFIG_AVB_ATX
 static int fsl_fuse_ops(uint32_t *buffer, uint32_t length, uint32_t offset,
@@ -982,7 +982,7 @@ int at_disable_vboot_unlock(void)
 }
 #endif /* CONFIG_AVB_ATX */
 
-#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
 bool rpmbkey_is_set(void)
 {
 	int mmcc;
@@ -1143,5 +1143,5 @@ int avb_set_public_key(uint8_t *staged_buffer, uint32_t size) {
 
 	return 0;
 }
-#endif /* CONFIG_IMX_TRUSTY_OS && CONFIG_ANDROID_AUTO_SUPPORT */
+#endif /* CONFIG_IMX_TRUSTY_OS && !defind(CONFIG_AVB_ATX) */
 #endif /* CONFIG_SPL_BUILD */
