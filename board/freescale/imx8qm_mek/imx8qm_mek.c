@@ -67,8 +67,10 @@ int board_early_init_f(void)
 	sc_err_t sciErr = 0;
 
 	/* When start u-boot in XEN VM, directly return */
-	if (IS_ENABLED(CONFIG_XEN))
+	if (IS_ENABLED(CONFIG_XEN)) {
+		writel(0xF53535F5, (void __iomem *)0x80000000);
 		return 0;
+	}
 
 	ipcHndl = gd->arch.ipc_channel_handle;
 
@@ -457,8 +459,11 @@ void board_quiesce_devices(void)
 		"dma_lpuart0",
 	};
 
-	if (IS_ENABLED(CONFIG_XEN))
+	if (IS_ENABLED(CONFIG_XEN)) {
+		/* Clear magic number to let xen know uboot is over */
+		writel(0x0, (void __iomem *)0x80000000);
 		return;
+	}
 
 	power_off_pd_devices(power_on_devices, ARRAY_SIZE(power_on_devices));
 }
