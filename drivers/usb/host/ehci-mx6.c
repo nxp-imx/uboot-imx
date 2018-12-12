@@ -436,9 +436,16 @@ int __weak board_ehci_power(int port, int on)
 int ehci_mx6_common_init(struct usb_ehci *ehci, int index)
 {
 	int ret;
+	u32 portsc;
 
 	enable_usboh3_clk(1);
 	mdelay(1);
+
+	portsc = readl(&ehci->portsc);
+	if (portsc & PORT_PTS_PHCD) {
+		debug("suspended: portsc %x, enabled it.\n", portsc);
+		clrbits_le32(&ehci->portsc, PORT_PTS_PHCD);
+	}
 
 	/* Do board specific initialization */
 	ret = board_ehci_hcd_init(index);
