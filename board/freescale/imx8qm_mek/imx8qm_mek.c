@@ -60,6 +60,13 @@ static void setup_iomux_uart(void)
 int board_early_init_f(void)
 {
 	int ret;
+
+	/* When start u-boot in XEN VM, directly return */
+	if (IS_ENABLED(CONFIG_XEN)) {
+		writel(0xF53535F5, (void __iomem *)0x80000000);
+		return 0;
+	}
+
 	/* Set UART0 clock root to 80 MHz */
 	sc_pm_clock_rate_t rate = 80000000;
 
@@ -450,6 +457,12 @@ void board_quiesce_devices(void)
 	const char *power_on_devices[] = {
 		"dma_lpuart0",
 	};
+
+	if (IS_ENABLED(CONFIG_XEN)) {
+		/* Clear magic number to let xen know uboot is over */
+		writel(0x0, (void __iomem *)0x80000000);
+		return;
+	}
 
 	power_off_pd_devices(power_on_devices, ARRAY_SIZE(power_on_devices));
 }
