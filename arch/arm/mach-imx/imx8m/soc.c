@@ -418,7 +418,8 @@ static int disable_dcss_nodes(void *blob)
 		"/hdmi_cec@32c33800",
 		"/hdmi_drm@32c00000",
 		"/display-subsystem",
-		"/sound-hdmi"
+		"/sound-hdmi",
+		"/sound-hdmi-arc"
 	};
 
 	return disable_fdt_nodes(blob, nodes_path, ARRAY_SIZE(nodes_path));
