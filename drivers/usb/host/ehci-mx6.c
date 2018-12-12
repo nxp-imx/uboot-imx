@@ -399,6 +399,14 @@ static void usb_oc_config(void __iomem *usbnc_base, int index)
 
 static void ehci_mx6_phy_init(struct usb_ehci *ehci, struct ehci_mx6_phy_data *phy_data, int index)
 {
+	u32 portsc;
+
+	portsc = readl(&ehci->portsc);
+	if (portsc & PORT_PTS_PHCD) {
+		debug("suspended: portsc %x, enabled it.\n", portsc);
+		clrbits_le32(&ehci->portsc, PORT_PTS_PHCD);
+	}
+
 	usb_power_config_mx6(phy_data->anatop_addr, index);
 	usb_power_config_mx7(phy_data->misc_addr);
 	usb_power_config_mx7ulp(phy_data->phy_addr);
