@@ -2112,7 +2112,11 @@ static int __cdns3_gadget_init(struct cdns3 *cdns)
 
 	/* fill gadget fields */
 	usb_ss->gadget.ops = &usb_ss_gadget_ops;
+#ifdef CONFIG_USB_CDNS3_GADGET_FORCE_HIGHSPEED
+	usb_ss->gadget.max_speed = USB_SPEED_HIGH;
+#else
 	usb_ss->gadget.max_speed = USB_SPEED_SUPER;
+#endif
 	usb_ss->gadget.speed = USB_SPEED_UNKNOWN;
 	usb_ss->gadget.name = "cdns3-gadget";
 	usb_ss->is_connected = 0;
@@ -2196,6 +2200,8 @@ void cdns3_gadget_remove(struct cdns3 *cdns)
 
 static void __cdns3_gadget_start(struct usb_ss_dev *usb_ss)
 {
+	u32 usb_conf_reg = 0;
+
 	/* configure endpoint 0 hardware */
 	cdns_ep0_config(usb_ss);
 
@@ -2216,12 +2222,11 @@ static void __cdns3_gadget_start(struct usb_ss_dev *usb_ss)
 			| USB_IEN__L2ENTIEN__MASK
 			| USB_IEN__L2EXTIEN__MASK);
 
-	gadget_writel(usb_ss, &usb_ss->regs->usb_conf,
-		    USB_CONF__CLK2OFFDS__MASK
-#ifdef CONFIG_USB_CDNS3_GADGET_FORCE_HIGHSPEED
-		    | USB_CONF__USB3DIS__MASK
-#endif
-		    | USB_CONF__L1DS__MASK);
+	usb_conf_reg = USB_CONF__CLK2OFFDS__MASK |
+			USB_CONF__L1DS__MASK;
+	if (usb_ss->gadget.max_speed == USB_SPEED_HIGH)
+		usb_conf_reg |= USB_CONF__USB3DIS__MASK;
+	gadget_writel(usb_ss, &usb_ss->regs->usb_conf, usb_conf_reg);
 
 	gadget_writel(usb_ss, &usb_ss->regs->usb_conf,
 			USB_CONF__U1DS__MASK
