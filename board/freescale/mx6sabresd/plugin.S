@@ -636,7 +636,7 @@
 	str r1, [r0, #0x068]
 	ldr r1, =0x0030FC03
 	str r1, [r0, #0x06c]
-	ldr r1, =0x0FFFC000
+	ldr r1, =0x0FFFF000
 	str r1, [r0, #0x070]
 	ldr r1, =0x3FF00000
 	str r1, [r0, #0x074]
