@@ -1483,7 +1483,7 @@ static int dwc3_gadget_start(struct usb_gadget *g,
 	if (dwc->revision < DWC3_REVISION_220A) {
 		reg |= DWC3_DCFG_SUPERSPEED;
 	} else {
-		switch (dwc->maximum_speed) {
+		switch (dwc->gadget.max_speed) {
 		case USB_SPEED_LOW:
 			reg |= DWC3_DSTS_LOWSPEED;
 			break;
@@ -1607,7 +1607,12 @@ static int dwc3_gadget_init_hw_endpoints(struct dwc3 *dwc,
 		} else {
 			int		ret;
 
-			usb_ep_set_maxpacket_limit(&dep->endpoint, 512);
+			if (dwc->maximum_speed >= USB_SPEED_SUPER)
+				usb_ep_set_maxpacket_limit(&dep->endpoint,
+							   1024);
+			else
+				usb_ep_set_maxpacket_limit(&dep->endpoint,
+							   512);
 			dep->endpoint.max_streams = 15;
 			dep->endpoint.ops = &dwc3_gadget_ep_ops;
 			list_add_tail(&dep->endpoint.ep_list,
@@ -2593,7 +2598,7 @@ int dwc3_gadget_init(struct dwc3 *dwc)
 	}
 
 	dwc->gadget.ops			= &dwc3_gadget_ops;
-	dwc->gadget.max_speed		= USB_SPEED_SUPER;
+	dwc->gadget.max_speed		= dwc->maximum_speed;
 	dwc->gadget.speed		= USB_SPEED_UNKNOWN;
 	dwc->gadget.name		= "dwc3-gadget";
 
