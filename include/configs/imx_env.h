@@ -30,3 +30,5 @@
         "fi;\0" \
 
 #endif
+
+#define CONFIG_FAT_WRITE
