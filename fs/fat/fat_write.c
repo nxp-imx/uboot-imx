@@ -299,11 +299,20 @@ get_long_file_name(fsdata *mydata, int curclust, __u8 *cluster,
 	if ((__u8 *)slotptr >= buflimit) {
 		if (curclust == 0)
 			return -1;
-		curclust = get_fatent(mydata, dir_curclust);
-		if (CHECK_CLUST(curclust, mydata->fatsize)) {
-			debug("curclust: 0x%x\n", curclust);
-			printf("Invalid FAT entry\n");
-			return -1;
+
+		if (mydata->fatsize == 32 ) {
+			curclust = get_fatent(mydata, dir_curclust);
+			if (CHECK_CLUST(curclust, mydata->fatsize)) {
+				debug("curclust: 0x%x\n", curclust);
+				printf("Invalid FAT entry\n");
+				return -1;
+			}
+		} else {
+			/*
+			 * In FAT16/12, the root dir is locate before data area
+			 * curclust may negative number
+			 */
+			curclust++;
 		}
 
 		dir_curclust = curclust;
