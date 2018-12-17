@@ -840,6 +840,11 @@ int clock_init(void)
 	clock_enable(CCGR_TSENSOR, 1);
 	clock_enable(CCGR_OCOTP, 1);
 
+	/* config GIC to sys_pll2_200m */
+	clock_enable(CCGR_GIC, 0);
+	clock_set_target_val(GIC_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(1));
+	clock_enable(CCGR_GIC, 1);
+
 	return 0;
 }
 #endif
