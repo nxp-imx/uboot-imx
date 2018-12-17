@@ -3979,6 +3979,7 @@ static void cb_erase(struct usb_ep *ep, struct usb_request *req)
 }
 #endif
 
+#ifndef CONFIG_NOT_UUU_BUILD
 static void cb_run_uboot_cmd(struct usb_ep *ep, struct usb_request *req)
 {
 	char *cmd = req->buf;
@@ -4022,6 +4023,7 @@ static void cb_run_uboot_acmd(struct usb_ep *ep, struct usb_request *req)
 	fastboot_func->in_req->complete = do_acmd_complete;
 	fastboot_tx_write_str("OKAY");
 }
+#endif
 
 #ifdef CONFIG_AVB_SUPPORT
 static void cb_set_active_avb(struct usb_ep *ep, struct usb_request *req)
@@ -4393,6 +4395,7 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 		.cb = cb_set_active_avb,
 	},
 #endif
+#ifndef CONFIG_NOT_UUU_BUILD
 	{
 		.cmd = "UCmd:",
 		.cb = cb_run_uboot_cmd,
@@ -4400,6 +4403,7 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 	{	.cmd ="ACmd:",
 		.cb = cb_run_uboot_acmd,
 	},
+#endif
 #endif
 	{
 		.cmd = "reboot",

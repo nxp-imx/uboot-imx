@@ -1,5 +1,12 @@
 comment "FASTBOOT"
 
+config NOT_UUU_BUILD
+	bool "Disable features used by uuu"
+	help
+	  This disables the features used by uuu, so that users can't
+	  execute u-boot command other than fastboot throuth the fastboot
+	  function provided by uuu.
+
 menuconfig FASTBOOT
 	bool "Fastboot support"
 	depends on USB_GADGET
