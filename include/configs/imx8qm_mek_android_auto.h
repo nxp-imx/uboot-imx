@@ -97,6 +97,7 @@
 #undef CONFIG_PHY_ATHEROS
 #undef CONFIG_CMD_FUSE
 #undef CONFIG_USB_FUNCTION_MASS_STORAGE
+#undef CONFIG_FAT_WRITE
 
 #if defined(CONFIG_XEN)
 #include "imx8qm_mek_android_auto_xen.h"
