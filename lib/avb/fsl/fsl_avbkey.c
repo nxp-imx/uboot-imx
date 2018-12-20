@@ -1034,7 +1034,7 @@ bool rpmbkey_is_set(void)
 	return ret;
 }
 
-int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size)
+int do_rpmb_key_set(uint8_t *key, uint32_t key_size)
 {
 	int ret = 0;
 	int mmcc;
@@ -1046,10 +1046,9 @@ int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size)
 	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, blob,
                                  RPMBKEY_LENGTH + CAAM_PAD);
 
-	if (memcmp(staged_buf, RPMB_KEY_MAGIC, strlen(RPMB_KEY_MAGIC))) {
-		printf("ERROR - rpmb magic doesn't match!\n");
-		return -1;
-	}
+	/* copy rpmb key to cache aligned buffer. */
+	memset(rpmb_key, 0, RPMBKEY_LENGTH);
+	memcpy(rpmb_key, key, RPMBKEY_LENGTH);
 
 	/* Get current mmc device. */
 	mmcc = mmc_get_env_dev();
@@ -1069,11 +1068,6 @@ int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size)
 		}
 		desc->hwpart = MMC_PART_RPMB;
 	}
-
-	/* Set rpmb key. */
-	memset(rpmb_key, 0, RPMBKEY_LENGTH);
-	memcpy(rpmb_key,
-		staged_buf + strlen(RPMB_KEY_MAGIC), RPMBKEY_LENGTH);
 
 	if (mmc_rpmb_set_key(mmc, rpmb_key)) {
 		printf("ERROR - Key already programmed ?\n");
@@ -1117,6 +1111,7 @@ int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size)
 
 	/* Erase the key buffer. */
 	memset(rpmb_key, 0, RPMBKEY_LENGTH);
+	memset(key, 0, RPMBKEY_LENGTH);
 
 fail:
 	/* Return to original partition */
@@ -1127,6 +1122,30 @@ fail:
 	}
 
 	return ret;
+}
+
+int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size)
+{
+
+	if (memcmp(staged_buf, RPMB_KEY_MAGIC, strlen(RPMB_KEY_MAGIC))) {
+		printf("ERROR - rpmb magic doesn't match!\n");
+		return -1;
+	}
+
+	return do_rpmb_key_set(staged_buf + strlen(RPMB_KEY_MAGIC),
+				RPMBKEY_LENGTH);
+}
+
+int fastboot_set_rpmb_random_key(void)
+{
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, rpmb_key, RPMBKEY_LENGTH);
+
+	if (hwcrypto_gen_rng((ulong)rpmb_key, RPMBKEY_LENGTH)) {
+		printf("error - can't generate random key!\n");
+		return -1;
+	}
+
+	return do_rpmb_key_set(rpmb_key, RPMBKEY_LENGTH);
 }
 
 int avb_set_public_key(uint8_t *staged_buffer, uint32_t size) {
