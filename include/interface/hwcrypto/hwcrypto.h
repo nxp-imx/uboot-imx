@@ -38,6 +38,7 @@ enum hwcrypto_command {
 
     HWCRYPTO_HASH            = (1 << HWCRYPTO_REQ_SHIFT),
     HWCRYPTO_ENCAP_BLOB      = (2 << HWCRYPTO_REQ_SHIFT),
+    HWCRYPTO_GEN_RNG         = (3 << HWCRYPTO_REQ_SHIFT),
 };
 
 /**
@@ -96,4 +97,12 @@ typedef struct hwcrypto_blob_msg {
     uint32_t blob_pa;
 }hwcrypto_blob_msg;
 
+/**
+ * @buf:  physical start address of the output rng buf.
+ * @len:  size of required rng.
+ */
+typedef struct hwcrypto_rng_msg {
+    uint32_t buf;
+    uint32_t len;
+}hwcrypto_rng_msg;
 #endif /* TRUSTY_INTERFACE_HWCRYPTO_H_ */
