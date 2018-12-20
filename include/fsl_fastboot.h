@@ -86,6 +86,7 @@
 #ifdef CONFIG_IMX_TRUSTY_OS
 #ifndef CONFIG_AVB_ATX
 #define FASTBOOT_SET_RPMB_KEY "set-rpmb-key"
+#define FASTBOOT_SET_RPMB_RANDOM_KEY "set-rpmb-random-key"
 #define FASTBOOT_SET_VBMETA_PUBLIC_KEY "set-public-key"
 #endif
 

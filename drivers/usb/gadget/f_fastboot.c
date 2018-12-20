@@ -3808,6 +3808,12 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 			strcpy(response, "FAILset rpmb key failed!");
 		} else
 			strcpy(response, "OKAY");
+	} else if (endswith(cmd, FASTBOOT_SET_RPMB_RANDOM_KEY)) {
+		if (fastboot_set_rpmb_random_key()) {
+			printf("ERROR set rpmb random key failed!\n");
+			strcpy(response, "FAILset rpmb random key failed!");
+		} else
+			strcpy(response, "OKAY");
 	} else if (endswith(cmd, FASTBOOT_SET_VBMETA_PUBLIC_KEY)) {
 		if (avb_set_public_key(interface.transfer_buffer,
 					download_bytes))
