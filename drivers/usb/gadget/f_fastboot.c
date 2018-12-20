@@ -798,8 +798,7 @@ static ulong bootloader_mmc_offset(void)
 	if (is_imx8m() || (is_imx8() && is_soc_rev(CHIP_REV_A)))
 		return 0x8400;
 	else if (is_imx8qm()) {
-		int dev_no = mmc_get_env_dev();
-		if (MEK_8QM_EMMC == dev_no)
+		if (MEK_8QM_EMMC == fastboot_devinfo.dev_id)
 		/* target device is eMMC boot0 partition, bootloader offset is 0x0 */
 			return 0x0;
 		else
@@ -944,6 +943,11 @@ static int get_fastboot_target_dev(char *mmc_dev, struct fastboot_ptentry *ptn)
 					sizeof(FASTBOOT_PARTITION_BOOTLOADER))) &&
 					(env_get("target_ubootdev"))) {
 		dev = simple_strtoul(env_get("target_ubootdev"), NULL, 10);
+
+		/* if target_ubootdev is set, it must be that users want to change
+		 * fastboot device, then fastboot environment need to be updated */
+		fastboot_setup();
+
 		target_mmc = find_mmc_device(dev);
 		if ((target_mmc == NULL) || mmc_init(target_mmc)) {
 			printf("MMC card init failed!\n");
@@ -1283,7 +1287,10 @@ static int _fastboot_setup_dev(int *switched)
 #if defined(CONFIG_FASTBOOT_STORAGE_MMC)
 		} else if (!strncmp(fastboot_env, "mmc", 3)) {
 			devinfo.type = DEV_MMC;
-			devinfo.dev_id = mmc_get_env_dev();
+			if(env_get("target_ubootdev"))
+				devinfo.dev_id = simple_strtoul(env_get("target_ubootdev"), NULL, 10);
+			else
+				devinfo.dev_id = mmc_get_env_dev();
 #endif
 		} else {
 			return 1;
