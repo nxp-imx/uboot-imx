@@ -403,8 +403,10 @@ void init_clk_fec(int index)
 		return;
 	}
 
-	/* Set SC_R_ENET_0 clock root to 125 MHz */
-	rate = 125000000;
+	/* Set SC_R_ENET_0 clock root to 250 MHz, the clkdiv is set to div 2
+	* so finally RGMII TX clk is 125Mhz
+	*/
+	rate = 250000000;
 
 	/* div = 8 clk_source = PLL_1 ss_slice #7 in verfication codes */
 	err = sc_pm_set_clock_rate(ipc, enet[index], 2, &rate);
@@ -421,6 +423,14 @@ void init_clk_fec(int index)
 		printf("\nSC_R_ENET_0 set clock enable failed! (error = %d)\n", err);
 		return;
 	}
+
+	/* Configure GPR regisers */
+	sc_misc_set_control(ipc, enet[index], SC_C_TXCLK,  0);
+	sc_misc_set_control(ipc, enet[index], SC_C_CLKDIV,  1); /* Enable divclk */
+	sc_misc_set_control(ipc, enet[index], SC_C_DISABLE_50,  1);
+	sc_misc_set_control(ipc, enet[index], SC_C_DISABLE_125,  1);
+	sc_misc_set_control(ipc, enet[index], SC_C_SEL_125,  0);
+	sc_misc_set_control(ipc, enet[index], SC_C_IPG_STOP,  0);
 
 	LPCG_AllClockOn(ENET_0_LPCG + index * 0x10000);
 }
