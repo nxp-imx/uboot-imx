@@ -614,7 +614,7 @@ static int ehci_usb_phy_mode(struct udevice *dev)
 			priv->init_type = USB_INIT_DEVICE;
 		else
 			priv->init_type = USB_INIT_HOST;
-	} else if (is_mx7() || is_imx8mm()) {
+	} else if (is_mx7() || is_imx8mm() || is_imx8mn()) {
 		phy_status = (void __iomem *)(priv->phy_base +
 					      USBNC_PHY_STATUS_OFFSET);
 		val = readl(phy_status);
@@ -665,7 +665,7 @@ static int ehci_get_usb_phy(struct udevice *dev)
 		}
 #endif
 		priv->phy_base = addr;
-	} else if (is_mx7() || is_imx8mm()) {
+	} else if (is_mx7() || is_imx8mm() || is_imx8mn()) {
 		priv->phy_base = addr;
 	} else {
 		return -EINVAL;
