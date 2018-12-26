@@ -1,5 +1,10 @@
 if ARCH_IMX8
 
+config RECOVER_SPL_DATA_SECTION
+	bool
+	help
+	  Save SPL DATA section for cold boot, restore at warm boot
+
 config AHAB_BOOT
 	bool "Support i.MX8 AHAB features"
 	help
@@ -18,11 +23,13 @@ config MU_BASE_SPL
 config IMX8QM
 	select IMX8
 	select SUPPORT_SPL
+	select RECOVER_SPL_DATA_SECTION
 	bool
 
 config IMX8QXP
 	select IMX8
 	select SUPPORT_SPL
+	select RECOVER_SPL_DATA_SECTION
 	bool
 
 config SYS_SOC
