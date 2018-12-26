@@ -5,6 +5,11 @@ config HAVE_SC_FIRMWARE
 	help
 	  Have SCU on the SoC
 
+config RECOVER_SPL_DATA_SECTION
+	bool
+	help
+	  Save SPL DATA section for cold boot, restore at warm boot
+
 config IMX_SMMU
 	bool "Enable SMMU on i.MX8"
 	help
@@ -22,10 +27,12 @@ config IMX8
 config IMX8QM
 	bool
 	select HAVE_SC_FIRMWARE
+	select RECOVER_SPL_DATA_SECTION
 
 config IMX8QXP
 	bool
 	select HAVE_SC_FIRMWARE
+	select RECOVER_SPL_DATA_SECTION
 
 config SYS_SOC
 	default "imx8"
