@@ -188,10 +188,12 @@ int arch_cpu_init(void)
 	if (IS_ENABLED(CONFIG_XEN))
 		return 0;
 
-	pass_over = get_pass_over_info();
-	if (pass_over && pass_over->g_ap_mu == 0) {
-		/* When ap_mu is 0, means the u-boot is boot from first container */
-		sc_misc_boot_status(ipcHndl, SC_MISC_BOOT_STATUS_SUCCESS);
+	if (is_soc_rev(CHIP_REV_A)) {
+		pass_over = get_pass_over_info();
+		if (pass_over && pass_over->g_ap_mu == 0) {
+			/* When ap_mu is 0, means the u-boot is boot from first container */
+			sc_misc_boot_status(ipcHndl, SC_MISC_BOOT_STATUS_SUCCESS);
+		}
 	}
 
 #ifdef CONFIG_IMX_SMMU
