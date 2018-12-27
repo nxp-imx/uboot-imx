@@ -186,7 +186,7 @@ config SPL_BOOTCOUNT_LIMIT
 
 config SPL_RAW_IMAGE_SUPPORT
 	bool "Support SPL loading and booting of RAW images"
-	default n if (ARCH_MX6 && (SPL_MMC_SUPPORT || SPL_SATA_SUPPORT))
+	default n if ((ARCH_MX6 && (SPL_MMC_SUPPORT || SPL_SATA_SUPPORT)) || ARCH_IMX8 || ARCH_IMX8M)
 	default y if !TI_SECURE_DEVICE
 	help
 	  SPL will support loading and booting a RAW image when this option
