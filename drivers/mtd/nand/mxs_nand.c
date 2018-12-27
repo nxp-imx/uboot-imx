@@ -82,6 +82,14 @@ struct nand_ecclayout fake_ecc_layout;
 static int chunk_data_size = MXS_NAND_CHUNK_DATA_CHUNK_SIZE;
 static int galois_field = 13;
 
+static uint8_t scan_ff_pattern[] = { 0xff };
+static struct nand_bbt_descr gpmi_bbt_descr = {
+	.options	= 0,
+	.offs		= 0,
+	.len		= 1,
+	.pattern	= scan_ff_pattern
+};
+
 /*
  * Cache management functions
  */
@@ -1339,6 +1347,8 @@ int board_nand_init(struct nand_chip *nand)
 
 	nand_set_controller_data(nand, nand_info);
 	nand->options |= NAND_NO_SUBPAGE_WRITE;
+	nand->bbt_options = NAND_BBT_USE_FLASH | NAND_BBT_NO_OOB;
+	nand->badblock_pattern	= &gpmi_bbt_descr;
 
 	nand->cmd_ctrl		= mxs_nand_cmd_ctrl;
 
