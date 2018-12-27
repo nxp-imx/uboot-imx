@@ -9,6 +9,7 @@
 #include <dm.h>
 #include <mmc.h>
 #include <spi_flash.h>
+#include <nand.h>
 #include <asm/arch/image.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/sci/sci.h>
@@ -16,7 +17,8 @@
 
 #define MMC_DEV		0
 #define QSPI_DEV	1
-#define RAM_DEV	3
+#define NAND_DEV	2
+#define RAM_DEV		3
 
 #define SEC_SECURE_RAM_BASE			(0x31800000UL)
 #define SEC_SECURE_RAM_END_BASE			(SEC_SECURE_RAM_BASE + 0xFFFFUL)
@@ -34,7 +36,8 @@ static int read(u32 start, u32 len, void *load_addr)
 {
 	int ret = -ENODEV;
 
-	if (!device && current_dev_type != RAM_DEV) {
+	if (current_dev_type != NAND_DEV && current_dev_type != RAM_DEV
+		&& !device) {
 		debug("No device selected\n");
 		return ret;
 	}
@@ -64,6 +67,15 @@ static int read(u32 start, u32 len, void *load_addr)
 				     len, load_addr);
 		if (ret != 0) {
 			debug("Read container image from QSPI failed\n");
+			return -EIO;
+		}
+	}
+#endif
+#ifdef CONFIG_SPL_NAND_SUPPORT
+	if (current_dev_type == NAND_DEV) {
+		ret = nand_spl_load_image(start, len, load_addr);
+		if (ret != 0) {
+			debug("Read container image from NAND failed\n");
 			return -EIO;
 		}
 	}
@@ -245,6 +257,21 @@ int spi_load_image_parse_container(struct spl_image_info *spl_image,
 
 	current_dev_type = QSPI_DEV;
 	device = flash;
+
+	start_offset = offset;
+
+	ret = read_auth_container(spl_image);
+
+	return ret;
+}
+
+int nand_load_image_parse_container(struct spl_image_info *spl_image,
+				   unsigned long offset)
+{
+	int ret = 0;
+
+	current_dev_type = NAND_DEV;
+	device = NULL;
 
 	start_offset = offset;
 
