@@ -158,7 +158,7 @@ static int read_auth_container(struct spl_image_info *spl_image)
 	int ret;
 	int i;
 
-	container = malloc(sizeof(struct container_hdr));
+	container = malloc(CONTAINER_HDR_ALIGNMENT);
 	if (!container)
 		return -ENOMEM;
 
