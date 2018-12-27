@@ -14,6 +14,8 @@
 
 #ifdef CONFIG_SPL_BUILD
 
+#define CONFIG_PARSE_CONTAINER
+
 #ifdef CONFIG_QSPI_BOOT
 #define CONFIG_SPL_SPI_LOAD
 #endif
@@ -23,11 +25,13 @@
 #define CONFIG_SYS_MONITOR_LEN          (1024 * 1024)
 
 #ifdef CONFIG_NAND_BOOT
+#ifndef CONFIG_PARSE_CONTAINER
 #define CONFIG_SPL_NAND_RAW_ONLY
+#endif
 #define CONFIG_SPL_NAND_SUPPORT
 #define CONFIG_SPL_DMA_SUPPORT
 #define CONFIG_SPL_NAND_MXS
-#define CONFIG_SYS_NAND_U_BOOT_OFFS     (0x4000000)  /*Put the FIT out of first 64MB boot area */
+#define CONFIG_SYS_NAND_U_BOOT_OFFS     (0x8000000)  /*Put the FIT out of first 128MB boot area */
 #define CONFIG_SPL_NAND_BOOT
 #define CONFIG_SYS_NAND_U_BOOT_DST		0x80000000
 #define CONFIG_SYS_NAND_U_BOOT_SIZE     (1024 * 1024 )
@@ -162,9 +166,7 @@
 	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
 
 #ifdef CONFIG_NAND_BOOT
-#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:128m(nandboot),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs) "
-#else
-#define MFG_NAND_PARTITION ""
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:128m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs) "
 #endif
 
 #define CONFIG_MFG_ENV_SETTINGS \
@@ -175,7 +177,6 @@
 	"initrd_high=0xffffffffffffffff\0" \
 	"emmc_dev=0\0" \
 	"sd_dev=1\0" \
-	"mtdparts=mtdparts=gpmi-nand:128m(nandboot),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)\0"
 
 /* Initial environment variables */
 #ifdef CONFIG_NAND_BOOT
@@ -186,6 +187,7 @@
 		MFG_NAND_PARTITION \
 		"\0"\
 	"console=ttyLP0,115200 earlycon=lpuart32,0x5a060000,115200\0" \
+	"mtdparts=" MFG_NAND_PARTITION "\0" \
 	"fdt_addr=0x83000000\0"
 #else
 #define CONFIG_EXTRA_ENV_SETTINGS		\
@@ -267,8 +269,8 @@
 
 #ifdef CONFIG_NAND_BOOT
 #define CONFIG_BOOTCOMMAND \
-	"nand read ${loadaddr} 0x8000000 0x2000000;"\
-	"nand read ${fdt_addr} 0xA000000 0x100000;"\
+	"nand read ${loadaddr} 0x9000000 0x2000000;"\
+	"nand read ${fdt_addr} 0xB000000 0x100000;"\
 	"booti ${loadaddr} - ${fdt_addr}"
 #else
 #define CONFIG_BOOTCOMMAND \
