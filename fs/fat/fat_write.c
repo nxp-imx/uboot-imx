@@ -591,14 +591,18 @@ static void flush_dir_table(fsdata *mydata, dir_entry **dentptr)
 		printf("error: wrinting directory entry\n");
 		return;
 	}
-	dir_newclust = find_empty_cluster(mydata);
-	set_fatent_value(mydata, dir_curclust, dir_newclust);
-	if (mydata->fatsize == 32)
+
+	if (mydata->fatsize == 32) {
+		dir_newclust = find_empty_cluster(mydata);
+		set_fatent_value(mydata, dir_curclust, dir_newclust);
 		set_fatent_value(mydata, dir_newclust, 0xffffff8);
-	else if (mydata->fatsize == 16)
-		set_fatent_value(mydata, dir_newclust, 0xfff8);
-	else if (mydata->fatsize == 12)
-		set_fatent_value(mydata, dir_newclust, 0xff8);
+	} else {
+		dir_newclust = dir_curclust + 1;
+		if (dir_newclust > 1) {
+			printf("error: fail to get empty clust for directory entry\n");
+			return;
+		}
+	}
 
 	dir_curclust = dir_newclust;
 
