@@ -824,7 +824,15 @@ static int new_dir_table(fat_itr *itr)
 	int dir_oldclust = itr->clust;
 	unsigned int bytesperclust = mydata->clust_size * mydata->sect_size;
 
-	dir_newclust = find_empty_cluster(mydata);
+	if (mydata->fatsize == 32) {
+		dir_newclust = find_empty_cluster(mydata);
+	} else {
+		dir_newclust = itr->clust + 1;
+		if (dir_newclust > 1) {
+			printf("error: fail to get empty clust for directory entry\n");
+			return -1;
+		}
+	}
 
 	/*
 	 * Flush before updating FAT to ensure valid directory structure
@@ -836,13 +844,10 @@ static int new_dir_table(fat_itr *itr)
 	if (flush_dir(itr))
 		return -EIO;
 
-	set_fatent_value(mydata, dir_oldclust, dir_newclust);
-	if (mydata->fatsize == 32)
+	if (mydata->fatsize == 32) {
+		set_fatent_value(mydata, dir_oldclust, dir_newclust);
 		set_fatent_value(mydata, dir_newclust, 0xffffff8);
-	else if (mydata->fatsize == 16)
-		set_fatent_value(mydata, dir_newclust, 0xfff8);
-	else if (mydata->fatsize == 12)
-		set_fatent_value(mydata, dir_newclust, 0xff8);
+	}
 
 	if (flush_dirty_fat_buffer(mydata) < 0)
 		return -EIO;
