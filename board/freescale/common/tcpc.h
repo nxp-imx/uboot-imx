@@ -451,4 +451,19 @@ int tcpc_init(struct tcpc_port *port, struct tcpc_port_config config, ss_mux_sel
 bool tcpc_pd_sink_check_charging(struct tcpc_port *port);
 void tcpc_print_log(struct tcpc_port *port);
 
+#ifdef CONFIG_SPL_BUILD
+int tcpc_setup_ufp_mode(struct tcpc_port *port)
+{
+	return 0;
+}
+int tcpc_setup_dfp_mode(struct tcpc_port *port)
+{
+	return 0;
+}
+
+int tcpc_disable_src_vbus(struct tcpc_port *port)
+{
+	return 0;
+}
+#endif
 #endif /* __TCPCI_H */
