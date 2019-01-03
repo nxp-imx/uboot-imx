@@ -2,7 +2,6 @@
 /*
  * Copyright 2018 NXP
  */
-
 #include <common.h>
 #include <spl.h>
 #include <errno.h>
@@ -17,6 +16,7 @@
 
 #define MMC_DEV		0
 #define QSPI_DEV	1
+#define RAM_DEV	3
 
 #define SEC_SECURE_RAM_BASE			(0x31800000UL)
 #define SEC_SECURE_RAM_END_BASE			(SEC_SECURE_RAM_BASE + 0xFFFFUL)
@@ -30,11 +30,11 @@ static int current_dev_type = MMC_DEV;
 static int start_offset;
 static void *device;
 
-static int read(int start, int len, void *load_addr)
+static int read(u32 start, u32 len, void *load_addr)
 {
 	int ret = -ENODEV;
 
-	if (!device) {
+	if (!device && current_dev_type != RAM_DEV) {
 		debug("No device selected\n");
 		return ret;
 	}
@@ -68,6 +68,11 @@ static int read(int start, int len, void *load_addr)
 		}
 	}
 #endif
+
+	if (current_dev_type == RAM_DEV) {
+		memcpy(load_addr, (const void *)(ulong)start, len);
+		ret = 0;
+	}
 
 	return ret;
 }
@@ -197,6 +202,8 @@ static int read_auth_container(struct spl_image_info *spl_image)
 
 		if (!image) {
 			ret = -EINVAL;
+			if (sc_seco_authenticate(-1, SC_MISC_REL_CONTAINER, 0) != SC_ERR_NONE)
+				printf("Error: release container failed!\n");
 			goto out;
 		}
 
@@ -238,6 +245,21 @@ int spi_load_image_parse_container(struct spl_image_info *spl_image,
 
 	current_dev_type = QSPI_DEV;
 	device = flash;
+
+	start_offset = offset;
+
+	ret = read_auth_container(spl_image);
+
+	return ret;
+}
+
+int sdp_load_image_parse_container(struct spl_image_info *spl_image,
+				   unsigned long offset)
+{
+	int ret = 0;
+
+	current_dev_type = RAM_DEV;
+	device = NULL;
 
 	start_offset = offset;
 

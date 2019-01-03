@@ -247,6 +247,14 @@ static struct usb_gadget_strings *sdp_generic_strings[] = {
 	NULL,
 };
 
+#ifdef CONFIG_PARSE_CONTAINER
+int __weak sdp_load_image_parse_container(struct spl_image_info *spl_image,
+				   unsigned long offset)
+{
+	return -EINVAL;
+}
+#endif
+
 void __weak board_sdp_cleanup(void)
 {
 }
@@ -676,6 +684,34 @@ static ulong sdp_spl_fit_read(struct spl_load_info *load, ulong sector,
 	return count;
 }
 
+#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_PARSE_CONTAINER
+static ulong search_container_header(ulong p, int size)
+{
+	int i = 0;
+	uint8_t *hdr;
+	for (i = 0; i < size; i += 4) {
+		hdr = (uint8_t *)(p +i);
+		if (*(hdr + 3) == 0x87 && *hdr == 0 &&
+			(*(hdr + 1) != 0 || *(hdr + 2) != 0))
+                        return p +i;
+	}
+        return 0;
+}
+#else
+static ulong search_fit_header(ulong p, int size)
+{
+	int i = 0;
+	for (i = 0; i < size; i += 4) {
+                if (genimg_get_format((const void *)(p+i)) == IMAGE_FORMAT_FIT)
+                        return p + i;
+	}
+
+        return 0;
+}
+#endif
+#endif
+
 static void sdp_handle_in_ep(void)
 {
 	u8 *data = sdp_func->in_req->buf;
@@ -731,6 +767,20 @@ static void sdp_handle_in_ep(void)
 			struct image_header *header;
 			struct spl_image_info spl_image = {};
 
+#ifdef CONFIG_PARSE_CONTAINER
+			sdp_func->jmp_address = (u32)search_container_header((ulong)sdp_func->jmp_address,
+				sdp_func->dnl_bytes);
+#else
+			if (IS_ENABLED(CONFIG_SPL_LOAD_FIT))
+				sdp_func->jmp_address = (u32)search_fit_header((ulong)sdp_func->jmp_address,
+					sdp_func->dnl_bytes);
+#endif
+			if (sdp_func->jmp_address == 0) {
+				panic("Error in search header, failed to jump\n");
+			}
+
+			printf("Found header at 0x%08x\n", sdp_func->jmp_address);
+
 			header = (struct image_header *)(ulong)(sdp_func->jmp_address);
 
 			if (IS_ENABLED(CONFIG_SPL_LOAD_FIT) &&
@@ -747,9 +797,14 @@ static void sdp_handle_in_ep(void)
 							  sdp_func->jmp_address,
 							  (void *)header);
 			} else {
+#ifdef CONFIG_PARSE_CONTAINER
+				sdp_load_image_parse_container(&spl_image,
+							     sdp_func->jmp_address);
+#else
 				/* In SPL, allow jumps to U-Boot images */
 				spl_parse_image_header(&spl_image,
 					(struct image_header *)(ulong)(sdp_func->jmp_address));
+#endif
 			}
 
 			board_sdp_cleanup();
