@@ -247,6 +247,10 @@ static struct usb_gadget_strings *sdp_generic_strings[] = {
 	NULL,
 };
 
+void __weak board_sdp_cleanup(void)
+{
+}
+
 static inline void *sdp_ptr(u32 val)
 {
 	return (void *)(uintptr_t)val;
@@ -743,6 +747,8 @@ static void sdp_handle_in_ep(void)
 				spl_parse_image_header(&spl_image,
 					(struct image_header *)(ulong)(sdp_func->jmp_address));
 			}
+
+			board_sdp_cleanup();
 
 			jump_to_image_no_args(&spl_image);
 #else

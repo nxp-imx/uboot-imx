@@ -13,6 +13,11 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+void board_sdp_cleanup(void)
+{
+	board_usb_cleanup(CONFIG_SPL_SDP_USB_DEV, USB_INIT_DEVICE);
+}
+
 static int spl_sdp_load_image(struct spl_image_info *spl_image,
 			      struct spl_boot_device *bootdev)
 {
