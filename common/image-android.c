@@ -138,6 +138,14 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
 #endif
 
+#ifdef CONFIG_TARGET_IMX8MM_DDR4_EVK
+	sprintf(newbootargs," androidboot.wifivendor=BCM");
+	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+#elif CONFIG_TARGET_IMX8MM_EVK
+	sprintf(newbootargs," androidboot.wifivendor=QCA");
+	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+#endif
+
 	/* append soc type into bootargs */
 	char *soc_type = env_get("soc_type");
 	if (soc_type) {
