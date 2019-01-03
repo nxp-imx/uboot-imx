@@ -137,6 +137,17 @@ static void _lpuart_serial_putc(struct lpuart_serial_platdata *plat,
 	__raw_writeb(c, &base->ud);
 }
 
+/* Test whether a character is in the RX buffer */
+static int _lpuart_serial_tstc(struct lpuart_serial_platdata *plat)
+{
+	struct lpuart_fsl *base = plat->reg;
+
+	if (__raw_readb(&base->urcfifo) == 0)
+		return 0;
+
+	return 1;
+}
+
 /*
  * Initialise the serial port with the given baudrate. The settings
  * are always 8 data bits, no parity, 1 stop bit, no start bits.
@@ -282,6 +293,20 @@ static void _lpuart32_serial_putc(struct lpuart_serial_platdata *plat,
 	lpuart_write32(plat->flags, &base->data, c);
 }
 
+/* Test whether a character is in the RX buffer */
+static int _lpuart32_serial_tstc(struct lpuart_serial_platdata *plat)
+{
+	struct lpuart_fsl_reg32 *base = plat->reg;
+	u32 water;
+
+	lpuart_read32(plat->flags, &base->water, &water);
+
+	if ((water >> 24) == 0)
+		return 0;
+
+	return 1;
+}
+
 /*
  * Initialise the serial port with the given baudrate. The settings
  * are always 8 data bits, no parity, 1 stop bit, no start bits.
@@ -387,12 +412,11 @@ static void serial_lpuart_putc(const char c)
 static int serial_lpuart_tstc(void)
 {
 	struct lpuart_serial_platdata *plat = &lpuart_serial_data;
-	struct lpuart_fsl *base = plat->reg;
 
-	if (__raw_readb(&base->urcfifo) == 0)
-		return 0;
+	if (plat->flags & LPUART_FLAG_REGMAP_32BIT_REG)
+		return _lpuart32_serial_tstc(plat);
 
-	return 1;
+	return _lpuart_serial_tstc(plat);
 }
 
 static struct serial_device serial_lpuart_drv = {
@@ -423,31 +447,6 @@ static bool is_lpuart32(struct udevice *dev)
 	struct lpuart_serial_platdata *plat = dev->platdata;
 
 	return plat->flags & LPUART_FLAG_REGMAP_32BIT_REG;
-}
-
-/* Test whether a character is in the RX buffer */
-static int _lpuart_serial_tstc(struct lpuart_serial_platdata *plat)
-{
-	struct lpuart_fsl *base = plat->reg;
-
-	if (__raw_readb(&base->urcfifo) == 0)
-		return 0;
-
-	return 1;
-}
-
-/* Test whether a character is in the RX buffer */
-static int _lpuart32_serial_tstc(struct lpuart_serial_platdata *plat)
-{
-	struct lpuart_fsl_reg32 *base = plat->reg;
-	u32 water;
-
-	lpuart_read32(plat->flags, &base->water, &water);
-
-	if ((water >> 24) == 0)
-		return 0;
-
-	return 1;
 }
 
 static int lpuart_serial_setbrg(struct udevice *dev, int baudrate)
