@@ -456,9 +456,12 @@ int tcpc_setup_ufp_mode(struct tcpc_port *port)
 {
 	return 0;
 }
-#endif
-#ifdef CONFIG_SPL_BUILD
 int tcpc_setup_dfp_mode(struct tcpc_port *port)
+{
+	return 0;
+}
+
+int tcpc_disable_src_vbus(struct tcpc_port *port)
 {
 	return 0;
 }
