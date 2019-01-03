@@ -126,7 +126,7 @@
 	"fdt_file=undefined\0" \
 	"fdt_addr=0x83000000\0" \
 	"tee_addr=0x84000000\0" \
-	"tee_file=uTee-6ullevk\0" \
+	"tee_file=undefined\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
 	"panel=TFT43AB\0" \
@@ -207,9 +207,22 @@
 					"echo WARNING: Could not determine dtb to use; " \
 				"fi; " \
 			"fi;\0" \
+		"findtee="\
+			"if test $tee_file = undefined; then " \
+				"if test $board_name = ULZ-EVK && test $board_rev = 14X14; then " \
+					"setenv tee_file uTee-6ulzevk; fi; " \
+				"if test $board_name = EVK && test $board_rev = 9X9; then " \
+					"setenv tee_file uTee-6ullevk; fi; " \
+				"if test $board_name = EVK && test $board_rev = 14X14; then " \
+					"setenv tee_file uTee-6ullevk; fi; " \
+				"if test $tee_file = undefined; then " \
+					"echo WARNING: Could not determine tee to use; " \
+				"fi; " \
+			"fi;\0" \
 
 #define CONFIG_BOOTCOMMAND \
 	   "run findfdt;" \
+	   "run findtee;" \
 	   "mmc dev ${mmcdev};" \
 	   "mmc dev ${mmcdev}; if mmc rescan; then " \
 		   "if run loadbootscript; then " \
