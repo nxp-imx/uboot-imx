@@ -482,9 +482,9 @@ static struct cdns3_device cdns3_device_data = {
 	.index = 1,
 };
 
-int usb_gadget_handle_interrupts(void)
+int usb_gadget_handle_interrupts(int index)
 {
-	cdns3_uboot_handle_interrupt(1);
+	cdns3_uboot_handle_interrupt(index);
 	return 0;
 }
 #endif
@@ -500,6 +500,19 @@ int board_usb_init(int index, enum usb_init_type init)
 #endif
 #ifdef CONFIG_USB_CDNS3_GADGET
 		} else {
+#ifdef CONFIG_SPL_BUILD
+			sc_ipc_t ipcHndl = 0;
+
+			ipcHndl = gd->arch.ipc_channel_handle;
+
+			ret = sc_pm_set_resource_power_mode(ipcHndl, SC_R_USB_2, SC_PM_PW_MODE_ON);
+			if (ret != SC_ERR_NONE)
+				printf("conn_usb2 Power up failed! (error = %d)\n", ret);
+
+			ret = sc_pm_set_resource_power_mode(ipcHndl, SC_R_USB_2_PHY, SC_PM_PW_MODE_ON);
+			if (ret != SC_ERR_NONE)
+				printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
+#else
 			struct power_domain pd;
 			int ret;
 
@@ -515,6 +528,8 @@ int board_usb_init(int index, enum usb_init_type init)
 				if (ret)
 					printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
 			}
+#endif
+
 #ifdef CONFIG_USB_TCPC
 			ret = tcpc_setup_ufp_mode(&port);
 			printf("%d setufp mode %d\n", index, ret);
@@ -541,23 +556,37 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 #endif
 #ifdef CONFIG_USB_CDNS3_GADGET
 		} else {
+			cdns3_uboot_exit(1);
+
+#ifdef CONFIG_SPL_BUILD
+			sc_ipc_t ipcHndl = 0;
+
+			ipcHndl = gd->arch.ipc_channel_handle;
+
+			ret = sc_pm_set_resource_power_mode(ipcHndl, SC_R_USB_2, SC_PM_PW_MODE_OFF);
+			if (ret != SC_ERR_NONE)
+				printf("conn_usb2 Power down failed! (error = %d)\n", ret);
+
+			ret = sc_pm_set_resource_power_mode(ipcHndl, SC_R_USB_2_PHY, SC_PM_PW_MODE_OFF);
+			if (ret != SC_ERR_NONE)
+				printf("conn_usb2_phy Power down failed! (error = %d)\n", ret);
+#else
 			struct power_domain pd;
 			int ret;
-
-			cdns3_uboot_exit(1);
 
 			/* Power off usb */
 			if (!power_domain_lookup_name("conn_usb2", &pd)) {
 				ret = power_domain_off(&pd);
 				if (ret)
-					printf("conn_usb2 Power up failed! (error = %d)\n", ret);
+					printf("conn_usb2 Power down failed! (error = %d)\n", ret);
 			}
 
 			if (!power_domain_lookup_name("conn_usb2_phy", &pd)) {
 				ret = power_domain_off(&pd);
 				if (ret)
-					printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
+					printf("conn_usb2_phy Power down failed! (error = %d)\n", ret);
 			}
+#endif
 #endif
 		}
 	}
