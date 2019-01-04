@@ -101,6 +101,20 @@
 			>;
 		};
 
+		pinctrl_i2c1_gpio: i2c1grp-gpio {
+			fsl,pins = <
+				MX8MQ_IOMUXC_I2C1_SCL_GPIO5_IO14        		0x7f
+				MX8MQ_IOMUXC_I2C1_SDA_GPIO5_IO15        		0x7f
+			>;
+		};
+
+		pinctrl_i2c2_gpio: i2c2grp-gpio {
+			fsl,pins = <
+				MX8MQ_IOMUXC_I2C2_SCL_GPIO5_IO16        		0x7f
+				MX8MQ_IOMUXC_I2C2_SDA_GPIO5_IO17        		0x7f
+			>;
+		};
+
 		pinctrl_pwm2: pwm2grp {
 			fsl,pins = <
 				MX8MQ_IOMUXC_GPIO1_IO13_PWM2_OUT	0x16
@@ -259,8 +273,11 @@
 
 &i2c1 {
 	clock-frequency = <100000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c1>;
+	pinctrl-1 = <&pinctrl_i2c1_gpio>;
+	scl-gpios = <&gpio5 14 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio5 15 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
 	pmic: pfuze100@08 {
@@ -352,8 +369,11 @@
 
 &i2c2 {
 	clock-frequency = <100000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c2>;
+	pinctrl-1 = <&pinctrl_i2c2_gpio>;
+	scl-gpios = <&gpio5 16 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio5 17 GPIO_ACTIVE_HIGH>;
 	status = "disabled";
 };
 
