@@ -230,7 +230,7 @@ int trusty_read_vbmeta_public_key(uint8_t *publickey, uint32_t size)
         return rc;
     }
     /* ensure caller passed size matches size returned by Trusty */
-    if (size != resp_size) {
+    if (size < resp_size) {
         return TRUSTY_ERR_INVALID_ARGS;
     }
     trusty_memcpy(publickey, resp_buf, resp_size);

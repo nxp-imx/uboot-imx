@@ -83,7 +83,7 @@ extern void trusty_os_init(void);
 #include "fastboot_lock_unlock.h"
 #endif
 
-#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_DUAL_BOOTLOADER)
+#ifdef CONFIG_IMX_TRUSTY_OS
 #include "u-boot/sha256.h"
 #endif
 
@@ -2125,12 +2125,21 @@ int trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_result
 	keymaster_verified_boot_t vbstatus;
 	FbLockState lock_status = fastboot_get_lock_stat();
 
-	uint8_t permanent_attributes_hash[AVB_SHA256_DIGEST_SIZE];
+	uint8_t boot_key_hash[AVB_SHA256_DIGEST_SIZE];
 #ifdef CONFIG_AVB_ATX
-	if (fsl_read_permanent_attributes_hash(&fsl_avb_atx_ops, permanent_attributes_hash)) {
+	if (fsl_read_permanent_attributes_hash(&fsl_avb_atx_ops, boot_key_hash)) {
 		printf("ERROR - failed to read permanent attributes hash for keymaster\n");
-		memset(permanent_attributes_hash, 0, AVB_SHA256_DIGEST_SIZE);
+		memset(boot_key_hash, 0, AVB_SHA256_DIGEST_SIZE);
 	}
+#else
+	uint8_t public_key_buf[AVB_MAX_BUFFER_LENGTH];
+	if (trusty_read_vbmeta_public_key(public_key_buf,
+						AVB_MAX_BUFFER_LENGTH) != 0) {
+		printf("ERROR - failed to read public key for keymaster\n");
+		memset(boot_key_hash, 0, AVB_SHA256_DIGEST_SIZE);
+	} else
+		sha256_csum_wd((unsigned char *)public_key_buf, AVB_SHA256_DIGEST_SIZE,
+				(unsigned char *)boot_key_hash, CHUNKSZ_SHA256);
 #endif
 
 	bool lock = (lock_status == FASTBOOT_LOCK)? true: false;
@@ -2147,11 +2156,11 @@ int trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_result
 	}
 
 	trusty_set_boot_params(os_ver_km, os_lvl_km, vbstatus, lock,
-			       permanent_attributes_hash, AVB_SHA256_DIGEST_SIZE,
+			       boot_key_hash, AVB_SHA256_DIGEST_SIZE,
 			       vbh, AVB_SHA256_DIGEST_SIZE);
 #else
 	trusty_set_boot_params(os_ver_km, os_lvl_km, vbstatus, lock,
-			       permanent_attributes_hash, AVB_SHA256_DIGEST_SIZE,
+			       boot_key_hash, AVB_SHA256_DIGEST_SIZE,
 			       NULL, 0);
 #endif
 

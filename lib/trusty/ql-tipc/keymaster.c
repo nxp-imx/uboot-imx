@@ -290,6 +290,9 @@ int km_tipc_init(struct trusty_ipc_dev *dev)
         return TRUSTY_ERR_GENERIC;
     }
 
+    /* mark as initialized */
+    initialized = true;
+
     return TRUSTY_ERR_NONE;
 }
 
