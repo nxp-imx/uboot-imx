@@ -92,6 +92,10 @@
 
 #define FASTBOOT_SET_CA_RESP "at-set-ca-response"
 #define FASTBOOT_GET_CA_REQ  "at-get-ca-request"
+#define FASTBOOT_SET_RSA_ATTESTATION_KEY  "set-rsa-atte-key"
+#define FASTBOOT_SET_EC_ATTESTATION_KEY  "set-ec-atte-key"
+#define FASTBOOT_APPEND_RSA_ATTESTATION_CERT  "append-rsa-atte-cert"
+#define FASTBOOT_APPEND_EC_ATTESTATION_CERT  "append-ec-atte-cert"
 #endif
 
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
