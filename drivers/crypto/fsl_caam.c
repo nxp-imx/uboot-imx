@@ -246,13 +246,16 @@ u32 caam_hwrng(u8 *output_ptr, u32 output_len)
  */
 void caam_open(void)
 {
-	u32 temp_reg;
 	int ret;
 
 	/* switch on the clock */
+	/* for imx8, the CAAM initialization should have been done
+	 * in seco, so we should skip this part.
+	 */
 #ifndef CONFIG_ARCH_IMX8
+	u32 temp_reg;
+
 	caam_clock_enable();
-#endif
 
 	/* reset the CAAM */
 	temp_reg = __raw_readl(CAAM_MCFGR) |
@@ -262,6 +265,7 @@ void caam_open(void)
 		;
 
 	jr_reset();
+
 	ret = do_cfg_jrqueue();
 
 	if (ret != SUCCESS) {
@@ -275,8 +279,15 @@ void caam_open(void)
 		printf("RNG already instantiated 0x%X\n", temp_reg);
 		return;
 	}
-
 	rng_init();
+#else
+	ret = do_cfg_jrqueue();
+
+	if (ret != SUCCESS) {
+		printf("Error CAAM JR initialization\n");
+		return;
+	}
+#endif
 
 #ifdef CONFIG_CAAM_KB_SELF_TEST
 	caam_test();
@@ -543,7 +554,14 @@ static int do_job(u32 *desc)
 	int ret;
 	phys_addr_t p_desc = virt_to_phys(desc);
 
+	/* for imx8, JR0 and JR1 will be assigned to seco, so we use
+	 * the JR3 instead.
+	 */
+#ifndef CONFIG_ARCH_IMX8
 	if (__raw_readl(CAAM_IRSAR0) == 0)
+#else
+	if (__raw_readl(CAAM_IRSAR3) == 0)
+#endif
 		return ERROR_ANY;
 	g_jrdata.inrings[0].desc = p_desc;
 
@@ -559,9 +577,15 @@ static int do_job(u32 *desc)
 			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
 
 	/* Inform HW that a new JR is available */
+#ifndef CONFIG_ARCH_IMX8
 	__raw_writel(1, CAAM_IRJAR0);
 	while (__raw_readl(CAAM_ORSFR0) == 0)
 		;
+#else
+	__raw_writel(1, CAAM_IRJAR3);
+	while (__raw_readl(CAAM_ORSFR3) == 0)
+		;
+#endif
 
 	if (PTR2CAAMDMA(desc) == g_jrdata.outrings[0].desc) {
 		ret = g_jrdata.outrings[0].status;
@@ -571,10 +595,15 @@ static int do_job(u32 *desc)
 	}
 
 	/* Acknowledge interrupt */
+#ifndef CONFIG_ARCH_IMX8
 	setbits_le32(CAAM_JRINTR0, JRINTR_JRI);
-
 	/* Remove the JR from the output list even if no JR caller found */
 	__raw_writel(1, CAAM_ORJRR0);
+#else
+	setbits_le32(CAAM_JRINTR3, JRINTR_JRI);
+	/* Remove the JR from the output list even if no JR caller found */
+	__raw_writel(1, CAAM_ORJRR3);
+#endif
 
 	return ret;
 }
@@ -632,6 +661,11 @@ static int do_cfg_jrqueue(void)
 	/* Configure the HW Job Rings */
 	ip_base = virt_to_phys((void *)g_jrdata.inrings);
 	op_base = virt_to_phys((void *)g_jrdata.outrings);
+
+	/* for imx8, JR0 and JR1 will be assigned to seco, so we use
+	 * the JR3 instead.
+	 */
+#ifndef CONFIG_ARCH_IMX8
 	__raw_writel(ip_base, CAAM_IRBAR0);
 	__raw_writel(1, CAAM_IRSR0);
 
@@ -639,6 +673,15 @@ static int do_cfg_jrqueue(void)
 	__raw_writel(1, CAAM_ORSR0);
 
 	setbits_le32(CAAM_JRINTR0, JRINTR_JRI);
+#else
+	__raw_writel(ip_base, CAAM_IRBAR3);
+	__raw_writel(1, CAAM_IRSR3);
+
+	__raw_writel(op_base, CAAM_ORBAR3);
+	__raw_writel(1, CAAM_ORSR3);
+
+	setbits_le32(CAAM_JRINTR3, JRINTR_JRI);
+#endif
 
 	/*
 	 * Configure interrupts but disable it:
@@ -650,10 +693,14 @@ static int do_cfg_jrqueue(void)
 	value |= (1 << BS_JRCFGR_LS_ICDCT) & BM_JRCFGR_LS_ICDCT;
 	value |= BM_JRCFGR_LS_ICEN;
 	value |= BM_JRCFGR_LS_IMSK;
+#ifndef CONFIG_ARCH_IMX8
 	__raw_writel(value, CAAM_JRCFGR0_LS);
 
 	/* Enable deco watchdog */
 	setbits_le32(CAAM_MCFGR, BM_MCFGR_WDE);
+#else
+	__raw_writel(value, CAAM_JRCFGR3_LS);
+#endif
 
 	return 0;
 }

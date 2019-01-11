@@ -105,6 +105,23 @@
 #define CAAM_SMAG1JR0_PRTN1 (CONFIG_SYS_FSL_SEC_ADDR + 0x111c)
 #define CAAM_SMPO           (CONFIG_SYS_FSL_SEC_ADDR + 0x1fbc)
 
+/* JR0 and JR1 will be assigned to seco in imx8, so we need to
+ * use JR3 instead.
+ */
+#ifdef CONFIG_ARCH_IMX8
+#define CAAM_IRBAR3         (CONFIG_SYS_FSL_SEC_ADDR + 0x40004)
+#define CAAM_IRSR3          (CONFIG_SYS_FSL_SEC_ADDR + 0x4000c)
+#define CAAM_IRSAR3         (CONFIG_SYS_FSL_SEC_ADDR + 0x40014)
+#define CAAM_IRJAR3         (CONFIG_SYS_FSL_SEC_ADDR + 0x4001c)
+#define CAAM_ORBAR3         (CONFIG_SYS_FSL_SEC_ADDR + 0x40024)
+#define CAAM_ORSR3          (CONFIG_SYS_FSL_SEC_ADDR + 0x4002c)
+#define CAAM_ORSFR3         (CONFIG_SYS_FSL_SEC_ADDR + 0x4003c)
+#define CAAM_JRINTR3        (CONFIG_SYS_FSL_SEC_ADDR + 0x4004c)
+#define CAAM_ORJRR3         (CONFIG_SYS_FSL_SEC_ADDR + 0x40034)
+#define CAAM_JRCFGR3_LS     (CONFIG_SYS_FSL_SEC_ADDR + 0x40054)
+#define CAAM_JRCR3          (CONFIG_SYS_FSL_SEC_ADDR + 0x4006c)
+#endif
+
 #define DESC_MAX_SIZE       (0x40)        /* Descriptor max size */
 #define JRCFG_LS_IMSK       (0x01)        /* Interrupt Mask */
 #define JR_MID              (0x02)        /* Matches ROM configuration */
