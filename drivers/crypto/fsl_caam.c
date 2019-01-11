@@ -45,12 +45,16 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static void rng_init(void);
-static void caam_clock_enable(void);
 static int do_cfg_jrqueue(void);
 static int do_job(u32 *desc);
+#ifndef CONFIG_ARCH_IMX8
+static void rng_init(void);
+static void caam_clock_enable(void);
 static int jr_reset(void);
+#endif
+#ifdef CONFIG_CAAM_KB_SELF_TEST
 static void caam_test(void);
+#endif
 
 /*
  * Structures
@@ -251,13 +255,16 @@ u32 caam_hwrng(u8 *output_ptr, u32 output_len)
  */
 void caam_open(void)
 {
-	u32 temp_reg;
 	int ret;
 
 	/* switch on the clock */
+	/* for imx8, the CAAM initialization should have been done
+	 * in seco, so we should skip this part.
+	 */
 #ifndef CONFIG_ARCH_IMX8
+	u32 temp_reg;
+
 	caam_clock_enable();
-#endif
 
 	/* reset the CAAM */
 	temp_reg = __raw_readl(CAAM_MCFGR) |
@@ -267,6 +274,7 @@ void caam_open(void)
 		;
 
 	jr_reset();
+
 	ret = do_cfg_jrqueue();
 
 	if (ret != SUCCESS) {
@@ -280,41 +288,271 @@ void caam_open(void)
 		printf("RNG already instantiated 0x%X\n", temp_reg);
 		return;
 	}
-
 	rng_init();
+#else
+	ret = do_cfg_jrqueue();
+
+	if (ret != SUCCESS) {
+		printf("Error CAAM JR initialization\n");
+		return;
+	}
+#endif
 
 #ifdef CONFIG_CAAM_KB_SELF_TEST
 	caam_test();
 #endif
 }
 
-static void caam_clock_enable(void)
+/*
+ *  Descriptors to instantiate SH0, SH1, load the keys
+ */
+static const u32 rng_inst_sh0_desc[] = {
+	/* Header, don't setup the size */
+	CAAM_HDR_CTYPE | CAAM_HDR_ONE | CAAM_HDR_START_INDEX(0),
+	/* Operation instantiation (sh0) */
+	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | ALGO_RNG_SH(0) | ALGO_RNG_INSTANTIATE,
+};
+
+static const u32 rng_inst_sh1_desc[] = {
+	/* wait for done - Jump to next entry */
+	CAAM_C1_JUMP | CAAM_JUMP_LOCAL | CAAM_JUMP_TST_ALL_COND_TRUE
+		| CAAM_JUMP_OFFSET(1),
+	/* Clear written register (write 1) */
+	CAAM_C0_LOAD_IMM | CAAM_DST_CLEAR_WRITTEN | sizeof(u32),
+	0x00000001,
+	/* Operation instantiation (sh1) */
+	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | ALGO_RNG_SH(1)
+		| ALGO_RNG_INSTANTIATE,
+};
+
+static const u32 rng_inst_load_keys[] = {
+	/* wait for done - Jump to next entry */
+	CAAM_C1_JUMP | CAAM_JUMP_LOCAL | CAAM_JUMP_TST_ALL_COND_TRUE
+		| CAAM_JUMP_OFFSET(1),
+	/* Clear written register (write 1) */
+	CAAM_C0_LOAD_IMM | CAAM_DST_CLEAR_WRITTEN | sizeof(u32),
+	0x00000001,
+	/* Generate the Key */
+	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | BM_ALGO_RNG_SK | ALGO_RNG_GENERATE,
+};
+
+static int do_job(u32 *desc)
 {
-#if defined(CONFIG_ARCH_MX6)
-	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
-	u32 reg;
+	int ret;
+	phys_addr_t p_desc = virt_to_phys(desc);
 
-	reg = __raw_readl(&mxc_ccm->CCGR0);
+	/* for imx8, JR0 and JR1 will be assigned to seco, so we use
+	 * the JR3 instead.
+	 */
+#ifndef CONFIG_ARCH_IMX8
+	if (__raw_readl(CAAM_IRSAR0) == 0)
+#else
+	if (__raw_readl(CAAM_IRSAR3) == 0)
+#endif
+		return ERROR_ANY;
+	g_jrdata.inrings[0].desc = p_desc;
 
-	reg |= (MXC_CCM_CCGR0_CAAM_SECURE_MEM_MASK |
-		MXC_CCM_CCGR0_CAAM_WRAPPER_ACLK_MASK |
-		MXC_CCM_CCGR0_CAAM_WRAPPER_IPG_MASK);
+	flush_dcache_range((uintptr_t)g_jrdata.inrings & ALIGN_MASK,
+			   ((uintptr_t)g_jrdata.inrings & ALIGN_MASK)
+			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
+	flush_dcache_range((uintptr_t)desc & ALIGN_MASK,
+			   ((uintptr_t)desc & ALIGN_MASK)
+			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
 
-	__raw_writel(reg, &mxc_ccm->CCGR0);
-
-#ifndef CONFIG_MX6UL
-	/* EMI slow clk */
-	reg = __raw_readl(&mxc_ccm->CCGR6);
-	reg |= MXC_CCM_CCGR6_EMI_SLOW_MASK;
-
-	__raw_writel(reg, &mxc_ccm->CCGR6);
+	/* Inform HW that a new JR is available */
+#ifndef CONFIG_ARCH_IMX8
+	__raw_writel(1, CAAM_IRJAR0);
+	while (__raw_readl(CAAM_ORSFR0) == 0)
+		;
+#else
+	__raw_writel(1, CAAM_IRJAR3);
+	while (__raw_readl(CAAM_ORSFR3) == 0)
+		;
 #endif
 
-#elif defined(CONFIG_ARCH_MX7)
-	HW_CCM_CCGR_SET(36, MXC_CCM_CCGR36_CAAM_DOMAIN0_MASK);
-#elif defined(CONFIG_ARCH_MX7ULP)
-	pcc_clock_enable(PER_CLK_CAAM, true);
+	flush_dcache_range((uintptr_t)g_jrdata.outrings & ALIGN_MASK,
+			   ((uintptr_t)g_jrdata.outrings & ALIGN_MASK)
+			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
+
+	if (PTR2CAAMDMA(desc) == g_jrdata.outrings[0].desc) {
+		ret = g_jrdata.outrings[0].status;
+	} else {
+		dump_error();
+		ret = ERROR_ANY;
+	}
+
+	/* Acknowledge interrupt */
+#ifndef CONFIG_ARCH_IMX8
+	setbits_le32(CAAM_JRINTR0, JRINTR_JRI);
+	/* Remove the JR from the output list even if no JR caller found */
+	__raw_writel(1, CAAM_ORJRR0);
+#else
+	setbits_le32(CAAM_JRINTR3, JRINTR_JRI);
+	/* Remove the JR from the output list even if no JR caller found */
+	__raw_writel(1, CAAM_ORJRR3);
 #endif
+
+	return ret;
+}
+
+static int do_cfg_jrqueue(void)
+{
+	u32 value = 0;
+	phys_addr_t ip_base;
+	phys_addr_t op_base;
+
+	/* check if already configured after relocation */
+	if (g_jrdata.status == RING_RELOC_INIT)
+		return 0;
+
+	/*
+	 * jr configuration needs to be updated once, after relocation to ensure
+	 * using the right buffers.
+	 * When buffers are updated after relocation the flag RING_RELOC_INIT
+	 * is used to prevent extra updates
+	 */
+	if (gd->flags & GD_FLG_RELOC) {
+		g_jrdata.inrings  = (struct inring_entry *)
+				    memalign(ARCH_DMA_MINALIGN,
+					     ARCH_DMA_MINALIGN);
+		g_jrdata.outrings = (struct outring_entry *)
+				    memalign(ARCH_DMA_MINALIGN,
+					     ARCH_DMA_MINALIGN);
+		g_jrdata.desc = (u32 *)
+				memalign(ARCH_DMA_MINALIGN, ARCH_DMA_MINALIGN);
+		g_jrdata.status = RING_RELOC_INIT;
+	} else {
+		u32 align_idx = 0;
+
+		/* Ensure 64bits buffers addresses alignment */
+		if ((uintptr_t)g_jrdata.raw_addr & 0x7)
+			align_idx = 1;
+		g_jrdata.inrings  = (struct inring_entry *)
+				    (&g_jrdata.raw_addr[align_idx]);
+		g_jrdata.outrings = (struct outring_entry *)
+				    (&g_jrdata.raw_addr[align_idx + 2]);
+		g_jrdata.desc = (u32 *)(&g_jrdata.raw_addr[align_idx + 4]);
+		g_jrdata.status = RING_EARLY_INIT;
+	}
+
+	if (!g_jrdata.inrings || !g_jrdata.outrings)
+		return ERROR_ANY;
+
+	/* Configure the HW Job Rings */
+	ip_base = virt_to_phys((void *)g_jrdata.inrings);
+	op_base = virt_to_phys((void *)g_jrdata.outrings);
+
+	/* for imx8, JR0 and JR1 will be assigned to seco, so we use
+	 * the JR3 instead.
+	 */
+#ifndef CONFIG_ARCH_IMX8
+	__raw_writel(ip_base, CAAM_IRBAR0);
+	__raw_writel(1, CAAM_IRSR0);
+
+	__raw_writel(op_base, CAAM_ORBAR0);
+	__raw_writel(1, CAAM_ORSR0);
+
+	setbits_le32(CAAM_JRINTR0, JRINTR_JRI);
+#else
+	__raw_writel(ip_base, CAAM_IRBAR3);
+	__raw_writel(1, CAAM_IRSR3);
+
+	__raw_writel(op_base, CAAM_ORBAR3);
+	__raw_writel(1, CAAM_ORSR3);
+
+	setbits_le32(CAAM_JRINTR3, JRINTR_JRI);
+#endif
+
+	/*
+	 * Configure interrupts but disable it:
+	 * Optimization to generate an interrupt either when there are
+	 * half of the job done or when there is a job done and
+	 * 10 clock cycles elapse without new job complete
+	 */
+	value = 10 << BS_JRCFGR_LS_ICTT;
+	value |= (1 << BS_JRCFGR_LS_ICDCT) & BM_JRCFGR_LS_ICDCT;
+	value |= BM_JRCFGR_LS_ICEN;
+	value |= BM_JRCFGR_LS_IMSK;
+#ifndef CONFIG_ARCH_IMX8
+	__raw_writel(value, CAAM_JRCFGR0_LS);
+
+	/* Enable deco watchdog */
+	setbits_le32(CAAM_MCFGR, BM_MCFGR_WDE);
+#else
+	__raw_writel(value, CAAM_JRCFGR3_LS);
+#endif
+
+	return 0;
+}
+
+#ifndef CONFIG_ARCH_IMX8
+static void do_clear_rng_error(void)
+{
+	u32 val;
+
+	val = __raw_readl(CAAM_RTMCTL);
+
+	if (val & (RTMCTL_ERR | RTMCTL_FCT_FAIL)) {
+		setbits_le32(CAAM_RTMCTL, RTMCTL_ERR);
+	val = __raw_readl(CAAM_RTMCTL);
+	}
+}
+
+static void do_inst_desc(u32 *desc, u32 status)
+{
+	u32 *pdesc = desc;
+	u8  desc_len;
+	bool add_sh0   = false;
+	bool add_sh1   = false;
+	bool load_keys = false;
+
+	/*
+	 * Modify the the descriptor to remove if necessary:
+	 *  - The key loading
+	 *  - One of the SH already instantiated
+	 */
+	desc_len = RNG_DESC_SH0_SIZE;
+	if ((status & RDSTA_IF0) != RDSTA_IF0)
+		add_sh0 = true;
+
+	if ((status & RDSTA_IF1) != RDSTA_IF1) {
+		add_sh1 = true;
+		if (add_sh0)
+			desc_len += RNG_DESC_SH1_SIZE;
+	}
+
+	if ((status & RDSTA_SKVN) != RDSTA_SKVN) {
+		load_keys = true;
+		desc_len += RNG_DESC_KEYS_SIZE;
+	}
+
+	/* Copy the SH0 descriptor anyway */
+	memcpy(pdesc, rng_inst_sh0_desc, sizeof(rng_inst_sh0_desc));
+	pdesc += RNG_DESC_SH0_SIZE;
+
+	if (load_keys) {
+		debug("RNG - Load keys\n");
+		memcpy(pdesc, rng_inst_load_keys, sizeof(rng_inst_load_keys));
+		pdesc += RNG_DESC_KEYS_SIZE;
+	}
+
+	if (add_sh1) {
+		if (add_sh0) {
+			debug("RNG - Instantiation of SH0 and SH1\n");
+			/* Add the sh1 descriptor */
+			memcpy(pdesc, rng_inst_sh1_desc,
+				sizeof(rng_inst_sh1_desc));
+		} else {
+			debug("RNG - Instantiation of SH1 only\n");
+			/* Modify the SH0 descriptor to instantiate only SH1 */
+			desc[1] &= ~BM_ALGO_RNG_SH;
+			desc[1] |= ALGO_RNG_SH(1);
+		}
+	}
+
+	/* Setup the descriptor size */
+	desc[0] &= ~(0x3F);
+	desc[0] |= CAAM_HDR_DESCLEN(desc_len);
 }
 
 static void kick_trng(u32 ent_delay)
@@ -412,262 +650,6 @@ static void kick_trng(u32 ent_delay)
 	/* setbits_le32(CAAM_RTMCTL, RTMCTL_ERR); */
 }
 
-/*
- *  Descriptors to instantiate SH0, SH1, load the keys
- */
-static const u32 rng_inst_sh0_desc[] = {
-	/* Header, don't setup the size */
-	CAAM_HDR_CTYPE | CAAM_HDR_ONE | CAAM_HDR_START_INDEX(0),
-	/* Operation instantiation (sh0) */
-	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | ALGO_RNG_SH(0) | ALGO_RNG_INSTANTIATE,
-};
-
-static const u32 rng_inst_sh1_desc[] = {
-	/* wait for done - Jump to next entry */
-	CAAM_C1_JUMP | CAAM_JUMP_LOCAL | CAAM_JUMP_TST_ALL_COND_TRUE
-		| CAAM_JUMP_OFFSET(1),
-	/* Clear written register (write 1) */
-	CAAM_C0_LOAD_IMM | CAAM_DST_CLEAR_WRITTEN | sizeof(u32),
-	0x00000001,
-	/* Operation instantiation (sh1) */
-	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | ALGO_RNG_SH(1)
-		| ALGO_RNG_INSTANTIATE,
-};
-
-static const u32 rng_inst_load_keys[] = {
-	/* wait for done - Jump to next entry */
-	CAAM_C1_JUMP | CAAM_JUMP_LOCAL | CAAM_JUMP_TST_ALL_COND_TRUE
-		| CAAM_JUMP_OFFSET(1),
-	/* Clear written register (write 1) */
-	CAAM_C0_LOAD_IMM | CAAM_DST_CLEAR_WRITTEN | sizeof(u32),
-	0x00000001,
-	/* Generate the Key */
-	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | BM_ALGO_RNG_SK | ALGO_RNG_GENERATE,
-};
-
-static void do_inst_desc(u32 *desc, u32 status)
-{
-	u32 *pdesc = desc;
-	u8  desc_len;
-	bool add_sh0   = false;
-	bool add_sh1   = false;
-	bool load_keys = false;
-
-	/*
-	 * Modify the the descriptor to remove if necessary:
-	 *  - The key loading
-	 *  - One of the SH already instantiated
-	 */
-	desc_len = RNG_DESC_SH0_SIZE;
-	if ((status & RDSTA_IF0) != RDSTA_IF0)
-		add_sh0 = true;
-
-	if ((status & RDSTA_IF1) != RDSTA_IF1) {
-		add_sh1 = true;
-		if (add_sh0)
-			desc_len += RNG_DESC_SH1_SIZE;
-	}
-
-	if ((status & RDSTA_SKVN) != RDSTA_SKVN) {
-		load_keys = true;
-		desc_len += RNG_DESC_KEYS_SIZE;
-	}
-
-	/* Copy the SH0 descriptor anyway */
-	memcpy(pdesc, rng_inst_sh0_desc, sizeof(rng_inst_sh0_desc));
-	pdesc += RNG_DESC_SH0_SIZE;
-
-	if (load_keys) {
-		debug("RNG - Load keys\n");
-		memcpy(pdesc, rng_inst_load_keys, sizeof(rng_inst_load_keys));
-		pdesc += RNG_DESC_KEYS_SIZE;
-	}
-
-	if (add_sh1) {
-		if (add_sh0) {
-			debug("RNG - Instantiation of SH0 and SH1\n");
-			/* Add the sh1 descriptor */
-			memcpy(pdesc, rng_inst_sh1_desc,
-			       sizeof(rng_inst_sh1_desc));
-		} else {
-			debug("RNG - Instantiation of SH1 only\n");
-			/* Modify the SH0 descriptor to instantiate only SH1 */
-			desc[1] &= ~BM_ALGO_RNG_SH;
-			desc[1] |= ALGO_RNG_SH(1);
-		}
-	}
-
-	/* Setup the descriptor size */
-	desc[0] &= ~(0x3F);
-	desc[0] |= CAAM_HDR_DESCLEN(desc_len);
-}
-
-static int jr_reset(void)
-{
-	/*
-	 * Function reset the Job Ring HW
-	 * Reset is done in 2 steps:
-	 *  - Flush all pending jobs (Set RESET bit)
-	 *  - Reset the Job Ring (Set RESET bit second time)
-	 */
-	u16 timeout = 10000;
-	u32 reg_val;
-
-	/* Mask interrupts to poll for reset completion status */
-	setbits_le32(CAAM_JRCFGR0_LS, BM_JRCFGR_LS_IMSK);
-
-	/* Initiate flush (required prior to reset) */
-	__raw_writel(JRCR_RESET, CAAM_JRCR0);
-	do {
-		reg_val = __raw_readl(CAAM_JRINTR0);
-		reg_val &= BM_JRINTR_HALT;
-	} while ((reg_val == JRINTR_HALT_ONGOING) && --timeout);
-
-	if (!timeout  || reg_val != JRINTR_HALT_DONE) {
-		printf("Failed to flush job ring\n");
-		return ERROR_ANY;
-	}
-
-	/* Initiate reset */
-	timeout = 100;
-	__raw_writel(JRCR_RESET, CAAM_JRCR0);
-	do {
-		reg_val = __raw_readl(CAAM_JRCR0);
-	} while ((reg_val & JRCR_RESET) && --timeout);
-
-	if (!timeout) {
-		printf("Failed to reset job ring\n");
-		return ERROR_ANY;
-	}
-
-	return 0;
-}
-
-static int do_job(u32 *desc)
-{
-	int ret;
-	phys_addr_t p_desc = virt_to_phys(desc);
-
-	if (__raw_readl(CAAM_IRSAR0) == 0)
-		return ERROR_ANY;
-	g_jrdata.inrings[0].desc = p_desc;
-
-	flush_dcache_range((uintptr_t)g_jrdata.inrings & ALIGN_MASK,
-			   ((uintptr_t)g_jrdata.inrings & ALIGN_MASK)
-			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
-	flush_dcache_range((uintptr_t)desc & ALIGN_MASK,
-			   ((uintptr_t)desc & ALIGN_MASK)
-			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
-
-	/* Inform HW that a new JR is available */
-	__raw_writel(1, CAAM_IRJAR0);
-	while (__raw_readl(CAAM_ORSFR0) == 0)
-		;
-
-	flush_dcache_range((uintptr_t)g_jrdata.outrings & ALIGN_MASK,
-			   ((uintptr_t)g_jrdata.outrings & ALIGN_MASK)
-			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
-
-	if (PTR2CAAMDMA(desc) == g_jrdata.outrings[0].desc) {
-		ret = g_jrdata.outrings[0].status;
-	} else {
-		dump_error();
-		ret = ERROR_ANY;
-	}
-
-	/* Acknowledge interrupt */
-	setbits_le32(CAAM_JRINTR0, JRINTR_JRI);
-
-	/* Remove the JR from the output list even if no JR caller found */
-	__raw_writel(1, CAAM_ORJRR0);
-
-	return ret;
-}
-
-static int do_cfg_jrqueue(void)
-{
-	u32 value = 0;
-	phys_addr_t ip_base;
-	phys_addr_t op_base;
-
-	/* check if already configured after relocation */
-	if (g_jrdata.status == RING_RELOC_INIT)
-		return 0;
-
-	/*
-	 * jr configuration needs to be updated once, after relocation to ensure
-	 * using the right buffers.
-	 * When buffers are updated after relocation the flag RING_RELOC_INIT
-	 * is used to prevent extra updates
-	 */
-	if (gd->flags & GD_FLG_RELOC) {
-		g_jrdata.inrings  = (struct inring_entry *)
-				    memalign(ARCH_DMA_MINALIGN,
-					     ARCH_DMA_MINALIGN);
-		g_jrdata.outrings = (struct outring_entry *)
-				    memalign(ARCH_DMA_MINALIGN,
-					     ARCH_DMA_MINALIGN);
-		g_jrdata.desc = (u32 *)
-				memalign(ARCH_DMA_MINALIGN, ARCH_DMA_MINALIGN);
-		g_jrdata.status = RING_RELOC_INIT;
-	} else {
-		u32 align_idx = 0;
-
-		/* Ensure 64bits buffers addresses alignment */
-		if ((uintptr_t)g_jrdata.raw_addr & 0x7)
-			align_idx = 1;
-		g_jrdata.inrings  = (struct inring_entry *)
-				    (&g_jrdata.raw_addr[align_idx]);
-		g_jrdata.outrings = (struct outring_entry *)
-				    (&g_jrdata.raw_addr[align_idx + 2]);
-		g_jrdata.desc = (u32 *)(&g_jrdata.raw_addr[align_idx + 4]);
-		g_jrdata.status = RING_EARLY_INIT;
-	}
-
-	if (!g_jrdata.inrings || !g_jrdata.outrings)
-		return ERROR_ANY;
-
-	/* Configure the HW Job Rings */
-	ip_base = virt_to_phys((void *)g_jrdata.inrings);
-	op_base = virt_to_phys((void *)g_jrdata.outrings);
-	__raw_writel(ip_base, CAAM_IRBAR0);
-	__raw_writel(1, CAAM_IRSR0);
-
-	__raw_writel(op_base, CAAM_ORBAR0);
-	__raw_writel(1, CAAM_ORSR0);
-
-	setbits_le32(CAAM_JRINTR0, JRINTR_JRI);
-
-	/*
-	 * Configure interrupts but disable it:
-	 * Optimization to generate an interrupt either when there are
-	 * half of the job done or when there is a job done and
-	 * 10 clock cycles elapse without new job complete
-	 */
-	value = 10 << BS_JRCFGR_LS_ICTT;
-	value |= (1 << BS_JRCFGR_LS_ICDCT) & BM_JRCFGR_LS_ICDCT;
-	value |= BM_JRCFGR_LS_ICEN;
-	value |= BM_JRCFGR_LS_IMSK;
-	__raw_writel(value, CAAM_JRCFGR0_LS);
-
-	/* Enable deco watchdog */
-	setbits_le32(CAAM_MCFGR, BM_MCFGR_WDE);
-
-	return 0;
-}
-
-static void do_clear_rng_error(void)
-{
-	u32 val;
-
-	val = __raw_readl(CAAM_RTMCTL);
-
-	if (val & (RTMCTL_ERR | RTMCTL_FCT_FAIL)) {
-		setbits_le32(CAAM_RTMCTL, RTMCTL_ERR);
-	val = __raw_readl(CAAM_RTMCTL);
-	}
-}
-
 static int do_instantiation(void)
 {
 	int ret = ERROR_ANY;
@@ -752,6 +734,79 @@ static void rng_init(void)
 	return;
 }
 
+static void caam_clock_enable(void)
+{
+#if defined(CONFIG_ARCH_MX6)
+	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+	u32 reg;
+
+	reg = __raw_readl(&mxc_ccm->CCGR0);
+
+	reg |= (MXC_CCM_CCGR0_CAAM_SECURE_MEM_MASK |
+		MXC_CCM_CCGR0_CAAM_WRAPPER_ACLK_MASK |
+		MXC_CCM_CCGR0_CAAM_WRAPPER_IPG_MASK);
+
+	__raw_writel(reg, &mxc_ccm->CCGR0);
+
+#ifndef CONFIG_MX6UL
+	/* EMI slow clk */
+	reg = __raw_readl(&mxc_ccm->CCGR6);
+	reg |= MXC_CCM_CCGR6_EMI_SLOW_MASK;
+
+	__raw_writel(reg, &mxc_ccm->CCGR6);
+#endif
+
+#elif defined(CONFIG_ARCH_MX7)
+	HW_CCM_CCGR_SET(36, MXC_CCM_CCGR36_CAAM_DOMAIN0_MASK);
+#elif defined(CONFIG_ARCH_MX7ULP)
+	pcc_clock_enable(PER_CLK_CAAM, true);
+#endif
+}
+
+static int jr_reset(void)
+{
+	/*
+	 * Function reset the Job Ring HW
+	 * Reset is done in 2 steps:
+	 *  - Flush all pending jobs (Set RESET bit)
+	 *  - Reset the Job Ring (Set RESET bit second time)
+	 */
+	u16 timeout = 10000;
+	u32 reg_val;
+
+	/* Mask interrupts to poll for reset completion status */
+	setbits_le32(CAAM_JRCFGR0_LS, BM_JRCFGR_LS_IMSK);
+
+	/* Initiate flush (required prior to reset) */
+	__raw_writel(JRCR_RESET, CAAM_JRCR0);
+	do {
+		reg_val = __raw_readl(CAAM_JRINTR0);
+		reg_val &= BM_JRINTR_HALT;
+	} while ((reg_val == JRINTR_HALT_ONGOING) && --timeout);
+
+	if (!timeout  || reg_val != JRINTR_HALT_DONE) {
+		printf("Failed to flush job ring\n");
+		return ERROR_ANY;
+	}
+
+	/* Initiate reset */
+	timeout = 100;
+	__raw_writel(JRCR_RESET, CAAM_JRCR0);
+	do {
+		reg_val = __raw_readl(CAAM_JRCR0);
+	} while ((reg_val & JRCR_RESET) && --timeout);
+
+	if (!timeout) {
+		printf("Failed to reset job ring\n");
+		return ERROR_ANY;
+	}
+
+	return 0;
+}
+
+#endif /* !CONFIG_ARCH_IMX8 */
+
+#ifdef CONFIG_CAAM_KB_SELF_TEST
 static void caam_hwrng_test(void)
 {
 	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, out1, 32);
@@ -795,3 +850,4 @@ static void caam_test(void)
 	caam_hwrng_test();
 	caam_blob_test();
 }
+#endif /* CONFIG_CAAM_KB_SELF_TEST */
