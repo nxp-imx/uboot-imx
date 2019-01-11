@@ -50,6 +50,7 @@ static void caam_clock_enable(void);
 static int do_cfg_jrqueue(void);
 static int do_job(u32 *desc);
 static int jr_reset(void);
+static void caam_test(void);
 
 /*
  * Structures
@@ -231,11 +232,11 @@ u32 caam_hwrng(u8 *output_ptr, u32 output_len)
 			   ((uintptr_t)hwrng_desc & ALIGN_MASK)
 			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
 
-	ret = do_job(hwrng_desc);
-
 	flush_dcache_range((uintptr_t)output & ALIGN_MASK,
 			   ((uintptr_t)output & ALIGN_MASK)
 			   + ROUND(2 * output_len, ARCH_DMA_MINALIGN));
+
+	ret = do_job(hwrng_desc);
 
 	if (ret != SUCCESS) {
 		printf("Error: RNG generate failed 0x%x\n", ret);
@@ -281,6 +282,10 @@ void caam_open(void)
 	}
 
 	rng_init();
+
+#ifdef CONFIG_CAAM_KB_SELF_TEST
+	caam_test();
+#endif
 }
 
 static void caam_clock_enable(void)
@@ -747,3 +752,46 @@ static void rng_init(void)
 	return;
 }
 
+static void caam_hwrng_test(void)
+{
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, out1, 32);
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, out2, 32);
+
+	memset(out1, 0x00, sizeof(out1));
+	memset(out2, 0x00, sizeof(out2));
+
+	caam_hwrng(out1, sizeof(out1));
+	caam_hwrng(out2, sizeof(out2));
+
+	if (memcmp(out1, out2, sizeof(out1)))
+		printf("caam hwrng test pass!\n");
+	else
+		printf("caam hwrng test fail!\n");
+}
+
+static void caam_blob_test(void)
+{
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, plain, 32);
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, blob, 128);
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, plain_bak, 32);
+
+	memset(plain, 0x00, sizeof(plain));
+	memset(plain_bak, 0xff, sizeof(plain_bak));
+
+	/* encapsulate blob */
+	caam_gen_blob((ulong)plain, (ulong)blob, sizeof(plain));
+
+	/* decapsulate blob */
+	caam_decap_blob((ulong)plain_bak, (ulong)blob, sizeof(plain_bak));
+
+	if (memcmp(plain, plain_bak, sizeof(plain)))
+		printf("caam blob test fail!\n");
+	else
+		printf("caam blob test pass!\n");
+}
+
+static void caam_test(void)
+{
+	caam_hwrng_test();
+	caam_blob_test();
+}
