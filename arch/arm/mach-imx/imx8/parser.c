@@ -233,6 +233,11 @@ static int read_auth_container(struct spl_image_info *spl_image)
 
 	sc_misc_seco_authenticate(ipcHndl, SC_MISC_REL_CONTAINER, 0);
 
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_DUAL_BOOTLOADER)
+	/* Everything checks out, get the sw_version now. */
+	spl_image->rbindex = (uint64_t)container->sw_version;
+#endif
+
 out:
 	free(container);
 
@@ -253,8 +258,11 @@ int mmc_load_image_parse_container(struct spl_image_info *spl_image,
 
 	if (!ret)
 	{
-		/* Images loaded, now check the rpmb keyblob for Trusty OS. */
-#if defined(CONFIG_IMX_TRUSTY_OS)
+		/* Images loaded, now check the rpmb keyblob for Trusty OS.
+		 * Skip this step when the dual bootloader feature is enabled
+		 * since the blob should be checked earlier.
+		 */
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_DUAL_BOOTLOADER)
 		ret = check_rpmb_blob(mmc);
 #endif
 	}

@@ -134,6 +134,57 @@ fail:
 	return ret;
 }
 
+bool rpmbkey_is_set(void)
+{
+	int mmcc;
+	bool ret;
+	uint8_t *buf;
+	struct mmc *mmc;
+	char original_part;
+	struct blk_desc *desc = NULL;
+
+	/* Get current mmc device. */
+	mmcc = mmc_get_env_dev();
+	mmc = find_mmc_device(mmcc);
+	if (!mmc) {
+		printf("error - cannot find '%d' mmc device\n", mmcc);
+		return false;
+	}
+
+	desc = mmc_get_blk_desc(mmc);
+	original_part = desc->hwpart;
+
+	/* Switch to the RPMB partition */
+	if (desc->hwpart != MMC_PART_RPMB) {
+		if (mmc_switch_part(mmc, MMC_PART_RPMB) != 0) {
+			printf("ERROR - can't switch to rpmb partition \n");
+			return false;
+		}
+		desc->hwpart = MMC_PART_RPMB;
+	}
+
+	/* Try to read the first one block, return count '1' means the rpmb
+	 * key has been set, otherwise means the key hasn't been set.
+	 */
+	buf = (uint8_t *)memalign(ALIGN_BYTES, desc->blksz);
+	if (mmc_rpmb_read(mmc, buf, 0, 1, NULL) != 1)
+		ret = false;
+	else
+		ret = true;
+
+	/* return to original partition. */
+	if (desc->hwpart != original_part) {
+		if (mmc_switch_part(mmc, original_part) != 0)
+			ret = false;
+		desc->hwpart = original_part;
+	}
+	/* remember to free the buffer */
+	if (buf != NULL)
+		free(buf);
+
+	return ret;
+}
+
 #ifdef CONFIG_FSL_CAAM_KB
 int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset) {
 
@@ -354,7 +405,7 @@ int rpmb_init(void) {
 		ERR("ERROR - get mmc device\n");
 		return -1;
 	}
-	/* The bootloader rollback index is stored in the last 8 blocks of
+	/* The bootloader rollback index is stored in the last 8k bytes of
 	 * RPMB which is different from the rollback index for vbmeta and
 	 * ATX key versions.
 	 */
@@ -642,8 +693,8 @@ int rbkidx_erase(void) {
 	}
 	return 0;
 }
-#endif /* CONFIG_FSL_CAAM_KB */
 #endif /* CONFIG_IMX_TRUSTY_OS */
+#endif /* CONFIG_FSL_CAAM_KB */
 #else /* AVB_RPMB */
 int rbkidx_erase(void) {
 	return 0;
@@ -660,8 +711,13 @@ int check_rpmb_blob(struct mmc *mmc)
 
 	read_keyslot_package(&kp);
 	if (strcmp(kp.magic, KEYPACK_MAGIC)) {
-		printf("keyslot package magic error, do nothing here!\n");
-		return 0;
+		if (rpmbkey_is_set()) {
+			printf("\nFATAL - RPMB key was destroyed!\n");
+			hang();
+		} else {
+			printf("keyslot package magic error, do nothing here!\n");
+			return 0;
+		}
 	}
 	/* If keyslot package valid, copy it to secure memory */
 	fill_secure_keyslot_package(&kp);
@@ -983,57 +1039,6 @@ int at_disable_vboot_unlock(void)
 #endif /* CONFIG_AVB_ATX */
 
 #if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
-bool rpmbkey_is_set(void)
-{
-	int mmcc;
-	bool ret;
-	uint8_t *buf;
-	struct mmc *mmc;
-	char original_part;
-	struct blk_desc *desc = NULL;
-
-	/* Get current mmc device. */
-	mmcc = mmc_get_env_dev();
-	mmc = find_mmc_device(mmcc);
-	if (!mmc) {
-		printf("error - cannot find '%d' mmc device\n", mmcc);
-		return false;
-	}
-
-	desc = mmc_get_blk_desc(mmc);
-	original_part = desc->hwpart;
-
-	/* Switch to the RPMB partition */
-	if (desc->hwpart != MMC_PART_RPMB) {
-		if (mmc_switch_part(mmc, MMC_PART_RPMB) != 0) {
-			printf("ERROR - can't switch to rpmb partition \n");
-			return false;
-		}
-		desc->hwpart = MMC_PART_RPMB;
-	}
-
-	/* Try to read the first one block, return count '1' means the rpmb
-	 * key has been set, otherwise means the key hasn't been set.
-	 */
-	buf = (uint8_t *)memalign(ALIGN_BYTES, desc->blksz);
-	if (mmc_rpmb_read(mmc, buf, 0, 1, NULL) != 1)
-		ret = false;
-	else
-		ret = true;
-
-	/* return to original partition. */
-	if (desc->hwpart != original_part) {
-		if (mmc_switch_part(mmc, original_part) != 0)
-			ret = false;
-		desc->hwpart = original_part;
-	}
-	/* remember to free the buffer */
-	if (buf != NULL)
-		free(buf);
-
-	return ret;
-}
-
 int do_rpmb_key_set(uint8_t *key, uint32_t key_size)
 {
 	int ret = 0;

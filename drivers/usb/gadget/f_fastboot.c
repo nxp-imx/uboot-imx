@@ -1976,7 +1976,7 @@ static struct andr_img_hdr boothdr __aligned(ARCH_DMA_MINALIGN);
 #endif
 
 #ifdef CONFIG_IMX_TRUSTY_OS
-#ifdef CONFIG_DUAL_BOOTLOADER
+#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_AVB_ATX)
 static int sha256_concatenation(uint8_t *hash_buf, uint8_t *vbh, uint8_t *image_hash)
 {
 	if ((hash_buf == NULL) || (vbh == NULL) || (image_hash == NULL)) {
@@ -2109,11 +2109,11 @@ fail:
 		free(image_buf);
 	return ret;
 }
+#endif /* CONFIG_DUAL_BOOTLOADER && CONFIG_AVB_ATX */
 
-#endif
 int trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_result,
 			    AvbSlotVerifyData *avb_out_data) {
-#ifdef CONFIG_DUAL_BOOTLOADER
+#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_AVB_ATX)
 	uint8_t vbh[AVB_SHA256_DIGEST_SIZE];
 #endif
 	int ret = 0;
@@ -2149,7 +2149,7 @@ int trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_result
 		vbstatus = KM_VERIFIED_BOOT_FAILED;
 
 	/* Calculate VBH */
-#ifdef CONFIG_DUAL_BOOTLOADER
+#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_AVB_ATX)
 	if (vbh_calculate(vbh, avb_out_data)) {
 		ret = -1;
 		goto fail;

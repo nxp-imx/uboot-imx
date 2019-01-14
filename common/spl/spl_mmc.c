@@ -64,6 +64,8 @@ int check_rpmb_blob(struct mmc *mmc);
  */
 extern int mmc_load_image_raw_sector_dual_uboot(struct spl_image_info *spl_image,
 						struct mmc *mmc);
+extern int mmc_load_image_parse_container_dual_uboot(struct spl_image_info *spl_image,
+						struct mmc *mmc);
 #else
 static __maybe_unused
 int mmc_load_image_raw_sector(struct spl_image_info *spl_image,
@@ -325,6 +327,14 @@ int __weak mmc_load_image_parse_container(struct spl_image_info *spl_image,
 {
 	return -ENODEV;
 };
+
+#ifdef CONFIG_DUAL_BOOTLOADER
+int __weak mmc_load_image_parse_container_dual_bootloader(struct spl_image_info *spl_image,
+				     struct mmc *mmc, unsigned long sector)
+{
+	return -ENODEV;
+};
+#endif
 #endif
 
 int spl_mmc_load_image(struct spl_image_info *spl_image,
@@ -394,8 +404,13 @@ int spl_mmc_load_image(struct spl_image_info *spl_image,
 #endif
 #ifdef CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
 #ifdef CONFIG_DUAL_BOOTLOADER
+#ifdef CONFIG_PARSE_CONTAINER
+		err = mmc_load_image_parse_container_dual_uboot(spl_image,
+								mmc);
+#else
 		err = mmc_load_image_raw_sector_dual_uboot(spl_image,
 							   mmc);
+#endif
 #else
 #ifdef CONFIG_PARSE_CONTAINER
 		err = mmc_load_image_parse_container(spl_image, mmc,
