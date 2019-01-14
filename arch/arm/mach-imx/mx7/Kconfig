@@ -23,6 +23,11 @@ config SPL_TEXT_BASE
 	depends on SPL
 	default 0x00912000
 
+config IMX_TAMPER
+	bool "Enable commands for SNVS tamper pin configuration and test"
+	help
+	  Set "Y" to enable the tamper commands
+
 choice
 	prompt "MX7 board select"
 	optional
