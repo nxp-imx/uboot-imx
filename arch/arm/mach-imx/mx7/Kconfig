@@ -16,6 +16,11 @@ config MX7D
 	select ROM_UNIFIED_SECTIONS
 	imply CMD_FUSE
 
+config IMX_TAMPER
+	bool "Enable commands for SNVS tamper pin configuration and test"
+	help
+	  Set "Y" to enable the tamper commands
+
 choice
 	prompt "MX7 board select"
 	optional
