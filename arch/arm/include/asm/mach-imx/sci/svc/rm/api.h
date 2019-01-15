@@ -324,7 +324,7 @@ sc_err_t sc_rm_move_all(sc_ipc_t ipc, sc_rm_pt_t pt_src, sc_rm_pt_t pt_dst,
  * ASSERT if the partition si secure and NEGATE if it is not, and
  * masters will defaulted to SMMU bypass. Access permissions will reset
  * to SEC_RW for the owning partition only for secure partitions, FULL for
- * non-secure. DEfault is no access by other partitions.
+ * non-secure. Default is no access by other partitions.
  *
  * Return errors:
  * - SC_ERR_NOACCESS if caller's partition is restricted,
@@ -445,7 +445,8 @@ sc_err_t sc_rm_set_master_sid(sc_ipc_t ipc, sc_rsrc_t resource,
  * - SC_ERR_LOCKED if the \a pt is confidential and the caller isn't \a pt
  *
  * This function configures how the HW isolation will restrict access to a
- * peripheral based on the attributes of a transaction from bus master.
+ * peripheral based on the attributes of a transaction from bus master. It
+ * also allows the access permissions of SC_R_SYSTEM to be set.
  */
 sc_err_t sc_rm_set_peripheral_permissions(sc_ipc_t ipc, sc_rsrc_t resource,
     sc_rm_pt_t pt, sc_rm_perm_t perm);

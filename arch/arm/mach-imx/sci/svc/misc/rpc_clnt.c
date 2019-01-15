@@ -152,6 +152,26 @@ sc_err_t sc_misc_seco_authenticate(sc_ipc_t ipc,
     return (sc_err_t) result;
 }
 
+sc_err_t sc_misc_seco_load_key(sc_ipc_t ipc, uint32_t id,
+    sc_faddr_t addr)
+{
+    sc_rpc_msg_t msg;
+    uint8_t result;
+
+    RPC_VER(&msg) = SC_RPC_VERSION;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_MISC);
+    RPC_FUNC(&msg) = U8(MISC_FUNC_SECO_LOAD_KEY);
+    RPC_U32(&msg, 0U) = U32(addr >> 32ULL);
+    RPC_U32(&msg, 4U) = U32(addr);
+    RPC_U32(&msg, 8U) = U32(id);
+    RPC_SIZE(&msg) = 4U;
+
+    sc_call_rpc(ipc, &msg, SC_FALSE);
+
+    result = RPC_R8(&msg);
+    return (sc_err_t) result;
+}
+
 sc_err_t sc_misc_seco_fuse_write(sc_ipc_t ipc, sc_faddr_t addr)
 {
     sc_rpc_msg_t msg;
@@ -279,6 +299,29 @@ sc_err_t sc_misc_seco_chip_info(sc_ipc_t ipc, uint16_t *lc,
     if (monotonic != NULL)
     {
         *monotonic = RPC_U16(&msg, 10U);
+    }
+
+    result = RPC_R8(&msg);
+    return (sc_err_t) result;
+}
+
+sc_err_t sc_misc_seco_get_event(sc_ipc_t ipc, uint8_t idx,
+    uint32_t *event)
+{
+    sc_rpc_msg_t msg;
+    uint8_t result;
+
+    RPC_VER(&msg) = SC_RPC_VERSION;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_MISC);
+    RPC_FUNC(&msg) = U8(MISC_FUNC_SECO_GET_EVENT);
+    RPC_U8(&msg, 0U) = U8(idx);
+    RPC_SIZE(&msg) = 2U;
+
+    sc_call_rpc(ipc, &msg, SC_FALSE);
+
+    if (event != NULL)
+    {
+        *event = RPC_U32(&msg, 0U);
     }
 
     result = RPC_R8(&msg);

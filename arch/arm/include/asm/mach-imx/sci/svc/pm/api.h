@@ -211,7 +211,8 @@ typedef uint8_t sc_pm_wake_src_t;
 
 /*!
  * This function sets the system power mode. Only the owner of the
- * SC_R_SYSTEM resource can do this.
+ * SC_R_SYSTEM resource or a partition with access permissions to
+ * SC_R_SYSTEM can do this.
  *
  * @param[in]     ipc         IPC handle
  * @param[in]     mode        power mode to apply
@@ -220,7 +221,7 @@ typedef uint8_t sc_pm_wake_src_t;
  *
  * Return errors:
  * - SC_ERR_PARM if invalid mode,
- * - SC_ERR_NOACCESS if caller not the owner of SC_R_SYSTEM
+ * - SC_ERR_NOACCESS if caller does not have SC_R_SYSTEM access
  *
  * @see sc_pm_set_sys_power_mode().
  */
@@ -574,7 +575,8 @@ sc_err_t sc_pm_get_clock_parent(sc_ipc_t ipc, sc_rsrc_t resource,
 
 /*!
  * This function is used to reset the system. Only the owner of the
- * SC_R_SYSTEM resource can do this.
+ * SC_R_SYSTEM resource or a partition with access permissions to
+ * SC_R_SYSTEM can do this.
  *
  * @param[in]     ipc         IPC handle
  * @param[in]     type        reset type
@@ -583,7 +585,7 @@ sc_err_t sc_pm_get_clock_parent(sc_ipc_t ipc, sc_rsrc_t resource,
  *
  * Return errors:
  * - SC_ERR_PARM if invalid type,
- * - SC_ERR_NOACCESS if caller not the owner of SC_R_SYSTEM
+ * - SC_ERR_NOACCESS if caller cannot access SC_R_SYSTEM
  *
  * If this function returns, then the reset did not occur due to an
  * invalid parameter.
@@ -678,7 +680,8 @@ void sc_pm_reboot(sc_ipc_t ipc, sc_pm_reset_type_t type);
  *
  * Return errors:
  * - SC_ERR_PARM if invalid partition or type
- * - SC_ERR_NOACCESS if caller's partition is not the parent of \a pt,
+ * - SC_ERR_NOACCESS if caller's partition is not the parent of \a pt
+ *   and the caller does not have access to SC_R_SYSTEM
  *
  * Most peripherals owned by the partition will be reset if
  * possible. SC state (partitions, power, clocks, etc.) is reset. The
@@ -725,9 +728,9 @@ sc_err_t sc_pm_cpu_start(sc_ipc_t ipc, sc_rsrc_t resource, sc_bool_t enable,
  *
  * This function does not return anything as the calling core may have been
  * reset. It can still fail if the resource or address is invalid. It can also
- * fail if the caller's partition is not the owner of the CPU or not the
- * parent of the CPU resource owner. Will also fail if the resource is not
- * powered on. No indication of failure is returned.
+ * fail if the caller's partition is not the owner of the CPU, not the parent
+ * of the CPU resource owner, or has access to SC_R_SYSTEM. Will also fail if
+ * the resource is not powered on. No indication of failure is returned.
  *
  * Note this just resets the CPU. None of the peripherals or bus fabric used by
  * the CPU is reset. State configured in the SCFW is not reset. The SW running

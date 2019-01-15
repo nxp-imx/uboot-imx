@@ -190,7 +190,8 @@ sc_err_t sc_timer_set_wdog_action(sc_ipc_t ipc,
 
 /*!
  * This function sets the RTC time. Only the owner of the SC_R_SYSTEM
- * resource can set the time.
+ * resource or a partition with access permissions to SC_R_SYSTEM can
+ * set the time.
  *
  * @param[in]     ipc         IPC handle
  * @param[in]     year        year (min 1970)
@@ -204,7 +205,7 @@ sc_err_t sc_timer_set_wdog_action(sc_ipc_t ipc,
  *
  * Return errors:
  * - SC_ERR_PARM if invalid time/date parameters,
- * - SC_ERR_NOACCESS if caller's partition is not the SYSTEM owner
+ * - SC_ERR_NOACCESS if caller's partition cannot access SC_R_SYSTEM
  */
 sc_err_t sc_timer_set_rtc_time(sc_ipc_t ipc, uint16_t year, uint8_t mon,
     uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
@@ -246,7 +247,8 @@ sc_err_t sc_timer_get_rtc_sec1970(sc_ipc_t ipc, uint32_t *sec);
  * @param[in]     min         minute (0-59)
  * @param[in]     sec         second (0-59)
  *
- * Note this alarm setting clears when the alarm is triggered.
+ * Note this alarm setting clears when the alarm is triggered. This is an
+ * absolute time.
  *
  * @return Returns an error code (SC_ERR_NONE = success).
  *
@@ -263,6 +265,8 @@ sc_err_t sc_timer_set_rtc_alarm(sc_ipc_t ipc, uint16_t year, uint8_t mon,
  * @param[in]     sec         period in seconds
  *
  * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Note this is a relative time.
  *
  * Return errors:
  * - SC_ERR_PARM if invalid time/date parameters
@@ -285,7 +289,8 @@ sc_err_t sc_timer_cancel_rtc_alarm(sc_ipc_t ipc);
 
 /*!
  * This function sets the RTC calibration value. Only the owner of the SC_R_SYSTEM
- * resource can set the calibration.
+ * resource or a partition with access permissions to SC_R_SYSTEM can set the
+ * calibration.
  *
  * @param[in]     ipc         IPC handle
  * @param[in]     count       calbration count (-16 to 15)
@@ -311,7 +316,8 @@ sc_err_t sc_timer_set_rtc_calb(sc_ipc_t ipc, int8_t count);
  * @param[in]     ipc         IPC handle
  * @param[in]     ticks       number of 8MHz cycles
  *
- * Note this alarm setting clears when the alarm is triggered.
+ * Note the \a ticks parameter is an absolute time. This alarm
+ * setting clears when the alarm is triggered.
  *
  * @return Returns an error code (SC_ERR_NONE = success).
  *
@@ -325,6 +331,8 @@ sc_err_t sc_timer_set_sysctr_alarm(sc_ipc_t ipc, uint64_t ticks);
  *
  * @param[in]     ipc          IPC handle
  * @param[in]     ticks        number of 8MHz cycles
+ *
+ * Note the \a ticks parameter is a relative time.
  *
  * @return Returns an error code (SC_ERR_NONE = success).
  *
