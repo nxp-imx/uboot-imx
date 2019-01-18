@@ -185,6 +185,14 @@ int arch_cpu_init(void)
 
 	gd->arch.ipc_channel_handle = ipcHndl;
 
+/* Dual bootloader feature will require CAAM access, but JR0 and JR1 will be
+ * assigned to seco for imx8, use JR3 instead.
+ */
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_DUAL_BOOTLOADER)
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_CAAM_JR3, SC_PM_PW_MODE_ON);
+	sc_pm_set_resource_power_mode(ipcHndl, SC_R_CAAM_JR3_OUT, SC_PM_PW_MODE_ON);
+#endif
+
 	if (IS_ENABLED(CONFIG_XEN))
 		return 0;
 
@@ -201,14 +209,6 @@ int arch_cpu_init(void)
 				SC_PM_PW_MODE_ON);
 	if (sciErr != SC_ERR_NONE)
 		return 0;
-#endif
-
-/* Dual bootloader feature will require CAAM access, but JR0 and JR1 will be
- * assigned to seco for imx8, use JR3 instead.
- */
-#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_DUAL_BOOTLOADER)
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_CAAM_JR3, SC_PM_PW_MODE_ON);
-	sc_pm_set_resource_power_mode(ipcHndl, SC_R_CAAM_JR3_OUT, SC_PM_PW_MODE_ON);
 #endif
 
 	return 0;
