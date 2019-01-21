@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2019 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -191,6 +191,11 @@ static int nxp_tmu_calibration(struct udevice *dev)
 	return 0;
 }
 
+void __weak nxp_tmu_arch_init(void *reg_base)
+{
+	return;
+}
+
 static void nxp_tmu_init(struct udevice *dev)
 {
 	struct nxp_tmu_plat *pdata = dev_get_platdata(dev);
@@ -214,6 +219,8 @@ static void nxp_tmu_init(struct udevice *dev)
 		/* Set update_interval */
 		writel(TMTMIR_DEFAULT, &pdata->regs->regs_v1.tmtmir);
 	}
+
+	nxp_tmu_arch_init((void *)pdata->regs);
 }
 
 static int nxp_tmu_enable_msite(struct udevice *dev)
