@@ -44,12 +44,16 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static void rng_init(void);
-static void caam_clock_enable(void);
 static int do_cfg_jrqueue(void);
 static int do_job(u32 *desc);
+#ifndef CONFIG_ARCH_IMX8
+static void rng_init(void);
+static void caam_clock_enable(void);
 static int jr_reset(void);
+#endif
+#ifdef CONFIG_CAAM_KB_SELF_TEST
 static void caam_test(void);
+#endif
 
 /*
  * Structures
@@ -294,130 +298,6 @@ void caam_open(void)
 #endif
 }
 
-static void caam_clock_enable(void)
-{
-#if defined(CONFIG_ARCH_MX6)
-	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
-	u32 reg;
-
-	reg = __raw_readl(&mxc_ccm->CCGR0);
-
-	reg |= (MXC_CCM_CCGR0_CAAM_SECURE_MEM_MASK |
-		MXC_CCM_CCGR0_CAAM_WRAPPER_ACLK_MASK |
-		MXC_CCM_CCGR0_CAAM_WRAPPER_IPG_MASK);
-
-	__raw_writel(reg, &mxc_ccm->CCGR0);
-
-#ifndef CONFIG_MX6UL
-	/* EMI slow clk */
-	reg = __raw_readl(&mxc_ccm->CCGR6);
-	reg |= MXC_CCM_CCGR6_EMI_SLOW_MASK;
-
-	__raw_writel(reg, &mxc_ccm->CCGR6);
-#endif
-
-#elif defined(CONFIG_ARCH_MX7)
-	HW_CCM_CCGR_SET(36, MXC_CCM_CCGR36_CAAM_DOMAIN0_MASK);
-#elif defined(CONFIG_ARCH_MX7ULP)
-	pcc_clock_enable(PER_CLK_CAAM, true);
-#endif
-}
-
-static void kick_trng(u32 ent_delay)
-{
-	u32 samples  = 512; /* number of bits to generate and test */
-	u32 mono_min = 195;
-	u32 mono_max = 317;
-	u32 mono_range  = mono_max - mono_min;
-	u32 poker_min = 1031;
-	u32 poker_max = 1600;
-	u32 poker_range = poker_max - poker_min + 1;
-	u32 retries    = 2;
-	u32 lrun_max   = 32;
-	s32 run_1_min   = 27;
-	s32 run_1_max   = 107;
-	s32 run_1_range = run_1_max - run_1_min;
-	s32 run_2_min   = 7;
-	s32 run_2_max   = 62;
-	s32 run_2_range = run_2_max - run_2_min;
-	s32 run_3_min   = 0;
-	s32 run_3_max   = 39;
-	s32 run_3_range = run_3_max - run_3_min;
-	s32 run_4_min   = -1;
-	s32 run_4_max   = 26;
-	s32 run_4_range = run_4_max - run_4_min;
-	s32 run_5_min   = -1;
-	s32 run_5_max   = 18;
-	s32 run_5_range = run_5_max - run_5_min;
-	s32 run_6_min   = -1;
-	s32 run_6_max   = 17;
-	s32 run_6_range = run_6_max - run_6_min;
-	u32 val;
-
-	/* Put RNG in program mode */
-	/* Setting both RTMCTL:PRGM and RTMCTL:TRNG_ACC causes TRNG to
-	 * properly invalidate the entropy in the entropy register and
-	 * force re-generation.
-	 */
-	setbits_le32(CAAM_RTMCTL, RTMCTL_PGM | RTMCTL_ACC);
-
-	/* Configure the RNG Entropy Delay
-	 * Performance-wise, it does not make sense to
-	 * set the delay to a value that is lower
-	 * than the last one that worked (i.e. the state handles
-	 * were instantiated properly. Thus, instead of wasting
-	 * time trying to set the values controlling the sample
-	 * frequency, the function simply returns.
-	 */
-	val = __raw_readl(CAAM_RTSDCTL);
-	val &= BM_TRNG_ENT_DLY;
-	val >>= BS_TRNG_ENT_DLY;
-	if (ent_delay < val) {
-		/* Put RNG4 into run mode */
-		clrbits_le32(CAAM_RTMCTL, RTMCTL_PGM | RTMCTL_ACC);
-		return;
-	}
-
-	val = (ent_delay << BS_TRNG_ENT_DLY) | samples;
-	__raw_writel(val, CAAM_RTSDCTL);
-
-	/* min. freq. count, equal to 1/2 of the entropy sample length */
-	__raw_writel(ent_delay >> 1, CAAM_RTFRQMIN);
-
-	/* max. freq. count, equal to 32 times the entropy sample length */
-	__raw_writel(ent_delay << 5, CAAM_RTFRQMAX);
-
-	__raw_writel((retries << 16) | lrun_max, CAAM_RTSCMISC);
-	__raw_writel(poker_max, CAAM_RTPKRMAX);
-	__raw_writel(poker_range, CAAM_RTPKRRNG);
-	__raw_writel((mono_range << 16) | mono_max, CAAM_RTSCML);
-	__raw_writel((run_1_range << 16) | run_1_max, CAAM_RTSCR1L);
-	__raw_writel((run_2_range << 16) | run_2_max, CAAM_RTSCR2L);
-	__raw_writel((run_3_range << 16) | run_3_max, CAAM_RTSCR3L);
-	__raw_writel((run_4_range << 16) | run_4_max, CAAM_RTSCR4L);
-	__raw_writel((run_5_range << 16) | run_5_max, CAAM_RTSCR5L);
-	__raw_writel((run_6_range << 16) | run_6_max, CAAM_RTSCR6PL);
-
-	val = __raw_readl(CAAM_RTMCTL);
-	/*
-	 * Select raw sampling in both entropy shifter
-	 * and statistical checker
-	 */
-	val &= ~BM_TRNG_SAMP_MODE;
-	val |= TRNG_SAMP_MODE_RAW_ES_SC;
-	/* Put RNG4 into run mode */
-	val &= ~(RTMCTL_PGM | RTMCTL_ACC);
-/*test with sample mode only */
-	__raw_writel(val, CAAM_RTMCTL);
-
-	/* Clear the ERR bit in RTMCTL if set. The TRNG error can occur when the
-	 * RNG clock is not within 1/2x to 8x the system clock.
-	 * This error is possible if ROM code does not initialize the system PLLs
-	 * immediately after PoR.
-	 */
-	/* setbits_le32(CAAM_RTMCTL, RTMCTL_ERR); */
-}
-
 /*
  *  Descriptors to instantiate SH0, SH1, load the keys
  */
@@ -450,104 +330,6 @@ static const u32 rng_inst_load_keys[] = {
 	/* Generate the Key */
 	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | BM_ALGO_RNG_SK | ALGO_RNG_GENERATE,
 };
-
-static void do_inst_desc(u32 *desc, u32 status)
-{
-	u32 *pdesc = desc;
-	u8  desc_len;
-	bool add_sh0   = false;
-	bool add_sh1   = false;
-	bool load_keys = false;
-
-	/*
-	 * Modify the the descriptor to remove if necessary:
-	 *  - The key loading
-	 *  - One of the SH already instantiated
-	 */
-	desc_len = RNG_DESC_SH0_SIZE;
-	if ((status & RDSTA_IF0) != RDSTA_IF0)
-		add_sh0 = true;
-
-	if ((status & RDSTA_IF1) != RDSTA_IF1) {
-		add_sh1 = true;
-		if (add_sh0)
-			desc_len += RNG_DESC_SH1_SIZE;
-	}
-
-	if ((status & RDSTA_SKVN) != RDSTA_SKVN) {
-		load_keys = true;
-		desc_len += RNG_DESC_KEYS_SIZE;
-	}
-
-	/* Copy the SH0 descriptor anyway */
-	memcpy(pdesc, rng_inst_sh0_desc, sizeof(rng_inst_sh0_desc));
-	pdesc += RNG_DESC_SH0_SIZE;
-
-	if (load_keys) {
-		debug("RNG - Load keys\n");
-		memcpy(pdesc, rng_inst_load_keys, sizeof(rng_inst_load_keys));
-		pdesc += RNG_DESC_KEYS_SIZE;
-	}
-
-	if (add_sh1) {
-		if (add_sh0) {
-			debug("RNG - Instantiation of SH0 and SH1\n");
-			/* Add the sh1 descriptor */
-			memcpy(pdesc, rng_inst_sh1_desc,
-			       sizeof(rng_inst_sh1_desc));
-		} else {
-			debug("RNG - Instantiation of SH1 only\n");
-			/* Modify the SH0 descriptor to instantiate only SH1 */
-			desc[1] &= ~BM_ALGO_RNG_SH;
-			desc[1] |= ALGO_RNG_SH(1);
-		}
-	}
-
-	/* Setup the descriptor size */
-	desc[0] &= ~(0x3F);
-	desc[0] |= CAAM_HDR_DESCLEN(desc_len);
-}
-
-static int jr_reset(void)
-{
-	/*
-	 * Function reset the Job Ring HW
-	 * Reset is done in 2 steps:
-	 *  - Flush all pending jobs (Set RESET bit)
-	 *  - Reset the Job Ring (Set RESET bit second time)
-	 */
-	u16 timeout = 10000;
-	u32 reg_val;
-
-	/* Mask interrupts to poll for reset completion status */
-	setbits_le32(CAAM_JRCFGR0_LS, BM_JRCFGR_LS_IMSK);
-
-	/* Initiate flush (required prior to reset) */
-	__raw_writel(JRCR_RESET, CAAM_JRCR0);
-	do {
-		reg_val = __raw_readl(CAAM_JRINTR0);
-		reg_val &= BM_JRINTR_HALT;
-	} while ((reg_val == JRINTR_HALT_ONGOING) && --timeout);
-
-	if (!timeout  || reg_val != JRINTR_HALT_DONE) {
-		printf("Failed to flush job ring\n");
-		return ERROR_ANY;
-	}
-
-	/* Initiate reset */
-	timeout = 100;
-	__raw_writel(JRCR_RESET, CAAM_JRCR0);
-	do {
-		reg_val = __raw_readl(CAAM_JRCR0);
-	} while ((reg_val & JRCR_RESET) && --timeout);
-
-	if (!timeout) {
-		printf("Failed to reset job ring\n");
-		return ERROR_ANY;
-	}
-
-	return 0;
-}
 
 static int do_job(u32 *desc)
 {
@@ -705,6 +487,7 @@ static int do_cfg_jrqueue(void)
 	return 0;
 }
 
+#ifndef CONFIG_ARCH_IMX8
 static void do_clear_rng_error(void)
 {
 	u32 val;
@@ -715,6 +498,158 @@ static void do_clear_rng_error(void)
 		setbits_le32(CAAM_RTMCTL, RTMCTL_ERR);
 	val = __raw_readl(CAAM_RTMCTL);
 	}
+}
+
+static void do_inst_desc(u32 *desc, u32 status)
+{
+	u32 *pdesc = desc;
+	u8  desc_len;
+	bool add_sh0   = false;
+	bool add_sh1   = false;
+	bool load_keys = false;
+
+	/*
+	 * Modify the the descriptor to remove if necessary:
+	 *  - The key loading
+	 *  - One of the SH already instantiated
+	 */
+	desc_len = RNG_DESC_SH0_SIZE;
+	if ((status & RDSTA_IF0) != RDSTA_IF0)
+		add_sh0 = true;
+
+	if ((status & RDSTA_IF1) != RDSTA_IF1) {
+		add_sh1 = true;
+		if (add_sh0)
+			desc_len += RNG_DESC_SH1_SIZE;
+	}
+
+	if ((status & RDSTA_SKVN) != RDSTA_SKVN) {
+		load_keys = true;
+		desc_len += RNG_DESC_KEYS_SIZE;
+	}
+
+	/* Copy the SH0 descriptor anyway */
+	memcpy(pdesc, rng_inst_sh0_desc, sizeof(rng_inst_sh0_desc));
+	pdesc += RNG_DESC_SH0_SIZE;
+
+	if (load_keys) {
+		debug("RNG - Load keys\n");
+		memcpy(pdesc, rng_inst_load_keys, sizeof(rng_inst_load_keys));
+		pdesc += RNG_DESC_KEYS_SIZE;
+	}
+
+	if (add_sh1) {
+		if (add_sh0) {
+			debug("RNG - Instantiation of SH0 and SH1\n");
+			/* Add the sh1 descriptor */
+			memcpy(pdesc, rng_inst_sh1_desc,
+			       sizeof(rng_inst_sh1_desc));
+		} else {
+			debug("RNG - Instantiation of SH1 only\n");
+			/* Modify the SH0 descriptor to instantiate only SH1 */
+			desc[1] &= ~BM_ALGO_RNG_SH;
+			desc[1] |= ALGO_RNG_SH(1);
+		}
+	}
+
+	/* Setup the descriptor size */
+	desc[0] &= ~(0x3F);
+	desc[0] |= CAAM_HDR_DESCLEN(desc_len);
+}
+
+static void kick_trng(u32 ent_delay)
+{
+	u32 samples  = 512; /* number of bits to generate and test */
+	u32 mono_min = 195;
+	u32 mono_max = 317;
+	u32 mono_range  = mono_max - mono_min;
+	u32 poker_min = 1031;
+	u32 poker_max = 1600;
+	u32 poker_range = poker_max - poker_min + 1;
+	u32 retries    = 2;
+	u32 lrun_max   = 32;
+	s32 run_1_min   = 27;
+	s32 run_1_max   = 107;
+	s32 run_1_range = run_1_max - run_1_min;
+	s32 run_2_min   = 7;
+	s32 run_2_max   = 62;
+	s32 run_2_range = run_2_max - run_2_min;
+	s32 run_3_min   = 0;
+	s32 run_3_max   = 39;
+	s32 run_3_range = run_3_max - run_3_min;
+	s32 run_4_min   = -1;
+	s32 run_4_max   = 26;
+	s32 run_4_range = run_4_max - run_4_min;
+	s32 run_5_min   = -1;
+	s32 run_5_max   = 18;
+	s32 run_5_range = run_5_max - run_5_min;
+	s32 run_6_min   = -1;
+	s32 run_6_max   = 17;
+	s32 run_6_range = run_6_max - run_6_min;
+	u32 val;
+
+	/* Put RNG in program mode */
+	/* Setting both RTMCTL:PRGM and RTMCTL:TRNG_ACC causes TRNG to
+	 * properly invalidate the entropy in the entropy register and
+	 * force re-generation.
+	 */
+	setbits_le32(CAAM_RTMCTL, RTMCTL_PGM | RTMCTL_ACC);
+
+	/* Configure the RNG Entropy Delay
+	 * Performance-wise, it does not make sense to
+	 * set the delay to a value that is lower
+	 * than the last one that worked (i.e. the state handles
+	 * were instantiated properly. Thus, instead of wasting
+	 * time trying to set the values controlling the sample
+	 * frequency, the function simply returns.
+	 */
+	val = __raw_readl(CAAM_RTSDCTL);
+	val &= BM_TRNG_ENT_DLY;
+	val >>= BS_TRNG_ENT_DLY;
+	if (ent_delay < val) {
+		/* Put RNG4 into run mode */
+		clrbits_le32(CAAM_RTMCTL, RTMCTL_PGM | RTMCTL_ACC);
+		return;
+	}
+
+	val = (ent_delay << BS_TRNG_ENT_DLY) | samples;
+	__raw_writel(val, CAAM_RTSDCTL);
+
+	/* min. freq. count, equal to 1/2 of the entropy sample length */
+	__raw_writel(ent_delay >> 1, CAAM_RTFRQMIN);
+
+	/* max. freq. count, equal to 32 times the entropy sample length */
+	__raw_writel(ent_delay << 5, CAAM_RTFRQMAX);
+
+	__raw_writel((retries << 16) | lrun_max, CAAM_RTSCMISC);
+	__raw_writel(poker_max, CAAM_RTPKRMAX);
+	__raw_writel(poker_range, CAAM_RTPKRRNG);
+	__raw_writel((mono_range << 16) | mono_max, CAAM_RTSCML);
+	__raw_writel((run_1_range << 16) | run_1_max, CAAM_RTSCR1L);
+	__raw_writel((run_2_range << 16) | run_2_max, CAAM_RTSCR2L);
+	__raw_writel((run_3_range << 16) | run_3_max, CAAM_RTSCR3L);
+	__raw_writel((run_4_range << 16) | run_4_max, CAAM_RTSCR4L);
+	__raw_writel((run_5_range << 16) | run_5_max, CAAM_RTSCR5L);
+	__raw_writel((run_6_range << 16) | run_6_max, CAAM_RTSCR6PL);
+
+	val = __raw_readl(CAAM_RTMCTL);
+	/*
+	 * Select raw sampling in both entropy shifter
+	 * and statistical checker
+	 */
+	val &= ~BM_TRNG_SAMP_MODE;
+	val |= TRNG_SAMP_MODE_RAW_ES_SC;
+	/* Put RNG4 into run mode */
+	val &= ~(RTMCTL_PGM | RTMCTL_ACC);
+/*test with sample mode only */
+	__raw_writel(val, CAAM_RTMCTL);
+
+	/* Clear the ERR bit in RTMCTL if set. The TRNG error can occur when the
+	 * RNG clock is not within 1/2x to 8x the system clock.
+	 * This error is possible if ROM code does not initialize the system PLLs
+	 * immediately after PoR.
+	 */
+	/* setbits_le32(CAAM_RTMCTL, RTMCTL_ERR); */
 }
 
 static int do_instantiation(void)
@@ -801,6 +736,79 @@ static void rng_init(void)
 	return;
 }
 
+static void caam_clock_enable(void)
+{
+#if defined(CONFIG_ARCH_MX6)
+	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+	u32 reg;
+
+	reg = __raw_readl(&mxc_ccm->CCGR0);
+
+	reg |= (MXC_CCM_CCGR0_CAAM_SECURE_MEM_MASK |
+		MXC_CCM_CCGR0_CAAM_WRAPPER_ACLK_MASK |
+		MXC_CCM_CCGR0_CAAM_WRAPPER_IPG_MASK);
+
+	__raw_writel(reg, &mxc_ccm->CCGR0);
+
+#ifndef CONFIG_MX6UL
+	/* EMI slow clk */
+	reg = __raw_readl(&mxc_ccm->CCGR6);
+	reg |= MXC_CCM_CCGR6_EMI_SLOW_MASK;
+
+	__raw_writel(reg, &mxc_ccm->CCGR6);
+#endif
+
+#elif defined(CONFIG_ARCH_MX7)
+	HW_CCM_CCGR_SET(36, MXC_CCM_CCGR36_CAAM_DOMAIN0_MASK);
+#elif defined(CONFIG_ARCH_MX7ULP)
+	pcc_clock_enable(PER_CLK_CAAM, true);
+#endif
+}
+
+static int jr_reset(void)
+{
+	/*
+	 * Function reset the Job Ring HW
+	 * Reset is done in 2 steps:
+	 *  - Flush all pending jobs (Set RESET bit)
+	 *  - Reset the Job Ring (Set RESET bit second time)
+	 */
+	u16 timeout = 10000;
+	u32 reg_val;
+
+	/* Mask interrupts to poll for reset completion status */
+	setbits_le32(CAAM_JRCFGR0_LS, BM_JRCFGR_LS_IMSK);
+
+	/* Initiate flush (required prior to reset) */
+	__raw_writel(JRCR_RESET, CAAM_JRCR0);
+	do {
+		reg_val = __raw_readl(CAAM_JRINTR0);
+		reg_val &= BM_JRINTR_HALT;
+	} while ((reg_val == JRINTR_HALT_ONGOING) && --timeout);
+
+	if (!timeout  || reg_val != JRINTR_HALT_DONE) {
+		printf("Failed to flush job ring\n");
+		return ERROR_ANY;
+	}
+
+	/* Initiate reset */
+	timeout = 100;
+	__raw_writel(JRCR_RESET, CAAM_JRCR0);
+	do {
+		reg_val = __raw_readl(CAAM_JRCR0);
+	} while ((reg_val & JRCR_RESET) && --timeout);
+
+	if (!timeout) {
+		printf("Failed to reset job ring\n");
+		return ERROR_ANY;
+	}
+
+	return 0;
+}
+
+#endif /* !CONFIG_ARCH_IMX8 */
+
+#ifdef CONFIG_CAAM_KB_SELF_TEST
 static void caam_hwrng_test(void)
 {
 	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, out1, 32);
@@ -844,3 +852,4 @@ static void caam_test(void)
 	caam_hwrng_test();
 	caam_blob_test();
 }
+#endif /* CONFIG_CAAM_KB_SELF_TEST */
