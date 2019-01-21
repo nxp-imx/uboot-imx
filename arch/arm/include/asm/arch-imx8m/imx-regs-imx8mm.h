@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 NXP
+ * Copyright 2018-2019 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -226,6 +226,17 @@ struct fuse_bank1_regs {
 	u32 tester5;
 	u32 rsvd2[3];
 	u32 cfg0;
+	u32 rsvd3[3];
+};
+
+struct fuse_bank3_regs {
+	u32 mem_trim0;
+	u32 rsvd0[3];
+	u32 mem_trim1;
+	u32 rsvd1[3];
+	u32 mem_trim2;
+	u32 rsvd2[3];
+	u32 ana0;
 	u32 rsvd3[3];
 };
 
