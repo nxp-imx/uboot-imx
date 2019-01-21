@@ -346,7 +346,12 @@ void enable_mipi_dsi_clk(unsigned char enable)
 
 void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq_in_khz)
 {
-	/* Scan the parent clock to find best fit clock, which should generate actual frequence >= freq */
+	/* Scan the parent clock to find best fit clock, whose generate actual frequence <= freq
+	*   Otherwise, the higher actual freq may introduce some problem
+	*   1. The real frequency exceeds max framerate that screen supports
+	*   2. The DSI PHY clock depends on the lcdif clock, so the higher lcdif clock may violate
+	*       DSI PHY clock requirement
+	*/
 	u8 pcd, best_pcd = 0;
 	u32 parent, frac, rate, parent_rate;
 	u32 best_parent = 0, best_frac = 0, best = 0;
@@ -376,10 +381,10 @@ void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq_in_khz)
 					continue;
 
 				rate = parent_rate * (frac + 1) / (pcd + 1);
-				if (rate < freq_in_khz)
+				if (rate > freq_in_khz)
 					continue;
 
-				if (best == 0 || rate < best) {
+				if (best == 0 || rate > best) {
 					best = rate;
 					best_parent = parent;
 					best_frac = frac;
