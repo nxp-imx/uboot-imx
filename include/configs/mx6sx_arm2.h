@@ -99,7 +99,7 @@
 		"g_mass_storage.iSerialNumber=\"\" "\
 		MFG_NAND_PARTITION \
 		"\0" \
-	"initrd_addr=0x83800000\0" \
+	"initrd_addr=0x86800000\0" \
 	"initrd_high=0xffffffff\0" \
 	"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 

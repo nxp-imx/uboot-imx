@@ -88,7 +88,7 @@
 		"mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) " \
 		"clk_ignore_unused "\
 		"\0" \
-	"initrd_addr=0x83800000\0" \
+	"initrd_addr=0x86800000\0" \
 	"initrd_high=0xffffffff\0" \
 	"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 

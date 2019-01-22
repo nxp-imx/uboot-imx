@@ -108,7 +108,7 @@
 		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
 		"g_mass_storage.iSerialNumber=\"\" "\
 		"\0" \
-		"initrd_addr=0x63800000\0" \
+		"initrd_addr=0x66800000\0" \
 		"initrd_high=0xffffffff\0" \
 		"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
 
