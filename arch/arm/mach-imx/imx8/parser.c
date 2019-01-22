@@ -187,8 +187,10 @@ static int read_auth_container(struct spl_image_info *spl_image)
 		return -ENOMEM;
 
 	ret = read(start_offset, CONTAINER_HDR_ALIGNMENT, (void *)container);
-	if (ret)
-		return ret;
+	if (ret) {
+		printf("Error in read container %d\n", ret);
+		goto out;
+	}
 
 	if (container->tag != 0x87 && container->version != 0x0) {
 		printf("Wrong container header\n");
@@ -205,6 +207,22 @@ static int read_auth_container(struct spl_image_info *spl_image)
 	length = container->length_lsb + (container->length_msb << 8);
 
 	debug("container length %u\n", length);
+
+	if (length > CONTAINER_HDR_ALIGNMENT) {
+		length =  ALIGN(length, CONTAINER_HDR_ALIGNMENT);
+
+		free(container);
+		container = malloc(length);
+		if (!container)
+			return -ENOMEM;
+
+		ret = read(start_offset, length, (void *)container);
+		if (ret) {
+			printf("Error in read full container %d\n", ret);
+			goto out;
+		}
+	}
+
 	memcpy((void *)SEC_SECURE_RAM_BASE, (const void *)container,
 	       ALIGN(length, CONFIG_SYS_CACHELINE_SIZE));
 
