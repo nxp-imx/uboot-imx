@@ -183,7 +183,7 @@ int board_early_init_f(void)
 #ifndef CONFIG_SPL_BUILD
 static struct fsl_esdhc_cfg usdhc_cfg[CONFIG_SYS_FSL_USDHC_NUM] = {
 	{USDHC1_BASE_ADDR, 0, 8},
-#ifndef CONFIG_TARGET_IMX8DX_DDR3_ARM2
+#ifndef CONFIG_TARGET_IMX8X_17X17_VAL
 	{USDHC2_BASE_ADDR, 0, 4},
 #endif
 };
@@ -472,8 +472,8 @@ int checkboard(void)
 {
 #if defined(CONFIG_TARGET_IMX8QXP_DDR3_ARM2)
 	puts("Board: iMX8QXP DDR3 ARM2\n");
-#elif defined(CONFIG_TARGET_IMX8DX_DDR3_ARM2)
-	puts("Board: iMX8DX DDR3 ARM2\n");
+#elif defined(CONFIG_TARGET_IMX8X_17X17_VAL)
+	puts("Board: iMX8X(QXP/DX) 17x17 Validation Board\n");
 #else
 	puts("Board: iMX8QXP LPDDR4 ARM2\n");
 #endif

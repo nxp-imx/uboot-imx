@@ -15,7 +15,7 @@
 #include "fsl-imx8qxp-lpddr4-arm2.dts"
 
 / {
-	model = "Freescale i.MX8DX DDR3 ARM2";
+	model = "Freescale i.MX8QXP 17x17 Validation board";
 };
 
 &i2c1 {
