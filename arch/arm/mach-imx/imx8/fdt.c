@@ -283,6 +283,104 @@ static void update_fdt_edma_nodes(void *blob)
 	}
 }
 
+static bool check_owned_resources_in_pd_tree(void *blob, int nodeoff,
+	unsigned int *unowned_rsrc)
+{
+	unsigned int rsrc_id;
+	int phplen;
+	const fdt32_t *php;
+
+	/* Search the ancestors nodes in current SS power-domain tree,
+	*   if all ancestors' resources are owned,  we can enable the node,
+	*   otherwise any ancestor is not owned, we should disable the node.
+	*/
+
+	do {
+		php = fdt_getprop(blob, nodeoff, "power-domains", &phplen);
+		if (!php) {
+			debug("   - ignoring no power-domains\n");
+			break;
+		}
+		if (phplen != 4) {
+			printf("ignoring %s power-domains of unexpected length %d\n",
+					fdt_get_name(blob, nodeoff, NULL), phplen);
+			break;
+		}
+		nodeoff = fdt_node_offset_by_phandle(blob, fdt32_to_cpu(*php));
+
+		rsrc_id = fdtdec_get_uint(blob, nodeoff, "reg", 0);
+		if (rsrc_id == SC_R_NONE) {
+			debug("%s's power domain use SC_R_NONE\n",
+				fdt_get_name(blob, nodeoff, NULL));
+			break;
+		}
+
+		debug("power-domains node 0x%x, resource id %u\n", nodeoff, rsrc_id);
+
+		if (!check_owned_resource(rsrc_id)) {
+			if (unowned_rsrc != NULL)
+				*unowned_rsrc = rsrc_id;
+			return false;
+		}
+	} while (fdt_node_check_compatible(blob, nodeoff, "nxp,imx8-pd"));
+
+	return true;
+}
+
+static void update_fdt_with_owned_resources_legacy(void *blob)
+{
+	/* Traverses the fdt nodes,
+	  * check its power domain and use the resource id in the power domain
+	  * for checking whether it is owned by current partition
+	  */
+
+	int offset = 0, next_off;
+	int depth = 0, next_depth;
+	unsigned int rsrc_id;
+	int rc;
+
+	for (offset = fdt_next_node(blob, offset, &depth); offset > 0;
+		 offset = fdt_next_node(blob, offset, &depth)) {
+
+		debug("Node name: %s, depth %d\n", fdt_get_name(blob, offset, NULL), depth);
+
+		if (!fdtdec_get_is_enabled(blob, offset)) {
+			debug("   - ignoring disabled device\n");
+			continue;
+		}
+
+		if (!fdt_node_check_compatible(blob, offset, "nxp,imx8-pd")) {
+			/* Skip to next depth=1 node*/
+			next_off = offset;
+			next_depth = depth;
+			do {
+				offset = next_off;
+				depth = next_depth;
+				next_off = fdt_next_node(blob, offset, &next_depth);
+				if (next_off < 0 || next_depth < 1)
+					break;
+
+				debug("PD name: %s, offset %d, depth %d\n",
+					fdt_get_name(blob, next_off, NULL), next_off, next_depth);
+			} while (next_depth > 1);
+
+			continue;
+		}
+
+		if (!check_owned_resources_in_pd_tree(blob, offset, &rsrc_id)) {
+			/* If the resource is not owned, disable it in FDT */
+			rc = disable_fdt_node(blob, offset);
+			if (!rc)
+				printf("Disable %s, resource id %u not owned\n",
+					fdt_get_name(blob, offset, NULL), rsrc_id);
+			else
+				printf("Unable to disable %s, err=%s\n",
+					fdt_get_name(blob, offset, NULL), fdt_strerror(rc));
+		}
+
+	}
+}
+
 static void update_fdt_with_owned_resources(void *blob)
 {
 	/*
@@ -293,7 +391,12 @@ static void update_fdt_with_owned_resources(void *blob)
 	struct fdtdec_phandle_args args;
 	int offset = 0, depth = 0;
 	u32 rsrc_id;
-	int rc, i;
+	int rc, i, count;
+
+	/* Check the new PD, if not find, continue with old PD tree */
+	count = fdt_node_offset_by_compatible(blob, -1, "fsl,scu-pd");
+	if (count < 0)
+		return update_fdt_with_owned_resources_legacy(blob);
 
 	for (offset = fdt_next_node(blob, offset, &depth); offset > 0;
 	     offset = fdt_next_node(blob, offset, &depth)) {
