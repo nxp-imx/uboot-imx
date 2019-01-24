@@ -895,6 +895,44 @@ static bool check_owned_resource(sc_rsrc_t rsrc_id)
 	return owned;
 }
 
+static bool check_owned_resources_in_pd_tree(void *blob, int nodeoff,
+	unsigned int *unowned_rsrc)
+{
+	unsigned int rsrc_id;
+	const fdt32_t *php;
+
+	/* Search the ancestors nodes in current SS power-domain tree,
+	*   if all ancestors' resources are owned,  we can enable the node,
+	*   otherwise any ancestor is not owned, we should disable the node.
+	*/
+
+	do {
+		php = fdt_getprop(blob, nodeoff, "power-domains", NULL);
+		if (!php) {
+			debug("   - ignoring no power-domains\n");
+			break;
+		}
+		nodeoff = fdt_node_offset_by_phandle(blob, fdt32_to_cpu(*php));
+
+		rsrc_id = fdtdec_get_uint(blob, nodeoff, "reg", 0);
+		if (rsrc_id == SC_R_LAST) {
+			debug("%s's power domain use SC_R_LAST\n",
+				fdt_get_name(blob, nodeoff, NULL));
+			break;
+		}
+
+		debug("power-domains node 0x%x, resource id %u\n", nodeoff, rsrc_id);
+
+		if (!check_owned_resource(rsrc_id)) {
+			if (unowned_rsrc != NULL)
+				*unowned_rsrc = rsrc_id;
+			return false;
+		}
+	} while (fdt_node_check_compatible(blob, nodeoff, "nxp,imx8-pd"));
+
+	return true;
+}
+
 static int disable_fdt_node(void *blob, int nodeoffset)
 {
 	int rc, ret;
@@ -1155,11 +1193,9 @@ static void update_fdt_with_owned_resources(void *blob)
 	  * for checking whether it is owned by current partition
 	  */
 
-	int offset = 0, next_off, addr;
+	int offset = 0, next_off;
 	int depth, next_depth;
 	unsigned int rsrc_id;
-	const fdt32_t *php;
-	const char *name;
 	int rc;
 
 	for (offset = fdt_next_node(blob, offset, &depth); offset > 0;
@@ -1190,34 +1226,17 @@ static void update_fdt_with_owned_resources(void *blob)
 			continue;
 		}
 
-		php = fdt_getprop(blob, offset, "power-domains", NULL);
-		if (!php) {
-			debug("   - ignoring no power-domains\n");
-		} else {
-			addr = fdt_node_offset_by_phandle(blob, fdt32_to_cpu(*php));
-			rsrc_id = fdtdec_get_uint(blob, addr, "reg", 0);
-
-			if (rsrc_id == SC_R_LAST) {
-				name = fdt_get_name(blob, offset, NULL);
-				printf("%s's power domain use SC_R_LAST\n", name);
-				continue;
-			}
-
-			debug("power-domains phandle 0x%x, addr 0x%x, resource id %u\n",
-				fdt32_to_cpu(*php), addr, rsrc_id);
-
-			if (!check_owned_resource(rsrc_id)) {
-
-				/* If the resource is not owned, disable it in FDT */
-				rc = disable_fdt_node(blob, offset);
-				if (!rc)
-					printf("Disable %s, resource id %u, pd phandle 0x%x\n",
-						fdt_get_name(blob, offset, NULL), rsrc_id, fdt32_to_cpu(*php));
-				else
-					printf("Unable to disable %s, err=%s\n",
-						fdt_get_name(blob, offset, NULL), fdt_strerror(rc));
-			}
+		if (!check_owned_resources_in_pd_tree(blob, offset, &rsrc_id)) {
+			/* If the resource is not owned, disable it in FDT */
+			rc = disable_fdt_node(blob, offset);
+			if (!rc)
+				printf("Disable %s, resource id %u not owned\n",
+					fdt_get_name(blob, offset, NULL), rsrc_id);
+			else
+				printf("Unable to disable %s, err=%s\n",
+					fdt_get_name(blob, offset, NULL), fdt_strerror(rc));
 		}
+
 	}
 }
 
