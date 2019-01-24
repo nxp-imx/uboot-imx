@@ -2285,10 +2285,10 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	avb_result = avb_flow_dual_uboot(&fsl_avb_ab_ops, requested_partitions_boot, allow_fail,
 			AVB_HASHTREE_ERROR_MODE_RESTART_AND_INVALIDATE, &avb_out_data);
 
-	/* Goto fail early if current slot is not bootable. */
+	/* Reboot if current slot is not bootable. */
 	if (avb_result == AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS) {
 		printf("boota: slot verify fail!\n");
-		goto fail;
+		do_reset(NULL, 0, 0, NULL);
 	}
 #endif /* !CONFIG_DUAL_BOOTLOADER */
 
