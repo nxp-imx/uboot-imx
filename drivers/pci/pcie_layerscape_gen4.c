@@ -378,6 +378,11 @@ static void ls_pcie_g4_ep_set_bar_size(struct ls_pcie_g4 *pcie, int pf,
 	u32 mask_l = lower_32_bits(~(size - 1));
 	u32 mask_h = upper_32_bits(~(size - 1));
 
+	/* A-011452 workaround: set the VF BAR1 to 8MB */
+	if (pcie->rev == REV_1_0 && vf_bar && bar == 1) {
+		mask_l = lower_32_bits(~(SZ_8M - 1));
+		mask_h = upper_32_bits(~(SZ_8M - 1));
+	}
 	ccsr_writel(pcie, GPEX_BAR_SELECT, bar_pos);
 	ccsr_writel(pcie, GPEX_BAR_SIZE_LDW, mask_l);
 	ccsr_writel(pcie, GPEX_BAR_SIZE_UDW, mask_h);
