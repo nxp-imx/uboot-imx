@@ -526,6 +526,14 @@ static int ls_pcie_g4_probe(struct udevice *dev)
 
 	pcie->rev = readb(pcie->ccsr + PCI_REVISION_ID);
 
+	/* Set ACK latency timeout */
+	if (pcie->rev == REV_1_0) {
+		val = ccsr_readl(pcie, GPEX_ACK_REPLAY_TO);
+		val &= ~(ACK_LAT_TO_VAL_MASK << ACK_LAT_TO_VAL_SHIFT);
+		val |= (4 << ACK_LAT_TO_VAL_SHIFT);
+		ccsr_writel(pcie, GPEX_ACK_REPLAY_TO, val);
+	}
+
 	pcie->mode = readb(pcie->ccsr + PCI_HEADER_TYPE) & 0x7f;
 
 	if (pcie->mode == PCI_HEADER_TYPE_NORMAL) {

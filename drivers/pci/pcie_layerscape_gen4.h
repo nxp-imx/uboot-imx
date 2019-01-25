@@ -58,6 +58,10 @@
 #define INI_VF_SHIFT				0
 #define GPEX_SRIOV_VF_OFFSET_STRIDE(pf)		(0x704 + (pf) * 4)
 
+#define GPEX_ACK_REPLAY_TO			0x438
+#define ACK_LAT_TO_VAL_SHIFT			0
+#define ACK_LAT_TO_VAL_MASK			0x1fff
+
 /* PAB CSR */
 #define PAB_CTRL				0x808
 #define PAB_CTRL_APIO_EN			BIT(0)
