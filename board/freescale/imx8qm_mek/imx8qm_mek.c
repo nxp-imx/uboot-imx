@@ -459,10 +459,6 @@ int board_init(void)
 	if (IS_ENABLED(CONFIG_XEN))
 		return 0;
 
-	/* Power up base board */
-	sc_pm_set_resource_power_mode(gd->arch.ipc_channel_handle,
-		SC_R_BOARD_R1, SC_PM_PW_MODE_ON);
-
 #ifdef CONFIG_MXC_GPIO
 	board_gpio_init();
 #endif
