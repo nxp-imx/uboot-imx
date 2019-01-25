@@ -242,6 +242,9 @@ static int ls_pcie_g4_read_config(const struct udevice *bus, pci_dev_t bdf,
 
 	address = ls_pcie_g4_conf_address(pcie, bdf, offset);
 
+	if (pcie->rev == REV_1_0 && offset == PCI_VENDOR_ID)
+		lut_writel(pcie, 0x0 << PCIE_LUT_GCR_RRE, PCIE_LUT_GCR);
+
 	switch (size) {
 	case PCI_SIZE_8:
 		*valuep = readb(address);
@@ -256,6 +259,9 @@ static int ls_pcie_g4_read_config(const struct udevice *bus, pci_dev_t bdf,
 		ret = -EINVAL;
 		break;
 	}
+
+	if (pcie->rev == REV_1_0 && offset == PCI_VENDOR_ID)
+		lut_writel(pcie, 0x1 << PCIE_LUT_GCR_RRE, PCIE_LUT_GCR);
 
 	return ret;
 }
@@ -517,6 +523,8 @@ static int ls_pcie_g4_probe(struct udevice *dev)
 	debug("%s ccsr:%lx, cfg:0x%lx, big-endian:%d\n",
 	      dev->name, (unsigned long)pcie->ccsr, (unsigned long)pcie->cfg,
 	      pcie->big_endian);
+
+	pcie->rev = readb(pcie->ccsr + PCI_REVISION_ID);
 
 	pcie->mode = readb(pcie->ccsr + PCI_HEADER_TYPE) & 0x7f;
 
