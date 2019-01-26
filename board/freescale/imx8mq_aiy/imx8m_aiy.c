@@ -24,6 +24,8 @@
 #include <power/pmic.h>
 #include <usb.h>
 #include <dwc3-uboot.h>
+#include <dm.h>
+#include <i2c.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -274,6 +276,11 @@ int board_phy_config(struct phy_device *phydev)
 #define USB_PHY_CTRL2			0xF0048
 #define USB_PHY_CTRL2_TXENABLEN0	BIT(8)
 
+#define PTN5150A_BUS				2
+#define PTN5150A_ADDR				0x3D
+#define PTN5150A_CONTROL			0x2
+#define PTN5150A_CONTROL_PORT_MASK	0x6
+
 static struct dwc3_device dwc3_device_data = {
 #ifdef CONFIG_SPL_BUILD
 	.maximum_speed = USB_SPEED_HIGH,
@@ -314,12 +321,51 @@ static void dwc3_nxp_usb_phy_init(struct dwc3_device *dwc3)
 	RegData &= ~(USB_PHY_CTRL1_RESET | USB_PHY_CTRL1_ATERESET);
 	writel(RegData, dwc3->base + USB_PHY_CTRL1);
 }
+
+#ifndef CONFIG_SPL_BUILD
+static void configure_cc_switch() {
+	uint8_t value;
+	int ret;
+	struct udevice *bus, *dev;
+
+	ret = uclass_get_device_by_seq(UCLASS_I2C, PTN5150A_BUS, &bus);
+	if (ret) {
+		printf("%s: No bus %d\n", __func__, PTN5150A_BUS);
+		return;
+	}
+
+	ret = dm_i2c_probe(bus, PTN5150A_ADDR, 0, &dev);
+	if (ret) {
+		printf("%s: Can't find device id=0x%x, on bus %d\n",
+			__func__, PTN5150A_ADDR, PTN5150A_BUS);
+		return;
+	}
+
+	if (dm_i2c_read(dev, PTN5150A_CONTROL, &value, 1)) {
+		printf("Unable to configure USB switch");
+		return;
+	}
+
+	value &= ~PTN5150A_CONTROL_PORT_MASK;
+	if (dm_i2c_write(dev, PTN5150A_CONTROL, &value, 1)) {
+		printf("Unable to configure USB switch");
+		return;
+	}
+	printf("Configured USB Switch for UFP\n");
+}
+#endif
 #endif
 
 #if defined(CONFIG_USB_DWC3) || defined(CONFIG_USB_XHCI_IMX8M)
 int board_usb_init(int index, enum usb_init_type init)
 {
 	imx8m_usb_power(index, true);
+
+#ifndef CONFIG_SPL_BUILD
+	/* Explicitly set USB switch to UFP (device) to ensure proper
+	*fastboot operation on type-C ports. */
+	configure_cc_switch();
+#endif
 
 	if (index == 0 && init == USB_INIT_DEVICE) {
 		dwc3_nxp_usb_phy_init(&dwc3_device_data);
