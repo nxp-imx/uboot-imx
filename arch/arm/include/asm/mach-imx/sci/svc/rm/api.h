@@ -464,6 +464,21 @@ sc_err_t sc_rm_set_peripheral_permissions(sc_ipc_t ipc, sc_rsrc_t resource,
 sc_bool_t sc_rm_is_resource_owned(sc_ipc_t ipc, sc_rsrc_t resource);
 
 /*!
+ * This function is used to get the owner of a resource.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     resource    resource to check
+ * @param[out]    pt          pointer to return owning partition
+ *
+ * Return errors:
+ * - SC_PARM if arguments out of range or invalid
+ *
+ * If \a resource is out of range then SC_ERR_PARM is returned.
+ */
+sc_err_t sc_rm_get_resource_owner(sc_ipc_t ipc, sc_rsrc_t resource,
+    sc_rm_pt_t *pt);
+
+/*!
  * This function is used to test if a resource is a bus master.
  *
  * @param[in]     ipc         IPC handle

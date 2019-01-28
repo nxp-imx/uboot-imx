@@ -45,8 +45,10 @@
 #define PM_FUNC_BOOT 8U /*!< Index for pm_boot() RPC call */
 #define PM_FUNC_REBOOT 9U /*!< Index for pm_reboot() RPC call */
 #define PM_FUNC_REBOOT_PARTITION 12U /*!< Index for pm_reboot_partition() RPC call */
+#define PM_FUNC_REBOOT_CONTINUE 25U /*!< Index for pm_reboot_continue() RPC call */
 #define PM_FUNC_CPU_START 11U /*!< Index for pm_cpu_start() RPC call */
 #define PM_FUNC_CPU_RESET 23U /*!< Index for pm_cpu_reset() RPC call */
+#define PM_FUNC_IS_PARTITION_STARTED 24U /*!< Index for pm_is_partition_started() RPC call */
 /*@}*/
 
 /* Types */

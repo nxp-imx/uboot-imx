@@ -43,7 +43,8 @@
 #define SC_RPC_SVC_PAD          6U
 #define SC_RPC_SVC_MISC         7U
 #define SC_RPC_SVC_IRQ          8U
-#define SC_RPC_SVC_ABORT        9U
+#define SC_RPC_SVC_SECO         9U
+#define SC_RPC_SVC_ABORT        10U
 
 #define SC_RPC_ASYNC_STATE_RD_START      0U
 #define SC_RPC_ASYNC_STATE_RD_ACTIVE     1U

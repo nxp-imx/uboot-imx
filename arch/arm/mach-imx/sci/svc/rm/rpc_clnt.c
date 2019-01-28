@@ -336,6 +336,29 @@ sc_bool_t sc_rm_is_resource_owned(sc_ipc_t ipc, sc_rsrc_t resource)
     return result;
 }
 
+sc_err_t sc_rm_get_resource_owner(sc_ipc_t ipc, sc_rsrc_t resource,
+    sc_rm_pt_t *pt)
+{
+    sc_rpc_msg_t msg;
+    uint8_t result;
+
+    RPC_VER(&msg) = SC_RPC_VERSION;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_RM);
+    RPC_FUNC(&msg) = U8(RM_FUNC_GET_RESOURCE_OWNER);
+    RPC_U16(&msg, 0U) = U16(resource);
+    RPC_SIZE(&msg) = 2U;
+
+    sc_call_rpc(ipc, &msg, SC_FALSE);
+
+    result = RPC_R8(&msg);
+    if (pt != NULL)
+    {
+        *pt = RPC_U8(&msg, 0U);
+    }
+
+    return (sc_err_t) result;
+}
+
 sc_bool_t sc_rm_is_resource_master(sc_ipc_t ipc, sc_rsrc_t resource)
 {
     sc_rpc_msg_t msg;

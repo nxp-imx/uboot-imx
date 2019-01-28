@@ -40,6 +40,7 @@
 #define RM_FUNC_SET_MASTER_SID 11U /*!< Index for rm_set_master_sid() RPC call */
 #define RM_FUNC_SET_PERIPHERAL_PERMISSIONS 12U /*!< Index for rm_set_peripheral_permissions() RPC call */
 #define RM_FUNC_IS_RESOURCE_OWNED 13U /*!< Index for rm_is_resource_owned() RPC call */
+#define RM_FUNC_GET_RESOURCE_OWNER 33U /*!< Index for rm_get_resource_owner() RPC call */
 #define RM_FUNC_IS_RESOURCE_MASTER 14U /*!< Index for rm_is_resource_master() RPC call */
 #define RM_FUNC_IS_RESOURCE_PERIPHERAL 15U /*!< Index for rm_is_resource_peripheral() RPC call */
 #define RM_FUNC_GET_RESOURCE_INFO 16U /*!< Index for rm_get_resource_info() RPC call */

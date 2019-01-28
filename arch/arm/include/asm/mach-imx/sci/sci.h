@@ -31,6 +31,7 @@
 #include <asm/mach-imx/sci/svc/pm/api.h>
 #include <asm/mach-imx/sci/svc/rm/api.h>
 #include <asm/mach-imx/sci/svc/timer/api.h>
+#include <asm/mach-imx/sci/svc/seco/api.h>
 
 #define SC_IPC_AP_CH0       	(MU_BASE_ADDR(0))
 #define SC_IPC_AP_CH1       	(MU_BASE_ADDR(1))

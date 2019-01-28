@@ -687,9 +687,26 @@ void sc_pm_reboot(sc_ipc_t ipc, sc_pm_reset_type_t type);
  * possible. SC state (partitions, power, clocks, etc.) is reset. The
  * boot SW of the booting CPU must be able to handle peripherals that
  * that are not reset.
+ *
+ * If board_reboot_part() returns a non-0 mask, then the reboot will
+ * be delayed until all partitions indicated in the mask have called
+ * sc_pm_reboot_continue() to continue the boot.
  */
 sc_err_t sc_pm_reboot_partition(sc_ipc_t ipc, sc_rm_pt_t pt,
     sc_pm_reset_type_t type);
+
+/*!
+ * This function is used to continue the reboot a partition.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     pt          handle of partition to continue
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ *
+ * Return errors:
+ * - SC_ERR_PARM if invalid partition
+ */
+sc_err_t sc_pm_reboot_continue(sc_ipc_t ipc, sc_rm_pt_t pt);
 
 /*!
  * This function is used to start/stop a CPU.
@@ -737,6 +754,19 @@ sc_err_t sc_pm_cpu_start(sc_ipc_t ipc, sc_rsrc_t resource, sc_bool_t enable,
  * on the core has to understand and deal with this.
  */
 void sc_pm_cpu_reset(sc_ipc_t ipc, sc_rsrc_t resource, sc_faddr_t address);
+
+/*!
+ * This function returns a bool indicating if a partition was started.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in]     pt          handle of partition to check
+ *
+ * @return Returns a bool (SC_TRUE = started).
+ *
+ * Note this indicates if a partition was started. It does not indicate if a
+ * partition is currently running or in a low power state.
+ */
+sc_bool_t sc_pm_is_partition_started(sc_ipc_t ipc, sc_rm_pt_t pt);
 
 /* @} */
 

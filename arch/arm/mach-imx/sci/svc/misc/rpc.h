@@ -30,14 +30,12 @@
 #define MISC_FUNC_SET_DMA_GROUP 5U /*!< Index for misc_set_dma_group() RPC call */
 #define MISC_FUNC_SECO_IMAGE_LOAD 8U /*!< Index for misc_seco_image_load() RPC call */
 #define MISC_FUNC_SECO_AUTHENTICATE 9U /*!< Index for misc_seco_authenticate() RPC call */
-#define MISC_FUNC_SECO_LOAD_KEY 34U /*!< Index for misc_seco_load_key() RPC call */
 #define MISC_FUNC_SECO_FUSE_WRITE 20U /*!< Index for misc_seco_fuse_write() RPC call */
 #define MISC_FUNC_SECO_ENABLE_DEBUG 21U /*!< Index for misc_seco_enable_debug() RPC call */
 #define MISC_FUNC_SECO_FORWARD_LIFECYCLE 22U /*!< Index for misc_seco_forward_lifecycle() RPC call */
 #define MISC_FUNC_SECO_RETURN_LIFECYCLE 23U /*!< Index for misc_seco_return_lifecycle() RPC call */
 #define MISC_FUNC_SECO_BUILD_INFO 24U /*!< Index for misc_seco_build_info() RPC call */
 #define MISC_FUNC_SECO_CHIP_INFO 25U /*!< Index for misc_seco_chip_info() RPC call */
-#define MISC_FUNC_SECO_GET_EVENT 35U /*!< Index for misc_seco_get_event() RPC call */
 #define MISC_FUNC_SECO_ATTEST_MODE 27U /*!< Index for misc_seco_attest_mode() RPC call */
 #define MISC_FUNC_SECO_ATTEST 28U /*!< Index for misc_seco_attest() RPC call */
 #define MISC_FUNC_SECO_GET_ATTEST_PKEY 31U /*!< Index for misc_seco_get_attest_pkey() RPC call */
