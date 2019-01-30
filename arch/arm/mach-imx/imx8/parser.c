@@ -128,7 +128,7 @@ static int authenticate_image(struct boot_img_t *img, int image_index)
 		return -EPERM;
 	}
 
-	err = sc_misc_seco_authenticate(ipcHndl, SC_MISC_VERIFY_IMAGE,
+	err = sc_seco_authenticate(ipcHndl, SC_MISC_VERIFY_IMAGE,
 					1 << image_index);
 	if (err) {
 		printf("authenticate img %d failed, return %d\n",
@@ -226,7 +226,7 @@ static int read_auth_container(struct spl_image_info *spl_image)
 	memcpy((void *)SEC_SECURE_RAM_BASE, (const void *)container,
 	       ALIGN(length, CONFIG_SYS_CACHELINE_SIZE));
 
-	ret = sc_misc_seco_authenticate(ipcHndl, SC_MISC_AUTH_CONTAINER,
+	ret = sc_seco_authenticate(ipcHndl, SC_MISC_AUTH_CONTAINER,
 					SECO_LOCAL_SEC_SEC_SECURE_RAM_BASE);
 	if (ret) {
 		printf("authenticate container hdr failed, return %d\n", ret);
@@ -239,7 +239,7 @@ static int read_auth_container(struct spl_image_info *spl_image)
 
 		if (!image) {
 			ret = -EINVAL;
-			sc_misc_seco_authenticate(ipcHndl, SC_MISC_REL_CONTAINER, 0);
+			sc_seco_authenticate(ipcHndl, SC_MISC_REL_CONTAINER, 0);
 			goto out;
 		}
 
@@ -249,7 +249,7 @@ static int read_auth_container(struct spl_image_info *spl_image)
 		}
 	}
 
-	sc_misc_seco_authenticate(ipcHndl, SC_MISC_REL_CONTAINER, 0);
+	sc_seco_authenticate(ipcHndl, SC_MISC_REL_CONTAINER, 0);
 
 #if defined(CONFIG_SPL_BUILD) && defined(CONFIG_DUAL_BOOTLOADER)
 	/* Everything checks out, get the sw_version now. */

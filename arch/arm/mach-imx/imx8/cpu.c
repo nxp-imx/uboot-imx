@@ -735,7 +735,7 @@ static void acquire_buildinfo(void)
 	}
 
 	/* Get SECO FW build and commit id */
-	sc_misc_seco_build_info(ipc, &seco_build, &seco_commit);
+	sc_seco_build_info(ipc, &seco_build, &seco_commit);
 	if (seco_build == 0) {
 		debug("SECO FW does not support build info\n");
 		seco_commit = 0; /* Display 0 when the build info is not supported*/

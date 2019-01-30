@@ -52,7 +52,7 @@ int authenticate_os_container(ulong addr)
 	debug("container length %u\n", length);
 	memcpy((void *)SEC_SECURE_RAM_BASE, (const void *)addr, ALIGN(length, CONFIG_SYS_CACHELINE_SIZE));
 
-	err = sc_misc_seco_authenticate(ipcHndl, SC_MISC_AUTH_CONTAINER, SECO_LOCAL_SEC_SEC_SECURE_RAM_BASE);
+	err = sc_seco_authenticate(ipcHndl, SC_MISC_AUTH_CONTAINER, SECO_LOCAL_SEC_SEC_SECURE_RAM_BASE);
 	if (err) {
 		printf("authenticate container hdr failed, return %d\n", err);
 		ret = -EIO;
@@ -90,7 +90,7 @@ int authenticate_os_container(ulong addr)
 			goto exit;
 		}
 
-		err = sc_misc_seco_authenticate(ipcHndl, SC_MISC_VERIFY_IMAGE, (1 << i));
+		err = sc_seco_authenticate(ipcHndl, SC_MISC_VERIFY_IMAGE, (1 << i));
 		if (err) {
 			printf("authenticate img %d failed, return %d\n", i, err);
 			ret = -EIO;
@@ -107,7 +107,7 @@ int authenticate_os_container(ulong addr)
 	}
 
 exit:
-	sc_misc_seco_authenticate(ipcHndl, SC_MISC_REL_CONTAINER, 0);
+	sc_seco_authenticate(ipcHndl, SC_MISC_REL_CONTAINER, 0);
 
 	return ret;
 }
@@ -213,7 +213,7 @@ static int do_ahab_status(cmd_tbl_t *cmdtp, int flag, int argc,
 	uint16_t lc;
 	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
 
-	err = sc_misc_seco_chip_info(ipcHndl, &lc, NULL, NULL, NULL);
+	err = sc_seco_chip_info(ipcHndl, &lc, NULL, NULL, NULL);
 	if (err != SC_ERR_NONE) {
 		printf("Error in get lifecycle\n");
 		return -EIO;
@@ -221,13 +221,13 @@ static int do_ahab_status(cmd_tbl_t *cmdtp, int flag, int argc,
 
 	display_life_cycle(lc);
 
-	err = sc_misc_seco_get_event(ipcHndl, idx, &event);
+	err = sc_seco_get_event(ipcHndl, idx, &event);
 	while (err == SC_ERR_NONE) {
 		printf ("SECO Event[%u] = 0x%08X\n", idx, event);
 		display_ahab_auth_event(event);
 
 		idx++;
-		err = sc_misc_seco_get_event(ipcHndl, idx, &event);
+		err = sc_seco_get_event(ipcHndl, idx, &event);
 	}
 
 	if (idx == 0)
