@@ -227,6 +227,13 @@ config MXC_OCOTP
 	  Programmable memory pages that are stored on the some
 	  Freescale i.MX processors.
 
+config IMX_M4_MU
+	bool "Enable i.MX MU Driver to communicate with Cortex M4"
+	depends on MISC
+	help
+	  If you say Y here to enable Message Unit driver to work with
+	  Cortex M4 core on AMP Freescale i.MX processors.
+
 config NUVOTON_NCT6102D
 	bool "Enable Nuvoton NCT6102D Super I/O driver"
 	help

@@ -15,6 +15,7 @@ obj-$(CONFIG_CROS_EC_I2C) += cros_ec_i2c.o
 obj-$(CONFIG_CROS_EC_SPI) += cros_ec_spi.o
 obj-$(CONFIG_SANDBOX) += p2sb_sandbox.o p2sb_emul.o
 obj-$(CONFIG_SANDBOX) += swap_case.o
+obj-$(CONFIG_IMX_M4_MU) += imx_m4_mu.o
 endif
 
 ifdef CONFIG_DM_I2C
