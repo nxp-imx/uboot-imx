@@ -1,5 +1,6 @@
 /*
  * Copyright 2016 Freescale Semiconductors, Inc.
+ * Copyright 2019 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -456,6 +457,18 @@ static int imx_lpi2c_probe(struct udevice *bus)
 	return 0;
 }
 
+int __weak board_imx_lpi2c_bind(struct udevice *dev)
+{
+	return 0;
+}
+
+static int imx_lpi2c_bind(struct udevice *dev)
+{
+	debug("imx_lpi2c_bind, %s, seq %d\n", dev->name, dev->req_seq);
+
+	return board_imx_lpi2c_bind(dev);
+}
+
 static const struct dm_i2c_ops imx_lpi2c_ops = {
 	.xfer		= imx_lpi2c_xfer,
 	.probe_chip	= imx_lpi2c_probe_chip,
@@ -472,6 +485,7 @@ U_BOOT_DRIVER(imx_lpi2c) = {
 	.name = "imx_lpi2c",
 	.id = UCLASS_I2C,
 	.of_match = imx_lpi2c_ids,
+	.bind = imx_lpi2c_bind,
 	.probe = imx_lpi2c_probe,
 	.priv_auto_alloc_size = sizeof(struct imx_lpi2c_bus),
 	.ops = &imx_lpi2c_ops,
