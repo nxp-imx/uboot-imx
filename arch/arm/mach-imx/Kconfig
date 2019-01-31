@@ -38,6 +38,26 @@ config IMX_BOOTAUX
 	help
 	  bootaux [addr] to boot auxiliary core.
 
+config IMX_VSERVICE_SHARED_BUFFER
+	hex "Define the buffer address used for virtual service"
+	depends on IMX_VSERVICE
+	help
+	  IMX virtual service will use this buffer for exchanging data with remote core.
+
+config IMX_VSERVICE_SHARED_BUFFER_SIZE
+	hex "Define the size of buffer address used for virtual service"
+	default 0x400000
+	depends on IMX_VSERVICE
+	help
+	  The buffer size for IMX virtual service needs enough large to fit all possible message.
+
+config IMX_VSERVICE
+	bool
+    select MISC
+    select IMX_M4_MU
+	help
+	  This enables imx virtual service provides framework for imx virtual driver working.
+
 config USE_IMXIMG_PLUGIN
 	bool "Use imximage plugin code"
 	depends on ARCH_MX7 || ARCH_MX6 || ARCH_MX7ULP
