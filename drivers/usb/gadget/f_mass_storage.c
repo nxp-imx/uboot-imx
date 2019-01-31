@@ -433,6 +433,7 @@ static void set_bulk_out_req_length(struct fsg_common *common,
 static struct ums *ums;
 static int ums_count;
 static struct fsg_common *the_fsg_common;
+static unsigned int controller_index = 0;
 
 static int fsg_set_halt(struct fsg_dev *fsg, struct usb_ep *ep)
 {
@@ -677,7 +678,7 @@ static int sleep_thread(struct fsg_common *common)
 			k = 0;
 		}
 
-		usb_gadget_handle_interrupts(0);
+		usb_gadget_handle_interrupts(controller_index);
 	}
 	common->thread_wakeup_needed = 0;
 	return rc;
@@ -2762,10 +2763,11 @@ int fsg_add(struct usb_configuration *c)
 	return fsg_bind_config(c->cdev, c, fsg_common);
 }
 
-int fsg_init(struct ums *ums_devs, int count)
+int fsg_init(struct ums *ums_devs, int count, unsigned int controller_idx)
 {
 	ums = ums_devs;
 	ums_count = count;
+	controller_index = controller_idx;
 
 	return 0;
 }
