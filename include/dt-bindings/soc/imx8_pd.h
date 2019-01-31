@@ -95,6 +95,8 @@
 #define PD_LSIO_PWM_7               lsio_pwm7
 #define PD_LSIO_MU5A                lsio_mu5a
 #define PD_LSIO_MU6A                lsio_mu6a
+#define PD_LSIO_MU8A                lsio_mu8a
+#define PD_LSIO_MU9A                lsio_mu9a
 
 #define PD_CONN                     connectivity_power_domain
 #define PD_CONN_SDHC_0              conn_sdhc0

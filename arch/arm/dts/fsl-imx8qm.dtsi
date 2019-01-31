@@ -151,6 +151,22 @@
 		interrupt-parent = <&gic>;
 	};
 
+	mu8: mu@5d230000 {
+		compatible = "fsl,imx-m4-mu";
+		reg = <0x0 0x5d230000 0x0 0x10000>;
+		interrupts = <GIC_SPI 187 IRQ_TYPE_LEVEL_HIGH>;
+		power-domains = <&pd_lsio_mu8a>;
+		status = "okay";
+	};
+
+	mu9: mu@5d240000 {
+		compatible = "fsl,imx-m4-mu";
+		reg = <0x0 0x5d240000 0x0 0x10000>;
+		interrupts = <GIC_SPI 188 IRQ_TYPE_LEVEL_HIGH>;
+		power-domains = <&pd_lsio_mu9a>;
+		status = "okay";
+	};
+
 	mu: mu@5d1c0000 {
 		compatible = "fsl,imx8-mu";
 		reg = <0x0 0x5d1c0000 0x0 0x10000>;
