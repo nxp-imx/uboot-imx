@@ -202,6 +202,15 @@
 	u-boot,dm-spl;
 };
 
+&i2c1 {
+	compatible = "fsl,imx8qm-lpi2c", "fsl,imx-virt-i2c";
+};
+
+&{/i2c@5a810000/i2cswitch@71} {
+	compatible = "nxp,pca9646", "fsl,imx-virt-i2c-mux";
+	virtual-bus-seq = <12>;
+};
+
 &wu {
 	u-boot,dm-spl;
 };
