@@ -888,6 +888,32 @@ void disconnect_from_pc(void)
 	}
 }
 
+bool check_owned_udevice(struct udevice *dev)
+{
+	int ret;
+	sc_rsrc_t resource_id;
+	struct ofnode_phandle_args args;
+
+	/* Get the resource id from its power-domain */
+	ret = dev_read_phandle_with_args(dev, "power-domains",
+					 "#power-domain-cells", 0, 0, &args);
+	if (ret) {
+		printf("no power-domains found\n");
+		return false;
+	}
+
+	/* Get the owner partition for resource*/
+	resource_id = (sc_rsrc_t)ofnode_read_u32_default(args.node, "reg", SC_R_LAST);
+	if (resource_id == SC_R_LAST) {
+		printf("Can't find the resource id for udev %s\n", dev->name);
+		return false;
+	}
+
+	debug("udev %s, resource id %d\n", dev->name, resource_id);
+
+	return sc_rm_is_resource_owned(-1, resource_id);
+}
+
 #ifdef CONFIG_IMX_VSERVICE
 struct udevice * board_imx_vservice_find_mu(struct udevice *dev)
 {
@@ -978,3 +1004,23 @@ void * board_imx_vservice_get_buffer(struct imx_vservice_channel *node, u32 size
 	return NULL;
 }
 #endif
+
+/* imx8qxp i2c1 has lots of devices may used by both M4 and A core
+*   If A core partition does not own the resource, we will start
+*   virtual i2c driver. Otherwise use local i2c driver.
+*/
+int board_imx_virt_i2c_bind(struct udevice *dev)
+{
+	if (check_owned_udevice(dev))
+		return -ENODEV;
+
+	return 0;
+}
+
+int board_imx_lpi2c_bind(struct udevice *dev)
+{
+	if (check_owned_udevice(dev))
+		return 0;
+
+	return -ENODEV;
+}
