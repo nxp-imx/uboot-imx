@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2019 NXP
  *
  * SPDX-License-Identifier: GPL-2.0
  */
@@ -262,6 +262,7 @@ static int imx8_power_domain_ofdata_to_platdata(struct udevice *dev)
 {
 	int reg;
 	struct imx8_power_domain_platdata *pdata = dev_get_platdata(dev);
+	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
 
 	reg = fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev), "reg", -1);
 	if (reg == -1) {
@@ -271,6 +272,13 @@ static int imx8_power_domain_ofdata_to_platdata(struct udevice *dev)
 	pdata->resource_id = (sc_rsrc_t)reg;
 
 	debug("%s resource_id %d\n", __func__, pdata->resource_id);
+
+	if (pdata->resource_id != SC_R_LAST) {
+		if (!sc_rm_is_resource_owned(ipcHndl, pdata->resource_id)) {
+			debug("%s [%d] not owned by curr partition\n", dev->name, pdata->resource_id);
+			return -EINVAL;
+		}
+	}
 
 	return 0;
 }
