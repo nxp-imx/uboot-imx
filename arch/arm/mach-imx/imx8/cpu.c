@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2018 NXP
+ * Copyright 2017-2019 NXP
  */
 
 #include <common.h>
@@ -26,6 +26,7 @@
 #include <asm/armv8/mmu.h>
 #include <asm/setup.h>
 #include <asm/mach-imx/boot_mode.h>
+#include <asm/mach-imx/imx_vservice.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -703,6 +704,16 @@ void enable_caches(void)
 			 PTE_BLOCK_NON_SHARE | PTE_BLOCK_PXN | PTE_BLOCK_UXN;
 
 	i = 1;
+
+#ifdef CONFIG_IMX_VSERVICE_SHARED_BUFFER
+	imx8_mem_map[i].virt = CONFIG_IMX_VSERVICE_SHARED_BUFFER;
+	imx8_mem_map[i].phys = CONFIG_IMX_VSERVICE_SHARED_BUFFER;
+	imx8_mem_map[i].size = CONFIG_IMX_VSERVICE_SHARED_BUFFER_SIZE;
+	imx8_mem_map[i].attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+			 PTE_BLOCK_NON_SHARE | PTE_BLOCK_PXN | PTE_BLOCK_UXN;
+	i++;
+#endif
+
 	for (mr = 0; mr < 64 && i < MAX_MEM_MAP_REGIONS; mr++) {
 		err = get_owned_memreg(mr, &start, &end);
 		if (!err) {
@@ -876,3 +887,94 @@ void disconnect_from_pc(void)
 		return;
 	}
 }
+
+#ifdef CONFIG_IMX_VSERVICE
+struct udevice * board_imx_vservice_find_mu(struct udevice *dev)
+{
+	int ret;
+	const char *m4_mu_name[2] = {
+		"mu@5d230000",
+		"mu@5d240000"
+	};
+	struct udevice *m4_mu[2];
+	sc_rm_pt_t m4_parts[2];
+	int err;
+	struct ofnode_phandle_args args;
+	sc_rsrc_t resource_id;
+	sc_rm_pt_t resource_part;
+
+	/* Get the resource id from its power-domain */
+	ret = dev_read_phandle_with_args(dev, "power-domains",
+					 "#power-domain-cells", 0, 0, &args);
+	if (ret) {
+		printf("Can't find the power-domains property for udev %s\n", dev->name);
+		return NULL;
+	}
+
+	/* Get the owner partition for resource*/
+	resource_id = (sc_rsrc_t)ofnode_read_u32_default(args.node, "reg", SC_R_LAST);
+	if (resource_id == SC_R_LAST) {
+		printf("Can't find the resource id for udev %s\n", dev->name);
+		return NULL;
+	}
+
+	err = sc_rm_get_resource_owner(-1, resource_id, &resource_part);
+	if (err != SC_ERR_NONE) {
+		printf("%s get resource [%d] owner error: %d\n", __func__, resource_id, err);
+		return NULL;
+	}
+
+	debug("udev %s, resource id %d, resource part %d\n", dev->name, resource_id, resource_part);
+
+	/* MU8 for communication between M4_0 and u-boot, MU9 for M4_1 and u-boot */
+	err = sc_rm_get_resource_owner(-1, SC_R_M4_0_PID0, &m4_parts[0]);
+	if (err != SC_ERR_NONE) {
+		printf("%s get resource [%d] owner error: %d\n", __func__, SC_R_M4_0_PID0, err);
+		return NULL;
+	}
+
+	ret = uclass_find_device_by_name(UCLASS_MISC,  m4_mu_name[0], &m4_mu[0]);
+	if (!ret) {
+		/* If the i2c is in m4_0 partition, return the mu8 */
+		if (resource_part == m4_parts[0])
+			return m4_mu[0];
+	}
+
+	if (is_imx8qm()) {
+		err = sc_rm_get_resource_owner(-1, SC_R_M4_1_PID0, &m4_parts[1]);
+		if (err != SC_ERR_NONE) {
+			printf("%s get resource [%d] owner error: %d\n", __func__, SC_R_M4_1_PID0, err);
+			return NULL;
+		}
+
+		ret = uclass_find_device_by_name(UCLASS_MISC,  m4_mu_name[1], &m4_mu[1]);
+		if (!ret) {
+			/* If the i2c is in m4_1 partition, return the mu9 */
+			if (resource_part == m4_parts[1])
+				return m4_mu[1];
+		}
+	}
+
+	return NULL;
+}
+
+void * board_imx_vservice_get_buffer(struct imx_vservice_channel *node, u32 size)
+{
+	const char *m4_mu_name[2] = {
+		"mu@5d230000",
+		"mu@5d240000"
+	};
+
+	/* Each MU ownes 1M buffer */
+	if (size <= 0x100000) {
+		if (!strcmp(node->mu_dev->name, m4_mu_name[0]))
+			return (void * )CONFIG_IMX_VSERVICE_SHARED_BUFFER;
+		else if (!strcmp(node->mu_dev->name, m4_mu_name[1]))
+			return (void * )(CONFIG_IMX_VSERVICE_SHARED_BUFFER + 0x100000);
+		else
+			return NULL;
+	}
+
+	return NULL;
+}
+#endif
