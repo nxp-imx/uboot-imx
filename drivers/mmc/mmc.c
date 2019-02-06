@@ -748,7 +748,8 @@ static int mmc_send_ext_csd(struct mmc *mmc, u8 *ext_csd)
 	return err;
 }
 
-int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value)
+static int __mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value,
+			bool send_status)
 {
 	struct mmc_cmd cmd;
 	int timeout = 1000;
@@ -764,17 +765,27 @@ int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value)
 	while (retries > 0) {
 		ret = mmc_send_cmd(mmc, &cmd, NULL);
 
-		/* Waiting for the ready status */
-		if (!ret) {
-			ret = mmc_send_status(mmc, timeout);
-			return ret;
+		if (ret) {
+			retries--;
+			continue;
 		}
 
-		retries--;
+		if (!send_status) {
+			mdelay(50);
+			return 0;
+		}
+
+		/* Waiting for the ready status */
+		return mmc_send_status(mmc, timeout);
 	}
 
 	return ret;
 
+}
+
+int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value)
+{
+	return __mmc_switch(mmc, set, index, value, true);
 }
 
 static int mmc_set_card_speed(struct mmc *mmc, enum bus_mode mode,
@@ -812,8 +823,9 @@ static int mmc_set_card_speed(struct mmc *mmc, enum bus_mode mode,
 	default:
 		return -EINVAL;
 	}
-	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_HS_TIMING,
-			 speed_bits);
+
+	err = __mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_HS_TIMING,
+			   speed_bits, !hsdowngrade);
 	if (err)
 		return err;
 
