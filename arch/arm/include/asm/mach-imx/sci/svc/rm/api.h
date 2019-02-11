@@ -470,6 +470,8 @@ sc_bool_t sc_rm_is_resource_owned(sc_ipc_t ipc, sc_rsrc_t resource);
  * @param[in]     resource    resource to check
  * @param[out]    pt          pointer to return owning partition
  *
+ * @return Returns a boolean (SC_TRUE if the resource is a bus master).
+ *
  * Return errors:
  * - SC_PARM if arguments out of range or invalid
  *

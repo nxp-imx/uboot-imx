@@ -397,6 +397,27 @@ sc_err_t sc_pm_reset_reason(sc_ipc_t ipc, sc_pm_reset_reason_t *reason)
     return (sc_err_t) result;
 }
 
+sc_err_t sc_pm_get_reset_part(sc_ipc_t ipc, sc_rm_pt_t *pt)
+{
+    sc_rpc_msg_t msg;
+    uint8_t result;
+
+    RPC_VER(&msg) = SC_RPC_VERSION;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_PM);
+    RPC_FUNC(&msg) = U8(PM_FUNC_GET_RESET_PART);
+    RPC_SIZE(&msg) = 1U;
+
+    sc_call_rpc(ipc, &msg, SC_FALSE);
+
+    result = RPC_R8(&msg);
+    if (pt != NULL)
+    {
+        *pt = RPC_U8(&msg, 0U);
+    }
+
+    return (sc_err_t) result;
+}
+
 sc_err_t sc_pm_boot(sc_ipc_t ipc, sc_rm_pt_t pt,
     sc_rsrc_t resource_cpu, sc_faddr_t boot_addr,
     sc_rsrc_t resource_mu, sc_rsrc_t resource_dev)

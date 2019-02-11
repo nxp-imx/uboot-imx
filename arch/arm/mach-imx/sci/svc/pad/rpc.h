@@ -52,7 +52,7 @@
  * @param[in]     caller_pt   caller partition
  * @param[in]     msg         pointer to RPC message
  */
-void pad_dispatch(sc_rm_pt_t caller_pt, sc_rpc_msg_t *msg);
+void pad_dispatch(sc_rm_pt_t caller_pt, sc_rsrc_t mu, sc_rpc_msg_t *msg);
 
 #endif /* SC_PAD_RPC_H */
 

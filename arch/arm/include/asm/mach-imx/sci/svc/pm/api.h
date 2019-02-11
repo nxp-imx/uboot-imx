@@ -596,7 +596,7 @@ sc_err_t sc_pm_reset(sc_ipc_t ipc, sc_pm_reset_type_t type);
  * This function gets a caller's reset reason.
  *
  * @param[in]     ipc         IPC handle
- * @param[out]    reason      pointer to return reset reason
+ * @param[out]    reason      pointer to return the reset reason
  *
  * This function returns the reason a partition was reset. If the reason
  * is POR, then the system reset reason will be returned.
@@ -608,6 +608,24 @@ sc_err_t sc_pm_reset(sc_ipc_t ipc, sc_pm_reset_type_t type);
  * @return Returns an error code (SC_ERR_NONE = success).
  */
 sc_err_t sc_pm_reset_reason(sc_ipc_t ipc, sc_pm_reset_reason_t *reason);
+
+/*!
+ * This function gets the partition that caused a reset.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[out]    pt          pointer to return the resetting partition
+ *
+ * If the reset reason obtained via sc_pm_reset_reason() is POR then the
+ * result from this function will be 0. Some SECO causes of reset will
+ * also return 0.
+ *
+ * Note depending on the connection of the WDOG_OUT signal and the OTP
+ * programming of the PMIC, some resets may trigger a system POR
+ * and the partition info will be lost.
+ *
+ * @return Returns an error code (SC_ERR_NONE = success).
+ */
+sc_err_t sc_pm_get_reset_part(sc_ipc_t ipc, sc_rm_pt_t *pt);
 
 /*!
  * This function is used to boot a partition.
@@ -645,12 +663,8 @@ sc_err_t sc_pm_boot(sc_ipc_t ipc, sc_rm_pt_t pt,
  * power, clocks, etc.) is reset. The boot SW of the booting CPU must be
  * able to handle peripherals that that are not reset.
  *
- * If \a type is SC_PM_RESET_TYPE_WARM, then only the boot CPU is reset.
- * SC state (partitions, power, clocks, etc.) are NOT reset. The boot SW
- * of the booting CPU must be able to handle peripherals and SC state that
- * that are not reset.
- *
- * If \a type is SC_PM_RESET_TYPE_BOARD, then return with no action.
+ * If \a type is SC_PM_RESET_TYPE_WARM or SC_PM_RESET_TYPE_BOARD, then
+ * returns SC_ERR_PARM as these are not supported.
  *
  * If this function returns, then the reset did not occur due to an
  * invalid parameter.
@@ -669,12 +683,8 @@ void sc_pm_reboot(sc_ipc_t ipc, sc_pm_reset_type_t type);
  * power, clocks, etc.) is reset. The boot SW of the booting CPU must be
  * able to handle peripherals that that are not reset.
  *
- * If \a type is SC_PM_RESET_TYPE_WARM, then only the boot CPU is reset.
- * SC state (partitions, power, clocks, etc.) are NOT reset. The boot SW
- * of the booting CPU must be able to handle peripherals and SC state that
- * that are not reset.
- *
- * If \a type is SC_PM_RESET_TYPE_BOARD, then return with no action.
+ * If \a type is SC_PM_RESET_TYPE_WARM or SC_PM_RESET_TYPE_BOARD, then
+ * returns SC_ERR_PARM as these are not supported.
  *
  * @return Returns an error code (SC_ERR_NONE = success).
  *

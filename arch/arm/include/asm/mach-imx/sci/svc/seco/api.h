@@ -442,6 +442,8 @@ void sc_seco_build_info(sc_ipc_t ipc, uint32_t *version,
  * @param[out]    monotonic   pointer to return monotonic counter
  * @param[out]    uid_l       pointer to return UID (lower 32 bits)
  * @param[out]    uid_h       pointer to return UID (upper 32 bits)
+ *
+ * @return Returns and error code (SC_ERR_NONE = success).
  */
 sc_err_t sc_seco_chip_info(sc_ipc_t ipc, uint16_t *lc,
     uint16_t *monotonic, uint32_t *uid_l, uint32_t *uid_h);

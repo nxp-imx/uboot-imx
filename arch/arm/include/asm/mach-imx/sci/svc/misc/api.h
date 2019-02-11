@@ -69,11 +69,11 @@
  * @name Defines for sc_misc_bt_t
  */
 /*@{*/
-#define SC_MISC_BT_PRIMARY              0U
-#define SC_MISC_BT_SECONDARY            1U
-#define SC_MISC_BT_RECOVERY             2U
-#define SC_MISC_BT_MANUFACTURE          3U
-#define SC_MISC_BT_SERIAL               4U
+#define SC_MISC_BT_PRIMARY              0U   /*!< Primary boot */
+#define SC_MISC_BT_SECONDARY            1U   /*!< Secondary boot */
+#define SC_MISC_BT_RECOVERY             2U   /*!< Recovery boot */
+#define SC_MISC_BT_MANUFACTURE          3U   /*!< Manufacture boot */
+#define SC_MISC_BT_SERIAL               4U   /*!< Serial boot */
 /*@}*/
 
 /* Types */
@@ -508,6 +508,19 @@ void sc_misc_get_button_status(sc_ipc_t ipc, sc_bool_t *status);
  * @return Returns and error code (SC_ERR_NONE = success).
  */
 sc_err_t sc_misc_rompatch_checksum(sc_ipc_t ipc, uint32_t *checksum);
+
+/*!
+ * This function calls the board IOCTL function.
+ *
+ * @param[in]     ipc         IPC handle
+ * @param[in,out] parm1       pointer to pass parameter 1
+ * @param[in,out] parm2       pointer to pass parameter 2
+ * @param[in,out] parm3       pointer to pass parameter 3
+ *
+ * @return Returns and error code (SC_ERR_NONE = success).
+ */
+sc_err_t sc_misc_board_ioctl(sc_ipc_t ipc, uint32_t *parm1,
+    uint32_t *parm2, uint32_t *parm3);
 
 /* @} */
 

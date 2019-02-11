@@ -42,6 +42,7 @@
 #define PM_FUNC_GET_CLOCK_PARENT 15U /*!< Index for pm_get_clock_parent() RPC call */
 #define PM_FUNC_RESET 13U /*!< Index for pm_reset() RPC call */
 #define PM_FUNC_RESET_REASON 10U /*!< Index for pm_reset_reason() RPC call */
+#define PM_FUNC_GET_RESET_PART 26U /*!< Index for pm_get_reset_part() RPC call */
 #define PM_FUNC_BOOT 8U /*!< Index for pm_boot() RPC call */
 #define PM_FUNC_REBOOT 9U /*!< Index for pm_reboot() RPC call */
 #define PM_FUNC_REBOOT_PARTITION 12U /*!< Index for pm_reboot_partition() RPC call */
@@ -61,7 +62,7 @@
  * @param[in]     caller_pt   caller partition
  * @param[in]     msg         pointer to RPC message
  */
-void pm_dispatch(sc_rm_pt_t caller_pt, sc_rpc_msg_t *msg);
+void pm_dispatch(sc_rm_pt_t caller_pt, sc_rsrc_t mu, sc_rpc_msg_t *msg);
 
 #endif /* SC_PM_RPC_H */
 

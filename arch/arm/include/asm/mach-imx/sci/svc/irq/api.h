@@ -88,6 +88,8 @@
 /*@{*/
 #define SC_IRQ_BUTTON            (1U << 0U)    /*!< Button interrupt */
 #define SC_IRQ_PAD               (1U << 1U)    /*!< Pad wakeup */
+#define SC_IRQ_USR1              (1U << 2U)    /*!< User defined 1 */
+#define SC_IRQ_USR2              (1U << 3U)    /*!< User defined 2 */
 /*@}*/
 
 /*!

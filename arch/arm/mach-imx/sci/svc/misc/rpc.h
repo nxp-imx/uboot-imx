@@ -57,6 +57,7 @@
 #define MISC_FUNC_GET_BOOT_TYPE 33U /*!< Index for misc_get_boot_type() RPC call */
 #define MISC_FUNC_GET_BUTTON_STATUS 18U /*!< Index for misc_get_button_status() RPC call */
 #define MISC_FUNC_ROMPATCH_CHECKSUM 26U /*!< Index for misc_rompatch_checksum() RPC call */
+#define MISC_FUNC_BOARD_IOCTL 34U /*!< Index for misc_board_ioctl() RPC call */
 /*@}*/
 
 /* Types */
@@ -69,7 +70,7 @@
  * @param[in]     caller_pt   caller partition
  * @param[in]     msg         pointer to RPC message
  */
-void misc_dispatch(sc_rm_pt_t caller_pt, sc_rpc_msg_t *msg);
+void misc_dispatch(sc_rm_pt_t caller_pt, sc_rsrc_t mu, sc_rpc_msg_t *msg);
 
 #endif /* SC_MISC_RPC_H */
 

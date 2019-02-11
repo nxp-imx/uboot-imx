@@ -697,5 +697,28 @@ sc_err_t sc_misc_rompatch_checksum(sc_ipc_t ipc, uint32_t *checksum)
     return (sc_err_t) result;
 }
 
+sc_err_t sc_misc_board_ioctl(sc_ipc_t ipc, uint32_t *parm1,
+    uint32_t *parm2, uint32_t *parm3)
+{
+    sc_rpc_msg_t msg;
+    uint8_t result;
+
+    RPC_VER(&msg) = SC_RPC_VERSION;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_MISC);
+    RPC_FUNC(&msg) = U8(MISC_FUNC_BOARD_IOCTL);
+    RPC_U32(&msg, 0U) = *PTR_U32(parm1);
+    RPC_U32(&msg, 4U) = *PTR_U32(parm2);
+    RPC_U32(&msg, 8U) = *PTR_U32(parm3);
+    RPC_SIZE(&msg) = 4U;
+
+    sc_call_rpc(ipc, &msg, SC_FALSE);
+
+    *parm1 = RPC_U32(&msg, 0U);
+    *parm2 = RPC_U32(&msg, 4U);
+    *parm3 = RPC_U32(&msg, 8U);
+    result = RPC_R8(&msg);
+    return (sc_err_t) result;
+}
+
 /**@}*/
 
