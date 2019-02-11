@@ -165,6 +165,7 @@ static void display_life_cycle(uint16_t lc)
 }
 
 #define AHAB_AUTH_CONTAINER_REQ 0x87
+#define AHAB_VERIFY_IMAGE_REQ 0x88
 
 #define AHAB_NO_AUTHENTICATION_IND 0xee
 #define AHAB_BAD_KEY_HASH_IND 0xfa
@@ -177,11 +178,19 @@ static void display_ahab_auth_event(uint32_t event)
 	uint8_t cmd = (event >> 16) & 0xff;
 	uint8_t resp_ind =(event >> 8) & 0xff;
 
-	if (cmd != AHAB_AUTH_CONTAINER_REQ)
+	switch (cmd) {
+	case AHAB_AUTH_CONTAINER_REQ:
+		printf("\tCMD = AHAB_AUTH_CONTAINER_REQ (0x%02X)\n", cmd);
+		printf("\tIND = ");
+		break;
+	case AHAB_VERIFY_IMAGE_REQ:
+		printf("\tCMD = AHAB_VERIFY_IMAGE_REQ (0x%02X)\n", cmd);
+		printf("\tIND = ");
+		break;
+	default:
 		return;
+	}
 
-	printf("\tCMD = AHAB_AUTH_CONTAINER_REQ (0x%02X)\n", cmd);
-	printf("\tIND = ");
 	switch (resp_ind) {
 	case AHAB_NO_AUTHENTICATION_IND:
 		printf("AHAB_NO_AUTHENTICATION_IND (0x%02X)\n\n", resp_ind);
