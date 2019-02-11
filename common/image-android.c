@@ -147,24 +147,32 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 		strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
 	}
 
-	int bootdev = get_boot_device();
-	if (bootdev == SD1_BOOT || bootdev == SD2_BOOT ||
-		bootdev == SD3_BOOT || bootdev == SD4_BOOT) {
+	char *storage_type = env_get("storage_type");
+	if (storage_type) {
 		sprintf(newbootargs,
-			" androidboot.storage_type=sd");
-	} else if (bootdev == MMC1_BOOT || bootdev == MMC2_BOOT ||
-		bootdev == MMC3_BOOT || bootdev == MMC4_BOOT) {
-		sprintf(newbootargs,
-			" androidboot.storage_type=emmc");
-	} else if (bootdev == NAND_BOOT) {
-		sprintf(newbootargs,
-			" androidboot.storage_type=nand");
-	} else
-		printf("boot device type is incorrect.\n");
-	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
-	if (bootloader_gpt_overlay()) {
-		sprintf(newbootargs, " gpt");
+			" androidboot.storage_type=%s",
+			storage_type);
 		strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+	} else {
+		int bootdev = get_boot_device();
+		if (bootdev == SD1_BOOT || bootdev == SD2_BOOT ||
+			bootdev == SD3_BOOT || bootdev == SD4_BOOT) {
+			sprintf(newbootargs,
+				" androidboot.storage_type=sd");
+		} else if (bootdev == MMC1_BOOT || bootdev == MMC2_BOOT ||
+			bootdev == MMC3_BOOT || bootdev == MMC4_BOOT) {
+			sprintf(newbootargs,
+				" androidboot.storage_type=emmc");
+		} else if (bootdev == NAND_BOOT) {
+			sprintf(newbootargs,
+				" androidboot.storage_type=nand");
+		} else
+			printf("boot device type is incorrect.\n");
+		strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+		if (bootloader_gpt_overlay()) {
+			sprintf(newbootargs, " gpt");
+			strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+		}
 	}
 
 	/* boot metric variables */
