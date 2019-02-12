@@ -18,8 +18,22 @@
 #include <asm/arch/fsl_serdes.h>
 #include <fsl-mc/fsl_mc.h>
 #include <fsl-mc/ldpaa_wriop.h>
+#include "../common/qsfp_eeprom.h"
 
 DECLARE_GLOBAL_DATA_PTR;
+
+#if defined(CONFIG_QSFP_EEPROM) && defined(CONFIG_PHY_CORTINA)
+#define CS4223_CONFIG_ENV	"cs4223_autoconfig"
+#define CS4223_CONFIG_CR4	"copper"
+#define CS4223_CONFIG_SR4	"optical"
+
+enum qsfp_compat_codes {
+	QSFP_COMPAT_XLPPI = 0x01,
+	QSFP_COMPAT_LR4	= 0x02,
+	QSFP_COMPAT_SR4	= 0x04,
+	QSFP_COMPAT_CR4	= 0x08,
+};
+#endif /* CONFIG_QSFP_EEPROM && CONFIG_PHY_CORTINA */
 
 static bool get_inphi_phy_id(struct mii_dev *bus, int addr, int devad)
 {
@@ -47,6 +61,9 @@ int board_eth_init(bd_t *bis)
 	struct mii_dev *dev;
 	struct ccsr_gur *gur = (void *)(CONFIG_SYS_FSL_GUTS_ADDR);
 	u32 srds_s1;
+#if defined(CONFIG_QSFP_EEPROM) && defined(CONFIG_PHY_CORTINA)
+	u8 qsfp_compat_code;
+#endif
 
 	srds_s1 = in_le32(&gur->rcwsr[28]) &
 				FSL_CHASSIS3_RCWSR28_SRDS1_PRTCL_MASK;
@@ -151,6 +168,26 @@ int board_eth_init(bd_t *bis)
 	}
 
 next:
+#if defined(CONFIG_QSFP_EEPROM) && defined(CONFIG_PHY_CORTINA)
+	/* read qsfp+ eeprom & update environment for cs4223 init */
+	select_i2c_ch_pca9547(I2C_MUX_CH_SEC);
+	select_i2c_ch_pca9547_sec(I2C_MUX_CH_QSFP);
+	qsfp_compat_code = get_qsfp_compat0();
+	switch (qsfp_compat_code) {
+	case QSFP_COMPAT_CR4:
+		env_set(CS4223_CONFIG_ENV, CS4223_CONFIG_CR4);
+		break;
+	case QSFP_COMPAT_XLPPI:
+	case QSFP_COMPAT_SR4:
+		env_set(CS4223_CONFIG_ENV, CS4223_CONFIG_SR4);
+		break;
+	default:
+		/* do nothing if detection fails or not supported*/
+		break;
+	}
+	select_i2c_ch_pca9547(I2C_MUX_CH_DEFAULT);
+#endif /* CONFIG_QSFP_EEPROM & CONFIG_PHY_CORTINA */
+
 	cpu_eth_init(bis);
 #endif /* CONFIG_FSL_MC_ENET */
 

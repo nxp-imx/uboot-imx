@@ -105,7 +105,14 @@
 
 /* I2C bus multiplexer */
 #define I2C_MUX_PCA_ADDR_PRI		0x77 /* Primary Mux*/
+#define I2C_MUX_PCA_ADDR_SEC		0x75 /* Secondary Mux*/
 #define I2C_MUX_CH_DEFAULT		0x8
+#define I2C_MUX_CH_SEC			0xF
+
+/* QSFP+/SFP+ I2C MUX related */
+#define I2C_MUX_CH_QSFP			0x8
+#define I2C_MUX_CH_SFP1			0xC
+#define I2C_MUX_CH_SFP2			0xD
 
 /* RTC */
 #define RTC
@@ -119,6 +126,10 @@
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN		1
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_BITS	3
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS	5
+
+/* QSFP/SFP module EEPROMs */
+#define I2C_SFP_EEPROM_ADDR	0x50
+#define I2C_SFP_EEPROM_ADDR_LEN	1
 
 /* Qixis */
 #define CONFIG_FSL_QIXIS
@@ -163,6 +174,8 @@
 #ifndef __ASSEMBLY__
 unsigned long get_board_sys_clk(void);
 unsigned long get_board_ddr_clk(void);
+int select_i2c_ch_pca9547(unsigned char ch);
+int select_i2c_ch_pca9547_sec(unsigned char ch);
 #endif
 
 #define CONFIG_SYS_CLK_FREQ		get_board_sys_clk()

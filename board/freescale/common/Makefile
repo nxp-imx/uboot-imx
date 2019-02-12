@@ -65,6 +65,7 @@ obj-$(CONFIG_POWER_MC34VR500)	+= mc34vr500.o
 obj-$(CONFIG_LS102XA_STREAM_ID)	+= ls102xa_stream_id.o
 
 obj-$(CONFIG_EMC2305)              += emc2305.o
+obj-$(CONFIG_QSFP_EEPROM)	+= qsfp_eeprom.o
 
 # deal with common files for P-series corenet based devices
 obj-$(CONFIG_TARGET_P2041RDB)	+= p_corenet/
