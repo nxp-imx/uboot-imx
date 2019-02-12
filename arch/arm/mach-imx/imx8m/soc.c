@@ -398,6 +398,20 @@ add_status:
 }
 
 #ifdef CONFIG_IMX8MQ
+bool check_dcss_fused(void)
+{
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[1];
+	struct fuse_bank1_regs *fuse =
+		(struct fuse_bank1_regs *)bank->fuse_regs;
+
+	u32 value = readl(&fuse->tester4);
+	if (value & 0x4000000)
+		return true;
+
+	return false;
+}
+
 static int disable_mipi_dsi_nodes(void *blob)
 {
 	const char *nodes_path[] = {
@@ -596,8 +610,11 @@ usb_modify_speed:
 
 	if (is_imx8mql()) {
 		disable_vpu_nodes(blob);
-		disable_dcss_nodes(blob);
-		check_mipi_dsi_nodes(blob);
+		if (check_dcss_fused()) {
+			printf("DCSS is fused\n");
+			disable_dcss_nodes(blob);
+			check_mipi_dsi_nodes(blob);
+		}
 	}
 
 	if (is_imx8md())
