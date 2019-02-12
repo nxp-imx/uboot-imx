@@ -268,24 +268,29 @@ The U-Boot fuse tool can be used for programming eFuses on i.MX SoCs.
 -------------------------
 
 If the fuses have been written properly, there should be no SECO events after
-boot. To validate this, power on the board, and run the following command on
-the SCFW terminal:
+boot. To validate this, power on the board, and run ahab_status command on
+U-Boot terminal.
 
-  >$ seco events
+No events should be returned after this command:
 
-Nothing should be returned after this command. If you get an error, please
-refer to examples below:
+  => ahab_status
+  Lifecycle: 0x0020, NXP closed
 
-0x0087EE00 = The container image is not signed.
-0x0087FA00 = The container image was signed with wrong key which are not
-             matching the OTP SRK hashes.
+  No SECO Events Found!
 
-In case your SRK fuses are not programmed yet the event 0x0087FA00 may also
-be displayed.
+U-Boot will decode the SECO events and provide more details on the failure,
+for example in case container image was signed with wrong keys and are not
+matching the OTP SRK hashes:
 
-Note: The SECO FW v1.1.0 is not logging an invalid image integrity as an event
-in open mode, in case your image does not boot after moving the lifecycle
-please review your image setup.
+  => ahab_status
+  Lifecycle: 0x0020, NXP closed
+
+  SECO Event[0] = 0x0087EE00
+          CMD = AHAB_AUTH_CONTAINER_REQ (0x87)
+          IND = AHAB_NO_AUTHENTICATION_IND (0xEE)
+
+Note: In case your SRK fuses are not programmed yet the event 0x0087FA00 may
+also be displayed.
 
 1.5.6 Close the device
 -----------------------
