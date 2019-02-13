@@ -14,6 +14,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/image.h>
+#include <console.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -236,6 +237,55 @@ static int do_ahab_status(cmd_tbl_t *cmdtp, int flag, int argc,
 	return 0;
 }
 
+static int confirm_close(void)
+{
+	puts("Warning: Please ensure your sample is in NXP closed state, "
+				"OEM SRK hash has been fused, \n"
+			"         and you are able to boot a signed image successfully "
+				"without any SECO events reported.\n"
+			"         If not, your sample will be unrecoverable.\n"
+			"\nReally perform this operation? <y/N>\n");
+
+	if (confirm_yesno())
+		return 1;
+
+	puts("Ahab close aborted\n");
+	return 0;
+}
+
+static int do_ahab_close(cmd_tbl_t *cmdtp, int flag, int argc,
+			 char * const argv[])
+{
+	sc_err_t err;
+	uint16_t lc;
+	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
+
+	if (!confirm_close())
+		return -EACCES;
+
+	err = sc_seco_chip_info(ipcHndl, &lc, NULL, NULL, NULL);
+	if (err != SC_ERR_NONE) {
+		printf("Error in get lifecycle\n");
+		return -EIO;
+	}
+
+	if (lc != 0x20) {
+		printf("Current lifecycle is NOT NXP closed, can't move to OEM closed\n");
+		display_life_cycle(lc);
+		return -EPERM;
+	}
+
+	err = sc_seco_forward_lifecycle(ipcHndl, 16);
+	if (err != SC_ERR_NONE) {
+		printf("Error in forward lifecycle to OEM closed\n");
+		return -EIO;
+	}
+
+	printf("Change to OEM closed successfully\n");
+
+	return 0;
+}
+
 U_BOOT_CMD(
 	auth_cntr, CONFIG_SYS_MAXARGS, 1, do_authenticate,
 	"autenticate OS container via AHAB",
@@ -248,3 +298,9 @@ U_BOOT_CMD(
 	"display AHAB lifecycle and events from seco",
 	""
   );
+
+U_BOOT_CMD(
+	  ahab_close, CONFIG_SYS_MAXARGS, 1, do_ahab_close,
+	  "Change AHAB lifecycle to OEM closed",
+	  ""
+);
