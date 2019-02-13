@@ -970,8 +970,8 @@ static int __dwc3_gadget_ep_queue(struct dwc3_ep *dep, struct dwc3_request *req)
 	 * so HACK the request length
 	 */
 	if (dep->direction == 0 &&
-	    req->request.length < dep->endpoint.maxpacket)
-		req->request.length = dep->endpoint.maxpacket;
+	    req->request.length < usb_endpoint_maxp(dep->endpoint.desc))
+		req->request.length = usb_endpoint_maxp(dep->endpoint.desc);
 
 	/*
 	 * We only add to our list of requests now and
