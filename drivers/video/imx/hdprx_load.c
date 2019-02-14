@@ -17,11 +17,11 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static void hdmi_rx_set_power(int onoff)
 {
-	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
+	sc_ipc_t ipch = gd->arch.ipc_channel_handle;
 
-	SC_PM_SET_RESOURCE_POWER_MODE(ipcHndl, SC_R_ISI_CH0, onoff);
-	SC_PM_SET_RESOURCE_POWER_MODE(ipcHndl, SC_R_HDMI_RX, onoff);
-	SC_PM_SET_RESOURCE_POWER_MODE(ipcHndl, SC_R_HDMI_RX_BYPASS, onoff);
+	SC_PM_SET_RESOURCE_POWER_MODE(ipch, SC_R_ISI_CH0, onoff);
+	SC_PM_SET_RESOURCE_POWER_MODE(ipch, SC_R_HDMI_RX, onoff);
+	SC_PM_SET_RESOURCE_POWER_MODE(ipch, SC_R_HDMI_RX_BYPASS, onoff);
 }
 
 int do_hdprx(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
@@ -37,22 +37,29 @@ int do_hdprx(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		unsigned long offset  = 0x2000;
 		const int iram_size   = 0x10000;
 		const int dram_size   = 0x8000;
+		const char *s;
+		sc_ipc_t ipch = gd->arch.ipc_channel_handle;
 
 		if (argc > 2) {
 			address = simple_strtoul(argv[2], NULL, 0);
 			if (argc > 3)
 				offset = simple_strtoul(argv[3], NULL, 0);
-		} else
+		} else {
 			printf("Missing address\n");
+		}
 
-		printf("Loading hdp rx firmware from 0x%016lx offset 0x%016lx\n",
-			address, offset);
+		printf("Loading hdprx firmware from 0x%016lx offset 0x%016lx\n",
+		       address, offset);
 		hdmi_rx_set_power(SC_PM_PW_MODE_ON);
 		hdp_rx_loadfirmware((unsigned char *)(address + offset),
-				     iram_size,
-				     (unsigned char *)(address + offset +
-						       iram_size),
-				     dram_size);
+				    iram_size,
+				    (unsigned char *)(address + offset +
+						      iram_size),
+				    dram_size);
+
+		s = env_get("hdprx_authenticate_fw");
+		if (s && !strcmp(s, "yes"))
+			SC_MISC_AUTH(ipch, SC_MISC_SECO_AUTH_HDMI_RX_FW, 0);
 		printf("Loading hdp rx firmware Complete\n");
 		/* do not turn off hdmi power or firmware load will be lost */
 	} else {
@@ -61,8 +68,8 @@ int do_hdprx(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
 	return 0;
 }
-/***************************************************/
 
+/***************************************************/
 U_BOOT_CMD(
 	hdprx,  CONFIG_SYS_MAXARGS, 1, do_hdprx,
 	"load hdmi rx firmware ",
@@ -70,5 +77,9 @@ U_BOOT_CMD(
 	"hdpload [address] [<offset>]\n"
 	"        address - address where the binary image starts\n"
 	"        <offset> - IRAM offset in the binary image (8192 default)\n"
+	"\n"
+	"        if \"hdprx_authenticate_fw\" is set to \"yes\", the seco\n"
+	"        will authenticate the firmware and load HDCP keys.\n"
+	"\n"
 	"tracescfw - Trace SCFW API calls for video commands\n"
 	);

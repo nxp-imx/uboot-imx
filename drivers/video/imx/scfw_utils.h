@@ -52,7 +52,7 @@ do { \
 	if (g_debug_scfw) \
 		printf("(%4d) sc_pm_clock_enable %s:%s -> %d\n",\
 		       __LINE__, _res_str, _clk_str, __enable__);\
-	_ret = sc_pm_clock_enable(ipcHndl,\
+	_ret = sc_pm_clock_enable(__ipcHndl__,\
 				 __res__, __clk__, __enable__, false);\
 	if (_ret != SC_ERR_NONE)\
 		printf("(%4d)>> sc_pm_clock_enable failed! %s:%s -> %d (error = %d)\n",\
@@ -67,7 +67,7 @@ do { \
 	if (g_debug_scfw) \
 			printf("(%4d) sc_misc_set_control %s:%s -> %d\n",\
 			       __LINE__, _res_str, _clk_str, __value__);\
-	_ret = sc_misc_set_control(ipcHndl, \
+	_ret = sc_misc_set_control(__ipcHndl__, \
 				 __res__, __clk__, __value__); \
 	if (_ret != SC_ERR_NONE) \
 		printf("(%4d)>> sc_misc_set_control failed! %s:%s -> %d (error = %d)\n", \
@@ -81,10 +81,22 @@ do { \
 	if (g_debug_scfw) \
 			printf("(%4d) sc_pm_set_resource_power_mode %s -> %d\n",\
 			       __LINE__, _res_str, __enable__);\
-	_ret = sc_pm_set_resource_power_mode(ipcHndl, __res__, __enable__);\
+	_ret = sc_pm_set_resource_power_mode(__ipcHndl__, __res__, __enable__);\
 	if (_ret != SC_ERR_NONE) \
 		printf("(%4d)>> sc_pm_set_resource_power_mode failed! %s -> %d (error = %d)\n", \
 		       __LINE__, _res_str, __enable__, _ret);\
+} while (0)
+
+#define SC_MISC_AUTH(__ipcHndl__, __cmd__, __addr__) \
+do { \
+	sc_err_t _ret; \
+	if (g_debug_scfw) \
+			printf("(%4d) sc_misc_seco_authenticate ->  cmd %d addr %d\n",\
+			       __LINE__, __cmd__, __addr__);\
+	_ret = sc_misc_seco_authenticate(__ipcHndl__, __cmd__, __addr__); \
+	if (_ret != SC_ERR_NONE) \
+		printf("(%4d)>> sc_misc_seco_authenticate cmd %d addr %d (error = %d)\n", \
+			__LINE__, __cmd__, __addr__, _ret); \
 } while (0)
 
 #endif /*_SCFW_UTILS_H_ */

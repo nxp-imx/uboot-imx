@@ -17,44 +17,44 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static void display_set_power(int onoff)
 {
-	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
+	sc_ipc_t ipch = gd->arch.ipc_channel_handle;
 
-	SC_PM_SET_RESOURCE_POWER_MODE(ipcHndl, SC_R_DC_0, onoff);
-	SC_PM_SET_RESOURCE_POWER_MODE(ipcHndl, SC_R_HDMI, onoff);
+	SC_PM_SET_RESOURCE_POWER_MODE(ipch, SC_R_DC_0, onoff);
+	SC_PM_SET_RESOURCE_POWER_MODE(ipch, SC_R_HDMI, onoff);
 }
 
 static void display_set_clocks(void)
 {
-	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
+	sc_ipc_t ipch = gd->arch.ipc_channel_handle;
 	const sc_pm_clock_rate_t pll = 1188000000;
 	const sc_pm_clock_rate_t hdmi_core_clock = pll / 10;
 	const sc_pm_clock_rate_t hdmi_bus_clock = pll / 14;
 
-	SC_PM_SET_RESOURCE_POWER_MODE(ipcHndl,
+	SC_PM_SET_RESOURCE_POWER_MODE(ipch,
 				      SC_R_HDMI_PLL_0, SC_PM_PW_MODE_OFF);
-	SC_PM_SET_CLOCK_RATE(ipcHndl,
+	SC_PM_SET_CLOCK_RATE(ipch,
 			     SC_R_HDMI_PLL_0, SC_PM_CLK_PLL, pll);
-	SC_PM_SET_RESOURCE_POWER_MODE(ipcHndl,
+	SC_PM_SET_RESOURCE_POWER_MODE(ipch,
 				      SC_R_HDMI_PLL_0, SC_PM_PW_MODE_ON);
 
 	/* HDMI DI Bus Clock  */
-	SC_PM_SET_CLOCK_RATE(ipcHndl,
+	SC_PM_SET_CLOCK_RATE(ipch,
 			     SC_R_HDMI, SC_PM_CLK_MISC4, hdmi_bus_clock);
 	/* HDMI DI Core Clock  */
-	SC_PM_SET_CLOCK_RATE(ipcHndl,
+	SC_PM_SET_CLOCK_RATE(ipch,
 			     SC_R_HDMI, SC_PM_CLK_MISC2, hdmi_core_clock);
 }
 
 static void display_enable_clocks(int enable)
 {
-	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
+	sc_ipc_t ipch = gd->arch.ipc_channel_handle;
 
-	SC_PM_CLOCK_ENABLE(ipcHndl, SC_R_HDMI_PLL_0, SC_PM_CLK_PLL, enable);
-	SC_PM_CLOCK_ENABLE(ipcHndl, SC_R_HDMI, SC_PM_CLK_MISC2, enable);
-	SC_PM_CLOCK_ENABLE(ipcHndl, SC_R_HDMI, SC_PM_CLK_MISC4, enable);
+	SC_PM_CLOCK_ENABLE(ipch, SC_R_HDMI_PLL_0, SC_PM_CLK_PLL, enable);
+	SC_PM_CLOCK_ENABLE(ipch, SC_R_HDMI, SC_PM_CLK_MISC2, enable);
+	SC_PM_CLOCK_ENABLE(ipch, SC_R_HDMI, SC_PM_CLK_MISC4, enable);
 	if (enable == OFF)
-		SC_PM_SET_RESOURCE_POWER_MODE(ipcHndl,
-				SC_R_HDMI_PLL_0, SC_PM_PW_MODE_OFF);
+		SC_PM_SET_RESOURCE_POWER_MODE(ipch, SC_R_HDMI_PLL_0,
+					      SC_PM_PW_MODE_OFF);
 }
 
 int do_hdp(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
@@ -70,16 +70,19 @@ int do_hdp(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		unsigned long offset  = 0x2000;
 		const int iram_size   = 0x10000;
 		const int dram_size   = 0x8000;
+		const char *s;
+		sc_ipc_t ipch = gd->arch.ipc_channel_handle;
 
 		if (argc > 2) {
 			address = simple_strtoul(argv[2], NULL, 0);
 			if (argc > 3)
 				offset = simple_strtoul(argv[3], NULL, 0);
-		} else
+		} else {
 			printf("Missing address\n");
+		}
 
 		printf("Loading hdp firmware from 0x%016lx offset 0x%016lx\n",
-			address, offset);
+		       address, offset);
 		display_set_power(SC_PM_PW_MODE_ON);
 		display_set_clocks();
 		display_enable_clocks(ON);
@@ -88,8 +91,14 @@ int do_hdp(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 				     (unsigned char *)(address + offset +
 						       iram_size),
 				     dram_size);
+
+		s = env_get("hdp_authenticate_fw");
+		if (s && !strcmp(s, "yes"))
+			SC_MISC_AUTH(ipch, SC_MISC_SECO_AUTH_HDMI_TX_FW, 0);
+
 		display_enable_clocks(OFF);
 		printf("Loading hdp firmware Complete\n");
+
 		/* do not turn off hdmi power or firmware load will be lost */
 	} else {
 		printf("test error argc %d\n", argc);
@@ -97,8 +106,8 @@ int do_hdp(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
 	return 0;
 }
-/***************************************************/
 
+/***************************************************/
 U_BOOT_CMD(
 	hdp,  CONFIG_SYS_MAXARGS, 1, do_hdp,
 	"load hdmi firmware ",
@@ -106,5 +115,9 @@ U_BOOT_CMD(
 	"hdpload [address] [<offset>]\n"
 	"        address - address where the binary image starts\n"
 	"        <offset> - IRAM offset in the binary image (8192 default)\n"
+	"\n"
+	"        if \"hdp_authenticate_fw\" is set to \"yes\", the seco\n"
+	"        will authenticate the firmware and load HDCP keys.\n"
+	"\n"
 	"tracescfw - Trace SCFW API calls for video commands\n"
 	);
