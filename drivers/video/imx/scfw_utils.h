@@ -87,4 +87,16 @@ do { \
 		       __LINE__, _res_str, __enable__, _ret);\
 } while (0)
 
+#define SC_MISC_AUTH(__ipcHndl__, __cmd__, __addr__) \
+do { \
+	sc_err_t _ret; \
+	if (g_debug_scfw) \
+			printf("(%4d) sc_misc_seco_authenticate ->  cmd %d addr %d\n",\
+			       __LINE__, __cmd__, __addr__);\
+	_ret = sc_seco_authenticate(__ipcHndl__, __cmd__, __addr__); \
+	if (_ret != SC_ERR_NONE) \
+		printf("(%4d)>> sc_misc_seco_authenticate cmd %d addr %d (error = %d)\n", \
+			__LINE__, __cmd__, __addr__, _ret); \
+} while (0)
+
 #endif /*_SCFW_UTILS_H_ */

@@ -65,16 +65,18 @@ int do_hdp(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		unsigned long offset  = 0x2000;
 		const int iram_size   = 0x10000;
 		const int dram_size   = 0x8000;
+		const char *s;
 
 		if (argc > 2) {
 			address = simple_strtoul(argv[2], NULL, 0);
 			if (argc > 3)
 				offset = simple_strtoul(argv[3], NULL, 0);
-		} else
+		} else {
 			printf("Missing address\n");
+		}
 
 		printf("Loading hdp firmware from 0x%016lx offset 0x%016lx\n",
-			address, offset);
+		       address, offset);
 		display_set_power(SC_PM_PW_MODE_ON);
 		display_set_clocks();
 		display_enable_clocks(ON);
@@ -83,8 +85,14 @@ int do_hdp(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 				     (unsigned char *)(address + offset +
 						       iram_size),
 				     dram_size);
+
+		s = env_get("hdp_authenticate_fw");
+		if (s && !strcmp(s, "yes"))
+			SC_MISC_AUTH(-1, SC_MISC_SECO_AUTH_HDMI_TX_FW, 0);
+
 		display_enable_clocks(OFF);
 		printf("Loading hdp firmware Complete\n");
+
 		/* do not turn off hdmi power or firmware load will be lost */
 	} else {
 		printf("test error argc %d\n", argc);
@@ -92,8 +100,8 @@ int do_hdp(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
 	return 0;
 }
-/***************************************************/
 
+/***************************************************/
 U_BOOT_CMD(
 	hdp,  CONFIG_SYS_MAXARGS, 1, do_hdp,
 	"load hdmi firmware ",
@@ -101,5 +109,9 @@ U_BOOT_CMD(
 	"hdpload [address] [<offset>]\n"
 	"        address - address where the binary image starts\n"
 	"        <offset> - IRAM offset in the binary image (8192 default)\n"
+	"\n"
+	"        if \"hdp_authenticate_fw\" is set to \"yes\", the seco\n"
+	"        will authenticate the firmware and load HDCP keys.\n"
+	"\n"
 	"tracescfw - Trace SCFW API calls for video commands\n"
 	);
