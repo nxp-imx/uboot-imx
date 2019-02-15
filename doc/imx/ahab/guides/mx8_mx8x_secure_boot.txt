@@ -27,8 +27,7 @@ following:
 - SECO firmware downloaded.
 - U-Boot downloaded and built. Please check section 1.2.
 - ARM Trusted Firmware (ATF) downloaded and built for your target.
-- System Controller Firmware (SCFW) downloaded and built for your board
-  with debug monitor enabled.
+- System Controller Firmware (SCFW).
 - Kernel image.
 
 You should also have downloaded the Code Signing Tool, available on NXP
@@ -198,11 +197,7 @@ Write the signed U-Boot image:
   $ sudo dd if=flash.signed.bin of=/dev/sdX bs=1k seek=32 ; sync
 
 Then insert the SD Card into the board and plug your device to your computer
-with an USB serial cable. When you power on the board, you should have two
-serial consoles: one for U-Boot, another one for SCFW.
-
-Please note that SCU console may be replaced by the M4 console. In case the M4
-image is needed, a base board will be required to access the SCU console.
+with an USB serial cable.
 
 1.5.4 Programming SRK Hash
 ---------------------------
@@ -297,17 +292,17 @@ also be displayed.
 
 After the device successfully boots a signed image without generating any
 SECO security events, it is safe to close the device. The SECO lifecycle
-should be changed from 32 (0x20) NXP open to 128 (0x80) OEM closed. Be
-aware this step can damage your board if a previous step failed. It is
-also irreversible. Run on the SCFW terminal:
+should be changed from 0x20 NXP closed to 0x80 OEM closed. Be aware this
+step can damage your board if a previous step failed. It is also
+irreversible. Run on the U-Boot terminal:
 
-  >$ seco lifecycle 16
+  => ahab_close
 
-Now reboot the target, and on the same terminal, run:
+Now reboot the target, and run:
 
-  >$ seco info
+  => ahab_status
 
-The lifecycle value should now be 128 (0x80) OEM closed.
+The lifecycle value should now be 0x80 OEM closed.
 
 2. Authenticating the OS container
 -----------------------------------
