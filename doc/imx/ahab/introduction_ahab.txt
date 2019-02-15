@@ -296,6 +296,9 @@ Table Hash.
   46e34bf089780bd1c809e714a17e2f4e\
   SRK_1_2_3_4_table.bin
 
+NOTE: The commands above cannot be used as reference to program the SoC
+      SRK_HASH fuses.
+
 The SRK_1_2_3_4_table.bin and SRK_1_2_3_4_fuse.bin files can be used in further
 steps as explained in AHAB guides available under doc/imx/hab/ahab/guides/
 directory.
