@@ -326,7 +326,7 @@ generated to the <work> directory to save it for later:
   $ cd <work>/imx-mkimage
   $ cp iMX8QX/flash.bin ..
   $ make SOC=iMX8QX flash_linux
-  $ mv i.MX8QX/flash.bin iMX8QX/flash_os.bin
+  $ mv iMX8QX/flash.bin iMX8QX/flash_os.bin
   $ cp iMX8QX/flash_os.bin ..
 
 - On i.MX 8 QM
@@ -334,7 +334,7 @@ generated to the <work> directory to save it for later:
     $ cd <work>/imx-mkimage
     $ cp iMX8QM/flash.bin ..
     $ make SOC=iMX8QM flash_linux
-    $ mv i.MX8QM/flash.bin iMX8QM/flash_os.bin
+    $ mv iMX8QM/flash.bin iMX8QM/flash_os.bin
     $ cp iMX8QM/flash_os.bin ..
 
 If the make command ends successfully, the end of the result should look
