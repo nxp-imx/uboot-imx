@@ -23,7 +23,7 @@ for i.MX8/8x device:
 - SECO Firmware.
 - U-Boot proper and SPL. (Please refer to section 1.2)
 - ARM Trusted Firmware (ATF).
-- System Controller Firmware (SCFW) with debug monitor enabled.
+- System Controller Firmware (SCFW).
 - Cortex M binary. (Optional)
 - Kernel image. (Optional)
 - Code signing tools (CST).
@@ -240,11 +240,6 @@ signed flash.bin image can be flashed in the device:
 
   $ sudo dd if=signed-flash.bin of=/dev/sd<X> bs=1k seek=32 && sync
 
-For the next steps you should be able to see U-Boot and SCFW consoles in your
-host PC. Please note that SCU console may be replaced by the M4 console, in
-case the M4 image is needed a base board will be required to access the SCU
-console.
-
 1.6 Programming SRK Hash
 -------------------------
 
@@ -339,17 +334,17 @@ also be displayed.
 
 After the device successfully boots a signed image without generating any
 SECO security events, it is safe to close the device. The SECO lifecycle
-should be changed from 32 (0x20) NXP open to 128 (0x80) OEM closed. Be
-aware this step can damage your board if a previous step failed. It is
-also irreversible. Run on the SCFW terminal:
+should be changed from 0x20 NXP closed to 0x80 OEM closed. Be aware this
+step can damage your board if a previous step failed. It is also
+irreversible. Run on the U-Boot terminal:
 
-  >$ seco lifecycle 16
+  => ahab_close
 
-Now reboot the target, and on the same terminal, run:
+Now reboot the target, and run:
 
-  >$ seco info
+  => ahab_status
 
-The lifecycle value should now be 128 (0x80) OEM closed.
+The lifecycle value should now be 0x80 OEM closed.
 
 2. Authenticating the OS container
 -----------------------------------
