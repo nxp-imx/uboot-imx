@@ -24,6 +24,22 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define SECO_PT                 2U
 
+static inline bool check_in_dram(ulong addr)
+{
+	int i;
+	bd_t *bd = gd->bd;
+
+	for (i = 0; i < CONFIG_NR_DRAM_BANKS; ++i) {
+		if (bd->bi_dram[i].size) {
+			if (addr >= bd->bi_dram[i].start &&
+				addr < (bd->bi_dram[i].start + bd->bi_dram[i].size))
+				return true;
+		}
+	}
+
+	return false;
+}
+
 int authenticate_os_container(ulong addr)
 {
 	struct container_hdr *phdr;
@@ -34,17 +50,24 @@ int authenticate_os_container(ulong addr)
 	sc_faddr_t start, end;
 	uint16_t length;
 
-	if (addr % 4)
+	if (addr % 4) {
+		puts("Error: Image's address is not 4 byte aligned\n");
 		return -EINVAL;
+	}
+
+	if (!check_in_dram(addr)) {
+		puts("Error: Image's address is invalid \n");
+		return -EINVAL;
+	}
 
 	phdr = (struct container_hdr *)addr;
 	if (phdr->tag != 0x87 && phdr->version != 0x0) {
-		printf("Wrong container header\n");
+		printf("Error: Wrong container header\n");
 		return -EFAULT;
 	}
 
 	if (!phdr->num_images) {
-		printf("Wrong container, no image found\n");
+		printf("Error: Wrong container, no image found\n");
 		return -EFAULT;
 	}
 
@@ -55,7 +78,7 @@ int authenticate_os_container(ulong addr)
 
 	err = sc_seco_authenticate(ipcHndl, SC_MISC_AUTH_CONTAINER, SECO_LOCAL_SEC_SEC_SECURE_RAM_BASE);
 	if (err) {
-		printf("authenticate container hdr failed, return %d\n", err);
+		printf("Error: authenticate container hdr failed, return %d\n", err);
 		ret = -EIO;
 		goto exit;
 	}
@@ -75,7 +98,7 @@ int authenticate_os_container(ulong addr)
 			img->dst & ~(CONFIG_SYS_CACHELINE_SIZE - 1), ALIGN(img->dst + img->size, CONFIG_SYS_CACHELINE_SIZE));
 
 		if (err) {
-			printf("can't find memreg for image load address %d, error %d\n", i, err);
+			printf("Error: can't find memreg for image load address %d, error %d\n", i, err);
 			ret = -ENOMEM;
 			goto exit;
 		}
@@ -86,20 +109,20 @@ int authenticate_os_container(ulong addr)
 
 		err = sc_rm_set_memreg_permissions(ipcHndl, mr, SECO_PT, SC_RM_PERM_FULL);
 		if (err) {
-			printf("set permission failed for img %d, error %d\n", i, err);
+			printf("Error: set permission failed for img %d, error %d\n", i, err);
 			ret = -EPERM;
 			goto exit;
 		}
 
 		err = sc_seco_authenticate(ipcHndl, SC_MISC_VERIFY_IMAGE, (1 << i));
 		if (err) {
-			printf("authenticate img %d failed, return %d\n", i, err);
+			printf("Error: authenticate img %d failed, return %d\n", i, err);
 			ret = -EIO;
 		}
 
 		err = sc_rm_set_memreg_permissions(ipcHndl, mr, SECO_PT, SC_RM_PERM_NONE);
 		if (err) {
-			printf("remove permission failed for img %d, error %d\n", i, err);
+			printf("Error: remove permission failed for img %d, error %d\n", i, err);
 			ret = -EPERM;
 		}
 
