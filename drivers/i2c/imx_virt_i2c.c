@@ -24,6 +24,9 @@ DECLARE_GLOBAL_DATA_PTR;
 #define SRTM_CMD_READ 0x0
 #define SRTM_CMD_WRITE 0x1
 
+#define I2C_M_SELECT_MUX_BUS	0x010000
+#define I2C_M_SRTM_STOP       0x0200
+
 struct imx_virt_i2c_bus {
 	int index;
 	ulong base;
@@ -59,7 +62,7 @@ static void imx_virt_i2c_msg_dump(struct imx_srtm_i2c_msg *msg)
 	}
 }
 
-static int imx_virt_i2c_read(struct udevice *bus, u32 chip, u8 *buf, int len)
+static int imx_virt_i2c_read(struct udevice *bus, u32 chip, u8 *buf, int len, uint flag)
 {
 	struct imx_srtm_i2c_msg *msg;
 	u32 size;
@@ -89,7 +92,7 @@ static int imx_virt_i2c_read(struct udevice *bus, u32 chip, u8 *buf, int len)
 	msg->i2c_bus = i2c_bus->index;
 	msg->return_val = 0;
 	msg->slave_addr = (u16)chip;
-	msg->flag = I2C_M_RD;
+	msg->flag = (u16)flag;
 	msg->data_length = len;
 
 	imx_virt_i2c_msg_dump(msg);
@@ -116,7 +119,7 @@ static int imx_virt_i2c_read(struct udevice *bus, u32 chip, u8 *buf, int len)
 	return ret;
 }
 
-static int imx_virt_i2c_write(struct udevice *bus, u32 chip, u8 *buf, int len)
+static int imx_virt_i2c_write(struct udevice *bus, u32 chip, u8 *buf, int len, uint flag)
 {
 	struct imx_srtm_i2c_msg *msg;
 	u32 size;
@@ -146,7 +149,7 @@ static int imx_virt_i2c_write(struct udevice *bus, u32 chip, u8 *buf, int len)
 	msg->i2c_bus = i2c_bus->index;
 	msg->return_val = 0;
 	msg->slave_addr = (u16)chip;
-	msg->flag = 0;
+	msg->flag = (u16)flag;
 	msg->data_length = len;
 
 	imx_virt_i2c_msg_dump(msg);
@@ -183,20 +186,26 @@ static int imx_virt_i2c_probe_chip(struct udevice *bus, u32 chip,
 {
 	debug("imx_virt_i2c_probe_chip\n");
 
-	return imx_virt_i2c_write(bus, chip, NULL, 0);
+	return imx_virt_i2c_write(bus, chip, NULL, 0, I2C_M_SRTM_STOP);
 }
 
 static int imx_virt_i2c_xfer(struct udevice *bus, struct i2c_msg *msg, int nmsgs)
 {
 	int ret = 0;
+	uint flag = 0;
 
 	for (; nmsgs > 0; nmsgs--, msg++) {
 		debug("virt_i2c_xfer: chip=0x%x, len=0x%x, buf=0x%08x\n", msg->addr, msg->len, *msg->buf);
-		if (msg->flags & I2C_M_RD)
-			ret = imx_virt_i2c_read(bus, msg->addr, msg->buf, msg->len);
+
+		flag = msg->flags;
+		if (nmsgs == 1)
+			flag |= I2C_M_SRTM_STOP;
+
+		if (flag & I2C_M_RD)
+			ret = imx_virt_i2c_read(bus, msg->addr, msg->buf, msg->len, flag);
 		else {
 			ret = imx_virt_i2c_write(bus, msg->addr, msg->buf,
-					    msg->len);
+					    msg->len, flag);
 			if (ret)
 				break;
 		}
@@ -231,8 +240,6 @@ static int imx_virt_i2c_probe(struct udevice *bus)
 
 	return 0;
 }
-
-#define I2C_M_SELECT_MUX_BUS	0x010000
 
 static int imx_virt_i2c_set_flags(struct udevice *child_dev, uint flags)
 {
