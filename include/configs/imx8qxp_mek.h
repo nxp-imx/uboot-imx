@@ -25,6 +25,12 @@
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR		0x1040 /* (32K + 2Mb)/sector_size */
 #define CONFIG_SYS_SPI_U_BOOT_OFFS 0x200000
+
+/*
+ * 0x08081000 - 0x08180FFF is for m4_0 xip image,
+  * So 3rd container image may start from 0x8181000
+ */
+#define CONFIG_SYS_UBOOT_BASE 0x08181000
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION		0
 
 
