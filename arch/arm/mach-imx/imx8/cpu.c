@@ -27,6 +27,7 @@
 #include <asm/setup.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/mach-imx/imx_vservice.h>
+#include <spl.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1023,4 +1024,15 @@ int board_imx_lpi2c_bind(struct udevice *dev)
 		return 0;
 
 	return -ENODEV;
+}
+
+void board_boot_order(u32 *spl_boot_list)
+{
+	spl_boot_list[0] = spl_boot_device();
+
+	if (spl_boot_list[0] == BOOT_DEVICE_SPI) {
+		/* Check whether we own the flexspi0, if not, use NOR boot */
+		if (!sc_rm_is_resource_owned(-1, SC_R_FSPI_0))
+			spl_boot_list[0] = BOOT_DEVICE_NOR;
+	}
 }
