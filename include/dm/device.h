@@ -61,6 +61,9 @@ struct driver_info;
  */
 #define DM_FLAG_OS_PREPARE		(1 << 10)
 
+/* DM should ignore the power domain on for this driver */
+#define DM_FLAG_IGNORE_POWER_ON		(1 << 11)
+
 /* DM should ignore the assign default clocks for this driver */
 #define DM_FLAG_IGNORE_DEFAULT_CLKS		(1 << 12)
 
