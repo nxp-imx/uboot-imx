@@ -383,7 +383,13 @@ int device_probe(struct udevice *dev)
 	if (dev->parent && device_get_uclass_id(dev) != UCLASS_POWER_DOMAIN) {
 		struct power_domain pd;
 		if (!power_domain_get(dev, &pd)) {
-			power_domain_on(&pd);
+			if (!(dev->driver->flags & DM_FLAG_IGNORE_POWER_ON)) {
+				ret = power_domain_on(&pd);
+				if (ret) {
+					power_domain_free(&pd);
+					goto fail;
+				}
+			}
 		}
 	}
 #endif
