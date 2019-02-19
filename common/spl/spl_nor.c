@@ -16,6 +16,18 @@ static ulong spl_nor_fit_read(struct spl_load_info *load, ulong sector,
 	return count;
 }
 
+unsigned long  __weak spl_nor_get_uboot_base(void)
+{
+	return CONFIG_SYS_UBOOT_BASE;
+}
+
+#ifdef CONFIG_PARSE_CONTAINER
+int __weak nor_load_image_parse_container(struct spl_image_info *spl_image,
+					  unsigned long offset)
+{
+	return -EINVAL;
+}
+#else
 static int nor_load_legacy(struct spl_image_info *spl_image)
 {
 	int ret;
@@ -25,16 +37,17 @@ static int nor_load_legacy(struct spl_image_info *spl_image)
 	 * defined location in SDRAM
 	 */
 	ret = spl_parse_image_header(spl_image,
-			(const struct image_header *)CONFIG_SYS_UBOOT_BASE);
+			(const struct image_header *)spl_nor_get_uboot_base());
 	if (ret)
 		return ret;
 
 	memcpy((void *)(unsigned long)spl_image->load_addr,
-	       (void *)(CONFIG_SYS_UBOOT_BASE + sizeof(struct image_header)),
+	       (void *)(spl_nor_get_uboot_base() + sizeof(struct image_header)),
 	       spl_image->size);
 
 	return 0;
 }
+#endif
 
 static int spl_nor_load_image(struct spl_image_info *spl_image,
 			      struct spl_boot_device *bootdev)
@@ -83,7 +96,7 @@ static int spl_nor_load_image(struct spl_image_info *spl_image,
 	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE -
 					 sizeof(struct image_header));
 
-	memcpy((void *)header, (void *)CONFIG_SYS_UBOOT_BASE, 0x40);
+	memcpy((void *)header, (void *)spl_nor_get_uboot_base(), 0x40);
 
 	if (IS_ENABLED(CONFIG_SPL_LOAD_FIT) &&
 	    image_get_magic(header) == FDT_MAGIC) {
@@ -96,10 +109,15 @@ static int spl_nor_load_image(struct spl_image_info *spl_image,
 		load.bl_len = 1;
 		load.read = spl_nor_fit_read;
 		ret = spl_load_simple_fit(spl_image, &load,
-					  CONFIG_SYS_UBOOT_BASE,
+					  spl_nor_get_uboot_base(),
 					  (void *)header);
 	} else {
+#ifdef CONFIG_PARSE_CONTAINER
+		ret = nor_load_image_parse_container(spl_image,
+							     spl_nor_get_uboot_base());
+#else
 		ret = nor_load_legacy(spl_image);
+#endif
 	}
 
 	return ret;
