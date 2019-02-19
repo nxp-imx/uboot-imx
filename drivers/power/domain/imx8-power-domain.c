@@ -60,6 +60,9 @@ static int imx8_power_domain_on(struct power_domain *power_domain)
 		return 0;
 
 	if (pdata->resource_id != SC_R_LAST) {
+		if (!sc_rm_is_resource_owned(ipcHndl, pdata->resource_id))
+			printf("%s [%d] not owned by curr partition\n", dev->name, pdata->resource_id);
+
 		ret = sc_pm_set_resource_power_mode(ipcHndl, pdata->resource_id, SC_PM_PW_MODE_ON);
 		if (ret) {
 			printf("Error: %s Power up failed! (error = %d)\n", dev->name, ret);
@@ -262,7 +265,6 @@ static int imx8_power_domain_ofdata_to_platdata(struct udevice *dev)
 {
 	int reg;
 	struct imx8_power_domain_platdata *pdata = dev_get_platdata(dev);
-	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
 
 	reg = fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev), "reg", -1);
 	if (reg == -1) {
@@ -272,13 +274,6 @@ static int imx8_power_domain_ofdata_to_platdata(struct udevice *dev)
 	pdata->resource_id = (sc_rsrc_t)reg;
 
 	debug("%s resource_id %d\n", __func__, pdata->resource_id);
-
-	if (pdata->resource_id != SC_R_LAST) {
-		if (!sc_rm_is_resource_owned(ipcHndl, pdata->resource_id)) {
-			debug("%s [%d] not owned by curr partition\n", dev->name, pdata->resource_id);
-			return -EINVAL;
-		}
-	}
 
 	return 0;
 }
