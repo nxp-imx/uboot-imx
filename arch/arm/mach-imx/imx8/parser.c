@@ -318,3 +318,18 @@ int sdp_load_image_parse_container(struct spl_image_info *spl_image,
 
 	return ret;
 }
+
+int __weak nor_load_image_parse_container(struct spl_image_info *spl_image,
+					  unsigned long offset)
+{
+	int ret = 0;
+
+	current_dev_type = RAM_DEV;
+	device = NULL;
+
+	start_offset = offset;
+
+	ret = read_auth_container(spl_image);
+
+	return ret;
+}
