@@ -300,7 +300,12 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
   if (avb_strcmp((const char*)hash_desc.hash_algorithm, "sha256") == 0) {
 #if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
     /* DMA requires cache aligned input/output buffer */
-    ALLOC_CACHE_ALIGN_BUFFER(uint8_t, hash_out, AVB_SHA256_DIGEST_SIZE);
+    uint8_t *hash_out = memalign(ARCH_DMA_MINALIGN, AVB_SHA256_DIGEST_SIZE);
+    if (hash_out == NULL) {
+        avb_error("failed to alloc memory!\n");
+        return AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
+        goto out;
+    }
     uint32_t round_buf_size = ROUND(hash_desc.salt_len + hash_desc.image_size,
                                 ARCH_DMA_MINALIGN);
     uint8_t *hash_buf = memalign(ARCH_DMA_MINALIGN, round_buf_size);
@@ -383,6 +388,8 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
 
 out:
 
+  if (digest != NULL)
+    free(digest);
   /* If it worked and something was loaded, copy to slot_data. */
   if ((ret == AVB_SLOT_VERIFY_RESULT_OK || result_should_continue(ret)) &&
       image_buf != NULL) {
