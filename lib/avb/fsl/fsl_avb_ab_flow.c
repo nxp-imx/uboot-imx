@@ -31,10 +31,18 @@ void fsl_slot_set_unbootable(AvbABSlotData* slot) {
  */
 void fsl_slot_normalize(AvbABSlotData* slot) {
 	if (slot->priority > 0) {
+#if defined(CONFIG_DUAL_BOOTLOADER) && !defined(CONFIG_SPL_BUILD)
+		if ((slot->tries_remaining == 0)
+			&& (!slot->successful_boot) && (slot->bootloader_verified != 1)) {
+			/* We've exhausted all tries -> unbootable. */
+			fsl_slot_set_unbootable(slot);
+		}
+#else
 		if ((slot->tries_remaining == 0) && (!slot->successful_boot)) {
 			/* We've exhausted all tries -> unbootable. */
 			fsl_slot_set_unbootable(slot);
 		}
+#endif
 		if ((slot->tries_remaining > 0) && (slot->successful_boot)) {
 			/* Illegal state - avb_ab_mark_slot_successful() will clear
 			* tries_remaining when setting successful_boot.
@@ -88,9 +96,11 @@ void fsl_avb_ab_data_init(AvbABData* data) {
 	data->slots[0].priority = AVB_AB_MAX_PRIORITY;
 	data->slots[0].tries_remaining = AVB_AB_MAX_TRIES_REMAINING;
 	data->slots[0].successful_boot = 0;
+	data->slots[0].bootloader_verified = 0;
 	data->slots[1].priority = AVB_AB_MAX_PRIORITY - 1;
 	data->slots[1].tries_remaining = AVB_AB_MAX_TRIES_REMAINING;
 	data->slots[1].successful_boot = 0;
+	data->slots[1].bootloader_verified = 0;
 }
 
 bool fsl_avb_ab_data_verify_and_byteswap(const AvbABData* src,
@@ -361,6 +371,9 @@ int mmc_load_image_parse_container_dual_uboot(
 		goto end;
 	} else if (!ab_data.slots[slot_index_to_boot].successful_boot &&
 		   (ab_data.slots[slot_index_to_boot].tries_remaining > 0)) {
+		/* Set the bootloader_verified flag if current slot only has one chance. */
+		if (ab_data.slots[slot_index_to_boot].tries_remaining == 1)
+			ab_data.slots[slot_index_to_boot].bootloader_verified = 1;
 		ab_data.slots[slot_index_to_boot].tries_remaining -= 1;
 	}
 	printf("Booting from bootloader%s...\n", slot_suffixes[slot_index_to_boot]);
@@ -500,6 +513,9 @@ int mmc_load_image_raw_sector_dual_uboot(
 		goto end;
 	} else if (!ab_data.slots[slot_index_to_boot].successful_boot &&
 		   (ab_data.slots[slot_index_to_boot].tries_remaining > 0)) {
+		/* Set the bootloader_verified flag as if current slot only has one chance. */
+		if (ab_data.slots[slot_index_to_boot].tries_remaining == 1)
+			ab_data.slots[slot_index_to_boot].bootloader_verified = 1;
 		ab_data.slots[slot_index_to_boot].tries_remaining -= 1;
 	}
 	printf("Booting from bootloader%s...\n", slot_suffixes[slot_index_to_boot]);
@@ -623,6 +639,8 @@ AvbABFlowResult avb_flow_dual_uboot(AvbABOps* ab_ops,
 		printf("No bootable slot found!\n");
 		goto out;
 	}
+	/* Clear the bootloader_verified flag. */
+	ab_data.slots[target_slot].bootloader_verified = 0;
 
 	printf("Verifying slot %s ...\n", slot_suffixes[target_slot]);
 	verify_result = avb_slot_verify(ops,

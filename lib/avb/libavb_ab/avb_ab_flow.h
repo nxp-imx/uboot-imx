@@ -72,7 +72,7 @@ typedef struct AvbABSlotData {
   uint8_t successful_boot;
 
   /* Reserved for future use. */
-  uint8_t reserved[1];
+  uint8_t bootloader_verified;
 } AVB_ATTR_PACKED AvbABSlotData;
 
 /* Struct used for recording A/B metadata.
