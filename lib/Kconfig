@@ -7,6 +7,9 @@ config AVB_ATX
 	bool "Enable AVB_ATX support"
 	depends on AVB_SUPPORT
 
+config APPEND_BOOTARGS
+	bool "Append bootargs support"
+
 config BCH
 	bool "Enable Software based BCH ECC"
 	help

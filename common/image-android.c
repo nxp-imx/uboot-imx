@@ -233,6 +233,7 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 		strncat(commandline, bootargs_trusty, sizeof(commandline) - strlen(commandline));
 	}
 
+#ifdef CONFIG_APPEND_BOOTARGS
 	/* Add 'append_bootargs' to hold some paramemters which need to be appended
 	 * to bootargs */
 	char *append_bootargs = env_get("append_bootargs");
@@ -245,6 +246,7 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 			strncat(commandline, append_bootargs, sizeof(commandline) - strlen(commandline));
 		}
 	}
+#endif
 
 	debug("Kernel command line: %s\n", commandline);
 	env_set("bootargs", commandline);
