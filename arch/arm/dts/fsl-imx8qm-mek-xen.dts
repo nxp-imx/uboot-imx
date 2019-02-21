@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 NXP
+ * Copyright 2018-2019 NXP
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -64,5 +64,6 @@
 
 &lpuart0 {
 	compatible = "xen,xen";
+	/delete-property/ power-domains;
 	u-boot,dm-pre-reloc;
 };
