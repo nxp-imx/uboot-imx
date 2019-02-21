@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014 Gateworks Corporation
+ * Copyright 2019 NXP
  * Author: Tim Harvey <tharvey@gateworks.com>
  *
  * SPDX-License-Identifier:	GPL-2.0+
@@ -7,6 +8,7 @@
 #include <common.h>
 #include <nand.h>
 #include <malloc.h>
+#include <linux/mtd/rawnand.h>
 
 static struct mtd_info *mtd;
 static struct nand_chip nand_chip;
@@ -140,14 +142,55 @@ ext_out:
 	return ret;
 }
 
+/* Extract the bits of per cell from the 3rd byte of the extended ID */
+static int nand_get_bits_per_cell(u8 cellinfo)
+{
+	int bits;
 
-static int mxs_flash_ident(struct mtd_info *mtd)
+	bits = cellinfo & NAND_CI_CELLTYPE_MSK;
+	bits >>= NAND_CI_CELLTYPE_SHIFT;
+	return bits + 1;
+}
+
+static inline bool is_full_id_nand(struct nand_flash_dev *type)
+{
+	return type->id_len;
+}
+
+static bool find_full_id_nand(struct mtd_info *mtd, struct nand_chip *chip,
+		   struct nand_flash_dev *type, u8 *id_data, int *busw)
+{
+	if (!strncmp((char *)type->id, (char *)id_data, type->id_len)) {
+		mtd->writesize = type->pagesize;
+		mtd->erasesize = type->erasesize;
+		mtd->oobsize = type->oobsize;
+
+		chip->bits_per_cell = nand_get_bits_per_cell(id_data[2]);
+		chip->chipsize = (uint64_t)type->chipsize << 20;
+		chip->options |= type->options;
+		chip->ecc_strength_ds = NAND_ECC_STRENGTH(type);
+		chip->ecc_step_ds = NAND_ECC_STEP(type);
+		chip->onfi_timing_mode_default =
+					type->onfi_timing_mode_default;
+
+		*busw = type->options & NAND_BUSWIDTH_16;
+
+		if (!mtd->name)
+			mtd->name = type->name;
+
+		return true;
+	}
+	return false;
+}
+
+static int mxs_flash_ident(struct mtd_info *mtd, struct nand_flash_dev *type)
 {
 	register struct nand_chip *chip = mtd_to_nand(mtd);
 	int i, val;
 	u8 mfg_id, dev_id;
 	u8 id_data[8];
 	struct nand_onfi_params *p = &chip->onfi_params;
+	int busw = 0;
 
 	/* Reset the chip */
 	chip->cmdfunc(mtd, NAND_CMD_RESET, -1, -1);
@@ -168,6 +211,18 @@ static int mxs_flash_ident(struct mtd_info *mtd)
 		return -1;
 	}
 	debug("0x%02x:0x%02x ", mfg_id, dev_id);
+
+	if (!type)
+		type = nand_flash_ids;
+
+	for (; type->name != NULL; type++) {
+		if (is_full_id_nand(type)) {
+			if (find_full_id_nand(mtd, chip, type, id_data, &busw))
+				goto ident_done;
+		} else if (dev_id == type->dev_id) {
+			break;
+		}
+	}
 
 	/* read ONFI */
 	chip->onfi_version = 0;
@@ -223,11 +278,14 @@ static int mxs_flash_ident(struct mtd_info *mtd)
 		printf("Could not retrieve ONFI ECC requirements\n");
 	}
 
+ident_done:
+	chip->page_shift = ffs(mtd->writesize) - 1;
+	chip->phys_erase_shift = ffs(mtd->erasesize) - 1;
 	debug("ecc_strength_ds %u, ecc_step_ds %u\n", chip->ecc_strength_ds, chip->ecc_step_ds);
-	debug("erasesize=%d (>>%d)\n", mtd->erasesize, chip->phys_erase_shift);
-	debug("writesize=%d (>>%d)\n", mtd->writesize, chip->page_shift);
+	debug("erasesize=%x (>>%d)\n", mtd->erasesize, chip->phys_erase_shift);
+	debug("writesize=%x (>>%d)\n", mtd->writesize, chip->page_shift);
 	debug("oobsize=%d\n", mtd->oobsize);
-	debug("chipsize=%lld\n", chip->chipsize);
+	debug("chipsize=%llx\n", chip->chipsize);
 
 	return 0;
 }
@@ -276,7 +334,7 @@ static int mxs_nand_init(void)
 	nand_chip.numchips = 1;
 
 	/* identify flash device */
-	if (mxs_flash_ident(mtd)) {
+	if (mxs_flash_ident(mtd, NULL)) {
 		printf("Failed to identify\n");
 		return -1;
 	}
@@ -314,7 +372,7 @@ int nand_spl_load_image(uint32_t offs, unsigned int size, void *buf)
 	page_off = offs & (mtd->writesize - 1);
 	nand_page_per_block = mtd->erasesize / mtd->writesize;
 
-	debug("%s offset:0x%08x len:%d page:%d\n", __func__, offs, size, page);
+	debug("%s offset:0x%08x len:%d page:%x\n", __func__, offs, size, page);
 
 	while (size) {
 		if (mxs_read_page_ecc(mtd, page_buf, page) < 0)
