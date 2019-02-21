@@ -67,9 +67,15 @@ void avb_ab_data_init(AvbABData* data) {
   data->slots[0].priority = AVB_AB_MAX_PRIORITY;
   data->slots[0].tries_remaining = AVB_AB_MAX_TRIES_REMAINING;
   data->slots[0].successful_boot = 0;
+#ifdef CONFIG_DUAL_BOOTLOADER
+  data->slots[0].bootloader_verified = 0;
+#endif
   data->slots[1].priority = AVB_AB_MAX_PRIORITY - 1;
   data->slots[1].tries_remaining = AVB_AB_MAX_TRIES_REMAINING;
   data->slots[1].successful_boot = 0;
+#ifdef CONFIG_DUAL_BOOTLOADER
+  data->slots[1].bootloader_verified = 0;
+#endif
 }
 
 /* The AvbABData struct is stored 2048 bytes into the 'misc' partition
@@ -423,6 +429,9 @@ AvbIOResult avb_ab_mark_slot_active(AvbABOps* ab_ops,
   ab_data.slots[slot_number].priority = AVB_AB_MAX_PRIORITY;
   ab_data.slots[slot_number].tries_remaining = AVB_AB_MAX_TRIES_REMAINING;
   ab_data.slots[slot_number].successful_boot = 0;
+#ifdef CONFIG_DUAL_BOOTLOADER
+  ab_data.slots[slot_number].bootloader_verified = 0;
+#endif
 
   /* Ensure other slot doesn't have as high a priority. */
   other_slot_number = 1 - slot_number;

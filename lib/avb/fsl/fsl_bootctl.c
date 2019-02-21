@@ -25,8 +25,17 @@ static int strcmp_l1(const char *s1, const char *s2) {
 }
 
 static bool slot_is_bootable(AvbABSlotData* slot) {
+#ifdef CONFIG_DUAL_BOOTLOADER
+  /* The 'bootloader_verified' will be set when the slot has only one chance
+   * left, which means the slot is bootable even tries_remaining is 0.
+   */
+  return slot->priority > 0 &&
+         (slot->successful_boot || (slot->tries_remaining > 0)
+         || (slot->bootloader_verified == 1));
+#else
   return slot->priority > 0 &&
          (slot->successful_boot || (slot->tries_remaining > 0));
+#endif
 }
 
 int slotidx_from_suffix(char *suffix) {
