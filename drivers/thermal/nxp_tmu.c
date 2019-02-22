@@ -106,17 +106,24 @@ static int read_temperature(struct udevice *dev, int *temp)
 	struct nxp_tmu_plat *pdata = dev_get_platdata(dev);
 	ulong drv_data = dev_get_driver_data(dev);
 	u32 val;
+	u32 retry = 10;
 
 	do {
+		mdelay(100);
+		retry--;
+
 		if (drv_data & FLAGS_VER2)
 			val = readl(&pdata->regs->regs_v2.tritsr);
 		else
 			val = readl(&pdata->regs->regs_v1.site[pdata->id].tritsr);
-	} while (!(val & 0x80000000));
+	} while (!(val & 0x80000000) && retry > 0);
 
-	*temp = (val & 0xff) * 1000;
-
-	return 0;
+	if (retry > 0) {
+		*temp = (val & 0xff) * 1000;
+		return 0;
+	} else {
+		return -EINVAL;
+	}
 }
 
 int nxp_tmu_get_temp(struct udevice *dev, int *temp)
@@ -126,8 +133,10 @@ int nxp_tmu_get_temp(struct udevice *dev, int *temp)
 	int ret;
 
 	ret = read_temperature(dev, &cpu_tmp);
-	if (ret)
+	if (ret) {
+		printf("invalid data\n");
 		return ret;
+	}
 
 	while (cpu_tmp >= pdata->alert) {
 		printf("CPU Temperature (%dC) has beyond alert (%dC), close to critical (%dC)",
@@ -135,8 +144,10 @@ int nxp_tmu_get_temp(struct udevice *dev, int *temp)
 		puts(" waiting...\n");
 		mdelay(pdata->polling_delay);
 		ret = read_temperature(dev, &cpu_tmp);
-		if (ret)
+		if (ret) {
+			printf("invalid data\n");
 			return ret;
+		}
 	}
 
 	*temp = cpu_tmp / 1000;
