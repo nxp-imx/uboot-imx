@@ -388,8 +388,10 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
 
 out:
 
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
   if (digest != NULL)
     free(digest);
+#endif
   /* If it worked and something was loaded, copy to slot_data. */
   if ((ret == AVB_SLOT_VERIFY_RESULT_OK || result_should_continue(ret)) &&
       image_buf != NULL) {
