@@ -19,3 +19,4 @@ enum boot_device get_boot_device(void);
 int print_bootinfo(void);
 void power_off_pd_devices(const char* permanent_on_devices[], int size);
 extern unsigned long rom_pointer[];
+bool check_m4_parts_boot(void);
