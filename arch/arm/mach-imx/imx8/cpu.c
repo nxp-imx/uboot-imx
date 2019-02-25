@@ -915,6 +915,34 @@ bool check_owned_udevice(struct udevice *dev)
 	return sc_rm_is_resource_owned(-1, resource_id);
 }
 
+bool check_m4_parts_boot(void)
+{
+	sc_rm_pt_t m4_parts[2];
+	int err;
+
+	err = sc_rm_get_resource_owner(-1, SC_R_M4_0_PID0, &m4_parts[0]);
+	if (err != SC_ERR_NONE) {
+		printf("%s get resource [%d] owner error: %d\n", __func__, SC_R_M4_0_PID0, err);
+		return false;
+	}
+
+	if (sc_pm_is_partition_started(-1, m4_parts[0]))
+		return true;
+
+	if (is_imx8qm()) {
+		err = sc_rm_get_resource_owner(-1, SC_R_M4_1_PID0, &m4_parts[1]);
+		if (err != SC_ERR_NONE) {
+			printf("%s get resource [%d] owner error: %d\n", __func__, SC_R_M4_1_PID0, err);
+			return false;
+		}
+
+		if (sc_pm_is_partition_started(-1, m4_parts[1]))
+			return true;
+	}
+
+	return false;
+}
+
 #ifdef CONFIG_IMX_VSERVICE
 struct udevice * board_imx_vservice_find_mu(struct udevice *dev)
 {
