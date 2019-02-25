@@ -617,6 +617,18 @@ int arch_auxiliary_core_check_up(u32 core_id)
 }
 #endif
 
+static bool check_owned_resource(sc_rsrc_t rsrc_id)
+{
+	sc_ipc_t ipcHndl = 0;
+	bool owned;
+
+	ipcHndl = gd->arch.ipc_channel_handle;
+
+	owned = sc_rm_is_resource_owned(ipcHndl, rsrc_id);
+
+	return owned;
+}
+
 #ifdef CONFIG_IMX_SMMU
 struct smmu_sid dev_sids[] = {
 };
@@ -630,6 +642,10 @@ sc_err_t imx8_config_smmu_sid(struct smmu_sid *dev_sids, int size)
 		return SC_ERR_NONE;
 
 	for (i = 0; i < size; i++) {
+		if (!check_owned_resource(dev_sids[i].rsrc)) {
+			printf("%s rsrc[%d] not owned\n", __func__, dev_sids[i].rsrc);
+			continue;
+		}
 		sciErr = sc_rm_set_master_sid(gd->arch.ipc_channel_handle,
 					      dev_sids[i].rsrc,
 					      dev_sids[i].sid);
@@ -883,18 +899,6 @@ int mmc_get_env_dev(void)
 	}
 
 	return board_mmc_get_env_dev(devno);
-}
-
-static bool check_owned_resource(sc_rsrc_t rsrc_id)
-{
-	sc_ipc_t ipcHndl = 0;
-	bool owned;
-
-	ipcHndl = gd->arch.ipc_channel_handle;
-
-	owned = sc_rm_is_resource_owned(ipcHndl, rsrc_id);
-
-	return owned;
 }
 
 static bool check_owned_resources_in_pd_tree(void *blob, int nodeoff,
@@ -1269,10 +1273,14 @@ static int config_smmu_resource_sid(int rsrc, int sid)
 {
 	sc_err_t err;
 
+	if (!check_owned_resource(rsrc)) {
+		printf("%s rsrc[%d] not owned\n", __func__, rsrc);
+		return -1;
+	}
 	err = sc_rm_set_master_sid(gd->arch.ipc_channel_handle, rsrc, sid);
 	debug("set_master_sid rsrc=%d sid=0x%x err=%d\n", rsrc, sid, err);
 	if (err != SC_ERR_NONE) {
-		pr_err("fail set_master_sid rsrc=%d sid=0x%x err=%d", rsrc, sid, err);
+		pr_err("fail set_master_sid rsrc=%d sid=0x%x err=%d\n", rsrc, sid, err);
 		return -EINVAL;
 	}
 
