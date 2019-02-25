@@ -97,6 +97,7 @@
 		"run netboot; \0"
 
 #define XEN_BOOT_ENV \
+	    "domu-android-auto=no\0" \
             "xenhyper_bootargs=console=dtuart dtuart=/serial@5a060000 dom0_mem=2048M dom0_max_vcpus=2 dom0_vcpus_pin=true hmp-unsafe=true\0" \
             "xenlinux_bootargs= \0" \
             "xenlinux_console=hvc0 earlycon=xen\0" \
@@ -105,13 +106,16 @@
             "xenboot_common=" \
                 "${get_cmd} ${loadaddr} xen;" \
                 "${get_cmd} ${fdt_addr} ${dom0fdt_file};" \
-		"scu_rm dtb ${fdt_addr};" \
                 "if ${get_cmd} ${hdp_addr} ${hdp_file}; then; hdp load ${hdp_addr}; fi;" \
                 "${get_cmd} ${xenlinux_addr} ${image};" \
                 "fdt addr ${fdt_addr};" \
                 "fdt resize 256;" \
                 "fdt set /chosen/module@0 reg <0x00000000 ${xenlinux_addr} 0x00000000 0x${filesize}>; " \
                 "fdt set /chosen/module@0 bootargs \"${bootargs} ${xenlinux_bootargs}\"; " \
+		"if test ${domu-android-auto} = yes; then; " \
+			"fdt set /domu/doma android-auto <1>;" \
+			"fdt rm /gpio@5d090000 power-domains;" \
+		"fi;" \
                 "setenv bootargs ${xenhyper_bootargs};" \
                 "booti ${loadaddr} - ${fdt_addr};" \
             "\0" \
