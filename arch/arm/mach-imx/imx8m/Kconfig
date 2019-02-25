@@ -42,6 +42,7 @@ config TARGET_IMX8MQ_AIY
 	bool "imx8mq_aiy"
 	select IMX8MQ
 	select SUPPORT_SPL
+	select IMX8M_LPDDR4
 
 config TARGET_IMX8MM_DDR4_VAL
 	bool "imx8mm DDR4 validation board"
