@@ -173,7 +173,7 @@ int board_mmc_getcd(struct mmc *mmc)
 
 void spl_board_init(void)
 {
-#if defined(CONFIG_QSPI_BOOT)
+#if defined(CONFIG_SPL_SPI_SUPPORT)
 	sc_ipc_t ipcHndl = 0;
 
 	ipcHndl = gd->arch.ipc_channel_handle;
@@ -189,7 +189,7 @@ void spl_board_init(void)
 
 void spl_board_prepare_for_boot(void)
 {
-#if defined(CONFIG_QSPI_BOOT)
+#if defined(CONFIG_SPL_SPI_SUPPORT)
 	sc_ipc_t ipcHndl = 0;
 
 	ipcHndl = gd->arch.ipc_channel_handle;
