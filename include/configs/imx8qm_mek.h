@@ -13,7 +13,7 @@
 
 #ifdef CONFIG_SPL_BUILD
 
-#ifdef CONFIG_QSPI_BOOT
+#ifdef CONFIG_SPL_SPI_SUPPORT
 #define CONFIG_SPL_SPI_LOAD
 #endif
 
