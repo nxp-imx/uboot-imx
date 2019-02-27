@@ -61,6 +61,7 @@
 	"splashpos=m,m\0"	  \
 	"fdt_high=0xffffffffffffffff\0"	  \
 	"initrd_high=0xffffffffffffffff\0" \
+	"panel=NULL\0" \
 
 #define CONFIG_FASTBOOT_BUF_ADDR   0x98000000
 #define CONFIG_FASTBOOT_BUF_SIZE   0x19000000
