@@ -904,8 +904,8 @@ bool check_owned_udevice(struct udevice *dev)
 	}
 
 	/* Get the owner partition for resource*/
-	resource_id = (sc_rsrc_t)ofnode_read_u32_default(args.node, "reg", SC_R_LAST);
-	if (resource_id == SC_R_LAST) {
+	resource_id = (sc_rsrc_t)ofnode_read_u32_default(args.node, "reg", SC_R_NONE);
+	if (resource_id == SC_R_NONE) {
 		printf("Can't find the resource id for udev %s\n", dev->name);
 		return false;
 	}
@@ -967,8 +967,8 @@ struct udevice * board_imx_vservice_find_mu(struct udevice *dev)
 	}
 
 	/* Get the owner partition for resource*/
-	resource_id = (sc_rsrc_t)ofnode_read_u32_default(args.node, "reg", SC_R_LAST);
-	if (resource_id == SC_R_LAST) {
+	resource_id = (sc_rsrc_t)ofnode_read_u32_default(args.node, "reg", SC_R_NONE);
+	if (resource_id == SC_R_NONE) {
 		printf("Can't find the resource id for udev %s\n", dev->name);
 		return NULL;
 	}
