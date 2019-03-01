@@ -731,10 +731,16 @@
 #define SC_R_ALL                  ((sc_rsrc_t) UINT16_MAX)  /*!< All resources */
 /*@}*/
 
+/*!
+ * Define for ATF/Linux. Not used by SCFW. Not a valid parameter
+ * for any SCFW API calls!
+ */
+#define SC_R_NONE                 0xFFF0U
+
 /* NOTE - please add by replacing some of the UNUSED from above! */
 
 /*!
- * Defnes for sc_ctrl_t.
+ * Defines for sc_ctrl_t.
  */
 #define SC_C_TEMP                       0U
 #define SC_C_TEMP_HI                    1U
