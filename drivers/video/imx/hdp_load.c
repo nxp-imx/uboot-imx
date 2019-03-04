@@ -26,9 +26,9 @@ static void display_set_power(int onoff)
 static void display_set_clocks(void)
 {
 	sc_ipc_t ipch = gd->arch.ipc_channel_handle;
-	const sc_pm_clock_rate_t pll = 657000000;
-	const sc_pm_clock_rate_t hdmi_core_clock = pll / 5; /* 135.000 Mhz */
-	const sc_pm_clock_rate_t hdmi_bus_clock = pll / 8;  /*  83.375 Mhz */
+	const sc_pm_clock_rate_t pll = 800000000;
+	const sc_pm_clock_rate_t hdmi_core_clock = pll / 4; /* 200 Mhz */
+	const sc_pm_clock_rate_t hdmi_bus_clock = pll / 8;  /* 100 Mhz */
 
 	SC_PM_SET_RESOURCE_POWER_MODE(ipch,
 				      SC_R_HDMI_PLL_0, SC_PM_PW_MODE_OFF);
