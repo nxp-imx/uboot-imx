@@ -239,7 +239,9 @@ static int read_auth_container(struct spl_image_info *spl_image)
 
 		if (!image) {
 			ret = -EINVAL;
-			sc_seco_authenticate(ipcHndl, SC_MISC_REL_CONTAINER, 0);
+			if (sc_seco_authenticate(ipcHndl, SC_MISC_REL_CONTAINER, 0) != SC_ERR_NONE)
+				printf("Error: release container failed!\n");
+
 			goto out;
 		}
 
@@ -249,7 +251,8 @@ static int read_auth_container(struct spl_image_info *spl_image)
 		}
 	}
 
-	sc_seco_authenticate(ipcHndl, SC_MISC_REL_CONTAINER, 0);
+	if (sc_seco_authenticate(ipcHndl, SC_MISC_REL_CONTAINER, 0) != SC_ERR_NONE)
+		printf("Error: release container failed!\n");
 
 #if defined(CONFIG_SPL_BUILD) && defined(CONFIG_DUAL_BOOTLOADER)
 	/* Everything checks out, get the sw_version now. */
