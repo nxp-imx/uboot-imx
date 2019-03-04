@@ -425,12 +425,19 @@ void init_clk_fec(int index)
 	}
 
 	/* Configure GPR regisers */
-	sc_misc_set_control(ipc, enet[index], SC_C_TXCLK,  0);
-	sc_misc_set_control(ipc, enet[index], SC_C_CLKDIV,  1); /* Enable divclk */
-	sc_misc_set_control(ipc, enet[index], SC_C_DISABLE_50,  1);
-	sc_misc_set_control(ipc, enet[index], SC_C_DISABLE_125,  1);
-	sc_misc_set_control(ipc, enet[index], SC_C_SEL_125,  0);
-	sc_misc_set_control(ipc, enet[index], SC_C_IPG_STOP,  0);
+	if (sc_misc_set_control(ipc, enet[index], SC_C_TXCLK,  0) != SC_ERR_NONE)
+		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_TXCLK);
+	/* Enable divclk */
+	if (sc_misc_set_control(ipc, enet[index], SC_C_CLKDIV,  1) != SC_ERR_NONE)
+		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_CLKDIV);
+	if (sc_misc_set_control(ipc, enet[index], SC_C_DISABLE_50,  1) != SC_ERR_NONE)
+		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_DISABLE_50);
+	if (sc_misc_set_control(ipc, enet[index], SC_C_DISABLE_125,  1) != SC_ERR_NONE)
+		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_DISABLE_125);
+	if (sc_misc_set_control(ipc, enet[index], SC_C_SEL_125,  0) != SC_ERR_NONE)
+		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_SEL_125);
+	if (sc_misc_set_control(ipc, enet[index], SC_C_IPG_STOP,  0) != SC_ERR_NONE)
+		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_IPG_STOP);
 
 	LPCG_AllClockOn(ENET_0_LPCG + index * 0x10000);
 }

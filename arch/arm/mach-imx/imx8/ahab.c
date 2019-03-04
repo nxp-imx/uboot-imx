@@ -131,7 +131,8 @@ int authenticate_os_container(ulong addr)
 	}
 
 exit:
-	sc_seco_authenticate(ipcHndl, SC_MISC_REL_CONTAINER, 0);
+	if (sc_seco_authenticate(ipcHndl, SC_MISC_REL_CONTAINER, 0) != SC_ERR_NONE)
+		printf("Error: release container failed!\n");
 
 	return ret;
 }
