@@ -89,6 +89,7 @@ static int read(u32 start, u32 len, void *load_addr)
 	return ret;
 }
 
+#ifdef CONFIG_AHAB_BOOT
 static int authenticate_image(struct boot_img_t *img, int image_index)
 {
 	sc_faddr_t start, end;
@@ -140,6 +141,7 @@ static int authenticate_image(struct boot_img_t *img, int image_index)
 
 	return ret;
 }
+#endif
 
 static struct boot_img_t *read_auth_image(struct container_hdr *container,
 					  int image_index)
@@ -160,10 +162,12 @@ static struct boot_img_t *read_auth_image(struct container_hdr *container,
 		return NULL;
 	}
 
+#ifdef CONFIG_AHAB_BOOT
 	if (authenticate_image(&images[image_index], image_index)) {
 		printf("Failed to authenticate image %d\n", image_index);
 		return NULL;
 	}
+#endif
 
 	return &images[image_index];
 }
@@ -216,6 +220,7 @@ static int read_auth_container(struct spl_image_info *spl_image)
 		}
 	}
 
+#ifdef CONFIG_AHAB_BOOT
 	memcpy((void *)SEC_SECURE_RAM_BASE, (const void *)container,
 	       ALIGN(length, CONFIG_SYS_CACHELINE_SIZE));
 
@@ -226,15 +231,14 @@ static int read_auth_container(struct spl_image_info *spl_image)
 		ret = -EFAULT;
 		goto out;
 	}
+#endif
 
 	for (i = 0; i < container->num_images; i++) {
 		struct boot_img_t *image = read_auth_image(container, i);
 
 		if (!image) {
 			ret = -EINVAL;
-			if (sc_seco_authenticate(-1, SC_MISC_REL_CONTAINER, 0) != SC_ERR_NONE)
-				printf("Error: release container failed!\n");
-			goto out;
+			goto end_auth;
 		}
 
 		if (i == 0) {
@@ -243,9 +247,11 @@ static int read_auth_container(struct spl_image_info *spl_image)
 		}
 	}
 
+end_auth:
+#ifdef CONFIG_AHAB_BOOT
 	if (sc_seco_authenticate(-1, SC_MISC_REL_CONTAINER, 0) != SC_ERR_NONE)
 		printf("Error: release container failed!\n");
-
+#endif
 out:
 	free(container);
 
