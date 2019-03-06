@@ -2565,6 +2565,7 @@ static irqreturn_t dwc3_interrupt(int irq, void *_dwc)
 int dwc3_gadget_init(struct dwc3 *dwc)
 {
 	int					ret;
+	u32 reg;
 
 	dwc->ctrl_req = dma_alloc_coherent(sizeof(*dwc->ctrl_req),
 					(unsigned long *)&dwc->ctrl_req_addr);
@@ -2622,6 +2623,10 @@ int dwc3_gadget_init(struct dwc3 *dwc)
 		dev_err(dwc->dev, "failed to register udc\n");
 		goto err4;
 	}
+
+	reg = dwc3_readl(dwc->regs, DWC3_DCTL);
+	reg &= ~(DWC3_DCTL_INITU1ENA | DWC3_DCTL_INITU2ENA);
+	dwc3_writel(dwc->regs, DWC3_DCTL, reg);
 
 	return 0;
 
