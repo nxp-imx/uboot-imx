@@ -120,6 +120,37 @@
 #define CONFIG_FSL_CAAM_KB
 #define CONFIG_SPL_CRYPTO_SUPPORT
 #define CONFIG_SYS_FSL_SEC_LE
+
+/* Change default spl/atf/u-boot address to support partition reboot. */
+#ifdef  CONFIG_SPL_TEXT_BASE
+#undef  CONFIG_SPL_TEXT_BASE
+#define CONFIG_SPL_TEXT_BASE           0x80000000
+#endif
+#ifdef  CONFIG_SPL_STACK
+#undef  CONFIG_SPL_STACK
+#define CONFIG_SPL_STACK               0x8003E000
+#endif
+#ifdef  CONFIG_SPL_BSS_START_ADDR
+#undef  CONFIG_SPL_BSS_START_ADDR
+#define CONFIG_SPL_BSS_START_ADDR      0x80038000
+#endif
+#ifdef  CONFIG_SYS_SPL_MALLOC_START
+#undef  CONFIG_SYS_SPL_MALLOC_START
+#define CONFIG_SYS_SPL_MALLOC_START    0x80020000
+#endif
+#ifdef  CONFIG_MALLOC_F_ADDR
+#undef  CONFIG_MALLOC_F_ADDR
+#define CONFIG_MALLOC_F_ADDR           0x80020000
+#endif
+#ifdef  CONFIG_ATF_TEXT_BASE
+#undef  CONFIG_ATF_TEXT_BASE
+#define CONFIG_ATF_TEXT_BASE           0x80040000
+#endif
+#ifdef  CONFIG_SYS_ATF_START
+#undef  CONFIG_SYS_ATF_START
+#define CONFIG_SYS_ATF_START           0x80040000
+#endif
+
 #endif
 
 #define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
