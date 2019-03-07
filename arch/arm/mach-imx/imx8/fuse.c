@@ -47,7 +47,7 @@ int fuse_sense(u32 bank, u32 word, u32 *val)
 		return -EINVAL;
 	}
 #if defined(CONFIG_SMC_FUSE)
-	unsigned long ret, value;
+	unsigned long ret = 0, value = 0;
 	ret = call_imx_sip_ret2(FSL_SIP_OTP_READ, (unsigned long)word,
 		&value, 0, 0);
 	*val = (u32)value;
