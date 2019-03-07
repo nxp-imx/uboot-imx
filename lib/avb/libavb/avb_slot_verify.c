@@ -201,6 +201,11 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
   size_t expected_digest_len = 0;
   uint8_t expected_digest_buf[AVB_SHA512_DIGEST_SIZE];
   const uint8_t* expected_digest = NULL;
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
+  uint8_t* hash_out = NULL;
+  uint8_t* hash_buf = NULL;
+#endif
+
 
   if (!avb_hash_descriptor_validate_and_byteswap(
           (const AvbHashDescriptor*)descriptor, &hash_desc)) {
@@ -300,18 +305,18 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
   if (avb_strcmp((const char*)hash_desc.hash_algorithm, "sha256") == 0) {
 #if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
     /* DMA requires cache aligned input/output buffer */
-    uint8_t *hash_out = memalign(ARCH_DMA_MINALIGN, AVB_SHA256_DIGEST_SIZE);
+    hash_out = memalign(ARCH_DMA_MINALIGN, AVB_SHA256_DIGEST_SIZE);
     if (hash_out == NULL) {
         avb_error("failed to alloc memory!\n");
-        return AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
+        ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
         goto out;
     }
     uint32_t round_buf_size = ROUND(hash_desc.salt_len + hash_desc.image_size,
                                 ARCH_DMA_MINALIGN);
-    uint8_t *hash_buf = memalign(ARCH_DMA_MINALIGN, round_buf_size);
+    hash_buf = memalign(ARCH_DMA_MINALIGN, round_buf_size);
     if (hash_buf == NULL) {
         avb_error("failed to alloc memory!\n");
-        return AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
+        ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
         goto out;
     }
 
@@ -331,6 +336,7 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
 
     digest = hash_out;
     free(hash_buf);
+    hash_buf = NULL;
 #else
     AvbSHA256Ctx sha256_ctx;
     avb_sha256_init(&sha256_ctx);
@@ -389,8 +395,14 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
 out:
 
 #if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
-  if (digest != NULL)
-    free(digest);
+  if (hash_out != NULL) {
+    free(hash_out);
+    hash_out = NULL;
+  }
+  if (hash_buf != NULL) {
+    free(hash_buf);
+    hash_buf = NULL;
+  }
 #endif
   /* If it worked and something was loaded, copy to slot_data. */
   if ((ret == AVB_SLOT_VERIFY_RESULT_OK || result_should_continue(ret)) &&
