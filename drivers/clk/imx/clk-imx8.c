@@ -45,7 +45,7 @@ static struct imx8_clks imx8_clk_names[] = {
 static ulong imx8_clk_get_rate(struct clk *clk)
 {
 	sc_pm_clk_t pm_clk;
-	ulong rate;
+	u32 rate;
 	u16 resource;
 	int ret;
 
