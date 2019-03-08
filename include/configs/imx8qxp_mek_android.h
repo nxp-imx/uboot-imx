@@ -61,38 +61,6 @@
 #define CONFIG_FASTBOOT_BUF_ADDR   0x98000000
 #define CONFIG_FASTBOOT_BUF_SIZE   0x19000000
 
-#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_NOT_UUU_BUILD)
-/* Change default spl/atf/u-boot address to support partition reboot. */
-#ifdef  CONFIG_SPL_TEXT_BASE
-#undef  CONFIG_SPL_TEXT_BASE
-#define CONFIG_SPL_TEXT_BASE           0x80000000
-#endif
-#ifdef  CONFIG_SPL_STACK
-#undef  CONFIG_SPL_STACK
-#define CONFIG_SPL_STACK               0x8003E000
-#endif
-#ifdef  CONFIG_SPL_BSS_START_ADDR
-#undef  CONFIG_SPL_BSS_START_ADDR
-#define CONFIG_SPL_BSS_START_ADDR      0x80038000
-#endif
-#ifdef  CONFIG_SYS_SPL_MALLOC_START
-#undef  CONFIG_SYS_SPL_MALLOC_START
-#define CONFIG_SYS_SPL_MALLOC_START    0x80020000
-#endif
-#ifdef  CONFIG_MALLOC_F_ADDR
-#undef  CONFIG_MALLOC_F_ADDR
-#define CONFIG_MALLOC_F_ADDR           0x80020000
-#endif
-#ifdef  CONFIG_ATF_TEXT_BASE
-#undef  CONFIG_ATF_TEXT_BASE
-#define CONFIG_ATF_TEXT_BASE           0x80040000
-#endif
-#ifdef  CONFIG_SYS_ATF_START
-#undef  CONFIG_SYS_ATF_START
-#define CONFIG_SYS_ATF_START           0x80040000
-#endif
-#endif
-
 #define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
 
 #endif /* IMX8QXP_MEK_ANDROID_H */
