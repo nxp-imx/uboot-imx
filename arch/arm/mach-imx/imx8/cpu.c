@@ -20,6 +20,7 @@
 #include <asm/armv8/cpu.h>
 #include <asm/armv8/mmu.h>
 #include <asm/mach-imx/boot_mode.h>
+#include <linux/libfdt.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -452,6 +453,22 @@ int mmc_get_env_dev(void)
 	}
 
 	return board_mmc_get_env_dev(devno);
+}
+#endif
+
+#ifdef CONFIG_OF_SYSTEM_SETUP
+int ft_system_setup(void *blob, bd_t *bd)
+{
+#ifdef BOOTAUX_RESERVED_MEM_BASE
+	int off;
+	off = fdt_add_mem_rsv(blob, BOOTAUX_RESERVED_MEM_BASE,
+				      BOOTAUX_RESERVED_MEM_SIZE);
+		if (off < 0)
+			printf("Failed  to reserve memory for bootaux: %s\n",
+			       fdt_strerror(off));
+#endif
+
+	return 0;
 }
 #endif
 
