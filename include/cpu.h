@@ -87,6 +87,14 @@ struct cpu_ops {
 	 * @return 0 if OK, -ENOSPC if buffer is too small, other -ve on error
 	 */
 	int (*get_vendor)(struct udevice *dev, char *buf, int size);
+
+	/**
+	 * is_current_cpu() - Check if the device is for current CPU
+	 *
+	 * @dev:	Device to check (UCLASS_CPU)
+	 * @return true if the device is current CPU, false if the device is not.
+	 */
+	bool (*is_current_cpu)(struct udevice *dev);
 };
 
 #define cpu_get_ops(dev)        ((struct cpu_ops *)(dev)->driver->ops)
@@ -134,5 +142,12 @@ int cpu_get_vendor(struct udevice *dev, char *buf, int size);
  * Return: 0 if OK, -ve on error
  */
 int cpu_probe_all(void);
+
+/**
+ * cpu_get_current_dev() - Get CPU udevice for current CPU
+ *
+ * Return: udevice if OK, - NULL on error
+ */
+struct udevice *cpu_get_current_dev(void);
 
 #endif

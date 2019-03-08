@@ -34,6 +34,32 @@ int cpu_probe_all(void)
 	return 0;
 }
 
+struct udevice *cpu_get_current_dev(void)
+{
+	struct udevice *cpu = NULL;
+	int ret;
+
+	for (uclass_first_device(UCLASS_CPU, &cpu); cpu;
+		uclass_next_device(&cpu)) {
+			struct cpu_ops *ops = cpu_get_ops(cpu);
+			if (ops->is_current_cpu) {
+				if (ops->is_current_cpu(cpu))
+					return cpu;
+			}
+	}
+
+	/* If can't find current cpu device, use the first dev insteaded */
+	ret = uclass_first_device_err(UCLASS_CPU, &cpu);
+	if (ret) {
+		debug("%s: Could not get CPU device (err = %d)\n",
+		      __func__, ret);
+		return NULL;
+	}
+
+	return cpu;
+}
+
+
 int cpu_get_desc(struct udevice *dev, char *buf, int size)
 {
 	struct cpu_ops *ops = cpu_get_ops(dev);
