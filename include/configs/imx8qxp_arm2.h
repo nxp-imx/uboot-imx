@@ -182,7 +182,7 @@
 #ifdef CONFIG_NAND_BOOT
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
-	"bootargs=console=ttyLP0,115200 ubi.mtd=5 "  \
+	"bootargs=console=ttyLP0,115200 ubi.mtd=6 "  \
 		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
 		MFG_NAND_PARTITION \
 		"\0"\
