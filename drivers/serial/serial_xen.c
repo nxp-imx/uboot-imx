@@ -190,9 +190,43 @@ U_BOOT_DRIVER(serial_xen) = {
 	.flags = DM_FLAG_PRE_RELOC | DM_FLAG_IGNORE_POWER_ON | DM_FLAG_IGNORE_DEFAULT_CLKS,
 };
 #else
+static void xen_serial_putc(const char c)
+{
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, 1, &c);
+}
+
+static void xen_serial_puts(const char *str)
+{
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, strlen(str), str);
+}
+
+static int xen_serial_tstc(void)
+{
+	return 0;
+}
+
+static int xen_serial_init(void)
+{
+}
+
+static void xen_serial_setbrg(void)
+{
+}
+
+static struct serial_device xen_serial_drv = {
+	.name	= "xen_serial",
+	.start	= xen_serial_init,
+	.stop	= NULL,
+	.setbrg	= xen_serial_setbrg,
+	.getc	= NULL,
+	.putc	= xen_serial_putc,
+	.puts	= xen_serial_puts,
+	.tstc	= xen_serial_tstc,
+};
+
 __weak struct serial_device *default_serial_console(void)
 {
-	return NULL;
+	return &xen_serial_drv;
 }
 
 #endif
