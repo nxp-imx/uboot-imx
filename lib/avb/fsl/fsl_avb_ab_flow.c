@@ -214,6 +214,7 @@ int fsl_load_metadata_dual_uboot(struct blk_desc *dev_desc,
 	}
 }
 
+#ifndef CONFIG_XEN
 static int spl_verify_rbidx(struct mmc *mmc, AvbABSlotData *slot,
 			struct spl_image_info *spl_image)
 {
@@ -273,6 +274,7 @@ static int spl_verify_rbidx(struct mmc *mmc, AvbABSlotData *slot,
 	}
 
 }
+#endif /* CONFIG_XEN */
 
 #ifdef CONFIG_PARSE_CONTAINER
 int mmc_load_image_parse_container_dual_uboot(
@@ -284,7 +286,9 @@ int mmc_load_image_parse_container_dual_uboot(
 	struct blk_desc *dev_desc;
 	AvbABData ab_data, ab_data_orig;
 	size_t slot_index_to_boot, target_slot;
+#ifndef CONFIG_XEN
 	struct keyslot_package kp;
+#endif
 
 	/* Check if gpt is valid */
 	dev_desc = mmc_get_blk_desc(mmc);
@@ -298,7 +302,8 @@ int mmc_load_image_parse_container_dual_uboot(
 		return -1;
 	}
 
-	/* Read RPMB keyslot package */
+#ifndef CONFIG_XEN
+	/* Read RPMB keyslot package, xen won't check this. */
 	read_keyslot_package(&kp);
 	if (strcmp(kp.magic, KEYPACK_MAGIC)) {
 		if (rpmbkey_is_set()) {
@@ -313,6 +318,8 @@ int mmc_load_image_parse_container_dual_uboot(
 			return -1;
 		}
 	}
+#endif
+
 	/* Load AB metadata from misc partition */
 	if (fsl_load_metadata_dual_uboot(dev_desc, &ab_data,
 					&ab_data_orig)) {
@@ -342,6 +349,8 @@ int mmc_load_image_parse_container_dual_uboot(
 		} else {
 			ret = mmc_load_image_parse_container(spl_image, mmc, info.start);
 
+			/* Don't need to check rollback index for xen. */
+#ifndef CONFIG_XEN
 			/* Image loaded successfully, go to verify rollback index */
 			if (!ret && rpmbkey_is_set())
 				ret = spl_verify_rbidx(mmc, &ab_data.slots[target_slot], spl_image);
@@ -349,6 +358,7 @@ int mmc_load_image_parse_container_dual_uboot(
 			/* Copy rpmb keyslot to secure memory. */
 			if (!ret)
 				fill_secure_keyslot_package(&kp);
+#endif
 		}
 
 		/* Set current slot to unbootable if load/verify fail. */
