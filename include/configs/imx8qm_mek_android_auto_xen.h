@@ -22,4 +22,13 @@
 /* This needs to be stay same in iomem in domu.cfg */
 #define SC_IPC_CH			0x5d1d0000
 
+#ifdef CONFIG_SPL_BUILD
+#undef CFG_MALLOC_F_ADDR
+
+#define CFG_MALLOC_F_ADDR		0x80100000
+#define CFG_SYS_SPL_PTE_RAM_BASE	0x80500000
+#endif
+
+#define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
+
 #endif /* IMX8QM_MEK_ANDROID_AUTO_XEN_H */
