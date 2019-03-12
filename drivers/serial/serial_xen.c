@@ -22,7 +22,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#ifdef CONFIG_DM_SERIAL
+#if CONFIG_IS_ENABLED(DM_SERIAL)
 struct xen_uart_priv {
 	struct xencons_interface *intf;
 	u32 evtchn;
@@ -149,7 +149,7 @@ static int write_console(struct udevice *dev, const char *data, int len)
 static int xen_serial_puts(struct udevice *dev, const char *str)
 {
 #ifdef CONFIG_SPL_BUILD
-	(void)HYPERVISOR_console_io(CONSOLEIO_write, strlen(str), str);
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, strlen(str), (char *)str);
 #else
 	write_console(dev, str, strlen(str));
 #endif
@@ -160,7 +160,7 @@ static int xen_serial_puts(struct udevice *dev, const char *str)
 static int xen_serial_putc(struct udevice *dev, const char ch)
 {
 #ifdef CONFIG_SPL_BUILD
-	(void)HYPERVISOR_console_io(CONSOLEIO_write, 1, &ch);
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, 1, (char *)&ch);
 #else
 	write_console(dev, &ch, 1);
 #endif
@@ -190,9 +190,44 @@ U_BOOT_DRIVER(serial_xen) = {
 	.flags = DM_FLAG_PRE_RELOC | DM_FLAG_IGNORE_DEFAULT_CLKS,
 };
 #else
+static void xen_serial_putc(const char c)
+{
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, 1, (char *)&c);
+}
+
+static void xen_serial_puts(const char *str)
+{
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, strlen(str), (char *)str);
+}
+
+static int xen_serial_tstc(void)
+{
+	return 0;
+}
+
+static int xen_serial_init(void)
+{
+	return 0;
+}
+
+static void xen_serial_setbrg(void)
+{
+}
+
+static struct serial_device xen_serial_drv = {
+	.name	= "xen_serial",
+	.start	= xen_serial_init,
+	.stop	= NULL,
+	.setbrg	= xen_serial_setbrg,
+	.getc	= NULL,
+	.putc	= xen_serial_putc,
+	.puts	= xen_serial_puts,
+	.tstc	= xen_serial_tstc,
+};
+
 __weak struct serial_device *default_serial_console(void)
 {
-	return NULL;
+	return &xen_serial_drv;
 }
 
 #endif
@@ -208,7 +243,7 @@ void _debug_uart_putc(int ch)
 	if (ch == '\n')
 		serial_putc('\r');
 
-	(void)HYPERVISOR_console_io(CONSOLEIO_write, 1, &ch);
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, 1, (char *)&ch);
 
 	return;
 }
