@@ -924,7 +924,7 @@ int fspi_xfer(struct fsl_fspi_priv *priv, unsigned int bitlen,
 {
 	u32 bytes = DIV_ROUND_UP(bitlen, 8);
 	static u32 wr_sfaddr;
-	u32 txbuf;
+	u32 txbuf = 0;
 
 	if (dout) {
 		if (flags & SPI_XFER_BEGIN) {
