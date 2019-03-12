@@ -175,6 +175,7 @@ static int get_imageset_end(void *dev, int dev_type)
 	return value_container[1] + offset2;
 }
 
+#ifdef CONFIG_SPL_SPI_LOAD
 unsigned long spl_spi_get_uboot_raw_sector(struct spi_flash *flash)
 {
 	int end;
@@ -186,7 +187,9 @@ unsigned long spl_spi_get_uboot_raw_sector(struct spi_flash *flash)
 
 	return end;
 }
+#endif
 
+#ifdef CONFIG_SPL_MMC_SUPPORT
 unsigned long spl_mmc_get_uboot_raw_sector(struct mmc *mmc)
 {
 	int end;
@@ -198,7 +201,9 @@ unsigned long spl_mmc_get_uboot_raw_sector(struct mmc *mmc)
 
 	return end/mmc->read_bl_len;
 }
+#endif
 
+#ifdef CONFIG_SPL_NAND_SUPPORT
 uint32_t spl_nand_get_uboot_raw_page(void)
 {
 	int end;
@@ -210,7 +215,9 @@ uint32_t spl_nand_get_uboot_raw_page(void)
 
 	return end;
 }
+#endif
 
+#ifdef CONFIG_SPL_NOR_SUPPORT
 unsigned long  spl_nor_get_uboot_base(void)
 {
 	int end;
@@ -230,3 +237,4 @@ unsigned long  spl_nor_get_uboot_base(void)
 
 	return end;
 }
+#endif
