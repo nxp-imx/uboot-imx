@@ -333,6 +333,11 @@ err2:
 	cdns3_remove_roles(cdns);
 err1:
 	cdns3_disable_clks(cdns->index);
+
+	/* For u-boot, need to free the memory manually here. */
+	if (cdns != NULL)
+		free(cdns);
+
 	return ret;
 }
 
