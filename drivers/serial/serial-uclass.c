@@ -425,7 +425,7 @@ static int serial_post_probe(struct udevice *dev)
 		return 0;
 	memset(&sdev, '\0', sizeof(sdev));
 
-	strncpy(sdev.name, dev->name, sizeof(sdev.name));
+	strncpy(sdev.name, dev->name, sizeof(sdev.name) - 1);
 	sdev.flags = DEV_FLAGS_OUTPUT | DEV_FLAGS_INPUT | DEV_FLAGS_DM;
 	sdev.priv = dev;
 	sdev.putc = serial_stub_putc;
