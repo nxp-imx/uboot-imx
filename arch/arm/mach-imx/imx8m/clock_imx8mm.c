@@ -612,16 +612,6 @@ int clock_init()
 {
 	uint32_t val_cfg0;
 
-	/* Configure ARM at 1GHz */
-	clock_set_target_val(ARM_A53_CLK_ROOT, CLK_ROOT_ON | \
-			     CLK_ROOT_SOURCE_SEL(0));
-
-	intpll_configure(ANATOP_ARM_PLL, INTPLL_OUT_1200M);
-
-	clock_set_target_val(ARM_A53_CLK_ROOT, CLK_ROOT_ON | \
-			     CLK_ROOT_SOURCE_SEL(1) | \
-			     CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1));
-
 	/*
 	 * According to ANAMIX SPEC
 	 * sys pll1 fixed at 800MHz
@@ -643,6 +633,16 @@ int clock_init()
 		INTPLL_DIV8_CLKE_MASK | INTPLL_DIV10_CLKE_MASK |
 		INTPLL_DIV20_CLKE_MASK;
 	writel(val_cfg0, SYS_PLL2_GNRL_CTL);
+
+	/* Configure ARM at 1.2GHz */
+	clock_set_target_val(ARM_A53_CLK_ROOT, CLK_ROOT_ON | \
+			     CLK_ROOT_SOURCE_SEL(2));
+
+	intpll_configure(ANATOP_ARM_PLL, INTPLL_OUT_1200M);
+
+	clock_set_target_val(ARM_A53_CLK_ROOT, CLK_ROOT_ON | \
+			     CLK_ROOT_SOURCE_SEL(1) | \
+			     CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1));
 
 	intpll_configure(ANATOP_SYSTEM_PLL3, INTPLL_OUT_750M);
 	clock_set_target_val(NOC_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(2));
