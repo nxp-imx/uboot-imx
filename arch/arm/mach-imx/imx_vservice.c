@@ -66,7 +66,7 @@ static int imx_vservice_connect(struct imx_vservice_channel *node)
 	int ret = 0;
 	union imx_m4_msg msg;
 
-	unsigned long timeout = timer_get_us() + 10000000; /* 10s timeout */
+	unsigned long timeout = timer_get_us() + 2000000; /* 2s timeout */
 
 	for (;;) {
 		msg.format.seq = 0;
