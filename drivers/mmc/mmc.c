@@ -1948,13 +1948,9 @@ static int mmc_select_hs400es(struct mmc *mmc)
 {
 	int err;
 
-	err = mmc_set_card_speed(mmc, MMC_HS);
+	err = mmc_set_card_speed(mmc, MMC_HS, true);
 	if (err)
 		return err;
-
-	/* configure the bus mode (host) */
-	mmc_select_mode(mmc, MMC_HS);
-	mmc_set_clock(mmc, mmc->tran_speed, false);
 
 	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
 		EXT_CSD_BUS_WIDTH, EXT_CSD_BUS_WIDTH_8 |
