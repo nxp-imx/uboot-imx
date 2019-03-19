@@ -55,6 +55,7 @@
 #define PD_DMA_CAN_2                dma_flexcan2
 #define PD_DMA_PWM_0                dma_pwm0
 #define PD_DMA_LCD_0                dma_lcd0
+#define PD_DMA_ELCDIF_PLL           dma_elcdif_pll
 
 #define PD_HSIO                     hsio_power_domain
 #define PD_HSIO_PCIE_A              hsio_pcie0
@@ -92,6 +93,8 @@
 #define PD_LSIO_PWM_5               lsio_pwm5
 #define PD_LSIO_PWM_6               lsio_pwm6
 #define PD_LSIO_PWM_7               lsio_pwm7
+#define PD_LSIO_MU5A                lsio_mu5a
+#define PD_LSIO_MU6A                lsio_mu6a
 
 #define PD_CONN                     connectivity_power_domain
 #define PD_CONN_SDHC_0              conn_sdhc0
@@ -135,7 +138,7 @@
 #define PD_AUD_GPT_10               audio_gpt10
 #define PD_AUD_AMIX                 audio_amix
 #define PD_AUD_MQS_0                audio_mqs0
-#define PD_AUD_HIFI                 audio_hifi
+#define PD_AUD_DSP                  audio_dsp
 #define PD_AUD_OCRAM                audio_ocram
 #define PD_AUD_MCLK_OUT_0           audio_mclkout0
 #define PD_AUD_MCLK_OUT_1           audio_mclkout1
@@ -167,22 +170,39 @@
 
 #define PD_MIPI_CSI0                mipi_csi0_power_domain
 #define PD_MIPI_CSI0_PWM            mipi_csi0_pwm
-#define PD_MIPI_CSI0_I2C            mipi_csi0_i2c
+#define PD_MIPI_CSI0_I2C0           mipi_csi0_i2c0
 #define PD_MIPI_CSI1                mipi_csi1_power_domain
 #define PD_MIPI_CSI1_PWM_0          mipi_csi1_pwm
-#define PD_MIPI_CSI1_I2C_0          mipi_csi1_i2c
+#define PD_MIPI_CSI1_I2C0           mipi_csi1_i2c0
+
+#define PD_PARALLEL_CSI             parallel_csi_power_domain
+#define PD_PARALLEL_CSI_I2C         parallel_csi_i2c
+#define PD_PARALLEL_CSI_PWM         parallel_csi_pwm
+#define PD_PARALLEL_CSI_PLL         parallel_csi_pll
 
 #define PD_HDMI                     hdmi_power_domain
+#define PD_HDMI_PLL_0               hdmi_pll0
+#define PD_HDMI_PLL_1               hdmi_pll1
 #define PD_HDMI_I2C_0               hdmi_i2c
+#define PD_HDMI_I2S_0               hdmi_i2s
 #define PD_HDMI_PWM_0               hdmi_pwm
 #define PD_HDMI_GPIO_0              hdmi_gpio
 
 #define PD_HDMI_RX                  hdmi_rx_power_domain
+#define PD_HDMI_RX_BYPASS           hdmi_rx_bypass
 #define PD_HDMI_RX_I2C              hdmi_rx_i2c
 #define PD_HDMI_RX_PWM              hdmi_rx_pwm
 
 #define PD_CM40                     cm40_power_domain
 #define PD_CM40_I2C                 cm40_i2c
 #define PD_CM40_INTMUX              cm40_intmux
+#define PD_CM41                     cm41_power_domain
+#define PD_CM41_I2C                 cm41_i2c
+#define PD_CM41_INTMUX              cm41_intmux
+
+#define PD_CAAM                     caam_power_domain
+#define PD_CAAM_JR1                 caam_job_ring1
+#define PD_CAAM_JR2                 caam_job_ring2
+#define PD_CAAM_JR3                 caam_job_ring3
 
 #endif /* __DT_BINDINGS_IMX8_PD_H */
