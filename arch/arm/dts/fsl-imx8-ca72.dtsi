@@ -1,4 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright 2017 NXP
  *
  * This program is free software; you can redistribute it and/or
@@ -13,8 +15,7 @@
  */
 
 #include <dt-bindings/interrupt-controller/arm-gic.h>
-
-/{
+/ {
 	cpus {
 		#address-cells = <2>;
 		#size-cells = <0>;
@@ -40,60 +41,42 @@
 			};
 		};
 
-		/* We have 1 clusters having 4 Cortex-A53 cores */
-		A53_0: cpu@0 {
+		/* We have 2nd clusters having 2 Cortex-A72 cores */
+		A72_0: cpu@100 {
 			device_type = "cpu";
-			compatible = "arm,cortex-a53";
-			reg = <0x0 0x0>;
+			compatible = "arm,cortex-a72","arm,armv8";
+			reg = <0x0 0x100>;
 			enable-method = "psci";
-			next-level-cache = <&A53_L2>;
+			next-level-cache = <&A72_L2>;
 			cpu-idle-states = <&CPU_SLEEP>;
 		};
 
-		A53_1: cpu@1 {
+		A72_1: cpu@101 {
 			device_type = "cpu";
-			compatible = "arm,cortex-a53";
-			reg = <0x0 0x1>;
+			compatible = "arm,cortex-a72","arm,armv8";
+			reg = <0x0 0x101>;
 			enable-method = "psci";
-			next-level-cache = <&A53_L2>;
+			next-level-cache = <&A72_L2>;
 			cpu-idle-states = <&CPU_SLEEP>;
 		};
 
-		A53_2: cpu@2 {
-			device_type = "cpu";
-			compatible = "arm,cortex-a53";
-			reg = <0x0 0x2>;
-			enable-method = "psci";
-			next-level-cache = <&A53_L2>;
-			cpu-idle-states = <&CPU_SLEEP>;
-		};
-
-		A53_3: cpu@3 {
-			device_type = "cpu";
-			compatible = "arm,cortex-a53";
-			reg = <0x0 0x3>;
-			enable-method = "psci";
-			next-level-cache = <&A53_L2>;
-			cpu-idle-states = <&CPU_SLEEP>;
-		};
-
-		A53_L2: l2-cache0 {
+		A72_L2: l2-cache1 {
 			compatible = "cache";
 		};
+	};
+
+	pmu {
+		compatible = "arm,armv8-pmuv3";
+		interrupts = <GIC_PPI 7
+			(GIC_CPU_MASK_SIMPLE(6) | IRQ_TYPE_LEVEL_HIGH)>;
+		interrupt-affinity = <&A72_0>, <&A72_1>;
 	};
 
 	psci {
 		compatible = "arm,psci-1.0";
 		method = "smc";
 		cpu_suspend   = <0xc4000001>;
-		cpu_off	      = <0xc4000002>;
-		cpu_on	      = <0xc4000003>;
+		cpu_off       = <0xc4000002>;
+		cpu_on        = <0xc4000003>;
 	};
-
-	pmu {
-                compatible = "arm,armv8-pmuv3";
-                interrupts = <GIC_PPI 7
-                        (GIC_CPU_MASK_SIMPLE(6) | IRQ_TYPE_LEVEL_HIGH)>;
-                interrupt-affinity = <&A53_0>, <&A53_1>, <&A53_2>, <&A53_3>;
-        };
 };
