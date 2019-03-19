@@ -16,7 +16,7 @@
 #include "fsl-imx8dxp.dtsi"
 
 / {
-	model = "Freescale i.MX8QXP";
+	model = "NXP i.MX8QXP";
 	compatible = "fsl,imx8qxp";
 
 	cpus {
