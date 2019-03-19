@@ -6,6 +6,23 @@
 #include "fsl-imx8dx.dtsi"
 
 / {
-	model = "Freescale i.MX8DXP";
+	model = "NXP i.MX8DXP";
 	compatible = "fsl,imx8dxp", "fsl,imx8qxp";
+	
+	vpu_decoder: vpu_decoder@2c000000 {
+		compatible = "nxp,imx8qm-b0-vpudec", "nxp,imx8qxp-b0-vpudec";
+		boot-region = <&decoder_boot>;
+		rpc-region = <&decoder_rpc>;
+		reg = <0x0 0x2c000000 0x0 0x1000000>;
+		reg-names = "vpu_regs";
+		clocks = <&clk IMX8QXP_VPU_DEC_CLK>;
+		clock-names = "vpu_clk";
+		assigned-clocks = <&clk IMX8QXP_VPU_DEC_CLK>;
+		power-domains = <&pd_vpu_dec>;
+		status = "disabled";
+	};
+};
+
+&gpu_3d0 {
+	assigned-clock-rates = <700000000>, <850000000>;
 };
