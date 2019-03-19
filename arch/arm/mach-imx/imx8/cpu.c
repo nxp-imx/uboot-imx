@@ -21,6 +21,7 @@
 #include <asm/arch-imx/cpu.h>
 #include <asm/armv8/cpu.h>
 #include <asm/armv8/mmu.h>
+#include <asm/setup.h>
 #include <asm/mach-imx/boot_mode.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -385,6 +386,39 @@ enum boot_device get_boot_device(void)
 
 	return boot_dev;
 }
+
+bool is_usb_boot(void)
+{
+	return get_boot_device() == USB_BOOT;
+}
+
+#ifdef CONFIG_SERIAL_TAG
+#define FUSE_UNIQUE_ID_WORD0 16
+#define FUSE_UNIQUE_ID_WORD1 17
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+	sc_err_t err;
+	uint32_t val1 = 0, val2 = 0;
+	uint32_t word1, word2;
+
+	word1 = FUSE_UNIQUE_ID_WORD0;
+	word2 = FUSE_UNIQUE_ID_WORD1;
+
+	err = sc_misc_otp_fuse_read(-1, word1, &val1);
+	if (err != SC_ERR_NONE) {
+		printf("%s fuse %d read error: %d\n", __func__,word1, err);
+		return;
+	}
+
+	err = sc_misc_otp_fuse_read(-1, word2, &val2);
+	if (err != SC_ERR_NONE) {
+		printf("%s fuse %d read error: %d\n", __func__, word2, err);
+		return;
+	}
+	serialnr->low = val1;
+	serialnr->high = val2;
+}
+#endif /*CONFIG_SERIAL_TAG*/
 
 #ifdef CONFIG_ENV_IS_IN_MMC
 __weak int board_mmc_get_env_dev(int devno)
@@ -760,4 +794,3 @@ u32 get_cpu_rev(void)
 
 	return (id << 12) | rev;
 }
-
