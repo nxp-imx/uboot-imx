@@ -19,6 +19,7 @@
 #include <asm/arch-imx/cpu.h>
 #include <asm/armv8/cpu.h>
 #include <asm/armv8/mmu.h>
+#include <asm/setup.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <linux/libfdt.h>
 #include <fdt_support.h>
@@ -492,6 +493,39 @@ enum boot_device get_boot_device(void)
 
 	return boot_dev;
 }
+
+bool is_usb_boot(void)
+{
+	return get_boot_device() == USB_BOOT;
+}
+
+#ifdef CONFIG_SERIAL_TAG
+#define FUSE_UNIQUE_ID_WORD0 16
+#define FUSE_UNIQUE_ID_WORD1 17
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+	sc_err_t err;
+	uint32_t val1 = 0, val2 = 0;
+	uint32_t word1, word2;
+
+	word1 = FUSE_UNIQUE_ID_WORD0;
+	word2 = FUSE_UNIQUE_ID_WORD1;
+
+	err = sc_misc_otp_fuse_read(-1, word1, &val1);
+	if (err != SC_ERR_NONE) {
+		printf("%s fuse %d read error: %d\n", __func__,word1, err);
+		return;
+	}
+
+	err = sc_misc_otp_fuse_read(-1, word2, &val2);
+	if (err != SC_ERR_NONE) {
+		printf("%s fuse %d read error: %d\n", __func__, word2, err);
+		return;
+	}
+	serialnr->low = val1;
+	serialnr->high = val2;
+}
+#endif /*CONFIG_SERIAL_TAG*/
 
 #ifdef CONFIG_ENV_IS_IN_MMC
 __weak int board_mmc_get_env_dev(int devno)
@@ -1049,10 +1083,17 @@ u64 get_page_table_size(void)
 }
 #endif
 
+#if defined(CONFIG_IMX8QM)
+#define FUSE_MAC0_WORD0 452
+#define FUSE_MAC0_WORD1 453
+#define FUSE_MAC1_WORD0 454
+#define FUSE_MAC1_WORD1 455
+#elif defined(CONFIG_IMX8QXP)
 #define FUSE_MAC0_WORD0 708
 #define FUSE_MAC0_WORD1 709
 #define FUSE_MAC1_WORD0 710
 #define FUSE_MAC1_WORD1 711
+#endif
 
 void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 {
@@ -1115,6 +1156,8 @@ struct cpu_imx_platdata {
 const char *get_imx8_type(u32 imxtype)
 {
 	switch (imxtype) {
+	case MXC_CPU_IMX8QM:
+		return "QM";	/* i.MX8 Quad MAX */
 	case MXC_CPU_IMX8QXP:
 	case MXC_CPU_IMX8QXP_A0:
 		return "QXP";
