@@ -364,7 +364,12 @@ enum boot_device get_boot_device(void)
 	return boot_dev;
 }
 
-#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+bool is_usb_boot(void)
+{
+	return get_boot_device() == USB_BOOT;
+}
+
+#if defined(CONFIG_SERIAL_TAG) || defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
 #define FUSE_UNIQUE_ID_WORD0 16
 #define FUSE_UNIQUE_ID_WORD1 17
 void get_board_serial(struct tag_serialnr *serialnr)
@@ -849,4 +854,29 @@ bool m4_parts_booted(void)
 	}
 
 	return false;
+}
+
+void disconnect_from_pc(void)
+{
+	int ret;
+	struct power_domain pd;
+
+	if (!power_domain_lookup_name("conn_usb0", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret) {
+			printf("conn_usb0 Power up failed! (error = %d)\n", ret);
+			return;
+		}
+
+		writel(0x0, USB_BASE_ADDR + 0x140);
+
+		ret = power_domain_off(&pd);
+		if (ret) {
+			printf("conn_usb0 Power off failed! (error = %d)\n", ret);
+			return;
+		}
+	} else {
+		printf("conn_usb0 finding failed!\n");
+		return;
+	}
 }
