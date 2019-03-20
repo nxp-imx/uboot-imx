@@ -559,4 +559,6 @@
 #define SC_R_ATTESTATION                545
 #define SC_R_LAST                       546
 
+#define SC_R_NONE                       0xFFF0
+
 #endif /* DT_BINDINGS_RSCRC_IMX_H */
