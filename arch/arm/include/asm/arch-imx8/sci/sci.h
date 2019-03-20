@@ -74,6 +74,8 @@ int sc_pm_cpu_start(sc_ipc_t ipc, sc_rsrc_t resource, sc_bool_t enable,
 			sc_faddr_t address);
 
 /* MISC API */
+int sc_misc_set_control(sc_ipc_t ipc, sc_rsrc_t resource,
+			sc_ctrl_t ctrl, u32 val);
 int sc_misc_get_control(sc_ipc_t ipc, sc_rsrc_t resource, sc_ctrl_t ctrl,
 			u32 *val);
 void sc_misc_get_boot_dev(sc_ipc_t ipc, sc_rsrc_t *boot_dev);
