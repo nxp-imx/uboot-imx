@@ -27,4 +27,6 @@
 
 typedef u8 sc_misc_boot_status_t;
 
+typedef u8 sc_misc_temp_t;
+
 #endif /* SC_MISC_API_H */
