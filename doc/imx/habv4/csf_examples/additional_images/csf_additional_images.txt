@@ -29,6 +29,6 @@
     # Key slot index used to authenticate the image data
     Verification index = 2
     # Authenticate Start Address, Offset, Length and file
-    Blocks = 0x80800000 0x00000000 0x80EEA020 "zImage", \
-	     0x83800000 0x00000000 0x8380B927 "imx7d-sdb.dtb", \
-	     0x84000000 0x00000000 0x840425B8 "uTee-7dsdb"
+    Blocks = 0x80800000 0x00000000 0x006EA000 "zImage", \
+	     0x83800000 0x00000000 0x0000B927 "imx7d-sdb.dtb", \
+	     0x84000000 0x00000000 0x000425B8 "uTee-7dsdb"
