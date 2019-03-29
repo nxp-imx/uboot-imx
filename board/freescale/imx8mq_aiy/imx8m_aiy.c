@@ -85,13 +85,9 @@ int board_postclk_init(void)
 #endif
 
 /* layout of baseboard id */
-#define IMX8MQ_GPIO3_IO25 IMX_GPIO_NR(3, 25)  //board_id[6]:6
-#define IMX8MQ_GPIO3_IO19 IMX_GPIO_NR(3, 19)  //board_id[6]:5
-#define IMX8MQ_GPIO3_IO20 IMX_GPIO_NR(3, 20)  //board_id[6]:4
-#define IMX8MQ_GPIO3_IO24 IMX_GPIO_NR(3, 24)  //board_id[6]:3
-#define IMX8MQ_GPIO3_IO23 IMX_GPIO_NR(3, 23)  //board_id[6]:2
-#define IMX8MQ_GPIO3_IO22 IMX_GPIO_NR(3, 22)  //board_id[6]:1
-#define IMX8MQ_GPIO3_IO21 IMX_GPIO_NR(3, 21)  //board_id[6]:0
+#define IMX8MQ_GPIO3_IO24 IMX_GPIO_NR(3, 24)  //board_id[2]:2
+#define IMX8MQ_GPIO3_IO22 IMX_GPIO_NR(3, 22)  //board_id[2]:1
+#define IMX8MQ_GPIO3_IO19 IMX_GPIO_NR(3, 19)  //board_id[2]:0
 
 /* GPIO port description */
 static unsigned long imx8m_gpio_ports[] = {
@@ -144,26 +140,21 @@ int get_imx8m_baseboard_id(void)
 {
 	int  i = 0, value = 0;
 	int baseboard_id;
-	int pin[7];
+	int pin[3];
 
 	/* initialize the pin array */
-	pin[0] = IMX8MQ_GPIO3_IO21;
+	pin[0] = IMX8MQ_GPIO3_IO19;
 	pin[1] = IMX8MQ_GPIO3_IO22;
-	pin[2] = IMX8MQ_GPIO3_IO23;
-	pin[3] = IMX8MQ_GPIO3_IO24;
-	pin[4] = IMX8MQ_GPIO3_IO20;
-	pin[5] = IMX8MQ_GPIO3_IO19;
-	pin[6] = IMX8MQ_GPIO3_IO25;
+	pin[2] = IMX8MQ_GPIO3_IO24;
 
 	/* Set gpio direction as input and get the input value */
 	baseboard_id = 0;
-	for (i = 0; i < 7; i++) {
+	for (i = 0; i < 3; i++) {
 		gpio_direction_input_legacy(pin[i]);
 		if ((value = gpio_get_value_legacy(pin[i])) < 0) {
 			printf("Error! Read gpio port: %d failed!\n", pin[i]);
 			return -1;
-		}
-		else
+		} else
 			baseboard_id |= ((value & 0x01) << i);
 	}
 
@@ -176,8 +167,8 @@ int get_tee_load(ulong *load)
 
 	board_id = get_imx8m_baseboard_id();
 	/* load TEE to the last 32M of DDR */
-	if ((board_id == ENTERPRISE_MICRON_1G) ||
-			(board_id == ENTERPRISE_HYNIX_1G)) {
+	if ((board_id == AIY_MICRON_1G) ||
+			(board_id == AIY_HYNIX_1G)) {
 		/* for 1G DDR board */
 		*load = (ulong)TEE_LOAD_ADDR_1G;
 	} else {
@@ -197,8 +188,8 @@ int dram_init(void)
 	 * type by board id.
 	 */
 	baseboard_id = get_imx8m_baseboard_id();
-	if ((baseboard_id == ENTERPRISE_MICRON_1G) ||
-			(baseboard_id == ENTERPRISE_HYNIX_1G)) {
+	if ((baseboard_id == AIY_MICRON_1G) ||
+			(baseboard_id == AIY_HYNIX_1G)) {
 		/* 1G DDR size */
 		ddr_size = 0x40000000;
 	} else{
@@ -377,8 +368,8 @@ int board_late_init(void)
 #endif
 	int baseboard_id;
 	baseboard_id = get_imx8m_baseboard_id();
-	if ((baseboard_id == ENTERPRISE_MICRON_1G) ||
-			(baseboard_id == ENTERPRISE_HYNIX_1G)) {
+	if ((baseboard_id == AIY_MICRON_1G) ||
+			(baseboard_id == AIY_HYNIX_1G)) {
 		/* 1G DDR size */
 		env_set("bootargs_ram_capacity", "cma=296M galcore.contiguousSize=8388608");
 	} else {

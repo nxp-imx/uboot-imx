@@ -24,12 +24,20 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-extern struct dram_timing_info dram_timing_3g;
+extern struct dram_timing_info dram_timing_micron_3g;
+extern struct dram_timing_info dram_timing_1g;
+extern int get_imx8m_baseboard_id(void);
 
 void spl_dram_init(void)
 {
+	int board_id = get_imx8m_baseboard_id();
+
 	/* ddr init */
-	ddr_init(&dram_timing_3g);
+	if ((board_id == AIY_MICRON_1G) || (board_id == AIY_HYNIX_1G))
+		ddr_init(&dram_timing_1g);
+	else
+		ddr_init(&dram_timing_micron_3g);
+
 }
 
 #define I2C_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE)

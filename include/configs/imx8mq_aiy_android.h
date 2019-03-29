@@ -53,11 +53,9 @@
 
 #define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
 
-#define ENTERPRISE_MICRON_1G   0x5c
-#define ENTERPRISE_HYNIX_1G    0x56
-#define ENTERPRISE_MIRCONB_3G  0x40
-#define WIBO_3G                0x00
-#define IMX8M_REF_3G           0x00
+#define AIY_MICRON_3G          0x1
+#define AIY_MICRON_1G          0x5
+#define AIY_HYNIX_1G           0x3
 
 #define TEE_LOAD_ADDR_1G 0x7e000000
 #define TEE_LOAD_ADDR_3G 0xfe000000
