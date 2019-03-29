@@ -121,12 +121,12 @@
  */
 #define JAILHOUSE_ENV \
 	"jh_clk= \0 " \
-	"jh_mmcboot=setenv fdt_file fsl-imx8mm-evk-root.dtb;" \
+	"jh_mmcboot=mw 0x303d0518 0xff; setenv fdt_file fsl-imx8mm-evk-root.dtb;" \
 		"setenv jh_clk clk_ignore_unused; " \
 			   "if run loadimage; then " \
 				   "run mmcboot; " \
 			   "else run jh_netboot; fi; \0" \
-	"jh_netboot=setenv fdt_file fsl-imx8mm-evk-root.dtb; setenv jh_clk clk_ignore_unused; run netboot; \0 "
+	"jh_netboot=mw 0x303d0518 0xff; setenv fdt_file fsl-imx8mm-evk-root.dtb; setenv jh_clk clk_ignore_unused; run netboot; \0 "
 
 #ifdef CONFIG_NAND_BOOT
 #define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs) "
