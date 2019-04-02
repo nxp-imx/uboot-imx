@@ -420,8 +420,6 @@
 #endif
 
 #define CONFIG_OF_SYSTEM_SETUP
-#define BOOTAUX_RESERVED_MEM_BASE 0x88000000
-#define BOOTAUX_RESERVED_MEM_SIZE 0x08000000 /* Reserve from second 128MB */
 
 #if defined(CONFIG_ANDROID_SUPPORT)
 #include "imx8qxp_mek_android.h"
