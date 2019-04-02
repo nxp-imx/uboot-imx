@@ -43,6 +43,20 @@ config IMX_BOOTAUX
 	help
 	  bootaux [addr] to boot auxiliary core.
 
+config BOOTAUX_RESERVED_MEM_BASE
+	hex "Define the reserved memory base address"
+	default 0x00
+	depends on ARCH_IMX8
+	help
+	  reserve DDR memory for bootaux
+
+config BOOTAUX_RESERVED_MEM_SIZE
+	hex "Define the reserved memory size"
+	default 0x00
+	depends on ARCH_IMX8
+	help
+	  This memory will be reserved by system and linux cannot access.
+
 config IMX_VSERVICE_SHARED_BUFFER
 	hex "Define the buffer address used for virtual service"
 	depends on IMX_VSERVICE
