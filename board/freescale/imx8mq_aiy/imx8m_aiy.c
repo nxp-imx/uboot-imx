@@ -421,7 +421,7 @@ int board_late_init(void)
 	if ((baseboard_id == AIY_MICRON_1G) ||
 			(baseboard_id == AIY_HYNIX_1G)) {
 		/* 1G DDR size */
-		env_set("bootargs_ram_capacity", "cma=296M galcore.contiguousSize=8388608");
+		env_set("bootargs_ram_capacity", "cma=296M galcore.contiguousSize=33554432");
 	} else {
 		/* 3G DDR size */
 		env_set("bootargs_ram_capacity", "cma=384M");
