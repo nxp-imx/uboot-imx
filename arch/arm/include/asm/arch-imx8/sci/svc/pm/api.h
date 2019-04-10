@@ -35,6 +35,13 @@
 #define SC_PM_CLK_MODE_AUTOGATE_HW	4U /* Clock is in HW autogate mode */
 #define SC_PM_CLK_MODE_AUTOGATE_SW_HW	5U /* Clock is in SW-HW autogate mode */
 
+/* Defines for sc_pm_clk_parent_t */
+#define SC_PM_PARENT_XTAL              0U    /*!< Parent is XTAL. */
+#define SC_PM_PARENT_PLL0              1U    /*!< Parent is PLL0 */
+#define SC_PM_PARENT_PLL1              2U    /*!< Parent is PLL1 or PLL0/2 */
+#define SC_PM_PARENT_PLL2              3U    /*!< Parent in PLL2 or PLL0/4 */
+#define SC_PM_PARENT_BYPS              4U    /*!< Parent is a bypass clock. */
+
 typedef u8 sc_pm_power_mode_t;
 typedef u8 sc_pm_clk_t;
 typedef u8 sc_pm_clk_mode_t;

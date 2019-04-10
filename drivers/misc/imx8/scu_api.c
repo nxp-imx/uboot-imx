@@ -95,6 +95,31 @@ int sc_pm_clock_enable(sc_ipc_t ipc, sc_rsrc_t resource, sc_pm_clk_t clk,
 	return ret;
 }
 
+int sc_pm_set_clock_parent(sc_ipc_t ipc, sc_rsrc_t resource,
+    sc_pm_clk_t clk, sc_pm_clk_parent_t parent)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	int size = sizeof(struct sc_rpc_msg_s);
+	struct sc_rpc_msg_s msg;
+	int ret;
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_PM);
+	RPC_FUNC(&msg) = (u8)(PM_FUNC_SET_CLOCK_PARENT);
+	RPC_U16(&msg, 0U) = (u16)(resource);
+	RPC_U8(&msg, 2U) = (u8)(clk);
+	RPC_U8(&msg, 3U) = (u8)(parent);
+	RPC_SIZE(&msg) = 2U;
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: resource:%d clk:%d: parent clk: %d, res:%d\n",
+		       __func__, resource, clk, parent, RPC_R8(&msg));
+
+	return ret;
+}
+
+
 int sc_pm_set_resource_power_mode(sc_ipc_t ipc, sc_rsrc_t resource,
 				  sc_pm_power_mode_t mode)
 {

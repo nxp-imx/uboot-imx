@@ -185,7 +185,18 @@ typedef u64 sc_ipc_t;
 #define SC_C_RST0                       43U
 #define SC_C_RST1                       44U
 #define SC_C_SEL0                       45U
-#define SC_C_LAST                       46U
+#define SC_C_CALIB0                     46U
+#define SC_C_CALIB1                     47U
+#define SC_C_CALIB2                     48U
+#define SC_C_IPG_DEBUG                  49U
+#define SC_C_IPG_DOZE                   50U
+#define SC_C_IPG_WAIT                   51U
+#define SC_C_IPG_STOP                   52U
+#define SC_C_IPG_STOP_MODE              53U
+#define SC_C_IPG_STOP_ACK               54U
+#define SC_C_SYNC_CTRL                  55U
+#define SC_C_LAST                       56U
+
 
 #define SC_P_ALL        ((sc_pad_t)UINT16_MAX)   /* All pads */
 
