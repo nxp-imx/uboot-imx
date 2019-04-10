@@ -895,27 +895,50 @@ int fspi_xfer(struct fsl_fspi_priv *priv, unsigned int bitlen,
 {
 	u32 bytes = DIV_ROUND_UP(bitlen, 8);
 	static u32 wr_sfaddr;
-	u32 txbuf, addr;
+	u32 txbuf = 0;
 
 	if (dout) {
 		if (flags & SPI_XFER_BEGIN) {
 			priv->cur_seqid = *(u8 *)dout;
-			if (priv->cur_seqid == FSPI_CMD_FAST_READ_4B ||
-				priv->cur_seqid == FSPI_CMD_BE_4K_4B ||
-				priv->cur_seqid == FSPI_CMD_SE_4B ||
-				priv->cur_seqid == FSPI_CMD_PP_4B) {
+			if (bytes > 1) {
+				int i, addr_bytes;
+
+				if (FSL_FSPI_FLASH_SIZE  <= SZ_16M)
+					addr_bytes = 3;
+				else
+					addr_bytes = 4;
+
 				dout = (u8 *)dout + 1;
-				memcpy(&txbuf, dout, 4);
-				addr = swab32(txbuf) & OFFSET_BITS_MASK_4B;
-			} else {
-				memcpy(&txbuf, dout, 4);
-				addr = swab32(txbuf) & OFFSET_BITS_MASK;
+				txbuf = *(u8 *)dout;
+				for (i = 1; i < addr_bytes; i++) {
+					txbuf <<= 8;
+					txbuf |= *(((u8 *)dout) + i);
+				}
+
+				debug("seqid 0x%x addr 0x%x\n", priv->cur_seqid, txbuf);
 			}
 		}
 
 		if (flags == SPI_XFER_END) {
 			if (priv->cur_seqid == FSPI_CMD_WR_EVCR) {
 				fspi_op_wrevcr(priv, (u8 *)dout, bytes);
+				return 0;
+			} else if ((priv->cur_seqid == FSPI_CMD_SE) ||
+				(priv->cur_seqid == FSPI_CMD_BE_4K) ||
+				(priv->cur_seqid == FSPI_CMD_SE_4B) ||
+				(priv->cur_seqid == FSPI_CMD_BE_4K_4B)) {
+				int i;
+				txbuf = *(u8 *)dout;
+				for (i = 1; i < bytes; i++) {
+					txbuf <<= 8;
+					txbuf |= *(((u8 *)dout) + i);
+				}
+
+				priv->sf_addr = txbuf;
+				fspi_op_erase(priv);
+#ifdef CONFIG_SYS_FSL_FSPI_AHB
+				fspi_ahb_invalid(priv);
+#endif
 				return 0;
 			}
 			priv->sf_addr = wr_sfaddr;
@@ -926,16 +949,10 @@ int fspi_xfer(struct fsl_fspi_priv *priv, unsigned int bitlen,
 		if (priv->cur_seqid == FSPI_CMD_QUAD_OUTPUT ||
 		    priv->cur_seqid == FSPI_CMD_FAST_READ ||
 		    priv->cur_seqid == FSPI_CMD_FAST_READ_4B) {
-			priv->sf_addr = addr;
-		} else if ((priv->cur_seqid == FSPI_CMD_SE) ||
-			   (priv->cur_seqid == FSPI_CMD_BE_4K) ||
-			   (priv->cur_seqid == FSPI_CMD_SE_4B) ||
-			   (priv->cur_seqid == FSPI_CMD_BE_4K_4B)) {
-			priv->sf_addr = addr;
-			fspi_op_erase(priv);
+			priv->sf_addr = txbuf;
 		} else if (priv->cur_seqid == FSPI_CMD_PP ||
 			priv->cur_seqid == FSPI_CMD_PP_4B) {
-			wr_sfaddr = addr;
+			wr_sfaddr = txbuf;
 		} else if (priv->cur_seqid == FSPI_CMD_WR_EVCR) {
 			wr_sfaddr = 0;
 		} else if ((priv->cur_seqid == FSPI_CMD_BRWR) ||
@@ -1351,6 +1368,7 @@ static const struct dm_spi_ops fsl_fspi_ops = {
 
 static const struct udevice_id fsl_fspi_ids[] = {
 	{ .compatible = "fsl,imx8qm-flexspi" },
+	{ .compatible = "fsl,imx8qxp-flexspi" },
 	{ }
 };
 
