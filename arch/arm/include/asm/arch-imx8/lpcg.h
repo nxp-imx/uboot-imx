@@ -15,11 +15,12 @@
 #error "No lpcg header"
 #endif
 
-void LPCG_ClockOff(u32 lpcg_addr, u8 clk);
-void LPCG_ClockOn(u32 lpcg_addr, u8 clk);
-void LPCG_ClockAutoGate(u32 lpcg_addr, u8 clk);
-void LPCG_AllClockOff(u32 lpcg_addr);
-void LPCG_AllClockOn(u32 lpcg_addr);
-void LPCG_AllClockAutoGate(u32 lpcg_addr);
+void lpcg_clock_off(u32 lpcg_addr, u8 clk);
+void lpcg_clock_on(u32 lpcg_addr, u8 clk);
+void lpcg_clock_autogate(u32 lpcg_addr, u8 clk);
+bool lpcg_is_clock_on(u32 lpcg_addr, u8 clk);
+void lpcg_all_clock_off(u32 lpcg_addr);
+void lpcg_all_clock_on(u32 lpcg_addr);
+void lpcg_all_clock_autogate(u32 lpcg_addr);
 
 #endif	/* __ASM_ARCH_IMX8_LPCG_H__ */
