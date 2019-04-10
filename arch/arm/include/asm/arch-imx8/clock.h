@@ -23,5 +23,13 @@ enum mxc_clock {
 };
 
 u32 mxc_get_clock(enum mxc_clock clk);
+u32 get_lpuart_clk(void);
+int enable_i2c_clk(unsigned char enable, unsigned i2c_num);
+u32 imx_get_i2cclk(unsigned i2c_num);
+void enable_usboh3_clk(unsigned char enable);
+u32 imx_get_fecclk(void);
+void init_clk_usdhc(u32 index);
+void init_clk_gpmi_nand(void);
+void init_clk_usb3(int index);
 
 #endif /* __ASM_ARCH_IMX8_CLOCK_H__ */
