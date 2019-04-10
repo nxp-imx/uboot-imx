@@ -264,6 +264,7 @@ struct fec_priv {
 	u32 interface;
 #endif
 	struct clk ipg_clk;
+	struct clk ahb_clk;
 	u32 clk_rate;
 };
 
