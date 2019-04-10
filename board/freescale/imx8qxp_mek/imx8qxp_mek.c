@@ -22,7 +22,7 @@
 #include <power-domain.h>
 #include "../common/tcpc.h"
 #include <cdns3-uboot.h>
-//#include <asm/arch/lpcg.h>
+#include <asm/arch/lpcg.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -71,6 +71,8 @@ int board_early_init_f(void)
 	ret = sc_pm_clock_enable(-1, SC_R_UART_0, 2, true, false);
 	if (ret)
 		return ret;
+
+	lpcg_all_clock_on(LPUART_0_LPCG);
 
 	setup_iomux_uart();
 
@@ -256,12 +258,12 @@ static void imx8qxp_hsio_initialize(void)
 			 printf("hsio_gpio Power up failed! (error = %d)\n", ret);
 	}
 
-	LPCG_AllClockOn(HSIO_PCIE_X1_LPCG);
-	LPCG_AllClockOn(HSIO_PHY_X1_LPCG);
-	LPCG_AllClockOn(HSIO_PHY_X1_CRR1_LPCG);
-	LPCG_AllClockOn(HSIO_PCIE_X1_CRR3_LPCG);
-	LPCG_AllClockOn(HSIO_MISC_LPCG);
-	LPCG_AllClockOn(HSIO_GPIO_LPCG);
+	lpcg_all_clock_on(HSIO_PCIE_X1_LPCG);
+	lpcg_all_clock_on(HSIO_PHY_X1_LPCG);
+	lpcg_all_clock_on(HSIO_PHY_X1_CRR1_LPCG);
+	lpcg_all_clock_on(HSIO_PCIE_X1_CRR3_LPCG);
+	lpcg_all_clock_on(HSIO_MISC_LPCG);
+	lpcg_all_clock_on(HSIO_GPIO_LPCG);
 
 	imx8_iomux_setup_multiple_pads(board_pcie_pins, ARRAY_SIZE(board_pcie_pins));
 }
