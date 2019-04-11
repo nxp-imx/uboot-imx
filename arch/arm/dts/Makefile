@@ -549,7 +549,12 @@ dtb-$(CONFIG_MX7) += imx7d-sdb.dtb \
 dtb-$(CONFIG_ARCH_MX7ULP) += imx7ulp-evk.dtb
 
 dtb-$(CONFIG_ARCH_IMX8) += fsl-imx8qxp-mek.dtb \
-	fsl-imx8qm-mek.dtb
+	fsl-imx8qm-mek.dtb \
+	fsl-imx8qm-ddr4-arm2.dtb \
+	fsl-imx8qm-lpddr4-arm2.dtb \
+	fsl-imx8qxp-lpddr4-arm2.dtb \
+	fsl-imx8qxp-17x17-val.dtb \
+	fsl-imx8dx-17x17-val.dtb
 
 dtb-$(CONFIG_ARCH_IMX8M) += fsl-imx8mq-evk.dtb
 

@@ -1,0 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2018-2019 NXP
+ *
+ */
+
+#include "fsl-imx8qxp-17x17-val.dts"
+
+/ {
+	model = "Freescale i.MX8DX 17x17 Validation board";
+};
