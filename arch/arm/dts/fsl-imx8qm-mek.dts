@@ -15,7 +15,7 @@
 /dts-v1/;
 
 #include "fsl-imx8qm.dtsi"
-#include "fsl-imx8qm-mek-u-boot.dtsi"
+#include "fsl-imx8qm-u-boot.dtsi"
 
 / {
 	model = "Freescale i.MX8QM MEK";
