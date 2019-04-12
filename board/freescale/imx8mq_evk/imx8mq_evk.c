@@ -70,7 +70,8 @@ static int setup_fec(void)
 		(struct iomuxc_gpr_base_regs *)IOMUXC_GPR_BASE_ADDR;
 
 	/* Use 125M anatop REF_CLK1 for ENET1, not from external */
-	clrsetbits_le32(&gpr->gpr[1], BIT(13) | BIT(17), 0);
+	clrsetbits_le32(&gpr->gpr[1],
+		IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL_MASK, 0);
 	return set_clk_enet(ENET_125MHZ);
 }
 
