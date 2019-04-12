@@ -130,8 +130,11 @@
 #define SNVS_LPLVDR			0x64
 #define SNVS_LPPGDR_INIT		0x41736166
 
+#define IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL_MASK 0x2000u
+#define IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL_SHIFT 13
+
 struct iomuxc_gpr_base_regs {
-	u32 gpr[47];
+	u32 gpr[48];
 };
 
 struct ocotp_regs {
