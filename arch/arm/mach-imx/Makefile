@@ -190,7 +190,7 @@ spl/u-boot-nand-spl.imx: SPL FORCE
 
 targets += $(addprefix ../../../,$(IMX_CONFIG) SPL u-boot.uim spl/u-boot-nand-spl.imx)
 
-obj-$(CONFIG_ARM64) += sip.o
+obj-$(CONFIG_ARM64) += lowlevel.o sip.o
 
 obj-$(CONFIG_MX5) += mx5/
 obj-$(CONFIG_MX6) += mx6/
