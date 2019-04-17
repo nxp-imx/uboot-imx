@@ -55,6 +55,15 @@ int board_early_init_f(void)
 	return 0;
 }
 
+#ifdef CONFIG_FSL_QSPI
+int board_qspi_init(void)
+{
+	set_clk_qspi();
+
+	return 0;
+}
+#endif
+
 int dram_init(void)
 {
 	/* rom_pointer[1] contains the size of TEE occupies */
@@ -229,6 +238,10 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 
 int board_init(void)
 {
+#ifdef CONFIG_FSL_QSPI
+	board_qspi_init();
+#endif
+
 #ifdef CONFIG_FEC_MXC
 	setup_fec();
 #endif
