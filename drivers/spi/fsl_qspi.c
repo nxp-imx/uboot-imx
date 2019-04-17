@@ -783,6 +783,19 @@ int qspi_xfer(struct fsl_qspi_priv *priv, unsigned int bitlen,
 		}
 
 		if (flags == SPI_XFER_END) {
+			if ((priv->cur_seqid == QSPI_CMD_SE) ||
+				(priv->cur_seqid == QSPI_CMD_BE_4K)) {
+				int i;
+				txbuf = *(u8 *)dout;
+				for (i = 1; i < bytes; i++) {
+					txbuf <<= 8;
+					txbuf |= *(((u8 *)dout) + i);
+				}
+
+				priv->sf_addr = txbuf;
+				qspi_op_erase(priv);
+				return 0;
+			}
 			priv->sf_addr = wr_sfaddr;
 			qspi_op_write(priv, (u8 *)dout, bytes);
 			return 0;
@@ -791,10 +804,6 @@ int qspi_xfer(struct fsl_qspi_priv *priv, unsigned int bitlen,
 		if (priv->cur_seqid == QSPI_CMD_FAST_READ ||
 		    priv->cur_seqid == QSPI_CMD_RDAR) {
 			priv->sf_addr = swab32(txbuf) & OFFSET_BITS_MASK;
-		} else if ((priv->cur_seqid == QSPI_CMD_SE) ||
-			   (priv->cur_seqid == QSPI_CMD_BE_4K)) {
-			priv->sf_addr = swab32(txbuf) & OFFSET_BITS_MASK;
-			qspi_op_erase(priv);
 		} else if (priv->cur_seqid == QSPI_CMD_PP ||
 			   priv->cur_seqid == QSPI_CMD_WRAR) {
 			wr_sfaddr = swab32(txbuf) & OFFSET_BITS_MASK;
