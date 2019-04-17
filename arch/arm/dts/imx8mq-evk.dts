@@ -330,12 +330,15 @@
 	pinctrl-0 = <&pinctrl_qspi>;
 	status = "okay";
 
-	n25q256a: flash@0 {
+	flash0: n25q256a@0 {
 		reg = <0>;
 		#address-cells = <1>;
 		#size-cells = <1>;
-		compatible = "micron,n25q256a", "jedec,spi-nor";
+		compatible = "jedec,spi-nor";
 		spi-max-frequency = <29000000>;
+		spi-tx-bus-width = <4>;
+		spi-rx-bus-width = <4>;
+		spi-nor,ddr-quad-read-dummy = <6>;
 	};
 };
 
