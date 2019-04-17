@@ -12,6 +12,7 @@
 #include <dm.h>
 #include <errno.h>
 #include <watchdog.h>
+#include <clk.h>
 #include "fsl_fspi.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -1183,8 +1184,25 @@ static int fsl_fspi_probe(struct udevice *bus)
 	struct fsl_fspi_priv *priv = dev_get_priv(bus);
 	struct dm_spi_bus *dm_spi_bus;
 
-	init_clk_fspi(bus->seq);
+	if (IS_ENABLED(CONFIG_CLK)) {
+		/* Assigned clock already set clock */
+		struct clk fspi_clk;
+		int ret;
 
+		ret = clk_get_by_name(bus, "fspi", &fspi_clk);
+		if (ret < 0) {
+			printf("Can't get fspi clk: %d\n", ret);
+			return ret;
+		}
+
+		ret = clk_enable(&fspi_clk);
+		if (ret < 0) {
+			printf("Can't enable fspi clk: %d\n", ret);
+			return ret;
+		}
+	} else {
+		init_clk_fspi(bus->seq);
+	}
 	dm_spi_bus = bus->uclass_priv;
 
 	dm_spi_bus->max_hz = plat->speed_hz;
