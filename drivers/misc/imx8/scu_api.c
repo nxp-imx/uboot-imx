@@ -389,6 +389,66 @@ sc_bool_t sc_rm_is_memreg_owned(sc_ipc_t ipc, sc_rm_mr_t mr)
 	return (sc_bool_t)result;
 }
 
+int sc_rm_find_memreg(sc_ipc_t ipc, sc_rm_mr_t *mr,
+	sc_faddr_t addr_start, sc_faddr_t addr_end)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	int size = sizeof(struct sc_rpc_msg_s);
+	struct sc_rpc_msg_s msg;
+	int ret;
+
+	if (!dev)
+		hang();
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_RM);
+	RPC_FUNC(&msg) = (u8)(RM_FUNC_FIND_MEMREG);
+	RPC_U32(&msg, 0U) = (u32)(addr_start >> 32ULL);
+	RPC_U32(&msg, 4U) = (u32)(addr_start);
+	RPC_U32(&msg, 8U) = (u32)(addr_end >> 32ULL);
+	RPC_U32(&msg, 12U) = (u32)(addr_end);
+	RPC_SIZE(&msg) = 5U;
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: start:0x%llx, end:0x%llx res:%d\n", __func__, addr_start, addr_end, RPC_R8(&msg));
+
+	if (mr != NULL)
+	{
+	    *mr = RPC_U8(&msg, 0U);
+	}
+
+	return ret;
+}
+
+int sc_rm_set_memreg_permissions(sc_ipc_t ipc, sc_rm_mr_t mr,
+	sc_rm_pt_t pt, sc_rm_perm_t perm)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	int size = sizeof(struct sc_rpc_msg_s);
+	struct sc_rpc_msg_s msg;
+	int ret;
+
+	if (!dev)
+		hang();
+
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_RM);
+	RPC_FUNC(&msg) = (u8)(RM_FUNC_SET_MEMREG_PERMISSIONS);
+	RPC_U8(&msg, 0U) = (u8)(mr);
+	RPC_U8(&msg, 1U) = (u8)(pt);
+	RPC_U8(&msg, 2U) = (u8)(perm);
+	RPC_SIZE(&msg) = 2U;
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: mr:%u, pt:%u, perm:%u, res:%d\n", __func__,
+			mr, pt, perm, RPC_R8(&msg));
+
+	return ret;
+}
+
 int sc_rm_get_memreg_info(sc_ipc_t ipc, sc_rm_mr_t mr, sc_faddr_t *addr_start,
 			  sc_faddr_t *addr_end)
 {
@@ -526,6 +586,89 @@ int sc_pm_get_resource_power_mode(sc_ipc_t ipc, sc_rsrc_t resource,
 	return ret;
 }
 
+int sc_seco_authenticate(sc_ipc_t ipc,
+	sc_seco_auth_cmd_t cmd, sc_faddr_t addr)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	struct sc_rpc_msg_s msg;
+	int size = sizeof(struct sc_rpc_msg_s);
+	int ret;
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_SECO);
+	RPC_FUNC(&msg) = (u8)(SECO_FUNC_AUTHENTICATE);
+	RPC_U32(&msg, 0U) = (u32)(addr >> 32ULL);
+	RPC_U32(&msg, 4U) = (u32)(addr);
+	RPC_U8(&msg, 8U) = (u8)(cmd);
+	RPC_SIZE(&msg) = 4U;
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: res:%d\n", __func__, RPC_R8(&msg));
+
+	return ret;
+}
+
+int sc_seco_forward_lifecycle(sc_ipc_t ipc, uint32_t change)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	struct sc_rpc_msg_s msg;
+	int size = sizeof(struct sc_rpc_msg_s);
+	int ret;
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_SECO);
+	RPC_FUNC(&msg) = (u8)(SECO_FUNC_FORWARD_LIFECYCLE);
+	RPC_U32(&msg, 0U) = (u32)(change);
+	RPC_SIZE(&msg) = 2U;
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: change:%u, res:%d\n", __func__, change, RPC_R8(&msg));
+
+	return ret;
+}
+
+int sc_seco_chip_info(sc_ipc_t ipc, uint16_t *lc,
+	uint16_t *monotonic, uint32_t *uid_l, uint32_t *uid_h)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	struct sc_rpc_msg_s msg;
+	int size = sizeof(struct sc_rpc_msg_s);
+	int ret;
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_SECO);
+	RPC_FUNC(&msg) = (u8)(SECO_FUNC_CHIP_INFO);
+	RPC_SIZE(&msg) = 1U;
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: res:%d\n", __func__, RPC_R8(&msg));
+
+	if (uid_l != NULL)
+	{
+	    *uid_l = RPC_U32(&msg, 0U);
+	}
+
+	if (uid_h != NULL)
+	{
+	    *uid_h = RPC_U32(&msg, 4U);
+	}
+
+	if (lc != NULL)
+	{
+	    *lc = RPC_U16(&msg, 8U);
+	}
+
+	if (monotonic != NULL)
+	{
+	    *monotonic = RPC_U16(&msg, 10U);
+	}
+
+	return ret;
+}
+
 void sc_seco_build_info(sc_ipc_t ipc, uint32_t *version,
 	uint32_t *commit)
 {
@@ -551,4 +694,30 @@ void sc_seco_build_info(sc_ipc_t ipc, uint32_t *version,
 	}
 
 	return;
+}
+
+int sc_seco_get_event(sc_ipc_t ipc, uint8_t idx,
+	uint32_t *event)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	struct sc_rpc_msg_s msg;
+	int size = sizeof(struct sc_rpc_msg_s);
+	int ret;
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_SECO);
+	RPC_FUNC(&msg) = (u8)(SECO_FUNC_GET_EVENT);
+	RPC_U8(&msg, 0U) = (u8)(idx);
+	RPC_SIZE(&msg) = 2U;
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: idx: %u, res:%d\n", __func__, idx, RPC_R8(&msg));
+
+	if (event != NULL)
+	{
+	    *event = RPC_U32(&msg, 0U);
+	}
+
+	return ret;
 }

@@ -11,6 +11,7 @@
 #include <asm/arch/sci/svc/pad/api.h>
 #include <asm/arch/sci/svc/pm/api.h>
 #include <asm/arch/sci/svc/rm/api.h>
+#include <asm/arch/sci/svc/seco/api.h>
 #include <asm/arch/sci/rpc.h>
 #include <dt-bindings/soc/imx_rsrc.h>
 #include <linux/errno.h>
@@ -89,6 +90,10 @@ int sc_misc_get_temp(sc_ipc_t ipc, sc_rsrc_t resource, sc_misc_temp_t temp,
 
 /* RM API */
 sc_bool_t sc_rm_is_memreg_owned(sc_ipc_t ipc, sc_rm_mr_t mr);
+int sc_rm_find_memreg(sc_ipc_t ipc, sc_rm_mr_t *mr,
+			sc_faddr_t addr_start, sc_faddr_t addr_end);
+int sc_rm_set_memreg_permissions(sc_ipc_t ipc, sc_rm_mr_t mr,
+			sc_rm_pt_t pt, sc_rm_perm_t perm);
 int sc_rm_get_memreg_info(sc_ipc_t ipc, sc_rm_mr_t mr, sc_faddr_t *addr_start,
 			  sc_faddr_t *addr_end);
 sc_bool_t sc_rm_is_resource_owned(sc_ipc_t ipc, sc_rsrc_t resource);
@@ -101,7 +106,14 @@ int sc_rm_set_master_sid(sc_ipc_t ipc, sc_rsrc_t resource,
     sc_rm_sid_t sid);
 
 /* SECO API */
+int sc_seco_authenticate(sc_ipc_t ipc,
+	sc_seco_auth_cmd_t cmd, sc_faddr_t addr);
+int sc_seco_forward_lifecycle(sc_ipc_t ipc, uint32_t change);
+int sc_seco_chip_info(sc_ipc_t ipc, uint16_t *lc,
+	uint16_t *monotonic, uint32_t *uid_l, uint32_t *uid_h);
 void sc_seco_build_info(sc_ipc_t ipc, uint32_t *version,
 	uint32_t *commit);
+int sc_seco_get_event(sc_ipc_t ipc, uint8_t idx,
+	uint32_t *event);
 
 #endif
