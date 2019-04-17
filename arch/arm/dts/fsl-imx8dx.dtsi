@@ -2547,8 +2547,9 @@
 		clocks = <&clk IMX8QXP_GPMI_BCH_IO_CLK>,
 			<&clk IMX8QXP_GPMI_APB_CLK>,
 			<&clk IMX8QXP_GPMI_BCH_CLK>,
-			<&clk IMX8QXP_GPMI_APB_BCH_CLK>;
-		clock-names = "gpmi_io", "gpmi_apb", "gpmi_bch", "gpmi_apb_bch";
+			<&clk IMX8QXP_GPMI_APB_BCH_CLK>,
+			<&clk IMX8QXP_APBHDMA_CLK>;
+		clock-names = "gpmi_io", "gpmi_apb", "gpmi_bch", "gpmi_apb_bch", "gpmi_apbh_dma";
 		dmas = <&dma_apbh 0>;
 		dma-names = "rx-tx";
 		power-domains = <&pd_conn_nand>;
