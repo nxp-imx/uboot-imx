@@ -215,6 +215,11 @@
 
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
+#ifdef CONFIG_FSL_QSPI
+#define FSL_QSPI_FLASH_SIZE		(SZ_32M)
+#define FSL_QSPI_FLASH_NUM		1
+#endif
+
 #define CONFIG_MXC_GPIO
 
 #define CONFIG_CMD_FUSE
