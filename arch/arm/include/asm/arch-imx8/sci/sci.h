@@ -97,6 +97,16 @@ int sc_rm_set_memreg_permissions(sc_ipc_t ipc, sc_rm_mr_t mr,
 int sc_rm_get_memreg_info(sc_ipc_t ipc, sc_rm_mr_t mr, sc_faddr_t *addr_start,
 			  sc_faddr_t *addr_end);
 sc_bool_t sc_rm_is_resource_owned(sc_ipc_t ipc, sc_rsrc_t resource);
+int sc_rm_partition_alloc(sc_ipc_t ipc, sc_rm_pt_t *pt, sc_bool_t secure,
+			sc_bool_t isolated, sc_bool_t restricted, sc_bool_t grant, sc_bool_t coherent);
+int sc_rm_partition_free(sc_ipc_t ipc, sc_rm_pt_t pt);
+int sc_rm_get_partition(sc_ipc_t ipc, sc_rm_pt_t *pt);
+int sc_rm_set_parent(sc_ipc_t ipc, sc_rm_pt_t pt,
+			sc_rm_pt_t pt_parent);
+int sc_rm_assign_resource(sc_ipc_t ipc, sc_rm_pt_t pt,
+			sc_rsrc_t resource);
+int sc_rm_assign_pad(sc_ipc_t ipc, sc_rm_pt_t pt, sc_pad_t pad);
+sc_bool_t sc_rm_is_pad_owned(sc_ipc_t ipc, sc_pad_t pad);
 
 /* PAD API */
 int sc_pad_set(sc_ipc_t ipc, sc_pad_t pad, u32 val);
