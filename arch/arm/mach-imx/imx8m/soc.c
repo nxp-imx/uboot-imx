@@ -399,7 +399,6 @@ int arch_misc_init(void)
 }
 #endif
 
-#ifdef CONFIG_USB_XHCI_IMX8M
 #define FSL_SIP_GPC			0xC2000000
 #define FSL_SIP_CONFIG_GPC_PM_DOMAIN	0x03
 int imx8m_usb_power(int usb_id, bool on)
@@ -416,4 +415,3 @@ int imx8m_usb_power(int usb_id, bool on)
 
 	return 0;
 }
-#endif
