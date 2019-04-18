@@ -570,7 +570,7 @@ int board_late_init(void)
 	end_of_uboot += 9;
 
 	/* load hdmitxfw.bin and hdmirxfw.bin*/
-	memcpy(IMX_HDMI_FIRMWARE_LOAD_ADDR, end_of_uboot,
+	memcpy((void *)IMX_HDMI_FIRMWARE_LOAD_ADDR, end_of_uboot,
 			IMX_HDMITX_FIRMWARE_SIZE + IMX_HDMIRX_FIRMWARE_SIZE);
 
 	sprintf(command, "hdp load 0x%x", IMX_HDMI_FIRMWARE_LOAD_ADDR);
