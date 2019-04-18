@@ -932,7 +932,11 @@ int fspi_xfer(struct fsl_fspi_priv *priv, unsigned int bitlen,
 				if (FSL_FSPI_FLASH_SIZE  <= SZ_16M)
 					addr_bytes = 3;
 				else
+#ifdef CONFIG_SPI_FLASH_BAR
+					addr_bytes = 3;
+#else
 					addr_bytes = 4;
+#endif
 
 				dout = (u8 *)dout + 1;
 				txbuf = *(u8 *)dout;
