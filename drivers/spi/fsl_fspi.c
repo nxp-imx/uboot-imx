@@ -1416,6 +1416,7 @@ static const struct dm_spi_ops fsl_fspi_ops = {
 static const struct udevice_id fsl_fspi_ids[] = {
 	{ .compatible = "fsl,imx8qm-flexspi" },
 	{ .compatible = "fsl,imx8qxp-flexspi" },
+	{ .compatible = "fsl,imx8mm-flexspi" },
 	{ }
 };
 
