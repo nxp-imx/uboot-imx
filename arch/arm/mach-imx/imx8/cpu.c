@@ -612,6 +612,7 @@ static bool check_owned_resources_in_pd_tree(void *blob, int nodeoff,
 	unsigned int *unowned_rsrc)
 {
 	unsigned int rsrc_id;
+	int phplen;
 	const fdt32_t *php;
 
 	/* Search the ancestors nodes in current SS power-domain tree,
@@ -620,9 +621,14 @@ static bool check_owned_resources_in_pd_tree(void *blob, int nodeoff,
 	*/
 
 	do {
-		php = fdt_getprop(blob, nodeoff, "power-domains", NULL);
+		php = fdt_getprop(blob, nodeoff, "power-domains", &phplen);
 		if (!php) {
 			debug("   - ignoring no power-domains\n");
+			break;
+		}
+		if (phplen != 4) {
+			printf("ignoring %s power-domains of unexpected length %d\n",
+					fdt_get_name(blob, nodeoff, NULL), phplen);
 			break;
 		}
 		nodeoff = fdt_node_offset_by_phandle(blob, fdt32_to_cpu(*php));
