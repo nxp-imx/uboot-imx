@@ -195,6 +195,16 @@ int power_init_board(void)
 
 void spl_board_init(void)
 {
+#ifndef CONFIG_SPL_USB_SDP_SUPPORT
+	/* Serial download mode */
+	if (is_usb_boot()) {
+		puts("Back to ROM, SDP\n");
+		restore_boot_params();
+	}
+#endif
+
+	init_usb_clk();
+
 	puts("Normal Boot\n");
 }
 
