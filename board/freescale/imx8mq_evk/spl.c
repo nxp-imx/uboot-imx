@@ -204,6 +204,17 @@ void spl_board_init(void)
 		if (sec_init())
 			printf("\nsec_init failed!\n");
 	}
+
+#ifndef CONFIG_SPL_USB_SDP_SUPPORT
+	/* Serial download mode */
+	if (is_usb_boot()) {
+		puts("Back to ROM, SDP\n");
+		restore_boot_params();
+	}
+#endif
+
+	init_usb_clk();
+
 	puts("Normal Boot\n");
 }
 
