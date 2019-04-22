@@ -204,6 +204,9 @@ void spl_board_init(void)
 		if (sec_init())
 			printf("\nsec_init failed!\n");
 	}
+
+	init_usb_clk();
+
 	puts("Normal Boot\n");
 }
 
