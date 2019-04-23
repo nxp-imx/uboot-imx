@@ -41,8 +41,9 @@
 #define CONFIG_SYS_MMC_ENV_PART		1	/* boot0 area */
 #endif
 
+#ifdef CONFIG_ANDROID_AB_SUPPORT
 #define CONFIG_SYSTEM_RAMDISK_SUPPORT
-
+#endif
 
 
 #define CONFIG_AVB_SUPPORT
