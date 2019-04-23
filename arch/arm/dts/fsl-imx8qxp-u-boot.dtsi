@@ -72,6 +72,10 @@
 	u-boot,dm-spl;
 };
 
+&pd_lsio_flexspi0 {
+	u-boot,dm-spl;
+};
+
 &gpio0 {
 	u-boot,dm-spl;
 };
@@ -113,5 +117,9 @@
 };
 
 &usdhc2 {
+	u-boot,dm-spl;
+};
+
+&flexspi0 {
 	u-boot,dm-spl;
 };
