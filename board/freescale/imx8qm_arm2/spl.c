@@ -12,6 +12,7 @@
 #include <dm/uclass-internal.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
+#include <bootm.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -35,6 +36,11 @@ void spl_board_init(void)
 	preloader_console_init();
 
 	puts("Normal Boot\n");
+}
+
+void spl_board_prepare_for_boot(void)
+{
+	board_quiesce_devices();
 }
 
 #ifdef CONFIG_SPL_LOAD_FIT
