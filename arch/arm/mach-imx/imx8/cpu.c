@@ -69,21 +69,6 @@ int arch_cpu_init(void)
 	save_restore_data();
 #endif
 
-#ifdef CONFIG_SPL_BUILD
-	struct pass_over_info_t *pass_over;
-
-	if (is_soc_rev(CHIP_REV_A)) {
-		pass_over = get_pass_over_info();
-		if (pass_over && pass_over->g_ap_mu == 0) {
-			/*
-			 * When ap_mu is 0, means the U-Boot booted
-			 * from first container
-			 */
-			sc_misc_boot_status(-1, SC_MISC_BOOT_STATUS_SUCCESS);
-		}
-	}
-#endif
-
 	return 0;
 }
 
@@ -98,6 +83,19 @@ int arch_cpu_init_dm(void)
 	if (ret) {
 		printf("could not get scu %d\n", ret);
 		return ret;
+	}
+
+	struct pass_over_info_t *pass_over;
+
+	if (is_soc_rev(CHIP_REV_A)) {
+		pass_over = get_pass_over_info();
+		if (pass_over && pass_over->g_ap_mu == 0) {
+			/*
+			 * When ap_mu is 0, means the U-Boot booted
+			 * from first container
+			 */
+			sc_misc_boot_status(-1, SC_MISC_BOOT_STATUS_SUCCESS);
+		}
 	}
 
 	if (is_imx8qm()) {
