@@ -1880,6 +1880,7 @@ static FbBootMode fastboot_get_bootmode(void)
 static void fastboot_setup_system_boot_args(const char *slot, bool append_root)
 {
 	const char *system_part_name = NULL;
+#ifdef CONFIG_ANDROID_AB_SUPPORT
 	if(slot == NULL)
 		return;
 	if(!strncmp(slot, "_a", strlen("_a")) || !strncmp(slot, "boot_a", strlen("boot_a"))) {
@@ -1891,6 +1892,10 @@ static void fastboot_setup_system_boot_args(const char *slot, bool append_root)
 		printf("slot invalid!\n");
 		return;
 	}
+#else
+	system_part_name = FASTBOOT_PARTITION_SYSTEM;
+#endif
+
 	struct fastboot_ptentry *ptentry = fastboot_flash_find_ptn(system_part_name);
 	if(ptentry != NULL) {
 		char bootargs_3rd[ANDR_BOOT_ARGS_SIZE];
@@ -2256,7 +2261,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		requested_partitions_boot[1] = NULL;
 		requested_partitions_recovery[1] = NULL;
 	}
-#ifndef CONFIG_ANDROID_AB_SUPPORT
+#ifndef CONFIG_SYSTEM_RAMDISK_SUPPORT
 	else if (is_recovery_mode){
 		requested_partitions_recovery[1] = NULL;
 	}
@@ -2272,6 +2277,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	avb_result = avb_ab_flow_fast(&fsl_avb_ab_ops, requested_partitions_boot, allow_fail,
 			AVB_HASHTREE_ERROR_MODE_RESTART_AND_INVALIDATE, &avb_out_data);
 #else
+#ifndef CONFIG_SYSTEM_RAMDISK_SUPPORT
 	if (!is_recovery_mode) {
 		avb_result = avb_single_flow(&fsl_avb_ab_ops, requested_partitions_boot, allow_fail,
 				AVB_HASHTREE_ERROR_MODE_RESTART, &avb_out_data);
@@ -2279,6 +2285,10 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		avb_result = avb_single_flow(&fsl_avb_ab_ops, requested_partitions_recovery, allow_fail,
 				AVB_HASHTREE_ERROR_MODE_RESTART, &avb_out_data);
 	}
+#else /* CONFIG_SYSTEM_RAMDISK_SUPPORT defined */
+	avb_result = avb_single_flow(&fsl_avb_ab_ops, requested_partitions_boot, allow_fail,
+			AVB_HASHTREE_ERROR_MODE_RESTART, &avb_out_data);
+#endif /*CONFIG_SYSTEM_RAMDISK_SUPPORT*/
 #endif
 #else /* !CONFIG_DUAL_BOOTLOADER */
 	/* We will only verify single one slot which has been selected in SPL */
@@ -2301,7 +2311,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		/* We may have more than one partition loaded by AVB, find the boot
 		 * partition first.
 		 */
-#ifdef CONFIG_ANDROID_AB_SUPPORT
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if (find_partition_data_by_name("boot", avb_out_data, &avb_loadpart))
 			goto fail;
 #else
@@ -2406,13 +2416,13 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 			goto fail;
 		} else
 			dt_img = (struct dt_table_header *)avb_loadpart->data;
-#elif defined(CONFIG_ANDROID_AB_SUPPORT)
+#elif defined(CONFIG_SYSTEM_RAMDISK_SUPPORT) /* It means boot.img(recovery) do not include dtb, it need load dtb from partition */
 		if (find_partition_data_by_name("dtbo",
 					avb_out_data, &avb_loadpart)) {
 			goto fail;
 		} else
 			dt_img = (struct dt_table_header *)avb_loadpart->data;
-#else
+#else /* recovery.img include dts while boot.img use dtbo */
 		if (is_recovery_mode) {
 			if (hdr->header_version != 1) {
 				printf("boota: boot image header version error!\n");
