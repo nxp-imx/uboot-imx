@@ -1213,7 +1213,7 @@ static int fsl_fspi_probe(struct udevice *bus)
 	struct fsl_fspi_priv *priv = dev_get_priv(bus);
 	struct dm_spi_bus *dm_spi_bus;
 
-	if (IS_ENABLED(CONFIG_CLK)) {
+	if (CONFIG_IS_ENABLED(CLK)) {
 		/* Assigned clock already set clock */
 		struct clk fspi_clk;
 		int ret;
