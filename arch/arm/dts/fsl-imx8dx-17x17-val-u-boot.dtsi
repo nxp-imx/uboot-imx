@@ -1,0 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2018 NXP
+ */
+
+#include "fsl-imx8qxp-17x17-val-u-boot.dtsi"

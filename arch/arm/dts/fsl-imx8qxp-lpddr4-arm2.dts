@@ -6,7 +6,6 @@
 /dts-v1/;
 
 #include "fsl-imx8qxp.dtsi"
-#include "fsl-imx8qxp-u-boot.dtsi"
 
 / {
 	model = "Freescale i.MX8QXP LPDDR4 ARM2";
