@@ -1487,8 +1487,6 @@ static int fsl_esdhc_probe(struct udevice *dev)
 	 * work as expected.
 	 */
 
-	init_clk_usdhc(dev_seq(dev));
-
 #if CONFIG_IS_ENABLED(CLK)
 	/* Assigned clock already set clock */
 	ret = clk_get_by_name(dev, "per", &priv->per_clk);
@@ -1504,6 +1502,8 @@ static int fsl_esdhc_probe(struct udevice *dev)
 
 	priv->sdhc_clk = clk_get_rate(&priv->per_clk);
 #else
+	init_clk_usdhc(dev_seq(dev));
+
 	priv->sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK + dev_seq(dev));
 	if (priv->sdhc_clk <= 0) {
 		dev_err(dev, "Unable to get clk for %s\n", dev->name);
