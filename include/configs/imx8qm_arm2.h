@@ -10,23 +10,30 @@
 #include <asm/arch/imx-regs.h>
 
 #ifdef CONFIG_SPL_BUILD
-#define CONFIG_SPL_TEXT_BASE				0x0
-#define CONFIG_SPL_MAX_SIZE				(124 * 1024)
+#define CONFIG_PARSE_CONTAINER
+#define CONFIG_SPL_TEXT_BASE				0x100000
+#define CONFIG_SPL_MAX_SIZE				(128 * 1024)
 #define CONFIG_SYS_MONITOR_LEN				(1024 * 1024)
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR                0x1040 /* (flash.bin_offset + 2Mb)/sector_size */
+#define CONFIG_SYS_SPI_U_BOOT_OFFS 0x200000
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION             0
 
-#define CONFIG_SPL_LDSCRIPT            "arch/arm/cpu/armv8/u-boot-spl.lds"
-#define CONFIG_SPL_STACK               0x013E000
-#define CONFIG_SPL_BSS_START_ADDR      0x00138000
-#define CONFIG_SPL_BSS_MAX_SIZE        0x8000	/* 20 KB */
-#define CONFIG_SYS_SPL_MALLOC_START    0x00120000
-#define CONFIG_SYS_SPL_MALLOC_SIZE     0x18000   /* 60 KB */
-#define CONFIG_SERIAL_LPUART_BASE      0x5a060000
+#define CONFIG_SPL_LDSCRIPT		"arch/arm/cpu/armv8/u-boot-spl.lds"
+/*
+ * The memory layout on stack:  DATA section save + gd + early malloc
+ * the idea is re-use the early malloc (CONFIG_SYS_MALLOC_F_LEN) with
+ * CONFIG_SYS_SPL_MALLOC_START
+ */
+#define CONFIG_SPL_STACK		0x0130000
+#define CONFIG_SPL_BSS_START_ADDR      0x00120000
+#define CONFIG_SPL_BSS_MAX_SIZE		0x1000	/* 4 KB */
+#define CONFIG_SYS_SPL_MALLOC_START	0x00128000
+#define CONFIG_SYS_SPL_MALLOC_SIZE     0x18000	/* 96 KB */
+#define CONFIG_SERIAL_LPUART_BASE	0x5a060000
 #define CONFIG_SYS_ICACHE_OFF
 #define CONFIG_SYS_DCACHE_OFF
-#define CONFIG_MALLOC_F_ADDR           0x00120000 /* malloc f used before GD_FLG_FULL_MALLOC_INIT set */
+#define CONFIG_MALLOC_F_ADDR		0x00128000
 
 #define CONFIG_SPL_RAW_IMAGE_ARM_TRUSTED_FIRMWARE
 
@@ -34,7 +41,6 @@
 
 #define CONFIG_OF_EMBED
 #endif
-
 
 #define CONFIG_REMAKE_ELF
 
