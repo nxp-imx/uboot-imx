@@ -4136,6 +4136,7 @@
 		reg-names = "FlexSPI", "FlexSPI-memory";
 		interrupts = <GIC_SPI 92 IRQ_TYPE_LEVEL_HIGH>;
 		clocks = <&clk IMX8QM_FSPI0_CLK>;
+		assigned-clocks = <&clk IMX8QM_FSPI0_DIV>;
 		assigned-clock-rates = <29000000>;
 		power-domains = <&pd_lsio_flexspi0>;
 		clock-names = "fspi";
