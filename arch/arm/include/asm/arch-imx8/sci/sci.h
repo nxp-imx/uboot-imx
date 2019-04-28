@@ -75,6 +75,7 @@ int sc_pm_set_clock_parent(sc_ipc_t ipc, sc_rsrc_t resource, sc_pm_clk_t clk,
 			sc_pm_clk_parent_t parent);
 int sc_pm_cpu_start(sc_ipc_t ipc, sc_rsrc_t resource, sc_bool_t enable,
 			sc_faddr_t address);
+sc_bool_t sc_pm_is_partition_started(sc_ipc_t ipc, sc_rm_pt_t pt);
 
 /* MISC API */
 int sc_misc_set_control(sc_ipc_t ipc, sc_rsrc_t resource,
@@ -107,6 +108,8 @@ int sc_rm_assign_resource(sc_ipc_t ipc, sc_rm_pt_t pt,
 			sc_rsrc_t resource);
 int sc_rm_assign_pad(sc_ipc_t ipc, sc_rm_pt_t pt, sc_pad_t pad);
 sc_bool_t sc_rm_is_pad_owned(sc_ipc_t ipc, sc_pad_t pad);
+int sc_rm_get_resource_owner(sc_ipc_t ipc, sc_rsrc_t resource,
+			sc_rm_pt_t *pt);
 
 /* PAD API */
 int sc_pad_set(sc_ipc_t ipc, sc_pad_t pad, u32 val);
