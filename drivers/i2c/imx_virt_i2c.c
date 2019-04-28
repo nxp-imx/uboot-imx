@@ -298,4 +298,5 @@ U_BOOT_DRIVER(imx_virt_i2c) = {
 	.child_post_bind = imx_virt_i2c_child_post_bind,
 	.priv_auto = sizeof(struct imx_virt_i2c_bus),
 	.ops = &imx_virt_i2c_ops,
+	.flags	= DM_FLAG_IGNORE_DEFAULT_CLKS,
 };
