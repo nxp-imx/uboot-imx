@@ -14,7 +14,14 @@
 #define CONFIG_SYS_MONITOR_LEN				(1024 * 1024)
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR                0x1040 /* (flash.bin_offset + 2Mb)/sector_size */
-#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION		0
+
+/*
+ * 0x08081000 - 0x08180FFF is for m4_0 xip image,
+ * 0x08181000 - 0x008280FFF is for m4_1 xip image
+  * So 3rd container image may start from 0x8281000
+ */
+#define CONFIG_SYS_UBOOT_BASE 0x08281000
+#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION             0
 
 #define CONFIG_SPL_LDSCRIPT		"arch/arm/cpu/armv8/u-boot-spl.lds"
 #define CONFIG_SPL_STACK		0x013fff0
