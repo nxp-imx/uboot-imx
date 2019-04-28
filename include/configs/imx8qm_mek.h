@@ -16,6 +16,14 @@
 #ifdef CONFIG_SPL_BUILD
 #define CONFIG_SPL_MAX_SIZE				(192 * 1024)
 #define CONFIG_SYS_MONITOR_LEN				(1024 * 1024)
+
+/*
+ * 0x08081000 - 0x08180FFF is for m4_0 xip image,
+ * 0x08181000 - 0x008280FFF is for m4_1 xip image
+  * So 3rd container image may start from 0x8281000
+ */
+#define CONFIG_SYS_UBOOT_BASE 0x08281000
+
 #define CONFIG_SPL_STACK		0x013fff0
 #define CONFIG_SPL_BSS_START_ADDR      0x00130000
 #define CONFIG_SPL_BSS_MAX_SIZE		0x1000	/* 4 KB */
