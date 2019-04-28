@@ -14,6 +14,12 @@
 
 #ifdef CONFIG_SPL_BUILD
 #define CFG_MALLOC_F_ADDR		0x00138000
+
+/*
+ * 0x08081000 - 0x08180FFF is for m4_0 xip image,
+  * So 3rd container image may start from 0x8181000
+ */
+#define CFG_SYS_UBOOT_BASE 0x08181000
 #endif
 
 #ifdef CONFIG_AHAB_BOOT
