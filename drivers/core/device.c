@@ -570,7 +570,7 @@ int device_probe(struct udevice *dev)
 	}
 
 	/* Only handle devices that have a valid ofnode */
-	if (dev_has_ofnode(dev)) {
+	if (dev_has_ofnode(dev) && !(dev->driver->flags & DM_FLAG_IGNORE_DEFAULT_CLKS)) {
 		/*
 		 * Process 'assigned-{clocks/clock-parents/clock-rates}'
 		 * properties
