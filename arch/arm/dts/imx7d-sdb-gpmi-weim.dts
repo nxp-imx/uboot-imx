@@ -1,0 +1,24 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright 2018 NXP
+ */
+
+#include "imx7d-sdb.dts"
+
+&gpmi{
+	status = "okay";
+	fsl,use-minimum-ecc;
+};
+
+/* &sai1{ */
+	/* status = "disabled"; */
+/* }; */
+
+&usdhc3{
+	status = "disabled";
+};
+
+&uart5{
+	status = "disabled";
+};

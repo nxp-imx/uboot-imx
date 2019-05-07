@@ -1,3 +1,0 @@
-&usbotg1 {
-	dr_mode = "peripheral";
-};

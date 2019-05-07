@@ -1,6 +1,15 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
+<<<<<<< HEAD
+=======
+ * Copyright 2017 NXP.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+>>>>>>> 2875b7e... MLK-18151-1 dts: mx7d: Update imx7d dts and binding files
  */
 
 #ifndef __DT_BINDINGS_CLOCK_IMX7D_H
@@ -451,6 +460,8 @@
 #define IMX7D_SNVS_CLK			442
 #define IMX7D_CAAM_CLK			443
 #define IMX7D_KPP_ROOT_CLK		444
-#define IMX7D_PXP_CLK			445
-#define IMX7D_CLK_END			446
+#define IMX7D_PXP_IPG_CLK		445
+#define IMX7D_PXP_AXI_CLK		446
+#define IMX7D_CLK_END			447
+
 #endif /* __DT_BINDINGS_CLOCK_IMX7D_H */
