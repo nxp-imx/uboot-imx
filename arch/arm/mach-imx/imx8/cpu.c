@@ -117,7 +117,7 @@ int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 {
 	sc_rsrc_t core_rsrc, mu_rsrc;
 	sc_faddr_t tcml_addr;
-	u32 tcml_size = SZ_128K;
+	u32 tcm_size = SZ_256K; /* TCML + TCMU */
 	ulong addr;
 
 
@@ -139,7 +139,7 @@ int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 
 	addr = (sc_faddr_t)boot_private_data;
 
-	if (addr >= tcml_addr && addr <= tcml_addr + tcml_size) {
+	if (addr >= tcml_addr && addr <= tcml_addr + tcm_size) {
 		printf("Wrong image address 0x%lx, should not in TCML\n",
 			addr);
 		return -EINVAL;
@@ -156,7 +156,7 @@ int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 	printf("Copy M4 image from 0x%lx to TCML 0x%lx\n", addr, (ulong)tcml_addr);
 
 	if (addr != tcml_addr)
-		memcpy((void *)tcml_addr, (void *)addr, tcml_size);
+		memcpy((void *)tcml_addr, (void *)addr, tcm_size);
 
 	printf("Start M4 %u\n", core_id);
 	if (sc_pm_cpu_start(-1, core_rsrc, true, tcml_addr) != SC_ERR_NONE)
@@ -229,7 +229,7 @@ int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 		core_rsrc = SC_R_M4_0_PID0;
 		aux_core_ram = 0x34FE0000;
 		mu_rsrc = SC_R_M4_0_MU_1A;
-		size = SZ_128K;
+		size = SZ_256K;
 		break;
 	case 1:
 		core_rsrc = SC_R_DSP;
