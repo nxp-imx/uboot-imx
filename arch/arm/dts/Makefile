@@ -875,7 +875,8 @@ dtb-$(CONFIG_EV_IMX280_NANO_X_MB) += \
 
 dtb-$(CONFIG_MX7) += imx7d-sdb.dtb \
 	imx7d-sdb-qspi.dtb \
-	imx7-cm.dtb \
+	imx7d-sdb-gpmi-weim.dtb \
+	imx7d-sdb-reva.dtb \
 	imx7-colibri-emmc.dtb \
 	imx7-colibri-rawnand.dtb \
 	imx7s-warp.dtb \
