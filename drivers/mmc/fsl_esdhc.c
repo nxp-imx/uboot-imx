@@ -6,6 +6,8 @@
  * (C) Copyright 2003
  * Kyle Harris, Nexus Technologies, Inc. kharris@nexus-tech.net
  *
+ * Copyright 2019 NXP
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -611,8 +613,7 @@ static void set_sysctl(struct fsl_esdhc_priv *priv, struct mmc *mmc, uint clock)
 		for (; pre_div < 256; pre_div *= 2)
 			if ((sdhc_clk / pre_div) <= (clock * 16))
 				break;
-	} else
-		pre_div = 1;
+	}
 
 	for (div = 1; div <= 16; div++)
 		if ((sdhc_clk / (div * pre_div)) <= clock)
