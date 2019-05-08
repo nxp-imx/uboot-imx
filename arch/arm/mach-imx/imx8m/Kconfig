@@ -60,11 +60,19 @@ config TARGET_IMX8MM_DDR4_EVK
 	bool "imx8mm DDR4 EVK board"
 	select IMX8MM
 	select IMX8M_DDR4
+
+config TARGET_IMX8MN_EVK
+	bool "imx8mn DDR4 EVK board"
+	select IMX8MN
+	select SUPPORT_SPL
+	select IMX8M_DDR4
+
 endchoice
 
 source "board/freescale/imx8mq_evk/Kconfig"
 source "board/freescale/imx8mq_arm2/Kconfig"
 source "board/freescale/imx8mm_evk/Kconfig"
 source "board/freescale/imx8mm_val/Kconfig"
+source "board/freescale/imx8mn_evk/Kconfig"
 
 endif
