@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 NXP
+ * Copyright 2017, 2019 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  *
@@ -7,6 +7,8 @@
 
 #ifndef __ASM_ARCH_IMX_REGS_H__
 #define __ASM_ARCH_IMX_REGS_H__
+
+#define ARCH_MXC
 
 #define MU_BASE_ADDR(id)	((0x5D1B0000UL + (id*0x10000)))
 
