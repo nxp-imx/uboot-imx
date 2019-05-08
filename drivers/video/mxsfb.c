@@ -298,8 +298,13 @@ void *video_hw_init(void)
 	printf("%s\n", panel.modeIdent);
 
 #ifdef CONFIG_IMX_MIPI_DSI_BRIDGE
+	int dsi_ret;
 	imx_mipi_dsi_bridge_mode_set(&fbmode);
-	imx_mipi_dsi_bridge_enable();
+	dsi_ret = imx_mipi_dsi_bridge_enable();
+	if (dsi_ret) {
+		printf("Enable DSI bridge failed, err %d\n", dsi_ret);
+		return NULL;
+	}
 #endif
 
 	/* Start framebuffer */
