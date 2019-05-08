@@ -560,9 +560,9 @@ config IMX_SEC_MIPI_DSI
 	bool "i.MX Samsung's MIPI DSI"
 	default n
 	select IMX_MIPI_DSI_BRIDGE
-	depends on VIDEO && (IMX8MM || MX7)
+	depends on VIDEO && (IMX8MM || IMX8MN || MX7)
 	help
-	  Support for i.MX7 and i.MX8MM MIPI DSI controller.
+	  Support for i.MX7, i.MX8MM and i.MX8MN MIPI DSI controller.
 
 config MXC_EPDC
 	bool "i.MX EPDC support"

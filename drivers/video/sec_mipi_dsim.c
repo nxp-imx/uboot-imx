@@ -207,10 +207,20 @@
 
 /* Dispmix Control & GPR Registers */
 #define DISPLAY_MIX_SFT_RSTN_CSR		0x00
+#ifdef CONFIG_IMX8MN
+#define MIPI_DSI_I_PRESETn_SFT_EN		BIT(0) | BIT(1)
+#else
    #define MIPI_DSI_I_PRESETn_SFT_EN		BIT(5)
+#endif
 #define DISPLAY_MIX_CLK_EN_CSR			0x04
+
+#ifdef CONFIG_IMX8MN
+#define MIPI_DSI_PCLK_SFT_EN		 BIT(0)
+#define MIPI_DSI_CLKREF_SFT_EN		 BIT(1)
+#else
    #define MIPI_DSI_PCLK_SFT_EN			BIT(8)
    #define MIPI_DSI_CLKREF_SFT_EN		BIT(9)
+#endif
 #define GPR_MIPI_RESET_DIV			0x08
    /* Clock & Data lanes reset: Active Low */
    #define GPR_MIPI_S_RESETN			BIT(16)
@@ -273,10 +283,10 @@ static void disp_mix_dsim_lanes_reset(struct sec_mipi_dsim *dsim, bool reset)
 {
 	if (!reset)
 		/* release lanes reset */
-		setbits_le32(dsim->disp_mix_gpr_base + GPR_MIPI_RESET_DIV, GPR_MIPI_S_RESETN | GPR_MIPI_M_RESETN);
+		setbits_le32(dsim->disp_mix_gpr_base + GPR_MIPI_RESET_DIV, GPR_MIPI_M_RESETN);
 	else
 		/* reset lanes */
-		clrbits_le32(dsim->disp_mix_gpr_base + GPR_MIPI_RESET_DIV, GPR_MIPI_S_RESETN | GPR_MIPI_M_RESETN);
+		clrbits_le32(dsim->disp_mix_gpr_base + GPR_MIPI_RESET_DIV, GPR_MIPI_M_RESETN);
 }
 
 static void sec_mipi_dsim_wr_tx_header(struct sec_mipi_dsim *dsim,
@@ -729,7 +739,7 @@ static int sec_mipi_dsim_bridge_enable(struct mipi_dsi_bridge_driver *bridge_dri
 	ret = sec_mipi_dsim_config_pll(dsim_host);
 	if (ret) {
 		printf("dsim pll config failed: %d\n", ret);
-		return -EPERM;
+		return ret;
 	}
 
 	/* config dphy timings */
