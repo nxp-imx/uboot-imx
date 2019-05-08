@@ -1,10 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright 2018 NXP
+ * Copyright 2018-2019 NXP
+ *
  */
 
 #ifndef __ASM_ARCH_IMX8_REGS_H__
 #define __ASM_ARCH_IMX8_REGS_H__
+
+#define ARCH_MXC
 
 #define LPUART_BASE		0x5A060000
 

@@ -1,11 +1,14 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
- * Copyright 2017 NXP
+ * Copyright 2017, 2019 NXP
+ *
  */
 
 #ifndef _MX7ULP_REGS_H_
 #define _MX7ULP_REGS_H_
+
+#define ARCH_MXC
 
 #include <linux/sizes.h>
 
