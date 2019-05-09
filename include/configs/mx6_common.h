@@ -37,4 +37,9 @@
 /* MMC */
 #define CONFIG_SUPPORT_EMMC_BOOT
 
+#ifdef CONFIG_IMX_OPTEE
+#define TEE_ENV "tee=yes\0"
+#else
+#define TEE_ENV "tee=no\0"
+#endif
 #endif
