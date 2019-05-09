@@ -61,4 +61,10 @@
 #endif
 #endif
 
+#ifdef CONFIG_IMX_OPTEE
+#define TEE_ENV "tee=yes\0"
+#else
+#define TEE_ENV "tee=no\0"
+#endif
+
 #endif
