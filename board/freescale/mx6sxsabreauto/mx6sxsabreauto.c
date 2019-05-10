@@ -263,20 +263,6 @@ int board_early_init_f(void)
 	return 0;
 }
 
-int board_mmc_get_env_dev(int devno)
-{
-	/*
-	 * need subtract 2 to map to the mmc device id
-	 * see the comments in board_mmc_init function
-	 */
-	return devno - 2;
-}
-
-int mmc_map_to_kernel_blk(int devno)
-{
-	return devno + 2;
-}
-
 #ifdef CONFIG_VIDEO_MXS
 static iomux_v3_cfg_t const lvds_ctrl_pads[] = {
 	/* Use GPIO for Brightness adjustment, duty cycle = period */

@@ -242,11 +242,6 @@ static void setup_iomux_fec(void)
 	udelay(15000);
 }
 
-int board_mmc_get_env_dev(int devno)
-{
-	return devno;
-}
-
 #ifdef CONFIG_SYS_I2C
 #define PC	MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C1 for PMIC */

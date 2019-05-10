@@ -449,13 +449,3 @@ int checkboard(void)
 
 	return 0;
 }
-
-int board_mmc_get_env_dev(int devno)
-{
-	return devno;
-}
-
-int mmc_map_to_kernel_blk(int devno)
-{
-	return devno;
-}

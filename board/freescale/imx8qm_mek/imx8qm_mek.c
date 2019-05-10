@@ -474,11 +474,6 @@ int ft_board_setup(void *blob, bd_t *bd)
 }
 #endif
 
-int board_mmc_get_env_dev(int devno)
-{
-	return devno;
-}
-
 int board_late_init(void)
 {
 	char *fdt_file;
@@ -504,6 +499,9 @@ int board_late_init(void)
 			env_set("fdt_file", "fsl-imx8qm-mek.dtb");
 	}
 
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
 	return 0;
 }
 

@@ -253,22 +253,6 @@ static void setup_iomux_uart(void)
 	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
 }
 
-int board_mmc_get_env_dev(int devno)
-{
-	if (devno == 2)
-		devno--;
-
-	return devno;
-}
-
-int mmc_map_to_kernel_blk(int dev_no)
-{
-	if (dev_no == 1)
-		dev_no++;
-
-	return dev_no;
-}
-
 #ifdef CONFIG_FEC_MXC
 static int setup_fec(int fec_id)
 {

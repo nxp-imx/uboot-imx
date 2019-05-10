@@ -354,12 +354,6 @@ int board_init(void)
 	return 0;
 }
 
-int board_mmc_get_env_dev(int devno)
-{
-	return devno;
-}
-
-
 #ifdef CONFIG_VIDEO_MXS
 
 #define ADV7535_MAIN 0x3d
@@ -656,5 +650,9 @@ size_t display_count = ARRAY_SIZE(displays);
 
 int board_late_init(void)
 {
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
+
 	return 0;
 }
