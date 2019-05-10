@@ -141,11 +141,6 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 }
 #endif
 
-int board_mmc_get_env_dev(int devno)
-{
-	return devno;
-}
-
 int board_late_init(void)
 {
 	char *fdt_file;
@@ -165,6 +160,10 @@ int board_late_init(void)
 		else
 			env_set("fdt_file", "imx8qxp-mek.dtb");
 	}
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
 
 	return 0;
 }
