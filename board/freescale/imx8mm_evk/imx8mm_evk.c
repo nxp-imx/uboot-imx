@@ -307,6 +307,10 @@ int board_init(void)
 
 int board_late_init(void)
 {
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
+
 	if (IS_ENABLED(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)) {
 		env_set("board_name", "EVK");
 		env_set("board_rev", "iMX8MM");
