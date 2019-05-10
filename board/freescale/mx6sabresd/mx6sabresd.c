@@ -1248,6 +1248,10 @@ int board_late_init(void)
 		env_set("board_rev", "MX6DL");
 #endif
 
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
+
 	return 0;
 }
 

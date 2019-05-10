@@ -674,7 +674,7 @@ int arch_cpu_init(void)
 #ifdef CONFIG_ENV_IS_IN_MMC
 __weak int board_mmc_get_env_dev(int devno)
 {
-	return CONFIG_SYS_MMC_ENV_DEV;
+	return devno;
 }
 
 static int mmc_get_boot_dev(void)

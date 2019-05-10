@@ -191,11 +191,6 @@ static void setup_iomux_uart(void)
 	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
 }
 
-int board_mmc_get_env_dev(int devno)
-{
-	return devno;
-}
-
 #ifdef CONFIG_SYS_I2C
 #define PC	MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C1 for PMIC */
