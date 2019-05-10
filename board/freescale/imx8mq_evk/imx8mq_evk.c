@@ -268,16 +268,15 @@ int board_init(void)
 	return 0;
 }
 
-int board_mmc_get_env_dev(int devno)
-{
-	return devno;
-}
-
 int board_late_init(void)
 {
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	env_set("board_name", "EVK");
 	env_set("board_rev", "iMX8MQ");
+#endif
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
 #endif
 
 	return 0;
