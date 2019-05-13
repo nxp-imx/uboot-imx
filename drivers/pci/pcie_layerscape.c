@@ -444,6 +444,15 @@ static void ls_pcie_setup_ep(struct ls_pcie *pcie)
 	if (PCI_EXT_CAP_ID(sriov) == PCI_EXT_CAP_ID_SRIOV) {
 		pcie->sriov_flag = 1;
 		for (pf = 0; pf < PCIE_PF_NUM; pf++) {
+			/*
+			 * The VF_BARn_REG register's Prefetchable and Type bit
+			 * fields are overwritten by a write to VF's BAR Mask
+			 * register. Before writing to the VF_BARn_MASK_REG
+			 * register, write 0b to the PCIE_MISC_CONTROL_1_OFF
+			 * register.
+			 */
+			writel(0, pcie->dbi + PCIE_MISC_CONTROL_1_OFF);
+
 			if (pcie->cfg2_flag) {
 				for (vf = 0; vf <= PCIE_VF_NUM; vf++) {
 					ctrl_writel(pcie,

@@ -94,6 +94,7 @@
 #define PCIE_BAR4_SIZE		SZ_1M /* 1M */
 
 #define PCIE_SRIOV_VFBAR0	0x19C
+#define PCIE_MISC_CONTROL_1_OFF	0x8BC
 #define PCIE_CTRL1_FUNC_NUM	0x00100000
 
 #define PCIE_MASK_OFFSET(flag, pf) ((flag) ? 0 : (0x1000 + 0x20000 * (pf)))
