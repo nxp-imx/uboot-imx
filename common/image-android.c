@@ -152,6 +152,10 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 		strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
 	}
 
+	sprintf(newbootargs,
+			" androidboot.boot_device_root=mmcblk%d", mmc_map_to_kernel_blk(mmc_get_env_dev()));
+	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+
 	char *storage_type = env_get("storage_type");
 	if (storage_type) {
 		sprintf(newbootargs,
