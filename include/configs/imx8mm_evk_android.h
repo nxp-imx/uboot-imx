@@ -76,4 +76,10 @@
 
 #endif
 
+/* Enable CONFIG_ANDROID_LOW_MEMORY to config 1GB ddr */
+#ifdef  CONFIG_ANDROID_LOW_MEMORY
+#undef  PHYS_SDRAM_SIZE
+#define PHYS_SDRAM_SIZE 0x40000000 /* 1GB DDR */
+#endif
+
 #endif /* IMX8MM_EVK_ANDROID_H */
