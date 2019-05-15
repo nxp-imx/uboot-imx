@@ -7,7 +7,7 @@
 #include <common.h>
 #include <stdlib.h>
 #include <linux/string.h>
-#include <fsl_fastboot.h>
+#include <fb_fsl.h>
 #include <fsl_avb.h>
 
 /* as libavb's bootctl doesn't have the get_var support

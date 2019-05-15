@@ -27,6 +27,7 @@
 #include <fsl_sec.h>
 #include <imx_thermal.h>
 #include <mmc.h>
+#include <asm/setup.h>
 #include <hang.h>
 #include <cpu_func.h>
 
@@ -848,6 +849,10 @@ void s_init(void)
 	u32 mask528;
 	u32 reg, periph1, periph2;
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+        /* Enable RTC */
+        writel(0x21, 0x020cc038);
+#endif
 	if (is_mx6sx() || is_mx6ul() || is_mx6ull() || is_mx6sll())
 		return;
 

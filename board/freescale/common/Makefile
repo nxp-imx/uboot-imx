@@ -63,6 +63,9 @@ ifneq (,$(filter $(SOC), mx6 mx7 mx7ulp imx8 imx8m imx8ulp imx9))
 obj-y				+= mmc.o
 endif
 obj-$(CONFIG_MXC_EPDC)		+= epdc_setup.o
+ifdef CONFIG_FSL_FASTBOOT
+obj-${CONFIG_ANDROID_RECOVERY} += recovery_keypad.o
+endif
 
 obj-$(CONFIG_LS102XA_STREAM_ID)	+= ls102xa_stream_id.o
 
