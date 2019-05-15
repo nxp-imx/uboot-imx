@@ -124,6 +124,10 @@ void ddrphy_init_set_dfi_clk(unsigned int drate)
 		dram_pll_init(DRAM_PLL_OUT_400M);
 		dram_disable_bypass();
 		break;
+	case 1066:
+		dram_pll_init(DRAM_PLL_OUT_266M);
+		dram_disable_bypass();
+		break;
 	case 667:
 		dram_pll_init(DRAM_PLL_OUT_167M);
 		dram_disable_bypass();
