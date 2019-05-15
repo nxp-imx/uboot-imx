@@ -22,6 +22,19 @@
 
 /* The bootloader expects the structure of andr_img_hdr with header
  * version 0 to be as follows: */
+/* Boot metric variables (in millisecond) */
+struct boot_metric
+{
+	u32 bll_1;	/* 1th bootloader load duration */
+	u32 ble_1;	/* 1th bootloader exec duration */
+	u32 kl;		/* kernel image load duration */
+	u32 kd;		/* kernel image decompress duration */
+	u32 avb;	/* avb verify boot.img duration */
+	u32 odt;	/* overlay device tree duration */
+	u32 sw;		/* system wait for UI interaction duration*/
+};
+typedef struct boot_metric boot_metric;
+
 struct andr_img_hdr {
     /* Must be ANDR_BOOT_MAGIC. */
     char magic[ANDR_BOOT_MAGIC_SIZE];
@@ -73,16 +86,19 @@ struct andr_img_hdr {
  * +-----------------+
  * | boot header     | 1 page
  * +-----------------+
- * | kernel          | n pages
+ * | kernel          | i pages
  * +-----------------+
  * | ramdisk         | m pages
  * +-----------------+
- * | second stage    | o pages
+ * | second stage    | n pages
+ * +-----------------+
+ * | recovery dtbo   | o pages
  * +-----------------+
  *
- * n = (kernel_size + page_size - 1) / page_size
+ * i = (kernel_size + page_size - 1) / page_size
  * m = (ramdisk_size + page_size - 1) / page_size
- * o = (second_size + page_size - 1) / page_size
+ * n = (second_size + page_size - 1) / page_size
+ * o = (recovery_dtbo_size + page_size - 1) / page_size
  *
  * 0. all entities are page_size aligned in flash
  * 1. kernel and ramdisk are required (size != 0)
@@ -136,4 +152,16 @@ struct andr_img_hdr {
  *    else: jump to kernel_addr
  */
 
+struct header_image {
+	uint32_t	code0;		/* Executable code */
+	uint32_t	code1;		/* Executable code */
+	uint64_t	text_offset;	/* Image load offset, LE */
+	uint64_t	image_size;	/* Effective Image size, LE */
+	uint64_t	res1;		/* reserved */
+	uint64_t	res2;		/* reserved */
+	uint64_t	res3;		/* reserved */
+	uint64_t	res4;		/* reserved */
+	uint32_t	magic;		/* Magic number */
+	uint32_t	res5;
+};
 #endif

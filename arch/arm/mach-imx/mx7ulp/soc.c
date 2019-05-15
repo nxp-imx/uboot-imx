@@ -19,6 +19,7 @@
 #include <asm/setup.h>
 #include <linux/bitops.h>
 #include <dm.h>
+#include <asm/setup.h>
 
 #define PMC0_BASE_ADDR		0x410a1000
 #define PMC0_CTRL		0x28
@@ -279,6 +280,11 @@ void s_init(void)
 	if (soc_rev() < CHIP_REV_2_0) {
 		/* enable dumb pmic */
 		writel((readl(SNVS_LP_LPCR) | SNVS_LPCR_DPEN), SNVS_LP_LPCR);
+
+#if defined(CONFIG_ANDROID_SUPPORT)
+		/* Enable RTC */
+		writel((readl(SNVS_LP_LPCR) | SNVS_LPCR_SRTC_ENV), SNVS_LP_LPCR);
+#endif
 	}
 
 #if defined(CONFIG_LDO_ENABLED_MODE)
@@ -372,7 +378,12 @@ static char *get_reset_cause(char *ret)
 
 	srs = readl(reg_srs);
 	cause1 = readl(reg_ssrs);
+#ifndef CONFIG_ANDROID_BOOT_IMAGE
+	/* We will read the ssrs states later for android so we don't
+	 * clear the states here.
+	 */
 	writel(cause1, reg_ssrs);
+#endif
 
 	reset_cause = cause1;
 
@@ -411,6 +422,17 @@ static char *get_reset_cause(char *ret)
 	debug("[%X] SRS[%X] %X - ", cause1, srs, srs^cause1);
 	return ret;
 }
+
+#ifdef CONFIG_ANDROID_BOOT_IMAGE
+void get_reboot_reason(char *ret)
+{
+	u32 *reg_ssrs = (u32 *)(SRC_BASE_ADDR + 0x28);
+
+	get_reset_cause(ret);
+	/* clear the ssrs here, its state has been recorded in reset_cause */
+	writel(reset_cause, reg_ssrs);
+}
+#endif
 
 void arch_preboot_os(void)
 {
@@ -467,7 +489,7 @@ enum boot_device get_boot_device(void)
 	return boot_dev;
 }
 
-#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+#if defined(CONFIG_SERIAL_TAG) || defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
 /*
  * OCOTP_CFG (SJC CHALLENGE, Unique ID)
  * i.MX 7ULP Applications Processor Reference Manual, Rev. 0, 09/2020

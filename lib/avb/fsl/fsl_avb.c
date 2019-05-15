@@ -8,8 +8,8 @@
 #include <part.h>
 #include <stdlib.h>
 
-#include <fsl_fastboot.h>
-#include "../../../drivers/usb/gadget/fastboot_lock_unlock.h"
+#include <fb_fsl.h>
+#include "../../../drivers/fastboot/fb_fsl/fastboot_lock_unlock.h"
 
 #include <fsl_avb.h>
 #include "fsl_avbkey.h"
