@@ -63,6 +63,9 @@ obj-$(CONFIG_DM_PMIC_PFUZE100)	+= pfuze.o
 obj-$(CONFIG_POWER_MC34VR500)	+= mc34vr500.o
 obj-$(CONFIG_MXC_EPDC)		+= epdc_setup.o
 obj-y				+= mmc.o
+ifdef CONFIG_FSL_FASTBOOT
+obj-${CONFIG_ANDROID_RECOVERY} += recovery_keypad.o
+endif
 
 obj-$(CONFIG_LS102XA_STREAM_ID)	+= ls102xa_stream_id.o
 

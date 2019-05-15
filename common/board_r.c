@@ -64,6 +64,9 @@
 #if defined(CONFIG_GPIO_HOG)
 #include <asm/gpio.h>
 #endif
+#ifdef CONFIG_FSL_FASTBOOT
+#include <fb_fsl.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -663,6 +666,20 @@ static int initr_avbkey(void)
 }
 #endif
 
+#ifdef CONFIG_FSL_FASTBOOT
+static int initr_fastboot_setup(void)
+{
+	fastboot_setup();
+	return 0;
+}
+
+static int initr_check_fastboot(void)
+{
+	fastboot_run_bootmode();
+	return 0;
+}
+#endif
+
 static int run_main_loop(void)
 {
 #ifdef CONFIG_SANDBOX
@@ -840,6 +857,9 @@ static init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_BOARD_LATE_INIT
 	board_late_init,
 #endif
+#ifdef CONFIG_FSL_FASTBOOT
+	initr_fastboot_setup,
+#endif
 #if defined(CONFIG_SCSI) && !defined(CONFIG_DM_SCSI)
 	INIT_FUNC_WATCHDOG_RESET
 	initr_scsi,
@@ -878,6 +898,9 @@ static init_fnc_t init_sequence_r[] = {
 #endif
 #if defined(AVB_RPMB) && !defined(CONFIG_SPL)
 	initr_avbkey,
+#endif
+#ifdef CONFIG_FSL_FASTBOOT
+	initr_check_fastboot,
 #endif
 	run_main_loop,
 };

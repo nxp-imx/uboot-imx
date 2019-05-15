@@ -158,6 +158,12 @@ config NXP_BOARD_REVISION
 	  stored in the fuses. Select this option if you want to be able to
 	  retrieve the board revision information.
 
+config FLASH_MCUFIRMWARE_SUPPORT
+	bool "Enable mcu firmware flash support"
+	depends on ARCH_MX7ULP || ARCH_IMX8M
+	help
+	  This enables the mcu firmware flash support for some SOCs.
+
 config DDRMC_VF610_CALIBRATION
 	bool "Enable DDRMC (DDR3) on-chip calibration"
 	depends on ARCH_VF610

@@ -1457,6 +1457,7 @@ void android_print_contents(const struct andr_img_hdr *hdr);
 #if !defined(CONFIG_SPL_BUILD)
 bool android_image_print_dtb_contents(ulong hdr_addr);
 #endif
+bool image_arm64(void *images);
 
 #endif /* CONFIG_ANDROID_BOOT_IMAGE */
 

@@ -141,6 +141,25 @@ static int validate_gpt_header(gpt_header *gpt_h, lbaint_t lba,
 	return 0;
 }
 
+static void prepare_last_lba_gpt_header(struct blk_desc *dev_desc, gpt_header *gpt_h)
+{
+	uint32_t calc_crc32;
+	uint64_t val;
+
+	/* recalculate the values for the Backup GPT Header */
+	val = le64_to_cpu(gpt_h->my_lba);
+	gpt_h->my_lba = cpu_to_le64(dev_desc->lba - 1);;
+	gpt_h->alternate_lba = cpu_to_le64(val);
+	gpt_h->last_usable_lba = cpu_to_le64(dev_desc->lba - 34);
+	gpt_h->partition_entry_lba =
+			cpu_to_le64(le64_to_cpu(gpt_h->last_usable_lba) + 1);
+	gpt_h->header_crc32 = 0;
+
+	calc_crc32 = efi_crc32((const unsigned char *)gpt_h,
+			       le32_to_cpu(gpt_h->header_size));
+	gpt_h->header_crc32 = cpu_to_le32(calc_crc32);
+}
+
 static int validate_gpt_entries(gpt_header *gpt_h, gpt_entry *gpt_e)
 {
 	uint32_t calc_crc32;
@@ -151,7 +170,7 @@ static int validate_gpt_entries(gpt_header *gpt_h, gpt_entry *gpt_e)
 		le32_to_cpu(gpt_h->sizeof_partition_entry));
 
 	if (calc_crc32 != le32_to_cpu(gpt_h->partition_entry_array_crc32)) {
-		printf("%s: 0x%x != 0x%x\n",
+		debug("%s: 0x%x != 0x%x\n",
 		       "GUID Partition Table Entry Array CRC is wrong",
 		       le32_to_cpu(gpt_h->partition_entry_array_crc32),
 		       calc_crc32);
@@ -859,6 +878,58 @@ int write_mbr_and_gpt_partitions(struct blk_desc *dev_desc, void *buf)
 
 	return 0;
 }
+int write_backup_gpt_partitions(struct blk_desc *dev_desc, void *buf)
+{
+	gpt_header *gpt_h;
+	gpt_entry *gpt_e;
+	int gpt_e_blk_cnt;
+	lbaint_t lba;
+	int cnt;
+
+	if (is_valid_gpt_buf(dev_desc, buf))
+		return -1;
+
+	/* determine start of GPT Header in the buffer */
+	gpt_h = buf + (GPT_PRIMARY_PARTITION_TABLE_LBA *
+		       dev_desc->blksz);
+
+	/* determine start of GPT Entries in the buffer */
+	gpt_e = buf + (le64_to_cpu(gpt_h->partition_entry_lba) *
+		       dev_desc->blksz);
+	gpt_e_blk_cnt = BLOCK_CNT((le32_to_cpu(gpt_h->num_partition_entries) *
+				   le32_to_cpu(gpt_h->sizeof_partition_entry)),
+				  dev_desc);
+
+	/* write MBR */
+	lba = 0;	/* MBR is always at 0 */
+	cnt = 1;	/* MBR (1 block) */
+	if (blk_dwrite(dev_desc, lba, cnt, buf) != cnt) {
+		printf("%s: failed writing '%s' (%d blks at 0x" LBAF ")\n",
+		       __func__, "MBR", cnt, lba);
+		return 1;
+	}
+
+	prepare_last_lba_gpt_header(dev_desc, gpt_h);
+
+	/* write Backup GPT */
+	lba = le64_to_cpu(gpt_h->partition_entry_lba);
+	cnt = gpt_e_blk_cnt;
+	if (blk_dwrite(dev_desc, lba, cnt, gpt_e) != cnt) {
+		printf("%s: failed writing '%s' (%d blks at 0x" LBAF ")\n",
+		       __func__, "Backup GPT Entries", cnt, lba);
+		return 1;
+	}
+
+	lba = le64_to_cpu(gpt_h->my_lba);
+	cnt = 1;	/* GPT Header (1 block) */
+	if (blk_dwrite(dev_desc, lba, cnt, gpt_h) != cnt) {
+		printf("%s: failed writing '%s' (%d blks at 0x" LBAF ")\n",
+		       __func__, "Backup GPT Header", cnt, lba);
+		return 1;
+	}
+
+	return 0;
+}
 #endif
 
 /*
@@ -991,7 +1062,7 @@ static int find_valid_gpt(struct blk_desc *dev_desc, gpt_header *gpt_head,
 
 	if (r != 1) {
 		if (r != 2)
-			printf("%s: *** ERROR: Invalid GPT ***\n", __func__);
+			debug("%s: *** ERROR: Invalid GPT ***\n", __func__);
 
 		if (is_gpt_valid(dev_desc, (dev_desc->lba - 1), gpt_head,
 				 pgpt_pte) != 1) {
@@ -1000,7 +1071,7 @@ static int find_valid_gpt(struct blk_desc *dev_desc, gpt_header *gpt_head,
 			return 0;
 		}
 		if (r != 2)
-			printf("%s: ***        Using Backup GPT ***\n",
+			debug("%s: ***        Using Backup GPT ***\n",
 			       __func__);
 	}
 	return 1;

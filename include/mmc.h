@@ -876,6 +876,7 @@ int mmc_get_env_addr(struct mmc *mmc, int copy, u32 *env_addr);
 extern uint mmc_get_env_part(struct mmc *mmc);
 # endif
 int mmc_get_env_dev(void);
+int mmc_map_to_kernel_blk(int dev_no);
 
 /* Minimum partition switch timeout in units of 10-milliseconds */
 #define MMC_MIN_PART_SWITCH_TIME	30 /* 300 ms */

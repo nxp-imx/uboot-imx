@@ -395,6 +395,15 @@ int is_valid_gpt_buf(struct blk_desc *dev_desc, void *buf);
 int write_mbr_and_gpt_partitions(struct blk_desc *dev_desc, void *buf);
 
 /**
+ * write_backup_gpt_partitions - write MBR, backup gpt table.
+ * @param dev_desc - block device descriptor
+ * @param buf - buffer which contains the MBR and Primary GPT info
+ *
+ * @return - '0' on success, otherwise error
+ */
+int write_backup_gpt_partitions(struct blk_desc *dev_desc, void *buf);
+
+/**
  * gpt_verify_headers() - Function to read and CRC32 check of the GPT's header
  *                        and partition table entries (PTE)
  *

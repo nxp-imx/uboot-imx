@@ -211,6 +211,10 @@ int init_func_vid(void);
 int checkboard(void);
 int show_board_info(void);
 
+#ifdef CONFIG_ANDROID_BOOT_IMAGE
+void get_reboot_reason(char *ret);
+#endif
+
 /**
  * Get the uppermost pointer that is valid to access
  *
