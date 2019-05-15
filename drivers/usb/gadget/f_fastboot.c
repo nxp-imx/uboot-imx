@@ -38,12 +38,20 @@
  * that expect bulk OUT requests to be divisible by maxpacket size.
  */
 
+typedef struct usb_req usb_req;
+struct usb_req {
+	struct usb_request *in_req;
+	usb_req *next;
+};
+
 struct f_fastboot {
 	struct usb_function usb_function;
 
 	/* IN/OUT EP's and corresponding requests */
 	struct usb_ep *in_ep, *out_ep;
 	struct usb_request *in_req, *out_req;
+
+	usb_req *front, *rear;
 };
 
 static char fb_ext_prop_name[] = "DeviceInterfaceGUID";
@@ -193,6 +201,24 @@ static struct usb_gadget_strings *fastboot_strings[] = {
 };
 
 static void rx_handler_command(struct usb_ep *ep, struct usb_request *req);
+
+static void fastboot_fifo_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	int status = req->status;
+	usb_req *request;
+
+	if (!status) {
+		if (fastboot_func->front != NULL) {
+			request = fastboot_func->front;
+			fastboot_func->front = fastboot_func->front->next;
+			usb_ep_free_request(ep, request->in_req);
+			free(request);
+		} else {
+			printf("fail free request\n");
+		}
+		return;
+	}
+}
 
 static void fastboot_complete(struct usb_ep *ep, struct usb_request *req)
 {
@@ -397,10 +423,56 @@ static int fastboot_add(struct usb_configuration *c)
 }
 DECLARE_GADGET_BIND_CALLBACK(usb_dnl_fastboot, fastboot_add);
 
-static int fastboot_tx_write(const char *buffer, unsigned int buffer_size)
+int fastboot_tx_write_more(const char *buffer)
+{
+	int ret = 0;
+
+	/* alloc usb request FIFO node */
+	usb_req *req = (usb_req *)malloc(sizeof(usb_req));
+	if (!req) {
+		printf("failed alloc usb req!\n");
+		return -ENOMEM;
+	}
+
+	/* usb request node FIFO enquene */
+	if ((fastboot_func->front == NULL) && (fastboot_func->rear == NULL)) {
+		fastboot_func->front = fastboot_func->rear = req;
+		req->next = NULL;
+	} else {
+		fastboot_func->rear->next = req;
+		fastboot_func->rear = req;
+		req->next = NULL;
+	}
+
+	/* alloc in request for current node */
+	req->in_req = fastboot_start_ep(fastboot_func->in_ep);
+	if (!req->in_req) {
+		printf("failed alloc req in\n");
+		fastboot_disable(&(fastboot_func->usb_function));
+		return  -EINVAL;
+	}
+	req->in_req->complete = fastboot_fifo_complete;
+
+	memcpy(req->in_req->buf, buffer, strlen(buffer));
+	req->in_req->length = strlen(buffer);
+
+	ret = usb_ep_queue(fastboot_func->in_ep, req->in_req, 0);
+	if (ret) {
+		printf("Error %d on queue\n", ret);
+		return -EINVAL;
+	}
+
+	ret = 0;
+	return ret;
+}
+
+int fastboot_tx_write(const char *buffer, unsigned int buffer_size)
 {
 	struct usb_request *in_req = fastboot_func->in_req;
 	int ret;
+
+	if (!buffer_size)
+		return 0;
 
 	memcpy(in_req->buf, buffer, buffer_size);
 	in_req->length = buffer_size;
@@ -511,6 +583,10 @@ static void rx_handler_command(struct usb_ep *ep, struct usb_request *req)
 	char *cmdbuf = req->buf;
 	char response[FASTBOOT_RESPONSE_LEN] = {0};
 	int cmd = -1;
+
+	/* init in request FIFO pointer */
+	fastboot_func->front = NULL;
+	fastboot_func->rear  = NULL;
 
 	if (req->status != 0 || req->length == 0)
 		return;

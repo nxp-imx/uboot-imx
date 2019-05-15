@@ -48,7 +48,20 @@ enum {
 	FASTBOOT_COMMAND_ACMD,
 	FASTBOOT_COMMAND_UCMD,
 #endif
-
+#ifdef CONFIG_FSL_FASTBOOT
+	FASTBOOT_COMMAND_UPLOAD,
+	FASTBOOT_COMMAND_GETSTAGED,
+#ifdef CONFIG_FASTBOOT_LOCK
+	FASTBOOT_COMMAND_FLASHING,
+	FASTBOOT_COMMAND_OEM,
+#endif
+#ifdef CONFIG_AVB_SUPPORT
+	FASTBOOT_COMMAND_SETACTIVE,
+#endif
+#ifdef CONFIG_AVB_ATX
+	FASTBOOT_COMMAND_STAGE,
+#endif
+#endif
 	FASTBOOT_COMMAND_COUNT
 };
 
@@ -176,4 +189,9 @@ void fastboot_data_complete(char *response);
 #if CONFIG_IS_ENABLED(FASTBOOT_UUU_SUPPORT)
 void fastboot_acmd_complete(void);
 #endif
+
+int fastboot_tx_write_more(const char *buffer);
+
+int fastboot_tx_write(const char *buffer, unsigned int buffer_size);
+
 #endif /* _FASTBOOT_H_ */

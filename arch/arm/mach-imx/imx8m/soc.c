@@ -29,13 +29,14 @@
 #include <imx_sip.h>
 #include <linux/arm-smccc.h>
 #include <linux/bitops.h>
+#include <asm/setup.h>
 #ifdef CONFIG_IMX_SEC_INIT
 #include <fsl_caam.h>
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if defined(CONFIG_IMX_HAB)
+#if defined(CONFIG_IMX_HAB) || defined(CONFIG_AVB_ATX)
 struct imx_sec_config_fuse_t const imx_sec_config_fuse = {
 	.bank = 1,
 	.word = 3,
@@ -493,6 +494,10 @@ int arch_cpu_init(void)
 	/* Secure init function such RNG */
 	imx_sec_init();
 #endif
+#if defined(CONFIG_ANDROID_SUPPORT)
+	/* Enable RTC */
+	writel(0x21, 0x30370038);
+#endif
 
 	if (is_imx8mq()) {
 		clock_enable(CCGR_OCOTP, 1);
@@ -555,6 +560,18 @@ bool is_usb_boot(void)
 {
 	return get_boot_device() == USB_BOOT;
 }
+#ifdef CONFIG_SERIAL_TAG
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[0];
+	struct fuse_bank0_regs *fuse =
+		(struct fuse_bank0_regs *)bank->fuse_regs;
+
+	serialnr->low = fuse->uid_low;
+	serialnr->high = fuse->uid_high;
+}
+#endif
 
 #ifdef CONFIG_OF_SYSTEM_SETUP
 bool check_fdt_new_path(void *blob)
