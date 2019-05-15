@@ -127,7 +127,7 @@ static void isolate_resource(void)
 }
 #endif
 
-#if defined(CONFIG_IMX_HAB)
+#if defined(CONFIG_IMX_HAB) || defined(CONFIG_AVB_ATX)
 struct imx_sec_config_fuse_t const imx_sec_config_fuse = {
 	.bank = 1,
 	.word = 3,
@@ -440,6 +440,10 @@ void s_init(void)
 	/* clock configuration. */
 	clock_init();
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+        /* Enable RTC */
+        writel(0x21, 0x30370038);
+#endif
 	return;
 }
 

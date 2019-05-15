@@ -122,12 +122,22 @@ void fastboot_boot(void)
 		run_command(s, CMD_FLAG_ENV);
 	} else {
 		static char boot_addr_start[20];
+#ifdef CONFIG_FSL_FASTBOOT
+		static char *const bootm_args[] = {
+			"boota", boot_addr_start, NULL
+		};
+
+		snprintf(boot_addr_start, sizeof(boot_addr_start) - 1,
+			 "0x%p", (void *)image_load_addr);
+#else
 		static char *const bootm_args[] = {
 			"bootm", boot_addr_start, NULL
 		};
 
 		snprintf(boot_addr_start, sizeof(boot_addr_start) - 1,
 			 "0x%p", fastboot_buf_addr);
+#endif
+
 		printf("Booting kernel at %s...\n\n\n", boot_addr_start);
 
 		do_bootm(NULL, 0, 2, bootm_args);
@@ -164,8 +174,13 @@ void fastboot_set_progress_callback(void (*progress)(const char *msg))
  */
 void fastboot_init(void *buf_addr, u32 buf_size)
 {
+#ifdef CONFIG_FSL_FASTBOOT
+	fastboot_buf_addr = buf_addr ? buf_addr :
+				       (void *)env_get_ulong("fastboot_buffer", 16, CONFIG_FASTBOOT_BUF_ADDR);
+#else
 	fastboot_buf_addr = buf_addr ? buf_addr :
 				       (void *)CONFIG_FASTBOOT_BUF_ADDR;
+#endif
 	fastboot_buf_size = buf_size ? buf_size : CONFIG_FASTBOOT_BUF_SIZE;
 	fastboot_set_progress_callback(NULL);
 }

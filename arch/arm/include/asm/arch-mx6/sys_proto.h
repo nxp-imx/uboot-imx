@@ -42,6 +42,7 @@ static inline void iomuxc_set_rgmii_io_voltage(int io_vol)
 }
 
 void set_wdog_reset(struct wdog_regs *wdog);
+enum boot_device get_boot_device(void);
 
 #ifdef CONFIG_LDO_BYPASS_CHECK
 int check_ldo_bypass(void);

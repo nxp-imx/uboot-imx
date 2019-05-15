@@ -12,6 +12,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/mach-imx/hab.h>
+#include <asm/setup.h>
 #ifdef CONFIG_IMX_SEC_INIT
 #include <fsl_caam.h>
 #endif
@@ -232,6 +233,11 @@ void s_init(void)
 	if (soc_rev() < CHIP_REV_2_0) {
 		/* enable dumb pmic */
 		writel((readl(SNVS_LP_LPCR) | SNVS_LPCR_DPEN), SNVS_LP_LPCR);
+
+#if defined(CONFIG_ANDROID_SUPPORT)
+		/* Enable RTC */
+		writel((readl(SNVS_LP_LPCR) | SNVS_LPCR_SRTC_ENV), SNVS_LP_LPCR);
+#endif
 	}
 
 #if defined(CONFIG_LDO_ENABLED_MODE)
@@ -340,7 +346,12 @@ static char *get_reset_cause(char *ret)
 
 	srs = readl(reg_srs);
 	cause1 = readl(reg_ssrs);
+#ifndef CONFIG_ANDROID_BOOT_IMAGE
+	/* We will read the ssrs states later for android so we don't
+	 * clear the states here.
+	 */
 	writel(cause1, reg_ssrs);
+#endif
 
 	reset_cause = cause1;
 
@@ -379,6 +390,17 @@ static char *get_reset_cause(char *ret)
 	debug("[%X] SRS[%X] %X - ", cause1, srs, srs^cause1);
 	return ret;
 }
+
+#ifdef CONFIG_ANDROID_BOOT_IMAGE
+void get_reboot_reason(char *ret)
+{
+	u32 *reg_ssrs = (u32 *)(SRC_BASE_ADDR + 0x28);
+
+	get_reset_cause(ret);
+	/* clear the ssrs here, its state has been recorded in reset_cause */
+	writel(reset_cause, reg_ssrs);
+}
+#endif
 
 void arch_preboot_os(void)
 {
@@ -434,3 +456,18 @@ enum boot_device get_boot_device(void)
 
 	return boot_dev;
 }
+
+#ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_SERIAL_TAG
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[1];
+	struct fuse_bank1_regs *fuse =
+		(struct fuse_bank1_regs *)bank->fuse_regs;
+	serialnr->low = (fuse->cfg0 & 0xFFFF) + ((fuse->cfg1 & 0xFFFF) << 16);
+	serialnr->high = (fuse->cfg2 & 0xFFFF) + ((fuse->cfg3 & 0xFFFF) << 16);
+}
+#endif /*CONFIG_SERIAL_TAG*/
+#endif /*CONFIG_FSL_FASTBOOT*/
