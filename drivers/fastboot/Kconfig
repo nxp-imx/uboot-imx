@@ -72,9 +72,54 @@ config FASTBOOT_FLASH
 	  the downloaded image to a non-volatile storage device. Define
 	  this to enable the "fastboot flash" command.
 
+config FASTBOOT_UUU_SUPPORT
+	bool "Enable FASTBOOT i.MX UUU special command"
+	default y if ARCH_MX7 || ARCH_MX6 || ARCH_IMX8 || ARCH_IMX8M || ARCH_MX7ULP
+	select FSL_FASTBOOT
+	help
+	  The fastboot protocol includes "UCmd" command and "ACmd" command
+
+config FSL_FASTBOOT
+	bool "Enable FSL fastboot support"
+	depends on FASTBOOT_FLASH
+	help
+	  This enables FSL implementation for Android fastboot.
+
+config ANDROID_RECOVERY
+	bool "Enable the recovery boot function"
+	depends on FSL_FASTBOOT
+	help
+	  This enables the Android Recovery boot function.
+
+config CMD_BOOTA
+	bool "Enable the boota command"
+	depends on FSL_FASTBOOT
+	help
+	  This enables the boota command for booting android images.
+
+config BCB_SUPPORT
+	bool "Enable the boot control block support"
+	depends on FSL_FASTBOOT
+	help
+	  This enables the boot control block support for android reboot command
+
+config FASTBOOT_LOCK
+	bool "Enable the lock and unlock feature to the partitions"
+	depends on FSL_FASTBOOT
+	help
+	  This enables the lock support for android flashing command
+
+config FASTBOOT_USB_DEV
+	int "USB controller number"
+	default 0
+	help
+	  Some boards have USB OTG controller other than 0. Define this
+	  option so it can be used in compiled environment (e.g. in
+	  CONFIG_BOOTCOMMAND).
+
 choice
 	prompt "Flash provider for FASTBOOT"
-	depends on FASTBOOT_FLASH
+	depends on FASTBOOT_FLASH && !FSL_FASTBOOT
 
 config FASTBOOT_FLASH_MMC
 	bool "FASTBOOT on MMC"

@@ -96,6 +96,9 @@ extern u8 __dtb_dt_begin[];	/* embedded device tree blob */
 extern u8 __dtb_dt_spl_begin[];	/* embedded device tree blob for SPL/TPL */
 int mdm_init(void);
 
+#ifdef CONFIG_ANDROID_BOOT_IMAGE
+void get_reboot_reason(char *ret);
+#endif
 /**
  * Show the DRAM size in a board-specific way
  *
@@ -541,6 +544,10 @@ int cpu_status(u32 nr);
 int cpu_reset(u32 nr);
 int cpu_disable(u32 nr);
 int cpu_release(u32 nr, int argc, char * const argv[]);
+#endif
+
+#ifdef CONFIG_CMD_READ
+int do_raw_read(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 #endif
 
 #else	/* __ASSEMBLY__ */

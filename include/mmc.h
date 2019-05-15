@@ -853,6 +853,7 @@ int mmc_get_env_addr(struct mmc *mmc, int copy, u32 *env_addr);
 extern uint mmc_get_env_part(struct mmc *mmc);
 # endif
 int mmc_get_env_dev(void);
+int mmc_map_to_kernel_blk(int dev_no);
 
 /* Set block count limit because of 16 bit register limit on some hardware*/
 #ifndef CONFIG_SYS_MMC_MAX_BLK_COUNT

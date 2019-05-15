@@ -19,6 +19,19 @@ typedef struct andr_img_hdr andr_img_hdr;
 #define ANDR_BOOT_ARGS_SIZE 512
 #define ANDR_BOOT_EXTRA_ARGS_SIZE 1024
 
+/* Boot metric variables (in millisecond) */
+struct boot_metric
+{
+	u32 bll_1;	/* 1th bootloader load duration */
+	u32 ble_1;	/* 1th bootloader exec duration */
+	u32 kl;		/* kernel image load duration */
+	u32 kd;		/* kernel image decompress duration */
+	u32 avb;	/* avb verify boot.img duration */
+	u32 odt;	/* overlay device tree duration */
+	u32 sw;		/* system wait for UI interaction duration*/
+};
+typedef struct boot_metric boot_metric;
+
 struct andr_img_hdr {
 	char magic[ANDR_BOOT_MAGIC_SIZE];
 
@@ -33,7 +46,7 @@ struct andr_img_hdr {
 
 	u32 tags_addr;		/* physical addr for kernel tags */
 	u32 page_size;		/* flash page size we assume */
-	u32 unused;		/* reserved for future expansion: MUST be 0 */
+	u32 header_version;
 
 	/* operating system version and security patch level; for
 	 * version "A.B.C" and patch level "Y-M-D":
@@ -51,22 +64,28 @@ struct andr_img_hdr {
 	/* Supplemental command line data; kept here to maintain
 	 * binary compatibility with older versions of mkbootimg */
 	char extra_cmdline[ANDR_BOOT_EXTRA_ARGS_SIZE];
+	uint32_t recovery_dtbo_size;   /* size of recovery dtbo image */
+	uint64_t recovery_dtbo_offset; /* offset in boot image */
+	uint32_t header_size;   /* size of boot image header in bytes */
 } __attribute__((packed));
 
 /*
  * +-----------------+
  * | boot header     | 1 page
  * +-----------------+
- * | kernel          | n pages
+ * | kernel          | i pages
  * +-----------------+
  * | ramdisk         | m pages
  * +-----------------+
- * | second stage    | o pages
+ * | second stage    | n pages
+ * +-----------------+
+ * | recovery dtbo   | o pages
  * +-----------------+
  *
- * n = (kernel_size + page_size - 1) / page_size
+ * i = (kernel_size + page_size - 1) / page_size
  * m = (ramdisk_size + page_size - 1) / page_size
- * o = (second_size + page_size - 1) / page_size
+ * n = (second_size + page_size - 1) / page_size
+ * o = (recovery_dtbo_size + page_size - 1) / page_size
  *
  * 0. all entities are page_size aligned in flash
  * 1. kernel and ramdisk are required (size != 0)
@@ -79,4 +98,16 @@ struct andr_img_hdr {
  * 6. if second_size != 0: jump to second_addr
  *    else: jump to kernel_addr
  */
+struct header_image {
+	uint32_t	code0;		/* Executable code */
+	uint32_t	code1;		/* Executable code */
+	uint64_t	text_offset;	/* Image load offset, LE */
+	uint64_t	image_size;	/* Effective Image size, LE */
+	uint64_t	res1;		/* reserved */
+	uint64_t	res2;		/* reserved */
+	uint64_t	res3;		/* reserved */
+	uint64_t	res4;		/* reserved */
+	uint32_t	magic;		/* Magic number */
+	uint32_t	res5;
+};
 #endif
