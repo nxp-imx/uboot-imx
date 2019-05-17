@@ -9,6 +9,8 @@
 #include <linux/sizes.h>
 #include <asm/arch/imx-regs.h>
 
+#include "imx_env.h"
+
 #ifdef CONFIG_SPL_BUILD
 #define CONFIG_SPL_MAX_SIZE				(192 * 1024)
 #define CONFIG_SYS_MONITOR_LEN				(1024 * 1024)
@@ -42,6 +44,8 @@
 
 #define CONFIG_BOARD_EARLY_INIT_F
 
+#define CONFIG_CMD_READ
+
 /* Flat Device Tree Definitions */
 #define CONFIG_OF_BOARD_SETUP
 
@@ -70,6 +74,13 @@
 	"m4_0_image=m4_0.bin\0" \
 	"loadm4image_0=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4_0_image}\0" \
 	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
+
+#define CONFIG_MFG_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
+	"initrd_addr=0x83100000\0" \
+	"initrd_high=0xffffffffffffffff\0" \
+	"emmc_dev=0\0" \
+	"sd_dev=1\0" \
 
 #define JAILHOUSE_ENV \
 	"jh_mmcboot=" \
@@ -113,6 +124,7 @@
 
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
+	CONFIG_MFG_ENV_SETTINGS \
 	M4_BOOT_ENV \
 	XEN_BOOT_ENV \
 	JAILHOUSE_ENV\
@@ -127,8 +139,6 @@
 	"cntr_file=os_cntr_signed.bin\0" \
 	"boot_fdt=try\0" \
 	"fdt_file=undefined\0" \
-	"initrd_addr=0x83100000\0" \
-	"initrd_high=0xffffffffffffffff\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \

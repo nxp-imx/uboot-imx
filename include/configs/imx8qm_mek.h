@@ -8,6 +8,7 @@
 
 #include <linux/sizes.h>
 #include <asm/arch/imx-regs.h>
+#include "imx_env.h"
 
 #ifdef CONFIG_SPL_BUILD
 #define CONFIG_SPL_MAX_SIZE				(192 * 1024)
@@ -42,6 +43,8 @@
 #define CONFIG_REMAKE_ELF
 
 #define CONFIG_BOARD_EARLY_INIT_F
+
+#define CONFIG_CMD_READ
 
 /* Flat Device Tree Definitions */
 #define CONFIG_OF_BOARD_SETUP
@@ -139,8 +142,16 @@
 #define MFG_NAND_PARTITION ""
 #endif
 
+#define CONFIG_MFG_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
+	"initrd_addr=0x83100000\0" \
+	"initrd_high=0xffffffffffffffff\0" \
+	"emmc_dev=0\0" \
+	"sd_dev=1\0" \
+
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
+	CONFIG_MFG_ENV_SETTINGS \
 	M4_BOOT_ENV \
 	XEN_BOOT_ENV \
 	JAILHOUSE_ENV\
@@ -155,8 +166,6 @@
 	"cntr_file=os_cntr_signed.bin\0" \
 	"boot_fdt=try\0" \
 	"fdt_file=undefined\0" \
-	"initrd_addr=0x83100000\0" \
-	"initrd_high=0xffffffffffffffff\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \

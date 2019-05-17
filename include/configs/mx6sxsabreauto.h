@@ -9,6 +9,7 @@
 #define __CONFIG_H
 
 #include "mx6_common.h"
+#include "imx_env.h"
 
 #define CONFIG_DBG_MONITOR
 
@@ -19,7 +20,7 @@
 #define CONFIG_MXC_UART_BASE		UART1_BASE
 
 #ifdef CONFIG_NAND_BOOT
-#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),16m(tee),-(rootfs) "
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(nandboot),16m(nandkernel),16m(nanddtb),16m(nandtee),-(nandrootfs)"
 #else
 #define MFG_NAND_PARTITION ""
 #endif
@@ -57,22 +58,12 @@
 
 
 #define CONFIG_MFG_ENV_SETTINGS \
-	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
-		"rdinit=/linuxrc " \
-		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
-		"g_mass_storage.file=/fat g_mass_storage.ro=1 " \
-		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
-		"g_mass_storage.iSerialNumber=\"\" "\
-		MFG_NAND_PARTITION \
-		"\0" \
-	"initrd_addr=0x83800000\0" \
+	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
+	"initrd_addr=0x86800000\0" \
 	"initrd_high=0xffffffff\0" \
-	"bootcmd_mfg=run mfgtool_args; " \
-		"if test ${tee} = yes; then " \
-			"bootm ${tee_addr} ${initrd_addr} ${fdt_addr}; " \
-		"else " \
-			"bootz ${loadaddr} ${initrd_addr} ${fdt_addr}; " \
-		"fi;\0"
+	"sd_dev=2\0" \
+	"mtdparts=" MFG_NAND_PARTITION \
+	"\0"\
 
 #if defined(CONFIG_NAND_BOOT)
 #define CONFIG_EXTRA_ENV_SETTINGS \
@@ -84,7 +75,7 @@
 	"fdt_high=0xffffffff\0"	  \
 	"console=ttymxc0\0" \
 	"bootargs=console=ttymxc0,115200 ubi.mtd=6 "  \
-		"root=ubi0:rootfs rootfstype=ubifs "		     \
+		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
 		MFG_NAND_PARTITION \
 		"\0" \
 	"bootcmd=nand read ${loadaddr} 0x4000000 0xc00000;"\
@@ -232,6 +223,8 @@
 /* Network */
 #define CONFIG_ETHPRIME                 "eth1"
 #define CONFIG_FEC_XCV_TYPE             RGMII
+
+#define CONFIG_SERIAL_TAG
 
 #ifdef CONFIG_CMD_USB
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET

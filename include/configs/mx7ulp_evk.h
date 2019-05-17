@@ -10,9 +10,12 @@
 
 #include <linux/sizes.h>
 #include <asm/arch/imx-regs.h>
+#include "imx_env.h"
 
 #define CONFIG_BOARD_POSTCLK_INIT
 #define CONFIG_SYS_BOOTM_LEN		0x1000000
+
+#define CONFIG_SERIAL_TAG
 
 #define CONFIG_SYS_MMC_ENV_DEV          0	/* USDHC1 */
 #define CONFIG_SYS_MMC_ENV_PART         0	/* user area */
@@ -59,21 +62,11 @@
 #define CONFIG_SYS_MEMTEST_END      (CONFIG_SYS_MEMTEST_START + (PHYS_SDRAM_SIZE >> 1))
 
 #define CONFIG_MFG_ENV_SETTINGS \
-	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
-		"rdinit=/linuxrc " \
-		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
-		"g_mass_storage.file=/fat g_mass_storage.ro=1 " \
-		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
-		"g_mass_storage.iSerialNumber=\"\" "\
-		"\0" \
-		"initrd_addr=0x63800000\0" \
-		"initrd_high=0xffffffff\0" \
-		"bootcmd_mfg=run mfgtool_args; " \
-			"if test ${tee} = yes; then " \
-				"bootm ${tee_addr} ${initrd_addr} ${fdt_addr}; " \
-			"else " \
-				"bootz ${loadaddr} ${initrd_addr} ${fdt_addr}; " \
-			"fi;\0"
+	CONFIG_MFG_ENV_SETTINGS_DEFAULT  \
+	"initrd_addr=0x66800000\0" \
+	"initrd_high=0xffffffff\0" \
+	"emmc_dev=0\0" \
+	"sd_dev=0\0"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
