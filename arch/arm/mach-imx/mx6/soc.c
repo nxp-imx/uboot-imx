@@ -721,7 +721,7 @@ static int mmc_get_boot_dev(void)
 	bootsel = (soc_sbmr & 0x000000FF) >> 6;
 
 	/* No boot from sd/mmc */
-	if (bootsel != 1)
+	if (is_usb_boot() || bootsel != 1)
 		return -1;
 
 	/* BOOT_CFG2[3] and BOOT_CFG2[4] */
