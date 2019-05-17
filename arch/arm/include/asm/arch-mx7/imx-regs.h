@@ -1208,10 +1208,14 @@ extern void check_cpu_temperature(void);
 extern void pcie_power_up(void);
 extern void pcie_power_off(void);
 
+#include <stdbool.h>
+bool is_usb_boot(void);
+#define is_boot_from_usb  is_usb_boot
+
 /* If ROM fail back to USB recover mode, USBPH0_PWD will be clear to use USB
  * If boot from the other mode, USB0_PWD will keep reset value
  */
-#define	is_boot_from_usb(void) (readl(USBOTG1_IPS_BASE_ADDR + 0x158) || \
+#define	is_usbotg_boot_enabled(void) (readl(USBOTG1_IPS_BASE_ADDR + 0x158) || \
 	readl(USBOTG2_IPS_BASE_ADDR + 0x158))
 #define	disconnect_from_pc(void) writel(0x0, USBOTG1_IPS_BASE_ADDR + 0x140)
 
