@@ -457,6 +457,11 @@ enum boot_device get_boot_device(void)
 	return boot_dev;
 }
 
+bool is_usb_boot(void)
+{
+	return get_boot_device() == USB_BOOT;
+}
+
 #ifdef CONFIG_FSL_FASTBOOT
 #ifdef CONFIG_SERIAL_TAG
 void get_board_serial(struct tag_serialnr *serialnr)
