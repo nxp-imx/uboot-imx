@@ -20,6 +20,9 @@
 #include <time.h>
 #include <u-boot/sha256.h>
 #include <bootcount.h>
+#ifdef is_boot_from_usb
+#include <env.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -334,6 +337,21 @@ const char *bootdelay_process(void)
 		bootdelay = fdtdec_get_config_int(gd->fdt_blob, "bootdelay",
 						  bootdelay);
 
+#if defined(is_boot_from_usb)
+	if (is_boot_from_usb() && env_get("bootcmd_mfg")) {
+		disconnect_from_pc();
+		printf("Boot from USB for mfgtools\n");
+		bootdelay = 0;
+		env_set_default("Use default environment for \
+				 mfgtools\n", 0);
+	} else if (is_boot_from_usb()) {
+		printf("Boot from USB for uuu\n");
+		env_set("bootcmd", "fastboot 0");
+	} else {
+		printf("Normal Boot\n");
+	}
+#endif
+
 	debug("### main_loop entered: bootdelay=%d\n\n", bootdelay);
 
 	if (IS_ENABLED(CONFIG_AUTOBOOT_MENU_SHOW))
@@ -349,6 +367,13 @@ const char *bootdelay_process(void)
 		s = env_get("altbootcmd");
 	else
 		s = env_get("bootcmd");
+
+#if defined(is_boot_from_usb)
+	if (is_boot_from_usb() && env_get("bootcmd_mfg")) {
+		s = env_get("bootcmd_mfg");
+		printf("Run bootcmd_mfg: %s\n", s);
+	}
+#endif
 
 	if (IS_ENABLED(CONFIG_OF_CONTROL))
 		process_fdt_options(gd->fdt_blob);
