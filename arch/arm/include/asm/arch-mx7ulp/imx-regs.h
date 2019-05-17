@@ -1152,7 +1152,9 @@ struct bootrom_sw_info {
 	u32 reserved_3[3];
 };
 
-#define	is_boot_from_usb(void)		(!(readl(USB_PHY0_BASE_ADDR) & (1<<20)))
+#include <stdbool.h>
+bool is_usb_boot(void);
+#define is_boot_from_usb  is_usb_boot
 #define	disconnect_from_pc(void)	writel(0x0, USBOTG0_RBASE + 0x140)
 
 #endif
