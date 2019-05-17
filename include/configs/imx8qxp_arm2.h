@@ -9,6 +9,8 @@
 #include <linux/sizes.h>
 #include <asm/arch/imx-regs.h>
 
+#include "imx_env.h"
+
 #ifdef CONFIG_SPL_BUILD
 #define CONFIG_PARSE_CONTAINER
 #define CONFIG_SPL_TEXT_BASE				0x100000
@@ -128,9 +130,19 @@
 #define MFG_NAND_PARTITION "mtdparts=gpmi-nand:128m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs) "
 #endif
 
+#define CONFIG_MFG_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
+	"clk_ignore_unused "\
+	"\0" \
+	"initrd_addr=0x83100000\0" \
+	"initrd_high=0xffffffffffffffff\0" \
+	"emmc_dev=0\0" \
+	"sd_dev=1\0" \
+
 /* Initial environment variables */
 #ifdef CONFIG_NAND_BOOT
 #define CONFIG_EXTRA_ENV_SETTINGS		\
+	CONFIG_MFG_ENV_SETTINGS \
 	"bootargs=console=ttyLP0,115200 ubi.mtd=6 "  \
 		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
 		MFG_NAND_PARTITION \
@@ -140,6 +152,7 @@
 	"fdt_addr=0x83000000\0"
 #else
 #define CONFIG_EXTRA_ENV_SETTINGS		\
+	CONFIG_MFG_ENV_SETTINGS \
 	M4_BOOT_ENV \
 	AHAB_ENV \
 	"script=boot.scr\0" \
@@ -152,8 +165,6 @@
 	"cntr_file=os_cntr_signed.bin\0" \
 	"boot_fdt=try\0" \
 	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
-	"initrd_addr=0x83100000\0" \
-	"initrd_high=0xffffffffffffffff\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
