@@ -60,6 +60,9 @@
 
 #define is_imx8qxp() (is_cpu_type(MXC_CPU_IMX8QXP))
 
+ /* gd->flags reserves high 16 bits for arch-specific flags */
+#define GD_FLG_ARCH_IMX_USB_BOOT		0x80000000	 /* Only used for MX6/7, If set, the u-boot is booting from USB serial download */
+
 #ifdef CONFIG_MX6
 #define IMX6_SRC_GPR10_BMODE		BIT(28)
 

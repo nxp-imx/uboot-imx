@@ -31,6 +31,8 @@
 #include <hang.h>
 #include <cpu_func.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 struct scu_regs {
 	u32	ctrl;
 	u32	config;
@@ -552,8 +554,19 @@ static void imx_set_pcie_phy_power_down(void)
 	}
 }
 
+bool is_usb_boot(void)
+{
+	if (gd->flags & GD_FLG_ARCH_IMX_USB_BOOT)
+		return true;
+
+	return false;
+}
+
 int arch_cpu_init(void)
 {
+	if (is_usbphy_power_on())
+		gd->flags |= GD_FLG_ARCH_IMX_USB_BOOT;
+
 	if (!is_mx6sl() && !is_mx6sx()
 		&& !is_mx6ul() && !is_mx6ull()
 		&& !is_mx6sll()) {
