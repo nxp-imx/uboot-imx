@@ -489,6 +489,11 @@ enum boot_device get_boot_device(void)
 	return boot_dev;
 }
 
+bool is_usb_boot(void)
+{
+	return get_boot_device() == USB_BOOT;
+}
+
 #if defined(CONFIG_SERIAL_TAG) || defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
 /*
  * OCOTP_CFG (SJC CHALLENGE, Unique ID)
