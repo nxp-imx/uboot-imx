@@ -9,6 +9,7 @@
 #include <linux/sizes.h>
 #include <linux/stringify.h>
 #include <asm/arch/imx-regs.h>
+#include "imx_env.h"
 
 #define CONFIG_SYS_BOOTM_LEN		(64 * SZ_1M)
 
@@ -29,6 +30,8 @@
 #define CONFIG_SPL_ABORT_ON_RAW_IMAGE
 #endif
 
+#define CONFIG_CMD_READ
+
 #define CONFIG_SYS_FSL_ESDHC_ADDR       0
 #define USDHC1_BASE_ADDR                0x5B010000
 #define USDHC2_BASE_ADDR                0x5B020000
@@ -39,8 +42,16 @@
 #define AHAB_ENV "sec_boot=no\0"
 #endif
 
+#define CONFIG_MFG_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
+	"initrd_addr=0x83100000\0" \
+	"initrd_high=0xffffffffffffffff\0" \
+	"emmc_dev=0\0" \
+	"sd_dev=1\0" \
+
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
+	CONFIG_MFG_ENV_SETTINGS \
 	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
@@ -50,8 +61,6 @@
 	"fdt_high=0xffffffffffffffff\0"		\
 	"boot_fdt=try\0" \
 	"fdt_file=undefined\0" \
-	"initrd_addr=0x83800000\0"		\
-	"initrd_high=0xffffffffffffffff\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
