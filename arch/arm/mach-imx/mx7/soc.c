@@ -330,8 +330,19 @@ static void set_epdc_qos(void)
 	writel(0xe080, IOMUXC_GPR_BASE_ADDR + 0x0034); /* EPDC AW/AR CACHE ENABLE */
 }
 
+bool is_usb_boot(void)
+{
+	if (gd->flags & GD_FLG_ARCH_IMX_USB_BOOT)
+		return true;
+
+	return false;
+}
+
 int arch_cpu_init(void)
 {
+	if (is_usbotg_boot_enabled())
+		gd->flags |= GD_FLG_ARCH_IMX_USB_BOOT;
+
 	init_aips();
 
 	init_csu();
