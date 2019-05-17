@@ -10,6 +10,8 @@
 #include <linux/stringify.h>
 #include <asm/arch/imx-regs.h>
 
+#include "imx_env.h"
+
 #ifdef CONFIG_SPL_BUILD
 #define CFG_MALLOC_F_ADDR		0x00120000
 
@@ -21,8 +23,16 @@
 #define AHAB_ENV "sec_boot=no\0"
 #endif
 
+#define CFG_MFG_ENV_SETTINGS \
+	CFG_MFG_ENV_SETTINGS_DEFAULT \
+	"initrd_addr=0x83100000\0" \
+	"initrd_high=0xffffffffffffffff\0" \
+	"emmc_dev=0\0" \
+	"sd_dev=1\0" \
+
 /* Initial environment variables */
 #define CFG_EXTRA_ENV_SETTINGS		\
+	CFG_MFG_ENV_SETTINGS \
 	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
@@ -32,8 +42,6 @@
 	"fdt_high=0xffffffffffffffff\0"		\
 	"boot_fdt=try\0" \
 	"fdt_file=undefined\0" \
-	"initrd_addr=0x83800000\0"		\
-	"initrd_high=0xffffffffffffffff\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
 	"mmcroot=/dev/mmcblk1p2 rootwait rw\0" \
