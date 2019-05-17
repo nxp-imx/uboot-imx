@@ -31,6 +31,8 @@
 #include <hang.h>
 #include <cpu_func.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 #define has_err007805() \
 	(is_mx6sl() || is_mx6dl() || is_mx6solo() || is_mx6ull())
 
@@ -535,9 +537,20 @@ static void imx_set_pcie_phy_power_down(void)
 	}
 }
 
+bool is_usb_boot(void)
+{
+	if (gd->flags & GD_FLG_ARCH_IMX_USB_BOOT)
+		return true;
+
+	return false;
+}
+
 int arch_cpu_init(void)
 {
 	struct mxc_ccm_reg *ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+
+	if (is_usbphy_power_on())
+		gd->flags |= GD_FLG_ARCH_IMX_USB_BOOT;
 
 	if (!is_mx6sl() && !is_mx6sx()
 		&& !is_mx6ul() && !is_mx6ull()

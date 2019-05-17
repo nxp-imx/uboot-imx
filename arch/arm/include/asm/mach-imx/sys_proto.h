@@ -83,6 +83,9 @@ struct bd_info;
 #define is_imxrt1020() (is_cpu_type(MXC_CPU_IMXRT1020))
 #define is_imxrt1050() (is_cpu_type(MXC_CPU_IMXRT1050))
 
+/* gd->flags reserves high 16 bits for arch-specific flags */
+#define GD_FLG_ARCH_IMX_USB_BOOT		0x80000000	 /* Only used for MX6/7, If set, the u-boot is booting from USB serial download */
+
 #ifdef CONFIG_MX6
 #define IMX6_SRC_GPR10_BMODE			BIT(28)
 #define IMX6_SRC_GPR10_PERSIST_SECONDARY_BOOT	BIT(30)
