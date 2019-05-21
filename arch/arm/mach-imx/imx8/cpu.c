@@ -567,7 +567,6 @@ void get_board_serial(struct tag_serialnr *serialnr)
 }
 #endif /*CONFIG_SERIAL_TAG*/
 
-#ifdef CONFIG_ENV_IS_IN_MMC
 __weak int board_mmc_get_env_dev(int devno)
 {
 	return devno;
@@ -597,7 +596,6 @@ int mmc_get_env_dev(void)
 
 	return board_mmc_get_env_dev(devno);
 }
-#endif
 
 static bool check_owned_resource(sc_rsrc_t rsrc_id)
 {
