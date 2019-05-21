@@ -699,7 +699,10 @@ int arch_cpu_init(void)
 	return 0;
 }
 
-#ifdef CONFIG_ENV_IS_IN_MMC
+#ifndef CONFIG_SYS_MMC_ENV_DEV
+#define CONFIG_SYS_MMC_ENV_DEV -1
+#endif
+
 __weak int board_mmc_get_env_dev(int devno)
 {
 	return devno;
@@ -757,7 +760,6 @@ uint mmc_get_env_part(struct mmc *mmc)
 
 	return board_mmc_get_env_part(devno);
 }
-#endif
 #endif
 
 int board_postclk_init(void)
