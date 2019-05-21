@@ -222,7 +222,6 @@ void get_board_serial(struct tag_serialnr *serialnr)
 }
 #endif /*CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG*/
 
-#ifdef CONFIG_ENV_IS_IN_MMC
 __weak int board_mmc_get_env_dev(int devno)
 {
 	return devno;
@@ -252,7 +251,6 @@ int mmc_get_env_dev(void)
 
 	return board_mmc_get_env_dev(devno);
 }
-#endif
 
 #define MEMSTART_ALIGNMENT  SZ_2M /* Align the memory start with 2MB */
 
