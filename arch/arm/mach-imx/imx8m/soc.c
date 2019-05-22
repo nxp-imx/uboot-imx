@@ -309,6 +309,77 @@ int arch_cpu_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_IMX8MN
+struct rom_api
+{
+	uint16_t ver;
+	uint16_t tag;
+	uint32_t reserved1;
+	uint32_t (*download_image)(uint8_t * dest, uint32_t offset, uint32_t size,  uint32_t xor);
+	uint32_t (*query_boot_infor)(uint32_t info_type, uint32_t *info, uint32_t xor);
+};
+static struct rom_api* g_rom_api = (struct rom_api*)0x980;
+
+typedef enum {
+    BT_DEV_TYPE_SD = 1,
+    BT_DEV_TYPE_MMC = 2,
+    BT_DEV_TYPE_NAND = 3,
+    BT_DEV_TYPE_FLEXSPINOR = 4,
+
+    BT_DEV_TYPE_USB = 0xE,
+    BT_DEV_TYPE_MEM_DEV = 0xF,
+
+    BT_DEV_TYPE_INVALID = 0xFF
+} boot_dev_type_e;
+
+#define QUERY_BT_DEV		2
+
+#define ROM_API_OKAY		0xF0
+
+enum boot_device get_boot_device(void)
+{
+	volatile gd_t *pgd = gd;
+	int ret;
+	uint32_t boot;
+	u16 boot_type;
+	u8 boot_instance;
+	enum boot_device boot_dev = SD1_BOOT;
+
+	ret = g_rom_api->query_boot_infor(QUERY_BT_DEV, &boot, ((uintptr_t) &boot)^ QUERY_BT_DEV);
+        gd =  pgd;
+
+	if (ret != ROM_API_OKAY) {
+		puts("ROMAPI: failure at query_boot_info\n");
+		return -1;
+	}
+
+	boot_type = boot >> 16;
+	boot_instance = (boot >> 8) & 0xff;
+
+	switch (boot_type) {
+	case BT_DEV_TYPE_SD:
+		boot_dev = boot_instance + SD1_BOOT;
+		break;
+	case BT_DEV_TYPE_MMC:
+		boot_dev = boot_instance + MMC1_BOOT;
+		break;
+	case BT_DEV_TYPE_NAND:
+		boot_dev = NAND_BOOT;
+		break;
+	case BT_DEV_TYPE_FLEXSPINOR:
+		boot_dev = QSPI_BOOT;
+		break;
+	case BT_DEV_TYPE_USB:
+		boot_dev = USB_BOOT;
+		break;
+	default:
+		break;
+	}
+
+	return boot_dev;
+}
+#endif
+
 bool is_usb_boot(void)
 {
 	return get_boot_device() == USB_BOOT;
