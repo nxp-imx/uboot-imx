@@ -3,6 +3,15 @@
  * Copyright 2019 NXP
  */
 
+/ {
+	firmware {
+		optee {
+			compatible = "linaro,optee-tz";
+			method = "smc";
+		};
+	};
+};
+
 &{/soc@0} {
 	u-boot,dm-pre-reloc;
 	u-boot,dm-spl;
