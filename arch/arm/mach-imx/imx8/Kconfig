@@ -10,6 +10,18 @@ config AHAB_BOOT
 	help
 	  This option enables the support for AHAB secure boot.
 
+config BOOTAUX_RESERVED_MEM_BASE
+	hex "Define the reserved memory base address"
+	default 0x0
+	help
+	  reserve DDR memory for bootaux
+
+config BOOTAUX_RESERVED_MEM_SIZE
+	hex "Define the reserved memory size"
+	default 0x0
+	help
+	  This memory will be reserved by system and linux cannot access.
+
 config IMX8
 	bool
 
