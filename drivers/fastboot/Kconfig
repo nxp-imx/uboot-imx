@@ -76,6 +76,7 @@ config FASTBOOT_UUU_SUPPORT
 	bool "Enable FASTBOOT i.MX UUU special command"
 	default y if ARCH_MX7 || ARCH_MX6 || ARCH_IMX8 || ARCH_IMX8M || ARCH_MX7ULP
 	select FSL_FASTBOOT
+	select FAT_WRITE
 	help
 	  The fastboot protocol includes "UCmd" command and "ACmd" command
 
