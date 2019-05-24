@@ -1135,10 +1135,10 @@ static int ft_add_optee_node(void *fdt, bd_t *bd)
 
 int ft_system_setup(void *blob, bd_t *bd)
 {
-#ifdef BOOTAUX_RESERVED_MEM_BASE
+#if (CONFIG_BOOTAUX_RESERVED_MEM_SIZE != 0x00)
 	int off;
-	off = fdt_add_mem_rsv(blob, BOOTAUX_RESERVED_MEM_BASE,
-				      BOOTAUX_RESERVED_MEM_SIZE);
+	off = fdt_add_mem_rsv(blob, CONFIG_BOOTAUX_RESERVED_MEM_BASE,
+				      CONFIG_BOOTAUX_RESERVED_MEM_SIZE);
 		if (off < 0)
 			printf("Failed  to reserve memory for bootaux: %s\n",
 			       fdt_strerror(off));
