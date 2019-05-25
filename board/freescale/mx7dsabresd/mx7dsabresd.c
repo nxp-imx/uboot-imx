@@ -262,9 +262,9 @@ static int setup_fec(int fec_id)
 	int ret;
 	unsigned int gpio;
 
-	ret = gpio_lookup_name("gpio_spi@0_5", NULL, NULL, &gpio);
+	ret = gpio_lookup_name("gpio-expander@0_5", NULL, NULL, &gpio);
 	if (ret) {
-		printf("GPIO: 'gpio_spi@0_5' not found\n");
+		printf("GPIO: 'gpio-expander@0_5' not found\n");
 		return -ENODEV;
 	}
 
