@@ -462,6 +462,7 @@ static int imx_lpi2c_probe(struct udevice *bus)
 	}
 
 	if (IS_ENABLED(CONFIG_CLK)) {
+		struct clk ipg_clk;
 		ret = clk_get_by_name(bus, "per", &i2c_bus->per_clk);
 		if (ret) {
 			dev_err(bus, "Failed to get per clk\n");
@@ -470,6 +471,17 @@ static int imx_lpi2c_probe(struct udevice *bus)
 		ret = clk_enable(&i2c_bus->per_clk);
 		if (ret) {
 			dev_err(bus, "Failed to enable per clk\n");
+			return ret;
+		}
+
+		ret = clk_get_by_name(bus, "ipg", &ipg_clk);
+		if (ret) {
+			dev_err(bus, "Failed to get ipg clk\n");
+			return ret;
+		}
+		ret = clk_enable(&ipg_clk);
+		if (ret) {
+			dev_err(bus, "Failed to enable ipg clk\n");
 			return ret;
 		}
 	} else {
