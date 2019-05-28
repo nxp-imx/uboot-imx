@@ -155,16 +155,20 @@ static inline int is_controller_busy(const struct fsl_qspi_priv *priv)
 	u32 val;
 	const u32 mask = QSPI_SR_BUSY_MASK | QSPI_SR_AHB_ACC_MASK |
 			 QSPI_SR_IP_ACC_MASK;
-	unsigned int retry = 5;
+	unsigned long timeout = 100; /* 100ms timeout */
 
-	do {
+	unsigned long start = get_timer(0);
+	while (1) {
 		val = qspi_read32(priv->flags, &priv->regs->sr);
 
 		if ((~val & mask) == mask)
 			return 0;
 
+		if (get_timer(start) > timeout)
+			break;
+
 		udelay(1);
-	} while (--retry);
+	}
 
 	return -ETIMEDOUT;
 }
