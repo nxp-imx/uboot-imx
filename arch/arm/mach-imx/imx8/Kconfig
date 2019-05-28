@@ -12,6 +12,7 @@ config IMX_SMMU
 
 config AHAB_BOOT
 	bool "Support i.MX8 AHAB features"
+	imply CMD_DEKBLOB
 	help
 	  This option enables the support for AHAB secure boot.
 

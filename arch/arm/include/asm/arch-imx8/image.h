@@ -47,3 +47,14 @@
 	 uint16_t signature_offset;
 	 uint32_t reserved;
  }__attribute__((packed));
+
+struct generate_key_blob_hdr {
+	uint8_t version;
+	uint8_t length_lsb;
+	uint8_t length_msb;
+	uint8_t tag;
+	uint8_t flags;
+	uint8_t size;
+	uint8_t algorithm;
+	uint8_t mode;
+} __attribute__((packed));
