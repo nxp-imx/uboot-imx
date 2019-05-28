@@ -30,6 +30,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define OFFSET_BITS_MASK	GENMASK(23, 0)
 
 #define FLASH_STATUS_WEL	0x02
+#define FLASH_STATUS_WIP	0x01
 
 /* SEQID */
 #define SEQID_WREN		1
@@ -664,6 +665,27 @@ static void qspi_op_write(struct fsl_qspi_priv *priv, u8 *txbuf, u32 len)
 		     QSPI_MCR_CLR_RXF_MASK | QSPI_MCR_CLR_TXF_MASK |
 		     mcr_reg);
 	qspi_write32(priv->flags, &regs->rbct, QSPI_RBCT_RXBRD_USEIPS);
+
+	if (TX_BUFFER_SIZE <= 256) {
+		status_reg = 0;
+		do {
+			WATCHDOG_RESET();
+
+			qspi_write32(priv->flags, &regs->ipcr,
+				     (SEQID_RDSR << QSPI_IPCR_SEQID_SHIFT) | 1);
+			while (qspi_read32(priv->flags, &regs->sr) & QSPI_SR_BUSY_MASK)
+				;
+
+			reg = qspi_read32(priv->flags, &regs->rbsr);
+			if (reg & QSPI_RBSR_RDBFL_MASK) {
+				status_reg = qspi_read32(priv->flags, &regs->rbdr[0]);
+				status_reg = qspi_endian_xchg(status_reg);
+			}
+			qspi_write32(priv->flags, &regs->mcr,
+				     qspi_read32(priv->flags, &regs->mcr) |
+				     QSPI_MCR_CLR_RXF_MASK);
+		} while ((status_reg & FLASH_STATUS_WIP) == FLASH_STATUS_WIP);
+	}
 
 	status_reg = 0;
 	while ((status_reg & FLASH_STATUS_WEL) != FLASH_STATUS_WEL) {
