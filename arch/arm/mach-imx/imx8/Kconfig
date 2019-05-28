@@ -7,6 +7,7 @@ config RECOVER_SPL_DATA_SECTION
 
 config AHAB_BOOT
 	bool "Support i.MX8 AHAB features"
+	imply CMD_DEKBLOB
 	help
 	  This option enables the support for AHAB secure boot.
 
