@@ -608,10 +608,10 @@ static int flush_dir_table(fat_itr *itr)
 		set_fatent_value(mydata, itr->clust, dir_newclust);
 		set_fatent_value(mydata, dir_newclust, 0xffffff8);
 	} else {
-		dir_newclust = dir_curclust + 1;
+		dir_newclust = itr->clust + 1;
 		if (dir_newclust > 1) {
 			printf("error: fail to get empty clust for directory entry\n");
-			return;
+			return -1;
 		}
 	}
 
