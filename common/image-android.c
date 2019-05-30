@@ -18,6 +18,7 @@
 #include <fsl_fastboot.h>
 #include <asm/setup.h>
 #include <dm.h>
+#include <mmc.h>
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 
