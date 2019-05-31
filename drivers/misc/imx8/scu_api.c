@@ -945,3 +945,30 @@ int sc_seco_get_event(sc_ipc_t ipc, uint8_t idx,
 
 	return ret;
 }
+
+int sc_seco_gen_key_blob(sc_ipc_t ipc, uint32_t id,
+	sc_faddr_t load_addr, sc_faddr_t export_addr, uint16_t max_size)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	struct sc_rpc_msg_s msg;
+	int size = sizeof(struct sc_rpc_msg_s);
+	int ret;
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_SECO);
+	RPC_FUNC(&msg) = (u8)(SECO_FUNC_GEN_KEY_BLOB);
+	RPC_U32(&msg, 0U) = (u32)(load_addr >> 32ULL);
+	RPC_U32(&msg, 4U) = (u32)(load_addr);
+	RPC_U32(&msg, 8U) = (u32)(export_addr >> 32ULL);
+	RPC_U32(&msg, 12U) = (u32)(export_addr);
+	RPC_U32(&msg, 16U) = (u32)(id);
+	RPC_U16(&msg, 20U) = (u16)(max_size);
+	RPC_SIZE(&msg) = 7U;
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: id: %u, load_addr 0x%llx, export_addr 0x%llx, res:%d\n",
+			__func__, id, load_addr, export_addr, RPC_R8(&msg));
+
+	return ret;
+}
