@@ -129,5 +129,7 @@ void sc_seco_build_info(sc_ipc_t ipc, uint32_t *version,
 	uint32_t *commit);
 int sc_seco_get_event(sc_ipc_t ipc, uint8_t idx,
 	uint32_t *event);
+int sc_seco_gen_key_blob(sc_ipc_t ipc, uint32_t id,
+	sc_faddr_t load_addr, sc_faddr_t export_addr, uint16_t max_size);
 
 #endif
