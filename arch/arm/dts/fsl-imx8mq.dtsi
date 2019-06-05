@@ -362,7 +362,7 @@
 		assigned-clock-rates = <500000000>, <100000000>;
 		status = "disabled";
 
-		usb_dwc3_0: dwc3 {
+		usb_dwc3_0: dwc3_0 {
 			compatible = "snps,dwc3";
 			reg = <0x0 0x38100000 0x0 0x10000>;
 			interrupts = <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>;
@@ -402,7 +402,7 @@
 		assigned-clock-rates = <500000000>, <100000000>;
 		status = "disabled";
 
-		usb_dwc3_1: dwc3 {
+		usb_dwc3_1: dwc3_1 {
 			compatible = "snps,dwc3";
 			reg = <0x0 0x38200000 0x0 0x10000>;
 			interrupts = <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>;
