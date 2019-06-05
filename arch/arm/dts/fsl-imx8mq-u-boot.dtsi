@@ -3,6 +3,14 @@
   * Copyright 2018 NXP
   */
 
+/ {
+
+	aliases {
+		usb0 = &usb_dwc3_0;
+		usb1 = &usb_dwc3_1;
+	};
+};
+
 &usb3_0 {
 	compatible = "simple-bus";
 };
