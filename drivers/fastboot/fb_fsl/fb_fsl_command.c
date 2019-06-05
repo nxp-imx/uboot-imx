@@ -48,6 +48,8 @@
 #include <trusty/libtipc.h>
 #endif
 
+#include "fb_fsl_common.h"
+
 #define EP_BUFFER_SIZE			4096
 
 /**
@@ -60,45 +62,73 @@ static u32 fastboot_bytes_received;
  */
 static u32 fastboot_bytes_expected;
 
-#if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
-static AvbABOps fsl_avb_ab_ops = {
-	.read_ab_metadata = fsl_read_ab_metadata,
-	.write_ab_metadata = fsl_write_ab_metadata,
-	.ops = NULL
-};
-#ifdef CONFIG_AVB_ATX
-static AvbAtxOps fsl_avb_atx_ops = {
-	.ops = NULL,
-	.read_permanent_attributes = fsl_read_permanent_attributes,
-	.read_permanent_attributes_hash = fsl_read_permanent_attributes_hash,
-#ifdef CONFIG_IMX_TRUSTY_OS
-	.set_key_version = fsl_write_rollback_index_rpmb,
-#else
-	.set_key_version = fsl_set_key_version,
-#endif
-	.get_random = fsl_get_random
-};
-#endif
-static AvbOps fsl_avb_ops = {
-	.ab_ops = &fsl_avb_ab_ops,
-#ifdef CONFIG_AVB_ATX
-	.atx_ops = &fsl_avb_atx_ops,
-#endif
-	.read_from_partition = fsl_read_from_partition_multi,
-	.write_to_partition = fsl_write_to_partition,
-#ifdef CONFIG_AVB_ATX
-	.validate_vbmeta_public_key = avb_atx_validate_vbmeta_public_key,
-#else
-	.validate_vbmeta_public_key = fsl_validate_vbmeta_public_key_rpmb,
-#endif
-	.read_rollback_index = fsl_read_rollback_index_rpmb,
-	.write_rollback_index = fsl_write_rollback_index_rpmb,
-	.read_is_device_unlocked = fsl_read_is_device_unlocked,
-	.get_unique_guid_for_partition = fsl_get_unique_guid_for_partition,
-	.get_size_of_partition = fsl_get_size_of_partition
-};
-#endif
+/* erase a partition on mmc */
+static void process_erase_mmc(const char *cmdbuf, char *response)
+{
+	int mmc_no = 0;
+	lbaint_t blks, blks_start, blks_size, grp_size;
+	struct mmc *mmc;
+	struct blk_desc *dev_desc;
+	struct fastboot_ptentry *ptn;
+	disk_partition_t info;
 
+	ptn = fastboot_flash_find_ptn(cmdbuf);
+	if ((ptn == NULL) || (ptn->flags & FASTBOOT_PTENTRY_FLAGS_UNERASEABLE)) {
+		sprintf(response, "FAILpartition does not exist or uneraseable");
+		fastboot_flash_dump_ptn();
+		return;
+	}
+
+	mmc_no = fastboot_devinfo.dev_id;
+	printf("erase target is MMC:%d\n", mmc_no);
+
+	mmc = find_mmc_device(mmc_no);
+	if ((mmc == NULL) || mmc_init(mmc)) {
+		printf("MMC card init failed!\n");
+		return;
+	}
+
+	dev_desc = blk_get_dev("mmc", mmc_no);
+	if (NULL == dev_desc) {
+		printf("Block device MMC %d not supported\n",
+			mmc_no);
+		sprintf(response, "FAILnot valid MMC card");
+		return;
+	}
+
+	if (part_get_info(dev_desc,
+				ptn->partition_index, &info)) {
+		printf("Bad partition index:%d for partition:%s\n",
+		ptn->partition_index, ptn->name);
+		sprintf(response, "FAILerasing of MMC card");
+		return;
+	}
+
+	/* Align blocks to erase group size to avoid erasing other partitions */
+	grp_size = mmc->erase_grp_size;
+	blks_start = (info.start + grp_size - 1) & ~(grp_size - 1);
+	if (info.size >= grp_size)
+		blks_size = (info.size - (blks_start - info.start)) &
+				(~(grp_size - 1));
+	else
+		blks_size = 0;
+
+	printf("Erasing blocks " LBAFU " to " LBAFU " due to alignment\n",
+	       blks_start, blks_start + blks_size);
+
+	blks = blk_derase(dev_desc, blks_start, blks_size);
+	if (blks != blks_size) {
+		printf("failed erasing from device %d", dev_desc->devnum);
+		sprintf(response, "FAILerasing of MMC card");
+		return;
+	}
+
+	printf("........ erased " LBAFU " bytes from '%s'\n",
+	       blks_size * info.blksz, cmdbuf);
+	sprintf(response, "OKAY");
+
+    return;
+}
 
 /* Write the bcb with fastboot bootloader commands */
 static void enable_fastboot_command(void)
@@ -902,6 +932,12 @@ int fastboot_handle_command(char *cmd_string, char *response)
 
 	cmd_parameter = cmd_string;
 	strsep(&cmd_parameter, ":");
+	/* separate cmdstring for "fastboot oem/flashing" with a blank */
+	if(cmd_parameter == NULL)
+	{
+		cmd_parameter = cmd_string;
+		strsep(&cmd_parameter, " ");
+	}
 
 	for (i = 0; i < ARRAY_SIZE(commands); i++) {
 		if (commands[i].command != NULL &&

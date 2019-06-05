@@ -19,6 +19,8 @@
 #include <asm/setup.h>
 #include <environment.h>
 
+#include "fb_fsl_common.h"
+
 static lbaint_t mmc_sparse_write(struct sparse_storage *info,
 		lbaint_t blk, lbaint_t blkcnt, const void *buffer)
 {

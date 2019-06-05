@@ -46,6 +46,61 @@ extern int armv7_init_nonsec(void);
 extern void trusty_os_init(void);
 #endif
 
+#include "fb_fsl_common.h"
+
+#if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
+AvbABOps fsl_avb_ab_ops = {
+	.read_ab_metadata = fsl_read_ab_metadata,
+	.write_ab_metadata = fsl_write_ab_metadata,
+	.ops = NULL
+};
+#ifdef CONFIG_AVB_ATX
+AvbAtxOps fsl_avb_atx_ops = {
+	.ops = NULL,
+	.read_permanent_attributes = fsl_read_permanent_attributes,
+	.read_permanent_attributes_hash = fsl_read_permanent_attributes_hash,
+#ifdef CONFIG_IMX_TRUSTY_OS
+	.set_key_version = fsl_write_rollback_index_rpmb,
+#else
+	.set_key_version = fsl_set_key_version,
+#endif
+	.get_random = fsl_get_random
+};
+#endif
+AvbOps fsl_avb_ops = {
+	.ab_ops = &fsl_avb_ab_ops,
+#ifdef CONFIG_AVB_ATX
+	.atx_ops = &fsl_avb_atx_ops,
+#endif
+	.read_from_partition = fsl_read_from_partition_multi,
+	.write_to_partition = fsl_write_to_partition,
+#ifdef CONFIG_AVB_ATX
+	.validate_vbmeta_public_key = avb_atx_validate_vbmeta_public_key,
+#else
+	.validate_vbmeta_public_key = fsl_validate_vbmeta_public_key_rpmb,
+#endif
+	.read_rollback_index = fsl_read_rollback_index_rpmb,
+        .write_rollback_index = fsl_write_rollback_index_rpmb,
+	.read_is_device_unlocked = fsl_read_is_device_unlocked,
+	.get_unique_guid_for_partition = fsl_get_unique_guid_for_partition,
+	.get_size_of_partition = fsl_get_size_of_partition
+};
+#endif
+
+int get_block_size(void) {
+        int dev_no = 0;
+        struct blk_desc *dev_desc;
+
+        dev_no = fastboot_devinfo.dev_id;
+        dev_desc = blk_get_dev(fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc", dev_no);
+        if (NULL == dev_desc) {
+                printf("** Block device %s %d not supported\n",
+                       fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc",
+                       dev_no);
+                return 0;
+        }
+        return dev_desc->blksz;
+}
 
 struct fastboot_device_info fastboot_devinfo = {0xff, 0xff};
 

@@ -37,6 +37,8 @@
 #include "fastboot_lock_unlock.h"
 #endif
 
+#include "fb_fsl_common.h"
+
 #ifdef CONFIG_IMX_TRUSTY_OS
 #include "u-boot/sha256.h"
 #include <trusty/libtipc.h>
@@ -131,21 +133,6 @@ static char *get_serial(void)
 #if !defined(VARIANT_NAME)
 #define VARIANT_NAME "NXP i.MX"
 #endif
-
-static int get_block_size(void) {
-	int dev_no = 0;
-	struct blk_desc *dev_desc;
-
-	dev_no = fastboot_devinfo.dev_id;
-	dev_desc = blk_get_dev(fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc", dev_no);
-	if (NULL == dev_desc) {
-		printf("** Block device %s %d not supported\n",
-		       fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc",
-		       dev_no);
-		return 0;
-	}
-	return dev_desc->blksz;
-}
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 static void uuid_hex2string(uint8_t *uuid, char* buf, uint32_t uuid_len, uint32_t uuid_strlen) {

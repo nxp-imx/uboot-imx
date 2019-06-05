@@ -41,6 +41,8 @@
 #include <trusty/libtipc.h>
 #endif
 
+#include "fb_fsl_common.h"
+
 #if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
 #define DST_DECOMPRESS_LEN 1024*1024*32
 #endif
@@ -181,7 +183,6 @@ U_BOOT_CMD(
 	lock_status, 2, 1, do_lock_status,
 	"lock_status",
 	"lock_status");
-}
 #endif
 
 #if defined(CONFIG_FLASH_MCUFIRMWARE_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
