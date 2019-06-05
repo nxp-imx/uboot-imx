@@ -91,6 +91,8 @@ long lmb_reserve(struct lmb *lmb, phys_addr_t base, phys_size_t size);
  */
 long lmb_reserve_flags(struct lmb *lmb, phys_addr_t base,
 		       phys_size_t size, enum lmb_flags flags);
+long lmb_reserve_overlap(struct lmb *lmb, phys_addr_t base,
+		       phys_size_t size, enum lmb_flags flags);
 phys_addr_t lmb_alloc(struct lmb *lmb, phys_size_t size, ulong align);
 phys_addr_t lmb_alloc_base(struct lmb *lmb, phys_size_t size, ulong align,
 			   phys_addr_t max_addr);
