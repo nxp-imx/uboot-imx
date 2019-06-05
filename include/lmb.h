@@ -80,6 +80,7 @@ void lmb_init_and_reserve_range(struct lmb *lmb, phys_addr_t base,
 				phys_size_t size, void *fdt_blob);
 long lmb_add(struct lmb *lmb, phys_addr_t base, phys_size_t size);
 long lmb_reserve(struct lmb *lmb, phys_addr_t base, phys_size_t size);
+long lmb_reserve_nonoverlap(struct lmb *lmb, phys_addr_t base, phys_size_t size);
 /**
  * lmb_reserve_flags - Reserve one region with a specific flags bitfield.
  *

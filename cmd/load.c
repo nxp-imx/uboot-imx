@@ -181,7 +181,7 @@ static ulong load_serial(long offset)
 		    } else
 #endif
 		    {
-			ret = lmb_reserve(&lmb, store_addr, binlen);
+			ret = lmb_reserve_nonoverlap(&lmb, store_addr, binlen);
 			if (ret) {
 				printf("\nCannot overwrite reserved area (%08lx..%08lx)\n",
 					store_addr, store_addr + binlen);
