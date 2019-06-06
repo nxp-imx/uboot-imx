@@ -134,10 +134,6 @@ static struct i2c_pads_info i2c_pad_info2 = {
 #endif
 #endif
 
-static iomux_v3_cfg_t const i2c3_pads[] = {
-	IOMUX_PADS(PAD_EIM_A24__GPIO5_IO04	| MUX_PAD_CTRL(NO_PAD_CTRL)),
-};
-
 static iomux_v3_cfg_t const port_exp[] = {
 	IOMUX_PADS(PAD_SD2_DAT0__GPIO1_IO15	| MUX_PAD_CTRL(NO_PAD_CTRL)),
 };
@@ -232,9 +228,22 @@ static void eim_clk_setup(void)
 
 static void setup_iomux_eimnor(void)
 {
+	int ret;
+	struct gpio_desc desc;
+
 	SETUP_IOMUX_PADS(eimnor_pads);
 
-	gpio_direction_output(IMX_GPIO_NR(5, 4), 0);
+	ret = dm_gpio_lookup_name("GPIO5_4", &desc);
+	if (ret) {
+		printf("%s lookup GPIO5_4 failed ret = %d\n", __func__, ret);
+		return;
+	}
+	ret = dm_gpio_request(&desc, "steer ctrl");
+	if (ret) {
+		printf("%s request steer logic failed ret = %d\n", __func__, ret);
+		return;
+	}
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE | GPIOD_ACTIVE_LOW);
 
 	eimnor_cs_setup();
 }
@@ -596,9 +605,22 @@ iomux_v3_cfg_t const ecspi1_pads[] = {
 
 void setup_spinor(void)
 {
+	int ret;
+	struct gpio_desc desc;
+
 	SETUP_IOMUX_PADS(ecspi1_pads);
 
-	gpio_direction_output(IMX_GPIO_NR(5, 4), 0);
+	ret = dm_gpio_lookup_name("GPIO5_4", &desc);
+	if (ret) {
+		printf("%s lookup GPIO5_4 failed ret = %d\n", __func__, ret);
+		return;
+	}
+	ret = dm_gpio_request(&desc, "steer ctrl");
+	if (ret) {
+		printf("%s request steer logic failed ret = %d\n", __func__, ret);
+		return;
+	}
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE | GPIOD_ACTIVE_LOW);
 }
 #endif
 
@@ -631,20 +653,6 @@ int board_init(void)
 	setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info2);
 #endif
 #endif
-
-	/* I2C 3 Steer */
-	ret = dm_gpio_lookup_name("GPIO5_4", &desc);
-	if (ret) {
-		printf("%s lookup GPIO5_4 failed ret = %d\n", __func__, ret);
-		return -ENODEV;
-	}
-	ret = dm_gpio_request(&desc, "steer logic");
-	if (ret) {
-		printf("%s request steer logic failed ret = %d\n", __func__, ret);
-		return -ENODEV;
-	}
-	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
-	SETUP_IOMUX_PADS(i2c3_pads);
 
 	ret = dm_gpio_lookup_name("GPIO1_15", &desc);
 	if (ret) {
