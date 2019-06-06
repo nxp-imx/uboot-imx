@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2012 Freescale Semiconductor, Inc.
- * Copyright 2018 NXP
+ * Copyright 2018-2019 NXP
  *
  * Configuration settings for the Freescale i.MX6Q SabreSD board.
  */
@@ -98,6 +98,7 @@
 	CONFIG_MFG_ENV_SETTINGS \
 	TEE_ENV \
 	"fdt_addr=0x18000000\0" \
+	"tee_addr=0x20000000\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"console=" CONSOLE_DEV "\0" \
 	"bootargs=console=" CONSOLE_DEV ",115200 ubi.mtd=6 "  \
@@ -108,7 +109,7 @@
 		"nand read ${fdt_addr} 0x5000000 0x100000;"\
 		"if test ${tee} = yes; then " \
 			"nand read ${tee_addr} 0x4000000 0x400000;"\
-			"bootm ${teeaddr} - ${fdt_addr};" \
+			"bootm ${tee_addr} - ${fdt_addr};" \
 		"else " \
 			"bootz ${loadaddr} - ${fdt_addr};" \
 		"fi\0"
