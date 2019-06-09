@@ -104,6 +104,7 @@
 
 static void print_regs(int contain_pcie_reg)
 {
+#ifdef CONFIG_MX6
 	u32 val;
 	struct iomuxc *iomuxc_regs = (struct iomuxc *)IOMUXC_BASE_ADDR;
 	struct mxc_ccm_reg *ccm_regs = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
@@ -125,11 +126,24 @@ static void print_regs(int contain_pcie_reg)
 		val = readl(MX6_DBI_ADDR + 0x72c);
 		DBGF("dbr1 offset 0x72c %08x\n", val);
 	}
+#endif
 }
 #else
 #define DBGF(x...)
 static void print_regs(int contain_pcie_reg) {}
 #endif
+
+struct imx_pcie_priv {
+	void __iomem		*dbi_base;
+	void __iomem		*cfg_base;
+};
+
+static struct imx_pcie_priv imx_pcie_priv = {
+	.dbi_base	= (void __iomem *)MX6_DBI_ADDR,
+	.cfg_base	= (void __iomem *)MX6_ROOT_ADDR,
+};
+
+static struct imx_pcie_priv *priv = &imx_pcie_priv;
 
 /*
  * PHY access functions
@@ -270,7 +284,7 @@ static int imx6_pcie_link_up(void)
 	int rx_valid, temp;
 
 	/* link is debug bit 36, debug register 1 starts at bit 32 */
-	rc = readl(MX6_DBI_ADDR + PCIE_PHY_DEBUG_R1);
+	rc = readl(priv->dbi_base + PCIE_PHY_DEBUG_R1);
 	if ((rc & PCIE_PHY_DEBUG_R1_LINK_UP) &&
 	    !(rc & PCIE_PHY_DEBUG_R1_LINK_IN_TRAINING))
 		return -EAGAIN;
@@ -282,8 +296,8 @@ static int imx6_pcie_link_up(void)
 	 * && (PHY/rx_valid==0) then pulse PHY/rx_reset. Transition
 	 * to gen2 is stuck
 	 */
-	pcie_phy_read((void *)MX6_DBI_ADDR, PCIE_PHY_RX_ASIC_OUT, &rx_valid);
-	ltssm = readl(MX6_DBI_ADDR + PCIE_PHY_DEBUG_R0) & 0x3F;
+	pcie_phy_read(priv->dbi_base, PCIE_PHY_RX_ASIC_OUT, &rx_valid);
+	ltssm = readl(priv->dbi_base + PCIE_PHY_DEBUG_R0) & 0x3F;
 
 	if (rx_valid & 0x01)
 		return 0;
@@ -293,15 +307,15 @@ static int imx6_pcie_link_up(void)
 
 	printf("transition to gen2 is stuck, reset PHY!\n");
 
-	pcie_phy_read((void *)MX6_DBI_ADDR, PHY_RX_OVRD_IN_LO, &temp);
+	pcie_phy_read(priv->dbi_base, PHY_RX_OVRD_IN_LO, &temp);
 	temp |= (PHY_RX_OVRD_IN_LO_RX_DATA_EN | PHY_RX_OVRD_IN_LO_RX_PLL_EN);
-	pcie_phy_write((void *)MX6_DBI_ADDR, PHY_RX_OVRD_IN_LO, temp);
+	pcie_phy_write(priv->dbi_base, PHY_RX_OVRD_IN_LO, temp);
 
 	udelay(3000);
 
-	pcie_phy_read((void *)MX6_DBI_ADDR, PHY_RX_OVRD_IN_LO, &temp);
+	pcie_phy_read(priv->dbi_base, PHY_RX_OVRD_IN_LO, &temp);
 	temp &= ~(PHY_RX_OVRD_IN_LO_RX_DATA_EN | PHY_RX_OVRD_IN_LO_RX_PLL_EN);
-	pcie_phy_write((void *)MX6_DBI_ADDR, PHY_RX_OVRD_IN_LO, temp);
+	pcie_phy_write(priv->dbi_base, PHY_RX_OVRD_IN_LO, temp);
 
 	return 0;
 }
@@ -324,24 +338,25 @@ static int imx_pcie_regions_setup(void)
 	 */
 
 	/* CMD reg:I/O space, MEM space, and Bus Master Enable */
-	setbits_le32(MX6_DBI_ADDR | PCI_COMMAND,
+	setbits_le32(priv->dbi_base + PCI_COMMAND,
 		     PCI_COMMAND_IO | PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER);
 
 	/* Set the CLASS_REV of RC CFG header to PCI_CLASS_BRIDGE_PCI */
-	setbits_le32(MX6_DBI_ADDR + PCI_CLASS_REVISION,
+	setbits_le32(priv->dbi_base + PCI_CLASS_REVISION,
 		     PCI_CLASS_BRIDGE_PCI << 16);
 
 	/* Region #0 is used for Outbound CFG space access. */
-	writel(0, MX6_DBI_ADDR + PCIE_ATU_VIEWPORT);
+	writel(0, priv->dbi_base + PCIE_ATU_VIEWPORT);
 
-	writel(MX6_ROOT_ADDR, MX6_DBI_ADDR + PCIE_ATU_LOWER_BASE);
-	writel(0, MX6_DBI_ADDR + PCIE_ATU_UPPER_BASE);
-	writel(MX6_ROOT_ADDR + MX6_ROOT_SIZE, MX6_DBI_ADDR + PCIE_ATU_LIMIT);
+	writel((u32)priv->cfg_base, priv->dbi_base + PCIE_ATU_LOWER_BASE);
+	writel(0, priv->dbi_base + PCIE_ATU_UPPER_BASE);
+	writel((u32)priv->cfg_base + MX6_ROOT_SIZE,
+	       priv->dbi_base + PCIE_ATU_LIMIT);
 
-	writel(0, MX6_DBI_ADDR + PCIE_ATU_LOWER_TARGET);
-	writel(0, MX6_DBI_ADDR + PCIE_ATU_UPPER_TARGET);
-	writel(PCIE_ATU_TYPE_CFG0, MX6_DBI_ADDR + PCIE_ATU_CR1);
-	writel(PCIE_ATU_ENABLE, MX6_DBI_ADDR + PCIE_ATU_CR2);
+	writel(0, priv->dbi_base + PCIE_ATU_LOWER_TARGET);
+	writel(0, priv->dbi_base + PCIE_ATU_UPPER_TARGET);
+	writel(PCIE_ATU_TYPE_CFG0, priv->dbi_base + PCIE_ATU_CR1);
+	writel(PCIE_ATU_ENABLE, priv->dbi_base + PCIE_ATU_CR2);
 
 	return 0;
 }
@@ -354,18 +369,18 @@ static uint32_t get_bus_address(pci_dev_t d, int where)
 	uint32_t va_address;
 
 	/* Reconfigure Region #0 */
-	writel(0, MX6_DBI_ADDR + PCIE_ATU_VIEWPORT);
+	writel(0, priv->dbi_base + PCIE_ATU_VIEWPORT);
 
 	if (PCI_BUS(d) < 2)
-		writel(PCIE_ATU_TYPE_CFG0, MX6_DBI_ADDR + PCIE_ATU_CR1);
+		writel(PCIE_ATU_TYPE_CFG0, priv->dbi_base + PCIE_ATU_CR1);
 	else
-		writel(PCIE_ATU_TYPE_CFG1, MX6_DBI_ADDR + PCIE_ATU_CR1);
+		writel(PCIE_ATU_TYPE_CFG1, priv->dbi_base + PCIE_ATU_CR1);
 
 	if (PCI_BUS(d) == 0) {
-		va_address = MX6_DBI_ADDR;
+		va_address = (u32)priv->dbi_base;
 	} else {
-		writel(d << 8, MX6_DBI_ADDR + PCIE_ATU_LOWER_TARGET);
-		va_address = MX6_IO_ADDR + SZ_16M - SZ_1M;
+		writel(d << 8, priv->dbi_base + PCIE_ATU_LOWER_TARGET);
+		va_address = (u32)priv->cfg_base;
 	}
 
 	va_address += (where & ~0x3);
@@ -505,12 +520,12 @@ static int imx6_pcie_assert_core_reset(bool prepare_for_boot)
 		gpr12 = readl(&iomuxc_regs->gpr[12]);
 		if ((gpr1 & IOMUXC_GPR1_PCIE_REF_CLK_EN) &&
 		    (gpr12 & IOMUXC_GPR12_PCIE_CTL_2)) {
-			val = readl(MX6_DBI_ADDR + PCIE_PL_PFLR);
+			val = readl(priv->dbi_base + PCIE_PL_PFLR);
 			val &= ~PCIE_PL_PFLR_LINK_STATE_MASK;
 			val |= PCIE_PL_PFLR_FORCE_LINK;
 
 			imx_pcie_fix_dabt_handler(true);
-			writel(val, MX6_DBI_ADDR + PCIE_PL_PFLR);
+			writel(val, priv->dbi_base + PCIE_PL_PFLR);
 			imx_pcie_fix_dabt_handler(false);
 
 			gpr12 &= ~IOMUXC_GPR12_PCIE_CTL_2;
@@ -663,9 +678,9 @@ static int imx_pcie_link_up(void)
 	 * Force the PCIe RC subordinate to 0xff, otherwise no downstream
 	 * devices will be detected if the enumeration is applied strictly.
 	 */
-	tmp = readl(MX6_DBI_ADDR + 0x18);
+	tmp = readl(priv->dbi_base + 0x18);
 	tmp |= (0xff << 16);
-	writel(tmp, MX6_DBI_ADDR + 0x18);
+	writel(tmp, priv->dbi_base + 0x18);
 
 	/*
 	 * FIXME: Force the PCIe RC to Gen1 operation
@@ -673,10 +688,10 @@ static int imx_pcie_link_up(void)
 	 * up, otherwise no downstream devices are detected. After the
 	 * link is up, a managed Gen1->Gen2 transition can be initiated.
 	 */
-	tmp = readl(MX6_DBI_ADDR + 0x7c);
+	tmp = readl(priv->dbi_base + 0x7c);
 	tmp &= ~0xf;
 	tmp |= 0x1;
-	writel(tmp, MX6_DBI_ADDR + 0x7c);
+	writel(tmp, priv->dbi_base + 0x7c);
 
 	/* LTSSM enable, starting link. */
 	setbits_le32(&iomuxc_regs->gpr[12], IOMUXC_GPR12_APPS_LTSSM_ENABLE);
@@ -707,8 +722,8 @@ static int imx_pcie_link_up(void)
 			puts("PCI:   pcie phy link never came up\n");
 #endif
 			debug("DEBUG_R0: 0x%08x, DEBUG_R1: 0x%08x\n",
-			      readl(MX6_DBI_ADDR + PCIE_PHY_DEBUG_R0),
-			      readl(MX6_DBI_ADDR + PCIE_PHY_DEBUG_R1));
+			      readl(priv->dbi_base + PCIE_PHY_DEBUG_R0),
+			      readl(priv->dbi_base + PCIE_PHY_DEBUG_R1));
 			clrbits_le32(&iomuxc_regs->gpr[12],
 				     IOMUXC_GPR12_APPS_LTSSM_ENABLE);
 			return -EINVAL;
