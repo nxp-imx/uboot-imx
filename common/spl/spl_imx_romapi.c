@@ -100,10 +100,11 @@ static int spl_romapi_load_image_seekable(struct spl_image_info *spl_image,
 
 	printf("image offset 0x%x, pagesize 0x%x, ivt offset 0x%x\n", image_offset, pagesize, offset);
 
-	if (((rom_bt_dev >> 16) & 0xff) ==  BOOT_FROM_MMC && image_offset == 0)
-		offset = CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512 - 0x8000;
-	else
+	if (((rom_bt_dev >> 16) & 0xff) ==  BOOT_FROM_SPINOR)
 		offset = CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512;
+	else
+		offset = image_offset + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512 - 0x8000;
+
 	size = ALIGN(sizeof(struct image_header), pagesize);
 	ret = g_rom_api->download_image((uint8_t*)header, offset, size, ((uintptr_t) header) ^ offset ^ size);
 	gd = pgd;
