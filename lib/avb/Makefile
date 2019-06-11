@@ -1,4 +1,4 @@
-subdir-ccflags-y += -I./lib/avb \
+subdir-ccflags-y += -I./lib \
 			-D_FILE_OFFSET_BITS=64 \
 			-D_POSIX_C_SOURCE=199309L \
 			-Wa,--noexecstack \
