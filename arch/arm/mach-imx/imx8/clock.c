@@ -385,6 +385,7 @@ void init_clk_fec(int index)
 	sc_ipc_t ipc;
 	sc_pm_clock_rate_t rate = 24000000;
 	sc_rsrc_t enet[2] = {SC_R_ENET_0, SC_R_ENET_1};
+	bool enet_freq_limited = false;
 
 	if (index > 1)
 		return;
@@ -393,6 +394,17 @@ void init_clk_fec(int index)
 		index = 0;
 
 	ipc = gd->arch.ipc_channel_handle;
+
+	/* FEC may limited to RMII 10/100 by fuse, check it */
+	if (is_imx8qxp()) {
+		uint32_t fuse_val = 0;
+
+		err = sc_misc_otp_fuse_read(ipc, 0xa, &fuse_val);
+		if (err != SC_ERR_NONE)
+			printf("%s fuse read error: %d\n", __func__, err);
+		else
+			enet_freq_limited = ((fuse_val >> (index + 1)) & 0x1);
+	}
 
 	/* Disable SC_R_ENET_0 clock root */
 	err = sc_pm_clock_enable(ipc, enet[index], 0, false, false);
@@ -425,21 +437,36 @@ void init_clk_fec(int index)
 	}
 
 	/* Configure GPR regisers */
-	if (sc_misc_set_control(ipc, enet[index], SC_C_TXCLK,  0) != SC_ERR_NONE)
-		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_TXCLK);
+	if (!enet_freq_limited) {
+		if (sc_misc_set_control(ipc, enet[index], SC_C_TXCLK,  0) != SC_ERR_NONE)
+			printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_TXCLK);
+	} else {
+		/* SCFW will force TXCLK not from PERCLK if ENET freq is fused, here we explictly set to 1 */
+		if (sc_misc_set_control(ipc, enet[index], SC_C_TXCLK,  1) != SC_ERR_NONE)
+			printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_TXCLK);
+	}
+
 	/* Enable divclk */
 	if (sc_misc_set_control(ipc, enet[index], SC_C_CLKDIV,  1) != SC_ERR_NONE)
 		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_CLKDIV);
-	if (sc_misc_set_control(ipc, enet[index], SC_C_DISABLE_50,  1) != SC_ERR_NONE)
+	if (sc_misc_set_control(ipc, enet[index], SC_C_DISABLE_50,  0) != SC_ERR_NONE)
 		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_DISABLE_50);
-	if (sc_misc_set_control(ipc, enet[index], SC_C_DISABLE_125,  1) != SC_ERR_NONE)
+	if (sc_misc_set_control(ipc, enet[index], SC_C_DISABLE_125,  0) != SC_ERR_NONE)
 		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_DISABLE_125);
 	if (sc_misc_set_control(ipc, enet[index], SC_C_SEL_125,  0) != SC_ERR_NONE)
 		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_SEL_125);
 	if (sc_misc_set_control(ipc, enet[index], SC_C_IPG_STOP,  0) != SC_ERR_NONE)
 		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_IPG_STOP);
 
-	LPCG_AllClockOn(ENET_0_LPCG + index * 0x10000);
+	LPCG_ClockOn(ENET_0_LPCG + index * 0x10000, 0);
+	LPCG_ClockOn(ENET_0_LPCG + index * 0x10000, 1);
+	LPCG_ClockOn(ENET_0_LPCG + index * 0x10000, 2);
+	LPCG_ClockOn(ENET_0_LPCG + index * 0x10000, 4);
+	LPCG_ClockOn(ENET_0_LPCG + index * 0x10000, 5);
+	if (!enet_freq_limited) {
+		/* RGMII TX CLK */
+		LPCG_ClockOn(ENET_0_LPCG + index * 0x10000, 3);
+	}
 }
 
 /*
