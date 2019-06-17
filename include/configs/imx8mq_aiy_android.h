@@ -58,8 +58,10 @@
 #define AIY_MICRON_3G          0x1
 #define AIY_MICRON_1G          0x5
 #define AIY_HYNIX_1G           0x3
+#define AIY_KINGSTON_2G        0x6
 
 #define TEE_LOAD_ADDR_1G 0x7e000000
+#define TEE_LOAD_ADDR_2G 0xbe000000
 #define TEE_LOAD_ADDR_3G 0xfe000000
 
 
