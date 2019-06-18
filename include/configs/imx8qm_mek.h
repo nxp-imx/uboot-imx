@@ -136,7 +136,7 @@
             "xenhyper_bootargs=console=dtuart dtuart=/serial@5a060000 dom0_mem=2048M dom0_max_vcpus=2 dom0_vcpus_pin=true hmp-unsafe=true\0" \
             "xenlinux_bootargs= \0" \
             "xenlinux_console=hvc0 earlycon=xen\0" \
-            "xenlinux_addr=0x92000000\0" \
+            "xenlinux_addr=0x9e000000\0" \
 	    "dom0fdt_file=fsl-imx8qm-mek-dom0.dtb\0" \
             "xenboot_common=" \
                 "${get_cmd} ${loadaddr} xen;" \
@@ -216,8 +216,8 @@
 		"source\0" \
 	"loadimage=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
 	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
-	"hdp_addr=0x84000000\0" \
-	"hdprx_addr=0x84800000\0" \
+	"hdp_addr=0x9c000000\0" \
+	"hdprx_addr=0x9c800000\0" \
 	"hdp_file=hdmitxfw.bin\0" \
 	"hdprx_file=hdmirxfw.bin\0" \
 	"loadhdp=fatload mmc ${mmcdev}:${mmcpart} ${hdp_addr} ${hdp_file}\0" \
