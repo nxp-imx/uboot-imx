@@ -12,7 +12,7 @@
 
 void board_sdp_cleanup(void)
 {
-	board_usb_cleanup(CONFIG_SPL_SDP_USB_DEV, USB_INIT_DEVICE);
+	usb_gadget_release(CONFIG_SPL_SDP_USB_DEV);
 }
 
 static int spl_sdp_load_image(struct spl_image_info *spl_image,
@@ -21,7 +21,7 @@ static int spl_sdp_load_image(struct spl_image_info *spl_image,
 	int ret;
 	const int controller_index = CONFIG_SPL_SDP_USB_DEV;
 
-	board_usb_init(controller_index, USB_INIT_DEVICE);
+	usb_gadget_initialize(controller_index);
 
 	g_dnl_clear_detach();
 	g_dnl_register("usb_dnl_sdp");
