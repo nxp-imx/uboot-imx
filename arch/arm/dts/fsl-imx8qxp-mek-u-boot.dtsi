@@ -96,11 +96,27 @@
 	u-boot,dm-spl;
 };
 
+&pd_conn_usb2 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_usb2_phy {
+	u-boot,dm-spl;
+};
+
 &gpio4 {
 	u-boot,dm-spl;
 };
 
 &lpuart0 {
+	u-boot,dm-spl;
+};
+
+&usbotg3 {
+	u-boot,dm-spl;
+};
+
+&usbphynop1 {
 	u-boot,dm-spl;
 };
 
@@ -127,4 +143,8 @@
 &{/i2c@5a810000/i2cswitch@71} {
 	compatible = "nxp,pca9646", "fsl,imx-virt-i2c-mux";
 	virtual-bus-seq = <12>;
+};
+
+&wu {
+	u-boot,dm-spl;
 };

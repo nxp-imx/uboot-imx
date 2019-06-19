@@ -108,6 +108,14 @@
 	u-boot,dm-spl;
 };
 
+&pd_conn_usb2 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_usb2_phy {
+	u-boot,dm-spl;
+};
+
 &gpio1 {
 	u-boot,dm-spl;
 };
@@ -128,6 +136,14 @@
 	u-boot,dm-spl;
 };
 
+&usbotg3 {
+	u-boot,dm-spl;
+};
+
+&usbphynop1 {
+	u-boot,dm-spl;
+};
+
 &usdhc1 {
 	u-boot,dm-spl;
 };
@@ -141,5 +157,9 @@
 };
 
 &flash0 {
+	u-boot,dm-spl;
+};
+
+&wu {
 	u-boot,dm-spl;
 };
