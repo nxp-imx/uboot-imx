@@ -56,7 +56,11 @@ struct cdns3_role_driver {
  * @wakeup_int: the wakeup interrupt
  */
 struct cdns3 {
+#if CONFIG_IS_ENABLED(DM_USB_GADGET)
+	struct udevice *dev;
+#else
 	struct device *dev;
+#endif
 	void __iomem *xhci_regs;
 	struct resource *xhci_res;
 	struct usbss_dev_register_block_type __iomem *dev_regs;
@@ -66,8 +70,13 @@ struct cdns3 {
 	int irq;
 	struct cdns3_role_driver *roles[CDNS3_ROLE_END];
 	enum cdns3_roles role;
+#if CONFIG_IS_ENABLED(DM_USB_GADGET)
+	struct udevice *host_dev;
+	struct udevice *gadget_dev;
+#else
 	struct device *host_dev;
 	struct device *gadget_dev;
+#endif
 	struct clk *cdns3_clks[CDNS3_NUM_OF_CLKS];
 
 	int  index;
@@ -113,5 +122,9 @@ static inline void cdns3_role_irq_handler(struct cdns3 *cdns)
 	cdns->roles[role]->irq(cdns);
 }
 
+#if CONFIG_IS_ENABLED(DM_USB_GADGET)
+int cdns3_init(struct cdns3 *cdns);
+void cdns3_exit(struct cdns3 *cdns);
+#endif
 
 #endif /* __DRIVERS_USB_CDNS3_CORE_H */

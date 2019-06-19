@@ -279,6 +279,7 @@ static void cdns3_remove_roles(struct cdns3 *cdns)
 	cdns3_gadget_remove(cdns);
 }
 
+#if !CONFIG_IS_ENABLED(DM_USB_GADGET)
 int cdns3_uboot_init(struct cdns3_device *cdns3_dev)
 {
 	struct device *dev = NULL;
@@ -372,3 +373,37 @@ void cdns3_uboot_handle_interrupt(int index)
 		break;
 	}
 }
+
+#else
+int cdns3_init(struct cdns3 *cdns)
+{
+	int ret;
+
+	ret = cdns3_core_init_role(cdns, USB_DR_MODE_PERIPHERAL);
+
+	cdns->role = cdns3_get_role(cdns);
+	dev_dbg(dev, "the init role is %d\n", cdns->role);
+	cdns3_set_role(cdns, cdns->role);
+	ret = cdns3_role_start(cdns, cdns->role);
+	if (ret) {
+		dev_err(dev, "can't start %s role\n", cdns3_role(cdns)->name);
+		goto err;
+	}
+
+	dev_dbg(dev, "Cadence USB3 core: probe succeed\n");
+
+	return 0;
+
+err:
+	cdns3_remove_roles(cdns);
+
+	return ret;
+}
+
+void cdns3_exit(struct cdns3 *cdns)
+{
+	cdns3_role_stop(cdns);
+	cdns3_remove_roles(cdns);
+	cdns3_reset_core(cdns);
+}
+#endif

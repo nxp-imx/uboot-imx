@@ -13,6 +13,12 @@
 #include "cdns_misc.h"
 #endif
 
+#if CONFIG_IS_ENABLED(DM_USB_GADGET)
+#include <dm.h>
+#include <clk.h>
+#include <power-domain.h>
+#endif
+
 #define gadget_to_usb_ss(g)  \
 	(container_of(g, struct usb_ss_dev, gadget))
 
@@ -185,7 +191,11 @@ struct usb_ss_endpoint {
 };
 
 struct usb_ss_dev {
+#if CONFIG_IS_ENABLED(DM_USB_GADGET)
+	struct udevice dev;
+#else
 	struct device dev;
+#endif
 	struct usbss_dev_register_block_type __iomem *regs;
 
 	struct usb_gadget gadget;
@@ -211,10 +221,24 @@ struct usb_ss_dev {
 	u32 usb_ien;
 	u32 ep_ien;
 	int setup_pending;
+#if CONFIG_IS_ENABLED(DM_USB_GADGET)
+	struct udevice *sysdev;
+#else
 	struct device *sysdev;
+#endif
 	bool start_gadget; /* The device mode is enabled */
 	struct list_head ep_match_list;
 };
+
+#if CONFIG_IS_ENABLED(DM_USB_GADGET)
+struct cdns3_generic_peripheral {
+	struct cdns3 cdns3;
+	struct usb_ss_dev usb_ss_dev;
+	struct clk_bulk clks;
+	struct power_domain phy_pd;
+	struct clk phy_clk;
+};
+#endif
 
 #define OTG_STS_SELECTOR	0xF000		/* OTG status selector */
 

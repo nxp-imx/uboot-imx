@@ -16,7 +16,10 @@
 #include <linux/usb/gadget.h>
 #include <linux/usb/composite.h>
 
+#if !CONFIG_IS_ENABLED(DM_USB_GADGET)
 #include "linux-compat.h"
+#endif
+
 #include "core.h"
 #include "gadget-export.h"
 #include "gadget.h"
@@ -2081,19 +2084,32 @@ static int usb_ss_init_ep0(struct usb_ss_dev *usb_ss)
 	return 0;
 }
 
+#if !CONFIG_IS_ENABLED(DM_USB_GADGET)
 static void cdns3_gadget_release(struct device *dev)
 {
 	struct usb_ss_dev *usb_ss = container_of(dev, struct usb_ss_dev, dev);
 
 	kfree(usb_ss);
 }
+#endif
 
 static int __cdns3_gadget_init(struct cdns3 *cdns)
 {
 	struct usb_ss_dev *usb_ss;
 	int ret;
-	struct device *dev;
+#if CONFIG_IS_ENABLED(DM_USB_GADGET)
+	struct udevice *dev;
+	struct cdns3_generic_peripheral *priv = container_of(cdns,
+				struct cdns3_generic_peripheral, cdns3);
 
+	usb_ss = &priv->usb_ss_dev;
+	dev = &usb_ss->dev;
+	dev->parent = cdns->dev;
+	dev_set_name(dev, "gadget-cdns3-dev");
+	cdns->gadget_dev = dev;
+	usb_ss->sysdev = cdns->dev;
+#else
+	struct device *dev;
 	usb_ss = kzalloc(sizeof(*usb_ss), GFP_KERNEL);
 	if (!usb_ss)
 		return -ENOMEM;
@@ -2104,6 +2120,7 @@ static int __cdns3_gadget_init(struct cdns3 *cdns)
 	dev_set_name(dev, "gadget-cdns3-dev");
 	cdns->gadget_dev = dev;
 	usb_ss->sysdev = cdns->dev;
+#endif
 	ret = device_register(dev);
 	if (ret)
 		goto err1;
@@ -2158,7 +2175,8 @@ static int __cdns3_gadget_init(struct cdns3 *cdns)
 	}
 
 	/* add USB gadget device */
-	ret = usb_add_gadget_udc(&usb_ss->dev, &usb_ss->gadget);
+	ret = usb_add_gadget_udc((struct device *)(&usb_ss->dev),
+				 &usb_ss->gadget);
 	if (ret < 0) {
 		dev_err(dev, "Failed to register USB device controller\n");
 		goto err4;
