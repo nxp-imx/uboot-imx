@@ -492,58 +492,11 @@ void pci_init_board(void)
 
 #endif
 
-#if defined(CONFIG_USB_CDNS3_GADGET)
-
-static struct cdns3_device cdns3_device_data = {
-	.none_core_base = 0x5B110000,
-	.xhci_base = 0x5B130000,
-	.dev_base = 0x5B140000,
-	.phy_base = 0x5B160000,
-	.otg_base = 0x5B120000,
-	.dr_mode = USB_DR_MODE_PERIPHERAL,
-	.index = 1,
-};
-
-int usb_gadget_handle_interrupts(int index)
-{
-	cdns3_uboot_handle_interrupt(index);
-	return 0;
-}
-
 int board_usb_init(int index, enum usb_init_type init)
 {
 	int ret = 0;
 
-	if (index == 1) {
-		if (init == USB_INIT_DEVICE) {
-#ifdef CONFIG_SPL_BUILD
-			ret = sc_pm_set_resource_power_mode(-1, SC_R_USB_2, SC_PM_PW_MODE_ON);
-			if (ret != SC_ERR_NONE)
-				printf("conn_usb2 Power up failed! (error = %d)\n", ret);
-
-			ret = sc_pm_set_resource_power_mode(-1, SC_R_USB_2_PHY, SC_PM_PW_MODE_ON);
-			if (ret != SC_ERR_NONE)
-				printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
-#else
-			struct power_domain pd;
-
-			if (!power_domain_lookup_name("conn_usb2_phy", &pd)) {
-				ret = power_domain_on(&pd);
-				if (ret)
-					printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
-			}
-
-			/* Power on usb */
-			if (!power_domain_lookup_name("conn_usb2", &pd)) {
-				ret = power_domain_on(&pd);
-				if (ret)
-					printf("conn_usb2 Power up failed! (error = %d)\n", ret);
-			}
-#endif
-			ret = cdns3_uboot_init(&cdns3_device_data);
-			printf("%d cdns3_uboot_initmode %d\n", index, ret);
-		}
-	} else if (index == 0) {
+	if (index == 0) {
 		if (init == USB_INIT_DEVICE) {
 #ifdef CONFIG_SPL_BUILD
 			ret = sc_pm_set_resource_power_mode(-1, SC_R_USB_0, SC_PM_PW_MODE_ON);
@@ -563,35 +516,7 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 {
 	int ret = 0;
 
-	if (index == 1) {
-		if (init == USB_INIT_DEVICE) {
-			cdns3_uboot_exit(1);
-#ifdef CONFIG_SPL_BUILD
-			ret = sc_pm_set_resource_power_mode(-1, SC_R_USB_2, SC_PM_PW_MODE_OFF);
-			if (ret != SC_ERR_NONE)
-				printf("conn_usb2 Power down failed! (error = %d)\n", ret);
-
-			ret = sc_pm_set_resource_power_mode(-1, SC_R_USB_2_PHY, SC_PM_PW_MODE_OFF);
-			if (ret != SC_ERR_NONE)
-				printf("conn_usb2_phy Power down failed! (error = %d)\n", ret);
-#else
-			struct power_domain pd;
-
-			/* Power off usb */
-			if (!power_domain_lookup_name("conn_usb2_phy", &pd)) {
-				ret = power_domain_off(&pd);
-				if (ret)
-					printf("conn_usb2_phy Power down failed! (error = %d)\n", ret);
-			}
-
-			if (!power_domain_lookup_name("conn_usb2", &pd)) {
-				ret = power_domain_off(&pd);
-				if (ret)
-					printf("conn_usb2 Power down failed! (error = %d)\n", ret);
-			}
-#endif
-		}
-	} else if (index == 0) {
+	if (index == 0) {
 		if (init == USB_INIT_DEVICE) {
 #ifdef CONFIG_SPL_BUILD
 			ret = sc_pm_set_resource_power_mode(-1, SC_R_USB_0, SC_PM_PW_MODE_OFF);
@@ -606,7 +531,6 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 	}
 	return ret;
 }
-#endif
 
 int board_init(void)
 {
