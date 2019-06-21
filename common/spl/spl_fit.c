@@ -67,6 +67,10 @@ static int find_node_from_desc(const void *fit, int node, const char *str)
 	return -ENOENT;
 }
 
+#ifdef CONFIG_DUAL_BOOTLOADER
+extern int spl_fit_get_rbindex(const void *fit);
+#endif
+
 /**
  * spl_fit_get_image_name(): By using the matching configuration subnode,
  * retrieve the name of an image, specified by a property name and an index
@@ -736,6 +740,16 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	ret = spl_simple_fit_parse(&ctx);
 	if (ret < 0)
 		return ret;
+
+#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_IMX_TRUSTY_OS)
+	int rbindex;
+	rbindex = spl_fit_get_rbindex(ctx.fit);
+	if (rbindex < 0) {
+		printf("Error! Can't get rollback index!\n");
+		return -1;
+	} else
+		spl_image->rbindex = rbindex;
+#endif
 
 	if (IS_ENABLED(CONFIG_SPL_FPGA))
 		spl_fit_load_fpga(&ctx, info, sector);
