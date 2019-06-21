@@ -709,7 +709,8 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	spl_image->flags |= SPL_FIT_FOUND;
 
 #ifdef CONFIG_IMX_HAB
-	board_spl_fit_post_load((ulong)fit, size);
+	if (!(spl_image->flags & SPL_FIT_BYPASS_POST_LOAD))
+		board_spl_fit_post_load((ulong)fit, size);
 #endif
 
 	return 0;

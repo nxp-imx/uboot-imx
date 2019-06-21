@@ -146,6 +146,10 @@ static ulong get_fit_image_size(void *fit)
 	spl_load_info.read = spl_ram_load_read;
 	spl_load_info.priv = &last;
 
+        /* We call load_simple_fit is just to get total size, the image is not downloaded,
+         * so should bypass authentication
+         */
+	spl_image.flags = SPL_FIT_BYPASS_POST_LOAD;
 	spl_load_simple_fit(&spl_image, &spl_load_info,
 			    (uintptr_t)fit, fit);
 
