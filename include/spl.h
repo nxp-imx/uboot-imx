@@ -260,6 +260,9 @@ struct spl_image_info {
 	ulong dcrc_length;
 	ulong dcrc;
 #endif
+#ifdef CONFIG_DUAL_BOOTLOADER
+	uint64_t rbindex;
+#endif
 };
 
 /**
