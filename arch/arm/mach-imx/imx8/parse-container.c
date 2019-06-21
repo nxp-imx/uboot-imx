@@ -192,6 +192,12 @@ static int read_auth_container(struct spl_image_info *spl_image,
 		}
 	}
 
+#if defined(CONFIG_SPL_BUILD) && \
+	defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_IMX_TRUSTY_OS)
+	/* Everything checks out, get the sw_version now. */
+	spl_image->rbindex = (uint64_t)container->sw_version;
+#endif
+
 end_auth:
 #ifdef CONFIG_AHAB_BOOT
 	if (sc_seco_authenticate(-1, SC_SECO_REL_CONTAINER, 0))
