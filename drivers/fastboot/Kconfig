@@ -77,6 +77,9 @@ config FASTBOOT_UUU_SUPPORT
 	default y if ARCH_MX7 || ARCH_MX6 || ARCH_IMX8 || ARCH_IMX8M || ARCH_MX7ULP
 	select FSL_FASTBOOT
 	select FAT_WRITE
+	select CMD_GPT
+	select RANDOM_UUID
+	select CMD_GPT_RENAME
 	help
 	  The fastboot protocol includes "UCmd" command and "ACmd" command
 

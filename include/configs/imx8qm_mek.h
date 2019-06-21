@@ -112,7 +112,9 @@
 #define CONFIG_ETHPRIME                 "eth1"
 #endif
 
+#ifndef CONFIG_LIB_RAND
 #define CONFIG_LIB_RAND
+#endif
 #define CONFIG_NET_RANDOM_ETHADDR
 
 #ifdef CONFIG_AHAB_BOOT

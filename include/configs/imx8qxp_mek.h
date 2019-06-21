@@ -356,7 +356,9 @@
 #define CONFIG_FEC_XCV_TYPE		RGMII
 #define FEC_QUIRK_ENET_MAC
 
+#ifndef CONFIG_LIB_RAND
 #define CONFIG_LIB_RAND
+#endif
 #define CONFIG_NET_RANDOM_ETHADDR
 
 /* Framebuffer */
