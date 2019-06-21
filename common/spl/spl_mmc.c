@@ -4,6 +4,9 @@
  * Texas Instruments, <www.ti.com>
  *
  * Aneesh V <aneesh@ti.com>
+ *
+ * Copyright 2018 NXP
+ *
  */
 #include <common.h>
 #include <dm.h>
@@ -41,7 +44,7 @@ static int mmc_load_legacy(struct spl_image_info *spl_image, struct mmc *mmc,
 	return 0;
 }
 
-static ulong h_spl_load_read(struct spl_load_info *load, ulong sector,
+ulong h_spl_load_read(struct spl_load_info *load, ulong sector,
 			     ulong count, void *buf)
 {
 	struct mmc *mmc = load->dev;
@@ -54,6 +57,14 @@ static ulong h_spl_load_read(struct spl_load_info *load, ulong sector,
 int check_rpmb_blob(struct mmc *mmc);
 #endif
 
+#ifdef CONFIG_DUAL_BOOTLOADER
+/* Pre-declaration of mmc_load_image_raw_sector_dual_uboot().
+ */
+extern int mmc_load_image_raw_sector_dual_uboot(struct spl_image_info *spl_image,
+						struct mmc *mmc);
+extern int mmc_load_image_parse_container_dual_uboot(struct spl_image_info *spl_image,
+						struct mmc *mmc);
+#else
 static __maybe_unused
 int mmc_load_image_raw_sector(struct spl_image_info *spl_image,
 			      struct mmc *mmc, unsigned long sector)
@@ -102,6 +113,8 @@ end:
 #endif
 	return ret;
 }
+
+#endif /* CONFIG_DUAL_BOOTLOADER */
 
 static int spl_mmc_get_device_index(u32 boot_device)
 {
@@ -323,6 +336,14 @@ int __weak mmc_load_image_parse_container(struct spl_image_info *spl_image,
 {
 	return -ENODEV;
 };
+
+#ifdef CONFIG_DUAL_BOOTLOADER
+int __weak mmc_load_image_parse_container_dual_bootloader(struct spl_image_info *spl_image,
+					struct mmc *mmc, unsigned long sector)
+{
+	return -ENODEV;
+}
+#endif
 #endif
 
 int spl_mmc_load_image(struct spl_image_info *spl_image,
@@ -354,10 +375,15 @@ int spl_mmc_load_image(struct spl_image_info *spl_image,
 			 * 1 and 2 match up to boot0 / boot1 and 7 is user data
 			 * which is the first physical partition (0).
 			 */
+#ifdef CONFIG_DUAL_BOOTLOADER
+			/* Bootloader is stored in eMMC user partition for dual bootloader */
+			part = 0;
+#else
 			part = (mmc->part_config >> 3) & PART_ACCESS_MASK;
 
 			if (part == 7)
 				part = 0;
+#endif
 
 			if (CONFIG_IS_ENABLED(MMC_TINY))
 				err = mmc_switch_part(mmc, part);
@@ -389,12 +415,22 @@ int spl_mmc_load_image(struct spl_image_info *spl_image,
 			return err;
 #endif
 #ifdef CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
+#ifdef CONFIG_DUAL_BOOTLOADER
+#ifdef CONFIG_PARSE_CONTAINER
+		err = mmc_load_image_parse_container_dual_uboot(spl_image,
+								mmc);
+#else
+		err = mmc_load_image_raw_sector_dual_uboot(spl_image,
+								mmc);
+#endif
+#else
 #ifdef CONFIG_PARSE_CONTAINER
 		err = mmc_load_image_parse_container(spl_image, mmc,
 				spl_mmc_get_uboot_raw_sector(mmc));
 #else
 		err = mmc_load_image_raw_sector(spl_image, mmc,
 			spl_mmc_get_uboot_raw_sector(mmc));
+#endif
 #endif
 		if (!err)
 			return err;

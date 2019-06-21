@@ -31,6 +31,10 @@ __weak void* board_spl_fit_buffer_addr(ulong fit_size, int bl_len)
 			align_len) & ~align_len);
 }
 
+#ifdef CONFIG_DUAL_BOOTLOADER
+extern int spl_fit_get_rbindex(const void *fit, int images);
+#endif
+
 /**
  * spl_fit_get_image_name(): By using the matching configuration subnode,
  * retrieve the name of an image, specified by a property name and an index
@@ -425,6 +429,16 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 		debug("%s: Cannot find /images node: %d\n", __func__, images);
 		return -1;
 	}
+
+#ifdef CONFIG_DUAL_BOOTLOADER
+    int rbindex;
+    rbindex = spl_fit_get_rbindex(fit, images);
+    if (rbindex < 0) {
+        printf("Error! Can't get rollback index!\n");
+        return -1;
+    } else
+        spl_image->rbindex = rbindex;
+#endif
 
 #ifdef CONFIG_SPL_FPGA_SUPPORT
 	node = spl_fit_get_image_node(fit, images, "fpga", 0);
