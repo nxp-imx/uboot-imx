@@ -852,7 +852,7 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 
 	spl_image->flags |= SPL_FIT_FOUND;
 
-	if (IS_ENABLED(CONFIG_IMX_HAB))
+	if (IS_ENABLED(CONFIG_IMX_HAB) && !(spl_image->flags & SPL_FIT_BYPASS_POST_LOAD))
 		board_spl_fit_post_load(ctx.fit);
 
 	return 0;
