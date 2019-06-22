@@ -240,3 +240,25 @@ int hwcrypto_gen_rng(uint32_t buf, uint32_t len)
                               sizeof(req), NULL, 0, false);
     return rc;
 }
+
+int hwcrypto_gen_bkek(uint32_t buf, uint32_t len)
+{
+    hwcrypto_bkek_msg req;
+    unsigned long start, end;
+
+    /* check the address */
+    if (buf == 0)
+        return TRUSTY_ERR_INVALID_ARGS;
+    /* fill the request buffer */
+    req.buf = buf;
+    req.len = len;
+
+    /* invalidate dcache for output buffer */
+    start = (unsigned long)buf & ~(ARCH_DMA_MINALIGN - 1);
+    end   = ALIGN((unsigned long)buf + len, ARCH_DMA_MINALIGN);
+    invalidate_dcache_range(start, end);
+
+    int rc = hwcrypto_do_tipc(HWCRYPTO_GEN_BKEK, (void*)&req,
+                              sizeof(req), NULL, 0, false);
+    return rc;
+}
