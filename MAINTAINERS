@@ -462,7 +462,7 @@ S:	Maintained
 T:	git git://git.denx.de/u-boot-efi.git
 F:	doc/README.uefi
 F:	doc/README.iscsi
-F:	Documentation/efi.rst
+F:	doc/efi.rst
 F:	include/capitalization.h
 F:	include/cp1250.h
 F:	include/cp437.h
