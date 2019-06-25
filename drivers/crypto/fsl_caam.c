@@ -418,22 +418,15 @@ static int do_cfg_jrqueue(void)
 		g_jrdata.status = RING_RELOC_INIT;
 	} else {
 		u32 align_idx = 0;
-		u32 *addr;
 
-#if defined(CONFIG_SPL_BUILD) && CONFIG_VAL(SYS_MALLOC_F_LEN)
-		ulong maddr = (ulong)malloc(DESC_MAX_SIZE * 2 + 8);
-		addr = (u32*)ALIGN(maddr, 8);
-#else
-		addr = g_jrdata.raw_addr;
-#endif
 		/* Ensure 64bits buffers addresses alignment */
-		if ((uintptr_t)addr & 0x7)
+		if ((uintptr_t)g_jrdata.raw_addr & 0x7)
 			align_idx = 1;
 		g_jrdata.inrings  = (struct inring_entry *)
-				    (&addr[align_idx]);
+				    (&g_jrdata.raw_addr[align_idx]);
 		g_jrdata.outrings = (struct outring_entry *)
-				    (&addr[align_idx + 2]);
-		g_jrdata.desc = (u32 *)(&addr[align_idx + 4]);
+				    (&g_jrdata.raw_addr[align_idx + 2]);
+		g_jrdata.desc = (u32 *)(&g_jrdata.raw_addr[align_idx + 4]);
 		g_jrdata.status = RING_EARLY_INIT;
 	}
 
