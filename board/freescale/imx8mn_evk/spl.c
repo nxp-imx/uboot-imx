@@ -88,6 +88,9 @@ void board_init_f(ulong dummy)
 {
 	int ret;
 
+	/* Clear the BSS. */
+	memset(__bss_start, 0, __bss_end - __bss_start);
+
 	arch_cpu_init();
 
 	init_uart_clk(1);
@@ -97,9 +100,6 @@ void board_init_f(ulong dummy)
 	timer_init();
 
 	preloader_console_init();
-
-	/* Clear the BSS. */
-	memset(__bss_start, 0, __bss_end - __bss_start);
 
 	ret = spl_init();
 	if (ret) {
