@@ -197,7 +197,7 @@ as u-boot-atf-container.img.
 
 - Generating the flash.bin image:
 
-  $ make SOC=<SoC Name> flash_spl_container
+  $ make SOC=<SoC Name> flash_spl
 
 The mkimage log provides the container and signature block offsets used by the
 CSF description file:
