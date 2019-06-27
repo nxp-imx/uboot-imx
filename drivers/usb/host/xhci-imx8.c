@@ -165,14 +165,27 @@ static int xhci_imx8_probe(struct udevice *dev)
 
 	/* Need to power on the PHY before access it */
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
+	struct udevice usbotg_dev;
 	struct udevice phy_dev;
 	struct power_domain pd;
 	const void *blob = gd->fdt_blob;
-	int offset = dev_of_offset(dev), phy_off;
+	int offset = dev_of_offset(dev), usbotg_off, phy_off;
+
+	usbotg_off = fdtdec_lookup_phandle(blob,
+					   offset,
+					   "cdns3,usb");
+	if (usbotg_off < 0)
+		return -EINVAL;
+
+	usbotg_dev.node = offset_to_ofnode(usbotg_off);
+	if (!power_domain_get(&usbotg_dev, &pd)) {
+		if (power_domain_on(&pd))
+			return -EINVAL;
+	}
 
 	phy_off = fdtdec_lookup_phandle(blob,
-						offset,
-						"cdns3,usbphy");
+					usbotg_off,
+					"cdns3,usbphy");
 	if (phy_off < 0)
 		return -EINVAL;
 
@@ -215,7 +228,7 @@ static int xhci_imx8_remove(struct udevice *dev)
 }
 
 static const struct udevice_id xhci_usb_ids[] = {
-	{ .compatible = "Cadence,usb3", },
+	{ .compatible = "Cadence,usb3-host", },
 	{ }
 };
 
