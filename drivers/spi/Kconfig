@@ -497,6 +497,13 @@ config FSL_ESPI
 	  access the SPI interface and SPI NOR flash on platforms embedding
 	  this Freescale eSPI IP core.
 
+config FSL_FSPI_NAND
+	bool "Freescale FlexSPI driver for SPI NAND"
+	help
+	  Enable the Freescale FlexSPI (FSPI) NAND driver. This driver can be
+	  used to access the SPI NAND flash on platforms embedding this
+	  Freescale IP core.
+
 config SH_QSPI
 	bool "Renesas Quad SPI driver"
 	help
