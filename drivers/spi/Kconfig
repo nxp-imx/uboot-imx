@@ -405,6 +405,13 @@ config FSL_FSPI
 	  used to access the SPI NOR flash on platforms embedding this
 	  Freescale IP core.
 
+config FSL_FSPI_NAND
+	bool "Freescale FlexSPI driver for SPI NAND"
+	help
+	  Enable the Freescale FlexSPI (FSPI) NAND driver. This driver can be
+	  used to access the SPI NAND flash on platforms embedding this
+	  Freescale IP core.
+
 config FSL_QSPI
 	bool "Freescale QSPI driver"
 	imply SPI_FLASH_BAR
