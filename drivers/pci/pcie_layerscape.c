@@ -470,7 +470,8 @@ static void ls_pcie_setup_ep(struct ls_pcie *pcie)
 			writel(0, pcie->dbi + PCIE_MISC_CONTROL_1_OFF);
 
 			bar_base = pcie->dbi +
-				   PCIE_MASK_OFFSET(pcie->cfg2_flag, pf);
+				   PCIE_MASK_OFFSET(pcie->cfg2_flag, pf,
+						    pcie->pf1_offset);
 
 			if (pcie->cfg2_flag) {
 				ctrl_writel(pcie,
@@ -581,6 +582,11 @@ static int ls_pcie_probe(struct udevice *dev)
 		pcie->cfg_res.end = pcie->cfg_res.start + cfg_size;
 		pcie->ctrl = pcie->lut + 0x40000;
 	}
+
+	if (svr == SVR_LX2160A)
+		pcie->pf1_offset = LX2160_PCIE_PF1_OFFSET;
+	else
+		pcie->pf1_offset = LS_PCIE_PF1_OFFSET;
 
 	if (svr == SVR_LS2080A || svr == SVR_LS2085A)
 		pcie->cfg2_flag = 1;

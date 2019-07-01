@@ -100,7 +100,7 @@
 #define PCIE_SRIOV_VFBAR0	0x19C
 #define PCIE_MISC_CONTROL_1_OFF	0x8BC
 
-#define PCIE_MASK_OFFSET(flag, pf) ((flag) ? 0 : (0x1000 + 0x20000 * (pf)))
+#define PCIE_MASK_OFFSET(flag, pf, off) ((flag) ? 0 : (0x1000 + (off) * (pf)))
 
 /* LUT registers */
 #define PCIE_LUT_UDR(n)		(0x800 + (n) * 8)
@@ -139,6 +139,12 @@
 #define LS1021_PEXMSCPORTSR(pex_idx)	(0x94 + (pex_idx) * 4)
 #define LS1021_LTSSM_STATE_SHIFT	20
 
+/* LX2160a PF1 offset */
+#define LX2160_PCIE_PF1_OFFSET	0x8000
+
+/* layerscape PF1 offset */
+#define LS_PCIE_PF1_OFFSET	0x20000
+
 struct ls_pcie {
 	int idx;
 	struct list_head list;
@@ -157,6 +163,7 @@ struct ls_pcie {
 	int next_lut_index;
 	uint sriov_flag;
 	uint cfg2_flag;
+	uint pf1_offset;
 	int stream_id_cur;
 	int mode;
 };
