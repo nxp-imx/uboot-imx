@@ -13,7 +13,7 @@ int arch_auxiliary_core_check_up(u32 core_id)
 {
 	struct arm_smccc_res res;
 
-	arm_smccc_smc(IMX_SIP_SRC, IMX_SIP_SRC_M4_STARTED, 0, 0,
+	arm_smccc_smc(IMX_SIP_SRC, IMX_SIP_SRC_MCU_STARTED, 0, 0,
 		      0, 0, 0, 0, &res);
 
 	return res.a0;
@@ -25,7 +25,7 @@ int arch_auxiliary_core_down(u32 core_id)
 
 	printf("## Stopping auxiliary core\n");
 
-	arm_smccc_smc(IMX_SIP_SRC, IMX_SIP_SRC_M4_STOP, 0, 0,
+	arm_smccc_smc(IMX_SIP_SRC, IMX_SIP_SRC_MCU_STOP, 0, 0,
 		      0, 0, 0, 0, &res);
 
 	return 0;
@@ -44,7 +44,7 @@ int arch_auxiliary_core_up(u32 core_id, ulong addr)
 
 	printf("## Starting auxiliary core stack = 0x%08X, pc = 0x%08X...\n", stack, pc);
 
-	arm_smccc_smc(IMX_SIP_SRC, IMX_SIP_SRC_M4_START, 0, 0,
+	arm_smccc_smc(IMX_SIP_SRC, IMX_SIP_SRC_MCU_START, 0, 0,
 		      0, 0, 0, 0, &res);
 
 	return 0;
