@@ -386,7 +386,7 @@ enum {
 	PTN_GPT_INDEX = 0,
 	PTN_TEE_INDEX,
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
-	PTN_M4_OS_INDEX,
+	PTN_MCU_OS_INDEX,
 #endif
 	PTN_ALL_INDEX,
 	PTN_BOOTLOADER_INDEX,
@@ -764,18 +764,18 @@ static int do_bootmcu(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int ret;
 	size_t out_num_read;
-	void *m4_base_addr = (void *)M4_BOOTROM_BASE_ADDR;
+	void *mcu_base_addr = (void *)MCU_BOOTROM_BASE_ADDR;
 	char command[32];
 
 	ret = read_from_partition_multi(FASTBOOT_MCU_FIRMWARE_PARTITION,
-			0, ANDROID_MCU_FIRMWARE_SIZE, (void *)m4_base_addr, &out_num_read);
+			0, ANDROID_MCU_FIRMWARE_SIZE, (void *)mcu_base_addr, &out_num_read);
 	if ((ret != 0) || (out_num_read != ANDROID_MCU_FIRMWARE_SIZE)) {
-		printf("Read M4 images failed!\n");
+		printf("Read MCU images failed!\n");
 		return 1;
 	} else {
-		printf("run command: 'bootaux 0x%x'\n",(unsigned int)(ulong)m4_base_addr);
+		printf("run command: 'bootaux 0x%x'\n",(unsigned int)(ulong)mcu_base_addr);
 
-		sprintf(command, "bootaux 0x%x", (unsigned int)(ulong)m4_base_addr);
+		sprintf(command, "bootaux 0x%x", (unsigned int)(ulong)mcu_base_addr);
 		ret = run_command(command, 0);
 		if (ret) {
 			printf("run 'bootaux' command failed!\n");
@@ -788,7 +788,7 @@ static int do_bootmcu(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 U_BOOT_CMD(
 	bootmcu, 1, 0, do_bootmcu,
 	"boot mcu images\n",
-	"boot mcu images from 'm4_os' partition, only support images run from TCM"
+	"boot mcu images from 'mcu_os' partition, only support images run from TCM"
 );
 #endif
 #endif /* CONFIG_FLASH_MCUFIRMWARE_SUPPORT */
@@ -1307,7 +1307,7 @@ static int _fastboot_setup_dev(int *switched)
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
 	/* For imx7ulp, flash m4 images directly to spi nor-flash, M4 will
 	 * run automatically after powered on. For imx8mq, flash m4 images to
-	 * physical partition 'm4_os', m4 will be kicked off by A core. */
+	 * physical partition 'mcu_os', m4 will be kicked off by A core. */
 	fastboot_firmwareinfo.type = ANDROID_MCU_FRIMWARE_DEV_TYPE;
 #endif
 
@@ -1464,14 +1464,14 @@ static int _fastboot_parts_load_from_ptable(void)
 	strcpy(ptable[PTN_TEE_INDEX].fstype, "raw");
 #endif
 
-	/* Add m4_os partition if we support mcu firmware image flash */
+	/* Add mcu_os partition if we support mcu firmware image flash */
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
-	strcpy(ptable[PTN_M4_OS_INDEX].name, FASTBOOT_MCU_FIRMWARE_PARTITION);
-	ptable[PTN_M4_OS_INDEX].start = ANDROID_MCU_FIRMWARE_START / dev_desc->blksz;
-	ptable[PTN_M4_OS_INDEX].length = ANDROID_MCU_FIRMWARE_SIZE / dev_desc->blksz;
-	ptable[PTN_M4_OS_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
-	ptable[PTN_M4_OS_INDEX].partition_id = user_partition;
-	strcpy(ptable[PTN_M4_OS_INDEX].fstype, "raw");
+	strcpy(ptable[PTN_MCU_OS_INDEX].name, FASTBOOT_MCU_FIRMWARE_PARTITION);
+	ptable[PTN_MCU_OS_INDEX].start = ANDROID_MCU_FIRMWARE_START / dev_desc->blksz;
+	ptable[PTN_MCU_OS_INDEX].length = ANDROID_MCU_FIRMWARE_SIZE / dev_desc->blksz;
+	ptable[PTN_MCU_OS_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
+	ptable[PTN_MCU_OS_INDEX].partition_id = user_partition;
+	strcpy(ptable[PTN_MCU_OS_INDEX].fstype, "raw");
 #endif
 
 	strcpy(ptable[PTN_ALL_INDEX].name, FASTBOOT_PARTITION_ALL);
