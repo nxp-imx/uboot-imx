@@ -1105,8 +1105,13 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	fspi_module_disable(&fspi->priv, 1);
 
 	/* Enable the module and set to proper value*/
+#ifdef CONFIG_FSPI_DQS_LOOPBACK
+	fspi_write32(fspi->priv.flags, &regs->mcr0,
+		     0xFFFF0010);
+#else
 	fspi_write32(fspi->priv.flags, &regs->mcr0,
 		     0xFFFF0000);
+#endif
 
 	total_size = FSL_FSPI_FLASH_SIZE * FSL_FSPI_FLASH_NUM >> 10;
 	/*
@@ -1214,8 +1219,13 @@ static int fsl_fspi_probe(struct udevice *bus)
 	fspi_module_disable(priv, 1);
 
 	/* Enable the module and set to proper value*/
+#ifdef CONFIG_FSPI_DQS_LOOPBACK
+	fspi_write32(priv->flags, &priv->regs->mcr0,
+		     0xFFFF0010);
+#else
 	fspi_write32(priv->flags, &priv->regs->mcr0,
 		     0xFFFF0000);
+#endif
 
 	/* Reset the DLL register to default value */
 	fspi_write32(priv->flags, &priv->regs->dllacr, 0x0100);
