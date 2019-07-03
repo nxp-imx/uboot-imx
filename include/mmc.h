@@ -223,6 +223,7 @@ static inline bool mmc_is_tuning_cmd(uint cmdidx)
 #define EXT_CSD_WR_REL_PARAM		166	/* R */
 #define EXT_CSD_WR_REL_SET		167	/* R/W */
 #define EXT_CSD_RPMB_MULT		168	/* RO */
+#define EXT_CSD_BOOT_WP			173	/* R/W & R/W/C_P */
 #define EXT_CSD_ERASE_GROUP_DEF		175	/* R/W */
 #define EXT_CSD_BOOT_BUS_WIDTH		177
 #define EXT_CSD_PART_CONF		179	/* R/W */
@@ -335,6 +336,8 @@ static inline bool mmc_is_tuning_cmd(uint cmdidx)
 #define MMC_QUIRK_RETRY_SEND_CID	BIT(0)
 #define MMC_QUIRK_RETRY_SET_BLOCKLEN	BIT(1)
 #define MMC_QUIRK_RETRY_APP_CMD	BIT(2)
+
+#define BOOT1_PWR_WP   (0x83)
 
 enum mmc_voltage {
 	MMC_SIGNAL_VOLTAGE_000 = 0,
