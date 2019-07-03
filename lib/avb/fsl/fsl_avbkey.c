@@ -79,7 +79,7 @@ int read_keyslot_package(struct keyslot_package* kp) {
 		printf("boota: cannot find '%d' mmc device\n", mmcc);
 		return -1;
 	}
-#ifndef CONFIG_BLK
+#if !CONFIG_IS_ENABLED(BLK)
 	original_part = mmc->block_dev.hwpart;
 	dev_desc = blk_get_dev("mmc", mmcc);
 #else
@@ -89,7 +89,7 @@ int read_keyslot_package(struct keyslot_package* kp) {
 		printf("** Block device MMC %d not supported\n", mmcc);
 		return -1;
 	}
-#ifdef CONFIG_BLK
+#if CONFIG_IS_ENABLED(BLK)
 	original_part = dev_desc->hwpart;
 #endif
 
@@ -107,7 +107,7 @@ int read_keyslot_package(struct keyslot_package* kp) {
 		ret = -1;
 		goto fail;
 	}
-#ifndef CONFIG_BLK
+#if !CONFIG_IS_ENABLED(BLK)
 	mmc->block_dev.hwpart = KEYSLOT_HWPARTITION_ID;
 #else
 	dev_desc->hwpart = KEYSLOT_HWPARTITION_ID;
@@ -126,7 +126,7 @@ fail:
 	if (fill != NULL)
 		free(fill);
 	/* Return to original partition */
-#ifndef CONFIG_BLK
+#if !CONFIG_IS_ENABLED(BLK)
 	if (mmc->block_dev.hwpart != original_part) {
 		if (mmc_switch_part(mmc, original_part) != 0)
 			return -1;
@@ -159,16 +159,29 @@ bool rpmbkey_is_set(void)
 		return false;
 	}
 
+#if !CONFIG_IS_ENABLED(BLK)
+	original_part = mmc->block_dev.hwpart;
+	desc = blk_get_dev("mmc", mmcc);
+#else
 	desc = mmc_get_blk_desc(mmc);
 	original_part = desc->hwpart;
+#endif
 
 	/* Switch to the RPMB partition */
+#if !CONFIG_IS_ENABLED(BLK)
+	if (mmc->block_dev.hwpart != MMC_PART_RPMB) {
+#else
 	if (desc->hwpart != MMC_PART_RPMB) {
+#endif
 		if (mmc_switch_part(mmc, MMC_PART_RPMB) != 0) {
 			printf("ERROR - can't switch to rpmb partition \n");
 			return false;
 		}
+#if !CONFIG_IS_ENABLED(BLK)
+		mmc->block_dev.hwpart = MMC_PART_RPMB;
+#else
 		desc->hwpart = MMC_PART_RPMB;
+#endif
 	}
 
 	/* Try to read the first one block, return count '1' means the rpmb
@@ -181,10 +194,18 @@ bool rpmbkey_is_set(void)
 		ret = true;
 
 	/* return to original partition. */
+#if !CONFIG_IS_ENABLED(BLK)
+	if (mmc->block_dev.hwpart != original_part) {
+#else
 	if (desc->hwpart != original_part) {
+#endif
 		if (mmc_switch_part(mmc, original_part) != 0)
 			ret = false;
+#if !CONFIG_IS_ENABLED(BLK)
+		mmc->block_dev.hwpart = original_part;
+#else
 		desc->hwpart = original_part;
+#endif
 	}
 	/* remember to free the buffer */
 	if (buf != NULL)
@@ -536,7 +557,7 @@ int gen_rpmb_key(struct keyslot_package *kp) {
 		printf("boota: cannot find '%d' mmc device\n", mmcc);
 		return -1;
 	}
-#ifndef CONFIG_BLK
+#if !CONFIG_IS_ENABLED(BLK)
 	original_part = mmc->block_dev.hwpart;
 	dev_desc = blk_get_dev("mmc", mmcc);
 #else
@@ -595,7 +616,7 @@ int gen_rpmb_key(struct keyslot_package *kp) {
 	}
 
 	/* program key to mmc */
-#ifndef CONFIG_BLK
+#if !CONFIG_IS_ENABLED(BLK)
 	if (mmc->block_dev.hwpart != MMC_PART_RPMB) {
 		if (mmc_switch_part(mmc, MMC_PART_RPMB) != 0) {
 			ret = -1;
@@ -621,7 +642,7 @@ int gen_rpmb_key(struct keyslot_package *kp) {
 
 fail:
 	/* Return to original partition */
-#ifndef CONFIG_BLK
+#if !CONFIG_IS_ENABLED(BLK)
 	if (mmc->block_dev.hwpart != original_part) {
 		if (mmc_switch_part(mmc, original_part) != 0)
 			ret = -1;
@@ -729,6 +750,7 @@ int check_rpmb_blob(struct mmc *mmc)
 	int ret = 0;
 	char original_part;
 	struct keyslot_package kp;
+	struct blk_desc *dev_desc = NULL;
 
 	read_keyslot_package(&kp);
 	if (strcmp(kp.magic, KEYPACK_MAGIC)) {
@@ -744,13 +766,22 @@ int check_rpmb_blob(struct mmc *mmc)
 	fill_secure_keyslot_package(&kp);
 
 	/* switch to boot1 partition. */
+#if !CONFIG_IS_ENABLED(BLK)
 	original_part = mmc->block_dev.hwpart;
+#else
+	dev_desc = mmc_get_blk_desc(mmc);
+	original_part = dev_desc->hwpart;
+#endif
 	if (mmc_switch_part(mmc, KEYSLOT_HWPARTITION_ID) != 0) {
 		printf("ERROR - can't switch to boot1 partition! \n");
 		ret = -1;
 		goto fail;
 	} else
+#if !CONFIG_IS_ENABLED(BLK)
 		mmc->block_dev.hwpart = KEYSLOT_HWPARTITION_ID;
+#else
+		dev_desc->hwpart = KEYSLOT_HWPARTITION_ID;
+#endif
 	/* write power-on write protection for boot1 partition. */
 	if (mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
 			EXT_CSD_BOOT_WP, BOOT1_PWR_WP)) {
@@ -760,11 +791,19 @@ int check_rpmb_blob(struct mmc *mmc)
 	}
 fail:
 	/* return to original partition. */
+#if !CONFIG_IS_ENABLED(BLK)
 	if (mmc->block_dev.hwpart != original_part) {
 		if (mmc_switch_part(mmc, original_part) != 0)
 			return -1;
 		mmc->block_dev.hwpart = original_part;
 	}
+#else
+	if (dev_desc->hwpart != original_part) {
+		if (mmc_switch_part(mmc, original_part) != 0)
+			return -1;
+		dev_desc->hwpart = original_part;
+	}
+#endif
 
 	return ret;
 }
