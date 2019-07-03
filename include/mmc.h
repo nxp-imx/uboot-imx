@@ -341,6 +341,8 @@ static inline bool mmc_is_tuning_cmd(uint cmdidx)
 #define MMC_QUIRK_RETRY_SET_BLOCKLEN	BIT(1)
 #define MMC_QUIRK_RETRY_APP_CMD	BIT(2)
 
+#define BOOT1_PWR_WP   (0x83)
+
 enum mmc_voltage {
 	MMC_SIGNAL_VOLTAGE_000 = 0,
 	MMC_SIGNAL_VOLTAGE_120 = 1,
