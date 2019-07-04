@@ -17,7 +17,7 @@
 #define is_soc_rev(rev) (soc_rev() == rev)
 
 /* returns MXC_CPU_ value */
-#define cpu_type(rev) (((rev) >> 12) & 0xff)
+#define cpu_type(rev) (((rev) >> 12) & 0x1ff)
 #define soc_type(rev) (((rev) >> 12) & 0xf0)
 /* both macros return/take MXC_CPU_ constants */
 #define get_cpu_type() (cpu_type(get_cpu_rev()))
@@ -54,7 +54,14 @@
 #define is_imx8mmdl() (is_cpu_type(MXC_CPU_IMX8MMDL))
 #define is_imx8mms() (is_cpu_type(MXC_CPU_IMX8MMS))
 #define is_imx8mmsl() (is_cpu_type(MXC_CPU_IMX8MMSL))
-#define is_imx8mn() (is_cpu_type(MXC_CPU_IMX8MN))
+#define is_imx8mn() (is_cpu_type(MXC_CPU_IMX8MN) || is_cpu_type(MXC_CPU_IMX8MND) || \
+	is_cpu_type(MXC_CPU_IMX8MNS) || is_cpu_type(MXC_CPU_IMX8MNL) || \
+	is_cpu_type(MXC_CPU_IMX8MNDL) || is_cpu_type(MXC_CPU_IMX8MNSL))
+#define is_imx8mnd() (is_cpu_type(MXC_CPU_IMX8MND))
+#define is_imx8mns() (is_cpu_type(MXC_CPU_IMX8MNS))
+#define is_imx8mnl() (is_cpu_type(MXC_CPU_IMX8MNL))
+#define is_imx8mndl() (is_cpu_type(MXC_CPU_IMX8MNDL))
+#define is_imx8mnsl() (is_cpu_type(MXC_CPU_IMX8MNSL))
 #define is_imx8qm() (is_cpu_type(MXC_CPU_IMX8QM))
 #define is_imx8qxp() (is_cpu_type(MXC_CPU_IMX8QXP))
 
