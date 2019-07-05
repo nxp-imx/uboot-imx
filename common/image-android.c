@@ -131,16 +131,18 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 					serialnr.low);
 	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
 
-	char bd_addr[16]={0};
-	sprintf(bd_addr,
-		"%08x%08x",
-		serialnr.high,
-		serialnr.low);
-	sprintf(newbootargs,
-		" androidboot.btmacaddr=%c%c:%c%c:%c%c:%c%c:%c%c:%c%c",
-		bd_addr[0],bd_addr[1],bd_addr[2],bd_addr[3],bd_addr[4],bd_addr[5],
-		bd_addr[6],bd_addr[7],bd_addr[8],bd_addr[9],bd_addr[10],bd_addr[11]);
-	strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+	if (serialnr.high + serialnr.low != 0) {
+		char bd_addr[16]={0};
+		sprintf(bd_addr,
+			"%08x%08x",
+			serialnr.high,
+			serialnr.low);
+		sprintf(newbootargs,
+			" androidboot.btmacaddr=%c%c:%c%c:%c%c:%c%c:%c%c:%c%c",
+			bd_addr[0],bd_addr[1],bd_addr[2],bd_addr[3],bd_addr[4],bd_addr[5],
+			bd_addr[6],bd_addr[7],bd_addr[8],bd_addr[9],bd_addr[10],bd_addr[11]);
+		strncat(commandline, newbootargs, sizeof(commandline) - strlen(commandline));
+	}
 #endif
 
 	/* append soc type into bootargs */
