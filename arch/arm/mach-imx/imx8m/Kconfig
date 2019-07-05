@@ -39,6 +39,12 @@ config TARGET_IMX8MQ_DDR4_ARM2
 	select IMX8MQ
 	select SUPPORT_SPL
 
+config TARGET_IMX8MQ_AIY
+	bool "imx8mq_aiy"
+	select IMX8MQ
+	select SUPPORT_SPL
+	select IMX8M_LPDDR4
+
 config TARGET_IMX8MM_DDR4_VAL
 	bool "imx8mm DDR4 validation board"
 	select IMX8MM
@@ -71,6 +77,7 @@ endchoice
 
 source "board/freescale/imx8mq_evk/Kconfig"
 source "board/freescale/imx8mq_arm2/Kconfig"
+source "board/freescale/imx8mq_aiy/Kconfig"
 source "board/freescale/imx8mm_evk/Kconfig"
 source "board/freescale/imx8mm_val/Kconfig"
 source "board/freescale/imx8mn_evk/Kconfig"
