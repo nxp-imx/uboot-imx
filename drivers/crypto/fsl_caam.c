@@ -151,16 +151,16 @@ u32 caam_decap_blob(u32 plain_text, u32 blob_addr, u32 size)
 	init_job_desc(decap_desc, 0);
 	append_load(decap_desc, PTR2CAAMDMA(skeymod), key_sz,
 		    LDST_CLASS_2_CCB | LDST_SRCDST_BYTE_KEY);
-	append_seq_in_ptr_intlen(decap_desc, blob_addr, size + 48, 0);
+	append_seq_in_ptr_intlen(decap_desc, blob_addr, size + CAAM_PAD_LEN, 0);
 	append_seq_out_ptr_intlen(decap_desc, plain_text, size, 0);
 	append_operation(decap_desc, OP_TYPE_DECAP_PROTOCOL | OP_PCLID_BLOB);
 
 	flush_dcache_range((uintptr_t)blob_addr & ALIGN_MASK,
 			   ((uintptr_t)blob_addr & ALIGN_MASK)
-			    + ROUND(2 * size, ARCH_DMA_MINALIGN));
+			   + ROUND(size + CAAM_PAD_LEN, ARCH_DMA_MINALIGN));
 	flush_dcache_range((uintptr_t)plain_text & ALIGN_MASK,
 			   (plain_text & ALIGN_MASK)
-			   + ROUND(2 * size, ARCH_DMA_MINALIGN));
+			   + ROUND(size, ARCH_DMA_MINALIGN));
 
 	/* Run descriptor with result written to blob buffer */
 	ret = do_job(decap_desc);
@@ -196,15 +196,15 @@ u32 caam_gen_blob(u32 plain_data_addr, u32 blob_addr, u32 size)
 	append_load(encap_desc, PTR2CAAMDMA(skeymod), key_sz,
 		    LDST_CLASS_2_CCB | LDST_SRCDST_BYTE_KEY);
 	append_seq_in_ptr_intlen(encap_desc, plain_data_addr, size, 0);
-	append_seq_out_ptr_intlen(encap_desc, PTR2CAAMDMA(blob), size + 48, 0);
+	append_seq_out_ptr_intlen(encap_desc, PTR2CAAMDMA(blob), size + CAAM_PAD_LEN, 0);
 	append_operation(encap_desc, OP_TYPE_ENCAP_PROTOCOL | OP_PCLID_BLOB);
 
 	flush_dcache_range((uintptr_t)plain_data_addr & ALIGN_MASK,
 			   (plain_data_addr & ALIGN_MASK)
-			   + ROUND(2 * size, ARCH_DMA_MINALIGN));
+			   + ROUND(size, ARCH_DMA_MINALIGN));
 	flush_dcache_range((uintptr_t)blob & ALIGN_MASK,
 			   ((uintptr_t)blob & ALIGN_MASK)
-			   + ROUND(2 * size, ARCH_DMA_MINALIGN));
+			   + ROUND(size + CAAM_PAD_LEN, ARCH_DMA_MINALIGN));
 
 	ret = do_job(encap_desc);
 
@@ -359,6 +359,10 @@ static int do_job(u32 *desc)
 			   ((uintptr_t)desc & ALIGN_MASK)
 			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
 
+	flush_dcache_range((uintptr_t)g_jrdata.outrings & ALIGN_MASK,
+			  ((uintptr_t)g_jrdata.outrings & ALIGN_MASK)
+			  + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
+
 	/* Inform HW that a new JR is available */
 #ifndef CONFIG_ARCH_IMX8
 	__raw_writel(1, CAAM_IRJAR0);
@@ -369,10 +373,6 @@ static int do_job(u32 *desc)
 	while (__raw_readl(CAAM_ORSFR3) == 0)
 		;
 #endif
-
-	flush_dcache_range((uintptr_t)g_jrdata.outrings & ALIGN_MASK,
-			   ((uintptr_t)g_jrdata.outrings & ALIGN_MASK)
-			   + ROUND(DESC_MAX_SIZE, ARCH_DMA_MINALIGN));
 
 	if (PTR2CAAMDMA(desc) == g_jrdata.outrings[0].desc) {
 		ret = g_jrdata.outrings[0].status;

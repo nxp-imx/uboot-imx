@@ -270,4 +270,6 @@ typedef enum {
 			RNG_DESC_SH1_SIZE + \
 			RNG_DESC_KEYS_SIZE)
 
+#define CAAM_PAD_LEN 48
+
 #endif /* __CAAM_INTERNAL_H__ */
