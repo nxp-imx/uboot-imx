@@ -45,5 +45,6 @@ extern AvbOps fsl_avb_ops;
 #endif
 
 int get_block_size(void);
+void process_erase_mmc(const char *cmdbuf, char *response);
 
 #endif	// FB_FSL_COMMON_H
