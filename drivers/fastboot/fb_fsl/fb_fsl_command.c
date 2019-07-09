@@ -722,6 +722,19 @@ static void erase(char *cmd, char *response)
 }
 #endif
 
+/**
+ * fastboot_set_reboot_flag() - Set flag to indicate reboot-bootloader
+ *
+ * This is a redefinition, since BSP dose not need the function of
+ * "reboot into bootloader", and with BCB support, the flag can be
+ * set with another way. Redefine this function to override the weak
+ * definition to avoid error return value.
+ */
+int fastboot_set_reboot_flag(void)
+{
+	return 0;
+}
+
 #if CONFIG_IS_ENABLED(FASTBOOT_UUU_SUPPORT)
 /**
  * run_ucmd() - Execute the UCmd command
