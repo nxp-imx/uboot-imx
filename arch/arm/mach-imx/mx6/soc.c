@@ -534,30 +534,6 @@ bool is_usb_boot(void)
 	return false;
 }
 
-static void pre_misc_setting(void)
-{
-	/* Bypass IPU1 QoS generator */
-	writel(0x00000002, 0x00bb048c);
-	/* Bypass IPU2 QoS generator */
-	writel(0x00000002, 0x00bb050c);
-	/* Bandwidth THR for of PRE0 */
-	writel(0x00000200, 0x00bb0690);
-	/* Bandwidth THR for of PRE1 */
-	writel(0x00000200, 0x00bb0710);
-	/* Bandwidth THR for of PRE2 */
-	writel(0x00000200, 0x00bb0790);
-	/* Bandwidth THR for of PRE3 */
-	writel(0x00000200, 0x00bb0810);
-	/* Saturation THR for of PRE0 */
-	writel(0x00000010, 0x00bb0694);
-	/* Saturation THR for of PRE1 */
-	writel(0x00000010, 0x00bb0714);
-	/* Saturation THR for of PRE2 */
-	writel(0x00000010, 0x00bb0794);
-	/* Saturation THR for of PRE */
-	writel(0x00000010, 0x00bb0814);
-}
-
 int arch_cpu_init(void)
 {
 	if (is_usbphy_power_on())
@@ -684,7 +660,7 @@ int arch_cpu_init(void)
 
 	if (is_mx6dqp()) {
 		writel(0x80000201, 0xbb0608);
-		pre_misc_setting();
+		enable_ipu_clock();
 	}
 
 #ifdef CONFIG_IMX_SEC_INIT
