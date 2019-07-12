@@ -382,6 +382,12 @@ u32 get_cpu_speed_grade_hz(void)
 
 	val = readl(&fuse->tester3);
 	val >>= OCOTP_TESTER3_SPEED_SHIFT;
+
+	if (is_imx8mn()) {
+		val &= 0xf;
+		return 2300000000 - val * 100000000;
+	}
+
 	if (is_imx8mm())
 		val &= 0x7;
 	else
