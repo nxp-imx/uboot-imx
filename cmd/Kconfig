@@ -1813,6 +1813,12 @@ config CMD_MTDPARTS_SPREAD
 	  at least as large as the size specified in the mtdparts variable and
 	  2) each partition starts on a good block.
 
+config MTDPARTS_SKIP_INVALID
+	bool "Skip invalid devices and keep checking the next one"
+	depends on CMD_MTDPARTS
+	help
+	  Enable this feature will look for next device rather than quit.
+
 config CMD_REISER
 	bool "reiser - Access to reiserfs filesystems"
 	help
