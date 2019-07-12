@@ -2063,6 +2063,12 @@ config MTDPARTS_DEFAULT
 	  Defines a default MTD partitioning scheme in the Linux MTD command
 	  line partitions format
 
+config MTDPARTS_SKIP_INVALID
+	bool "Skip invalid devices and keep checking the next one"
+	depends on CMD_MTDPARTS
+	help
+	  Enable this feature will look for next device rather than quit.
+
 config CMD_REISER
 	bool "reiser - Access to reiserfs filesystems"
 	help
