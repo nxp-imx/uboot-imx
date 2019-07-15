@@ -26,6 +26,8 @@
 #ifdef CONFIG_IMX_SEC_INIT
 #include <fsl_caam.h>
 #endif
+#include <env.h>
+#include <env_internal.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -887,3 +889,60 @@ void nxp_tmu_arch_init(void *reg_base)
 		writel((tca_en << 31) |(tca_hr <<16) | tca_rt,  (ulong)reg_base + 0x30);
 	}
 }
+
+#if defined(CONFIG_IMX8MN) || defined(CONFIG_IMX8MP)
+enum env_location env_get_location(enum env_operation op, int prio)
+{
+	enum boot_device dev = get_boot_device();
+	enum env_location env_loc = ENVL_UNKNOWN;
+
+	if (prio)
+		return env_loc;
+
+	switch (dev) {
+#ifdef CONFIG_ENV_IS_IN_SPI_FLASH
+	case QSPI_BOOT:
+		env_loc = ENVL_SPI_FLASH;
+		break;
+#endif
+#ifdef CONFIG_ENV_IS_IN_NAND
+	case NAND_BOOT:
+		env_loc = ENVL_NAND;
+		break;
+#endif
+#ifdef CONFIG_ENV_IS_IN_MMC
+	case SD1_BOOT:
+	case SD2_BOOT:
+	case SD3_BOOT:
+	case MMC1_BOOT:
+	case MMC2_BOOT:
+	case MMC3_BOOT:
+		env_loc =  ENVL_MMC;
+		break;
+#endif
+	default:
+#if defined(CONFIG_ENV_IS_NOWHERE)
+		env_loc = ENVL_NOWHERE;
+#endif
+		break;
+	}
+
+	return env_loc;
+}
+
+#ifndef ENV_IS_EMBEDDED
+long long env_get_offset(long long defautl_offset)
+{
+	enum boot_device dev = get_boot_device();
+
+	switch (dev) {
+	case NAND_BOOT:
+		return (60 << 20);  /* 60MB offset for NAND */
+	default:
+		break;
+	}
+
+	return defautl_offset;
+}
+#endif
+#endif
