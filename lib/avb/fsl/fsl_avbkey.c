@@ -25,6 +25,9 @@
 #include <memalign.h>
 #include "trusty/hwcrypto.h"
 #include "fsl_atx_attributes.h"
+#include <asm/mach-imx/hab.h>
+#include <asm/arch/sys_proto.h>
+#include <asm/mach-imx/sci/sci.h>
 
 #define INITFLAG_FUSE_OFFSET 0
 #define INITFLAG_FUSE_MASK 0x00000001
@@ -1060,6 +1063,28 @@ int at_disable_vboot_unlock(void)
 #endif /* CONFIG_AVB_ATX */
 
 #if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
+
+DECLARE_GLOBAL_DATA_PTR;
+extern struct imx_sec_config_fuse_t const imx_sec_config_fuse;
+#define HAB_ENABLED_BIT (is_soc_type(MXC_SOC_IMX8M)? 0x2000000 : 0x2)
+
+/* Check hab status, this is basically copied from imx_hab_is_enabled() */
+bool hab_is_enabled(void)
+{
+	struct imx_sec_config_fuse_t *fuse =
+		(struct imx_sec_config_fuse_t *)&imx_sec_config_fuse;
+	uint32_t reg;
+	int ret;
+
+	ret = fuse_read(fuse->bank, fuse->word, &reg);
+	if (ret) {
+		puts("\nSecure boot fuse read error\n");
+		return ret;
+	}
+
+	return (reg & HAB_ENABLED_BIT) == HAB_ENABLED_BIT;
+}
+
 int do_rpmb_key_set(uint8_t *key, uint32_t key_size)
 {
 	int ret = 0;
@@ -1185,6 +1210,38 @@ int avb_set_public_key(uint8_t *staged_buffer, uint32_t size) {
 		return -1;
 	} else
 		printf("Set vbmeta public key successfully!\n");
+
+	return 0;
+}
+
+int fastboot_get_mppubk(uint8_t *staged_buffer, uint32_t *size) {
+
+#ifdef CONFIG_ARCH_IMX8
+	sc_err_t err;
+	uint16_t lc;
+	sc_ipc_t ipcHndl = gd->arch.ipc_channel_handle;
+
+	err = sc_seco_chip_info(ipcHndl, &lc, NULL, NULL, NULL);
+	if (err != SC_ERR_NONE) {
+		printf("Error in get lifecycle\n");
+		return -1;
+	}
+
+	if (lc != 0x80) {
+#else
+	if (!hab_is_enabled()) {
+#endif
+		ERR("Error. This command can only be used when hab is closed!!\n");
+		return -1;
+	}
+	if ((staged_buffer == NULL) || (size == NULL)) {
+		ERR("Error. Get null staged_buffer!\n");
+		return -1;
+	}
+	if (trusty_get_mppubk(staged_buffer, size)) {
+		ERR("Error. Failed to get mppubk!\n");
+		return -1;
+	}
 
 	return 0;
 }
