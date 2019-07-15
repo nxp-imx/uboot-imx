@@ -3867,6 +3867,14 @@ static void cb_flashing(struct usb_ep *ep, struct usb_request *req)
 			printf("Append ec attestation key successfully!\n");
 			strcpy(response, "OKAY");
 		}
+	}  else if (endswith(cmd, FASTBOOT_GET_MPPUBK)) {
+		if (fastboot_get_mppubk(interface.transfer_buffer, &download_bytes)) {
+			printf("ERROR Generate mppubk failed!\n");
+			strcpy(response, "FAILGenerate mppubk failed!");
+		} else {
+			printf("mppubk generated!\n");
+			strcpy(response, "OKAY");
+		}
 	}
 #ifndef CONFIG_AVB_ATX
 	else if (endswith(cmd, FASTBOOT_SET_RPMB_KEY)) {
