@@ -127,4 +127,12 @@ int trusty_atap_read_uuid_str(char **uuid_p);
  */
 int trusty_set_product_id(const uint8_t *product_id, uint32_t size);
 
+/*
+ * trusty_get_mppubk is called to get the mppubk from trusty side.
+ *
+ * @mppubk: Pointer to the buffer which store the mppubk.
+ * @size:  Pointer to The size of mppubk.
+ */
+int trusty_get_mppubk(uint8_t *mppubk, uint32_t* size);
+
 #endif /* TRUSTY_KEYMASTER_H_ */

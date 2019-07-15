@@ -62,7 +62,8 @@ enum keymaster_command {
     KM_ATAP_SET_CA_RESPONSE_UPDATE     = (0x6000 << KEYMASTER_REQ_SHIFT),
     KM_ATAP_SET_CA_RESPONSE_FINISH     = (0x7000 << KEYMASTER_REQ_SHIFT),
     KM_ATAP_READ_UUID                  = (0x8000 << KEYMASTER_REQ_SHIFT),
-    KM_SET_PRODUCT_ID                  = (0x9000 << KEYMASTER_REQ_SHIFT)
+    KM_SET_PRODUCT_ID                  = (0x9000 << KEYMASTER_REQ_SHIFT),
+    KM_GET_MPPUBK                      = (0xc000 << KEYMASTER_REQ_SHIFT)
 };
 
 typedef enum {
@@ -209,6 +210,15 @@ struct km_raw_buffer_resp {
     int32_t error;
     uint32_t data_size;
     int8_t data[0];
+} TRUSTY_ATTR_PACKED;
+
+/**
+ * km_get_mppubk_resp - response format for mppubk buffer
+ */
+struct km_get_mppubk_resp {
+    int32_t error;
+    uint32_t data_size;
+    uint8_t data[64];
 } TRUSTY_ATTR_PACKED;
 
 /**
