@@ -480,3 +480,31 @@ int trusty_atap_read_uuid_str(char **uuid_p)
     }
     return rc;
 }
+
+int trusty_get_mppubk(uint8_t *mppubk, uint32_t *size)
+{
+    int rc = TRUSTY_ERR_GENERIC;
+    struct km_get_mppubk_resp resp;
+
+    rc = km_send_request(KM_GET_MPPUBK, NULL, 0);
+    if (rc < 0) {
+        trusty_error("failed to send km mppubk request\n", rc);
+        return rc;
+    }
+
+    rc = km_read_raw_response(KM_GET_MPPUBK, &resp, sizeof(resp));
+    if (rc < 0) {
+        trusty_error("%s: failed (%d) to read km mppubk response\n", __func__, rc);
+        return rc;
+    }
+
+    if (resp.data_size != 64) {
+        trusty_error("%s: Wrong mppubk size!\n", __func__);
+        return TRUSTY_ERR_GENERIC;
+    } else {
+        *size = resp.data_size;
+    }
+
+    memcpy(mppubk, resp.data, resp.data_size);
+    return TRUSTY_ERR_NONE;
+}
