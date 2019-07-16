@@ -21,6 +21,13 @@ config ENV_IS_NOWHERE
 	  stored. U-Boot will therefore always start up with a default
 	  environment.
 
+config ENV_DEFAULT_NOWHERE
+	depends on !ENV_IS_NOWHERE
+	bool "Environment is not stored if no matched location"
+	help
+	  Define this when multiple ENV locations are defined and use nowhere as
+	  default when no storage medium is matched.
+
 config ENV_IS_IN_EEPROM
 	bool "Environment in EEPROM"
 	depends on !CHAIN_OF_TRUST
