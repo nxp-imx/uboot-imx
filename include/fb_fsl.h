@@ -95,6 +95,10 @@
 #define FASTBOOT_SET_EC_ATTESTATION_KEY  "set-ec-atte-key"
 #define FASTBOOT_APPEND_RSA_ATTESTATION_CERT  "append-rsa-atte-cert"
 #define FASTBOOT_APPEND_EC_ATTESTATION_CERT  "append-ec-atte-cert"
+#define FASTBOOT_SET_RSA_ATTESTATION_KEY_ENC  "set-rsa-atte-key-enc"
+#define FASTBOOT_SET_EC_ATTESTATION_KEY_ENC  "set-ec-atte-key-enc"
+#define FASTBOOT_APPEND_RSA_ATTESTATION_CERT_ENC  "append-rsa-atte-cert-enc"
+#define FASTBOOT_APPEND_EC_ATTESTATION_CERT_ENC  "append-ec-atte-cert-enc"
 #define FASTBOOT_GET_MPPUBK  "get-mppubk"
 #endif
 

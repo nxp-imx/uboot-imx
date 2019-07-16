@@ -502,6 +502,46 @@ static void flashing(char *cmd, char *response)
 			strcpy(response, "FAILInternal error!");
 		} else
 			strcpy(response, "OKAY");
+	} else if (endswith(cmd, FASTBOOT_SET_RSA_ATTESTATION_KEY_ENC)) {
+		if (trusty_set_attestation_key_enc(fastboot_buf_addr,
+							fastboot_bytes_received,
+							KM_ALGORITHM_RSA)) {
+			printf("ERROR set rsa attestation key failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			printf("Set rsa attestation key successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	} else if (endswith(cmd, FASTBOOT_SET_EC_ATTESTATION_KEY_ENC)) {
+		if (trusty_set_attestation_key_enc(fastboot_buf_addr,
+							fastboot_bytes_received,
+							KM_ALGORITHM_EC)) {
+			printf("ERROR set ec attestation key failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			printf("Set ec attestation key successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	} else if (endswith(cmd, FASTBOOT_APPEND_RSA_ATTESTATION_CERT_ENC)) {
+		if (trusty_append_attestation_cert_chain_enc(fastboot_buf_addr,
+								fastboot_bytes_received,
+								KM_ALGORITHM_RSA)) {
+			printf("ERROR append rsa attestation cert chain failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			printf("Append rsa attestation key successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	}  else if (endswith(cmd, FASTBOOT_APPEND_EC_ATTESTATION_CERT_ENC)) {
+		if (trusty_append_attestation_cert_chain_enc(fastboot_buf_addr,
+								fastboot_bytes_received,
+								KM_ALGORITHM_EC)) {
+			printf("ERROR append ec attestation cert chain failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			printf("Append ec attestation key successfully!\n");
+			strcpy(response, "OKAY");
+		}
 	} else if (endswith(cmd, FASTBOOT_SET_RSA_ATTESTATION_KEY)) {
 		if (trusty_set_attestation_key(fastboot_buf_addr,
 						fastboot_bytes_received,
