@@ -410,6 +410,21 @@ int trusty_append_attestation_cert_chain(const uint8_t *cert,
                                         cert, cert_size, algorithm);
 }
 
+int trusty_set_attestation_key_enc(const uint8_t *key, uint32_t key_size,
+                               keymaster_algorithm_t algorithm)
+{
+    return trusty_send_attestation_data(KM_SET_ATTESTATION_KEY_ENC, key, key_size,
+                                        algorithm);
+}
+
+int trusty_append_attestation_cert_chain_enc(const uint8_t *cert,
+                                         uint32_t cert_size,
+                                         keymaster_algorithm_t algorithm)
+{
+    return trusty_send_attestation_data(KM_APPEND_ATTESTATION_CERT_CHAIN_ENC,
+                                        cert, cert_size, algorithm);
+}
+
 int trusty_atap_get_ca_request(const uint8_t *operation_start,
                                uint32_t operation_start_size,
                                uint8_t **ca_request_p,
