@@ -381,3 +381,10 @@ int env_select(const char *name)
 
 	return -ENODEV;
 }
+
+#ifndef ENV_IS_EMBEDDED
+__weak long long env_get_offset(long long defautl_offset)
+{
+	return defautl_offset;
+}
+#endif
