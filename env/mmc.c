@@ -78,7 +78,7 @@ static inline s64 mmc_offset(int copy)
 			return val;
 	}
 
-	defvalue = CONFIG_ENV_OFFSET;
+	defvalue = env_get_offset(CONFIG_ENV_OFFSET);
 	propname = dt_prop.offset;
 
 #if defined(CONFIG_ENV_OFFSET_REDUND)
@@ -92,7 +92,7 @@ static inline s64 mmc_offset(int copy)
 #else
 static inline s64 mmc_offset(int copy)
 {
-	s64 offset = CONFIG_ENV_OFFSET;
+	s64 offset = env_get_offset(CONFIG_ENV_OFFSET);
 
 #if defined(CONFIG_ENV_OFFSET_REDUND)
 	if (copy)
