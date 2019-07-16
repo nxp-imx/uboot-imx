@@ -377,4 +377,11 @@ int env_get_char(int index);
  * This is used for those unfortunate archs with crappy toolchains
  */
 void env_reloc(void);
+
+#ifdef ENV_IS_EMBEDDED
+#define env_get_offset(x) x
+#else
+long long env_get_offset(long long defautl_offset);
+#endif
+
 #endif
