@@ -282,6 +282,12 @@ int env_import_redund(const char *buf1, int buf1_status,
 		      const char *buf2, int buf2_status);
 #endif
 
+#ifdef ENV_IS_EMBEDDED
+#define env_get_offset(x) x
+#else
+long long env_get_offset(long long defautl_offset);
+#endif
+
 /**
  * env_get_char() - Get a character from the early environment
  *

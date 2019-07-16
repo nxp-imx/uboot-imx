@@ -193,7 +193,7 @@ static int env_nand_save(void)
 			.name = "NAND",
 			.erase_opts = {
 				.length = CONFIG_ENV_RANGE,
-				.offset = CONFIG_ENV_OFFSET,
+				.offset = env_get_offset(CONFIG_ENV_OFFSET),
 			},
 		},
 #ifdef CONFIG_ENV_OFFSET_REDUND
@@ -333,7 +333,7 @@ static int env_nand_load(void)
 		goto done;
 	}
 
-	read1_fail = readenv(CONFIG_ENV_OFFSET, (u_char *) tmp_env1);
+	read1_fail = readenv(env_get_offset(CONFIG_ENV_OFFSET), (u_char *) tmp_env1);
 	read2_fail = readenv(CONFIG_ENV_OFFSET_REDUND, (u_char *) tmp_env2);
 
 	ret = env_import_redund((char *)tmp_env1, read1_fail, (char *)tmp_env2,
@@ -372,7 +372,7 @@ static int env_nand_load(void)
 	}
 #endif
 
-	ret = readenv(CONFIG_ENV_OFFSET, (u_char *)buf);
+	ret = readenv(env_get_offset(CONFIG_ENV_OFFSET), (u_char *)buf);
 	if (ret) {
 		set_default_env("!readenv() failed");
 		return -EIO;
