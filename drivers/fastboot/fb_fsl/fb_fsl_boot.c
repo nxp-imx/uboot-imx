@@ -831,6 +831,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		goto fail;
 	/* lock the boot status and rollback_idx preventing Linux modify it */
 	trusty_lock_boot_state();
+	/* lock the boot state so linux can't use some hwcrypto commands. */
+	hwcrypto_lock_boot_state();
 	/* put ql-tipc to release resource for Linux */
 	trusty_ipc_shutdown();
 #endif
