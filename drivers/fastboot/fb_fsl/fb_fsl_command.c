@@ -343,9 +343,6 @@ static void wipe_all_userdata(void)
 	/* Erase the cache partition for legacy imx6/7 */
 	process_erase_mmc(FASTBOOT_PARTITION_CACHE, response);
 #endif
-	/* The unlock permissive flag is set by user and should be wiped here. */
-	set_fastboot_lock_disable();
-
 
 #if defined(AVB_RPMB) && !defined(CONFIG_IMX_TRUSTY_OS)
 	printf("Start stored_rollback_index wipe process....\n");
@@ -365,12 +362,11 @@ static FbLockState do_fastboot_unlock(bool force)
 	}
 	if ((fastboot_lock_enable() == FASTBOOT_UL_ENABLE) || force) {
 		printf("It is able to unlock device. %d\n",fastboot_lock_enable());
+
+		wipe_all_userdata();
 		status = fastboot_set_lock_stat(FASTBOOT_UNLOCK);
 		if (status < 0)
 			return FASTBOOT_LOCK_ERROR;
-
-		wipe_all_userdata();
-
 	} else {
 		printf("It is not able to unlock device.");
 		return FASTBOOT_LOCK_ERROR;
@@ -387,11 +383,11 @@ static FbLockState do_fastboot_lock(void)
 		printf("The device is already locked\n");
 		return FASTBOOT_LOCK;
 	}
+
+	wipe_all_userdata();
 	status = fastboot_set_lock_stat(FASTBOOT_LOCK);
 	if (status < 0)
 		return FASTBOOT_LOCK_ERROR;
-
-	wipe_all_userdata();
 
 	return FASTBOOT_LOCK;
 }
