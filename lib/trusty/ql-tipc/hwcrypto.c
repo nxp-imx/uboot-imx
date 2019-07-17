@@ -262,3 +262,8 @@ int hwcrypto_gen_bkek(uint32_t buf, uint32_t len)
                               sizeof(req), NULL, 0, false);
     return rc;
 }
+
+int hwcrypto_lock_boot_state(void)
+{
+    return hwcrypto_do_tipc(HWCRYPTO_LOCK_BOOT_STATE, NULL, 0, NULL, 0, false);
+}
