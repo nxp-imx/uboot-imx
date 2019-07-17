@@ -40,6 +40,7 @@ enum hwcrypto_command {
     HWCRYPTO_ENCAP_BLOB      = (2 << HWCRYPTO_REQ_SHIFT),
     HWCRYPTO_GEN_RNG         = (3 << HWCRYPTO_REQ_SHIFT),
     HWCRYPTO_GEN_BKEK        = (4 << HWCRYPTO_REQ_SHIFT),
+    HWCRYPTO_LOCK_BOOT_STATE = (5 << HWCRYPTO_REQ_SHIFT),
 };
 
 /**
