@@ -455,6 +455,12 @@ FbLockEnableResult fastboot_lock_enable() {
 	int mmc_id;
 	FbLockEnableResult ret;
 
+#ifdef CONFIG_DUAL_BOOTLOADER
+	/* Always allow unlock device in spl recovery mode. */
+	if (is_spl_recovery())
+		return FASTBOOT_UL_ENABLE;
+#endif
+
 	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
 	if (bdata == NULL)
 		return FASTBOOT_UL_ERROR;
