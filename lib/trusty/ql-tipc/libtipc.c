@@ -32,6 +32,7 @@
 #include <trusty/trusty_ipc.h>
 #include <trusty/util.h>
 #include <hang.h>
+#include <trusty/imx_snvs.h>
 
 #define LOCAL_LOG 0
 
@@ -141,6 +142,13 @@ int trusty_ipc_init(void)
     /* secure storage service init ok, use trusty backed keystore */
     if (use_keystore)
         env_set("keystore", "trusty");
+
+    trusty_info("Initializing Trusty SNVS driver\n");
+    rc = imx_snvs_init(_ipc_dev);
+    if (rc != 0) {
+        trusty_error("Initlializing Trusty SNVS driver failed (%d)\n", rc);
+        return rc;
+    }
 
     return TRUSTY_ERR_NONE;
 }
