@@ -83,6 +83,14 @@ static unsigned long smc(unsigned long r0,
     return _r0;
 }
 
+int32_t trusty_simple_fast_call32(uint32_t smcnr,
+                                  uint32_t a0, uint32_t a1, uint32_t a2)
+{
+    trusty_assert(SMC_IS_FASTCALL(smcnr));
+
+    return smc(smcnr, a0, a1, a2);
+}
+
 static int32_t trusty_fast_call32(struct trusty_dev *dev, uint32_t smcnr,
                                   uint32_t a0, uint32_t a1, uint32_t a2)
 {

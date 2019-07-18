@@ -41,6 +41,7 @@ obj-y += \
     $(QL_TIPC)/libtipc.o \
     $(QL_TIPC)/rpmb_proxy.o \
     $(QL_TIPC)/util.o \
+    $(QL_TIPC)/imx_snvs.o \
     sysdeps/sysdeps_uboot.o \
     sysdeps/storage_ops_uboot.o
 
