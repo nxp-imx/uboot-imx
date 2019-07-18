@@ -267,14 +267,10 @@ static void imx8qm_hsio_initialize(void)
 
 	lpcg_all_clock_on(HSIO_PCIE_X2_LPCG);
 	lpcg_all_clock_on(HSIO_PCIE_X1_LPCG);
-	lpcg_all_clock_on(HSIO_SATA_LPCG);
 	lpcg_all_clock_on(HSIO_PHY_X2_LPCG);
 	lpcg_all_clock_on(HSIO_PHY_X1_LPCG);
-	lpcg_all_clock_on(HSIO_PHY_X2_CRR0_LPCG);
-	lpcg_all_clock_on(HSIO_PHY_X1_CRR1_LPCG);
 	lpcg_all_clock_on(HSIO_PCIE_X2_CRR2_LPCG);
 	lpcg_all_clock_on(HSIO_PCIE_X1_CRR3_LPCG);
-	lpcg_all_clock_on(HSIO_SATA_CRR4_LPCG);
 	lpcg_all_clock_on(HSIO_MISC_LPCG);
 	lpcg_all_clock_on(HSIO_GPIO_LPCG);
 
@@ -371,9 +367,6 @@ int board_init(void)
 
 #ifdef CONFIG_FSL_HSIO
 	imx8qm_hsio_initialize();
-#ifdef CONFIG_SCSI_AHCI_PLAT
-	sata_init();
-#endif
 #endif
 
 #if defined(CONFIG_USB) && defined(CONFIG_USB_TCPC)
