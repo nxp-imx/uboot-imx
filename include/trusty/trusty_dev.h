@@ -79,4 +79,10 @@ int trusty_dev_exec_ipc(struct trusty_dev *dev, struct ns_mem_page_info *buf,
 int trusty_dev_shutdown_ipc(struct trusty_dev *dev,
                             struct ns_mem_page_info *buf, uint32_t buf_size);
 
+/*
+ * Export Trusty fastcall API
+ */
+int32_t trusty_simple_fast_call32(uint32_t smcnr,
+                                  uint32_t a0, uint32_t a1, uint32_t a2);
+
 #endif /* TRUSTY_TRUSTY_DEV_H_ */

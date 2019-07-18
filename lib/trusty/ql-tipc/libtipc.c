@@ -33,6 +33,7 @@
 #include <trusty/util.h>
 #include <hang.h>
 #include <env.h>
+#include <trusty/imx_snvs.h>
 
 #define LOCAL_LOG 0
 
@@ -138,7 +139,16 @@ int trusty_ipc_init(void)
     trusty_info("Initializing Trusty Hardware Crypto client\n");
     rc = hwcrypto_tipc_init(_ipc_dev);
     if (rc != 0) {
-        trusty_error("Initlializing Trusty Keymaster client failed (%d)\n", rc);
+        trusty_error("Initlializing Trusty hwcrypto client failed (%d)\n", rc);
+        return rc;
+    }
+#endif
+
+#ifdef CONFIG_IMX8M
+    trusty_info("Initializing Trusty SNVS driver\n");
+    rc = imx_snvs_init(_ipc_dev);
+    if (rc != 0) {
+        trusty_error("Initlializing Trusty SNVS driver failed (%d)\n", rc);
         return rc;
     }
 #endif
