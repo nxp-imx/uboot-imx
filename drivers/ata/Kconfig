@@ -59,6 +59,15 @@ config DWC_AHCI
 	  Enable this driver to support Sata devices through
 	  Synopsys DWC AHCI module.
 
+config IMX_AHCI
+	bool "Enable IMX AHCI driver support"
+	select SCSI_AHCI
+	depends on AHCI
+	depends on DM_SCSI
+	help
+	  Enable this driver to support Sata devices through
+	  i.MX AHCI module.
+
 config DWC_AHSATA
 	bool "Enable DWC AHSATA driver support"
 	select LIBATA
