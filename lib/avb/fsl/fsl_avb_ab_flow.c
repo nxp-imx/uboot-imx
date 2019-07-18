@@ -400,16 +400,74 @@ int mmc_load_image_raw_sector_dual_uboot(struct spl_image_info *spl_image,
 	}
 
 	if (slot_index_to_boot == 2) {
-		/* No bootable slots! */
-		printf("No bootable slots found.\n");
-		ret = -1;
-		goto end;
+		/* No bootable slots, try to boot into recovery! */
+		printf("No bootable slots found, try to boot into recovery mode...\n");
+
+		ab_data.spl_recovery = true;
+		if ((ab_data.last_boot != 0) && (ab_data.last_boot != 1))
+			slot_index_to_boot = 0;
+		else
+			slot_index_to_boot = ab_data.last_boot;
+
+		snprintf(partition_name, PARTITION_NAME_LEN,
+			 PARTITION_BOOTLOADER"%s",
+			 slot_suffixes[target_slot]);
+
+		/* Read part info from gpt */
+		if (part_get_info_by_name(dev_desc, partition_name, &info) == -1) {
+			printf("Can't get partition info of partition bootloader%s\n",
+				slot_suffixes[target_slot]);
+			ret = -1;
+			goto end;
+		} else {
+			header = (struct image_header *)(CONFIG_SYS_TEXT_BASE -
+				 sizeof(struct image_header));
+
+			/* read image header to find the image size & load address */
+			count = blk_dread(dev_desc, info.start, 1, header);
+			if (count == 0) {
+				ret = -1;
+				goto end;
+			}
+
+			/* Load fit/container and check HAB */
+			load.dev = mmc;
+			load.priv = NULL;
+			load.filename = NULL;
+			load.bl_len = mmc->read_bl_len;
+			load.read = h_spl_load_read;
+			if (IS_ENABLED(CONFIG_SPL_LOAD_FIT) &&
+					image_get_magic(header) == FDT_MAGIC) {
+				/* Fit */
+				ret = spl_load_simple_fit(spl_image, &load,
+							  info.start, header);
+			} else if (IS_ENABLED(CONFIG_SPL_LOAD_IMX_CONTAINER)) {
+				/* container */
+				ret = spl_load_imx_container(spl_image, &load, info.start);
+			} else
+				ret = -1;
+
+#if !defined(CONFIG_XEN) && defined(CONFIG_IMX_TRUSTY_OS)
+			/* Image loaded successfully, go to verify rollback index */
+			if (!ret)
+				ret = spl_verify_rbidx(mmc, &ab_data.slots[target_slot], spl_image);
+
+			/* Copy rpmb keyslot to secure memory. */
+			if (!ret)
+				fill_secure_keyslot_package(&kp);
+#endif
+		}
+
+		if (ret)
+			goto end;
 	} else if (!ab_data.slots[slot_index_to_boot].successful_boot &&
 		   (ab_data.slots[slot_index_to_boot].tries_remaining > 0)) {
 		/* Set the bootloader_verified flag as if current slot only has one chance. */
 		if (ab_data.slots[slot_index_to_boot].tries_remaining == 1)
 			ab_data.slots[slot_index_to_boot].bootloader_verified = 1;
 		ab_data.slots[slot_index_to_boot].tries_remaining -= 1;
+
+		ab_data.last_boot = slot_index_to_boot;
 	}
 	printf("Booting from bootloader%s...\n", slot_suffixes[slot_index_to_boot]);
 
@@ -683,6 +741,38 @@ out:
 
 	return ret;
 }
+
+extern AvbABOps fsl_avb_ab_ops;
+static bool spl_recovery_flag = false;
+bool is_spl_recovery(void)
+{
+	return spl_recovery_flag;
+}
+void check_spl_recovery(void)
+{
+	AvbABData ab_data, ab_data_orig;
+	AvbIOResult io_ret;
+
+	io_ret = fsl_load_metadata(&fsl_avb_ab_ops, &ab_data, &ab_data_orig);
+	if (io_ret != AVB_IO_RESULT_OK) {
+		printf("Load metadata fail, go to fail!\n");
+		hang();
+	}
+
+	spl_recovery_flag = ab_data.spl_recovery;
+	/* Clear spl recovery flag. */
+	ab_data.spl_recovery = false;
+	fsl_save_metadata_if_changed(&fsl_avb_ab_ops, &ab_data, &ab_data_orig);
+
+	if (spl_recovery_flag) {
+		printf("Enter spl recovery mode, only fastboot commands are supported!\n");
+
+		while (1) {
+			run_command("fastboot 0", 0);
+		}
+	}
+}
+
 #else /* CONFIG_DUAL_BOOTLOADER */
 /* For legacy i.mx6/7, we won't enable A/B due to the limitation of
  * storage capacity, but we still want to verify boot/recovery with
