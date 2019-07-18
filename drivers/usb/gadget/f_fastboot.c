@@ -1701,7 +1701,7 @@ void board_recovery_setup(void)
 #endif /*CONFIG_FSL_FASTBOOT*/
 
 #if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
-static AvbABOps fsl_avb_ab_ops = {
+AvbABOps fsl_avb_ab_ops = {
 	.read_ab_metadata = fsl_read_ab_metadata,
 	.write_ab_metadata = fsl_write_ab_metadata,
 	.ops = NULL
