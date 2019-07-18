@@ -383,6 +383,12 @@
 	};
 };
 
+&sata {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pciea>;
+	clkreq-gpio = <&gpio4 27 GPIO_ACTIVE_LOW>;
+	status = "okay";
+};
 
 &tsens {
 	tsens-num = <6>;
