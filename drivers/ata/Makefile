@@ -12,6 +12,7 @@ obj-$(CONFIG_FSL_SATA) += fsl_sata.o
 obj-$(CONFIG_LIBATA) += libata.o
 obj-$(CONFIG_SATA) += sata.o
 obj-$(CONFIG_SATA_CEVA) += sata_ceva.o
+obj-$(CONFIG_IMX_AHCI) += imx_ahci.o
 obj-$(CONFIG_SATA_MV) += sata_mv.o
 obj-$(CONFIG_SATA_SIL) += sata_sil.o
 obj-$(CONFIG_SANDBOX) += sata_sandbox.o
