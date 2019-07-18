@@ -93,8 +93,14 @@ typedef struct AvbABData {
   /* Per-slot metadata. */
   AvbABSlotData slots[2];
 
+  /* Last boot slot */
+  uint8_t last_boot;
+
+  /* spl recovery mode */
+  bool spl_recovery;
+
   /* Reserved for future use. */
-  uint8_t reserved2[12];
+  uint8_t reserved2[10];
 
   /* CRC32 of all 28 bytes preceding this field. */
   uint32_t crc32;

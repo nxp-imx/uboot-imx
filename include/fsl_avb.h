@@ -275,4 +275,7 @@ int avb_set_public_key(uint8_t *staged_buffer, uint32_t size);
 /* Get manufacture protection  public key */
 int fastboot_get_mppubk(uint8_t *staged_buffer, uint32_t *size);
 
+/* Return if device is in spl recovery mode. */
+bool is_spl_recovery(void);
+
 #endif /* __FSL_AVB_H__ */
