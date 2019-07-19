@@ -92,10 +92,10 @@ int get_block_size(void) {
         struct blk_desc *dev_desc;
 
         dev_no = fastboot_devinfo.dev_id;
-        dev_desc = blk_get_dev(fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc", dev_no);
+        dev_desc = blk_get_dev(fastboot_devinfo.type == DEV_SATA ? "scsi" : "mmc", dev_no);
         if (NULL == dev_desc) {
                 printf("** Block device %s %d not supported\n",
-                       fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc",
+                       fastboot_devinfo.type == DEV_SATA ? "scsi" : "mmc",
                        dev_no);
                 return 0;
         }

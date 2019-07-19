@@ -178,7 +178,7 @@ static void process_flash_blkdev(const char *cmdbuf, void *download_buffer,
 				dev_no = fastboot_devinfo.dev_id;
 
 				printf("sparse flash target is %s:%d\n",
-				       fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc",
+				       fastboot_devinfo.type == DEV_SATA ? "scsi" : "mmc",
 				       dev_no);
 				if (fastboot_devinfo.type == DEV_MMC) {
 					mmc = find_mmc_device(dev_no);
@@ -186,10 +186,10 @@ static void process_flash_blkdev(const char *cmdbuf, void *download_buffer,
 						printf("MMC card init failed!\n");
 				}
 
-				dev_desc = blk_get_dev(fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc", dev_no);
+				dev_desc = blk_get_dev(fastboot_devinfo.type == DEV_SATA ? "scsi" : "mmc", dev_no);
 				if (!dev_desc || dev_desc->type == DEV_TYPE_UNKNOWN) {
 					printf("** Block device %s %d not supported\n",
-					       fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc",
+					       fastboot_devinfo.type == DEV_SATA ? "scsi" : "mmc",
 					       dev_no);
 					return;
 				}
@@ -244,7 +244,7 @@ static void process_flash_blkdev(const char *cmdbuf, void *download_buffer,
 					}
 
 					sprintf(blk_write, "%s write 0x%x 0x%x 0x%x",
-						fastboot_devinfo.type == DEV_SATA ? "sata" : "mmc",
+						fastboot_devinfo.type == DEV_SATA ? "scsi" : "mmc",
 						(unsigned int)(uintptr_t)download_buffer, /*source*/
 						ptn->start, /*dest*/
 						temp /*length*/);
