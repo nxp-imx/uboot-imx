@@ -640,8 +640,8 @@ static int ahci_device_data_io(struct ahci_uc_priv *uc_priv, u8 port, u8 *fis,
 
 	debug("Enter %s: for port %d\n", __func__, port);
 
-	if (port > uc_priv->n_ports) {
-		printf("Invalid port number %d\n", port);
+	if (port >= uc_priv->n_ports) {
+		debug("Invalid port number %d\n", port);
 		return -1;
 	}
 
