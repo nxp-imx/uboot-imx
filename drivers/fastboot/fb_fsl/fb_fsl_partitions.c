@@ -18,8 +18,8 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/setup.h>
 #include <env.h>
-#ifdef CONFIG_SATA
-#include <sata.h>
+#ifdef CONFIG_DM_SCSI
+#include <scsi.h>
 #endif
 
 #if defined(CONFIG_FASTBOOT_LOCK)
@@ -147,17 +147,11 @@ static int _fastboot_parts_load_from_ptable(void)
 
 	/* sata case in env */
 	if (fastboot_devinfo.type == DEV_SATA) {
-#ifdef CONFIG_SATA
+#ifdef CONFIG_DM_SCSI
 		int sata_device_no = fastboot_devinfo.dev_id;
 		puts("flash target is SATA\n");
-		if (sata_initialize())
-			return -1;
-		if (sata_device_no >= CONFIG_SYS_SATA_MAX_DEVICE) {
-			printf("Unknown SATA(%d) device for fastboot\n",
-				sata_device_no);
-			return -1;
-		}
-		dev_desc = sata_get_dev(sata_device_no);
+		scsi_scan(false);
+		dev_desc = blk_get_dev("scsi", sata_device_no);
 #else /*! CONFIG_SATA*/
 		puts("SATA isn't buildin\n");
 		return -1;
