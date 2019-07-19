@@ -23,6 +23,7 @@ config ENV_IS_NOWHERE
 
 config ENV_DEFAULT_NOWHERE
 	depends on !ENV_IS_NOWHERE
+	default y if IMX8MN
 	bool "Environment is not stored if no matched location"
 	help
 	  Define this when multiple ENV locations are defined and use nowhere as
