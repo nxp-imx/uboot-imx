@@ -26,6 +26,10 @@
 #include "trusty/hwcrypto.h"
 #include "fsl_atx_attributes.h"
 
+#if defined(CONFIG_SPL_BUILD)
+#include <spl.h>
+#endif
+
 #define INITFLAG_FUSE_OFFSET 0
 #define INITFLAG_FUSE_MASK 0x00000001
 #define INITFLAG_FUSE 0x00000001
@@ -61,13 +65,36 @@ void fill_secure_keyslot_package(struct keyslot_package *kp) {
 				0x100));
 }
 
+#if defined(CONFIG_SPL_BUILD)
+static int spl_mmc_get_device_index(u32 boot_device)
+{
+	switch (boot_device) {
+	case BOOT_DEVICE_MMC1:
+		return 0;
+	case BOOT_DEVICE_MMC2:
+	case BOOT_DEVICE_MMC2_2:
+		return 1;
+	}
+
+#ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
+	printf("spl: unsupported mmc boot device.\n");
+#endif
+
+	return -ENODEV;
+}
+#endif
+
 int read_keyslot_package(struct keyslot_package* kp) {
 	char original_part;
 	int blksz;
 	unsigned char* fill = NULL;
 	int ret = 0;
 	/* load tee from boot1 of eMMC. */
+#if defined(CONFIG_SPL_BUILD)
+	int mmcc = spl_mmc_get_device_index(spl_boot_device());
+#else
 	int mmcc = mmc_get_env_dev();
+#endif
 	struct blk_desc *dev_desc = NULL;
 
 	struct mmc *mmc;
