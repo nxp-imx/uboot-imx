@@ -214,7 +214,7 @@ int fsl_load_metadata_dual_uboot(struct blk_desc *dev_desc,
 	}
 }
 
-#ifndef CONFIG_XEN
+#if !defined(CONFIG_XEN) && defined(CONFIG_IMX_TRUSTY_OS)
 static int spl_verify_rbidx(struct mmc *mmc, AvbABSlotData *slot,
 			struct spl_image_info *spl_image)
 {
@@ -286,7 +286,7 @@ int mmc_load_image_parse_container_dual_uboot(
 	struct blk_desc *dev_desc;
 	AvbABData ab_data, ab_data_orig;
 	size_t slot_index_to_boot, target_slot;
-#ifndef CONFIG_XEN
+#if !defined(CONFIG_XEN) && defined(CONFIG_IMX_TRUSTY_OS)
 	struct keyslot_package kp;
 #endif
 
@@ -302,7 +302,7 @@ int mmc_load_image_parse_container_dual_uboot(
 		return -1;
 	}
 
-#ifndef CONFIG_XEN
+#if !defined(CONFIG_XEN) && defined(CONFIG_IMX_TRUSTY_OS)
 	/* Read RPMB keyslot package, xen won't check this. */
 	read_keyslot_package(&kp);
 	if (strcmp(kp.magic, KEYPACK_MAGIC)) {
@@ -350,7 +350,7 @@ int mmc_load_image_parse_container_dual_uboot(
 			ret = mmc_load_image_parse_container(spl_image, mmc, info.start);
 
 			/* Don't need to check rollback index for xen. */
-#ifndef CONFIG_XEN
+#if !defined(CONFIG_XEN) && defined(CONFIG_IMX_TRUSTY_OS)
 			/* Image loaded successfully, go to verify rollback index */
 			if (!ret && rpmbkey_is_set())
 				ret = spl_verify_rbidx(mmc, &ab_data.slots[target_slot], spl_image);
@@ -398,7 +398,7 @@ int mmc_load_image_parse_container_dual_uboot(
 			ret = mmc_load_image_parse_container(spl_image, mmc, info.start);
 
 			/* Don't need to check rollback index for xen. */
-#ifndef CONFIG_XEN
+#if !defined(CONFIG_XEN) && defined(CONFIG_IMX_TRUSTY_OS)
 			/* Image loaded successfully, go to verify rollback index */
 			if (!ret && rpmbkey_is_set())
 				ret = spl_verify_rbidx(mmc, &ab_data.slots[slot_index_to_boot], spl_image);
@@ -445,7 +445,9 @@ int mmc_load_image_raw_sector_dual_uboot(
 	struct image_header *header;
 	AvbABData ab_data, ab_data_orig;
 	size_t slot_index_to_boot, target_slot;
+#ifdef CONFIG_IMX_TRUSTY_OS
 	struct keyslot_package kp;
+#endif
 
 	/* Check if gpt is valid */
 	dev_desc = mmc_get_blk_desc(mmc);
@@ -459,20 +461,23 @@ int mmc_load_image_raw_sector_dual_uboot(
 		return -1;
 	}
 
-	/* Init RPMB keyslot package if not initialized before. */
+#ifdef CONFIG_IMX_TRUSTY_OS
+	/* Read RPMB keyslot package. */
 	read_keyslot_package(&kp);
 	if (strcmp(kp.magic, KEYPACK_MAGIC)) {
-		printf("keyslot package magic error. Will generate new one\n");
-		if (gen_rpmb_key(&kp)) {
-			printf("Generate keyslot package fail!\n");
+		if (rpmbkey_is_set()) {
+			printf("\nFATAL - RPMB key was destroyed!\n");
+			hang();
+		} else
+			printf("keyslot package magic error, do nothing here!\n");
+	} else {
+		/* Set power-on write protection to boot1 partition. */
+		if (mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_BOOT_WP, BOOT1_PWR_WP)) {
+			printf("Unable to set power-on write protection to boot1!\n");
 			return -1;
 		}
 	}
-	/* Set power-on write protection to boot1 partition. */
-	if (mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_BOOT_WP, BOOT1_PWR_WP)) {
-		printf("Unable to set power-on write protection to boot1!\n");
-		return -1;
-	}
+#endif
 
 	/* Load AB metadata from misc partition */
 	if (fsl_load_metadata_dual_uboot(dev_desc, &ab_data,
@@ -528,13 +533,15 @@ int mmc_load_image_raw_sector_dual_uboot(
 				ret = -1;
 			}
 
+#ifdef CONFIG_IMX_TRUSTY_OS
 			/* Fit image loaded successfully, go to verify rollback index */
-			if (!ret)
+			if (!ret && rpmbkey_is_set())
 				ret = spl_verify_rbidx(mmc, &ab_data.slots[target_slot], spl_image);
 
 			/* Copy rpmb keyslot to secure memory. */
 			if (!ret)
 				fill_secure_keyslot_package(&kp);
+#endif
 		}
 
 		/* Set current slot to unbootable if load/verify fail. */
@@ -598,13 +605,15 @@ int mmc_load_image_raw_sector_dual_uboot(
 				ret = -1;
 			}
 
+#ifdef CONFIG_IMX_TRUSTY_OS
 			/* Fit image loaded successfully, go to verify rollback index */
-			if (!ret)
+			if (!ret && rpmbkey_is_set())
 				ret = spl_verify_rbidx(mmc, &ab_data.slots[target_slot], spl_image);
 
 			/* Copy rpmb keyslot to secure memory. */
 			if (!ret)
 				fill_secure_keyslot_package(&kp);
+#endif
 		}
 
 		if (ret)

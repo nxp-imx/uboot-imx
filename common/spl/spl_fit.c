@@ -429,14 +429,14 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 		return -1;
 	}
 
-#ifdef CONFIG_DUAL_BOOTLOADER
-    int rbindex;
-    rbindex = spl_fit_get_rbindex(fit, images);
-    if (rbindex < 0) {
-        printf("Error! Can't get rollback index!\n");
-        return -1;
-    } else
-        spl_image->rbindex = rbindex;
+#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_IMX_TRUSTY_OS)
+	int rbindex;
+	rbindex = spl_fit_get_rbindex(fit, images);
+	if (rbindex < 0) {
+		printf("Error! Can't get rollback index!\n");
+		return -1;
+	} else
+		spl_image->rbindex = rbindex;
 #endif
 
 #ifdef CONFIG_SPL_FPGA_SUPPORT
