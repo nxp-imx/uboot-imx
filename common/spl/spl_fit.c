@@ -421,7 +421,7 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 		return -1;
 	}
 
-#ifdef CONFIG_DUAL_BOOTLOADER
+#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_IMX_TRUSTY_OS)
 	int rbindex;
 	rbindex = spl_fit_get_rbindex(fit, images);
 	if (rbindex < 0) {
