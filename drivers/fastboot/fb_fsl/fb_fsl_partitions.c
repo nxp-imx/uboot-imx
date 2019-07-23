@@ -42,7 +42,7 @@ enum {
 	PTN_GPT_INDEX = 0,
 	PTN_TEE_INDEX,
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
-	PTN_M4_OS_INDEX,
+	PTN_MCU_OS_INDEX,
 #endif
 	PTN_ALL_INDEX,
 	PTN_BOOTLOADER_INDEX,
@@ -209,14 +209,14 @@ static int _fastboot_parts_load_from_ptable(void)
 	strcpy(ptable[PTN_TEE_INDEX].fstype, "raw");
 #endif
 
-	/* Add m4_os partition if we support mcu firmware image flash */
+	/* Add mcu_os partition if we support mcu firmware image flash */
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
-	strcpy(ptable[PTN_M4_OS_INDEX].name, FASTBOOT_MCU_FIRMWARE_PARTITION);
-	ptable[PTN_M4_OS_INDEX].start = ANDROID_MCU_FIRMWARE_START / dev_desc->blksz;
-	ptable[PTN_M4_OS_INDEX].length = ANDROID_MCU_FIRMWARE_SIZE / dev_desc->blksz;
-	ptable[PTN_M4_OS_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
-	ptable[PTN_M4_OS_INDEX].partition_id = user_partition;
-	strcpy(ptable[PTN_M4_OS_INDEX].fstype, "raw");
+	strcpy(ptable[PTN_MCU_OS_INDEX].name, FASTBOOT_MCU_FIRMWARE_PARTITION);
+	ptable[PTN_MCU_OS_INDEX].start = ANDROID_MCU_FIRMWARE_START / dev_desc->blksz;
+	ptable[PTN_MCU_OS_INDEX].length = ANDROID_MCU_FIRMWARE_SIZE / dev_desc->blksz;
+	ptable[PTN_MCU_OS_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
+	ptable[PTN_MCU_OS_INDEX].partition_id = user_partition;
+	strcpy(ptable[PTN_MCU_OS_INDEX].fstype, "raw");
 #endif
 
 	strcpy(ptable[PTN_ALL_INDEX].name, FASTBOOT_PARTITION_ALL);
