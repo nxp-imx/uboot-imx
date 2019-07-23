@@ -19,6 +19,7 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/clock.h>
 #include <asm/mach-imx/iomux-v3.h>
+#include <asm/mach-imx/regs-usbphy.h>
 #include <asm/mach-imx/sys_proto.h>
 #include <dm.h>
 #include <asm/mach-types.h>
@@ -40,18 +41,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define USB_H1_CTRL_OFFSET	0x04
 
-#define USBPHY_CTRL				0x00000030
-#define USBPHY_CTRL_SET				0x00000034
-#define USBPHY_CTRL_CLR				0x00000038
-#define USBPHY_CTRL_TOG				0x0000003c
-
-#define USBPHY_PWD				0x00000000
-#define USBPHY_CTRL_SFTRST			0x80000000
-#define USBPHY_CTRL_CLKGATE			0x40000000
-#define USBPHY_CTRL_ENUTMILEVEL3		0x00008000
-#define USBPHY_CTRL_ENUTMILEVEL2		0x00004000
-#define USBPHY_CTRL_OTG_ID			0x08000000
-
 #define ANADIG_USB2_CHRG_DETECT_EN_B		0x00100000
 #define ANADIG_USB2_CHRG_DETECT_CHK_CHRG_B	0x00080000
 
@@ -61,8 +50,6 @@ DECLARE_GLOBAL_DATA_PTR;
 #define ANADIG_USB2_PLL_480_CTRL_EN_USB_CLKS	0x00000040
 
 #define USBNC_OFFSET		0x200
-#define USBNC_PHY_STATUS_OFFSET	0x23C
-#define USBNC_PHYSTATUS_ID_DIG	(1 << 4) /* otg_id status */
 #define USBNC_PHYCFG2_ACAENB	(1 << 4) /* otg_id detection enable */
 #define UCTRL_PWR_POL		(1 << 9) /* OTG Polarity of Power Pin */
 #define UCTRL_OVER_CUR_POL	(1 << 8) /* OTG Polarity of Overcurrent */
@@ -664,7 +651,7 @@ static int ehci_get_usb_phy(struct udevice *dev)
 		struct udevice phy_dev;
 		struct power_domain pd;
 
-		phy_dev.node = offset_to_ofnode(phy_off);
+		dev_set_ofnode(&phy_dev, offset_to_ofnode(phy_off));
 		if (!power_domain_get(&phy_dev, &pd)) {
 			if (power_domain_on(&pd))
 				return -EINVAL;
