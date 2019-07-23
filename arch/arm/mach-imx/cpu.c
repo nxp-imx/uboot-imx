@@ -24,6 +24,8 @@
 #include <ipu_pixfmt.h>
 #include <thermal.h>
 #include <sata.h>
+#include <dm/device-internal.h>
+#include <dm/uclass-internal.h>
 
 #ifdef CONFIG_VIDEO_GIS
 #include <gis.h>
@@ -356,6 +358,20 @@ void arch_preboot_os(void)
 #if defined(CONFIG_PCIE_IMX)
 	imx_pcie_remove();
 #endif
+
+#if defined(CONFIG_IMX_AHCI)
+	struct udevice *dev;
+	int rc;
+
+	rc = uclass_find_device(UCLASS_AHCI, 0, &dev);
+	if (!rc && dev) {
+		rc = device_remove(dev, DM_REMOVE_NORMAL);
+		if (rc)
+			printf("Cannot remove SATA device '%s' (err=%d)\n",
+				dev->name, rc);
+	}
+#endif
+
 #if defined(CONFIG_SATA)
 	sata_remove(0);
 #if defined(CONFIG_MX6)
