@@ -157,12 +157,12 @@
 		"bootargs=console=" CONSOLE_DEV ",115200 \0"\
 		"bootargs_sata=setenv bootargs ${bootargs} " \
 			"root=/dev/sda2 rootwait rw \0" \
-		"bootcmd_sata=run bootargs_sata; sata init; " \
+		"bootcmd_sata=run bootargs_sata; scsi scan; " \
 			"run findfdt; run findtee;" \
-			"fatload sata 0:1 ${loadaddr} ${image}; " \
-			"fatload sata 0:1 ${fdt_addr} ${fdt_file}; " \
+			"fatload scsi 0:1 ${loadaddr} ${image}; " \
+			"fatload scsi 0:1 ${fdt_addr} ${fdt_file}; " \
 			"if test ${tee} = yes; then " \
-				"fatload sata 0:1 ${tee_addr} ${tee_file}; " \
+				"fatload scsi 0:1 ${tee_addr} ${tee_file}; " \
 				"bootm ${tee_addr} - ${fdt_addr}; " \
 			"else " \
 				"bootz ${loadaddr} - ${fdt_addr}; " \
@@ -338,15 +338,6 @@
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
-#ifdef CONFIG_SATA
-#define CONFIG_DWC_AHSATA
-#define CONFIG_SYS_SATA_MAX_DEVICE	1
-#define CONFIG_DWC_AHSATA_PORT_ID	0
-#define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
-#define CONFIG_LBA48
-#define CONFIG_LIBATA
-#endif
-
 #ifdef CONFIG_MTD_NOR_FLASH
 #define CONFIG_SYS_FLASH_BASE           WEIM_ARB_BASE_ADDR
 #define CONFIG_SYS_FLASH_SECT_SIZE      (128 * 1024)
@@ -379,7 +370,6 @@
 #elif defined(CONFIG_ENV_IS_IN_NAND)
 #elif defined(CONFIG_ENV_IS_IN_SATA)
 #define CONFIG_SYS_SATA_ENV_DEV		0
-#define CONFIG_SYS_DCACHE_OFF /* remove when sata driver support cache */
 #endif
 
 /* I2C Configs */
