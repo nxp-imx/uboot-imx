@@ -190,18 +190,18 @@ static int do_bootmcu(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int ret;
 	size_t out_num_read;
-	void *m4_base_addr = (void *)M4_BOOTROM_BASE_ADDR;
+	void *mcu_base_addr = (void *)MCU_BOOTROM_BASE_ADDR;
 	char command[32];
 
 	ret = read_from_partition_multi(FASTBOOT_MCU_FIRMWARE_PARTITION,
-			0, ANDROID_MCU_FIRMWARE_SIZE, (void *)m4_base_addr, &out_num_read);
+			0, ANDROID_MCU_FIRMWARE_SIZE, (void *)mcu_base_addr, &out_num_read);
 	if ((ret != 0) || (out_num_read != ANDROID_MCU_FIRMWARE_SIZE)) {
-		printf("Read M4 images failed!\n");
+		printf("Read MCU images failed!\n");
 		return 1;
 	} else {
-		printf("run command: 'bootaux 0x%x'\n",(unsigned int)(ulong)m4_base_addr);
+		printf("run command: 'bootaux 0x%x'\n",(unsigned int)(ulong)mcu_base_addr);
 
-		sprintf(command, "bootaux 0x%x", (unsigned int)(ulong)m4_base_addr);
+		sprintf(command, "bootaux 0x%x", (unsigned int)(ulong)mcu_base_addr);
 		ret = run_command(command, 0);
 		if (ret) {
 			printf("run 'bootaux' command failed!\n");
@@ -214,7 +214,7 @@ static int do_bootmcu(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 U_BOOT_CMD(
 	bootmcu, 1, 0, do_bootmcu,
 	"boot mcu images\n",
-	"boot mcu images from 'm4_os' partition, only support images run from TCM"
+	"boot mcu images from 'mcu_os' partition, only support images run from TCM"
 );
 #endif
 

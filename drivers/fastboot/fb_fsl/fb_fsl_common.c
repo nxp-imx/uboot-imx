@@ -332,7 +332,7 @@ static int _fastboot_setup_dev(int *switched)
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
 	/* For imx7ulp, flash m4 images directly to spi nor-flash, M4 will
 	 * run automatically after powered on. For imx8mq, flash m4 images to
-	 * physical partition 'm4_os', m4 will be kicked off by A core. */
+	 * physical partition 'mcu_os', m4 will be kicked off by A core. */
 	fastboot_firmwareinfo.type = ANDROID_MCU_FRIMWARE_DEV_TYPE;
 #endif
 
