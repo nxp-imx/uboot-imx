@@ -64,7 +64,7 @@ static ulong bootloader_mmc_offset(void)
 			return 0x8000;
 	} else if (is_imx8mn()) {
 		/* target device is eMMC boot0 partition, bootloader offset is 0x0 */
-		if (env_get_ulong("emmc_dev", 10, 1) == fastboot_devinfo.dev_id)
+		if (env_get_ulong("emmc_dev", 10, 2) == fastboot_devinfo.dev_id)
 			return 0;
 		else
 			return 0x8000;
