@@ -182,6 +182,7 @@
 				 <&clks IMX6QDL_CLK_SATA_REF_100M>,
 				 <&clks IMX6QDL_CLK_AHB>;
 			clock-names = "sata", "sata_ref", "ahb";
+			gpr = <&gpr>;
 			status = "disabled";
 		};
 
