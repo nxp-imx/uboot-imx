@@ -139,12 +139,12 @@
 		"bootargs=console=" CONSOLE_DEV ",115200 \0"\
 		"bootargs_sata=setenv bootargs ${bootargs} " \
 			"root=/dev/sda2 rootwait rw \0" \
-		"bootcmd_sata=run bootargs_sata; sata init; " \
+		"bootcmd_sata=run bootargs_sata; scsi scan; " \
 			"run findfdt; run findtee;" \
-			"fatload sata 0:1 ${loadaddr} ${image}; " \
-			"fatload sata 0:1 ${fdt_addr} ${fdt_file}; " \
+			"fatload scsi 0:1 ${loadaddr} ${image}; " \
+			"fatload scsi 0:1 ${fdt_addr} ${fdt_file}; " \
 			"if test ${tee} = yes; then " \
-				"fatload sata 0:1 ${tee_addr} ${tee_file}; " \
+				"fatload scsi 0:1 ${tee_addr} ${tee_file}; " \
 				"bootm ${tee_addr} - ${fdt_addr}; " \
 			"else " \
 				"bootz ${loadaddr} - ${fdt_addr}; " \
