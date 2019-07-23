@@ -1119,7 +1119,7 @@ u32 imx_get_fecclk(void)
 	return mxc_get_clock(MXC_IPG_CLK);
 }
 
-#if defined(CONFIG_SATA) || defined(CONFIG_PCIE_IMX)
+#if defined(CONFIG_SATA) || defined(CONFIG_IMX_AHCI) || defined(CONFIG_PCIE_IMX)
 static int enable_enet_pll(uint32_t en)
 {
 	struct mxc_ccm_reg *const imx_ccm
@@ -1146,7 +1146,7 @@ static int enable_enet_pll(uint32_t en)
 }
 #endif
 
-#ifdef CONFIG_SATA
+#if defined(CONFIG_SATA) || defined(CONFIG_IMX_AHCI)
 static void ungate_sata_clock(void)
 {
 	struct mxc_ccm_reg *const imx_ccm =
@@ -1230,7 +1230,7 @@ int enable_pcie_clock(void)
 
 	if (!is_mx6sx()) {
 	/* Party time! Ungate the clock to the PCIe. */
-#ifdef CONFIG_SATA
+#if defined(CONFIG_SATA) || defined(CONFIG_IMX_AHCI)
 		ungate_sata_clock();
 #endif
 		ungate_pcie_clock();
