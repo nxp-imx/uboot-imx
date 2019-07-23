@@ -15,6 +15,9 @@
 #include <memalign.h>
 #include <sata.h>
 #include <search.h>
+#ifdef CONFIG_DM_SCSI
+#include <scsi.h>
+#endif
 
 #if defined(CONFIG_ENV_OFFSET_REDUND)
 #error ENV REDUND not supported
@@ -49,12 +52,19 @@ static int env_sata_save(void)
 	struct blk_desc *sata = NULL;
 	int env_sata, ret;
 
+#ifndef CONFIG_DM_SCSI
 	if (sata_initialize())
 		return 1;
 
 	env_sata = sata_get_env_dev();
 
 	sata = sata_get_dev(env_sata);
+#else
+	scsi_scan(false);
+	env_sata = sata_get_env_dev();
+
+	sata = blk_get_dev("scsi", env_sata);
+#endif
 	if (sata == NULL) {
 		printf("Unknown SATA(%d) device for environment!\n",
 		       env_sata);
@@ -95,12 +105,20 @@ static int env_sata_load(void)
 	struct blk_desc *sata = NULL;
 	int env_sata;
 
+#ifndef CONFIG_DM_SCSI
 	if (sata_initialize())
 		return -EIO;
 
 	env_sata = sata_get_env_dev();
 
 	sata = sata_get_dev(env_sata);
+#else
+	scsi_scan(false);
+	env_sata = sata_get_env_dev();
+
+	sata = blk_get_dev("scsi", env_sata);
+#endif
+
 	if (sata == NULL) {
 		printf("Unknown SATA(%d) device for environment!\n", env_sata);
 		return -EIO;
