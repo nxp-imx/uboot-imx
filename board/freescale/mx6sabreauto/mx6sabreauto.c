@@ -33,10 +33,6 @@
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
 #include "../common/pfuze.h"
-
-#ifdef CONFIG_SATA
-#include <asm/mach-imx/sata.h>
-#endif
 #ifdef CONFIG_FSL_FASTBOOT
 #include <fb_fsl.h>
 #ifdef CONFIG_ANDROID_RECOVERY
@@ -673,10 +669,6 @@ int board_init(void)
 
 #ifdef CONFIG_MXC_SPI
 	setup_spinor();
-#endif
-
-#ifdef CONFIG_SATA
-	setup_sata();
 #endif
 
 #ifdef CONFIG_MTD_NOR_FLASH

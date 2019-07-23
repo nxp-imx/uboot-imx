@@ -38,9 +38,6 @@
 #include <lcd.h>
 #include <mxc_epdc_fb.h>
 #endif
-#ifdef CONFIG_SATA
-#include <asm/mach-imx/sata.h>
-#endif
 #ifdef CONFIG_FSL_FASTBOOT
 #include <fb_fsl.h>
 #ifdef CONFIG_ANDROID_RECOVERY
@@ -838,10 +835,6 @@ int board_init(void)
 
 #if defined(CONFIG_MX6DL) && defined(CONFIG_MXC_EPDC)
 	setup_epdc();
-#endif
-
-#ifdef CONFIG_SATA
-	setup_sata();
 #endif
 
 #ifdef CONFIG_FEC_MXC
