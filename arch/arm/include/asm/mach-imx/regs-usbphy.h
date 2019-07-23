@@ -22,4 +22,7 @@
 #define USBPHY_CTRL_CLKGATE				(1 << 30)
 #define USBPHY_CTRL_SFTRST				(1 << 31)
 
+#define USBNC_PHY_STATUS_OFFSET	0x23C
+#define USBNC_PHYSTATUS_ID_DIG	(1 << 4) /* otg_id status */
+
 #endif /* __REGS_USBPHY_H__ */
