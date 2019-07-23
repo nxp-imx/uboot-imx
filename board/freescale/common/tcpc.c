@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 NXP
+ * Copyright 2017,2019 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -970,7 +970,7 @@ int tcpc_init(struct tcpc_port *port, struct tcpc_port_config config, ss_mux_sel
 	}
 
 	dm_i2c_read(port->i2c_dev, TCPC_POWER_STATUS, &valb, 1);
-	tcpc_debug_log("POWER STATUS: 0x%x\n", valb);
+	tcpc_debug_log(port, "POWER STATUS: 0x%x\n", valb);
 
 	/* Clear AllRegistersResetToDefault */
 	valb = 0x80;
