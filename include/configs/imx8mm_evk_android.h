@@ -60,10 +60,6 @@
 #define KEYSLOT_BLKS             0x1FFF
 #define NS_ARCH_ARM64 1
 
-#ifdef CONFIG_SPL_BUILD
-#undef CONFIG_BLK
-#endif
-
 #endif
 
 /* Enable CONFIG_ANDROID_LOW_MEMORY to config 1GB ddr */
