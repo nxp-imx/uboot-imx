@@ -30,8 +30,7 @@
 #ifdef CONFIG_ARCH_IMX8
 #include <asm/arch/sci/sci.h>
 #endif
-
-#if defined(CONFIG_SPL_BUILD)
+#ifdef CONFIG_SPL_BUILD
 #include <spl.h>
 #endif
 
@@ -45,14 +44,35 @@
 
 extern int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value);
 
-#ifdef AVB_RPMB
-static int mmc_dev_no = -1;
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_MMC_SUPPORT)
+int spl_get_mmc_dev(void)
+{
+	u32 dev_no = spl_boot_device();
+	switch (dev_no) {
+	case BOOT_DEVICE_MMC1:
+		return 0;
+	case BOOT_DEVICE_MMC2:
+	case BOOT_DEVICE_MMC2_2:
+		return 1;
+	}
 
+#ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
+	printf("spl: unsupported mmc boot device.\n");
+#endif
+
+	return -ENODEV;
+}
+#endif
+
+#ifdef AVB_RPMB
 struct mmc *get_mmc(void) {
-	extern int mmc_get_env_devno(void);
+	int mmc_dev_no;
 	struct mmc *mmc;
-	if (mmc_dev_no < 0 && (mmc_dev_no = mmc_get_env_dev()) < 0)
-		return NULL;
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_MMC_SUPPORT)
+	mmc_dev_no = spl_get_mmc_dev();
+#else
+	mmc_dev_no = mmc_get_env_dev();
+#endif
 	mmc = find_mmc_device(mmc_dev_no);
 	if (!mmc || mmc_init(mmc))
 		return NULL;
@@ -70,33 +90,14 @@ void fill_secure_keyslot_package(struct keyslot_package *kp) {
 				0x100));
 }
 
-#if defined(CONFIG_SPL_BUILD)
-static int spl_mmc_get_device_index(u32 boot_device)
-{
-	switch (boot_device) {
-	case BOOT_DEVICE_MMC1:
-		return 0;
-	case BOOT_DEVICE_MMC2:
-	case BOOT_DEVICE_MMC2_2:
-		return 1;
-	}
-
-#ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
-	printf("spl: unsupported mmc boot device.\n");
-#endif
-
-	return -ENODEV;
-}
-#endif
-
 int read_keyslot_package(struct keyslot_package* kp) {
 	char original_part;
 	int blksz;
 	unsigned char* fill = NULL;
 	int ret = 0;
 	/* load tee from boot1 of eMMC. */
-#if defined(CONFIG_SPL_BUILD)
-	int mmcc = spl_mmc_get_device_index(spl_boot_device());
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_MMC_SUPPORT)
+	int mmcc = spl_get_mmc_dev();
 #else
 	int mmcc = mmc_get_env_dev();
 #endif
@@ -184,7 +185,11 @@ bool rpmbkey_is_set(void)
 	struct blk_desc *desc = NULL;
 
 	/* Get current mmc device. */
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_MMC_SUPPORT)
+	mmcc = spl_get_mmc_dev();
+#else
 	mmcc = mmc_get_env_dev();
+#endif
 	mmc = find_mmc_device(mmcc);
 	if (!mmc) {
 		printf("error - cannot find '%d' mmc device\n", mmcc);
@@ -580,7 +585,11 @@ int gen_rpmb_key(struct keyslot_package *kp) {
 
 	int ret = -1;
 	/* load tee from boot1 of eMMC. */
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_MMC_SUPPORT)
+	int mmcc = spl_get_mmc_dev();
+#else
 	int mmcc = mmc_get_env_dev();
+#endif
 	struct blk_desc *dev_desc = NULL;
 
 	struct mmc *mmc;
@@ -1170,7 +1179,11 @@ int do_rpmb_key_set(uint8_t *key, uint32_t key_size)
 	memcpy(rpmb_key, key, RPMBKEY_LENGTH);
 
 	/* Get current mmc device. */
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_MMC_SUPPORT)
+	mmcc = spl_get_mmc_dev();
+#else
 	mmcc = mmc_get_env_dev();
+#endif
 	mmc = find_mmc_device(mmcc);
 	if (!mmc) {
 		printf("error - cannot find '%d' mmc device\n", mmcc);
