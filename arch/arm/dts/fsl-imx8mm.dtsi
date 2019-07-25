@@ -47,6 +47,8 @@
 		spi0 = &flexspi;
 		usb0 = &usbotg1;
 		usb1 = &usbotg2;
+		usbgadget0 = &usbg1;
+		usbgadget1 = &usbg2;
 	};
 
 	cpus {
@@ -606,6 +608,20 @@
 	dispmix_gpr: display-gpr@32e28000 {
 		compatible = "fsl, imx8mm-iomuxc-gpr", "syscon";
 		reg = <0x0 0x32e28000 0x0 0x100>;
+	};
+
+	usbg1: usbg1 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg1>;
+		status = "okay";
+	};
+
+	usbg2: usbg2 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg2>;
+		status = "okay";
 	};
 
 	usbotg1: usb@32e40000 {

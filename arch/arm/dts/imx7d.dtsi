@@ -47,6 +47,7 @@
 / {
 	aliases {
 		usb1 = &usbotg2;
+		usbgadget1 = &usbg2;
 	};
 
 	cpus {
@@ -318,6 +319,13 @@
 };
 
 &aips3 {
+	usbg2: usbg2 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg2>;
+		status = "okay";
+	};
+
 	usbotg2: usb@30b20000 {
 		compatible = "fsl,imx7d-usb", "fsl,imx27-usb";
 		reg = <0x30b20000 0x200>;

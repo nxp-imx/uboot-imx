@@ -88,6 +88,7 @@
 		spi3 = &ecspi3;
 		spi4 = &ecspi4;
 		usb0 = &usbotg1;
+		usbgadget0 = &usbg1;
 	};
 
 	cpus {
@@ -957,6 +958,13 @@
 				dmas = <&sdma 34 4 0>, <&sdma 35 4 0>;
 				dma-names = "rx", "tx";
 				status = "disabled";
+			};
+
+			usbg1: usbg1 {
+				compatible = "fsl,imx27-usb-gadget";
+				dr_mode = "peripheral";
+				chipidea,usb = <&usbotg1>;
+				status = "okay";
 			};
 
 			usbotg1: usb@30b10000 {
