@@ -87,6 +87,7 @@
 		spi3 = &ecspi4;
 		ethernet0 = &fec1;
 		usb0 = &usbotg1;
+		usbgadget0 = &usbg1;
 	};
 
 	cpus {
@@ -1167,6 +1168,13 @@
 				#mbox-cells = <2>;
 				fsl,mu-side-b;
 				status = "disabled";
+			};
+
+			usbg1: usbg1 {
+				compatible = "fsl,imx27-usb-gadget";
+				dr_mode = "peripheral";
+				chipidea,usb = <&usbotg1>;
+				status = "okay";
 			};
 
 			usbotg1: usb@30b10000 {
