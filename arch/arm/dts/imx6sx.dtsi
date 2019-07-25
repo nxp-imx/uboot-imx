@@ -61,6 +61,8 @@
 		usb2 = &usbh;
 		usbphy0 = &usbphy1;
 		usbphy1 = &usbphy2;
+		usbgadget0 = &usbg1;
+		usbgadget1 = &usbg2;
 	};
 
 	cpus {
@@ -1022,6 +1024,20 @@
 					reg = <0x2000 0x1000>;
 					interrupts = <GIC_SPI 106 IRQ_TYPE_LEVEL_HIGH>;
 				};
+			};
+
+			usbg1: usbg1 {
+				compatible = "fsl,imx27-usb-gadget";
+				dr_mode = "peripheral";
+				chipidea,usb = <&usbotg1>;
+				status = "okay";
+			};
+
+			usbg2: usbg2 {
+				compatible = "fsl,imx27-usb-gadget";
+				dr_mode = "peripheral";
+				chipidea,usb = <&usbotg2>;
+				status = "okay";
 			};
 
 			usbotg1: usb@2184000 {

@@ -31,6 +31,8 @@
 		serial2 = &lpuart6;
 		serial3 = &lpuart7;
 		usbphy0 = &usbphy1;
+		usb0 = &usbotg1;
+		usbgadget0 = &usbg1;
 	};
 
 	cpus {
@@ -186,6 +188,13 @@
 			clocks = <&scg1 IMX7ULP_CLK_NIC1_BUS_DIV>,
 				 <&pcc2 IMX7ULP_CLK_LPTPM5>;
 			clock-names = "ipg", "per";
+		};
+
+		usbg1: usbg1 {
+			compatible = "fsl,imx27-usb-gadget";
+			dr_mode = "peripheral";
+			chipidea,usb = <&usbotg1>;
+			status = "okay";
 		};
 
 		usbotg1: usb@40330000 {
