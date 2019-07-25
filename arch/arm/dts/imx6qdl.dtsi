@@ -50,6 +50,7 @@
 		usbphy1 = &usbphy2;
 		usb0 = &usbotg;
 		usb1 = &usbh1;
+		usbgadget0 = &usbg1;
 	};
 
 	clocks {
@@ -1075,7 +1076,14 @@
 				reg = <0x0217c000 0x4000>;
 			};
 
-			usbotg: usb@2184000 {
+			usbg1: usbg1 {
+				compatible = "fsl,imx27-usb-gadget";
+				dr_mode = "peripheral";
+				chipidea,usb = <&usbotg>;
+				status = "okay";
+			};
+
+			usbotg: usb@02184000 {
 				compatible = "fsl,imx6q-usb", "fsl,imx27-usb";
 				reg = <0x02184000 0x200>;
 				interrupts = <0 43 IRQ_TYPE_LEVEL_HIGH>;
