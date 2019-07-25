@@ -53,6 +53,7 @@
 		spi4 = &ecspi4;
 		ethernet1 = &fec2;
 		usb1 = &usbotg2;
+		usbgadget1 = &usbg2;
 	};
 
 	cpus {
@@ -352,6 +353,13 @@
 		reg = <0x30ba0000 0x10000>;
 		interrupts = <GIC_SPI 6 IRQ_TYPE_LEVEL_HIGH>;
 		status = "disabled";
+	};
+
+	usbg2: usbg2 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg2>;
+		status = "okay";
 	};
 
 	usbotg2: usb@30b20000 {

@@ -7,6 +7,7 @@
 
 	aliases {
 		usbhost1 = &usbh3;
+		usbgadget0 = &usbg1;
 	};
 
 	usbh3: usbh3 {
@@ -15,6 +16,15 @@
 		cdns3,usb = <&usbotg3>;
 		status = "okay";
 	};
+
+	usbg1: usbg1 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg1>;
+		status = "okay";
+		u-boot,dm-spl;
+	};
+
 };
 
 &{/imx8qx-pm} {
@@ -126,6 +136,14 @@
 	u-boot,dm-spl;
 };
 
+&pd_conn_usbotg0 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_usbotg0_phy {
+	u-boot,dm-spl;
+};
+
 &pd_lsio_flexspi0 {
 	u-boot,dm-spl;
 };
@@ -171,6 +189,18 @@
 };
 
 &lpuart0 {
+	u-boot,dm-spl;
+};
+
+&usbmisc1 {
+	u-boot,dm-spl;
+};
+
+&usbphy1 {
+	u-boot,dm-spl;
+};
+
+&usbotg1 {
 	u-boot,dm-spl;
 };
 
