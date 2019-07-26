@@ -53,4 +53,12 @@
 #endif
 #define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
 
+#ifdef CONFIG_DUAL_BOOTLOADER
+#define CONFIG_SPL_MMC_WRITE 1
+#endif
+
+#ifdef CONFIG_SPL_BUILD
+#undef CONFIG_BLK
+#endif
+
 #endif /* IMX8MQ_EVK_ANDROID_H */
