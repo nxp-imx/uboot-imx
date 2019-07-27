@@ -101,6 +101,7 @@ endif # USB_GADGET_DWC2_OTG
 config CI_UDC
 	bool "ChipIdea device controller"
 	select USB_GADGET_DUALSPEED
+	imply DM_USB_GADGET
 	help
 	  Say Y here to enable device controller functionality of the
 	  ChipIdea driver.
