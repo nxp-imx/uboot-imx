@@ -291,7 +291,7 @@ config FSL_PCIE_EP_COMPAT
 
 config PCIE_IMX
 	bool "i.MX PCIe support"
-	depends on ARCH_MX6
+	depends on ARCH_MX6 || ARCH_IMX8
 
 config PCIE_INTEL_FPGA
 	bool "Intel FPGA PCIe support"
