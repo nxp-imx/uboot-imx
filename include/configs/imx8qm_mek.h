@@ -43,6 +43,10 @@
 #define USDHC1_BASE_ADDR                0x5B010000
 #define USDHC2_BASE_ADDR                0x5B020000
 
+#define CONFIG_PCIE_IMX
+#define CONFIG_CMD_PCI
+#define CONFIG_PCI_SCAN_SHOW
+
 #define CONFIG_FEC_XCV_TYPE             RGMII
 #define FEC_QUIRK_ENET_MAC
 
