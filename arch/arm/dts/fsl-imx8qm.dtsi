@@ -72,6 +72,8 @@
 		i2c6 = &i2c1_lvds0;
 		i2c8 = &i2c1_lvds1;
 		spi0 = &flexspi0;
+		pci0 = &pciea;
+		pci1 = &pcieb;
 	};
 
 	memory@80000000 {

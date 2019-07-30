@@ -44,6 +44,18 @@
 			off-on-delay-us = <4800>;
 			enable-active-high;
 		};
+
+		epdev_on: fixedregulator@100 {
+			compatible = "regulator-fixed";
+			pinctrl-names = "default", "sleep";
+			pinctrl-0 = <&pinctrl_wlreg_on>;
+			pinctrl-1 = <&pinctrl_wlreg_on_sleep>;
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-name = "epdev_on";
+			gpio = <&gpio1 13 0>;
+			enable-active-high;
+		};
 	};
 };
 
@@ -207,6 +219,18 @@
 			fsl,pins = <
 				SC_P_LVDS1_I2C1_SCL_LVDS1_I2C1_SCL	0xc600004c
 				SC_P_LVDS1_I2C1_SDA_LVDS1_I2C1_SDA	0xc600004c
+			>;
+		};
+
+		pinctrl_wlreg_on: wlregongrp{
+			fsl,pins = <
+				SC_P_LVDS1_I2C0_SDA_LSIO_GPIO1_IO13		0x06000000
+			>;
+		};
+
+		pinctrl_wlreg_on_sleep: wlregon_sleepgrp{
+			fsl,pins = <
+				SC_P_LVDS1_I2C0_SDA_LSIO_GPIO1_IO13		0x07800000
 			>;
 		};
 	};
@@ -381,6 +405,17 @@
 		compatible = "ite,it6263";
 		reg = <0x4c>;
 	};
+};
+
+&pciea{
+	ext_osc = <1>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pciea>;
+	disable-gpio = <&gpio4 9 GPIO_ACTIVE_LOW>;
+	reset-gpio = <&gpio4 29 GPIO_ACTIVE_LOW>;
+	clkreq-gpio = <&gpio4 27 GPIO_ACTIVE_LOW>;
+	epdev_on = <&epdev_on>;
+	status = "okay";
 };
 
 &sata {
