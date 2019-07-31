@@ -143,6 +143,7 @@ static int ep_matches(
 	/* MATCH!! */
 
 	/* report address */
+	desc->bEndpointAddress &= 0xF0;
 	if (isdigit(ep->name[2])) {
 		u8	num = simple_strtoul(&ep->name[2], NULL, 10);
 		desc->bEndpointAddress |= num;
