@@ -233,7 +233,7 @@ static int ti_musb_peripheral_of_to_plat(struct udevice *dev)
 }
 #endif
 
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+static int ti_musb_peripheral_handle_interrupts(struct udevice *dev)
 {
 	struct ti_musb_peripheral *priv = dev_get_priv(dev);
 
@@ -278,6 +278,7 @@ U_BOOT_DRIVER(ti_musb_peripheral) = {
 	.probe = ti_musb_peripheral_probe,
 	.remove = ti_musb_peripheral_remove,
 	.ops	= &musb_usb_ops,
+	.handle_interrupts = ti_musb_peripheral_handle_interrupts,
 	.plat_auto	= sizeof(struct ti_musb_plat),
 	.priv_auto	= sizeof(struct ti_musb_peripheral),
 	.flags = DM_FLAG_PRE_RELOC,
