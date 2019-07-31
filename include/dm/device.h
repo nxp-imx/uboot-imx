@@ -370,6 +370,7 @@ struct driver {
 	int (*child_post_bind)(struct udevice *dev);
 	int (*child_pre_probe)(struct udevice *dev);
 	int (*child_post_remove)(struct udevice *dev);
+	int (*handle_interrupts)(struct udevice *dev);
 	int priv_auto;
 	int plat_auto;
 	int per_child_auto;

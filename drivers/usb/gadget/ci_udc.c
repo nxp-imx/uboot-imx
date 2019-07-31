@@ -1133,7 +1133,7 @@ struct ci_udc_priv_data {
 	struct ehci_mx6_phy_data phy_data;
 };
 
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+static int ci_udc_gadget_handle_interrupts(struct udevice *dev)
 {
 	return ci_udc_handle_interrupts();
 }
@@ -1412,6 +1412,7 @@ U_BOOT_DRIVER(ci_udc_otg) = {
 	.of_to_plat = ci_udc_otg_ofdata_to_platdata,
 	.probe = ci_udc_otg_probe,
 	.remove = ci_udc_otg_remove,
+	.handle_interrupts = ci_udc_gadget_handle_interrupts,
 	.priv_auto = sizeof(struct ci_udc_priv_data),
 };
 
