@@ -35,7 +35,7 @@ static int cdns3_generic_peripheral_clk_init(struct udevice *dev,
 	return 0;
 }
 
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+static int cdns3_generic_handle_interrupts(struct udevice *dev)
 {
 	struct cdns3_generic_peripheral *priv = dev_get_priv(dev);
 	struct cdns3 *cdns3 = &priv->cdns3;
@@ -110,5 +110,6 @@ U_BOOT_DRIVER(cdns3_generic_peripheral) = {
 	.ofdata_to_platdata = cdns3_generic_peripheral_ofdata_to_platdata,
 	.probe = cdns3_generic_peripheral_probe,
 	.remove = cdns3_generic_peripheral_remove,
+	.handle_interrupts = cdns3_generic_handle_interrupts,
 	.priv_auto_alloc_size = sizeof(struct cdns3_generic_peripheral),
 };

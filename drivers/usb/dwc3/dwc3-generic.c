@@ -108,7 +108,7 @@ static int dwc3_generic_ofdata_to_platdata(struct udevice *dev)
 }
 
 #if CONFIG_IS_ENABLED(DM_USB_GADGET)
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+static int dwc3_generic_peripheral_handle_interrupts(struct udevice *dev)
 {
 	struct dwc3_generic_priv *priv = dev_get_priv(dev);
 	struct dwc3 *dwc3 = &priv->dwc3;
@@ -138,6 +138,7 @@ U_BOOT_DRIVER(dwc3_generic_peripheral) = {
 	.ofdata_to_platdata = dwc3_generic_ofdata_to_platdata,
 	.probe = dwc3_generic_peripheral_probe,
 	.remove = dwc3_generic_peripheral_remove,
+	.handle_interrupts = dwc3_generic_peripheral_handle_interrupts,
 	.priv_auto_alloc_size = sizeof(struct dwc3_generic_priv),
 	.platdata_auto_alloc_size = sizeof(struct dwc3_generic_plat),
 };
