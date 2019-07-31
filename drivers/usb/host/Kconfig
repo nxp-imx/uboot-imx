@@ -134,6 +134,7 @@ endif # USB_XHCI_HCD
 config USB_EHCI_HCD
 	bool "EHCI HCD (USB 2.0) support"
 	default y if ARCH_MX5 || ARCH_MX6
+	default y if ARCH_MX5 || ARCH_MX6 || ARCH_IMX8
 	depends on DM && OF_CONTROL
 	select USB_HOST
 	---help---
