@@ -51,9 +51,20 @@ int usb_gadget_release(int index)
 
 int usb_gadget_handle_interrupts(int index)
 {
+	const struct driver *drv;
+
 	if (index < 0 || index >= ARRAY_SIZE(dev_array))
 		return -EINVAL;
-	return dm_usb_gadget_handle_interrupts(dev_array[index]);
+
+	drv = dev_array[index]->driver;
+	assert(drv);
+
+	if (drv->handle_interrupts)
+		return drv->handle_interrupts(dev_array[index]);
+	else
+		pr_err("No handle_interrupts function found\n");
+
+	return -EINVAL;
 }
 #endif
 
