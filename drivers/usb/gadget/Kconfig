@@ -166,6 +166,15 @@ config USB_FUNCTION_THOR
 	  Enable Tizen's THOR download protocol support in U-Boot. It
 	  allows downloading images into memory and flash them to target device.
 
+config USB_PORT_AUTO
+	bool "Enable USB port autodetect"
+	depends on CI_UDC
+	help
+	  Enable usb port autodetect function for i.MX8. There two usb ports -
+	  usb2 and usb3 on i.MX8, when use SDP or fastboot which runs automatically
+	  when uboot starts, enable this config will autodetect the  connected usb
+	  port instead of specify USB port to download in code.
+
 endif # USB_GADGET_DOWNLOAD
 
 config USB_ETHER
