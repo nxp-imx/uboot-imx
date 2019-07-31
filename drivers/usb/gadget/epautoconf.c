@@ -143,6 +143,7 @@ static int ep_matches(
 	/* MATCH!! */
 
 	/* report address */
+	desc->bEndpointAddress &= 0xF0;
 	if (isdigit(ep->name[2])) {
 		u8	num = dectoul(&ep->name[2], NULL);
 		desc->bEndpointAddress |= num;
