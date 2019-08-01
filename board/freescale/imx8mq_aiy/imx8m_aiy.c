@@ -439,9 +439,9 @@ int board_late_init(void)
 	if ((baseboard_id == AIY_MICRON_1G) ||
 			(baseboard_id == AIY_HYNIX_1G)) {
 		/* 1G DDR size */
-		env_set("bootargs_ram_capacity", "cma=296M galcore.contiguousSize=33554432 androidboot.gui_resolution=720p");
+		env_set("bootargs_ram_capacity", "cma=296M galcore.contiguousSize=33554432 androidboot.displaymode=720p");
 	} else {
-		env_set("bootargs_ram_capacity", "cma=384M androidboot.gui_resolution=1080p");
+		env_set("bootargs_ram_capacity", "cma=384M");
 	}
 
 	return 0;
