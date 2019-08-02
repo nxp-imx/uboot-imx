@@ -307,3 +307,8 @@ void g_dnl_unregister(void)
 {
 	usb_composite_unregister(&g_dnl_driver);
 }
+
+int __weak board_usb_gadget_port_auto(void)
+{
+	return -1;
+}
