@@ -13,6 +13,7 @@
 #include <dm/lists.h>
 #include <dm/uclass.h>
 #include <errno.h>
+#include <asm/arch/clock.h>
 #include <power-domain.h>
 #include <dm/device.h>
 #include <dm/uclass-internal.h>
@@ -1066,3 +1067,51 @@ void board_boot_order(u32 *spl_boot_list)
 			spl_boot_list[0] = BOOT_DEVICE_NOR;
 	}
 }
+
+#ifdef CONFIG_USB_PORT_AUTO
+int board_usb_gadget_port_auto(void)
+{
+	int ret;
+	u32 usb2_data;
+	struct power_domain pd;
+	struct power_domain phy_pd;
+
+	if (!power_domain_lookup_name("conn_usb0", &pd)) {
+		ret = power_domain_on(&pd);
+		if (ret) {
+			printf("conn_usb0 Power up failed!\n");
+			return ret;
+		}
+
+		if (!power_domain_lookup_name("conn_usb0_phy", &phy_pd)) {
+			ret = power_domain_on(&phy_pd);
+			if (ret) {
+				printf("conn_usb0_phy Power up failed!\n");
+				return ret;
+			}
+		} else {
+			return -1;
+		}
+
+		enable_usboh3_clk(1);
+		usb2_data = readl(USB_BASE_ADDR + 0x154);
+
+		ret = power_domain_off(&phy_pd);
+		if (ret) {
+			printf("conn_usb0_phy Power off failed!\n");
+			return ret;
+		}
+		ret = power_domain_off(&pd);
+		if (ret) {
+			printf("conn_usb0 Power off failed!\n");
+			return ret;
+		}
+
+		if (!usb2_data)
+			return 1;
+		else
+			return 0;
+	}
+	return -1;
+}
+#endif
