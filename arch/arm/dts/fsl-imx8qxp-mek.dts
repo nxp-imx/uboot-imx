@@ -40,6 +40,16 @@
 			off-on-delay-us = <3480>;
 		};
 
+		reg_pcieb: regulator-pcie {
+			compatible = "regulator-fixed";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-name = "mpcie_3v3";
+			gpio = <&pca9557_a 2 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+			regulator-always-on;
+		};
+
 		reg_usb_otg1_vbus: regulator@0 {
 			compatible = "regulator-fixed";
 			reg = <0>;
@@ -150,6 +160,14 @@
 				SC_P_USDHC1_DATA2_CONN_USDHC1_DATA2	0x00000021
 				SC_P_USDHC1_DATA3_CONN_USDHC1_DATA3	0x00000021
 				SC_P_USDHC1_VSELECT_CONN_USDHC1_VSELECT	0x00000021
+			>;
+		};
+
+		pinctrl_pcieb: pcieagrp{
+			fsl,pins = <
+				SC_P_PCIE_CTRL0_PERST_B_LSIO_GPIO4_IO00		0x06000021
+				SC_P_PCIE_CTRL0_CLKREQ_B_LSIO_GPIO4_IO01	0x06000021
+				SC_P_PCIE_CTRL0_WAKE_B_LSIO_GPIO4_IO02		0x04000021
 			>;
 		};
 
@@ -320,6 +338,15 @@
 	cd-gpios = <&gpio4 22 GPIO_ACTIVE_LOW>;
 	wp-gpios = <&gpio4 21 GPIO_ACTIVE_HIGH>;
 	vmmc-supply = <&reg_usdhc2_vmmc>;
+	status = "okay";
+};
+
+&pcieb{
+	ext_osc = <1>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pcieb>;
+	reset-gpio = <&gpio4 0 GPIO_ACTIVE_LOW>;
+	vpcie-supply = <&reg_pcieb>;
 	status = "okay";
 };
 
