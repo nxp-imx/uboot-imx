@@ -32,6 +32,18 @@
 			off-on-delay-us = <12000>;
 		};
 
+		epdev_on: fixedregulator@100 {
+			compatible = "regulator-fixed";
+			pinctrl-names = "default", "sleep";
+			pinctrl-0 = <&pinctrl_wlreg_on>;
+			pinctrl-1 = <&pinctrl_wlreg_on_sleep>;
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-name = "epdev_on";
+			gpio = <&gpio4 18 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+		};
+
 		reg_usb_otg1_vbus: regulator@0 {
 			compatible = "regulator-fixed";
 			reg = <0>;
@@ -138,6 +150,26 @@
 				SC_P_QSPI0B_DATA3_LSIO_QSPI0B_DATA3	0x06000021
 			>;
 		};
+
+		pinctrl_pcieb: pcieagrp{
+			fsl,pins = <
+				SC_P_PCIE_CTRL0_PERST_B_LSIO_GPIO4_IO00		0x06000021
+				SC_P_PCIE_CTRL0_CLKREQ_B_LSIO_GPIO4_IO01	0x06000021
+				SC_P_PCIE_CTRL0_WAKE_B_LSIO_GPIO4_IO02		0x04000021
+			>;
+		};
+
+		pinctrl_wlreg_on: wlregongrp{
+			fsl,pins = <
+				SC_P_EMMC0_RESET_B_LSIO_GPIO4_IO18		0x06000000
+			>;
+		};
+
+		pinctrl_wlreg_on_sleep: wlregon_sleepgrp{
+			fsl,pins = <
+				SC_P_EMMC0_RESET_B_LSIO_GPIO4_IO18		0x07800000
+			>;
+		};
 	};
 };
 
@@ -227,5 +259,15 @@
 	adp-disable;
 	power-polarity-active-high;
 	disable-over-current;
+	status = "okay";
+};
+
+&pcieb{
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pcieb>;
+	clkreq-gpio = <&gpio4 1 GPIO_ACTIVE_LOW>;
+	reset-gpio = <&gpio4 0 GPIO_ACTIVE_LOW>;
+	epdev_on = <&epdev_on>;
+	ext_osc = <1>;
 	status = "okay";
 };
