@@ -68,6 +68,7 @@
 		usb0 = &usbotg1;
 		usbphy0 = &usbphy1;
 		usb1 = &usbotg3;
+		pci0 = &pcieb;
 	};
 
 	cpus {
