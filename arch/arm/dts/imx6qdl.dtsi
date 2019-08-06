@@ -51,6 +51,7 @@
 		usb0 = &usbotg;
 		usb1 = &usbh1;
 		usbgadget0 = &usbg1;
+		pci0 = &pcie;
 	};
 
 	clocks {
@@ -245,6 +246,7 @@
 				 <&clks IMX6QDL_CLK_PCIE_REF_125M>;
 			clock-names = "pcie", "pcie_bus", "pcie_phy";
 			fsl,max-link-speed = <2>;
+			gpr = <&gpr>;
 			status = "disabled";
 		};
 
