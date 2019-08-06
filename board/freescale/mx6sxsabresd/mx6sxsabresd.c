@@ -35,6 +35,7 @@
 #include <usb.h>
 #include <usb/ehci-ci.h>
 #include <asm/mach-imx/video.h>
+#include <power/regulator.h>
 
 #ifdef CONFIG_IMX_RDC
 #include <asm/mach-imx/rdc-sema.h>
@@ -153,20 +154,6 @@ static iomux_v3_cfg_t const wdog_b_pad = {
 static iomux_v3_cfg_t const peri_3v3_pads[] = {
 	MX6_PAD_QSPI1A_DATA0__GPIO4_IO_16 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
-
-#ifdef CONFIG_PCIE_IMX
-iomux_v3_cfg_t const pcie_pads[] = {
-	MX6_PAD_ENET1_COL__GPIO2_IO_0 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* POWER */
-	MX6_PAD_ENET1_CRS__GPIO2_IO_1 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* RESET */
-};
-
-static void setup_pcie(void)
-{
-	imx_iomux_v3_setup_multiple_pads(pcie_pads, ARRAY_SIZE(pcie_pads));
-	gpio_request(CONFIG_PCIE_IMX_POWER_GPIO, "PCIE Power Enable");
-	gpio_request(CONFIG_PCIE_IMX_PERST_GPIO, "PCIE Reset");
-}
-#endif
 
 static void setup_iomux_uart(void)
 {
@@ -773,9 +760,9 @@ int board_init(void)
 	 */
 	imx_iomux_v3_setup_pad(wdog_b_pad);
 
-	/* Active high for ncp692 */
-	gpio_request(IMX_GPIO_NR(4, 16), "ncp692_en");
-	gpio_direction_output(IMX_GPIO_NR(4, 16), 1);
+#if defined(CONFIG_DM_REGULATOR)
+	regulators_enable_boot_on(false);
+#endif
 
 #ifdef CONFIG_SYS_I2C_LEGACY
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
@@ -790,10 +777,6 @@ int board_init(void)
 
 #ifdef CONFIG_FSL_QSPI
 	board_qspi_init();
-#endif
-
-#ifdef CONFIG_PCIE_IMX
-	setup_pcie();
 #endif
 
 	/* Also used for OF_CONTROL enabled */
