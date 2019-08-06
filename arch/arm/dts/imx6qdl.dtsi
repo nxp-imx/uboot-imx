@@ -52,6 +52,7 @@
 		usbphy0 = &usbphy1;
 		usbphy1 = &usbphy2;
 		usbgadget0 = &usbg1;
+		pci0 = &pcie;
 	};
 
 	clocks {
@@ -346,6 +347,7 @@
 				 <&clks IMX6QDL_CLK_LVDS1_GATE>,
 				 <&clks IMX6QDL_CLK_PCIE_REF_125M>;
 			clock-names = "pcie", "pcie_bus", "pcie_phy";
+			gpr = <&gpr>;
 			status = "disabled";
 		};
 
