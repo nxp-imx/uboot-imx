@@ -66,6 +66,7 @@
 		usb1 = &usbotg2;
 		usbgadget0 = &usbg1;
 		usbgadget1 = &usbg2;
+		pci0 = &pcie;
 	};
 
 	cpus {
@@ -1628,6 +1629,7 @@
 			pcie-phy-supply = <&reg_pcie_phy>;
 			power-domains = <&pd_disp>;
 			fsl,max-link-speed = <2>;
+			gpr = <&gpr>;
 			status = "disabled";
 		};
 	};
