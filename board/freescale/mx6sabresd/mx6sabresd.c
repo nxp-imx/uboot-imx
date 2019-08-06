@@ -34,6 +34,7 @@
 #include <usb.h>
 #include <usb/ehci-ci.h>
 #include <asm/arch/mx6-ddr.h>
+#include <power/regulator.h>
 #if defined(CONFIG_MX6DL) && defined(CONFIG_MXC_EPDC)
 #include <lcd.h>
 #include <mxc_epdc_fb.h>
@@ -181,7 +182,7 @@ static struct i2c_pads_info i2c_pad_info1 = {
 };
 #endif
 
-#ifdef CONFIG_PCIE_IMX
+#if defined(CONFIG_PCIE_IMX) && !defined(CONFIG_DM_PCI)
 iomux_v3_cfg_t const pcie_pads[] = {
 	IOMUX_PADS(PAD_EIM_D19__GPIO3_IO19 | MUX_PAD_CTRL(NO_PAD_CTRL)),	/* POWER */
 	IOMUX_PADS(PAD_GPIO_17__GPIO7_IO12 | MUX_PAD_CTRL(NO_PAD_CTRL)),	/* RESET */
@@ -821,6 +822,10 @@ int board_init(void)
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
+#if defined(CONFIG_DM_REGULATOR)
+	regulators_enable_boot_on(false);
+#endif
+
 #ifdef CONFIG_MXC_SPI
 	setup_spi();
 #endif
@@ -829,7 +834,7 @@ int board_init(void)
 	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
 #endif
 
-#ifdef CONFIG_PCIE_IMX
+#if defined(CONFIG_PCIE_IMX) && !defined(CONFIG_DM_PCI)
 	setup_pcie();
 #endif
 
