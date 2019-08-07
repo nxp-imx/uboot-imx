@@ -46,6 +46,8 @@
 		spi0 = &flexspi0;
 		usb0 = &usbotg1;
 		usb1 = &usbotg2;
+		usbgadget0 = &usbg1;
+		usbgadget1 = &usbg2;
 	};
 
 	cpus {
@@ -438,6 +440,20 @@
 		interrupts = <GIC_SPI 38 IRQ_TYPE_LEVEL_HIGH>;
 		clocks = <&clk IMX8MN_CLK_I2C4_ROOT>;
 		status = "disabled";
+	};
+
+	usbg1: usbg1 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg1>;
+		status = "okay";
+	};
+
+	usbg2: usbg2 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg2>;
+		status = "okay";
 	};
 
 	usbotg1: usb@32e40000 {
