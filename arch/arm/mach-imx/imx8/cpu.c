@@ -962,6 +962,68 @@ static void update_fdt_with_owned_resources(void *blob)
 	}
 }
 
+static void update_fdt_with_owned_resources_v2(void *blob)
+{
+	int count, i, ret, rc;
+	int offset = 0, depth = 0;
+	struct fdtdec_phandle_args args;
+
+	/* Check the new PD, if not find, continue with old PD tree */
+	count = fdt_node_offset_by_compatible(blob, -1, "fsl,scu-pd");
+	if (count < 0)
+		return update_fdt_with_owned_resources(blob);
+
+	debug("Update FDT V2\n");
+
+	for (offset = fdt_next_node(blob, offset, &depth); offset > 0;
+		 offset = fdt_next_node(blob, offset, &depth)) {
+
+		debug("Node name: %s, depth %d\n", fdt_get_name(blob, offset, NULL), depth);
+
+		if (!fdtdec_get_is_enabled(blob, offset)) {
+			debug("   - ignoring disabled device\n");
+			continue;
+		}
+
+		count = fdtdec_parse_phandle_with_args(blob,
+						     offset,
+						     "power-domains", "#power-domain-cells",
+						     0, -1, NULL);
+		if (count < 1) {
+			debug("no power-domains found\n");
+			continue;
+		}
+
+		debug("count %d\n", count);
+
+		for (i = 0; i < count; i++) {
+			ret = fdtdec_parse_phandle_with_args(blob,
+						     offset,
+						     "power-domains", "#power-domain-cells",
+						     0, i, &args);
+
+			if (ret) {
+				debug("Error in parsing power-domains\n");
+				continue;
+			}
+
+			debug("check resource id %u\n", args.args[0]);
+
+			if (!check_owned_resource(args.args[0])) {
+				/* If the resource is not owned, disable it in FDT */
+				rc = disable_fdt_node(blob, offset);
+				if (!rc)
+					printf("Disable %s, resource id %u not owned\n",
+						fdt_get_name(blob, offset, NULL), args.args[0]);
+				else
+					printf("Unable to disable %s, err=%s\n",
+						fdt_get_name(blob, offset, NULL), fdt_strerror(rc));
+			}
+
+		}
+	}
+}
+
 #ifdef CONFIG_IMX_SMMU
 static int get_srsc_from_fdt_node_power_domain(void *blob, int device_offset)
 {
@@ -1146,7 +1208,7 @@ int ft_system_setup(void *blob, bd_t *bd)
 #endif
 
 #ifndef CONFIG_SKIP_RESOURCE_CHECKING
-	update_fdt_with_owned_resources(blob);
+	update_fdt_with_owned_resources_v2(blob);
 #endif
 
 	update_fdt_edma_nodes(blob);
