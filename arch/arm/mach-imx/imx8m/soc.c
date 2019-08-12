@@ -868,7 +868,7 @@ int imx8m_usb_power(int usb_id, bool on)
 
 void nxp_tmu_arch_init(void *reg_base)
 {
-	if (is_imx8mm()) {
+	if (is_imx8mm() || is_imx8mn()) {
 		/* Load TCALIV and TASR from fuses */
 		struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
 		struct fuse_bank *bank = &ocotp->bank[3];
