@@ -431,7 +431,6 @@ static inline void qspi_ahb_read(struct fsl_qspi_priv *priv, u8 *rxbuf, int len)
 	qspi_write32(priv->flags, &regs->mcr, mcr_reg);
 }
 
-#ifndef CONFIG_MX7ULP
 static void qspi_enable_ddr_mode(struct fsl_qspi_priv *priv)
 {
 	u32 reg, reg2;
@@ -460,7 +459,6 @@ static void qspi_enable_ddr_mode(struct fsl_qspi_priv *priv)
 	reg |= BIT(16);
 	qspi_write32(priv->flags, &regs->flshcr, reg);
 }
-#endif
 
 /*
  * There are two different ways to read out the data from the flash:
@@ -503,10 +501,8 @@ static void qspi_init_ahb_read(struct fsl_qspi_priv *priv)
 	qspi_write32(priv->flags, &regs->bfgencr,
 		     SEQID_FAST_READ << QSPI_BFGENCR_SEQID_SHIFT);
 
-#ifndef CONFIG_MX7ULP
 	/*Enable DDR Mode*/
 	qspi_enable_ddr_mode(priv);
-#endif
 }
 #endif
 
