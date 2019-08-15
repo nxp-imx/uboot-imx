@@ -62,7 +62,6 @@ static u32 fastboot_bytes_received;
  */
 static u32 fastboot_bytes_expected;
 
-
 /* Write the bcb with fastboot bootloader commands */
 static void enable_fastboot_command(void)
 {
@@ -584,6 +583,18 @@ static void flashing(char *cmd, char *response)
 			strcpy(response, "FAILGenerate mppubk failed!");
 		} else {
 			printf("mppubk generated!\n");
+			strcpy(response, "OKAY");
+		}
+	}  else if (endswith(cmd, FASTBOOT_GET_SERIAL_NUMBER)) {
+		char *serial = get_serial();
+
+		if (!serial)
+			strcpy(response, "FAILSerial number not support!");
+		else {
+			/* Serial number will not exceed 16 bytes.*/
+			strncpy(fastboot_buf_addr, serial, 16);
+			fastboot_bytes_received = 16;
+			printf("Serial number generated!\n");
 			strcpy(response, "OKAY");
 		}
 	}
