@@ -523,3 +523,34 @@ int trusty_get_mppubk(uint8_t *mppubk, uint32_t *size)
     memcpy(mppubk, resp.data, resp.data_size);
     return TRUSTY_ERR_NONE;
 }
+
+int trusty_verify_secure_unlock(uint8_t *unlock_credential,
+                                uint32_t credential_size,
+                                uint8_t *serial, uint32_t serial_size)
+{
+    int rc = TRUSTY_ERR_GENERIC;
+    uint8_t *req = NULL;
+    uint32_t req_size = 0;
+
+    struct km_secure_unlock_data secure_unlock_data = {
+        .serial_size = serial_size,
+        .serial_data = serial,
+        .credential_size = credential_size,
+        .credential_data = unlock_credential,
+    };
+
+    rc = km_secure_unlock_data_serialize(&secure_unlock_data,
+                                             &req, &req_size);
+
+    if (rc < 0) {
+        trusty_error("failed (%d) to serialize request\n", rc);
+        goto end;
+    }
+    rc = km_do_tipc(KM_VERIFY_SECURE_UNLOCK, req, req_size, NULL, NULL);
+
+end:
+    if (req) {
+        trusty_free(req);
+    }
+    return rc;
+}

@@ -362,6 +362,21 @@ static FbLockState do_fastboot_unlock(bool force)
 	if ((fastboot_lock_enable() == FASTBOOT_UL_ENABLE) || force) {
 		printf("It is able to unlock device. %d\n",fastboot_lock_enable());
 
+#if defined(CONFIG_SECURE_UNLOCK) && defined(CONFIG_IMX_TRUSTY_OS)
+		if ((fastboot_bytes_received == 0) || !hab_is_enabled()) {
+			printf("No unlock credential found or hab is not closed!\n");
+			return FASTBOOT_LOCK_ERROR;
+		} else {
+			char *serial = get_serial();
+			status = trusty_verify_secure_unlock(fastboot_buf_addr,
+								fastboot_bytes_received,
+								serial, 16);
+			if (status < 0) {
+				printf("verify secure unlock credential fail due Trusty return %d\n", status);
+				return FASTBOOT_LOCK_ERROR;
+			}
+		}
+#endif
 		wipe_all_userdata();
 		status = fastboot_set_lock_stat(FASTBOOT_UNLOCK);
 		if (status < 0)
