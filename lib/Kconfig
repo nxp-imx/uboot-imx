@@ -344,6 +344,8 @@ config DUAL_BOOTLOADER
 config AT_AUTHENTICATE_UNLOCK
 	bool "Enable authenticate unlock for Android Things devices"
 
+config SECURE_UNLOCK
+	bool "Enable secure unlock for Android devices, it can only be enabled on HAB closed board"
 endmenu
 
 menu "Hashing Support"
