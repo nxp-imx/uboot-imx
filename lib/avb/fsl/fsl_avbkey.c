@@ -1148,6 +1148,18 @@ extern struct imx_sec_config_fuse_t const imx_sec_config_fuse;
 /* Check hab status, this is basically copied from imx_hab_is_enabled() */
 bool hab_is_enabled(void)
 {
+#ifdef CONFIG_ARCH_IMX8
+	sc_err_t err;
+	uint16_t lc;
+
+	err = sc_seco_chip_info(-1, &lc, NULL, NULL, NULL);
+	if (err != SC_ERR_NONE) {
+		printf("Error in get lifecycle\n");
+		return false;
+	}
+
+	if (lc != 0x80)
+#else
 	struct imx_sec_config_fuse_t *fuse =
 		(struct imx_sec_config_fuse_t *)&imx_sec_config_fuse;
 	uint32_t reg;
@@ -1155,11 +1167,15 @@ bool hab_is_enabled(void)
 
 	ret = fuse_read(fuse->bank, fuse->word, &reg);
 	if (ret) {
-		puts("\nSecure boot fuse read error\n");
-		return ret;
+		puts("\nSecure boot fuse read error!\n");
+		return false;
 	}
 
-	return (reg & HAB_ENABLED_BIT) == HAB_ENABLED_BIT;
+	if (!((reg & HAB_ENABLED_BIT) == HAB_ENABLED_BIT))
+#endif
+		return false;
+	else
+		return true;
 }
 
 int do_rpmb_key_set(uint8_t *key, uint32_t key_size)
@@ -1297,23 +1313,11 @@ int avb_set_public_key(uint8_t *staged_buffer, uint32_t size) {
 
 int fastboot_get_mppubk(uint8_t *staged_buffer, uint32_t *size) {
 
-#ifdef CONFIG_ARCH_IMX8
-	sc_err_t err;
-	uint16_t lc;
-
-	err = sc_seco_chip_info(-1, &lc, NULL, NULL, NULL);
-	if (err != SC_ERR_NONE) {
-		printf("Error in get lifecycle\n");
-		return -1;
-	}
-
-	if (lc != 0x80) {
-#else
 	if (!hab_is_enabled()) {
-#endif
 		ERR("Error. This command can only be used when hab is closed!!\n");
 		return -1;
 	}
+
 	if ((staged_buffer == NULL) || (size == NULL)) {
 		ERR("Error. Get null staged_buffer!\n");
 		return -1;
