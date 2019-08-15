@@ -44,7 +44,10 @@ extern AvbAtxOps fsl_avb_atx_ops;
 extern AvbOps fsl_avb_ops;
 #endif
 
+#define IMX_SERIAL_LEN 32
+
 int get_block_size(void);
 void process_erase_mmc(const char *cmdbuf, char *response);
+char *get_serial(void);
 
 #endif	// FB_FSL_COMMON_H
