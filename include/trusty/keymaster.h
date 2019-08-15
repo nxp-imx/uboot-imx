@@ -135,4 +135,16 @@ int trusty_set_product_id(const uint8_t *product_id, uint32_t size);
  */
 int trusty_get_mppubk(uint8_t *mppubk, uint32_t* size);
 
+/* trusty_verify_secure_unlock is called to the verify the secure unlock
+ * credential.
+ *
+ * @unlock_credential: Poniter to the unlock credential.
+ * @credential_size: credential size.
+ * @serial: serial number to verify.
+ * @serial_size: serial number size.
+ */
+int trusty_verify_secure_unlock(uint8_t *unlock_credential,
+                                uint32_t credential_size,
+                                uint8_t *serial, uint32_t serial_size);
+
 #endif /* TRUSTY_KEYMASTER_H_ */
