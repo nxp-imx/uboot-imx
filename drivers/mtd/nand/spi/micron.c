@@ -36,6 +36,18 @@ static SPINAND_OP_VARIANTS(update_cache_variants,
 		SPINAND_PROG_LOAD_X4(false, 0, NULL, 0),
 		SPINAND_PROG_LOAD(false, 0, NULL, 0));
 
+static SPINAND_OP_VARIANTS(mt29f4g01_read_cache_variants,
+		SPINAND_PAGE_READ_FROM_CACHE_X4_OP(0, 1, NULL, 0),
+		SPINAND_PAGE_READ_FROM_CACHE_X2_OP(0, 1, NULL, 0),
+		SPINAND_PAGE_READ_FROM_CACHE_OP(true, 0, 1, NULL, 0),
+		SPINAND_PAGE_READ_FROM_CACHE_OP(false, 0, 1, NULL, 0));
+
+static SPINAND_OP_VARIANTS(mt29f4g01_write_cache_variants,
+		SPINAND_PROG_LOAD(true, 0, NULL, 0));
+
+static SPINAND_OP_VARIANTS(mt29f4g01_update_cache_variants,
+		SPINAND_PROG_LOAD(false, 0, NULL, 0));
+
 static int mt29f2g01abagd_ooblayout_ecc(struct mtd_info *mtd, int section,
 					struct mtd_oob_region *region)
 {
@@ -54,9 +66,9 @@ static int mt29f2g01abagd_ooblayout_free(struct mtd_info *mtd, int section,
 	if (section)
 		return -ERANGE;
 
-	/* Reserve 2 bytes for the BBM. */
-	region->offset = 2;
-	region->length = 62;
+	/* Reserve 4 bytes for the BBM. */
+	region->offset = 4;
+	region->length = 60;
 
 	return 0;
 }
@@ -92,6 +104,20 @@ static int mt29f2g01abagd_ecc_get_status(struct spinand_device *spinand,
 	return -EINVAL;
 }
 
+int mt29f4g01_select_target(struct spinand_device *spinand,
+			     unsigned int target)
+{
+	struct spi_mem_op op = SPINAND_SET_FEATURE_OP(0xd0,
+						      spinand->scratchbuf);
+
+	if (target == 1)
+		*spinand->scratchbuf = 0x40;
+	else
+		*spinand->scratchbuf = 0x0;
+
+	return spi_mem_exec_op(spinand->slave, &op);
+}
+
 static const struct spinand_info micron_spinand_table[] = {
 	SPINAND_INFO("MT29F2G01ABAGD", 0x24,
 		     NAND_MEMORG(1, 2048, 128, 64, 2048, 2, 1, 1),
@@ -102,6 +128,16 @@ static const struct spinand_info micron_spinand_table[] = {
 		     0,
 		     SPINAND_ECCINFO(&mt29f2g01abagd_ooblayout,
 				     mt29f2g01abagd_ecc_get_status)),
+	SPINAND_INFO("MT29F4G01ADAGD", 0x32,
+			 NAND_MEMORG(1, 2048, 128, 64, 2048, 2, 1, 2),
+			 NAND_ECCREQ(8, 512),
+			 SPINAND_INFO_OP_VARIANTS(&mt29f4g01_read_cache_variants,
+						  &mt29f4g01_write_cache_variants,
+						  &mt29f4g01_update_cache_variants),
+			 0,
+			 SPINAND_ECCINFO(&mt29f2g01abagd_ooblayout,
+					 mt29f2g01abagd_ecc_get_status),
+			 SPINAND_SELECT_TARGET(&mt29f4g01_select_target)),
 };
 
 static int micron_spinand_detect(struct spinand_device *spinand)
