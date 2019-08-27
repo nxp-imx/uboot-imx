@@ -50,13 +50,11 @@ file are covered by a digital signature.
                  v   |          IVT - FIT          |   |
              ------- +-----------------------------+   |
                      |          CSF - FIT          |   |
-             ------- +-----------------------------+   |
-                 ^   |       u-boot-nodtb.bin      |   |  FIT
-                 |   |               +             |   | Image
-                 |   |          u-boot.bin         |   |
-          Signed |   +-----------------------------+   |
-           Data  |   |       OP-TEE (Optional)     |   |
+             ------- +-----------------------------+   |  FIT
+                 ^   |       u-boot-nodtb.bin      |   | Image
                  |   +-----------------------------+   |
+          Signed |   |       OP-TEE (Optional)     |   |
+           Data  |   +-----------------------------+   |
                  |   |        bl31.bin (ATF)       |   |
                  |   +-----------------------------+   |
                  v   |          u-boot.dtb         |   v
@@ -153,7 +151,6 @@ The imx-mkimage project is used to combines all the images in a single
 flash.bin binary, the following files are required:
 
 - U-Boot:
-  u-boot.bin
   u-boot-nodtb.bin
   u-boot-spl.bin
   U-Boot DTB file (e.g. fsl-imx8mq-evk.dtb)
