@@ -833,17 +833,28 @@ fail:
 #endif /* CONFIG_IMX_TRUSTY_OS */
 }
 #else /* AVB_RPMB */
-/*
- * In no security enhanced ARM64, we cannot protect public key.
- * So that we choose to trust the key from vbmeta image
- */
 AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
 					   const uint8_t* public_key_data,
 					   size_t public_key_length,
 					   const uint8_t* public_key_metadata,
 					   size_t public_key_metadata_length,
 					   bool* out_is_trusted) {
-	*out_is_trusted = true;
+	assert(ops != NULL && out_is_trusted != NULL);
+
+	/* match given public key */
+	if (memcmp(fsl_public_key, public_key_data, public_key_length)) {
+		ERR("public key not match\n");
+		*out_is_trusted = false;
+	} else
+		*out_is_trusted = true;
+
+	/* We're not going to return error code when public key
+	 * verify fail because it will abort the following avb
+	 * verify process even we allow the verification error.
+	 * Return AVB_IO_RESULT_OK and keep the 'out_is_trusted'
+	 * as false, avb will handle the error depends on the
+	 * 'allow_verification_error' flag.
+	 */
 	return AVB_IO_RESULT_OK;
 }
 
