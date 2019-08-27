@@ -27,6 +27,16 @@ config IMX8MP
 config SYS_SOC
 	default "imx8m"
 
+config SECURE_STICKY_BITS_LOCKUP
+	bool "Enable workaround to fix sticky bits lock up issue"
+	depends on IMX8MQ && IMX_HAB
+	default y
+
+config IMX_UNIQUE_ID
+	hex "Enable workaround to fix sticky bits lock up issue"
+	depends on IMX8MQ && IMX_HAB && !SECURE_STICKY_BITS_LOCKUP
+	default 0x0
+
 choice
 	prompt  "NXP i.MX8M board select"
 	optional
