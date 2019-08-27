@@ -325,7 +325,7 @@ generated to the <work> directory to save it for later:
 
   $ cd <work>/imx-mkimage
   $ cp iMX8QX/flash.bin ..
-  $ make SOC=iMX8QX flash_linux
+  $ make SOC=iMX8QX flash_kernel
   $ mv iMX8QX/flash.bin iMX8QX/flash_os.bin
   $ cp iMX8QX/flash_os.bin ..
 
@@ -333,7 +333,7 @@ generated to the <work> directory to save it for later:
 
     $ cd <work>/imx-mkimage
     $ cp iMX8QM/flash.bin ..
-    $ make SOC=iMX8QM flash_linux
+    $ make SOC=iMX8QM flash_kernel
     $ mv iMX8QM/flash.bin iMX8QM/flash_os.bin
     $ cp iMX8QM/flash_os.bin ..
 
