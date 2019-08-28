@@ -1,0 +1,53 @@
+[Header]
+    Version = 4.3
+    Hash Algorithm = sha256
+    Engine = CAAM
+    Engine Configuration = 0
+    Certificate Format = X509
+    Signature Format = CMS
+
+[Install SRK]
+    File = "../crts/SRK_1_2_3_4_table.bin"
+    Source index = 0
+
+[Install CSFK]
+    File = "../crts/CSF1_1_sha256_2048_65537_v3_usr_crt.pem"
+
+[Authenticate CSF]
+
+[Unlock]
+    Engine = CAAM
+    Features = MID
+
+[Install Key]
+    Verification index = 0
+    Target index = 2
+    File = "../crts/IMG1_1_sha256_2048_65537_v3_usr_crt.pem"
+
+[Authenticate Data]
+    Verification index = 2
+    Blocks = 0x401fcdc0 0x57c00 0x1020 "flash-spl-fit-enc.bin", \
+             0x40200000 0x5AC00 0xB8940 "flash-spl-fit-enc.bin", \
+             0x920000 0x113540 0xA160 "flash-spl-fit-enc.bin", \
+             0xBE000000 0x11D6A0 0x48520 "flash-spl-fit-enc.bin"
+
+[Install Secret Key]
+    # Install the blob
+    Verification Index = 0
+    Target Index = 0
+    Key = "dek_fit_dummy.bin"
+    Key Length = 128
+    # Fixed address defined in imx-mkimage project in iMX8M/soc.mak file
+    # DEK_BLOB_LOAD_ADDR = 0x40400000
+    Blob Address = 0x40400000
+
+[Decrypt Data]
+    # The decrypt data command below causes CST to modify the input
+    # file and encrypt the specified block of data. This image file
+    # is a copy of the file used for the authentication command above
+    Verification Index = 0
+    Mac Bytes = 16
+    Blocks = 0x40200000 0x5AC00 0xB8940 "flash-spl-fit-enc-dummy.bin", \
+             0x920000 0x113540 0xA160 "flash-spl-fit-enc-dummy.bin", \
+             0xBE000000 0x11D6A0 0x48520 "flash-spl-fit-enc-dummy.bin"
+
