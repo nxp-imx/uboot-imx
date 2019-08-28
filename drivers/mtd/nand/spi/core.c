@@ -981,6 +981,8 @@ static int spinand_detect(struct spinand_device *spinand)
 	if (ret) {
 		dev_err(dev, "unknown raw ID %*phN\n", SPINAND_MAX_ID_LEN,
 			spinand->id.data);
+		dev_err(dev, "0x%x, 0x%x, 0x%x, 0x%x\n",
+			spinand->id.data[0], spinand->id.data[1], spinand->id.data[2], spinand->id.data[3]);
 		return ret;
 	}
 
