@@ -17,6 +17,13 @@
 		stdout-path = &uart1;
 	};
 
+	firmware {
+		optee {
+			compatible = "linaro,optee-tz";
+			method = "smc";
+		};
+	};
+
 	memory@40000000 {
 		device_type = "memory";
 		reg = <0x00000000 0x40000000 0 0xc0000000>;
