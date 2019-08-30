@@ -1025,10 +1025,12 @@ static void update_fdt_with_owned_resources_v2(void *blob)
 }
 
 #ifdef CONFIG_IMX_SMMU
-static int get_srsc_from_fdt_node_power_domain(void *blob, int device_offset)
+static int get_srsc_from_fdt_node_power_domain(void *blob, int device_offset, int index)
 {
 	const fdt32_t *prop;
 	int pdnode_offset;
+	int ret;
+	struct fdtdec_phandle_args args;
 
 	prop = fdt_getprop(blob, device_offset, "power-domains", NULL);
 	if (!prop) {
@@ -1044,7 +1046,17 @@ static int get_srsc_from_fdt_node_power_domain(void *blob, int device_offset)
 		return pdnode_offset;
 	}
 
-	return fdtdec_get_uint(blob, pdnode_offset, "reg", -ENOENT);
+	ret = fdtdec_get_uint(blob, pdnode_offset, "reg", -ENOENT);
+	if (ret != -ENOENT)
+		return ret;
+
+	ret = fdtdec_parse_phandle_with_args(blob, device_offset,
+					     "power-domains",
+					     "#power-domain-cells", 0, index,
+					     &args);
+	if (ret)
+		return ret;
+	return args.args[0];
 }
 
 static int config_smmu_resource_sid(int rsrc, int sid)
@@ -1069,6 +1081,7 @@ static int config_smmu_fdt_device_sid(void *blob, int device_offset, int sid)
 {
 	int rsrc;
 	int proplen;
+	int i, count;
 	const fdt32_t *prop;
 	const char *name = fdt_get_name(blob, device_offset, NULL);
 
@@ -1085,14 +1098,22 @@ static int config_smmu_fdt_device_sid(void *blob, int device_offset, int sid)
 		return 0;
 	}
 
-	rsrc = get_srsc_from_fdt_node_power_domain(blob, device_offset);
-	debug("configure node %s sid 0x%x rsrc=%d\n", name, sid, rsrc);
-	if (rsrc < 0) {
-		debug("failed to determine SC_R_* for node %s\n", name);
-		return rsrc;
+	count = fdtdec_parse_phandle_with_args(blob, device_offset,
+					       "power-domains",
+					       "#power-domain-cells",
+					       0, -1, NULL);
+	for (i = 0; i < count; i++) {
+		rsrc = get_srsc_from_fdt_node_power_domain(blob, device_offset, i);
+		debug("configure node %s sid 0x%x rsrc=%d\n", name, sid, rsrc);
+		if (rsrc < 0) {
+			debug("failed to determine SC_R_* for node %s\n", name);
+			return rsrc;
+		}
+
+		config_smmu_resource_sid(rsrc, sid);
 	}
 
-	return config_smmu_resource_sid(rsrc, sid);
+	return 0;
 }
 
 /* assign master sid based on iommu properties in fdt */
