@@ -6,6 +6,16 @@
 #include <linux/linkage.h>
 
 ENTRY(lowlevel_init)
+#ifdef CONFIG_SPL_BUILD
+	mrs	x0, CurrentEL
+	cmp	x0, #12
+	b.eq	1f
+	ret
+1:
+	msr daifclr, #4
+	isb
+	ret
+#else
 	mrs	x0, CurrentEL
 	cmp	x0, #8
 	b.eq	1f
@@ -19,4 +29,5 @@ ENTRY(lowlevel_init)
 	msr	hcr_el2, x0
 	isb
 	ret
+#endif
 ENDPROC(lowlevel_init)
