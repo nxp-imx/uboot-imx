@@ -399,6 +399,18 @@ int display_controller_setup(sc_pm_clock_rate_t pixel_clock)
 		return -EIO;
 	}
 
+	err = sc_pm_set_clock_parent(ipcHndl, dc_rsrc, SC_PM_CLK_MISC0, 2);
+	if (err != SC_ERR_NONE) {
+		printf("DISP0 set clock parent failed! (error = %d)\n", err);
+		return -EIO;
+	}
+
+	err = sc_pm_set_clock_parent(ipcHndl, dc_rsrc, SC_PM_CLK_MISC1, 3);
+	if (err != SC_ERR_NONE) {
+		printf("DISP0 set clock parent failed! (error = %d)\n", err);
+		return -EIO;
+	}
+
 	err = sc_pm_set_clock_rate(ipcHndl, dc_rsrc, SC_PM_CLK_MISC1, &pixel_clock);
 	if (err != SC_ERR_NONE) {
 		printf("DISP1 set clock rate failed! (error = %d)\n", err);
