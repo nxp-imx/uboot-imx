@@ -1262,6 +1262,8 @@ static void cdns_ep_config(struct usb_ss_endpoint *usb_ss_ep)
 	u32 bEndpointAddress = usb_ss_ep->num | usb_ss_ep->dir;
 	u32 interrupt_mask = 0;
 	bool is_iso_ep = (usb_ss_ep->type == USB_ENDPOINT_XFER_ISOC);
+	__maybe_unused bool is_int_ep =
+			(usb_ss_ep->type == USB_ENDPOINT_XFER_INT);
 
 	dev_dbg(&usb_ss->dev,
 		"%s: %s addr=0x%x, speed %d, is_iso_ep %d\n", __func__,
@@ -1294,6 +1296,10 @@ static void cdns_ep_config(struct usb_ss_endpoint *usb_ss_ep)
 		max_packet_size = (is_iso_ep ?
 			ENDPOINT_MAX_PACKET_SIZE_1024 :
 			ENDPOINT_MAX_PACKET_SIZE_512);
+#if defined(CONFIG_SPL_USB_SDP_SUPPORT) || defined(CONFIG_USB_FUNCTION_SDP)
+		if (is_int_ep)
+			max_packet_size = ENDPOINT_MAX_PACKET_SIZE_1024;
+#endif
 		break;
 
 	case USB_SPEED_WIRELESS:
