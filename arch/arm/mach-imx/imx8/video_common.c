@@ -22,6 +22,7 @@
 #include <asm/arch/imx8_mipi_dsi.h>
 #include <asm/arch/video_common.h>
 #include <power-domain.h>
+#include <asm/arch/lpcg.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -340,6 +341,7 @@ int display_controller_setup(sc_pm_clock_rate_t pixel_clock)
 	sc_rsrc_t dc_rsrc, pll0_rsrc, pll1_rsrc;
 	sc_pm_clock_rate_t pll_clk;
 	const char *pll1_pd_name;
+	u32 dc_lpcg;
 
 	int dc_id = gdc;
 
@@ -351,11 +353,13 @@ int display_controller_setup(sc_pm_clock_rate_t pixel_clock)
 		pll0_rsrc = SC_R_DC_0_PLL_0;
 		pll1_rsrc = SC_R_DC_0_PLL_1;
 		pll1_pd_name = "dc0_pll1";
+		dc_lpcg = DC_0_LPCG;
 	} else {
 		dc_rsrc = SC_R_DC_1;
 		pll0_rsrc = SC_R_DC_1_PLL_0;
 		pll1_rsrc = SC_R_DC_1_PLL_1;
 		pll1_pd_name = "dc1_pll1";
+		dc_lpcg = DC_1_LPCG;
 	}
 
 	if (!power_domain_lookup_name(pll1_pd_name, &pd)) {
@@ -422,6 +426,8 @@ int display_controller_setup(sc_pm_clock_rate_t pixel_clock)
 		printf("DISP1 clock enable failed! (error = %d)\n", err);
 		return -EIO;
 	}
+
+	lpcg_all_clock_on(dc_lpcg);
 
 	err = sc_misc_set_control(-1, dc_rsrc, SC_C_PXL_LINK_MST1_ADDR, 0);
 	if (err != SC_ERR_NONE) {
