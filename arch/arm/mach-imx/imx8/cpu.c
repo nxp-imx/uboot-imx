@@ -33,6 +33,7 @@
 #include <asm/mach-imx/imx_vservice.h>
 #include <asm/arch/power-domain.h>
 #include <spl.h>
+#include <asm/arch/lpcg.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -280,6 +281,8 @@ int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 			return -EIO;
 		}
 
+		lpcg_all_clock_on(AUD_DSP_LPCG);
+
 		if (!power_domain_lookup_name("audio_sai0", &pd)) {
 			if (power_domain_on(&pd)) {
 				printf("Error power on SAI0\n");
@@ -293,6 +296,9 @@ int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 				return -EIO;
 			}
 		}
+
+		lpcg_all_clock_on(AUD_OCRAM_LPCG);
+		lpcg_all_clock_on(AUD_SAI_0_LPCG);
 	}
 
 	printf("Copy image from 0x%lx to 0x%lx\n", addr, (ulong)aux_core_ram);
