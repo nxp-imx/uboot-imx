@@ -102,11 +102,9 @@ static char *substitute(char *string,	/* string buffer */
 
 	/* move tail if needed */
 	if (olen != nlen) {
-		int tail, len;
+		int tail;
 
-		len = (olen > nlen) ? olen : nlen;
-
-		tail = ssize - (p + len - string);
+		tail = strlen(p + olen) + 1;
 
 		debug("## tail len %d\n", tail);
 
