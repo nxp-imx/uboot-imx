@@ -1,6 +1,11 @@
 config CREATE_ARCH_SYMLINK
 	bool
 
+config FLASH_BOOT
+	bool "Flash Boot"
+	depends on !SD_BOOT
+	default n
+
 config HAVE_ARCH_IOREMAP
 	bool
 
