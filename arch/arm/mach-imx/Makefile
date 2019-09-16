@@ -267,3 +267,4 @@ obj-$(CONFIG_MX7) += mx7/
 obj-$(CONFIG_ARCH_MX7ULP) += mx7ulp/
 obj-$(CONFIG_IMX8M) += imx8m/
 obj-$(CONFIG_ARCH_IMX8) += imx8/
+obj-$(CONFIG_CMD_WRITEBCB_MX7) += cmd_writebcb_mx7.o
