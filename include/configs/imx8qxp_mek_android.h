@@ -13,6 +13,10 @@
 #define CONFIG_CMD_READ
 #define CONFIG_USB_GADGET_VBUS_DRAW	2
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+#define NS_ARCH_ARM64 1
+#endif
+
 #define CONFIG_ANDROID_AB_SUPPORT
 #define CONFIG_AVB_SUPPORT
 #define CONFIG_SUPPORT_EMMC_RPMB
@@ -25,9 +29,12 @@
 #define CONFIG_FASTBOOT_LOCK
 #define FSL_FASTBOOT_FB_DEV "mmc"
 
+#define KEYSLOT_HWPARTITION_ID   2
+#define KEYSLOT_BLKS             0x3FFF
+
 #ifdef CONFIG_SYS_MALLOC_LEN
 #undef CONFIG_SYS_MALLOC_LEN
-#define CONFIG_SYS_MALLOC_LEN           (76 * SZ_1M)
+#define CONFIG_SYS_MALLOC_LEN           (90 * SZ_1M)
 #endif
 
 #define CONFIG_FASTBOOT_USB_DEV 1
@@ -45,6 +52,17 @@
 	"fdt_high=0xffffffffffffffff\0"	  \
 	"initrd_high=0xffffffffffffffff\0" \
 	"panel=NULL\0" \
+
+#ifdef CONFIG_IMX_TRUSTY_OS
+#define AVB_RPMB
+
+#ifdef CONFIG_SPL_BUILD
+#undef CONFIG_BLK
+#define CONFIG_FSL_CAAM_KB
+#define CONFIG_SPL_CRYPTO_SUPPORT
+#define CONFIG_SYS_FSL_SEC_LE
+#endif
+#endif
 
 #define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
 
