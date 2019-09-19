@@ -446,10 +446,8 @@ int trusty_setbootparameter(struct boot_img_hdr_v3 *hdr,
 int trusty_setbootparameter(struct andr_img_hdr *hdr,
 #endif
 				AvbABFlowResult avb_result, AvbSlotVerifyData *avb_out_data) {
-#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_AVB_ATX)
-	uint8_t vbh[AVB_SHA256_DIGEST_SIZE];
-#endif
 	int ret = 0;
+	uint8_t vbh[AVB_SHA256_DIGEST_SIZE];
 	u32 os_ver = hdr->os_version >> 11;
 	u32 os_ver_km = (((os_ver >> 14) & 0x7F) * 100 + ((os_ver >> 7) & 0x7F)) * 100
 	    + (os_ver & 0x7F);
@@ -457,29 +455,33 @@ int trusty_setbootparameter(struct andr_img_hdr *hdr,
 	u32 os_lvl_km = ((os_lvl >> 4) + 2000) * 100 + (os_lvl & 0x0F);
 	keymaster_verified_boot_t vbstatus;
 	FbLockState lock_status = fastboot_get_lock_stat();
-
 	uint8_t boot_key_hash[AVB_SHA256_DIGEST_SIZE];
+
+	bool lock = (lock_status == FASTBOOT_LOCK)? true: false;
+	if ((avb_result == AVB_AB_FLOW_RESULT_OK) && lock)
+		vbstatus = KM_VERIFIED_BOOT_VERIFIED;
+	else
+		vbstatus = KM_VERIFIED_BOOT_UNVERIFIED;
+
 #ifdef CONFIG_AVB_ATX
 	if (fsl_read_permanent_attributes_hash(&fsl_avb_atx_ops, boot_key_hash)) {
 		printf("ERROR - failed to read permanent attributes hash for keymaster\n");
-		memset(boot_key_hash, 0, AVB_SHA256_DIGEST_SIZE);
+		memset(boot_key_hash, '\0', AVB_SHA256_DIGEST_SIZE);
 	}
 #else
 	uint8_t public_key_buf[AVB_MAX_BUFFER_LENGTH];
 	if (trusty_read_vbmeta_public_key(public_key_buf,
 						AVB_MAX_BUFFER_LENGTH) != 0) {
 		printf("ERROR - failed to read public key for keymaster\n");
-		memset(boot_key_hash, 0, AVB_SHA256_DIGEST_SIZE);
+		memset(boot_key_hash, '\0', AVB_SHA256_DIGEST_SIZE);
 	} else
 		sha256_csum_wd((unsigned char *)public_key_buf, AVB_SHA256_DIGEST_SIZE,
 				(unsigned char *)boot_key_hash, CHUNKSZ_SHA256);
 #endif
 
-	bool lock = (lock_status == FASTBOOT_LOCK)? true: false;
-	if (avb_result == AVB_AB_FLOW_RESULT_OK)
-		vbstatus = KM_VERIFIED_BOOT_VERIFIED;
-	else
-		vbstatus = KM_VERIFIED_BOOT_FAILED;
+	/* All '\0' boot key should be passed if the device is unlocked. */
+	if (!lock)
+		memset(boot_key_hash, '\0', AVB_SHA256_DIGEST_SIZE);
 
 	/* Calculate VBH */
 #if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_AVB_ATX)
@@ -487,15 +489,14 @@ int trusty_setbootparameter(struct andr_img_hdr *hdr,
 		ret = -1;
 		goto fail;
 	}
-
-	trusty_set_boot_params(os_ver_km, os_lvl_km, vbstatus, lock,
-			       boot_key_hash, AVB_SHA256_DIGEST_SIZE,
-			       vbh, AVB_SHA256_DIGEST_SIZE);
 #else
-	trusty_set_boot_params(os_ver_km, os_lvl_km, vbstatus, lock,
-			       boot_key_hash, AVB_SHA256_DIGEST_SIZE,
-			       NULL, 0);
+	avb_slot_verify_data_calculate_vbmeta_digest(avb_out_data,
+						     AVB_DIGEST_TYPE_SHA256,
+						     vbh);
 #endif
+	trusty_set_boot_params(os_ver_km, os_lvl_km, vbstatus, lock,
+					boot_key_hash, AVB_SHA256_DIGEST_SIZE,
+					vbh, AVB_SHA256_DIGEST_SIZE);
 
 #if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_AVB_ATX)
 fail:
