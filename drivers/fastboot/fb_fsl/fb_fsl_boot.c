@@ -241,16 +241,21 @@ static void fastboot_setup_system_boot_args(const char *slot, bool append_root)
 
 	struct fastboot_ptentry *ptentry = fastboot_flash_find_ptn(system_part_name);
 	if(ptentry != NULL) {
-		char bootargs_3rd[ANDR_BOOT_ARGS_SIZE];
+		char bootargs_3rd[ANDR_BOOT_ARGS_SIZE] = {'\0'};
 		if (append_root) {
 			u32 dev_no = mmc_map_to_kernel_blk(mmc_get_env_dev());
-			sprintf(bootargs_3rd, "skip_initramfs root=/dev/mmcblk%dp%d",
+			sprintf(bootargs_3rd, "root=/dev/mmcblk%dp%d ",
 					dev_no,
 					ptentry->partition_index);
-		} else {
-			sprintf(bootargs_3rd, "skip_initramfs");
 		}
-		strcat(bootargs_3rd, " rootwait");
+		strcat(bootargs_3rd, "rootwait");
+
+		/* for standard android, recovery ramdisk will be used anyway, to
+		 * boot up Android, "androidboot.force_normal_boot=1" is needed */
+#ifndef CONFIG_ANDROID_AUTO_SUPPORT
+			strcat(bootargs_3rd, " androidboot.force_normal_boot=1");
+#endif
+
 		env_set("bootargs_3rd", bootargs_3rd);
 	} else {
 		printf("Can't find partition: %s\n", system_part_name);
@@ -662,13 +667,18 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		char bootargs_sec[ANDR_BOOT_EXTRA_ARGS_SIZE];
 		if (lock_status == FASTBOOT_LOCK) {
 			snprintf(bootargs_sec, sizeof(bootargs_sec),
-					"androidboot.verifiedbootstate=green androidboot.flash.locked=1 androidboot.slot_suffix=%s %s",
-					avb_out_data->ab_suffix, avb_out_data->cmdline);
+					"androidboot.verifiedbootstate=green androidboot.flash.locked=1 androidboot.slot_suffix=%s ",
+					avb_out_data->ab_suffix);
 		} else {
 			snprintf(bootargs_sec, sizeof(bootargs_sec),
-					"androidboot.verifiedbootstate=orange androidboot.flash.locked=0 androidboot.slot_suffix=%s %s",
-					avb_out_data->ab_suffix, avb_out_data->cmdline);
+					"androidboot.verifiedbootstate=orange androidboot.flash.locked=0 androidboot.slot_suffix=%s ",
+					avb_out_data->ab_suffix);
 		}
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+		strcat(bootargs_sec, avb_out_data->cmdline);
+#else
+		strcat(bootargs_sec, strstr(avb_out_data->cmdline, "androidboot"));
+#endif
 		env_set("bootargs_sec", bootargs_sec);
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if(!is_recovery_mode) {
@@ -716,14 +726,15 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 
 	flush_cache((ulong)image_load_addr, image_size);
 	check_image_arm64  = image_arm64((void *)(ulong)hdr->kernel_addr);
-#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+#if !defined(CONFIG_SYSTEM_RAMDISK_SUPPORT) || !defined(CONFIG_ANDROID_AUTO_SUPPORT)
+	memcpy((void *)(ulong)hdr->ramdisk_addr, (void *)(ulong)hdr + hdr->page_size
+			+ ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
+#else
 	if (is_recovery_mode)
 		memcpy((void *)(ulong)hdr->ramdisk_addr, (void *)(ulong)hdr + hdr->page_size
 				+ ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
-#else
-	memcpy((void *)(ulong)hdr->ramdisk_addr, (void *)(ulong)hdr + hdr->page_size
-			+ ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
 #endif
+
 #ifdef CONFIG_OF_LIBFDT
 	/* load the dtb file */
 	u32 fdt_size = 0;
@@ -819,8 +830,9 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	sprintf(ramdisk_addr, "0x%x:0x%x", hdr->ramdisk_addr, hdr->ramdisk_size);
 	sprintf(fdt_addr, "0x%x", hdr->second_addr);
 
-/* no need to pass ramdisk addr for normal boot mode when enable CONFIG_SYSTEM_RAMDISK_SUPPORT*/
-#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+/* when CONFIG_SYSTEM_RAMDISK_SUPPORT is enabled and it's for Android Auto, if it's not recovery mode
+ * do not pass ramdisk addr*/
+#if defined(CONFIG_SYSTEM_RAMDISK_SUPPORT) && defined(CONFIG_ANDROID_AUTO_SUPPORT)
 	if (!is_recovery_mode)
 		boot_args[2] = NULL;
 #endif
