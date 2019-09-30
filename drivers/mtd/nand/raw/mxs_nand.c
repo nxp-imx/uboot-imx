@@ -858,8 +858,7 @@ static int mxs_nand_ecc_write_page(struct mtd_info *mtd,
 	d->cmd.pio_words[4] = (dma_addr_t)nand_info->data_buf;
 	d->cmd.pio_words[5] = (dma_addr_t)nand_info->oob_buf;
 
-#if CONFIG_IS_ENABLED(MX7)
-	if (nand_info->en_randomizer) {
+	if (is_mx7() && nand_info->en_randomizer) {
 		d->cmd.pio_words[2] |= GPMI_ECCCTRL_RANDOMIZER_ENABLE |
 				       GPMI_ECCCTRL_RANDOMIZER_TYPE2;
 		/*
@@ -871,7 +870,6 @@ static int mxs_nand_ecc_write_page(struct mtd_info *mtd,
 		 */
 		d->cmd.pio_words[3] |= (page % 255) << 16;
 	}
-#endif
 
 	mxs_dma_desc_append(channel, d);
 

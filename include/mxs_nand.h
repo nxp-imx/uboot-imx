@@ -73,13 +73,11 @@ struct mxs_nand_info {
 	struct mxs_dma_desc	**desc;
 	uint32_t		desc_index;
 
-#if CONFIG_IS_ENABLED(MX7) || CONFIG_IS_ENABLED(MX6)
 	u32 en_randomizer;
 	u32 writesize;
 	u32 oobsize;
 	u32 bch_flash0layout0;
 	u32 bch_flash0layout1;
-#endif /* CONFIG_IS_ENABLED(MX7) */
 };
 
 struct mxs_nand_layout {
@@ -95,10 +93,8 @@ int mxs_nand_init_ctrl(struct mxs_nand_info *nand_info);
 int mxs_nand_init_spl(struct nand_chip *nand);
 int mxs_nand_setup_ecc(struct mtd_info *mtd);
 
-#if CONFIG_IS_ENABLED(MX7) || CONFIG_IS_ENABLED(MX6)
 void mxs_nand_mode_fcb(struct mtd_info *mtd);
 void mxs_nand_mode_normal(struct mtd_info *mtd);
 u32 mxs_nand_mark_byte_offset(struct mtd_info *mtd);
 u32 mxs_nand_mark_bit_offset(struct mtd_info *mtd);
 void mxs_nand_get_layout(struct mtd_info *mtd, struct mxs_nand_layout *l);
-#endif /* CONFIG_IS_ENABLED(MX7) */
