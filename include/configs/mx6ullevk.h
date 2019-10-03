@@ -62,7 +62,7 @@
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
 #ifdef CONFIG_NAND_BOOT
-#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),16m(tee),-(rootfs) "
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(nandboot),16m(nandkernel),16m(nanddtb),16m(nandtee),-(nandrootfs)"
 #else
 #define MFG_NAND_PARTITION ""
 #endif
@@ -78,6 +78,8 @@
 	"emmc_dev=1\0"\
 	"emmc_ack=1\0"\
 	"sd_dev=1\0" \
+	"mtdparts=" MFG_NAND_PARTITION \
+	"\0"\
 
 #if defined(CONFIG_NAND_BOOT)
 #define CONFIG_EXTRA_ENV_SETTINGS \
