@@ -449,17 +449,27 @@ fail:
 
 }
 FbLockEnableResult fastboot_lock_enable() {
-	struct blk_desc *fs_dev_desc;
-	disk_partition_t fs_partition;
-	unsigned char *bdata;
-	int mmc_id;
-	FbLockEnableResult ret;
-
 #ifdef CONFIG_DUAL_BOOTLOADER
 	/* Always allow unlock device in spl recovery mode. */
 	if (is_spl_recovery())
 		return FASTBOOT_UL_ENABLE;
 #endif
+
+#ifdef CONFIG_IMX_TRUSTY_OS
+	int ret;
+	uint8_t oem_device_unlock;
+
+	ret = trusty_read_oem_unlock_device_permission(&oem_device_unlock);
+	if (ret < 0)
+		return FASTBOOT_UL_ERROR;
+	else
+		return oem_device_unlock;
+#else /* CONFIG_IMX_TRUSTY_OS */
+	FbLockEnableResult ret;
+	struct blk_desc *fs_dev_desc;
+	disk_partition_t fs_partition;
+	unsigned char *bdata;
+	int mmc_id;
 
 	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
 	if (bdata == NULL)
@@ -500,6 +510,7 @@ FbLockEnableResult fastboot_lock_enable() {
 fail:
 	free(bdata);
 	return ret;
+#endif /* CONFIG_IMX_TRUSTY_OS */
 
 }
 #endif
