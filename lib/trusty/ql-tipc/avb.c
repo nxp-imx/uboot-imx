@@ -260,3 +260,10 @@ int trusty_lock_boot_state(void)
 {
     return avb_do_tipc(LOCK_BOOT_STATE, NULL, 0, NULL, NULL);
 }
+
+int trusty_read_oem_unlock_device_permission(uint8_t *oem_device_unlock)
+{
+    uint32_t resp_size = sizeof(*oem_device_unlock);
+    return avb_do_tipc(READ_OEM_UNLOCK_DEVICE_PERMISSION, NULL, 0, oem_device_unlock,
+                       &resp_size);
+}
