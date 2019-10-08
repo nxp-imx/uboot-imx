@@ -116,5 +116,11 @@ int trusty_write_lock_state(uint8_t lock_state);
  * Returns one of trusty_err.
  */
 int trusty_lock_boot_state(void);
+/*
+ * Send request to secure side to read oem device unlock state from RPMB.
+ *
+ * Returns one of trusty_err.
+ */
+int trusty_read_oem_unlock_device_permission(uint8_t *lock_state);
 
 #endif /* TRUSTY_AVB_H_ */
