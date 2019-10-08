@@ -55,7 +55,7 @@ static ulong bootloader_mmc_offset(void)
 {
 	if (is_imx8mq() || is_imx8mm() || (is_imx8() && is_soc_rev(CHIP_REV_A)))
 		return 0x8400;
-	else if (is_imx8qm()) {
+	else if (is_imx8qm() || (is_imx8qxp() && !is_soc_rev(CHIP_REV_B))) {
 		if (MEK_8QM_EMMC == fastboot_devinfo.dev_id)
 		/* target device is eMMC boot0 partition, bootloader offset is 0x0 */
 			return 0x0;
