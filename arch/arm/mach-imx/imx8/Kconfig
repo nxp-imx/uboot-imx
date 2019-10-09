@@ -118,4 +118,17 @@ source "board/freescale/imx8qxp_arm2/Kconfig"
 source "board/freescale/imx8qm_arm2/Kconfig"
 source "board/freescale/imx8dxl_phantom_mek/Kconfig"
 
+config SNVS_SEC_SC
+	bool "Support SNVS configuration"
+	help
+	  Allow to configure the SNVS via SCU API to configure tampers and secure
+	  violation.
+
+config SNVS_SEC_SC_AUTO
+	bool "Support SNVS configuration command"
+	depends on SNVS_SEC_SC
+	help
+	  This configuration will apply the selected configurations automatically
+	  at boot.
+
 endif

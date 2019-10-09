@@ -118,6 +118,7 @@ int sc_rm_get_resource_owner(sc_ipc_t ipc, sc_rsrc_t resource,
 
 /* PAD API */
 int sc_pad_set(sc_ipc_t ipc, sc_pad_t pad, u32 val);
+int sc_pad_get(sc_ipc_t ipc, sc_pad_t pad, uint32_t *val);
 
 /* SMMU API */
 int sc_rm_set_master_sid(sc_ipc_t ipc, sc_rsrc_t resource,
@@ -141,6 +142,9 @@ int sc_seco_update_mpmr(sc_ipc_t ipc, sc_faddr_t addr,
 			uint8_t size, uint8_t lock);
 int sc_seco_get_mp_sign(sc_ipc_t ipc, sc_faddr_t msg_addr,
 			uint16_t msg_size, sc_faddr_t dst_addr, uint16_t dst_size);
+int sc_seco_secvio_config(sc_ipc_t ipc, uint8_t id, uint8_t access,
+	uint32_t *data0, uint32_t *data1, uint32_t *data2, uint32_t *data3,
+	uint32_t *data4, uint8_t size);
 int sc_seco_secvio_dgo_config(sc_ipc_t ipc, uint8_t id, uint8_t access,
 	uint32_t *data);
 

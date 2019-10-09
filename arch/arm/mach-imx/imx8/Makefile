@@ -13,3 +13,4 @@ obj-y += partition.o
 endif
 obj-$(CONFIG_AHAB_BOOT) += ahab.o
 obj-$(CONFIG_VIDEO_IMXDPUV1) += video_common.o
+obj-$(CONFIG_SNVS_SEC_SC) += snvs_security_sc.o
