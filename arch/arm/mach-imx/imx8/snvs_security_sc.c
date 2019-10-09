@@ -10,6 +10,13 @@
  *  - passive mode expecting VCC on the line: "_passive_vcc_"
  *  - passive mode expecting VCC on the line: "_passive_gnd_"
  *  - active mode: "_active_"
+ *
+ * WARNING:
+ * The silicon revision B0 of the iMX8QM and iMX8QXP have a bug in the SECO ROM:
+ * If the SSM of the SNVS changes state, the next call to SECO will trigger an
+ * integrity check of the SECO firmware which will fail due to incorrect CAAM
+ * keys hence the SECO will not respond to the call. The system will hang in
+ * this state until a watchdog resets the board.
  */
 
 #include <command.h>
@@ -19,9 +26,6 @@
 #include <asm/arch/sci/sci.h>
 #include <asm/arch-imx8/imx8-pins.h>
 #include <asm/arch-imx8/snvs_security_sc.h>
-
-/* Access to gd */
-DECLARE_GLOBAL_DATA_PTR;
 
 #define SC_WRITE_CONF 1
 
@@ -86,7 +90,8 @@ struct snvs_security_sc_conf {
 static struct snvs_security_sc_conf snvs_default_config = {
 	.hp = {
 		.lock = 0x1f0703ff,
-		.secvio_ctl = 0x3000007f,
+		.secvio_intcfg = 0x8000002f,
+		.secvio_ctl = 0xC000007f,
 	},
 	.lp = {
 		.lock = 0x1f0003ff,
@@ -113,7 +118,8 @@ static struct snvs_security_sc_conf snvs_default_config = {
 static struct snvs_security_sc_conf snvs_passive_vcc_config = {
 	.hp = {
 		.lock = 0x1f0703ff,
-		.secvio_ctl = 0x3000007f,
+		.secvio_intcfg = 0x8000002f,
+		.secvio_ctl = 0xC000007f,
 	},
 	.lp = {
 		.lock = 0x1f0003ff,
@@ -141,7 +147,8 @@ static struct snvs_security_sc_conf snvs_passive_vcc_config = {
 static struct snvs_security_sc_conf snvs_passive_gnd_config = {
 	.hp = {
 		.lock = 0x1f0703ff,
-		.secvio_ctl = 0x3000007f,
+		.secvio_intcfg = 0x8000002f,
+		.secvio_ctl = 0xC000007f,
 	},
 	.lp = {
 		.lock = 0x1f0003ff,
@@ -169,7 +176,8 @@ static struct snvs_security_sc_conf snvs_passive_gnd_config = {
 static struct snvs_security_sc_conf snvs_active_config = {
 	.hp = {
 		.lock = 0x1f0703ff,
-		.secvio_ctl = 0x3000007f,
+		.secvio_intcfg = 0x8000002f,
+		.secvio_ctl = 0xC000007f,
 	},
 	.lp = {
 		.lock = 0x1f0003ff,
@@ -214,18 +222,24 @@ static struct snvs_dgo_conf snvs_dgo_default_config = {
 static struct snvs_dgo_conf snvs_dgo_passive_vcc_config = {
 	.tamper_misc_ctl = 0x80000000, /* Lock the DGO */
 	.tamper_pull_ctl = 0x00000001, /* Pull down ET1 */
+#ifdef CONFIG_TARGET_IMX8QXP_MEK
 	.tamper_ana_test_ctl = 0x20000000, /* Enable tamper */
+#endif /* CONFIG_TARGET_IMX8QXP_MEK */
 };
 
 static struct snvs_dgo_conf snvs_dgo_passive_gnd_config = {
 	.tamper_misc_ctl = 0x80000000, /* Lock the DGO */
 	.tamper_pull_ctl = 0x00000401, /* Pull up ET1 */
+#ifdef CONFIG_TARGET_IMX8QXP_MEK
 	.tamper_ana_test_ctl = 0x20000000, /* Enable tamper */
+#endif /* CONFIG_TARGET_IMX8QXP_MEK */
 };
 
 static struct snvs_dgo_conf snvs_dgo_active_config = {
 	.tamper_misc_ctl = 0x80000000, /* Lock the DGO */
+#ifdef CONFIG_TARGET_IMX8QXP_MEK
 	.tamper_ana_test_ctl = 0x20000000, /* Enable tamper */
+#endif /* CONFIG_TARGET_IMX8QXP_MEK */
 };
 
 static struct snvs_dgo_conf *get_snvs_dgo_config(void)
@@ -239,6 +253,7 @@ struct tamper_pin_cfg {
 };
 
 static struct tamper_pin_cfg tamper_pin_list_default_config[] = {
+#ifdef CONFIG_TARGET_IMX8QXP_MEK
 	{SC_P_CSI_D00, 0}, /* Tamp_Out0 */
 	{SC_P_CSI_D01, 0}, /* Tamp_Out1 */
 	{SC_P_CSI_D02, 0}, /* Tamp_Out2 */
@@ -249,19 +264,26 @@ static struct tamper_pin_cfg tamper_pin_list_default_config[] = {
 	{SC_P_CSI_D07, 0}, /* Tamp_In2 */
 	{SC_P_CSI_HSYNC, 0}, /* Tamp_In3 */
 	{SC_P_CSI_VSYNC, 0}, /* Tamp_In4 */
+#endif /* CONFIG_TARGET_IMX8QXP_MEK */
 };
 
 static struct tamper_pin_cfg tamper_pin_list_passive_vcc_config[] = {
+#ifdef CONFIG_TARGET_IMX8QXP_MEK
 	{SC_P_CSI_D05, 0x1c000060}, /* Tamp_In0 */ /* Sel tamper + OD input */
+#endif /* CONFIG_TARGET_IMX8QXP_MEK */
 };
 
 static struct tamper_pin_cfg tamper_pin_list_passive_gnd_config[] = {
+#ifdef CONFIG_TARGET_IMX8QXP_MEK
 	{SC_P_CSI_D05, 0x1c000060}, /* Tamp_In0 */ /* Sel tamper + OD input */
+#endif /* CONFIG_TARGET_IMX8QXP_MEK */
 };
 
 static struct tamper_pin_cfg tamper_pin_list_active_config[] = {
+#ifdef CONFIG_TARGET_IMX8QXP_MEK
 	{SC_P_CSI_D00, 0x1a000060}, /* Tamp_Out0 */ /* Sel tamper + OD */
 	{SC_P_CSI_D05, 0x1c000060}, /* Tamp_In0 */ /* Sel tamper + OD input */
+#endif /* CONFIG_TARGET_IMX8QXP_MEK */
 };
 
 #define TAMPER_PIN_LIST_CHOSEN tamper_pin_list_default_config
@@ -282,11 +304,11 @@ static u32 ptr_value(u32 *_p)
 	return (_p) ? *_p : 0xdeadbeef;
 }
 
-static int check_write_secvio_config(u32 id, u32 *_p1, u32 *_p2,
+static sc_err_t check_write_secvio_config(u32 id, u32 *_p1, u32 *_p2,
 					  u32 *_p3, u32 *_p4, u32 *_p5,
 					  u32 _cnt)
 {
-	int sciErr = 0;
+	sc_err_t sciErr = 0;
 	u32 d1 = ptr_value(_p1);
 	u32 d2 = ptr_value(_p2);
 	u32 d3 = ptr_value(_p3);
@@ -323,12 +345,13 @@ exit:
 
 static int apply_snvs_config(struct snvs_security_sc_conf *cnf)
 {
-	int sciErr = 0;
+	sc_err_t sciErr = 0;
 
 	debug("%s\n", __func__);
 
 	debug("Applying config:\n"
 		  "\thp.lock = 0x%.8x\n"
+		  "\thp.secvio_intcfg = 0x%.8x\n"
 		  "\thp.secvio_ctl = 0x%.8x\n"
 		  "\tlp.lock = 0x%.8x\n"
 		  "\tlp.secvio_ctl = 0x%.8x\n"
@@ -347,6 +370,7 @@ static int apply_snvs_config(struct snvs_security_sc_conf *cnf)
 		  "\tlp.act_tamper_routing_ctl1 = 0x%.8x\n"
 		  "\tlp.act_tamper_routing_ctl2 = 0x%.8x\n",
 			cnf->hp.lock,
+			cnf->hp.secvio_intcfg,
 			cnf->hp.secvio_ctl,
 			cnf->lp.lock,
 			cnf->lp.secvio_ctl,
@@ -423,22 +447,31 @@ static int apply_snvs_config(struct snvs_security_sc_conf *cnf)
 	if (sciErr != SC_ERR_NONE)
 		goto exit;
 
-	/* Lock access */
-	sciErr = SC_CHECK_WRITE1(SC_CONF_OFFSET_OF(hp.lock), &cnf->hp.lock);
+	sciErr = SC_CHECK_WRITE1(SC_CONF_OFFSET_OF(hp.secvio_intcfg),
+				 &cnf->hp.secvio_intcfg);
 	if (sciErr != SC_ERR_NONE)
 		goto exit;
 
-	sciErr = SC_CHECK_WRITE1(SC_CONF_OFFSET_OF(lp.lock), &cnf->lp.lock);
-	if (sciErr != SC_ERR_NONE)
-		goto exit;
+	/* Lock access */
+	if (cnf->hp.lock) {
+		sciErr = SC_CHECK_WRITE1(SC_CONF_OFFSET_OF(hp.lock), &cnf->hp.lock);
+		if (sciErr != SC_ERR_NONE)
+			goto exit;
+	}
+
+	if (cnf->lp.lock) {
+		sciErr = SC_CHECK_WRITE1(SC_CONF_OFFSET_OF(lp.lock), &cnf->lp.lock);
+		if (sciErr != SC_ERR_NONE)
+			goto exit;
+	}
 
 exit:
 	return (sciErr == SC_ERR_NONE) ? 0 : -EIO;
 }
 
-static int dgo_write(u32 _id, u8 _access, u32 *_pdata)
+static sc_err_t dgo_write(u32 _id, u8 _access, u32 *_pdata)
 {
-	int sciErr = sc_seco_secvio_dgo_config(-1, _id, _access, _pdata);
+	sc_err_t sciErr = sc_seco_secvio_dgo_config(-1, _id, _access, _pdata);
 
 	if (sciErr != SC_ERR_NONE) {
 		printf("Failed to set dgo configuration\n");
@@ -450,7 +483,7 @@ static int dgo_write(u32 _id, u8 _access, u32 *_pdata)
 
 static int apply_snvs_dgo_config(struct snvs_dgo_conf *cnf)
 {
-	int sciErr = 0;
+	sc_err_t sciErr = 0;
 
 	debug("%s\n", __func__);
 
@@ -497,9 +530,9 @@ exit:
 	return (sciErr == SC_ERR_NONE) ? 0 : -EIO;
 }
 
-static int pad_write(u32 _pad, u32 _value)
+static sc_err_t pad_write(u32 _pad, u32 _value)
 {
-	int sciErr = sc_pad_set(-1, _pad, _value);
+	sc_err_t sciErr = sc_pad_set(-1, _pad, _value);
 
 	if (sciErr != SC_ERR_NONE) {
 		printf("Failed to set pad configuration\n");
@@ -511,7 +544,7 @@ static int pad_write(u32 _pad, u32 _value)
 
 static int apply_tamper_pin_list_config(struct tamper_pin_cfg *confs, u32 size)
 {
-	int sciErr = 0;
+	sc_err_t sciErr = 0;
 	u32 idx;
 
 	debug("%s\n", __func__);
@@ -606,6 +639,7 @@ exit:
 static char snvs_cfg_help_text[] =
 	"snvs_cfg\n"
 	"\thp.lock\n"
+	"\thp.secvio_intcfg\n"
 	"\thp.secvio_ctl\n"
 	"\tlp.lock\n"
 	"\tlp.secvio_ctl\n"
@@ -626,7 +660,7 @@ static char snvs_cfg_help_text[] =
 	"\n"
 	"ALL values should be in hexadecimal format";
 
-#define NB_REGISTERS 18
+#define NB_REGISTERS 19
 static int do_snvs_cfg(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	int err = 0;
@@ -638,6 +672,7 @@ static int do_snvs_cfg(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		return CMD_RET_USAGE;
 
 	conf.hp.lock = simple_strtoul(argv[++idx], NULL, 16);
+	conf.hp.secvio_intcfg = simple_strtoul(argv[++idx], NULL, 16);
 	conf.hp.secvio_ctl = simple_strtoul(argv[++idx], NULL, 16);
 	conf.lp.lock = simple_strtoul(argv[++idx], NULL, 16);
 	conf.lp.secvio_ctl = simple_strtoul(argv[++idx], NULL, 16);
@@ -741,8 +776,6 @@ U_BOOT_CMD(tamper_pin_cfg,
 
 static char snvs_clear_status_help_text[] =
 	"snvs_clear_status\n"
-	"\tHPSR\n"
-	"\tHPSVSR\n"
 	"\tLPSR\n"
 	"\tLPTDSR\n"
 	"\n"
@@ -752,7 +785,7 @@ static char snvs_clear_status_help_text[] =
 static int do_snvs_clear_status(cmd_tbl_t *cmdtp, int flag, int argc,
 				  char *const argv[])
 {
-	int sciErr = 0;
+	sc_err_t sciErr = 0;
 	u32 idx = 0;
 
 	struct snvs_security_sc_conf conf = {0};
@@ -798,6 +831,7 @@ static int do_snvs_sec_status(cmd_tbl_t *cmdtp, int flag, int argc,
 	u32 data[5];
 
 	u32 pads[] = {
+#ifdef CONFIG_TARGET_IMX8QXP_MEK
 		SC_P_CSI_D00,
 		SC_P_CSI_D01,
 		SC_P_CSI_D02,
@@ -808,6 +842,7 @@ static int do_snvs_sec_status(cmd_tbl_t *cmdtp, int flag, int argc,
 		SC_P_CSI_D07,
 		SC_P_CSI_HSYNC,
 		SC_P_CSI_VSYNC,
+#endif /* CONFIG_TARGET_IMX8QXP_MEK */
 	};
 
 	u32 fuses[] = {
