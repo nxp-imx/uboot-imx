@@ -16,6 +16,7 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/sci/sci.h>
 #include <asm/arch/imx8-pins.h>
+#include <asm/arch/snvs_security_sc.h>
 #include <asm/arch/iomux.h>
 #include <asm/arch/sys_proto.h>
 #include <usb.h>
@@ -325,6 +326,15 @@ int board_init(void)
 
 #if defined(CONFIG_USB) && defined(CONFIG_USB_TCPC)
 	setup_typec();
+#endif
+
+#ifdef CONFIG_SNVS_SEC_SC_AUTO
+	{
+		int ret = snvs_security_sc_init();
+
+		if (ret)
+			return ret;
+	}
 #endif
 
 	return 0;
