@@ -106,7 +106,7 @@ struct fcb_block {
 
 	/* The swap position of main area in spare area */
 	u32 spare_offset;
-#if CONFIG_IS_ENABLED(MX7) || CONFIG_IS_ENABLED(MX6)
+#if defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8M)
 	u32 onfi_sync_enable;
 	u32 onfi_sync_speed;
 	u32 onfi_sync_nand_data;
