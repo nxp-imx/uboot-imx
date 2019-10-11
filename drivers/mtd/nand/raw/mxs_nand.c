@@ -858,7 +858,7 @@ static int mxs_nand_ecc_write_page(struct mtd_info *mtd,
 	d->cmd.pio_words[4] = (dma_addr_t)nand_info->data_buf;
 	d->cmd.pio_words[5] = (dma_addr_t)nand_info->oob_buf;
 
-	if (is_mx7() && nand_info->en_randomizer) {
+	if ((is_mx7() && nand_info->en_randomizer) || (is_imx8m() && nand_info->en_randomizer)) {
 		d->cmd.pio_words[2] |= GPMI_ECCCTRL_RANDOMIZER_ENABLE |
 				       GPMI_ECCCTRL_RANDOMIZER_TYPE2;
 		/*
@@ -1457,7 +1457,7 @@ err:
 }
 #endif
 
-#if CONFIG_IS_ENABLED(MX7) || CONFIG_IS_ENABLED(MX6)
+#if defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8M)
 /*
  * Read NAND layout for FCB block generation.
  */
