@@ -112,7 +112,7 @@
 #endif
 
 #ifdef CONFIG_NAND_BOOT
-#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs) "
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)"
 #endif
 
 /*
@@ -312,7 +312,6 @@
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 
 #ifdef CONFIG_CMD_UBI
-#define CONFIG_MTD_DEVICE
 #endif
 #endif /* CONFIG_NAND_MXS */
 
