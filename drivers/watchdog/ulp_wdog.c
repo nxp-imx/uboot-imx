@@ -33,6 +33,8 @@ struct wdog_regs {
 #define WDGCS1_WDGE                      (1<<7)
 #define WDGCS1_WDGUPDATE                 (1<<5)
 
+#define WDGCS2_RCS                       (1<<2)
+#define WDGCS2_ULK                       (1<<3)
 #define WDGCS2_FLG                       (1<<6)
 
 #define WDG_BUS_CLK                      (0x0)
@@ -68,6 +70,9 @@ void hw_watchdog_init(void)
 	__raw_writel(UNLOCK_WORD1, &wdog->cnt);
 	dmb();
 
+	/* Wait WDOG Unlock */
+	while (!(readl(&wdog->cs2) & WDGCS2_ULK));
+
 	val = readb(&wdog->cs2);
 	val |= WDGCS2_FLG;
 	writeb(val, &wdog->cs2);
@@ -77,6 +82,9 @@ void hw_watchdog_init(void)
 
 	writeb(WDG_LPO_CLK, &wdog->cs2);/* setting 1-kHz clock source */
 	writeb((WDGCS1_WDGE | WDGCS1_WDGUPDATE), &wdog->cs1);/* enable counter running */
+
+	/* Wait WDOG reconfiguration */
+	while (!(readl(&wdog->cs2) & WDGCS2_RCS));
 
 	hw_watchdog_reset();
 }
@@ -90,11 +98,17 @@ void reset_cpu(ulong addr)
 	__raw_writel(UNLOCK_WORD1, &wdog->cnt);
 	dmb();
 
+	/* Wait WDOG Unlock */
+	while (!(readl(&wdog->cs2) & WDGCS2_ULK));
+
 	hw_watchdog_set_timeout(5); /* 5ms timeout */
 	writel(0, &wdog->win);
 
 	writeb(WDG_LPO_CLK, &wdog->cs2);/* setting 1-kHz clock source */
 	writeb(WDGCS1_WDGE, &wdog->cs1);/* enable counter running */
+
+	/* Wait WDOG reconfiguration */
+	while (!(readl(&wdog->cs2) & WDGCS2_RCS));
 
 	hw_watchdog_reset();
 
