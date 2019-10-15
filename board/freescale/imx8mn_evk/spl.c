@@ -17,7 +17,11 @@
 #include <asm/arch/ddr.h>
 
 #include <power/pmic.h>
+#ifdef CONFIG_POWER_PCA9450
+#include <power/pca9450.h>
+#else
 #include <power/bd71837.h>
+#endif
 #include <asm/mach-imx/gpio.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <fsl_esdhc_imx.h>
@@ -149,6 +153,40 @@ int board_mmc_getcd(struct mmc *mmc)
 
 #ifdef CONFIG_POWER
 #define I2C_PMIC	0
+#ifdef CONFIG_POWER_PCA9450
+int power_init_board(void)
+{
+	struct pmic *p;
+	int ret;
+
+	ret = power_pca9450b_init(I2C_PMIC);
+	if (ret)
+		printf("power init failed");
+	p = pmic_get("PCA9450");
+	pmic_probe(p);
+
+	/* BUCKxOUT_DVS0/1 control BUCK123 output */
+	pmic_reg_write(p, PCA9450_BUCK123_DVS, 0x29);
+
+	/* increase VDD_SOC/VDD_DRAM to typical value 0.95V before first DRAM access */
+	/* Set DVS1 to 0.85v for suspend */
+	/* Enable DVS control through PMIC_STBY_REQ and set B1_ENMODE=1 (ON by PMIC_ON_REQ=H) */
+	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS0, 0x1C);
+	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS1, 0x14);
+	pmic_reg_write(p, PCA9450_BUCK1CTRL, 0x59);
+
+	/* set VDD_SNVS_0V8 from default 0.85V */
+	pmic_reg_write(p, PCA9450_LDO2CTRL, 0xC0);
+
+	/* enable LDO4 to 1.2v */
+	pmic_reg_write(p, PCA9450_LDO4CTRL, 0x44);
+
+	/* set WDOG_B_CFG to cold reset */
+	pmic_reg_write(p, PCA9450_RESET_CTRL, 0xA1);
+
+	return 0;
+}
+#else
 int power_init_board(void)
 {
 	struct pmic *p;
@@ -189,6 +227,7 @@ int power_init_board(void)
 
 	return 0;
 }
+#endif
 #endif
 
 void spl_board_init(void)
