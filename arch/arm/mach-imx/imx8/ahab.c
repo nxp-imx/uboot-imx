@@ -74,7 +74,7 @@ int authenticate_os_container(ulong addr)
 	debug("container length %u\n", length);
 	memcpy((void *)SEC_SECURE_RAM_BASE, (const void *)addr, ALIGN(length, CONFIG_SYS_CACHELINE_SIZE));
 
-	err = sc_seco_authenticate(-1, SC_MISC_AUTH_CONTAINER, SECO_LOCAL_SEC_SEC_SECURE_RAM_BASE);
+	err = sc_seco_authenticate(-1, SC_SECO_AUTH_CONTAINER, SECO_LOCAL_SEC_SEC_SECURE_RAM_BASE);
 	if (err) {
 		printf("Error: authenticate container hdr failed, return %d\n", err);
 		ret = -EIO;
@@ -112,7 +112,7 @@ int authenticate_os_container(ulong addr)
 			goto exit;
 		}
 
-		err = sc_seco_authenticate(-1, SC_MISC_VERIFY_IMAGE, (1 << i));
+		err = sc_seco_authenticate(-1, SC_SECO_VERIFY_IMAGE, (1 << i));
 		if (err) {
 			printf("Error: authenticate img %d failed, return %d\n", i, err);
 			ret = -EIO;
@@ -129,7 +129,7 @@ int authenticate_os_container(ulong addr)
 	}
 
 exit:
-	if (sc_seco_authenticate(-1, SC_MISC_REL_CONTAINER, 0) != SC_ERR_NONE)
+	if (sc_seco_authenticate(-1, SC_SECO_REL_CONTAINER, 0) != SC_ERR_NONE)
 		printf("Error: release container failed!\n");
 
 	return ret;
