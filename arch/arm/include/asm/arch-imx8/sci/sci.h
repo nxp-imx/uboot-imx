@@ -12,6 +12,8 @@
 #include <asm/arch/sci/svc/pm/api.h>
 #include <asm/arch/sci/svc/rm/api.h>
 #include <asm/arch/sci/svc/seco/api.h>
+#include <asm/arch/sci/svc/irq/api.h>
+#include <asm/arch/sci/svc/timer/api.h>
 #include <asm/arch/sci/rpc.h>
 #include <dt-bindings/soc/imx_rsrc.h>
 #include <linux/errno.h>
@@ -72,6 +74,7 @@ int sc_pm_set_clock_parent(sc_ipc_t ipc, sc_rsrc_t resource, sc_pm_clk_t clk,
 int sc_pm_cpu_start(sc_ipc_t ipc, sc_rsrc_t resource, sc_bool_t enable,
 		    sc_faddr_t address);
 sc_bool_t sc_pm_is_partition_started(sc_ipc_t ipc, sc_rm_pt_t pt);
+int sc_pm_resource_reset(sc_ipc_t ipc, sc_rsrc_t resource);
 
 /* MISC API */
 int sc_misc_set_control(sc_ipc_t ipc, sc_rsrc_t resource,
@@ -112,6 +115,9 @@ int sc_pad_set(sc_ipc_t ipc, sc_pad_t pad, u32 val);
 /* SMMU API */
 int sc_rm_set_master_sid(sc_ipc_t ipc, sc_rsrc_t resource, sc_rm_sid_t sid);
 
+/* Timer API */
+int sc_timer_set_wdog_window(sc_ipc_t ipc, sc_timer_wdog_time_t window);
+
 /* SECO API */
 int sc_seco_authenticate(sc_ipc_t ipc, sc_seco_auth_cmd_t cmd,
 			 sc_faddr_t addr);
@@ -122,5 +128,13 @@ void sc_seco_build_info(sc_ipc_t ipc, u32 *version, u32 *commit);
 int sc_seco_get_event(sc_ipc_t ipc, u8 idx, u32 *event);
 int sc_seco_gen_key_blob(sc_ipc_t ipc, u32 id, sc_faddr_t load_addr,
 			 sc_faddr_t export_addr, u16 max_size);
+int sc_seco_get_mp_key(sc_ipc_t ipc, sc_faddr_t dst_addr,
+			u16 dst_size);
+int sc_seco_update_mpmr(sc_ipc_t ipc, sc_faddr_t addr,
+			u8 size, u8 lock);
+int sc_seco_get_mp_sign(sc_ipc_t ipc, sc_faddr_t msg_addr,
+			u16 msg_size, sc_faddr_t dst_addr, u16 dst_size);
+int sc_seco_secvio_dgo_config(sc_ipc_t ipc, u8 id, u8 access,
+	u32 *data);
 
 #endif
