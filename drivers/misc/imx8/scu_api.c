@@ -174,6 +174,28 @@ sc_bool_t sc_pm_is_partition_started(sc_ipc_t ipc, sc_rm_pt_t pt)
 	return !!result;
 }
 
+int sc_pm_resource_reset(sc_ipc_t ipc, sc_rsrc_t resource)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	int size = sizeof(struct sc_rpc_msg_s);
+	struct sc_rpc_msg_s msg;
+	int ret;
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SIZE(&msg) = 2U;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_PM);
+	RPC_FUNC(&msg) = (u8)(PM_FUNC_RESOURCE_RESET);
+
+	RPC_U16(&msg, 0U) = (u16)(resource);
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: resource:%d res:%d\n",
+		       __func__, resource, RPC_R8(&msg));
+
+	return ret;
+}
+
 /* PAD */
 int sc_pad_set(sc_ipc_t ipc, sc_pad_t pad, u32 val)
 {
@@ -801,6 +823,28 @@ int sc_pm_get_resource_power_mode(sc_ipc_t ipc, sc_rsrc_t resource,
 	return ret;
 }
 
+int sc_timer_set_wdog_window(sc_ipc_t ipc, sc_timer_wdog_time_t window)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	struct sc_rpc_msg_s msg;
+	int size = sizeof(struct sc_rpc_msg_s);
+	int ret;
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SIZE(&msg) = 2U;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_TIMER);
+	RPC_FUNC(&msg) = (u8)(TIMER_FUNC_SET_WDOG_WINDOW);
+
+	RPC_U32(&msg, 0U) = (u32)(window);
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: window:%u: res:%d\n",
+		       __func__, window, RPC_R8(&msg));
+
+	return ret;
+}
+
 int sc_seco_authenticate(sc_ipc_t ipc, sc_seco_auth_cmd_t cmd,
 			 sc_faddr_t addr)
 {
@@ -944,6 +988,37 @@ int sc_seco_gen_key_blob(sc_ipc_t ipc, u32 id, sc_faddr_t load_addr,
 	if (ret) {
 		printf("%s: id: %u, load_addr 0x%llx, export_addr 0x%llx, res:%d\n",
 		       __func__, id, load_addr, export_addr, RPC_R8(&msg));
+	}
+
+	return ret;
+}
+
+int sc_seco_secvio_dgo_config(sc_ipc_t ipc, uint8_t id, uint8_t access,
+	uint32_t *data)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	struct sc_rpc_msg_s msg;
+	int size = sizeof(struct sc_rpc_msg_s);
+	int ret;
+
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SIZE(&msg) = 3U;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_SECO);
+	RPC_FUNC(&msg) = (u8)(SECO_FUNC_SECVIO_DGO_CONFIG);
+
+	RPC_U32(&msg, 0U) = (u32)(*data);
+	RPC_U8(&msg, 4U) = (u8)(id);
+	RPC_U8(&msg, 5U) = (u8)(access);
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s, id:0x%x, access:%x, res:%d\n",
+			__func__, id, access, RPC_R8(&msg));
+
+	if (data != NULL)
+	{
+	    *data = RPC_U32(&msg, 0U);
 	}
 
 	return ret;

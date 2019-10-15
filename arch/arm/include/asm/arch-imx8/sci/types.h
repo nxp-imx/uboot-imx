@@ -19,6 +19,7 @@ typedef u64 sc_ipc_t;
 /* Defines for common frequencies */
 #define SC_32KHZ            32768U   /* 32KHz */
 #define SC_10MHZ         10000000U   /* 10MHz */
+#define SC_16MHZ         16000000U   /* 16MHz */
 #define SC_20MHZ         20000000U   /* 20MHz */
 #define SC_25MHZ         25000000U   /* 25MHz */
 #define SC_27MHZ         27000000U   /* 27MHz */
@@ -32,6 +33,7 @@ typedef u64 sc_ipc_t;
 #define SC_83MHZ         83333333U   /* 83MHz */
 #define SC_84MHZ         84375000U   /* 84.37MHz */
 #define SC_100MHZ       100000000U   /* 100MHz */
+#define SC_114MHZ       114000000U   /* 114MHz */
 #define SC_125MHZ       125000000U   /* 125MHz */
 #define SC_133MHZ       133333333U   /* 133MHz */
 #define SC_135MHZ       135000000U   /* 135MHz */
@@ -52,29 +54,43 @@ typedef u64 sc_ipc_t;
 #define SC_372MHZ       372000000U   /* 372MHz */
 #define SC_375MHZ       375000000U   /* 375MHz */
 #define SC_400MHZ       400000000U   /* 400MHz */
+#define SC_465MHZ       465000000U   /* 465MHz */
 #define SC_500MHZ       500000000U   /* 500MHz */
 #define SC_594MHZ       594000000U   /* 594MHz */
 #define SC_625MHZ       625000000U   /* 625MHz */
 #define SC_640MHZ       640000000U   /* 640MHz */
+#define SC_648MHZ       648000000U   /* 648MHz */
 #define SC_650MHZ       650000000U   /* 650MHz */
 #define SC_667MHZ       666666667U   /* 667MHz */
 #define SC_675MHZ       675000000U   /* 675MHz */
 #define SC_700MHZ       700000000U   /* 700MHz */
 #define SC_720MHZ       720000000U   /* 720MHz */
 #define SC_750MHZ       750000000U   /* 750MHz */
+#define SC_753MHZ       753000000U   /* 753MHz */
+#define SC_793MHZ       793000000U   /* 793MHz */
 #define SC_800MHZ       800000000U   /* 800MHz */
 #define SC_850MHZ       850000000U   /* 850MHz */
+#define SC_858MHZ       858000000U   /* 858MHz */
 #define SC_900MHZ       900000000U   /* 900MHz */
+#define SC_953MHZ       953000000U   /* 953MHz */
+#define SC_963MHZ       963000000U   /* 963MHz */
 #define SC_1000MHZ     1000000000U   /* 1GHz */
 #define SC_1060MHZ     1060000000U   /* 1.06GHz */
+#define SC_1068MHZ     1068000000U   /* 1.068GHz */
+#define SC_1121MHZ     1121000000U   /* 1.121GHz */
+#define SC_1173MHZ     1173000000U   /* 1.173GHz */
 #define SC_1188MHZ     1188000000U   /* 1.188GHz */
 #define SC_1260MHZ     1260000000U   /* 1.26GHz */
+#define SC_1278MHZ     1278000000U   /* 1.278GHz */
 #define SC_1280MHZ     1280000000U   /* 1.28GHz */
 #define SC_1300MHZ     1300000000U   /* 1.3GHz */
+#define SC_1313MHZ     1313000000U   /* 1.313GHz */
+#define SC_1345MHZ     1345000000U   /* 1.345GHz */
 #define SC_1400MHZ     1400000000U   /* 1.4GHz */
 #define SC_1500MHZ     1500000000U   /* 1.5GHz */
 #define SC_1600MHZ     1600000000U   /* 1.6GHz */
 #define SC_1800MHZ     1800000000U   /* 1.8GHz */
+#define SC_1860MHZ     1860000000U   /* 1.86GHz */
 #define SC_2000MHZ     2000000000U   /* 2.0GHz */
 #define SC_2112MHZ     2112000000U   /* 2.12GHz */
 
@@ -89,6 +105,7 @@ typedef u64 sc_ipc_t;
 #define SC_144MHZ       144000000U   /* 144MHz */
 #define SC_192MHZ       192000000U   /* 192MHz */
 #define SC_211MHZ       211200000U   /* 211.2MHz */
+#define SC_228MHZ       228000000U   /* 233MHz */
 #define SC_240MHZ       240000000U   /* 240MHz */
 #define SC_264MHZ       264000000U   /* 264MHz */
 #define SC_352MHZ       352000000U   /* 352MHz */
@@ -96,11 +113,13 @@ typedef u64 sc_ipc_t;
 #define SC_384MHZ       384000000U   /* 384MHz */
 #define SC_396MHZ       396000000U   /* 396MHz */
 #define SC_432MHZ       432000000U   /* 432MHz */
+#define SC_456MHZ       456000000U   /* 466MHz */
 #define SC_480MHZ       480000000U   /* 480MHz */
 #define SC_600MHZ       600000000U   /* 600MHz */
 #define SC_744MHZ       744000000U   /* 744MHz */
 #define SC_792MHZ       792000000U   /* 792MHz */
 #define SC_864MHZ       864000000U   /* 864MHz */
+#define SC_912MHZ       912000000U   /* 912MHz */
 #define SC_960MHZ       960000000U   /* 960MHz */
 #define SC_1056MHZ     1056000000U   /* 1056MHz */
 #define SC_1104MHZ     1104000000U   /* 1104MHz */
@@ -113,7 +132,6 @@ typedef u64 sc_ipc_t;
 #define SC_755MHZ       755250000U   /* 755.25MHz */
 
 /* Defines for type widths */
-#define SC_FADDR_W      36U          /* Width of sc_faddr_t */
 #define SC_BOOL_W       1U           /* Width of sc_bool_t */
 #define SC_ERR_W        4U           /* Width of sc_err_t */
 #define SC_RSRC_W       10U          /* Width of sc_rsrc_t */
@@ -195,7 +213,9 @@ typedef u64 sc_ipc_t;
 #define SC_C_IPG_STOP_MODE              53U
 #define SC_C_IPG_STOP_ACK               54U
 #define SC_C_SYNC_CTRL                  55U
-#define SC_C_LAST                       56U
+#define SC_C_OFS_AUDIO_ALT              56U
+#define SC_C_DSP_BYP                    57U
+#define SC_C_LAST                       58U
 
 
 #define SC_P_ALL        ((sc_pad_t)UINT16_MAX)   /* All pads */
