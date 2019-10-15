@@ -13,6 +13,8 @@
 #include <asm/arch/sci/svc/pm/api.h>
 #include <asm/arch/sci/svc/rm/api.h>
 #include <asm/arch/sci/svc/seco/api.h>
+#include <asm/arch/sci/svc/irq/api.h>
+#include <asm/arch/sci/svc/timer/api.h>
 #include <asm/arch/sci/rpc.h>
 #include <dt-bindings/soc/imx_rsrc.h>
 #include <linux/errno.h>
