@@ -17,7 +17,7 @@
 #include "fsl-imx8mn.dtsi"
 
 / {
-	model = "NXP i.MX8MNano EVK board";
+	model = "NXP i.MX8MNano DDR4 EVK board";
 	compatible = "fsl,imx8mn-evk", "fsl,imx8mn";
 
 	chosen {
