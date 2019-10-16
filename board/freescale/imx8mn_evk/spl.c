@@ -210,6 +210,9 @@ int power_init_board(void)
 	pmic_reg_write(p, BD71837_BUCK1_VOLT_RUN, 0x19);
 #endif
 
+	/* Set VDD_SOC 0.85v for suspend */
+	pmic_reg_write(p, BD71837_BUCK1_VOLT_SUSP, 0xf);
+
 #ifdef CONFIG_IMX8M_DDR4
 	/* increase NVCC_DRAM_1V2 to 1.2v for DDR4 */
 	pmic_reg_write(p, BD71837_BUCK8_VOLT, 0x28);
