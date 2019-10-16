@@ -134,5 +134,11 @@ int sc_seco_get_event(sc_ipc_t ipc, uint8_t idx,
 	uint32_t *event);
 int sc_seco_gen_key_blob(sc_ipc_t ipc, uint32_t id,
 	sc_faddr_t load_addr, sc_faddr_t export_addr, uint16_t max_size);
+int sc_seco_get_mp_key(sc_ipc_t ipc, sc_faddr_t dst_addr,
+			uint16_t dst_size);
+int sc_seco_update_mpmr(sc_ipc_t ipc, sc_faddr_t addr,
+			uint8_t size, uint8_t lock);
+int sc_seco_get_mp_sign(sc_ipc_t ipc, sc_faddr_t msg_addr,
+			uint16_t msg_size, sc_faddr_t dst_addr, uint16_t dst_size);
 
 #endif
