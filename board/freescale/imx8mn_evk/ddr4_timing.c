@@ -763,6 +763,7 @@ struct dram_cfg_param ddr_fsp0_cfg[] = {
 	{ 0xd0000, 0x1 },
 };
 
+
 /* P1 message block paremeter for training firmware */
 struct dram_cfg_param ddr_fsp1_cfg[] = {
 	{ 0xd0000, 0x0 },
