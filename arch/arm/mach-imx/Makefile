@@ -39,7 +39,7 @@ obj-y	+= cpu.o
 obj-$(CONFIG_SYS_I2C_MXC) += i2c-mxv7.o
 obj-y += mmc_env.o
 endif
-ifeq ($(SOC),$(filter $(SOC),mx7 imx8m))
+ifeq ($(SOC),$(filter $(SOC),mx7 imx8m imx8))
 ifneq ($(CONFIG_SPL_BUILD),y)
 obj-$(CONFIG_FSL_MFGPROT) += cmd_mfgprot.o
 endif
