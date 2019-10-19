@@ -159,12 +159,26 @@ config CMD_NANDBCB
 
 config FSL_MFGPROT
 	bool "Support the 'mfgprot' command"
-	depends on IMX_HAB && ARCH_MX7
+	depends on IMX_HAB || AHAB_BOOT
+	select IMX_CAAM_MFG_PROT if ARCH_MX7
+	select IMX_SECO_MFG_PROT if ARCH_IMX8
 	help
 	  This option enables the manufacturing protection command
 	  which can be used has a protection feature for Manufacturing
 	  process. With this tool is possible to authenticate the
 	  chip to the OEM's server.
+
+config IMX_CAAM_MFG_PROT
+	bool "Support the manufacturing protection with CAAM U-Boot driver"
+	help
+	  This enables the manufacturing protection feature with the U-Boot
+	  CAAM driver. This option is only available on iMX7D/S.
+
+config IMX_SECO_MFG_PROT
+	bool "Support the manufacturing protection with SECO API"
+	help
+	  This enables the manufacturing protection feature with the SECO API.
+	  This option is only available on iMX8/8x series.
 
 config DBG_MONITOR
 	bool "Enable the AXI debug monitor"
