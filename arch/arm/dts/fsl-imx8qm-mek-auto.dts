@@ -28,6 +28,10 @@
 	};
 };
 
+&gpio1 {
+	status = "disabled";
+};
+
 &gpio2 {
 	status = "disabled";
 };
