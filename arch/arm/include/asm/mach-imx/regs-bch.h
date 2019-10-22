@@ -36,6 +36,7 @@ struct mxs_bch_regs {
 	mxs_reg_32(hw_bch_flash2layout1)
 	mxs_reg_32(hw_bch_flash3layout0)
 	mxs_reg_32(hw_bch_flash3layout1)
+	mxs_reg_32(hw_bch_debug0)
 	mxs_reg_32(hw_bch_dbgkesread)
 	mxs_reg_32(hw_bch_dbgcsferead)
 	mxs_reg_32(hw_bch_dbgsyndegread)
