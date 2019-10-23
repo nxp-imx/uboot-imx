@@ -122,7 +122,6 @@ struct dram_cfg_param ddr_ddrc_cfg[] = {
 
 /* PHY Initialize Configuration */
 struct dram_cfg_param ddr_ddrphy_cfg[] = {
-	{0x000d0000, 0x00000000},
 	{0x000100a0, 0x00000000},
 	{0x000100a1, 0x00000001},
 	{0x000100a2, 0x00000002},
@@ -271,8 +270,6 @@ struct dram_cfg_param ddr_ddrphy_cfg[] = {
 	{0x002200c7, 0x00000021},
 	{0x002200ca, 0x00000024},
 	{0x002200cc, 0x000001f7},
-	{0x00020060, 0x00000002},
-	{0x000d0000, 0x00000001},
 };
 
 /* ddr phy trained csr */
