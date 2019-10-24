@@ -421,7 +421,6 @@ bool is_usb_boot(void)
 	return get_boot_device() == USB_BOOT;
 }
 
-#ifdef CONFIG_FSL_FASTBOOT
 #ifdef CONFIG_SERIAL_TAG
 void get_board_serial(struct tag_serialnr *serialnr)
 {
@@ -434,4 +433,3 @@ void get_board_serial(struct tag_serialnr *serialnr)
 	serialnr->high = (fuse->cfg2 & 0xFFFF) + ((fuse->cfg3 & 0xFFFF) << 16);
 }
 #endif /*CONFIG_SERIAL_TAG*/
-#endif /*CONFIG_FSL_FASTBOOT*/
