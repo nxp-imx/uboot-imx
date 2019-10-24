@@ -280,7 +280,7 @@ static void imx_set_wdog_powerdown(bool enable)
 	writew(enable, &wdog3->wmcr);
 }
 
-#ifdef CONFIG_SECURE_BOOT
+#if defined(CONFIG_SECURE_BOOT) && defined(CONFIG_IMX8MQ)
 static bool is_hdmi_fused(void) {
 	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
 	struct fuse_bank *bank = &ocotp->bank[1];
@@ -345,7 +345,7 @@ int arch_cpu_init(void)
 		clock_init();
 		imx_set_wdog_powerdown(false);
 
-#ifdef CONFIG_SECURE_BOOT
+#if defined(CONFIG_SECURE_BOOT) && defined(CONFIG_IMX8MQ)
 		secure_lockup();
 #endif
 		if (is_imx8md() || is_imx8mmd() || is_imx8mmdl() || is_imx8mms() || is_imx8mmsl() ||
