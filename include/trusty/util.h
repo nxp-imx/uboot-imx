@@ -75,8 +75,7 @@ const char* trusty_basename(const char* str);
  */
 #define trusty_info(message, ...)             \
   do {                                        \
-    trusty_printf(trusty_basename(__FILE__)); \
-    trusty_printf(": INFO ");                 \
+    trusty_printf("INFO ");                 \
     trusty_printf(message, ##__VA_ARGS__);    \
   } while(0)
 
