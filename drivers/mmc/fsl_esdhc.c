@@ -636,9 +636,6 @@ static void set_sysctl(struct fsl_esdhc_priv *priv, struct mmc *mmc, uint clock)
 		sdhc_clk >>= 1;
 	}
 
-	if (clock < mmc->cfg->f_min)
-		clock = mmc->cfg->f_min;
-
 	if (sdhc_clk / 16 > clock) {
 		for (; pre_div < 256; pre_div *= 2)
 			if ((sdhc_clk / pre_div) <= (clock * 16))
@@ -971,6 +968,7 @@ static int esdhc_set_ios_common(struct fsl_esdhc_priv *priv, struct mmc *mmc)
 {
 	struct fsl_esdhc *regs = priv->esdhc_regs;
 	int ret __maybe_unused;
+	uint clock;
 
 #ifdef CONFIG_FSL_ESDHC_USE_PERIPHERAL_CLK
 	/* Select to use peripheral clock */
@@ -979,8 +977,12 @@ static int esdhc_set_ios_common(struct fsl_esdhc_priv *priv, struct mmc *mmc)
 	esdhc_clock_control(priv, true);
 #endif
 	/* Set the clock speed */
-	if (priv->clock != mmc->clock)
-		set_sysctl(priv, mmc, mmc->clock);
+	clock = mmc->clock;
+	if (clock < mmc->cfg->f_min)
+		clock = mmc->cfg->f_min;
+
+	if (priv->clock != clock)
+		set_sysctl(priv, mmc, clock);
 
 #ifdef MMC_SUPPORTS_TUNING
 	if (mmc->clk_disable) {
