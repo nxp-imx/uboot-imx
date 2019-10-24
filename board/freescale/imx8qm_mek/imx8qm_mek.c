@@ -441,7 +441,7 @@ int board_late_init(void)
 	board_late_mmc_env_init();
 #endif
 
-#ifdef IMX_LOAD_HDMI_FIMRWARE
+#ifdef CONFIG_IMX_LOAD_HDMI_FIMRWARE
 	char *end_of_uboot;
 	char command[256];
 	end_of_uboot = (char *)(ulong)(CONFIG_SYS_TEXT_BASE + _end_ofs + fdt_totalsize(gd->fdt_blob));
