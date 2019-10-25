@@ -31,7 +31,7 @@
 		gpio = <&gpio2 19 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		startup-delay-us = <100>;
-		off-on-delay-us = <12000>;
+		u-boot,off-on-delay-us = <12000>;
 	};
 };
 
