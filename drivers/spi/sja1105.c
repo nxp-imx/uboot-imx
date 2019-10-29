@@ -538,8 +538,38 @@ int do_sja_regs(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
+int do_sja_probe(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	char  *cp = 0;
+	struct sja_parms sjap;
+
+	sjap.cs = 0;
+	sjap.bus = CONFIG_DEFAULT_SPI_BUS;
+
+	if (argc == 2) {
+		sjap.bus = simple_strtoul(argv[1], &cp, 10);
+		if (*cp == ':') {
+			sjap.cs = simple_strtoul(cp + 1, &cp, 10);
+		} else {
+			sjap.cs = sjap.bus;
+			sjap.bus = CONFIG_DEFAULT_SPI_BUS;
+		}
+	}
+	printf("Probe SJA1105\n");
+	/* For debug purposes force SJA1105 initialization*/
+	sja1105_probe(sjap.cs, sjap.bus);
+	sja1105_reset_ports(sjap.cs, sjap.bus);
+	/* end of force SJA1105 initialization*/
+
+	return 0;
+}
+
 U_BOOT_CMD(sja, 2, 1, do_sja_regs,
 	   "SJA1105 register dump",
 	   "[<bus>:]<cs> - View registers for SJA\n"
 );
 
+U_BOOT_CMD(sja_probe, 2, 1, do_sja_probe,
+	   "SJA1105 probe device",
+	   "[<bus>:]<cs> - Probe SJA and load configuration\n"
+);
