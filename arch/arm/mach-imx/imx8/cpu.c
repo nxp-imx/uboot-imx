@@ -481,6 +481,27 @@ int mmc_get_env_dev(void)
 
 #define MEMSTART_ALIGNMENT  SZ_2M /* Align the memory start with 2MB */
 
+static sc_faddr_t reserve_optee_shm(sc_faddr_t addr_start)
+{
+	/* OPTEE has a share memory at its top address,
+	 * ATF assigns the share memory to non-secure os partition for share with kernel
+	 * We should not add this share memory to DDR bank, as this memory is dedicated for
+	 * optee, optee driver will memremap it and can't be used by system malloc.
+	 */
+
+	sc_faddr_t optee_start = boot_pointer[0];
+	sc_faddr_t optee_size = boot_pointer[1];
+
+	if (optee_size && optee_start <= addr_start &&
+		addr_start < optee_start + optee_size) {
+		debug("optee 0x%llx 0x%llx, addr_start 0x%llx\n",
+			optee_start, optee_size, addr_start);
+		return optee_start + optee_size;
+	}
+
+	return addr_start;
+}
+
 static int get_owned_memreg(sc_rm_mr_t mr, sc_faddr_t *addr_start,
 			    sc_faddr_t *addr_end)
 {
@@ -496,7 +517,7 @@ static int get_owned_memreg(sc_rm_mr_t mr, sc_faddr_t *addr_start,
 			return -EINVAL;
 		}
 		debug("0x%llx -- 0x%llx\n", start, end);
-		*addr_start = start;
+		*addr_start = reserve_optee_shm(start);
 		*addr_end = end;
 
 		return 0;
