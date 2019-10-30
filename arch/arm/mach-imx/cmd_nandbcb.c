@@ -674,7 +674,7 @@ static int do_nandbcb_dump(int argc, char * const argv[])
 			continue;
 		}
 		bab_block_table[i] = 0;
-		if (memcpy(dump_nand_fcb + i, &dump_fill_fcb, sizeof(dump_fill_fcb)) != 0) {
+		if (memcmp(dump_nand_fcb + i, &dump_fill_fcb, sizeof(dump_fill_fcb)) == 0) {
 			printf("mtd: found FCB%d candidate version %08x @%d:0x%x\n",
 			       i, dump_nand_fcb[i].version, i, dump_fcb_off[i]);
 		} else {
@@ -686,7 +686,7 @@ static int do_nandbcb_dump(int argc, char * const argv[])
 		if (mtd_block_isbad(dump_mtd, (loff_t)(dump_mtd->erasesize * i)))
 			continue;
 
-		if (memcpy(dump_nand_dbbt + i, &dump_fill_dbbt, sizeof(dump_fill_dbbt)) != 0) {
+		if (memcmp(dump_nand_dbbt + i, &dump_fill_dbbt, sizeof(dump_fill_dbbt)) == 0) {
 			printf("mtd: DBBT%d found\n", i);
 			printf("mtd: Valid DBBT%d found @%d:0x%x\n", i, i, dump_dbbt_off[i]);
 
