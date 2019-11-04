@@ -93,11 +93,11 @@
 
 #define JAILHOUSE_ENV \
 	"jh_mmcboot=" \
-		"setenv fdt_file fsl-imx8qxp-mek-root.dtb;"\
+		"setenv fdt_file imx8qxp-mek-root.dtb;"\
 		"setenv boot_os 'scu_rm dtb ${fdt_addr}; booti ${loadaddr} - ${fdt_addr};'; " \
 		"run mmcboot; \0" \
 	"jh_netboot=" \
-		"setenv fdt_file fsl-imx8qxp-mek-root.dtb;"\
+		"setenv fdt_file imx8qxp-mek-root.dtb;"\
 		"setenv boot_os 'scu_rm dtb ${fdt_addr}; booti ${loadaddr} - ${fdt_addr};'; " \
 		"run netboot; \0"
 
@@ -106,7 +106,7 @@
             "xenlinux_bootargs= \0" \
             "xenlinux_console=hvc0 earlycon=xen\0" \
             "xenlinux_addr=0x9e000000\0" \
-	    "dom0fdt_file=fsl-imx8qxp-mek-dom0.dtb\0" \
+	    "dom0fdt_file=imx8qxp-mek-dom0.dtb\0" \
             "xenboot_common=" \
                 "${get_cmd} ${loadaddr} xen;" \
                 "${get_cmd} ${fdt_addr} ${dom0fdt_file};" \

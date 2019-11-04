@@ -397,14 +397,14 @@ int board_late_init(void)
 	if (fdt_file && !strcmp(fdt_file, "undefined")) {
 #ifdef CONFIG_TARGET_IMX8DX_MEK
 		if (m4_boot)
-			env_set("fdt_file", "fsl-imx8dx-mek-rpmsg.dtb");
+			env_set("fdt_file", "imx8dx-mek-rpmsg.dtb");
 		else
-			env_set("fdt_file", "fsl-imx8dx-mek.dtb");
+			env_set("fdt_file", "imx8dx-mek.dtb");
 #else
 		if (m4_boot)
-			env_set("fdt_file", "fsl-imx8qxp-mek-rpmsg.dtb");
+			env_set("fdt_file", "imx8qxp-mek-rpmsg.dtb");
 		else
-			env_set("fdt_file", "fsl-imx8qxp-mek.dtb");
+			env_set("fdt_file", "imx8qxp-mek.dtb");
 #endif
 	}
 

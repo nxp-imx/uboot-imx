@@ -78,12 +78,12 @@
  */
 #define JAILHOUSE_ENV \
 	"jh_clk= \0 " \
-	"jh_mmcboot=mw 0x303d0518 0xff; setenv fdt_file fsl-imx8mm-evk-root.dtb;" \
+	"jh_mmcboot=mw 0x303d0518 0xff; setenv fdt_file imx8mm-evk-root.dtb;" \
 		"setenv jh_clk clk_ignore_unused; " \
 			   "if run loadimage; then " \
 				   "run mmcboot; " \
 			   "else run jh_netboot; fi; \0" \
-	"jh_netboot=mw 0x303d0518 0xff; setenv fdt_file fsl-imx8mm-evk-root.dtb; setenv jh_clk clk_ignore_unused; run netboot; \0 "
+	"jh_netboot=mw 0x303d0518 0xff; setenv fdt_file imx8mm-evk-root.dtb; setenv jh_clk clk_ignore_unused; run netboot; \0 "
 
 
 #define CONFIG_MFG_ENV_SETTINGS \
