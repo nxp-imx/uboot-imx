@@ -401,7 +401,8 @@ void detail_board_ddr_info(void)
  */
 void reset_cpu(ulong addr)
 {
-	/* TODO */
+	sc_pm_reboot(-1, SC_PM_RESET_TYPE_COLD);
+	while(1);
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP

@@ -78,6 +78,7 @@ int sc_pm_set_clock_parent(sc_ipc_t ipc, sc_rsrc_t resource, sc_pm_clk_t clk,
 			sc_pm_clk_parent_t parent);
 int sc_pm_cpu_start(sc_ipc_t ipc, sc_rsrc_t resource, sc_bool_t enable,
 			sc_faddr_t address);
+void sc_pm_reboot(sc_ipc_t ipc, sc_pm_reset_type_t type);
 sc_bool_t sc_pm_is_partition_started(sc_ipc_t ipc, sc_rm_pt_t pt);
 
 /* MISC API */
