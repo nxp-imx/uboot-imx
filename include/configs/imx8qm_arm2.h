@@ -135,7 +135,7 @@
             "xenlinux_bootargs= \0" \
             "xenlinux_console=hvc0 earlycon=xen\0" \
             "xenlinux_addr=0x9e000000\0" \
-	    "dom0fdt_file=fsl-imx8qm-lpddr4-arm2-dom0.dtb\0" \
+	    "dom0fdt_file=imx8qm-lpddr4-arm2-dom0.dtb\0" \
             "xenboot_common=" \
                 "${get_cmd} ${loadaddr} xen;" \
                 "${get_cmd} ${fdt_addr} ${dom0fdt_file};" \
