@@ -249,9 +249,9 @@ int board_late_init(void)
 
 	if (fdt_file && !strcmp(fdt_file, "undefined")) {
 		if (m4_boot)
-			env_set("fdt_file", "fsl-imx8dxl-phantom-mek-rpmsg.dtb");
+			env_set("fdt_file", "imx8dxl-phantom-mek-rpmsg.dtb");
 		else
-			env_set("fdt_file", "fsl-imx8dxl-phantom-mek.dtb");
+			env_set("fdt_file", "imx8dxl-phantom-mek.dtb");
 	}
 
 #ifdef CONFIG_ENV_IS_IN_MMC
