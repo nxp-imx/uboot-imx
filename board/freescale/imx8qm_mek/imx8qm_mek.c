@@ -432,7 +432,8 @@ void board_quiesce_devices(void)
  */
 void reset_cpu(void)
 {
-	/* TODO */
+	sc_pm_reboot(-1, SC_PM_RESET_TYPE_COLD);
+	while(1);
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
