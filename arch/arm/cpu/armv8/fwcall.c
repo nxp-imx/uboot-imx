@@ -131,7 +131,7 @@ int do_poweroff(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 }
 #endif
 
-#ifdef CONFIG_PSCI_RESET
+#if defined(CONFIG_PSCI_RESET) && !defined(CONFIG_SPL_BUILD)
 void reset_misc(void)
 {
 	psci_system_reset();
@@ -156,4 +156,4 @@ void __efi_runtime EFIAPI efi_reset_system(
 	while (1) { }
 }
 #endif /* CONFIG_EFI_LOADER */
-#endif /* CONFIG_PSCI_RESET */
+#endif /* CONFIG_PSCI_RESET && !CONFIG_SPL_BUILD */
