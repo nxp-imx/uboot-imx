@@ -42,6 +42,7 @@
 #endif
 
 #define CONFIG_CMD_BOOTA
+#define CONFIG_CMD_MMC_RPMB 1
 #define CONFIG_SUPPORT_RAW_INITRD
 #define CONFIG_SERIAL_TAG
 
