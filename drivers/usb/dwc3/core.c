@@ -542,6 +542,20 @@ static int dwc3_core_init(struct dwc3 *dwc)
 
 	dwc3_writel(dwc->regs, DWC3_GCTL, reg);
 
+	/*
+	 * Disable Park Mode:
+	 * Park mode can only be used in host mode with only a single
+	 * async endpoint is active, but which has a known issue cause
+	 * USB3.0 HC may die when read and write at the same time,
+	 * considering this mode only can improve the delay between
+	 * bursts in case only one endpoint is active, it's not really
+	 * useful, so disable it, Synopsys will release a formal STAR
+	 * and disable it by default in next IP release.
+	 */
+	reg = dwc3_readl(dwc->regs, DWC3_GUCTL1);
+	reg |= DWC3_GUCTL1_PARKMODE_DISABLE_SS;
+	dwc3_writel(dwc->regs, DWC3_GUCTL1, reg);
+
 	ret = dwc3_alloc_scratch_buffers(dwc);
 	if (ret)
 		goto err0;
