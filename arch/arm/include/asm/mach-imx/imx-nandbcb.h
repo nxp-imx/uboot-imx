@@ -9,9 +9,11 @@
 
 #define FCB_FINGERPRINT		0x20424346      /* 'FCB' */
 #define FCB_VERSION_1		0x01000000
+#define FCB_FINGERPRINT_OFF	0x4      	/* FCB fingerprint offset*/
 
-#define DBBT_FINGERPRINT2	0x54424244	/* 'DBBT' */
+#define DBBT_FINGERPRINT	0x54424244	/* 'DBBT' */
 #define DBBT_VERSION_1		0x01000000
+#define DBBT_FINGERPRINT_OFF	0x4      	/* DBBT fingerprint offset*/
 
 struct dbbt_block {
 	u32 checksum;	/* reserved on i.MX6 */
@@ -106,7 +108,8 @@ struct fcb_block {
 
 	/* The swap position of main area in spare area */
 	u32 spare_offset;
-#if defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8M)
+#if !defined(CONFIG_MX6) || defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL)\
+|| defined(CONFIG_MX6ULL)
 	u32 onfi_sync_enable;
 	u32 onfi_sync_speed;
 	u32 onfi_sync_nand_data;
