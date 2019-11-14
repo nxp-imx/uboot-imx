@@ -80,6 +80,7 @@ int sc_pm_cpu_start(sc_ipc_t ipc, sc_rsrc_t resource, sc_bool_t enable,
 			sc_faddr_t address);
 void sc_pm_reboot(sc_ipc_t ipc, sc_pm_reset_type_t type);
 sc_bool_t sc_pm_is_partition_started(sc_ipc_t ipc, sc_rm_pt_t pt);
+int sc_pm_resource_reset(sc_ipc_t ipc, sc_rsrc_t resource);
 
 /* MISC API */
 int sc_misc_set_control(sc_ipc_t ipc, sc_rsrc_t resource,
@@ -140,5 +141,7 @@ int sc_seco_update_mpmr(sc_ipc_t ipc, sc_faddr_t addr,
 			uint8_t size, uint8_t lock);
 int sc_seco_get_mp_sign(sc_ipc_t ipc, sc_faddr_t msg_addr,
 			uint16_t msg_size, sc_faddr_t dst_addr, uint16_t dst_size);
+int sc_seco_secvio_dgo_config(sc_ipc_t ipc, uint8_t id, uint8_t access,
+	uint32_t *data);
 
 #endif

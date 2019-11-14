@@ -11,7 +11,7 @@
 /* Defines */
 
 #define SCFW_API_VERSION_MAJOR  1U
-#define SCFW_API_VERSION_MINOR  13U
+#define SCFW_API_VERSION_MINOR  15U
 
 #define SC_RPC_VERSION          1U
 
@@ -22,9 +22,13 @@
 #define RPC_SVC(MSG)            ((MSG)->svc)
 #define RPC_FUNC(MSG)           ((MSG)->func)
 #define RPC_R8(MSG)             ((MSG)->func)
+#define RPC_I64(MSG, IDX)       ((s64)(RPC_U32((MSG), (IDX))) << 32ULL) \
+                                    | (s64)(RPC_U32((MSG), (IDX) + 4U))
 #define RPC_I32(MSG, IDX)       ((MSG)->DATA.i32[(IDX) / 4U])
 #define RPC_I16(MSG, IDX)       ((MSG)->DATA.i16[(IDX) / 2U])
 #define RPC_I8(MSG, IDX)        ((MSG)->DATA.i8[(IDX)])
+#define RPC_U64(MSG, IDX)       ((u64)(RPC_U32((MSG), (IDX))) << 32ULL) \
+                                    | (u64)(RPC_U32((MSG), (IDX) + 4U))
 #define RPC_U32(MSG, IDX)       ((MSG)->DATA.u32[(IDX) / 4U])
 #define RPC_U16(MSG, IDX)       ((MSG)->DATA.u16[(IDX) / 2U])
 #define RPC_U8(MSG, IDX)        ((MSG)->DATA.u8[(IDX)])
@@ -87,6 +91,7 @@ struct sc_rpc_msg_s {
 #define PM_FUNC_REBOOT_CONTINUE 	25U
 #define PM_FUNC_CPU_START			11U
 #define PM_FUNC_CPU_RESET 			23U
+#define PM_FUNC_RESOURCE_RESET 		29U
 #define PM_FUNC_IS_PARTITION_STARTED 24U
 
 /* MISC RPC */
@@ -197,6 +202,7 @@ struct sc_rpc_msg_s {
 #define SECO_FUNC_SAB_MSG 23U /* Index for sc_seco_sab_msg() RPC call */
 #define SECO_FUNC_SECVIO_ENABLE 25U /* Index for sc_seco_secvio_enable() RPC call */
 #define SECO_FUNC_SECVIO_CONFIG 26U /* Index for sc_seco_secvio_config() RPC call */
+#define SECO_FUNC_SECVIO_DGO_CONFIG 27U /* Index for sc_seco_secvio_dgo_config() RPC call */
 
 /* IRQ RPC */
 #define IRQ_FUNC_UNKNOWN 0 /* Unknown function */
