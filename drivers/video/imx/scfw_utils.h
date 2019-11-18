@@ -91,11 +91,11 @@ do { \
 do { \
 	sc_err_t _ret; \
 	if (g_debug_scfw) \
-			printf("(%4d) sc_misc_seco_authenticate ->  cmd %d addr %d\n",\
+			printf("(%4d) sc_seco_authenticate ->  cmd %d addr %d\n",\
 			       __LINE__, __cmd__, __addr__);\
-	_ret = sc_misc_seco_authenticate(__ipcHndl__, __cmd__, __addr__); \
+	_ret = sc_seco_authenticate(__ipcHndl__, __cmd__, __addr__); \
 	if (_ret != SC_ERR_NONE) \
-		printf("(%4d)>> sc_misc_seco_authenticate cmd %d addr %d (error = %d)\n", \
+		printf("(%4d)>> sc_seco_authenticate cmd %d addr %d (error = %d)\n", \
 			__LINE__, __cmd__, __addr__, _ret); \
 } while (0)
 

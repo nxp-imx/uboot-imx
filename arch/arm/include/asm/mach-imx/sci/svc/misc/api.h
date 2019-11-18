@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
- * Copyright 2017-2018 NXP
+ * Copyright 2017-2019 NXP
  *
  * SPDX-License-Identifier:     GPL-2.0+
  */
@@ -9,7 +9,7 @@
  * Header file containing the public API for the System Controller (SC)
  * Miscellaneous (MISC) function.
  *
- * @addtogroup MISC_SVC (SVC) Miscellaneous Service
+ * @addtogroup MISC_SVC MISC: Miscellaneous Service
  *
  * Module for the Miscellaneous (MISC) service.
  *
@@ -54,18 +54,6 @@
 /*@}*/
 
 /*!
- * @name Defines for sc_misc_seco_auth_cmd_t
- */
-/*@{*/
-#define SC_MISC_AUTH_CONTAINER          0U   /*!< Authenticate container */
-#define SC_MISC_VERIFY_IMAGE            1U   /*!< Verify image */
-#define SC_MISC_REL_CONTAINER           2U   /*!< Release container */
-#define SC_MISC_SECO_AUTH_SECO_FW       3U   /*!< SECO Firmware */
-#define SC_MISC_SECO_AUTH_HDMI_TX_FW    4U   /*!< HDMI TX Firmware */
-#define SC_MISC_SECO_AUTH_HDMI_RX_FW    5U   /*!< HDMI RX Firmware */
-/*@}*/
-
-/*!
  * @name Defines for sc_misc_bt_t
  */
 /*@{*/
@@ -87,11 +75,6 @@ typedef uint8_t sc_misc_dma_group_t;
  * This type is used report boot status.
  */
 typedef uint8_t sc_misc_boot_status_t;
-
-/*!
- * This type is used to issue SECO authenticate commands.
- */
-typedef uint8_t sc_misc_seco_auth_cmd_t;
 
 /*!
  * This type is used report boot status.
@@ -202,87 +185,6 @@ sc_err_t sc_misc_set_dma_group(sc_ipc_t ipc, sc_rsrc_t resource,
 /* @} */
 
 /*!
- * @name Security Functions
- * @{
- */
-
-/*!
- * @deprecated Use sc_seco_image_load() instead.
- */
-sc_err_t sc_misc_seco_image_load(sc_ipc_t ipc, sc_faddr_t addr_src,
-    sc_faddr_t addr_dst, uint32_t len, sc_bool_t fw);
-
-/*!
- * @deprecated Use sc_seco_authenticate() instead.
- */
-sc_err_t sc_misc_seco_authenticate(sc_ipc_t ipc,
-    sc_misc_seco_auth_cmd_t cmd, sc_faddr_t addr);
-
-/*!
- * @deprecated Use sc_seco_fuse_write() instead.
- */
-sc_err_t sc_misc_seco_fuse_write(sc_ipc_t ipc, sc_faddr_t addr);
-
-/*!
- * @deprecated Use sc_seco_enable_debug() instead.
- */
-sc_err_t sc_misc_seco_enable_debug(sc_ipc_t ipc, sc_faddr_t addr);
-
-/*!
- * @deprecated Use sc_seco_forward_lifecycle() instead.
- */
-sc_err_t sc_misc_seco_forward_lifecycle(sc_ipc_t ipc, uint32_t change);
-
-/*!
- * @deprecated Use sc_seco_return_lifecycle() instead.
- */
-sc_err_t sc_misc_seco_return_lifecycle(sc_ipc_t ipc, sc_faddr_t addr);
-
-/*!
- * @deprecated Use sc_seco_build_info() instead.
- */
-void sc_misc_seco_build_info(sc_ipc_t ipc, uint32_t *version,
-    uint32_t *commit);
-
-/*!
- * @deprecated Use sc_seco_chip_info() instead.
- */
-sc_err_t sc_misc_seco_chip_info(sc_ipc_t ipc, uint16_t *lc,
-    uint16_t *monotonic, uint32_t *uid_l, uint32_t *uid_h);
-
-/*!
- * @deprecated Use sc_seco_attest_mode() instead.
- */
-sc_err_t sc_misc_seco_attest_mode(sc_ipc_t ipc, uint32_t mode);
-
-/*!
- * @deprecated Use sc_seco_attest() instead.
- */
-sc_err_t sc_misc_seco_attest(sc_ipc_t ipc, uint64_t nonce);
-
-/*!
- * @deprecated Use sc_seco_get_attest_pkey() instead.
- */
-sc_err_t sc_misc_seco_get_attest_pkey(sc_ipc_t ipc, sc_faddr_t addr);
-
-/*!
- * @deprecated Use sc_seco_get_attest_sign() instead.
- */
-sc_err_t sc_misc_seco_get_attest_sign(sc_ipc_t ipc, sc_faddr_t addr);
-
-/*!
- * @deprecated Use sc_seco_attest_verify() instead.
- */
-sc_err_t sc_misc_seco_attest_verify(sc_ipc_t ipc, sc_faddr_t addr);
-
-/*!
- * @deprecated Use sc_seco_commit() instead.
- */
-sc_err_t sc_misc_seco_commit(sc_ipc_t ipc, uint32_t *info);
-
-/* @} */
-
-/*!
  * @name Debug Functions
  * @{
  */
@@ -327,7 +229,7 @@ void sc_misc_build_info(sc_ipc_t ipc, uint32_t *build,
  * @param[out]    sv_maj      pointer to return major part of SCFW version
  * @param[out]    sv_min      pointer to return minor part of SCFW version
  *
- * Client verion is the version of the API ported to and used by the caller.
+ * Client version is the version of the API ported to and used by the caller.
  * SCFW version is the version of the SCFW binary running on the CPU.
  *
  * Note a major version difference indicates a break in compatibility.
@@ -433,7 +335,7 @@ sc_err_t sc_misc_otp_fuse_read(sc_ipc_t ipc, uint32_t word, uint32_t *val);
  * The command is passed as is to SECO. SECO uses part of the
  * \a word parameter to indicate if the fuse should be locked
  * after programming. See the "Write common fuse" section of
- * the Security Reference Manual (SRM) for more info.
+ * the SECO API Reference Guide for more info.
  *
  * @return Returns and error code (SC_ERR_NONE = success).
  *

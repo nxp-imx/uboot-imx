@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
- * Copyright 2017-2018 NXP
+ * Copyright 2017-2019 NXP
  *
  * SPDX-License-Identifier:     GPL-2.0+
  */
@@ -9,7 +9,7 @@
  * Header file containing the public API for the System Controller (SC)
  * Interrupt (IRQ) function.
  *
- * @addtogroup IRQ_SVC (SVC) Interrupt Service
+ * @addtogroup IRQ_SVC IRQ: Interrupt Service
  *
  * Module for the Interrupt (IRQ) service.
  *
@@ -91,6 +91,8 @@
 #define SC_IRQ_USR1              (1U << 2U)    /*!< User defined 1 */
 #define SC_IRQ_USR2              (1U << 3U)    /*!< User defined 2 */
 #define SC_IRQ_BC_PAD            (1U << 4U)    /*!< Pad wakeup (broadcast to all partitions) */
+#define SC_IRQ_SW_WAKE           (1U << 5U)    /*!< Software requested wake */
+#define SC_IRQ_SECVIO            (1U << 6U)    /*!< Security violation */
 /*@}*/
 
 /*!

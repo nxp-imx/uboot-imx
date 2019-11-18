@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
- * Copyright 2017-2018 NXP
+ * Copyright 2017-2019 NXP
  *
  * SPDX-License-Identifier:     GPL-2.0+
  */
@@ -10,7 +10,7 @@
  * Resource Management (RM) function. This includes functions for
  * partitioning resources, pads, and memory regions.
  *
- * @addtogroup RM_SVC (SVC) Resource Management Service
+ * @addtogroup RM_SVC RM: Resource Management Service
  *
  * Module for the Resource Management (RM) service.
  *
@@ -336,7 +336,7 @@ sc_err_t sc_rm_move_all(sc_ipc_t ipc, sc_rm_pt_t pt_src, sc_rm_pt_t pt_dst,
  *
  * This action resets the resource's master and peripheral attributes.
  * Privilege attribute will be PASSTHRU, security attribute will be
- * ASSERT if the partition si secure and NEGATE if it is not, and
+ * ASSERT if the partition is secure and NEGATE if it is not, and
  * masters will defaulted to SMMU bypass. Access permissions will reset
  * to SEC_RW for the owning partition only for secure partitions, FULL for
  * non-secure. Default is no access by other partitions.
@@ -586,15 +586,18 @@ sc_err_t sc_rm_get_resource_info(sc_ipc_t ipc, sc_rsrc_t resource,
  * - SC_ERR_UNAVAILABLE if memory region table is full (no more allocation
  *   space)
  *
- * The area covered by the memory region must currently be owned by the caller.
- * By default, the new region will have access permission set to allow the
- * caller to access.
+ * This function will create a new memory region. The area covered by the
+ * new region must already exist in a memory region owned by the caller. The
+ * result will be two memory regions, the new one overlapping the existing
+ * one. The new region has higher priority. See the XRDC2 MRC documentation
+ * for how it resolves access permissions in this case. By default, the new
+ * region will have access permission set to allow the caller to access.
  */
 sc_err_t sc_rm_memreg_alloc(sc_ipc_t ipc, sc_rm_mr_t *mr,
     sc_faddr_t addr_start, sc_faddr_t addr_end);
 
 /*!
- * This function requests that the SC split a memory region.
+ * This function requests that the SC split an existing memory region.
  *
  * @param[in]     ipc         IPC handle
  * @param[in]     mr          handle of memory region to split
@@ -615,7 +618,9 @@ sc_err_t sc_rm_memreg_alloc(sc_ipc_t ipc, sc_rm_mr_t *mr,
  * - SC_ERR_UNAVAILABLE if memory region table is full (no more allocation
  *   space)
  *
- * Note the new region must start or end on the split region.
+ * This function will take an existing region and split it into two,
+ * non-overlapping regions. Note the new region must start or end on the
+ * split region.
  */
 sc_err_t sc_rm_memreg_split(sc_ipc_t ipc, sc_rm_mr_t mr,
     sc_rm_mr_t *mr_ret, sc_faddr_t addr_start, sc_faddr_t addr_end);
@@ -641,7 +646,9 @@ sc_err_t sc_rm_memreg_split(sc_ipc_t ipc, sc_rm_mr_t mr,
  *   space)
  *
  * This function finds the memory region containing the address range.
- * It then splits it as required and returns the extracted region.
+ * It then splits it as required and returns the extracted region. The
+ * result is 2-3 non-overlapping regions, depending on how the new region
+ * aligns with existing regions.
  */
 sc_err_t sc_rm_memreg_frag(sc_ipc_t ipc, sc_rm_mr_t *mr_ret,
     sc_faddr_t addr_start, sc_faddr_t addr_end);
@@ -697,6 +704,12 @@ sc_err_t sc_rm_find_memreg(sc_ipc_t ipc, sc_rm_mr_t *mr,
  *
  * @return Returns an error code (SC_ERR_NONE = success).
  *
+ * This function assigns a memory region to a partition. This partition is then
+ * the owner. All regions always have an owner (one owner). The owner
+ * has various rights to make API calls affecting the region. Ownership
+ * does not imply access to the memory itself (that is based on access
+ * rights).
+ *
  * Return errors:
  * - SC_PARM if arguments out of range or invalid,
  * - SC_ERR_NOACCESS if caller's partition is not the \a mr owner or parent
@@ -715,11 +728,9 @@ sc_err_t sc_rm_assign_memreg(sc_ipc_t ipc, sc_rm_pt_t pt, sc_rm_mr_t mr);
  *                            applied for
  * @param[in]     perm        permissions to apply to \a mr for \a pt
  *
- * This function assigned a memory region to a partition. This partition is then
- * the owner. All regions always have an owner (one owner). The owner
- * has various rights to make API calls affecting the region. Ownership
- * does not imply access to the memory itself (that is based on access
- * rights).
+ * This operates on the memory region specified. If SC_RM_PT_ALL is specified
+ * then it operates on all the regions owned by the caller that exist at the
+ * time of the call.
  *
  * @return Returns an error code (SC_ERR_NONE = success).
  *

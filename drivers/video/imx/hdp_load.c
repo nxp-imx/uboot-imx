@@ -94,7 +94,7 @@ int do_hdp(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
 		s = env_get("hdp_authenticate_fw");
 		if (s && !strcmp(s, "yes"))
-			SC_MISC_AUTH(ipch, SC_MISC_SECO_AUTH_HDMI_TX_FW, 0);
+			SC_MISC_AUTH(ipch, SC_SECO_AUTH_HDMI_TX_FW, 0);
 
 		display_enable_clocks(OFF);
 		printf("Loading hdp firmware Complete\n");

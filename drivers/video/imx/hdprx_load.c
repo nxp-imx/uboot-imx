@@ -59,7 +59,7 @@ int do_hdprx(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
 		s = env_get("hdprx_authenticate_fw");
 		if (s && !strcmp(s, "yes"))
-			SC_MISC_AUTH(ipch, SC_MISC_SECO_AUTH_HDMI_RX_FW, 0);
+			SC_MISC_AUTH(ipch, SC_SECO_AUTH_HDMI_RX_FW, 0);
 		printf("Loading hdp rx firmware Complete\n");
 		/* do not turn off hdmi power or firmware load will be lost */
 	} else {
