@@ -22,11 +22,12 @@
 		reg = <0x60000000 0x40000000>;
 	};
 
-	backlight {
-		compatible = "pwm-backlight";
-		pwms = <&tpm4 1 50000 0>;
-		brightness-levels = <0 20 25 30 35 40 100>;
-		default-brightness-level = <6>;
+	backlight: backlight {
+		compatible = "gpio-backlight";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_backlight>;
+		gpios = <&gpio_ptf 2 GPIO_ACTIVE_HIGH>;
+		default-on;
 		status = "okay";
 	};
 
@@ -36,6 +37,25 @@
 		reset-delay-us = <1000>;
 		#reset-cells = <0>;
 	};
+
+	dsi_host: dsi-host {
+		compatible = "northwest,mipi-dsi";
+		status = "okay";
+	};
+
+	rm68200_panel {
+		compatible = "raydium,rm68200";
+		reset-gpios = <&gpio_ptc 19 GPIO_ACTIVE_LOW>;
+		backlight = <&backlight>;
+		status = "okay";
+
+		port {
+			rm68200_from_dsim: endpoint {
+				remote-endpoint = <&dsim_to_rm68200>;
+			};
+		};
+	};
+
 	regulators {
 		compatible = "simple-bus";
 		#address-cell = <1>;
@@ -94,32 +114,21 @@
 };
 
 &lcdif {
+	#address-cells = <1>;
+	#size-cells = <0>;
 	status = "okay";
-	disp-dev = "mipi_dsi_northwest";
 	display = <&display0>;
 
 	display0: display@0 {
-		bits-per-pixel = <16>;
+		bits-per-pixel = <24>;
 		bus-width = <24>;
+	};
 
-		display-timings {
-			native-mode = <&timing0>;
-			timing0: timing0 {
-			clock-frequency = <9200000>;
-			hactive = <480>;
-			vactive = <272>;
-			hfront-porch = <8>;
-			hback-porch = <4>;
-			hsync-len = <41>;
-			vback-porch = <2>;
-			vfront-porch = <4>;
-			vsync-len = <10>;
+	lcdif_disp0: port@0 {
+		reg = <0>;
 
-			hsync-active = <0>;
-			vsync-active = <0>;
-			de-active = <1>;
-			pixelclk-active = <0>;
-			};
+		lcdif_to_dsim: endpoint {
+			remote-endpoint = <&dsim_from_lcdif>;
 		};
 	};
 };
@@ -131,18 +140,26 @@
 };
 
 &mipi_dsi {
+	#address-cells = <1>;
+	#size-cells = <0>;
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&pinctrl_mipi_dsi_reset>;
 	pinctrl-1 = <&pinctrl_mipi_dsi_reset>;
 	lcd_panel = "TRULY-WVGA-TFT3P5581E";
 	resets = <&mipi_dsi_reset>;
 	status = "okay";
-};
 
-&tpm4 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_pwm0>;
-	status = "okay";
+	port@0 {
+		dsim_from_lcdif: endpoint {
+			remote-endpoint = <&lcdif_to_dsim>;
+		};
+	};
+
+	port@1 {
+		dsim_to_rm68200: endpoint {
+			remote-endpoint = <&rm68200_from_dsim>;
+		};
+	};
 };
 
 &usbotg1 {
@@ -197,9 +214,9 @@
 		bias-pull-up;
 	};
 
-	pinctrl_pwm0: pwm0grp {
+	pinctrl_backlight: backlight_grp {
 		fsl,pins = <
-			IMX7ULP_PAD_PTF2__TPM4_CH1	0x2
+			IMX7ULP_PAD_PTF2__PTF2      0x20000
 		>;
 	};
 
