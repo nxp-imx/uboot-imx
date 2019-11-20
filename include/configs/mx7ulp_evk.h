@@ -74,6 +74,7 @@
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"console=ttyLP0\0" \
+	"splashimage=0x78000000\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
 	"fdt_file=" CONFIG_DEFAULT_FDT_FILE ".dtb\0" \
@@ -191,4 +192,18 @@
 #else
 #define TEE_ENV "tee=no\0"
 #endif
+
+#ifdef CONFIG_DM_VIDEO
+#define CONFIG_VIDEO_MXS
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_SPLASH_SCREEN
+#define CONFIG_SPLASH_SCREEN_ALIGN
+#define CONFIG_CMD_BMP
+#define CONFIG_BMP_16BPP
+#define CONFIG_BMP_24BPP
+#define CONFIG_BMP_32BPP
+#define CONFIG_VIDEO_BMP_RLE8
+#define CONFIG_VIDEO_BMP_LOGO
+#endif
+
 #endif	/* __CONFIG_H */
