@@ -330,6 +330,15 @@ static int rm68200_panel_probe(struct udevice *dev)
 	return 0;
 }
 
+static int rm68200_panel_disable(struct udevice *dev)
+{
+	struct rm68200_panel_priv *priv = dev_get_priv(dev);
+
+	dm_gpio_set_value(&priv->reset, true);
+
+	return 0;
+}
+
 static const struct panel_ops rm68200_panel_ops = {
 	.enable_backlight = rm68200_panel_enable_backlight,
 	.get_display_timing = rm68200_panel_get_display_timing,
@@ -347,6 +356,7 @@ U_BOOT_DRIVER(rm68200_panel) = {
 	.ops			  = &rm68200_panel_ops,
 	.ofdata_to_platdata	  = rm68200_panel_ofdata_to_platdata,
 	.probe			  = rm68200_panel_probe,
+	.remove			  = rm68200_panel_disable,
 	.platdata_auto_alloc_size = sizeof(struct mipi_dsi_panel_plat),
 	.priv_auto_alloc_size	= sizeof(struct rm68200_panel_priv),
 };
