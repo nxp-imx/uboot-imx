@@ -326,6 +326,88 @@ void hab_caam_clock_enable(unsigned char enable)
 }
 #endif
 
+void enable_mipi_dsi_clk(unsigned char enable)
+{
+	if (enable) {
+		pcc_clock_enable(PER_CLK_DSI, false);
+
+		/* mipi dsi escape clock range is 40-80Mhz, we expect to set it to about 60 Mhz
+		 * To avoid PCD issue, we select parent clock with lowest frequency
+		 * NIC1_CLK = 1584000khz, frac = 1, div = 5,  output = 63.360Mhz
+		 */
+		pcc_clock_sel(PER_CLK_DSI, SCG_NIC1_CLK);
+		pcc_clock_div_config(PER_CLK_DSI, 1, 5);
+
+		pcc_clock_enable(PER_CLK_DSI, true);
+	} else {
+		pcc_clock_enable(PER_CLK_DSI, false);
+	}
+}
+
+void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq_in_khz)
+{
+	/* Scan the parent clock to find best fit clock, whose generate actual frequence <= freq
+	*   Otherwise, the higher actual freq may introduce some problem
+	*   1. The real frequency exceeds max framerate that screen supports
+	*   2. The DSI PHY clock depends on the lcdif clock, so the higher lcdif clock may violate
+	*       DSI PHY clock requirement
+	*/
+	u8 pcd, best_pcd = 0;
+	u32 parent, frac, rate, parent_rate;
+	u32 best_parent = 0, best_frac = 0, best = 0;
+
+	static enum scg_clk clksrc_plat[] = {
+		SCG_NIC1_BUS_CLK,
+		SCG_NIC1_CLK,
+		SCG_DDR_CLK,
+		SCG_APLL_PFD2_CLK,
+		SCG_APLL_PFD1_CLK,
+		SCG_APLL_PFD0_CLK,
+		USB_PLL_OUT,
+	};
+
+	pcc_clock_enable(PER_CLK_LCDIF, false);
+
+	for (parent = 0; parent < ARRAY_SIZE(clksrc_plat); parent++) {
+		parent_rate = scg_clk_get_rate(clksrc_plat[parent]);
+		if (!parent_rate)
+			continue;
+
+		parent_rate = parent_rate / 1000; /* Change to khz*/
+
+		for (pcd = 0; pcd < 8; pcd++) {
+			for (frac = 0; frac < 2; frac++) {
+				if (pcd == 0 && frac == 1)
+					continue;
+
+				rate = parent_rate * (frac + 1) / (pcd + 1);
+				if (rate > freq_in_khz)
+					continue;
+
+				if (best == 0 || rate > best) {
+					best = rate;
+					best_parent = parent;
+					best_frac = frac;
+					best_pcd = pcd;
+				}
+			}
+		}
+	}
+
+	if (best == 0) {
+		printf("Can't find parent clock for LCDIF, target freq: %u\n", freq_in_khz);
+		return;
+	}
+
+	debug("LCD target rate %ukhz, best rate %ukhz, frac %u, pcd %u, best_parent %u\n",
+	      freq_in_khz, best, best_frac, best_pcd, best_parent);
+
+	pcc_clock_sel(PER_CLK_LCDIF, clksrc_plat[best_parent]);
+	pcc_clock_div_config(PER_CLK_LCDIF, best_frac, best_pcd + 1);
+	pcc_clock_enable(PER_CLK_LCDIF, true);
+}
+
+
 #ifndef CONFIG_SPL_BUILD
 /*
  * Dump some core clockes.

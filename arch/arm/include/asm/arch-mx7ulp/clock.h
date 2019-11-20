@@ -36,6 +36,8 @@ void enable_ocotp_clk(unsigned char enable);
 #ifdef CONFIG_USB_EHCI_HCD
 void enable_usboh3_clk(unsigned char enable);
 #endif
+void enable_mipi_dsi_clk(unsigned char enable);
+void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq_in_khz);
 void init_clk_usdhc(u32 index);
 void clock_init(void);
 void hab_caam_clock_enable(unsigned char enable);
