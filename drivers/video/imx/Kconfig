@@ -59,10 +59,29 @@ config VIDEO_SEC_MIPI_DSI
 	  rather requires a SoC-specific glue driver to call it), it
 	  can not be enabled from the configuration menu.
 
+config VIDEO_NW_MIPI_DSI
+	bool
+	select VIDEO_MIPI_DSI
+	help
+	  Enables the common driver code for the Northwest
+	  MIPI DSI block found in SoCs from various vendors.
+	  As this does not provide any functionality by itself (but
+	  rather requires a SoC-specific glue driver to call it), it
+	  can not be enabled from the configuration menu.
+
 config VIDEO_IMX_SEC_DSI
 	bool "Enable IMX SEC DSI video support"
 	select VIDEO_BRIDGE
 	select VIDEO_SEC_MIPI_DSI
+	select VIDEO_LINK
+	help
+	  This option enables support DSI internal bridge which can be used on
+	  devices which have DSI devices connected.
+
+config VIDEO_IMX_NW_DSI
+	bool "Enable IMX Northwest DSI video support"
+	select VIDEO_BRIDGE
+	select VIDEO_NW_MIPI_DSI
 	select VIDEO_LINK
 	help
 	  This option enables support DSI internal bridge which can be used on
