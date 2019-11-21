@@ -21,7 +21,7 @@
 /* define the nandfit partiton environment for uuu */
 #if defined(CONFIG_IMX8MM) || defined(CONFIG_IMX8MQ) || \
 	defined(CONFIG_IMX8QM) || defined(CONFIG_IMX8QXP)
-#define MFG_NAND_FIT_PARTITION "nandfit_part=yes"
+#define MFG_NAND_FIT_PARTITION "nandfit_part=yes\0"
 #else
 #define MFG_NAND_FIT_PARTITION ""
 #endif
@@ -43,6 +43,5 @@
 		FASTBOOT_CMD  \
         "fi;\0" \
 	MFG_NAND_FIT_PARTITION \
-	"\0" \
 
 #endif
