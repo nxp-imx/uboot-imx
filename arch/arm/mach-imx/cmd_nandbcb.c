@@ -1426,7 +1426,7 @@ usage:
 }
 
 static char nandbcb_help_text[] =
-	"update addr off|partition len - update 'len' bytes starting at\n"
+	"init addr off|partition len - update 'len' bytes starting at\n"
 	"        'off|part' to memory address 'addr', skipping  bad blocks\n"
         "nandbcb bcbonly off|partition fw1-off fw1-size [fw2-off fw2-size]\n"
 	"	 - write BCB only (FCB and DBBT), fwx-size and fwx-off in bytes\n"
