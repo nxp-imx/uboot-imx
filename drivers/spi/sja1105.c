@@ -465,52 +465,40 @@ int sja1105_probe(u32 cs, u32 bus)
 	return sja1105_configuration_load(&sjap);
 }
 
-int do_sja_regs(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int sja1105_print_regs(struct sja_parms *sjap)
 {
 	u32 val32;
-	char  *cp = 0;
 	int i, j;
-	struct sja_parms sjap;
-
-	if (argc == 2) {
-		sjap.bus = simple_strtoul(argv[1], &cp, 10);
-		if (*cp == ':') {
-			sjap.cs = simple_strtoul(cp + 1, &cp, 10);
-		} else {
-			sjap.cs = sjap.bus;
-			sjap.bus = CONFIG_DEFAULT_SPI_BUS;
-		}
-	}
 
 	printf("\nGeneral Status\n");
-	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS1);
+	val32 = sja1105_read_reg32(sjap, SJA1105_REG_GENERAL_STATUS1);
 	printf("general_status_1    = %08x\n", val32);
-	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS2);
+	val32 = sja1105_read_reg32(sjap, SJA1105_REG_GENERAL_STATUS2);
 	printf("general_status_2    = %08x\n", val32);
-	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS3);
+	val32 = sja1105_read_reg32(sjap, SJA1105_REG_GENERAL_STATUS3);
 	printf("general_status_3    = %08x\n", val32);
-	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS4);
+	val32 = sja1105_read_reg32(sjap, SJA1105_REG_GENERAL_STATUS4);
 	printf("general_status_4    = %08x\n", val32);
-	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS5);
+	val32 = sja1105_read_reg32(sjap, SJA1105_REG_GENERAL_STATUS5);
 	printf("general_status_5    = %08x\n", val32);
-	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS6);
+	val32 = sja1105_read_reg32(sjap, SJA1105_REG_GENERAL_STATUS6);
 	printf("general_status_6    = %08x\n", val32);
-	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS7);
+	val32 = sja1105_read_reg32(sjap, SJA1105_REG_GENERAL_STATUS7);
 	printf("general_status_7    = %08x\n", val32);
-	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS8);
+	val32 = sja1105_read_reg32(sjap, SJA1105_REG_GENERAL_STATUS8);
 	printf("general_status_8    = %08x\n", val32);
-	val32 = sja1105_read_reg32(&sjap, SJA1105_REG_GENERAL_STATUS9);
+	val32 = sja1105_read_reg32(sjap, SJA1105_REG_GENERAL_STATUS9);
 	printf("general_status_9    = %08x\n", val32);
 
 	for (i = 0; i < SJA1105_PORT_NB; i++) {
 		printf("\nEthernet MAC-level status port%d\n", i);
-		val32 = sja1105_read_reg32(&sjap,
+		val32 = sja1105_read_reg32(sjap,
 					   SJA1105_REG_PORT_MAC_STATUS(i));
 		for (j = 0; j < NUM_MAC_LVL_COUNTERS1; j++)
 			printf("port%d %s    = %u\n", i, mac_lvl_counters1[j],
 			       (val32 >> (j * 8)) & 0xFF);
 
-		val32 = sja1105_read_reg32(&sjap,
+		val32 = sja1105_read_reg32(sjap,
 					   SJA1105_REG_PORT_MAC_STATUS(i) + 1);
 		for (j = 0; j < NUM_MAC_LVL_COUNTERS2; j++)
 			printf("port%d %s    = %u\n", i, mac_lvl_counters2[j],
@@ -520,16 +508,18 @@ int do_sja_regs(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	for (i = 0; i < SJA1105_PORT_NB; i++) {
 		printf("\nEthernet High-level status port%d\n", i);
 		for (j = 0; j < NUM_ETH_HIGH_LVL_COUNTERS1; j++) {
-			val32 = sja1105_read_reg32(&sjap,
-						SJA1105_REG_PORT_HIGH_STATUS1(i)
-						+ j);
+			val32 =
+			sja1105_read_reg32(sjap,
+					   SJA1105_REG_PORT_HIGH_STATUS1(i)
+					   + j);
 			printf("port%d %s    = %u\n", i,
 			       eth_high_lvl_counters1[j], val32);
 		}
 		for (j = 0; j < NUM_ETH_HIGH_LVL_COUNTERS2; j++) {
-			val32 = sja1105_read_reg32(&sjap,
-						SJA1105_REG_PORT_HIGH_STATUS2(i)
-						+ j);
+			val32 =
+			sja1105_read_reg32(sjap,
+					   SJA1105_REG_PORT_HIGH_STATUS2(i)
+					   + j);
 			printf("port%d %s    = %u\n", i,
 			       eth_high_lvl_counters2[j], val32);
 		}
@@ -538,16 +528,21 @@ int do_sja_regs(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-int do_sja_probe(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_sja_cmd(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	char  *cp = 0;
 	struct sja_parms sjap;
 
+	/* Parse SPI data */
 	sjap.cs = 0;
 	sjap.bus = CONFIG_DEFAULT_SPI_BUS;
 
-	if (argc == 2) {
-		sjap.bus = simple_strtoul(argv[1], &cp, 10);
+	if (argc < 2) {
+		return CMD_RET_USAGE;
+	}
+
+	if (argc == 3) {
+		sjap.bus = simple_strtoul(argv[2], &cp, 10);
 		if (*cp == ':') {
 			sjap.cs = simple_strtoul(cp + 1, &cp, 10);
 		} else {
@@ -555,21 +550,24 @@ int do_sja_probe(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			sjap.bus = CONFIG_DEFAULT_SPI_BUS;
 		}
 	}
-	printf("Probe SJA1105\n");
-	/* For debug purposes force SJA1105 initialization*/
-	sja1105_probe(sjap.cs, sjap.bus);
-	sja1105_reset_ports(sjap.cs, sjap.bus);
-	/* end of force SJA1105 initialization*/
+
+	if (!strcmp(argv[1], "probe")) {
+		printf("Probe SJA1105\n");
+		/* For debug purposes force SJA1105 initialization*/
+		sja1105_probe(sjap.cs, sjap.bus);
+		sja1105_reset_ports(sjap.cs, sjap.bus);
+		/* end of force SJA1105 initialization*/
+	} else if (!strcmp(argv[1], "info")) {
+		sja1105_print_regs(&sjap);
+	} else {
+		return CMD_RET_USAGE;
+	}
 
 	return 0;
 }
 
-U_BOOT_CMD(sja, 2, 1, do_sja_regs,
-	   "SJA1105 register dump",
-	   "[<bus>:]<cs> - View registers for SJA\n"
-);
-
-U_BOOT_CMD(sja_probe, 2, 1, do_sja_probe,
-	   "SJA1105 probe device",
-	   "[<bus>:]<cs> - Probe SJA and load configuration\n"
+U_BOOT_CMD(sja, 3, 1, do_sja_cmd,
+	   "SJA1105 control",
+	   "sja probe [<bus>:]<cs> - Probe SJA and load configuration\n"
+	   "sja info [<bus>:]<cs> - View registers for SJA\n"
 );
