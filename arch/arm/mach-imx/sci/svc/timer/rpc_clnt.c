@@ -66,6 +66,25 @@ sc_err_t sc_timer_set_wdog_pre_timeout(sc_ipc_t ipc,
     return err;
 }
 
+sc_err_t sc_timer_set_wdog_window(sc_ipc_t ipc, sc_timer_wdog_time_t window)
+{
+    sc_rpc_msg_t msg;
+    sc_err_t err;
+
+    RPC_VER(&msg) = SC_RPC_VERSION;
+    RPC_SIZE(&msg) = 2U;
+    RPC_SVC(&msg) = U8(SC_RPC_SVC_TIMER);
+    RPC_FUNC(&msg) = U8(TIMER_FUNC_SET_WDOG_WINDOW);
+
+    RPC_U32(&msg, 0U) = U32(window);
+
+    sc_call_rpc(ipc, &msg, SC_FALSE);
+
+    err = (sc_err_t) RPC_R8(&msg);
+
+    return err;
+}
+
 sc_err_t sc_timer_start_wdog(sc_ipc_t ipc, sc_bool_t lock)
 {
     sc_rpc_msg_t msg;

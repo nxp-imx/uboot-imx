@@ -26,6 +26,7 @@
 #define TIMER_FUNC_UNKNOWN 0 /*!< Unknown function */
 #define TIMER_FUNC_SET_WDOG_TIMEOUT 1U /*!< Index for sc_timer_set_wdog_timeout() RPC call */
 #define TIMER_FUNC_SET_WDOG_PRE_TIMEOUT 12U /*!< Index for sc_timer_set_wdog_pre_timeout() RPC call */
+#define TIMER_FUNC_SET_WDOG_WINDOW 19U /*!< Index for sc_timer_set_wdog_window() RPC call */
 #define TIMER_FUNC_START_WDOG 2U /*!< Index for sc_timer_start_wdog() RPC call */
 #define TIMER_FUNC_STOP_WDOG 3U /*!< Index for sc_timer_stop_wdog() RPC call */
 #define TIMER_FUNC_PING_WDOG 4U /*!< Index for sc_timer_ping_wdog() RPC call */
