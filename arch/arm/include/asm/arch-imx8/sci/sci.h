@@ -124,6 +124,9 @@ int sc_pad_get(sc_ipc_t ipc, sc_pad_t pad, uint32_t *val);
 int sc_rm_set_master_sid(sc_ipc_t ipc, sc_rsrc_t resource,
     sc_rm_sid_t sid);
 
+/* Timer API */
+int sc_timer_set_wdog_window(sc_ipc_t ipc, sc_timer_wdog_time_t window);
+
 /* SECO API */
 int sc_seco_authenticate(sc_ipc_t ipc,
 	sc_seco_auth_cmd_t cmd, sc_faddr_t addr);
