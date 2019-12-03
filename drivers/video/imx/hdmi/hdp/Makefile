@@ -5,7 +5,7 @@
 #
 obj-$(CONFIG_VIDEO_IMX_HDP_LOAD) += API_General.o util.o test_base_sw.o
 
-obj-$(CONFIG_VIDEO_IMX8_HDMI) += \
+obj-$(CONFIG_VIDEO_IMX8M_HDMI) += \
 	API_General.o \
 	test_base_sw.o \
 	API_AVI.o \
