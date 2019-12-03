@@ -32,9 +32,19 @@ config VIDEO_IMX_HDP_LOAD
 	  firmware is copied from system memory to the HDMI/DP IRAM and
 	  DRAM memory.
 
-config VIDEO_IMX8_HDMI
-	bool "i.MX8 HDMI Splash screen"
+config VIDEO_IMX8M_DCSS
+	bool "i.MX8M DCSS controller"
 	default n
-	depends on VIDEO && IMX8M
+	depends on IMX8M && DM_VIDEO
+	select VIDEO_LINK
 	help
-	  Support for HDMI i.MX8 processors.
+	  Support for DCSS on i.MX8MQ processors.
+
+config VIDEO_IMX8M_HDMI
+	bool "i.MX8M HDMI Splash screen"
+	default n
+	depends on IMX8M && DM_VIDEO
+	select DISPLAY
+	select VIDEO_LINK
+	help
+	  Support for HDMI on i.MX8MQ processors.
