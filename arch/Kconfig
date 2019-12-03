@@ -136,6 +136,7 @@ config SANDBOX
 	imply ACPI_PMC
 	imply ACPI_PMC_SANDBOX
 	imply CMD_PMC
+	imply DM_DSA
 
 config SH
 	bool "SuperH architecture"
