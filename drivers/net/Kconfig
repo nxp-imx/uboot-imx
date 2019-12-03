@@ -70,6 +70,14 @@ config MDIO_MUX_SANDBOX
 
 	  This driver is used for testing in test/dm/mdio.c
 
+config DSA_SANDBOX
+	depends on DM_DSA && SANDBOX
+	default y
+	bool "Sandbox: Mocked DSA driver"
+	help
+	  This driver implements a dummy switch and a dummy Ethernet device used
+	  to test DSA class code.
+
 menuconfig NETDEVICES
 	bool "Network device support"
 	depends on NET

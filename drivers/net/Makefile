@@ -83,3 +83,4 @@ obj-y += mscc_eswitch/
 obj-$(CONFIG_HIGMACV300_ETH) += higmacv300.o
 obj-$(CONFIG_MDIO_SANDBOX) += mdio_sandbox.o
 obj-$(CONFIG_FSL_ENETC) += fsl_enetc.o fsl_enetc_mdio.o
+obj-$(CONFIG_DSA_SANDBOX) += dsa_sandbox.o
