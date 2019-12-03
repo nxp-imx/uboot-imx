@@ -14,6 +14,17 @@
 	#address-cells = <2>;
 	#size-cells = <2>;
 
+	aliases {
+		eth0 = &enetc0;
+		eth1 = &enetc1;
+		eth2 = &enetc2;
+		eth3 = &enetc6;
+		eth4 = &felix0;
+		eth5 = &felix1;
+		eth6 = &felix2;
+		eth7 = &felix3;
+	};
+
 	sysclk: sysclk {
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
@@ -145,9 +156,51 @@
 			reg = <0x000300 0 0 0 0>;
 			status = "disabled";
 		};
+		ethsw: pci@0,5 {
+			#address-cells=<0>;
+			#size-cells=<1>;
+			reg = <0x000500 0 0 0 0>;
+
+			ethsw_ports: ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				felix0: port@0 {
+					reg = <0>;
+					status = "disabled";
+					label = "swp0";
+				};
+				felix1: port@1 {
+					reg = <1>;
+					status = "disabled";
+					label = "swp1";
+				};
+				felix2: port@2 {
+					reg = <2>;
+					status = "disabled";
+					label = "swp2";
+				};
+				felix3: port@3 {
+					reg = <3>;
+					status = "disabled";
+					label = "swp3";
+				};
+				port@4 {
+					reg = <4>;
+					phy-mode = "internal";
+					status = "okay";
+					ethernet = <&enetc2>;
+				};
+				port@5 {
+					reg = <5>;
+					phy-mode = "internal";
+					status = "disabled";
+				};
+			};
+		};
 		enetc6: pci@0,6 {
 			reg = <0x000600 0 0 0 0>;
-			status = "okay";
+			status = "disabled";
 			phy-mode = "internal";
 		};
 	};
