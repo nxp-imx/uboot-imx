@@ -294,12 +294,7 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
     }
     uint32_t round_buf_size = ROUND(hash_desc.salt_len + hash_desc.image_size,
                                 ARCH_DMA_MINALIGN);
-    hash_buf = memalign(ARCH_DMA_MINALIGN, round_buf_size);
-    if (hash_buf == NULL) {
-        avb_error("failed to alloc memory!\n");
-        ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
-        goto out;
-    }
+    hash_buf = (void *)CONFIG_FASTBOOT_BUF_ADDR;
 
     avb_memcpy(hash_buf, desc_salt, hash_desc.salt_len);
     avb_memcpy(hash_buf + hash_desc.salt_len,
@@ -316,8 +311,6 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
     }
 
     digest = hash_out;
-    free(hash_buf);
-    hash_buf = NULL;
 #else
     AvbSHA256Ctx sha256_ctx;
     avb_sha256_init(&sha256_ctx);
@@ -379,10 +372,6 @@ out:
   if (hash_out != NULL) {
     free(hash_out);
     hash_out = NULL;
-  }
-  if (hash_buf != NULL) {
-    free(hash_buf);
-    hash_buf = NULL;
   }
 #endif
   /* If it worked and something was loaded, copy to slot_data. */

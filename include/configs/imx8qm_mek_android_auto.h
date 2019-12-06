@@ -48,7 +48,7 @@
 
 #ifdef CONFIG_SYS_MALLOC_LEN
 #undef CONFIG_SYS_MALLOC_LEN
-#define CONFIG_SYS_MALLOC_LEN           (76 * SZ_1M)
+#define CONFIG_SYS_MALLOC_LEN           (64 * SZ_1M)
 #endif
 
 #define CONFIG_FASTBOOT_USB_DEV 1
