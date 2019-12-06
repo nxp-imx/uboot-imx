@@ -1001,6 +1001,10 @@ AvbABFlowResult avb_ab_flow_fast(AvbABOps* ab_ops,
 				fsl_slot_set_unbootable(&ab_data.slots[target_slot]);
 				set_slot_unbootable = false;
 			}
+			if (slot_data[target_slot] != NULL) {
+				avb_slot_verify_data_free(slot_data[target_slot]);
+				slot_data[target_slot] = NULL;
+			}
 		}
 		/* switch to another slot */
 		target_slot = (target_slot == 1 ? 0 : 1);
