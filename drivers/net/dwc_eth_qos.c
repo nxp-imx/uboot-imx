@@ -39,6 +39,7 @@
 #include <phy.h>
 #include <reset.h>
 #include <wait_bit.h>
+#include <asm/arch/clock.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <eth_phy.h>
@@ -833,7 +834,7 @@ static ulong eqos_get_tick_clk_rate_stm32(struct udevice *dev)
 static ulong eqos_get_tick_clk_rate_imx(struct udevice *dev)
 {
 	/* TODO: retrieve from CSR clock */
-	return 100 * 1000000;
+	return imx_get_eqos_csr_clk();
 }
 
 static int eqos_calibrate_pads_stm32(struct udevice *dev)
@@ -959,6 +960,33 @@ static int eqos_set_tx_clk_speed_stm32(struct udevice *dev)
 
 static int eqos_set_tx_clk_speed_imx(struct udevice *dev)
 {
+	struct eqos_priv *eqos = dev_get_priv(dev);
+	ulong rate;
+	int ret;
+
+	debug("%s(dev=%p):\n", __func__, dev);
+
+	switch (eqos->phy->speed) {
+	case SPEED_1000:
+		rate = 125 * 1000 * 1000;
+		break;
+	case SPEED_100:
+		rate = 25 * 1000 * 1000;
+		break;
+	case SPEED_10:
+		rate = 2.5 * 1000 * 1000;
+		break;
+	default:
+		pr_err("invalid speed %d", eqos->phy->speed);
+		return -EINVAL;
+	}
+
+	ret = imx_eqos_txclk_set_rate(rate);
+	if (ret < 0) {
+		pr_err("imx (tx_clk, %lu) failed: %d", rate, ret);
+		return ret;
+	}
+
 	return 0;
 }
 
@@ -1798,7 +1826,17 @@ static int eqos_probe_resources_imx(struct udevice *dev)
 
 static phy_interface_t eqos_get_interface_imx(struct udevice *dev)
 {
-	return PHY_INTERFACE_MODE_RGMII;
+	const char *phy_mode;
+	phy_interface_t interface = PHY_INTERFACE_MODE_NONE;
+
+	debug("%s(dev=%p):\n", __func__, dev);
+
+	phy_mode = fdt_getprop(gd->fdt_blob, dev_of_offset(dev), "phy-mode",
+			       NULL);
+	if (phy_mode)
+		interface = phy_get_interface_by_name(phy_mode);
+
+	return interface;
 }
 
 static int eqos_remove_resources_tegra186(struct udevice *dev)
