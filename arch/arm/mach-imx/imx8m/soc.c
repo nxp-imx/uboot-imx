@@ -846,11 +846,11 @@ void reset_cpu(ulong addr)
 	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
 
 	/* Clear WDA to trigger WDOG_B immediately */
-	writew((WCR_WDE | WCR_SRS), &wdog->wcr);
+	writew((SET_WCR_WT(1) | WCR_WDT | WCR_WDE | WCR_SRS), &wdog->wcr);
 
 	while (1) {
 		/*
-		 * spin for .5 seconds before reset
+		 * spin for 1 second before timeout reset
 		 */
 	}
 }
