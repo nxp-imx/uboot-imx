@@ -248,6 +248,11 @@ config AT_AUTHENTICATE_UNLOCK
 
 config SECURE_UNLOCK
 	bool "Enable secure unlock for Android devices, it can only be enabled on HAB closed board"
+
+config TRUSTY_UNLOCK_PERMISSION
+	bool "Support unlock permission protection in trusty"
+	depends on IMX_TRUSTY_OS
+
 endmenu
 
 menu "Hashing Support"
