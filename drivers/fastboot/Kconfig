@@ -80,6 +80,8 @@ config FASTBOOT_UUU_SUPPORT
 	select CMD_GPT
 	select RANDOM_UUID
 	select CMD_GPT_RENAME
+	select CONSOLE_MUX
+	select SYS_STDIO_DEREGISTER
 	help
 	  The fastboot protocol includes "UCmd" command and "ACmd" command
 
