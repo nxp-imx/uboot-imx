@@ -48,6 +48,9 @@ extern void trusty_os_init(void);
 
 #include "fb_fsl_common.h"
 
+#include <serial.h>
+#include <stdio_dev.h>
+
 #if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
 AvbABOps fsl_avb_ab_ops = {
 	.read_ab_metadata = fsl_read_ab_metadata,
@@ -374,3 +377,37 @@ void fastboot_setup(void)
 #endif
 #endif
 }
+
+static void fastboot_putc(struct stdio_dev *dev, const char c)
+{
+	char buff[6] = "INFO";
+	buff[4] = c;
+	buff[5] = 0;
+	fastboot_tx_write_more(buff);
+}
+
+#define FASTBOOT_MAX_LEN 64
+
+static void fastboot_puts(struct stdio_dev *dev, const char *s)
+{
+	char buff[FASTBOOT_MAX_LEN + 1] = "INFO";
+	int len = strlen(s);
+	int i, left;
+
+	for (i = 0; i < len; i += FASTBOOT_MAX_LEN - 4) {
+		left = len - i;
+		if (left > FASTBOOT_MAX_LEN - 4)
+			left = FASTBOOT_MAX_LEN - 4;
+
+		memcpy(buff + 4, s + i, left);
+		buff[left + 4 + 1] = 0;
+		fastboot_tx_write_more(buff);
+	}
+}
+
+struct stdio_dev g_fastboot_stdio = {
+	.name = "fastboot",
+	.flags = DEV_FLAGS_OUTPUT,
+	.putc = fastboot_putc,
+	.puts = fastboot_puts,
+};
