@@ -87,6 +87,8 @@ config FASTBOOT_UUU_SUPPORT
 	select CMD_GPT
 	select RANDOM_UUID
 	select CMD_GPT_RENAME
+	select CONSOLE_MUX
+	select SYS_STDIO_DEREGISTER
 	help
 	  This extends the fastboot protocol with the "UCmd" and "ACmd"
 	  commands, which are used by NXP's "universal update utility" (UUU).
