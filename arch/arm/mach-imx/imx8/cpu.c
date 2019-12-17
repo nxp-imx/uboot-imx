@@ -373,15 +373,15 @@ int imx8_config_smmu_sid(struct smmu_sid *dev_sids, int size)
 		return 0;
 
 	for (i = 0; i < size; i++) {
-		if (!check_owned_resource(dev_sids[i].rsrc)) {
-			printf("%s rsrc[%d] not owned\n", __func__, dev_sids[i].rsrc);
-			continue;
-		}
 		sciErr = sc_rm_set_master_sid(-1,
 					      dev_sids[i].rsrc,
 					      dev_sids[i].sid);
 		if (sciErr) {
-			printf("set master sid error\n");
+			if (!check_owned_resource(dev_sids[i].rsrc)) {
+				printf("%s rsrc[%d] not owned\n", __func__, dev_sids[i].rsrc);
+				continue;
+			}
+			printf("set master sid error %d\n", sciErr);
 			return sciErr;
 		}
 	}
@@ -1069,13 +1069,13 @@ static int config_smmu_resource_sid(int rsrc, int sid)
 {
 	int err;
 
-	if (!check_owned_resource(rsrc)) {
-		printf("%s rsrc[%d] not owned\n", __func__, rsrc);
-		return -1;
-	}
 	err = sc_rm_set_master_sid(-1, rsrc, sid);
 	debug("set_master_sid rsrc=%d sid=0x%x err=%d\n", rsrc, sid, err);
 	if (err != SC_ERR_NONE) {
+		if (!check_owned_resource(rsrc)) {
+			printf("%s rsrc[%d] not owned\n", __func__, rsrc);
+			return -1;
+		}
 		pr_err("fail set_master_sid rsrc=%d sid=0x%x err=%d\n", rsrc, sid, err);
 		return -EINVAL;
 	}
