@@ -15,6 +15,7 @@
 #include <dm/uclass-internal.h>
 #include <net/pcap.h>
 #include "eth_internal.h"
+#include <eth_phy.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -462,6 +463,10 @@ static int eth_post_bind(struct udevice *dev)
 		       dev->name);
 		return -EINVAL;
 	}
+
+#ifdef CONFIG_DM_ETH_PHY
+	eth_phy_binds_nodes(dev);
+#endif
 
 	return 0;
 }
