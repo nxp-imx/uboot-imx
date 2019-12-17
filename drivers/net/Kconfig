@@ -11,6 +11,12 @@ config DM_ETH
 	  This is currently implemented in net/eth-uclass.c
 	  Look in include/net.h for details.
 
+config DM_ETH_PHY
+	bool "Enable Driver Model for Ethernet Generic PHY drivers"
+	depends on DM
+	help
+	  Enable driver model for Ethernet Generic PHY .
+
 menuconfig NETDEVICES
 	bool "Network device support"
 	depends on NET
