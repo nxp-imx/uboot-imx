@@ -1134,6 +1134,7 @@ static void process_flash_mmc(const char *cmdbuf)
 static void process_erase_mmc(const char *cmdbuf, char *response)
 {
 	int mmc_no = 0;
+	char blk_dev[128];
 	lbaint_t blks, blks_start, blks_size, grp_size;
 	struct mmc *mmc;
 	struct blk_desc *dev_desc;
@@ -1161,6 +1162,15 @@ static void process_erase_mmc(const char *cmdbuf, char *response)
 		printf("Block device MMC %d not supported\n",
 			mmc_no);
 		sprintf(response, "FAILnot valid MMC card");
+		return;
+	}
+
+	/* Get and switch target flash device. */
+	if (get_fastboot_target_dev(blk_dev, ptn) != 0) {
+		printf("failed to get target dev!\n");
+		return;
+	} else if (run_command(blk_dev, 0)) {
+		printf("Init of BLK device failed\n");
 		return;
 	}
 
