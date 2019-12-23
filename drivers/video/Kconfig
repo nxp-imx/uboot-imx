@@ -617,6 +617,12 @@ config WAVEFORM_BUF_SIZE
 	help
 	  Set the buffer size for loading waveform file.
 
+config VIDEO_IMX_LCDIFV3
+	bool "i.MX LCDIFv3 support"
+	depends on VIDEO && IMX8MP
+	help
+	  Support for i.MX8MP LCDIFv3 controller.
+
 config CFB_CONSOLE
 	bool "Enable colour frame buffer console"
 	depends on VIDEO
