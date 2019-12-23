@@ -441,7 +441,7 @@ int board_late_init(void)
 		/* 1G DDR size */
 		env_set("bootargs_ram_capacity", "cma=296M galcore.contiguousSize=33554432 androidboot.displaymode=720p androidboot.lcd_density=160");
 	} else {
-		env_set("bootargs_ram_capacity", "cma=384M androidboot.lcd_density=213");
+		env_set("bootargs_ram_capacity", "cma=384M androidboot.lcd_density=240");
 	}
 
 	return 0;
