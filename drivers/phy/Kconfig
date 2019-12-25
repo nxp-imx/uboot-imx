@@ -277,7 +277,7 @@ config PHY_MTK_TPHY
 config PHY_IMX8MQ_USB
 	bool "NXP i.MX8MQ USB PHY Driver"
 	depends on PHY
-	depends on IMX8MQ
+	depends on IMX8MQ || IMX8MP
 	help
 	  Support the USB3.0 PHY in NXP i.MX8MQ SoC
 

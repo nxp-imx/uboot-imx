@@ -1362,6 +1362,12 @@ int arch_misc_init(void)
 #endif
 
 #ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_IMX8MP
+#define HSIO_GPR_BASE                               (0x32F10000U)
+#define HSIO_GPR_REG_0_USB_CLOCK_MODULE_EN_SHIFT    (1)
+#define HSIO_GPR_REG_0_USB_CLOCK_MODULE_EN          (0x1U << HSIO_GPR_REG_0_USB_CLOCK_MODULE_EN_SHIFT)
+#endif
+
 static uint32_t gpc_pu_m_core_offset[11] = {
 	0xc00, 0xc40, 0xc80, 0xcc0,
 	0xdc0, 0xe00, 0xe40, 0xe80,
@@ -1387,6 +1393,15 @@ void imx8m_usb_power_domain(uint32_t domain_id, bool on)
 {
 	uint32_t val;
 	uintptr_t reg;
+
+#ifdef CONFIG_IMX8MP
+	if (on) {
+		/* enable usb clock via hsio gpr */
+		reg = readl(HSIO_GPR_BASE);
+		reg |= HSIO_GPR_REG_0_USB_CLOCK_MODULE_EN;
+		writel(reg, HSIO_GPR_BASE);
+	}
+#endif
 
 	imx_gpc_set_m_core_pgc(gpc_pu_m_core_offset[domain_id], true);
 
