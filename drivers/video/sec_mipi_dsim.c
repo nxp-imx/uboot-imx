@@ -261,6 +261,7 @@ struct sec_mipi_dsim {
 	struct mipi_dsi_client_driver *dsi_panel_drv;
 };
 
+#ifndef CONFIG_IMX8MP
 static void disp_mix_dsim_soft_reset_release(struct sec_mipi_dsim *dsim, bool release)
 {
 	if (release)
@@ -288,6 +289,7 @@ static void disp_mix_dsim_lanes_reset(struct sec_mipi_dsim *dsim, bool reset)
 		/* reset lanes */
 		clrbits_le32(dsim->disp_mix_gpr_base + GPR_MIPI_RESET_DIV, GPR_MIPI_M_RESETN);
 }
+#endif
 
 static void sec_mipi_dsim_wr_tx_header(struct sec_mipi_dsim *dsim,
 			u8 di, u8 data0, u8 data1)
@@ -902,10 +904,12 @@ int sec_mipi_dsim_setup(const struct sec_mipi_dsim_plat_data *plat_data)
 	dsim_host->dsi_panel_drv = NULL;
 	dsim_host->dsi_panel_dev = NULL;
 
+#ifndef CONFIG_IMX8MP
 	/* Pull dsim out of reset */
 	disp_mix_dsim_soft_reset_release(dsim_host, true);
 	disp_mix_dsim_clks_enable(dsim_host, true);
 	disp_mix_dsim_lanes_reset(dsim_host, false);
+#endif
 
 	imx_sec_dsim_driver.driver_private = dsim_host;
 	return imx_mipi_dsi_bridge_register_driver(&imx_sec_dsim_driver);
