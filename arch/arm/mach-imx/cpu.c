@@ -27,6 +27,8 @@
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
 
+#include <asm/mach-imx/video.h>
+
 #ifdef CONFIG_VIDEO_GIS
 #include <gis.h>
 #endif
@@ -393,6 +395,9 @@ void arch_preboot_os(void)
 #endif
 #if defined(CONFIG_VIDEO_MXS)
 	lcdif_power_down();
+#endif
+#if defined(CONFIG_VIDEO_IMX_LCDIFV3)
+	lcdifv3_power_down();
 #endif
 #if defined(CONFIG_VIDEO_IMXDCSS)
 	imx8m_fb_disable();

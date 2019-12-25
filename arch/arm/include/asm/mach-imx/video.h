@@ -16,6 +16,8 @@
 #include <asm/arch/video_common.h>
 #elif defined(CONFIG_VIDEO_MXS)
 #include <mxsfb.h>
+#elif defined(CONFIG_VIDEO_IMX_LCDIFV3)
+#include <imx_lcdifv3.h>
 #elif defined(CONFIG_VIDEO_IMXDCSS)
 #include <asm/arch/video_common.h>
 #endif

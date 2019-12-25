@@ -50,6 +50,10 @@ int board_video_skip(void)
 		ret = mxs_lcd_panel_setup(displays[i].mode,
 					displays[i].pixfmt,
 				    displays[i].bus);
+#elif defined(CONFIG_VIDEO_IMX_LCDIFV3)
+		ret = lcdifv3_panel_setup(displays[i].mode,
+					displays[i].pixfmt,
+				    displays[i].bus);
 #endif
 		if (!ret) {
 			if (displays[i].enable)
