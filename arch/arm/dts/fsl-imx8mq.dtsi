@@ -349,7 +349,7 @@
        };
 
 	usb3_0: usb@38100000 {
-		compatible = "fsl, imx8mq-dwc3";
+		compatible = "fsl,imx8mq-dwc3";
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;
@@ -389,7 +389,7 @@
        };
 
 	usb3_1: usb@38200000 {
-		compatible = "fsl, imx8mq-dwc3";
+		compatible = "fsl,imx8mq-dwc3";
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;

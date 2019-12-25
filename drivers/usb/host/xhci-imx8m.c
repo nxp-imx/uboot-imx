@@ -158,7 +158,7 @@ static int xhci_imx8m_remove(struct udevice *dev)
 }
 
 static const struct udevice_id xhci_usb_ids[] = {
-	{ .compatible = "fsl, imx8mq-dwc3", },
+	{ .compatible = "fsl,imx8mq-dwc3", },
 	{ }
 };
 
