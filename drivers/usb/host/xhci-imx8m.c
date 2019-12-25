@@ -36,6 +36,9 @@ struct imx8m_usbmix {
 	u32 phy_ctrl1;
 	u32 phy_ctrl2;
 	u32 phy_ctrl3;
+	u32 phy_ctrl4;
+	u32 phy_ctrl5;
+	u32 phy_ctrl6;
 };
 
 struct imx8m_xhci {
@@ -54,9 +57,32 @@ static struct imx8m_usbctrl_data ctr_data[] = {
 	{1, USB2_BASE_ADDR},
 };
 
+#ifdef CONFIG_IMX8MP
+#define HSIO_GPR_BASE                               (0x32F10000U)
+#define HSIO_GPR_REG_0                              (HSIO_GPR_BASE)
+#define HSIO_GPR_REG_0_USB_CLOCK_MODULE_EN_SHIFT    (1)
+#define HSIO_GPR_REG_0_USB_CLOCK_MODULE_EN          (0x1U << HSIO_GPR_REG_0_USB_CLOCK_MODULE_EN_SHIFT)
+#endif
+
 static void imx8m_usb_phy_init(struct imx8m_usbmix *usbmix_reg)
 {
 	u32 reg;
+
+#ifdef CONFIG_IMX8MP
+	/* enable usb clock via hsio gpr */
+	reg = readl(HSIO_GPR_REG_0);
+	reg |= HSIO_GPR_REG_0_USB_CLOCK_MODULE_EN;
+	writel(reg, HSIO_GPR_REG_0);
+
+	/* USB3.0 PHY signal fsel for 24M ref */
+	reg = readl(&usbmix_reg->phy_ctrl0);
+	reg = (reg & 0xfffff81f) | (0x2a<<5);
+	writel(reg, &usbmix_reg->phy_ctrl0);
+
+	reg = readl(&usbmix_reg->phy_ctrl6);
+	reg &=~0x1;
+	writel(reg, &usbmix_reg->phy_ctrl6);
+#endif
 
 	reg = readl(&usbmix_reg->phy_ctrl1);
 	reg &= ~(PHY_CTRL1_VDATSRCENB0 | PHY_CTRL1_VDATDETENB0);
