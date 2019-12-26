@@ -190,6 +190,15 @@ static int get_single_var(char *cmd, char *response)
 		} else {
 			strncat(response, fb_part->fstype, chars_left);
 		}
+	} else if ((str = strstr(cmd, "is-logical:"))) {
+		str +=strlen("is-logical:");
+		struct fastboot_ptentry* fb_part;
+		fb_part = fastboot_flash_find_ptn(str);
+		if (!fb_part) {
+			return -1;
+		} else {
+			snprintf(response + strlen(response), chars_left, "no");
+		}
 	} else if (!strcmp_l1("version-baseband", cmd)) {
 		strncat(response, "N/A", chars_left);
 	} else if (!strcmp_l1("version-bootloader", cmd) ||
