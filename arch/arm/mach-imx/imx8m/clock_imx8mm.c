@@ -255,6 +255,7 @@ u32 decode_fracpll(enum clk_root_src frac_pll)
 }
 
 static struct imx_int_pll_rate_table imx8mm_fracpll_tbl[] = {
+	PLL_1443X_RATE(1000000000U, 250, 3, 1, 0),
 	PLL_1443X_RATE(800000000U, 200, 3, 1, 0),
 	PLL_1443X_RATE(750000000U, 250, 2, 2, 0),
 	PLL_1443X_RATE(650000000U, 325, 3, 2, 0),
@@ -502,7 +503,10 @@ find:
 	/* Select to video PLL */
 	debug("mxs_set_lcdclk, pre = %d, post = %d\n", pre, post);
 
-#ifdef CONFIG_IMX8MN
+#ifdef CONFIG_IMX8MP
+	/* TODO */
+	clock_set_target_val(MEDIA_DISP1_PIX_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(1) | CLK_ROOT_PRE_DIV(pre - 1) | CLK_ROOT_POST_DIV(post - 1));
+#elif defined(CONFIG_IMX8MN)
 	clock_set_target_val(DISPLAY_PIXEL_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(1) | CLK_ROOT_PRE_DIV(pre - 1) | CLK_ROOT_POST_DIV(post - 1));
 #else
 	clock_set_target_val(LCDIF_PIXEL_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(1) | CLK_ROOT_PRE_DIV(pre - 1) | CLK_ROOT_POST_DIV(post - 1));
@@ -510,6 +514,11 @@ find:
 
 }
 
+#ifdef CONFIG_IMX8MP
+void enable_display_clk(unsigned char enable)
+{
+}
+#else
 void enable_display_clk(unsigned char enable)
 {
 	if (enable) {
@@ -537,6 +546,7 @@ void enable_display_clk(unsigned char enable)
 		clock_enable(CCGR_DISPMIX, false);
 	}
 }
+#endif
 
 void init_uart_clk(u32 index)
 {
@@ -689,16 +699,23 @@ int clock_init()
 			     CLK_ROOT_SOURCE_SEL(1) | \
 			     CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1));
 
-	if (is_imx8mn())
+	if (is_imx8mn() || is_imx8mp())
 		intpll_configure(ANATOP_SYSTEM_PLL3, MHZ(600));
 	else
 		intpll_configure(ANATOP_SYSTEM_PLL3, MHZ(750));
+
+#ifdef CONFIG_IMX8MP
+	/* 8MP ROM already set NOC to 800Mhz, only need to configure NOC_IO clk to 600Mhz */
+	/* 8MP ROM already set GIC to 400Mhz, system_pll1_800m with div = 2 */
+	clock_set_target_val(NOC_IO_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(2));
+#else
 	clock_set_target_val(NOC_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(2));
 
 	/* config GIC to sys_pll2_100m */
 	clock_enable(CCGR_GIC, 0);
 	clock_set_target_val(GIC_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(3));
 	clock_enable(CCGR_GIC, 1);
+#endif
 
 	clock_set_target_val(NAND_USDHC_BUS_CLK_ROOT, CLK_ROOT_ON |
 						CLK_ROOT_SOURCE_SEL(1));
@@ -730,6 +747,91 @@ int set_clk_qspi(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_DWC_ETH_QOS
+int set_clk_eqos(enum enet_freq type)
+{
+	u32 target;
+	u32 enet1_ref;
+
+	switch (type) {
+	case ENET_125MHZ:
+		enet1_ref = ENET1_REF_CLK_ROOT_FROM_PLL_ENET_MAIN_125M_CLK;
+		break;
+	case ENET_50MHZ:
+		enet1_ref = ENET1_REF_CLK_ROOT_FROM_PLL_ENET_MAIN_50M_CLK;
+		break;
+	case ENET_25MHZ:
+		enet1_ref = ENET1_REF_CLK_ROOT_FROM_PLL_ENET_MAIN_25M_CLK;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	/* disable the clock first */
+	clock_enable(CCGR_QOS_ETHENET, 0);
+	clock_enable(CCGR_SDMA2, 0);
+
+	/* set enet axi clock 266Mhz */
+	target = CLK_ROOT_ON | ENET_AXI_CLK_ROOT_FROM_SYS1_PLL_266M |
+		 CLK_ROOT_PRE_DIV(CLK_ROOT_PRE_DIV1) |
+		 CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1);
+	clock_set_target_val(ENET_AXI_CLK_ROOT, target);
+
+	target = CLK_ROOT_ON | enet1_ref |
+		 CLK_ROOT_PRE_DIV(CLK_ROOT_PRE_DIV1) |
+		 CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1);
+	clock_set_target_val(ENET_QOS_CLK_ROOT, target);
+
+	target = CLK_ROOT_ON |
+		ENET1_TIME_CLK_ROOT_FROM_PLL_ENET_MAIN_100M_CLK |
+		CLK_ROOT_PRE_DIV(CLK_ROOT_PRE_DIV1) |
+		CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV4);
+	clock_set_target_val(ENET_QOS_TIMER_CLK_ROOT, target);
+
+	/* enable clock */
+	clock_enable(CCGR_QOS_ETHENET, 1);
+	clock_enable(CCGR_SDMA2, 1);
+
+	return 0;
+}
+
+int imx_eqos_txclk_set_rate(u32 rate)
+{
+	u32 val;
+	u32 eqos_post_div;
+
+	/* disable the clock first */
+	clock_enable(CCGR_QOS_ETHENET, 0);
+	clock_enable(CCGR_SDMA2, 0);
+
+	switch (rate) {
+	case 125000000:
+		eqos_post_div = 1;
+		break;
+	case 25000000:
+		eqos_post_div = 125000000 / 25000000;
+		break;
+	case 2500000:
+		eqos_post_div = 125000000 / 2500000;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	clock_get_target_val(ENET_QOS_CLK_ROOT, &val);
+	val &= ~(CLK_ROOT_PRE_DIV_MASK | CLK_ROOT_POST_DIV_MASK);
+	val |= CLK_ROOT_PRE_DIV(CLK_ROOT_PRE_DIV1) |
+	       CLK_ROOT_POST_DIV(eqos_post_div - 1);
+	clock_set_target_val(ENET_QOS_CLK_ROOT, val);
+
+	/* enable clock */
+	clock_enable(CCGR_QOS_ETHENET, 1);
+	clock_enable(CCGR_SDMA2, 1);
+
+	return 0;
+}
+#endif
 
 #ifdef CONFIG_FEC_MXC
 int set_clk_enet(enum enet_freq type)
@@ -895,6 +997,30 @@ u32 imx_get_fecclk(void)
 	return get_root_clk(ENET_AXI_CLK_ROOT);
 }
 
+u32 imx_get_eqos_csr_clk(void)
+{
+	return get_root_clk(ENET_AXI_CLK_ROOT);
+}
+
+#if defined(CONFIG_IMX8MP)
+void init_usb_clk(void)
+{
+	clock_enable(CCGR_USB_MSCALE_PL301, 0);
+	clock_enable(CCGR_USB_PHY_8MP, 0);
+
+	/* HSIOMIX AXI BUS root already been set by ROM */
+
+	/* 100MHz */
+	clock_set_target_val(USB_CORE_REF_CLK_ROOT, CLK_ROOT_ON |
+			     CLK_ROOT_SOURCE_SEL(1));
+	/* 100MHz */
+	clock_set_target_val(USB_PHY_REF_CLK_ROOT, CLK_ROOT_ON |
+			     CLK_ROOT_SOURCE_SEL(1));
+
+	clock_enable(CCGR_USB_MSCALE_PL301, 1);
+	clock_enable(CCGR_USB_PHY_8MP, 1);
+}
+#else
 void enable_usboh3_clk(unsigned char enable)
 {
 	if (enable) {
@@ -910,6 +1036,7 @@ void enable_usboh3_clk(unsigned char enable)
 		clock_enable(CCGR_USB_MSCALE_PL301, 0);
 	}
 }
+#endif
 
 /*
  * Dump some clockes.
