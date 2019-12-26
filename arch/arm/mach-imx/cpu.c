@@ -169,6 +169,8 @@ unsigned imx_ddr_size(void)
 const char *get_imx_type(u32 imxtype)
 {
 	switch (imxtype) {
+	case MXC_CPU_IMX8MP:
+		return "8MP";	/* Quad-core version of the imx8mp */
 	case MXC_CPU_IMX8MN:
 		return "8MNano Quad";/* Quad-core version of the imx8mn */
 	case MXC_CPU_IMX8MND:
@@ -518,7 +520,7 @@ u32 get_cpu_temp_grade(int *minc, int *maxc)
 }
 #endif
 
-#if (defined(CONFIG_MX7) || defined(CONFIG_IMX8M)) && !defined(CONFIG_IMX8MN)
+#if defined(CONFIG_MX7) || defined(CONFIG_IMX8MQ) || defined(CONFIG_IMX8MM)
 enum boot_device get_boot_device(void)
 {
 	struct bootrom_sw_info **p =

@@ -151,7 +151,7 @@ u32 spl_boot_device(void)
 	case SD1_BOOT:
 	case MMC1_BOOT:
 		return BOOT_DEVICE_MMC1;
-#if defined(CONFIG_IMX8MM) || defined(CONFIG_IMX8MN)
+#if defined(CONFIG_IMX8MM) || defined(CONFIG_IMX8MN) || defined(CONFIG_IMX8MP)
 	case SD2_BOOT:
 	case MMC2_BOOT:
 		return BOOT_DEVICE_MMC1;

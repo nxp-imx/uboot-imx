@@ -64,7 +64,7 @@ void enable_tzc380(void)
 	/* Enable TZASC and lock setting */
 	setbits_le32(&gpr->gpr[10], GPR_TZASC_EN);
 	setbits_le32(&gpr->gpr[10], GPR_TZASC_EN_LOCK);
-#if defined(CONFIG_IMX8MM) || defined(CONFIG_IMX8MN)
+#if defined(CONFIG_IMX8MM) || defined(CONFIG_IMX8MN) || defined(CONFIG_IMX8MP)
 	setbits_le32(&gpr->gpr[10], GPR_TZASC_SWAP_ID);
 #endif
 
@@ -233,8 +233,11 @@ u32 get_cpu_rev(void)
 
 	reg &= 0xff;
 
-	/* iMX8MN */
-	 if (major_low == 0x42) {
+	/* iMX8MP */
+	if (major_low == 0x43) {
+		return (MXC_CPU_IMX8MP << 12) | reg;
+	} else if (major_low == 0x42) {
+		/* iMX8MN */
 		type = get_cpu_variant_type(MXC_CPU_IMX8MN);
 		return (type << 12) | reg;
 	 } else if (major_low == 0x41) {
@@ -385,7 +388,7 @@ int arch_cpu_init(void)
 	return 0;
 }
 
-#ifdef CONFIG_IMX8MN
+#if defined(CONFIG_IMX8MN) || defined(CONFIG_IMX8MP)
 struct rom_api
 {
 	uint16_t ver;
@@ -995,7 +998,7 @@ void do_error(struct pt_regs *pt_regs, unsigned int esr)
 #endif
 #endif
 
-#if defined(CONFIG_IMX8MN)
+#if defined(CONFIG_IMX8MN) || defined(CONFIG_IMX8MP)
 enum env_location env_get_location(enum env_operation op, int prio)
 {
 	enum boot_device dev = get_boot_device();

@@ -62,6 +62,7 @@
 #define is_imx8mnl() (is_cpu_type(MXC_CPU_IMX8MNL))
 #define is_imx8mndl() (is_cpu_type(MXC_CPU_IMX8MNDL))
 #define is_imx8mnsl() (is_cpu_type(MXC_CPU_IMX8MNSL))
+#define is_imx8mp() (is_cpu_type(MXC_CPU_IMX8MP))
 #define is_imx8qm() (is_cpu_type(MXC_CPU_IMX8QM))
 #define is_imx8qxp() (is_cpu_type(MXC_CPU_IMX8QXP))
 

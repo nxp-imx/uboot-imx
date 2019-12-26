@@ -21,6 +21,10 @@ config IMX8MN
 	bool
 	select IMX8M
 
+config IMX8MP
+	bool
+	select IMX8M
+
 config SECURE_STICKY_BITS_LOCKUP
 	bool "Enable workaround to fix sticky bits lock up issue"
 	depends on IMX8MQ && SECURE_BOOT
