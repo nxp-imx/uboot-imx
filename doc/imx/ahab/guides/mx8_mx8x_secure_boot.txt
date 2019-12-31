@@ -274,8 +274,8 @@ No events should be returned after this command:
   No SECO Events Found!
 
 U-Boot will decode the SECO events and provide more details on the failure,
-for example in case container image was signed with wrong keys and are not
-matching the OTP SRK hashes:
+for example in case container is not signed (signature is missing), but the
+device is not OEM closed:
 
   => ahab_status
   Lifecycle: 0x0020, NXP closed
@@ -284,8 +284,8 @@ matching the OTP SRK hashes:
           CMD = AHAB_AUTH_CONTAINER_REQ (0x87)
           IND = AHAB_NO_AUTHENTICATION_IND (0xEE)
 
-Note: In case your SRK fuses are not programmed yet the event 0x0087FA00 may
-also be displayed.
+Note: In case the signature is incorrect (signed with wrong keys which are not
+matching the OTP SRK hashes) the event 0x0087FA00 is also displayed.
 
 1.5.6 Close the device
 -----------------------
