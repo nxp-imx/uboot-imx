@@ -97,6 +97,10 @@ int power_init_board(void)
 	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS1, 0x14);
 	pmic_reg_write(p, PCA9450_BUCK1CTRL, 0x59);
 
+	/* Kernel uses OD/OD freq for SOC */
+	/* To avoid timing risk from SOC to ARM,increase VDD_ARM to OD voltage 0.95v */
+	pmic_reg_write(p, PCA9450_BUCK2OUT_DVS0, 0x1C);
+
 	/* set WDOG_B_CFG to cold reset */
 	pmic_reg_write(p, PCA9450_RESET_CTRL, 0xA1);
 
