@@ -17,6 +17,8 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static struct anamix_pll *ana_pll = (struct anamix_pll *)ANATOP_BASE_ADDR;
 
+u32 get_root_clk(enum clk_root_index clock_id);
+
 #ifdef CONFIG_SECURE_BOOT
 void hab_caam_clock_enable(unsigned char enable)
 {
@@ -712,9 +714,8 @@ int clock_init()
 
 	intpll_configure(ANATOP_ARM_PLL, MHZ(1200));
 
-	clock_set_target_val(ARM_A53_CLK_ROOT, CLK_ROOT_ON | \
-			     CLK_ROOT_SOURCE_SEL(1) | \
-			     CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1));
+	/* Bypass CCM A53 ROOT, Switch to ARM PLL -> MUX-> CPU */
+	clock_set_target_val(CORE_SEL_CFG, CLK_ROOT_SOURCE_SEL(1));
 
 	if (is_imx8mn() || is_imx8mp())
 		intpll_configure(ANATOP_SYSTEM_PLL3, MHZ(600));
@@ -942,6 +943,8 @@ u32 get_root_src_clk(enum clk_root_src root_src)
 	case AUDIO_PLL2_CLK:
 	case VIDEO_PLL_CLK:
 		return decode_fracpll(root_src);
+	case ARM_A53_ALT_CLK:
+		return get_root_clk(ARM_A53_CLK_ROOT);
 	default:
 		return 0;
 	}
@@ -971,13 +974,26 @@ u32 get_root_clk(enum clk_root_index clock_id)
 	return root_src_clk / (post_podf + 1) / (pre_podf + 1);
 }
 
+u32 get_arm_core_clk(void)
+{
+	enum clk_root_src root_src;
+	u32 root_src_clk;
+
+	if (clock_get_src(CORE_SEL_CFG, &root_src) < 0)
+		return 0;
+
+	root_src_clk = get_root_src_clk(root_src);
+
+	return root_src_clk;
+}
+
 u32 mxc_get_clock(enum mxc_clock clk)
 {
 	u32 val;
 
 	switch (clk) {
 		case MXC_ARM_CLK:
-			return get_root_clk(ARM_A53_CLK_ROOT);
+			return get_arm_core_clk();
 		case MXC_IPG_CLK:
 			clock_get_target_val(IPG_CLK_ROOT, &val);
 			val = val & 0x3;

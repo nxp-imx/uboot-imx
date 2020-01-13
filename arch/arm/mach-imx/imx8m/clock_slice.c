@@ -472,7 +472,7 @@ static struct clk_root_map root_array[] = {
 	 {DRAM_PLL1_CLK}
 	},
 	{CORE_SEL_CFG, CORE_SEL_CLOCK_SLICE, 0,
-	 {DRAM_PLL1_CLK}
+	 {ARM_A53_ALT_CLK, ARM_PLL_CLK}
 	},
 };
 #elif defined(CONFIG_IMX8MM)
@@ -931,7 +931,7 @@ static struct clk_root_map root_array[] = {
 	 {DRAM_PLL1_CLK}
 	},
 	{CORE_SEL_CFG, CORE_SEL_CLOCK_SLICE, 0,
-	 {DRAM_PLL1_CLK}
+	 {ARM_A53_ALT_CLK, ARM_PLL_CLK}
 	},
 };
 #elif defined(CONFIG_IMX8MN)
@@ -1285,7 +1285,7 @@ static struct clk_root_map root_array[] = {
 	 {DRAM_PLL1_CLK}
 	},
 	{CORE_SEL_CFG, CORE_SEL_CLOCK_SLICE, 0,
-	 {DRAM_PLL1_CLK}
+	 {ARM_A53_ALT_CLK, ARM_PLL_CLK}
 	},
 };
 #elif defined(CONFIG_IMX8MP)
@@ -1602,7 +1602,7 @@ static struct clk_root_map root_array[] = {
 	 {DRAM_PLL1_CLK}
 	},
 	{CORE_SEL_CFG, CORE_SEL_CLOCK_SLICE, 0,
-	 {DRAM_PLL1_CLK}
+	 {ARM_A53_ALT_CLK, ARM_PLL_CLK}
 	},
 };
 #endif
