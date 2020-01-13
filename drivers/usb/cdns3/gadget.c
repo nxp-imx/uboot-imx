@@ -924,6 +924,7 @@ static int cdns_check_ep_interrupt_proceed(struct usb_ss_endpoint *usb_ss_ep)
 
 		/* get just completed request */
 		request = next_request(&usb_ss_ep->request_list);
+		cdns_flush_cache((uintptr_t)request->dma, request->length);
 		usb_gadget_unmap_request(&usb_ss->gadget, request,
 			usb_ss_ep->endpoint.desc->bEndpointAddress
 			& ENDPOINT_DIR_MASK);
