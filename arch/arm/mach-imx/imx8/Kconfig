@@ -106,6 +106,12 @@ config TARGET_IMX8DXL_PHANTOM_MEK
 	select BOARD_LATE_INIT
 	select IMX8QXP
 
+config TARGET_IMX8DX_MEK
+	bool "Support i.MX8DX MEK board"
+	select BOARD_LATE_INIT
+	select SUPPORT_SPL
+	select IMX8QXP
+
 endchoice
 
 source "board/freescale/imx8qm_mek/Kconfig"
