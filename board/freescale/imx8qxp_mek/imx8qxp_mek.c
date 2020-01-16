@@ -213,7 +213,11 @@ int board_phy_config(struct phy_device *phydev)
 
 int checkboard(void)
 {
+#ifdef CONFIG_TARGET_IMX8DX_MEK
+	puts("Board: iMX8DX MEK\n");
+#else
 	puts("Board: iMX8QXP MEK\n");
+#endif
 
 	build_info();
 	print_bootinfo();
@@ -381,8 +385,13 @@ int board_late_init(void)
 
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	env_set("board_name", "MEK");
+#ifdef CONFIG_TARGET_IMX8DX_MEK
+	env_set("board_rev", "iMX8DX");
+#else
 	env_set("board_rev", "iMX8QXP");
 #endif
+#endif
+
 	env_set("sec_boot", "no");
 #ifdef CONFIG_AHAB_BOOT
 	env_set("sec_boot", "yes");
@@ -392,10 +401,17 @@ int board_late_init(void)
 	m4_booted = m4_parts_booted();
 
 	if (fdt_file && !strcmp(fdt_file, "undefined")) {
+#ifdef CONFIG_TARGET_IMX8DX_MEK
+		if (m4_booted)
+			env_set("fdt_file", "imx8dx-mek-rpmsg.dtb");
+		else
+			env_set("fdt_file", "imx8dx-mek.dtb");
+#else
 		if (m4_booted)
 			env_set("fdt_file", "imx8qxp-mek-rpmsg.dtb");
 		else
 			env_set("fdt_file", "imx8qxp-mek.dtb");
+#endif
 	}
 
 #ifdef CONFIG_ENV_IS_IN_MMC
