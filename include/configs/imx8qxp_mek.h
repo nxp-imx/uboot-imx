@@ -167,9 +167,15 @@
 #define CFG_SYS_SDRAM_BASE		0x80000000
 #define PHYS_SDRAM_1			0x80000000
 #define PHYS_SDRAM_2			0x880000000
+
+#ifdef CONFIG_TARGET_IMX8DX_MEK
+#define PHYS_SDRAM_1_SIZE		0x40000000	/* 1 GB */
+#define PHYS_SDRAM_2_SIZE		0x00000000	/* 0 GB */
+#else
 #define PHYS_SDRAM_1_SIZE		0x80000000	/* 2 GB */
 /* LPDDR4 board total DDR is 3GB */
 #define PHYS_SDRAM_2_SIZE		0x40000000	/* 1 GB */
+#endif
 
 /* Misc configuration */
 
