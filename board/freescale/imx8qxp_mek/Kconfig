@@ -1,4 +1,4 @@
-if TARGET_IMX8QXP_MEK
+if TARGET_IMX8QXP_MEK || TARGET_IMX8DX_MEK
 
 config SYS_BOARD
 	default "imx8qxp_mek"
