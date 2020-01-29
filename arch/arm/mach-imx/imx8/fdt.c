@@ -6,6 +6,7 @@
 #include <common.h>
 #include <asm/arch/sci/sci.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/mach-imx/optee.h>
 #include <dm/ofnode.h>
 #include <fdt_support.h>
 #include <linux/libfdt.h>
@@ -568,56 +569,6 @@ static int config_smmu_fdt(void *blob)
 			      name, proplen);
 		}
 	}
-
-	return 0;
-}
-
-static int ft_add_optee_node(void *fdt, bd_t *bd)
-{
-	const char *path, *subpath;
-	int offs;
-
-	/*
-	 * No TEE space allocated indicating no TEE running, so no
-	 * need to add optee node in dts
-	 */
-	if (!boot_pointer[1])
-		return 0;
-
-	offs = fdt_increase_size(fdt, 512);
-	if (offs) {
-		printf("No Space for dtb\n");
-		return 1;
-	}
-
-	path = "/firmware";
-	offs = fdt_path_offset(fdt, path);
-	if (offs < 0) {
-		path = "/";
-		offs = fdt_path_offset(fdt, path);
-
-		if (offs < 0) {
-			printf("Could not find root node.\n");
-			return offs;
-		}
-
-		subpath = "firmware";
-		offs = fdt_add_subnode(fdt, offs, subpath);
-		if (offs < 0) {
-			printf("Could not create %s node.\n", subpath);
-			return offs;
-		}
-	}
-
-	subpath = "optee";
-	offs = fdt_add_subnode(fdt, offs, subpath);
-	if (offs < 0) {
-		printf("Could not create %s node.\n", subpath);
-		return offs;
-	}
-
-	fdt_setprop_string(fdt, offs, "compatible", "linaro,optee-tz");
-	fdt_setprop_string(fdt, offs, "method", "smc");
 
 	return 0;
 }
