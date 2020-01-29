@@ -16,6 +16,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/hab.h>
 #include <asm/mach-imx/boot_mode.h>
+#include <asm/mach-imx/optee.h>
 #include <asm/mach-imx/syscounter.h>
 #include <asm/ptrace.h>
 #include <asm/armv8/mmu.h>
@@ -1125,54 +1126,6 @@ static int disable_cpu_nodes(void *blob, u32 disabled_cores)
 
 	disable_thermal_cpu_nodes(blob, disabled_cores);
 	disable_pmu_cpu_nodes(blob, disabled_cores);
-
-	return 0;
-}
-
-static int ft_add_optee_node(void *fdt, struct bd_info *bd)
-{
-	const char *path, *subpath;
-	int offs;
-
-	/*
-	 * No TEE space allocated indicating no TEE running, so no
-	 * need to add optee node in dts
-	 */
-	if (!rom_pointer[1])
-		return 0;
-
-	offs = fdt_increase_size(fdt, 512);
-	if (offs) {
-		printf("No Space for dtb\n");
-		return 1;
-	}
-
-	path = "/firmware";
-	offs = fdt_path_offset(fdt, path);
-	if (offs < 0) {
-		path = "/";
-		offs = fdt_path_offset(fdt, path);
-
-		if (offs < 0) {
-			printf("Could not find root node.\n");
-			return 1;
-		}
-
-		subpath = "firmware";
-		offs = fdt_add_subnode(fdt, offs, subpath);
-		if (offs < 0) {
-			printf("Could not create %s node.\n", subpath);
-		}
-	}
-
-	subpath = "optee";
-	offs = fdt_add_subnode(fdt, offs, subpath);
-	if (offs < 0) {
-		printf("Could not create %s node.\n", subpath);
-	}
-
-	fdt_setprop_string(fdt, offs, "compatible", "linaro,optee-tz");
-	fdt_setprop_string(fdt, offs, "method", "smc");
 
 	return 0;
 }
