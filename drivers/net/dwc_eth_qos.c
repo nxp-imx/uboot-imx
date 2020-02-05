@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION.
+ * Copyright 2020 NXP
  *
  * Portions based on U-Boot's rtl8169.c.
  */
@@ -47,7 +48,7 @@
 #include <asm/cache.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
-#ifdef CONFIG_ARCH_IMX8M
+#if defined(CONFIG_IMX8MP) || defined(CONFIG_IMX8DXL)
 #include <asm/arch/clock.h>
 #include <asm/mach-imx/sys_proto.h>
 #endif
@@ -1708,6 +1709,10 @@ static const struct udevice_id eqos_ids[] = {
 #if IS_ENABLED(CONFIG_DWC_ETH_QOS_IMX)
 	{
 		.compatible = "nxp,imx8mp-dwmac-eqos",
+		.data = (ulong)&eqos_imx_config
+	},
+	{
+		.compatible = "nxp,imx8dxl-dwmac-eqos",
 		.data = (ulong)&eqos_imx_config
 	},
 #endif
