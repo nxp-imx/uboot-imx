@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier:     GPL-2.0+ */
 /*
- * Copyright 2018 NXP
+ * Copyright 2018-2020 NXP
  */
 
 #ifndef SC_TYPES_H
@@ -215,10 +215,11 @@ typedef u64 sc_ipc_t;
 #define SC_C_SYNC_CTRL                  55U
 #define SC_C_OFS_AUDIO_ALT              56U
 #define SC_C_DSP_BYP                    57U
-#define SC_C_LAST                       58U
-
-
-#define SC_P_ALL        ((sc_pad_t)UINT16_MAX)   /* All pads */
+#define SC_C_CLK_GEN_EN                 58U
+#define SC_C_INTF_SEL                   59U
+#define SC_C_RXC_DLY                    60U
+#define SC_C_TIMER_SEL                  61U
+#define SC_C_LAST                       62U
 
 /* Types */
 
