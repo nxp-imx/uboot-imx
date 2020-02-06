@@ -122,6 +122,11 @@ config TARGET_IMX8DX_MEK
 	select SUPPORT_SPL
 	select IMX8QXP
 
+config TARGET_IMX8DXL_EVK
+	bool "Support i.MX8DXL EVK board"
+	select BOARD_LATE_INIT
+	select IMX8DXL
+
 endchoice
 
 source "board/freescale/imx8qxp_mek/Kconfig"
@@ -129,6 +134,7 @@ source "board/freescale/imx8qm_mek/Kconfig"
 source "board/freescale/imx8qxp_arm2/Kconfig"
 source "board/freescale/imx8qm_arm2/Kconfig"
 source "board/freescale/imx8dxl_phantom_mek/Kconfig"
+source "board/freescale/imx8dxl_evk/Kconfig"
 
 config SNVS_SEC_SC
 	bool "Support SNVS configuration"
