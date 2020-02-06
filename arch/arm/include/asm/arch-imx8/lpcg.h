@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 NXP
+ * Copyright 2018-2020 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -10,6 +10,8 @@
 #if defined(CONFIG_IMX8QM)
 #include "imx8qm_lpcg.h"
 #elif defined(CONFIG_IMX8QXP)
+#include "imx8qxp_lpcg.h"
+#elif defined(CONFIG_IMX8DXL)
 #include "imx8qxp_lpcg.h"
 #else
 #error "No lpcg header"
