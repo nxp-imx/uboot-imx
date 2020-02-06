@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2019 NXP
+ * Copyright 2018-2020 NXP
  */
 
 #include <common.h>
@@ -19,7 +19,7 @@
 #define NAND_DEV	2
 #define QSPI_NOR_DEV	3
 
-static int __get_container_size(ulong addr)
+static int __get_container_size(ulong addr, u16 *header_length)
 {
 	struct container_hdr *phdr;
 	struct boot_img_t *img_entry;
@@ -33,7 +33,9 @@ static int __get_container_size(ulong addr)
 		return -EFAULT;
 	}
 
-	max_offset = sizeof(struct container_hdr);
+	max_offset = phdr->length_lsb + (phdr->length_msb << 8);
+	if (header_length)
+		*header_length = max_offset;
 
 	img_entry = (struct boot_img_t *)(addr + sizeof(struct container_hdr));
 	for (i = 0; i < phdr->num_images; i++) {
@@ -59,7 +61,7 @@ static int __get_container_size(ulong addr)
 	return max_offset;
 }
 
-static int get_container_size(void *dev, int dev_type, unsigned long offset)
+static int get_container_size(void *dev, int dev_type, unsigned long offset, u16 *header_length)
 {
 	u8 *buf = malloc(CONTAINER_HDR_ALIGNMENT);
 	int ret = 0;
@@ -114,7 +116,7 @@ static int get_container_size(void *dev, int dev_type, unsigned long offset)
 		memcpy(buf, (const void *)offset, CONTAINER_HDR_ALIGNMENT);
 #endif
 
-	ret = __get_container_size((ulong)buf);
+	ret = __get_container_size((ulong)buf, header_length);
 
 	free(buf);
 
@@ -155,13 +157,13 @@ static unsigned long get_boot_device_offset(void *dev, int dev_type)
 
 static int get_imageset_end(void *dev, int dev_type)
 {
-	unsigned long offset1 = 0, offset2 = 0;
-	int value_container[2];
+	unsigned long offset[3] = {};
+	int value_container[3] = {};
+	u16 hdr_length;
 
-	offset1 = get_boot_device_offset(dev, dev_type);
-	offset2 = CONTAINER_HDR_ALIGNMENT + offset1;
+	offset[0] = get_boot_device_offset(dev, dev_type);
 
-	value_container[0] = get_container_size(dev, dev_type, offset1);
+	value_container[0] = get_container_size(dev, dev_type, offset[0], &hdr_length);
 	if (value_container[0] < 0) {
 		printf("Parse seco container failed %d\n", value_container[0]);
 		return value_container[0];
@@ -169,17 +171,35 @@ static int get_imageset_end(void *dev, int dev_type)
 
 	debug("seco container size 0x%x\n", value_container[0]);
 
-	value_container[1] = get_container_size(dev, dev_type, offset2);
-	if (value_container[1] < 0) {
-		debug("Parse scu container failed %d, only seco container\n",
-		      value_container[1]);
-		/* return seco container total size */
-		return value_container[0] + offset1;
+	if (is_imx8dxl()) {
+		offset[1] = ALIGN(hdr_length, CONTAINER_HDR_ALIGNMENT) + offset[0];
+
+		value_container[1] = get_container_size(dev, dev_type, offset[1], &hdr_length);
+		if (value_container[1] < 0) {
+			printf("Parse v2x container failed %d\n", value_container[1]);
+			return value_container[0] + offset[0]; /* return seco container total size */
+		}
+
+		debug("v2x container size 0x%x\n", value_container[1]);
+
+		offset[2] = ALIGN(hdr_length, CONTAINER_HDR_ALIGNMENT) + offset[1];
+	} else {
+		/* Skip offset[1] */
+		offset[2] = ALIGN(hdr_length, CONTAINER_HDR_ALIGNMENT) + offset[0];
 	}
 
-	debug("scu container size 0x%x\n", value_container[1]);
+	value_container[2] = get_container_size(dev, dev_type, offset[2], &hdr_length);
+	if (value_container[2] < 0) {
+		debug("Parse scu container image failed %d, only seco container\n", value_container[2]);
+		if (is_imx8dxl())
+			return value_container[1] + offset[1]; /* return seco + v2x container total size */
+		else
+			return value_container[0] + offset[0]; /* return seco container total size */
+	}
 
-	return value_container[1] + offset2;
+	debug("scu container size 0x%x\n", value_container[2]);
+
+	return value_container[2] + offset[2];
 }
 
 #ifdef CONFIG_SPL_SPI_LOAD
