@@ -18,7 +18,7 @@
 #include "clk-imx8.h"
 
 struct imx8_clks_collect *soc_data[] = {
-#ifdef CONFIG_IMX8QXP
+#if defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 	&imx8qxp_clk_collect,
 #endif
 #ifdef CONFIG_IMX8QM
