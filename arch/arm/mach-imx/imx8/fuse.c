@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 NXP
+ * Copyright 2017-2020 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  *
@@ -24,7 +24,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define FSL_ECC_WORD_END_2	 0x1FF
 #endif
 
-#ifdef CONFIG_IMX8QXP
+#if defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 #define FSL_ECC_WORD_START_2	 0x220
 #define FSL_ECC_WORD_END_2	 0x31F
 
@@ -71,7 +71,7 @@ int fuse_prog(u32 bank, u32 word, u32 val)
 		printf("Invalid bank argument, ONLY bank 0 is supported\n");
 		return -EINVAL;
 	}
-#ifdef CONFIG_IMX8QXP
+#if defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 	if ((word >= FSL_QXP_FUSE_GAP_START) && (word <= FSL_QXP_FUSE_GAP_END)) {
 		printf("Invalid word argument for this SoC\n");
 		return -EINVAL;

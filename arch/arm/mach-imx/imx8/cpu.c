@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2017-2019 NXP
+ * Copyright 2017-2020 NXP
  */
 
 #include <common.h>
@@ -103,7 +103,7 @@ int arch_cpu_init_dm(void)
 
 	struct pass_over_info_t *pass_over;
 
-	if (is_soc_rev(CHIP_REV_A)) {
+	if ((is_imx8qm() || is_imx8qxp()) && is_soc_rev(CHIP_REV_A)) {
 		pass_over = get_pass_over_info();
 		if (pass_over && pass_over->g_ap_mu == 0) {
 			/*
@@ -182,7 +182,7 @@ int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 }
 #endif
 
-#ifdef CONFIG_IMX8QXP
+#if defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 static unsigned long load_elf_image_shdr(unsigned long addr)
 {
 	Elf32_Ehdr *ehdr; /* Elf header structure pointer */
@@ -1524,7 +1524,7 @@ u64 get_page_table_size(void)
 #define FUSE_MAC0_WORD1 453
 #define FUSE_MAC1_WORD0 454
 #define FUSE_MAC1_WORD1 455
-#elif defined(CONFIG_IMX8QXP)
+#elif defined(CONFIG_IMX8QXP) || defined (CONFIG_IMX8DXL)
 #define FUSE_MAC0_WORD0 708
 #define FUSE_MAC0_WORD1 709
 #define FUSE_MAC1_WORD0 710
@@ -1622,6 +1622,8 @@ const char *get_imx8_type(u32 imxtype)
 	case MXC_CPU_IMX8QXP:
 	case MXC_CPU_IMX8QXP_A0:
 		return "QXP";
+	case MXC_CPU_IMX8DXL:
+		return "DXL";
 	default:
 		return "??";
 	}
@@ -1706,6 +1708,8 @@ static int cpu_imx_get_count(struct udevice *dev)
 {
 	if (is_imx8qxp())
 		return 4;
+	else if (is_imx8dxl())
+		return 2;
 	else
 		return 6;
 }
