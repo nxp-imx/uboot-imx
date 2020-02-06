@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright 2018 NXP
+ * Copyright 2018-2020 NXP
  *
  * Peng Fan <peng.fan@nxp.com>
  */
@@ -181,7 +181,8 @@ enum imx8image_fld_types {
 typedef enum SOC_TYPE {
 	NONE = 0,
 	QX,
-	QM
+	QM,
+	DXL
 } soc_type_t;
 
 typedef enum option_type {

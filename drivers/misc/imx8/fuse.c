@@ -18,7 +18,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #ifdef CONFIG_IMX8QM
 #define FSL_ECC_WORD_START_2	 0x1A0
 #define FSL_ECC_WORD_END_2	 0x1FF
-#elif defined(CONFIG_IMX8QXP)
+#elif defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 #define FSL_ECC_WORD_START_2	 0x220
 #define FSL_ECC_WORD_END_2	 0x31F
 #endif
@@ -57,7 +57,7 @@ int fuse_prog(u32 bank, u32 word, u32 val)
 		return -EINVAL;
 	}
 
-	if (IS_ENABLED(CONFIG_IMX8QXP)) {
+	if (IS_ENABLED(CONFIG_IMX8QXP) || IS_ENABLED(CONFIG_IMX8DXL)) {
 		if (word >= FSL_QXP_FUSE_GAP_START &&
 		    word <= FSL_QXP_FUSE_GAP_END) {
 			printf("Invalid word argument for this SoC\n");
