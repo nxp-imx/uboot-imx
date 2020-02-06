@@ -154,8 +154,8 @@
 
 &ethphy0 {
 	reset-gpios = <&gpio4 22 GPIO_ACTIVE_LOW>;
-	reset-delay-us = <15000>;
-	reset-post-delay-us = <100000>;
+	reset-assert-us = <15000>;
+	reset-deassert-us = <100000>;
 };
 
 &fec {
