@@ -8,6 +8,7 @@ obj-$(CONFIG_CLK_IMX8) += clk-imx8.o
 
 ifdef CONFIG_CLK_IMX8
 obj-$(CONFIG_IMX8QXP) += clk-imx8qxp.o
+obj-$(CONFIG_IMX8DXL) += clk-imx8qxp.o
 obj-$(CONFIG_IMX8QM) += clk-imx8qm.o
 endif
 obj-$(CONFIG_$(SPL_TPL_)CLK_IMX8MM) += clk-imx8mm.o clk-pll14xx.o \
