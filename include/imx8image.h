@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright 2018 NXP
+ * Copyright 2018-2020 NXP
  *
  * Peng Fan <peng.fan@nxp.com>
  */
@@ -182,6 +182,7 @@ typedef enum SOC_TYPE {
 	NONE = 0,
 	QX,
 	QM,
+	DXL,
 	ULP,
 	IMX9
 } soc_type_t;
