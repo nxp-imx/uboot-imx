@@ -2,6 +2,7 @@
 /*
  * (C) Copyright 2009
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de.
+ * Copyright 2018-2020 NXP
  */
 
 #ifndef _SYS_PROTO_H_
@@ -79,6 +80,7 @@ struct bd_info;
 #define is_imx8mp6() (is_cpu_type(MXC_CPU_IMX8MP6))
 
 #define is_imx8qxp() (is_cpu_type(MXC_CPU_IMX8QXP))
+#define is_imx8dxl() (is_cpu_type(MXC_CPU_IMX8DXL))
 
 #define is_imxrt1020() (is_cpu_type(MXC_CPU_IMXRT1020))
 #define is_imxrt1050() (is_cpu_type(MXC_CPU_IMXRT1050))
