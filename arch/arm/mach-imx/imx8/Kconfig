@@ -118,11 +118,17 @@ config TARGET_IMX8DX_MEK
 	select SUPPORT_SPL
 	select IMX8QXP
 
+config TARGET_IMX8DXL_EVK
+	bool "Support i.MX8DXL EVK board"
+	select BOARD_LATE_INIT
+	select IMX8DXL
+
 endchoice
 
 source "board/freescale/imx8qm_mek/Kconfig"
 source "board/freescale/imx8qxp_mek/Kconfig"
 source "board/freescale/imx8dxl_phantom_mek/Kconfig"
+source "board/freescale/imx8dxl_evk/Kconfig"
 source "board/advantech/imx8qm_rom7720_a1/Kconfig"
 source "board/toradex/apalis-imx8/Kconfig"
 source "board/toradex/colibri-imx8x/Kconfig"
