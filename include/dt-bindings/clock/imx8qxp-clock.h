@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright 2018 NXP
+ * Copyright 2018-2020 NXP
  */
 
 #ifndef __DT_BINDINGS_CLOCK_IMX8QXP_H
@@ -583,5 +583,12 @@
 #define IMX8QXP_ELCDIF_PLL				535
 #define IMX8QXP_LCD_SEL					536
 
-#define IMX8QXP_CLK_END					537
+#define IMX8DXL_EQOS_MEM_CLK				537
+#define IMX8DXL_EQOS_ACLK				538
+#define IMX8DXL_EQOS_CSR_CLK			539
+#define IMX8DXL_EQOS_CLK				540
+#define IMX8DXL_EQOS_PTP_CLK_S			541
+#define IMX8DXL_EQOS_PTP_CLK			542
+
+#define IMX8QXP_CLK_END					543
 #endif /* __DT_BINDINGS_CLOCK_IMX8QXP_H */

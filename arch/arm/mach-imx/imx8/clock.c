@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2018-2019 NXP
+ * Copyright 2018-2020 NXP
  */
 
 #include <common.h>
@@ -353,6 +353,8 @@ void init_clk_fec(int index)
 	* so finally RGMII TX clk is 125Mhz
 	*/
 	rate = 250000000;
+	if (is_imx8dxl() && index == 1) /* eQos */
+		rate = 125000000;
 
 	/* div = 8 clk_source = PLL_1 ss_slice #7 in verfication codes */
 	err = sc_pm_set_clock_rate(-1, enet[index], 2, &rate);
@@ -371,11 +373,13 @@ void init_clk_fec(int index)
 	}
 
 	/* Configure GPR regisers */
-	if (sc_misc_set_control(-1, enet[index], SC_C_TXCLK,  0) != SC_ERR_NONE)
-		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_TXCLK);
-	/* Enable divclk */
-	if (sc_misc_set_control(-1, enet[index], SC_C_CLKDIV,  1) != SC_ERR_NONE)
-		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_CLKDIV);
+	if (!(is_imx8dxl() && index == 1)) {
+		if (sc_misc_set_control(-1, enet[index], SC_C_TXCLK,  0) != SC_ERR_NONE)
+			printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_TXCLK);
+		/* Enable divclk */
+		if (sc_misc_set_control(-1, enet[index], SC_C_CLKDIV,  1) != SC_ERR_NONE)
+			printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_CLKDIV);
+	}
 	if (sc_misc_set_control(-1, enet[index], SC_C_DISABLE_50,  1) != SC_ERR_NONE)
 		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_DISABLE_50);
 	if (sc_misc_set_control(-1, enet[index], SC_C_DISABLE_125,  1) != SC_ERR_NONE)

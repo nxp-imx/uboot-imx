@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright 2018-2019 NXP
+ * Copyright 2018-2020 NXP
  * Peng Fan <peng.fan@nxp.com>
  */
 
@@ -56,7 +56,7 @@ struct imx8_mux_clks {
 	ulong parent_clks[CLK_IMX8_MAX_MUX_SEL];
 };
 
-#ifdef CONFIG_IMX8QXP
+#if defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 static struct imx8_clks imx8qxp_clks[] = {
 	{ IMX8QXP_A35_DIV, "A35_DIV", SC_R_A35, SC_PM_CLK_CPU },
 	{ IMX8QXP_I2C0_DIV, "I2C0_DIV", SC_R_I2C_0, SC_PM_CLK_PER },
@@ -167,6 +167,15 @@ static struct imx8_lpcg_clks imx8qxp_lpcg_clks[] = {
 	{ IMX8QXP_ENET1_PTP_CLK, "ENET1_PTP", 0, ENET_1_LPCG, IMX8QXP_ENET1_ROOT_DIV  },
 	{ IMX8QXP_ENET1_RGMII_TX_CLK, "ENET1_RGMII_TX", 12, ENET_1_LPCG, IMX8QXP_ENET1_RMII_TX_SEL  },
 	{ IMX8QXP_ENET1_RMII_RX_CLK, "ENET1_RMII_RX", 0, ENET_1_LPCG + 0x4, IMX8QXP_ENET1_RGMII_DIV  },
+
+#if defined(CONFIG_IMX8DXL)
+	{ IMX8DXL_EQOS_MEM_CLK, "EQOS_MEM_CLK", 8, ENET_1_LPCG, IMX8QXP_AXI_CONN_CLK_ROOT },
+	{ IMX8DXL_EQOS_ACLK, "EQOS_ACLK", 16, ENET_1_LPCG, IMX8DXL_EQOS_MEM_CLK },
+	{ IMX8DXL_EQOS_CSR_CLK, "EQOS_CSR_CLK", 24, ENET_1_LPCG, IMX8QXP_IPG_CONN_CLK_ROOT },
+	{ IMX8DXL_EQOS_CLK, "EQOS_CLK", 20, ENET_1_LPCG, IMX8QXP_ENET1_ROOT_DIV },
+	{ IMX8DXL_EQOS_PTP_CLK_S, "EQOS_PTP_S", 8, ENET_1_LPCG, IMX8QXP_ENET0_ROOT_DIV  },
+	{ IMX8DXL_EQOS_PTP_CLK, "EQOS_PTP", 0, ENET_1_LPCG, IMX8DXL_EQOS_PTP_CLK_S  },
+#endif
 
 	{ IMX8QXP_LSIO_FSPI0_IPG_S_CLK, "FSPI0_IPG_S", 0x18, FSPI_0_LPCG, IMX8QXP_LSIO_BUS_CLK },
 	{ IMX8QXP_LSIO_FSPI0_IPG_CLK, "FSPI0_IPG", 0x14, FSPI_0_LPCG, IMX8QXP_LSIO_FSPI0_IPG_S_CLK },
@@ -422,7 +431,7 @@ static struct imx8_fixed_clks * check_imx8_fixed_clk(struct udevice *dev, ulong 
 	struct imx8_fixed_clks *clks;
 
 	switch (data) {
-#ifdef CONFIG_IMX8QXP
+#if defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 	case FLAG_CLK_IMX8_IMX8QXP:
 		size = ARRAY_SIZE(imx8qxp_fixed_clks);
 		clks = imx8qxp_fixed_clks;
@@ -455,7 +464,7 @@ static struct imx8_lpcg_clks * check_imx8_lpcg_clk(struct udevice *dev, ulong id
 	struct imx8_lpcg_clks *clks;
 
 	switch (data) {
-#ifdef CONFIG_IMX8QXP
+#if defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 	case FLAG_CLK_IMX8_IMX8QXP:
 		size = ARRAY_SIZE(imx8qxp_lpcg_clks);
 		clks = imx8qxp_lpcg_clks;
@@ -488,7 +497,7 @@ static struct imx8_clks * check_imx8_slice_clk(struct udevice *dev, ulong id)
 	struct imx8_clks *clks;
 
 	switch (data) {
-#ifdef CONFIG_IMX8QXP
+#if defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 	case FLAG_CLK_IMX8_IMX8QXP:
 		size = ARRAY_SIZE(imx8qxp_clks);
 		clks = imx8qxp_clks;
@@ -521,7 +530,7 @@ static struct imx8_gpr_clks * check_imx8_gpr_clk(struct udevice *dev, ulong id)
 	struct imx8_gpr_clks *clks;
 
 	switch (data) {
-#ifdef CONFIG_IMX8QXP
+#if defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 	case FLAG_CLK_IMX8_IMX8QXP:
 		size = ARRAY_SIZE(imx8qxp_gpr_clks);
 		clks = imx8qxp_gpr_clks;
@@ -555,7 +564,7 @@ static struct imx8_mux_clks * check_imx8_mux_clk(struct udevice *dev, ulong id)
 	struct imx8_mux_clks *clks;
 
 	switch (data) {
-#ifdef CONFIG_IMX8QXP
+#if defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 	case FLAG_CLK_IMX8_IMX8QXP:
 		size = ARRAY_SIZE(imx8qxp_mux_clks);
 		clks = imx8qxp_mux_clks;
@@ -836,7 +845,7 @@ int soc_clk_dump(void)
 	data = (ulong)dev_get_driver_data(dev);
 
 	switch (data) {
-#ifdef CONFIG_IMX8QXP
+#if defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 	case FLAG_CLK_IMX8_IMX8QXP:
 		size = ARRAY_SIZE(imx8qxp_clks);
 		clks = imx8qxp_clks;
@@ -901,7 +910,7 @@ static int imx8_clk_probe(struct udevice *dev)
 }
 
 static const struct udevice_id imx8_clk_ids[] = {
-#ifdef CONFIG_IMX8QXP
+#if defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 	{ .compatible = "fsl,imx8qxp-clk", .data = FLAG_CLK_IMX8_IMX8QXP, },
 #endif
 #ifdef CONFIG_IMX8QM
