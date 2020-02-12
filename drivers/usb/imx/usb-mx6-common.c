@@ -79,12 +79,12 @@ static void usb_internal_phy_clock_gate(int index, int on)
 
 static void usb_power_config(int index)
 {
+	if (index >= ARRAY_SIZE(phy_bases))
+                return;
+
 #if defined(CONFIG_MX7ULP)
 	struct usbphy_regs __iomem *usbphy =
 		(struct usbphy_regs __iomem *)USB_PHY0_BASE_ADDR;
-
-	if (index > 0)
-		return;
 
 	writel(ANADIG_USB2_CHRG_DETECT_EN_B |
 		   ANADIG_USB2_CHRG_DETECT_CHK_CHRG_B,
@@ -93,12 +93,11 @@ static void usb_power_config(int index)
 	scg_enable_usb_pll(true);
 
 #elif defined(CONFIG_IMX8)
-	struct usbphy_regs __iomem *usbphy =
-		(struct usbphy_regs __iomem *)USB_PHY0_BASE_ADDR;
-	int timeout = 1000000;
 
-	if (index > 0)
-		return;
+
+	struct usbphy_regs __iomem *usbphy = (struct usbphy_regs __iomem *)phy_bases[index];
+
+	int timeout = 1000000;
 
 	writel(ANADIG_USB2_CHRG_DETECT_EN_B |
 		   ANADIG_USB2_CHRG_DETECT_CHK_CHRG_B,
