@@ -1107,7 +1107,7 @@
 	usbphy2: usbphy@0x5b110000 {
 		compatible = "fsl,imx8qm-usbphy", "fsl,imx7ulp-usbphy", "fsl,imx6ul-usbphy", "fsl,imx23-usbphy";
 		reg = <0x0 0x5b110000 0x0 0x1000>;
-		clocks = <&clk IMX8QXP_USB2_PHY_IPG_CLK>;
+		clocks = <&clk IMX8DXL_USB2_PHY2_IPG_CLK>;
 		power-domains = <&pd_conn_usbotg1_phy>;
 	};
 
@@ -1117,7 +1117,7 @@
 		interrupt-parent = <&wu>;
 		interrupts = <GIC_SPI 169 IRQ_TYPE_LEVEL_HIGH>;
 		fsl,usbphy = <&usbphy1>;
-		clocks = <&clk IMX8QXP_USB2_OH_AHB_CLK>;
+		clocks = <&clk IMX8QXP_CLK_DUMMY>;
 		ahb-burst-config = <0x0>;
 		tx-burst-size-dword = <0x10>;
 		rx-burst-size-dword = <0x10>;
@@ -1132,7 +1132,7 @@
 		interrupt-parent = <&wu>;
 		interrupts = <GIC_SPI 166 IRQ_TYPE_LEVEL_HIGH>;
 		fsl,usbphy = <&usbphy2>;
-		clocks = <&clk IMX8QXP_USB2_OH_AHB_CLK>;
+		clocks = <&clk IMX8QXP_CLK_DUMMY>;
 		ahb-burst-config = <0x0>;
 		tx-burst-size-dword = <0x10>;
 		rx-burst-size-dword = <0x10>;
