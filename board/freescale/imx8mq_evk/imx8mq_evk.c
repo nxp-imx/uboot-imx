@@ -64,17 +64,6 @@ int board_qspi_init(void)
 }
 #endif
 
-int dram_init(void)
-{
-	/* rom_pointer[1] contains the size of TEE occupies */
-	if (rom_pointer[1])
-		gd->ram_size = PHYS_SDRAM_SIZE - rom_pointer[1];
-	else
-		gd->ram_size = PHYS_SDRAM_SIZE;
-
-	return 0;
-}
-
 #ifdef CONFIG_FEC_MXC
 #define FEC_RST_PAD IMX_GPIO_NR(1, 9)
 static iomux_v3_cfg_t const fec1_rst_pads[] = {

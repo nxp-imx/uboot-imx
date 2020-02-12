@@ -128,17 +128,6 @@ int board_early_init_f(void)
 	return 0;
 }
 
-int dram_init(void)
-{
-	/* rom_pointer[1] contains the size of TEE occupies */
-	if (rom_pointer[1])
-		gd->ram_size = PHYS_SDRAM_SIZE - rom_pointer[1];
-	else
-		gd->ram_size = PHYS_SDRAM_SIZE;
-
-	return 0;
-}
-
 #ifdef CONFIG_FEC_MXC
 #ifndef CONFIG_TARGET_IMX8MM_DDR3L_VAL
 #define FEC_RST_PAD IMX_GPIO_NR(4, 22)
