@@ -59,6 +59,39 @@ int board_early_init_f(void)
 	return 0;
 }
 
+#ifdef CONFIG_OF_BOARD_SETUP
+int ft_board_setup(void *blob, bd_t *bd)
+{
+#ifdef CONFIG_IMX8M_DRAM_INLINE_ECC
+	int rc;
+	phys_addr_t ecc0_start = 0xb0000000;
+	phys_addr_t ecc1_start = 0x130000000;
+	phys_addr_t ecc2_start = 0x1b0000000;
+	size_t ecc_size = 0x10000000;
+
+	rc = add_res_mem_dt_node(blob, "ecc", ecc0_start, ecc_size);
+	if (rc < 0) {
+		printf("Could not create ecc0 reserved-memory node.\n");
+		return rc;
+	}
+
+	rc = add_res_mem_dt_node(blob, "ecc", ecc1_start, ecc_size);
+	if (rc < 0) {
+		printf("Could not create ecc1 reserved-memory node.\n");
+		return rc;
+	}
+
+	rc = add_res_mem_dt_node(blob, "ecc", ecc2_start, ecc_size);
+	if (rc < 0) {
+		printf("Could not create ecc2 reserved-memory node.\n");
+		return rc;
+	}
+#endif
+
+	return 0;
+}
+#endif
+
 #ifdef CONFIG_FEC_MXC
 #define FEC_RST_PAD IMX_GPIO_NR(4, 2)
 static iomux_v3_cfg_t const fec1_rst_pads[] = {
