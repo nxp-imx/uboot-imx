@@ -253,4 +253,7 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac);
 void enable_ca7_smp(void);
 #endif
 
+int add_res_mem_dt_node(void *fdt, const char *name, phys_addr_t pa,
+			size_t size);
+int add_dt_path_subnode(void *fdt, const char *path, const char *subnode);
 #endif
