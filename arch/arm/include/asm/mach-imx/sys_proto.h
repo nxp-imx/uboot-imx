@@ -174,4 +174,8 @@ unsigned long call_imx_sip_ret2(unsigned long id, unsigned long reg0,
                                 unsigned long *reg1, unsigned long reg2, unsigned long reg3);
 
 void imx_get_mac_from_fuse(int dev_id, unsigned char *mac);
+
+int add_res_mem_dt_node(void *fdt, const char *name, phys_addr_t pa,
+			size_t size);
+int add_dt_path_subnode(void *fdt, const char *path, const char *subnode);
 #endif
