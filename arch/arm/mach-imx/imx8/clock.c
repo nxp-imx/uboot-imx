@@ -213,7 +213,9 @@ void init_clk_gpmi_nand(void)
 
 void enable_usboh3_clk(unsigned char enable)
 {
+#if !defined(CONFIG_IMX8DXL)
 	lpcg_all_clock_on(USB_2_LPCG);
+#endif
 	return;
 }
 
