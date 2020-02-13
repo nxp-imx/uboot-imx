@@ -10,6 +10,7 @@
 #include <asm/io.h>
 #include <asm/mach-imx/regs-common.h>
 #include <fsl_caam.h>
+#include <fdt_support.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
