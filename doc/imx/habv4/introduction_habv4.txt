@@ -12,7 +12,7 @@ to authenticate and/or decrypt the program image by using cryptography
 operations.
 
 This feature is supported in i.MX 50, i.MX 53, i.MX 6, i.MX 7 series and
- i.MX 8M, i.MX 8MM devices.
+i.MX 8M family (i.MX 8M, i.MX 8MM, i.MX 8MN, i.MX 8MP devices).
 
 Step-by-step guides are available under doc/imx/habv4/guides/ directory,
 users familiar with HAB and CST PKI tree generation should refer to these
