@@ -1,28 +1,27 @@
          +======================================================+
-         +   i.MX8M, i.MX8MM Encrypted Boot guide using HABv4   +
+         +    i.MX8M family Encrypted Boot guide using HABv4    +
          +======================================================+
 
 1. HABv4 Encrypted Boot process
 -------------------------------
 
 This document describes a step-by-step procedure on how to encrypt and sign a
-bootloader image for i.MX8M, i.MX8MM, i.MX8MN family devices. It is assumed
-that the reader is familiar with basic HAB concepts and has already closed
-the device, step-by-step procedure can be found in mx8m_mx8mm_secure_boot.txt
-guide.
+bootloader image for i.MX8M family devices. It is assumed that the reader is
+familiar with basic HAB concepts and has already closed the device, step-by-step
+procedure can be found in mx8m_secure_boot.txt guide.
 
 Details about encrypted boot can be found in application note AN12056[1] and
 in the introduction_habv4.txt document.
 
 The steps described in this document were based in i.MX8MM device, the same
-concept can be applied to i.MX8M and i.MX8MN family devices.
+concept can be applied to other i.MX8M family devices.
 
 1.1 Understanding the encrypted flash.bin image layout
 ------------------------------------------------------
 
-As described in mx8m_mx8mm_secure_boot.txt guide a single binary is used
-to boot the device, the imx-mkimage tool combines all the input images in
-a FIT structure, generating a flash.bin binary.
+As described in mx8m_secure_boot.txt guide a single binary is used to boot the
+device, the imx-mkimage tool combines all the input images in a FIT structure,
+generating a flash.bin binary.
 
 The encrypted boot image requires a DEK (Data Encryption Key) blob on each time
 HABv4 is used to decrypt an image. The DEK blob is used as a security layer to
@@ -127,8 +126,8 @@ TrustZone secure world we must encapsulate the blobs using OP-TEE.
 1.5 Preparing the fit image
 ----------------------------
 
-As explained in mx8m_mx8mm_secure_boot.txt document the imx-mkimage project is
-used to combine all the images in a single flash.bin binary.
+As explained in mx8m_secure_boot.txt document the imx-mkimage project is used to
+combine all the images in a single flash.bin binary.
 
 Copy all the binaries generated (U-Boot images, bl31.bin, tee.bin and Firmware)
 into iMX8M directory and run the following commands according to the target
