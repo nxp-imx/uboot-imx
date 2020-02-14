@@ -181,7 +181,11 @@ int add_res_mem_dt_node(void *fdt, const char *name, phys_addr_t pa,
 			return -1;
 	}
 
+#ifdef CONFIG_PHYS_64BIT
 	snprintf(subnode_name, sizeof(subnode_name), "%s@0x%llx", name, pa);
+#else
+	snprintf(subnode_name, sizeof(subnode_name), "%s@0x%lx", name, pa);
+#endif
 	offs = fdt_add_subnode(fdt, offs, subnode_name);
 	if (offs >= 0) {
 		u32 data[FDT_MAX_NCELLS * 2];
