@@ -784,31 +784,6 @@ static int eqos_start_resets_stm32(struct udevice *dev)
 
 static int eqos_start_resets_imx(struct udevice *dev)
 {
-	struct eqos_priv *eqos = dev_get_priv(dev);
-	int ret;
-
-	debug("%s(dev=%p):\n", __func__, dev);
-
-	if (dm_gpio_is_valid(&eqos->phy_reset_gpio)) {
-		ret = dm_gpio_set_value(&eqos->phy_reset_gpio, 1);
-		if (ret < 0) {
-			pr_err("dm_gpio_set_value(phy_reset, assert) failed: %d", ret);
-			return ret;
-		}
-
-		mdelay(eqos->reset_delay);
-
-		ret = dm_gpio_set_value(&eqos->phy_reset_gpio, 0);
-		if (ret < 0) {
-			pr_err("dm_gpio_set_value(phy_reset, deassert) failed: %d", ret);
-			return ret;
-		}
-
-		if (eqos->reset_post_delay)
-			mdelay(eqos->reset_post_delay);
-	}
-
-	debug("%s: OK\n", __func__);
 	return 0;
 }
 
@@ -829,11 +804,6 @@ static int eqos_stop_resets_stm32(struct udevice *dev)
 
 static int eqos_stop_resets_imx(struct udevice *dev)
 {
-	struct eqos_priv *eqos = dev_get_priv(dev);
-
-	if (dm_gpio_is_valid(&eqos->phy_reset_gpio)) {
-		dm_gpio_set_value(&eqos->phy_reset_gpio, 1);
-	}
 	return 0;
 }
 
@@ -1935,20 +1905,33 @@ static int eqos_probe_resources_imx(struct udevice *dev)
 		pr_debug("gpio_request_by_name(phy reset) failed: %d", ret);
 	}
 
-	eqos->reset_delay = dev_read_u32_default(dev, "phy-reset-duration", 1);
-	if (eqos->reset_delay > 1000) {
-		pr_err("phy reset duration should be <= 1000ms\n");
-		/* property value wrong, use default value */
-		eqos->reset_delay = 1;
-	}
+	if (dm_gpio_is_valid(&eqos->phy_reset_gpio)) {
+		eqos->reset_delay = dev_read_u32_default(dev, "phy-reset-duration", 1);
+		if (eqos->reset_delay > 1000) {
+			pr_err("phy reset duration should be <= 1000ms\n");
+			/* property value wrong, use default value */
+			eqos->reset_delay = 1;
+		}
 
-	eqos->reset_post_delay = dev_read_u32_default(dev,
-						      "phy-reset-post-delay",
-						      0);
-	if (eqos->reset_post_delay > 1000) {
-		pr_err("phy reset post delay should be <= 1000ms\n");
-		/* property value wrong, use default value */
-		eqos->reset_post_delay = 0;
+		mdelay(eqos->reset_delay);
+
+		eqos->reset_post_delay = dev_read_u32_default(dev,
+							      "phy-reset-post-delay",
+							      0);
+		if (eqos->reset_post_delay > 1000) {
+			pr_err("phy reset post delay should be <= 1000ms\n");
+			/* property value wrong, use default value */
+			eqos->reset_post_delay = 0;
+		}
+
+		ret = dm_gpio_set_value(&eqos->phy_reset_gpio, 0);
+		if (ret < 0) {
+			pr_err("dm_gpio_set_value(phy_reset, deassert) failed: %d", ret);
+			goto err_free_gpio_phy_reset;
+		}
+
+		if (eqos->reset_post_delay)
+			mdelay(eqos->reset_post_delay);
 	}
 
 #ifdef CONFIG_CLK
