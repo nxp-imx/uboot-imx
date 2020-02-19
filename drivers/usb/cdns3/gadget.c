@@ -20,6 +20,7 @@
 #include "gadget.h"
 #include "io.h"
 #include <dm/devres.h>
+#include <linux/iopoll.h>
 
 static void __cdns3_gadget_start(struct usb_ss_dev *usb_ss);
 static void cdns_prepare_setup_packet(struct usb_ss_dev *usb_ss);
@@ -1391,6 +1392,61 @@ static int usb_ss_gadget_ep_enable(struct usb_ep *ep,
 	return 0;
 }
 
+static int cdns3_disable_reset_ep(struct usb_ss_dev *usb_ss,
+				   struct usb_ss_endpoint *usb_ss_ep)
+{
+	u32 val;
+	int ret;
+	unsigned long flags;
+
+	spin_lock_irqsave(&usb_ss->lock, flags);
+
+	if (usb_ss_ep->hw_reset_flag) {
+		spin_unlock_irqrestore(&usb_ss->lock, flags);
+		return 0;
+	}
+
+	select_ep(usb_ss_ep->usb_ss,
+			usb_ss_ep->endpoint.desc->bEndpointAddress);
+
+	/**
+	 * Driver needs some time before resetting endpoint.
+	 * It need waits for clearing DBUSY bit or for timeout expired.
+	 * 10us is enough time for controller to stop transfer.
+	 */
+	ret = readl_poll_timeout(&usb_ss->regs->ep_sts, val,
+				  !(val & EP_STS__DBUSY__MASK), 10);
+	if (unlikely(ret))
+		dev_err(usb_ss->dev, "Timeout: %s wait dbusy\n",
+			usb_ss->gadget.name);
+
+	ret = readl_poll_timeout(&usb_ss->regs->ep_sts, val,
+				  (val & EP_STS__BUFFEMPTY__MASK), 1000);
+	if (unlikely(ret))
+		dev_err(usb_ss->dev, "Timeout: %s: %s wait buffer empty\n",
+			usb_ss_ep->name, usb_ss->gadget.name);
+
+	writel(EP_CMD__EPRST__MASK, &usb_ss->regs->ep_cmd);
+
+	ret = readl_poll_timeout(&usb_ss->regs->ep_cmd, val,
+					!(val & (EP_CMD__CSTALL__MASK | EP_CMD__EPRST__MASK)),
+					1000);
+
+	if (unlikely(ret))
+		dev_err(usb_ss->dev, "Timeout: %s resetting failed.\n",
+			usb_ss->gadget.name);
+
+
+	val = readl(&usb_ss->regs->ep_cfg);
+	val &= ~EP_CFG__ENABLE__MASK;
+	writel(val, &usb_ss->regs->ep_cfg);
+
+	usb_ss_ep->hw_reset_flag = 1;
+	spin_unlock_irqrestore(&usb_ss->lock, flags);
+
+	return ret;
+}
+
 static int usb_ss_gadget_ep_conf(struct usb_gadget *gadget,
 				  struct usb_ep *ep,
 				  struct usb_endpoint_descriptor *desc)
@@ -1443,7 +1499,6 @@ static int usb_ss_gadget_ep_disable(struct usb_ep *ep)
 	unsigned long flags;
 	int ret = 0;
 	struct usb_request *request;
-	u32 ep_cfg;
 
 	if (!ep) {
 		pr_debug("usb-ss: invalid parameters\n");
@@ -1464,6 +1519,8 @@ static int usb_ss_gadget_ep_disable(struct usb_ep *ep)
 	dev_dbg(&usb_ss->dev,
 		"Disabling endpoint: %s\n", ep->name);
 
+	ret = cdns3_disable_reset_ep(usb_ss, usb_ss_ep);
+
 	while (!list_empty(&usb_ss_ep->request_list)) {
 		request = next_request(&usb_ss_ep->request_list);
 		usb_gadget_unmap_request(&usb_ss->gadget, request,
@@ -1476,10 +1533,6 @@ static int usb_ss_gadget_ep_disable(struct usb_ep *ep)
 		spin_lock(&usb_ss->lock);
 	}
 
-	select_ep(usb_ss, ep->desc->bEndpointAddress);
-	ep_cfg = cdns_readl(&usb_ss->regs->ep_cfg);
-	ep_cfg &= ~EP_CFG__ENABLE__MASK;
-	cdns_writel(&usb_ss->regs->ep_cfg, ep_cfg);
 	ep->desc = NULL;
 	usb_ss_ep->enabled = 0;
 
@@ -1745,17 +1798,25 @@ static int usb_ss_gadget_set_selfpowered(struct usb_gadget *gadget,
 static int usb_ss_gadget_pullup(struct usb_gadget *gadget, int is_on)
 {
 	struct usb_ss_dev *usb_ss = gadget_to_usb_ss(gadget);
+	struct usb_ep *ep;
 
 	if (!usb_ss->start_gadget)
 		return 0;
 
 	dev_dbg(&usb_ss->dev, "%s: %d\n", __func__, is_on);
 
-	if (is_on)
+	if (is_on) {
 		cdns_writel(&usb_ss->regs->usb_conf, USB_CONF__DEVEN__MASK);
-	else
-		cdns_writel(&usb_ss->regs->usb_conf, USB_CONF__DEVDS__MASK);
+	} else {
+		list_for_each_entry(ep,
+			&usb_ss->gadget.ep_list,
+			ep_list) {
+			if (to_usb_ss_ep(ep)->enabled)
+				cdns3_disable_reset_ep(usb_ss, to_usb_ss_ep(ep));
+		}
 
+		cdns_writel(&usb_ss->regs->usb_conf, USB_CONF__DEVDS__MASK);
+	}
 	return 0;
 }
 
