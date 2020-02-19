@@ -171,6 +171,7 @@
 #define EP_STS__TRBERR__MASK                                        0x00000080U
 #define EP_STS__NRDY__MASK                                          0x00000100U
 #define EP_STS__DBUSY__MASK                                         0x00000200U
+#define EP_STS__BUFFEMPTY__MASK                                     0x00000400U
 #define EP_STS__OUTSMM__MASK                                        0x00004000U
 #define EP_STS__ISOERR__MASK                                        0x00008000U
 #endif /* __EP_STS_MACRO__ */

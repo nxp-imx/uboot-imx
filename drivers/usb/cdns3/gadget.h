@@ -179,6 +179,7 @@ struct usb_ss_endpoint {
 	int hw_pending_flag;
 	int stalled_flag;
 	int wedge_flag;
+	int hw_reset_flag;
 	void *cpu_addr;
 	dma_addr_t dma_addr;
 	u8					dir;
