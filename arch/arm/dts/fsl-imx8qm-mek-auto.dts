@@ -19,7 +19,7 @@
 
 / {
 	chosen {
-		bootargs = "console=ttyLP0,115200 earlycon=lpuart32,0x5a060000,115200 androidboot.console=ttyLP0 androidboot.xen_boot=default";
+		bootargs = "console=ttyLP0,115200 earlycon androidboot.console=ttyLP0 androidboot.xen_boot=default";
 		stdout-path = &lpuart0;
 	};
 
