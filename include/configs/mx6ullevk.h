@@ -160,10 +160,4 @@
 
 #define CONFIG_SOFT_SPI
 
-#ifdef CONFIG_FSL_QSPI
-#define CONFIG_SYS_FSL_QSPI_AHB
-#define FSL_QSPI_FLASH_NUM		1
-#define FSL_QSPI_FLASH_SIZE		SZ_32M
-#endif
-
 #endif
