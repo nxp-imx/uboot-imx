@@ -117,6 +117,10 @@ static int setup_eqos(void)
 	if (err != SC_ERR_NONE)
 		printf("SC_R_ENET_1 CLK_GEN_EN failed! (error = %d)\n", err);
 
+	err = sc_pm_resource_reset(-1, SC_R_ENET_1);
+	if (err != SC_ERR_NONE)
+		printf("SC_R_ENET_1 resource reset failed! (error = %d)\n", err);
+
 	return 0;
 }
 #endif
