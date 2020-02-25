@@ -220,7 +220,6 @@ void lcdifv3_power_down(void)
 	}
 
 	lcdifv3_disable_controller(&panel);
-	writel(CTRL_SW_RESET, (ulong)(panel.isaBase + LCDIFV3_CTRL_SET));
 }
 
 void *video_hw_init(void)
