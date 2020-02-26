@@ -48,9 +48,9 @@
 #endif
 
 #if defined(CONFIG_ANDROID_THINGS_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
-#define FASTBOOT_COMMON_VAR_NUM 14
+#define FASTBOOT_COMMON_VAR_NUM 15
 #else
-#define FASTBOOT_COMMON_VAR_NUM 13
+#define FASTBOOT_COMMON_VAR_NUM 14
 #endif
 
 #define FASTBOOT_VAR_YES    "yes"
@@ -71,6 +71,7 @@ char *fastboot_common_var[FASTBOOT_COMMON_VAR_NUM] = {
 	"battery-voltage",
 	"variant",
 	"battery-soc-ok",
+	"is-userspace",
 #if defined(CONFIG_ANDROID_THINGS_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
 	"baseboard_id"
 #endif
@@ -204,6 +205,8 @@ static int get_single_var(char *cmd, char *response)
 		strncat(response, VARIANT_NAME, chars_left);
 	} else if (!strcmp_l1("off-mode-charge", cmd)) {
 		strncat(response, "1", chars_left);
+	} else if (!strcmp_l1("is-userspace", cmd)) {
+		strncat(response, FASTBOOT_VAR_NO, chars_left);
 	} else if (!strcmp_l1("downloadsize", cmd) ||
 		!strcmp_l1("max-download-size", cmd)) {
 

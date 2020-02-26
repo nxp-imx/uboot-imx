@@ -72,6 +72,20 @@ static void enable_fastboot_command(void)
 #endif
 }
 
+#ifdef CONFIG_ANDROID_RECOVERY
+/* Write the recovery options with fastboot bootloader commands */
+static void enable_recovery_fastboot(void)
+{
+#ifdef CONFIG_BCB_SUPPORT
+	char msg[32] = {0};
+	strncpy(msg, RECOVERY_BCB_CMD, 31);
+	bcb_write_command(msg);
+	strncpy(msg, RECOVERY_FASTBOOT_ARG, 31);
+	bcb_write_recovery_opt(msg);
+#endif
+}
+#endif
+
 /* Get the Boot mode from BCB cmd or Key pressed */
 static FbBootMode fastboot_get_bootmode(void)
 {
@@ -175,6 +189,24 @@ static void reboot_bootloader(char *cmd_parameter, char *response)
 	else
 		fastboot_okay(NULL, response);
 }
+
+#ifdef CONFIG_ANDROID_RECOVERY
+/**
+ * reboot_fastboot() - Sets reboot fastboot flag.
+ *
+ * @cmd_parameter: Pointer to command parameter
+ * @response: Pointer to fastboot response buffer
+ */
+static void reboot_fastboot(char *cmd_parameter, char *response)
+{
+	enable_recovery_fastboot();
+
+	if (fastboot_set_reboot_flag())
+		fastboot_fail("Cannot set reboot flag", response);
+	else
+		fastboot_okay(NULL, response);
+}
+#endif
 
 static void upload(char *cmd_parameter, char *response)
 {
@@ -929,6 +961,12 @@ static const struct {
 		[FASTBOOT_COMMAND_STAGE] = {
 			.command = "stage",
 			.dispatch = download,
+		},
+#endif
+#ifdef CONFIG_ANDROID_RECOVERY
+		[FASTBOOT_COMMAND_RECOVERY_FASTBOOT] = {
+			.command = "reboot-fastboot",
+			.dispatch = reboot_fastboot,
 		},
 #endif
 };
