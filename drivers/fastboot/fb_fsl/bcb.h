@@ -11,6 +11,7 @@
 #define FASTBOOT_BCB_CMD "bootonce-bootloader"
 #ifdef CONFIG_ANDROID_RECOVERY
 #define RECOVERY_BCB_CMD "boot-recovery"
+#define RECOVERY_FASTBOOT_ARG "recovery\n--fastboot"
 #endif
 /* keep same as bootable/recovery/bootloader.h */
 struct bootloader_message {
@@ -48,10 +49,18 @@ struct bootloader_message_ab {
 	(u32)(&(((struct bootloader_message_ab *)0)->slot_suffix[BOOTCTRL_IDX]))
 #define MISC_COMMAND \
 	(u32)(uintptr_t)(&(((struct bootloader_message *)0)->command[MISC_COMMAND_IDX]))
+
+#ifdef CONFIG_ANDROID_RECOVERY
+#define RECOVERY_OPTIONS\
+	(u32)(uintptr_t)(&(((struct bootloader_message *)0)->recovery[0]))
+#endif
 int bcb_rw_block(bool bread, char **ppblock,
 		uint *pblksize, char *pblock_write, uint offset, uint size);
 
 int bcb_write_command(char *bcb_command);
 int bcb_read_command(char *command);
 
+#ifdef CONFIG_ANDROID_RECOVERY
+int bcb_write_recovery_opt(char *opts);
+#endif
 #endif
