@@ -631,6 +631,9 @@ static void rx_handler_command(struct usb_ep *ep, struct usb_request *req)
 
 		case FASTBOOT_COMMAND_REBOOT:
 		case FASTBOOT_COMMAND_REBOOT_BOOTLOADER:
+#ifdef CONFIG_ANDROID_RECOVERY
+		case FASTBOOT_COMMAND_RECOVERY_FASTBOOT:
+#endif
 			fastboot_func->in_req->complete = compl_do_reset;
 			break;
 #if CONFIG_IS_ENABLED(FASTBOOT_UUU_SUPPORT)
