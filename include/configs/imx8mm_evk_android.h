@@ -84,8 +84,6 @@
 #define PHYS_SDRAM_SIZE          0xC0000000 /* 3GB */
 #define PHYS_SDRAM_2             0x100000000
 #define PHYS_SDRAM_2_SIZE        0x40000000 /* 1GB */
-#undef CONFIG_NR_DRAM_BANKS
-#define CONFIG_NR_DRAM_BANKS 3
 #endif
 
 #define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
