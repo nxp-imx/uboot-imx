@@ -24,6 +24,19 @@ int ft_add_optee_node(void *fdt, bd_t *bd)
 	if (!rom_pointer[1])
 		return 0;
 
+#ifdef CONFIG_OF_LIBFDT_OVERLAY
+	if (rom_pointer[2]) {
+		debug("OP-TEE: applying overlay on 0x%llx\n",rom_pointer[2]);
+		ret = fdt_overlay_apply_verbose(fdt, rom_pointer[2]);
+		if (ret == 0) {
+			debug("Overlay applied with success");
+			fdt_pack(fdt);
+			return 0;
+		}
+	}
+	/* Fallback to previous implementation */
+#endif
+
 	optee_start = (phys_addr_t)rom_pointer[0];
 	optee_size = rom_pointer[1] - OPTEE_SHM_SIZE;
 
