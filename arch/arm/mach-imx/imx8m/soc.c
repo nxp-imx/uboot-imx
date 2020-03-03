@@ -589,6 +589,19 @@ void get_board_serial(struct tag_serialnr *serialnr)
 #endif
 
 #ifdef CONFIG_OF_SYSTEM_SETUP
+bool check_fdt_new_path(void *blob)
+{
+	const char *soc_path = "/soc@0";
+	int nodeoff;
+
+	nodeoff = fdt_path_offset(blob, soc_path);
+	if (nodeoff < 0) {
+		return false;
+	}
+
+	return true;
+}
+
 static int disable_fdt_nodes(void *blob, const char *nodes_path[], int size_array)
 {
 	int i = 0;
@@ -642,7 +655,9 @@ static int disable_mipi_dsi_nodes(void *blob)
 	const char *nodes_path[] = {
 		"/mipi_dsi@30A00000",
 		"/mipi_dsi_bridge@30A00000",
-		"/dsi_phy@30A00300"
+		"/dsi_phy@30A00300",
+		"/soc@0/bus@30800000/mipi_dsi@30a00000",
+		"/soc@0/bus@30800000/dphy@30a00300"
 	};
 
 	return disable_fdt_nodes(blob, nodes_path, ARRAY_SIZE(nodes_path));
@@ -658,7 +673,9 @@ static int disable_dcss_nodes(void *blob)
 		"/hdmi_drm@32c00000",
 		"/display-subsystem",
 		"/sound-hdmi",
-		"/sound-hdmi-arc"
+		"/sound-hdmi-arc",
+		"/soc@0/bus@32c00000/display-controller@32e00000",
+		"/soc@0/bus@32c00000/hdmi@32c00000",
 	};
 
 	return disable_fdt_nodes(blob, nodes_path, ARRAY_SIZE(nodes_path));
@@ -666,25 +683,39 @@ static int disable_dcss_nodes(void *blob)
 
 static int check_mipi_dsi_nodes(void *blob)
 {
-	const char *lcdif_path = "/lcdif@30320000";
-	const char *mipi_dsi_path = "/mipi_dsi@30A00000";
-
-	const char *lcdif_ep_path = "/lcdif@30320000/port@0/mipi-dsi-endpoint";
-	const char *mipi_dsi_ep_path = "/mipi_dsi@30A00000/port@1/endpoint";
+	const char *lcdif_path[] = {
+		"/lcdif@30320000",
+		"/soc@0/bus@30000000/lcdif@30320000"
+	};
+	const char *mipi_dsi_path[] = {
+		"/mipi_dsi@30A00000",
+		"/soc@0/bus@30800000/mipi_dsi@30a00000"
+	};
+	const char *lcdif_ep_path[] = {
+		"/lcdif@30320000/port@0/mipi-dsi-endpoint",
+		"/soc@0/bus@30000000/lcdif@30320000/port@0/endpoint"
+	};
+	const char *mipi_dsi_ep_path[] = {
+		"/mipi_dsi@30A00000/port@1/endpoint",
+		"/soc@0/bus@30800000/mipi_dsi@30a00000/ports/port@0/endpoint"
+	};
 
 	int nodeoff;
-	nodeoff = fdt_path_offset(blob, lcdif_path);
+	bool new_path = check_fdt_new_path(blob);
+	int i = new_path? 1 : 0;
+
+	nodeoff = fdt_path_offset(blob, lcdif_path[i]);
 	if (nodeoff < 0 || !fdtdec_get_is_enabled(blob, nodeoff)) {
 		/* If can't find lcdif node or lcdif node is disabled, then disable all mipi dsi,
 		    since they only can input from DCSS */
 		return disable_mipi_dsi_nodes(blob);
 	}
 
-	nodeoff = fdt_path_offset(blob, mipi_dsi_path);
+	nodeoff = fdt_path_offset(blob, mipi_dsi_path[i]);
 	if (nodeoff < 0 || !fdtdec_get_is_enabled(blob, nodeoff))
 		return 0;
 
-	nodeoff = fdt_path_offset(blob, lcdif_ep_path);
+	nodeoff = fdt_path_offset(blob, lcdif_ep_path[i]);
 	if (nodeoff < 0) {
 		/* If can't find lcdif endpoint, then disable all mipi dsi,
 		    since they only can input from DCSS */
@@ -692,7 +723,7 @@ static int check_mipi_dsi_nodes(void *blob)
 	} else {
 		int lookup_node;
 		lookup_node = fdtdec_lookup_phandle(blob, nodeoff, "remote-endpoint");
-		nodeoff = fdt_path_offset(blob, mipi_dsi_ep_path);
+		nodeoff = fdt_path_offset(blob, mipi_dsi_ep_path[i]);
 
 		if (nodeoff >0 && nodeoff == lookup_node)
 			return 0;
@@ -714,7 +745,8 @@ void board_quiesce_devices(void)
 int disable_vpu_nodes(void *blob)
 {
 	const char *nodes_path_8mq[] = {
-		"/vpu@38300000"
+		"/vpu@38300000",
+		"/soc@0/vpu@38300000"
 	};
 
 	const char *nodes_path_8mm[] = {
@@ -788,11 +820,17 @@ int ft_system_setup(void *blob, bd_t *bd)
 
 		disable_dcss_nodes(blob);
 
-		const char *usb_dwc3_path = "/usb@38100000/dwc3";
-		nodeoff = fdt_path_offset(blob, usb_dwc3_path);
+		bool new_path = check_fdt_new_path(blob);
+		int v = new_path? 1 : 0;
+		const char *usb_dwc3_path[] = {
+			"/usb@38100000/dwc3",
+			"/soc@0/usb@38100000"
+		};
+
+		nodeoff = fdt_path_offset(blob, usb_dwc3_path[v]);
 		if (nodeoff >= 0) {
 			const char *speed = "high-speed";
-			printf("Found %s node\n", usb_dwc3_path);
+			printf("Found %s node\n", usb_dwc3_path[v]);
 
 usb_modify_speed:
 
@@ -804,13 +842,13 @@ usb_modify_speed:
 						goto usb_modify_speed;
 				}
 				printf("Unable to set property %s:%s, err=%s\n",
-					usb_dwc3_path, "maximum-speed", fdt_strerror(rc));
+					usb_dwc3_path[v], "maximum-speed", fdt_strerror(rc));
 			} else {
 				printf("Modify %s:%s = %s\n",
-					usb_dwc3_path, "maximum-speed", speed);
+					usb_dwc3_path[v], "maximum-speed", speed);
 			}
 		}else {
-			printf("Can't found %s node\n", usb_dwc3_path);
+			printf("Can't found %s node\n", usb_dwc3_path[v]);
 		}
 	}
 
