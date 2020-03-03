@@ -871,37 +871,6 @@ usb_modify_speed:
 		disable_cpu_nodes(blob, 2);
 	else if (is_imx8mns() || is_imx8mnsl())
 		disable_cpu_nodes(blob, 3);
-
-#ifdef CONFIG_IMX8MN_FORCE_NOM_SOC
-	/* Disable the DVFS by removing 1.4Ghz and 1.5Ghz operating-points*/
-	int rc;
-	int nodeoff;
-	static const char * const nodes_path = "/cpus/cpu@0";
-	u32 val[] = {1200000, 850000};
-
-	nodeoff = fdt_path_offset(blob, nodes_path);
-	if (nodeoff < 0) {
-		printf("Unable to find node %s, err=%s\n",
-		       nodes_path, fdt_strerror(nodeoff));
-		return nodeoff;
-	}
-
-	printf("Found %s node\n", nodes_path);
-
-	val[0] = cpu_to_fdt32(val[0]);
-	val[1] = cpu_to_fdt32(val[1]);
-	rc = fdt_setprop(blob, nodeoff, "operating-points", &val, 2 * sizeof(u32));
-	if (rc) {
-		printf("Unable to update operating-points for node %s, err=%s\n",
-		       nodes_path, fdt_strerror(rc));
-		return rc;
-	}
-
-	printf("Update %s:%s\n", nodes_path,
-	       "operating-points");
-
-#endif /* CONFIG_IMX8MN_FORCE_NOM_SOC */
-
 #endif
 
 	return ft_add_optee_node(blob, bd);
