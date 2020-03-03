@@ -373,30 +373,39 @@ int mmc_get_env_dev(void)
 int ft_system_setup(void *blob, bd_t *bd)
 {
 	if (get_boot_device() == USB_BOOT) {
-		int rc;
-		int nodeoff = fdt_path_offset(blob, "/ahb-bridge0@40000000/usdhc@40370000");
-		if (nodeoff < 0)
-			return 0; /* Not found, skip it */
+		int i = 0;
+		const char *nodes_path[] = {
+			"/ahb-bridge0@40000000/usdhc@40370000",
+			"/bus@40000000/mmc@40370000"
+		};
+		int size_array = ARRAY_SIZE(nodes_path);
 
-		printf("Found usdhc0 node\n");
-		if (fdt_get_property(blob, nodeoff, "vqmmc-supply", NULL) != NULL) {
-			rc = fdt_delprop(blob, nodeoff, "vqmmc-supply");
-			if (!rc) {
-				printf("Removed vqmmc-supply property\n");
+		for (i = 0; i < size_array; i++) {
+			int rc;
+			int nodeoff = fdt_path_offset(blob, nodes_path[i]);
+			if (nodeoff < 0)
+				continue; /* Not found, skip it */
+
+			printf("Found usdhc0 node\n");
+			if (fdt_get_property(blob, nodeoff, "vqmmc-supply", NULL) != NULL) {
+				rc = fdt_delprop(blob, nodeoff, "vqmmc-supply");
+				if (!rc) {
+					printf("Removed vqmmc-supply property\n");
 
 add:
-				rc = fdt_setprop(blob, nodeoff, "no-1-8-v", NULL, 0);
-				if (rc == -FDT_ERR_NOSPACE) {
-					rc = fdt_increase_size(blob, 32);
-					if (!rc)
-						goto add;
-				} else if (rc) {
-					printf("Failed to add no-1-8-v property, %d\n", rc);
+					rc = fdt_setprop(blob, nodeoff, "no-1-8-v", NULL, 0);
+					if (rc == -FDT_ERR_NOSPACE) {
+						rc = fdt_increase_size(blob, 32);
+						if (!rc)
+							goto add;
+					} else if (rc) {
+						printf("Failed to add no-1-8-v property, %d\n", rc);
+					} else {
+						printf("Added no-1-8-v property\n");
+					}
 				} else {
-					printf("Added no-1-8-v property\n");
+					printf("Failed to remove vqmmc-supply property, %d\n", rc);
 				}
-			} else {
-				printf("Failed to remove vqmmc-supply property, %d\n", rc);
 			}
 		}
 	}
