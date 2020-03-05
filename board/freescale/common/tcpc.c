@@ -549,12 +549,12 @@ static int tcpc_pd_transmit_message(struct tcpc_port *port, struct pd_message *m
 	return ret;
 }
 
-static void tcpc_log_source_caps(struct tcpc_port *port, uint32_t *caps, unsigned int capcount)
+static void tcpc_log_source_caps(struct tcpc_port *port, struct pd_message *msg, unsigned int capcount)
 {
 	int i;
 
 	for (i = 0; i < capcount; i++) {
-		u32 pdo = caps[i];
+		u32 pdo = msg->payload[i];
 		enum pd_pdo_type type = pdo_type(pdo);
 
 		tcpc_log(port, "PDO %d: type %d, ",
@@ -597,7 +597,7 @@ static void tcpc_log_source_caps(struct tcpc_port *port, uint32_t *caps, unsigne
 	}
 }
 
-static int tcpc_pd_select_pdo(uint32_t *caps, uint32_t capcount, uint32_t max_snk_mv, uint32_t max_snk_ma)
+static int tcpc_pd_select_pdo(struct pd_message *msg, uint32_t capcount, uint32_t max_snk_mv, uint32_t max_snk_ma)
 {
 	unsigned int i, max_mw = 0, max_mv = 0;
 	int ret = -EINVAL;
@@ -607,7 +607,7 @@ static int tcpc_pd_select_pdo(uint32_t *caps, uint32_t capcount, uint32_t max_sn
 	 * the board's voltage limits. Prefer PDO providing exp
 	 */
 	for (i = 0; i < capcount; i++) {
-		u32 pdo = caps[i];
+		u32 pdo = msg->payload[i];
 		enum pd_pdo_type type = pdo_type(pdo);
 		unsigned int mv, ma, mw;
 
@@ -637,7 +637,7 @@ static int tcpc_pd_select_pdo(uint32_t *caps, uint32_t capcount, uint32_t max_sn
 }
 
 static int tcpc_pd_build_request(struct tcpc_port *port,
-										uint32_t *caps,
+										struct pd_message *msg,
 										uint32_t capcount,
 										uint32_t max_snk_mv,
 										uint32_t max_snk_ma,
@@ -651,11 +651,11 @@ static int tcpc_pd_build_request(struct tcpc_port *port,
 	int index;
 	u32 pdo;
 
-	index = tcpc_pd_select_pdo(caps, capcount, max_snk_mv, max_snk_ma);
+	index = tcpc_pd_select_pdo(msg, capcount, max_snk_mv, max_snk_ma);
 	if (index < 0)
 		return -EINVAL;
 
-	pdo = caps[index];
+	pdo = msg->payload[index];
 	type = pdo_type(pdo);
 
 	if (type == PDO_TYPE_FIXED)
@@ -724,12 +724,11 @@ static void tcpc_pd_sink_process(struct tcpc_port *port)
 			if (msgtype != PD_DATA_SOURCE_CAP)
 				continue;
 
-			uint32_t *caps = (uint32_t *)&msg.payload;
 			uint32_t rdo = 0;
 
-			tcpc_log_source_caps(port, caps, objcnt);
+			tcpc_log_source_caps(port, &msg, objcnt);
 
-			tcpc_pd_build_request(port, caps, objcnt,
+			tcpc_pd_build_request(port, &msg, objcnt,
 				port->cfg.max_snk_mv, port->cfg.max_snk_ma,
 				port->cfg.max_snk_mw, port->cfg.op_snk_mv,
 				&rdo);
