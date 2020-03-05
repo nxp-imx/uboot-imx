@@ -43,8 +43,12 @@
 
 #include "fb_fsl_common.h"
 
-#if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
-#define DST_DECOMPRESS_LEN 1024*1024*32
+/* max kernel image size */
+#ifdef CONFIG_ARCH_IMX8
+/* imx8q has more limitation so we assign less memory here. */
+#define MAX_KERNEL_LEN (60 * 1024 * 1024)
+#else
+#define MAX_KERNEL_LEN (64 * 1024 * 1024)
 #endif
 
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
@@ -696,7 +700,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 					(void *)((ulong)hdr + hdr->page_size), hdr->kernel_size);
 		} else {
 #ifdef CONFIG_LZ4
-			size_t lz4_len = DST_DECOMPRESS_LEN;
+			size_t lz4_len = MAX_KERNEL_LEN;
 			if (ulz4fn((void *)((ulong)hdr + hdr->page_size),
 						hdr->kernel_size, (void *)(ulong)hdr->kernel_addr, &lz4_len) != 0) {
 				printf("Decompress kernel fail!\n");
@@ -735,10 +739,12 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 
 #ifdef CONFIG_OF_LIBFDT
 	/* load the dtb file */
+	u32 fdt_addr = 0;
 	u32 fdt_size = 0;
 	struct dt_table_header *dt_img = NULL;
 
 	if (is_load_fdt_from_part()) {
+		fdt_addr = (ulong)((ulong)(hdr->kernel_addr) + MAX_KERNEL_LEN);
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
 		if (find_partition_data_by_name("oem_bootloader",
 					avb_out_data, &avb_loadpart)) {
@@ -783,15 +789,17 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		dt_entry = (struct dt_table_entry *)((ulong)dt_img +
 				be32_to_cpu(dt_img->dt_entries_offset));
 		fdt_size = be32_to_cpu(dt_entry->dt_size);
-		memcpy((void *)(ulong)hdr->second_addr, (void *)((ulong)dt_img +
+		memcpy((void *)fdt_addr, (void *)((ulong)dt_img +
 				be32_to_cpu(dt_entry->dt_offset)), fdt_size);
 	} else {
-		if (hdr->second_size && hdr->second_addr) {
-			memcpy((void *)(ulong)hdr->second_addr,
+		fdt_addr = (ulong)(hdr->second_addr);
+		fdt_size = (ulong)(hdr->second_size);
+		if (fdt_size && fdt_addr) {
+			memcpy((void *)(ulong)fdt_addr,
 				(void *)(ulong)hdr + hdr->page_size
 				+ ALIGN(hdr->kernel_size, hdr->page_size)
 				+ ALIGN(hdr->ramdisk_size, hdr->page_size),
-				hdr->second_size);
+				fdt_size);
 		}
 	}
 #endif /*CONFIG_OF_LIBFDT*/
@@ -805,20 +813,15 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	printf("kernel   @ %08x (%d)\n", hdr->kernel_addr, hdr->kernel_size);
 	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
 #ifdef CONFIG_OF_LIBFDT
-	if (is_load_fdt_from_part()) {
-		if (fdt_size)
-			printf("fdt      @ %08x (%d)\n", hdr->second_addr, fdt_size);
-	} else {
-		if (hdr->second_size)
-			printf("fdt      @ %08x (%d)\n", hdr->second_addr, hdr->second_size);
-	}
+	if (fdt_size)
+		printf("fdt      @ %08x (%d)\n", fdt_addr, fdt_size);
 #endif /*CONFIG_OF_LIBFDT*/
 
 	char boot_addr_start[12];
 	char ramdisk_addr[25];
-	char fdt_addr[12];
+	char fdt_addr_start[12];
 
-	char *boot_args[] = { NULL, boot_addr_start, ramdisk_addr, fdt_addr};
+	char *boot_args[] = { NULL, boot_addr_start, ramdisk_addr, fdt_addr_start};
 	if (check_image_arm64)
 		boot_args[0] = "booti";
 	else
@@ -826,7 +829,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 
 	sprintf(boot_addr_start, "0x%lx", addr);
 	sprintf(ramdisk_addr, "0x%x:0x%x", hdr->ramdisk_addr, hdr->ramdisk_size);
-	sprintf(fdt_addr, "0x%x", hdr->second_addr);
+	sprintf(fdt_addr_start, "0x%x", fdt_addr);
 
 /* when CONFIG_SYSTEM_RAMDISK_SUPPORT is enabled and it's for Android Auto, if it's not recovery mode
  * do not pass ramdisk addr*/
