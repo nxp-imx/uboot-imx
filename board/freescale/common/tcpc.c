@@ -893,8 +893,14 @@ static int tcpc_pd_sink_init(struct tcpc_port *port)
 		tcpc_log(port, "TCPC wrong state for dead battery, err = %d, CC = 0x%x\n",
 			err, state);
 		return -EPERM;
-	} else
+	} else {
+		err = tcpc_set_plug_orientation(port, pol);
+		if (err) {
+			tcpc_log(port, "TCPC set plug orientation failed, err = %d\n", err);
+			return err;
+		}
 		port->pd_state = ATTACHED;
+	}
 
 	dm_i2c_read(port->i2c_dev, TCPC_POWER_CTRL, (uint8_t *)&valb, 1);
 	valb &= ~TCPC_POWER_CTRL_AUTO_DISCH_DISCO; /* disable AutoDischargeDisconnect */
