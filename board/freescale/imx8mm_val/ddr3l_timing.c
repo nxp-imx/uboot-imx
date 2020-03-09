@@ -156,7 +156,7 @@ struct dram_cfg_param ddr3l_ddrc_cfg[] = {
 	{ DDRC_FREQ2_ODTCFG(0), 0x04050800 },
 
 	/* default start freq point */
-	{ DDRC_MSTR2(0), 0x0},
+	{ DDRC_MSTR2(0), 0x2},
 };
 
 /* PHY Initialize Configuration */
@@ -320,7 +320,6 @@ struct dram_cfg_param ddr3l_ddrphy_cfg[] = {
 	{ 0x200f6, 0x5555 },
 	{ 0x200f7, 0xf000 },
 	{ 0x20025, 0x0 },
-	{ 0x20060, 0x2 },
 };
 
 /* ddr phy trained CSR */
@@ -1351,7 +1350,7 @@ struct dram_fsp_msg ddr3l_dram_fsp_msg[] = {
 		.fsp_cfg = ddr3l_fsp0_cfg,
 		.fsp_cfg_num = ARRAY_SIZE(ddr3l_fsp0_cfg),
 	},
-#if 0
+#if 1
 	{
 		/* P1 1066mts 1D */
 		.drate = 1066,
@@ -1381,4 +1380,5 @@ struct dram_timing_info dram_timing = {
 	.ddrphy_trained_csr_num = ARRAY_SIZE(ddr3l_ddrphy_trained_csr),
 	.ddrphy_pie = ddr3l_phy_pie,
 	.ddrphy_pie_num = ARRAY_SIZE(ddr3l_phy_pie),
+	.fsp_table = { 1600, 1066, 667 },
 };
