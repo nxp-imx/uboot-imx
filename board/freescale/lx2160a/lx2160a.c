@@ -726,6 +726,7 @@ int ft_board_setup(void *blob, bd_t *bd)
 	u64 mc_memory_size = 0;
 	u16 total_memory_banks;
 	u64 gic_lpi_base;
+	int ret;
 
 	ft_cpu_setup(blob, bd);
 
@@ -747,8 +748,9 @@ int ft_board_setup(void *blob, bd_t *bd)
 
 #ifdef CONFIG_GIC_V3_ITS
 	gic_lpi_base = gd->arch.resv_ram - GIC_LPI_SIZE;
-	gic_lpi_tables_init(gic_lpi_base, cpu_numcores());
-	fdt_fixup_gic_lpi_memory(blob, gic_lpi_base);
+	ret = fdt_fixup_gic_lpi_memory(blob, gic_lpi_base);
+	if (!ret && gic_lpi_tables_init(gic_lpi_base, cpu_numcores()))
+		debug("%s: failed to init gic-lpi-tables\n", __func__);
 #endif
 
 #ifdef CONFIG_RESV_RAM
