@@ -49,13 +49,16 @@ const char *get_imx8_rev(u32 rev)
 	}
 }
 
-const char *get_core_name(void)
+const char *get_core_name(struct udevice *dev)
 {
-	if (is_cortex_a35())
+	const void *blob = gd->fdt_blob;
+	int node = dev_of_offset(dev);
+
+	if (!fdt_node_check_compatible(blob, node, "arm,cortex-a35"))
 		return "A35";
-	else if (is_cortex_a53())
+	else if (!fdt_node_check_compatible(blob, node, "arm,cortex-a53"))
 		return "A53";
-	else if (is_cortex_a72())
+	else if (!fdt_node_check_compatible(blob, node, "arm,cortex-a72"))
 		return "A72";
 	else
 		return "?";
@@ -166,7 +169,7 @@ static int imx8_cpu_probe(struct udevice *dev)
 
 	cpurev = get_cpu_rev();
 	plat->cpurev = cpurev;
-	plat->name = get_core_name();
+	plat->name = get_core_name(dev);
 	plat->rev = get_imx8_rev(cpurev & 0xFFF);
 	plat->type = get_imx8_type((cpurev & 0xFF000) >> 12);
 
