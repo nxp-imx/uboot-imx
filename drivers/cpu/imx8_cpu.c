@@ -11,6 +11,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch-imx/cpu.h>
 #include <asm/armv8/cpu.h>
+#include <clk.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -20,6 +21,7 @@ struct cpu_imx_platdata {
 	const char *type;
 	u32 cpurev;
 	u32 freq_mhz;
+	u32 mpidr;
 };
 
 const char *get_imx8_type(u32 imxtype)
@@ -118,7 +120,10 @@ static int cpu_imx_get_info(struct udevice *dev, struct cpu_info *info)
 
 static int cpu_imx_get_count(struct udevice *dev)
 {
-	return 4;
+	if (is_imx8qxp())
+		return 4;
+	else
+		return 6;
 }
 
 static int cpu_imx_get_vendor(struct udevice *dev,  char *buf, int size)
@@ -127,47 +132,57 @@ static int cpu_imx_get_vendor(struct udevice *dev,  char *buf, int size)
 	return 0;
 }
 
+static bool cpu_imx_is_current(struct udevice *dev)
+{
+	struct cpu_imx_platdata *plat = dev_get_platdata(dev);
+
+	if (plat->mpidr == (read_mpidr() & 0xffff))
+		return true;
+
+	return false;
+}
+
 static const struct cpu_ops cpu_imx8_ops = {
 	.get_desc	= cpu_imx_get_desc,
 	.get_info	= cpu_imx_get_info,
 	.get_count	= cpu_imx_get_count,
 	.get_vendor	= cpu_imx_get_vendor,
+	.is_current_cpu = cpu_imx_is_current,
 };
 
 static const struct udevice_id cpu_imx8_ids[] = {
 	{ .compatible = "arm,cortex-a35" },
 	{ .compatible = "arm,cortex-a53" },
+	{ .compatible = "arm,cortex-a72" },
 	{ }
 };
-
-static ulong imx8_get_cpu_rate(void)
-{
-	ulong rate;
-	int ret;
-	int type = is_cortex_a35() ? SC_R_A35 : is_cortex_a53() ?
-		   SC_R_A53 : SC_R_A72;
-
-	ret = sc_pm_get_clock_rate(-1, type, SC_PM_CLK_CPU,
-				   (sc_pm_clock_rate_t *)&rate);
-	if (ret) {
-		printf("Could not read CPU frequency: %d\n", ret);
-		return 0;
-	}
-
-	return rate;
-}
 
 static int imx8_cpu_probe(struct udevice *dev)
 {
 	struct cpu_imx_platdata *plat = dev_get_platdata(dev);
+	struct clk cpu_clk;
 	u32 cpurev;
+	int ret;
 
 	cpurev = get_cpu_rev();
 	plat->cpurev = cpurev;
 	plat->name = get_core_name();
 	plat->rev = get_imx8_rev(cpurev & 0xFFF);
 	plat->type = get_imx8_type((cpurev & 0xFF000) >> 12);
-	plat->freq_mhz = imx8_get_cpu_rate() / 1000000;
+
+	plat->mpidr = dev_read_addr(dev);
+	if (plat->mpidr == FDT_ADDR_T_NONE) {
+		printf("%s: Failed to get CPU reg property\n", __func__);
+		return -EINVAL;
+	}
+
+	ret = clk_get_by_index(dev, 0, &cpu_clk);
+	if (ret) {
+		debug("%s: Failed to get CPU clk: %d\n", __func__, ret);
+		return 0;
+	}
+
+	plat->freq_mhz = clk_get_rate(&cpu_clk) / 1000000;
 	return 0;
 }
 
