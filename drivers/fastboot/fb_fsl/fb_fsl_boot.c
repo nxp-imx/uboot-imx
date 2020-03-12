@@ -43,8 +43,12 @@
 
 #include "fb_fsl_common.h"
 
-#if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
-#define DST_DECOMPRESS_LEN 1024*1024*32
+/* max kernel image size */
+#ifdef CONFIG_ARCH_IMX8
+/* imx8q has more limitation so we assign less memory here. */
+#define MAX_KERNEL_LEN (60 * 1024 * 1024)
+#elif CONFIG_ARCH_IMX8M
+#define MAX_KERNEL_LEN (64 * 1024 * 1024)
 #endif
 
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
@@ -56,8 +60,6 @@
 /* Offset (in u32's) of start and end fields in the zImage header. */
 #define ZIMAGE_START_ADDR	10
 #define ZIMAGE_END_ADDR	11
-
-#define FDT_OFFSET_TO_KERNEL 0x3000000   /* device tree blob offset to the kernel image */
 
 /* Boot metric variables */
 boot_metric metrics = {
@@ -700,7 +702,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 					(void *)((ulong)hdr + hdr->page_size), hdr->kernel_size);
 		} else {
 #ifdef CONFIG_LZ4
-			size_t lz4_len = DST_DECOMPRESS_LEN;
+			size_t lz4_len = MAX_KERNEL_LEN;
 			if (ulz4fn((void *)((ulong)hdr + hdr->page_size),
 						hdr->kernel_size, (void *)(ulong)hdr->kernel_addr, &lz4_len) != 0) {
 				printf("Decompress kernel fail!\n");
@@ -744,7 +746,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	struct dt_table_header *dt_img = NULL;
 
 	if (is_load_fdt_from_part()) {
-		fdt_addr = (ulong)((ulong)(hdr->kernel_addr) + FDT_OFFSET_TO_KERNEL);
+		fdt_addr = (ulong)((ulong)(hdr->kernel_addr) + MAX_KERNEL_LEN);
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
 		if (find_partition_data_by_name("oem_bootloader",
 					avb_out_data, &avb_loadpart)) {
