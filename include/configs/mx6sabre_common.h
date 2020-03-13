@@ -101,7 +101,7 @@
 	"tee_addr=0x20000000\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"console=" CONSOLE_DEV "\0" \
-	"bootargs=console=" CONSOLE_DEV ",115200 ubi.mtd=6 "  \
+	"bootargs=console=" CONSOLE_DEV ",115200 ubi.mtd=nandrootfs "  \
 		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
 		MFG_NAND_PARTITION \
 		"\0" \
