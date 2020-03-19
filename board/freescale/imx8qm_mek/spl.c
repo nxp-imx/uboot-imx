@@ -55,9 +55,6 @@ int board_fit_config_name_match(const char *name)
 
 void board_init_f(ulong dummy)
 {
-	/* Clear global data */
-	memset((void *)gd, 0, sizeof(gd_t));
-
 	/* Clear the BSS. */
 	memset(__bss_start, 0, __bss_end - __bss_start);
 
