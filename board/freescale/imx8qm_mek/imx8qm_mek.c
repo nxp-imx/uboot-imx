@@ -15,15 +15,26 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/sci/sci.h>
 #include <asm/arch/imx8-pins.h>
+#include <usb.h>
 #include <asm/arch/iomux.h>
 #include <asm/arch/sys_proto.h>
+#include "../common/tcpc.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define UART_PAD_CTRL	((SC_PAD_CONFIG_OUT_IN << PADRING_CONFIG_SHIFT) | \
-			 (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) | \
-			 (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | \
-			 (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
+#define ENET_INPUT_PAD_CTRL	((SC_PAD_CONFIG_OD_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
+						| (SC_PAD_28FDSOI_DSE_18V_10MA << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
+
+#define ENET_NORMAL_PAD_CTRL	((SC_PAD_CONFIG_NORMAL << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
+						| (SC_PAD_28FDSOI_DSE_18V_10MA << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
+
+
+#define GPIO_PAD_CTRL	((SC_PAD_CONFIG_NORMAL << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
+						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
+
+
+#define UART_PAD_CTRL	((SC_PAD_CONFIG_OUT_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
+						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
 
 static iomux_cfg_t uart0_pads[] = {
 	SC_P_UART0_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
@@ -47,22 +58,85 @@ int board_early_init_f(void)
 
 	setup_iomux_uart();
 
-	sc_pm_set_resource_power_mode(-1, SC_R_GPIO_5, SC_PM_PW_MODE_ON);
-
 	return 0;
 }
 
-#if CONFIG_IS_ENABLED(DM_GPIO)
-static void board_gpio_init(void)
-{
-	/* TODO */
-}
-#else
-static inline void board_gpio_init(void) {}
-#endif
 
 #if IS_ENABLED(CONFIG_FEC_MXC)
 #include <miiphy.h>
+
+#ifndef CONFIG_DM_ETH
+static iomux_cfg_t pad_enet1[] = {
+	SC_P_ENET1_RGMII_RX_CTL | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET1_RGMII_RXD0 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET1_RGMII_RXD1 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET1_RGMII_RXD2 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET1_RGMII_RXD3 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET1_RGMII_RXC | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET1_RGMII_TX_CTL | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET1_RGMII_TXD0 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET1_RGMII_TXD1 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET1_RGMII_TXD2 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET1_RGMII_TXD3 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET1_RGMII_TXC | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+
+	/* Shared MDIO */
+	SC_P_ENET0_MDC | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_MDIO | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+};
+
+static iomux_cfg_t pad_enet0[] = {
+	SC_P_ENET0_RGMII_RX_CTL | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET0_RGMII_RXD0 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET0_RGMII_RXD1 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET0_RGMII_RXD2 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET0_RGMII_RXD3 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET0_RGMII_RXC | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET0_RGMII_TX_CTL | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_RGMII_TXD0 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_RGMII_TXD1 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_RGMII_TXD2 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_RGMII_TXD3 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_RGMII_TXC | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+
+	/* Shared MDIO */
+	SC_P_ENET0_MDC | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_MDIO | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+};
+
+static void setup_iomux_fec(void)
+{
+	if (0 == CONFIG_FEC_ENET_DEV)
+		imx8_iomux_setup_multiple_pads(pad_enet0, ARRAY_SIZE(pad_enet0));
+	else
+		imx8_iomux_setup_multiple_pads(pad_enet1, ARRAY_SIZE(pad_enet1));
+}
+
+int board_eth_init(bd_t *bis)
+{
+	int ret;
+	struct power_domain pd;
+
+	printf("[%s] %d\n", __func__, __LINE__);
+
+	if (CONFIG_FEC_ENET_DEV) {
+		if (!power_domain_lookup_name("conn_enet1", &pd))
+			power_domain_on(&pd);
+	} else {
+		if (!power_domain_lookup_name("conn_enet0", &pd))
+			power_domain_on(&pd);
+	}
+
+	setup_iomux_fec();
+
+	ret = fecmxc_initialize_multi(bis, CONFIG_FEC_ENET_DEV,
+		CONFIG_FEC_MXC_PHYADDR, IMX_FEC_BASE);
+	if (ret)
+		printf("FEC1 MXC: %s:failed\n", __func__);
+
+	return ret;
+}
+#endif
 
 int board_phy_config(struct phy_device *phydev)
 {
@@ -81,6 +155,57 @@ int board_phy_config(struct phy_device *phydev)
 }
 #endif
 
+#define BB_GPIO_3V3_1 IMX_GPIO_NR(4, 20)
+#define BB_GPIO_3V3_2 IMX_GPIO_NR(4, 24)
+#define BB_GPIO_3V3_3 IMX_GPIO_NR(4, 23)
+
+static void board_gpio_init(void)
+{
+	int ret;
+	struct gpio_desc desc;
+
+	ret = dm_gpio_lookup_name("GPIO4_20", &desc);
+	if (ret) {
+		printf("%s lookup GPIO@4_20 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "bb_3v3_1");
+	if (ret) {
+		printf("%s request bb_3v3_1 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	ret = dm_gpio_lookup_name("GPIO4_24", &desc);
+	if (ret) {
+		printf("%s lookup GPIO@4_24 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "bb_3v3_2");
+	if (ret) {
+		printf("%s request bb_3v3_2 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	ret = dm_gpio_lookup_name("GPIO4_23", &desc);
+	if (ret) {
+		printf("%s lookup GPIO@4_23 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "bb_3v3_3");
+	if (ret) {
+		printf("%s request bb_3v3_3 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+}
 int checkboard(void)
 {
 	puts("Board: iMX8QM MEK\n");
@@ -91,12 +216,117 @@ int checkboard(void)
 	return 0;
 }
 
+#ifdef CONFIG_USB
+
+#ifdef CONFIG_USB_TCPC
+struct gpio_desc type_sel_desc;
+
+static iomux_cfg_t ss_mux_gpio[] = {
+	SC_P_USB_SS3_TC3 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
+	SC_P_QSPI1A_SS0_B | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
+};
+
+struct tcpc_port port;
+struct tcpc_port_config port_config = {
+	.i2c_bus = 0,
+	.addr = 0x51,
+	.port_type = TYPEC_PORT_DFP,
+};
+
+void ss_mux_select(enum typec_cc_polarity pol)
+{
+	if (pol == TYPEC_POLARITY_CC1)
+		dm_gpio_set_value(&type_sel_desc, 0);
+	else
+		dm_gpio_set_value(&type_sel_desc, 1);
+}
+
+static void setup_typec(void)
+{
+	int ret;
+	struct gpio_desc typec_en_desc;
+
+	imx8_iomux_setup_multiple_pads(ss_mux_gpio, ARRAY_SIZE(ss_mux_gpio));
+	ret = dm_gpio_lookup_name("GPIO4_6", &type_sel_desc);
+	if (ret) {
+		printf("%s lookup GPIO4_6 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&type_sel_desc, "typec_sel");
+	if (ret) {
+		printf("%s request typec_sel failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&type_sel_desc, GPIOD_IS_OUT);
+
+	ret = dm_gpio_lookup_name("GPIO4_19", &typec_en_desc);
+	if (ret) {
+		printf("%s lookup GPIO4_19 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&typec_en_desc, "typec_en");
+	if (ret) {
+		printf("%s request typec_en failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	/* Enable SS MUX */
+	dm_gpio_set_dir_flags(&typec_en_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	tcpc_init(&port, port_config, &ss_mux_select);
+}
+#endif
+
+int board_usb_init(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	if (index == 1) {
+		if (init == USB_INIT_HOST) {
+#ifdef CONFIG_USB_TCPC
+			ret = tcpc_setup_dfp_mode(&port);
+#endif
+#ifdef CONFIG_USB_CDNS3_GADGET
+		} else {
+#ifdef CONFIG_USB_TCPC
+			ret = tcpc_setup_ufp_mode(&port);
+			printf("%d setufp mode %d\n", index, ret);
+#endif
+#endif
+		}
+	}
+
+	return ret;
+
+}
+
+int board_usb_cleanup(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	if (index == 1) {
+		if (init == USB_INIT_HOST) {
+#ifdef CONFIG_USB_TCPC
+			ret = tcpc_disable_src_vbus(&port);
+#endif
+		}
+	}
+
+	return ret;
+}
+#endif
+
 int board_init(void)
 {
-	/* Power up base board */
-	sc_pm_set_resource_power_mode(-1, SC_R_BOARD_R1, SC_PM_PW_MODE_ON);
-
 	board_gpio_init();
+
+
+#if defined(CONFIG_USB) && defined(CONFIG_USB_TCPC)
+	setup_typec();
+#endif
 
 	return 0;
 }
