@@ -288,6 +288,14 @@ config PHY_XILINX_ZYNQMP
 	  Enable this to support ZynqMP High Speed Gigabit Transceiver
 	  that is part of ZynqMP SoC.
 
+config CDNS3_USB_PHY
+	bool "Support CDNS3 USB PHY"
+	depends on PHY
+	help
+	  Support for the USB PHY in CDNS3 IP.
+
+	  This PHY is found on CDNS3 IP devices supporting USB.
+
 source "drivers/phy/rockchip/Kconfig"
 source "drivers/phy/cadence/Kconfig"
 source "drivers/phy/ti/Kconfig"
