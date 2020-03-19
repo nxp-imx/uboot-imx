@@ -454,6 +454,7 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 	return ret;
 }
 
+#ifdef CONFIG_USB_TCPC
 /* Not used so far */
 int board_typec_get_mode(int index)
 {
@@ -475,6 +476,7 @@ int board_typec_get_mode(int index)
 		return USB_INIT_HOST;
 	}
 }
+#endif
 #endif
 
 int board_init(void)
