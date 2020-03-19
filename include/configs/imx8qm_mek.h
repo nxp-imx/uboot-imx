@@ -14,16 +14,15 @@
 #define CONFIG_SYS_BOOTM_LEN		(64 * SZ_1M)
 
 #ifdef CONFIG_SPL_BUILD
-#define CONFIG_SPL_MAX_SIZE				(124 * 1024)
+#define CONFIG_SPL_MAX_SIZE				(192 * 1024)
 #define CONFIG_SYS_MONITOR_LEN				(1024 * 1024)
-
-#define CONFIG_SPL_STACK		0x013E000
-#define CONFIG_SPL_BSS_START_ADDR	0x00128000
+#define CONFIG_SPL_STACK		0x013fff0
+#define CONFIG_SPL_BSS_START_ADDR      0x00130000
 #define CONFIG_SPL_BSS_MAX_SIZE		0x1000	/* 4 KB */
-#define CONFIG_SYS_SPL_MALLOC_START	0x00120000
-#define CONFIG_SYS_SPL_MALLOC_SIZE	0x3000	/* 12 KB */
+#define CONFIG_SYS_SPL_MALLOC_START	0x82200000
+#define CONFIG_SYS_SPL_MALLOC_SIZE     0x80000	/* 512 KB */
 #define CONFIG_SERIAL_LPUART_BASE	0x5a060000
-#define CONFIG_MALLOC_F_ADDR		0x00120000
+#define CONFIG_MALLOC_F_ADDR		0x00138000
 
 #define CONFIG_SPL_RAW_IMAGE_ARM_TRUSTED_FIRMWARE
 
@@ -36,10 +35,41 @@
 #define USDHC1_BASE_ADDR                0x5B010000
 #define USDHC2_BASE_ADDR                0x5B020000
 
+#define CONFIG_FEC_XCV_TYPE             RGMII
+#define FEC_QUIRK_ENET_MAC
+
+/* ENET0 connects AR8031 on CPU board, ENET1 connects to base board */
+#define CONFIG_FEC_ENET_DEV 0
+
+#if (CONFIG_FEC_ENET_DEV == 0)
+#define IMX_FEC_BASE			0x5B040000
+#define CONFIG_FEC_MXC_PHYADDR          0x0
+#define CONFIG_ETHPRIME                 "eth0"
+#elif (CONFIG_FEC_ENET_DEV == 1)
+#define IMX_FEC_BASE			0x5B050000
+#define CONFIG_FEC_MXC_PHYADDR          0x1
+#define CONFIG_ETHPRIME                 "eth1"
+#endif
+
 #ifdef CONFIG_AHAB_BOOT
 #define AHAB_ENV "sec_boot=yes\0"
 #else
 #define AHAB_ENV "sec_boot=no\0"
+#endif
+
+/* Boot M4 */
+#define M4_BOOT_ENV \
+	"m4_0_image=m4_0.bin\0" \
+	"m4_1_image=m4_1.bin\0" \
+	"loadm4image_0=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4_0_image}\0" \
+	"loadm4image_1=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4_1_image}\0" \
+	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
+	"m4boot_1=run loadm4image_1; dcache flush; bootaux ${loadaddr} 1\0" \
+
+#ifdef CONFIG_NAND_BOOT
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:128m(boot),32m(kernel),16m(dtb),8m(misc),-(rootfs) "
+#else
+#define MFG_NAND_PARTITION ""
 #endif
 
 #define CONFIG_MFG_ENV_SETTINGS \
@@ -47,16 +77,17 @@
 	"initrd_addr=0x83100000\0" \
 	"initrd_high=0xffffffffffffffff\0" \
 	"emmc_dev=0\0" \
-	"sd_dev=1\0" \
+	"sd_dev=1\0"
 
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
+	M4_BOOT_ENV \
 	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
 	"panel=NULL\0" \
-	"console=ttyLP0,${baudrate} earlycon=lpuart32,0x5a060000,${baudrate}\0" \
+	"console=ttyLP0\0" \
 	"fdt_addr=0x83000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
 	"boot_fdt=try\0" \
@@ -65,7 +96,7 @@
 	"mmcpart=1\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
 	"mmcautodetect=yes\0" \
-	"mmcargs=setenv bootargs console=${console} root=${mmcroot}\0 " \
+	"mmcargs=setenv bootargs console=${console},${baudrate} earlycon root=${mmcroot}\0 " \
 	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
@@ -93,7 +124,7 @@
 				"echo wait for boot; " \
 			"fi;" \
 		"fi;\0" \
-	"netargs=setenv bootargs console=${console} " \
+	"netargs=setenv bootargs console=${console},${baudrate} earlycon " \
 		"root=/dev/nfs " \
 		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 	"netboot=echo Booting from net ...; " \
@@ -114,7 +145,7 @@
 			"${get_cmd} ${loadaddr} ${image}; " \
 			"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 				"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
-					"booti ${loadaddr} - ${fdt_addr}; " \
+					"run boot_os; " \
 				"else " \
 					"echo WARN: Cannot load the DT; " \
 				"fi; " \
@@ -126,8 +157,6 @@
 /* Link Definitions */
 
 #define CONFIG_SYS_INIT_SP_ADDR         0x80200000
-
-/* Default environment is in SD */
 
 /* On LPDDR4 board, USDHC1 is for eMMC, USDHC2 is for SD on CPU board */
 #define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
@@ -142,7 +171,31 @@
 /* Generic Timer Definitions */
 #define COUNTER_FREQUENCY		8000000	/* 8MHz */
 
-/* Networking */
-#define CONFIG_FEC_XCV_TYPE		RGMII
+/* Serial */
+#define CONFIG_BAUDRATE			115200
 
+/* Monitor Command Prompt */
+#define CONFIG_SYS_PROMPT_HUSH_PS2     "> "
+#define CONFIG_SYS_CBSIZE              2048
+#define CONFIG_SYS_MAXARGS             64
+#define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE
+#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
+					sizeof(CONFIG_SYS_PROMPT) + 16)
+
+#define CONFIG_SERIAL_TAG
+
+/* USB Config */
+#ifndef CONFIG_SPL_BUILD
+#define CONFIG_USBD_HS
+
+#endif
+
+#define CONFIG_USB_MAX_CONTROLLER_COUNT 2
+
+/* USB OTG controller configs */
+#ifdef CONFIG_USB_EHCI_HCD
+#define CONFIG_USB_HOST_ETHER
+#define CONFIG_USB_ETHER_ASIX
+#define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
+#endif
 #endif /* __IMX8QM_MEK_H */
