@@ -163,7 +163,7 @@ int ft_board_setup(void *blob, bd_t *bd)
 int board_late_init(void)
 {
 	char *fdt_file;
-	bool m4_boot;
+	bool __maybe_unused m4_boot;
 
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	env_set("board_name", "EVK");
@@ -179,10 +179,14 @@ int board_late_init(void)
 	m4_boot = check_m4_parts_boot();
 
 	if (fdt_file && !strcmp(fdt_file, "undefined")) {
+#if defined(CONFIG_TARGET_IMX8DXL_DDR3_EVK)
+		env_set("fdt_file", "imx8dxl-ddr3-evk.dtb");
+#else
 		if (m4_boot)
 			env_set("fdt_file", "imx8dxl-evk-rpmsg.dtb");
 		else
 			env_set("fdt_file", "imx8dxl-evk.dtb");
+#endif
 	}
 
 #ifdef CONFIG_ENV_IS_IN_MMC
