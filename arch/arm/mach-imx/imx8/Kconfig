@@ -127,6 +127,11 @@ config TARGET_IMX8DXL_EVK
 	select BOARD_LATE_INIT
 	select IMX8DXL
 
+config TARGET_IMX8DXL_DDR3_EVK
+	bool "Support i.MX8DXL EVK board"
+	select BOARD_LATE_INIT
+	select IMX8DXL
+
 endchoice
 
 source "board/freescale/imx8qxp_mek/Kconfig"
