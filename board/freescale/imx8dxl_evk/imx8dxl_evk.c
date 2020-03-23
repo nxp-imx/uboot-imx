@@ -164,31 +164,37 @@ void pci_init_board(void)
 #endif
 
 #ifdef CONFIG_DWC_ETH_QOS
-static int setup_eqos(void)
+int board_interface_eth_init(int interface_type, bool eth_clk_sel_reg,
+				    bool eth_ref_clk_sel_reg)
 {
-	sc_err_t err;
+	if (interface_type == PHY_INTERFACE_MODE_RGMII && eth_ref_clk_sel_reg) {
+		int err;
 
-	/* set GPR14:12 to b’001: RGMII mode */
-	err = sc_misc_set_control(-1, SC_R_ENET_1, SC_C_INTF_SEL, 0x1);
-	if (err != SC_ERR_NONE)
-		printf("SC_R_ENET_1 INTF_SEL failed! (error = %d)\n", err);
+		/* set GPR14:12 to 01: RGMII mode */
+		err = sc_misc_set_control(-1, SC_R_ENET_1, SC_C_INTF_SEL, 0x1);
+		if (err != SC_ERR_NONE) {
+			printf("SC_R_ENET_1 INTF_SEL failed! (error = %d)\n", err);
+			return err;
+		}
 
-	/* enable GPR11：CLK_GEN_EN */
-	err = sc_misc_set_control(-1, SC_R_ENET_1, SC_C_CLK_GEN_EN, 1);
-	if (err != SC_ERR_NONE)
-		printf("SC_R_ENET_1 CLK_GEN_EN failed! (error = %d)\n", err);
+		/* enable GPR11 CLK_GEN_EN */
+		err = sc_misc_set_control(-1, SC_R_ENET_1, SC_C_CLK_GEN_EN, 1);
+		if (err != SC_ERR_NONE) {
+			printf("SC_R_ENET_1 CLK_GEN_EN failed! (error = %d)\n", err);
+			return err;
+		}
 
-    return 0;
+		return 0;
+	}
+
+	return -1;
 }
+
 #endif
 
 int board_init(void)
 {
 	board_gpio_init();
-#ifdef CONFIG_DWC_ETH_QOS
-	/* clock, phy interface mode */
-	setup_eqos();
-#endif
 
 	return 0;
 }
