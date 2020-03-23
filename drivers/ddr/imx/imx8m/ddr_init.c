@@ -118,6 +118,7 @@ void ddr_init(struct dram_timing_info *dram_timing)
 
 	initial_drate = dram_timing->fsp_msg[0].drate;
 	/* default to the frequency point 0 clock */
+	printf("DDRINFO: DRAM rate %dMTS\n", initial_drate);
 	ddrphy_init_set_dfi_clk(initial_drate);
 
 	/* D-aasert the presetn */
