@@ -1898,6 +1898,10 @@ static int eqos_probe_resources_imx(struct udevice *dev)
 		return -EINVAL;
 	}
 
+	ret = board_interface_eth_init(interface, 0, 1);
+	if (ret)
+		return -EINVAL;
+
 	ret = gpio_request_by_name(dev, "phy-reset-gpios", 0,
 				   &eqos->phy_reset_gpio,
 				   GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
