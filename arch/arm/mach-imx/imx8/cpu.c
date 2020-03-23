@@ -75,6 +75,8 @@ int arch_cpu_init(void)
 	return 0;
 }
 
+static void power_off_all_usb(void);
+
 int arch_cpu_init_dm(void)
 {
 	struct udevice *devp;
@@ -107,6 +109,8 @@ int arch_cpu_init_dm(void)
 		if (ret)
 			return ret;
 	}
+
+	power_off_all_usb();
 
 	return 0;
 }
@@ -1090,7 +1094,9 @@ void board_boot_order(u32 *spl_boot_list)
 }
 
 #ifdef CONFIG_USB_PORT_AUTO
-int board_usb_gadget_port_auto(void)
+int usb_boot_index = 0xf;
+
+static int usb_port_auto_check(void)
 {
 	int ret;
 	u32 usb2_data;
@@ -1135,4 +1141,37 @@ int board_usb_gadget_port_auto(void)
 	}
 	return -1;
 }
+
+static void usb_port_record_index(void)
+{
+	usb_boot_index = usb_port_auto_check();
+	if (usb_boot_index < 0)
+		usb_boot_index = 0;
+}
+
+int board_usb_gadget_port_auto(void)
+{
+#if defined(CONFIG_SPL_BUILD)
+	usb_port_record_index();
 #endif
+
+	return usb_boot_index;
+}
+#endif
+
+static void power_off_all_usb(void)
+{
+	if (is_usb_boot()) {
+#ifdef CONFIG_USB_PORT_AUTO
+		usb_port_record_index();
+#endif
+		/* Turn off all usb resource to let conn SS power down */
+		sc_pm_set_resource_power_mode(-1, SC_R_USB_0_PHY, SC_PM_PW_MODE_OFF);
+		sc_pm_set_resource_power_mode(-1, SC_R_USB_1_PHY, SC_PM_PW_MODE_OFF);
+		sc_pm_set_resource_power_mode(-1, SC_R_USB_2_PHY, SC_PM_PW_MODE_OFF);
+
+		sc_pm_set_resource_power_mode(-1, SC_R_USB_0, SC_PM_PW_MODE_OFF);
+		sc_pm_set_resource_power_mode(-1, SC_R_USB_1, SC_PM_PW_MODE_OFF);
+		sc_pm_set_resource_power_mode(-1, SC_R_USB_2, SC_PM_PW_MODE_OFF);
+	}
+}
