@@ -97,7 +97,7 @@ int wait_ddrphy_training_complete(void)
 			debug("Training PASS\n");
 			return 0;
 		} else if (mail == 0xff) {
-			debug("Training FAILED\n");
+			printf("Training FAILED\n");
 			return -1;
 		}
 	}
