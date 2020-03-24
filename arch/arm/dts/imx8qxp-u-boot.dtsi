@@ -3,6 +3,7 @@
  * Copyright 2018, 2021 NXP
  */
 
+#ifdef CONFIG_BINMAN
 / {
 	binman: binman {
 		multiple-images;
@@ -131,3 +132,4 @@
 		};
 	};
 };
+#endif
