@@ -13,8 +13,7 @@
 #include "imx_env.h"
 
 #ifdef CONFIG_SPL_BUILD
-#define CFG_MALLOC_F_ADDR		0x00120000
-
+#define CFG_MALLOC_F_ADDR		0x00138000
 #endif
 
 #ifdef CONFIG_AHAB_BOOT
@@ -23,16 +22,23 @@
 #define AHAB_ENV "sec_boot=no\0"
 #endif
 
+/* Boot M4 */
+#define M4_BOOT_ENV \
+	"m4_0_image=m4_0.bin\0" \
+	"loadm4image_0=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4_0_image}\0" \
+	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
+
 #define CFG_MFG_ENV_SETTINGS \
 	CFG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x83100000\0" \
 	"initrd_high=0xffffffffffffffff\0" \
 	"emmc_dev=0\0" \
-	"sd_dev=1\0" \
+	"sd_dev=1\0"
 
 /* Initial environment variables */
 #define CFG_EXTRA_ENV_SETTINGS		\
 	CFG_MFG_ENV_SETTINGS \
+	M4_BOOT_ENV \
 	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
@@ -46,7 +52,7 @@
 	"mmcpart=1\0" \
 	"mmcroot=/dev/mmcblk1p2 rootwait rw\0" \
 	"mmcautodetect=yes\0" \
-	"mmcargs=setenv bootargs console=${console},${baudrate} root=${mmcroot}\0 " \
+	"mmcargs=setenv bootargs console=${console},${baudrate} earlycon root=${mmcroot}\0 " \
 	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
@@ -74,7 +80,7 @@
 				"echo wait for boot; " \
 			"fi;" \
 		"fi;\0" \
-	"netargs=setenv bootargs console=${console},${baudrate} " \
+	"netargs=setenv bootargs console=${console},${baudrate} earlycon " \
 		"root=/dev/nfs " \
 		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 	"netboot=echo Booting from net ...; " \
@@ -105,8 +111,6 @@
 		"fi;\0"
 
 /* Link Definitions */
-
-/* Default environment is in SD */
 
 /* On LPDDR4 board, USDHC1 is for eMMC, USDHC2 is for SD on CPU board */
 
