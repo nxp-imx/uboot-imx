@@ -13,25 +13,24 @@
 #include "imx_env.h"
 
 #ifdef CONFIG_SPL_BUILD
-#define CONFIG_SPL_MAX_SIZE				(124 * 1024)
+#define CONFIG_SPL_MAX_SIZE				(192 * 1024)
 #define CONFIG_SYS_MONITOR_LEN				(1024 * 1024)
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
-#define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR		0x800
+#define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR		0x1040 /* (32K + 2Mb)/sector_size */
 
 #define CONFIG_SPL_LDSCRIPT		"arch/arm/cpu/armv8/u-boot-spl.lds"
-#define CONFIG_SPL_STACK		0x013E000
-#define CONFIG_SPL_BSS_START_ADDR	0x00128000
+#define CONFIG_SPL_STACK		0x013fff0
+#define CONFIG_SPL_BSS_START_ADDR      0x00130000
 #define CONFIG_SPL_BSS_MAX_SIZE		0x1000	/* 4 KB */
-#define CONFIG_SYS_SPL_MALLOC_START	0x00120000
-#define CONFIG_SYS_SPL_MALLOC_SIZE	0x3000	/* 12 KB */
+#define CONFIG_SYS_SPL_MALLOC_START	0x82200000
+#define CONFIG_SYS_SPL_MALLOC_SIZE     0x80000	/* 512 KB */
 #define CONFIG_SERIAL_LPUART_BASE	0x5a060000
-#define CONFIG_MALLOC_F_ADDR		0x00120000
+#define CONFIG_MALLOC_F_ADDR		0x00138000
 
 #define CONFIG_SPL_RAW_IMAGE_ARM_TRUSTED_FIRMWARE
 
 #define CONFIG_SPL_ABORT_ON_RAW_IMAGE
 
-#define CONFIG_OF_EMBED
 #endif
 
 #define CONFIG_REMAKE_ELF
@@ -53,6 +52,12 @@
 #define AHAB_ENV "sec_boot=no\0"
 #endif
 
+/* Boot M4 */
+#define M4_BOOT_ENV \
+	"m4_0_image=m4_0.bin\0" \
+	"loadm4image_0=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4_0_image}\0" \
+	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
+
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x83100000\0" \
@@ -63,6 +68,7 @@
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
+	M4_BOOT_ENV \
 	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
@@ -76,7 +82,7 @@
 	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
 	"mmcautodetect=yes\0" \
-	"mmcargs=setenv bootargs console=${console},${baudrate} root=${mmcroot}\0 " \
+	"mmcargs=setenv bootargs console=${console},${baudrate} earlycon root=${mmcroot}\0 " \
 	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
@@ -104,7 +110,7 @@
 				"echo wait for boot; " \
 			"fi;" \
 		"fi;\0" \
-	"netargs=setenv bootargs console=${console},${baudrate} " \
+	"netargs=setenv bootargs console=${console},${baudrate} earlycon " \
 		"root=/dev/nfs " \
 		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 	"netboot=echo Booting from net ...; " \
@@ -160,7 +166,13 @@
 
 #define CONFIG_SYS_INIT_SP_ADDR         0x80200000
 
-/* Default environment is in SD */
+#ifdef CONFIG_QSPI_BOOT
+#define CONFIG_ENV_SECT_SIZE	(128 * 1024)
+#define CONFIG_ENV_SPI_BUS	CONFIG_SF_DEFAULT_BUS
+#define CONFIG_ENV_SPI_CS	CONFIG_SF_DEFAULT_CS
+#define CONFIG_ENV_SPI_MODE	CONFIG_SF_DEFAULT_MODE
+#define CONFIG_ENV_SPI_MAX_HZ	CONFIG_SF_DEFAULT_SPEED
+#endif
 
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
@@ -178,6 +190,17 @@
 /* LPDDR4 board total DDR is 3GB */
 #define PHYS_SDRAM_2_SIZE		0x40000000	/* 1 GB */
 
+/* Serial */
+#define CONFIG_BAUDRATE			115200
+
+/* Monitor Command Prompt */
+#define CONFIG_SYS_PROMPT_HUSH_PS2     "> "
+#define CONFIG_SYS_CBSIZE              2048
+#define CONFIG_SYS_MAXARGS             64
+#define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE
+#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
+					sizeof(CONFIG_SYS_PROMPT) + 16)
+
 /* Generic Timer Definitions */
 #define COUNTER_FREQUENCY		8000000	/* 8MHz */
 
@@ -185,12 +208,43 @@
 #define CONFIG_PCA953X
 #endif
 
+#define CONFIG_SERIAL_TAG
+
+/* USB Config */
+#ifndef CONFIG_SPL_BUILD
+#define CONFIG_CMD_USB
+#define CONFIG_USB_STORAGE
+#define CONFIG_USBD_HS
+
+#define CONFIG_CMD_USB_MASS_STORAGE
+#define CONFIG_USB_GADGET_MASS_STORAGE
+#define CONFIG_USB_FUNCTION_MASS_STORAGE
+
+#endif
+
+#define CONFIG_USB_MAX_CONTROLLER_COUNT 2
+
+/* USB OTG controller configs */
+#ifdef CONFIG_USB_EHCI_HCD
+#define CONFIG_USB_HOST_ETHER
+#define CONFIG_USB_ETHER_ASIX
+#define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
+#endif
+
 /* Networking */
+#define CONFIG_FEC_ENET_DEV 0
+
+#if (CONFIG_FEC_ENET_DEV == 0)
+#define IMX_FEC_BASE			0x5B040000
+#define CONFIG_FEC_MXC_PHYADDR          0x0
+#define CONFIG_ETHPRIME                 "eth0"
+#elif (CONFIG_FEC_ENET_DEV == 1)
+#define IMX_FEC_BASE			0x5B050000
+#define CONFIG_FEC_MXC_PHYADDR          0x1
+#define CONFIG_ETHPRIME                 "eth1"
+#endif
+
 #define CONFIG_FEC_XCV_TYPE		RGMII
 
-/* Misc configuration */
-#define CONFIG_SYS_CBSIZE	2048
-#define CONFIG_SYS_MAXARGS	64
-#define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE
 
 #endif /* __IMX8QXP_MEK_H */
