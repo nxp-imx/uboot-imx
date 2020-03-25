@@ -42,7 +42,7 @@
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <eth_phy.h>
-#if defined(CONFIG_IMX8M) || defined(CONFIG_IMX8DXL)
+#if defined(CONFIG_IMX8MP) || defined(CONFIG_IMX8DXL)
 #include <asm/mach-imx/sys_proto.h>
 #endif
 
@@ -1160,7 +1160,7 @@ static int eqos_read_rom_hwaddr(struct udevice *dev)
 {
 	struct eth_pdata *pdata = dev_get_platdata(dev);
 
-#ifdef CONFIG_ARCH_IMX8M
+#if defined(CONFIG_IMX8MP) || defined(CONFIG_IMX8DXL)
 	imx_get_mac_from_fuse(dev->req_seq, pdata->enetaddr);
 #endif
 	return !is_valid_ethaddr(pdata->enetaddr);
