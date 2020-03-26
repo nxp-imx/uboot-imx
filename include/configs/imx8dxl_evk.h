@@ -174,4 +174,6 @@
 
 #define PHYS_SDRAM_2_SIZE		0x00000000
 
+/* NAND stuff */
+#define CFG_SYS_NAND_BASE           0x40000000
 #endif /* __IMX8DXL_EVK_H */
