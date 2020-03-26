@@ -1417,7 +1417,7 @@ static int do_nandbcb(cmd_tbl_t *cmdtp, int flag, int argc,
 		plat_config = imx8mm_plat_config;
 	else if (is_imx8mn())
 		plat_config = imx8mn_plat_config;
-	else if (is_imx8qm() || is_imx8qxp())
+	else if (is_imx8qm() || is_imx8qxp() || is_imx8dxl())
 		plat_config = imx8q_plat_config;
 	else {
 		printf("ERROR: Unknown platform\n");
@@ -1425,7 +1425,7 @@ static int do_nandbcb(cmd_tbl_t *cmdtp, int flag, int argc,
 	}
 
 	if ((plat_config.misc_flags) & BT_SEARCH_CNT_FROM_FUSE) {
-		if (is_imx8qxp()) {
+		if (is_imx8qxp() || is_imx8dxl()) {
 			g_boot_search_count = fuse_to_search_count(0, 720,
 								   0xc0, 6);
 			printf("search count set to %d from fuse\n",
