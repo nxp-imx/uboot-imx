@@ -12,7 +12,7 @@
 
 #define CONFIG_SYS_BOOTM_LEN		(64 * SZ_1M)
 
-#define CONFIG_SPL_MAX_SIZE		(124 * 1024)
+#define CONFIG_SPL_MAX_SIZE		(148 * 1024)
 #define CONFIG_SYS_MONITOR_LEN		(512 * 1024)
 
 #ifdef CONFIG_SPL_BUILD
@@ -37,39 +37,91 @@
 
 /* ENET Config */
 /* ENET1 */
-#if defined(CONFIG_CMD_NET)
+#if defined(CONFIG_FEC_MXC)
 #define CONFIG_ETHPRIME                 "FEC"
 
 #define CONFIG_FEC_XCV_TYPE             RGMII
 #define CONFIG_FEC_MXC_PHYADDR          0
-#define FEC_QUIRK_ENET_MAC
 
 #define IMX_FEC_BASE			0x30BE0000
 #endif
 
-#ifndef CONFIG_SPL_BUILD
+#ifdef CONFIG_DISTRO_DEFAULTS
 #define BOOT_TARGET_DEVICES(func) \
-       func(MMC, mmc, 0) \
-       func(MMC, mmc, 1) \
-       func(DHCP, dhcp, na)
+	func(USB, usb, 0) \
+	func(MMC, mmc, 1) \
+	func(MMC, mmc, 0)
 
 #include <config_distro_bootcmd.h>
+#else
+#define BOOTENV
 #endif
 
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	BOOTENV \
-	"scriptaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
+	"scriptaddr=0x43500000\0" \
 	"kernel_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
+	"bsp_script=boot.scr\0" \
 	"image=Image\0" \
 	"console=ttymxc0,115200\0" \
 	"fdt_addr_r=0x43000000\0"			\
+	"fdt_high=0xffffffffffffffff\0"		\
 	"boot_fdt=try\0" \
 	"fdtfile=imx8mq-evk.dtb\0" \
-	"initrd_addr=0x43800000\0"		\
 	"bootm_size=0x10000000\0" \
+	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
+	"mmcautodetect=yes\0" \
+	"mmcargs=setenv bootargs console=${console} root=${mmcroot}\0 " \
+	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${bsp_script};\0" \
+	"bootscript=echo Running bootscript from mmc ...; " \
+		"source\0" \
+	"loadimage=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
+	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr_r} ${fdtfile}\0" \
+	"mmcboot=echo Booting from mmc ...; " \
+		"run mmcargs; " \
+		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
+			"if run loadfdt; then " \
+				"booti ${loadaddr} - ${fdt_addr_r}; " \
+			"else " \
+				"echo WARN: Cannot load the DT; " \
+			"fi; " \
+		"else " \
+			"echo wait for boot; " \
+		"fi;\0" \
+	"netargs=setenv bootargs console=${console} " \
+		"root=/dev/nfs " \
+		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
+	"netboot=echo Booting from net ...; " \
+		"run netargs;  " \
+		"if test ${ip_dyn} = yes; then " \
+			"setenv get_cmd dhcp; " \
+		"else " \
+			"setenv get_cmd tftp; " \
+		"fi; " \
+		"${get_cmd} ${loadaddr} ${image}; " \
+		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
+			"if ${get_cmd} ${fdt_addr_r} ${fdtfile}; then " \
+				"booti ${loadaddr} - ${fdt_addr_r}; " \
+			"else " \
+				"echo WARN: Cannot load the DT; " \
+			"fi; " \
+		"else " \
+			"booti; " \
+		"fi;\0" \
+	"bsp_bootcmd=echo Running BSP bootcmd ...; " \
+			"mmc dev ${mmcdev}; if mmc rescan; then " \
+			   "if run loadbootscript; then " \
+				   "run bootscript; " \
+			   "else " \
+				   "if run loadimage; then " \
+					   "run mmcboot; " \
+				   "else run netboot; " \
+				   "fi; " \
+			   "fi; " \
+		   "fi;"
 
 /* Link Definitions */
 
@@ -100,8 +152,6 @@
 
 /* USB configs */
 #ifndef CONFIG_SPL_BUILD
-#define CONFIG_CMD_USB
-#define CONFIG_USB_STORAGE
 
 #define CONFIG_CMD_USB_MASS_STORAGE
 #define CONFIG_USB_FUNCTION_MASS_STORAGE
