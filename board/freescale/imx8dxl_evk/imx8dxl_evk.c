@@ -33,6 +33,9 @@ DECLARE_GLOBAL_DATA_PTR;
 #define ENET_NORMAL_PAD_CTRL	((SC_PAD_CONFIG_NORMAL << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
 						| (SC_PAD_28FDSOI_DSE_18V_10MA << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
 
+#define GPMI_NAND_PAD_CTRL	 ((SC_PAD_CONFIG_OUT_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) \
+				  | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
+
 #define GPIO_PAD_CTRL	((SC_PAD_CONFIG_NORMAL << PADRING_CONFIG_SHIFT) | \
 			 (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) | \
 			 (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | \
@@ -52,6 +55,48 @@ static void setup_iomux_uart(void)
 {
 	imx8_iomux_setup_multiple_pads(uart0_pads, ARRAY_SIZE(uart0_pads));
 }
+
+#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_NAND_MXS
+static iomux_cfg_t gpmi_nand_pads[] = {
+	SC_P_EMMC0_DATA0 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA1 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA2 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA3 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA4 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA5 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA6 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_DATA7 | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_STROBE | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_RESET_B | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_CLK | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_EMMC0_CMD | MUX_MODE_ALT(1) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+
+	SC_P_USDHC1_RESET_B | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_USDHC1_WP | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+	SC_P_USDHC1_VSELECT | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPMI_NAND_PAD_CTRL),
+
+};
+
+static void setup_iomux_gpmi_nand(void)
+{
+	imx8_iomux_setup_multiple_pads(gpmi_nand_pads, ARRAY_SIZE(gpmi_nand_pads));
+}
+
+static void imx8dxl_gpmi_nand_initialize(void)
+{
+	int ret;
+
+	ret = sc_pm_set_resource_power_mode(-1, SC_R_NAND, SC_PM_PW_MODE_ON);
+	if (ret != SC_ERR_NONE)
+		return;
+
+	init_clk_gpmi_nand();
+	setup_iomux_gpmi_nand();
+}
+#endif
+#endif
+
 
 int board_early_init_f(void)
 {
@@ -77,6 +122,11 @@ int board_early_init_f(void)
 
 	setup_iomux_uart();
 
+#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_NAND_MXS
+	imx8dxl_gpmi_nand_initialize();
+#endif
+#endif
 	return 0;
 }
 
