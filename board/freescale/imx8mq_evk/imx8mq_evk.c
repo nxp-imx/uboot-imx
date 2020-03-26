@@ -167,8 +167,7 @@ struct tcpc_port_config port_config = {
 	.op_snk_mv = 9000,
 };
 
-#define USB_TYPEC_SEL IMX_GPIO_NR(3, 15)
-
+struct gpio_desc type_sel_desc;
 static iomux_v3_cfg_t ss_mux_gpio[] = {
 	IMX8MQ_PAD_NAND_RE_B__GPIO3_IO15 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
@@ -176,9 +175,9 @@ static iomux_v3_cfg_t ss_mux_gpio[] = {
 void ss_mux_select(enum typec_cc_polarity pol)
 {
 	if (pol == TYPEC_POLARITY_CC1)
-		gpio_direction_output(USB_TYPEC_SEL, 1);
+		dm_gpio_set_value(&type_sel_desc, 1);
 	else
-		gpio_direction_output(USB_TYPEC_SEL, 0);
+		dm_gpio_set_value(&type_sel_desc, 0);
 }
 
 static int setup_typec(void)
@@ -186,7 +185,20 @@ static int setup_typec(void)
 	int ret;
 
 	imx_iomux_v3_setup_multiple_pads(ss_mux_gpio, ARRAY_SIZE(ss_mux_gpio));
-	gpio_request(USB_TYPEC_SEL, "typec_sel");
+
+	ret = dm_gpio_lookup_name("GPIO3_15", &type_sel_desc);
+	if (ret) {
+		printf("%s lookup GPIO3_15 failed ret = %d\n", __func__, ret);
+		return -ENODEV;
+	}
+
+	ret = dm_gpio_request(&type_sel_desc, "typec_sel");
+	if (ret) {
+		printf("%s request typec_sel failed ret = %d\n", __func__, ret);
+		return -ENODEV;
+	}
+
+	dm_gpio_set_dir_flags(&type_sel_desc, GPIOD_IS_OUT);
 
 	ret = tcpc_init(&port, port_config, &ss_mux_select);
 	if (ret) {
