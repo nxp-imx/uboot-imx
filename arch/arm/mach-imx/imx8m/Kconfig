@@ -62,6 +62,14 @@ config TARGET_IMX8MQ_PHANBELL
 	select IMX8MQ
 	select IMX8M_LPDDR4
 
+config TARGET_IMX8MQ_DDR3L_VAL
+	bool "imx8mq_ddr3l_val"
+	select IMX8MQ
+
+config TARGET_IMX8MQ_DDR4_VAL
+	bool "imx8mq_ddr4_val"
+	select IMX8MQ
+
 config TARGET_IMX8MM_EVK
 	bool "imx8mm LPDDR4 EVK board"
 	select BINMAN
@@ -241,6 +249,7 @@ source "board/beacon/imx8mn/Kconfig"
 source "board/compulab/imx8mm-cl-iot-gate/Kconfig"
 source "board/engicam/imx8mm/Kconfig"
 source "board/freescale/imx8mq_evk/Kconfig"
+source "board/freescale/imx8mq_val/Kconfig"
 source "board/freescale/imx8mm_evk/Kconfig"
 source "board/freescale/imx8mn_evk/Kconfig"
 source "board/freescale/imx8mp_evk/Kconfig"
