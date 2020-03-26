@@ -23,6 +23,10 @@
  */
 #define CONFIG_SYS_UBOOT_BASE 0x08181000
 
+#define CONFIG_SYS_NAND_U_BOOT_OFFS     (0x8000000)  /*Put the FIT out of first 128MB boot area */
+#define CONFIG_SPL_NAND_BASE
+#define CONFIG_SPL_NAND_IDENT
+
 #define CONFIG_SPL_LDSCRIPT		"arch/arm/cpu/armv8/u-boot-spl.lds"
 /*
  * The memory layout on stack:  DATA section save + gd + early malloc
@@ -72,6 +76,10 @@
 	"loadm4image_0=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4_0_image}\0" \
 	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
 
+#ifdef CONFIG_NAND_BOOT
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:128m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)"
+#endif
+
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x83100000\0" \
@@ -120,6 +128,17 @@
             "\0" \
 
 /* Initial environment variables */
+#ifdef CONFIG_NAND_BOOT
+#define CONFIG_EXTRA_ENV_SETTINGS		\
+	CONFIG_MFG_ENV_SETTINGS \
+	"bootargs=console=ttyLP0,115200 ubi.mtd=nandrootfs "  \
+		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
+		MFG_NAND_PARTITION \
+		"\0"\
+	"console=ttyLP0,115200 earlycon\0" \
+	"mtdparts=" MFG_NAND_PARTITION "\0" \
+	"fdt_addr=0x83000000\0"
+#else
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
 	M4_BOOT_ENV \
@@ -197,7 +216,14 @@
 				"booti; " \
 			"fi;" \
 		"fi;\0"
+#endif
 
+#ifdef CONFIG_NAND_BOOT
+#define CONFIG_BOOTCOMMAND \
+	"nand read ${loadaddr} 0x9000000 0x2000000;"\
+	"nand read ${fdt_addr} 0xB000000 0x100000;"\
+	"booti ${loadaddr} - ${fdt_addr}"
+#else
 #define CONFIG_BOOTCOMMAND \
 	   "mmc dev ${mmcdev}; if mmc rescan; then " \
 		   "if run loadbootscript; then " \
@@ -216,6 +242,7 @@
 			 "fi; " \
 		   "fi; " \
 	   "else booti ${loadaddr} - ${fdt_addr}; fi"
+#endif
 
 /* Link Definitions */
 #define CONFIG_LOADADDR			0x80280000
@@ -276,6 +303,18 @@
 #endif
 
 #define CONFIG_SERIAL_TAG
+
+#ifdef CONFIG_NAND_MXS
+#define CONFIG_CMD_NAND_TRIMFFS
+
+/* NAND stuff */
+#define CONFIG_SYS_MAX_NAND_DEVICE     1
+#define CONFIG_SYS_NAND_BASE           0x40000000
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+#define CONFIG_SYS_NAND_USE_FLASH_BBT
+
+#endif
 
 /* USB Config */
 #ifndef CONFIG_SPL_BUILD
