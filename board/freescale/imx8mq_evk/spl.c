@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <cpu_func.h>
 #include <hang.h>
 #include <image.h>
 #include <init.h>
@@ -125,7 +126,7 @@ int board_mmc_init(struct bd_info *bis)
 		switch (i) {
 		case 0:
 			init_clk_usdhc(0);
-			usdhc_cfg[0].sdhc_clk = mxc_get_clock(USDHC1_CLK_ROOT);
+			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
 			imx_iomux_v3_setup_multiple_pads(usdhc1_pads,
 							 ARRAY_SIZE(usdhc1_pads));
 			gpio_request(USDHC1_PWR_GPIO, "usdhc1_reset");
@@ -135,7 +136,7 @@ int board_mmc_init(struct bd_info *bis)
 			break;
 		case 1:
 			init_clk_usdhc(1);
-			usdhc_cfg[1].sdhc_clk = mxc_get_clock(USDHC2_CLK_ROOT);
+			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
 			imx_iomux_v3_setup_multiple_pads(usdhc2_pads,
 							 ARRAY_SIZE(usdhc2_pads));
 			gpio_request(USDHC2_PWR_GPIO, "usdhc2_reset");
