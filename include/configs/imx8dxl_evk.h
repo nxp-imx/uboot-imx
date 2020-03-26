@@ -21,6 +21,10 @@
  */
 #define CONFIG_SYS_UBOOT_BASE 0x08181000
 
+#define CONFIG_SYS_NAND_U_BOOT_OFFS     (0x8000000)  /*Put the FIT out of first 128MB boot area */
+#define CONFIG_SPL_NAND_BASE
+#define CONFIG_SPL_NAND_IDENT
+
 #define CONFIG_SPL_STACK		0x822ffff0
 #define CONFIG_SPL_BSS_START_ADDR      0x82280000
 #define CONFIG_SPL_BSS_MAX_SIZE		0x1000	/* 4 KB */
@@ -58,6 +62,10 @@
 	"m4_0_image=m4_0.bin\0" \
 	"loadm4image_0=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4_0_image}\0" \
 	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
+
+#ifdef CONFIG_NAND_BOOT
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:128m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)"
+#endif
 
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
@@ -107,6 +115,17 @@
             "\0" \
 
 /* Initial environment variables */
+#ifdef CONFIG_NAND_BOOT
+#define CONFIG_EXTRA_ENV_SETTINGS		\
+	CONFIG_MFG_ENV_SETTINGS \
+	"bootargs=console=ttyLP0,115200 ubi.mtd=nandrootfs "  \
+		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
+		MFG_NAND_PARTITION \
+		"\0"\
+	"console=ttyLP0,115200 earlycon\0" \
+	"mtdparts=" MFG_NAND_PARTITION "\0" \
+	"fdt_addr=0x83000000\0"
+#else
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
 	M4_BOOT_ENV \
@@ -184,6 +203,7 @@
 				"booti; " \
 			"fi;" \
 		"fi;\0"
+#endif
 
 /* Link Definitions */
 
@@ -229,6 +249,16 @@
 #endif
 
 #define CONFIG_SERIAL_TAG
+
+#ifdef CONFIG_NAND_MXS
+#define CONFIG_CMD_NAND_TRIMFFS
+
+/* NAND stuff */
+#define CONFIG_SYS_MAX_NAND_DEVICE     1
+#define CONFIG_SYS_NAND_BASE           0x40000000
+#define CONFIG_SYS_NAND_USE_FLASH_BBT
+
+#endif
 
 /* USB Config */
 #ifndef CONFIG_SPL_BUILD
