@@ -80,6 +80,16 @@ config TARGET_IMX8MM_DATA_MODUL_EDM_SBC
 	select IMX8M_LPDDR4
 	select SUPPORT_SPL
 
+config TARGET_IMX8MQ_DDR3L_VAL
+	bool "imx8mq_ddr3l_val"
+	select IMX8MQ
+	select SUPPORT_SPL
+
+config TARGET_IMX8MQ_DDR4_VAL
+	bool "imx8mq_ddr4_val"
+	select IMX8MQ
+	select SUPPORT_SPL
+
 config TARGET_IMX8MM_EVK
 	bool "imx8mm LPDDR4 EVK board"
 	select BINMAN
@@ -351,6 +361,7 @@ source "board/dhelectronics/dh_imx8mp/Kconfig"
 source "board/engicam/imx8mm/Kconfig"
 source "board/engicam/imx8mp/Kconfig"
 source "board/freescale/imx8mq_evk/Kconfig"
+source "board/freescale/imx8mq_val/Kconfig"
 source "board/freescale/imx8mm_evk/Kconfig"
 source "board/freescale/imx8mn_evk/Kconfig"
 source "board/freescale/imx8mp_evk/Kconfig"
