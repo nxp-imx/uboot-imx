@@ -33,6 +33,10 @@
 	"loadm4image_0=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4_0_image}\0" \
 	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
 
+#ifdef CONFIG_NAND_BOOT
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:128m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)"
+#endif
+
 #define CFG_MFG_ENV_SETTINGS \
 	CFG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x83100000\0" \
@@ -81,6 +85,17 @@
             "\0" \
 
 /* Initial environment variables */
+#ifdef CONFIG_NAND_BOOT
+#define CFG_EXTRA_ENV_SETTINGS		\
+	CFG_MFG_ENV_SETTINGS \
+	"bootargs=console=ttyLP0,115200 ubi.mtd=nandrootfs "  \
+		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
+		MFG_NAND_PARTITION \
+		"\0"\
+	"console=ttyLP0,115200 earlycon\0" \
+	"mtdparts=" MFG_NAND_PARTITION "\0" \
+	"fdt_addr=0x83000000\0"
+#else
 #define CFG_EXTRA_ENV_SETTINGS		\
 	CFG_MFG_ENV_SETTINGS \
 	M4_BOOT_ENV \
@@ -158,6 +173,7 @@
 				"booti; " \
 			"fi;" \
 		"fi;\0"
+#endif
 
 /* Link Definitions */
 
