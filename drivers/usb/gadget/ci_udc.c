@@ -1034,6 +1034,99 @@ bool dfu_usb_get_reset(void)
 	return !!(readl(&udc->usbsts) & STS_URI);
 }
 
+static int ci_udc_otg_phy_mode2(ulong phy_addr)
+{
+	void *__iomem phy_ctrl, *__iomem phy_status;
+	void *__iomem phy_base = (void *__iomem)phy_addr;
+	u32 val;
+
+	if (is_mx6() || is_mx7ulp() || is_imx8()) {
+		phy_ctrl = (void __iomem *)(phy_base + USBPHY_CTRL);
+		val = readl(phy_ctrl);
+		if (val & USBPHY_CTRL_OTG_ID)
+			return USB_INIT_DEVICE;
+		else
+			return USB_INIT_HOST;
+	} else if (is_mx7() || is_imx8mm() || is_imx8mn()) {
+		phy_status = (void __iomem *)(phy_base +
+					      USBNC_PHY_STATUS_OFFSET);
+		val = readl(phy_status);
+		if (val & USBNC_PHYSTATUS_ID_DIG)
+			return USB_INIT_DEVICE;
+		else
+			return USB_INIT_HOST;
+	} else {
+		return -EINVAL;
+	}
+}
+
+bool udc_irq_reset(void)
+{
+	struct ci_udc *udc = (struct ci_udc *)controller.ctrl->hcor;
+	unsigned n = readl(&udc->usbsts);
+	writel(n, &udc->usbsts);
+
+	n &= (STS_SLI | STS_URI | STS_PCI | STS_UI | STS_UEI);
+	if (n == 0)
+		return false;
+
+	if (n & STS_URI) {
+		DBG("-- reset --\n");
+		return true;
+	}
+
+	if (n & STS_SLI)
+		DBG("-- suspend --\n");
+
+	return false;
+}
+
+bool ci_udc_check_bus_active(ulong ehci_addr, ulong phy_addr, int index)
+{
+	struct usb_ehci *ehci = (struct usb_ehci *)ehci_addr;
+	struct ehci_ctrl ctrl;
+	int ret;
+	bool active = false;
+
+	ret = ehci_mx6_common_init(ehci, index);
+	if (ret)
+		return false;
+
+	if (ci_udc_otg_phy_mode2(phy_addr) != USB_INIT_DEVICE)
+		return false;
+
+	ctrl.hccr = (struct ehci_hccr *)((ulong)&ehci->caplength);
+	ctrl.hcor = (struct ehci_hcor *)((ulong)ctrl.hccr +
+			HC_LENGTH(ehci_readl(&(ctrl.hccr)->cr_capbase)));
+	controller.ctrl = &ctrl;
+
+	ret = ci_udc_probe();
+	if (ret) {
+		return false;
+	}
+
+	ci_pullup(NULL, 1);
+
+	int count = 100;
+	while (count > 0) {
+		if (udc_irq_reset()) {
+			active = true;
+			break;
+		}
+		mdelay(10);
+		count--;
+	}
+
+	ci_pullup(NULL, 0);
+
+	ci_ep_free_request(&controller.ep[0].ep, &controller.ep0_req->req);
+	free(controller.items_mem);
+	free(controller.epts);
+
+	return active;
+}
+
+
 #if !CONFIG_IS_ENABLED(DM_USB_GADGET)
 int usb_gadget_handle_interrupts(int index)
 {
