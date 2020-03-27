@@ -31,6 +31,7 @@
 #include <spl.h>
 #include <env.h>
 #include <asm/mach-imx/imx_vservice.h>
+#include <usb/ci_udc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1054,14 +1055,13 @@ int board_imx_lpi2c_bind(struct udevice *dev)
 }
 
 #ifdef CONFIG_USB_PORT_AUTO
-int usb_boot_index = 0xf;
-
 static int usb_port_auto_check(void)
 {
 	int ret;
 	u32 usb2_data;
 	struct power_domain pd;
 	struct power_domain phy_pd;
+	struct ehci_mx6_phy_data phy_data;
 
 	if (!power_domain_lookup_name("conn_usb0", &pd)) {
 		ret = power_domain_on(&pd);
@@ -1080,8 +1080,12 @@ static int usb_port_auto_check(void)
 			return -1;
 		}
 
+		phy_data.phy_addr = (void __iomem *)(ulong)USB_PHY0_BASE_ADDR;
+		phy_data.misc_addr = (void __iomem *)(ulong)(USB_BASE_ADDR + 0x200);
+		phy_data.anatop_addr = NULL;
+
 		enable_usboh3_clk(1);
-		usb2_data = readl(USB_BASE_ADDR + 0x154);
+		usb2_data = ci_udc_check_bus_active(USB_BASE_ADDR, &phy_data, 0);
 
 		ret = power_domain_off(&phy_pd);
 		if (ret) {
@@ -1102,18 +1106,15 @@ static int usb_port_auto_check(void)
 	return -1;
 }
 
-static void usb_port_record_index(void)
-{
-	usb_boot_index = usb_port_auto_check();
-	if (usb_boot_index < 0)
-		usb_boot_index = 0;
-}
-
 int board_usb_gadget_port_auto(void)
 {
-#if defined(CONFIG_SPL_BUILD)
-	usb_port_record_index();
-#endif
+    int usb_boot_index;
+	usb_boot_index = usb_port_auto_check();
+
+	if (usb_boot_index < 0)
+		usb_boot_index = 0;
+
+	printf("auto usb %d\n", usb_boot_index);
 
 	return usb_boot_index;
 }
@@ -1122,9 +1123,6 @@ int board_usb_gadget_port_auto(void)
 static void power_off_all_usb(void)
 {
 	if (is_usb_boot()) {
-#ifdef CONFIG_USB_PORT_AUTO
-		usb_port_record_index();
-#endif
 		/* Turn off all usb resource to let conn SS power down */
 		sc_pm_set_resource_power_mode(-1, SC_R_USB_0_PHY, SC_PM_PW_MODE_OFF);
 		sc_pm_set_resource_power_mode(-1, SC_R_USB_1_PHY, SC_PM_PW_MODE_OFF);
