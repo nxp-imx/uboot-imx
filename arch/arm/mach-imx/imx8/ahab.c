@@ -12,6 +12,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/image.h>
 #include <console.h>
+#include <cpu_func.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -102,7 +103,7 @@ int authenticate_os_container(ulong addr)
 		flush_dcache_range(s, e);
 
 		/* Find the memreg and set permission for seco pt */
-		err = sc_rm_find_memreg(-1, &mr, s, e);
+		err = sc_rm_find_memreg(-1, &mr, s, e - 1);
 		if (err) {
 			printf("Not found memreg for image: %d, error %d\n",
 			       i, err);
