@@ -85,7 +85,7 @@ int authenticate_os_container(ulong addr)
 	for (i=0; i < phdr->num_images; i++) {
 		struct boot_img_t *img = (struct boot_img_t *)(addr + sizeof(struct container_hdr) + i * sizeof(struct boot_img_t));
 
-		debug("img %d, dst 0x%llx, src 0x%lx, size 0x%x\n", i, img->dst, img->offset + addr, img->size);
+		debug("img %d, dst 0x%x, src 0x%x, size 0x%x\n", i, (uint32_t) img->dst, img->offset + addr, img->size);
 
 		memcpy((void *)img->dst, (const void *)(img->offset + addr), img->size);
 		flush_dcache_range(img->dst & ~(CONFIG_SYS_CACHELINE_SIZE - 1),
@@ -96,7 +96,7 @@ int authenticate_os_container(ulong addr)
 			img->dst & ~(CONFIG_SYS_CACHELINE_SIZE - 1), ALIGN(img->dst + img->size, CONFIG_SYS_CACHELINE_SIZE)-1);
 
 		if (err) {
-			printf("Error: can't find memreg for image load address %d, error %d\n", i, err);
+			printf("Error: can't find memreg for image load address 0x%x, error %d\n", img->dst, err);
 			ret = -ENOMEM;
 			goto exit;
 		}
