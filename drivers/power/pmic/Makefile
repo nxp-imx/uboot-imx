@@ -32,6 +32,7 @@ obj-$(CONFIG_$(SPL_)PMIC_LP87565) += lp87565.o
 obj-$(CONFIG_PMIC_STPMIC1) += stpmic1.o
 
 obj-$(CONFIG_POWER_LTC3676) += pmic_ltc3676.o
+obj-$(CONFIG_POWER_BD71837) += pmic_bd71837.o
 obj-$(CONFIG_POWER_MUIC_MAX8997) += muic_max8997.o
 obj-$(CONFIG_POWER_PCA9450) += pmic_pca9450.o
 obj-$(CONFIG_POWER_PFUZE100) += pmic_pfuze100.o
