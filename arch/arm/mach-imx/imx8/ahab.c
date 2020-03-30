@@ -93,7 +93,7 @@ int authenticate_os_container(ulong addr)
 
 		/* Find the memreg and set permission for seco pt */
 		err = sc_rm_find_memreg(-1, &mr,
-			img->dst & ~(CONFIG_SYS_CACHELINE_SIZE - 1), ALIGN(img->dst + img->size, CONFIG_SYS_CACHELINE_SIZE));
+			img->dst & ~(CONFIG_SYS_CACHELINE_SIZE - 1), ALIGN(img->dst + img->size, CONFIG_SYS_CACHELINE_SIZE)-1);
 
 		if (err) {
 			printf("Error: can't find memreg for image load address %d, error %d\n", i, err);
