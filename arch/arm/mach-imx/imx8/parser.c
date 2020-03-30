@@ -108,7 +108,7 @@ static int authenticate_image(struct boot_img_t *img, int image_index)
 	/* Find the memreg and set permission for seco pt */
 	err = sc_rm_find_memreg(-1, &mr,
 				img->dst & ~(CONFIG_SYS_CACHELINE_SIZE - 1),
-				ALIGN(img->dst + img->size, CONFIG_SYS_CACHELINE_SIZE));
+				ALIGN(img->dst + img->size, CONFIG_SYS_CACHELINE_SIZE) - 1);
 
 	if (err) {
 		printf("can't find memreg for image load address %d, error %d\n",
