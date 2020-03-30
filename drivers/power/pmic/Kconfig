@@ -410,6 +410,9 @@ config SPL_POWER_TPS65910
 
 if POWER_LEGACY || SPL_POWER_LEGACY
 
+config POWER_BD71837
+	bool "Enable legacy driver for BD71837 PMIC"
+
 config POWER_HI6553
 	bool "Enable legacy driver for HI6553 PMIC"
 
