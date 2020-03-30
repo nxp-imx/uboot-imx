@@ -106,7 +106,7 @@ int authenticate_os_container(ulong addr)
 		flush_dcache_range(s, e);
 
 		/* Find the memreg and set permission for seco pt */
-		err = sc_rm_find_memreg(-1, &mr, s, e);
+		err = sc_rm_find_memreg(-1, &mr, s, e - 1);
 		if (err) {
 			printf("Error: can't find memreg for image load address 0x%llx, error %d\n", img->dst, err);
 			ret = -ENOMEM;
