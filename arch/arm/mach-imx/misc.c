@@ -107,11 +107,25 @@ void board_lmb_reserve(struct lmb *lmb)
 	}
 }
 
+static void configure_tzc380(void)
+{
+	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
+#if defined (IP2APB_TZASC1_BASE_ADDR)
+	if (iomux->gpr[9] & 0x1)
+		writel(0xf0000000, IP2APB_TZASC1_BASE_ADDR + 0x108);
+#endif
+#if defined (IP2APB_TZASC2_BASE_ADDR)
+	if (iomux->gpr[9] & 0x2)
+		writel(0xf0000000, IP2APB_TZASC2_BASE_ADDR + 0x108);
+#endif
+}
+
 void imx_sec_init(void)
 {
 #if defined(CONFIG_SPL_BUILD) || !defined(CONFIG_SPL)
 	caam_open();
 #endif
+       configure_tzc380();
 }
 
 static void set_dt_val(void *data, uint32_t cell_size, uint64_t val)
