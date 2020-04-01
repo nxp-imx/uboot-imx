@@ -278,4 +278,5 @@ enum boot_device get_boot_device(void);
 int add_res_mem_dt_node(void *fdt, const char *name, phys_addr_t pa,
 			size_t size);
 int add_dt_path_subnode(void *fdt, const char *path, const char *subnode);
+void configure_tzc380(void);
 #endif

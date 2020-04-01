@@ -366,6 +366,7 @@ int arch_cpu_init(void)
 	init_snvs();
 
 	imx_gpcv2_init();
+	configure_tzc380();
 
 	enable_ca7_smp();
 
