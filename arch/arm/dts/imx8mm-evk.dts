@@ -9,10 +9,11 @@
 #include "imx8mm.dtsi"
 
 / {
-	model = "FSL i.MX8MM EVK board";
+	model = "NXP i.MX8MM EVK board";
 	compatible = "fsl,imx8mm-evk", "fsl,imx8mm";
 
 	chosen {
+		bootargs = "console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200";
 		stdout-path = &uart2;
 	};
 
@@ -36,6 +37,7 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 		gpio = <&gpio2 19 GPIO_ACTIVE_HIGH>;
+		off-on-delay-us = <20000>;
 		enable-active-high;
 	};
 
@@ -94,11 +96,29 @@
 	};
 };
 
+&flexspi {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_flexspi0>;
+	status = "okay";
+
+	flash0: mt25qu256aba@0 {
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "jedec,spi-nor";
+		spi-max-frequency = <80000000>;
+		spi-tx-bus-width = <4>;
+		spi-rx-bus-width = <4>;
+	};
+};
+
 &i2c1 {
 	clock-frequency = <400000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c1>;
-	status = "okay";
+	pinctrl-1 = <&pinctrl_i2c1_gpio>;
+	scl-gpios = <&gpio5 14 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio5 15 GPIO_ACTIVE_HIGH>;
 
 	pmic@4b {
 		compatible = "rohm,bd71847";
@@ -210,8 +230,11 @@
 
 &i2c2 {
 	clock-frequency = <400000>;
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c2>;
+	pinctrl-1 = <&pinctrl_i2c2_gpio>;
+	scl-gpios = <&gpio5 16 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio5 17 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
 	ptn5110: tcpc@50 {
@@ -223,13 +246,26 @@
 		interrupts = <11 8>;
 		status = "okay";
 
-		port {
-			typec1_dr_sw: endpoint {
-				remote-endpoint = <&usb1_drd_sw>;
-			};
-		};
-
 		typec1_con: connector {
+			compatible = "usb-c-connector";
+			label = "USB-C";
+			power-role = "dual";
+			data-role = "dual";
+			try-power-role = "sink";
+			source-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)>;
+			sink-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)
+				     PDO_VAR(5000, 20000, 3000)>;
+			op-sink-microwatt = <15000000>;
+			self-powered;
+		};
+	};
+
+	ptn5110_2: tcpc@52 {
+		compatible = "nxp,ptn5110";
+		reg = <0x52>;
+		status = "okay";
+
+		typec2_con: connector {
 			compatible = "usb-c-connector";
 			label = "USB-C";
 			power-role = "dual";
@@ -245,9 +281,12 @@
 };
 
 &i2c3 {
-	clock-frequency = <400000>;
-	pinctrl-names = "default";
+	clock-frequency = <100000>;
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c3>;
+	pinctrl-1 = <&pinctrl_i2c3_gpio>;
+	scl-gpios = <&gpio5 18 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpio5 19 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
 	pca6416: gpio@20 {
@@ -278,18 +317,13 @@
 };
 
 &usbotg1 {
-	dr_mode = "otg";
-	hnp-disable;
-	srp-disable;
-	adp-disable;
-	usb-role-switch;
 	status = "okay";
+	extcon = <&ptn5110>;
+};
 
-	port {
-		usb1_drd_sw: endpoint {
-			remote-endpoint = <&typec1_dr_sw>;
-		};
-	};
+&usbotg2 {
+	status = "okay";
+	extcon = <&ptn5110_2>;
 };
 
 &usdhc2 {
@@ -343,6 +377,17 @@
 		>;
 	};
 
+	pinctrl_flexspi0: flexspi0grp {
+		fsl,pins = <
+			MX8MM_IOMUXC_NAND_ALE_QSPI_A_SCLK               0x1c2
+			MX8MM_IOMUXC_NAND_CE0_B_QSPI_A_SS0_B            0x82
+			MX8MM_IOMUXC_NAND_DATA00_QSPI_A_DATA0           0x82
+			MX8MM_IOMUXC_NAND_DATA01_QSPI_A_DATA1           0x82
+			MX8MM_IOMUXC_NAND_DATA02_QSPI_A_DATA2           0x82
+			MX8MM_IOMUXC_NAND_DATA03_QSPI_A_DATA3           0x82
+		>;
+	};
+
 	pinctrl_gpio_led: gpioledgrp {
 		fsl,pins = <
 			MX8MM_IOMUXC_NAND_READY_B_GPIO3_IO16	0x19
@@ -373,6 +418,27 @@
 		fsl,pins = <
 			MX8MM_IOMUXC_I2C3_SCL_I2C3_SCL			0x400001c3
 			MX8MM_IOMUXC_I2C3_SDA_I2C3_SDA			0x400001c3
+		>;
+	};
+
+	pinctrl_i2c1_gpio: i2c1grp-gpio {
+		fsl,pins = <
+			MX8MM_IOMUXC_I2C1_SCL_GPIO5_IO14        		0x1c3
+			MX8MM_IOMUXC_I2C1_SDA_GPIO5_IO15        	0x1c3
+		>;
+	};
+
+	pinctrl_i2c2_gpio: i2c2grp-gpio {
+		fsl,pins = <
+			MX8MM_IOMUXC_I2C2_SCL_GPIO5_IO16        		0x1c3
+			MX8MM_IOMUXC_I2C2_SDA_GPIO5_IO17        	0x1c3
+		>;
+	};
+
+	pinctrl_i2c3_gpio: i2c3grp-gpio {
+		fsl,pins = <
+			MX8MM_IOMUXC_I2C3_SCL_GPIO5_IO18        		0x1c3
+			MX8MM_IOMUXC_I2C3_SDA_GPIO5_IO19        	0x1c3
 		>;
 	};
 
