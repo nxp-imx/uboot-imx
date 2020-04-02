@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2019 NXP
+ * Copyright 2020 NXP
  */
 
 / {
@@ -67,10 +67,6 @@
 	u-boot,dm-spl;
 };
 
-&pinctrl_usdhc3 {
-	u-boot,dm-spl;
-};
-
 &gpio1 {
 	u-boot,dm-spl;
 };
@@ -107,15 +103,6 @@
 	sd-uhs-sdr104;
 	sd-uhs-ddr50;
 	assigned-clocks = <&clk IMX8MM_CLK_USDHC2>;
-	assigned-clock-rates = <400000000>;
-	assigned-clock-parents = <&clk IMX8MM_SYS_PLL1_400M>;
-};
-
-&usdhc3 {
-	u-boot,dm-spl;
-	mmc-hs400-1_8v;
-	mmc-hs400-enhanced-strobe;
-	assigned-clocks = <&clk IMX8MM_CLK_USDHC3>;
 	assigned-clock-rates = <400000000>;
 	assigned-clock-parents = <&clk IMX8MM_SYS_PLL1_400M>;
 };
