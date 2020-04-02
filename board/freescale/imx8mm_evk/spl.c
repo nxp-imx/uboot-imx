@@ -21,7 +21,11 @@
 #include <asm/arch/ddr.h>
 
 #include <power/pmic.h>
+#ifdef CONFIG_POWER_PCA9450
 #include <power/pca9450.h>
+#else
+#include <power/bd71837.h>
+#endif
 #include <asm/mach-imx/gpio.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <fsl_esdhc_imx.h>
@@ -40,6 +44,10 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 	case SD3_BOOT:
 	case MMC3_BOOT:
 		return BOOT_DEVICE_MMC2;
+	case QSPI_BOOT:
+		return BOOT_DEVICE_NOR;
+	case NAND_BOOT:
+		return BOOT_DEVICE_NAND;
 	default:
 		return BOOT_DEVICE_NONE;
 	}
@@ -182,6 +190,7 @@ int board_mmc_getcd(struct mmc *mmc)
 
 #if CONFIG_IS_ENABLED(POWER_LEGACY)
 #define I2C_PMIC	0
+#ifdef CONFIG_POWER_PCA9450
 int power_init_board(void)
 {
 	struct pmic *p;
@@ -216,6 +225,43 @@ int power_init_board(void)
 
 	return 0;
 }
+#else
+int power_init_board(void)
+{
+	struct pmic *p;
+	int ret;
+
+	ret = power_bd71837_init(I2C_PMIC);
+	if (ret)
+		printf("power init failed");
+
+	p = pmic_get("BD71837");
+	pmic_probe(p);
+
+
+	/* decrease RESET key long push time from the default 10s to 10ms */
+	pmic_reg_write(p, BD718XX_PWRONCONFIG1, 0x0);
+
+	/* unlock the PMIC regs */
+	pmic_reg_write(p, BD718XX_REGLOCK, 0x1);
+
+	/* increase VDD_SOC to typical value 0.85v before first DRAM access */
+	pmic_reg_write(p, BD718XX_BUCK1_VOLT_RUN, 0x0f);
+
+	/* increase VDD_DRAM to 0.975v for 3Ghz DDR */
+	pmic_reg_write(p, BD718XX_1ST_NODVS_BUCK_VOLT, 0x83);
+
+#ifndef CONFIG_IMX8M_LPDDR4
+	/* increase NVCC_DRAM_1V2 to 1.2v for DDR4 */
+	pmic_reg_write(p, BD718XX_4TH_NODVS_BUCK_VOLT, 0x28);
+#endif
+
+	/* lock the PMIC regs */
+	pmic_reg_write(p, BD718XX_REGLOCK, 0x11);
+
+	return 0;
+}
+#endif
 #endif
 
 void spl_board_init(void)
@@ -236,33 +282,6 @@ int board_fit_config_name_match(const char *name)
 	return 0;
 }
 #endif
-
-#define UART_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_FSEL1)
-#define WDOG_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_ODE | PAD_CTL_PUE | PAD_CTL_PE)
-
-static iomux_v3_cfg_t const uart_pads[] = {
-	IMX8MM_PAD_UART2_RXD_UART2_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
-	IMX8MM_PAD_UART2_TXD_UART2_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
-};
-
-static iomux_v3_cfg_t const wdog_pads[] = {
-	IMX8MM_PAD_GPIO1_IO02_WDOG1_WDOG_B  | MUX_PAD_CTRL(WDOG_PAD_CTRL),
-};
-
-int board_early_init_f(void)
-{
-	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
-
-	imx_iomux_v3_setup_multiple_pads(wdog_pads, ARRAY_SIZE(wdog_pads));
-
-	set_wdog_reset(wdog);
-
-	imx_iomux_v3_setup_multiple_pads(uart_pads, ARRAY_SIZE(uart_pads));
-
-	init_uart_clk(1);
-
-	return 0;
-}
 
 void board_init_f(ulong dummy)
 {
