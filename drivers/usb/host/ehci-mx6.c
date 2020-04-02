@@ -705,7 +705,11 @@ static int ehci_usb_bind(struct udevice *dev)
 	 * With these changes in place, the ad-hoc indexing goes away and
 	 * the driver is fully converted to DT probing.
 	 */
-	u32 controller_spacing = is_mx7() ? 0x10000 : 0x200;
+	u32 controller_spacing;
+	if (IS_ENABLED(CONFIG_MX6))
+		controller_spacing = 0x200;
+	else
+		controller_spacing = 0x10000;
 	fdt_addr_t addr = devfdt_get_addr_index(dev, 0);
 
 	dev->req_seq = (addr - USB_BASE_ADDR) / controller_spacing;
@@ -724,7 +728,7 @@ static int ehci_usb_probe(struct udevice *dev)
 	int ret;
 
 	priv->ehci = ehci;
-	priv->portnr = dev->seq;
+	priv->portnr = dev->req_seq;
 	priv->init_type = type;
 
 	ret = board_usb_init(priv->portnr, priv->init_type);
@@ -776,7 +780,7 @@ int ehci_usb_remove(struct udevice *dev)
 
 	ehci_deregister(dev);
 
-	return board_usb_cleanup(dev->seq, priv->init_type);
+	return board_usb_cleanup(dev->req_seq, priv->init_type);
 }
 
 static const struct udevice_id mx6_usb_ids[] = {
