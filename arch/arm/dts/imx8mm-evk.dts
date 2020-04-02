@@ -9,7 +9,7 @@
 #include "imx8mm-evk.dtsi"
 
 / {
-	model = "FSL i.MX8MM EVK board";
+	model = "NXP i.MX8MM EVK board";
 	compatible = "fsl,imx8mm-evk", "fsl,imx8mm";
 
 	aliases {
