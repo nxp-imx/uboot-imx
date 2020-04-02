@@ -113,7 +113,7 @@
 	};
 };
 
-&csi {
+&csi1_bridge {
 	status = "okay";
 };
 
@@ -215,7 +215,7 @@
 	};
 };
 
-&mipi_csi {
+&mipi_csi_1 {
 	status = "okay";
 	ports {
 		port@0 {

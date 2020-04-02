@@ -70,11 +70,7 @@
 	};
 };
 
-&gpu_2d {
-	status = "okay";
-};
-
-&gpu_3d {
+&gpu {
 	status = "okay";
 };
 

@@ -316,11 +316,7 @@
 		"", "", "", "", "", "", "", "";
 };
 
-&gpu_2d {
-	status = "disabled";
-};
-
-&gpu_3d {
+&gpu {
 	status = "disabled";
 };
 

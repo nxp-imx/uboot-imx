@@ -9,31 +9,11 @@
 #include "imx8mm-evk.dtsi"
 
 / {
-	model = "FSL i.MX8MM EVK board";
+	model = "NXP i.MX8MM EVK board";
 	compatible = "fsl,imx8mm-evk", "fsl,imx8mm";
 
 	aliases {
 		spi0 = &flexspi;
-	};
-};
-
-&ddrc {
-	operating-points-v2 = <&ddrc_opp_table>;
-
-	ddrc_opp_table: opp-table {
-		compatible = "operating-points-v2";
-
-		opp-25M {
-			opp-hz = /bits/ 64 <25000000>;
-		};
-
-		opp-100M {
-			opp-hz = /bits/ 64 <100000000>;
-		};
-
-		opp-750M {
-			opp-hz = /bits/ 64 <750000000>;
-		};
 	};
 };
 
