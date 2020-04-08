@@ -78,7 +78,7 @@ static int booti_start(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (ret != 0)
 		return 1;
 
-#ifdef CONFIG_IMX_HAB
+#if defined(CONFIG_IMX_HAB) && !defined(CONFIG_AVB_SUPPORT)
 	extern int authenticate_image(
 		uint32_t ddr_start, uint32_t raw_image_size);
 	if (authenticate_image(ld, image_size) != 0) {
