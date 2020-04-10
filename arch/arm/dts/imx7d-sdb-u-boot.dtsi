@@ -1,7 +1,3 @@
-&fec2 {
-	status = "disable";
-};
-
 &usbotg1 {
 	dr_mode = "peripheral";
 };

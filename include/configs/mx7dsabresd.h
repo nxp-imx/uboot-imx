@@ -17,6 +17,9 @@
 /* MMC Config*/
 #define CONFIG_SYS_FSL_ESDHC_ADDR       0
 
+/* Default ETH port */
+#define CONFIG_ETHPRIME                 "eth0"
+
 #ifdef CONFIG_IMX_BOOTAUX
 /* Set to QSPI1 A flash at default */
 #define CONFIG_SYS_AUXCORE_BOOTDATA 0x60000000
