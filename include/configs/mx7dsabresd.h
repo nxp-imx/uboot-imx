@@ -20,6 +20,9 @@
 /* MMC Config*/
 #define CONFIG_SYS_FSL_ESDHC_ADDR       0
 
+/* Default ETH port */
+#define CONFIG_ETHPRIME                 "eth0"
+
 /* I2C configs */
 #define CONFIG_SYS_I2C_MXC
 #define CONFIG_SYS_I2C_SPEED		100000
