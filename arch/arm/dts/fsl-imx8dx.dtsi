@@ -2598,6 +2598,10 @@
 			<&clk IMX8QXP_USB3_CORE_PCLK>;
 		clock-names = "usb3_lpm_clk", "usb3_bus_clk", "usb3_aclk",
 			"usb3_ipg_clk", "usb3_core_pclk";
+		assigned-clocks = <&clk IMX8QXP_USB3_ACLK_DIV>,
+			   <&clk IMX8QXP_USB3_LPM_DIV>,
+			   <&clk IMX8QXP_USB3_BUS_DIV>;
+		assigned-clock-rates = <125000000>, <12000000>, <250000000>;
 		power-domains = <&pd_conn_usb2>;
 		cdns3,usbphy = <&usbphynop1>;
 		status = "disabled";
