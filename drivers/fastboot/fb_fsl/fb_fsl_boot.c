@@ -47,7 +47,7 @@
 #ifdef CONFIG_ARCH_IMX8
 /* imx8q has more limitation so we assign less memory here. */
 #define MAX_KERNEL_LEN (60 * 1024 * 1024)
-#elif CONFIG_ARCH_IMX8M
+#else
 #define MAX_KERNEL_LEN (64 * 1024 * 1024)
 #endif
 
