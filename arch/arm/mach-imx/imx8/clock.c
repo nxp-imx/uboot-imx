@@ -222,6 +222,40 @@ void enable_usboh3_clk(unsigned char enable)
 void init_clk_usb3(int index)
 {
 	sc_err_t err;
+	sc_pm_clock_rate_t rate;
+
+	err = sc_pm_clock_enable(-1, SC_R_USB_2, SC_PM_CLK_MISC, false, false);
+	if (err != SC_ERR_NONE)
+		printf("USB3 set clock failed!, line=%d (error = %d)\n",
+			__LINE__, err);
+
+	err = sc_pm_clock_enable(-1, SC_R_USB_2, SC_PM_CLK_MST_BUS, false, false);
+	if (err != SC_ERR_NONE)
+		printf("USB3 set clock failed!, line=%d (error = %d)\n",
+			__LINE__, err);
+
+	err = sc_pm_clock_enable(-1, SC_R_USB_2, SC_PM_CLK_PER, false, false);
+	if (err != SC_ERR_NONE)
+		printf("USB3 set clock failed!, line=%d (error = %d)\n",
+			__LINE__, err);
+
+	rate = 12000000;
+	err = sc_pm_set_clock_rate(-1, SC_R_USB_2, SC_PM_CLK_MISC, &rate);
+	if (err != SC_ERR_NONE)
+		printf("USB3 set MISC clock rate failed!, line=%d (error = %d)\n",
+			__LINE__, err);
+
+	rate = 250000000;
+	err = sc_pm_set_clock_rate(-1, SC_R_USB_2, SC_PM_CLK_MST_BUS, &rate);
+	if (err != SC_ERR_NONE)
+		printf("USB3 set BUS clock rate failed!, line=%d (error = %d)\n",
+			__LINE__, err);
+
+	rate = 125000000;
+	err = sc_pm_set_clock_rate(-1, SC_R_USB_2, SC_PM_CLK_PER, &rate);
+	if (err != SC_ERR_NONE)
+		printf("USB3 set PER clock rate failed!, line=%d (error = %d)\n",
+			__LINE__, err);
 
 	err = sc_pm_clock_enable(-1, SC_R_USB_2, SC_PM_CLK_MISC, true, false);
 	if (err != SC_ERR_NONE)
