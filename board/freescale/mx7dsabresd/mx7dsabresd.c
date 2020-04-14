@@ -22,6 +22,7 @@
 #include <i2c.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <asm/arch/crm_regs.h>
+#include <asm/mach-imx/video.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -144,25 +145,74 @@ static iomux_v3_cfg_t const pwm_pads[] = {
 	MX7D_PAD_GPIO1_IO01__GPIO1_IO1 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
-static int setup_lcd(void)
+void do_enable_parallel_lcd(struct display_info_t const *dev)
 {
+	int ret;
+	struct gpio_desc desc;
+
 	imx_iomux_v3_setup_multiple_pads(lcd_pads, ARRAY_SIZE(lcd_pads));
 
 	imx_iomux_v3_setup_multiple_pads(pwm_pads, ARRAY_SIZE(pwm_pads));
 
 	/* Reset LCD */
-	gpio_request(IMX_GPIO_NR(3, 4), "lcd reset");
-	gpio_direction_output(IMX_GPIO_NR(3, 4) , 0);
+	ret = dm_gpio_lookup_name("GPIO3_4", &desc);
+	if (ret) {
+		printf("%s lookup GPIO3_4 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "lcd reset");
+	if (ret) {
+		printf("%s request lcd reset failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
+	dm_gpio_set_value(&desc, 0);
 	udelay(500);
-	gpio_direction_output(IMX_GPIO_NR(3, 4) , 1);
+	dm_gpio_set_value(&desc, 1);
 
 	/* Set Brightness to high */
-	gpio_request(IMX_GPIO_NR(1, 1), "lcd backlight");
-	gpio_direction_output(IMX_GPIO_NR(1, 1) , 1);
+	ret = dm_gpio_lookup_name("GPIO1_1", &desc);
+	if (ret) {
+		printf("%s lookup GPIO1_1 failed ret = %d\n", __func__, ret);
+		return;
+	}
 
-	return 0;
+	ret = dm_gpio_request(&desc, "lcd backlight");
+	if (ret) {
+		printf("%s request lcd backlight failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	return;
 }
+
+struct display_info_t const displays[] = {{
+	.bus = ELCDIF1_IPS_BASE_ADDR,
+	.addr = 0,
+	.pixfmt = 24,
+	.detect = NULL,
+	.enable	= do_enable_parallel_lcd,
+	.mode	= {
+		.name			= "TFT43AB",
+		.xres           = 480,
+		.yres           = 272,
+		.pixclock       = 108695,
+		.left_margin    = 8,
+		.right_margin   = 4,
+		.upper_margin   = 2,
+		.lower_margin   = 4,
+		.hsync_len      = 41,
+		.vsync_len      = 10,
+		.sync           = 0,
+		.vmode          = FB_VMODE_NONINTERLACED
+} } };
+size_t display_count = ARRAY_SIZE(displays);
 #endif
+
 
 static void setup_iomux_uart(void)
 {
@@ -245,10 +295,6 @@ int board_init(void)
 
 #ifdef CONFIG_NAND_MXS
 	setup_gpmi_nand();
-#endif
-
-#ifdef CONFIG_VIDEO_MXS
-	setup_lcd();
 #endif
 
 #ifdef CONFIG_FSL_QSPI
