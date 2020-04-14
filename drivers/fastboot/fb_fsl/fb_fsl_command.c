@@ -831,6 +831,18 @@ static void flash(char *cmd, char *response)
 #if defined(CONFIG_FASTBOOT_LOCK)
 	if (strncmp(cmd, "gpt", 3) == 0) {
 		int gpt_valid = 0;
+		int status, mmc_no;
+		struct blk_desc *dev_desc;
+		mmc_no = fastboot_devinfo.dev_id;
+		dev_desc = blk_get_dev("mmc", mmc_no);
+		if (dev_desc) {
+			if (dev_desc->part_type != PART_TYPE_EFI)
+				dev_desc->part_type = PART_TYPE_EFI;
+		}
+		else {
+			fastboot_fail("", response);
+			return;
+		}
 		gpt_valid = partition_table_valid();
 		/* If gpt is valid, load partitons table into memory.
 		   So if the next command is "fastboot reboot bootloader",
