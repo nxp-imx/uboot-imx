@@ -6,9 +6,10 @@
 
 #include "imx6ull.dtsi"
 #include "imx6ul-14x14-evk.dtsi"
+#include "imx6ul-14x14-evk-u-boot.dtsi"
 
 / {
-	model = "Freescale i.MX6 UltraLiteLite 14x14 EVK Board";
+	model = "i.MX6 ULL 14x14 EVK Board";
 	compatible = "fsl,imx6ull-14x14-evk", "fsl,imx6ull";
 };
 
