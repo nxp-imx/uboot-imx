@@ -13,6 +13,7 @@ CONFIG_SYS_I2C_MXC_I2C2=y
 CONFIG_DM_GPIO=y
 CONFIG_DEFAULT_DEVICE_TREE="imx6ul-14x14-evk"
 CONFIG_SUPPORT_RAW_INITRD=y
+CONFIG_USE_IMXIMG_PLUGIN=y
 CONFIG_USE_BOOTCOMMAND=y
 CONFIG_BOOTCOMMAND="run findfdt;mmc dev ${mmcdev};mmc dev ${mmcdev}; if mmc rescan; then if run loadbootscript; then run bootscript; else if run loadimage; then run mmcboot; else run netboot; fi; fi; else run netboot; fi"
 CONFIG_IMX_CONFIG="board/freescale/mx6ul_14x14_evk/imximage.cfg"
