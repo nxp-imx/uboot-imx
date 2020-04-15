@@ -757,6 +757,13 @@ static int nxp_fspi_exec_op(struct spi_slave *slave,
 				   FSPI_STS0_ARB_IDLE, 1, POLL_TOUT, true);
 	WARN_ON(err);
 
+	/*
+	 * Watchdog gets triggered for large read/write/erase since this
+	 * delay is not present in this API(readl_poll_timeout), add
+	 * this delay here.
+	 */
+	udelay(1);
+
 	nxp_fspi_prepare_lut(f, op);
 	/*
 	 * If we have large chunks of data, we read them through the AHB bus
