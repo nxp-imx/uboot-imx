@@ -36,10 +36,16 @@
 
 &usdhc1 {
 	compatible = "fsl,imx6ull-usdhc", "fsl,imx6sx-usdhc";
+	assigned-clocks = <&clks IMX6UL_CLK_USDHC1_SEL>, <&clks IMX6UL_CLK_USDHC1>;
+	assigned-clock-parents = <&clks IMX6UL_CLK_PLL2_PFD2>;
+	assigned-clock-rates = <0>, <132000000>;
 };
 
 &usdhc2 {
 	compatible = "fsl,imx6ull-usdhc", "fsl,imx6sx-usdhc";
+	assigned-clocks = <&clks IMX6UL_CLK_USDHC2_SEL>, <&clks IMX6UL_CLK_USDHC2>;
+	assigned-clock-parents = <&clks IMX6UL_CLK_PLL2_PFD2>;
+	assigned-clock-rates = <0>, <132000000>;
 };
 
 / {
@@ -74,6 +80,18 @@
 				clocks = <&clks IMX6UL_CLK_UART8_IPG>,
 					 <&clks IMX6UL_CLK_UART8_SERIAL>;
 				clock-names = "ipg", "per";
+				status = "disabled";
+			};
+
+			epdc: epdc@228c000 {
+				compatible = "fsl,imx7d-epdc";
+				interrupts = <GIC_SPI 112 IRQ_TYPE_LEVEL_HIGH>;
+				reg = <0x228c000 0x4000>;
+				clocks = <&clks IMX6ULL_CLK_EPDC_ACLK>,
+					 <&clks IMX6ULL_CLK_EPDC_PIX>;
+				clock-names = "epdc_axi", "epdc_pix";
+				/* Need to fix epdc-ram */
+				/* epdc-ram = <&gpr 0x4 30>; */
 				status = "disabled";
 			};
 		};
