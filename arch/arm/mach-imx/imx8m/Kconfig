@@ -4,7 +4,6 @@ config IMX8M
 	bool
 	select HAS_CAAM
 	select ROM_UNIFIED_SECTIONS
-	select ARMV8_SPL_EXCEPTION_VECTORS
 
 config SYS_SOC
 	default "imx8m"
@@ -12,14 +11,17 @@ config SYS_SOC
 config IMX8MQ
 	bool
 	select IMX8M
+	select ARMV8_SPL_EXCEPTION_VECTORS
 
 config IMX8MM
 	bool
 	select IMX8M
+	select ARMV8_SPL_EXCEPTION_VECTORS
 
 config IMX8MN
 	bool
 	select IMX8M
+	select ARMV8_SPL_EXCEPTION_VECTORS
 
 config IMX8MP
 	bool
