@@ -12,7 +12,20 @@
 #include "mx6_common.h"
 #include <asm/mach-imx/gpio.h>
 
+/* uncomment for BEE support, needs to enable CONFIG_CMD_FUSE */
+/* #define CONFIG_CMD_BEE */
+
 #define is_mx6ul_9x9_evk()	CONFIG_IS_ENABLED(TARGET_MX6UL_9X9_EVK)
+
+#ifdef CONFIG_TARGET_MX6UL_9X9_EVK
+#define PHYS_SDRAM_SIZE		SZ_256M
+#define BOOTARGS_CMA_SIZE   "cma=96M "
+#else
+#define PHYS_SDRAM_SIZE		SZ_512M
+#define BOOTARGS_CMA_SIZE   ""
+/* DCDC used on 14x14 EVK, no PMIC */
+#undef CONFIG_LDO_BYPASS_CHECK
+#endif
 
 /* SPL options */
 #include "imx6_spl.h"
@@ -46,7 +59,46 @@
 
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
+#ifdef CONFIG_NAND_BOOT
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
+#else
+#define MFG_NAND_PARTITION ""
+#endif
+
+#define CONFIG_MFG_ENV_SETTINGS \
+	"mfgtool_args=setenv bootargs console=${console},${baudrate} " \
+		BOOTARGS_CMA_SIZE \
+		"rdinit=/linuxrc " \
+		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
+		"g_mass_storage.file=/fat g_mass_storage.ro=1 " \
+		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
+		"g_mass_storage.iSerialNumber=\"\" "\
+		MFG_NAND_PARTITION \
+		"clk_ignore_unused "\
+		"\0" \
+	"initrd_addr=0x83800000\0" \
+	"initrd_high=0xffffffff\0" \
+	"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+
+#if defined(CONFIG_NAND_BOOT)
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
+	"splashimage=" __stringify(CONFIG_LOADADDR) "\0" \
+	"videomode=video=ctfb:x:480,y:272,depth:24,pclk:108695,le:8,ri:4,up:2,lo:4,hs:41,vs:10,sync:0,vmode:0\0" \
+	"fdt_addr=0x83000000\0" \
+	"fdt_high=0xffffffff\0"	  \
+	"console=ttymxc0\0" \
+	"bootargs=console=ttymxc0,115200 ubi.mtd=4 "  \
+		"root=ubi0:rootfs rootfstype=ubifs "		     \
+		BOOTARGS_CMA_SIZE \
+		"mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs)\0"\
+	"bootcmd=nand read ${loadaddr} 0x4000000 0xc00000;"\
+		"nand read ${fdt_addr} 0x5000000 0x100000;"\
+		"bootz ${loadaddr} - ${fdt_addr}\0"
+
+#else
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"console=ttymxc0\0" \
@@ -63,6 +115,7 @@
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
 	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
+		BOOTARGS_CMA_SIZE \
 		"root=${mmcroot}\0" \
 	"loadbootscript=" \
 		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
@@ -86,6 +139,7 @@
 			"bootz; " \
 		"fi;\0" \
 	"netargs=setenv bootargs console=${console},${baudrate} " \
+		BOOTARGS_CMA_SIZE \
 		"root=/dev/nfs " \
 	"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 		"netboot=echo Booting from net ...; " \
@@ -132,6 +186,7 @@
 			   "fi; " \
 		   "fi; " \
 	   "else run netboot; fi"
+#endif
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_MEMTEST_START	0x80000000
@@ -163,6 +218,23 @@
 #define FSL_QSPI_FLASH_SIZE		SZ_32M
 #endif
 
+/* NAND stuff */
+#ifdef CONFIG_NAND_MXS
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_SYS_NAND_BASE		0x40000000
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+#define CONFIG_SYS_NAND_USE_FLASH_BBT
+
+/* DMA stuff, needed for GPMI/MXS NAND support */
+#endif
+#if defined(CONFIG_ENV_IS_IN_SPI_FLASH)
+#define CONFIG_ENV_SPI_BUS		CONFIG_SF_DEFAULT_BUS
+#define CONFIG_ENV_SPI_CS		CONFIG_SF_DEFAULT_CS
+#define CONFIG_ENV_SPI_MODE		CONFIG_SF_DEFAULT_MODE
+#define CONFIG_ENV_SPI_MAX_HZ		CONFIG_SF_DEFAULT_SPEED
+#endif
+
 /* USB Configs */
 #ifdef CONFIG_CMD_USB
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET
@@ -171,22 +243,8 @@
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 2
 #endif
 
-#ifdef CONFIG_CMD_NET
-#define CONFIG_FEC_MXC
-#define CONFIG_FEC_ENET_DEV		1
-
-#if (CONFIG_FEC_ENET_DEV == 0)
-#define IMX_FEC_BASE			ENET_BASE_ADDR
-#define CONFIG_FEC_MXC_PHYADDR          0x2
 #define CONFIG_FEC_XCV_TYPE             RMII
-#define CONFIG_ETHPRIME			"eth0"
-#elif (CONFIG_FEC_ENET_DEV == 1)
-#define IMX_FEC_BASE			ENET2_BASE_ADDR
-#define CONFIG_FEC_MXC_PHYADDR		0x1
-#define CONFIG_FEC_XCV_TYPE		RMII
 #define CONFIG_ETHPRIME			"eth1"
-#endif
-#endif
 
 #define CONFIG_IMX_THERMAL
 
@@ -199,7 +257,6 @@
 #define CONFIG_BMP_16BPP
 #define CONFIG_VIDEO_BMP_RLE8
 #define CONFIG_VIDEO_BMP_LOGO
-#define MXS_LCDIF_BASE MX6UL_LCDIF1_BASE_ADDR
 #endif
 #endif
 
