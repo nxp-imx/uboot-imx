@@ -9,7 +9,7 @@
 #include "imx6ul.dtsi"
 
 / {
-	model = "Freescale i.MX6 UltraLite 9x9 EVK Board";
+	model = "i.MX6 UltraLite 9x9 EVK Board";
 	compatible = "fsl,imx6ul-9x9-evk", "fsl,imx6ul";
 
 	aliases {
@@ -56,7 +56,7 @@
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
 			gpio = <&gpio1 9 GPIO_ACTIVE_HIGH>;
-			off-on-delay = <20000>;
+			off-on-delay-us = <20000>;
 			enable-active-high;
 		};
 	};
@@ -126,7 +126,7 @@
 	sda-gpios = <&gpio1 29 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
-	pmic: pfuze3000@08 {
+	pmic: pfuze3000@8 {
 		compatible = "fsl,pfuze3000";
 		reg = <0x08>;
 
@@ -217,7 +217,7 @@
 		};
 	};
 
-	mag3110@0e {
+	mag3110@e {
 		compatible = "fsl,mag3110";
 		reg = <0x0e>;
 		position = <2>;
@@ -318,6 +318,46 @@
 			>;
 		};
 
+		pinctrl_lcdif_ctrl: lcdifctrlgrp {
+			fsl,pins = <
+				MX6UL_PAD_LCD_CLK__LCDIF_CLK	    0x79
+				MX6UL_PAD_LCD_ENABLE__LCDIF_ENABLE  0x79
+				MX6UL_PAD_LCD_HSYNC__LCDIF_HSYNC    0x79
+				MX6UL_PAD_LCD_VSYNC__LCDIF_VSYNC    0x79
+				/* used for lcd reset */
+				MX6UL_PAD_SNVS_TAMPER9__GPIO5_IO09  0x79
+			>;
+		};
+
+		pinctrl_lcdif_dat: lcdifdatgrp {
+			fsl,pins = <
+				MX6UL_PAD_LCD_DATA00__LCDIF_DATA00  0x79
+				MX6UL_PAD_LCD_DATA01__LCDIF_DATA01  0x79
+				MX6UL_PAD_LCD_DATA02__LCDIF_DATA02  0x79
+				MX6UL_PAD_LCD_DATA03__LCDIF_DATA03  0x79
+				MX6UL_PAD_LCD_DATA04__LCDIF_DATA04  0x79
+				MX6UL_PAD_LCD_DATA05__LCDIF_DATA05  0x79
+				MX6UL_PAD_LCD_DATA06__LCDIF_DATA06  0x79
+				MX6UL_PAD_LCD_DATA07__LCDIF_DATA07  0x79
+				MX6UL_PAD_LCD_DATA08__LCDIF_DATA08  0x79
+				MX6UL_PAD_LCD_DATA09__LCDIF_DATA09  0x79
+				MX6UL_PAD_LCD_DATA10__LCDIF_DATA10  0x79
+				MX6UL_PAD_LCD_DATA11__LCDIF_DATA11  0x79
+				MX6UL_PAD_LCD_DATA12__LCDIF_DATA12  0x79
+				MX6UL_PAD_LCD_DATA13__LCDIF_DATA13  0x79
+				MX6UL_PAD_LCD_DATA14__LCDIF_DATA14  0x79
+				MX6UL_PAD_LCD_DATA15__LCDIF_DATA15  0x79
+				MX6UL_PAD_LCD_DATA16__LCDIF_DATA16  0x79
+				MX6UL_PAD_LCD_DATA17__LCDIF_DATA17  0x79
+				MX6UL_PAD_LCD_DATA18__LCDIF_DATA18  0x79
+				MX6UL_PAD_LCD_DATA19__LCDIF_DATA19  0x79
+				MX6UL_PAD_LCD_DATA20__LCDIF_DATA20  0x79
+				MX6UL_PAD_LCD_DATA21__LCDIF_DATA21  0x79
+				MX6UL_PAD_LCD_DATA22__LCDIF_DATA22  0x79
+				MX6UL_PAD_LCD_DATA23__LCDIF_DATA23  0x79
+			>;
+		};
+
 		pinctrl_qspi: qspigrp {
 			fsl,pins = <
 				MX6UL_PAD_NAND_WP_B__QSPI_A_SCLK      0x70a1
@@ -400,6 +440,41 @@
 			fsl,pins = <
 				MX6UL_PAD_LCD_RESET__WDOG1_WDOG_ANY    0x30b0
 			>;
+		};
+	};
+};
+
+
+&lcdif {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lcdif_dat
+		     &pinctrl_lcdif_ctrl>;
+
+	display = <&display0>;
+	status = "okay";
+
+	display0: display {
+		bits-per-pixel = <16>;
+		bus-width = <24>;
+
+		display-timings {
+			native-mode = <&timing0>;
+			timing0: timing0 {
+			clock-frequency = <9200000>;
+			hactive = <480>;
+			vactive = <272>;
+			hfront-porch = <8>;
+			hback-porch = <4>;
+			hsync-len = <41>;
+			vback-porch = <2>;
+			vfront-porch = <4>;
+			vsync-len = <10>;
+
+			hsync-active = <0>;
+			vsync-active = <0>;
+			de-active = <1>;
+			pixelclk-active = <0>;
+			};
 		};
 	};
 };
