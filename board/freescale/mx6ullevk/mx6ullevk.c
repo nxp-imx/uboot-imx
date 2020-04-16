@@ -338,6 +338,7 @@ int board_late_init(void)
 
 	if (is_cpu_type(MXC_CPU_MX6ULZ)) {
 		env_set("board_name", "ULZ-EVK");
+		env_set("usb_net_cmd", "usb start");
     }
 #endif
 
