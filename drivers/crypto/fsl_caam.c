@@ -263,6 +263,7 @@ void caam_open(void)
 	 */
 #ifndef CONFIG_ARCH_IMX8
 	u32 temp_reg;
+	u32 init_mask;
 
 	caam_clock_enable();
 
@@ -284,7 +285,8 @@ void caam_open(void)
 
 	/* Check if the RNG is already instantiated */
 	temp_reg = __raw_readl(CAAM_RDSTA);
-	if (temp_reg == (RDSTA_IF0 | RDSTA_IF1 | RDSTA_SKVN)) {
+	init_mask = RDSTA_IF0 | RDSTA_IF1 | RDSTA_SKVN;
+	if ((temp_reg & init_mask) == init_mask) {
 		printf("RNG already instantiated 0x%X\n", temp_reg);
 		return;
 	}
@@ -311,7 +313,8 @@ static const u32 rng_inst_sh0_desc[] = {
 	/* Header, don't setup the size */
 	CAAM_HDR_CTYPE | CAAM_HDR_ONE | CAAM_HDR_START_INDEX(0),
 	/* Operation instantiation (sh0) */
-	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | ALGO_RNG_SH(0) | ALGO_RNG_INSTANTIATE,
+	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | ALGO_RNG_SH(0) | ALGO_RNG_PR |
+		ALGO_RNG_INSTANTIATE,
 };
 
 static const u32 rng_inst_sh1_desc[] = {
@@ -322,7 +325,7 @@ static const u32 rng_inst_sh1_desc[] = {
 	CAAM_C0_LOAD_IMM | CAAM_DST_CLEAR_WRITTEN | sizeof(u32),
 	0x00000001,
 	/* Operation instantiation (sh1) */
-	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | ALGO_RNG_SH(1)
+	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | ALGO_RNG_SH(1) | ALGO_RNG_PR
 		| ALGO_RNG_INSTANTIATE,
 };
 
