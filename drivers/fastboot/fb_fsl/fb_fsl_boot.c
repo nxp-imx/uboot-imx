@@ -548,7 +548,6 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 
 	ulong addr = 0;
 	struct andr_img_hdr *hdr = NULL;
-	void *boot_buf = NULL;
 	ulong image_size;
 	u32 avb_metric;
 	bool check_image_arm64 =  false;
@@ -854,8 +853,6 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 
 	if (avb_out_data != NULL)
 		avb_slot_verify_data_free(avb_out_data);
-	if (boot_buf != NULL)
-		free(boot_buf);
 
 	if (check_image_arm64) {
 #ifdef CONFIG_CMD_BOOTI
