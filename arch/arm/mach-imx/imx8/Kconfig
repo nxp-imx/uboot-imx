@@ -28,12 +28,17 @@ config BOOTAUX_RESERVED_MEM_SIZE
 	help
 	  This memory will be reserved by system and linux cannot access.
 
-config IMX_LOAD_HDMI_FIMRWARE
-	bool "Enable HDMI firmware loading"
+config IMX_LOAD_HDMI_FIMRWARE_RX
+	bool "Enable HDMI rx firmware loading"
 	depends on ARCH_IMX8 || VIDEO_IMX_HDP_LOAD
 	help
-	  This enable the hdmi firmware loading. It depends on the "hdp" and
-	  "hdprx" commands.
+	  This enable the hdmi rx firmware loading. It depends on the "hdprx" command.
+
+config IMX_LOAD_HDMI_FIMRWARE_TX
+	bool "Enable HDMI tx firmware loading"
+	depends on ARCH_IMX8 || VIDEO_IMX_HDP_LOAD
+	help
+	  This enable the hdmi tx firmware loading. It depends on the "hdp" command.
 
 config IMX8
 	bool

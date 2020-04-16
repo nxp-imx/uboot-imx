@@ -452,7 +452,7 @@ int board_late_init(void)
 	board_late_mmc_env_init();
 #endif
 
-#ifdef CONFIG_IMX_LOAD_HDMI_FIMRWARE
+#if defined(CONFIG_IMX_LOAD_HDMI_FIMRWARE_RX) || defined(CONFIG_IMX_LOAD_HDMI_FIMRWARE_TX)
 	char *end_of_uboot;
 	char command[256];
 	end_of_uboot = (char *)(ulong)(CONFIG_SYS_TEXT_BASE + _end_ofs + fdt_totalsize(gd->fdt_blob));
@@ -462,13 +462,16 @@ int board_late_init(void)
 	memcpy((void *)IMX_HDMI_FIRMWARE_LOAD_ADDR, end_of_uboot,
 			IMX_HDMITX_FIRMWARE_SIZE + IMX_HDMIRX_FIRMWARE_SIZE);
 
+#ifdef CONFIG_IMX_LOAD_HDMI_FIMRWARE_TX
 	sprintf(command, "hdp load 0x%x", IMX_HDMI_FIRMWARE_LOAD_ADDR);
 	run_command(command, 0);
-
+#endif
+#ifdef CONFIG_IMX_LOAD_HDMI_FIMRWARE_RX
 	sprintf(command, "hdprx load 0x%x",
 			IMX_HDMI_FIRMWARE_LOAD_ADDR + IMX_HDMITX_FIRMWARE_SIZE);
 	run_command(command, 0);
 #endif
+#endif /* CONFIG_IMX_LOAD_HDMI_FIMRWARE_RX || CONFIG_IMX_LOAD_HDMI_FIMRWARE_TX */
 
 	return 0;
 }
