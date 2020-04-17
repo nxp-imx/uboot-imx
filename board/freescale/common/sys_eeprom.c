@@ -589,13 +589,13 @@ unsigned int get_cpu_board_revision(void)
 		u8 major;         /* 0x04        Board revision, major */
 		u8 minor;         /* 0x05        Board revision, minor */
 	} be;
-	int ret;
 
 #ifndef CONFIG_DM_I2C
 	i2c_read(CONFIG_SYS_I2C_EEPROM_ADDR, 0, CONFIG_SYS_I2C_EEPROM_ADDR_LEN,
 		(void *)&be, sizeof(be));
 #else
 	struct udevice *dev;
+	int ret;
 #ifdef CONFIG_SYS_EEPROM_BUS_NUM
 	ret = i2c_get_chip_for_busnum(CONFIG_SYS_EEPROM_BUS_NUM,
 				      CONFIG_SYS_I2C_EEPROM_ADDR,
