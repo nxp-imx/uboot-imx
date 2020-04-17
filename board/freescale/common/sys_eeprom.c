@@ -589,6 +589,7 @@ unsigned int get_cpu_board_revision(void)
 		u8 major;         /* 0x04        Board revision, major */
 		u8 minor;         /* 0x05        Board revision, minor */
 	} be;
+	int ret;
 
 #ifndef CONFIG_DM_I2C
 	i2c_read(CONFIG_SYS_I2C_EEPROM_ADDR, 0, CONFIG_SYS_I2C_EEPROM_ADDR_LEN,
@@ -603,7 +604,7 @@ unsigned int get_cpu_board_revision(void)
 #else
 	ret = i2c_get_chip_for_busnum(0, CONFIG_SYS_I2C_EEPROM_ADDR,
 				      CONFIG_SYS_I2C_EEPROM_ADDR_LEN,
-				      &dev)
+				      &dev);
 #endif
 	if (!ret)
 		dm_i2c_read(dev, 0, (void *)&be, sizeof(be));
