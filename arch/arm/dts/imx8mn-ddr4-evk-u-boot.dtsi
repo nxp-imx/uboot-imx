@@ -11,6 +11,9 @@
 &clk {
 	u-boot,dm-spl;
 	u-boot,dm-pre-reloc;
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
 };
 
 &osc_24m {
@@ -32,6 +35,10 @@
 };
 
 &iomuxc {
+	u-boot,dm-spl;
+};
+
+&reg_usdhc2_vmmc {
 	u-boot,dm-spl;
 };
 
@@ -81,12 +88,40 @@
 
 &usdhc1 {
 	u-boot,dm-spl;
+	assigned-clocks = <&clk IMX8MN_CLK_USDHC1>;
+	assigned-clock-rates = <400000000>;
+	assigned-clock-parents = <&clk IMX8MN_SYS_PLL1_400M>;
 };
 
 &usdhc2 {
 	u-boot,dm-spl;
+	assigned-clocks = <&clk IMX8MN_CLK_USDHC2>;
+	assigned-clock-rates = <400000000>;
+	assigned-clock-parents = <&clk IMX8MN_SYS_PLL1_400M>;
 };
 
 &usdhc3 {
 	u-boot,dm-spl;
+	assigned-clocks = <&clk IMX8MN_CLK_USDHC3>;
+	assigned-clock-rates = <400000000>;
+	assigned-clock-parents = <&clk IMX8MN_SYS_PLL1_400M>;
+};
+&fec1 {
+	phy-reset-gpios = <&gpio4 22 GPIO_ACTIVE_LOW>;
+};
+
+&usbotg1 {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+};
+
+&usbotg2 {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+};
+
+&flexspi {
+	assigned-clock-rates = <100000000>;
+	assigned-clocks = <&clk IMX8MN_CLK_QSPI>;
+	assigned-clock-parents = <&clk IMX8MN_SYS_PLL1_100M>;
 };
