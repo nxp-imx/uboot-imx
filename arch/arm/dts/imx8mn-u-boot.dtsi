@@ -8,17 +8,28 @@
 		multiple-images;
 	};
 
+	wdt-reboot {
+		compatible = "wdt-reboot";
+		wdt = <&wdog1>;
+		u-boot,dm-spl;
+	};
+
+	aliases {
+		usbgadget0 = &usbg1;
+	};
+
+	usbg1: usbg1 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg1>;
+		status = "okay";
+	};
+
 	firmware {
 		optee {
 			compatible = "linaro,optee-tz";
 			method = "smc";
 		};
-	};
-
-	wdt-reboot {
-		compatible = "wdt-reboot";
-		wdt = <&wdog1>;
-		u-boot,dm-spl;
 	};
 };
 
@@ -57,6 +68,31 @@
 };
 
 &osc_24m {
+	u-boot,dm-spl;
+	u-boot,dm-pre-reloc;
+};
+
+&osc_32k {
+	u-boot,dm-spl;
+	u-boot,dm-pre-reloc;
+};
+
+&clk_ext1 {
+	u-boot,dm-spl;
+	u-boot,dm-pre-reloc;
+};
+
+&clk_ext2 {
+	u-boot,dm-spl;
+	u-boot,dm-pre-reloc;
+};
+
+&clk_ext3 {
+	u-boot,dm-spl;
+	u-boot,dm-pre-reloc;
+};
+
+&clk_ext4 {
 	u-boot,dm-spl;
 	u-boot,dm-pre-reloc;
 };
