@@ -160,16 +160,6 @@
 	phy-reset-gpios = <&gpio4 22 GPIO_ACTIVE_LOW>;
 };
 
-&usbotg1 {
-	/delete-property/ assigned-clocks;
-	/delete-property/ assigned-clock-parents;
-};
-
-&usbotg2 {
-	/delete-property/ assigned-clocks;
-	/delete-property/ assigned-clock-parents;
-};
-
 &flexspi {
 	assigned-clock-rates = <100000000>;
 	assigned-clocks = <&clk IMX8MM_CLK_QSPI>;
