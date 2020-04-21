@@ -332,6 +332,38 @@ static u32 get_cpu_variant_type(u32 type)
 				return MXC_CPU_IMX8MNL;
 			break;
 		}
+	} else if (type == MXC_CPU_IMX8MP) {
+		u32 value0 = readl(&fuse->tester3);
+		u32 flag = 0;
+
+		if ((value0 & 0xc0000) == 0x80000) {
+			return MXC_CPU_IMX8MPD;
+		} else {
+			/* vpu disabled */
+			if ((value0 & 0x43000000) == 0x43000000)
+				flag = 1;
+
+			/* npu disabled*/
+			if ((value & 0x8) == 0x8)
+				flag |= (1 << 1);
+
+			/* isp disabled */
+			if ((value & 0x3) == 0x3)
+				flag |= (1 << 2);
+
+			switch (flag) {
+			case 7:
+				return MXC_CPU_IMX8MPL;
+			case 6:
+				return MXC_CPU_IMX8MP5;
+			case 2:
+				return MXC_CPU_IMX8MP6;
+			case 1:
+				return MXC_CPU_IMX8MP7;
+			default:
+				break;
+			}
+		}
 	}
 
 	return type;
@@ -349,7 +381,7 @@ u32 get_cpu_rev(void)
 
 	/* iMX8MP */
 	if (major_low == 0x43) {
-		return (MXC_CPU_IMX8MP << 12) | reg;
+		type = get_cpu_variant_type(MXC_CPU_IMX8MP);
 	} else if (major_low == 0x42) {
 		/* iMX8MN */
 		type = get_cpu_variant_type(MXC_CPU_IMX8MN);
@@ -486,7 +518,7 @@ int arch_cpu_init(void)
 		secure_lockup();
 #endif
 		if (is_imx8md() || is_imx8mmd() || is_imx8mmdl() || is_imx8mms() || is_imx8mmsl() ||
-			is_imx8mnd() || is_imx8mndl() || is_imx8mns() || is_imx8mnsl()) {
+			is_imx8mnd() || is_imx8mndl() || is_imx8mns() || is_imx8mnsl() || is_imx8mpd()) {
 			/* Power down cpu core 1, 2 and 3 for iMX8M Dual core or Single core */
 			struct pgc_reg *pgc_core1 = (struct pgc_reg *)(GPC_BASE_ADDR + 0x840);
 			struct pgc_reg *pgc_core2 = (struct pgc_reg *)(GPC_BASE_ADDR + 0x880);
@@ -754,10 +786,18 @@ int disable_vpu_nodes(void *blob)
 		"/vpu_h1@38320000"
 	};
 
+	const char *nodes_path_8mp[] = {
+		"/vpu_g1@38300000",
+		"/vpu_g2@38310000",
+		"/vpu_vc8000e@38320000"
+	};
+
 	if (is_imx8mq())
 		return disable_fdt_nodes(blob, nodes_path_8mq, ARRAY_SIZE(nodes_path_8mq));
 	else if (is_imx8mm())
 		return disable_fdt_nodes(blob, nodes_path_8mm, ARRAY_SIZE(nodes_path_8mm));
+	else if (is_imx8mp())
+		return disable_fdt_nodes(blob, nodes_path_8mp, ARRAY_SIZE(nodes_path_8mp));
 	else
 		return -EPERM;
 
@@ -770,6 +810,34 @@ int disable_gpu_nodes(void *blob)
 	};
 
 	return disable_fdt_nodes(blob, nodes_path_8mn, ARRAY_SIZE(nodes_path_8mn));
+}
+
+int disable_npu_nodes(void *blob)
+{
+	const char *nodes_path_8mp[] = {
+		"/vipsi@38500000"
+	};
+
+	return disable_fdt_nodes(blob, nodes_path_8mp, ARRAY_SIZE(nodes_path_8mp));
+}
+
+int disable_isp_nodes(void *blob)
+{
+	const char *nodes_path_8mp[] = {
+		"/soc@0/bus@32c00000/camera/isp@32e10000",
+		"/soc@0/bus@32c00000/camera/isp@32e20000"
+	};
+
+	return disable_fdt_nodes(blob, nodes_path_8mp, ARRAY_SIZE(nodes_path_8mp));
+}
+
+int disable_dsp_nodes(void *blob)
+{
+	const char *nodes_path_8mp[] = {
+		"/dsp@3b6e8000"
+	};
+
+	return disable_fdt_nodes(blob, nodes_path_8mp, ARRAY_SIZE(nodes_path_8mp));
 }
 
 static int disable_cpu_nodes(void *blob, u32 disabled_cores)
@@ -909,6 +977,21 @@ usb_modify_speed:
 	else if (is_imx8mns() || is_imx8mnsl())
 		disable_cpu_nodes(blob, 3);
 
+#elif defined(CONFIG_IMX8MP)
+	if (is_imx8mpl() || is_imx8mp7())
+		disable_vpu_nodes(blob);
+
+	if (is_imx8mpl() || is_imx8mp6() || is_imx8mp5())
+		disable_npu_nodes(blob);
+
+	if (is_imx8mpl() || is_imx8mp5())
+		disable_isp_nodes(blob);
+
+	if (is_imx8mpl() || is_imx8mp7() || is_imx8mp6() || is_imx8mp5())
+		disable_dsp_nodes(blob);
+
+	if (is_imx8mpd())
+		disable_cpu_nodes(blob, 2);
 #endif
 
 	return ft_add_optee_node(blob, bd);
