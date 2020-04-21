@@ -682,8 +682,8 @@ struct mipi_dsi_client_dev rm67191_dev = {
 
 #define FSL_SIP_GPC			0xC2000000
 #define FSL_SIP_CONFIG_GPC_PM_DOMAIN	0x3
-#define DISPMIX				9
-#define MIPI				10
+#define DISPMIX				13
+#define MIPI				15
 
 void do_enable_mipi2hdmi(struct display_info_t const *dev)
 {
