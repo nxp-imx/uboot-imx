@@ -20,6 +20,10 @@
 &clk {
 	u-boot,dm-spl;
 	u-boot,dm-pre-reloc;
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+
 };
 
 &osc_32k {
@@ -46,6 +50,10 @@
 };
 
 &iomuxc {
+	u-boot,dm-spl;
+};
+
+&pinctrl_reg_usdhc2_vmmc {
 	u-boot,dm-spl;
 };
 
@@ -105,26 +113,40 @@
 	u-boot,dm-spl;
 };
 
-&i2c4 {
-	u-boot,dm-spl;
-};
-
-&i2c5 {
-	u-boot,dm-spl;
-};
-
-&i2c6 {
+&pinctrl_i2c1 {
 	u-boot,dm-spl;
 };
 
 &usdhc1 {
 	u-boot,dm-spl;
+	assigned-clocks = <&clk IMX8MP_CLK_USDHC1>;
+	assigned-clock-rates = <400000000>;
+	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_400M>;
 };
 
 &usdhc2 {
 	u-boot,dm-spl;
+	assigned-clocks = <&clk IMX8MP_CLK_USDHC2>;
+	assigned-clock-rates = <400000000>;
+	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_400M>;
 };
 
 &usdhc3 {
 	u-boot,dm-spl;
+	assigned-clocks = <&clk IMX8MP_CLK_USDHC3>;
+	assigned-clock-rates = <400000000>;
+	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_400M>;
+};
+
+&eqos {
+	compatible = "fsl,imx-eqos";
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+};
+
+&flexspi {
+	assigned-clock-rates = <100000000>;
+	assigned-clocks = <&clk IMX8MP_CLK_QSPI>;
+	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_100M>;
 };
