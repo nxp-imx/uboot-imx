@@ -21,14 +21,9 @@
 #include <asm/arch/clock.h>
 #include <asm/mach-imx/gpio.h>
 #include <asm/mach-imx/mxc_i2c.h>
-#include <fsl_esdhc.h>
+#include <fsl_esdhc_imx.h>
 #include <mmc.h>
 #include <asm/arch/ddr.h>
-
-#include <dm/uclass.h>
-#include <dm/device.h>
-#include <dm/uclass-internal.h>
-#include <dm/device-internal.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -40,20 +35,6 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 void spl_dram_init(void)
 {
 	ddr_init(&dram_timing);
-}
-
-void spl_board_init(void)
-{
-	struct udevice *dev;
-	int ret;
-
-	puts("Normal Boot\n");
-
-	ret = uclass_get_device_by_name(UCLASS_CLK,
-					"clock-controller@30380000",
-					&dev);
-	if (ret < 0)
-		printf("Failed to find clock node. Check device tree\n");
 }
 
 #define I2C_PAD_CTRL (PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE | PAD_CTL_PE)
@@ -70,6 +51,104 @@ struct i2c_pads_info i2c_pad_info1 = {
 		.gp = IMX_GPIO_NR(5, 15),
 	},
 };
+
+#define USDHC2_CD_GPIO	IMX_GPIO_NR(2, 12)
+#define USDHC2_PWR_GPIO IMX_GPIO_NR(2, 19)
+
+#define USDHC_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE |PAD_CTL_PE | \
+			 PAD_CTL_FSEL2)
+#define USDHC_GPIO_PAD_CTRL (PAD_CTL_HYS | PAD_CTL_DSE1)
+#define USDHC_CD_PAD_CTRL (PAD_CTL_PE |PAD_CTL_PUE |PAD_CTL_HYS | PAD_CTL_DSE4)
+
+
+static iomux_v3_cfg_t const usdhc3_pads[] = {
+	MX8MP_PAD_NAND_WE_B__USDHC3_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_NAND_WP_B__USDHC3_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_NAND_DATA04__USDHC3_DATA0 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_NAND_DATA05__USDHC3_DATA1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_NAND_DATA06__USDHC3_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_NAND_DATA07__USDHC3_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_NAND_RE_B__USDHC3_DATA4 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_NAND_CE2_B__USDHC3_DATA5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_NAND_CE3_B__USDHC3_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_NAND_CLE__USDHC3_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const usdhc2_pads[] = {
+	MX8MP_PAD_SD2_CLK__USDHC2_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_SD2_CMD__USDHC2_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_SD2_DATA0__USDHC2_DATA0 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_SD2_DATA1__USDHC2_DATA1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_SD2_DATA2__USDHC2_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_SD2_DATA3__USDHC2_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	MX8MP_PAD_SD2_RESET_B__GPIO2_IO19 | MUX_PAD_CTRL(USDHC_GPIO_PAD_CTRL),
+	MX8MP_PAD_SD2_CD_B__GPIO2_IO12    | MUX_PAD_CTRL(USDHC_CD_PAD_CTRL),
+};
+
+static struct fsl_esdhc_cfg usdhc_cfg[2] = {
+	{USDHC2_BASE_ADDR, 0, 4},
+	{USDHC3_BASE_ADDR, 0, 8},
+};
+
+int board_mmc_init(bd_t *bis)
+{
+	int i, ret;
+	/*
+	 * According to the board_mmc_init() the following map is done:
+	 * (U-Boot device node)    (Physical Port)
+	 * mmc0                    USDHC1
+	 * mmc1                    USDHC2
+	 */
+	for (i = 0; i < CONFIG_SYS_FSL_USDHC_NUM; i++) {
+		switch (i) {
+		case 0:
+			init_clk_usdhc(1);
+			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
+			imx_iomux_v3_setup_multiple_pads(
+				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
+			gpio_request(USDHC2_PWR_GPIO, "usdhc2_reset");
+			gpio_direction_output(USDHC2_PWR_GPIO, 0);
+			udelay(500);
+			gpio_direction_output(USDHC2_PWR_GPIO, 1);
+			gpio_request(USDHC2_CD_GPIO, "usdhc2 cd");
+			gpio_direction_input(USDHC2_CD_GPIO);
+			break;
+		case 1:
+			init_clk_usdhc(2);
+			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
+			imx_iomux_v3_setup_multiple_pads(
+				usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
+			break;
+		default:
+			printf("Warning: you configured more USDHC controllers"
+				"(%d) than supported by the board\n", i + 1);
+			return -EINVAL;
+		}
+
+		ret = fsl_esdhc_initialize(bis, &usdhc_cfg[i]);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
+int board_mmc_getcd(struct mmc *mmc)
+{
+	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
+	int ret = 0;
+
+	switch (cfg->esdhc_base) {
+	case USDHC3_BASE_ADDR:
+		ret = 1;
+		break;
+	case USDHC2_BASE_ADDR:
+		ret = !gpio_get_value(USDHC2_CD_GPIO);
+		return ret;
+	}
+
+	return 1;
+}
 
 #ifdef CONFIG_POWER
 #define I2C_PMIC	0
@@ -108,6 +187,11 @@ int power_init_board(void)
 }
 #endif
 
+void spl_board_init(void)
+{
+	puts("Normal Boot\n");
+}
+
 #ifdef CONFIG_SPL_LOAD_FIT
 int board_fit_config_name_match(const char *name)
 {
@@ -126,8 +210,6 @@ void board_init_f(ulong dummy)
 	memset(__bss_start, 0, __bss_end - __bss_start);
 
 	arch_cpu_init();
-
-	init_uart_clk(1);
 
 	board_early_init_f();
 

@@ -9,9 +9,8 @@
 #include <linux/sizes.h>
 #include <asm/arch/imx-regs.h>
 
-#ifdef CONFIG_SECURE_BOOT
-#define CONFIG_CSF_SIZE			0x2000 /* 8K region */
-#endif
+#include "imx_env.h"
+
 
 #define CONFIG_SPL_MAX_SIZE		(152 * 1024)
 #define CONFIG_SYS_MONITOR_LEN		(512 * 1024)
@@ -21,41 +20,83 @@
 #define CONFIG_SYS_UBOOT_BASE	(QSPI0_AMBA_BASE + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
 
 #ifdef CONFIG_SPL_BUILD
-/*#define CONFIG_ENABLE_DDR_TRAINING_DEBUG*/
-#define CONFIG_SPL_LDSCRIPT		"arch/arm/cpu/armv8/u-boot-spl.lds"
-#define CONFIG_SPL_STACK		0x990000
+#define CONFIG_SPL_STACK		0x187FF0
 #define CONFIG_SPL_BSS_START_ADDR      0x0095e000
 #define CONFIG_SPL_BSS_MAX_SIZE        0x2000	/* 8 KB */
 #define CONFIG_SYS_SPL_MALLOC_START    0x42200000
 #define CONFIG_SYS_SPL_MALLOC_SIZE     SZ_512K	/* 512 KB */
-#define CONFIG_SYS_ICACHE_OFF
-#define CONFIG_SYS_DCACHE_OFF
 
-#define CONFIG_MALLOC_F_ADDR		0x940000
+#define CONFIG_MALLOC_F_ADDR		0x184000 /* malloc f used before GD_FLG_FULL_MALLOC_INIT set */
 
 #define CONFIG_SPL_ABORT_ON_RAW_IMAGE
-
-#undef CONFIG_DM_MMC
-#undef CONFIG_DM_PMIC
-#undef CONFIG_DM_PMIC_PFUZE100
 
 #define CONFIG_POWER
 #define CONFIG_POWER_I2C
 #define CONFIG_POWER_PCA9450
 
-#undef CONFIG_DM_I2C
 #define CONFIG_SYS_I2C
+
+#if defined(CONFIG_NAND_BOOT)
+#define CONFIG_SPL_NAND_SUPPORT
+#define CONFIG_SPL_DMA
+#define CONFIG_SPL_NAND_MXS
+#define CONFIG_SPL_NAND_BASE
+#define CONFIG_SPL_NAND_IDENT
+#define CONFIG_SYS_NAND_U_BOOT_OFFS 	0x4000000 /* Put the FIT out of first 64MB boot area */
+
+/* Set a redundant offset in nand FIT mtdpart. The new uuu will burn full boot image (not only FIT part) to the mtdpart, so we check both two offsets */
+#define CONFIG_SYS_NAND_U_BOOT_OFFS_REDUND \
+	(CONFIG_SYS_NAND_U_BOOT_OFFS + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512 - 0x8400)
+#endif
 
 #endif
 
+#define CONFIG_CMD_READ
+#define CONFIG_SERIAL_TAG
+#define CONFIG_FASTBOOT_USB_DEV 0
+
+#define CONFIG_REMAKE_ELF
+/* ENET Config */
+/* ENET1 */
+#if defined(CONFIG_CMD_NET)
+#define CONFIG_ETHPRIME                 "eth1" /* Set eqos to primary since we use its MDIO */
+
+#define CONFIG_FEC_XCV_TYPE             RGMII
+#define CONFIG_FEC_MXC_PHYADDR          1
+#define FEC_QUIRK_ENET_MAC
+
+#define DWC_NET_PHYADDR			1
+#ifdef CONFIG_DWC_ETH_QOS
+#define CONFIG_SYS_NONCACHED_MEMORY     (1 * SZ_1M)     /* 1M */
+#endif
+#endif
+
+#define JAILHOUSE_ENV \
+	"jh_clk= \0 " \
+	"jh_mmcboot=setenv fdt_file imx8mp-evk-root.dtb;" \
+		"setenv jh_clk clk_ignore_unused; " \
+			   "if run loadimage; then " \
+				   "run mmcboot; " \
+			   "else run jh_netboot; fi; \0" \
+	"jh_netboot=setenv fdt_file imx8mp-evk-root.dtb; setenv jh_clk clk_ignore_unused; run netboot; \0 "
+
+#define CONFIG_MFG_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
+	"initrd_addr=0x43800000\0" \
+	"initrd_high=0xffffffffffffffff\0" \
+	"emmc_dev=2\0"\
+	"sd_dev=1\0" \
+
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
+	CONFIG_MFG_ENV_SETTINGS \
+	JAILHOUSE_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
-	"console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200\0" \
+	"console=ttymxc1,115200\0" \
 	"fdt_addr=0x43000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
-	"boot_fdt=try\0" \
+	"boot_fit=no\0" \
 	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
 	"initrd_addr=0x43800000\0"		\
 	"initrd_high=0xffffffffffffffff\0" \
@@ -71,14 +112,14 @@
 	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"run mmcargs; " \
-		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
+		"if test ${boot_fit} = yes || test ${boot_fit} = try; then " \
+			"bootm ${loadaddr}; " \
+		"else " \
 			"if run loadfdt; then " \
 				"booti ${loadaddr} - ${fdt_addr}; " \
 			"else " \
 				"echo WARN: Cannot load the DT; " \
 			"fi; " \
-		"else " \
-			"echo wait for boot; " \
 		"fi;\0" \
 	"netargs=setenv bootargs ${jh_clk} console=${console} " \
 		"root=/dev/nfs " \
@@ -91,14 +132,14 @@
 			"setenv get_cmd tftp; " \
 		"fi; " \
 		"${get_cmd} ${loadaddr} ${image}; " \
-		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
+		"if test ${boot_fit} = yes || test ${boot_fit} = try; then " \
+			"bootm ${loadaddr}; " \
+		"else " \
 			"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
 				"booti ${loadaddr} - ${fdt_addr}; " \
 			"else " \
 				"echo WARN: Cannot load the DT; " \
 			"fi; " \
-		"else " \
-			"booti; " \
 		"fi;\0"
 
 #define CONFIG_BOOTCOMMAND \
@@ -111,7 +152,7 @@
 			   "else run netboot; " \
 			   "fi; " \
 		   "fi; " \
-	   "else booti ${loadaddr} - ${fdt_addr}; fi"
+	   "fi;"
 
 /* Link Definitions */
 #define CONFIG_LOADADDR			0x40480000
@@ -126,6 +167,11 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 #define CONFIG_ENV_OVERWRITE
+#define CONFIG_ENV_SPI_BUS		CONFIG_SF_DEFAULT_BUS
+#define CONFIG_ENV_SPI_CS		CONFIG_SF_DEFAULT_CS
+#define CONFIG_ENV_SPI_MODE		CONFIG_SF_DEFAULT_MODE
+#define CONFIG_ENV_SPI_MAX_HZ		CONFIG_SF_DEFAULT_SPEED
+
 #define CONFIG_SYS_MMC_ENV_DEV		1   /* USDHC2 */
 #define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
 
@@ -153,6 +199,7 @@
 #define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
 					sizeof(CONFIG_SYS_PROMPT) + 16)
 
+#define CONFIG_IMX_BOOTAUX
 #define CONFIG_FSL_USDHC
 
 #define CONFIG_SYS_FSL_USDHC_NUM	2
@@ -160,6 +207,40 @@
 
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
+#ifdef CONFIG_FSL_FSPI
+#define FSL_FSPI_FLASH_SIZE		SZ_32M
+#define FSL_FSPI_FLASH_NUM		1
+#define FSPI0_BASE_ADDR			0x30bb0000
+#define FSPI0_AMBA_BASE			0x0
+#define CONFIG_FSPI_QUAD_SUPPORT
+
+#define CONFIG_SYS_FSL_FSPI_AHB
+#endif
+
+#ifdef CONFIG_NAND_MXS
+#define CONFIG_CMD_NAND_TRIMFFS
+
+/* NAND stuff */
+#define CONFIG_SYS_MAX_NAND_DEVICE     1
+#define CONFIG_SYS_NAND_BASE           0x20000000
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+#define CONFIG_SYS_NAND_USE_FLASH_BBT
+#endif /* CONFIG_NAND_MXS */
+
 #define CONFIG_SYS_I2C_SPEED		100000
 
+/* USB configs */
+#ifndef CONFIG_SPL_BUILD
+#define CONFIG_CMD_USB
+#define CONFIG_USB_STORAGE
+
+#define CONFIG_CMD_USB_MASS_STORAGE
+#define CONFIG_USB_GADGET_MASS_STORAGE
+#define CONFIG_USB_FUNCTION_MASS_STORAGE
+#endif
+
+#define CONFIG_USB_MAX_CONTROLLER_COUNT         2
+#define CONFIG_USBD_HS
+#define CONFIG_USB_GADGET_VBUS_DRAW 2
 #endif
