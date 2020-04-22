@@ -6,8 +6,8 @@
 #include <config.h>
 
 .align 8
-.global boot_pointer
-boot_pointer:
+.global rom_pointer
+rom_pointer:
 	.space 32
 
 /*
@@ -17,7 +17,7 @@ boot_pointer:
 .global save_boot_params
 save_boot_params:
 	/* The firmware provided ATAG/FDT address can be found in r2/x0 */
-	adr	x0, boot_pointer
+	adr	x0, rom_pointer
 	stp	x1, x2, [x0], #16
 	stp	x3, x4, [x0], #16
 
