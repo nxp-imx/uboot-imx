@@ -867,14 +867,14 @@
 
 	pinctrl_usb0_vbus: dhcom-usb0-grp {
 		fsl,pins = <
-			MX8MP_IOMUXC_GPIO1_IO10__USB1_OTG_ID		0x0
+			MX8MP_IOMUXC_GPIO1_IO10__USB1_ID		0x0
 		>;
 	};
 
 	pinctrl_usb1_vbus: dhcom-usb1-grp {
 		fsl,pins = <
-			MX8MP_IOMUXC_GPIO1_IO14__USB2_OTG_PWR		0x6
-			MX8MP_IOMUXC_GPIO1_IO15__USB2_OTG_OC		0x80
+			MX8MP_IOMUXC_GPIO1_IO14__USB2_PWR		0x6
+			MX8MP_IOMUXC_GPIO1_IO15__USB2_OC		0x80
 		>;
 	};
 

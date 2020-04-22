@@ -1220,7 +1220,7 @@
 
 	pinctrl_usb1_vbus: usb1vbusgrp {
 		fsl,pins =
-			<MX8MP_IOMUXC_GPIO1_IO12__USB1_OTG_PWR		0x19>;	/* SODIMM 155 */
+			<MX8MP_IOMUXC_GPIO1_IO12__USB1_PWR		0x19>;	/* SODIMM 155 */
 	};
 
 	/* USB_1_ID */
@@ -1231,7 +1231,7 @@
 
 	pinctrl_usb2_vbus: usb2vbusgrp {
 		fsl,pins =
-			<MX8MP_IOMUXC_GPIO1_IO14__USB2_OTG_PWR		0x19>;	/* SODIMM 185 */
+			<MX8MP_IOMUXC_GPIO1_IO14__USB2_PWR		0x19>;	/* SODIMM 185 */
 	};
 
 	/* On-module Wi-Fi */
