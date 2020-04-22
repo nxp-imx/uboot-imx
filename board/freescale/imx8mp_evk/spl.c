@@ -10,18 +10,23 @@
 #include <log.h>
 #include <spl.h>
 #include <asm/global_data.h>
-#include <asm/arch/clock.h>
 #include <asm/arch/imx8mp_pins.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/boot_mode.h>
+#include <power/pmic.h>
+
+#include <power/pca9450.h>
+#include <asm/arch/clock.h>
+#include <dm/uclass.h>
+#include <dm/device.h>
+#include <dm/uclass-internal.h>
+#include <dm/device-internal.h>
 #include <asm/mach-imx/gpio.h>
 #include <asm/mach-imx/iomux-v3.h>
 #include <asm/mach-imx/mxc_i2c.h>
+#include <fsl_esdhc_imx.h>
+#include <mmc.h>
 #include <asm/arch/ddr.h>
-#include <power/pmic.h>
-#include <power/pca9450.h>
-#include <dm/uclass.h>
-#include <dm/device.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -51,43 +56,31 @@ void spl_board_init(void)
 	 * setting done. Default is 400Mhz (system_pll1_800m with div = 2)
 	 * set by ROM for ND VDD_SOC
 	 */
+#if !defined(CONFIG_IMX8M_VDD_SOC_850MV)
 	clock_enable(CCGR_GIC, 0);
 	clock_set_target_val(GIC_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(5));
 	clock_enable(CCGR_GIC, 1);
 
 	puts("Normal Boot\n");
+#endif
 }
 
-#define I2C_PAD_CTRL (PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE | PAD_CTL_PE)
-#define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
-struct i2c_pads_info i2c_pad_info1 = {
-	.scl = {
-		.i2c_mode = MX8MP_PAD_I2C1_SCL__I2C1_SCL | PC,
-		.gpio_mode = MX8MP_PAD_I2C1_SCL__GPIO5_IO14 | PC,
-		.gp = IMX_GPIO_NR(5, 14),
-	},
-	.sda = {
-		.i2c_mode = MX8MP_PAD_I2C1_SDA__I2C1_SDA | PC,
-		.gpio_mode = MX8MP_PAD_I2C1_SDA__GPIO5_IO15 | PC,
-		.gp = IMX_GPIO_NR(5, 15),
-	},
-};
-
-#if CONFIG_IS_ENABLED(POWER_LEGACY)
-#define I2C_PMIC	0
+#if CONFIG_IS_ENABLED(DM_PMIC_PCA9450)
 int power_init_board(void)
 {
-	struct pmic *p;
+	struct udevice *dev;
 	int ret;
 
-	ret = power_pca9450_init(I2C_PMIC, 0x25);
-	if (ret)
-		printf("power init failed");
-	p = pmic_get("PCA9450");
-	pmic_probe(p);
+	ret = pmic_get("pca9450@25", &dev);
+	if (ret == -ENODEV) {
+		puts("No pca9450@25\n");
+		return 0;
+	}
+	if (ret != 0)
+		return ret;
 
 	/* BUCKxOUT_DVS0/1 control BUCK123 output */
-	pmic_reg_write(p, PCA9450_BUCK123_DVS, 0x29);
+	pmic_reg_write(dev, PCA9450_BUCK123_DVS, 0x29);
 
 	/*
 	 * increase VDD_SOC to typical value 0.95V before first
@@ -97,19 +90,19 @@ int power_init_board(void)
 	 */
 #ifdef CONFIG_IMX8M_VDD_SOC_850MV
 	/* set DVS0 to 0.85v for special case*/
-	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS0, 0x14);
+	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x14);
 #else
-	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS0, 0x1C);
+	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x1C);
 #endif
-	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS1, 0x14);
-	pmic_reg_write(p, PCA9450_BUCK1CTRL, 0x59);
+	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x14);
+	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
 
 	/* Kernel uses OD/OD freq for SOC */
 	/* To avoid timing risk from SOC to ARM,increase VDD_ARM to OD voltage 0.95v */
-	pmic_reg_write(p, PCA9450_BUCK2OUT_DVS0, 0x1C);
+	pmic_reg_write(dev, PCA9450_BUCK2OUT_DVS0, 0x1C);
 
 	/* set WDOG_B_CFG to cold reset */
-	pmic_reg_write(p, PCA9450_RESET_CTRL, 0xA1);
+	pmic_reg_write(dev, PCA9450_RESET_CTRL, 0xA1);
 
 	return 0;
 }
@@ -127,6 +120,7 @@ int board_fit_config_name_match(const char *name)
 
 void board_init_f(ulong dummy)
 {
+	struct udevice *dev;
 	int ret;
 
 	/* Clear the BSS. */
@@ -134,21 +128,27 @@ void board_init_f(ulong dummy)
 
 	arch_cpu_init();
 
-	init_uart_clk(1);
-
 	board_early_init_f();
 
-	ret = spl_early_init();
-	if (ret) {
-		debug("spl_init() failed: %d\n", ret);
-		hang();
-	}
+	timer_init();
 
 	preloader_console_init();
 
-	enable_tzc380();
+	ret = spl_early_init();
+	if (ret) {
+		debug("spl_early_init() failed: %d\n", ret);
+		hang();
+	}
 
-	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+	ret = uclass_get_device_by_name(UCLASS_CLK,
+					"clock-controller@30380000",
+					&dev);
+	if (ret < 0) {
+		printf("Failed to find clock node. Check device tree\n");
+		hang();
+	}
+
+	enable_tzc380();
 
 	power_init_board();
 
