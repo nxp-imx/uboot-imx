@@ -489,8 +489,8 @@ static sc_faddr_t reserve_optee_shm(sc_faddr_t addr_start)
 	 * optee, optee driver will memremap it and can't be used by system malloc.
 	 */
 
-	sc_faddr_t optee_start = boot_pointer[0];
-	sc_faddr_t optee_size = boot_pointer[1];
+	sc_faddr_t optee_start = rom_pointer[0];
+	sc_faddr_t optee_size = rom_pointer[1];
 
 	if (optee_size && optee_start <= addr_start &&
 		addr_start < optee_start + optee_size) {
