@@ -514,7 +514,6 @@
 &usbotg1 {
 	status = "okay";
 	extcon = <&typec_ptn5110_1>;
-	dr_mode = "otg";
 };
 
 &usbotg2 {
