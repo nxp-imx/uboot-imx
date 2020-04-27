@@ -98,6 +98,12 @@ u8 qixis_esdhc_detect_quirk(void);
 
 #define INPHI_PHY_ADDR1		0x0
 #define INPHI_PHY_ADDR2		0x1
+#ifdef CONFIG_SD_BOOT
+#define IN112525_FW_ADDR	0x980000
+#else
+#define IN112525_FW_ADDR	0x20980000
+#endif
+#define IN112525_FW_LENGTH	0x40000
 
 #define RGMII_PHY_ADDR1		0x01
 #define RGMII_PHY_ADDR2		0x02
