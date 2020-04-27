@@ -196,7 +196,7 @@ int print_cpuinfo(void)
 	struct udevice *thermal_dev;
 	int cpu_tmp, minc, maxc, ret;
 
-	printf("CPU:   Freescale i.MX%s rev%d.%d",
+	printf("CPU:   i.MX%s rev%d.%d",
 	       get_imx_type((cpurev & 0x1FF000) >> 12),
 	       (cpurev & 0x000F0) >> 4,
 	       (cpurev & 0x0000F) >> 0);
@@ -208,7 +208,7 @@ int print_cpuinfo(void)
 		       mxc_get_clock(MXC_ARM_CLK) / 1000000);
 	}
 #else
-	printf("CPU:   Freescale i.MX%s rev%d.%d at %d MHz\n",
+	printf("CPU:   i.MX%s rev%d.%d at %d MHz\n",
 		get_imx_type((cpurev & 0x1FF000) >> 12),
 		(cpurev & 0x000F0) >> 4,
 		(cpurev & 0x0000F) >> 0,
