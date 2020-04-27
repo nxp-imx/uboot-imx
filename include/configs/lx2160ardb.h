@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright 2018,2020 NXP
+ * Copyright 2018-2022 NXP
  */
 
 #ifndef __LX2_RDB_H
@@ -10,6 +10,21 @@
 
 /* RTC */
 #define CFG_SYS_RTC_BUS_NUM		4
+
+/* MAC/PHY configuration */
+#define AQR113C_PHY_ADDR1      0x0
+#define AQR113C_PHY_ADDR2      0x08
+
+#define INPHI_PHY_ADDR1		0x0
+#ifdef CONFIG_SD_BOOT
+#define IN112525_FW_ADDR        0x980000
+#else
+#define IN112525_FW_ADDR        0x20980000
+#endif
+#define IN112525_FW_LENGTH      0x40000
+
+#define RGMII_PHY_ADDR1		0x01
+#define RGMII_PHY_ADDR2		0x02
 
 /* EMC2305 */
 #define I2C_MUX_CH_EMC2305		0x09
