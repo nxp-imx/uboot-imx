@@ -136,6 +136,8 @@
 
 &usdhc2 {
 	u-boot,dm-spl;
+	sd-uhs-sdr104;
+	sd-uhs-ddr50;
 };
 
 &flexspi0 {

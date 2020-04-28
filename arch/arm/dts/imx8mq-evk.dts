@@ -333,6 +333,7 @@
 	non-removable;
 	no-sd;
 	no-sdio;
+	mmc-hs400-1_8v;
 	status = "okay";
 };
 
@@ -343,6 +344,8 @@
 	pinctrl-2 = <&pinctrl_usdhc2_200mhz>;
 	cd-gpios = <&gpio2 12 GPIO_ACTIVE_LOW>;
 	vmmc-supply = <&reg_usdhc2_vmmc>;
+	sd-uhs-sdr104;
+	sd-uhs-ddr50;
 	status = "okay";
 };
 
