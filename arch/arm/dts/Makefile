@@ -903,6 +903,8 @@ dtb-$(CONFIG_ARCH_HIGHBANK) += highbank.dtb
 dtb-$(CONFIG_ARCH_IMX8) += \
 	fsl-imx8qm-apalis.dtb \
 	fsl-imx8qm-mek.dtb \
+	fsl-imx8qm-ddr4-val.dtb \
+	fsl-imx8qm-lpddr4-val.dtb \
 	imx8qm-cgtqmx8.dtb \
 	imx8qm-rom7720-a1.dtb \
 	fsl-imx8qxp-ai_ml.dtb \
