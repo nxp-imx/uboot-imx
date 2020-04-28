@@ -218,10 +218,13 @@
 
 &usdhc1 {
 	u-boot,dm-spl;
+	mmc-hs400-1_8v;
 };
 
 &usdhc2 {
 	u-boot,dm-spl;
+	sd-uhs-sdr104;
+	sd-uhs-ddr50;
 };
 
 &flexspi0 {
