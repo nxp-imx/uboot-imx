@@ -544,6 +544,10 @@ static int find_partition_data_by_name(char* part_name,
 		return 0;
 }
 
+bool __weak is_power_key_pressed(void) {
+	return false;
+}
+
 int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 
 	ulong addr = 0;
@@ -724,6 +728,21 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 
 		goto fail;
 	}
+
+	/* Show orange warning for unlocked device, press power button to skip. */
+#ifdef CONFIG_AVB_WARNING_LOGO
+	if (fastboot_get_lock_stat() == FASTBOOT_UNLOCK) {
+		int count = 0;
+
+		printf("Device is unlocked, press power key to skip warning logo... \n");
+		if (display_unlock_warning())
+			printf("can't show unlock warning.\n");
+		while ( (count < 10 * CONFIG_AVB_WARNING_TIME_LAST) && !is_power_key_pressed()) {
+			mdelay(100);
+			count++;
+		}
+	}
+#endif
 
 	flush_cache((ulong)image_load_addr, image_size);
 	check_image_arm64  = image_arm64((void *)(ulong)hdr->kernel_addr);

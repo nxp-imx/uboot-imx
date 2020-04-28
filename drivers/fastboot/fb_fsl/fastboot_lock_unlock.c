@@ -29,6 +29,16 @@
 
 #endif
 
+#ifdef CONFIG_AVB_WARNING_LOGO
+#include "lcd.h"
+#include "video.h"
+#include "dm/uclass.h"
+#include "fsl_avb_logo.h"
+#include "video_link.h"
+#include "video_console.h"
+#include "video_font_data.h"
+#endif
+
 int fastboot_flash_find_index(const char *name);
 
 #if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_ARM64)
@@ -547,6 +557,62 @@ int display_lock(FbLockState lock, int verify) {
 	return -1;
 
 }
+
+#ifdef CONFIG_AVB_WARNING_LOGO
+int display_unlock_warning(void) {
+	int ret;
+	struct udevice *dev;
+
+	ret = uclass_first_device_err(UCLASS_VIDEO, &dev);
+	if (!ret) {
+		/* clear screen first */
+		video_clear(dev);
+		/* Draw the orange warning bmp logo */
+		ret = bmp_display((ulong)orange_warning_bmp_bitmap,
+					CONFIG_AVB_WARNING_LOGO_COLS, CONFIG_AVB_WARNING_LOGO_ROWS);
+
+		/* Show warning text. */
+		if (uclass_first_device_err(UCLASS_VIDEO_CONSOLE, &dev)) {
+			printf("no text console device found!\n");
+			return -1;
+		}
+		/* Adjust the cursor postion, the (x, y) are hard-coded here. */
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 6);
+		vidconsole_put_string(dev, "The bootloader is unlocked and software");
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 7);
+		vidconsole_put_string(dev, "integrity cannot be guaranteed. Any data");
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 8);
+		vidconsole_put_string(dev, "stored on the device may be available to");
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 9);
+		vidconsole_put_string(dev, "attackers. Do not store any sensitive data");
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 10);
+		vidconsole_put_string(dev, "on the device.");
+		/* Jump one line to show the link */
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 13);
+		vidconsole_put_string(dev, "Visit this link on another device:");
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 14);
+		vidconsole_put_string(dev, "g.co/ABH");
+
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 20);
+		vidconsole_put_string(dev, "PRESS POWER BUTTON TO CONTINUE...");
+		/* sync frame buffer */
+		video_sync_all();
+
+		return 0;
+	} else {
+		printf("no video device found!\n");
+		return -1;
+	}
+}
+#endif
 
 int fastboot_wipe_data_partition(void)
 {

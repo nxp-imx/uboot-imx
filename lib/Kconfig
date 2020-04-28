@@ -333,6 +333,31 @@ config AVB_ATX
 	bool "Enable AVB_ATX support"
 	depends on AVB_SUPPORT
 
+config AVB_WARNING_LOGO
+	bool "Enable avb warning show logo on screen"
+	help
+	  Enable avb warning show logo on screen
+
+config AVB_WARNING_LOGO_COLS
+	hex "x resolution on the screen"
+	default 0x1E0
+	depends on AVB_WARNING_LOGO
+	help
+	  The x resolution on the screen.
+
+config AVB_WARNING_LOGO_ROWS
+	hex "y resolution on the screen"
+	default 0x60
+	depends on AVB_WARNING_LOGO
+	help
+	  The y resolution on the screen.
+
+config AVB_WARNING_TIME_LAST
+	hex "the time of avb warning logo will last"
+	default 0x3
+	help
+	  The time of avb warning logo will last (s).
+
 config APPEND_BOOTARGS
 	bool "Append bootargs support"
 
