@@ -70,5 +70,7 @@ void set_fastboot_lock_disable(void);
 
 int display_lock(FbLockState lock, int verify);
 
+int display_unlock_warning(void);
+
 bool valid_tos(void);
 #endif
