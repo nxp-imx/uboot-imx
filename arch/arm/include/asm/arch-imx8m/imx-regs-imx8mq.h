@@ -160,6 +160,8 @@
 #define IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL_MASK 0x2000u
 #define IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL_SHIFT 13
 
+#define SNVS_HPSR              (SNVS_HP_BASE_ADDR + 0x14)
+
 struct iomuxc_gpr_base_regs {
 	u32 gpr[48];
 };

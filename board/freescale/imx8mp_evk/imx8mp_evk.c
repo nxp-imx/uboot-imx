@@ -521,6 +521,12 @@ int is_recovery_key_pressing(void)
 #endif /*CONFIG_ANDROID_RECOVERY*/
 #endif /*CONFIG_FSL_FASTBOOT*/
 
+#ifdef CONFIG_ANDROID_SUPPORT
+bool is_power_key_pressed(void) {
+	return (bool)(!!(readl(SNVS_HPSR) & (0x1 << 6)));
+}
+#endif
+
 #ifdef CONFIG_SPL_MMC_SUPPORT
 
 #define UBOOT_RAW_SECTOR_OFFSET 0x40
