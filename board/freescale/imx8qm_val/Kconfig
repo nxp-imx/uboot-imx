@@ -1,0 +1,12 @@
+if TARGET_IMX8QM_LPDDR4_VAL || TARGET_IMX8QM_DDR4_VAL
+
+config SYS_BOARD
+	default "imx8qm_val"
+
+config SYS_VENDOR
+	default "freescale"
+
+config SYS_CONFIG_NAME
+	default "imx8qm_val"
+
+endif
