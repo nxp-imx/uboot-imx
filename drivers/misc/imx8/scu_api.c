@@ -457,6 +457,24 @@ int sc_misc_get_temp(sc_ipc_t ipc, sc_rsrc_t resource, sc_misc_temp_t temp,
 	return 0;
 }
 
+void sc_misc_get_button_status(sc_ipc_t ipc, sc_bool_t *status)
+{
+	struct sc_rpc_msg_s msg;
+	struct udevice *dev = gd->arch.scu_dev;
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SIZE(&msg) = 1U;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_MISC);
+	RPC_FUNC(&msg) = (u8)(MISC_FUNC_GET_BUTTON_STATUS);
+
+	misc_call(dev, SC_FALSE, &msg, 1U, &msg, 1U);
+
+	if (status != NULL)
+	{
+		*status = (sc_bool_t)(!!(RPC_U8(&msg, 0U)));
+	}
+}
+
 /* RM */
 sc_bool_t sc_rm_is_memreg_owned(sc_ipc_t ipc, sc_rm_mr_t mr)
 {
