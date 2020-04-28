@@ -423,3 +423,12 @@ int board_late_init(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_ANDROID_SUPPORT
+bool is_power_key_pressed(void) {
+	sc_bool_t status = SC_FALSE;
+
+	sc_misc_get_button_status(-1, &status);
+	return (bool)status;
+}
+#endif
