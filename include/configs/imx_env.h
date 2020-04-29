@@ -20,7 +20,8 @@
 
 /* define the nandfit partiton environment for uuu */
 #if defined(CONFIG_IMX8MM) || defined(CONFIG_IMX8MQ) || \
-	defined(CONFIG_IMX8QM) || defined(CONFIG_IMX8QXP)
+	defined(CONFIG_IMX8QM) || defined(CONFIG_IMX8QXP) || \
+	defined(CONFIG_IMX8DXL)
 #define MFG_NAND_FIT_PARTITION "nandfit_part=yes\0"
 #else
 #define MFG_NAND_FIT_PARTITION ""
