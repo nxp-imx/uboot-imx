@@ -212,6 +212,37 @@ static void board_gpio_init(void)
 	}
 
 	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	/* enable LVDS SAS boards */
+	ret = dm_gpio_lookup_name("GPIO1_6", &desc);
+	if (ret) {
+		printf("%s lookup GPIO1_6 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "lvds_enable");
+	if (ret) {
+		printf("%s request lvds_enable failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	/* enable MIPI SAS boards */
+	ret = dm_gpio_lookup_name("GPIO1_7", &desc);
+	if (ret) {
+		printf("%s lookup GPIO1_7 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "mipi_enable");
+	if (ret) {
+		printf("%s request mipi_enable failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
 }
 int checkboard(void)
 {
