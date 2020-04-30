@@ -1,0 +1,101 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2018 NXP
+ */
+
+/ {
+	aliases {
+		usbgadget0 = &usbg1;
+	};
+
+	usbg1: usbg1 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg1>;
+		status = "okay";
+		u-boot,dm-spl;
+	};
+};
+
+&{/imx8qx-pm} {
+
+	u-boot,dm-spl;
+};
+
+&mu {
+	u-boot,dm-spl;
+};
+
+&clk {
+	u-boot,dm-spl;
+};
+
+&iomuxc {
+	u-boot,dm-spl;
+};
+
+&{/mu@5d1c0000/iomuxc/imx8qxp-val} {
+	u-boot,dm-spl;
+};
+
+&pinctrl_lpuart0 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc1 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc1_100mhz {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc1_200mhz {
+	u-boot,dm-spl;
+};
+
+&pd_conn {
+	u-boot,dm-spl;
+};
+
+&pd_dma {
+	u-boot,dm-spl;
+};
+
+&pd_dma_lpuart0 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_sdch0 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_usbotg0 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_usbotg0_phy {
+	u-boot,dm-spl;
+};
+
+&lpuart0 {
+	u-boot,dm-spl;
+};
+
+&usbmisc1 {
+	u-boot,dm-spl;
+};
+
+&usbphy1 {
+	u-boot,dm-spl;
+};
+
+&usbotg1 {
+	u-boot,dm-spl;
+};
+
+&usdhc1 {
+	u-boot,dm-spl;
+	mmc-hs400-1_8v;
+	mmc-hs400-enhanced-strobe;
+};

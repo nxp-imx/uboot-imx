@@ -1,0 +1,49 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2018-2019 NXP
+ *
+ */
+
+#include "fsl-imx8qxp-lpddr4-val.dts"
+
+/ {
+	model = "NXP i.MX8QXP 17x17 Validation board";
+};
+
+&i2c1 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <100000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lpi2c1>;
+	status = "okay";
+
+	pca9557_a: gpio@18 {
+		compatible = "nxp,pca9557";
+		reg = <0x18>;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+
+	pca9557_b: gpio@19 {
+		compatible = "nxp,pca9557";
+		reg = <0x19>;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+};
+
+&i2c3 {
+	status = "disabled";
+
+	/delete-node/ gpio@18;
+ 	/delete-node/ gpio@19;
+};
+
+&usdhc2 {
+	status = "disabled";
+};
+
+&usbotg3 {
+	status = "disabled";
+};
