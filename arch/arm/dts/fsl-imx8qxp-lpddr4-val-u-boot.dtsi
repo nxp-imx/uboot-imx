@@ -1,0 +1,217 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2018 NXP
+ */
+
+/ {
+
+	aliases {
+		usbhost1 = &usbh3;
+		usbgadget0 = &usbg1;
+	};
+
+	usbh3: usbh3 {
+		compatible = "Cadence,usb3-host";
+		dr_mode = "host";
+		cdns3,usb = <&usbotg3>;
+		status = "okay";
+	};
+
+	usbg1: usbg1 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg1>;
+		status = "okay";
+		u-boot,dm-spl;
+	};
+
+};
+
+&{/imx8qx-pm} {
+
+	u-boot,dm-spl;
+};
+
+&mu {
+	u-boot,dm-spl;
+};
+
+&clk {
+	u-boot,dm-spl;
+};
+
+&iomuxc {
+	u-boot,dm-spl;
+};
+
+&{/regulators} {
+	u-boot,dm-spl;
+};
+
+&reg_usdhc2_vmmc {
+	u-boot,dm-spl;
+};
+
+&{/mu@5d1c0000/iomuxc/imx8qxp-val} {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2_gpio {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2_100mhz {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2_200mhz {
+	u-boot,dm-spl;
+};
+
+&pinctrl_lpuart0 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc1 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc1_100mhz {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc1_200mhz {
+	u-boot,dm-spl;
+};
+
+&pinctrl_flexspi0 {
+	u-boot,dm-spl;
+};
+
+&pd_lsio {
+	u-boot,dm-spl;
+};
+
+&pd_lsio_gpio0 {
+	u-boot,dm-spl;
+};
+
+&pd_lsio_gpio3 {
+	u-boot,dm-spl;
+};
+
+&pd_lsio_gpio4 {
+	u-boot,dm-spl;
+};
+
+&pd_conn {
+	u-boot,dm-spl;
+};
+
+&pd_dma {
+	u-boot,dm-spl;
+};
+
+&pd_dma_lpuart0 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_sdch0 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_sdch1 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_sdch2 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_usbotg0 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_usbotg0_phy {
+	u-boot,dm-spl;
+};
+
+&pd_conn_usb2 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_usb2_phy {
+	u-boot,dm-spl;
+};
+
+&pd_lsio_flexspi0 {
+	u-boot,dm-spl;
+};
+
+&gpio0 {
+	u-boot,dm-spl;
+};
+
+&gpio3 {
+	u-boot,dm-spl;
+};
+
+&gpio4 {
+	u-boot,dm-spl;
+};
+
+&lpuart0 {
+	u-boot,dm-spl;
+};
+
+&usbmisc1 {
+	u-boot,dm-spl;
+};
+
+&usbphy1 {
+	u-boot,dm-spl;
+};
+
+&usbotg1 {
+	u-boot,dm-spl;
+};
+
+&usbotg3 {
+	phys = <&usbphynop1>;
+	u-boot,dm-spl;
+};
+
+&usbphynop1 {
+	compatible = "cdns,usb3-phy";
+	reg = <0x0 0x5B160000 0x0 0x40000>;
+	#phy-cells = <0>;
+	u-boot,dm-spl;
+};
+
+&usdhc1 {
+	u-boot,dm-spl;
+	mmc-hs400-1_8v;
+	mmc-hs400-enhanced-strobe;
+};
+
+&usdhc2 {
+	u-boot,dm-spl;
+	sd-uhs-sdr104;
+	sd-uhs-ddr50;
+};
+
+&flexspi0 {
+	u-boot,dm-spl;
+};
+
+&flash0 {
+	u-boot,dm-spl;
+};
+
+&wu {
+	u-boot,dm-spl;
+};

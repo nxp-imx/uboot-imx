@@ -117,6 +117,21 @@ config TARGET_IMX8QXP_MEK
 	select BOARD_LATE_INIT
 	select IMX8QXP
 
+config TARGET_IMX8QXP_LPDDR4_VAL
+	bool "Support i.MX8QXP lpddr4 validation board"
+	select BOARD_LATE_INIT
+	select IMX8QXP
+
+config TARGET_IMX8QXP_DDR3_VAL
+	bool "Support i.MX8QXP ddr3 validation board"
+	select BOARD_LATE_INIT
+	select IMX8QXP
+
+config TARGET_IMX8X_17X17_VAL
+	bool "Support i.MX8QXP/DX 17x17 validation board"
+	select BOARD_LATE_INIT
+	select IMX8QXP
+
 config TARGET_IMX8DXL_PHANTOM_MEK
 	bool "Support i.MX8DXL PHANTOM MEK board"
 	select BOARD_LATE_INIT
@@ -143,6 +158,7 @@ endchoice
 source "board/freescale/imx8qm_mek/Kconfig"
 source "board/freescale/imx8qxp_mek/Kconfig"
 source "board/freescale/imx8qm_val/Kconfig"
+source "board/freescale/imx8qxp_val/Kconfig"
 source "board/freescale/imx8dxl_phantom_mek/Kconfig"
 source "board/freescale/imx8dxl_evk/Kconfig"
 source "board/advantech/imx8qm_rom7720_a1/Kconfig"
