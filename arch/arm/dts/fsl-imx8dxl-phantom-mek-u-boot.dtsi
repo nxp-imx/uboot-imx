@@ -86,6 +86,14 @@
 	u-boot,dm-spl;
 };
 
+&pd_dma {
+	u-boot,dm-spl;
+};
+
+&pd_dma_lpuart0 {
+	u-boot,dm-spl;
+};
+
 &pd_lsio_flexspi0 {
 	u-boot,dm-spl;
 };
