@@ -308,6 +308,9 @@ static int apply_tamper_pin_list_config(struct tamper_pin_cfg *confs, u32 size)
 	debug("%s\n", __func__);
 
 	for (idx = 0; idx < size; idx++) {
+		if (confs[idx].pad == TAMPER_NOT_DEFINED)
+			continue;
+
 		debug("\t idx %d: pad %d: 0x%.8x\n", idx, confs[idx].pad,
 		      confs[idx].mux_conf);
 		pad_write(confs[idx].pad, 3 << 30 | confs[idx].mux_conf);
@@ -550,23 +553,9 @@ static int do_snvs_sec_status(cmd_tbl_t *cmdtp, int flag, int argc,
 {
 	int sciErr;
 	u32 idx;
-
+	u32 nb_pins;
 	u32 data[5];
-
-	u32 pads[] = {
-#ifdef CONFIG_TARGET_IMX8QXP_MEK
-		SC_P_CSI_D00,
-		SC_P_CSI_D01,
-		SC_P_CSI_D02,
-		SC_P_CSI_D03,
-		SC_P_CSI_D04,
-		SC_P_CSI_D05,
-		SC_P_CSI_D06,
-		SC_P_CSI_D07,
-		SC_P_CSI_HSYNC,
-		SC_P_CSI_VSYNC,
-#endif /* CONFIG_TARGET_IMX8QXP_MEK */
-	};
+	struct tamper_pin_cfg *pin_cfg_list = get_tamper_pin_cfg_list(&nb_pins);
 
 	u32 fuses[] = {
 		14,
@@ -618,14 +607,17 @@ static int do_snvs_sec_status(cmd_tbl_t *cmdtp, int flag, int argc,
 
 	/* Pins */
 	printf("Pins:\n");
-	for (idx = 0; idx < ARRAY_SIZE(pads); idx++) {
-		u8 pad_id = pads[idx];
+	for (idx = 0; idx < nb_pins; idx++) {
+		struct tamper_pin_cfg *cfg = &pin_cfg_list[idx];
 
-		sciErr = sc_pad_get(-1, pad_id, &data[0]);
+		if (cfg->pad == TAMPER_NOT_DEFINED)
+			continue;
+
+		sciErr = sc_pad_get(-1, cfg->pad, &data[0]);
 		if (sciErr == 0)
-			printf("\t- Pin %d: %.8x\n", pad_id, data[0]);
+			printf("\t- Pin %d: %.8x\n", cfg->pad, data[0]);
 		else
-			printf("Failed to read Pin %d\n", pad_id);
+			printf("Failed to read Pin %d\n", cfg->pad);
 	}
 
 	/* Fuses */
