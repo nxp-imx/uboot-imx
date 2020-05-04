@@ -26,6 +26,15 @@ config TARGET_MX7ULP_COM
 	bool "Support MX7ULP COM board"
 	select MX7ULP
 	select SYS_ARCH_TIMER
+config TARGET_MX7ULP_10X10_VAL
+	bool "Support mx7ulp 10x10 validation board"
+	select SYS_ARCH_TIMER
+	select MX7ULP
+
+config TARGET_MX7ULP_14X14_VAL
+	bool "Support mx7ulp 14x14 validation board"
+	select SYS_ARCH_TIMER
+	select MX7ULP
 
 config TARGET_MX7ULP_EVK
 	bool "Support mx7ulp EVK board"
@@ -35,6 +44,7 @@ config TARGET_MX7ULP_EVK
 endchoice
 
 source "board/ea/mx7ulp_com/Kconfig"
+source "board/freescale/mx7ulp_val/Kconfig"
 source "board/freescale/mx7ulp_evk/Kconfig"
 
 endif
