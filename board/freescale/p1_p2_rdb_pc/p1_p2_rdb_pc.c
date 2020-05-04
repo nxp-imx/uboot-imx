@@ -356,6 +356,7 @@ int board_early_init_r(void)
 	return 0;
 }
 
+#ifndef CONFIG_DM_ETH
 int board_eth_init(bd_t *bis)
 {
 	struct fsl_pq_mdio_info mdio_info;
@@ -403,6 +404,7 @@ int board_eth_init(bd_t *bis)
 
 	return pci_eth_init(bis);
 }
+#endif
 
 #if defined(CONFIG_QE) && \
 	(defined(CONFIG_TARGET_P1025RDB) || defined(CONFIG_TARGET_P1021RDB))
