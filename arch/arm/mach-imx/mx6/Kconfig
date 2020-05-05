@@ -552,6 +552,22 @@ config TARGET_MX6UL_14X14_EVK
 	select SUPPORT_SPL
 	imply CMD_DM
 
+config TARGET_MX6UL_14X14_DDR3_VAL
+	bool "mx6ul_14x14_ddr3_val"
+	select BOARD_LATE_INIT
+	select MX6UL
+	select DM
+	select DM_THERMAL
+	imply CMD_DM
+
+config TARGET_MX6UL_14X14_LPDDR2_VAL
+	bool "mx6ul_14x14_lpddr2_val"
+	select BOARD_LATE_INIT
+	select MX6UL
+	select DM
+	select DM_THERMAL
+	imply CMD_DM
+
 config TARGET_MX6UL_ENGICAM
 	bool "Support Engicam GEAM6UL/Is.IoT"
 	select BOARD_LATE_INIT
@@ -830,6 +846,8 @@ source "board/freescale/mx6sxsabreauto/Kconfig"
 source "board/freescale/mx6sx_17x17_val/Kconfig"
 source "board/freescale/mx6sx_19x19_val/Kconfig"
 source "board/freescale/mx6ul_14x14_evk/Kconfig"
+source "board/freescale/mx6ul_14x14_ddr3_val/Kconfig"
+source "board/freescale/mx6ul_14x14_lpddr2_val/Kconfig"
 source "board/freescale/mx6ullevk/Kconfig"
 source "board/grinn/liteboard/Kconfig"
 source "board/phytec/pcm058/Kconfig"
