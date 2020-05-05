@@ -1,0 +1,18 @@
+if TARGET_MX6SLL_VAL
+
+config SYS_BOARD
+	default "mx6sll_val"
+
+config SYS_VENDOR
+	default "freescale"
+
+config SYS_CONFIG_NAME
+	default "mx6sll_val"
+
+config LPDDR2_BOARD
+	bool "set if the board uses the LPDDR2 not default LPDDR3" 
+
+config SYS_TEXT_BASE
+	default 0x87800000
+
+endif
