@@ -1,0 +1,23 @@
+if TARGET_MX6SX_19X19_VAL
+
+config SYS_BOARD
+	default "mx6sx_19x19_val"
+
+config SYS_VENDOR
+	default "freescale"
+
+config SYS_CONFIG_NAME
+	default "mx6sx_19x19_val"
+
+config SYS_TEXT_BASE
+	default 0x87800000
+
+config LPDDR2_BOARD
+	bool "Select for the board using LPDDR2 not default DDR3"
+
+config NOR
+	bool "Support for NOR flash"
+	help
+	  The i.MX SoC supports having a NOR flash connected to the WEIM.
+	  Need to set this for NOR_BOOT.
+endif
