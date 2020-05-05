@@ -1,0 +1,24 @@
+if TARGET_MX6ULL_DDR3_VAL
+
+config SYS_BOARD
+       default "mx6ull_ddr3_val"
+
+config SYS_VENDOR
+       default "freescale"
+
+config SYS_CONFIG_NAME
+       default "mx6ull_ddr3_val"
+
+config MX6ULL_DDR3_VAL_EMMC_REWORK
+	bool "Select this for the board with eMMC rework"
+
+config SYS_TEXT_BASE
+	default 0x87800000
+
+config MX6ULL_DDR3_VAL_TSC_REWORK
+        bool "Select this for the board with screen touch rework"
+
+config MX6ULL_DDR3_VAL_QSPIB_REWORK
+        bool "Select this for the board with flash on QSPI-B port rework"
+
+endif

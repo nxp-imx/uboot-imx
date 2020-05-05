@@ -586,6 +586,14 @@ config TARGET_MX6UL_ENGICAM
 	select SUPPORT_SPL
 	imply CMD_DM
 
+config TARGET_MX6ULL_DDR3_VAL
+	bool "Support mx6ull_ddr3_val"
+	select BOARD_LATE_INIT
+	select MX6ULL
+	select DM
+	select DM_THERMAL
+	imply CMD_DM
+
 config TARGET_MX6ULL_9X9_EVK
 	bool "Support mx6ull_9x9_evk"
 	select BOARD_LATE_INIT
@@ -849,6 +857,7 @@ source "board/freescale/mx6ul_14x14_evk/Kconfig"
 source "board/freescale/mx6ul_14x14_ddr3_val/Kconfig"
 source "board/freescale/mx6ul_14x14_lpddr2_val/Kconfig"
 source "board/freescale/mx6ullevk/Kconfig"
+source "board/freescale/mx6ull_ddr3_val/Kconfig"
 source "board/grinn/liteboard/Kconfig"
 source "board/phytec/pcm058/Kconfig"
 source "board/phytec/pfla02/Kconfig"
