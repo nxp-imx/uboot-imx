@@ -1,0 +1,24 @@
+if TARGET_MX6UL_14X14_LPDDR2_VAL
+
+config SYS_BOARD
+       default "mx6ul_14x14_lpddr2_val"
+
+config SYS_VENDOR
+       default "freescale"
+
+config SYS_CONFIG_NAME
+       default "mx6ul_14x14_lpddr2_val"
+
+config SYS_TEXT_BASE
+	default 0x87800000
+
+config MX6UL_LPDDR2_VAL_USDHC2_REWORK
+	bool "Select this for the board with 8bits USDHC2 rework"
+
+config NOR
+	bool "Support for NOR flash"
+	help
+	  The i.MX SoC supports having a NOR flash connected to the WEIM.
+	  Need to set this for NOR_BOOT.
+
+endif

@@ -1,0 +1,26 @@
+if TARGET_MX6UL_14X14_DDR3_VAL
+
+config SYS_BOARD
+       default "mx6ul_14x14_ddr3_val"
+
+config SYS_VENDOR
+       default "freescale"
+
+config SYS_CONFIG_NAME
+       default "mx6ul_14x14_ddr3_val"
+
+config MX6UL_DDR3_VAL_EMMC_REWORK
+	bool "Select this for the board with eMMC rework"
+
+config SYS_TEXT_BASE
+	default 0x87800000
+
+config MX6UL_DDR3_VAL_USDHC2_REWORK
+	bool "Select this for the board with 8bits USDHC2 rework"
+
+config NOR
+	bool "Support for NOR flash"
+	help
+	  The i.MX SoC supports having a NOR flash connected to the WEIM.
+	  Need to set this for NOR_BOOT.
+endif
