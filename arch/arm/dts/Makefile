@@ -669,7 +669,10 @@ endif
 
 dtb-$(CONFIG_MX6SL) += imx6sl-evk.dtb
 
-dtb-$(CONFIG_MX6SLL) += imx6sll-evk.dtb
+dtb-$(CONFIG_MX6SLL) += imx6sll-evk.dtb \
+	imx6sll-lpddr2-val.dtb \
+	imx6sll-lpddr3-val.dtb \
+	imx6sll-lpddr3-val-ecspi.dtb
 
 dtb-$(CONFIG_MX6SX) += \
 	imx6sx-14x14-val.dtb \
