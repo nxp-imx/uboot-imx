@@ -26,8 +26,8 @@ int ft_add_optee_node(void *fdt, bd_t *bd)
 
 #ifdef CONFIG_OF_LIBFDT_OVERLAY
 	if (rom_pointer[2]) {
-		debug("OP-TEE: applying overlay on 0x%llx\n",rom_pointer[2]);
-		ret = fdt_overlay_apply_verbose(fdt, rom_pointer[2]);
+		debug("OP-TEE: applying overlay on 0x%lx\n",rom_pointer[2]);
+		ret = fdt_overlay_apply_verbose(fdt, (void*)rom_pointer[2]);
 		if (ret == 0) {
 			debug("Overlay applied with success");
 			fdt_pack(fdt);
