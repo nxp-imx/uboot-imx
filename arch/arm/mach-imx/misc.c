@@ -109,8 +109,8 @@ void board_lmb_reserve(struct lmb *lmb)
 
 static void configure_tzc380(void)
 {
-	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
 #if defined (IP2APB_TZASC1_BASE_ADDR)
+	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
 	if (iomux->gpr[9] & 0x1)
 		writel(0xf0000000, IP2APB_TZASC1_BASE_ADDR + 0x108);
 #endif
