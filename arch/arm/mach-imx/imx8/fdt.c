@@ -498,16 +498,16 @@ static int config_smmu_fdt_device_sid(void *blob, int device_offset, int sid)
 						     "#power-domain-cells",
 						     0, i++, &args);
 		if (ret == -ENOENT) {
-			break;
+			return 0;
 		} else if (ret) {
 			printf("Parse power-domains of node %s wrong: %d\n",
 			       fdt_get_name(blob, device_offset, NULL), ret);
 			continue;
 		}
 
+		rsrc = args.args[0];
 		debug("configure node %s sid 0x%x rsrc=%d\n",
 		      name, sid, rsrc);
-		rsrc = args.args[0];
 
 		ret = config_smmu_resource_sid(rsrc, sid);
 		if (ret)
