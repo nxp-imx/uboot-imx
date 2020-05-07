@@ -358,6 +358,11 @@ config AVB_WARNING_TIME_LAST
 	help
 	  The time of avb warning logo will last (s).
 
+config BOOTLOADER_MENU
+	bool "Enable bootloader menu for android device"
+	help
+	  bootloader menu feature for android device.
+
 config APPEND_BOOTARGS
 	bool "Append bootargs support"
 
