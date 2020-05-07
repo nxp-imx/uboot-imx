@@ -363,3 +363,8 @@ config ANDROID_DYNAMIC_PARTITION
 config VIRTUAL_AB_SUPPORT
 	bool "Support virtual AB update"
 	select ANDROID_DYNAMIC_PARTITION
+
+config BOOTLOADER_MENU
+	bool "Enable bootloader menu for android device"
+	help
+	bootloader menu feature for android device.
