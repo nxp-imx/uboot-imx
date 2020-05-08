@@ -785,4 +785,13 @@ config VIDEO_LINK
 	   This option enables a video link framework basing on port-endpoint graph
 	   to connect video components.
 
+config VIDEO_IT6263_BRIDGE
+	bool "ITE6263 LVDS to HDMI connector"
+	depends on DM_VIDEO
+	select VIDEO_BRIDGE
+	default n
+	help
+	Say Y here if you want to enable support for ITE IT6263
+	LVDS to HDMI connector, currently only support 1280x720P.
+
 endmenu
