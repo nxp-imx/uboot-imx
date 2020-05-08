@@ -234,16 +234,6 @@
  * MMC
  */
 
-/* SPI */
-#if defined(CONFIG_QSPI_BOOT) || defined(CONFIG_SD_BOOT_QSPI)
-/* QSPI */
-#define QSPI0_AMBA_BASE			0x40000000
-#define FSL_QSPI_FLASH_SIZE		(1 << 24)
-#define FSL_QSPI_FLASH_NUM		2
-
-/* DSPI */
-#endif
-
 /* DM SPI */
 #if defined(CONFIG_FSL_DSPI) || defined(CONFIG_FSL_QSPI)
 #define CONFIG_DM_SPI_FLASH
@@ -297,7 +287,8 @@
 
 #ifdef CONFIG_LPUART
 #define CONFIG_EXTRA_ENV_SETTINGS       \
-	"bootargs=root=/dev/ram0 rw console=ttyLP0,115200 $othbootargs\0" \
+	"bootargs=root=/dev/ram0 rw console=ttyLP0,115200 "	\
+		"cma=64M@0x0-0xb0000000\0" \
 	"initrd_high=0xffffffff\0"      \
 	"fdt_addr=0x64f00000\0"		\
 	"kernel_addr=0x65000000\0"	\
@@ -353,7 +344,8 @@
 		"$kernel_size && bootm $load_addr#$board\0"
 #else
 #define CONFIG_EXTRA_ENV_SETTINGS	\
-	"bootargs=root=/dev/ram0 rw console=ttyS0,115200 $othbootargs\0" \
+	"bootargs=root=/dev/ram0 rw console=ttyS0,115200 "	\
+		"cma=64M@0x0-0xb0000000\0" \
 	"initrd_high=0xffffffff\0"      \
 	"fdt_addr=0x64f00000\0"		\
 	"kernel_addr=0x61000000\0"	\

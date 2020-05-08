@@ -105,7 +105,14 @@
 
 /* I2C bus multiplexer */
 #define I2C_MUX_PCA_ADDR_PRI		0x77 /* Primary Mux*/
+#define I2C_MUX_PCA_ADDR_SEC		0x75 /* Secondary Mux*/
 #define I2C_MUX_CH_DEFAULT		0x8
+#define I2C_MUX_CH_SEC			0xF
+
+/* QSFP+/SFP+ I2C MUX related */
+#define I2C_MUX_CH_QSFP			0x8
+#define I2C_MUX_CH_SFP1			0xC
+#define I2C_MUX_CH_SFP2			0xD
 
 /* RTC */
 #define RTC
@@ -119,6 +126,10 @@
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN		1
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_BITS	3
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS	5
+
+/* QSFP/SFP module EEPROMs */
+#define I2C_SFP_EEPROM_ADDR	0x50
+#define I2C_SFP_EEPROM_ADDR_LEN	1
 
 /* Qixis */
 #define CONFIG_FSL_QIXIS
@@ -163,6 +174,8 @@
 #ifndef __ASSEMBLY__
 unsigned long get_board_sys_clk(void);
 unsigned long get_board_ddr_clk(void);
+int select_i2c_ch_pca9547(unsigned char ch);
+int select_i2c_ch_pca9547_sec(unsigned char ch);
 #endif
 
 #define CONFIG_SYS_CLK_FREQ		get_board_sys_clk()
@@ -199,6 +212,16 @@ unsigned long get_board_ddr_clk(void);
 
 #define SD_MC_INIT_CMD				\
 	"mmc read 0x80a00000 0x5000 0x1200;"	\
+	"mmc read 0x80e00000 0x7000 0x800;"	\
+	"env exists secureboot && "		\
+	"mmc read 0x80640000 0x3200 0x20 && "	\
+	"mmc read 0x80680000 0x3400 0x20 && "	\
+	"esbc_validate 0x80640000 && "		\
+	"esbc_validate 0x80680000 ;"		\
+	"fsl_mc start mc 0x80a00000 0x80e00000\0"
+
+#define SD2_MC_INIT_CMD				\
+	"mmc dev 1; mmc read 0x80a00000 0x5000 0x1200;"	\
 	"mmc read 0x80e00000 0x7000 0x800;"	\
 	"env exists secureboot && "		\
 	"mmc read 0x80640000 0x3200 0x20 && "	\
@@ -274,11 +297,11 @@ unsigned long get_board_ddr_clk(void);
 		"env exists secureboot && esbc_halt;"
 
 #define SD2_BOOTCOMMAND						\
-		"env exists mcinitcmd && mmcinfo; "		\
+		"mmc dev 1; env exists mcinitcmd && mmcinfo; "	\
 		"mmc read 0x80d00000 0x6800 0x800; "		\
 		"env exists mcinitcmd && env exists secureboot "	\
-		" && mmc read 0x80780000 0x3C00 0x20 "		\
-		"&& esbc_validate 0x80780000;env exists mcinitcmd "	\
+		" && mmc read 0x806C0000 0x3600 0x20 "		\
+		"&& esbc_validate 0x806C0000;env exists mcinitcmd "	\
 		"&& fsl_mc lazyapply dpl 0x80d00000;"		\
 		"run distro_bootcmd;run sd2_bootcmd;"		\
 		"env exists secureboot && esbc_halt;"

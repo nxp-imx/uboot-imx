@@ -305,12 +305,4 @@
 #error "EPDC Pins conflicts QSPI, Either EPDC or QSPI can be enabled!"
 #endif
 
-#ifdef CONFIG_FSL_QSPI
-#define CONFIG_SYS_FSL_QSPI_AHB
-#define FSL_QSPI_FLASH_NUM		1
-#define FSL_QSPI_FLASH_SIZE		SZ_64M
-#define QSPI0_BASE_ADDR			QSPI1_IPS_BASE_ADDR
-#define QSPI0_AMBA_BASE			QSPI0_ARB_BASE_ADDR
-#endif
-
 #endif	/* __CONFIG_H */

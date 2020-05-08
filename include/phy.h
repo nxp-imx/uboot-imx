@@ -404,6 +404,7 @@ int phy_broadcom_init(void);
 int phy_cortina_init(void);
 int phy_davicom_init(void);
 int phy_et1011c_init(void);
+int phy_in112525_init(void);
 int phy_lxt_init(void);
 int phy_marvell_init(void);
 int phy_micrel_ksz8xxx_init(void);
@@ -459,5 +460,5 @@ static inline bool phy_interface_is_sgmii(struct phy_device *phydev)
 #define PHY_UID_CS4223  	0x03e57003
 #define PHY_UID_TN2020		0x00a19410
 #define PHY_UID_IN112525_S03	0x02107440
-
+#define PHY_UID_IN112525_S05    0x02107441
 #endif

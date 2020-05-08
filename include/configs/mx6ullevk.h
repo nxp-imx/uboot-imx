@@ -248,12 +248,6 @@
 
 #define CONFIG_IOMUX_LPSR
 
-#ifdef CONFIG_FSL_QSPI
-#define CONFIG_SYS_FSL_QSPI_AHB
-#define FSL_QSPI_FLASH_NUM		1
-#define FSL_QSPI_FLASH_SIZE		SZ_32M
-#endif
-
 /* NAND stuff */
 #ifdef CONFIG_NAND_MXS
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
@@ -299,5 +293,6 @@
 
 #define CONFIG_MODULE_FUSE
 #define CONFIG_OF_SYSTEM_SETUP
+#define CONFIG_SOFT_SPI
 
 #endif
