@@ -14,6 +14,8 @@
 #include <asm/arch/clock.h>
 #ifdef CONFIG_TARGET_IMX8MM_AB2
 #include <asm/arch/imx8mm_pins.h>
+#else
+#include <asm/arch/imx8mn_pins.h>
 #endif
 #include <asm/arch/sys_proto.h>
 #include <asm-generic/gpio.h>
@@ -46,6 +48,25 @@ static iomux_v3_cfg_t const pwr_en_5v0[] = {
 
 static iomux_v3_cfg_t const pwr_en_ana[] = {
 	IMX8MM_PAD_GPIO1_IO10_GPIO1_IO10 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+#endif
+
+#if defined(CONFIG_TARGET_IMX8MN_AB2) || defined(CONFIG_TARGET_IMX8MN_DDR4_AB2)
+static iomux_v3_cfg_t const uart_pads[] = {
+	IMX8MN_PAD_UART2_RXD__UART2_DCE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
+	IMX8MN_PAD_UART2_TXD__UART2_DCE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const wdog_pads[] = {
+	IMX8MN_PAD_GPIO1_IO02__WDOG1_WDOG_B | MUX_PAD_CTRL(WDOG_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const pwr_en_5v0[] = {
+	IMX8MN_PAD_GPIO1_IO07__GPIO1_IO7 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const pwr_en_ana[] = {
+	IMX8MN_PAD_GPIO1_IO10__GPIO1_IO10 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 #endif
 
@@ -118,7 +139,11 @@ int board_late_init(void)
 #endif
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	env_set("board_name", "AB2");
+#ifdef CONFIG_TARGET_IMX8MM_AB2
 	env_set("board_rev", "iMX8MM");
+#else
+	env_set("board_rev", "iMX8MN");
+#endif
 #endif
 	return 0;
 }

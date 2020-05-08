@@ -24,6 +24,8 @@
 
 #ifdef CONFIG_TARGET_IMX8MM_AB2
 #include <asm/arch/imx8mm_pins.h>
+#else
+#include <asm/arch/imx8mn_pins.h>
 #endif
 
 #ifdef CONFIG_POWER_PCA9450
@@ -36,6 +38,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int spl_board_boot_device(enum boot_device boot_dev_spl)
 {
+#ifdef CONFIG_TARGET_IMX8MM_AB2
 	switch (boot_dev_spl) {
 	case SD2_BOOT:
 	case MMC2_BOOT:
@@ -52,6 +55,9 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 	default:
 		return BOOT_DEVICE_NONE;
 	}
+#else
+	return BOOT_DEVICE_BOOTROM;
+#endif
 }
 
 void spl_dram_init(void)
@@ -76,6 +82,21 @@ struct i2c_pads_info i2c_pad_info1 = {
 	.sda = {
 		.i2c_mode = IMX8MM_PAD_I2C1_SDA_I2C1_SDA | PC,
 		.gpio_mode = IMX8MM_PAD_I2C1_SDA_GPIO5_IO15 | PC,
+		.gp = IMX_GPIO_NR(5, 15),
+	},
+};
+#endif
+
+#if defined(CONFIG_TARGET_IMX8MN_AB2) || defined(CONFIG_TARGET_IMX8MN_DDR4_AB2)
+struct i2c_pads_info i2c_pad_info1 = {
+	.scl = {
+		.i2c_mode = IMX8MN_PAD_I2C1_SCL__I2C1_SCL | PC,
+		.gpio_mode = IMX8MN_PAD_I2C1_SCL__GPIO5_IO14 | PC,
+		.gp = IMX_GPIO_NR(5, 14),
+	},
+	.sda = {
+		.i2c_mode = IMX8MN_PAD_I2C1_SDA__I2C1_SDA | PC,
+		.gpio_mode = IMX8MN_PAD_I2C1_SDA__GPIO5_IO15 | PC,
 		.gp = IMX_GPIO_NR(5, 15),
 	},
 };
@@ -107,6 +128,32 @@ static iomux_v3_cfg_t const usdhc2_pads[] = {
 	IMX8MM_PAD_SD2_DATA3_USDHC2_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	IMX8MM_PAD_SD2_RESET_B_GPIO2_IO19 | MUX_PAD_CTRL(USDHC_GPIO_PAD_CTRL),
 	IMX8MM_PAD_SD2_CD_B_GPIO2_IO12 | MUX_PAD_CTRL(USDHC_CD_PAD_CTRL),
+};
+#endif
+
+#if defined(CONFIG_TARGET_IMX8MN_AB2) || defined(CONFIG_TARGET_IMX8MN_DDR4_AB2)
+static iomux_v3_cfg_t const usdhc3_pads[] = {
+	IMX8MN_PAD_NAND_WE_B__USDHC3_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_NAND_WP_B__USDHC3_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_NAND_DATA04__USDHC3_DATA0 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_NAND_DATA05__USDHC3_DATA1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_NAND_DATA06__USDHC3_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_NAND_DATA07__USDHC3_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_NAND_RE_B__USDHC3_DATA4 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_NAND_CE2_B__USDHC3_DATA5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_NAND_CE3_B__USDHC3_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_NAND_CLE__USDHC3_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const usdhc2_pads[] = {
+	IMX8MN_PAD_SD2_CLK__USDHC2_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_SD2_CMD__USDHC2_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_SD2_DATA0__USDHC2_DATA0 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_SD2_DATA1__USDHC2_DATA1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_SD2_DATA2__USDHC2_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_SD2_DATA3__USDHC2_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+	IMX8MN_PAD_SD2_RESET_B__GPIO2_IO19 | MUX_PAD_CTRL(USDHC_GPIO_PAD_CTRL),
+	IMX8MN_PAD_SD2_CD_B__GPIO2_IO12 | MUX_PAD_CTRL(USDHC_CD_PAD_CTRL),
 };
 #endif
 
@@ -177,12 +224,13 @@ int board_mmc_getcd(struct mmc *mmc)
 
 #ifdef CONFIG_POWER
 #define I2C_PMIC	0
+
+#ifdef CONFIG_POWER_PCA9450
 int power_init_board(void)
 {
 	struct pmic *p;
 	int ret;
 
-#ifdef CONFIG_POWER_PCA9450
 	ret = power_pca9450b_init(I2C_PMIC);
 	if (ret)
 		printf("power init failed");
@@ -202,14 +250,25 @@ int power_init_board(void)
 	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS1, 0x14);
 	pmic_reg_write(p, PCA9450_BUCK1CTRL, 0x59);
 
-	/* Kernel uses OD/OD freq for SOC */
-	/* To avoid timing risk from SOC to ARM,increase VDD_ARM to OD voltage 0.95v */
-	pmic_reg_write(p, PCA9450_BUCK2OUT_DVS0, 0x1C);
-
+#if defined(CONFIG_TARGET_IMX8MN_AB2) || defined(CONFIG_TARGET_IMX8MN_DDR4_AB2)
+	/* set VDD_SNVS_0V8 from default 0.85V */
+	pmic_reg_write(p, PCA9450_LDO2CTRL, 0xC0);
+	/* enable LDO4 to 1.2v */
+	pmic_reg_write(p, PCA9450_LDO4CTRL, 0x44);
+#endif
 	/* set WDOG_B_CFG to cold reset */
 	pmic_reg_write(p, PCA9450_RESET_CTRL, 0xA1);
 
-#else
+	return 0;
+}
+#endif /* CONFIG_POWER_PCA9450 */
+
+#ifdef CONFIG_POWER_BD71837
+int power_init_board(void)
+{
+	struct pmic *p;
+	int ret;
+
 	ret = power_bd71837_init(I2C_PMIC);
 	if (ret)
 		printf("power init failed");
@@ -220,21 +279,39 @@ int power_init_board(void)
 	pmic_reg_write(p, BD71837_PWRONCONFIG1, 0x0);
 	/* unlock the PMIC regs */
 	pmic_reg_write(p, BD71837_REGLOCK, 0x1);
+#ifdef CONFIG_TARGET_IMX8MM_AB2
 	/* increase VDD_SOC to typical value 0.85v before first DRAM access */
 	pmic_reg_write(p, BD71837_BUCK1_VOLT_RUN, 0x0f);
 	/* increase VDD_DRAM to 0.975v for 3Ghz DDR */
 	pmic_reg_write(p, BD71837_BUCK5_VOLT, 0x83);
-#ifndef CONFIG_IMX8M_LPDDR4
+#ifdef CONFIG_IMX8M_DDR4
 	/* increase NVCC_DRAM_1V2 to 1.2v for DDR4 */
 	pmic_reg_write(p, BD71837_BUCK8_VOLT, 0x28);
 #endif
+#endif /* CONFIG_TARGET_IMX8MM_AB2 */
+
+#if defined(CONFIG_TARGET_IMX8MN_AB2) || defined(CONFIG_TARGET_IMX8MN_DDR4_AB2)
+	/* Set VDD_ARM to typical value 0.85v for 1.2Ghz */
+	pmic_reg_write(p, BD71837_BUCK2_VOLT_RUN, 0xf);
+#ifdef CONFIG_IMX8M_DDR4
+	/* Set VDD_SOC/VDD_DRAM to typical value 0.85v for nominal mode */
+	pmic_reg_write(p, BD71837_BUCK1_VOLT_RUN, 0xf);
+#endif
+	/* Set VDD_SOC 0.85v for suspend */
+	pmic_reg_write(p, BD71837_BUCK1_VOLT_SUSP, 0xf);
+#ifdef CONFIG_IMX8M_DDR4
+	/* increase NVCC_DRAM_1V2 to 1.2v for DDR4 */
+	pmic_reg_write(p, BD71837_BUCK8_VOLT, 0x28);
+#endif
+#endif /* CONFIG_TARGET_IMX8MN_AB2 */
+
 	/* lock the PMIC regs */
 	pmic_reg_write(p, BD71837_REGLOCK, 0x11);
-#endif
 
 	return 0;
 }
-#endif
+#endif /* CONFIG_POWER_BD71837 */
+#endif /* CONFIG_POWER */
 
 void spl_board_init(void)
 {
