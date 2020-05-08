@@ -132,6 +132,7 @@ int video_bridge_set_active(struct udevice *dev, bool active)
 UCLASS_DRIVER(video_bridge) = {
 	.id		= UCLASS_VIDEO_BRIDGE,
 	.name		= "video_bridge",
+	.flags		= DM_UC_FLAG_SEQ_ALIAS,
 	.per_device_auto_alloc_size	= sizeof(struct video_bridge_priv),
 	.pre_probe	= video_bridge_pre_probe,
 };
