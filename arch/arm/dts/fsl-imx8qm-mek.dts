@@ -390,6 +390,14 @@
 	lvds-to-hdmi-bridge@4c {
 		compatible = "ite,it6263";
 		reg = <0x4c>;
+
+		port {
+			it6263_0_in: endpoint {
+				clock-lanes = <3>;
+				data-lanes = <0 1 2 4>;
+				remote-endpoint = <&lvds0_out>;
+			};
+		};
 	};
 };
 
@@ -460,3 +468,46 @@
 		};
 	};
 };
+
+&dpu1 {
+	status = "okay";
+};
+
+&ldb1_phy {
+	status = "okay";
+};
+
+&ldb1 {
+	status = "okay";
+
+	lvds-channel@0 {
+		fsl,data-mapping = "jeida";
+		fsl,data-width = <24>;
+		status = "okay";
+
+		display-timings {
+			native-mode = <&timing0>;
+
+			timing0: timing0 {
+				clock-frequency = <74250000>;
+				hactive = <1280>;
+				vactive = <720>;
+				hfront-porch = <220>;
+				hback-porch = <110>;
+				hsync-len = <40>;
+				vback-porch = <5>;
+				vfront-porch = <20>;
+				vsync-len = <5>;
+			};
+		};
+
+		port@1 {
+			reg = <1>;
+
+			lvds0_out: endpoint {
+				remote-endpoint = <&it6263_0_in>;
+			};
+		};
+	};
+};
+
