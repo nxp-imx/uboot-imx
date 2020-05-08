@@ -4,6 +4,6 @@
 # SPDX-License-Identifier:      GPL-2.0+
 #
 
-UBOOTINCLUDE += -I$(srctree)/drivers/video/imx8/hdp
+UBOOTINCLUDE += -I$(srctree)/drivers/video/imx/hdmi/hdp
 obj-$(CONFIG_VIDEO_IMX_HDP_LOAD) += hdp_load.o hdprx_load.o hdp/
 obj-$(CONFIG_VIDEO_IMX8_HDMI) += hdp.o imx8_hdmi.o hdp/
