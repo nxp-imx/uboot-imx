@@ -949,6 +949,13 @@ config BMP_32BPP
 
 endif # VIDEO
 
+config VIDEO_LINK
+	bool "Enable video link framework support"
+	depends on VIDEO
+	help
+	   This option enables a video link framework basing on port-endpoint graph
+	   to connect video components.
+
 config VIDEO_IMX8_HDMI
 	bool "i.MX8 HDMI Splash screen"
 	default n
