@@ -672,10 +672,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 					"androidboot.verifiedbootstate=orange androidboot.flash.locked=0 androidboot.slot_suffix=%s ",
 					avb_out_data->ab_suffix);
 		}
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
 		strcat(bootargs_sec, avb_out_data->cmdline);
-#else
-		strcat(bootargs_sec, strstr(avb_out_data->cmdline, "androidboot"));
+#ifndef CONFIG_ANDROID_AUTO_SUPPORT
 		/* for standard android, recovery ramdisk will be used anyway, to
 		 * boot up Android, "androidboot.force_normal_boot=1" is needed */
 		if(!is_recovery_mode) {

@@ -9,7 +9,11 @@
 #include "avb_version.h"
 #include <malloc.h>
 
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#define NUM_GUIDS 3
+#else
 #define NUM_GUIDS 2
+#endif
 
 /* Substitutes all variables (e.g. $(ANDROID_SYSTEM_PARTUUID)) with
  * values. Returns NULL on OOM, otherwise the cmdline with values
@@ -20,9 +24,16 @@ char* avb_sub_cmdline(AvbOps* ops,
                       const char* ab_suffix,
                       bool using_boot_for_vbmeta,
                       const AvbCmdlineSubstList* additional_substitutions) {
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+  const char* part_name_str[NUM_GUIDS] = {"system", "boot", "vbmeta"};
+  const char* replace_str[NUM_GUIDS] = {"$(ANDROID_SYSTEM_PARTUUID)",
+                                        "$(ANDROID_BOOT_PARTUUID)",
+                                        "$(ANDROID_VBMETA_PARTUUID)"};
+#else
   const char* part_name_str[NUM_GUIDS] = {"boot", "vbmeta"};
   const char* replace_str[NUM_GUIDS] = {"$(ANDROID_BOOT_PARTUUID)",
                                         "$(ANDROID_VBMETA_PARTUUID)"};
+#endif
   char* ret = NULL;
   AvbIOResult io_ret;
   size_t n;
@@ -31,7 +42,11 @@ char* avb_sub_cmdline(AvbOps* ops,
    * partition.
    */
   if (using_boot_for_vbmeta) {
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+    part_name_str[2] = "boot";
+#else
     part_name_str[1] = "boot";
+#endif
   }
 
   /* Replace unique partition GUIDs */
