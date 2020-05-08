@@ -787,6 +787,13 @@ config IHS_VIDEO_OUT
 	  out On-screen Display (OSD) used on gdsys FPGAs to control dynamic
 	  textual overlays of the display outputs.
 
+config VIDEO_LINK
+	bool "Enable video link framework support"
+	depends on DM_VIDEO
+	help
+	   This option enables a video link framework basing on port-endpoint graph
+	   to connect video components.
+
 config VIDEO_IMX8_HDMI
 	bool "i.MX8 HDMI Splash screen"
 	default n
