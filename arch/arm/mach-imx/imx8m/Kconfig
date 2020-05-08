@@ -102,6 +102,18 @@ config TARGET_IMX8MM_AB2
 	select SUPPORT_SPL
 	select IMX8M_LPDDR4
 
+config TARGET_IMX8MN_AB2
+	bool "imx8mn LPDDR4 Audio board 2.0"
+	select IMX8MN
+	select SUPPORT_SPL
+	select IMX8M_LPDDR4
+
+config TARGET_IMX8MN_DDR4_AB2
+	bool "imx8mn DDR4 Audio board 2.0"
+	select IMX8MN
+	select SUPPORT_SPL
+	select IMX8M_DDR4
+
 config TARGET_VERDIN_IMX8MM
        bool "Support Toradex Verdin iMX8M Mini module"
        select IMX8MM
