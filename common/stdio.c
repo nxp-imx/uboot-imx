@@ -18,6 +18,8 @@
 #include <stdio_dev.h>
 #include <serial.h>
 #include <splash.h>
+#include <video_link.h>
+
 #include <i2c.h>
 #include <asm/global_data.h>
 #include <dm/device-internal.h>
@@ -340,6 +342,9 @@ int stdio_add_devices(void)
 	i2c_init_all();
 #endif
 	if (IS_ENABLED(CONFIG_DM_VIDEO)) {
+#ifdef CONFIG_VIDEO_LINK
+		video_link_init();
+#endif
 		/*
 		 * If the console setting is not in environment variables then
 		 * console_init_r() will not be calling iomux_doenv() (which
