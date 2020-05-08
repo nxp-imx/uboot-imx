@@ -9,9 +9,19 @@ config VIDEO_IPUV3
 config VIDEO_IMXDPUV1
 	bool "i.MX DPU V1 display support"
 	default n
-	depends on IMX8
+	depends on IMX8 && DM_VIDEO
+	select VIDEO_LINK
 	help
 	  Support for IMXDPU V1 display controller for i.MX8 processors.
+
+config VIDEO_IMX8_LVDS
+	bool "i.MX8 LDVS bridge support"
+	default n
+	depends on IMX8 && DM_VIDEO
+	select DISPLAY
+	select VIDEO_LINK
+	help
+	  Support for i.MX8 LDVS bridge controller for i.MX8 processors.
 
 config VIDEO_IMX_HDP_LOAD
 	bool "i.MX8 HDMI/DP firmware loading"
