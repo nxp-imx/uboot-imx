@@ -17,6 +17,7 @@
 #include <stdio_dev.h>
 #include <serial.h>
 #include <splash.h>
+#include <video_link.h>
 
 #if defined(CONFIG_SYS_I2C)
 #include <i2c.h>
@@ -345,6 +346,10 @@ int stdio_add_devices(void)
 #else
 #endif
 #ifdef CONFIG_DM_VIDEO
+
+#ifdef CONFIG_VIDEO_LINK
+	video_link_init();
+#endif
 	/*
 	 * If the console setting is not in environment variables then
 	 * console_init_r() will not be calling iomux_doenv() (which calls

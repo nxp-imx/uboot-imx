@@ -19,6 +19,7 @@
 #include <mapmem.h>
 #include <splash.h>
 #include <video.h>
+#include <video_link.h>
 #include <asm/byteorder.h>
 
 static int bmp_info (ulong addr);
@@ -252,8 +253,15 @@ int bmp_display(ulong addr, int x, int y)
 	addr = map_to_sysmem(bmp);
 
 #ifdef CONFIG_DM_VIDEO
+#ifdef CONFIG_VIDEO_LINK
+	dev = video_link_get_video_device();
+	if (!dev) {
+		ret = -ENODEV;
+	} else {
+#else
 	ret = uclass_first_device_err(UCLASS_VIDEO, &dev);
 	if (!ret) {
+#endif
 		bool align = false;
 
 		if (CONFIG_IS_ENABLED(SPLASH_SCREEN_ALIGN) ||

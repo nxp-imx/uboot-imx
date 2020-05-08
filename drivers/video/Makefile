@@ -15,6 +15,7 @@ obj-$(CONFIG_VIDEO_MIPI_DSI) += dsi-host-uclass.o
 obj-$(CONFIG_DM_VIDEO) += panel-uclass.o simple_panel.o
 obj-$(CONFIG_DM_VIDEO) += video-uclass.o vidconsole-uclass.o
 obj-$(CONFIG_DM_VIDEO) += video_bmp.o
+obj-$(CONFIG_VIDEO_LINK) += video_link.o
 endif
 
 obj-${CONFIG_EXYNOS_FB} += exynos/
