@@ -33,6 +33,16 @@ int dsi_host_enable(struct udevice *dev)
 	return ops->enable(dev);
 }
 
+int dsi_host_disable(struct udevice *dev)
+{
+	struct dsi_host_ops *ops = dsi_host_get_ops(dev);
+
+	if (!ops->disable)
+		return -ENOSYS;
+
+	return ops->disable(dev);
+}
+
 UCLASS_DRIVER(dsi_host) = {
 	.id		= UCLASS_DSI_HOST,
 	.name		= "dsi_host",
