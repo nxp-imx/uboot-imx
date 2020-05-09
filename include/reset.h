@@ -134,6 +134,8 @@ int reset_get_by_index_nodev(ofnode node, int index,
  */
 int reset_get_bulk(struct udevice *dev, struct reset_ctl_bulk *bulk);
 
+int reset_get_bulk_nodev(ofnode node, struct reset_ctl_bulk *bulk);
+
 /**
  * reset_get_by_name - Get/request a reset signal by name.
  *

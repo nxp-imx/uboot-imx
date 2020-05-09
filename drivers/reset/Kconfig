@@ -148,4 +148,10 @@ config RESET_IMX7
 	help
 	  Support for reset controller on i.MX7/8 SoCs.
 
+config RESET_DISPMIX
+	bool "i.MX8M Display MIX Reset Driver"
+	depends on DM_RESET && ARCH_IMX8M && DM_VIDEO
+	default n
+	help
+	  Support for reset controller on i.MX8M SoCs.
 endmenu
