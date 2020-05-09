@@ -102,7 +102,7 @@ int reset_get_by_index_nodev(ofnode node, int index,
 int reset_get_bulk(struct udevice *dev, struct reset_ctl_bulk *bulk)
 {
 	int i, ret, err, count;
-	
+
 	bulk->count = 0;
 
 	count = dev_count_phandle_with_args(dev, "resets", "#reset-cells");
@@ -132,6 +132,41 @@ bulk_get_err:
 
 	return ret;
 }
+
+int reset_get_bulk_nodev(ofnode node, struct reset_ctl_bulk *bulk)
+{
+	int i, ret, err, count;
+
+	bulk->count = 0;
+
+	count = ofnode_count_phandle_with_args(node, "resets", "#reset-cells");
+	if (count < 1)
+		return count;
+
+	bulk->resets = kzalloc(count * sizeof(struct reset_ctl),
+				    GFP_KERNEL);
+	if (!bulk->resets)
+		return -ENOMEM;
+
+	for (i = 0; i < count; i++) {
+		ret = reset_get_by_index_nodev(node, i, &bulk->resets[i]);
+		if (ret < 0)
+			goto bulk_get_err;
+
+		++bulk->count;
+	}
+
+	return 0;
+
+bulk_get_err:
+	err = reset_release_all(bulk->resets, bulk->count);
+	if (err)
+		debug("%s: could release all resets\n",
+		      __func__);
+
+	return ret;
+}
+
 
 int reset_get_by_name(struct udevice *dev, const char *name,
 		     struct reset_ctl *reset_ctl)
