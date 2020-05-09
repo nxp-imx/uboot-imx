@@ -79,14 +79,21 @@
  * Another approach is add the clocks for inmates into clks_init_on
  * in clk-imx8mm.c, then clk_ingore_unused could be removed.
  */
+#ifdef CONFIG_TARGET_IMX8MN_DDR4_EVK
+#define JH_ROOT_DTB	"imx8mn-ddr4-evk-root.dtb"
+#else
+#define JH_ROOT_DTB	"imx8mn-evk-root.dtb"
+#endif
+
 #define JAILHOUSE_ENV \
 	"jh_clk= \0 " \
-	"jh_mmcboot=mw 0x303d0518 0xff; setenv fdt_file imx8mn-ddr4-evk-root.dtb;" \
+	"jh_root_dtb=" JH_ROOT_DTB "\0" \
+	"jh_mmcboot=mw 0x303d0518 0xff; setenv fdt_file ${jh_root_dtb};" \
 		"setenv jh_clk clk_ignore_unused; " \
 			   "if run loadimage; then " \
 				   "run mmcboot; " \
 			   "else run jh_netboot; fi; \0" \
-	"jh_netboot=mw 0x303d0518 0xff; setenv fdt_file imx8mn-ddr4-evk-root.dtb; setenv jh_clk clk_ignore_unused; run netboot; \0 "
+	"jh_netboot=mw 0x303d0518 0xff; setenv fdt_file ${jh_root_dtb}; setenv jh_clk clk_ignore_unused; run netboot; \0 "
 
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
