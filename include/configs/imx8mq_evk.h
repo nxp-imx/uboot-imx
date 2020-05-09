@@ -83,6 +83,7 @@
 	JAILHOUSE_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
+	"splashimage=0x50000000\0" \
 	"console=ttymxc0,115200\0" \
 	"fdt_addr=0x43000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
@@ -222,6 +223,18 @@
 
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_DM_PMIC
+#endif
+
+#ifdef CONFIG_DM_VIDEO
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_SPLASH_SCREEN
+#define CONFIG_SPLASH_SCREEN_ALIGN
+#define CONFIG_CMD_BMP
+#define CONFIG_BMP_16BPP
+#define CONFIG_BMP_24BPP
+#define CONFIG_BMP_32BPP
+#define CONFIG_VIDEO_BMP_RLE8
+#define CONFIG_VIDEO_BMP_LOGO
 #endif
 
 #endif
