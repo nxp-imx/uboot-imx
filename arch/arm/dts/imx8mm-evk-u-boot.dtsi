@@ -190,3 +190,9 @@
 	status = "okay";
 	extcon = <&ptn5110>;
 };
+
+&mipi_dsi {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+};
