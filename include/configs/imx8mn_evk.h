@@ -108,6 +108,7 @@
 	JAILHOUSE_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
+	"splashimage=0x50000000\0" \
 	"console=ttymxc1,115200\0" \
 	"fdt_addr=0x43000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
@@ -260,5 +261,18 @@
 
 #define CONFIG_MXC_USB_PORTSC  (PORT_PTS_UTMI | PORT_PTS_PTW)
 #define CONFIG_USB_MAX_CONTROLLER_COUNT         2
+
+#ifdef CONFIG_DM_VIDEO
+#define CONFIG_VIDEO_MXS
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_SPLASH_SCREEN
+#define CONFIG_SPLASH_SCREEN_ALIGN
+#define CONFIG_CMD_BMP
+#define CONFIG_BMP_16BPP
+#define CONFIG_BMP_24BPP
+#define CONFIG_BMP_32BPP
+#define CONFIG_VIDEO_BMP_RLE8
+#define CONFIG_VIDEO_BMP_LOGO
+#endif
 
 #endif
