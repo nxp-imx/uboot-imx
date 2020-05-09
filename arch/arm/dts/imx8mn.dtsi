@@ -38,6 +38,7 @@
 		spi0 = &flexspi;
 		usb0 = &usbotg1;
 		usb1 = &usbotg2;
+		video0 = &lcdif;
 	};
 
 	cpus {
