@@ -31,3 +31,9 @@
 		regulator-max-microvolt = <1800000>;
 	};
 };
+
+&dcss {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+};
