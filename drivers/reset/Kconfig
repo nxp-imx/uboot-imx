@@ -197,4 +197,11 @@ config RESET_SCMI
 	  Enable this option if you want to support reset controller
 	  devices exposed by a SCMI agent based on SCMI reset domain
 	  protocol communication with a SCMI server.
+
+config RESET_DISPMIX
+	bool "i.MX8M Display MIX Reset Driver"
+	depends on DM_RESET && ARCH_IMX8M && DM_VIDEO
+	default n
+	help
+	  Support for reset controller on i.MX8M SoCs.
 endmenu
