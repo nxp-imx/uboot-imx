@@ -346,6 +346,15 @@ config VIDEO_LCD_RAYDIUM_RM68200
 	Say Y here if you want to enable support for Raydium RM68200
 	720x1280 DSI video mode panel.
 
+config VIDEO_LCD_RAYDIUM_RM67191
+	bool "RM67191 DSI LCD panel support"
+	depends on DM_VIDEO
+	select VIDEO_MIPI_DSI
+	default n
+	help
+	Say Y here if you want to enable support for Raydium RM68200
+	1080x1920 DSI video mode panel.
+
 config VIDEO_LCD_SSD2828
 	bool "SSD2828 bridge chip"
 	default n
@@ -793,5 +802,14 @@ config VIDEO_IT6263_BRIDGE
 	help
 	Say Y here if you want to enable support for ITE IT6263
 	LVDS to HDMI connector, currently only support 1280x720P.
+
+config VIDEO_ADV7535
+	bool "ADV7535 MIPI DSI to HDMI connector"
+	depends on DM_VIDEO
+	select VIDEO_MIPI_DSI
+	default n
+	help
+	Say Y here if you want to enable support for ADI ADV7535
+	DSI to HDMI connector, currently only support 1920x1080.
 
 endmenu
