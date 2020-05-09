@@ -170,3 +170,15 @@
 	status = "okay";
 	extcon = <&ptn5110>;
 };
+
+&lcdif {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+};
+
+&mipi_dsi {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+};

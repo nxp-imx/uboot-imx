@@ -41,6 +41,7 @@
 		spi2 = &ecspi3;
 		usb0 = &usbotg1;
 		usb1 = &usbotg2;
+		video0 = &lcdif;
 	};
 
 	cpus {
@@ -1397,6 +1398,11 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		#reset-cells = <0>;
+
+		lcdif-soft-resetn {
+			compatible = "lcdif,soft-resetn";
+			resets = <&dispmix_sft_rstn IMX8MM_BUS_RSTN_BLK_SYNC>;
+		};
 
 		lcdif-clk-enable {
 			compatible = "lcdif,clk-enable";

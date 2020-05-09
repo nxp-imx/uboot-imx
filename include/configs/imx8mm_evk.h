@@ -101,6 +101,7 @@
 #if defined(CONFIG_NAND_BOOT)
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
+	"splashimage=0x50000000\0" \
 	"fdt_addr_r=0x43000000\0"			\
 	"fdt_high=0xffffffffffffffff\0" \
 	"mtdparts=" MFG_NAND_PARTITION "\0" \
@@ -122,6 +123,7 @@
 	"kernel_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"bsp_script=boot.scr\0" \
 	"image=Image\0" \
+	"splashimage=0x50000000\0" \
 	"console=ttymxc1,115200\0" \
 	"fdt_addr_r=0x43000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
