@@ -20,12 +20,17 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/dma.h>
 #include <asm/io.h>
+#include <reset.h>
+#include <panel.h>
+#include <video_bridge.h>
+#include <video_link.h>
 
 #include "videomodes.h"
 #include <linux/string.h>
 #include <linux/list.h>
 #include <linux/fb.h>
 #include <mxsfb.h>
+#include <dm/device-internal.h>
 
 #ifdef CONFIG_VIDEO_GIS
 #include <gis.h>
@@ -62,7 +67,7 @@ __weak void mxsfb_system_setup(void)
  * 	 le:89,ri:164,up:23,lo:10,hs:10,vs:10,sync:0,vmode:0
  */
 
-static void mxs_lcd_init(phys_addr_t reg_base, u32 fb_addr, struct ctfb_res_modes *mode, int bpp)
+static void mxs_lcd_init(phys_addr_t reg_base, u32 fb_addr, struct ctfb_res_modes *mode, int bpp, bool bridge, bool enable_pol)
 {
 	struct mxs_lcdif_regs *regs = (struct mxs_lcdif_regs *)(reg_base);
 	uint32_t word_len = 0, bus_width = 0;
@@ -104,15 +109,25 @@ static void mxs_lcd_init(phys_addr_t reg_base, u32 fb_addr, struct ctfb_res_mode
 	writel(valid_data << LCDIF_CTRL1_BYTE_PACKING_FORMAT_OFFSET,
 		&regs->hw_lcdif_ctrl1);
 
+	if (bridge)
+		writel(LCDIF_CTRL2_OUTSTANDING_REQS_REQ_16, &regs->hw_lcdif_ctrl2);
+
 	mxsfb_system_setup();
 
 	writel((mode->yres << LCDIF_TRANSFER_COUNT_V_COUNT_OFFSET) | mode->xres,
 		&regs->hw_lcdif_transfer_count);
 
-	writel(LCDIF_VDCTRL0_ENABLE_PRESENT | LCDIF_VDCTRL0_ENABLE_POL |
-		LCDIF_VDCTRL0_VSYNC_PERIOD_UNIT |
-		LCDIF_VDCTRL0_VSYNC_PULSE_WIDTH_UNIT |
-		mode->vsync_len, &regs->hw_lcdif_vdctrl0);
+	if (!enable_pol)
+		writel(LCDIF_VDCTRL0_ENABLE_PRESENT |
+			LCDIF_VDCTRL0_VSYNC_PERIOD_UNIT |
+			LCDIF_VDCTRL0_VSYNC_PULSE_WIDTH_UNIT |
+			mode->vsync_len, &regs->hw_lcdif_vdctrl0);
+	else
+		writel(LCDIF_VDCTRL0_ENABLE_PRESENT | LCDIF_VDCTRL0_ENABLE_POL |
+			LCDIF_VDCTRL0_VSYNC_PERIOD_UNIT |
+			LCDIF_VDCTRL0_VSYNC_PULSE_WIDTH_UNIT |
+			mode->vsync_len, &regs->hw_lcdif_vdctrl0);
+
 	writel(mode->upper_margin + mode->lower_margin +
 		mode->vsync_len + mode->yres,
 		&regs->hw_lcdif_vdctrl1);
@@ -145,10 +160,10 @@ static void mxs_lcd_init(phys_addr_t reg_base, u32 fb_addr, struct ctfb_res_mode
 	writel(LCDIF_CTRL_RUN, &regs->hw_lcdif_ctrl_set);
 }
 
-static int mxs_probe_common(phys_addr_t reg_base, struct ctfb_res_modes *mode, int bpp, u32 fb)
+static int mxs_probe_common(phys_addr_t reg_base, struct ctfb_res_modes *mode, int bpp, u32 fb, bool bridge, bool enable_pol)
 {
 	/* Start framebuffer */
-	mxs_lcd_init(reg_base, fb, mode, bpp);
+	mxs_lcd_init(reg_base, fb, mode, bpp, bridge, enable_pol);
 
 #ifdef CONFIG_VIDEO_MXS_MODE_SYSTEM
 	/*
@@ -324,7 +339,7 @@ void *video_hw_init(void)
 
 	printf("%s\n", panel.modeIdent);
 
-	ret = mxs_probe_common(panel.isaBase, &mode, bpp, (u32)fb);
+	ret = mxs_probe_common(panel.isaBase, &mode, bpp, (u32)fb, false, true);
 	if (ret)
 		goto dealloc_fb;
 
@@ -344,7 +359,73 @@ dealloc_fb:
 
 struct mxsfb_priv {
 	fdt_addr_t reg_base;
+	struct udevice *disp_dev;
+
+#if IS_ENABLED(CONFIG_DM_RESET)
+	struct reset_ctl_bulk soft_resetn;
+	struct reset_ctl_bulk clk_enable;
+#endif
 };
+
+#if IS_ENABLED(CONFIG_DM_RESET)
+static int lcdif_rstc_reset(struct reset_ctl_bulk *rstc, bool assert)
+{
+	int ret;
+
+	if (!rstc)
+		return 0;
+
+	ret = assert ? reset_assert_bulk(rstc)	:
+		       reset_deassert_bulk(rstc);
+
+	return ret;
+}
+
+static int lcdif_of_parse_resets(struct udevice *dev)
+{
+	int ret;
+	ofnode parent, child;
+	struct ofnode_phandle_args args;
+	struct reset_ctl_bulk rstc;
+	const char *compat;
+	uint32_t rstc_num = 0;
+
+	struct mxsfb_priv *priv = dev_get_priv(dev);
+
+	ret = dev_read_phandle_with_args(dev, "resets", "#reset-cells", 0,
+					 0, &args);
+	if (ret)
+		return ret;
+
+	parent = args.node;
+	ofnode_for_each_subnode(child, parent) {
+		compat = ofnode_get_property(child, "compatible", NULL);
+		if (!compat)
+			continue;
+
+		ret = reset_get_bulk_nodev(child, &rstc);
+		if (ret)
+			continue;
+
+		if (!of_compat_cmp("lcdif,soft-resetn", compat, 0)) {
+			priv->soft_resetn = rstc;
+			rstc_num++;
+		} else if (!of_compat_cmp("lcdif,clk-enable", compat, 0)) {
+			priv->clk_enable = rstc;
+			rstc_num++;
+		}
+		else
+			dev_warn(dev, "invalid lcdif reset node: %s\n", compat);
+	}
+
+	if (!rstc_num) {
+		dev_err(dev, "no invalid reset control exists\n");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+#endif
 
 static int mxs_of_get_timings(struct udevice *dev,
 			      struct display_timing *timings,
@@ -353,6 +434,7 @@ static int mxs_of_get_timings(struct udevice *dev,
 	int ret = 0;
 	u32 display_phandle;
 	ofnode display_node;
+	struct mxsfb_priv *priv = dev_get_priv(dev);
 
 	ret = ofnode_read_u32(dev_ofnode(dev), "display", &display_phandle);
 	if (ret) {
@@ -373,10 +455,19 @@ static int mxs_of_get_timings(struct udevice *dev,
 		return -EINVAL;
 	}
 
-	ret = ofnode_decode_display_timing(display_node, 0, timings);
-	if (ret) {
-		dev_err(dev, "failed to get any display timings\n");
-		return -EINVAL;
+	priv->disp_dev = video_link_get_next_device(dev);
+	if (priv->disp_dev) {
+		ret = video_link_get_display_timings(timings);
+		if (ret) {
+			dev_err(dev, "failed to get any video link display timings\n");
+			return -EINVAL;
+		}
+	} else {
+		ret = ofnode_decode_display_timing(display_node, 0, timings);
+		if (ret) {
+			dev_err(dev, "failed to get any display timings\n");
+			return -EINVAL;
+		}
 	}
 
 	return ret;
@@ -393,18 +484,70 @@ static int mxs_video_probe(struct udevice *dev)
 	u32 bpp = 0;
 	u32 fb_start, fb_end;
 	int ret;
+	bool enable_pol = true, enable_bridge = false;
 
 	debug("%s() plat: base 0x%lx, size 0x%x\n",
 	       __func__, plat->base, plat->size);
-
-	ret = mxs_of_get_timings(dev, &timings, &bpp);
-	if (ret)
-		return ret;
 
 	priv->reg_base = dev_read_addr(dev);
 	if (priv->reg_base == FDT_ADDR_T_NONE) {
 		dev_err(dev, "lcdif base address is not found\n");
 		return -EINVAL;
+	}
+
+	ret = mxs_of_get_timings(dev, &timings, &bpp);
+	if (ret)
+		return ret;
+
+#if IS_ENABLED(CONFIG_DM_RESET)
+	ret = lcdif_of_parse_resets(dev);
+	if (!ret) {
+		ret = lcdif_rstc_reset(&priv->soft_resetn, false);
+		if (ret) {
+			dev_err(dev, "deassert soft_resetn failed\n");
+			return ret;
+		}
+
+		ret = lcdif_rstc_reset(&priv->clk_enable, true);
+		if (ret) {
+			dev_err(dev, "assert clk_enable failed\n");
+			return ret;
+		}
+	}
+#endif
+
+	if (priv->disp_dev) {
+#if IS_ENABLED(CONFIG_VIDEO_BRIDGE)
+		if (device_get_uclass_id(priv->disp_dev) == UCLASS_VIDEO_BRIDGE) {
+			ret = video_bridge_attach(priv->disp_dev);
+			if (ret) {
+				dev_err(dev, "fail to attach bridge\n");
+				return ret;
+			}
+
+			ret = video_bridge_set_backlight(priv->disp_dev, 80);
+			if (ret) {
+				dev_err(dev, "fail to set backlight\n");
+				return ret;
+			}
+
+			enable_bridge = true;
+
+			/* sec dsim needs enable ploarity at low, default we set to high */
+			if (dev_read_bool(dev, "enable_polarity_low"))
+				enable_pol = false;
+
+		}
+#endif
+
+		if (device_get_uclass_id(priv->disp_dev) == UCLASS_PANEL) {
+			ret = panel_enable_backlight(priv->disp_dev);
+			if (ret) {
+				dev_err(dev, "panel %s enable backlight error %d\n",
+					priv->disp_dev->name, ret);
+				return ret;
+			}
+		}
 	}
 
 	mode.xres = timings.hactive.typ;
@@ -417,7 +560,7 @@ static int mxs_video_probe(struct udevice *dev)
 	mode.vsync_len = timings.vsync_len.typ;
 	mode.pixclock = HZ2PS(timings.pixelclock.typ);
 
-	ret = mxs_probe_common(priv->reg_base, &mode, bpp, plat->base);
+	ret = mxs_probe_common(priv->reg_base, &mode, bpp, plat->base, enable_bridge, enable_pol);
 	if (ret)
 		return ret;
 
@@ -456,33 +599,9 @@ static int mxs_video_probe(struct udevice *dev)
 static int mxs_video_bind(struct udevice *dev)
 {
 	struct video_uc_platdata *plat = dev_get_uclass_platdata(dev);
-	struct display_timing timings;
-	u32 bpp = 0;
-	u32 bytes_pp = 0;
-	int ret;
 
-	ret = mxs_of_get_timings(dev, &timings, &bpp);
-	if (ret)
-		return ret;
-
-	switch (bpp) {
-	case 32:
-	case 24:
-	case 18:
-		bytes_pp = 4;
-		break;
-	case 16:
-		bytes_pp = 2;
-		break;
-	case 8:
-		bytes_pp = 1;
-		break;
-	default:
-		dev_err(dev, "invalid bpp specified (bpp = %i)\n", bpp);
-		return -EINVAL;
-	}
-
-	plat->size = timings.hactive.typ * timings.vactive.typ * bytes_pp;
+	/* Max size supported by LCDIF, because in bind, we can't probe panel */
+	plat->size = 1920 * 1080 *4 * 2;
 
 	return 0;
 }
@@ -491,6 +610,11 @@ static int mxs_video_remove(struct udevice *dev)
 {
 	struct video_uc_platdata *plat = dev_get_uclass_platdata(dev);
 	struct mxsfb_priv *priv = dev_get_priv(dev);
+
+	debug("%s\n", __func__);
+
+	if (priv->disp_dev)
+		device_remove(priv->disp_dev, DM_REMOVE_NORMAL);
 
 	mxs_remove_common(priv->reg_base, plat->base);
 
@@ -501,6 +625,8 @@ static const struct udevice_id mxs_video_ids[] = {
 	{ .compatible = "fsl,imx23-lcdif" },
 	{ .compatible = "fsl,imx28-lcdif" },
 	{ .compatible = "fsl,imx7ulp-lcdif" },
+	{ .compatible = "fsl,imx8mm-lcdif" },
+	{ .compatible = "fsl,imx8mn-lcdif" },
 	{ /* sentinel */ }
 };
 
