@@ -38,6 +38,7 @@
 		serial3 = &uart4;
 		spi0 = &flexspi;
 		usb0 = &usbotg1;
+		video0 = &lcdif;
 	};
 
 	cpus {
