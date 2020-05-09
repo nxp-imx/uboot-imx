@@ -287,6 +287,11 @@ int board_ehci_usb_phy_mode(struct udevice *dev)
 
 #endif
 
+#define FSL_SIP_GPC			0xC2000000
+#define FSL_SIP_CONFIG_GPC_PM_DOMAIN	0x3
+#define DISPMIX				9
+#define MIPI				10
+
 int board_init(void)
 {
 #ifdef CONFIG_USB_TCPC
@@ -295,6 +300,9 @@ int board_init(void)
 
 	if (IS_ENABLED(CONFIG_FEC_MXC))
 		setup_fec();
+
+	call_imx_sip(FSL_SIP_GPC, FSL_SIP_CONFIG_GPC_PM_DOMAIN, DISPMIX, true, 0);
+	call_imx_sip(FSL_SIP_GPC, FSL_SIP_CONFIG_GPC_PM_DOMAIN, MIPI, true, 0);
 
 	return 0;
 }
