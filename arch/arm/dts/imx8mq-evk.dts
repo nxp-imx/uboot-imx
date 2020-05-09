@@ -462,6 +462,44 @@
 	status = "okay";
 };
 
+&dcss {
+	status = "okay";
+	port@0 {
+		dcss_out: endpoint {
+			remote-endpoint = <&hdmi_in>;
+		};
+	};
+};
+
+&hdmi {
+	compatible = "fsl,imx8mq-hdmi";
+	status = "okay";
+
+	display-timings {
+		native-mode = <&timing1>;
+
+		timing1: timing1 {
+			clock-frequency = <74250000>;
+			hactive = <1280>;
+			vactive = <720>;
+			hfront-porch = <110>;
+			hback-porch = <220>;
+			hsync-len = <40>;
+			vback-porch = <20>;
+			vfront-porch = <5>;
+			vsync-len = <5>;
+			hsync-active = <1>;
+			vsync-active = <1>;
+		};
+	};
+
+	port@0 {
+		hdmi_in: endpoint {
+			remote-endpoint = <&dcss_out>;
+		};
+	};
+};
+
 &iomuxc {
 	pinctrl-names = "default";
 
