@@ -148,3 +148,16 @@
 	assigned-clocks = <&clk IMX8MN_CLK_QSPI>;
 	assigned-clock-parents = <&clk IMX8MN_SYS_PLL1_100M>;
 };
+
+&lcdif {
+	enable_polarity_low;
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+};
+
+&mipi_dsi {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+};
