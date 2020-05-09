@@ -70,4 +70,12 @@ int dsi_host_init(struct udevice *dev,
  */
 int dsi_host_enable(struct udevice *dev);
 
+/**
+ * dsi_host_disable
+ *
+ * @dev:	dsi host device
+ * @return 0 if OK, -ve on error
+ */
+int dsi_host_disable(struct udevice *dev);
+
 #endif
