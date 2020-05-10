@@ -36,6 +36,7 @@ struct imx_sec_dsim_priv {
 	struct reset_ctl_bulk mipi_reset;
 };
 
+#if IS_ENABLED(CONFIG_DM_RESET)
 static int sec_dsim_rstc_reset(struct reset_ctl_bulk *rstc, bool assert)
 {
 	int ret;
@@ -95,6 +96,7 @@ static int sec_dsim_of_parse_resets(struct udevice *dev)
 
 	return 0;
 }
+#endif
 
 static int imx_sec_dsim_attach(struct udevice *dev)
 {
@@ -161,31 +163,35 @@ static int imx_sec_dsim_probe(struct udevice *dev)
 {
 	struct imx_sec_dsim_priv *priv = dev_get_priv(dev);
 	struct mipi_dsi_device *device = &priv->device;
-	int ret;
 
 	device->dev = dev;
 
-	sec_dsim_of_parse_resets(dev);
+#if IS_ENABLED(CONFIG_DM_RESET)
+	int ret;
+	/* Allow to not have resets */
+	ret = sec_dsim_of_parse_resets(dev);
+	if (!ret) {
+		ret = sec_dsim_rstc_reset(&priv->soft_resetn, false);
+		if (ret) {
+			dev_err(dev, "deassert soft_resetn failed\n");
+			return ret;
+		}
 
-	ret = sec_dsim_rstc_reset(&priv->soft_resetn, false);
-	if (ret) {
-		dev_err(dev, "deassert soft_resetn failed\n");
-		return ret;
+		ret = sec_dsim_rstc_reset(&priv->clk_enable, true);
+		if (ret) {
+			dev_err(dev, "assert clk_enable failed\n");
+			return ret;
+		}
+
+		ret = sec_dsim_rstc_reset(&priv->mipi_reset, false);
+		if (ret) {
+			dev_err(dev, "deassert mipi_reset failed\n");
+			return ret;
+		}
 	}
+#endif
 
-	ret = sec_dsim_rstc_reset(&priv->clk_enable, true);
-	if (ret) {
-		dev_err(dev, "assert clk_enable failed\n");
-		return ret;
-	}
-
-	ret = sec_dsim_rstc_reset(&priv->mipi_reset, false);
-	if (ret) {
-		dev_err(dev, "deassert mipi_reset failed\n");
-		return ret;
-	}
-
-	return ret;
+	return 0;
 }
 
 static int imx_sec_dsim_remove(struct udevice *dev)
@@ -213,6 +219,7 @@ struct video_bridge_ops imx_sec_dsim_ops = {
 static const struct udevice_id imx_sec_dsim_ids[] = {
 	{ .compatible = "fsl,imx8mm-mipi-dsim" },
 	{ .compatible = "fsl,imx8mn-mipi-dsim" },
+	{ .compatible = "fsl,imx8mp-mipi-dsim" },
 	{ }
 };
 
