@@ -72,7 +72,6 @@
 	/*
 	 * Framebuffer and LCD
 	 */
-	#define CONFIG_CMD_BMP
 	#undef LCD_TEST_PATTERN
 	/* #define CONFIG_SPLASH_IS_IN_MMC			1 */
 	#define LCD_BPP					LCD_MONOCHROME
