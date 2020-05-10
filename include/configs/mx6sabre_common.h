@@ -94,6 +94,7 @@
 	"fdt_addr=0x18000000\0" \
 	"tee_addr=0x20000000\0" \
 	"fdt_high=0xffffffff\0"	  \
+	"splashimage=0x28000000\0" \
 	"console=" CONSOLE_DEV "\0" \
 	"bootargs=console=" CONSOLE_DEV ",115200 ubi.mtd=nandrootfs "  \
 		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
@@ -117,6 +118,7 @@
 		"fdt_file=undefined\0" \
 		"fdt_addr=0x18000000\0" \
 		"fdt_high=0xffffffff\0"   \
+		"splashimage=0x28000000\0" \
 		"tee_addr=0x20000000\0" \
 		"tee_file=undefined\0" \
 		"findfdt="\
@@ -190,7 +192,7 @@
 	"dfu_alt_info=spl raw 0x400\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"initrd_high=0xffffffff\0" \
-	"splashimage=" __stringify(CONFIG_LOADADDR) "\0" \
+	"splashimage=0x28000000\0" \
 	"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
 	"mmcpart=1\0" \
 	"finduuid=part uuid mmc ${mmcdev}:2 uuid\0" \
@@ -397,6 +399,7 @@
 #define CONFIG_SPLASH_SCREEN
 #define CONFIG_SPLASH_SCREEN_ALIGN
 #define CONFIG_BMP_16BPP
+#define CONFIG_CMD_BMP
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
 #define CONFIG_IMX_HDMI
