@@ -67,3 +67,10 @@ config VIDEO_IMX_SEC_DSI
 	help
 	  This option enables support DSI internal bridge which can be used on
 	  devices which have DSI devices connected.
+
+config VIDEO_IMX_LCDIFV3
+	bool "i.MX LCDIFv3 support"
+	depends on DM_VIDEO && IMX8MP
+	select VIDEO_LINK
+	help
+	  Support for i.MX8MP LCDIFv3 controller.
