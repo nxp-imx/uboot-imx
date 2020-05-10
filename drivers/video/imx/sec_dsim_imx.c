@@ -127,6 +127,7 @@ struct video_bridge_ops imx_sec_dsim_ops = {
 static const struct udevice_id imx_sec_dsim_ids[] = {
 	{ .compatible = "fsl,imx8mm-mipi-dsim" },
 	{ .compatible = "fsl,imx8mn-mipi-dsim" },
+	{ .compatible = "fsl,imx8mp-mipi-dsim" },
 	{ }
 };
 
