@@ -602,7 +602,7 @@
 	status = "okay";
 
 	display0: display@0 {
-		bits-per-pixel = <16>;
+		bits-per-pixel = <24>;
 		bus-width = <24>;
 
 		display-timings {
@@ -1000,7 +1000,7 @@
 				MX7D_PAD_LCD_ENABLE__LCD_ENABLE		0x79
 				MX7D_PAD_LCD_VSYNC__LCD_VSYNC		0x79
 				MX7D_PAD_LCD_HSYNC__LCD_HSYNC		0x79
-				MX7D_PAD_LCD_RESET__LCD_RESET		0x79
+				MX7D_PAD_LCD_RESET__GPIO3_IO4		0x80000000
 			>;
 		};
 
