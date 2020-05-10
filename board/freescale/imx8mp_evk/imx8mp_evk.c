@@ -464,6 +464,11 @@ int board_typec_get_mode(int index)
 #endif
 #endif
 
+#define FSL_SIP_GPC			0xC2000000
+#define FSL_SIP_CONFIG_GPC_PM_DOMAIN	0x3
+#define DISPMIX				13
+#define MIPI				15
+
 int board_init(void)
 {
 #ifdef CONFIG_USB_TCPC
@@ -486,6 +491,11 @@ int board_init(void)
 #if defined(CONFIG_USB_DWC3) || defined(CONFIG_USB_XHCI_IMX8M)
 	init_usb_clk();
 #endif
+
+	/* enable the dispmix & mipi phy power domain */
+	call_imx_sip(FSL_SIP_GPC, FSL_SIP_CONFIG_GPC_PM_DOMAIN, DISPMIX, true, 0);
+	call_imx_sip(FSL_SIP_GPC, FSL_SIP_CONFIG_GPC_PM_DOMAIN, MIPI, true, 0);
+
 	return 0;
 }
 

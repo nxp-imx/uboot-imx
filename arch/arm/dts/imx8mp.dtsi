@@ -42,6 +42,7 @@
 		usb0 = &usb_dwc3_0;
 		usb1 = &usb_dwc3_1;
 		spi0 = &flexspi;
+		video0 = &lcdif1;
 	};
 
 	cpus {
