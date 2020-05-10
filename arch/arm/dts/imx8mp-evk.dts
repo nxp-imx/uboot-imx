@@ -59,6 +59,32 @@
 		startup-delay-us = <100>;
 		off-on-delay-us = <12000>;
 	};
+	
+	dsi_host: dsi-host {
+		compatible = "samsung,sec-mipi-dsi";
+		status = "okay";
+	};
+
+	rm67191_panel {
+		compatible = "raydium,rm67191";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_mipi_dsi_en>;
+		reset-gpio = <&gpio1 8 GPIO_ACTIVE_LOW>;
+		dsi-lanes = <4>;
+		video-mode = <2>;	/* 0: burst mode
+					 * 1: non-burst mode with sync event
+					 * 2: non-burst mode with sync pulse
+					 */
+		panel-width-mm = <68>;
+		panel-height-mm = <121>;
+		status = "okay";
+
+		port {
+			rm67191_from_dsim: endpoint {
+				remote-endpoint = <&dsim_to_rm67191>;
+			};
+		};
+	};
 };
 
 &eqos {
@@ -246,7 +272,7 @@
 	adv_bridge: adv7535@3d {
 		compatible = "adi,adv7533";
 		reg = <0x3d>;
-		adi,addr-cec = <0x3b>;
+		adi,addr-cec = <0x3c>;
 		adi,dsi-lanes = <4>;
 		status = "okay";
 
@@ -285,7 +311,12 @@
 	port@1 {
 		dsim_to_adv7535: endpoint {
 			remote-endpoint = <&adv7535_from_dsim>;
-			attach-bridge;
+		};
+	};
+
+	port@2 {
+		dsim_to_rm67191: endpoint {
+			remote-endpoint = <&rm67191_from_dsim>;
 		};
 	};
 };
