@@ -189,3 +189,15 @@
 &flexspi {
 	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_400M>;
 };
+
+&lcdif1 {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+};
+
+&mipi_dsi {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+};
