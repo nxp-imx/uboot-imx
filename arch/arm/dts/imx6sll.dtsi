@@ -42,6 +42,7 @@
 		usbphy1 = &usbphy2;
 		usbgadget0 = &usbg1;
 		usbgadget1 = &usbg2;
+		video0 = &lcdif;
 	};
 
 	cpus {
