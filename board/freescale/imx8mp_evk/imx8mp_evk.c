@@ -25,6 +25,8 @@
 #include "../common/tcpc.h"
 #include <usb.h>
 #include <dwc3-uboot.h>
+#include <imx_sip.h>
+#include <linux/arm-smccc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -415,8 +417,13 @@ int board_phy_config(struct phy_device *phydev)
 }
 #endif
 
+#define DISPMIX				13
+#define MIPI				15
+
 int board_init(void)
 {
+	struct arm_smccc_res res;
+
 #ifdef CONFIG_USB_TCPC
 	setup_typec();
 #endif
@@ -436,6 +443,13 @@ int board_init(void)
 #if defined(CONFIG_USB_DWC3) || defined(CONFIG_USB_XHCI_IMX8M)
 	init_usb_clk();
 #endif
+
+	/* enable the dispmix & mipi phy power domain */
+	arm_smccc_smc(IMX_SIP_GPC, IMX_SIP_GPC_PM_DOMAIN,
+		      DISPMIX, true, 0, 0, 0, 0, &res);
+	arm_smccc_smc(IMX_SIP_GPC, IMX_SIP_GPC_PM_DOMAIN,
+		      MIPI, true, 0, 0, 0, 0, &res);
+
 	return 0;
 }
 
