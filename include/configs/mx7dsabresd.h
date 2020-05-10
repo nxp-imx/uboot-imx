@@ -78,7 +78,6 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS \
 	TEE_ENV \
-	"panel=TFT43AB\0" \
 	"fdt_addr=0x83000000\0" \
 	"tee_addr=0x84000000\0" \
 	"fdt_high=0xffffffff\0"	  \
@@ -113,7 +112,7 @@
 	"tee_file=uTee-7dsdb\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
-	"panel=TFT43AB\0" \
+	"splashimage=0x8c000000\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
@@ -232,8 +231,7 @@
 #define CONFIG_MXC_USB_PORTSC  (PORT_PTS_UTMI | PORT_PTS_PTW)
 
 #ifdef CONFIG_DM_VIDEO
-#define CONFIG_VIDEO_MXS
-#define CONFIG_IMX_VIDEO_SKIP
+#define CONFIG_VIDEO_LINK
 #endif
 
 /*
