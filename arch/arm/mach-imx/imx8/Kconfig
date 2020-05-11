@@ -6,6 +6,18 @@ config AHAB_BOOT
 	help
 	  This option enables the support for AHAB secure boot.
 
+config IMX_LOAD_HDMI_FIMRWARE_RX
+	bool "Enable HDMI rx firmware loading"
+	depends on ARCH_IMX8 || VIDEO_IMX_HDP_LOAD
+	help
+	  This enable the hdmi rx firmware loading. It depends on the "hdprx" command.
+
+config IMX_LOAD_HDMI_FIMRWARE_TX
+	bool "Enable HDMI tx firmware loading"
+	depends on ARCH_IMX8 || VIDEO_IMX_HDP_LOAD
+	help
+	  This enable the hdmi tx firmware loading. It depends on the "hdp" command.
+
 config IMX8
 	bool
 	select HAS_CAAM
