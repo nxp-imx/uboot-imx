@@ -21,6 +21,7 @@
 #include <asm/arch/iomux.h>
 #include <asm/arch/sys_proto.h>
 #include "../common/tcpc.h"
+#include "command.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -459,6 +460,7 @@ int mmc_map_to_kernel_blk(int dev_no)
 	return dev_no;
 }
 
+extern uint32_t _end_ofs;
 int board_late_init(void)
 {
 	char *fdt_file;
@@ -497,5 +499,27 @@ int board_late_init(void)
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
+
+#if defined(CONFIG_IMX_LOAD_HDMI_FIMRWARE_RX) || defined(CONFIG_IMX_LOAD_HDMI_FIMRWARE_TX)
+	char *end_of_uboot;
+	char command[256];
+	end_of_uboot = (char *)(ulong)(CONFIG_SYS_TEXT_BASE + _end_ofs + fdt_totalsize(gd->fdt_blob));
+	end_of_uboot += 9;
+
+	/* load hdmitxfw.bin and hdmirxfw.bin*/
+	memcpy((void *)IMX_HDMI_FIRMWARE_LOAD_ADDR, end_of_uboot,
+			IMX_HDMITX_FIRMWARE_SIZE + IMX_HDMIRX_FIRMWARE_SIZE);
+
+#ifdef CONFIG_IMX_LOAD_HDMI_FIMRWARE_TX
+	sprintf(command, "hdp load 0x%x", IMX_HDMI_FIRMWARE_LOAD_ADDR);
+	run_command(command, 0);
+#endif
+#ifdef CONFIG_IMX_LOAD_HDMI_FIMRWARE_RX
+	sprintf(command, "hdprx load 0x%x",
+			IMX_HDMI_FIRMWARE_LOAD_ADDR + IMX_HDMITX_FIRMWARE_SIZE);
+	run_command(command, 0);
+#endif
+#endif /* CONFIG_IMX_LOAD_HDMI_FIMRWARE_RX || CONFIG_IMX_LOAD_HDMI_FIMRWARE_TX */
+
 	return 0;
 }
