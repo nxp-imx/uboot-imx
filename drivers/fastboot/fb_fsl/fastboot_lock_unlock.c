@@ -455,7 +455,7 @@ FbLockEnableResult fastboot_lock_enable() {
 		return FASTBOOT_UL_ENABLE;
 #endif
 
-#ifdef CONFIG_IMX_TRUSTY_OS
+#if defined(CONFIG_IMX_TRUSTY_OS) || defined(CONFIG_TRUSTY_UNLOCK_PERMISSION)
 	int ret;
 	uint8_t oem_device_unlock;
 
