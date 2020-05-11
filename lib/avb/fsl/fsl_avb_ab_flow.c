@@ -388,11 +388,19 @@ int mmc_load_image_raw_sector_dual_uboot(struct spl_image_info *spl_image,
 
 		/* Set current slot to unbootable if load/verify fail. */
 		if (ret != 0) {
-			printf("Load or verify bootloader%s fail, setting unbootable..\n",
-			       slot_suffixes[target_slot]);
-			fsl_slot_set_unbootable(&ab_data.slots[target_slot]);
-			/* Switch to another slot. */
-			target_slot = (target_slot == 1 ? 0 : 1);
+			/* Reboot if current slot has booted succefully before, this prevents
+			 * slot been marked as "unbootable" due to some random failures (like
+			 * eMMC/DRAM access error at some critical temperature).
+			 */
+			if (ab_data.slots[target_slot].successful_boot)
+				do_reset(NULL, 0, 0, NULL);
+			else {
+				printf("Load or verify bootloader%s fail, setting unbootable..\n",
+				       slot_suffixes[target_slot]);
+				fsl_slot_set_unbootable(&ab_data.slots[target_slot]);
+				/* Switch to another slot. */
+				target_slot = (target_slot == 1 ? 0 : 1);
+			}
 		} else {
 			slot_index_to_boot = target_slot;
 			n = 2;
@@ -651,20 +659,28 @@ AvbABFlowResult avb_flow_dual_uboot(AvbABOps* ab_ops,
 	}
 
 	if (set_slot_unbootable) {
-		avb_errorv("Error verifying slot ",
-			   slot_suffixes[target_slot],
-			   " with result ",
-			   avb_slot_verify_result_to_string(verify_result),
-			   " - setting unbootable.\n",
-			   NULL);
-		fsl_slot_set_unbootable(&ab_data.slots[target_slot]);
-
-		/* Only the slot chosen by SPL will be verified here so we
-		 * return AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS if the
-		 * slot should be set unbootable.
+		/* Reboot if current slot has booted succefully before, this prevents
+		 * slot been marked as "unbootable" due to some random failures (like
+		 * eMMC/DRAM access error at some critical temperature).
 		 */
-		ret = AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS;
-		goto out;
+		if (ab_data.slots[target_slot].successful_boot)
+			do_reset(NULL, 0, 0, NULL);
+		else {
+			avb_errorv("Error verifying slot ",
+				   slot_suffixes[target_slot],
+				   " with result ",
+				   avb_slot_verify_result_to_string(verify_result),
+				   " - setting unbootable.\n",
+				   NULL);
+			fsl_slot_set_unbootable(&ab_data.slots[target_slot]);
+
+			/* Only the slot chosen by SPL will be verified here so we
+			 * return AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS if the
+			 * slot should be set unbootable.
+			 */
+			ret = AVB_AB_FLOW_RESULT_ERROR_NO_BOOTABLE_SLOTS;
+			goto out;
+		}
 	}
 
 	/* Update stored rollback index only when the slot has been marked
@@ -969,14 +985,22 @@ AvbABFlowResult avb_ab_flow_fast(AvbABOps* ab_ops,
 		}
 
 		if (set_slot_unbootable) {
-			avb_errorv("Error verifying slot ",
-				   slot_suffixes[target_slot],
-				   " with result ",
-				   avb_slot_verify_result_to_string(verify_result),
-				   " - setting unbootable.\n",
-				   NULL);
-			fsl_slot_set_unbootable(&ab_data.slots[target_slot]);
-			set_slot_unbootable = false;
+			/* Reboot if current slot has booted succefully before, this prevents
+			 * slot been marked as "unbootable" due to some random failures (like
+			 * eMMC/DRAM access error at some critical temperature).
+			 */
+			if (ab_data.slots[target_slot].successful_boot)
+				do_reset(NULL, 0, 0, NULL);
+			else {
+				avb_errorv("Error verifying slot ",
+					   slot_suffixes[target_slot],
+					   " with result ",
+					   avb_slot_verify_result_to_string(verify_result),
+					   " - setting unbootable.\n",
+					   NULL);
+				fsl_slot_set_unbootable(&ab_data.slots[target_slot]);
+				set_slot_unbootable = false;
+			}
 		}
 		/* switch to another slot */
 		target_slot = (target_slot == 1 ? 0 : 1);
