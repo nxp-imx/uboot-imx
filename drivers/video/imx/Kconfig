@@ -93,3 +93,4 @@ config VIDEO_IMX_LCDIFV3
 	select VIDEO_LINK
 	help
 	  Support for i.MX8MP LCDIFv3 controller.
+
