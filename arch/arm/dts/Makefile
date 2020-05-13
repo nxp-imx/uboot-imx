@@ -762,6 +762,8 @@ dtb-$(CONFIG_ARCH_IMX8) += \
 	fsl-imx8qm-mek.dtb \
 	fsl-imx8qm-ddr4-val.dtb \
 	fsl-imx8qm-lpddr4-val.dtb \
+	fsl-imx8qm-mek-auto.dtb \
+	fsl-imx8qm-mek-auto2.dtb \
 	imx8qm-rom7720-a1.dtb \
 	fsl-imx8qxp-ai_ml.dtb \
 	fsl-imx8qxp-colibri.dtb \
@@ -770,6 +772,7 @@ dtb-$(CONFIG_ARCH_IMX8) += \
 	fsl-imx8qxp-lpddr4-val-gpmi-nand.dtb \
 	fsl-imx8qxp-17x17-val.dtb \
 	fsl-imx8dx-17x17-val.dtb \
+	fsl-imx8qxp-mek-auto.dtb \
 	fsl-imx8dx-mek.dtb \
 	fsl-imx8dxl-phantom-mek.dtb \
 	fsl-imx8dxl-evk.dtb \

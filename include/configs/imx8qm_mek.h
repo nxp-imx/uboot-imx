@@ -359,4 +359,10 @@
 #define CONFIG_VIDEO_BMP_LOGO
 #endif
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "imx8qm_mek_android.h"
+#elif defined (CONFIG_ANDROID_AUTO_SUPPORT)
+#include "imx8qm_mek_android_auto.h"
+#endif
+
 #endif /* __IMX8QM_MEK_H */
