@@ -206,4 +206,8 @@
 #define CONFIG_VIDEO_BMP_LOGO
 #endif
 
+#ifdef CONFIG_ANDROID_SUPPORT
+#include "mx7ulp_evk_android.h"
+#endif
+
 #endif	/* __CONFIG_H */

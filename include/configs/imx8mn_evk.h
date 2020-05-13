@@ -276,4 +276,8 @@
 #define CONFIG_VIDEO_BMP_LOGO
 #endif
 
+#ifdef CONFIG_ANDROID_SUPPORT
+#include "imx8mn_evk_android.h"
+#endif
+
 #endif
