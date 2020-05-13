@@ -59,6 +59,7 @@ struct imx8m_dcss_priv {
 
 	bool hpol;		/* horizontal pulse polarity	*/
 	bool vpol;		/* vertical pulse polarity	*/
+	bool enabled;
 
 	fdt_addr_t addr;
 };
@@ -461,7 +462,7 @@ static int imx8m_dcss_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
-	printf("pixelclock %u, hlen %u, vlen %u\n",
+	debug("pixelclock %u, hlen %u, vlen %u\n",
 		priv->timings.pixelclock.typ, priv->timings.hactive.typ, priv->timings.vactive.typ);
 
 	imx8m_dcss_power_init();
@@ -470,9 +471,10 @@ static int imx8m_dcss_probe(struct udevice *dev)
 
 	imx8m_dcss_reset(dev);
 
-	display_enable(priv->disp_dev, 32, NULL);
-
-	imx8m_dcss_init(dev);
+	if (display_enable(priv->disp_dev, 32, NULL) == 0) {
+		imx8m_dcss_init(dev);
+		priv->enabled = true;
+	}
 
 	uc_priv->bpix = VIDEO_BPP32;
 	uc_priv->xsize = priv->timings.hactive.typ;
@@ -493,7 +495,7 @@ static int imx8m_dcss_bind(struct udevice *dev)
 {
 	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
 
-	printf("%s\n", __func__);
+	debug("%s\n", __func__);
 
 	/* Max size supported by LCDIF, because in bind, we can't probe panel */
 	plat->size = 1920 * 1080 *4;
@@ -505,11 +507,12 @@ static int imx8m_dcss_remove(struct udevice *dev)
 {
 	struct imx8m_dcss_priv *priv = dev_get_priv(dev);
 
-	printf("%s\n", __func__);
+	debug("%s\n", __func__);
 
-	device_remove(priv->disp_dev, DM_REMOVE_NORMAL);
-
-	imx8m_display_shutdown(dev);
+	if (priv->enabled) {
+		device_remove(priv->disp_dev, DM_REMOVE_NORMAL);
+		imx8m_display_shutdown(dev);
+	}
 
 	return 0;
 }
