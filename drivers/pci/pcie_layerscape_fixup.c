@@ -51,6 +51,33 @@ static void ls_pcie_lut_set_mapping(struct ls_pcie *pcie, int index, u32 devid,
 	lut_writel(pcie, streamid | PCIE_LUT_ENABLE, PCIE_LUT_LDR(index));
 }
 
+static int fdt_pcie_get_nodeoffset(void *blob, struct ls_pcie *pcie)
+{
+	int nodeoffset;
+	uint svr;
+	char *compat = NULL;
+
+	/* find pci controller node */
+	nodeoffset = fdt_node_offset_by_compat_reg(blob, "fsl,ls-pcie",
+						   pcie->dbi_res.start);
+	if (nodeoffset < 0) {
+#ifdef CONFIG_FSL_PCIE_COMPAT /* Compatible with older version of dts node */
+		svr = SVR_SOC_VER(get_svr());
+		if (svr == SVR_LS2088A || svr == SVR_LS2084A ||
+		    svr == SVR_LS2048A || svr == SVR_LS2044A ||
+		    svr == SVR_LS2081A || svr == SVR_LS2041A)
+			compat = "fsl,ls2088a-pcie";
+		else
+			compat = CONFIG_FSL_PCIE_COMPAT;
+		if (compat)
+			nodeoffset = fdt_node_offset_by_compat_reg(blob,
+					compat, pcie->dbi_res.start);
+#endif
+	}
+
+	return nodeoffset;
+}
+
 /*
  * An msi-map is a property to be added to the pci controller
  * node.  It is a table, where each entry consists of 4 fields
@@ -65,28 +92,10 @@ static void fdt_pcie_set_msi_map_entry_ls(void *blob, struct ls_pcie *pcie,
 	u32 *prop;
 	u32 phandle;
 	int nodeoffset;
-	uint svr;
-	char *compat = NULL;
 
-	/* find pci controller node */
-	nodeoffset = fdt_node_offset_by_compat_reg(blob, "fsl,ls-pcie",
-						   pcie->dbi_res.start);
-	if (nodeoffset < 0) {
-#ifdef CONFIG_FSL_PCIE_COMPAT /* Compatible with older version of dts node */
-		svr = (get_svr() >> SVR_VAR_PER_SHIFT) & 0xFFFFFE;
-		if (svr == SVR_LS2088A || svr == SVR_LS2084A ||
-		    svr == SVR_LS2048A || svr == SVR_LS2044A ||
-		    svr == SVR_LS2081A || svr == SVR_LS2041A)
-			compat = "fsl,ls2088a-pcie";
-		else
-			compat = CONFIG_FSL_PCIE_COMPAT;
-		if (compat)
-			nodeoffset = fdt_node_offset_by_compat_reg(blob,
-					compat, pcie->dbi_res.start);
-#endif
-		if (nodeoffset < 0)
-			return;
-	}
+	nodeoffset = fdt_pcie_get_nodeoffset(blob, pcie);
+	if (nodeoffset < 0)
+		return;
 
 	/* get phandle to MSI controller */
 	prop = (u32 *)fdt_getprop(blob, nodeoffset, "msi-parent", 0);
@@ -119,29 +128,10 @@ static void fdt_pcie_set_iommu_map_entry_ls(void *blob, struct ls_pcie *pcie,
 	u32 iommu_map[4];
 	int nodeoffset;
 	int lenp;
-	uint svr;
-	char *compat = NULL;
 
-	/* find pci controller node */
-	nodeoffset = fdt_node_offset_by_compat_reg(blob, "fsl,ls-pcie",
-						   pcie->dbi_res.start);
-	if (nodeoffset < 0) {
-#ifdef CONFIG_FSL_PCIE_COMPAT /* Compatible with older version of dts node */
-		svr = (get_svr() >> SVR_VAR_PER_SHIFT) & 0xFFFFFE;
-		if (svr == SVR_LS2088A || svr == SVR_LS2084A ||
-		    svr == SVR_LS2048A || svr == SVR_LS2044A ||
-		    svr == SVR_LS2081A || svr == SVR_LS2041A)
-			compat = "fsl,ls2088a-pcie";
-		else
-			compat = CONFIG_FSL_PCIE_COMPAT;
-
-		if (compat)
-			nodeoffset = fdt_node_offset_by_compat_reg(blob,
-						compat, pcie->dbi_res.start);
-#endif
-		if (nodeoffset < 0)
-			return;
-	}
+	nodeoffset = fdt_pcie_get_nodeoffset(blob, pcie);
+	if (nodeoffset < 0)
+		return;
 
 	/* get phandle to iommu controller */
 	prop = fdt_getprop_w(blob, nodeoffset, "iommu-map", &lenp);
@@ -222,27 +212,10 @@ static void fdt_fixup_pcie_ls(void *blob)
 static void ft_pcie_rc_fix(void *blob, struct ls_pcie *pcie)
 {
 	int off;
-	uint svr;
-	char *compat = NULL;
 
-	off = fdt_node_offset_by_compat_reg(blob, "fsl,ls-pcie",
-					    pcie->dbi_res.start);
-	if (off < 0) {
-#ifdef CONFIG_FSL_PCIE_COMPAT /* Compatible with older version of dts node */
-		svr = (get_svr() >> SVR_VAR_PER_SHIFT) & 0xFFFFFE;
-		if (svr == SVR_LS2088A || svr == SVR_LS2084A ||
-		    svr == SVR_LS2048A || svr == SVR_LS2044A ||
-		    svr == SVR_LS2081A || svr == SVR_LS2041A)
-			compat = "fsl,ls2088a-pcie";
-		else
-			compat = CONFIG_FSL_PCIE_COMPAT;
-		if (compat)
-			off = fdt_node_offset_by_compat_reg(blob,
-					compat, pcie->dbi_res.start);
-#endif
-		if (off < 0)
-			return;
-	}
+	off = fdt_pcie_get_nodeoffset(blob, pcie);
+	if (off < 0)
+		return;
 
 	if (pcie->enabled && pcie->mode == PCI_HEADER_TYPE_BRIDGE)
 		fdt_set_node_status(blob, off, FDT_STATUS_OKAY, 0);
