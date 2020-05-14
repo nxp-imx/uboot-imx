@@ -300,6 +300,18 @@ static sc_err_t pad_write(u32 _pad, u32 _value)
 	return sciErr;
 }
 
+static sc_err_t pad_read(u32 _pad, u32 *_value)
+{
+	sc_err_t sciErr = sc_pad_get(-1, _pad, _value);
+
+	if (sciErr != SC_ERR_NONE) {
+		printf("Failed to get pad configuration\n");
+		printf("Failed to get conf pad %d", _pad);
+	}
+
+	return sciErr;
+}
+
 static int apply_tamper_pin_list_config(struct tamper_pin_cfg *confs, u32 size)
 {
 	sc_err_t sciErr = 0;
@@ -671,4 +683,51 @@ U_BOOT_CMD(snvs_sec_status,
 	   1, 1, do_snvs_sec_status,
 	   "tamper pin configuration",
 	   snvs_sec_status_help_text
+);
+
+static char gpio_conf_help_text[] =
+	"gpio_conf <pad> <hexval>\n"
+	"Configure the GPIO of an IOMUX:\n"
+	" - pad:\n"
+	" - hexval:";
+
+static int do_gpio_conf(cmd_tbl_t *cmdtp, int flag, int argc,
+			char *const argv[])
+{
+	int err = -EIO;
+	sc_err_t sciErr;
+	u32 pad, val, valcheck;
+
+	pad = simple_strtoul(argv[1], NULL, 10);
+	val = simple_strtoul(argv[2], NULL, 16);
+
+	printf("Configuring GPIO %d with %x\n", pad, val);
+
+	sciErr = pad_write(pad, 3 << 30 | val);
+	if (sciErr != SC_ERR_NONE) {
+		printf("Error writing conf\n");
+		goto exit;
+	}
+
+	sciErr = pad_read(pad, &valcheck);
+	if (sciErr != SC_ERR_NONE) {
+		printf("Error reading conf\n");
+		goto exit;
+	}
+
+	if (valcheck != val) {
+		printf("Error: configured %x instead of %x\n", valcheck, val);
+		goto exit;
+	}
+
+	err = 0;
+
+exit:
+	return err;
+}
+
+U_BOOT_CMD(gpio_conf,
+	   3, 1, do_gpio_conf,
+	   "gpio configuration",
+	   gpio_conf_help_text
 );
