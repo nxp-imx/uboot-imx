@@ -175,6 +175,12 @@ source "board/toradex/apalis-imx8/Kconfig"
 source "board/toradex/colibri-imx8x/Kconfig"
 source "board/siemens/capricorn/Kconfig"
 
+config SKIP_RESOURCE_CHECKING
+	bool "Skip resource owner checking to kernel FDT nodes"
+	help
+	  By default the kernel FDT nodes are checked if belong to current partition.
+	  Set the config to skip this checking.
+
 config IMX_SNVS_SEC_SC
 	bool "Support SNVS configuration"
 	help
