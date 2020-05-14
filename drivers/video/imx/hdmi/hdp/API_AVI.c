@@ -71,7 +71,8 @@ CDN_API_STATUS cdn_api_set_avi(VIC_MODES vic_mode,
 	unsigned int packet_r = 0;
 	unsigned int packet_vic = 0;
 	unsigned int packet_pr = 0;
-	unsigned int packet_buf[18 / sizeof(unsigned int)];
+	unsigned int packet_buf_size = 5; /* Total buf length is 18, aligned with 4 bytes, need 5 words */
+	unsigned int packet_buf[packet_buf_size];
 	unsigned char *packet = (unsigned char *)&packet_buf[0];
 	unsigned int packet_hb0 = 0;
 	unsigned int packet_hb1 = 0;
@@ -184,7 +185,7 @@ CDN_API_STATUS cdn_api_set_avi(VIC_MODES vic_mode,
 	packet[16] = packet_pb12;
 	packet[17] = packet_pb13;
 
-	cdn_api_infoframeset(0, packet_len,
+	cdn_api_infoframeset(0, packet_buf_size,
 			     (unsigned int *)&packet[0], packet_type);
 
 	return CDN_OK;
