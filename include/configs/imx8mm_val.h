@@ -25,6 +25,8 @@
 /* ENET Config */
 /* ENET1 */
 #if defined(CONFIG_FEC_MXC)
+#define PHY_ANEG_TIMEOUT 20000
+
 #ifdef CONFIG_TARGET_IMX8MM_DDR3L_VAL
 #define CFG_FEC_MXC_PHYADDR          3
 #else

@@ -178,5 +178,6 @@
 #endif
 
 /* Misc configuration */
+#define PHY_ANEG_TIMEOUT 20000
 
 #endif /* __IMX8QXP_MEK_H */

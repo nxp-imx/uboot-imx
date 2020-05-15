@@ -192,4 +192,7 @@
 
 /* NAND stuff */
 #define CFG_SYS_NAND_BASE           0x40000000
+
+#define PHY_ANEG_TIMEOUT 20000
+
 #endif /* __IMX8DXL_EVK_H */

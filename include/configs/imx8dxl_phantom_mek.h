@@ -173,5 +173,6 @@
 #define PHYS_SDRAM_2_SIZE		0x00000000
 
 /* Misc configuration */
+#define PHY_ANEG_TIMEOUT 20000
 
 #endif /* __IMX8DXL_PHANTOM_MEK_H */

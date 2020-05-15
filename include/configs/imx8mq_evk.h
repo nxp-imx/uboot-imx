@@ -25,6 +25,7 @@
 /* ENET1 */
 #if defined(CONFIG_FEC_MXC)
 #define CFG_FEC_MXC_PHYADDR          0
+#define PHY_ANEG_TIMEOUT 20000
 #endif
 
 #ifdef CONFIG_DISTRO_DEFAULTS

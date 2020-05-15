@@ -22,6 +22,8 @@
 #define CFG_SYS_UBOOT_BASE 0x08181000
 #endif
 
+#define PHY_ANEG_TIMEOUT 20000
+
 #ifdef CONFIG_AHAB_BOOT
 #define AHAB_ENV "sec_boot=yes\0"
 #else

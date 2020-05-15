@@ -30,6 +30,8 @@
 
 #endif
 
+#define PHY_ANEG_TIMEOUT 20000
+
 #ifdef CONFIG_NAND_BOOT
 #define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)"
 #endif
