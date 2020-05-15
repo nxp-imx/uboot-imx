@@ -62,6 +62,7 @@
 /* ENET1 */
 #if defined(CONFIG_FEC_MXC)
 #define CONFIG_ETHPRIME                 "FEC"
+#define PHY_ANEG_TIMEOUT 20000
 
 #define FEC_QUIRK_ENET_MAC
 
