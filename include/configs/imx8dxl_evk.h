@@ -375,5 +375,6 @@
 #define CONFIG_SYS_NONCACHED_MEMORY     (1 * SZ_1M)     /* 1M */
 #endif
 #define CONFIG_ETHPRIME                 "eth1"
+#define PHY_ANEG_TIMEOUT 20000
 
 #endif /* __IMX8DXL_EVK_H */

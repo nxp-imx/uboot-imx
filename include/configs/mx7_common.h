@@ -40,7 +40,8 @@
 /* UART */
 #define CONFIG_MXC_UART
 
-/* MMC */
+/* NET PHY */
+#define PHY_ANEG_TIMEOUT 20000
 
 #define CONFIG_ARMV7_SECURE_BASE	0x00900000
 
