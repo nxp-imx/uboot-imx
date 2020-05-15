@@ -161,9 +161,9 @@ static int apply_snvs_config(struct snvs_security_sc_conf *cnf)
 	scierr = check_write_secvio_config(SC_CONF_OFFSET_OF(lp.act_tamper1_cfg),
 					   &cnf->lp.act_tamper1_cfg,
 					   &cnf->lp.act_tamper2_cfg,
-					   &cnf->lp.act_tamper2_cfg,
-					   &cnf->lp.act_tamper2_cfg,
-					   &cnf->lp.act_tamper2_cfg, 5);
+					   &cnf->lp.act_tamper3_cfg,
+					   &cnf->lp.act_tamper4_cfg,
+					   &cnf->lp.act_tamper5_cfg, 5);
 	if (scierr != SC_ERR_NONE)
 		goto exit;
 
