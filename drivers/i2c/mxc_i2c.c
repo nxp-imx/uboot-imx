@@ -27,7 +27,7 @@
 #include <dm.h>
 #include <dm/pinctrl.h>
 #include <fdtdec.h>
-#include <asm/arch/sys_proto.h>
+#include <asm/mach-imx/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
