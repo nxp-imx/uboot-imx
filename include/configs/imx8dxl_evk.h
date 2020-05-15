@@ -283,5 +283,6 @@
 #define DWC_NET_PHYADDR			0
 
 #define CONFIG_ETHPRIME                 "eth1"
+#define PHY_ANEG_TIMEOUT 20000
 
 #endif /* __IMX8DXL_EVK_H */

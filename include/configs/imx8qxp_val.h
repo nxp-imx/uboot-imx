@@ -52,6 +52,7 @@
 #define CONFIG_PCI_SCAN_SHOW
 
 #define CONFIG_FEC_XCV_TYPE             RGMII
+#define PHY_ANEG_TIMEOUT 20000
 
 /* ENET0 connects AR8031 on CPU board, ENET1 connects to base board */
 #define CONFIG_ETHPRIME                 "eth0"

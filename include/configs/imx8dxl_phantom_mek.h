@@ -249,6 +249,7 @@
 #define CONFIG_ETHPRIME                 "eth1"
 
 #define CONFIG_FEC_XCV_TYPE		RGMII
+#define PHY_ANEG_TIMEOUT 20000
 
 
 #endif /* __IMX8DXL_PHANTOM_MEK_H */

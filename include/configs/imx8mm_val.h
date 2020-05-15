@@ -43,6 +43,7 @@
 /* ENET1 */
 #if defined(CONFIG_FEC_MXC)
 #define CONFIG_ETHPRIME                 "FEC"
+#define PHY_ANEG_TIMEOUT 20000
 
 
 #define IMX_FEC_BASE			0x30BE0000
