@@ -27,7 +27,9 @@
 #include <dm.h>
 #include <dm/pinctrl.h>
 #include <fdtdec.h>
-#include <asm/mach-imx/sys_proto.h>
+#ifdef CONFIG_MX6
+#include <asm/arch/sys_proto.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -4,7 +4,7 @@
  * Copyright 2018 NXP
  */
 #include <common.h>
-#include <asm/mach-imx/sys_proto.h>
+#include <asm/arch/sys_proto.h>
 #include <linux/errno.h>
 #include <asm/io.h>
 #include <stdbool.h>
