@@ -18,7 +18,7 @@ arch-$(CONFIG_CPU_V7A)		=$(call cc-option, -march=armv7-a, \
 				 $(call cc-option, -march=armv7))
 arch-$(CONFIG_CPU_V7M)		=-march=armv7-m
 arch-$(CONFIG_CPU_V7R)		=-march=armv7-r
-arch-$(CONFIG_ARM64)		=-march=armv8-a -mgeneral-regs-only
+arch-$(CONFIG_ARM64)		=-march=armv8-a
 
 # On Tegra systems we must build SPL for the armv4 core on the device
 # but otherwise we can use the value in CONFIG_SYS_ARM_ARCH
@@ -26,6 +26,10 @@ ifeq ($(CONFIG_SPL_BUILD)$(CONFIG_TEGRA),yy)
 arch-y += -D__LINUX_ARM_ARCH__=4
 else
 arch-y += -D__LINUX_ARM_ARCH__=$(CONFIG_SYS_ARM_ARCH)
+endif
+
+ifneq ($(CONFIG_ARCH_IMX8)$(CONFIG_ARCH_IMX8M),)
+arch-y += -mgeneral-regs-only
 endif
 
 # Evaluate arch cc-option calls now
