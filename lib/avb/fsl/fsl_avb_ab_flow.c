@@ -377,12 +377,14 @@ int mmc_load_image_raw_sector_dual_uboot(struct spl_image_info *spl_image,
 
 #if !defined(CONFIG_XEN) && defined(CONFIG_IMX_TRUSTY_OS)
 			/* Image loaded successfully, go to verify rollback index */
-			if (!ret)
-				ret = spl_verify_rbidx(mmc, &ab_data.slots[target_slot], spl_image);
+			if (rpmbkey_is_set()) {
+				if (!ret)
+					ret = spl_verify_rbidx(mmc, &ab_data.slots[target_slot], spl_image);
 
-			/* Copy rpmb keyslot to secure memory. */
-			if (!ret)
-				fill_secure_keyslot_package(&kp);
+				/* Copy rpmb keyslot to secure memory. */
+				if (!ret)
+					fill_secure_keyslot_package(&kp);
+			}
 #endif
 		}
 
@@ -457,12 +459,14 @@ int mmc_load_image_raw_sector_dual_uboot(struct spl_image_info *spl_image,
 
 #if !defined(CONFIG_XEN) && defined(CONFIG_IMX_TRUSTY_OS)
 			/* Image loaded successfully, go to verify rollback index */
-			if (!ret)
-				ret = spl_verify_rbidx(mmc, &ab_data.slots[target_slot], spl_image);
+			if (rpmbkey_is_set()) {
+				if (!ret)
+					ret = spl_verify_rbidx(mmc, &ab_data.slots[target_slot], spl_image);
 
-			/* Copy rpmb keyslot to secure memory. */
-			if (!ret)
-				fill_secure_keyslot_package(&kp);
+				/* Copy rpmb keyslot to secure memory. */
+				if (!ret)
+					fill_secure_keyslot_package(&kp);
+			}
 #endif
 		}
 
