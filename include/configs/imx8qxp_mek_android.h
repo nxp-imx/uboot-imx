@@ -21,10 +21,11 @@
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #undef CONFIG_BOOTCOMMAND
 
-#define CONFIG_EXTRA_ENV_SETTINGS					\
-	"splashpos=m,m\0"	  \
-	"fdt_high=0xffffffffffffffff\0"	  \
-	"initrd_high=0xffffffffffffffff\0" \
+#define CONFIG_EXTRA_ENV_SETTINGS		\
+	"splashpos=m,m\0"	  		\
+	"splashimage=0x9e000000\0" 		\
+	"fdt_high=0xffffffffffffffff\0"	  	\
+	"initrd_high=0xffffffffffffffff\0" 	\
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 #define AVB_RPMB
