@@ -8,8 +8,8 @@
 #include "fsl-imx8dxl.dtsi"
 
 / {
-	model = "NXP i.MX8DXL DDR3 EVK Board";
-	compatible = "fsl,imx8dxl-evk", "fsl,imx8dxl";
+	model = "NXP i.MX8DXL DDR3 VAL Board";
+	compatible = "fsl,imx8dxl-ddr3-val", "fsl,imx8dxl";
 
 	chosen {
 		bootargs = "console=ttyLP0,115200 earlycon";
