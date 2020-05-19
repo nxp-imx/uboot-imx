@@ -210,18 +210,6 @@ static int imx8_scu_remove(struct udevice *dev)
 
 static int imx8_scu_bind(struct udevice *dev)
 {
-	int ret;
-	struct udevice *child;
-	ofnode node;
-
-	debug("%s(dev=%p)\n", __func__, dev);
-	ofnode_for_each_subnode(node, dev_ofnode(dev)) {
-		ret = lists_bind_fdt(dev, node, &child, true);
-		if (ret)
-			return ret;
-		debug("bind child dev %s\n", child->name);
-	}
-
 	return 0;
 }
 
