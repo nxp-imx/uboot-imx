@@ -22,22 +22,12 @@
 	#size-cells = <2>;
 
 	aliases {
-		csi0 = &mipi_csi_0;
-		csi1 = &mipi_csi_1;
 		ethernet0 = &fec1;
 		ethernet1 = &fec2;
 		dsiphy0 = &mipi_dsi_phy1;
 		dsiphy1 = &mipi_dsi_phy2;
 		mipidsi0 = &mipi_dsi1;
 		mipidsi1 = &mipi_dsi2;
-		isi0 = &isi_0;
-		isi1 = &isi_1;
-		isi2 = &isi_2;
-		isi3 = &isi_3;
-		isi4 = &isi_4;
-		isi5 = &isi_5;
-		isi6 = &isi_6;
-		isi7 = &isi_7;
 		serial0 = &lpuart0;
 		serial1 = &lpuart1;
 		serial2 = &lpuart2;
@@ -57,9 +47,6 @@
 		usb0 = &usbotg1;
 		usbphy0 = &usbphy1;
 		usb1 = &usbotg3;
-		can0 = &flexcan1;
-		can1 = &flexcan2;
-		can2 = &flexcan3;
 		i2c0 = &i2c0;
 		i2c1 = &i2c1;
 		i2c2 = &i2c2;
@@ -219,57 +206,6 @@
 		status = "okay";
 	};
 
-	vpu_decoder: vpu_decoder@2c000000 {
-		compatible = "nxp,imx8qm-b0-vpudec", "nxp,imx8qxp-b0-vpudec";
-		boot-region = <&decoder_boot>;
-		rpc-region = <&decoder_rpc>;
-		reg = <0x0 0x2c000000 0x0 0x1000000>;
-		reg-names = "vpu_regs";
-		reg-csr = <0x2d080000>;
-		power-domains = <&pd_vpu_dec>;
-		status = "disabled";
-	};
-
-	vpu_encoder: vpu_encoder@2d000000 {
-		compatible = "nxp,imx8qm-b0-vpuenc";
-		#address-cells = <1>;
-		#size-cells = <1>;
-
-		boot-region = <&encoder_boot>;
-		rpc-region = <&encoder_rpc>;
-		reserved-region = <&encoder_reserved>;
-		reg = <0x0 0x2d000000 0x0 0x1000000>,	/*VPU Encoder*/
-			<0x0 0x2c000000 0x0 0x2000000>; /*VPU*/
-		reg-names = "vpu_regs";
-		power-domains = <&pd_vpu_enc>;
-		reg-rpc-system = <0x40000000>;
-
-		resolution-max = <1920 1080>;
-		fps-max = <120>;
-		status = "disabled";
-
-		core0@1020000 {
-			compatible = "fsl,imx8-mu1-vpu-m0";
-			reg = <0x1020000 0x20000>;
-			reg-csr = <0x1090000 0x10000>;
-			interrupts = <GIC_SPI 473 IRQ_TYPE_LEVEL_HIGH>;
-			fsl,vpu_ap_mu_id = <17>;
-			fw-buf-size = <0x200000>;
-			rpc-buf-size = <0x80000>;
-			print-buf-size = <0x80000>;
-		};
-		core1@1040000 {
-			compatible = "fsl,imx8-mu2-vpu-m0";
-			reg = <0x1040000 0x20000>;
-			reg-csr = <0x10a0000 0x10000>;
-			interrupts = <GIC_SPI 474 IRQ_TYPE_LEVEL_HIGH>;
-			fsl,vpu_ap_mu_id = <18>;
-			fw-buf-size = <0x200000>;
-			rpc-buf-size = <0x80000>;
-			print-buf-size = <0x80000>;
-		};
-	};
-
 	timer {
 		compatible = "arm,armv8-timer";
 		interrupts = <GIC_PPI 13 (GIC_CPU_MASK_SIMPLE(6) | IRQ_TYPE_LEVEL_LOW)>, /* Physical Secure */
@@ -349,17 +285,6 @@
 	clock-latency = <61036>;
 	#cooling-cells = <2>;
 	/delete-property/ cpu-idle-states;
-};
-
-
-&imx8_gpu_ss {/*<freq-kHz vol-uV>*/
-       operating-points = <
-/*overdrive*/  800000  0  /*The first tuple is for core clock frequency*/
-               1000000 0  /*The second tuple is for shader clock frequency*/
-/*nominal*/    650000  0
-               700000  0
-/*underdrive*/ 400000  0  /*core/shader clock share the same frequency on underdrive mode*/
-       >;
 };
 
 &A53_1 {
