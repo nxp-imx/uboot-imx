@@ -368,13 +368,16 @@ static int ehci_usb_bind(struct udevice *dev)
 	 * the driver is fully converted to DT probing.
 	 */
 	u32 controller_spacing;
-	if (IS_ENABLED(CONFIG_MX6))
-		controller_spacing = 0x200;
-	else
-		controller_spacing = 0x10000;
-	fdt_addr_t addr = devfdt_get_addr_index(dev, 0);
 
-	dev->seq_ = (addr - USB_BASE_ADDR) / controller_spacing;
+	if (dev_seq(dev) == -1) {
+		if (IS_ENABLED(CONFIG_MX6))
+			controller_spacing = 0x200;
+		else
+			controller_spacing = 0x10000;
+		fdt_addr_t addr = devfdt_get_addr_index(dev, 0);
+
+		dev->seq_ = (addr - USB_BASE_ADDR) / controller_spacing;
+	}
 
 	return 0;
 }
