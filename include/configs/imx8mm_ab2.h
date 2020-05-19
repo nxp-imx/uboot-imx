@@ -63,6 +63,7 @@
 #define CONFIG_FEC_XCV_TYPE             RGMII
 #define CONFIG_FEC_MXC_PHYADDR          1
 #define FEC_QUIRK_ENET_MAC
+#define PHY_ANEG_TIMEOUT                20000
 
 #define IMX_FEC_BASE			0x30BE0000
 #endif
