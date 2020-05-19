@@ -29,9 +29,10 @@
 #undef CONFIG_BOOTCOMMAND
 
 #define CONFIG_EXTRA_ENV_SETTINGS       \
-	"splashpos=m,m\0"       \
-	"fdt_high=0xffffffff\0" \
-	"initrd_high=0xffffffff\0" \
+	"splashpos=m,m\0"		\
+	"splashimage=0x78000000\0"	\
+	"fdt_high=0xffffffff\0"		\
+	"initrd_high=0xffffffff\0"	\
 
 /* Enable mcu firmware flash */
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
