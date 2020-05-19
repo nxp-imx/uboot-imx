@@ -67,7 +67,7 @@
 #define CONFIG_ETHPRIME                 "eth0"
 
 #define CONFIG_FEC_XCV_TYPE             RGMII
-#define CONFIG_FEC_MXC_PHYADDR          1
+#define CONFIG_FEC_MXC_PHYADDR          0
 #define FEC_QUIRK_ENET_MAC
 #define PHY_ANEG_TIMEOUT                20000
 
