@@ -145,7 +145,11 @@ int board_phy_config(struct phy_device *phydev)
 
 int checkboard(void)
 {
+#if defined(CONFIG_TARGET_IMX8DXL_DDR3_VAL)
+	puts("Board: iMX8DXL DDR3 VAL\n");
+#else
 	puts("Board: iMX8DXL EVK\n");
+#endif
 
 	build_info();
 	print_bootinfo();
@@ -235,8 +239,8 @@ int board_late_init(void)
 	m4_boot = check_m4_parts_boot();
 
 	if (fdt_file && !strcmp(fdt_file, "undefined")) {
-#if defined(CONFIG_TARGET_IMX8DXL_DDR3_EVK)
-		env_set("fdt_file", "imx8dxl-ddr3-evk.dtb");
+#if defined(CONFIG_TARGET_IMX8DXL_DDR3_VAL)
+		env_set("fdt_file", "imx8dxl-ddr3-val.dtb");
 #else
 		if (m4_boot)
 			env_set("fdt_file", "imx8dxl-evk-rpmsg.dtb");

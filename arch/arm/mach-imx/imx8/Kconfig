@@ -160,8 +160,8 @@ config TARGET_IMX8DXL_EVK
 	select BOARD_LATE_INIT
 	select IMX8DXL
 
-config TARGET_IMX8DXL_DDR3_EVK
-	bool "Support i.MX8DXL EVK board"
+config TARGET_IMX8DXL_DDR3_VAL
+	bool "Support i.MX8DXL VAL board"
 	select BOARD_LATE_INIT
 	select IMX8DXL
 
