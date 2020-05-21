@@ -763,6 +763,7 @@ static int check_mipi_dsi_nodes(void *blob)
 	}
 
 }
+#endif
 
 void board_quiesce_devices(void)
 {
@@ -771,7 +772,6 @@ void board_quiesce_devices(void)
 		disconnect_from_pc();
 #endif
 }
-#endif
 
 int disable_vpu_nodes(void *blob)
 {
