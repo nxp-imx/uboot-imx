@@ -186,6 +186,12 @@ int hwcrypto_hash(uint32_t in_addr, uint32_t in_len, uint32_t out_addr,
 
     int rc = hwcrypto_do_tipc(HWCRYPTO_HASH, (void*)&req,
                               sizeof(req), NULL, 0, false);
+
+    /* invalidate the dcache again before read to avoid coherency
+     * problem caused by speculative memory access by the CPU.
+     */
+    invalidate_dcache_range(start, end);
+
     return rc;
 }
 
@@ -216,6 +222,11 @@ int hwcrypto_gen_blob(uint32_t plain_pa,
 
     int rc = hwcrypto_do_tipc(HWCRYPTO_ENCAP_BLOB, (void*)&req,
                               sizeof(req), NULL, 0, false);
+
+    /* invalidate the dcache again before read to avoid coherency
+     * problem caused by speculative memory access by the CPU.
+     */
+    invalidate_dcache_range(start, end);
     return rc;
 }
 
@@ -238,6 +249,11 @@ int hwcrypto_gen_rng(uint32_t buf, uint32_t len)
 
     int rc = hwcrypto_do_tipc(HWCRYPTO_GEN_RNG, (void*)&req,
                               sizeof(req), NULL, 0, false);
+
+    /* invalidate the dcache again before read to avoid coherency
+     * problem caused by speculative memory access by the CPU.
+     */
+    invalidate_dcache_range(start, end);
     return rc;
 }
 
@@ -260,6 +276,11 @@ int hwcrypto_gen_bkek(uint32_t buf, uint32_t len)
 
     int rc = hwcrypto_do_tipc(HWCRYPTO_GEN_BKEK, (void*)&req,
                               sizeof(req), NULL, 0, false);
+
+    /* invalidate the dcache again before read to avoid coherency
+     * problem caused by speculative memory access by the CPU.
+     */
+    invalidate_dcache_range(start, end);
     return rc;
 }
 
