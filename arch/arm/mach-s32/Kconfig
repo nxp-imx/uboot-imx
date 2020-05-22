@@ -1,9 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0+
 # Copyright 2020 NXP
 
-config IMX_CONFIG
-	string
-
 config MKIMAGE_T
 	string
 	default "s32v234image"
