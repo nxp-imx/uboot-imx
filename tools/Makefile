@@ -61,6 +61,8 @@ FIT_OBJS-$(CONFIG_FIT) := fit_common.o fit_image.o image-host.o common/image-fit
 FIT_SIG_OBJS-$(CONFIG_FIT_SIGNATURE) := common/image-sig.o
 FIT_CIPHER_OBJS-$(CONFIG_FIT_CIPHER) := common/image-cipher.o
 
+S32V234IMAGE-$(CONFIG_S32V234) := s32v234image.o
+
 # The following files are synced with upstream DTC.
 # Use synced versions from scripts/dtc/libfdt/.
 LIBFDT_SRCS_SYNCED := fdt.c fdt_wip.c fdt_sw.c fdt_rw.c \
@@ -95,6 +97,7 @@ dumpimage-mkimage-objs := aisimage.o \
 			common/image.o \
 			imagetool.o \
 			imximage.o \
+			$(S32V234IMAGE-y) \
 			imx8image.o \
 			imx8mimage.o \
 			kwbimage.o \

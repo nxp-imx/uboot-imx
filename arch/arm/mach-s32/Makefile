@@ -16,7 +16,8 @@ IMX_CONFIG = $(CONFIG_IMX_CONFIG:"%"=%)
 	$(Q)mkdir -p $(dir $@)
 	$(call if_changed_dep,cpp_cfg)
 
-MKIMAGEFLAGS_u-boot.s32 = -n $(filter-out $< $(PHONY),$^) -T imximage \
+MKIMAGEFLAGS_u-boot.s32 = -n $(filter-out $< $(PHONY),$^) \
+	-T $(CONFIG_MKIMAGE_T) \
 	-e $(CONFIG_SYS_TEXT_BASE)
 u-boot.s32: MKIMAGEOUTPUT = u-boot.s32.log
 

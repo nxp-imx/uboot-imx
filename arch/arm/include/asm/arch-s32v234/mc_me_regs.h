@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2015, Freescale Semiconductor, Inc.
+ * (C) Copyright 2020 NXP
+ *
  */
 
 #ifndef __ARCH_ARM_MACH_S32V234_MCME_REGS_H__
@@ -90,6 +92,10 @@
 #define MC_ME_RUNMODE_MC_PWRLVL0		(1 << 28)
 #define MC_ME_RUNMODE_MC_PWRLVL1		(1 << 29)
 #define MC_ME_RUNMODE_MC_PWRLVL2		(1 << 30)
+
+#define DRUN_MC_RESETVAL			(0x00100010)
+#define SYSCLK_FXOSC				(1 << 0)
+#define SYSCLK_ARM_PLL_DFS_1			BIT(1)
 
 /* MC_ME_DRUN_SEC_CC_I */
 #define MC_ME_DRUN_SEC_CC_I					(MC_ME_BASE_ADDR + 0x260)
