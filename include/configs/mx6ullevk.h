@@ -293,6 +293,5 @@
 
 #define CONFIG_MODULE_FUSE
 #define CONFIG_OF_SYSTEM_SETUP
-#define CONFIG_SOFT_SPI
 
 #endif
