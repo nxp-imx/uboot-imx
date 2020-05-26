@@ -32,9 +32,6 @@
 #undef CONFIG_FASTBOOT_USB_DEV
 #define CONFIG_FASTBOOT_USB_DEV 0 /* Use OTG port, not typec port */
 
-/* This needs to be stay same in iomem in domu.cfg */
-#define SC_IPC_CH			0x5d1d0000
-
 #ifdef CONFIG_SPL_BUILD
 #undef CONFIG_SPL_BSS_START_ADDR
 #undef CONFIG_SYS_SPL_MALLOC_START
@@ -42,7 +39,6 @@
 #undef CONFIG_SPL_TEXT_BASE
 #undef CONFIG_SPL_STACK
 
-#define CONFIG_SPL_TEXT_BASE		0x80080000
 #define CONFIG_MALLOC_F_ADDR		0x80100000
 #define CONFIG_SYS_SPL_MALLOC_START	0x80200000
 #define CONFIG_SPL_BSS_START_ADDR	0x80300000
