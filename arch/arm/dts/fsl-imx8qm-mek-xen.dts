@@ -13,6 +13,7 @@
  */
 
 #include "fsl-imx8qm-mek.dts"
+#include "fsl-imx8qm-mek-u-boot.dtsi"
 
 &usdhc2 {
 	status = "disabled";
@@ -66,4 +67,9 @@
 	compatible = "xen,xen";
 	/delete-property/ power-domains;
 	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&mu {
+	reg = <0x0 0x5d1d0000 0x0 0x10000>;
 };
