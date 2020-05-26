@@ -259,7 +259,6 @@ int show_bootloader_menu(void) {
 				break;
 			} else if (is_vol_key_pressed()) {
 				focus++;
-				printf("\nfocus is %d\n", focus);
 				if (focus > 3)
 					focus = 0;
 				mdelay(400);
