@@ -19,9 +19,6 @@
 #define PHYS_SDRAM_1_SIZE		0x80000000	/* 2 GB */
 #define PHYS_SDRAM_2_SIZE		0x60000000	/* 1536 MB */
 
-/* This needs to be stay same in iomem in domu.cfg */
-#define SC_IPC_CH			0x5d1d0000
-
 #ifdef CONFIG_SPL_BUILD
 #undef CFG_MALLOC_F_ADDR
 
