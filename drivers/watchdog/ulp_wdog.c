@@ -71,7 +71,7 @@ void hw_watchdog_init(void)
 	dmb();
 
 	/* Wait WDOG Unlock */
-	while (!(readl(&wdog->cs2) & WDGCS2_ULK));
+	while (!(readb(&wdog->cs2) & WDGCS2_ULK));
 
 	val = readb(&wdog->cs2);
 	val |= WDGCS2_FLG;
@@ -84,7 +84,7 @@ void hw_watchdog_init(void)
 	writeb((WDGCS1_WDGE | WDGCS1_WDGUPDATE), &wdog->cs1);/* enable counter running */
 
 	/* Wait WDOG reconfiguration */
-	while (!(readl(&wdog->cs2) & WDGCS2_RCS));
+	while (!(readb(&wdog->cs2) & WDGCS2_RCS));
 
 	hw_watchdog_reset();
 }
@@ -99,7 +99,7 @@ void reset_cpu(ulong addr)
 	dmb();
 
 	/* Wait WDOG Unlock */
-	while (!(readl(&wdog->cs2) & WDGCS2_ULK));
+	while (!(readb(&wdog->cs2) & WDGCS2_ULK));
 
 	hw_watchdog_set_timeout(5); /* 5ms timeout */
 	writel(0, &wdog->win);
@@ -108,7 +108,7 @@ void reset_cpu(ulong addr)
 	writeb(WDGCS1_WDGE, &wdog->cs1);/* enable counter running */
 
 	/* Wait WDOG reconfiguration */
-	while (!(readl(&wdog->cs2) & WDGCS2_RCS));
+	while (!(readb(&wdog->cs2) & WDGCS2_RCS));
 
 	hw_watchdog_reset();
 
