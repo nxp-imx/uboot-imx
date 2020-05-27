@@ -497,7 +497,11 @@ int spl_mmc_load_image(struct spl_image_info *spl_image,
 			    0,
 #endif
 #ifdef CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR
-			    CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR);
+			    CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR
+#ifdef CONFIG_SECONDARY_BOOT_SECTOR_OFFSET
+			    + CONFIG_SECONDARY_BOOT_SECTOR_OFFSET
+#endif
+			    );
 #else
 			    0);
 #endif

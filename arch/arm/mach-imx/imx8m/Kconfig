@@ -27,6 +27,15 @@ config IMX8MP
 config SYS_SOC
 	default "imx8m"
 
+config SECONDARY_BOOT_SECTOR_OFFSET
+	hex "SD/MMC sector offset used for ROM secondary boot"
+	default 0x0
+	depends on IMX8MQ || IMX8MM
+	help
+	  Set the sector offset to non-zero value in SPL used for
+	  secondary boot image. This value should be same as the
+	  firstSectorNumber in secondary image table.
+
 config SECURE_STICKY_BITS_LOCKUP
 	bool "Enable workaround to fix sticky bits lock up issue"
 	depends on IMX8MQ && IMX_HAB
