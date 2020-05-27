@@ -16,7 +16,7 @@
 #include <asm/arch/sci/svc/timer/api.h>
 #include <asm/arch/sci/rpc.h>
 #include <dt-bindings/soc/imx_rsrc.h>
-#include <linux/errno.h>
+#include <common.h>
 
 static inline int sc_err_to_linux(sc_err_t err)
 {
