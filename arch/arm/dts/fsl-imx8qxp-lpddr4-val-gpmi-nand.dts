@@ -4,6 +4,7 @@
  */
 
 #include "fsl-imx8qxp-lpddr4-val.dts"
+#include "fsl-imx8qxp-lpddr4-val-u-boot.dtsi"
 
 &iomuxc {
 	imx8qxp-val {
