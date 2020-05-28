@@ -15,6 +15,12 @@
 #include "fsl-imx8qm-mek.dts"
 #include "fsl-imx8qm-mek-u-boot.dtsi"
 
+/ {
+	chosen {
+		bootargs = "console=hvc0 earlycon=hvc0 androidboot.console=hvc0 androidboot.android_dt_dir=/proc/device-tree/firmware/android/ androidboot.selinux=permissive";
+	};
+};
+
 &usdhc2 {
 	status = "disabled";
 };
