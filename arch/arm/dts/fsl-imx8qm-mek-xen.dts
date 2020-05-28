@@ -19,11 +19,16 @@
 	status = "disabled";
 };
 
+&gpio1 {
+	/delete-property/ power-domains;
+};
+
 &gpio2 {
 	status = "disabled";
 };
 
 &gpio4 {
+	/delete-property/ power-domains;
 	status = "okay";
 };
 
