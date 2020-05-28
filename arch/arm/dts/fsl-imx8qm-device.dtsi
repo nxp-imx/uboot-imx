@@ -1928,7 +1928,7 @@
 		reg = <0x0 0x5b010000 0x0 0x10000>;
 		clocks = <&clk IMX8QM_SDHC0_IPG_CLK>,
 			<&clk IMX8QM_SDHC0_CLK>,
-			<&clk IMX8QM_CLK_DUMMY>;
+			<&clk IMX8QM_SDHC0_AHB_CLK>;
 		clock-names = "ipg", "per", "ahb";
 		assigned-clocks = <&clk IMX8QM_SDHC0_DIV>;
 		assigned-clock-rates = <400000000>;
@@ -1946,7 +1946,7 @@
 		reg = <0x0 0x5b020000 0x0 0x10000>;
 		clocks = <&clk IMX8QM_SDHC1_IPG_CLK>,
 			<&clk IMX8QM_SDHC1_CLK>,
-			<&clk IMX8QM_CLK_DUMMY>;
+			<&clk IMX8QM_SDHC1_AHB_CLK>;
 		clock-names = "ipg", "per", "ahb";
 		assigned-clocks = <&clk IMX8QM_SDHC1_DIV>;
 		assigned-clock-rates = <200000000>;
@@ -1964,7 +1964,7 @@
 		reg = <0x0 0x5b030000 0x0 0x10000>;
 		clocks = <&clk IMX8QM_SDHC2_IPG_CLK>,
 			<&clk IMX8QM_SDHC2_CLK>,
-			<&clk IMX8QM_CLK_DUMMY>;
+			<&clk IMX8QM_SDHC2_AHB_CLK>;
 		clock-names = "ipg", "per", "ahb";
 		assigned-clocks = <&clk IMX8QM_SDHC2_DIV>;
 		assigned-clock-rates = <200000000>;
