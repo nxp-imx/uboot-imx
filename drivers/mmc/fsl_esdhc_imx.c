@@ -151,6 +151,8 @@ struct fsl_esdhc_priv {
 	struct fsl_esdhc *esdhc_regs;
 	unsigned int sdhc_clk;
 	struct clk per_clk;
+	struct clk ipg_clk;
+	struct clk ahb_clk;
 	unsigned int clock;
 	unsigned int mode;
 #if !CONFIG_IS_ENABLED(DM_MMC)
@@ -1507,6 +1509,24 @@ static int fsl_esdhc_probe(struct udevice *dev)
 
 #if CONFIG_IS_ENABLED(CLK)
 	/* Assigned clock already set clock */
+	ret = clk_get_by_name(dev, "ipg", &priv->ipg_clk);
+	if (!ret) {
+		ret = clk_enable(&priv->ipg_clk);
+		if (ret) {
+			printf("Failed to enable ipg_clk\n");
+			return ret;
+		}
+	}
+
+	ret = clk_get_by_name(dev, "ahb", &priv->ahb_clk);
+	if (!ret) {
+		ret = clk_enable(&priv->ahb_clk);
+		if (ret) {
+			printf("Failed to enable ahb_clk\n");
+			return ret;
+		}
+	}
+
 	ret = clk_get_by_name(dev, "per", &priv->per_clk);
 	if (ret) {
 		printf("Failed to get per_clk\n");
