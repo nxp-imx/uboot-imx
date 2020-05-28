@@ -2188,9 +2188,11 @@
 			 <&clk IMX8QM_HSIO_PCIE_A_SLV_AXI_CLK>,
 			 <&clk IMX8QM_HSIO_PHY_X2_PCLK_0>,
 			 <&clk IMX8QM_HSIO_PCIE_X2_PER_CLK>,
-			 <&clk IMX8QM_HSIO_PCIE_A_DBI_AXI_CLK>;
-		clock-names = "pcie", "pcie_bus", "pcie_phy", "pcie_per", "pcie_inbound_axi";
-
+			 <&clk IMX8QM_HSIO_PCIE_A_DBI_AXI_CLK>,
+			 <&clk IMX8QM_HSIO_PHY_X2_PER_CLK>,
+			 <&clk IMX8QM_HSIO_MISC_PER_CLK>;
+		clock-names = "pcie", "pcie_bus", "pcie_phy", "pcie_per", "pcie_inbound_axi",
+					"phy_per", "misc_per";
 		interrupt-map-mask = <0 0 0 0x7>;
 		interrupt-map =  <0 0 0 1 &gic 0 73 4>,
 				 <0 0 0 2 &gic 0 74 4>,
@@ -2231,9 +2233,13 @@
 			 <&clk IMX8QM_HSIO_PCIE_B_SLV_AXI_CLK>,
 			 <&clk IMX8QM_HSIO_PHY_X2_PCLK_1>,
 			 <&clk IMX8QM_HSIO_PCIE_X1_PER_CLK>,
-			 <&clk IMX8QM_HSIO_PCIE_B_DBI_AXI_CLK>;
-		clock-names = "pcie", "pcie_bus", "pcie_phy", "pcie_per", "pcie_inbound_axi";
-
+			 <&clk IMX8QM_HSIO_PCIE_B_DBI_AXI_CLK>,
+			 <&clk IMX8QM_HSIO_PCIE_X2_PER_CLK>,
+			 <&clk IMX8QM_HSIO_PHY_X2_PCLK_0>,
+			 <&clk IMX8QM_HSIO_PHY_X2_PER_CLK>,
+			 <&clk IMX8QM_HSIO_MISC_PER_CLK>;
+		clock-names = "pcie", "pcie_bus", "pcie_phy", "pcie_per", "pcie_inbound_axi",
+					"pciex2_per", "pcie_phy_pclk", "phy_per", "misc_per";
 		interrupt-map-mask = <0 0 0 0x7>;
 		interrupt-map =  <0 0 0 1 &gic 0 105 4>,
 				 <0 0 0 2 &gic 0 106 4>,
