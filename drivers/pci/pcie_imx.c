@@ -252,8 +252,10 @@ struct imx_pcie_priv {
 #if CONFIG_IS_ENABLED(CLK)
 	struct clk			pcie_bus;
 	struct clk			pcie_phy;
+	struct clk			pcie_phy_pclk;
 	struct clk			pcie_inbound_axi;
 	struct clk			pcie_per;
+	struct clk			pciex2_per;
 	struct clk			phy_per;
 	struct clk			misc_per;
 	struct clk			pcie;
@@ -962,62 +964,100 @@ static int imx8_pcie_deassert_core_reset(struct imx_pcie_priv *priv)
 		printf("unable to enable pcie_phy clock\n");
 		goto err_pcie;
 	}
-#endif
 
-	if (priv->variant == IMX8QM
-		|| priv->variant == IMX8QXP) {
-
-#if CONFIG_IS_ENABLED(CLK)
-		ret = clk_enable(&priv->pcie_inbound_axi);
-		if (ret) {
-			printf("unable to enable pcie_axi clock\n");
-			goto err_pcie_phy;
-		}
-		ret = clk_enable(&priv->pcie_per);
-		if (ret) {
-			printf("unable to enable pcie_per clock\n");
-			clk_disable(&priv->pcie_inbound_axi);
-			goto err_pcie_phy;
-		}
-#endif
-		/* allow the clocks to stabilize */
-		udelay(200);
-
-		/* bit19 PM_REQ_CORE_RST of pciex#_stts0 should be cleared. */
-		for (i = 0; i < 100; i++) {
-			val = IMX8QM_CSR_PCIEA_OFFSET
-				+ priv->ctrl_id * SZ_64K;
-			imx_pcie_gpr_read(priv,
-					val + IMX8QM_CSR_PCIE_STTS0_OFFSET,
-					&tmp);
-			if ((tmp & IMX8QM_CTRL_STTS0_PM_REQ_CORE_RST) == 0)
-				break;
-			udelay(10);
-		}
-
-		if ((tmp & IMX8QM_CTRL_STTS0_PM_REQ_CORE_RST) != 0)
-			printf("ERROR PM_REQ_CORE_RST is still set.\n");
-
-		/* wait for phy pll lock firstly. */
-		if (imx8_pcie_wait_for_phy_pll_lock(priv)) {
-			ret = -ENODEV;
-			goto err_ref_clk;;
-		}
-
-		if (dm_gpio_is_valid(&priv->reset_gpio)) {
-			dm_gpio_set_value(&priv->reset_gpio, 1);
-			mdelay(20);
-			dm_gpio_set_value(&priv->reset_gpio, 0);
-			mdelay(20);
-		}
-
-		return 0;
+	ret = clk_enable(&priv->pcie_bus);
+	if (ret) {
+		printf("unable to enable pcie_bus clock\n");
+		goto err_pcie_phy;
 	}
+
+	ret = clk_enable(&priv->pcie_inbound_axi);
+	if (ret) {
+		printf("unable to enable pcie_axi clock\n");
+		goto err_pcie_bus;
+	}
+	ret = clk_enable(&priv->pcie_per);
+	if (ret) {
+		printf("unable to enable pcie_per clock\n");
+		goto err_pcie_inbound_axi;
+	}
+
+	ret = clk_enable(&priv->phy_per);
+	if (ret) {
+		printf("unable to enable phy_per clock\n");
+		goto err_pcie_per;
+	}
+
+	ret = clk_enable(&priv->misc_per);
+	if (ret) {
+		printf("unable to enable misc_per clock\n");
+		goto err_phy_per;
+	}
+
+	if (priv->variant == IMX8QM && priv->ctrl_id == 1) {
+		ret = clk_enable(&priv->pcie_phy_pclk);
+		if (ret) {
+			printf("unable to enable pcie_phy_pclk clock\n");
+			goto err_misc_per;
+		}
+
+		ret = clk_enable(&priv->pciex2_per);
+		if (ret) {
+			printf("unable to enable pciex2_per clock\n");
+			clk_disable(&priv->pcie_phy_pclk);
+			goto err_misc_per;
+		}
+	}
+#endif
+	/* allow the clocks to stabilize */
+	udelay(200);
+
+	/* bit19 PM_REQ_CORE_RST of pciex#_stts0 should be cleared. */
+	for (i = 0; i < 100; i++) {
+		val = IMX8QM_CSR_PCIEA_OFFSET
+			+ priv->ctrl_id * SZ_64K;
+		imx_pcie_gpr_read(priv,
+				val + IMX8QM_CSR_PCIE_STTS0_OFFSET,
+				&tmp);
+		if ((tmp & IMX8QM_CTRL_STTS0_PM_REQ_CORE_RST) == 0)
+			break;
+		udelay(10);
+	}
+
+	if ((tmp & IMX8QM_CTRL_STTS0_PM_REQ_CORE_RST) != 0)
+		printf("ERROR PM_REQ_CORE_RST is still set.\n");
+
+	/* wait for phy pll lock firstly. */
+	if (imx8_pcie_wait_for_phy_pll_lock(priv)) {
+		ret = -ENODEV;
+		goto err_ref_clk;;
+	}
+
+	if (dm_gpio_is_valid(&priv->reset_gpio)) {
+		dm_gpio_set_value(&priv->reset_gpio, 1);
+		mdelay(20);
+		dm_gpio_set_value(&priv->reset_gpio, 0);
+		mdelay(20);
+	}
+
+	return 0;
 
 err_ref_clk:
 #if CONFIG_IS_ENABLED(CLK)
+	if (priv->variant == IMX8QM && priv->ctrl_id == 1) {
+		clk_disable(&priv->pciex2_per);
+		clk_disable(&priv->pcie_phy_pclk);
+	}
+err_misc_per:
+	clk_disable(&priv->misc_per);
+err_phy_per:
+	clk_disable(&priv->phy_per);
+err_pcie_per:
 	clk_disable(&priv->pcie_per);
+err_pcie_inbound_axi:
 	clk_disable(&priv->pcie_inbound_axi);
+err_pcie_bus:
+	clk_disable(&priv->pcie_bus);
 err_pcie_phy:
 	clk_disable(&priv->pcie_phy);
 err_pcie:
@@ -1620,6 +1660,32 @@ static int imx_pcie_dm_probe(struct udevice *dev)
 		if (ret) {
 			printf("Failed to get pcie_inbound_axi clk\n");
 			return ret;
+		}
+
+		ret = clk_get_by_name(dev, "phy_per", &priv->phy_per);
+		if (ret) {
+			printf("Failed to get phy_per clk\n");
+			return ret;
+		}
+
+		ret = clk_get_by_name(dev, "misc_per", &priv->misc_per);
+		if (ret) {
+			printf("Failed to get misc_per clk\n");
+			return ret;
+		}
+
+		if (priv->variant == IMX8QM && priv->ctrl_id == 1) {
+			ret = clk_get_by_name(dev, "pcie_phy_pclk", &priv->pcie_phy_pclk);
+			if (ret) {
+				printf("Failed to get pcie_phy_pclk clk\n");
+				return ret;
+			}
+
+			ret = clk_get_by_name(dev, "pciex2_per", &priv->pciex2_per);
+			if (ret) {
+				printf("Failed to get pciex2_per clk\n");
+				return ret;
+			}
 		}
 #endif
 		priv->iomuxc_gpr =
