@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <hang.h>
 #include <clock_legacy.h>
 #include <cpu_func.h>
 #include <asm/io.h>
@@ -324,7 +325,12 @@ static char *get_reset_cause(void)
 
 void reset_cpu(ulong addr)
 {
-	printf("Feature not supported.\n");
+	entry_to_target_mode(MC_ME_MCTL_RESET);
+
+	/* If we get there, we are not in good shape */
+	mdelay(1000);
+	printf("FATAL: Reset Failed!\n");
+	hang();
 };
 
 int print_cpuinfo(void)
