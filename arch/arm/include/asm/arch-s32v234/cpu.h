@@ -83,4 +83,7 @@ static const struct sys_mmu_table s32_final_mmu_table[] = {
 
 #endif
 
+u32 cpu_mask(void);
+int cpu_numcores(void);
+
 #endif /* _FSL_S32V234_CPU_H */
