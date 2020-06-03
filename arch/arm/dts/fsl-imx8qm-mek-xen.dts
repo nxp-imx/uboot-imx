@@ -17,7 +17,7 @@
 
 / {
 	chosen {
-		bootargs = "console=hvc0 earlycon=hvc0 androidboot.console=hvc0 androidboot.android_dt_dir=/proc/device-tree/firmware/android/ androidboot.selinux=permissive";
+		bootargs = "console=hvc0 earlycon=hvc0 androidboot.console=hvc0 androidboot.android_dt_dir=/proc/device-tree/firmware/android/";
 	};
 };
 
