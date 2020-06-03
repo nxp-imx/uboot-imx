@@ -1,0 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2020 NXP
+ */
+
+&flash0 {
+	/delete-property/ spi-tx-bus-width;
+	/delete-property/ spi-rx-bus-width;
+};
