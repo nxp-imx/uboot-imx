@@ -28,7 +28,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if defined(CONFIG_IMX_TRUSTY_OS)
+#if defined(CONFIG_IMX_TRUSTY_OS) || defined(CONFIG_IMX8_TRUSTY_XEN)
 /* Pre-declaration of check_rpmb_blob. */
 int check_rpmb_blob(struct mmc *mmc);
 #endif
@@ -297,7 +297,7 @@ int mmc_load_image_parse_container(struct spl_image_info *spl_image,
 	if (ret = mmc_init(rpmb_mmc))
 		printf("mmc init failed %s\n", __func__);
 	else
-	ret = check_rpmb_blob(rpmb_mmc);
+		ret = check_rpmb_blob(rpmb_mmc);
 #endif
 	}
 	return ret;

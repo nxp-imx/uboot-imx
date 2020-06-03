@@ -14,7 +14,7 @@
 #include "avb_util.h"
 #include "avb_vbmeta_image.h"
 #include "avb_version.h"
-#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX) && !defined(CONFIG_XEN)
 #include "trusty/hwcrypto.h"
 #include <memalign.h>
 #endif
@@ -198,7 +198,7 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
   size_t expected_digest_len = 0;
   uint8_t expected_digest_buf[AVB_SHA512_DIGEST_SIZE];
   const uint8_t* expected_digest = NULL;
-#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX) && !defined(CONFIG_XEN)
   uint8_t* hash_out = NULL;
   uint8_t* hash_buf = NULL;
 #endif
@@ -300,7 +300,7 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
   }
 
   if (avb_strcmp((const char*)hash_desc.hash_algorithm, "sha256") == 0) {
-#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX) && !defined(CONFIG_XEN)
     /* DMA requires cache aligned input/output buffer */
     hash_out = memalign(ARCH_DMA_MINALIGN, AVB_SHA256_DIGEST_SIZE);
     if (hash_out == NULL) {
@@ -384,7 +384,7 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
 
 out:
 
-#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX) && !defined(CONFIG_XEN)
   if (hash_out != NULL) {
     free(hash_out);
     hash_out = NULL;
