@@ -588,9 +588,9 @@ int ft_system_setup(void *blob, bd_t *bd)
 
 #ifndef CONFIG_SKIP_RESOURCE_CHECKING
 	update_fdt_with_owned_resources(blob);
+	update_fdt_edma_nodes(blob);
 #endif
 
-	update_fdt_edma_nodes(blob);
 	if (is_imx8qm()) {
 		ret = config_smmu_fdt(blob);
 		if (ret)
