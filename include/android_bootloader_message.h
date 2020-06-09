@@ -145,8 +145,16 @@ struct slot_metadata {
     // 1 if this slot is corrupted from a dm-verity corruption, 0
     // otherwise.
     uint8_t verity_corrupted : 1;
+#ifdef CONFIG_DUAL_BOOTLOADER
+    // 1 if the bootloader has been verified in spl stage, 0 otherwise.
+    // this is needed for dual bootloader case.
+    uint8_t bootloader_verified : 1;
+    // Reserved for further use.
+    uint8_t reserved : 6;
+#else
     // Reserved for further use.
     uint8_t reserved : 7;
+#endif
 } __attribute__((packed));
 
 /* Bootloader Control AB
@@ -172,8 +180,17 @@ struct bootloader_control {
     uint8_t reserved0[2];
     // Per-slot information.  Up to 4 slots.
     struct slot_metadata slot_info[4];
+#ifdef CONFIG_DUAL_BOOTLOADER
+    //Last boot slot
+    uint8_t last_boot;
+    //spl recovery mode
+    bool spl_recovery;
+    // Reserved for further use.
+    uint8_t reserved1[6];
+#else
     // Reserved for further use.
     uint8_t reserved1[8];
+#endif
     // CRC32 of all 28 bytes preceding this field (little endian
     // format).
     uint32_t crc32_le;
