@@ -339,6 +339,12 @@ int __weak spl_mmc_emmc_boot_partition(struct mmc *mmc)
 {
 	int part = 0;
 
+#ifdef CONFIG_DUAL_BOOTLOADER
+	/* Bootloader is stored in eMMC user partition for
+	 * dual bootloader.
+	 */
+	part = 0;
+#else
 #ifdef CONFIG_SYS_MMCSD_RAW_MODE_EMMC_BOOT_PARTITION
 	part = CONFIG_SYS_MMCSD_RAW_MODE_EMMC_BOOT_PARTITION;
 #else
@@ -351,6 +357,7 @@ int __weak spl_mmc_emmc_boot_partition(struct mmc *mmc)
 
 	if (part == 7)
 		part = 0;
+#endif
 #endif
 
 	return part;
