@@ -44,6 +44,4 @@
 #endif
 #endif
 
-#define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
-
 #endif /* IMX8QM_MEK_ANDROID_H */
