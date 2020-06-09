@@ -13,7 +13,6 @@ subdir-ccflags-y += -I./lib \
 			-std=gnu99
 
 ifndef CONFIG_SPL_BUILD
-obj-y += libavb_ab/
 obj-$(CONFIG_AVB_ATX) += libavb_atx/
 endif
 obj-y += fsl/

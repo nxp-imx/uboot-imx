@@ -53,8 +53,8 @@ extern void trusty_os_init(void);
 
 #if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
 AvbABOps fsl_avb_ab_ops = {
-	.read_ab_metadata = fsl_read_ab_metadata,
-	.write_ab_metadata = fsl_write_ab_metadata,
+	.read_ab_metadata = fsl_avb_ab_data_read,
+	.write_ab_metadata = fsl_avb_ab_data_write,
 	.ops = NULL
 };
 #ifdef CONFIG_AVB_ATX

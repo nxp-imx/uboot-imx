@@ -84,8 +84,6 @@
 #define CONFIG_SYS_FSL_SEC_LE
 #endif
 
-#define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
-
 #if defined(CONFIG_XEN)
 #include "imx8qm_mek_android_auto_xen.h"
 #endif
