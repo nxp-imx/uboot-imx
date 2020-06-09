@@ -741,7 +741,7 @@ static void set_active_avb(char *cmd, char *response)
 		return;
 	}
 
-	ret = avb_ab_mark_slot_active(&fsl_avb_ab_ops, slot);
+	ret = fsl_avb_ab_mark_slot_active(&fsl_avb_ab_ops, slot);
 	if (ret != AVB_IO_RESULT_OK)
 		fastboot_fail("avb IO error", response);
 	else

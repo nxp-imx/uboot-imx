@@ -58,6 +58,4 @@
 #define NS_ARCH_ARM64 1
 #endif
 
-#define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
-
 #endif /* IMX8MN_EVK_ANDROID_H */

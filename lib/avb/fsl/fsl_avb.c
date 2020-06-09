@@ -336,34 +336,6 @@ fail:
 	return ret;
 }
 
-/* Reads A/B metadata from persistent storage. Returned data is
- * properly byteswapped. Returns AVB_IO_RESULT_OK on success, error
- * code otherwise.
- *
- * If the data read is invalid (e.g. wrong magic or CRC checksum
- * failure), the metadata shoule be reset using avb_ab_data_init()
- * and then written to persistent storage.
- *
- * Implementations will typically want to use avb_ab_data_read()
- * here to use the 'misc' partition for persistent storage.
- */
-AvbIOResult fsl_read_ab_metadata(AvbABOps* ab_ops, struct AvbABData* data)
-{
-	return avb_ab_data_read(ab_ops, data);
-}
-
-/* Writes A/B metadata to persistent storage. This will byteswap and
- * update the CRC as needed. Returns AVB_IO_RESULT_OK on success,
- * error code otherwise.
- *
- * Implementations will typically want to use avb_ab_data_write()
- * here to use the 'misc' partition for persistent storage.
- */
-AvbIOResult fsl_write_ab_metadata(AvbABOps* ab_ops, const struct AvbABData* data)
-{
-	return avb_ab_data_write(ab_ops, data);
-}
-
 /* Gets whether the device is unlocked. The value is returned in
  * |out_is_unlocked| (true if unlocked, false otherwise). Returns
  * AVB_IO_RESULT_OK if the state was retrieved, otherwise an error

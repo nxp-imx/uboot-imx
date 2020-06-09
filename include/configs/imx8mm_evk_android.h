@@ -71,6 +71,4 @@
 #define PHYS_SDRAM_2_SIZE        0x40000000 /* 1GB */
 #endif
 
-#define AVB_AB_I_UNDERSTAND_LIBAVB_AB_IS_DEPRECATED
-
 #endif /* IMX8MM_EVK_ANDROID_H */
