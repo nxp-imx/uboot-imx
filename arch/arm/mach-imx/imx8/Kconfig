@@ -79,6 +79,12 @@ config IMX_CONTAINER_CFG
 	  This is to specific the cfg file for generating container
 	  image which will be loaded by SPL.
 
+config PSCI_BOARD_REBOOT
+	bool "Enable psci board reboot command"
+	depends on ARM_PSCI_FW
+	help
+	  This is a optional command used to trigger system board reboot on imx8.
+
 choice
 	prompt "i.MX8 board select"
 	optional
