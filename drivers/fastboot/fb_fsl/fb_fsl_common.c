@@ -400,7 +400,7 @@ static void fastboot_puts(struct stdio_dev *dev, const char *s)
 			left = FASTBOOT_MAX_LEN - 4;
 
 		memcpy(buff + 4, s + i, left);
-		buff[left + 4 + 1] = 0;
+		buff[left + 4] = 0;
 		fastboot_tx_write_more(buff);
 	}
 }
