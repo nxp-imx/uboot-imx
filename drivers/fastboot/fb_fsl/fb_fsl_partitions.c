@@ -352,7 +352,7 @@ bool fastboot_parts_is_raw(struct fastboot_ptentry *ptn)
 	 return false;
 }
 
-static bool is_exist(char (*partition_base_name)[16], char *buffer, int count)
+static bool is_exist(char (*partition_base_name)[20], char *buffer, int count)
 {
 	int n;
 
@@ -364,7 +364,7 @@ static bool is_exist(char (*partition_base_name)[16], char *buffer, int count)
 }
 
 /*get partition base name from gpt without "_a/_b"*/
-int fastboot_parts_get_name(char (*partition_base_name)[16])
+int fastboot_parts_get_name(char (*partition_base_name)[20])
 {
 	int n = 0;
 	int count = 0;

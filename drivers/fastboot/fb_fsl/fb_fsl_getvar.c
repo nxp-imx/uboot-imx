@@ -452,7 +452,7 @@ void fastboot_getvar(char *cmd, char *response)
 	int status = 0;
 	int count = 0;
 	char var_name[FASTBOOT_RESPONSE_LEN];
-	char partition_base_name[MAX_PTN][16];
+	char partition_base_name[MAX_PTN][20];
 	char slot_suffix[2][5] = {"a","b"};
 
 	if (!cmd) {
