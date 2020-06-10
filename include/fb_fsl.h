@@ -224,7 +224,7 @@ bool fastboot_parts_is_slot(void);
 bool fastboot_parts_is_raw(struct fastboot_ptentry *ptn);
 
 /*get partition base name from gpt without "_a/_b"*/
-int fastboot_parts_get_name(char (*partition_base_name)[16]);
+int fastboot_parts_get_name(char (*partition_base_name)[20]);
 
 void fastboot_load_partitions(void);
 
