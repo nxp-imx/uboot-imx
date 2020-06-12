@@ -509,10 +509,18 @@ static int fastboot_tx_write_str(const char *buffer)
 	return fastboot_tx_write(buffer, strlen(buffer));
 }
 
+#ifdef CONFIG_PSCI_BOARD_REBOOT
+int do_board_reboot(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]);
+#endif
+
 static void compl_do_reset(struct usb_ep *ep, struct usb_request *req)
 {
 	g_dnl_unregister();
+#ifdef CONFIG_PSCI_BOARD_REBOOT
+	do_board_reboot(NULL, 0, 0, NULL);
+#else
 	do_reset(NULL, 0, 0, NULL);
+#endif
 }
 
 static unsigned int rx_bytes_expected(struct usb_ep *ep)
