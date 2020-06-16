@@ -376,12 +376,26 @@ int dram_init_banksize(void)
 }
 #endif
 
-#ifdef CONFIG_IMX_TRUSTY_OS
+#if defined(CONFIG_IMX_TRUSTY_OS) || defined(CONFIG_IMX8_TRUSTY_XEN)
 int check_rpmb_blob(struct mmc *mmc);
 
 int mmc_image_load_late(struct mmc *mmc)
 {
+	struct mmc *rpmb_mmc;
+
+#ifdef CONFIG_IMX8_TRUSTY_XEN
+	/* keyblob is stored at eMMC */
+	if (mmc_init_device(0))
+		printf("mmc init device fail %s\n", __func__);
+	rpmb_mmc = find_mmc_device(0);
+	if (mmc_init(rpmb_mmc)) {
+		printf("mmc init failed %s\n", __func__);
+		return -1;
+       }
+#else
+	rpmb_mmc = mmc;
+#endif
 	/* Check the rpmb key blob for trusty enabled platfrom. */
-	return check_rpmb_blob(mmc);
+	return check_rpmb_blob(rpmb_mmc);
 }
 #endif

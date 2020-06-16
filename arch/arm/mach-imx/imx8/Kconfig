@@ -85,6 +85,9 @@ config PSCI_BOARD_REBOOT
 	help
 	  This is a optional command used to trigger system board reboot on imx8.
 
+config IMX8_TRUSTY_XEN
+	bool "Support Trusty Xen feature"
+
 choice
 	prompt "i.MX8 board select"
 	optional
