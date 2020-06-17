@@ -60,11 +60,14 @@ static __maybe_unused unsigned long spl_mmc_raw_uboot_offset(int part)
 }
 
 #if defined(CONFIG_IMX_TRUSTY_OS)
-/* Pre-declaration of check_rpmb_blob. */
-int check_rpmb_blob(struct mmc *mmc);
 int mmc_load_image_raw_sector_dual_uboot(struct spl_image_info *spl_image,
 					 struct mmc *mmc);
 #endif
+
+int __weak mmc_image_load_late(struct mmc *mmc)
+{
+	return 0;
+}
 
 static __maybe_unused
 int mmc_load_image_raw_sector(struct spl_image_info *spl_image,
@@ -118,11 +121,7 @@ end:
 		return -1;
 	}
 
-	/* Images loaded, now check the rpmb keyblob for Trusty OS. */
-#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
-		ret = check_rpmb_blob(mmc);
-#endif
-
+	ret = mmc_image_load_late(mmc);
 	return ret;
 }
 
