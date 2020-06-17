@@ -85,6 +85,23 @@
 			   "else run jh_netboot; fi; \0" \
 	"jh_netboot=mw 0x303d0518 0xff; setenv fdt_file imx8mm-ab2-root.dtb; setenv jh_clk clk_ignore_unused; run netboot; \0 "
 
+#define M4_BOOT_ENV \
+	"m4_image=nxh3670.bin\0" \
+	"m4_loadaddr=0x80000000\0" \
+	"m4_sf_loadaddr=0x08100000\0" \
+	"loadm4image=fatload mmc ${mmcdev}:${mmcpart} ${m4_loadaddr} ${m4_image}\0" \
+	"update_m4_from_sd=" \
+		"if sf probe 0:0; then " \
+			"if run loadm4image; then " \
+				"setexpr fw_sz ${filesize} + 0xffff; " \
+				"setexpr fw_sz ${fw_sz} / 0x10000; " \
+				"setexpr fw_sz ${fw_sz} * 0x10000; " \
+				"sf erase 0x100000 ${fw_sz}; " \
+				"sf write ${m4_loadaddr} 0x100000 ${filesize}; " \
+			"fi; " \
+		"fi\0" \
+	"m4boot=run loadm4image; dcache flush; bootaux ${m4_loadaddr}\0" \
+	"m4boot_sf=sf probe 0:0; dcache flush; bootaux ${m4_sf_loadaddr}\0"
 
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
@@ -113,6 +130,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
 	JAILHOUSE_ENV \
+	M4_BOOT_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
 	"console=ttymxc1,115200\0" \
