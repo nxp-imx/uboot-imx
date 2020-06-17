@@ -16,6 +16,7 @@
 #include <asm/mach-imx/hab.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <g_dnl.h>
+#include <mmc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -372,5 +373,15 @@ int dram_init_banksize(void)
 	gd->bd->bi_dram[0].size = imx_ddr_size();
 
 	return 0;
+}
+#endif
+
+#ifdef CONFIG_IMX_TRUSTY_OS
+int check_rpmb_blob(struct mmc *mmc);
+
+int mmc_image_load_late(struct mmc *mmc)
+{
+	/* Check the rpmb key blob for trusty enabled platfrom. */
+	return check_rpmb_blob(mmc);
 }
 #endif
