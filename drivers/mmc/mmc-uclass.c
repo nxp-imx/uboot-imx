@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2015 Google, Inc
+ * Copyright 2020 NXP
  * Written by Simon Glass <sjg@chromium.org>
  */
 
@@ -292,9 +293,6 @@ void mmc_do_preinit(void)
 
 		if (!m)
 			continue;
-#ifdef CONFIG_FSL_ESDHC_ADAPTER_IDENT
-		mmc_set_preinit(m, 1);
-#endif
 		if (m->preinit)
 			mmc_start_init(m);
 	}
