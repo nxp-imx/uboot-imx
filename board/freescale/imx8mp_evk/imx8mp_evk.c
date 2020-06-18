@@ -27,6 +27,7 @@
 #include <dwc3-uboot.h>
 #include <imx_sip.h>
 #include <linux/arm-smccc.h>
+#include <mmc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

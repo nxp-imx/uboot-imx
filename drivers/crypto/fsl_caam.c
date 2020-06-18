@@ -421,6 +421,7 @@ static void kick_trng(u32 ent_delay)
 /*
  *  Descriptors to instantiate SH0, SH1, load the keys
  */
+#ifndef CONFIG_ARCH_IMX8
 static const u32 rng_inst_sh0_desc[] = {
 	/* Header, don't setup the size */
 	CAAM_HDR_CTYPE | CAAM_HDR_ONE | CAAM_HDR_START_INDEX(0),
@@ -451,6 +452,7 @@ static const u32 rng_inst_load_keys[] = {
 	/* Generate the Key */
 	CAAM_PROTOP_CTYPE | CAAM_C1_RNG | BM_ALGO_RNG_SK | ALGO_RNG_GENERATE,
 };
+#endif
 
 static void do_inst_desc(u32 *desc, u32 status)
 {

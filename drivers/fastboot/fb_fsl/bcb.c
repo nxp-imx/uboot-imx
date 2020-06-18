@@ -11,6 +11,7 @@
 #include <g_dnl.h>
 #include <mmc.h>
 #include "bcb.h"
+#include "command.h"
 #define ALIGN_BYTES 64 /*armv7 cache line need 64 bytes aligned */
 
 static ulong get_block_size(char *ifname, int dev)
