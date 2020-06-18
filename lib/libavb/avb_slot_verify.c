@@ -294,7 +294,7 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
   bool image_preloaded = false;
   uint8_t* digest;
   size_t digest_len;
-  const char* found;
+  const char* found = NULL;
   uint64_t image_size;
   size_t expected_digest_len = 0;
   uint8_t expected_digest_buf[AVB_SHA512_DIGEST_SIZE];
@@ -394,7 +394,9 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
   // Although only one of the type might be used, we have to defined the
   // structure here so that they would live outside the 'if/else' scope to be
   // used later.
+#if !defined(CONFIG_IMX_TRUSTY_OS) || defined(CONFIG_AVB_ATX) ||  defined(CONFIG_XEN)
   AvbSHA256Ctx sha256_ctx;
+#endif
   AvbSHA512Ctx sha512_ctx;
   size_t image_size_to_hash = hash_desc.image_size;
   // If we allow verification error and the whole partition is smaller than
@@ -411,8 +413,6 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
         ret = AVB_SLOT_VERIFY_RESULT_ERROR_OOM;
         goto out;
     }
-    uint32_t round_buf_size = ROUND(hash_desc.salt_len + image_size_to_hash,
-                                ARCH_DMA_MINALIGN);
     hash_buf = (void *)CONFIG_FASTBOOT_BUF_ADDR;
 
     avb_memcpy(hash_buf, desc_salt, hash_desc.salt_len);

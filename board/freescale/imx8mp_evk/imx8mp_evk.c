@@ -21,6 +21,7 @@
 #include "../common/tcpc.h"
 #include <usb.h>
 #include <dwc3-uboot.h>
+#include <mmc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

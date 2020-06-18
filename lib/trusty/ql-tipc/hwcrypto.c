@@ -28,6 +28,8 @@
 #include <trusty/trusty_ipc.h>
 #include <trusty/util.h>
 #include "common.h"
+#include <cpu_func.h>
+#include <hang.h>
 
 #define LOCAL_LOG 0
 #define CAAM_KB_HEADER_LEN 48
