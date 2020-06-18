@@ -6,6 +6,7 @@
 + */
 #include <common.h>
 #include <stdlib.h>
+#include <part.h>
 
 #include "debug.h"
 #include "utils.h"

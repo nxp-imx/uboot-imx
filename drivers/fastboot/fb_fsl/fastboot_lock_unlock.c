@@ -5,6 +5,7 @@
 #include <common.h>
 #include <mapmem.h>
 #include <linux/types.h>
+#include <linux/delay.h>
 #include <part.h>
 #include <mmc.h>
 #include <ext_common.h>
@@ -18,6 +19,8 @@
 #include <trusty/libtipc.h>
 #include <asm/mach-imx/hab.h>
 #endif
+
+#include <fsl_avb.h>
 
 #ifdef FASTBOOT_ENCRYPT_LOCK
 
@@ -144,7 +147,7 @@ static int generate_salt(unsigned char* salt) {
 
 }
 
-static FbLockState decrypt_lock_store(unsigned char *bdata) {
+static __maybe_unused FbLockState decrypt_lock_store(unsigned char *bdata) {
 	int p = 0, ret;
 	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, plain_data, ENDATA_LEN);
 	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, keymod, 16);

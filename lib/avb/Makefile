@@ -8,6 +8,7 @@ subdir-ccflags-y += -I./lib \
 			-Wno-type-limits \
 			-Wno-psabi \
 			-Wno-unused-parameter \
+			-Wno-sign-compare \
 			-ffunction-sections \
 			-std=gnu99
 
