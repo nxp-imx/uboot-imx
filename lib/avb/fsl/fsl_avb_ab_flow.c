@@ -11,6 +11,7 @@
 #include "utils.h"
 #include "fsl_caam.h"
 #include "fsl_avbkey.h"
+#include "hang.h"
 
 #if defined(CONFIG_DUAL_BOOTLOADER) || !defined(CONFIG_SPL_BUILD)
 static const char* slot_suffixes[2] = {"_a", "_b"};

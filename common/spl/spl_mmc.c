@@ -59,7 +59,7 @@ static __maybe_unused unsigned long spl_mmc_raw_uboot_offset(int part)
 	return 0;
 }
 
-#if defined(CONFIG_IMX_TRUSTY_OS)
+#if defined(CONFIG_DUAL_BOOTLOADER)
 int mmc_load_image_raw_sector_dual_uboot(struct spl_image_info *spl_image,
 					 struct mmc *mmc);
 #endif

@@ -13,6 +13,8 @@
 #include <mmc.h>
 #include <hash.h>
 #include <mapmem.h>
+#include <hang.h>
+#include <cpu_func.h>
 
 #include <fsl_avb.h>
 #include "trusty/avb.h"
@@ -791,7 +793,9 @@ int check_rpmb_blob(struct mmc *mmc)
 	int ret = 0;
 	char original_part;
 	struct keyslot_package kp;
+#if CONFIG_IS_ENABLED(BLK)
 	struct blk_desc *dev_desc = NULL;
+#endif
 
 	read_keyslot_package(&kp);
 	if (strcmp(kp.magic, KEYPACK_MAGIC)) {

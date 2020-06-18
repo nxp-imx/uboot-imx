@@ -40,6 +40,7 @@
 #ifdef CONFIG_IMX_TRUSTY_OS
 #include "u-boot/sha256.h"
 #include <trusty/libtipc.h>
+#include <trusty/hwcrypto.h>
 #endif
 
 #include "fb_fsl_common.h"
@@ -439,8 +440,12 @@ fail:
 }
 #endif /* CONFIG_DUAL_BOOTLOADER && CONFIG_AVB_ATX */
 
-int trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_result,
-			    AvbSlotVerifyData *avb_out_data) {
+#ifdef CONFIG_VENDOR_BOOT_SUPPORT
+int trusty_setbootparameter(struct boot_img_hdr_v3 *hdr,
+#else
+int trusty_setbootparameter(struct andr_img_hdr *hdr,
+#endif
+				AvbABFlowResult avb_result, AvbSlotVerifyData *avb_out_data) {
 #if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_AVB_ATX)
 	uint8_t vbh[AVB_SHA256_DIGEST_SIZE];
 #endif
@@ -492,7 +497,9 @@ int trusty_setbootparameter(struct andr_img_hdr *hdr, AvbABFlowResult avb_result
 			       NULL, 0);
 #endif
 
+#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_AVB_ATX)
 fail:
+#endif
 	return ret;
 }
 #endif
@@ -870,7 +877,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	dt_entry = (struct dt_table_entry *)((ulong)dt_img +
 			be32_to_cpu(dt_img->dt_entries_offset));
 	fdt_size = be32_to_cpu(dt_entry->dt_size);
-	memcpy((void *)fdt_addr, (void *)((ulong)dt_img +
+	memcpy((void *)(ulong)fdt_addr, (void *)((ulong)dt_img +
 			be32_to_cpu(dt_entry->dt_offset)), fdt_size);
 #endif /*CONFIG_OF_LIBFDT*/
 

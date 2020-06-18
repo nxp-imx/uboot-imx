@@ -19,6 +19,8 @@
 #include <asm/mach-imx/hab.h>
 #endif
 
+#include <fsl_avb.h>
+
 #ifdef FASTBOOT_ENCRYPT_LOCK
 
 #include <hash.h>
@@ -150,7 +152,7 @@ static int generate_salt(unsigned char* salt) {
 
 }
 
-static FbLockState decrypt_lock_store(unsigned char *bdata) {
+static __maybe_unused FbLockState decrypt_lock_store(unsigned char *bdata) {
 	int p = 0, ret;
 	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, plain_data, ENDATA_LEN);
 
@@ -198,7 +200,7 @@ static FbLockState decrypt_lock_store(unsigned char *bdata) {
 		return plain_data[ENDATA_LEN-1];
 }
 
-static int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
+static __maybe_unused int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
 	unsigned int p = 0;
 	int ret;
 	int salt_len = generate_salt(bdata);
