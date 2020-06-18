@@ -1511,7 +1511,7 @@ void reset_cpu(void)
 #endif
 
 #if defined(CONFIG_ARCH_MISC_INIT)
-static void acquire_buildinfo(void)
+static __maybe_unused void acquire_buildinfo(void)
 {
 	u64 atf_commit = 0;
 	struct arm_smccc_res res;

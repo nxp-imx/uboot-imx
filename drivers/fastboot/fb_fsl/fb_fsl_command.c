@@ -402,7 +402,7 @@ static FbLockState do_fastboot_unlock(bool force)
 			char *serial = get_serial();
 			status = trusty_verify_secure_unlock(fastboot_buf_addr,
 								fastboot_bytes_received,
-								serial, 16);
+								(uint8_t *)serial, 16);
 			if (status < 0) {
 				printf("verify secure unlock credential fail due Trusty return %d\n", status);
 				return FASTBOOT_LOCK_ERROR;

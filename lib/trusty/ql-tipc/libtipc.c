@@ -31,6 +31,8 @@
 #include <trusty/trusty_dev.h>
 #include <trusty/trusty_ipc.h>
 #include <trusty/util.h>
+#include <hang.h>
+#include <env.h>
 
 #define LOCAL_LOG 0
 
