@@ -319,41 +319,6 @@ exit:
 	return (sciErr == SC_ERR_NONE) ? 0 : -EIO;
 }
 
-int examples(void)
-{
-	u32 size;
-	struct snvs_security_sc_conf *snvs_conf;
-	struct snvs_dgo_conf *snvs_dgo_conf;
-	struct tamper_pin_cfg *tamper_pin_conf;
-
-	/* Caller */
-	snvs_conf = get_snvs_config();
-	snvs_dgo_conf = get_snvs_dgo_config();
-	tamper_pin_conf = get_tamper_pin_cfg_list(&size);
-
-	/* Default */
-	snvs_conf = &snvs_default_config;
-	snvs_dgo_conf = &snvs_dgo_default_config;
-	tamper_pin_conf = tamper_pin_list_default_config;
-
-	/* Passive tamper expecting VCC on the line */
-	snvs_conf = &snvs_passive_vcc_config;
-	snvs_dgo_conf = &snvs_dgo_passive_vcc_config;
-	tamper_pin_conf = tamper_pin_list_passive_vcc_config;
-
-	/* Passive tamper expecting GND on the line */
-	snvs_conf = &snvs_passive_gnd_config;
-	snvs_dgo_conf = &snvs_dgo_passive_gnd_config;
-	tamper_pin_conf = tamper_pin_list_passive_gnd_config;
-
-	/* Active tamper */
-	snvs_conf = &snvs_active_config;
-	snvs_dgo_conf = &snvs_dgo_active_config;
-	tamper_pin_conf = tamper_pin_list_active_config;
-
-	return !snvs_conf + !snvs_dgo_conf + !tamper_pin_conf;
-}
-
 #ifdef CONFIG_SNVS_SEC_SC_AUTO
 int snvs_security_sc_init(void)
 {
