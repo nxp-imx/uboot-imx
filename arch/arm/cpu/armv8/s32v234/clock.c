@@ -136,7 +136,7 @@ static int program_pll(enum pll_type pll, u32 refclk_freq, u32 freq0, u32 freq1,
 		/* DFS clk enable programming */
 		writel(DFS_CTRL_DLL_RESET, DFS_CTRL(pll));
 
-		writel(DFS_DLLPRG1_CPICTRL_SET(0x5) |
+		writel(DFS_DLLPRG1_CPICTRL_SET(0x7) |
 		       DFS_DLLPRG1_VSETTLCTRL_SET(0x1) |
 		       DFS_DLLPRG1_CALBYPEN_SET(0x0) |
 		       DFS_DLLPRG1_DACIN_SET(0x1) | DFS_DLLPRG1_LCKWT_SET(0x0) |
