@@ -201,6 +201,8 @@
 			"if test $fdt_file = undefined; then " \
 				"if test $board_name = ULZ-EVK && test $board_rev = 14X14; then " \
 					"setenv fdt_file imx6ulz-14x14-evk.dtb; fi; " \
+				"if test $board_name = ULZL-EVK && test $board_rev = 9X9; then " \
+					"setenv fdt_file imx6ulz-lite-evk.dtb; fi; " \
 				"if test $board_name = EVK && test $board_rev = 9X9; then " \
 					"setenv fdt_file imx6ull-9x9-evk.dtb; fi; " \
 				"if test $board_name = EVK && test $board_rev = 14X14; then " \
@@ -213,6 +215,8 @@
 			"if test $tee_file = undefined; then " \
 				"if test $board_name = ULZ-EVK && test $board_rev = 14X14; then " \
 					"setenv tee_file uTee-6ulzevk; fi; " \
+				"if test $board_name = ULZL-EVK && test $board_rev = 9X9; then " \
+					"setenv tee_file uTee-6ulzlevk; fi; " \
 				"if test $board_name = EVK && test $board_rev = 9X9; then " \
 					"setenv tee_file uTee-6ullevk; fi; " \
 				"if test $board_name = EVK && test $board_rev = 14X14; then " \

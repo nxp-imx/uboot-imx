@@ -20,6 +20,7 @@
 #define MXC_CPU_MX6UL		0x64
 #define MXC_CPU_MX6ULL		0x65
 #define MXC_CPU_MX6ULZ		0x6b /* dummy ID */
+#define MXC_CPU_MX6ULZL		0x6C /* dummy ID */
 #define MXC_CPU_MX6SOLO		0x66 /* dummy */
 #define MXC_CPU_MX6SLL		0x67
 #define MXC_CPU_MX6D		0x6A

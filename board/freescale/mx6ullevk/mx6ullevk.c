@@ -505,7 +505,13 @@ int board_late_init(void)
 	if (is_cpu_type(MXC_CPU_MX6ULZ)) {
 		env_set("board_name", "ULZ-EVK");
 		env_set("usb_net_cmd", "usb start");
-    }
+	}
+
+	if (is_cpu_type(MXC_CPU_MX6ULZL)) {
+		env_set("board_name", "ULZL-EVK");
+		env_set("usb_net_cmd", "usb start");
+	}
+
 #endif
 
 #ifdef CONFIG_ENV_IS_IN_MMC

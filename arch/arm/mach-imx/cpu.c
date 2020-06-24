@@ -225,6 +225,8 @@ const char *get_imx_type(u32 imxtype)
 		return "6ULL";	/* ULL version of the mx6 */
 	case MXC_CPU_MX6ULZ:
 		return "6ULZ";	/* ULL version of the mx6 */
+	case MXC_CPU_MX6ULZL:
+		return "6ULZLite";	/* ULL version of the mx6 */
 	case MXC_CPU_MX51:
 		return "51";
 	case MXC_CPU_MX53:
