@@ -394,5 +394,4 @@ Finally:
   $ sudo umount partition
 
 References:
-[1] AN12212: "Software Solutions for Migration Guide from Aarch32 to
-              Aarch64" - Rev 0."
+[1] AN12212: "Software Solutions for Migration Guide from Aarch32 to Aarch64"
