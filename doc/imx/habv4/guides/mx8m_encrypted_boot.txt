@@ -497,4 +497,4 @@ incompatible DEK blob will be detected and cause an error. A substitute
 encrypted boot image will not be decrypted, and will not be executed.
 
 References:
-[1] AN12056: "Encrypted Boot on HABv4 and CAAM Enabled Devices" - Rev. 1
+[1] AN12056: "Encrypted Boot on HABv4 and CAAM Enabled Devices"
