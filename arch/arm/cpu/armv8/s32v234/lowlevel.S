@@ -27,6 +27,8 @@
 #define DMA_TCDn_CSR(channel)			(DMA_TCDn(channel) + 0x1C)
 #define DMA_TCDn_BITER_ELINKNO(channel)		(DMA_TCDn(channel) + 0x1E)
 
+#define SWT_SR(SWTn_BASE_ADDR) (SWTn_BASE_ADDR + 0x10)
+
 /*************************************************************************
  *
  * void dma_mem_clr(start, size);
@@ -106,14 +108,14 @@ ENTRY(lowlevel_init)
 
 	branch_if_slave x0, 1f
 
-watchdog_m4_disable:
+watchdog_cortexm_disable:
 	/* disable SWT4 watchdog*/
-	ldr x0, =0x40086010
+	ldr x0, =SWT_SR(SWT4_BASE_ADDR)
 	ldr w1, =0xC520
 	str w1, [x0]
 	ldr w1, =0xD928
 	str w1, [x0]
-	ldr x0, =0x40086000
+	ldr x0, =SWT4_BASE_ADDR
 	ldr x1, [x0]
 	and x1, x1, 0xFFFFFFFE
 	str x1, [x0]
