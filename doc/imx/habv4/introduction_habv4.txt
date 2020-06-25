@@ -257,6 +257,5 @@ directory.
 
 References:
 [1] CST: i.MX High Assurance Boot Reference Code Signing Tool.
-[2] AN4581: "Secure Boot on i.MX 50, i.MX 53, i.MX 6 and i.MX 7 Series using
- HABv4" - Rev 2.
-[3] AN12056: "Encrypted Boot on HABv4 and CAAM Enabled Devices" - Rev. 1
+[2] AN4581: "i.MX Secure Boot on HABv4 Supported Devices"
+[3] AN12056: "Encrypted Boot on HABv4 and CAAM Enabled Devices"
