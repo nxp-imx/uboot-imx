@@ -290,4 +290,4 @@ os_cntr_signed.bin.
   $ sudo cp enc_flash_os.bin /media/UserID/Boot\ imx8/os_cntr_signed.bin
 
 References:
-[1] SCFW API guide: "System Controller Firmware API Reference Guide - Rev 1.5"
+[1] SCFW API guide: "System Controller Firmware API Reference Guide"

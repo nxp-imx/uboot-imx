@@ -354,5 +354,4 @@ targets, for a complete procedure please refer to mx8_mx8x_secure_boot.txt
 document available under doc/imx/hab/ahab/guides/ directory.
 
 References:
-[1] AN12212: "Software Solutions for Migration Guide from Aarch32 to
-              Aarch64" - Rev 0."
+[1] AN12212: "Software Solutions for Migration Guide from Aarch32 to Aarch64"
