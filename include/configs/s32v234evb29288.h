@@ -16,6 +16,8 @@
  * the ones in the header included at the end, configs/s32v234_common.h.
  */
 
+#define FDT_FILE fsl-s32v234-evb.dtb
+
 #define CONFIG_DDR_INIT_DELAY 100
 
 /* we include this file here because it depends on the above definitions */

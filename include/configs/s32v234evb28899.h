@@ -8,6 +8,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define FDT_FILE fsl-s32v234-evb28899.dtb
+
 /* we include this file here because it depends on the above definitions */
 #include <configs/s32v234_common.h>
 
