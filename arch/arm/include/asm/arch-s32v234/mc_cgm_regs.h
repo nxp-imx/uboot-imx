@@ -103,6 +103,16 @@
 #define PLLDIG_PLLCAL1_NDAC1_OFFSET		(24)
 #define PLLDIG_PLLCAL1_NDAC1_MASK		(0x7F000000)
 
+/* PLL Calibration Register 2 (PLLDIG_PLLCAL2) */
+#define PLLDIG_PLLCAL2(pll)		((MC_CGM0_BASE_ADDR + 0x0000003c) + \
+					 ((pll) * 0x80))
+
+/* These values must be written into PLLCAL1 and PLLCAL2 according
+ * to the S32V234 Reference Manual Revision 4
+ */
+#define PLLDIG_PLLCAL1_ADVISED_VALUE	0x44000000
+#define PLLDIG_PLLCAL2_ADVISED_VALUE	0x0001002b
+
 /* Digital Frequency Synthesizer (DFS) */
 /* According to the manual there are 3 DFS modules only for ARM_PLL, DDR_PLL, ENET_PLL */
 #define DFS0_BASE_ADDR				(MC_CGM0_BASE_ADDR + 0x00000040)

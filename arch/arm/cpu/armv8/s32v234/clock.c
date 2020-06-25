@@ -125,6 +125,9 @@ static int program_pll(enum pll_type pll, u32 refclk_freq, u32 freq0, u32 freq1,
 	writel(readl(PLLDIG_PLLFD(pll)) | PLLDIG_PLLFD_MFN_SET(pllfd_mfn) |
 	       PLLDIG_PLLFD_SMDEN, PLLDIG_PLLFD(pll));
 
+	writel(PLLDIG_PLLCAL1_ADVISED_VALUE, PLLDIG_PLLCAL1(pll));
+	writel(PLLDIG_PLLCAL2_ADVISED_VALUE, PLLDIG_PLLCAL2(pll));
+
 	/* switch on the pll in current mode */
 	writel(readl(MC_ME_RUNn_MC(0)) | MC_ME_RUNMODE_MC_PLL(pll),
 	       MC_ME_RUNn_MC(0));
