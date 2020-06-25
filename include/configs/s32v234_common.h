@@ -64,7 +64,7 @@
 
 #ifdef CONFIG_RUN_FROM_DDR0
 /* Flat device tree definitions */
-#define FDT_ADDR		0x82000000
+#define FDT_ADDR		0x83E00000
 
 /*Kernel image load address */
 #define LOADADDR		0x80080000
@@ -72,7 +72,7 @@
 /* Ramdisk load address */
 #define RAMDISK_ADDR		0x84000000
 #else
-#define FDT_ADDR		0xC2000000
+#define FDT_ADDR		0xC3E00000
 
 /*Kernel image load address */
 #define LOADADDR		0xC307FFC0
