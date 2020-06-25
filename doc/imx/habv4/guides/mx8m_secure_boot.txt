@@ -423,7 +423,13 @@ details about these fuses and their possible impact can be found at AN4581[1].
 
   => fuse prog 1 3 0xC00000
 
-2. Authenticating additional boot images
+2. Secure boot in SDP mode
+---------------------------
+
+For secure boot in SDP mode, please refer to the "HABv4 closed chip support"
+chapter in the UUU documentation[3].
+
+3. Authenticating additional boot images
 -----------------------------------------
 
 The High Assurance Boot (HAB) code located in the on-chip ROM provides an
@@ -461,7 +467,7 @@ The diagram below illustrate the Image layout:
                     |     Padding (optional)      |
                     +-----------------------------+
 
-2.1 Padding the image
+3.1 Padding the image
 ----------------------
 
 The Image must be padded to the size specified in the Image header, this can be
@@ -480,7 +486,7 @@ The tool objcopy can be used for padding the image.
   $ objcopy -I binary -O binary --pad-to 0x1455000 --gap-fill=0x00 \
 	Image Image_pad.bin
 
-2.2 Generating Image Vector Table
+3.2 Generating Image Vector Table
 ----------------------------------
 
 The HAB code requires an Image Vector Table (IVT) for determining the image
@@ -498,7 +504,7 @@ Note: The load Address may change depending on the device.
 
   $ cat Image_pad.bin ivt.bin > Image_pad_ivt.bin
 
-2.3 Signing the image
+3.3 Signing the image
 ----------------------
 
 A CSF file has to be created to sign the image. HAB does not allow to change
@@ -515,7 +521,7 @@ CSF examples are available in ../csf_examples/additional_images/ directory.
 
   $ cat Image_pad_ivt.bin csf_Image.bin > Image_signed.bin
 
-2.4 Verifying HAB events
+3.4 Verifying HAB events
 -------------------------
 
 The U-Boot includes the hab_auth_img command which can be used for
@@ -531,3 +537,4 @@ If no HAB events were found the Image is successfully signed.
 References:
 [1] AN4581: "i.MX Secure Boot on HABv4 Supported Devices"
 [2] AN12212: "Software Solutions for Migration Guide from Aarch32 to Aarch64"
+[3] https://github.com/NXPmicro/mfgtools/releases/
