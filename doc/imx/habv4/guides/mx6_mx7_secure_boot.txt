@@ -342,7 +342,13 @@ and word according to the i.MX device:
               | i.MX7ULP     | bank 1 word 1 | 0x000000C0 |
               +--------------+---------------+------------+
 
-2. Extending the root of trust
+2. Secure boot in SDP mode
+---------------------------
+
+For secure boot in SDP mode, please refer to the "HABv4 closed chip support"
+chapter in the UUU documentation[3].
+
+3. Extending the root of trust
 -------------------------------
 
 The High Assurance Boot (HAB) code located in the on-chip ROM provides an
@@ -376,7 +382,7 @@ The diagram below illustrate the zImage layout:
                     |     Padding (optional)      |
                     +-----------------------------+
 
-2.1 Padding the image
+3.1 Padding the image
 ----------------------
 
 The zImage must be padded to the next boundary address (0x1000), for instance
@@ -389,7 +395,7 @@ The tool objcopy can be used for padding the image.
   $ objcopy -I binary -O binary --pad-to 0x64A000 --gap-fill=0x00 \
 	zImage zImage_pad.bin
 
-2.2 Generating Image Vector Table
+3.2 Generating Image Vector Table
 ----------------------------------
 
 The HAB code requires an Image Vector Table (IVT) for determining the image
@@ -407,7 +413,7 @@ Note: The load Address may change depending on the device.
 
   $ cat zImage_pad.bin ivt.bin > zImage_pad_ivt.bin
 
-2.3 Signing the image
+3.3 Signing the image
 ----------------------
 
 A CSF file has to be created to sign the image. HAB does not allow to change
@@ -425,7 +431,7 @@ directory.
 
   $ cat zImage_pad_ivt.bin csf_zImage.bin > zImage_signed.bin
 
-2.4 Verifying HAB events
+3.4 Verifying HAB events
 -------------------------
 
 The U-Boot includes the hab_auth_img command which can be used for
@@ -441,3 +447,4 @@ If no HAB events were found the zImage is successfully signed.
 References:
 [1] AN4581: "i.MX Secure Boot on HABv4 Supported Devices"
 [2] AN12263: "HABv4 RVT Guidelines and Recommendations"
+[3] https://github.com/NXPmicro/mfgtools/releases/
