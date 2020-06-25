@@ -273,6 +273,5 @@ will be detected and cause an error. A substitute encrypted boot image
 will not be decrypted, and will not be executed.
 
 References:
-[1] AN4581: "Secure Boot on i.MX 50, i.MX 53, i.MX 6 and i.MX 7 Series
-using HABv4" - Rev. 2
-[2] AN12056: "Encrypted Boot on HABv4 and CAAM Enabled Devices" - Rev. 1
+[1] AN4581: "i.MX Secure Boot on HABv4 Supported Devices"
+[2] AN12056: "Encrypted Boot on HABv4 and CAAM Enabled Devices"
