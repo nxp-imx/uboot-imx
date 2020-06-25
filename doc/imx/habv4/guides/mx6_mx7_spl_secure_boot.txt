@@ -176,5 +176,12 @@ complete procedure please refer to section "1.5 Programming SRK Hash" in
 mx6_mx7_secure_boot.txt document available under doc/imx/habv4/guides/
 directory.
 
+2. Secure boot in SDP mode
+---------------------------
+
+For secure boot in SDP mode, please refer to the "HABv4 closed chip support"
+chapter in the UUU documentation[2].
+
 References:
 [1] AN4581: "i.MX Secure Boot on HABv4 Supported Devices"
+[2] https://github.com/NXPmicro/mfgtools/releases/
