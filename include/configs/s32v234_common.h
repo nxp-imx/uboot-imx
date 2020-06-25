@@ -67,7 +67,7 @@
 #define FDT_ADDR		0x82000000
 
 /*Kernel image load address */
-#define LOADADDR		0x8307FFC0
+#define LOADADDR		0x80080000
 
 /* Ramdisk load address */
 #define RAMDISK_ADDR		0x84000000
