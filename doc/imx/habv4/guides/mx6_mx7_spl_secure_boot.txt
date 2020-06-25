@@ -177,5 +177,4 @@ mx6_mx7_secure_boot.txt document available under doc/imx/habv4/guides/
 directory.
 
 References:
-[1] AN4581: "Secure Boot on i.MX 50, i.MX 53, i.MX 6 and i.MX 7 Series using
- HABv4" - Rev 2.
+[1] AN4581: "i.MX Secure Boot on HABv4 Supported Devices"

@@ -529,7 +529,5 @@ loaded at the load address specified in the IVT.
 If no HAB events were found the Image is successfully signed.
 
 References:
-[1] AN4581: "Secure Boot on i.MX 50, i.MX 53, i.MX 6 and i.MX 7 Series using
- HABv4" - Rev 2.
-[2] AN12212: "Software Solutions for Migration Guide from Aarch32 to
-Aarch64" - Rev 0.
+[1] AN4581: "i.MX Secure Boot on HABv4 Supported Devices"
+[2] AN12212: "Software Solutions for Migration Guide from Aarch32 to Aarch64"
