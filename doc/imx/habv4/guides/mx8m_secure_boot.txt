@@ -407,22 +407,6 @@ signed using the correct PKI tree.
 Additional fuses can be programmed for completely secure the device, more
 details about these fuses and their possible impact can be found at AN4581[1].
 
-- Program SRK_LOCK:
-
-  => fuse prog 0 0 0x200
-
-- Program DIR_BT_DIS:
-
-  => fuse prog 1 3 0x8000000
-
-- Program SJC_DISABLE:
-
-  => fuse prog 1 3 0x200000
-
-- JTAG_SMODE:
-
-  => fuse prog 1 3 0xC00000
-
 2. Secure boot in SDP mode
 ---------------------------
 
