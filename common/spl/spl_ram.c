@@ -17,6 +17,11 @@
 #include <spl.h>
 #include <linux/libfdt.h>
 
+unsigned long __weak spl_ram_get_uboot_base(void)
+{
+	return CONFIG_SPL_LOAD_FIT_ADDRESS;
+}
+
 static ulong spl_ram_load_read(struct spl_load_info *load, ulong sector,
 			       ulong count, void *buf)
 {
@@ -24,13 +29,7 @@ static ulong spl_ram_load_read(struct spl_load_info *load, ulong sector,
 
 	debug("%s: sector %lx, count %lx, buf %lx\n",
 	      __func__, sector, count, (ulong)buf);
-
-	addr = (ulong)CONFIG_SPL_LOAD_FIT_ADDRESS + sector;
-	if (CONFIG_IS_ENABLED(IMAGE_PRE_LOAD))
-		addr += image_load_offset;
-
-	memcpy(buf, (void *)addr, count);
-
+	memcpy(buf, (void *)(sector), count);
 	return count;
 }
 
@@ -40,7 +39,7 @@ static int spl_ram_load_image(struct spl_image_info *spl_image,
 	struct legacy_img_hdr *header;
 	int ret;
 
-	header = (struct legacy_img_hdr *)CONFIG_SPL_LOAD_FIT_ADDRESS;
+	header = (struct legacy_img_hdr *)spl_ram_get_uboot_base();
 
 	if (CONFIG_IS_ENABLED(IMAGE_PRE_LOAD)) {
 		unsigned long addr = (unsigned long)header;
@@ -65,7 +64,15 @@ static int spl_ram_load_image(struct spl_image_info *spl_image,
 		debug("Found FIT\n");
 		load.bl_len = 1;
 		load.read = spl_ram_load_read;
-		ret = spl_load_simple_fit(spl_image, &load, 0, header);
+		ret = spl_load_simple_fit(spl_image, &load, (ulong)header, header);
+	} else if (IS_ENABLED(CONFIG_SPL_LOAD_IMX_CONTAINER)) {
+		struct spl_load_info load;
+
+		memset(&load, 0, sizeof(load));
+		load.bl_len = 1;
+		load.read = spl_ram_load_read;
+
+		ret = spl_load_imx_container(spl_image, &load, (ulong)header);
 	} else {
 		ulong u_boot_pos = spl_get_image_pos();
 
