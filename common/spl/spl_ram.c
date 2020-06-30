@@ -21,12 +21,17 @@
 # define CONFIG_SPL_LOAD_FIT_ADDRESS	0
 #endif
 
+unsigned long __weak spl_ram_get_uboot_base(void)
+{
+	return CONFIG_SPL_LOAD_FIT_ADDRESS;
+}
+
 static ulong spl_ram_load_read(struct spl_load_info *load, ulong sector,
 			       ulong count, void *buf)
 {
 	debug("%s: sector %lx, count %lx, buf %lx\n",
 	      __func__, sector, count, (ulong)buf);
-	memcpy(buf, (void *)(CONFIG_SPL_LOAD_FIT_ADDRESS + sector), count);
+	memcpy(buf, (void *)(sector), count);
 	return count;
 }
 
@@ -35,7 +40,7 @@ static int spl_ram_load_image(struct spl_image_info *spl_image,
 {
 	struct image_header *header;
 
-	header = (struct image_header *)CONFIG_SPL_LOAD_FIT_ADDRESS;
+	header = (struct image_header *)spl_ram_get_uboot_base();
 
 #if CONFIG_IS_ENABLED(DFU)
 	if (bootdev->boot_device == BOOT_DEVICE_DFU)
@@ -49,7 +54,15 @@ static int spl_ram_load_image(struct spl_image_info *spl_image,
 		debug("Found FIT\n");
 		load.bl_len = 1;
 		load.read = spl_ram_load_read;
-		spl_load_simple_fit(spl_image, &load, 0, header);
+		spl_load_simple_fit(spl_image, &load, (ulong)header, header);
+	} else if (IS_ENABLED(CONFIG_SPL_LOAD_IMX_CONTAINER)) {
+		struct spl_load_info load;
+
+		memset(&load, 0, sizeof(load));
+		load.bl_len = 1;
+		load.read = spl_ram_load_read;
+
+		spl_load_imx_container(spl_image, &load, (ulong)header);
 	} else {
 		ulong u_boot_pos = binman_sym(ulong, u_boot_any, image_pos);
 
