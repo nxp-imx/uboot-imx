@@ -20,20 +20,13 @@
 #define CONFIG_REMAKE_ELF
 #undef CONFIG_RUN_FROM_IRAM_ONLY
 
-#define CONFIG_RUN_FROM_DDR0
-#undef CONFIG_RUN_FROM_DDR1
-
 #define CONFIG_SYS_FSL_DRAM_BASE1       0x80000000
 #define CONFIG_SYS_FSL_DRAM_SIZE1       CONFIG_SYS_DDR_SIZE
 #define CONFIG_SYS_FSL_DRAM_BASE2       0xC0000000
 #define CONFIG_SYS_FSL_DRAM_SIZE2       0x40000000
 
-/* Run by default from DDR1  */
-#ifdef CONFIG_RUN_FROM_DDR0
+/* Run by default from DDR0  */
 #define DDR_BASE_ADDR			CONFIG_SYS_FSL_DRAM_BASE1
-#else
-#define DDR_BASE_ADDR			CONFIG_SYS_FSL_DRAM_BASE2
-#endif
 
 #define CONFIG_MACH_TYPE		4146
 
@@ -62,7 +55,6 @@
 /* Ramdisk name */
 #define RAMDISK_NAME		rootfs.uimg
 
-#ifdef CONFIG_RUN_FROM_DDR0
 /* Flat device tree definitions */
 #define FDT_ADDR		0x83E00000
 
@@ -71,15 +63,6 @@
 
 /* Ramdisk load address */
 #define RAMDISK_ADDR		0x84000000
-#else
-#define FDT_ADDR		0xC3E00000
-
-/*Kernel image load address */
-#define LOADADDR		0xC307FFC0
-
-/* Ramdisk load address */
-#define RAMDISK_ADDR		0xC4000000
-#endif
 
 /* Generic Timer Definitions */
 /* COUNTER_FREQUENCY value will be used at startup but will be replaced
