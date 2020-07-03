@@ -42,7 +42,6 @@
 
 #define CONFIG_SPL_ABORT_ON_RAW_IMAGE /* For RAW image gives a error info not panic */
 
-#define CONFIG_OF_EMBED
 #endif
 
 #define CONFIG_REMAKE_ELF
