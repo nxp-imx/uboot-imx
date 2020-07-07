@@ -8,7 +8,7 @@
 
 #include "snvs_security_sc_conf.h"
 
-static struct snvs_security_sc_conf snvs_default_config = {
+static __maybe_unused struct snvs_security_sc_conf snvs_default_config = {
 	.hp = {
 		.lock = 0x1f0703ff,
 		.secvio_intcfg = 0x8000002f,
@@ -36,11 +36,11 @@ static struct snvs_security_sc_conf snvs_default_config = {
 	}
 };
 
-static struct snvs_dgo_conf snvs_dgo_default_config = {
+static __maybe_unused struct snvs_dgo_conf snvs_dgo_default_config = {
 	.tamper_misc_ctl = 0x80000000, /* Lock the DGO */
 };
 
-static struct snvs_security_sc_conf snvs_passive_vcc_config = {
+static __maybe_unused struct snvs_security_sc_conf snvs_passive_vcc_config = {
 	.hp = {
 		.lock = 0x1f0703ff,
 		.secvio_intcfg = 0x8000002f,
@@ -69,7 +69,7 @@ static struct snvs_security_sc_conf snvs_passive_vcc_config = {
 	}
 };
 
-static struct snvs_security_sc_conf snvs_passive_gnd_config = {
+static __maybe_unused struct snvs_security_sc_conf snvs_passive_gnd_config = {
 	.hp = {
 		.lock = 0x1f0703ff,
 		.secvio_intcfg = 0x8000002f,
@@ -98,7 +98,7 @@ static struct snvs_security_sc_conf snvs_passive_gnd_config = {
 	}
 };
 
-static struct snvs_security_sc_conf snvs_active_config = {
+static __maybe_unused struct snvs_security_sc_conf snvs_active_config = {
 	.hp = {
 		.lock = 0x1f0703ff,
 		.secvio_intcfg = 0x8000002f,
@@ -126,19 +126,19 @@ static struct snvs_security_sc_conf snvs_active_config = {
 	}
 };
 
-static struct snvs_dgo_conf snvs_dgo_passive_vcc_config = {
+static __maybe_unused struct snvs_dgo_conf snvs_dgo_passive_vcc_config = {
 	.tamper_misc_ctl = 0x80000000, /* Lock the DGO */
 	.tamper_pull_ctl = 0x00000001, /* Pull down ET1 */
 	.tamper_ana_test_ctl = 0x20000000, /* Enable tamper */
 };
 
-static struct snvs_dgo_conf snvs_dgo_passive_gnd_config = {
+static __maybe_unused struct snvs_dgo_conf snvs_dgo_passive_gnd_config = {
 	.tamper_misc_ctl = 0x80000000, /* Lock the DGO */
 	.tamper_pull_ctl = 0x00000401, /* Pull up ET1 */
 	.tamper_ana_test_ctl = 0x20000000, /* Enable tamper */
 };
 
-static struct snvs_dgo_conf snvs_dgo_active_config = {
+static __maybe_unused struct snvs_dgo_conf snvs_dgo_active_config = {
 	.tamper_misc_ctl = 0x80000000, /* Lock the DGO */
 	.tamper_ana_test_ctl = 0x20000000, /* Enable tamper */
 };
@@ -156,15 +156,15 @@ static struct tamper_pin_cfg tamper_pin_list_default_config[] = {
 	{SC_P_CSI_D04, 0}, /* Tamp_Out4 */
 };
 
-static struct tamper_pin_cfg tamper_pin_list_passive_vcc_config[] = {
+static __maybe_unused struct tamper_pin_cfg tamper_pin_list_passive_vcc_config[] = {
 	{SC_P_CSI_D05, 0x1c000060}, /* Tamp_In0 */ /* Sel tamper + OD input */
 };
 
-static struct tamper_pin_cfg tamper_pin_list_passive_gnd_config[] = {
+static __maybe_unused struct tamper_pin_cfg tamper_pin_list_passive_gnd_config[] = {
 	{SC_P_CSI_D05, 0x1c000060}, /* Tamp_In0 */ /* Sel tamper + OD input */
 };
 
-static struct tamper_pin_cfg tamper_pin_list_active_config[] = {
+static __maybe_unused struct tamper_pin_cfg tamper_pin_list_active_config[] = {
 	{SC_P_CSI_D00, 0x1a000060}, /* Tamp_Out0 */ /* Sel tamper + OD */
 	{SC_P_CSI_D05, 0x1c000060}, /* Tamp_In0 */ /* Sel tamper + OD input */
 };

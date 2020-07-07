@@ -17,7 +17,7 @@
 #include "snvs_security_sc_conf.h"
 
 /* Default configuration of the tamper for all boards */
-static struct snvs_security_sc_conf snvs_default_config = {
+static __maybe_unused struct snvs_security_sc_conf snvs_default_config = {
 	.hp = {
 		.lock = 0x1f0703ff,
 		.secvio_intcfg = 0x8000002f,
@@ -45,7 +45,7 @@ static struct snvs_security_sc_conf snvs_default_config = {
 	}
 };
 
-static struct snvs_dgo_conf snvs_dgo_default_config = {
+static __maybe_unused struct snvs_dgo_conf snvs_dgo_default_config = {
 	.tamper_misc_ctl = 0x80000000, /* Lock the DGO */
 };
 
