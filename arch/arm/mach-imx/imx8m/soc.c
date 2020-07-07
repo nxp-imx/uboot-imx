@@ -483,9 +483,6 @@ static void secure_lockup(void)
 		clock_enable(CCGR_OCOTP, 1);
 		setbits_le32(&ocotp->sw_sticky, 0x6); /* Lock up field return and SRK revoke */
 		writel(0x80000000, &ocotp->scs_set); /* Lock up SCS */
-
-		/* Clear mfg prot private key in CAAM */
-		setbits_le32((ulong)(CONFIG_SYS_FSL_SEC_ADDR + 0xc), 0x08000000);
 #else
 		/* Check the Unique ID, if it is matched with UID config, then allow to leave sticky bits unlocked */
 		if (!is_uid_matched(CONFIG_IMX_UNIQUE_ID))
