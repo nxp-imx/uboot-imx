@@ -12,5 +12,5 @@ ifdef CONFIG_SPL_BUILD
 obj-$(CONFIG_SPL_LOAD_IMX_CONTAINER) += image.o parse-container.o
 else
 obj-y += partition.o
-endif
 obj-$(CONFIG_SNVS_SEC_SC) += snvs_security_sc.o
+endif
