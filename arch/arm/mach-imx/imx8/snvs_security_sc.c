@@ -34,6 +34,7 @@
 #define SRTC_EN 0x1
 #define DP_EN BIT(5)
 
+#ifdef CONFIG_SNVS_SEC_SC_AUTO
 static struct snvs_security_sc_conf *get_snvs_config(void)
 {
 	return &snvs_default_config;
@@ -43,6 +44,7 @@ static struct snvs_dgo_conf *get_snvs_dgo_config(void)
 {
 	return &snvs_dgo_default_config;
 }
+#endif
 
 #define TAMPER_PIN_LIST_CHOSEN tamper_pin_list_default_config
 
