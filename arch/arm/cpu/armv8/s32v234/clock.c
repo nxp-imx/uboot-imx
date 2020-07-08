@@ -287,6 +287,8 @@ static void enable_modules_clock(void)
 	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(MMDC1_PCTL));
 	/* QuadSPI */
 	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(QUADSPI0_PCTL));
+	/* DSPI */
+	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(DSPI0_PCTL));
 	/* SDHC */
 	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(SDHC_PCTL));
 

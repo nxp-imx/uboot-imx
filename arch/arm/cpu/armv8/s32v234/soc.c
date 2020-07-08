@@ -307,6 +307,11 @@ static u32 get_qspi_clk(void)
 #undef AUXn
 }
 
+static u32 get_dspi_clk(void)
+{
+	return get_sys_clk(MXC_SYS6_CLK);
+}
+
 /* return clocks in Hz */
 unsigned int mxc_get_clock(enum mxc_clock clk)
 {
@@ -325,6 +330,8 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 		return get_usdhc_clk();
 	case MXC_QSPI_CLK:
 		return get_qspi_clk();
+	case MXC_DSPI_CLK:
+		return get_dspi_clk();
 	default:
 		break;
 	}
