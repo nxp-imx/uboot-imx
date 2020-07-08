@@ -95,6 +95,9 @@
 #define CONFIG_SYS_FSL_FLASH0_SIZE      0x10000000
 #define CONFIG_SYS_FSL_FLASH1_BASE      0x60000000
 #define CONFIG_SYS_FSL_FLASH1_SIZE      0x10000000
+#define QSPI_BASE_ADDR			0x400A6000
+#define FLASH_BASE_ADR2			(CONFIG_SYS_FSL_FLASH0_BASE + 0x4000000)
+#define CONFIG_SYS_FLASH_BASE		CONFIG_SYS_FSL_FLASH0_BASE
 
 /* Allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
@@ -102,6 +105,8 @@
 
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC_BASE_ADDR
 #define CONFIG_SYS_FSL_ESDHC_NUM	1
+
+#define CONFIG_S32V234_FLASH
 
 #define CONFIG_LOADADDR			LOADADDR
 
@@ -112,6 +117,15 @@
 				" root=/dev/ram rw" \
 				CONFIG_BOOTARGS_LOGLEVEL " " \
 				CONFIG_EXTRA_KERNEL_BOOT_ARGS
+/* QSPI/hyperflash configs */
+#ifdef CONFIG_S32V234_FLASH
+
+/* debug stuff for qspi/hyperflash */
+#undef CONFIG_DEBUG_S32V234_QSPI_QSPI
+
+#undef CONFIG_CMD_FLASH
+
+#endif
 
 #ifdef CONFIG_CMD_BOOTI
 
