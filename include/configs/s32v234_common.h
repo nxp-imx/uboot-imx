@@ -159,6 +159,8 @@
 #define CONFIG_BOARD_EXTRA_ENV_SETTINGS	""
 #endif
 
+#define CONFIG_FLASHBOOT_RAMDISK " ${ramdisk_addr} "
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_BOARD_EXTRA_ENV_SETTINGS  \
 	"script=boot.scr\0" \
@@ -229,7 +231,8 @@
 		"cp.b ${kernel_flashaddr} ${loadaddr} ${kernel_maxsize};"\
 		"cp.b ${fdt_flashaddr} ${fdt_addr} ${fdt_maxsize};"\
 		"cp.b ${ramdisk_flashaddr} ${ramdisk_addr} ${ramdisk_maxsize};"\
-		"${boot_mtd} ${loadaddr} ${ramdisk_addr} ${fdt_addr};\0"
+		"${boot_mtd} ${loadaddr}" CONFIG_FLASHBOOT_RAMDISK \
+		"${fdt_addr};\0"
 
 #undef CONFIG_BOOTCOMMAND
 #if defined(CONFIG_FLASH_BOOT)
