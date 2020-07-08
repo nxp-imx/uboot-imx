@@ -273,6 +273,39 @@ static u32 get_i2c_clk(void)
 	return get_peripherals_clk();
 }
 
+static u32 get_qspi_clk(void)
+{
+	u32 auxclk14_div, auxclk14_sel, freq = 0;
+#define AUXn 14
+
+	auxclk14_sel = readl(CGM_ACn_SS(MC_CGM0_BASE_ADDR, AUXn)) &
+		MC_CGM_ACn_SEL_MASK;
+	auxclk14_sel >>= MC_CGM_ACn_SEL_OFFSET;
+
+	auxclk14_div = readl(CGM_ACn_DCm(MC_CGM0_BASE_ADDR, AUXn, 0)) &
+		MC_CGM_ACn_DCm_PREDIV_MASK;
+	auxclk14_div >>= MC_CGM_ACn_DCm_PREDIV_OFFSET;
+	auxclk14_div += 1;
+
+	switch (auxclk14_sel) {
+	case MC_CGM_ACn_SEL_FIRC:
+		freq = FIRC_CLK_FREQ;
+		break;
+	case MC_CGM_ACn_SEL_XOSC:
+		freq = XOSC_CLK_FREQ;
+		break;
+	case MC_CGM_ACn_SEL_ENETPLL:
+		freq = decode_pll(ENET_PLL, XOSC_CLK_FREQ, 3);
+		break;
+	default:
+		printf("unsupported system clock select\n");
+		freq = 0;
+	}
+
+	return freq / auxclk14_div;
+#undef AUXn
+}
+
 /* return clocks in Hz */
 unsigned int mxc_get_clock(enum mxc_clock clk)
 {
@@ -289,6 +322,8 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 		return get_i2c_clk();
 	case MXC_USDHC_CLK:
 		return get_usdhc_clk();
+	case MXC_QSPI_CLK:
+		return get_qspi_clk();
 	default:
 		break;
 	}

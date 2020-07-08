@@ -16,6 +16,7 @@ enum mxc_clock {
 	MXC_USDHC_CLK,
 	MXC_FEC_CLK,
 	MXC_I2C_CLK,
+	MXC_QSPI_CLK,
 };
 enum pll_type {
 	ARM_PLL = 0,
