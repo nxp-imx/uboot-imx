@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2015-2016 Freescale Semiconductor, Inc.
- * (C) Copyright 2017-2018 NXP
+ * (C) Copyright 2017-2019 NXP
  *
  */
 
@@ -58,26 +58,30 @@ static inline int get_siul2_midr2_speed(void)
 /* SIUL2_MSCR specifications as stated in Reference Manual:
  * 0 - 359 Output Multiplexed Signal Configuration Registers
  * 512- 1023 Input Multiplexed Signal Configuration Registers */
-#define SIUL2_MSCR_BASE				(SIUL2_BASE_ADDR + 0x00000240)
-#define SIUL2_MSCRn(i)				(SIUL2_MSCR_BASE + 4 * (i))
+#define SIUL2_MSCR_BASE			(SIUL2_BASE_ADDR + 0x00000240)
+#define SIUL2_MSCRn(i)			(SIUL2_MSCR_BASE + 4 * (i))
 
-#define SIUL2_IMCR_BASE				(SIUL2_BASE_ADDR + 0x00000A40)
-#define SIUL2_IMCRn(i)				(SIUL2_IMCR_BASE +  4 * (i))
+#define SIUL2_IMCR_BASE			(SIUL2_BASE_ADDR + 0x00000A40)
+#define SIUL2_IMCRn(i)			(SIUL2_IMCR_BASE +  4 * (i))
 
-#define SIUL2_GPDO_BASE				(SIUL2_BASE_ADDR + 0x00001300)
-#define SIUL2_GPDOn(i)				(SIUL2_GPDO_BASE + 4 * (i))
+#define SIUL2_GPDO_BASE			(SIUL2_BASE_ADDR + 0x00001300)
+#define SIUL2_GPDOn(i)			(SIUL2_GPDO_BASE + (i))
 
-#define SIUL2_GPDI_BASE				(SIUL2_BASE_ADDR + 0x00001500)
-#define SIUL2_GPDIn(i)				(SIUL2_GPDI_BASE + 4 * (i))
+#define SIUL2_GPDI_BASE			(SIUL2_BASE_ADDR + 0x00001500)
+#define SIUL2_GPDIn(i)			(SIUL2_GPDI_BASE + (i))
 
-#define SIUL2_PGPDO_BASE			(SIUL2_BASE_ADDR + 0x00001700)
-#define SIUL2_PGPDOn(i)				(SIUL2_PGPDO_BASE +  2 * (i))
+#define SIUL2_PGPDO_BASE		(SIUL2_BASE_ADDR + 0x00001700)
+#define SIUL2_PGPDOn(i)			(SIUL2_PGPDO_BASE + \
+						(((i) / 2) * 4) + \
+						(((i) % 2) ? 0 : 2))
 
-#define SIUL2_PGPDI_BASE			(SIUL2_BASE_ADDR + 0x00001740)
-#define SIUL2_PGPDIn(i)				(SIUL2_PGPDI_BASE + 2 * (i))
+#define SIUL2_PGPDI_BASE		(SIUL2_BASE_ADDR + 0x00001740)
+#define SIUL2_PGPDIn(i)			(SIUL2_PGPDI_BASE + \
+						(((i) / 2) * 4) + \
+						(((i) % 2) ? 0 : 2))
 
-#define SIUL2_MPGPDO_BASE			(SIUL2_BASE_ADDR + 0x00001780)
-#define SIUL2_MPGPDOn(i)			(SIUL2_MPGPDO_BASE + 4 * (i))
+#define SIUL2_MPGPDO_BASE		(SIUL2_BASE_ADDR + 0x00001780)
+#define SIUL2_MPGPDOn(i)		(SIUL2_MPGPDO_BASE + 4 * (i))
 
 /* SIUL2_MSCR masks */
 #define SIUL2_MSCR_DDR_DO_TRIM(v)	((v) & 0xC0000000)
