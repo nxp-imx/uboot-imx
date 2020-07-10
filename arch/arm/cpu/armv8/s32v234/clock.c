@@ -11,6 +11,7 @@
 #include <asm/arch/mc_me_regs.h>
 #include <asm/arch/mc_rgm_regs.h>
 #include <asm/arch/clock.h>
+#include <asm/arch-s32v234/siul.h>
 
 /*
  * Select the clock reference for required pll.
@@ -312,13 +313,22 @@ static void enable_modules_clock(void)
 
 void clock_init(void)
 {
-	unsigned int arm_dfs[ARM_PLL_PHI1_DFS_Nr][DFS_PARAMS_Nr] = {
-		{ARM_PLL_PHI1_DFS1_EN, ARM_PLL_PHI1_DFS1_MFN,
-		 ARM_PLL_PHI1_DFS1_MFI},
-		{ARM_PLL_PHI1_DFS2_EN, ARM_PLL_PHI1_DFS2_MFN,
-		 ARM_PLL_PHI1_DFS2_MFI},
-		{ARM_PLL_PHI1_DFS3_EN, ARM_PLL_PHI1_DFS3_MFN,
-		 ARM_PLL_PHI1_DFS3_MFI}
+	unsigned int arm_1ghz_dfs[ARM_1GHZ_PLL_PHI1_DFS_Nr][DFS_PARAMS_Nr] = {
+		{ARM_1GHZ_PLL_PHI1_DFS1_EN, ARM_1GHZ_PLL_PHI1_DFS1_MFN,
+		 ARM_1GHZ_PLL_PHI1_DFS1_MFI},
+		{ARM_1GHZ_PLL_PHI1_DFS2_EN, ARM_1GHZ_PLL_PHI1_DFS2_MFN,
+		 ARM_1GHZ_PLL_PHI1_DFS2_MFI},
+		{ARM_1GHZ_PLL_PHI1_DFS3_EN, ARM_1GHZ_PLL_PHI1_DFS3_MFN,
+		 ARM_1GHZ_PLL_PHI1_DFS3_MFI}
+	};
+
+	unsigned int arm_800mhz_dfs[ARM_800MHZ_PLL_PHI1_DFS_Nr][DFS_PARAMS_Nr] = {
+		{ARM_800MHZ_PLL_PHI1_DFS1_EN, ARM_800MHZ_PLL_PHI1_DFS1_MFN,
+		 ARM_800MHZ_PLL_PHI1_DFS1_MFI},
+		{ARM_800MHZ_PLL_PHI1_DFS2_EN, ARM_800MHZ_PLL_PHI1_DFS2_MFN,
+		 ARM_800MHZ_PLL_PHI1_DFS2_MFI},
+		{ARM_800MHZ_PLL_PHI1_DFS3_EN, ARM_800MHZ_PLL_PHI1_DFS3_MFN,
+		 ARM_800MHZ_PLL_PHI1_DFS3_MFI}
 	};
 
 	unsigned int enet_dfs[ENET_PLL_PHI1_DFS_Nr][DFS_PARAMS_Nr] = {
@@ -363,9 +373,23 @@ void clock_init(void)
 
 	entry_to_target_mode(MC_ME_MCTL_RUN0);
 
-	program_pll(ARM_PLL, XOSC_CLK_FREQ, ARM_PLL_PHI0_FREQ,
-		    ARM_PLL_PHI1_FREQ, ARM_PLL_PHI1_DFS_Nr, arm_dfs,
-		    ARM_PLL_PLLDV_PREDIV, ARM_PLL_PLLDV_MFD, ARM_PLL_PLLDV_MFN);
+	if (get_siul2_midr2_speed() == SIUL2_MIDR2_SPEED_800MHZ)
+		program_pll(ARM_PLL, XOSC_CLK_FREQ, ARM_800MHZ_PLL_PHI0_FREQ,
+			    ARM_800MHZ_PLL_PHI1_FREQ,
+			    ARM_800MHZ_PLL_PHI1_DFS_Nr, arm_800mhz_dfs,
+			    ARM_800MHZ_PLL_PLLDV_PREDIV,
+			    ARM_800MHZ_PLL_PLLDV_MFD, ARM_800MHZ_PLL_PLLDV_MFN
+			   );
+	else
+		/* If the speed grading is unsupported or unrecognized, fall
+		 * back to 1 GHz.
+		 */
+		program_pll(ARM_PLL, XOSC_CLK_FREQ, ARM_1GHZ_PLL_PHI0_FREQ,
+			    ARM_1GHZ_PLL_PHI1_FREQ,
+			    ARM_1GHZ_PLL_PHI1_DFS_Nr, arm_1ghz_dfs,
+			    ARM_1GHZ_PLL_PLLDV_PREDIV,
+			    ARM_1GHZ_PLL_PLLDV_MFD, ARM_1GHZ_PLL_PLLDV_MFN
+			   );
 
 	setup_sys_clocks();
 

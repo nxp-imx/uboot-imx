@@ -24,6 +24,8 @@
 #define DFS2		3
 #define DFS3		4
 
+#define MHZ			1000000
+
 u32 get_cpu_rev(void)
 {
 	struct mscm_ir *mscmir = (struct mscm_ir *)MSCM_BASE_ADDR;
@@ -375,9 +377,30 @@ void reset_cpu(ulong addr)
 
 int print_cpuinfo(void)
 {
+	int speed;
+	u32 osc_freq;
+	struct src *src = (struct src *)SRC_SOC_BASE_ADDR;
+
+	speed = get_siul2_midr2_speed();
+	if (speed != SIUL2_MIDR2_SPEED_1GHZ &&
+	    speed != SIUL2_MIDR2_SPEED_800MHZ) {
+		printf("Warning: ");
+		if (speed == SIUL2_MIDR2_SPEED_600MHZ)
+			printf("Unsupported speed grading: 600 MHz. ");
+		else
+			printf("Unknown speed grading: %#x. ", speed);
+		if (readl(&src->gpr1) &
+		    (SRC_GPR1_PLL_SOURCE_MASK << SRC_GPR1_PLL_OFFSET))
+			osc_freq = XOSC_CLK_FREQ;
+		else
+			osc_freq = FIRC_CLK_FREQ;
+		printf("ARM-PLL frequency was configured to %lu MHz\n",
+		       decode_pll(ARM_PLL, osc_freq, 0) / MHZ);
+	}
+
 	printf("CPU:   NXP S32V234 V%d.%d at %d MHz\n",
 	       get_siul2_midr1_major() + 1, get_siul2_midr1_minor(),
-	       mxc_get_clock(MXC_ARM_CLK) / 1000000);
+	       mxc_get_clock(MXC_ARM_CLK) / MHZ);
 	printf("Reset cause: %s\n", get_reset_cause());
 
 	return 0;

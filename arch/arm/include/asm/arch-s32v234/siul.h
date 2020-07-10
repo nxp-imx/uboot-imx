@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * (C) Copyright 2015, Freescale Semiconductor, Inc.
+ * (C) Copyright 2015-2016 Freescale Semiconductor, Inc.
+ * (C) Copyright 2017-2018 NXP
+ *
  */
 
 #ifndef __ARCH_ARM_MACH_S32V234_SIUL_H__
@@ -37,6 +39,20 @@ static inline int get_siul2_midr1_major(void)
 {
 	return ((readl(SIUL2_MIDR1) & SIUL2_MIDR1_MAJOR_MASK)
 			>> SIUL2_MIDR1_MAJOR_SHIFT);
+}
+
+/* SIUL2_MIDR2 fields */
+#define SIUL2_MIDR2_SPEED_SHIFT		(23)
+#define SIUL2_MIDR2_SPEED_GRADING	(0xF << SIUL2_MIDR2_SPEED_SHIFT)
+
+#define SIUL2_MIDR2_SPEED_600MHZ	(0xA)
+#define SIUL2_MIDR2_SPEED_800MHZ	(0xB)
+#define SIUL2_MIDR2_SPEED_1GHZ		(0xC)
+
+static inline int get_siul2_midr2_speed(void)
+{
+	return (readl(SIUL2_MIDR2) & SIUL2_MIDR2_SPEED_GRADING)
+			>> SIUL2_MIDR2_SPEED_SHIFT;
 }
 
 /* SIUL2_MSCR specifications as stated in Reference Manual:
