@@ -24,6 +24,9 @@
 #define DFS2		3
 #define DFS3		4
 
+#define PERIPH_PLL_PHI0_DIV3	3
+#define PERIPH_PLL_PHI0_DIV5	5
+
 #define MHZ			1000000
 
 u32 get_cpu_rev(void)
@@ -204,16 +207,29 @@ static u32 get_sys_clk(u32 number)
 
 static u32 get_peripherals_clk(void)
 {
-	u32 auxclk5_div;
-	u32 freq = 0;
+	u32 auxclk5_div, auxclk5_sel, freq = 0;
 
+	auxclk5_sel = aux_source_clk_get(MC_CGM0_BASE_ADDR, CGM_AC5_SC);
 	auxclk5_div = aux_div_clk_get(MC_CGM0_BASE_ADDR, CGM_AC5_SC,
 				      CGM_ACn_DC0);
 
-	freq = decode_pll(PERIPH_PLL, XOSC_CLK_FREQ, DFS_NONE);
+	switch (auxclk5_sel) {
+	case MC_CGM_ACn_SEL_FIRC:
+		freq = FIRC_CLK_FREQ;
+		break;
+	case MC_CGM_ACn_SEL_XOSC:
+		freq = XOSC_CLK_FREQ;
+		break;
+	case MC_CGM_ACn_SEL_PERPLLDIVX:
+		freq = decode_pll(PERIPH_PLL, XOSC_CLK_FREQ, DFS_NONE) /
+				  PERIPH_PLL_PHI0_DIV5;
+		break;
+	default:
+		printf("unsupported source clock\n");
+		freq = 0;
+	}
 
 	return freq / auxclk5_div;
-
 }
 
 static u32 get_uart_clk(void)
@@ -232,7 +248,8 @@ static u32 get_uart_clk(void)
 		freq = XOSC_CLK_FREQ;
 		break;
 	case MC_CGM_ACn_SEL_PERPLLDIVX:
-		freq = get_peripherals_clk() / 3;
+		freq = decode_pll(PERIPH_PLL, XOSC_CLK_FREQ, DFS_NONE) /
+			PERIPH_PLL_PHI0_DIV3;
 		break;
 	case MC_CGM_ACn_SEL_SYSCLK:
 		freq = get_sys_clk(MXC_SYS6_CLK);
