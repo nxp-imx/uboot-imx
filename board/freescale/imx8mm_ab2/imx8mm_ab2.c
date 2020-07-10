@@ -95,7 +95,7 @@ int board_early_init_f(void)
 
 	imx_iomux_v3_setup_multiple_pads(pwr_en_ana, ARRAY_SIZE(pwr_en_ana));
 	gpio_request(PWR_EN_ANA, "pwr_en_ana");
-	gpio_direction_output(PWR_EN_ANA, 1);
+	gpio_direction_output(PWR_EN_ANA, 0);
 
 	return 0;
 }
@@ -122,6 +122,10 @@ int board_phy_config(struct phy_device *phydev)
 
 int board_init(void)
 {
+#ifdef CONFIG_DM_REGULATOR
+	regulators_enable_boot_on(false);
+#endif
+
 #ifdef CONFIG_FEC_MXC
 	setup_fec();
 #endif
