@@ -42,7 +42,7 @@ static u32 get_pllfreq(u32 pll, u32 refclk_freq, u32 plldv,
 	u32 plldv_prediv = 0, plldv_mfd = 0,	pllfd_mfn = 0;
 	u32 plldv_rfdphi_div = 0, fout = 0;
 	u32 dfs_portn = 0, dfs_mfn = 0, dfs_mfi = 0;
-	float vco = 0;
+	double vco = 0;
 
 	if (selected_output > DFS_MAXNUMBER) {
 		return -1;
@@ -57,8 +57,8 @@ static u32 get_pllfreq(u32 pll, u32 refclk_freq, u32 plldv,
 	plldv_prediv = plldv_prediv == 0 ? 1 : plldv_prediv;
 
 	/* The formula for VCO is from TR manual, rev. 1 */
-	vco = (refclk_freq / (float)plldv_prediv) *
-	       (plldv_mfd + pllfd_mfn / (float)20480);
+	vco = (refclk_freq / (double)plldv_prediv) *
+	       (plldv_mfd + pllfd_mfn / (double)20480);
 
 	if (selected_output != DFS_NONE) {
 		/* Determine the RFDPHI for PHI1 */
