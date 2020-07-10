@@ -230,6 +230,12 @@ static void setup_aux_clocks(void)
 	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC5_SC, CGM_ACn_DC0,
 			   PLLDIG_PLLDV_PREDIV_0);
 
+	/* setup the aux clock divider for CAN_CLK (40 MHz) */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC6_SC,
+			      MC_CGM_ACn_SEL_XOSC);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC6_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
 	/* setup the aux clock divider for LIN_CLK (66 MHz) */
 	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC3_SC,
 			      MC_CGM_ACn_SEL_PERPLLDIVX);
