@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2013-2017 Freescale Semiconductor, Inc.
- * Copyright 2020 NXP
+ * Copyright 2016-2018,2020 NXP
  */
 
 #include <common.h>
@@ -36,12 +36,13 @@ u32 get_cpu_rev(void)
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static uintptr_t get_pllfreq(u32 pll, u32 refclk_freq, u32 plldv,
-			     u32 pllfd, u32 selected_output)
+static u32 get_pllfreq(u32 pll, u32 refclk_freq, u32 plldv,
+		       u32 pllfd, u32 selected_output)
 {
-	u32 vco = 0, plldv_prediv = 0, plldv_mfd = 0, pllfd_mfn = 0;
+	u32 plldv_prediv = 0, plldv_mfd = 0,	pllfd_mfn = 0;
 	u32 plldv_rfdphi_div = 0, fout = 0;
 	u32 dfs_portn = 0, dfs_mfn = 0, dfs_mfi = 0;
+	float vco = 0;
 
 	if (selected_output > DFS_MAXNUMBER) {
 		return -1;
@@ -56,7 +57,7 @@ static uintptr_t get_pllfreq(u32 pll, u32 refclk_freq, u32 plldv,
 	plldv_prediv = plldv_prediv == 0 ? 1 : plldv_prediv;
 
 	/* The formula for VCO is from TR manual, rev. 1 */
-	vco = (refclk_freq / plldv_prediv) *
+	vco = (refclk_freq / (float)plldv_prediv) *
 	       (plldv_mfd + pllfd_mfn / (float)20480);
 
 	if (selected_output != DFS_NONE) {
@@ -96,11 +97,10 @@ static uintptr_t get_pllfreq(u32 pll, u32 refclk_freq, u32 plldv,
 }
 
 /* Implemented for ARMPLL, PERIPH_PLL, ENET_PLL, DDR_PLL, VIDEO_LL */
-static uintptr_t decode_pll(enum pll_type pll, u32 refclk_freq,
-			    u32 selected_output)
+static u32 decode_pll(enum pll_type pll, u32 refclk_freq,
+		      u32 selected_output)
 {
-	u32 plldv, pllfd;
-	int freq;
+	u32 plldv, pllfd, freq;
 
 	plldv = readl(PLLDIG_PLLDV(pll));
 	pllfd = readl(PLLDIG_PLLFD(pll));
@@ -394,7 +394,7 @@ int print_cpuinfo(void)
 			osc_freq = XOSC_CLK_FREQ;
 		else
 			osc_freq = FIRC_CLK_FREQ;
-		printf("ARM-PLL frequency was configured to %lu MHz\n",
+		printf("ARM-PLL frequency was configured to %u MHz\n",
 		       decode_pll(ARM_PLL, osc_freq, 0) / MHZ);
 	}
 

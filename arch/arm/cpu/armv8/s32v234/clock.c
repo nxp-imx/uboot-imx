@@ -97,9 +97,8 @@ static int program_pll(enum pll_type pll, u32 refclk_freq, u32 freq0, u32 freq1,
 	/*
 	 * This formula is from platform reference manual (Rev. 1, 6/2015), PLLDIG chapter.
 	 */
-	fvco =
-	    (refclk_freq / plldv_prediv) * (plldv_mfd +
-					    pllfd_mfn / (float)20480);
+	fvco = (refclk_freq / (float)plldv_prediv) *
+		(plldv_mfd + pllfd_mfn / (float)20480);
 
 	/*
 	 * VCO should have value in [ PLL_MIN_FREQ, PLL_MAX_FREQ ]. Please consult
