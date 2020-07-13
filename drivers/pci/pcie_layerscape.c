@@ -616,11 +616,11 @@ static int ls_pcie_probe(struct udevice *dev)
 	if (pcie->mode == PCI_HEADER_TYPE_NORMAL) {
 		printf("PCIe%u: %s %s", PCIE_SRDS_PRTCL(pcie->idx), dev->name,
 		       "Endpoint");
-			ls_pcie_setup_ep(pcie);
+		ls_pcie_setup_ep(pcie);
 	} else {
 		printf("PCIe%u: %s %s", PCIE_SRDS_PRTCL(pcie->idx), dev->name,
 		       "Root Complex");
-			ls_pcie_setup_ctrl(pcie);
+		ls_pcie_setup_ctrl(pcie);
 	}
 
 	if (!ls_pcie_link_up(pcie)) {
