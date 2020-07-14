@@ -352,7 +352,32 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	return 0;
 }
 
-/* Not yet implemented - int soc_clk_dump(); */
+int do_s32_showclocks(cmd_tbl_t *cmdtp, int flag, int argc,
+		      char * const argv[])
+{
+	printf("Root clocks:\n");
+	printf("CPU clock:%5d MHz\n",
+	       mxc_get_clock(MXC_ARM_CLK) / MHZ);
+	printf("PERIPHERALS clock: %5d MHz\n",
+	       mxc_get_clock(MXC_PERIPHERALS_CLK) / MHZ);
+	printf("uSDHC clock:	%5d MHz\n",
+	       mxc_get_clock(MXC_USDHC_CLK) / MHZ);
+	printf("FEC clock:	%5d MHz\n",
+	       mxc_get_clock(MXC_FEC_CLK) / MHZ);
+	printf("UART clock:	%5d MHz\n",
+	       mxc_get_clock(MXC_UART_CLK) / MHZ);
+	printf("QSPI clock:	%5d MHz\n",
+	       mxc_get_clock(MXC_QSPI_CLK) / MHZ);
+	printf("DSPI clock:	%5d MHz\n",
+	       mxc_get_clock(MXC_DSPI_CLK) / MHZ);
+
+	return 0;
+}
+
+U_BOOT_CMD(clocks, CONFIG_SYS_MAXARGS, 1, do_s32_showclocks,
+	   "display clocks",
+	   ""
+	   );
 
 #if defined(CONFIG_DISPLAY_CPUINFO)
 static char *get_reset_cause(void)
