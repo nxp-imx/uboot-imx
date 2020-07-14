@@ -42,8 +42,6 @@
 /* Config CACHE */
 #define CONFIG_CMD_CACHE
 
-#define CONFIG_SYS_FULL_VA
-
 /* Enable passing of ATAGs */
 #define CONFIG_CMDLINE_TAG
 
@@ -89,7 +87,6 @@
  */
 #define COUNTER_FREQUENCY               (10000000)     /* 10MHz*/
 #define COUNTER_FREQUENCY_CUT1          (12000000)     /* 12MHz*/
-#define CONFIG_SYS_FSL_ERRATUM_A008585
 
 /* Size of malloc() pool */
 #ifdef CONFIG_RUN_FROM_IRAM_ONLY
@@ -104,9 +101,6 @@
 #define LINFLEXUART_BASE		LINFLEXD1_BASE_ADDR
 #endif
 
-#define CONFIG_DEBUG_UART_LINFLEXUART
-#define CONFIG_DEBUG_UART_BASE		LINFLEXUART_BASE
-
 /* Allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_UART_PORT		(1)
@@ -114,20 +108,7 @@
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC_BASE_ADDR
 #define CONFIG_SYS_FSL_ESDHC_NUM	1
 
-#define CONFIG_CMD_MMC
-/* #define CONFIG_CMD_EXT2 EXT2 Support */
-
-#ifdef CONFIG_SYS_USE_NAND
-/* Nand Flash Configs */
-#define CONFIG_JFFS2_NAND
-#define MTD_NAND_FSL_NFC_SWECC 1
-#define CONFIG_NAND_FSL_NFC
-#define CONFIG_SYS_NAND_BASE		0x400E0000
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define NAND_MAX_CHIPS			CONFIG_SYS_MAX_NAND_DEVICE
-#define CONFIG_SYS_NAND_SELECT_DEVICE
-#define CONFIG_SYS_64BIT_VSPRINTF	/* needed for nand_util.c */
-#endif
+#define CONFIG_GENERIC_MMC
 
 #define CONFIG_LOADADDR			LOADADDR
 
@@ -179,14 +160,18 @@
 #include <config_distro_bootcmd.h>
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_PROMPT		"=> "
+#define CONFIG_SYS_PROMPT_HUSH_PS2      "> "
+#define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
+#define CONFIG_SYS_PBSIZE		\
+		(CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
+#define CONFIG_SYS_MAXARGS		16 /* max number of command args */
+#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
 #define CONFIG_SYS_MEMTEST_START	(DDR_BASE_ADDR)
 #define CONFIG_SYS_MEMTEST_END		(DDR_BASE_ADDR + \
 						(CONFIG_SYS_DDR_SIZE - 1))
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
-#define CONFIG_SYS_HZ				1000
 
 #define CONFIG_SYS_TEXT_OFFSET		0x00020000
 
@@ -195,7 +180,6 @@
 #endif
 
 /* Physical memory map */
-#define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM			(DDR_BASE_ADDR)
 #define PHYS_SDRAM_SIZE			(CONFIG_SYS_DDR_SIZE)
 
