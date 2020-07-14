@@ -19,6 +19,8 @@
 #error "Please define the DDR type for S32V234 board!"
 #endif
 
+void setup_iomux_enet(void);
+
 #ifdef CONFIG_FSL_DCU_FB
 void setup_iomux_dcu(void);
 #endif

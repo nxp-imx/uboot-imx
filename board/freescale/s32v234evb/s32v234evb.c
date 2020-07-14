@@ -61,9 +61,6 @@ static void setup_iomux_uart(void)
 	/* set UART1 RXD - IMCR[202] - to link to PA13 */
 	writel(SIUL2_IMCR_UART_RXD_to_pad, SIUL2_IMCRn(SIUL2_IMCR_UART1_RXD));
 }
-static void setup_iomux_enet(void)
-{
-}
 
 static void setup_iomux_i2c(void)
 {
