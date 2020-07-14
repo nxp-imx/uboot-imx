@@ -189,10 +189,15 @@ int power_init_board(void)
 	/* BUCKxOUT_DVS0/1 control BUCK123 output */
 	pmic_reg_write(p, PCA9450_BUCK123_DVS, 0x29);
 
+#ifdef CONFIG_IMX8MN_LOW_DRIVE_MODE
+	/* Set VDD_SOC/VDD_DRAM to 0.8v for low drive mode */
+	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS0, 0x10);
+#else
 	/* increase VDD_SOC/VDD_DRAM to typical value 0.95V before first DRAM access */
+	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS0, 0x1C);
+#endif
 	/* Set DVS1 to 0.85v for suspend */
 	/* Enable DVS control through PMIC_STBY_REQ and set B1_ENMODE=1 (ON by PMIC_ON_REQ=H) */
-	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS0, 0x1C);
 	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS1, 0x14);
 	pmic_reg_write(p, PCA9450_BUCK1CTRL, 0x59);
 
@@ -230,18 +235,19 @@ int power_init_board(void)
 	/* Set VDD_ARM to typical value 0.85v for 1.2Ghz */
 	pmic_reg_write(p, BD71837_BUCK2_VOLT_RUN, 0xf);
 
-#ifdef CONFIG_IMX8M_DDR4
+#ifdef CONFIG_IMX8MN_LOW_DRIVE_MODE
+	/* Set VDD_SOC/VDD_DRAM to typical value 0.8v for low drive mode */
+	pmic_reg_write(p, BD71837_BUCK1_VOLT_RUN, 0xa);
+#else
 	/* Set VDD_SOC/VDD_DRAM to typical value 0.85v for nominal mode */
 	pmic_reg_write(p, BD71837_BUCK1_VOLT_RUN, 0xf);
-#endif
+#endif /* CONFIG_IMX8MN_LOW_DRIVE_MODE */
 
 	/* Set VDD_SOC 0.85v for suspend */
 	pmic_reg_write(p, BD71837_BUCK1_VOLT_SUSP, 0xf);
 
-#ifdef CONFIG_IMX8M_DDR4
 	/* increase NVCC_DRAM_1V2 to 1.2v for DDR4 */
 	pmic_reg_write(p, BD71837_BUCK8_VOLT, 0x28);
-#endif
 
 	/* lock the PMIC regs */
 	pmic_reg_write(p, BD71837_REGLOCK, 0x11);
