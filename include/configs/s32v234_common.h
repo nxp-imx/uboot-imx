@@ -114,6 +114,15 @@
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC_BASE_ADDR
 #define CONFIG_SYS_FSL_ESDHC_NUM	1
 
+/* I2C Configs */
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_MXC
+#define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
+#define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
+#define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
+#define CONFIG_SYS_I2C_SPEED		100000
+#define CONFIG_SYS_SPD_BUS_NUM		0
+
 #define CONFIG_LOADADDR			LOADADDR
 
 #undef CONFIG_BOOTARGS
