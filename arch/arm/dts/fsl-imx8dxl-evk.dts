@@ -451,6 +451,7 @@
 	cd-gpios = <&gpio5 1 GPIO_ACTIVE_LOW>;
 	wp-gpios = <&gpio5 0 GPIO_ACTIVE_HIGH>;
 	vmmc-supply = <&reg_usdhc2_vmmc>;
+	max-frequency = <100000000>;
 	status = "okay";
 };
 
