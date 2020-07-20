@@ -193,6 +193,7 @@ struct sc_rpc_msg_s {
 #define SECO_FUNC_UPDATE_MPMR 14U /* Index for seco_update_mpmr() RPC call */
 #define SECO_FUNC_GET_MP_SIGN 15U /* Index for seco_get_mp_sign() RPC call */
 #define SECO_FUNC_BUILD_INFO 16U /* Index for seco_build_info() RPC call */
+#define SECO_FUNC_V2X_BUILD_INFO 30U /* Index for sc_seco_v2x_build_info() RPC call */
 #define SECO_FUNC_CHIP_INFO 17U /* Index for seco_chip_info() RPC call */
 #define SECO_FUNC_ENABLE_DEBUG 18U /* Index for seco_enable_debug() RPC call */
 #define SECO_FUNC_GET_EVENT 19U /* Index for seco_get_event() RPC call */
