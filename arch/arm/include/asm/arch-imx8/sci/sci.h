@@ -129,6 +129,7 @@ int sc_seco_forward_lifecycle(sc_ipc_t ipc, u32 change);
 int sc_seco_chip_info(sc_ipc_t ipc, u16 *lc, u16 *monotonic, u32 *uid_l,
 		      u32 *uid_h);
 void sc_seco_build_info(sc_ipc_t ipc, u32 *version, u32 *commit);
+int sc_seco_v2x_build_info(sc_ipc_t ipc, u32 *version, u32 *commit);
 int sc_seco_get_event(sc_ipc_t ipc, u8 idx, u32 *event);
 int sc_seco_gen_key_blob(sc_ipc_t ipc, u32 id, sc_faddr_t load_addr,
 			 sc_faddr_t export_addr, u16 max_size);
