@@ -151,7 +151,6 @@ int checkboard(void)
 	puts("Board: iMX8DXL EVK\n");
 #endif
 
-	build_info();
 	print_bootinfo();
 
 	return 0;
@@ -224,6 +223,8 @@ int board_late_init(void)
 {
 	char *fdt_file;
 	bool __maybe_unused m4_boot;
+
+	build_info();
 
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	env_set("board_name", "EVK");
