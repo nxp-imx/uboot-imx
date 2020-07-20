@@ -1,0 +1,88 @@
+if ARCH_S32V234
+
+config SYS_CPU
+	string
+	default "armv8"
+
+config SYS_VENDOR
+	string
+	default "freescale"
+
+config SYS_SOC
+	string
+	default "s32v234"
+
+config BAUDRATE
+	int "Serial baudrate"
+	default 115200
+
+choice
+	prompt "Select S32V234 Target Board Support"
+	default TARGET_S32V234EVB
+	help
+	  S32V234 Target Board Selection.
+	  At this point, only S32V234EVB is available.
+
+config TARGET_S32V234EVB
+	bool "Support s32v234evb"
+	select SYS_FSL_ERRATUM_ESDHC111
+	help
+	  S32V Evaluation System for high-performance, safe computation-intensive
+	  front vision, surround vision and sensor fusion applications.
+
+endchoice
+
+if TARGET_S32V234EVB
+
+choice
+	prompt "S32V234EVB Board Family Member"
+	default S32V234EVB_29288
+	help
+	  S32V234EVB Board Family Members.
+	  Default selection is S32V234EVB_29288.
+
+config S32V234EVB_28899
+	bool "S32V234EVB_28899"
+	help
+	  First S32V234EVB generation.
+
+config S32V234EVB_29288
+	bool "S32V234EVB_29288"
+	help
+	  Second S32V234EVB generation.
+
+endchoice
+
+endif
+
+choice
+	prompt "Select DDR type"
+	default S32V234_LPDDR2
+	help
+	  S32V234 DDR Configuration.
+	  At this point, only Micron LPDDR2 is supported.
+
+config S32V234_LPDDR2
+	bool "LPDDR2 Support"
+	help
+	  Enable the support for Micron LPDDR2,
+	  2×32-bit, up to 1066 MHz data rate, 2×1 GB addressable.
+
+config S32V234_DDR3
+	bool "DDR3 Support"
+	help
+	  Enable the support for Micron DDR3,
+	  2×32-bit, up to 1066 MHz data rate, 2×1 GB addressable.
+
+endchoice
+
+config DDR_HANDSHAKE_AT_RESET
+	bool "Enable DDR handshake"
+	default y
+	help
+	  Enable DDR handshake after functional reset.
+	  Execute additional checks in case of a functional reset.
+
+source "board/freescale/s32v234evb/Kconfig"
+
+endif

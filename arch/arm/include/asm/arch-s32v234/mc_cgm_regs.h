@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2015, Freescale Semiconductor, Inc.
+ * (C) Copyright 2020 NXP
  */
 
 #ifndef __ARCH_ARM_MACH_S32V234_MCCGM_REGS_H__
@@ -102,6 +103,16 @@
 #define PLLDIG_PLLCAL1_NDAC1_OFFSET		(24)
 #define PLLDIG_PLLCAL1_NDAC1_MASK		(0x7F000000)
 
+/* PLL Calibration Register 2 (PLLDIG_PLLCAL2) */
+#define PLLDIG_PLLCAL2(pll)		((MC_CGM0_BASE_ADDR + 0x0000003c) + \
+					 ((pll) * 0x80))
+
+/* These values must be written into PLLCAL1 and PLLCAL2 according
+ * to the S32V234 Reference Manual Revision 4
+ */
+#define PLLDIG_PLLCAL1_ADVISED_VALUE	0x44000000
+#define PLLDIG_PLLCAL2_ADVISED_VALUE	0x0001002b
+
 /* Digital Frequency Synthesizer (DFS) */
 /* According to the manual there are 3 DFS modules only for ARM_PLL, DDR_PLL, ENET_PLL */
 #define DFS0_BASE_ADDR				(MC_CGM0_BASE_ADDR + 0x00000040)
@@ -166,6 +177,9 @@
 
 #define DFS_PARAMS_Nr				(3)
 
+#define FXOSC_CTL			(MC_CGM0_BASE_ADDR + 0x280)
+#define FXOSC_CTL_FASTBOOT_VALUE	(0x018020f0)
+
 /* Frequencies are in Hz */
 #define FIRC_CLK_FREQ				(48000000)
 #define XOSC_CLK_FREQ				(40000000)
@@ -178,16 +192,16 @@
 /* ARM_PLL_PHI1_DFS1_FREQ - 266 Mhz */
 #define ARM_PLL_PHI1_DFS1_EN		(1)
 #define ARM_PLL_PHI1_DFS1_MFI		(3)
-#define ARM_PLL_PHI1_DFS1_MFN		(194)
+#define ARM_PLL_PHI1_DFS1_MFN		(195)
 /* ARM_PLL_PHI1_DFS2_REQ - 600 Mhz */
 #define ARM_PLL_PHI1_DFS2_EN		(1)
 #define ARM_PLL_PHI1_DFS2_MFI		(1)
-#define ARM_PLL_PHI1_DFS2_MFN		(170)
+#define ARM_PLL_PHI1_DFS2_MFN		(171)
 /* ARM_PLL_PHI1_DFS3_FREQ - 600 Mhz */
 #define ARM_PLL_PHI1_DFS3_EN		(1)
 #define ARM_PLL_PHI1_DFS3_MFI		(1)
-#define ARM_PLL_PHI1_DFS3_MFN		(170)
-#define ARM_PLL_PHI1_DFS_Nr			(3)
+#define ARM_PLL_PHI1_DFS3_MFN		(171)
+#define ARM_PLL_PHI1_DFS_Nr		(3)
 #define ARM_PLL_PLLDV_PREDIV		(2)
 #define ARM_PLL_PLLDV_MFD			(50)
 #define ARM_PLL_PLLDV_MFN			(0)
@@ -204,16 +218,16 @@
 /* ENET_PLL_PHI1_DFS1_FREQ - 350 Mhz*/
 #define ENET_PLL_PHI1_DFS1_EN		(1)
 #define ENET_PLL_PHI1_DFS1_MFI		(2)
-#define ENET_PLL_PHI1_DFS1_MFN		(219)
+#define ENET_PLL_PHI1_DFS1_MFN		(220)
 /* ENET_PLL_PHI1_DFS2_FREQ - 350 Mhz*/
 #define ENET_PLL_PHI1_DFS2_EN		(1)
 #define ENET_PLL_PHI1_DFS2_MFI		(2)
-#define ENET_PLL_PHI1_DFS2_MFN		(219)
+#define ENET_PLL_PHI1_DFS2_MFN		(220)
 /* ENET_PLL_PHI1_DFS3_FREQ - 320 Mhz*/
 #define ENET_PLL_PHI1_DFS3_EN		(1)
 #define ENET_PLL_PHI1_DFS3_MFI		(3)
-#define ENET_PLL_PHI1_DFS3_MFN		(32)
-/* ENET_PLL_PHI1_DFS1_FREQ - 50 Mhz*/
+#define ENET_PLL_PHI1_DFS3_MFN		(33)
+/* ENET_PLL_PHI1_DFS4_FREQ - 50 Mhz*/
 #define ENET_PLL_PHI1_DFS4_EN		(1)
 #define ENET_PLL_PHI1_DFS4_MFI		(2)
 #define ENET_PLL_PHI1_DFS4_MFN		(0)
@@ -227,16 +241,16 @@
 /* DDR_PLL_PHI1_DFS1_FREQ - 500 Mhz */
 #define DDR_PLL_PHI1_DFS1_EN		(1)
 #define DDR_PLL_PHI1_DFS1_MFI		(2)
-#define DDR_PLL_PHI1_DFS1_MFN		(33)
+#define DDR_PLL_PHI1_DFS1_MFN		(34)
 /* DDR_PLL_PHI1_DFS2_REQ - 500 Mhz */
 #define DDR_PLL_PHI1_DFS2_EN		(1)
 #define DDR_PLL_PHI1_DFS2_MFI		(2)
-#define DDR_PLL_PHI1_DFS2_MFN		(33)
+#define DDR_PLL_PHI1_DFS2_MFN		(34)
 /* DDR_PLL_PHI1_DFS3_FREQ - 350 Mhz */
 #define DDR_PLL_PHI1_DFS3_EN		(1)
 #define DDR_PLL_PHI1_DFS3_MFI		(3)
-#define DDR_PLL_PHI1_DFS3_MFN		(11)
-#define DDR_PLL_PHI1_DFS_Nr			(3)
+#define DDR_PLL_PHI1_DFS3_MFN		(12)
+#define DDR_PLL_PHI1_DFS_Nr		(3)
 #define DDR_PLL_PLLDV_PREDIV		(2)
 #define DDR_PLL_PLLDV_MFD			(53)
 #define DDR_PLL_PLLDV_MFN			(6144)

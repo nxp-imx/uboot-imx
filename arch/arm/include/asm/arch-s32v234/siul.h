@@ -6,6 +6,7 @@
 #ifndef __ARCH_ARM_MACH_S32V234_SIUL_H__
 #define __ARCH_ARM_MACH_S32V234_SIUL_H__
 
+#include <asm/io.h>
 #include "ddr.h"
 
 #define SIUL2_MIDR1				(SIUL2_BASE_ADDR + 0x00000004)
@@ -21,6 +22,22 @@
 #define SIUL2_IFMCRn(i)				(SIUL2_IFMCR_BASE + 4 * (i))
 
 #define SIUL2_IFCPR				(SIUL2_BASE_ADDR + 0x000000C0)
+
+/* SIUL2_MIDR1 masks */
+#define SIUL2_MIDR1_MINOR_MASK		(0xF << 0)
+#define SIUL2_MIDR1_MAJOR_SHIFT		(4)
+#define SIUL2_MIDR1_MAJOR_MASK		(0xF << SIUL2_MIDR1_MAJOR_SHIFT)
+
+static inline int get_siul2_midr1_minor(void)
+{
+	return (readl(SIUL2_MIDR1) & SIUL2_MIDR1_MINOR_MASK);
+}
+
+static inline int get_siul2_midr1_major(void)
+{
+	return ((readl(SIUL2_MIDR1) & SIUL2_MIDR1_MAJOR_MASK)
+			>> SIUL2_MIDR1_MAJOR_SHIFT);
+}
 
 /* SIUL2_MSCR specifications as stated in Reference Manual:
  * 0 - 359 Output Multiplexed Signal Configuration Registers
@@ -104,7 +121,7 @@
 
 #define SIUL2_MSCR_PUS(v)		((v) & 0x00001800)
 #define SIUL2_MSCR_PUS_100K_DOWN	(0 << 11)
-#define SIUL2_MSCR_PUS_50K_DOWN		(1 << 11)
+#define SIUL2_MSCR_PUS_50K_UP		BIT(11)
 #define SIUL2_MSCR_PUS_100K_UP		(2 << 11)
 #define SIUL2_MSCR_PUS_33K_UP		(3 << 11)
 
@@ -127,15 +144,35 @@
 #define SIUL2_MSCR_MUX_MODE_ALT3	(0x3)
 
 /* UART settings */
-#define SIUL2_UART0_TXD_PAD	12
-#define SIUL2_UART_TXD		(SIUL2_MSCR_OBE_EN | SIUL2_MSCR_PUS_100K_UP | SIUL2_MSCR_DSE_60ohm |	\
-				SIUL2_MSCR_SRE_SPEED_LOW_100 | SIUL2_MSCR_MUX_MODE_ALT1)
 
-#define SIUL2_UART0_MSCR_RXD_PAD	11
-#define SIUL2_UART0_IMCR_RXD_PAD	200
+/* UART0 */
+/* TXD */
+#define SIUL2_MSCR_PA12		12
+/* RXD */
+#define SIUL2_MSCR_PA11		11
+#define SIUL2_IMCR_UART0_RXD	200
 
-#define SIUL2_UART_MSCR_RXD	(SIUL2_MSCR_PUE_EN | SIUL2_MSCR_IBE_EN | SIUL2_MSCR_DCYCLE_TRIM_RIGHT)
-#define SIUL2_UART_IMCR_RXD	(SIUL2_MSCR_MUX_MODE_ALT2)
+/* UART1 */
+/* TXD */
+#define SIUL2_MSCR_PA14		14
+/* RXD */
+#define SIUL2_MSCR_PA13		13
+#define SIUL2_IMCR_UART1_RXD	202
+
+/* UART MSCR settings */
+#define SIUL2_MSCR_PORT_CTRL_UART_TXD	\
+	(SIUL2_MSCR_OBE_EN |		\
+	 SIUL2_MSCR_PUS_100K_UP |	\
+	 SIUL2_MSCR_DSE_60ohm |		\
+	 SIUL2_MSCR_SRE_SPEED_LOW_100 |	\
+	 SIUL2_MSCR_MUX_MODE_ALT1)
+#define SIUL2_MSCR_PORT_CTRL_UART_RXD	\
+	(SIUL2_MSCR_PUE_EN |		\
+	 SIUL2_MSCR_IBE_EN |		\
+	 SIUL2_MSCR_DCYCLE_TRIM_RIGHT)
+
+/* UART IMCR mux modes */
+#define SIUL2_IMCR_UART_RXD_to_pad	(SIUL2_MSCR_MUX_MODE_ALT2)
 
 /* uSDHC settings */
 #define SIUL2_USDHC_PAD_CTRL_BASE	(SIUL2_MSCR_SRE_SPEED_HIGH_200 | SIUL2_MSCR_OBE_EN |	\

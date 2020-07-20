@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * (C) Copyright 2013-2016, Freescale Semiconductor, Inc.
+ * (C) Copyright 2013-2017 Freescale Semiconductor, Inc.
  */
 
 #include <common.h>
+#include <hang.h>
 #include <clock_legacy.h>
 #include <cpu_func.h>
 #include <asm/io.h>
-#include <asm/arch/imx-regs.h>
-#include <asm/arch/clock.h>
-#include <asm/arch/mc_cgm_regs.h>
-#include <asm/arch/mc_me_regs.h>
-#include <asm/arch/mc_rgm_regs.h>
+#include <asm/arch/soc.h>
+#include <asm/arch/siul.h>
+#include <asm/arch/src.h>
+#include <fsl_esdhc_imx.h>
+#include <mmc.h>
 #include <netdev.h>
 #include <div64.h>
 #include <errno.h>
@@ -45,8 +46,9 @@ static uintptr_t get_pllfreq(u32 pll, u32 refclk_freq, u32 plldv,
 
 	plldv_prediv = plldv_prediv == 0 ? 1 : plldv_prediv;
 
-	/* The formula for VCO is from TR manual, rev. D */
-	vco = refclk_freq / plldv_prediv * (plldv_mfd + pllfd_mfn / 20481);
+	/* The formula for VCO is from TR manual, rev. 1 */
+	vco = (refclk_freq / plldv_prediv) *
+	       (plldv_mfd + pllfd_mfn / (float)20480);
 
 	if (selected_output != 0) {
 		/* Determine the RFDPHI for PHI1 */
@@ -61,9 +63,13 @@ static uintptr_t get_pllfreq(u32 pll, u32 refclk_freq, u32 plldv,
 			    (dfs_portn & DFS_DVPORTn_MFI_MASK) >>
 			    DFS_DVPORTn_MFI_OFFSET;
 			dfs_mfn =
-			    (dfs_portn & DFS_DVPORTn_MFI_MASK) >>
-			    DFS_DVPORTn_MFI_OFFSET;
-			fout = vco / (dfs_mfi + (dfs_mfn / 256));
+			    (dfs_portn & DFS_DVPORTn_MFN_MASK) >>
+			    DFS_DVPORTn_MFN_OFFSET;
+
+			dfs_mfi <<= 8;
+			vco /= plldv_rfdphi_div;
+			fout = vco / (dfs_mfi + dfs_mfn);
+			fout <<= 8;
 		} else {
 			fout = vco / plldv_rfdphi_div;
 		}
@@ -85,11 +91,13 @@ static uintptr_t decode_pll(enum pll_type pll, u32 refclk_freq,
 			    u32 selected_output)
 {
 	u32 plldv, pllfd;
+	int freq;
 
 	plldv = readl(PLLDIG_PLLDV(pll));
 	pllfd = readl(PLLDIG_PLLFD(pll));
 
-	return get_pllfreq(pll, refclk_freq, plldv, pllfd, selected_output);
+	freq = get_pllfreq(pll, refclk_freq, plldv, pllfd, selected_output);
+	return freq  < 0 ? 0 : freq;
 }
 
 static u32 get_mcu_main_clk(void)
@@ -122,6 +130,7 @@ static u32 get_mcu_main_clk(void)
 		break;
 	default:
 		printf("unsupported system clock select\n");
+		freq = 0;
 	}
 
 	return freq / coreclk_div;
@@ -142,13 +151,13 @@ static u32 get_sys_clk(u32 number)
 		break;
 	default:
 		printf("unsupported system clock \n");
-		return -1;
+		sysclk_div_number = 0;
 	}
 	sysclk_sel = readl(CGM_SC_SS(MC_CGM0_BASE_ADDR)) & MC_CGM_SC_SEL_MASK;
 	sysclk_sel >>= MC_CGM_SC_SEL_OFFSET;
 
 	sysclk_div =
-	    readl(CGM_SC_DCn(MC_CGM1_BASE_ADDR, sysclk_div_number)) &
+	    readl(CGM_SC_DCn(MC_CGM0_BASE_ADDR, sysclk_div_number)) &
 	    MC_CGM_SC_DCn_PREDIV_MASK;
 	sysclk_div >>= MC_CGM_SC_DCn_PREDIV_OFFSET;
 	sysclk_div += 1;
@@ -166,11 +175,12 @@ static u32 get_sys_clk(u32 number)
 		break;
 	case MC_CGM_SC_SEL_CLKDISABLE:
 		printf("Sysclk is disabled\n");
+		freq = 0;
 		break;
 	default:
 		printf("unsupported system clock select\n");
+		freq = 0;
 	}
-
 	return freq / sysclk_div;
 }
 
@@ -220,6 +230,7 @@ static u32 get_uart_clk(void)
 		break;
 	default:
 		printf("unsupported system clock select\n");
+		freq = 0;
 	}
 
 	return freq / auxclk3_div;
@@ -231,7 +242,7 @@ static u32 get_fec_clk(void)
 	u32 freq = 0;
 
 	aux2clk_div =
-	    readl(CGM_ACn_DCm(MC_CGM0_BASE_ADDR, 2, 0)) &
+	    readl(CGM_ACn_DCm(MC_CGM2_BASE_ADDR, 2, 0)) &
 	    MC_CGM_ACn_DCm_PREDIV_MASK;
 	aux2clk_div >>= MC_CGM_ACn_DCm_PREDIV_OFFSET;
 	aux2clk_div += 1;
@@ -283,7 +294,7 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	}
 	printf("Error: Unsupported function to read the frequency! \
 			Please define it correctly!");
-	return -1;
+	return 0;
 }
 
 /* Not yet implemented - int soc_clk_dump(); */
@@ -291,7 +302,7 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 #if defined(CONFIG_DISPLAY_CPUINFO)
 static char *get_reset_cause(void)
 {
-	u32 cause = readl(MC_RGM_BASE_ADDR + 0x300);
+	u32 cause = readl(MC_RGM_FES);
 
 	switch (cause) {
 	case F_SWT4:
@@ -318,12 +329,18 @@ static char *get_reset_cause(void)
 
 void reset_cpu(ulong addr)
 {
-	printf("Feature not supported.\n");
+	entry_to_target_mode(MC_ME_MCTL_RESET);
+
+	/* If we get there, we are not in good shape */
+	mdelay(1000);
+	printf("FATAL: Reset Failed!\n");
+	hang();
 };
 
 int print_cpuinfo(void)
 {
-	printf("CPU:   Freescale Treerunner S32V234 at %d MHz\n",
+	printf("CPU:   NXP S32V234 V%d.%d at %d MHz\n",
+	       get_siul2_midr1_major() + 1, get_siul2_midr1_minor(),
 	       mxc_get_clock(MXC_ARM_CLK) / 1000000);
 	printf("Reset cause: %s\n", get_reset_cause());
 
@@ -342,10 +359,224 @@ int cpu_eth_init(bd_t * bis)
 	return rc;
 }
 
+static int detect_boot_interface(void)
+{
+	volatile struct src *src = (struct src *)SRC_SOC_BASE_ADDR;
+
+	u32 reg_val;
+	int value;
+
+	reg_val = readl(&src->bmr1);
+	value = reg_val & SRC_BMR1_CFG1_MASK;
+	value = value >> SRC_BMR1_CFG1_BOOT_SHIFT;
+
+	if (value != SRC_BMR1_CFG1_QuadSPI &&
+	    value != SRC_BMR1_CFG1_SD &&
+	    value != SRC_BMR1_CFG1_eMMC) {
+		printf("Unknown booting environment\n");
+		value = -1;
+	}
+
+	return value;
+}
+
 int get_clocks(void)
 {
 #ifdef CONFIG_FSL_ESDHC_IMX
 	gd->arch.sdhc_clk = mxc_get_clock(MXC_USDHC_CLK);
 #endif
+	return 0;
+}
+
+__weak void setup_iomux_sdhc(void)
+{
+	/* Set iomux PADS for USDHC */
+
+	/* PK6 pad: uSDHC clk */
+	writel(SIUL2_USDHC_PAD_CTRL_CLK, SIUL2_MSCRn(150));
+	writel(0x3, SIUL2_MSCRn(902));
+
+	/* PK7 pad: uSDHC CMD */
+	writel(SIUL2_USDHC_PAD_CTRL_CMD, SIUL2_MSCRn(151));
+	writel(0x3, SIUL2_MSCRn(901));
+
+	/* PK8 pad: uSDHC DAT0 */
+	writel(SIUL2_USDHC_PAD_CTRL_DAT0_3, SIUL2_MSCRn(152));
+	writel(0x3, SIUL2_MSCRn(903));
+
+	/* PK9 pad: uSDHC DAT1 */
+	writel(SIUL2_USDHC_PAD_CTRL_DAT0_3, SIUL2_MSCRn(153));
+	writel(0x3, SIUL2_MSCRn(904));
+
+	/* PK10 pad: uSDHC DAT2 */
+	writel(SIUL2_USDHC_PAD_CTRL_DAT0_3, SIUL2_MSCRn(154));
+	writel(0x3, SIUL2_MSCRn(905));
+
+	/* PK11 pad: uSDHC DAT3 */
+	writel(SIUL2_USDHC_PAD_CTRL_DAT0_3, SIUL2_MSCRn(155));
+	writel(0x3, SIUL2_MSCRn(906));
+
+	/* PK15 pad: uSDHC DAT4 */
+	writel(SIUL2_USDHC_PAD_CTRL_DAT4_7, SIUL2_MSCRn(159));
+	writel(0x3, SIUL2_MSCRn(907));
+
+	/* PL0 pad: uSDHC DAT5 */
+	writel(SIUL2_USDHC_PAD_CTRL_DAT4_7, SIUL2_MSCRn(160));
+	writel(0x3, SIUL2_MSCRn(908));
+
+	/* PL1 pad: uSDHC DAT6 */
+	writel(SIUL2_USDHC_PAD_CTRL_DAT4_7, SIUL2_MSCRn(161));
+	writel(0x3, SIUL2_MSCRn(909));
+
+	/* PL2 pad: uSDHC DAT7 */
+	writel(SIUL2_USDHC_PAD_CTRL_DAT4_7, SIUL2_MSCRn(162));
+	writel(0x3, SIUL2_MSCRn(910));
+}
+
+#ifdef CONFIG_FSL_ESDHC_IMX
+struct fsl_esdhc_cfg esdhc_cfg[1] = {
+	{USDHC_BASE_ADDR},
+};
+
+__weak int board_mmc_getcd(struct mmc *mmc)
+{
+	/* eSDHC1 is always present */
+	return 1;
+}
+
+__weak int sdhc_setup(bd_t *bis)
+{
+	esdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_USDHC_CLK);
+
+	setup_iomux_sdhc();
+
+	return fsl_esdhc_initialize(bis, &esdhc_cfg[0]);
+}
+
+int board_mmc_init(bd_t *bis)
+{
+	int ret = detect_boot_interface();
+
+	if (ret < 0)
+		return -1;
+
+	if (ret != SRC_BMR1_CFG1_QuadSPI)
+		return sdhc_setup(bis);
+	else
+		return 0;
+}
+
+static int do_sdhc_setup(cmd_tbl_t *cmdtp, int flag, int argc,
+			 char * const argv[])
+{
+	int ret;
+	struct mmc *mmc = find_mmc_device(0);
+
+	printf("Hyperflash is disabled. SD/eMMC is active and can be used\n");
+
+	if (!mmc)
+		return sdhc_setup(gd->bd);
+
+	/* set the sdhc pinmuxing */
+	setup_iomux_sdhc();
+
+	/* reforce the mmc's initialization */
+	ret = mmc_init(mmc);
+	if (ret) {
+		printf("Impossible to configure the SDHC controller. Please check the SDHC jumpers\n");
+		return 1;
+	}
+	return 0;
+}
+
+/* sdhc setup */
+U_BOOT_CMD(sdhcsetup, 1, 1, do_sdhc_setup,
+	   "setup sdhc pinmuxing and sdhc registers for access to SD",
+	   "\n"
+	   "Set up the sdhc pinmuxing and sdhc registers to access the SD\n"
+	   "and disconnect from the Hyperflash.\n"
+);
+#endif
+
+void setup_iomux_ddr(void)
+{
+	ddr_config_iomux(DDR0);
+	ddr_config_iomux(DDR1);
+}
+
+void ddr_ctrl_init(void)
+{
+	config_mmdc(0);
+	config_mmdc(1);
+}
+
+#ifdef CONFIG_DDR_HANDSHAKE_AT_RESET
+void ddr_check_post_func_reset(uint8_t module)
+{
+	u32 ddr_self_ref_clr, mmdc_mapsr;
+	unsigned long mmdc_addr;
+	volatile struct src *src = (struct src *)SRC_SOC_BASE_ADDR;
+
+	mmdc_addr = (module) ? MMDC1_BASE_ADDR : MMDC0_BASE_ADDR;
+	ddr_self_ref_clr = (module) ? SRC_DDR_EN_SELF_REF_CTRL_DDR1_SLF_REF_CLR
+				    : SRC_DDR_EN_SELF_REF_CTRL_DDR0_SLF_REF_CLR;
+
+	/* Check if DDR is still in refresh mode */
+	if (src->ddr_self_ref_ctrl & ddr_self_ref_clr) {
+		mmdc_mapsr = readl(mmdc_addr + MMDC_MAPSR);
+		writel(mmdc_mapsr | MMDC_MAPSR_EN_SLF_REF,
+		       mmdc_addr + MMDC_MAPSR);
+
+		src->ddr_self_ref_ctrl =
+			src->ddr_self_ref_ctrl | ddr_self_ref_clr;
+
+		mmdc_mapsr = readl(mmdc_addr + MMDC_MAPSR);
+		writel(mmdc_mapsr & ~MMDC_MAPSR_EN_SLF_REF,
+		       mmdc_addr + MMDC_MAPSR);
+	}
+}
+#endif
+
+__weak int dram_init(void)
+{
+#ifdef CONFIG_DDR_HANDSHAKE_AT_RESET
+	u32 enabled_hs_events, func_event;
+
+	if (readl(MC_RGM_DDR_HE) & MC_RGM_DDR_HE_EN) {
+		/* Enable DDR handshake for all functional events */
+		volatile struct src *src = (struct src *)SRC_SOC_BASE_ADDR;
+
+		src->ddr_self_ref_ctrl = src->ddr_self_ref_ctrl |
+					 SRC_DDR_EN_SLF_REF_VALUE;
+
+		/* If reset event was received, check DDR state */
+		func_event = readl(MC_RGM_FES);
+		enabled_hs_events = readl(MC_RGM_FRHE);
+		if (func_event & enabled_hs_events) {
+			if (func_event & MC_RGM_FES_ANY_FUNC_EVENT) {
+				/* Check if DDR handshake was done */
+				while (!(readl(MC_RGM_DDR_HS) &
+				       MC_RGM_DDR_HS_HNDSHK_DONE))
+					;
+
+				ddr_check_post_func_reset(DDR0);
+				ddr_check_post_func_reset(DDR1);
+			}
+		}
+	} else {
+		/*
+		 * First boot so the handshake isn't necessary.
+		 * We should only enable it for future functional resets.
+		 */
+		writel(MC_RGM_DDR_HE_VALUE, MC_RGM_DDR_HE);
+		writel(MC_RGM_FRHE_ALL_VALUE, MC_RGM_FRHE);
+	}
+#endif
+	setup_iomux_ddr();
+
+	ddr_ctrl_init();
+
+	gd->ram_size = get_ram_size((void *)PHYS_SDRAM, PHYS_SDRAM_SIZE);
+
 	return 0;
 }

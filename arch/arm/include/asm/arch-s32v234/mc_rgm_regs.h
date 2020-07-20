@@ -27,4 +27,14 @@
 #define F_ST_DONE			0x4
 #define F_EXT_RST			0x1
 
+/* DDR Handshake timeout value in IRC clocks */
+#define HNDSHK_TO_VAL			160
+
+#define MC_RGM_FES_ANY_FUNC_EVENT	0x846D
+#define MC_RGM_DDR_HE_EN		(0x1)
+#define MC_RGM_DDR_HE_VALUE		(HNDSHK_TO_VAL << 16) | \
+					 (MC_RGM_DDR_HE_EN)
+#define MC_RGM_FRHE_ALL_VALUE		0x846D
+#define MC_RGM_DDR_HS_HNDSHK_DONE	0x2
+
 #endif /* __ARCH_ARM_MACH_S32V234_MCRGM_REGS_H__ */

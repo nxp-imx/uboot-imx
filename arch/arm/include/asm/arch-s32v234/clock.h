@@ -27,6 +27,7 @@ enum pll_type {
 
 unsigned int mxc_get_clock(enum mxc_clock clk);
 void clock_init(void);
+void entry_to_target_mode(u32 mode);
 
 #define imx_get_fecclk() mxc_get_clock(MXC_FEC_CLK)
 

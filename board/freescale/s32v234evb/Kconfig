@@ -1,23 +1,25 @@
 if TARGET_S32V234EVB
 
-config SYS_CPU
-	string
-	default "armv8"
-
 config SYS_BOARD
 	string
 	default "s32v234evb"
 
-config SYS_VENDOR
-	string
-	default "freescale"
-
-config SYS_SOC
-	string
-	default "s32v234"
-
 config SYS_CONFIG_NAME
 	string
-	default "s32v234evb"
+	default "s32v234evb29288" if S32V234EVB_29288
+	default "s32v234evb28899" if S32V234EVB_28899
+
+# S32V234EVB rev. A board with DDR3 has 4x512 MB DDR chips
+# DDR0(1024MB) and DDR1(1024MB).
+# S32V234EVB rev. D board with LPDDR2 has 2x256 MB DDR chips
+# DDR0(256MB) and DDR1(256MB).
+# U-boot uses only one DDR slot for the boards which don't have
+# the DDR slots mapped as contiguous memory, otherwise uses
+# both DDR slots.
+
+config SYS_DDR_SIZE
+	hex
+	default 0x80000000 if S32V234_DDR3
+	default 0x10000000 if S32V234_LPDDR2
 
 endif
