@@ -1030,6 +1030,31 @@ void sc_seco_build_info(sc_ipc_t ipc, u32 *version, u32 *commit)
 		*commit = RPC_U32(&msg, 4U);
 }
 
+int sc_seco_v2x_build_info(sc_ipc_t ipc, u32 *version, u32 *commit)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	struct sc_rpc_msg_s msg;
+	int size = sizeof(struct sc_rpc_msg_s);
+	int ret;
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SIZE(&msg) = 1U;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_SECO);
+	RPC_FUNC(&msg) = (u8)(SECO_FUNC_V2X_BUILD_INFO);
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: res:%d\n", __func__, RPC_R8(&msg));
+
+	if (version)
+		*version = RPC_U32(&msg, 0U);
+
+	if (commit)
+		*commit = RPC_U32(&msg, 4U);
+
+	return ret;
+}
+
 int sc_seco_get_event(sc_ipc_t ipc, u8 idx, u32 *event)
 {
 	struct udevice *dev = gd->arch.scu_dev;
