@@ -154,10 +154,12 @@ ifdef CONFIG_IMX_M4_BIND
 OBJCOPYFLAGS += -j .firmware_image
 endif
 
+ifeq ($(CONFIG_S32V234),y)
 ifeq ($(CONFIG_OF_SEPARATE),y)
 ALL-y += u-boot-dtb.s32
 else
 ALL-y += u-boot.s32
+endif
 endif
 
 ifneq ($(CONFIG_IMX_CONFIG),)
