@@ -327,7 +327,6 @@ int checkboard(void)
 	puts("Board: iMX8QM DDR4 VAL\n");
 #endif
 
-	build_info();
 	print_bootinfo();
 
 	return 0;
@@ -376,6 +375,8 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 
 int board_late_init(void)
 {
+	build_info();
+
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	env_set("board_name", "VAL");
 	env_set("board_rev", "iMX8QM");

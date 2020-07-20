@@ -249,7 +249,6 @@ int checkboard(void)
 {
 	puts("Board: iMX8QM MEK\n");
 
-	build_info();
 	print_bootinfo();
 
 	return 0;
@@ -417,6 +416,8 @@ int board_late_init(void)
 {
 	char *fdt_file;
 	bool m4_booted;
+
+	build_info();
 
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	env_set("board_name", "MEK");
