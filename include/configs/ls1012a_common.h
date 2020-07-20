@@ -10,10 +10,13 @@
 
 #include <asm/arch/config.h>
 #include <asm/arch/stream_id_lsch2.h>
+#include <linux/sizes.h>
 
 #define CONFIG_SYS_CLK_FREQ		125000000
 
 #define CONFIG_SKIP_LOWLEVEL_INIT
+
+#define CONFIG_ENV_OVERWRITE
 
 #ifdef CONFIG_TFABOOT
 #define CONFIG_SYS_INIT_SP_ADDR                CONFIG_SYS_TEXT_BASE
@@ -34,11 +37,11 @@
 #define CONFIG_LAYERSCAPE_NS_ACCESS
 
 /* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 1024 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(5 * SZ_1M)
 
 /* PFE */
 #define CONFIG_SYS_FMAN_FW_ADDR		0x400d0000
-#define CONFIG_SYS_QE_FMAN_FW_LENGTH	0x10000
+#define CONFIG_SYS_QE_FMAN_FW_LENGTH	0x300000
 
 /*SPI device */
 #define CONFIG_SYS_FSL_QSPI_BASE	0x40000000

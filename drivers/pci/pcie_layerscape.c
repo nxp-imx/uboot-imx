@@ -92,7 +92,7 @@ static void ls_pcie_cfg1_set_busdev(struct ls_pcie *pcie, u32 busdev)
 }
 
 static void ls_pcie_atu_outbound_set(struct ls_pcie *pcie, int idx, int type,
-				      u64 phys, u64 bus_addr, pci_size_t size)
+				      u64 phys, u64 bus_addr, u64 size)
 {
 	dbi_writel(pcie, PCIE_ATU_REGION_OUTBOUND | idx, PCIE_ATU_VIEWPORT);
 	dbi_writel(pcie, (u32)phys, PCIE_ATU_LOWER_BASE);
@@ -105,25 +105,27 @@ static void ls_pcie_atu_outbound_set(struct ls_pcie *pcie, int idx, int type,
 }
 
 /* Use bar match mode and MEM type as default */
-static void ls_pcie_atu_inbound_set(struct ls_pcie *pcie, int idx,
-				     int bar, u64 phys)
+static void ls_pcie_atu_inbound_set(struct ls_pcie *pcie, u32 pf, u32 vf_flag,
+				    int idx, int bar, u64 phys)
 {
 	dbi_writel(pcie, PCIE_ATU_REGION_INBOUND | idx, PCIE_ATU_VIEWPORT);
 	dbi_writel(pcie, (u32)phys, PCIE_ATU_LOWER_TARGET);
 	dbi_writel(pcie, phys >> 32, PCIE_ATU_UPPER_TARGET);
-	dbi_writel(pcie, PCIE_ATU_TYPE_MEM, PCIE_ATU_CR1);
+	dbi_writel(pcie, PCIE_ATU_TYPE_MEM | PCIE_ATU_FUNC_NUM(pf),
+		   PCIE_ATU_CR1);
 	dbi_writel(pcie, PCIE_ATU_ENABLE | PCIE_ATU_BAR_MODE_ENABLE |
+		   (pcie->sriov_flag ? PCIE_ATU_FUNC_NUM_MATCH_EN : 0) |
+		   (vf_flag ? PCIE_ATU_VFBAR_MATCH_MODE_EN : 0) |
 		   PCIE_ATU_BAR_NUM(bar), PCIE_ATU_CR2);
 }
 
-static void ls_pcie_dump_atu(struct ls_pcie *pcie)
+static void ls_pcie_dump_atu(struct ls_pcie *pcie, u32 win_num, u32 type)
 {
-	int i;
+	int win_idx;
 
-	for (i = 0; i < PCIE_ATU_REGION_NUM; i++) {
-		dbi_writel(pcie, PCIE_ATU_REGION_OUTBOUND | i,
-			   PCIE_ATU_VIEWPORT);
-		debug("iATU%d:\n", i);
+	for (win_idx = 0; win_idx < win_num; win_idx++) {
+		dbi_writel(pcie, type | win_idx, PCIE_ATU_VIEWPORT);
+		debug("iATU%d:\n", win_idx);
 		debug("\tLOWER PHYS 0x%08x\n",
 		      dbi_readl(pcie, PCIE_ATU_LOWER_BASE));
 		debug("\tUPPER PHYS 0x%08x\n",
@@ -217,7 +219,7 @@ static void ls_pcie_setup_atu(struct ls_pcie *pcie)
 					 pref->bus_start,
 					 pref->size);
 
-	ls_pcie_dump_atu(pcie);
+	ls_pcie_dump_atu(pcie, PCIE_ATU_REGION_NUM, PCIE_ATU_REGION_OUTBOUND);
 }
 
 /* Return 0 if the address is valid, -errno if not valid */
@@ -331,50 +333,80 @@ static void ls_pcie_setup_ctrl(struct ls_pcie *pcie)
 	pcie->stream_id_cur = 0;
 }
 
-static void ls_pcie_ep_setup_atu(struct ls_pcie *pcie)
+static void ls_pcie_ep_setup_atu(struct ls_pcie *pcie, u32 pf)
 {
-	u64 phys = CONFIG_SYS_PCI_EP_MEMORY_BASE;
+	u64 phys = 0;
+	u32 vf_flag = 0;
+
+	phys = CONFIG_SYS_PCI_EP_MEMORY_BASE + pf * SZ_64M;
 
 	/* ATU 0 : INBOUND : map BAR0 */
-	ls_pcie_atu_inbound_set(pcie, 0, 0, phys);
+	phys = ALIGN(phys, PCIE_BAR0_SIZE);
+	ls_pcie_atu_inbound_set(pcie, pf, vf_flag, 0 + pf * BAR_NUM, 0, phys);
 	/* ATU 1 : INBOUND : map BAR1 */
-	phys += PCIE_BAR1_SIZE;
-	ls_pcie_atu_inbound_set(pcie, 1, 1, phys);
+	phys = ALIGN(phys + PCIE_BAR0_SIZE, PCIE_BAR1_SIZE);
+	ls_pcie_atu_inbound_set(pcie, pf, vf_flag, 1 + pf * BAR_NUM, 1, phys);
 	/* ATU 2 : INBOUND : map BAR2 */
-	phys += PCIE_BAR2_SIZE;
-	ls_pcie_atu_inbound_set(pcie, 2, 2, phys);
+	phys = ALIGN(phys + PCIE_BAR1_SIZE, PCIE_BAR2_SIZE);
+	ls_pcie_atu_inbound_set(pcie, pf, vf_flag, 2 + pf * BAR_NUM, 2, phys);
 	/* ATU 3 : INBOUND : map BAR4 */
-	phys = CONFIG_SYS_PCI_EP_MEMORY_BASE + PCIE_BAR4_SIZE;
-	ls_pcie_atu_inbound_set(pcie, 3, 4, phys);
+	phys = ALIGN(phys + PCIE_BAR2_SIZE, PCIE_BAR4_SIZE);
+	ls_pcie_atu_inbound_set(pcie, pf, vf_flag, 3 + pf * BAR_NUM, 4, phys);
 
-	/* ATU 0 : OUTBOUND : map MEM */
-	ls_pcie_atu_outbound_set(pcie, 0,
-				 PCIE_ATU_TYPE_MEM,
-				 pcie->cfg_res.start,
-				 0,
-				 CONFIG_SYS_PCI_MEMORY_SIZE);
+	if (pcie->sriov_flag) {
+		vf_flag = 1;
+		/* ATU 4 : INBOUND : map BAR0 */
+		phys = ALIGN(phys + PCIE_BAR4_SIZE, PCIE_BAR0_SIZE);
+		ls_pcie_atu_inbound_set(pcie, pf, vf_flag,
+					4 + pf * BAR_NUM, 0, phys);
+		/* ATU 5 : INBOUND : map BAR1 */
+		phys = ALIGN(phys + PCIE_BAR0_SIZE * PCIE_VF_NUM,
+			     PCIE_BAR1_SIZE);
+		ls_pcie_atu_inbound_set(pcie, pf, vf_flag,
+					5 + pf * BAR_NUM, 1, phys);
+		/* ATU 6 : INBOUND : map BAR2 */
+		phys = ALIGN(phys + PCIE_BAR1_SIZE * PCIE_VF_NUM,
+			     PCIE_BAR2_SIZE);
+		ls_pcie_atu_inbound_set(pcie, pf, vf_flag,
+					6 + pf * BAR_NUM, 2, phys);
+		/* ATU 7 : INBOUND : map BAR4 */
+		phys = ALIGN(phys + PCIE_BAR2_SIZE * PCIE_VF_NUM,
+			     PCIE_BAR4_SIZE);
+		ls_pcie_atu_inbound_set(pcie, pf, vf_flag,
+					7 + pf * BAR_NUM, 4, phys);
+	}
+
+	/* ATU: OUTBOUND : map MEM */
+	ls_pcie_atu_outbound_set(pcie, pf, PCIE_ATU_TYPE_MEM,
+				 (u64)pcie->cfg_res.start
+				 + pf * CONFIG_SYS_PCI_MEMORY_SIZE,
+				 0, CONFIG_SYS_PCI_MEMORY_SIZE);
 }
 
 /* BAR0 and BAR1 are 32bit BAR2 and BAR4 are 64bit */
 static void ls_pcie_ep_setup_bar(void *bar_base, int bar, u32 size)
 {
+	u32 mask;
+
 	/* The least inbound window is 4KiB */
-	if (size < 4 * 1024)
-		return;
+	if (size < SZ_4K)
+		mask = 0;
+	else
+		mask = size - 1;
 
 	switch (bar) {
 	case 0:
-		writel(size - 1, bar_base + PCI_BASE_ADDRESS_0);
+		writel(mask, bar_base + PCI_BASE_ADDRESS_0);
 		break;
 	case 1:
-		writel(size - 1, bar_base + PCI_BASE_ADDRESS_1);
+		writel(mask, bar_base + PCI_BASE_ADDRESS_1);
 		break;
 	case 2:
-		writel(size - 1, bar_base + PCI_BASE_ADDRESS_2);
+		writel(mask, bar_base + PCI_BASE_ADDRESS_2);
 		writel(0, bar_base + PCI_BASE_ADDRESS_3);
 		break;
 	case 4:
-		writel(size - 1, bar_base + PCI_BASE_ADDRESS_4);
+		writel(mask, bar_base + PCI_BASE_ADDRESS_4);
 		writel(0, bar_base + PCI_BASE_ADDRESS_5);
 		break;
 	default:
@@ -384,13 +416,28 @@ static void ls_pcie_ep_setup_bar(void *bar_base, int bar, u32 size)
 
 static void ls_pcie_ep_setup_bars(void *bar_base)
 {
-	/* BAR0 - 32bit - 4K configuration */
+	/* BAR0 - 32bit - configuration */
 	ls_pcie_ep_setup_bar(bar_base, 0, PCIE_BAR0_SIZE);
-	/* BAR1 - 32bit - 8K MSIX*/
+	/* BAR1 - 32bit - MSIX*/
 	ls_pcie_ep_setup_bar(bar_base, 1, PCIE_BAR1_SIZE);
-	/* BAR2 - 64bit - 4K MEM desciptor */
+	/* BAR2 - 64bit - MEM descriptor */
 	ls_pcie_ep_setup_bar(bar_base, 2, PCIE_BAR2_SIZE);
-	/* BAR4 - 64bit - 1M MEM*/
+	/* BAR4 - 64bit - MEM*/
+	ls_pcie_ep_setup_bar(bar_base, 4, PCIE_BAR4_SIZE);
+}
+
+static void ls_pcie_ep_setup_vf_bars(void *bar_base)
+{
+	/* VF BAR0 MASK register at offset 0x19c*/
+	bar_base += PCIE_SRIOV_VFBAR0 - PCI_BASE_ADDRESS_0;
+
+	/* VF-BAR0 - 32bit - configuration */
+	ls_pcie_ep_setup_bar(bar_base, 0, PCIE_BAR0_SIZE);
+	/* VF-BAR1 - 32bit - MSIX*/
+	ls_pcie_ep_setup_bar(bar_base, 1, PCIE_BAR1_SIZE);
+	/* VF-BAR2 - 64bit - MEM descriptor */
+	ls_pcie_ep_setup_bar(bar_base, 2, PCIE_BAR2_SIZE);
+	/* VF-BAR4 - 64bit - MEM*/
 	ls_pcie_ep_setup_bar(bar_base, 4, PCIE_BAR4_SIZE);
 }
 
@@ -406,25 +453,54 @@ static void ls_pcie_ep_enable_cfg(struct ls_pcie *pcie)
 static void ls_pcie_setup_ep(struct ls_pcie *pcie)
 {
 	u32 sriov;
+	u32 pf, vf;
+	void *bar_base = NULL;
 
 	sriov = readl(pcie->dbi + PCIE_SRIOV);
 	if (PCI_EXT_CAP_ID(sriov) == PCI_EXT_CAP_ID_SRIOV) {
-		int pf, vf;
-
+		pcie->sriov_flag = 1;
 		for (pf = 0; pf < PCIE_PF_NUM; pf++) {
-			for (vf = 0; vf <= PCIE_VF_NUM; vf++) {
-				ctrl_writel(pcie, PCIE_LCTRL0_VAL(pf, vf),
-					    PCIE_PF_VF_CTRL);
+			/*
+			 * The VF_BARn_REG register's Prefetchable and Type bit
+			 * fields are overwritten by a write to VF's BAR Mask
+			 * register. Before writing to the VF_BARn_MASK_REG
+			 * register, write 0b to the PCIE_MISC_CONTROL_1_OFF
+			 * register.
+			 */
+			writel(0, pcie->dbi + PCIE_MISC_CONTROL_1_OFF);
 
-				ls_pcie_ep_setup_bars(pcie->dbi);
-				ls_pcie_ep_setup_atu(pcie);
+			bar_base = pcie->dbi +
+				   PCIE_MASK_OFFSET(pcie->cfg2_flag, pf,
+						    pcie->pf1_offset);
+
+			if (pcie->cfg2_flag) {
+				ctrl_writel(pcie,
+					    PCIE_LCTRL0_VAL(pf, 0),
+					    PCIE_PF_VF_CTRL);
+				ls_pcie_ep_setup_bars(bar_base);
+
+				for (vf = 1; vf <= PCIE_VF_NUM; vf++) {
+					ctrl_writel(pcie,
+						    PCIE_LCTRL0_VAL(pf, vf),
+						    PCIE_PF_VF_CTRL);
+					ls_pcie_ep_setup_vf_bars(bar_base);
+				}
+			} else {
+				ls_pcie_ep_setup_bars(bar_base);
+				ls_pcie_ep_setup_vf_bars(bar_base);
 			}
+			ls_pcie_ep_setup_atu(pcie, pf);
 		}
-		/* Disable CFG2 */
-		ctrl_writel(pcie, 0, PCIE_PF_VF_CTRL);
+
+		if (pcie->cfg2_flag)  /* Disable CFG2 */
+			ctrl_writel(pcie, 0, PCIE_PF_VF_CTRL);
+		ls_pcie_dump_atu(pcie, PCIE_ATU_REGION_NUM_SRIOV,
+				 PCIE_ATU_REGION_INBOUND);
 	} else {
 		ls_pcie_ep_setup_bars(pcie->dbi + PCIE_NO_SRIOV_BAR_BASE);
-		ls_pcie_ep_setup_atu(pcie);
+		ls_pcie_ep_setup_atu(pcie, 0);
+		ls_pcie_dump_atu(pcie, PCIE_ATU_REGION_NUM,
+				 PCIE_ATU_REGION_INBOUND);
 	}
 
 	ls_pcie_ep_enable_cfg(pcie);
@@ -506,6 +582,16 @@ static int ls_pcie_probe(struct udevice *dev)
 		pcie->cfg_res.end = pcie->cfg_res.start + cfg_size;
 		pcie->ctrl = pcie->lut + 0x40000;
 	}
+
+	if (svr == SVR_LX2160A)
+		pcie->pf1_offset = LX2160_PCIE_PF1_OFFSET;
+	else
+		pcie->pf1_offset = LS_PCIE_PF1_OFFSET;
+
+	if (svr == SVR_LS2080A || svr == SVR_LS2085A)
+		pcie->cfg2_flag = 1;
+	else
+		pcie->cfg2_flag = 0;
 
 	pcie->cfg0 = map_physmem(pcie->cfg_res.start,
 				 fdt_resource_size(&pcie->cfg_res),

@@ -42,6 +42,8 @@
 
 #define CONFIG_SKIP_LOWLEVEL_INIT
 
+#define CONFIG_ENV_OVERWRITE
+
 #define CONFIG_VERY_BIG_RAM
 #define CONFIG_SYS_DDR_SDRAM_BASE	0x80000000
 #define CONFIG_SYS_FSL_DDR_SDRAM_BASE_PHY	0
@@ -129,7 +131,6 @@
 /* I2C */
 #ifndef CONFIG_DM_I2C
 #define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_MXC
 #define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
 #define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
 #define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */

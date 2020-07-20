@@ -131,9 +131,45 @@
 	phy-handle = <&rdb_phy0>;
 };
 
+&ethsw_ports {
+	port@0 {
+		status = "okay";
+		phy-mode = "qsgmii";
+		phy-handle = <&sw_phy0>;
+	};
+	port@1 {
+		status = "okay";
+		phy-mode = "qsgmii";
+		phy-handle = <&sw_phy1>;
+	};
+	port@2 {
+		status = "okay";
+		phy-mode = "qsgmii";
+		phy-handle = <&sw_phy2>;
+	};
+	port@3 {
+		status = "okay";
+		phy-mode = "qsgmii";
+		phy-handle = <&sw_phy3>;
+	};
+};
+
 &mdio0 {
 	status = "okay";
 	rdb_phy0: phy@2 {
 		reg = <2>;
+	};
+
+	sw_phy0: phy@10 {
+		reg = <0x10>;
+	};
+	sw_phy1: phy@11 {
+		reg = <0x11>;
+	};
+	sw_phy2: phy@12 {
+		reg = <0x12>;
+	};
+	sw_phy3: phy@13 {
+		reg = <0x13>;
 	};
 };

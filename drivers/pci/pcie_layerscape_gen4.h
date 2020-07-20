@@ -11,6 +11,8 @@
 #include <pci.h>
 #include <dm.h>
 
+#define REV_1_0					(0x10)
+
 #ifndef CONFIG_SYS_PCI_MEMORY_SIZE
 #define CONFIG_SYS_PCI_MEMORY_SIZE		(4 * 1024 * 1024 * 1024ULL)
 #endif
@@ -55,6 +57,10 @@
 #define INI_VF_MASK				0xffff
 #define INI_VF_SHIFT				0
 #define GPEX_SRIOV_VF_OFFSET_STRIDE(pf)		(0x704 + (pf) * 4)
+
+#define GPEX_ACK_REPLAY_TO			0x438
+#define ACK_LAT_TO_VAL_SHIFT			0
+#define ACK_LAT_TO_VAL_MASK			0x1fff
 
 /* PAB CSR */
 #define PAB_CTRL				0x808
@@ -161,6 +167,8 @@
 #define PCIE_LUT_LDR(n)				(0x804 + (n) * 8)
 #define PCIE_LUT_ENABLE				BIT(31)
 #define PCIE_LUT_ENTRY_COUNT			32
+#define PCIE_LUT_GCR				(0x28)
+#define PCIE_LUT_GCR_RRE			(0)
 
 /* PF control registers */
 #define PCIE_LTSSM_STA				0x7fc
@@ -190,6 +198,7 @@ struct ls_pcie_g4 {
 	int stream_id_cur;
 	int mode;
 	int sriov_support;
+	u8 rev;
 };
 
 extern struct list_head ls_pcie_g4_list;

@@ -22,6 +22,7 @@ void dm_pciauto_setup_device(struct udevice *dev, int bars_num,
 			     struct pci_region *prefetch, struct pci_region *io,
 			     bool enum_only)
 {
+	struct udevice *rp = pci_get_controller(dev);
 	u32 bar_response;
 	pci_size_t bar_size;
 	u16 cmdstat = 0;
@@ -32,6 +33,9 @@ void dm_pciauto_setup_device(struct udevice *dev, int bars_num,
 	struct pci_region *bar_res = NULL;
 	int found_mem64 = 0;
 	u16 class;
+	int pos;
+	u16 val, vendor, dev_id;
+	u8 rev;
 
 	dm_pci_read_config16(dev, PCI_COMMAND, &cmdstat);
 	cmdstat = (cmdstat & ~(PCI_COMMAND_IO | PCI_COMMAND_MEMORY)) |
@@ -167,6 +171,36 @@ void dm_pciauto_setup_device(struct udevice *dev, int bars_num,
 	dm_pci_write_config8(dev, PCI_CACHE_LINE_SIZE,
 			     CONFIG_SYS_PCI_CACHE_LINE_SIZE);
 	dm_pci_write_config8(dev, PCI_LATENCY_TIMER, 0x80);
+
+	/*
+	 * When NXP LAYERSCAPE Gen4 PCIe controller is sending multiple split
+	 * completions and ACK latency expires indicating that ACK should be
+	 * send at priority. But because of large number of split completions
+	 * and FC update DLLP, the controller does not give priority to ACK
+	 * transmission. This results into ACK latency timer timeout error at
+	 * the link partner and the pending TLPs are replayed by the link
+	 * partner again.
+	 *
+	 * The workaround:
+	 * Restrict the number of completions from the PCIe controller to 1,
+	 * by changing the Max Read Request Size (MRRS) of link partner to the
+	 * same value as Max Packet size (MPS).
+	 *
+	 * So, set both the MPS and MRRS to the minimum 128B.
+	 */
+	dm_pci_read_config16(rp, PCI_VENDOR_ID, &vendor);
+	dm_pci_read_config16(rp, PCI_DEVICE_ID, &dev_id);
+	dm_pci_read_config8(rp, PCI_REVISION_ID, &rev);
+	if (vendor == PCI_VENDOR_ID_FREESCALE &&
+	    dev_id == PCI_DEVICE_ID_LX2160A && rev == 0x10) {
+		pos = dm_pci_find_capability(dev, PCI_CAP_ID_EXP);
+		if (pos) {
+			dm_pci_read_config16(dev, pos + PCI_EXP_DEVCTL, &val);
+			val &= ~(PCI_EXP_DEVCTL_READRQ |
+				 PCI_EXP_DEVCTL_PAYLOAD);
+			dm_pci_write_config16(dev, pos + PCI_EXP_DEVCTL, val);
+		}
+	}
 }
 
 void dm_pciauto_prescan_setup_bridge(struct udevice *dev, int sub_bus)

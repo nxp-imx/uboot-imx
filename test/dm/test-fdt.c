@@ -283,7 +283,7 @@ static int dm_test_alias_highest_id(struct unit_test_state *uts)
 	int ret;
 
 	ret = dev_read_alias_highest_id("eth");
-	ut_asserteq(5, ret);
+	ut_asserteq(11, ret);
 
 	ret = dev_read_alias_highest_id("gpio");
 	ut_asserteq(2, ret);

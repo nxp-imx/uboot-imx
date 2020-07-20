@@ -419,6 +419,15 @@
 #define PCI_MAX_PCI_DEVICES	32
 #define PCI_MAX_PCI_FUNCTIONS	8
 
+/* PCI Express capability registers */
+#define PCI_EXP_DEVCTL			8	/* Device Control */
+#define  PCI_EXP_DEVCTL_PAYLOAD		0x00e0	/* Max_Payload_Size */
+#define  PCI_EXP_DEVCTL_READRQ		0x7000	/* Max_Read_Request_Size */
+#define  PCI_EXP_DEVCTL_READRQ_128B	0x0000	/* 128 Bytes */
+#define  PCI_EXP_DEVCTL_READRQ_256B	0x1000	/* 256 Bytes */
+#define  PCI_EXP_DEVCTL_READRQ_512B	0x2000	/* 512 Bytes */
+#define  PCI_EXP_DEVCTL_READRQ_1024B	0x3000	/* 1024 Bytes */
+
 #define PCI_FIND_CAP_TTL 0x48
 #define CAP_START_POS 0x40
 

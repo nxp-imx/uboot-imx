@@ -242,6 +242,9 @@ static int ls_pcie_g4_read_config(const struct udevice *bus, pci_dev_t bdf,
 
 	address = ls_pcie_g4_conf_address(pcie, bdf, offset);
 
+	if (pcie->rev == REV_1_0 && offset == PCI_VENDOR_ID)
+		lut_writel(pcie, 0x0 << PCIE_LUT_GCR_RRE, PCIE_LUT_GCR);
+
 	switch (size) {
 	case PCI_SIZE_8:
 		*valuep = readb(address);
@@ -256,6 +259,9 @@ static int ls_pcie_g4_read_config(const struct udevice *bus, pci_dev_t bdf,
 		ret = -EINVAL;
 		break;
 	}
+
+	if (pcie->rev == REV_1_0 && offset == PCI_VENDOR_ID)
+		lut_writel(pcie, 0x1 << PCIE_LUT_GCR_RRE, PCIE_LUT_GCR);
 
 	return ret;
 }
@@ -372,6 +378,11 @@ static void ls_pcie_g4_ep_set_bar_size(struct ls_pcie_g4 *pcie, int pf,
 	u32 mask_l = lower_32_bits(~(size - 1));
 	u32 mask_h = upper_32_bits(~(size - 1));
 
+	/* A-011452 workaround: set the VF BAR1 to 8MB */
+	if (pcie->rev == REV_1_0 && vf_bar && bar == 1) {
+		mask_l = lower_32_bits(~(SZ_8M - 1));
+		mask_h = upper_32_bits(~(SZ_8M - 1));
+	}
 	ccsr_writel(pcie, GPEX_BAR_SELECT, bar_pos);
 	ccsr_writel(pcie, GPEX_BAR_SIZE_LDW, mask_l);
 	ccsr_writel(pcie, GPEX_BAR_SIZE_UDW, mask_h);
@@ -517,6 +528,16 @@ static int ls_pcie_g4_probe(struct udevice *dev)
 	debug("%s ccsr:%lx, cfg:0x%lx, big-endian:%d\n",
 	      dev->name, (unsigned long)pcie->ccsr, (unsigned long)pcie->cfg,
 	      pcie->big_endian);
+
+	pcie->rev = readb(pcie->ccsr + PCI_REVISION_ID);
+
+	/* Set ACK latency timeout */
+	if (pcie->rev == REV_1_0) {
+		val = ccsr_readl(pcie, GPEX_ACK_REPLAY_TO);
+		val &= ~(ACK_LAT_TO_VAL_MASK << ACK_LAT_TO_VAL_SHIFT);
+		val |= (4 << ACK_LAT_TO_VAL_SHIFT);
+		ccsr_writel(pcie, GPEX_ACK_REPLAY_TO, val);
+	}
 
 	pcie->mode = readb(pcie->ccsr + PCI_HEADER_TYPE) & 0x7f;
 

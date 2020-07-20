@@ -9,6 +9,7 @@
 #define _PCIE_LAYERSCAPE_H_
 #include <pci.h>
 #include <dm.h>
+#include <linux/sizes.h>
 
 #ifndef CONFIG_SYS_PCI_MEMORY_BUS
 #define CONFIG_SYS_PCI_MEMORY_BUS CONFIG_SYS_SDRAM_BASE
@@ -19,7 +20,7 @@
 #endif
 
 #ifndef CONFIG_SYS_PCI_MEMORY_SIZE
-#define CONFIG_SYS_PCI_MEMORY_SIZE (2 * 1024 * 1024 * 1024UL) /* 2G */
+#define CONFIG_SYS_PCI_MEMORY_SIZE SZ_4G
 #endif
 
 #ifndef CONFIG_SYS_PCI_EP_MEMORY_BASE
@@ -39,14 +40,18 @@
 #define PCIE_ATU_REGION_INDEX2		(0x2 << 0)
 #define PCIE_ATU_REGION_INDEX3		(0x3 << 0)
 #define PCIE_ATU_REGION_NUM		6
+#define PCIE_ATU_REGION_NUM_SRIOV	24
 #define PCIE_ATU_CR1			0x904
 #define PCIE_ATU_TYPE_MEM		(0x0 << 0)
 #define PCIE_ATU_TYPE_IO		(0x2 << 0)
 #define PCIE_ATU_TYPE_CFG0		(0x4 << 0)
 #define PCIE_ATU_TYPE_CFG1		(0x5 << 0)
+#define PCIE_ATU_FUNC_NUM(pf)		(pf << 20)
 #define PCIE_ATU_CR2			0x908
 #define PCIE_ATU_ENABLE			(0x1 << 31)
 #define PCIE_ATU_BAR_MODE_ENABLE	(0x1 << 30)
+#define PCIE_ATU_FUNC_NUM_MATCH_EN	(1 << 19)
+#define PCIE_ATU_VFBAR_MATCH_MODE_EN	(1 << 26)
 #define PCIE_ATU_BAR_NUM(bar)		((bar) << 8)
 #define PCIE_ATU_LOWER_BASE		0x90C
 #define PCIE_ATU_UPPER_BASE		0x910
@@ -85,11 +90,17 @@
 
 #define PCIE_PF_NUM		2
 #define PCIE_VF_NUM		64
+#define BAR_NUM			8
 
-#define PCIE_BAR0_SIZE		(4 * 1024) /* 4K */
-#define PCIE_BAR1_SIZE		(8 * 1024) /* 8K for MSIX */
-#define PCIE_BAR2_SIZE		(4 * 1024) /* 4K */
-#define PCIE_BAR4_SIZE		(1 * 1024 * 1024) /* 1M */
+#define PCIE_BAR0_SIZE		SZ_4K /* 4K */
+#define PCIE_BAR1_SIZE		SZ_8K /* 8K for MSIX */
+#define PCIE_BAR2_SIZE		SZ_4K /* 4K */
+#define PCIE_BAR4_SIZE		SZ_1M /* 1M */
+
+#define PCIE_SRIOV_VFBAR0	0x19C
+#define PCIE_MISC_CONTROL_1_OFF	0x8BC
+
+#define PCIE_MASK_OFFSET(flag, pf, off) ((flag) ? 0 : (0x1000 + (off) * (pf)))
 
 /* LUT registers */
 #define PCIE_LUT_UDR(n)		(0x800 + (n) * 8)
@@ -128,6 +139,12 @@
 #define LS1021_PEXMSCPORTSR(pex_idx)	(0x94 + (pex_idx) * 4)
 #define LS1021_LTSSM_STATE_SHIFT	20
 
+/* LX2160a PF1 offset */
+#define LX2160_PCIE_PF1_OFFSET	0x8000
+
+/* layerscape PF1 offset */
+#define LS_PCIE_PF1_OFFSET	0x20000
+
 struct ls_pcie {
 	int idx;
 	struct list_head list;
@@ -144,6 +161,9 @@ struct ls_pcie {
 	bool big_endian;
 	bool enabled;
 	int next_lut_index;
+	uint sriov_flag;
+	uint cfg2_flag;
+	uint pf1_offset;
 	int stream_id_cur;
 	int mode;
 };

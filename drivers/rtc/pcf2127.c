@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2016 by NXP Semiconductors Inc.
  * Date & Time support for PCF2127 RTC
+ * Copyright 2020 NXP
  */
 
 /*	#define	DEBUG	*/
@@ -26,7 +27,7 @@ static int pcf2127_read_reg(struct udevice *dev, uint offset,
 			    u8 *buffer, int len)
 {
 	struct dm_i2c_chip *chip = dev_get_parent_platdata(dev);
-	struct i2c_msg msg;
+	struct i2c_msg msg = {0};
 	int ret;
 
 	/* Set the address of the start register to be read */
