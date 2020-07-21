@@ -18,6 +18,10 @@
 #define CONFIG_SYS_I2C_DVI_BUS_NUM	1
 #define CONFIG_SYS_I2C_DVI_ADDR		0x39
 
+/* Ethernet config */
+#define CONFIG_FEC_XCV_TYPE     RGMII
+#define CONFIG_FEC_MXC_PHYADDR  1
+
 #define FDT_FILE fsl-s32v234-pcie.dtb
 
 /* we include this file here because it depends on the above definitions */
