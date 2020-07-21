@@ -25,6 +25,11 @@ config TARGET_S32V234EVB
 	  S32V Evaluation System for high-performance, safe computation-intensive
 	  front vision, surround vision and sensor fusion applications.
 
+config TARGET_S32V234PCIE
+	bool "Support s32v234pcie"
+	help
+	  S32V234 board with PCIe Edge connector.
+
 endchoice
 
 if TARGET_S32V234EVB
