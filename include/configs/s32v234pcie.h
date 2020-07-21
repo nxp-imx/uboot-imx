@@ -24,7 +24,6 @@
 
 #ifdef CONFIG_CMD_PCI
 #define CONFIG_PCIE_EP_MODE
-#define CONFIG_GICSUPPORT
 #endif
 
 #define FDT_FILE fsl-s32v234-pcie.dtb
