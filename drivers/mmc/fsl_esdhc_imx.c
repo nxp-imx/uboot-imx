@@ -29,7 +29,9 @@
 #include <dm.h>
 #include <asm-generic/gpio.h>
 #include <dm/pinctrl.h>
+#ifdef CONFIG_MX6
 #include <asm/arch/sys_proto.h>
+#endif
 
 #if !CONFIG_IS_ENABLED(BLK)
 #include "mmc_private.h"
