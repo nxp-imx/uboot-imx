@@ -208,6 +208,20 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_BOARD_EXTRA_ENV_SETTINGS  \
+	"ipaddr=10.0.0.100\0" \
+	"serverip=10.0.0.1\0" \
+	"netmask=255.255.255.0\0" \
+	"nfsbootargs=setenv bootargs console=${console},${baudrate} " \
+		"root=/dev/nfs rw " \
+		"ip=${ipaddr}:${serverip}::${netmask}::eth0:off " \
+		"nfsroot=${serverip}:/tftpboot/rfs,nolock,v3,tcp " \
+		CONFIG_EXTRA_KERNEL_BOOT_ARGS "\0" \
+	"loadtftpimage=tftp ${loadaddr} ${image};\0" \
+	"loadtftpfdt=tftp ${fdt_addr} ${fdt_file};\0" \
+	"nfsboot=echo Booting from net using tftp and nfs...; " \
+		"run nfsbootargs;"\
+		"run loadtftpimage; run loadtftpfdt;"\
+		"${boot_mtd} ${loadaddr} - ${fdt_addr};\0" \
 	"script=boot.scr\0" \
 	"boot_mtd=" __stringify(BOOT_MTD) "\0" \
 	"image=" __stringify(IMAGE_NAME) "\0" \
