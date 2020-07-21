@@ -28,6 +28,11 @@
 #define CONFIG_FEC_XCV_TYPE	RGMII
 #define CONFIG_FEC_MXC_PHYADDR	3
 
+#ifdef CONFIG_SJA1105
+#define SJA_1_BUS	0
+#define SJA_1_CS	0
+#endif /* CONFIG_SJA1105 */
+
 /* we include this file here because it depends on the above definitions */
 #include <configs/s32v234_common.h>
 

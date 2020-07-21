@@ -20,6 +20,10 @@
 #include <micrel.h>
 #endif
 
+#ifdef CONFIG_SJA1105
+#include "sja1105.h"
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static void setup_iomux_dspi(void)
@@ -185,6 +189,10 @@ int board_init(void)
 {
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
+
+#ifdef CONFIG_SJA1105
+	sja1105_probe(SJA_1_CS, SJA_1_BUS);
+#endif
 
 	return 0;
 }
