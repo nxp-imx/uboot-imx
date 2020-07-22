@@ -384,6 +384,9 @@ config TRUSTY_UNLOCK_PERMISSION
 config VENDOR_BOOT_SUPPORT
 	bool "Support vendor boot load"
 
+config VIRTUAL_AB_SUPPORT
+	bool "Support virtual AB update"
+
 endmenu
 
 menu "Hashing Support"
