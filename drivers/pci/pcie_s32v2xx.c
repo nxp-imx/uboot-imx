@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Heinz Wrobel <heinz.wrobel@nxp.com>
  * Copyright (C) 2015 Aurelian Voicu <aurelian.voicu@nxp.com>
  * Copyright 2016-2017,2020 NXP
+ * (C) Copyright 2018 MicroSys Electronics GmbH
  *
  * Based on upstream iMX U-Boot driver:
  * pcie_imx.c:		Marek Vasut <marex@denx.de>
@@ -742,6 +743,31 @@ void pci_init_board(void)
 	epmode = 0;
 #endif
 
+#if defined CONFIG_MPXS32V234_R1 || defined CONFIG_MPXS32V234_R2
+#ifdef CONFIG_PCIE_EXT_CLOCK
+	/*
+	 * SBC-S32VEVB has external PCIe clocking.
+	 * Note that it is not an option to make this configuration available
+	 * via setting the environment variable 'hwconfig'. The reason is that
+	 * the variable 'hwconfig' could be deleted by mistake from the
+	 * persistent storage. In that case U-Boot would hang when
+	 * initializing the PCIe subsystem.
+	 */
+	clockexternal = 1;
+#else
+	clockexternal = 0;
+	/* For CUT2.0 we MUST use external clock, since there is no
+	 * internal clock available.
+	 * This must be done for backwards compatibility, so that
+	 * PCIe works the same way with the default settings on
+	 * all CUTs, old and new.
+	 */
+	if (get_siul2_midr1_major() >= 1)
+		clockexternal = 1;
+	else
+		clockexternal = 0;
+#endif
+#endif
 	/* We have a build time default, but we allow a custom
 	 * override for configuration flexibility
 	 */
