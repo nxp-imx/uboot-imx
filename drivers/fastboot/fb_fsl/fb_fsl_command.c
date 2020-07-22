@@ -49,6 +49,7 @@
 #endif
 
 #include "fb_fsl_common.h"
+#include "fb_fsl_virtual_ab.h"
 
 #define EP_BUFFER_SIZE			4096
 
@@ -409,6 +410,14 @@ static FbLockState do_fastboot_unlock(bool force)
 			}
 		}
 #endif
+
+#ifdef CONFIG_VIRTUAL_AB_SUPPORT
+		if (virtual_ab_update_is_merging() || virtual_ab_update_is_snapshoted()) {
+			printf("Can not erase userdata while a snapshot update is in progress!\n");
+			return FASTBOOT_LOCK_ERROR;
+		}
+#endif
+
 		wipe_all_userdata();
 		status = fastboot_set_lock_stat(FASTBOOT_UNLOCK);
 		if (status < 0)
@@ -429,6 +438,13 @@ static FbLockState do_fastboot_lock(void)
 		printf("The device is already locked\n");
 		return FASTBOOT_LOCK;
 	}
+
+#ifdef CONFIG_VIRTUAL_AB_SUPPORT
+		if (virtual_ab_update_is_merging() || virtual_ab_update_is_snapshoted()) {
+			printf("Can not erase userdata while a snapshot update is in progress!\n");
+			return FASTBOOT_LOCK_ERROR;
+		}
+#endif
 
 	wipe_all_userdata();
 	status = fastboot_set_lock_stat(FASTBOOT_LOCK);
@@ -734,6 +750,20 @@ static void set_active_avb(char *cmd, char *response)
 		return;
 	}
 
+#ifdef CONFIG_VIRTUAL_AB_SUPPORT
+	if (virtual_ab_update_is_merging()) {
+		printf("Can not switch slot while snapshot merge is in progress!\n");
+		fastboot_fail("Snapshot merge is in progress!", response);
+		return;
+	}
+
+	/* Only output a warning when the image is snapshoted. */
+	if (virtual_ab_update_is_snapshoted())
+		printf("Warning: changing the active slot with a snapshot applied may cancel the update!\n");
+	else
+		printf("Warning: Virtual A/B is enabled, switch slot may make the system fail to boot. \n");
+#endif
+
 	slot = slotidx_from_suffix(cmd);
 
 	if (slot < 0) {
@@ -778,8 +808,22 @@ static void flash(char *cmd, char *response)
 	}
 #endif
 
+#ifdef CONFIG_VIRTUAL_AB_SUPPORT
+	if (partition_is_protected_during_merge(cmd)) {
+		printf("Can not flash partition %s while a snapshot update is in progress!\n", cmd);
+		fastboot_fail("Snapshot update is in progress", response);
+		return;
+	}
+#endif
+
 	fastboot_process_flash(cmd, fastboot_buf_addr,
 		fastboot_bytes_received, response);
+
+#ifdef CONFIG_VIRTUAL_AB_SUPPORT
+	/* Cancel virtual AB update after image flash */
+	if (virtual_ab_update_is_merging() || virtual_ab_update_is_snapshoted())
+		virtual_ab_cancel_update();
+#endif
 
 #if defined(CONFIG_FASTBOOT_LOCK)
 	if (strncmp(cmd, "gpt", 3) == 0) {
@@ -820,6 +864,15 @@ static void erase(char *cmd, char *response)
 		return;
 	}
 #endif
+
+#ifdef CONFIG_VIRTUAL_AB_SUPPORT
+	if (partition_is_protected_during_merge(cmd)) {
+		printf("Can not erase partition %s while a snapshot update is in progress!", cmd);
+		fastboot_fail("Snapshot update is in progress", response);
+		return;
+	}
+#endif
+
 	fastboot_process_erase(cmd, response);
 }
 #endif
