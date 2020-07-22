@@ -605,9 +605,31 @@ static void esdhc_tuning_block_enable(struct fsl_esdhc_priv *priv,
 	esdhc_clock_control(priv, true);
 }
 
+void fsl_esdhc_exit_hs400(struct fsl_esdhc_priv *priv)
+{
+	struct fsl_esdhc *regs = priv->esdhc_regs;
+
+	esdhc_clrbits32(&regs->sdtimingctl, FLW_CTL_BG);
+	esdhc_clrbits32(&regs->sdclkctl, CMD_CLK_CTL);
+
+	esdhc_clock_control(priv, false);
+	esdhc_clrbits32(&regs->tbctl, HS400_MODE);
+	esdhc_clock_control(priv, true);
+
+	esdhc_clrbits32(&regs->dllcfg0, DLL_FREQ_SEL | DLL_ENABLE);
+	esdhc_clrbits32(&regs->tbctl, HS400_WNDW_ADJUST);
+
+	esdhc_tuning_block_enable(priv, false);
+}
+
 static void esdhc_set_timing(struct fsl_esdhc_priv *priv, enum bus_mode mode)
 {
 	struct fsl_esdhc *regs = priv->esdhc_regs;
+
+	/* Exit HS400 mode before setting any other mode */
+	if (esdhc_read32(&regs->tbctl) & HS400_MODE &&
+	    mode != MMC_HS_400)
+		fsl_esdhc_exit_hs400(priv);
 
 	esdhc_clock_control(priv, false);
 
