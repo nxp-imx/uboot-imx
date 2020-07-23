@@ -630,7 +630,7 @@ static int wait_for_pkt_done(struct mipi_dsi_northwest_info *mipi_dsi, unsigned 
 	uint32_t irq_status;
 
 	do {
-		irq_status = readl(mipi_dsi->mmio_base + HOST_PKT_STATUS);
+		irq_status = readl(mipi_dsi->mmio_base + HOST_IRQ_STATUS);
 		if (irq_status & HOST_IRQ_STATUS_TX_PKT_DONE)
 			return timeout;
 
@@ -666,7 +666,6 @@ static int mipi_dsi_pkt_write(struct mipi_dsi_northwest_info *mipi_dsi,
 		printf("wait tx done timeout!\n");
 		return -ETIMEDOUT;
 	}
-	mdelay(10);
 
 	return 0;
 }
