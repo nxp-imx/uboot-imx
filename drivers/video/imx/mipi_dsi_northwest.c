@@ -26,7 +26,7 @@
 #include <dm/device_compat.h>
 #include <regmap.h>
 #include <syscon.h>
-
+#include <asm/arch/clock.h>
 
 #define MIPI_LCD_SLEEP_MODE_DELAY	(120)
 #define MIPI_FIFO_TIMEOUT		250000 /* 250ms */
@@ -722,6 +722,8 @@ static void mipi_dsi_shutdown(struct mipi_dsi_northwest_info *mipi_dsi)
 	writel(0x1, mipi_dsi->mmio_base + DPHY_PD_PLL);
 	writel(0x1, mipi_dsi->mmio_base + DPHY_PD_DPHY);
 
+	enable_mipi_dsi_clk(false);
+
 	reset_dsi_domains(mipi_dsi, true);
 }
 
@@ -738,6 +740,9 @@ static int mipi_dsi_northwest_host_attach(struct mipi_dsi_host *host,
 
 	/* Assert resets */
 	reset_dsi_domains(mipi_dsi, true);
+
+	/* Enable mipi relevant clocks */
+	enable_mipi_dsi_clk(true);
 
 	ret = mipi_dsi_dphy_init(mipi_dsi);
 	if (ret < 0)
