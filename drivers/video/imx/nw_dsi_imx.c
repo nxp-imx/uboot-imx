@@ -22,7 +22,6 @@
 #include <power/regulator.h>
 #include <regmap.h>
 #include <syscon.h>
-#include <asm/arch/clock.h>
 
 struct nw_dsi_imx_priv {
 	struct mipi_dsi_device device;
@@ -107,8 +106,6 @@ static int nw_dsi_imx_probe(struct udevice *dev)
 		return -EINVAL;
 	}
 
-	enable_mipi_dsi_clk(true);
-
 	return ret;
 }
 
@@ -125,8 +122,6 @@ static int nw_dsi_imx_remove(struct udevice *dev)
 		dev_err(dev, "failed to enable mipi dsi host\n");
 		return ret;
 	}
-
-	enable_mipi_dsi_clk(false);
 
 	return 0;
 }
