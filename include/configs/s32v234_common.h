@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * (C) Copyright 2016 NXP.
+ * (C) Copyright 2016,2020 NXP.
  *
  * Configuration settings for the Freescale S32V234 EVB board.
  */
@@ -108,8 +108,6 @@
 				" root=/dev/ram rw" \
 				CONFIG_BOOTARGS_LOGLEVEL " " \
 				CONFIG_EXTRA_KERNEL_BOOT_ARGS
-
-#define CONFIG_CMD_ENV
 
 #ifdef CONFIG_CMD_BOOTI
 
