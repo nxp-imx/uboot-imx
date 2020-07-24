@@ -23,9 +23,11 @@
 #include <log.h>
 #include <stddef.h>
 #include <common.h>
+#include <console.h>
 #include <asm/arch/sci/sci.h>
 #include <asm/arch-imx8/imx8-pins.h>
 #include <asm/arch-imx8/snvs_security_sc.h>
+#include <asm/arch/sys_proto.h>
 #include "snvs_security_sc_conf_board.h"
 
 #define SC_WRITE_CONF 1
@@ -732,4 +734,73 @@ U_BOOT_CMD(gpio_conf,
 	   3, 1, do_gpio_conf,
 	   "gpio configuration",
 	   gpio_conf_help_text
+);
+
+#define FSL_SIP_FIPS_CONFIG		0xC200000D
+#define FSL_SIP_FIPS_CONFIG_SET		0x1
+
+static
+int do_set_fips_mode(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+{
+	int err = -EIO;
+	u8 fips_mode = 0;
+
+	if (argc < 2)
+		return CMD_RET_USAGE;
+
+	fips_mode = simple_strtoul(argv[1], NULL, 16);
+
+	if (argc == 2) {
+		printf("Warning: Setting FIPS mode [%x] will burn a fuse and\n"
+		       "is permanent\n"
+		       "Really perform this fuse programming? <y/N>\n",
+		       fips_mode);
+
+		/* If the user does not answer yes (1), we return */
+		if (confirm_yesno() != 1)
+			return 0;
+	}
+
+	if (argc == 3 && !(argv[2][0] == '-' && argv[2][1] == 'y'))
+		return CMD_RET_USAGE;
+
+	err = call_imx_sip(FSL_SIP_FIPS_CONFIG, FSL_SIP_FIPS_CONFIG_SET,
+			   fips_mode, 0, 0);
+	if (err) {
+		printf("Failed to set fips mode %d. err: %d\n",
+		       fips_mode, err);
+	}
+
+	return (err) ? CMD_RET_FAILURE : CMD_RET_SUCCESS;
+}
+
+U_BOOT_CMD(set_fips_mode,
+	   3, 0, do_set_fips_mode,
+	   "Set FIPS mode",
+	   "<mode in hex> [-y] \n"
+	   "    The SoC will be configured in FIPS <mode> (PERMANENT)\n"
+	   "    If \"-y\" is not passed, the function will ask for validation\n"
+	   "ex: set_fips_mode 1\n"
+);
+
+static
+int do_check_fips_mode(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+{
+	int err = -EIO;
+	u32 fuse_value = 0;
+
+	/* The FIPS bit is the bit 3 in the word 0xA */
+	err = sc_misc_otp_fuse_read(-1, 0xA, &fuse_value);
+	if (err)
+		return err;
+
+	printf("FIPS mode: %x\n", fuse_value >> 3 & 0x1);
+
+	return 0;
+}
+
+U_BOOT_CMD(check_fips_mode,
+	   1, 0, do_check_fips_mode,
+	   "Display the FIPS mode of the SoC by reading fuse 0xA, bit 3",
+	   NULL
 );
