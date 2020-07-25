@@ -12,6 +12,7 @@
 #include <mmc.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
+#include <power/regulator.h>
 #ifdef CONFIG_TARGET_IMX8MM_AB2
 #include <asm/arch/imx8mm_pins.h>
 #else
