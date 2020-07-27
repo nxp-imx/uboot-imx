@@ -19,7 +19,12 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define FSL_FSPI_NAND_SIZE SZ_4G
 #define FSL_FSPI_NAND_NUM 1
+
+#ifdef CONFIG_IMX8ULP
+#define RX_BUFFER_SIZE		0x400
+#else
 #define RX_BUFFER_SIZE		0x200
+#endif
 #define TX_BUFFER_SIZE		0x400
 #define AHB_BUFFER_SIZE		0x800
 
@@ -36,18 +41,28 @@ enum fspi_lut_id {
 	SEQID_GET_FEATURE = 4,
 	SEQID_BLK_ERASE	= 5,
 	SEQID_PAGE_READ = 6,
-	SEQID_READ_FROM_CACHE_NORMAL = 7,
-	SEQID_READ_FROM_CACHE_FAST = 8,
-	SEQID_READ_FROM_CACHE_X2 = 9,
-	SEQID_READ_FROM_CACHE_X4 = 10,
-	SEQID_READ_FROM_CACHE_DUALIO = 11,
-	SEQID_READ_FROM_CACHE_QUADIO = 12,
-	SEQID_PROG_EXEC = 13,
-	SEQID_PROG_LOAD = 14,
-	SEQID_PROG_LOAD_RANDOM = 15,
-	SEQID_PROG_LOAD_X4 = 16,
-	SEQID_PROG_LOAD_RANDOM_X4 = 17,
+	SEQID_PROG_EXEC = 7,
+	SEQID_READ_FROM_CACHE_COMMON = 8,
+	SEQID_PROG_LOAD_COMMON = 9,
 	SEQID_END,
+};
+
+enum fspi_read_cache_id {
+	ID_READ_FROM_CACHE_NORMAL = 0,
+	ID_READ_FROM_CACHE_FAST = 1,
+	ID_READ_FROM_CACHE_X2 = 2,
+	ID_READ_FROM_CACHE_X4 = 3,
+	ID_READ_FROM_CACHE_DUALIO = 4,
+	ID_READ_FROM_CACHE_QUADIO = 5,
+	ID_READ_FROM_CACHE_END,
+};
+
+enum fspi_prog_load_id {
+	ID_PROG_LOAD = 0,
+	ID_PROG_LOAD_RANDOM = 1,
+	ID_PROG_LOAD_X4 = 2,
+	ID_PROG_LOAD_RANDOM_X4 = 3,
+	ID_PROG_LOAD_END,
 };
 
 /* SPI NAND CMD */
@@ -133,6 +148,147 @@ struct fspi_cmd_func_pair {
 	u8 cmd;
 	int (*fspi_op_func)(struct fsl_fspi_priv *priv, u32 seqid, const struct spi_mem_op *op);
 };
+
+const u32 read_cache_lut[ID_READ_FROM_CACHE_END][4] = {
+	/* Read from cache normal */
+	{
+		OPRND0(SPINAND_CMD_PAGE_READ_FROM_CACHE_NORMAL) |
+			PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
+			PAD1(LUT_PAD1) | INSTR1(LUT_MODE4),
+		OPRND0(ADDR12BIT) | PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) |
+			OPRND1(8) | PAD1(LUT_PAD1) | INSTR1(LUT_DUMMY),
+		OPRND0(0) | PAD0(LUT_PAD1) | INSTR0(LUT_READ),
+		0,
+	},
+	/* Read from cache fast */
+	{
+		OPRND0(SPINAND_CMD_PAGE_READ_FROM_CACHE_FAST) |
+			PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
+			PAD1(LUT_PAD1) | INSTR1(LUT_MODE4),
+		OPRND0(ADDR12BIT) | PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) |
+			OPRND1(8) | PAD1(LUT_PAD1) | INSTR1(LUT_DUMMY),
+		OPRND0(0) | PAD0(LUT_PAD1) | INSTR0(LUT_READ),
+		0,
+	},
+	/* Read from cache x2 */
+	{
+		OPRND0(SPINAND_CMD_PAGE_READ_FROM_CACHE_X2) |
+			PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
+			PAD1(LUT_PAD1) | INSTR1(LUT_MODE4),
+		OPRND0(ADDR12BIT) | PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) | OPRND1(8) |
+			PAD1(LUT_PAD1) | INSTR1(LUT_DUMMY),
+		OPRND0(0) | PAD0(LUT_PAD2) | INSTR0(LUT_READ),
+		0,
+	},
+	/* Read from cache x4 */
+	{
+		OPRND0(SPINAND_CMD_PAGE_READ_FROM_CACHE_X4) |
+			PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
+			PAD1(LUT_PAD1) | INSTR1(LUT_MODE4),
+		OPRND0(ADDR12BIT) | PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) | OPRND1(8) |
+			PAD1(LUT_PAD1) | INSTR1(LUT_DUMMY),
+		OPRND0(0) | PAD0(LUT_PAD4) | INSTR0(LUT_READ),
+		0,
+	},
+	/* Read from cache dual IO */
+	{
+		OPRND0(SPINAND_CMD_PAGE_READ_FROM_CACHE_DUALIO) |
+			PAD0(LUT_PAD1) | INSTR0(LUT_CMD) | OPRND1(0) |
+			PAD1(LUT_PAD2) | INSTR1(LUT_MODE4),
+		OPRND0(ADDR12BIT) | PAD0(LUT_PAD2) | INSTR0(LUT_CADDR_SDR) | OPRND1(4) |
+			PAD1(LUT_PAD2) | INSTR1(LUT_DUMMY),
+		OPRND0(0) | PAD0(LUT_PAD2) | INSTR0(LUT_READ),
+		0,
+	},
+	/* Read from cache Quad IO */
+	{
+		OPRND0(SPINAND_CMD_PAGE_READ_FROM_CACHE_QUADIO) |
+			PAD0(LUT_PAD1) | INSTR0(LUT_CMD) | OPRND1(0) |
+			PAD1(LUT_PAD4) | INSTR1(LUT_MODE4),
+		OPRND0(ADDR12BIT) |PAD0(LUT_PAD4) | INSTR0(LUT_CADDR_SDR) |
+			OPRND1(4) | PAD1(LUT_PAD4) | INSTR1(LUT_DUMMY),
+		OPRND0(0) | PAD0(LUT_PAD4) | INSTR0(LUT_READ),
+		0,
+	},
+};
+
+const u32 prog_load_lut[ID_PROG_LOAD_END][4] = {
+	/* Program load */
+	{
+		OPRND0(SPINAND_CMD_PROG_LOAD) |
+			PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
+			PAD1(LUT_PAD1) | INSTR1(LUT_MODE4),
+		OPRND0(ADDR12BIT) | PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) |
+			OPRND1(0) |PAD1(LUT_PAD1) | INSTR1(LUT_WRITE),
+		0, 0,
+	},
+	/* Program load random */
+	{
+		OPRND0(SPINAND_CMD_PROG_LOAD_RANDOM) |
+			PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
+			PAD1(LUT_PAD1) | INSTR1(LUT_MODE4),
+		OPRND0(ADDR12BIT) | PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) |
+			OPRND1(0) | PAD1(LUT_PAD1) | INSTR1(LUT_WRITE),
+		0, 0,
+	},
+	/* Program load x4 */
+	{
+		OPRND0(SPINAND_CMD_PROG_LOAD_X4) |
+			PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
+			PAD1(LUT_PAD1) | INSTR1(LUT_MODE4),
+		OPRND0(ADDR12BIT) | PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) |
+			OPRND1(0) | PAD1(LUT_PAD4) | INSTR1(LUT_WRITE),
+		0, 0,
+	},
+	/* Program load random x4 */
+	{
+		OPRND0(SPINAND_CMD_PROG_LOAD_RANDOM_X4) |
+			PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
+			PAD1(LUT_PAD1) | INSTR1(LUT_MODE4),
+		OPRND0(ADDR12BIT) | PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) |
+			OPRND1(0) | PAD1(LUT_PAD4) | INSTR1(LUT_WRITE),
+		0, 0,
+	},
+};
+
+
+u8 fspi_read_cache_cmds[ID_READ_FROM_CACHE_END] = {
+	SPINAND_CMD_PAGE_READ_FROM_CACHE_NORMAL,
+	SPINAND_CMD_PAGE_READ_FROM_CACHE_FAST,
+	SPINAND_CMD_PAGE_READ_FROM_CACHE_X2,
+	SPINAND_CMD_PAGE_READ_FROM_CACHE_X4,
+	SPINAND_CMD_PAGE_READ_FROM_CACHE_DUALIO,
+	SPINAND_CMD_PAGE_READ_FROM_CACHE_QUADIO,
+};
+
+u8 fspi_prog_load_cmds[ID_PROG_LOAD_END] = {
+	SPINAND_CMD_PROG_LOAD,
+	SPINAND_CMD_PROG_LOAD_RANDOM,
+	SPINAND_CMD_PROG_LOAD_X4,
+	SPINAND_CMD_PROG_LOAD_RANDOM_X4,
+};
+
+static int fsl_fspi_nand_get_read_index(u8 cmd)
+{
+	int i;
+	for (i = 0; i < ID_READ_FROM_CACHE_END; i++) {
+		if (fspi_read_cache_cmds[i] == cmd)
+			break;
+	}
+
+	return i;
+}
+
+static int fsl_fspi_nand_get_progload_index(u8 cmd)
+{
+	int i;
+	for (i = 0; i < ID_PROG_LOAD_END; i++) {
+		if (fspi_prog_load_cmds[i] == cmd)
+			break;
+	}
+
+	return i;
+}
 
 static u32 fspi_read32(u32 flags, u32 *addr)
 {
@@ -220,84 +376,6 @@ static void fspi_nand_set_lut(struct fsl_fspi_priv *priv)
 	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
 	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
 
-	/* Read from cache normal */
-	lut_base = SEQID_READ_FROM_CACHE_NORMAL * 4;
-	fspi_write32(priv->flags, &regs->lut[lut_base],
-		     OPRND0(SPINAND_CMD_PAGE_READ_FROM_CACHE_NORMAL) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_MODE4));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 1], OPRND0(ADDR12BIT) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) | OPRND1(8) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_DUMMY));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 2], OPRND0(0) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_READ));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
-
-	/* Read from cache fast */
-	lut_base = SEQID_READ_FROM_CACHE_FAST * 4;
-	fspi_write32(priv->flags, &regs->lut[lut_base],
-		     OPRND0(SPINAND_CMD_PAGE_READ_FROM_CACHE_FAST) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_MODE4));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 1], OPRND0(ADDR12BIT) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) | OPRND1(8) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_DUMMY));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 2], OPRND0(0) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_READ));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
-
-	/* Read from cache x2 */
-	lut_base = SEQID_READ_FROM_CACHE_X2 * 4;
-	fspi_write32(priv->flags, &regs->lut[lut_base],
-		     OPRND0(SPINAND_CMD_PAGE_READ_FROM_CACHE_X2) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_MODE4));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 1], OPRND0(ADDR12BIT) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) | OPRND1(8) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_DUMMY));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 2], OPRND0(0) |
-		     PAD0(LUT_PAD2) | INSTR0(LUT_READ));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
-
-	/* Read from cache x4 */
-	lut_base = SEQID_READ_FROM_CACHE_X4 * 4;
-	fspi_write32(priv->flags, &regs->lut[lut_base],
-		     OPRND0(SPINAND_CMD_PAGE_READ_FROM_CACHE_X4) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_MODE4));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 1], OPRND0(ADDR12BIT) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) | OPRND1(8) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_DUMMY));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 2], OPRND0(0) |
-		     PAD0(LUT_PAD4) | INSTR0(LUT_READ));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
-
-	/* Read from cache dual IO */
-	lut_base = SEQID_READ_FROM_CACHE_DUALIO * 4;
-	fspi_write32(priv->flags, &regs->lut[lut_base],
-		     OPRND0(SPINAND_CMD_PAGE_READ_FROM_CACHE_DUALIO) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD) | OPRND1(0) |
-		     PAD1(LUT_PAD2) | INSTR1(LUT_MODE4));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 1], OPRND0(ADDR12BIT) |
-		     PAD0(LUT_PAD2) | INSTR0(LUT_CADDR_SDR) | OPRND1(4) |
-		     PAD1(LUT_PAD2) | INSTR1(LUT_DUMMY));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 2],  OPRND0(0) |
-		     PAD0(LUT_PAD2) | INSTR0(LUT_READ));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
-
-	/* Read from cache Quad IO */
-	lut_base = SEQID_READ_FROM_CACHE_QUADIO * 4;
-	fspi_write32(priv->flags, &regs->lut[lut_base],
-		     OPRND0(SPINAND_CMD_PAGE_READ_FROM_CACHE_QUADIO) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD) | OPRND1(0) |
-		     PAD1(LUT_PAD4) | INSTR1(LUT_MODE4));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 1], OPRND0(ADDR12BIT) |
-		     PAD0(LUT_PAD4) | INSTR0(LUT_CADDR_SDR) | OPRND1(4) |
-		     PAD1(LUT_PAD4) | INSTR1(LUT_DUMMY));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 2], OPRND0(0) |
-		     PAD0(LUT_PAD4) | INSTR0(LUT_READ));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
-
 	/* Program execute */
 	lut_base = SEQID_PROG_EXEC * 4;
 	fspi_write32(priv->flags, &regs->lut[lut_base],
@@ -305,54 +383,6 @@ static void fspi_nand_set_lut(struct fsl_fspi_priv *priv)
 		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(ADDR24BIT) |
 		     PAD1(LUT_PAD1) | INSTR1(LUT_ADDR));
 	fspi_write32(priv->flags, &regs->lut[lut_base + 1], 0);
-	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
-	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
-
-	/* Program load */
-	lut_base = SEQID_PROG_LOAD * 4;
-	fspi_write32(priv->flags, &regs->lut[lut_base],
-		     OPRND0(SPINAND_CMD_PROG_LOAD) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_MODE4));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 1], OPRND0(ADDR12BIT) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) | OPRND1(0) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_WRITE));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
-	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
-
-	/* Program load random */
-	lut_base = SEQID_PROG_LOAD_RANDOM * 4;
-	fspi_write32(priv->flags, &regs->lut[lut_base],
-		     OPRND0(SPINAND_CMD_PROG_LOAD_RANDOM) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_MODE4));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 1],  OPRND0(ADDR12BIT) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) | OPRND1(0) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_WRITE));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
-	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
-
-	/* Program load x4 */
-	lut_base = SEQID_PROG_LOAD_X4 * 4;
-	fspi_write32(priv->flags, &regs->lut[lut_base],
-		     OPRND0(SPINAND_CMD_PROG_LOAD_X4) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_MODE4));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 1],  OPRND0(ADDR12BIT) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) | OPRND1(0) |
-		     PAD1(LUT_PAD4) | INSTR1(LUT_WRITE));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
-	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
-
-	/* Program load random x4 */
-	lut_base = SEQID_PROG_LOAD_RANDOM_X4 * 4;
-	fspi_write32(priv->flags, &regs->lut[lut_base],
-		     OPRND0(SPINAND_CMD_PROG_LOAD_RANDOM_X4) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CMD)  | OPRND1(0) |
-		     PAD1(LUT_PAD1) | INSTR1(LUT_MODE4));
-	fspi_write32(priv->flags, &regs->lut[lut_base + 1], OPRND0(ADDR12BIT) |
-		     PAD0(LUT_PAD1) | INSTR0(LUT_CADDR_SDR) | OPRND1(0) |
-		     PAD1(LUT_PAD4) | INSTR1(LUT_WRITE));
 	fspi_write32(priv->flags, &regs->lut[lut_base + 2], 0);
 	fspi_write32(priv->flags, &regs->lut[lut_base + 3], 0);
 
@@ -409,6 +439,43 @@ static void fspi_nand_set_oprnd1(struct fsl_fspi_priv *priv,  u32 seqid, u8 oprn
 	val &= ~(OPRND1(0xff));
 	fspi_write32(priv->flags, &regs->lut[lut_base],
 		     val  | OPRND1(oprnd));
+
+	/* Lock the LUT */
+	fspi_write32(priv->flags, &regs->lutkey, FLEXSPI_LUTKEY_VALUE);
+	fspi_write32(priv->flags, &regs->lutcr, FLEXSPI_LCKER_LOCK);
+}
+
+static void fspi_nand_set_read_write_lut(struct fsl_fspi_priv *priv,  u32 seqid, u8 oprnd, u8 cmd)
+{
+	struct fsl_fspi_regs *regs = priv->regs;
+	u32 lut_base, val;
+	int i = 0;
+	const u32 *lut_buf;
+
+	if (seqid == SEQID_READ_FROM_CACHE_COMMON) {
+		i = fsl_fspi_nand_get_read_index(cmd);
+		lut_buf = &read_cache_lut[i][0];
+	} else {
+		i = fsl_fspi_nand_get_progload_index(cmd);
+		lut_buf = &prog_load_lut[i][0];
+	}
+
+	debug("seqid %u cmd %u oprnd1 %u, id %d\n", seqid, cmd, oprnd, i);
+
+	/* Unlock the LUT */
+	fspi_write32(priv->flags, &regs->lutkey, FLEXSPI_LUTKEY_VALUE);
+	fspi_write32(priv->flags, &regs->lutcr, FLEXSPI_LCKER_UNLOCK);
+
+	lut_base = seqid * 4;
+
+	/* update oprnd1 */
+	val = lut_buf[0];
+	val &= ~(OPRND1(0xff));
+	fspi_write32(priv->flags, &regs->lut[lut_base],
+		val  | OPRND1(oprnd));
+	fspi_write32(priv->flags, &regs->lut[lut_base + 1], lut_buf[1]);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 2], lut_buf[2]);
+	fspi_write32(priv->flags, &regs->lut[lut_base + 3], lut_buf[3]);
 
 	/* Lock the LUT */
 	fspi_write32(priv->flags, &regs->lutkey, FLEXSPI_LUTKEY_VALUE);
@@ -534,8 +601,8 @@ static int fspi_nand_op_read(struct fsl_fspi_priv *priv, u32 seqid, const struct
 	rxbuf = op->data.buf.in;
 	panel = op->addr.val >> FSPI_NAND_CAS;
 
-	/* Update LUT to select plane */
-	fspi_nand_set_oprnd1(priv, seqid, panel);
+	/* Update LUT and select plane */
+	fspi_nand_set_read_write_lut(priv, seqid, panel, op->cmd.opcode);
 
 	debug("%s seqid=%u, addr_val = 0x%llx, addr_nbytes = %u, data_buf_in = 0x%lx, data_nbytes = 0x%x\n",
 	      __func__, seqid, op->addr.val, op->addr.nbytes,
@@ -598,8 +665,8 @@ static int fspi_nand_op_write(struct fsl_fspi_priv *priv, u32 seqid, const struc
 	txbuf = (u8 *)(op->data.buf.out);
 	panel = op->addr.val >> FSPI_NAND_CAS;
 
-	/* Update LUT to select plane */
-	fspi_nand_set_oprnd1(priv, seqid, panel);
+	/* Update LUT and select plane */
+	fspi_nand_set_read_write_lut(priv, seqid, panel, op->cmd.opcode);
 
 	debug("%s seqid=%u, addr_val = 0x%llx, addr_nbytes = %u, data_buf_in = 0x%lx, data_nbytes = 0x%x\n",
 	      __func__, seqid, op->addr.val, op->addr.nbytes,
@@ -868,17 +935,9 @@ struct fspi_cmd_func_pair fspi_supported_cmds[SEQID_END] = {
 	{SPINAND_CMD_GET_FEATURE, &fspi_nand_op_read_reg},
 	{SPINAND_CMD_BLK_ERASE, &fspi_nand_op_cmd},
 	{SPINAND_CMD_PAGE_READ, &fspi_nand_op_cmd},
-	{SPINAND_CMD_PAGE_READ_FROM_CACHE_NORMAL, &fspi_nand_op_read},
-	{SPINAND_CMD_PAGE_READ_FROM_CACHE_FAST, &fspi_nand_op_read},
-	{SPINAND_CMD_PAGE_READ_FROM_CACHE_X2, &fspi_nand_op_read},
-	{SPINAND_CMD_PAGE_READ_FROM_CACHE_X4, &fspi_nand_op_read},
-	{SPINAND_CMD_PAGE_READ_FROM_CACHE_DUALIO, &fspi_nand_op_read},
-	{SPINAND_CMD_PAGE_READ_FROM_CACHE_QUADIO, &fspi_nand_op_read},
 	{SPINAND_CMD_PROG_EXEC, &fspi_nand_op_cmd},
-	{SPINAND_CMD_PROG_LOAD, &fspi_nand_op_write},
-	{SPINAND_CMD_PROG_LOAD_RANDOM, &fspi_nand_op_write},
-	{SPINAND_CMD_PROG_LOAD_X4, &fspi_nand_op_write},
-	{SPINAND_CMD_PROG_LOAD_RANDOM_X4, &fspi_nand_op_write},
+	{0x0, &fspi_nand_op_read},
+	{0x0, &fspi_nand_op_write},
 };
 
 static int fsl_fspi_nand_get_lut_index(const struct spi_mem_op *op)
@@ -888,6 +947,16 @@ static int fsl_fspi_nand_get_lut_index(const struct spi_mem_op *op)
 	for (i = 0; i < SEQID_END; i++) {
 		if (fspi_supported_cmds[i].cmd == op->cmd.opcode)
 			break;
+
+		if (i == SEQID_READ_FROM_CACHE_COMMON) {
+			if (fsl_fspi_nand_get_read_index(op->cmd.opcode)
+				< ID_READ_FROM_CACHE_END)
+				break;
+		} else if (i == SEQID_PROG_LOAD_COMMON) {
+			if (fsl_fspi_nand_get_progload_index(op->cmd.opcode)
+				< ID_PROG_LOAD_END)
+				break;
+		}
 	}
 
 	return i;
