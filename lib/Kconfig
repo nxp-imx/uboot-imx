@@ -381,9 +381,6 @@ config TRUSTY_UNLOCK_PERMISSION
 	bool "Support unlock permission protection in trusty"
 	depends on IMX_TRUSTY_OS
 
-config VENDOR_BOOT_SUPPORT
-	bool "Support vendor boot load"
-
 config VIRTUAL_AB_SUPPORT
 	bool "Support virtual AB update"
 
