@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2013-2016 Freescale Semiconductor, Inc.
- * (C) Copyright 2017-2018 NXP
+ * (C) Copyright 2017-2018,2020 NXP
  */
 
 #ifndef __ASM_ARCH_IMX_REGS_H__
@@ -112,6 +112,10 @@
 #define REP_BASE_ADDR				(AIPS1_BASE_ADDR + 0X00006A000)
 #define MBIST_CONTROLLER_BASE_ADDR		(AIPS1_BASE_ADDR + 0X00006C000)
 #define BOOT_LOADER_BASE_ADDR			(AIPS1_BASE_ADDR + 0X00006F000)
+
+#define IS_ADDR_IN_IRAM(addr) \
+	((addr) >= (IRAM_BASE_ADDR) && \
+	(addr) < (IRAM_BASE_ADDR) + (IRAM_SIZE))
 
 #define CCI400_BASE_ADDR			(0x7E090000)
 
