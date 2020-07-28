@@ -499,8 +499,6 @@ static char *get_reset_cause(void)
 
 }
 
-#define SRC_SCR_SW_RST					(1<<12)
-
 void reset_cpu(ulong addr)
 {
 	entry_to_target_mode(MC_ME_MCTL_RESET);
