@@ -28,7 +28,9 @@
 
 #include "fec_mxc.h"
 #include <eth_phy.h>
+#ifdef CONFIG_MX6
 #include <asm/arch/sys_proto.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
