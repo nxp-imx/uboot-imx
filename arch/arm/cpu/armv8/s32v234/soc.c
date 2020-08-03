@@ -29,6 +29,7 @@
 #define VIDEO_PLL_PHI0_DIV2	2
 
 #define MHZ			1000000
+#define MAC_ADDR_STR_LEN	17
 
 #ifdef CONFIG_DCU_QOS_FIX
 #define S32V234_NIC_FASTDMA1_IB_READ_QOS	(0x40012380)
@@ -455,6 +456,22 @@ U_BOOT_CMD(clocks, CONFIG_SYS_MAXARGS, 1, do_s32_showclocks,
 	   "display clocks",
 	   ""
 	   );
+
+#ifdef CONFIG_FEC_MXC
+void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
+{
+	const char *mac_str = S32V234_FEC_DEFAULT_ADDR;
+
+	if ((!env_get("ethaddr")) ||
+	    (strncasecmp(mac_str, env_get("ethaddr"), MAC_ADDR_STR_LEN) == 0)) {
+		printf("\nWarning: System is using default MAC address. ");
+		printf("Please set a new value\n");
+		string_to_enetaddr(mac_str, mac);
+	} else {
+		string_to_enetaddr(env_get("ethdaddr"), mac);
+	}
+}
+#endif
 
 #if defined(CONFIG_DISPLAY_CPUINFO)
 static char *get_reset_cause(void)

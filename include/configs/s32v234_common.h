@@ -195,6 +195,13 @@
 #define CONFIG_BOARD_EXTRA_ENV_SETTINGS	""
 #endif
 
+#ifdef CONFIG_FEC_MXC
+#define S32V234_FEC_DEFAULT_ADDR "00:1b:c3:12:34:22"
+#define FEC_EXTRA_ENV_SETTINGS	"ethaddr=" S32V234_FEC_DEFAULT_ADDR
+#else
+#define FEC_EXTRA_ENV_SETTINGS	""
+#endif
+
 #define CONFIG_FLASHBOOT_RAMDISK " ${ramdisk_addr} "
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
@@ -268,7 +275,8 @@
 		"cp.b ${fdt_flashaddr} ${fdt_addr} ${fdt_maxsize};"\
 		"cp.b ${ramdisk_flashaddr} ${ramdisk_addr} ${ramdisk_maxsize};"\
 		"${boot_mtd} ${loadaddr}" CONFIG_FLASHBOOT_RAMDISK \
-		"${fdt_addr};\0"
+		"${fdt_addr};\0" \
+	FEC_EXTRA_ENV_SETTINGS
 
 #undef CONFIG_BOOTCOMMAND
 #if defined(CONFIG_FLASH_BOOT)
