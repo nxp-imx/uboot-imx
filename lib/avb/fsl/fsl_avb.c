@@ -409,7 +409,7 @@ AvbIOResult fsl_get_size_of_partition(AvbOps* ops,
 		fastboot_flash_dump_ptn();
 		return AVB_IO_RESULT_ERROR_NO_SUCH_PARTITION;
 	}
-	*out_size_num_bytes = (uint64_t)(pte->length * 512);
+	*out_size_num_bytes = (uint64_t)(pte->length) * 512;
 	return AVB_IO_RESULT_OK;
 }
 
