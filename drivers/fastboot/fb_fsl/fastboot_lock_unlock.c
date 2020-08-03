@@ -121,9 +121,9 @@ static FbLockState decrypt_lock_store(unsigned char* bdata) {
 }
 static inline int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
 	if (FASTBOOT_LOCK == lock)
-		strncpy((char *)bdata, "locked", strlen("locked"));
+		strncpy((char *)bdata, "locked", strlen("locked") + 1);
 	else if (FASTBOOT_UNLOCK == lock)
-		strncpy((char *)bdata, "unlocked", strlen("unlocked"));
+		strncpy((char *)bdata, "unlocked", strlen("unlocked") + 1);
 	else
 		return -1;
 	return 0;
