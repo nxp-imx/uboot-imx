@@ -228,7 +228,7 @@ static unsigned long load_elf_image_shdr(unsigned long addr)
 
 int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 {
-	sc_rsrc_t core_rsrc, mu_rsrc = -1;
+	sc_rsrc_t core_rsrc, mu_rsrc = SC_R_NONE;
 	sc_faddr_t aux_core_ram;
 	u32 size;
 	ulong addr;
@@ -263,7 +263,7 @@ int arch_auxiliary_core_up(u32 core_id, ulong boot_private_data)
 	if (sc_pm_set_resource_power_mode(-1, core_rsrc, SC_PM_PW_MODE_ON) != SC_ERR_NONE)
 		return -EIO;
 
-	if (mu_rsrc != -1) {
+	if (mu_rsrc != SC_R_NONE) {
 		if (sc_pm_set_resource_power_mode(-1, mu_rsrc, SC_PM_PW_MODE_ON) != SC_ERR_NONE)
 			return -EIO;
 	}
