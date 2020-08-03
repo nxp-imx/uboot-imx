@@ -502,12 +502,35 @@ const char *requested_partitions_recovery[] = {"recovery", NULL};
 
 static bool gki_is_enabled(void)
 {
-	bool ptn_find;
-	ptn_find = fastboot_flash_find_ptn("vendor_boot_a") ||
-			fastboot_flash_find_ptn("vendor_boot_b") ||
-			fastboot_flash_find_ptn("vendor_boot");
+	size_t size;
+	struct andr_img_hdr hdr;
+	char partition_name[20];
 
-	if (ptn_find)
+#ifdef CONFIG_ANDROID_AB_SUPPORT
+	int target_slot;
+	struct bootloader_control ab_data;
+	char* slot_suffixes[2] = {"_a", "_b"};
+
+	if (fsl_avb_ab_ops.read_ab_metadata(&fsl_avb_ab_ops, &ab_data) !=
+					    AVB_IO_RESULT_OK) {
+		printf("Read A/B metadata fail!\n");
+		return false;
+	}
+	target_slot = get_curr_slot(&ab_data);
+	sprintf(partition_name, "boot%s", slot_suffixes[target_slot]);
+#else
+	sprintf(partition_name, "boot");
+#endif
+
+	/* Read boot header to find the version */
+	if (fsl_avb_ops.read_from_partition(&fsl_avb_ops, partition_name,
+					    0, sizeof(struct andr_img_hdr),
+					    (void *)&hdr, &size)) {
+		printf("%s load error!\n", partition_name);
+		return false;
+	}
+
+	if (hdr.header_version >= 3)
 		return true;
 	else
 		return false;
