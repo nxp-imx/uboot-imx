@@ -651,8 +651,6 @@ static int write_fcb(struct boot_config *boot_cfg, struct fcb_block *fcb)
 		off += g_boot_search_stride;
 	}
 
-	return 0;
-
 fcb_raw_page_err:
 	if (fcb_raw_page)
 		kfree(fcb_raw_page);
