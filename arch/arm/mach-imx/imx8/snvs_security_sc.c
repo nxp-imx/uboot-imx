@@ -290,9 +290,9 @@ exit:
 	return (scierr == SC_ERR_NONE) ? 0 : -EIO;
 }
 
-static sc_err_t pad_write(u32 _pad, u32 _value)
+static int pad_write(u32 _pad, u32 _value)
 {
-	sc_err_t scierr = sc_pad_set(-1, _pad, _value);
+	int scierr = sc_pad_set(-1, _pad, _value);
 
 	if (scierr != SC_ERR_NONE) {
 		printf("Failed to set pad configuration\n");
@@ -302,9 +302,9 @@ static sc_err_t pad_write(u32 _pad, u32 _value)
 	return scierr;
 }
 
-static sc_err_t pad_read(u32 _pad, u32 *_value)
+static int pad_read(u32 _pad, u32 *_value)
 {
-	sc_err_t sciErr = sc_pad_get(-1, _pad, _value);
+	int sciErr = sc_pad_get(-1, _pad, _value);
 
 	if (sciErr != SC_ERR_NONE) {
 		printf("Failed to get pad configuration\n");
@@ -316,7 +316,7 @@ static sc_err_t pad_read(u32 _pad, u32 *_value)
 
 static int apply_tamper_pin_list_config(struct tamper_pin_cfg *confs, u32 size)
 {
-	sc_err_t scierr = 0;
+	int scierr = 0;
 	u32 idx;
 
 	debug("%s\n", __func__);
@@ -327,7 +327,7 @@ static int apply_tamper_pin_list_config(struct tamper_pin_cfg *confs, u32 size)
 
 		debug("\t idx %d: pad %d: 0x%.8x\n", idx, confs[idx].pad,
 		      confs[idx].mux_conf);
-		pad_write(confs[idx].pad, 3 << 30 | confs[idx].mux_conf);
+		scierr = pad_write(confs[idx].pad, 3 << 30 | confs[idx].mux_conf);
 		if (scierr != SC_ERR_NONE)
 			goto exit;
 	}
@@ -698,7 +698,7 @@ static int do_gpio_conf(struct cmd_tbl *cmdtp, int flag, int argc,
 			char *const argv[])
 {
 	int err = -EIO;
-	sc_err_t sciErr;
+	int sciErr;
 	u32 pad, val, valcheck;
 
 	pad = simple_strtoul(argv[1], NULL, 10);
