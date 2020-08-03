@@ -138,7 +138,7 @@ static int proxy_handle_rpmb(struct trusty_ipc_chan *chan,
 
     if (req->write_size) {
         if ((req->write_size % MMC_BLOCK_SIZE) != 0) {
-            trusty_error("%: invalid write size %u\n", __func__,
+            trusty_error("%s: invalid write size %u\n", __func__,
                          req->write_size);
             msg->result = STORAGE_ERR_NOT_VALID;
             goto err_response;
