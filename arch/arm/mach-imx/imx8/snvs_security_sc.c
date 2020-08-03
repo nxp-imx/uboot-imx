@@ -229,9 +229,9 @@ exit:
 	return (sciErr == SC_ERR_NONE) ? 0 : -EIO;
 }
 
-static sc_err_t dgo_write(u32 _id, u8 _access, u32 *_pdata)
+static int dgo_write(u32 _id, u8 _access, u32 *_pdata)
 {
-	sc_err_t sciErr = sc_seco_secvio_dgo_config(-1, _id, _access, _pdata);
+	int sciErr = sc_seco_secvio_dgo_config(-1, _id, _access, _pdata);
 
 	if (sciErr != SC_ERR_NONE) {
 		printf("Failed to set dgo configuration\n");
@@ -243,7 +243,7 @@ static sc_err_t dgo_write(u32 _id, u8 _access, u32 *_pdata)
 
 static int apply_snvs_dgo_config(struct snvs_dgo_conf *cnf)
 {
-	sc_err_t sciErr = 0;
+	int sciErr = 0;
 
 	debug("%s\n", __func__);
 
@@ -261,28 +261,28 @@ static int apply_snvs_dgo_config(struct snvs_dgo_conf *cnf)
 			cnf->tamper_misc_ctl,
 			cnf->tamper_core_volt_mon_ctl);
 
-	dgo_write(0x04, 1, &cnf->tamper_offset_ctl);
+	sciErr = dgo_write(0x04, 1, &cnf->tamper_offset_ctl);
 	if (sciErr != SC_ERR_NONE)
 		goto exit;
 
-	dgo_write(0x14, 1, &cnf->tamper_pull_ctl);
+	sciErr = dgo_write(0x14, 1, &cnf->tamper_pull_ctl);
 	if (sciErr != SC_ERR_NONE)
 		goto exit;
 
-	dgo_write(0x24, 1, &cnf->tamper_ana_test_ctl);
+	sciErr = dgo_write(0x24, 1, &cnf->tamper_ana_test_ctl);
 	if (sciErr != SC_ERR_NONE)
 		goto exit;
 
-	dgo_write(0x34, 1, &cnf->tamper_sensor_trim_ctl);
+	sciErr = dgo_write(0x34, 1, &cnf->tamper_sensor_trim_ctl);
 	if (sciErr != SC_ERR_NONE)
 		goto exit;
 
-	dgo_write(0x54, 1, &cnf->tamper_core_volt_mon_ctl);
+	sciErr = dgo_write(0x54, 1, &cnf->tamper_core_volt_mon_ctl);
 	if (sciErr != SC_ERR_NONE)
 		goto exit;
 
 	/* Last as it could lock the writes */
-	dgo_write(0x44, 1, &cnf->tamper_misc_ctl);
+	sciErr = dgo_write(0x44, 1, &cnf->tamper_misc_ctl);
 	if (sciErr != SC_ERR_NONE)
 		goto exit;
 
