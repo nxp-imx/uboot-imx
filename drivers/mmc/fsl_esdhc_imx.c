@@ -1314,6 +1314,13 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	if (!cfg)
 		return -EINVAL;
 
+#ifdef CONFIG_MX6
+	if (mx6_esdhc_fused(cfg->esdhc_base)) {
+		printf("ESDHC@0x%lx is fused, disable it\n", cfg->esdhc_base);
+		return -ENODEV;
+	}
+#endif
+
 	priv = calloc(sizeof(struct fsl_esdhc_priv), 1);
 	if (!priv)
 		return -ENOMEM;
@@ -1330,14 +1337,6 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 		free(priv);
 		return ret;
 	}
-
-#ifdef CONFIG_MX6
-	if (mx6_esdhc_fused(cfg->esdhc_base)) {
-		printf("ESDHC@0x%lx is fused, disable it\n", cfg->esdhc_base);
-		free(priv);
-		return -ENODEV;
-	}
-#endif
 
 	ret = fsl_esdhc_init(priv, plat);
 	if (ret) {
