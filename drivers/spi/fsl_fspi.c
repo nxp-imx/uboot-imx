@@ -1437,11 +1437,11 @@ int fsl_fspi_exec_op(struct spi_slave *slave, const struct spi_mem_op *op)
 	struct fsl_fspi_priv *priv;
 	struct udevice *bus;
 
-	bus = slave->dev->parent;
-	priv = dev_get_priv(bus);
-
 	if (!op || !slave)
 		return -EINVAL;
+
+	bus = slave->dev->parent;
+	priv = dev_get_priv(bus);
 
 	i = fsl_fspi_get_lut_index(op);
 	if (i == SEQID_END) {
