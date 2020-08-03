@@ -74,7 +74,7 @@ int rpmb_storage_send(void *rpmb_dev, const void *rel_write_data,
     if (rel_write_size) {
         if (rel_write_size % MMC_BLOCK_SIZE) {
             trusty_error(
-                "rel_write_size is not a multiple of MMC_BLOCK_SIZE: %d\n",
+                "rel_write_size is not a multiple of MMC_BLOCK_SIZE: %lu\n",
                  rel_write_size);
             ret = TRUSTY_ERR_INVALID_ARGS;
             goto end;
@@ -90,7 +90,7 @@ int rpmb_storage_send(void *rpmb_dev, const void *rel_write_data,
     }
     if (write_size) {
         if (write_size % MMC_BLOCK_SIZE) {
-            trusty_error("write_size is not a multiple of MMC_BLOCK_SIZE: %d\n",
+            trusty_error("write_size is not a multiple of MMC_BLOCK_SIZE: %lu\n",
                          write_size);
             ret = TRUSTY_ERR_INVALID_ARGS;
             goto end;
@@ -105,7 +105,7 @@ int rpmb_storage_send(void *rpmb_dev, const void *rel_write_data,
     }
     if (read_size) {
         if (read_size % MMC_BLOCK_SIZE) {
-            trusty_error("read_size is not a multiple of MMC_BLOCK_SIZE: %d\n",
+            trusty_error("read_size is not a multiple of MMC_BLOCK_SIZE: %lu\n",
                          read_size);
             ret = TRUSTY_ERR_INVALID_ARGS;
             goto end;
