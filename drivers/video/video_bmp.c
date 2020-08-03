@@ -283,7 +283,7 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 		}
 #endif
 
-		if (bpix == 8)
+		if (bpix == 8 || bpix == 1)
 			byte_width = width;
 		else if (bpix == 16)
 			byte_width = width * 2;
@@ -295,7 +295,7 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 		for (i = 0; i < height; ++i) {
 			WATCHDOG_RESET();
 			for (j = 0; j < width; j++) {
-				if (bpix == 8) {
+				if (bpix == 8 || bpix == 1) {
 					fb_put_byte(&fb, &bmap);
 				} else if (bpix == 16) {
 					*(uint16_t *)fb = cmap_base[*bmap];
