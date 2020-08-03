@@ -497,7 +497,7 @@ static int tcpc_pd_transmit_message(struct tcpc_port *port, struct pd_message *m
 {
 	int ret;
 	uint8_t valb;
-	uint16_t val;
+	uint16_t val = 0;
 
 	if (port == NULL)
 		return -EINVAL;
