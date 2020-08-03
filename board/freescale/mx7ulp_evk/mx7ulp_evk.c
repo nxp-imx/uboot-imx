@@ -249,6 +249,7 @@ int show_bootloader_menu(void) {
 						break;
 					case 2:
 						do_reset(NULL, 0, 0, NULL);
+						break;
 					case 3:
 						board_recovery_setup();
 						break;
