@@ -503,7 +503,7 @@ int trusty_get_mppubk(uint8_t *mppubk, uint32_t *size)
 
     rc = km_send_request(KM_GET_MPPUBK, NULL, 0);
     if (rc < 0) {
-        trusty_error("failed to send km mppubk request\n", rc);
+        trusty_error("%s: failed (%d) to send km mppubk request\n", __func__, rc);
         return rc;
     }
 
