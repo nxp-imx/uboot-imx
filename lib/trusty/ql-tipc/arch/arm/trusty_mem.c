@@ -97,7 +97,7 @@ static void arm64_write_ATS1ExW(uint64_t vaddr)
         break;
     case 0x3:
     default:
-        trusty_fatal("Unsupported execution state: EL%u\n", _current_el );
+        trusty_fatal("Unsupported execution state: EL%lu\n", _current_el );
         break;
     }
 
