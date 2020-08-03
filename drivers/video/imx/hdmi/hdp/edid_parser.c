@@ -476,7 +476,7 @@ EDID_PARSER_RESULT edid_parse(S_EDID_DATA *edid, unsigned char *raw_data,
 	raw_data_index = 54;
 	for (descriptor_index = 0; descriptor_index < 4; descriptor_index++) {
 		if (raw_data[raw_data_index] == 0 &&
-		    raw_data[raw_data_index] == 0) {
+		    raw_data[raw_data_index + 1] == 0) {
 			/*display descriptor found */
 			unsigned char tag = raw_data[raw_data_index + 3];
 			if (tag == 0xFF) {
