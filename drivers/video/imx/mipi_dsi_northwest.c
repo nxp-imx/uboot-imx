@@ -484,7 +484,8 @@ static int mipi_dsi_host_init(struct mipi_dsi_northwest_info *mipi_dsi)
 
 static int mipi_dsi_dpi_init(struct mipi_dsi_northwest_info *mipi_dsi)
 {
-	uint32_t bpp, color_coding, pixel_fmt;
+	uint32_t color_coding, pixel_fmt;
+	int bpp;
 	struct display_timing *timings = &(mipi_dsi->timings);
 
 	bpp = mipi_dsi_pixel_format_to_bpp(mipi_dsi->device->format);
