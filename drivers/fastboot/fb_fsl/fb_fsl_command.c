@@ -928,11 +928,18 @@ void fastboot_acmd_complete(void)
  */
 static void run_acmd(char *cmd_parameter, char *response)
 {
-        if (!cmd_parameter) {
-                pr_err("missing slot suffix\n");
-                fastboot_fail("missing command", response);
-                return;
-        }
+	if (!cmd_parameter) {
+		pr_err("missing slot suffix\n");
+		fastboot_fail("missing command", response);
+		return;
+	}
+
+	if (strlen(cmd_parameter) >= sizeof(g_a_cmd_buff)) {
+		pr_err("input acmd is too long\n");
+		fastboot_fail("too long command", response);
+		return;
+	}
+
 	strcpy(g_a_cmd_buff, cmd_parameter);
 	fastboot_okay(NULL, response);
 }
