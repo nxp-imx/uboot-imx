@@ -223,6 +223,10 @@ static int get_single_var(char *cmd, char *response)
 	} else if (!strcmp_l1("erase-block-size", cmd)) {
 		mmc_dev_no = mmc_get_env_dev();
 		mmc = find_mmc_device(mmc_dev_no);
+		if (!mmc) {
+			strncat(response, "FAILCannot get dev", chars_left);
+			return -1;
+		}
 		blksz = get_block_size();
 		snprintf(response + strlen(response), chars_left, "0x%x",
 				(blksz * mmc->erase_grp_size));
