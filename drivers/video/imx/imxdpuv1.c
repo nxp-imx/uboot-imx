@@ -3815,7 +3815,7 @@ int imxdpuv1_disp_force_shadow_load(int8_t imxdpuv1_id,
 	}
 
 	for (i = 0; i <  IMXDPUV1_SHDLD_IDX_MAX; i++) {
-		temp_mask = 1 << i;
+		temp_mask = 1ULL << i;
 		if ((mask & temp_mask) == 0)
 			continue;
 
