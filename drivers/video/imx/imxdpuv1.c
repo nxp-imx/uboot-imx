@@ -4347,11 +4347,6 @@ int imxdpuv1_disp_set_chan_crop(
 		return -EINVAL;
 	}
 
-	if ((imxdpu->chan_data[idx].clip_height < 0) ||
-		(imxdpu->chan_data[idx].clip_width < 0)) {
-		return -EINVAL;
-	}
-
 	sub_idx = imxdpuv1_get_channel_subindex(chan);
 
 	imxdpu->chan_data[idx].dest_top    = dest_top;
