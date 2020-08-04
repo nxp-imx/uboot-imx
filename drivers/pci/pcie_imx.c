@@ -607,7 +607,7 @@ static void __iomem *get_bus_address(struct imx_pcie_priv *priv,
 			imx_pcie_atu_outbound_set(priv, PCIE_ATU_REGION_INDEX1,
 					 PCIE_ATU_TYPE_CFG0,
 					 (ulong)priv->cfg_base,
-					 d << 8,
+					 (u64)d << 8,
 					 priv->cfg_size >> 1);
 			va_address = priv->cfg_base;
 		} else {
@@ -615,7 +615,7 @@ static void __iomem *get_bus_address(struct imx_pcie_priv *priv,
 			imx_pcie_atu_outbound_set(priv, PCIE_ATU_REGION_INDEX1,
 					 PCIE_ATU_TYPE_CFG1,
 					 (ulong)priv->cfg1_base,
-					 d << 8,
+					 (u64)d << 8,
 					 priv->cfg_size >> 1);
 			va_address = priv->cfg1_base;
 		}
