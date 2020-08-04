@@ -152,7 +152,7 @@ static int do_part_dtb(int argc, char * const argv[])
 				if (fdtdec_get_int_array(fdt, subnode, "rsrcs",
 							 rsrc_data, rsrc_size >> 2)) {
 					debug("Error reading rsrcs\n");
-					free(rsrc_data);
+					kfree(rsrc_data);
 					return CMD_RET_FAILURE;
 				}
 			}
@@ -165,14 +165,14 @@ static int do_part_dtb(int argc, char * const argv[])
 				if (!pad_data) {
 					debug("No mem\n");
 					if (rsrc_data != NULL)
-						free(rsrc_data);
+						kfree(rsrc_data);
 					return CMD_RET_FAILURE;
 				}
 				if (fdtdec_get_int_array(fdt, subnode, "pads",
 							 pad_data, pad_size >> 2)) {
 					debug("Error reading pad\n");
-					free(pad_data);
-					free(rsrc_data);
+					kfree(pad_data);
+					kfree(rsrc_data);
 					return CMD_RET_FAILURE;
 				}
 			}
@@ -229,9 +229,9 @@ static int do_part_dtb(int argc, char * const argv[])
 
 			free_data:
 				if (pad_size > 0)
-					free(pad_data);
+					kfree(pad_data);
 				if (rsrc_size > 0) {
-					free(rsrc_data);
+					kfree(rsrc_data);
 					rsrc_data = NULL;
 				}
 		}
