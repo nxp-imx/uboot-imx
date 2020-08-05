@@ -333,6 +333,8 @@ static void pciinfo(struct udevice *bus, bool short_listing)
 {
 	struct udevice *dev;
 
+	printf("Showing already found devices. Not re-enumerating the bus.\n");
+
 	pciinfo_header(bus->seq, short_listing);
 
 	for (device_find_first_child(bus, &dev);
@@ -396,6 +398,8 @@ void pciinfo(int bus_num, int short_pci_listing)
 	unsigned short vendor_id;
 	pci_dev_t dev;
 	int ret;
+
+	printf("Re-enumerating the bus.\n");
 
 	if (!hose)
 		return;
