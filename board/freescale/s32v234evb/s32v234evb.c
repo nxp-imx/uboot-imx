@@ -149,7 +149,6 @@ void setup_xrdc(void)
 
 int board_early_init_f(void)
 {
-// start_secondary_cores();
 	clock_init();
 	mscm_init();
 
