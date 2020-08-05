@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2013-2017 Freescale Semiconductor, Inc.
+ * Copyright 2020 NXP
  */
 
 #include <common.h>
@@ -143,10 +144,10 @@ static u32 get_sys_clk(u32 number)
 	u32 freq = 0;
 
 	switch (number) {
-	case 3:
+	case MXC_SYS3_CLK:
 		sysclk_div_number = 0;
 		break;
-	case 6:
+	case MXC_SYS6_CLK:
 		sysclk_div_number = 1;
 		break;
 	default:
@@ -226,7 +227,7 @@ static u32 get_uart_clk(void)
 		freq = get_peripherals_clk() / 3;
 		break;
 	case MC_CGM_ACn_SEL_SYSCLK:
-		freq = get_sys_clk(6);
+		freq = get_sys_clk(MXC_SYS6_CLK);
 		break;
 	default:
 		printf("unsupported system clock select\n");
