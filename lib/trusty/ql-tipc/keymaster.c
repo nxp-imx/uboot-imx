@@ -247,7 +247,7 @@ static int km_get_version(int32_t *version)
 
     rc = km_send_request(KM_GET_VERSION, NULL, 0);
     if (rc < 0) {
-        trusty_error("failed to send km version request", rc);
+        trusty_error("failed (%d) to send km version request", rc);
         return rc;
     }
 
