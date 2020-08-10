@@ -66,7 +66,7 @@
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
 			regulator-name = "epdev_on";
-			gpio = 	<&pca6416_a 12 GPIO_ACTIVE_HIGH>;
+			gpio = 	<&pca6416_a 13 GPIO_ACTIVE_HIGH>;
 			enable-active-high;
 
 		};
@@ -76,7 +76,7 @@
 			regulator-min-microvolt = <0000000>;
 			regulator-max-microvolt = <3300000>;
 			regulator-name = "clk_ext_sel";
-			gpio = <&pca6416_a 10 GPIO_ACTIVE_LOW>;
+			gpio = <&pca6416_a 10 GPIO_ACTIVE_HIGH>;
 			regulator-always-on;
 		};
 
@@ -481,14 +481,13 @@
 };
 
 &pcieb{
-	ext_osc = <1>;
+	ext_osc = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pcieb>;
 	clkreq-gpio = <&gpio4 1 GPIO_ACTIVE_LOW>;
-	power-on-gpio = <&pca6416_a 10 GPIO_ACTIVE_LOW>;
+	power-on-gpio = <&pca6416_a 12 GPIO_ACTIVE_HIGH>;
 	reset-gpio = <&gpio4 0 GPIO_ACTIVE_LOW>;
-	enable-gpios = <&pca6416_a 10 GPIO_ACTIVE_LOW>;
-	epdev_on-supply = <&epdev_on>;
+	epdev_on = <&epdev_on>;
 	status = "okay";
 };
 
