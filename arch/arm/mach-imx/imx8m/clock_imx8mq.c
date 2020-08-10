@@ -191,9 +191,6 @@ static u32 decode_sscg_pll(enum clk_root_src sscg_pll)
 		pll_clke = SSCG_PLL_DIV20_CLKE_MASK;
 		div = 20;
 		break;
-	default:
-		printf("sscg pll %d not supporte\n", sscg_pll);
-		return 0;
 	}
 
 	/* Power down */
