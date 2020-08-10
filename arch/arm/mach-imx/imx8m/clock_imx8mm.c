@@ -833,8 +833,6 @@ static u32 decode_intpll(enum clk_root_src intpll)
 		pll_clke_mask = INTPLL_DIV20_CLKE_MASK;
 		div = 20;
 		break;
-	default:
-		return -EINVAL;
 	}
 
 	if ((pll_gnrl_ctl & pll_clke_mask) == 0)
