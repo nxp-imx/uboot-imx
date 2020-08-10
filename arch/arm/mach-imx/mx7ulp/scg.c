@@ -408,6 +408,8 @@ static u32 scg_nic_get_rate(enum scg_clk clk)
 		mask = SCG_NICCSR_NIC1BUSDIV_MASK;
 		shift = SCG_NICCSR_NIC1BUSDIV_SHIFT;
 		break;
+	default:
+		return 0;
 	}
 
 	/*
