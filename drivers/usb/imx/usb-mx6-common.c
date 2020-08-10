@@ -231,7 +231,7 @@ int usb_phy_mode(int port)
 	void __iomem *phy_ctrl;
 	u32 val;
 
-	if (index >= ARRAY_SIZE(phy_bases))
+	if (port >= ARRAY_SIZE(phy_bases))
 		return USB_INIT_HOST;
 
 	phy_reg = (void __iomem *)phy_bases[port];
