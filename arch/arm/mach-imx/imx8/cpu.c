@@ -917,6 +917,10 @@ u32 get_cpu_rev(void)
 	rev = (id >> 5)  & 0xf;
 	id = (id & 0x1f) + MXC_SOC_IMX8;  /* Dummy ID for chip */
 
+	/* 8DXL uses A1/A2, so generate dummy rev to differentiate with B/C */
+	if (id == MXC_CPU_IMX8DXL && rev != 0)
+		rev = 0x10 + rev;
+
 	return (id << 12) | rev;
 }
 
