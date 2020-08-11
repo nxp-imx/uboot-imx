@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2015-2016 Freescale Semiconductor, Inc.
- * (C) Copyright 2017 NXP
+ * (C) Copyright 2017-2018 NXP
  *
  */
 
@@ -225,35 +225,50 @@ static void setup_aux_clocks(void)
 	 * setup the aux clock divider for PERI_CLK
 	 * (source: PERIPH_PLL_PHI_0/5, PERI_CLK - 80 MHz)
 	 */
-	aux_source_clk_config(MC_CGM0_BASE_ADDR, 5, MC_CGM_ACn_SEL_PERPLLDIVX);
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 5, 0, 0);
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC5_SC,
+			      MC_CGM_ACn_SEL_PERPLLDIVX);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC5_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
 
 	/* setup the aux clock divider for LIN_CLK (66 MHz) */
-	aux_source_clk_config(MC_CGM0_BASE_ADDR, 3,
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC3_SC,
 			      MC_CGM_ACn_SEL_PERPLLDIVX);
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 3, 0, 1);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC3_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_1);
 
 	/* setup the aux clock divider for ENET_TIME_CLK (125MHz) */
-	aux_source_clk_config(MC_CGM0_BASE_ADDR, 7, MC_CGM_ACn_SEL_ENETPLL);
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 7, 1, 3);
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC7_SC,
+			      MC_CGM_ACn_SEL_ENETPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC7_SC, CGM_ACn_DC1,
+			   PLLDIG_PLLDV_PREDIV_3);
 
 	/* setup the aux clock divider for ENET_CLK (125MHz) */
-	aux_source_clk_config(MC_CGM2_BASE_ADDR, 2, MC_CGM_ACn_SEL_ENETPLL);
-	aux_div_clk_config(MC_CGM2_BASE_ADDR, 2, 0, 3);
+	aux_source_clk_config(MC_CGM2_BASE_ADDR, CGM_AC2_SC,
+			      MC_CGM_ACn_SEL_ENETPLL);
+	aux_div_clk_config(MC_CGM2_BASE_ADDR, CGM_AC2_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_3);
 
 	/* setup the aux clock divider for QSPI_CLK  (target freq 40 MHz)*/
-	aux_source_clk_config(MC_CGM0_BASE_ADDR, 14, MC_CGM_ACn_SEL_XOSC);
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 14, 0, 0);
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC14_SC,
+			      MC_CGM_ACn_SEL_XOSC);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC14_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
 
 	/* setup the aux clock divider for SDHC_CLK (50 MHz). */
-	aux_source_clk_config(MC_CGM0_BASE_ADDR, 15, MC_CGM_ACn_SEL_ENETPLL);
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 15, 0, 0);
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC15_SC,
+			      MC_CGM_ACn_SEL_ENETPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC15_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
 
 	/* setup the aux clock divider for DDR_CLK (533MHz) and APEX_SYS_CLK (266MHz) */
-	aux_source_clk_config(MC_CGM0_BASE_ADDR, 8, MC_CGM_ACn_SEL_DDRPLL);
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 8, 0, 0);
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC8_SC,
+			      MC_CGM_ACn_SEL_DDRPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC8_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
 	/* setup the aux clock divider for DDR4_CLK (133,25MHz) */
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 8, 1, 3);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC8_SC, CGM_ACn_DC1,
+			   PLLDIG_PLLDV_PREDIV_3);
 
 	entry_to_target_mode(MC_ME_MCTL_RUN0);
 
