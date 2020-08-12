@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2018-2019 NXP
+ * Copyright 2020 NXP
  */
 
 #include <common.h>
-#include <command.h>
 #include <errno.h>
-#include <log.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
-#include <asm/arch/sci/sci.h>
+#include <asm/arch/s400_api.h>
 #include <asm/mach-imx/sys_proto.h>
 #include <asm/arch-imx/cpu.h>
 #include <asm/arch/sys_proto.h>
@@ -20,25 +17,21 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define SEC_SECURE_RAM_BASE             (0x31800000UL)
-#define SEC_SECURE_RAM_END_BASE         (SEC_SECURE_RAM_BASE + 0xFFFFUL)
-#define SECO_LOCAL_SEC_SEC_SECURE_RAM_BASE  (0x60000000UL)
-
-#define SECO_PT                 2U
+#define IMG_CONTAINER_BASE             (0x22010000UL)
+#define IMG_CONTAINER_END_BASE         (IMG_CONTAINER_BASE + 0xFFFFUL)
 
 int ahab_auth_cntr_hdr(struct container_hdr *container, u16 length)
 {
 	int err;
-	memcpy((void *)SEC_SECURE_RAM_BASE, (const void *)container,
-		ALIGN(length, CONFIG_SYS_CACHELINE_SIZE));
+	u32 resp;
+	memcpy((void *)IMG_CONTAINER_BASE, (const void *)container,
+	       ALIGN(length, CONFIG_SYS_CACHELINE_SIZE));
 
-	err = sc_seco_authenticate(-1, SC_SECO_AUTH_CONTAINER,
-				   SECO_LOCAL_SEC_SEC_SECURE_RAM_BASE);
-
-	if (err) {
-		printf("Authenticate container hdr failed, return %d\n",
-		       err);
-	}
+	err = ahab_auth_oem_ctnr(IMG_CONTAINER_BASE,
+				   &resp);
+	if (err)
+		printf("Authenticate container hdr failed, return %d, resp 0x%x\n",
+		       err, resp);
 
 	return err;
 }
@@ -46,65 +39,29 @@ int ahab_auth_cntr_hdr(struct container_hdr *container, u16 length)
 int ahab_auth_release(void)
 {
 	int err;
+	u32 resp;
 
-	err = sc_seco_authenticate(-1, SC_SECO_REL_CONTAINER, 0);
+	err = ahab_release_container(&resp);
 	if (err)
-		printf("Error: release container failed!\n");
+		printf("Error: release container failed, resp 0x%x!\n", resp);
 
 	return err;
 }
 
 int ahab_verify_cntr_image(struct boot_img_t *img, int image_index)
 {
-	sc_faddr_t start, end;
-	sc_rm_mr_t mr;
 	int err;
-	int ret = 0;
+	u32 resp;
 
-	debug("img %d, dst 0x%llx, src 0x%x, size 0x%x\n",
-	      image_index, img->dst, img->offset, img->size);
-
-	/* Find the memreg and set permission for seco pt */
-	err = sc_rm_find_memreg(-1, &mr,
-				img->dst & ~(CONFIG_SYS_CACHELINE_SIZE - 1),
-				ALIGN(img->dst + img->size, CONFIG_SYS_CACHELINE_SIZE) - 1);
-
+	err = ahab_verify_image(image_index, &resp);
 	if (err) {
-		printf("Error: can't find memreg for image load address 0x%llx, error %d\n", img->dst, err);
-		return -ENOMEM;
+		printf("Authenticate img %d failed, return %d, resp 0x%x\n",
+		       image_index, err, resp);
+		return -EIO;
 	}
 
-	err = sc_rm_get_memreg_info(-1, mr, &start, &end);
-	if (!err)
-		debug("memreg %u 0x%llx -- 0x%llx\n", mr, start, end);
-
-	err = sc_rm_set_memreg_permissions(-1, mr,
-					   SECO_PT, SC_RM_PERM_FULL);
-	if (err) {
-		printf("Set permission failed for img %d, error %d\n",
-		       image_index, err);
-		return -EPERM;
-	}
-
-	err = sc_seco_authenticate(-1, SC_SECO_VERIFY_IMAGE,
-				   1 << image_index);
-	if (err) {
-		printf("Authenticate img %d failed, return %d\n",
-		       image_index, err);
-		ret = -EIO;
-	}
-
-	err = sc_rm_set_memreg_permissions(-1, mr,
-					   SECO_PT, SC_RM_PERM_NONE);
-	if (err) {
-		printf("Remove permission failed for img %d, error %d\n",
-		       image_index, err);
-		ret = -EPERM;
-	}
-
-	return ret;
+	return 0;
 }
-
 
 static inline bool check_in_dram(ulong addr)
 {
@@ -198,7 +155,7 @@ static int do_authenticate(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (argc < 2)
 		return CMD_RET_USAGE;
 
-	addr = hextoul(argv[1], NULL);
+	addr = simple_strtoul(argv[1], NULL, 16);
 
 	printf("Authenticate OS container at 0x%lx\n", addr);
 
@@ -242,32 +199,15 @@ static void display_life_cycle(u16 lc)
 	}
 }
 
-#define AHAB_AUTH_CONTAINER_REQ 0x87
-#define AHAB_VERIFY_IMAGE_REQ 0x88
-
 #define AHAB_NO_AUTHENTICATION_IND 0xee
 #define AHAB_BAD_KEY_HASH_IND 0xfa
 #define AHAB_INVALID_KEY_IND 0xf9
 #define AHAB_BAD_SIGNATURE_IND 0xf0
 #define AHAB_BAD_HASH_IND 0xf1
 
-static void display_ahab_auth_event(u32 event)
+static void display_ahab_auth_ind(u32 event)
 {
-	u8 cmd = (event >> 16) & 0xff;
 	u8 resp_ind = (event >> 8) & 0xff;
-
-	switch (cmd) {
-	case AHAB_AUTH_CONTAINER_REQ:
-		printf("\tCMD = AHAB_AUTH_CONTAINER_REQ (0x%02X)\n", cmd);
-		printf("\tIND = ");
-		break;
-	case AHAB_VERIFY_IMAGE_REQ:
-		printf("\tCMD = AHAB_VERIFY_IMAGE_REQ (0x%02X)\n", cmd);
-		printf("\tIND = ");
-		break;
-	default:
-		return;
-	}
 
 	switch (resp_ind) {
 	case AHAB_NO_AUTHENTICATION_IND:
@@ -291,37 +231,6 @@ static void display_ahab_auth_event(u32 event)
 	}
 }
 
-static int do_ahab_status(struct cmd_tbl *cmdtp, int flag, int argc,
-			  char *const argv[])
-{
-	int err;
-	u8 idx = 0U;
-	u32 event;
-	u16 lc;
-
-	err = sc_seco_chip_info(-1, &lc, NULL, NULL, NULL);
-	if (err != SC_ERR_NONE) {
-		printf("Error in get lifecycle\n");
-		return -EIO;
-	}
-
-	display_life_cycle(lc);
-
-	err = sc_seco_get_event(-1, idx, &event);
-	while (err == SC_ERR_NONE) {
-		printf("SECO Event[%u] = 0x%08X\n", idx, event);
-		display_ahab_auth_event(event);
-
-		idx++;
-		err = sc_seco_get_event(-1, idx, &event);
-	}
-
-	if (idx == 0)
-		printf("No SECO Events Found!\n\n");
-
-	return 0;
-}
-
 static int confirm_close(void)
 {
 	puts("Warning: Please ensure your sample is in NXP closed state, "
@@ -341,27 +250,14 @@ static int confirm_close(void)
 static int do_ahab_close(struct cmd_tbl *cmdtp, int flag, int argc,
 			 char *const argv[])
 {
-	int confirmed = argc >= 2 && !strcmp(argv[1], "-y");
 	int err;
-	u16 lc;
+	u32 resp;
 
-	if (!confirmed && !confirm_close())
+	if (!confirm_close())
 		return -EACCES;
 
-	err = sc_seco_chip_info(-1, &lc, NULL, NULL, NULL);
-	if (err != SC_ERR_NONE) {
-		printf("Error in get lifecycle\n");
-		return -EIO;
-	}
-
-	if (lc != 0x20) {
-		puts("Current lifecycle is NOT NXP closed, can't move to OEM closed\n");
-		display_life_cycle(lc);
-		return -EPERM;
-	}
-
-	err = sc_seco_forward_lifecycle(-1, 16);
-	if (err != SC_ERR_NONE) {
+	err = ahab_forward_lifecycle(8, &resp);
+	if (err != 0) {
 		printf("Error in forward lifecycle to OEM closed\n");
 		return -EIO;
 	}
@@ -375,11 +271,6 @@ U_BOOT_CMD(auth_cntr, CONFIG_SYS_MAXARGS, 1, do_authenticate,
 	   "autenticate OS container via AHAB",
 	   "addr\n"
 	   "addr - OS container hex address\n"
-);
-
-U_BOOT_CMD(ahab_status, CONFIG_SYS_MAXARGS, 1, do_ahab_status,
-	   "display AHAB lifecycle and events from seco",
-	   ""
 );
 
 U_BOOT_CMD(ahab_close, CONFIG_SYS_MAXARGS, 1, do_ahab_close,
