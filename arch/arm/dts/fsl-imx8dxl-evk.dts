@@ -369,7 +369,7 @@
 	clock-frequency = <100000>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_lpi2c3>;
-	status = "okay";
+	status = "disabled";
 
 	i2cswitch@70 {
 		compatible = "nxp,pca9646";
