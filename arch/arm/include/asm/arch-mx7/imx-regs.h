@@ -836,6 +836,7 @@ struct src {
 #define IMX7D_GPR5_CSI1_MUX_CTRL_MIPI_CSI		(0x1 << 4)
 
 struct iomuxc {
+	u32 reserved[0x4000];
 	u32 gpr[23];
 	/* mux and pad registers */
 };
