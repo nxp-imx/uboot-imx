@@ -66,6 +66,9 @@
 /* Ramdisk name */
 #define RAMDISK_NAME		rootfs.uimg
 
+/* Increase image size */
+#define CONFIG_SYS_BOOTM_LEN	(64 << 20)
+
 /* Flat device tree definitions */
 #define FDT_ADDR		0x83E00000
 
