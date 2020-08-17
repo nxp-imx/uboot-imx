@@ -22,7 +22,7 @@
 #include <mmc.h>
 #include <asm/arch/ddr.h>
 
-#ifdef CONFIG_TARGET_IMX8MM_AB2
+#if defined(CONFIG_TARGET_IMX8MM_AB2) || defined(CONFIG_TARGET_IMX8MM_DDR4_AB2)
 #include <asm/arch/imx8mm_pins.h>
 #else
 #include <asm/arch/imx8mn_pins.h>
@@ -38,7 +38,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int spl_board_boot_device(enum boot_device boot_dev_spl)
 {
-#ifdef CONFIG_TARGET_IMX8MM_AB2
+#if defined(CONFIG_TARGET_IMX8MM_AB2) || defined(CONFIG_TARGET_IMX8MM_DDR4_AB2)
 	switch (boot_dev_spl) {
 	case SD2_BOOT:
 	case MMC2_BOOT:
@@ -72,7 +72,7 @@ void spl_dram_init(void)
 #define USDHC_GPIO_PAD_CTRL (PAD_CTL_HYS | PAD_CTL_DSE1)
 #define USDHC_CD_PAD_CTRL (PAD_CTL_PE |PAD_CTL_PUE |PAD_CTL_HYS | PAD_CTL_DSE4)
 
-#ifdef CONFIG_TARGET_IMX8MM_AB2
+#if defined(CONFIG_TARGET_IMX8MM_AB2) || defined(CONFIG_TARGET_IMX8MM_DDR4_AB2)
 struct i2c_pads_info i2c_pad_info1 = {
 	.scl = {
 		.i2c_mode = IMX8MM_PAD_I2C1_SCL_I2C1_SCL | PC,
@@ -105,7 +105,7 @@ struct i2c_pads_info i2c_pad_info1 = {
 #define USDHC2_CD_GPIO	IMX_GPIO_NR(2, 12)
 #define USDHC2_PWR_GPIO	IMX_GPIO_NR(2, 19)
 
-#ifdef CONFIG_TARGET_IMX8MM_AB2
+#if defined(CONFIG_TARGET_IMX8MM_AB2) || defined(CONFIG_TARGET_IMX8MM_DDR4_AB2)
 static iomux_v3_cfg_t const usdhc3_pads[] = {
 	IMX8MM_PAD_NAND_WE_B_USDHC3_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	IMX8MM_PAD_NAND_WP_B_USDHC3_CMD | MUX_PAD_CTRL(USDHC_PAD_CTRL),
@@ -279,7 +279,8 @@ int power_init_board(void)
 	pmic_reg_write(p, BD71837_PWRONCONFIG1, 0x0);
 	/* unlock the PMIC regs */
 	pmic_reg_write(p, BD71837_REGLOCK, 0x1);
-#ifdef CONFIG_TARGET_IMX8MM_AB2
+
+#if defined(CONFIG_TARGET_IMX8MM_AB2) || defined(CONFIG_TARGET_IMX8MM_DDR4_AB2)
 	/* increase VDD_SOC to typical value 0.85v before first DRAM access */
 	pmic_reg_write(p, BD71837_BUCK1_VOLT_RUN, 0x0f);
 	/* increase VDD_DRAM to 0.975v for 3Ghz DDR */
@@ -316,7 +317,7 @@ int power_init_board(void)
 void spl_board_init(void)
 {
 #ifndef CONFIG_SPL_USB_SDP_SUPPORT
-#ifdef CONFIG_TARGET_IMX8MM_AB2
+#if defined(CONFIG_TARGET_IMX8MM_AB2) || defined(CONFIG_TARGET_IMX8MM_DDR4_AB2)
 	/* Serial download mode */
 	if (is_usb_boot()) {
 		puts("Back to ROM, SDP\n");
