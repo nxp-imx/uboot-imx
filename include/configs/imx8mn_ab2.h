@@ -88,6 +88,41 @@
 			   "else run jh_netboot; fi; \0" \
 	"jh_netboot=mw 0x303d0518 0xff; setenv fdt_file imx8mn-ddr4-ab2-root.dtb; setenv jh_clk clk_ignore_unused; run netboot; \0 "
 
+#define M7_BOOT_ENV \
+	"m7_boot=no\0" \
+	"m7_image=nxh3670.itb\0" \
+	"m7_loadaddr=0x80000000\0" \
+	"m7_nxh_app_loadaddr=0x81000000\0" \
+	"m7_nxh_rfmac_loadaddr=0x81012000\0" \
+	"m7_nxh_cf_loadaddr=0x81016000\0" \
+	"m7_nxh_data_loadaddr=0x8101E000\0" \
+	"m7_fdt_file=imx8mn-ab2-m7.dtb\0" \
+	"m7_nxh_bin=main@1\0" \
+	"m7_nxh_app=app@1\0" \
+	"m7_nxh_rfmac=rfmac@1\0" \
+	"m7_nxh_cf=cf@1\0" \
+	"m7_nxh_data=data@1\0" \
+	"loadm7nxhfw=imxtract ${loadaddr} ${m7_nxh_bin} ${m7_loadaddr}; " \
+		"imxtract ${loadaddr} ${m7_nxh_app} ${m7_nxh_app_loadaddr}; " \
+		"imxtract ${loadaddr} ${m7_nxh_rfmac} ${m7_nxh_rfmac_loadaddr}; " \
+		"imxtract ${loadaddr} ${m7_nxh_cf} ${m7_nxh_cf_loadaddr}; " \
+		"imxtract ${loadaddr} ${m7_nxh_data} ${m7_nxh_data_loadaddr}\0" \
+	"loadm7image=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m7_image}\0" \
+	"update_m7_from_sd=" \
+		"if sf probe 0:0; then " \
+			"if run loadm7image; then " \
+				"setexpr fw_sz ${filesize} + 0xffff; " \
+				"setexpr fw_sz ${fw_sz} / 0x10000; " \
+				"setexpr fw_sz ${fw_sz} * 0x10000; " \
+				"sf erase 0x100000 ${fw_sz}; " \
+				"sf write ${m7_loadaddr} 0x100000 ${filesize}; " \
+			"fi; " \
+		"fi\0" \
+	"m7boot=run loadm7image; run loadm7nxhfw; dcache flush; bootaux ${m7_loadaddr}\0" \
+	"m7netboot=${get_cmd} ${loaddadr} ${m7_image}; " \
+		"run loadm7nxhfw; dcache flush; bootaux ${m7_loadaddr}; \0" \
+	"m7boot_sf=sf probe 0:0; dcache flush; bootaux ${m7_sf_loadaddr}\0"
+
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x43800000\0" \
@@ -99,6 +134,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
 	JAILHOUSE_ENV \
+	M7_BOOT_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
 	"console=ttymxc1,115200\0" \
@@ -120,6 +156,10 @@
 	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"run mmcargs; " \
+		"if test ${m7_boot} = yes || test ${m7_boot} = try; then "\
+			"echo Booting M7 aux core...; " \
+			"run m7boot; " \
+		"fi; " \
 		"if test ${boot_fit} = yes || test ${boot_fit} = try; then " \
 			"bootm ${loadaddr}; " \
 		"else " \
@@ -138,6 +178,10 @@
 			"setenv get_cmd dhcp; " \
 		"else " \
 			"setenv get_cmd tftp; " \
+		"fi; " \
+		"if test ${m7_boot} = yes || test ${m7_boot} = try; then " \
+			"echo Booting M7 aux core...;" \
+			"run m7netboot;" \
 		"fi; " \
 		"${get_cmd} ${loadaddr} ${image}; " \
 		"if test ${boot_fit} = yes || test ${boot_fit} = try; then " \
