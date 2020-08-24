@@ -2771,21 +2771,6 @@ int mmc_get_op_cond(struct mmc *mmc)
 		      MMC_QUIRK_RETRY_APP_CMD;
 #endif
 
-	err = mmc_power_cycle(mmc);
-	if (err) {
-		/*
-		 * if power cycling is not supported, we should not try
-		 * to use the UHS modes, because we wouldn't be able to
-		 * recover from an error during the UHS initialization.
-		 */
-		pr_debug("Unable to do a full power cycle. Disabling the UHS modes for safety\n");
-		uhs_en = false;
-		mmc->host_caps &= ~UHS_CAPS;
-		err = mmc_power_on(mmc);
-	}
-	if (err)
-		return err;
-
 #if CONFIG_IS_ENABLED(DM_MMC)
 	/*
 	 * Re-initialization is needed to clear old configuration for
@@ -2803,6 +2788,21 @@ int mmc_get_op_cond(struct mmc *mmc)
 retry:
 	mmc_set_initial_state(mmc);
 
+	err = mmc_power_cycle(mmc);
+	if (err) {
+		/*
+		 * if power cycling is not supported, we should not try
+		 * to use the UHS modes, because we wouldn't be able to
+		 * recover from an error during the UHS initialization.
+		 */
+		pr_debug("Unable to do a full power cycle. Disabling the UHS modes for safety\n");
+		uhs_en = false;
+		mmc->host_caps &= ~UHS_CAPS;
+		err = mmc_power_on(mmc);
+	}
+	if (err)
+		return err;
+
 	/* Reset the Card */
 	err = mmc_go_idle(mmc);
 
@@ -2819,7 +2819,6 @@ retry:
 	err = sd_send_op_cond(mmc, uhs_en);
 	if (err && uhs_en) {
 		uhs_en = false;
-		mmc_power_cycle(mmc);
 		goto retry;
 	}
 
