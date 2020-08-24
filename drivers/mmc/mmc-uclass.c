@@ -154,6 +154,21 @@ int mmc_deferred_probe(struct mmc *mmc)
 	return dm_mmc_deferred_probe(mmc->dev);
 }
 
+int dm_mmc_hs400_prepare_ddr(struct udevice *dev)
+{
+	struct dm_mmc_ops *ops = mmc_get_ops(dev);
+
+	if (ops->hs400_prepare_ddr)
+		return ops->hs400_prepare_ddr(dev);
+
+	return 0;
+}
+
+int mmc_hs400_prepare_ddr(struct mmc *mmc)
+{
+	return dm_mmc_hs400_prepare_ddr(mmc->dev);
+}
+
 int dm_mmc_reinit(struct udevice *dev)
 {
 	struct dm_mmc_ops *ops = mmc_get_ops(dev);
