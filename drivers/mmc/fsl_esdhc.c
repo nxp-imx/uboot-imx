@@ -23,6 +23,10 @@
 #include <asm/io.h>
 #include <dm.h>
 #include <dm/device_compat.h>
+#if defined(CONFIG_FSL_LAYERSCAPE)
+#include <asm/arch/clock.h>
+#include <asm/arch/soc.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1030,7 +1034,32 @@ static int fsl_esdhc_execute_tuning(struct udevice *dev, uint32_t opcode)
 	struct fsl_esdhc *regs = priv->esdhc_regs;
 	u32 val, irqstaten;
 	int i;
+#if defined(CONFIG_FSL_LAYERSCAPE)
+	uint svr, div, div_new = 0;
 
+	svr = get_svr();
+
+	/*
+	 * Erratum A-011334: Limited clock dividers for HS400 mode
+	 * The divider value can be only 4, 8, or 12.
+	 */
+	if (plat->mmc.hs400_tuning &&
+	    (IS_SVR_DEV(svr, SVR_DEV(SVR_LX2160A)) ||
+	     IS_SVR_DEV(svr, SVR_DEV(SVR_LS1028A)))) {
+		div = priv->sdhc_clk / priv->clock;
+		if (div <= 4)
+			div_new = 4;
+		else if (div <= 8)
+			div_new = 8;
+		else if (div <= 12)
+			div_new = 12;
+		else
+			printf("fsl_esdhc: error clock division\n");
+
+		if (div_new != div)
+			set_sysctl(priv, &plat->mmc, priv->sdhc_clk / div_new);
+	}
+#endif
 	esdhc_tuning_block_enable(priv, true);
 	esdhc_setbits32(&regs->autoc12err, EXECUTE_TUNING);
 
