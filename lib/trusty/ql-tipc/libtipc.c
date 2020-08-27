@@ -76,7 +76,6 @@ int trusty_ipc_init(void)
     }
 
     /* create Trusty IPC device */
-    trusty_info("Initializing Trusty IPC device\n");
     rc = trusty_ipc_dev_create(&_ipc_dev, &_tdev, PAGE_SIZE);
     if (rc != 0) {
         trusty_error("Initializing Trusty IPC device failed (%d)\n", rc);
@@ -87,7 +86,6 @@ int trusty_ipc_init(void)
     rpmb_ctx = rpmb_storage_get_ctx();
 
     /* start secure storage proxy service */
-    trusty_info("Initializing RPMB storage proxy service\n");
     rc = rpmb_storage_proxy_init(_ipc_dev, rpmb_ctx);
     if (rc != 0) {
         trusty_error("Initlializing RPMB storage proxy service failed (%d)\n",
@@ -106,14 +104,12 @@ int trusty_ipc_init(void)
         /* secure storage service init ok, use trusty backed keystore */
         env_set("keystore", "trusty");
 
-        trusty_info("Initializing Trusty AVB client\n");
         rc = avb_tipc_init(_ipc_dev);
         if (rc != 0) {
             trusty_error("Initlializing Trusty AVB client failed (%d)\n", rc);
             return rc;
         }
 
-        trusty_info("Initializing Trusty Keymaster client\n");
         rc = km_tipc_init(_ipc_dev);
         if (rc != 0) {
             trusty_error("Initlializing Trusty Keymaster client failed (%d)\n", rc);
@@ -122,7 +118,6 @@ int trusty_ipc_init(void)
     }
 
 #ifndef CONFIG_AVB_ATX
-    trusty_info("Initializing Trusty Hardware Crypto client\n");
     rc = hwcrypto_tipc_init(_ipc_dev);
     if (rc != 0) {
         trusty_error("Initlializing Trusty Keymaster client failed (%d)\n", rc);

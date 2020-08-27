@@ -211,7 +211,7 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	if (strlen(andr_tmp_str))
 		printf("Android's image name: %s\n", andr_tmp_str);
 
-	printf("Kernel load addr 0x%08x size %u KiB\n",
+	debug("Kernel load addr 0x%08x size %u KiB\n",
 	       kernel_addr, DIV_ROUND_UP(hdr->kernel_size, 1024));
 
 	char commandline[COMMANDLINE_LENGTH] = {0};

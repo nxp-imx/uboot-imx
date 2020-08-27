@@ -26,40 +26,108 @@
 	config {
 		load-environment = <0>;
 	};
+
+	aliases {
+		/delete-property/ dsiphy0;
+		/delete-property/ dsiphy1;
+		/delete-property/ mipidsi0;
+		/delete-property/ mipidsi1;
+		/delete-property/ serial1;
+		/delete-property/ serial2;
+		/delete-property/ serial3;
+		/delete-property/ serial4;
+		/delete-property/ i2c6;
+		/delete-property/ i2c8;
+		/delete-property/ display0;
+		/delete-property/ display1;
+		/delete-property/ video0;
+		/delete-property/ video1;
+		/delete-property/ ethernet0;
+		/delete-property/ ethernet1;
+		/delete-property/ gpio2;
+		/delete-property/ gpio5;
+		/delete-property/ mmc1;
+		/delete-property/ mmc2;
+		/delete-property/ spi0;
+		/delete-property/ pci0;
+		/delete-property/ pci1;
+	};
 };
 
-&gpio2 {
-	status = "disabled";
-};
-
-&gpio5 {
-	status = "disabled";
-};
-
-&usdhc2 {
-	status = "disabled";
-};
-
-&fec1 {
-	status = "disabled";
-};
-
-&fec2 {
-	status = "disabled";
-};
-
-&flexspi0 {
-	status = "disabled";
-};
-
-&i2c1_lvds0 {
-	status = "disabled";
-};
-
-&i2c1_lvds1 {
-	status = "disabled";
-};
-
-&lpspi0 {
-	status = "disabled";
-};
+/delete-node/ &pd_dc0;
+/delete-node/ &pd_dc1;
+/delete-node/ &pd_isi_ch0;
+/delete-node/ &pd_caam;
+/delete-node/ &tsens;
+/delete-node/ &thermal_zones;
+/delete-node/ &rtc;
+/delete-node/ &dpu1_intsteer;
+/delete-node/ &dpu1;
+/delete-node/ &hdmi;
+/delete-node/ &irqsteer_dsi0;
+/delete-node/ &i2c0_mipi_dsi0;
+/delete-node/ &mipi_dsi_csr1;
+/delete-node/ &mipi_dsi_phy1;
+/delete-node/ &mipi_dsi1;
+/delete-node/ &mipi_dsi_bridge1;
+/delete-node/ &lvds_region1;
+/delete-node/ &ldb1_phy;
+/delete-node/ &ldb1;
+/delete-node/ &lvds0_pwm;
+/delete-node/ &dpu2_intsteer;
+/delete-node/ &dpu2;
+/delete-node/ &irqsteer_dsi1;
+/delete-node/ &i2c0_mipi_dsi1;
+/delete-node/ &mipi_dsi_csr2;
+/delete-node/ &mipi_dsi_phy2;
+/delete-node/ &mipi_dsi2;
+/delete-node/ &mipi_dsi_bridge2;
+/delete-node/ &lvds_region2;
+/delete-node/ &ldb2_phy;
+/delete-node/ &ldb2;
+/delete-node/ &lvds1_pwm;
+/delete-node/ &camera;
+/delete-node/ &irqsteer_hdmi;
+/delete-node/ &irqsteer_hdmi_rx;
+/delete-node/ &i2c0_hdmi;
+/delete-node/ &irqsteer_lvds0;
+/delete-node/ &i2c1_lvds0;
+/delete-node/ &irqsteer_lvds1;
+/delete-node/ &i2c1_lvds1;
+/delete-node/ &lpspi0;
+/delete-node/ &lpspi3;
+/delete-node/ &lpuart1;
+/delete-node/ &lpuart2;
+/delete-node/ &lpuart3;
+/delete-node/ &lpuart4;
+/delete-node/ &edma0;
+/delete-node/ &edma2;
+/delete-node/ &edma3;
+/delete-node/ &mlb;
+/delete-node/ &ddr_pmu0;
+/delete-node/ &ddr_pmu1;
+/delete-node/ &display;
+/delete-node/ &dma_cap;
+/delete-node/ &imx_rpmsg;
+/delete-node/ &crypto;
+/delete-node/ &caam_sm;
+/delete-node/ &i2c_rpbus_0;
+/delete-node/ &i2c_rpbus_1;
+/delete-node/ &sc_pwrkey;
+/delete-node/ &mu13;
+/delete-node/ &mu_m0;
+/delete-node/ &mu1_m0;
+/delete-node/ &mu2_m0;
+/delete-node/ &usdhc2;
+/delete-node/ &usdhc3;
+/delete-node/ &fec1;
+/delete-node/ &fec2;
+/delete-node/ &flexspi0;
+/delete-node/ &gpio2;
+/delete-node/ &gpio5;
+/delete-node/ &pciea;
+/delete-node/ &pcieb;
+/delete-node/ &sata;
+/delete-node/ &mu8;
+/delete-node/ &mu9;
+/delete-node/ &cci;
