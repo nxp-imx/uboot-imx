@@ -32,6 +32,7 @@
 #ifdef CONFIG_MX6
 #include <asm/arch/sys_proto.h>
 #endif
+#include <linux/iopoll.h>
 
 #if !CONFIG_IS_ENABLED(BLK)
 #include "mmc_private.h"
@@ -624,6 +625,8 @@ static void set_sysctl(struct fsl_esdhc_priv *priv, struct mmc *mmc, uint clock)
 {
 	struct fsl_esdhc *regs = priv->esdhc_regs;
 	int div = 1;
+	u32 tmp;
+	int ret;
 #ifdef ARCH_MXC
 #ifdef CONFIG_MX53
 	/* For i.MX53 eSDHCv3, SYSCTL.SDCLKFS may not be set to 0. */
@@ -669,7 +672,9 @@ static void set_sysctl(struct fsl_esdhc_priv *priv, struct mmc *mmc, uint clock)
 
 	esdhc_clrsetbits32(&regs->sysctl, SYSCTL_CLOCK_MASK, clk);
 
-	udelay(10000);
+	ret = readl_poll_timeout(&regs->prsstat, tmp, tmp & PRSSTAT_SDSTB, 100);
+	if (ret)
+		pr_warn("fsl_esdhc_imx: Internal clock never stabilised.\n");
 
 #ifdef CONFIG_FSL_USDHC
 	esdhc_setbits32(&regs->vendorspec, VENDORSPEC_PEREN | VENDORSPEC_CKEN);
