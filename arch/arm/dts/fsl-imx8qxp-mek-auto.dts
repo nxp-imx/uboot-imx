@@ -26,45 +26,156 @@
 	config {
 		load-environment = <0>;
 	};
-};
 
-&gpio0 {
-	status = "disabled";
-};
-
-&gpio1 {
-	status = "disabled";
-};
-
-&gpio3 {
-	status = "disabled";
+	aliases {
+		/delete-property/ gpio0;
+		/delete-property/ gpio1;
+		/delete-property/ gpio3;
+		/delete-property/ gpio4;
+		/delete-property/ ethernet0;
+		/delete-property/ ethernet1;
+		/delete-property/ mmc1;
+		/delete-property/ mmc2;
+		/delete-property/ spi0;
+		/delete-property/ pci0;
+		/delete-property/ csi0;
+		/delete-property/ video0;
+		/delete-property/ dsiphy0;
+		/delete-property/ dsiphy1;
+		/delete-property/ mipidsi0;
+		/delete-property/ mipidsi1;
+		/delete-property/ display0;
+		/delete-property/ display1;
+		/delete-property/ isi0;
+		/delete-property/ isi1;
+		/delete-property/ isi2;
+		/delete-property/ isi3;
+		/delete-property/ isi4;
+		/delete-property/ isi5;
+		/delete-property/ isi6;
+		/delete-property/ isi7;
+		/delete-property/ serial1;
+		/delete-property/ serial2;
+		/delete-property/ serial3;
+		/delete-property/ i2c13;
+		/delete-property/ i2c15;
+		/delete-property/ can0;
+		/delete-property/ can1;
+		/delete-property/ can2;
+	};
 };
 
 &gpio4 {
 	status = "disabled";
 };
 
-&fec1 {
-	status = "disabled";
-};
-
-&fec2 {
-	status = "disabled";
-};
-
-&flexspi0 {
-	status = "disabled";
-};
-
-&i2c0_mipi_lvds0 {
-	status = "disabled";
-};
-
-&i2c0_mipi_lvds1 {
-	status = "disabled";
-};
-
-&usdhc2 {
-	status = "disabled";
-};
-
+/delete-node/ &pd_dc0;
+/delete-node/ &pd_isi_ch0;
+/delete-node/ &pd_caam;
+/delete-node/ &gpio0;
+/delete-node/ &gpio1;
+/delete-node/ &gpio3;
+/delete-node/ &fec1;
+/delete-node/ &fec2;
+/delete-node/ &flexspi0;
+/delete-node/ &usdhc2;
+/delete-node/ &usdhc3;
+/delete-node/ &pcieb;
+/delete-node/ &mu8;
+/delete-node/ &mu13;
+/delete-node/ &mu_m0;
+/delete-node/ &mu1_m0;
+/delete-node/ &mu_m4;
+/delete-node/ &rtc;
+/delete-node/ &thermal_zones;
+/delete-node/ &tsens;
+/delete-node/ &irqsteer_csi;
+/delete-node/ &dpu1;
+/delete-node/ &mipi_dsi_csr1;
+/delete-node/ &mipi_dsi_phy1;
+/delete-node/ &mipi_dsi1;
+/delete-node/ &mipi_dsi_bridge1;
+/delete-node/ &lvds_region1;
+/delete-node/ &ldb1_phy;
+/delete-node/ &ldb1;
+/delete-node/ &mipi_dsi_csr2;
+/delete-node/ &mipi_dsi_phy2;
+/delete-node/ &mipi_dsi2;
+/delete-node/ &mipi_dsi_bridge2;
+/delete-node/ &lvds_region2;
+/delete-node/ &ldb2_phy;
+/delete-node/ &ldb2;
+/delete-node/ &lpspi0;
+/delete-node/ &lpuart1;
+/delete-node/ &lpuart2;
+/delete-node/ &lpuart3;
+/delete-node/ &edma0;
+/delete-node/ &edma2;
+/delete-node/ &mlb;
+/delete-node/ &ddr_pmu0;
+/delete-node/ &dma_cap;
+/delete-node/ &imx_rpmsg;
+/delete-node/ &crypto;
+/delete-node/ &caam_sm;
+/delete-node/ &i2c_rpbus_1;
+/delete-node/ &sc_pwrkey;
+/delete-node/ &i2c0_csi0;
+/delete-node/ &pixel_combiner;
+/delete-node/ &prg1;
+/delete-node/ &prg2;
+/delete-node/ &prg3;
+/delete-node/ &prg4;
+/delete-node/ &prg5;
+/delete-node/ &prg6;
+/delete-node/ &prg7;
+/delete-node/ &prg8;
+/delete-node/ &prg9;
+/delete-node/ &dpr1_channel1;
+/delete-node/ &dpr1_channel2;
+/delete-node/ &dpr1_channel3;
+/delete-node/ &dpr2_channel1;
+/delete-node/ &dpr2_channel2;
+/delete-node/ &dpr2_channel3;
+/delete-node/ &irqsteer_mipi_lvds0;
+/delete-node/ &pwm_mipi_lvds0;
+/delete-node/ &i2c0_mipi_lvds0;
+/delete-node/ &irqsteer_mipi_lvds1;
+/delete-node/ &cameradev;
+/delete-node/ &pwm_mipi_lvds1;
+/delete-node/ &i2c0_mipi_lvds1;
+/delete-node/ &gpio0_mipi_csi0;
+/delete-node/ &sai0;
+/delete-node/ &sai1;
+/delete-node/ &sai2;
+/delete-node/ &sai3;
+/delete-node/ &asrc0;
+/delete-node/ &asrc1;
+/delete-node/ &esai0;
+/delete-node/ &spdif0;
+/delete-node/ &{/display-subsystem};
+/delete-node/ &intmux_cm40;
+/delete-node/ &i2c0_cm40;
+/delete-node/ &dpu_intsteer;
+/delete-node/ &adma_lcdif;
+/delete-node/ &pwm_adma_lcdif;
+/delete-node/ &i2c_rpbus_5;
+/delete-node/ &i2c_rpbus_12;
+/delete-node/ &i2c_rpbus_13;
+/delete-node/ &i2c_rpbus_14;
+/delete-node/ &i2c_rpbus_15;
+/delete-node/ &flexcan1;
+/delete-node/ &flexcan2;
+/delete-node/ &flexcan3;
+/delete-node/ &gpmi;
+/delete-node/ &gpu_3d0;
+/delete-node/ &imx8_gpu_ss;
+/delete-node/ &lpspi2;
+/delete-node/ &acm;
+/delete-node/ &amix;
+/delete-node/ &mqs;
+/delete-node/ &gpt0;
+/delete-node/ &dsp;
+/delete-node/ &{/imx_ion};
+/delete-node/ &vpu;
+/delete-node/ &vpu_decoder;
+/delete-node/ &vpu_encoder;

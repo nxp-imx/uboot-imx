@@ -448,6 +448,9 @@ out:
 
 #define PARTITION_NAME_LEN 13
 #define PARTITION_BOOTLOADER "bootloader"
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#define PARTITION_MISC_ID 11
+#endif
 
 extern int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value);
 
@@ -469,7 +472,11 @@ int fsl_save_metadata_if_changed_dual_uboot(struct blk_desc *dev_desc,
 	/* Save metadata if changed. */
 	if (memcmp(ab_data, ab_data_orig, sizeof(struct bootloader_control)) != 0) {
 		/* Get misc partition info */
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+		if (part_get_info(dev_desc, PARTITION_MISC_ID, &info) == -1) {
+#else
 		if (part_get_info_by_name(dev_desc, FASTBOOT_PARTITION_MISC, &info) == -1) {
+#endif
 			printf("Can't get partition info of partition: misc\n");
 			return -1;
 		}
@@ -497,7 +504,11 @@ int fsl_load_metadata_dual_uboot(struct blk_desc *dev_desc,
 	struct bootloader_control serialized;
 	size_t num_bytes;
 
+#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+	if (part_get_info(dev_desc, PARTITION_MISC_ID, &info) == -1) {
+#else
 	if (part_get_info_by_name(dev_desc, FASTBOOT_PARTITION_MISC, &info) == -1) {
+#endif
 		printf("Can't get partition info of partition: misc\n");
 		return -1;
 	} else {
