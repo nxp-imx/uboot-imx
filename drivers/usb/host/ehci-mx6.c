@@ -129,6 +129,11 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 		board_ehci_power(index, (type == USB_INIT_DEVICE) ? 0 : 1);
 	if (type != init)
 		return -ENODEV;
+
+	if (is_mx6dqp() || is_mx6dq() || is_mx6sdl() ||
+		((is_mx6sl() || is_mx6sx()) && type == USB_INIT_HOST))
+		setbits_le32(&ehci->usbmode, SDIS);
+
 	if (type == USB_INIT_DEVICE)
 		return 0;
 
@@ -185,6 +190,10 @@ static int mx6_init_after_reset(struct ehci_ctrl *dev)
 		}
 	}
 #endif
+
+	if (is_mx6dqp() || is_mx6dq() || is_mx6sdl() ||
+		((is_mx6sl() || is_mx6sx()) && type == USB_INIT_HOST))
+		setbits_le32(&ehci->usbmode, SDIS);
 
 	if (type == USB_INIT_DEVICE)
 		return 0;
