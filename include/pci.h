@@ -484,6 +484,19 @@
 #define  PCI_EXP_DEVCAP_FLR     0x10000000 /* Function Level Reset */
 #define PCI_EXP_DEVCTL		8	/* Device Control */
 #define  PCI_EXP_DEVCTL_BCR_FLR 0x8000  /* Bridge Configuration Retry / FLR */
+#define PCI_EXP_DEVCAP2		36	/* Device Capabilities 2 */
+#define  PCI_EXP_DEVCAP2_ARI	0x00000020 /* ARI Forwarding Supported */
+#define PCI_EXP_DEVCTL2		40	/* Device Control 2 */
+#define  PCI_EXP_DEVCTL2_ARI	0x0020 /* Alternative Routing-ID */
+
+/* PCI SR-IOV Configuration */
+#define PCI_SRIOV_CTRL		8	/* SR-IOV Control Register */
+#define  PCI_SRIOV_CTRL_VF_EN	 0x00000001 /* VF Enable */
+#define  PCI_SRIOV_CTRL_ARI	 0x00000010 /* ARI Capable Hierarchy */
+#define PCI_SRIOV_TOTAL_VFS	14 /* TotalVFs */
+#define PCI_SRIOV_NUM_VFS	16 /* NumVFs */
+#define PCI_SRIOV_VF_OFFSET	20 /* First VF Offset */
+#define PCI_SRIOV_VF_STRIDE	22 /* VF Stride */
 
 /* Include the ID list */
 

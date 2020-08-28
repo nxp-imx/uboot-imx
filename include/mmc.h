@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2008,2010 Freescale Semiconductor, Inc
+ * Copyright 2020 NXP
  * Andy Fleming
  *
  * Based (loosely) on the Linux code
@@ -421,6 +422,21 @@ struct dm_mmc_ops {
 	 */
 	int (*deferred_probe)(struct udevice *dev);
 	/**
+	 * hs400_prepare_ddr - prepare to switch to DDR mode
+	 *
+	 * @dev:	Device to check
+	 * @return 0 if success, -ve on error
+	 */
+	int (*hs400_prepare_ddr)(struct udevice *dev);
+	/**
+	 * reinit() - Re-initialization to clear old configuration for
+	 * mmc rescan.
+	 *
+	 * @dev:	Device to reinit
+	 * @return 0 if Ok, -ve if error
+	 */
+	int (*reinit)(struct udevice *dev);
+	/**
 	 * send_cmd() - Send a command to the MMC device
 	 *
 	 * @dev:	Device to receive the command
@@ -504,6 +520,7 @@ int dm_mmc_execute_tuning(struct udevice *dev, uint opcode);
 int dm_mmc_wait_dat0(struct udevice *dev, int state, int timeout_us);
 int dm_mmc_host_power_cycle(struct udevice *dev);
 int dm_mmc_deferred_probe(struct udevice *dev);
+int dm_mmc_reinit(struct udevice *dev);
 
 /* Transition functions for compatibility */
 int mmc_set_ios(struct mmc *mmc);
@@ -514,6 +531,8 @@ int mmc_wait_dat0(struct mmc *mmc, int state, int timeout_us);
 int mmc_set_enhanced_strobe(struct mmc *mmc);
 int mmc_host_power_cycle(struct mmc *mmc);
 int mmc_deferred_probe(struct mmc *mmc);
+int mmc_hs400_prepare_ddr(struct mmc *mmc);
+int mmc_reinit(struct mmc *mmc);
 
 #else
 struct mmc_ops {
@@ -525,6 +544,11 @@ struct mmc_ops {
 	int (*getwp)(struct mmc *mmc);
 	int (*host_power_cycle)(struct mmc *mmc);
 };
+
+static inline int mmc_hs400_prepare_ddr(struct mmc *mmc)
+{
+	return 0;
+}
 #endif
 
 struct mmc_config {
@@ -680,6 +704,7 @@ struct mmc {
 				  * accessing the boot partitions
 				  */
 	u32 quirks;
+	u8 hs400_tuning;
 };
 
 struct mmc_hwpart_conf {

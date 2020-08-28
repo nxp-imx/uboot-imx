@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2017-2019 NXP
+ * Copyright 2017-2020 NXP
  * Copyright 2014-2015 Freescale Semiconductor, Inc.
  * Layerscape PCIe driver
  */
@@ -531,7 +531,8 @@ static int ls_pcie_probe(struct udevice *dev)
 
 	pcie->enabled = is_serdes_configured(PCIE_SRDS_PRTCL(pcie->idx));
 	if (!pcie->enabled) {
-		printf("PCIe%d: %s disabled\n", pcie->idx, dev->name);
+		printf("PCIe%d: %s disabled\n", PCIE_SRDS_PRTCL(pcie->idx),
+		       dev->name);
 		return 0;
 	}
 
@@ -567,6 +568,12 @@ static int ls_pcie_probe(struct udevice *dev)
 		return ret;
 	}
 
+	cfg_size = fdt_resource_size(&pcie->cfg_res);
+	if (cfg_size < SZ_8K) {
+		printf("PCIe%d: %s Invalid size(0x%llx) for resource \"config\",expected minimum 0x%x\n",
+		       PCIE_SRDS_PRTCL(pcie->idx), dev->name, cfg_size, SZ_8K);
+		return 0;
+	}
 	/*
 	 * Fix the pcie memory map address and PF control registers address
 	 * for LS2088A series SoCs
@@ -576,7 +583,6 @@ static int ls_pcie_probe(struct udevice *dev)
 	if (svr == SVR_LS2088A || svr == SVR_LS2084A ||
 	    svr == SVR_LS2048A || svr == SVR_LS2044A ||
 	    svr == SVR_LS2081A || svr == SVR_LS2041A) {
-		cfg_size = fdt_resource_size(&pcie->cfg_res);
 		pcie->cfg_res.start = LS2088A_PCIE1_PHYS_ADDR +
 					LS2088A_PCIE_PHYS_SIZE * pcie->idx;
 		pcie->cfg_res.end = pcie->cfg_res.start + cfg_size;
@@ -608,11 +614,13 @@ static int ls_pcie_probe(struct udevice *dev)
 	pcie->mode = readb(pcie->dbi + PCI_HEADER_TYPE) & 0x7f;
 
 	if (pcie->mode == PCI_HEADER_TYPE_NORMAL) {
-		printf("PCIe%u: %s %s", pcie->idx, dev->name, "Endpoint");
-			ls_pcie_setup_ep(pcie);
+		printf("PCIe%u: %s %s", PCIE_SRDS_PRTCL(pcie->idx), dev->name,
+		       "Endpoint");
+		ls_pcie_setup_ep(pcie);
 	} else {
-		printf("PCIe%u: %s %s", pcie->idx, dev->name, "Root Complex");
-			ls_pcie_setup_ctrl(pcie);
+		printf("PCIe%u: %s %s", PCIE_SRDS_PRTCL(pcie->idx), dev->name,
+		       "Root Complex");
+		ls_pcie_setup_ctrl(pcie);
 	}
 
 	if (!ls_pcie_link_up(pcie)) {
