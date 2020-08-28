@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * (C) Copyright 2016 NXP.
+ * (C) Copyright 2016-2017,2020 NXP.
  *
  * Configuration settings for the Freescale S32V234 EVB board.
  */
@@ -11,6 +11,14 @@
 #include <asm/arch/imx-regs.h>
 
 #define CONFIG_S32V234
+
+/* Config DCU */
+#ifdef CONFIG_FSL_DCU_FB
+#define CONFIG_SYS_DCU_ADDR             0x40028000
+#define DCU_LAYER_MAX_NUM               8
+#define DCU_CTRL_DESC_LAYER_NUM		10
+#define CONFIG_SYS_FSL_DCU_LE
+#endif
 
 /* Config GIC */
 #define CONFIG_GICV2
@@ -35,6 +43,9 @@
 /* Config CACHE */
 #define CONFIG_CMD_CACHE
 
+/* Enable DCU QoS fix */
+#define CONFIG_DCU_QOS_FIX
+
 /* Enable passing of ATAGs */
 #define CONFIG_CMDLINE_TAG
 
@@ -55,6 +66,9 @@
 /* Ramdisk name */
 #define RAMDISK_NAME		rootfs.uimg
 
+/* Increase image size */
+#define CONFIG_SYS_BOOTM_LEN	(64 << 20)
+
 /* Flat device tree definitions */
 #define FDT_ADDR		0x83E00000
 
@@ -63,6 +77,15 @@
 
 /* Ramdisk load address */
 #define RAMDISK_ADDR		0x84000000
+
+/* Flash booting */
+#define UBOOT_FLASH_ADDR		(CONFIG_SYS_FSL_FLASH0_BASE + 0x0)
+#define KERNEL_FLASH_ADDR		(CONFIG_SYS_FSL_FLASH0_BASE + 0x100000)
+#define KERNEL_FLASH_MAXSIZE		0xA00000
+#define FDT_FLASH_ADDR			(CONFIG_SYS_FSL_FLASH0_BASE + 0xB00000)
+#define FDT_FLASH_MAXSIZE		0x100000
+#define RAMDISK_FLASH_ADDR		(CONFIG_SYS_FSL_FLASH0_BASE + 0xC00000)
+#define RAMDISK_FLASH_MAXSIZE		0x2000000
 
 /* Generic Timer Definitions */
 /* COUNTER_FREQUENCY value will be used at startup but will be replaced
@@ -90,6 +113,14 @@
 #define LINFLEXUART_BASE		LINFLEXD1_BASE_ADDR
 #endif
 
+/* memory mapped external flash */
+#define CONFIG_SYS_FSL_FLASH0_BASE      0x20000000
+#define CONFIG_SYS_FSL_FLASH0_SIZE      0x10000000
+#define CONFIG_SYS_FSL_FLASH1_BASE      0x60000000
+#define CONFIG_SYS_FSL_FLASH1_SIZE      0x10000000
+#define QSPI_BASE_ADDR			0x400A6000
+#define CONFIG_SYS_FLASH_BASE		CONFIG_SYS_FSL_FLASH0_BASE
+
 /* Allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_UART_PORT		(1)
@@ -97,7 +128,14 @@
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC_BASE_ADDR
 #define CONFIG_SYS_FSL_ESDHC_NUM	1
 
-#define CONFIG_GENERIC_MMC
+/* I2C Configs */
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_MXC
+#define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
+#define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
+#define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
+#define CONFIG_SYS_I2C_SPEED		100000
+#define CONFIG_SYS_SPD_BUS_NUM		0
 
 #define CONFIG_LOADADDR			LOADADDR
 
@@ -109,7 +147,37 @@
 				CONFIG_BOOTARGS_LOGLEVEL " " \
 				CONFIG_EXTRA_KERNEL_BOOT_ARGS
 
-#define CONFIG_CMD_ENV
+#define MMAP_DSPI		SPI0_BASE_ADDR
+
+/* flash related definitions */
+#if defined(CONFIG_SPI_FLASH) && defined(CONFIG_FSL_QSPI)
+#define CONFIG_S32V234_USES_FLASH
+
+/* Flash Size and Num need to be updated according to the board's flash type */
+#define FSL_QSPI_FLASH_SIZE            SZ_128M
+#define FSL_QSPI_FLASH_NUM             2
+
+#define QSPI0_BASE_ADDR                QSPI_BASE_ADDR
+#define QSPI0_AMBA_BASE                CONFIG_SYS_FSL_FLASH0_BASE
+
+#else
+#define CONFIG_S32V234_FLASH
+
+/* QSPI/hyperflash configs */
+#ifdef CONFIG_S32V234_FLASH
+#define CONFIG_S32V234_USES_FLASH
+
+/* debug stuff for qspi/hyperflash */
+#undef CONFIG_DEBUG_S32V234_QSPI_QSPI
+
+#undef CONFIG_CMD_FLASH
+
+#define FLASH_BASE_ADR2			(CONFIG_SYS_FSL_FLASH0_BASE + 0x4000000)
+
+#endif
+#endif
+
+#define CONFIG_HWCONFIG
 
 #ifdef CONFIG_CMD_BOOTI
 
@@ -132,8 +200,49 @@
 #define CONFIG_BOARD_EXTRA_ENV_SETTINGS	""
 #endif
 
+#ifdef CONFIG_FEC_MXC
+#define S32V234_FEC_DEFAULT_ADDR "00:1b:c3:12:34:22"
+#define FEC_EXTRA_ENV_SETTINGS	"ethaddr=" S32V234_FEC_DEFAULT_ADDR
+#else
+#define FEC_EXTRA_ENV_SETTINGS	""
+#endif
+
+#ifndef CONFIG_DCU_EXTRA_ENV_SETTINGS
+#define CONFIG_DCU_EXTRA_ENV_SETTINGS	""
+#endif
+
+/*
+ * Enable CONFIG_BOARD_USE_RAMFS_IN_NFSBOOT if u-boot should use a ramdisk
+ * for nfsbooting.
+ */
+#ifdef CONFIG_BOARD_USE_RAMFS_IN_NFSBOOT
+#define NFSRAMFS_ADDR "${ramdisk_addr}"
+#define NFSRAMFS_TFTP_CMD "run loadtftpramdisk; "
+#else
+#define NFSRAMFS_ADDR "-"
+#define NFSRAMFS_TFTP_CMD ""
+#endif
+
+#define CONFIG_FLASHBOOT_RAMDISK " ${ramdisk_addr} "
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_BOARD_EXTRA_ENV_SETTINGS  \
+	CONFIG_DCU_EXTRA_ENV_SETTINGS   \
+	"ipaddr=10.0.0.100\0" \
+	"serverip=10.0.0.1\0" \
+	"netmask=255.255.255.0\0" \
+	"nfsbootargs=setenv bootargs console=${console},${baudrate} " \
+		"root=/dev/nfs rw " \
+		"ip=${ipaddr}:${serverip}::${netmask}::eth0:off " \
+		"nfsroot=${serverip}:/tftpboot/rfs,nolock,v3,tcp " \
+		CONFIG_EXTRA_KERNEL_BOOT_ARGS "\0" \
+	"loadtftpimage=tftp ${loadaddr} ${image};\0" \
+	"loadtftpramdisk=tftp ${ramdisk_addr} ${ramdisk};\0" \
+	"loadtftpfdt=tftp ${fdt_addr} ${fdt_file};\0" \
+	"nfsboot=echo Booting from net using tftp and nfs...; " \
+		"run nfsbootargs;"\
+		"run loadtftpimage; " NFSRAMFS_TFTP_CMD "run loadtftpfdt;"\
+		"${boot_mtd} ${loadaddr} " NFSRAMFS_ADDR " ${fdt_addr};\0" \
 	"script=boot.scr\0" \
 	"boot_mtd=" __stringify(BOOT_MTD) "\0" \
 	"image=" __stringify(IMAGE_NAME) "\0" \
@@ -159,7 +268,7 @@
 			"if ${get_cmd} ${update_sd_firmware_filename}; then " \
 				"setexpr fw_sz ${filesize} / 0x200; " \
 				"setexpr fw_sz ${fw_sz} + 1; "	\
-				"mmc write ${loadaddr} 0x2 ${fw_sz}; " \
+				"mmc write ${loadaddr} 0x8 ${fw_sz}; " \
 			"fi; "	\
 		"fi\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
@@ -185,8 +294,32 @@
 		"else " \
 			"echo WARN: Cannot load the DT; " \
 		"fi;\0" \
+	"flashbootargs=setenv bootargs console=${console}" \
+		CONFIG_BOOTARGS_LOGLEVEL " root=/dev/ram rw earlycon " \
+		CONFIG_EXTRA_KERNEL_BOOT_ARGS ";" \
+		"setexpr uboot_flashaddr " __stringify(UBOOT_FLASH_ADDR) ";" \
+		"setexpr kernel_flashaddr " __stringify(KERNEL_FLASH_ADDR) ";" \
+		"setenv kernel_maxsize " __stringify(KERNEL_FLASH_MAXSIZE) ";" \
+		"setexpr fdt_flashaddr " __stringify(FDT_FLASH_ADDR) ";" \
+		"setenv fdt_maxsize " __stringify(FDT_FLASH_MAXSIZE) ";" \
+		"setexpr ramdisk_flashaddr " \
+				__stringify(RAMDISK_FLASH_ADDR) ";" \
+		"setenv ramdisk_maxsize " \
+				__stringify(RAMDISK_FLASH_MAXSIZE) ";\0" \
+	"flashboot=echo Booting from flash...; " \
+		"run flashbootargs;"\
+		"cp.b ${kernel_flashaddr} ${loadaddr} ${kernel_maxsize};"\
+		"cp.b ${fdt_flashaddr} ${fdt_addr} ${fdt_maxsize};"\
+		"cp.b ${ramdisk_flashaddr} ${ramdisk_addr} ${ramdisk_maxsize};"\
+		"${boot_mtd} ${loadaddr}" CONFIG_FLASHBOOT_RAMDISK \
+		"${fdt_addr};\0" \
+	FEC_EXTRA_ENV_SETTINGS
 
 #undef CONFIG_BOOTCOMMAND
+#if defined(CONFIG_FLASH_BOOT)
+#define CONFIG_BOOTCOMMAND \
+	"run flashboot"
+#elif defined(CONFIG_SD_BOOT)
 #define CONFIG_BOOTCOMMAND \
 	   "mmc dev ${mmcdev}; if mmc rescan; then " \
 		   "if run loadimage; then " \
@@ -194,6 +327,7 @@
 		   "else run netboot; " \
 		   "fi; " \
 	   "else run netboot; fi"
+#endif
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_PROMPT_HUSH_PS2      "> "
@@ -208,6 +342,8 @@
 						(CONFIG_SYS_DDR_SIZE - 1))
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
+
+#define IMX_FEC_BASE			ENET_BASE_ADDR
 
 #define CONFIG_SYS_TEXT_OFFSET		0x00020000
 
@@ -234,6 +370,24 @@
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_MMC_PART			1
 
+#define FLASH_SECTOR_SIZE		0x40000 /* 256 KB */
+
+#if defined(CONFIG_FLASH_BOOT)
+#define CONFIG_SYS_MAX_FLASH_BANKS	1
+#define CONFIG_SYS_MAX_FLASH_SECT	(0x4000000 / CONFIG_ENV_SECT_SIZE)
+#endif
+
 #define CONFIG_BOOTP_BOOTFILESIZE
+
+#ifdef CONFIG_CMD_PCI
+#define CONFIG_GICSUPPORT
+#define CONFIG_CMD_IRQ
+#define CONFIG_PCIE_S32V234
+#define CONFIG_PCI
+#define CONFIG_PCI_PNP
+#define CONFIG_PCI_SCAN_SHOW
+#endif /* CONFIG_CMD_PCI */
+
+#define CONFIG_SYS_LDSCRIPT  "arch/arm/cpu/armv8/s32v234/u-boot.lds"
 
 #endif

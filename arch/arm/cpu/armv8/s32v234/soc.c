@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2013-2017 Freescale Semiconductor, Inc.
+ * Copyright 2016-2018,2020 NXP
  */
 
 #include <common.h>
@@ -17,6 +18,65 @@
 #include <div64.h>
 #include <errno.h>
 
+#define DFS_NONE	0
+#define DFS0		1
+#define DFS1		2
+#define DFS2		3
+#define DFS3		4
+
+#define PERIPH_PLL_PHI0_DIV3	3
+#define PERIPH_PLL_PHI0_DIV5	5
+#define VIDEO_PLL_PHI0_DIV2	2
+
+#define MHZ			1000000
+#define MAC_ADDR_STR_LEN	17
+
+#ifdef CONFIG_DCU_QOS_FIX
+#define S32V234_NIC_FASTDMA1_IB_READ_QOS	(0x40012380)
+#define S32V234_NIC_FASTDMA1_IB_WRITE_QOS	(0x40012384)
+#define S32V234_NIC_GPU0_READ_QOS		(0x40012480)
+#define S32V234_NIC_GPU0_WRITE_QOS		(0x40012484)
+#define S32V234_NIC_H264DEC_READ_QOS		(0x40012580)
+#define S32V234_NIC_H264DEC_WRITE_QOS		(0x40012584)
+#define S32V234_NIC_GPU1_READ_QOS		(0x40012680)
+#define S32V234_NIC_GPU1_WRITE_QOS		(0x40012684)
+#define S32V234_NIC_CORES_CCI1_IB_READ_QOS	(0x40012780)
+#define S32V234_NIC_CORES_CCI1_IB_WRITE_QOS	(0x40012784)
+#define S32V234_NIC_APEX0_DMA_READ_QOS		(0x40012880)
+#define S32V234_NIC_APEX0_DMA_WRITE_QOS		(0x40012884)
+#define S32V234_NIC_APEX0_BLKDM_A_READ_QOS	(0x40012980)
+#define S32V234_NIC_APEX0_BLKDM_A_WRITE_QOS	(0x40012984)
+#define S32V234_NIC_APEX1_DMA_READ_QOS		(0x40012A80)
+#define S32V234_NIC_APEX1_DMA_WRITE_QOS		(0x40012A84)
+#define S32V234_NIC_APEX1_BLKDMA_READ_QOS	(0x40012B80)
+#define S32V234_NIC_APEX1_BLKDMA_WRITE_QOS	(0x40012B84)
+#define S32V234_NIC_PCIE_READ_QOS		(0x40012C80)
+#define S32V234_NIC_PCIE_WRITE_QOS		(0x40012C84)
+#define S32V234_NIC_ENET0_READ_QOS		(0x40012D80)
+#define S32V234_NIC_ENET0_WRITE_QOS		(0x40012D84)
+#define S32V234_NIC_ENET1_READ_QOS		(0x40012E80)
+#define S32V234_NIC_ENET1_WRITE_QOS		(0x40012E84)
+#define S32V234_NIC_CORES_CCI0_READ_QOS		(0x40012F80)
+#define S32V234_NIC_CORES_CCI0_WRITE_QOS	(0x40012F84)
+#define S32V234_NIC_AXBS_READ_QOS		(0x40013080)
+#define S32V234_NIC_AXBS_WRITE_QOS		(0x40013084)
+#define S32V234_NIC_PDI0_READ_QOS		(0x40013180)
+#define S32V234_NIC_PDI0_WRITE_QOS		(0x40013184)
+#define S32V234_NIC_PDI1_READ_QOS		(0x40013280)
+#define S32V234_NIC_PDI1_WRITE_QOS		(0x40013284)
+#define S32V234_NIC_AXBS_RAM_READ_QOS		(0x40013380)
+#define S32V234_NIC_AXBS_RAM_WRITE_QOS		(0x40013384)
+#define S32V234_NIC_FASTDMA0_READ_QOS		(0x40013480)
+#define S32V234_NIC_FASTDMA0_WRITE_QOS		(0x40013484)
+
+#define S32V234_NIC_RESET			(0x0)
+
+/* SRC_GPR8 bit fields */
+#define SRC_GPR8_2D_ACE_QOS_OFFSET				0
+#define MIN_DCU_QOS_PRIORITY					0xD
+
+#endif /* CONFIG_DCU_QOS_FIX */
+
 u32 get_cpu_rev(void)
 {
 	struct mscm_ir *mscmir = (struct mscm_ir *)MSCM_BASE_ADDR;
@@ -27,12 +87,13 @@ u32 get_cpu_rev(void)
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static uintptr_t get_pllfreq(u32 pll, u32 refclk_freq, u32 plldv,
-			     u32 pllfd, u32 selected_output)
+static u32 get_pllfreq(u32 pll, u32 refclk_freq, u32 plldv,
+		       u32 pllfd, u32 selected_output)
 {
-	u32 vco = 0, plldv_prediv = 0, plldv_mfd = 0, pllfd_mfn = 0;
+	u32 plldv_prediv = 0, plldv_mfd = 0,	pllfd_mfn = 0;
 	u32 plldv_rfdphi_div = 0, fout = 0;
 	u32 dfs_portn = 0, dfs_mfn = 0, dfs_mfi = 0;
+	double vco = 0;
 
 	if (selected_output > DFS_MAXNUMBER) {
 		return -1;
@@ -47,10 +108,10 @@ static uintptr_t get_pllfreq(u32 pll, u32 refclk_freq, u32 plldv,
 	plldv_prediv = plldv_prediv == 0 ? 1 : plldv_prediv;
 
 	/* The formula for VCO is from TR manual, rev. 1 */
-	vco = (refclk_freq / plldv_prediv) *
-	       (plldv_mfd + pllfd_mfn / (float)20480);
+	vco = (refclk_freq / (double)plldv_prediv) *
+	       (plldv_mfd + pllfd_mfn / (double)20480);
 
-	if (selected_output != 0) {
+	if (selected_output != DFS_NONE) {
 		/* Determine the RFDPHI for PHI1 */
 		plldv_rfdphi_div =
 		    (plldv & PLLDIG_PLLDV_RFDPHI1_MASK) >>
@@ -87,11 +148,10 @@ static uintptr_t get_pllfreq(u32 pll, u32 refclk_freq, u32 plldv,
 }
 
 /* Implemented for ARMPLL, PERIPH_PLL, ENET_PLL, DDR_PLL, VIDEO_LL */
-static uintptr_t decode_pll(enum pll_type pll, u32 refclk_freq,
-			    u32 selected_output)
+static u32 decode_pll(enum pll_type pll, u32 refclk_freq,
+		      u32 selected_output)
 {
-	u32 plldv, pllfd;
-	int freq;
+	u32 plldv, pllfd, freq;
 
 	plldv = readl(PLLDIG_PLLDV(pll));
 	pllfd = readl(PLLDIG_PLLFD(pll));
@@ -100,19 +160,34 @@ static uintptr_t decode_pll(enum pll_type pll, u32 refclk_freq,
 	return freq  < 0 ? 0 : freq;
 }
 
+static u32 sys_source_clk_get(uintptr_t cgm_addr)
+{
+	return MC_CGM_SC_SEL_GET(readl(CGM_SC_SS(cgm_addr)));
+}
+
+static u32 sys_div_clk_get(uintptr_t cgm_addr, u8 dc)
+{
+	return MC_CGM_SC_DIV_GET(readl(CGM_SC_DCn(cgm_addr, dc)));
+}
+
+static u32 aux_source_clk_get(uintptr_t cgm_addr, u8 ac)
+{
+	return MC_CGM_ACn_SEL_GET(readl(CGM_ACn_SS(cgm_addr, ac)));
+}
+
+static u32 aux_div_clk_get(uintptr_t cgm_addr, u8 ac, u8 dc)
+{
+	return MC_CGM_ACn_DIV_GET(readl(CGM_ACn_DCm(cgm_addr, ac, dc)));
+}
+
 static u32 get_mcu_main_clk(void)
 {
 	u32 coreclk_div;
 	u32 sysclk_sel;
 	u32 freq = 0;
 
-	sysclk_sel = readl(CGM_SC_SS(MC_CGM1_BASE_ADDR)) & MC_CGM_SC_SEL_MASK;
-	sysclk_sel >>= MC_CGM_SC_SEL_OFFSET;
-
-	coreclk_div =
-	    readl(CGM_SC_DCn(MC_CGM1_BASE_ADDR, 0)) & MC_CGM_SC_DCn_PREDIV_MASK;
-	coreclk_div >>= MC_CGM_SC_DCn_PREDIV_OFFSET;
-	coreclk_div += 1;
+	sysclk_sel = sys_source_clk_get(MC_CGM1_BASE_ADDR);
+	coreclk_div = sys_div_clk_get(MC_CGM1_BASE_ADDR, CGM_SCn_DC0);
 
 	switch (sysclk_sel) {
 	case MC_CGM_SC_SEL_FIRC:
@@ -123,7 +198,7 @@ static u32 get_mcu_main_clk(void)
 		break;
 	case MC_CGM_SC_SEL_ARMPLL:
 		/* ARMPLL has as source XOSC and CORE_CLK has as input PHI0 */
-		freq = decode_pll(ARM_PLL, XOSC_CLK_FREQ, 0);
+		freq = decode_pll(ARM_PLL, XOSC_CLK_FREQ, DFS_NONE);
 		break;
 	case MC_CGM_SC_SEL_CLKDISABLE:
 		printf("Sysclk is disabled\n");
@@ -143,24 +218,18 @@ static u32 get_sys_clk(u32 number)
 	u32 freq = 0;
 
 	switch (number) {
-	case 3:
-		sysclk_div_number = 0;
+	case MXC_SYS3_CLK:
+		sysclk_div_number = CGM_SCn_DC0;
 		break;
-	case 6:
-		sysclk_div_number = 1;
+	case MXC_SYS6_CLK:
+		sysclk_div_number = CGM_SCn_DC1;
 		break;
 	default:
 		printf("unsupported system clock \n");
 		sysclk_div_number = 0;
 	}
-	sysclk_sel = readl(CGM_SC_SS(MC_CGM0_BASE_ADDR)) & MC_CGM_SC_SEL_MASK;
-	sysclk_sel >>= MC_CGM_SC_SEL_OFFSET;
-
-	sysclk_div =
-	    readl(CGM_SC_DCn(MC_CGM0_BASE_ADDR, sysclk_div_number)) &
-	    MC_CGM_SC_DCn_PREDIV_MASK;
-	sysclk_div >>= MC_CGM_SC_DCn_PREDIV_OFFSET;
-	sysclk_div += 1;
+	sysclk_sel = sys_source_clk_get(MC_CGM0_BASE_ADDR);
+	sysclk_div = sys_div_clk_get(MC_CGM0_BASE_ADDR, sysclk_div_number);
 
 	switch (sysclk_sel) {
 	case MC_CGM_SC_SEL_FIRC:
@@ -171,7 +240,7 @@ static u32 get_sys_clk(u32 number)
 		break;
 	case MC_CGM_SC_SEL_ARMPLL:
 		/* ARMPLL has as source XOSC and SYSn_CLK has as input DFS1 */
-		freq = decode_pll(ARM_PLL, XOSC_CLK_FREQ, 1);
+		freq = decode_pll(ARM_PLL, XOSC_CLK_FREQ, DFS0);
 		break;
 	case MC_CGM_SC_SEL_CLKDISABLE:
 		printf("Sysclk is disabled\n");
@@ -186,34 +255,38 @@ static u32 get_sys_clk(u32 number)
 
 static u32 get_peripherals_clk(void)
 {
-	u32 aux5clk_div;
-	u32 freq = 0;
+	u32 auxclk5_div, auxclk5_sel, freq = 0;
 
-	aux5clk_div =
-	    readl(CGM_ACn_DCm(MC_CGM0_BASE_ADDR, 5, 0)) &
-	    MC_CGM_ACn_DCm_PREDIV_MASK;
-	aux5clk_div >>= MC_CGM_ACn_DCm_PREDIV_OFFSET;
-	aux5clk_div += 1;
+	auxclk5_sel = aux_source_clk_get(MC_CGM0_BASE_ADDR, CGM_AC5_SC);
+	auxclk5_div = aux_div_clk_get(MC_CGM0_BASE_ADDR, CGM_AC5_SC,
+				      CGM_ACn_DC0);
 
-	freq = decode_pll(PERIPH_PLL, XOSC_CLK_FREQ, 0);
+	switch (auxclk5_sel) {
+	case MC_CGM_ACn_SEL_FIRC:
+		freq = FIRC_CLK_FREQ;
+		break;
+	case MC_CGM_ACn_SEL_XOSC:
+		freq = XOSC_CLK_FREQ;
+		break;
+	case MC_CGM_ACn_SEL_PERPLLDIVX:
+		freq = decode_pll(PERIPH_PLL, XOSC_CLK_FREQ, DFS_NONE) /
+				  PERIPH_PLL_PHI0_DIV5;
+		break;
+	default:
+		printf("unsupported source clock\n");
+		freq = 0;
+	}
 
-	return freq / aux5clk_div;
-
+	return freq / auxclk5_div;
 }
 
 static u32 get_uart_clk(void)
 {
 	u32 auxclk3_div, auxclk3_sel, freq = 0;
 
-	auxclk3_sel =
-	    readl(CGM_ACn_SS(MC_CGM0_BASE_ADDR, 3)) & MC_CGM_ACn_SEL_MASK;
-	auxclk3_sel >>= MC_CGM_ACn_SEL_OFFSET;
-
-	auxclk3_div =
-	    readl(CGM_ACn_DCm(MC_CGM0_BASE_ADDR, 3, 0)) &
-	    MC_CGM_ACn_DCm_PREDIV_MASK;
-	auxclk3_div >>= MC_CGM_ACn_DCm_PREDIV_OFFSET;
-	auxclk3_div += 1;
+	auxclk3_sel = aux_source_clk_get(MC_CGM0_BASE_ADDR, CGM_AC3_SC);
+	auxclk3_div = aux_div_clk_get(MC_CGM0_BASE_ADDR, CGM_AC3_SC,
+				      CGM_ACn_DC0);
 
 	switch (auxclk3_sel) {
 	case MC_CGM_ACn_SEL_FIRC:
@@ -223,10 +296,11 @@ static u32 get_uart_clk(void)
 		freq = XOSC_CLK_FREQ;
 		break;
 	case MC_CGM_ACn_SEL_PERPLLDIVX:
-		freq = get_peripherals_clk() / 3;
+		freq = decode_pll(PERIPH_PLL, XOSC_CLK_FREQ, DFS_NONE) /
+			PERIPH_PLL_PHI0_DIV3;
 		break;
 	case MC_CGM_ACn_SEL_SYSCLK:
-		freq = get_sys_clk(6);
+		freq = get_sys_clk(MXC_SYS6_CLK);
 		break;
 	default:
 		printf("unsupported system clock select\n");
@@ -238,39 +312,92 @@ static u32 get_uart_clk(void)
 
 static u32 get_fec_clk(void)
 {
-	u32 aux2clk_div;
+	u32 auxclk2_div;
 	u32 freq = 0;
 
-	aux2clk_div =
-	    readl(CGM_ACn_DCm(MC_CGM2_BASE_ADDR, 2, 0)) &
-	    MC_CGM_ACn_DCm_PREDIV_MASK;
-	aux2clk_div >>= MC_CGM_ACn_DCm_PREDIV_OFFSET;
-	aux2clk_div += 1;
+	auxclk2_div = aux_div_clk_get(MC_CGM2_BASE_ADDR, CGM_AC2_SC,
+				      CGM_ACn_DC0);
 
-	freq = decode_pll(ENET_PLL, XOSC_CLK_FREQ, 0);
+	freq = decode_pll(ENET_PLL, XOSC_CLK_FREQ, DFS_NONE);
 
-	return freq / aux2clk_div;
+	return freq / auxclk2_div;
 }
 
 static u32 get_usdhc_clk(void)
 {
-	u32 aux15clk_div;
+	u32 auxclk15_div;
 	u32 freq = 0;
 
-	aux15clk_div =
-	    readl(CGM_ACn_DCm(MC_CGM0_BASE_ADDR, 15, 0)) &
-	    MC_CGM_ACn_DCm_PREDIV_MASK;
-	aux15clk_div >>= MC_CGM_ACn_DCm_PREDIV_OFFSET;
-	aux15clk_div += 1;
+	auxclk15_div = aux_div_clk_get(MC_CGM0_BASE_ADDR, CGM_AC15_SC,
+				       CGM_ACn_DC0);
 
-	freq = decode_pll(ENET_PLL, XOSC_CLK_FREQ, 4);
+	freq = decode_pll(ENET_PLL, XOSC_CLK_FREQ, DFS3);
 
-	return freq / aux15clk_div;
+	return freq / auxclk15_div;
 }
 
 static u32 get_i2c_clk(void)
 {
 	return get_peripherals_clk();
+}
+
+static u32 get_qspi_clk(void)
+{
+	u32 auxclk14_div, auxclk14_sel, freq = 0;
+
+	auxclk14_sel = aux_source_clk_get(MC_CGM0_BASE_ADDR, CGM_AC14_SC);
+	auxclk14_div = aux_div_clk_get(MC_CGM0_BASE_ADDR, CGM_AC14_SC,
+				       CGM_ACn_DC0);
+
+	switch (auxclk14_sel) {
+	case MC_CGM_ACn_SEL_FIRC:
+		freq = FIRC_CLK_FREQ;
+		break;
+	case MC_CGM_ACn_SEL_XOSC:
+		freq = XOSC_CLK_FREQ;
+		break;
+	case MC_CGM_ACn_SEL_ENETPLL:
+		freq = decode_pll(ENET_PLL, XOSC_CLK_FREQ, DFS2);
+		break;
+	default:
+		printf("unsupported system clock select\n");
+		freq = 0;
+	}
+
+	return freq / auxclk14_div;
+}
+
+static u32 get_dcu_pix_clk(void)
+{
+	u32 auxclk9_div, auxclk9_sel;
+	u32 freq = 0;
+
+	auxclk9_sel = aux_source_clk_get(MC_CGM0_BASE_ADDR, CGM_AC9_SC);
+	auxclk9_div = aux_div_clk_get(MC_CGM0_BASE_ADDR, CGM_AC9_SC,
+					 CGM_ACn_DC1);
+
+	switch (auxclk9_sel) {
+	case MC_CGM_ACn_SEL_FIRC:
+		freq = FIRC_CLK_FREQ;
+		break;
+	case MC_CGM_ACn_SEL_XOSC:
+		freq = XOSC_CLK_FREQ;
+		break;
+	case MC_CGM_ACn_SEL_VIDEOPLLDIV2:
+		freq = decode_pll(VIDEO_PLL, XOSC_CLK_FREQ, DFS_NONE) /
+				VIDEO_PLL_PHI0_DIV2;
+		break;
+	default:
+		printf("unsupported source clock select\n");
+		freq = 0;
+	}
+
+	return freq / auxclk9_div;
+}
+
+static u32 get_dspi_clk(void)
+{
+	return get_sys_clk(MXC_SYS6_CLK);
 }
 
 /* return clocks in Hz */
@@ -289,6 +416,12 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 		return get_i2c_clk();
 	case MXC_USDHC_CLK:
 		return get_usdhc_clk();
+	case MXC_QSPI_CLK:
+		return get_qspi_clk();
+	case MXC_DCU_PIX_CLK:
+		return get_dcu_pix_clk();
+	case MXC_DSPI_CLK:
+		return get_dspi_clk();
 	default:
 		break;
 	}
@@ -297,7 +430,48 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	return 0;
 }
 
-/* Not yet implemented - int soc_clk_dump(); */
+int do_s32_showclocks(cmd_tbl_t *cmdtp, int flag, int argc,
+		      char * const argv[])
+{
+	printf("Root clocks:\n");
+	printf("CPU clock:%5d MHz\n",
+	       mxc_get_clock(MXC_ARM_CLK) / MHZ);
+	printf("PERIPHERALS clock: %5d MHz\n",
+	       mxc_get_clock(MXC_PERIPHERALS_CLK) / MHZ);
+	printf("uSDHC clock:	%5d MHz\n",
+	       mxc_get_clock(MXC_USDHC_CLK) / MHZ);
+	printf("FEC clock:	%5d MHz\n",
+	       mxc_get_clock(MXC_FEC_CLK) / MHZ);
+	printf("UART clock:	%5d MHz\n",
+	       mxc_get_clock(MXC_UART_CLK) / MHZ);
+	printf("QSPI clock:	%5d MHz\n",
+	       mxc_get_clock(MXC_QSPI_CLK) / MHZ);
+	printf("DSPI clock:	%5d MHz\n",
+	       mxc_get_clock(MXC_DSPI_CLK) / MHZ);
+
+	return 0;
+}
+
+U_BOOT_CMD(clocks, CONFIG_SYS_MAXARGS, 1, do_s32_showclocks,
+	   "display clocks",
+	   ""
+	   );
+
+#ifdef CONFIG_FEC_MXC
+void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
+{
+	const char *mac_str = S32V234_FEC_DEFAULT_ADDR;
+
+	if ((!env_get("ethaddr")) ||
+	    (strncasecmp(mac_str, env_get("ethaddr"), MAC_ADDR_STR_LEN) == 0)) {
+		printf("\nWarning: System is using default MAC address. ");
+		printf("Please set a new value\n");
+		string_to_enetaddr(mac_str, mac);
+	} else {
+		string_to_enetaddr(env_get("ethdaddr"), mac);
+	}
+}
+#endif
 
 #if defined(CONFIG_DISPLAY_CPUINFO)
 static char *get_reset_cause(void)
@@ -325,8 +499,6 @@ static char *get_reset_cause(void)
 
 }
 
-#define SRC_SCR_SW_RST					(1<<12)
-
 void reset_cpu(ulong addr)
 {
 	entry_to_target_mode(MC_ME_MCTL_RESET);
@@ -339,24 +511,74 @@ void reset_cpu(ulong addr)
 
 int print_cpuinfo(void)
 {
+	int speed;
+	u32 osc_freq;
+	struct src *src = (struct src *)SRC_SOC_BASE_ADDR;
+
+	speed = get_siul2_midr2_speed();
+	if (speed != SIUL2_MIDR2_SPEED_1GHZ &&
+	    speed != SIUL2_MIDR2_SPEED_800MHZ) {
+		printf("Warning: ");
+		if (speed == SIUL2_MIDR2_SPEED_600MHZ)
+			printf("Unsupported speed grading: 600 MHz. ");
+		else
+			printf("Unknown speed grading: %#x. ", speed);
+		if (readl(&src->gpr1) &
+		    (SRC_GPR1_PLL_SOURCE_MASK << SRC_GPR1_PLL_OFFSET))
+			osc_freq = XOSC_CLK_FREQ;
+		else
+			osc_freq = FIRC_CLK_FREQ;
+		printf("ARM-PLL frequency was configured to %u MHz\n",
+		       decode_pll(ARM_PLL, osc_freq, 0) / MHZ);
+	}
+
 	printf("CPU:   NXP S32V234 V%d.%d at %d MHz\n",
 	       get_siul2_midr1_major() + 1, get_siul2_midr1_minor(),
-	       mxc_get_clock(MXC_ARM_CLK) / 1000000);
+	       mxc_get_clock(MXC_ARM_CLK) / MHZ);
 	printf("Reset cause: %s\n", get_reset_cause());
 
 	return 0;
 }
 #endif
 
-int cpu_eth_init(bd_t * bis)
+int cpu_eth_init(bd_t *bis)
 {
 	int rc = -ENODEV;
 
 #if defined(CONFIG_FEC_MXC)
-	rc = fecmxc_initialize(bis);
+	volatile struct src *src_regs = (struct src *)SRC_SOC_BASE_ADDR;
+
+	/* enable RGMII mode */
+#if (CONFIG_FEC_XCV_TYPE == RGMII)
+	clrsetbits_le32(&src_regs->gpr3, SRC_GPR3_ENET_MODE,
+			SRC_GPR3_ENET_MODE);
+#else
+	clrsetbits_le32(&src_regs->gpr3, SRC_GPR3_ENET_MODE,
+			0);
 #endif
 
+#ifdef CONFIG_FEC_MXC_PHYADDR
+	rc = fecmxc_initialize(bis);
+#endif /* CONFIG_FEC_MXC_PHYADDR */
+
+#endif /* CONFIG_FEC_MXC */
+
 	return rc;
+}
+
+void cpu_pci_clock_init(const int clockexternal)
+{
+	volatile struct src *src_regs = (struct src *)SRC_SOC_BASE_ADDR;
+
+	clrsetbits_le32(&src_regs->gpr3,
+			SRC_GPR3_PCIE_RFCC_CLK,
+			(clockexternal) ? SRC_GPR3_PCIE_RFCC_CLK : 0);
+	/* The RM does not state that a delay is required.
+	 * I want to be on the safe side however to ensure clock
+	 * stability before checking the link. With respect to boot
+	 * time delays, this can be revisited later on.
+	 */
+	udelay(100);
 }
 
 static int detect_boot_interface(void)
@@ -387,6 +609,221 @@ int get_clocks(void)
 #endif
 	return 0;
 }
+
+__weak void setup_iomux_enet(void)
+{
+#ifndef CONFIG_PHY_RGMII_DIRECT_CONNECTED
+	/* set PC13 - MSCR[45] - for MDC */
+	writel(SIUL2_MSCR_ENET_MDC, SIUL2_MSCRn(SIUL2_MSCR_PC13));
+
+	/* set PC14 - MSCR[46] - for MDIO */
+	writel(SIUL2_MSCR_ENET_MDIO, SIUL2_MSCRn(SIUL2_MSCR_PC14));
+	writel(SIUL2_MSCR_ENET_MDIO_IN, SIUL2_MSCRn(SIUL2_MSCR_PC14_IN));
+#endif
+
+#ifdef CONFIG_PHY_RGMII_DIRECT_CONNECTED
+	/* set PC15 - MSCR[47] - for TX CLK SWITCH */
+	writel(SIUL2_MSCR_ENET_TX_CLK_SWITCH,
+	       SIUL2_MSCRn(SIUL2_MSCR_PC15_SWITCH));
+#else
+	/* set PC15 - MSCR[47] - for TX CLK */
+	writel(SIUL2_MSCR_ENET_TX_CLK, SIUL2_MSCRn(SIUL2_MSCR_PC15));
+#endif
+	writel(SIUL2_MSCR_ENET_TX_CLK_IN, SIUL2_MSCRn(SIUL2_MSCR_PC15_IN));
+
+	/* set PD0 - MSCR[48] - for RX_CLK */
+	writel(SIUL2_MSCR_ENET_RX_CLK, SIUL2_MSCRn(SIUL2_MSCR_PD0));
+	writel(SIUL2_MSCR_ENET_RX_CLK_IN, SIUL2_MSCRn(SIUL2_MSCR_PD0_IN));
+
+	/* set PD1 - MSCR[49] - for RX_D0 */
+	writel(SIUL2_MSCR_ENET_RX_D0, SIUL2_MSCRn(SIUL2_MSCR_PD1));
+	writel(SIUL2_MSCR_ENET_RX_D0_IN, SIUL2_MSCRn(SIUL2_MSCR_PD1_IN));
+
+	/* set PD2 - MSCR[50] - for RX_D1 */
+	writel(SIUL2_MSCR_ENET_RX_D1, SIUL2_MSCRn(SIUL2_MSCR_PD2));
+	writel(SIUL2_MSCR_ENET_RX_D1_IN, SIUL2_MSCRn(SIUL2_MSCR_PD2_IN));
+
+	/* set PD3 - MSCR[51] - for RX_D2 */
+	writel(SIUL2_MSCR_ENET_RX_D2, SIUL2_MSCRn(SIUL2_MSCR_PD3));
+	writel(SIUL2_MSCR_ENET_RX_D2_IN, SIUL2_MSCRn(SIUL2_MSCR_PD3_IN));
+
+	/* set PD4 - MSCR[52] - for RX_D3 */
+	writel(SIUL2_MSCR_ENET_RX_D3, SIUL2_MSCRn(SIUL2_MSCR_PD4));
+	writel(SIUL2_MSCR_ENET_RX_D3_IN, SIUL2_MSCRn(SIUL2_MSCR_PD4_IN));
+
+	/* set PD5 - MSCR[53] - for RX_DV */
+	writel(SIUL2_MSCR_ENET_RX_DV, SIUL2_MSCRn(SIUL2_MSCR_PD5));
+	writel(SIUL2_MSCR_ENET_RX_DV_IN, SIUL2_MSCRn(SIUL2_MSCR_PD5_IN));
+
+	/* set PD7 - MSCR[55] - for TX_D0 */
+	writel(SIUL2_MSCR_ENET_TX_D0, SIUL2_MSCRn(SIUL2_MSCR_PD7));
+	/* set PD8 - MSCR[56] - for TX_D1 */
+	writel(SIUL2_MSCR_ENET_TX_D1, SIUL2_MSCRn(SIUL2_MSCR_PD8));
+	/* set PD9 - MSCR[57] - for TX_D2 */
+	writel(SIUL2_MSCR_ENET_TX_D2, SIUL2_MSCRn(SIUL2_MSCR_PD9));
+	/* set PD10 - MSCR[58] - for TX_D3 */
+	writel(SIUL2_MSCR_ENET_TX_D3, SIUL2_MSCRn(SIUL2_MSCR_PD10));
+	/* set PD11 - MSCR[59] - for TX_EN */
+	writel(SIUL2_MSCR_ENET_TX_EN, SIUL2_MSCRn(SIUL2_MSCR_PD11));
+}
+
+#ifdef CONFIG_FSL_DCU_FB
+__weak void setup_iomux_dcu(void)
+{
+	/* set PH8 - MSCR[120] - for HSYNC_C1 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH8));
+	/* set PH9 - MSCR[121] - for VSYNC_C2 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH9));
+	/* set PH10 - MSCR[122] - for DE_C3 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH10));
+	/* set PH12 - MSCR[124] - for PCLK_D1 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH12));
+	/* set PH13 - MSCR[125] - for R0_D2 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH13));
+	/* set PH14 - MSCR[126] - for R1_D3 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH14));
+	/* set PH15 - MSCR[127] - for R2_D4 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PH15));
+	/* set PJ0 - MSCR[128] - for R3_D5 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ0));
+	/* set PJ1 - MSCR[129] - for R4_D6 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ1));
+	/* set PJ2 - MSCR[130] - for R5_D7 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ2));
+	/* set PJ3 - MSCR[131] - for R6_D8 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ3));
+	/* set PJ4 - MSCR[132] - for R7_D9 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ4));
+	/* set PJ5 - MSCR[133] - for G0_D10 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ5));
+	/* set PJ6 - MSCR[134] - for G1_D11 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ6));
+	/* set PJ7 - MSCR[135] - for G2_D12 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ7));
+	/* set PJ8 - MSCR[136] - for G3_D13 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ8));
+	/* set PJ9 - MSCR[137] - for G4_D14 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ9));
+	/* set PJ10 - MSCR[138] - for G5_D15 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ10));
+	/* set PJ11 - MSCR[139] - for G6_D16 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ11));
+	/* set PJ12 - MSCR[140] - for G7_D17 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ12));
+	/* set PJ13 - MSCR[141] - for B0_D18 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ13));
+	/* set PJ14 - MSCR[142] - for B1_D19 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ14));
+	/* set PJ15 - MSCR[143] - for B2_D20 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PJ15));
+	/* set PK0 - MSCR[144] - for B3_D21 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PK0));
+	/* set PK1 - MSCR[145] - for B4_D22 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PK1));
+	/* set PK2 - MSCR[146] - for B5_D23 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PK2));
+	/* set PK3 - MSCR[147] - for B6_D24 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PK3));
+	/* set PK4 - MSCR[148] - for B7_D25 */
+	writel(SIUL2_MSCR_DCU_CFG, SIUL2_MSCRn(SIUL2_MSCR_PK4));
+}
+#endif
+
+#ifdef CONFIG_DCU_QOS_FIX
+int board_dcu_qos(void)
+{
+	/*
+	 * SRC_GPR8.2D_ACE_QOS was introduced in TR2.0 and is used to set
+	 * the minimum QOS value for DCU DMA master. Depending on the pixel
+	 * output rate of the display, the real time requirements of the 2D-ACE
+	 * have to be ensured to avoid underruns of its local buffers. This
+	 * requires that other masters of the device interconnect should receive
+	 * a lower QoS than programmed by SRC_GPR8.
+	 */
+	if (get_siul2_midr1_major() == TREERUNNER_GENERATION_2_MAJOR) {
+		struct src *src_regs = (struct src *)SRC_SOC_BASE_ADDR;
+		u32 val = readl(&src_regs->gpr8);
+
+		writel(val |
+		       (MIN_DCU_QOS_PRIORITY << SRC_GPR8_2D_ACE_QOS_OFFSET),
+		       &src_regs->gpr8);
+	}
+
+	/* m_fastdma1_ib */
+	writel(S32V234_NIC_RESET, S32V234_NIC_FASTDMA1_IB_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_FASTDMA1_IB_WRITE_QOS);
+
+	/* m_gpu0 */
+	writel(S32V234_NIC_RESET, S32V234_NIC_GPU0_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_GPU0_WRITE_QOS);
+
+	/* m_h264dec */
+	writel(S32V234_NIC_RESET, S32V234_NIC_H264DEC_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_H264DEC_WRITE_QOS);
+
+	/* m_gpu1 */
+	writel(S32V234_NIC_RESET, S32V234_NIC_GPU1_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_GPU1_WRITE_QOS);
+
+	/* m_cores_cci1_ib */
+	writel(S32V234_NIC_RESET, S32V234_NIC_CORES_CCI1_IB_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_CORES_CCI1_IB_WRITE_QOS);
+
+	/* m_apex0_dma */
+	writel(S32V234_NIC_RESET, S32V234_NIC_APEX0_DMA_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_APEX0_DMA_WRITE_QOS);
+
+	/* m_apex0_blkdm a */
+	writel(S32V234_NIC_RESET, S32V234_NIC_APEX0_BLKDM_A_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_APEX0_BLKDM_A_WRITE_QOS);
+
+	/* m_apex1_dma */
+	writel(S32V234_NIC_RESET, S32V234_NIC_APEX1_DMA_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_APEX1_DMA_WRITE_QOS);
+
+	/* m_apex1_blkdma */
+	writel(S32V234_NIC_RESET, S32V234_NIC_APEX1_BLKDMA_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_APEX1_BLKDMA_WRITE_QOS);
+
+	/* m_pcie */
+	writel(S32V234_NIC_RESET, S32V234_NIC_PCIE_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_PCIE_WRITE_QOS);
+
+	/* m_enet0 */
+	writel(S32V234_NIC_RESET, S32V234_NIC_ENET0_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_ENET0_WRITE_QOS);
+
+	/* m_enet1 */
+	writel(S32V234_NIC_RESET, S32V234_NIC_ENET1_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_ENET1_WRITE_QOS);
+
+	/* m_cores_cci0 */
+	writel(S32V234_NIC_RESET, S32V234_NIC_CORES_CCI0_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_CORES_CCI0_WRITE_QOS);
+
+	/* m_axbs */
+	writel(S32V234_NIC_RESET, S32V234_NIC_AXBS_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_AXBS_WRITE_QOS);
+
+	/* m_pdi0 */
+	writel(S32V234_NIC_RESET, S32V234_NIC_PDI0_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_PDI0_WRITE_QOS);
+
+	/* m_pdi1 */
+	writel(S32V234_NIC_RESET, S32V234_NIC_PDI1_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_PDI1_WRITE_QOS);
+
+	/* m_axbs_ram */
+	writel(S32V234_NIC_RESET, S32V234_NIC_AXBS_RAM_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_AXBS_RAM_WRITE_QOS);
+
+	/* m_fastdma0 */
+	writel(S32V234_NIC_RESET, S32V234_NIC_FASTDMA0_READ_QOS);
+	writel(S32V234_NIC_RESET, S32V234_NIC_FASTDMA0_WRITE_QOS);
+
+	return 0;
+}
+#endif
 
 __weak void setup_iomux_sdhc(void)
 {
@@ -580,3 +1017,60 @@ __weak int dram_init(void)
 
 	return 0;
 }
+
+/* start M4 core */
+static int do_start_m4(cmd_tbl_t *cmdtp, int flag, int argc,
+		       char * const argv[])
+{
+	unsigned long addr;
+	char *ep;
+
+	if (argc < 2)
+		return CMD_RET_USAGE;
+
+	addr = simple_strtoul(argv[1], &ep, 16);
+	if (ep == argv[1] || *ep != '\0')
+		return CMD_RET_USAGE;
+
+	if (!IS_ADDR_IN_IRAM(addr)) {
+		printf("ERROR: Address 0x%08lX not in internal SRAM ...\n",
+		       addr);
+		return CMD_RET_USAGE;
+	}
+
+	printf("Starting core M4 at SRAM address 0x%08lX ...\n", addr);
+
+	/* Write the M4 core's start address
+	 * address is required by the hardware to be odd
+	 */
+	writel(addr | 0x1, MC_ME_CADDR0);
+
+	/* enable CM4 to be active during all modes of operation */
+	writew(MC_MC_CCTL_CORE_ACTIVE, MC_MC_CCTL0);
+
+	/* mode_enter(DRUN_M) */
+	writel(MC_ME_MCTL_RUN0 | MC_ME_MCTL_KEY, MC_ME_MCTL);
+	writel(MC_ME_MCTL_RUN0 | MC_ME_MCTL_INVERTEDKEY, MC_ME_MCTL)
+		;
+
+	printf("Wait while mode entry is in progress ...\n");
+
+	/* wait while mode entry is in process */
+	while ((readl(MC_ME_GS) & MC_ME_GS_S_MTRANS) != 0x00000000)
+		;
+
+	printf("Wait for the run mode to be entered ...\n");
+
+	/* check if the mode has been entered */
+	while ((readl(MC_ME_GS) & MC_ME_GS_S_CRT_MODE_DRUN) != 0x00000000)
+		;
+
+	printf("M4 started.\n");
+
+	return CMD_RET_SUCCESS;
+}
+
+U_BOOT_CMD(startm4,	2,	1,	do_start_m4,
+	   "start M4 core from SRAM address",
+	   "startAddress"
+);

@@ -1,13 +1,5 @@
 if ARCH_S32V234
 
-config SYS_CPU
-	string
-	default "armv8"
-
-config SYS_VENDOR
-	string
-	default "freescale"
-
 config SYS_SOC
 	string
 	default "s32v234"
@@ -21,7 +13,6 @@ choice
 	default TARGET_S32V234EVB
 	help
 	  S32V234 Target Board Selection.
-	  At this point, only S32V234EVB is available.
 
 config TARGET_S32V234EVB
 	bool "Support s32v234evb"
@@ -29,6 +20,15 @@ config TARGET_S32V234EVB
 	help
 	  S32V Evaluation System for high-performance, safe computation-intensive
 	  front vision, surround vision and sensor fusion applications.
+
+config TARGET_S32V234PCIE
+	bool "Support s32v234pcie"
+	help
+	  S32V234 board with PCIe Edge connector.
+
+config TARGET_MPXS32V234
+	bool "Support s32v234sbc"
+	select S32V234EVB_29288
 
 endchoice
 
@@ -50,6 +50,11 @@ config S32V234EVB_29288
 	bool "S32V234EVB_29288"
 	help
 	  Second S32V234EVB generation.
+
+config S32V234BBMINI_29406
+	bool "S32V234BBMINI_29406"
+	help
+	  S32V234EVB mini bluebox.
 
 endchoice
 
@@ -83,6 +88,7 @@ config DDR_HANDSHAKE_AT_RESET
 	  Enable DDR handshake after functional reset.
 	  Execute additional checks in case of a functional reset.
 
-source "board/freescale/s32v234evb/Kconfig"
+source "board/freescale/Kconfig"
+source "board/microsys/mpxs32v234/Kconfig"
 
 endif

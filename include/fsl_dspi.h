@@ -6,6 +6,9 @@
  * TsiChung Liew (Tsi-Chung.Liew@freescale.com)
  * Chao Fu (B44548@freesacle.com)
  * Haikun Wang (B53464@freescale.com)
+ *
+ * (C) Copyright 2017 NXP
+ *
  */
 
 #ifndef _FSL_DSPI_H_
@@ -71,7 +74,11 @@ struct dspi {
 #define DSPI_CTAR_CPHA			0x02000000
 #define DSPI_CTAR_LSBFE			0x01000000
 #define DSPI_CTAR_PCSSCK(x)		(((x) & 0x03) << 22)
+#ifdef CONFIG_ARCH_S32V234
+#define DSPI_CTAR_PCSSCK_7CLK		0x00C00000
+#else
 #define DSPI_CTAR_PCSSCK_7CLK		0x00A00000
+#endif
 #define DSPI_CTAR_PCSSCK_5CLK		0x00800000
 #define DSPI_CTAR_PCSSCK_3CLK		0x00400000
 #define DSPI_CTAR_PCSSCK_1CLK		0x00000000
@@ -94,6 +101,8 @@ struct dspi {
 #define DSPI_CTAR_ASC(x)		(((x) & 0x0F) << 8)
 #define DSPI_CTAR_DT(x)			(((x) & 0x0F) << 4)
 #define DSPI_CTAR_BR(x)			((x) & 0x0F)
+
+#define DSPI_CTAR_SCALE_BITS		0xf
 
 /* Status */
 #define DSPI_SR_TCF			0x80000000

@@ -133,14 +133,6 @@ config EXYNOS_SPI
 	  access the SPI NOR flash on platforms embedding this Samsung
 	  Exynos IP core.
 
-config FSL_DSPI
-	bool "Freescale DSPI driver"
-	help
-	  Enable the Freescale DSPI driver. This driver can be used to
-	  access the SPI NOR flash and SPI Data flash on platforms embedding
-	  this Freescale DSPI IP core. LS102xA and Colibri VF50/VF61 platforms
-	  use this driver.
-
 config ICH_SPI
 	bool "Intel ICH SPI driver"
 	help
@@ -398,6 +390,14 @@ config FSL_ESPI
 	  access the SPI interface and SPI NOR flash on platforms embedding
 	  this Freescale eSPI IP core.
 
+config FSL_DSPI
+	bool "Freescale DSPI driver"
+	help
+	  Enable the Freescale DSPI driver. This driver can be used to
+	  access the SPI NOR flash and SPI Data flash on platforms embedding
+	  this Freescale DSPI IP core. LS102xA and Colibri VF50/VF61 platforms
+	  use this driver.
+
 config FSL_FSPI
 	bool "Freescale FlexSPI driver"
 	help
@@ -445,6 +445,13 @@ config SH_QSPI
 	help
 	  Enable the Renesas Quad SPI controller driver. This driver can be
 	  used on Renesas SoCs.
+
+config SJA1105
+	bool "NXP SJA1105x driver"
+	depends on FSL_DSPI
+	help
+	  Enable the NXP SJA1105x driver.
+	  The NXP SJA1105x switch is used on several boards, such as S32V234EVB.
 
 config KIRKWOOD_SPI
 	bool "Marvell Kirkwood SPI Driver"

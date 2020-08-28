@@ -26,6 +26,16 @@
 #define MC_CGM_SC_SEL_MASK			(0x0F000000)
 #define MC_CGM_SC_SEL_OFFSET		(24)
 
+#define MC_CGM_SC_SEL_GET(sc_ss)	(((sc_ss) & MC_CGM_SC_SEL_MASK) >> \
+					MC_CGM_SC_SEL_OFFSET)
+#define MC_CGM_SC_DIV_GET(sc_ss)	((((sc_ss) & MC_CGM_SC_DCn_PREDIV_MASK) >> \
+					MC_CGM_SC_DCn_PREDIV_OFFSET) + 1)
+
+
+#define CGM_SCn_DC0	0
+#define CGM_SCn_DC1	1
+#define CGM_SCn_DC2	2
+
 /* MC_CGM_ACn_DCm */
 #define CGM_ACn_DCm(cgm_addr,ac,dc)		( ((cgm_addr) + 0x00000808) + ((ac) * 0x20) + ((dc) * 0x4) )
 #define MC_CGM_ACn_DCm_PREDIV(val)		(MC_CGM_ACn_DCm_PREDIV_MASK & ((val) << MC_CGM_ACn_DCm_PREDIV_OFFSET))
@@ -48,9 +58,17 @@
  */
 #define CGM_ACn_SC(cgm_addr,ac)			((cgm_addr + 0x00000800) + ((ac) * 0x20))
 #define CGM_ACn_SS(cgm_addr,ac)			((cgm_addr + 0x00000804) + ((ac) * 0x20))
-#define MC_CGM_ACn_SEL_MASK				(0x07000000)
-#define MC_CGM_ACn_SEL_SET(source)		(MC_CGM_ACn_SEL_MASK & (((source) & 0x7) << MC_CGM_ACn_SEL_OFFSET))
+#define MC_CGM_ACn_SEL_MASK			(0x0F000000)
+#define MC_CGM_ACn_SEL_SET(source)		(MC_CGM_ACn_SEL_MASK & \
+						(((source) & 0xF) << \
+						MC_CGM_ACn_SEL_OFFSET))
 #define MC_CGM_ACn_SEL_OFFSET			(24)
+
+#define MC_CGM_ACn_SEL_GET(ac)			(((ac) & MC_CGM_ACn_SEL_MASK) >> \
+						MC_CGM_ACn_SEL_OFFSET)
+
+#define MC_CGM_ACn_DIV_GET(ac)			((((ac) & MC_CGM_ACn_DCm_PREDIV_MASK) >> \
+						MC_CGM_ACn_DCm_PREDIV_OFFSET) + 1)
 
 #define MC_CGM_ACn_SEL_FIRC				(0x0)
 #define MC_CGM_ACn_SEL_XOSC				(0x1)
@@ -64,8 +82,30 @@
 #define MC_CGM_ACn_SEL_DDRPLL			(0x5)
 #define MC_CGM_ACn_SEL_EXTSRCPAD		(0x7)
 #define MC_CGM_ACn_SEL_SYSCLK			(0x8)
-#define MC_CGM_ACn_SEL_VIDEOPLLDIVX		(0x9)
+#define MC_CGM_ACn_SEL_VIDEOPLLDIV2		(0x9)
 #define MC_CGM_ACn_SEL_PERCLK			(0xA)
+
+#define CGM_AC0_SC	0
+#define CGM_AC1_SC	1
+#define CGM_AC2_SC	2
+#define CGM_AC3_SC	3
+#define CGM_AC5_SC	5
+#define CGM_AC6_SC	6
+#define CGM_AC7_SC	7
+#define CGM_AC8_SC	8
+#define CGM_AC9_SC	9
+#define CGM_AC12_SC	12
+#define CGM_AC13_SC	13
+#define CGM_AC14_SC	14
+#define CGM_AC15_SC	15
+
+#define CGM_ACn_DC0	0
+#define CGM_ACn_DC1	1
+#define CGM_ACn_DC2	2
+
+#define PLLDIG_PLLDV_PREDIV_0	0
+#define PLLDIG_PLLDV_PREDIV_1	1
+#define PLLDIG_PLLDV_PREDIV_3	3
 
 /* PLLDIG PLL Divider Register (PLLDIG_PLLDV) */
 #define PLLDIG_PLLDV(pll)				((MC_CGM0_BASE_ADDR + 0x00000028) + ((pll) * 0x80))
@@ -187,24 +227,45 @@
 #define PLL_MIN_FREQ				(650000000)
 #define PLL_MAX_FREQ				(1300000000)
 
-#define ARM_PLL_PHI0_FREQ			(1000000000)
-#define ARM_PLL_PHI1_FREQ			(1000000000)
-/* ARM_PLL_PHI1_DFS1_FREQ - 266 Mhz */
-#define ARM_PLL_PHI1_DFS1_EN		(1)
-#define ARM_PLL_PHI1_DFS1_MFI		(3)
-#define ARM_PLL_PHI1_DFS1_MFN		(195)
-/* ARM_PLL_PHI1_DFS2_REQ - 600 Mhz */
-#define ARM_PLL_PHI1_DFS2_EN		(1)
-#define ARM_PLL_PHI1_DFS2_MFI		(1)
-#define ARM_PLL_PHI1_DFS2_MFN		(171)
-/* ARM_PLL_PHI1_DFS3_FREQ - 600 Mhz */
-#define ARM_PLL_PHI1_DFS3_EN		(1)
-#define ARM_PLL_PHI1_DFS3_MFI		(1)
-#define ARM_PLL_PHI1_DFS3_MFN		(171)
-#define ARM_PLL_PHI1_DFS_Nr		(3)
-#define ARM_PLL_PLLDV_PREDIV		(2)
-#define ARM_PLL_PLLDV_MFD			(50)
-#define ARM_PLL_PLLDV_MFN			(0)
+/* 1 GHz ARM version */
+#define ARM_1GHZ_PLL_PHI0_FREQ			(1000000000)
+#define ARM_1GHZ_PLL_PHI1_FREQ			(1000000000)
+/* ARM_1GHz_PLL_PHI1_DFS1_FREQ - 266 Mhz */
+#define ARM_1GHZ_PLL_PHI1_DFS1_EN		(1)
+#define ARM_1GHZ_PLL_PHI1_DFS1_MFI		(3)
+#define ARM_1GHZ_PLL_PHI1_DFS1_MFN		(195)
+/* ARM_1GHz_PLL_PHI1_DFS2_REQ - 600 Mhz */
+#define ARM_1GHZ_PLL_PHI1_DFS2_EN		(1)
+#define ARM_1GHZ_PLL_PHI1_DFS2_MFI		(1)
+#define ARM_1GHZ_PLL_PHI1_DFS2_MFN		(171)
+/* ARM_1GHz_PLL_PHI1_DFS3_FREQ - 600 Mhz */
+#define ARM_1GHZ_PLL_PHI1_DFS3_EN		(1)
+#define ARM_1GHZ_PLL_PHI1_DFS3_MFI		(1)
+#define ARM_1GHZ_PLL_PHI1_DFS3_MFN		(171)
+#define ARM_1GHZ_PLL_PHI1_DFS_Nr		(3)
+#define ARM_1GHZ_PLL_PLLDV_PREDIV		(2)
+#define ARM_1GHZ_PLL_PLLDV_MFD			(50)
+#define ARM_1GHZ_PLL_PLLDV_MFN			(0)
+
+/* 800 MHz ARM version */
+#define ARM_800MHZ_PLL_PHI0_FREQ		(800000000)
+#define ARM_800MHZ_PLL_PHI1_FREQ		(800000000)
+/* ARM_800MHz_PLL_PHI1_DFS1_FREQ - 266 Mhz */
+#define ARM_800MHZ_PLL_PHI1_DFS1_EN		(1)
+#define ARM_800MHZ_PLL_PHI1_DFS1_MFI		(3)
+#define ARM_800MHZ_PLL_PHI1_DFS1_MFN		(2)
+/* ARM_800MHz_PLL_PHI1_DFS2_REQ - 600 Mhz */
+#define ARM_800MHZ_PLL_PHI1_DFS2_EN		(1)
+#define ARM_800MHZ_PLL_PHI1_DFS2_MFI		(1)
+#define ARM_800MHZ_PLL_PHI1_DFS2_MFN		(86)
+/* ARM_800MHz_PLL_PHI1_DFS3_FREQ - 600 Mhz */
+#define ARM_800MHZ_PLL_PHI1_DFS3_EN		(1)
+#define ARM_800MHZ_PLL_PHI1_DFS3_MFI		(1)
+#define ARM_800MHZ_PLL_PHI1_DFS3_MFN		(86)
+#define ARM_800MHZ_PLL_PHI1_DFS_Nr		(3)
+#define ARM_800MHZ_PLL_PLLDV_PREDIV		(2)
+#define ARM_800MHZ_PLL_PLLDV_MFD		(40)
+#define ARM_800MHZ_PLL_PLLDV_MFN		(0)
 
 #define PERIPH_PLL_PHI0_FREQ		(400000000)
 #define PERIPH_PLL_PHI1_FREQ		(100000000)
@@ -229,8 +290,8 @@
 #define ENET_PLL_PHI1_DFS3_MFN		(33)
 /* ENET_PLL_PHI1_DFS4_FREQ - 50 Mhz*/
 #define ENET_PLL_PHI1_DFS4_EN		(1)
-#define ENET_PLL_PHI1_DFS4_MFI		(2)
-#define ENET_PLL_PHI1_DFS4_MFN		(0)
+#define ENET_PLL_PHI1_DFS4_MFI		(20)
+#define ENET_PLL_PHI1_DFS4_MFN		(1)
 #define ENET_PLL_PHI1_DFS_Nr		(4)
 #define ENET_PLL_PLLDV_PREDIV		(2)
 #define ENET_PLL_PLLDV_MFD			(50)

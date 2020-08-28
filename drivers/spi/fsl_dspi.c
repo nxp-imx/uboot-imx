@@ -4,9 +4,11 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
  * Copyright (C) 2004-2009, 2015 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  * TsiChung Liew (Tsi-Chung.Liew@freescale.com)
  * Chao Fu (B44548@freescale.com)
  * Haikun Wang (B53464@freescale.com)
+ *
  */
 
 #include <common.h>
@@ -21,6 +23,8 @@
 #include <asm/arch/clock.h>
 #endif
 #include <fsl_dspi.h>
+#include <linux/math64.h>
+#include <linux/time.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -56,6 +60,14 @@ DECLARE_GLOBAL_DATA_PTR;
 					DSPI_CTAR_CSSCK(15) | \
 					DSPI_CTAR_ASC(15) | \
 					DSPI_CTAR_DT(15))
+
+#ifndef CONFIG_DSPI_CS_SCK_DELAY
+#define CONFIG_DSPI_CS_SCK_DELAY 0
+#endif
+
+#ifndef CONFIG_DSPI_SCK_CS_DELAY
+#define CONFIG_DSPI_SCK_CS_DELAY 0
+#endif
 
 /**
  * struct fsl_dspi_platdata - platform data for Freescale DSPI
@@ -103,6 +115,40 @@ struct fsl_dspi {
 	struct fsl_dspi_priv priv;
 };
 #endif
+
+static void ns_delay_scale(char *psc, char *sc, int delay_ns,
+			   unsigned long clkrate)
+{
+	int pscale_tbl[4] = {1, 3, 5, 7};
+	int scale_needed, scale, minscale = INT_MAX;
+	int i, j;
+	u32 remainder;
+
+	scale_needed = div_u64_rem((u64)delay_ns * clkrate, NSEC_PER_SEC,
+				   &remainder);
+	if (remainder)
+		scale_needed++;
+
+	for (i = 0; i < ARRAY_SIZE(pscale_tbl); i++)
+		for (j = 0; j <= DSPI_CTAR_SCALE_BITS; j++) {
+			scale = pscale_tbl[i] * (2 << j);
+			if (scale >= scale_needed) {
+				if (scale < minscale) {
+					minscale = scale;
+					*psc = i;
+					*sc = j;
+				}
+				break;
+			}
+		}
+
+	if (minscale == INT_MAX) {
+		debug("Cannot find correct scale values for %dns delay at clkrate %ld, using max prescaler value",
+		      delay_ns, clkrate);
+		*psc = ARRAY_SIZE(pscale_tbl) - 1;
+		*sc = DSPI_CTAR_SCALE_BITS;
+	}
+}
 
 __weak void cpu_dspi_port_conf(void)
 {
@@ -179,6 +225,8 @@ static int fsl_dspi_cfg_ctar_mode(struct fsl_dspi_priv *priv,
 		uint cs, uint mode)
 {
 	uint bus_setup;
+	char pcssck = 0, cssck = 0;
+	char pasc = 0, asc = 0;
 
 	bus_setup = dspi_read32(priv->flags, &priv->regs->ctar[0]);
 
@@ -192,6 +240,19 @@ static int fsl_dspi_cfg_ctar_mode(struct fsl_dspi_priv *priv,
 		bus_setup |= DSPI_CTAR_CPHA;
 	if (mode & SPI_LSB_FIRST)
 		bus_setup |= DSPI_CTAR_LSBFE;
+	if (mode & SPI_FMSZ_8)
+		bus_setup |= DSPI_CTAR_TRSZ(7);
+	if (mode & SPI_FMSZ_16)
+		bus_setup |= DSPI_CTAR_TRSZ(15);
+
+	ns_delay_scale(&pcssck, &cssck, CONFIG_DSPI_CS_SCK_DELAY,
+		       priv->bus_clk);
+	ns_delay_scale(&pasc, &asc, CONFIG_DSPI_SCK_CS_DELAY, priv->bus_clk);
+
+	bus_setup |= DSPI_CTAR_PCSSCK(pcssck);
+	bus_setup |= DSPI_CTAR_PASC(pasc);
+	bus_setup |= DSPI_CTAR_CSSCK(cssck);
+	bus_setup |= DSPI_CTAR_ASC(asc);
 
 	dspi_write32(priv->flags, &priv->regs->ctar[0], bus_setup);
 
@@ -256,7 +317,7 @@ static int dspi_xfer(struct fsl_dspi_priv *priv, uint cs, unsigned int bitlen,
 	uint len = bitlen >> 3;
 
 	if (priv->charbit == 16) {
-		bitlen >>= 1;
+		len >>= 1;
 		spi_wr16 = (u16 *)dout;
 		spi_rd16 = (u16 *)din;
 	} else {
@@ -362,25 +423,34 @@ static int fsl_dspi_hz_to_spi_baud(int *pbr, int *br,
 		16, 32, 64, 128,
 		256, 512, 1024, 2048,
 		4096, 8192, 16384, 32768};
-	int temp, i = 0, j = 0;
+	int temp, minscale = INT_MAX, i = 0, j = 0;
 
 	temp = clkrate / speed_hz;
 
 	for (i = 0; i < ARRAY_SIZE(pbr_tbl); i++)
 		for (j = 0; j < ARRAY_SIZE(brs); j++) {
 			if (pbr_tbl[i] * brs[j] >= temp) {
-				*pbr = i;
-				*br = j;
-				return 0;
+				if (pbr_tbl[i] * brs[j] < minscale) {
+					*pbr = i;
+					*br = j;
+					minscale = pbr_tbl[i] * brs[j];
+				}
+				break;
 			}
 		}
 
-	debug("Can not find valid baud rate,speed_hz is %d, ", speed_hz);
-	debug("clkrate is %d, we use the max prescaler value.\n", clkrate);
+	if (minscale == INT_MAX) {
+		debug("Can not find valid baud rate,speed_hz is %d, ",
+		      speed_hz);
+		debug("clkrate is %d, we use the max prescaler value.\n",
+		      clkrate);
 
-	*pbr = ARRAY_SIZE(pbr_tbl) - 1;
-	*br =  ARRAY_SIZE(brs) - 1;
-	return -EINVAL;
+		*pbr = ARRAY_SIZE(pbr_tbl) - 1;
+		*br =  ARRAY_SIZE(brs) - 1;
+		return -EINVAL;
+	}
+
+	return 0;
 }
 
 static int fsl_dspi_cfg_speed(struct fsl_dspi_priv *priv, uint speed)
@@ -411,6 +481,7 @@ static int fsl_dspi_cfg_speed(struct fsl_dspi_priv *priv, uint speed)
 
 	return 0;
 }
+
 #ifndef CONFIG_DM_SPI
 int spi_cs_is_valid(unsigned int bus, unsigned int cs)
 {
@@ -425,6 +496,7 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 {
 	struct fsl_dspi *dspi;
 	uint mcr_cfg_val;
+	int i;
 
 	dspi = spi_alloc_slave(struct fsl_dspi, bus, cs);
 	if (!dspi)
@@ -526,7 +598,7 @@ void spi_release_bus(struct spi_slave *slave)
 	struct fsl_dspi *dspi = (struct fsl_dspi *)slave;
 
 	dspi_halt(&dspi->priv, 1);
-	cpu_dspi_release_bus(slave->bus.slave->cs);
+	cpu_dspi_release_bus(slave->bus, slave->cs);
 }
 
 int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
@@ -727,6 +799,7 @@ static const struct dm_spi_ops fsl_dspi_ops = {
 
 static const struct udevice_id fsl_dspi_ids[] = {
 	{ .compatible = "fsl,vf610-dspi" },
+	{ .compatible = "fsl,s32v234-dspi" },
 	{ }
 };
 

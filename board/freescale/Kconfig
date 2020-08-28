@@ -1,0 +1,12 @@
+if TARGET_S32V234EVB ||		\
+   TARGET_S32V234PCIE
+
+source "board/freescale/s32v234evb/Kconfig"
+
+source "board/freescale/s32v234pcie/Kconfig"
+
+config SYS_VENDOR
+	string
+	default "freescale"
+
+endif

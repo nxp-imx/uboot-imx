@@ -4,6 +4,7 @@
  *
  * (C) Copyright 2001
  * Gerald Van Baren, Custom IDEAS, vanbaren@cideas.com.
+ * Copyright 2017,2020 NXP
  */
 
 #ifndef _SPI_H_
@@ -32,6 +33,9 @@
 #define SPI_RX_QUAD	BIT(13)			/* receive with 4 wires */
 #define SPI_TX_OCTAL	BIT(14)			/* transmit with 8 wires */
 #define SPI_RX_OCTAL	BIT(15)			/* receive with 8 wires */
+#define SPI_FMSZ_8	BIT(16)			/* Force frame size to 8 bits */
+#define SPI_FMSZ_16	BIT(17)
+#define SPI_FMSZ_32	BIT(18)
 
 /* Header byte that marks the start of the message */
 #define SPI_PREAMBLE_END_BYTE	0xec

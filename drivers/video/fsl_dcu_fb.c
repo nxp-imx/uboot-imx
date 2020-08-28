@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2014 Freescale Semiconductor, Inc.
+ * (C) Copyright 2017-2018 NXP
  * Copyright 2019 Toradex AG
  *
  * FSL DCU Framebuffer driver
@@ -83,12 +84,16 @@
 #define BPP_24_RGB888			5
 #define BPP_32_ARGB8888			6
 
+#ifndef DCU_CTRL_DESC_LAYER_NUM
+#define DCU_CTRL_DESC_LAYER_NUM         11
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 /*
  * This setting is used for the TWR_LCD_RGB card
  */
-static struct fb_videomode fsl_dcu_mode_480_272 = {
+__weak struct fb_videomode fsl_dcu_mode_480_272 = {
 	.name		= "480x272-60",
 	.refresh	= 60,
 	.xres		= 480,
@@ -107,7 +112,7 @@ static struct fb_videomode fsl_dcu_mode_480_272 = {
 /*
  * This setting is used for Siliconimage SiI9022A HDMI
  */
-static struct fb_videomode fsl_dcu_cea_mode_640_480 = {
+__weak struct fb_videomode fsl_dcu_cea_mode_640_480 = {
 	.name		= "640x480-60",
 	.refresh	= 60,
 	.xres		= 640,
@@ -119,6 +124,22 @@ static struct fb_videomode fsl_dcu_cea_mode_640_480 = {
 	.lower_margin	= 10,
 	.hsync_len	= 96,
 	.vsync_len	= 2,
+	.sync		= 0,
+	.vmode		= FB_VMODE_NONINTERLACED,
+};
+
+__weak struct fb_videomode fsl_dcu_mode_1920_1080 = {
+	.name		= "1920x1080-60",
+	.refresh	= 60,
+	.xres		= 1920,
+	.yres		= 1080,
+	.pixclock	= 148500, /* HDMI */
+	.left_margin	= 30,
+	.right_margin	= 60,
+	.upper_margin	= 30,
+	.lower_margin	= 3,
+	.hsync_len	= 60,
+	.vsync_len	= 3,
 	.sync		= 0,
 	.vmode		= FB_VMODE_NONINTERLACED,
 };
@@ -225,21 +246,11 @@ struct dcu_reg {
 static void reset_total_layers(void)
 {
 	struct dcu_reg *regs = (struct dcu_reg *)CONFIG_SYS_DCU_ADDR;
-	int i;
+	int i, j;
 
-	for (i = 0; i < DCU_LAYER_MAX_NUM; i++) {
-		dcu_write32(&regs->ctrldescl[i][0], 0);
-		dcu_write32(&regs->ctrldescl[i][1], 0);
-		dcu_write32(&regs->ctrldescl[i][2], 0);
-		dcu_write32(&regs->ctrldescl[i][3], 0);
-		dcu_write32(&regs->ctrldescl[i][4], 0);
-		dcu_write32(&regs->ctrldescl[i][5], 0);
-		dcu_write32(&regs->ctrldescl[i][6], 0);
-		dcu_write32(&regs->ctrldescl[i][7], 0);
-		dcu_write32(&regs->ctrldescl[i][8], 0);
-		dcu_write32(&regs->ctrldescl[i][9], 0);
-		dcu_write32(&regs->ctrldescl[i][10], 0);
-	}
+	for (i = 0; i < DCU_LAYER_MAX_NUM; i++)
+		for (j = 0; j < DCU_CTRL_DESC_LAYER_NUM; j++)
+			dcu_write32(&regs->ctrldescl[i][j], 0);
 }
 
 static int layer_ctrldesc_init(struct fb_info fbinfo,
@@ -409,6 +420,9 @@ int fsl_probe_common(struct fb_info *fbinfo, unsigned int *win_x,
 		break;
 	case RESOLUTION(1024, 600):
 		fsl_dcu_mode_db = &fsl_dcu_mode_1024_600;
+		break;
+	case RESOLUTION(1920, 1080):
+		fsl_dcu_mode_db = &fsl_dcu_mode_1920_1080;
 		break;
 	default:
 		printf("unsupported resolution %ux%u\n",

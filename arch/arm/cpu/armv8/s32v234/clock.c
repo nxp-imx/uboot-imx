@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2015-2016 Freescale Semiconductor, Inc.
- * (C) Copyright 2017 NXP
+ * (C) Copyright 2017-2018 NXP
  *
  */
 
@@ -11,6 +11,7 @@
 #include <asm/arch/mc_me_regs.h>
 #include <asm/arch/mc_rgm_regs.h>
 #include <asm/arch/clock.h>
+#include <asm/arch-s32v234/siul.h>
 
 /*
  * Select the clock reference for required pll.
@@ -96,9 +97,8 @@ static int program_pll(enum pll_type pll, u32 refclk_freq, u32 freq0, u32 freq1,
 	/*
 	 * This formula is from platform reference manual (Rev. 1, 6/2015), PLLDIG chapter.
 	 */
-	fvco =
-	    (refclk_freq / plldv_prediv) * (plldv_mfd +
-					    pllfd_mfn / (float)20480);
+	fvco = (refclk_freq / (float)plldv_prediv) *
+		(plldv_mfd + pllfd_mfn / (float)20480);
 
 	/*
 	 * VCO should have value in [ PLL_MIN_FREQ, PLL_MAX_FREQ ]. Please consult
@@ -225,34 +225,102 @@ static void setup_aux_clocks(void)
 	 * setup the aux clock divider for PERI_CLK
 	 * (source: PERIPH_PLL_PHI_0/5, PERI_CLK - 80 MHz)
 	 */
-	aux_source_clk_config(MC_CGM0_BASE_ADDR, 5, MC_CGM_ACn_SEL_PERPLLDIVX);
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 5, 0, 0);
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC5_SC,
+			      MC_CGM_ACn_SEL_PERPLLDIVX);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC5_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
+	/* setup the aux clock divider for CAN_CLK (40 MHz) */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC6_SC,
+			      MC_CGM_ACn_SEL_XOSC);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC6_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
 
 	/* setup the aux clock divider for LIN_CLK (66 MHz) */
-	aux_source_clk_config(MC_CGM0_BASE_ADDR, 3,
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC3_SC,
 			      MC_CGM_ACn_SEL_PERPLLDIVX);
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 3, 0, 1);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC3_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_1);
 
-	/* setup the aux clock divider for ENET_TIME_CLK (50MHz) */
-	aux_source_clk_config(MC_CGM0_BASE_ADDR, 7, MC_CGM_ACn_SEL_ENETPLL);
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 7, 1, 9);
+	/* setup the aux clock divider for ENET_TIME_CLK (125MHz) */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC7_SC,
+			      MC_CGM_ACn_SEL_ENETPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC7_SC, CGM_ACn_DC1,
+			   PLLDIG_PLLDV_PREDIV_3);
 
-	/* setup the aux clock divider for ENET_CLK (50MHz) */
-	aux_source_clk_config(MC_CGM2_BASE_ADDR, 2, MC_CGM_ACn_SEL_ENETPLL);
-	aux_div_clk_config(MC_CGM2_BASE_ADDR, 2, 0, 9);
+	/* setup the aux clock divider for ENET_CLK (125MHz) */
+	aux_source_clk_config(MC_CGM2_BASE_ADDR, CGM_AC2_SC,
+			      MC_CGM_ACn_SEL_ENETPLL);
+	aux_div_clk_config(MC_CGM2_BASE_ADDR, CGM_AC2_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_3);
+
+	/* setup the aux clock divider for H264_DEC_CLK  (350MHz) */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC12_SC,
+			      MC_CGM_ACn_SEL_ENETPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC12_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
+	/* setup the aux clock divider for H264_ENC_CLK (350MHz) */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC13_SC,
+			      MC_CGM_ACn_SEL_ENETPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC13_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
+	/* setup the aux clock divider for QSPI_CLK  (target freq 40 MHz)*/
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC14_SC,
+			      MC_CGM_ACn_SEL_XOSC);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC14_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
 
 	/* setup the aux clock divider for SDHC_CLK (50 MHz). */
-	aux_source_clk_config(MC_CGM0_BASE_ADDR, 15, MC_CGM_ACn_SEL_ENETPLL);
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 15, 0, 9);
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC15_SC,
+			      MC_CGM_ACn_SEL_ENETPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC15_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
 
 	/* setup the aux clock divider for DDR_CLK (533MHz) and APEX_SYS_CLK (266MHz) */
-	aux_source_clk_config(MC_CGM0_BASE_ADDR, 8, MC_CGM_ACn_SEL_DDRPLL);
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 8, 0, 0);
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC8_SC,
+			      MC_CGM_ACn_SEL_DDRPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC8_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
 	/* setup the aux clock divider for DDR4_CLK (133,25MHz) */
-	aux_div_clk_config(MC_CGM0_BASE_ADDR, 8, 1, 3);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC8_SC, CGM_ACn_DC1,
+			   PLLDIG_PLLDV_PREDIV_3);
+
+	/* setup the aux clock divider for SEQ_CLK (250MHz)
+	 * and ISP_CLK (500MHz))
+	 */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC0_SC,
+			      MC_CGM_ACn_SEL_DDRPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC0_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
+	/* setup the aux clock divider for APEX_APU_CLK (500MHz) */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC1_SC,
+			      MC_CGM_ACn_SEL_DDRPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC1_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
+	/* setup the aux clock divider for MJPEG_CLK (350MHz) */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC2_SC,
+			      MC_CGM_ACn_SEL_DDRPLL);
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC2_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
+	/* setup the aux clock source for DCU_AXI_CLK and DCU_PIX_CLK */
+	aux_source_clk_config(MC_CGM0_BASE_ADDR, CGM_AC9_SC,
+			      MC_CGM_ACn_SEL_VIDEOPLLDIV2);
+
+	/* setup the aux clock divider for DCU_AXI_CLK (300MHz) */
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC9_SC, CGM_ACn_DC0,
+			   PLLDIG_PLLDV_PREDIV_0);
+
+	/* setup the aux clock divider for DCU_PIX_CLK (150MHz) */
+	aux_div_clk_config(MC_CGM0_BASE_ADDR, CGM_AC9_SC, CGM_ACn_DC1,
+			   PLLDIG_PLLDV_PREDIV_1);
 
 	entry_to_target_mode(MC_ME_MCTL_RUN0);
-
 }
 
 static void enable_modules_clock(void)
@@ -283,21 +351,43 @@ static void enable_modules_clock(void)
 	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(MMDC1_PCTL));
 	/* QuadSPI */
 	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(QUADSPI0_PCTL));
+	/* DSPI */
+	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(DSPI0_PCTL));
 	/* SDHC */
 	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(SDHC_PCTL));
+
+	/*
+	 * The ungating for the clocks of the above IPs should be
+	 * removed from u-boot, because they are used only in kernel
+	 * drivers.
+	 */
+
+	/* DCU */
+	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(DCU_PCTL));
+	/* DEC200 */
+	writeb(MC_ME_PCTLn_RUNPCm(CFG_RUN_PC), MC_ME_PCTLn(DEC200_PCTL));
 
 	entry_to_target_mode(MC_ME_MCTL_RUN0);
 }
 
 void clock_init(void)
 {
-	unsigned int arm_dfs[ARM_PLL_PHI1_DFS_Nr][DFS_PARAMS_Nr] = {
-		{ARM_PLL_PHI1_DFS1_EN, ARM_PLL_PHI1_DFS1_MFN,
-		 ARM_PLL_PHI1_DFS1_MFI},
-		{ARM_PLL_PHI1_DFS2_EN, ARM_PLL_PHI1_DFS2_MFN,
-		 ARM_PLL_PHI1_DFS2_MFI},
-		{ARM_PLL_PHI1_DFS3_EN, ARM_PLL_PHI1_DFS3_MFN,
-		 ARM_PLL_PHI1_DFS3_MFI}
+	unsigned int arm_1ghz_dfs[ARM_1GHZ_PLL_PHI1_DFS_Nr][DFS_PARAMS_Nr] = {
+		{ARM_1GHZ_PLL_PHI1_DFS1_EN, ARM_1GHZ_PLL_PHI1_DFS1_MFN,
+		 ARM_1GHZ_PLL_PHI1_DFS1_MFI},
+		{ARM_1GHZ_PLL_PHI1_DFS2_EN, ARM_1GHZ_PLL_PHI1_DFS2_MFN,
+		 ARM_1GHZ_PLL_PHI1_DFS2_MFI},
+		{ARM_1GHZ_PLL_PHI1_DFS3_EN, ARM_1GHZ_PLL_PHI1_DFS3_MFN,
+		 ARM_1GHZ_PLL_PHI1_DFS3_MFI}
+	};
+
+	unsigned int arm_800mhz_dfs[ARM_800MHZ_PLL_PHI1_DFS_Nr][DFS_PARAMS_Nr] = {
+		{ARM_800MHZ_PLL_PHI1_DFS1_EN, ARM_800MHZ_PLL_PHI1_DFS1_MFN,
+		 ARM_800MHZ_PLL_PHI1_DFS1_MFI},
+		{ARM_800MHZ_PLL_PHI1_DFS2_EN, ARM_800MHZ_PLL_PHI1_DFS2_MFN,
+		 ARM_800MHZ_PLL_PHI1_DFS2_MFI},
+		{ARM_800MHZ_PLL_PHI1_DFS3_EN, ARM_800MHZ_PLL_PHI1_DFS3_MFN,
+		 ARM_800MHZ_PLL_PHI1_DFS3_MFI}
 	};
 
 	unsigned int enet_dfs[ENET_PLL_PHI1_DFS_Nr][DFS_PARAMS_Nr] = {
@@ -329,15 +419,36 @@ void clock_init(void)
 		MC_ME_RUN_PCn(0));
 
 	/* turn on FXOSC */
+#if defined(CONFIG_S32V234_FAST_BOOT)
+	writel(MC_ME_RUNMODE_MC_PLL(ARM_PLL) | MC_ME_RUNMODE_MC_PLL(ENET_PLL) |
+			MC_ME_RUNMODE_MC_MVRON | MC_ME_RUNMODE_MC_XOSCON |
+			MC_ME_RUNMODE_MC_FIRCON | MC_ME_RUNMODE_MC_SYSCLK(0x1),
+			MC_ME_RUNn_MC(0));
+#else
 	writel(MC_ME_RUNMODE_MC_MVRON | MC_ME_RUNMODE_MC_XOSCON |
 	       MC_ME_RUNMODE_MC_FIRCON | MC_ME_RUNMODE_MC_SYSCLK(0x1),
 	       MC_ME_RUNn_MC(0));
+#endif
 
 	entry_to_target_mode(MC_ME_MCTL_RUN0);
 
-	program_pll(ARM_PLL, XOSC_CLK_FREQ, ARM_PLL_PHI0_FREQ,
-		    ARM_PLL_PHI1_FREQ, ARM_PLL_PHI1_DFS_Nr, arm_dfs,
-		    ARM_PLL_PLLDV_PREDIV, ARM_PLL_PLLDV_MFD, ARM_PLL_PLLDV_MFN);
+	if (get_siul2_midr2_speed() == SIUL2_MIDR2_SPEED_800MHZ)
+		program_pll(ARM_PLL, XOSC_CLK_FREQ, ARM_800MHZ_PLL_PHI0_FREQ,
+			    ARM_800MHZ_PLL_PHI1_FREQ,
+			    ARM_800MHZ_PLL_PHI1_DFS_Nr, arm_800mhz_dfs,
+			    ARM_800MHZ_PLL_PLLDV_PREDIV,
+			    ARM_800MHZ_PLL_PLLDV_MFD, ARM_800MHZ_PLL_PLLDV_MFN
+			   );
+	else
+		/* If the speed grading is unsupported or unrecognized, fall
+		 * back to 1 GHz.
+		 */
+		program_pll(ARM_PLL, XOSC_CLK_FREQ, ARM_1GHZ_PLL_PHI0_FREQ,
+			    ARM_1GHZ_PLL_PHI1_FREQ,
+			    ARM_1GHZ_PLL_PHI1_DFS_Nr, arm_1ghz_dfs,
+			    ARM_1GHZ_PLL_PLLDV_PREDIV,
+			    ARM_1GHZ_PLL_PLLDV_MFD, ARM_1GHZ_PLL_PLLDV_MFN
+			   );
 
 	setup_sys_clocks();
 

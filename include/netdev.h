@@ -2,6 +2,7 @@
 /*
  * (C) Copyright 2008
  * Benjamin Warren, biggerbadderben@gmail.com
+ * (C) Copyright 2017 NXP
  */
 
 /*
@@ -25,6 +26,7 @@ int board_eth_init(bd_t *bis);
 int board_interface_eth_init(struct udevice *dev,
 			     phy_interface_t interface_type);
 int cpu_eth_init(bd_t *bis);
+void board_net_init(void);
 
 /* Driver initialization prototypes */
 int at91emac_register(bd_t *bis, unsigned long iobase);

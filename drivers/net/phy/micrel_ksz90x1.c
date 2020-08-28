@@ -7,6 +7,7 @@
  * (C) 2012 NetModule AG, David Andrey, added KSZ9031
  * (C) Copyright 2017 Adaptrum, Inc.
  * Written by Alexandru Gagniuc <alex.g@adaptrum.com> for Adaptrum, Inc.
+ * (C) Copyright 2017 NXP
  */
 #include <common.h>
 #include <dm.h>
@@ -344,6 +345,18 @@ static int ksz9031_phy_extwrite(struct phy_device *phydev, int addr,
 static int ksz9031_config(struct phy_device *phydev)
 {
 	int ret;
+	u16 bmcr;
+
+	/*
+	 * Check if Power-Down bit from Basic Control Register is set.
+	 * If so, set it to 0.
+	 */
+	bmcr = phy_read(phydev, MDIO_DEVAD_NONE, MII_BMCR);
+
+	if (bmcr & BMCR_PDOWN) {
+		bmcr &= ~BMCR_PDOWN;
+		phy_write(phydev, MDIO_DEVAD_NONE, MII_BMCR, bmcr);
+	}
 
 	ret = ksz9031_of_config(phydev);
 	if (ret)
