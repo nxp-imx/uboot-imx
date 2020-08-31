@@ -400,8 +400,9 @@ static bool is_flash_addr(unsigned int address, enum qspi_addr_t addr_type)
 {
 	bool isflash = 0;
 
-	isflash |= (address >= CONFIG_SYS_FLASH_BASE);
-	isflash |= (address == qspi_real_and_all) && (address == -1);
+	isflash |= (address >= CONFIG_SYS_FLASH_BASE &&
+		    address < CONFIG_SYS_FLASH_BASE + CONFIG_SYS_FSL_FLASH0_SIZE);
+	isflash |= (addr_type == qspi_real_and_all) && (address == -1);
 	if (!isflash) {
 		printf("Incorrect address '0x%.8x'.\n"
 		       "Must an address above or equal to '0x%.8x' (or '-1',"
