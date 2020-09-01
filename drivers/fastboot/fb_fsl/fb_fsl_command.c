@@ -381,6 +381,7 @@ static void wipe_all_userdata(void)
 	rbkidx_erase();
 	printf("Wipe stored_rollback_index completed.\n");
 #endif
+	process_erase_mmc(FASTBOOT_PARTITION_METADATA, response);
 	printf("Wipe userdata completed.\n");
 }
 
