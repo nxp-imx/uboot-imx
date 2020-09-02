@@ -15,6 +15,9 @@ int sc_pm_setup_uart(sc_rsrc_t uart_rsrc, sc_pm_clock_rate_t clk_rate)
 	sc_pm_clock_rate_t rate = clk_rate;
 	int ret;
 
+	if (uart_rsrc < SC_R_UART_0 || uart_rsrc > SC_R_UART_4)
+		return -EINVAL;
+
 	/* Power up UARTn */
 	ret = sc_pm_set_resource_power_mode(-1, uart_rsrc, SC_PM_PW_MODE_ON);
 	if (ret)
@@ -30,7 +33,7 @@ int sc_pm_setup_uart(sc_rsrc_t uart_rsrc, sc_pm_clock_rate_t clk_rate)
 	if (ret)
 		return ret;
 
-	lpcg_all_clock_on(LPUART_0_LPCG);
+	lpcg_all_clock_on(LPUART_0_LPCG + (uart_rsrc - SC_R_UART_0) * 0x10000);
 
 	return 0;
 }
