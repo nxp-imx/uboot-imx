@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2017-2019 NXP
+ * Copyright 2017-2020 NXP
  * Copyright 2014-2015 Freescale Semiconductor, Inc.
  */
 
@@ -75,6 +75,9 @@ static struct cpu_type cpu_type_list[] = {
 	CPU_TYPE_ENTRY(LX2160A, LX2160A, 16),
 	CPU_TYPE_ENTRY(LX2120A, LX2120A, 12),
 	CPU_TYPE_ENTRY(LX2080A, LX2080A, 8),
+	CPU_TYPE_ENTRY(LX2162A, LX2162A, 16),
+	CPU_TYPE_ENTRY(LX2122A, LX2122A, 12),
+	CPU_TYPE_ENTRY(LX2082A, LX2082A, 8),
 };
 
 #define EARLY_PGTABLE_SIZE 0x5000
@@ -399,7 +402,7 @@ void cpu_name(char *name)
 	for (i = 0; i < ARRAY_SIZE(cpu_type_list); i++)
 		if ((cpu_type_list[i].soc_ver & SVR_WO_E) == ver) {
 			strcpy(name, cpu_type_list[i].name);
-#ifdef CONFIG_ARCH_LX2160A
+#if defined(CONFIG_ARCH_LX2160A) || defined(CONFIG_ARCH_LX2162A)
 			if (IS_C_PROCESSOR(svr))
 				strcat(name, "C");
 #endif
@@ -1141,8 +1144,8 @@ int arch_early_init_r(void)
 	/* some dpmacs in armv8a based freescale layerscape SOCs can be
 	 * configured via both serdes(sgmii, xfi, xlaui etc) bits and via
 	 * EC*_PMUX(rgmii) bits in RCW.
-	 * e.g. dpmac 17 and 18 in LX2160A can be configured as SGMII from
-	 * serdes bits and as RGMII via EC1_PMUX/EC2_PMUX bits
+	 * e.g. dpmac 17 and 18 in LX2160A and LX2162A can be configured as
+	 * SGMII from serdes bits and as RGMII via EC1_PMUX/EC2_PMUX bits
 	 * Now if a dpmac is enabled by serdes bits then it takes precedence
 	 * over EC*_PMUX bits. i.e. in LX2160A if we select serdes protocol
 	 * that configures dpmac17 as SGMII and set the EC1_PMUX as RGMII,
@@ -1225,7 +1228,7 @@ void __efi_runtime reset_cpu(ulong addr)
 {
 	u32 val;
 
-#ifdef CONFIG_ARCH_LX2160A
+#if defined(CONFIG_ARCH_LX2160A) || defined(CONFIG_ARCH_LX2162A)
 	val = in_le32(rstcr);
 	val |= 0x01;
 	out_le32(rstcr, val);
