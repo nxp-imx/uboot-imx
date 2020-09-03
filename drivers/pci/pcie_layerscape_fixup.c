@@ -21,6 +21,35 @@
 #include "pcie_layerscape.h"
 #include "pcie_layerscape_fixup_common.h"
 
+static int fdt_pcie_get_nodeoffset(void *blob, struct ls_pcie *pcie)
+{
+	int nodeoffset;
+	uint svr;
+	char *compat = NULL;
+
+	/* find pci controller node */
+	nodeoffset = fdt_node_offset_by_compat_reg(blob, "fsl,ls-pcie",
+						   pcie->dbi_res.start);
+	if (nodeoffset < 0) {
+#ifdef CONFIG_FSL_PCIE_COMPAT /* Compatible with older version of dts node */
+		svr = (get_svr() >> SVR_VAR_PER_SHIFT) & 0xFFFFFE;
+		if (svr == SVR_LS2088A || svr == SVR_LS2084A ||
+		    svr == SVR_LS2048A || svr == SVR_LS2044A ||
+		    svr == SVR_LS2081A || svr == SVR_LS2041A)
+			compat = "fsl,ls2088a-pcie";
+		else
+			compat = CONFIG_FSL_PCIE_COMPAT;
+		if (!compat)
+			return nodeoffset;
+		nodeoffset =
+			fdt_node_offset_by_compat_reg(blob, compat,
+						      pcie->dbi_res.start);
+#endif
+	}
+
+	return nodeoffset;
+}
+
 #if defined(CONFIG_FSL_LSCH3) || defined(CONFIG_FSL_LSCH2)
 /*
  * Return next available LUT index.
@@ -51,33 +80,6 @@ static void ls_pcie_lut_set_mapping(struct ls_pcie *pcie, int index, u32 devid,
 	/* leave mask as all zeroes, want to match all bits */
 	lut_writel(pcie, devid << 16, PCIE_LUT_UDR(index));
 	lut_writel(pcie, streamid | PCIE_LUT_ENABLE, PCIE_LUT_LDR(index));
-}
-
-static int fdt_pcie_get_nodeoffset(void *blob, struct ls_pcie *pcie)
-{
-	int nodeoffset;
-	uint svr;
-	char *compat = NULL;
-
-	/* find pci controller node */
-	nodeoffset = fdt_node_offset_by_compat_reg(blob, "fsl,ls-pcie",
-						   pcie->dbi_res.start);
-	if (nodeoffset < 0) {
-#ifdef CONFIG_FSL_PCIE_COMPAT /* Compatible with older version of dts node */
-		svr = SVR_SOC_VER(get_svr());
-		if (svr == SVR_LS2088A || svr == SVR_LS2084A ||
-		    svr == SVR_LS2048A || svr == SVR_LS2044A ||
-		    svr == SVR_LS2081A || svr == SVR_LS2041A)
-			compat = "fsl,ls2088a-pcie";
-		else
-			compat = CONFIG_FSL_PCIE_COMPAT;
-		if (compat)
-			nodeoffset = fdt_node_offset_by_compat_reg(blob,
-					compat, pcie->dbi_res.start);
-#endif
-	}
-
-	return nodeoffset;
 }
 
 /*
