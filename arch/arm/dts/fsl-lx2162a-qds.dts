@@ -1,0 +1,97 @@
+// SPDX-License-Identifier: GPL-2.0+ OR X11
+/*
+ * NXP LX2162AQDS device tree source
+ *
+ * Copyright 2020 NXP
+ *
+ */
+
+/dts-v1/;
+
+#include "fsl-lx2160a.dtsi"
+
+/ {
+	model = "NXP Layerscape LX2162AQDS Board";
+	compatible = "fsl,lx2162aqds", "fsl,lx2160a";
+
+	aliases {
+		spi0 = &fspi;
+
+		pcie@3500000 {
+			status = "disabled";
+		};
+
+		pcie@3800000 {
+			status = "disabled";
+		};
+
+		pcie@3900000 {
+			status = "disabled";
+		};
+	};
+};
+
+&fspi {
+	status = "okay";
+
+	mt35xu512aba0: flash@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "jedec,spi-nor";
+		spi-max-frequency = <50000000>;
+		reg = <0>;
+		spi-rx-bus-width = <8>;
+		spi-tx-bus-width = <1>;
+	};
+};
+
+&usb1 {
+	status = "disabled";
+};
+
+&esdhc0 {
+	status = "okay";
+};
+
+&esdhc1 {
+	status = "okay";
+};
+
+&i2c0 {
+	status = "okay";
+	u-boot,dm-pre-reloc;
+
+	i2c-mux@77 {
+		compatible = "nxp,pca9547";
+		reg = <0x77>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		i2c@3 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x3>;
+
+			rtc@51 {
+				compatible = "pcf2127-rtc";
+				reg = <0x51>;
+			};
+		};
+	};
+};
+
+&sata0 {
+	status = "okay";
+};
+
+&sata1 {
+	status = "okay";
+};
+
+&sata2 {
+	status = "okay";
+};
+
+&sata3 {
+	status = "okay";
+};
