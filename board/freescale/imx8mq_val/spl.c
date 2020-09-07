@@ -25,14 +25,23 @@
 #include <spl.h>
 #include "../common/pfuze.h"
 #include <nand.h>
+
+#ifdef CONFIG_TARGET_IMX8MQ_DDR3L_VAL
 #include "ddr/ddr.h"
+#else
+#include <asm/arch/ddr.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
 void spl_dram_init(void)
 {
 	/* ddr init */
+#ifdef CONFIG_TARGET_IMX8MQ_DDR3L_VAL
 	ddr_init(NULL);
+#else
+	ddr_init(&dram_timing);
+#endif
 }
 
 #define I2C_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE)
