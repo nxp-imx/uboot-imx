@@ -62,6 +62,7 @@ config TARGET_IMX8MQ_DDR3L_VAL
 config TARGET_IMX8MQ_DDR4_VAL
 	bool "imx8mq_ddr4_val"
 	select IMX8MQ
+	select IMX8M_DDR4
 
 config TARGET_IMX8MM_DDR4_VAL
 	bool "imx8mm DDR4 validation board"
