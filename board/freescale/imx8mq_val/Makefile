@@ -12,6 +12,6 @@ obj-y += ddr/helper.o
 ifdef CONFIG_TARGET_IMX8MQ_DDR3L_VAL
 obj-y += ddr/ddr3l/ddr_init.o ddr/ddr3l/ddrphy_train.o
 else
-obj-y += ddr/ddr4/ddr_init.o ddr/ddr4/ddrphy_train.o
+obj-$(CONFIG_IMX8M_DDR4) += ddr4_timing.o
 endif
 endif
