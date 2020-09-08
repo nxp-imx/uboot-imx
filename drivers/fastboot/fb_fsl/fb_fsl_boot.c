@@ -697,7 +697,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 					avb_out_data->ab_suffix);
 		}
 		strcat(bootargs_sec, avb_out_data->cmdline);
-#ifndef CONFIG_ANDROID_AUTO_SUPPORT
+#if defined(CONFIG_ANDROID_AB_SUPPORT) && !defined(CONFIG_ANDROID_AUTO_SUPPORT)
 		/* for standard android, recovery ramdisk will be used anyway, to
 		 * boot up Android, "androidboot.force_normal_boot=1" is needed */
 		if(!is_recovery_mode) {
