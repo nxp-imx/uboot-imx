@@ -642,7 +642,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	/* Parse the avb data */
 	if ((avb_result == AVB_AB_FLOW_RESULT_OK) ||
 			(avb_result == AVB_AB_FLOW_RESULT_OK_WITH_VERIFICATION_ERROR)) {
-		assert(avb_out_data != NULL);
+		if (avb_out_data == NULL)
+			goto fail;
 		/* We may have more than one partition loaded by AVB, find the boot partition first.*/
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 		if (find_partition_data_by_name("boot", avb_out_data, &avb_loadpart))
@@ -696,7 +697,8 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 					"androidboot.verifiedbootstate=orange androidboot.flash.locked=0 androidboot.slot_suffix=%s ",
 					avb_out_data->ab_suffix);
 		}
-		strcat(bootargs_sec, avb_out_data->cmdline);
+		if (avb_out_data->cmdline != NULL)
+			strcat(bootargs_sec, avb_out_data->cmdline);
 #ifndef CONFIG_ANDROID_AUTO_SUPPORT
 		/* for standard android, recovery ramdisk will be used anyway, to
 		 * boot up Android, "androidboot.force_normal_boot=1" is needed */
