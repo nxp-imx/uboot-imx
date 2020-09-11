@@ -37,6 +37,8 @@
 		i2c5 = &lpi2c5;
 		i2c6 = &lpi2c6;
 		i2c7 = &lpi2c7;
+		spi0 = &qspi1;
+		spi3 = &lpspi3;
 	};
 
 	cpus {

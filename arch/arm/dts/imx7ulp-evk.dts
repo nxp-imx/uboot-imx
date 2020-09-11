@@ -87,6 +87,16 @@
 	};
 };
 
+&lpspi3 {
+	fsl,spi-num-chipselects = <1>;
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&pinctrl_lpspi3>;
+	pinctrl-1 = <&pinctrl_lpspi3>;
+	cs-gpios = <&gpio_ptf 19 GPIO_ACTIVE_LOW>, <0>, <0>, <0>;
+	spi-max-frequency = <1000000>;
+	status = "okay";
+};
+
 &lpi2c5 {
 	#address-cells = <1>;
 	#size-cells = <0>;
@@ -217,6 +227,15 @@
 	pinctrl_backlight: backlight_grp {
 		fsl,pins = <
 			IMX7ULP_PAD_PTF2__PTF2      0x20000
+		>;
+	};
+
+	pinctrl_lpspi3: lpspi3grp {
+		fsl,pins = <
+			IMX7ULP_PAD_PTF16__LPSPI3_SIN	0x0
+			IMX7ULP_PAD_PTF17__LPSPI3_SOUT	0x0
+			IMX7ULP_PAD_PTF18__LPSPI3_SCK	0x0
+			IMX7ULP_PAD_PTF19__PTF19        0x0
 		>;
 	};
 
