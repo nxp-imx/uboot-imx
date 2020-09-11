@@ -16,7 +16,7 @@ enum mxc_clock {
 	MXC_AHB_CLK,
 	MXC_IPG_CLK,
 	MXC_UART_CLK,
-	MXC_CSPI_CLK,
+	MXC_LPSPI_CLK,
 	MXC_AXI_CLK,
 	MXC_DDR_CLK,
 	MXC_ESDHC_CLK,
@@ -29,6 +29,10 @@ u32 get_lpuart_clk(void);
 #ifdef CONFIG_SYS_I2C_IMX_LPI2C
 int enable_i2c_clk(unsigned char enable, unsigned i2c_num);
 u32 imx_get_i2cclk(unsigned i2c_num);
+#endif
+#ifdef CONFIG_FSL_LPSPI
+int enable_lpspi_clk(unsigned char enable, unsigned spi_num);
+u32 imx_get_spiclk(unsigned spi_num);
 #endif
 #ifdef CONFIG_MXC_OCOTP
 void enable_ocotp_clk(unsigned char enable);
