@@ -37,6 +37,7 @@
 		/delete-property/ mmc1;
 		/delete-property/ mmc2;
 		/delete-property/ spi0;
+		/delete-property/ spi1;
 		/delete-property/ pci0;
 		/delete-property/ csi0;
 		/delete-property/ video0;

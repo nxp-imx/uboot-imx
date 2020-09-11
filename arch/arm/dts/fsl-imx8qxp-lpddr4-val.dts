@@ -121,6 +121,20 @@
 			>;
 		};
 
+		pinctrl_lpspi0: lpspi0grp {
+			fsl,pins = <
+				SC_P_SPI0_SCK_ADMA_SPI0_SCK		0x600004c
+				SC_P_SPI0_SDO_ADMA_SPI0_SDO		0x600004c
+				SC_P_SPI0_SDI_ADMA_SPI0_SDI		0x600004c
+			>;
+		};
+
+		pinctrl_lpspi0_cs: lpspi0cs {
+			fsl,pins = <
+				SC_P_SPI0_CS0_LSIO_GPIO1_IO08		0x21
+			>;
+		};
+
 		pinctrl_usdhc1: usdhc1grp {
 			fsl,pins = <
 				SC_P_EMMC0_CLK_CONN_EMMC0_CLK		0x06000041
@@ -257,6 +271,10 @@
 	status = "okay";
 };
 
+&gpio1 {
+	status = "okay";
+};
+
 &gpio3 {
 	status = "okay";
 };
@@ -264,6 +282,25 @@
 &gpio4 {
 	status = "okay";
 };
+
+&lpspi0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lpspi0 &pinctrl_lpspi0_cs>;
+	cs-gpios = <&gpio1 8 GPIO_ACTIVE_LOW>, <0>, <0>, <0>;
+	spi-max-frequency = <1000000>;
+	status = "okay";
+
+	flash: at45db041e@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "atmel,at45", "atmel,dataflash";
+		spi-max-frequency = <1000000>;
+		reg = <0>;
+	};
+};
+
 
 &fec1 {
 	pinctrl-names = "default";
