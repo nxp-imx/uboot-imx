@@ -69,6 +69,7 @@
 		usbphy0 = &usbphy1;
 		usb1 = &usbotg3;
 		pci0 = &pcieb;
+		spi1 = &lpspi0;
 	};
 
 	cpus {
@@ -2750,8 +2751,22 @@
 			 <&clk IMX8QXP_SPI0_IPG_CLK>;
 		clock-names = "per", "ipg";
 		assigned-clocks = <&clk IMX8QXP_SPI0_CLK>;
-		assigned-clock-rates = <20000000>;
+		assigned-clock-rates = <80000000>;
 		power-domains = <&pd_dma_lpspi0>;
+		status = "disabled";
+	};
+
+	lpspi1: lpspi@5a010000 {
+		compatible = "fsl,imx7ulp-spi";
+		reg = <0x0 0x5a010000 0x0 0x10000>;
+		interrupts = <GIC_SPI 217 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-parent = <&gic>;
+		clocks = <&clk IMX8QXP_SPI1_CLK>,
+			 <&clk IMX8QXP_SPI1_IPG_CLK>;
+		clock-names = "per", "ipg";
+		assigned-clocks = <&clk IMX8QXP_SPI1_CLK>;
+		assigned-clock-rates = <80000000>;
+		power-domains = <&pd_dma_lpspi1>;
 		status = "disabled";
 	};
 
@@ -2764,8 +2779,22 @@
 			 <&clk IMX8QXP_SPI2_IPG_CLK>;
 		clock-names = "per", "ipg";
 		assigned-clocks = <&clk IMX8QXP_SPI2_CLK>;
-		assigned-clock-rates = <20000000>;
+		assigned-clock-rates = <80000000>;
 		power-domains = <&pd_dma_lpspi2>;
+		status = "disabled";
+	};
+
+	lpspi3: lpspi@5a030000 {
+		compatible = "fsl,imx7ulp-spi";
+		reg = <0x0 0x5a030000 0x0 0x10000>;
+		interrupts = <GIC_SPI 219 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-parent = <&gic>;
+		clocks = <&clk IMX8QXP_SPI3_CLK>,
+			 <&clk IMX8QXP_SPI3_IPG_CLK>;
+		clock-names = "per", "ipg";
+		assigned-clocks = <&clk IMX8QXP_SPI3_CLK>;
+		assigned-clock-rates = <80000000>;
+		power-domains = <&pd_dma_lpspi3>;
 		status = "disabled";
 	};
 
