@@ -471,6 +471,12 @@ config MXC_SPI
 	  Enable the MXC SPI controller driver. This driver can be used
 	  on various i.MX SoCs such as i.MX31/35/51/6/7.
 
+config FSL_LPSPI
+	bool "FSL LPSPI Driver"
+	help
+	  Enable the FSL LPSPI controller driver. This driver can be used
+	  on various i.MX SoCs such as i.MX7ULP/8QM/8QXP/8DX/8DXL.
+
 config MXS_SPI
 	bool "MXS SPI Driver"
 	help
