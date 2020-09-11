@@ -524,4 +524,10 @@ config SYNQUACER_SPI
 	  be used to access the SPI interface and SPI NOR flash on platforms
 	  embedding this HS-SPI IP core.
 
+config FSL_LPSPI
+	bool "FSL LPSPI Driver"
+	help
+	  Enable the FSL LPSPI controller driver. This driver can be used
+	  on various i.MX SoCs such as i.MX7ULP/8QM/8QXP/8DX/8DXL.
+
 endif # menu "SPI Support"
