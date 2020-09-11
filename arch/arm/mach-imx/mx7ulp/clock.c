@@ -114,6 +114,42 @@ u32 imx_get_i2cclk(unsigned i2c_num)
 }
 #endif
 
+#ifdef CONFIG_FSL_LPSPI
+int enable_lpspi_clk(unsigned char enable, unsigned spi_num)
+{
+	/* Set parent to FIRC DIV2 clock */
+	const enum pcc_clk lpspi_pcc_clks[] = {
+		PER_CLK_LPSPI2,
+		PER_CLK_LPSPI3,
+	};
+
+	if (spi_num < 2 || spi_num > 3)
+		return -EINVAL;
+
+	if (enable) {
+		pcc_clock_enable(lpspi_pcc_clks[spi_num - 2], false);
+		pcc_clock_sel(lpspi_pcc_clks[spi_num - 2], SCG_FIRC_DIV2_CLK);
+		pcc_clock_enable(lpspi_pcc_clks[spi_num - 2], true);
+	} else {
+		pcc_clock_enable(lpspi_pcc_clks[spi_num - 2], false);
+	}
+	return 0;
+}
+
+u32 imx_get_spiclk(unsigned spi_num)
+{
+	const enum pcc_clk lpspi_pcc_clks[] = {
+		PER_CLK_LPSPI2,
+		PER_CLK_LPSPI3,
+	};
+
+	if (spi_num < 2 || spi_num > 3)
+		return 0;
+
+	return pcc_clock_get_rate(lpspi_pcc_clks[spi_num - 2]);
+}
+#endif
+
 unsigned int mxc_get_clock(enum mxc_clock clk)
 {
 	switch (clk) {
@@ -127,6 +163,8 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 		return get_ipg_clk();
 	case MXC_I2C_CLK:
 		return pcc_clock_get_rate(PER_CLK_LPI2C4);
+	case MXC_LPSPI_CLK:
+		return pcc_clock_get_rate(PER_CLK_LPSPI3);
 	case MXC_UART_CLK:
 		return get_lpuart_clk();
 	case MXC_ESDHC_CLK:
