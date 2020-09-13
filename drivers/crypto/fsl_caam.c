@@ -615,11 +615,18 @@ static void kick_trng(u32 ent_delay)
 	val = (ent_delay << BS_TRNG_ENT_DLY) | samples;
 	__raw_writel(val, CAAM_RTSDCTL);
 
-	/* min. freq. count, equal to 1/2 of the entropy sample length */
+	/*
+	 * Recommended margins (min,max) for freq. count:
+	 *   freq_mul = RO_freq / TRNG_clk_freq
+	 *   rtfrqmin = (ent_delay x freq_mul) >> 1;
+	 *   rtfrqmax = (ent_delay x freq_mul) << 3;
+	 * Given current deployments of CAAM in i.MX SoCs, and to simplify
+	 * the configuration, we consider [1,16] to be a safe interval
+	 * for the freq_mul and the limits of the interval are used to compute
+	 * rtfrqmin, rtfrqmax
+	 */
 	__raw_writel(ent_delay >> 1, CAAM_RTFRQMIN);
-
-	/* max. freq. count, equal to 32 times the entropy sample length */
-	__raw_writel(ent_delay << 5, CAAM_RTFRQMAX);
+	__raw_writel(ent_delay << 7, CAAM_RTFRQMAX);
 
 	__raw_writel((retries << 16) | lrun_max, CAAM_RTSCMISC);
 	__raw_writel(poker_max, CAAM_RTPKRMAX);
