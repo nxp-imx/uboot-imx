@@ -409,4 +409,11 @@
 		ranges = <0x81000000 0x0 0x00000000 0xa8 0x00020000 0x0 0x00010000   /* downstream I/O */
 			  0x82000000 0x0 0x40000000 0xa8 0x40000000 0x0 0x40000000>; /* non-prefetchable memory */
 	};
+
+	firmware {
+		optee {
+			compatible = "linaro,optee-tz";
+			method = "smc";
+		};
+	};
 };
