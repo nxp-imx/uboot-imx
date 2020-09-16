@@ -156,6 +156,12 @@ config TARGET_IMX8MN_DDR4_EVK
 	select FSL_CAAM
 	select SPL_CRYPTO if SPL
 
+config TARGET_IMX8MN_DDR3_EVK
+	bool "imx8mn 11x11 DDR3 EVK board"
+	select IMX8MN
+	select SUPPORT_SPL
+	select IMX8M_DDR3L
+
 config TARGET_IMX8MN_VENICE
 	bool "Support Gateworks Venice iMX8M Nano module"
 	select BINMAN
