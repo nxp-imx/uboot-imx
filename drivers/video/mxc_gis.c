@@ -103,6 +103,11 @@ static void config_channel(struct channel_param *ch)
 	u32 val, i;
 	u32 reg_offset;
 
+	if (ch->cmd_num > 3 || ch->ch_num > 5) {
+		printf("Error val cmd_num=%d, ch_num=%d\n , \n", ch->cmd_num, ch->ch_num);
+		return;
+	}
+
 	/* Config channel map and command */
 	switch (ch->ch_num) {
 	case 0:
