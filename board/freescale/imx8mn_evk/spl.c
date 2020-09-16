@@ -192,6 +192,15 @@ int power_init_board(void)
 #ifdef CONFIG_IMX8MN_LOW_DRIVE_MODE
 	/* Set VDD_SOC/VDD_DRAM to 0.8v for low drive mode */
 	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS0, 0x10);
+#elif defined(CONFIG_TARGET_IMX8MN_DDR3_EVK)
+	/* Set VDD_SOC to 0.85v for DDR3L at 1600MTS */
+	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS0, 0x14);
+
+	/* Disable the BUCK2 */
+	pmic_reg_write(p, PCA9450_BUCK2CTRL, 0x48);
+
+	/* Set NVCC_DRAM to 1.35v */
+	pmic_reg_write(p, PCA9450_BUCK6OUT, 0x1E);
 #else
 	/* increase VDD_SOC/VDD_DRAM to typical value 0.95V before first DRAM access */
 	pmic_reg_write(p, PCA9450_BUCK1OUT_DVS0, 0x1C);
