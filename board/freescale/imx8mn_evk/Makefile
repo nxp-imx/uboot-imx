@@ -14,5 +14,6 @@ obj-$(CONFIG_IMX8M_DDR4) += ddr4_timing_ld.o
 else
 obj-$(CONFIG_IMX8M_LPDDR4) += lpddr4_timing.o
 obj-$(CONFIG_IMX8M_DDR4) += ddr4_timing.o
+obj-$(CONFIG_IMX8M_DDR3L) += ddr3l_timing.o
 endif
 endif
