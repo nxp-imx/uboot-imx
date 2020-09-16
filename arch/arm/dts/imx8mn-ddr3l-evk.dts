@@ -1,0 +1,27 @@
+// SPDX-License-Identifier: GPL-2.0+
+ /*
+  * Copyright 2020 NXP
+  */
+
+#include "imx8mn-evk.dts"
+#include "imx8mn-evk-u-boot.dtsi"
+
+/ {
+	model = "NXP i.MX8MNano DDR3L EVK board";
+};
+
+&dsi_host {
+	status = "disabled";
+};
+
+&{/rm67191_panel} {
+	status = "disabled";
+};
+
+&lcdif {
+	status = "disabled";
+};
+
+&mipi_dsi {
+	status = "disabled";
+};
