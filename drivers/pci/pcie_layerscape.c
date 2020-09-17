@@ -571,7 +571,8 @@ static int ls_pcie_probe(struct udevice *dev)
 	cfg_size = fdt_resource_size(&pcie->cfg_res);
 	if (cfg_size < SZ_8K) {
 		printf("PCIe%d: %s Invalid size(0x%llx) for resource \"config\",expected minimum 0x%x\n",
-		       PCIE_SRDS_PRTCL(pcie->idx), dev->name, cfg_size, SZ_8K);
+		       PCIE_SRDS_PRTCL(pcie->idx), dev->name,
+		       (u64)cfg_size, SZ_8K);
 		return 0;
 	}
 	/*
