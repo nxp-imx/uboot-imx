@@ -384,6 +384,11 @@ config TRUSTY_UNLOCK_PERMISSION
 config VIRTUAL_AB_SUPPORT
 	bool "Support virtual AB update"
 
+config LOAD_KEY_FROM_RPMB
+	bool "Support load AVB public key from RPMB storage"
+	default n
+	depends on IMX_TRUSTY_OS
+
 endmenu
 
 menu "Hashing Support"
