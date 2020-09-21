@@ -16,7 +16,7 @@
 #include "utils.h"
 #include "debug.h"
 #include "trusty/avb.h"
-#if !defined(CONFIG_IMX_TRUSTY_OS)
+#ifndef CONFIG_LOAD_KEY_FROM_RPMB
 #include "fsl_public_key.h"
 #endif
 #include "fsl_atx_attributes.h"
@@ -578,7 +578,7 @@ AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
 	assert(ops != NULL && out_is_trusted != NULL);
 	*out_is_trusted = false;
 
-#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_AVB_ATX)
+#ifdef CONFIG_LOAD_KEY_FROM_RPMB
 	uint8_t public_key_buf[AVB_MAX_BUFFER_LENGTH];
 	if (trusty_read_vbmeta_public_key(public_key_buf,
 						public_key_length) != 0) {
