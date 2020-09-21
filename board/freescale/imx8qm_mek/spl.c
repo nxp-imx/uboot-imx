@@ -37,9 +37,12 @@ void spl_board_init(void)
 
 	timer_init();
 
+#ifdef CONFIG_SPL_SERIAL
 	preloader_console_init();
 
 	puts("Normal Boot\n");
+#endif
+
 }
 
 void spl_board_prepare_for_boot(void)
