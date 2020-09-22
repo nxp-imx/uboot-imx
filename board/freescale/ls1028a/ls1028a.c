@@ -21,6 +21,7 @@
 #endif
 #include <fsl_immap.h>
 #include <netdev.h>
+#include <video_fb.h>
 
 #include <fdtdec.h>
 #include <miiphy.h>
@@ -301,3 +302,8 @@ int checkboard(void)
 	return 0;
 }
 #endif
+
+void *video_hw_init(void)
+{
+	return NULL;
+}
