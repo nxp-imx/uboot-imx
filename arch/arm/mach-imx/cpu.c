@@ -132,6 +132,12 @@ const char *get_imx_type(u32 imxtype)
 		return "8MNano DualLite";/* Dual-core Lite version of the imx8mn */
 	case MXC_CPU_IMX8MNSL:
 		return "8MNano SoloLite";/* Single-core Lite version of the imx8mn */
+	case MXC_CPU_IMX8MNUQ:
+		return "8MNano UltraLite Quad";/* Quad-core UltraLite version of the imx8mn */
+	case MXC_CPU_IMX8MNUD:
+		return "8MNano UltraLite Dual";/* Dual-core UltraLite version of the imx8mn */
+	case MXC_CPU_IMX8MNUS:
+		return "8MNano UltraLite Solo";/* Single-core UltraLite version of the imx8mn */
 	case MXC_CPU_IMX8MM:
 		return "8MMQ";	/* Quad-core version of the imx8mm */
 	case MXC_CPU_IMX8MML:
