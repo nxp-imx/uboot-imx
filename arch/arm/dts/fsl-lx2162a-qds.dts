@@ -16,18 +16,6 @@
 
 	aliases {
 		spi0 = &fspi;
-
-		pcie@3500000 {
-			status = "disabled";
-		};
-
-		pcie@3800000 {
-			status = "disabled";
-		};
-
-		pcie@3900000 {
-			status = "disabled";
-		};
 	};
 };
 
@@ -97,4 +85,16 @@
 
 &sata3 {
 	status = "okay";
+};
+
+&pcie2 {
+	status = "disabled";
+};
+
+&pcie5 {
+	status = "disabled";
+};
+
+&pcie6 {
+	status = "disabled";
 };
