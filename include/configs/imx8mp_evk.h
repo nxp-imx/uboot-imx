@@ -47,7 +47,29 @@
 	"emmc_dev=2\0"\
 	"sd_dev=1\0"
 
+
+#ifdef CONFIG_NAND_BOOT
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)"
+#endif
+
 /* Initial environment variables */
+#if defined(CONFIG_NAND_BOOT)
+#define CFG_EXTRA_ENV_SETTINGS \
+	CFG_MFG_ENV_SETTINGS \
+	"splashimage=0x50000000\0" \
+	"fdt_addr_r=0x43000000\0"			\
+	"fdt_high=0xffffffffffffffff\0" \
+	"mtdparts=" MFG_NAND_PARTITION "\0" \
+	"console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200\0" \
+	"bootargs=console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200 ubi.mtd=nandrootfs "  \
+		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
+		MFG_NAND_PARTITION \
+		"\0" \
+	"bootcmd=nand read ${loadaddr} 0x5000000 0x2000000;"\
+		"nand read ${fdt_addr_r} 0x7000000 0x100000;"\
+		"booti ${loadaddr} - ${fdt_addr_r}"
+
+#else
 #define CFG_EXTRA_ENV_SETTINGS		\
 	CFG_MFG_ENV_SETTINGS \
 	JAILHOUSE_ENV \
@@ -116,6 +138,7 @@
 			   "fi; " \
 		   "fi; " \
 	   "fi;"
+#endif
 
 /* Link Definitions */
 
@@ -128,10 +151,20 @@
 #define PHYS_SDRAM			0x40000000
 #define PHYS_SDRAM_SIZE			0xC0000000	/* 3 GB */
 #define PHYS_SDRAM_2			0x100000000
+#ifdef CONFIG_TARGET_IMX8MP_DDR4_EVK
+#define PHYS_SDRAM_2_SIZE		0x40000000	/* 1 GB */
+#else
 #define PHYS_SDRAM_2_SIZE		0xC0000000	/* 3 GB */
+#endif
 
 #define CFG_MXC_UART_BASE		UART2_BASE_ADDR
 
+#define CFG_SYS_NAND_BASE           0x20000000
+
+#ifdef CONFIG_TARGET_IMX8MP_DDR4_EVK
+#define CFG_SYS_FSL_USDHC_NUM	1
+#else
 #define CFG_SYS_FSL_USDHC_NUM	2
+#endif
 
 #endif

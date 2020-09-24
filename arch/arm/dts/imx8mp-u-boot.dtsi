@@ -62,25 +62,41 @@
 		};
 
 		ddr-1d-imem-fw {
+#ifdef CONFIG_IMX8M_LPDDR4
 			filename = "lpddr4_pmu_train_1d_imem_202006.bin";
+#else
+			filename = "ddr4_imem_1d_202006.bin";
+#endif
 			type = "blob-ext";
 			align-end = <4>;
 		};
 
 		ddr-1d-dmem-fw {
+#ifdef CONFIG_IMX8M_LPDDR4
 			filename = "lpddr4_pmu_train_1d_dmem_202006.bin";
+#else
+			filename = "ddr4_dmem_1d_202006.bin";
+#endif
 			type = "blob-ext";
 			align-end = <4>;
 		};
 
 		ddr-2d-imem-fw {
+#ifdef CONFIG_IMX8M_LPDDR4
 			filename = "lpddr4_pmu_train_2d_imem_202006.bin";
+#else
+			filename = "ddr4_imem_2d_202006.bin";
+#endif
 			type = "blob-ext";
 			align-end = <4>;
 		};
 
 		ddr-2d-dmem-fw {
+#ifdef CONFIG_IMX8M_LPDDR4
 			filename = "lpddr4_pmu_train_2d_dmem_202006.bin";
+#else
+			filename = "ddr4_dmem_2d_202006.bin";
+#endif
 			type = "blob-ext";
 			align-end = <4>;
 		};

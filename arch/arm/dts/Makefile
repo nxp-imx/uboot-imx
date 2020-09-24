@@ -1058,6 +1058,7 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mq-mnt-reform2.dtb \
 	imx8mq-phanbell.dtb \
 	imx8mp-dhcom-pdk2.dtb \
+	imx8mp-ddr4-evk.dtb \
 	imx8mp-evk.dtb \
 	imx8mp-icore-mx8mp-edimm2.2.dtb \
 	imx8mp-msc-sm2s.dtb \
