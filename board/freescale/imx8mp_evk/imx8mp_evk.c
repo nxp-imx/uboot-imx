@@ -64,6 +64,17 @@ int board_early_init_f(void)
 int ft_board_setup(void *blob, bd_t *bd)
 {
 #ifdef CONFIG_IMX8M_DRAM_INLINE_ECC
+#ifdef CONFIG_TARGET_IMX8MP_DDR4_EVK
+	int rc;
+	phys_addr_t ecc_start = 0x120000000;
+	size_t ecc_size = 0x20000000;
+
+	rc = add_res_mem_dt_node(blob, "ecc", ecc_start, ecc_size);
+	if (rc < 0) {
+		printf("Could not create ecc reserved-memory node.\n");
+		return rc;
+	}
+#else
 	int rc;
 	phys_addr_t ecc0_start = 0xb0000000;
 	phys_addr_t ecc1_start = 0x130000000;
@@ -87,6 +98,7 @@ int ft_board_setup(void *blob, bd_t *bd)
 		printf("Could not create ecc2 reserved-memory node.\n");
 		return rc;
 	}
+#endif
 #endif
 
 	return 0;

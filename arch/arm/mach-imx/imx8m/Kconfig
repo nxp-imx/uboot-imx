@@ -112,6 +112,12 @@ config TARGET_IMX8MP_EVK
 	select SUPPORT_SPL
 	select IMX8M_LPDDR4
 
+config TARGET_IMX8MP_DDR4_EVK
+	bool "imx8mp DDR4 EVK board"
+	select IMX8MP
+	select SUPPORT_SPL
+	select IMX8M_DDR4
+
 config TARGET_IMX8MM_AB2
 	bool "imx8mm LPDDR4 Audio board 2.0"
 	select IMX8MM
