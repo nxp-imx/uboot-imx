@@ -179,6 +179,12 @@ config TARGET_IMX8MP_EVK
 	select ARCH_MISC_INIT
 	select SPL_CRYPTO if SPL
 
+config TARGET_IMX8MP_DDR4_EVK
+	bool "imx8mp DDR4 EVK board"
+	select IMX8MP
+	select SUPPORT_SPL
+	select IMX8M_DDR4
+
 config TARGET_PICO_IMX8MQ
 	bool "Support Technexion Pico iMX8MQ"
 	select BINMAN

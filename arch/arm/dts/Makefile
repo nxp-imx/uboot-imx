@@ -984,6 +984,7 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mn-beacon-kit.dtb \
 	imx8mq-mnt-reform2.dtb \
 	imx8mq-phanbell.dtb \
+	imx8mp-ddr4-evk.dtb \
 	imx8mp-evk.dtb \
 	imx8mp-phyboard-pollux-rdk.dtb \
 	imx8mp-verdin.dtb \
