@@ -16,39 +16,48 @@
 		stdout-path = &uart2;
 	};
 
-	reg_usdhc2_vmmc: regulator-usdhc2 {
-		compatible = "regulator-fixed";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_reg_usdhc2_vmmc>;
-		regulator-name = "VSD_3V3";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		gpio = <&gpio2 19 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
-		startup-delay-us = <100>;
-		off-on-delay-us = <12000>;
-	};
+	regulators {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
 
-	reg_ab2_ana_pwr: regulator-ab2-ana-pwr {
-		compatible = "regulator-fixed";
-		regulator-name = "ab2_ana_pwr";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_ab2_ana_pwr>;
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		gpio = <&gpio1 10 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
-	};
+		reg_usdhc2_vmmc: regulator-usdhc2 {
+			compatible = "regulator-fixed";
+			reg = <0>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_reg_usdhc2_vmmc>;
+			regulator-name = "VSD_3V3";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			gpio = <&gpio2 19 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+			startup-delay-us = <100>;
+			off-on-delay-us = <12000>;
+		};
 
-	reg_ab2_vdd_pwr_5v0: regulator-ab2-vdd-pwr-5v0 {
-		compatible = "regulator-fixed";
-		regulator-name = "ab2_vdd_pwr_5v0";
-		regulator-min-microvolt = <5000000>;
-		regulator-max-microvolt = <5000000>;
-		gpio = <&gpio1 7 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
-		startup-delay-us = <100>;
-		u-boot,off-on-delay-us = <12000>;
+		reg_ab2_ana_pwr: regulator-ab2-ana-pwr {
+			compatible = "regulator-fixed";
+			reg = <2>;
+			regulator-name = "ANA_12V0";
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_ab2_ana_pwr>;
+			regulator-min-microvolt = <12000000>;
+			regulator-max-microvolt = <12000000>;
+			gpio = <&gpio1 10 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+		};
+
+		reg_ab2_vdd_pwr_5v0: regulator-ab2-vdd-pwr-5v0 {
+			compatible = "regulator-fixed";
+			reg = <1>;
+			regulator-name = "VDD_5V0";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			gpio = <&gpio1 7 GPIO_ACTIVE_HIGH>;
+			regulator-always-on;
+			regulator-boot-on;
+			enable-active-high;
+		};
 	};
 };
 
