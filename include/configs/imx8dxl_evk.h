@@ -326,7 +326,6 @@
 #define FSL_FSPI_FLASH_NUM		1
 #define FSPI0_BASE_ADDR			0x5d120000
 #define FSPI0_AMBA_BASE			0
-#define CONFIG_SYS_FSL_FSPI_AHB
 #endif
 
 #define CONFIG_SERIAL_TAG
