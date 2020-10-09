@@ -16,6 +16,9 @@
 
 	aliases {
 		spi0 = &fspi;
+		spi1 = &dspi0;
+		spi2 = &dspi1;
+		spi3 = &dspi2;
 	};
 };
 
