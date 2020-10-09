@@ -676,9 +676,9 @@ static void fspi_mem_op_read_data_fifo(struct fsl_fspi_priv *priv, u32 seqid, u8
 static void fspi_op_read(struct fsl_fspi_priv *priv, u32 *rxbuf, u32 len)
 {
 #ifdef CONFIG_FSPI_QUAD_SUPPORT
-	fspi_mem_op_read_data_fifo(priv, SEQID_QUAD_OUTPUT, rxbuf, len);
+	fspi_mem_op_read_data_fifo(priv, SEQID_QUAD_OUTPUT, (u8 *)rxbuf, len);
 #else
-	fspi_mem_op_read_data_fifo(priv, SEQID_FAST_READ, rxbuf, len);
+	fspi_mem_op_read_data_fifo(priv, SEQID_FAST_READ, (u8 *)rxbuf, len);
 #endif
 }
 #endif
