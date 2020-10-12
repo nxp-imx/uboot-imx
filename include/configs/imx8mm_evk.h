@@ -32,7 +32,11 @@
 
 #define CONFIG_POWER
 #define CONFIG_POWER_I2C
+#if defined(CONFIG_IMX8M_LPDDR4) && defined(CONFIG_TARGET_IMX8MM_EVK)
+#define CONFIG_POWER_PCA9450
+#else
 #define CONFIG_POWER_BD71837
+#endif
 
 #define CONFIG_SYS_I2C
 

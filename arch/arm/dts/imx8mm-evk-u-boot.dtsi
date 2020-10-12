@@ -144,12 +144,12 @@
 	u-boot,dm-spl;
 };
 
-&{/soc@0/bus@30800000/i2c@30a20000/pmic@4b} {
+&pmic {
 	u-boot,dm-spl;
-};
 
-&{/soc@0/bus@30800000/i2c@30a20000/pmic@4b/regulators} {
-	u-boot,dm-spl;
+	regulators {
+		u-boot,dm-spl;
+	};
 };
 
 &pinctrl_i2c1 {
