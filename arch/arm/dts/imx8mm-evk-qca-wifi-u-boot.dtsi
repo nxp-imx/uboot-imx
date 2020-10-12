@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
-/*
- * Copyright 2019 NXP
- */
+ /*
+  * Copyright 2020 NXP
+  */
 
 / {
 	wdt-reboot {
@@ -150,11 +150,11 @@
 	u-boot,dm-spl;
 };
 
-&{/soc@0/bus@30800000/i2c@30a20000/pca9450@25} {
+&{/soc@0/bus@30800000/i2c@30a20000/pmic@4b} {
 	u-boot,dm-spl;
 };
 
-&{/soc@0/bus@30800000/i2c@30a20000/pca9450@25/regulators} {
+&{/soc@0/bus@30800000/i2c@30a20000/pmic@4b/regulators} {
 	u-boot,dm-spl;
 };
 
@@ -168,14 +168,6 @@
 
 &fec1 {
 	phy-reset-gpios = <&gpio4 22 GPIO_ACTIVE_LOW>;
-};
-
-&ethphy0 {
-	vddio0: vddio-regulator {
-		regulator-name = "VDDIO";
-		regulator-min-microvolt = <1800000>;
-		regulator-max-microvolt = <1800000>;
-	};
 };
 
 &wdog1 {
