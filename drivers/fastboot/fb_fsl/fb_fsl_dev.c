@@ -395,7 +395,7 @@ static void process_flash_sf(const char *cmdbuf, void *download_buffer,
 				return;
 			}
 			/* Erase */
-			sprintf(sf_command, "sf erase 0x%x 0x%x", ptn->start * blksz, /*start*/
+			sprintf(sf_command, "sf erase 0x%x 0x%lx", ptn->start * blksz, /*start*/
 			ptn->length * blksz /*size*/);
 			ret = run_command(sf_command, 0);
 			if (ret) {
