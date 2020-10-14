@@ -276,7 +276,7 @@ void fastboot_flash_dump_ptn(void)
 	unsigned int n;
 	for (n = 0; n < g_pcount; n++) {
 		struct fastboot_ptentry *ptn = g_ptable + n;
-		printf("idx %d, ptn %d name='%s' start=%d len=%d\n",
+		printf("idx %d, ptn %d name='%s' start=%d len=%ld\n",
 			n, ptn->partition_index, ptn->name, ptn->start, ptn->length);
 	}
 }
