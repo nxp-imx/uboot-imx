@@ -638,6 +638,9 @@ int board_eth_init(bd_t *bis)
 			};
 			break;
 		case PHY_INTERFACE_MODE_RGMII:
+		case PHY_INTERFACE_MODE_RGMII_TXID:
+		case PHY_INTERFACE_MODE_RGMII_RXID:
+		case PHY_INTERFACE_MODE_RGMII_ID:
 			/* FM1 DTSEC5 routes to RGMII with EC2 */
 			debug("FM1@DTSEC%u is RGMII at address %u\n",
 				idx + 1, 2);
@@ -816,6 +819,9 @@ int board_eth_init(bd_t *bis)
 			};
 			break;
 		case PHY_INTERFACE_MODE_RGMII:
+		case PHY_INTERFACE_MODE_RGMII_TXID:
+		case PHY_INTERFACE_MODE_RGMII_RXID:
+		case PHY_INTERFACE_MODE_RGMII_ID:
 			/*
 			 * If DTSEC5 is RGMII, then it's routed via via EC1 to
 			 * the first on-board RGMII port.  If DTSEC6 is RGMII,

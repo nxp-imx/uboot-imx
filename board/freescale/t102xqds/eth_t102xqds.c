@@ -168,14 +168,19 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 {
 	struct fixed_link f_link;
 
-	if (fm_info_get_enet_if(port) == PHY_INTERFACE_MODE_RGMII) {
+	switch (fm_info_get_enet_if(port)) {
+	case PHY_INTERFACE_MODE_RGMII:
+	case PHY_INTERFACE_MODE_RGMII_TXID:
+	case PHY_INTERFACE_MODE_RGMII_RXID:
+	case PHY_INTERFACE_MODE_RGMII_ID:
 		if (port == FM1_DTSEC3) {
 			fdt_set_phy_handle(fdt, compat, addr, "rgmii_phy2");
 			fdt_setprop_string(fdt, offset, "phy-connection-type",
 					   "rgmii");
 			fdt_status_okay_by_alias(fdt, "emi1_rgmii1");
 		}
-	} else if (fm_info_get_enet_if(port) == PHY_INTERFACE_MODE_SGMII) {
+		break;
+	case PHY_INTERFACE_MODE_SGMII:
 		if (port == FM1_DTSEC1) {
 			fdt_set_phy_handle(fdt, compat, addr,
 					   "sgmii_vsc8234_phy_s5");
@@ -183,12 +188,14 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 			fdt_set_phy_handle(fdt, compat, addr,
 					   "sgmii_vsc8234_phy_s4");
 		}
-	} else if (fm_info_get_enet_if(port) == PHY_INTERFACE_MODE_SGMII_2500) {
+		break;
+	case PHY_INTERFACE_MODE_SGMII_2500:
 		if (port == FM1_DTSEC3) {
 			fdt_set_phy_handle(fdt, compat, addr,
 					   "sgmii_aqr105_phy_s3");
 		}
-	} else if (fm_info_get_enet_if(port) == PHY_INTERFACE_MODE_QSGMII) {
+		break;
+	case PHY_INTERFACE_MODE_QSGMII:
 		switch (port) {
 		case FM1_DTSEC1:
 			fdt_set_phy_handle(fdt, compat, addr, "qsgmii_phy_p1");
@@ -209,7 +216,8 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 		fdt_setprop_string(fdt, offset, "phy-connection-type",
 				   "qsgmii");
 		fdt_status_okay_by_alias(fdt, "emi1_slot2");
-	} else if (fm_info_get_enet_if(port) == PHY_INTERFACE_MODE_XGMII) {
+		break;
+	case PHY_INTERFACE_MODE_XGMII:
 		/* XFI interface */
 		f_link.phy_id = port;
 		f_link.duplex = 1;
@@ -220,6 +228,9 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 		fdt_delprop(fdt, offset, "phy-handle");
 		fdt_setprop(fdt, offset, "fixed-link", &f_link, sizeof(f_link));
 		fdt_setprop_string(fdt, offset, "phy-connection-type", "xgmii");
+		break;
+	default:
+		break;
 	}
 }
 
@@ -408,6 +419,9 @@ int board_eth_init(bd_t *bis)
 			}
 			break;
 		case PHY_INTERFACE_MODE_RGMII:
+		case PHY_INTERFACE_MODE_RGMII_TXID:
+		case PHY_INTERFACE_MODE_RGMII_RXID:
+		case PHY_INTERFACE_MODE_RGMII_ID:
 			if (i == FM1_DTSEC3)
 				mdio_mux[i] = EMI1_RGMII2;
 			else if (i == FM1_DTSEC4)
