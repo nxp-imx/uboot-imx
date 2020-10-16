@@ -5,3 +5,4 @@ config VIDEO_NXP_HDP
 	  Enable NXP HDP Library for HDMI and HDMI/DP firmware loading
 
 source "drivers/video/nxp/imx/Kconfig"
+source "drivers/video/nxp/layerscape/Kconfig"
