@@ -237,15 +237,27 @@ CDN_API_STATUS cdn_api_get_debug_reg_val(uint16_t *val)
 
 CDN_API_STATUS cdn_api_checkalive(void)
 {
-	static unsigned int alive;
-	unsigned int newalive;
+	unsigned int alive, newalive;
+	u8 retries_left = 10;
 
-	if (cdn_apb_read(KEEP_ALIVE << 2, &newalive))
+	if (cdn_apb_read(KEEP_ALIVE << 2, &alive))
 		return CDN_ERR;
-	if (alive == newalive)
-		return CDN_BSY;
-	alive = newalive;
-	return CDN_OK;
+
+	while (retries_left--) {
+		udelay(1);
+
+		if (cdn_apb_read(KEEP_ALIVE << 2, &newalive))
+			return CDN_ERR;
+
+		if (alive == newalive)
+			continue;
+
+		return CDN_OK;
+	}
+
+	printf("%s: keep-alive counter did not increment for 10us...\n", __func__);
+
+	return CDN_BSY;
 }
 
 CDN_API_STATUS cdn_api_checkalive_blocking(void)

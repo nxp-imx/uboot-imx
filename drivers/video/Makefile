@@ -71,4 +71,4 @@ obj-$(CONFIG_VIDEO_VESA) += vesa.o
 
 obj-y += bridge/
 obj-y += sunxi/
-obj-y += imx/
+obj-y += nxp/
