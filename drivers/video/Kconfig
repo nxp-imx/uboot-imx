@@ -667,7 +667,7 @@ config VIDEO_TEGRA124
 
 source "drivers/video/bridge/Kconfig"
 
-source "drivers/video/imx/Kconfig"
+source "drivers/video/nxp/Kconfig"
 
 config VIDEO_NX
 	bool "Enable video support on Nexell SoC"

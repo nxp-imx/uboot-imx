@@ -27,6 +27,7 @@ config VIDEO_IMX_HDP_LOAD
 	bool "i.MX8 HDMI/DP firmware loading"
 	default n
 	depends on IMX8QM
+	select VIDEO_NXP_HDP
 	help
 	  Support for HDMI/DP firmware loading for i.MX8QM processors. The
 	  firmware is copied from system memory to the HDMI/DP IRAM and
@@ -46,6 +47,7 @@ config VIDEO_IMX8M_HDMI
 	depends on IMX8M && DM_VIDEO
 	select DISPLAY
 	select VIDEO_LINK
+	select VIDEO_NXP_HDP
 	help
 	  Support for HDMI on i.MX8MQ processors.
 
