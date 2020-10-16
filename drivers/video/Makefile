@@ -85,4 +85,4 @@ obj-$(CONFIG_VIDEO_GIS) += mxc_gis.o
 
 obj-y += bridge/
 obj-y += sunxi/
-obj-y += imx/
+obj-y += nxp/
