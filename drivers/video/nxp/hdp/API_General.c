@@ -3,39 +3,9 @@
  * Copyright (C) 2016-2017 Cadence Design Systems, Inc.
  * All rights reserved worldwide.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the copyright holder nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. THE SOFTWARE IS PROVIDED "AS IS",
- * WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
- * FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  * Copyright 2017-2018 NXP
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  ******************************************************************************
  *
@@ -66,22 +36,23 @@ void cdn_api_init(void)
 }
 
 CDN_API_STATUS hdp_rx_loadfirmware(unsigned char *imem, int imemsize,
-				    unsigned char *dmem, int dmemsize)
+				   unsigned char *dmem, int dmemsize)
 {
 	int i;
+
 	for (i = 0; i < imemsize; i += 4)
 		if (hdp_rx_apb_write(ADDR_IMEM + i,
-				  (unsigned int)imem[i] << 0 |
-				  (unsigned int)imem[i + 1] << 8 |
-				  (unsigned int)imem[i + 2] << 16 |
-				  (unsigned int)imem[i + 3] << 24))
+				     (unsigned int)imem[i] << 0 |
+				     (unsigned int)imem[i + 1] << 8 |
+				     (unsigned int)imem[i + 2] << 16 |
+				     (unsigned int)imem[i + 3] << 24))
 			return CDN_ERR;
 	for (i = 0; i < dmemsize; i += 4)
 		if (hdp_rx_apb_write(ADDR_DMEM + i,
-				  (unsigned int)dmem[i] << 0 |
-				  (unsigned int)dmem[i + 1] << 8 |
-				  (unsigned int)dmem[i + 2] << 16 |
-				  (unsigned int)dmem[i + 3] << 24))
+				     (unsigned int)dmem[i] << 0 |
+				     (unsigned int)dmem[i + 1] << 8 |
+				     (unsigned int)dmem[i + 2] << 16 |
+				     (unsigned int)dmem[i + 3] << 24))
 			return CDN_ERR;
 	return CDN_OK;
 }
@@ -90,6 +61,7 @@ CDN_API_STATUS cdn_api_loadfirmware(unsigned char *imem, int imemsize,
 				    unsigned char *dmem, int dmemsize)
 {
 	int i;
+
 	for (i = 0; i < imemsize; i += 4)
 		if (cdn_apb_write(ADDR_IMEM + i,
 				  (unsigned int)imem[i] << 0 |
@@ -111,6 +83,7 @@ CDN_API_STATUS cdn_api_general_test_echo(unsigned int val,
 					 CDN_BUS_TYPE bus_type)
 {
 	CDN_API_STATUS ret;
+
 	if (!state.running) {
 		if (!internal_apb_available())
 			return CDN_BSY;
@@ -141,8 +114,8 @@ CDN_API_STATUS cdn_api_general_test_echo_blocking(unsigned int val,
 	internal_block_function(cdn_api_general_test_echo(val, bus_type));
 }
 
-CDN_API_STATUS cdn_api_general_test_echo_ext(uint8_t const *msg, uint8_t *resp,
-					     uint16_t num_bytes,
+CDN_API_STATUS cdn_api_general_test_echo_ext(u8 const *msg, u8 *resp,
+					     u16 num_bytes,
 					     CDN_BUS_TYPE bus_type)
 {
 	CDN_API_STATUS ret;
@@ -190,20 +163,20 @@ CDN_API_STATUS cdn_api_general_test_echo_ext(uint8_t const *msg, uint8_t *resp,
 	return CDN_OK;
 }
 
-CDN_API_STATUS cdn_api_general_test_echo_ext_blocking(uint8_t const *msg,
-						      uint8_t *resp,
-						      uint16_t num_bytes,
+CDN_API_STATUS cdn_api_general_test_echo_ext_blocking(u8 const *msg,
+						      u8 *resp,
+						      u16 num_bytes,
 						      CDN_BUS_TYPE bus_type)
 {
 	internal_block_function(cdn_api_general_test_echo_ext
-				(msg, resp, num_bytes, bus_type)
-	    );
+				(msg, resp, num_bytes, bus_type));
 }
 
 CDN_API_STATUS cdn_api_general_getcurversion(unsigned short *ver,
 					     unsigned short *verlib)
 {
 	unsigned int vh, vl, vlh, vll;
+
 	if (cdn_apb_read(VER_L << 2, &vl))
 		return CDN_ERR;
 	if (cdn_apb_read(VER_H << 2, &vh))
@@ -219,7 +192,7 @@ CDN_API_STATUS cdn_api_general_getcurversion(unsigned short *ver,
 
 CDN_API_STATUS cdn_api_get_event(uint32_t *events)
 {
-	uint32_t evt[4] = { 0 };
+	u32 evt[4] = { 0 };
 
 	if (!events) {
 		printf("events pointer is NULL!\n");
@@ -244,7 +217,7 @@ CDN_API_STATUS cdn_api_get_event(uint32_t *events)
 
 CDN_API_STATUS cdn_api_get_debug_reg_val(uint16_t *val)
 {
-	uint32_t dbg[2] = { 0 };
+	u32 dbg[2] = { 0 };
 
 	if (!val) {
 		printf("val pointer is NULL!\n");
@@ -257,7 +230,7 @@ CDN_API_STATUS cdn_api_get_debug_reg_val(uint16_t *val)
 		return CDN_ERR;
 	}
 
-	*val = (uint16_t) ((dbg[0] & 0xFF) | ((dbg[1] & 0xFF) << 8));
+	*val = (u16)((dbg[0] & 0xFF) | ((dbg[1] & 0xFF) << 8));
 
 	return CDN_OK;
 }
@@ -265,7 +238,7 @@ CDN_API_STATUS cdn_api_get_debug_reg_val(uint16_t *val)
 CDN_API_STATUS cdn_api_checkalive(void)
 {
 	unsigned int alive, newalive;
-	uint8_t retries_left = 10;
+	u8 retries_left = 10;
 
 	if (cdn_apb_read(KEEP_ALIVE << 2, &alive))
 		return CDN_ERR;
@@ -316,14 +289,14 @@ CDN_API_STATUS cdn_api_maincontrol_blocking(unsigned char mode,
 	internal_block_function(cdn_api_maincontrol(mode, resp));
 }
 
-CDN_API_STATUS cdn_api_apbconf(uint8_t dpcd_bus_sel, uint8_t dpcd_bus_lock,
-			       uint8_t hdcp_bus_sel, uint8_t hdcp_bus_lock,
-			       uint8_t capb_bus_sel, uint8_t capb_bus_lock,
-			       uint8_t *dpcd_resp, uint8_t *hdcp_resp,
-			       uint8_t *capb_resp)
+CDN_API_STATUS cdn_api_apbconf(u8 dpcd_bus_sel, u8 dpcd_bus_lock,
+			       u8 hdcp_bus_sel, u8 hdcp_bus_lock,
+			       u8 capb_bus_sel, u8 capb_bus_lock,
+			       u8 *dpcd_resp, u8 *hdcp_resp,
+			       u8 *capb_resp)
 {
-	uint8_t resp;
-	uint8_t set = 0;
+	u8 resp;
+	u8 set = 0;
 
 	if (!state.running) {
 		if (!internal_apb_available())
@@ -374,15 +347,15 @@ CDN_API_STATUS cdn_api_apbconf(uint8_t dpcd_bus_sel, uint8_t dpcd_bus_lock,
 	return CDN_OK;
 }
 
-CDN_API_STATUS cdn_api_apbconf_blocking(uint8_t dpcd_bus_sel,
-					uint8_t dpcd_bus_lock,
-					uint8_t hdcp_bus_sel,
-					uint8_t hdcp_bus_lock,
-					uint8_t capb_bus_sel,
-					uint8_t capb_bus_lock,
-					uint8_t *dpcd_resp,
-					uint8_t *hdcp_resp,
-					uint8_t *capb_resp)
+CDN_API_STATUS cdn_api_apbconf_blocking(u8 dpcd_bus_sel,
+					u8 dpcd_bus_lock,
+					u8 hdcp_bus_sel,
+					u8 hdcp_bus_lock,
+					u8 capb_bus_sel,
+					u8 capb_bus_lock,
+					u8 *dpcd_resp,
+					u8 *hdcp_resp,
+					u8 *capb_resp)
 {
 	internal_block_function(cdn_api_apbconf(dpcd_bus_sel, dpcd_bus_lock,
 						hdcp_bus_sel, hdcp_bus_lock,
@@ -401,6 +374,7 @@ CDN_API_STATUS cdn_api_general_read_register(unsigned int addr,
 					     *resp)
 {
 	CDN_API_STATUS ret;
+
 	if (!state.running) {
 		if (!internal_apb_available())
 			return CDN_BSY;

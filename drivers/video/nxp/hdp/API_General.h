@@ -3,39 +3,9 @@
  * Copyright (C) 2016-2017 Cadence Design Systems, Inc.
  * All rights reserved worldwide.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the copyright holder nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. THE SOFTWARE IS PROVIDED "AS IS",
- * WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
- * FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  * Copyright 2017-2018 NXP
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  ******************************************************************************
  *
@@ -168,16 +138,16 @@ CDN_API_STATUS cdn_api_general_test_echo_blocking(unsigned int val,
  * will return #CDN_ERROR if reply message doesn't match request or if
  *  arguments are invalid.
  */
-CDN_API_STATUS cdn_api_general_test_echo_ext(uint8_t const *msg, uint8_t *resp,
-					     uint16_t num_bytes,
+CDN_API_STATUS cdn_api_general_test_echo_ext(u8 const *msg, u8 *resp,
+					     u16 num_bytes,
 					     CDN_BUS_TYPE bus_type);
 
 /**
  * \brief blocking version of #CDN_API_General_Test_Echo_Ext
  */
-CDN_API_STATUS cdn_api_general_test_echo_ext_blocking(uint8_t const *msg,
-						      uint8_t *resp,
-						      uint16_t num_bytes,
+CDN_API_STATUS cdn_api_general_test_echo_ext_blocking(u8 const *msg,
+						      u8 *resp,
+						      u16 num_bytes,
 						      CDN_BUS_TYPE bus_type);
 
 /**
@@ -186,7 +156,7 @@ CDN_API_STATUS cdn_api_general_test_echo_ext_blocking(uint8_t const *msg,
  * \param [out] libver - lib version
  * \return status
  *
- * this fucntion does not require #CDN_API_Init
+ * this function does not require #CDN_API_Init
  */
 CDN_API_STATUS cdn_api_general_getcurversion(unsigned short *ver,
 					     unsigned short *verlib);
@@ -212,13 +182,13 @@ CDN_API_STATUS cdn_api_get_debug_reg_val(uint16_t *val);
 /**
  * \brief check if KEEP_ALIVE register changed
  * \return #CDN_BSY if KEEP_ALIVE not changed, #CDN_OK if changed and #CDN_ERR
- * if error occured while reading
+ * if error occurred while reading
  */
 CDN_API_STATUS cdn_api_checkalive(void);
 
 /**
  * \breif blocking version of #CDN_API_CheckAlive
- * blocks untill KEEP_ALIVE register changes or error occurs while reading
+ * blocks until KEEP_ALIVE register changes or error occurs while reading
  */
 CDN_API_STATUS cdn_api_checkalive_blocking(void);
 
@@ -247,31 +217,31 @@ CDN_API_STATUS cdn_api_maincontrol_blocking(unsigned char mode,
  * @param capb_bus_sel Same meaning as for DPCD but for Cipher APB.
  * @param capb_bus_lock Same meaning as for DPCD but for Cipher APB.
  * @param dpcd_resp [out] Status of the operation.
- * If set to zero then DPCD bus type was successfuly changed.
+ * If set to zero then DPCD bus type was successfully changed.
  * If not then error occurred, most likely due to locked DPCD bus.
  * @param hdcp_resp [out] Same as for DPCD but for HDCP.
  * @param capb_resp [out] Same as for DPCD but for Cipher APB.
  *
  * \return status
  */
-CDN_API_STATUS cdn_api_apbconf(uint8_t dpcd_bus_sel, uint8_t dpcd_bus_lock,
-			       uint8_t hdcp_bus_sel, uint8_t hdcp_bus_lock,
-			       uint8_t capb_bus_sel, uint8_t capb_bus_lock,
-			       uint8_t *dpcd_resp, uint8_t *hdcp_resp,
-			       uint8_t *capb_resp);
+CDN_API_STATUS cdn_api_apbconf(u8 dpcd_bus_sel, u8 dpcd_bus_lock,
+			       u8 hdcp_bus_sel, u8 hdcp_bus_lock,
+			       u8 capb_bus_sel, u8 capb_bus_lock,
+			       u8 *dpcd_resp, u8 *hdcp_resp,
+			       u8 *capb_resp);
 
 /**
  * blocking version of #CDN_API_MainControl
  */
-CDN_API_STATUS cdn_api_apbconf_blocking(uint8_t dpcd_bus_sel,
-					uint8_t dpcd_bus_lock,
-					uint8_t hdcp_bus_sel,
-					uint8_t hdcp_bus_lock,
-					uint8_t capb_bus_sel,
-					uint8_t capb_bus_lock,
-					uint8_t *dpcd_resp,
-					uint8_t *hdcp_resp,
-					uint8_t *capb_resp);
+CDN_API_STATUS cdn_api_apbconf_blocking(u8 dpcd_bus_sel,
+					u8 dpcd_bus_lock,
+					u8 hdcp_bus_sel,
+					u8 hdcp_bus_lock,
+					u8 capb_bus_sel,
+					u8 capb_bus_lock,
+					u8 *dpcd_resp,
+					u8 *hdcp_resp,
+					u8 *capb_resp);
 
 /**
  * \brief set the  xtensa clk, write this api before turn on the cpu
@@ -296,10 +266,10 @@ CDN_API_STATUS cdn_api_general_write_field_blocking(unsigned int addr,
 						    unsigned char startbit,
 						    unsigned char bitsno,
 						    unsigned int val);
-CDN_API_STATUS cdn_api_general_phy_test_access(uint8_t *resp);
-CDN_API_STATUS cdn_api_general_phy_test_access_blocking(uint8_t *resp);
+CDN_API_STATUS cdn_api_general_phy_test_access(u8 *resp);
+CDN_API_STATUS cdn_api_general_phy_test_access_blocking(u8 *resp);
 CDN_API_STATUS hdp_rx_loadfirmware(unsigned char *imem,
-				    int imemsize,
-				    unsigned char *dmem, int dmemsize);
-
+				   int imemsize,
+				   unsigned char *dmem,
+				   int dmemsize);
 #endif

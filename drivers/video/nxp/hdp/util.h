@@ -3,39 +3,9 @@
  * Copyright (C) 2016-2017 Cadence Design Systems, Inc.
  * All rights reserved worldwide.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Copyright 2017-2018 NXP
  *
- * 1. Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the copyright holder nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. THE SOFTWARE IS PROVIDED "AS IS",
- * WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
- * FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * Copyright 2017 NXP
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  ******************************************************************************
  *
@@ -74,7 +44,8 @@ do {						\
 } while (0)
 
 /**
- * \brief write message and write response (if any), non-blocking way. Also sets state.running = 0
+ * \brief write message and write response (if any), non-blocking way.
+ * Also sets state.running = 0
  */
 #define INTERNAL_PROCESS_MESSAGES				\
 do {								\
@@ -99,8 +70,10 @@ do {								\
 		return ret;					\
 } while (0)
 
-/* macro for simple tx only command, command format as in mkfullmsg
-   (with count) */
+/*
+ * macro for simple tx only command, command format as in mkfullmsg
+ * (with count)
+ */
 #define internal_macro_command_tx(module, opcode, bustype, command...)	\
 do {									\
 	if (!state.running) {						\
@@ -111,8 +84,10 @@ do {									\
 	INTERNAL_PROCESS_MESSAGES;					\
 } while (0)
 
-/* macro for command with response with matching opcode, command format as in
-   mkfullmsg (with count) */
+/*
+ * macro for command with response with matching opcode, command format as in
+ * mkfullmsg (with count)
+ */
 #define internal_macro_command_txrx(module, opcode, bustype, command...) \
 do {									\
 	if (!state.running) {						\
@@ -167,7 +142,7 @@ void internal_itobe(int val, volatile unsigned char *dest, int bytes);
  * \param bytes - size of read value
  * \return result
  */
-uint32_t internal_betoi(volatile uint8_t const *src, uint8_t bytes);
+u32 internal_betoi(volatile u8 const *src, u8 bytes);
 
 /**
  * \brief create message from size and value pairs; also sets
@@ -198,7 +173,7 @@ void internal_mbox_tx_enable(unsigned char module, unsigned char opcode,
 			     unsigned short length);
 
 /**
- * \brief write from txBuffer to mailbox untill full or end of message.
+ * \brief write from txBuffer to mailbox until full or end of message.
  *
  * when txEnable == 0 writes nothing
  * when write reaches end of message set txEnable = 0
@@ -208,7 +183,7 @@ void internal_mbox_tx_enable(unsigned char module, unsigned char opcode,
  * \brief combination of #internal_mkmsg and #internal_mbox_tx_enable
  *
  * #internal_mkmsg dest and #internal_mbox_tx_enable length are determined
- * automaticly this function also sets state.txEnable = 1 and
+ * automatically this function also sets state.txEnable = 1 and
  * state.running
  */
 void internal_tx_mkfullmsg(unsigned char module, unsigned char opcode,
@@ -225,7 +200,7 @@ void internal_vtx_mkfullmsg(unsigned char module, unsigned char opcode,
  *
  * when size is positive read value using #internal_betoi
  * when size is negative mempcy from txBuffer to ptr -size bytes
- * when size is 0 write to ptr addres of current position in rxbuffer
+ * when size is 0 write to ptr address of current position in rxbuffer
  * when ptr is NULL ignore size bytes (if size is negative this
  * will rewind buffer)
  */
@@ -234,7 +209,7 @@ void internal_vreadmsg(int valno, va_list vl);
 
 INTERNAL_MBOX_STATUS internal_mbox_tx_process(void);
 /**
- * \brief read to rxBuffer from mailbox untill empty or end of message
+ * \brief read to rxBuffer from mailbox until empty or end of message
  *
  * when rxEnable == 0 reads nothing
  * when end of message reached sets rxEnable = 0
@@ -274,7 +249,7 @@ typedef struct {
 } state_struct;
 
 extern state_struct state;
-extern int cdn_bus_read(unsigned int addr, unsigned int* value);
+extern int cdn_bus_read(unsigned int addr, unsigned int *value);
 extern int cdn_bus_write(unsigned int addr, unsigned int value);
 unsigned short internal_get_msg_len(void);
 

@@ -16,7 +16,7 @@
 #include <linux/err.h>
 #include <asm/io.h>
 
-#include "../videomodes.h"
+#include "../../videomodes.h"
 #include <linux/string.h>
 #include <linux/list.h>
 #include <linux/fb.h>

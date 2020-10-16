@@ -573,7 +573,7 @@ config VIDEO_TEGRA124
 
 source "drivers/video/bridge/Kconfig"
 
-source "drivers/video/imx/Kconfig"
+source "drivers/video/nxp/Kconfig"
 
 config VIDEO
 	bool "Enable legacy video support"
