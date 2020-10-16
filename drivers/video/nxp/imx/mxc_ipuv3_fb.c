@@ -22,7 +22,7 @@
 #include <asm/io.h>
 #include <asm/mach-imx/video.h>
 #include <malloc.h>
-#include "../videomodes.h"
+#include "../../videomodes.h"
 #include "ipu.h"
 #include "mxcfb.h"
 #include "ipu_regs.h"
