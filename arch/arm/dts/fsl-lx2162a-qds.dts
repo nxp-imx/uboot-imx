@@ -1,32 +1,32 @@
 // SPDX-License-Identifier: GPL-2.0+ OR X11
 /*
- * NXP ls1028AQDS device tree source
+ * NXP LX2162AQDS device tree source
  *
- * Copyright 2019 NXP
+ * Copyright 2020 NXP
  *
  */
 
 /dts-v1/;
 
-#include "fsl-ls1028a.dtsi"
+#include "fsl-lx2160a.dtsi"
 
 / {
-	model = "NXP Layerscape 1028a QDS Board";
-	compatible = "fsl,ls1028a-qds", "fsl,ls1028a";
+	model = "NXP Layerscape LX2162AQDS Board";
+	compatible = "fsl,lx2162aqds", "fsl,lx2160a";
+
 	aliases {
 		spi0 = &fspi;
 		spi1 = &dspi0;
 		spi2 = &dspi1;
 		spi3 = &dspi2;
 	};
-
 };
 
 &dspi0 {
 	bus-num = <0>;
 	status = "okay";
 
-	dflash0: sst25wf040b {
+	dflash0: n25q128a {
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "spi-flash";
@@ -35,8 +35,7 @@
 		spi-cpha;
 		reg = <0>;
 	};
-
-	dflash1: en25s64 {
+	dflash1: sst25wf040b {
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "spi-flash";
@@ -45,7 +44,7 @@
 		spi-cpha;
 		reg = <1>;
 	};
-	dflash2: n25q128a {
+	dflash2: en25s64 {
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "spi-flash";
@@ -60,7 +59,7 @@
 	bus-num = <0>;
 	status = "okay";
 
-	dflash3: sst25wf040b {
+	dflash3: n25q128a {
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "spi-flash";
@@ -69,8 +68,7 @@
 		spi-cpha;
 		reg = <0>;
 	};
-
-	dflash4: en25s64 {
+	dflash4: sst25wf040b {
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "spi-flash";
@@ -79,7 +77,7 @@
 		spi-cpha;
 		reg = <1>;
 	};
-	dflash5: n25q128a {
+	dflash5: en25s64 {
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "spi-flash";
@@ -94,7 +92,7 @@
 	bus-num = <0>;
 	status = "okay";
 
-	dflash8: en25s64 {
+	dflash6: n25q128a {
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "spi-flash";
@@ -103,21 +101,30 @@
 		spi-cpha;
 		reg = <0>;
 	};
-};
-
-&esdhc0 {
-	status = "okay";
-};
-
-&esdhc1 {
-	status = "okay";
-
+	dflash7: sst25wf040b {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "spi-flash";
+		spi-max-frequency = <3000000>;
+		spi-cpol;
+		spi-cpha;
+		reg = <1>;
+	};
+	dflash8: en25s64 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "spi-flash";
+		spi-max-frequency = <3000000>;
+		spi-cpol;
+		spi-cpha;
+		reg = <2>;
+	};
 };
 
 &fspi {
 	status = "okay";
 
-	mt35xu02g0: flash@0 {
+	mt35xu512aba0: flash@0 {
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "jedec,spi-nor";
@@ -128,129 +135,68 @@
 	};
 };
 
+&usb1 {
+	status = "disabled";
+};
+
+&esdhc0 {
+	status = "okay";
+};
+
+&esdhc1 {
+	status = "okay";
+	mmc-hs200-1_8v;
+	mmc-hs400-1_8v;
+	bus-width = <8>;
+};
+
 &i2c0 {
 	status = "okay";
 	u-boot,dm-pre-reloc;
-
-	fpga@66 {
-		#address-cells = <1>;
-		#size-cells = <0>;
-		compatible = "simple-mfd";
-		reg = <0x66>;
-
-		mux-mdio@54 {
-			#address-cells = <1>;
-			#size-cells = <0>;
-			compatible = "mdio-mux-i2creg";
-			reg = <0x54>;
-			#mux-control-cells = <1>;
-			mux-reg-masks = <0x54 0xf0>;
-			mdio-parent-bus = <&mdio0>;
-
-			/* on-board MDIO with a single RGMII PHY */
-			mdio@00 {
-				#address-cells = <1>;
-				#size-cells = <0>;
-				reg = <0x00>;
-
-				qds_phy0: phy@5 {
-					reg = <5>;
-				};
-			};
-			/* slot 1 */
-			slot1: mdio@40 {
-				#address-cells = <1>;
-				#size-cells = <0>;
-				reg = <0x40>;
-			};
-			/* slot 2 */
-			slot2: mdio@50 {
-				#address-cells = <1>;
-				#size-cells = <0>;
-				reg = <0x50>;
-			};
-			/* slot 3 */
-			slot3: mdio@60 {
-				#address-cells = <1>;
-				#size-cells = <0>;
-				reg = <0x60>;
-			};
-			/* slot 4 */
-			slot4: mdio@70 {
-				#address-cells = <1>;
-				#size-cells = <0>;
-				reg = <0x70>;
-			};
-		};
-	};
 
 	i2c-mux@77 {
 		compatible = "nxp,pca9547";
 		reg = <0x77>;
 		#address-cells = <1>;
 		#size-cells = <0>;
+
+		i2c@3 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x3>;
+
+			rtc@51 {
+				compatible = "pcf2127-rtc";
+				reg = <0x51>;
+			};
+		};
 	};
 };
 
-&i2c1 {
-	status = "okay";
-
-	rtc@51 {
-		compatible = "pcf2127-rtc";
-		reg = <0x51>;
-	};
-};
-
-&i2c2 {
+&sata0 {
 	status = "okay";
 };
 
-&i2c3 {
+&sata1 {
 	status = "okay";
 };
 
-&i2c4 {
+&sata2 {
 	status = "okay";
 };
 
-&i2c5 {
+&sata3 {
 	status = "okay";
 };
 
-&i2c6 {
-	status = "okay";
+&pcie2 {
+	status = "disabled";
 };
 
-&i2c7 {
-	status = "okay";
+&pcie5 {
+	status = "disabled";
 };
 
-&sata {
-	status = "okay";
-};
-
-&serial0 {
-	status = "okay";
-};
-
-&serial1 {
-	status = "okay";
-};
-
-&usb1 {
-	status = "okay";
-};
-
-&usb2 {
-	status = "okay";
-};
-
-&enetc1 {
-	status = "okay";
-	phy-mode = "rgmii";
-	phy-handle = <&qds_phy0>;
-};
-
-&mdio0 {
-	status = "okay";
+&pcie6 {
+	status = "disabled";
 };

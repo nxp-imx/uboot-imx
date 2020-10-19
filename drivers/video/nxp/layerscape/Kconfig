@@ -1,0 +1,10 @@
+
+config VIDEO_LS_HDP_LOAD
+	bool "NXP Layerscape HDMI/DP firmware loading"
+	default n
+	depends on VIDEO
+	select VIDEO_NXP_HDP
+	help
+	  Support for HDMI/DP firmware loading for NXP Layerscape processors. The
+	  firmware is copied from system memory to the HDMI/DP IRAM and
+	  DRAM memory.

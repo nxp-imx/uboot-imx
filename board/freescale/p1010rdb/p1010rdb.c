@@ -125,7 +125,7 @@ int board_early_init_r(void)
 	return 0;
 }
 
-#ifdef CONFIG_PCI
+#if defined(CONFIG_PCI) && !defined(CONFIG_DM_PCI)
 void pci_init_board(void)
 {
 	fsl_pcie_init_board(0);
@@ -481,6 +481,7 @@ int checkboard(void)
 	return 0;
 }
 
+#ifndef CONFIG_DM_ETH
 int board_eth_init(bd_t *bis)
 {
 #ifdef CONFIG_TSEC_ENET
@@ -521,6 +522,7 @@ int board_eth_init(bd_t *bis)
 
 	return pci_eth_init(bis);
 }
+#endif
 
 #if defined(CONFIG_OF_BOARD_SETUP)
 void fdt_del_flexcan(void *blob)
@@ -611,7 +613,7 @@ int ft_board_setup(void *blob, bd_t *bd)
 	base = env_get_bootm_low();
 	size = env_get_bootm_size();
 
-#if defined(CONFIG_PCI)
+#if defined(CONFIG_PCI) && !defined(CONFIG_DM_PCI)
 	FT_FSL_PCI_SETUP;
 #endif
 

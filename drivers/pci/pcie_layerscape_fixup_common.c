@@ -40,6 +40,8 @@ int lx2_board_fix_fdt(void *fdt)
 		{ "config_axi_slave", "config" }
 	};
 	int off = -1, i;
+	const fdt32_t *prop;
+	u32 ob_wins, ib_wins;
 
 	off = fdt_node_offset_by_compatible(fdt, -1, "fsl,lx2160a-pcie");
 	while (off != -FDT_ERR_NOTFOUND) {
@@ -85,6 +87,32 @@ int lx2_board_fix_fdt(void *fdt)
 		off = fdt_node_offset_by_compatible(fdt, off,
 						    "fsl,lx2160a-pcie");
 	}
+
+	/* Fixup PCIe EP nodes */
+	off = -1;
+	off = fdt_node_offset_by_compatible(fdt, off, "fsl,lx2160a-pcie-ep");
+	while (off != -FDT_ERR_NOTFOUND) {
+		fdt_setprop_string(fdt, off, "compatible",
+				   "fsl,lx2160ar2-pcie-ep");
+		prop = fdt_getprop(fdt, off, "apio-wins", NULL);
+		if (!prop) {
+			printf("%s: Failed to fixup PCIe EP node @0x%x\n",
+			       __func__, off);
+			off = fdt_node_offset_by_compatible(fdt, off,
+							    "fsl,lx2160a-pcie-ep");
+			continue;
+		}
+
+		ob_wins = fdt32_to_cpu(*prop);
+		ib_wins = (ob_wins == 256) ? 24 : 8;
+		fdt_setprop_u32(fdt, off, "num-ib-windows", ib_wins);
+		fdt_setprop_u32(fdt, off, "num-ob-windows", ob_wins);
+		fdt_delprop(fdt, off, "apio-wins");
+
+		off = fdt_node_offset_by_compatible(fdt, off,
+						    "fsl,lx2160a-pcie-ep");
+	}
+
 	return 0;
 }
 
@@ -94,13 +122,16 @@ int pcie_board_fix_fdt(void *fdt)
 
 	svr = SVR_SOC_VER(get_svr());
 
-	if (svr == SVR_LX2160A && IS_SVR_REV(get_svr(), 2, 0))
+	if ((svr == SVR_LX2160A || svr == SVR_LX2162A ||
+	     svr == SVR_LX2120A || svr == SVR_LX2080A ||
+	     svr == SVR_LX2122A || svr == SVR_LX2082A) &&
+	     IS_SVR_REV(get_svr(), 2, 0))
 		return lx2_board_fix_fdt(fdt);
 
 	return 0;
 }
 
-#ifdef CONFIG_ARCH_LX2160A
+#if defined(CONFIG_ARCH_LX2160A) || defined(CONFIG_ARCH_LX2162A)
 /* returns the next available streamid for pcie, -errno if failed */
 int pcie_next_streamid(int currentid, int idx)
 {

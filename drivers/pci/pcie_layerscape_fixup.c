@@ -39,8 +39,6 @@ static int fdt_pcie_get_nodeoffset(void *blob, struct ls_pcie *pcie)
 			compat = "fsl,ls2088a-pcie";
 		else
 			compat = CONFIG_FSL_PCIE_COMPAT;
-		if (!compat)
-			return nodeoffset;
 		nodeoffset =
 			fdt_node_offset_by_compat_reg(blob, compat,
 						      pcie->dbi_res.start);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2014-2015 Freescale Semiconductor
- * Copyright 2019 NXP
+ * Copyright 2019-2020 NXP
  */
 
 #include <common.h>
@@ -32,6 +32,8 @@
 #include <env_internal.h>
 DECLARE_GLOBAL_DATA_PTR;
 #endif
+#include <dm.h>
+#include <linux/err.h>
 
 bool soc_has_dp_ddr(void)
 {
@@ -148,7 +150,8 @@ static void erratum_a008997(void)
 	out_be16((phy) + SCFG_USB_PHY_RX_OVRD_IN_HI, USB_PHY_RX_EQ_VAL_4)
 
 #elif defined(CONFIG_ARCH_LS2080A) || defined(CONFIG_ARCH_LS1088A) || \
-	defined(CONFIG_ARCH_LS1028A) || defined(CONFIG_ARCH_LX2160A)
+	defined(CONFIG_ARCH_LS1028A) || defined(CONFIG_ARCH_LX2160A) || \
+	defined(CONFIG_ARCH_LX2162A)
 
 #define PROGRAM_USB_PHY_RX_OVRD_IN_HI(phy)	\
 	out_le16((phy) + DCSR_USB_PHY_RX_OVRD_IN_HI, USB_PHY_RX_EQ_VAL_1); \
@@ -184,7 +187,7 @@ static void erratum_a009007(void)
 #if defined(CONFIG_FSL_LSCH3)
 static void erratum_a050106(void)
 {
-#if defined(CONFIG_ARCH_LX2160A)
+#if defined(CONFIG_ARCH_LX2160A) || defined(CONFIG_ARCH_LX2162A)
 	void __iomem *dcsr = (void __iomem *)DCSR_BASE;
 
 	PROGRAM_USB_PHY_RX_OVRD_IN_HI(dcsr + DCSR_USB_PHY1);
@@ -354,7 +357,8 @@ void fsl_lsch3_early_init_f(void)
 #endif
 
 #if defined(CONFIG_ARCH_LS1088A) || defined(CONFIG_ARCH_LS1028A) || \
-	defined(CONFIG_ARCH_LS2080A) || defined(CONFIG_ARCH_LX2160A)
+	defined(CONFIG_ARCH_LS2080A) || defined(CONFIG_ARCH_LX2160A) || \
+	defined(CONFIG_ARCH_LX2162A)
 	set_icids();
 #endif
 }
@@ -877,6 +881,39 @@ __weak int fsl_board_late_init(void)
 	return 0;
 }
 
+#define DWC3_GSBUSCFG0			0xc100
+#define DWC3_GSBUSCFG0_CACHETYPE_SHIFT	16
+#define DWC3_GSBUSCFG0_CACHETYPE(n)        (((n) & 0xffff)            \
+	<< DWC3_GSBUSCFG0_CACHETYPE_SHIFT)
+
+void enable_dwc3_snooping(void)
+{
+	int ret;
+	u32 val;
+	struct udevice *bus;
+	struct uclass *uc;
+	fdt_addr_t dwc3_base;
+
+	ret = uclass_get(UCLASS_USB, &uc);
+	if (ret)
+		return;
+
+	uclass_foreach_dev(bus, uc) {
+		if (!strcmp(bus->driver->of_match->compatible,
+			    "fsl,layerscape-dwc3")) {
+			dwc3_base = devfdt_get_addr(bus);
+			if (dwc3_base == FDT_ADDR_T_NONE) {
+				dev_err(bus, "dwc3 regs missing\n");
+				continue;
+			}
+			val = in_le32(dwc3_base + DWC3_GSBUSCFG0);
+			val &= ~DWC3_GSBUSCFG0_CACHETYPE(~0);
+			val |= DWC3_GSBUSCFG0_CACHETYPE(0x2222);
+			writel(val, dwc3_base + DWC3_GSBUSCFG0);
+		}
+	}
+}
+
 int board_late_init(void)
 {
 #ifdef CONFIG_CHAIN_OF_TRUST
@@ -913,6 +950,9 @@ int board_late_init(void)
 #ifdef CONFIG_FSPI_AHB_EN_4BYTE
 	fspi_ahb_init();
 #endif
+
+	if (IS_ENABLED(CONFIG_DM))
+		enable_dwc3_snooping();
 
 	return fsl_board_late_init();
 }

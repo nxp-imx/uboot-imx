@@ -41,6 +41,9 @@
 #define HDMI_RX_SEC_OFFSET_ADDR 0x58261008
 #endif
 
+#ifdef CONFIG_ARCH_LS1028A
+#define HDMI_BASE	0xf200000
+#endif
 #endif
 
 #ifdef CONFIG_ARCH_IMX8M
@@ -192,3 +195,22 @@ void cdn_usleep(uint32_t us)
 }
 #endif
 
+#ifdef CONFIG_ARCH_LS1028A
+int cdn_apb_read(unsigned int addr, unsigned int *value)
+{
+	unsigned int temp;
+	u64 tmp_addr = addr + HDMI_BASE;
+
+	temp = __raw_readl(tmp_addr);
+	*value = temp;
+	return 0;
+}
+
+int cdn_apb_write(unsigned int addr, unsigned int value)
+{
+	u64 tmp_addr = addr + HDMI_BASE;
+
+	__raw_writel(value, tmp_addr);
+	return 0;
+}
+#endif
