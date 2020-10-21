@@ -47,6 +47,10 @@
 #define ATAP_UUID_STR_SIZE ((ATAP_UUID_SIZE*2) + 1)
 #endif
 
+#ifdef CONFIG_VIRTUAL_AB_SUPPORT
+#include "fb_fsl_virtual_ab.h"
+#endif
+
 #if defined(CONFIG_ANDROID_THINGS_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
 #define FASTBOOT_COMMON_VAR_NUM 15
 #else
@@ -434,6 +438,16 @@ static int get_single_var(char *cmd, char *response)
 
 	}
 #endif
+#ifdef CONFIG_VIRTUAL_AB_SUPPORT
+	else if (!strcmp_l1("snapshot-update-status", cmd)) {
+		if (virtual_ab_update_is_merging())
+			strncat(response, "merging", chars_left);
+		else if (virtual_ab_update_is_snapshoted())
+			strncat(response, "snapshotted", chars_left);
+		else
+			strncat(response, "none", chars_left);
+	}
+#endif
 	else {
 		char envstr[32];
 
@@ -539,6 +553,12 @@ void fastboot_getvar(char *cmd, char *response)
 				fastboot_tx_write_more(response);
 			}
 		}
+
+#ifdef CONFIG_VIRTUAL_AB_SUPPORT
+		strncpy(response, "INFOsnapshot-update-status:", FASTBOOT_RESPONSE_LEN);
+		get_single_var("snapshot-update-status", response);
+		fastboot_tx_write_more(response);
+#endif
 
 		strncpy(response, "OKAYDone!", 10);
 		fastboot_tx_write_more(response);
