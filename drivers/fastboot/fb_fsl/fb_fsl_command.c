@@ -948,6 +948,35 @@ static void run_acmd(char *cmd_parameter, char *response)
 }
 #endif
 
+#ifdef CONFIG_VIRTUAL_AB_SUPPORT
+static void snapshot_update(char *cmd_parameter, char *response)
+{
+	if (endswith(cmd_parameter, "cancel")) {
+		FbLockState status;
+		status = fastboot_get_lock_stat();
+		if ((status == FASTBOOT_LOCK) || (status == FASTBOOT_LOCK_ERROR)) {
+			printf("Can not cancel snapshot update when the device is locked!\n");
+			fastboot_fail("device is locked!", response);
+		} else if (virtual_ab_update_is_merging() || virtual_ab_update_is_snapshoted()) {
+			if (virtual_ab_cancel_update() != -1)
+				fastboot_okay(NULL, response);
+			else
+				fastboot_fail("Can't cancel snapshot update!", response);
+		} else {
+			printf("Device is not in 'merging' or 'snapshotted' state, do nothing...\n");
+			fastboot_okay(NULL, response);
+		}
+
+		return;
+	} else {
+		printf("Error! Only 'cancel' is supported!");
+		strcpy(response, "FAILInternal error!");
+	}
+
+	return;
+}
+#endif
+
 static const struct {
 	const char *command;
 	void (*dispatch)(char *cmd_parameter, char *response);
@@ -1030,6 +1059,12 @@ static const struct {
 		[FASTBOOT_COMMAND_RECOVERY_FASTBOOT] = {
 			.command = "reboot-fastboot",
 			.dispatch = reboot_fastboot,
+		},
+#endif
+#ifdef CONFIG_VIRTUAL_AB_SUPPORT
+		[FASTBOOT_COMMAND_SNAPSHOT_UPDATE] = {
+			.command = "snapshot-update",
+			.dispatch = snapshot_update,
 		},
 #endif
 };
