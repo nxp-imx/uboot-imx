@@ -12,6 +12,7 @@
 static int read_virtual_ab_message(misc_virtual_ab_message *message)
 {
 	size_t num_bytes;
+	int source_slot;
 
 	if (fsl_read_from_partition_multi(NULL, FASTBOOT_PARTITION_MISC,
 					SYSTEM_SPACE_SIZE_IN_MISC,
@@ -23,11 +24,18 @@ static int read_virtual_ab_message(misc_virtual_ab_message *message)
 
 	if ((message->magic != MISC_VIRTUAL_AB_MAGIC_HEADER) ||
 		(message->version != MISC_VIRTUAL_AB_MESSAGE_VERSION)) {
-		printf("Invalid virtual AB status, resetting...");
+		printf("Invalid virtual AB status, resetting...\n");
 		message->version = MISC_VIRTUAL_AB_MESSAGE_VERSION;
 		message->magic = MISC_VIRTUAL_AB_MAGIC_HEADER;
 		message->merge_status = VIRTUAL_AB_NONE;
-		message->source_slot = 0;
+
+		/* Reset the source slot as the current slot */
+		source_slot = current_slot();
+		if (source_slot != -1)
+			message->source_slot = source_slot;
+		else
+			return -1;
+
 		if (fsl_write_to_partition(NULL, FASTBOOT_PARTITION_MISC,
 						SYSTEM_SPACE_SIZE_IN_MISC,
 						sizeof(misc_virtual_ab_message),
@@ -48,7 +56,8 @@ bool partition_is_protected_during_merge(char *part)
 	if ((!strncmp(part, "misc", sizeof("misc")) ||
 		!strncmp(part, "userdata", sizeof("userdata")) ||
 		!strncmp(part, "metadata", sizeof("metadata"))) &&
-		(virtual_ab_update_is_merging() || virtual_ab_update_is_snapshoted()))
+		(virtual_ab_update_is_merging() ||
+		 (virtual_ab_update_is_snapshoted() && !virtual_ab_slot_match())))
 		return true;
 	else
 		return false;
@@ -70,6 +79,17 @@ bool virtual_ab_update_is_snapshoted(void)
 
 	read_virtual_ab_message(&message);
 	if (message.merge_status == VIRTUAL_AB_SNAPSHOTTED)
+		return true;
+	else
+		return false;
+}
+
+bool virtual_ab_slot_match(void)
+{
+	misc_virtual_ab_message message;
+	read_virtual_ab_message(&message);
+
+	if (message.source_slot == current_slot())
 		return true;
 	else
 		return false;
