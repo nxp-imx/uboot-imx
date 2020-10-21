@@ -14,4 +14,5 @@ typedef enum {
 bool partition_is_protected_during_merge(char *part);
 bool virtual_ab_update_is_merging(void);
 bool virtual_ab_update_is_snapshoted(void);
+bool virtual_ab_slot_match(void);
 int virtual_ab_cancel_update(void);

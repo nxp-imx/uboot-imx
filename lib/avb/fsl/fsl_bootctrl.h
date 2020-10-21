@@ -133,6 +133,13 @@ bool is_slotvar_avb(char *cmd);
  * */
 int get_curr_slot(struct bootloader_control* ab_data);
 
+/* Get current bootable slot without passing the "bootloader_control" struct.
+ * return 0 for the first slot
+ * return 1 for the second slot
+ * return -1 for not supported slot
+ * */
+int current_slot(void);
+
 /* return 0 for the first slot
  * return 1 for the second slot
  * return -1 for not supported slot

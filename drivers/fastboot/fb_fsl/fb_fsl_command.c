@@ -413,7 +413,8 @@ static FbLockState do_fastboot_unlock(bool force)
 #endif
 
 #ifdef CONFIG_VIRTUAL_AB_SUPPORT
-		if (virtual_ab_update_is_merging() || virtual_ab_update_is_snapshoted()) {
+		if (virtual_ab_update_is_merging() ||
+			(virtual_ab_update_is_snapshoted() && !virtual_ab_slot_match())) {
 			printf("Can not erase userdata while a snapshot update is in progress!\n");
 			return FASTBOOT_LOCK_ERROR;
 		}
@@ -441,7 +442,8 @@ static FbLockState do_fastboot_lock(void)
 	}
 
 #ifdef CONFIG_VIRTUAL_AB_SUPPORT
-		if (virtual_ab_update_is_merging() || virtual_ab_update_is_snapshoted()) {
+		if (virtual_ab_update_is_merging() ||
+			(virtual_ab_update_is_snapshoted() && !virtual_ab_slot_match())) {
 			printf("Can not erase userdata while a snapshot update is in progress!\n");
 			return FASTBOOT_LOCK_ERROR;
 		}
