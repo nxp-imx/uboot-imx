@@ -9,7 +9,7 @@
 #include "avb_version.h"
 #include <malloc.h>
 
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_ANDROID_DYNAMIC_PARTITION
 #define NUM_GUIDS 3
 #else
 #define NUM_GUIDS 2
@@ -24,7 +24,7 @@ char* avb_sub_cmdline(AvbOps* ops,
                       const char* ab_suffix,
                       bool using_boot_for_vbmeta,
                       const AvbCmdlineSubstList* additional_substitutions) {
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_ANDROID_DYNAMIC_PARTITION
   const char* part_name_str[NUM_GUIDS] = {"system", "boot", "vbmeta"};
   const char* replace_str[NUM_GUIDS] = {"$(ANDROID_SYSTEM_PARTUUID)",
                                         "$(ANDROID_BOOT_PARTUUID)",
@@ -42,7 +42,7 @@ char* avb_sub_cmdline(AvbOps* ops,
    * partition.
    */
   if (using_boot_for_vbmeta) {
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_ANDROID_DYNAMIC_PARTITION
     part_name_str[2] = "boot";
 #else
     part_name_str[1] = "boot";

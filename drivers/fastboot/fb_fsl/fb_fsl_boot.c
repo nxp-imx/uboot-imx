@@ -218,7 +218,11 @@ U_BOOT_CMD(
 );
 #endif
 
-#if defined CONFIG_SYSTEM_RAMDISK_SUPPORT && defined CONFIG_ANDROID_AUTO_SUPPORT
+#ifdef CONFIG_CMD_BOOTA
+
+/* Section for Android bootimage format support */
+
+#ifndef CONFIG_ANDROID_DYNAMIC_PARTITION
 /* Setup booargs for taking the system parition as ramdisk */
 static void fastboot_setup_system_boot_args(const char *slot, bool append_root)
 {
@@ -257,14 +261,6 @@ static void fastboot_setup_system_boot_args(const char *slot, bool append_root)
 	}
 }
 #endif
-
-#ifdef CONFIG_CMD_BOOTA
-
-/* Section for Android bootimage format support
-* Refer:
-* http://android.git.kernel.org/?p=platform/system/core.git;a=blob;
-* f=mkbootimg/bootimg.h
-*/
 
 void
 bootimg_print_image_hdr(struct andr_img_hdr *hdr)
@@ -697,15 +693,15 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 					avb_out_data->ab_suffix);
 		}
 		strcat(bootargs_sec, avb_out_data->cmdline);
-#if defined(CONFIG_ANDROID_AB_SUPPORT) && !defined(CONFIG_ANDROID_AUTO_SUPPORT)
-		/* for standard android, recovery ramdisk will be used anyway, to
-		 * boot up Android, "androidboot.force_normal_boot=1" is needed */
+#ifdef CONFIG_ANDROID_DYNAMIC_PARTITION
+		/* for the condition dynamic partition is used , recovery ramdisk is used to boot
+		 * up Android, in this condition, "androidboot.force_normal_boot=1" is needed */
 		if(!is_recovery_mode) {
 			strcat(bootargs_sec, " androidboot.force_normal_boot=1");
 		}
 #endif
 		env_set("bootargs_sec", bootargs_sec);
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_ANDROID_DYNAMIC_PARTITION
 		if(!is_recovery_mode) {
 			if(avb_out_data->cmdline != NULL && strstr(avb_out_data->cmdline, "root="))
 				fastboot_setup_system_boot_args(avb_out_data->ab_suffix, false);
@@ -781,7 +777,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		memcpy((void *)(ulong)vendor_boot_hdr->ramdisk_addr + vendor_boot_hdr->vendor_ramdisk_size,
 				(void *)(ulong)hdr_v3 + 4096 + ALIGN(hdr_v3->kernel_size, 4096), hdr_v3->ramdisk_size);
 	} else {
-#if !defined(CONFIG_SYSTEM_RAMDISK_SUPPORT) || !defined(CONFIG_ANDROID_AUTO_SUPPORT)
+#if !defined(CONFIG_SYSTEM_RAMDISK_SUPPORT) || defined(CONFIG_ANDROID_DYNAMIC_PARTITION)
 		memcpy((void *)(ulong)hdr->ramdisk_addr, (void *)(ulong)hdr + hdr->page_size
 				+ ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
 #else
@@ -887,7 +883,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	sprintf(fdt_addr_start, "0x%x", fdt_addr);
 
 	/* Don't pass ramdisk addr for Android Auto if we are not booting from recovery */
-#ifdef CONFIG_ANDROID_AUTO_SUPPORT
+#ifndef CONFIG_ANDROID_DYNAMIC_PARTITION
 	if (!is_recovery_mode)
 		boot_args[2] = NULL;
 #endif

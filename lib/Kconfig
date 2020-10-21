@@ -381,8 +381,12 @@ config TRUSTY_UNLOCK_PERMISSION
 	bool "Support unlock permission protection in trusty"
 	depends on IMX_TRUSTY_OS
 
+config ANDROID_DYNAMIC_PARTITION
+	bool "Support to boot up Android with system image in logical partitions"
+
 config VIRTUAL_AB_SUPPORT
 	bool "Support virtual AB update"
+	select ANDROID_DYNAMIC_PARTITION
 
 config LOAD_KEY_FROM_RPMB
 	bool "Support load AVB public key from RPMB storage"
