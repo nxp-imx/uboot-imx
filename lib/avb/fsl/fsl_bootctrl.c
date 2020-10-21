@@ -37,6 +37,7 @@
  * hardware/interfaces/boot/1.1/default/boot_control/include/libboot_control/libboot_control.h
  */
 #define FSL_AB_METADATA_MISC_PARTITION_OFFSET 2048
+extern AvbABOps fsl_avb_ab_ops;
 
 static char *slot_suffix[AVB_AB_SLOT_NUM] = {"_a", "_b"};
 
@@ -59,6 +60,19 @@ int get_curr_slot(struct bootloader_control *ab_data) {
 		return 1;
 	else
 		return -1;
+}
+
+/* Return current slot without passing 'bootloader_control' struct */
+int current_slot(void) {
+	struct bootloader_control ab_data;
+
+	/* Load A/B metadata and decide which slot we are going to load */
+	if (fsl_avb_ab_ops.read_ab_metadata(&fsl_avb_ab_ops, &ab_data) !=
+					    AVB_IO_RESULT_OK) {
+		printf("Error loading AB metadata from misc!\n");
+		return -1;
+	}
+	return get_curr_slot(&ab_data);
 }
 
 int slotidx_from_suffix(char *suffix) {
@@ -1060,7 +1074,6 @@ out:
 	return ret;
 }
 
-extern AvbABOps fsl_avb_ab_ops;
 static bool spl_recovery_flag = false;
 bool is_spl_recovery(void)
 {
