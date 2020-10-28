@@ -25,9 +25,9 @@ int get_margin_pos(uint64_t part_start, uint64_t part_end, unsigned long blksz,
 		return -1;
 
 	if (offset < 0) {
-		margin->blk_start = (offset + 1) / (uint64_t)blksz + part_end;
+		margin->blk_start = (offset + 1) / (int64_t)blksz + part_end;
  		// offset == -1 means the last byte?, or start need -1
-		margin->start = (off = offset % (uint64_t)blksz) == 0 ?
+		margin->start = (off = offset % (int64_t)blksz) == 0 ?
 			        0 : blksz + off;
 		if (offset + num_bytes - 1 >= 0) {
 			if (!allow_partial)
@@ -37,9 +37,9 @@ int get_margin_pos(uint64_t part_start, uint64_t part_end, unsigned long blksz,
 		} else {
  			// which blk the last byte is in
 			margin->blk_end = (num_bytes + offset) /
-					  (uint64_t)blksz + part_end;
+					  (int64_t)blksz + part_end;
 			margin->end = (off = (num_bytes + offset - 1) %
-				      (uint64_t)blksz) == 0 ?
+				      (int64_t)blksz) == 0 ?
 				      0 : blksz + off; // last byte
 		}
 	} else {
