@@ -6,6 +6,8 @@
 #ifndef __ASM_ARCH_IMX8_REGS_H__
 #define __ASM_ARCH_IMX8_REGS_H__
 
+#include <asm/mach-imx/regs-lcdif.h>
+
 #define ARCH_MXC
 
 #define LPUART_BASE		0x5A060000
