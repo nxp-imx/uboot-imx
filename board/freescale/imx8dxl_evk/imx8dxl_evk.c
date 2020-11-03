@@ -118,6 +118,115 @@ int board_early_init_f(void)
 #if CONFIG_IS_ENABLED(DM_GPIO)
 static void board_gpio_init(void)
 {
+#if defined(CONFIG_DM_VIDEO)
+	int ret;
+	struct gpio_desc desc;
+
+	/* M40_DEBUG_UART_SEL */
+	ret = dm_gpio_lookup_name("gpio@20_3", &desc);
+	if (ret) {
+		printf("%s lookup gpio@20_3 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "M40_DEBUG_UART_SEL");
+	if (ret) {
+		printf("%s request M40_DEBUG_UART_SEL failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE | GPIOD_ACTIVE_LOW);
+
+	/* SPI0_SEL */
+	ret = dm_gpio_lookup_name("gpio@20_8", &desc);
+	if (ret) {
+		printf("%s lookup gpio@20_8 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "SPI0_SEL");
+	if (ret) {
+		printf("%s request SPI0_SEL failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE | GPIOD_ACTIVE_LOW);
+
+	/* UART1_SEL */
+	ret = dm_gpio_lookup_name("gpio@20_6", &desc);
+	if (ret) {
+		printf("%s lookup gpio@20_6 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "UART1_SEL");
+	if (ret) {
+		printf("%s request UART1_SEL failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE | GPIOD_ACTIVE_LOW);
+
+	/* MUX3_EN */
+	ret = dm_gpio_lookup_name("gpio@21_8", &desc);
+	if (ret) {
+		printf("%s lookup gpio@21_8 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "MUX3_EN");
+	if (ret) {
+		printf("%s request MUX3_EN failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE | GPIOD_ACTIVE_LOW);
+
+	/* SPI3_CS0_SEL */
+	ret = dm_gpio_lookup_name("gpio@20_4", &desc);
+	if (ret) {
+		printf("%s lookup gpio@20_4 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "SPI3_CS0_SEL");
+	if (ret) {
+		printf("%s request SPI3_CS0_SEL failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE | GPIOD_ACTIVE_LOW);
+
+	/* SPI3_SEL */
+	ret = dm_gpio_lookup_name("gpio@20_7", &desc);
+	if (ret) {
+		printf("%s lookup gpio@20_7 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "SPI3_SEL");
+	if (ret) {
+		printf("%s request SPI3_SEL failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE | GPIOD_ACTIVE_LOW);
+
+	/* BL_CTR */
+	ret = dm_gpio_lookup_name("gpio@20_5", &desc);
+	if (ret) {
+		printf("%s lookup gpio@20_5 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "BL_CTR");
+	if (ret) {
+		printf("%s request BL_CTR failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+#endif
 }
 #else
 static inline void board_gpio_init(void) {}
