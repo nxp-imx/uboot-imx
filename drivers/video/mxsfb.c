@@ -14,8 +14,11 @@
 #include <malloc.h>
 #include <video.h>
 #include <video_fb.h>
-
+#if CONFIG_IS_ENABLED(CLK) && IS_ENABLED(CONFIG_IMX8)
+#include <clk.h>
+#else
 #include <asm/arch/clock.h>
+#endif
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/dma.h>
@@ -74,8 +77,9 @@ static void mxs_lcd_init(phys_addr_t reg_base, u32 fb_addr, struct ctfb_res_mode
 	uint8_t valid_data = 0;
 
 	/* Kick in the LCDIF clock */
+#if !(CONFIG_IS_ENABLED(CLK) && IS_ENABLED(CONFIG_IMX8))
 	mxs_set_lcdclk((u32)reg_base, PS2KHZ(mode->pixclock));
-
+#endif
 	/* Restart the LCDIF block */
 	mxs_reset_block(&regs->hw_lcdif_ctrl_reg);
 
@@ -365,6 +369,12 @@ struct mxsfb_priv {
 	struct reset_ctl_bulk soft_resetn;
 	struct reset_ctl_bulk clk_enable;
 #endif
+
+#if CONFIG_IS_ENABLED(CLK) && IS_ENABLED(CONFIG_IMX8)
+	struct clk			lcdif_pix;
+	struct clk			lcdif_disp_axi;
+	struct clk			lcdif_axi;
+#endif
 };
 
 #if IS_ENABLED(CONFIG_DM_RESET)
@@ -499,6 +509,38 @@ static int mxs_video_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
+#if CONFIG_IS_ENABLED(CLK) && IS_ENABLED(CONFIG_IMX8)
+	ret = clk_get_by_name(dev, "pix", &priv->lcdif_pix);
+	if (ret) {
+		printf("Failed to get pix clk\n");
+		return ret;
+	}
+
+	ret = clk_get_by_name(dev, "disp_axi", &priv->lcdif_disp_axi);
+	if (ret) {
+		printf("Failed to get disp_axi clk\n");
+		return ret;
+	}
+
+	ret = clk_get_by_name(dev, "axi", &priv->lcdif_axi);
+	if (ret) {
+		printf("Failed to get axi clk\n");
+		return ret;
+	}
+
+	ret = clk_enable(&priv->lcdif_axi);
+	if (ret) {
+		printf("unable to enable lcdif_axi clock\n");
+		return ret;
+	}
+
+	ret = clk_enable(&priv->lcdif_disp_axi);
+	if (ret) {
+		printf("unable to enable lcdif_disp_axi clock\n");
+		return ret;
+	}
+#endif
+
 #if IS_ENABLED(CONFIG_DM_RESET)
 	ret = lcdif_of_parse_resets(dev);
 	if (!ret) {
@@ -560,6 +602,20 @@ static int mxs_video_probe(struct udevice *dev)
 	mode.vsync_len = timings.vsync_len.typ;
 	mode.pixclock = HZ2PS(timings.pixelclock.typ);
 
+#if CONFIG_IS_ENABLED(CLK) && IS_ENABLED(CONFIG_IMX8)
+	ret = clk_set_rate(&priv->lcdif_pix, timings.pixelclock.typ);
+	if (ret < 0) {
+		printf("Failed to set pix clk rate\n");
+		return ret;
+	}
+
+	ret = clk_enable(&priv->lcdif_pix);
+	if (ret) {
+		printf("unable to enable lcdif_pix clock\n");
+		return ret;
+	}
+#endif
+
 	ret = mxs_probe_common(priv->reg_base, &mode, bpp, plat->base, enable_bridge, enable_pol);
 	if (ret)
 		return ret;
@@ -585,9 +641,9 @@ static int mxs_video_probe(struct udevice *dev)
 	uc_priv->ysize = mode.yres;
 
 	/* Enable dcache for the frame buffer */
-	fb_start = plat->base & ~(MMU_SECTION_SIZE - 1);
+	fb_start = plat->base;
 	fb_end = plat->base + plat->size;
-	fb_end = ALIGN(fb_end, 1 << MMU_SECTION_SHIFT);
+
 	mmu_set_region_dcache_behaviour(fb_start, fb_end - fb_start,
 					DCACHE_WRITEBACK);
 	video_set_flush_dcache(dev, true);
@@ -601,7 +657,8 @@ static int mxs_video_bind(struct udevice *dev)
 	struct video_uc_platdata *plat = dev_get_uclass_platdata(dev);
 
 	/* Max size supported by LCDIF, because in bind, we can't probe panel */
-	plat->size = 1920 * 1080 *4 * 2;
+	plat->size = ALIGN(1920 * 1080 *4 * 2, MMU_SECTION_SIZE);
+	plat->align = MMU_SECTION_SIZE;
 
 	return 0;
 }
