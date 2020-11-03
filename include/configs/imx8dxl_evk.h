@@ -134,7 +134,7 @@
 	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
-	"panel=NULL\0" \
+	"splashimage=0x9e000000\0" \
 	"console=ttyLP0\0" \
 	"fdt_addr=0x83000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
@@ -284,5 +284,9 @@
 
 #define CONFIG_ETHPRIME                 "eth1"
 #define PHY_ANEG_TIMEOUT 20000
+
+#if defined(CONFIG_DM_VIDEO)
+#define CONFIG_VIDEO_LINK
+#endif
 
 #endif /* __IMX8DXL_EVK_H */
