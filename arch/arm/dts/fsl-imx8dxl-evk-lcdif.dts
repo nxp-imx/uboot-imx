@@ -1,0 +1,85 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Copyright 2020 NXP.
+ */
+
+#include "fsl-imx8dxl-evk.dts"
+#include "fsl-imx8dxl-evk-u-boot.dtsi"
+
+&eqos {
+	status = "disabled";
+};
+
+&lpspi3 {
+	status = "disabled";
+};
+
+&iomuxc {
+	pinctrl_lcdif: lcdifgrp {
+		fsl,pins = <
+			SC_P_SPI3_SCK_ADMA_LCDIF_D00			0x00000023
+			SC_P_SPI3_SDO_ADMA_LCDIF_D01		0x00000023
+			SC_P_SPI3_SDI_ADMA_LCDIF_D02			0x00000023
+			SC_P_ENET1_RGMII_TXD3_ADMA_LCDIF_D03		0x00000023
+			SC_P_UART1_TX_ADMA_LCDIF_D04		0x00000023
+			SC_P_UART1_RX_ADMA_LCDIF_D05		0x00000023
+			SC_P_UART1_RTS_B_ADMA_LCDIF_D06		0x00000023
+			SC_P_UART1_CTS_B_ADMA_LCDIF_D07		0x00000023
+			SC_P_SPI0_SCK_ADMA_LCDIF_D08			0x00000023
+			SC_P_SPI0_SDI_ADMA_LCDIF_D09			0x00000023
+			SC_P_SPI0_SDO_ADMA_LCDIF_D10		0x00000023
+			SC_P_SPI0_CS1_ADMA_LCDIF_D11			0x00000023
+			SC_P_SPI0_CS0_ADMA_LCDIF_D12			0x00000023
+			SC_P_ADC_IN1_ADMA_LCDIF_D13			0x00200003
+			SC_P_ADC_IN0_ADMA_LCDIF_D14			0x00200003
+			SC_P_ADC_IN3_ADMA_LCDIF_D15			0x00200003
+			SC_P_ADC_IN2_ADMA_LCDIF_D16			0x00200003
+			SC_P_ADC_IN5_ADMA_LCDIF_D17			0x00200003
+			SC_P_SPI3_CS0_ADMA_LCDIF_HSYNC		0x00000023
+			SC_P_SPI3_CS1_ADMA_LCDIF_RESET		0x00000023
+			SC_P_MCLK_IN1_ADMA_LCDIF_EN			0x00000023
+			SC_P_MCLK_IN0_ADMA_LCDIF_VSYNC		0x00000023
+			SC_P_MCLK_OUT0_ADMA_LCDIF_CLK		0x00000023
+		>;
+	};
+};
+
+&adma_lcdif {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lcdif>;
+	status = "okay";
+
+	assigned-clocks = <&clk IMX8QXP_LCD_SEL>,
+			<&clk IMX8QXP_LCD_PXL_SEL>,
+			<&clk IMX8QXP_ELCDIF_PLL_DIV>;
+	assigned-clock-parents = <&clk IMX8QXP_ELCDIF_PLL_DIV>,
+			<&clk IMX8QXP_LCD_PXL_BYPASS_DIV>;
+	assigned-clock-rates = <0>, <0>, <711000000>;
+
+	display = <&display0>;
+
+	display0: display@0 {
+		bits-per-pixel = <18>;
+		bus-width = <24>;
+
+		display-timings {
+			native-mode = <&timing0>;
+			timing0: timing0 {
+				clock-frequency = <71100000>;
+				hactive = <1280>;
+				vactive = <800>;
+				hfront-porch = <70>;
+				hback-porch = <80>;
+				hsync-len = <10>;
+				vback-porch = <10>;
+				vfront-porch = <10>;
+				vsync-len = <3>;
+
+				hsync-active = <0>;
+				vsync-active = <0>;
+				de-active = <1>;
+				pixelclk-active = <0>;
+			};
+		};
+	};
+};
