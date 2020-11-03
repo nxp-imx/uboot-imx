@@ -419,9 +419,9 @@ static int mxs_video_probe(struct udevice *dev)
 	uc_priv->ysize = timings.vactive.typ;
 
 	/* Enable dcache for the frame buffer */
-	fb_start = plat->base & ~(MMU_SECTION_SIZE - 1);
+	fb_start = plat->base;
 	fb_end = plat->base + plat->size;
-	fb_end = ALIGN(fb_end, 1 << MMU_SECTION_SHIFT);
+
 	mmu_set_region_dcache_behaviour(fb_start, fb_end - fb_start,
 					DCACHE_WRITEBACK);
 	video_set_flush_dcache(dev, true);
@@ -435,7 +435,8 @@ static int mxs_video_bind(struct udevice *dev)
 	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
 
 	/* Max size supported by LCDIF, because in bind, we can't probe panel */
-	plat->size = 1920 * 1080 *4 * 2;
+	plat->size = ALIGN(1920 * 1080 *4 * 2, MMU_SECTION_SIZE);
+	plat->align = MMU_SECTION_SIZE;
 
 	return 0;
 }
