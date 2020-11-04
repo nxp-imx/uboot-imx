@@ -80,8 +80,13 @@ static void append_kernel_cmdline(char *commandline)
 			" androidboot.btmacaddr=%c%c:%c%c:%c%c:%c%c:%c%c:%c%c",
 			bd_addr[0],bd_addr[1],bd_addr[2],bd_addr[3],bd_addr[4],bd_addr[5],
 			bd_addr[6],bd_addr[7],bd_addr[8],bd_addr[9],bd_addr[10],bd_addr[11]);
-		strncat(commandline, newbootargs, COMMANDLINE_LENGTH - strlen(commandline));
+	} else {
+		/* Some boards have serial number as all zeros (imx8mp),
+		 * hard code the bt mac address for such case. */
+		sprintf(newbootargs, " androidboot.btmacaddr=22:22:67:C6:69:73");
 	}
+
+	strncat(commandline, newbootargs, COMMANDLINE_LENGTH - strlen(commandline));
 #endif
 
 	/* append soc type into bootargs */
