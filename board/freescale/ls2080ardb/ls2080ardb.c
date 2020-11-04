@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2015 Freescale Semiconductor
- * Copyright 2017 NXP
+ * Copyright 2017-2020 NXP
  */
 #include <common.h>
 #include <env.h>
@@ -23,7 +23,10 @@
 #include <asm/arch/ppa.h>
 #include <fsl_sec.h>
 #include <asm/arch-fsl-layerscape/fsl_icid.h>
+#include <asm/gic-v3.h>
+#include <cpu_func.h>
 
+#define GIC_LPI_SIZE                             0x200000
 #ifdef CONFIG_FSL_QIXIS
 #include "../common/qixis.h"
 #include "ls2080ardb_qixis.h"
@@ -347,6 +350,21 @@ void board_quiesce_devices(void)
 }
 #endif
 
+#ifdef CONFIG_GIC_V3_ITS
+void fdt_fixup_gic_lpi_memory(void *blob, u64 gic_lpi_base)
+{
+	u32 phandle;
+	int err;
+	struct fdt_memory gic_lpi;
+
+	gic_lpi.start = gic_lpi_base;
+	gic_lpi.end = gic_lpi_base + GIC_LPI_SIZE - 1;
+	err = fdtdec_add_reserved_memory(blob, "gic-lpi", &gic_lpi, &phandle);
+	if (err < 0)
+		debug("failed to add reserved memory: %d\n", err);
+}
+#endif
+
 #ifdef CONFIG_OF_BOARD_SETUP
 void fsl_fdt_fixup_flash(void *fdt)
 {
@@ -421,6 +439,7 @@ int ft_board_setup(void *blob, bd_t *bd)
 	u64 mc_memory_base = 0;
 	u64 mc_memory_size = 0;
 	u16 total_memory_banks;
+	u64 gic_lpi_base;
 
 	ft_cpu_setup(blob, bd);
 
@@ -439,6 +458,12 @@ int ft_board_setup(void *blob, bd_t *bd)
 	size[0] = gd->bd->bi_dram[0].size;
 	base[1] = gd->bd->bi_dram[1].start;
 	size[1] = gd->bd->bi_dram[1].size;
+
+#ifdef CONFIG_GIC_V3_ITS
+	gic_lpi_base = gd->arch.resv_ram - GIC_LPI_SIZE;
+	gic_lpi_tables_init(gic_lpi_base, cpu_numcores());
+	fdt_fixup_gic_lpi_memory(blob, gic_lpi_base);
+#endif
 
 #ifdef CONFIG_RESV_RAM
 	/* reduce size if reserved memory is within this bank */
