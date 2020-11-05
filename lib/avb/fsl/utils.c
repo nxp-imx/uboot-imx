@@ -14,8 +14,8 @@
  * get margin_pos struct from offset [to the partition start/end] and
  * num_bytes to read/write
  */
-int get_margin_pos(uint64_t part_start, uint64_t part_end, unsigned long blksz,
-		   margin_pos_t *margin, int64_t offset, size_t num_bytes,
+int get_margin_pos(long part_start, long part_end, long blksz,
+		   margin_pos_t *margin, long offset, size_t num_bytes,
 		   bool allow_partial) {
 	long off;
 	if (margin == NULL)
@@ -25,9 +25,9 @@ int get_margin_pos(uint64_t part_start, uint64_t part_end, unsigned long blksz,
 		return -1;
 
 	if (offset < 0) {
-		margin->blk_start = (offset + 1) / (int64_t)blksz + part_end;
+		margin->blk_start = (offset + 1) / blksz + part_end;
  		// offset == -1 means the last byte?, or start need -1
-		margin->start = (off = offset % (int64_t)blksz) == 0 ?
+		margin->start = (off = offset % blksz) == 0 ?
 			        0 : blksz + off;
 		if (offset + num_bytes - 1 >= 0) {
 			if (!allow_partial)
@@ -37,17 +37,16 @@ int get_margin_pos(uint64_t part_start, uint64_t part_end, unsigned long blksz,
 		} else {
  			// which blk the last byte is in
 			margin->blk_end = (num_bytes + offset) /
-					  (int64_t)blksz + part_end;
-			margin->end = (off = (num_bytes + offset - 1) %
-				      (int64_t)blksz) == 0 ?
+					  blksz + part_end;
+			margin->end = (off = (num_bytes + offset - 1) % blksz) == 0 ?
 				      0 : blksz + off; // last byte
 		}
 	} else {
-		margin->blk_start = offset / (uint64_t)blksz + part_start;
-		margin->start = offset % (uint64_t)blksz;
-		margin->blk_end = ((offset + num_bytes - 1) / (uint64_t)blksz) +
+		margin->blk_start = offset / blksz + part_start;
+		margin->start = offset % blksz;
+		margin->blk_end = ((offset + num_bytes - 1) / blksz) +
 				  part_start ;
-		margin->end = (offset + num_bytes - 1) % (uint64_t)blksz;
+		margin->end = (offset + num_bytes - 1) % blksz;
 		if (margin->blk_end > part_end) {
 			if (!allow_partial)
 				return -1;
