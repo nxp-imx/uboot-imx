@@ -971,11 +971,11 @@ static int do_vdd_override(cmd_tbl_t *cmdtp,
 	if (argc < 2)
 		return CMD_RET_USAGE;
 
-	if (!strict_strtoul(argv[1], 10, &override))
+	if (!strict_strtoul(argv[1], 10, &override)) {
 		ret = adjust_vdd(override);   /* the value is checked by callee */
 		if (ret < 0)
 			return CMD_RET_FAILURE;
-	else
+	} else
 		return CMD_RET_USAGE;
 	return 0;
 }
