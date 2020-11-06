@@ -523,9 +523,6 @@ int clock_init(void)
 #ifdef CONFIG_IMX8MP
 	/* 8MP ROM already set NOC to 800Mhz, only need to configure NOC_IO clk to 600Mhz */
 	clock_set_target_val(NOC_IO_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(2));
-	clock_enable(CCGR_GIC, 0);
-	clock_set_target_val(GIC_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(5));
-	clock_enable(CCGR_GIC, 1);
 #else
 	clock_set_target_val(NOC_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(2));
 

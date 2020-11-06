@@ -218,6 +218,16 @@ int power_init_board(void)
 
 void spl_board_init(void)
 {
+	/* Set GIC clock to 500Mhz for OD VDD_SOC. Kernel driver does not allow to change it.
+	 * Should set the clock after PMIC setting done.
+	 * Default is 400Mhz (system_pll1_800m with div = 2) set by ROM for ND VDD_SOC
+	 */
+#ifdef CONFIG_IMX8M_LPDDR4
+	clock_enable(CCGR_GIC, 0);
+	clock_set_target_val(GIC_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(5));
+	clock_enable(CCGR_GIC, 1);
+#endif
+
 	puts("Normal Boot\n");
 }
 
