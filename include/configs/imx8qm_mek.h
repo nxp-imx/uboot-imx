@@ -168,7 +168,8 @@
 	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
 	"mmcautodetect=yes\0" \
-	"mmcargs=setenv bootargs console=${console},${baudrate} earlycon root=${mmcroot}\0 " \
+	"mmcargs=setenv bootargs console=${console},${baudrate} earlycon root=${mmcroot} " \
+		"cpufreq.default_governor=SCHEDUTIL\0" \
 	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
@@ -205,7 +206,8 @@
 		"fi;\0" \
 	"netargs=setenv bootargs console=${console},${baudrate} earlycon " \
 		"root=/dev/nfs " \
-		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
+		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp " \
+		"cpufreq.default_governor=SCHEDUTIL\0" \
 	"netboot=echo Booting from net ...; " \
 		"run netargs;  " \
 		"if test ${ip_dyn} = yes; then " \
