@@ -821,30 +821,34 @@ static int low_drive_gpu_freq(void *blob)
 		"/soc@0/gpu@38000000"
 	};
 
-	int nodeoff, cnt, i;
+	int nodeoff, cnt, i, j;
 	u32 assignedclks[7];
 
-	nodeoff = fdt_path_offset(blob, nodes_path_8mn[0]);
-	if (nodeoff < 0)
-		return nodeoff;
+	for (i = 0; i < ARRAY_SIZE(nodes_path_8mn); i++) {
+		nodeoff = fdt_path_offset(blob, nodes_path_8mn[i]);
+		if (nodeoff < 0)
+			continue;
 
-	cnt = fdtdec_get_int_array_count(blob, nodeoff, "assigned-clock-rates", assignedclks, 7);
-	if (cnt < 0)
-		return cnt;
+		cnt = fdtdec_get_int_array_count(blob, nodeoff, "assigned-clock-rates", assignedclks, 7);
+		if (cnt < 0)
+			return cnt;
 
-	if (cnt != 7)
-		printf("Warning: %s, assigned-clock-rates count %d\n", nodes_path_8mn[0], cnt);
+		if (cnt != 7)
+			printf("Warning: %s, assigned-clock-rates count %d\n", nodes_path_8mn[i], cnt);
 
-	assignedclks[cnt - 1] = 200000000;
-	assignedclks[cnt - 2] = 200000000;
+		assignedclks[cnt - 1] = 200000000;
+		assignedclks[cnt - 2] = 200000000;
 
-	for (i = 0; i < cnt; i++) {
-		debug("<%u>, ", assignedclks[i]);
-		assignedclks[i] = cpu_to_fdt32(assignedclks[i]);
+		for (j = 0; j < cnt; j++) {
+			debug("<%u>, ", assignedclks[j]);
+			assignedclks[j] = cpu_to_fdt32(assignedclks[j]);
+		}
+		debug("\n");
+
+		return fdt_setprop(blob, nodeoff, "assigned-clock-rates", &assignedclks, sizeof(assignedclks));
 	}
-	debug("\n");
 
-	return fdt_setprop(blob, nodeoff, "assigned-clock-rates", &assignedclks, sizeof(assignedclks));
+	return -ENOENT;
 }
 #endif
 
