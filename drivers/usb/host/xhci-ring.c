@@ -725,7 +725,8 @@ again:
 		return -ETIMEDOUT;
 	}
 
-	if ((void *)event->trans_event.buffer != last_transfer_trb_addr) {
+	if ((uintptr_t)event->trans_event.buffer !=
+			(uintptr_t)last_transfer_trb_addr) {
 		available_length -=
 			(int)EVENT_TRB_LEN(le32_to_cpu(event->trans_event.transfer_len));
 		xhci_acknowledge_event(ctrl);
