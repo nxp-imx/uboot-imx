@@ -35,6 +35,12 @@ int dram_init(void)
 	return 0;
 }
 
+ulong board_get_usable_ram_top(ulong total_size)
+{
+	/* Reserve top 1M memory used by M core vring/buffer */
+	return gd->ram_top - SZ_1M;
+}
+
 static iomux_cfg_t const lpuart4_pads[] = {
 	MX7ULP_PAD_PTC3__LPUART4_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 	MX7ULP_PAD_PTC2__LPUART4_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
