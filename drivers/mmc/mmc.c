@@ -2690,19 +2690,16 @@ static void mmc_set_initial_state(struct mmc *mmc)
 {
 	int err;
 
-	mmc->signal_voltage = MMC_SIGNAL_VOLTAGE_330;
+	/* First try to set 3.3V. If it fails set to 1.8V */
+	err = mmc_set_signal_voltage(mmc, MMC_SIGNAL_VOLTAGE_330);
+	if (err != 0)
+		err = mmc_set_signal_voltage(mmc, MMC_SIGNAL_VOLTAGE_180);
+	if (err != 0)
+		pr_warn("mmc: failed to set signal voltage\n");
+
 	mmc_select_mode(mmc, MMC_LEGACY);
-	mmc->bus_width = 1;
-	mmc->clock = 0;
-	mmc->clk_disable = MMC_CLK_ENABLE;
-
-	err = mmc_set_ios(mmc);
-	if (err)
-		mmc->signal_voltage = MMC_SIGNAL_VOLTAGE_180;
-
-	err = mmc_set_ios(mmc);
-	if (err)
-		pr_warn("mmc: failed to set initial state\n");
+	mmc_set_bus_width(mmc, 1);
+	mmc_set_clock(mmc, 0, MMC_CLK_ENABLE);
 }
 
 static int mmc_power_on(struct mmc *mmc)
