@@ -298,13 +298,15 @@ static int fsl_lpspi_xfer_internal(struct fsl_lpspi_slave *lpspi,
 	int n_bits;
 	int ret = 0;
 	u32 blk_size;
-	struct LPSPI_Type *regs = (struct LPSPI_Type *)lpspi->base;
+	struct LPSPI_Type *regs;
 	u8 watermark = 0;
 	struct udevice *dev = lpspi->dev;
 	struct dm_spi_slave_platdata *slave_plat = dev_get_parent_platdata(dev);
 
 	if (!lpspi)
 		return -EINVAL;
+
+	regs = (struct LPSPI_Type *)lpspi->base;
 
 	ret = fsl_lpspi_check_trans_len(n_bytes, lpspi->wordlen);
 	if (ret)
