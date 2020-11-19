@@ -226,6 +226,14 @@ static void setup_iomux_uart(void)
 	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
 }
 
+#ifdef CONFIG_IMX_BOOTAUX
+ulong board_get_usable_ram_top(ulong total_size)
+{
+	/* Reserve top 1M memory used by M core vring/buffer */
+	return gd->ram_top - SZ_1M;
+}
+#endif
+
 #ifdef CONFIG_FEC_MXC
 static int setup_fec(void)
 {
