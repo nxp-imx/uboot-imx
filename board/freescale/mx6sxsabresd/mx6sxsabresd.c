@@ -554,6 +554,14 @@ int board_early_init_f(void)
 	return 0;
 }
 
+#ifdef CONFIG_IMX_BOOTAUX
+ulong board_get_usable_ram_top(ulong total_size)
+{
+	/* Reserve top 1M memory used by M core vring/buffer */
+	return gd->ram_top - SZ_1M;
+}
+#endif
+
 static struct fsl_esdhc_cfg usdhc_cfg[3] = {
 	{USDHC2_BASE_ADDR, 0, 4},
 	{USDHC3_BASE_ADDR},
