@@ -15,7 +15,7 @@
 
 #ifdef CONFIG_SYS_MALLOC_LEN
 #undef CONFIG_SYS_MALLOC_LEN
-#define CONFIG_SYS_MALLOC_LEN           (64 * SZ_1M)
+#define CONFIG_SYS_MALLOC_LEN           (32 * SZ_1M)
 #endif
 
 #undef CONFIG_EXTRA_ENV_SETTINGS
