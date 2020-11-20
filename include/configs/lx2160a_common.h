@@ -262,7 +262,7 @@ int select_i2c_ch_pca9547_sec(unsigned char ch);
 	"kernel_size=0x2800000\0"		\
 	"kernel_addr_sd=0x8000\0"		\
 	"kernelhdr_addr_sd=0x3000\0"            \
-	"kernel_size_sd=0x1d000\0"              \
+	"kernel_size_sd=0x14000\0"              \
 	"kernelhdr_size_sd=0x20\0"              \
 	"console=ttyAMA0,38400n8\0"		\
 	BOOTENV					\

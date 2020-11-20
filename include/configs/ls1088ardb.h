@@ -504,9 +504,7 @@
 
 /* MAC/PHY configuration */
 #ifdef CONFIG_FSL_MC_ENET
-#define CONFIG_PHYLIB
 
-#define CONFIG_PHY_VITESSE
 #define AQ_PHY_ADDR1			0x00
 #define AQR105_IRQ_MASK			0x00000004
 
@@ -520,7 +518,6 @@
 #define QSGMII2_PORT4_PHY_ADDR		0x1f
 
 #define CONFIG_ETHPRIME		"DPMAC1@xgmii"
-#define CONFIG_PHY_GIGE
 #endif
 #endif
 

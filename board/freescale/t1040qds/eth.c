@@ -288,14 +288,17 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 	phy_interface_t intf = fm_info_get_enet_if(port);
 	char phy[16];
 
+	switch (intf) {
 	/* The RGMII PHY is identified by the MAC connected to it */
-	if (intf == PHY_INTERFACE_MODE_RGMII) {
+	case PHY_INTERFACE_MODE_RGMII:
+	case PHY_INTERFACE_MODE_RGMII_TXID:
+	case PHY_INTERFACE_MODE_RGMII_RXID:
+	case PHY_INTERFACE_MODE_RGMII_ID:
 		sprintf(phy, "rgmii_phy%u", port == FM1_DTSEC4 ? 1 : 2);
 		fdt_set_phy_handle(fdt, compat, addr, phy);
-	}
-
+		break;
 	/* The SGMII PHY is identified by the MAC connected to it */
-	if (intf == PHY_INTERFACE_MODE_SGMII) {
+	case PHY_INTERFACE_MODE_SGMII:
 		int lane = serdes_get_first_lane(FSL_SRDS_1, SGMII_FM1_DTSEC1
 						 + port);
 		u8 slot;
@@ -309,6 +312,9 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 				CONFIG_SYS_FM1_DTSEC1_RISER_PHY_ADDR + 1));
 			fdt_set_phy_handle(fdt, compat, addr, phy);
 		}
+		break;
+	default:
+		break;
 	}
 }
 
@@ -341,6 +347,9 @@ void fdt_fixup_board_enet(void *fdt)
 			}
 		break;
 		case PHY_INTERFACE_MODE_RGMII:
+		case PHY_INTERFACE_MODE_RGMII_TXID:
+		case PHY_INTERFACE_MODE_RGMII_RXID:
+		case PHY_INTERFACE_MODE_RGMII_ID:
 			if (i == FM1_DTSEC4)
 				fdt_status_okay_by_alias(fdt, "emi1_rgmii0");
 
@@ -491,6 +500,9 @@ int board_eth_init(bd_t *bis)
 			break;
 
 		case PHY_INTERFACE_MODE_RGMII:
+		case PHY_INTERFACE_MODE_RGMII_TXID:
+		case PHY_INTERFACE_MODE_RGMII_RXID:
+		case PHY_INTERFACE_MODE_RGMII_ID:
 			/* Only DTSEC4 and DTSEC5 can be routed to RGMII */
 			t1040_handle_phy_interface_rgmii(i);
 			break;
