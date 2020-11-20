@@ -222,7 +222,7 @@ U_BOOT_CMD(
 
 /* Section for Android bootimage format support */
 
-#ifndef CONFIG_ANDROID_DYNAMIC_PARTITION
+#if !defined(CONFIG_ANDROID_DYNAMIC_PARTITION) && defined(CONFIG_SYSTEM_RAMDISK_SUPPORT)
 /* Setup booargs for taking the system parition as ramdisk */
 static void fastboot_setup_system_boot_args(const char *slot, bool append_root)
 {
@@ -695,7 +695,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		}
 		if (avb_out_data->cmdline != NULL)
 			strcat(bootargs_sec, avb_out_data->cmdline);
-#ifdef CONFIG_ANDROID_DYNAMIC_PARTITION
+#if defined(CONFIG_ANDROID_DYNAMIC_PARTITION) && defined(CONFIG_SYSTEM_RAMDISK_SUPPORT)
 		/* for the condition dynamic partition is used , recovery ramdisk is used to boot
 		 * up Android, in this condition, "androidboot.force_normal_boot=1" is needed */
 		if(!is_recovery_mode) {
@@ -703,7 +703,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 		}
 #endif
 		env_set("bootargs_sec", bootargs_sec);
-#ifndef CONFIG_ANDROID_DYNAMIC_PARTITION
+#if !defined(CONFIG_ANDROID_DYNAMIC_PARTITION) && defined(CONFIG_SYSTEM_RAMDISK_SUPPORT)
 		if(!is_recovery_mode) {
 			if(avb_out_data->cmdline != NULL && strstr(avb_out_data->cmdline, "root="))
 				fastboot_setup_system_boot_args(avb_out_data->ab_suffix, false);
@@ -885,7 +885,7 @@ int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	sprintf(fdt_addr_start, "0x%x", fdt_addr);
 
 	/* Don't pass ramdisk addr for Android Auto if we are not booting from recovery */
-#ifndef CONFIG_ANDROID_DYNAMIC_PARTITION
+#if !defined(CONFIG_ANDROID_DYNAMIC_PARTITION) && defined(CONFIG_SYSTEM_RAMDISK_SUPPORT)
 	if (!is_recovery_mode)
 		boot_args[2] = NULL;
 #endif
