@@ -153,6 +153,14 @@ int read_keyslot_package(struct keyslot_package* kp) {
 		ret = -1;
 		goto fail;
 	} else {
+		/* make sure keyslot package padding is reset to 0 */
+		uint8_t pad[KEYPACK_PAD_LENGTH];
+		memset(pad, 0, KEYPACK_PAD_LENGTH);
+		if (memcmp(pad, ((struct keyslot_package *)fill)->pad, KEYPACK_PAD_LENGTH)) {
+			memset(((struct keyslot_package *)fill)->pad, 0, KEYPACK_PAD_LENGTH);
+			blk_dwrite(dev_desc, KEYSLOT_BLKS, 1, fill);
+		}
+
 		memcpy(kp, fill, sizeof(struct keyslot_package));
 	}
 
