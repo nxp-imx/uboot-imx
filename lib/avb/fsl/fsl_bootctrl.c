@@ -463,7 +463,8 @@ out:
 #define PARTITION_NAME_LEN 13
 #define PARTITION_BOOTLOADER "bootloader"
 #ifdef CONFIG_ANDROID_AUTO_SUPPORT
-#define PARTITION_MISC_ID 11
+/* This should always sync with the gpt */
+#define PARTITION_MISC_ID 9
 #endif
 
 extern int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value);
