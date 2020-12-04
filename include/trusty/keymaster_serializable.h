@@ -68,6 +68,14 @@ int km_attestation_data_serialize(const struct km_attestation_data *data,
                                   uint8_t **out, uint32_t *out_size);
 
 /**
+ * Serializes a km_attestation_id_data structure. On success, allocates |*out_size|
+ * bytes to |*out| and writes the serialized |data| to |*out|. Caller takes
+ * ownership of |*out|. Returns one of trusty_err.
+ */
+int km_attestation_id_data_serialize(const struct km_attestation_id_data *data,
+                                 uint8_t** out, uint32_t *out_size);
+
+/**
  * Serializes a km_secure_unlock_data structure. On success, allocates |*out_size|
  * bytes to |*out| and writes the serialized |data| to |*out|. Caller takes
  * ownership of |*out|. Returns one of trusty_err.
