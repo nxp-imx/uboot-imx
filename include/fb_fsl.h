@@ -103,6 +103,7 @@
 #define FASTBOOT_APPEND_EC_ATTESTATION_CERT_ENC  "append-ec-atte-cert-enc"
 #define FASTBOOT_GET_MPPUBK  "get-mppubk"
 #define FASTBOOT_GET_SERIAL_NUMBER  "get-serial-number"
+#define FASTBOOT_APPEND_ATTESTATION_ID "append-device-id"
 #endif
 
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT

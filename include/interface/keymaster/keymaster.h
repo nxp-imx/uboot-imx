@@ -66,7 +66,8 @@ enum keymaster_command {
     KM_SET_ATTESTATION_KEY_ENC         = (0xa000 << KEYMASTER_REQ_SHIFT),
     KM_APPEND_ATTESTATION_CERT_CHAIN_ENC = (0xb000 << KEYMASTER_REQ_SHIFT),
     KM_GET_MPPUBK                      = (0xc000 << KEYMASTER_REQ_SHIFT),
-    KM_VERIFY_SECURE_UNLOCK            = (0xd000 << KEYMASTER_REQ_SHIFT)
+    KM_VERIFY_SECURE_UNLOCK            = (0xd000 << KEYMASTER_REQ_SHIFT),
+    KM_APPEND_ATTESTATION_ID           = (0xe000 << KEYMASTER_REQ_SHIFT)
 };
 
 typedef enum {
@@ -287,6 +288,10 @@ struct km_attestation_data {
     const uint8_t *data;
 } TRUSTY_ATTR_PACKED;
 
+struct km_attestation_id_data {
+    uint32_t data_size;
+    const uint8_t *data;
+} TRUSTY_ATTR_PACKED;
 /**
  * km_raw_buffer - represents a single raw buffer
  *
