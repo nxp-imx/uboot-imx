@@ -393,6 +393,16 @@ config LOAD_KEY_FROM_RPMB
 	default n
 	depends on IMX_TRUSTY_OS
 
+config ID_ATTESTATION
+	bool "Support device ID attestation"
+	default n
+	depends on IMX_TRUSTY_OS
+
+config ATTESTATION_ID_PRODUCT
+	string "Product name for ID attestation"
+	depends on IMX_TRUSTY_OS && ID_ATTESTATION
+	default SYS_CONFIG_NAME
+
 endmenu
 
 menu "Hashing Support"
