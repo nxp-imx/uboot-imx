@@ -580,3 +580,26 @@ end:
     }
     return rc;
 }
+
+int trusty_append_attestation_id(const char *data, uint32_t data_size)
+{
+    struct km_attestation_id_data attestation_id_data = {
+        .data_size = data_size,
+        .data = (uint8_t *)data,
+    };
+    uint8_t *req = NULL;
+    uint32_t req_size = 0;
+    int rc = km_attestation_id_data_serialize(&attestation_id_data, &req, &req_size);
+
+    if (rc < 0) {
+        trusty_error("failed (%d) to serialize request\n", rc);
+        goto end;
+    }
+    rc = km_do_tipc(KM_APPEND_ATTESTATION_ID, req, req_size, NULL, NULL);
+
+end:
+    if (req) {
+        trusty_free(req);
+    }
+    return rc;
+}
