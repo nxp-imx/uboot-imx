@@ -182,9 +182,19 @@ void board_fastboot_setup(void)
 	} else if (is_imx8qm()) {
 		if (!env_get("soc_type"))
 			env_set("soc_type", "imx8qm");
+		if (is_soc_rev(CHIP_REV_A))
+			env_set("soc_rev", "reva");
+		else if (is_soc_rev(CHIP_REV_B))
+			env_set("soc_rev", "revb");
 	} else if (is_imx8qxp()) {
 		if (!env_get("soc_type"))
 			env_set("soc_type", "imx8qxp");
+		if (is_soc_rev(CHIP_REV_A))
+			env_set("soc_rev", "reva");
+		else if (is_soc_rev(CHIP_REV_B))
+			env_set("soc_rev", "revb");
+		else if (is_soc_rev(CHIP_REV_C))
+			env_set("soc_rev", "revc");
 	} else if (is_imx8mq()) {
 		if (!env_get("soc_type"))
 			env_set("soc_type", "imx8mq");
