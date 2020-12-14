@@ -398,6 +398,10 @@ end:
 int trusty_set_attestation_key(const uint8_t *key, uint32_t key_size,
                                keymaster_algorithm_t algorithm)
 {
+    if (!initialized) {
+        trusty_error("Keymaster TIPC client not initialized!\n");
+        return -1;
+    }
     return trusty_send_attestation_data(KM_SET_ATTESTATION_KEY, key, key_size,
                                         algorithm);
 }
@@ -406,6 +410,10 @@ int trusty_append_attestation_cert_chain(const uint8_t *cert,
                                          uint32_t cert_size,
                                          keymaster_algorithm_t algorithm)
 {
+    if (!initialized) {
+        trusty_error("Keymaster TIPC client not initialized!\n");
+        return -1;
+    }
     return trusty_send_attestation_data(KM_APPEND_ATTESTATION_CERT_CHAIN,
                                         cert, cert_size, algorithm);
 }
@@ -413,6 +421,10 @@ int trusty_append_attestation_cert_chain(const uint8_t *cert,
 int trusty_set_attestation_key_enc(const uint8_t *key, uint32_t key_size,
                                keymaster_algorithm_t algorithm)
 {
+    if (!initialized) {
+        trusty_error("Keymaster TIPC client not initialized!\n");
+        return -1;
+    }
     return trusty_send_attestation_data(KM_SET_ATTESTATION_KEY_ENC, key, key_size,
                                         algorithm);
 }
@@ -421,6 +433,10 @@ int trusty_append_attestation_cert_chain_enc(const uint8_t *cert,
                                          uint32_t cert_size,
                                          keymaster_algorithm_t algorithm)
 {
+    if (!initialized) {
+        trusty_error("Keymaster TIPC client not initialized!\n");
+        return -1;
+    }
     return trusty_send_attestation_data(KM_APPEND_ATTESTATION_CERT_CHAIN_ENC,
                                         cert, cert_size, algorithm);
 }
@@ -501,6 +517,11 @@ int trusty_get_mppubk(uint8_t *mppubk, uint32_t *size)
     int rc = TRUSTY_ERR_GENERIC;
     struct km_get_mppubk_resp resp;
 
+    if (!initialized) {
+        trusty_error("Keymaster TIPC client not initialized!\n");
+        return -1;
+    }
+
     rc = km_send_request(KM_GET_MPPUBK, NULL, 0);
     if (rc < 0) {
         trusty_error("%s: failed (%d) to send km mppubk request\n", __func__, rc);
@@ -531,6 +552,11 @@ int trusty_verify_secure_unlock(uint8_t *unlock_credential,
     int rc = TRUSTY_ERR_GENERIC;
     uint8_t *req = NULL;
     uint32_t req_size = 0;
+
+    if (!initialized) {
+        trusty_error("Keymaster TIPC client not initialized!\n");
+        return -1;
+    }
 
     struct km_secure_unlock_data secure_unlock_data = {
         .serial_size = serial_size,
