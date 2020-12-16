@@ -482,7 +482,7 @@ int fsl_save_metadata_if_changed_dual_uboot(struct blk_desc *dev_desc,
 	/* Save metadata if changed. */
 	if (memcmp(ab_data, ab_data_orig, sizeof(struct bootloader_control)) != 0) {
 		/* Get misc partition info */
-		if (part_get_info_by_name(dev_desc, FASTBOOT_PARTITION_MISC, &info) == -1) {
+		if (part_get_info_efi_by_name(dev_desc, FASTBOOT_PARTITION_MISC, &info) == -1) {
 			printf("Can't get partition info of partition: misc\n");
 			return -1;
 		}
@@ -510,7 +510,7 @@ int fsl_load_metadata_dual_uboot(struct blk_desc *dev_desc,
 	struct bootloader_control serialized;
 	size_t num_bytes;
 
-	if (part_get_info_by_name(dev_desc, FASTBOOT_PARTITION_MISC, &info) == -1) {
+	if (part_get_info_efi_by_name(dev_desc, FASTBOOT_PARTITION_MISC, &info) == -1) {
 		printf("Can't get partition info of partition: misc\n");
 		return -1;
 	} else {
