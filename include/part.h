@@ -453,6 +453,11 @@ int gpt_verify_partitions(struct blk_desc *dev_desc,
  */
 int get_disk_guid(struct blk_desc *dev_desc, char *guid);
 
+#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_SPL_BUILD)
+int part_get_info_efi_by_name(struct blk_desc *dev_desc, const char *name,
+		      disk_partition_t *info);
+#endif
+
 #endif
 
 #if CONFIG_IS_ENABLED(DOS_PARTITION)
