@@ -27,6 +27,7 @@ const efi_guid_t efi_guid_loaded_image_device_path =
 const efi_guid_t efi_simple_file_system_protocol_guid =
 		EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
 const efi_guid_t efi_file_info_guid = EFI_FILE_INFO_GUID;
+const efi_guid_t efi_memory_only_reset_control_guid = EFI_MEMORY_ONLY_RESET_CONTROL_GUID;
 
 static int machines[] = {
 #if defined(__aarch64__)

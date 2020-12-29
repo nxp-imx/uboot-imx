@@ -176,6 +176,37 @@ static efi_status_t efi_init_os_indications(void)
 
 
 /**
+ * efi_init_memory_only_reset_control() - indicate supported features for
+ * OS requests
+ *
+ * Set the MemoryOverwriteRequestControl variable.
+ *
+ * Return:	status code
+ */
+static efi_status_t efi_init_memory_only_reset_control(void)
+{
+	u8 memory_only_reset_control = 0;
+	efi_status_t ret;
+	efi_uintn_t data_size = 0;
+
+	ret = efi_get_variable_int(L"MemoryOverwriteRequestControl",
+				   &efi_memory_only_reset_control_guid,
+				   NULL, &data_size,
+				   &memory_only_reset_control, NULL);
+	if (ret == EFI_SUCCESS)
+		return ret;
+
+	ret = efi_set_variable_int(L"MemoryOverwriteRequestControl",
+				   &efi_memory_only_reset_control_guid,
+				   EFI_VARIABLE_BOOTSERVICE_ACCESS |
+				   EFI_VARIABLE_RUNTIME_ACCESS |
+				   EFI_VARIABLE_NON_VOLATILE,
+				   sizeof(memory_only_reset_control),
+				   &memory_only_reset_control, 0);
+	return ret;
+}
+
+/**
  * efi_init_obj_list() - Initialize and populate EFI object list
  *
  * Return:	status code
@@ -223,6 +254,11 @@ efi_status_t efi_init_obj_list(void)
 
 	/* Indicate supported features */
 	ret = efi_init_os_indications();
+	if (ret != EFI_SUCCESS)
+		goto out;
+
+	/* Platform Reset Attack features */
+	ret = efi_init_memory_only_reset_control();
 	if (ret != EFI_SUCCESS)
 		goto out;
 
