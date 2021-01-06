@@ -48,7 +48,7 @@ void __attribute__((weak)) reset_cpu(void)
 {
 	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
 
-	imx_watchdog_expire_now(wdog, true);
+	imx_watchdog_expire_now(wdog, false);
 }
 #endif
 
