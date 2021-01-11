@@ -97,6 +97,14 @@ static void append_kernel_cmdline(char *commandline)
 			soc_type);
 		strncat(commandline, newbootargs, COMMANDLINE_LENGTH - strlen(commandline));
 	}
+	/* append soc rev into bootargs */
+	char *soc_rev = env_get("soc_rev");
+	if (soc_rev) {
+		sprintf(newbootargs,
+			" androidboot.soc_rev=%s",
+			soc_rev);
+		strncat(commandline, newbootargs, COMMANDLINE_LENGTH - strlen(commandline));
+	}
 
 	sprintf(newbootargs,
 			" androidboot.boot_device_root=mmcblk%d", mmc_map_to_kernel_blk(mmc_get_env_dev()));

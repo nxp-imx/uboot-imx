@@ -169,4 +169,12 @@ int trusty_verify_secure_unlock(uint8_t *unlock_credential,
                                 uint32_t credential_size,
                                 uint8_t *serial, uint32_t serial_size);
 
+/*
+ * trusty_append_attestation_id is called to set attestation Device ID.
+ *
+ * @ data: Device ID string
+ * @ data_size: Device ID size
+ * */
+int trusty_append_attestation_id(const char *data, uint32_t data_size);
+
 #endif /* TRUSTY_KEYMASTER_H_ */
