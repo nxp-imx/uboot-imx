@@ -275,9 +275,9 @@ static int do_bee_init(cmd_tbl_t *cmdtp, int flag, int argc,
 	struct bee_parameters *p = &para;
 
 #if defined(CONFIG_SYS_ARM_CACHE_WRITETHROUGH)
-	enum dcache_option option = DCACHE_WRITETHROUGH;
+	enum dcache_option option = DCACHE_WRITETHROUGH & ~TTB_SECT_XN_MASK;
 #else
-	enum dcache_option option = DCACHE_WRITEBACK;
+	enum dcache_option option = DCACHE_WRITEBACK & ~TTB_SECT_XN_MASK;
 #endif
 
 	if (argc > 5)
