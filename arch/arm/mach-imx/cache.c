@@ -10,6 +10,8 @@
 #include <asm/io.h>
 #include <asm/mach-imx/sys_proto.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 static void enable_ca7_smp(void)
 {
 	u32 val;
@@ -39,12 +41,16 @@ static void enable_ca7_smp(void)
 }
 
 #if !CONFIG_IS_ENABLED(SYS_DCACHE_OFF)
+
+#define ARMV7_DOMAIN_CLIENT	1
+#define ARMV7_DOMAIN_MASK	(0x3 << 0)
+
 void enable_caches(void)
 {
 #if defined(CONFIG_SYS_ARM_CACHE_WRITETHROUGH)
-	enum dcache_option option = DCACHE_WRITETHROUGH;
+	enum dcache_option option = DCACHE_WRITETHROUGH & ~TTB_SECT_XN_MASK;
 #else
-	enum dcache_option option = DCACHE_WRITEBACK;
+	enum dcache_option option = DCACHE_WRITEBACK & ~TTB_SECT_XN_MASK;
 #endif
 	/* Avoid random hang when download by usb */
 	invalidate_dcache_all();
@@ -63,6 +69,40 @@ void enable_caches(void)
 					IRAM_SIZE,
 					option);
 }
+
+void dram_bank_mmu_setup(int bank)
+{
+	bd_t *bd = gd->bd;
+	int	i;
+
+	debug("%s: bank: %d\n", __func__, bank);
+	for (i = bd->bi_dram[bank].start >> MMU_SECTION_SHIFT;
+	     i < (bd->bi_dram[bank].start >> MMU_SECTION_SHIFT) +
+		 (bd->bi_dram[bank].size >> MMU_SECTION_SHIFT);
+	     i++) {
+#if defined(CONFIG_SYS_ARM_CACHE_WRITETHROUGH)
+		set_section_dcache(i, DCACHE_WRITETHROUGH & ~TTB_SECT_XN_MASK);
+#elif defined(CONFIG_SYS_ARM_CACHE_WRITEALLOC)
+		set_section_dcache(i, DCACHE_WRITEALLOC & ~TTB_SECT_XN_MASK);
+#else
+		set_section_dcache(i, DCACHE_WRITEBACK & ~TTB_SECT_XN_MASK);
+#endif
+	}
+}
+
+void arm_init_domains(void)
+{
+	u32 reg;
+
+	reg = get_dacr();
+	/*
+	* Set domain to client to do access and XN check
+	*/
+	reg &= ~ARMV7_DOMAIN_MASK;
+	reg |= ARMV7_DOMAIN_CLIENT;
+	set_dacr(reg);
+}
+
 #else
 void enable_caches(void)
 {
