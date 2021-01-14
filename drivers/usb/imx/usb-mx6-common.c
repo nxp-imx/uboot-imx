@@ -66,7 +66,7 @@ struct usbnc_regs {
 	u32 adp_status;
 };
 
-#if defined(CONFIG_MX6) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMXRT) || defined(CONFIG_IMX8)
+#if defined(CONFIG_MX6) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMXRT) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8ULP)
 static const ulong phy_bases[] = {
 	USB_PHY0_BASE_ADDR,
 #if defined(USB_PHY1_BASE_ADDR)
@@ -228,19 +228,19 @@ static void __maybe_unused
 usb_power_config_mx7(void __iomem *usbnc_base) { }
 #endif
 
-#if defined(CONFIG_MX7ULP) && !CONFIG_IS_ENABLED(PHY)
+#if (defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8ULP)) && !CONFIG_IS_ENABLED(PHY)
 static void usb_power_config_mx7ulp(void __iomem *usbphy_base)
 {
 	struct usbphy_regs __iomem *usbphy = (struct usbphy_regs __iomem *)usbphy_base;
 
-	if (!is_mx7ulp())
+	if (!(is_mx7ulp() || is_imx8ulp()))
 		return;
 
 	writel(ANADIG_USB2_CHRG_DETECT_EN_B |
 	       ANADIG_USB2_CHRG_DETECT_CHK_CHRG_B,
 	       &usbphy->usb1_chrg_detect);
 
-	scg_enable_usb_pll(true);
+	enable_usb_pll((ulong)usbphy);
 }
 #else
 static void __maybe_unused
@@ -308,7 +308,7 @@ static void usb_oc_config(void __iomem *usbnc_base, int index)
 	struct usbnc_regs __iomem *usbnc = (struct usbnc_regs __iomem *)usbnc_base;
 #if defined(CONFIG_MX6)
 	void __iomem *ctrl = (void __iomem *)(&usbnc->ctrl[index]);
-#elif defined(CONFIG_USB_EHCI_MX7) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8)
+#elif defined(CONFIG_USB_EHCI_MX7) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8ULP)
 	void __iomem *ctrl = (void __iomem *)(&usbnc->ctrl[0]);
 #endif
 
@@ -346,7 +346,7 @@ void ehci_mx6_phy_init(struct usb_ehci *ehci, struct ehci_mx6_phy_data *phy_data
 
 	usb_oc_config(phy_data->misc_addr, index);
 
-#if defined(CONFIG_MX6) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMXRT) || defined(CONFIG_IMX8)
+#if defined(CONFIG_MX6) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMXRT) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8ULP)
 	usb_internal_phy_clock_gate(phy_data->phy_addr, 1);
 	usb_phy_enable(ehci, phy_data->phy_addr);
 #endif
