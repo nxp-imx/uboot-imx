@@ -38,6 +38,7 @@ void enable_ocotp_clk(unsigned char enable);
 #endif
 #ifdef CONFIG_USB_EHCI_HCD
 void enable_usboh3_clk(unsigned char enable);
+int enable_usb_pll(ulong usb_phy_base);
 #endif
 void enable_mipi_dsi_clk(unsigned char enable);
 void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq_in_khz);
