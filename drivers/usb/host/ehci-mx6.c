@@ -147,14 +147,14 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	u32 controller_spacing = 0x10000;
 	phy_data.misc_addr = (void __iomem *)(ulong)(USB_BASE_ADDR +
 			(0x10000 * index) + USBNC_OFFSET);
-#elif defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8)
+#elif defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8ULP)
 	if (index >= ARRAY_SIZE(phy_bases))
 		return -EINVAL;
 
-	u32 controller_spacing = 0x10000;
+	u32 controller_spacing = is_imx8ulp()? 0x20000: 0x10000;
 	phy_data.phy_addr = (void __iomem *)(ulong)phy_bases[index];
 	phy_data.misc_addr = (void __iomem *)(ulong)(USB_BASE_ADDR +
-			(0x10000 * index) + USBNC_OFFSET);
+			(controller_spacing * index) + USBNC_OFFSET);
 #endif
 	struct usb_ehci *ehci = (struct usb_ehci *)(ulong)(USB_BASE_ADDR +
 		(controller_spacing * index));
@@ -338,9 +338,9 @@ static int ehci_usb_phy_mode(struct udevice *dev)
 	 * About fsl,usbphy, Refer to
 	 * Documentation/devicetree/bindings/usb/ci-hdrc-usb2.txt.
 	 */
-	if (is_mx6() || is_mx7ulp() || is_imxrt() || is_imx8()) {
-		addr = (void __iomem *)fdtdec_get_addr(blob, priv->phy_node_off,
-						       "reg");
+	if (is_mx6() || is_mx7ulp() || is_imxrt() || is_imx8() || is_imx8ulp()) {
+		addr = (void __iomem *)fdtdec_get_addr_size_auto_noparent(blob, priv->phy_node_off,
+						       "reg", 0, NULL, false);
 		if ((fdt_addr_t)addr == FDT_ADDR_T_NONE)
 			return -EINVAL;
 
@@ -428,13 +428,13 @@ static int mx6_parse_dt_addrs(struct udevice *dev)
 #if !CONFIG_IS_ENABLED(PHY) || defined(CONFIG_IMX8)
 	void *__iomem addr;
 	struct ehci_mx6_phy_data *phy_data = &priv->phy_data;
-	addr = (void __iomem *)fdtdec_get_addr(blob, phy_off, "reg");
+	addr = (void __iomem *)fdtdec_get_addr_size_auto_noparent(blob, phy_off, "reg", 0, NULL, false);
 	if ((fdt_addr_t)addr == FDT_ADDR_T_NONE)
 		addr = NULL;
 
 	phy_data->phy_addr = addr;
 
-	addr = (void __iomem *)fdtdec_get_addr(blob, misc_off, "reg");
+	addr = (void __iomem *)fdtdec_get_addr_size_auto_noparent(blob, misc_off, "reg", 0, NULL, false);
 	if ((fdt_addr_t)addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
@@ -448,7 +448,7 @@ static int mx6_parse_dt_addrs(struct udevice *dev)
 	if (anatop_off < 0)
 		return -EINVAL;
 
-	addr = (void __iomem *)fdtdec_get_addr(blob, anatop_off, "reg");
+	addr = (void __iomem *)fdtdec_get_addr_size_auto_noparent(blob, anatop_off, "reg", 0, NULL, false);
 	if ((fdt_addr_t)addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
