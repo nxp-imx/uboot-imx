@@ -260,6 +260,11 @@ void enable_usboh3_clk(unsigned char enable)
 	}
 }
 
+int enable_usb_pll(ulong usb_phy_base)
+{
+	return scg_enable_usb_pll(true);
+}
+
 static void lpuart_set_clk(uint32_t index, enum scg_clk clk)
 {
 	const enum pcc_clk lpuart_pcc_clks[] = {
