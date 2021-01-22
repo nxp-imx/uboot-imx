@@ -160,6 +160,14 @@ config CMD_NANDBCB
 	  This is similar to kobs-ng, which is used in Linux as separate
 	  rootfs package.
 
+config CMD_QSPIHDR
+	bool "Q(F)SPI Boot Config Header command"
+	depends on DM_SPI_FLASH
+	default y
+	help
+	  Boot from Q(F)SPI need a boot config header, this command can
+	  help to check if header already exists or add one if not.
+
 config FSL_MFGPROT
 	bool "Support the 'mfgprot' command"
 	depends on IMX_HAB || AHAB_BOOT
