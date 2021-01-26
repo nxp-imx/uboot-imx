@@ -862,7 +862,7 @@ static void flash(char *cmd, char *response)
 #if defined(CONFIG_FASTBOOT_LOCK)
 	if (strncmp(cmd, "gpt", 3) == 0) {
 		int gpt_valid = 0;
-		int status, mmc_no;
+		int mmc_no;
 		struct blk_desc *dev_desc;
 		mmc_no = fastboot_devinfo.dev_id;
 		dev_desc = blk_get_dev("mmc", mmc_no);
