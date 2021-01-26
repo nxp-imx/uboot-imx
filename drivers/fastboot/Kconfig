@@ -110,7 +110,9 @@ config ANDROID_RECOVERY
 
 config CMD_BOOTA
 	bool "Enable the boota command"
+	default y
 	depends on FSL_FASTBOOT
+	depends on ANDROID_SUPPORT || ANDROID_AUTO_SUPPORT || ANDROID_THINGS_SUPPORT
 	help
 	  This enables the boota command for booting android images.
 

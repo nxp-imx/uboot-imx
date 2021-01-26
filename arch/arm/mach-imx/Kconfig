@@ -255,11 +255,6 @@ config IMX_CONTAINER_CFG
 	  This is to specific the cfg file for generating container
 	  image which will be loaded by SPL.
 
-config IMX_TRUSTY_OS
-	bool "Support Trusty OS related feature"
-	depends on ARCH_MX6 || ARCH_MX7 || ARCH_IMX8 || ARCH_IMX8M
-	select SYS_ARM_CACHE_WRITEALLOC
-
 config CMD_PROVISION_KEY
 	bool "Support to provision a encrypted key as black blob"
 	depends on IMX8MM || IMX8MN
@@ -269,3 +264,102 @@ config CMD_PROVISION_KEY
 	  derive PKEK = sha256(MPPUBK).
 	  read encrypted key and decrypt it using PKEK.
 	  generate black blob of decrypted key, add 20 bytes TAG to black blob.
+
+config ANDROID_SUPPORT
+	bool "Standard Android features support"
+	default n
+	select FSL_FASTBOOT
+	select FASTBOOT_LOCK
+	select BCB_SUPPORT
+	select ANDROID_RECOVERY
+	select SUPPORT_RAW_INITRD
+	select LIBAVB
+	select AVB_SUPPORT
+
+config ANDROID_AUTO_SUPPORT
+	bool "Android Automotive features support"
+	default n
+	select FSL_FASTBOOT
+	select FASTBOOT_LOCK
+	select BCB_SUPPORT
+	select ANDROID_RECOVERY
+	select SUPPORT_RAW_INITRD
+	select LIBAVB
+	select AVB_SUPPORT
+
+config ANDROID_THINGS_SUPPORT
+	bool "Android Things features support"
+	default n
+	select FSL_FASTBOOT
+	select FASTBOOT_LOCK
+	select BCB_SUPPORT
+	select ANDROID_RECOVERY
+	select SUPPORT_RAW_INITRD
+	select LIBAVB
+	select AVB_SUPPORT
+
+config AT_AUTHENTICATE_UNLOCK
+	bool "Enable authenticate unlock for Android Things devices"
+	depends on ANDROID_THINGS_SUPPORT
+
+config ANDROID_AB_SUPPORT
+	bool "Android A/B slots support"
+	depends on ANDROID_SUPPORT || ANDROID_AUTO_SUPPORT || ANDROID_THINGS_SUPPORT
+	default n
+	select SYSTEM_RAMDISK_SUPPORT
+
+config SYSTEM_RAMDISK_SUPPORT
+	bool "Support build ramdisk in system image"
+	default n
+
+menu "TRUSTY OS Support"
+
+config IMX_TRUSTY_OS
+	bool "Support Trusty OS related feature"
+	depends on ARCH_MX6 || ARCH_MX7 || ARCH_IMX8 || ARCH_IMX8M
+	select SYS_ARM_CACHE_WRITEALLOC
+	select CMD_MMC_RPMB
+	select SUPPORT_EMMC_RPMB
+
+config TRUSTY_UNLOCK_PERMISSION
+	bool "Support unlock permission protection in trusty"
+	default y
+	depends on IMX_TRUSTY_OS
+
+config LOAD_KEY_FROM_RPMB
+	bool "Support load AVB public key from RPMB storage"
+	default y
+	depends on IMX_TRUSTY_OS
+
+config ID_ATTESTATION
+	bool "Support device ID attestation"
+	default y
+	depends on IMX_TRUSTY_OS
+
+config ATTESTATION_ID_PRODUCT
+	string "Product name for ID attestation"
+	depends on IMX_TRUSTY_OS && ID_ATTESTATION
+	default SYS_CONFIG_NAME
+
+config SECURE_UNLOCK
+	bool "Enable secure unlock for Android devices, it can only be enabled on HAB closed board"
+	depends on IMX_TRUSTY_OS
+
+endmenu
+
+config APPEND_BOOTARGS
+	bool "Append bootargs support"
+
+config DUAL_BOOTLOADER
+	bool "Enable dual bootloader support"
+	select SPL_MMC
+	select SPL_MMC_WRITE
+	help
+	  Enable A/B bootloader select in SPL.
+
+config ANDROID_DYNAMIC_PARTITION
+	bool "Support to boot up Android with system image in logical partitions"
+
+config VIRTUAL_AB_SUPPORT
+	bool "Support virtual AB update"
+	select ANDROID_DYNAMIC_PARTITION
