@@ -250,6 +250,42 @@ u32 caam_hwrng(u8 *output_ptr, u32 output_len)
 }
 
 /*!
+ * Use CAAM to derive BKEK
+ *
+ * @param   output_ptr  Location address of the output data.
+ *
+ * @return  SUCCESS or ERROR_XXX
+ */
+u32 caam_derive_bkek(u8 *output_ptr)
+{
+	u32 ret = SUCCESS;
+	u32 key_sz = sizeof(skeymod);
+	u32 *bkek_desc = g_jrdata.desc;
+
+	/* initialize the output array */
+	memset(output_ptr, 0, BKEK_SIZE);
+
+	/* prepare job descriptor */
+	init_job_desc(bkek_desc, 0);
+	append_load(bkek_desc, PTR2CAAMDMA(skeymod), key_sz,
+		    LDST_CLASS_2_CCB | LDST_SRCDST_BYTE_KEY);
+	append_seq_out_ptr_intlen(bkek_desc, PTR2CAAMDMA(output_ptr), BKEK_SIZE, 0);
+	append_operation(bkek_desc, OP_TYPE_ENCAP_PROTOCOL | OP_PCLID_BLOB | OP_PROTINFO_MKVB);
+
+	flush_dcache_range((uintptr_t)output_ptr & ALIGN_MASK,
+			   ((uintptr_t)output_ptr & ALIGN_MASK)
+			   + ROUND(BKEK_SIZE, ARCH_DMA_MINALIGN));
+
+	ret = do_job(bkek_desc);
+
+	if (ret != SUCCESS) {
+		printf("Error: output bkek job failed 0x%x\n", ret);
+	}
+
+	return ret;
+}
+
+/*!
  * Initialize the CAAM.
  *
  */
