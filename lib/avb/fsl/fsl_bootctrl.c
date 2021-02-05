@@ -642,13 +642,7 @@ int mmc_load_image_raw_sector_dual_uboot(struct spl_image_info *spl_image,
 
 #if !defined(CONFIG_XEN) && defined(CONFIG_IMX_TRUSTY_OS)
 	read_keyslot_package(&kp);
-	if (strcmp(kp.magic, KEYPACK_MAGIC)) {
-		if (rpmbkey_is_set()) {
-			printf("\nFATAL - RPMB key was destroyed!\n");
-			hang();
-		} else
-			printf("keyslot package magic error, do nothing here!\n");
-	} else {
+	if (!strcmp(kp.magic, KEYPACK_MAGIC)) {
 		/* Set power-on write protection to boot1 partition. */
 		if (mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_BOOT_WP, BOOT1_PWR_WP)) {
 			printf("Unable to set power-on write protection to boot1!\n");

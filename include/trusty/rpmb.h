@@ -75,4 +75,14 @@ void *rpmb_storage_get_ctx(void);
  */
 void rpmb_storage_put_ctx(void *dev);
 
+/*
+ * Set rpmb key by secure side.
+ */
+int storage_set_rpmb_key(void);
+
+/*
+ * Erase rpmb storage by secure side.
+ */
+int storage_erase_rpmb(void);
+
 #endif /* TRUSTY_RPMB_H_ */
