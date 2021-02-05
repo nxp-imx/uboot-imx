@@ -35,7 +35,8 @@
 #define ANDROID_MCU_FIRMWARE_HEADER_STACK 0x20020000
 #endif
 
-#if !defined(CONFIG_IMX_TRUSTY_OS) || !defined(CONFIG_DUAL_BOOTLOADER)
+#if !defined(CONFIG_IMX_TRUSTY_OS) || !defined(CONFIG_DUAL_BOOTLOADER) || \
+    !defined(CONFIG_SPL_BUILD)
 #undef CONFIG_FSL_CAAM_KB
 #endif
 

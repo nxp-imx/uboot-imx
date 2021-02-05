@@ -26,6 +26,7 @@
 #include "debug.h"
 #include <memalign.h>
 #include "trusty/hwcrypto.h"
+#include "trusty/rpmb.h"
 #include "fsl_atx_attributes.h"
 #include <asm/mach-imx/hab.h>
 #include <asm/arch/sys_proto.h>
@@ -301,12 +302,18 @@ int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset
 		ret = -1;
 		goto fail;
 	}
-	/* copy rpmb key to blob */
-	memcpy(blob, kp.rpmb_keyblob, RPMBKEY_BLOB_LEN);
 	caam_open();
-	if (caam_decap_blob((ulong)extract_key, (ulong)blob,
-				RPMBKEY_LENGTH)) {
-		ERR("decap rpmb key error\n");
+	if (!strcmp(kp.magic, KEYPACK_MAGIC)) {
+		/* Use the key from keyslot. */
+		memcpy(blob, kp.rpmb_keyblob, RPMBKEY_BLOB_LEN);
+		if (caam_decap_blob((ulong)extract_key, (ulong)blob,
+					RPMBKEY_LENGTH)) {
+			ERR("decap rpmb key error\n");
+			ret = -1;
+			goto fail;
+		}
+	} else if (caam_derive_bkek(extract_key)) {
+		ERR("get rpmb key error\n");
 		ret = -1;
 		goto fail;
 	}
@@ -335,6 +342,7 @@ int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset
 		out_buf += cnt;
 		s = 0;
 	}
+	memset(extract_key, 0, RPMBKEY_LENGTH);
 	ret = 0;
 
 fail:
@@ -401,12 +409,18 @@ int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offse
 		ret = -1;
 		goto fail;
 	}
-	/* copy rpmb key to blob */
-	memcpy(blob, kp.rpmb_keyblob, RPMBKEY_BLOB_LEN);
 	caam_open();
-	if (caam_decap_blob((ulong)extract_key, (ulong)blob,
-				RPMBKEY_LENGTH)) {
-		ERR("decap rpmb key error\n");
+	if (!strcmp(kp.magic, KEYPACK_MAGIC)) {
+		/* Use the key from keyslot. */
+		memcpy(blob, kp.rpmb_keyblob, RPMBKEY_BLOB_LEN);
+		if (caam_decap_blob((ulong)extract_key, (ulong)blob,
+					RPMBKEY_LENGTH)) {
+			ERR("decap rpmb key error\n");
+			ret = -1;
+			goto fail;
+		}
+	} else if (caam_derive_bkek(extract_key)) {
+		ERR("get rpmb key error\n");
 		ret = -1;
 		goto fail;
 	}
@@ -440,6 +454,7 @@ int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offse
 		if (s != 0)
 			s = 0;
 	}
+	memset(extract_key, 0, RPMBKEY_LENGTH);
 	ret = 0;
 
 fail:
@@ -800,13 +815,8 @@ int check_rpmb_blob(struct mmc *mmc)
 
 	read_keyslot_package(&kp);
 	if (strcmp(kp.magic, KEYPACK_MAGIC)) {
-		if (rpmbkey_is_set()) {
-			printf("\nFATAL - RPMB key was destroyed!\n");
-			hang();
-		} else {
-			printf("keyslot package magic error, do nothing here!\n");
-			return 0;
-		}
+		/* Return if the magic doesn't match */
+		return 0;
 	}
 	/* If keyslot package valid, copy it to secure memory */
 	fill_secure_keyslot_package(&kp);
@@ -1278,7 +1288,7 @@ fail:
 	return ret;
 }
 
-int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size)
+int fastboot_set_rpmb_staged_key(uint8_t *staged_buf, uint32_t key_size)
 {
 
 	if (memcmp(staged_buf, RPMB_KEY_MAGIC, strlen(RPMB_KEY_MAGIC))) {
@@ -1290,16 +1300,9 @@ int fastboot_set_rpmb_key(uint8_t *staged_buf, uint32_t key_size)
 				RPMBKEY_LENGTH);
 }
 
-int fastboot_set_rpmb_random_key(void)
+int fastboot_set_rpmb_hardware_key(void)
 {
-	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, rpmb_key, RPMBKEY_LENGTH);
-
-	if (hwcrypto_gen_rng((ulong)rpmb_key, RPMBKEY_LENGTH)) {
-		printf("error - can't generate random key!\n");
-		return -1;
-	}
-
-	return do_rpmb_key_set(rpmb_key, RPMBKEY_LENGTH);
+	return storage_set_rpmb_key();
 }
 
 int avb_set_public_key(uint8_t *staged_buffer, uint32_t size) {
