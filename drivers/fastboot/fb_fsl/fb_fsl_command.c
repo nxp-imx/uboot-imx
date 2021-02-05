@@ -45,6 +45,7 @@
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 #include "u-boot/sha256.h"
+#include "trusty/rpmb.h"
 #include <trusty/libtipc.h>
 #endif
 
@@ -696,18 +697,26 @@ static void flashing(char *cmd, char *response)
 	}
 #endif
 #ifndef CONFIG_AVB_ATX
-	else if (endswith(cmd, FASTBOOT_SET_RPMB_KEY)) {
-		if (fastboot_set_rpmb_key(fastboot_buf_addr, fastboot_bytes_received)) {
-			printf("ERROR set rpmb key failed!\n");
-			strcpy(response, "FAILset rpmb key failed!");
+	else if (endswith(cmd, FASTBOOT_SET_RPMB_STAGED_KEY)) {
+		if (fastboot_set_rpmb_staged_key(fastboot_buf_addr, fastboot_bytes_received)) {
+			printf("ERROR set rpmb staged key failed!\n");
+			strcpy(response, "FAILset rpmb staged key failed!");
 		} else
 			strcpy(response, "OKAY");
-	} else if (endswith(cmd, FASTBOOT_SET_RPMB_RANDOM_KEY)) {
-		if (fastboot_set_rpmb_random_key()) {
-			printf("ERROR set rpmb random key failed!\n");
-			strcpy(response, "FAILset rpmb random key failed!");
+	} else if (endswith(cmd, FASTBOOT_SET_RPMB_HARDWARE_KEY)) {
+		if (fastboot_set_rpmb_hardware_key()) {
+			printf("ERROR set rpmb hardware key failed!\n");
+			strcpy(response, "FAILset rpmb hardware key failed!");
 		} else
 			strcpy(response, "OKAY");
+	} else if (endswith(cmd, FASTBOOT_ERASE_RPMB)) {
+		if (storage_erase_rpmb()) {
+			printf("ERROR erase rpmb storage failed!\n");
+			strcpy(response, "FAILerase rpmb storage failed!");
+		} else {
+			printf("erase rpmb storage succeed!\n");
+			strcpy(response, "OKAY");
+		}
 	} else if (endswith(cmd, FASTBOOT_SET_VBMETA_PUBLIC_KEY)) {
 		if (avb_set_public_key(fastboot_buf_addr,
 					fastboot_bytes_received))

@@ -56,6 +56,9 @@ enum storage_cmd {
 
     /* transaction support */
     STORAGE_END_TRANSACTION = 9 << STORAGE_REQ_SHIFT,
+
+    STORAGE_RPMB_KEY_SET = 12 << STORAGE_REQ_SHIFT,
+    STORAGE_RPMB_ERASE_ALL = 13 << STORAGE_REQ_SHIFT,
 };
 
 /**
