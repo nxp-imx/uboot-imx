@@ -37,6 +37,8 @@ struct trusty_ipc_chan proxy_chan;
 struct storage_msg req_msg;
 static uint8_t req_buf[4096];
 static uint8_t read_buf[4096];
+bool proxy_resp_flag = false;
+static int req_len = 0;
 
 /*
  * Read RPMB request from storage service. Writes message to @msg
@@ -74,6 +76,53 @@ static int proxy_read_request(struct trusty_ipc_chan *chan,
 }
 
 /*
+ * Read RPMB response from storage service. Writes message to @msg
+ * and @req.
+ *
+ * @chan:     proxy ipc channel
+ * @msg:      address of storage message header
+ * @cmd:      cmd corresponding to the request
+ * @resp:     address of storage message response
+ * @resp_len: length of resp in bytes
+ */
+static int proxy_read_response(struct trusty_ipc_chan *chan, struct storage_msg *msg,
+                               uint32_t cmd, void *resp, size_t resp_len)
+{
+    int rc;
+
+    struct trusty_ipc_iovec resp_iovs[2] = {
+        { .base = msg, .len = sizeof(*msg) },
+        { .base = resp, .len = resp_len },
+    };
+    rc = trusty_ipc_recv(chan, resp_iovs, resp ? 2 : 1, true);
+    if (rc < 0) {
+        /* recv message failed */
+        trusty_error("%s: failed (%d) to recv response\n", __func__, rc);
+        return rc;
+    }
+    if (proxy_resp_flag) {
+        memcpy(msg, &req_msg, sizeof(struct storage_msg));
+        if (resp)
+            memcpy(resp, req_buf, req_len);
+        rc = req_len + sizeof(struct storage_msg);
+        proxy_resp_flag = false;
+    }
+
+    if ((size_t)rc < sizeof(*msg)) {
+        /* malformed message */
+        trusty_error("%s: malformed request (%zu)\n", __func__, (size_t)rc);
+        return TRUSTY_ERR_GENERIC;
+    }
+
+    if (msg->cmd != (cmd | STORAGE_RESP_BIT)) {
+        trusty_error("malformed response, cmd: 0x%x\n", msg->cmd);
+        return TRUSTY_ERR_GENERIC;
+    }
+
+    return rc - sizeof(*msg); /* return payload size */
+}
+
+/*
  * Send RPMB response to storage service
  *
  * @chan:     proxy ipc channel
@@ -92,6 +141,71 @@ static int proxy_send_response(struct trusty_ipc_chan *chan,
 
     msg->cmd |= STORAGE_RESP_BIT;
     return trusty_ipc_send(chan, resp_iovs, resp ? 2 : 1, false);
+}
+
+/*
+ * Send RPMB request to storage service
+ *
+ * @chan:     proxy ipc channel
+ * @msg:      address of storage message header
+ * @req:      address of storage message request
+ * @req_len:  length of request in bytes
+ */
+static int proxy_send_request(struct trusty_ipc_chan *chan,
+                              struct storage_msg *msg, void *req,
+                              size_t req_len)
+{
+    struct trusty_ipc_iovec req_iovs[2] = {
+        { .base = msg, .len = sizeof(*msg) },
+        { .base = req, .len = req_len }
+    };
+
+    return trusty_ipc_send(chan, req_iovs, req ? 2 : 1, false);
+}
+
+/*
+ * Convenience function to send a request to the storage service and read the
+ * response.
+ *
+ * @cmd: the command
+ * @req: the request buffer
+ * @req_size: size of the request buffer
+ * @resp: the response buffer
+ * @resp_size_p: pointer to the size of the response buffer. changed to the
+                 actual size of the response read from the secure side
+ */
+static int storage_do_tipc(uint32_t cmd, void *req, uint32_t req_size, void *resp,
+                       uint32_t *resp_size_p)
+{
+    int rc;
+    struct storage_msg msg = { .cmd = cmd };
+
+    if (!initialized) {
+        trusty_error("%s: Secure storage TIPC client not initialized\n", __func__);
+        return TRUSTY_ERR_GENERIC;
+    }
+    rc = proxy_send_request(&proxy_chan, &msg, req, req_size);
+    if (rc < 0) {
+        trusty_error("%s: failed (%d) to send storage request\n", __func__, rc);
+        return rc;
+    }
+
+    uint32_t resp_size = resp_size_p ? *resp_size_p : 0;
+    rc = proxy_read_response(&proxy_chan, &msg, cmd, resp, resp_size);
+    if (rc < 0) {
+        trusty_error("%s: failed (%d) to read secure storage response\n", __func__, rc);
+        return rc;
+    }
+    /* change response size to actual response size */
+    if (resp_size_p && rc != *resp_size_p) {
+        *resp_size_p = rc;
+    }
+    if (msg.result != STORAGE_NO_ERROR) {
+        trusty_error("%s: secure storage service returned error (%d)\n", __func__,
+                     msg.result);
+        return TRUSTY_ERR_GENERIC;
+    }
+    return TRUSTY_ERR_NONE;
 }
 
 /*
@@ -257,6 +371,18 @@ static int proxy_on_message(struct trusty_ipc_chan *chan)
         return rc;
     }
 
+    /**
+     * The response of proxy will also be routed to here but we should
+     * not handle them, just return and set "proxy_resp_flag" to indicate
+     * func trusty_ipc_dev_recv() not try to receive the msg again.
+     */
+    if (req_msg.cmd & STORAGE_RESP_BIT) {
+        chan->complete = 1;
+        proxy_resp_flag = 1;
+        req_len = rc;
+        return TRUSTY_EVENT_HANDLED;
+    }
+
     /* handle it and send reply */
     rc = proxy_handle_req(chan, &req_msg, req_buf, rc);
     if (rc < 0) {
@@ -329,4 +455,16 @@ void rpmb_storage_proxy_shutdown(struct trusty_ipc_dev *dev)
     trusty_ipc_close(&proxy_chan);
 
     initialized = false;
+}
+
+int storage_set_rpmb_key(void)
+{
+    uint32_t size = 0;
+    return storage_do_tipc(STORAGE_RPMB_KEY_SET, NULL, 0, NULL, &size);
+}
+
+int storage_erase_rpmb(void)
+{
+    uint32_t size = 0;
+    return storage_do_tipc(STORAGE_RPMB_ERASE_ALL, NULL, 0, NULL, &size);
 }
