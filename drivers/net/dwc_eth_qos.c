@@ -303,6 +303,8 @@ struct eqos_priv {
 	struct eqos_tegra186_regs *tegra186_regs;
 	struct reset_ctl reset_ctl;
 	struct gpio_desc phy_reset_gpio;
+	uint32_t reset_delay;
+	uint32_t reset_post_delay;
 	struct clk clk_master_bus;
 	struct clk clk_rx;
 	struct clk clk_ptp_ref;
@@ -1880,6 +1882,7 @@ static int eqos_probe_resources_imx(struct udevice *dev)
 {
 	struct eqos_priv *eqos = dev_get_priv(dev);
 	phy_interface_t interface;
+	int ret = 0;
 
 	debug("%s(dev=%p):\n", __func__, dev);
 
@@ -1890,8 +1893,52 @@ static int eqos_probe_resources_imx(struct udevice *dev)
 		return -EINVAL;
 	}
 
+	ret = gpio_request_by_name(dev, "phy-reset-gpios", 0,
+				   &eqos->phy_reset_gpio,
+				   GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+	if (ret) {
+		pr_debug("gpio_request_by_name(phy reset) failed: %d", ret);
+	}
+
+	if (dm_gpio_is_valid(&eqos->phy_reset_gpio)) {
+		eqos->reset_delay = dev_read_u32_default(dev, "phy-reset-duration", 1);
+		if (eqos->reset_delay > 1000) {
+			pr_err("phy reset duration should be <= 1000ms\n");
+			/* property value wrong, use default value */
+			eqos->reset_delay = 1;
+		}
+
+		mdelay(eqos->reset_delay);
+
+		eqos->reset_post_delay = dev_read_u32_default(dev,
+							      "phy-reset-post-delay",
+							      0);
+		if (eqos->reset_post_delay > 1000) {
+			pr_err("phy reset post delay should be <= 1000ms\n");
+			/* property value wrong, use default value */
+			eqos->reset_post_delay = 0;
+		}
+
+		ret = dm_gpio_set_value(&eqos->phy_reset_gpio, 0);
+		if (ret < 0) {
+			pr_err("dm_gpio_set_value(phy_reset, deassert) failed: %d", ret);
+			goto err_free_gpio_phy_reset;
+		}
+
+		if (eqos->reset_post_delay)
+			mdelay(eqos->reset_post_delay);
+	}
+
 	debug("%s: OK\n", __func__);
 	return 0;
+
+err_free_gpio_phy_reset:
+	if (dm_gpio_is_valid(&eqos->phy_reset_gpio)) {
+		dm_gpio_free(dev, &eqos->phy_reset_gpio);
+	}
+
+	debug("%s: returns %d\n", __func__, ret);
+	return ret;
 }
 
 static phy_interface_t eqos_get_interface_imx(struct udevice *dev)
@@ -1951,6 +1998,14 @@ static int eqos_remove_resources_stm32(struct udevice *dev)
 
 static int eqos_remove_resources_imx(struct udevice *dev)
 {
+	struct eqos_priv *eqos = dev_get_priv(dev);
+
+	debug("%s(dev=%p):\n", __func__, dev);
+	if (dm_gpio_is_valid(&eqos->phy_reset_gpio)) {
+		dm_gpio_free(dev, &eqos->phy_reset_gpio);
+	}
+
+	debug("%s: OK\n", __func__);
 	return 0;
 }
 
