@@ -35,6 +35,11 @@
 struct lcdifv3_priv {
 	fdt_addr_t reg_base;
 	struct udevice *disp_dev;
+
+	u32 thres_low_mul;
+	u32 thres_low_div;
+	u32 thres_high_mul;
+	u32 thres_high_div;
 };
 
 static int lcdifv3_set_pix_fmt(struct lcdifv3_priv *priv, unsigned int format)
@@ -119,6 +124,38 @@ static void lcdifv3_set_bus_fmt(struct lcdifv3_priv *priv)
 	writel(disp_para, (ulong)(priv->reg_base + LCDIFV3_DISP_PARA));
 }
 
+static void lcdifv3_enable_plane_panic(struct lcdifv3_priv *priv)
+{
+	u32 panic_thres, thres_low, thres_high;
+
+	/* apb clock has been enabled */
+
+	/* As suggestion, the thres_low should be 1/3 FIFO,
+	 * and thres_high should be 2/3 FIFO (The FIFO size
+	 * is 8KB = 512 * 128bit).
+	 * threshold = n * 128bit (n: 0 ~ 511)
+	 */
+	thres_low  = DIV_ROUND_UP(511 * priv->thres_low_mul,
+			priv->thres_low_div);
+	thres_high = DIV_ROUND_UP(511 * priv->thres_high_mul,
+			priv->thres_high_div);
+
+	panic_thres = PANIC0_THRES_PANIC_THRES_LOW(thres_low)	|
+		      PANIC0_THRES_PANIC_THRES_HIGH(thres_high);
+
+	writel(panic_thres, priv->reg_base + LCDIFV3_PANIC0_THRES);
+
+	/* Enable Panic:
+	 *
+	 * As designed, the panic won't trigger an irq,
+	 * so it is unnecessary to handle this as an irq
+	 * and NoC + QoS modules will handle panic
+	 * automatically.
+	 */
+	writel(INT_ENABLE_D1_PLANE_PANIC_EN,
+	       priv->reg_base + LCDIFV3_INT_ENABLE_D1);
+}
+
 static void lcdifv3_enable_controller(struct lcdifv3_priv *priv)
 {
 	u32 disp_para, ctrldescl0_5;
@@ -166,6 +203,9 @@ static void lcdifv3_init(struct udevice *dev,
 	mxs_set_lcdclk(priv->reg_base, PS2KHZ(mode->pixclock));
 
 	writel(CTRL_SW_RESET, (ulong)(priv->reg_base + LCDIFV3_CTRL_CLR));
+
+	/* enable plane FIFO panic */
+	lcdifv3_enable_plane_panic(priv);
 
 	lcdifv3_set_mode(priv, mode);
 
@@ -229,6 +269,54 @@ static int lcdifv3_of_get_timings(struct udevice *dev,
 	return ret;
 }
 
+static int lcdifv3_check_thres_value(u32 mul, u32 div)
+{
+	if (!div)
+		return -EINVAL;
+
+	if (mul > div)
+		return -EINVAL;
+
+	return 0;
+}
+
+static void lcdifv3_of_parse_thres(struct udevice *dev)
+{
+	int ret;
+	u32 thres_low[2], thres_high[2];
+	struct lcdifv3_priv *priv = dev_get_priv(dev);
+
+
+	/* default 'thres-low' value:  FIFO * 1/3;
+	 * default 'thres-high' value: FIFO * 2/3.
+	 */
+	priv->thres_low_mul	= 1;
+	priv->thres_low_div	= 3;
+	priv->thres_high_mul	= 2;
+	priv->thres_high_div	= 3;
+
+	ret = dev_read_u32_array(dev, "thres-low", thres_low, 2);
+	if (!ret) {
+		/* check the value effectiveness */
+		ret = lcdifv3_check_thres_value(thres_low[0], thres_low[1]);
+		if (!ret) {
+			priv->thres_low_mul	= thres_low[0];
+			priv->thres_low_div	= thres_low[1];
+		}
+	}
+
+	ret = dev_read_u32_array(dev, "thres-high", thres_high, 2);
+	if (!ret) {
+		/* check the value effectiveness */
+		ret = lcdifv3_check_thres_value(thres_high[0], thres_high[1]);
+		if (!ret) {
+			priv->thres_high_mul	= thres_high[0];
+			priv->thres_high_div	= thres_high[1];
+		}
+	}
+}
+
+
 static int lcdifv3_video_probe(struct udevice *dev)
 {
 	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
@@ -253,6 +341,8 @@ static int lcdifv3_video_probe(struct udevice *dev)
 	ret = lcdifv3_of_get_timings(dev, &timings);
 	if (ret)
 		return ret;
+
+	lcdifv3_of_parse_thres(dev);
 
 	if (priv->disp_dev) {
 #if IS_ENABLED(CONFIG_VIDEO_BRIDGE)
