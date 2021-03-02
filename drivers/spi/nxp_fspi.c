@@ -309,6 +309,9 @@
 #define POLL_TOUT		5000
 #define NXP_FSPI_MAX_CHIPSELECT		4
 
+/* access memory via IPS only due to this errata */
+#define NXP_FSPI_QUIRK_ERR050601    BIT(0)
+
 struct nxp_fspi_devtype_data {
 	unsigned int rxfifo;
 	unsigned int txfifo;
@@ -338,6 +341,14 @@ static const struct nxp_fspi_devtype_data imx8qxp_data = {
 	.txfifo = SZ_1K,        /* (128 * 64 bits)  */
 	.ahb_buf_size = SZ_2K,  /* (256 * 64 bits)  */
 	.quirks = 0,
+	.little_endian = true,  /* little-endian    */
+};
+
+static const struct nxp_fspi_devtype_data imx8dxl_data = {
+	.rxfifo = SZ_512,       /* (64  * 64 bits)  */
+	.txfifo = SZ_1K,        /* (128 * 64 bits)  */
+	.ahb_buf_size = SZ_2K,  /* (256 * 64 bits)  */
+	.quirks = NXP_FSPI_QUIRK_ERR050601,
 	.little_endian = true,  /* little-endian    */
 };
 
@@ -372,6 +383,11 @@ static u32 fspi_readl(struct nxp_fspi *f, void __iomem *addr)
 		return in_le32(addr);
 	else
 		return in_be32(addr);
+}
+
+static inline int nxp_fspi_ips_access_only(struct nxp_fspi *f)
+{
+	return f->devtype_data->quirks & NXP_FSPI_QUIRK_ERR050601;
 }
 
 static int nxp_fspi_check_buswidth(struct nxp_fspi *f, u8 width)
@@ -793,7 +809,8 @@ static int nxp_fspi_exec_op(struct spi_slave *slave,
 	 * by accessing the mapped memory. In all other cases we use
 	 * IP commands to access the flash.
 	 */
-	if (op->data.nbytes > (f->devtype_data->rxfifo - 4) &&
+	if (!nxp_fspi_ips_access_only(f) &&
+		op->data.nbytes > (f->devtype_data->rxfifo - 4) &&
 	    op->data.dir == SPI_MEM_DATA_IN) {
 		nxp_fspi_read_ahb(f, op);
 	} else {
@@ -826,6 +843,11 @@ static int nxp_fspi_adjust_op_size(struct spi_slave *slave,
 			op->data.nbytes = f->devtype_data->ahb_buf_size;
 		else if (op->data.nbytes > (f->devtype_data->rxfifo - 4))
 			op->data.nbytes = ALIGN_DOWN(op->data.nbytes, 8);
+
+		/* dxl won't use ahb to access data, limit to rxfifo size */
+		if (nxp_fspi_ips_access_only(f) &&
+			op->data.nbytes > f->devtype_data->rxfifo)
+			op->data.nbytes = f->devtype_data->rxfifo;
 	}
 
 	return 0;
@@ -1015,6 +1037,7 @@ static const struct udevice_id nxp_fspi_ids[] = {
 	{ .compatible = "nxp,lx2160a-fspi", .data = (ulong)&lx2160a_data, },
 	{ .compatible = "nxp,imx8mm-fspi", .data = (ulong)&imx8mm_data, },
 	{ .compatible = "nxp,imx8qxp-fspi", .data = (ulong)&imx8qxp_data, },
+	{ .compatible = "nxp,imx8dxl-fspi", .data = (ulong)&imx8dxl_data, },
 	{ }
 };
 
