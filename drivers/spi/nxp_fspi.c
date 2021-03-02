@@ -59,6 +59,7 @@
  * read operation, so let's use the last entry (31).
  */
 #define	SEQID_LUT			31
+#define	SEQID_AHB_LUT			30
 
 /* Registers used by the driver */
 #define FSPI_MCR0			0x00
@@ -246,6 +247,10 @@
 #define FSPI_LUT_OFFSET			(SEQID_LUT * 4 * 4)
 #define FSPI_LUT_REG(idx) \
 	(FSPI_LUT_BASE + FSPI_LUT_OFFSET + (idx) * 4)
+
+#define FSPI_AHB_LUT_OFFSET			(SEQID_AHB_LUT * 4 * 4)
+#define FSPI_AHB_LUT_REG(idx) \
+	(FSPI_LUT_BASE + FSPI_AHB_LUT_OFFSET + (idx) * 4)
 
 /* register map end */
 
@@ -533,6 +538,12 @@ static void nxp_fspi_prepare_lut(struct nxp_fspi *f,
 	/* fill LUT */
 	for (i = 0; i < ARRAY_SIZE(lutval); i++)
 		fspi_writel(f, lutval[i], base + FSPI_LUT_REG(i));
+
+	if (op->data.nbytes && op->data.dir == SPI_MEM_DATA_IN &&
+		op->addr.nbytes) {
+		for (i = 0; i < ARRAY_SIZE(lutval); i++)
+			fspi_writel(f, lutval[i], base + FSPI_AHB_LUT_REG(i));
+	}
 
 	dev_dbg(f->dev, "CMD[%x] lutval[0:%x \t 1:%x \t 2:%x \t 3:%x], size: 0x%08x\n",
 		op->cmd.opcode, lutval[0], lutval[1], lutval[2], lutval[3], op->data.nbytes);
@@ -931,10 +942,10 @@ static int nxp_fspi_default_setup(struct nxp_fspi *f)
 		    base + FSPI_AHBCR);
 
 	/* AHB Read - Set lut sequence ID for all CS. */
-	fspi_writel(f, SEQID_LUT, base + FSPI_FLSHA1CR2);
-	fspi_writel(f, SEQID_LUT, base + FSPI_FLSHA2CR2);
-	fspi_writel(f, SEQID_LUT, base + FSPI_FLSHB1CR2);
-	fspi_writel(f, SEQID_LUT, base + FSPI_FLSHB2CR2);
+	fspi_writel(f, SEQID_AHB_LUT, base + FSPI_FLSHA1CR2);
+	fspi_writel(f, SEQID_AHB_LUT, base + FSPI_FLSHA2CR2);
+	fspi_writel(f, SEQID_AHB_LUT, base + FSPI_FLSHB1CR2);
+	fspi_writel(f, SEQID_AHB_LUT, base + FSPI_FLSHB2CR2);
 
 	return 0;
 }
