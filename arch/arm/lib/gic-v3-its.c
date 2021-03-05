@@ -3,6 +3,7 @@
  * Copyright 2019 Broadcom.
  */
 #include <common.h>
+#include <cpu_func.h>
 #include <asm/gic.h>
 #include <asm/gic-v3.h>
 #include <asm/io.h>
@@ -28,6 +29,8 @@ int gic_lpi_tables_init(u64 base, u32 num_redist)
 	int i;
 	u64 redist_lpi_base;
 	u64 pend_base = GICR_BASE + GICR_PENDBASER;
+	ulong pend_tab_total_sz;
+	void *pend_tab_va;
 
 	gicd_typer = readl(GICD_BASE + GICD_TYPER);
 
@@ -76,12 +79,19 @@ int gic_lpi_tables_init(u64 base, u32 num_redist)
 
 	redist_lpi_base = base + LPI_PROPBASE_SZ;
 
+	pend_tab_total_sz = num_redist * LPI_PENDBASE_SZ;
+	pend_tab_va = map_physmem(redist_lpi_base, pend_tab_total_sz, MAP_NOCACHE);
+	memset(pend_tab_va, 0, pend_tab_total_sz);
+	flush_cache((ulong)pend_tab_va, pend_tab_total_sz);
+	unmap_physmem(pend_tab_va, MAP_NOCACHE);
+
 	for (i = 0; i < num_redist; i++) {
 		u32 offset = i * GIC_REDISTRIBUTOR_OFFSET;
 
 		val = ((redist_lpi_base + (i * LPI_PENDBASE_SZ)) |
 			GICR_PENDBASER_INNERSHAREABLE |
-			GICR_PENDBASER_RAWAWB);
+			GICR_PENDBASER_RAWAWB |
+			GICR_PENDBASER_PTZ);
 
 		writeq(val, (uintptr_t)(pend_base + offset));
 		tmp = readq((uintptr_t)(pend_base + offset));
