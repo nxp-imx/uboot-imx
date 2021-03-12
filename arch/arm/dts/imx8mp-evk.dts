@@ -13,7 +13,7 @@
 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
 
 	chosen {
-		bootargs = "console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200";
+		bootargs = "console=ttymxc1,115200";
 		stdout-path = &uart2;
 	};
 
