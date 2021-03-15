@@ -23,6 +23,12 @@
 
 #endif
 
+#ifdef CONFIG_TARGET_IMX8QM_MEK_A53_ONLY
+#define IMX_HDMI_FIRMWARE_LOAD_ADDR (CFG_SYS_SDRAM_BASE + SZ_64M)
+#define IMX_HDMITX_FIRMWARE_SIZE 0x20000
+#define IMX_HDMIRX_FIRMWARE_SIZE 0x20000
+#endif
+
 #define PHY_ANEG_TIMEOUT 20000
 
 #ifdef CONFIG_AHAB_BOOT
@@ -92,9 +98,18 @@
 #define MFG_NAND_PARTITION ""
 #endif
 
+#ifdef CONFIG_TARGET_IMX8QM_MEK_A72_ONLY
+#define HDP_LOAD_ENV
+#define INITRD_ADDR_ENV "initrd_addr=0xC3100000\0"
+#else
+#define HDP_LOAD_ENV \
+	"if run loadhdp; then; hdp load ${hdp_addr}; fi;"
+#define INITRD_ADDR_ENV "initrd_addr=0x83100000\0"
+#endif
+
 #define CFG_MFG_ENV_SETTINGS \
 	CFG_MFG_ENV_SETTINGS_DEFAULT \
-	"initrd_addr=0x83100000\0" \
+	INITRD_ADDR_ENV \
 	"initrd_high=0xffffffffffffffff\0" \
 	"emmc_dev=0\0" \
 	"sd_dev=1\0"
@@ -108,17 +123,17 @@
 	AHAB_ENV \
 	"script=boot.scr\0" \
 	"image=Image\0" \
-	"splashimage=0x9e000000\0" \
-	"console=ttyLP0\0" \
-	"fdt_addr=0x83000000\0"			\
+	SPLASH_IMAGE_ADDR \
+	CFG_CONSOLE \
+	FDT_ADDR \
 	"fdt_high=0xffffffffffffffff\0"		\
 	"cntr_addr=0x98000000\0"			\
 	"cntr_file=os_cntr_signed.bin\0" \
 	"boot_fdt=try\0" \
-	"fdt_file=undefined\0" \
+	FDT_FILE \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
-	"mmcroot=/dev/mmcblk1p2 rootwait rw\0" \
+	"mmcroot=" CFG_MMCROOT " rootwait rw\0" \
 	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} earlycon root=${mmcroot} " \
 		"cpufreq.default_governor=SCHEDUTIL\0" \
@@ -137,7 +152,7 @@
 	"loadcntr=fatload mmc ${mmcdev}:${mmcpart} ${cntr_addr} ${cntr_file}\0" \
 	"auth_os=auth_cntr ${cntr_addr}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
-		"if run loadhdp; then; hdp load ${hdp_addr}; fi;" \
+		HDP_LOAD_ENV \
 		"run mmcargs; " \
 		"if test ${sec_boot} = yes; then " \
 			"if run auth_os; then " \
@@ -188,14 +203,52 @@
 			"fi;" \
 		"fi;\0"
 
-/* Link Definitions */
+#if defined(CONFIG_TARGET_IMX8QM_MEK_A72_ONLY)
+	#define FDT_ADDR	"fdt_addr=0xC3000000\0"
+	#define FDT_FILE	"fdt_file=imx8qm-mek-cockpit-a72.dtb\0"
+#elif defined(CONFIG_TARGET_IMX8QM_MEK_A53_ONLY)
+	#define FDT_ADDR	"fdt_addr=0x83000000\0"
+	#define FDT_FILE	"fdt_file=imx8qm-mek-cockpit-a53.dtb\0"
+#else
+	#define FDT_ADDR	"fdt_addr=0x83000000\0"
+	#define FDT_FILE	"fdt_file=undefined\0"
+#endif
 
 /* On LPDDR4 board, USDHC1 is for eMMC, USDHC2 is for SD on CPU board */
+#if defined(CONFIG_TARGET_IMX8QM_MEK_A72_ONLY)
+	#define CFG_MMCROOT			"/dev/mmcblk0p2"  /* USDHC1 */
+#elif defined(CONFIG_TARGET_IMX8QM_MEK_A53_ONLY)
+	#define CFG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
+#else
+	#define CFG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
+#endif
 
+#if defined(CONFIG_TARGET_IMX8QM_MEK_A72_ONLY)
+#define CFG_CONSOLE "console=ttyLP2\0"
+#define SPLASH_IMAGE_ADDR	"splashimage=0xde000000\0"
+#else
+#define CFG_CONSOLE "console=ttyLP0\0"
+#define SPLASH_IMAGE_ADDR	"splashimage=0x9e000000\0"
+#endif
+
+#if defined(CONFIG_TARGET_IMX8QM_MEK_A53_ONLY)
+#define CFG_SYS_SDRAM_BASE		0x80000000
+#define PHYS_SDRAM_1			0x80000000
+#define PHYS_SDRAM_2			0x880000000
+#define PHYS_SDRAM_1_SIZE		0x40000000	/* 1 GB */
+#define PHYS_SDRAM_2_SIZE		0x80000000	/* 2 GB */
+#elif defined(CONFIG_TARGET_IMX8QM_MEK_A72_ONLY)
+#define CFG_SYS_SDRAM_BASE		0xC0000000
+#define PHYS_SDRAM_1			0xC0000000
+#define PHYS_SDRAM_2			0x900000000
+#define PHYS_SDRAM_1_SIZE		0x40000000	/* 1 GB */
+#define PHYS_SDRAM_2_SIZE		0x80000000	/* 2 GB */
+#else
 #define CFG_SYS_SDRAM_BASE		0x80000000
 #define PHYS_SDRAM_1			0x80000000
 #define PHYS_SDRAM_2			0x880000000
 #define PHYS_SDRAM_1_SIZE		0x80000000	/* 2 GB */
 #define PHYS_SDRAM_2_SIZE		0x100000000	/* 4 GB */
+#endif
 
 #endif /* __IMX8QM_MEK_H */
