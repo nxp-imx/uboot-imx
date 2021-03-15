@@ -85,12 +85,14 @@ int arch_cpu_init_dm(void)
 		}
 	}
 
+#if !defined(CONFIG_TARGET_IMX8QM_MEK_A72_ONLY) && !defined(CONFIG_TARGET_IMX8QM_MEK_A53_ONLY)
 	if (is_imx8qm()) {
 		ret = sc_pm_set_resource_power_mode(-1, SC_R_SMMU,
 						    SC_PM_PW_MODE_ON);
 		if (ret)
 			return ret;
 	}
+#endif
 
 	power_off_all_usb();
 
@@ -336,6 +338,11 @@ enum boot_device get_boot_device(void)
 
 	sc_rsrc_t dev_rsrc;
 
+#if defined(CONFIG_TARGET_IMX8QM_MEK_A72_ONLY)
+	return MMC1_BOOT;
+#elif defined(CONFIG_TARGET_IMX8QM_MEK_A53_ONLY)
+	return SD2_BOOT;
+#endif
 	sc_misc_get_boot_dev(-1, &dev_rsrc);
 
 	switch (dev_rsrc) {
@@ -415,7 +422,11 @@ int mmc_get_env_dev(void)
 	sc_rsrc_t dev_rsrc;
 	int devno;
 
+#if defined(CONFIG_TARGET_IMX8QM_MEK_A72_ONLY)
+	dev_rsrc = SC_R_SDHC_0;
+#else
 	sc_misc_get_boot_dev(-1, &dev_rsrc);
+#endif
 
 	switch (dev_rsrc) {
 	case SC_R_SDHC_0:

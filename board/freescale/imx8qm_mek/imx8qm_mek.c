@@ -38,14 +38,25 @@ DECLARE_GLOBAL_DATA_PTR;
 #define UART_PAD_CTRL	((SC_PAD_CONFIG_OUT_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
 						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
 
+#ifdef CONFIG_TARGET_IMX8QM_MEK_A72_ONLY
+static iomux_cfg_t uart2_pads[] = {
+	SC_P_UART0_RTS_B | MUX_MODE_ALT(2) | MUX_PAD_CTRL(UART_PAD_CTRL),
+	SC_P_UART0_CTS_B | MUX_MODE_ALT(2) | MUX_PAD_CTRL(UART_PAD_CTRL),
+};
+#else
 static iomux_cfg_t uart0_pads[] = {
 	SC_P_UART0_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 	SC_P_UART0_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
+#endif
 
 static void setup_iomux_uart(void)
 {
+#ifdef CONFIG_TARGET_IMX8QM_MEK_A72_ONLY
+	imx8_iomux_setup_multiple_pads(uart2_pads, ARRAY_SIZE(uart2_pads));
+#else
 	imx8_iomux_setup_multiple_pads(uart0_pads, ARRAY_SIZE(uart0_pads));
+#endif
 }
 
 int board_early_init_f(void)
@@ -59,10 +70,17 @@ int board_early_init_f(void)
 		return 0;
 	}
 
+#ifdef CONFIG_TARGET_IMX8QM_MEK_A72_ONLY
+	/* Set UART2 clock root to 80 MHz */
+	ret = sc_pm_setup_uart(SC_R_UART_2, rate);
+	if (ret)
+		return ret;
+#else
 	/* Set UART0 clock root to 80 MHz */
 	ret = sc_pm_setup_uart(SC_R_UART_0, rate);
 	if (ret)
 		return ret;
+#endif	/* CONFIG_TARGET_IMX8QM_MEK_A72_ONLY */
 
 	setup_iomux_uart();
 
@@ -169,6 +187,7 @@ int board_phy_config(struct phy_device *phydev)
 
 static void board_gpio_init(void)
 {
+#if defined(CONFIG_TARGET_IMX8QM_MEK) || defined(CONFIG_TARGET_IMX8QM_MEK_A53_ONLY)
 	int ret;
 	struct gpio_desc desc;
 
@@ -243,6 +262,7 @@ static void board_gpio_init(void)
 	}
 
 	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+#endif
 
 }
 int checkboard(void)
@@ -385,7 +405,13 @@ int board_init(void)
 void board_quiesce_devices(void)
 {
 	const char *power_on_devices[] = {
+#ifdef CONFIG_TARGET_IMX8QM_MEK_A72_ONLY
+		"dma_lpuart2",
+		"PD_UART2_TX",
+		"PD_UART2_RX",
+#else
 		"dma_lpuart0",
+#endif
 	};
 
 	if (IS_ENABLED(CONFIG_XEN)) {
@@ -415,7 +441,9 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 int board_late_init(void)
 {
 	char *fdt_file;
+#if !defined(CONFIG_TARGET_IMX8QM_MEK_A53_ONLY) && !defined(CONFIG_TARGET_IMX8QM_MEK_A72_ONLY)
 	bool m4_booted;
+#endif
 
 	build_info();
 
@@ -430,13 +458,19 @@ int board_late_init(void)
 #endif
 
 	fdt_file = env_get("fdt_file");
-	m4_booted = m4_parts_booted();
 
 	if (fdt_file && !strcmp(fdt_file, "undefined")) {
+#if defined(CONFIG_TARGET_IMX8QM_MEK_A53_ONLY)
+		env_set("fdt_file", "imx8qm-mek-cockpit-ca53.dtb");
+#elif defined(CONFIG_TARGET_IMX8QM_MEK_A72_ONLY)
+		env_set("fdt_file", "imx8qm-mek-cockpit-ca72.dtb");
+#else
+		m4_booted = m4_parts_booted();
 		if (m4_booted)
 			env_set("fdt_file", "imx8qm-mek-rpmsg.dtb");
 		else
 			env_set("fdt_file", "imx8qm-mek.dtb");
+#endif
 	}
 
 #ifdef CONFIG_ENV_IS_IN_MMC
