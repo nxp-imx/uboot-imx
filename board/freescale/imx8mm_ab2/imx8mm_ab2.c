@@ -25,6 +25,8 @@
 #include <asm/mach-imx/iomux-v3.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <spl.h>
+#include <usb.h>
+#include "../common/tcpc.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -121,10 +123,82 @@ int board_phy_config(struct phy_device *phydev)
 	return 0;
 }
 
+#ifdef CONFIG_USB_TCPC
+struct tcpc_port port1;
+
+struct tcpc_port_config port1_config = {
+	.i2c_bus = 1, /* i2c2*/
+	.addr = 0x1d,
+	.port_type = TYPEC_PORT_UFP,
+	.max_snk_mv = 5000,
+	.max_snk_ma = 3000,
+	.max_snk_mw = 15000,
+	.op_snk_mv = 9000,
+};
+
+static int setup_typec(void)
+{
+	int ret;
+
+	ret = tcpc_init(&port1, port1_config, NULL);
+	if (ret) {
+		printf("%s: tcpc port1 init failed, err=%d\n", __func__, ret);
+	}
+
+	return ret;
+}
+
+int board_usb_init(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	imx8m_usb_power(index, true);
+
+	if (init == USB_INIT_HOST)
+		tcpc_setup_dfp_mode(&port1);
+	else
+		tcpc_setup_ufp_mode(&port1);
+
+	return ret;
+}
+
+int board_usb_cleanup(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	if (init == USB_INIT_HOST)
+		ret = tcpc_disable_src_vbus(&port1);
+
+	imx8m_usb_power(index, false);
+
+	return ret;
+}
+
+int board_ehci_usb_phy_mode(struct udevice *dev)
+{
+	enum typec_cc_polarity pol;
+	enum typec_cc_state state;
+	int ret = 0;
+
+	tcpc_setup_ufp_mode(&port1);
+	ret = tcpc_get_cc_status(&port1, &pol, &state);
+	if (!ret) {
+		if (state == TYPEC_STATE_SRC_RD_RA || state == TYPEC_STATE_SRC_RD)
+			return USB_INIT_HOST;
+	}
+
+	return USB_INIT_DEVICE;
+}
+#endif
+
 int board_init(void)
 {
 #ifdef CONFIG_DM_REGULATOR
 	regulators_enable_boot_on(false);
+#endif
+
+#ifdef CONFIG_USB_TCPC
+	setup_typec();
 #endif
 
 #ifdef CONFIG_FEC_MXC
