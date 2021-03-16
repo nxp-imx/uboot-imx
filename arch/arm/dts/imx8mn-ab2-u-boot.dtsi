@@ -4,11 +4,22 @@
  */
 
 / {
+	aliases {
+		usbgadget0 = &usbg1;
+	};
+
 	firmware {
 		optee {
 			compatible = "linaro,optee-tz";
 			method = "smc";
 		};
+	};
+
+	usbg1: usbg1 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg1>;
+		status = "okay";
 	};
 };
 
