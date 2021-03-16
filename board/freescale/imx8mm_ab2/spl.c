@@ -51,7 +51,7 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 	case NAND_BOOT:
 		return BOOT_DEVICE_NAND;
 	case USB_BOOT:
-		return BOOT_DEVICE_NONE;
+		return BOOT_DEVICE_BOARD;
 	default:
 		return BOOT_DEVICE_NONE;
 	}
