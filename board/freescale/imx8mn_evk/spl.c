@@ -23,6 +23,11 @@
 
 #include <power/pmic.h>
 #include <power/bd71837.h>
+#include <power/pca9450.h>
+#include <dm/uclass.h>
+#include <dm/device.h>
+#include <dm/uclass-internal.h>
+#include <dm/device-internal.h>
 #include <asm/mach-imx/gpio.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <fsl_esdhc_imx.h>
@@ -79,6 +84,43 @@ int power_init_board(void)
 
 	/* lock the PMIC regs */
 	pmic_reg_write(dev, BD718XX_REGLOCK, 0x11);
+
+	return 0;
+}
+#endif
+
+#if CONFIG_IS_ENABLED(DM_PMIC_PCA9450)
+int power_init_board(void)
+{
+	struct udevice *dev;
+	int ret;
+
+	ret = pmic_get("pca9450@25", &dev);
+	if (ret == -ENODEV) {
+		puts("No pca9450@25\n");
+		return 0;
+	}
+	if (ret != 0)
+		return ret;
+
+	/* BUCKxOUT_DVS0/1 control BUCK123 output */
+	pmic_reg_write(dev, PCA9450_BUCK123_DVS, 0x29);
+
+	/* increase VDD_SOC/VDD_DRAM to typical value 0.95V before first DRAM access */
+	/* Set DVS1 to 0.85v for suspend */
+	/* Enable DVS control through PMIC_STBY_REQ and set B1_ENMODE=1 (ON by PMIC_ON_REQ=H) */
+	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x1C);
+	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x14);
+	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
+
+	/* set VDD_SNVS_0V8 from default 0.85V */
+	pmic_reg_write(dev, PCA9450_LDO2CTRL, 0xC0);
+
+	/* enable LDO4 to 1.2v */
+	pmic_reg_write(dev, PCA9450_LDO4CTRL, 0x44);
+
+	/* set WDOG_B_CFG to cold reset */
+	pmic_reg_write(dev, PCA9450_RESET_CTRL, 0xA1);
 
 	return 0;
 }
