@@ -586,6 +586,15 @@ int config_board_mux(void)
 }
 #endif
 
+#if CONFIG_IS_ENABLED(TARGET_LX2160ARDB)
+u8 get_board_rev(void)
+{
+	u8 board_rev = (QIXIS_READ(arch) & 0xf) - 1 + 'A';
+
+	return board_rev;
+}
+#endif
+
 unsigned long get_board_sys_clk(void)
 {
 #if defined(CONFIG_TARGET_LX2160AQDS) || defined(CONFIG_TARGET_LX2162AQDS)
@@ -899,7 +908,6 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	u64 mc_memory_base = 0;
 	u64 mc_memory_size = 0;
 	u16 total_memory_banks;
-	u8 board_rev;
 
 	ft_cpu_setup(blob, bd);
 
@@ -955,8 +963,7 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	fdt_fixup_icid(blob);
 
 if (IS_ENABLED(CONFIG_TARGET_LX2160ARDB)) {
-	board_rev = (QIXIS_READ(arch) & 0xf) - 1 + 'A';
-	if (board_rev == 'C')
+	if (get_board_rev() >= 'C')
 		fdt_fixup_i2c_thermal_node(blob);
 	}
 
