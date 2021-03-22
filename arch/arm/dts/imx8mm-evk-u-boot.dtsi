@@ -135,6 +135,7 @@
 	assigned-clocks = <&clk IMX8MM_CLK_USDHC2>;
 	assigned-clock-rates = <400000000>;
 	assigned-clock-parents = <&clk IMX8MM_SYS_PLL1_400M>;
+	fsl,signal-voltage-switch-extra-delay-ms = <8>;
 };
 
 &usdhc3 {
