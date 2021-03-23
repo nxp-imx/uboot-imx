@@ -356,6 +356,7 @@ static int spl_romapi_load_image_stream(struct spl_image_info *spl_image,
 
 	ret = g_rom_api->download_image(p, 0, imagesize,
 					((uintptr_t)p) ^ imagesize);
+	gd = pgd;
 	if (ret != ROM_API_OKAY)
 		printf("ROM download failure %d\n", imagesize);
 
