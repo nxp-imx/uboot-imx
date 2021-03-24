@@ -1044,7 +1044,7 @@ static int ci_udc_otg_phy_mode2(void *__iomem phy_base)
 	void *__iomem phy_ctrl, *__iomem phy_status;
 	u32 val;
 
-	if (is_mx6() || is_mx7ulp() || is_imx8()) {
+	if (is_mx6() || is_mx7ulp() || is_imx8() || is_imx8ulp()) {
 		phy_ctrl = (void __iomem *)(phy_base + USBPHY_CTRL);
 		val = readl(phy_ctrl);
 		if (val & USBPHY_CTRL_OTG_ID)
@@ -1243,7 +1243,8 @@ static int ci_udc_phy_setup(struct udevice *dev, struct ci_udc_priv_data *priv)
 			return -EINVAL;
 	}
 
-	addr = (void __iomem *)fdtdec_get_addr(gd->fdt_blob, priv->phy_off, "reg");
+	addr = (void __iomem *)fdtdec_get_addr_size_auto_noparent(gd->fdt_blob,
+		priv->phy_off, "reg", 0, NULL, false);
 	if ((fdt_addr_t)addr == FDT_ADDR_T_NONE)
 		addr = NULL;
 
@@ -1253,7 +1254,8 @@ static int ci_udc_phy_setup(struct udevice *dev, struct ci_udc_priv_data *priv)
 	if (misc_off < 0)
 		return -EINVAL;
 
-	addr = (void __iomem *)fdtdec_get_addr(gd->fdt_blob, misc_off, "reg");
+	addr = (void __iomem *)fdtdec_get_addr_size_auto_noparent(gd->fdt_blob,
+		misc_off, "reg", 0, NULL, false);
 	if ((fdt_addr_t)addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
@@ -1267,7 +1269,8 @@ static int ci_udc_phy_setup(struct udevice *dev, struct ci_udc_priv_data *priv)
 	if (anatop_off < 0)
 		return -EINVAL;
 
-	addr = (void __iomem *)fdtdec_get_addr(gd->fdt_blob, anatop_off, "reg");
+	addr = (void __iomem *)fdtdec_get_addr_size_auto_noparent(gd->fdt_blob,
+		anatop_off, "reg", 0, NULL, false);
 	if ((fdt_addr_t)addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
@@ -1360,10 +1363,10 @@ static int ci_udc_otg_phy_mode(struct udevice *dev)
 	void *__iomem phy_base = (void *__iomem)devfdt_get_addr(&priv->otgdev);
 	u32 val;
 
-	if (is_mx6() || is_mx7ulp() || is_imx8()) {
-		phy_base = (void __iomem *)fdtdec_get_addr(gd->fdt_blob,
+	if (is_mx6() || is_mx7ulp() || is_imx8() || is_imx8ulp()) {
+		phy_base = (void __iomem *)fdtdec_get_addr_size_auto_noparent(gd->fdt_blob,
 							   priv->phy_off,
-							   "reg");
+							   "reg", 0, NULL, false);
 		if ((fdt_addr_t)phy_base == FDT_ADDR_T_NONE)
 			return -EINVAL;
 
