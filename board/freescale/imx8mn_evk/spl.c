@@ -27,10 +27,12 @@
 #include <dm/device-internal.h>
 #include <power/pmic.h>
 #include <power/pca9450.h>
+#include <power/bd71837.h>
 #include <asm/mach-imx/gpio.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <fsl_esdhc_imx.h>
 #include <mmc.h>
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -44,21 +46,49 @@ void spl_dram_init(void)
 	ddr_init(&dram_timing);
 }
 
-void spl_board_init(void)
+#if CONFIG_IS_ENABLED(DM_PMIC_BD71837)
+int power_init_board(void)
 {
 	struct udevice *dev;
 	int ret;
 
-	arch_misc_init();
+	ret = pmic_get("pmic@4b", &dev);
+	if (ret == -ENODEV) {
+		puts("No pmic@4b\n");
+		return 0;
+	}
+	if (ret != 0)
+		return ret;
 
-	puts("Normal Boot\n");
+	/* decrease RESET key long push time from the default 10s to 10ms */
+	pmic_reg_write(dev, BD718XX_PWRONCONFIG1, 0x0);
 
-	ret = uclass_get_device_by_name(UCLASS_CLK,
-					"clock-controller@30380000",
-					&dev);
-	if (ret < 0)
-		printf("Failed to find clock node. Check device tree\n");
+	/* unlock the PMIC regs */
+	pmic_reg_write(dev, BD718XX_REGLOCK, 0x1);
+
+	/* Set VDD_ARM to typical value 0.85v for 1.2Ghz */
+	pmic_reg_write(dev, BD718XX_BUCK2_VOLT_RUN, 0xf);
+
+#ifdef CONFIG_IMX8MN_LOW_DRIVE_MODE
+	/* Set VDD_SOC/VDD_DRAM to typical value 0.8v for low drive mode */
+	pmic_reg_write(dev, BD718XX_BUCK1_VOLT_RUN, 0xa);
+#else
+	/* Set VDD_SOC/VDD_DRAM to typical value 0.85v for nominal mode */
+	pmic_reg_write(dev, BD718XX_BUCK1_VOLT_RUN, 0xf);
+#endif /* CONFIG_IMX8MN_LOW_DRIVE_MODE */
+
+	/* Set VDD_SOC 0.85v for suspend */
+	pmic_reg_write(dev, BD718XX_BUCK1_VOLT_SUSP, 0xf);
+
+	/* increase NVCC_DRAM_1V2 to 1.2v for DDR4 */
+	pmic_reg_write(dev, BD718XX_4TH_NODVS_BUCK_VOLT, 0x28);
+
+	/* lock the PMIC regs */
+	pmic_reg_write(dev, BD718XX_REGLOCK, 0x11);
+
+	return 0;
 }
+#endif
 
 #if CONFIG_IS_ENABLED(DM_PMIC_PCA9450)
 int power_init_board(void)
@@ -99,6 +129,13 @@ int power_init_board(void)
 }
 #endif
 
+void spl_board_init(void)
+{
+	arch_misc_init();
+
+	puts("Normal Boot\n");
+}
+
 #ifdef CONFIG_SPL_LOAD_FIT
 int board_fit_config_name_match(const char *name)
 {
@@ -111,6 +148,7 @@ int board_fit_config_name_match(const char *name)
 
 void board_init_f(ulong dummy)
 {
+	struct udevice *dev;
 	int ret;
 
 	/* Clear the BSS. */
@@ -118,19 +156,29 @@ void board_init_f(ulong dummy)
 
 	arch_cpu_init();
 
-	init_uart_clk(1);
+	board_early_init_f();
 
 	timer_init();
 
-	ret = spl_init();
+	ret = spl_early_init();
 	if (ret) {
-		debug("spl_init() failed: %d\n", ret);
+		debug("spl_early_init() failed: %d\n", ret);
+		hang();
+	}
+
+	ret = uclass_get_device_by_name(UCLASS_CLK,
+					"clock-controller@30380000",
+					&dev);
+	if (ret < 0) {
+		printf("Failed to find clock node. Check device tree\n");
 		hang();
 	}
 
 	preloader_console_init();
 
 	enable_tzc380();
+
+	power_init_board();
 
 	/* DDR initialization */
 	spl_dram_init();
