@@ -1321,6 +1321,7 @@
 	};
 
 	usbphynop2: usbphynop2 {
+		#phy-cells = <0>;
 		compatible = "usb-nop-xceiv";
 		clocks = <&clk IMX8MN_CLK_USB_PHY_REF>;
 		assigned-clocks = <&clk IMX8MN_CLK_USB_PHY_REF>;

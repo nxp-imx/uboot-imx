@@ -99,7 +99,6 @@ config TARGET_KONTRON_MX8MM
 
 config TARGET_IMX8MN_EVK
 	bool "imx8mn LPDDR4 EVK board"
-	select BINMAN
 	select IMX8MN
 	select SUPPORT_SPL
 	select IMX8M_LPDDR4
@@ -108,7 +107,6 @@ config TARGET_IMX8MN_EVK
 
 config TARGET_IMX8MN_DDR4_EVK
 	bool "imx8mn DDR4 EVK board"
-	select BINMAN
 	select IMX8MN
 	select SUPPORT_SPL
 	select IMX8M_DDR4
