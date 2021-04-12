@@ -12,6 +12,9 @@
 #include <asm/mach-imx/boot_mode.h>
 #include <efi_loader.h>
 #include <spl.h>
+#include <asm/arch/rdc.h>
+#include <cpu_func.h>
+#include <asm/setup.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -337,6 +340,10 @@ int arch_cpu_init(void)
 	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
 		/* Disable wdog */
 		init_wdog();
+
+		/* release xrdc, then allow A35 to write SRAM2 */
+		release_xrdc();
+		xrdc_mrc_region_set_access(2, CONFIG_SPL_TEXT_BASE, 0xE00);
 
 		clock_init();
 	} else {
