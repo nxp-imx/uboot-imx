@@ -7,6 +7,7 @@
 #define _IMX8ULP_REGS_H_
 #define ARCH_MXC
 
+#include <linux/bitops.h>
 #include <linux/sizes.h>
 
 #define PBRIDGE0_BASE		0x28000000
@@ -54,6 +55,8 @@
 #define AVD_SIM_BASE_ADDR	0x2DA50000
 #define AVD_SIM_LPDDR_CTRL	(AVD_SIM_BASE_ADDR + 0x14)
 #define AVD_SIM_LPDDR_CTRL2	(AVD_SIM_BASE_ADDR + 0x18)
+
+#define FEC_QUIRK_ENET_MAC
 
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 #include <asm/types.h>
