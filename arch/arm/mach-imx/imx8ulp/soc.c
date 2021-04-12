@@ -335,14 +335,42 @@ static void set_core0_reset_vector(u32 entry)
 	setbits_le32(SIM1_BASE_ADDR + 0x8, (0x1 << 26));
 }
 
+int trdc_set_access(void)
+{
+	/*
+	* TRDC mgr + 4 MBC + 2 MRC.
+	* S400 should already configure when release RDC
+	* A35 only map non-secure region for pbridge0 and 1, set sec_access to false
+	*/
+	trdc_mbc_set_access(2, 7, 0, 49, false);
+	trdc_mbc_set_access(2, 7, 0, 50, false);
+	trdc_mbc_set_access(2, 7, 0, 51, false);
+	trdc_mbc_set_access(2, 7, 0, 52, false);
+	trdc_mbc_set_access(2, 7, 0, 53, false);
+	trdc_mbc_set_access(2, 7, 0, 54, false);
+
+	/* CGC0: PBridge0 slot 47 */
+	trdc_mbc_set_access(2, 7, 0, 47, false);
+
+	/* Iomuxc0: : PBridge1 slot 33 */
+	trdc_mbc_set_access(2, 7, 1, 33, false);
+
+	return 0;
+}
+
 int arch_cpu_init(void)
 {
 	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
 		/* Disable wdog */
 		init_wdog();
 
+		if (get_boot_mode() == SINGLE_BOOT) {
+			release_rdc(RDC_TRDC);
+			trdc_set_access();
+		}
+
 		/* release xrdc, then allow A35 to write SRAM2 */
-		release_xrdc();
+		release_rdc(RDC_XRDC);
 		xrdc_mrc_region_set_access(2, CONFIG_SPL_TEXT_BASE, 0xE00);
 
 		clock_init();
