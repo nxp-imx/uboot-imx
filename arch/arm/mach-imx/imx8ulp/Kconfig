@@ -1,0 +1,15 @@
+if ARCH_IMX8ULP
+
+config IMX8ULP
+	bool
+
+config SYS_SOC
+	default "imx8ulp"
+
+choice
+	prompt "i.MX8ULP board select"
+	optional
+
+endchoice
+
+endif
