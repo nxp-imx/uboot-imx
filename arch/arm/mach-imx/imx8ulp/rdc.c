@@ -12,17 +12,42 @@
 #include <asm/arch/s400_api.h>
 #include <asm/arch/rdc.h>
 
-int release_xrdc(void)
+struct mbc_mem_dom {
+	u32 mem_glbcfg[4];
+	u32 nse_blk_index;
+	u32 nse_blk_set;
+	u32 nse_blk_clr;
+	u32 nsr_blk_clr_all;
+	u32 memn_glbac[8];
+	/* The upper only existed in the beginning of each MBC */
+	u32 mem0_blk_cfg_w[64];
+	u32 mem0_blk_nse_w[16];
+	u32 mem1_blk_cfg_w[8];
+	u32 mem1_blk_nse_w[2];
+	u32 mem2_blk_cfg_w[8];
+	u32 mem2_blk_nse_w[2];
+	u32 mem3_blk_cfg_w[8];
+	u32 mem3_blk_nse_w[2];/*0x1F0, 0x1F4 */
+	u32 reserved[2];
+};
+
+struct trdc {
+	u8 res0[0x1000];
+	struct mbc_mem_dom mem_dom[4][8];
+};
+
+int release_rdc(enum rdc_type type)
 {
 	ulong s_mu_base = 0x27020000UL;
 	struct imx8ulp_s400_msg msg;
 	int ret;
+	u32 rdc_id = (type == RDC_XRDC) ? 0x78 : 0x74;
 
 	msg.version = AHAB_VERSION;
 	msg.tag = AHAB_CMD_TAG;
 	msg.size = 2;
 	msg.command = AHAB_RELEASE_RDC_REQ_CID;
-	msg.data[0] = (0x78 << 8) | 0x2; /* A35 XRDC */
+	msg.data[0] = (rdc_id << 8) | 0x2; /* A35 XRDC */
 
 	mu_hal_init(s_mu_base);
 	mu_hal_sendmsg(s_mu_base, 0, *((u32 *)&msg));
@@ -31,13 +56,12 @@ int release_xrdc(void)
 	ret = mu_hal_receivemsg(s_mu_base, 0, (u32 *)&msg);
 	if (!ret) {
 		ret = mu_hal_receivemsg(s_mu_base, 1, &msg.data[0]);
-		if (!ret)
-			return ret;
+		if (!ret) {
+			if ((msg.data[0] & 0xff) == 0xd6)
+				return 0;
+		}
 
-		if ((msg.data[0] & 0xff) == 0)
-			return 0;
-		else
-			return -EIO;
+		return -EIO;
 	}
 
 	return ret;
@@ -83,4 +107,56 @@ void xrdc_mrc_region_set_access(int mrc_index, u32 addr, u32 access)
 			return;
 		}
 	}
+}
+
+int trdc_mbc_set_access(u32 mbc_x, u32 dom_x, u32 mem_x, u32 blk_x, bool sec_access)
+{
+	struct trdc *trdc_base = (struct trdc *)0x28031000U;
+	struct mbc_mem_dom *mbc_dom;
+	u32 *cfg_w, *nse_w;
+	u32 index, offset, val;
+
+	mbc_dom = &trdc_base->mem_dom[mbc_x][dom_x];
+
+	switch (mem_x) {
+	case 0:
+		cfg_w = &mbc_dom->mem0_blk_cfg_w[blk_x / 8];
+		nse_w = &mbc_dom->mem0_blk_nse_w[blk_x / 32];
+		break;
+	case 1:
+		cfg_w = &mbc_dom->mem1_blk_cfg_w[blk_x / 8];
+		nse_w = &mbc_dom->mem1_blk_nse_w[blk_x / 32];
+		break;
+	case 2:
+		cfg_w = &mbc_dom->mem2_blk_cfg_w[blk_x / 8];
+		nse_w = &mbc_dom->mem2_blk_nse_w[blk_x / 32];
+		break;
+	case 3:
+		cfg_w = &mbc_dom->mem3_blk_cfg_w[blk_x / 8];
+		nse_w = &mbc_dom->mem3_blk_nse_w[blk_x / 32];
+		break;
+	default:
+		return -EINVAL;
+	};
+
+	index = blk_x % 8;
+	offset = index * 4;
+
+	val = readl((void __iomem *)cfg_w);
+
+	val &= ~(0xFU << offset);
+
+	/* MBC0-3
+	 *  Global 0, 0x7777 secure pri/user read/write/execute, S400 has already set it.
+	 *  So select MBC0_MEMN_GLBAC0
+	 */
+	if (sec_access) {
+		val |= (0x0 << offset);
+		writel(val, (void __iomem *)cfg_w);
+	} else {
+		val |= (0x8 << offset); /* nse bit set */
+		writel(val, (void __iomem *)cfg_w);
+	}
+
+	return 0;
 }
