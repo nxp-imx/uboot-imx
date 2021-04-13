@@ -1471,6 +1471,8 @@ ulong android_image_get_kcomp(const struct andr_img_hdr *hdr);
 void android_print_contents(const struct andr_img_hdr *hdr);
 bool android_image_print_dtb_contents(ulong hdr_addr);
 bool image_arm64(void *images);
+uint32_t kernel_size(void *images);
+ulong kernel_relocate_addr(ulong images);
 
 /**
  * board_fit_config_name_match() - Check for a matching board name
