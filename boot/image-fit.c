@@ -1388,19 +1388,10 @@ error:
  */
 int fit_image_verify(const void *fit, int image_noffset)
 {
-	const char *name = fit_get_name(fit, image_noffset, NULL);
 	const void	*data;
 	size_t		size;
 	char		*err_msg = "";
 
-	if (IS_ENABLED(CONFIG_FIT_SIGNATURE) && strchr(name, '@')) {
-		/*
-		 * We don't support this since libfdt considers names with the
-		 * name root but different @ suffix to be equal
-		 */
-		err_msg = "Node name contains @";
-		goto err;
-	}
 	/* Get image data and data length */
 	if (fit_image_get_data_and_size(fit, image_noffset, &data, &size)) {
 		err_msg = "Can't get image data/size";
