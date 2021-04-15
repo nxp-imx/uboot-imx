@@ -5,7 +5,7 @@
  * Author:	Priyanka Jain <priyanka.jain@nxp.com>
  *		Sriram Dash <sriram.dash@nxp.com>
  *
- * Copyright 2018 NXP
+ * Copyright 2018-2022 NXP
  *
  */
 
@@ -19,6 +19,12 @@
 	aliases {
 		spi0 = &fspi;
 	};
+};
+
+&dpmac2 {
+	status = "okay";
+	phy-handle = <&cortina_phy>;
+	phy-connection-type = "xlaui4";
 };
 
 &dpmac3 {
@@ -47,6 +53,11 @@
 
 &emdio1 {
 	status = "okay";
+
+	cortina_phy: ethernet-phy@0 {
+		reg = <0x0>;
+	};
+
 	rgmii_phy1: ethernet-phy@1 {
 		/* AR8035 PHY - "compatible" property not strictly needed */
 		compatible = "ethernet-phy-id004d.d072";
