@@ -169,6 +169,11 @@ int board_fix_fdt(void *fdt)
 		fdt_setprop(fdt, off, "reg-names", reg_names, names_len);
 	}
 
+	/* Fixup u-boot's DTS in case this is a revC board and
+	 * we're using DM_ETH.
+	 */
+	if (IS_ENABLED(CONFIG_TARGET_LX2160ARDB) && IS_ENABLED(CONFIG_DM_ETH))
+		fdt_fixup_board_phy_revc(fdt);
 	return 0;
 }
 #endif
@@ -730,6 +735,9 @@ void fdt_fixup_board_enet(void *fdt)
 		fdt_status_okay(fdt, offset);
 #ifndef CONFIG_DM_ETH
 		fdt_fixup_board_phy(fdt);
+#else
+		if (IS_ENABLED(CONFIG_TARGET_LX2160ARDB))
+			fdt_fixup_board_phy_revc(fdt);
 #endif
 	} else {
 		fdt_status_fail(fdt, offset);
