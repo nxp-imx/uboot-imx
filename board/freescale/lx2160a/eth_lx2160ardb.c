@@ -366,5 +366,5 @@ int fdt_fixup_board_phy(void *fdt)
 		}
 	}
 
-	return ret;
+	return fdt_fixup_board_phy_revc(fdt);
 }
