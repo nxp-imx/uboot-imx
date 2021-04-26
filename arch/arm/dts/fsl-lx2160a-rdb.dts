@@ -39,6 +39,18 @@
 	phy-connection-type = "usxgmii";
 };
 
+&dpmac5 {
+	status = "okay";
+	phy-handle = <&inphi_phy>;
+	phy-connection-type = "25g-aui";
+};
+
+&dpmac6 {
+	status = "okay";
+	phy-handle = <&inphi_phy>;
+	phy-connection-type = "25g-aui";
+};
+
 &dpmac17 {
 	status = "okay";
 	phy-handle = <&rgmii_phy1>;
@@ -81,6 +93,14 @@
 		compatible = "ethernet-phy-ieee802.3-c45";
 		interrupts = <GIC_SPI 3 IRQ_TYPE_LEVEL_HIGH>;
 		reg = <0x5>;
+	};
+};
+
+&emdio2 {
+	status = "okay";
+	inphi_phy: ethernet-phy@0 {
+		compatible = "ethernet-phy-id0210.7440";
+		reg = <0x0>;
 	};
 };
 
