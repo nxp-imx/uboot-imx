@@ -143,6 +143,13 @@ int power_init_board(void)
 
 void spl_board_init(void)
 {
+	struct udevice *dev;
+	uclass_find_first_device(UCLASS_MISC, &dev);
+
+	for (; dev; uclass_find_next_device(&dev)) {
+		if (device_probe(dev))
+			continue;
+	}
 	puts("Normal Boot\n");
 }
 

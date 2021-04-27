@@ -21,6 +21,9 @@
 #include <asm/ptrace.h>
 #include <asm/armv8/mmu.h>
 #include <dm/uclass.h>
+#include <dm/platdata.h>
+#include <dm/uclass-internal.h>
+#include <dm/device-internal.h>
 #include <efi_loader.h>
 #include <env.h>
 #include <env_internal.h>
@@ -32,9 +35,6 @@
 #include <linux/bitops.h>
 #include <asm/setup.h>
 #include <asm/bootm.h>
-#ifdef CONFIG_IMX_SEC_INIT
-#include <fsl_caam.h>
-#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -571,10 +571,6 @@ int arch_cpu_init(void)
 		}
 	}
 
-#ifdef CONFIG_IMX_SEC_INIT
-	/* Secure init function such RNG */
-	imx_sec_init();
-#endif
 #if defined(CONFIG_ANDROID_SUPPORT)
 	/* Enable RTC */
 	writel(0x21, 0x30370038);
@@ -1198,6 +1194,14 @@ static void acquire_buildinfo(void)
 
 int arch_misc_init(void)
 {
+	struct udevice *dev;
+
+	uclass_find_first_device(UCLASS_MISC, &dev);
+	for (; dev; uclass_find_next_device(&dev)) {
+		if (device_probe(dev))
+			continue;
+	}
+
 	acquire_buildinfo();
 
 	return 0;

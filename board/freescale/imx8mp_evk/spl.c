@@ -94,6 +94,14 @@ int power_init_board(void)
 
 void spl_board_init(void)
 {
+	struct udevice *dev;
+	uclass_find_first_device(UCLASS_MISC, &dev);
+
+	for (; dev; uclass_find_next_device(&dev)) {
+		if (device_probe(dev))
+			continue;
+	}
+
 	/* Set GIC clock to 500Mhz for OD VDD_SOC. Kernel driver does not allow to change it.
 	 * Should set the clock after PMIC setting done.
 	 * Default is 400Mhz (system_pll1_800m with div = 2) set by ROM for ND VDD_SOC

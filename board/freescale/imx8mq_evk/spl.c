@@ -23,6 +23,7 @@
 #include <asm/mach-imx/gpio.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <fsl_esdhc_imx.h>
+#include <fsl_sec.h>
 #include <mmc.h>
 #include <linux/delay.h>
 #include <power/pmic.h>
@@ -200,6 +201,11 @@ int power_init_board(void)
 
 void spl_board_init(void)
 {
+#ifdef CONFIG_FSL_CAAM
+	if (sec_init()) {
+		printf("\nsec_init failed!\n");
+	}
+#endif
 #ifndef CONFIG_SPL_USB_SDP_SUPPORT
 	/* Serial download mode */
 	if (is_usb_boot()) {

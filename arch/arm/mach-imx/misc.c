@@ -13,7 +13,6 @@
 #include <linux/errno.h>
 #include <asm/io.h>
 #include <asm/mach-imx/regs-common.h>
-#include <fsl_caam.h>
 #include <fdt_support.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -121,13 +120,6 @@ void configure_tzc380(void)
 #if defined (IP2APB_TZASC2_BASE_ADDR)
 	if (iomux->gpr[9] & 0x2)
 		writel(0xf0000000, IP2APB_TZASC2_BASE_ADDR + 0x108);
-#endif
-}
-
-void imx_sec_init(void)
-{
-#if defined(CONFIG_SPL_BUILD) || !defined(CONFIG_SPL)
-	caam_open();
 #endif
 }
 
