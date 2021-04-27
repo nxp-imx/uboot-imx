@@ -207,7 +207,7 @@ void inline_cnstr_jobdesc_hash(uint32_t *desc,
 	append_store(desc, dma_addr_out, storelen,
 		     LDST_CLASS_2_CCB | LDST_SRCDST_BYTE_CONTEXT);
 }
-#ifndef CONFIG_SPL_BUILD
+
 void inline_cnstr_jobdesc_blob_encap(uint32_t *desc, uint8_t *key_idnfr,
 				     uint8_t *plain_txt, uint8_t *enc_blob,
 				     uint32_t in_sz)
@@ -255,7 +255,7 @@ void inline_cnstr_jobdesc_blob_decap(uint32_t *desc, uint8_t *key_idnfr,
 
 	append_operation(desc, OP_TYPE_DECAP_PROTOCOL | OP_PCLID_BLOB);
 }
-#endif
+
 /*
  * Descriptor to instantiate RNG State Handle 0 in normal mode and
  * load the JDKEK, TDKEK and TDSK registers
@@ -333,4 +333,17 @@ void inline_cnstr_jobdesc_pkha_rsaexp(uint32_t *desc,
 
 	append_fifo_store(desc, dma_addr_out, out_siz,
 			  LDST_CLASS_1_CCB | FIFOST_TYPE_PKHA_B);
+}
+
+void inline_cnstr_jobdesc_derive_bkek(uint32_t *desc, void *bkek_out, void *key_mod, uint32_t key_sz)
+{
+	dma_addr_t dma_key_mod = virt_to_phys(key_mod);
+	dma_addr_t dma_bkek_out = virt_to_phys(bkek_out);
+
+	init_job_desc(desc, 0);
+	append_load(desc, dma_key_mod, key_sz,	LDST_CLASS_2_CCB |
+						LDST_SRCDST_BYTE_KEY);
+	append_seq_out_ptr_intlen(desc, dma_bkek_out, BKEK_SIZE, 0);
+	append_operation(desc, OP_TYPE_ENCAP_PROTOCOL | OP_PCLID_BLOB |
+							OP_PROTINFO_MKVB);
 }
