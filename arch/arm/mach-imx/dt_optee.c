@@ -27,11 +27,17 @@ int ft_add_optee_node(void *fdt, struct bd_info *bd)
 #ifdef CONFIG_OF_LIBFDT_OVERLAY
 	if (rom_pointer[2]) {
 		debug("OP-TEE: applying overlay on 0x%lx\n",rom_pointer[2]);
-		ret = fdt_overlay_apply_verbose(fdt, (void*)rom_pointer[2]);
+		ret = fdt_check_header((void*)rom_pointer[2]);
 		if (ret == 0) {
-			debug("Overlay applied with success");
-			fdt_pack(fdt);
-			return 0;
+			/* Copy the fdt overlay to next 1M and use copied overlay */
+			memcpy((void *)(rom_pointer[2] + SZ_1M), (void *)rom_pointer[2],
+				fdt_totalsize((void*)rom_pointer[2]));
+			ret = fdt_overlay_apply_verbose(fdt, (void*)(rom_pointer[2] + SZ_1M));
+			if (ret == 0) {
+				debug("Overlay applied with success");
+				fdt_pack(fdt);
+				return 0;
+			}
 		}
 	}
 	/* Fallback to previous implementation */
