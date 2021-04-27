@@ -72,6 +72,9 @@ config FSL_CAAM_RNG
 	  using the prediction resistance flag which means the DRGB is
 	  reseeded from the TRNG every time random data is generated.
 
+config FSL_BLOB
+	bool "Enable Blob Encap/Decap, Blob KEK support"
+
 endif
 
 config FSL_DCP_RNG

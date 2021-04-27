@@ -15,6 +15,7 @@
 
 #define KEY_BLOB_SIZE		32
 #define MAC_SIZE			16
+#define BKEK_SIZE		32
 
 /* Max size of any CAAM descriptor in 32-bit words, inclusive of header */
 #define MAX_CAAM_DESCSIZE	64
@@ -462,6 +463,9 @@
 #define OP_PROTINFO_HASH_SHA256	0x00000180
 #define OP_PROTINFO_HASH_SHA384	0x00000200
 #define OP_PROTINFO_HASH_SHA512	0x00000280
+
+/* PROTINFO fields for Blob Operations */
+#define OP_PROTINFO_MKVB	0x00000002
 
 /* For non-protocol/alg-only op commands */
 #define OP_ALG_TYPE_SHIFT	24
