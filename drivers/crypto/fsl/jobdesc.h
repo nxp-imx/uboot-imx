@@ -49,4 +49,7 @@ void inline_cnstr_jobdesc_pkha_rsaexp(uint32_t *desc,
 				      struct pk_in_params *pkin, uint8_t *out,
 				      uint32_t out_siz);
 
+void inline_cnstr_jobdesc_derive_bkek(uint32_t *desc, void *bkek_out,
+				      void *key_mod, uint32_t key_sz);
+
 #endif
