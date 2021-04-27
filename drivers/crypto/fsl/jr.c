@@ -8,10 +8,10 @@
 
 #include <common.h>
 #include <cpu_func.h>
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <log.h>
 #include <malloc.h>
-#include "fsl_sec.h"
 #include "jr.h"
 #include "jobdesc.h"
 #include "desc_constr.h"
@@ -21,7 +21,10 @@
 #include <asm/cache.h>
 #include <asm/fsl_pamu.h>
 #endif
+#include <dm.h>
 #include <dm/lists.h>
+#include <dm/root.h>
+#include <dm/device-internal.h>
 
 #define CIRC_CNT(head, tail, size)	(((head) - (tail)) & (size - 1))
 #define CIRC_SPACE(head, tail, size)	CIRC_CNT((tail), (head) + 1, (size))
@@ -34,20 +37,30 @@ uint32_t sec_offset[CONFIG_SYS_FSL_MAX_NUM_OF_SEC] = {
 #endif
 };
 
+#if CONFIG_IS_ENABLED(DM)
+struct udevice *caam_dev;
+#else
 #define SEC_ADDR(idx)	\
 	(ulong)((CONFIG_SYS_FSL_SEC_ADDR + sec_offset[idx]))
 
 #define SEC_JR0_ADDR(idx)	\
 	(ulong)(SEC_ADDR(idx) +	\
 	 (CONFIG_SYS_FSL_JR0_OFFSET - CONFIG_SYS_FSL_SEC_OFFSET))
+struct caam_regs caam_st;
+#endif
 
-struct jobring jr0[CONFIG_SYS_FSL_MAX_NUM_OF_SEC];
-
-static inline void start_jr0(uint8_t sec_idx)
+static inline u32 jr_start_reg(u8 jrid)
 {
-	ccsr_sec_t *sec = (void *)SEC_ADDR(sec_idx);
+	return (1 << jrid);
+}
+
+#ifndef CONFIG_ARCH_IMX8
+static inline void start_jr(struct caam_regs *caam)
+{
+	ccsr_sec_t *sec = caam->sec;
 	u32 ctpr_ms = sec_in32(&sec->ctpr_ms);
 	u32 scfgr = sec_in32(&sec->scfgr);
+	u32 jrstart = jr_start_reg(caam->jrid);
 
 	if (ctpr_ms & SEC_CTPR_MS_VIRT_EN_INCL) {
 		/* VIRT_EN_INCL = 1 & VIRT_EN_POR = 1 or
@@ -55,23 +68,17 @@ static inline void start_jr0(uint8_t sec_idx)
 		 */
 		if ((ctpr_ms & SEC_CTPR_MS_VIRT_EN_POR) ||
 		    (scfgr & SEC_SCFGR_VIRT_EN))
-			sec_out32(&sec->jrstartr, CONFIG_JRSTARTR_JR0);
+			sec_out32(&sec->jrstartr, jrstart);
 	} else {
 		/* VIRT_EN_INCL = 0 && VIRT_EN_POR_VALUE = 1 */
 		if (ctpr_ms & SEC_CTPR_MS_VIRT_EN_POR)
-			sec_out32(&sec->jrstartr, CONFIG_JRSTARTR_JR0);
+			sec_out32(&sec->jrstartr, jrstart);
 	}
 }
+#endif
 
-static inline void jr_reset_liodn(uint8_t sec_idx)
+static inline void jr_disable_irq(struct jr_regs *regs)
 {
-	ccsr_sec_t *sec = (void *)SEC_ADDR(sec_idx);
-	sec_out32(&sec->jrliodnr[0].ls, 0);
-}
-
-static inline void jr_disable_irq(uint8_t sec_idx)
-{
-	struct jr_regs *regs = (struct jr_regs *)SEC_JR0_ADDR(sec_idx);
 	uint32_t jrcfg = sec_in32(&regs->jrcfg1);
 
 	jrcfg = jrcfg | JR_INTMASK;
@@ -79,10 +86,10 @@ static inline void jr_disable_irq(uint8_t sec_idx)
 	sec_out32(&regs->jrcfg1, jrcfg);
 }
 
-static void jr_initregs(uint8_t sec_idx)
+static void jr_initregs(uint8_t sec_idx, struct caam_regs *caam)
 {
-	struct jr_regs *regs = (struct jr_regs *)SEC_JR0_ADDR(sec_idx);
-	struct jobring *jr = &jr0[sec_idx];
+	struct jr_regs *regs = caam->regs;
+	struct jobring *jr = &caam->jr[sec_idx];
 	caam_dma_addr_t ip_base = virt_to_phys((void *)jr->input_ring);
 	caam_dma_addr_t op_base = virt_to_phys((void *)jr->output_ring);
 
@@ -102,16 +109,16 @@ static void jr_initregs(uint8_t sec_idx)
 	sec_out32(&regs->irs, JR_SIZE);
 
 	if (!jr->irq)
-		jr_disable_irq(sec_idx);
+		jr_disable_irq(regs);
 }
 
-static int jr_init(uint8_t sec_idx)
+static int jr_init(uint8_t sec_idx, struct caam_regs *caam)
 {
-	struct jobring *jr = &jr0[sec_idx];
+	struct jobring *jr = &caam->jr[sec_idx];
 
 	memset(jr, 0, sizeof(struct jobring));
 
-	jr->jq_id = DEFAULT_JR_ID;
+	jr->jq_id = caam->jrid;
 	jr->irq = DEFAULT_IRQ;
 
 #ifdef CONFIG_FSL_CORENET
@@ -133,53 +140,10 @@ static int jr_init(uint8_t sec_idx)
 	memset(jr->input_ring, 0, JR_SIZE * sizeof(caam_dma_addr_t));
 	memset(jr->output_ring, 0, jr->op_size);
 
-	start_jr0(sec_idx);
-
-	jr_initregs(sec_idx);
-
-	return 0;
-}
-
-static int jr_sw_cleanup(uint8_t sec_idx)
-{
-	struct jobring *jr = &jr0[sec_idx];
-
-	jr->head = 0;
-	jr->tail = 0;
-	jr->read_idx = 0;
-	jr->write_idx = 0;
-	memset(jr->info, 0, sizeof(jr->info));
-	memset(jr->input_ring, 0, jr->size * sizeof(caam_dma_addr_t));
-	memset(jr->output_ring, 0, jr->size * sizeof(struct op_ring));
-
-	return 0;
-}
-
-static int jr_hw_reset(uint8_t sec_idx)
-{
-	struct jr_regs *regs = (struct jr_regs *)SEC_JR0_ADDR(sec_idx);
-	uint32_t timeout = 100000;
-	uint32_t jrint, jrcr;
-
-	sec_out32(&regs->jrcr, JRCR_RESET);
-	do {
-		jrint = sec_in32(&regs->jrint);
-	} while (((jrint & JRINT_ERR_HALT_MASK) ==
-		  JRINT_ERR_HALT_INPROGRESS) && --timeout);
-
-	jrint = sec_in32(&regs->jrint);
-	if (((jrint & JRINT_ERR_HALT_MASK) !=
-	     JRINT_ERR_HALT_INPROGRESS) && timeout == 0)
-		return -1;
-
-	timeout = 100000;
-	sec_out32(&regs->jrcr, JRCR_RESET);
-	do {
-		jrcr = sec_in32(&regs->jrcr);
-	} while ((jrcr & JRCR_RESET) && --timeout);
-
-	if (timeout == 0)
-		return -1;
+#ifndef CONFIG_ARCH_IMX8
+	start_jr(caam);
+#endif
+	jr_initregs(sec_idx, caam);
 
 	return 0;
 }
@@ -187,10 +151,10 @@ static int jr_hw_reset(uint8_t sec_idx)
 /* -1 --- error, can't enqueue -- no space available */
 static int jr_enqueue(uint32_t *desc_addr,
 	       void (*callback)(uint32_t status, void *arg),
-	       void *arg, uint8_t sec_idx)
+	       void *arg, uint8_t sec_idx, struct caam_regs *caam)
 {
-	struct jr_regs *regs = (struct jr_regs *)SEC_JR0_ADDR(sec_idx);
-	struct jobring *jr = &jr0[sec_idx];
+	struct jr_regs *regs = caam->regs;
+	struct jobring *jr = &caam->jr[sec_idx];
 	int head = jr->head;
 	uint32_t desc_word;
 	int length = desc_len(desc_addr);
@@ -262,10 +226,10 @@ static int jr_enqueue(uint32_t *desc_addr,
 	return 0;
 }
 
-static int jr_dequeue(int sec_idx)
+static int jr_dequeue(int sec_idx, struct caam_regs *caam)
 {
-	struct jr_regs *regs = (struct jr_regs *)SEC_JR0_ADDR(sec_idx);
-	struct jobring *jr = &jr0[sec_idx];
+	struct jr_regs *regs = caam->regs;
+	struct jobring *jr = &caam->jr[sec_idx];
 	int head = jr->head;
 	int tail = jr->tail;
 	int idx, i, found;
@@ -348,14 +312,18 @@ static void desc_done(uint32_t status, void *arg)
 {
 	struct result *x = arg;
 	x->status = status;
-#ifndef CONFIG_SPL_BUILD
 	caam_jr_strstatus(status);
-#endif
 	x->done = 1;
 }
 
 static inline int run_descriptor_jr_idx(uint32_t *desc, uint8_t sec_idx)
 {
+	struct caam_regs *caam;
+#if CONFIG_IS_ENABLED(DM)
+	caam = dev_get_priv(caam_dev);
+#else
+	caam = &caam_st;
+#endif
 	unsigned long long timeval = 0;
 	unsigned long long timeout = CONFIG_USEC_DEQ_TIMEOUT;
 	struct result op;
@@ -363,7 +331,7 @@ static inline int run_descriptor_jr_idx(uint32_t *desc, uint8_t sec_idx)
 
 	memset(&op, 0, sizeof(op));
 
-	ret = jr_enqueue(desc, desc_done, &op, sec_idx);
+	ret = jr_enqueue(desc, desc_done, &op, sec_idx, caam);
 	if (ret) {
 		debug("Error in SEC enq\n");
 		ret = JQ_ENQ_ERR;
@@ -374,7 +342,7 @@ static inline int run_descriptor_jr_idx(uint32_t *desc, uint8_t sec_idx)
 		udelay(1);
 		timeval += 1;
 
-		ret = jr_dequeue(sec_idx);
+		ret = jr_dequeue(sec_idx, caam);
 		if (ret) {
 			debug("Error in SEC deq\n");
 			ret = JQ_DEQ_ERR;
@@ -401,13 +369,63 @@ int run_descriptor_jr(uint32_t *desc)
 	return run_descriptor_jr_idx(desc, 0);
 }
 
+#ifndef CONFIG_ARCH_IMX8
+static int jr_sw_cleanup(uint8_t sec_idx, struct caam_regs *caam)
+{
+	struct jobring *jr = &caam->jr[sec_idx];
+
+	jr->head = 0;
+	jr->tail = 0;
+	jr->read_idx = 0;
+	jr->write_idx = 0;
+	memset(jr->info, 0, sizeof(jr->info));
+	memset(jr->input_ring, 0, jr->size * sizeof(caam_dma_addr_t));
+	memset(jr->output_ring, 0, jr->size * sizeof(struct op_ring));
+
+	return 0;
+}
+
+static int jr_hw_reset(struct jr_regs *regs)
+{
+	uint32_t timeout = 100000;
+	uint32_t jrint, jrcr;
+
+	sec_out32(&regs->jrcr, JRCR_RESET);
+        do {
+		jrint = sec_in32(&regs->jrint);
+        } while (((jrint & JRINT_ERR_HALT_MASK) ==
+		  JRINT_ERR_HALT_INPROGRESS) && --timeout);
+
+	jrint = sec_in32(&regs->jrint);
+	if (((jrint & JRINT_ERR_HALT_MASK) !=
+	     JRINT_ERR_HALT_INPROGRESS) && timeout == 0)
+		return -1;
+
+	timeout = 100000;
+	sec_out32(&regs->jrcr, JRCR_RESET);
+	do {
+		jrcr = sec_in32(&regs->jrcr);
+	} while ((jrcr & JRCR_RESET) && --timeout);
+
+	if (timeout == 0)
+		return -1;
+
+	return 0;
+}
+
 static inline int jr_reset_sec(uint8_t sec_idx)
 {
-	if (jr_hw_reset(sec_idx) < 0)
+	struct caam_regs *caam;
+#if CONFIG_IS_ENABLED(DM)
+	caam = dev_get_priv(caam_dev);
+#else
+	caam = &caam_st;
+#endif
+	if (jr_hw_reset(caam->regs) < 0)
 		return -1;
 
 	/* Clean up the jobring structure maintained by software */
-	jr_sw_cleanup(sec_idx);
+	jr_sw_cleanup(sec_idx, caam);
 
 	return 0;
 }
@@ -417,9 +435,15 @@ int jr_reset(void)
 	return jr_reset_sec(0);
 }
 
-static inline int sec_reset_idx(uint8_t sec_idx)
+int sec_reset(void)
 {
-	ccsr_sec_t *sec = (void *)SEC_ADDR(sec_idx);
+	struct caam_regs *caam;
+#if CONFIG_IS_ENABLED(DM)
+        caam = dev_get_priv(caam_dev);
+#else
+	caam = &caam_st;
+#endif
+	ccsr_sec_t *sec = caam->sec;
 	uint32_t mcfgr = sec_in32(&sec->mcfgr);
 	uint32_t timeout = 100000;
 
@@ -445,11 +469,7 @@ static inline int sec_reset_idx(uint8_t sec_idx)
 
 	return 0;
 }
-int sec_reset(void)
-{
-	return sec_reset_idx(0);
-}
-#ifndef CONFIG_SPL_BUILD
+
 static int deinstantiate_rng(u8 sec_idx, int state_handle_mask)
 {
 	u32 *desc;
@@ -495,12 +515,11 @@ static int deinstantiate_rng(u8 sec_idx, int state_handle_mask)
 	return ret;
 }
 
-static int instantiate_rng(u8 sec_idx, int gen_sk)
+static int instantiate_rng(uint8_t sec_idx, ccsr_sec_t *sec, int gen_sk)
 {
 	u32 *desc;
 	u32 rdsta_val;
 	int ret = 0, sh_idx, size;
-	ccsr_sec_t __iomem *sec = (ccsr_sec_t __iomem *)SEC_ADDR(sec_idx);
 	struct rng4tst __iomem *rng =
 			(struct rng4tst __iomem *)&sec->rng;
 
@@ -553,9 +572,8 @@ static int instantiate_rng(u8 sec_idx, int gen_sk)
 	return ret;
 }
 
-static u8 get_rng_vid(uint8_t sec_idx)
+static u8 get_rng_vid(ccsr_sec_t *sec)
 {
-	ccsr_sec_t *sec = (void *)SEC_ADDR(sec_idx);
 	u8 vid;
 
 	if (caam_get_era() < 10) {
@@ -573,9 +591,8 @@ static u8 get_rng_vid(uint8_t sec_idx)
  * By default, the TRNG runs for 200 clocks per sample;
  * 1200 clocks per sample generates better entropy.
  */
-static void kick_trng(int ent_delay, uint8_t sec_idx)
+static void kick_trng(int ent_delay, ccsr_sec_t *sec)
 {
-	ccsr_sec_t __iomem *sec = (ccsr_sec_t __iomem *)SEC_ADDR(sec_idx);
 	struct rng4tst __iomem *rng =
 			(struct rng4tst __iomem *)&sec->rng;
 	u32 val;
@@ -602,10 +619,9 @@ static void kick_trng(int ent_delay, uint8_t sec_idx)
 	sec_clrbits32(&rng->rtmctl, RTMCTL_PRGM);
 }
 
-static int rng_init(uint8_t sec_idx)
+static int rng_init(uint8_t sec_idx, ccsr_sec_t *sec)
 {
 	int ret, gen_sk, ent_delay = RTSDCTL_ENT_DLY_MIN;
-	ccsr_sec_t __iomem *sec = (ccsr_sec_t __iomem *)SEC_ADDR(sec_idx);
 	struct rng4tst __iomem *rng =
 			(struct rng4tst __iomem *)&sec->rng;
 	u32 inst_handles;
@@ -623,7 +639,7 @@ static int rng_init(uint8_t sec_idx)
 		 * the TRNG parameters.
 		 */
 		if (!inst_handles) {
-			kick_trng(ent_delay, sec_idx);
+			kick_trng(ent_delay, sec);
 			ent_delay += 400;
 		}
 		/*
@@ -633,7 +649,7 @@ static int rng_init(uint8_t sec_idx)
 		 * interval, leading to a sucessful initialization of
 		 * the RNG.
 		 */
-		ret = instantiate_rng(sec_idx, gen_sk);
+		ret = instantiate_rng(sec_idx, sec, gen_sk);
 	} while ((ret == -1) && (ent_delay < RTSDCTL_ENT_DLY_MAX));
 	if (ret) {
 		printf("SEC%u:  Failed to instantiate RNG\n", sec_idx);
@@ -646,12 +662,25 @@ static int rng_init(uint8_t sec_idx)
 	return ret;
 }
 #endif
+
 int sec_init_idx(uint8_t sec_idx)
 {
-	ccsr_sec_t *sec = (void *)SEC_ADDR(sec_idx);
-	uint32_t mcr = sec_in32(&sec->mcfgr);
 	int ret = 0;
-
+	struct caam_regs *caam;
+#if CONFIG_IS_ENABLED(DM)
+	caam = dev_get_priv(caam_dev);
+#else
+	caam_st.sec = (void *)SEC_ADDR(sec_idx);
+	caam_st.regs = (struct jr_regs *)SEC_JR0_ADDR(sec_idx);
+	caam_st.jrid = 0;
+	caam = &caam_st;
+#endif
+#ifndef CONFIG_ARCH_IMX8
+	ccsr_sec_t *sec = caam->sec;
+	uint32_t mcr = sec_in32(&sec->mcfgr);
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_IMX8M)
+	uint32_t jrdid_ms = 0;
+#endif
 #ifdef CONFIG_FSL_CORENET
 	uint32_t liodnr;
 	uint32_t liodn_ns;
@@ -681,6 +710,11 @@ int sec_init_idx(uint8_t sec_idx)
 	mcr |= (1 << MCFGR_PS_SHIFT);
 #endif
 	sec_out32(&sec->mcfgr, mcr);
+	jr_reset();
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_IMX8M)
+	jrdid_ms = JRDID_MS_TZ_OWN | JRDID_MS_PRIM_TZ | JRDID_MS_PRIM_DID;
+	sec_out32(&sec->jrliodnr[caam->jrid].ms, jrdid_ms);
+#endif
 
 #ifdef CONFIG_FSL_CORENET
 #ifdef CONFIG_SPL_BUILD
@@ -692,25 +726,26 @@ int sec_init_idx(uint8_t sec_idx)
 	liodn_ns = CONFIG_SPL_JR0_LIODN_NS & JRNSLIODN_MASK;
 	liodn_s = CONFIG_SPL_JR0_LIODN_S & JRSLIODN_MASK;
 
-	liodnr = sec_in32(&sec->jrliodnr[0].ls) &
+	liodnr = sec_in32(&sec->jrliodnr[caam->jrid].ls) &
 		 ~(JRNSLIODN_MASK | JRSLIODN_MASK);
 	liodnr = liodnr |
 		 (liodn_ns << JRNSLIODN_SHIFT) |
 		 (liodn_s << JRSLIODN_SHIFT);
-	sec_out32(&sec->jrliodnr[0].ls, liodnr);
+	sec_out32(&sec->jrliodnr[caam->jrid].ls, liodnr);
 #else
-	liodnr = sec_in32(&sec->jrliodnr[0].ls);
+	liodnr = sec_in32(&sec->jrliodnr[caam->jrid].ls);
 	liodn_ns = (liodnr & JRNSLIODN_MASK) >> JRNSLIODN_SHIFT;
 	liodn_s = (liodnr & JRSLIODN_MASK) >> JRSLIODN_SHIFT;
 #endif
 #endif
-
-	ret = jr_init(sec_idx);
+#endif
+	ret = jr_init(sec_idx, caam);
 	if (ret < 0) {
 		printf("SEC%u:  initialization failed\n", sec_idx);
 		return -1;
 	}
 
+#ifndef CONFIG_ARCH_IMX8
 #ifdef CONFIG_FSL_CORENET
 	ret = sec_config_pamu_table(liodn_ns, liodn_s);
 	if (ret < 0)
@@ -718,9 +753,9 @@ int sec_init_idx(uint8_t sec_idx)
 
 	pamu_enable();
 #endif
-#ifndef CONFIG_SPL_BUILD
-	if (get_rng_vid(sec_idx) >= 4) {
-		if (rng_init(sec_idx) < 0) {
+
+	if (get_rng_vid(caam->sec) >= 4) {
+		if (rng_init(sec_idx, caam->sec) < 0) {
 			printf("SEC%u:  RNG instantiation failed\n", sec_idx);
 			return -1;
 		}
@@ -742,3 +777,66 @@ int sec_init(void)
 {
 	return sec_init_idx(0);
 }
+
+#if CONFIG_IS_ENABLED(DM)
+static int caam_jr_probe(struct udevice *dev)
+{
+	struct caam_regs *caam = dev_get_priv(dev);
+	const void *fdt = gd->fdt_blob;
+	int node = dev_of_offset(dev);
+	struct fdt_resource res;
+	int subnode, ret;
+	unsigned int jr_node = 0;
+
+	caam_dev = dev;
+
+	ret = fdt_get_resource(fdt, node, "reg", 0, &res);
+	if (ret) {
+		printf("caam_jr: resource not found\n");
+		return ret;
+	}
+	caam->sec = (ccsr_sec_t *)res.start;
+	caam->regs = (struct jr_regs *)caam->sec;
+
+	/* Check for enabled job ring subnode */
+	fdt_for_each_subnode(subnode, fdt, node) {
+		if (!fdtdec_get_is_enabled(fdt, subnode)) {
+			continue;
+		}
+		jr_node = fdtdec_get_uint(fdt, subnode, "reg", -1);
+		if (jr_node > 0) {
+			caam->regs = (struct jr_regs *)((ulong)caam->sec + jr_node);
+			while (!(jr_node & 0x0F)) {
+				jr_node = jr_node >> 4;
+			}
+			caam->jrid = jr_node - 1;
+			break;
+		}
+	}
+
+	if (sec_init()) {
+		printf("\nsec_init failed!\n");
+	}
+
+	return 0;
+}
+
+static int caam_jr_bind(struct udevice *dev)
+{
+	return 0;
+}
+
+static const struct udevice_id caam_jr_match[] = {
+	{ .compatible = "fsl,sec-v4.0" },
+	{ }
+};
+
+U_BOOT_DRIVER(caam_jr) = {
+	.name		= "caam_jr",
+	.id		= UCLASS_MISC,
+	.of_match	= caam_jr_match,
+	.bind		= caam_jr_bind,
+	.probe		= caam_jr_probe,
+	.priv_auto	= sizeof(struct caam_regs),
+};
+#endif
