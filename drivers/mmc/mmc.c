@@ -833,6 +833,9 @@ static int __mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value,
 	 * is false, because by now (after 'timeout_ms' ms) the bus should be
 	 * reliable.
 	 */
+	if (!send_status)
+		return 0;
+
 	do {
 		ret = mmc_send_status(mmc, &status);
 
