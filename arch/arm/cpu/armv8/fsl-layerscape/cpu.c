@@ -48,6 +48,8 @@
 #endif
 #endif
 #include <linux/mii.h>
+#include <dm/uclass-internal.h>
+#include <dm/device-internal.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1649,6 +1651,14 @@ __weak int serdes_misc_init(void)
 
 int arch_misc_init(void)
 {
+	struct udevice *dev;
+
+	uclass_find_first_device(UCLASS_MISC, &dev);
+	for (; dev; uclass_find_next_device(&dev)) {
+		if (device_probe(dev))
+			continue;
+	}
+
 	serdes_misc_init();
 
 	return 0;

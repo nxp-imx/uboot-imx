@@ -23,7 +23,6 @@
 #include <asm/arch/mmu.h>
 #include <asm/arch/soc.h>
 #include <asm/arch/ppa.h>
-#include <fsl_sec.h>
 #include <asm/arch-fsl-layerscape/fsl_icid.h>
 
 #ifdef CONFIG_FSL_QIXIS
@@ -273,9 +272,6 @@ int board_init(void)
 	QIXIS_WRITE(rst_ctl, QIXIS_RST_CTL_RESET_EN);
 #endif
 
-#ifdef CONFIG_FSL_CAAM
-	sec_init();
-#endif
 #ifdef CONFIG_FSL_LS_PPA
 	ppa_init();
 #endif
@@ -283,9 +279,6 @@ int board_init(void)
 #ifdef CONFIG_FSL_MC_ENET
 	/* invert AQR405 IRQ pins polarity */
 	out_le32(irq_ccsr + IRQCR_OFFSET / 4, AQR405_IRQ_MASK);
-#endif
-#ifdef CONFIG_FSL_CAAM
-	sec_init();
 #endif
 
 #if !defined(CONFIG_SYS_EARLY_PCI_INIT) && defined(CONFIG_DM_ETH)

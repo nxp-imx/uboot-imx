@@ -18,6 +18,10 @@ config ARCH_LS1012A
 	select SYS_I2C_MXC
 	select SYS_I2C_MXC_I2C1 if !DM_I2C
 	select SYS_I2C_MXC_I2C2 if !DM_I2C
+	select FSL_CAAM
+	select FSL_BLOB
+	select MISC
+	select ARCH_MISC_INIT
 	imply PANIC_HANG
 
 config ARCH_LS1028A
@@ -48,6 +52,9 @@ config ARCH_LS1028A
 	select SYS_FSL_ERRATUM_A009942 if !TFABOOT
 	select SYS_FSL_ERRATUM_A050382
 	select RESV_RAM if GIC_V3_ITS
+	select FSL_CAAM
+	select FSL_BLOB
+	select MISC
 	imply PANIC_HANG
 
 config ARCH_LS1043A
@@ -80,6 +87,10 @@ config ARCH_LS1043A
 	select SYS_I2C_MXC_I2C2 if !DM_I2C
 	select SYS_I2C_MXC_I2C3 if !DM_I2C
 	select SYS_I2C_MXC_I2C4 if !DM_I2C
+	select FSL_CAAM
+	select FSL_BLOB
+	select MISC
+	select ARCH_MISC_INIT
 	imply CMD_PCI
 
 config ARCH_LS1046A
@@ -113,6 +124,10 @@ config ARCH_LS1046A
 	select SYS_I2C_MXC_I2C2 if !DM_I2C
 	select SYS_I2C_MXC_I2C3 if !DM_I2C
 	select SYS_I2C_MXC_I2C4 if !DM_I2C
+	select FSL_CAAM
+	select FSL_BLOB
+	select MISC
+	select ARCH_MISC_INIT
 	imply SCSI
 	imply SCSI_AHCI
 
@@ -154,6 +169,9 @@ config ARCH_LS1088A
 	select SYS_I2C_MXC_I2C3 if !TFABOOT
 	select SYS_I2C_MXC_I2C4 if !TFABOOT
 	select RESV_RAM if GIC_V3_ITS
+	select FSL_CAAM
+	select FSL_BLOB
+	select MISC
 	imply SCSI
 	imply PANIC_HANG
 
@@ -205,6 +223,9 @@ config ARCH_LS2080A
 	select SYS_I2C_MXC_I2C3 if !TFABOOT
 	select SYS_I2C_MXC_I2C4 if !TFABOOT
 	select RESV_RAM if GIC_V3_ITS
+	select FSL_CAAM
+	select FSL_BLOB
+	select MISC
 	imply DISTRO_DEFAULTS
 	imply PANIC_HANG
 
@@ -232,6 +253,9 @@ config ARCH_LX2162A
 	select BOARD_EARLY_INIT_F
 	select SYS_I2C_MXC
 	select RESV_RAM if GIC_V3_ITS
+	select FSL_CAAM
+	select FSL_BLOB
+	select MISC
 	imply DISTRO_DEFAULTS
 	imply PANIC_HANG
 	imply SCSI
@@ -262,6 +286,9 @@ config ARCH_LX2160A
 	select BOARD_EARLY_INIT_F
 	select SYS_I2C_MXC
 	select RESV_RAM if GIC_V3_ITS
+	select FSL_CAAM
+	select FSL_BLOB
+	select MISC
 	imply DISTRO_DEFAULTS
 	imply PANIC_HANG
 	imply SCSI

@@ -28,7 +28,6 @@
 #include <fsl_mmdc.h>
 #include <spl.h>
 #include <netdev.h>
-#include <fsl_sec.h>
 #include "../common/qixis.h"
 #include "ls1012aqds_qixis.h"
 #include "ls1012aqds_pfe.h"
@@ -151,10 +150,6 @@ int board_init(void)
 
 #ifdef CONFIG_ENV_IS_NOWHERE
 	gd->env_addr = (ulong)&default_environment[0];
-#endif
-
-#ifdef CONFIG_FSL_CAAM
-	sec_init();
 #endif
 
 #ifdef CONFIG_FSL_LS_PPA

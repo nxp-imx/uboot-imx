@@ -27,7 +27,6 @@
 #include <env_internal.h>
 #include <fsl_mmdc.h>
 #include <netdev.h>
-#include <fsl_sec.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -174,10 +173,6 @@ int board_init(void)
 
 #ifdef CONFIG_ENV_IS_NOWHERE
 	gd->env_addr = (ulong)&default_environment[0];
-#endif
-
-#ifdef CONFIG_FSL_CAAM
-	sec_init();
 #endif
 
 #ifdef CONFIG_FSL_LS_PPA
