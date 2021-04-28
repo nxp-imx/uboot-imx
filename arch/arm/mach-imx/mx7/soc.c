@@ -17,9 +17,10 @@
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/arch/crm_regs.h>
 #include <dm.h>
+#include <dm/uclass-internal.h>
+#include <dm/device-internal.h>
 #include <env.h>
 #include <imx_thermal.h>
-#include <fsl_sec.h>
 #include <asm/setup.h>
 #include <linux/delay.h>
 #include <fsl_wdog.h>
@@ -54,9 +55,6 @@
 #define BM_GPC_PGC_ACK_SEL_A7_DUMMY_PDN_ACK	0x8000
 
 #define BM_GPC_PGC_CORE_PUPSCR			0x7fff80
-#ifdef CONFIG_IMX_SEC_INIT
-#include <fsl_caam.h>
-#endif
 
 #if defined(CONFIG_IMX_THERMAL)
 static const struct imx_thermal_plat imx7_thermal_plat = {
@@ -363,10 +361,7 @@ int arch_cpu_init(void)
 	init_snvs();
 
 	imx_gpcv2_init();
-#ifdef CONFIG_IMX_SEC_INIT
-	/* Secure init function such RNG */
-	imx_sec_init();
-#endif
+
 	configure_tzc380();
 
 	return 0;
@@ -383,16 +378,19 @@ int arch_cpu_init(void)
 #ifdef CONFIG_ARCH_MISC_INIT
 int arch_misc_init(void)
 {
+	struct udevice *dev;
+
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	if (is_mx7d())
 		env_set("soc", "imx7d");
 	else
 		env_set("soc", "imx7s");
 #endif
-
-#ifdef CONFIG_FSL_CAAM
-	sec_init();
-#endif
+	uclass_find_first_device(UCLASS_MISC, &dev);
+	for (; dev; uclass_find_next_device(&dev)) {
+		if (device_probe(dev))
+			continue;
+	}
 
 	return 0;
 }
