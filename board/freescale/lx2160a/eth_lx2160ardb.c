@@ -41,6 +41,49 @@ static bool get_inphi_phy_id(struct mii_dev *bus, int addr, int devad)
 		return false;
 }
 
+int setup_eth_rev_c(u32 srds_p)
+{
+	struct mii_dev *bus;
+	int i;
+
+	/* difference between SerDes1 protocols 18/19 is 4x10G vs. 40G */
+	switch (srds_p) {
+	case 19:
+		wriop_init_dpmac_enet_if(WRIOP1_DPMAC2,
+					 PHY_INTERFACE_MODE_XLAUI);
+		break;
+	case 18:
+		for (i = WRIOP1_DPMAC7; i <= WRIOP1_DPMAC10; i++)
+			wriop_init_dpmac_enet_if(i, PHY_INTERFACE_MODE_XGMII);
+		break;
+	default:
+		printf("SerDes1 protocol 0x%x is not supported on LX2160ARDB\n",
+		       srds_p);
+		return -1;
+	}
+
+	/* common interfaces for SerDes1 protocols 18 and 19 initialization */
+	wriop_set_phy_address(WRIOP1_DPMAC3, 0, AQR113C_PHY_ADDR1);
+	wriop_set_phy_address(WRIOP1_DPMAC4, 0, AQR113C_PHY_ADDR2);
+	wriop_set_phy_address(WRIOP1_DPMAC5, 0, INPHI_PHY_ADDR1);
+	wriop_set_phy_address(WRIOP1_DPMAC6, 0, INPHI_PHY_ADDR1);
+	wriop_set_phy_address(WRIOP1_DPMAC17, 0, RGMII_PHY_ADDR1);
+	wriop_set_phy_address(WRIOP1_DPMAC18, 0, RGMII_PHY_ADDR2);
+
+	/* assign DPMAC/PHY to MDIO bus */
+	bus = miiphy_get_dev_by_name(DEFAULT_WRIOP_MDIO1_NAME);
+	wriop_set_mdio(WRIOP1_DPMAC3, bus);
+	wriop_set_mdio(WRIOP1_DPMAC4, bus);
+	wriop_set_mdio(WRIOP1_DPMAC17, bus);
+	wriop_set_mdio(WRIOP1_DPMAC18, bus);
+
+	bus = miiphy_get_dev_by_name(DEFAULT_WRIOP_MDIO2_NAME);
+	wriop_set_mdio(WRIOP1_DPMAC5, bus);
+	wriop_set_mdio(WRIOP1_DPMAC6, bus);
+
+	return 0;
+}
+
 int board_eth_init(struct bd_info *bis)
 {
 #if defined(CONFIG_FSL_MC_ENET)
@@ -70,6 +113,13 @@ int board_eth_init(struct bd_info *bis)
 	fm_memac_mdio_init(bis, &mdio_info);
 
 	dev = miiphy_get_dev_by_name(DEFAULT_WRIOP_MDIO2_NAME);
+
+	/* new LX2160A-RDB2 revC board uses phy-less 25G/40G interfaces */
+	if (get_board_rev() == 'C') {
+		setup_eth_rev_c(srds_s1);
+		goto next;
+	}
+
 	switch (srds_s1) {
 	case 19:
 		wriop_set_phy_address(WRIOP1_DPMAC2, 0,
