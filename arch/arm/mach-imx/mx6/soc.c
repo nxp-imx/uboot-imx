@@ -24,12 +24,11 @@
 #include <asm/arch/mxc_hdmi.h>
 #include <asm/arch/crm_regs.h>
 #include <dm.h>
+#include <dm/uclass-internal.h>
+#include <dm/device-internal.h>
 #include <imx_thermal.h>
 #include <mmc.h>
 #include <asm/setup.h>
-#ifdef CONFIG_IMX_SEC_INIT
-#include <fsl_caam.h>
-#endif
 #include <hang.h>
 #include <cpu_func.h>
 #include <env.h>
@@ -665,11 +664,6 @@ int arch_cpu_init(void)
 	if (is_mx6dqp())
 		noc_setup();
 #endif
-
-#ifdef CONFIG_IMX_SEC_INIT
-	/* Secure init function such RNG */
-	imx_sec_init();
-#endif
 	configure_tzc380();
 
 	return 0;
@@ -1003,6 +997,14 @@ static void setup_serial_number(void)
 
 int arch_misc_init(void)
 {
+	struct udevice *dev;
+
+	uclass_find_first_device(UCLASS_MISC, &dev);
+	for (; dev; uclass_find_next_device(&dev)) {
+		if (device_probe(dev))
+			continue;
+	}
+
 	setup_serial_number();
 	return 0;
 }
