@@ -102,6 +102,29 @@ int arch_cpu_init_dm(void)
 	return 0;
 }
 
+#if defined(CONFIG_ARCH_MISC_INIT)
+int arch_misc_init(void)
+{
+	struct udevice *dev;
+	int node, ret;
+
+	/* Request seco for JR2 access.JR0, JR1 will be assigned to seco for imx8 */
+	sc_pm_set_resource_power_mode(-1, SC_R_CAAM_JR2, SC_PM_PW_MODE_ON);
+	sc_pm_set_resource_power_mode(-1, SC_R_CAAM_JR2_OUT, SC_PM_PW_MODE_ON);
+
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "fsl,sec-v4.0");
+
+	ret = uclass_get_device_by_of_offset(UCLASS_MISC, node, &dev);
+	if (ret) {
+		printf("could not get caam jr device %d\n", ret);
+		return ret;
+	}
+	device_probe(dev);
+
+	return 0;
+}
+#endif
+
 #ifdef CONFIG_IMX_BOOTAUX
 
 #ifdef CONFIG_IMX8QM

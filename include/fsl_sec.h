@@ -194,12 +194,10 @@ typedef struct ccsr_sec {
 #define SEC_CHAVID_LS_RNG_SHIFT		16
 #define SEC_CHAVID_RNG_LS_MASK		0x000f0000
 
-#define CONFIG_JRSTARTR_JR0		0x00000001
-
 struct jr_regs {
 #if defined(CONFIG_SYS_FSL_SEC_LE) && \
 	!(defined(CONFIG_MX6) || defined(CONFIG_MX7) || \
-	  defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8M))
+	  defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8M) || defined(CONFIG_IMX8))
 	u32 irba_l;
 	u32 irba_h;
 #else
@@ -214,7 +212,7 @@ struct jr_regs {
 	u32 irja;
 #if defined(CONFIG_SYS_FSL_SEC_LE) && \
 	!(defined(CONFIG_MX6) || defined(CONFIG_MX7) || \
-	  defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8M))
+	  defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8M) || defined(CONFIG_IMX8))
 	u32 orba_l;
 	u32 orba_h;
 #else
@@ -248,7 +246,7 @@ struct jr_regs {
 struct sg_entry {
 #if defined(CONFIG_SYS_FSL_SEC_LE) && \
 	!(defined(CONFIG_MX6) || defined(CONFIG_MX7) || \
-	  defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8M))
+	  defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8M) || defined(CONFIG_IMX8))
 	uint32_t addr_lo;	/* Memory Address - lo */
 	uint32_t addr_hi;	/* Memory Address of start of buffer - hi */
 #else

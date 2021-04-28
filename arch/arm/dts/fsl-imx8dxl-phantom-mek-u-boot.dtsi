@@ -106,6 +106,22 @@
 	u-boot,dm-spl;
 };
 
+&pd_caam {
+	u-boot,dm-spl;
+};
+
+&pd_caam_jr1 {
+	u-boot,dm-spl;
+};
+
+&pd_caam_jr2 {
+	u-boot,dm-spl;
+};
+
+&pd_caam_jr3 {
+	u-boot,dm-spl;
+};
+
 &gpio4 {
 	u-boot,dm-spl;
 };
@@ -155,4 +171,20 @@
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
 	};
+};
+
+&crypto {
+	u-boot,dm-spl;
+};
+
+&sec_jr1 {
+	u-boot,dm-spl;
+};
+
+&sec_jr2 {
+	u-boot,dm-spl;
+};
+
+&sec_jr3 {
+	u-boot,dm-spl;
 };

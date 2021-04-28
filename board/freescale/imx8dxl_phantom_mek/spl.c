@@ -16,12 +16,26 @@
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 #include <bootm.h>
+#include <asm/arch/sci/sci.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 void spl_board_init(void)
 {
 	struct udevice *dev;
+	int node, ret;
+
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "fsl,imx8-mu");
+
+	ret = uclass_get_device_by_of_offset(UCLASS_MISC, node, &dev);
+	if (ret) {
+		return;
+	}
+	device_probe(dev);
+
+	/* Request seco for JR2 access.JR0, JR1 will be assigned to seco for imx8 */
+	sc_pm_set_resource_power_mode(-1, SC_R_CAAM_JR2, SC_PM_PW_MODE_ON);
+	sc_pm_set_resource_power_mode(-1, SC_R_CAAM_JR2_OUT, SC_PM_PW_MODE_ON);
 
 	uclass_find_first_device(UCLASS_MISC, &dev);
 
