@@ -17,9 +17,9 @@
 #include <asm/mach-imx/hab.h>
 #include <linux/bitops.h>
 #include <asm/setup.h>
-#ifdef CONFIG_IMX_SEC_INIT
-#include <fsl_caam.h>
-#endif
+#include <dm.h>
+#include <dm/uclass-internal.h>
+#include <dm/device-internal.h>
 
 #define PMC0_BASE_ADDR		0x410a1000
 #define PMC0_CTRL		0x28
@@ -135,13 +135,22 @@ int arch_cpu_init(void)
 	}
 #endif
 
-#ifdef CONFIG_IMX_SEC_INIT
-	/* Secure init function such RNG */
-	imx_sec_init();
-#endif
-
 	return 0;
 }
+
+#if defined(CONFIG_ARCH_MISC_INIT)
+int arch_misc_init(void)
+{
+	struct udevice *dev;
+
+	uclass_find_first_device(UCLASS_MISC, &dev);
+	for (; dev; uclass_find_next_device(&dev)) {
+		if (device_probe(dev))
+			continue;
+	}
+	return 0;
+}
+#endif
 
 #ifdef CONFIG_BOARD_POSTCLK_INIT
 int board_postclk_init(void)

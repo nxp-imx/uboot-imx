@@ -200,6 +200,29 @@
 			};
 		};
 
+		crypto: crypto@40240000 {
+			compatible = "fsl,sec-v4.0";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			reg = <0x40240000 0x10000>;
+			ranges = <0 0x40240000 0x10000>;
+			clocks = <&clks IMX7ULP_CLK_CAAM>,
+				 <&clks IMX7ULP_CLK_NIC1_BUS_DIV>;
+			clock-names = "aclk", "ipg";
+
+			sec_jr0: jr@1000 {
+				compatible = "fsl,sec-v4.0-job-ring";
+				reg = <0x1000 0x1000>;
+				interrupts = <GIC_SPI 54 IRQ_TYPE_LEVEL_HIGH>;
+			};
+
+			sec_jr1: jr@2000 {
+				compatible = "fsl,sec-v4.0-job-ring";
+				reg = <0x2000 0x1000>;
+				interrupts = <GIC_SPI 54 IRQ_TYPE_LEVEL_HIGH>;
+			};
+		};
+
 		tpm5: tpm@40260000 {
 			compatible = "fsl,imx7ulp-tpm";
 			reg = <0x40260000 0x1000>;
