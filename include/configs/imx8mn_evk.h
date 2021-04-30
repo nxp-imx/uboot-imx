@@ -108,6 +108,7 @@
 	"splashimage=0x50000000\0" \
 	"console=ttymxc1,115200\0" \
 	"fdt_addr_r=0x43000000\0"			\
+	"fdt_addr=0x43000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
 	"boot_fit=no\0" \
 	"fdtfile=" CONFIG_DEFAULT_FDT_FILE "\0" \

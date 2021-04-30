@@ -104,6 +104,7 @@
 	CONFIG_MFG_ENV_SETTINGS \
 	"splashimage=0x50000000\0" \
 	"fdt_addr_r=0x43000000\0"			\
+	"fdt_addr=0x43000000\0"			\
 	"fdt_high=0xffffffffffffffff\0" \
 	"mtdparts=" MFG_NAND_PARTITION "\0" \
 	"console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200\0" \
@@ -127,6 +128,7 @@
 	"splashimage=0x50000000\0" \
 	"console=ttymxc1,115200\0" \
 	"fdt_addr_r=0x43000000\0"			\
+	"fdt_addr=0x43000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
 	"boot_fit=no\0" \
 	"fdtfile=" CONFIG_DEFAULT_FDT_FILE "\0" \

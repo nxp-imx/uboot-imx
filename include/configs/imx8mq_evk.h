@@ -91,6 +91,7 @@
 	"splashimage=0x50000000\0" \
 	"console=ttymxc0,115200\0" \
 	"fdt_addr_r=0x43000000\0"			\
+	"fdt_addr=0x43000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
 	"boot_fdt=try\0" \
 	"fdtfile=imx8mq-evk.dtb\0" \
