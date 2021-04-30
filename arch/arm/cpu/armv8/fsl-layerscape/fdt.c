@@ -534,6 +534,9 @@ void ft_cpu_setup(void *blob, struct bd_info *bd)
 #ifdef CONFIG_SYS_DPAA_FMAN
 	fdt_fixup_fman_firmware(blob);
 #endif
+#ifdef CONFIG_FSL_PFE
+	fdt_fixup_pfe_firmware(blob);
+#endif
 #ifndef CONFIG_ARCH_LS1012A
 	fsl_fdt_disable_usb(blob);
 #endif

@@ -21,6 +21,8 @@
 #if defined(CONFIG_FSL_MC_ENET)
 #define CONFIG_MII
 #define CONFIG_ETHPRIME		"DPMAC1@xgmii"
+#define AQR113C_PHY_ADDR1      0x0
+#define AQR113C_PHY_ADDR2      0x08
 #endif
 
 /* EMC2305 */
