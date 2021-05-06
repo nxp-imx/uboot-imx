@@ -20,7 +20,8 @@
 #include <config.h>
 #include <fsl_wdog.h>
 #include <linux/delay.h>
-
+#include <dm/uclass-internal.h>
+#include <dm/device-internal.h>
 #include "fsl_epu.h"
 
 #define DCSR_RCPM2_BLOCK_OFFSET	0x223000
@@ -397,3 +398,18 @@ void arch_preboot_os(void)
 	ctrl &= ~ARCH_TIMER_CTRL_ENABLE;
 	asm("mcr p15, 0, %0, c14, c2, 1" : : "r" (ctrl));
 }
+
+#ifdef CONFIG_ARCH_MISC_INIT
+int arch_misc_init(void)
+{
+	struct udevice *dev;
+
+	uclass_find_first_device(UCLASS_MISC, &dev);
+	for (; dev; uclass_find_next_device(&dev)) {
+		if (device_probe(dev))
+			continue;
+	}
+
+	return 0;
+}
+#endif
