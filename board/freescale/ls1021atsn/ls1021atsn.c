@@ -238,10 +238,7 @@ int misc_init_r(void)
 #ifdef CONFIG_FSL_DEVICE_DISABLE
 	device_disable(devdis_tbl, ARRAY_SIZE(devdis_tbl));
 #endif
-
-#ifdef CONFIG_FSL_CAAM
-	return sec_init();
-#endif
+	return 0;
 }
 #endif
 
