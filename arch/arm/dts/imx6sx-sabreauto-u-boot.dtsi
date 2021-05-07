@@ -15,14 +15,6 @@
 	};
 };
 
-&fec1 {
-	phy-mode = "rgmii-txid";
-};
-
-&fec2 {
-	phy-mode = "rgmii-txid";
-};
-
 &ethphy0 {
 	vddio0: vddio-regulator {
 		regulator-name = "VDDIO";
