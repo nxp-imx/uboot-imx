@@ -3,14 +3,6 @@
  * Copyright 2018 NXP
  */
 
-&fec1 {
-	phy-mode = "rgmii-txid";
-};
-
-&fec2 {
-	phy-mode = "rgmii-txid";
-};
-
 &ethphy1 {
 	vddio1: vddio-regulator {
 		regulator-name = "VDDIO";
