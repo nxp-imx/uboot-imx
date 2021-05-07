@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2015 Freescale Semiconductor
+ * Copyright 2015, 2021 Freescale Semiconductor
  */
 #include <common.h>
 #include <env.h>
@@ -20,7 +20,6 @@
 #include <rtc.h>
 #include <asm/arch/soc.h>
 #include <hwconfig.h>
-#include <fsl_sec.h>
 #include <asm/arch/ppa.h>
 #include <asm/arch-fsl-layerscape/fsl_icid.h>
 
@@ -243,10 +242,6 @@ int board_init(void)
 #else
 	rtc_enable_32khz_output();
 #endif
-#endif
-
-#ifdef CONFIG_FSL_CAAM
-	sec_init();
 #endif
 
 #ifdef CONFIG_FSL_LS_PPA
