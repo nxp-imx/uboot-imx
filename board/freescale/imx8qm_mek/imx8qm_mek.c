@@ -533,3 +533,12 @@ bool is_power_key_pressed(void) {
 	return (bool)status;
 }
 #endif
+
+#ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_ANDROID_RECOVERY
+int is_recovery_key_pressing(void)
+{
+	return 0; /* TODO */
+}
+#endif /* CONFIG_ANDROID_RECOVERY */
+#endif /* CONFIG_FSL_FASTBOOT */
