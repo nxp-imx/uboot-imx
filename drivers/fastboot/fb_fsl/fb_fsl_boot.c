@@ -164,7 +164,7 @@ fail:
 
 
 #if defined(CONFIG_FASTBOOT_LOCK)
-int do_lock_status(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
+int do_lock_status(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 	FbLockState status = fastboot_get_lock_stat();
 	if (status != FASTBOOT_LOCK_ERROR) {
 		if (status == FASTBOOT_LOCK)
@@ -187,7 +187,7 @@ U_BOOT_CMD(
 #endif
 
 #if defined(CONFIG_FLASH_MCUFIRMWARE_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
-static int do_bootmcu(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_bootmcu(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	int ret;
 	size_t out_num_read;
@@ -564,7 +564,7 @@ bool __weak is_power_key_pressed(void) {
 	return false;
 }
 
-int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
+int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 
 	ulong addr = 0;
 	u32 avb_metric;
@@ -984,7 +984,7 @@ U_BOOT_CMD(
 
 #else /* CONFIG_AVB_SUPPORT */
 /* boota <addr> [ mmc0 | mmc1 [ <partition> ] ] */
-int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong addr = 0;
 	char *ptn = "boot";

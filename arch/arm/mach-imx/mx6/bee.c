@@ -268,7 +268,7 @@ static int region_valid(u32 start, u32 size)
 	return 0;
 }
 
-static int do_bee_init(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_bee_init(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
 	u32 start, size;
@@ -375,7 +375,7 @@ static int do_bee_init(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_bee_test(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_bee_test(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
 	int ret;
@@ -402,14 +402,14 @@ static int do_bee_test(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static cmd_tbl_t cmd_bmp_sub[] = {
+static struct cmd_tbl cmd_bmp_sub[] = {
 	U_BOOT_CMD_MKENT(init, 5, 0, do_bee_init, "", ""),
 	U_BOOT_CMD_MKENT(test, 2, 0, do_bee_test, "", ""),
 };
 
-static int do_bee_ops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_bee_ops(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
-	cmd_tbl_t *c;
+	struct cmd_tbl *c;
 
 	c = find_cmd_tbl(argv[1], &cmd_bmp_sub[0], ARRAY_SIZE(cmd_bmp_sub));
 

@@ -509,7 +509,7 @@ static int fastboot_tx_write_str(const char *buffer)
 }
 
 #ifdef CONFIG_PSCI_BOARD_REBOOT
-int do_board_reboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_board_reboot(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]);
 #endif
 
 static void compl_do_reset(struct usb_ep *ep, struct usb_request *req)

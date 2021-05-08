@@ -318,7 +318,7 @@ static void clear_tamper_warning(void)
 	writel(lptdsr, SNVS_LPTDSR);
 }
 
-static int do_tamper(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+static int do_tamper(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	const char *op = argc >= 2 ? argv[1] : NULL;
 	unsigned int tx, rx, high;
