@@ -214,6 +214,8 @@ extern const efi_guid_t efi_guid_rng_protocol;
 extern const efi_guid_t efi_guid_capsule_report;
 /* GUID of firmware management protocol */
 extern const efi_guid_t efi_guid_firmware_management_protocol;
+/* GUID of memory only reset control */
+extern const efi_guid_t efi_memory_only_reset_control_guid;
 
 extern unsigned int __efi_runtime_start, __efi_runtime_stop;
 extern unsigned int __efi_runtime_rel_start, __efi_runtime_rel_stop;
