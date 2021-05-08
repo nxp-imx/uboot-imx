@@ -22,7 +22,7 @@
 #include <command.h>
 #include <fsl_caam.h>
 
-static int do_caam(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_caam(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 
 	int ret, i;

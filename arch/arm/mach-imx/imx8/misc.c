@@ -143,7 +143,7 @@ void build_info(void)
 #define PSCI_SYSTEM_RESET2_AARCH64		0xc4000012
 #define PSCI_RESET2_SYSTEM_BOARD_RESET		0x80000002
 
-int do_board_reboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_board_reboot(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct udevice *dev;
 
