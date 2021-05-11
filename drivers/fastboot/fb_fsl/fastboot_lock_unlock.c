@@ -25,7 +25,7 @@
 #ifdef FASTBOOT_ENCRYPT_LOCK
 
 #include <hash.h>
-#include <fsl_caam.h>
+#include <fsl_sec.h>
 
 //Encrypted data is 80bytes length.
 #define ENDATA_LEN 80
@@ -131,6 +131,10 @@ static inline int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
 }
 #endif
 #else
+static u8 skeymod[] = {
+	0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
+	0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
+};
 
 static int sha1sum(unsigned char* data, int len, unsigned char* output) {
 	struct hash_algo *algo;
@@ -156,11 +160,10 @@ static int generate_salt(unsigned char* salt) {
 static __maybe_unused FbLockState decrypt_lock_store(unsigned char *bdata) {
 	int p = 0, ret;
 	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, plain_data, ENDATA_LEN);
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, keymod, 16);
 
-	caam_open();
-	ret = caam_decap_blob((uint32_t)(ulong)plain_data,
-			      (uint32_t)(ulong)bdata + ROUND(ENDATA_LEN, ARCH_DMA_MINALIGN),
-			      ENDATA_LEN);
+	memcpy(keymod, skeymod, sizeof(skeymod));
+	ret = blob_decap(keymod, plain_data, bdata + ROUND(ENDATA_LEN, ARCH_DMA_MINALIGN), ENDATA_LEN);
 	if (ret != 0) {
 		printf("Error during blob decap operation: 0x%x\n",ret);
 		return FASTBOOT_LOCK_ERROR;
@@ -202,6 +205,7 @@ static __maybe_unused FbLockState decrypt_lock_store(unsigned char *bdata) {
 }
 
 static __maybe_unused int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, keymod, 16);
 	unsigned int p = 0;
 	int ret;
 	int salt_len = generate_salt(bdata);
@@ -217,12 +221,10 @@ static __maybe_unused int encrypt_lock_store(FbLockState lock, unsigned char* bd
 	//Set lock value
 	*(bdata + p) = lock;
 
-	caam_open();
-	ret = caam_gen_blob((uint32_t)(ulong)bdata,
-			(uint32_t)(ulong)bdata + ROUND(ENDATA_LEN, ARCH_DMA_MINALIGN),
-			ENDATA_LEN);
+	memcpy(keymod, skeymod, sizeof(skeymod));
+	ret = blob_encap(keymod, bdata, bdata + ROUND(ENDATA_LEN, ARCH_DMA_MINALIGN), ENDATA_LEN);
 	if (ret != 0) {
-		printf("error in caam_gen_blob:0x%x\n", ret);
+		printf("error in blob_encap:0x%x\n", ret);
 		return -1;
 	}
 
