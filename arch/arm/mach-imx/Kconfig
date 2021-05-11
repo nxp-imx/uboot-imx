@@ -320,6 +320,7 @@ config IMX_TRUSTY_OS
 	select SYS_ARM_CACHE_WRITEALLOC
 	select CMD_MMC_RPMB
 	select SUPPORT_EMMC_RPMB
+	select SPL_SUPPORT_EMMC_RPMB
 
 config TRUSTY_UNLOCK_PERMISSION
 	bool "Support unlock permission protection in trusty"
