@@ -14,6 +14,7 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/hab.h>
+#include <asm/global_data.h>
 #include <imx_sip.h>
 #include <linux/arm-smccc.h>
 
