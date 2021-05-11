@@ -40,7 +40,7 @@ int blob_decap(u8 *key_mod, u8 *src, u8 *dst, u32 len)
 		return -EINVAL;
 	}
 
-	printf("\nDecapsulating blob to get data\n");
+	debug("\nDecapsulating blob to get data\n");
 	desc = malloc_cache_aligned(sizeof(int) * MAX_CAAM_DESCSIZE);
 	if (!desc) {
 		debug("Not enough memory for descriptor allocation\n");
@@ -77,7 +77,7 @@ int blob_decap(u8 *key_mod, u8 *src, u8 *dst, u32 len)
 		invalidate_dcache_range((unsigned long)dst,
 					(unsigned long)dst + size);
 
-		puts("Blob decapsulation successful.\n");
+		debug("Blob decapsulation successful.\n");
 	}
 
 	free(desc);
@@ -108,7 +108,7 @@ int blob_encap(u8 *key_mod, u8 *src, u8 *dst, u32 len)
 		return -EINVAL;
 	}
 
-	printf("\nEncapsulating data to form blob\n");
+	debug("\nEncapsulating data to form blob\n");
 	desc = malloc_cache_aligned(sizeof(int) * MAX_CAAM_DESCSIZE);
 	if (!desc) {
 		debug("Not enough memory for descriptor allocation\n");
@@ -145,7 +145,7 @@ int blob_encap(u8 *key_mod, u8 *src, u8 *dst, u32 len)
 		invalidate_dcache_range((unsigned long)dst,
 					(unsigned long)dst + size);
 
-		puts("Blob encapsulation successful.\n");
+		debug("Blob encapsulation successful.\n");
 	}
 
 	free(desc);
@@ -163,7 +163,7 @@ int derive_blob_kek(u8 *bkek_buf, u8 *key_mod, u32 key_sz)
 		return -EINVAL;
 	}
 
-	printf("\nBlob key encryption key(bkek)\n");
+	debug("\nBlob key encryption key(bkek)\n");
 	desc = malloc_cache_aligned(sizeof(int) * MAX_CAAM_DESCSIZE);
 	if (!desc) {
 		printf("Not enough memory for descriptor allocation\n");
@@ -189,7 +189,7 @@ int derive_blob_kek(u8 *bkek_buf, u8 *key_mod, u32 key_sz)
 	} else {
 		invalidate_dcache_range((unsigned long)bkek_buf,
 					(unsigned long)bkek_buf + size);
-		puts("derive bkek successful.\n");
+		debug("derive bkek successful.\n");
 	}
 
 	free(desc);
@@ -202,11 +202,11 @@ int hwrng_generate(u8 *dst, u32 len)
 	u32 *desc;
 
 	if (!IS_ALIGNED((uintptr_t)dst, ARCH_DMA_MINALIGN)) {
-		puts("Error: caam_hwrng_test: Address arguments are not aligned!\n");
+		puts("Error: caam_hwrng: Address arguments are not aligned!\n");
 		return -EINVAL;
 	}
 
-	printf("\nRNG generate\n");
+	debug("\nRNG generate\n");
 	desc = malloc_cache_aligned(sizeof(int) * MAX_CAAM_DESCSIZE);
 	if (!desc) {
 		printf("Not enough memory for descriptor allocation\n");
@@ -226,7 +226,7 @@ int hwrng_generate(u8 *dst, u32 len)
 	} else {
 		invalidate_dcache_range((unsigned long)dst,
 					(unsigned long)dst + size);
-		puts("RNG generation successful.\n");
+		debug("RNG generation successful.\n");
 	}
 
 	free(desc);
