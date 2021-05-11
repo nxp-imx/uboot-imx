@@ -31,6 +31,7 @@
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
 #include <power-domain.h>
 #endif
+#include <clk.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -582,6 +583,9 @@ struct ehci_mx6_priv_data {
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
 	struct power_domain phy_pd;
 #endif
+#if CONFIG_IS_ENABLED(CLK)
+	struct clk phy_clk;
+#endif
 #endif
 };
 
@@ -818,12 +822,40 @@ static int ehci_mx6_phy_prepare(struct ehci_mx6_priv_data *priv)
 	}
 #endif
 
+#if CONFIG_IS_ENABLED(CLK)
+	int ret;
+
+	ret = clk_get_by_index(&priv->phy_dev, 0, &priv->phy_clk);
+	if (ret) {
+		printf("Failed to get phy_clk\n");
+		return ret;
+	}
+
+	ret = clk_enable(&priv->phy_clk);
+	if (ret) {
+		printf("Failed to enable phy_clk\n");
+		return ret;
+	}
+#endif
+
 	return 0;
 }
 
 static int ehci_mx6_phy_remove(struct ehci_mx6_priv_data *priv)
 {
 	int ret = 0;
+
+#if CONFIG_IS_ENABLED(CLK)
+	if (priv->phy_clk.dev) {
+		ret = clk_disable(&priv->phy_clk);
+		if (ret)
+			return ret;
+
+		ret = clk_free(&priv->phy_clk);
+		if (ret)
+			return ret;
+	}
+#endif
 
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
 	if (priv->phy_pd.dev) {
