@@ -47,4 +47,7 @@ config IMX8M_LPDDR4_FREQ0_2400MTS
 config IMX8M_LPDDR4_FREQ0_3200MTS
 	bool "imx8m LPDDR4 freq0 change from 4000MTS to 3200MTS"
 
+config IMX8M_4G_LPDDR4
+	bool "imx8m 4GB LPDDR4"
+
 endmenu
