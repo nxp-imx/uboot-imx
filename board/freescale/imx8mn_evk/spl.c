@@ -77,8 +77,8 @@ int power_init_board(void)
 	pmic_reg_write(dev, BD718XX_BUCK1_VOLT_RUN, 0xf);
 #endif /* CONFIG_IMX8MN_LOW_DRIVE_MODE */
 
-	/* Set VDD_SOC 0.85v for suspend */
-	pmic_reg_write(dev, BD718XX_BUCK1_VOLT_SUSP, 0xf);
+	/* Set VDD_SOC 0.75v for low-v suspend */
+	pmic_reg_write(dev, BD718XX_BUCK1_VOLT_SUSP, 0x5);
 
 	/* increase NVCC_DRAM_1V2 to 1.2v for DDR4 */
 	pmic_reg_write(dev, BD718XX_4TH_NODVS_BUCK_VOLT, 0x28);
@@ -123,9 +123,9 @@ int power_init_board(void)
 	/* increase VDD_SOC/VDD_DRAM to typical value 0.95V before first DRAM access */
 	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x1C);
 #endif
-	/* Set DVS1 to 0.85v for suspend */
+	/* Set DVS1 to 0.75v for low-v suspend */
 	/* Enable DVS control through PMIC_STBY_REQ and set B1_ENMODE=1 (ON by PMIC_ON_REQ=H) */
-	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x14);
+	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0xC);
 	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
 
 	/* set VDD_SNVS_0V8 from default 0.85V */
