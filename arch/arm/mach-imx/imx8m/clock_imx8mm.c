@@ -345,8 +345,8 @@ void enable_display_clk(unsigned char enable)
 		/* Set Video PLL to 594Mhz, p = 1, m = 99,  k = 0, s = 2 */
 		fracpll_configure(ANATOP_VIDEO_PLL, VIDEO_PLL_RATE);
 
-		/* 500Mhz */
-		clock_set_target_val(MEDIA_AXI_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(1) | CLK_ROOT_PRE_DIV(CLK_ROOT_PRE_DIV2));
+		/* 400Mhz */
+		clock_set_target_val(MEDIA_AXI_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(2) | CLK_ROOT_PRE_DIV(CLK_ROOT_PRE_DIV2));
 
 		/* 200Mhz */
 		clock_set_target_val(MEDIA_APB_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(2) |CLK_ROOT_PRE_DIV(CLK_ROOT_PRE_DIV4));
