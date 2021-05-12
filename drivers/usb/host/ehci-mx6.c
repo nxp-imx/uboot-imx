@@ -31,6 +31,7 @@
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
 #include <power-domain.h>
 #endif
+#include <clk.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -287,15 +288,34 @@ static int ehci_get_usb_phy(struct udevice *dev)
 		if ((fdt_addr_t)addr == FDT_ADDR_T_NONE)
 			return -EINVAL;
 
+
+		struct udevice __maybe_unused phy_dev;
+		dev_set_ofnode(&phy_dev, offset_to_ofnode(phy_off));
+
 		/* Need to power on the PHY before access it */
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
-		struct udevice phy_dev;
 		struct power_domain pd;
 
-		dev_set_ofnode(&phy_dev, offset_to_ofnode(phy_off));
 		if (!power_domain_get(&phy_dev, &pd)) {
 			if (power_domain_on(&pd))
 				return -EINVAL;
+		}
+#endif
+
+#if CONFIG_IS_ENABLED(CLK)
+		int ret;
+		struct clk phy_clk;
+
+		ret = clk_get_by_index(&phy_dev, 0, &phy_clk);
+		if (ret) {
+			printf("Failed to get phy_clk\n");
+			return ret;
+		}
+
+		ret = clk_enable(&phy_clk);
+		if (ret) {
+			printf("Failed to enable phy_clk\n");
+			return ret;
 		}
 #endif
 		priv->phy_base = addr;
