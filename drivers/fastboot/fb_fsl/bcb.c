@@ -11,6 +11,7 @@
 #include <g_dnl.h>
 #include <mmc.h>
 #include "bcb.h"
+#include "command.h"
 #define ALIGN_BYTES 64 /*armv7 cache line need 64 bytes aligned */
 
 static ulong get_block_size(char *ifname, int dev)
@@ -26,7 +27,7 @@ static ulong get_block_size(char *ifname, int dev)
 	return dev_desc->blksz;
 }
 
-static int do_write(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_write(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	char *ep;
 	struct blk_desc *dev_desc = NULL;

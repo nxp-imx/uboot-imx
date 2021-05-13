@@ -398,6 +398,10 @@ end:
 int trusty_set_attestation_key(const uint8_t *key, uint32_t key_size,
                                keymaster_algorithm_t algorithm)
 {
+    if (!initialized) {
+        trusty_error("Keymaster TIPC client not initialized!\n");
+        return -1;
+    }
     return trusty_send_attestation_data(KM_SET_ATTESTATION_KEY, key, key_size,
                                         algorithm);
 }
@@ -406,7 +410,34 @@ int trusty_append_attestation_cert_chain(const uint8_t *cert,
                                          uint32_t cert_size,
                                          keymaster_algorithm_t algorithm)
 {
+    if (!initialized) {
+        trusty_error("Keymaster TIPC client not initialized!\n");
+        return -1;
+    }
     return trusty_send_attestation_data(KM_APPEND_ATTESTATION_CERT_CHAIN,
+                                        cert, cert_size, algorithm);
+}
+
+int trusty_set_attestation_key_enc(const uint8_t *key, uint32_t key_size,
+                               keymaster_algorithm_t algorithm)
+{
+    if (!initialized) {
+        trusty_error("Keymaster TIPC client not initialized!\n");
+        return -1;
+    }
+    return trusty_send_attestation_data(KM_SET_ATTESTATION_KEY_ENC, key, key_size,
+                                        algorithm);
+}
+
+int trusty_append_attestation_cert_chain_enc(const uint8_t *cert,
+                                         uint32_t cert_size,
+                                         keymaster_algorithm_t algorithm)
+{
+    if (!initialized) {
+        trusty_error("Keymaster TIPC client not initialized!\n");
+        return -1;
+    }
+    return trusty_send_attestation_data(KM_APPEND_ATTESTATION_CERT_CHAIN_ENC,
                                         cert, cert_size, algorithm);
 }
 
@@ -477,6 +508,98 @@ int trusty_atap_read_uuid_str(char **uuid_p)
         trusty_error("keymaster returned wrong uuid size: %d\n", response_size);
         trusty_free(*uuid_p);
         rc = TRUSTY_ERR_GENERIC;
+    }
+    return rc;
+}
+
+int trusty_get_mppubk(uint8_t *mppubk, uint32_t *size)
+{
+    int rc = TRUSTY_ERR_GENERIC;
+    struct km_get_mppubk_resp resp;
+
+    if (!initialized) {
+        trusty_error("Keymaster TIPC client not initialized!\n");
+        return -1;
+    }
+
+    rc = km_send_request(KM_GET_MPPUBK, NULL, 0);
+    if (rc < 0) {
+        trusty_error("failed to send km mppubk request\n", rc);
+        return rc;
+    }
+
+    rc = km_read_raw_response(KM_GET_MPPUBK, &resp, sizeof(resp));
+    if (rc < 0) {
+        trusty_error("%s: failed (%d) to read km mppubk response\n", __func__, rc);
+        return rc;
+    }
+
+    if (resp.data_size != 64) {
+        trusty_error("%s: Wrong mppubk size!\n", __func__);
+        return TRUSTY_ERR_GENERIC;
+    } else {
+        *size = resp.data_size;
+    }
+
+    memcpy(mppubk, resp.data, resp.data_size);
+    return TRUSTY_ERR_NONE;
+}
+
+int trusty_verify_secure_unlock(uint8_t *unlock_credential,
+                                uint32_t credential_size,
+                                uint8_t *serial, uint32_t serial_size)
+{
+    int rc = TRUSTY_ERR_GENERIC;
+    uint8_t *req = NULL;
+    uint32_t req_size = 0;
+
+    if (!initialized) {
+        trusty_error("Keymaster TIPC client not initialized!\n");
+        return -1;
+    }
+
+    struct km_secure_unlock_data secure_unlock_data = {
+        .serial_size = serial_size,
+        .serial_data = serial,
+        .credential_size = credential_size,
+        .credential_data = unlock_credential,
+    };
+
+    rc = km_secure_unlock_data_serialize(&secure_unlock_data,
+                                             &req, &req_size);
+
+    if (rc < 0) {
+        trusty_error("failed (%d) to serialize request\n", rc);
+        goto end;
+    }
+    rc = km_do_tipc(KM_VERIFY_SECURE_UNLOCK, req, req_size, NULL, NULL);
+
+end:
+    if (req) {
+        trusty_free(req);
+    }
+    return rc;
+}
+
+int trusty_append_attestation_id(const char *data, uint32_t data_size)
+{
+    struct km_attestation_id_data attestation_id_data = {
+        .data_size = data_size,
+        .data = (uint8_t *)data,
+    };
+    uint8_t *req = NULL;
+    uint32_t req_size = 0;
+    int rc = km_attestation_id_data_serialize(&attestation_id_data, &req, &req_size);
+
+    if (rc < 0) {
+        trusty_error("failed (%d) to serialize request\n", rc);
+        goto end;
+    }
+    rc = km_do_tipc(KM_APPEND_ATTESTATION_ID, req, req_size, NULL, NULL);
+
+end:
+    if (req) {
+        trusty_free(req);
     }
     return rc;
 }

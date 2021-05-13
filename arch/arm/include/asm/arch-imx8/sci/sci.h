@@ -74,6 +74,7 @@ int sc_pm_set_clock_parent(sc_ipc_t ipc, sc_rsrc_t resource, sc_pm_clk_t clk,
 			   sc_pm_clk_parent_t parent);
 int sc_pm_cpu_start(sc_ipc_t ipc, sc_rsrc_t resource, sc_bool_t enable,
 		    sc_faddr_t address);
+void sc_pm_reboot(sc_ipc_t ipc, sc_pm_reset_type_t type);
 sc_bool_t sc_pm_is_partition_started(sc_ipc_t ipc, sc_rm_pt_t pt);
 int sc_pm_resource_reset(sc_ipc_t ipc, sc_rsrc_t resource);
 
@@ -89,6 +90,7 @@ void sc_misc_build_info(sc_ipc_t ipc, u32 *build, u32 *commit);
 int sc_misc_otp_fuse_read(sc_ipc_t ipc, u32 word, u32 *val);
 int sc_misc_get_temp(sc_ipc_t ipc, sc_rsrc_t resource, sc_misc_temp_t temp,
 		     s16 *celsius, s8 *tenths);
+void sc_misc_get_button_status(sc_ipc_t ipc, sc_bool_t *status);
 
 /* RM API */
 sc_bool_t sc_rm_is_memreg_owned(sc_ipc_t ipc, sc_rm_mr_t mr);

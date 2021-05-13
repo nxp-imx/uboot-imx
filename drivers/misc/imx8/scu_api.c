@@ -481,6 +481,24 @@ int sc_misc_get_temp(sc_ipc_t ipc, sc_rsrc_t resource, sc_misc_temp_t temp,
 	return 0;
 }
 
+void sc_misc_get_button_status(sc_ipc_t ipc, sc_bool_t *status)
+{
+	struct sc_rpc_msg_s msg;
+	struct udevice *dev = gd->arch.scu_dev;
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SIZE(&msg) = 1U;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_MISC);
+	RPC_FUNC(&msg) = (u8)(MISC_FUNC_GET_BUTTON_STATUS);
+
+	misc_call(dev, SC_FALSE, &msg, 1U, &msg, 1U);
+
+	if (status != NULL)
+	{
+		*status = (sc_bool_t)(!!(RPC_U8(&msg, 0U)));
+	}
+}
+
 /* RM */
 sc_bool_t sc_rm_is_memreg_owned(sc_ipc_t ipc, sc_rm_mr_t mr)
 {
@@ -849,6 +867,21 @@ int sc_pm_cpu_start(sc_ipc_t ipc, sc_rsrc_t resource, sc_bool_t enable,
 	}
 
 	return ret;
+}
+
+void sc_pm_reboot(sc_ipc_t ipc, sc_pm_reset_type_t type)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	struct sc_rpc_msg_s msg;
+	int size = sizeof(struct sc_rpc_msg_s);
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = (u8)(SC_RPC_SVC_PM);
+	RPC_FUNC(&msg) = (u8)(PM_FUNC_REBOOT);
+	RPC_U8(&msg, 0U) = (u8)(type);
+	RPC_SIZE(&msg) = 2U;
+
+	misc_call(dev, SC_TRUE, &msg, size, &msg, size);
 }
 
 int sc_pm_get_resource_power_mode(sc_ipc_t ipc, sc_rsrc_t resource,

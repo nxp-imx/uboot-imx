@@ -105,6 +105,7 @@ int arch_cpu_init_dm(void)
 #if defined(CONFIG_ARCH_MISC_INIT)
 int arch_misc_init(void)
 {
+#if !defined(CONFIG_ANDROID_SUPPORT) && !defined(CONFIG_ANDROID_AUTO_SUPPORT)
 	struct udevice *dev;
 	int node, ret;
 
@@ -120,6 +121,7 @@ int arch_misc_init(void)
 		return ret;
 	}
 	device_probe(dev);
+#endif
 
 	return 0;
 }

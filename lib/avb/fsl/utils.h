@@ -25,8 +25,8 @@ struct margin_pos {
 };
 typedef struct margin_pos margin_pos_t;
 
-int get_margin_pos(uint64_t part_start, uint64_t part_end, unsigned long blksz,
-		   margin_pos_t *margin, int64_t offset, size_t num_bytes,
+int get_margin_pos(long part_start, long part_end, long blksz,
+		   margin_pos_t *margin, long offset, size_t num_bytes,
 		   bool allow_partial);
 
 int read_from_partition_in_bytes(struct blk_desc *fs_dev_desc,

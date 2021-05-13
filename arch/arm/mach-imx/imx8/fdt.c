@@ -155,7 +155,7 @@ static int fdt_edma_get_channel_id(u32 *regs, int index, struct edma_ch_map *edm
 	return ch_id;
 }
 
-static void update_fdt_edma_nodes(void *blob)
+static __maybe_unused void update_fdt_edma_nodes(void *blob)
 {
 	struct edma_ch_map edma_qm[] = {
 		{ SC_R_DMA_0_CH0, 0x5a200000, 32, "/dma-controller@5a1f0000"},
@@ -384,7 +384,7 @@ static void update_fdt_with_owned_resources_legacy(void *blob)
 	}
 }
 
-static void update_fdt_with_owned_resources(void *blob)
+static __maybe_unused void update_fdt_with_owned_resources(void *blob)
 {
 	/*
 	 * Traverses the fdt nodes, check its power domain and use
@@ -588,7 +588,9 @@ int ft_system_setup(void *blob, struct bd_info *bd)
 			       fdt_strerror(off));
 	}
 
+#ifndef CONFIG_SKIP_RESOURCE_CHECKING
 	update_fdt_with_owned_resources(blob);
+#endif
 
 	update_fdt_edma_nodes(blob);
 	if (is_imx8qm()) {

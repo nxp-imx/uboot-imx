@@ -62,7 +62,12 @@ enum keymaster_command {
     KM_ATAP_SET_CA_RESPONSE_UPDATE     = (0x6000 << KEYMASTER_REQ_SHIFT),
     KM_ATAP_SET_CA_RESPONSE_FINISH     = (0x7000 << KEYMASTER_REQ_SHIFT),
     KM_ATAP_READ_UUID                  = (0x8000 << KEYMASTER_REQ_SHIFT),
-    KM_SET_PRODUCT_ID                  = (0x9000 << KEYMASTER_REQ_SHIFT)
+    KM_SET_PRODUCT_ID                  = (0x9000 << KEYMASTER_REQ_SHIFT),
+    KM_GET_MPPUBK                      = (0xb000 << KEYMASTER_REQ_SHIFT),
+    KM_APPEND_ATTESTATION_CERT_CHAIN_ENC = (0xc000 << KEYMASTER_REQ_SHIFT),
+    KM_SET_ATTESTATION_KEY_ENC         = (0xd000 << KEYMASTER_REQ_SHIFT),
+    KM_VERIFY_SECURE_UNLOCK            = (0xe000 << KEYMASTER_REQ_SHIFT),
+    KM_APPEND_ATTESTATION_ID           = (0xf000 << KEYMASTER_REQ_SHIFT)
 };
 
 typedef enum {
@@ -212,6 +217,29 @@ struct km_raw_buffer_resp {
 } TRUSTY_ATTR_PACKED;
 
 /**
+ * km_get_mppubk_resp - response format for mppubk buffer
+ */
+struct km_get_mppubk_resp {
+    int32_t error;
+    uint32_t data_size;
+    uint8_t data[64];
+} TRUSTY_ATTR_PACKED;
+
+/**
+ * km_secure_unlock_data - represents the secure unlock data
+ *
+ * @serial_size: size of |serial_data|
+ * @serial_data: serial_data (serial number)
+ * @credential_size: size of |credential_data|
+ * @credential_data: credential data
+ */
+struct km_secure_unlock_data {
+    uint32_t serial_size;
+    const uint8_t *serial_data;
+    uint32_t credential_size;
+    const uint8_t *credential_data;
+} TRUSTY_ATTR_PACKED;
+/**
  * km_set_ca_response_begin_req - starts the process to set the ATAP CA Response
  *
  * @ca_response_size: total size of the CA Response message
@@ -260,6 +288,10 @@ struct km_attestation_data {
     const uint8_t *data;
 } TRUSTY_ATTR_PACKED;
 
+struct km_attestation_id_data {
+    uint32_t data_size;
+    const uint8_t *data;
+} TRUSTY_ATTR_PACKED;
 /**
  * km_raw_buffer - represents a single raw buffer
  *

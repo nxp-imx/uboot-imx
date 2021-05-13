@@ -74,4 +74,19 @@ int hwcrypto_gen_blob(uint32_t plain_pa,
  * @len: size of required rng.
  * */
 int hwcrypto_gen_rng(uint32_t buf, uint32_t len);
+
+/* Send request to secure side to generate bkek with caam.
+ * Returns one of trusty_err.
+ *
+ * @buf: physical start address of the output rng buf.
+ * @len: size of required rng.
+ * */
+int hwcrypto_gen_bkek(uint32_t buf, uint32_t len);
+
+/* Send request to secure side to lock boot state, so some
+ * hwcrypto commands can't be used outside of bootloader.
+ * Returns one of trusty_err.
+ * */
+int hwcrypto_lock_boot_state(void);
+
 #endif /* TRUSTY_HWCRYPTO_H_ */

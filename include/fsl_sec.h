@@ -377,6 +377,39 @@ int sec_init_idx(uint8_t);
 int sec_init(void);
 
 u8 caam_get_era(void);
+
+/**
+ * blob_decap() - Decapsulate the data from a blob
+ * @key_mod:    - Key modifier address
+ * @src:        - Source address (blob)
+ * @dst:        - Destination address (data)
+ * @len:        - Size of decapsulated data
+ *
+ * Note: Start and end of the key_mod, src and dst buffers have to be aligned to
+ * the cache line size (ARCH_DMA_MINALIGN) for the CAAM operation to succeed.
+ *
+ * Returns zero on success, negative on error.
+ */
+int blob_decap(u8 *key_mod, u8 *src, u8 *dst, u32 len);
+
+/**
+ * blob_encap() - Encapsulate the data as a blob
+ * @key_mod:    - Key modifier address
+ * @src:        - Source address (data)
+ * @dst:        - Destination address (blob)
+ * @len:        - Size of data to be encapsulated
+ *
+ * Note: Start and end of the key_mod, src and dst buffers have to be aligned to
+ * the cache line size (ARCH_DMA_MINALIGN) for the CAAM operation to succeed.
+ *
+ * Returns zero on success, negative on error.
+ */
+int blob_encap(u8 *key_mod, u8 *src, u8 *dst, u32 len);
+
+int derive_blob_kek(u8 *bkek_buf, u8 *key_mod, u32 key_sz);
+
+int hwrng_generate(u8 *dst, u32 len);
+
 #endif
 
 #endif /* __FSL_SEC_H */

@@ -27,7 +27,10 @@
 #include <trusty/rpmb.h>
 #include <trusty/trusty_ipc.h>
 #include <trusty/util.h>
+#include <memalign.h>
 #include "common.h"
+#include <cpu_func.h>
+#include <hang.h>
 
 #define LOCAL_LOG 0
 #define CAAM_KB_HEADER_LEN 48
@@ -77,10 +80,9 @@ static int hwcrypto_read_response(struct hwcrypto_message *msg, uint32_t cmd, vo
  * @resp: the response buffer
  * @resp_size_p: pointer to the size of the response buffer. changed to the
                  actual size of the response read from the secure side
- * @handle_rpmb: true if the request is expected to invoke RPMB callbacks
  */
 static int hwcrypto_do_tipc(uint32_t cmd, void *req, uint32_t req_size, void *resp,
-                       uint32_t *resp_size_p, bool handle_rpmb)
+                       uint32_t *resp_size_p)
 {
     int rc;
     struct hwcrypto_message msg = { .cmd = cmd };
@@ -94,16 +96,6 @@ static int hwcrypto_do_tipc(uint32_t cmd, void *req, uint32_t req_size, void *re
     if (rc < 0) {
         trusty_error("%s: failed (%d) to send hwcrypto request\n", __func__, rc);
         return rc;
-    }
-
-    if (handle_rpmb) {
-        /* handle any incoming RPMB requests */
-        rc = rpmb_storage_proxy_poll();
-        if (rc < 0) {
-            trusty_error("%s: failed (%d) to get RPMB requests\n", __func__,
-                         rc);
-            return rc;
-        }
     }
 
     uint32_t resp_size = resp_size_p ? *resp_size_p : 0;
@@ -185,7 +177,13 @@ int hwcrypto_hash(uint32_t in_addr, uint32_t in_len, uint32_t out_addr,
     invalidate_dcache_range(start, end);
 
     int rc = hwcrypto_do_tipc(HWCRYPTO_HASH, (void*)&req,
-                              sizeof(req), NULL, 0, false);
+                              sizeof(req), NULL, 0);
+
+    /* invalidate the dcache again before read to avoid coherency
+     * problem caused by speculative memory access by the CPU.
+     */
+    invalidate_dcache_range(start, end);
+
     return rc;
 }
 
@@ -215,7 +213,12 @@ int hwcrypto_gen_blob(uint32_t plain_pa,
     invalidate_dcache_range(start, end);
 
     int rc = hwcrypto_do_tipc(HWCRYPTO_ENCAP_BLOB, (void*)&req,
-                              sizeof(req), NULL, 0, false);
+                              sizeof(req), NULL, 0);
+
+    /* invalidate the dcache again before read to avoid coherency
+     * problem caused by speculative memory access by the CPU.
+     */
+    invalidate_dcache_range(start, end);
     return rc;
 }
 
@@ -237,6 +240,43 @@ int hwcrypto_gen_rng(uint32_t buf, uint32_t len)
     invalidate_dcache_range(start, end);
 
     int rc = hwcrypto_do_tipc(HWCRYPTO_GEN_RNG, (void*)&req,
-                              sizeof(req), NULL, 0, false);
+                              sizeof(req), NULL, 0);
+
+    /* invalidate the dcache again before read to avoid coherency
+     * problem caused by speculative memory access by the CPU.
+     */
+    invalidate_dcache_range(start, end);
     return rc;
+}
+
+int hwcrypto_gen_bkek(uint32_t buf, uint32_t len)
+{
+    hwcrypto_bkek_msg req;
+    unsigned long start, end;
+
+    /* check the address */
+    if (buf == 0)
+        return TRUSTY_ERR_INVALID_ARGS;
+    /* fill the request buffer */
+    req.buf = buf;
+    req.len = len;
+
+    /* invalidate dcache for output buffer */
+    start = (unsigned long)buf & ~(ARCH_DMA_MINALIGN - 1);
+    end   = ALIGN((unsigned long)buf + len, ARCH_DMA_MINALIGN);
+    invalidate_dcache_range(start, end);
+
+    int rc = hwcrypto_do_tipc(HWCRYPTO_GEN_BKEK, (void*)&req,
+                              sizeof(req), NULL, 0);
+
+    /* invalidate the dcache again before read to avoid coherency
+     * problem caused by speculative memory access by the CPU.
+     */
+    invalidate_dcache_range(start, end);
+    return rc;
+}
+
+int hwcrypto_lock_boot_state(void)
+{
+    return hwcrypto_do_tipc(HWCRYPTO_LOCK_BOOT_STATE, NULL, 0, NULL, 0);
 }

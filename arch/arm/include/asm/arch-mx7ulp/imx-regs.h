@@ -966,6 +966,8 @@
 
 #define SNVS_LPCR_DPEN				(0x20)
 #define SNVS_LPCR_SRTC_ENV			(0x1)
+#define SNVS_BASE_REVB				(0x41070000)
+#define SNVS_HPSR_REVB				(SNVS_BASE_REVB + 0x14)
 
 #define SRC_BASE_ADDR			CMC1_RBASE
 #define IRAM_BASE_ADDR			OCRAM_0_BASE

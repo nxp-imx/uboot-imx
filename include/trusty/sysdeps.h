@@ -31,6 +31,7 @@
  */
 #include <common.h>
 #include <compiler.h>
+#include <irq_func.h>
 
 /*
  * These attribute macros may need to be adjusted if not using gcc or clang.

@@ -67,9 +67,11 @@ void spl_board_init(void)
 	imx8_iomux_setup_multiple_pads(usdhc2_sd_pwr, ARRAY_SIZE(usdhc2_sd_pwr));
 	gpio_direction_output(USDHC2_SD_PWR, 0);
 
+#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	preloader_console_init();
 
 	puts("Normal Boot\n");
+#endif
 }
 
 void spl_board_prepare_for_boot(void)

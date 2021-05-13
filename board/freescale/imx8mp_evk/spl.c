@@ -38,7 +38,28 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int spl_board_boot_device(enum boot_device boot_dev_spl)
 {
+#ifdef CONFIG_SPL_BOOTROM_SUPPORT
 	return BOOT_DEVICE_BOOTROM;
+#else
+	switch (boot_dev_spl) {
+	case SD1_BOOT:
+	case MMC1_BOOT:
+	case SD2_BOOT:
+	case MMC2_BOOT:
+		return BOOT_DEVICE_MMC1;
+	case SD3_BOOT:
+	case MMC3_BOOT:
+		return BOOT_DEVICE_MMC2;
+	case QSPI_BOOT:
+		return BOOT_DEVICE_NOR;
+	case NAND_BOOT:
+		return BOOT_DEVICE_NAND;
+	case USB_BOOT:
+		return BOOT_DEVICE_BOARD;
+	default:
+		return BOOT_DEVICE_NONE;
+	}
+#endif
 }
 
 void spl_dram_init(void)
@@ -70,7 +91,12 @@ int power_init_board(void)
 	 * Enable DVS control through PMIC_STBY_REQ and
 	 * set B1_ENMODE=1 (ON by PMIC_ON_REQ=H)
 	 */
+#ifdef CONFIG_IMX8M_VDD_SOC_850MV
+	/* set DVS0 to 0.85v for special case*/
+	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x14);
+#else
 	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x1C);
+#endif
 	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x14);
 	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
 

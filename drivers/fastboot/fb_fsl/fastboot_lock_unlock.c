@@ -5,6 +5,7 @@
 #include <common.h>
 #include <mapmem.h>
 #include <linux/types.h>
+#include <linux/delay.h>
 #include <part.h>
 #include <mmc.h>
 #include <ext_common.h>
@@ -19,14 +20,26 @@
 #include <asm/mach-imx/hab.h>
 #endif
 
+#include <fsl_avb.h>
+
 #ifdef FASTBOOT_ENCRYPT_LOCK
 
 #include <hash.h>
-#include <fsl_caam.h>
+#include <fsl_sec.h>
 
 //Encrypted data is 80bytes length.
 #define ENDATA_LEN 80
 
+#endif
+
+#ifdef CONFIG_AVB_WARNING_LOGO
+#include "lcd.h"
+#include "video.h"
+#include "dm/uclass.h"
+#include "fsl_avb_logo.h"
+#include "video_link.h"
+#include "video_console.h"
+#include "video_font_data.h"
 #endif
 
 int fastboot_flash_find_index(const char *name);
@@ -118,6 +131,10 @@ static inline int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
 }
 #endif
 #else
+static u8 skeymod[] = {
+	0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
+	0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
+};
 
 static int sha1sum(unsigned char* data, int len, unsigned char* output) {
 	struct hash_algo *algo;
@@ -140,14 +157,13 @@ static int generate_salt(unsigned char* salt) {
 
 }
 
-static FbLockState decrypt_lock_store(unsigned char *bdata) {
+static __maybe_unused FbLockState decrypt_lock_store(unsigned char *bdata) {
 	int p = 0, ret;
 	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, plain_data, ENDATA_LEN);
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, keymod, 16);
 
-	caam_open();
-	ret = caam_decap_blob((uint32_t)(ulong)plain_data,
-			      (uint32_t)(ulong)bdata + ROUND(ENDATA_LEN, ARCH_DMA_MINALIGN),
-			      ENDATA_LEN);
+	memcpy(keymod, skeymod, sizeof(skeymod));
+	ret = blob_decap(keymod, plain_data, bdata + ROUND(ENDATA_LEN, ARCH_DMA_MINALIGN), ENDATA_LEN);
 	if (ret != 0) {
 		printf("Error during blob decap operation: 0x%x\n",ret);
 		return FASTBOOT_LOCK_ERROR;
@@ -188,7 +204,8 @@ static FbLockState decrypt_lock_store(unsigned char *bdata) {
 		return plain_data[ENDATA_LEN-1];
 }
 
-static int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
+static __maybe_unused int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, keymod, 16);
 	unsigned int p = 0;
 	int ret;
 	int salt_len = generate_salt(bdata);
@@ -204,12 +221,10 @@ static int encrypt_lock_store(FbLockState lock, unsigned char* bdata) {
 	//Set lock value
 	*(bdata + p) = lock;
 
-	caam_open();
-	ret = caam_gen_blob((uint32_t)(ulong)bdata,
-			(uint32_t)(ulong)bdata + ROUND(ENDATA_LEN, ARCH_DMA_MINALIGN),
-			ENDATA_LEN);
+	memcpy(keymod, skeymod, sizeof(skeymod));
+	ret = blob_encap(keymod, bdata, bdata + ROUND(ENDATA_LEN, ARCH_DMA_MINALIGN), ENDATA_LEN);
 	if (ret != 0) {
-		printf("error in caam_gen_blob:0x%x\n", ret);
+		printf("error in blob_encap:0x%x\n", ret);
 		return -1;
 	}
 
@@ -449,11 +464,27 @@ fail:
 
 }
 FbLockEnableResult fastboot_lock_enable() {
+#ifdef CONFIG_DUAL_BOOTLOADER
+	/* Always allow unlock device in spl recovery mode. */
+	if (is_spl_recovery())
+		return FASTBOOT_UL_ENABLE;
+#endif
+
+#if defined(CONFIG_IMX_TRUSTY_OS) || defined(CONFIG_TRUSTY_UNLOCK_PERMISSION)
+	int ret;
+	uint8_t oem_device_unlock;
+
+	ret = trusty_read_oem_unlock_device_permission(&oem_device_unlock);
+	if (ret < 0)
+		return FASTBOOT_UL_ERROR;
+	else
+		return oem_device_unlock;
+#else /* CONFIG_IMX_TRUSTY_OS */
+	FbLockEnableResult ret;
 	struct blk_desc *fs_dev_desc;
 	struct disk_partition fs_partition;
 	unsigned char *bdata;
 	int mmc_id;
-	FbLockEnableResult ret;
 
 	bdata = (unsigned char *)memalign(ALIGN_BYTES, SECTOR_SIZE);
 	if (bdata == NULL)
@@ -494,6 +525,7 @@ FbLockEnableResult fastboot_lock_enable() {
 fail:
 	free(bdata);
 	return ret;
+#endif /* CONFIG_IMX_TRUSTY_OS */
 
 }
 #endif
@@ -530,6 +562,62 @@ int display_lock(FbLockState lock, int verify) {
 	return -1;
 
 }
+
+#ifdef CONFIG_AVB_WARNING_LOGO
+int display_unlock_warning(void) {
+	int ret;
+	struct udevice *dev;
+
+	ret = uclass_first_device_err(UCLASS_VIDEO, &dev);
+	if (!ret) {
+		/* clear screen first */
+		video_clear(dev);
+		/* Draw the orange warning bmp logo */
+		ret = bmp_display((ulong)orange_warning_bmp_bitmap,
+					CONFIG_AVB_WARNING_LOGO_COLS, CONFIG_AVB_WARNING_LOGO_ROWS);
+
+		/* Show warning text. */
+		if (uclass_first_device_err(UCLASS_VIDEO_CONSOLE, &dev)) {
+			printf("no text console device found!\n");
+			return -1;
+		}
+		/* Adjust the cursor postion, the (x, y) are hard-coded here. */
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 6);
+		vidconsole_put_string(dev, "The bootloader is unlocked and software");
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 7);
+		vidconsole_put_string(dev, "integrity cannot be guaranteed. Any data");
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 8);
+		vidconsole_put_string(dev, "stored on the device may be available to");
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 9);
+		vidconsole_put_string(dev, "attackers. Do not store any sensitive data");
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 10);
+		vidconsole_put_string(dev, "on the device.");
+		/* Jump one line to show the link */
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 13);
+		vidconsole_put_string(dev, "Visit this link on another device:");
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 14);
+		vidconsole_put_string(dev, "g.co/ABH");
+
+		vidconsole_position_cursor(dev, CONFIG_AVB_WARNING_LOGO_COLS/VIDEO_FONT_WIDTH,
+						CONFIG_AVB_WARNING_LOGO_ROWS/VIDEO_FONT_HEIGHT + 20);
+		vidconsole_put_string(dev, "PRESS POWER BUTTON TO CONTINUE...");
+		/* sync frame buffer */
+		video_sync_all();
+
+		return 0;
+	} else {
+		printf("no video device found!\n");
+		return -1;
+	}
+}
+#endif
 
 int fastboot_wipe_data_partition(void)
 {
