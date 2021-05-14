@@ -217,7 +217,7 @@ static int _fastboot_parts_load_from_ptable(void)
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
 	strcpy(ptable[PTN_MCU_OS_INDEX].name, FASTBOOT_MCU_FIRMWARE_PARTITION);
 	ptable[PTN_MCU_OS_INDEX].start = ANDROID_MCU_FIRMWARE_START / dev_desc->blksz;
-	ptable[PTN_MCU_OS_INDEX].length = ANDROID_MCU_FIRMWARE_SIZE / dev_desc->blksz;
+	ptable[PTN_MCU_OS_INDEX].length = ANDROID_MCU_OS_PARTITION_SIZE / dev_desc->blksz;
 	ptable[PTN_MCU_OS_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
 	ptable[PTN_MCU_OS_INDEX].partition_id = user_partition;
 	strcpy(ptable[PTN_MCU_OS_INDEX].fstype, "raw");

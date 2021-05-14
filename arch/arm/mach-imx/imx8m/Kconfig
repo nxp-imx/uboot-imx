@@ -46,6 +46,14 @@ config IMX_UNIQUE_ID
 	depends on IMX8MQ && IMX_HAB && !SECURE_STICKY_BITS_LOCKUP
 	default 0x0
 
+config IMX8M_MCU_RDC_START_CONFIG_ADDR
+	hex "Start address of mcu rdc config when mcu starts"
+	default 0x186000
+
+config IMX8M_MCU_RDC_STOP_CONFIG_ADDR
+	hex "Start address of mcu rdc config when mcu stops"
+	default 0x187000
+
 choice
 	prompt "NXP i.MX8M board select"
 	optional

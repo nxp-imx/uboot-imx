@@ -35,7 +35,7 @@ struct spl_fit_info {
 	int conf_node;		/* FDT offset to selected configuration node */
 };
 
-__weak void board_spl_fit_post_load(const void *fit)
+__weak void board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
 {
 }
 
@@ -866,8 +866,7 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 
 	spl_image->flags |= SPL_FIT_FOUND;
 
-	if (IS_ENABLED(CONFIG_IMX_HAB) && !(spl_image->flags & SPL_FIT_BYPASS_POST_LOAD))
-		board_spl_fit_post_load(ctx.fit);
+	board_spl_fit_post_load(ctx.fit, spl_image);
 
 	return 0;
 }

@@ -319,16 +319,6 @@ ulong board_spl_fit_size_align(ulong size)
 	return size;
 }
 
-void board_spl_fit_post_load(const void *fit)
-{
-	u32 offset = ALIGN(fdt_totalsize(fit), 0x1000);
-
-	if (imx_hab_authenticate_image((uintptr_t)fit,
-				       offset + IVT_SIZE + CSF_PAD_SIZE,
-				       offset)) {
-		panic("spl: ERROR:  image authentication unsuccessful\n");
-	}
-}
 #endif
 
 void *board_spl_fit_buffer_addr(ulong fit_size, int sectors, int bl_len)
@@ -388,6 +378,83 @@ void *spl_load_simple_fit_fix_load(const void *fit)
 	memcpy((void *)new, fit, size);
 
 	return (void *)new;
+}
+
+#if defined(CONFIG_IMX8MP) || defined(CONFIG_IMX8MN)
+int board_handle_rdc_config(void *fdt_addr, const char *config_name, void *dst_addr)
+{
+	int node = -1, size = 0, ret = 0;
+	uint32_t *data = NULL;
+	const struct fdt_property *prop;
+
+	node = fdt_node_offset_by_compatible(fdt_addr, -1, "imx8m,mcu_rdc");
+	if (node < 0) {
+		printf("Failed to find node!, err: %d!\n", node);
+		ret = -1;
+		goto exit;
+	}
+
+	/*
+	 * Before MCU core starts we should set the rdc config for it,
+	 * then restore the rdc config after it stops.
+	 */
+	prop = fdt_getprop(fdt_addr, node, config_name, &size);
+	if (!prop) {
+		printf("Failed to find property %s!\n", config_name);
+		ret = -1;
+		goto exit;
+	}
+	if (!size || size % (5 * sizeof(uint32_t))) {
+		printf("Config size is wrong! size:%d\n", size);
+		ret = -1;
+		goto exit;
+	}
+	data = malloc(size);
+	if (fdtdec_get_int_array(fdt_addr, node, config_name,
+				 data, size/sizeof(int))) {
+		printf("Failed to parse rdc config!\n");
+		ret = -1;
+		goto exit;
+	} else {
+		/* copy the rdc config */
+		memcpy(dst_addr, data, size);
+		ret = 0;
+	}
+
+exit:
+	if (data)
+		free(data);
+
+	/* Invalidate the buffer if no valid config found. */
+	if (ret < 0)
+		memset(dst_addr, 0, sizeof(uint32_t));
+
+	return ret;
+}
+#endif
+
+void board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
+{
+	if (IS_ENABLED(CONFIG_IMX_HAB) && !(spl_image->flags & SPL_FIT_BYPASS_POST_LOAD)) {
+		u32 offset = ALIGN(fdt_totalsize(fit), 0x1000);
+
+		if (imx_hab_authenticate_image((uintptr_t)fit,
+					       offset + IVT_SIZE + CSF_PAD_SIZE,
+					       offset)) {
+			panic("spl: ERROR:  image authentication unsuccessful\n");
+		}
+	}
+#if defined(CONFIG_IMX8MP) || defined(CONFIG_IMX8MN)
+#define MCU_RDC_MAGIC "mcu_rdc"
+	if (!(spl_image->flags & SPL_FIT_BYPASS_POST_LOAD)) {
+		memcpy((void *)CONFIG_IMX8M_MCU_RDC_START_CONFIG_ADDR, MCU_RDC_MAGIC, ALIGN(strlen(MCU_RDC_MAGIC), 4));
+		memcpy((void *)CONFIG_IMX8M_MCU_RDC_STOP_CONFIG_ADDR, MCU_RDC_MAGIC, ALIGN(strlen(MCU_RDC_MAGIC), 4));
+		board_handle_rdc_config(spl_image->fdt_addr, "start-config",
+					(void *)(CONFIG_IMX8M_MCU_RDC_START_CONFIG_ADDR + ALIGN(strlen(MCU_RDC_MAGIC), 4)));
+		board_handle_rdc_config(spl_image->fdt_addr, "stop-config",
+					(void *)(CONFIG_IMX8M_MCU_RDC_STOP_CONFIG_ADDR + ALIGN(strlen(MCU_RDC_MAGIC), 4)));
+	}
+#endif
 }
 
 #ifdef CONFIG_IMX_TRUSTY_OS
