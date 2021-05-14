@@ -191,8 +191,8 @@ static int do_bootmcu(struct cmd_tbl *cmdtp, int flag, int argc, char * const ar
 	char command[32];
 
 	ret = read_from_partition_multi(FASTBOOT_MCU_FIRMWARE_PARTITION,
-			0, ANDROID_MCU_FIRMWARE_SIZE, (void *)mcu_base_addr, &out_num_read);
-	if ((ret != 0) || (out_num_read != ANDROID_MCU_FIRMWARE_SIZE)) {
+			0, ANDROID_MCU_OS_PARTITION_SIZE, (void *)mcu_base_addr, &out_num_read);
+	if ((ret != 0) || (out_num_read != ANDROID_MCU_OS_PARTITION_SIZE)) {
 		printf("Read MCU images failed!\n");
 		return 1;
 	} else {
