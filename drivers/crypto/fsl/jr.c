@@ -25,6 +25,7 @@
 #include <dm/lists.h>
 #include <dm/root.h>
 #include <dm/device-internal.h>
+#include <power-domain.h>
 
 #define CIRC_CNT(head, tail, size)	(((head) - (tail)) & (size - 1))
 #define CIRC_SPACE(head, tail, size)	CIRC_CNT((tail), (head) + 1, (size))
@@ -778,6 +779,25 @@ int sec_init(void)
 	return sec_init_idx(0);
 }
 
+#ifdef CONFIG_ARCH_IMX8
+static int jr_power_on(int subnode)
+{
+#if CONFIG_IS_ENABLED(POWER_DOMAIN)
+	struct udevice __maybe_unused jr_dev;
+	struct power_domain pd;
+
+	dev_set_ofnode(&jr_dev, offset_to_ofnode(subnode));
+
+	/* Need to power on Job Ring before access it */
+	if (!power_domain_get(&jr_dev, &pd)) {
+		if (power_domain_on(&pd))
+			return -EINVAL;
+	}
+#endif
+	return 0;
+}
+#endif
+
 #if CONFIG_IS_ENABLED(DM)
 static int caam_jr_probe(struct udevice *dev)
 {
@@ -810,6 +830,11 @@ static int caam_jr_probe(struct udevice *dev)
 				jr_node = jr_node >> 4;
 			}
 			caam->jrid = jr_node - 1;
+#ifdef CONFIG_ARCH_IMX8
+			ret = jr_power_on(subnode);
+			if (ret)
+				return ret;
+#endif
 			break;
 		}
 	}

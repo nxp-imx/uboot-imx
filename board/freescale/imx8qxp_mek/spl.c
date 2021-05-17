@@ -49,12 +49,7 @@ void spl_board_init(void)
 	}
 	device_probe(dev);
 
-	/* Request seco for JR2 access.JR0, JR1 will be assigned to seco for imx8 */
-	sc_pm_set_resource_power_mode(-1, SC_R_CAAM_JR2, SC_PM_PW_MODE_ON);
-	sc_pm_set_resource_power_mode(-1, SC_R_CAAM_JR2_OUT, SC_PM_PW_MODE_ON);
-
 	uclass_find_first_device(UCLASS_MISC, &dev);
-
 	for (; dev; uclass_find_next_device(&dev)) {
 		if (device_probe(dev))
 			continue;
