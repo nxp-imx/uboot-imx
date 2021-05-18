@@ -11,6 +11,7 @@ config USB_FUNCTION_FASTBOOT
 	default y if ARCH_SUNXI && USB_MUSB_GADGET
 	select FASTBOOT
 	select USB_GADGET_DOWNLOAD
+	select USB_GADGET_OS_DESCRIPTORS
 	help
 	  This enables the USB part of the fastboot gadget.
 
