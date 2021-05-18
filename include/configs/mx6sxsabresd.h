@@ -248,5 +248,6 @@
 
 #define CONFIG_SYS_FSL_USDHC_NUM	3
 #define CONFIG_MMCROOT			"/dev/mmcblk3p2"  /* USDHC4 */
+#define CONFIG_SYS_MMC_ENV_DEV		3  /*USDHC4*/
 
 #endif				/* __CONFIG_H */
