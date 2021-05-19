@@ -1456,7 +1456,11 @@ usb_modify_speed:
 
 	delete_u_boot_nodes(blob);
 
+#if defined(CONFIG_ANDROID_SUPPORT) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
+	return 0;
+#else
 	return ft_add_optee_node(blob, bd);
+#endif
 }
 #endif
 
