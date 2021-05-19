@@ -27,6 +27,7 @@
 #include <trusty/avb.h>
 #include <trusty/keymaster.h>
 #include <trusty/sysdeps.h>
+#include <trusty/hwcrypto.h>
 
 /*
  * Initialize TIPC library

@@ -664,6 +664,22 @@ static void flashing(char *cmd, char *response)
 			printf("Serial number generated!\n");
 			strcpy(response, "OKAY");
 		}
+	} else if (endswith(cmd, FASTBOOT_WV_PROVISION)) {
+		if (hwcrypto_provision_wv_key(fastboot_buf_addr, fastboot_bytes_received)) {
+			printf("ERROR provision widevine keybox failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			printf("Provision widevine keybox successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	} else if (endswith(cmd, FASTBOOT_WV_PROVISION_ENC)) {
+		if (hwcrypto_provision_wv_key_enc(fastboot_buf_addr, fastboot_bytes_received)) {
+			printf("ERROR provision widevine keybox failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			printf("Provision widevine keybox successfully!\n");
+			strcpy(response, "OKAY");
+		}
 	}
 #ifdef CONFIG_ID_ATTESTATION
 	else if (endswith(cmd, FASTBOOT_APPEND_ATTESTATION_ID)) {
