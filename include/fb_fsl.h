@@ -105,6 +105,8 @@
 #define FASTBOOT_GET_MPPUBK  "get-mppubk"
 #define FASTBOOT_GET_SERIAL_NUMBER  "get-serial-number"
 #define FASTBOOT_APPEND_ATTESTATION_ID "append-device-id"
+#define FASTBOOT_WV_PROVISION	"provision-wv-keybox"
+#define FASTBOOT_WV_PROVISION_ENC	"provision-wv-keybox-enc"
 #endif
 
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
