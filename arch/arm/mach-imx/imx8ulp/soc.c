@@ -22,6 +22,7 @@
 #include <dm/device.h>
 #include <dm/uclass-internal.h>
 #include <asm/arch/s400_api.h>
+#include <fuse.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -509,17 +510,30 @@ void lpav_configure(void)
 int arch_cpu_init(void)
 {
 	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
+		u32 val = 0;
+		int ret;
+		bool rdc_en = true; /* Default assume DBD_EN is set */
+
 		/* Disable wdog */
 		init_wdog();
 
+		/* Read DBD_EN fuse */
+		ret = fuse_read(8, 1, &val);
+		if (!ret)
+			rdc_en = !!(val & 0x4000);
+
 		if (get_boot_mode() == SINGLE_BOOT) {
-			release_rdc(RDC_TRDC);
+			if (rdc_en)
+				release_rdc(RDC_TRDC);
+
 			trdc_set_access();
 			lpav_configure();
 		}
 
-		/* release xrdc, then allow A35 to write SRAM2 */
-		release_rdc(RDC_XRDC);
+		/* Release xrdc, then allow A35 to write SRAM2 */
+		if (rdc_en)
+			release_rdc(RDC_XRDC);
+
 		xrdc_mrc_region_set_access(2, CONFIG_SPL_TEXT_BASE, 0xE00);
 
 		clock_init();
