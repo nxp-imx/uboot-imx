@@ -766,7 +766,7 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 			goto fail;
 		}
 
-		kernel_image_size = kernel_size((void *)((ulong)hdr + hdr->page_size));
+		kernel_image_size = kernel_size((void *)(long)hdr->kernel_addr);
 #else /* CONFIG_ARCH_IMX8 || CONFIG_ARCH_IMX8M */
 		/* copy kernel image and boot header to hdr->kernel_addr - hdr->page_size */
 		memcpy((void *)(ulong)(hdr->kernel_addr - hdr->page_size), (void *)hdr,
