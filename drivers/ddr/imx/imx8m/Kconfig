@@ -44,4 +44,7 @@ config IMX8M_VDD_SOC_850MV
 config IMX8M_LPDDR4_FREQ0_2400MTS
 	bool "imx8m PDDR4 freq0 change from 4000MTS to 2400MTS"
 
+config IMX8M_LPDDR4_FREQ0_3200MTS
+	bool "imx8m LPDDR4 freq0 change from 4000MTS to 3200MTS"
+
 endmenu
