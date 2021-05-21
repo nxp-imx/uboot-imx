@@ -31,6 +31,7 @@
 #include "common.h"
 #include <cpu_func.h>
 #include <hang.h>
+#include <trusty/keymaster_serializable.h>
 
 #define LOCAL_LOG 0
 #define CAAM_KB_HEADER_LEN 48
@@ -279,4 +280,50 @@ int hwcrypto_gen_bkek(uint32_t buf, uint32_t len)
 int hwcrypto_lock_boot_state(void)
 {
     return hwcrypto_do_tipc(HWCRYPTO_LOCK_BOOT_STATE, NULL, 0, NULL, 0);
+}
+
+int hwcrypto_provision_wv_key(const char *data, uint32_t data_size)
+{
+    uint8_t *req = NULL, *tmp;
+    /* sanity check */
+    if (!data || !data_size)
+        return TRUSTY_ERR_INVALID_ARGS;
+
+    /* serialize the request */
+    req = trusty_calloc(data_size + sizeof(data_size), 1);
+    if (!req) {
+        return TRUSTY_ERR_NO_MEMORY;
+    }
+    tmp = append_sized_buf_to_buf(req, (uint8_t *)data, data_size);
+
+    int rc = hwcrypto_do_tipc(HWCRYPTO_PROVISION_WV_KEY, (void*)req,
+                              data_size + sizeof(data_size), NULL, 0);
+
+    if (req)
+        trusty_free(req);
+
+    return rc;
+}
+
+int hwcrypto_provision_wv_key_enc(const char *data, uint32_t data_size)
+{
+    uint8_t *req = NULL, *tmp;
+    /* sanity check */
+    if (!data || !data_size)
+        return TRUSTY_ERR_INVALID_ARGS;
+
+    /* serialize the request */
+    req = trusty_calloc(data_size + sizeof(data_size), 1);
+    if (!req) {
+        return TRUSTY_ERR_NO_MEMORY;
+    }
+    tmp = append_sized_buf_to_buf(req, (uint8_t *)data, data_size);
+
+    int rc = hwcrypto_do_tipc(HWCRYPTO_PROVISION_WV_KEY_ENC, (void*)req,
+                              data_size + sizeof(data_size), NULL, 0);
+
+    if (req)
+        trusty_free(req);
+
+    return rc;
 }
