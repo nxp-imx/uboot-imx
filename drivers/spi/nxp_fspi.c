@@ -56,10 +56,11 @@
 /*
  * The driver only uses one single LUT entry, that is updated on
  * each call of exec_op(). Index 0 is preset at boot with a basic
- * read operation, so let's use the last entry (31).
+ * read operation, so let's use the middle entry (15).
+ * for some platforms, this is the last entry
  */
-#define	SEQID_LUT			31
-#define	SEQID_AHB_LUT			30
+#define	SEQID_LUT			15
+#define	SEQID_AHB_LUT			14
 
 /* Registers used by the driver */
 #define FSPI_MCR0			0x00
@@ -354,6 +355,14 @@ static const struct nxp_fspi_devtype_data imx8dxl_data = {
 	.txfifo = SZ_1K,        /* (128 * 64 bits)  */
 	.ahb_buf_size = SZ_2K,  /* (256 * 64 bits)  */
 	.quirks = FSPI_QUIRK_USE_IP_ONLY,
+	.little_endian = true,  /* little-endian    */
+};
+
+static const struct nxp_fspi_devtype_data imx8ulp_data = {
+	.rxfifo = SZ_1K,       /* (128  * 64 bits)  */
+	.txfifo = SZ_1K,        /* (128 * 64 bits)  */
+	.ahb_buf_size = SZ_2K,  /* (256 * 64 bits)  */
+	.quirks = 0,
 	.little_endian = true,  /* little-endian    */
 };
 
@@ -1082,6 +1091,7 @@ static const struct udevice_id nxp_fspi_ids[] = {
 	{ .compatible = "nxp,imx8mm-fspi", .data = (ulong)&imx8mm_data, },
 	{ .compatible = "nxp,imx8qxp-fspi", .data = (ulong)&imx8qxp_data, },
 	{ .compatible = "nxp,imx8dxl-fspi", .data = (ulong)&imx8dxl_data, },
+	{ .compatible = "nxp,imx8ulp-fspi", .data = (ulong)&imx8ulp_data, },
 	{ }
 };
 
