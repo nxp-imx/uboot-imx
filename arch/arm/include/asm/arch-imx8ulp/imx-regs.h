@@ -158,6 +158,12 @@ struct usbphy_regs {
 	u32	usb1_pfda_ctrl1_clr;		/* 0x148 */
 	u32	usb1_pfda_ctrl1_tog;		/* 0x14c */
 };
+
+#include <stdbool.h>
+bool is_usb_boot(void);
+void disconnect_from_pc(void);
+#define is_boot_from_usb  is_usb_boot
+
 #endif
 
 #endif

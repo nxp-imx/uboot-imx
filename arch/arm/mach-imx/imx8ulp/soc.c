@@ -65,18 +65,33 @@ enum boot_device get_boot_device(void)
 		boot_dev = QSPI_BOOT;
 		break;
 	case BT_DEV_TYPE_USB:
-		boot_dev = USB_BOOT;
+		boot_dev = boot_instance + USB_BOOT;
 		break;
 	default:
 		break;
 	}
+
+	debug("boot dev %d\n", boot_dev);
 
 	return boot_dev;
 }
 
 bool is_usb_boot(void)
 {
-	return get_boot_device() == USB_BOOT;
+	enum boot_device bt_dev = get_boot_device();
+	return (bt_dev == USB_BOOT || bt_dev == USB2_BOOT);
+}
+
+void disconnect_from_pc(void)
+{
+	enum boot_device bt_dev = get_boot_device();
+
+	if (bt_dev == USB_BOOT)
+		writel(0x0, USBOTG0_RBASE + 0x140);
+	else if (bt_dev == USB2_BOOT)
+		writel(0x0, USBOTG1_RBASE + 0x140);
+
+	return;
 }
 
 #ifdef CONFIG_ENV_IS_IN_MMC
@@ -105,11 +120,29 @@ int mmc_get_env_dev(void)
 	boot_type = boot >> 16;
 	boot_instance = (boot >> 8) & 0xff;
 
+	debug("boot_type %d, instance %d\n", boot_type, boot_instance);
+
 	/* If not boot from sd/mmc, use default value */
-	if (boot_type != BOOT_TYPE_SD && boot_type != BOOT_TYPE_MMC)
+	if ((boot_type != BOOT_TYPE_SD) && (boot_type != BOOT_TYPE_MMC))
 		return env_get_ulong("mmcdev", 10, CONFIG_SYS_MMC_ENV_DEV);
 
 	return board_mmc_get_env_dev(boot_instance);
+
+}
+#endif
+
+#ifdef CONFIG_USB_PORT_AUTO
+int board_usb_gadget_port_auto(void)
+{
+    enum boot_device bt_dev = get_boot_device();
+	int usb_boot_index = 0;
+
+	if (bt_dev == USB2_BOOT)
+		usb_boot_index = 1;
+
+	printf("auto usb %d\n", usb_boot_index);
+
+	return usb_boot_index;
 }
 #endif
 
