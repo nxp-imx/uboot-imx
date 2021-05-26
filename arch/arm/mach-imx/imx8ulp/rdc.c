@@ -240,6 +240,47 @@ void xrdc_mrc_region_set_access(int mrc_index, u32 addr, u32 access)
 	}
 }
 
+void xrdc_init_mda(void)
+{
+	ulong xrdc_base = XRDC_ADDR, off;
+	u32 i = 0;
+
+	/* Set MDA3-5 for PXP, ENET, CAAM to DID 1*/
+	for (i = 3; i <= 5; i++) {
+		off = 0x800 + i * 0x20;
+		writel(0x200000A1, xrdc_base + off);
+		writel(0xA00000A1, xrdc_base + off);
+	}
+
+	/* Set MDA10 -15 to DID 3 for video */
+	for (i = 10; i <= 15; i++) {
+		off = 0x800 + i * 0x20;
+		writel(0x200000A3, xrdc_base + off);
+		writel(0xA00000A3, xrdc_base + off);
+	}
+}
+
+void xrdc_init_mrc(void)
+{
+	/* The MRC8 is for SRAM1 */
+	xrdc_config_mrc_w0_w1(8, 0, 0x21000000, 0x10000);
+	/* Allow for all domains: So domain 2/3 (HIFI DSP/LPAV) is ok to access */
+	xrdc_config_mrc_dx_perm(8, 0, 0, 1);
+	xrdc_config_mrc_dx_perm(8, 0, 1, 1);
+	xrdc_config_mrc_dx_perm(8, 0, 2, 1);
+	xrdc_config_mrc_dx_perm(8, 0, 3, 1);
+	xrdc_config_mrc_dx_perm(8, 0, 4, 1);
+	xrdc_config_mrc_dx_perm(8, 0, 5, 1);
+	xrdc_config_mrc_dx_perm(8, 0, 6, 1);
+	xrdc_config_mrc_dx_perm(8, 0, 7, 1);
+	xrdc_config_mrc_w3_w4(8, 0, 0x0, 0x80000FFF);
+
+	/* The MRC6 is for video modules to ddr */
+	xrdc_config_mrc_w0_w1(6, 0, 0x80000000, 0x80000000);
+	xrdc_config_mrc_dx_perm(6, 0, 3, 1); /* allow for domain 3 video */
+	xrdc_config_mrc_w3_w4(6, 0, 0x0, 0x80000FFF);
+}
+
 int trdc_mbc_set_access(u32 mbc_x, u32 dom_x, u32 mem_x, u32 blk_x, bool sec_access)
 {
 	struct trdc *trdc_base = (struct trdc *)0x28031000U;
