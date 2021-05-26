@@ -19,4 +19,8 @@ int xrdc_config_mrc_w3_w4(u32 mrc_con, u32 region, u32 w3, u32 w4);
 int xrdc_config_pdac(u32 bridge, u32 index, u32 dom, u32 perm);
 int xrdc_config_pdac_openacc(u32 bridge, u32 index);
 int trdc_mbc_set_access(u32 mbc_x, u32 dom_x, u32 mem_x, u32 blk_x, bool sec_access);
+
+void xrdc_init_mda(void);
+void xrdc_init_mrc(void);
+
 #endif
