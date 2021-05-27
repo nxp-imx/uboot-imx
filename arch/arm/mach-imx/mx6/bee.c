@@ -14,6 +14,7 @@
 #include <fuse.h>
 #include <asm/arch/sys_proto.h>
 #include <cpu_func.h>
+#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
