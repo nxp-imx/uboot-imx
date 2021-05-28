@@ -122,7 +122,11 @@ int set_ddr_clk(u32 phy_freq_mhz)
 		writel(0xd0000000, PCC5_LPDDR4_ADDR); /* enable ddr pcc */
 	} else if (phy_freq_mhz == 528) {
 		writel(0x90000000, PCC5_LPDDR4_ADDR); /* disable ddr pcc */
-		cgc2_ddrclk_config(1, 1); /* 264Mhz DDR clock */
+		cgc2_ddrclk_config(4, 1); /* 264Mhz DDR clock */
+		writel(0xd0000000, PCC5_LPDDR4_ADDR); /* enable ddr pcc */
+	} else if (phy_freq_mhz == 264) {
+		writel(0x90000000, PCC5_LPDDR4_ADDR); /* disable ddr pcc */
+		cgc2_ddrclk_config(4, 3); /* 132Mhz DDR clock */
 		writel(0xd0000000, PCC5_LPDDR4_ADDR); /* enable ddr pcc */
 	} else if (phy_freq_mhz == 192) {
 		writel(0x90000000, PCC5_LPDDR4_ADDR); /* disable ddr pcc */

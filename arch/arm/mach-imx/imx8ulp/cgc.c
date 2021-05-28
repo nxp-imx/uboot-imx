@@ -189,7 +189,7 @@ void cgc2_pll4_init(void)
 		;
 
 	/* Enable all 4 PFDs */
-	setbits_le32(&cgc2_regs->pll4pfdcfg, 18 << 0);
+	setbits_le32(&cgc2_regs->pll4pfdcfg, 30 << 0); /* 316.8Mhz for NIC_LPAV */
 	setbits_le32(&cgc2_regs->pll4pfdcfg, 18 << 8);
 	setbits_le32(&cgc2_regs->pll4pfdcfg, 12 << 16);
 	setbits_le32(&cgc2_regs->pll4pfdcfg, 24 << 24);
