@@ -306,6 +306,9 @@ void *video_hw_init(void)
 		bpp = depth;
 	}
 
+	mode.pixclock_khz = PS2KHZ(mode.pixclock);
+	mode.pixclock = mode.pixclock_khz * 1000;
+
 	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
 		if (check_module_fused(MODULE_LCDIF)) {
 			printf("LCDIF@0x%x is fused, disable it\n", MXS_LCDIF_BASE);
