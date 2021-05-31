@@ -4738,12 +4738,16 @@ e1000_phy_init_script(struct e1000_hw *hw)
 			uint16_t fused, fine, coarse;
 
 			/* Move to analog registers page */
-			e1000_read_phy_reg(hw,
-				IGP01E1000_ANALOG_SPARE_FUSE_STATUS, &fused);
+			if (e1000_read_phy_reg(hw,
+					       IGP01E1000_ANALOG_SPARE_FUSE_STATUS,
+					       &fused))
+				return;
 
 			if (!(fused & IGP01E1000_ANALOG_SPARE_FUSE_ENABLED)) {
-				e1000_read_phy_reg(hw,
-					IGP01E1000_ANALOG_FUSE_STATUS, &fused);
+				if (e1000_read_phy_reg(hw,
+						       IGP01E1000_ANALOG_FUSE_STATUS,
+						       &fused))
+					return;
 
 				fine = fused & IGP01E1000_ANALOG_FUSE_FINE_MASK;
 				coarse = fused
