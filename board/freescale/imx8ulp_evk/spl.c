@@ -19,6 +19,7 @@
 #include <asm/arch/ddr.h>
 #include <asm/arch/rdc.h>
 #include <asm/arch/upower.h>
+#include <asm/mach-imx/boot_mode.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -30,7 +31,31 @@ void spl_dram_init(void)
 
 u32 spl_boot_device(void)
 {
+#ifdef CONFIG_SPL_BOOTROM_SUPPORT
 	return BOOT_DEVICE_BOOTROM;
+#else
+	enum boot_device boot_device_spl = get_boot_device();
+
+	switch (boot_device_spl) {
+	case SD1_BOOT:
+	case MMC1_BOOT:
+	case SD2_BOOT:
+	case MMC2_BOOT:
+		return BOOT_DEVICE_MMC1;
+	case SD3_BOOT:
+	case MMC3_BOOT:
+		return BOOT_DEVICE_MMC2;
+	case QSPI_BOOT:
+		return BOOT_DEVICE_NOR;
+	case NAND_BOOT:
+		return BOOT_DEVICE_NAND;
+	case USB_BOOT:
+	case USB2_BOOT:
+		return BOOT_DEVICE_BOARD;
+	default:
+		return BOOT_DEVICE_NONE;
+	}
+#endif
 }
 
 int power_init_board(void)
