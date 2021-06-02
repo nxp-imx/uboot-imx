@@ -51,3 +51,11 @@
 &lpuart5 {
 	u-boot,dm-spl;
 };
+
+&usdhc0 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc0 {
+	u-boot,dm-spl;
+};
