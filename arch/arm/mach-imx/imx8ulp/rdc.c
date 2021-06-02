@@ -59,9 +59,24 @@ struct mbc_mem_dom {
 	u32 reserved[2];
 };
 
+struct mrc_rgn_dom {
+	u32 mrc_glbcfg[4];
+	u32 nse_rgn_indirect;
+	u32 nse_rgn_set;
+	u32 nse_rgn_clr;
+	u32 nse_rgn_clr_all;
+	u32 memn_glbac[8];
+	/* The upper only existed in the beginning of each MRC */
+	u32 rgn_desc_words[8][2]; /* 8 regions, 2 words per region */
+	u32 reserved[16];
+	u32	rgn_nse;
+	u32 reserved2[15];
+};
+
 struct trdc {
 	u8 res0[0x1000];
 	struct mbc_mem_dom mem_dom[4][8];
+	struct mrc_rgn_dom mrc_dom[2][8];
 };
 
 union dxsel_perm {
@@ -328,6 +343,69 @@ int trdc_mbc_set_access(u32 mbc_x, u32 dom_x, u32 mem_x, u32 blk_x, bool sec_acc
 	} else {
 		val |= (0x8 << offset); /* nse bit set */
 		writel(val, (void __iomem *)cfg_w);
+	}
+
+	return 0;
+}
+
+int trdc_mrc_region_set_access(u32 mrc_x, u32 dom_x, u32 addr_start, u32 addr_end, bool sec_access)
+{
+	struct trdc *trdc_base = (struct trdc *)0x28031000U;
+	struct mrc_rgn_dom *mrc_dom;
+	u32 *desc_w;
+	u32 start, end;
+	u32 i, free = 8;;
+	bool vld, hit = false;
+
+	mrc_dom = &trdc_base->mrc_dom[mrc_x][dom_x];
+
+	for (i = 0; i < 8; i++) {
+		desc_w = &mrc_dom->rgn_desc_words[i][0];
+
+		start = readl((void __iomem *)desc_w) & 0xfff;
+		end = readl((void __iomem *)(desc_w + 1));
+		vld = end & 0x1;
+		end = end & 0xfff;
+
+		if (start == 0 && end == 0 && !vld && free >= 8)
+			free = i;
+
+		/* Check all the region descriptors, even overlap */
+		if (addr_start >= end || addr_end <= start || !vld)
+			continue;
+
+		/* MRC0,1
+		 *  Global 0, 0x7777 secure pri/user read/write/execute, S400 has already set it.
+		 *  So select MRCx_MEMN_GLBAC0
+		 */
+		if (sec_access) {
+			writel(start, (void __iomem *)desc_w);
+			writel(end | 0x1, (void __iomem *)(desc_w + 1));
+		} else {
+			writel(start, (void __iomem *)desc_w);
+			writel((end | 0x1 | 0x10), (void __iomem *)(desc_w + 1));
+		}
+
+		if (addr_start >= start && addr_end <= end)
+			hit = true;
+	}
+
+	if (!hit) {
+		if (free >= 8)
+			return -EFAULT;
+
+		desc_w = &mrc_dom->rgn_desc_words[free][0];
+
+		addr_start &= ~0xfff;
+		addr_end &= ~0xfff;
+
+		if (sec_access) {
+			writel(addr_start, (void __iomem *)desc_w);
+			writel(addr_end | 0x1, (void __iomem *)(desc_w + 1));
+		} else {
+			writel(addr_start, (void __iomem *)desc_w);
+			writel((addr_end | 0x1 | 0x10), (void __iomem *)(desc_w + 1));
+		}
 	}
 
 	return 0;
