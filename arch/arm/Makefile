@@ -32,7 +32,7 @@ else
 arch-y += -D__LINUX_ARM_ARCH__=$(CONFIG_SYS_ARM_ARCH)
 endif
 
-ifneq ($(CONFIG_ARCH_IMX8)$(CONFIG_ARCH_IMX8M),)
+ifneq ($(CONFIG_ARCH_IMX8)$(CONFIG_ARCH_IMX8M)$(CONFIG_ARCH_IMX8ULP),)
 arch-y += -mgeneral-regs-only
 endif
 
