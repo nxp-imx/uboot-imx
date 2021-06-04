@@ -131,6 +131,7 @@ config TARGET_MX6SABREAUTO_COMMON
     select BOARD_LATE_INIT
     select DM
     select DM_THERMAL
+    select IMX_THERMAL
     select BOARD_EARLY_INIT_F
     select NXP_BOARD_REVISION
     imply CMD_DM
@@ -140,6 +141,7 @@ config TARGET_MX6SABRESD_COMMON
     select BOARD_LATE_INIT
     select DM
     select DM_THERMAL
+    select IMX_THERMAL
     select BOARD_EARLY_INIT_F
     select NXP_BOARD_REVISION
     imply CMD_DM
