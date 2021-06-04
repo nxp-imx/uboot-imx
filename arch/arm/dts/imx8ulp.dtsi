@@ -21,7 +21,8 @@
 		mmc0 = &usdhc0;
 		mmc1 = &usdhc1;
 		mmc2 = &usdhc2;
-		spi0 = &flexspi2;
+		spi0 = &flexspi0;
+		spi2 = &flexspi2;
 		ethernet0 = &fec;
 		i2c7 = &lpi2c7;
 		usbphy0 = &usbphy0;
@@ -192,6 +193,24 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 		ranges = <0x0 0x0 0x0 0x80000000>;
+
+		per_bridge0: bus@28000000 {
+			compatible = "simple-bus";
+			reg = <0x28000000 0x800000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+
+			flexspi0: flexspi@28039000 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				compatible = "nxp,imx8ulp-fspi";
+				reg = <0x28039000 0x10000>,
+					<0x04000000 0x7ffffff>;
+				reg-names = "fspi_base", "fspi_mmap";
+				status = "disabled";
+			};
+		};
 
 		per_bridge3: bus@29000000 {
 			compatible = "simple-bus";
