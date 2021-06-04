@@ -321,6 +321,15 @@ static struct mm_region imx8ulp_arm64_mem_map[] = {
 			 PTE_BLOCK_OUTER_SHARE
 	},
 	{
+		/* FLEXSPI0 */
+		.virt = 0x04000000,
+		.phys = 0x04000000,
+		.size = 0x08000000UL,
+		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+			 PTE_BLOCK_NON_SHARE |
+			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
+	},
+	{
 		/* SSRAM (align with 2M) */
 		.virt = 0x1FE00000UL,
 		.phys = 0x1FE00000UL,
