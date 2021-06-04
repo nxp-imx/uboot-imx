@@ -16,10 +16,33 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 #if defined(CONFIG_NXP_FSPI) || defined(CONFIG_FSL_FSPI_NAND)
+#define FSPI_PAD_CTRL	(PAD_CTL_PUS_UP | PAD_CTL_DSE)
+static iomux_cfg_t const flexspi0_pads[] = {
+	IMX8ULP_PAD_PTC5__FLEXSPI0_A_SS0_b | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC6__FLEXSPI0_A_SCLK | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC10__FLEXSPI0_A_DATA0 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC9__FLEXSPI0_A_DATA1 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC8__FLEXSPI0_A_DATA2 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC7__FLEXSPI0_A_DATA3 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC4__FLEXSPI0_A_DATA4 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC3__FLEXSPI0_A_DATA5 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC2__FLEXSPI0_A_DATA6 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC1__FLEXSPI0_A_DATA7 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+};
+
 static void setup_flexspi(void)
 {
 	init_clk_fspi(0);
 }
+
+static void setup_rtd_flexspi0(void)
+{
+	imx8ulp_iomux_setup_multiple_pads(flexspi0_pads, ARRAY_SIZE(flexspi0_pads));
+
+	/* Set PCC of flexspi0, 192Mhz % 4 = 48Mhz */
+	writel(0xD6000003, 0x280300e4);
+}
+
 #endif
 
 #if IS_ENABLED(CONFIG_FEC_MXC)
@@ -109,6 +132,10 @@ int board_init(void)
 {
 #if defined(CONFIG_NXP_FSPI) || defined(CONFIG_FSL_FSPI_NAND)
 	setup_flexspi();
+
+	if (get_boot_mode() == SINGLE_BOOT) {
+		setup_rtd_flexspi0();
+	}
 #endif
 	if (IS_ENABLED(CONFIG_FEC_MXC))
 		setup_fec();
