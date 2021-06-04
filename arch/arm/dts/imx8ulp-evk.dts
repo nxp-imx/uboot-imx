@@ -144,10 +144,22 @@
 	};
 };
 
+&flexspi0 {
+	status = "okay";
+
+	flash0: atxp032@0 {
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "jedec,spi-nor";
+		spi-max-frequency = <66000000>;
+	};
+};
+
 &flexspi2 {
 	status = "okay";
 
-	flash0: mt35xu512aba@0 {
+	flash1: mt35xu512aba@0 {
 		reg = <0>;
 		#address-cells = <1>;
 		#size-cells = <1>;
