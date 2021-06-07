@@ -56,7 +56,6 @@
 		i2c8 = &i2c1_lvds1;
 		spi0 = &flexspi0;
 		pci0 = &pciea;
-		pci1 = &pcieb;
 		display0 = &ldb1;
 		display1 = &ldb2;
 		video0 = &dpu1;
