@@ -264,6 +264,7 @@ static void board_gpio_init(void)
 
 	desc.dev = dev;
 	desc.offset = 12;
+	desc.flags = 0;
 
 	ret = dm_gpio_request(&desc, "ioexp_rst");
 	if (ret) {
