@@ -34,6 +34,7 @@
 #if CONFIG_SYS_FSL_SEC_COMPAT >= 4
 /* RNG4 TRNG test registers */
 struct rng4tst {
+#define RTMCTL_ACC  0x20
 #define RTMCTL_PRGM 0x00010000	/* 1 -> program mode, 0 -> run mode */
 #define RTMCTL_SAMP_MODE_VON_NEUMANN_ES_SC     0 /* use von Neumann data in
 						    both entropy shifter and
