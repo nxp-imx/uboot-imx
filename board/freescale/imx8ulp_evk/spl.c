@@ -94,6 +94,8 @@ int power_init_board(void)
 	upower_pmic_i2c_read(0x21, &pmic_reg);
 	upower_pmic_i2c_read(0x2e, &pmic_reg);
 
+	/* Set buck3 to 1.1v OD */
+	upower_pmic_i2c_write(0x22, 0x28);
 	return 0;
 }
 
