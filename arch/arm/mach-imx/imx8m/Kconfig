@@ -177,24 +177,40 @@ config TARGET_IMX8MM_AB2
 	select IMX8MM
 	select SUPPORT_SPL
 	select IMX8M_LPDDR4
+	select FSL_CAAM
+	select FSL_BLOB
+	select MISC
+	select SPL_CRYPTO_SUPPORT if SPL
 
 config TARGET_IMX8MM_DDR4_AB2
 	bool "imx8mm DDR4 Audio board 2.0"
 	select IMX8MM
 	select SUPPORT_SPL
 	select IMX8M_DDR4
+	select FSL_CAAM
+	select FSL_BLOB
+	select MISC
+	select SPL_CRYPTO_SUPPORT if SPL
 
 config TARGET_IMX8MN_AB2
 	bool "imx8mn LPDDR4 Audio board 2.0"
 	select IMX8MN
 	select SUPPORT_SPL
 	select IMX8M_LPDDR4
+	select FSL_CAAM
+	select FSL_BLOB
+	select MISC
+	select SPL_CRYPTO_SUPPORT if SPL
 
 config TARGET_IMX8MN_DDR4_AB2
 	bool "imx8mn DDR4 Audio board 2.0"
 	select IMX8MN
 	select SUPPORT_SPL
 	select IMX8M_DDR4
+	select FSL_CAAM
+	select FSL_BLOB
+	select MISC
+	select SPL_CRYPTO_SUPPORT if SPL
 
 config TARGET_VERDIN_IMX8MM
        bool "Support Toradex Verdin iMX8M Mini module"
