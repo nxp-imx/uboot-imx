@@ -4,15 +4,14 @@
  */
 
 / {
-	aliases {
-		usbgadget0 = &usbg1;
+	wdt-reboot {
+		compatible = "wdt-reboot";
+		wdt = <&wdog1>;
+		u-boot,dm-spl;
 	};
 
-	firmware {
-		optee {
-			compatible = "linaro,optee-tz";
-			method = "smc";
-		};
+	aliases {
+		usbgadget0 = &usbg1;
 	};
 
 	usbg1: usbg1 {
@@ -20,6 +19,13 @@
 		dr_mode = "peripheral";
 		chipidea,usb = <&usbotg1>;
 		status = "okay";
+	};
+
+	firmware {
+		optee {
+			compatible = "linaro,optee-tz";
+			method = "smc";
+		};
 	};
 };
 
@@ -60,6 +66,7 @@
 
 &reg_usdhc2_vmmc {
 	u-boot,dm-spl;
+	u-boot,off-on-delay-us = <20000>;
 };
 
 &pinctrl_reg_usdhc2_vmmc {
@@ -106,6 +113,22 @@
 	u-boot,dm-spl;
 };
 
+&crypto {
+	u-boot,dm-spl;
+};
+
+&sec_jr0 {
+	u-boot,dm-spl;
+};
+
+&sec_jr1 {
+	u-boot,dm-spl;
+};
+
+&sec_jr2 {
+	u-boot,dm-spl;
+};
+
 &usdhc1 {
 	u-boot,dm-spl;
 	assigned-clocks = <&clk IMX8MN_CLK_USDHC1>;
@@ -131,8 +154,54 @@
 	assigned-clock-parents = <&clk IMX8MN_SYS_PLL1_400M>;
 };
 
-&flexspi {
-	assigned-clock-rates = <100000000>;
-	assigned-clocks = <&clk IMX8MN_CLK_QSPI>;
-	assigned-clock-parents = <&clk IMX8MN_SYS_PLL1_100M>;
+&wdog1 {
+	u-boot,dm-spl;
+};
+
+&i2c1 {
+	u-boot,dm-spl;
+};
+
+&{/soc@0/bus@30800000/i2c@30a20000/pca9450@25} {
+	u-boot,dm-spl;
+};
+
+&{/soc@0/bus@30800000/i2c@30a20000/pca9450@25/regulators} {
+	u-boot,dm-spl;
+};
+
+&pinctrl_i2c1 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_i2c1_gpio {
+	u-boot,dm-spl;
+};
+
+&pinctrl_pmic {
+	u-boot,dm-spl;
+};
+
+&fec1 {
+	phy-reset-gpios = <&gpio1 5 GPIO_ACTIVE_LOW>;
+};
+
+&ethphy0 {
+	vddio0: vddio-regulator {
+		regulator-name = "VDDIO";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+};
+
+&lcdif {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+};
+
+&mipi_dsi {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
 };
