@@ -85,10 +85,6 @@
 	u-boot,dm-spl;
 };
 
-&pinctrl_usdhc3 {
-	u-boot,dm-spl;
-};
-
 &gpio1 {
 	u-boot,dm-spl;
 };
@@ -127,27 +123,17 @@
 	assigned-clocks = <&clk IMX8MM_CLK_USDHC2>;
 	assigned-clock-rates = <400000000>;
 	assigned-clock-parents = <&clk IMX8MM_SYS_PLL1_400M>;
-	fsl,signal-voltage-switch-extra-delay-ms = <8>;
-};
-
-&usdhc3 {
-	u-boot,dm-spl;
-	mmc-hs400-1_8v;
-	mmc-hs400-enhanced-strobe;
-	assigned-clocks = <&clk IMX8MM_CLK_USDHC3>;
-	assigned-clock-rates = <400000000>;
-	assigned-clock-parents = <&clk IMX8MM_SYS_PLL1_400M>;
 };
 
 &i2c1 {
 	u-boot,dm-spl;
 };
 
-&{/soc@0/bus@30800000/i2c@30a20000/pca9450@25} {
+&{/soc@0/bus@30800000/i2c@30a20000/pmic@4b} {
 	u-boot,dm-spl;
 };
 
-&{/soc@0/bus@30800000/i2c@30a20000/pca9450@25/regulators} {
+&{/soc@0/bus@30800000/i2c@30a20000/pmic@4b/regulators} {
 	u-boot,dm-spl;
 };
 
