@@ -56,6 +56,10 @@
 	u-boot,dm-spl;
 };
 
+&usdhc2 {
+	status = "disabled";
+};
+
 &pinctrl_usdhc0 {
 	u-boot,dm-spl;
 };
