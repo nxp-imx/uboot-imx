@@ -29,12 +29,12 @@ endif
 obj-$(CONFIG_GPT_TIMER) += timer.o
 obj-$(CONFIG_SYS_I2C_MXC) += i2c-mxv7.o
 endif
-ifeq ($(SOC),$(filter $(SOC),mx7 mx6 mxs mx7ulp imx8m imx8 imxrt))
+ifeq ($(SOC),$(filter $(SOC),mx7 mx6 mxs mx7ulp imx8m imx8 imxrt imx8ulp))
 obj-y	+= misc.o
 obj-$(CONFIG_CMD_PRIBLOB) += priblob.o
 obj-$(CONFIG_SPL_BUILD)	+= spl.o
 endif
-ifeq ($(SOC),$(filter $(SOC),imx8m imx8))
+ifeq ($(SOC),$(filter $(SOC),imx8m imx8 imx8ulp))
 obj-y	+= dt_optee.o
 endif
 ifeq ($(SOC),$(filter $(SOC),mx7))
