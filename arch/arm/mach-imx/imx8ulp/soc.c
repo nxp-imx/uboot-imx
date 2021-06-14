@@ -23,6 +23,7 @@
 #include <dm/uclass-internal.h>
 #include <asm/arch/s400_api.h>
 #include <fuse.h>
+#include <asm/mach-imx/optee.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -603,4 +604,9 @@ u32 spl_arch_boot_image_offset(u32 image_offset, u32 rom_bt_dev)
 		image_offset = 0;
 
 	return image_offset;
+}
+
+int ft_system_setup(void *blob, struct bd_info *bd)
+{
+	return ft_add_optee_node(blob, bd);
 }
