@@ -102,6 +102,8 @@ int power_init_board(void)
 void spl_board_init(void)
 {
 	struct udevice *dev;
+	u32 res;
+	int ret;
 
 	uclass_find_first_device(UCLASS_MISC, &dev);
 
@@ -135,6 +137,11 @@ void spl_board_init(void)
 
 	/* Init XRDC MRC for VIDEO, DSP domains */
 	xrdc_init_mrc();
+
+	/* Enable A35 access to the CAAM */
+	ret = ahab_release_caam(0x7, &res);
+	if (ret)
+		printf("ahab release caam failed %d, 0x%x\n", ret, res);
 }
 
 #ifdef CONFIG_SPL_LOAD_FIT
