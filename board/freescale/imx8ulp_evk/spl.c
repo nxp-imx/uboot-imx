@@ -61,6 +61,8 @@ int power_init_board(void)
 void spl_board_init(void)
 {
 	struct udevice *dev;
+	u32 res;
+	int ret;
 
 	uclass_find_first_device(UCLASS_MISC, &dev);
 
@@ -99,6 +101,11 @@ void spl_board_init(void)
 
 	/* Call it after PS16 power up */
 	set_lpav_qos();
+
+	/* Enable A35 access to the CAAM */
+	ret = ahab_release_caam(0x7, &res);
+	if (ret)
+		printf("ahab release caam failed %d, 0x%x\n", ret, res);
 }
 
 void board_init_f(ulong dummy)
