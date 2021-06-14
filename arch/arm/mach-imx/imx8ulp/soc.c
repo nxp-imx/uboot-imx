@@ -29,6 +29,7 @@
 #include <linux/iopoll.h>
 #include <env.h>
 #include <env_internal.h>
+#include <asm/mach-imx/optee.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -930,4 +931,9 @@ enum env_location env_get_location(enum env_operation op, int prio)
 	}
 
 	return env_loc;
+}
+
+int ft_system_setup(void *blob, struct bd_info *bd)
+{
+	return ft_add_optee_node(blob, bd);
 }
