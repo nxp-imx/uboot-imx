@@ -33,10 +33,13 @@
 #include <fsl_validate.h>
 #endif
 #include <fsl_immap.h>
+#ifdef CONFIG_TFABOOT
+#include <env_internal.h>
+#endif
 #include <dm.h>
 #include <dm/device_compat.h>
 #include <linux/err.h>
-#ifdef CONFIG_GIC_V3_ITS
+#if defined(CONFIG_TFABOOT) || defined(CONFIG_GIC_V3_ITS)
 DECLARE_GLOBAL_DATA_PTR;
 #endif
 
@@ -953,12 +956,28 @@ int board_late_init(void)
 #endif
 #ifdef CONFIG_TFABOOT
 	/*
-	 * Set bootcmd and mcinitcmd if they don't exist in the environment.
+	 * check if gd->env_addr is default_environment; then setenv bootcmd
+	 * and mcinitcmd.
 	 */
-	if (!env_get("bootcmd"))
+#ifdef CONFIG_SYS_RELOC_GD_ENV_ADDR
+	if (gd->env_addr == (ulong)&default_environment[0]) {
+#else
+	if (gd->env_addr + gd->reloc_off == (ulong)&default_environment[0]) {
+#endif
 		fsl_setenv_bootcmd();
-	if (!env_get("mcinitcmd"))
 		fsl_setenv_mcinitcmd();
+	}
+
+	/*
+	 * If the boot mode is secure, default environment is not present then
+	 * setenv command needs to be run by default
+	 */
+#ifdef CONFIG_CHAIN_OF_TRUST
+	if ((fsl_check_boot_mode_secure() == 1)) {
+		fsl_setenv_bootcmd();
+		fsl_setenv_mcinitcmd();
+	}
+#endif
 #endif
 #ifdef CONFIG_QSPI_AHB_INIT
 	qspi_ahb_init();
