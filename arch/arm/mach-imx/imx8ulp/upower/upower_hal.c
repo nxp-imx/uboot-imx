@@ -172,5 +172,17 @@ int upower_init(void)
 
 	mdelay(1);
 
+	ret = upwr_xcp_set_ddr_retention(APD_DOMAIN, 0, NULL);
+	if (ret)
+		printf("Clear DDR retention fail %d\n", ret);
+	else
+		printf("Clear DDR retention ok\n");
+
+	upower_wait_resp();
+
+	ret = upwr_poll_req_status(UPWR_SG_EXCEPT, NULL, NULL, &ret_val, 1000);
+	if (ret != UPWR_REQ_OK)
+		printk("Faliure %d\n", ret);
+
 	return 0;
 }
