@@ -276,7 +276,7 @@ typedef enum {             /* Exception Functions */
 	UPWR_XCP_SW_ALARM, /*  4 = uPower software alarm: upwr_xcp_sw_alarm */
 	UPWR_XCP_I2C,      /*  5 = I2C access: upwr_xcp_i2c_access */
 	UPWR_XCP_SPARE_6,  /*  6 = spare */
-	UPWR_XCP_SPARE_7,  /*  7 = spare */
+	UPWR_XCP_SET_DDR_RETN,  /*  7 = set/clear ddr retention */
 	UPWR_XCP_SPARE_8,  /*  8 = spare */
 	UPWR_XCP_SPARE_9,  /*  9 = spare */
 	UPWR_XCP_SPARE_10, /* 10 = spare */
@@ -295,6 +295,7 @@ typedef upwr_boot_start_msg upwr_xcp_boot_start_msg;
 typedef upwr_start_msg      upwr_xcp_start_msg;
 typedef upwr_down_2w_msg    upwr_xcp_config_msg;
 typedef upwr_down_1w_msg    upwr_xcp_swalarm_msg;
+typedef upwr_down_1w_msg    upwr_xcp_ddr_retn_msg;
 typedef upwr_pointer_msg    upwr_xcp_i2c_msg;
 
 typedef struct { /* structure pointed by message upwr_xcp_i2c_msg */
@@ -316,6 +317,7 @@ typedef union {
 	upwr_xcp_config_msg       config;    /* uPower configuration */
 	upwr_xcp_swalarm_msg      swalarm;   /* software alarm */
 	upwr_xcp_i2c_msg          i2c;       /* I2C access */
+	upwr_xcp_ddr_retn_msg     set_ddr_retn;       /* set ddr retention msg */
 } upwr_xcp_msg;
 
 /* *************************************************************************

@@ -429,6 +429,27 @@ int upwr_xcp_sw_alarm(soc_domain_t     domain,
 		      const upwr_callb callb);
 
 /**
+ * upwr_xcp_set_ddr_retention() - M33/A35 can use this API to set/clear ddr retention
+ * @domain: identifier of the caller domain.
+ * soc_domain_t found in upower_soc_defs.h.
+ * @enable: true, means that set ddr retention, false clear ddr retention.
+ * @callb: NULL
+ *
+ * A callback may not be registered (NULL pointer), in which case polling has
+ * to be used to check the response, by calling upwr_req_status or
+ * upwr_poll_req_status, using UPWR_SG_EXCEPT as the service group argument.
+ *
+ * Context: no sleep, no locks taken/released.
+ * Return: 0 if ok,
+ *        -1 if service group is busy,
+ *        -3 if called in an invalid API state
+ */
+
+int upwr_xcp_set_ddr_retention(soc_domain_t     domain,
+                        uint32_t enable,
+                        const upwr_callb callb);
+
+/**
  * upwr_xcp_shutdown() - Shuts down all uPower services and power mode tasks.
  * @callb: pointer to the callback to be called when the uPower has finished
  * the shutdown, or NULL if no callback needed
