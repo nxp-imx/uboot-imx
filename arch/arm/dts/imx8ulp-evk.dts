@@ -16,15 +16,9 @@
 		bootargs = "console=ttyLP1,115200 earlycon";
 	};
 
-	reg_usdhc2_vmmc: regulator-usdhc2 {
-		compatible = "regulator-fixed";
-		regulator-name = "VSD_3V3";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		gpio = <&pcal6408 0 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
-		startup-delay-us = <100>;
-		off-on-delay-us = <12000>;
+	usdhc2_pwrseq: usdhc2_pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		reset-gpios = <&pcal6408 2 GPIO_ACTIVE_LOW>;
 	};
 };
 
@@ -68,14 +62,15 @@
 		>;
 	};
 
-	pinctrl_usdhc2: usdhc2grp {
+	pinctrl_usdhc2_pte: usdhc2ptegrp {
 		fsl,pins = <
 			MX8ULP_PAD_PTE1__SDHC2_D0	0x43
 			MX8ULP_PAD_PTE0__SDHC2_D1	0x43
-			MX8ULP_PAD_PTE5__SDHC2_D2	0x42
-			MX8ULP_PAD_PTE4__SDHC2_D3	0x42
+			MX8ULP_PAD_PTE5__SDHC2_D2	0x43
+			MX8ULP_PAD_PTE4__SDHC2_D3	0x43
 			MX8ULP_PAD_PTE2__SDHC2_CLK	0x10042
 			MX8ULP_PAD_PTE3__SDHC2_CMD	0x43
+			MX8ULP_PAD_PTE7__PTE7		0x10003
 		>;
 	};
 
@@ -119,14 +114,25 @@
 };
 
 &usdhc2 {
-	pinctrl-names = "default", "state_100mhz", "state_200mhz";
-	pinctrl-0 = <&pinctrl_usdhc2>;
-	pinctrl-1 = <&pinctrl_usdhc2>;
-	pinctrl-2 = <&pinctrl_usdhc2>;
+	pinctrl-names = "default", "state_100mhz", "state_200mhz", "sleep";
+	pinctrl-0 = <&pinctrl_usdhc2_pte>;
+	pinctrl-1 = <&pinctrl_usdhc2_pte>;
+	pinctrl-2 = <&pinctrl_usdhc2_pte>;
+	pinctrl-3 = <&pinctrl_usdhc2_pte>;
+	mmc-pwrseq = <&usdhc2_pwrseq>;
+	max-frequency = <100000000>;
 	bus-width = <4>;
-	broken-cd;
-	vmmc-supply = <&reg_usdhc2_vmmc>;
+	keep-power-in-suspend;
+	non-removable;
+	wakeup-source;
 	status = "okay";
+
+	wifi_wake_host {
+		compatible = "nxp,wifi-wake-host";
+		interrupt-parent = <&gpioe>;
+		interrupts = <7 IRQ_TYPE_LEVEL_LOW>;
+		interrupt-names = "host-wake";
+	};
 };
 
 &lpi2c7 {

@@ -463,13 +463,16 @@
 			};
 
 			usdhc2: mmc@298f0000 {
-				compatible = "fsl,imx8ulp-usdhc", "fsl,imx7ulp-usdhc";
+				compatible = "fsl,imx8ulp-usdhc", "fsl,imx8mm-usdhc";
 				reg = <0x298f0000 0x10000>;
 				interrupts = <GIC_SPI 144 IRQ_TYPE_LEVEL_HIGH>;
-				clocks = <&cgc1 IMX8ULP_CLK_DUMMY>,
-					 <&cgc1 IMX8ULP_CLK_DUMMY>,
+				clocks = <&cgc1 IMX8ULP_CLK_XBAR_DIVBUS>,
+					 <&cgc1 IMX8ULP_CLK_NIC_PER_DIVPLAT>,
 					 <&pcc4 IMX8ULP_CLK_USDHC2>;
 				clock-names = "ipg", "ahb", "per";
+				assigned-clocks = <&cgc1 IMX8ULP_CLK_SPLL3_PFD2>, <&pcc4 IMX8ULP_CLK_USDHC2>;
+				assigned-clock-parents = <0>, <&cgc1 IMX8ULP_CLK_SPLL3_PFD2_DIV1>;
+				assigned-clock-rates = <396000000>, <396000000>;
 				fsl,tuning-start-tap = <20>;
 				fsl,tuning-step= <2>;
 				bus-width = <4>;
