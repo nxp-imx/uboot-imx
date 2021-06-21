@@ -842,6 +842,23 @@ static int imx8ulp_evt_dm_post_init(void *ctx, struct event *event)
 }
 EVENT_SPY(EVT_DM_POST_INIT, imx8ulp_evt_dm_post_init);
 
+#if defined(CONFIG_ARCH_MISC_INIT)
+int arch_misc_init(void)
+{
+	if (IS_ENABLED(CONFIG_FSL_CAAM)) {
+		struct udevice *dev;
+		int ret;
+
+		ret = uclass_get_device_by_driver(UCLASS_MISC, DM_DRIVER_GET(caam_jr), &dev);
+		if (ret)
+			printf("Failed to initialize %s: %d\n", dev->name, ret);
+	}
+
+
+	return 0;
+}
+#endif
+
 #if defined(CONFIG_SPL_BUILD)
 __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {

@@ -853,6 +853,9 @@ config ARCH_IMX8ULP
 	select GPIO_EXTRA_HEADER
 	select MISC
 	select IMX_SENTINEL
+	select SYS_FSL_HAS_SEC
+	select SYS_FSL_SEC_LE
+	select SYS_FSL_SEC_COMPAT_4
 	imply CMD_DM
 
 config ARCH_IMX9
