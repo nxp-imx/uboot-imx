@@ -335,6 +335,43 @@
 				timeout-sec = <40>;
 			};
 
+			crypto: crypto@292e0000 {
+				compatible = "fsl,sec-v4.0";
+				#address-cells = <1>;
+				#size-cells = <1>;
+				reg = <0x292e0000 0x10000>;
+				ranges = <0 0x292e0000 0x10000>;
+				interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+				clocks = <&pcc3 IMX8ULP_CLK_CAAM>,
+					<&cgc1 IMX8ULP_CLK_NIC_PER_DIVPLAT>;
+				clock-names = "ipg", "aclk";
+
+				sec_jr0: jr@1000 {
+					compatible = "fsl,sec-v4.0-job-ring";
+					reg = <0x1000 0x1000>;
+					interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+					status = "disabled";
+				};
+
+				sec_jr1: jr@2000 {
+					compatible = "fsl,sec-v4.0-job-ring";
+					reg = <0x2000 0x1000>;
+					interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+				};
+
+				sec_jr2: jr@3000 {
+					compatible = "fsl,sec-v4.0-job-ring";
+					reg = <0x3000 0x1000>;
+					interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+				};
+
+				sec_jr3: jr@4000 {
+					compatible = "fsl,sec-v4.0-job-ring";
+					reg = <0x4000 0x1000>;
+					interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+				};
+			};
+
 			cgc1: clock-controller@292c0000 {
 				compatible = "fsl,imx8ulp-cgc1";
 				reg = <0x292c0000 0x10000>;
