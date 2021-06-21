@@ -799,7 +799,7 @@ int sec_init_idx(uint8_t sec_idx)
 
 	ccsr_sec_t *sec = caam->sec;
 	uint32_t mcr = sec_in32(&sec->mcfgr);
-#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_IMX8M)
+#if defined(CONFIG_SPL_BUILD) && (defined(CONFIG_IMX8M) || defined(CONFIG_IMX8ULP))
 	uint32_t jrdid_ms = 0;
 #endif
 #ifdef CONFIG_FSL_CORENET
@@ -831,7 +831,10 @@ int sec_init_idx(uint8_t sec_idx)
 	mcr |= (1 << MCFGR_PS_SHIFT);
 #endif
 	sec_out32(&sec->mcfgr, mcr);
-#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_IMX8M)
+#ifdef CONFIG_IMX8ULP
+	sec_reset();
+#endif
+#if defined(CONFIG_SPL_BUILD) && (defined(CONFIG_IMX8M) || defined(CONFIG_IMX8ULP))
 	jrdid_ms = JRDID_MS_TZ_OWN | JRDID_MS_PRIM_TZ | JRDID_MS_PRIM_DID;
 	sec_out32(&sec->jrliodnr[caam->jrid].ms, jrdid_ms);
 #endif

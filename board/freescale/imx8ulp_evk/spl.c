@@ -11,6 +11,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/imx8ulp-pins.h>
+#include <fsl_sec.h>
 #include <dm/uclass.h>
 #include <dm/device.h>
 #include <dm/uclass-internal.h>
@@ -20,6 +21,7 @@
 #include <asm/arch/rdc.h>
 #include <asm/arch/upower.h>
 #include <asm/mach-imx/boot_mode.h>
+#include <asm/arch/s400_api.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -87,14 +89,14 @@ void spl_board_init(void)
 {
 	struct udevice *dev;
 	u32 res;
-	int ret;
+	int node, ret;
 
-	uclass_find_first_device(UCLASS_MISC, &dev);
-
-	for (; dev; uclass_find_next_device(&dev)) {
-		if (device_probe(dev))
-			continue;
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "fsl,imx8ulp-mu");
+	ret = uclass_get_device_by_of_offset(UCLASS_MISC, node, &dev);
+	if (ret) {
+		return;
 	}
+	device_probe(dev);
 
 	board_early_init_f();
 
@@ -127,10 +129,20 @@ void spl_board_init(void)
 	/* Call it after PS16 power up */
 	set_lpav_qos();
 
-	/* Enable A35 access to the CAAM */
-	ret = ahab_release_caam(0x7, &res);
-	if (ret)
-		printf("ahab release caam failed %d, 0x%x\n", ret, res);
+	/* Asks S400 to release CAAM for A35 core */
+	ret = ahab_release_caam(7, &res);
+	if (!ret) {
+
+		/* Only two UCLASS_MISC devicese are present on the platform. There
+		 * are MU and CAAM. Here we initialize CAAM once it's released by
+		 * S400 firmware..
+		 */
+		if (IS_ENABLED(CONFIG_FSL_CAAM)) {
+			ret = uclass_get_device_by_driver(UCLASS_MISC, DM_DRIVER_GET(caam_jr), &dev);
+			if (ret)
+				printf("Failed to initialize %s: %d\n", dev->name, ret);
+		}
+	}
 }
 
 void board_init_f(ulong dummy)
