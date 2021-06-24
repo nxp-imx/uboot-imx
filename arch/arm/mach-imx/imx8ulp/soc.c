@@ -434,7 +434,11 @@ static struct mm_region imx8ulp_arm64_mem_map[] = {
 		.phys = 0x80000000UL,
 		.size = PHYS_SDRAM_SIZE,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
+#ifdef CONFIG_IMX_TRUSTY_OS
+			 PTE_BLOCK_INNER_SHARE
+#else
 			 PTE_BLOCK_OUTER_SHARE
+#endif
 	}, {
 		/*
 		 * empty entrie to split table entry 5
