@@ -29,6 +29,11 @@
 		chipidea,usb = <&usbotg2>;
 		status = "okay";
 	};
+
+	dsi_host: dsi-host {
+		compatible = "northwest,mipi-dsi";
+		status = "okay";
+	};
 };
 
 &soc {
@@ -82,6 +87,24 @@
 
 &sec_jr3 {
 	u-boot,dm-spl;
+};
+
+&lpi2c0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <100000>;
+	status = "okay";
+
+	pcal6416: gpio@20 {
+		compatible = "ti,tca6416";
+		reg = <0x20>;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+};
+
+&dsi {
+	data-lanes-num = <4>;
 };
 
 &usbotg1 {
