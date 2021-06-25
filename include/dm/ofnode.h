@@ -1423,6 +1423,20 @@ int ofnode_write_u32(ofnode node, const char *propname, u32 value);
 int ofnode_set_enabled(ofnode node, bool value);
 
 /**
+ * ofnode_get_phy_node_index() - Get indexed PHY node for a MAC (if not fixed-link)
+ *
+ * This function parses PHY handle from the Ethernet controller's ofnode
+ * (trying all possible PHY handle property names), and returns the PHY ofnode.
+ *
+ * Before this is used, ofnode_phy_is_fixed_link() should be checked first, and
+ * if the result to that is true, this function should not be called.
+ *
+ * @eth_node:	ofnode belonging to the Ethernet controller
+ * Return: ofnode of the PHY, if it exists, otherwise an invalid ofnode
+ */
+ofnode ofnode_get_phy_node_index(ofnode node, int index);
+
+/**
  * ofnode_get_phy_node() - Get PHY node for a MAC (if not fixed-link)
  *
  * This function parses PHY handle from the Ethernet controller's ofnode

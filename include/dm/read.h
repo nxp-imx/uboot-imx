@@ -799,6 +799,20 @@ int dev_decode_panel_timing(const struct udevice *dev,
 			    struct display_timing *config);
 
 /**
+ * dev_get_phy_node_index() - Get indexed PHY node for a MAC (if not fixed-link)
+ *
+ * This function parses PHY handle from the Ethernet controller's ofnode
+ * (trying all possible PHY handle property names), and returns the PHY ofnode.
+ *
+ * Before this is used, ofnode_phy_is_fixed_link() should be checked first, and
+ * if the result to that is true, this function should not be called.
+ *
+ * @dev: device representing the MAC
+ * Return: ofnode of the PHY, if it exists, otherwise an invalid ofnode
+ */
+ofnode dev_get_phy_node_index(const struct udevice *dev, int index);
+
+/**
  * dev_get_phy_node() - Get PHY node for a MAC (if not fixed-link)
  *
  * This function parses PHY handle from the Ethernet controller's ofnode
@@ -1201,6 +1215,11 @@ static inline int dev_decode_panel_timing(const struct udevice *dev,
 					  struct display_timing *config)
 {
 	return ofnode_decode_panel_timing(dev_ofnode(dev), config);
+}
+
+static inline ofnode dev_get_phy_node_index(const struct udevice *dev, int index)
+{
+	return ofnode_get_phy_node_index(dev_ofnode(dev), index);
 }
 
 static inline ofnode dev_get_phy_node(const struct udevice *dev)

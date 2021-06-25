@@ -168,7 +168,8 @@ struct phy_device *dm_mdio_phy_connect(struct udevice *mdiodev, int phyaddr,
 }
 
 static struct phy_device *dm_eth_connect_phy_handle(struct udevice *ethdev,
-						    phy_interface_t interface)
+						    phy_interface_t interface,
+						    int phy_index)
 {
 	u32 phy_addr;
 	struct udevice *mdiodev;
@@ -181,7 +182,7 @@ static struct phy_device *dm_eth_connect_phy_handle(struct udevice *ethdev,
 		goto out;
 	}
 
-	phynode = dev_get_phy_node(ethdev);
+	phynode = dev_get_phy_node_index(ethdev, phy_index);
 	if (!ofnode_valid(phynode)) {
 		dev_dbg(ethdev, "can't find PHY node\n");
 		return NULL;
@@ -213,8 +214,8 @@ out:
 	return phy;
 }
 
-/* Connect to a PHY linked in eth DT node */
-struct phy_device *dm_eth_phy_connect(struct udevice *ethdev)
+/* Connect to the #phy_index PHY linked in eth DT node */
+struct phy_device *dm_eth_phy_connect_index(struct udevice *ethdev, int phy_index)
 {
 	phy_interface_t interface;
 	struct phy_device *phy;
@@ -228,7 +229,7 @@ struct phy_device *dm_eth_phy_connect(struct udevice *ethdev)
 	if (interface == PHY_INTERFACE_MODE_NA)
 		dev_dbg(ethdev, "can't find interface mode, default to NA\n");
 
-	phy = dm_eth_connect_phy_handle(ethdev, interface);
+	phy = dm_eth_connect_phy_handle(ethdev, interface, phy_index);
 
 	if (!phy)
 		return NULL;
@@ -236,6 +237,12 @@ struct phy_device *dm_eth_phy_connect(struct udevice *ethdev)
 	phy->interface = interface;
 
 	return phy;
+}
+
+/* Connect to a PHY linked in eth DT node */
+struct phy_device *dm_eth_phy_connect(struct udevice *ethdev)
+{
+	return dm_eth_phy_connect_index(ethdev, 0);
 }
 
 UCLASS_DRIVER(mdio) = {
