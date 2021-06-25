@@ -755,9 +755,8 @@ int in112525_s03_lane_recovery(int lane)
 		}
 		break;
 	default:
-		dev_err(inphi_phydev->dev,
-			"Incorrect usage of APIs in %s driver\n",
-			inphi_phydev->drv->name);
+		pr_err("Incorrect usage of APIs in %s driver\n",
+		       inphi_phydev->drv->name);
 		break;
 	}
 
