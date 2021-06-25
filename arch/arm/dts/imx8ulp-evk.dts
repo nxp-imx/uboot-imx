@@ -20,6 +20,14 @@
 		compatible = "mmc-pwrseq-simple";
 		reset-gpios = <&pcal6408 2 GPIO_ACTIVE_LOW>;
 	};
+
+	reg_5v: regulator-5v {
+		compatible = "regulator-fixed";
+		regulator-name = "5V";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		regulator-always-on;
+	};
 };
 
 &lpuart5 {
@@ -31,6 +39,12 @@
 };
 
 &iomuxc1 {
+	pinctrl_dsi: dsigrp {
+		fsl,pins = <
+			MX8ULP_PAD_PTF8__PTF8		0x3
+		>;
+	};
+
 	pinctrl_lpuart5: lpuart5grp {
 		fsl,pins = <
 			MX8ULP_PAD_PTF14__LPUART5_TX	0x03
@@ -238,4 +252,41 @@
 
 &usbphy1 {
 	fsl,tx-d-cal = <88>;
+};
+
+&dsi {
+	status = "okay";
+
+	panel@0 {
+		compatible = "raydium,rm68200";
+		reg = <0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_dsi>;
+		reset-gpios = <&gpiof 8 GPIO_ACTIVE_LOW>;
+		power-supply = <&reg_5v>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&mipi_dsi_out>;
+			};
+		};
+	};
+
+	ports {
+		port@1 {
+			reg = <1>;
+
+			mipi_dsi_out: endpoint {
+				remote-endpoint = <&panel_in>;
+			};
+		};
+	};
+};
+
+&dcnano {
+	status = "okay";
+};
+
+&dphy {
+	status = "okay";
 };

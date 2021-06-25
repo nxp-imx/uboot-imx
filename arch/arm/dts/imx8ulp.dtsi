@@ -6,6 +6,8 @@
 #include <dt-bindings/clock/imx8ulp-clock.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/reset/imx8ulp-pcc-reset.h>
+#include <dt-bindings/reset/imx8ulp-sim-reset.h>
 #include "imx8ulp-pinfunc.h"
 
 / {
@@ -25,6 +27,7 @@
 		spi2 = &flexspi2;
 		ethernet0 = &fec;
 		i2c7 = &lpi2c7;
+		i2c0 = &lpi2c0;
 		usbphy0 = &usbphy0;
 		usb0 = &usbotg0;
 		usbphy1 = &usbphy1;
@@ -208,6 +211,20 @@
 				reg = <0x28039000 0x10000>,
 					<0x04000000 0x7ffffff>;
 				reg-names = "fspi_base", "fspi_mmap";
+				status = "disabled";
+			};
+		};
+
+		per_bridge1: bus@28080000 {
+			compatible = "simple-bus";
+			reg = <0x28080000 0x800000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+
+			lpi2c0: lpi2c0@28098000 {
+				compatible = "fsl,imx8ulp-lpi2c", "fsl,imx7ulp-lpi2c";
+				reg = <0x28098000 0x10000>;
 				status = "disabled";
 			};
 		};
@@ -580,7 +597,7 @@
 				interrupts = <GIC_SPI 107 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&pcc4 IMX8ULP_CLK_ENET>,
 					 <&pcc4 IMX8ULP_CLK_ENET>,
-					 <&cgc1 IMX8ULP_CLK_ENETSTAMP_SEL>,
+					 <&cgc1 IMX8ULP_CLK_ENET_TS_SEL>,
 					 <&pcc4 IMX8ULP_CLK_ENET>,
 					 <&pcc4 IMX8ULP_CLK_ENET>;
 				clock-names = "ipg", "ahb", "ptp",
@@ -733,6 +750,23 @@
 				status = "okay";
 			};
 
+			avd_sim: syscon@2da50000 {
+				compatible = "nxp,imx8ulp-avd-sim", "syscon", "simple-mfd";
+				reg = <0x2da50000 0x38>;
+				clocks = <&pcc5 IMX8ULP_CLK_AVD_SIM>;
+
+				mux: mux-controller {
+					compatible = "mmio-mux";
+					#mux-control-cells = <1>;
+					mux-reg-masks = <0x8 0x00000200>; /* DSI_DPI2_EPDC_DCNANO_MUX_SEL */
+				};
+
+				avd_sim_rst: reset-controller {
+					compatible = "nxp,imx8ulp-avd-sim-reset";
+					#reset-cells = <1>;
+				};
+			};
+
 			cgc2: clock-controller@2da60000 {
 				compatible = "fsl,imx8ulp-cgc2";
 				reg = <0x2da60000 0x10000>;
@@ -745,6 +779,59 @@
 				compatible = "fsl,imx8ulp-pcc5";
 				reg = <0x2da70000 0x10000>;
 				#clock-cells = <1>;
+				#reset-cells = <1>;
+			};
+
+			dsi: dsi@2db00000 {
+				compatible = "fsl,imx8ulp-nwl-dsi";
+				reg = <0x2db00000 0x300>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				clocks = <&cgc2 IMX8ULP_CLK_LPAV_BUS_DIV>,
+					 <&pcc5 IMX8ULP_CLK_DSI>,
+					 <&pcc5 IMX8ULP_CLK_DSI_TX_ESC>,
+					 <&cgc2 IMX8ULP_CLK_DSI_PHY_REF>;
+				clock-names = "core", "rx_esc", "tx_esc", "phy_ref";
+				assigned-clocks = <&pcc5 IMX8ULP_CLK_DSI>;
+				assigned-clock-parents = <&cgc2 IMX8ULP_CLK_PLL4_PFD3_DIV2>;
+				assigned-clock-rates = <79200000>;
+				interrupts = <GIC_SPI 114 IRQ_TYPE_LEVEL_HIGH>;
+				data-lanes-num = <4>;
+				mux-controls = <&mux 0>;
+				csr = <&avd_sim>;
+				phys = <&dphy>;
+				phy-names = "dphy";
+				resets = <&avd_sim_rst IMX8ULP_SIM_RESET_MIPI_DSI_RST_BYTE_N>,
+					 <&avd_sim_rst IMX8ULP_SIM_RESET_MIPI_DSI_RST_DPI_N>,
+					 <&avd_sim_rst IMX8ULP_SIM_RESET_MIPI_DSI_RST_ESC_N>,
+					 <&pcc5 PCC5_DSI_SWRST>;
+				reset-names = "byte", "dpi", "esc", "pclk";
+				status = "disabled";
+
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					port@0 {
+						#address-cells = <1>;
+						#size-cells = <0>;
+						reg = <0>;
+
+						mipi_dsi_to_dcnano_dpi: endpoint@0 {
+							reg = <0>;
+							remote-endpoint = <&dcnano_dpi_to_mipi_dsi>;
+						};
+					};
+				};
+			};
+
+			dphy: phy@2db00300 {
+				compatible = "fsl,imx8ulp-mipi-dphy";
+				reg = <0x2db00300 0x100>;
+				clocks = <&cgc2 IMX8ULP_CLK_DSI_PHY_REF>;
+				clock-names = "phy_ref";
+				#phy-cells = <0>;
+				status = "disabled";
 			};
 		};
 
@@ -760,6 +847,35 @@
 				 <&pcc5 IMX8ULP_CLK_RGPIOD>;
 			clock-names = "gpio", "port";
 			gpio-ranges = <&iomuxc1 0 0 24>;
+		};
+
+		dcnano: display-controller@2e050000 {
+			compatible = "nxp,imx8ulp-dcnano";
+			reg = <0x2e050000 0x10000>;
+			interrupts = <GIC_SPI 113 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&cgc2 IMX8ULP_CLK_LPAV_AXI_DIV>,
+				 <&cgc2 IMX8ULP_CLK_LPAV_AHB_DIV>,
+				 <&pcc5 IMX8ULP_CLK_DC_NANO>;
+			clock-names = "axi", "ahb", "pixel";
+			assigned-clocks = <&pcc5 IMX8ULP_CLK_DC_NANO>;
+			assigned-clock-parents = <&cgc2 IMX8ULP_CLK_PLL4_PFD0_DIV1>;
+			status = "disabled";
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				dcnano_dpi: port@0 {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					reg = <0>;
+
+					dcnano_dpi_to_mipi_dsi: endpoint@0 {
+						reg = <0>;
+						remote-endpoint = <&mipi_dsi_to_dcnano_dpi>;
+					};
+				};
+			};
 		};
 	};
 };
