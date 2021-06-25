@@ -879,6 +879,7 @@ static struct serdes_configuration {
 	{1, 3, true},
 	{1, 7, true},
 	{1, 13, true},
+	{1, 14, true},
 	{1, 19, true},
 	{1, 20, true},
 
