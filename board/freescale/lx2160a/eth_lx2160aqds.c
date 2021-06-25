@@ -25,6 +25,7 @@
 #include <fsl-mc/ldpaa_wriop.h>
 #include <linux/libfdt.h>
 
+#include "lx2160a.h"
 #include "../common/qixis.h"
 
 DECLARE_GLOBAL_DATA_PTR;
