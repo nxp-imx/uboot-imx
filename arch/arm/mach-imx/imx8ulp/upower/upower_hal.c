@@ -19,8 +19,8 @@ void upower_apd_inst_isr(upwr_isr_callb txrx_isr, upwr_isr_callb excp_isr)
 
 void upower_wait_resp(void)
 {
-    while(muptr->SR.B.RFP == 0) {
-        debug("%s: poll the mu:%x\n", __func__, muptr->SR.R);
+    while(muptr->RSR.B.RF0 == 0) {
+        debug("%s: poll the mu:%x\n", __func__, muptr->RSR.R);
         udelay(100);
     }
 
