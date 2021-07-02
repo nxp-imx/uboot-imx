@@ -23,6 +23,13 @@
 #define DSI_CM			0x100
 #define DSI_PLL_EN		0x80
 
+#define AVDSIM_SYSCTRL0		0x8
+#define AVDSIM_DSI_RST_DPI_N		0x8
+#define AVDSIM_DSI_RST_ESC_N		0x10
+#define AVDSIM_DSI_RST_BYTE_N		0x20
+#define AVDSIM_DSI_SD			0x4
+#define AVDSIM_DSI_CM			0x2
+
 /* dphy */
 #define DPHY_PD_DPHY			0x300
 #define DPHY_M_PRG_HS_PREPARE		0x304
@@ -31,6 +38,10 @@
 #define DPHY_MC_PRG_HS_ZERO		0x310
 #define DPHY_M_PRG_HS_TRAIL		0x314
 #define DPHY_MC_PRG_HS_TRAIL		0x318
+
+#ifdef CONFIG_MX7ULP
+#define DPHY_RXHS_SETTLE_REG_NA
+
 #define DPHY_PD_PLL			0x31c
 #define DPHY_TST			0x320
 #define DPHY_CN				0x324
@@ -42,6 +53,22 @@
 #define DPHY_AUTO_PD_EN			0x33c
 #define DPHY_RXLPRP			0x340
 #define DPHY_RXCDRP			0x344
+#else
+#define DPHY_RTERM_SEL_REG_NA
+
+#define DPHY_MC_PRG_RXHS_SETTLE 0x31c
+#define DPHY_M_PRG_RXHS_SETTLE 0x320
+#define DPHY_PD_PLL			0x324
+#define DPHY_TST			0x328
+#define DPHY_CN				0x32c
+#define DPHY_CM				0x330
+#define DPHY_CO				0x334
+#define DPHY_LOCK			0x338
+#define DPHY_LOCK_BYP			0x33c
+#define DPHY_AUTO_PD_EN			0x340
+#define DPHY_RXLPRP			0x344
+#define DPHY_RXCDRP			0x348
+#endif
 
 /* host */
 #define HOST_CFG_NUM_LANES		0x0
