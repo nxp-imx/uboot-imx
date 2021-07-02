@@ -37,4 +37,6 @@ void init_clk_fspi(int index);
 void init_clk_ddr(void);
 int set_ddr_clk(u32 phy_freq_mhz);
 void clock_init(void);
+void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq_in_khz);
+void enable_mipi_dsi_clk(unsigned char enable);
 #endif
