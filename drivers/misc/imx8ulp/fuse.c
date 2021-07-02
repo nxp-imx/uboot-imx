@@ -62,6 +62,7 @@ struct s400_map_entry s400_api_mapping_table[] = {
 	{ 2, 8 },	/* ECID */
 	{ 7, 4, 0, 1 },	/* OTP_UNIQ_ID */
 	{ 23, 1, 4, 2 }, /* OTFAD */
+	{ 25, 8 }, /* Test config2 */
 };
 
 static s32 map_fsb_fuse_index(u32 bank, u32 word, bool *redundancy)
