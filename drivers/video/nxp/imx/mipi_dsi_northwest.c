@@ -29,7 +29,7 @@
 #include <asm/arch/clock.h>
 
 #define MIPI_LCD_SLEEP_MODE_DELAY	(120)
-#define MIPI_FIFO_TIMEOUT		250000 /* 250ms */
+#define MIPI_FIFO_TIMEOUT		500000 /* 500ms */
 #define	PS2KHZ(ps)	(1000000000UL / (ps))
 
 #define DIV_ROUND_CLOSEST_ULL(x, divisor)(		\
@@ -54,6 +54,15 @@ enum mipi_dsi_payload {
 	DSI_PAYLOAD_VIDEO,
 };
 
+struct nwl_dsi_sim_ops {
+	int (*mipi_reset)(struct regmap *sim, bool reset);
+	int (*dpi_reset)(struct regmap *sim, bool reset);
+	int (*cm_set)(struct regmap *sim, bool normal);
+	int (*shutdown)(struct regmap *sim, bool sd);
+	int (*pll_en)(struct regmap *sim, bool enable);
+	int (*isolate)(struct regmap *sim, bool enable);
+};
+
 /*
  * mipi-dsi northwest driver information structure, holds useful data for the driver.
  */
@@ -63,6 +72,7 @@ struct mipi_dsi_northwest_info {
 	struct mipi_dsi_host dsi_host;
 	struct display_timing timings;
 	struct regmap *sim;
+	struct nwl_dsi_sim_ops *sim_ops;
 
 	 uint32_t max_data_lanes;
 	 uint32_t max_data_rate;
@@ -216,7 +226,8 @@ static int mipi_dsi_dphy_init(struct mipi_dsi_northwest_info *mipi_dsi)
 	uint64_t norm_denom, norm_num, split_denom;
 	struct pll_divider div = { 0 };
 
-	regmap_update_bits(mipi_dsi->sim, SIM_SOPT1, MIPI_ISO_DISABLE, MIPI_ISO_DISABLE);
+	if (mipi_dsi->sim_ops->isolate)
+		mipi_dsi->sim_ops->isolate(mipi_dsi->sim, false);
 
 	bpp = mipi_dsi_pixel_format_to_bpp(mipi_dsi->device->format);
 
@@ -420,7 +431,7 @@ static int mipi_dsi_dphy_init(struct mipi_dsi_northwest_info *mipi_dsi)
 	debug("cn 0x%x, cm 0x%x, co 0x%x\n", div.cn, div.cm, div.co);
 
 	writel(div.cn, mipi_dsi->mmio_base + DPHY_CN);
-	writel(div.cm, mipi_dsi->mmio_base + DPHY_CM);
+	writel(div.cm + 1, mipi_dsi->mmio_base + DPHY_CM);
 	writel(div.co, mipi_dsi->mmio_base + DPHY_CO);
 
 	writel(0x25, mipi_dsi->mmio_base + DPHY_TST);
@@ -436,8 +447,25 @@ static int mipi_dsi_dphy_init(struct mipi_dsi_northwest_info *mipi_dsi)
 	}
 	debug("%s: dphy lock = 0x%x\n", __func__, lock);
 
+#ifndef DPHY_RXHS_SETTLE_REG_NA
+	u32 rxhs_settle = 0x7;
+	if (req_bit_clk < 80000000)
+		rxhs_settle = 0x1;
+	else if (req_bit_clk < 250000000)
+		rxhs_settle = 0x6;
+	else if (req_bit_clk < 500000000)
+		rxhs_settle = 0x8;
+	else
+		rxhs_settle = 0xa;
+
+	writel(rxhs_settle, mipi_dsi->mmio_base + DPHY_M_PRG_RXHS_SETTLE);
+	writel(0x10, mipi_dsi->mmio_base + DPHY_MC_PRG_RXHS_SETTLE);
+#endif
+
 	writel(0x0, mipi_dsi->mmio_base + DPHY_LOCK_BYP);
+#ifndef DPHY_RTERM_SEL_REG_NA
 	writel(0x1, mipi_dsi->mmio_base + DPHY_RTERM_SEL);
+#endif
 	writel(0x0, mipi_dsi->mmio_base + DPHY_AUTO_PD_EN);
 	writel(0x1, mipi_dsi->mmio_base + DPHY_RXLPRP);
 	writel(0x1, mipi_dsi->mmio_base + DPHY_RXCDRP);
@@ -449,7 +477,9 @@ static int mipi_dsi_dphy_init(struct mipi_dsi_northwest_info *mipi_dsi)
 	writel(0x5, mipi_dsi->mmio_base + DPHY_MC_PRG_HS_TRAIL);
 	writel(0x0, mipi_dsi->mmio_base + DPHY_PD_DPHY);
 
-	regmap_update_bits(mipi_dsi->sim, SIM_SOPT1CFG, DSI_PLL_EN, DSI_PLL_EN);
+	if (mipi_dsi->sim_ops->pll_en)
+		mipi_dsi->sim_ops->pll_en(mipi_dsi->sim, true);
+
 	return 0;
 }
 
@@ -512,11 +542,11 @@ static int mipi_dsi_dpi_init(struct mipi_dsi_northwest_info *mipi_dsi)
 	writel(pixel_fmt, mipi_dsi->mmio_base + DPI_PIXEL_FORMAT);
 	writel(0x0, mipi_dsi->mmio_base + DPI_VSYNC_POLARITY);
 	writel(0x0, mipi_dsi->mmio_base + DPI_HSYNC_POLARITY);
-	writel(0x2, mipi_dsi->mmio_base + DPI_VIDEO_MODE);
+	writel(0x0, mipi_dsi->mmio_base + DPI_VIDEO_MODE);
 
-	writel(timings->hfront_porch.typ * (bpp >> 3), mipi_dsi->mmio_base + DPI_HFP);
-	writel(timings->hback_porch.typ * (bpp >> 3), mipi_dsi->mmio_base + DPI_HBP);
-	writel(timings->hsync_len.typ * (bpp >> 3), mipi_dsi->mmio_base + DPI_HSA);
+	writel(timings->hfront_porch.typ, mipi_dsi->mmio_base + DPI_HFP);
+	writel(timings->hback_porch.typ, mipi_dsi->mmio_base + DPI_HBP);
+	writel(timings->hsync_len.typ, mipi_dsi->mmio_base + DPI_HSA);
 	writel(0x0, mipi_dsi->mmio_base + DPI_ENABLE_MULT_PKTS);
 
 	writel(timings->vback_porch.typ, mipi_dsi->mmio_base + DPI_VBP);
@@ -630,15 +660,27 @@ static void mipi_dsi_long_data_wr(struct mipi_dsi_northwest_info *mipi_dsi,
 
 static int wait_for_pkt_done(struct mipi_dsi_northwest_info *mipi_dsi, unsigned long timeout)
 {
-	uint32_t irq_status;
+	uint32_t irq_status, pkt_status;
 
+	/* Wait state machine to idle first, then read IRQ status
+	* IRQ status [28:9] maps dsi host controller status_out port bits, It initiates a status_port read to DSI PHY,
+	* We should not IRQ status register until state machine be idle
+	*/
 	do {
+		pkt_status = readl(mipi_dsi->mmio_base + HOST_PKT_STATUS);
+		if (!(pkt_status & HOST_IRQ_STATUS_SM_NOT_IDLE))
+			break;
+
+		udelay(1);
+	} while (--timeout);
+
+	while(timeout--) {
 		irq_status = readl(mipi_dsi->mmio_base + HOST_IRQ_STATUS);
 		if (irq_status & HOST_IRQ_STATUS_TX_PKT_DONE)
 			return timeout;
 
 		udelay(1);
-	} while (--timeout);
+	}
 
 	return 0;
 }
@@ -649,7 +691,7 @@ static int mipi_dsi_pkt_write(struct mipi_dsi_northwest_info *mipi_dsi,
 	int ret = 0;
 	const uint8_t *data = (const uint8_t *)buf;
 
-	debug("mipi_dsi_pkt_write data_type 0x%x, buf 0x%x, len %u\n", data_type, (u32)buf, len);
+	debug("mipi_dsi_pkt_write data_type 0x%x, buf 0x%lx, len %u\n", data_type, (ulong)buf, len);
 
 	if (len == 0)
 		/* handle generic long write command */
@@ -702,16 +744,11 @@ static int mipi_dsi_dcs_cmd(struct mipi_dsi_northwest_info *mipi_dsi,
 
 static void reset_dsi_domains(struct mipi_dsi_northwest_info *mipi_dsi, bool reset)
 {
-	/* escape domain */
-	regmap_update_bits(mipi_dsi->sim, SIM_SOPT1CFG,
-			DSI_RST_ESC_N, (reset ? 0 : DSI_RST_ESC_N));
-	/* byte domain */
-	regmap_update_bits(mipi_dsi->sim, SIM_SOPT1CFG,
-			DSI_RST_BYTE_N, (reset ? 0 : DSI_RST_BYTE_N));
+	if (mipi_dsi->sim_ops->mipi_reset)
+		mipi_dsi->sim_ops->mipi_reset(mipi_dsi->sim, reset);
 
-	/* dpi domain */
-	regmap_update_bits(mipi_dsi->sim, SIM_SOPT1CFG,
-			DSI_RST_DPI_N, (reset ? 0 : DSI_RST_DPI_N));
+	if (mipi_dsi->sim_ops->dpi_reset)
+			mipi_dsi->sim_ops->dpi_reset(mipi_dsi->sim, reset);
 }
 
 static void mipi_dsi_shutdown(struct mipi_dsi_northwest_info *mipi_dsi)
@@ -759,10 +796,12 @@ static int mipi_dsi_northwest_host_attach(struct mipi_dsi_host *host,
 	reset_dsi_domains(mipi_dsi, false);
 
 	/* display_en */
-	regmap_update_bits(mipi_dsi->sim, SIM_SOPT1CFG, DSI_SD, 0);
+	if (mipi_dsi->sim_ops->shutdown)
+		mipi_dsi->sim_ops->shutdown(mipi_dsi->sim, false);
 
 	/* normal cm */
-	regmap_update_bits(mipi_dsi->sim, SIM_SOPT1CFG, DSI_CM, 0);
+	if (mipi_dsi->sim_ops->cm_set)
+		mipi_dsi->sim_ops->cm_set(mipi_dsi->sim, true);
 	mdelay(20);
 
 	/* Disable all interrupts, since we use polling */
@@ -809,6 +848,113 @@ static const struct mipi_dsi_host_ops mipi_dsi_northwest_host_ops = {
 	.transfer = mipi_dsi_northwest_host_transfer,
 };
 
+int imx7ulp_dsi_mipi_reset(struct regmap *sim, bool reset)
+{
+	/* escape domain */
+	regmap_update_bits(sim, SIM_SOPT1CFG,
+			DSI_RST_ESC_N, (reset ? 0 : DSI_RST_ESC_N));
+	/* byte domain */
+	regmap_update_bits(sim, SIM_SOPT1CFG,
+			DSI_RST_BYTE_N, (reset ? 0 : DSI_RST_BYTE_N));
+
+	return 0;
+}
+
+int imx7ulp_dsi_dpi_reset(struct regmap *sim, bool reset)
+{
+	/* dpi domain */
+	regmap_update_bits(sim, SIM_SOPT1CFG,
+			DSI_RST_DPI_N, (reset ? 0 : DSI_RST_DPI_N));
+
+	return 0;
+}
+
+int imx7ulp_dsi_shutdown(struct regmap *sim, bool sd)
+{
+	regmap_update_bits(sim, SIM_SOPT1CFG,
+			DSI_SD, (sd ? DSI_SD : 0));
+
+	return 0;
+}
+
+int imx7ulp_dsi_cm_set(struct regmap *sim, bool normal)
+{
+	regmap_update_bits(sim, SIM_SOPT1CFG,
+			DSI_CM, (normal ? 0 : DSI_CM));
+
+	return 0;
+}
+
+int imx7ulp_dsi_pll_en(struct regmap *sim, bool enable)
+{
+	regmap_update_bits(sim, SIM_SOPT1CFG,
+			DSI_PLL_EN, (enable ? DSI_PLL_EN : 0));
+
+	return 0;
+}
+
+int imx7ulp_dsi_isolate(struct regmap *sim, bool enable)
+{
+	regmap_update_bits(sim, SIM_SOPT1,
+			MIPI_ISO_DISABLE, (enable ? 0 : MIPI_ISO_DISABLE));
+
+	return 0;
+}
+
+int imx8ulp_dsi_mipi_reset(struct regmap *sim, bool reset)
+{
+	/* byte domain */
+	regmap_update_bits(sim, AVDSIM_SYSCTRL0,
+			AVDSIM_DSI_RST_BYTE_N, (reset ? 0 : AVDSIM_DSI_RST_BYTE_N));
+
+	/* escape domain */
+	regmap_update_bits(sim, AVDSIM_SYSCTRL0,
+			AVDSIM_DSI_RST_ESC_N, (reset ? 0 : AVDSIM_DSI_RST_ESC_N));
+
+	return 0;
+}
+
+int imx8ulp_dsi_dpi_reset(struct regmap *sim, bool reset)
+{
+	/* dpi domain */
+	regmap_update_bits(sim, AVDSIM_SYSCTRL0,
+			AVDSIM_DSI_RST_DPI_N, (reset ? 0 : AVDSIM_DSI_RST_DPI_N));
+
+	return 0;
+}
+
+int imx8ulp_dsi_shutdown(struct regmap *sim, bool sd)
+{
+	regmap_update_bits(sim, AVDSIM_SYSCTRL0,
+			AVDSIM_DSI_SD, (sd ? AVDSIM_DSI_SD : 0));
+
+	return 0;
+}
+
+int imx8ulp_dsi_cm_set(struct regmap *sim, bool normal)
+{
+	regmap_update_bits(sim, AVDSIM_SYSCTRL0,
+			AVDSIM_DSI_CM, (normal ? AVDSIM_DSI_CM : 0));
+
+	return 0;
+}
+
+static struct nwl_dsi_sim_ops imx7ulp_sim_ops = {
+	.mipi_reset = &imx7ulp_dsi_mipi_reset,
+	.dpi_reset = &imx7ulp_dsi_dpi_reset,
+	.cm_set = &imx7ulp_dsi_cm_set,
+	.shutdown = &imx7ulp_dsi_shutdown,
+	.pll_en = &imx7ulp_dsi_pll_en,
+	.isolate = &imx7ulp_dsi_isolate,
+};
+
+static struct nwl_dsi_sim_ops imx8ulp_sim_ops = {
+	.mipi_reset = &imx8ulp_dsi_mipi_reset,
+	.dpi_reset = &imx8ulp_dsi_dpi_reset,
+	.cm_set = &imx8ulp_dsi_cm_set,
+	.shutdown = &imx8ulp_dsi_shutdown,
+};
+
 static int mipi_dsi_northwest_init(struct udevice *dev,
 			    struct mipi_dsi_device *device,
 			    struct display_timing *timings,
@@ -830,22 +976,39 @@ static int mipi_dsi_northwest_init(struct udevice *dev,
 		return -EINVAL;
 	}
 
-	ret = dev_read_u32(device->dev, "max-data-rate", &dsi->max_data_rate);
-	if (ret) {
-		dev_err(device->dev, "fail to get max-data-rate\n");
-		return -EINVAL;
-	}
+	if (device_is_compatible(device->dev, "fsl,imx7ulp-mipi-dsi")) {
+		ret = dev_read_u32(device->dev, "max-data-rate", &dsi->max_data_rate);
+		if (ret) {
+			dev_err(device->dev, "fail to get max-data-rate\n");
+			return -EINVAL;
+		}
 
-	ret = dev_read_u32(device->dev, "phy-ref-clkfreq", &dsi->pll_ref);
-	if (ret) {
-		dev_err(device->dev, "fail to get phy-ref-clkfreq\n");
-		return -EINVAL;
-	}
+		ret = dev_read_u32(device->dev, "phy-ref-clkfreq", &dsi->pll_ref);
+		if (ret) {
+			dev_err(device->dev, "fail to get phy-ref-clkfreq\n");
+			return -EINVAL;
+		}
 
-	dsi->sim = syscon_regmap_lookup_by_phandle(device->dev, "sim");
-	if (IS_ERR(dsi->sim)) {
-		dev_err(device->dev, "fail to get sim regmap\n");
-		return PTR_ERR(dsi->sim);
+		dsi->sim = syscon_regmap_lookup_by_phandle(device->dev, "sim");
+		if (IS_ERR(dsi->sim)) {
+			dev_err(device->dev, "fail to get sim regmap\n");
+			return PTR_ERR(dsi->sim);
+		}
+
+		dsi->sim_ops = &imx7ulp_sim_ops;
+	} else if (device_is_compatible(device->dev, "fsl,imx8ulp-nwl-dsi")) {
+		dsi->max_data_rate = 1500000000;
+		dsi->pll_ref = 24000000;
+		dsi->sim = syscon_regmap_lookup_by_phandle(device->dev, "csr");
+		if (IS_ERR(dsi->sim)) {
+			dev_err(device->dev, "fail to get csr regmap\n");
+			return PTR_ERR(dsi->sim);
+		}
+
+		dsi->sim_ops = &imx8ulp_sim_ops;
+	} else {
+		dev_err(device->dev, "Invalid compatible string\n");
+		return -EINVAL;
 	}
 
 	return 0;
@@ -890,7 +1053,6 @@ U_BOOT_DRIVER(mipi_dsi_northwest) = {
 	.id			= UCLASS_DSI_HOST,
 	.of_match		= mipi_dsi_northwest_ids,
 	.probe			= mipi_dsi_northwest_probe,
-	.remove 		= mipi_dsi_northwest_disable,
 	.ops			= &mipi_dsi_northwest_ops,
 	.priv_auto	= sizeof(struct mipi_dsi_northwest_info),
 };
