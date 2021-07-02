@@ -99,6 +99,8 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	u32 controller_spacing = 0x200;
 #elif defined(CONFIG_USB_EHCI_MX7) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8)
 	u32 controller_spacing = 0x10000;
+#elif defined(CONFIG_IMX8ULP)
+	u32 controller_spacing = 0x20000;
 #endif
 	struct usb_ehci *ehci = (struct usb_ehci *)(ulong)(USB_BASE_ADDR +
 		(controller_spacing * index));
@@ -241,7 +243,7 @@ static int ehci_usb_phy_mode(struct udevice *dev)
 	void *__iomem phy_ctrl, *__iomem phy_status;
 	u32 val;
 
-	if (is_mx6() || is_mx7ulp() || is_imx8()) {
+	if (is_mx6() || is_mx7ulp() || is_imx8() || is_imx8ulp()) {
 		phy_ctrl = (void __iomem *)(priv->phy_base + USBPHY_CTRL);
 		val = readl(phy_ctrl);
 
@@ -276,15 +278,15 @@ static int ehci_get_usb_phy(struct udevice *dev)
 	 * About fsl,usbphy, Refer to
 	 * Documentation/devicetree/bindings/usb/ci-hdrc-usb2.txt.
 	 */
-	if (is_mx6() || is_mx7ulp() || is_imx8()) {
+	if (is_mx6() || is_mx7ulp() || is_imx8() || is_imx8ulp()) {
 		phy_off = fdtdec_lookup_phandle(blob,
 						offset,
 						"fsl,usbphy");
 		if (phy_off < 0)
 			return -EINVAL;
 
-		addr = (void __iomem *)fdtdec_get_addr(blob, phy_off,
-						       "reg");
+		addr = (void __iomem *)fdtdec_get_addr_size_auto_noparent(blob, phy_off,
+						       "reg", 0, NULL, false);
 		if ((fdt_addr_t)addr == FDT_ADDR_T_NONE)
 			return -EINVAL;
 
@@ -401,6 +403,8 @@ static int ehci_usb_bind(struct udevice *dev)
 	if (dev_seq(dev) == -1) {
 		if (IS_ENABLED(CONFIG_MX6))
 			controller_spacing = 0x200;
+		else if (IS_ENABLED(CONFIG_IMX8ULP))
+			controller_spacing = 0x20000;
 		else
 			controller_spacing = 0x10000;
 		fdt_addr_t addr = devfdt_get_addr_index(dev, 0);

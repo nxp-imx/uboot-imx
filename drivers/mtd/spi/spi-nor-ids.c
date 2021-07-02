@@ -63,6 +63,10 @@
  * old entries may be missing 4K flag.
  */
 const struct flash_info spi_nor_ids[] = {
+#ifdef CONFIG_SPI_FLASH_ADESTO		/* ADESTO */
+	/* Fix to 4 bytes addr width, except 0x03 read, others are using 4 bytes */
+	{ INFO("atxp032",	 0x43a700, 0, 64 * 1024,   64, SECT_4K | SPI_NOR_HAS_LOCK) .addr_width = 4, },
+#endif
 #ifdef CONFIG_SPI_FLASH_ATMEL		/* ATMEL */
 	/* Atmel -- some are (confusingly) marketed as "DataFlash" */
 	{ INFO("at26df321",	0x1f4700, 0, 64 * 1024, 64, SECT_4K) },
@@ -172,6 +176,7 @@ const struct flash_info spi_nor_ids[] = {
 	{ INFO("mx66l1g45g",  0xc2201b, 0, 64 * 1024, 2048, SECT_4K | SPI_NOR_DUAL_READ | SPI_NOR_QUAD_READ) },
 	{ INFO("mx25l1633e", 0xc22415, 0, 64 * 1024,   32, SPI_NOR_QUAD_READ | SPI_NOR_4B_OPCODES | SECT_4K) },
 	{ INFO("mx25r6435f", 0xc22817, 0, 64 * 1024,   128,  SECT_4K) },
+	{ INFO("mx25uw51345g", 0xc2843a, 0,  64 * 1024,  1024, SECT_4K | SPI_NOR_4B_OPCODES) },
 #endif
 
 #ifdef CONFIG_SPI_FLASH_STMICRO		/* STMICRO */

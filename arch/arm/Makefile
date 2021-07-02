@@ -28,7 +28,7 @@ else
 arch-y += -D__LINUX_ARM_ARCH__=$(CONFIG_SYS_ARM_ARCH)
 endif
 
-ifneq ($(CONFIG_ARCH_IMX8)$(CONFIG_ARCH_IMX8M),)
+ifneq ($(CONFIG_ARCH_IMX8)$(CONFIG_ARCH_IMX8M)$(CONFIG_ARCH_IMX8ULP),)
 arch-y += -mgeneral-regs-only
 endif
 
@@ -111,11 +111,11 @@ libs-y += arch/arm/cpu/
 libs-y += arch/arm/lib/
 
 ifeq ($(CONFIG_SPL_BUILD),y)
-ifneq (,$(CONFIG_MX23)$(CONFIG_MX28)$(CONFIG_MX35)$(filter $(SOC), mx25 mx5 mx6 mx7 mx35 imx8m imx8 imxrt))
+ifneq (,$(CONFIG_MX23)$(CONFIG_MX28)$(CONFIG_MX35)$(filter $(SOC), mx25 mx5 mx6 mx7 mx35 imx8m imx8 imx8ulp imxrt))
 libs-y += arch/arm/mach-imx/
 endif
 else
-ifneq (,$(filter $(SOC), mx25 mx27 mx5 mx6 mx7 mx7ulp mx31 mx35 mxs imx8m imx8 imxrt vf610))
+ifneq (,$(filter $(SOC), mx25 mx27 mx5 mx6 mx7 mx7ulp mx31 mx35 mxs imx8m imx8 imx8ulp imxrt vf610))
 libs-y += arch/arm/mach-imx/
 endif
 endif

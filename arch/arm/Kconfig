@@ -850,6 +850,14 @@ config ARCH_IMX8M
 	select SUPPORT_SPL
 	imply CMD_DM
 
+config ARCH_IMX8ULP
+	bool "NXP i.MX8ULP platform"
+	select ARM64
+	select DM
+	select OF_CONTROL
+	select SUPPORT_SPL
+	imply CMD_DM
+
 config ARCH_IMXRT
 	bool "NXP i.MXRT platform"
 	select CPU_V7M
@@ -1903,6 +1911,8 @@ source "arch/arm/mach-imx/mx7ulp/Kconfig"
 source "arch/arm/mach-imx/imx8/Kconfig"
 
 source "arch/arm/mach-imx/imx8m/Kconfig"
+
+source "arch/arm/mach-imx/imx8ulp/Kconfig"
 
 source "arch/arm/mach-imx/imxrt/Kconfig"
 
