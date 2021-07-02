@@ -96,3 +96,10 @@ config VIDEO_IMX_LCDIFV3
 	help
 	  Support for i.MX8MP LCDIFv3 controller.
 
+config VIDEO_IMX_DCNANO
+	bool "i.MX DCNANO LCDIF support"
+	depends on DM_VIDEO && IMX8ULP
+	select VIDEO_LINK
+	help
+	  Support for i.MX8ULP DCNANO LCD controller.
+
