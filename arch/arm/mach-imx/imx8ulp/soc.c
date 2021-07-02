@@ -681,6 +681,25 @@ int arch_cpu_init_dm(void)
 	return 0;
 }
 
+#if defined(CONFIG_ARCH_MISC_INIT)
+int arch_misc_init(void)
+{
+	struct udevice *dev;
+	int node, ret;
+
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "fsl,sec-v4.0");
+
+	ret = uclass_get_device_by_of_offset(UCLASS_MISC, node, &dev);
+	if (ret) {
+		printf("could not get caam jr device %d\n", ret);
+		return ret;
+	}
+	device_probe(dev);
+
+	return 0;
+}
+#endif
+
 #if defined(CONFIG_SPL_BUILD)
 __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
