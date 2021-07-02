@@ -240,15 +240,34 @@ static const struct eth_ops dsa_port_ops = {
 	.free_pkt	= dsa_port_free_pkt,
 };
 
+/*
+ * Inherit port's hwaddr from the DSA master, unless the port already has a
+ * unique MAC address specified in the environment.
+ */
+static void dsa_port_set_hwaddr(struct udevice *pdev, struct udevice *master)
+{
+	struct eth_pdata *eth_pdata, *master_pdata;
+	unsigned char env_enetaddr[ARP_HLEN];
+
+	eth_env_get_enetaddr_by_index("eth", dev_seq(pdev), env_enetaddr);
+	if (!is_zero_ethaddr(env_enetaddr))
+		return;
+
+	master_pdata = dev_get_plat(master);
+	eth_pdata = dev_get_plat(pdev);
+	memcpy(eth_pdata->enetaddr, master_pdata->enetaddr, ARP_HLEN);
+	eth_env_set_enetaddr_by_index("eth", dev_seq(pdev),
+				      master_pdata->enetaddr);
+}
+
 static int dsa_port_probe(struct udevice *pdev)
 {
 	struct udevice *dev = dev_get_parent(pdev);
-	struct eth_pdata *eth_pdata, *master_pdata;
-	unsigned char env_enetaddr[ARP_HLEN];
+	struct dsa_ops *ops = dsa_get_ops(dev);
 	struct dsa_port_pdata *port_pdata;
 	struct dsa_priv *dsa_priv;
 	struct udevice *master;
-	int ret;
+	int err;
 
 	port_pdata = dev_get_parent_plat(pdev);
 	dsa_priv = dev_get_uclass_priv(dev);
@@ -268,23 +287,18 @@ static int dsa_port_probe(struct udevice *pdev)
 	 * TODO: we assume the master device is always there and doesn't get
 	 * removed during runtime.
 	 */
-	ret = device_probe(master);
-	if (ret)
-		return ret;
+	err = device_probe(master);
+	if (err)
+		return err;
 
-	/*
-	 * Inherit port's hwaddr from the DSA master, unless the port already
-	 * has a unique MAC address specified in the environment.
-	 */
-	eth_env_get_enetaddr_by_index("eth", dev_seq(pdev), env_enetaddr);
-	if (!is_zero_ethaddr(env_enetaddr))
-		return 0;
+	dsa_port_set_hwaddr(pdev, master);
 
-	master_pdata = dev_get_plat(master);
-	eth_pdata = dev_get_plat(pdev);
-	memcpy(eth_pdata->enetaddr, master_pdata->enetaddr, ARP_HLEN);
-	eth_env_set_enetaddr_by_index("eth", dev_seq(pdev),
-				      master_pdata->enetaddr);
+	if (ops->port_probe) {
+		err = ops->port_probe(dev, port_pdata->index,
+				      port_pdata->phy);
+		if (err)
+			return err;
+	}
 
 	return 0;
 }
