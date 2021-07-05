@@ -162,6 +162,11 @@ int board_late_init(void)
 	board_late_mmc_env_init();
 #endif
 
+	env_set("sec_boot", "no");
+#ifdef CONFIG_AHAB_BOOT
+	env_set("sec_boot", "yes");
+#endif
+
 	/* clear fdtaddr to avoid obsolete data */
 	addr = env_get_hex("fdt_addr_r", 0);
 	if (addr)
