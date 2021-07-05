@@ -6,6 +6,7 @@ config AHAB_BOOT
 	  This option enables the support for AHAB secure boot.
 
 config IMX8ULP
+	select ARCH_EARLY_INIT_R
 	bool
 	select ARMV8_SPL_EXCEPTION_VECTORS
 
