@@ -55,6 +55,11 @@
 #define BOOTENV
 #endif
 
+#define JAILHOUSE_ENV \
+	"jh_clk= \0 " \
+	"jh_mmcboot=setenv jh_clk clk_ignore_unused mem=1GB; run loadimage; run mmcboot\0 " \
+	"jh_netboot=setenv jh_clk clk_ignore_unused mem=1GB; run netboot\0 "
+
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x83800000\0" \
@@ -66,6 +71,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
 	BOOTENV \
+	JAILHOUSE_ENV \
 	AHAB_ENV \
 	"scriptaddr=0x83500000\0" \
 	"kernel_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
@@ -83,7 +89,7 @@
 	"mmcpart=1\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
 	"mmcautodetect=yes\0" \
-	"mmcargs=setenv bootargs console=${console} root=${mmcroot}\0 " \
+	"mmcargs=setenv bootargs ${jh_clk} console=${console} root=${mmcroot}\0 " \
 	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
@@ -111,7 +117,7 @@
 				"fi; " \
 			"fi;" \
 		"fi;\0" \
-	"netargs=setenv bootargs console=${console} " \
+	"netargs=setenv bootargs ${jh_clk} console=${console} " \
 		"root=/dev/nfs " \
 		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 	"netboot=echo Booting from net ...; " \
