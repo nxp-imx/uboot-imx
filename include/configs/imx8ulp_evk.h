@@ -39,6 +39,12 @@
 #define IMX_FEC_BASE			0x29950000
 #endif
 
+#ifdef CONFIG_AHAB_BOOT
+#define AHAB_ENV "sec_boot=yes\0"
+#else
+#define AHAB_ENV "sec_boot=no\0"
+#endif
+
 #ifdef CONFIG_DISTRO_DEFAULTS
 #define BOOT_TARGET_DEVICES(func) \
 	func(USB, usb, 0) \
@@ -60,6 +66,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
 	BOOTENV \
+	AHAB_ENV \
 	"scriptaddr=0x83500000\0" \
 	"kernel_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"image=Image\0" \
@@ -67,6 +74,8 @@
 	"fdt_addr_r=0x83000000\0"			\
 	"fdt_addr=0x83000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
+	"cntr_addr=0x98000000\0"			\
+	"cntr_file=os_cntr_signed.bin\0" \
 	"boot_fit=no\0" \
 	"fdtfile=imx8ulp-evk.dtb\0" \
 	"bootm_size=0x10000000\0" \
@@ -80,16 +89,27 @@
 		"source\0" \
 	"loadimage=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
 	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr_r} ${fdtfile}\0" \
+	"loadcntr=fatload mmc ${mmcdev}:${mmcpart} ${cntr_addr} ${cntr_file}\0" \
+	"auth_os=auth_cntr ${cntr_addr}\0" \
+	"boot_os=booti ${loadaddr} - ${fdt_addr_r};\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"run mmcargs; " \
-		"if test ${boot_fit} = yes || test ${boot_fit} = try; then " \
-			"bootm ${loadaddr}; " \
-		"else " \
-			"if run loadfdt; then " \
-				"booti ${loadaddr} - ${fdt_addr_r}; " \
+		"if test ${sec_boot} = yes; then " \
+			"if run auth_os; then " \
+				"run boot_os; " \
 			"else " \
-				"echo WARN: Cannot load the DT; " \
+				"echo ERR: failed to authenticate; " \
 			"fi; " \
+		"else " \
+			"if test ${boot_fit} = yes || test ${boot_fit} = try; then " \
+				"bootm ${loadaddr}; " \
+			"else " \
+				"if run loadfdt; then " \
+					"run boot_os; " \
+				"else " \
+					"echo WARN: Cannot load the DT; " \
+				"fi; " \
+			"fi;" \
 		"fi;\0" \
 	"netargs=setenv bootargs console=${console} " \
 		"root=/dev/nfs " \
@@ -101,25 +121,41 @@
 		"else " \
 			"setenv get_cmd tftp; " \
 		"fi; " \
-		"${get_cmd} ${loadaddr} ${image}; " \
-		"if test ${boot_fit} = yes || test ${boot_fit} = try; then " \
-			"bootm ${loadaddr}; " \
-		"else " \
-			"if ${get_cmd} ${fdt_addr_r} ${fdtfile}; then " \
-				"booti ${loadaddr} - ${fdt_addr_r}; " \
+		"if test ${sec_boot} = yes; then " \
+			"${get_cmd} ${cntr_addr} ${cntr_file}; " \
+			"if run auth_os; then " \
+				"run boot_os; " \
 			"else " \
-				"echo WARN: Cannot load the DT; " \
+				"echo ERR: failed to authenticate; " \
 			"fi; " \
+		"else " \
+			"${get_cmd} ${loadaddr} ${image}; " \
+			"if test ${boot_fit} = yes || test ${boot_fit} = try; then " \
+				"bootm ${loadaddr}; " \
+			"else " \
+				"if ${get_cmd} ${fdt_addr_r} ${fdtfile}; then " \
+					"run boot_os; " \
+				"else " \
+					"echo WARN: Cannot load the DT; " \
+				"fi; " \
+			"fi;" \
 		"fi;\0" \
 	"bsp_bootcmd=echo Running BSP bootcmd ...; " \
 		"mmc dev ${mmcdev}; if mmc rescan; then " \
 		   "if run loadbootscript; then " \
 			   "run bootscript; " \
 		   "else " \
-			   "if run loadimage; then " \
-				   "run mmcboot; " \
-			   "else run netboot; " \
-			   "fi; " \
+			   "if test ${sec_boot} = yes; then " \
+				   "if run loadcntr; then " \
+					   "run mmcboot; " \
+				   "else run netboot; " \
+				   "fi; " \
+			    "else " \
+				   "if run loadimage; then " \
+					   "run mmcboot; " \
+				   "else run netboot; " \
+				   "fi; " \
+				"fi; " \
 		   "fi; " \
 	   "fi;"
 
