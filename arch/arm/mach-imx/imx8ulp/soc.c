@@ -700,6 +700,24 @@ int arch_misc_init(void)
 }
 #endif
 
+#ifdef CONFIG_ARCH_EARLY_INIT_R
+int arch_early_init_r(void)
+{
+	struct udevice *devp;
+	int node, ret;
+
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "fsl,imx8ulp-mu");
+
+	ret = uclass_get_device_by_of_offset(UCLASS_MISC, node, &devp);
+	if (ret) {
+		printf("could not get S400 mu %d\n", ret);
+		return ret;
+	}
+
+	return 0;
+}
+#endif
+
 #if defined(CONFIG_SPL_BUILD)
 __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
