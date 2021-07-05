@@ -70,4 +70,29 @@ config FSL_CAAM_RNG
 config FSL_BLOB
 	bool "Enable Blob Encap/Decap, Blob KEK support"
 
+config RNG_SELF_TEST
+	bool "RNG self test"
+	help
+	 Enable RNG self test.
+	 Following is the typical warning message when ROM/HAB fails rng self test
+	 ------------+----+------+----+----------------------------------------
+	 Persistent  | T  |  L   | P  | Contents
+	 Memory      | a  |  e   | a  |
+	 Record      | g  |  n   | r  |
+	 Type        |    |  g   |    |
+	             |    |  t   |    |
+	             |    |  h   |    |
+	 ------------+----+------+----+-------------------------------------------------
+	 Event       |0xdb|0x0024|0x42| SRCE Field: 69 30 e1 1d
+	             |    |      |    |             STS = HAB_WARNING (0x69)
+	             |    |      |    |             RSN = HAB_ENG_FAIL (0x30)
+	             |    |      |    |             CTX = HAB_CTX_ENTRY (0xE1)
+	             |    |      |    |             ENG = HAB_ENG_CAAM (0x1d)
+	             |    |      |    | Evt Data (hex):
+	             |    |      |    |  00 04 00 02 40 00 36 06 55 55 00 03 00 00 00 00
+	             |    |      |    |  00 00 00 00 00 00 00 00 00 00 00 01
+	 ------------+----+------+----+-------------------------------------------------
+	 In this scenario RNG self test needs to be run explicitly and
+	 must be run before running any RNG based crypto implementation.
+
 endif

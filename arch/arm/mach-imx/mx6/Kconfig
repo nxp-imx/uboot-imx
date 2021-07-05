@@ -137,6 +137,7 @@ config TARGET_MX6SABREAUTO_COMMON
     select FSL_CAAM
     select FSL_BLOB
     select ARCH_MISC_INIT
+    select RNG_SELF_TEST
 
 config TARGET_MX6SABRESD_COMMON
     bool
@@ -150,6 +151,7 @@ config TARGET_MX6SABRESD_COMMON
     select FSL_CAAM
     select FSL_BLOB
     select ARCH_MISC_INIT
+    select RNG_SELF_TEST
 
 choice
 	prompt "MX6 board select"
@@ -486,6 +488,7 @@ config TARGET_MX6SXSABRESD
 	select FSL_CAAM
 	select FSL_BLOB
 	select ARCH_MISC_INIT
+	select RNG_SELF_TEST
 
 config TARGET_MX6SXSABREAUTO
 	bool "mx6sxsabreauto"
