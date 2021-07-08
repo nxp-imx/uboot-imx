@@ -463,14 +463,3 @@ int board_late_init(void)
 
 	return 0;
 }
-
-#ifdef CONFIG_IMX_BOOTAUX
-phys_size_t board_get_usable_ram_top(phys_size_t total_size)
-{
-	/* Reserve 16M memory used by M core vring/buffer, which begins at 16MB before optee */
-	if (rom_pointer[1])
-		return gd->ram_top - SZ_16M;
-
-	return gd->ram_top;
-}
-#endif
