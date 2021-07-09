@@ -486,17 +486,6 @@ int board_late_init(void)
 	return 0;
 }
 
-#ifdef CONFIG_IMX_BOOTAUX
-ulong board_get_usable_ram_top(ulong total_size)
-{
-	/* Reserve 16M memory used by M core vring/buffer, which begins at 16MB before optee */
-	if (rom_pointer[1])
-		return gd->ram_top - SZ_16M;
-
-	return gd->ram_top;
-}
-#endif
-
 #ifdef CONFIG_ANDROID_SUPPORT
 bool is_power_key_pressed(void) {
 	return (bool)(!!(readl(SNVS_HPSR) & (0x1 << 6)));
