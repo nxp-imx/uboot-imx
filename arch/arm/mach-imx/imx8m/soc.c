@@ -1237,6 +1237,29 @@ static int disable_cpu_nodes(void *blob, u32 disabled_cores)
 	return 0;
 }
 
+static int delete_u_boot_nodes(void *blob)
+{
+	static const char * const nodes_path = "/u-boot-node";
+	int nodeoff;
+	int rc;
+
+	nodeoff = fdt_path_offset(blob, nodes_path);
+	if (nodeoff < 0)
+		return 0;
+
+	debug("Found %s node\n", nodes_path);
+
+	rc = fdt_del_node(blob, nodeoff);
+	if (rc < 0) {
+		printf("Unable to delete node %s, err=%s\n",
+		       nodes_path, fdt_strerror(rc));
+	} else {
+		printf("Delete node %s\n", nodes_path);
+	}
+
+	return 0;
+}
+
 static int cleanup_nodes_for_efi(void *blob)
 {
 	static const char * const path[][2] = {
@@ -1452,6 +1475,8 @@ usb_modify_speed:
 #endif
 
 	cleanup_nodes_for_efi(blob);
+
+	delete_u_boot_nodes(blob);
 
 	if (fixup_thermal_trips(blob, "cpu-thermal"))
 		printf("Failed to update cpu-thermal trip(s)");
