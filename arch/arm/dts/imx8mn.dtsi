@@ -37,7 +37,6 @@
 		serial3 = &uart4;
 		spi0 = &flexspi;
 		usb0 = &usbotg1;
-		usb1 = &usbotg2;
 		video0 = &lcdif;
 	};
 
@@ -705,6 +704,7 @@
 			snvs: snvs@30370000 {
 				compatible = "fsl,sec-v4.0-mon","syscon", "simple-mfd";
 				reg = <0x30370000 0x10000>;
+				status = "disabled";
 
 				snvs_rtc: snvs-rtc-lp {
 					compatible = "fsl,sec-v4.0-mon-rtc-lp";
@@ -714,6 +714,7 @@
 						     <GIC_SPI 20 IRQ_TYPE_LEVEL_HIGH>;
 					clocks = <&clk IMX8MN_CLK_SNVS_ROOT>;
 					clock-names = "snvs-rtc";
+					status = "disabled";
 				};
 
 				snvs_pwrkey: snvs-powerkey {
@@ -1192,7 +1193,6 @@
 							 <&clk IMX8MN_SYS_PLL1_100M>;
 				phys = <&usbphynop1>;
 				fsl,usbmisc = <&usbmisc1 0>;
-				power-domains = <&usb_otg1_pd>;
 				status = "disabled";
 			};
 
@@ -1201,28 +1201,6 @@
 				#index-cells = <1>;
 				reg = <0x32e40200 0x200>;
 			};
-
-			usbotg2: usb@32e50000 {
-				compatible = "fsl,imx8mn-usb", "fsl,imx7d-usb", "fsl,imx27-usb";
-				reg = <0x32e50000 0x200>;
-				interrupts = <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>;
-				clocks = <&clk IMX8MN_CLK_USB1_CTRL_ROOT>;
-				clock-names = "usb1_ctrl_root_clk";
-				assigned-clocks = <&clk IMX8MN_CLK_USB_BUS>,
-						  <&clk IMX8MN_CLK_USB_CORE_REF>;
-				assigned-clock-parents = <&clk IMX8MN_SYS_PLL2_500M>,
-							 <&clk IMX8MN_SYS_PLL1_100M>;
-				phys = <&usbphynop2>;
-				fsl,usbmisc = <&usbmisc2 0>;
-				status = "disabled";
-			};
-
-			usbmisc2: usbmisc@32e50200 {
-				compatible = "fsl,imx8mn-usbmisc", "fsl,imx7d-usbmisc";
-				#index-cells = <1>;
-				reg = <0x32e50200 0x200>;
-			};
-
 		};
 
 		dma_apbh: dma-controller@33000000 {
@@ -1320,16 +1298,6 @@
 		assigned-clock-parents = <&clk IMX8MN_SYS_PLL1_100M>;
 		clock-names = "main_clk";
 	};
-
-	usbphynop2: usbphynop2 {
-		#phy-cells = <0>;
-		compatible = "usb-nop-xceiv";
-		clocks = <&clk IMX8MN_CLK_USB_PHY_REF>;
-		assigned-clocks = <&clk IMX8MN_CLK_USB_PHY_REF>;
-		assigned-clock-parents = <&clk IMX8MN_SYS_PLL1_100M>;
-		clock-names = "main_clk";
-	};
-
 
 	dispmix-reset {
 		compatible = "simple-bus";

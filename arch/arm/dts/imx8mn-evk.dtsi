@@ -156,31 +156,6 @@
 			self-powered;
 		};
 	};
-
-	ptn5110_2: tcpc@52 {
-		compatible = "nxp,ptn5110";
-		reg = <0x52>;
-		status = "okay";
-
-		port {
-			typec2_dr_sw: endpoint {
-				remote-endpoint = <&usb2_drd_sw>;
-			};
-		};
-
-		typec2_con: connector {
-			compatible = "usb-c-connector";
-			label = "USB-C";
-			power-role = "dual";
-			data-role = "dual";
-			try-power-role = "sink";
-			source-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)>;
-			sink-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)
-				     PDO_VAR(5000, 20000, 3000)>;
-			op-sink-microwatt = <15000000>;
-			self-powered;
-		};
-	};
 };
 
 &i2c3 {
@@ -265,17 +240,6 @@
 	port {
 		usb1_drd_sw: endpoint {
 			remote-endpoint = <&typec1_dr_sw>;
-		};
-	};
-};
-
-&usbotg2 {
-	status = "okay";
-	extcon = <&ptn5110_2>;
-	
-	port {
-		usb2_drd_sw: endpoint {
-			remote-endpoint = <&typec2_dr_sw>;
 		};
 	};
 };
