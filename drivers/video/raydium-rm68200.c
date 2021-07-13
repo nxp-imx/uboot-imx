@@ -246,10 +246,11 @@ static int rm68200_panel_enable_backlight(struct udevice *dev)
 
 	mdelay(20);
 
-	ret = backlight_enable(priv->backlight);
-	if (ret)
-		return ret;
-
+	if (priv->backlight) {
+		ret = backlight_enable(priv->backlight);
+		if (ret)
+			return ret;
+	}
 	return 0;
 }
 
@@ -295,7 +296,7 @@ static int rm68200_panel_of_to_plat(struct udevice *dev)
 
 	ret = uclass_get_device_by_phandle(UCLASS_PANEL_BACKLIGHT, dev,
 					   "backlight", &priv->backlight);
-	if (ret) {
+	if (ret && ret != -ENOENT) {
 		dev_err(dev, "Cannot get backlight: ret=%d\n", ret);
 		return ret;
 	}
