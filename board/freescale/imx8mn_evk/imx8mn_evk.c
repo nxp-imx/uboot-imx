@@ -304,6 +304,9 @@ int board_init(void)
 
 #ifdef CONFIG_USB_TCPC
 	setup_typec();
+
+	/* Enable Power by default for SR-IR usage */
+	imx8m_usb_power(0, true);
 #endif
 
 	if (IS_ENABLED(CONFIG_FEC_MXC))

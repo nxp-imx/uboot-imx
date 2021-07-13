@@ -1150,7 +1150,29 @@ static int disable_cpu_nodes(void *blob, u32 disabled_cores)
 	return 0;
 }
 
-#if defined(CONFIG_IMX8MM)
+static int delete_u_boot_nodes(void *blob)
+{
+	static const char * const nodes_path = "/u-boot-node";
+	int nodeoff;
+	int rc;
+
+	nodeoff = fdt_path_offset(blob, nodes_path);
+	if (nodeoff < 0)
+		return 0;
+
+	debug("Found %s node\n", nodes_path);
+
+	rc = fdt_del_node(blob, nodeoff);
+	if (rc < 0) {
+		printf("Unable to delete node %s, err=%s\n",
+		       nodes_path, fdt_strerror(rc));
+	} else {
+		printf("Delete node %s\n", nodes_path);
+	}
+
+	return 0;
+}
+
 static int cleanup_nodes_for_efi(void *blob)
 {
 	static const char * const usbotg_path[] = {
@@ -1179,7 +1201,6 @@ static int cleanup_nodes_for_efi(void *blob)
 
 	return 0;
 }
-#endif
 
 int ft_system_setup(void *blob, struct bd_info *bd)
 {
@@ -1275,8 +1296,6 @@ usb_modify_speed:
 	else if (is_imx8mms() || is_imx8mmsl())
 		disable_cpu_nodes(blob, 3);
 
-	cleanup_nodes_for_efi(blob);
-
 #elif defined(CONFIG_IMX8MN)
 	if (is_imx8mnl() || is_imx8mndl() ||  is_imx8mnsl())
 		disable_gpu_nodes(blob);
@@ -1312,6 +1331,11 @@ usb_modify_speed:
 	if (is_imx8mpd())
 		disable_cpu_nodes(blob, 2);
 #endif
+
+	if (CONFIG_IS_ENABLED(IMX8MM) || CONFIG_IS_ENABLED(IMX8MN))
+		cleanup_nodes_for_efi(blob);
+
+	delete_u_boot_nodes(blob);
 
 	return ft_add_optee_node(blob, bd);
 }
