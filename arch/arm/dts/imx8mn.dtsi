@@ -643,6 +643,7 @@
 			snvs: snvs@30370000 {
 				compatible = "fsl,sec-v4.0-mon","syscon", "simple-mfd";
 				reg = <0x30370000 0x10000>;
+				status = "disabled";
 
 				snvs_rtc: snvs-rtc-lp {
 					compatible = "fsl,sec-v4.0-mon-rtc-lp";
@@ -652,6 +653,7 @@
 						     <GIC_SPI 20 IRQ_TYPE_LEVEL_HIGH>;
 					clocks = <&clk IMX8MN_CLK_SNVS_ROOT>;
 					clock-names = "snvs-rtc";
+					status = "disabled";
 				};
 
 				snvs_pwrkey: snvs-powerkey {
