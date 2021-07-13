@@ -82,10 +82,6 @@
 	extcon = <&ptn5150>;
 };
 
-&usbotg2 {
-	status = "disabled";
-};
-
 &iomuxc {
 	pinctrl_fec1: fec1grp {
 		fsl,pins = <
