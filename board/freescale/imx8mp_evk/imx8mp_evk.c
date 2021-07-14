@@ -353,10 +353,6 @@ int board_usb_init(int index, enum usb_init_type init)
 		ret = tcpc_setup_dfp_mode(&port1);
 #endif
 		return ret;
-	} else if (index == 1 && init == USB_INIT_HOST) {
-		/* Enable GPIO1_IO14 for 5V VBUS */
-		gpio_request(USB2_PWR_EN, "usb2_pwr");
-		gpio_direction_output(USB2_PWR_EN, 1);
 	}
 
 	return 0;
@@ -371,9 +367,6 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 #ifdef CONFIG_USB_TCPC
 		ret = tcpc_disable_src_vbus(&port1);
 #endif
-	} else if (index == 1 && init == USB_INIT_HOST) {
-		/* Disable GPIO1_IO14 for 5V VBUS */
-		gpio_direction_output(USB2_PWR_EN, 0);
 	}
 
 	imx8m_usb_power(index, false);
