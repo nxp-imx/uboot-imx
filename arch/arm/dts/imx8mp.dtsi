@@ -1132,6 +1132,91 @@
 
 		};
 
+		usb3_phy0: usb-phy@381f0040 {
+			compatible = "fsl,imx8mp-usb-phy";
+			reg = <0x381f0040 0x40>;
+			clocks = <&clk IMX8MP_CLK_USB_PHY_ROOT>;
+			clock-names = "phy";
+			assigned-clocks = <&clk IMX8MP_CLK_USB_PHY_REF>;
+			assigned-clock-parents = <&clk IMX8MP_CLK_24M>;
+			#phy-cells = <0>;
+			status = "disabled";
+		};
+
+		usb3_0: usb@32f10100 {
+			compatible = "fsl,imx8mp-dwc3";
+			reg = <0x32f10100 0x8>;
+			clocks = <&clk IMX8MP_CLK_HSIO_ROOT>,
+				 <&clk IMX8MP_CLK_USB_ROOT>;
+			clock-names = "hsio", "suspend";
+			interrupts = <GIC_SPI 148 IRQ_TYPE_LEVEL_HIGH>;
+			power-domains = <&hsiomix_pd>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+			status = "disabled";
+
+			usb_dwc3_0: dwc3@38100000 {
+				compatible = "snps,dwc3";
+				reg = <0x38100000 0x10000>;
+				clocks = <&clk IMX8MP_CLK_HSIO_AXI>,
+					 <&clk IMX8MP_CLK_USB_CORE_REF>,
+					 <&clk IMX8MP_CLK_USB_ROOT>;
+				clock-names = "bus_early", "ref", "suspend";
+				assigned-clocks = <&clk IMX8MP_CLK_HSIO_AXI>;
+				assigned-clock-parents = <&clk IMX8MP_SYS_PLL2_500M>;
+				assigned-clock-rates = <500000000>;
+				interrupts = <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>;
+				phys = <&usb3_phy0>, <&usb3_phy0>;
+				phy-names = "usb2-phy", "usb3-phy";
+				snps,dis-u2-freeclk-exists-quirk;
+				status = "disabled";
+			};
+
+		};
+
+		usb3_phy1: usb-phy@382f0040 {
+			compatible = "fsl,imx8mp-usb-phy";
+			reg = <0x382f0040 0x40>;
+			clocks = <&clk IMX8MP_CLK_USB_PHY_ROOT>;
+			clock-names = "phy";
+			assigned-clocks = <&clk IMX8MP_CLK_USB_PHY_REF>;
+			assigned-clock-parents = <&clk IMX8MP_CLK_24M>;
+			#phy-cells = <0>;
+			status = "disabled";
+		};
+
+		usb3_1: usb@32f10108 {
+			compatible = "fsl,imx8mp-dwc3";
+			reg = <0x32f10108 0x8>;
+			clocks = <&clk IMX8MP_CLK_HSIO_ROOT>,
+				 <&clk IMX8MP_CLK_USB_ROOT>;
+			clock-names = "hsio", "suspend";
+			interrupts = <GIC_SPI 149 IRQ_TYPE_LEVEL_HIGH>;
+			power-domains = <&hsiomix_pd>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+			status = "disabled";
+
+			usb_dwc3_1: dwc3@38200000 {
+				compatible = "snps,dwc3";
+				reg = <0x38200000 0x10000>;
+				clocks = <&clk IMX8MP_CLK_HSIO_AXI>,
+					 <&clk IMX8MP_CLK_USB_CORE_REF>,
+					 <&clk IMX8MP_CLK_USB_ROOT>;
+				clock-names = "bus_early", "ref", "suspend";
+				assigned-clocks = <&clk IMX8MP_CLK_HSIO_AXI>;
+				assigned-clock-parents = <&clk IMX8MP_SYS_PLL2_500M>;
+				assigned-clock-rates = <500000000>;
+				interrupts = <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>;
+				phys = <&usb3_phy1>, <&usb3_phy1>;
+				phy-names = "usb2-phy", "usb3-phy";
+				snps,dis-u2-freeclk-exists-quirk;
+				status = "disabled";
+			};
+		};
+
 		ddr-pmu@3d800000 {
 			compatible = "fsl,imx8mp-ddr-pmu", "fsl,imx8m-ddr-pmu";
 			reg = <0x3d800000 0x400000>;
@@ -1215,42 +1300,6 @@
 		phys = <&pcie_phy>;
 		phy-names = "pcie-phy";
 		fsl,imx8mp-hsio-mix = <&hsio_mix>;
-		status = "disabled";
-	};
-
-	usb_dwc3_0: usb@38100000 {
-		compatible = "fsl,imx8mq-dwc3", "snps,dwc3";
-		reg = <0x0 0x38100000 0x0 0x10000>;
-		interrupts = <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>;
-		phys = <&usb3_phy0>, <&usb3_phy0>;
-		phy-names = "usb2-phy", "usb3-phy";
-		usb3-resume-missing-cas;
-		snps,power-down-scale = <2>;
-		status = "disabled";
-	};
-
-	usb3_phy0: usb-phy@381f0040 {
-		compatible = "fsl,imx8mq-usb-phy";
-		reg = <0x0 0x381f0040 0x0 0x40>;
-		#phy-cells = <0>;
-		status = "disabled";
-	};
-
-	usb_dwc3_1: usb@38200000 {
-		compatible = "fsl,imx8mq-dwc3", "snps,dwc3";
-		reg = <0x0 0x38200000 0x0 0x10000>;
-		interrupts = <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>;
-		phys = <&usb3_phy1>, <&usb3_phy1>;
-		phy-names = "usb2-phy", "usb3-phy";
-		usb3-resume-missing-cas;
-		snps,power-down-scale = <2>;
-		status = "disabled";
-	};
-
-	usb3_phy1: usb-phy@382f0040 {
-		compatible = "fsl,imx8mq-usb-phy";
-		reg = <0x0 0x382f0040 0x0 0x40>;
-		#phy-cells = <0>;
 		status = "disabled";
 	};
 };
