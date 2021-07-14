@@ -200,6 +200,17 @@ U_BOOT_DRIVER(xhci_imx8m) = {
 	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
 };
 
+static const struct udevice_id xhci_imx8mp_ids[] = {
+	{ .compatible = "fsl,imx8mp-dwc3", },
+	{ }
+};
+
+U_BOOT_DRIVER(xhci_imx8mp_misc) = {
+	.name	= "xhci_imx8mp_misc",
+	.id	= UCLASS_MISC,
+	.of_match = of_match_ptr(xhci_imx8mp_ids),
+};
+
 #else
 int xhci_hcd_init(int index, struct xhci_hccr **hccr, struct xhci_hcor **hcor)
 {
