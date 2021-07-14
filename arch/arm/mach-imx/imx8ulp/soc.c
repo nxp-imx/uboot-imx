@@ -381,7 +381,11 @@ static struct mm_region imx8ulp_arm64_mem_map[] = {
 		.phys = 0x80000000UL,
 		.size = PHYS_SDRAM_SIZE,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
+#ifdef CONFIG_IMX_TRUSTY_OS
+			 PTE_BLOCK_INNER_SHARE
+#else
 			 PTE_BLOCK_OUTER_SHARE
+#endif
 	}, {
 		/*
 		 * empty entrie to split table entry 5
@@ -597,6 +601,11 @@ int trdc_set_access(void)
 
 	/* flexspi0 */
 	trdc_mrc_region_set_access(0, 7, 0x04000000, 0x0c000000, false);
+
+	/* tpm0: PBridge1 slot 21 */
+	trdc_mbc_set_access(2, 7, 1, 21, false);
+	/* lpi2c0: PBridge1 slot 24 */
+	trdc_mbc_set_access(2, 7, 1, 24, false);
 	return 0;
 }
 

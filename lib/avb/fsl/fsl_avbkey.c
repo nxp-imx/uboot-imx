@@ -1181,7 +1181,7 @@ bool hab_is_enabled(void)
 	}
 
 	if (lc != 0x80)
-#else
+#elif CONFIG_ARCH_IMX8M
 	struct imx_sec_config_fuse_t *fuse =
 		(struct imx_sec_config_fuse_t *)&imx_sec_config_fuse;
 	uint32_t reg;
@@ -1194,6 +1194,8 @@ bool hab_is_enabled(void)
 	}
 
 	if (!((reg & HAB_ENABLED_BIT) == HAB_ENABLED_BIT))
+#else
+		if (1)
 #endif
 		return false;
 	else

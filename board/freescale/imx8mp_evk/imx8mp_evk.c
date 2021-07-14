@@ -353,10 +353,6 @@ int board_usb_init(int index, enum usb_init_type init)
 		ret = tcpc_setup_dfp_mode(&port1);
 #endif
 		return ret;
-	} else if (index == 1 && init == USB_INIT_HOST) {
-		/* Enable GPIO1_IO14 for 5V VBUS */
-		gpio_request(USB2_PWR_EN, "usb2_pwr");
-		gpio_direction_output(USB2_PWR_EN, 1);
 	}
 
 	return 0;
@@ -371,9 +367,6 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 #ifdef CONFIG_USB_TCPC
 		ret = tcpc_disable_src_vbus(&port1);
 #endif
-	} else if (index == 1 && init == USB_INIT_HOST) {
-		/* Disable GPIO1_IO14 for 5V VBUS */
-		gpio_direction_output(USB2_PWR_EN, 0);
 	}
 
 	imx8m_usb_power(index, false);
@@ -446,6 +439,10 @@ int board_init(void)
 
 #ifdef CONFIG_USB_TCPC
 	setup_typec();
+
+	/* Enable USB power default */
+	imx8m_usb_power(0, true);
+	imx8m_usb_power(1, true);
 #endif
 
 	if (CONFIG_IS_ENABLED(FEC_MXC)) {
@@ -485,17 +482,6 @@ int board_late_init(void)
 
 	return 0;
 }
-
-#ifdef CONFIG_IMX_BOOTAUX
-ulong board_get_usable_ram_top(ulong total_size)
-{
-	/* Reserve 16M memory used by M core vring/buffer, which begins at 16MB before optee */
-	if (rom_pointer[1])
-		return gd->ram_top - SZ_16M;
-
-	return gd->ram_top;
-}
-#endif
 
 #ifdef CONFIG_ANDROID_SUPPORT
 bool is_power_key_pressed(void) {
