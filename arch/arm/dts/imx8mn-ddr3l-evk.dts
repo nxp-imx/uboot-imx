@@ -13,7 +13,7 @@
 	status = "disabled";
 };
 
-&{/rm67191_panel} {
+&{/rm67199_panel} {
 	status = "disabled";
 };
 
