@@ -26,8 +26,12 @@ struct rm67191_panel_priv {
 	unsigned long mode_flags;
 };
 
+struct rad_platform_data {
+	int (*enable)(struct udevice *dev);
+};
+
 /* Manufacturer Command Set pages (CMD2) */
-static const cmd_set_table manufacturer_cmd_set[] = {
+static const cmd_set_table mcs_rm67191[] = {
 	{0xFE, 0x0B},
 	{0x28, 0x40},
 	{0x29, 0x4F},
@@ -173,6 +177,42 @@ static const cmd_set_table manufacturer_cmd_set[] = {
 	{0x51, 0x04},
 };
 
+static const cmd_set_table mcs_rm67199[] = {
+	{0xFE, 0xA0}, {0x2B, 0x18}, {0xFE, 0x70}, {0x7D, 0x05},
+	{0x5D, 0x0A}, {0x5A, 0x79}, {0x5C, 0x00}, {0x52, 0x00},
+	{0xFE, 0xD0}, {0x40, 0x02}, {0x13, 0x40}, {0xFE, 0x40},
+	{0x05, 0x08}, {0x06, 0x08}, {0x08, 0x08}, {0x09, 0x08},
+	{0x0A, 0xCA}, {0x0B, 0x88}, {0x20, 0x93}, {0x21, 0x93},
+	{0x24, 0x02}, {0x26, 0x02}, {0x28, 0x05}, {0x2A, 0x05},
+	{0x74, 0x2F}, {0x75, 0x1E}, {0xAD, 0x00}, {0xFE, 0x60},
+	{0x00, 0xCC}, {0x01, 0x00}, {0x02, 0x04}, {0x03, 0x00},
+	{0x04, 0x00}, {0x05, 0x07}, {0x06, 0x00}, {0x07, 0x88},
+	{0x08, 0x00}, {0x09, 0xCC}, {0x0A, 0x00}, {0x0B, 0x04},
+	{0x0C, 0x00}, {0x0D, 0x00}, {0x0E, 0x05}, {0x0F, 0x00},
+	{0x10, 0x88}, {0x11, 0x00}, {0x12, 0xCC}, {0x13, 0x0F},
+	{0x14, 0xFF}, {0x15, 0x04}, {0x16, 0x00}, {0x17, 0x06},
+	{0x18, 0x00}, {0x19, 0x96}, {0x1A, 0x00}, {0x24, 0xCC},
+	{0x25, 0x00}, {0x26, 0x02}, {0x27, 0x00}, {0x28, 0x00},
+	{0x29, 0x06}, {0x2A, 0x06}, {0x2B, 0x82}, {0x2D, 0x00},
+	{0x2F, 0xCC}, {0x30, 0x00}, {0x31, 0x02}, {0x32, 0x00},
+	{0x33, 0x00}, {0x34, 0x07}, {0x35, 0x06}, {0x36, 0x82},
+	{0x37, 0x00}, {0x38, 0xCC}, {0x39, 0x00}, {0x3A, 0x02},
+	{0x3B, 0x00}, {0x3D, 0x00}, {0x3F, 0x07}, {0x40, 0x00},
+	{0x41, 0x88}, {0x42, 0x00}, {0x43, 0xCC}, {0x44, 0x00},
+	{0x45, 0x02}, {0x46, 0x00}, {0x47, 0x00}, {0x48, 0x06},
+	{0x49, 0x02}, {0x4A, 0x8A}, {0x4B, 0x00}, {0x5F, 0xCA},
+	{0x60, 0x01}, {0x61, 0xE8}, {0x62, 0x09}, {0x63, 0x00},
+	{0x64, 0x07}, {0x65, 0x00}, {0x66, 0x30}, {0x67, 0x00},
+	{0x9B, 0x03}, {0xA9, 0x07}, {0xAA, 0x06}, {0xAB, 0x02},
+	{0xAC, 0x10}, {0xAD, 0x11}, {0xAE, 0x05}, {0xAF, 0x04},
+	{0xB0, 0x10}, {0xB1, 0x10}, {0xB2, 0x10}, {0xB3, 0x10},
+	{0xB4, 0x10}, {0xB5, 0x10}, {0xB6, 0x10}, {0xB7, 0x10},
+	{0xB8, 0x10}, {0xB9, 0x10}, {0xBA, 0x04}, {0xBB, 0x05},
+	{0xBC, 0x00}, {0xBD, 0x01}, {0xBE, 0x0A}, {0xBF, 0x10},
+	{0xC0, 0x11}, {0xFE, 0xA0}, {0x22, 0x00},
+};
+
+
 static const struct display_timing default_timing = {
 	.pixelclock.typ		= 132000000,
 	.hactive.typ		= 1080,
@@ -205,15 +245,16 @@ static u8 color_format_from_dsi_format(enum mipi_dsi_pixel_format format)
 	}
 };
 
-static int rad_panel_push_cmd_list(struct mipi_dsi_device *device)
+static int rad_panel_push_cmd_list(struct mipi_dsi_device *device,
+				   const cmd_set_table *cmd_set,
+				   size_t count)
 {
 	size_t i;
-	const u8 *cmd;
-	size_t count = sizeof(manufacturer_cmd_set) / CMD_TABLE_LEN;
+	const cmd_set_table *cmd;
 	int ret = 0;
 
-	for (i = 0; i < count ; i++) {
-		cmd = manufacturer_cmd_set[i];
+	for (i = 0; i < count; i++) {
+		cmd = cmd_set++;
 		ret = mipi_dsi_generic_write(device, cmd, CMD_TABLE_LEN);
 		if (ret < 0)
 			return ret;
@@ -233,7 +274,8 @@ static int rm67191_enable(struct udevice *dev)
 
 	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
-	ret = rad_panel_push_cmd_list(dsi);
+	ret = rad_panel_push_cmd_list(dsi, &mcs_rm67191[0],
+		sizeof(mcs_rm67191) / CMD_TABLE_LEN);
 	if (ret < 0) {
 		printf("Failed to send MCS (%d)\n", ret);
 		return -EIO;
@@ -310,9 +352,92 @@ static int rm67191_enable(struct udevice *dev)
 	return 0;
 }
 
+static int rm67199_enable(struct udevice *dev)
+{
+	struct rm67191_panel_priv *priv = dev_get_priv(dev);
+	struct mipi_dsi_panel_plat *plat = dev_get_plat(dev);
+	struct mipi_dsi_device *dsi = plat->device;
+	u8 color_format = color_format_from_dsi_format(priv->format);
+	u16 brightness;
+	int ret;
+
+	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+	ret = rad_panel_push_cmd_list(dsi, &mcs_rm67199[0],
+		sizeof(mcs_rm67199) / CMD_TABLE_LEN);
+	if (ret < 0) {
+		printf("Failed to send MCS (%d)\n", ret);
+		return -EIO;
+	}
+
+	/* Select User Command Set table (CMD1) */
+	ret = mipi_dsi_generic_write(dsi, (u8[]){ WRMAUCCTR, 0x00 }, 2);
+	if (ret < 0)
+		return -EIO;
+
+	/* Set DSI mode */
+	ret = mipi_dsi_generic_write(dsi, (u8[]){ 0xC2, 0x08 }, 2);
+	if (ret < 0) {
+		printf("Failed to set DSI mode (%d)\n", ret);
+		return -EIO;
+	}
+
+	/* Set tear ON */
+	ret = mipi_dsi_dcs_set_tear_on(dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
+	if (ret < 0) {
+		printf("Failed to set tear ON (%d)\n", ret);
+		return -EIO;
+	}
+
+	/* Set tear scanline */
+	ret = mipi_dsi_dcs_set_tear_scanline(dsi, 0x00);
+	if (ret < 0) {
+		printf("Failed to set tear scanline (%d)\n", ret);
+		return -EIO;
+	}
+
+	/* Set pixel format */
+	ret = mipi_dsi_dcs_set_pixel_format(dsi, color_format);
+	if (ret < 0) {
+		printf("Failed to set pixel format (%d)\n", ret);
+		return -EIO;
+	}
+
+
+	/* Set display brightness */
+	brightness = 255; /* Max brightness */
+	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_BRIGHTNESS, &brightness, 2);
+	if (ret < 0) {
+		printf("Failed to set display brightness (%d)\n",
+				  ret);
+		return -EIO;
+	}
+
+	/* Exit sleep mode */
+	ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
+	if (ret < 0) {
+		printf("Failed to exit sleep mode (%d)\n", ret);
+		return -EIO;
+	}
+
+	mdelay(120);
+
+	ret = mipi_dsi_dcs_set_display_on(dsi);
+	if (ret < 0) {
+		printf("Failed to set display ON (%d)\n", ret);
+		return -EIO;
+	}
+
+	mdelay(100);
+
+	return 0;
+}
+
+
 static int rm67191_panel_enable_backlight(struct udevice *dev)
 {
 	struct mipi_dsi_panel_plat *plat = dev_get_plat(dev);
+	struct rad_platform_data *data = (struct rad_platform_data *)dev_get_driver_data(dev);
 	struct mipi_dsi_device *device = plat->device;
 	int ret;
 
@@ -320,7 +445,7 @@ static int rm67191_panel_enable_backlight(struct udevice *dev)
 	if (ret < 0)
 		return ret;
 
-	return rm67191_enable(dev);
+	return data->enable(dev);
 }
 
 static int rm67191_panel_get_display_timing(struct udevice *dev,
@@ -412,8 +537,17 @@ static const struct panel_ops rm67191_panel_ops = {
 	.get_display_timing = rm67191_panel_get_display_timing,
 };
 
+static const struct rad_platform_data rad_rm67191 = {
+	.enable = &rm67191_enable,
+};
+
+static const struct rad_platform_data rad_rm67199 = {
+	.enable = &rm67199_enable,
+};
+
 static const struct udevice_id rm67191_panel_ids[] = {
-	{ .compatible = "raydium,rm67191" },
+	{ .compatible = "raydium,rm67191", .data = (ulong)&rad_rm67191 },
+	{ .compatible = "raydium,rm67199", .data = (ulong)&rad_rm67199 },
 	{ }
 };
 
