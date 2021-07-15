@@ -53,8 +53,8 @@
 		status = "okay";
 	};
 
-	rm67191_panel {
-		compatible = "raydium,rm67191";
+	rm67199_panel {
+		compatible = "raydium,rm67199";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_mipi_dsi_en>;
 		reset-gpio = <&gpio1 8 GPIO_ACTIVE_LOW>;
