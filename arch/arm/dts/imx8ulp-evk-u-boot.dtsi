@@ -5,21 +5,21 @@
 
 / {
 	aliases {
-		usbgadget0 = &usbg0;
-		usbgadget1 = &usbg1;
-	};
-
-	usbg0: usbg0 {
-		compatible = "fsl,imx27-usb-gadget";
-		dr_mode = "peripheral";
-		chipidea,usb = <&usbotg0>;
-		status = "okay";
+		usbgadget0 = &usbg1;
+		usbgadget1 = &usbg2;
 	};
 
 	usbg1: usbg1 {
 		compatible = "fsl,imx27-usb-gadget";
 		dr_mode = "peripheral";
 		chipidea,usb = <&usbotg1>;
+		status = "okay";
+	};
+
+	usbg2: usbg2 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg2>;
 		status = "okay";
 	};
 
@@ -43,6 +43,7 @@
 
 &iomuxc1 {
 	u-boot,dm-spl;
+	fsl,mux_mask = <0xf00>;
 };
 
 &pinctrl_lpuart5 {
@@ -97,4 +98,22 @@
 		gpio-controller;
 		#gpio-cells = <2>;
 	};
+};
+
+&scmi_buf {
+	reg = <0x0 0x1000>; /* Align page size */
+};
+
+&dsi {
+	data-lanes-num = <4>;
+};
+
+&usbotg1 {
+	compatible = "fsl,imx8ulp-usb", "fsl,imx7ulp-usb", "fsl,imx27-usb";
+	fsl,usbphy = <&usbphy1>;
+};
+
+&usbotg2 {
+	compatible = "fsl,imx8ulp-usb", "fsl,imx7ulp-usb", "fsl,imx27-usb";
+	fsl,usbphy = <&usbphy2>;
 };
