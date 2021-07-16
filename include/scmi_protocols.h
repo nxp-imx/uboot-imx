@@ -289,4 +289,38 @@ struct scmi_voltd_level_get_out {
 	s32 voltage_level;
 };
 
+/*
+ * SCMI Power Protocol
+ */
+
+enum scmi_power_message_id {
+	SCMI_POWER_DOMAIN_ATTRIBUTES = 0x3,
+	SCMI_POWER_STATE_SET = 0x4,
+	SCMI_POWER_STATE_GET = 0x5,
+	SCMI_POWER_STATE_NOTIFY = 0x6,
+};
+
+
+#define SCMI_POWER_STATE_GENERIC_ON		(0 << 30)
+#define SCMI_POWER_STATE_GENERIC_OFF	(1 << 30)
+
+struct scmi_power_set_state {
+	u32 flags;
+	u32 domain;
+	u32 state;
+};
+
+struct scmi_power_set_state_out {
+	s32 status;
+};
+
+struct scmi_power_get_state {
+	u32 domain;
+};
+
+struct scmi_power_get_state_out {
+	s32 status;
+	u32 state;
+};
+
 #endif /* _SCMI_PROTOCOLS_H */

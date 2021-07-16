@@ -68,6 +68,23 @@ config SANDBOX_POWER_DOMAIN
 	  simply accepts requests to power on/off various HW modules without
 	  actually doing anything beyond a little error checking.
 
+config RESET_SCMI
+	bool "Enable SCMI reset domain driver"
+	select SCMI_FIRMWARE
+	help
+	  Enable this option if you want to support reset controller
+	  devices exposed by a SCMI agent based on SCMI reset domain
+	  protocol communication with a SCMI server.
+
+config SCMI_POWER_DOMAIN
+	bool "Enable the SCMI power domain driver"
+	depends on POWER_DOMAIN
+	select SCMI_FIRMWARE
+	help
+	  Enable this option if you want to support power domain controller
+	  devices exposed by a SCMI agent based on SCMI power domain
+	  protocol communication with a SCMI server.
+
 config TEGRA186_POWER_DOMAIN
 	bool "Enable Tegra186 BPMP-based power domain driver"
 	depends on TEGRA186_BPMP
