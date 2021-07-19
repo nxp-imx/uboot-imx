@@ -13,24 +13,13 @@
 #include <miiphy.h>
 #include <netdev.h>
 #include <asm/gpio.h>
+#include <power-domain.h>
+#include <dt-bindings/power/imx8ulp-power.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 #if defined(CONFIG_NXP_FSPI) || defined(CONFIG_FSL_FSPI_NAND)
 #define FSPI_PAD_CTRL	(PAD_CTL_PUS_UP | PAD_CTL_DSE)
-static iomux_cfg_t const flexspi2_pads[] = {
-	IMX8ULP_PAD_PTD12__FLEXSPI2_A_SS0_B | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	IMX8ULP_PAD_PTD13__FLEXSPI2_A_SCLK | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	IMX8ULP_PAD_PTD17__FLEXSPI2_A_DATA0 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	IMX8ULP_PAD_PTD16__FLEXSPI2_A_DATA1 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	IMX8ULP_PAD_PTD15__FLEXSPI2_A_DATA2 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	IMX8ULP_PAD_PTD14__FLEXSPI2_A_DATA3 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	IMX8ULP_PAD_PTD22__FLEXSPI2_A_DATA4 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	IMX8ULP_PAD_PTD21__FLEXSPI2_A_DATA5 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	IMX8ULP_PAD_PTD20__FLEXSPI2_A_DATA6 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-	IMX8ULP_PAD_PTD19__FLEXSPI2_A_DATA7 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
-};
-
 static iomux_cfg_t const flexspi0_pads[] = {
 	IMX8ULP_PAD_PTC5__FLEXSPI0_A_SS0_b | MUX_PAD_CTRL(FSPI_PAD_CTRL),
 	IMX8ULP_PAD_PTC6__FLEXSPI0_A_SCLK | MUX_PAD_CTRL(FSPI_PAD_CTRL),
@@ -46,8 +35,6 @@ static iomux_cfg_t const flexspi0_pads[] = {
 
 static void setup_flexspi(void)
 {
-	imx8ulp_iomux_setup_multiple_pads(flexspi2_pads, ARRAY_SIZE(flexspi2_pads));
-
 	init_clk_fspi(0);
 }
 
@@ -178,6 +165,35 @@ int board_late_init(void)
 #endif
 
 	return 0;
+}
+
+void board_quiesce_devices(void)
+{
+	/* Disable the power domains may used in u-boot before entering kernel */
+#if CONFIG_IS_ENABLED(POWER_DOMAIN)
+	struct udevice *scmi_devpd;
+	int ret, i;
+	struct power_domain pd;
+	ulong ids[] = {
+		IMX8ULP_PD_FLEXSPI2, IMX8ULP_PD_USB0, IMX8ULP_PD_USDHC0,
+		IMX8ULP_PD_USDHC1, IMX8ULP_PD_USDHC2_USB1, IMX8ULP_PD_DCNANO,
+		IMX8ULP_PD_MIPI_DSI};
+
+	ret = uclass_get_device(UCLASS_POWER_DOMAIN, 0, &scmi_devpd);
+	if (ret) {
+		printf("Cannot get scmi devpd: err=%d\n", ret);
+		return;
+	}
+
+	pd.dev = scmi_devpd;
+
+	for (i = 0; i < ARRAY_SIZE(ids); i++) {
+		pd.id = ids[i];
+		ret = power_domain_off(&pd);
+		if (ret)
+			printf("power_domain_off %lu failed: err=%d\n", ids[i], ret);
+	}
+#endif
 }
 
 #ifdef CONFIG_FSL_FASTBOOT

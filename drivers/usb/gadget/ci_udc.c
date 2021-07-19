@@ -1283,9 +1283,11 @@ static int ci_udc_phy_shutdown(struct ci_udc_priv_data *priv)
 #endif
 
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
-	ret = power_domain_off(&priv->phy_pd);
-	if (ret)
-		printf("Power down USB PHY failed! (error = %d)\n", ret);
+	if (priv->phy_pd.dev) {
+		ret = power_domain_off(&priv->phy_pd);
+		if (ret)
+			printf("Power down USB PHY failed! (error = %d)\n", ret);
+	}
 #endif
 	return ret;
 }
@@ -1439,9 +1441,11 @@ static int ci_udc_otg_remove(struct udevice *dev)
 	clk_release_bulk(&priv->clks);
 	ci_udc_phy_shutdown(priv);
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
-	if (power_domain_off(&priv->otg_pd)) {
-		printf("Power down USB controller failed!\n");
-		return -EINVAL;
+	if (priv->otg_pd.dev) {
+		if (power_domain_off(&priv->otg_pd)) {
+			printf("Power down USB controller failed!\n");
+			return -EINVAL;
+		}
 	}
 #endif
 	board_usb_cleanup(dev_seq(dev), USB_INIT_DEVICE);

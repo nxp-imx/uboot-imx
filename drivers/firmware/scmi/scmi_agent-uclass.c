@@ -80,6 +80,10 @@ static int scmi_bind_protocols(struct udevice *dev)
 			if (IS_ENABLED(CONFIG_RESET_SCMI))
 				drv = DM_DRIVER_GET(scmi_reset_domain);
 			break;
+		case SCMI_PROTOCOL_ID_POWER_DOMAIN:
+			if (IS_ENABLED(CONFIG_POWER_DOMAIN))
+				drv = DM_DRIVER_GET(scmi_power_domain);
+			break;
 		default:
 			break;
 		}
