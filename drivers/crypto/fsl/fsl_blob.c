@@ -22,13 +22,15 @@
  * @src:        - Source address (blob)
  * @dst:        - Destination address (data)
  * @len:        - Size of decapsulated data
+ * @keycolor    - Determines if the source data is covered (black key) or
+ *                plaintext.
  *
  * Note: Start and end of the key_mod, src and dst buffers have to be aligned to
  * the cache line size (ARCH_DMA_MINALIGN) for the CAAM operation to succeed.
  *
  * Returns zero on success, negative on error.
  */
-int blob_decap(u8 *key_mod, u8 *src, u8 *dst, u32 len)
+int blob_decap(u8 *key_mod, u8 *src, u8 *dst, u32 len, u8 keycolor)
 {
 	int ret, size, i = 0;
 	u32 *desc;
@@ -55,7 +57,7 @@ int blob_decap(u8 *key_mod, u8 *src, u8 *dst, u32 len)
 	flush_dcache_range((unsigned long)src,
 			   (unsigned long)src + size);
 
-	inline_cnstr_jobdesc_blob_decap(desc, key_mod, src, dst, len);
+	inline_cnstr_jobdesc_blob_decap(desc, key_mod, src, dst, len, keycolor);
 
 	debug("Descriptor dump:\n");
 	for (i = 0; i < 14; i++)
@@ -65,8 +67,9 @@ int blob_decap(u8 *key_mod, u8 *src, u8 *dst, u32 len)
 	flush_dcache_range((unsigned long)desc,
 			   (unsigned long)desc + size);
 
-	flush_dcache_range((unsigned long)dst,
-			   (unsigned long)dst + size);
+	size = ALIGN(len, ARCH_DMA_MINALIGN);
+	invalidate_dcache_range((unsigned long)dst,
+				(unsigned long)dst + size);
 
 	ret = run_descriptor_jr(desc);
 
@@ -90,13 +93,15 @@ int blob_decap(u8 *key_mod, u8 *src, u8 *dst, u32 len)
  * @src:        - Source address (data)
  * @dst:        - Destination address (blob)
  * @len:        - Size of data to be encapsulated
+ * @keycolor    - Determines if the source data is covered (black key) or
+ *                plaintext.
  *
  * Note: Start and end of the key_mod, src and dst buffers have to be aligned to
  * the cache line size (ARCH_DMA_MINALIGN) for the CAAM operation to succeed.
  *
  * Returns zero on success, negative on error.
  */
-int blob_encap(u8 *key_mod, u8 *src, u8 *dst, u32 len)
+int blob_encap(u8 *key_mod, u8 *src, u8 *dst, u32 len, u8 keycolor)
 {
 	int ret, size, i = 0;
 	u32 *desc;
@@ -123,7 +128,7 @@ int blob_encap(u8 *key_mod, u8 *src, u8 *dst, u32 len)
 	flush_dcache_range((unsigned long)src,
 			   (unsigned long)src + size);
 
-	inline_cnstr_jobdesc_blob_encap(desc, key_mod, src, dst, len);
+	inline_cnstr_jobdesc_blob_encap(desc, key_mod, src, dst, len, keycolor);
 
 	debug("Descriptor dump:\n");
 	for (i = 0; i < 14; i++)
@@ -133,8 +138,9 @@ int blob_encap(u8 *key_mod, u8 *src, u8 *dst, u32 len)
 	flush_dcache_range((unsigned long)desc,
 			   (unsigned long)desc + size);
 
-	flush_dcache_range((unsigned long)dst,
-			   (unsigned long)dst + size);
+	size = ALIGN(BLOB_SIZE(len), ARCH_DMA_MINALIGN);
+	invalidate_dcache_range((unsigned long)dst,
+				(unsigned long)dst + size);
 
 	ret = run_descriptor_jr(desc);
 

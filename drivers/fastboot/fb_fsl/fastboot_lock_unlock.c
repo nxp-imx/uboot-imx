@@ -209,7 +209,8 @@ static __maybe_unused int encrypt_lock_store(FbLockState lock, unsigned char* bd
 	*(bdata + p) = lock;
 
 	memcpy(keymod, skeymod, sizeof(skeymod));
-	ret = blob_encap(keymod, bdata, bdata + ROUND(ENDATA_LEN, ARCH_DMA_MINALIGN), ENDATA_LEN);
+	ret = blob_encap(keymod, bdata, bdata + ROUND(ENDATA_LEN, ARCH_DMA_MINALIGN), ENDATA_LEN,
+			 0);
 	if (ret != 0) {
 		printf("error in blob_encap:0x%x\n", ret);
 		return -1;

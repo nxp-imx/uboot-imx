@@ -210,13 +210,14 @@ void inline_cnstr_jobdesc_hash(uint32_t *desc,
 
 void inline_cnstr_jobdesc_blob_encap(uint32_t *desc, uint8_t *key_idnfr,
 				     uint8_t *plain_txt, uint8_t *enc_blob,
-				     uint32_t in_sz)
+				     uint32_t in_sz, uint8_t keycolor)
 {
 	caam_dma_addr_t dma_addr_key_idnfr, dma_addr_in, dma_addr_out;
 	uint32_t key_sz = KEY_IDNFR_SZ_BYTES;
 	/* output blob will have 32 bytes key blob in beginning and
 	 * 16 byte HMAC identifier at end of data blob */
 	uint32_t out_sz = in_sz + KEY_BLOB_SIZE + MAC_SIZE;
+	uint32_t bk_store;
 
 	dma_addr_key_idnfr = virt_to_phys((void *)key_idnfr);
 	dma_addr_in	= virt_to_phys((void *)plain_txt);
@@ -230,16 +231,23 @@ void inline_cnstr_jobdesc_blob_encap(uint32_t *desc, uint8_t *key_idnfr,
 
 	append_seq_out_ptr(desc, dma_addr_out, out_sz, 0);
 
-	append_operation(desc, OP_TYPE_ENCAP_PROTOCOL | OP_PCLID_BLOB);
+	bk_store = OP_PCLID_BLOB;
+
+	/* An input black key cannot be stored in a red blob */
+	if (keycolor == BLACK_KEY)
+		bk_store |= OP_PCL_BLOB_BLACK;
+
+	append_operation(desc, OP_TYPE_ENCAP_PROTOCOL | bk_store);
 }
 
 void inline_cnstr_jobdesc_blob_decap(uint32_t *desc, uint8_t *key_idnfr,
 				     uint8_t *enc_blob, uint8_t *plain_txt,
-				     uint32_t out_sz)
+				     uint32_t out_sz, uint8_t keycolor)
 {
 	caam_dma_addr_t dma_addr_key_idnfr, dma_addr_in, dma_addr_out;
 	uint32_t key_sz = KEY_IDNFR_SZ_BYTES;
 	uint32_t in_sz = out_sz + KEY_BLOB_SIZE + MAC_SIZE;
+	uint32_t bk_store;
 
 	dma_addr_key_idnfr = virt_to_phys((void *)key_idnfr);
 	dma_addr_in	= virt_to_phys((void *)enc_blob);
@@ -253,7 +261,13 @@ void inline_cnstr_jobdesc_blob_decap(uint32_t *desc, uint8_t *key_idnfr,
 
 	append_seq_out_ptr(desc, dma_addr_out, out_sz, 0);
 
-	append_operation(desc, OP_TYPE_DECAP_PROTOCOL | OP_PCLID_BLOB);
+	bk_store = OP_PCLID_BLOB;
+
+	/* An input black key cannot be stored in a red blob */
+	if (keycolor == BLACK_KEY)
+		bk_store |= OP_PCL_BLOB_BLACK;
+
+	append_operation(desc, OP_TYPE_DECAP_PROTOCOL | bk_store);
 }
 
 /*

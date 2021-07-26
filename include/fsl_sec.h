@@ -389,13 +389,15 @@ u8 caam_get_era(void);
  * @src:        - Source address (blob)
  * @dst:        - Destination address (data)
  * @len:        - Size of decapsulated data
+ * @keycolor    - Determines if the source data is covered (black key) or
+ *                plaintext.
  *
  * Note: Start and end of the key_mod, src and dst buffers have to be aligned to
  * the cache line size (ARCH_DMA_MINALIGN) for the CAAM operation to succeed.
  *
  * Returns zero on success, negative on error.
  */
-int blob_decap(u8 *key_mod, u8 *src, u8 *dst, u32 len);
+int blob_decap(u8 *key_mod, u8 *src, u8 *dst, u32 len, u8 keycolor);
 
 /**
  * blob_encap() - Encapsulate the data as a blob
@@ -403,13 +405,15 @@ int blob_decap(u8 *key_mod, u8 *src, u8 *dst, u32 len);
  * @src:        - Source address (data)
  * @dst:        - Destination address (blob)
  * @len:        - Size of data to be encapsulated
+ * @keycolor    - Determines if the source data is covered (black key) or
+ *                plaintext.
  *
  * Note: Start and end of the key_mod, src and dst buffers have to be aligned to
  * the cache line size (ARCH_DMA_MINALIGN) for the CAAM operation to succeed.
  *
  * Returns zero on success, negative on error.
  */
-int blob_encap(u8 *key_mod, u8 *src, u8 *dst, u32 len);
+int blob_encap(u8 *key_mod, u8 *src, u8 *dst, u32 len, u8 keycolor);
 
 int derive_blob_kek(u8 *bkek_buf, u8 *key_mod, u32 key_sz);
 
