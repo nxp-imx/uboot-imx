@@ -13,6 +13,9 @@
 
 #define KEY_IDNFR_SZ_BYTES		16
 
+/* Encrypted key */
+#define BLACK_KEY	1
+
 #ifdef CONFIG_CMD_DEKBLOB
 /* inline_cnstr_jobdesc_blob_dek:
  * Intializes and constructs the job descriptor for DEK encapsulation
@@ -33,11 +36,11 @@ void inline_cnstr_jobdesc_hash(uint32_t *desc,
 
 void inline_cnstr_jobdesc_blob_encap(uint32_t *desc, uint8_t *key_idnfr,
 				     uint8_t *plain_txt, uint8_t *enc_blob,
-				     uint32_t in_sz);
+				     uint32_t in_sz, uint8_t keycolor);
 
 void inline_cnstr_jobdesc_blob_decap(uint32_t *desc, uint8_t *key_idnfr,
 				     uint8_t *enc_blob, uint8_t *plain_txt,
-				     uint32_t out_sz);
+				     uint32_t out_sz, uint8_t keycolor);
 
 void inline_cnstr_jobdesc_rng_instantiation(u32 *desc, int handle, int do_sk);
 
