@@ -76,6 +76,7 @@ config IMX_HAB
 	depends on ARCH_MX7 || ARCH_MX6 || ARCH_MX5 || ARCH_IMX8M || ARCH_MX7ULP
 	select FSL_CAAM if HAS_CAAM
 	imply CMD_DEKBLOB if HAS_CAAM
+	imply CMD_PROVISION_KEY if HAS_CAAM
 	help
 	  This option enables the support for secure boot (HAB).
 	  See doc/imx/habv4/* for more details.
@@ -257,3 +258,13 @@ config IMX_TRUSTY_OS
 	bool "Support Trusty OS related feature"
 	depends on ARCH_MX6 || ARCH_MX7 || ARCH_IMX8 || ARCH_IMX8M
 	select SYS_ARM_CACHE_WRITEALLOC
+
+config CMD_PROVISION_KEY
+	bool "Support to provision a encrypted key as black blob"
+	depends on IMX8MM || IMX8MN
+	select IMX_CAAM_MFG_PROT
+	help
+	  reads manufacturing protection public key(MPPUBK).
+	  derive PKEK = sha256(MPPUBK).
+	  read encrypted key and decrypt it using PKEK.
+	  generate black blob of decrypted key, add 20 bytes TAG to black blob.
