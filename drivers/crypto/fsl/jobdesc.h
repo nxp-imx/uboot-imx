@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2014 Freescale Semiconductor, Inc.
+ * Copyright 2021 NXP
  *
  */
 
@@ -55,4 +56,7 @@ void inline_cnstr_jobdesc_pkha_rsaexp(uint32_t *desc,
 void inline_cnstr_jobdesc_derive_bkek(uint32_t *desc, void *bkek_out,
 				      void *key_mod, uint32_t key_sz);
 
+void inline_cnstr_jobdesc_aes_ecb_decrypt(uint32_t *desc, uint8_t *key,
+					  uint32_t key_len, uint8_t *src,
+					  uint8_t *dst, uint32_t len);
 #endif
