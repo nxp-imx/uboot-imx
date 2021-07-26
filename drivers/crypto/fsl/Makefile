@@ -10,3 +10,4 @@ obj-$(CONFIG_FSL_CAAM_RNG) += rng.o
 obj-$(CONFIG_FSL_DCP_RNG) += dcp_rng.o
 obj-$(CONFIG_IMX_CAAM_MFG_PROT) += fsl_mfgprot.o
 obj-$(CONFIG_RNG_SELF_TEST) += rng_self_test.o
+obj-$(CONFIG_CMD_PROVISION_KEY) += fsl_aes.o tag_object.o

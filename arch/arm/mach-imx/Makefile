@@ -12,6 +12,7 @@ endif
 ifeq ($(SOC),$(filter $(SOC),imx8m))
 ifneq ($(CONFIG_SPL_BUILD),y)
 obj-$(CONFIG_IMX_BOOTAUX) += imx_bootaux.o
+obj-$(CONFIG_CMD_PROVISION_KEY) += cmd_prov_key.o
 endif
 obj-y += mmc_env.o
 obj-$(CONFIG_FEC_MXC) += mac.o

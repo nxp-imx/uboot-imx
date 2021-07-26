@@ -28,7 +28,16 @@
 #error Neither CONFIG_SYS_FSL_SEC_LE nor CONFIG_SYS_FSL_SEC_BE is defined
 #endif
 
+#define BLOB_OVERHEAD		(32 + 16)
 #define BLOB_SIZE(x)		((x) + 32 + 16) /* Blob buffer size */
+#define AES256_KEY_SZ		32
+
+#define NONCE_SIZE		6
+#define ICV_SIZE		6
+#define CCM_OVERHEAD		(NONCE_SIZE + ICV_SIZE)
+#define TAG_SIZE		20
+#define MAX_BLOB_SIZE		(AES256_KEY_SZ + CCM_OVERHEAD +\
+				BLOB_OVERHEAD + TAG_SIZE)
 
 /* Security Engine Block (MS = Most Sig., LS = Least Sig.) */
 #if CONFIG_SYS_FSL_SEC_COMPAT >= 4
