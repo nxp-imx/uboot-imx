@@ -4,7 +4,7 @@
  * Basic job descriptor construction
  *
  * Copyright 2014 Freescale Semiconductor, Inc.
- * Copyright 2018 NXP
+ * Copyright 2018, 2021 NXP
  *
  */
 
@@ -360,4 +360,33 @@ void inline_cnstr_jobdesc_derive_bkek(uint32_t *desc, void *bkek_out, void *key_
 	append_seq_out_ptr_intlen(desc, dma_bkek_out, BKEK_SIZE, 0);
 	append_operation(desc, OP_TYPE_ENCAP_PROTOCOL | OP_PCLID_BLOB |
 							OP_PROTINFO_MKVB);
+}
+
+void inline_cnstr_jobdesc_aes_ecb_decrypt(uint32_t *desc, uint8_t *key, uint32_t key_len,
+					  uint8_t *src, uint8_t *dst, uint32_t len)
+{
+	caam_dma_addr_t dma_addr_key, dma_addr_src, dma_addr_dst;
+
+	dma_addr_key = virt_to_phys(key);
+	dma_addr_src = virt_to_phys(src);
+	dma_addr_dst = virt_to_phys(dst);
+
+	init_job_desc(desc, 0);
+
+	/* Key command: Load key in class 1 key register. */
+	append_key(desc, dma_addr_key, key_len, CLASS_1 | KEY_DEST_CLASS_REG);
+
+	/* AES ECB Decrypt Operation command. */
+	append_operation(desc, OP_TYPE_CLASS1_ALG | OP_ALG_ALGSEL_AES | OP_ALG_AAI_ECB
+				| OP_ALG_AS_INITFINAL | OP_ALG_DECRYPT);
+
+	/* Fifoload command: load input data. */
+	append_fifo_load(desc, dma_addr_src, len, FIFOLD_CLASS_CLASS1 | FIFOLD_TYPE_MSG
+						| FIFOLD_TYPE_LAST1);
+
+	/* Fifostore command: store decrypted key in black. */
+	append_jump(desc, JUMP_CLASS_CLASS1 | 1);
+	append_move(desc, MOVE_SRC_OUTFIFO | MOVE_DEST_CLASS2KEY | MOVE_WAITCOMP | len);
+	append_load_imm_u32(desc, len, CLASS_2 | LDST_SRCDST_WORD_KEYSZ_REG | LDST_IMM);
+	append_fifo_store(desc, dma_addr_dst, len, CLASS_2 | FIFOST_TYPE_KEY_KEK);
 }

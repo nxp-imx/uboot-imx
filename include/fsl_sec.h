@@ -419,6 +419,8 @@ int derive_blob_kek(u8 *bkek_buf, u8 *key_mod, u32 key_sz);
 
 int hwrng_generate(u8 *dst, u32 len);
 
+int aesecb_decrypt(u8 *key, u32 key_len, u8 *src, u8 *dst, u32 len);
+
 int tag_black_obj(u8 *black_obj, size_t black_obj_len, size_t key_len, size_t black_max_len);
 #endif
 

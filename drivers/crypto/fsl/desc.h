@@ -497,6 +497,9 @@
 #define OP_ALG_AAI_SHIFT	4
 #define OP_ALG_AAI_MASK		(0x1ff << OP_ALG_AAI_SHIFT)
 
+/* block cipher AAI set */
+#define OP_ALG_AAI_ECB		(0x20 << OP_ALG_AAI_SHIFT)
+
 /* randomizer AAI set */
 #define OP_ALG_AAI_RNG		(0x00 << OP_ALG_AAI_SHIFT)
 #define OP_ALG_AAI_RNG_NZB	(0x10 << OP_ALG_AAI_SHIFT)
