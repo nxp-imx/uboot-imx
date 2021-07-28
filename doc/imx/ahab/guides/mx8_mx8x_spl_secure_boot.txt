@@ -199,6 +199,10 @@ as u-boot-atf-container.img.
 
   $ make SOC=<SoC Name> flash_spl
 
+  Or use below command for i.MX8ULP
+
+  $ make SOC=<SoC Name> flash_singleboot_m33
+
 The mkimage log provides the container and signature block offsets used by the
 CSF description file:
 
@@ -261,6 +265,11 @@ The U-Boot fuse tool can be used for programming eFuses on i.MX SoCs.
   0000040 a27e5132 eba887cf 592c1e2b bb501799
   0000060 ee702e07 cf8ce73e fb55e2d5 eba6bbd2
 
+  On i.MX8ULP, the SRK Hash uses sha256 and dump 8 words fuses
+  $ od -t x4 SRK_1_2_3_4_fuse.bin
+  0000000 db2959f2 90dfc39c 53394566 e0b75829
+  0000020 85e6f3b1 af00983d e5e804fe 7a451024
+
 - Program SRK_HASH[511:0] fuses:
 
   * On i.MX 8 QXP:
@@ -300,6 +309,17 @@ The U-Boot fuse tool can be used for programming eFuses on i.MX SoCs.
   => fuse prog 0 735 0xcf8ce73e
   => fuse prog 0 736 0xfb55e2d5
   => fuse prog 0 737 0xeba6bbd2
+
+  * On i.MX 8 ULP:
+
+  => fuse prog 15 0 0xdb2959f2
+  => fuse prog 15 1 0x90dfc39c
+  => fuse prog 15 2 0x53394566
+  => fuse prog 15 3 0xe0b75829
+  => fuse prog 15 4 0x85e6f3b1
+  => fuse prog 15 5 0xaf00983d
+  => fuse prog 15 6 0xe5e804fe
+  => fuse prog 15 7 0x7a451024
 
 1.7 Verify SECO events
 -----------------------
