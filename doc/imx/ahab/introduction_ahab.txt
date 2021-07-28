@@ -297,6 +297,11 @@ Table Hash.
   46e34bf089780bd1c809e714a17e2f4e\
   SRK_1_2_3_4_table.bin
 
+- Platform like i.MX8ULP which only has 8 words of SRK fuses need to regenerate
+  the SRK_1_2_3_4_fuse.bin by SHA256 from SRK_1_2_3_4_table.bin.
+
+  $ openssl dgst -binary -sha256 SRK_1_2_3_4_table.bin
+
 NOTE: The commands above cannot be used as reference to program the SoC
       SRK_HASH fuses.
 
