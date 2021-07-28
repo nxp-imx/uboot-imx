@@ -436,6 +436,7 @@
 /* Assuming OP_TYPE = OP_TYPE_UNI_PROTOCOL */
 #define OP_PCLID_SECMEM		0x08
 #define OP_PCLID_BLOB		(0x0d << OP_PCLID_SHIFT)
+#define OP_PCL_BLOB_BLACK	0x0004
 #define OP_PCLID_SECRETKEY	(0x11 << OP_PCLID_SHIFT)
 #define OP_PCLID_PUBLICKEYPAIR	(0x14 << OP_PCLID_SHIFT)
 #define OP_PCLID_DSA_SIGN	(0x15 << OP_PCLID_SHIFT)
@@ -495,6 +496,9 @@
 
 #define OP_ALG_AAI_SHIFT	4
 #define OP_ALG_AAI_MASK		(0x1ff << OP_ALG_AAI_SHIFT)
+
+/* block cipher AAI set */
+#define OP_ALG_AAI_ECB		(0x20 << OP_ALG_AAI_SHIFT)
 
 /* randomizer AAI set */
 #define OP_ALG_AAI_RNG		(0x00 << OP_ALG_AAI_SHIFT)
