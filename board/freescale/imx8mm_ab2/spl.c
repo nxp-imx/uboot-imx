@@ -16,7 +16,7 @@
 #include <asm/io.h>
 #include <asm/mach-imx/iomux-v3.h>
 #include <asm/arch/clock.h>
-#if defined(CONFIG_TARGET_IMX8MM_AB2) || defined(CONFIG_TARGET_IMX8MM_DDR4_AB2)
+#if defined(CONFIG_IMX8MM)
 #include <asm/arch/imx8mm_pins.h>
 #else
 #include <asm/arch/imx8mn_pins.h>
@@ -42,8 +42,12 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int spl_board_boot_device(enum boot_device boot_dev_spl)
 {
-#if defined(CONFIG_TARGET_IMX8MM_AB2) || defined(CONFIG_TARGET_IMX8MM_DDR4_AB2)
+#ifdef CONFIG_SPL_BOOTROM_SUPPORT
+	return BOOT_DEVICE_BOOTROM;
+#else
 	switch (boot_dev_spl) {
+	case SD1_BOOT:
+	case MMC1_BOOT:
 	case SD2_BOOT:
 	case MMC2_BOOT:
 		return BOOT_DEVICE_MMC1;
@@ -59,8 +63,6 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 	default:
 		return BOOT_DEVICE_NONE;
 	}
-#else
-	return BOOT_DEVICE_BOOTROM;
 #endif
 }
 
@@ -69,7 +71,7 @@ void spl_dram_init(void)
 	ddr_init(&dram_timing);
 }
 
-#if defined(CONFIG_TARGET_IMX8MM_AB2) || defined(CONFIG_TARGET_IMX8MM_DDR4_AB2)
+#if defined(CONFIG_IMX8MM)
 
 #define I2C_PAD_CTRL (PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE | PAD_CTL_PE)
 #define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
@@ -182,7 +184,7 @@ int board_mmc_getcd(struct mmc *mmc)
 	return 1;
 }
 
-#endif /* if defined(CONFIG_TARGET_IMX8MM_AB2) || defined(CONFIG_TARGET_IMX8MM_DDR4_AB2) */
+#endif /* if defined(CONFIG_IMX8MM) */
 
 #if CONFIG_IS_ENABLED(DM_PMIC_PCA9450)
 int power_init_board(void)
@@ -206,11 +208,20 @@ int power_init_board(void)
 	 * Enable DVS control through PMIC_STBY_REQ and
 	 * set B1_ENMODE=1 (ON by PMIC_ON_REQ=H)
 	 */
+#if defined(CONFIG_TARGET_IMX8MN_DDR3L_AB2)
+	/* Set VDD_SOC to 0.85v for DDR3L at 1600MTS */
+	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x14);
+	/* Disable the BUCK2 */
+	pmic_reg_write(dev, PCA9450_BUCK2CTRL, 0x48);
+	/* Set NVCC_DRAM to 1.35v */
+	pmic_reg_write(dev, PCA9450_BUCK6OUT, 0x1E);
+#else
 	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x1C);
+#endif
 	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0xC);
 	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
 
-#if defined(CONFIG_TARGET_IMX8MN_AB2) || defined(CONFIG_TARGET_IMX8MN_DDR4_AB2)
+#if defined(CONFIG_IMX8MN)
 	/* set VDD_SNVS_0V8 from default 0.85V */
 	pmic_reg_write(dev, PCA9450_LDO2CTRL, 0xC0);
 	/* enable LDO4 to 1.2v */
@@ -242,7 +253,7 @@ int power_init_board(void)
 	/* unlock the PMIC regs */
 	pmic_reg_write(dev, BD718XX_REGLOCK, 0x1);
 
-#if defined(CONFIG_TARGET_IMX8MM_AB2) || defined(CONFIG_TARGET_IMX8MM_DDR4_AB2)
+#if defined(CONFIG_IMX8MM)
 	/* increase VDD_SOC to typical value 0.85v before first DRAM access */
 	pmic_reg_write(dev, BD718XX_BUCK1_VOLT_RUN, 0x0f);
 	/* increase VDD_DRAM to 0.975v for 3Ghz DDR */
@@ -251,9 +262,9 @@ int power_init_board(void)
 	/* increase NVCC_DRAM_1V2 to 1.2v for DDR4 */
 	pmic_reg_write(dev, BD718XX_BUCK8_VOLT, 0x28);
 #endif
-#endif /* CONFIG_TARGET_IMX8MM_AB2 */
+#endif /* CONFIG_IMX8MM */
 
-#if defined(CONFIG_TARGET_IMX8MN_AB2) || defined(CONFIG_TARGET_IMX8MN_DDR4_AB2)
+#if defined(CONFIG_IMX8MN)
 	/* Set VDD_ARM to typical value 0.85v for 1.2Ghz */
 	pmic_reg_write(dev, BD718XX_BUCK2_VOLT_RUN, 0xf);
 #ifdef CONFIG_IMX8M_DDR4
@@ -266,7 +277,7 @@ int power_init_board(void)
 	/* increase NVCC_DRAM_1V2 to 1.2v for DDR4 */
 	pmic_reg_write(dev, BD718XX_4TH_NODVS_BUCK_VOLT, 0x28);
 #endif
-#endif /* CONFIG_TARGET_IMX8MN_AB2 */
+#endif /* CONFIG_IMX8MN */
 
 	/* lock the PMIC regs */
 	pmic_reg_write(dev, BD718XX_REGLOCK, 0x11);
@@ -353,7 +364,7 @@ int power_init_board(void)
 
 void spl_board_init(void)
 {
-#if defined(CONFIG_TARGET_IMX8MN_AB2) || defined(CONFIG_TARGET_IMX8MN_DDR4_AB2)
+#if defined(CONFIG_IMX8MN)
 	struct udevice *dev;
 	uclass_find_first_device(UCLASS_MISC, &dev);
 
@@ -377,7 +388,7 @@ int board_fit_config_name_match(const char *name)
 
 void board_init_f(ulong dummy)
 {
-#if defined(CONFIG_TARGET_IMX8MN_AB2) || defined(CONFIG_TARGET_IMX8MN_DDR4_AB2)
+#if defined(CONFIG_IMX8MN)
 	struct udevice *dev;
 #endif
 	int ret;
@@ -399,7 +410,7 @@ void board_init_f(ulong dummy)
 		hang();
 	}
 
-#if defined(CONFIG_TARGET_IMX8MN_AB2) || defined(CONFIG_TARGET_IMX8MN_DDR4_AB2)
+#if defined(CONFIG_IMX8MN)
 	ret = uclass_get_device_by_name(UCLASS_CLK,
 					"clock-controller@30380000",
 					&dev);
@@ -411,7 +422,7 @@ void board_init_f(ulong dummy)
 
 	enable_tzc380();
 
-#if defined(CONFIG_TARGET_IMX8MM_AB2) || defined(CONFIG_TARGET_IMX8MM_DDR4_AB2)
+#if defined(CONFIG_IMX8MM)
 	/* Adjust pmic voltage to 1.0V for 800M */
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
 #endif
