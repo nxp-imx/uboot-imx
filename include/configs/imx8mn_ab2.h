@@ -240,7 +240,11 @@
 
 #define CONFIG_SYS_SDRAM_BASE           0x40000000
 #define PHYS_SDRAM                      0x40000000
+#ifdef CONFIG_TARGET_IMX8MN_DDR3L_AB2
+#define PHYS_SDRAM_SIZE			0x40000000 /* 1GB DDR */
+#else
 #define PHYS_SDRAM_SIZE			0x80000000 /* 2GB DDR */
+#endif
 
 #define CONFIG_MXC_UART_BASE		UART2_BASE_ADDR
 
