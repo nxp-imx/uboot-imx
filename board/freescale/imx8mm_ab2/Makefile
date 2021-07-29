@@ -12,4 +12,5 @@ obj-$(CONFIG_TARGET_IMX8MM_AB2) += lpddr4_imx8mm_som.o
 obj-$(CONFIG_TARGET_IMX8MM_DDR4_AB2) += ddr4_imx8mm_som.o
 obj-$(CONFIG_TARGET_IMX8MN_AB2) += lpddr4_imx8mn_som.o
 obj-$(CONFIG_TARGET_IMX8MN_DDR4_AB2) += ddr4_imx8mn_som.o
+obj-$(CONFIG_TARGET_IMX8MN_DDR3L_AB2) += ddr3l_imx8mn_som.o
 endif
