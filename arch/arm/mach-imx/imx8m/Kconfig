@@ -220,6 +220,16 @@ config TARGET_IMX8MN_DDR4_AB2
 	select MISC
 	select SPL_CRYPTO_SUPPORT if SPL
 
+config TARGET_IMX8MN_DDR3L_AB2
+	bool "imx8mn DDR3L Audio board 2.0"
+	select IMX8MN
+	select SUPPORT_SPL
+	select IMX8M_DDR3L
+	select FSL_CAAM
+	select FSL_BLOB
+	select MISC
+	select SPL_CRYPTO_SUPPORT if SPL
+
 config TARGET_VERDIN_IMX8MM
        bool "Support Toradex Verdin iMX8M Mini module"
        select IMX8MM
