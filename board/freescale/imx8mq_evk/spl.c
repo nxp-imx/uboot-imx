@@ -218,12 +218,30 @@ int board_fit_config_name_match(const char *name)
 }
 #endif
 
+#define GPR_PCIE_VREG_BYPASS	BIT(12)
+static void enable_pcie_vreg(bool enable)
+{
+	struct iomuxc_gpr_base_regs *gpr =
+		(struct iomuxc_gpr_base_regs *)IOMUXC_GPR_BASE_ADDR;
+
+	if (!enable) {
+		setbits_le32(&gpr->gpr[14], GPR_PCIE_VREG_BYPASS);
+		setbits_le32(&gpr->gpr[16], GPR_PCIE_VREG_BYPASS);
+	} else {
+		clrbits_le32(&gpr->gpr[14], GPR_PCIE_VREG_BYPASS);
+		clrbits_le32(&gpr->gpr[16], GPR_PCIE_VREG_BYPASS);
+	}
+}
+
 void board_init_f(ulong dummy)
 {
 	int ret;
 
 	/* Clear the BSS. */
 	memset(__bss_start, 0, __bss_end - __bss_start);
+
+	/* PCIE_VPH connects to 3.3v on EVK, enable VREG to generate 1.8V to PHY */
+	enable_pcie_vreg(true);
 
 	arch_cpu_init();
 
