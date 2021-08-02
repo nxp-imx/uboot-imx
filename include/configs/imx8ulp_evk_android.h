@@ -19,7 +19,7 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	"splashpos=m,m\0"			\
-	"splashimage=0x50000000\0"		\
+	"splashimage=0x90000000\0"		\
 	"fdt_high=0xffffffffffffffff\0"		\
 	"initrd_high=0xffffffffffffffff\0"	\
 	"emmc_dev=0\0"                          \
