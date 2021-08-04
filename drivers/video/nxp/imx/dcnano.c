@@ -220,6 +220,8 @@ static int dcnano_video_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
+	reset_lcdclk();
+
 	if (priv->disp_dev) {
 #if IS_ENABLED(CONFIG_VIDEO_BRIDGE)
 		if (device_get_uclass_id(priv->disp_dev) == UCLASS_VIDEO_BRIDGE) {
