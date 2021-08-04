@@ -779,6 +779,10 @@ int sec_init_idx(uint8_t sec_idx)
 	int ret = 0;
 	struct caam_regs *caam;
 #if CONFIG_IS_ENABLED(DM)
+	if (caam_dev == NULL) {
+		printf("caam_jr: caam not found\n");
+		return -1;
+	}
 	caam = dev_get_priv(caam_dev);
 #else
 	caam_st.sec = (void *)SEC_ADDR(sec_idx);
