@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /* +FHDR------------------------------------------------------------------------
- * Copyright (c) 2019, 2020 NXP Semiconductor N.V.
+ * Copyright 2019-2021 NXP
  * -----------------------------------------------------------------------------
  * FILE NAME      : upower_defs.h
  * DEPARTMENT     : BSTC - Campinas, Brazil
@@ -11,50 +11,50 @@
  * VERSION DATE        AUTHOR                  DESCRIPTION
  *
  * $Log: upower_defs.h.rca $
- * 
+ *
  *  Revision: 1.221 Fri Apr 30 06:27:06 2021 nxa10721
  *  powersys_fw_048.011.012.006
- * 
+ *
  *  Revision: 1.66 Tue Apr 27 12:48:48 2021 nxa11511
  *  Adds new pwm function number UPWR_PWM_REGCFG for new service upwr_pwm_reg_config
  *  (same value as UPWR_PWM_DEVMOD, deprecated).
  *  Adds struct upwr_reg_config_t, only a stub for now.
  *  Replaces typedef upwr_pwm_devmode_msg with upwr_pwm_regcfg_msg.
  *  upwr_pwm_msg.devmode replaced with upwr_pwm_msg.regcfg
- * 
+ *
  *  Revision: 1.60 Fri Oct 23 11:49:56 2020 nxa11511
  *  Deleted the GPL license statements, leaving only BSD, as it is compatible with Linux and good for closed ROM/firmware code.
- * 
+ *
  *  Revision: 1.59 Wed Sep 30 15:57:35 2020 nxa11511
  *  Now UPWR_DGN_MAX = UPWR_DGN_ALL.
  *  Redefines upwr_dgn_log_t according to dgn_lib.S;
  *  Merge from branch dgn_lib.
- * 
+ *
  *  Revision: 1.58.1.1 Tue Sep 29 10:07:12 2020 nxa11511
  *  Adds UPWR_DGN_ALL to upwr_dgn_mode_t, which is now also UPWR_DGN_MAX.
  *  In upwr_dgn_log_t, DGN_LOG_EVENTNEW added DGN_LOG_SPARE deleted.
- * 
+ *
  *  Revision: 1.49 Mon Jun  8 06:46:30 2020 nxa11511
  *  *** empty comment string ***
- * 
+ *
  *  Revision: 1.44 Tue Apr  7 13:34:01 2020 nxf42682
  *  Put TYPES_LOCAL_H - fixed serious compilation error of version 1.42 and 1.43
- * 
+ *
  *  Revision: 1.43 Tue Mar 31 12:50:46 2020 nxf42682
  *  Merged version 1.42 with 1.41.1.1
- * 
+ *
  *  Revision: 1.42 Tue Mar 31 08:06:59 2020 nxa11511
  *  Fixes a compiling error.
- * 
+ *
  *  Revision: 1.41 Mon Mar 30 23:07:26 2020 nxa10721
  *  Added support for AVD bias
- * 
+ *
  *  Revision: 1.40 Mon Mar 30 14:29:44 2020 nxa11511
  *  Updates to API spec 20200404:
  *  API functions upwr_power_on and upwr_boot_start deleted.
  *  API functions upwr_xcp_power_on and upwr_xcp_boot_start moved to the Power Management service group;
  *  renamed to upwr_pwm_dom_power_on and upwr_pwm_boot_start
- * 
+ *
  *  Revision: 1.39 Fri Mar 27 17:17:34 2020 nxa11511
  *  Adds typedef upwr_start_msg.
  *  (sets new typedef upwr_xcp_start_msg;
@@ -62,83 +62,83 @@
  *
  *  Revision: 1.35 Tue Mar 10 06:24:09 2020 nxa11511
  *  Fixes identations to comply with the Linux kernel coding guidelines.
- * 
+ *
  *  Revision: 1.34 Thu Mar  5 22:08:03 2020 nxa10721
  *  Using the RTD monitor config also for APD
- * 
+ *
  *  Revision: 1.33 Mon Mar  2 12:16:14 2020 nxa11511
  *  Changes typedef upwr_start_msg to simple 1-word message.
- * 
+ *
  *  Revision: 1.29 Mon Feb 10 10:34:29 2020 nxa10721
  *  Temporarily turns RTD config pointers as uint32_t for A35 compilation in SoC
- * 
+ *
  *  Revision: 1.28 Sun Feb  9 16:10:01 2020 nxa10721
  *  Added abs_pwr_mode_t, solving TKT0532383
  *  Define RTD swt and mem configs as a pointer or 32-bit word, according to CPU
- * 
+ *
  *  Revision: 1.27 Thu Jan 30 07:09:03 2020 nxa11511
  *  typedef upwr_rom_vers_t members major and minor renamed to vmajor and vminor to avoid clashing with a Linux include macro.
- * 
+ *
  *  Revision: 1.23 Mon Nov 25 10:38:33 2019 nxa10721
  *  Typecastings to reduce warns
- * 
+ *
  *  Revision: 1.21 Wed Nov 13 21:59:44 2019 nxa10721
  *  Added toutines to handle swt offset
- * 
+ *
  *  Revision: 1.20 Tue Nov  5 12:46:45 2019 nxa10721
  *  Added APD power mode config structs, using offsets instead of pointers
- * 
+ *
  *  Revision: 1.19 Thu Oct 24 11:33:48 2019 nxa10721
  *  Remove some g++ warns on strings
- * 
+ *
  *  Revision: 1.18 Fri Oct 18 06:42:40 2019 nxa10721
  *  Added APD and core power modes
- * 
+ *
  *  Revision: 1.17 Wed Oct  9 11:35:24 2019 nxa13158
  *  replaced powersys low power mode config by struct config
- * 
+ *
  *  Revision: 1.16 Tue Sep 24 12:16:30 2019 nxa13158
  *  updated upwr_pmc_mon_rtd_cfg_t struct (removed unecessary union)
- * 
+ *
  *  Revision: 1.15 Mon Aug 26 14:24:26 2019 nxa13158
  *  reorganized power modes enum to make easy to reuse in tb
- * 
+ *
  *  Revision: 1.14 Fri Aug 23 17:54:11 2019 nxa11511
  *  Renames UPWR_RESP_NOT_IMPL to UPWR_RESP_UNINSTALLD.
- * 
+ *
  *  Revision: 1.13 Wed Aug 21 12:59:15 2019 nxa13158
  *  renamed RTD mode to active DMA, moved pmc_bias_mode_t to
  *  pmc_api. Updated mem bias struct config
- * 
+ *
  *  Revision: 1.12 Wed Aug 21 07:01:47 2019 nxa11511
  *  Several changes in message formats.
- * 
+ *
  *  Revision: 1.9 Thu Aug 15 17:10:04 2019 nxa13158
  *  removed POR from power modes transitions. Not needed anymore
- * 
+ *
  *  Revision: 1.8 Thu Aug 15 11:50:08 2019 nxa11511
  *  UPWR_SG_PMODE renamed to UPWR_SG_PMGMT.
- * 
+ *
  *  Revision: 1.7 Wed Aug 14 10:16:48 2019 nxa13158
  *  Fixed upwr_pmc_bias_cfg_t struct definition
- * 
+ *
  *  Revision: 1.6 Tue Aug 13 17:52:07 2019 nxa11511
  *  Adds Exception function enum.
  *  Fixes union upwr_pmc_mon_rtd_cfg_t.
- * 
+ *
  *  Revision: 1.5 Tue Aug 13 15:26:40 2019 nxa13158
  *  added Power Modes configuration structs.
- * 
+ *
  *  Revision: 1.4 Mon Aug 12 18:18:40 2019 nxa11511
  *  Message structs/unions turned into typedefs.
  *  Adds message formats for the new initialization procedure with the boot start step.
- * 
+ *
  *  Revision: 1.3 Sat Aug 10 09:06:21 2019 nxa11511
  *  Adds extern "C" if __cplusplus is #defined and UPWR_NAMESPACE is #undefined.
- * 
+ *
  *  Revision: 1.1 Thu Aug  1 17:14:33 2019 nxa11511
  *  uPower driver API #defines and typedefs shared with the firmware
- * 
+ *
  * -----------------------------------------------------------------------------
  * KEYWORDS: micro-power uPower driver API
  * -----------------------------------------------------------------------------
@@ -153,7 +153,7 @@
 #ifndef _UPWR_DEFS_H
 #define _UPWR_DEFS_H
 
-#ifndef TYPES_LOCAL_H 
+#ifndef TYPES_LOCAL_H
 
 #include <stdint.h> /* this include breaks the SoC compile - TBD why? */
 
@@ -269,7 +269,7 @@ typedef enum {             /* Exception Functions */
 	UPWR_XCP_PING = UPWR_XCP_INIT,
 			   /*  0 = also ping request, since its response is
 				   an init msg */
-	UPWR_XCP_START,    /*  1 = service start: upwr_start 
+	UPWR_XCP_START,    /*  1 = service start: upwr_start
                             *      (not a service request itself) */
 	UPWR_XCP_SHUTDOWN, /*  2 = service shutdown: upwr_xcp_shutdown */
 	UPWR_XCP_CONFIG,   /*  3 = uPower configuration: upwr_xcp_config */

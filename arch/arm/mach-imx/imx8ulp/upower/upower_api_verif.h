@@ -1,5 +1,5 @@
 /* +FHDR------------------------------------------------------------------------
- * Copyright (c) 2019, NXP Semiconductor N.V.
+ * Copyright 2019-2021 NXP
  * NXP Confidential Proprietary
  * -----------------------------------------------------------------------------
  * FILE NAME      : upower_api_verif.h
@@ -11,16 +11,16 @@
  * VERSION DATE        AUTHOR                  DESCRIPTION
  *
  * $Log: upower_api_verif.h.rca $
- * 
+ *
  *  Revision: 1.4 Tue Sep 15 17:52:21 2020 nxa11511
  *  Verification-only service upwr_pwm_reg_access moved to Exception service group and was renamed upwr_xcp_reg_access.
- * 
+ *
  *  Revision: 1.3 Wed Jun 17 17:01:08 2020 nxa11511
  *  Comment fix.
- * 
+ *
  *  Revision: 1.2 Mon Jun  8 06:46:13 2020 nxa11511
  *  Removes verification-only typedefs, moved to upower_soc_defs.h
- * 
+ *
  * -----------------------------------------------------------------------------
  * KEYWORDS: micro-power uPower driver API verification
  * -----------------------------------------------------------------------------
@@ -39,7 +39,7 @@
 
 /* definitions for the verification-only service upwr_pwm_read_write */
 
-/* 
+/*
  * upwr_xcp_reg_access()- accesses (read or write) a register inside uPower.
  * @access: pointer to the access specification struct (see upower_soc_defs.h).
  *          access->mask determines the bits of access->data written (if any)

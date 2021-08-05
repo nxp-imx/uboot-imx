@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /* +FHDR------------------------------------------------------------------------
- * Copyright (c) 2019, 2020 NXP Semiconductor N.V.
+ * Copyright 2019-2021 NXP
  * -----------------------------------------------------------------------------
  * FILE NAME      : upower_api.h
  * DEPARTMENT     : BSTC - Campinas, Brazil
@@ -106,7 +106,7 @@ extern "C" {
 /******************************************************************************
  * uPower API Overview and Concepts
  *
- * Version: 20210430 Copyright (c) 2019-2021 NXP Semiconductor N.V.
+ * Version: 20210430 Copyright 2019-2021 NXP
  *
  * This API is intended to be used by the OS drivers (Linux, FreeRTOS etc)
  * as well as bare metal drivers to command and use services from the uPower.
