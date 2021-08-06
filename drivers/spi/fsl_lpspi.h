@@ -2,7 +2,7 @@
 /*
  * Register definitions for Freescale QSPI
  *
- * Copyright 2020 NXP Semiconductor, Inc.
+ * Copyright 2020 NXP
  * Author: Clark Wang (xiaoning.wang@nxp.com)
  */
 #ifndef _FSL_LPSPI_H_

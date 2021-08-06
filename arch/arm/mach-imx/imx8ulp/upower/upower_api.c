@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /* +FHDR----------------------------------------------------------------------
- * Copyright (c) 2019, 2020, NXP Semiconductor N.V.
+ * Copyright 2019-2021 NXP
  * ---------------------------------------------------------------------------
  * FILE NAME      : upower_api.c
  * DEPARTMENT     : BSTC - Campinas, Brazil

@@ -2,7 +2,7 @@
 /*
  * LPSPI controller driver.
  *
- * Copyright 2020 NXP Semiconductor, Inc.
+ * Copyright 2020 NXP
  * Author: Clark Wang (xiaoning.wang@nxp.com)
  */
 
