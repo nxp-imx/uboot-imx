@@ -31,6 +31,7 @@
 	"kernelheader_addr_r=0x80200000\0"	\
 	"kernel_addr_r=0x96000000\0"		\
 	"fdt_addr_r=0x90000000\0"		\
+	"fdt_addr=0x90000000\0"                 \
 	"load_addr=0x96000000\0"		\
 	"kernel_size=0x2800000\0"		\
 	"bootm_size=0x10000000\0"		\
