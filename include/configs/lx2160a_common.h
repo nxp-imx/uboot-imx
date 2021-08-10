@@ -232,7 +232,6 @@ int select_i2c_ch_pca9547_sec(unsigned char ch);
 	"ramdisk_size=0x2000000\0"		\
 	"fdt_high=0xa0000000\0"			\
 	"initrd_high=0xffffffffffffffff\0"	\
-	"fdt_addr=0x64f00000\0"			\
 	"kernel_start=0x1000000\0"		\
 	"kernelheader_start=0x600000\0"		\
 	"scriptaddr=0x80000000\0"		\
