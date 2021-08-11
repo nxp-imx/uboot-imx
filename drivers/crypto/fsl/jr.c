@@ -44,9 +44,17 @@ struct udevice *caam_dev;
 #define SEC_ADDR(idx)	\
 	(ulong)((CONFIG_SYS_FSL_SEC_ADDR + sec_offset[idx]))
 
-#define SEC_JR0_ADDR(idx)	\
+#ifndef CONFIG_IMX8M
+#define SEC_JR_ADDR(idx)	\
 	(ulong)(SEC_ADDR(idx) +	\
 	 (CONFIG_SYS_FSL_JR0_OFFSET - CONFIG_SYS_FSL_SEC_OFFSET))
+#define JR_ID 0
+#else
+#define SEC_JR_ADDR(idx)	\
+	(ulong)(SEC_ADDR(idx) + \
+	 (CONFIG_SYS_FSL_JR1_OFFSET - CONFIG_SYS_FSL_SEC_OFFSET))
+#define JR_ID 1
+#endif
 struct caam_regs caam_st;
 #endif
 
@@ -786,8 +794,8 @@ int sec_init_idx(uint8_t sec_idx)
 	caam = dev_get_priv(caam_dev);
 #else
 	caam_st.sec = (void *)SEC_ADDR(sec_idx);
-	caam_st.regs = (struct jr_regs *)SEC_JR0_ADDR(sec_idx);
-	caam_st.jrid = 0;
+	caam_st.regs = (struct jr_regs *)SEC_JR_ADDR(sec_idx);
+	caam_st.jrid = JR_ID;
 	caam = &caam_st;
 #endif
 #if CONFIG_IS_ENABLED(OF_CONTROL)
