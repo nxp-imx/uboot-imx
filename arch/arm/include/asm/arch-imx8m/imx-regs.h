@@ -246,6 +246,7 @@
 #define CFG_SYS_FSL_SEC_ADDR         (CAAM_IPS_BASE_ADDR + \
 					 CFG_SYS_FSL_SEC_OFFSET)
 #define CFG_SYS_FSL_JR0_OFFSET       (0x1000)
+#define CFG_SYS_FSL_JR1_OFFSET       (0x2000)
 #define CFG_SYS_FSL_JR0_ADDR         (CFG_SYS_FSL_SEC_ADDR + \
 					 CFG_SYS_FSL_JR0_OFFSET)
 #if !defined(__ASSEMBLY__)
