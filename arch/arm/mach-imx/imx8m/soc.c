@@ -1534,6 +1534,7 @@ static __maybe_unused void acquire_buildinfo(void)
 
 int arch_misc_init(void)
 {
+#ifndef CONFIG_ANDROID_SUPPORT
 	if (IS_ENABLED(CONFIG_FSL_CAAM)) {
 		struct udevice *dev;
 		int ret;
@@ -1542,6 +1543,7 @@ int arch_misc_init(void)
 		if (ret)
 			printf("Failed to initialize %s: %d\n", dev->name, ret);
 	}
+#endif
 	acquire_buildinfo();
 
 	return 0;
