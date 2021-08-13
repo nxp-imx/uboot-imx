@@ -1775,6 +1775,7 @@ void reset_cpu(void)
 #if defined(CONFIG_ARCH_MISC_INIT)
 int arch_misc_init(void)
 {
+#ifndef CONFIG_ANDROID_SUPPORT
 	if (IS_ENABLED(CONFIG_FSL_CAAM)) {
 		struct udevice *dev;
 		int ret;
@@ -1783,6 +1784,7 @@ int arch_misc_init(void)
 		if (ret)
 			printf("Failed to initialize caam_jr: %d\n", ret);
 	}
+#endif
 
 	return 0;
 }
