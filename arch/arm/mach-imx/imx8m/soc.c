@@ -1275,6 +1275,7 @@ static void acquire_buildinfo(void)
 
 int arch_misc_init(void)
 {
+#ifndef CONFIG_ANDROID_SUPPORT
 	struct udevice *dev;
 
 	uclass_find_first_device(UCLASS_MISC, &dev);
@@ -1282,7 +1283,7 @@ int arch_misc_init(void)
 		if (device_probe(dev))
 			continue;
 	}
-
+#endif
 	acquire_buildinfo();
 
 	return 0;
