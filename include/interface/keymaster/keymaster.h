@@ -291,10 +291,6 @@ struct km_attestation_data {
     const uint8_t *data;
 } TRUSTY_ATTR_PACKED;
 
-struct km_attestation_id_data {
-    uint32_t data_size;
-    const uint8_t *data;
-} TRUSTY_ATTR_PACKED;
 /**
  * km_raw_buffer - represents a single raw buffer
  *
