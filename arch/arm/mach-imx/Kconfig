@@ -336,10 +336,40 @@ config ID_ATTESTATION
 	default y
 	depends on IMX_TRUSTY_OS
 
-config ATTESTATION_ID_PRODUCT
-	string "Product name for ID attestation"
+config ATTESTATION_ID_BRAND
+	string "brand name"
 	depends on IMX_TRUSTY_OS && ID_ATTESTATION
-	default SYS_CONFIG_NAME
+	default ""
+
+config ATTESTATION_ID_DEVICE
+	string "device name"
+	depends on IMX_TRUSTY_OS && ID_ATTESTATION
+	default ""
+
+config ATTESTATION_ID_PRODUCT
+	string "product name"
+	depends on IMX_TRUSTY_OS && ID_ATTESTATION
+	default ""
+
+config ATTESTATION_ID_IMEI
+	string "IMEI id"
+	depends on IMX_TRUSTY_OS && ID_ATTESTATION
+	default ""
+
+config ATTESTATION_ID_MEID
+	string "MEID id"
+	depends on IMX_TRUSTY_OS && ID_ATTESTATION
+	default ""
+
+config ATTESTATION_ID_MANUFACTURER
+	string "manufacture name"
+	depends on IMX_TRUSTY_OS && ID_ATTESTATION
+	default ""
+
+config ATTESTATION_ID_MODEL
+	string "model name"
+	depends on IMX_TRUSTY_OS && ID_ATTESTATION
+	default ""
 
 config SECURE_UNLOCK
 	bool "Enable secure unlock for Android devices, it can only be enabled on HAB closed board"
