@@ -712,8 +712,7 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 			printf("Wrong kernel image! Please check if you need to enable 'CONFIG_LZ4'\n");
 			goto fail;
 		}
-
-		kernel_image_size = kernel_size((void *)((ulong)hdr_v3 + 4096));
+		kernel_image_size = kernel_size((void *)(ulong)vendor_boot_hdr->kernel_addr);
 	} else {
 #if defined (CONFIG_ARCH_IMX8) || defined (CONFIG_ARCH_IMX8M)
 		if (image_arm64((void *)((ulong)hdr + hdr->page_size))) {
