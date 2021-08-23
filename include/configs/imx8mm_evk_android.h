@@ -50,17 +50,6 @@
 #define KEYSLOT_BLKS             0x1FFF
 #define NS_ARCH_ARM64 1
 
-#ifdef CONFIG_ID_ATTESTATION
-#define ATTESTATION_ID_BRAND "Android"
-#define ATTESTATION_ID_DEVICE "evk_8mm"
-#define ATTESTATION_ID_MANUFACTURER "nxp"
-#define ATTESTATION_ID_MODEL "EVK_8MM"
-#ifdef CONFIG_ATTESTATION_ID_PRODUCT
-#undef CONFIG_ATTESTATION_ID_PRODUCT
-#endif
-#define CONFIG_ATTESTATION_ID_PRODUCT "evk_8mm"
-#endif
-
 #endif
 
 /* Enable CONFIG_IMX8M_1G_MEMORY  to config 1GB ddr */
