@@ -142,6 +142,8 @@ static int _fastboot_parts_load_from_ptable(void)
 	int boot_partition = FASTBOOT_MMC_NONE_PARTITION_ID;
 	int user_partition = FASTBOOT_MMC_NONE_PARTITION_ID;
 
+	unsigned long boot_loader_psize = ANDROID_BOOTLOADER_SIZE;
+
 	struct mmc *mmc;
 	struct blk_desc *dev_desc;
 	struct fastboot_ptentry ptable[MAX_PTN];
@@ -184,6 +186,7 @@ static int _fastboot_parts_load_from_ptable(void)
 		if (mmc->part_config != MMCPART_NOAVAILABLE) {
 			boot_partition = FASTBOOT_MMC_BOOT_PARTITION_ID;
 			user_partition = FASTBOOT_MMC_USER_PARTITION_ID;
+			boot_loader_psize = mmc->capacity_boot;
 		}
 	} else {
 		printf("Can't setup partition table on this device %d\n",
@@ -231,7 +234,8 @@ static int _fastboot_parts_load_from_ptable(void)
 	ptable[PTN_BOOTLOADER_INDEX].start =
 				bootloader_mmc_offset() / dev_desc->blksz;
 	ptable[PTN_BOOTLOADER_INDEX].length =
-				 ANDROID_BOOTLOADER_SIZE / dev_desc->blksz;
+				 boot_loader_psize / dev_desc->blksz;
+
 	ptable[PTN_BOOTLOADER_INDEX].partition_id = boot_partition;
 	ptable[PTN_BOOTLOADER_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
 	strcpy(ptable[PTN_BOOTLOADER_INDEX].fstype, "raw");
