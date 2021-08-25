@@ -24,9 +24,6 @@
 #include <regmap.h>
 #include <syscon.h>
 
-/* fixed phy ref clk rate */
-#define PHY_REF_CLK		27000000
-
 struct imx_sec_dsim_priv {
 	struct mipi_dsi_device device;
 	void __iomem *base;
