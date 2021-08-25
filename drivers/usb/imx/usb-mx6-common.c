@@ -93,10 +93,6 @@ static void usb_power_config(int index)
 	struct usbphy_regs __iomem *usbphy =
 		(struct usbphy_regs __iomem *)phy_bases[index];
 
-	writel(ANADIG_USB2_CHRG_DETECT_EN_B |
-		   ANADIG_USB2_CHRG_DETECT_CHK_CHRG_B,
-		   &usbphy->usb1_chrg_detect);
-
 	enable_usb_pll((ulong)usbphy);
 
 #elif defined(CONFIG_IMX8)
@@ -105,10 +101,6 @@ static void usb_power_config(int index)
 	struct usbphy_regs __iomem *usbphy = (struct usbphy_regs __iomem *)phy_bases[index];
 
 	int timeout = 1000000;
-
-	writel(ANADIG_USB2_CHRG_DETECT_EN_B |
-		   ANADIG_USB2_CHRG_DETECT_CHK_CHRG_B,
-		   &usbphy->usb1_chrg_detect);
 
 	if (!(readl(&usbphy->usb1_pll_480_ctrl) & PLL_USB_LOCK_MASK)) {
 
