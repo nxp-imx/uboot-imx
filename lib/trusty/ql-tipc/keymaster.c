@@ -586,6 +586,7 @@ int trusty_set_attestation_id(void)
 {
     uint8_t *req = NULL, *tmp = NULL;
     uint32_t req_size = 0;
+    char *serial = NULL;
     int rc;
 
     req = trusty_calloc(1024, 1); // 1024 bytes buffer should be enough.
@@ -620,10 +621,14 @@ int trusty_set_attestation_id(void)
     }
 
     /* serial number, bail out when fail because it's a MUST. */
-    char *serial = get_serial();
-    if (serial)
-        km_attestation_id_data_serialize((uint8_t *)serial, 16, &tmp, &req_size);
-    else {
+    serial = get_serial();
+    if (serial != NULL) {
+        rc = km_attestation_id_data_serialize((uint8_t *)serial, 16, &tmp, &req_size);
+        if (rc < 0) {
+	    trusty_error("%s: failed (%d) to set id serial.\n", __func__, rc);
+            goto end;
+        }
+    } else {
         trusty_error("%s: failed to get serial number.\n", __func__);
         goto end;
     }
