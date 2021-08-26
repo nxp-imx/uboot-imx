@@ -115,3 +115,38 @@ void init_uart_clk(u32 index)
 		break;
 	}
 }
+
+void init_clk_usdhc(u32 index)
+{
+	switch (index) {
+	case 0:
+		ccm_cfg_clk_ccgr(CCGR_USDHC1, 0);
+		ccm_cfg_clk_root(51, 2, 1);
+		ccm_cfg_clk_ccgr(CCGR_USDHC1, 1);
+		break;
+	case 1:
+		ccm_cfg_clk_ccgr(CCGR_USDHC2, 0);
+		ccm_cfg_clk_root(52, 2, 1);
+		ccm_cfg_clk_ccgr(CCGR_USDHC2, 0);
+		break;
+	case 2:
+		ccm_cfg_clk_ccgr(CCGR_USDHC3, 0);
+		ccm_cfg_clk_root(53, 2, 1);
+		ccm_cfg_clk_ccgr(CCGR_USDHC3, 0);
+		break;
+	default:
+		return;
+	};
+};
+
+unsigned int mxc_get_clock(enum mxc_clock clk)
+{
+	switch (clk) {
+	case MXC_ESDHC_CLK:
+		return 400000000;
+	default:
+		return -1;
+	};
+
+	return -1;
+};
