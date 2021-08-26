@@ -180,9 +180,9 @@
 #define CCGR_SPI8	75
 #define CCGR_I3C1	76
 #define CCGR_I3C2	77
-#define CCGR_USD1	78
-#define CCGR_USD2	79
-#define CCGR_USD3	80
+#define CCGR_USDHC1	78
+#define CCGR_USDHC2	79
+#define CCGR_USDHC3	80
 #define CCGR_SAI1	81
 #define CCGR_SAI2	82
 #define CCGR_SAI3	83
