@@ -173,7 +173,7 @@ config CMD_QSPIHDR
 config FSL_MFGPROT
 	bool "Support the 'mfgprot' command"
 	depends on IMX_HAB || AHAB_BOOT
-	select IMX_CAAM_MFG_PROT if ARCH_MX7
+	select IMX_CAAM_MFG_PROT if (ARCH_MX7 || ARCH_IMX8M)
 	select IMX_SECO_MFG_PROT if ARCH_IMX8
 	help
 	  This option enables the manufacturing protection command
