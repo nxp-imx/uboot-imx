@@ -34,9 +34,9 @@ struct s400_map_entry {
 struct fsb_map_entry fsb_mapping_table[] = {
 	{ 3, 8 },
 	{ 4, 8 },
+	{ -1, 48 }, /* Reserve 48 words */
 	{ 5, 8 },
 	{ 6, 8 },
-	{ -1, 48 }, /* Reserve 48 words */
 	{ 8,  4, true },
 	{ 24, 4, true },
 	{ 26, 4, true },
