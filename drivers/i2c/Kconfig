@@ -169,6 +169,11 @@ config SYS_I2C_IMX_LPI2C
 	help
 	  Add support for the NXP i.MX LPI2C driver.
 
+config SYS_I2C_IMX_I3C
+	bool "NXP i.MX I3C driver"
+	help
+	  Add support for the NXP i.MX I3C driver.
+
 config SYS_I2C_IMX_VIRT_I2C
 	bool "NXP i.MX Virtual I2C driver"
 	select IMX_VSERVICE
