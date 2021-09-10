@@ -427,19 +427,18 @@
 				status = "okay";
 			};
 
-			i3c2: i3c-master@29360000 {
-				#address-cells = <3>;
-				#size-cells = <0>;
-				compatible = "silvaco,i3c-master";
+			i3c2: i3c@29360000 {
+				compatible = "fsl,imx8ulp-i3c";
 				reg = <0x29360000 0x10000>;
+				#address-cells = <1>;
+				#size-cells = <0>;
 				interrupts = <GIC_SPI 96 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&pcc3 IMX8ULP_CLK_I3C2>,
-					 <&pcc3 IMX8ULP_CLK_I3C2>,
-					 <&cgc1 IMX8ULP_CLK_DUMMY>;
-				clock-names = "pclk", "fast_clk", "slow_clk";
+					 <&pcc3 IMX8ULP_CLK_I3C2>;
+				clock-names = "per", "ipg";
 				assigned-clocks = <&pcc3 IMX8ULP_CLK_I3C2>;
-				assigned-clock-parents = <&cgc1 IMX8ULP_CLK_SOSC_DIV2>;
-				assigned-clock-rates = <24000000>;
+				assigned-clock-parents = <&cgc1 IMX8ULP_CLK_FROSC_DIV2>;
+				assigned-clock-rates = <48000000>;
 				status = "disabled";
 			};
 
