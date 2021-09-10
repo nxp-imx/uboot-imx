@@ -174,8 +174,9 @@ int board_init(void)
 	}
 #endif
 
-	if (IS_ENABLED(CONFIG_FEC_MXC))
-		setup_fec();
+#if defined(CONFIG_FEC_MXC)
+	setup_fec();
+#endif
 
 	if (m33_image_booted()) {
 		sync = m33_image_handshake(1000);
