@@ -27,8 +27,80 @@
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 #define COMMANDLINE_LENGTH			2048
+#define BOOTCONFIG_MAGIC "#BOOTCONFIG\n"
+#define BOOTCONFIG_MAGIC_SIZE 12
+#define BOOTCONFIG_SIZE_SIZE 4
+#define BOOTCONFIG_CHECKSUM_SIZE 4
+#define BOOTCONFIG_TRAILER_SIZE BOOTCONFIG_MAGIC_SIZE + \
+				BOOTCONFIG_SIZE_SIZE + \
+				BOOTCONFIG_CHECKSUM_SIZE
 
 static char andr_tmp_str[ANDR_BOOT_ARGS_SIZE + 1];
+
+/*
+ * Simple checksum for a buffer.
+ *
+ * @param addr pointer to the start of the buffer.
+ * @param size size of the buffer in bytes.
+ * @return check sum result.
+ */
+static uint32_t checksum(const unsigned char* const buffer, uint32_t size)
+{
+	uint32_t sum = 0;
+	for (uint32_t i = 0; i < size; i++) {
+		sum += buffer[i];
+	}
+	return sum;
+}
+
+/*
+ * Check if the bootconfig trailer is present within the bootconfig section.
+ *
+ */
+static bool trailer_exist(uint64_t bootconfig_end_addr)
+{
+	return !strncmp((char*)(bootconfig_end_addr - BOOTCONFIG_MAGIC_SIZE),
+			BOOTCONFIG_MAGIC, BOOTCONFIG_MAGIC_SIZE);
+}
+
+/*
+ * Insert the bootconfig trailer. The trailer should have:
+ * parameter size - 4 bytes
+ * checksum of the section - 4 bytes
+ * magic #BOOTCONFIG\n - 12 bytes
+ */
+int32_t add_bootconfig_trailer(uint64_t bootconfig_start_addr, uint32_t bootconfig_size)
+{
+	uint64_t end;
+	uint32_t sum;
+
+	if (bootconfig_start_addr == 0) {
+		return -1;
+	}
+	if (bootconfig_size == 0) {
+		return 0;
+	}
+
+	end = bootconfig_start_addr + bootconfig_size;
+
+	if (trailer_exist(end)) {
+	// do nothing.
+		return 0;
+	}
+
+	// copy the size
+	memcpy((void *)(end), &bootconfig_size, BOOTCONFIG_SIZE_SIZE);
+
+	// add checksum
+	sum = checksum((unsigned char*)bootconfig_start_addr, bootconfig_size);
+	memcpy((void *)(end + BOOTCONFIG_SIZE_SIZE), &sum, BOOTCONFIG_CHECKSUM_SIZE);
+
+	// add the magic
+	memcpy((void *)(end + BOOTCONFIG_SIZE_SIZE + BOOTCONFIG_CHECKSUM_SIZE),
+		BOOTCONFIG_MAGIC, BOOTCONFIG_MAGIC_SIZE);
+
+	return BOOTCONFIG_TRAILER_SIZE;
+}
 
 static ulong android_image_get_kernel_addr(const struct andr_img_hdr *hdr)
 {
@@ -56,28 +128,21 @@ static ulong android_image_get_kernel_addr(const struct andr_img_hdr *hdr)
 	return hdr->kernel_addr;
 }
 
-static void append_kernel_cmdline(char *commandline)
+/*
+ * The parameters start with androidboot.* should be used
+ * by android userspace, let's handle them here.
+ * */
+static void append_androidboot_args(char *args, uint32_t *len)
 {
-	char newbootargs[512] = {0};
+	char args_buf[512] = {0};
 	extern boot_metric metrics;
-
-	/* Add 'bootargs_ram_capacity' to hold the parameters based on different ram capacity */
-	char *bootargs_ram_capacity = env_get("bootargs_ram_capacity");
-	if (bootargs_ram_capacity) {
-		strncat(commandline, " ", COMMANDLINE_LENGTH - strlen(commandline));
-		strncat(commandline, bootargs_ram_capacity,
-			COMMANDLINE_LENGTH - strlen(commandline));
-	}
 
 #ifdef CONFIG_SERIAL_TAG
 	struct tag_serialnr serialnr;
 	get_board_serial(&serialnr);
 
-	sprintf(newbootargs,
-					" androidboot.serialno=%08x%08x",
-					serialnr.high,
-					serialnr.low);
-	strncat(commandline, newbootargs, COMMANDLINE_LENGTH - strlen(commandline));
+	sprintf(args_buf, " androidboot.serialno=%08x%08x", serialnr.high, serialnr.low);
+	strncat(args, args_buf, *len - strlen(args));
 
 	if (serialnr.high + serialnr.low != 0) {
 		char bd_addr[16]={0};
@@ -85,47 +150,47 @@ static void append_kernel_cmdline(char *commandline)
 			"%08x%08x",
 			serialnr.high,
 			serialnr.low);
-		sprintf(newbootargs,
+		sprintf(args_buf,
 			" androidboot.btmacaddr=%c%c:%c%c:%c%c:%c%c:%c%c:%c%c",
 			bd_addr[0],bd_addr[1],bd_addr[2],bd_addr[3],bd_addr[4],bd_addr[5],
 			bd_addr[6],bd_addr[7],bd_addr[8],bd_addr[9],bd_addr[10],bd_addr[11]);
 	} else {
 		/* Some boards have serial number as all zeros (imx8mp),
 		 * hard code the bt mac address for such case. */
-		sprintf(newbootargs, " androidboot.btmacaddr=22:22:67:C6:69:73");
+		sprintf(args_buf, " androidboot.btmacaddr=22:22:67:C6:69:73");
 	}
 
-	strncat(commandline, newbootargs, COMMANDLINE_LENGTH - strlen(commandline));
+	strncat(args, args_buf, *len - strlen(args));
 #endif
 
 	/* append soc type into bootargs */
 	char *soc_type = env_get("soc_type");
 	if (soc_type) {
-		sprintf(newbootargs,
+		sprintf(args_buf,
 			" androidboot.soc_type=%s",
 			soc_type);
-		strncat(commandline, newbootargs, COMMANDLINE_LENGTH - strlen(commandline));
+		strncat(args, args_buf, *len - strlen(args));
 	}
 	/* append soc rev into bootargs */
 	char *soc_rev = env_get("soc_rev");
 	if (soc_rev) {
-		sprintf(newbootargs,
+		sprintf(args_buf,
 			" androidboot.soc_rev=%s",
 			soc_rev);
-		strncat(commandline, newbootargs, COMMANDLINE_LENGTH - strlen(commandline));
+		strncat(args, args_buf, *len - strlen(args));
 	}
 
-	sprintf(newbootargs,
+	sprintf(args_buf,
 			" androidboot.boot_device_root=mmcblk%d", mmc_map_to_kernel_blk(mmc_get_env_dev()));
-	strncat(commandline, newbootargs, COMMANDLINE_LENGTH - strlen(commandline));
+	strncat(args, args_buf, *len - strlen(args));
 
 	/* boot metric variables */
 	metrics.ble_1 = get_timer(0);
-	sprintf(newbootargs,
+	sprintf(args_buf,
 		" androidboot.boottime=1BLL:%d,1BLE:%d,KL:%d,KD:%d,AVB:%d,ODT:%d,SW:%d",
 		metrics.bll_1, metrics.ble_1, metrics.kl, metrics.kd, metrics.avb,
 		metrics.odt, metrics.sw);
-	strncat(commandline, newbootargs, COMMANDLINE_LENGTH - strlen(commandline));
+	strncat(args, args_buf, *len - strlen(args));
 
 #if defined(CONFIG_ARCH_MX6) || defined(CONFIG_ARCH_MX7) || \
 	defined(CONFIG_ARCH_MX7ULP) || defined(CONFIG_ARCH_IMX8M)
@@ -134,24 +199,57 @@ static void append_kernel_cmdline(char *commandline)
 	memset(cause, '\0', sizeof(cause));
 	get_reboot_reason(cause);
 	if (strstr(cause, "POR"))
-		sprintf(newbootargs," androidboot.bootreason=cold,powerkey");
+		sprintf(args_buf," androidboot.bootreason=cold,powerkey");
 	else if (strstr(cause, "WDOG") || strstr(cause, "WDG"))
-		sprintf(newbootargs," androidboot.bootreason=watchdog");
+		sprintf(args_buf," androidboot.bootreason=watchdog");
 	else
-		sprintf(newbootargs," androidboot.bootreason=reboot");
+		sprintf(args_buf," androidboot.bootreason=reboot");
 #else
-	sprintf(newbootargs," androidboot.bootreason=reboot");
+	sprintf(args_buf," androidboot.bootreason=reboot");
 #endif
-	strncat(commandline, newbootargs, COMMANDLINE_LENGTH - strlen(commandline));
+	strncat(args, args_buf, *len - strlen(args));
+
+	/* VTS need this commandline to verify fdt overlay. Pass the
+	 * dtb index as "0" here since we only have one dtb in dtbo
+	 * partition and haven't enabled the dtb overlay.
+	 */
+#if defined(CONFIG_ANDROID_SUPPORT) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
+	sprintf(args_buf," androidboot.dtbo_idx=0");
+	strncat(args, args_buf, *len - strlen(args));
+#endif
+
+	char *keystore = env_get("keystore");
+	char *bootargs_trusty;
+	if ((keystore == NULL) || strncmp(keystore, "trusty", sizeof("trusty"))) {
+		bootargs_trusty = " androidboot.keystore=software";
+	} else {
+		bootargs_trusty = " androidboot.keystore=trusty";
+	}
+	strncat(args, bootargs_trusty, *len - strlen(args));
+
 
 #ifdef CONFIG_AVB_SUPPORT
 	/* secondary cmdline added by avb */
 	char *bootargs_sec = env_get("bootargs_sec");
 	if (bootargs_sec) {
-		strncat(commandline, " ", COMMANDLINE_LENGTH - strlen(commandline));
-		strncat(commandline, bootargs_sec, COMMANDLINE_LENGTH - strlen(commandline));
+		strncat(args, " ", *len - strlen(args));
+		strncat(args, bootargs_sec, *len - strlen(args));
 	}
 #endif
+
+	*len = strlen(args);
+}
+
+static void append_kernel_cmdline(char *commandline)
+{
+	/* Add 'bootargs_ram_capacity' to hold the parameters based on different ram capacity */
+	char *bootargs_ram_capacity = env_get("bootargs_ram_capacity");
+	if (bootargs_ram_capacity) {
+		strncat(commandline, " ", COMMANDLINE_LENGTH - strlen(commandline));
+		strncat(commandline, bootargs_ram_capacity,
+			COMMANDLINE_LENGTH - strlen(commandline));
+	}
+
 #ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
 	/* Normal boot:
 	 * cmdline to bypass ramdisk in boot.img, but use the system.img
@@ -164,26 +262,6 @@ static void append_kernel_cmdline(char *commandline)
 		strncat(commandline, bootargs_3rd, COMMANDLINE_LENGTH - strlen(commandline));
 	}
 #endif
-
-	/* VTS need this commandline to verify fdt overlay. Pass the
-	 * dtb index as "0" here since we only have one dtb in dtbo
-	 * partition and haven't enabled the dtb overlay.
-	 */
-#if defined(CONFIG_ANDROID_SUPPORT) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
-	sprintf(newbootargs," androidboot.dtbo_idx=0");
-	strncat(commandline, newbootargs, COMMANDLINE_LENGTH - strlen(commandline));
-#endif
-
-	char *keystore = env_get("keystore");
-	if ((keystore == NULL) || strncmp(keystore, "trusty", sizeof("trusty"))) {
-		char *bootargs_trusty = "androidboot.keystore=software";
-		strncat(commandline, " ", COMMANDLINE_LENGTH - strlen(commandline));
-		strncat(commandline, bootargs_trusty, COMMANDLINE_LENGTH - strlen(commandline));
-	} else {
-		char *bootargs_trusty = "androidboot.keystore=trusty";
-		strncat(commandline, " ", COMMANDLINE_LENGTH - strlen(commandline));
-		strncat(commandline, bootargs_trusty, COMMANDLINE_LENGTH - strlen(commandline));
-	}
 
 #ifdef CONFIG_APPEND_BOOTARGS
 	/* Add 'append_bootargs' to hold some paramemters which need to be appended
@@ -199,6 +277,37 @@ static void append_kernel_cmdline(char *commandline)
 		}
 	}
 #endif
+}
+
+int append_runtime_bootconfig(char *bootconfig, uint32_t *size)
+{
+	char buffer[COMMANDLINE_LENGTH] = {0};
+	char *ptr = buffer;
+	uint32_t len = COMMANDLINE_LENGTH;
+	int i = 0;
+
+	append_androidboot_args(buffer, &len);
+	/* +1 because we will append "\n" to the buffer end */
+	if (len + 1 > COMMANDLINE_LENGTH) {
+		printf("Error - buffer overflow!\n");
+		return -1;
+	}
+	/*
+	 * The parameters in bootconfig should be separated by
+	 * newline escape sequence '\n' instead of space. Replace
+	 * all space with "\n" here
+	 */
+	for (i = 0; i < len; i++) {
+		if (*ptr == ' ')
+			*ptr = '\n';
+		ptr++;
+	}
+	*ptr = '\n';
+
+	/* append bootconfig */
+	memcpy(bootconfig, buffer, strlen(buffer));
+	*size = strlen(buffer);
+	return 0;
 }
 
 /**
@@ -219,6 +328,7 @@ static void append_kernel_cmdline(char *commandline)
 int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 			     ulong *os_data, ulong *os_len)
 {
+	u32 len;
 	u32 kernel_addr = android_image_get_kernel_addr(hdr);
 	const struct image_header *ihdr = (const struct image_header *)
 		((uintptr_t)hdr + hdr->page_size);
@@ -268,6 +378,8 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	}
 
 	append_kernel_cmdline(commandline);
+	len = COMMANDLINE_LENGTH - strlen(commandline);
+	append_androidboot_args(commandline, &len);
 
 	debug("Kernel command line: %s\n", commandline);
 	env_set("bootargs", commandline);
@@ -291,18 +403,20 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 }
 
 /**
- * android_image_get_kernel() - processes kernel part of Android boot images
+ * android_image_get_kernel_v3() - processes kernel part of Android boot images
  * @hdr:	Pointer to boot image header, which is at the start
  *			of the image.
  * @vendor_hdr:	Pointer to vendor_boot image header, which is at the start
  *			of the image.
+ * @bootconfig: bootconfig flag
  * This function appends the kernel command line to the bootargs env variable.
  *
  * Return: Zero on success, otherwise on failure.
  */
 int android_image_get_kernel_v3(const struct boot_img_hdr_v3 *hdr,
-				const struct vendor_boot_img_hdr_v3 *vendor_hdr)
+				const struct vendor_boot_img_hdr_v3 *vendor_hdr, bool bootconfig)
 {
+	u32 len;
 	u32 kernel_addr = vendor_hdr->kernel_addr;
 
 	/*
@@ -341,7 +455,7 @@ int android_image_get_kernel_v3(const struct boot_img_hdr_v3 *hdr,
 		if (*vendor_hdr->cmdline) {
 			if (strlen((char *)vendor_hdr->cmdline) + 1 >
 				COMMANDLINE_LENGTH - strlen(commandline)) {
-				printf("cmdline in bootimg is too long!\n");
+				printf("cmdline in vendor_boot image is too long!\n");
 				return -1;
 			}
 			else
@@ -360,6 +474,10 @@ int android_image_get_kernel_v3(const struct boot_img_hdr_v3 *hdr,
 	}
 
 	append_kernel_cmdline(commandline);
+	if (!bootconfig) {
+		len = COMMANDLINE_LENGTH - strlen(commandline);
+		append_androidboot_args(commandline, &len);
+	}
 
 	debug("Kernel command line: %s\n", commandline);
 	env_set("bootargs", commandline);
@@ -372,11 +490,10 @@ int android_image_check_header(const struct andr_img_hdr *hdr)
 	return memcmp(ANDR_BOOT_MAGIC, hdr->magic, ANDR_BOOT_MAGIC_SIZE);
 }
 
-int android_image_check_header_v3(const struct boot_img_hdr_v3 *hdr,
-				  const struct vendor_boot_img_hdr_v3 *vendor_hdr)
+int android_image_check_header_v3(uint8_t *boot_magic, uint8_t * vendor_boot_magic)
 {
-	return memcmp(ANDR_BOOT_MAGIC, hdr->magic, ANDR_BOOT_MAGIC_SIZE) ||
-		memcmp(ANDR_VENDOR_BOOT_MAGIC, vendor_hdr->magic, ANDR_VENDOR_BOOT_MAGIC_SIZE);
+	return memcmp(ANDR_BOOT_MAGIC, boot_magic, ANDR_BOOT_MAGIC_SIZE) ||
+		memcmp(ANDR_VENDOR_BOOT_MAGIC, vendor_boot_magic, ANDR_VENDOR_BOOT_MAGIC_SIZE);
 }
 
 ulong android_image_get_end(const struct andr_img_hdr *hdr)
