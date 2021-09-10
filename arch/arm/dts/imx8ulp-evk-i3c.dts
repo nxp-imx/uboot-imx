@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+/*
+ * Copyright 2021 NXP
+ */
+
+/dts-v1/;
+
+#include "imx8ulp-evk.dts"
+#include "imx8ulp-evk-u-boot.dtsi"
+
+&fec {
+	status = "disabled";
+};
+
+&lpspi5 {
+	status = "disabled";
+};
+
+&i3c2 {
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&pinctrl_i3c2>;
+	pinctrl-1 = <&pinctrl_i3c2>;
+	switch-gpio = <&pcal6416 10 GPIO_ACTIVE_HIGH>;
+	status = "okay";
+};
+
+&iomuxc1 {
+	pinctrl_i3c2: i3c2grp {
+		fsl,pins = <
+			MX8ULP_PAD_PTE15__I3C2_PUR	0x3
+			MX8ULP_PAD_PTE22__I3C2_SCL	0x3
+			MX8ULP_PAD_PTE23__I3C2_SDA	0x3
+		>;
+	};
+};
