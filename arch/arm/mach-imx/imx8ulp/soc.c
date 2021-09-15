@@ -28,6 +28,7 @@
 #include <env.h>
 #include <env_internal.h>
 #include <linux/iopoll.h>
+#include <thermal.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -289,6 +290,22 @@ int print_cpuinfo(void)
 	       get_imx_type((cpurev & 0xFF000) >> 12),
 	       (cpurev & 0x000F0) >> 4, (cpurev & 0x0000F) >> 0,
 	       mxc_get_clock(MXC_ARM_CLK) / 1000000);
+
+#if defined(CONFIG_IMX_PMC_TEMPERATURE)
+	struct udevice *udev;
+	int ret, temp;
+
+	ret = uclass_get_device(UCLASS_THERMAL, 0, &udev);
+	if (!ret) {
+		ret = thermal_get_temp(udev, &temp);
+		if (!ret)
+			printf("CPU current temperature: %d\n", temp);
+		else
+			debug(" - failed to get CPU current temperature\n");
+	} else {
+		debug(" - failed to get CPU current temperature\n");
+	}
+#endif
 
 	printf("Reset cause: %s\n", get_reset_cause(cause));
 
