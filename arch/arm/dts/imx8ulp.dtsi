@@ -188,6 +188,12 @@
 			#mbox-cells = <2>;
 		};
 
+		pmc: pmc@28359000 {
+			compatible = "fsl,imx8ulp-pmc-temperature";
+			reg = <0x28359000 0x1000>;
+			adc = <&adc1>;
+		};
+
 		per_bridge0: bus@28000000 {
 			compatible = "simple-bus";
 			reg = <0x28000000 0x80000>;
@@ -217,6 +223,10 @@
 				compatible = "fsl,imx8ulp-lpi2c", "fsl,imx7ulp-lpi2c";
 				reg = <0x28098000 0x10000>;
 				status = "disabled";
+			};
+
+			adc1: adc1@0x280a2000 {
+				reg = <0x280a2000 0x1000>;
 			};
 		};
 
