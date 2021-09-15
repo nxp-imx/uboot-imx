@@ -30,6 +30,7 @@
 #include <env.h>
 #include <env_internal.h>
 #include <linux/iopoll.h>
+#include <thermal.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
