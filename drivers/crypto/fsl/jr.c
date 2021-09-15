@@ -598,7 +598,7 @@ static u8 get_rng_vid(ccsr_sec_t *sec)
 }
 
 #if defined(CONFIG_ARCH_IMX8M) || defined(CONFIG_ARCH_MX7ULP) || \
-	defined(CONFIG_ARCH_MX6) || defined (CONFIG_ARCH_MX7)
+	defined(CONFIG_ARCH_MX6) || defined(CONFIG_ARCH_MX7) || defined(CONFIG_ARCH_IMX8ULP)
 
 static void kick_trng(u32 ent_delay, ccsr_sec_t *sec)
 {
