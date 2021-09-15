@@ -40,4 +40,5 @@ void clock_init(void);
 void mxs_set_lcdclk(uint32_t base_addr, uint32_t freq_in_khz);
 void reset_lcdclk(void);
 void enable_mipi_dsi_clk(unsigned char enable);
+void enable_adc1_clk(bool enable);
 #endif
