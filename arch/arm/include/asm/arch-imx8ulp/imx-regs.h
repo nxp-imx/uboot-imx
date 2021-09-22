@@ -33,6 +33,7 @@
 
 #define PCC_XRDC_MGR_ADDR	0x292d00bc
 
+#define PCC1_RBASE		0x28091000
 #define PCC3_RBASE		0x292d0000
 #define PCC4_RBASE		0x29800000
 #define PCC5_RBASE		0x2da70000
@@ -137,6 +138,66 @@ struct usbphy_regs {
 	u32	usb1_pfda_ctrl1_set;		/* 0x144 */
 	u32	usb1_pfda_ctrl1_clr;		/* 0x148 */
 	u32	usb1_pfda_ctrl1_tog;		/* 0x14c */
+};
+
+struct adc_regs {
+	u32	verid;		/* 0x000 */
+	u32	param;		/* 0x004 */
+	u32	reserved0[2];	/* 0x008 */
+	u32	ctrl;		/* 0x010 */
+	u32	stat;		/* 0x014 */
+	u32	ie;		/* 0x018 */
+	u32	de;		/* 0x01c */
+	u32	cfg;		/* 0x020 */
+	u32	pause;		/* 0x024 */
+	u32	reserved1[3];	/* 0x028 */
+	u32	swtrig;		/* 0x034 */
+	u32	tstat;		/* 0x038 */
+	u32	reserved2[25];	/* 0x03c */
+	u32	tctrl0;		/* 0x0a0 */
+	u32	tctrl1;		/* 0x0a4 */
+	u32	tctrl2;		/* 0x0a8 */
+	u32	tctrl3;		/* 0x0ac */
+	u32	reserved3[12];	/* 0x0b0 */
+	u32	fctrl0;		/* 0x0e0 */
+	u32	reserved4[7];	/* 0x0e4 */
+	u32	cmdl1;		/* 0x100 */
+	u32	cmdh1;		/* 0x104 */
+	u32	cmdl2;		/* 0x108 */
+	u32	cmdh2;		/* 0x10c */
+	u32	cmdl3;		/* 0x110 */
+	u32	cmdh3;		/* 0x114 */
+	u32	cmdl4;		/* 0x118 */
+	u32	cmdh4;		/* 0x11c */
+	u32	cmdl5;		/* 0x120 */
+	u32	cmdh5;		/* 0x124 */
+	u32	cmdl6;		/* 0x128 */
+	u32	cmdh6;		/* 0x12c */
+	u32	cmdl7;		/* 0x130 */
+	u32	cmdh7;		/* 0x134 */
+	u32	cmdl8;		/* 0x138 */
+	u32	cmdh8;		/* 0x13c */
+	u32	cmdl9;		/* 0x140 */
+	u32	cmdh9;		/* 0x144 */
+	u32	cmdl10;		/* 0x148 */
+	u32	cmdh10;		/* 0x14c */
+	u32	cmdl11;		/* 0x150 */
+	u32	cmdh11;		/* 0x154 */
+	u32	cmdl12;		/* 0x158 */
+	u32	cmdh12;		/* 0x15c */
+	u32	cmdl13;		/* 0x160 */
+	u32	cmdh13;		/* 0x164 */
+	u32	cmdl14;		/* 0x168 */
+	u32	cmdh14;		/* 0x16c */
+	u32	cmdl15;		/* 0x170 */
+	u32	cmdh15;		/* 0x174 */
+	u32	reserved5[34];	/* 0x178 */
+	u32	cv1;		/* 0x200 */
+	u32	cv2;		/* 0x204 */
+	u32	cv3;		/* 0x208 */
+	u32	cv4;		/* 0x20c */
+	u32	reserved6[60];	/* 0x210 */
+	u32	resfifo0;	/* 0x300 */
 };
 
 #include <stdbool.h>
