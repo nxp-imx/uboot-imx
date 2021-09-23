@@ -13,6 +13,7 @@
 #include <miiphy.h>
 #include <netdev.h>
 #include <asm/gpio.h>
+#include <i2c.h>
 #include <power-domain.h>
 #include <dt-bindings/power/imx8ulp-power.h>
 
@@ -131,6 +132,37 @@ void mipi_dsi_panel_backlight(void)
 	writel(0x20, 0x28095030);
 }
 
+void reset_lsm6dsx(uint8_t i2c_bus, uint8_t addr)
+{
+	struct udevice *bus;
+	struct udevice *i2c_dev = NULL;
+	int ret;
+	struct i2c_msg msg;
+	u8 i2c_buf[2] = { 0x12, 0x1 };
+
+	ret = uclass_get_device_by_seq(UCLASS_I2C, i2c_bus, &bus);
+	if (ret) {
+		printf("%s: Can't find bus\n", __func__);
+		return;
+	}
+
+	ret = dm_i2c_probe(bus, addr, 0, &i2c_dev);
+	if (ret) {
+		printf("%s: Can't find device id=0x%x\n",
+			__func__, addr);
+		return;
+	}
+
+	msg.addr = addr;
+	msg.flags = 0;
+	msg.len = 2;
+	msg.buf = i2c_buf;
+
+	ret = dm_i2c_xfer(i2c_dev, &msg, 1);
+	if (!ret)
+		printf("%s: Reset device 0x%x successfully.\n", __func__, addr);
+}
+
 int board_init(void)
 {
 	int sync = -ENODEV;
@@ -142,8 +174,9 @@ int board_init(void)
 	}
 #endif
 
-	if (IS_ENABLED(CONFIG_FEC_MXC))
-		setup_fec();
+#if defined(CONFIG_FEC_MXC)
+	setup_fec();
+#endif
 
 	if (m33_image_booted()) {
 		sync = m33_image_handshake(1000);
@@ -173,6 +206,10 @@ int board_late_init(void)
 	env_set("sec_boot", "no");
 #ifdef CONFIG_AHAB_BOOT
 	env_set("sec_boot", "yes");
+#endif
+
+#ifdef CONFIG_SYS_I2C_IMX_I3C
+	reset_lsm6dsx(8, 0x9);
 #endif
 
 	return 0;

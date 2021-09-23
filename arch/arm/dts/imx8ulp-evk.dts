@@ -96,6 +96,20 @@
 	status = "okay";
 };
 
+&lpi2c0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <100000>;
+	status = "okay";
+
+	pcal6416: gpio@20 {
+		compatible = "ti,tca6416";
+		reg = <0x20>;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+};
+
 &lpi2c7 {
 	#address-cells = <1>;
 	#size-cells = <0>;

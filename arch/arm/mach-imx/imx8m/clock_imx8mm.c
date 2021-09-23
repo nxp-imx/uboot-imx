@@ -368,6 +368,17 @@ void enable_display_clk(unsigned char enable)
 }
 #endif
 
+u32 get_dsi_phy_ref_clk(void)
+{
+#ifdef CONFIG_IMX8MP
+	return get_root_clk(MEDIA_MIPI_PHY1_REF_CLK_ROOT);
+#elif defined(CONFIG_IMX8MN)
+	return get_root_clk(DISPLAY_DSI_PHY_REF_CLK_ROOT);
+#else
+	return get_root_clk(MIPI_DSI_PHY_REF_CLK_ROOT);
+#endif
+}
+
 void init_uart_clk(u32 index)
 {
 	/*
