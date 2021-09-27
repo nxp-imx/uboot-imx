@@ -233,7 +233,7 @@ void reset_phy(void)
 
 static int fdt_get_dpmac_node(void *fdt, int dpmac_id)
 {
-	char dpmac_str[] = "dpmacs@00";
+	char dpmac_str[11] = "dpmacs@00";
 	int offset, dpmacs_offset;
 
 	/* get the dpmac offset */
