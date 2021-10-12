@@ -357,6 +357,11 @@ config ATTESTATION_ID_MODEL
 	depends on IMX_TRUSTY_OS && ID_ATTESTATION
 	default ""
 
+config GENERATE_MPPUBK
+	bool "Enable manufacturing production public key extraction"
+	default y
+	depends on IMX_TRUSTY_OS
+
 config SECURE_UNLOCK
 	bool "Enable secure unlock for Android devices, it can only be enabled on HAB closed board"
 	depends on IMX_TRUSTY_OS
