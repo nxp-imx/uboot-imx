@@ -1329,6 +1329,7 @@ int avb_set_public_key(uint8_t *staged_buffer, uint32_t size) {
 	return 0;
 }
 
+#ifdef CONFIG_GENERATE_MPPUBK
 int fastboot_get_mppubk(uint8_t *staged_buffer, uint32_t *size) {
 
 	if (!hab_is_enabled()) {
@@ -1347,5 +1348,6 @@ int fastboot_get_mppubk(uint8_t *staged_buffer, uint32_t *size) {
 
 	return 0;
 }
+#endif /* CONFIG_GENERATE_MPPUBK */
 #endif /* CONFIG_IMX_TRUSTY_OS && !defind(CONFIG_AVB_ATX) */
 #endif /* CONFIG_SPL_BUILD */

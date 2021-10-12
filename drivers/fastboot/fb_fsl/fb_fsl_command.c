@@ -644,7 +644,9 @@ static void flashing(char *cmd, char *response)
 			printf("Append ec attestation key successfully!\n");
 			strcpy(response, "OKAY");
 		}
-	}  else if (endswith(cmd, FASTBOOT_GET_MPPUBK)) {
+	}
+#ifdef CONFIG_GENERATE_MPPUBK
+	else if (endswith(cmd, FASTBOOT_GET_MPPUBK)) {
 		if (fastboot_get_mppubk(fastboot_buf_addr, &fastboot_bytes_received)) {
 			printf("ERROR Generate mppubk failed!\n");
 			strcpy(response, "FAILGenerate mppubk failed!");
@@ -652,7 +654,9 @@ static void flashing(char *cmd, char *response)
 			printf("mppubk generated!\n");
 			strcpy(response, "OKAY");
 		}
-	}  else if (endswith(cmd, FASTBOOT_GET_SERIAL_NUMBER)) {
+	}
+#endif
+	else if (endswith(cmd, FASTBOOT_GET_SERIAL_NUMBER)) {
 		char *serial = get_serial();
 
 		if (!serial)
