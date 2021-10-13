@@ -35,7 +35,7 @@
 
 static int imx_read_pmc_temperature(struct udevice *dev, int *temperature)
 {
-	void __iomem *pmc_reg = (void __iomem *)devfdt_get_addr_index(dev, 0);
+	void __iomem *pmc_reg;
 	void __iomem *pmc_anacore_ctrl_addr;
 	struct adc_regs *regs;
 	struct ofnode_phandle_args args;
@@ -43,10 +43,13 @@ static int imx_read_pmc_temperature(struct udevice *dev, int *temperature)
 	u16 tsensorvalue[7] = {0}, conv_value;
 	u32 val, tmp32, i, cm_000, cm_010, cm_110, c1_temp, c2_temp, cm_temp, vm_temp;
 	int ret;
+	fdt_addr_t addr = devfdt_get_addr_index(dev, 0);
 
-	if (pmc_reg == FDT_ADDR_T_NONE)
+	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
-	pmc_anacore_ctrl_addr = pmc_reg + ANACORE_CTRL_OFFSET;
+
+	pmc_reg = (void __iomem *)addr;
+	pmc_anacore_ctrl_addr = (void __iomem *)(addr + ANACORE_CTRL_OFFSET);
 
 	/* enable the ADC1's clock */
 	enable_adc1_clk(true);
@@ -54,10 +57,11 @@ static int imx_read_pmc_temperature(struct udevice *dev, int *temperature)
 	ret = dev_read_phandle_with_args(dev, "adc", NULL, 0, 0, &args);
 	if (ret)
 		return ret;
-	regs = (struct adc_regs *)ofnode_get_addr(args.node);
-	if (regs == FDT_ADDR_T_NONE)
+	addr = ofnode_get_addr(args.node);
+	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
+	regs = (struct adc_regs *)addr;
 	/* reset the ADC1's configuration */
 	val = readl(&regs->ctrl);
 	val |= ADC_CTRL_RST_MASK;
