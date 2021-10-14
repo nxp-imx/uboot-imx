@@ -17,4 +17,6 @@
 #define WDG4_BASE_ADDR      0x424a0000UL
 #define WDG5_BASE_ADDR      0x424b0000UL
 
+#define ANATOP_BASE_ADDR    0x44480000UL
+
 #endif

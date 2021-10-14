@@ -16,136 +16,556 @@
 #include <div64.h>
 #include <errno.h>
 #include <linux/bitops.h>
-#include <linux/iopoll.h>
 #include <linux/delay.h>
 #include <log.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
-u32 get_clk_src_freq(u32 src_clk)
+static struct anatop_reg *ana_regs = (struct anatop_reg *)ANATOP_BASE_ADDR;
+
+static struct imx_intpll_rate_table imx9_intpll_tbl[] = {
+	INT_PLL_RATE(1800000000U, 1, 150, 2), /* 1.8Ghz */
+	INT_PLL_RATE(1700000000U, 1, 141, 2), /* 1.7Ghz */
+	INT_PLL_RATE(1400000000U, 1, 175, 3), /* 1.4Ghz */
+	INT_PLL_RATE(1000000000U, 1, 166, 4), /* 1000Mhz */
+	INT_PLL_RATE(900000000U, 1, 150, 4), /* 900Mhz */
+};
+
+static struct imx_fracpll_rate_table imx9_fracpll_tbl[] = {
+	FRAC_PLL_RATE(1000000000U, 1, 166, 4, 2, 3), /* 1000Mhz */
+	FRAC_PLL_RATE(933000000U, 1, 155, 4, 1, 2), /* 933Mhz */
+	FRAC_PLL_RATE(700000000U, 1, 145, 5, 5, 6), /* 700Mhz */
+	FRAC_PLL_RATE(466000000U, 1, 155, 8, 1, 3), /* 466Mhz */
+	FRAC_PLL_RATE(400000000U, 1, 200, 12, 0, 1), /* 400Mhz */
+};
+
+/* return in khz */
+static u32 decode_pll_vco(struct ana_pll_reg *reg, bool fracpll)
 {
-	switch(src_clk) {
-	case OSC_24M_CLK:
-		return MHZ(24);
+	u32 ctrl;
+	u32 pll_status;
+	u32 div;
+	int rdiv, mfi, mfn, mfd;
+	int clk = 24000;
+
+	ctrl = readl(&reg->ctrl.reg);
+	pll_status = readl(&reg->pll_status);
+	div = readl(&reg->div.reg);
+
+	if (!(ctrl & PLL_CTRL_POWERUP))
+		return 0;
+
+	if (!(pll_status & PLL_STATUS_PLL_LOCK))
+		return 0;
+
+	mfi = (div & GENMASK(24, 16)) >> 16;
+	rdiv = (div & GENMASK(15, 13)) >> 13;
+
+	if (rdiv == 0)
+		rdiv = 1;
+
+	if (fracpll) {
+		mfn = (int)readl(&reg->num.reg);
+		mfn >>= 2;
+		mfd = (int)(readl(&reg->denom.reg) & GENMASK(29, 0));
+
+		clk = clk * (mfi * mfd + mfn) / mfd / rdiv;
+	} else {
+		clk = clk * mfi / rdiv;
+	}
+
+	return (u32)clk;
+}
+
+/* return in khz */
+static u32 decode_pll_out(struct ana_pll_reg *reg, bool fracpll)
+{
+	u32 ctrl = readl(&reg->ctrl.reg);
+	u32 div;
+
+	if (ctrl & PLL_CTRL_CLKMUX_BYPASS)
+		return 24000;
+
+	if (!(ctrl & PLL_CTRL_CLKMUX_EN))
+		return 0;
+
+	div = readl(&reg->div.reg);
+	div &= 0xff; /* odiv */
+
+	if (div == 0)
+		div = 2;
+	else if (div == 1)
+		div = 3;
+
+	return decode_pll_vco(reg, fracpll) / div;
+}
+
+/* return in khz */
+static u32 decode_pll_pfd(struct ana_pll_reg *reg,
+	struct ana_pll_dfs *dfs_reg, bool div2, bool fracpll)
+{
+	u32 pllvco = decode_pll_vco(reg, fracpll);
+	u32 dfs_ctrl = readl(&dfs_reg->dfs_ctrl.reg);
+	u32 dfs_div = readl(&dfs_reg->dfs_div.reg);
+	u32 mfn, mfi;
+	u32 output;
+
+	if (dfs_ctrl & PLL_DFS_CTRL_BYPASS)
+		return pllvco;
+
+	if (!(dfs_ctrl & PLL_DFS_CTRL_ENABLE) ||
+		(div2 && !(dfs_ctrl & PLL_DFS_CTRL_CLKOUT_DIV2)) ||
+		(!div2 && !(dfs_ctrl & PLL_DFS_CTRL_CLKOUT)))
+		return 0;
+
+	mfn = dfs_div & GENMASK(2, 0);
+	mfi = (dfs_div & GENMASK(15, 8)) >> 8;
+
+	if (mfn > 3)
+		return 0; /* valid mfn 0-3 */
+
+	if (mfi == 0 || mfi == 1)
+		return 0; /* valid mfi 2-255 */
+
+	output = (pllvco * 5) / (mfi * 5 + mfn);
+
+	if (div2)
+		return output >> 1;
+
+	return output;
+}
+
+static u32 decode_pll(enum ccm_clk_src pll)
+{
+	switch (pll) {
+	case ARM_PLL_CLK:
+		return decode_pll_out(&ana_regs->arm_pll, false);
+	case SYS_PLL_PG:
+		return decode_pll_out(&ana_regs->sys_pll, false);
 	case SYS_PLL_PFD0:
-		return MHZ(1000);
+		return decode_pll_pfd(&ana_regs->sys_pll,
+			&ana_regs->sys_pll.dfs[0], false, true);
 	case SYS_PLL_PFD0_DIV2:
-		return MHZ(500);
+		return decode_pll_pfd(&ana_regs->sys_pll,
+			&ana_regs->sys_pll.dfs[0], true, true);
 	case SYS_PLL_PFD1:
-		return MHZ(800);
+		return decode_pll_pfd(&ana_regs->sys_pll,
+			&ana_regs->sys_pll.dfs[1], false, true);
 	case SYS_PLL_PFD1_DIV2:
-		return MHZ(400);
+		return decode_pll_pfd(&ana_regs->sys_pll,
+			&ana_regs->sys_pll.dfs[1], true, true);
 	case SYS_PLL_PFD2:
-		return MHZ(625);
+		return decode_pll_pfd(&ana_regs->sys_pll,
+			&ana_regs->sys_pll.dfs[2], false, true);
 	case SYS_PLL_PFD2_DIV2:
-		return 312500000;
-	/* TODO: Add ARM/AUDIO/VIDEO */
+		return decode_pll_pfd(&ana_regs->sys_pll,
+			&ana_regs->sys_pll.dfs[2], true, true);
+	case AUDIO_PLL_CLK:
+		return decode_pll_out(&ana_regs->audio_pll, true);
+	case DRAM_PLL_CLK:
+		return decode_pll_out(&ana_regs->dram_pll, true);
+	case VIDEO_PLL_CLK:
+		return decode_pll_out(&ana_regs->video_pll, true);
 	default:
-		return 0;
+		printf("Invalid clock source to decode\n");
+		break;
 	}
-}
-
-int get_clk_root_freq(u32 root_clk)
-{
-	void __iomem *base = (void __iomem *)CCM_BASE_ADDR + root_clk * 0x80;
-	u32 status = readl(base + CLK_ROOT_STATUS0_OFF);
-	u32 src_freq;
-	u32 mux, div;
-
-	if (status & CLK_ROOT_STATUS_OFF)
-		return 0;
-
-	div = status & CLK_ROOT_DIV_MASK;
-	mux = (status & CLK_ROOT_MUX_MASK) >> CLK_ROOT_MUX_SHIFT;
-
-	src_freq = get_clk_src_freq(clk_root_src[root_clk][mux]);
-
-	return src_freq / (div + 1);
-}
-
-int get_clk_ccgr_freq(u32 lpcg_clk)
-{
-	void __iomem *base = (void __iomem *)CCM_CCGR_BASE_ADDR + lpcg_clk * 0x80;
-}
-
-int ccm_cfg_clk_root(u32 blk, u32 mux, u32 div)
-{
-	void __iomem *base = (void __iomem *)CCM_BASE_ADDR + blk * 0x80;
-	u32 status;
-	int ret;
-
-	writel((mux << 8) | div, base + CLK_ROOT_CONTROL_OFF);
-
-	ret = readl_poll_timeout(base + CLK_ROOT_STATUS0_OFF, status,
-				 !(status & CLK_ROOT_STATUS_CHANGING), 200000);
-	if (ret)
-		log_err("%s: failed, status: 0x%x, base: %p\n", __func__,
-			readl(base + CLK_ROOT_STATUS0_OFF), base);
-
-	return ret;
-};
-
-int ccm_allow_clk_root_ns(u32 blk, bool ns)
-{
-	void __iomem *base = (void __iomem *)CCM_BASE_ADDR + blk * 0x80;
-	u32 val;
-
-	val = readl(base + CLK_ROOT_AUTHEN_OFF);
-	if (val & CLK_ROOT_AUTHEN_TZ_LOCK_MASK) {
-		return -EPERM;
-	}
-
-	if (ns)
-		setbits_le32(base + CLK_ROOT_AUTHEN_OFF, CLK_ROOT_AUTHEN_TZ_NS_MASK);
-	else
-		clrbits_le32(base + CLK_ROOT_AUTHEN_OFF, CLK_ROOT_AUTHEN_TZ_NS_MASK);
-
-	return 0;
-};
-
-
-int ccm_cfg_clk_ccgr(u32 lpcg, u32 val)
-{
-	void __iomem *base = (void __iomem *)CCM_CCGR_BASE_ADDR + lpcg * 0x80;
-
-	writel(val, base);
 
 	return 0;
 }
 
-int ccm_allow_clk_ccgr_ns(u32 lpcg, bool ns)
-{
-	void __iomem *base = (void __iomem *)CCM_CCGR_BASE_ADDR + lpcg * 0x80;
-	u32 val;
-
-	val = readl(base + CLK_ROOT_AUTHEN_OFF);
-	if (val & CLK_ROOT_AUTHEN_TZ_LOCK_MASK) {
-		return -EPERM;
-	}
-
-	if (ns)
-		setbits_le32(base + CLK_ROOT_AUTHEN_OFF, CLK_ROOT_AUTHEN_TZ_NS_MASK);
-	else
-		clrbits_le32(base + CLK_ROOT_AUTHEN_OFF, CLK_ROOT_AUTHEN_TZ_NS_MASK);
-
-	return 0;
-}
-
-int clock_init(void)
+int configure_intpll(enum ccm_clk_src pll, u32 freq)
 {
 	int i;
-	for (i = 0; i < IMX93_CLK_ROOT_MAX; i++)
-		ccm_allow_clk_root_ns(i, true);
+	struct imx_intpll_rate_table *rate;
+	struct ana_pll_reg *reg;
+	u32 pll_status;
 
-	for (i = 0; i < IMX93_CLK_CCGR_MAX; i++)
-		ccm_allow_clk_ccgr_ns(i, true);
+	for (i = 0; i < ARRAY_SIZE(imx9_intpll_tbl); i++) {
+		if (freq == imx9_intpll_tbl[i].rate)
+			break;
+	}
+
+	if (i == ARRAY_SIZE(imx9_intpll_tbl)) {
+		debug("No matched freq table %u\n", freq);
+		return -EINVAL;
+	}
+
+	rate = &imx9_intpll_tbl[i];
+
+	/* ROM has configured SYS PLL and PFD, no need for it */
+	switch (pll) {
+	case ARM_PLL_CLK:
+		reg = &ana_regs->arm_pll;
+		break;
+	default:
+		return -EPERM;
+	}
+
+	/* Bypass the PLL to ref */
+	writel(PLL_CTRL_CLKMUX_BYPASS, &reg->ctrl.reg_set);
+
+	/* disable pll and output */
+	writel(PLL_CTRL_CLKMUX_EN | PLL_CTRL_POWERUP, &reg->ctrl.reg_clr);
+
+	/* Program the ODIV, RDIV, MFI */
+	writel((rate->odiv & GENMASK(7, 0)) |
+		((rate->rdiv << 13 ) & GENMASK(15, 13)) |
+		((rate->mfi << 16) & GENMASK(24, 16)), &reg->div.reg);
+
+#ifndef CONFIG_TARGET_IMX93_EMU
+	/* wait 5us */
+	udelay(5);
+#endif
+
+	/* power up the PLL and wait lock (max wait time 100 us) */
+	writel(PLL_CTRL_POWERUP, &reg->ctrl.reg_set);
+
+#ifndef CONFIG_TARGET_IMX93_EMU
+	udelay(100);
+#endif
+
+	pll_status = readl(&reg->pll_status);
+	if (pll_status & PLL_STATUS_PLL_LOCK) {
+		writel(PLL_CTRL_CLKMUX_EN, &reg->ctrl.reg_set);
+
+		/* clear bypass */
+		writel(PLL_CTRL_CLKMUX_BYPASS, &reg->ctrl.reg_clr);
+
+	} else {
+		debug("Fail to lock PLL %u\n", pll);
+		return -EIO;
+	}
 
 	return 0;
+}
+
+
+int configure_fracpll(enum ccm_clk_src pll, u32 freq)
+{
+	int i;
+	struct imx_fracpll_rate_table *rate;
+	struct ana_pll_reg *reg;
+	u32 pll_status;
+
+	for (i = 0; i < ARRAY_SIZE(imx9_fracpll_tbl); i++) {
+		if (freq == imx9_fracpll_tbl[i].rate)
+			break;
+	}
+
+	if (i == ARRAY_SIZE(imx9_fracpll_tbl)) {
+		debug("No matched freq table %u\n", freq);
+		return -EINVAL;
+	}
+
+	rate = &imx9_fracpll_tbl[i];
+
+	switch (pll) {
+	case SYS_PLL_PG:
+		reg = &ana_regs->sys_pll;
+		break;
+	case DRAM_PLL_CLK:
+		reg = &ana_regs->dram_pll;
+		break;
+	case VIDEO_PLL_CLK:
+		reg = &ana_regs->video_pll;
+		break;
+	default:
+		return -EPERM;
+	}
+
+	/* Bypass the PLL to ref */
+	writel(PLL_CTRL_CLKMUX_BYPASS, &reg->ctrl.reg_set);
+
+	/* disable pll and output */
+	writel(PLL_CTRL_CLKMUX_EN | PLL_CTRL_POWERUP, &reg->ctrl.reg_clr);
+
+	/* Program the ODIV, RDIV, MFI */
+	writel((rate->odiv & GENMASK(7, 0)) |
+		((rate->rdiv << 13 ) & GENMASK(15, 13)) |
+		((rate->mfi << 16) & GENMASK(24, 16)), &reg->div.reg);
+
+	/* Set SPREAD_SPECRUM enable to 0 */
+	writel(PLL_SS_EN, &reg->ss.reg_clr);
+
+	/* Program NUMERATOR and DENOMINATOR */
+	writel((rate->mfn << 2), &reg->num.reg);
+	writel((rate->mfd & GENMASK(29, 0)), &reg->denom.reg);
+
+#ifndef CONFIG_TARGET_IMX93_EMU
+	/* wait 5us */
+	udelay(5);
+#endif
+
+	/* power up the PLL and wait lock (max wait time 100 us) */
+	writel(PLL_CTRL_POWERUP, &reg->ctrl.reg_set);
+
+#ifndef CONFIG_TARGET_IMX93_EMU
+	udelay(100);
+#endif
+
+	pll_status = readl(&reg->pll_status);
+	if (pll_status & PLL_STATUS_PLL_LOCK) {
+		writel(PLL_CTRL_CLKMUX_EN, &reg->ctrl.reg_set);
+
+#ifndef CONFIG_TARGET_IMX93_EMU
+		/* check the MFN is updated */
+		pll_status = readl(&reg->pll_status);
+		if ((pll_status & ~0x3) != (rate->mfn << 2)) {
+			debug("MFN update not matched, pll_status 0x%x, mfn 0x%x\n",
+				pll_status, rate->mfn);
+			return -EIO;
+		}
+#endif
+		/* clear bypass */
+		writel(PLL_CTRL_CLKMUX_BYPASS, &reg->ctrl.reg_clr);
+
+	} else {
+		debug("Fail to lock PLL %u\n", pll);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+int configure_pll_pfd(enum ccm_clk_src pll_pfg, u32 mfi, u32 mfn, bool div2_en)
+{
+	struct ana_pll_dfs *dfs;
+	struct ana_pll_reg *reg;
+	u32 dfs_status;
+	u32 index;
+
+	if (mfn > 3)
+		return -EINVAL; /* valid mfn 0-3 */
+
+	if (mfi < 2 || mfi > 255)
+		return -EINVAL; /* valid mfi 2-255 */
+
+	switch (pll_pfg) {
+	case SYS_PLL_PFD0:
+		reg = &ana_regs->sys_pll;
+		index = 0;
+		break;
+	case SYS_PLL_PFD1:
+		reg = &ana_regs->sys_pll;
+		index = 1;
+		break;
+	case SYS_PLL_PFD2:
+		reg = &ana_regs->sys_pll;
+		index = 2;
+		break;
+	default:
+		return -EPERM;
+	}
+
+	dfs = &reg->dfs[index];
+
+	/* Bypass the DFS to PLL VCO */
+	writel(PLL_DFS_CTRL_BYPASS, &dfs->dfs_ctrl.reg_set);
+
+	/* disable DFS and output */
+	writel(PLL_DFS_CTRL_ENABLE | PLL_DFS_CTRL_CLKOUT |
+		PLL_DFS_CTRL_CLKOUT_DIV2, &dfs->dfs_ctrl.reg_clr);
+
+	writel(((mfi << 8) & GENMASK(15, 8)) | (mfn & GENMASK(2, 0)),
+		&dfs->dfs_div.reg);
+
+	writel(PLL_DFS_CTRL_CLKOUT, &dfs->dfs_ctrl.reg_set);
+	if (div2_en)
+		writel(PLL_DFS_CTRL_CLKOUT_DIV2, &dfs->dfs_ctrl.reg_set);
+	writel(PLL_DFS_CTRL_ENABLE, &dfs->dfs_ctrl.reg_set);
+
+#ifndef CONFIG_TARGET_IMX93_EMU
+	/*
+         * As HW expert said: after enabling the DFS, clock will start
+         * coming after 6 cycles output clock period.
+         * 5us is much bigger than expected, so it will be safe
+         */
+	udelay(5);
+#endif
+
+	dfs_status = readl(&reg->dfs_status);
+
+	if (!(dfs_status & (1 << index))) {
+		debug("DFS lock failed\n");
+		return -EIO;
+	}
+
+	/* Bypass the DFS to PLL VCO */
+	writel(PLL_DFS_CTRL_BYPASS, &dfs->dfs_ctrl.reg_clr);
+
+	return 0;
+}
+
+int update_fracpll_mfn(enum ccm_clk_src pll, int mfn)
+{
+	struct ana_pll_reg *reg;
+	bool repoll = false;
+	u32 pll_status;
+	int count = 20;
+
+	switch (pll) {
+	case AUDIO_PLL_CLK:
+		reg = &ana_regs->audio_pll;
+		break;
+	case DRAM_PLL_CLK:
+		reg = &ana_regs->dram_pll;
+		break;
+	case VIDEO_PLL_CLK:
+		reg = &ana_regs->video_pll;
+		break;
+	default:
+		printf("Invalid pll %u for update FRAC PLL MFN\n", pll);
+		return -EINVAL;
+	}
+
+	if (readl(&reg->pll_status) & PLL_STATUS_PLL_LOCK)
+		repoll = true;
+
+	mfn <<= 2;
+	writel(mfn, &reg->num);
+
+	if (repoll) {
+		do {
+			pll_status = readl(&reg->pll_status);
+			udelay(5);
+			count--;
+		} while (((pll_status & ~0x3) != (u32)mfn) && count > 0);
+
+		if (count <= 0) {
+			printf("update MFN timeout, pll_status 0x%x, mfn 0x%x\n",
+				pll_status, mfn);
+			return -EIO;
+		}
+	}
+
+	return 0;
+}
+
+int update_pll_pfd_mfn(enum ccm_clk_src pll_pfd, u32 mfn)
+{
+	struct ana_pll_dfs *dfs;
+	u32 val;
+	u32 index;
+
+	switch (pll_pfd) {
+	case SYS_PLL_PFD0:
+	case SYS_PLL_PFD0_DIV2:
+		index = 0;
+		break;
+	case SYS_PLL_PFD1:
+	case SYS_PLL_PFD1_DIV2:
+		index = 1;
+		break;
+	case SYS_PLL_PFD2:
+	case SYS_PLL_PFD2_DIV2:
+		index = 2;
+		break;
+	default:
+		printf("Invalid pfd %u for update PLL PFD MFN\n", pll_pfd);
+		return -EINVAL;
+	}
+
+	dfs = &ana_regs->sys_pll.dfs[index];
+
+	val = readl(&dfs->dfs_div.reg);
+	val &= ~0x3;
+	val |= mfn & 0x3;
+	writel(val, &dfs->dfs_div.reg);
+
+	return 0;
+}
+
+/* return in khz */
+u32 get_clk_src_rate(enum ccm_clk_src source)
+{
+	u32 ctrl;
+	bool clk_on;
+
+	switch (source) {
+	case ARM_PLL_CLK:
+		ctrl = readl(&ana_regs->arm_pll.ctrl.reg);
+	case AUDIO_PLL_CLK:
+		ctrl = readl(&ana_regs->audio_pll.ctrl.reg);
+		break;
+	case DRAM_PLL_CLK:
+		ctrl = readl(&ana_regs->dram_pll.ctrl.reg);
+		break;
+	case VIDEO_PLL_CLK:
+		ctrl = readl(&ana_regs->video_pll.ctrl.reg);
+		break;
+	case SYS_PLL_PFD0:
+	case SYS_PLL_PFD0_DIV2:
+		ctrl = readl(&ana_regs->sys_pll.dfs[0].dfs_ctrl.reg);
+		break;
+	case SYS_PLL_PFD1:
+	case SYS_PLL_PFD1_DIV2:
+		ctrl = readl(&ana_regs->sys_pll.dfs[1].dfs_ctrl.reg);
+		break;
+	case SYS_PLL_PFD2:
+	case SYS_PLL_PFD2_DIV2:
+		ctrl = readl(&ana_regs->sys_pll.dfs[2].dfs_ctrl.reg);
+		break;
+	case OSC_24M_CLK:
+		return 24000;
+	default:
+		printf("Invalid clock source to get rate\n");
+		return 0;
+	}
+
+	if (ctrl & PLL_CTRL_HW_CTRL_SEL) {
+		/* When using HW ctrl, check OSCPLL */
+		clk_on = ccm_clk_src_is_clk_on(source);
+		if (clk_on)
+			return decode_pll(source);
+		else
+			return 0;
+	} else {
+		/* controlled by pll registers */
+		return decode_pll(source);
+	}
+}
+
+u32 get_arm_core_clk(void)
+{
+	u32 val;
+	ccm_shared_gpr_get(SHARED_GPR_A55_CLK, &val);
+
+	if (val & SHARED_GPR_A55_CLK_SEL_PLL)
+		return decode_pll(ARM_PLL_CLK) * 1000;
+
+	return ccm_clk_root_get_rate(ARM_A55_CLK_ROOT);
+}
+
+unsigned int mxc_get_clock(enum mxc_clock clk)
+{
+	switch (clk) {
+	case MXC_ARM_CLK:
+		return get_arm_core_clk();
+	case MXC_IPG_CLK:
+		return ccm_clk_root_get_rate(BUS_WAKEUP_CLK_ROOT);
+	case MXC_CSPI_CLK:
+		return ccm_clk_root_get_rate(LPSPI1_CLK_ROOT);
+	case MXC_ESDHC_CLK:
+		return ccm_clk_root_get_rate(USDHC1_CLK_ROOT);
+	case MXC_ESDHC2_CLK:
+		return ccm_clk_root_get_rate(USDHC2_CLK_ROOT);
+	case MXC_ESDHC3_CLK:
+		return ccm_clk_root_get_rate(USDHC3_CLK_ROOT);
+	case MXC_UART_CLK:
+		return ccm_clk_root_get_rate(LPUART1_CLK_ROOT);
+	case MXC_FLEXSPI_CLK:
+		return ccm_clk_root_get_rate(FLEXSPI1_CLK_ROOT);
+	default:
+		return -1;
+	};
+
+	return -1;
 };
 
 u32 get_lpuart_clk(void)
 {
-	return 24000000;
+	return mxc_get_clock(MXC_UART_CLK);
 }
 
 void init_uart_clk(u32 index)
@@ -153,7 +573,9 @@ void init_uart_clk(u32 index)
 	switch(index) {
 	case LPUART1_CLK_ROOT:
 		/* 24M */
-		ccm_cfg_clk_root(LPUART1_CLK_ROOT, 0, 0);
+		ccm_lpcg_on(CCGR_URT1, false);
+		ccm_clk_root_cfg(LPUART1_CLK_ROOT, OSC_24M_CLK, 1);
+		ccm_lpcg_on(CCGR_URT1, true);
 		break;
 	default:
 		break;
@@ -162,35 +584,113 @@ void init_uart_clk(u32 index)
 
 void init_clk_usdhc(u32 index)
 {
+	/* 400 Mhz */
 	switch (index) {
 	case 0:
-		ccm_cfg_clk_ccgr(CCGR_USDHC1, 0);
-		ccm_cfg_clk_root(51, 2, 1);
-		ccm_cfg_clk_ccgr(CCGR_USDHC1, 1);
+		ccm_lpcg_on(CCGR_USDHC1, 0);
+		ccm_clk_root_cfg(USDHC1_CLK_ROOT, SYS_PLL_PFD1, 2);
+		ccm_lpcg_on(CCGR_USDHC1, 1);
 		break;
 	case 1:
-		ccm_cfg_clk_ccgr(CCGR_USDHC2, 0);
-		ccm_cfg_clk_root(52, 2, 1);
-		ccm_cfg_clk_ccgr(CCGR_USDHC2, 0);
+		ccm_lpcg_on(CCGR_USDHC2, 0);
+		ccm_clk_root_cfg(USDHC2_CLK_ROOT, SYS_PLL_PFD1, 2);
+		ccm_lpcg_on(CCGR_USDHC2, 1);
 		break;
 	case 2:
-		ccm_cfg_clk_ccgr(CCGR_USDHC3, 0);
-		ccm_cfg_clk_root(53, 2, 1);
-		ccm_cfg_clk_ccgr(CCGR_USDHC3, 0);
+		ccm_lpcg_on(CCGR_USDHC3, 0);
+		ccm_clk_root_cfg(USDHC3_CLK_ROOT, SYS_PLL_PFD1, 2);
+		ccm_lpcg_on(CCGR_USDHC3, 1);
 		break;
 	default:
 		return;
 	};
-};
+}
 
-unsigned int mxc_get_clock(enum mxc_clock clk)
+int clock_init(void)
 {
-	switch (clk) {
-	case MXC_ESDHC_CLK:
-		return 400000000;
-	default:
-		return -1;
-	};
+	/* Set A55 periphal to 333M */
+	ccm_clk_root_cfg(ARM_A55_PERIPH_CLK_ROOT, SYS_PLL_PFD0, 3);
+	/* Set A55 mtr bus to 133M */
+	ccm_clk_root_cfg(ARM_A55_MTR_BUS_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
 
-	return -1;
-};
+	/* Sentinel to 200M */
+	ccm_clk_root_cfg(SENTINEL_CLK_ROOT, SYS_PLL_PFD1_DIV2, 2);
+	/* Bus_wakeup to 133M */
+	ccm_clk_root_cfg(BUS_WAKEUP_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+	/* Bus_AON to 133M */
+	ccm_clk_root_cfg(BUS_AON_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+	/* M33 to 200M */
+	ccm_clk_root_cfg(M33_CLK_ROOT, SYS_PLL_PFD1_DIV2, 2);
+	/* WAKEUP_AXI to 333M */
+	ccm_clk_root_cfg(WAKEUP_AXI_CLK_ROOT, SYS_PLL_PFD0, 3);
+	/* SWO TRACE to 133M */
+	ccm_clk_root_cfg(SWO_TRACE_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+	/* M33 systetick to 133M */
+	ccm_clk_root_cfg(M33_SYSTICK_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+	/* NIC to 400M */
+	ccm_clk_root_cfg(NIC_CLK_ROOT, SYS_PLL_PFD1, 2);
+	/* NIC_APB to 133M */
+	ccm_clk_root_cfg(NIC_APB_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+
+	/* allow for non-secure access */
+	int i;
+	for (i = 0; i < OSCPLL_END; i++)
+		ccm_clk_src_tz_access(i, true, false, false);
+
+	for (i = 0; i < CLK_ROOT_NUM; i++)
+		ccm_clk_root_tz_access(i, true, false, false);
+
+	for (i = 0; i < CCGR_NUM; i++)
+		ccm_lpcg_tz_access(i, true, false, false);
+
+	for (i = 0; i < SHARED_GPR_NUM; i++)
+		ccm_shared_gpr_tz_access(i, true, false, false);
+
+	return 0;
+}
+
+/*
+ * Dump some clockes.
+ */
+#ifndef CONFIG_SPL_BUILD
+int do_showclocks(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
+{
+	u32 freq;
+
+	freq = decode_pll(ARM_PLL_CLK);
+	printf("ARM_PLL    %8d MHz\n", freq / 1000);
+	freq = decode_pll(DRAM_PLL_CLK);
+	printf("DRAM_PLL    %8d MHz\n", freq / 1000);
+	freq = decode_pll(SYS_PLL_PFD0);
+	printf("SYS_PLL_PFD0    %8d MHz\n", freq / 1000);
+	freq = decode_pll(SYS_PLL_PFD0_DIV2);
+	printf("SYS_PLL_PFD0_DIV2    %8d MHz\n", freq / 1000);
+	freq = decode_pll(SYS_PLL_PFD1);
+	printf("SYS_PLL_PFD1    %8d MHz\n", freq / 1000);
+	freq = decode_pll(SYS_PLL_PFD1_DIV2);
+	printf("SYS_PLL_PFD1_DIV2    %8d MHz\n", freq / 1000);
+	freq = decode_pll(SYS_PLL_PFD2);
+	printf("SYS_PLL_PFD2    %8d MHz\n", freq / 1000);
+	freq = decode_pll(SYS_PLL_PFD2_DIV2);
+	printf("SYS_PLL_PFD2_DIV2    %8d MHz\n", freq / 1000);
+	freq = mxc_get_clock(MXC_ARM_CLK);
+	printf("ARM CORE    %8d MHz\n", freq / 1000000);
+	freq = mxc_get_clock(MXC_IPG_CLK);
+	printf("IPG    		%8d MHz\n", freq / 1000000);
+	freq = mxc_get_clock(MXC_UART_CLK);
+	printf("UART3          %8d MHz\n", freq / 1000000);
+	freq = mxc_get_clock(MXC_ESDHC_CLK);
+	printf("USDHC1         %8d MHz\n", freq / 1000000);
+	freq = mxc_get_clock(MXC_FLEXSPI_CLK);
+	printf("FLEXSPI           %8d MHz\n", freq / 1000000);
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	clocks,	CONFIG_SYS_MAXARGS, 1, do_showclocks,
+	"display clocks",
+	""
+);
+#endif
+
