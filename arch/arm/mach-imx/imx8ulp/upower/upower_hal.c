@@ -128,6 +128,8 @@ int upower_init(void)
 	uint64_t memon;
 	int ret, ret_val;
 
+	struct upwr_dom_bias_cfg_t bias;
+
 	do {
 		status = upwr_init(1, muptr, NULL, NULL, upower_apd_inst_isr, NULL);
 		if (upower_status(status)) {
@@ -186,6 +188,21 @@ int upower_init(void)
 	upower_wait_resp();
 
 	ret = upwr_poll_req_status(UPWR_SG_EXCEPT, NULL, NULL, &ret_val, 1000);
+	if (ret != UPWR_REQ_OK)
+		printk("Faliure %d\n", ret);
+
+	/* Enable AFBB for AP domain */
+	bias.apply = BIAS_APPLY_APD;
+	bias.dommode = AFBB_BIAS_MODE;
+	ret = upwr_pwm_chng_dom_bias(&bias, NULL);
+
+	if (ret)
+		printf("Enable AFBB for APD bias fail %d\n", ret);
+	else
+		printf("Enable AFBB for APD bias ok\n");
+
+	upower_wait_resp();
+	ret = upwr_poll_req_status(UPWR_SG_PWRMGMT, NULL, NULL, &ret_val, 1000);
 	if (ret != UPWR_REQ_OK)
 		printk("Faliure %d\n", ret);
 
