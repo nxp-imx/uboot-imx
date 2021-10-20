@@ -30,8 +30,9 @@ example: dek_blob 0x10800000 0x10801000 192
 
 The resulting DEK blob then is used to construct the encrypted
 U-Boot image. Note that the blob needs to be transferred back
-to the host.Then the following commands are used to construct
-the final image.
+to the host. This process and additional configuration enablement
+needed is detailed in the target board's encrypted_boot documentation.
+Then the following commands are used to construct the final image.
 
 cat u-boot-dtb.imx csf-u-boot.bin > u-boot-signed.imx
 objcopy -I binary -O binary --pad-to <blob_dst> --gap-fill=0x00 \

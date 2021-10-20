@@ -81,8 +81,12 @@ steps will not work.
 1.3 Compile the CST to enable the encrypting feature
 ----------------------------------------------------
 
-The encrypting feature is not enabled by default. You need to
-execute the following commands to enable it:
+CST version 3.0.0 and later have the encryption feature enabled by default.
+If using an earlier version, the encryption feature must be explicitly
+enabled.
+
+For CST versions <3.0.0, the CST backend must be recompiled, execute the
+following commands to enable encryption support in CST:
 
   $ sudo apt-get install libssl-dev openssl
   $ cd <CST install directory>/code/back_end/src
