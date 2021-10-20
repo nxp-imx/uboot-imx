@@ -48,5 +48,7 @@ extern u32 clk_root_src[][4];
 int clock_init(void);
 int ccm_cfg_clk_root(u32 blk, u32 mux, u32 div);
 u32 get_lpuart_clk(void);
+int ccm_allow_clk_root_ns(u32 blk, bool ns);
+int ccm_allow_clk_ccgr_ns(u32 lpcg, bool ns);
 void init_uart_clk(u32 index);
 #endif

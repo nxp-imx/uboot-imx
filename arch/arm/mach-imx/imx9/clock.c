@@ -85,6 +85,25 @@ int ccm_cfg_clk_root(u32 blk, u32 mux, u32 div)
 	return ret;
 };
 
+int ccm_allow_clk_root_ns(u32 blk, bool ns)
+{
+	void __iomem *base = (void __iomem *)CCM_BASE_ADDR + blk * 0x80;
+	u32 val;
+
+	val = readl(base + CLK_ROOT_AUTHEN_OFF);
+	if (val & CLK_ROOT_AUTHEN_TZ_LOCK_MASK) {
+		return -EPERM;
+	}
+
+	if (ns)
+		setbits_le32(base + CLK_ROOT_AUTHEN_OFF, CLK_ROOT_AUTHEN_TZ_NS_MASK);
+	else
+		clrbits_le32(base + CLK_ROOT_AUTHEN_OFF, CLK_ROOT_AUTHEN_TZ_NS_MASK);
+
+	return 0;
+};
+
+
 int ccm_cfg_clk_ccgr(u32 lpcg, u32 val)
 {
 	void __iomem *base = (void __iomem *)CCM_CCGR_BASE_ADDR + lpcg * 0x80;
@@ -94,8 +113,33 @@ int ccm_cfg_clk_ccgr(u32 lpcg, u32 val)
 	return 0;
 }
 
+int ccm_allow_clk_ccgr_ns(u32 lpcg, bool ns)
+{
+	void __iomem *base = (void __iomem *)CCM_CCGR_BASE_ADDR + lpcg * 0x80;
+	u32 val;
+
+	val = readl(base + CLK_ROOT_AUTHEN_OFF);
+	if (val & CLK_ROOT_AUTHEN_TZ_LOCK_MASK) {
+		return -EPERM;
+	}
+
+	if (ns)
+		setbits_le32(base + CLK_ROOT_AUTHEN_OFF, CLK_ROOT_AUTHEN_TZ_NS_MASK);
+	else
+		clrbits_le32(base + CLK_ROOT_AUTHEN_OFF, CLK_ROOT_AUTHEN_TZ_NS_MASK);
+
+	return 0;
+}
+
 int clock_init(void)
 {
+	int i;
+	for (i = 0; i < IMX93_CLK_ROOT_MAX; i++)
+		ccm_allow_clk_root_ns(i, true);
+
+	for (i = 0; i < IMX93_CLK_CCGR_MAX; i++)
+		ccm_allow_clk_ccgr_ns(i, true);
+
 	return 0;
 };
 
