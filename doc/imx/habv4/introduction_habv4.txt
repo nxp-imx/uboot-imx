@@ -66,7 +66,9 @@ The CSF structure contains the commands, SRK table, signatures and
 certificates.
 
 Details about the Secure Boot and Code Signing Tool (CST) can be found in
-the application note AN4581[2] and in the secure boot guides.
+the application note AN4581[2] and in the secure boot guides. Syntax and
+details about CSF can be found in the CST User Guide which is packaged with
+the CST tool and located in the doc directory.
 
 1.2 The HABv4 Encrypted Boot Architecture
 ------------------------------------------

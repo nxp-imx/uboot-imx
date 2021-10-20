@@ -68,12 +68,20 @@ build configuration:
 
   ARM architecture -> Support i.MX HAB features
 
+The U-Boot image must then be recompiled after these changes are made.
+
 1.3 Creating the CSF description file
 --------------------------------------
 
 The CSF contains all the commands that the HAB executes during the secure
 boot. These commands instruct the HAB on which memory areas of the image
-to authenticate, which keys to install, use and etc.
+to authenticate, which keys to install, use and etc. More information
+on constructing a CSF file can be found in the CST User Guide, located
+within the CST package's doc directory.
+
+Key and Certificate generation done by the CST is out of the scope of
+this document. Please refer to introduction_habv4.txt for keys,
+certificates, SRK table, and SRK hash generation.
 
 CSF examples are available under doc/imx/habv4/csf_examples/ directory.
 
@@ -108,7 +116,11 @@ the U-Boot build, the example below is a log for mx7dsabresd_defconfig target:
 - In "Authenticate Data" CSF command users can copy and past the output
   addresses:
 
-  Block = 0x877ff400 0x00000000 0x0009ec00 "u-boot-dtb.imx"
+  For example:
+
+  [Authenticate Data]
+    ...
+    Block = 0x877ff400 0x00000000 0x0009ec00 "u-boot-dtb.imx"
 
 1.3.1 Avoiding Kernel crash when OP-TEE is enabled
 ---------------------------------------------------
@@ -150,6 +162,10 @@ media.
 
   $ sudo dd if=u-boot-signed.imx of=/dev/sd<x> bs=1K seek=1 && sync
 
+Note: The Universal Update Utility (UUU) can also be used to flash the
+image to the target board's eMMC. Details on UUU installation and help
+can be found in the supporting UUU documentation[3].
+
 1.5 Programming SRK Hash
 -------------------------
 
@@ -159,6 +175,9 @@ SoC SRK_HASH[255:0] fuses.
 
 Be careful when programming these values, as this data is the basis for the
 root of trust. An error in SRK Hash results in a part that does not boot.
+More information and full details regarding fuses can be found in the
+Security Reference Manual of the target board. Contact an NXP Representative
+for access.
 
 The U-Boot fuse tool can be used for programming eFuses on i.MX SoCs.
 
