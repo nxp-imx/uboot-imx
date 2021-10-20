@@ -677,6 +677,10 @@ static int sec_mipi_dsim_calc_pmsk(struct sec_mipi_dsim *dsim)
 	fout = dsim->bit_clk;
 	fin  = get_dsi_phy_ref_clk();
 	fin = DIV_ROUND_UP_ULL(fin, 1000); /* Change to Khz */
+	if (fin == 0) {
+		printf("Error: DSI PHY reference clock is disabled\n");
+		return -EINVAL;
+	}
 
 	/* TODO: ignore 'k' for PMS calculation,
 	 * only use 'p', 'm' and 's' to generate
