@@ -188,6 +188,14 @@ void cgc1_pll3_init(ulong freq)
 
 void cgc2_pll4_init(void)
 {
+	/* Check the NICLPAV first to ensure not from PLL4 PFD1 clock */
+	if ((readl(&cgc2_regs->niclpavclk) & GENMASK(29, 28)) == BIT(28)) {
+		/* switch to FRO 192 first */
+		clrbits_le32(&cgc2_regs->niclpavclk, GENMASK(29, 28));
+		while (!(readl(&cgc2_regs->niclpavclk) & BIT(27)))
+			;
+	}
+
 	/* Disable PFD DIV and clear DIV */
 	writel(0x80808080, &cgc2_regs->pll4div_pfd0);
 	writel(0x80808080, &cgc2_regs->pll4div_pfd1);
