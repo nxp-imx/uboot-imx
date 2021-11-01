@@ -889,16 +889,15 @@ int sec_init_idx(uint8_t sec_idx)
 			return -1;
 		}
 
-		if (IS_ENABLED(CONFIG_DM_RNG)) {
-			ret = device_bind_driver(NULL, "caam-rng", "caam-rng",
-						 NULL);
-			if (ret)
-				printf("Couldn't bind rng driver (%d)\n", ret);
-		}
-
 		printf("SEC%u:  RNG instantiated\n", sec_idx);
 	}
 #endif
+	if (IS_ENABLED(CONFIG_DM_RNG)) {
+		ret = device_bind_driver(NULL, "caam-rng", "caam-rng", NULL);
+		if (ret)
+			printf("Couldn't bind rng driver (%d)\n", ret);
+	}
+
 	return ret;
 }
 
