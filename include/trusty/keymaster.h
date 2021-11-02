@@ -174,4 +174,9 @@ int trusty_verify_secure_unlock(uint8_t *unlock_credential,
  * */
 int trusty_set_attestation_id(void);
 
+/*
+ * trusty_set_boot_patch_level is called to set the boot patch level.
+ * */
+int trusty_set_boot_patch_level(uint32_t boot_patch_level);
+
 #endif /* TRUSTY_KEYMASTER_H_ */
