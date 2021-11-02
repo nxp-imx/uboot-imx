@@ -335,9 +335,6 @@ static void disable_wdog(void __iomem *wdog_base)
 {
 	u32 val_cs = readl(wdog_base + 0x00);
 
-	if (!(val_cs & 0x80))
-		return;
-
 	dmb();
 	__raw_writel(REFRESH_WORD0, (wdog_base + 0x04)); /* Refresh the CNT */
 	__raw_writel(REFRESH_WORD1, (wdog_base + 0x04));
@@ -354,7 +351,7 @@ static void disable_wdog(void __iomem *wdog_base)
 	}
 	writel(0x0, (wdog_base + 0x0C)); /* Set WIN to 0 */
 	writel(0x400, (wdog_base + 0x08)); /* Set timeout to default 0x400 */
-	writel(0x120, (wdog_base + 0x00)); /* Disable it and set update */
+	writel(0x2120, (wdog_base + 0x00)); /* Change to 32bit cmd, disable it and set update */
 
 	while (!(readl(wdog_base + 0x00) & 0x400))
 		;
