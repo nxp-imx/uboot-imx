@@ -459,6 +459,88 @@ fail:
 #endif
 	return ret;
 }
+
+int set_boot_patch_level(const uint8_t* image_data, size_t image_size)
+{
+	const char * boot_patch_level = NULL;
+	size_t patch_level_size = 0;
+	AvbFooter footer;
+	AvbFooter *footer_buf;
+	const uint8_t* vbmeta_data;
+	size_t vbmeta_size;
+	uint32_t trimmed_patch_level = 0, year = 0, month = 0, day = 0;
+	char date_buf[10] = {0};
+
+	/* Get the vbmeta footer of 'boot' partition */
+	footer_buf = (struct AvbFooter *)(image_data + image_size - AVB_FOOTER_SIZE);
+	if (!avb_footer_validate_and_byteswap(footer_buf, &footer)) {
+		printf("boota: failed to find vbmeta footer!");
+		return -1;
+	}
+
+	/* Get vbmeta struct in 'boot' partition */
+	vbmeta_data = image_data + footer.vbmeta_offset;
+	vbmeta_size = footer.vbmeta_size;
+
+	/* Search for the boot security patch level property. */
+	boot_patch_level = avb_property_lookup(vbmeta_data, vbmeta_size,
+						"com.android.build.boot.security_patch",
+						0, &patch_level_size);
+	if (boot_patch_level) {
+		/* Format the security patch level which is YYYY-MM-DD */
+		char *start, *end;
+
+		/* Year */
+		start = (char *)boot_patch_level;
+		end = strchr(boot_patch_level, '-');
+		if (!end) {
+			printf("boota: invalid boot security patch level!\n");
+			return -1;
+		}
+		memcpy(date_buf, start, end - start);
+		year = simple_strtoul(date_buf, NULL, 10);
+		if (year < 1970) {
+			printf("boota: invalid boot security patch level!\n");
+			return -1;
+		}
+
+		/* Month */
+		start = end + 1;
+		end = strchr(start, '-');
+		if (!end) {
+			printf("boota: invalid boot security patch level!\n");
+			return -1;
+		}
+		memset(date_buf, 0, sizeof(date_buf));
+		memcpy(date_buf, start, end - start);
+		month = simple_strtoul(date_buf, NULL, 10);
+		if ((month < 1) || (month > 12)) {
+			printf("boota: invalid boot security patch level!\n");
+			return -1;
+		}
+
+		/* Day */
+		start = end + 1;
+		memset(date_buf, 0, sizeof(date_buf));
+		memcpy(date_buf, start, strlen(start));
+		day = simple_strtoul(date_buf, NULL, 10);
+		if ((day < 1) || (day > 31)) {
+			printf("boota: invalid boot security patch level!\n");
+			return -1;
+		}
+		trimmed_patch_level = year * 10000 + month * 100 + day;
+
+		/* Set the patch level to secure world */
+		if (trusty_set_boot_patch_level(trimmed_patch_level)) {
+			printf("boota: set boot patch level failed.\n");
+			return -1;
+		}
+	} else {
+		printf("No boot patch level found!\n");
+	}
+
+	return 0;
+}
 #endif
 
 #if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
@@ -972,6 +1054,11 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 	else
 		os_version = hdr->os_version;
 	if (trusty_setbootparameter(os_version, avb_result, avb_out_data))
+		goto fail;
+
+	if (find_partition_data_by_name("boot", avb_out_data, &avb_loadpart))
+		goto fail;
+	if (set_boot_patch_level(avb_loadpart->data, avb_loadpart->data_size))
 		goto fail;
 
 	/* lock the boot status and rollback_idx preventing Linux modify it */

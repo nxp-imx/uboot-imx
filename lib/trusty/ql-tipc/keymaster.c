@@ -677,3 +677,26 @@ end:
     }
     return rc;
 }
+
+int trusty_set_boot_patch_level(uint32_t boot_patch_level)
+{
+    if (!initialized) {
+        trusty_error("Keymaster TIPC client not initialized!\n");
+        return -1;
+    }
+
+    uint8_t *req = NULL;
+    uint32_t req_size = 0;
+    int rc;
+
+    req = trusty_calloc(4, 1); // 4 bytes should be enough.
+    memcpy(req, &boot_patch_level, sizeof(uint32_t));
+    req_size = sizeof(uint32_t);
+
+    rc = km_do_tipc(KM_CONFIGURE_BOOT_PATCHLEVEL, req, req_size, NULL, NULL);
+
+    if (req) {
+        trusty_free(req);
+    }
+    return rc;
+}
