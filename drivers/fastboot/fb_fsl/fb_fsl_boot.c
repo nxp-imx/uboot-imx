@@ -460,30 +460,51 @@ fail:
 	return ret;
 }
 
-int set_boot_patch_level(const uint8_t* image_data, size_t image_size)
+int set_boot_patch_level(char *slot)
 {
 	const char * boot_patch_level = NULL;
 	size_t patch_level_size = 0;
-	AvbFooter footer;
-	AvbFooter *footer_buf;
-	const uint8_t* vbmeta_data;
-	size_t vbmeta_size;
+	uint8_t* vbmeta_data = NULL;
+	size_t vbmeta_num_read;
 	uint32_t trimmed_patch_level = 0, year = 0, month = 0, day = 0;
+	AvbFooter footer;
+	size_t footer_num_read;
+	uint8_t footer_buf[AVB_FOOTER_SIZE];
 	char date_buf[10] = {0};
+	char boot_partition_name[16] = {0};
+	int ret = -1;
 
 	/* Get the vbmeta footer of 'boot' partition */
-	footer_buf = (struct AvbFooter *)(image_data + image_size - AVB_FOOTER_SIZE);
-	if (!avb_footer_validate_and_byteswap(footer_buf, &footer)) {
-		printf("boota: failed to find vbmeta footer!");
-		return -1;
+	snprintf(boot_partition_name, sizeof(boot_partition_name), "boot%s", slot);
+	ret = read_from_partition_multi(boot_partition_name, -AVB_FOOTER_SIZE,
+					AVB_FOOTER_SIZE, footer_buf, &footer_num_read);
+	if ((ret != 0) || (footer_num_read != AVB_FOOTER_SIZE)) {
+		printf("boota: read boot image footer failed!\n");
+		ret = -1;
+		goto end;
+	} else if (!avb_footer_validate_and_byteswap((AvbFooter *)footer_buf, &footer)) {
+		printf("boota: failed to find vbmeta footer!\n");
+		ret = -1;
+		goto end;
 	}
 
 	/* Get vbmeta struct in 'boot' partition */
-	vbmeta_data = image_data + footer.vbmeta_offset;
-	vbmeta_size = footer.vbmeta_size;
+	vbmeta_data = malloc(footer.vbmeta_size);
+	if (vbmeta_data == NULL) {
+		printf("boota: failed to allocate memory!\n");
+		ret = -1;
+		goto end;
+	}
+	ret = read_from_partition_multi(boot_partition_name, footer.vbmeta_offset,
+					footer.vbmeta_size, vbmeta_data, &vbmeta_num_read);
+	if ((ret != 0) || (vbmeta_num_read != footer.vbmeta_size)) {
+		printf("boota: read vbmeta struct in boot image failed!\n");
+		ret = -1;
+		goto end;
+	}
 
 	/* Search for the boot security patch level property. */
-	boot_patch_level = avb_property_lookup(vbmeta_data, vbmeta_size,
+	boot_patch_level = avb_property_lookup(vbmeta_data, footer.vbmeta_size,
 						"com.android.build.boot.security_patch",
 						0, &patch_level_size);
 	if (boot_patch_level) {
@@ -495,13 +516,15 @@ int set_boot_patch_level(const uint8_t* image_data, size_t image_size)
 		end = strchr(boot_patch_level, '-');
 		if (!end) {
 			printf("boota: invalid boot security patch level!\n");
-			return -1;
+			ret = -1;
+			goto end;
 		}
 		memcpy(date_buf, start, end - start);
 		year = simple_strtoul(date_buf, NULL, 10);
 		if (year < 1970) {
 			printf("boota: invalid boot security patch level!\n");
-			return -1;
+			ret = -1;
+			goto end;
 		}
 
 		/* Month */
@@ -509,14 +532,16 @@ int set_boot_patch_level(const uint8_t* image_data, size_t image_size)
 		end = strchr(start, '-');
 		if (!end) {
 			printf("boota: invalid boot security patch level!\n");
-			return -1;
+			ret = -1;
+			goto end;
 		}
 		memset(date_buf, 0, sizeof(date_buf));
 		memcpy(date_buf, start, end - start);
 		month = simple_strtoul(date_buf, NULL, 10);
 		if ((month < 1) || (month > 12)) {
 			printf("boota: invalid boot security patch level!\n");
-			return -1;
+			ret = -1;
+			goto end;
 		}
 
 		/* Day */
@@ -526,20 +551,29 @@ int set_boot_patch_level(const uint8_t* image_data, size_t image_size)
 		day = simple_strtoul(date_buf, NULL, 10);
 		if ((day < 1) || (day > 31)) {
 			printf("boota: invalid boot security patch level!\n");
-			return -1;
+			ret = -1;
+			goto end;
 		}
 		trimmed_patch_level = year * 10000 + month * 100 + day;
 
 		/* Set the patch level to secure world */
 		if (trusty_set_boot_patch_level(trimmed_patch_level)) {
 			printf("boota: set boot patch level failed.\n");
-			return -1;
+			ret = -1;
+			goto end;
 		}
+
+		ret = 0;
 	} else {
 		printf("No boot patch level found!\n");
+		ret = 0;
 	}
 
-	return 0;
+end:
+	if (vbmeta_data != NULL)
+		free(vbmeta_data);
+
+	return ret;
 }
 #endif
 
@@ -1056,10 +1090,7 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 	if (trusty_setbootparameter(os_version, avb_result, avb_out_data))
 		goto fail;
 
-	if (find_partition_data_by_name("boot", avb_out_data, &avb_loadpart))
-		goto fail;
-	if (set_boot_patch_level(avb_loadpart->data, avb_loadpart->data_size))
-		goto fail;
+	set_boot_patch_level(avb_out_data->ab_suffix);
 
 	/* lock the boot status and rollback_idx preventing Linux modify it */
 	trusty_lock_boot_state();
