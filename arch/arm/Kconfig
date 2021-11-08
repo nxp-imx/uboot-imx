@@ -23,6 +23,7 @@ config ARM64_CRC32
 config COUNTER_FREQUENCY
 	int "Timer clock frequency"
 	depends on ARM64 || CPU_V7A
+	default 1000000 if IMX8ULP
 	default 8000000 if IMX8 || MX7 || MX6UL || MX6ULL
 	default 24000000 if ARCH_SUNXI || ARCH_EXYNOS || ROCKCHIP_RK3128 || \
 			ROCKCHIP_RK3288 || ROCKCHIP_RK322X || ROCKCHIP_RK3036
