@@ -176,7 +176,7 @@ static void disable_wdog(u32 wdog_base)
 	__raw_writel(REFRESH_WORD1, (wdog_base + 0x04));
 	dmb();
 
-	if (!(val_cs & 800)) {
+	if (!(val_cs & 0x800)) {
 		dmb();
 		__raw_writel(UNLOCK_WORD0, (wdog_base + 0x04));
 		__raw_writel(UNLOCK_WORD1, (wdog_base + 0x04));

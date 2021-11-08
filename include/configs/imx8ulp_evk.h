@@ -34,6 +34,8 @@
 
 #endif
 
+#define COUNTER_FREQUENCY       1000000 /* 1MHz */
+
 #define CONFIG_SERIAL_TAG
 
 #define CONFIG_REMAKE_ELF
