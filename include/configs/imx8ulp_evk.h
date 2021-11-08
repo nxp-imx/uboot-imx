@@ -28,6 +28,8 @@
 
 #endif
 
+#define COUNTER_FREQUENCY       1000000 /* 1MHz */
+
 /* ENET Config */
 #if defined(CONFIG_FEC_MXC)
 #define CONFIG_ETHPRIME                 "FEC"
