@@ -29,6 +29,124 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+struct rom_api *g_rom_api = (struct rom_api *)0x1980;
+
+enum boot_device get_boot_device(void)
+{
+	volatile gd_t *pgd = gd;
+	int ret;
+	u32 boot;
+	u16 boot_type;
+	u8 boot_instance;
+	enum boot_device boot_dev = SD1_BOOT;
+
+	ret = g_rom_api->query_boot_infor(QUERY_BT_DEV, &boot,
+					  ((uintptr_t)&boot) ^ QUERY_BT_DEV);
+	set_gd(pgd);
+
+	if (ret != ROM_API_OKAY) {
+		puts("ROMAPI: failure at query_boot_info\n");
+		return -1;
+	}
+
+	boot_type = boot >> 16;
+	boot_instance = (boot >> 8) & 0xff;
+
+	switch (boot_type) {
+	case BT_DEV_TYPE_SD:
+		boot_dev = boot_instance + SD1_BOOT;
+		break;
+	case BT_DEV_TYPE_MMC:
+		boot_dev = boot_instance + MMC1_BOOT;
+		break;
+	case BT_DEV_TYPE_NAND:
+		boot_dev = NAND_BOOT;
+		break;
+	case BT_DEV_TYPE_FLEXSPINOR:
+		boot_dev = QSPI_BOOT;
+		break;
+	case BT_DEV_TYPE_USB:
+		boot_dev = boot_instance + USB_BOOT;
+		break;
+	default:
+		break;
+	}
+
+	debug("boot dev %d\n", boot_dev);
+
+	return boot_dev;
+}
+
+bool is_usb_boot(void)
+{
+	enum boot_device bt_dev = get_boot_device();
+	return (bt_dev == USB_BOOT || bt_dev == USB2_BOOT);
+}
+
+void disconnect_from_pc(void)
+{
+	enum boot_device bt_dev = get_boot_device();
+
+	if (bt_dev == USB_BOOT)
+		writel(0x0, USB1_BASE_ADDR + 0x140);
+	else if (bt_dev == USB2_BOOT)
+		writel(0x0, USB2_BASE_ADDR + 0x140);
+
+	return;
+}
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+__weak int board_mmc_get_env_dev(int devno)
+{
+	return devno;
+}
+
+int mmc_get_env_dev(void)
+{
+	volatile gd_t *pgd = gd;
+	int ret;
+	u32 boot;
+	u16 boot_type;
+	u8 boot_instance;
+
+	ret = g_rom_api->query_boot_infor(QUERY_BT_DEV, &boot,
+					  ((uintptr_t)&boot) ^ QUERY_BT_DEV);
+	set_gd(pgd);
+
+	if (ret != ROM_API_OKAY) {
+		puts("ROMAPI: failure at query_boot_info\n");
+		return CONFIG_SYS_MMC_ENV_DEV;
+	}
+
+	boot_type = boot >> 16;
+	boot_instance = (boot >> 8) & 0xff;
+
+	debug("boot_type %d, instance %d\n", boot_type, boot_instance);
+
+	/* If not boot from sd/mmc, use default value */
+	if ((boot_type != BOOT_TYPE_SD) && (boot_type != BOOT_TYPE_MMC))
+		return env_get_ulong("mmcdev", 10, CONFIG_SYS_MMC_ENV_DEV);
+
+	return board_mmc_get_env_dev(boot_instance);
+
+}
+#endif
+
+#ifdef CONFIG_USB_PORT_AUTO
+int board_usb_gadget_port_auto(void)
+{
+    enum boot_device bt_dev = get_boot_device();
+	int usb_boot_index = 0;
+
+	if (bt_dev == USB2_BOOT)
+		usb_boot_index = 1;
+
+	printf("auto usb %d\n", usb_boot_index);
+
+	return usb_boot_index;
+}
+#endif
+
 u32 get_cpu_rev(void)
 {
 	return (MXC_CPU_IMX93 << 12) | CHIP_REV_1_0;

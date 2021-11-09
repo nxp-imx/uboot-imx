@@ -19,4 +19,18 @@
 
 #define ANATOP_BASE_ADDR    0x44480000UL
 
+#define USB1_BASE_ADDR		0x4c100000
+#define USB2_BASE_ADDR		0x4c200000
+
+#if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
+#include <asm/types.h>
+
+#include <stdbool.h>
+
+bool is_usb_boot(void);
+void disconnect_from_pc(void);
+#define is_boot_from_usb  is_usb_boot
+
+#endif
+
 #endif
