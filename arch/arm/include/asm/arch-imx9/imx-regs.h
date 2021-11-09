@@ -24,6 +24,11 @@
 
 #define ANATOP_BASE_ADDR    0x44480000UL
 
+#define USB1_BASE_ADDR		0x4c100000
+#define USB2_BASE_ADDR		0x4c200000
+
+#define USB_BASE_ADDR		USB1_BASE_ADDR
+
 #define BLK_CTRL_WAKEUPMIX_BASE_ADDR 0x42420000
 #define BLK_CTRL_S_ANOMIX_BASE_ADDR  0x444f0000
 
@@ -231,6 +236,11 @@ struct src_mix_slice_regs {
 	u32 fsm_stat;
 	u32 func_stat;
 };
+
+bool is_usb_boot(void);
+void disconnect_from_pc(void);
+#define is_boot_from_usb  is_usb_boot
+
 #endif
 
 #endif

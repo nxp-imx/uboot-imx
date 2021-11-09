@@ -35,22 +35,38 @@ DECLARE_GLOBAL_DATA_PTR;
 
 struct rom_api *g_rom_api = (struct rom_api *)0x1980;
 
+bool is_usb_boot(void)
+{
+	enum boot_device bt_dev = get_boot_device();
+	return (bt_dev == USB_BOOT || bt_dev == USB2_BOOT);
+}
+
+void disconnect_from_pc(void)
+{
+	enum boot_device bt_dev = get_boot_device();
+
+	if (bt_dev == USB_BOOT)
+		writel(0x0, USB1_BASE_ADDR + 0x140);
+	else if (bt_dev == USB2_BOOT)
+		writel(0x0, USB2_BASE_ADDR + 0x140);
+
+	return;
+}
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 __weak int board_mmc_get_env_dev(int devno)
 {
-	return devno; }
+	return devno;
+}
 
 int mmc_get_env_dev(void)
 {
-	volatile gd_t *pgd = gd;
 	int ret;
 	u32 boot;
 	u16 boot_type;
 	u8 boot_instance;
 
-	ret = g_rom_api->query_boot_infor(QUERY_BT_DEV, &boot,
-					  ((uintptr_t)&boot) ^ QUERY_BT_DEV);
-	set_gd(pgd);
+	ret = rom_api_query_boot_infor(QUERY_BT_DEV, &boot);
 
 	if (ret != ROM_API_OKAY) {
 		puts("ROMAPI: failure at query_boot_info\n");
@@ -67,6 +83,21 @@ int mmc_get_env_dev(void)
 		return env_get_ulong("mmcdev", 10, CONFIG_SYS_MMC_ENV_DEV);
 
 	return board_mmc_get_env_dev(boot_instance);
+}
+#endif
+
+#ifdef CONFIG_USB_PORT_AUTO
+int board_usb_gadget_port_auto(void)
+{
+    enum boot_device bt_dev = get_boot_device();
+	int usb_boot_index = 0;
+
+	if (bt_dev == USB2_BOOT)
+		usb_boot_index = 1;
+
+	printf("auto usb %d\n", usb_boot_index);
+
+	return usb_boot_index;
 }
 #endif
 

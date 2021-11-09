@@ -11,4 +11,5 @@
 void soc_power_init(void);
 bool m33_is_rom_kicked(void);
 int m33_prepare(void);
+bool is_usb_boot(void);
 #endif
