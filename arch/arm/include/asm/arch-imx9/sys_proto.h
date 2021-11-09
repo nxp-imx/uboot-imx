@@ -8,5 +8,9 @@
 
 #include <asm/mach-imx/sys_proto.h>
 
+ulong spl_romapi_raw_seekable_read(u32 offset, u32 size, void *buf);
+ulong spl_romapi_get_uboot_base(u32 image_offset, u32 rom_bt_dev);
 extern unsigned long rom_pointer[];
+enum boot_device get_boot_device(void);
+bool is_usb_boot(void);
 #endif

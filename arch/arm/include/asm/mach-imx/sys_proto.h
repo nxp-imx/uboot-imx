@@ -154,7 +154,7 @@ struct rproc_att {
 	u32 size; /* size of reg range */
 };
 
-#if defined(CONFIG_IMX8M) || defined(CONFIG_IMX8ULP)
+#if defined(CONFIG_IMX8M) || defined(CONFIG_IMX8ULP) || defined(CONFIG_IMX9)
 struct rom_api {
 	u16 ver;
 	u16 tag;
