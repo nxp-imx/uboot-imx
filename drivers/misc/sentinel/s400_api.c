@@ -9,7 +9,7 @@
 #include <malloc.h>
 #include <asm/io.h>
 #include <dm.h>
-#include <asm/arch/s400_api.h>
+#include <asm/mach-imx/s400_api.h>
 #include <misc.h>
 
 DECLARE_GLOBAL_DATA_PTR;

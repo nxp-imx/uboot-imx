@@ -21,7 +21,7 @@
 #include <asm/arch/rdc.h>
 #include <asm/arch/upower.h>
 #include <asm/mach-imx/boot_mode.h>
-#include <asm/arch/s400_api.h>
+#include <asm/mach-imx/s400_api.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/pcc.h>
 
