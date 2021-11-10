@@ -839,6 +839,8 @@ config ARCH_IMX8ULP
 	select SYS_FSL_HAS_SEC
 	select SYS_FSL_SEC_LE
 	select SYS_FSL_SEC_COMPAT_4
+	select MISC
+	select IMX_SENTINEL
 	imply CMD_DM
 
 config ARCH_IMX9
@@ -847,6 +849,8 @@ config ARCH_IMX9
 	select DM
 	select MACH_IMX
 	select SUPPORT_SPL
+	select MISC
+	select IMX_SENTINEL
 	imply CMD_DM
 
 config ARCH_IMXRT

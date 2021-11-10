@@ -249,6 +249,13 @@ config IMX_M4_MU
 	  If you say Y here to enable Message Unit driver to work with
 	  Cortex M4 core on AMP Freescale i.MX processors.
 
+config IMX_SENTINEL
+	bool "Enable i.MX Sentinel MU driver and API"
+	depends on MISC && (ARCH_IMX9 || ARCH_IMX8ULP)
+	help
+	  If you say Y here to enable Message Unit driver to work with
+	  Sentinel core on some NXP i.MX processors.
+
 config NUVOTON_NCT6102D
 	bool "Enable Nuvoton NCT6102D Super I/O driver"
 	help

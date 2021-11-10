@@ -40,7 +40,6 @@ config TARGET_IMX8ULP_9X9_EVK
 	select IMX8ULP_DRAM
 	select FSL_CAAM
 	select FSL_BLOB
-	select MISC
 	select ARCH_MISC_INIT
 	select SPL_CRYPTO_SUPPORT if SPL
 
