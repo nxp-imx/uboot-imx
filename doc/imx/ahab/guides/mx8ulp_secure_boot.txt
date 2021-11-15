@@ -1,0 +1,421 @@
+     +=========================================================+
+     +             i.MX 8ULP AHAB guide using AHAB             +
+     +=========================================================+
+
+1. AHAB secure boot process
+----------------------------
+
+This document provides a step-by-step guide on how to securely boot a boot
+image. It is assumed that the reader is familiar with basic AHAB concepts and
+with the PKI tree generation.
+
+It is also assumed that the reader is familiar with all pieces of software
+needed. The procedure to build uboot, ATF, OPTEE and download the firmwares are
+ out of scope of this document, please refer to the Linux BSP user guide for
+further details.
+
+Details about AHAB can be found in the introduction_ahab.txt document and in
+processors Security Reference Manual Document (SRM).
+
+1.1 Preparing the environment to build a secure boot image
+-----------------------------------------------------------
+
+Secure boot image preparation requires mkimage to build and Code Signing tool
+to sign the image.
+
+Based on bootmode, following files are needed to prepare the boot image:
+- All boot modes
+  - Edgelock secure enclave Firmware (ELke).
+  - uPower Firmware.
+
+- Dualboot mode / Singleboot mode
+  - U-Boot proper and SPL.
+  - ARM Trusted Firmware (ATF).
+  - OPTEE (Optional)
+  - Cortex M binary (Optional in Singleboot mode)
+
+- LPboot mode
+  - Cortex M binary
+
+- Root of trust extension (Optional)
+  - Kernel image.
+
+In the following sections, <work> designates the repository where all
+parts have been downloaded and built.
+
+1.2 Preparing U-Boot to support AHAB secure boot features
+----------------------------------------------------------
+
+The U-Boot/SPL provides extra AHAB supported functionalities that include
+extension of Root of Trust, checking any events(issues) after image
+authentication, chip lifecycle status, securing the target etc.
+
+The support is enabled by adding CONFIG_AHAB_BOOT to the defconfig file used
+by your target:
+
+  - Defconfig:
+    CONFIG_AHAB_BOOT=y
+  - Kconfig:
+    ARM architecture -> Support i.MX 8 AHAB features
+
+Enabling this feature allows the SPL and uboot image to extend the Root of
+Trust by using the AHAB API call via ELke FW.
+
+1.3 Building an image supporting secure boot
+------------------------------------------------
+
+A typical singleboot mode image with Cortex-M support contains three containers:
+
+            *start ----> +---------------------------+ ---------
+                         |   1st Container header    |   ^
+                         |       and signature       |   |
+                         +---------------------------+   |
+                         | Padding for 1kB alignment |   |
+    *start + 0x400 ----> +---------------------------+   |
+                         |   2nd Container header    |   |
+                         |       and signature       |   |
+                         +---------------------------+   |
+                         |          Padding          |   |  Authenticated at
+                         +---------------------------+   |  ELke ROM/FW Level
+                         |          ELke FW          |   |
+                         +---------------------------+   |
+                         |          Padding          |   |
+                         +---------------------------+   |
+                         |         uPower FW         |   |
+                         +---------------------------+   |
+                         |       Cortex-M Image      |   |
+                         +---------------------------+   |
+                         |         SPL Image         |   v
+                         +---------------------------+ ---------
+                         |   3rd Container header    |   ^
+                         |       and signature       |   |
+                         +---------------------------+   |
+                         |          Padding          |   | Authenticated
+                         +---------------------------+   | at SPL Level
+                         |     U-Boot Proper IMG     |   |
+                         +---------------------------+   |
+                         |    ARM Trusted FW (ATF)   |   v
+                         +---------------------------+ ---------
+
+The first container includes the ELke FW which is signed using NXP keys, this
+container is authenticated by ELke ROM.
+
+The second container includes the SPL (in dualboot mode) or SPL and uPower FW
+(in singleboot mode) which are signed using OEM keys, this container is
+authenticated at ELke FW level.
+
+The third container includes the U-Boot proper and the ATF. The SPL is in
+charge to load this container and also to interface with ELke FW to authenticate
+ the additional container.
+
+The signing procedure is slightly different when compared with HABv4 series. On
+AHAB the signature is directly included in the container, the CST is
+responsible to sign and handle the "Signature Block":
+
+             +----------------------------+ ---------
+             |                            |  ^
+             |                            |  |
+             |      Container header      |  |
+             |                            |  |
+             |                            |  |
+             +---+----------------------- +  |
+             | S | Signature block header |  | Signed
+             | i +------------------------+  |
+             | g |                        |  |
+             | n |                        |  |
+             | a |        SRK table       |  |
+             | t |                        |  |
+             | u |                        |  v
+             | r +------------------------+ ---------
+             | e |       Signature        |
+             |   +------------------------+
+             | B |                        |
+             | l |        SGK Key         |
+             | o | Certificate (optional) |
+             | c |                        |
+             | k |                        |
+             +---+------------------------+
+
+The certificate block is divided into:
+
+                    +---------------+ ^
+                    |  Public key   | | Signed
+                    |  Permission   | |
+                    +---------------+ v
+                    |   Signature   |
+                    +---------------+
+
+The first block (public key permission) verify the Signature block preceding
+(between SRK table and Certificate blocks), while the second block (signature)
+is verified by the SRK table block.
+
+In case not using the subordinate key, the container signature is verified
+against the SRK keys directly.
+
+1.4 Preparing the signed boot image
+------------------------------------
+
+The imx-mkimage tool, provided as part of the BSP release, supports generating
+boot images for all the different boot modes supported by i.MX 8ULP. For more
+details on how to build image for each boot mode please refer to the Linux BSP
+user guide.
+
+Each boot mode constructs the boot image in different ways that are targeted
+for Cortex-A or Cortex-M or both.
+
+In the following sections building and signing a Cortex-A and Cortex-M image is
+ described.
+
+1.4.1 Signing Cortex-A core image
+---------------------------------------
+
+The boot modes that target Cortex-A core (dualboot and singleboot modes) also
+build the uboot and ATF container called "u-boot-atf-container". Please refer
+to "soc.mk" file in "<imx-mkimage>/iMX8ULP" for more details. This container is
+ needed to be signed first before signing the SPL container.
+
+1.4.1.1 Preparing the u-boot-atf-container
+-----------------------------------------
+
+The first step is to generate the u-boot-atf-container container which includes
+ the U-Boot proper and ATF images (including optionally OP-TEE).
+
+The imx-mkimage project includes a target which only generates this container:
+
+- Generating the U-Boot proper + ATF container:
+
+  $ make SOC=<SoC Name> u-boot-atf-container.img
+
+The mkimage log provides the container and signature block offsets used by the
+CSF description file:
+
+  CST: CONTAINER 0 offset: 0x0
+  CST: CONTAINER 0: Signature Block: offset is at 0x110
+
+Keep a note of the offsets above to be used with CST/CSF.
+
+The u-boot-atf-container.img file generated is needed to be signed using the
+Code Signing Tool (CST).
+
+1.4.1.2 Signing the u-boot-atf-container container
+-------------------------------------------------
+
+The CSF description file contains all the commands that the AHAB executes
+during the secure boot procedure. These commands instruct the AHAB code on
+which memory areas of the image to authenticate, which keys to install, use
+and etc.
+
+CSF examples are available under doc/imx/hab/ahab/csf_examples/ directory.
+
+As explained in section above, the mkimage log provides the container and
+signature block offsets used by the CSF description file (example provided in
+csf_uboot_atf.txt). These offsets need to be updated in the CSF file at
+"Authenticate Data" command along with the path to the flash.bin file:
+
+- "Authenticate Data" command in csf_uboot_atf.txt file:
+
+  [Authenticate Data]
+  # Binary to be signed generated by mkimage
+  File = "u-boot-atf-container.img"
+  # Offsets = Container header  Signature block
+  Offsets   = 0x0               0x110
+
+- Sign the container:
+
+  $ ./cst -i csf_uboot_atf.txt -o signed-u-boot-atf-container.img
+
+The signed-u-boot-atf-container.img will then have to be copied to the target's
+ directory in imx-mkimage and renamed to u-boot-atf-container.img.
+
+1.4.1.3 Preparing the flash.bin image with u-boot-atf-container
+----------------------------------------------------------------
+
+The signed u-boot-atf-container container can be now used to create the final
+flash.bin image, be sure that the signed u-boot-atf-container container was
+successfully replaced and is named as u-boot-atf-container.img in target's
+directory.
+
+- Generating the flash.bin image:
+
+  $ make SOC=<SoC Name> flash_<boot mode>
+
+The mkimage log provides the container and signature block offsets used by the
+CSF description file:
+
+  CST: CONTAINER 0 offset: 0x400
+  CST: CONTAINER 0: Signature Block: offset is at 0x510
+
+Keep a note of the offsets above to be used with CST/CSF.
+
+The final flash.bin image would include the container with SPL and the
+u-boot-atf-container container out of which the SPL container would have to be
+signed using the Code Signing Tool (CST).
+
+1.4.1.4 Signing the flash.bin image with u-boot-atf-container
+--------------------------------------------------------------
+
+As mentioned above the CSF description file contains all the commands that AHAB
+ executes during the secure boot procedure.
+
+CSF examples are available under doc/imx/hab/ahab/csf_examples/ directory.
+
+As explained in section above, the mkimage log provides the container and
+signature block offsets used by the CSF description file (example provided in
+csf_boot_image.txt). These offsets need to be updated in the CSF file at
+"Authenticate Data" command along with the path to the flash.bin file:
+
+
+- "Authenticate Data" command in csf_boot_image.txt file:
+
+  [Authenticate Data]
+  # Binary to be signed generated by mkimage
+  File = "flash.bin"
+  # Offsets = Container header  Signature block
+  Offsets   = 0x400             0x510
+
+- Sign the flash.bin image:
+
+ $ ./cst -i csf_boot_image.txt -o signed-flash.bin
+
+The signed-flash.bin image contains all the signatures and can be flashed in
+the device.
+
+1.4.2 Signing Cortex-M core image
+---------------------------------------
+
+The boot modes that target Cortex-M core (dualboot and LPboot modes) have one
+container to sign which contains the Cortex-M image along with uPower FW.
+Please refer to "soc.mk" file in "<imx-mkimage>/iMX8ULP" directory for more
+details.
+
+1.4.2.1 Preparing the Cortex-M core image
+------------------------------------------
+
+The final flash.bin image created using the imx-mkimage tool contains 2
+containers. 1st container consists of the NXP signed ELke FW and thus doesnt
+need signing. The 2nd container consists of the Cortex-M image and uPower FW at
+ the minimum.
+
+- Generating the flash.bin image:
+
+  $ make SOC=<SoC Name> flash_<boot mode>
+
+The mkimage log provides the container and signature block offsets used by the
+CSF description file:
+
+  CST: CONTAINER 0 offset: 0x400
+  CST: CONTAINER 0: Signature Block: offset is at 0x510
+
+Keep a note of the offsets above to be used with CST/CSF.
+
+Note: The flash.bin image created for Cortex-M core targetting FlexSPI NOR
+flash has the 1st container at an offset of 0x1000. This offset can be found in
+ "soc.mk" file in "<imx-mkimage>/iMX8ULP" directory. Thus the offsets provided
+by mkimage tool need to have 0x1000 added to them.
+
+1.4.2.2 Signing the Cortex-M core flash.bin image
+--------------------------------------------------
+
+As mentioned above, the CSF description file contains all the commands that AHAB
+ executes during the secure boot procedure.
+
+CSF examples are available under doc/imx/hab/ahab/csf_examples/ directory.
+
+As explained in section above, the mkimage log provides the container and
+signature block offsets used by the CSF description file (example provided in
+csf_boot_image.txt). These offsets need to be updated in the CSF file at
+"Authenticate Data" command along with the path to the flash.bin file:
+
+
+- "Authenticate Data" command in csf_boot_image.txt file:
+
+  [Authenticate Data]
+  # Binary to be signed generated by mkimage
+  File = "flash.bin"
+  # Offsets = Container header  Signature block
+  Offsets   = 0x1400             0x1510
+
+Note: The offsets have been incremented by 0x1000, as described above.
+
+- Sign the flash.bin image:
+
+ $ ./cst -i csf_boot_image.txt -o signed-flash.bin
+
+The signed-flash.bin image contains all the signatures and can be flashed in
+the device.
+
+1.5 Flashing the signed image
+------------------------------
+
+After completing all steps in Section 1.4 the signed flash.bin image can be
+flashed in the device using UUU. Please refer to UUU documentation for more
+details on programming the flash devices on the target.
+
+1.6 Programming SRK Hash
+-------------------------
+
+As explained in introduction_ahab.txt document the SRK Hash fuse values are
+generated by the srktool and should be programmed in the SoC SRK_HASH[255:0]
+fuses.
+
+Be careful when programming these values, as this data is the basis for the
+root of trust. An error in SRK Hash results in a part that does not boot.
+
+The U-Boot fuse tool can be used for programming eFuses on i.MX SoCs.
+
+- Dump SRK Hash fuses values in host machine:
+
+  On i.MX8ULP, the SRK Hash uses sha256 and dump 8 words fuses
+  $ od -t x4 SRK_1_2_3_4_fuse.bin
+  0000000 db2959f2 90dfc39c 53394566 e0b75829
+  0000020 85e6f3b1 af00983d e5e804fe 7a451024
+
+- Program SRK_HASH[255:0] fuses:
+
+  * On i.MX 8 ULP:
+
+  => fuse prog 15 0 0xdb2959f2
+  => fuse prog 15 1 0x90dfc39c
+  => fuse prog 15 2 0x53394566
+  => fuse prog 15 3 0xe0b75829
+  => fuse prog 15 4 0x85e6f3b1
+  => fuse prog 15 5 0xaf00983d
+  => fuse prog 15 6 0xe5e804fe
+  => fuse prog 15 7 0x7a451024
+
+1.7 Verify AHAB events
+-----------------------
+
+If the fuses have been burned properly, there should be no AHAB events after
+boot. To validate this, power on the board, and run ahab_status command on
+U-Boot terminal.
+
+No events should be returned after this command:
+
+  => ahab_status
+  Lifecycle: 0x0020, NXP closed
+
+
+1.8 Close the device
+---------------------
+
+After the device successfully boots a signed image without generating any AHAB
+security events, it is safe to close the device. The chip lifecycle should be
+changed from 0x20 NXP closed to 0x80 OEM closed. Be aware this step can damage
+your board if a previous step failed. It is also irreversible. Run on the
+U-Boot terminal:
+
+  => ahab_close
+
+Now reboot the target, and run:
+
+  => ahab_status
+
+The lifecycle value should now be 0x80 OEM closed.
+
+2. Authenticating the OS container
+-----------------------------------
+
+The procedure for authenticating the OS container can be found in
+doc/imx/ahab/guides/sign_os_cntr.txt file.
+
