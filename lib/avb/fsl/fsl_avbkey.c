@@ -1181,6 +1181,13 @@ bool hab_is_enabled(void)
 	}
 
 	if (lc != 0x80)
+#elif CONFIG_IMX8ULP
+	uint32_t lc;
+
+	lc = readl(FSB_BASE_ADDR + 0x41c);
+	lc &= 0x3f;
+
+	if (lc != 0x20)
 #elif CONFIG_ARCH_IMX8M
 	struct imx_sec_config_fuse_t *fuse =
 		(struct imx_sec_config_fuse_t *)&imx_sec_config_fuse;
