@@ -31,6 +31,7 @@
 #endif
 #include <asm/arch/speed.h>
 #include <fsl_qbman.h>
+#include "dt_optee.h"
 
 int fdt_fixup_phy_connection(void *blob, int offset, phy_interface_t phyc)
 {
@@ -698,3 +699,14 @@ void ft_cpu_setup(void *blob, struct bd_info *bd)
 	fdt_fixup_ecam(blob);
 #endif
 }
+
+#ifdef CONFIG_OF_SYSTEM_SETUP
+int ft_system_setup(void *blob, struct bd_info *bd)
+{
+#ifdef CONFIG_OF_LIBFDT_OVERLAY
+	return ft_add_optee_overlay(blob, bd);
+#else
+	return 0;
+#endif
+}
+#endif
