@@ -616,7 +616,9 @@ void ft_pci_setup_ls(void *blob, struct bd_info *bd)
 {
 	struct ls_pcie_rc *pcie_rc;
 
+#if defined(CONFIG_FSL_LSCH3) || defined(CONFIG_FSL_LSCH2)
 	pcie_board_fix_fdt(blob);
+#endif
 
 	list_for_each_entry(pcie_rc, &ls_pcie_list, list)
 		ft_pcie_ls_setup(blob, pcie_rc);
