@@ -31,6 +31,7 @@
 #include "../common/pfuze.h"
 #include <asm/arch/imx8mq_sec_def.h>
 #include <asm/arch/imx8m_csu.h>
+#include <asm/arch/imx8m_rdc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -313,8 +314,15 @@ void spl_board_prepare_for_boot(void)
 		{0}
 	};
 
+	struct imx_rdc_cfg rdc_cfg[] = {
+		{0}
+	};
+
 	/* csu config */
 	imx_csu_init(csu_cfg);
+
+	/* rdc config */
+	imx_rdc_init(rdc_cfg);
 
 	/* config the ocram memory range for secure access */
 	setbits_le32(IOMUXC_GPR_BASE_ADDR + 0x2c, 0x421);
