@@ -21,10 +21,10 @@
 #define SREQ		BIT(30)
 #define ENA		BIT(30)
 
-#define DID0		U(0x0)
-#define DID1		U(0x1)
-#define DID2		U(0x2)
-#define DID3		U(0x3)
+#define DID0		UL(0x0)
+#define DID1		UL(0x1)
+#define DID2		UL(0x2)
+#define DID3		UL(0x3)
 
 #define D3R		BIT(7)
 #define D3W		BIT(6)
