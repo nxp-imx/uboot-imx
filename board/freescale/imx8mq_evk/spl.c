@@ -310,12 +310,19 @@ void spl_board_prepare_for_boot(void)
 		CSU_SA(CSU_SA_HUGO, 1, LOCKED),
 		CSU_SA(CSU_SA_DAP, 1, LOCKED),
 		CSU_SA(CSU_SA_SDMA2, 1, LOCKED),
-
+#ifdef CONFIG_IMX_TRUSTY_OS
+		CSU_CSLx(CSU_CSL_VPU_SEC, CSU_SEC_LEVEL_5, LOCKED),
+#endif
 		{0}
 	};
 
 	struct imx_rdc_cfg rdc_cfg[] = {
-		{0}
+		RDC_MDAn(RDC_MDA_DCSS, DID2),
+		/* memory region */
+		RDC_MEM_REGIONn(1, 0x00000000, 0xA0000000, LCK|ENA|D3R|D3W|D2R|/*D2W|*/D1R|D1W|D0R|D0W),
+		RDC_MEM_REGIONn(2, 0xA0000000, 0xB0000000, LCK|ENA|D3R|D3W|D2R|D2W|D1R|D1W|/*D0R|*/D0W),
+		RDC_MEM_REGIONn(3, 0xB0000000, 0xFFFFFFFF, LCK|ENA|D3R|D3W|D2R|/*D2W|*/D1R|D1W|D0R|D0W),
+		{0},
 	};
 
 	/* csu config */
