@@ -186,7 +186,7 @@ void cgc1_pll3_init(ulong freq)
 	}
 }
 
-void cgc2_pll4_init(void)
+void cgc2_pll4_init(bool pll4_reset)
 {
 	/* Check the NICLPAV first to ensure not from PLL4 PFD1 clock */
 	if ((readl(&cgc2_regs->niclpavclk) & GENMASK(29, 28)) == BIT(28)) {
@@ -203,16 +203,18 @@ void cgc2_pll4_init(void)
 	/* Gate off and clear PFD  */
 	writel(0x80808080, &cgc2_regs->pll4pfdcfg);
 
-	/* Disable PLL4 */
-	writel(0x0, &cgc2_regs->pll4csr);
+	if (pll4_reset) {
+		/* Disable PLL4 */
+		writel(0x0, &cgc2_regs->pll4csr);
 
-	/* Configure PLL4 to 528Mhz and clock source from SOSC */
-	writel(22 << 16, &cgc2_regs->pll4cfg);
-	writel(0x1, &cgc2_regs->pll4csr);
+		/* Configure PLL4 to 528Mhz and clock source from SOSC */
+		writel(22 << 16, &cgc2_regs->pll4cfg);
+		writel(0x1, &cgc2_regs->pll4csr);
 
-	/* wait for PLL4 output valid */
-	while (!(readl(&cgc2_regs->pll4csr) & BIT(24)))
-		;
+		/* wait for PLL4 output valid */
+		while (!(readl(&cgc2_regs->pll4csr) & BIT(24)))
+			;
+	}
 
 	/* Enable all 4 PFDs */
 	setbits_le32(&cgc2_regs->pll4pfdcfg, 18 << 0); /* 528 */
