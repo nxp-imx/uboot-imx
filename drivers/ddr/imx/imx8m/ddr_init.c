@@ -54,9 +54,9 @@ void ddrc_inline_ecc_scrub(unsigned int start_address,
 	/* Step11: Disable SBR by programming SBRCTL.scrub_en=0 */
 	clrbits_le32(DDRC_SBRCTL(0), 0x1);
 	/* Step12: Prepare for normal scrub operation(Read) and set scrub_interval*/
-	reg32_write(DDRC_SBRCTL(0), 0x100);
+	reg32_write(DDRC_SBRCTL(0), 0xFF20);
 	/* Step13: Enable the SBR by programming SBRCTL.scrub_en=1 */
-	reg32_write(DDRC_SBRCTL(0), 0x101);
+	reg32_write(DDRC_SBRCTL(0), 0xFF21);
 	/* Step14: Enable AXI ports by programming */
 	reg32_write(DDRC_PCTRL_0(0), 0x1);
 	/* Step15: Disable quasi-dynamic programming */
