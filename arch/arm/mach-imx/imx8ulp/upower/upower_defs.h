@@ -12,9 +12,6 @@
  *
  * $Log: upower_defs.h.rca $
  *
- *  Revision: 1.221 Fri Apr 30 06:27:06 2021 nxa10721
- *  powersys_fw_048.011.012.006
- *
  *  Revision: 1.66 Tue Apr 27 12:48:48 2021 nxa11511
  *  Adds new pwm function number UPWR_PWM_REGCFG for new service upwr_pwm_reg_config
  *  (same value as UPWR_PWM_DEVMOD, deprecated).
@@ -160,11 +157,11 @@
 #endif /* not production code */
 
 #ifndef UPWR_PMC_SWT_WORDS
-#define UPWR_PMC_SWT_WORDS              (1)
+#define UPWR_PMC_SWT_WORDS              (1U)
 #endif
 
 #ifndef UPWR_PMC_MEM_WORDS
-#define UPWR_PMC_MEM_WORDS              (2)
+#define UPWR_PMC_MEM_WORDS              (2U)
 #endif
 
 /* ****************************************************************************
@@ -172,18 +169,18 @@
  * ****************************************************************************
  */
 
-#define UPWR_SRVGROUP_BITS  (4)
-#define UPWR_FUNCTION_BITS  (4)
-#define UPWR_PWDOMAIN_BITS  (4)
+#define UPWR_SRVGROUP_BITS  (4U)
+#define UPWR_FUNCTION_BITS  (4U)
+#define UPWR_PWDOMAIN_BITS  (4U)
 #define UPWR_HEADER_BITS   \
-                      (UPWR_SRVGROUP_BITS+UPWR_FUNCTION_BITS+UPWR_PWDOMAIN_BITS)
-#define UPWR_ARG_BITS      (32-UPWR_HEADER_BITS)
-#if   ((UPWR_ARG_BITS & 1) > 0)
+                      (UPWR_SRVGROUP_BITS + UPWR_FUNCTION_BITS + UPWR_PWDOMAIN_BITS)
+#define UPWR_ARG_BITS      (32U - UPWR_HEADER_BITS)
+#if   ((UPWR_ARG_BITS & 1U) > 0U)
 #error "UPWR_ARG_BITS must be an even number"
 #endif
-#define UPWR_ARG64_BITS          (64-UPWR_HEADER_BITS)
-#define UPWR_HALF_ARG_BITS       (UPWR_ARG_BITS >> 1)
-#define UPWR_DUAL_OFFSET_BITS    ((UPWR_ARG_BITS+32) >> 1)
+#define UPWR_ARG64_BITS          (64U - UPWR_HEADER_BITS)
+#define UPWR_HALF_ARG_BITS       (UPWR_ARG_BITS >> 1U)
+#define UPWR_DUAL_OFFSET_BITS    ((UPWR_ARG_BITS + 32U) >> 1U)
 
 #ifdef  __cplusplus
 #ifndef UPWR_NAMESPACE /* extern "C" 'cancels' the effect of namespace */
@@ -277,8 +274,10 @@ typedef enum {             /* Exception Functions */
 	UPWR_XCP_I2C,      /*  5 = I2C access: upwr_xcp_i2c_access */
 	UPWR_XCP_SPARE_6,  /*  6 = spare */
 	UPWR_XCP_SET_DDR_RETN,  /*  7 = set/clear ddr retention */
-	UPWR_XCP_SPARE_8,  /*  8 = spare */
-	UPWR_XCP_SPARE_9,  /*  9 = spare */
+	UPWR_XCP_SET_RTD_APD_LLWU,  /*  8 = set/clear rtd/apd llwu */
+	UPWR_XCP_SPARE_8 = UPWR_XCP_SET_RTD_APD_LLWU,  /*  8 = spare */
+    UPWR_XCP_SET_RTD_USE_DDR,      /* 9 = M33 core set it is using DDR or not */
+	UPWR_XCP_SPARE_9 = UPWR_XCP_SET_RTD_USE_DDR,  /*  9 = spare */
 	UPWR_XCP_SPARE_10, /* 10 = spare */
 	UPWR_XCP_SPARE_11, /* 11 = spare */
 	UPWR_XCP_SPARE_12, /* 12 = spare */
@@ -296,6 +295,8 @@ typedef upwr_start_msg      upwr_xcp_start_msg;
 typedef upwr_down_2w_msg    upwr_xcp_config_msg;
 typedef upwr_down_1w_msg    upwr_xcp_swalarm_msg;
 typedef upwr_down_1w_msg    upwr_xcp_ddr_retn_msg;
+typedef upwr_down_1w_msg    upwr_xcp_rtd_use_ddr_msg;
+typedef upwr_down_1w_msg    upwr_xcp_rtd_apd_llwu_msg;
 typedef upwr_pointer_msg    upwr_xcp_i2c_msg;
 
 typedef struct { /* structure pointed by message upwr_xcp_i2c_msg */
@@ -309,16 +310,29 @@ typedef struct { /* structure pointed by message upwr_xcp_i2c_msg */
 /* Exception all messages */
 
 typedef union {
-        struct upwr_msg_hdr       hdr;       /* message header */
+    struct upwr_msg_hdr       hdr;       /* message header */
 	upwr_xcp_ping_msg         ping;      /* ping */
-        upwr_xcp_start_msg        start;     /* service start */
+    upwr_xcp_start_msg        start;     /* service start */
 	upwr_xcp_shutdown_msg     shutdown;  /* shutdown */
 	upwr_xcp_boot_start_msg   bootstart; /* boot start */
 	upwr_xcp_config_msg       config;    /* uPower configuration */
 	upwr_xcp_swalarm_msg      swalarm;   /* software alarm */
 	upwr_xcp_i2c_msg          i2c;       /* I2C access */
 	upwr_xcp_ddr_retn_msg     set_ddr_retn;       /* set ddr retention msg */
+	upwr_xcp_rtd_use_ddr_msg     set_rtd_use_ddr;       /* set rtd is using ddr msg */
+	upwr_xcp_rtd_apd_llwu_msg     set_llwu;       /* set rtd/apd llwu msg */
 } upwr_xcp_msg;
+
+typedef struct { /* structure pointed by message upwr_volt_dva_req_id_msg */
+	uint32_t         id_word0;
+	uint32_t         id_word1;
+	uint32_t         mode;
+} upwr_dva_id_struct;
+
+/**
+ * PMIC voltage accuracy is 12.5 mV, 12500 uV
+ */
+#define PMIC_VOLTAGE_MIN_STEP 12500U
 
 /* *************************************************************************
  * Service Group POWER MANAGEMENT - downstream
@@ -336,15 +350,67 @@ typedef enum {            /* Power Management Functions */
 	UPWR_PWM_MEM_BIAS,/* 7 = Memory bias control: upwr_pwm_chng_mem_bias */
 	UPWR_PWM_PMICCFG, /* 8 = PMIC configuration:  upwr_pwm_pmic_config */
 	UPWR_PWM_PMICMOD = UPWR_PWM_PMICCFG, /* deprecated, for old compile */
-	UPWR_PWM_PES,     /* 9 = Power Event Sequencer */
+	UPWR_PWM_PES,      /* 9 so far, no use */
 	UPWR_PWM_CONFIG , /* 10= apply power mode defined configuration */
 	UPWR_PWM_CFGPTR,  /* 11= configuration pointer */
 	UPWR_PWM_DOM_PWRON,/* 12 = domain power on: upwr_pwm_dom_power_on */
 	UPWR_PWM_BOOT,     /* 13 = boot start: upwr_pwm_boot_start */
-        UPWR_PWM_FREQ,     /* 14 = domain frequency setup */
+    UPWR_PWM_FREQ,     /* 14 = domain frequency setup */
 	UPWR_PWM_PARAM,    /* 15 = power management parameters */
 	UPWR_PWM_F_COUNT
 } upwr_pwm_f_t;
+
+#define MAX_PMETER_SSEL 7U
+
+typedef enum {            /* Voltage Management Functions */
+	UPWR_VTM_CHNG_PMIC_RAIL_VOLT,  /* 0 = change pmic rail voltage */
+	UPWR_VTM_GET_PMIC_RAIL_VOLT, /* 1 = get pmic rail voltage */
+	UPWR_VTM_PMIC_CONFIG, /* 2 = configure PMIC IC */
+    UPWR_VTM_DVA_DUMP_INFO, /* 3 = dump dva information */
+    UPWR_VTM_DVA_REQ_ID, /* 4 = dva request ID array */
+    UPWR_VTM_DVA_REQ_DOMAIN, /* 5 = dva request domain */
+    UPWR_VTM_DVA_REQ_SOC, /* 6 = dva request the whole SOC */
+    UPWR_VTM_PMETER_MEAS, /* 7 = pmeter measure */
+    UPWR_VTM_VMETER_MEAS, /* 8 = vmeter measure */
+    UPWR_VTM_PMIC_COLD_RESET, /* 9 = pmic cold reset */
+    UPWR_VTM_SET_DVFS_PMIC_RAIL,     /* 10 = set which domain use which pmic rail, for DVFS use */
+    UPWR_VTM_SET_PMIC_MODE,        /* 11 = set pmic mode */
+    UPWR_VTM_F_COUNT
+} upwr_volt_f_t;
+
+#define VMETER_SEL_RTD 0U
+#define VMETER_SEL_LDO 1U
+#define VMETER_SEL_APD 2U
+#define VMETER_SEL_AVD 3U
+#define VMETER_SEL_MAX 3U
+
+/**
+ * The total TSEL count is 256
+ */
+#define MAX_TEMP_TSEL 256U
+
+/**
+ * Support 3 temperature sensor, sensor 0, 1, 2
+ */
+#define MAX_TEMP_SENSOR 2U
+
+typedef enum {          /* Temperature Management Functions */
+    UPWR_TEMP_GET_CUR_TEMP,  /* 0 = get current temperature */
+    UPWR_TEMP_F_COUNT
+} upwr_temp_f_t;
+
+typedef enum {          /* Delay Meter Management Functions */
+    UPWR_DMETER_GET_DELAY_MARGIN, /* 0 = get delay margin */
+    UPWR_DMETER_SET_DELAY_MARGIN, /* 1 = set delay margin */
+    UPWR_PMON_REQ, /* 2 = process monitor service */
+    UPWR_DMETER_F_COUNT
+} upwr_dmeter_f_t;
+
+typedef upwr_down_1w_msg    upwr_volt_pmeter_meas_msg;
+
+typedef upwr_down_1w_msg    upwr_volt_pmic_set_mode_msg;
+
+typedef upwr_down_1w_msg    upwr_volt_vmeter_meas_msg;
 
 struct upwr_reg_config_t {
 	uint32_t reg;   // TODO: real config
@@ -404,6 +470,63 @@ typedef upwr_pointer_msg upwr_pwm_pes_seq_msg;
 
 typedef upwr_pointer_msg upwr_pwm_regcfg_msg ;
 
+/* upwr_volt_pmic_volt-specific message format */
+
+typedef union {
+	struct upwr_msg_hdr           hdr;       /* message header */
+	struct {
+		uint32_t rsv:UPWR_HEADER_BITS;
+        uint32_t domain: 8U;
+        uint32_t rail: 8U;
+	} args;
+} upwr_volt_dom_pmic_rail_msg;
+
+typedef union {
+	struct upwr_msg_hdr hdr;
+	struct {
+		uint32_t rsv:UPWR_HEADER_BITS;
+		uint32_t rail: 4U;  /* pmic rail id  */
+		uint32_t volt: 12U; /* voltage value, accurate to mV, support 0~3.3V */
+	} args;
+} upwr_volt_pmic_set_volt_msg;
+
+typedef union {
+	struct upwr_msg_hdr hdr;
+	struct {
+		uint32_t rsv:UPWR_HEADER_BITS;
+		uint32_t rail: 16U;  /* pmic rail id  */
+	} args;
+} upwr_volt_pmic_get_volt_msg;
+
+typedef union {
+	struct upwr_msg_hdr hdr;
+	struct {
+		uint32_t rsv:UPWR_HEADER_BITS;
+		uint32_t domain: 8U;
+		uint32_t mode: 8U; /* work mode */
+	} args;
+} upwr_volt_dva_req_domain_msg;
+
+typedef union {
+	struct upwr_msg_hdr hdr;
+	struct {
+		uint32_t rsv:UPWR_HEADER_BITS;
+		uint32_t mode: 16U;  /* work mode  */
+	} args;
+} upwr_volt_dva_req_soc_msg;
+
+typedef union {
+	struct upwr_msg_hdr hdr;
+	struct {
+		uint32_t rsv:UPWR_HEADER_BITS;
+		uint32_t addr_offset: 16U;  /* addr_offset to 0x28330000  */
+	} args;
+} upwr_volt_dva_dump_info_msg;
+
+typedef upwr_pointer_msg upwr_volt_pmiccfg_msg;
+typedef upwr_pointer_msg upwr_volt_dva_req_id_msg;
+typedef upwr_down_1w_msg upwr_volt_pmic_cold_reset_msg;
+
 /* upwr_pwm_volt-specific message format */
 
 typedef union {
@@ -417,12 +540,22 @@ typedef union {
 
 /* upwr_pwm_freq_setup-specific message format */
 
+/**
+ * This message structure is used for DVFS feature
+ * 1. Because user may use different PMIC or different board,
+ * the pmic regulator of RTD/APD may change,
+ * so, user need to tell uPower the regulator number.
+ * The number must be matched with PMIC IC and board.
+ * use 4 bits for pmic regulator, support to 16 regulator.
+ *
+ * use 12 bits for target frequency, accurate to MHz, support to 4096 MHz
+ */
 typedef union {
 	struct upwr_msg_hdr hdr;
 	struct {
-		uint32_t rsv:UPWR_HEADER_BITS;
-		uint32_t nextfq:UPWR_HALF_ARG_BITS; /* next    frequency  */
-		uint32_t currfq:UPWR_HALF_ARG_BITS; /* current frequency */
+		uint32_t rsv: UPWR_HEADER_BITS;
+		uint32_t rail: 4; /* pmic regulator  */
+		uint32_t target_freq: 12; /* target frequency */
 	} args;
 } upwr_pwm_freq_msg;
 
@@ -455,7 +588,6 @@ typedef union {
 	upwr_pwm_regcfg_msg     regcfg;   /* regulator config message */
 	upwr_pwm_volt_msg       volt;     /* set voltage message */
 	upwr_pwm_freq_msg       freq;     /* set frequency message */
-	upwr_pwm_pmiccfg_msg    pmiccfg;  /* PMIC configuration message */
 	upwr_pwm_switch_msg     switches; /* switch control message */
 	upwr_pwm_pwron_msg      pwron;    /* switch/RAM/ROM power on  message */
 	upwr_pwm_pwroff_msg     pwroff;   /* switch/RAM/ROM power off message */
@@ -464,6 +596,76 @@ typedef union {
 	upwr_pwm_dom_pwron_msg  dompwron; /* domain power on message */
 	upwr_pwm_boot_start_msg boot;     /* boot start      message */
 } upwr_pwm_msg;
+
+typedef union {
+	struct upwr_msg_hdr     hdr;      /* message header */
+	upwr_volt_pmic_set_volt_msg  set_pmic_volt;     /* set pmic voltage message */
+	upwr_volt_pmic_get_volt_msg  get_pmic_volt;     /* set pmic voltage message */
+	upwr_volt_pmic_set_mode_msg  set_pmic_mode;     /* set pmic mode message */
+	upwr_volt_pmiccfg_msg    pmiccfg;  /* PMIC configuration message */
+	upwr_volt_dom_pmic_rail_msg   dom_pmic_rail; /* domain bias message */
+	upwr_volt_dva_dump_info_msg    dva_dump_info;  /* dump dva info message */
+	upwr_volt_dva_req_id_msg    dva_req_id;  /* dump dva request id array message */
+	upwr_volt_dva_req_domain_msg    dva_req_domain;  /* dump dva request domain message */
+	upwr_volt_dva_req_soc_msg    dva_req_soc;  /* dump dva request whole soc message */
+	upwr_volt_pmeter_meas_msg    pmeter_meas_msg;  /* pmeter measure message */
+	upwr_volt_vmeter_meas_msg    vmeter_meas_msg;  /* vmeter measure message */
+	upwr_volt_pmic_cold_reset_msg    cold_reset_msg;  /* pmic cold reset message */
+} upwr_volt_msg;
+
+
+typedef union {
+	struct upwr_msg_hdr hdr;
+	struct {
+		uint32_t rsv:UPWR_HEADER_BITS;
+		uint32_t sensor_id: 16U;  /* temperature sensor id  */
+	} args;
+} upwr_temp_get_cur_temp_msg;
+
+typedef union {
+	struct upwr_msg_hdr hdr;
+	struct {
+		uint32_t rsv:UPWR_HEADER_BITS;
+		uint32_t index: 8U;  /* the delay meter index  */
+		uint32_t path: 8U;  /* the critical path number  */
+	} args;
+} upwr_dmeter_get_delay_margin_msg;
+
+#define MAX_DELAY_MARGIN 63U
+#define MAX_DELAY_CRITICAL_PATH 7U
+#define MAX_DELAY_METER_NUM 1U
+
+typedef union {
+	struct upwr_msg_hdr hdr;
+	struct {
+		uint32_t rsv:UPWR_HEADER_BITS;
+		uint32_t index: 4U;  /* the delay meter index  */
+		uint32_t path: 4U;  /* the critical path number  */
+		uint32_t dm: 8U;  /* the delay margin value of delay meter  */
+	} args;
+} upwr_dmeter_set_delay_margin_msg;
+
+#define MAX_PMON_CHAIN_SEL 1U
+
+typedef union {
+	struct upwr_msg_hdr hdr;
+	struct {
+		uint32_t rsv:UPWR_HEADER_BITS;
+		uint32_t chain_sel: 16U;  /* the process monitor delay chain sel  */
+	} args;
+} upwr_pmon_msg;
+
+typedef union {
+    struct upwr_msg_hdr hdr;           /* message header */
+    upwr_temp_get_cur_temp_msg  get_temp_msg;      /* get current temperature message */
+} upwr_temp_msg;
+
+typedef union {
+    struct upwr_msg_hdr hdr;           /* message header */
+    upwr_dmeter_get_delay_margin_msg  get_margin_msg;      /* get delay margin message */
+    upwr_dmeter_set_delay_margin_msg  set_margin_msg;      /* set delay margin message */
+    upwr_pmon_msg  pmon_msg;      /* process monitor message */
+} upwr_dmeter_msg;
 
 typedef upwr_down_2w_msg upwr_down_max_msg; /* longest downstream msg */
 
@@ -482,7 +684,8 @@ typedef struct {
 
 typedef enum {            /* Diagnose Functions */
 	UPWR_DGN_MODE,    /* 0 = diagnose mode: upwr_dgn_mode */
-	UPWR_DGN_F_COUNT
+	UPWR_DGN_F_COUNT,
+    UPWR_DGN_BUFFER_EN,
 } upwr_dgn_f_t;
 
 typedef enum {
@@ -506,6 +709,11 @@ typedef union {
 	struct upwr_msg_hdr   hdr;
 	upwr_dgn_mode_msg     mode_msg;
 } upwr_dgn_msg;
+
+typedef struct {
+    struct upwr_msg_hdr   hdr;
+    uint32_t              buf_addr;
+} upwr_dgn_v2_msg;
 
 /* diagnostics log types in the shared RAM log buffer */
 
@@ -535,10 +743,10 @@ typedef enum {
 
 /* generic ok/ko response message */
 
-#define UPWR_RESP_ERR_BITS (4)
+#define UPWR_RESP_ERR_BITS (4U)
 #define UPWR_RESP_HDR_BITS (UPWR_RESP_ERR_BITS+\
                             UPWR_SRVGROUP_BITS+UPWR_FUNCTION_BITS)
-#define UPWR_RESP_RET_BITS (32-UPWR_RESP_HDR_BITS)
+#define UPWR_RESP_RET_BITS (32U - UPWR_RESP_HDR_BITS)
 
 typedef enum { /* response error codes */
 	UPWR_RESP_OK = 0,     /* no error */
@@ -581,11 +789,11 @@ typedef upwr_up_2w_msg   upwr_up_max_msg;
  * Exception/Initialization - upstream
  ***************************************************************************/
 
-#define UPWR_SOC_BITS    (7)
-#define UPWR_VMINOR_BITS (4)
-#define UPWR_VFIXES_BITS (4)
+#define UPWR_SOC_BITS    (7U)
+#define UPWR_VMINOR_BITS (4U)
+#define UPWR_VFIXES_BITS (4U)
 #define UPWR_VMAJOR_BITS \
-           (32-UPWR_HEADER_BITS-UPWR_SOC_BITS-UPWR_VMINOR_BITS-UPWR_VFIXES_BITS)
+           (32U - UPWR_HEADER_BITS - UPWR_SOC_BITS - UPWR_VMINOR_BITS - UPWR_VFIXES_BITS)
 
 typedef struct {
 	uint32_t soc_id;
@@ -657,6 +865,14 @@ typedef upwr_resp_msg upwr_alarm_resp_msg;
  ***************************************************************************/
 
 typedef upwr_resp_msg upwr_param_resp_msg;
+
+enum work_mode {
+    OVER_DRIVE,
+    NORMAL_DRIVE,
+    LOW_DRIVE
+};
+
+#define UTIMER3_MAX_COUNT 0xFFFFU
 
 #ifdef  __cplusplus
 #ifndef UPWR_NAMESPACE /* extern "C" 'cancels' the effect of namespace */

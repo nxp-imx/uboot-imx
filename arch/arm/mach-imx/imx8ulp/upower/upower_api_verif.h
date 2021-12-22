@@ -70,6 +70,4 @@
 
 int upwr_xcp_reg_access(const struct upwr_reg_access_t* access,
 			upwr_callb                      callb);
-
-
 #endif

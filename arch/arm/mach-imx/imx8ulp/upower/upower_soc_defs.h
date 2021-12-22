@@ -12,9 +12,6 @@
  *
  * $Log: upower_soc_defs.h.rca $
  *
- *  Revision: 1.178 Fri Apr 30 06:27:06 2021 nxa10721
- *  powersys_fw_048.011.012.006
- *
  *  Revision: 1.56 Tue Apr 27 12:58:16 2021 nxa11511
  *  Adds macro UPWR_VOLT_MICROV
  *
@@ -108,7 +105,7 @@
 #error "upower_defs.h or upower_api.h included before upower_soc_defs.h"
 #endif
 
-#define UPWR_MU_MSG_SIZE            (2) /* words */
+#define UPWR_MU_MSG_SIZE            (2U) /* words */
 
 #ifdef   NUM_PMC_SWT_WORDS
 #define UPWR_PMC_SWT_WORDS          NUM_PMC_SWT_WORDS
@@ -119,37 +116,37 @@
 #endif
 
 #ifndef UPWR_DRAM_SHARED_BASE_ADDR
-#define UPWR_DRAM_SHARED_BASE_ADDR      (0x28330000)
+#define UPWR_DRAM_SHARED_BASE_ADDR      (0x28330000U)
 #endif
 
 #ifndef UPWR_DRAM_SHARED_SIZE
-#define UPWR_DRAM_SHARED_SIZE           (2048)
+#define UPWR_DRAM_SHARED_SIZE           (2048U)
 #endif
 
 #define UPWR_DRAM_SHARED_ENDPLUS        (UPWR_DRAM_SHARED_BASE_ADDR+\
 					 UPWR_DRAM_SHARED_SIZE)
 
 #ifndef UPWR_API_BUFFER_BASE
-#define UPWR_API_BUFFER_BASE            (0x28330600)
+#define UPWR_API_BUFFER_BASE            (0x28330600U)
 #endif
 
 #ifndef UPWR_API_BUFFER_ENDPLUS
-#define UPWR_API_BUFFER_ENDPLUS         (UPWR_DRAM_SHARED_ENDPLUS - 64)
+#define UPWR_API_BUFFER_ENDPLUS         (UPWR_DRAM_SHARED_ENDPLUS - 64U)
 #endif
 
 #ifndef UPWR_PMC_SWT_WORDS
-#define UPWR_PMC_SWT_WORDS              (1)
+#define UPWR_PMC_SWT_WORDS              (1U)
 #endif
 
 #ifndef UPWR_PMC_MEM_WORDS
-#define UPWR_PMC_MEM_WORDS              (2)
+#define UPWR_PMC_MEM_WORDS              (2U)
 #endif
 
-#define UPWR_OSC_HI_FREQ               (64) // MHz
-#define UPWR_OSC_LO_FREQ               (16) // MHz
+#define UPWR_OSC_HI_FREQ               (64U) // MHz
+#define UPWR_OSC_LO_FREQ               (16U) // MHz
 
 #ifndef UPWR_I2C_FREQ
-#define UPWR_I2C_FREQ                  (UPWR_OSC_HI_FREQ * 1000000)
+#define UPWR_I2C_FREQ                  (UPWR_OSC_HI_FREQ * 1000000U)
 #endif
 
 /******************************************************************************
@@ -206,21 +203,27 @@
  * Note: option 0 is also available if the RAM firmware is loaded.
  */
 
+/* service upwr_pwm_set_domain_pmic_rail message argument fields*/
+typedef struct {
+	uint32_t domain: 16U;
+	uint32_t rail: 16U;
+} upwr_pwm_dom_pmic_rail_args;
+
 /* service upwr_pwm_chng_dom_bias message argument fields */
 
-#define UPWR_DOMBIAS_MODE_BITS    (2)
-#define UPWR_DOMBIAS_RBB_BITS     (8)
-#define UPWR_DOMBIAS_RSV_BITS     (14)
+#define UPWR_DOMBIAS_MODE_BITS    (2U)
+#define UPWR_DOMBIAS_RBB_BITS     (8U)
+#define UPWR_DOMBIAS_RSV_BITS     (14U)
 #define UPWR_DOMBIAS_ARG_BITS     (UPWR_DOMBIAS_RSV_BITS      + \
-                                   (2*UPWR_DOMBIAS_MODE_BITS) + \
-                                   (4*UPWR_DOMBIAS_RBB_BITS)  + 2)
+                                   (2U * UPWR_DOMBIAS_MODE_BITS) + \
+                                   (4U * UPWR_DOMBIAS_RBB_BITS)  + 2U)
 
 typedef struct {
-	uint32_t  :12; /* TODO: find a way to use UPWR_HEADER_BITS */
+	uint32_t  :12U; /* TODO: find a way to use UPWR_HEADER_BITS */
 	uint32_t dommode:UPWR_DOMBIAS_MODE_BITS;
 	uint32_t avdmode:UPWR_DOMBIAS_MODE_BITS;
-	uint32_t domapply:1;
-	uint32_t avdapply:1;
+	uint32_t domapply:1U;
+	uint32_t avdapply:1U;
 	uint32_t rsv     :UPWR_DOMBIAS_RSV_BITS;
 	uint32_t domrbbn :UPWR_DOMBIAS_RBB_BITS;/* RTD/APD back bias N-well */
 	uint32_t domrbbp :UPWR_DOMBIAS_RBB_BITS;/* RTD/APD back bias P-well */
@@ -230,32 +233,32 @@ typedef struct {
 
 #define UPWR_FILL_DOMBIAS_ARGS(dom, bias, args)           \
 do {                                                      \
-	args.B.domapply = args.B.avdapply = 0;            \
+	args.B.domapply = args.B.avdapply = 0U;            \
                                                           \
 	switch (bias->apply) {                            \
 		case BIAS_APPLY_RTD_AVD:                  \
-			args.B.avdapply = 1;              \
+			args.B.avdapply = 1U;              \
 			/* no break here, fallthrough */  \
 		case BIAS_APPLY_RTD:                      \
 			dom = (uint32_t)RTD_DOMAIN;       \
-			args.B.domapply = 1;              \
+			args.B.domapply = 1U;              \
 			break;                            \
 		case BIAS_APPLY_APD_AVD:                  \
-			args.B.avdapply = 1;              \
+			args.B.avdapply = 1U;              \
 			/* no break here, fallthrough */  \
 		case BIAS_APPLY_APD:                      \
 			dom = (uint32_t)APD_DOMAIN;       \
-			args.B.domapply = 1;              \
+			args.B.domapply = 1U;              \
 			break;                            \
 		case BIAS_APPLY_AVD:                      \
-			args.B.avdapply = 1;              \
+			args.B.avdapply = 1U;              \
 			break;                            \
-		default:                      \
-			break;                            \
-	}                                                 \
+        default:                              \
+            break;                            \
+    }                                                 \
 	args.B.dommode = (uint32_t)bias->dommode;         \
 	args.B.avdmode = (uint32_t)bias->avdmode;         \
-	uint32_t sat = UPWR_BIAS2MILIV((1 << UPWR_DOMBIAS_RBB_BITS)-1);\
+	uint32_t sat = UPWR_BIAS2MILIV((1U << UPWR_DOMBIAS_RBB_BITS) - 1U);\
 	args.B.domrbbn = (bias->dombias.rbbn > sat)? sat: \
                      UPWR_BIAS_MILIV(bias->dombias.rbbn); \
 	args.B.domrbbp = (bias->dombias.rbbp > sat)? sat: \
@@ -269,9 +272,9 @@ do {                                                      \
 /* service upwr_pwm_chng_mem_bias message argument fields */
 
 typedef struct {
-	uint32_t  :12; /* TODO: find a way to use UPWR_HEADER_BITS */
-	uint32_t en:1;
-	uint32_t rsv:19;
+	uint32_t  :12U; /* TODO: find a way to use UPWR_HEADER_BITS */
+	uint32_t en:1U;
+	uint32_t rsv:19U;
 } upwr_pwm_mem_bias_args;
 
 #define UPWR_FILL_MEMBIAS_ARGS(bias, args)                \
@@ -287,18 +290,18 @@ extern "C" {
 #endif
 #endif
 
-#define UPWR_APD_CORES      (2)
-#define UPWR_RTD_CORES      (1)
+#define UPWR_APD_CORES      (2U)
+#define UPWR_RTD_CORES      (1U)
 
-typedef enum {
-	RTD_DOMAIN        = 0,
-	APD_DOMAIN        = 1,
-	UPWR_MAIN_DOMAINS,                           /* RTD, AVD */
-	AVD_DOMAIN        = UPWR_MAIN_DOMAINS,
-	UPWR_DOMAIN_COUNT,                           /* RTD, APD, AVD */
-	PSD_DOMAIN        = UPWR_DOMAIN_COUNT,
-	UPWR_ALL_DOMAINS                             /* RTD, APD, AVD, PSD */
-} soc_domain_t;
+#define RTD_DOMAIN (0U)
+#define APD_DOMAIN (1U)
+#define UPWR_MAIN_DOMAINS (2U)
+#define AVD_DOMAIN (2U)
+#define UPWR_DOMAIN_COUNT (3U)
+#define PSD_DOMAIN (3U)
+#define UPWR_ALL_DOMAINS (4U)
+
+typedef uint32_t soc_domain_t;
 
 /*=========================================================================
  * UNIT CONVERSION MACROS
@@ -307,12 +310,12 @@ typedef enum {
  *=========================================================================*/
 
 #define UPWR_VOLT_MILIV(v) (v)        /* voltage in mV    to argument value */
-#define UPWR_VOLT_MICROV(v)((v)/1000) /* voltage in uV    to argument value */
-#define UPWR_BIAS_MILIV(v) ((v)/50)   /* bias voltage(mV) to argument value */
-#define UPWR_BIAS2MILIV(v) ((v)*50)   /* inverse of UPWR_BIAS_MILIV         */
+#define UPWR_VOLT_MICROV(v)((v) / 1000U) /* voltage in uV    to argument value */
+#define UPWR_BIAS_MILIV(v) (((v) + 49U ) / 50U)   /* bias voltage(mV) to argument value */
+#define UPWR_BIAS2MILIV(v) ((v) * 50U)   /* inverse of UPWR_BIAS_MILIV         */
 #define UPWR_FREQ_KHZ(f)   (f)        /* frequency (kHz)  to argument value */
 
-#define UPWR_DOMBIAS_MAX_MV      (UPWR_BIAS2MILIV((1<<UPWR_DOMBIAS_RBB_BITS)-1))
+#define UPWR_DOMBIAS_MAX_MV      (UPWR_BIAS2MILIV((1U << UPWR_DOMBIAS_RBB_BITS) - 1U))
 
 /**---------------------------------------------------------------
  * EXCEPTION SERVICE GROUP
@@ -338,21 +341,21 @@ typedef enum {
 typedef union {
 	uint32_t R;
 	struct {
-		uint32_t ALARM_INT   :1; /* 1= use MU GPI1 for alarm interrupt;
+		uint32_t ALARM_INT   :1U; /* 1= use MU GPI1 for alarm interrupt;
 					    0= use MU GPI0 for alarm interrupt;
 					    this configuration is valid for
 					    RTD only
 					  */
-		uint32_t CFG_IOMUX  : 1; /* 1= tells uPower fw/PMIC driver to
+		uint32_t CFG_IOMUX  : 1U; /* 1= tells uPower fw/PMIC driver to
 					       config i.MX8ULP IOMUX for the PMIC
 					       I2C and mode pins;
 					    0= uPower fw/PMIC must not config
 					       i.MX8ULP IOMUX, leave it to host
 					  */
-		uint32_t DGNBUFBITS : 4; /* defines the diagnostic buffer size
+		uint32_t DGNBUFBITS : 4U; /* defines the diagnostic buffer size
 					    according to the formula:
 					    size = 2^(DGNBUFBITS+3) bytes */
-		uint32_t RSV        :26; /* reserved bits: should be all 0s  */
+		uint32_t RSV        :26U; /* reserved bits: should be all 0s  */
 	} B;
 } upwr_xcp_config_t;
 
@@ -387,27 +390,27 @@ typedef enum {
 
                                      /* values in mV: */
 
-#define UPWR_RTD_RBBN_MAX     (1300) /* max. RTD Reverse Back Bias N-Well */
-#define UPWR_RTD_RBBN_MIN      (100) /* min. RTD Reverse Back Bias N-Well */
+#define UPWR_RTD_RBBN_MAX     (1300U) /* max. RTD Reverse Back Bias N-Well */
+#define UPWR_RTD_RBBN_MIN      (100U) /* min. RTD Reverse Back Bias N-Well */
 
-#define UPWR_RTD_RBBP_MAX     (1300) /* max. RTD Reverse Back Bias P-Well */
-#define UPWR_RTD_RBBP_MIN      (100) /* min. RTD Reverse Back Bias P-Well */
+#define UPWR_RTD_RBBP_MAX     (1300U) /* max. RTD Reverse Back Bias P-Well */
+#define UPWR_RTD_RBBP_MIN      (100U) /* min. RTD Reverse Back Bias P-Well */
 
 /* APD bias can only two values (mV): */
 
-#define UPWR_APD_RBBN_LO      (1000) /* low  APD Reverse Back Bias N-Well */
-#define UPWR_APD_RBBN_HI      (1300) /* high APD Reverse Back Bias N-Well */
+#define UPWR_APD_RBBN_LO      (1000U) /* low  APD Reverse Back Bias N-Well */
+#define UPWR_APD_RBBN_HI      (1300U) /* high APD Reverse Back Bias N-Well */
 
-#define UPWR_APD_RBBP_LO      (1000) /* low  APD Reverse Back Bias P-Well */
-#define UPWR_APD_RBBP_HI      (1300) /* high APD Reverse Back Bias P-Well */
+#define UPWR_APD_RBBP_LO      (1000U) /* low  APD Reverse Back Bias P-Well */
+#define UPWR_APD_RBBP_HI      (1300U) /* high APD Reverse Back Bias P-Well */
 
 /* AVD bias can only two values (mV): */
 
-#define UPWR_AVD_RBBN_LO      (1000) /* low  AVD Reverse Back Bias N-Well */
-#define UPWR_AVD_RBBN_HI      (1300) /* high AVD Reverse Back Bias N-Well */
+#define UPWR_AVD_RBBN_LO      (1000U) /* low  AVD Reverse Back Bias N-Well */
+#define UPWR_AVD_RBBN_HI      (1300U) /* high AVD Reverse Back Bias N-Well */
 
-#define UPWR_AVD_RBBP_LO      (1000) /* low  AVD Reverse Back Bias P-Well */
-#define UPWR_AVD_RBBP_HI      (1300) /* high AVD Reverse Back Bias P-Well */
+#define UPWR_AVD_RBBP_LO      (1000U) /* low  AVD Reverse Back Bias P-Well */
+#define UPWR_AVD_RBBP_HI      (1300U) /* high AVD Reverse Back Bias P-Well */
 
 /**+
  * upwr_pwm_param()
@@ -435,16 +438,16 @@ typedef enum {
 typedef union {
 	uint32_t R;
 	struct {
-		uint32_t DPD_ALLOW   :1; /* 1= uPower can go Deep Power Down */
-		uint32_t DSL_DIS     :1; /* 1= uPower won't go Deep Sleep    */
-		uint32_t SLP_ALLOW   :1; /* 1= uPower goes Sleep in the same
+		uint32_t DPD_ALLOW   :1U; /* 1= uPower can go Deep Power Down */
+		uint32_t DSL_DIS     :1U; /* 1= uPower won't go Deep Sleep    */
+		uint32_t SLP_ALLOW   :1U; /* 1= uPower goes Sleep in the same
 					       conditions as Active, and even
 					       DSL if DSL_DIS=1  */
-		uint32_t DSL_BGAP_OFF:1; /* 1= turn bandgap off when uPower
+		uint32_t DSL_BGAP_OFF:1U; /* 1= turn bandgap off when uPower
 					       goes Deep Sleep               */
-		uint32_t DPD_BGAP_ON :1; /* 1= leave bandgap on when uPower
+		uint32_t DPD_BGAP_ON :1U; /* 1= leave bandgap on when uPower
                                                goes Deep Power Down          */
-		uint32_t RSV        :27; /* reserved bits: should be all 0s  */
+		uint32_t RSV        :27U; /* reserved bits: should be all 0s  */
 	} B;
 } upwr_pwm_param_t;
 
@@ -757,8 +760,40 @@ struct upwr_dom_bias_cfg_t {
 
 /* bias struct used in power mode config definitions */
 
+/**
+ *
+
+ When write power mode transition program, please read below comments carefully.
+ The structure and logic is complex, There is a lot of extension and reuse.
+
+ First, for mode, extend "uint32_t mode" to a union struct, add support for AVD:
+typedef union {
+  uint32_t                  R;
+  struct {
+    uint32_t                  mode      : 8;    // Dom bias mode
+    uint32_t                  rsrv_1    : 8;
+    uint32_t                  avd_mode  : 8;    // AVD bias mode
+    uint32_t                  rsrv_2    : 8;
+  }                         B;
+} dom_bias_mode_cfg_t;
+
+  Second, if mode is AFBB mode, no need to configure rbbn and rbbp, uPower firmware will configure all SRAM_AFBB_0 or SRAM_AFBB_1 for corresponding domain.
+
+  Third, if mode is RBB mode, extend "uint32_t rbbn" and "uint32_t rbbp" to a union struct, add support for AVD:
+  typedef union {
+  uint32_t                  R;
+  struct {
+    uint32_t                  lvl       : 8;    // Dom bias level
+    uint32_t                  rsrv_1    : 8;
+    uint32_t                  avd_lvl   : 8;    // AVD bias level
+    uint32_t                  rsrv_2    : 8;
+  }                         B;
+} dom_bias_lvl_cfg_t;
+
+ *
+ */
 typedef struct {
-	uint32_t mode; /* Domain bias mode config */
+	uint32_t mode; /* Domain bias mode config, extend to dom_bias_mode_cfg_t to support RTD, APD, AVD */
 	uint32_t rbbn; /* reverse back bias N well */
 	uint32_t rbbp; /* reverse back bias P well */
 } UPWR_DOM_BIAS_CFG_T;
@@ -781,7 +816,6 @@ typedef struct {
 
 struct upwr_mem_bias_cfg_t {
 	uint32_t en; /* Memory bias enable config */
-
 };
 
 /* bias struct used in power mode config definitions */
@@ -1186,18 +1220,6 @@ typedef enum {
 	PAD_TQSLEEP_EVT
 } pmc_pad_evt_t;
 
-/*=*************************************************************************
- * PMIC
- *=*************************************************************************/
-
-#define PMIC_MODE_PINS      4
-#define PMIC_MODE_NUM       (1UL<<PMIC_MODE_PINS)
-
-typedef uint8_t             pmic_mode_lvl_t;
-typedef pmic_mode_lvl_t     pmic_mode_lvls_t[APD_DOMAIN+1][PMIC_MODE_NUM];
-
-#define MAX_PMIC_MODE_LVL   0xff
-
 
 /*=*************************************************************************
  * All configs
@@ -1359,11 +1381,10 @@ struct ps_pwr_mode_cfg_t {
 	ps_rtd_swt_cfgs_t       ps_rtd_swt_cfg;
 	ps_apd_pwr_mode_cfgs_t  ps_apd_pwr_mode_cfg ;
 	ps_apd_swt_cfgs_t       ps_apd_swt_cfg;
-	pmic_mode_lvls_t        pmic_mode_lvls;
 };
 
-#define UPWR_XCP_MIN_ADDR   (0x28350000)
-#define UPWR_XCP_MAX_ADDR   (0x2836FFFC)
+#define UPWR_XCP_MIN_ADDR   (0x28350000U)
+#define UPWR_XCP_MAX_ADDR   (0x2836FFFCU)
 
 struct upwr_reg_access_t {
 	uint32_t     addr;
@@ -1391,6 +1412,15 @@ typedef union {
 		struct upwr_mem_switches_t   apd_memory;
 	}                                                apd_pwr_mode;
 } upwr_pwm_union_t;
+
+#define MAX_SG_EXCEPT_MEM_SIZE sizeof(upwr_xcp_union_t)
+#define MAX_SG_PWRMGMT_MEM_SIZE sizeof(upwr_pwm_union_t)
+
+/**
+ * VOLTM group need shared memory for PMIC IC configuration
+ * 256 Bytes is enough for PMIC register array
+ */
+#define MAX_SG_VOLTM_MEM_SIZE 256U
 
 #ifdef  __cplusplus
 #ifndef UPWR_NAMESPACE /* extern "C" 'cancels' the effect of namespace */
