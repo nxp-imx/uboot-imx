@@ -57,7 +57,7 @@ struct f_fastboot {
 };
 
 static char fb_ext_prop_name[] = "DeviceInterfaceGUID";
-static char fb_ext_prop_data[] = "{4866319A-F4D6-4374-93B9-DC2DEB361BA9}";
+static char fb_ext_prop_data[] = "{F72FE0D4-CBCB-407d-8814-9ED673D0DD6B}";
 
 static struct usb_os_desc_ext_prop fb_ext_prop = {
 	.type = 1,		/* NUL-terminated Unicode String (REG_SZ) */
