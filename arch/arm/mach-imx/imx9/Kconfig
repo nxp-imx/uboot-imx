@@ -7,6 +7,7 @@ config AHAB_BOOT
 
 config IMX9
 	bool
+	select ARCH_EARLY_INIT_R
 	select HAS_CAAM
 	select ROM_UNIFIED_SECTIONS
 
