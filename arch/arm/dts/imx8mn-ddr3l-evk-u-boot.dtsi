@@ -5,6 +5,42 @@
 
 #include "imx8mn-evk-u-boot.dtsi"
 
+/ {
+	mcu_rdc {
+		compatible = "imx8m,mcu_rdc";
+			    /* rdc config when MCU starts
+			     * master
+			     *   SDMA3p --> domain 1
+			     *   SDMA3b --> domian 1
+			     *   SDMA3_SPBA2  --> domian 1
+			     * peripheral:
+			     *   SAI3   --> Only Domian 1 can access
+			     *   UART4  --> Only Domian 1 can access
+			     *   GPT1   --> Only Domian 1 can access
+			     * memory:
+			     *   no MRC should be configured when GPU3D is disabled.
+			     * end.
+			     */
+		start-config = <
+			    RDC_MDA  RDC_MDA_SDMA3p DID1 0x0 0x0
+			    RDC_MDA  RDC_MDA_SDMA3b DID1 0x0 0x0
+			    RDC_MDA  RDC_MDA_SDMA3_SPBA2 DID1 0x0 0x0
+			    RDC_PDAP RDC_PDAP_SAI3  PDAP_D1_ACCESS 0x0 0x0
+			    RDC_PDAP RDC_PDAP_UART4 PDAP_D1_ACCESS 0x0 0x0
+			    RDC_PDAP RDC_PDAP_GPT1  PDAP_D1_ACCESS 0x0 0x0
+			    0x0      0x0            0x0  0x0 0x0
+			  >;
+			    /* rdc config when MCU stops
+			     * memory:
+			     *   no MRC should be configured when GPU3D is disabled.
+			     * end.
+			     */
+		stop-config = <
+			    0x0      0x0            0x0  0x0 0x0
+			  >;
+	};
+};
+
 &blob_1 {
 	filename = "ddr3_imem_1d_201810.bin";
 };
