@@ -23,8 +23,7 @@
 			     *   UART4  --> Only Domian 1 can access
 			     *   GPT1   --> Only Domian 1 can access
 			     * memory:
-			     *   TCM    --> Only Domian 1 can access (0x7E0000~0x81FFFF)
-			     *   DDR    --> Only Domian 1 can access (0x77000000~0x78000000)
+			     *   no MRC should be configured when GPU3D is disabled.
 			     * end.
 			     */
 		start-config = <
@@ -34,19 +33,14 @@
 			    RDC_PDAP RDC_PDAP_SAI3  PDAP_D1_ACCESS 0x0 0x0
 			    RDC_PDAP RDC_PDAP_UART4 PDAP_D1_ACCESS 0x0 0x0
 			    RDC_PDAP RDC_PDAP_GPT1  PDAP_D1_ACCESS 0x0 0x0
-			    RDC_MEM_REGION 26 TCM_START TCM_END MEM_D1_ACCESS
-			    RDC_MEM_REGION 0 M4_EVK_DDR3L_START M4_EVK_DDR3L_END MEM_D1_ACCESS
 			    0x0      0x0            0x0  0x0 0x0
 			  >;
 			    /* rdc config when MCU stops
 			     * memory:
-			     *   TCM    --> domain 0/1 can access (0x7E0000~0x81FFFF)
-			     *   DDR    --> domain 0/1 can access (0x77000000~0x78000000)
+			     *   no MRC should be configured when GPU3D is disabled.
 			     * end.
 			     */
 		stop-config = <
-			    RDC_MEM_REGION 26 TCM_START TCM_END MEM_D0D1_ACCESS
-			    RDC_MEM_REGION 0 M4_EVK_DDR3L_START M4_EVK_DDR3L_END MEM_D0D1_ACCESS
 			    0x0      0x0            0x0  0x0 0x0
 			  >;
 	};
