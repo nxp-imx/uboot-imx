@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2017-2018 NXP
+ * Copyright 2017-2018, 2021 NXP
  */
 #include <common.h>
 #include <env.h>
@@ -919,10 +919,10 @@ void fsl_fdt_fixup_flash(void *fdt)
 	}
 
 	if (disable_ifc) {
-		offset = fdt_path_offset(fdt, "/soc/ifc/nor");
+		offset = fdt_path_offset(fdt, "/soc/memory-controller/nor");
 
 		if (offset < 0)
-			offset = fdt_path_offset(fdt, "/ifc/nor");
+			offset = fdt_path_offset(fdt, "/memory-controller/nor");
 	} else {
 		offset = fdt_path_offset(fdt, "/soc/quadspi");
 
@@ -932,10 +932,10 @@ void fsl_fdt_fixup_flash(void *fdt)
 
 #else
 #ifdef CONFIG_FSL_QSPI
-	offset = fdt_path_offset(fdt, "/soc/ifc/nor");
+	offset = fdt_path_offset(fdt, "/soc/memory-controller/nor");
 
 	if (offset < 0)
-		offset = fdt_path_offset(fdt, "/ifc/nor");
+		offset = fdt_path_offset(fdt, "/memory-controller/nor");
 #else
 	offset = fdt_path_offset(fdt, "/soc/quadspi");
 
