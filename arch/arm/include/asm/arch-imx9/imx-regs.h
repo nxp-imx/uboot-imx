@@ -22,6 +22,8 @@
 #define USB1_BASE_ADDR		0x4c100000
 #define USB2_BASE_ADDR		0x4c200000
 
+#define FSB_BASE_ADDR   0x47510000
+
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 #include <asm/types.h>
 
