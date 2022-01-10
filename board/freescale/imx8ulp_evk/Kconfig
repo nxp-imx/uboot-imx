@@ -1,4 +1,4 @@
-if TARGET_IMX8ULP_EVK
+if TARGET_IMX8ULP_EVK || TARGET_IMX8ULP_9X9_EVK
 
 config SYS_BOARD
 	default "imx8ulp_evk"
