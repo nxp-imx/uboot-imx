@@ -860,6 +860,37 @@ u32 spl_arch_boot_image_offset(u32 image_offset, u32 rom_bt_dev)
 
 int ft_system_setup(void *blob, struct bd_info *bd)
 {
+	u32 uid[4];
+	u32 res;
+	int ret;
+	int nodeoff = fdt_path_offset(blob, "/soc");
+	/* Nibble 1st for major version
+	 * Nibble 0th for minor version.
+	 */
+	const u32 rev = 0x10;
+
+	if (nodeoff < 0) {
+		printf("Node to update the SoC serial number is not found.\n");
+		goto skip_upt;
+	}
+
+	ret = ahab_read_common_fuse(1, uid, 4, &res);
+	if (ret) {
+		printf("ahab read fuse failed %d, 0x%x\n", ret, res);
+		memset(uid, 0x0, 4 * sizeof(u32));
+	}
+
+	ret = fdt_setprop_u32(blob, nodeoff, "soc-rev", rev);
+	if (ret)
+		printf("Error[0x%x] fdt_setprop revision-number.\n", ret);
+
+	ret = fdt_setprop_u64(blob, nodeoff, "soc-serial",
+				(u64)uid[3] << 32 | uid[0]);
+	if (ret)
+		printf("Error[0x%x] fdt_setprop serial-number.\n", ret);
+
+
+skip_upt:
 	return ft_add_optee_node(blob, bd);
 }
 
