@@ -910,18 +910,25 @@ u32 get_cpu_rev(void)
 	u32 id = 0, rev = 0;
 	int ret;
 
+	/* returns ID - chip id [4:0], chip revision [9:5]*/
 	ret = sc_misc_get_control(-1, SC_R_SYSTEM, SC_C_ID, &id);
 	if (ret)
 		return 0;
 
+	/* Extract silicon version */
 	rev = (id >> 5)  & 0xf;
+	/* Extract chip ID and add dummy */
 	id = (id & 0x1f) + MXC_SOC_IMX8;  /* Dummy ID for chip */
 
-	/* 8DXL uses A1/A2, so generate dummy rev to differentiate with B/C */
-	if (id == MXC_CPU_IMX8DXL && rev != 0)
-		rev = 0x10 + rev;
+	/* 8DXL A1: use dummy rev to differentiate from B */
+	if (id == MXC_CPU_IMX8DXL && rev == CHIP_REV_B)
+		rev = CHIP_REV_A1;
+	/* 8DXL B0: detect as B instead of C */
+	else if (id == MXC_CPU_IMX8DXL && rev == CHIP_REV_C)
+		rev = CHIP_REV_B;
 
-	return (id << 12) | rev;
+	/* return Chip ID in [31:12] and silicon ver in [11:0]*/
+	return (id << 12) | (rev & 0xfff);
 }
 
 static bool check_device_power_off(struct udevice *dev,
