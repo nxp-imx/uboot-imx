@@ -439,6 +439,15 @@ config VIDEO_LCD_RAYDIUM_RM67191
 	Say Y here if you want to enable support for Raydium RM68200
 	1080x1920 DSI video mode panel.
 
+config VIDEO_LCD_ROCKTECH_HIMAX8394F
+	bool "Rocktech Himax8394f 720x1280 DSI video mode panel"
+	depends on DM_VIDEO
+	select VIDEO_MIPI_DSI
+	default n
+	help
+	Say Y here if you want to enable support for Rocktech Himax8394f
+	720*1280 DSI video mode panel.
+
 config VIDEO_LCD_SSD2828
 	bool "SSD2828 bridge chip"
 	default n

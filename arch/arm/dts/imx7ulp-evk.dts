@@ -52,15 +52,16 @@
 		status = "okay";
 	};
 
-	rm68200_panel {
-		compatible = "raydium,rm68200";
+	hx8394f_panel {
+		compatible = "rocktech,hx8394f";
+		himax,dsi-lanes = <2>;
 		reset-gpios = <&gpio0 19 GPIO_ACTIVE_LOW>;
 		backlight = <&backlight>;
 		status = "okay";
 
 		port {
-			rm68200_from_dsim: endpoint {
-				remote-endpoint = <&dsim_to_rm68200>;
+			hx8394f_from_dsim: endpoint {
+				remote-endpoint = <&dsim_to_hx8394f>;
 			};
 		};
 	};
@@ -363,8 +364,8 @@
 	};
 
 	port@1 {
-		dsim_to_rm68200: endpoint {
-			remote-endpoint = <&rm68200_from_dsim>;
+		dsim_to_hx8394f: endpoint {
+			remote-endpoint = <&hx8394f_from_dsim>;
 		};
 	};
 };
