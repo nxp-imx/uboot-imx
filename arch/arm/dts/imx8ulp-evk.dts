@@ -313,12 +313,14 @@
 	status = "okay";
 
 	panel@0 {
-		compatible = "raydium,rm68200";
+		compatible = "rocktech,hx8394f";
 		reg = <0>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_dsi>;
+		himax,dsi-lanes = <2>;
 		reset-gpios = <&gpiof 8 GPIO_ACTIVE_LOW>;
-		power-supply = <&reg_5v>;
+		vcc-supply = <&reg_5v>;
+		iovcc-supply = <&reg_5v>;
 
 		port {
 			panel_in: endpoint {
