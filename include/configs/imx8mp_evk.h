@@ -70,15 +70,17 @@
 #define BOOTENV
 #endif
 
+#define JH_ROOT_DTB    "imx8mp-evk-root.dtb"
 
 #define JAILHOUSE_ENV \
 	"jh_clk= \0 " \
-	"jh_mmcboot=setenv fdtfile imx8mp-evk-root.dtb;" \
+	"jh_root_dtb=" JH_ROOT_DTB "\0" \
+	"jh_mmcboot=setenv fdtfile ${jh_root_dtb};" \
 		"setenv jh_clk clk_ignore_unused mem=1920MB; " \
 			   "if run loadimage; then " \
 				   "run mmcboot; " \
 			   "else run jh_netboot; fi; \0" \
-	"jh_netboot=setenv fdtfile imx8mp-evk-root.dtb; setenv jh_clk clk_ignore_unused mem=1920MB; run netboot; \0 "
+	"jh_netboot=setenv fdtfile ${jh_root_dtb}; setenv jh_clk clk_ignore_unused mem=1920MB; run netboot; \0 "
 
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
