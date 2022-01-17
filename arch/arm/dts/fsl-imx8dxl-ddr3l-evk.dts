@@ -8,7 +8,7 @@
 #include "fsl-imx8dxl.dtsi"
 
 / {
-	model = "NXP i.MX8DXL DDR3 EVK Board";
+	model = "NXP i.MX8DXL DDR3L EVK Board";
 	compatible = "fsl,imx8dxl-evk", "fsl,imx8dxl";
 
 	chosen {
