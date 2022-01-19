@@ -138,7 +138,7 @@ static int set_name(fat_itr *itr, const char *filename, char *shortname)
 
 	/* If filename and short name are the same, quit. */
 	sprintf(buf, "%.*s.%.3s", period_location, dirent.name, dirent.ext);
-	if (!strcmp(buf, filename)) {
+	if (!strncmp(buf, filename, strlen(filename))) {
 		ret = 1;
 		goto out;
 	}
