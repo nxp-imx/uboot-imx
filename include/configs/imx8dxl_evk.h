@@ -290,9 +290,9 @@
 
 /* total DDR is 1GB */
 #if defined(CONFIG_TARGET_IMX8DXL_DDR3_EVK)
-#define PHYS_SDRAM_1_SIZE		0x20000000
+#define PHYS_SDRAM_1_SIZE		0x1FF00000	/* 512MB - ECC region 1MB */
 #else
-#define PHYS_SDRAM_1_SIZE		0x40000000	/* 1 GB */
+#define PHYS_SDRAM_1_SIZE		0x3FE00000	/* 1 GB - ECC region 2MB */
 #endif
 
 #define PHYS_SDRAM_2_SIZE		0x00000000
