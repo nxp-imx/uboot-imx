@@ -105,10 +105,17 @@ struct usbnc_regs {
 	u32 adp_status;
 };
 
-#if defined(CONFIG_MX6) && !defined(CONFIG_PHY)
-static void usb_power_config_mx6(struct anatop_regs __iomem *anatop,
+struct ehci_mx6_phy_data {
+	void __iomem *phy_addr;
+	void __iomem *misc_addr;
+	void __iomem *anatop_addr;
+};
+
+#if defined(CONFIG_MX6) && !CONFIG_IS_ENABLED(PHY)
+static void usb_power_config_mx6(void __iomem *anatop_base,
 				 int anatop_bits_index)
 {
+	struct anatop_regs __iomem *anatop = (struct anatop_regs __iomem *)anatop_base;
 	void __iomem *chrg_detect;
 	void __iomem *pll_480_ctrl_clr;
 	void __iomem *pll_480_ctrl_set;
@@ -152,12 +159,13 @@ static void usb_power_config_mx6(struct anatop_regs __iomem *anatop,
 }
 #else
 static void __maybe_unused
-usb_power_config_mx6(void *anatop, int anatop_bits_index) { }
+usb_power_config_mx6(void __iomem *anatop_base, int anatop_bits_index) { }
 #endif
 
-#if defined(CONFIG_USB_EHCI_MX7) && !defined(CONFIG_PHY)
-static void usb_power_config_mx7(struct usbnc_regs *usbnc)
+#if defined(CONFIG_USB_EHCI_MX7) && !CONFIG_IS_ENABLED(PHY)
+static void usb_power_config_mx7(void __iomem *usbnc_base)
 {
+	struct usbnc_regs __iomem *usbnc = (struct usbnc_regs __iomem *)usbnc_base;
 	void __iomem *phy_cfg2 = (void __iomem *)(&usbnc->phy_cfg2);
 
 	if (!is_mx7())
@@ -171,12 +179,14 @@ static void usb_power_config_mx7(struct usbnc_regs *usbnc)
 }
 #else
 static void __maybe_unused
-usb_power_config_mx7(void *usbnc) { }
+usb_power_config_mx7(void __iomem *usbnc_base) { }
 #endif
 
-#if defined(CONFIG_MX7ULP) && !defined(CONFIG_PHY)
-static void usb_power_config_mx7ulp(struct usbphy_regs __iomem *usbphy)
+#if defined(CONFIG_MX7ULP) && !CONFIG_IS_ENABLED(PHY)
+static void usb_power_config_mx7ulp(void __iomem *usbphy_base)
 {
+	struct usbphy_regs __iomem *usbphy = (struct usbphy_regs __iomem *)usbphy_base;
+
 	if (!is_mx7ulp())
 		return;
 
@@ -188,12 +198,14 @@ static void usb_power_config_mx7ulp(struct usbphy_regs __iomem *usbphy)
 }
 #else
 static void __maybe_unused
-usb_power_config_mx7ulp(void *usbphy) { }
+usb_power_config_mx7ulp(void __iomem *usbphy_base) { }
 #endif
 
 #if defined(CONFIG_IMX8)
-static void usb_power_config_imx8(struct usbphy_regs __iomem *usbphy)
+static void usb_power_config_imx8(void __iomem *usbphy_base)
 {
+	struct usbphy_regs __iomem *usbphy = (struct usbphy_regs __iomem *)usbphy_base;
+
 	if (!is_imx8())
 		return;
 
@@ -240,7 +252,7 @@ static void usb_power_config_imx8(struct usbphy_regs __iomem *usbphy)
 }
 #else
 static void __maybe_unused
-usb_power_config_imx8(void *usbphy) { }
+usb_power_config_imx8(void __iomem *usbphy_base) { }
 #endif
 
 
@@ -252,9 +264,12 @@ static const ulong phy_bases[] = {
 #endif
 };
 
-#if !defined(CONFIG_PHY)
+#if !CONFIG_IS_ENABLED(PHY)
 static void usb_internal_phy_clock_gate(void __iomem *phy_reg, int on)
 {
+	if (phy_reg == NULL)
+		return;
+
 	phy_reg += on ? USBPHY_CTRL_CLR : USBPHY_CTRL_SET;
 	writel(USBPHY_CTRL_CLKGATE, phy_reg);
 }
@@ -265,6 +280,9 @@ static int usb_phy_enable(struct usb_ehci *ehci, void __iomem *phy_reg)
 	void __iomem *phy_ctrl;
 	void __iomem *usb_cmd;
 	int ret;
+
+	if (phy_reg == NULL)
+		return -EINVAL;
 
 	phy_ctrl = (void __iomem *)(phy_reg + USBPHY_CTRL);
 	usb_cmd = (void __iomem *)&ehci->usbcmd;
@@ -351,10 +369,11 @@ static void ehci_mx6_powerup_fixup(struct ehci_ctrl *ctrl, uint32_t *status_reg,
 	*reg = ehci_readl(status_reg);
 }
 
-#if !defined(CONFIG_PHY)
+#if !CONFIG_IS_ENABLED(PHY)
 /* Should be done in the MXS PHY driver */
-static void usb_oc_config(struct usbnc_regs *usbnc, int index)
+static void usb_oc_config(void __iomem *usbnc_base, int index)
 {
+	struct usbnc_regs __iomem *usbnc = (struct usbnc_regs __iomem *)usbnc_base;
 #if defined(CONFIG_MX6)
 	void __iomem *ctrl = (void __iomem *)(&usbnc->ctrl[index]);
 #elif defined(CONFIG_USB_EHCI_MX7) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8)
@@ -375,6 +394,21 @@ static void usb_oc_config(struct usbnc_regs *usbnc, int index)
 	setbits_le32(ctrl, UCTRL_PWR_POL);
 #else
 	clrbits_le32(ctrl, UCTRL_PWR_POL);
+#endif
+}
+
+static void ehci_mx6_phy_init(struct usb_ehci *ehci, struct ehci_mx6_phy_data *phy_data, int index)
+{
+	usb_power_config_mx6(phy_data->anatop_addr, index);
+	usb_power_config_mx7(phy_data->misc_addr);
+	usb_power_config_mx7ulp(phy_data->phy_addr);
+	usb_power_config_imx8(phy_data->phy_addr);
+
+	usb_oc_config(phy_data->misc_addr, index);
+
+#if defined(CONFIG_MX6) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMXRT) || defined(CONFIG_IMX8)
+	usb_internal_phy_clock_gate(phy_data->phy_addr, 1);
+	usb_phy_enable(ehci, phy_data->phy_addr);
 #endif
 }
 #endif
@@ -434,30 +468,34 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 		struct ehci_hccr **hccr, struct ehci_hcor **hcor)
 {
 	enum usb_init_type type;
+	struct ehci_mx6_phy_data phy_data;
+	memset(&phy_data, 0, sizeof(phy_data));
+
 #if defined(CONFIG_MX6) || defined(CONFIG_IMXRT)
 	if (index > 3)
 			return -EINVAL;
 
 	u32 controller_spacing = 0x200;
-	struct anatop_regs __iomem *anatop =
-		(struct anatop_regs __iomem *)ANATOP_BASE_ADDR;
-	struct usbnc_regs *usbnc = (struct usbnc_regs *)(USB_BASE_ADDR +
+	phy_data.anatop_addr = (void __iomem *)ANATOP_BASE_ADDR;
+	phy_data.misc_addr = (void __iomem *)(USB_BASE_ADDR +
 			USB_OTHERREGS_OFFSET);
+	if (index < ARRAY_SIZE(phy_bases))
+		phy_data.phy_addr = (void __iomem *)(ulong)phy_bases[index];
+
 #elif defined(CONFIG_USB_EHCI_MX7)
 	if (index > 1)
 		return -EINVAL;
 
 	u32 controller_spacing = 0x10000;
-	struct usbnc_regs *usbnc = (struct usbnc_regs *)(USB_BASE_ADDR +
+	phy_data.misc_addr = (void __iomem *)(ulong)(USB_BASE_ADDR +
 			(0x10000 * index) + USBNC_OFFSET);
 #elif defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8)
-	if (index > ARRAY_SIZE(phy_bases))
+	if (index >= ARRAY_SIZE(phy_bases))
 		return -EINVAL;
 
 	u32 controller_spacing = 0x10000;
-	struct usbphy_regs __iomem *usbphy =
-		(struct usbphy_regs __iomem *)(ulong)phy_bases[index];
-	struct usbnc_regs *usbnc = (struct usbnc_regs *)(ulong)(USB_BASE_ADDR +
+	phy_data.phy_addr = (void __iomem *)(ulong)phy_bases[index];
+	phy_data.misc_addr = (void __iomem *)(ulong)(USB_BASE_ADDR +
 			(0x10000 * index) + USBNC_OFFSET);
 #endif
 	struct usb_ehci *ehci = (struct usb_ehci *)(ulong)(USB_BASE_ADDR +
@@ -482,24 +520,7 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 		return ret;
 	}
 
-#if defined(CONFIG_MX6) || defined(CONFIG_IMXRT)
-	usb_power_config_mx6(anatop, index);
-#elif defined (CONFIG_USB_EHCI_MX7)
-	usb_power_config_mx7(usbnc);
-#elif defined (CONFIG_MX7ULP)
-	usb_power_config_mx7ulp(usbphy);
-#elif defined (CONFIG_IMX8)
-	usb_power_config_imx8(usbphy);
-#endif
-
-	usb_oc_config(usbnc, index);
-
-#if defined(CONFIG_MX6) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMXRT) || defined(CONFIG_IMX8)
-	if (index < ARRAY_SIZE(phy_bases)) {
-		usb_internal_phy_clock_gate((void __iomem *)phy_bases[index], 1);
-		usb_phy_enable(ehci, (void __iomem *)phy_bases[index]);
-	}
-#endif
+	ehci_mx6_phy_init(ehci, &phy_data, index);
 
 	ehci_set_controller_priv(index, NULL, &mx6_ehci_ops);
 
@@ -540,11 +561,14 @@ struct ehci_mx6_priv_data {
 	struct phy phy;
 	enum usb_init_type init_type;
 	enum usb_phy_interface phy_type;
-#if !defined(CONFIG_PHY)
 	int portnr;
-	void __iomem *phy_addr;
-	void __iomem *misc_addr;
-	void __iomem *anatop_addr;
+	int phy_node_off;
+#if !CONFIG_IS_ENABLED(PHY) || defined(CONFIG_IMX8)
+	struct udevice phy_dev;
+	struct ehci_mx6_phy_data phy_data;
+#if CONFIG_IS_ENABLED(POWER_DOMAIN)
+	struct power_domain phy_pd;
+#endif
 #endif
 };
 
@@ -579,18 +603,8 @@ static int mx6_init_after_reset(struct ehci_ctrl *dev)
 		return ret;
 	}
 
-#if !defined(CONFIG_PHY)
-	usb_power_config_mx6(priv->anatop_addr, priv->portnr);
-	usb_power_config_mx7(priv->misc_addr);
-	usb_power_config_mx7ulp(priv->phy_addr);
-	usb_power_config_imx8(priv->phy_addr);
-
-	usb_oc_config(priv->misc_addr, priv->portnr);
-
-#if defined(CONFIG_MX6) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMX8)
-	usb_internal_phy_clock_gate(priv->phy_addr, 1);
-	usb_phy_enable(ehci, priv->phy_addr);
-#endif
+#if !CONFIG_IS_ENABLED(PHY) || defined(CONFIG_IMX8)
+	ehci_mx6_phy_init(ehci, &priv->phy_data, priv->portnr);
 #endif
 
 #if CONFIG_IS_ENABLED(DM_REGULATOR)
@@ -648,7 +662,6 @@ static int ehci_usb_phy_mode(struct udevice *dev)
 	void *__iomem addr = (void *__iomem)devfdt_get_addr(dev);
 	void *__iomem phy_ctrl, *__iomem phy_status;
 	const void *blob = gd->fdt_blob;
-	int offset = dev_of_offset(dev), phy_off;
 	u32 val;
 
 	/*
@@ -656,28 +669,10 @@ static int ehci_usb_phy_mode(struct udevice *dev)
 	 * Documentation/devicetree/bindings/usb/ci-hdrc-usb2.txt.
 	 */
 	if (is_mx6() || is_mx7ulp() || is_imxrt() || is_imx8()) {
-		phy_off = fdtdec_lookup_phandle(blob,
-						offset,
-						"fsl,usbphy");
-		if (phy_off < 0)
-			return -EINVAL;
-
-		addr = (void __iomem *)fdtdec_get_addr(blob, phy_off,
+		addr = (void __iomem *)fdtdec_get_addr(blob, priv->phy_node_off,
 						       "reg");
 		if ((fdt_addr_t)addr == FDT_ADDR_T_NONE)
 			return -EINVAL;
-
-		/* Need to power on the PHY before access it */
-#if CONFIG_IS_ENABLED(POWER_DOMAIN)
-		struct udevice phy_dev;
-		struct power_domain pd;
-
-		phy_dev.node = offset_to_ofnode(phy_off);
-		if (!power_domain_get(&phy_dev, &pd)) {
-			if (power_domain_on(&pd))
-				return -EINVAL;
-		}
-#endif
 
 		phy_ctrl = (void __iomem *)(addr + USBPHY_CTRL);
 		val = readl(phy_ctrl);
@@ -741,12 +736,10 @@ check_type:
 
 static int mx6_parse_dt_addrs(struct udevice *dev)
 {
-#if !defined(CONFIG_PHY)
 	struct ehci_mx6_priv_data *priv = dev_get_priv(dev);
 	int phy_off, misc_off;
 	const void *blob = gd->fdt_blob;
 	int offset = dev_of_offset(dev);
-	void *__iomem addr;
 
 	phy_off = fdtdec_lookup_phandle(blob, offset, "fsl,usbphy");
 	if (phy_off < 0) {
@@ -759,26 +752,26 @@ static int mx6_parse_dt_addrs(struct udevice *dev)
 	if (misc_off < 0)
 		return -EINVAL;
 
+	priv->portnr = dev_seq(dev);
+	priv->phy_node_off = phy_off;
+
+#if !CONFIG_IS_ENABLED(PHY) || defined(CONFIG_IMX8)
+	void *__iomem addr;
+	struct ehci_mx6_phy_data *phy_data = &priv->phy_data;
 	addr = (void __iomem *)fdtdec_get_addr(blob, phy_off, "reg");
 	if ((fdt_addr_t)addr == FDT_ADDR_T_NONE)
 		addr = NULL;
 
-	priv->phy_addr = addr;
+	phy_data->phy_addr = addr;
 
 	addr = (void __iomem *)fdtdec_get_addr(blob, misc_off, "reg");
 	if ((fdt_addr_t)addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
-	priv->misc_addr = addr;
+	phy_data->misc_addr = addr;
 
 #if defined(CONFIG_MX6)
-	int anatop_off, ret, devnump;
-
-	ret = fdtdec_get_alias_seq(blob, dev->uclass->uc_drv->name,
-				   phy_off, &devnump);
-	if (ret < 0)
-		return ret;
-	priv->portnr = devnump;
+	int anatop_off;
 
 	/* Resolve ANATOP offset through USB PHY node */
 	anatop_off = fdtdec_lookup_phandle(blob, phy_off, "fsl,anatop");
@@ -789,11 +782,43 @@ static int mx6_parse_dt_addrs(struct udevice *dev)
 	if ((fdt_addr_t)addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
-	priv->anatop_addr = addr;
+	phy_data->anatop_addr = addr;
 #endif
 #endif
 	return 0;
 }
+
+#if !CONFIG_IS_ENABLED(PHY) || defined(CONFIG_IMX8)
+static int ehci_mx6_phy_prepare(struct ehci_mx6_priv_data *priv)
+{
+	dev_set_ofnode(&priv->phy_dev, offset_to_ofnode(priv->phy_node_off));
+
+#if CONFIG_IS_ENABLED(POWER_DOMAIN)
+	/* Need to power on the PHY before access it */
+	if (!power_domain_get(&priv->phy_dev, &priv->phy_pd)) {
+		if (power_domain_on(&priv->phy_pd))
+			return -EINVAL;
+	}
+#endif
+
+	return 0;
+}
+
+static int ehci_mx6_phy_remove(struct ehci_mx6_priv_data *priv)
+{
+	int ret = 0;
+
+#if CONFIG_IS_ENABLED(POWER_DOMAIN)
+	if (priv->phy_pd.dev) {
+		ret = power_domain_off(&priv->phy_pd);
+		if (ret)
+			printf("Power down USB PHY failed! (error = %d)\n", ret);
+	}
+#endif
+
+	return ret;
+}
+#endif
 
 static int ehci_usb_probe(struct udevice *dev)
 {
@@ -827,6 +852,14 @@ static int ehci_usb_probe(struct udevice *dev)
 		return ret;
 	}
 
+#if !CONFIG_IS_ENABLED(PHY) || defined(CONFIG_IMX8)
+	ret = ehci_mx6_phy_prepare(priv);
+	if (ret) {
+		printf("Failed to prepare USB phy\n");
+		return ret;
+	}
+#endif
+
 #if CONFIG_IS_ENABLED(CLK)
 	ret = clk_get_by_index(dev, 0, &priv->clk);
 	if (ret < 0)
@@ -848,18 +881,12 @@ static int ehci_usb_probe(struct udevice *dev)
 		debug("%s: No vbus supply\n", dev->name);
 #endif
 
-#if !defined(CONFIG_PHY)
-	usb_power_config_mx6(priv->anatop_addr, priv->portnr);
-	usb_power_config_mx7(priv->misc_addr);
-	usb_power_config_mx7ulp(priv->phy_addr);
-	usb_power_config_imx8(priv->phy_addr);
-
-	usb_oc_config(priv->misc_addr, priv->portnr);
-
-#if defined(CONFIG_MX6) || defined(CONFIG_MX7ULP) || defined(CONFIG_IMXRT) || defined(CONFIG_IMX8)
-	usb_internal_phy_clock_gate(priv->phy_addr, 1);
-	usb_phy_enable(ehci, priv->phy_addr);
-#endif
+#if !CONFIG_IS_ENABLED(PHY) || defined(CONFIG_IMX8)
+	ehci_mx6_phy_init(ehci, &priv->phy_data, priv->portnr);
+#else
+	ret = ehci_setup_phy(dev, &priv->phy, priv->portnr);
+	if (ret)
+		goto err_clk;
 #endif
 
 	/* If the init_type is unknown due to it is not forced in DTB, we use USB ID to detect */
@@ -880,7 +907,7 @@ static int ehci_usb_probe(struct udevice *dev)
 					   false : true);
 		if (ret && ret != -ENOSYS) {
 			printf("Error enabling VBUS supply (ret=%i)\n", ret);
-			goto err_clk;
+			goto err_phy;
 		}
 	}
 #endif
@@ -893,46 +920,45 @@ static int ehci_usb_probe(struct udevice *dev)
 
 	mdelay(10);
 
-#if defined(CONFIG_PHY)
-	ret = ehci_setup_phy(dev, &priv->phy, 0);
-	if (ret)
-		goto err_regulator;
-#endif
-
 	hccr = (struct ehci_hccr *)((uintptr_t)&ehci->caplength);
 	hcor = (struct ehci_hcor *)((uintptr_t)hccr +
 			HC_LENGTH(ehci_readl(&(hccr)->cr_capbase)));
 
 	ret = ehci_register(dev, hccr, hcor, &mx6_ehci_ops, 0, priv->init_type);
 	if (ret)
-		goto err_phy;
+		goto err_regulator;
 
 	return ret;
 
-err_phy:
-#if defined(CONFIG_PHY)
-	ehci_shutdown_phy(dev, &priv->phy);
+
 err_regulator:
-#endif
 #if CONFIG_IS_ENABLED(DM_REGULATOR)
 	if (priv->vbus_supply)
 		regulator_set_enable(priv->vbus_supply, false);
+#endif
+err_phy:
+#if CONFIG_IS_ENABLED(PHY) && !defined(CONFIG_IMX8)
+	ehci_shutdown_phy(dev, &priv->phy);
 #endif
 err_clk:
 #if CONFIG_IS_ENABLED(CLK)
 	clk_disable(&priv->clk);
 #endif
+#if !CONFIG_IS_ENABLED(PHY) || defined(CONFIG_IMX8)
+	ehci_mx6_phy_remove(priv);
+#endif
+
 	return ret;
 }
 
 int ehci_usb_remove(struct udevice *dev)
 {
-	struct ehci_mx6_priv_data *priv __maybe_unused = dev_get_priv(dev);
+	struct ehci_mx6_priv_data *priv = dev_get_priv(dev);
 	struct usb_plat *plat = dev_get_plat(dev);
 
 	ehci_deregister(dev);
 
-#if defined(CONFIG_PHY)
+#if CONFIG_IS_ENABLED(PHY) && !defined(CONFIG_IMX8)
 	ehci_shutdown_phy(dev, &priv->phy);
 #endif
 
@@ -943,6 +969,10 @@ int ehci_usb_remove(struct udevice *dev)
 
 #if CONFIG_IS_ENABLED(CLK)
 	clk_disable(&priv->clk);
+#endif
+
+#if !CONFIG_IS_ENABLED(PHY) || defined(CONFIG_IMX8)
+	ehci_mx6_phy_remove(priv);
 #endif
 
 	plat->init_type = 0; /* Clean the requested usb type to host mode */
