@@ -27,7 +27,7 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 	case MMC1_BOOT:
 		return BOOT_DEVICE_MMC1;
 	case SD2_BOOT:
-#ifdef CONFIG_TARGET_IMX8DXL_DDR3_VAL
+#ifdef CONFIG_TARGET_IMX8DXL_DDR3_EVK
 		return BOOT_DEVICE_MMC1;
 #else
 		return BOOT_DEVICE_MMC2_2;

@@ -44,7 +44,7 @@ config IMX8QXP
 config IMX8DXL
 	select IMX8
 	select SUPPORT_SPL
-	select RECOVER_SPL_DATA_SECTION
+	select SPL_RECOVER_DATA_SECTION
 	bool
 
 config SYS_SOC
