@@ -150,6 +150,8 @@
 #else
 #define HDP_LOAD_ENV \
 	"if run loadhdp; then; hdp load ${hdp_addr}; fi;"
+#define HDPRX_LOAD_ENV \
+	"if test ${hdprx_enable} = yes; then if run loadhdprx; then; hdprx load ${hdprx_addr}; fi; fi; "
 #define INITRD_ADDR_ENV "initrd_addr=0x83100000\0"
 #endif
 
@@ -192,6 +194,7 @@
 	"hdprx_addr=0x9c800000\0" \
 	"hdp_file=hdmitxfw.bin\0" \
 	"hdprx_file=hdmirxfw.bin\0" \
+	"hdprx_enable=no\0" \
 	"loadhdp=fatload mmc ${mmcdev}:${mmcpart} ${hdp_addr} ${hdp_file}\0" \
 	"loadhdprx=fatload mmc ${mmcdev}:${mmcpart} ${hdprx_addr} ${hdprx_file}\0" \
 	"boot_os=booti ${loadaddr} - ${fdt_addr};\0" \
@@ -199,6 +202,7 @@
 	"auth_os=auth_cntr ${cntr_addr}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		HDP_LOAD_ENV \
+		HDPRX_LOAD_ENV \
 		"run mmcargs; " \
 		"if test ${sec_boot} = yes; then " \
 			"if run auth_os; then " \
