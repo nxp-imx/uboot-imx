@@ -114,7 +114,7 @@ int arch_misc_init(void)
 	ret = uclass_get_device_by_of_offset(UCLASS_MISC, node, &dev);
 	if (ret) {
 		printf("could not get caam jr device %d\n", ret);
-		return ret;
+		return 0;
 	}
 	device_probe(dev);
 #endif
