@@ -96,11 +96,11 @@ int board_usb_init(int index, enum usb_init_type init)
 		if (init == USB_INIT_DEVICE) {
 #if !CONFIG_IS_ENABLED(DM_USB_GADGET) && !CONFIG_IS_ENABLED(DM_USB)
 			ret = sc_pm_set_resource_power_mode(-1, SC_R_USB_0, SC_PM_PW_MODE_ON);
-			if (ret != SC_ERR_NONE)
+			if (ret)
 				printf("conn_usb0 Power up failed! (error = %d)\n", ret);
 
 			ret = sc_pm_set_resource_power_mode(-1, SC_R_USB_0_PHY, SC_PM_PW_MODE_ON);
-			if (ret != SC_ERR_NONE)
+			if (ret)
 				printf("conn_usb0_phy Power up failed! (error = %d)\n", ret);
 #endif
 		}
@@ -116,11 +116,11 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 		if (init == USB_INIT_DEVICE) {
 #if !CONFIG_IS_ENABLED(DM_USB_GADGET) && !CONFIG_IS_ENABLED(DM_USB)
 			ret = sc_pm_set_resource_power_mode(-1, SC_R_USB_0, SC_PM_PW_MODE_OFF);
-			if (ret != SC_ERR_NONE)
+			if (ret)
 				printf("conn_usb0 Power down failed! (error = %d)\n", ret);
 
 			ret = sc_pm_set_resource_power_mode(-1, SC_R_USB_0_PHY, SC_PM_PW_MODE_OFF);
-			if (ret != SC_ERR_NONE)
+			if (ret)
 				printf("conn_usb0_phy Power down failed! (error = %d)\n", ret);
 #endif
 		}

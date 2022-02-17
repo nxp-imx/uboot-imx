@@ -87,7 +87,7 @@ static void imx8dxl_gpmi_nand_initialize(void)
 	int ret;
 
 	ret = sc_pm_set_resource_power_mode(-1, SC_R_NAND, SC_PM_PW_MODE_ON);
-	if (ret != SC_ERR_NONE)
+	if (ret)
 		return;
 
 	init_clk_gpmi_nand();
@@ -246,16 +246,16 @@ int checkboard(void)
 #ifdef CONFIG_DWC_ETH_QOS
 static int setup_eqos(void)
 {
-	sc_err_t err;
+	int err;
 
 	/* set GPR14:12 to b'001: RGMII mode */
 	err = sc_misc_set_control(-1, SC_R_ENET_1, SC_C_INTF_SEL, 0x1);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("SC_R_ENET_1 INTF_SEL failed! (error = %d)\n", err);
 
 	/* enable GPR11: CLK_GEN_EN */
 	err = sc_misc_set_control(-1, SC_R_ENET_1, SC_C_CLK_GEN_EN, 1);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("SC_R_ENET_1 CLK_GEN_EN failed! (error = %d)\n", err);
 
 	return 0;
