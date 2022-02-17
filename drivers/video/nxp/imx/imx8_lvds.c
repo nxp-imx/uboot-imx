@@ -40,7 +40,7 @@ struct imx8_ldb_priv {
 
 static int imx8_ldb_soc_setup(struct udevice *dev, sc_pm_clock_rate_t pixel_clock)
 {
-	sc_err_t err;
+	int err;
 	sc_rsrc_t lvds_rsrc, mipi_rsrc;
 	const char *pd_name;
 	struct imx8_ldb_priv *priv = dev_get_priv(dev);
@@ -75,19 +75,19 @@ static int imx8_ldb_soc_setup(struct udevice *dev, sc_pm_clock_rate_t pixel_cloc
 
 	/* Setup clocks */
 	err = sc_pm_set_clock_rate(-1, lvds_rsrc, SC_PM_CLK_BYPASS, &pixel_clock);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("LVDS set rate SC_PM_CLK_BYPASS failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_pm_set_clock_rate(-1, lvds_rsrc, SC_PM_CLK_PER, &pixel_clock);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("LVDS set rate SC_PM_CLK_BYPASS failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_pm_set_clock_rate(-1, lvds_rsrc, SC_PM_CLK_PHY, &pixel_clock);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("LVDS set rate SC_PM_CLK_BYPASS failed! (error = %d)\n", err);
 		return -EIO;
 	}
@@ -99,39 +99,39 @@ static int imx8_ldb_soc_setup(struct udevice *dev, sc_pm_clock_rate_t pixel_cloc
 
 		/* Configure to LVDS mode not MIPI DSI */
 		err = sc_misc_set_control(-1, mipi_rsrc, SC_C_MODE, 1);
-		if (err != SC_ERR_NONE) {
+		if (err) {
 			printf("LVDS sc_misc_set_control SC_C_MODE failed! (error = %d)\n", err);
 			return -EIO;
 		}
 
 		/* Configure to LVDS mode with single channel */
 		err = sc_misc_set_control(-1, mipi_rsrc, SC_C_DUAL_MODE, 0);
-		if (err != SC_ERR_NONE) {
+		if (err) {
 			printf("LVDS sc_misc_set_control SC_C_DUAL_MODE failed! (error = %d)\n", err);
 			return -EIO;
 		}
 
 		err = sc_misc_set_control(-1, mipi_rsrc, SC_C_PXL_LINK_SEL, lvds_id);
-		if (err != SC_ERR_NONE) {
+		if (err) {
 			printf("LVDS sc_misc_set_control SC_C_PXL_LINK_SEL failed! (error = %d)\n", err);
 			return -EIO;
 		}
 	}
 
 	err = sc_pm_clock_enable(-1, lvds_rsrc, SC_PM_CLK_BYPASS, true, false);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("LVDS enable clock SC_PM_CLK_BYPASS failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_pm_clock_enable(-1, lvds_rsrc, SC_PM_CLK_PER, true, false);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("LVDS enable clock SC_PM_CLK_PER failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_pm_clock_enable(-1, lvds_rsrc, SC_PM_CLK_PHY, true, false);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("LVDS enable clock SC_PM_CLK_PHY failed! (error = %d)\n", err);
 		return -EIO;
 	}

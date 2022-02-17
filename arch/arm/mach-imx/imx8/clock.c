@@ -21,14 +21,14 @@ u32 get_lpuart_clk(void)
 
 u32 mxc_get_clock(enum mxc_clock clk)
 {
-	sc_err_t err;
+	int err;
 	sc_pm_clock_rate_t clkrate;
 
 	switch (clk) {
 	case MXC_UART_CLK:
 		err = sc_pm_get_clock_rate(-1,
 				SC_R_UART_0, 2, &clkrate);
-		if (err != SC_ERR_NONE) {
+		if (err) {
 			printf("sc get UART clk failed! err=%d\n", err);
 			return 0;
 		}
@@ -36,7 +36,7 @@ u32 mxc_get_clock(enum mxc_clock clk)
 	case MXC_ESDHC_CLK:
 		err = sc_pm_get_clock_rate(-1,
 				SC_R_SDHC_0, 2, &clkrate);
-		if (err != SC_ERR_NONE) {
+		if (err) {
 			printf("sc get uSDHC1 clk failed! err=%d\n", err);
 			return 0;
 		}
@@ -44,7 +44,7 @@ u32 mxc_get_clock(enum mxc_clock clk)
 	case MXC_ESDHC2_CLK:
 		err = sc_pm_get_clock_rate(-1,
 				SC_R_SDHC_1, 2, &clkrate);
-		if (err != SC_ERR_NONE) {
+		if (err) {
 			printf("sc get uSDHC2 clk failed! err=%d\n", err);
 			return 0;
 		}
@@ -52,7 +52,7 @@ u32 mxc_get_clock(enum mxc_clock clk)
 	case MXC_ESDHC3_CLK:
 		err = sc_pm_get_clock_rate(-1,
 				SC_R_SDHC_2, 2, &clkrate);
-		if (err != SC_ERR_NONE) {
+		if (err) {
 			printf("sc get uSDHC3 clk failed! err=%d\n", err);
 			return 0;
 		}
@@ -60,7 +60,7 @@ u32 mxc_get_clock(enum mxc_clock clk)
 	case MXC_FEC_CLK:
 		err = sc_pm_get_clock_rate(-1,
 				SC_R_ENET_0, 2, &clkrate);
-		if (err != SC_ERR_NONE) {
+		if (err) {
 			printf("sc get ENET clk failed! err=%d\n", err);
 			return 0;
 		}
@@ -68,7 +68,7 @@ u32 mxc_get_clock(enum mxc_clock clk)
 	case MXC_DDR_CLK:
 		err = sc_pm_get_clock_rate(-1,
 				SC_R_DRC_0, 0, &clkrate);
-		if (err != SC_ERR_NONE) {
+		if (err) {
 			printf("sc get DRC0 clk failed! err=%d\n", err);
 			return 0;
 		}
@@ -98,7 +98,7 @@ static struct imx_i2c_map *get_i2c_desc(unsigned i2c_num)
 
 int enable_i2c_clk(unsigned char enable, unsigned i2c_num)
 {
-	sc_err_t err;
+	int err;
 	struct imx_i2c_map *desc;
 	int i;
 
@@ -114,7 +114,7 @@ int enable_i2c_clk(unsigned char enable, unsigned i2c_num)
 		err = sc_pm_clock_enable(-1,
 			desc->rsrc, 2, false, false);
 
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("i2c clock error %d\n", err);
 		return -EPERM;
 	}
@@ -130,7 +130,7 @@ int enable_i2c_clk(unsigned char enable, unsigned i2c_num)
 
 u32 imx_get_i2cclk(unsigned i2c_num)
 {
-	sc_err_t err;
+	int err;
 	u32 clock_rate;
 	struct imx_i2c_map *desc;
 
@@ -140,7 +140,7 @@ u32 imx_get_i2cclk(unsigned i2c_num)
 
 	err = sc_pm_get_clock_rate(-1, desc->rsrc, 2,
 		&clock_rate);
-	if (err != SC_ERR_NONE)
+	if (err)
 		return 0;
 
 	return clock_rate;
@@ -148,20 +148,20 @@ u32 imx_get_i2cclk(unsigned i2c_num)
 
 void init_clk_fspi(int index)
 {
-	sc_err_t sciErr = 0;
+	int err = 0;
 	sc_pm_clock_rate_t rate;
 
 	/* Set FSPI0 clock root to 29 MHz */
 	rate = 29000000;
-	sciErr = sc_pm_set_clock_rate(-1, SC_R_FSPI_0, SC_PM_CLK_PER, &rate);
-	if (sciErr != SC_ERR_NONE) {
+	err = sc_pm_set_clock_rate(-1, SC_R_FSPI_0, SC_PM_CLK_PER, &rate);
+	if (err) {
 		puts("FSPI0 setrate failed\n");
 		return;
 	}
 
 	/* Enable FSPI0 clock root */
-	sciErr = sc_pm_clock_enable(-1, SC_R_FSPI_0, SC_PM_CLK_PER, true, false);
-	if (sciErr != SC_ERR_NONE) {
+	err = sc_pm_clock_enable(-1, SC_R_FSPI_0, SC_PM_CLK_PER, true, false);
+	if (err) {
 		puts("FSPI0 enable clock failed\n");
 		return;
 	}
@@ -173,35 +173,35 @@ void init_clk_fspi(int index)
 
 void init_clk_gpmi_nand(void)
 {
-	sc_err_t sciErr = 0;
+	int err = 0;
 	sc_pm_clock_rate_t rate;
 
 	/* Set NAND BCH clock root to 50 MHz */
 	rate = 50000000;
-	sciErr = sc_pm_set_clock_rate(-1, SC_R_NAND, SC_PM_CLK_PER, &rate);
-	if (sciErr != SC_ERR_NONE) {
+	err = sc_pm_set_clock_rate(-1, SC_R_NAND, SC_PM_CLK_PER, &rate);
+	if (err) {
 		puts("NAND BCH set rate failed\n");
 		return;
 	}
 
 	/* Enable NAND BCH clock root */
-	sciErr = sc_pm_clock_enable(-1, SC_R_NAND, SC_PM_CLK_PER, true, false);
-	if (sciErr != SC_ERR_NONE) {
+	err = sc_pm_clock_enable(-1, SC_R_NAND, SC_PM_CLK_PER, true, false);
+	if (err) {
 		puts("NAND BCH enable clock failed\n");
 		return;
 	}
 
 	/* Set NAND GPMI clock root to 50 MHz */
 	rate = 50000000;
-	sciErr = sc_pm_set_clock_rate(-1, SC_R_NAND, SC_PM_CLK_MST_BUS, &rate);
-	if (sciErr != SC_ERR_NONE) {
+	err = sc_pm_set_clock_rate(-1, SC_R_NAND, SC_PM_CLK_MST_BUS, &rate);
+	if (err) {
 		puts("NAND GPMI set rate failed\n");
 		return;
 	 }
 
 	/* Enable NAND GPMI clock root */
-	sciErr = sc_pm_clock_enable(-1, SC_R_NAND, SC_PM_CLK_MST_BUS, true, false);
-	if (sciErr != SC_ERR_NONE) {
+	err = sc_pm_clock_enable(-1, SC_R_NAND, SC_PM_CLK_MST_BUS, true, false);
+	if (err) {
 		puts("NAND GPMI enable clock failed\n");
 		return;
 	}
@@ -222,54 +222,54 @@ void enable_usboh3_clk(unsigned char enable)
 
 void init_clk_usb3(int index)
 {
-	sc_err_t err;
+	int err;
 	sc_pm_clock_rate_t rate;
 
 	err = sc_pm_clock_enable(-1, SC_R_USB_2, SC_PM_CLK_MISC, false, false);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("USB3 set clock failed!, line=%d (error = %d)\n",
 			__LINE__, err);
 
 	err = sc_pm_clock_enable(-1, SC_R_USB_2, SC_PM_CLK_MST_BUS, false, false);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("USB3 set clock failed!, line=%d (error = %d)\n",
 			__LINE__, err);
 
 	err = sc_pm_clock_enable(-1, SC_R_USB_2, SC_PM_CLK_PER, false, false);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("USB3 set clock failed!, line=%d (error = %d)\n",
 			__LINE__, err);
 
 	rate = 12000000;
 	err = sc_pm_set_clock_rate(-1, SC_R_USB_2, SC_PM_CLK_MISC, &rate);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("USB3 set MISC clock rate failed!, line=%d (error = %d)\n",
 			__LINE__, err);
 
 	rate = 250000000;
 	err = sc_pm_set_clock_rate(-1, SC_R_USB_2, SC_PM_CLK_MST_BUS, &rate);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("USB3 set BUS clock rate failed!, line=%d (error = %d)\n",
 			__LINE__, err);
 
 	rate = 125000000;
 	err = sc_pm_set_clock_rate(-1, SC_R_USB_2, SC_PM_CLK_PER, &rate);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("USB3 set PER clock rate failed!, line=%d (error = %d)\n",
 			__LINE__, err);
 
 	err = sc_pm_clock_enable(-1, SC_R_USB_2, SC_PM_CLK_MISC, true, false);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("USB3 set clock failed!, line=%d (error = %d)\n",
 			__LINE__, err);
 
 	err = sc_pm_clock_enable(-1, SC_R_USB_2, SC_PM_CLK_MST_BUS, true, false);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("USB3 set clock failed!, line=%d (error = %d)\n",
 			__LINE__, err);
 
 	err = sc_pm_clock_enable(-1, SC_R_USB_2, SC_PM_CLK_PER, true, false);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("USB3 set clock failed!, line=%d (error = %d)\n",
 			__LINE__, err);
 
@@ -285,22 +285,22 @@ int cdns3_enable_clks(int index)
 
 int cdns3_disable_clks(int index)
 {
-	sc_err_t err;
+	int err;
 
 	lpcg_all_clock_off(USB_3_LPCG);
 
 	err = sc_pm_clock_enable(-1, SC_R_USB_2, SC_PM_CLK_MISC, false, false);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("USB3 disable clock failed!, line=%d (error = %d)\n",
 			__LINE__, err);
 
 	err = sc_pm_clock_enable(-1, SC_R_USB_2, SC_PM_CLK_MST_BUS, false, false);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("USB3 disable clock failed!, line=%d (error = %d)\n",
 			__LINE__, err);
 
 	err = sc_pm_clock_enable(-1, SC_R_USB_2, SC_PM_CLK_PER, false, false);
-	if (err != SC_ERR_NONE)
+	if (err)
 		printf("USB3 disable clock failed!, line=%d (error = %d)\n",
 			__LINE__, err);
 
@@ -317,7 +317,7 @@ void init_clk_usdhc(u32 index)
 	u32 instances = 2;
 #endif
 
-	sc_err_t err;
+	int err;
 	sc_pm_clock_rate_t actual = 400000000;
 
 	if (index >= instances)
@@ -325,7 +325,7 @@ void init_clk_usdhc(u32 index)
 
 	/* Must disable the clock before set clock parent */
 	err = sc_pm_clock_enable(-1, usdhcs[index], SC_PM_CLK_PER, false, false);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("SDHC_%d per clk enable failed!\n", index);
 		return;
 	}
@@ -340,7 +340,7 @@ void init_clk_usdhc(u32 index)
 	 */
 	if (is_imx8qxp()) {
 		err = sc_pm_set_clock_parent(-1, usdhcs[index], 2, SC_PM_PARENT_PLL1);
-		if (err != SC_ERR_NONE)
+		if (err)
 			printf("SDHC_%d set clock parent failed!(error = %d)\n", index, err);
 
 		if (index == 1)
@@ -348,7 +348,7 @@ void init_clk_usdhc(u32 index)
 	}
 
 	err = sc_pm_set_clock_rate(-1, usdhcs[index], 2, &actual);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("SDHC_%d set clock failed! (error = %d)\n", index, err);
 		return;
 	}
@@ -357,7 +357,7 @@ void init_clk_usdhc(u32 index)
 		debug("Actual rate for SDHC_%d is %d\n", index, actual);
 
 	err = sc_pm_clock_enable(-1, usdhcs[index], SC_PM_CLK_PER, true, false);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("SDHC_%d per clk enable failed!\n", index);
 		return;
 	}
@@ -367,7 +367,7 @@ void init_clk_usdhc(u32 index)
 
 void init_clk_fec(int index)
 {
-	sc_err_t err;
+	int err;
 	sc_pm_clock_rate_t rate = 24000000;
 	sc_rsrc_t enet[2] = {SC_R_ENET_0, SC_R_ENET_1};
 
@@ -381,7 +381,7 @@ void init_clk_fec(int index)
 	err = sc_pm_clock_enable(-1, enet[index], 0, false, false);
 	err |= sc_pm_clock_enable(-1, enet[index], 2, false, false);
 	err |= sc_pm_clock_enable(-1, enet[index], 4, false, false);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("\nSC_R_ENET_0 set clock disable failed! (error = %d)\n", err);
 		return;
 	}
@@ -395,7 +395,7 @@ void init_clk_fec(int index)
 
 	/* div = 8 clk_source = PLL_1 ss_slice #7 in verfication codes */
 	err = sc_pm_set_clock_rate(-1, enet[index], 2, &rate);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("\nSC_R_ENET_0 set clock ref clock 125M failed! (error = %d)\n", err);
 		return;
 	}
@@ -404,26 +404,26 @@ void init_clk_fec(int index)
 	err = sc_pm_clock_enable(-1, enet[index], 0, true, true);
 	err |= sc_pm_clock_enable(-1, enet[index], 2, true, true);
 	err |= sc_pm_clock_enable(-1, enet[index], 4, true, true);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("\nSC_R_ENET_0 set clock enable failed! (error = %d)\n", err);
 		return;
 	}
 
 	/* Configure GPR regisers */
 	if (!(is_imx8dxl() && index == 1)) {
-		if (sc_misc_set_control(-1, enet[index], SC_C_TXCLK,  0) != SC_ERR_NONE)
+		if (sc_misc_set_control(-1, enet[index], SC_C_TXCLK,  0))
 			printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_TXCLK);
 		/* Enable divclk */
-		if (sc_misc_set_control(-1, enet[index], SC_C_CLKDIV,  1) != SC_ERR_NONE)
+		if (sc_misc_set_control(-1, enet[index], SC_C_CLKDIV,  1))
 			printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_CLKDIV);
 	}
-	if (sc_misc_set_control(-1, enet[index], SC_C_DISABLE_50,  1) != SC_ERR_NONE)
+	if (sc_misc_set_control(-1, enet[index], SC_C_DISABLE_50,  1))
 		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_DISABLE_50);
-	if (sc_misc_set_control(-1, enet[index], SC_C_DISABLE_125,  1) != SC_ERR_NONE)
+	if (sc_misc_set_control(-1, enet[index], SC_C_DISABLE_125,  1))
 		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_DISABLE_125);
-	if (sc_misc_set_control(-1, enet[index], SC_C_SEL_125,  0) != SC_ERR_NONE)
+	if (sc_misc_set_control(-1, enet[index], SC_C_SEL_125,  0))
 		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_SEL_125);
-	if (sc_misc_set_control(-1, enet[index], SC_C_IPG_STOP,  0) != SC_ERR_NONE)
+	if (sc_misc_set_control(-1, enet[index], SC_C_IPG_STOP,  0))
 		printf("\nConfigure GPR registers operation(%d) failed!\n", SC_C_IPG_STOP);
 
 	lpcg_all_clock_on(ENET_0_LPCG + index * 0x10000);

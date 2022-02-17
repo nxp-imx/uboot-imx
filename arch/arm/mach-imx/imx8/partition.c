@@ -53,7 +53,7 @@ static int partition_alloc(bool isolated, bool restricted, bool grant, sc_rm_pt_
 	}
 
 	err = sc_rm_get_partition(-1, &parent_part);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		puts("sc_rm_get_partition failure\n");
 		return -EINVAL;
 	}
@@ -61,13 +61,13 @@ static int partition_alloc(bool isolated, bool restricted, bool grant, sc_rm_pt_
 	debug("isolated %d, restricted %d, grant %d\n", isolated, restricted, grant);
 	err = sc_rm_partition_alloc(-1, &os_part, false, isolated,
 				    restricted, grant, false);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("sc_rm_partition_alloc failure %d\n", err);
 		return -EINVAL;
 	}
 
 	err = sc_rm_set_parent(-1, os_part, parent_part);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		sc_rm_partition_free(-1, os_part);
 		return -EINVAL;
 	}
@@ -253,7 +253,7 @@ static int do_part_free(int argc, char * const argv[])
 	os_part = simple_strtoul(argv[0], NULL, 10);
 
 	err = sc_rm_partition_free(-1, os_part);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("free partiiton %d err %d\n", os_part, err);
 		return CMD_RET_FAILURE;
 	}
@@ -301,7 +301,7 @@ static int do_resource_assign(int argc, char * const argv[])
 		err = sc_rm_assign_pad(-1, os_part, pad);
 	else
 		err = sc_rm_assign_resource(-1, os_part, resource);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("assign resource/pad error %d\n", err);
 		return CMD_RET_FAILURE;
 	}
@@ -327,7 +327,7 @@ static int do_part_list(int argc, char * const argv[])
 
 static int do_part_test(int argc, char * const argv[])
 {
-	sc_err_t err;
+	int err;
 	sc_rsrc_t resource;
 
 	if (argc < 1)
@@ -336,7 +336,7 @@ static int do_part_test(int argc, char * const argv[])
 	resource = simple_strtoul(argv[0], NULL, 10);
 
 	err = sc_pm_set_resource_power_mode(-1, resource, SC_PM_PW_MODE_ON);
-	if (err == SC_ERR_NOACCESS)
+	if (err == -EACCES)
 		puts("NO ACCESS\n");
 
 	return CMD_RET_SUCCESS;
