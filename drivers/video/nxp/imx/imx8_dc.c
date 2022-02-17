@@ -46,7 +46,7 @@ struct imx8_dc_priv {
 
 static int imx8_dc_soc_setup(struct udevice *dev, sc_pm_clock_rate_t pixel_clock)
 {
-	sc_err_t err;
+	int err;
 	sc_rsrc_t dc_rsrc, pll0_rsrc, pll1_rsrc;
 	sc_pm_clock_rate_t pll_clk;
 	const char *pll1_pd_name;
@@ -92,61 +92,61 @@ static int imx8_dc_soc_setup(struct udevice *dev, sc_pm_clock_rate_t pixel_clock
 		pll_clk = 675000000;
 
 	err = sc_pm_set_clock_rate(-1, pll0_rsrc, SC_PM_CLK_PLL, &pll_clk);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("PLL0 set clock rate failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_pm_set_clock_rate(-1, pll1_rsrc, SC_PM_CLK_PLL, &pll_clk);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("PLL1 set clock rate failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_pm_set_clock_parent(-1, dc_rsrc, SC_PM_CLK_MISC0, 2);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DISP0 set clock parent failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_pm_set_clock_parent(-1, dc_rsrc, SC_PM_CLK_MISC1, 3);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DISP0 set clock parent failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_pm_set_clock_rate(-1, dc_rsrc, SC_PM_CLK_MISC0, &pixel_clock);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DISP0 set clock rate failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_pm_set_clock_rate(-1, dc_rsrc, SC_PM_CLK_MISC1, &pixel_clock);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DISP1 set clock rate failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_pm_clock_enable(-1, pll0_rsrc, SC_PM_CLK_PLL, true, false);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("PLL0 clock enable failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_pm_clock_enable(-1, pll1_rsrc, SC_PM_CLK_PLL, true, false);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("PLL1 clock enable failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_pm_clock_enable(-1, dc_rsrc, SC_PM_CLK_MISC0, true, false);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DISP0 clock enable failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_pm_clock_enable(-1, dc_rsrc, SC_PM_CLK_MISC1, true, false);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DISP1 clock enable failed! (error = %d)\n", err);
 		return -EIO;
 	}
@@ -154,49 +154,49 @@ static int imx8_dc_soc_setup(struct udevice *dev, sc_pm_clock_rate_t pixel_clock
 	lpcg_all_clock_on(dc_lpcg);
 
 	err = sc_misc_set_control(-1, dc_rsrc, SC_C_PXL_LINK_MST1_ADDR, 0);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DC Set control fSC_C_PXL_LINK_MST1_ADDR ailed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_misc_set_control(-1, dc_rsrc, SC_C_PXL_LINK_MST1_ENB, 1);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DC Set control SC_C_PXL_LINK_MST1_ENB failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_misc_set_control(-1, dc_rsrc, SC_C_PXL_LINK_MST1_VLD, 1);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DC Set control SC_C_PXL_LINK_MST1_VLD failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_misc_set_control(-1, dc_rsrc, SC_C_PXL_LINK_MST2_ADDR, 0);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DC Set control SC_C_PXL_LINK_MST2_ADDR ailed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_misc_set_control(-1, dc_rsrc, SC_C_PXL_LINK_MST2_ENB, 1);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DC Set control SC_C_PXL_LINK_MST2_ENB failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_misc_set_control(-1, dc_rsrc, SC_C_PXL_LINK_MST2_VLD, 1);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DC Set control SC_C_PXL_LINK_MST2_VLD failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_misc_set_control(-1, dc_rsrc, SC_C_SYNC_CTRL0, 1);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DC Set control SC_C_SYNC_CTRL0 failed! (error = %d)\n", err);
 		return -EIO;
 	}
 
 	err = sc_misc_set_control(-1, dc_rsrc, SC_C_SYNC_CTRL1, 1);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("DC Set control SC_C_SYNC_CTRL1 failed! (error = %d)\n", err);
 		return -EIO;
 	}
