@@ -1051,7 +1051,7 @@ static int ci_udc_otg_phy_mode2(void *__iomem phy_base)
 			return USB_INIT_DEVICE;
 		else
 			return USB_INIT_HOST;
-	} else if (is_mx7() || is_imx8mm() || is_imx8mn()) {
+	} else if (is_mx7() || is_imx8mm() || is_imx8mn() || is_imx93()) {
 		phy_status = (void __iomem *)(phy_base +
 					      USBNC_PHY_STATUS_OFFSET);
 		val = readl(phy_status);
@@ -1378,7 +1378,7 @@ static int ci_udc_otg_phy_mode(struct udevice *dev)
 			return USB_INIT_DEVICE;
 		else
 			return USB_INIT_HOST;
-	} else if (is_mx7() || is_imx8mm() || is_imx8mn()) {
+	} else if (is_mx7() || is_imx8mm() || is_imx8mn() || is_imx93()) {
 		phy_status = (void __iomem *)(phy_base +
 					      USBNC_PHY_STATUS_OFFSET);
 		val = readl(phy_status);
