@@ -130,7 +130,7 @@
 #define MX8MQ_IOMUXC_SD1_CMD_USDHC1_CMD                                     0x0A4 0x30C 0x000 0x0 0x0
 #define MX8MQ_IOMUXC_SD1_CMD_GPIO2_IO1                                      0x0A4 0x30C 0x000 0x5 0x0
 #define MX8MQ_IOMUXC_SD1_DATA0_USDHC1_DATA0                                 0x0A8 0x310 0x000 0x0 0x0
-#define MX8MQ_IOMUXC_SD1_DATA0_GPIO2_IO2                                    0x0A8 0x31  0x000 0x5 0x0
+#define MX8MQ_IOMUXC_SD1_DATA0_GPIO2_IO2                                    0x0A8 0x310 0x000 0x5 0x0
 #define MX8MQ_IOMUXC_SD1_DATA1_USDHC1_DATA1                                 0x0AC 0x314 0x000 0x0 0x0
 #define MX8MQ_IOMUXC_SD1_DATA1_GPIO2_IO3                                    0x0AC 0x314 0x000 0x5 0x0
 #define MX8MQ_IOMUXC_SD1_DATA2_USDHC1_DATA2                                 0x0B0 0x318 0x000 0x0 0x0
@@ -555,12 +555,12 @@
 #define MX8MQ_IOMUXC_I2C3_SDA_TPSMP_HDATA21                                 0x228 0x490 0x000 0x7 0x0
 #define MX8MQ_IOMUXC_I2C4_SCL_I2C4_SCL                                      0x22C 0x494 0x000 0x0 0x0
 #define MX8MQ_IOMUXC_I2C4_SCL_PWM2_OUT                                      0x22C 0x494 0x000 0x1 0x0
-#define MX8MQ_IOMUXC_I2C4_SCL_PCIE1_CLKREQ_B                                0x22C 0x494 0x524 0x2 0x0
+#define MX8MQ_IOMUXC_I2C4_SCL_PCIE1_CLKREQ_B                                0x22C 0x494 0x524 0x12 0x0
 #define MX8MQ_IOMUXC_I2C4_SCL_GPIO5_IO20                                    0x22C 0x494 0x000 0x5 0x0
 #define MX8MQ_IOMUXC_I2C4_SCL_TPSMP_HDATA22                                 0x22C 0x494 0x000 0x7 0x0
 #define MX8MQ_IOMUXC_I2C4_SDA_I2C4_SDA                                      0x230 0x498 0x000 0x0 0x0
 #define MX8MQ_IOMUXC_I2C4_SDA_PWM1_OUT                                      0x230 0x498 0x000 0x1 0x0
-#define MX8MQ_IOMUXC_I2C4_SDA_PCIE2_CLKREQ_B                                0x230 0x498 0x528 0x2 0x0
+#define MX8MQ_IOMUXC_I2C4_SDA_PCIE2_CLKREQ_B                                0x230 0x498 0x528 0x12 0x0
 #define MX8MQ_IOMUXC_I2C4_SDA_GPIO5_IO21                                    0x230 0x498 0x000 0x5 0x0
 #define MX8MQ_IOMUXC_I2C4_SDA_TPSMP_HDATA23                                 0x230 0x498 0x000 0x7 0x0
 #define MX8MQ_IOMUXC_UART1_RXD_UART1_DCE_RX                                 0x234 0x49C 0x4F4 0x0 0x0
