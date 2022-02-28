@@ -896,69 +896,6 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 #endif /* CONFIG_ARCH_IMX8 || CONFIG_ARCH_IMX8M */
 	}
 
-	/*
-	 * Start loading ramdisk. */
-	/* Load ramdisk except for Android Auto which doesn't support dynamic partition,
-	 * it will only load ramdisk in recovery mode.
-	 */
-	if (boot_header_version == 4) {
-		/*
-		 * concatenate vendor_boot ramdisk and boot ramdisk, load the
-		 * whole ramdisk directly as we don't have multiple ramdisk.
-		 */
-		memcpy((void *)ramdisk_addr, (void *)(ulong)vendor_boot_hdr_v4 +
-			ALIGN(sizeof(struct vendor_boot_img_hdr_v4), vendor_boot_hdr_v4->page_size),
-			vendor_boot_hdr_v4->vendor_ramdisk_size);
-		memcpy((void *)ramdisk_addr + vendor_boot_hdr_v4->vendor_ramdisk_size,
-			(void *)(ulong)hdr_v4 + 4096 + ALIGN(hdr_v4->kernel_size, 4096),
-			hdr_v4->ramdisk_size);
-		ramdisk_size = vendor_boot_hdr_v4->vendor_ramdisk_size + hdr_v4->ramdisk_size;
-
-		/* append build time bootconfig */
-		void *bootconfig_addr = (void *)(ulong)vendor_boot_hdr_v4 +
-					ALIGN(sizeof(struct vendor_boot_img_hdr_v4), vendor_boot_hdr_v4->page_size) +
-					ALIGN(vendor_boot_hdr_v4->vendor_ramdisk_size, vendor_boot_hdr_v4->page_size) +
-					ALIGN(vendor_boot_hdr_v4->dtb_size, vendor_boot_hdr_v4->page_size) +
-					ALIGN(vendor_boot_hdr_v4->vendor_ramdisk_table_size, vendor_boot_hdr_v4->page_size);
-		void *bootconfig_start = (void *)ramdisk_addr + ramdisk_size;
-		memcpy(bootconfig_start, bootconfig_addr, vendor_boot_hdr_v4->bootconfig_size);
-
-		/* append run time bootconfig */
-		uint32_t bootconfig_size;
-		if (append_runtime_bootconfig(bootconfig_start +
-						vendor_boot_hdr_v4->bootconfig_size,
-						&bootconfig_size) < 0) {
-			printf("boota: append runtime bootconfig failed!\n");
-			goto fail;
-		}
-		bootconfig_size += vendor_boot_hdr_v4->bootconfig_size;
-		bootconfig_size += add_bootconfig_trailer((uint64_t)bootconfig_start, bootconfig_size);
-
-		/* update ramdisk size */
-		ramdisk_size += bootconfig_size;
-	} else if (boot_header_version == 3) {
-		/*
-		 * concatenate vendor_boot ramdisk and boot ramdisk.
-		 */
-		memcpy((void *)ramdisk_addr, (void *)(ulong)vendor_boot_hdr_v3 +
-			ALIGN(sizeof(struct vendor_boot_img_hdr_v3), vendor_boot_hdr_v3->page_size),
-			vendor_boot_hdr_v3->vendor_ramdisk_size);
-		memcpy((void *)ramdisk_addr + vendor_boot_hdr_v3->vendor_ramdisk_size,
-			(void *)(ulong)hdr_v3 + 4096 + ALIGN(hdr_v3->kernel_size, 4096),
-			hdr_v3->ramdisk_size);
-		ramdisk_size = vendor_boot_hdr_v3->vendor_ramdisk_size + hdr_v3->ramdisk_size;
-	} else {
-#if !defined(CONFIG_SYSTEM_RAMDISK_SUPPORT) || defined(CONFIG_ANDROID_DYNAMIC_PARTITION)
-		memcpy((void *)ramdisk_addr, (void *)(ulong)hdr + hdr->page_size +
-			ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
-#else
-		if (is_recovery_mode)
-			memcpy((void *)ramdisk_addr, (void *)(ulong)hdr + hdr->page_size +
-				ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
-#endif
-		ramdisk_size = hdr->ramdisk_size;
-	}
-
 	/* Start loading the dtb file */
 	u32 fdt_addr = 0;
 	u32 fdt_size = 0;
@@ -1020,6 +957,81 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 	fdt_size = be32_to_cpu(dt_entry->dt_size);
 	memcpy((void *)(ulong)fdt_addr, (void *)((ulong)dt_img +
 			be32_to_cpu(dt_entry->dt_offset)), fdt_size);
+
+
+	/*
+	 * Start loading ramdisk. */
+	/* Load ramdisk except for Android Auto which doesn't support dynamic partition,
+	 * it will only load ramdisk in recovery mode.
+	 */
+	/* Check if we have overlap between ramdisk, kernel and dtb */
+	if ((ramdisk_addr >= kernel_addr) && (ramdisk_addr < ALIGN(fdt_addr + fdt_size, 4096))) {
+		ulong ramdisk_addr_relocate = (ulong)ALIGN(fdt_addr + fdt_size, 4096);
+
+		printf("boota: ramdisk overlap detected!!! ");
+		printf("redirecting ramdisk from 0x%08x to 0x%08x\n", (uint32_t)ramdisk_addr, (uint32_t)ramdisk_addr_relocate);
+
+		/* relocate ramdisk*/
+		ramdisk_addr = ramdisk_addr_relocate;
+	}
+
+	if (boot_header_version == 4) {
+		/*
+		 * concatenate vendor_boot ramdisk and boot ramdisk, load the
+		 * whole ramdisk directly as we don't have multiple ramdisk.
+		 */
+		memcpy((void *)ramdisk_addr, (void *)(ulong)vendor_boot_hdr_v4 +
+			ALIGN(sizeof(struct vendor_boot_img_hdr_v4), vendor_boot_hdr_v4->page_size),
+			vendor_boot_hdr_v4->vendor_ramdisk_size);
+		memcpy((void *)ramdisk_addr + vendor_boot_hdr_v4->vendor_ramdisk_size,
+			(void *)(ulong)hdr_v4 + 4096 + ALIGN(hdr_v4->kernel_size, 4096),
+			hdr_v4->ramdisk_size);
+		ramdisk_size = vendor_boot_hdr_v4->vendor_ramdisk_size + hdr_v4->ramdisk_size;
+
+		/* append build time bootconfig */
+		void *bootconfig_addr = (void *)(ulong)vendor_boot_hdr_v4 +
+					ALIGN(sizeof(struct vendor_boot_img_hdr_v4), vendor_boot_hdr_v4->page_size) +
+					ALIGN(vendor_boot_hdr_v4->vendor_ramdisk_size, vendor_boot_hdr_v4->page_size) +
+					ALIGN(vendor_boot_hdr_v4->dtb_size, vendor_boot_hdr_v4->page_size) +
+					ALIGN(vendor_boot_hdr_v4->vendor_ramdisk_table_size, vendor_boot_hdr_v4->page_size);
+		void *bootconfig_start = (void *)ramdisk_addr + ramdisk_size;
+		memcpy(bootconfig_start, bootconfig_addr, vendor_boot_hdr_v4->bootconfig_size);
+
+		/* append run time bootconfig */
+		uint32_t bootconfig_size;
+		if (append_runtime_bootconfig(bootconfig_start +
+						vendor_boot_hdr_v4->bootconfig_size,
+						&bootconfig_size) < 0) {
+			printf("boota: append runtime bootconfig failed!\n");
+			goto fail;
+		}
+		bootconfig_size += vendor_boot_hdr_v4->bootconfig_size;
+		bootconfig_size += add_bootconfig_trailer((uint64_t)bootconfig_start, bootconfig_size);
+
+		/* update ramdisk size */
+		ramdisk_size += bootconfig_size;
+	} else if (boot_header_version == 3) {
+		/*
+		 * concatenate vendor_boot ramdisk and boot ramdisk.
+		 */
+		memcpy((void *)ramdisk_addr, (void *)(ulong)vendor_boot_hdr_v3 +
+			ALIGN(sizeof(struct vendor_boot_img_hdr_v3), vendor_boot_hdr_v3->page_size),
+			vendor_boot_hdr_v3->vendor_ramdisk_size);
+		memcpy((void *)ramdisk_addr + vendor_boot_hdr_v3->vendor_ramdisk_size,
+			(void *)(ulong)hdr_v3 + 4096 + ALIGN(hdr_v3->kernel_size, 4096),
+			hdr_v3->ramdisk_size);
+		ramdisk_size = vendor_boot_hdr_v3->vendor_ramdisk_size + hdr_v3->ramdisk_size;
+	} else {
+#if !defined(CONFIG_SYSTEM_RAMDISK_SUPPORT) || defined(CONFIG_ANDROID_DYNAMIC_PARTITION)
+		memcpy((void *)ramdisk_addr, (void *)(ulong)hdr + hdr->page_size +
+			ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
+#else
+		if (is_recovery_mode)
+			memcpy((void *)ramdisk_addr, (void *)(ulong)hdr + hdr->page_size +
+				ALIGN(hdr->kernel_size, hdr->page_size), hdr->ramdisk_size);
+#endif
+		ramdisk_size = hdr->ramdisk_size;
+	}
 
 	/* Combine cmdline */
 	if (boot_header_version == 4) {
