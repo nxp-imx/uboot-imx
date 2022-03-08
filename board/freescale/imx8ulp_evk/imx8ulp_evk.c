@@ -15,6 +15,12 @@
 #include <asm/gpio.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+#if defined(CONFIG_NXP_FSPI) || defined(CONFIG_FSL_FSPI_NAND)
+static void setup_flexspi(void)
+{
+	init_clk_fspi(0);
+}
+#endif
 
 #if IS_ENABLED(CONFIG_FEC_MXC)
 #define ENET_CLK_PAD_CTRL	(PAD_CTL_PUS_UP | PAD_CTL_DSE | PAD_CTL_IBE_ENABLE)
@@ -101,6 +107,9 @@ void mipi_dsi_panel_backlight(void)
 
 int board_init(void)
 {
+#if defined(CONFIG_NXP_FSPI) || defined(CONFIG_FSL_FSPI_NAND)
+	setup_flexspi();
+#endif
 	if (IS_ENABLED(CONFIG_FEC_MXC))
 		setup_fec();
 
