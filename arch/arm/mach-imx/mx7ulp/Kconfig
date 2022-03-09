@@ -57,6 +57,7 @@ config TARGET_MX7ULP_EVK
 	select MX7ULP
 	select SYS_ARCH_TIMER
 	select FSL_CAAM
+	select FSL_BLOB
 	select ARCH_MISC_INIT
 
 endchoice

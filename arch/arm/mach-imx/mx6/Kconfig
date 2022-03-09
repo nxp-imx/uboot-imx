@@ -135,6 +135,7 @@ config TARGET_MX6SABREAUTO_COMMON
     select NXP_BOARD_REVISION
     imply CMD_DM
     select FSL_CAAM
+    select FSL_BLOB
     select ARCH_MISC_INIT
 
 config TARGET_MX6SABRESD_COMMON
@@ -147,6 +148,7 @@ config TARGET_MX6SABRESD_COMMON
     select NXP_BOARD_REVISION
     imply CMD_DM
     select FSL_CAAM
+    select FSL_BLOB
     select ARCH_MISC_INIT
 
 choice
@@ -482,6 +484,7 @@ config TARGET_MX6SXSABRESD
 	select DM_THERMAL
 	select SUPPORT_SPL
 	select FSL_CAAM
+	select FSL_BLOB
 	select ARCH_MISC_INIT
 
 config TARGET_MX6SXSABREAUTO
@@ -531,6 +534,7 @@ config TARGET_MX6UL_9X9_EVK
 	select OF_SYSTEM_SETUP
 	imply CMD_DM
 	select FSL_CAAM
+	select FSL_BLOB
 	select ARCH_MISC_INIT
 
 config TARGET_MX6UL_14X14_EVK
@@ -544,6 +548,7 @@ config TARGET_MX6UL_14X14_EVK
 	select OF_SYSTEM_SETUP
 	imply CMD_DM
 	select FSL_CAAM
+	select FSL_BLOB
 	select ARCH_MISC_INIT
 
 config TARGET_MX6UL_14X14_DDR3_VAL

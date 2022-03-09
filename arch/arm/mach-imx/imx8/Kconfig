@@ -80,6 +80,7 @@ config TARGET_IMX8QM_MEK
 	select BOARD_LATE_INIT
 	select IMX8QM
 	select FSL_CAAM
+	select FSL_BLOB
 	select ARCH_MISC_INIT
 	select SPL_CRYPTO if SPL
 
@@ -110,6 +111,7 @@ config TARGET_IMX8QXP_MEK
 	select BOARD_LATE_INIT
 	select IMX8QXP
 	select FSL_CAAM
+	select FSL_BLOB
 	select ARCH_MISC_INIT
 	select SPL_CRYPTO if SPL
 

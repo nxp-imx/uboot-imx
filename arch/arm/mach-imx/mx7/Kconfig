@@ -74,6 +74,7 @@ config TARGET_MX7DSABRESD
 	select MX7D
 	imply CMD_DM
 	select FSL_CAAM
+	select FSL_BLOB
 
 config TARGET_MX7D_12X12_LPDDR3_VAL
 	bool "Support mx7d_12x12_lpddr3_val"
