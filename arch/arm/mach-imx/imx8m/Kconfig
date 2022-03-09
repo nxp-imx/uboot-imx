@@ -109,6 +109,10 @@ config TARGET_IMX8MM_DDR4_EVK
 	select IMX8MM
 	select SUPPORT_SPL
 	select IMX8M_DDR4
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select SPL_CRYPTO if SPL
 
 config TARGET_IMX8MM_ICORE_MX8MM
 	bool "Engicam i.Core MX8M Mini SOM"
@@ -165,6 +169,9 @@ config TARGET_IMX8MN_DDR3_EVK
 	select IMX8MN
 	select SUPPORT_SPL
 	select IMX8M_DDR3L
+	select FSL_CAAM
+	select FSL_BLOB
+	select SPL_CRYPTO if SPL
 
 config TARGET_IMX8MN_VENICE
 	bool "Support Gateworks Venice iMX8M Nano module"
@@ -189,6 +196,10 @@ config TARGET_IMX8MP_DDR4_EVK
 	select IMX8MP
 	select SUPPORT_SPL
 	select IMX8M_DDR4
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select SPL_CRYPTO if SPL
 
 config TARGET_PICO_IMX8MQ
 	bool "Support Technexion Pico iMX8MQ"

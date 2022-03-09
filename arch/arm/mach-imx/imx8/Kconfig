@@ -144,22 +144,38 @@ config TARGET_IMX8DXL_PHANTOM_MEK
 	bool "Support i.MX8DXL PHANTOM MEK board"
 	select BOARD_LATE_INIT
 	select IMX8QXP
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select SPL_CRYPTO if SPL
 
 config TARGET_IMX8DX_MEK
 	bool "Support i.MX8DX MEK board"
 	select BOARD_LATE_INIT
 	select SUPPORT_SPL
 	select IMX8QXP
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select SPL_CRYPTO if SPL
 
 config TARGET_IMX8DXL_EVK
 	bool "Support i.MX8DXL EVK board"
 	select BOARD_LATE_INIT
 	select IMX8DXL
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select SPL_CRYPTO if SPL
 
 config TARGET_IMX8DXL_DDR3_EVK
 	bool "Support i.MX8DXL EVK board"
 	select BOARD_LATE_INIT
 	select IMX8DXL
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select SPL_CRYPTO if SPL
 
 endchoice
 
