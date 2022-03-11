@@ -236,10 +236,6 @@ static void usb_power_config_mx7ulp(void __iomem *usbphy_base)
 	if (!(is_mx7ulp() || is_imx8ulp()))
 		return;
 
-	writel(ANADIG_USB2_CHRG_DETECT_EN_B |
-	       ANADIG_USB2_CHRG_DETECT_CHK_CHRG_B,
-	       &usbphy->usb1_chrg_detect);
-
 	enable_usb_pll((ulong)usbphy);
 }
 #else
@@ -256,10 +252,6 @@ static void usb_power_config_imx8(void __iomem *usbphy_base)
 		return;
 
 	int timeout = 1000000;
-
-	writel(ANADIG_USB2_CHRG_DETECT_EN_B |
-		   ANADIG_USB2_CHRG_DETECT_CHK_CHRG_B,
-		   &usbphy->usb1_chrg_detect);
 
 	if (!(readl(&usbphy->usb1_pll_480_ctrl) & PLL_USB_LOCK_MASK)) {
 
