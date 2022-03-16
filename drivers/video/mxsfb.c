@@ -26,6 +26,7 @@
 #include <panel.h>
 #include <video_bridge.h>
 #include <video_link.h>
+#include <display.h>
 
 #include "videomodes.h"
 #include <dm/device-internal.h>
@@ -356,6 +357,16 @@ static int mxs_video_probe(struct udevice *dev)
 	}
 
 	if (priv->disp_dev) {
+#if IS_ENABLED(CONFIG_DISPLAY)
+		if (device_get_uclass_id(priv->disp_dev) == UCLASS_DISPLAY) {
+			ret = display_enable(priv->disp_dev, bpp, &timings);
+			if (ret) {
+				dev_err(dev, "fail to enable display\n");
+				return ret;
+			}
+		}
+#endif
+
 #if IS_ENABLED(CONFIG_VIDEO_BRIDGE)
 		if (device_get_uclass_id(priv->disp_dev) == UCLASS_VIDEO_BRIDGE) {
 			ret = video_bridge_attach(priv->disp_dev);
@@ -378,7 +389,6 @@ static int mxs_video_probe(struct udevice *dev)
 
 		}
 #endif
-
 		if (device_get_uclass_id(priv->disp_dev) == UCLASS_PANEL) {
 			ret = panel_enable_backlight(priv->disp_dev);
 			if (ret) {
