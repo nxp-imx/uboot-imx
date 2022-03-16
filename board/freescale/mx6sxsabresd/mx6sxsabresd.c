@@ -661,16 +661,16 @@ static iomux_v3_cfg_t const lcd_pads[] = {
 	MX6_PAD_SD1_DATA2__GPIO6_IO_4 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
-void do_enable_lvds(struct display_info_t const *dev)
+void setup_lvds(void)
 {
 	int ret;
 
-	ret = enable_lcdif_clock(dev->bus, 1);
+	ret = enable_lcdif_clock(LCDIF2_BASE_ADDR, 1);
 	if (ret) {
 		printf("Enable LCDIF clock failed, %d\n", ret);
 		return;
 	}
-	ret = enable_lvds_bridge(dev->bus);
+	ret = enable_lvds_clock(LCDIF2_BASE_ADDR);
 	if (ret) {
 		printf("Enable LVDS bridge failed, %d\n", ret);
 		return;
@@ -688,12 +688,11 @@ void do_enable_lvds(struct display_info_t const *dev)
 	gpio_direction_output(IMX_GPIO_NR(6, 3) , 1);
 }
 
-void do_enable_parallel_lcd(struct display_info_t const *dev)
-
+void setup_lcd(void)
 {
 	int ret;
 
-	ret = enable_lcdif_clock(dev->bus, 1);
+	ret = enable_lcdif_clock(MX6SX_LCDIF1_BASE_ADDR, 1);
 	if (ret) {
 		printf("Enable LCDIF clock failed, %d\n", ret);
 		return;
@@ -711,47 +710,6 @@ void do_enable_parallel_lcd(struct display_info_t const *dev)
 	gpio_request(IMX_GPIO_NR(6, 4), "lcd_bright");
 	gpio_direction_output(IMX_GPIO_NR(6, 4) , 1);
 }
-
-struct display_info_t const displays[] = {{
-	.bus = LCDIF2_BASE_ADDR,
-	.addr = 0,
-	.pixfmt = 18,
-	.detect = NULL,
-	.enable	= do_enable_lvds,
-	.mode	= {
-		.name			= "Hannstar-XGA",
-		.xres           = 1024,
-		.yres           = 768,
-		.pixclock       = 15385,
-		.left_margin    = 220,
-		.right_margin   = 40,
-		.upper_margin   = 21,
-		.lower_margin   = 7,
-		.hsync_len      = 60,
-		.vsync_len      = 10,
-		.sync           = 0,
-		.vmode          = FB_VMODE_NONINTERLACED
-} }, {
-	.bus = MX6SX_LCDIF1_BASE_ADDR,
-	.addr = 0,
-	.pixfmt = 24,
-	.detect = NULL,
-	.enable	= do_enable_parallel_lcd,
-	.mode	= {
-		.name			= "MCIMX28LCD",
-		.xres           = 800,
-		.yres           = 480,
-		.pixclock       = 29850,
-		.left_margin    = 89,
-		.right_margin   = 164,
-		.upper_margin   = 23,
-		.lower_margin   = 10,
-		.hsync_len      = 10,
-		.vsync_len      = 10,
-		.sync           = 0,
-		.vmode          = FB_VMODE_NONINTERLACED
-} } };
-size_t display_count = ARRAY_SIZE(displays);
 #endif
 
 int board_init(void)
@@ -790,6 +748,11 @@ int board_init(void)
 	/* Also used for OF_CONTROL enabled */
 #ifdef CONFIG_FEC_MXC
 	setup_fec();
+#endif
+
+#ifdef CONFIG_VIDEO_MXS
+	setup_lvds();
+	setup_lcd();
 #endif
 
 	return 0;

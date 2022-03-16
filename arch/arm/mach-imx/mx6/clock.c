@@ -654,7 +654,8 @@ void mxs_set_lcdclk(u32 base_addr, u32 freq)
 	if (is_mx6sx()) {
 		reg = readl(&imx_ccm->cscdr2);
 		/* Can't change clocks when clock not from pre-mux */
-		if ((reg & MXC_CCM_CSCDR2_LCDIF2_CLK_SEL_MASK) != 0)
+		if ((base_addr == LCDIF2_BASE_ADDR) &&
+			(reg & MXC_CCM_CSCDR2_LCDIF2_CLK_SEL_MASK) != 0)
 			return;
 	}
 
@@ -859,10 +860,9 @@ int enable_lcdif_clock(u32 base_addr, bool enable)
 	return 0;
 }
 
-int enable_lvds_bridge(u32 lcd_base_addr)
+int enable_lvds_clock(u32 lcd_base_addr)
 {
 	u32 reg = 0;
-	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
 
 	if (is_cpu_type(MXC_CPU_MX6SX)) {
 		if ((lcd_base_addr != LCDIF1_BASE_ADDR) &&
@@ -900,20 +900,6 @@ int enable_lvds_bridge(u32 lcd_base_addr)
 		reg |= (0x3 << MXC_CCM_CSCDR2_LCDIF2_CLK_SEL_OFFSET);
 	}
 	writel(reg, &imx_ccm->cscdr2);
-
-	reg = IOMUXC_GPR2_DI0_VS_POLARITY_ACTIVE_LOW
-		| IOMUXC_GPR2_BIT_MAPPING_CH0_SPWG
-		| IOMUXC_GPR2_DATA_WIDTH_CH0_18BIT
-		| IOMUXC_GPR2_LVDS_CH0_MODE_ENABLED_DI0;
-	writel(reg, &iomux->gpr[6]);
-
-	reg = readl(&iomux->gpr[5]);
-	if (lcd_base_addr == LCDIF1_BASE_ADDR)
-		reg &= ~0x8;  /* MUX LVDS to LCDIF1 */
-	else
-		reg |= 0x8; /* MUX LVDS to LCDIF2 */
-	writel(reg, &iomux->gpr[5]);
-
 	return 0;
 }
 

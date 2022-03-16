@@ -86,7 +86,7 @@
 	"tee_file=uTee-6sxsdb\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
-	"panel=Hannstar-XGA\0" \
+	"splashimage=0x8c000000\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
@@ -193,14 +193,6 @@
 #ifdef CONFIG_CMD_PCI
 #define CONFIG_PCI_SCAN_SHOW
 #define CONFIG_PCIE_IMX
-#endif
-
-#ifndef CONFIG_SPL_BUILD
-#ifdef CONFIG_DM_VIDEO
-#define CONFIG_IMX_VIDEO_SKIP
-#define CONFIG_SYS_CONSOLE_BG_COL            0x00
-#define CONFIG_SYS_CONSOLE_FG_COL            0xa0
-#endif
 #endif
 
 #define CONFIG_SYS_FSL_USDHC_NUM	3

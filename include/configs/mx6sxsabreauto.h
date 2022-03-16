@@ -66,7 +66,7 @@
 	CONFIG_MFG_ENV_SETTINGS \
 	TEE_ENV \
 	"tee_addr=0x84000000\0" \
-	"panel=Hannstar-XGA\0" \
+	"splashimage=0x8c000000\0" \
 	"fdt_addr=0x83000000\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"console=ttymxc0\0" \
@@ -99,7 +99,7 @@
 	"tee_file=uTee-6sxauto\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
-	"panel=Hannstar-XGA\0" \
+	"splashimage=0x8c000000\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
@@ -213,12 +213,6 @@
 #ifndef CONFIG_DM_PCA953X
 #define CONFIG_PCA953X
 #define CONFIG_SYS_I2C_PCA953X_WIDTH	{ {0x30, 8}, {0x32, 8}, {0x34, 8} }
-#endif
-
-#ifdef CONFIG_DM_VIDEO
-#define CONFIG_IMX_VIDEO_SKIP
-#define CONFIG_SYS_CONSOLE_BG_COL            0x00
-#define CONFIG_SYS_CONSOLE_FG_COL            0xa0
 #endif
 
 #endif				/* __CONFIG_H */

@@ -260,13 +260,13 @@ static iomux_v3_cfg_t const lcd_pads[] = {
 	MX6_PAD_LCD1_RESET__GPIO3_IO_27 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
-void do_enable_lvds(struct display_info_t const *dev)
+void setup_lvds(void)
 {
 	struct gpio_desc desc;
 	int ret;
 
-	enable_lcdif_clock(dev->bus, 1);
-	enable_lvds_bridge(dev->bus);
+	enable_lcdif_clock(LCDIF2_BASE_ADDR, 1);
+	enable_lvds_clock(LCDIF2_BASE_ADDR);
 
 	imx_iomux_v3_setup_multiple_pads(lvds_ctrl_pads,
 							ARRAY_SIZE(lvds_ctrl_pads));
@@ -295,12 +295,12 @@ void do_enable_lvds(struct display_info_t const *dev)
 	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
 }
 
-void do_enable_parallel_lcd(struct display_info_t const *dev)
+void setup_lcd(void)
 {
 	struct gpio_desc desc;
 	int ret;
 
-	enable_lcdif_clock(dev->bus, 1);
+	enable_lcdif_clock(MX6SX_LCDIF1_BASE_ADDR, 1);
 
 	imx_iomux_v3_setup_multiple_pads(lcd_pads, ARRAY_SIZE(lcd_pads));
 
@@ -315,47 +315,6 @@ void do_enable_parallel_lcd(struct display_info_t const *dev)
 
 	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
 }
-
-struct display_info_t const displays[] = {{
-	.bus = LCDIF2_BASE_ADDR,
-	.addr = 0,
-	.pixfmt = 18,
-	.detect = NULL,
-	.enable	= do_enable_lvds,
-	.mode	= {
-		.name			= "Hannstar-XGA",
-		.xres           = 1024,
-		.yres           = 768,
-		.pixclock       = 15385,
-		.left_margin    = 220,
-		.right_margin   = 40,
-		.upper_margin   = 21,
-		.lower_margin   = 7,
-		.hsync_len      = 60,
-		.vsync_len      = 10,
-		.sync           = 0,
-		.vmode          = FB_VMODE_NONINTERLACED
-} }, {
-	.bus = MX6SX_LCDIF1_BASE_ADDR,
-	.addr = 0,
-	.pixfmt = 18,
-	.detect = NULL,
-	.enable	= do_enable_parallel_lcd,
-	.mode	= {
-		.name			= "Boundary-LCD",
-		.xres           = 800,
-		.yres           = 480,
-		.pixclock       = 29850,
-		.left_margin    = 89,
-		.right_margin   = 164,
-		.upper_margin   = 23,
-		.lower_margin   = 10,
-		.hsync_len      = 10,
-		.vsync_len      = 10,
-		.sync           = 0,
-		.vmode          = FB_VMODE_NONINTERLACED
-} } };
-size_t display_count = ARRAY_SIZE(displays);
 #endif
 
 #ifdef CONFIG_FSL_QSPI
@@ -455,6 +414,10 @@ int board_init(void)
 	setup_fec();
 #endif
 
+#ifdef CONFIG_VIDEO_MXS
+	setup_lvds();
+	setup_lcd();
+#endif
 	return 0;
 }
 
