@@ -64,7 +64,7 @@
 	CFG_MFG_ENV_SETTINGS \
 	TEE_ENV \
 	"tee_addr=0x84000000\0" \
-	"panel=Hannstar-XGA\0" \
+	"splashimage=0x8c000000\0" \
 	"fdt_addr=0x83000000\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"console=ttymxc0\0" \
@@ -97,7 +97,7 @@
 	"tee_file=uTee-6sxauto\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
-	"panel=Hannstar-XGA\0" \
+	"splashimage=0x8c000000\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
 	"mmcroot=/dev/mmcblk2p2 rootwait rw\0" \

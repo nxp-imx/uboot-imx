@@ -77,7 +77,7 @@ void disable_ipu_clock(void);
 int enable_fec_anatop_clock(int fec_id, enum enet_freq freq);
 void enable_enet_clk(unsigned char enable);
 int enable_lcdif_clock(u32 base_addr, bool enable);
-int enable_lvds_bridge(u32 lcd_base_addr);
+int enable_lvds_clock(u32 lcd_base_addr);
 void enable_qspi_clk(int qspi_num);
 void enable_thermal_clk(void);
 void enable_epdc_clock(void);
