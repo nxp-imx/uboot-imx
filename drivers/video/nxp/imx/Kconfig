@@ -14,6 +14,17 @@ config VIDEO_IMXDPUV1
 	help
 	  Support for IMXDPU V1 display controller for i.MX8 processors.
 
+config VIDEO_IMX6SX_LVDS
+	bool "i.MX6SX LDVS bridge support"
+	default n
+	depends on MX6SX && DM_VIDEO
+	select DISPLAY
+	select VIDEO_LINK
+	select REGMAP
+	select SYSCON
+	help
+	  Support for LDVS bridge controller on i.MX6SX processors.
+
 config VIDEO_IMX8_LVDS
 	bool "i.MX8 LDVS bridge support"
 	default n
