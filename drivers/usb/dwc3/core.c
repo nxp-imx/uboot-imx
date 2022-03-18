@@ -465,7 +465,6 @@ static void dwc3_phy_setup(struct dwc3 *dwc)
 /* set global incr burst type configuration registers */
 static void dwc3_set_incr_burst_type(struct dwc3 *dwc)
 {
-	struct udevice *dev = dwc->dev;
 	u32 cfg;
 
 	if (!dwc->incrx_size)
@@ -502,7 +501,7 @@ static void dwc3_set_incr_burst_type(struct dwc3 *dwc)
 	case 1:
 		break;
 	default:
-		dev_err(dev, "Invalid property\n");
+		dev_err(dwc->dev, "Invalid property\n");
 		break;
 	}
 
@@ -927,6 +926,7 @@ void dwc3_uboot_exit(int index)
 		dwc3_core_exit_mode(dwc);
 		dwc3_event_buffers_cleanup(dwc);
 		dwc3_free_event_buffers(dwc);
+		dwc3_core_stop(dwc);
 		dwc3_core_exit(dwc);
 		list_del(&dwc->list);
 		kfree(dwc->mem);
