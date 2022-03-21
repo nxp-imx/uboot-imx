@@ -1039,6 +1039,16 @@ static int esdhc_init_common(struct fsl_esdhc_priv *priv, struct mmc *mmc)
 	/* Set timout to the maximum value */
 	esdhc_clrsetbits32(&regs->sysctl, SYSCTL_TIMEOUT_MASK, 14 << 16);
 
+	/* Set INITA to send 80 clocks after power stable */
+	esdhc_setbits32(&regs->sysctl, SYSCTL_INITA);
+
+	/* Wait until 74 clocks completed */
+	start = get_timer(0);
+	while ((esdhc_read32(&regs->sysctl) & SYSCTL_INITA)) {
+		if (get_timer(start) > 1000)
+			return -ETIMEDOUT;
+	}
+
 	return 0;
 }
 
@@ -1567,7 +1577,7 @@ static int fsl_esdhc_probe(struct udevice *dev)
 
 	upriv->mmc = mmc;
 
-	return esdhc_init_common(priv, mmc);
+	return 0;
 }
 
 static int fsl_esdhc_get_cd(struct udevice *dev)
@@ -1635,6 +1645,14 @@ static int fsl_esdhc_wait_dat0(struct udevice *dev, int state,
 	return ret;
 }
 
+static int fsl_esdhc_reinit(struct udevice *dev)
+{
+	struct fsl_esdhc_plat *plat = dev_get_plat(dev);
+	struct fsl_esdhc_priv *priv = dev_get_priv(dev);
+
+	return esdhc_init_common(priv, &plat->mmc);
+}
+
 static const struct dm_mmc_ops fsl_esdhc_ops = {
 	.get_cd		= fsl_esdhc_get_cd,
 	.send_cmd	= fsl_esdhc_send_cmd,
@@ -1646,6 +1664,7 @@ static const struct dm_mmc_ops fsl_esdhc_ops = {
 	.set_enhanced_strobe = fsl_esdhc_set_enhanced_strobe,
 #endif
 	.wait_dat0 = fsl_esdhc_wait_dat0,
+	.reinit = fsl_esdhc_reinit,
 };
 
 static struct esdhc_soc_data usdhc_imx7d_data = {
