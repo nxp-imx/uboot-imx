@@ -1171,11 +1171,11 @@ extern struct imx_sec_config_fuse_t const imx_sec_config_fuse;
 bool hab_is_enabled(void)
 {
 #ifdef CONFIG_ARCH_IMX8
-	sc_err_t err;
+	int err;
 	uint16_t lc;
 
 	err = sc_seco_chip_info(-1, &lc, NULL, NULL, NULL);
-	if (err != SC_ERR_NONE) {
+	if (err) {
 		printf("Error in get lifecycle\n");
 		return false;
 	}

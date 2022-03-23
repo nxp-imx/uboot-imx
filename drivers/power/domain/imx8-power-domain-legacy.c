@@ -103,7 +103,6 @@ static int imx8_power_domain_on(struct power_domain *power_domain)
 	struct udevice *dev = power_domain->dev;
 	struct imx8_power_domain_plat *pdata;
 	struct imx8_power_domain_priv *ppriv;
-	sc_err_t ret;
 	int err;
 
 	struct power_domain parent_domain;
@@ -136,11 +135,11 @@ static int imx8_power_domain_on(struct power_domain *power_domain)
 #endif
 		}
 
-		ret = sc_pm_set_resource_power_mode(-1, pdata->resource_id,
+		err = sc_pm_set_resource_power_mode(-1, pdata->resource_id,
 						    SC_PM_PW_MODE_ON);
-		if (ret) {
+		if (err) {
 			printf("Error: %s Power up failed! (error = %d)\n",
-			       dev->name, ret);
+			       dev->name, err);
 			return -EIO;
 		}
 	}
@@ -158,7 +157,7 @@ static int imx8_power_domain_off_node(struct power_domain *power_domain)
 	struct imx8_power_domain_priv *ppriv;
 	struct imx8_power_domain_priv *child_ppriv;
 	struct imx8_power_domain_plat *pdata;
-	sc_err_t ret;
+	int ret;
 
 	ppriv = dev_get_priv(dev);
 	pdata = dev_get_plat(dev);
@@ -209,7 +208,7 @@ static int imx8_power_domain_off_parentnodes(struct power_domain *power_domain)
 	struct imx8_power_domain_priv *ppriv;
 	struct imx8_power_domain_priv *child_ppriv;
 	struct imx8_power_domain_plat *pdata;
-	sc_err_t ret;
+	int ret;
 	struct power_domain parent_pd;
 
 	if (device_get_uclass_id(parent) == UCLASS_POWER_DOMAIN) {
