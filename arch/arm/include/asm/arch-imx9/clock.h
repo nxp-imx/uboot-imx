@@ -212,6 +212,9 @@ u32 get_lpuart_clk(void);
 void init_uart_clk(u32 index);
 void init_clk_usdhc(u32 index);
 u32 mxc_get_clock(enum mxc_clock clk);
+void dram_pll_init(ulong pll_val);
+void dram_enable_bypass(ulong clk_val);
+void dram_disable_bypass(void);
 
 int ccm_clk_src_on(enum ccm_clk_src oscpll, bool enable);
 int ccm_clk_src_auto(enum ccm_clk_src oscpll, bool enable);
