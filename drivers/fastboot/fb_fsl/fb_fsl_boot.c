@@ -579,7 +579,7 @@ end:
 
 #if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
 /* we can use avb to verify Trusty if we want */
-const char *requested_partitions_boot[] = {"boot", "dtbo", "vendor_boot", NULL};
+const char *requested_partitions_boot[] = {"boot", "dtbo", "vendor_boot", "init_boot", NULL};
 const char *requested_partitions_recovery[] = {"recovery", NULL};
 
 static int get_boot_header_version(void)
@@ -652,18 +652,21 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 	int boot_header_version = 0;
 	bool check_image_arm64 =  false;
 	bool is_recovery_mode = false;
+	bool with_init_boot = false;
 
 	/* 'hdr' should point to boot.img */
 	struct andr_img_hdr *hdr = NULL;
 	struct boot_img_hdr_v3 *hdr_v3 = NULL;
 	struct vendor_boot_img_hdr_v3 *vendor_boot_hdr_v3 = NULL;
 	struct boot_img_hdr_v4 *hdr_v4 = NULL;
+	struct boot_img_hdr_v4 *init_boot_hdr_v4 = NULL;
 	struct vendor_boot_img_hdr_v4 *vendor_boot_hdr_v4 = NULL;
 
 	AvbABFlowResult avb_result;
 	AvbSlotVerifyData *avb_out_data = NULL;
 	AvbPartitionData *avb_loadpart = NULL;
 	AvbPartitionData *avb_vendorboot = NULL;
+	AvbPartitionData *avb_initboot = NULL;
 
 	/* get bootmode, default to boot "boot" */
 	if (argc > 1) {
@@ -693,6 +696,12 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 		goto fail;
 	} else if (boot_header_version < 3) {
 		requested_partitions_boot[2] = NULL;
+	} else if (boot_header_version == 4) {
+		if (fastboot_flash_find_ptn("init_boot_a") == NULL) {
+			with_init_boot = false;
+			requested_partitions_boot[3] = NULL;
+		} else
+			with_init_boot = true;
 	}
 
 	/* For imx6 on Android, we don't have a/b slot and we want to verify boot/recovery with AVB.
@@ -739,6 +748,9 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 		if ((boot_header_version >= 3) &&
 			find_partition_data_by_name("vendor_boot", avb_out_data, &avb_vendorboot))
 			goto fail;
+		if (with_init_boot &&
+			find_partition_data_by_name("init_boot", avb_out_data, &avb_initboot))
+			goto fail;
 #else
 		if (is_recovery_mode) {
 			if (find_partition_data_by_name("recovery", avb_out_data, &avb_loadpart))
@@ -756,6 +768,8 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 			assert(avb_vendorboot != NULL);
 			hdr_v4 = (struct boot_img_hdr_v4 *)avb_loadpart->data;
 			vendor_boot_hdr_v4 = (struct vendor_boot_img_hdr_v4 *)avb_vendorboot->data;
+			if (avb_initboot)
+				init_boot_hdr_v4 = (struct boot_img_hdr_v4 *)avb_initboot->data;
 			/* check the header magic, same for boot header v3 and v4 */
 			if (android_image_check_header_v3(hdr_v4->magic, vendor_boot_hdr_v4->magic)) {
 				printf("boota: bad boot/vendor_boot image magic\n");
@@ -983,10 +997,18 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 		memcpy((void *)ramdisk_addr, (void *)(ulong)vendor_boot_hdr_v4 +
 			ALIGN(sizeof(struct vendor_boot_img_hdr_v4), vendor_boot_hdr_v4->page_size),
 			vendor_boot_hdr_v4->vendor_ramdisk_size);
-		memcpy((void *)ramdisk_addr + vendor_boot_hdr_v4->vendor_ramdisk_size,
-			(void *)(ulong)hdr_v4 + 4096 + ALIGN(hdr_v4->kernel_size, 4096),
-			hdr_v4->ramdisk_size);
-		ramdisk_size = vendor_boot_hdr_v4->vendor_ramdisk_size + hdr_v4->ramdisk_size;
+
+		if (with_init_boot) {
+			memcpy((void *)ramdisk_addr + vendor_boot_hdr_v4->vendor_ramdisk_size,
+				(void *)(ulong)init_boot_hdr_v4 + 4096 + ALIGN(init_boot_hdr_v4->kernel_size, 4096),
+				init_boot_hdr_v4->ramdisk_size);
+			ramdisk_size = vendor_boot_hdr_v4->vendor_ramdisk_size + init_boot_hdr_v4->ramdisk_size;
+		} else {
+			memcpy((void *)ramdisk_addr + vendor_boot_hdr_v4->vendor_ramdisk_size,
+				(void *)(ulong)hdr_v4 + 4096 + ALIGN(hdr_v4->kernel_size, 4096),
+				hdr_v4->ramdisk_size);
+			ramdisk_size = vendor_boot_hdr_v4->vendor_ramdisk_size + hdr_v4->ramdisk_size;
+		}
 
 		/* append build time bootconfig */
 		void *bootconfig_addr = (void *)(ulong)vendor_boot_hdr_v4 +
