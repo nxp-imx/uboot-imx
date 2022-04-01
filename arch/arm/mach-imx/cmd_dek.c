@@ -101,6 +101,7 @@ static int blob_encap_dek(uint32_t src_addr, uint32_t dst_addr, uint32_t len)
 			       0x0, &shm_output);
 	if (ret < 0) {
 		printf("Cannot register output shared memory 0x%X\n", ret);
+		tee_shm_free(shm_input);
 		goto error;
 	}
 
@@ -122,11 +123,11 @@ static int blob_encap_dek(uint32_t src_addr, uint32_t dst_addr, uint32_t len)
 	if (ret < 0)
 		printf("Cannot generate Blob with PTA DEK Blob 0x%X\n", ret);
 
-error:
 	/* Free shared memory */
 	tee_shm_free(shm_input);
 	tee_shm_free(shm_output);
 
+error:
 	/* Close session */
 	ret = tee_close_session(dev, arg.session);
 	if (ret < 0)
