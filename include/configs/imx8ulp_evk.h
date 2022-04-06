@@ -80,6 +80,7 @@
 	"image=Image\0" \
 	"splashimage=0x90000000\0" \
 	"console=ttyLP1,115200 earlycon\0" \
+	"fdtoverlay_addr_r=0x83040000\0"			\
 	"fdt_addr_r=0x83000000\0"			\
 	"fdt_addr=0x83000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
