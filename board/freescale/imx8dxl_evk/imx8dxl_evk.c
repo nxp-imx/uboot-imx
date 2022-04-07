@@ -328,7 +328,7 @@ int board_late_init(void)
 
 	if (fdt_file && !strcmp(fdt_file, "undefined")) {
 #if defined(CONFIG_TARGET_IMX8DXL_DDR3_EVK)
-		env_set("fdt_file", "imx8dxl-ddr3-evk.dtb");
+		env_set("fdt_file", "imx8dxl-ddr3l-evk.dtb");
 #else
 		if (m4_booted)
 			env_set("fdt_file", "imx8dxl-evk-rpmsg.dtb");
