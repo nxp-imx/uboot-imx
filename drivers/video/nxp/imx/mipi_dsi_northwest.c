@@ -487,12 +487,18 @@ static int mipi_dsi_host_init(struct mipi_dsi_northwest_info *mipi_dsi)
 {
 	uint32_t lane_num;
 
+	if (mipi_dsi->device->lanes > mipi_dsi->max_data_lanes)
+		return -EINVAL;
+
 	switch (mipi_dsi->device->lanes) {
 	case 1:
 		lane_num = 0x0;
 		break;
 	case 2:
 		lane_num = 0x1;
+		break;
+	case 4:
+		lane_num = 0x3;
 		break;
 	default:
 		/* Invalid lane num */
