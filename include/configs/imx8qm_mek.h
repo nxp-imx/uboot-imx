@@ -146,6 +146,7 @@
 
 #ifdef CONFIG_TARGET_IMX8QM_MEK_A72_ONLY
 #define HDP_LOAD_ENV
+#define HDPRX_LOAD_ENV
 #define INITRD_ADDR_ENV "initrd_addr=0xC3100000\0"
 #else
 #define HDP_LOAD_ENV \
