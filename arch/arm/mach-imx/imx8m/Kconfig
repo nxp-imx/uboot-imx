@@ -58,7 +58,6 @@ config TARGET_IMX8MQ_CM
 
 config TARGET_IMX8MQ_EVK
 	bool "imx8mq_evk"
-	select BINMAN
 	select IMX8MQ
 	select IMX8M_LPDDR4
 	select FSL_CAAM
@@ -95,7 +94,6 @@ config TARGET_IMX8MM_DDR3L_VAL
 
 config TARGET_IMX8MM_EVK
 	bool "imx8mm LPDDR4 EVK board"
-	select BINMAN
 	select IMX8MM
 	select SUPPORT_SPL
 	select IMX8M_LPDDR4
@@ -182,7 +180,6 @@ config TARGET_IMX8MN_VENICE
 
 config TARGET_IMX8MP_EVK
 	bool "imx8mp LPDDR4 EVK board"
-	select BINMAN
 	select IMX8MP
 	select SUPPORT_SPL
 	select IMX8M_LPDDR4
