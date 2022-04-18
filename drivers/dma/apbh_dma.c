@@ -129,10 +129,10 @@ static int mxs_dma_enable(int channel)
 		return 0;
 	}
 
-	pdesc = list_first_entry(&pchan->active, struct mxs_dma_desc, node);
-	if (pdesc == NULL)
+	if (list_empty(&pchan->active))
 		return -EFAULT;
 
+	pdesc = list_first_entry(&pchan->active, struct mxs_dma_desc, node);
 	if (pchan->flags & MXS_DMA_FLAGS_BUSY) {
 		if (!(pdesc->cmd.data & MXS_DMA_DESC_CHAIN))
 			return 0;
@@ -577,6 +577,14 @@ void mxs_dma_init(void)
 {
 	struct mxs_apbh_regs *apbh_regs =
 		(struct mxs_apbh_regs *)MXS_APBH_BASE;
+
+	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+		if (check_module_fused(MODULE_APBHDMA)) {
+			printf("NAND APBH-DMA@0x%x is fused, disable it\n",
+				MXS_APBH_BASE);
+			return;
+		}
+	}
 
 	mxs_reset_block(&apbh_regs->hw_apbh_ctrl0_reg);
 

@@ -114,11 +114,28 @@ config USB_XHCI_BRCM
 	  USB controller based on the Broadcom USB3 IP Core.
 	  Supports USB2/3 functionality.
 
+config USB_XHCI_IMX8
+	bool "XHCI support for i.MX8"
+	depends on ARCH_IMX8
+	default y
+	help
+	  Enables support for the on-chip xHCI controller on i.MX8QM and
+	  i.MX8QXP SoCs.
+
+config USB_XHCI_IMX8M
+	bool "XHCI support for imx8M(mscale)"
+	depends on ARCH_IMX8M
+	select MISC if IMX8MP
+	default y
+	help
+	  Enables support for the on-chip xHCI controller on imx8m(mscale) SoC.
+
 endif # USB_XHCI_HCD
 
 config USB_EHCI_HCD
 	bool "EHCI HCD (USB 2.0) support"
 	default y if ARCH_MX5 || ARCH_MX6
+	default y if ARCH_MX5 || ARCH_MX6 || ARCH_IMX8
 	depends on DM && OF_CONTROL
 	select USB_HOST
 	---help---
@@ -164,8 +181,8 @@ config USB_EHCI_MX5
 	  Enables support for the on-chip EHCI controller on i.MX5 SoCs.
 
 config USB_EHCI_MX6
-	bool "Support for i.MX6/i.MX7ULP on-chip EHCI USB controller"
-	depends on ARCH_MX6 || ARCH_MX7ULP || ARCH_IMXRT
+	bool "Support for i.MX6/i.MX7ULP/i.MX8 on-chip EHCI USB controller"
+	depends on ARCH_MX6 || ARCH_MX7ULP || ARCH_IMXRT || ARCH_IMX8 || ARCH_IMX8ULP
 	default y
 	---help---
 	  Enables support for the on-chip EHCI controller on i.MX6 SoCs.

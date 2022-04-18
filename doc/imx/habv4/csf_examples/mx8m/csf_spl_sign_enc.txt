@@ -1,0 +1,47 @@
+[Header]
+    Version = 4.3
+    Hash Algorithm = sha256
+    Engine = CAAM
+    Engine Configuration = 0
+    Certificate Format = X509
+    Signature Format = CMS
+
+[Install SRK]
+    File = "../crts/SRK_1_2_3_4_table.bin"
+    Source index = 0
+
+[Install CSFK]
+    File = "../crts/CSF1_1_sha256_2048_65537_v3_usr_crt.pem"
+
+[Authenticate CSF]
+
+[Unlock]
+    Engine = CAAM
+    Features = MID
+
+[Install Key]
+    Verification index = 0
+    Target index = 2
+    File = "../crts/IMG1_1_sha256_2048_65537_v3_usr_crt.pem"
+
+[Authenticate Data]
+    Verification index = 2
+    Blocks = 0x7E0FC0 0x0 0x2C400 "flash-spl-enc.bin"
+
+[Install Secret Key]
+    # Install the blob
+    Verification Index = 0
+    Target Index = 0
+    Key = "dek_spl_dummy.bin"
+    Key Length = 128
+    # Authenticate Start Address +  Image length + CSF Padding
+    # 0x7E0FC0 + 0x2c400 + 0x2000
+    Blob Address = 0x80F3C0
+
+[Decrypt Data]
+    # The decrypt data command below causes CST to modify the input
+    # file and encrypt the specified block of data. This image file
+    # is a copy of the file used for the authentication command above
+    Verification Index = 0
+    Mac Bytes = 16
+    Blocks = 0x7E1000 0x40 0x2C3C0 "flash-spl-enc-dummy.bin"

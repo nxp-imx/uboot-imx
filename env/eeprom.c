@@ -67,7 +67,7 @@ static int eeprom_bus_write(unsigned dev_addr, unsigned offset,
 static int env_eeprom_load(void)
 {
 	char buf_env[CONFIG_ENV_SIZE];
-	unsigned int off = CONFIG_ENV_OFFSET;
+	unsigned int off = env_get_offset(CONFIG_ENV_OFFSET);
 
 #ifdef CONFIG_ENV_OFFSET_REDUND
 	ulong len, crc[2], crc_tmp;
@@ -77,7 +77,7 @@ static int env_eeprom_load(void)
 
 	eeprom_init(-1);	/* prepare for EEPROM read/write */
 
-	off_env[0] = CONFIG_ENV_OFFSET;
+	off_env[0] = env_get_offset(CONFIG_ENV_OFFSET);
 	off_env[1] = CONFIG_ENV_OFFSET_REDUND;
 
 	for (i = 0; i < 2; i++) {
@@ -139,7 +139,7 @@ static int env_eeprom_load(void)
 
 	/* read old CRC */
 	eeprom_bus_read(CONFIG_SYS_I2C_EEPROM_ADDR,
-			CONFIG_ENV_OFFSET + offsetof(env_t, crc),
+			env_get_offset(CONFIG_ENV_OFFSET) + offsetof(env_t, crc),
 			(uchar *)&crc, sizeof(ulong));
 
 	new = 0;
@@ -149,7 +149,7 @@ static int env_eeprom_load(void)
 		int n = (len > sizeof(rdbuf)) ? sizeof(rdbuf) : len;
 
 		eeprom_bus_read(CONFIG_SYS_I2C_EEPROM_ADDR,
-				CONFIG_ENV_OFFSET + off, rdbuf, n);
+				env_get_offset(CONFIG_ENV_OFFSET) + off, rdbuf, n);
 		new = crc32(new, rdbuf, n);
 		len -= n;
 		off += n;
@@ -162,7 +162,7 @@ static int env_eeprom_load(void)
 	}
 #endif /* CONFIG_ENV_OFFSET_REDUND */
 
-	off = CONFIG_ENV_OFFSET;
+	off = env_get_offset(CONFIG_ENV_OFFSET);
 #ifdef CONFIG_ENV_OFFSET_REDUND
 	if (gd->env_valid == ENV_REDUND)
 		off = CONFIG_ENV_OFFSET_REDUND;
@@ -178,7 +178,7 @@ static int env_eeprom_save(void)
 {
 	env_t	env_new;
 	int	rc;
-	unsigned int off	= CONFIG_ENV_OFFSET;
+	unsigned int off	= env_get_offset(CONFIG_ENV_OFFSET);
 #ifdef CONFIG_ENV_OFFSET_REDUND
 	unsigned int off_red	= CONFIG_ENV_OFFSET_REDUND;
 	char flag_obsolete	= ENV_REDUND_OBSOLETE;
@@ -191,7 +191,7 @@ static int env_eeprom_save(void)
 #ifdef CONFIG_ENV_OFFSET_REDUND
 	if (gd->env_valid == ENV_VALID) {
 		off	= CONFIG_ENV_OFFSET_REDUND;
-		off_red	= CONFIG_ENV_OFFSET;
+		off_red	= env_get_offset(CONFIG_ENV_OFFSET);
 	}
 
 	env_new.flags = ENV_REDUND_ACTIVE;

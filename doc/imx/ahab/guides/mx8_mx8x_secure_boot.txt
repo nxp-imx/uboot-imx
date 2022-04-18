@@ -1,0 +1,314 @@
+     +=========================================================+
+     +       i.MX 8, i.MX 8X Secure Boot guide using AHAB      +
+     +=========================================================+
+
+1. AHAB secure boot process
+----------------------------
+
+This document describes a step-by-step procedure on how to sign and
+securely boot a flash.bin image. It is assumed that the reader is
+familiar with basic AHAB concepts and with the PKI tree generation.
+
+It is also assumed that the reader is familiar with all pieces of software
+needed. The procedure to build SCFW, ATF and download the firmwares are out of
+scope of this document, please refer to the Linux BSP Release Notes and
+AN12212[1] for further details.
+
+Details about AHAB can be found in the introduction_ahab.txt document
+and in processors Security Reference Manual Document (SRM).
+
+1.1 Preparing the environment to build a secure boot image
+-----------------------------------------------------------
+
+Before continuing, be sure to have already downloaded and built the
+following:
+
+- imx-mkimage downloaded and built with i.MX 8 container support.
+- SECO firmware downloaded.
+- U-Boot downloaded and built. Please check section 1.2.
+- ARM Trusted Firmware (ATF) downloaded and built for your target.
+- System Controller Firmware (SCFW).
+- Kernel image.
+
+You should also have downloaded the Code Signing Tool, available on NXP
+website.
+
+In the following sections, <work> designates the repository where all
+parts have been downloaded and built.
+
+1.2 Preparing U-Boot to support AHAB secure boot features
+----------------------------------------------------------
+
+The U-Boot provides extra functions for AHAB, such as the ability to
+authenticate additional container images by calling the SCU API
+sc_misc_seco_authenticate() function.
+
+The support is enabled by adding CONFIG_AHAB_BOOT to the defconfig file used
+for your target:
+
+  - Defconfig:
+    CONFIG_AHAB_BOOT=y
+  - Kconfig:
+    ARM architecture -> Support i.MX 8 AHAB features
+
+1.3 Building an image supporting secure boot
+---------------------------------------------
+
+The boot image is composed of different layers:
+
+             +---------------------------+ <-- *start
+             |   1st Container header    |
+             |       and signature       |
+             +---------------------------+
+             | Padding for 1kB alignment |
+             +---------------------------+ <-- *start + 0x400
+             |   2nd Container header    |
+             |       and signature       |
+             +---------------------------+
+             |          Padding          |
+             +---------------------------+
+             |          SECO FW          |
+             +---------------------------+
+             |          Padding          |
+             +---------------------------+
+             |      SCU FW with DDR      |
+             |   initialization Image    |
+             |         embedded          |
+             +---------------------------+
+             |      Cortex-M4 Image      |
+             +---------------------------+
+             |    Cortex-A bootloader    |
+             +---------------------------+
+
+It contains two containers, one for the SECO firmware (AHAB), and one for
+the SCFW, the ATF, U-Boot and M4 Image. They are preceded by their headers.
+The first one, containing the SECO firmware image, is padded to 0x1000 to
+fix the start address of the second one, which can contain one or multiple
+images.
+
+If you are familiar with secure boot process with HABv4, you will notice
+there is no need for CSF in this architecture. The CST is responsible to
+handle the Signature block:
+
+             +----------------------------+  ^
+             |                            |  |
+             |                            |  |
+             |      Container header      |  |
+             |                            |  |
+             |                            |  |
+             +---+------------------------+  |
+             | S | Signature block header |  | Signed
+             | i +------------------------+  |
+             | g |                        |  |
+             | n |                        |  |
+             | a |        SRK table       |  |
+             | t |                        |  |
+             | u |                        |  |
+             | r +------------------------+  v
+             | e |       Signature        |
+             |   +------------------------+
+             | b |                        |
+             | l |        SGK Key         |
+             | o | Certificate (optional) |
+             | c |                        |
+             | k |                        |
+             +---+------------------------+
+
+The certificate block is divided into:
+
+                    +---------------+ ^
+                    |  Public key   | | Signed
+                    |  Permission   | |
+                    +---------------+ v
+                    |   Signature   |
+                    +---------------+
+
+The first block (public key permission) verify the Signature block
+preceding (between SRK table and Certificate blocks), while the second
+block (signature) is verified by the SRK table block.
+
+1.4 Prepare the boot image layout
+----------------------------------
+
+To generate the flash.bin file:
+
+- On i.MX 8 QXP:
+
+  $ cd <work>/imx-mkimage
+  $ make SOC=iMX8QX flash
+
+- On i.MX 8 QM:
+
+  $ cd <work>/imx-mkimage
+  $ make SOC=iMX8QM flash
+
+If the command ends successfully, the end of the result should look
+like:
+
+  CST: CONTAINER 0 offset: 0x400
+  CST: CONTAINER 0: Signature Block: offset is at 0x590
+  DONE.
+  Note: Please copy image to offset: IVT_OFFSET + IMAGE_OFFSET
+
+Keep in mind the offsets above to be used with CST/CSF.
+
+Please note that on this example we not including an Cortex-M4 Image, on
+i.MX8/8x MEK boards the SCU console may be replaced by the M4 console not
+being possible to run the steps documented in section "1.5.5 Verify SECO
+events".
+
+1.5 Secure boot setup with the CST
+-----------------------------------
+
+1.5.1 Creating the CSF description file for the second container
+-----------------------------------------------------------------
+
+The CSF contains all the commands that the AHAB executes during the secure
+boot. These commands instruct the AHAB on which memory areas of the image
+to authenticate, which keys to install, use and etc.
+
+CSF examples are available under doc/imx/hab/ahab/csf_examples/
+directory.
+
+This csf_boot_image.txt file example should be updated with the offset values
+of the 1.4 section and the path to your flash.bin file. It is the last part
+of the file:
+
+  [Authenticate Data]
+  # Binary to be signed generated by mkimage
+  File = "flash.bin"
+  # Offsets = Container header  Signature block (printed out by mkimage)
+  Offsets   = 0x400             0x590
+
+1.5.2 Signing the boot image
+-----------------------------
+
+Now you use the CST to generate the signed boot image from the previously
+created csf_boot_image.txt Commands Sequence File:
+
+  $ cd <work>
+  $ ./release/linux64/bin/cst -i csf_boot_image.txt -o flash.signed.bin
+
+1.5.3 Flash the signed image
+-----------------------------
+
+Write the signed U-Boot image:
+
+  $ sudo dd if=flash.signed.bin of=/dev/sdX bs=1k seek=32 ; sync
+
+Then insert the SD Card into the board and plug your device to your computer
+with an USB serial cable.
+
+1.5.4 Programming SRK Hash
+---------------------------
+
+As explained in introduction_ahab.txt document the SRK Hash fuse values are
+generated by the srktool and should be programmed in the SoC SRK_HASH[511:0]
+fuses.
+
+Be careful when programming these values, as this data is the basis for the
+root of trust. An error in SRK Hash results in a part that does not boot.
+
+The U-Boot fuse tool can be used for programming eFuses on i.MX SoCs.
+
+- Dump SRK Hash fuses values in host machine:
+
+  $ od -t x4 SRK_1_2_3_4_fuse.bin
+  0000000 d436cc46 8ecccda9 b89e1601 5fada3db
+  0000020 d454114a b6cd51f4 77384870 c50ee4b2
+  0000040 a27e5132 eba887cf 592c1e2b bb501799
+  0000060 ee702e07 cf8ce73e fb55e2d5 eba6bbd2
+
+- Program SRK_HASH[511:0] fuses:
+
+  * On i.MX 8 QXP:
+
+  => fuse prog 0 730 0xd436cc46
+  => fuse prog 0 731 0x8ecccda9
+  => fuse prog 0 732 0xb89e1601
+  => fuse prog 0 733 0x5fada3db
+  => fuse prog 0 734 0xd454114a
+  => fuse prog 0 735 0xb6cd51f4
+  => fuse prog 0 736 0x77384870
+  => fuse prog 0 737 0xc50ee4b2
+  => fuse prog 0 738 0xa27e5132
+  => fuse prog 0 739 0xeba887cf
+  => fuse prog 0 740 0x592c1e2b
+  => fuse prog 0 741 0xbb501799
+  => fuse prog 0 742 0xee702e07
+  => fuse prog 0 743 0xcf8ce73e
+  => fuse prog 0 744 0xfb55e2d5
+  => fuse prog 0 745 0xeba6bbd2
+
+  * On i.MX 8 QM:
+
+  => fuse prog 0 722 0xd436cc46
+  => fuse prog 0 723 0x8ecccda9
+  => fuse prog 0 724 0xb89e1601
+  => fuse prog 0 725 0x5fada3db
+  => fuse prog 0 726 0xd454114a
+  => fuse prog 0 727 0xb6cd51f4
+  => fuse prog 0 728 0x77384870
+  => fuse prog 0 729 0xc50ee4b2
+  => fuse prog 0 730 0xa27e5132
+  => fuse prog 0 731 0xeba887cf
+  => fuse prog 0 732 0x592c1e2b
+  => fuse prog 0 733 0xbb501799
+  => fuse prog 0 734 0xee702e07
+  => fuse prog 0 735 0xcf8ce73e
+  => fuse prog 0 736 0xfb55e2d5
+  => fuse prog 0 737 0xeba6bbd2
+
+1.5.5 Verify SECO events
+-------------------------
+
+If the fuses have been written properly, there should be no SECO events after
+boot. To validate this, power on the board, and run ahab_status command on
+U-Boot terminal.
+
+No events should be returned after this command:
+
+  => ahab_status
+  Lifecycle: 0x0020, NXP closed
+
+  No SECO Events Found!
+
+U-Boot will decode the SECO events and provide more details on the failure,
+for example in case container is not signed (signature is missing), but the
+device is not OEM closed:
+
+  => ahab_status
+  Lifecycle: 0x0020, NXP closed
+
+  SECO Event[0] = 0x0087EE00
+          CMD = AHAB_AUTH_CONTAINER_REQ (0x87)
+          IND = AHAB_NO_AUTHENTICATION_IND (0xEE)
+
+Note: In case the signature is incorrect (signed with wrong keys which are not
+matching the OTP SRK hashes) the event 0x0087FA00 is also displayed.
+
+1.5.6 Close the device
+-----------------------
+
+After the device successfully boots a signed image without generating any
+SECO security events, it is safe to close the device. The SECO lifecycle
+should be changed from 0x20 NXP closed to 0x80 OEM closed. Be aware this
+step can damage your board if a previous step failed. It is also
+irreversible. Run on the U-Boot terminal:
+
+  => ahab_close
+
+Now reboot the target, and run:
+
+  => ahab_status
+
+The lifecycle value should now be 0x80 OEM closed.
+
+2. Authenticating the OS container
+-----------------------------------
+
+The procedure for authenticating the OS container can be found in
+doc/imx/ahab/guides/sign_os_cntr.txt file.
+
+References:
+[1] AN12212: "Software Solutions for Migration Guide from Aarch32 to Aarch64"

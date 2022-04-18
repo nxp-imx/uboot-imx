@@ -31,7 +31,7 @@
 		reg = <0x60000000 0x40000000>;
 	};
 
-	backlight {
+	backlight: backlight {
 		compatible = "gpio-backlight";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_backlight>;
@@ -45,6 +45,25 @@
 		reset-gpios = <&gpio0 19 GPIO_ACTIVE_LOW>;
 		reset-delay-us = <1000>;
 		#reset-cells = <0>;
+	};
+
+	dsi_host: dsi-host {
+		compatible = "northwest,mipi-dsi";
+		status = "okay";
+	};
+
+	hx8394f_panel {
+		compatible = "rocktech,hx8394f";
+		himax,dsi-lanes = <2>;
+		reset-gpios = <&gpio0 19 GPIO_ACTIVE_LOW>;
+		backlight = <&backlight>;
+		status = "okay";
+
+		port {
+			hx8394f_from_dsim: endpoint {
+				remote-endpoint = <&dsim_to_hx8394f>;
+			};
+		};
 	};
 
 	regulators {
@@ -240,7 +259,7 @@
 				IMX7ULP_PAD_PTF16__LPSPI3_SIN	0x0
 				IMX7ULP_PAD_PTF17__LPSPI3_SOUT	0x0
 				IMX7ULP_PAD_PTF18__LPSPI3_SCK	0x0
-				IMX7ULP_PAD_PTF19__LPSPI3_PCS0	0x0
+				IMX7ULP_PAD_PTF19__PTF19	0x0
 			>;
 		};
 
@@ -285,32 +304,21 @@
 };
 
 &lcdif {
+	#address-cells = <1>;
+	#size-cells = <0>;
 	status = "okay";
-	disp-dev = "mipi_dsi_northwest";
 	display = <&display0>;
 
 	display0: display@0 {
-		bits-per-pixel = <16>;
+		bits-per-pixel = <24>;
 		bus-width = <24>;
+	};
 
-		display-timings {
-			native-mode = <&timing0>;
-			timing0: timing0 {
-			clock-frequency = <9200000>;
-			hactive = <480>;
-			vactive = <272>;
-			hfront-porch = <8>;
-			hback-porch = <4>;
-			hsync-len = <41>;
-			vback-porch = <2>;
-			vfront-porch = <4>;
-			vsync-len = <10>;
+	lcdif_disp0: port@0 {
+		reg = <0>;
 
-			hsync-active = <0>;
-			vsync-active = <0>;
-			de-active = <1>;
-			pixelclk-active = <0>;
-			};
+		lcdif_to_dsim: endpoint {
+			remote-endpoint = <&dsim_from_lcdif>;
 		};
 	};
 };
@@ -335,21 +343,31 @@
 	#size-cells = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_lpspi3>;
+	cs-gpios = <&gpio3 19 GPIO_ACTIVE_LOW>, <0>, <0>, <0>;
+	spi-max-frequency = <1000000>;
 	status = "okay";
-
-	spidev0: spi@0 {
-		reg = <0>;
-		compatible = "rohm,dh2228fv";
-		spi-max-frequency = <1000000>;
-	};
 };
 
 &mipi_dsi {
+	#address-cells = <1>;
+	#size-cells = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_mipi_dsi_reset>;
 	lcd_panel = "TRULY-WVGA-TFT3P5581E";
 	resets = <&mipi_dsi_reset>;
 	status = "okay";
+
+	port@0 {
+		dsim_from_lcdif: endpoint {
+			remote-endpoint = <&lcdif_to_dsim>;
+		};
+	};
+
+	port@1 {
+		dsim_to_hx8394f: endpoint {
+			remote-endpoint = <&hx8394f_from_dsim>;
+		};
+	};
 };
 
 &lpuart4 { /* console */

@@ -20,6 +20,7 @@ obj-$(CONFIG_SIMPLE_PANEL) += simple_panel.o
 
 obj-$(CONFIG_VIDEO_LOGO) += u_boot_logo.o
 
+obj-$(CONFIG_VIDEO_LINK) += video_link.o
 endif
 
 obj-${CONFIG_EXYNOS_FB} += exynos/
@@ -52,17 +53,20 @@ obj-$(CONFIG_VIDEO_DW_HDMI) += dw_hdmi.o
 obj-$(CONFIG_VIDEO_DW_MIPI_DSI) += dw_mipi_dsi.o
 obj-$(CONFIG_VIDEO_EFI) += efi.o
 obj-$(CONFIG_VIDEO_FSL_DCU_FB) += fsl_dcu_fb.o videomodes.o
-obj-$(CONFIG_VIDEO_IPUV3) += imx/
 obj-$(CONFIG_VIDEO_IVYBRIDGE_IGD) += ivybridge_igd.o
 obj-$(CONFIG_VIDEO_LCD_ANX9804) += anx9804.o
 obj-$(CONFIG_VIDEO_LCD_HITACHI_TX18D42VM) += hitachi_tx18d42vm_lcd.o
 obj-$(CONFIG_VIDEO_LCD_ORISETECH_OTM8009A) += orisetech_otm8009a.o
 obj-$(CONFIG_VIDEO_LCD_RAYDIUM_RM68200) += raydium-rm68200.o
+obj-$(CONFIG_VIDEO_LCD_RAYDIUM_RM67191) += raydium-rm67191.o
+obj-$(CONFIG_VIDEO_LCD_ROCKTECH_HIMAX8394F) += rocktech-hx8394f.o
 obj-$(CONFIG_VIDEO_LCD_SSD2828) += ssd2828.o
 obj-$(CONFIG_VIDEO_LCD_TDO_TL070WSH30) += tdo-tl070wsh30.o
 obj-$(CONFIG_VIDEO_MCDE_SIMPLE) += mcde_simple.o
+obj-$(CONFIG_VIDEO_ADV7535) += adv7535.o
 obj-${CONFIG_VIDEO_MESON} += meson/
 obj-${CONFIG_VIDEO_MIPI_DSI} += mipi_dsi.o
+obj-$(CONFIG_VIDEO_IT6263_BRIDGE) += it6263_bridge.o
 obj-$(CONFIG_VIDEO_MVEBU) += mvebu_lcd.o
 obj-$(CONFIG_VIDEO_MXS) += mxsfb.o videomodes.o
 obj-$(CONFIG_VIDEO_NX) += nexell_display.o videomodes.o nexell/
@@ -74,6 +78,12 @@ obj-$(CONFIG_VIDEO_TEGRA20) += tegra.o
 obj-$(CONFIG_VIDEO_VCXK) += bus_vcxk.o
 obj-$(CONFIG_VIDEO_VESA) += vesa.o
 obj-$(CONFIG_VIDEO_SEPS525) += seps525.o
+obj-$(CONFIG_MXC_EPDC) += mxc_epdc_fb.o
+obj-$(CONFIG_VIDEO_VADC) += mxc_vadc.o
+obj-$(CONFIG_VIDEO_CSI) += mxc_csi.o
+obj-$(CONFIG_VIDEO_PXP) += mxc_pxp.o
+obj-$(CONFIG_VIDEO_GIS) += mxc_gis.o
 
 obj-y += bridge/
 obj-y += sunxi/
+obj-y += nxp/

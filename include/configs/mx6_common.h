@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
+ * Copyright (C) 2012-2016 Freescale Semiconductor, Inc.
  * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright 2018 NXP
  */
 
 #ifndef __MX6_COMMON_H
@@ -28,9 +30,19 @@
 #include <asm/mach-imx/gpio.h>
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_CBSIZE	512
+#define CONFIG_SYS_CBSIZE	1024
 #define CONFIG_SYS_MAXARGS	32
+#define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE
+
+/* NET PHY */
+#define PHY_ANEG_TIMEOUT 20000
 
 /* MMC */
+#define CONFIG_SUPPORT_EMMC_BOOT
 
+#ifdef CONFIG_IMX_OPTEE
+#define TEE_ENV "tee=yes\0"
+#else
+#define TEE_ENV "tee=no\0"
+#endif
 #endif

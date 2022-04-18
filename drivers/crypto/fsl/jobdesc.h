@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2014 Freescale Semiconductor, Inc.
+ * Copyright 2021 NXP
  *
  */
 
@@ -12,6 +13,9 @@
 #include "rsa_caam.h"
 
 #define KEY_IDNFR_SZ_BYTES		16
+
+/* Encrypted key */
+#define BLACK_KEY	1
 
 #ifdef CONFIG_CMD_DEKBLOB
 /* inline_cnstr_jobdesc_blob_dek:
@@ -33,11 +37,11 @@ void inline_cnstr_jobdesc_hash(uint32_t *desc,
 
 void inline_cnstr_jobdesc_blob_encap(uint32_t *desc, uint8_t *key_idnfr,
 				     uint8_t *plain_txt, uint8_t *enc_blob,
-				     uint32_t in_sz);
+				     uint32_t in_sz, uint8_t keycolor);
 
 void inline_cnstr_jobdesc_blob_decap(uint32_t *desc, uint8_t *key_idnfr,
 				     uint8_t *enc_blob, uint8_t *plain_txt,
-				     uint32_t out_sz);
+				     uint32_t out_sz, uint8_t keycolor);
 
 void inline_cnstr_jobdesc_rng_instantiation(u32 *desc, int handle, int do_sk);
 
@@ -49,4 +53,10 @@ void inline_cnstr_jobdesc_pkha_rsaexp(uint32_t *desc,
 				      struct pk_in_params *pkin, uint8_t *out,
 				      uint32_t out_siz);
 
+void inline_cnstr_jobdesc_derive_bkek(uint32_t *desc, void *bkek_out,
+				      void *key_mod, uint32_t key_sz);
+
+void inline_cnstr_jobdesc_aes_ecb_decrypt(uint32_t *desc, uint8_t *key,
+					  uint32_t key_len, uint8_t *src,
+					  uint8_t *dst, uint32_t len);
 #endif

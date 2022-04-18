@@ -760,12 +760,14 @@ dtb-y += \
 	imx6dl-udoo.dtb \
 	imx6dl-riotboard.dtb \
 	imx6dl-sabreauto.dtb \
+	imx6dl-sabreauto-ecspi.dtb \
+	imx6dl-sabreauto-gpmi-weim.dtb \
 	imx6dl-sabresd.dtb \
 	imx6dl-wandboard-revd1.dtb \
 
 endif
 
-ifneq ($(CONFIG_MX6Q)$(CONFIG_MX6QDL),)
+ifneq ($(CONFIG_MX6Q)$(CONFIG_MX6QDL)$(CONFIG_MX6QP),)
 dtb-y += \
 	imx6-apalis.dtb \
 	imx6q-cm-fx6.dtb \
@@ -809,11 +811,15 @@ dtb-y += \
 	imx6q-phytec-mira-rdk-nand.dtb \
 	imx6q-udoo.dtb \
 	imx6q-sabreauto.dtb \
+	imx6q-sabreauto-ecspi.dtb \
+	imx6q-sabreauto-gpmi-weim.dtb \
 	imx6q-sabrelite.dtb \
 	imx6q-sabresd.dtb \
 	imx6q-tbs2910.dtb \
 	imx6q-wandboard-revd1.dtb \
 	imx6qp-sabreauto.dtb \
+	imx6qp-sabreauto-ecspi.dtb \
+	imx6qp-sabreauto-gpmi-weim.dtb \
 	imx6qp-sabresd.dtb \
 	imx6qp-wandboard-revd1.dtb \
 
@@ -821,11 +827,22 @@ endif
 
 dtb-$(CONFIG_MX6SL) += imx6sl-evk.dtb
 
-dtb-$(CONFIG_MX6SLL) += imx6sll-evk.dtb
+dtb-$(CONFIG_MX6SLL) += imx6sll-evk.dtb \
+	imx6sll-lpddr2-val.dtb \
+	imx6sll-lpddr3-val.dtb \
+	imx6sll-lpddr3-val-ecspi.dtb
 
 dtb-$(CONFIG_MX6SX) += \
+	imx6sx-14x14-val.dtb \
+	imx6sx-17x17-val.dtb \
+	imx6sx-17x17-val-ecspi.dtb \
+	imx6sx-17x17-val-gpmi-weim.dtb \
+	imx6sx-19x19-val.dtb \
+	imx6sx-19x19-val-ecspi.dtb \
+	imx6sx-19x19-val-gpmi-weim.dtb \
 	imx6sx-sabreauto.dtb \
 	imx6sx-sdb.dtb \
+	imx6sx-sdb-emmc.dtb \
 	imx6sx-softing-vining-2000.dtb \
 	imx6sx-udoo-neo-basic.dtb \
 	imx6sx-udoo-neo-extended.dtb \
@@ -836,8 +853,13 @@ dtb-$(CONFIG_MX6UL) += \
 	imx6ul-isiot-emmc.dtb \
 	imx6ul-isiot-nand.dtb \
 	imx6ul-opos6uldev.dtb \
+	imx6ul-14x14-ddr3-val.dtb \
+	imx6ul-14x14-ddr3-val-emmc.dtb \
+	imx6ul-14x14-ddr3-val-gpmi-weim.dtb \
+	imx6ul-14x14-lpddr2-val.dtb \
 	imx6ul-14x14-evk.dtb \
-	imx6ul-9x9-evk.dtb \
+	imx6ul-14x14-evk-emmc.dtb \
+	imx6ul-14x14-evk-gpmi-weim.dtb \
 	imx6ul-9x9-evk.dtb \
 	imx6ul-liteboard.dtb \
 	imx6ul-phytec-segin-ff-rdk-nand.dtb \
@@ -847,7 +869,15 @@ dtb-$(CONFIG_MX6UL) += \
 	imx6ull-kontron-n641x-s.dtb
 
 dtb-$(CONFIG_MX6ULL) += \
+	imx6ull-14x14-ddr3-val.dtb \
+	imx6ull-14x14-ddr3-val-epdc.dtb \
+	imx6ull-14x14-ddr3-val-emmc.dtb \
+	imx6ull-14x14-ddr3-val-gpmi-weim.dtb \
+	imx6ull-14x14-ddr3-val-tsc.dtb \
 	imx6ull-14x14-evk.dtb \
+	imx6ull-14x14-evk-emmc.dtb \
+	imx6ull-14x14-evk-gpmi-weim.dtb \
+	imx6ull-9x9-evk.dtb \
 	imx6ull-colibri.dtb \
 	imx6ull-colibri-emmc.dtb \
 	imx6ull-myir-mys-6ulx-eval.dtb \
@@ -855,7 +885,9 @@ dtb-$(CONFIG_MX6ULL) += \
 	imx6ull-phytec-segin-ff-rdk-emmc.dtb \
 	imx6ull-dart-6ul.dtb \
 	imx6ull-somlabs-visionsom.dtb \
-	imx6ulz-14x14-evk.dtb
+	imx6ulz-14x14-evk.dtb \
+	imx6ulz-14x14-evk-emmc.dtb \
+	imx6ulz-14x14-evk-gpmi-weim.dtb
 
 dtb-$(CONFIG_ARCH_MX6) += \
 	imx6-apalis.dtb \
@@ -869,36 +901,69 @@ dtb-$(CONFIG_EV_IMX280_NANO_X_MB) += \
 
 dtb-$(CONFIG_MX7) += imx7d-sdb.dtb \
 	imx7d-sdb-qspi.dtb \
-	imx7-cm.dtb \
+	imx7d-sdb-epdc.dtb \
+	imx7d-sdb-gpmi-weim.dtb \
+	imx7d-sdb-reva.dtb \
 	imx7-colibri-emmc.dtb \
 	imx7-colibri-rawnand.dtb \
 	imx7s-warp.dtb \
 	imx7d-meerkat96.dtb \
 	imx7d-pico-pi.dtb \
 	imx7d-pico-hobbit.dtb \
-	imx7d-smegw01.dtb
+	imx7d-smegw01.dtb \
+	imx7d-12x12-lpddr3-val.dtb \
+	imx7d-12x12-lpddr3-val-ecspi.dtb \
+	imx7d-12x12-lpddr3-val-qspi.dtb \
+	imx7d-12x12-ddr3-val.dtb \
+	imx7d-19x19-ddr3-val.dtb \
+	imx7d-19x19-lpddr2-val.dtb \
+	imx7d-19x19-lpddr3-val.dtb
 
 dtb-$(CONFIG_ARCH_MX7ULP) += imx7ulp-com.dtb \
-	imx7ulp-evk.dtb
+	imx7ulp-10x10-val.dtb \
+	imx7ulp-14x14-val.dtb \
+	imx7ulp-evk.dtb \
+	imx7ulp-evk-emmc.dtb \
+	imx7ulp-evk-qspi.dtb
 
 dtb-$(CONFIG_ARCH_HIGHBANK) += highbank.dtb
 
 dtb-$(CONFIG_ARCH_IMX8) += \
 	fsl-imx8qm-apalis.dtb \
 	fsl-imx8qm-mek.dtb \
+	fsl-imx8qm-ddr4-val.dtb \
+	fsl-imx8qm-lpddr4-val.dtb \
+	fsl-imx8qm-mek-cockpit-a53.dtb \
+	fsl-imx8qm-mek-cockpit-a72.dtb \
+	fsl-imx8qm-mek-xen.dtb \
 	imx8qm-cgtqmx8.dtb \
 	imx8qm-rom7720-a1.dtb \
 	fsl-imx8qxp-ai_ml.dtb \
 	fsl-imx8qxp-colibri.dtb \
 	fsl-imx8qxp-apalis.dtb \
 	fsl-imx8qxp-mek.dtb \
+	fsl-imx8qxp-lpddr4-val.dtb \
+	fsl-imx8qxp-lpddr4-val-gpmi-nand.dtb \
+	fsl-imx8qxp-17x17-val.dtb \
+	fsl-imx8dx-17x17-val.dtb \
+	fsl-imx8dx-mek.dtb \
+	fsl-imx8dxl-phantom-mek.dtb \
+	fsl-imx8dxl-evk.dtb \
+	fsl-imx8dxl-evk-lcdif.dtb \
+	fsl-imx8dxl-ddr3l-evk.dtb \
 	imx8-deneb.dtb \
 	imx8-giedi.dtb
 
 dtb-$(CONFIG_ARCH_IMX8ULP) += \
-	imx8ulp-evk.dtb
+	imx8ulp-evk.dtb \
+	imx8ulp-evk-i3c.dtb \
+	imx8ulp-9x9-evk.dtb \
+	imx8ulp-9x9-evk-i3c.dtb
 
 dtb-$(CONFIG_ARCH_IMX8M) += \
+	imx8mm-ddr4-evk.dtb \
+	imx8mm-ddr3l-val.dtb \
+	imx8mm-ddr4-val.dtb \
 	imx8mm-evk.dtb \
 	imx8mm-icore-mx8mm-ctouch2.dtb \
 	imx8mm-icore-mx8mm-edimm2.2.dtb \
@@ -912,17 +977,21 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mm-venice-gw7902.dtb \
 	imx8mm-verdin.dtb \
 	phycore-imx8mm.dtb \
+	imx8mn-ddr3l-evk.dtb \
 	imx8mn-ddr4-evk.dtb \
 	imx8mq-cm.dtb \
 	imx8mn-evk.dtb \
 	imx8mn-var-som-symphony.dtb \
 	imx8mn-venice.dtb \
 	imx8mn-venice-gw7902.dtb \
+	imx8mq-ddr3l-val.dtb \
+	imx8mq-ddr4-val.dtb \
 	imx8mq-evk.dtb \
 	imx8mm-beacon-kit.dtb \
 	imx8mn-beacon-kit.dtb \
 	imx8mq-mnt-reform2.dtb \
 	imx8mq-phanbell.dtb \
+	imx8mp-ddr4-evk.dtb \
 	imx8mp-evk.dtb \
 	imx8mp-phyboard-pollux-rdk.dtb \
 	imx8mp-verdin.dtb \

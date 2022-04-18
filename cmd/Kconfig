@@ -2017,6 +2017,7 @@ config CMD_AES
 
 config CMD_BLOB
 	bool "Enable the 'blob' command"
+	select FSL_BLOB
 	depends on !MX6ULL && !MX6SLL && !MX6SL
 	select IMX_HAB if ARCH_MX6 || ARCH_MX7 || ARCH_MX7ULP || ARCH_IMX8M
 	help
@@ -2289,6 +2290,12 @@ config MTDPARTS_DEFAULT
 	help
 	  Defines a default MTD partitioning scheme in the Linux MTD command
 	  line partitions format
+
+config MTDPARTS_SKIP_INVALID
+	bool "Skip invalid devices and keep checking the next one"
+	depends on CMD_MTDPARTS
+	help
+	  Enable this feature will look for next device rather than quit.
 
 config CMD_REISER
 	bool "reiser - Access to reiserfs filesystems"

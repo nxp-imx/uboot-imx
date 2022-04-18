@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  */
 
 #include <init.h>
@@ -12,6 +13,7 @@
 #include <asm/global_data.h>
 #include <asm/gpio.h>
 #include <asm/mach-imx/iomux-v3.h>
+#include <asm/mach-imx/boot_mode.h>
 #include <asm/io.h>
 #include <linux/delay.h>
 #include <linux/sizes.h>
@@ -25,6 +27,11 @@
 #include <i2c.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <asm/arch/crm_regs.h>
+#if defined(CONFIG_MXC_EPDC)
+#include <lcd.h>
+#include <mxc_epdc_fb.h>
+#endif
+#include <asm/mach-imx/video.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -40,6 +47,8 @@ DECLARE_GLOBAL_DATA_PTR;
   (PAD_CTL_HYS | PAD_CTL_DSE_3P3V_49OHM | PAD_CTL_SRE_FAST)
 
 #define NAND_PAD_READY0_CTRL (PAD_CTL_DSE_3P3V_49OHM | PAD_CTL_PUS_PU5KOHM)
+
+#define EPDC_PAD_CTRL	0x0
 
 #ifdef CONFIG_MXC_SPI
 static iomux_v3_cfg_t const ecspi3_pads[] = {
@@ -76,6 +85,55 @@ static iomux_v3_cfg_t const uart1_pads[] = {
 	MX7D_PAD_UART1_RX_DATA__UART1_DCE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
+#define BOARD_REV_C  0x300
+#define BOARD_REV_B  0x200
+#define BOARD_REV_A  0x100
+
+static int mx7sabre_rev(void)
+{
+	/*
+	 * Get Board ID information from OCOTP_GP1[15:8]
+	 * i.MX7D SDB RevA: 0x41
+	 * i.MX7D SDB RevB: 0x42
+	 */
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[14];
+	int reg = readl(&bank->fuse_regs[0]);
+	int ret;
+
+	if (reg != 0) {
+		switch (reg >> 8 & 0x0F) {
+		case 0x3:
+			ret = BOARD_REV_C;
+			break;
+		case 0x02:
+			ret = BOARD_REV_B;
+			break;
+		case 0x01:
+		default:
+			ret = BOARD_REV_A;
+			break;
+		}
+	} else {
+		/* If the gp1 fuse is not burn, we have to use TO rev for the board rev */
+		if (is_soc_rev(CHIP_REV_1_0))
+			ret = BOARD_REV_A;
+		else if (is_soc_rev(CHIP_REV_1_1))
+			ret = BOARD_REV_B;
+		else
+			ret = BOARD_REV_C;
+	}
+
+	return ret;
+}
+
+u32 get_board_rev(void)
+{
+	int rev = mx7sabre_rev();
+
+	return (get_cpu_rev() & ~(0xF << 8)) | rev;
+}
+
 #ifdef CONFIG_NAND_MXS
 static iomux_v3_cfg_t const gpmi_pads[] = {
 	MX7D_PAD_SD3_DATA0__NAND_DATA00 | MUX_PAD_CTRL(NAND_PAD_CTRL),
@@ -108,37 +166,8 @@ static void setup_gpmi_nand(void)
 }
 #endif
 
-#ifdef CONFIG_VIDEO_MXS
+#ifdef CONFIG_DM_VIDEO
 static iomux_v3_cfg_t const lcd_pads[] = {
-	MX7D_PAD_LCD_CLK__LCD_CLK | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_ENABLE__LCD_ENABLE | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_HSYNC__LCD_HSYNC | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_VSYNC__LCD_VSYNC | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA00__LCD_DATA0 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA01__LCD_DATA1 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA02__LCD_DATA2 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA03__LCD_DATA3 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA04__LCD_DATA4 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA05__LCD_DATA5 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA06__LCD_DATA6 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA07__LCD_DATA7 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA08__LCD_DATA8 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA09__LCD_DATA9 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA10__LCD_DATA10 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA11__LCD_DATA11 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA12__LCD_DATA12 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA13__LCD_DATA13 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA14__LCD_DATA14 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA15__LCD_DATA15 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA16__LCD_DATA16 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA17__LCD_DATA17 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA18__LCD_DATA18 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA19__LCD_DATA19 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA20__LCD_DATA20 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA21__LCD_DATA21 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA22__LCD_DATA22 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-	MX7D_PAD_LCD_DATA23__LCD_DATA23 | MUX_PAD_CTRL(LCD_PAD_CTRL),
-
 	MX7D_PAD_LCD_RESET__GPIO3_IO4	| MUX_PAD_CTRL(LCD_PAD_CTRL),
 };
 
@@ -149,22 +178,50 @@ static iomux_v3_cfg_t const pwm_pads[] = {
 
 static int setup_lcd(void)
 {
+	int ret;
+	struct gpio_desc desc;
+
 	imx_iomux_v3_setup_multiple_pads(lcd_pads, ARRAY_SIZE(lcd_pads));
 
 	imx_iomux_v3_setup_multiple_pads(pwm_pads, ARRAY_SIZE(pwm_pads));
 
 	/* Reset LCD */
-	gpio_request(IMX_GPIO_NR(3, 4), "lcd reset");
-	gpio_direction_output(IMX_GPIO_NR(3, 4) , 0);
+	ret = dm_gpio_lookup_name("GPIO3_4", &desc);
+	if (ret) {
+		printf("%s lookup GPIO3_4 failed ret = %d\n", __func__, ret);
+		return -ENODEV;
+	}
+
+	ret = dm_gpio_request(&desc, "lcd reset");
+	if (ret) {
+		printf("%s request lcd reset failed ret = %d\n", __func__, ret);
+		return -ENODEV;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
+	dm_gpio_set_value(&desc, 0);
 	udelay(500);
-	gpio_direction_output(IMX_GPIO_NR(3, 4) , 1);
+	dm_gpio_set_value(&desc, 1);
 
 	/* Set Brightness to high */
-	gpio_request(IMX_GPIO_NR(1, 1), "lcd backlight");
-	gpio_direction_output(IMX_GPIO_NR(1, 1) , 1);
+	ret = dm_gpio_lookup_name("GPIO1_1", &desc);
+	if (ret) {
+		printf("%s lookup GPIO1_1 failed ret = %d\n", __func__, ret);
+		return -ENODEV;
+	}
+
+	ret = dm_gpio_request(&desc, "lcd backlight");
+	if (ret) {
+		printf("%s request lcd backlight failed ret = %d\n", __func__, ret);
+		return -ENODEV;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
 
 	return 0;
 }
+#else
+static inline int setup_lcd(void) { return 0; }
 #endif
 
 static void setup_iomux_uart(void)
@@ -172,21 +229,13 @@ static void setup_iomux_uart(void)
 	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
 }
 
-int board_mmc_get_env_dev(int devno)
+#ifdef CONFIG_IMX_BOOTAUX
+ulong board_get_usable_ram_top(ulong total_size)
 {
-	if (devno == 2)
-		devno--;
-
-	return devno;
+	/* Reserve top 1M memory used by M core vring/buffer */
+	return gd->ram_top - SZ_1M;
 }
-
-int mmc_map_to_kernel_blk(int dev_no)
-{
-	if (dev_no == 1)
-		dev_no++;
-
-	return dev_no;
-}
+#endif
 
 #ifdef CONFIG_FEC_MXC
 static int setup_fec(void)
@@ -198,6 +247,10 @@ static int setup_fec(void)
 	clrsetbits_le32(&iomuxc_gpr_regs->gpr[1],
 		(IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL_MASK |
 		 IOMUXC_GPR_GPR1_GPR_ENET1_CLK_DIR_MASK), 0);
+
+	clrsetbits_le32(&iomuxc_gpr_regs->gpr[1],
+			(IOMUXC_GPR_GPR1_GPR_ENET2_TX_CLK_SEL_MASK |
+			 IOMUXC_GPR_GPR1_GPR_ENET2_CLK_DIR_MASK), 0);
 
 	return set_clk_enet(ENET_125MHZ);
 }
@@ -226,6 +279,263 @@ int board_qspi_init(void)
 }
 #endif
 
+#ifdef CONFIG_MXC_EPDC
+iomux_v3_cfg_t const epdc_en_pads[] = {
+	MX7D_PAD_GPIO1_IO04__GPIO1_IO4 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const epdc_enable_pads[] = {
+	MX7D_PAD_EPDC_DATA00__EPDC_DATA0	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA01__EPDC_DATA1	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA02__EPDC_DATA2	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA03__EPDC_DATA3	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA04__EPDC_DATA4	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA05__EPDC_DATA5	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA06__EPDC_DATA6	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA07__EPDC_DATA7	| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_SDCLK__EPDC_SDCLK		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_SDLE__EPDC_SDLE		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_SDOE__EPDC_SDOE		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_SDSHR__EPDC_SDSHR		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_SDCE0__EPDC_SDCE0		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_SDCE1__EPDC_SDCE1		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_GDCLK__EPDC_GDCLK		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_GDOE__EPDC_GDOE		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_GDRL__EPDC_GDRL		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_GDSP__EPDC_GDSP		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_BDR0__EPDC_BDR0		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+	MX7D_PAD_EPDC_BDR1__EPDC_BDR1		| MUX_PAD_CTRL(EPDC_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const epdc_disable_pads[] = {
+	MX7D_PAD_EPDC_DATA00__GPIO2_IO0,
+	MX7D_PAD_EPDC_DATA01__GPIO2_IO1,
+	MX7D_PAD_EPDC_DATA02__GPIO2_IO2,
+	MX7D_PAD_EPDC_DATA03__GPIO2_IO3,
+	MX7D_PAD_EPDC_DATA04__GPIO2_IO4,
+	MX7D_PAD_EPDC_DATA05__GPIO2_IO5,
+	MX7D_PAD_EPDC_DATA06__GPIO2_IO6,
+	MX7D_PAD_EPDC_DATA07__GPIO2_IO7,
+	MX7D_PAD_EPDC_SDCLK__GPIO2_IO16,
+	MX7D_PAD_EPDC_SDLE__GPIO2_IO17,
+	MX7D_PAD_EPDC_SDOE__GPIO2_IO18,
+	MX7D_PAD_EPDC_SDSHR__GPIO2_IO19,
+	MX7D_PAD_EPDC_SDCE0__GPIO2_IO20,
+	MX7D_PAD_EPDC_SDCE1__GPIO2_IO21,
+	MX7D_PAD_EPDC_GDCLK__GPIO2_IO24,
+	MX7D_PAD_EPDC_GDOE__GPIO2_IO25,
+	MX7D_PAD_EPDC_GDRL__GPIO2_IO26,
+	MX7D_PAD_EPDC_GDSP__GPIO2_IO27,
+	MX7D_PAD_EPDC_BDR0__GPIO2_IO28,
+	MX7D_PAD_EPDC_BDR1__GPIO2_IO29,
+};
+
+vidinfo_t panel_info = {
+	.vl_refresh = 85,
+	.vl_col = 1024,
+	.vl_row = 758,
+	.vl_pixclock = 40000000,
+	.vl_left_margin = 12,
+	.vl_right_margin = 76,
+	.vl_upper_margin = 4,
+	.vl_lower_margin = 5,
+	.vl_hsync = 12,
+	.vl_vsync = 2,
+	.vl_sync = 0,
+	.vl_mode = 0,
+	.vl_flag = 0,
+	.vl_bpix = 3,
+	.cmap = 0,
+};
+
+struct epdc_timing_params panel_timings = {
+	.vscan_holdoff = 4,
+	.sdoed_width = 10,
+	.sdoed_delay = 20,
+	.sdoez_width = 10,
+	.sdoez_delay = 20,
+	.gdclk_hp_offs = 524,
+	.gdsp_offs = 327,
+	.gdoe_offs = 0,
+	.gdclk_offs = 19,
+	.num_ce = 1,
+};
+
+struct gpio_desc epd_pwrstat_desc;
+struct gpio_desc epd_vcom_desc;
+struct gpio_desc epd_wakeup_desc;
+struct gpio_desc epd_pwr_ctl0_desc;
+
+static void setup_epdc_power(void)
+{
+	int ret;
+
+	/* IOMUX_GPR1: bit30: Disable On-chip RAM EPDC Function */
+	struct iomuxc_gpr_base_regs *const iomuxc_gpr_regs
+		= (struct iomuxc_gpr_base_regs *) IOMUXC_GPR_BASE_ADDR;
+
+	clrsetbits_le32(&iomuxc_gpr_regs->gpr[1],
+		IOMUXC_GPR_GPR1_GPR_ENABLE_OCRAM_EPDC_MASK, 0);
+
+	/* Setup epdc voltage */
+
+	/* EPDC_PWRSTAT - GPIO2[31] for PWR_GOOD status */
+	ret = dm_gpio_lookup_name("GPIO2_31", &epd_pwrstat_desc);
+	if (ret) {
+		printf("%s lookup GPIO2_31 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&epd_pwrstat_desc, "epdc_pwrstat");
+	if (ret) {
+		printf("%s request epdc_pwrstat failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&epd_pwrstat_desc, GPIOD_IS_IN);
+
+	/* EPDC_VCOM0 - GPIO4[14] for VCOM control */
+	/* Set as output */
+	ret = dm_gpio_lookup_name("GPIO4_14", &epd_vcom_desc);
+	if (ret) {
+		printf("%s lookup GPIO4_14 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&epd_vcom_desc, "epdc_vcom");
+	if (ret) {
+		printf("%s request epdc_vcom failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&epd_vcom_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	/* EPDC_PWRWAKEUP - GPIO2[23] for EPD PMIC WAKEUP */
+	/* Set as output */
+	ret = dm_gpio_lookup_name("GPIO2_23", &epd_wakeup_desc);
+	if (ret) {
+		printf("%s lookup GPIO2_23 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&epd_wakeup_desc, "epdc_pmic");
+	if (ret) {
+		printf("%s request epdc_pmic failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&epd_wakeup_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	/* EPDC_PWRCTRL0 - GPIO2[30] for EPD PWR CTL0 */
+	/* Set as output */
+	ret = dm_gpio_lookup_name("GPIO2_30", &epd_pwr_ctl0_desc);
+	if (ret) {
+		printf("%s lookup GPIO2_30 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&epd_pwr_ctl0_desc, "epdc_pwr_ctl0");
+	if (ret) {
+		printf("%s request epdc_pwr_ctl0 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&epd_pwr_ctl0_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+}
+
+static void epdc_enable_pins(void)
+{
+	/* epdc iomux settings */
+	imx_iomux_v3_setup_multiple_pads(epdc_enable_pads,
+				ARRAY_SIZE(epdc_enable_pads));
+}
+
+static void epdc_disable_pins(void)
+{
+	/* Configure MUX settings for EPDC pins to GPIO  and drive to 0 */
+	imx_iomux_v3_setup_multiple_pads(epdc_disable_pads,
+				ARRAY_SIZE(epdc_disable_pads));
+}
+
+static void setup_epdc(void)
+{
+	/*** epdc Maxim PMIC settings ***/
+
+	/* EPDC_PWRSTAT - GPIO2[31] for PWR_GOOD status */
+	imx_iomux_v3_setup_pad(MX7D_PAD_EPDC_PWR_STAT__GPIO2_IO31 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+
+	/* EPDC_VCOM0 - GPIO4[14] for VCOM control */
+	imx_iomux_v3_setup_pad(MX7D_PAD_I2C4_SCL__GPIO4_IO14 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+
+	/* EPDC_PWRWAKEUP - GPIO4[23] for EPD PMIC WAKEUP */
+	imx_iomux_v3_setup_pad(MX7D_PAD_EPDC_SDCE3__GPIO2_IO23 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+
+	/* EPDC_PWRCTRL0 - GPIO4[20] for EPD PWR CTL0 */
+	imx_iomux_v3_setup_pad(MX7D_PAD_EPDC_PWR_COM__GPIO2_IO30 |
+				MUX_PAD_CTRL(EPDC_PAD_CTRL));
+
+	/* Set pixel clock rates for EPDC in clock.c */
+
+	panel_info.epdc_data.wv_modes.mode_init = 0;
+	panel_info.epdc_data.wv_modes.mode_du = 1;
+	panel_info.epdc_data.wv_modes.mode_gc4 = 3;
+	panel_info.epdc_data.wv_modes.mode_gc8 = 2;
+	panel_info.epdc_data.wv_modes.mode_gc16 = 2;
+	panel_info.epdc_data.wv_modes.mode_gc32 = 2;
+
+	panel_info.epdc_data.epdc_timings = panel_timings;
+
+	setup_epdc_power();
+}
+
+void epdc_power_on(void)
+{
+	unsigned int reg;
+	struct gpio_regs *gpio_regs = (struct gpio_regs *)GPIO2_BASE_ADDR;
+
+	/* Set EPD_PWR_CTL0 to high - enable EINK_VDD (3.15) */
+	dm_gpio_set_value(&epd_pwr_ctl0_desc, 1);
+	udelay(1000);
+
+	/* Enable epdc signal pin */
+	epdc_enable_pins();
+
+	/* Set PMIC Wakeup to high - enable Display power */
+	dm_gpio_set_value(&epd_wakeup_desc, 1);
+
+	/* Wait for PWRGOOD == 1 */
+	while (1) {
+		reg = readl(&gpio_regs->gpio_psr);
+		if (!(reg & (1 << 31)))
+			break;
+
+		udelay(100);
+	}
+
+	/* Enable VCOM */
+	dm_gpio_set_value(&epd_vcom_desc, 1);
+
+	udelay(500);
+}
+
+void epdc_power_off(void)
+{
+	/* Set PMIC Wakeup to low - disable Display power */
+	dm_gpio_set_value(&epd_wakeup_desc, 0);
+
+	/* Disable VCOM */
+	dm_gpio_set_value(&epd_vcom_desc, 0);
+
+	epdc_disable_pins();
+
+	/* Set EPD_PWR_CTL0 to low - disable EINK_VDD (3.15) */
+	dm_gpio_set_value(&epd_pwr_ctl0_desc, 0);
+}
+#endif
+
 int board_early_init_f(void)
 {
 	setup_iomux_uart();
@@ -246,12 +556,37 @@ int board_init(void)
 	setup_gpmi_nand();
 #endif
 
-#ifdef CONFIG_VIDEO_MXS
-	setup_lcd();
-#endif
-
 #ifdef CONFIG_FSL_QSPI
 	board_qspi_init();
+#endif
+
+#ifdef CONFIG_MXC_EPDC
+	if (mx7sabre_rev() >= BOARD_REV_B) {
+		int ret;
+		struct gpio_desc desc;
+		/*
+		 * From RevB, GPIO1_IO04 is used for ENET2 EN,
+		 * so set its output to high to isolate the
+		 * ENET2 signals for EPDC
+		 */
+		imx_iomux_v3_setup_multiple_pads(epdc_en_pads,
+			ARRAY_SIZE(epdc_en_pads));
+
+		ret = dm_gpio_lookup_name("GPIO1_4", &desc);
+		if (ret) {
+			printf("%s lookup GPIO1_4 failed ret = %d\n", __func__, ret);
+			return -ENODEV;
+		}
+
+		ret = dm_gpio_request(&desc, "epdc_en");
+		if (ret) {
+			printf("%s request epdc_en failed ret = %d\n", __func__, ret);
+			return -ENODEV;
+		}
+
+		dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+	}
+	setup_epdc();
 #endif
 
 #ifdef CONFIG_MXC_SPI
@@ -261,11 +596,13 @@ int board_init(void)
 	return 0;
 }
 
+
 #ifdef CONFIG_DM_PMIC
 int power_init_board(void)
 {
 	struct udevice *dev;
 	int ret, dev_id, rev_id;
+	u32 sw3mode;
 
 	ret = pmic_get("pfuze3000@8", &dev);
 	if (ret == -ENODEV)
@@ -285,6 +622,12 @@ int power_init_board(void)
 	 */
 	pmic_clrsetbits(dev, PFUZE3000_VLD4CTL, 0xF, 0xA);
 
+	/* change sw3 mode to avoid DDR power off */
+	sw3mode = pmic_reg_read(dev, PFUZE3000_SW3MODE);
+	ret = pmic_reg_write(dev, PFUZE3000_SW3MODE, sw3mode | 0x20);
+	if (ret < 0)
+		printf("PMIC: PFUZE3000 change sw3 mode failed\n");
+
 	return 0;
 }
 #endif
@@ -293,29 +636,49 @@ int board_late_init(void)
 {
 	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
 
+	env_set("tee", "no");
+#ifdef CONFIG_IMX_OPTEE
+	env_set("tee", "yes");
+#endif
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
+
+	setup_lcd();
+
 	imx_iomux_v3_setup_multiple_pads(wdog_pads, ARRAY_SIZE(wdog_pads));
 
 	set_wdog_reset(wdog);
-
-	/*
-	 * Do not assert internal WDOG_RESET_B_DEB(controlled by bit 4),
-	 * since we use PMIC_PWRON to reset the board.
-	 */
-	clrsetbits_le16(&wdog->wcr, 0, 0x10);
 
 	return 0;
 }
 
 int checkboard(void)
 {
+	int rev = mx7sabre_rev();
 	char *mode;
+	char *revname;
 
 	if (IS_ENABLED(CONFIG_ARMV7_BOOT_SEC_DEFAULT))
 		mode = "secure";
 	else
 		mode = "non-secure";
 
-	printf("Board: i.MX7D SABRESD in %s mode\n", mode);
+	switch (rev) {
+	case BOARD_REV_C:
+		revname = "C";
+		break;
+	case BOARD_REV_B:
+		revname = "B";
+		break;
+	case BOARD_REV_A:
+	default:
+		revname = "A";
+		break;
+	}
+
+	printf("Board: i.MX7D SABRESD Rev%s in %s mode\n", revname, mode);
 
 	return 0;
 }

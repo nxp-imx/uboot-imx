@@ -12,4 +12,6 @@ config SYS_CONFIG_NAME
 config IMX_CONFIG
 	default "arch/arm/mach-imx/imx8m/imximage.cfg"
 
+source "board/freescale/common/Kconfig"
+
 endif

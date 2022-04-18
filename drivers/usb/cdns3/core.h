@@ -1,28 +1,17 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Cadence USBSS DRD Header File.
- *
- * Copyright (C) 2017-2018 NXP
- * Copyright (C) 2018-2019 Cadence.
- *
- * Authors: Peter Chen <peter.chen@nxp.com>
- *          Pawel Laszczak <pawell@cadence.com>
+ * Copyright 2019 NXP
  */
-#include <linux/compiler.h>
-#include <linux/types.h>
-#include <linux/usb/otg.h>
-#include <generic-phy.h>
 
-#ifndef __LINUX_CDNS3_CORE_H
-#define __LINUX_CDNS3_CORE_H
-
-enum usb_role {
-	USB_ROLE_NONE,
-	USB_ROLE_HOST,
-	USB_ROLE_DEVICE,
-};
+#ifndef __DRIVERS_USB_CDNS3_CORE_H
+#define __DRIVERS_USB_CDNS3_CORE_H
 
 struct cdns3;
+enum cdns3_roles {
+	CDNS3_ROLE_HOST = 0,
+	CDNS3_ROLE_GADGET,
+	CDNS3_ROLE_END,
+};
 
 /**
  * struct cdns3_role_driver - host/gadget role driver
@@ -32,77 +21,98 @@ struct cdns3;
  * @resume: resume callback for this role
  * @irq: irq handler for this role
  * @name: role name string (host/gadget)
- * @state: current state
  */
 struct cdns3_role_driver {
 	int (*start)(struct cdns3 *cdns);
 	void (*stop)(struct cdns3 *cdns);
 	int (*suspend)(struct cdns3 *cdns, bool do_wakeup);
 	int (*resume)(struct cdns3 *cdns, bool hibernated);
+	int (*irq)(struct cdns3 *cdns);
 	const char *name;
-#define CDNS3_ROLE_STATE_INACTIVE	0
-#define CDNS3_ROLE_STATE_ACTIVE		1
-	int state;
 };
 
-#define CDNS3_XHCI_RESOURCES_NUM	2
+#define CDNS3_NUM_OF_CLKS	5
 /**
  * struct cdns3 - Representation of Cadence USB3 DRD controller.
  * @dev: pointer to Cadence device struct
  * @xhci_regs: pointer to base of xhci registers
+ * @xhci_res: the resource for xhci
  * @dev_regs: pointer to base of dev registers
- * @otg_v0_regs: pointer to base of v0 otg registers
- * @otg_v1_regs: pointer to base of v1 otg registers
+ * @none_core_regs: pointer to base of nxp wrapper registers
+ * @phy_regs: pointer to base of phy registers
  * @otg_regs: pointer to base of otg registers
- * @otg_irq: irq number for otg controller
- * @dev_irq: irq number for device controller
+ * @irq: irq number for controller
  * @roles: array of supported roles for this controller
  * @role: current role
  * @host_dev: the child host device pointer for cdns3 core
  * @gadget_dev: the child gadget device pointer for cdns3 core
- * @usb2_phy: pointer to USB2 PHY
- * @usb3_phy: pointer to USB3 PHY
- * @mutex: the mutex for concurrent code at driver
- * @dr_mode: supported mode of operation it can be only Host, only Device
- *           or OTG mode that allow to switch between Device and Host mode.
- *           This field based on firmware setting, kernel configuration
- *           and hardware configuration.
- * @role_sw: pointer to role switch object.
- * @role_override: set 1 if role rely on SW.
+ * @usbphy: usbphy for this controller
+ * @cdns3_clks: Clock pointer array for cdns3 core
+ * @extcon: Type-C extern connector
+ * @extcon_nb: notifier block for Type-C extern connector
+ * @role_switch_wq: work queue item for role switch
+ * @in_lpm: the controller in low power mode
+ * @wakeup_int: the wakeup interrupt
  */
 struct cdns3 {
-	struct udevice			*dev;
-	void __iomem			*xhci_regs;
-	struct cdns3_usb_regs __iomem	*dev_regs;
+	struct udevice *dev;
+	void __iomem *xhci_regs;
+	struct resource *xhci_res;
+	struct usbss_dev_register_block_type __iomem *dev_regs;
+	void __iomem *none_core_regs;
+	void __iomem *phy_regs;
+	void __iomem *otg_regs;
+	int irq;
+	struct cdns3_role_driver *roles[CDNS3_ROLE_END];
+	enum cdns3_roles role;
+	struct udevice *host_dev;
+	struct udevice *gadget_dev;
+	struct clk *cdns3_clks[CDNS3_NUM_OF_CLKS];
 
-	struct cdns3_otg_legacy_regs	*otg_v0_regs;
-	struct cdns3_otg_regs		*otg_v1_regs;
-	struct cdns3_otg_common_regs	*otg_regs;
-#define CDNS3_CONTROLLER_V0	0
-#define CDNS3_CONTROLLER_V1	1
-	u32				version;
-
-	int				otg_irq;
-	int				dev_irq;
-	struct cdns3_role_driver	*roles[USB_ROLE_DEVICE + 1];
-	enum usb_role			role;
-	struct cdns3_device		*gadget_dev;
-	struct phy			usb2_phy;
-	struct phy			usb3_phy;
-	/* mutext used in workqueue*/
-	struct mutex			mutex;
-	enum usb_dr_mode		dr_mode;
-	int				role_override;
+	int  index;
+	struct list_head list;
 };
 
-int cdns3_hw_role_switch(struct cdns3 *cdns);
+static inline struct cdns3_role_driver *cdns3_role(struct cdns3 *cdns)
+{
+	WARN_ON(cdns->role >= CDNS3_ROLE_END || !cdns->roles[cdns->role]);
+	return cdns->roles[cdns->role];
+}
 
-/**
- * cdns3_bind - generic bind function
- * @parent - pointer to parent udevice of which cdns3 USB controller
- *           node is child of
- *
- * return 0 on success, negative errno otherwise
- */
-int cdns3_bind(struct udevice *dev);
-#endif /* __LINUX_CDNS3_CORE_H */
+static inline int cdns3_role_start(struct cdns3 *cdns, enum cdns3_roles role)
+{
+	if (role >= CDNS3_ROLE_END)
+		return 0;
+
+	if (!cdns->roles[role])
+		return -ENXIO;
+
+	cdns->role = role;
+	return cdns->roles[role]->start(cdns);
+}
+
+static inline void cdns3_role_stop(struct cdns3 *cdns)
+{
+	enum cdns3_roles role = cdns->role;
+
+	if (role == CDNS3_ROLE_END)
+		return;
+
+	cdns->roles[role]->stop(cdns);
+	cdns->role = CDNS3_ROLE_END;
+}
+
+static inline void cdns3_role_irq_handler(struct cdns3 *cdns)
+{
+	enum cdns3_roles role = cdns->role;
+
+	if (role == CDNS3_ROLE_END)
+		return;
+
+	cdns->roles[role]->irq(cdns);
+}
+
+int cdns3_init(struct cdns3 *cdns);
+void cdns3_exit(struct cdns3 *cdns);
+
+#endif /* __DRIVERS_USB_CDNS3_CORE_H */

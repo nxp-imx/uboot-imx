@@ -35,6 +35,13 @@ config IMX_TMU
 	  The boot is hold to the cool device to throttle CPUs when the
 	  passive trip is crossed
 
+config IMX_PMC_TEMPERATURE
+	bool "PMC Temperature Sensor driver for NXP i.MX8ULP"
+	depends on ARCH_IMX8ULP
+	help
+	  Enable PMC Temperature Sensor on NXP i.MX8ULP. The driver supports
+	  reading CPU temperature.
+
 config TI_DRA7_THERMAL
         bool "Temperature sensor driver for TI dra7xx SOCs"
         help

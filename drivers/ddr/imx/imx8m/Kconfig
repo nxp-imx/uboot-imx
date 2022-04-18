@@ -32,7 +32,7 @@ config SAVED_DRAM_TIMING_BASE
 
 config IMX8M_DRAM_INLINE_ECC
 	bool "imx8mp inline ECC"
-	depends on IMX8MP && IMX8M_LPDDR4
+	depends on IMX8MP
 	help
 	  Select this config if you want to use inline ecc feature for
 	  imx8mp-evk board.
@@ -43,5 +43,8 @@ config IMX8M_VDD_SOC_850MV
 
 config IMX8M_LPDDR4_FREQ0_2400MTS
 	bool "imx8m PDDR4 freq0 change from 4000MTS to 2400MTS"
+
+config IMX8M_LPDDR4_FREQ0_3200MTS
+	bool "imx8m LPDDR4 freq0 change from 4000MTS to 3200MTS"
 
 endmenu

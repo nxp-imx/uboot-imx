@@ -8,10 +8,11 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/io.h>
 #include <asm/mach-imx/boot_mode.h>
+#include <env.h>
 
 __weak int board_mmc_get_env_dev(int devno)
 {
-	return CONFIG_SYS_MMC_ENV_DEV;
+	return devno;
 }
 
 int mmc_get_env_dev(void)
@@ -23,7 +24,7 @@ int mmc_get_env_dev(void)
 
 	/* If not boot from sd/mmc, use default value */
 	if ((boot_type != BOOT_TYPE_SD) && (boot_type != BOOT_TYPE_MMC))
-		return CONFIG_SYS_MMC_ENV_DEV;
+		return env_get_ulong("mmcdev", 10, CONFIG_SYS_MMC_ENV_DEV);
 
 	return board_mmc_get_env_dev(devno);
 }

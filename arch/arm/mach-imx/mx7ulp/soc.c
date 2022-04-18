@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ * Copyright 2017-2021 NXP
  */
 
 #include <common.h>
@@ -10,12 +11,15 @@
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
+#include <asm/sections.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/mach-imx/hab.h>
 #include <asm/mach-imx/sys_proto.h>
 #include <asm/setup.h>
 #include <linux/bitops.h>
+#include <dm.h>
+#include <asm/setup.h>
 
 #define PMC0_BASE_ADDR		0x410a1000
 #define PMC0_CTRL		0x28
@@ -48,7 +52,22 @@ u32 get_cpu_rev(void)
 	/* Check the ROM version for cpu revision */
 	u32 rom_version = readl((void __iomem *)ROM_VERSION_ADDR);
 
-	return (MXC_CPU_MX7ULP << 12) | (rom_version & 0xFF);
+	rom_version &= 0xFF;
+	if (rom_version == CHIP_REV_1_0) {
+		return (MXC_CPU_MX7ULP << 12) | (rom_version);
+	} else {
+		/* Check the "Mirror of JTAG ID" SIM register since RevB */
+		uint32_t id;
+		id = readl(SIM0_RBASE + 0x8c);
+		id = (id >> 28) & 0xFF;
+
+		/* Revision Number ULP1 Version
+		 * 0000				A0
+		 * 0001				B0
+		 * 0010				B1
+		 */
+		return (MXC_CPU_MX7ULP << 12) | (CHIP_REV_2_0 + (id - 1));
+	}
 }
 
 #ifdef CONFIG_REVISION_TAG
@@ -76,11 +95,65 @@ enum bt_mode get_boot_mode(void)
 	return LOW_POWER_BOOT;
 }
 
+#ifdef CONFIG_IMX_M4_BIND
+char __firmware_image_start[0] __attribute__((section(".__firmware_image_start")));
+char __firmware_image_end[0] __attribute__((section(".__firmware_image_end")));
+
+int mcore_early_load_and_boot(void)
+{
+	u32 *src_addr = (u32 *)&__firmware_image_start;
+	u32 *dest_addr = (u32 *)TCML_BASE; /*TCML*/
+	u32 image_size = SZ_128K + SZ_64K; /* 192 KB*/
+	u32 pc = 0, tag = 0;
+
+	memcpy(dest_addr, src_addr, image_size);
+
+	/* Set GP register to tell the M4 rom the image entry */
+	/* We assume the M4 image has IVT head and padding which
+	 * should be same as the one programmed into QSPI flash
+	 */
+	tag = *(dest_addr + 1024);
+	if (tag != 0x402000d1 && tag !=0x412000d1)
+		return -1;
+
+	pc = *(dest_addr + 1025);
+
+	writel(pc, SIM0_RBASE + 0x70); /*GP7*/
+
+	return 0;
+}
+#endif
+
 int arch_cpu_init(void)
 {
 	enable_ca7_smp();
+
+#ifdef CONFIG_IMX_M4_BIND
+	int ret;
+	if (get_boot_mode() == SINGLE_BOOT) {
+		ret = mcore_early_load_and_boot();
+		if (ret)
+			puts("Invalid M4 image, boot failed\n");
+	}
+#endif
 	return 0;
 }
+
+#if defined(CONFIG_ARCH_MISC_INIT)
+int arch_misc_init(void)
+{
+	if (IS_ENABLED(CONFIG_FSL_CAAM)) {
+		struct udevice *dev;
+		int ret;
+
+		ret = uclass_get_device_by_driver(UCLASS_MISC, DM_DRIVER_GET(caam_jr), &dev);
+		if (ret)
+			printf("Failed to initialize %s: %d\n", dev->name, ret);
+	}
+
+	return 0;
+}
+#endif
 
 #ifdef CONFIG_BOARD_POSTCLK_INIT
 int board_postclk_init(void)
@@ -106,7 +179,7 @@ static void disable_wdog(u32 wdog_base)
 	__raw_writel(REFRESH_WORD1, (wdog_base + 0x04));
 	dmb();
 
-	if (!(val_cs & 800)) {
+	if (!(val_cs & 0x800)) {
 		dmb();
 		__raw_writel(UNLOCK_WORD0, (wdog_base + 0x04));
 		__raw_writel(UNLOCK_WORD1, (wdog_base + 0x04));
@@ -207,6 +280,11 @@ void s_init(void)
 	if (soc_rev() < CHIP_REV_2_0) {
 		/* enable dumb pmic */
 		writel((readl(SNVS_LP_LPCR) | SNVS_LPCR_DPEN), SNVS_LP_LPCR);
+
+#if defined(CONFIG_ANDROID_SUPPORT)
+		/* Enable RTC */
+		writel((readl(SNVS_LP_LPCR) | SNVS_LPCR_SRTC_ENV), SNVS_LP_LPCR);
+#endif
 	}
 
 #if defined(CONFIG_LDO_ENABLED_MODE)
@@ -238,7 +316,7 @@ int print_cpuinfo(void)
 
 	cpurev = get_cpu_rev();
 
-	printf("CPU:   Freescale i.MX%s rev%d.%d at %d MHz\n",
+	printf("CPU:   i.MX%s rev%d.%d at %d MHz\n",
 	       get_imx_type((cpurev & 0xFF000) >> 12),
 	       (cpurev & 0x000F0) >> 4, (cpurev & 0x0000F) >> 0,
 	       mxc_get_clock(MXC_ARM_CLK) / 1000000);
@@ -256,6 +334,10 @@ int print_cpuinfo(void)
 	case SINGLE_BOOT:
 	default:
 		printf("Single boot\n");
+#ifdef CONFIG_IMX_M4_BIND
+		if (readl(SIM0_RBASE + 0x70))
+			printf("M4 start at 0x%x\n", readl(SIM0_RBASE + 0x70));
+#endif
 		break;
 	}
 
@@ -296,7 +378,12 @@ static char *get_reset_cause(char *ret)
 
 	srs = readl(reg_srs);
 	cause1 = readl(reg_ssrs);
+#ifndef CONFIG_ANDROID_BOOT_IMAGE
+	/* We will read the ssrs states later for android so we don't
+	 * clear the states here.
+	 */
 	writel(cause1, reg_ssrs);
+#endif
 
 	reset_cause = cause1;
 
@@ -336,10 +423,28 @@ static char *get_reset_cause(char *ret)
 	return ret;
 }
 
+#ifdef CONFIG_ANDROID_BOOT_IMAGE
+void get_reboot_reason(char *ret)
+{
+	u32 *reg_ssrs = (u32 *)(SRC_BASE_ADDR + 0x28);
+
+	get_reset_cause(ret);
+	/* clear the ssrs here, its state has been recorded in reset_cause */
+	writel(reset_cause, reg_ssrs);
+}
+#endif
+
+void arch_preboot_os(void)
+{
+	scg_disable_pll_pfd(SCG_APLL_PFD1_CLK);
+	scg_disable_pll_pfd(SCG_APLL_PFD2_CLK);
+	scg_disable_pll_pfd(SCG_APLL_PFD3_CLK);
+}
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 __weak int board_mmc_get_env_dev(int devno)
 {
-	return CONFIG_SYS_MMC_ENV_DEV;
+	return devno;
 }
 
 int mmc_get_env_dev(void)
@@ -384,7 +489,12 @@ enum boot_device get_boot_device(void)
 	return boot_dev;
 }
 
-#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+bool is_usb_boot(void)
+{
+	return get_boot_device() == USB_BOOT;
+}
+
+#if defined(CONFIG_SERIAL_TAG) || defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
 /*
  * OCOTP_CFG (SJC CHALLENGE, Unique ID)
  * i.MX 7ULP Applications Processor Reference Manual, Rev. 0, 09/2020

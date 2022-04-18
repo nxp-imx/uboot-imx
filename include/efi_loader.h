@@ -312,6 +312,8 @@ extern const efi_guid_t efi_guid_firmware_management_protocol;
 extern const efi_guid_t efi_esrt_guid;
 /* GUID of the SMBIOS table */
 extern const efi_guid_t smbios_guid;
+/* GUID of memory only reset control */
+extern const efi_guid_t efi_memory_only_reset_control_guid;
 
 extern char __efi_runtime_start[], __efi_runtime_stop[];
 extern char __efi_runtime_rel_start[], __efi_runtime_rel_stop[];

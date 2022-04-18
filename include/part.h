@@ -103,6 +103,7 @@ struct disk_part {
 struct blk_desc *blk_get_dev(const char *ifname, int dev);
 
 struct blk_desc *mg_disk_get_dev(int dev);
+struct blk_desc *sata_get_dev(int dev);
 int host_get_dev_err(int dev, struct blk_desc **blk_devp);
 
 /* disk/part.c */
@@ -257,6 +258,7 @@ extern const struct block_drvr block_drvr[];
 static inline struct blk_desc *blk_get_dev(const char *ifname, int dev)
 { return NULL; }
 static inline struct blk_desc *mg_disk_get_dev(int dev) { return NULL; }
+static inline struct blk_desc *sata_get_dev(int dev) { return NULL; }
 
 static inline int part_get_info(struct blk_desc *dev_desc, int part,
 				struct disk_partition *info) { return -1; }
@@ -417,6 +419,15 @@ int is_valid_gpt_buf(struct blk_desc *dev_desc, void *buf);
  * Return: - '0' on success, otherwise error
  */
 int write_mbr_and_gpt_partitions(struct blk_desc *dev_desc, void *buf);
+
+/**
+ * write_backup_gpt_partitions - write MBR, backup gpt table.
+ * @param dev_desc - block device descriptor
+ * @param buf - buffer which contains the MBR and Primary GPT info
+ *
+ * @return - '0' on success, otherwise error
+ */
+int write_backup_gpt_partitions(struct blk_desc *dev_desc, void *buf);
 
 /**
  * gpt_verify_headers() - Function to read and CRC32 check of the GPT's header

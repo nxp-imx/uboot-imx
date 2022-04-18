@@ -239,7 +239,7 @@ int nand_spl_load_image(uint32_t offs, unsigned int size, void *buf)
 	page_off = offs & (mtd->writesize - 1);
 	nand_page_per_block = mtd->erasesize / mtd->writesize;
 
-	debug("%s offset:0x%08x len:%d page:%x\n", __func__, offs, size, page);
+	debug("%s offset:0x%08x len:%d page:0x%x\n", __func__, offs, size, page);
 
 	while (size) {
 		if (mxs_read_page_ecc(mtd, page_buf, page) < 0)
@@ -281,11 +281,6 @@ int nand_spl_load_image(uint32_t offs, unsigned int size, void *buf)
 	free(page_buf);
 
 	return 0;
-}
-
-struct mtd_info *nand_get_mtd(void)
-{
-	return mtd;
 }
 
 int nand_default_bbt(struct mtd_info *mtd)

@@ -15,6 +15,9 @@
 #include <memalign.h>
 #include <sata.h>
 #include <search.h>
+#ifdef CONFIG_DM_SCSI
+#include <scsi.h>
+#endif
 
 #if defined(CONFIG_ENV_OFFSET_REDUND)
 #error ENV REDUND not supported
@@ -49,12 +52,19 @@ static int env_sata_save(void)
 	struct blk_desc *sata = NULL;
 	int env_sata, ret;
 
+#ifndef CONFIG_DM_SCSI
 	if (sata_initialize())
 		return 1;
 
 	env_sata = sata_get_env_dev();
 
 	sata = sata_get_dev(env_sata);
+#else
+	scsi_scan(false);
+	env_sata = sata_get_env_dev();
+
+	sata = blk_get_dev("scsi", env_sata);
+#endif
 	if (sata == NULL) {
 		printf("Unknown SATA(%d) device for environment!\n",
 		       env_sata);
@@ -66,7 +76,7 @@ static int env_sata_save(void)
 		return 1;
 
 	printf("Writing to SATA(%d)...", env_sata);
-	if (write_env(sata, CONFIG_ENV_SIZE, CONFIG_ENV_OFFSET, (u_char *)env_new)) {
+	if (write_env(sata, CONFIG_ENV_SIZE, env_get_offset(CONFIG_ENV_OFFSET), (u_char *)env_new)) {
 		puts("failed\n");
 		return 1;
 	}
@@ -89,24 +99,32 @@ static inline int read_env(struct blk_desc *sata, unsigned long size,
 	return (n == blk_cnt) ? 0 : -1;
 }
 
-static void env_sata_load(void)
+static int env_sata_load(void)
 {
 	ALLOC_CACHE_ALIGN_BUFFER(char, buf, CONFIG_ENV_SIZE);
 	struct blk_desc *sata = NULL;
 	int env_sata;
 
+#ifndef CONFIG_DM_SCSI
 	if (sata_initialize())
 		return -EIO;
 
 	env_sata = sata_get_env_dev();
 
 	sata = sata_get_dev(env_sata);
+#else
+	scsi_scan(false);
+	env_sata = sata_get_env_dev();
+
+	sata = blk_get_dev("scsi", env_sata);
+#endif
+
 	if (sata == NULL) {
 		printf("Unknown SATA(%d) device for environment!\n", env_sata);
 		return -EIO;
 	}
 
-	if (read_env(sata, CONFIG_ENV_SIZE, CONFIG_ENV_OFFSET, buf)) {
+	if (read_env(sata, CONFIG_ENV_SIZE, env_get_offset(CONFIG_ENV_OFFSET), buf)) {
 		env_set_default(NULL, 0);
 		return -EIO;
 	}

@@ -9,6 +9,7 @@
 #include <command.h>
 #include <log.h>
 #include <malloc.h>
+#include <memalign.h>
 #include <asm/byteorder.h>
 #include <linux/compiler.h>
 #include <fsl_sec.h>
@@ -100,6 +101,7 @@ static int blob_encap_dek(u32 src_addr, u32 dst_addr, u32 len)
 			       0x0, &shm_output);
 	if (ret < 0) {
 		printf("Cannot register output shared memory 0x%X\n", ret);
+		tee_shm_free(shm_input);
 		goto error;
 	}
 
@@ -121,11 +123,11 @@ static int blob_encap_dek(u32 src_addr, u32 dst_addr, u32 len)
 	if (ret < 0)
 		printf("Cannot generate Blob with PTA DEK Blob 0x%X\n", ret);
 
-error:
 	/* Free shared memory */
 	tee_shm_free(shm_input);
 	tee_shm_free(shm_output);
 
+error:
 	/* Close session */
 	ret = tee_close_session(dev, arg.session);
 	if (ret < 0)
@@ -153,7 +155,7 @@ error:
 
 static int blob_encap_dek(u32 src_addr, u32 dst_addr, u32 len)
 {
-	sc_err_t err;
+	int err;
 	sc_rm_mr_t mr_input, mr_output;
 	struct generate_key_blob_hdr hdr;
 	u8 in_size, out_size;

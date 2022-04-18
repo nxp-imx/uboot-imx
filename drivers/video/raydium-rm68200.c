@@ -246,17 +246,28 @@ static int rm68200_panel_enable_backlight(struct udevice *dev)
 
 	mdelay(20);
 
-	ret = backlight_enable(priv->backlight);
-	if (ret)
-		return ret;
-
+	if (priv->backlight) {
+		ret = backlight_enable(priv->backlight);
+		if (ret)
+			return ret;
+	}
 	return 0;
 }
 
 static int rm68200_panel_get_display_timing(struct udevice *dev,
 					    struct display_timing *timings)
 {
+	struct mipi_dsi_panel_plat *plat = dev_get_plat(dev);
+	struct mipi_dsi_device *device = plat->device;
+
 	memcpy(timings, &default_timing, sizeof(*timings));
+
+	/* fill characteristics of DSI data link */
+	if (device) {
+		device->lanes = plat->lanes;
+		device->format = plat->format;
+		device->mode_flags = plat->mode_flags;
+	}
 
 	return 0;
 }
@@ -285,7 +296,7 @@ static int rm68200_panel_of_to_plat(struct udevice *dev)
 
 	ret = uclass_get_device_by_phandle(UCLASS_PANEL_BACKLIGHT, dev,
 					   "backlight", &priv->backlight);
-	if (ret) {
+	if (ret && ret != -ENOENT) {
 		dev_err(dev, "Cannot get backlight: ret=%d\n", ret);
 		return ret;
 	}
@@ -321,6 +332,15 @@ static int rm68200_panel_probe(struct udevice *dev)
 	return 0;
 }
 
+static int rm68200_panel_disable(struct udevice *dev)
+{
+	struct rm68200_panel_priv *priv = dev_get_priv(dev);
+
+	dm_gpio_set_value(&priv->reset, true);
+
+	return 0;
+}
+
 static const struct panel_ops rm68200_panel_ops = {
 	.enable_backlight = rm68200_panel_enable_backlight,
 	.get_display_timing = rm68200_panel_get_display_timing,
@@ -338,6 +358,7 @@ U_BOOT_DRIVER(rm68200_panel) = {
 	.ops			  = &rm68200_panel_ops,
 	.of_to_plat	  = rm68200_panel_of_to_plat,
 	.probe			  = rm68200_panel_probe,
+	.remove			  = rm68200_panel_disable,
 	.plat_auto	= sizeof(struct mipi_dsi_panel_plat),
 	.priv_auto	= sizeof(struct rm68200_panel_priv),
 };

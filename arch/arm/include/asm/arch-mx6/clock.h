@@ -77,11 +77,14 @@ void disable_ipu_clock(void);
 int enable_fec_anatop_clock(int fec_id, enum enet_freq freq);
 void enable_enet_clk(unsigned char enable);
 int enable_lcdif_clock(u32 base_addr, bool enable);
+int enable_lvds_clock(u32 lcd_base_addr);
 void enable_qspi_clk(int qspi_num);
 void enable_thermal_clk(void);
+void enable_epdc_clock(void);
 void mxs_set_lcdclk(u32 base_addr, u32 freq);
 void select_ldb_di_clock_source(enum ldb_di_clock clk);
 void enable_eim_clk(unsigned char enable);
+void mxs_set_vadcclk(void);
 int do_mx6_showclocks(struct cmd_tbl *cmdtp, int flag, int argc,
 		      char *const argv[]);
 #endif /* __ASM_ARCH_CLOCK_H */

@@ -1,0 +1,281 @@
++==========================================================+
++   i.MX6, i.MX7 U-Boot Encrypted Boot guide using HABv4   +
++==========================================================+
+
+1. HABv4 Encrypted Boot process
+-------------------------------
+
+This document describes a step-by-step procedure on how to encrypt and
+sign an U-Boot image. It is assumed that the reader is familiar
+with basic HAB concepts and has already followed the mx6_mx7_secure_boot.txt
+guide and got a working closed device.
+
+Details about HAB and encrypted boot process can be found in application
+notes AN4581[1] and AN12056[2] and in the introduction_habv4.txt document.
+
+Before continuing, be sure to have fatwrite and dek_blob commands
+available in U-Boot. If not, enable them in Kconfig and rebuild
+U-Boot:
+
+- Defconfig
+
+  CONFIG_FAT_WRITE=y
+  CONFIG_CMD_DEKBLOB=y
+  CONFIG_CMD_PRIBLOB=y
+
+- Kconfig
+
+  File systems -> Enable FAT filesystem support-> Enable FAT filesystem
+  write support
+  ARM architecture -> Support the 'dek_blob' command
+  ARM architecture -> Support the set_priblob_bitfield command
+
+1.1 Building an encrypted U-Boot image
+--------------------------------------
+
+This U-Boot is built the same way the one from the secure document is,
+so it provides the same access the the HAB APIs, extra functions
+for HAB, etc...
+
+However, the layout of the new image is different, as a part of it is
+encrypted, and a DEK blob is appended at the end. The diagram below
+illustrates an encrypted u-boot-dtb.imx image layout:
+
+  ----------------------- +-----------------------------+ <--- *start
+         ^            ^   |      Image Vector Table     |
+         |            |   +-----------------------------+ <--- *boot_data
+         |            |   |          Boot Data          |
+         |      Plain |   +-----------------------------+ <--- *dcd
+         |       text |   |          DCD Table          |
+         |            |   +-----------------------------+
+  Signed |            v   |           Padding           |
+   data  |        ------- +-----------------------------+ <--- *entry
+         |            ^   |                             |
+         |            |   |                             |
+         |  Encrypted |   |        u-boot-dtb.bin       |
+         |       data |   |                             |
+         |            |   |                             |
+         |            |   +-----------------------------+
+         v            v   |           Padding           |
+  ----------------------- +-----------------------------+ <--- *csf
+                      ^   |    Command Sequence File    |
+               0x2000 |   |   (commands + SRK table +   |
+           (in bytes) |   | signatures + certificates + |
+                      v   |        Nonce + MAC)         |
+                  ------- +-----------------------------+
+                          |           Padding           |
+                          +-----------------------------+ <--- *csf + 0x2000
+                          |           DEK Blob          |
+                          +-----------------------------+
+                          |           Padding           |
+                          +-----------------------------+
+
+1.2 Get a secure boot working
+-----------------------------
+
+You need to go through all the steps described into the
+mx6_mx7_secure_boot.txt guide, and get a signed U-Boot which can
+boot successfully on a closed target. Otherwise, the following
+steps will not work.
+
+1.3 Compile the CST to enable the encrypting feature
+----------------------------------------------------
+
+CST version 3.0.0 and later have the encryption feature enabled by default.
+If using an earlier version, the encryption feature must be explicitly
+enabled.
+
+For CST versions <3.0.0, the CST backend must be recompiled, execute the
+following commands to enable encryption support in CST:
+
+  $ sudo apt-get install libssl-dev openssl
+  $ cd <CST install directory>/code/back_end/src
+  $ gcc -o cst_encrypted -I ../hdr -L ../../../linux64/lib *.c
+    -lfrontend -lcrypto
+  $ cp cst_encrypted ../../../<where your original CST executable is>
+
+1.4 Creating the CSF description files
+--------------------------------------
+
+The CSF contains all the commands that the ROM executes during the
+secure boot. These commands instruct the HAB on which memory areas
+of the image to authenticate, which keys to install, use, etc...
+
+CSF examples for encrypted boot are available under
+doc/imx/hab/habv4/csf_examples/ directory.
+
+For both CSF, first part is same compared to the CSF used for
+the secure boot step.
+Here we describe how to encrypt the U-Boot image and then sign it.
+
+1.4.1 csf_u-boot_enc.txt
+-------------------------
+
+This first CSF is used to encrypt the U-Boot image and generate the
+dek.bin file. The Authenticate Data command has to be modified, and
+two new commands have to be added:
+
+- Modify the Authenticate Data command to only cover IVT and DCD:
+
+  Blocks = 0x877ff400 0x00000000 0x00000c00 "u-boot-dtb.imx"
+
+- Add the new Install Secret Key command to generate the dek.bin
+  file and install the blob. The parameter which depends of your
+  configuration is the Blob Address. Padding of 0x2000 is
+  recommended. Following the csf_uboot.txt data for instance:
+
+  Blob Address = Authenticate Start Address + Padding + length
+               = 0x877ff400 + 0x2000 + 0x9ec00 = 0x878a0000
+
+- Add the new Decrypt Data command to encrypt the file. As the file
+  specified in parameter will be modified, we suggest to copy it.
+  Then modify the Blocks command depending of your U-Boot image.
+  In our example:
+
+  $ cp u-boot-dtb.imx u-boot-dtb.imx-enc
+  Block = (Authenticate start addr + 0xc00) 0xc00 (length - 0xc00)
+          u-boot-dtb.imx-enc
+        = (0x877ff400 + 0xc00) 0xc00 (0x9ec00 - 0xc00)
+          u-boot-dtb.imx-enc
+        = 0x87800000 0xc00 0x9e000 u-boot-dtb.imx-enc
+
+1.4.2 csf_u-boot_sign_enc.txt
+-----------------------------
+
+This second CSF is used to sign the encrypted U-Boot image previously
+generated (u-boot-dtb.imx-enc). The Authenticate Data part has also
+to be changed, the modifications are the following:
+
+- The Authenticate Data command is same compared to the one in
+  csf_uboot.txt file, except that this time, the file parameter
+  is the file previously encrypted: u-boot-dtb.imx-enc.
+
+  Blocks = 0x877ff400 0x000 0x0009ec00 "u-boot-dtb.imx-enc"
+
+- For the two new commands, we do not want to they modify our previously
+  signed/generated files. Therefore, for the Key parameter of the
+  Install Secret Key command, the value is now dek-dummy.bin, which
+  will generate a new dek file instead of erasing the previous one.
+  About the decrypt data command, you need to copy the u-boot-dtb.imx
+  file again in a u-boot-dtb.imx-dummy file, to not replace the
+  original encrypted file with an encrypted one:
+
+  Key = "dek-dummy.bin"
+  Blocks = 0x87800000 0x00000c00 0x9e000 "u-boot-dtb.imx-dummy"
+
+1.5 Encrypt the U-Boot image
+----------------------------
+
+The image is encrypted using the Code Signing Tool. It generates also
+a CSF binary and a dek.bin file, which will be used on the future
+steps below.
+
+- Create the CSF binary file and encrypt the U-Boot image
+
+  $ ./cst_encrypted -i csf_u-boot_enc.txt -o csf_u-boot_enc.bin
+
+1.6 Sign the encrypted U-Boot image
+-----------------------------------
+
+The image is then signed using the Code Signing Tool. It also
+generate a CSF binary, which will be used on the future steps below.
+
+- Create the CSF binary file and sign the encrypted U-Boot image
+
+  $ ./cst_encrypted -i csf_u-boot_sign_enc.txt -o csf_u-boot_sign_enc.bin
+
+1.7 Swap Nonce/MAC from csf_u-boot_enc.bin to csf_u-boot_sign_enc.bin
+---------------------------------------------------------------------
+
+First, calculate Nonce/MAC size based on MAC bytes value
+in CSF. As Mac bytes is 16:
+
+  Nonce/MAC size = Nonce size + MAC bytes + CSF header for Nonce/Mac
+                 = 12 + 16 + 8 = 36 bytes
+
+Then, calculate Nonce/MAC offset in CSF:
+
+  MAC offset = csf_u-boot-enc.bin size - Nonce/MAC size
+             = 3972 - 36 = 3936 Bytes
+
+In the next step, extract Nonce/NAC from the first CSF:
+
+  $ dd if=csf_u-boot_enc.bin of=noncemac.bin bs=1 skip=3936 count=36
+
+Finally, replace the MAC of csf_u-boot_sign_enc.bin with the extracted
+one:
+
+  $ dd if=noncemac.bin of=csf_u-boot_sign_enc.bin bs=1 seek=3936 count=36
+
+1.8 Generate encryptedu-boot with no dek
+----------------------------------------
+
+As described in the layout in the first part of this document, the
+final image is composed of these different parts padded to known
+values, to make it compliant with the CSF.
+
+First, pad the CSF to 0x2000:
+
+  $ objcopy -I binary -O binary --pad-to 0x2000 --gap-fill=0xff
+  csf_u-boot_sign_enc.bin csf_u-boot_sign_enc_padded.bin
+
+Then, append this file to the encrypted U-Boot image:
+
+  $ cat u-boot-dtb.imx-enc csf_u-boot_sign_enc_padded.bin >
+  u-boot_encrypted_no_dek.bin
+
+Pad this new file to width+offset (0x9ec00 + 0x2000 = 0xa0c00):
+
+  $ objcopy -I binary -O binary --pad-to 0xa0c00 --gap-fill=0x00
+  u-boot_encrypted_no_dek.bin u-boot_encrypted_no_dek_padded.bin
+
+1.9 Generate the DEK Blob
+-------------------------
+The missing part to get our final U-Boot encrypted image is a DEK
+blob. To generate it, copy the dek.bin file generated at step 1.5
+on the Boot partition of your SD Card. Then interrupt the boot
+and your chip. You need the fatwrite and dek_blob command, which
+should be enabled by the secure boot. If not, you have to enable
+them in Kconfig and recompile U-Boot
+
+Run the following commands:
+
+  => mmc list
+  FSL_SDHC: 0 (SD)   #index to use for mmc in following commands
+  => fatload mmc 0 0x80800000 dek.bin
+  => dek_blob 0x80800000 0x80801000 128
+  => fatwrite mmc 0 0x80801000 dek_blob.bin 0x48
+
+1.10 Finalize the encrypted U-Boot image
+----------------------------------------
+
+Finally, copy the generated dek_blob.bin file from your SDCard to
+your CST repository. Append it with the last padded file to get your
+final image:
+
+  $ cat u-boot_encrypted_no_dek_padded.bin dek_blob.bin >
+  u-boot_encrypted.bin
+
+If the image does not boot, please verify the size of your
+U-Boot image, the length specified into CSF and the padding values.
+
+2. About the PRIBLOB bitfield from CAAM SCFGR register
+------------------------------------------------------
+
+It is highly recommended to set the PRIBLOB bitfield from the CAAM
+SCFGR register to 0x3 once your encrypted U-Boot image is completed.
+To do so, a command has been implemented in u-boot:
+
+  => set_priblob_bitfield
+
+Once this bitfield is set to 0x3, it ensures cryptographic separation
+of private blob types avoiding any modification or replacement of
+DEK blobs. Newly created blobs will be incompatible with blobs
+required to decrypt an encrypted boot image. When the HAB later
+executes the command to decrypt the DEK, an incompatible DEK blob
+will be detected and cause an error. A substitute encrypted boot image
+will not be decrypted, and will not be executed.
+
+References:
+[1] AN4581: "i.MX Secure Boot on HABv4 Supported Devices"
+[2] AN12056: "Encrypted Boot on HABv4 and CAAM Enabled Devices"

@@ -3,6 +3,32 @@
  * Copyright 2021 NXP
  */
 
+/ {
+	aliases {
+		usbgadget0 = &usbg1;
+		usbgadget1 = &usbg2;
+	};
+
+	usbg1: usbg1 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg1>;
+		status = "okay";
+	};
+
+	usbg2: usbg2 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg2>;
+		status = "okay";
+	};
+
+	dsi_host: dsi-host {
+		compatible = "northwest,mipi-dsi";
+		status = "okay";
+	};
+};
+
 &{/soc@0} {
 	u-boot,dm-spl;
 };
@@ -17,6 +43,7 @@
 
 &iomuxc1 {
 	u-boot,dm-spl;
+	fsl,mux_mask = <0xf00>;
 };
 
 &pinctrl_lpuart5 {
@@ -33,8 +60,62 @@
 
 &usdhc0 {
 	u-boot,dm-spl;
+	mmc-hs400-1_8v;
+	mmc-hs400-enhanced-strobe;
 };
 
 &pinctrl_usdhc0 {
 	u-boot,dm-spl;
+};
+
+&crypto {
+	u-boot,dm-spl;
+};
+
+&sec_jr0 {
+	u-boot,dm-spl;
+};
+
+&sec_jr1 {
+	u-boot,dm-spl;
+};
+
+&sec_jr2 {
+	u-boot,dm-spl;
+};
+
+&sec_jr3 {
+	u-boot,dm-spl;
+};
+
+&lpi2c0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <100000>;
+	status = "okay";
+
+	pcal6416: gpio@20 {
+		compatible = "ti,tca6416";
+		reg = <0x20>;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+};
+
+&scmi_buf {
+	reg = <0x0 0x1000>; /* Align page size */
+};
+
+&dsi {
+	data-lanes-num = <4>;
+};
+
+&usbotg1 {
+	compatible = "fsl,imx8ulp-usb", "fsl,imx7ulp-usb", "fsl,imx27-usb";
+	fsl,usbphy = <&usbphy1>;
+};
+
+&usbotg2 {
+	compatible = "fsl,imx8ulp-usb", "fsl,imx7ulp-usb", "fsl,imx27-usb";
+	fsl,usbphy = <&usbphy2>;
 };

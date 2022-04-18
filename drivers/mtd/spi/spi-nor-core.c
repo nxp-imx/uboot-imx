@@ -1329,7 +1329,7 @@ static int stm_is_locked(struct spi_nor *nor, loff_t ofs, uint64_t len)
 static const struct flash_info *spi_nor_read_id(struct spi_nor *nor)
 {
 	int			tmp;
-	u8			id[SPI_NOR_MAX_ID_LEN];
+	u8			id[SPI_NOR_MAX_ID_LEN * 2];
 	const struct flash_info	*info;
 
 	tmp = nor->read_reg(nor, SPINOR_OP_RDID, id, SPI_NOR_MAX_ID_LEN);
@@ -1346,8 +1346,28 @@ static const struct flash_info *spi_nor_read_id(struct spi_nor *nor)
 		}
 	}
 
+#if defined(CONFIG_SPI_FLASH_ADESTO)
+	tmp = nor->read_reg(nor, SPINOR_OP_RDID, id, SPI_NOR_MAX_ID_LEN * 2);
+	if (tmp < 0) {
+		dev_dbg(nor->dev, "error %d reading JEDEC ID\n", tmp);
+		return ERR_PTR(tmp);
+	}
+
+	info = spi_nor_ids;
+	for (; info->name; info++) {
+		if (info->id_len) {
+			if (!memcmp(info->id, &id[7], info->id_len))
+				return info;
+		}
+	}
+
+	dev_err(nor->dev, "unrecognized JEDEC id bytes: %02x, %02x, %02x\n",
+		id[7], id[8], id[9]);
+#endif
+
 	dev_err(nor->dev, "unrecognized JEDEC id bytes: %02x, %02x, %02x\n",
 		id[0], id[1], id[2]);
+
 	return ERR_PTR(-ENODEV);
 }
 
@@ -2682,12 +2702,15 @@ static int spi_nor_init_params(struct spi_nor *nor,
 	spi_nor_set_pp_settings(&params->page_programs[SNOR_CMD_PP],
 				SPINOR_OP_PP, SNOR_PROTO_1_1_1);
 
-	/*
-	 * Since xSPI Page Program opcode is backward compatible with
-	 * Legacy SPI, use Legacy SPI opcode there as well.
-	 */
-	spi_nor_set_pp_settings(&params->page_programs[SNOR_CMD_PP_8_8_8_DTR],
-				SPINOR_OP_PP, SNOR_PROTO_8_8_8_DTR);
+	if (info->flags & SPI_NOR_OCTAL_DTR_PP) {
+		params->hwcaps.mask |= SNOR_HWCAPS_PP_8_8_8_DTR;
+		/*
+		 * Since xSPI Page Program opcode is backward compatible with
+		 * Legacy SPI, use Legacy SPI opcode there as well.
+		 */
+		spi_nor_set_pp_settings(&params->page_programs[SNOR_CMD_PP_8_8_8_DTR],
+					SPINOR_OP_PP, SNOR_PROTO_8_8_8_DTR);
+	}
 
 	if (info->flags & SPI_NOR_QUAD_READ) {
 		params->hwcaps.mask |= SNOR_HWCAPS_PP_1_1_4;
@@ -3569,6 +3592,7 @@ static int spi_nor_init(struct spi_nor *nor)
 	    (JEDEC_MFR(nor->info) == SNOR_MFR_ATMEL ||
 	     JEDEC_MFR(nor->info) == SNOR_MFR_INTEL ||
 	     JEDEC_MFR(nor->info) == SNOR_MFR_SST ||
+	     JEDEC_MFR(nor->info) == SNOR_MFR_ADESTO ||
 	     nor->info->flags & SPI_NOR_HAS_LOCK)) {
 		write_enable(nor);
 		write_sr(nor, 0);

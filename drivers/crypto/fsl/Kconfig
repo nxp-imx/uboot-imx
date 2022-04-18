@@ -2,6 +2,7 @@ config FSL_CAAM
 	bool "Freescale Crypto Driver Support"
 	select SHA_HW_ACCEL
 	# hw_sha1() under drivers/crypto, and needed with SHA_HW_ACCEL
+	select MISC if DM
 	imply SPL_CRYPTO if (ARM && SPL)
 	imply CMD_HASH
 	help
@@ -11,7 +12,7 @@ config FSL_CAAM
 
 config CAAM_64BIT
 	bool
-	default y if PHYS_64BIT && !ARCH_IMX8M
+	default y if PHYS_64BIT && !ARCH_IMX8M && !ARCH_IMX8 && !ARCH_IMX8ULP
 	help
 	  Select Crypto driver for 64 bits CAAM version
 
@@ -65,5 +66,33 @@ config FSL_CAAM_RNG
 	  module of the CAAM. The random data is fetched from the DRGB
 	  using the prediction resistance flag which means the DRGB is
 	  reseeded from the TRNG every time random data is generated.
+
+config FSL_BLOB
+	bool "Enable Blob Encap/Decap, Blob KEK support"
+
+config RNG_SELF_TEST
+	bool "RNG self test"
+	help
+	 Enable RNG self test.
+	 Following is the typical warning message when ROM/HAB fails rng self test
+	 ------------+----+------+----+----------------------------------------
+	 Persistent  | T  |  L   | P  | Contents
+	 Memory      | a  |  e   | a  |
+	 Record      | g  |  n   | r  |
+	 Type        |    |  g   |    |
+	             |    |  t   |    |
+	             |    |  h   |    |
+	 ------------+----+------+----+-------------------------------------------------
+	 Event       |0xdb|0x0024|0x42| SRCE Field: 69 30 e1 1d
+	             |    |      |    |             STS = HAB_WARNING (0x69)
+	             |    |      |    |             RSN = HAB_ENG_FAIL (0x30)
+	             |    |      |    |             CTX = HAB_CTX_ENTRY (0xE1)
+	             |    |      |    |             ENG = HAB_ENG_CAAM (0x1d)
+	             |    |      |    | Evt Data (hex):
+	             |    |      |    |  00 04 00 02 40 00 36 06 55 55 00 03 00 00 00 00
+	             |    |      |    |  00 00 00 00 00 00 00 00 00 00 00 01
+	 ------------+----+------+----+-------------------------------------------------
+	 In this scenario RNG self test needs to be run explicitly and
+	 must be run before running any RNG based crypto implementation.
 
 endif

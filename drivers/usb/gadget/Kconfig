@@ -112,6 +112,7 @@ config USB_GADGET_OS_DESCRIPTORS
 config CI_UDC
 	bool "ChipIdea device controller"
 	select USB_GADGET_DUALSPEED
+	imply DM_USB_GADGET
 	help
 	  Say Y here to enable device controller functionality of the
 	  ChipIdea driver.
@@ -190,6 +191,15 @@ config USB_FUNCTION_ACM
 	  ACM serial link. This function can be used to create a stdio device to
 	  interoperate with MS-Windows hosts or with the Linux-USB "cdc-acm"
 	  driver.
+
+config USB_PORT_AUTO
+	bool "Enable USB port autodetect"
+	depends on CI_UDC
+	help
+	  Enable usb port autodetect function for i.MX8. There two usb ports -
+	  usb2 and usb3 on i.MX8, when use SDP or fastboot which runs automatically
+	  when uboot starts, enable this config will autodetect the  connected usb
+	  port instead of specify USB port to download in code.
 
 endif # USB_GADGET_DOWNLOAD
 

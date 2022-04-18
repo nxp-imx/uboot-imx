@@ -1,0 +1,567 @@
+         +======================================================+
+         +    i.MX8M family Encrypted Boot guide using HABv4    +
+         +======================================================+
+
+1. HABv4 Encrypted Boot process
+-------------------------------
+
+This document describes a step-by-step procedure on how to encrypt and sign a
+bootloader image for i.MX8M family devices. It is assumed that the reader is
+familiar with basic HAB concepts and has already closed the device, step-by-step
+procedure can be found in mx8m_secure_boot.txt guide.
+
+Details about encrypted boot can be found in application note AN12056[1] and
+in the introduction_habv4.txt document.
+
+The steps described in this document were based in i.MX8MM device, the same
+concept can be applied to other i.MX8M family devices.
+
+1.1 Understanding the encrypted flash.bin image layout
+------------------------------------------------------
+
+As described in mx8m_secure_boot.txt guide a single binary is used to boot the
+device, the imx-mkimage tool combines all the input images in a FIT structure,
+generating a flash.bin binary.
+
+The encrypted boot image requires a DEK (Data Encryption Key) blob on each time
+HABv4 is used to decrypt an image. The DEK blob is used as a security layer to
+wrap and store the DEK off-chip using the OTPMK which is unique per device.
+More details can be found in AN12056 application note.
+
+The diagram below illustrates an encrypted flash.bin image layout:
+
+                     +-----------------------------+
+                     |                             |
+                     |     *Signed HDMI/DP FW      |
+                     |                             |
+                     +-----------------------------+
+                     |           Padding           |
+  ------------------ +-----------------------------+ --------
+        ^            |          IVT - SPL          |   ^
+ Signed |    ------- +-----------------------------+   |
+  Data  |    Enc  ^  |        u-boot-spl.bin       |   |
+        |    Data |  |              +              |   |  SPL
+        v         v  |           DDR FW            |   | Image
+  ------------------ +-----------------------------+   |
+                     |      CSF - SPL + DDR FW     |   v
+                     +-----------------------------+ --------
+                     |           DEK Blob          |
+                     +-----------------------------+
+                     |           Padding           |
+             ------- +-----------------------------+ --------
+          Signed ^   |          FDT - FIT          |   ^
+           Data  |   +-----------------------------+   |
+                 v   |          IVT - FIT          |   |
+             ------- +-----------------------------+   |
+                     |          CSF - FIT          |   |
+  ------------------ +-----------------------------+   |
+                ^    |       u-boot-nodtb.bin      |   | FIT
+                |    +-----------------------------+   | Image
+    Signed and  |    |          u-boot.dtb         |   |
+     Encrypted  |    +-----------------------------+   |
+          Data  |    |        bl31.bin (ATF)       |   |
+                |    +-----------------------------+   |
+                v    |            OP-TEE           |   |
+  ------------------ +-----------------------------+   |
+                     |           DEK Blob          |   v
+                     +-----------------------------+ --------
+  * Only supported on i.MX8M series
+
+1.2 Enabling the encrypted boot support in U-Boot
+--------------------------------------------------
+
+For deploying an encrypted boot image additional U-Boot tools are needed,
+please be sure to have the following features enabled, this can be achieved
+by following one of the methods below:
+
+- Defconfig
+
+  CONFIG_IMX_HAB=y
+  CONFIG_FAT_WRITE=y
+  CONFIG_CMD_DEKBLOB=y
+  CONFIG_IMX_OPTEE_DEK_ENCAP=y
+  CONFIG_CMD_PRIBLOB=y
+
+- Kconfig
+
+  ARM architecture -> Support i.MX HAB features
+  ARM architecture -> Support the 'dek_blob' command
+  ARM architecture -> Support the set_priblob_bitfield command
+  File systems -> Enable FAT filesystem support-> Enable FAT filesystem
+                  write support
+
+The U-Boot image must then be recompiled after these changes are made.
+
+1.3 Enabling the encrypted boot support in CST
+----------------------------------------------
+CST version 3.0.0 and later have the encryption feature enabled by default.
+If using an earlier version, the encryption feature must be explicitly
+enabled.
+
+For CST versions <3.0.0, the CST backend must be recompiled, execute the
+following commands to enable encryption support in CST:
+
+  $ sudo apt-get install libssl-dev openssl
+  $ cd <CST install directory>/code/back_end/src
+  $ gcc -o cst_encrypted -I ../hdr -L ../../../linux64/lib *.c
+    -lfrontend -lcrypto
+  $ cp cst_encrypted ../../../linux64/bin/
+
+1.4 Building OP-TEE and ATF to support DEK blob tool
+-----------------------------------------------------
+
+The DEK blob must be created by a software running in Arm TrustZone Secure
+World, the CAAM block takes into consideration the TrustZone configuration
+when encapsulating the DEK and the resulting blob can be only decapsulated
+by a SW running in the same configuration. As ROM code is running in ARM
+TrustZone secure world we must encapsulate the blobs using OP-TEE.
+
+- Building ATF to support OP-TEE:
+
+  $ make PLAT=<SoC Name> SPD=opteed bl31
+
+- Building OP-TEE to support DEK blob encapsulation:
+
+  $ CFG_NXPCRYPT=y CFG_GEN_DEK_BLOB=y source ./scripts/nxp_build.sh <Board Name>
+
+* OP-TEE debug logs can be enabled by adding CFG_TEE_CORE_LOG_LEVEL=4 in
+  command line above.
+
+Note: If a Make error is encountered while building ATF, make sure the compilation
+environment is set up properly and then try the following command to resolve
+persistent errors:
+
+  $ unset LDFLAGS
+
+1.5 Preparing the fit image
+----------------------------
+
+As explained in mx8m_secure_boot.txt document the imx-mkimage project is used to
+combine all the images in a single flash.bin binary.
+
+Copy all the binaries generated (U-Boot images, bl31.bin, tee.bin and Firmware)
+into iMX8M directory and run the following commands according to the target
+device:
+
+- Create a dummy DEK blob:
+
+  $ dd if=/dev/zero of=iMX8M/dek_blob_fit_dummy.bin bs=96 count=1 && sync
+
+- Assembly flash.bin binary:
+
+  $ make SOC=<SoC Name> flash_spl_uboot
+
+The mkimage log will be used during the encrypted boot procedure to create the
+Command Sequence File (CSF):
+
+- imx-mkimage build log:
+
+  Loader IMAGE:
+   header_image_off 	0x0
+   dcd_off 		0x0
+   image_off 		0x40
+   csf_off 		0x2c400
+   spl hab block: 	0x7e0fc0 0x0 0x2c400
+
+  Second Loader IMAGE:
+   sld_header_off 	0x57c00
+   sld_csf_off 		0x58c20
+   sld hab block: 	0x401fcdc0 0x57c00 0x1020
+
+- Additional HAB information is provided by running the following command:
+
+  $ make SOC=<SoC Name> print_fit_hab
+
+  ./../scripts/pad_image.sh bl31.bin
+  ./../scripts/pad_image.sh u-boot-nodtb.bin fsl-imx8mm-evk.dtb
+  TEE_LOAD_ADDR=0xbe000000 ATF_LOAD_ADDR=0x00920000 VERSION=v1 \
+  ./print_fit_hab.sh 0x60000 fsl-imx8mm-evk.dtb
+  0x40200000 0x5AC00 0xB0318
+  0x402B0318 0x10AF18 0x8628
+  0x920000 0x113540 0xA160
+  0xBE000000 0x11D6A0 0x48520
+
+1.6 Creating the CSF description file for SPL + DDR FW image
+-------------------------------------------------------------
+
+The CSF contains all the commands that the ROM executes during the secure boot.
+These commands instruct the HAB on which memory areas of the image to
+authenticate and/or decrypt, which keys to install, use, etc...
+
+CSF examples for encrypted boot are available under
+doc/imx/hab/habv4/csf_examples/ directory.
+
+With current CST implementation is not possible to encrypt and sign an image
+at the same time, hence two CSF files are required on each time HAB is used.
+
+1.6.1 csf_spl_enc.txt
+----------------------
+
+The first CSF is used to encrypt the SPL and DDR FW images and generate the
+dek_spl.bin file. The Authenticate Data command has to cover only the image
+header and two commands have to be added to encrypt the image.
+
+- Add the Authenticate Data command to only cover SPL IVT and boot data:
+
+  For example:
+
+  [Authenticate Data]
+    ...
+    Blocks = 0x7E0FC0 0x0 0x40 "flash.bin"
+
+- Add the Install Secret Key command to generate the dek_spl.bin file and
+  install the blob. The Blob Address depends on your image layout and can
+  be calculated as following:
+
+  For example:
+
+  [Install Secret Key]
+    ...
+    Key = "dek_spl.bin"
+    # Blob Address = Authenticate Start Address +  Image length + CSF Padding
+    #              = 0x7E0FC0 + 0x2c400 + 0x2000 = 0x80F3C0
+    Blob Address = 0x80F3C0
+
+- Add the Decrypt Data command to encrypt the file. As SPL image header
+  cannot be encrypted we need to calculate the Block as following:
+
+  Start Address = Start Address + SPL header = 0x7E0FC0 + 0x40 = 0x7E1000
+  Offset = Image offset (image_off) = 0x40
+  Decrypt size = Image length - SPL header = 0x2C400 - 0x40 = 0x2C3C0
+
+  For example:
+
+  [Decrypt Data]
+    ...
+    Blocks = 0x7E1000 0x40 0x2C3C0 "flash-spl-enc.bin"
+
+1.6.2 csf_spl_sign_enc.txt
+---------------------------
+
+The second CSF is used to sign the encrypted SPL image previously generated
+(flash-spl-enc.bin).
+
+- The Authenticate Data command should cover the entire SPL and DDR FW image,
+  the file parameter is the encrypted image flash-spl-enc.bin:
+
+  For example:
+
+  [Authenticate Data]
+    ...
+    Blocks = 0x7E0FC0 0x0 0x2C400 "flash-spl-enc.bin"
+
+- Add the Install Secret Key command to generate a dummy DEK blob file,
+  the blob address should be the same as used in csf_spl_enc.txt:
+
+  For example:
+
+  [Install Secret Key]
+    ...
+    Key = "dek_spl_dummy.bin"
+    Blob Address = 0x80F3C0
+
+- Add the Decrypt Data command to encrypt the file. As image was encrypted
+  in CSF above we need to encrypt a dummy file, the block addresses should be
+  the same as used in csf_spl_enc.txt:
+
+  For example:
+
+  [Decrypt Data]
+    ...
+    Blocks = 0x7E1000 0x40 0x2C3C0 "flash-spl-enc-dummy.bin"
+
+1.7 Encrypting and signing the SPL + DDR FW image
+--------------------------------------------------
+
+The CST is used to encrypt the image and regenerate a random DEK. During this
+step two CSF binaries are generated but only one will be included in final
+image.
+
+- Encrypt the SPL + DDR FW image:
+
+  $ cp flash.bin flash-spl-enc.bin
+  $ ./cst_encrypted -i csf_spl_enc.txt -o csf_spl_enc.bin
+
+- Sign the encrypted SPL + DDR FW image:
+
+  $ cp flash-spl-enc.bin flash-spl-enc-dummy.bin
+  $ ./cst_encrypted -i csf_spl_sign_enc.txt -o csf_spl_sign_enc.bin
+
+1.7.1 Create final CSF binary for SPL + DDR FW image
+-----------------------------------------------------
+
+As only one CSF binary will be included in final image it's necessary to
+swap Nonce/MAC from csf_spl_enc.bin to csf_spl_sign_enc.bin.
+
+- Calculate Nonce/MAC size based on MAC bytes value in CSF:
+
+  Nonce/MAC size = Nonce size + MAC bytes + CSF header for Nonce/Mac
+                 = 12 + 16 + 8 = 36 bytes
+
+- Calculate Nonce/MAC offset in CSF:
+
+  MAC offset = csf_spl_enc.bin size - Nonce/MAC size
+             = 3980 - 36 = 3944 Bytes
+
+- Extract Nonce/MAC from csf_spl_enc.bin:
+
+  $ dd if=csf_spl_enc.bin of=noncemac.bin bs=1 skip=3944 count=36
+
+- Replace the MAC of csf_spl_sign_enc with the one extracted above:
+
+  $ dd if=noncemac.bin of=csf_spl_sign_enc.bin bs=1 seek=3944 count=36
+
+1.8 Creating the CSF description file for FIT image
+----------------------------------------------------
+
+Similar to SPL image two CSF files are required encrypt and sign the FIT
+image.
+
+Please note that the steps below are using the flash-spl-enc.bin image created
+in steps above.
+
+1.8.1 csf_fit_enc.txt
+----------------------
+
+The first CSF is used to encrypt the FIT image and generate the dek_fit.bin
+file.
+
+- Modify the Authenticate Data command to only cover FIT image FDT header:
+
+  For example:
+
+  [Authenticate Data]
+    ...
+    Blocks = 0x401FCDC0 0x57C00 0x1020 "flash-spl-enc.bin"
+
+- Add the Install Secret Key command to generate the dek_fit.bin file and
+  install the blob. The Blob Address is a fixed address defined in imx-mkimage
+  project in iMX8M/soc.mak file:
+
+  iMX8M/soc.mak:
+    DEK_BLOB_LOAD_ADDR = 0x40400000
+
+  For example:
+
+  [Install Secret Key]
+    ...
+    Key = "dek_fit.bin"
+    Blob Address = 0x40400000
+
+- Add the Decrypt Data command to encrypt the file.
+
+  The CST can only encrypt images that are 16 bytes aligned, as u-boot-nodtb.bin
+  and u-boot.dtb are together 16 bytes aligned we should consider the first two
+  lines provided in print_fit_hab as a single block.
+
+  imx-mkimage output:
+
+    0x40200000 0x5AC00 0xB0318 ──┬── Total length = 0xB0318 + 0x8628 = 0xB8940
+    0x402B0318 0x10AF18 0x8628 ──┘
+    0x920000 0x113540 0xA160
+    0xBE000000 0x11D6A0 0x48520
+
+  Decrypt data in csf_fit_enc.txt:
+
+  For example:
+
+  [Decrypt Data]
+    ...
+    Blocks = 0x40200000 0x5AC00 0xB8940 "flash-spl-fit-enc.bin", \
+             0x920000 0x113540 0xA160 "flash-spl-fit-enc.bin", \
+             0xBE000000 0x11D6A0 0x48520 "flash-spl-fit-enc.bin"
+
+1.8.2 csf_fit_sign_enc.txt
+---------------------------
+
+The second CSF is used to sign the encrypted FIT image previously generated
+(flash-spl-fit-enc.bin).
+
+- The Authenticate Data command should cover the entire FIT image,
+  the file parameter is the encrypted FIT image flash-spl-fit-enc.bin:
+
+  For example:
+
+  [Authenticate Data]
+    ...
+    Blocks = 0x401fcdc0 0x57c00 0x1020 "flash-spl-fit-enc.bin"
+	     0x40200000 0x5AC00 0xB8940 "flash-spl-fit-enc.bin", \
+             0x920000 0x113540 0xA160 "flash-spl-fit-enc.bin", \
+             0xBE000000 0x11D6A0 0x48520 "flash-spl-fit-enc.bin"
+
+
+- Add the Install Secret Key command to generate a dummy DEK blob file,
+  the blob address should be the same as used in csf_spl_enc.txt:
+
+  For example:
+
+  [Install Secret Key]
+    ...
+    Key = "dek_fit_dummy.bin"
+    Blob Address = 0x40400000
+
+- Add the Decrypt Data command to encrypt the file. As image was encrypted
+  in CSF above we need to encrypt a dummy file, the block address should be
+  the same as used in csf_fit_enc.txt:
+
+  For example:
+
+  [Decrypt Data]
+    ...
+    Blocks = 0x40200000 0x5AC00 0xB8940 "flash-spl-fit-enc-dummy.bin", \
+             0x920000 0x113540 0xA160"flash-spl-fit-enc-dummy.bin", \
+             0xBE000000 0x11D6A0 0x48520 "flash-spl-fit-enc-dummy.bin"
+
+1.9 Encrypting and signing the FIT image
+-----------------------------------------
+
+The CST is used to encrypt the image and regenerate a random DEK. During this
+step two CSF binaries are generated but only one will be included in final
+image.
+
+- Encrypt the FIT image:
+
+  $ cp flash-spl-enc.bin flash-spl-fit-enc.bin
+  $ ./cst_encrypted -i csf_fit_enc.txt -o csf_fit_enc.bin
+
+- Sign the encrypted FIT image:
+
+  $ cp flash-spl-fit-enc.bin flash-spl-fit-enc-dummy.bin
+  $ ./cst_encrypted -i csf_fit_sign_enc.txt -o csf_fit_sign_enc.bin
+
+1.9.1 Create final CSF binary for FIT image
+-----------------------------------------------------
+
+As only one CSF binary will be included in final image it's necessary to swap
+Nonce/MAC from csf_fit_enc.bin to csf_fit_sign_enc.bin.
+
+- Calculate Nonce/MAC size based on MAC bytes value in CSF:
+
+  Nonce/MAC size = Nonce size + MAC bytes + CSF header for Nonce/Mac
+                 = 12 + 16 + 8 = 36 bytes
+
+- Calculate Nonce/MAC offset in csf_fit_enc.bin:
+
+  MAC offset = csf_fit_enc.bin size - Nonce/MAC size
+             = 3996 - 36 = 3960 Bytes
+
+- Extract Nonce/MAC from csf_fit_enc.bin:
+
+  $ dd if=csf_fit_enc.bin of=noncemac.bin bs=1 skip=3960 count=36
+
+- Calculate Nonce/MAC offset in csf_fit_sign_enc.bin:
+
+  MAC offset = csf_fit_enc.bin size - Nonce/MAC size
+             = 4020 - 36 = 3984 Bytes
+
+- Replace the MAC of csf_fit_sign_enc.bin with the one extracted above:
+
+  $ dd if=noncemac.bin of=csf_fit_sign_enc.bin bs=1 seek=3984 count=36
+
+1.10 Generate the DEK Blob
+---------------------------
+
+The DEK must be encapsulated into a CAAM blob so it can be included into
+the final encrypted binary. The U-Boot provides a tool called dek_blob
+which is calling the CAAM implementation included in OP-TEE.  The
+dek_blob tool is only functional on a board with a closed configuration.
+
+Copy the dek_spl.bin and dek_fit.bin in SDCard FAT partition and run
+the following commands from U-Boot prompt:
+
+  => mmc list
+     FSL_SDHC: 1 (SD)
+     FSL_SDHC: 2
+  => fatload mmc 1:1 0x40400000 dek_spl.bin
+  => dek_blob 0x40400000 0x40401000 128
+  => fatwrite mmc 1:1 0x40401000 dek_spl_blob.bin 0x48
+  => reset
+  ...
+  => fatload mmc 1:1 0x40402000 dek_fit.bin
+  => dek_blob 0x40402000 0x40403000 128
+  => fatwrite mmc 1:1 0x40403000 dek_fit_blob.bin 0x48
+
+In host PC copy the generated dek_spl_blob.bin and dek_fit_blob.bin to the
+CST directory.
+
+Note: Prior to OPTEE version 3.13.0, the target 8M board must be reset
+between dek_blob calls, due to a known cache issue.
+
+1.11 Assembly the encrypted image
+----------------------------------
+
+The CSF binaries generated in the steps above have to be inserted into the
+encrypted image.
+
+The CSF offsets can be obtained from the flash.bin build log:
+
+- SPL CSF offset:
+
+  csf_off 0x2c400
+
+- FIT CSF offset:
+
+  sld_csf_off 0x58c20
+
+The encrypted flash.bin image can be then assembled:
+
+- Create a flash-spl-fit-enc.bin copy:
+
+  $ cp flash-spl-fit-enc.bin encrypted-flash.bin
+
+1.11.1 Insert SPL CSF and DEK blob
+-----------------------------------
+
+- Insert csf_spl_sign_enc.bin in encrypted-flash.bin at 0x2c400 offset:
+
+  $ dd if=csf_spl_sign_enc.bin of=encrypted-flash.bin seek=$((0x2c400)) bs=1 conv=notrunc
+
+- Insert dek_spl_blob.bin in encrypted-flash.bin at 0x2c400 + 0x2000 offset:
+
+  $ dd if=dek_spl_blob.bin of=encrypted-flash.bin seek=$((0x2e400)) bs=1 conv=notrunc
+
+1.11.2 Insert FIT CSF and DEK blob
+-----------------------------------
+
+- Insert csf_fit_sign_enc.bin in encrypted-flash.bin at 0x58c20 offset:
+
+  $ dd if=csf_fit_sign_enc.bin of=encrypted-flash.bin seek=$((0x58c20)) bs=1 conv=notrunc
+
+- The DEK blob must be inserted in last image entry on FIT image, the last line
+  provided by print_fit_hab taget log target can be used:
+
+    0x40200000 0x5AC00 0xB0318
+    0x402B0318 0x10AF18 0x8628
+    0x920000 0x113540 0xA160
+    0xBE000000 0x11D6A0 0x48520 -> Last line in print_fit_hab log
+
+- Insert dek_fit_blob.bin encrypted-flash.bin at 0x11D6A0 + 0x48520 offset:
+
+  $ dd if=dek_fit_blob.bin of=encrypted-flash.bin seek=$((0x165BC0)) bs=1 conv=notrunc
+
+1.11.3 Flash encrypted boot image
+-----------------------------------
+
+- Flash encrypted image in SDCard:
+
+  $ sudo dd if=encrypted-flash.bin of=/dev/sd<x> bs=1K seek=33* && sync
+  * Offset in i.MX8MN device is 32K.
+
+2.0 Setting the PRIBLOB in CAAM SCFGR register
+-----------------------------------------------
+
+It is highly recommended to advance the PRIBLOB field in CAAM SCFGR register to
+0x3, a command is available in U-Boot that should be called after all images in
+boot flow has been decrypted by HAB:
+
+  => set_priblob_bitfield
+
+The PRIBLOB configuration ensures cryptographic separation of private blob
+types avoiding any modification or replacement of DEK blobs. Newly created
+blobs will be incompatible with blobs required to decrypt an encrypted boot
+image. When the HAB later executes the command to decrypt the DEK, an
+incompatible DEK blob will be detected and cause an error. A substitute
+encrypted boot image will not be decrypted, and will not be executed.
+
+References:
+[1] AN12056: "Encrypted Boot on HABv4 and CAAM Enabled Devices"

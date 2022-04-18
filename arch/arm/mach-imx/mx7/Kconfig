@@ -31,6 +31,11 @@ config OPTEE_TZDRAM_SIZE
 	  The size of pre-allocated Trust Zone DRAM to allocate for the OPTEE
 	  runtime.
 
+config IMX_TAMPER
+	bool "Enable commands for SNVS tamper pin configuration and test"
+	help
+	  Set "Y" to enable the tamper commands
+
 choice
 	prompt "MX7 board select"
 	optional
@@ -67,6 +72,48 @@ config TARGET_MX7DSABRESD
 	select DM
 	select DM_THERMAL
 	select MX7D
+	imply CMD_DM
+	select FSL_CAAM
+	select FSL_BLOB
+
+config TARGET_MX7D_12X12_LPDDR3_VAL
+	bool "Support mx7d_12x12_lpddr3_val"
+	select BOARD_LATE_INIT
+	select MX7D
+	select DM
+	select DM_THERMAL
+	imply CMD_DM
+
+config TARGET_MX7D_12X12_DDR3_VAL
+	bool "Support mx7d_12x12_ddr3_val"
+	select BOARD_LATE_INIT
+	select MX7D
+	select DM
+	select DM_THERMAL
+	imply CMD_DM
+
+config TARGET_MX7D_19X19_DDR3_VAL
+	bool "Support mx7d_19x19_ddr3_val"
+	select BOARD_LATE_INIT
+	select MX7D
+	select DM
+	select DM_THERMAL
+	imply CMD_DM
+
+config TARGET_MX7D_19X19_LPDDR3_VAL
+	bool "Support mx7d_19x19_lpddr3_val"
+	select BOARD_LATE_INIT
+	select MX7D
+	select DM
+	select DM_THERMAL
+	imply CMD_DM
+
+config TARGET_MX7D_19X19_LPDDR2_VAL
+	bool "Support mx7d_19x19_lpddr2_val"
+	select BOARD_LATE_INIT
+	select MX7D
+	select DM
+	select DM_THERMAL
 	imply CMD_DM
 
 config TARGET_PICO_IMX7D
@@ -110,6 +157,10 @@ config SYS_SOC
 source "board/compulab/cl-som-imx7/Kconfig"
 source "board/ronetix/imx7-cm/Kconfig"
 source "board/freescale/mx7dsabresd/Kconfig"
+source "board/freescale/mx7d_12x12_lpddr3_val/Kconfig"
+source "board/freescale/mx7d_12x12_ddr3_val/Kconfig"
+source "board/freescale/mx7d_19x19_ddr3_val/Kconfig"
+source "board/freescale/mx7d_19x19_lpddr3_val/Kconfig"
 source "board/novtech/meerkat96/Kconfig"
 source "board/storopack/smegw01/Kconfig"
 source "board/technexion/pico-imx7d/Kconfig"

@@ -67,6 +67,8 @@
 #define SIM1_PCC1_SLOT			(48)
 #define MMDC0_AIPS3_SLOT		(43)
 #define IOMUXC_DDR_AIPS3_SLOT		(45)
+#define DSI_AIPS3_SLOT			(41)
+#define LCDIF_AIPS3_SLOT		(42)
 
 #define LPI2C0_AIPS0_SLOT		(51)
 #define LPI2C1_AIPS0_SLOT		(52)
@@ -129,6 +131,9 @@
 #define SIM_SOPT1_PMIC_STBY_REQ		(1<<2)
 #define SIM_SOPT1_A7_SW_RESET		(1<<0)
 
+#define WKPU_WAKEUP_EN			0x88
+#define WKPU_QSPI_CHANNEL		BIT(20)
+
 #define IOMUXC_PCR_MUX_ALT_SHIFT	(8)
 #define IOMUXC_PCR_MUX_ALT_MASK		(0xF00)
 #define IOMUXC_PSMI_IMUX_ALT_SHIFT	(0)
@@ -179,6 +184,10 @@
 
 #define USDHC0_RBASE	((AIPS2_BASE + (AIPS2_SLOT_SIZE * USDHC0_AIPS2_SLOT)))
 #define USDHC1_RBASE	((AIPS2_BASE + (AIPS2_SLOT_SIZE * USDHC1_AIPS2_SLOT)))
+
+#define LCDIF_RBASE	((AIPS3_BASE + (AIPS3_SLOT_SIZE * LCDIF_AIPS3_SLOT)))
+#define MXS_LCDIF_BASE	LCDIF_RBASE
+
 
 #define SNVS_BASE	((AIPS2_BASE + (AIPS2_SLOT_SIZE * SNVS_AIPS2_SLOT)))
 #define SNVS_LP_LPCR	(SNVS_BASE + 0x38)
@@ -963,6 +972,7 @@
 #define IOMUXC_BASE_ADDR		IOMUXC1_RBASE
 
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
+#include <asm/mach-imx/regs-lcdif.h>
 
 #include <asm/types.h>
 
@@ -1149,7 +1159,9 @@ struct bootrom_sw_info {
 	u32 reserved_3[3];
 };
 
-#define	is_boot_from_usb(void)		(!(readl(USB_PHY0_BASE_ADDR) & (1<<20)))
+#include <stdbool.h>
+bool is_usb_boot(void);
+#define is_boot_from_usb  is_usb_boot
 #define	disconnect_from_pc(void)	writel(0x0, USBOTG0_RBASE + 0x140)
 
 #endif

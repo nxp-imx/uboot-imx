@@ -233,7 +233,7 @@ static long lmb_add_region_flags(struct lmb_region *rgn, phys_addr_t base,
 			break;
 		} else if (lmb_addrs_overlap(base, size, rgnbase, rgnsize)) {
 			/* regions overlap */
-			return -1;
+			return -2;
 		}
 	}
 
@@ -364,6 +364,43 @@ static long lmb_overlaps_region(struct lmb_region *rgn, phys_addr_t base,
 	}
 
 	return (i < rgn->cnt) ? i : -1;
+}
+
+long lmb_reserve_overlap(struct lmb *lmb, phys_addr_t base, phys_size_t size,
+		       enum lmb_flags flags)
+{
+	struct lmb_region *_rgn = &(lmb->reserved);
+	long ret = lmb_add_region_flags(_rgn, base, size, flags);
+	long overlap_rgn;
+	phys_addr_t res_base;
+	phys_size_t res_size;
+
+	/* Handle the overlap */
+	if (ret == -2) {
+		overlap_rgn = lmb_overlaps_region(_rgn, base, size);
+		res_base = lmb->reserved.region[overlap_rgn].base;
+		res_size = lmb->reserved.region[overlap_rgn].size;
+
+		if ((base >= res_base) && ((base + size) <= (res_base + res_size))) {
+			/* new region is inside reserved region, so it is already reserved */
+			return 0;
+		} else {
+			if (base < res_base) {
+				ret = lmb_reserve_flags(lmb, base, res_base - base, flags);
+				if (ret < 0)
+					return ret;
+			}
+
+			if ((base + size) > (res_base + res_size)) {
+				ret = lmb_reserve_flags(lmb, res_base + res_size,
+					(base + size) - (res_base + res_size), flags);
+				if (ret < 0)
+					return ret;
+			}
+		}
+	}
+
+	return ret;
 }
 
 phys_addr_t lmb_alloc(struct lmb *lmb, phys_size_t size, ulong align)

@@ -79,7 +79,7 @@ static void boot_fdt_reserve_region(struct lmb *lmb, uint64_t addr,
 {
 	long ret;
 
-	ret = lmb_reserve_flags(lmb, addr, size, flags);
+	ret = lmb_reserve_overlap(lmb, addr, size, flags);
 	if (ret >= 0) {
 		debug("   reserving fdt memory region: addr=%llx size=%llx flags=%x\n",
 		      (unsigned long long)addr,

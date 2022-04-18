@@ -180,6 +180,8 @@
 /* Global User Control 1 Register */
 #define DWC3_GUCTL1_TX_IPGAP_LINECHECK_DIS	BIT(28)
 #define DWC3_GUCTL1_DEV_L1_EXIT_BY_HW	BIT(24)
+/* Disable park mode for super speed */
+#define DWC3_GUCTL1_PARKMODE_DISABLE_SS BIT(17)
 
 /* Global USB2 PHY Configuration Register */
 #define DWC3_GUSB2PHYCFG_PHYSOFTRST	(1 << 31)
@@ -681,6 +683,7 @@ struct dwc3_scratchpad_array {
  *		- USBPHY_INTERFACE_MODE_UTMIW
  * @dcfg: saved contents of DCFG register
  * @gctl: saved contents of GCTL register
+ * @power_down_scale: 16KHz clock periods for suspend_clk
  * @isoch_delay: wValue from Set Isochronous Delay request;
  * @u2sel: parameter from Set SEL request.
  * @u2pel: parameter from Set SEL request.
@@ -807,6 +810,7 @@ struct dwc3 {
 	enum dwc3_ep0_state	ep0state;
 	enum dwc3_link_state	link_state;
 
+	u16			power_down_scale;
 	u16			isoch_delay;
 	u16			u2sel;
 	u16			u2pel;

@@ -1,0 +1,116 @@
+
+config VIDEO_IPUV3
+	bool "i.MX IPUv3 Core video support"
+	depends on DM_VIDEO && (MX5 || MX6)
+	help
+	  This enables framebuffer driver for i.MX processors working
+	  on the IPUv3(Image Processing Unit) internal graphic processor.
+
+config VIDEO_IMXDPUV1
+	bool "i.MX DPU V1 display support"
+	default n
+	depends on IMX8 && DM_VIDEO
+	select VIDEO_LINK
+	help
+	  Support for IMXDPU V1 display controller for i.MX8 processors.
+
+config VIDEO_IMX6SX_LVDS
+	bool "i.MX6SX LDVS bridge support"
+	default n
+	depends on MX6SX && DM_VIDEO
+	select DISPLAY
+	select VIDEO_LINK
+	select REGMAP
+	select SYSCON
+	help
+	  Support for LDVS bridge controller on i.MX6SX processors.
+
+config VIDEO_IMX8_LVDS
+	bool "i.MX8 LDVS bridge support"
+	default n
+	depends on IMX8 && DM_VIDEO
+	select DISPLAY
+	select VIDEO_LINK
+	help
+	  Support for i.MX8 LDVS bridge controller for i.MX8 processors.
+
+config VIDEO_IMX_HDP_LOAD
+	bool "i.MX8 HDMI/DP firmware loading"
+	default n
+	depends on IMX8QM
+	select VIDEO_NXP_HDP
+	help
+	  Support for HDMI/DP firmware loading for i.MX8QM processors. The
+	  firmware is copied from system memory to the HDMI/DP IRAM and
+	  DRAM memory.
+
+config VIDEO_IMX8M_DCSS
+	bool "i.MX8M DCSS controller"
+	default n
+	depends on IMX8M && DM_VIDEO
+	select VIDEO_LINK
+	help
+	  Support for DCSS on i.MX8MQ processors.
+
+config VIDEO_IMX8M_HDMI
+	bool "i.MX8M HDMI Splash screen"
+	default n
+	depends on IMX8M && DM_VIDEO
+	select DISPLAY
+	select VIDEO_LINK
+	select VIDEO_NXP_HDP
+	help
+	  Support for HDMI on i.MX8MQ processors.
+
+config VIDEO_SEC_MIPI_DSI
+	bool
+	select VIDEO_MIPI_DSI
+	help
+	  Enables the common driver code for the Samsung
+	  MIPI DSI block found in SoCs from various vendors.
+	  As this does not provide any functionality by itself (but
+	  rather requires a SoC-specific glue driver to call it), it
+	  can not be enabled from the configuration menu.
+
+config VIDEO_NW_MIPI_DSI
+	bool
+	select VIDEO_MIPI_DSI
+	help
+	  Enables the common driver code for the Northwest
+	  MIPI DSI block found in SoCs from various vendors.
+	  As this does not provide any functionality by itself (but
+	  rather requires a SoC-specific glue driver to call it), it
+	  can not be enabled from the configuration menu.
+
+config VIDEO_IMX_SEC_DSI
+	bool "Enable IMX SEC DSI video support"
+	select VIDEO_BRIDGE
+	select VIDEO_SEC_MIPI_DSI
+	select VIDEO_LINK
+	help
+	  This option enables support DSI internal bridge which can be used on
+	  devices which have DSI devices connected.
+
+config VIDEO_IMX_NW_DSI
+	bool "Enable IMX Northwest DSI video support"
+	select VIDEO_BRIDGE
+	select VIDEO_NW_MIPI_DSI
+	select VIDEO_LINK
+	help
+	  This option enables support DSI internal bridge which can be used on
+	  devices which have DSI devices connected.
+
+config VIDEO_IMX_LCDIFV3
+	bool "i.MX LCDIFv3 support"
+	depends on DM_VIDEO && IMX8MP
+	select VIDEO_LINK
+	help
+	  Support for i.MX8MP LCDIFv3 controller.
+
+config VIDEO_IMX_DCNANO
+	bool "i.MX DCNANO LCDIF support"
+	depends on DM_VIDEO && IMX8ULP
+	select VIDEO_LINK
+	help
+	  Support for i.MX8ULP DCNANO LCD controller.
+

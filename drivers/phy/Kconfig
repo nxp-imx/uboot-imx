@@ -277,7 +277,7 @@ config PHY_MTK_TPHY
 config PHY_IMX8MQ_USB
 	bool "NXP i.MX8MQ USB PHY Driver"
 	depends on PHY
-	depends on IMX8MQ
+	depends on IMX8MQ || IMX8MP
 	help
 	  Support the USB3.0 PHY in NXP i.MX8MQ SoC
 
@@ -287,6 +287,14 @@ config PHY_XILINX_ZYNQMP
 	help
 	  Enable this to support ZynqMP High Speed Gigabit Transceiver
 	  that is part of ZynqMP SoC.
+
+config CDNS3_USB_PHY
+	bool "Support CDNS3 USB PHY"
+	depends on PHY
+	help
+	  Support for the USB PHY in CDNS3 IP.
+
+	  This PHY is found on CDNS3 IP devices supporting USB.
 
 source "drivers/phy/rockchip/Kconfig"
 source "drivers/phy/cadence/Kconfig"

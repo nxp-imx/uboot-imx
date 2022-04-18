@@ -372,13 +372,16 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	case MXC_QSPI_CLK:
 		return get_root_clk(QSPI_CLK_ROOT);
 	default:
-		return get_root_clk(clk);
+		printf("Unsupported mxc_clock %d\n", clk);
+		break;
 	}
+
+	return 0;
 }
 
 u32 imx_get_uartclk(void)
 {
-	return mxc_get_clock(UART1_CLK_ROOT);
+	return mxc_get_clock(MXC_UART_CLK);
 }
 
 void mxs_set_lcdclk(u32 base_addr, u32 freq)
@@ -734,6 +737,77 @@ static int frac_pll_init(u32 pll, enum frac_pll_out_val val)
 	return 0;
 }
 
+int sscg_pll_init(u32 pll)
+{
+	void __iomem *pll_cfg0, __iomem *pll_cfg1, __iomem *pll_cfg2;
+	u32 val_cfg0, val_cfg1, val_cfg2, val;
+	u32 bypass1_mask = 0x20, bypass2_mask = 0x10;
+	int ret;
+
+	switch (pll) {
+	case ANATOP_SYSTEM_PLL1:
+		pll_cfg0 = &ana_pll->sys_pll1_cfg0;
+		pll_cfg1 = &ana_pll->sys_pll1_cfg1;
+		pll_cfg2 = &ana_pll->sys_pll1_cfg2;
+		/* 800MHz */
+		val_cfg2 = SSCG_PLL_FEEDBACK_DIV_F1_VAL(3) |
+			SSCG_PLL_FEEDBACK_DIV_F2_VAL(3);
+		val_cfg1 = 0;
+		val_cfg0 = SSCG_PLL_CLKE_MASK | SSCG_PLL_DIV2_CLKE_MASK |
+			SSCG_PLL_DIV3_CLKE_MASK | SSCG_PLL_DIV4_CLKE_MASK |
+			SSCG_PLL_DIV5_CLKE_MASK | SSCG_PLL_DIV6_CLKE_MASK |
+			SSCG_PLL_DIV8_CLKE_MASK | SSCG_PLL_DIV10_CLKE_MASK |
+			SSCG_PLL_DIV20_CLKE_MASK | SSCG_PLL_LOCK_SEL_MASK |
+			SSCG_PLL_REFCLK_SEL_OSC_25M;
+		break;
+	case ANATOP_SYSTEM_PLL2:
+		pll_cfg0 = &ana_pll->sys_pll2_cfg0;
+		pll_cfg1 = &ana_pll->sys_pll2_cfg1;
+		pll_cfg2 = &ana_pll->sys_pll2_cfg2;
+		/* 1000MHz */
+		val_cfg2 = SSCG_PLL_FEEDBACK_DIV_F1_VAL(3) |
+			SSCG_PLL_FEEDBACK_DIV_F2_VAL(4);
+		val_cfg1 = 0;
+		val_cfg0 = SSCG_PLL_CLKE_MASK | SSCG_PLL_DIV2_CLKE_MASK |
+			SSCG_PLL_DIV3_CLKE_MASK | SSCG_PLL_DIV4_CLKE_MASK |
+			SSCG_PLL_DIV5_CLKE_MASK | SSCG_PLL_DIV6_CLKE_MASK |
+			SSCG_PLL_DIV8_CLKE_MASK | SSCG_PLL_DIV10_CLKE_MASK |
+			SSCG_PLL_DIV20_CLKE_MASK | SSCG_PLL_LOCK_SEL_MASK |
+			SSCG_PLL_REFCLK_SEL_OSC_25M;
+		break;
+	case ANATOP_SYSTEM_PLL3:
+		pll_cfg0 = &ana_pll->sys_pll3_cfg0;
+		pll_cfg1 = &ana_pll->sys_pll3_cfg1;
+		pll_cfg2 = &ana_pll->sys_pll3_cfg2;
+		/* 800MHz */
+		val_cfg2 = SSCG_PLL_FEEDBACK_DIV_F1_VAL(3) |
+			SSCG_PLL_FEEDBACK_DIV_F2_VAL(3);
+		val_cfg1 = 0;
+		val_cfg0 = SSCG_PLL_PLL3_CLKE_MASK |  SSCG_PLL_LOCK_SEL_MASK |
+			SSCG_PLL_REFCLK_SEL_OSC_25M;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	/*bypass*/
+	setbits_le32(pll_cfg0, bypass1_mask | bypass2_mask);
+	/* set value */
+	writel(val_cfg2, pll_cfg2);
+	writel(val_cfg1, pll_cfg1);
+	/*unbypass1 and wait 70us */
+	writel(val_cfg0 | bypass2_mask, pll_cfg1);
+
+	__udelay(70);
+
+	/* unbypass2 and wait lock */
+	writel(val_cfg0, pll_cfg1);
+	ret = readl_poll_timeout(pll_cfg0, val, val & SSCG_PLL_LOCK_MASK, 1);
+	if (ret)
+		printf("%s timeout\n", __func__);
+
+	return ret;
+}
 
 int clock_init(void)
 {
@@ -790,6 +864,20 @@ int clock_init(void)
 }
 #endif
 
+int imx8m_dcss_clock_init(u32 pixclk)
+{
+	/* b_clk: bus_clk_root(4) sel 2nd input source and
+	   pre_div to 0; output should be 800M */
+	clock_set_target_val(DISPLAY_AXI_CLK_ROOT, CLK_ROOT_ON |CLK_ROOT_SOURCE_SEL(2));
+
+	/* rtr_clk: bus_clk_root(6) sel 1st input source
+		   and pre_div to 1; output should be 400M */
+	clock_set_target_val(DISPLAY_RTRM_CLK_ROOT,
+		CLK_ROOT_ON |CLK_ROOT_SOURCE_SEL(1) |CLK_ROOT_PRE_DIV(CLK_ROOT_PRE_DIV2));
+
+	return 0;
+}
+
 /*
  * Dump some clockes.
  */
@@ -841,11 +929,11 @@ static int do_imx8m_showclocks(struct cmd_tbl *cmdtp, int flag, int argc,
 	printf("SYS_PLL2_50    %8d MHz\n", freq / 1000000);
 	freq = decode_sscg_pll(SYSTEM_PLL3_CLK);
 	printf("SYS_PLL3       %8d MHz\n", freq / 1000000);
-	freq = mxc_get_clock(UART1_CLK_ROOT);
+	freq = mxc_get_clock(MXC_UART_CLK);
 	printf("UART1          %8d MHz\n", freq / 1000000);
-	freq = mxc_get_clock(USDHC1_CLK_ROOT);
+	freq = mxc_get_clock(MXC_ESDHC_CLK);
 	printf("USDHC1         %8d MHz\n", freq / 1000000);
-	freq = mxc_get_clock(QSPI_CLK_ROOT);
+	freq = mxc_get_clock(MXC_QSPI_CLK);
 	printf("QSPI           %8d MHz\n", freq / 1000000);
 	return 0;
 }

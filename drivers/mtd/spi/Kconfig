@@ -202,6 +202,11 @@ config SPI_FLASH_XTX
 	  Add support for various XTX (XTX Technology Limited)
 	  SPI flash chips (XT25xxx).
 
+config SPI_FLASH_ADESTO
+	bool "Adesto SPI flash support"
+	help
+	  Add support for various Adesto SPI flash chips (ATXPxxx)
+
 endif
 
 config SPI_FLASH_USE_4K_SECTORS

@@ -16,24 +16,47 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/sci/sci.h>
 #include <asm/arch/imx8-pins.h>
+#include <asm/arch/snvs_security_sc.h>
+#include <usb.h>
 #include <asm/arch/iomux.h>
 #include <asm/arch/sys_proto.h>
+#include "../common/tcpc.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define UART_PAD_CTRL	((SC_PAD_CONFIG_OUT_IN << PADRING_CONFIG_SHIFT) | \
-			 (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) | \
-			 (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | \
-			 (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
+#define ENET_INPUT_PAD_CTRL	((SC_PAD_CONFIG_OD_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
+						| (SC_PAD_28FDSOI_DSE_18V_10MA << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
 
+#define ENET_NORMAL_PAD_CTRL	((SC_PAD_CONFIG_NORMAL << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
+						| (SC_PAD_28FDSOI_DSE_18V_10MA << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
+
+
+#define GPIO_PAD_CTRL	((SC_PAD_CONFIG_NORMAL << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
+						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
+
+
+#define UART_PAD_CTRL	((SC_PAD_CONFIG_OUT_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
+						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
+
+#ifdef CONFIG_TARGET_IMX8QM_MEK_A72_ONLY
+static iomux_cfg_t uart2_pads[] = {
+	SC_P_UART0_RTS_B | MUX_MODE_ALT(2) | MUX_PAD_CTRL(UART_PAD_CTRL),
+	SC_P_UART0_CTS_B | MUX_MODE_ALT(2) | MUX_PAD_CTRL(UART_PAD_CTRL),
+};
+#else
 static iomux_cfg_t uart0_pads[] = {
 	SC_P_UART0_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 	SC_P_UART0_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
+#endif
 
 static void setup_iomux_uart(void)
 {
+#ifdef CONFIG_TARGET_IMX8QM_MEK_A72_ONLY
+	imx8_iomux_setup_multiple_pads(uart2_pads, ARRAY_SIZE(uart2_pads));
+#else
 	imx8_iomux_setup_multiple_pads(uart0_pads, ARRAY_SIZE(uart0_pads));
+#endif
 }
 
 int board_early_init_f(void)
@@ -41,32 +64,110 @@ int board_early_init_f(void)
 	sc_pm_clock_rate_t rate = SC_80MHZ;
 	int ret;
 
+	/* When start u-boot in XEN VM, directly return */
+	if (IS_ENABLED(CONFIG_XEN)) {
+		writel(0xF53535F5, (void __iomem *)0x80000000);
+		return 0;
+	}
+
+#ifdef CONFIG_TARGET_IMX8QM_MEK_A72_ONLY
+	/* Set UART2 clock root to 80 MHz */
+	ret = sc_pm_setup_uart(SC_R_UART_2, rate);
+	if (ret)
+		return ret;
+#else
 	/* Set UART0 clock root to 80 MHz */
 	ret = sc_pm_setup_uart(SC_R_UART_0, rate);
 	if (ret)
 		return ret;
+#endif	/* CONFIG_TARGET_IMX8QM_MEK_A72_ONLY */
 
 	setup_iomux_uart();
-
-	sc_pm_set_resource_power_mode(-1, SC_R_GPIO_5, SC_PM_PW_MODE_ON);
 
 	return 0;
 }
 
-#if CONFIG_IS_ENABLED(DM_GPIO)
-static void board_gpio_init(void)
-{
-	/* TODO */
-}
-#else
-static inline void board_gpio_init(void) {}
-#endif
 
 #if IS_ENABLED(CONFIG_FEC_MXC)
 #include <miiphy.h>
 
+#ifndef CONFIG_DM_ETH
+static iomux_cfg_t pad_enet1[] = {
+	SC_P_ENET1_RGMII_RX_CTL | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET1_RGMII_RXD0 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET1_RGMII_RXD1 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET1_RGMII_RXD2 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET1_RGMII_RXD3 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET1_RGMII_RXC | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET1_RGMII_TX_CTL | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET1_RGMII_TXD0 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET1_RGMII_TXD1 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET1_RGMII_TXD2 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET1_RGMII_TXD3 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET1_RGMII_TXC | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+
+	/* Shared MDIO */
+	SC_P_ENET0_MDC | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_MDIO | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+};
+
+static iomux_cfg_t pad_enet0[] = {
+	SC_P_ENET0_RGMII_RX_CTL | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET0_RGMII_RXD0 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET0_RGMII_RXD1 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET0_RGMII_RXD2 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET0_RGMII_RXD3 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET0_RGMII_RXC | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
+	SC_P_ENET0_RGMII_TX_CTL | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_RGMII_TXD0 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_RGMII_TXD1 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_RGMII_TXD2 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_RGMII_TXD3 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_RGMII_TXC | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+
+	/* Shared MDIO */
+	SC_P_ENET0_MDC | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+	SC_P_ENET0_MDIO | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
+};
+
+static void setup_iomux_fec(void)
+{
+	if (0 == CONFIG_FEC_ENET_DEV)
+		imx8_iomux_setup_multiple_pads(pad_enet0, ARRAY_SIZE(pad_enet0));
+	else
+		imx8_iomux_setup_multiple_pads(pad_enet1, ARRAY_SIZE(pad_enet1));
+}
+
+int board_eth_init(bd_t *bis)
+{
+	int ret;
+	struct power_domain pd;
+
+	printf("[%s] %d\n", __func__, __LINE__);
+
+	if (CONFIG_FEC_ENET_DEV) {
+		if (!power_domain_lookup_name("conn_enet1", &pd))
+			power_domain_on(&pd);
+	} else {
+		if (!power_domain_lookup_name("conn_enet0", &pd))
+			power_domain_on(&pd);
+	}
+
+	setup_iomux_fec();
+
+	ret = fecmxc_initialize_multi(bis, CONFIG_FEC_ENET_DEV,
+		CONFIG_FEC_MXC_PHYADDR, IMX_FEC_BASE);
+	if (ret)
+		printf("FEC1 MXC: %s:failed\n", __func__);
+
+	return ret;
+}
+
 int board_phy_config(struct phy_device *phydev)
 {
+	if (phydev->drv->config)
+		phydev->drv->config(phydev);
+
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x1f);
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x8);
 
@@ -75,31 +176,254 @@ int board_phy_config(struct phy_device *phydev)
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x05);
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x100);
 
-	if (phydev->drv->config)
-		phydev->drv->config(phydev);
-
 	return 0;
 }
 #endif
+#endif
 
+#define BB_GPIO_3V3_1 IMX_GPIO_NR(4, 20)
+#define BB_GPIO_3V3_2 IMX_GPIO_NR(4, 24)
+#define BB_GPIO_3V3_3 IMX_GPIO_NR(4, 23)
+
+static void board_gpio_init(void)
+{
+#if defined(CONFIG_TARGET_IMX8QM_MEK) || defined(CONFIG_TARGET_IMX8QM_MEK_A53_ONLY)
+	int ret;
+	struct gpio_desc desc;
+
+	ret = dm_gpio_lookup_name("GPIO4_20", &desc);
+	if (ret) {
+		printf("%s lookup GPIO@4_20 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "bb_3v3_1");
+	if (ret) {
+		printf("%s request bb_3v3_1 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	ret = dm_gpio_lookup_name("GPIO4_24", &desc);
+	if (ret) {
+		printf("%s lookup GPIO@4_24 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "bb_3v3_2");
+	if (ret) {
+		printf("%s request bb_3v3_2 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	ret = dm_gpio_lookup_name("GPIO4_23", &desc);
+	if (ret) {
+		printf("%s lookup GPIO@4_23 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "bb_3v3_3");
+	if (ret) {
+		printf("%s request bb_3v3_3 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	/* enable LVDS SAS boards */
+	ret = dm_gpio_lookup_name("GPIO1_6", &desc);
+	if (ret) {
+		printf("%s lookup GPIO1_6 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "lvds_enable");
+	if (ret) {
+		printf("%s request lvds_enable failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	/* enable MIPI SAS boards */
+	ret = dm_gpio_lookup_name("GPIO1_7", &desc);
+	if (ret) {
+		printf("%s lookup GPIO1_7 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "mipi_enable");
+	if (ret) {
+		printf("%s request mipi_enable failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+#endif
+
+}
 int checkboard(void)
 {
 	puts("Board: iMX8QM MEK\n");
 
-	build_info();
 	print_bootinfo();
 
 	return 0;
 }
 
+#ifdef CONFIG_USB
+
+#ifdef CONFIG_USB_TCPC
+struct gpio_desc type_sel_desc;
+
+static iomux_cfg_t ss_mux_gpio[] = {
+	SC_P_USB_SS3_TC3 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
+	SC_P_QSPI1A_SS0_B | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
+};
+
+struct tcpc_port port;
+struct tcpc_port_config port_config = {
+	.i2c_bus = 0,
+	.addr = 0x51,
+	.port_type = TYPEC_PORT_DFP,
+};
+
+void ss_mux_select(enum typec_cc_polarity pol)
+{
+	if (pol == TYPEC_POLARITY_CC1)
+		dm_gpio_set_value(&type_sel_desc, 0);
+	else
+		dm_gpio_set_value(&type_sel_desc, 1);
+}
+
+static void setup_typec(void)
+{
+	int ret;
+	struct gpio_desc typec_en_desc;
+
+	imx8_iomux_setup_multiple_pads(ss_mux_gpio, ARRAY_SIZE(ss_mux_gpio));
+	ret = dm_gpio_lookup_name("GPIO4_6", &type_sel_desc);
+	if (ret) {
+		printf("%s lookup GPIO4_6 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&type_sel_desc, "typec_sel");
+	if (ret) {
+		printf("%s request typec_sel failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	dm_gpio_set_dir_flags(&type_sel_desc, GPIOD_IS_OUT);
+
+	ret = dm_gpio_lookup_name("GPIO4_19", &typec_en_desc);
+	if (ret) {
+		printf("%s lookup GPIO4_19 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&typec_en_desc, "typec_en");
+	if (ret) {
+		printf("%s request typec_en failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	/* Enable SS MUX */
+	dm_gpio_set_dir_flags(&typec_en_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+	ret = tcpc_init(&port, port_config, &ss_mux_select);
+	if (ret) {
+		printf("%s: tcpc init failed, err=%d\n", __func__, ret);
+		return;
+	}
+}
+#endif
+
+int board_usb_init(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	if (index == 1) {
+		if (init == USB_INIT_HOST) {
+#ifdef CONFIG_USB_TCPC
+			ret = tcpc_setup_dfp_mode(&port);
+#endif
+#ifdef CONFIG_USB_CDNS3_GADGET
+		} else {
+#ifdef CONFIG_USB_TCPC
+			ret = tcpc_setup_ufp_mode(&port);
+			printf("%d setufp mode %d\n", index, ret);
+#endif
+#endif
+		}
+	}
+
+	return ret;
+
+}
+
+int board_usb_cleanup(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	if (index == 1) {
+		if (init == USB_INIT_HOST) {
+#ifdef CONFIG_USB_TCPC
+			ret = tcpc_disable_src_vbus(&port);
+#endif
+		}
+	}
+
+	return ret;
+}
+#endif
+
 int board_init(void)
 {
-	/* Power up base board */
-	sc_pm_set_resource_power_mode(-1, SC_R_BOARD_R1, SC_PM_PW_MODE_ON);
+	if (IS_ENABLED(CONFIG_XEN))
+		return 0;
 
 	board_gpio_init();
 
+
+#if defined(CONFIG_USB) && defined(CONFIG_USB_TCPC)
+	setup_typec();
+#endif
+
+#ifdef CONFIG_IMX_SNVS_SEC_SC_AUTO
+	{
+		int ret = snvs_security_sc_init();
+
+		if (ret)
+			return ret;
+	}
+#endif
+
 	return 0;
+}
+
+void board_quiesce_devices(void)
+{
+	const char *power_on_devices[] = {
+#ifdef CONFIG_TARGET_IMX8QM_MEK_A72_ONLY
+		"dma_lpuart2",
+		"PD_UART2_TX",
+		"PD_UART2_RX",
+#else
+		"dma_lpuart0",
+#endif
+	};
+
+	if (IS_ENABLED(CONFIG_XEN)) {
+		/* Clear magic number to let xen know uboot is over */
+		writel(0x0, (void __iomem *)0x80000000);
+		return;
+	}
+
+	imx8_power_off_pd_devices(power_on_devices, ARRAY_SIZE(power_on_devices));
 }
 
 /*
@@ -119,28 +443,59 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 
 int board_mmc_get_env_dev(int devno)
 {
+	/* Use EMMC */
+	if (IS_ENABLED(CONFIG_XEN))
+		return 0;
+
 	return devno;
+}
+
+int mmc_map_to_kernel_blk(int dev_no)
+{
+	/* Use EMMC */
+	if (IS_ENABLED(CONFIG_XEN))
+		return 0;
+
+	return dev_no;
 }
 
 int board_late_init(void)
 {
 	char *fdt_file;
+#if !defined(CONFIG_TARGET_IMX8QM_MEK_A53_ONLY) && !defined(CONFIG_TARGET_IMX8QM_MEK_A72_ONLY)
 	bool m4_booted;
+#endif
+
+	build_info();
 
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	env_set("board_name", "MEK");
 	env_set("board_rev", "iMX8QM");
 #endif
 
+	env_set("sec_boot", "no");
+#ifdef CONFIG_AHAB_BOOT
+	env_set("sec_boot", "yes");
+#endif
+
 	fdt_file = env_get("fdt_file");
-	m4_booted = m4_parts_booted();
 
 	if (fdt_file && !strcmp(fdt_file, "undefined")) {
+#if defined(CONFIG_TARGET_IMX8QM_MEK_A53_ONLY)
+		env_set("fdt_file", "imx8qm-mek-cockpit-ca53.dtb");
+#elif defined(CONFIG_TARGET_IMX8QM_MEK_A72_ONLY)
+		env_set("fdt_file", "imx8qm-mek-cockpit-ca72.dtb");
+#else
+		m4_booted = m4_parts_booted();
 		if (m4_booted)
 			env_set("fdt_file", "imx8qm-mek-rpmsg.dtb");
 		else
 			env_set("fdt_file", "imx8qm-mek.dtb");
+#endif
 	}
 
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
 	return 0;
 }

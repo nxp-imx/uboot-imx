@@ -1,0 +1,29 @@
+/*
+ * Copyright (C) 2014 Freescale Semiconductor, Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+#include "imx6sx-17x17-val.dts"
+
+&usdhc3 {
+	status = "disabled";
+};
+
+&ecspi4 {
+	fsl,spi-num-chipselects = <1>;
+	cs-gpios = <&gpio7 4 0>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi4_1 &pinctrl_ecspi4_cs_1>;
+	status = "okay"; /* pin conflict with USDHC3 */
+
+	flash: m25p80@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "st,m25p32", "jedec,spi-nor";
+		spi-max-frequency = <20000000>;
+		reg = <0>;
+	};
+};

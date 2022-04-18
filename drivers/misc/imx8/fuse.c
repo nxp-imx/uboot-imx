@@ -11,6 +11,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/global_data.h>
 #include <linux/arm-smccc.h>
+#include <env.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -20,7 +21,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #ifdef CONFIG_IMX8QM
 #define FSL_ECC_WORD_START_2	 0x1A0
 #define FSL_ECC_WORD_END_2	 0x1FF
-#elif defined(CONFIG_IMX8QXP)
+#elif defined(CONFIG_IMX8QXP) || defined(CONFIG_IMX8DXL)
 #define FSL_ECC_WORD_START_2	 0x220
 #define FSL_ECC_WORD_END_2	 0x31F
 #endif
@@ -55,13 +56,14 @@ int fuse_sense(u32 bank, u32 word, u32 *val)
 int fuse_prog(u32 bank, u32 word, u32 val)
 {
 	struct arm_smccc_res res;
+	int force_prog = 0;
 
 	if (bank != 0) {
 		printf("Invalid bank argument, ONLY bank 0 is supported\n");
 		return -EINVAL;
 	}
 
-	if (IS_ENABLED(CONFIG_IMX8QXP)) {
+	if (IS_ENABLED(CONFIG_IMX8QXP) || IS_ENABLED(CONFIG_IMX8DXL)) {
 		if (word >= FSL_QXP_FUSE_GAP_START &&
 		    word <= FSL_QXP_FUSE_GAP_END) {
 			printf("Invalid word argument for this SoC\n");
@@ -69,16 +71,19 @@ int fuse_prog(u32 bank, u32 word, u32 val)
 		}
 	}
 
-	if ((word >= FSL_ECC_WORD_START_1 && word <= FSL_ECC_WORD_END_1) ||
-	    (word >= FSL_ECC_WORD_START_2 && word <= FSL_ECC_WORD_END_2)) {
-		puts("Warning: Words in this index range have ECC protection\n"
-		     "and can only be programmed once per word. Individual bit\n"
-		     "operations will be rejected after the first one.\n"
-		     "\n\n Really program this word? <y/N>\n");
+	force_prog = env_get_yesno("force_prog_ecc");
+	if (force_prog != 1) {
+		if ((word >= FSL_ECC_WORD_START_1 && word <= FSL_ECC_WORD_END_1) ||
+		    (word >= FSL_ECC_WORD_START_2 && word <= FSL_ECC_WORD_END_2)) {
+			puts("Warning: Words in this index range have ECC protection\n"
+			     "and can only be programmed once per word. Individual bit\n"
+			     "operations will be rejected after the first one.\n"
+			     "\n\n Really program this word? <y/N>\n");
 
-		if (!confirm_yesno()) {
-			puts("Word programming aborted\n");
-			return -EPERM;
+			if (!confirm_yesno()) {
+				puts("Word programming aborted\n");
+				return -EPERM;
+			}
 		}
 	}
 

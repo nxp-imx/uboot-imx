@@ -15,7 +15,7 @@
 /delete-node/ &tsc;
 
 / {
-	model = "Freescale i.MX6 ULZ 14x14 EVK Board";
+	model = "i.MX6 ULZ 14x14 EVK Board";
 	compatible = "fsl,imx6ulz-14x14-evk", "fsl,imx6ull", "fsl,imx6ulz";
 
 	/delete-node/ panel;

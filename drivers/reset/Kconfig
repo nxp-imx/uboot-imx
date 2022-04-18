@@ -212,4 +212,11 @@ config RESET_DRA7
 	help
 	  Support for TI DRA7-RESET subsystem. Basic Assert/Deassert
 	  is supported.
+
+config RESET_DISPMIX
+	bool "i.MX8M Display MIX Reset Driver"
+	depends on DM_RESET && ARCH_IMX8M && DM_VIDEO
+	default n
+	help
+	  Support for reset controller on i.MX8M SoCs.
 endmenu

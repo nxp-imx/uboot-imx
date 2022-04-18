@@ -12,8 +12,9 @@ endif
 ifeq ($(SOC),$(filter $(SOC),imx8m))
 ifneq ($(CONFIG_SPL_BUILD),y)
 obj-$(CONFIG_IMX_BOOTAUX) += imx_bootaux.o
+obj-$(CONFIG_CMD_PROVISION_KEY) += cmd_prov_key.o
 endif
-obj-$(CONFIG_ENV_IS_IN_MMC) += mmc_env.o
+obj-y += mmc_env.o
 obj-$(CONFIG_FEC_MXC) += mac.o
 obj-$(CONFIG_DWC_ETH_QOS) += mac.o
 obj-$(CONFIG_SYS_I2C_MXC) += i2c-mxv7.o
@@ -29,16 +30,23 @@ endif
 obj-$(CONFIG_GPT_TIMER) += timer.o
 obj-$(CONFIG_SYS_I2C_MXC) += i2c-mxv7.o
 endif
-ifeq ($(SOC),$(filter $(SOC),mx7 mx6 mxs imx8m imx8 imxrt))
+ifeq ($(SOC),$(filter $(SOC),mx7 mx6 mxs mx7ulp imx8m imx8 imxrt imx8ulp))
 obj-y	+= misc.o
 obj-$(CONFIG_CMD_PRIBLOB) += priblob.o
 obj-$(CONFIG_SPL_BUILD)	+= spl.o
 endif
+ifeq ($(SOC),$(filter $(SOC),imx8m imx8 imx8ulp))
+obj-y	+= dt_optee.o
+endif
 ifeq ($(SOC),$(filter $(SOC),mx7))
 obj-y	+= cpu.o
 obj-$(CONFIG_SYS_I2C_MXC) += i2c-mxv7.o
-obj-$(CONFIG_ENV_IS_IN_MMC) += mmc_env.o
+obj-y += mmc_env.o
+endif
+ifeq ($(SOC),$(filter $(SOC),mx7 imx8 imx8m))
+ifneq ($(CONFIG_SPL_BUILD),y)
 obj-$(CONFIG_FSL_MFGPROT) += cmd_mfgprot.o
+endif
 endif
 ifeq ($(SOC),$(filter $(SOC),mx5 mx6 mx7))
 obj-$(CONFIG_IMX_VIDEO_SKIP) += video.o
@@ -53,6 +61,7 @@ endif
 obj-$(CONFIG_SATA) += sata.o
 obj-$(CONFIG_IMX_HAB)    += hab.o
 obj-$(CONFIG_SYSCOUNTER_TIMER) += syscounter.o
+obj-$(CONFIG_IMX_TRUSTY_OS) += trusty.o
 endif
 ifeq ($(SOC),$(filter $(SOC),mx7ulp))
 obj-y  += cache.o mmdc_size.o
@@ -62,11 +71,18 @@ ifeq ($(SOC),$(filter $(SOC),vf610))
 obj-y += ddrmc-vf610.o
 obj-$(CONFIG_DDRMC_VF610_CALIBRATION) += ddrmc-vf610-calibration.o
 endif
+ifeq ($(SOC),$(filter $(SOC),imx8))
+ifneq ($(CONFIG_SPL_BUILD),y)
+obj-$(CONFIG_IMX_BOOTAUX) += imx_bootaux.o
+endif
+endif
 ifneq ($(CONFIG_SPL_BUILD),y)
 obj-$(CONFIG_CMD_BMODE) += cmd_bmode.o
 obj-$(CONFIG_CMD_HDMIDETECT) += cmd_hdmidet.o
 obj-$(CONFIG_CMD_DEKBLOB) += cmd_dek.o
 obj-$(CONFIG_CMD_NANDBCB) += cmd_nandbcb.o
+obj-$(CONFIG_CMD_QSPIHDR) += cmd_qspihdr.o
+obj-$(CONFIG_IMX_VSERVICE) += imx_vservice.o
 endif
 
 ifeq ($(CONFIG_SPL_BUILD),y)
@@ -121,12 +137,41 @@ IMAGE_TYPE := imximage
 DEPFILE_EXISTS := 0
 endif
 
-MKIMAGEFLAGS_u-boot.imx = -n $(filter-out $(PLUGIN).bin $< $(PHONY),$^) \
+MKIMAGEFLAGS_u-boot.imx = -n $(filter-out $(PLUGIN).bin $(QSPI_HEADER) $< $(PHONY),$^) \
 	-T $(IMAGE_TYPE) -e $(CONFIG_SYS_TEXT_BASE)
 u-boot.imx: MKIMAGEOUTPUT = u-boot.imx.log
 
-u-boot.imx: u-boot.bin u-boot.cfgout $(PLUGIN).bin FORCE
+QSPI_HEADER_SOURCE = board/freescale/common/qspi_header
+QSPI_HEADER = qspi_header
+QSPI_HEADER_OFF = 1
+QSPI_UBOOT_OFF = 4
+ifeq ($(SOC),$(filter $(SOC),mx7))
+QSPI_HEADER_OFF = 0
+QSPI_UBOOT_OFF = 1
+endif
+
+ifeq ($(CONFIG_QSPI_BOOT),y)
+$(QSPI_HEADER): $(QSPI_HEADER_SOURCE) FORCE
+	@cp $< $@
+
+else
+$(QSPI_HEADER):
+
+endif
+
+u-boot.imx: u-boot.bin u-boot.cfgout $(PLUGIN).bin $(QSPI_HEADER) FORCE
 	$(call if_changed,mkimage)
+ifeq ($(CONFIG_QSPI_BOOT),y)
+	@awk '{s="0000000"$$1;l=length(s);if(!((NR-1)%4))printf "%08x ",(NR-1)*4; \
+		for(i=1;i<8;i+=2)printf " %s",substr(s,l-i,2);if(!(NR%4))printf "\n";}' \
+		$(QSPI_HEADER) > qspi.tmp
+	@xxd -r qspi.tmp qspi.bin
+	@dd if=$@ of=u-boot.tmp bs=1k seek=$(QSPI_UBOOT_OFF)
+	@dd if=qspi.bin of=u-boot.tmp bs=1k seek=$(QSPI_HEADER_OFF) conv=notrunc
+	@mv u-boot.tmp $@
+	@rm qspi.tmp qspi.bin
+	@echo "Packed QSPI header with $@"
+endif
 
 ifeq ($(CONFIG_MULTI_DTB_FIT),y)
 MKIMAGEFLAGS_u-boot-dtb.imx = -n $(filter-out $(PLUGIN).bin $< $(PHONY),$^) \
@@ -138,13 +183,24 @@ ifeq ($(DEPFILE_EXISTS),0)
 	$(call if_changed,mkimage)
 endif
 else ifeq ($(CONFIG_OF_SEPARATE),y)
-MKIMAGEFLAGS_u-boot-dtb.imx = -n $(filter-out $(PLUGIN).bin $< $(PHONY),$^) \
+MKIMAGEFLAGS_u-boot-dtb.imx = -n $(filter-out $(PLUGIN).bin $(QSPI_HEADER) $< $(PHONY),$^) \
 	-T $(IMAGE_TYPE) -e $(CONFIG_SYS_TEXT_BASE)
 u-boot-dtb.imx: MKIMAGEOUTPUT = u-boot-dtb.imx.log
 
-u-boot-dtb.imx: u-boot-dtb.bin u-boot-dtb.cfgout $(PLUGIN).bin FORCE
+u-boot-dtb.imx: u-boot-dtb.bin u-boot-dtb.cfgout $(PLUGIN).bin $(QSPI_HEADER) FORCE
 ifeq ($(DEPFILE_EXISTS),0)
 	$(call if_changed,mkimage)
+ifeq ($(CONFIG_QSPI_BOOT),y)
+	@awk '{s="0000000"$$1;l=length(s);if(!((NR-1)%4))printf "%08x ",(NR-1)*4; \
+		for(i=1;i<8;i+=2)printf " %s",substr(s,l-i,2);if(!(NR%4))printf "\n";}' \
+		$(QSPI_HEADER) > qspi.tmp
+	@xxd -r qspi.tmp qspi.bin
+	@dd if=$@ of=u-boot.tmp bs=1k seek=$(QSPI_UBOOT_OFF)
+	@dd if=qspi.bin of=u-boot.tmp bs=1k seek=$(QSPI_HEADER_OFF) conv=notrunc
+	@mv u-boot.tmp $@
+	@rm qspi.tmp qspi.bin
+	@echo "Packed QSPI header with $@"
+endif
 endif
 endif
 

@@ -19,6 +19,7 @@ obj-$(CONFIG_ARCH_AT91) += at91/
 obj-$(CONFIG_OPTEE_LIB) += optee/
 obj-$(CONFIG_ASN1_DECODER) += asn1_decoder.o
 obj-y += crypto/
+obj-$(CONFIG_IMX_TRUSTY_OS) += trusty/ql-tipc/
 
 obj-$(CONFIG_AES) += aes.o
 obj-$(CONFIG_AES) += aes/
@@ -85,6 +86,7 @@ obj-$(CONFIG_$(SPL_)LZ4) += lz4_wrapper.o
 obj-$(CONFIG_$(SPL_)LIB_RATIONAL) += rational.o
 
 obj-$(CONFIG_LIBAVB) += libavb/
+obj-$(CONFIG_AVB_SUPPORT) += avb/
 
 obj-$(CONFIG_$(SPL_TPL_)OF_LIBFDT) += libfdt/
 obj-$(CONFIG_$(SPL_TPL_)OF_REAL) += fdtdec_common.o fdtdec.o

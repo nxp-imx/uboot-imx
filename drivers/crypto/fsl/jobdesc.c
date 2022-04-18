@@ -4,7 +4,7 @@
  * Basic job descriptor construction
  *
  * Copyright 2014 Freescale Semiconductor, Inc.
- * Copyright 2018 NXP
+ * Copyright 2018, 2021 NXP
  *
  */
 
@@ -207,16 +207,17 @@ void inline_cnstr_jobdesc_hash(uint32_t *desc,
 	append_store(desc, dma_addr_out, storelen,
 		     LDST_CLASS_2_CCB | LDST_SRCDST_BYTE_CONTEXT);
 }
-#ifndef CONFIG_SPL_BUILD
+
 void inline_cnstr_jobdesc_blob_encap(uint32_t *desc, uint8_t *key_idnfr,
 				     uint8_t *plain_txt, uint8_t *enc_blob,
-				     uint32_t in_sz)
+				     uint32_t in_sz, uint8_t keycolor)
 {
 	caam_dma_addr_t dma_addr_key_idnfr, dma_addr_in, dma_addr_out;
 	uint32_t key_sz = KEY_IDNFR_SZ_BYTES;
 	/* output blob will have 32 bytes key blob in beginning and
 	 * 16 byte HMAC identifier at end of data blob */
 	uint32_t out_sz = in_sz + KEY_BLOB_SIZE + MAC_SIZE;
+	uint32_t bk_store;
 
 	dma_addr_key_idnfr = virt_to_phys((void *)key_idnfr);
 	dma_addr_in	= virt_to_phys((void *)plain_txt);
@@ -230,16 +231,23 @@ void inline_cnstr_jobdesc_blob_encap(uint32_t *desc, uint8_t *key_idnfr,
 
 	append_seq_out_ptr(desc, dma_addr_out, out_sz, 0);
 
-	append_operation(desc, OP_TYPE_ENCAP_PROTOCOL | OP_PCLID_BLOB);
+	bk_store = OP_PCLID_BLOB;
+
+	/* An input black key cannot be stored in a red blob */
+	if (keycolor == BLACK_KEY)
+		bk_store |= OP_PCL_BLOB_BLACK;
+
+	append_operation(desc, OP_TYPE_ENCAP_PROTOCOL | bk_store);
 }
 
 void inline_cnstr_jobdesc_blob_decap(uint32_t *desc, uint8_t *key_idnfr,
 				     uint8_t *enc_blob, uint8_t *plain_txt,
-				     uint32_t out_sz)
+				     uint32_t out_sz, uint8_t keycolor)
 {
 	caam_dma_addr_t dma_addr_key_idnfr, dma_addr_in, dma_addr_out;
 	uint32_t key_sz = KEY_IDNFR_SZ_BYTES;
 	uint32_t in_sz = out_sz + KEY_BLOB_SIZE + MAC_SIZE;
+	uint32_t bk_store;
 
 	dma_addr_key_idnfr = virt_to_phys((void *)key_idnfr);
 	dma_addr_in	= virt_to_phys((void *)enc_blob);
@@ -253,9 +261,15 @@ void inline_cnstr_jobdesc_blob_decap(uint32_t *desc, uint8_t *key_idnfr,
 
 	append_seq_out_ptr(desc, dma_addr_out, out_sz, 0);
 
-	append_operation(desc, OP_TYPE_DECAP_PROTOCOL | OP_PCLID_BLOB);
+	bk_store = OP_PCLID_BLOB;
+
+	/* An input black key cannot be stored in a red blob */
+	if (keycolor == BLACK_KEY)
+		bk_store |= OP_PCL_BLOB_BLACK;
+
+	append_operation(desc, OP_TYPE_DECAP_PROTOCOL | bk_store);
 }
-#endif
+
 /*
  * Descriptor to instantiate RNG State Handle 0 in normal mode and
  * load the JDKEK, TDKEK and TDSK registers
@@ -333,4 +347,46 @@ void inline_cnstr_jobdesc_pkha_rsaexp(uint32_t *desc,
 
 	append_fifo_store(desc, dma_addr_out, out_siz,
 			  LDST_CLASS_1_CCB | FIFOST_TYPE_PKHA_B);
+}
+
+void inline_cnstr_jobdesc_derive_bkek(uint32_t *desc, void *bkek_out, void *key_mod, uint32_t key_sz)
+{
+	dma_addr_t dma_key_mod = virt_to_phys(key_mod);
+	dma_addr_t dma_bkek_out = virt_to_phys(bkek_out);
+
+	init_job_desc(desc, 0);
+	append_load(desc, dma_key_mod, key_sz,	LDST_CLASS_2_CCB |
+						LDST_SRCDST_BYTE_KEY);
+	append_seq_out_ptr_intlen(desc, dma_bkek_out, BKEK_SIZE, 0);
+	append_operation(desc, OP_TYPE_ENCAP_PROTOCOL | OP_PCLID_BLOB |
+							OP_PROTINFO_MKVB);
+}
+
+void inline_cnstr_jobdesc_aes_ecb_decrypt(uint32_t *desc, uint8_t *key, uint32_t key_len,
+					  uint8_t *src, uint8_t *dst, uint32_t len)
+{
+	caam_dma_addr_t dma_addr_key, dma_addr_src, dma_addr_dst;
+
+	dma_addr_key = virt_to_phys(key);
+	dma_addr_src = virt_to_phys(src);
+	dma_addr_dst = virt_to_phys(dst);
+
+	init_job_desc(desc, 0);
+
+	/* Key command: Load key in class 1 key register. */
+	append_key(desc, dma_addr_key, key_len, CLASS_1 | KEY_DEST_CLASS_REG);
+
+	/* AES ECB Decrypt Operation command. */
+	append_operation(desc, OP_TYPE_CLASS1_ALG | OP_ALG_ALGSEL_AES | OP_ALG_AAI_ECB
+				| OP_ALG_AS_INITFINAL | OP_ALG_DECRYPT);
+
+	/* Fifoload command: load input data. */
+	append_fifo_load(desc, dma_addr_src, len, FIFOLD_CLASS_CLASS1 | FIFOLD_TYPE_MSG
+						| FIFOLD_TYPE_LAST1);
+
+	/* Fifostore command: store decrypted key in black. */
+	append_jump(desc, JUMP_CLASS_CLASS1 | 1);
+	append_move(desc, MOVE_SRC_OUTFIFO | MOVE_DEST_CLASS2KEY | MOVE_WAITCOMP | len);
+	append_load_imm_u32(desc, len, CLASS_2 | LDST_SRCDST_WORD_KEYSZ_REG | LDST_IMM);
+	append_fifo_store(desc, dma_addr_dst, len, CLASS_2 | FIFOST_TYPE_KEY_KEK);
 }

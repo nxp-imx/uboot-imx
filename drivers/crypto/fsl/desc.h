@@ -15,6 +15,7 @@
 
 #define KEY_BLOB_SIZE		32
 #define MAC_SIZE			16
+#define BKEK_SIZE		32
 
 /* Max size of any CAAM descriptor in 32-bit words, inclusive of header */
 #define MAX_CAAM_DESCSIZE	64
@@ -435,6 +436,7 @@
 /* Assuming OP_TYPE = OP_TYPE_UNI_PROTOCOL */
 #define OP_PCLID_SECMEM		0x08
 #define OP_PCLID_BLOB		(0x0d << OP_PCLID_SHIFT)
+#define OP_PCL_BLOB_BLACK	0x0004
 #define OP_PCLID_SECRETKEY	(0x11 << OP_PCLID_SHIFT)
 #define OP_PCLID_PUBLICKEYPAIR	(0x14 << OP_PCLID_SHIFT)
 #define OP_PCLID_DSA_SIGN	(0x15 << OP_PCLID_SHIFT)
@@ -462,6 +464,9 @@
 #define OP_PROTINFO_HASH_SHA256	0x00000180
 #define OP_PROTINFO_HASH_SHA384	0x00000200
 #define OP_PROTINFO_HASH_SHA512	0x00000280
+
+/* PROTINFO fields for Blob Operations */
+#define OP_PROTINFO_MKVB	0x00000002
 
 /* For non-protocol/alg-only op commands */
 #define OP_ALG_TYPE_SHIFT	24
@@ -491,6 +496,9 @@
 
 #define OP_ALG_AAI_SHIFT	4
 #define OP_ALG_AAI_MASK		(0x1ff << OP_ALG_AAI_SHIFT)
+
+/* block cipher AAI set */
+#define OP_ALG_AAI_ECB		(0x20 << OP_ALG_AAI_SHIFT)
 
 /* randomizer AAI set */
 #define OP_ALG_AAI_RNG		(0x00 << OP_ALG_AAI_SHIFT)

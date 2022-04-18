@@ -27,6 +27,12 @@ config FSL_USE_PCA9547_MUX
 	help
 	 This option enables the PCA9547 I2C mux on Freescale boards.
 
+config USB_TCPC
+	bool "USB Typec port controller simple driver"
+	default n
+	help
+	  Enable USB type-c port controller (TCPC) driver
+
 config VID
 	bool "Enable Freescale VID"
 	depends on I2C || DM_I2C

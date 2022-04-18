@@ -24,12 +24,14 @@
 #define CONFIG_IOMUX_LPSR
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_CBSIZE		512
+#define CONFIG_SYS_CBSIZE		2048
 #define CONFIG_SYS_MAXARGS		32
+#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
 /* UART */
 
-/* MMC */
+/* NET PHY */
+#define PHY_ANEG_TIMEOUT 20000
 
 #define CONFIG_ARMV7_SECURE_BASE	0x00900000
 
@@ -38,5 +40,11 @@
  * launched by OPTEE, because of that we shall skip all the low level
  * initialization since it was already done by ATF or OPTEE
  */
+
+#ifdef CONFIG_IMX_OPTEE
+#define TEE_ENV "tee=yes\0"
+#else
+#define TEE_ENV "tee=no\0"
+#endif
 
 #endif

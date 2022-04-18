@@ -48,6 +48,18 @@ static SPINAND_OP_VARIANTS(update_cache_variants,
 		SPINAND_PROG_LOAD_X4(false, 0, NULL, 0),
 		SPINAND_PROG_LOAD(false, 0, NULL, 0));
 
+static SPINAND_OP_VARIANTS(mt29f4g01_read_cache_variants,
+		SPINAND_PAGE_READ_FROM_CACHE_X4_OP(0, 1, NULL, 0),
+		SPINAND_PAGE_READ_FROM_CACHE_X2_OP(0, 1, NULL, 0),
+		SPINAND_PAGE_READ_FROM_CACHE_OP(true, 0, 1, NULL, 0),
+		SPINAND_PAGE_READ_FROM_CACHE_OP(false, 0, 1, NULL, 0));
+
+static SPINAND_OP_VARIANTS(mt29f4g01_write_cache_variants,
+		SPINAND_PROG_LOAD(true, 0, NULL, 0));
+
+static SPINAND_OP_VARIANTS(mt29f4g01_update_cache_variants,
+		SPINAND_PROG_LOAD(false, 0, NULL, 0));
+
 static int micron_8_ooblayout_ecc(struct mtd_info *mtd, int section,
 				  struct mtd_oob_region *region)
 {
@@ -66,9 +78,9 @@ static int micron_8_ooblayout_free(struct mtd_info *mtd, int section,
 	if (section)
 		return -ERANGE;
 
-	/* Reserve 2 bytes for the BBM. */
-	region->offset = 2;
-	region->length = (mtd->oobsize / 2) - 2;
+	/* Reserve 4 bytes for the BBM. */
+	region->offset = 4;
+	region->length = (mtd->oobsize / 2) - 4;
 
 	return 0;
 }
@@ -209,6 +221,16 @@ static const struct spinand_info micron_spinand_table[] = {
 					      &write_cache_variants,
 					      &update_cache_variants),
 		     SPINAND_HAS_CR_FEAT_BIT,
+		     SPINAND_ECCINFO(&micron_8_ooblayout,
+				     micron_8_ecc_get_status),
+		     SPINAND_SELECT_TARGET(micron_select_target)),
+	SPINAND_INFO("MT29F4G01ADAGD", 0x32,
+			 NAND_MEMORG(1, 2048, 128, 64, 2048, 2, 1, 2),
+			 NAND_ECCREQ(8, 512),
+			 SPINAND_INFO_OP_VARIANTS(&mt29f4g01_read_cache_variants,
+						  &mt29f4g01_write_cache_variants,
+						  &mt29f4g01_update_cache_variants),
+			 0,
 		     SPINAND_ECCINFO(&micron_8_ooblayout,
 				     micron_8_ecc_get_status),
 		     SPINAND_SELECT_TARGET(micron_select_target)),

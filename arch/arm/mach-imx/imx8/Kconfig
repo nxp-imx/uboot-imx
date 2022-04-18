@@ -8,6 +8,7 @@ config AHAB_BOOT
 
 config IMX8
 	bool
+	select HAS_CAAM
 
 config MU_BASE_SPL
 	hex "MU base address used in SPL"
@@ -23,6 +24,12 @@ config IMX8QM
 	bool
 
 config IMX8QXP
+	select IMX8
+	select SUPPORT_SPL
+	select SPL_RECOVER_DATA_SECTION
+	bool
+
+config IMX8DXL
 	select IMX8
 	select SUPPORT_SPL
 	select SPL_RECOVER_DATA_SECTION
@@ -72,6 +79,20 @@ config TARGET_IMX8QM_MEK
 	bool "Support i.MX8QM MEK board"
 	select BOARD_LATE_INIT
 	select IMX8QM
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select SPL_CRYPTO if SPL
+
+config TARGET_IMX8QM_LPDDR4_VAL
+	bool "Support i.MX8QM lpddr4 validation board"
+	select BOARD_LATE_INIT
+	select IMX8QM
+
+config TARGET_IMX8QM_DDR4_VAL
+	bool "Support i.MX8QM ddr4 validation board"
+	select BOARD_LATE_INIT
+	select IMX8QM
 
 config TARGET_CONGA_QMX8
 	bool "Support congatec conga-QMX8 board"
@@ -89,12 +110,82 @@ config TARGET_IMX8QXP_MEK
 	bool "Support i.MX8QXP MEK board"
 	select BOARD_LATE_INIT
 	select IMX8QXP
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select SPL_CRYPTO if SPL
+
+config TARGET_IMX8QM_MEK_A53_ONLY
+        bool "Support i.MX8QM MEK board, cluster A53 only"
+        select BOARD_LATE_INIT
+        select IMX8QM
+
+config TARGET_IMX8QM_MEK_A72_ONLY
+        bool "Support i.MX8QM MEK board, cluster A72 only"
+        select BOARD_LATE_INIT
+        select IMX8QM
+
+config TARGET_IMX8QXP_LPDDR4_VAL
+	bool "Support i.MX8QXP lpddr4 validation board"
+	select BOARD_LATE_INIT
+	select IMX8QXP
+
+config TARGET_IMX8QXP_DDR3_VAL
+	bool "Support i.MX8QXP ddr3 validation board"
+	select BOARD_LATE_INIT
+	select IMX8QXP
+
+config TARGET_IMX8X_17X17_VAL
+	bool "Support i.MX8QXP/DX 17x17 validation board"
+	select BOARD_LATE_INIT
+	select IMX8QXP
+
+config TARGET_IMX8DXL_PHANTOM_MEK
+	bool "Support i.MX8DXL PHANTOM MEK board"
+	select BOARD_LATE_INIT
+	select IMX8QXP
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select SPL_CRYPTO if SPL
+
+config TARGET_IMX8DX_MEK
+	bool "Support i.MX8DX MEK board"
+	select BOARD_LATE_INIT
+	select SUPPORT_SPL
+	select IMX8QXP
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select SPL_CRYPTO if SPL
+
+config TARGET_IMX8DXL_EVK
+	bool "Support i.MX8DXL EVK board"
+	select BOARD_LATE_INIT
+	select IMX8DXL
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select SPL_CRYPTO if SPL
+
+config TARGET_IMX8DXL_DDR3_EVK
+	bool "Support i.MX8DXL EVK board"
+	select BOARD_LATE_INIT
+	select IMX8DXL
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select SPL_CRYPTO if SPL
 
 endchoice
 
 source "board/freescale/imx8qm_mek/Kconfig"
 source "board/freescale/imx8qxp_mek/Kconfig"
 source "board/congatec/cgtqmx8/Kconfig"
+source "board/freescale/imx8qm_val/Kconfig"
+source "board/freescale/imx8qxp_val/Kconfig"
+source "board/freescale/imx8dxl_phantom_mek/Kconfig"
+source "board/freescale/imx8dxl_evk/Kconfig"
 source "board/advantech/imx8qm_rom7720_a1/Kconfig"
 source "board/toradex/apalis-imx8/Kconfig"
 source "board/toradex/colibri-imx8x/Kconfig"

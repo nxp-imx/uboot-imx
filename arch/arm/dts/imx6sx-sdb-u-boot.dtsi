@@ -1,0 +1,85 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2018 NXP
+ */
+
+&{/aliases} {
+	video0 = &lcdif1;
+	video1 = &lcdif2;
+	display0 = &ldb;
+};
+
+&lcdif1 {
+	status = "okay";
+
+	display0: display@0 {
+		bits-per-pixel = <24>;
+		bus-width = <24>;
+	};
+};
+
+&lcdif2 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	display1: display@1 {
+		bits-per-pixel = <18>;
+		bus-width = <18>;
+	};
+
+	port@0 {
+		reg = <0>;
+
+		lcdif2_lvds0: endpoint@0 {
+			remote-endpoint = <&ldb_lvds0>;
+		};
+	};
+};
+
+&{/soc/bus@2000000/ldb@20e0014/lvds-channel@0} {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	display-timings {
+		native-mode = <&timing1>;
+		timing1: hsd100pxn1 {
+			clock-frequency = <65000000>;
+			hactive = <1024>;
+			vactive = <768>;
+			hback-porch = <220>;
+			hfront-porch = <40>;
+			vback-porch = <21>;
+			vfront-porch = <7>;
+			hsync-len = <60>;
+			vsync-len = <10>;
+			hsync-active = <0>;
+			vsync-active = <0>;
+			de-active = <1>;
+			pixelclk-active = <0>;
+		};
+	};
+
+	port@0 {
+		reg = <0>;
+
+		ldb_lvds0: endpoint {
+			remote-endpoint = <&lcdif2_lvds0>;
+		};
+	};
+};
+
+&ethphy1 {
+	vddio1: vddio-regulator {
+		regulator-name = "VDDIO";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+};
+
+&ethphy2 {
+	vddio2: vddio-regulator {
+		regulator-name = "VDDIO";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+};

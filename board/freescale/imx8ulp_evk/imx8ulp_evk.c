@@ -13,8 +13,40 @@
 #include <miiphy.h>
 #include <netdev.h>
 #include <asm/gpio.h>
+#include <i2c.h>
+#include <power-domain.h>
+#include <dt-bindings/power/imx8ulp-power.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+#if defined(CONFIG_NXP_FSPI) || defined(CONFIG_FSL_FSPI_NAND)
+#define FSPI_PAD_CTRL	(PAD_CTL_PUS_UP | PAD_CTL_DSE)
+static iomux_cfg_t const flexspi0_pads[] = {
+	IMX8ULP_PAD_PTC5__FLEXSPI0_A_SS0_b | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC6__FLEXSPI0_A_SCLK | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC10__FLEXSPI0_A_DATA0 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC9__FLEXSPI0_A_DATA1 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC8__FLEXSPI0_A_DATA2 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC7__FLEXSPI0_A_DATA3 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC4__FLEXSPI0_A_DATA4 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC3__FLEXSPI0_A_DATA5 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC2__FLEXSPI0_A_DATA6 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+	IMX8ULP_PAD_PTC1__FLEXSPI0_A_DATA7 | MUX_PAD_CTRL(FSPI_PAD_CTRL),
+};
+
+static void setup_flexspi(void)
+{
+	init_clk_fspi(0);
+}
+
+static void setup_rtd_flexspi0(void)
+{
+	imx8ulp_iomux_setup_multiple_pads(flexspi0_pads, ARRAY_SIZE(flexspi0_pads));
+
+	/* Set PCC of flexspi0, 192Mhz % 4 = 48Mhz */
+	writel(0xD6000003, 0x280300e4);
+}
+
+#endif
 
 #if IS_ENABLED(CONFIG_FEC_MXC)
 #define ENET_CLK_PAD_CTRL	(PAD_CTL_PUS_UP | PAD_CTL_DSE | PAD_CTL_IBE_ENABLE)
@@ -99,12 +131,59 @@ void mipi_dsi_panel_backlight(void)
 	writel(0x20, 0x28095030);
 }
 
+void reset_lsm6dsx(uint8_t i2c_bus, uint8_t addr)
+{
+	struct udevice *bus;
+	struct udevice *i2c_dev = NULL;
+	int ret;
+	struct i2c_msg msg;
+	u8 i2c_buf[2] = { 0x12, 0x1 };
+
+	ret = uclass_get_device_by_seq(UCLASS_I2C, i2c_bus, &bus);
+	if (ret) {
+		printf("%s: Can't find bus\n", __func__);
+		return;
+	}
+
+	ret = dm_i2c_probe(bus, addr, 0, &i2c_dev);
+	if (ret) {
+		printf("%s: Can't find device id=0x%x\n",
+			__func__, addr);
+		return;
+	}
+
+	msg.addr = addr;
+	msg.flags = 0;
+	msg.len = 2;
+	msg.buf = i2c_buf;
+
+	ret = dm_i2c_xfer(i2c_dev, &msg, 1);
+	if (!ret)
+		printf("%s: Reset device 0x%x successfully.\n", __func__, addr);
+}
+
 int board_init(void)
 {
-	if (IS_ENABLED(CONFIG_FEC_MXC))
-		setup_fec();
+	int sync = -ENODEV;
+#if defined(CONFIG_NXP_FSPI) || defined(CONFIG_FSL_FSPI_NAND)
+	setup_flexspi();
 
-	if (IS_ENABLED(CONFIG_DM_VIDEO)) {
+	if (get_boot_mode() == SINGLE_BOOT) {
+		setup_rtd_flexspi0();
+	}
+#endif
+
+#if defined(CONFIG_FEC_MXC)
+	setup_fec();
+#endif
+
+	if (m33_image_booted()) {
+		sync = m33_image_handshake(1000);
+		printf("M33 Sync: %s\n", sync? "Timeout": "OK");
+	}
+
+	/* When sync with M33 is failed, use local driver to set for video */
+	if (sync != 0 && IS_ENABLED(CONFIG_DM_VIDEO)) {
 		mipi_dsi_mux_panel();
 		mipi_dsi_panel_backlight();
 	}
@@ -119,5 +198,47 @@ int board_early_init_f(void)
 
 int board_late_init(void)
 {
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
+
+	env_set("sec_boot", "no");
+#ifdef CONFIG_AHAB_BOOT
+	env_set("sec_boot", "yes");
+#endif
+
+#ifdef CONFIG_SYS_I2C_IMX_I3C
+	reset_lsm6dsx(8, 0x9);
+#endif
+
 	return 0;
+}
+
+void board_quiesce_devices(void)
+{
+	/* Disable the power domains may used in u-boot before entering kernel */
+#if CONFIG_IS_ENABLED(POWER_DOMAIN)
+	struct udevice *scmi_devpd;
+	int ret, i;
+	struct power_domain pd;
+	ulong ids[] = {
+		IMX8ULP_PD_FLEXSPI2, IMX8ULP_PD_USB0, IMX8ULP_PD_USDHC0,
+		IMX8ULP_PD_USDHC1, IMX8ULP_PD_USDHC2_USB1, IMX8ULP_PD_DCNANO,
+		IMX8ULP_PD_MIPI_DSI};
+
+	ret = uclass_get_device(UCLASS_POWER_DOMAIN, 0, &scmi_devpd);
+	if (ret) {
+		printf("Cannot get scmi devpd: err=%d\n", ret);
+		return;
+	}
+
+	pd.dev = scmi_devpd;
+
+	for (i = 0; i < ARRAY_SIZE(ids); i++) {
+		pd.id = ids[i];
+		ret = power_domain_off(&pd);
+		if (ret)
+			printf("power_domain_off %lu failed: err=%d\n", ids[i], ret);
+	}
+#endif
 }

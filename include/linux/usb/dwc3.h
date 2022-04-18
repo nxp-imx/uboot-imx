@@ -154,6 +154,7 @@ struct dwc3 {					/* offset: 0xC100 */
 
 /* Global Configuration Register */
 #define DWC3_GCTL_PWRDNSCALE(n)			((n) << 19)
+#define DWC3_GCTL_PWRDNSCALE_MASK		DWC3_GCTL_PWRDNSCALE(0x1fff)
 #define DWC3_GCTL_U2RSTECN			(1 << 16)
 #define DWC3_GCTL_RAMCLKSEL(x)			\
 		(((x) & DWC3_GCTL_CLK_MASK) << 6)

@@ -1,0 +1,53 @@
+* Cadence USB3 Controller
+
+Required properties:
+- compatible: should contain: "cdns,usb3-1.0.0"
+- reg: physical base address and size of the controller's register areas
+	Controller has 5 different regions:
+	region 1 - NONE-CORE registers area
+	region 2 - HOST registers area
+	region 3 - DEVICE registers area
+	region 4 - PHY registers area
+	region 5 - OTG registers area
+- reg-names - register memory area names:
+	"none-core" - for NONE-CORE registers space
+	"xhci" - for HOST registers space
+	"dev" - for DEVICE registers space
+	"phy" - for PHY registers space
+	"otg" - for OTG registers space
+- interrupts: interrupts used by cdns3 controller
+- interrupt-parent: the interrupt parent for this module
+- clocks: reference to the USB clock
+- clock-names: the name of clocks
+- phys: reference to the USB PHY
+
+Optional properties:
+- dr_mode: One of "host", "peripheral" or "otg". Defaults to "otg"
+- extcon: extcon phandler for cdns3 device
+- power-domains: the power domain for cdns3 controller and phy
+
+Examples:
+
+usbotg3: cdns3@5b110000 {
+	compatible = "cdns,usb3-1.0.0";
+	reg = <0x0 0x5B110000 0x0 0x10000>,
+		<0x0 0x5B130000 0x0 0x10000>,
+		<0x0 0x5B140000 0x0 0x10000>,
+		<0x0 0x5B160000 0x0 0x40000>,
+		<0x0 0x5B120000 0x0 0x10000>;
+	reg-names = "none-core", "xhci", "dev", "phy", "otg";
+	interrupt-parent = <&gic>;
+	interrupts = <GIC_SPI 271 IRQ_TYPE_LEVEL_HIGH>;
+	clocks = <&clk IMX8QM_USB3_LPM_CLK>,
+		<&clk IMX8QM_USB3_BUS_CLK>,
+		<&clk IMX8QM_USB3_ACLK>,
+		<&clk IMX8QM_USB3_IPG_CLK>,
+		<&clk IMX8QM_USB3_CORE_PCLK>;
+	clock-names = "usb3_lpm_clk", "usb3_bus_clk", "usb3_aclk",
+		"usb3_ipg_clk", "usb3_core_pclk";
+	power-domains = <&pd_conn_usb2>;
+	phys = <&usbphy1>;
+	dr_mode = "otg";
+	extcon = <&typec_ptn5150>;
+	status = "disabled";
+};

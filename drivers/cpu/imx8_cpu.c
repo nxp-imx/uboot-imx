@@ -35,6 +35,8 @@ const char *get_imx8_type(u32 imxtype)
 		return "QXP";
 	case MXC_CPU_IMX8QM:
 		return "QM";
+	case MXC_CPU_IMX8DXL:
+		return "DXL";
 	default:
 		return "??";
 	}
@@ -49,6 +51,10 @@ const char *get_imx8_rev(u32 rev)
 		return "B";
 	case CHIP_REV_C:
 		return "C";
+	case CHIP_REV_A1:
+		return "A1";
+	case CHIP_REV_A2:
+		return "A2";
 	default:
 		return "?";
 	}

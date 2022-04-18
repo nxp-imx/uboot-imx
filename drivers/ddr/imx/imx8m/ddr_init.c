@@ -54,9 +54,9 @@ void ddrc_inline_ecc_scrub(unsigned int start_address,
 	/* Step11: Disable SBR by programming SBRCTL.scrub_en=0 */
 	clrbits_le32(DDRC_SBRCTL(0), 0x1);
 	/* Step12: Prepare for normal scrub operation(Read) and set scrub_interval*/
-	reg32_write(DDRC_SBRCTL(0), 0x100);
+	reg32_write(DDRC_SBRCTL(0), 0xFF20);
 	/* Step13: Enable the SBR by programming SBRCTL.scrub_en=1 */
-	reg32_write(DDRC_SBRCTL(0), 0x101);
+	reg32_write(DDRC_SBRCTL(0), 0xFF21);
 	/* Step14: Enable AXI ports by programming */
 	reg32_write(DDRC_PCTRL_0(0), 0x1);
 	/* Step15: Disable quasi-dynamic programming */
@@ -96,7 +96,7 @@ int ddr_init(struct dram_timing_info *dram_timing)
 	unsigned int tmp, initial_drate, target_freq;
 	int ret;
 
-	debug("DDRINFO: start DRAM init\n");
+	printf("DDRINFO: start DRAM init\n");
 
 	/* Step1: Follow the power up procedure */
 	if (is_imx8mq()) {
@@ -119,6 +119,7 @@ int ddr_init(struct dram_timing_info *dram_timing)
 
 	initial_drate = dram_timing->fsp_msg[0].drate;
 	/* default to the frequency point 0 clock */
+	printf("DDRINFO: DRAM rate %dMTS\n", initial_drate);
 	ddrphy_init_set_dfi_clk(initial_drate);
 
 	/* D-aasert the presetn */
@@ -185,7 +186,7 @@ int ddr_init(struct dram_timing_info *dram_timing)
 		tmp = reg32_read(DDRPHY_CalBusy(0));
 	} while ((tmp & 0x1));
 
-	debug("DDRINFO:ddrphy calibration done\n");
+	printf("DDRINFO:ddrphy calibration done\n");
 
 	/* Step15: Set SWCTL.sw_done to 0 */
 	reg32_write(DDRC_SWCTL(0), 0x00000000);
@@ -238,7 +239,7 @@ int ddr_init(struct dram_timing_info *dram_timing)
 
 	/* enable port 0 */
 	reg32_write(DDRC_PCTRL_0(0), 0x00000001);
-	debug("DDRINFO: ddrmix config done\n");
+	printf("DDRINFO: ddrmix config done\n");
 
 	board_dram_ecc_scrub();
 

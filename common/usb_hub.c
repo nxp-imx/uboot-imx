@@ -950,7 +950,7 @@ U_BOOT_DRIVER(usb_generic_hub) = {
 	.name	= "usb_hub",
 	.id	= UCLASS_USB_HUB,
 	.of_match = usb_hub_ids,
-	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
+	.flags	= DM_FLAG_ALLOC_PRIV_DMA | DM_FLAG_DEFAULT_PD_CTRL_OFF,
 };
 
 UCLASS_DRIVER(usb_hub) = {

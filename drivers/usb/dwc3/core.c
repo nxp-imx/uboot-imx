@@ -465,7 +465,6 @@ static void dwc3_phy_setup(struct dwc3 *dwc)
 /* set global incr burst type configuration registers */
 static void dwc3_set_incr_burst_type(struct dwc3 *dwc)
 {
-	struct udevice *dev = dwc->dev;
 	u32 cfg;
 
 	if (!dwc->incrx_size)
@@ -502,11 +501,30 @@ static void dwc3_set_incr_burst_type(struct dwc3 *dwc)
 	case 1:
 		break;
 	default:
-		dev_err(dev, "Invalid property\n");
+		dev_err(dwc->dev, "Invalid property\n");
 		break;
 	}
 
 	dwc3_writel(dwc->regs, DWC3_GSBUSCFG0, cfg);
+}
+
+void dwc3_set_suspend_clk(struct dwc3 *dwc)
+{
+	u32 reg;
+
+	/*
+	 * DWC3_GCTL.PWRDNSCALE: The USB3 suspend_clk input replaces
+	 * pipe3_rx_pclk as a clock source to a small part of the USB3
+	 * core that operates when the SS PHY is in its lowest power
+	 * (P3) state, and therefore does not provide a clock.
+	 * The Power Down Scale field specifies how many suspend_clk
+	 * periods fit into a 16 kHz clock period. When performing the
+	 * division, round up the remainder.
+	 */
+	reg = dwc3_readl(dwc->regs, DWC3_GCTL);
+	reg &= ~(DWC3_GCTL_PWRDNSCALE(0x1fff));
+	reg |= DWC3_GCTL_PWRDNSCALE(dwc->power_down_scale);
+	dwc3_writel(dwc->regs, DWC3_GCTL, reg);
 }
 
 /**
@@ -558,6 +576,9 @@ static int dwc3_core_init(struct dwc3 *dwc)
 	ret = dwc3_core_soft_reset(dwc);
 	if (ret)
 		goto err0;
+
+	if (dwc->power_down_scale)
+		dwc3_set_suspend_clk(dwc);
 
 	reg = dwc3_readl(dwc->regs, DWC3_GCTL);
 	reg &= ~DWC3_GCTL_SCALEDOWN_MASK;
@@ -628,6 +649,20 @@ static int dwc3_core_init(struct dwc3 *dwc)
 	dwc3_core_num_eps(dwc);
 
 	dwc3_writel(dwc->regs, DWC3_GCTL, reg);
+
+	/*
+	 * Disable Park Mode:
+	 * Park mode can only be used in host mode with only a single
+	 * async endpoint is active, but which has a known issue cause
+	 * USB3.0 HC may die when read and write at the same time,
+	 * considering this mode only can improve the delay between
+	 * bursts in case only one endpoint is active, it's not really
+	 * useful, so disable it, Synopsys will release a formal STAR
+	 * and disable it by default in next IP release.
+	 */
+	reg = dwc3_readl(dwc->regs, DWC3_GUCTL1);
+	reg |= DWC3_GUCTL1_PARKMODE_DISABLE_SS;
+	dwc3_writel(dwc->regs, DWC3_GUCTL1, reg);
 
 	ret = dwc3_alloc_scratch_buffers(dwc);
 	if (ret)
@@ -700,12 +735,6 @@ static int dwc3_core_init_mode(struct dwc3 *dwc)
 	return 0;
 }
 
-static void dwc3_gadget_run(struct dwc3 *dwc)
-{
-	dwc3_writel(dwc->regs, DWC3_DCTL, DWC3_DCTL_RUN_STOP);
-	mdelay(100);
-}
-
 static void dwc3_core_stop(struct dwc3 *dwc)
 {
 	u32 reg;
@@ -731,13 +760,6 @@ static void dwc3_core_exit_mode(struct dwc3 *dwc)
 		/* do nothing */
 		break;
 	}
-
-	/*
-	 * switch back to peripheral mode
-	 * This enables the phy to enter idle and then, if enabled, suspend.
-	 */
-	dwc3_set_mode(dwc, DWC3_GCTL_PRTCAP_DEVICE);
-	dwc3_gadget_run(dwc);
 }
 
 #define DWC3_ALIGN_MASK		(16 - 1)
@@ -817,6 +839,8 @@ int dwc3_uboot_init(struct dwc3_device *dwc3_dev)
 	dwc->tx_de_emphasis_quirk = dwc3_dev->tx_de_emphasis_quirk;
 	if (dwc3_dev->tx_de_emphasis)
 		tx_de_emphasis = dwc3_dev->tx_de_emphasis;
+
+	dwc->power_down_scale = dwc3_dev->power_down_scale;
 
 	/* default to superspeed if no maximum_speed passed */
 	if (dwc->maximum_speed == USB_SPEED_UNKNOWN)
@@ -902,6 +926,7 @@ void dwc3_uboot_exit(int index)
 		dwc3_core_exit_mode(dwc);
 		dwc3_event_buffers_cleanup(dwc);
 		dwc3_free_event_buffers(dwc);
+		dwc3_core_stop(dwc);
 		dwc3_core_exit(dwc);
 		list_del(&dwc->list);
 		kfree(dwc->mem);

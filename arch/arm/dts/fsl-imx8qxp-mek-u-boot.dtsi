@@ -1,7 +1,31 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2018 NXP
+ * Copyright 2018, 2021 NXP
  */
+
+/ {
+
+	aliases {
+		usbhost1 = &usbh3;
+		usbgadget0 = &usbg1;
+	};
+
+	usbh3: usbh3 {
+		compatible = "Cadence,usb3-host";
+		dr_mode = "host";
+		cdns3,usb = <&usbotg3>;
+		status = "okay";
+	};
+
+	usbg1: usbg1 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg1>;
+		status = "okay";
+		u-boot,dm-spl;
+	};
+
+};
 
 &{/imx8qx-pm} {
 
@@ -17,6 +41,38 @@
 };
 
 &iomuxc {
+	u-boot,dm-spl;
+};
+
+&{/regulators} {
+	u-boot,dm-spl;
+};
+
+&reg_usdhc2_vmmc {
+	u-boot,dm-spl;
+};
+
+&{/mu@5d1c0000/iomuxc/imx8qxp-mek} {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2_gpio {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_lpuart0 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc1 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_flexspi0 {
 	u-boot,dm-spl;
 };
 
@@ -80,6 +136,42 @@
 	u-boot,dm-spl;
 };
 
+&pd_caam {
+	u-boot,dm-spl;
+};
+
+&pd_caam_jr1 {
+	u-boot,dm-spl;
+};
+
+&pd_caam_jr2 {
+	u-boot,dm-spl;
+};
+
+&pd_caam_jr3 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_usbotg0 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_usbotg0_phy {
+	u-boot,dm-spl;
+};
+
+&pd_lsio_flexspi0 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_usb2 {
+	u-boot,dm-spl;
+};
+
+&pd_conn_usb2_phy {
+	u-boot,dm-spl;
+};
+
 &gpio0 {
 	u-boot,dm-spl;
 };
@@ -116,6 +208,30 @@
 	u-boot,dm-spl;
 };
 
+&usbmisc1 {
+	u-boot,dm-spl;
+};
+
+&usbphy1 {
+	u-boot,dm-spl;
+};
+
+&usbotg1 {
+	u-boot,dm-spl;
+};
+
+&usbotg3 {
+	phys = <&usbphynop1>;
+	u-boot,dm-spl;
+};
+
+&usbphynop1 {
+	compatible = "cdns,usb3-phy";
+	reg = <0x0 0x5B160000 0x0 0x40000>;
+	#phy-cells = <0>;
+	u-boot,dm-spl;
+};
+
 &usdhc1 {
 	u-boot,dm-spl;
 	mmc-hs400-1_8v;
@@ -125,4 +241,65 @@
 	u-boot,dm-spl;
 	sd-uhs-sdr104;
 	sd-uhs-ddr50;
+};
+
+&crypto {
+	u-boot,dm-spl;
+};
+
+&sec_jr1 {
+	u-boot,dm-spl;
+};
+
+&sec_jr2 {
+	u-boot,dm-spl;
+};
+
+&sec_jr3 {
+	u-boot,dm-spl;
+};
+
+&flexspi0 {
+	u-boot,dm-spl;
+};
+
+&flash0 {
+	u-boot,dm-spl;
+};
+
+&i2c1 {
+	compatible = "fsl,imx8qm-lpi2c", "fsl,imx-virt-i2c";
+};
+
+&{/i2c@5a810000/i2cswitch@71} {
+	compatible = "nxp,pca9646", "fsl,imx-virt-i2c-mux";
+	virtual-bus-seq = <12>;
+};
+
+&wu {
+	u-boot,dm-spl;
+};
+
+&fec1 {
+	phy-mode = "rgmii-id";
+};
+
+&fec2 {
+	phy-mode = "rgmii-id";
+};
+
+&ethphy0 {
+	vddio0: vddio-regulator {
+		regulator-name = "VDDIO";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+};
+
+&ethphy1 {
+	vddio1: vddio-regulator {
+		regulator-name = "VDDIO";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
 };

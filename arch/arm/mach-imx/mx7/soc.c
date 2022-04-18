@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright 2021 NXP
  */
 
 #include <common.h>
@@ -20,9 +21,9 @@
 #include <dm.h>
 #include <env.h>
 #include <imx_thermal.h>
-#include <fsl_sec.h>
 #include <asm/setup.h>
 #include <linux/delay.h>
+#include <fsl_wdog.h>
 
 #define IOMUXC_GPR1		0x4
 #define BM_IOMUXC_GPR1_IRQ	0x1000
@@ -127,7 +128,7 @@ static void isolate_resource(void)
 }
 #endif
 
-#if defined(CONFIG_IMX_HAB)
+#if defined(CONFIG_IMX_HAB) || defined(CONFIG_AVB_ATX)
 struct imx_sec_config_fuse_t const imx_sec_config_fuse = {
 	.bank = 1,
 	.word = 3,
@@ -306,8 +307,43 @@ static void imx_gpcv2_init(void)
 	udelay(65);
 }
 
+static void set_epdc_qos(void)
+{
+	writel(0, REGS_QOS_BASE);  /*  Disable clkgate & soft_reset */
+	writel(0, REGS_QOS_BASE + 0x60);  /*  Enable all masters */
+	writel(0, REGS_QOS_EPDC);   /*  Disable clkgate & soft_reset */
+	writel(0, REGS_QOS_PXP0);   /*  Disable clkgate & soft_reset */
+	writel(0, REGS_QOS_PXP1);   /*  Disable clkgate & soft_reset */
+
+	writel(0x0f020722, REGS_QOS_EPDC + 0xd0);   /*  WR, init = 7 with red flag */
+	writel(0x0f020722, REGS_QOS_EPDC + 0xe0);   /*  RD,  init = 7 with red flag */
+
+	writel(1, REGS_QOS_PXP0);   /*  OT_CTRL_EN =1 */
+	writel(1, REGS_QOS_PXP1);   /*  OT_CTRL_EN =1 */
+
+	writel(0x0f020222, REGS_QOS_PXP0 + 0x50);   /*  WR,  init = 2 with red flag */
+	writel(0x0f020222, REGS_QOS_PXP1 + 0x50);   /*  WR,  init = 2 with red flag */
+	writel(0x0f020222, REGS_QOS_PXP0 + 0x60);   /*  rD,  init = 2 with red flag */
+	writel(0x0f020222, REGS_QOS_PXP1 + 0x60);   /*  rD,  init = 2 with red flag */
+	writel(0x0f020422, REGS_QOS_PXP0 + 0x70);   /*  tOTAL,  init = 4 with red flag */
+	writel(0x0f020422, REGS_QOS_PXP1 + 0x70);   /*  TOTAL,  init = 4 with red flag */
+
+	writel(0xe080, IOMUXC_GPR_BASE_ADDR + 0x0034); /* EPDC AW/AR CACHE ENABLE */
+}
+
+bool is_usb_boot(void)
+{
+	if (gd->flags & GD_FLG_ARCH_IMX_USB_BOOT)
+		return true;
+
+	return false;
+}
+
 int arch_cpu_init(void)
 {
+	if (is_usbotg_boot_enabled())
+		gd->flags |= GD_FLG_ARCH_IMX_USB_BOOT;
+
 	init_aips();
 
 	init_csu();
@@ -316,6 +352,8 @@ int arch_cpu_init(void)
 
 	init_cpu_basic();
 
+	set_epdc_qos();
+
 #if CONFIG_IS_ENABLED(IMX_RDC)
 	isolate_resource();
 #endif
@@ -323,6 +361,7 @@ int arch_cpu_init(void)
 	init_snvs();
 
 	imx_gpcv2_init();
+	configure_tzc380();
 
 	enable_ca7_smp();
 
@@ -340,7 +379,7 @@ int arch_cpu_init(void)
 #ifdef CONFIG_ARCH_MISC_INIT
 int arch_misc_init(void)
 {
-#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+#if defined(CONFIG_SERIAL_TAG) || defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
 	struct tag_serialnr serialnr;
 	char serial_string[0x20];
 
@@ -356,15 +395,19 @@ int arch_misc_init(void)
 	env_set("serial#", serial_string);
 #endif
 
-#ifdef CONFIG_FSL_CAAM
-	sec_init();
-#endif
+	if (IS_ENABLED(CONFIG_FSL_CAAM)) {
+		struct udevice *dev;
+		int ret;
+		ret = uclass_get_device_by_driver(UCLASS_MISC, DM_DRIVER_GET(caam_jr), &dev);
+		if (ret)
+			printf("Failed to initialize %s: %d\n", dev->name, ret);
+	}
 
 	return 0;
 }
 #endif
 
-#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+#if defined(CONFIG_SERIAL_TAG) || defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
 /*
  * OCOTP_TESTER
  * i.MX 7Solo Applications Processor Reference Manual, Rev. 0.1, 08/2016
@@ -421,6 +464,10 @@ void s_init(void)
 	/* clock configuration. */
 	clock_init();
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+        /* Enable RTC */
+        writel(0x21, 0x30370038);
+#endif
 	return;
 }
 
@@ -447,4 +494,32 @@ void reset_misc(void)
 	lcdif_power_down();
 #endif
 #endif
+}
+
+#ifdef CONFIG_IMX_TRUSTY_OS
+#ifdef CONFIG_MX7D
+void smp_set_core_boot_addr(unsigned long addr, int corenr)
+{
+            return;
+}
+
+void smp_waitloop(unsigned previous_address)
+{
+            return;
+}
+#endif
+#endif
+
+void reset_cpu(ulong addr)
+{
+	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
+
+	/* Clear WDA to trigger WDOG_B immediately */
+	writew((WCR_WDE | WCR_SRS), &wdog->wcr);
+
+	while (1) {
+		/*
+		 * spin for .5 seconds before reset
+		 */
+	}
 }

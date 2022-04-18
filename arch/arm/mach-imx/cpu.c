@@ -27,6 +27,10 @@
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
 
+#ifdef CONFIG_VIDEO_GIS
+#include <gis.h>
+#endif
+
 #ifdef CONFIG_FSL_ESDHC_IMX
 #include <fsl_esdhc_imx.h>
 #endif
@@ -40,7 +44,10 @@ u32 get_imx_reset_cause(void)
 	if (reset_cause == -1) {
 		reset_cause = readl(&src_regs->srsr);
 /* preserve the value for U-Boot proper */
-#if !defined(CONFIG_SPL_BUILD)
+#if !defined(CONFIG_SPL_BUILD) && !defined(CONFIG_ANDROID_BOOT_IMAGE)
+		/* We will read the ssrs states later for android so we don't
+		 * clear the states here.
+		 */
 		writel(reset_cause, &src_regs->srsr);
 #endif
 	}
@@ -91,6 +98,17 @@ static char *get_reset_cause(void)
 		return "unknown reset";
 	}
 }
+
+#ifdef CONFIG_ANDROID_BOOT_IMAGE
+void get_reboot_reason(char *ret)
+{
+	struct src *src_regs = (struct src *)SRC_BASE_ADDR;
+
+	strcpy(ret, (const char *)get_reset_cause());
+	/* clear the srsr here, its state has been recorded in reset_cause */
+	writel(reset_cause, &src_regs->srsr);
+}
+#endif
 #endif
 
 #if defined(CONFIG_DISPLAY_CPUINFO) && !defined(CONFIG_SPL_BUILD)
@@ -106,6 +124,8 @@ const char *get_imx_type(u32 imxtype)
 		return "8MP Lite[4]";	/* Quad-core Lite version of the imx8mp */
 	case MXC_CPU_IMX8MP6:
 		return "8MP[6]";	/* Quad-core version of the imx8mp, NPU fused */
+	case MXC_CPU_IMX8MPUL:
+		return "8MP UltraLite";	/* Quad-core UltraLite version of the imx8mp */
 	case MXC_CPU_IMX8MN:
 		return "8MNano Quad"; /* Quad-core version */
 	case MXC_CPU_IMX8MND:
@@ -183,6 +203,10 @@ int print_cpuinfo(void)
 {
 	u32 cpurev;
 	__maybe_unused u32 max_freq;
+#if defined(CONFIG_DBG_MONITOR)
+	struct dbg_monitor_regs *dbg =
+		(struct dbg_monitor_regs *)DEBUG_MONITOR_BASE_ADDR;
+#endif
 
 	cpurev = get_cpu_rev();
 
@@ -190,7 +214,7 @@ int print_cpuinfo(void)
 	struct udevice *thermal_dev;
 	int cpu_tmp, minc, maxc, ret;
 
-	printf("CPU:   Freescale i.MX%s rev%d.%d",
+	printf("CPU:   i.MX%s rev%d.%d",
 	       get_imx_type((cpurev & 0x1FF000) >> 12),
 	       (cpurev & 0x000F0) >> 4,
 	       (cpurev & 0x0000F) >> 0);
@@ -202,7 +226,7 @@ int print_cpuinfo(void)
 		       mxc_get_clock(MXC_ARM_CLK) / 1000000);
 	}
 #else
-	printf("CPU:   Freescale i.MX%s rev%d.%d at %d MHz\n",
+	printf("CPU:   i.MX%s rev%d.%d at %d MHz\n",
 		get_imx_type((cpurev & 0x1FF000) >> 12),
 		(cpurev & 0x000F0) >> 4,
 		(cpurev & 0x0000F) >> 0,
@@ -238,6 +262,14 @@ int print_cpuinfo(void)
 		debug(" - invalid sensor device\n");
 	}
 	puts("\n");
+#endif
+
+#if defined(CONFIG_DBG_MONITOR)
+	if (readl(&dbg->snvs_addr))
+		printf("DBG snvs regs addr 0x%x, data 0x%x, info 0x%x\n",
+		       readl(&dbg->snvs_addr),
+		       readl(&dbg->snvs_data),
+		       readl(&dbg->snvs_info));
 #endif
 
 	printf("Reset cause: %s\n", get_reset_cause());
@@ -304,9 +336,16 @@ void arch_preboot_os(void)
 #endif
 	}
 #endif
+#if defined(CONFIG_LDO_BYPASS_CHECK)
+	ldo_mode_set(check_ldo_bypass());
+#endif
 #if defined(CONFIG_VIDEO_IPUV3)
 	/* disable video before launching O/S */
 	ipuv3_fb_shutdown();
+#endif
+#ifdef CONFIG_VIDEO_GIS
+	/* Entry for GIS */
+	mxc_disable_gis();
 #endif
 #if defined(CONFIG_VIDEO_MXS) && !defined(CONFIG_DM_VIDEO)
 	lcdif_power_down();

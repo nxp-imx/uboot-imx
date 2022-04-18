@@ -1307,6 +1307,13 @@ static int mxs_nand_init_dma(struct mxs_nand_info *info)
 {
 	int i = 0, j, ret = 0;
 
+	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+		if (check_module_fused(MODULE_GPMI)) {
+			printf("NAND GPMI@0x%lx is fused, disable it\n", (ulong)info->gpmi_regs);
+			return -EPERM;
+		}
+	}
+
 	info->desc = malloc(sizeof(struct mxs_dma_desc *) *
 				MXS_NAND_DMA_DESCRIPTOR_COUNT);
 	if (!info->desc) {
@@ -1379,6 +1386,9 @@ int mxs_nand_init_spl(struct nand_chip *nand)
 		nand_info->max_ecc_strength_supported = 62;
 	else
 		nand_info->max_ecc_strength_supported = 40;
+
+	if (IS_ENABLED(CONFIG_NAND_MXS_USE_MINIMUM_ECC))
+		nand_info->use_minimum_ecc = true;
 
 	err = mxs_nand_alloc_buffers(nand_info);
 	if (err)

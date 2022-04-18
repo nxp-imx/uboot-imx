@@ -33,6 +33,11 @@ config MX6Q
 	select HAS_CAAM
 	select MX6_SMP
 
+config MX6QP
+	bool "i.MX 6QuadPlus SoC support"
+	select HAS_CAAM
+	select MX6_SMP
+
 config MX6QDL
 	bool "i.MX 6Dual and 6Quad SoC support"
 	select HAS_CAAM
@@ -105,6 +110,48 @@ config MX6_DDRCAL
 	help
 	  Say "Y" if your board uses dynamic (per-boot) DDR calibration.
 	  If unsure, say N.
+
+config LDO_BYPASS_CHECK
+	bool "Enable the LDO bypass checking and setting"
+	default y if !MX6SLL
+	help
+	  This feature searches the gpc node in loaded DTB and checking the
+	  "fsl,ldo-bypass" property. When the property is set, board relevant 
+	  PMIC settings are called to adjust for LDO bypass. 
+
+config CMD_BEE
+	bool "Enable commands for Bus Encryption Engine(BEE)"
+	depends on MX6UL
+	help
+	  Set "Y" to enable the bee commands
+
+config TARGET_MX6SABREAUTO_COMMON
+    bool
+    select BOARD_LATE_INIT
+    select DM
+    select DM_THERMAL
+    select IMX_THERMAL
+    select BOARD_EARLY_INIT_F
+    select NXP_BOARD_REVISION
+    imply CMD_DM
+    select FSL_CAAM
+    select FSL_BLOB
+    select ARCH_MISC_INIT
+    select RNG_SELF_TEST
+
+config TARGET_MX6SABRESD_COMMON
+    bool
+    select BOARD_LATE_INIT
+    select DM
+    select DM_THERMAL
+    select IMX_THERMAL
+    select BOARD_EARLY_INIT_F
+    select NXP_BOARD_REVISION
+    imply CMD_DM
+    select FSL_CAAM
+    select FSL_BLOB
+    select ARCH_MISC_INIT
+    select RNG_SELF_TEST
 
 choice
 	prompt "MX6 board select"
@@ -354,6 +401,8 @@ config TARGET_MX6SABREAUTO
 	select DM_THERMAL
 	select SUPPORT_SPL
 	imply CMD_DM
+	select FSL_CAAM
+	select ARCH_MISC_INIT
 
 config TARGET_MX6SABRESD
 	bool "mx6sabresd"
@@ -364,6 +413,48 @@ config TARGET_MX6SABRESD
 	select DM_THERMAL
 	select SUPPORT_SPL
 	imply CMD_DM
+	select FSL_CAAM
+	select ARCH_MISC_INIT
+
+config TARGET_MX6QSABREAUTO
+    bool "mx6qsabreauto"
+    select TARGET_MX6SABREAUTO_COMMON
+    depends on MX6Q
+
+config TARGET_MX6QPSABREAUTO
+    bool "mx6qpsabreauto"
+    select TARGET_MX6SABREAUTO_COMMON
+    depends on MX6QP
+
+config TARGET_MX6DLSABREAUTO
+    bool "mx6dlsabreauto"
+    select TARGET_MX6SABREAUTO_COMMON
+    depends on MX6DL
+
+config TARGET_MX6SOLOSABREAUTO
+    bool "mx6solosabreauto"
+    select TARGET_MX6SABREAUTO_COMMON
+    depends on MX6S
+
+config TARGET_MX6QSABRESD
+	bool "mx6qsabresd"
+    select TARGET_MX6SABRESD_COMMON
+    depends on MX6Q
+
+config TARGET_MX6QPSABRESD
+	bool "mx6qpsabresd"
+    select TARGET_MX6SABRESD_COMMON
+    depends on MX6QP
+
+config TARGET_MX6DLSABRESD
+	bool "mx6dlsabresd"
+    select TARGET_MX6SABRESD_COMMON
+    depends on MX6DL
+
+config TARGET_MX6SOLOSABRESD
+	bool "mx6solosabresd"
+    select TARGET_MX6SABRESD_COMMON
+    depends on MX6S
 
 config TARGET_MX6SLEVK
 	bool "mx6slevk"
@@ -378,6 +469,14 @@ config TARGET_MX6SLLEVK
 	select DM_THERMAL
 	imply CMD_DM
 
+config TARGET_MX6SLL_VAL
+	bool "mx6sll val"
+	depends on MX6SLL
+	select BOARD_LATE_INIT
+	select DM
+	select DM_THERMAL
+	imply CMD_DM
+
 config TARGET_MX6SXSABRESD
 	bool "mx6sxsabresd"
 	depends on MX6SX
@@ -386,6 +485,10 @@ config TARGET_MX6SXSABRESD
 	select DM
 	select DM_THERMAL
 	select SUPPORT_SPL
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select RNG_SELF_TEST
 
 config TARGET_MX6SXSABREAUTO
 	bool "mx6sxsabreauto"
@@ -396,6 +499,33 @@ config TARGET_MX6SXSABREAUTO
 	select DM_THERMAL
 	imply CMD_DM
 
+config TARGET_MX6SX_14X14_VAL
+	bool "mx6sx_14x14_val"
+	depends on MX6SX
+	select DM
+	select DM_THERMAL
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
+	imply CMD_DM
+
+config TARGET_MX6SX_17X17_VAL
+	bool "mx6sx_17x17_val"
+	depends on MX6SX
+	select DM
+	select DM_THERMAL
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
+	imply CMD_DM
+
+config TARGET_MX6SX_19X19_VAL
+	bool "mx6sx_19x19_val"
+	depends on MX6SX
+	select DM
+	select DM_THERMAL
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
+	imply CMD_DM
+
 config TARGET_MX6UL_9X9_EVK
 	bool "mx6ul_9x9_evk"
 	depends on MX6UL
@@ -403,7 +533,12 @@ config TARGET_MX6UL_9X9_EVK
 	select DM
 	select DM_THERMAL
 	select SUPPORT_SPL
+	select IMX_MODULE_FUSE
+	select OF_SYSTEM_SETUP
 	imply CMD_DM
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
 
 config TARGET_MX6UL_14X14_EVK
 	bool "mx6ul_14x14_evk"
@@ -412,6 +547,31 @@ config TARGET_MX6UL_14X14_EVK
 	select DM
 	select DM_THERMAL
 	select SUPPORT_SPL
+	select IMX_MODULE_FUSE
+	select OF_SYSTEM_SETUP
+	imply CMD_DM
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+
+config TARGET_MX6UL_14X14_DDR3_VAL
+	bool "mx6ul_14x14_ddr3_val"
+	depends on MX6UL
+	select BOARD_LATE_INIT
+	select DM
+	select DM_THERMAL
+	select IMX_MODULE_FUSE
+	select OF_SYSTEM_SETUP
+	imply CMD_DM
+
+config TARGET_MX6UL_14X14_LPDDR2_VAL
+	bool "mx6ul_14x14_lpddr2_val"
+	depends on MX6UL
+	select BOARD_LATE_INIT
+	select DM
+	select DM_THERMAL
+	select IMX_MODULE_FUSE
+	select OF_SYSTEM_SETUP
 	imply CMD_DM
 
 config TARGET_MX6UL_ENGICAM
@@ -432,12 +592,34 @@ config TARGET_MX6UL_ENGICAM
 	select SUPPORT_SPL
 	imply CMD_DM
 
+config TARGET_MX6ULL_DDR3_VAL
+	bool "Support mx6ull_ddr3_val"
+	depends on MX6ULL
+	select BOARD_LATE_INIT
+	select DM
+	select DM_THERMAL
+	select IMX_MODULE_FUSE
+	select OF_SYSTEM_SETUP
+	imply CMD_DM
+
+config TARGET_MX6ULL_9X9_EVK
+	bool "Support mx6ull_9x9_evk"
+	depends on MX6ULL
+	select BOARD_LATE_INIT
+	select DM
+	select DM_THERMAL
+	select IMX_MODULE_FUSE
+	select OF_SYSTEM_SETUP
+	imply CMD_DM
+
 config TARGET_MX6ULL_14X14_EVK
 	bool "Support mx6ull_14x14_evk"
 	depends on MX6ULL
 	select BOARD_LATE_INIT
 	select DM
 	select DM_THERMAL
+	select IMX_MODULE_FUSE
+	select OF_SYSTEM_SETUP
 	imply CMD_DM
 
 config TARGET_MYS_6ULX
@@ -669,11 +851,17 @@ source "board/freescale/mx6memcal/Kconfig"
 source "board/freescale/mx6sabreauto/Kconfig"
 source "board/freescale/mx6sabresd/Kconfig"
 source "board/freescale/mx6slevk/Kconfig"
+source "board/freescale/mx6sll_val/Kconfig"
 source "board/freescale/mx6sllevk/Kconfig"
 source "board/freescale/mx6sxsabresd/Kconfig"
 source "board/freescale/mx6sxsabreauto/Kconfig"
+source "board/freescale/mx6sx_17x17_val/Kconfig"
+source "board/freescale/mx6sx_19x19_val/Kconfig"
 source "board/freescale/mx6ul_14x14_evk/Kconfig"
+source "board/freescale/mx6ul_14x14_ddr3_val/Kconfig"
+source "board/freescale/mx6ul_14x14_lpddr2_val/Kconfig"
 source "board/freescale/mx6ullevk/Kconfig"
+source "board/freescale/mx6ull_ddr3_val/Kconfig"
 source "board/grinn/liteboard/Kconfig"
 source "board/phytec/pcm058/Kconfig"
 source "board/phytec/pcl063/Kconfig"

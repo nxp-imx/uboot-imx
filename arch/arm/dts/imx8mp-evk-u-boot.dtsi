@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2019 NXP
+ * Copyright 2019, 2021 NXP
  */
 
 #include "imx8mp-u-boot.dtsi"
@@ -19,12 +19,13 @@
 	};
 };
 
-&reg_usdhc2_vmmc {
-	u-boot,off-on-delay-us = <20000>;
+&pinctrl_reg_usdhc2_vmmc {
+	u-boot,dm-spl;
 };
 
 &reg_usdhc2_vmmc {
 	u-boot,dm-spl;
+	u-boot,off-on-delay-us = <20000>;
 };
 
 &pinctrl_uart2 {
@@ -67,6 +68,22 @@
 	u-boot,dm-spl;
 };
 
+&crypto {
+	u-boot,dm-spl;
+};
+
+&sec_jr0 {
+	u-boot,dm-spl;
+};
+
+&sec_jr1 {
+	u-boot,dm-spl;
+};
+
+&sec_jr2 {
+	u-boot,dm-spl;
+};
+
 &i2c1 {
 	u-boot,dm-spl;
 };
@@ -79,35 +96,52 @@
 	u-boot,dm-spl;
 };
 
-&i2c4 {
+&pinctrl_i2c1 {
 	u-boot,dm-spl;
 };
 
-&i2c5 {
-	u-boot,dm-spl;
-};
-
-&i2c6 {
+&pinctrl_i2c1_gpio {
 	u-boot,dm-spl;
 };
 
 &usdhc1 {
 	u-boot,dm-spl;
+	assigned-clocks = <&clk IMX8MP_CLK_USDHC1>;
+	assigned-clock-rates = <400000000>;
+	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_400M>;
 };
 
 &usdhc2 {
 	u-boot,dm-spl;
 	sd-uhs-sdr104;
 	sd-uhs-ddr50;
+	assigned-clocks = <&clk IMX8MP_CLK_USDHC2>;
+	assigned-clock-rates = <400000000>;
+	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_400M>;
 };
 
 &usdhc3 {
 	u-boot,dm-spl;
 	mmc-hs400-1_8v;
 	mmc-hs400-enhanced-strobe;
+	assigned-clocks = <&clk IMX8MP_CLK_USDHC3>;
+	assigned-clock-rates = <400000000>;
+	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_400M>;
 };
 
 &wdog1 {
+	u-boot,dm-spl;
+};
+
+&{/soc@0/bus@30800000/i2c@30a20000/pca9450@25} {
+	u-boot,dm-spl;
+};
+
+&{/soc@0/bus@30800000/i2c@30a20000/pca9450@25/regulators} {
+	u-boot,dm-spl;
+};
+
+&pinctrl_pmic {
 	u-boot,dm-spl;
 };
 
@@ -120,8 +154,8 @@
 
 &ethphy0 {
 	reset-gpios = <&gpio4 22 GPIO_ACTIVE_LOW>;
-	reset-delay-us = <15000>;
-	reset-post-delay-us = <100000>;
+	reset-assert-us = <15000>;
+	reset-deassert-us = <100000>;
 };
 
 &fec {
@@ -130,4 +164,40 @@
 	phy-reset-post-delay = <100>;
 };
 
+&flexspi {
+	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_400M>;
+};
 
+&lcdif1 {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+};
+
+&mipi_dsi {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+};
+
+&usb3_0 {
+	/delete-property/ power-domains;
+};
+
+&usb3_1 {
+	/delete-property/ power-domains;
+};
+
+&usb_dwc3_0 {
+	compatible = "fsl,imx8mq-dwc3", "snps,dwc3";
+	assigned-clocks = <&clk IMX8MP_CLK_HSIO_AXI>;
+	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_800M>;
+	assigned-clock-rates = <400000000>;
+};
+
+&usb_dwc3_1 {
+	compatible = "fsl,imx8mq-dwc3", "snps,dwc3";
+	assigned-clocks = <&clk IMX8MP_CLK_HSIO_AXI>;
+	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_800M>;
+	assigned-clock-rates = <400000000>;
+};

@@ -23,7 +23,13 @@
 #include <dm/uclass.h>
 #include <dm/device.h>
 #include <dm/uclass-internal.h>
+#include <asm/arch/pcc.h>
 #include <fuse.h>
+#include <thermal.h>
+#include <asm/mach-imx/optee.h>
+#include <env.h>
+#include <env_internal.h>
+#include <linux/iopoll.h>
 #include <thermal.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -65,18 +71,33 @@ enum boot_device get_boot_device(void)
 		boot_dev = QSPI_BOOT;
 		break;
 	case BT_DEV_TYPE_USB:
-		boot_dev = USB_BOOT;
+		boot_dev = boot_instance + USB_BOOT;
 		break;
 	default:
 		break;
 	}
+
+	debug("boot dev %d\n", boot_dev);
 
 	return boot_dev;
 }
 
 bool is_usb_boot(void)
 {
-	return get_boot_device() == USB_BOOT;
+	enum boot_device bt_dev = get_boot_device();
+	return (bt_dev == USB_BOOT || bt_dev == USB2_BOOT);
+}
+
+void disconnect_from_pc(void)
+{
+	enum boot_device bt_dev = get_boot_device();
+
+	if (bt_dev == USB_BOOT)
+		writel(0x0, USBOTG0_RBASE + 0x140);
+	else if (bt_dev == USB2_BOOT)
+		writel(0x0, USBOTG1_RBASE + 0x140);
+
+	return;
 }
 
 #ifdef CONFIG_ENV_IS_IN_MMC
@@ -105,11 +126,29 @@ int mmc_get_env_dev(void)
 	boot_type = boot >> 16;
 	boot_instance = (boot >> 8) & 0xff;
 
+	debug("boot_type %d, instance %d\n", boot_type, boot_instance);
+
 	/* If not boot from sd/mmc, use default value */
-	if (boot_type != BOOT_TYPE_SD && boot_type != BOOT_TYPE_MMC)
+	if ((boot_type != BOOT_TYPE_SD) && (boot_type != BOOT_TYPE_MMC))
 		return env_get_ulong("mmcdev", 10, CONFIG_SYS_MMC_ENV_DEV);
 
 	return board_mmc_get_env_dev(boot_instance);
+
+}
+#endif
+
+#ifdef CONFIG_USB_PORT_AUTO
+int board_usb_gadget_port_auto(void)
+{
+    enum boot_device bt_dev = get_boot_device();
+	int usb_boot_index = 0;
+
+	if (bt_dev == USB2_BOOT)
+		usb_boot_index = 1;
+
+	printf("auto usb %d\n", usb_boot_index);
+
+	return usb_boot_index;
 }
 #endif
 
@@ -135,6 +174,40 @@ enum bt_mode get_boot_mode(void)
 
 	return LOW_POWER_BOOT;
 }
+
+bool m33_image_booted(void)
+{
+	u32 gp6 = 0;
+
+	/* DGO_GP6 */
+	gp6 = readl(SIM_SEC_BASE_ADDR + 0x28);
+	if (gp6 & (1 << 5))
+		return true;
+
+	return false;
+}
+
+int m33_image_handshake(ulong timeout_ms)
+{
+	u32 fsr;
+	int ret;
+	ulong timeout_us = timeout_ms * 1000;
+
+	/* Notify m33 that it's ready to do init srtm(enable mu receive interrupt and so on) */
+	setbits_le32(MU0_B_BASE_ADDR + 0x100, BIT(0)); /* set FCR F0 flag of MU0_MUB */
+
+	/*
+	 * Wait m33 to set FCR F0 flag of MU0_MUA
+	 * Clear FCR F0 flag of MU0_MUB after m33 has set FCR F0 flag of MU0_MUA
+	 */
+	ret = readl_poll_sleep_timeout(MU0_B_BASE_ADDR + 0x104,
+		fsr, fsr & BIT(0), 10, timeout_us);
+	if (ret == 0)
+		clrbits_le32(MU0_B_BASE_ADDR + 0x100, BIT(0));
+
+	return ret;
+}
+
 
 #define CMC_SRS_TAMPER                    BIT(31)
 #define CMC_SRS_SECURITY                  BIT(30)
@@ -262,15 +335,12 @@ static void disable_wdog(void __iomem *wdog_base)
 {
 	u32 val_cs = readl(wdog_base + 0x00);
 
-	if (!(val_cs & 0x80))
-		return;
-
 	dmb();
 	__raw_writel(REFRESH_WORD0, (wdog_base + 0x04)); /* Refresh the CNT */
 	__raw_writel(REFRESH_WORD1, (wdog_base + 0x04));
 	dmb();
 
-	if (!(val_cs & 800)) {
+	if (!(val_cs & 0x800)) {
 		dmb();
 		__raw_writel(UNLOCK_WORD0, (wdog_base + 0x04));
 		__raw_writel(UNLOCK_WORD1, (wdog_base + 0x04));
@@ -281,7 +351,7 @@ static void disable_wdog(void __iomem *wdog_base)
 	}
 	writel(0x0, (wdog_base + 0x0C)); /* Set WIN to 0 */
 	writel(0x400, (wdog_base + 0x08)); /* Set timeout to default 0x400 */
-	writel(0x120, (wdog_base + 0x00)); /* Disable it and set update */
+	writel(0x2120, (wdog_base + 0x00)); /* Change to 32bit cmd, disable it and set update */
 
 	while (!(readl(wdog_base + 0x00) & 0x400))
 		;
@@ -379,6 +449,17 @@ static struct mm_region imx8ulp_arm64_mem_map[] = {
 
 struct mm_region *mem_map = imx8ulp_arm64_mem_map;
 
+static unsigned int imx8ulp_find_dram_entry_in_mem_map(void)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(imx8ulp_arm64_mem_map); i++)
+		if (imx8ulp_arm64_mem_map[i].phys == CONFIG_SYS_SDRAM_BASE)
+			return i;
+
+	hang();	/* Entry not found, this must never happen. */
+}
+
 /* simplify the page table size to enhance boot speed */
 #define MAX_PTE_ENTRIES		512
 #define MAX_MEM_MAP_REGIONS	16
@@ -410,17 +491,104 @@ u64 get_page_table_size(void)
 
 void enable_caches(void)
 {
-	/* TODO: add TEE memmap region */
+	/* If OPTEE runs, remove OPTEE memory from MMU table to avoid speculative prefetch */
+	if (rom_pointer[1]) {
+		/*
+		 * TEE are loaded, So the ddr bank structures
+		 * have been modified update mmu table accordingly
+		 */
+		int i = 0;
+		int entry = imx8ulp_find_dram_entry_in_mem_map();
+		u64 attrs = imx8ulp_arm64_mem_map[entry].attrs;
+
+		while (i < CONFIG_NR_DRAM_BANKS &&
+		       entry < ARRAY_SIZE(imx8ulp_arm64_mem_map)) {
+			if (gd->bd->bi_dram[i].start == 0)
+				break;
+			imx8ulp_arm64_mem_map[entry].phys = gd->bd->bi_dram[i].start;
+			imx8ulp_arm64_mem_map[entry].virt = gd->bd->bi_dram[i].start;
+			imx8ulp_arm64_mem_map[entry].size = gd->bd->bi_dram[i].size;
+			imx8ulp_arm64_mem_map[entry].attrs = attrs;
+			debug("Added memory mapping (%d): %llx %llx\n", entry,
+			      imx8ulp_arm64_mem_map[entry].phys, imx8ulp_arm64_mem_map[entry].size);
+			i++; entry++;
+		}
+	}
 
 	icache_enable();
 	dcache_enable();
 }
 
+__weak int board_phys_sdram_size(phys_size_t *size)
+{
+	if (!size)
+		return -EINVAL;
+
+	*size = PHYS_SDRAM_SIZE;
+	return 0;
+}
+
 int dram_init(void)
 {
-	gd->ram_size = PHYS_SDRAM_SIZE;
+	unsigned int entry = imx8ulp_find_dram_entry_in_mem_map();
+	phys_size_t sdram_size;
+	int ret;
+
+	ret = board_phys_sdram_size(&sdram_size);
+	if (ret)
+		return ret;
+
+	/* rom_pointer[1] contains the size of TEE occupies */
+	if (rom_pointer[1])
+		gd->ram_size = sdram_size - rom_pointer[1];
+	else
+		gd->ram_size = sdram_size;
+
+	/* also update the SDRAM size in the mem_map used externally */
+	imx8ulp_arm64_mem_map[entry].size = sdram_size;
+	return 0;
+}
+
+int dram_init_banksize(void)
+{
+	int bank = 0;
+	int ret;
+	phys_size_t sdram_size;
+
+	ret = board_phys_sdram_size(&sdram_size);
+	if (ret)
+		return ret;
+
+	gd->bd->bi_dram[bank].start = PHYS_SDRAM;
+	if (rom_pointer[1]) {
+		phys_addr_t optee_start = (phys_addr_t)rom_pointer[0];
+		phys_size_t optee_size = (size_t)rom_pointer[1];
+
+		gd->bd->bi_dram[bank].size = optee_start - gd->bd->bi_dram[bank].start;
+		if ((optee_start + optee_size) < (PHYS_SDRAM + sdram_size)) {
+			if (++bank >= CONFIG_NR_DRAM_BANKS) {
+				puts("CONFIG_NR_DRAM_BANKS is not enough\n");
+				return -1;
+			}
+
+			gd->bd->bi_dram[bank].start = optee_start + optee_size;
+			gd->bd->bi_dram[bank].size = PHYS_SDRAM +
+				sdram_size - gd->bd->bi_dram[bank].start;
+		}
+	} else {
+		gd->bd->bi_dram[bank].size = sdram_size;
+	}
 
 	return 0;
+}
+
+phys_size_t get_effective_memsize(void)
+{
+	/* return the first bank as effective memory */
+	if (rom_pointer[1])
+		return ((phys_addr_t)rom_pointer[0] - PHYS_SDRAM);
+
+	return gd->ram_size;
 }
 
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
@@ -490,10 +658,10 @@ static int trdc_set_access(void)
 	return 0;
 }
 
-void lpav_configure(void)
+void lpav_configure(bool lpav_to_m33)
 {
-	/* LPAV to APD */
-	setbits_le32(SIM_SEC_BASE_ADDR + 0x44, BIT(7));
+	if (!lpav_to_m33)
+		setbits_le32(SIM_SEC_BASE_ADDR + 0x44, BIT(7)); /* LPAV to APD */
 
 	/* PXP/GPU 2D/3D/DCNANO/MIPI_DSI/EPDC/HIFI4 to APD */
 	setbits_le32(SIM_SEC_BASE_ADDR + 0x4c, 0x7F);
@@ -537,6 +705,19 @@ int arch_cpu_init(void)
 		int ret;
 		bool rdc_en = true; /* Default assume DBD_EN is set */
 
+		/* Enable System Reset Interrupt using WDOG_AD */
+		setbits_le32(CMC1_BASE_ADDR + 0x8C, BIT(13));
+		/* Clear AD_PERIPH Power switch domain out of reset interrupt flag */
+		setbits_le32(CMC1_BASE_ADDR + 0x70, BIT(4));
+
+		if (readl(CMC1_BASE_ADDR + 0x90) & BIT(13)) {
+			/* Clear System Reset Interrupt Flag Register of WDOG_AD */
+			setbits_le32(CMC1_BASE_ADDR + 0x90, BIT(13));
+			/* Reset WDOG to clear reset request */
+			pcc_reset_peripheral(3, WDOG3_PCC3_SLOT, true);
+			pcc_reset_peripheral(3, WDOG3_PCC3_SLOT, false);
+		}
+
 		/* Disable wdog */
 		init_wdog();
 
@@ -551,7 +732,9 @@ int arch_cpu_init(void)
 
 			trdc_set_access();
 
-			lpav_configure();
+			lpav_configure(false);
+		} else {
+			lpav_configure(true);
 		}
 
 		/* Release xrdc, then allow A35 to write SRAM2 */
@@ -560,7 +743,7 @@ int arch_cpu_init(void)
 
 		xrdc_mrc_region_set_access(2, CONFIG_SPL_TEXT_BASE, 0xE00);
 
-		clock_init();
+		clock_init_early();
 	} else {
 		/* reconfigure core0 reset vector to ROM */
 		set_core0_reset_vector(0x1000);
@@ -584,6 +767,40 @@ int arch_cpu_init_dm(void)
 
 	return 0;
 }
+
+#if defined(CONFIG_ARCH_MISC_INIT)
+int arch_misc_init(void)
+{
+	if (IS_ENABLED(CONFIG_FSL_CAAM)) {
+		struct udevice *dev;
+		int ret;
+
+		ret = uclass_get_device_by_driver(UCLASS_MISC, DM_DRIVER_GET(caam_jr), &dev);
+		if (ret)
+			printf("Failed to initialize %s: %d\n", dev->name, ret);
+	}
+
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_ARCH_EARLY_INIT_R
+int arch_early_init_r(void)
+{
+	struct udevice *devp;
+	int node, ret;
+
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "fsl,imx8ulp-mu");
+
+	ret = uclass_get_device_by_of_offset(UCLASS_MISC, node, &devp);
+	if (ret) {
+		printf("could not get S400 mu %d\n", ret);
+		return ret;
+	}
+
+	return 0;
+}
+#endif
 
 #if defined(CONFIG_SPL_BUILD)
 __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
@@ -639,4 +856,74 @@ u32 spl_arch_boot_image_offset(u32 image_offset, u32 rom_bt_dev)
 		image_offset = 0;
 
 	return image_offset;
+}
+
+int ft_system_setup(void *blob, struct bd_info *bd)
+{
+	u32 uid[4];
+	u32 res;
+	int ret;
+	int nodeoff = fdt_path_offset(blob, "/soc");
+	/* Nibble 1st for major version
+	 * Nibble 0th for minor version.
+	 */
+	const u32 rev = 0x10;
+
+	if (nodeoff < 0) {
+		printf("Node to update the SoC serial number is not found.\n");
+		goto skip_upt;
+	}
+
+	ret = ahab_read_common_fuse(1, uid, 4, &res);
+	if (ret) {
+		printf("ahab read fuse failed %d, 0x%x\n", ret, res);
+		memset(uid, 0x0, 4 * sizeof(u32));
+	}
+
+	ret = fdt_setprop_u32(blob, nodeoff, "soc-rev", rev);
+	if (ret)
+		printf("Error[0x%x] fdt_setprop revision-number.\n", ret);
+
+	ret = fdt_setprop_u64(blob, nodeoff, "soc-serial",
+				(u64)uid[3] << 32 | uid[0]);
+	if (ret)
+		printf("Error[0x%x] fdt_setprop serial-number.\n", ret);
+
+
+skip_upt:
+	return ft_add_optee_node(blob, bd);
+}
+
+enum env_location env_get_location(enum env_operation op, int prio)
+{
+	enum boot_device dev = get_boot_device();
+	enum env_location env_loc = ENVL_UNKNOWN;
+
+	if (prio)
+		return env_loc;
+
+	switch (dev) {
+#ifdef CONFIG_ENV_IS_IN_SPI_FLASH
+	case QSPI_BOOT:
+		env_loc = ENVL_SPI_FLASH;
+		break;
+#endif
+#ifdef CONFIG_ENV_IS_IN_MMC
+	case SD1_BOOT:
+	case SD2_BOOT:
+	case SD3_BOOT:
+	case MMC1_BOOT:
+	case MMC2_BOOT:
+	case MMC3_BOOT:
+		env_loc =  ENVL_MMC;
+		break;
+#endif
+	default:
+#if defined(CONFIG_ENV_IS_NOWHERE)
+		env_loc = ENVL_NOWHERE;
+#endif
+		break;
+	}
+
+	return env_loc;
 }
