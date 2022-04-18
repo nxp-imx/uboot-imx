@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2018-2021 NXP
+ * Copyright 2018-2022 NXP
  */
 
 #include <common.h>
@@ -35,6 +35,8 @@
 #include <fsl_immap.h>
 #include <asm/arch-fsl-layerscape/fsl_icid.h>
 #include "lx2160a.h"
+#include "../common/qsfp_eeprom.h"
+#include "../common/i2c_mux.h"
 
 #ifdef CONFIG_EMC2305
 #include "../common/emc2305.h"
@@ -166,6 +168,11 @@ int board_fix_fdt(void *fdt)
 		fdt_setprop(fdt, off, "reg-names", reg_names, names_len);
 	}
 
+	/* Fixup u-boot's DTS in case this is a revC board and
+	 * we're using DM_ETH.
+	 */
+	if (IS_ENABLED(CONFIG_TARGET_LX2160ARDB) && IS_ENABLED(CONFIG_DM_ETH))
+		fdt_fixup_board_phy_revc(fdt);
 	return 0;
 }
 #endif
@@ -541,6 +548,15 @@ int config_board_mux(void)
 }
 #endif
 
+#if CONFIG_IS_ENABLED(TARGET_LX2160ARDB)
+u8 get_board_rev(void)
+{
+	u8 board_rev = (QIXIS_READ(arch) & 0xf) - 1 + 'A';
+
+	return board_rev;
+}
+#endif
+
 unsigned long get_board_sys_clk(void)
 {
 #if defined(CONFIG_TARGET_LX2160AQDS) || defined(CONFIG_TARGET_LX2162AQDS)
@@ -579,6 +595,32 @@ unsigned long get_board_ddr_clk(void)
 #endif
 }
 
+#if defined(CONFIG_TARGET_LX2160ARDB) && defined(CONFIG_QSFP_EEPROM) && defined(CONFIG_PHY_CORTINA)
+void qsfp_cortina_detect(void)
+{
+	u8 qsfp_compat_code;
+
+	/* read qsfp+ eeprom & update environment for cs4223 init */
+	select_i2c_ch_pca9547(I2C_MUX_CH_SEC, 0);
+	select_i2c_ch_pca9547_sec(I2C_MUX_CH_QSFP, 0);
+	qsfp_compat_code = get_qsfp_compat0();
+	switch (qsfp_compat_code) {
+	case QSFP_COMPAT_CR4:
+		env_set(CS4223_CONFIG_ENV, CS4223_CONFIG_CR4);
+		break;
+	case QSFP_COMPAT_XLPPI:
+	case QSFP_COMPAT_SR4:
+		env_set(CS4223_CONFIG_ENV, CS4223_CONFIG_SR4);
+		break;
+	default:
+		/* do nothing if detection fails or not supported*/
+		break;
+	}
+	select_i2c_ch_pca9547(I2C_MUX_CH_DEFAULT, 0);
+}
+
+#endif /* CONFIG_QSFP_EEPROM & CONFIG_PHY_CORTINA */
+
 int board_init(void)
 {
 #if defined(CONFIG_FSL_MC_ENET) && defined(CONFIG_TARGET_LX2160ARDB)
@@ -590,6 +632,10 @@ int board_init(void)
 #if defined(CONFIG_FSL_MC_ENET) && defined(CONFIG_TARGET_LX2160ARDB)
 	/* invert AQR107 IRQ pins polarity */
 	out_le32(irq_ccsr + IRQCR_OFFSET / 4, AQR107_IRQ_MASK);
+
+#if defined(CONFIG_QSFP_EEPROM) && defined(CONFIG_PHY_CORTINA)
+	qsfp_cortina_detect();
+#endif
 #endif
 
 #if !defined(CONFIG_SYS_EARLY_PCI_INIT) && defined(CONFIG_DM_ETH)
@@ -684,6 +730,9 @@ void fdt_fixup_board_enet(void *fdt)
 		fdt_status_okay(fdt, offset);
 #ifndef CONFIG_DM_ETH
 		fdt_fixup_board_phy(fdt);
+#else
+		if (IS_ENABLED(CONFIG_TARGET_LX2160ARDB))
+			fdt_fixup_board_phy_revc(fdt);
 #endif
 	} else {
 		fdt_status_fail(fdt, offset);
@@ -818,9 +867,6 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	u64 mc_memory_size = 0;
 	u16 total_memory_banks;
 	int err;
-#if CONFIG_IS_ENABLED(TARGET_LX2160ARDB)
-	u8 board_rev;
-#endif
 
 	err = fdt_increase_size(blob, 512);
 	if (err) {
@@ -883,8 +929,7 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	fdt_fixup_icid(blob);
 
 #if CONFIG_IS_ENABLED(TARGET_LX2160ARDB)
-	board_rev = (QIXIS_READ(arch) & 0xf) - 1 + 'A';
-	if (board_rev == 'C')
+	if (get_board_rev() >= 'C')
 		fdt_fixup_i2c_thermal_node(blob);
 #endif
 

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright 2018-2021 NXP
+ * Copyright 2018-2022 NXP
  */
 
 #ifndef __LX2_COMMON_H
@@ -86,7 +86,14 @@
 
 /* I2C bus multiplexer */
 #define I2C_MUX_PCA_ADDR_PRI		0x77 /* Primary Mux*/
+#define I2C_MUX_PCA_ADDR_SEC		0x75 /* Secondary Mux*/
 #define I2C_MUX_CH_DEFAULT		0x8
+#define I2C_MUX_CH_SEC			0xF
+
+/* QSFP+/SFP+ I2C MUX related */
+#define I2C_MUX_CH_QSFP			0x8
+#define I2C_MUX_CH_SFP1			0xC
+#define I2C_MUX_CH_SFP2			0xD
 
 /* RTC */
 #define RTC
@@ -95,6 +102,10 @@
 /* EEPROM */
 #define CONFIG_SYS_I2C_EEPROM_NXID
 #define CONFIG_SYS_EEPROM_BUS_NUM		0
+
+/* QSFP/SFP module EEPROMs */
+#define I2C_SFP_EEPROM_ADDR	0x50
+#define I2C_SFP_EEPROM_ADDR_LEN	1
 
 /* Qixis */
 #define CONFIG_FSL_QIXIS

@@ -183,6 +183,19 @@ struct phy_device *dm_mdio_phy_connect(struct udevice *mdiodev, int phyaddr,
  */
 struct phy_device *dm_eth_phy_connect(struct udevice *ethdev);
 
+/**
+ * dm_eth_phy_connect_index - Connect an Eth device to the #phy_index PHY based on device tree
+ * This means that the phy-handle reference can now hold multiple PHYs.
+ *
+ * Picks up the DT phy-handle and phy-mode from ethernet device node and
+ * connects the ethernet device to the linked PHY.
+ *
+ * @ethdev: ethernet device
+ *
+ * @return pointer to phy_device, or 0 on error
+ */
+struct phy_device *dm_eth_phy_connect_index(struct udevice *ethdev, int phy_index);
+
 /* indicates none of the child buses is selected */
 #define MDIO_MUX_SELECT_NONE	-1
 
