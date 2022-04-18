@@ -207,6 +207,9 @@ void board_fastboot_setup(void)
 	} else if (is_imx8mp()) {
 		if (!env_get("soc_type"))
 			env_set("soc_type", "imx8mp");
+	} else if (is_imx8ulp()) {
+		if (!env_get("soc_type"))
+			env_set("soc_type", "imx8ulp");
 	}
 }
 

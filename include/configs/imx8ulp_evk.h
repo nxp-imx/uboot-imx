@@ -192,4 +192,9 @@
 #define WDOG_BASE_ADDR			WDG3_RBASE
 /* USB Configs */
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 2
+
+#ifdef CONFIG_ANDROID_SUPPORT
+#include "imx8ulp_evk_android.h"
+#endif
+
 #endif
