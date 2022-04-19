@@ -106,3 +106,21 @@ config CLK_IMXRT1050
 	select CLK_COMPOSITE_CCF
 	help
 	  This enables support clock driver for i.MXRT1050 platforms.
+
+config SPL_CLK_IMX93
+	bool "Enable i.MX93 clock driver"
+	depends on ARCH_IMX9 && SPL
+	select SPL_CLK
+	select SPL_CLK_CCF
+	select SPL_CLK_COMPOSITE_CCF
+	help
+	  Enable support for i.MX93 clocks.
+
+config CLK_IMX93
+	bool "Enable i.MX93 clock driver"
+	depends on ARCH_IMX9
+	select CLK
+	select CLK_CCF
+	select CLK_COMPOSITE_CCF
+	help
+	  Enable support for i.MX93 clocks.
