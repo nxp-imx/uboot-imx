@@ -255,4 +255,8 @@
 #define CONFIG_MXC_USB_PORTSC  (PORT_PTS_UTMI | PORT_PTS_PTW)
 #define CONFIG_USB_MAX_CONTROLLER_COUNT         2
 
+#ifdef CONFIG_ANDROID_SUPPORT
+#include "imx8mm_evk_android.h"
+#endif
+
 #endif

@@ -47,8 +47,10 @@
 #endif
 
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
-#define FASTBOOT_MCU_FIRMWARE_PARTITION "m4_os"
+#define FASTBOOT_MCU_FIRMWARE_PARTITION "mcu_os"
 #endif
+
+#define FASTBOOT_PARTITION_METADATA "metadata"
 
 #ifdef CONFIG_ANDROID_AB_SUPPORT
 #define FASTBOOT_PARTITION_BOOT_A "boot_a"
@@ -84,9 +86,10 @@
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 #ifndef CONFIG_AVB_ATX
-#define FASTBOOT_SET_RPMB_KEY "set-rpmb-key"
-#define FASTBOOT_SET_RPMB_RANDOM_KEY "set-rpmb-random-key"
+#define FASTBOOT_SET_RPMB_STAGED_KEY "set-rpmb-staged-key"
+#define FASTBOOT_SET_RPMB_HARDWARE_KEY "set-rpmb-hardware-key"
 #define FASTBOOT_SET_VBMETA_PUBLIC_KEY "set-public-key"
+#define FASTBOOT_ERASE_RPMB "erase-rpmb"
 #endif
 
 #define FASTBOOT_SET_CA_RESP "at-set-ca-response"
@@ -95,6 +98,15 @@
 #define FASTBOOT_SET_EC_ATTESTATION_KEY  "set-ec-atte-key"
 #define FASTBOOT_APPEND_RSA_ATTESTATION_CERT  "append-rsa-atte-cert"
 #define FASTBOOT_APPEND_EC_ATTESTATION_CERT  "append-ec-atte-cert"
+#define FASTBOOT_SET_RSA_ATTESTATION_KEY_ENC  "set-rsa-atte-key-enc"
+#define FASTBOOT_SET_EC_ATTESTATION_KEY_ENC  "set-ec-atte-key-enc"
+#define FASTBOOT_APPEND_RSA_ATTESTATION_CERT_ENC  "append-rsa-atte-cert-enc"
+#define FASTBOOT_APPEND_EC_ATTESTATION_CERT_ENC  "append-ec-atte-cert-enc"
+#define FASTBOOT_GET_MPPUBK  "get-mppubk"
+#define FASTBOOT_GET_SERIAL_NUMBER  "get-serial-number"
+#define FASTBOOT_SET_ATTESTATION_ID "set-device-id"
+#define FASTBOOT_WV_PROVISION	"provision-wv-keybox"
+#define FASTBOOT_WV_PROVISION_ENC	"provision-wv-keybox-enc"
 #endif
 
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT
@@ -159,7 +171,7 @@ struct fastboot_ptentry {
 	/* The start wrt the nand part, must be multiple of nand block size */
 	unsigned int start;
 	/* The length of the partition, must be multiple of nand block size */
-	unsigned int length;
+	unsigned long length;
 	/* Controls the details of how operations are done on the partition
 	   See the FASTBOOT_PTENTRY_FLAGS_*'s defined below */
 	unsigned int flags;

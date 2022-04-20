@@ -177,6 +177,8 @@ Again:
     return rc;
 }
 
+extern bool proxy_resp_flag;
+
 int trusty_ipc_recv(struct trusty_ipc_chan *chan,
                     const struct trusty_ipc_iovec *iovs, size_t iovs_cnt,
                     bool wait)
@@ -194,9 +196,13 @@ int trusty_ipc_recv(struct trusty_ipc_chan *chan,
         }
     }
 
-    rc = trusty_ipc_dev_recv(chan->dev, chan->handle, iovs, iovs_cnt);
-    if (rc < 0)
-        trusty_error("%s: ipc recv failed (%d)\n", __func__, rc);
+    /* Return directly if the iovs have been received.  */
+    if (!proxy_resp_flag) {
+        rc = trusty_ipc_dev_recv(chan->dev, chan->handle, iovs, iovs_cnt);
+        if (rc < 0)
+            trusty_error("%s: ipc recv failed (%d)\n", __func__, rc);
+    } else
+        rc = 0;
 
     return rc;
 }

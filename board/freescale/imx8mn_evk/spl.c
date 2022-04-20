@@ -38,7 +38,28 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int spl_board_boot_device(enum boot_device boot_dev_spl)
 {
+#ifdef CONFIG_SPL_BOOTROM_SUPPORT
 	return BOOT_DEVICE_BOOTROM;
+#else
+	switch (boot_dev_spl) {
+	case SD1_BOOT:
+	case MMC1_BOOT:
+	case SD2_BOOT:
+	case MMC2_BOOT:
+		return BOOT_DEVICE_MMC1;
+	case SD3_BOOT:
+	case MMC3_BOOT:
+		return BOOT_DEVICE_MMC2;
+	case QSPI_BOOT:
+		return BOOT_DEVICE_NOR;
+	case NAND_BOOT:
+		return BOOT_DEVICE_NAND;
+	case USB_BOOT:
+		return BOOT_DEVICE_BOARD;
+	default:
+		return BOOT_DEVICE_NONE;
+	}
+#endif
 }
 
 void spl_dram_init(void)
@@ -203,3 +224,18 @@ void board_init_f(ulong dummy)
 
 	board_init_r(NULL, 0);
 }
+
+#ifdef CONFIG_SPL_MMC
+#define UBOOT_RAW_SECTOR_OFFSET 0x40
+unsigned long spl_mmc_get_uboot_raw_sector(struct mmc *mmc)
+{
+	u32 boot_dev = spl_boot_device();
+	switch (boot_dev) {
+		case BOOT_DEVICE_MMC1:
+			return CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR;
+		case BOOT_DEVICE_MMC2:
+			return CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR - UBOOT_RAW_SECTOR_OFFSET;
+	}
+	return CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR;
+}
+#endif

@@ -21,6 +21,7 @@
 #include <asm/arch/iomux.h>
 #include <asm/arch/sys_proto.h>
 #include "../common/tcpc.h"
+#include "command.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -431,7 +432,8 @@ void board_quiesce_devices(void)
  */
 void reset_cpu(void)
 {
-	/* TODO */
+	sc_pm_reboot(-1, SC_PM_RESET_TYPE_COLD);
+	while(1);
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
@@ -459,6 +461,7 @@ int mmc_map_to_kernel_blk(int dev_no)
 	return dev_no;
 }
 
+extern uint32_t _end_ofs;
 int board_late_init(void)
 {
 	char *fdt_file;
@@ -497,5 +500,45 @@ int board_late_init(void)
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
+
+#if defined(CONFIG_IMX_LOAD_HDMI_FIMRWARE_RX) || defined(CONFIG_IMX_LOAD_HDMI_FIMRWARE_TX)
+	char *end_of_uboot;
+	char command[256];
+	end_of_uboot = (char *)(ulong)(CONFIG_SYS_TEXT_BASE + _end_ofs + fdt_totalsize(gd->fdt_blob));
+	end_of_uboot += 9;
+
+	/* load hdmitxfw.bin and hdmirxfw.bin*/
+	memcpy((void *)IMX_HDMI_FIRMWARE_LOAD_ADDR, end_of_uboot,
+			IMX_HDMITX_FIRMWARE_SIZE + IMX_HDMIRX_FIRMWARE_SIZE);
+
+#ifdef CONFIG_IMX_LOAD_HDMI_FIMRWARE_TX
+	sprintf(command, "hdp load 0x%x", IMX_HDMI_FIRMWARE_LOAD_ADDR);
+	run_command(command, 0);
+#endif
+#ifdef CONFIG_IMX_LOAD_HDMI_FIMRWARE_RX
+	sprintf(command, "hdprx load 0x%x",
+			IMX_HDMI_FIRMWARE_LOAD_ADDR + IMX_HDMITX_FIRMWARE_SIZE);
+	run_command(command, 0);
+#endif
+#endif /* CONFIG_IMX_LOAD_HDMI_FIMRWARE_RX || CONFIG_IMX_LOAD_HDMI_FIMRWARE_TX */
+
 	return 0;
 }
+
+#ifdef CONFIG_ANDROID_SUPPORT
+bool is_power_key_pressed(void) {
+	sc_bool_t status = SC_FALSE;
+
+	sc_misc_get_button_status(-1, &status);
+	return (bool)status;
+}
+#endif
+
+#ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_ANDROID_RECOVERY
+int is_recovery_key_pressing(void)
+{
+	return 0; /* TODO */
+}
+#endif /* CONFIG_ANDROID_RECOVERY */
+#endif /* CONFIG_FSL_FASTBOOT */

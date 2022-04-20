@@ -367,7 +367,9 @@ void board_quiesce_devices(void)
  */
 void reset_cpu(void)
 {
-	/* TODO */
+	sc_pm_reboot(-1, SC_PM_RESET_TYPE_COLD);
+	while(1);
+
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
@@ -421,3 +423,21 @@ int board_late_init(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_ANDROID_SUPPORT
+bool is_power_key_pressed(void) {
+	sc_bool_t status = SC_FALSE;
+
+	sc_misc_get_button_status(-1, &status);
+	return (bool)status;
+}
+#endif
+
+#ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_ANDROID_RECOVERY
+int is_recovery_key_pressing(void)
+{
+	return 0; /* TODO */
+}
+#endif /* CONFIG_ANDROID_RECOVERY */
+#endif /* CONFIG_FSL_FASTBOOT */

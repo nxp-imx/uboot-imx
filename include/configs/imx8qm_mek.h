@@ -345,4 +345,13 @@
 #define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
 #endif
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "imx8qm_mek_android.h"
+#elif defined (CONFIG_ANDROID_AUTO_SUPPORT)
+#include "imx8qm_mek_android_auto.h"
+#elif defined(CONFIG_IMX8_TRUSTY_XEN)
+#include "imx8qm_mek_trusty_xen.h"
+#endif
+
+
 #endif /* __IMX8QM_MEK_H */

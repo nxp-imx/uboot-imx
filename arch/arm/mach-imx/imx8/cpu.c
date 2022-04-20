@@ -105,6 +105,7 @@ int arch_cpu_init_dm(void)
 #if defined(CONFIG_ARCH_MISC_INIT)
 int arch_misc_init(void)
 {
+#if !defined(CONFIG_ANDROID_SUPPORT) && !defined(CONFIG_ANDROID_AUTO_SUPPORT)
 	if (IS_ENABLED(CONFIG_FSL_CAAM)) {
 		struct udevice *dev;
 		int ret;
@@ -113,6 +114,7 @@ int arch_misc_init(void)
 		if (ret)
 			printf("Failed to initialize %s: %d\n", dev->name, ret);
 	}
+#endif
 
 	return 0;
 }

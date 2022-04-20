@@ -12,6 +12,10 @@
 	model = "NXP i.MX8MM EVK board";
 	compatible = "fsl,imx8mm-evk", "fsl,imx8mm";
 
+	chosen {
+		bootargs = "console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200";
+	};
+
 	aliases {
 		spi0 = &flexspi;
 	};

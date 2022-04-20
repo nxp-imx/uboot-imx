@@ -59,3 +59,36 @@ int bcb_write_command(char *bcb_command)
 	free(p_block);
 	return 0;
 }
+
+#ifdef CONFIG_ANDROID_RECOVERY
+int bcb_write_recovery_opt(char *opts)
+{
+	int ret = 0;
+	char *p_block = NULL;
+	uint offset_in_block = 0;
+	uint blk_size = 0;
+
+	if (opts == NULL)
+		return -1;
+
+
+	ret = bcb_rw_block(true, &p_block, &blk_size, NULL, RECOVERY_OPTIONS, 32);
+	if (ret) {
+		printf("write_bootctl, bcb_rw_block read failed\n");
+		return -1;
+	}
+
+	offset_in_block = RECOVERY_OPTIONS%blk_size;
+	memcpy(p_block + offset_in_block, opts, 32);
+
+	ret = bcb_rw_block(false, NULL, NULL, p_block, RECOVERY_OPTIONS, 32);
+	if (ret) {
+		free(p_block);
+		printf("write_bootctl, bcb_rw_block write failed\n");
+		return -1;
+	}
+
+	free(p_block);
+	return 0;
+}
+#endif

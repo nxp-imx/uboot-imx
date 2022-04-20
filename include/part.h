@@ -296,7 +296,8 @@ part_get_info_by_dev_and_name_or_num(const char *dev_iface,
 #ifdef CONFIG_SPL_BUILD
 # define part_print_ptr(x)	NULL
 # if defined(CONFIG_SPL_FS_EXT4) || defined(CONFIG_SPL_FS_FAT) || \
-	defined(CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_PARTITION)
+	defined(CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_PARTITION) || \
+	defined(CONFIG_DUAL_BOOTLOADER)
 #  define part_get_info_ptr(x)	x
 # else
 #  define part_get_info_ptr(x)	NULL
@@ -477,6 +478,11 @@ int gpt_verify_partitions(struct blk_desc *dev_desc,
  * Return: - '0' on success, otherwise error
  */
 int get_disk_guid(struct blk_desc *dev_desc, char *guid);
+
+#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_SPL_BUILD)
+int part_get_info_efi_by_name(struct blk_desc *dev_desc, const char *name,
+		      struct disk_partition *info);
+#endif
 
 #endif
 

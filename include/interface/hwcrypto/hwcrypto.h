@@ -39,6 +39,10 @@ enum hwcrypto_command {
     HWCRYPTO_HASH            = (1 << HWCRYPTO_REQ_SHIFT),
     HWCRYPTO_ENCAP_BLOB      = (2 << HWCRYPTO_REQ_SHIFT),
     HWCRYPTO_GEN_RNG         = (3 << HWCRYPTO_REQ_SHIFT),
+    HWCRYPTO_GEN_BKEK        = (4 << HWCRYPTO_REQ_SHIFT),
+    HWCRYPTO_LOCK_BOOT_STATE = (5 << HWCRYPTO_REQ_SHIFT),
+    HWCRYPTO_PROVISION_WV_KEY = (6 << HWCRYPTO_REQ_SHIFT),
+    HWCRYPTO_PROVISION_WV_KEY_ENC = (7 << HWCRYPTO_REQ_SHIFT),
 };
 
 /**
@@ -105,4 +109,13 @@ typedef struct hwcrypto_rng_msg {
     uint32_t buf;
     uint32_t len;
 }hwcrypto_rng_msg;
+
+/**
+ * @buf:  physical start address of the output bkek buf.
+ * @len:  size of required rng.
+ */
+typedef struct hwcrypto_bkek_msg {
+    uint32_t buf;
+    uint32_t len;
+}hwcrypto_bkek_msg;
 #endif /* TRUSTY_INTERFACE_HWCRYPTO_H_ */

@@ -107,6 +107,14 @@ config SUPPORT_EMMC_RPMB
 	  Enable support for reading, writing and programming the
 	  key for the Replay Protection Memory Block partition in eMMC.
 
+config SPL_SUPPORT_EMMC_RPMB
+	bool "Support eMMC replay protected memory block (RPMB) in SPL"
+	default n
+	imply CMD_MMC_RPMB
+	help
+	  Enable support for reading, writing and programming the
+	  key for the Replay Protection Memory Block partition in eMMC.
+
 config SUPPORT_EMMC_BOOT
 	bool "Support some additional features of the eMMC boot partitions"
 	help

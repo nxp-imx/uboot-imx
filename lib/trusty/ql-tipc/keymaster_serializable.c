@@ -97,6 +97,43 @@ int km_attestation_data_serialize(const struct km_attestation_data *data,
     return TRUSTY_ERR_NONE;
 }
 
+int km_attestation_id_data_serialize(const uint8_t *data, uint32_t data_size,
+                                     uint8_t** out, uint32_t *out_size)
+{
+    if (!out || !out_size) {
+        return TRUSTY_ERR_INVALID_ARGS;
+    }
+
+    if (data_size)
+        *out = append_sized_buf_to_buf(*out, data, data_size);
+    else
+        *out = append_uint32_to_buf(*out, data_size);
+    *out_size += (sizeof(data_size) + data_size);
+
+    return TRUSTY_ERR_NONE;
+}
+
+int km_secure_unlock_data_serialize(const struct km_secure_unlock_data *data,
+                                 uint8_t** out, uint32_t *out_size)
+{
+    uint8_t *tmp;
+
+    if (!out || !data || !out_size) {
+        return TRUSTY_ERR_INVALID_ARGS;
+    }
+    *out_size = (sizeof(data->serial_size) + sizeof(data->credential_size) +
+                 data->serial_size + data->credential_size);
+    *out = trusty_calloc(*out_size, 1);
+    if (!*out) {
+        return TRUSTY_ERR_NO_MEMORY;
+    }
+
+    tmp = append_sized_buf_to_buf(*out, data->serial_data, data->serial_size);
+    tmp = append_sized_buf_to_buf(tmp, data->credential_data, data->credential_size);
+
+    return TRUSTY_ERR_NONE;
+}
+
 int km_raw_buffer_serialize(const struct km_raw_buffer *buf, uint8_t** out,
                             uint32_t *out_size)
 {

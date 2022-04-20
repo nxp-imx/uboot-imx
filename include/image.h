@@ -1451,9 +1451,15 @@ int fit_image_cipher_get_algo(const void *fit, int noffset, char **algo);
 struct cipher_algo *image_get_cipher_algo(const char *full_name);
 
 struct andr_img_hdr;
+struct boot_img_hdr_v3;
+struct vendor_boot_img_hdr_v3;
 int android_image_check_header(const struct andr_img_hdr *hdr);
+int android_image_check_header_v3(uint8_t *boot_magic, uint8_t * vendor_boot_magic);
 int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 			     ulong *os_data, ulong *os_len);
+int android_image_get_kernel_v3(const struct boot_img_hdr_v3 *hdr,
+				const struct vendor_boot_img_hdr_v3 *vendor_hdr,
+				bool bootconfig);
 int android_image_get_ramdisk(const struct andr_img_hdr *hdr,
 			      ulong *rd_data, ulong *rd_len);
 int android_image_get_second(const struct andr_img_hdr *hdr,
@@ -1467,6 +1473,10 @@ ulong android_image_get_kcomp(const struct andr_img_hdr *hdr);
 void android_print_contents(const struct andr_img_hdr *hdr);
 bool android_image_print_dtb_contents(ulong hdr_addr);
 bool image_arm64(void *images);
+uint32_t kernel_size(void *images);
+ulong kernel_relocate_addr(ulong images);
+int append_runtime_bootconfig(char *bootconfig, uint32_t *size);
+int32_t add_bootconfig_trailer(uint64_t bootconfig_start_addr, uint32_t bootconfig_size);
 
 /**
  * board_fit_config_name_match() - Check for a matching board name

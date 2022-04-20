@@ -185,4 +185,8 @@
 #define CONFIG_USBD_HS
 #define CONFIG_USB_GADGET_VBUS_DRAW 2
 
+#ifdef CONFIG_ANDROID_SUPPORT
+#include "imx8mq_evk_android.h"
+#endif
+
 #endif

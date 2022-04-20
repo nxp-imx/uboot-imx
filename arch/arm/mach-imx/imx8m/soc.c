@@ -36,7 +36,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if defined(CONFIG_IMX_HAB) || defined(CONFIG_AVB_ATX)
+#if defined(CONFIG_IMX_HAB) || defined(CONFIG_AVB_ATX) || defined(CONFIG_IMX_TRUSTY_OS)
 struct imx_sec_config_fuse_t const imx_sec_config_fuse = {
 	.bank = 1,
 	.word = 3,
@@ -1456,7 +1456,11 @@ usb_modify_speed:
 
 	delete_u_boot_nodes(blob);
 
+#if defined(CONFIG_ANDROID_SUPPORT) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
+	return 0;
+#else
 	return ft_add_optee_node(blob, bd);
+#endif
 }
 #endif
 
@@ -1511,7 +1515,7 @@ void reset_cpu(void)
 #endif
 
 #if defined(CONFIG_ARCH_MISC_INIT)
-static void acquire_buildinfo(void)
+static __maybe_unused void acquire_buildinfo(void)
 {
 	u64 atf_commit = 0;
 	struct arm_smccc_res res;
@@ -1530,6 +1534,7 @@ static void acquire_buildinfo(void)
 
 int arch_misc_init(void)
 {
+#ifndef CONFIG_ANDROID_SUPPORT
 	if (IS_ENABLED(CONFIG_FSL_CAAM)) {
 		struct udevice *dev;
 		int ret;
@@ -1538,6 +1543,7 @@ int arch_misc_init(void)
 		if (ret)
 			printf("Failed to initialize %s: %d\n", dev->name, ret);
 	}
+#endif
 	acquire_buildinfo();
 
 	return 0;

@@ -392,17 +392,30 @@ config AVB_ATX
 	bool "Enable AVB_ATX support"
 	depends on AVB_SUPPORT
 
-config APPEND_BOOTARGS
-	bool "Append bootargs support"
-
-config DUAL_BOOTLOADER
-	bool "Enable dual bootloader support"
+config AVB_WARNING_LOGO
+	bool "Enable avb warning show logo on screen"
 	help
-	  Enable A/B bootloader select in SPL.
+	  Enable avb warning show logo on screen
 
-config AT_AUTHENTICATE_UNLOCK
-	bool "Enable authenticate unlock for Android Things devices"
+config AVB_WARNING_LOGO_COLS
+	hex "x resolution on the screen"
+	default 0x1E0
+	depends on AVB_WARNING_LOGO
+	help
+	  The x resolution on the screen.
 
+config AVB_WARNING_LOGO_ROWS
+	hex "y resolution on the screen"
+	default 0x60
+	depends on AVB_WARNING_LOGO
+	help
+	  The y resolution on the screen.
+
+config AVB_WARNING_TIME_LAST
+	hex "the time of avb warning logo will last"
+	default 0x3
+	help
+	  The time of avb warning logo will last (s).
 endmenu
 
 menu "Hashing Support"

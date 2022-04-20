@@ -42,7 +42,7 @@ enum {
 	PTN_GPT_INDEX = 0,
 	PTN_TEE_INDEX,
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
-	PTN_M4_OS_INDEX,
+	PTN_MCU_OS_INDEX,
 #endif
 	PTN_ALL_INDEX,
 	PTN_BOOTLOADER_INDEX,
@@ -119,13 +119,14 @@ static int _fastboot_parts_add_ptable_entry(int ptable_index,
 	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_VENDOR_A) ||
 	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_OEM_B) ||
 	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_VENDOR_B) ||
-	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_DATA))
+	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_DATA) ||
 #else
 	if (!strcmp((const char *)info.name, FASTBOOT_PARTITION_SYSTEM) ||
 	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_DATA) ||
 	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_DEVICE) ||
-	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_CACHE))
+	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_CACHE) ||
 #endif
+	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_METADATA))
 		strcpy(ptable[ptable_index].fstype, "ext4");
 	else
 		strcpy(ptable[ptable_index].fstype, "raw");
@@ -212,14 +213,14 @@ static int _fastboot_parts_load_from_ptable(void)
 	strcpy(ptable[PTN_TEE_INDEX].fstype, "raw");
 #endif
 
-	/* Add m4_os partition if we support mcu firmware image flash */
+	/* Add mcu_os partition if we support mcu firmware image flash */
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
-	strcpy(ptable[PTN_M4_OS_INDEX].name, FASTBOOT_MCU_FIRMWARE_PARTITION);
-	ptable[PTN_M4_OS_INDEX].start = ANDROID_MCU_FIRMWARE_START / dev_desc->blksz;
-	ptable[PTN_M4_OS_INDEX].length = ANDROID_MCU_FIRMWARE_SIZE / dev_desc->blksz;
-	ptable[PTN_M4_OS_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
-	ptable[PTN_M4_OS_INDEX].partition_id = user_partition;
-	strcpy(ptable[PTN_M4_OS_INDEX].fstype, "raw");
+	strcpy(ptable[PTN_MCU_OS_INDEX].name, FASTBOOT_MCU_FIRMWARE_PARTITION);
+	ptable[PTN_MCU_OS_INDEX].start = ANDROID_MCU_FIRMWARE_START / dev_desc->blksz;
+	ptable[PTN_MCU_OS_INDEX].length = ANDROID_MCU_OS_PARTITION_SIZE / dev_desc->blksz;
+	ptable[PTN_MCU_OS_INDEX].flags = FASTBOOT_PTENTRY_FLAGS_UNERASEABLE;
+	ptable[PTN_MCU_OS_INDEX].partition_id = user_partition;
+	strcpy(ptable[PTN_MCU_OS_INDEX].fstype, "raw");
 #endif
 
 	strcpy(ptable[PTN_ALL_INDEX].name, FASTBOOT_PARTITION_ALL);
@@ -279,7 +280,7 @@ void fastboot_flash_dump_ptn(void)
 	unsigned int n;
 	for (n = 0; n < g_pcount; n++) {
 		struct fastboot_ptentry *ptn = g_ptable + n;
-		printf("idx %d, ptn %d name='%s' start=%d len=%d\n",
+		printf("idx %d, ptn %d name='%s' start=%d len=%ld\n",
 			n, ptn->partition_index, ptn->name, ptn->start, ptn->length);
 	}
 }

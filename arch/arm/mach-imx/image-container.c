@@ -231,7 +231,7 @@ static unsigned long get_boot_device_offset(void *dev, int dev_type)
 	return offset;
 }
 
-static ulong get_imageset_end(void *dev, int dev_type)
+static __maybe_unused ulong get_imageset_end(void *dev, int dev_type)
 {
 	unsigned long offset[3] = {};
 	int value_container[3] = {};

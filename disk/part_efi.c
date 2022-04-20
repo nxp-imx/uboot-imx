@@ -272,8 +272,10 @@ void part_print_efi(struct blk_desc *dev_desc)
 		printf("\tguid:\t%pUl\n", uuid);
 	}
 
+#if !defined(CONFIG_DUAL_BOOTLOADER) || !defined(CONFIG_SPL_BUILD)
 	/* Remember to free pte */
 	free(gpt_pte);
+#endif
 	return;
 }
 
@@ -297,7 +299,9 @@ int part_get_info_efi(struct blk_desc *dev_desc, int part,
 	    !is_pte_valid(&gpt_pte[part - 1])) {
 		debug("%s: *** ERROR: Invalid partition number %d ***\n",
 			__func__, part);
+#if !defined(CONFIG_DUAL_BOOTLOADER) || !defined(CONFIG_SPL_BUILD)
 		free(gpt_pte);
+#endif
 		return -1;
 	}
 
@@ -324,10 +328,72 @@ int part_get_info_efi(struct blk_desc *dev_desc, int part,
 	debug("%s: start 0x" LBAF ", size 0x" LBAF ", name %s\n", __func__,
 	      info->start, info->size, info->name);
 
-	/* Remember to free pte */
+#if !defined(CONFIG_DUAL_BOOTLOADER) || !defined(CONFIG_SPL_BUILD)
+	/* Heap memory is very limited in SPL, if the dual bootloader is
+	 * enabled, just load pte to dram instead of oc-ram. In such case,
+	 * this part of  memory shouldn't be freed. But in common routine,
+	 * don't forget to free the memory after use.
+	 */
 	free(gpt_pte);
+#endif
 	return 0;
 }
+
+#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_SPL_BUILD)
+int part_get_info_efi_by_name(struct blk_desc *dev_desc, const char *name,
+		      struct disk_partition *info)
+{
+	ALLOC_CACHE_ALIGN_BUFFER_PAD(gpt_header, gpt_head, 1, dev_desc->blksz);
+	/* We don't free gpt_pte because the memory is allocated at
+	 * CONFIG_SYS_SPL_PTE_RAM_BASE due to the limited memory at
+	 * SPL stage.
+	 */
+	gpt_entry *gpt_pte = NULL;
+	int i = 0;
+
+	if (name == NULL) {
+		printf("%s: Invalid Argument(s)\n", __func__);
+		return -1;
+	}
+
+	/* This function validates AND fills in the GPT header and PTE */
+	if (find_valid_gpt(dev_desc, gpt_head, &gpt_pte) != 1)
+		return -1;
+
+	/* Search PTE to find matched partition. */
+	for (i = 0; i < le32_to_cpu(gpt_head->num_partition_entries); i++) {
+		if (is_pte_valid(&gpt_pte[i]) &&
+			strcmp(name, print_efiname(&gpt_pte[i])) == 0) {
+			/* Matched partition found, copy it. */
+			/* The 'lbaint_t' casting may limit the maximum disk size to 2 TB */
+			info->start = (lbaint_t)le64_to_cpu(gpt_pte[i].starting_lba);
+			/* The ending LBA is inclusive, to calculate size, add 1 to it */
+			info->size = (lbaint_t)le64_to_cpu(gpt_pte[i].ending_lba) + 1
+				     - info->start;
+			info->blksz = dev_desc->blksz;
+
+			snprintf((char *)info->name, sizeof(info->name), "%s", name);
+			strcpy((char *)info->type, "U-Boot");
+			info->bootable = get_bootable(&gpt_pte[i]);
+#if CONFIG_IS_ENABLED(PARTITION_UUIDS)
+			uuid_bin_to_str(gpt_pte[i].unique_partition_guid.b, info->uuid,
+					UUID_STR_FORMAT_GUID);
+#endif
+#ifdef CONFIG_PARTITION_TYPE_GUID
+			uuid_bin_to_str(gpt_pte[i].partition_type_guid.b,
+					info->type_guid, UUID_STR_FORMAT_GUID);
+#endif
+
+			debug("%s: start 0x" LBAF ", size 0x" LBAF ", name %s\n", __func__,
+			      info->start, info->size, info->name);
+
+			return i;
+		}
+	}
+
+	return -1;
+}
+#endif /* CONFIG_DUAL_BOOTLOADER && CONFIG_SPL_BUILD */
 
 static int part_test_efi(struct blk_desc *dev_desc)
 {
@@ -1123,10 +1189,19 @@ static gpt_entry *alloc_read_gpt_entries(struct blk_desc *dev_desc,
 	      (u32) le32_to_cpu(pgpt_head->sizeof_partition_entry),
 	      (ulong)count);
 
-	/* Allocate memory for PTE, remember to FREE */
+	/* Allocate memory for PTE.
+	 * Heap memory is very limited in SPL, if the dual bootloader is
+	 * enabled, just load pte to dram instead of oc-ram. In such case,
+	 * this part of  memory shouldn't be freed. But in common routine,
+	 * don't forget to free the memory after use.
+	 */
 	if (count != 0) {
+#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_SPL_BUILD)
+		pte = (gpt_entry *)CONFIG_SYS_SPL_PTE_RAM_BASE;
+#else
 		pte = memalign(ARCH_DMA_MINALIGN,
 			       PAD_TO_BLOCKSIZE(count, dev_desc));
+#endif
 	}
 
 	if (count == 0 || pte == NULL) {
@@ -1140,7 +1215,9 @@ static gpt_entry *alloc_read_gpt_entries(struct blk_desc *dev_desc,
 	blk_cnt = BLOCK_CNT(count, dev_desc);
 	if (blk_dread(dev_desc, blk, (lbaint_t)blk_cnt, pte) != blk_cnt) {
 		printf("*** ERROR: Can't read GPT Entries ***\n");
+#if !defined(CONFIG_DUAL_BOOTLOADER) || !defined(CONFIG_SPL_BUILD)
 		free(pte);
+#endif
 		return NULL;
 	}
 	return pte;

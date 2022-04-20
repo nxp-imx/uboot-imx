@@ -53,8 +53,8 @@ extern void trusty_os_init(void);
 
 #if defined(CONFIG_AVB_SUPPORT) && defined(CONFIG_MMC)
 AvbABOps fsl_avb_ab_ops = {
-	.read_ab_metadata = fsl_read_ab_metadata,
-	.write_ab_metadata = fsl_write_ab_metadata,
+	.read_ab_metadata = fsl_avb_ab_data_read,
+	.write_ab_metadata = fsl_avb_ab_data_write,
 	.ops = NULL
 };
 #ifdef CONFIG_AVB_ATX
@@ -182,9 +182,19 @@ void board_fastboot_setup(void)
 	} else if (is_imx8qm()) {
 		if (!env_get("soc_type"))
 			env_set("soc_type", "imx8qm");
+		if (is_soc_rev(CHIP_REV_A))
+			env_set("soc_rev", "reva");
+		else if (is_soc_rev(CHIP_REV_B))
+			env_set("soc_rev", "revb");
 	} else if (is_imx8qxp()) {
 		if (!env_get("soc_type"))
 			env_set("soc_type", "imx8qxp");
+		if (is_soc_rev(CHIP_REV_A))
+			env_set("soc_rev", "reva");
+		else if (is_soc_rev(CHIP_REV_B))
+			env_set("soc_rev", "revb");
+		else if (is_soc_rev(CHIP_REV_C))
+			env_set("soc_rev", "revc");
 	} else if (is_imx8mq()) {
 		if (!env_get("soc_type"))
 			env_set("soc_type", "imx8mq");
@@ -197,6 +207,9 @@ void board_fastboot_setup(void)
 	} else if (is_imx8mp()) {
 		if (!env_get("soc_type"))
 			env_set("soc_type", "imx8mp");
+	} else if (is_imx8ulp()) {
+		if (!env_get("soc_type"))
+			env_set("soc_type", "imx8ulp");
 	}
 }
 
@@ -332,7 +345,7 @@ static int _fastboot_setup_dev(int *switched)
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
 	/* For imx7ulp, flash m4 images directly to spi nor-flash, M4 will
 	 * run automatically after powered on. For imx8mq, flash m4 images to
-	 * physical partition 'm4_os', m4 will be kicked off by A core. */
+	 * physical partition 'mcu_os', m4 will be kicked off by A core. */
 	fastboot_firmwareinfo.type = ANDROID_MCU_FRIMWARE_DEV_TYPE;
 #endif
 

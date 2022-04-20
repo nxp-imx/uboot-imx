@@ -6,6 +6,18 @@ config AHAB_BOOT
 	help
 	  This option enables the support for AHAB secure boot.
 
+config IMX_LOAD_HDMI_FIMRWARE_RX
+	bool "Enable HDMI rx firmware loading"
+	depends on ARCH_IMX8 || VIDEO_IMX_HDP_LOAD
+	help
+	  This enable the hdmi rx firmware loading. It depends on the "hdprx" command.
+
+config IMX_LOAD_HDMI_FIMRWARE_TX
+	bool "Enable HDMI tx firmware loading"
+	depends on ARCH_IMX8 || VIDEO_IMX_HDP_LOAD
+	help
+	  This enable the hdmi tx firmware loading. It depends on the "hdp" command.
+
 config IMX8
 	bool
 	select HAS_CAAM
@@ -45,6 +57,12 @@ config BOOTAUX_RESERVED_MEM_BASE
 config BOOTAUX_RESERVED_MEM_SIZE
 	hex "i.MX auxiliary core dram memory size"
 	default 0
+
+config PSCI_BOARD_REBOOT
+	bool "Enable psci board reboot command"
+	depends on ARM_PSCI_FW
+	help
+	  This is a optional command used to trigger system board reboot on imx8.
 
 choice
 	prompt "i.MX8 board select"
