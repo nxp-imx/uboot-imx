@@ -93,7 +93,6 @@
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	"verify=no\0"				\
-	"fdt_addr=0x00f00000\0"			\
 	"kernel_addr=0x01000000\0"		\
 	"kernelheader_addr=0x600000\0"		\
 	"scriptaddr=0x80000000\0"		\
@@ -102,6 +101,7 @@
 	"kernelheader_addr_r=0x80200000\0"	\
 	"kernel_addr_r=0x96000000\0"		\
 	"fdt_addr_r=0x90000000\0"		\
+	"fdt_addr=0x90000000\0"                 \
 	"load_addr=0xa0000000\0"		\
 	"kernel_size=0x2800000\0"		\
 	"kernelheader_size=0x40000\0"		\

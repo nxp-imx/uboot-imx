@@ -328,6 +328,7 @@
 	"fdtheader_addr_r=0x80100000\0"		\
 	"kernel_addr_r=0x81000000\0"		\
 	"fdt_addr_r=0x90000000\0"		\
+	"fdt_addr=0x90000000\0"                 \
 	"load_addr=0xa0000000\0"
 
 /* Initial environment variables */

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0
- * Copyright 2016-2019 NXP
+ * Copyright 2016-2019, 2021 NXP
  * Copyright 2019 Vladimir Oltean <olteanv@gmail.com>
  */
 
@@ -121,7 +121,6 @@
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	"bootargs=root=/dev/ram0 rw console=ttyS0,115200\0"		\
 	"initrd_high=0xffffffff\0"					\
-	"fdt_addr=0x64f00000\0"						\
 	"kernel_addr=0x61000000\0"					\
 	"kernelheader_addr=0x60800000\0"				\
 	"scriptaddr=0x80000000\0"					\
@@ -131,6 +130,7 @@
 	"kernel_addr_r=0x80008000\0"					\
 	"kernelheader_size=0x40000\0"					\
 	"fdt_addr_r=0x8f000000\0"					\
+	"fdt_addr=0x90000000\0"						\
 	"ramdisk_addr_r=0xa0000000\0"					\
 	"load_addr=0x80008000\0"					\
 	"kernel_size=0x2800000\0"					\
