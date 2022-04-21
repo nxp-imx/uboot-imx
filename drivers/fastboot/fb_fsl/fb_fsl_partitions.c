@@ -62,7 +62,7 @@ static ulong bootloader_mmc_offset(void)
 		else
 		/* target device is SD card, bootloader offset is 0x8000 */
 			return 0x8000;
-	} else if (is_imx8mn() || is_imx8mp() || is_imx8dxl() || is_imx8ulp()) {
+	} else if (is_imx8mn() || is_imx8mp() || is_imx8dxl() || is_imx8ulp() || is_imx93()) {
 		/* target device is eMMC boot0 partition, bootloader offset is 0x0 */
 		if (env_get_ulong("emmc_dev", 10, 2) == fastboot_devinfo.dev_id)
 			return 0;
