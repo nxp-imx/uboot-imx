@@ -210,6 +210,9 @@ void board_fastboot_setup(void)
 	} else if (is_imx8ulp()) {
 		if (!env_get("soc_type"))
 			env_set("soc_type", "imx8ulp");
+	} else if (is_imx93()) {
+		if (!env_get("soc_type"))
+			env_set("soc_type", "imx93");
 	}
 }
 
