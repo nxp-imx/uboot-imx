@@ -59,7 +59,7 @@ static uint32_t checksum(const unsigned char* const buffer, uint32_t size)
  */
 static bool trailer_exist(uint64_t bootconfig_end_addr)
 {
-	return !strncmp((char*)(bootconfig_end_addr - BOOTCONFIG_MAGIC_SIZE),
+	return !strncmp((char*)(ulong)(bootconfig_end_addr - BOOTCONFIG_MAGIC_SIZE),
 			BOOTCONFIG_MAGIC, BOOTCONFIG_MAGIC_SIZE);
 }
 
@@ -89,14 +89,14 @@ int32_t add_bootconfig_trailer(uint64_t bootconfig_start_addr, uint32_t bootconf
 	}
 
 	// copy the size
-	memcpy((void *)(end), &bootconfig_size, BOOTCONFIG_SIZE_SIZE);
+	memcpy((void *)(ulong)(end), &bootconfig_size, BOOTCONFIG_SIZE_SIZE);
 
 	// add checksum
-	sum = checksum((unsigned char*)bootconfig_start_addr, bootconfig_size);
-	memcpy((void *)(end + BOOTCONFIG_SIZE_SIZE), &sum, BOOTCONFIG_CHECKSUM_SIZE);
+	sum = checksum((unsigned char*)(ulong)bootconfig_start_addr, bootconfig_size);
+	memcpy((void *)(ulong)(end + BOOTCONFIG_SIZE_SIZE), &sum, BOOTCONFIG_CHECKSUM_SIZE);
 
 	// add the magic
-	memcpy((void *)(end + BOOTCONFIG_SIZE_SIZE + BOOTCONFIG_CHECKSUM_SIZE),
+	memcpy((void *)(ulong)(end + BOOTCONFIG_SIZE_SIZE + BOOTCONFIG_CHECKSUM_SIZE),
 		BOOTCONFIG_MAGIC, BOOTCONFIG_MAGIC_SIZE);
 
 	return BOOTCONFIG_TRAILER_SIZE;
