@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <asm/io.h>
 #include <asm/system.h>
 #include <asm/arch/snvs.h>
