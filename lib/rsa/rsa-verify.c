@@ -589,6 +589,12 @@ int rsa_verify(struct image_sign_info *info,
 
 #ifndef USE_HOSTCC
 
+U_BOOT_CRYPTO_ALGO(rsa1024) = {
+	.name = "rsa1024",
+	.key_len = RSA1024_BYTES,
+	.verify = rsa_verify,
+};
+
 U_BOOT_CRYPTO_ALGO(rsa2048) = {
 	.name = "rsa2048",
 	.key_len = RSA2048_BYTES,
