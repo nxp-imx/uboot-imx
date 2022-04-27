@@ -163,6 +163,9 @@ efi_status_t EFIAPI efi_query_variable_info(
 	EFI_ENTRY("%x %p %p %p", attributes, maximum_variable_storage_size,
 		  remaining_variable_storage_size, maximum_variable_size);
 
+	if (attributes & EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS)
+		return EFI_EXIT(EFI_UNSUPPORTED);
+
 	if (!maximum_variable_storage_size ||
 	    !remaining_variable_storage_size ||
 	    !maximum_variable_size ||

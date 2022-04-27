@@ -537,6 +537,11 @@ efi_status_t efi_set_variable_int(const u16 *variable_name,
 		goto out;
 	}
 
+	if (attributes & EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS) {
+		ret = EFI_UNSUPPORTED;
+		goto out;
+	}
+
 	/*
 	 * Allocate the buffer early, before switching to RW (if needed)
 	 * so we won't need to account for any failures in reading/setting

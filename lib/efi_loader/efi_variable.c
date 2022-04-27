@@ -282,7 +282,7 @@ efi_status_t efi_set_variable_int(const u16 *variable_name,
 	/* authenticate a variable */
 	if (IS_ENABLED(CONFIG_EFI_SECURE_BOOT)) {
 		if (attributes & EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS)
-			return EFI_INVALID_PARAMETER;
+			return EFI_UNSUPPORTED;
 		if (attributes &
 		    EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS) {
 			u32 env_attr;
