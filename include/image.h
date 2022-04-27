@@ -1475,7 +1475,7 @@ bool android_image_print_dtb_contents(ulong hdr_addr);
 bool image_arm64(void *images);
 uint32_t kernel_size(void *images);
 ulong kernel_relocate_addr(ulong images);
-int append_runtime_bootconfig(char *bootconfig, uint32_t *size);
+int append_runtime_bootconfig(char *bootconfig, uint32_t *size, void *fdt_addr);
 int32_t add_bootconfig_trailer(uint64_t bootconfig_start_addr, uint32_t bootconfig_size);
 
 /**
