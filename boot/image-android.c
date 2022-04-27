@@ -132,7 +132,7 @@ static ulong android_image_get_kernel_addr(const struct andr_img_hdr *hdr)
  * The parameters start with androidboot.* should be used
  * by android userspace, let's handle them here.
  * */
-static void append_androidboot_args(char *args, uint32_t *len)
+static int append_androidboot_args(char *args, uint32_t *len, void *fdt_addr)
 {
 	char args_buf[512] = {0};
 	extern boot_metric metrics;
@@ -180,9 +180,33 @@ static void append_androidboot_args(char *args, uint32_t *len)
 		strncat(args, args_buf, *len - strlen(args));
 	}
 
-	sprintf(args_buf,
+	if (!fdt_addr) {
+		sprintf(args_buf,
 			" androidboot.boot_device_root=mmcblk%d", mmc_map_to_kernel_blk(mmc_get_env_dev()));
-	strncat(args, args_buf, *len - strlen(args));
+		strncat(args, args_buf, *len - strlen(args));
+	} else {
+		char mmcblk[30];
+		char *boot_device = NULL;
+		int offset = -1;
+
+		/* The boot device should locates at "/firmware/android/"boot_devices_mmcblkX" */
+		offset = fdt_path_offset(fdt_addr, "/firmware/android");
+		if (offset > 0) {
+			sprintf(mmcblk, "boot_devices_mmcblk%d", mmc_map_to_kernel_blk(mmc_get_env_dev()));
+			boot_device = (char *)fdt_getprop(fdt_addr, offset, mmcblk, NULL);
+			if (boot_device) {
+				sprintf(args_buf,
+					" androidboot.boot_devices=%s", boot_device);
+				strncat(args, args_buf, *len - strlen(args));
+			} else {
+				printf("failed to get boot device from device tree!\n");
+				return -1;
+			}
+		} else {
+			printf("failed to get boot device from device tree!\n");
+			return -1;
+		}
+	}
 
 	/* boot metric variables */
 	metrics.ble_1 = get_timer(0);
@@ -238,6 +262,8 @@ static void append_androidboot_args(char *args, uint32_t *len)
 #endif
 
 	*len = strlen(args);
+
+	return 0;
 }
 
 static void append_kernel_cmdline(char *commandline)
@@ -279,14 +305,15 @@ static void append_kernel_cmdline(char *commandline)
 #endif
 }
 
-int append_runtime_bootconfig(char *bootconfig, uint32_t *size)
+int append_runtime_bootconfig(char *bootconfig, uint32_t *size, void *fdt_addr)
 {
 	char buffer[COMMANDLINE_LENGTH] = {0};
 	char *ptr = buffer;
 	uint32_t len = COMMANDLINE_LENGTH;
 	int i = 0;
 
-	append_androidboot_args(buffer, &len);
+	if (append_androidboot_args(buffer, &len, fdt_addr) < 0)
+		return -1;
 	/* +1 because we will append "\n" to the buffer end */
 	if (len + 1 > COMMANDLINE_LENGTH) {
 		printf("Error - buffer overflow!\n");
@@ -379,7 +406,8 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 
 	append_kernel_cmdline(commandline);
 	len = COMMANDLINE_LENGTH - strlen(commandline);
-	append_androidboot_args(commandline, &len);
+	if (append_androidboot_args(commandline, &len, NULL) < 0)
+		return -1;
 
 	debug("Kernel command line: %s\n", commandline);
 	env_set("bootargs", commandline);
@@ -476,7 +504,8 @@ int android_image_get_kernel_v3(const struct boot_img_hdr_v3 *hdr,
 	append_kernel_cmdline(commandline);
 	if (!bootconfig) {
 		len = COMMANDLINE_LENGTH - strlen(commandline);
-		append_androidboot_args(commandline, &len);
+		if (append_androidboot_args(commandline, &len, NULL) < 0)
+			return -1;
 	}
 
 	debug("Kernel command line: %s\n", commandline);
