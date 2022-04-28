@@ -1,0 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0+
+ /*
+  * Copyright 2021 NXP
+  */
+
+#include "imx8mn-ddr3l-evk.dts"
+#include "imx8mn-ab2.dtsi"
+
+/ {
+	model = "NXP i.MX8MNano DDR3L Audio board 2.0";
+};

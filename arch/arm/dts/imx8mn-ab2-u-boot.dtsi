@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2020 NXP
+ */
+
+#include "imx8mn-evk-u-boot.dtsi"
+
+&fec1 {
+	phy-reset-gpios = <&gpio1 5 GPIO_ACTIVE_LOW>;
+	phy-reset-post-delay = <150>;
+	phy-reset-duration = <15>;
+};
