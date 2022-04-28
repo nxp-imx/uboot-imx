@@ -345,30 +345,6 @@ phys_size_t get_effective_memsize(void)
 	}
 }
 
-phys_size_t board_get_usable_ram_top(phys_size_t total_size)
-{
-	ulong top_addr;
-
-	/*
-	 * Some IPs have their accessible address space restricted by
-	 * the interconnect. Let's make sure U-Boot only ever uses the
-	 * space below the 4G address boundary (which is 3GiB big),
-	 * even when the effective available memory is bigger.
-	 */
-	top_addr = clamp_val((u64)PHYS_SDRAM + gd->ram_size, 0, 0xffffffff);
-
-	/*
-	 * rom_pointer[0] stores the TEE memory start address.
-	 * rom_pointer[1] stores the size TEE uses.
-	 * We need to reserve the memory region for TEE.
-	 */
-	if (!IS_ENABLED(CONFIG_ARMV8_PSCI) && rom_pointer[0] &&
-	    rom_pointer[1] && top_addr > rom_pointer[0])
-		top_addr = rom_pointer[0];
-
-	return top_addr;
-}
-
 static u32 get_cpu_variant_type(u32 type)
 {
 	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
