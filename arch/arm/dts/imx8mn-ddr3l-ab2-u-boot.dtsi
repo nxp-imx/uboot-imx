@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2020 NXP
+ */
+
+#include "imx8mn-ab2-u-boot.dtsi"
+
+&blob_1 {
+	filename = "ddr3_imem_1d_201810.bin";
+};
+
+&blob_2 {
+	filename = "ddr3_dmem_1d_201810.bin";
+};
+
+/delete-node/ &blob_3;
+
+/delete-node/ &blob_4;
