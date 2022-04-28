@@ -24,6 +24,8 @@ const efi_guid_t efi_guid_sha256 = EFI_CERT_SHA256_GUID;
 const efi_guid_t efi_guid_cert_rsa2048 = EFI_CERT_RSA2048_GUID;
 const efi_guid_t efi_guid_cert_x509 = EFI_CERT_X509_GUID;
 const efi_guid_t efi_guid_cert_x509_sha256 = EFI_CERT_X509_SHA256_GUID;
+const efi_guid_t efi_guid_cert_x509_sha384 = EFI_CERT_X509_SHA384_GUID;
+const efi_guid_t efi_guid_cert_x509_sha512 = EFI_CERT_X509_SHA512_GUID;
 const efi_guid_t efi_guid_cert_type_pkcs7 = EFI_CERT_TYPE_PKCS7_GUID;
 
 static u8 pkcs7_hdr[] = {
@@ -124,23 +126,32 @@ struct pkcs7_message *efi_parse_pkcs7_header(const void *buf,
  * Return:	true on success, false on error
  */
 static bool efi_hash_regions(struct image_region *regs, int count,
-			     void **hash, size_t *size)
+			     void **hash, size_t size)
 {
+	char hash_algo[16];
+	int ret;
+
+	/* basic sanity checking */
+	if (!size)
+		return false;
+
+	ret = snprintf(hash_algo, sizeof(hash_algo), "sha%ld", size * 8);
+	if (ret >= sizeof(hash_algo))
+		return false;
+
 	if (!*hash) {
-		*hash = calloc(1, SHA256_SUM_LEN);
+		*hash = calloc(1, size);
 		if (!*hash) {
 			EFI_PRINT("Out of memory\n");
 			return false;
 		}
 	}
-	if (size)
-		*size = SHA256_SUM_LEN;
 
-	hash_calculate("sha256", regs, count, *hash);
+	hash_calculate(hash_algo, regs, count, *hash);
 #ifdef DEBUG
 	EFI_PRINT("hash calculated:\n");
 	print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
-		       *hash, SHA256_SUM_LEN, false);
+		       *hash, size, false);
 #endif
 
 	return true;
@@ -190,7 +201,7 @@ bool efi_signature_lookup_digest(struct efi_image_regions *regs,
 	struct efi_signature_store *siglist;
 	struct efi_sig_data *sig_data;
 	void *hash = NULL;
-	size_t size = 0;
+	size_t size = SHA256_SUM_LEN;
 	bool found = false;
 	bool hash_done = false;
 
@@ -216,7 +227,7 @@ bool efi_signature_lookup_digest(struct efi_image_regions *regs,
 			continue;
 
 		if (!hash_done &&
-		    !efi_hash_regions(regs->reg, regs->num, &hash, &size)) {
+		    !efi_hash_regions(regs->reg, regs->num, &hash, size)) {
 			EFI_PRINT("Digesting an image failed\n");
 			break;
 		}
@@ -263,7 +274,7 @@ static bool efi_lookup_certificate(struct x509_certificate *cert,
 	struct efi_sig_data *sig_data;
 	struct image_region reg[1];
 	void *hash = NULL, *hash_tmp = NULL;
-	size_t size = 0;
+	size_t size = SHA256_SUM_LEN;
 	bool found = false;
 
 	EFI_PRINT("%s: Enter, %p, %p\n", __func__, cert, db);
@@ -278,7 +289,7 @@ static bool efi_lookup_certificate(struct x509_certificate *cert,
 	/* calculate hash of TBSCertificate */
 	reg[0].data = cert->tbs;
 	reg[0].size = cert->tbs_size;
-	if (!efi_hash_regions(reg, 1, &hash, &size))
+	if (!efi_hash_regions(reg, 1, &hash, size))
 		goto out;
 
 	EFI_PRINT("%s: searching for %s\n", __func__, cert->subject);
@@ -300,7 +311,7 @@ static bool efi_lookup_certificate(struct x509_certificate *cert,
 				  cert_tmp->subject);
 			reg[0].data = cert_tmp->tbs;
 			reg[0].size = cert_tmp->tbs_size;
-			if (!efi_hash_regions(reg, 1, &hash_tmp, NULL))
+			if (!efi_hash_regions(reg, 1, &hash_tmp, size))
 				goto out;
 
 			x509_free_certificate(cert_tmp);
@@ -377,6 +388,26 @@ out:
 	return verified;
 }
 
+/** guid_to_sha_len - return the sha size in bytes for a given guid
+ *                    used of EFI security databases
+ *
+ * @guid: guid to check
+ *
+ * Return: len or 0 if no match is found
+ */
+static int guid_to_sha_len(efi_guid_t *guid)
+{
+	int size = 0;
+
+	if (!guidcmp(guid, &efi_guid_cert_x509_sha256))
+		size = SHA256_SUM_LEN;
+	else if (!guidcmp(guid, &efi_guid_cert_x509_sha384))
+		size = SHA384_SUM_LEN;
+	else if (!guidcmp(guid, &efi_guid_cert_x509_sha512))
+		size = SHA512_SUM_LEN;
+
+	return size;
+}
 /**
  * efi_signature_check_revocation - check revocation with dbx
  * @sinfo:	Signer's info
@@ -400,7 +431,7 @@ static bool efi_signature_check_revocation(struct pkcs7_signed_info *sinfo,
 	struct efi_sig_data *sig_data;
 	struct image_region reg[1];
 	void *hash = NULL;
-	size_t size = 0;
+	size_t size = SHA256_SUM_LEN;
 	time64_t revoc_time;
 	bool revoked = false;
 
@@ -411,13 +442,14 @@ static bool efi_signature_check_revocation(struct pkcs7_signed_info *sinfo,
 
 	EFI_PRINT("Checking revocation against %s\n", cert->subject);
 	for (siglist = dbx; siglist; siglist = siglist->next) {
-		if (guidcmp(&siglist->sig_type, &efi_guid_cert_x509_sha256))
+		size = guid_to_sha_len(&siglist->sig_type);
+		if (!size)
 			continue;
 
 		/* calculate hash of TBSCertificate */
 		reg[0].data = cert->tbs;
 		reg[0].size = cert->tbs_size;
-		if (!efi_hash_regions(reg, 1, &hash, &size))
+		if (!efi_hash_regions(reg, 1, &hash, size))
 			goto out;
 
 		for (sig_data = siglist->sig_data_list; sig_data;
@@ -500,7 +532,7 @@ bool efi_signature_verify(struct efi_image_regions *regs,
 		 */
 		if (!msg->data &&
 		    !efi_hash_regions(regs->reg, regs->num,
-				      (void **)&sinfo->sig->digest, NULL)) {
+				      (void **)&sinfo->sig->digest, SHA256_SUM_LEN)) {
 			EFI_PRINT("Digesting an image failed\n");
 			goto out;
 		}
