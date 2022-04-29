@@ -26,6 +26,7 @@ config SPL_CLK_IMX8MM
 	depends on ARCH_IMX8M && SPL
 	select SPL_CLK
 	select SPL_CLK_CCF
+	select SPL_CLK_COMPOSITE_CCF
 	help
 	  This enables SPL DM/DTS support for clock driver in i.MX8MM
 
@@ -34,6 +35,7 @@ config CLK_IMX8MM
 	depends on ARCH_IMX8M
 	select CLK
 	select CLK_CCF
+	select CLK_COMPOSITE_CCF
 	help
 	  This enables support clock driver for i.MX8MM platforms.
 
