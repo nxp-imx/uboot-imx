@@ -1,0 +1,158 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2022 NXP
+ */
+
+/ {
+	/delete-node/ audio-codec;
+	/delete-node/ dsi-host;
+	/delete-node/ ir-receiver;
+	/delete-node/ rm67199_panel;
+	/delete-node/ sound-wm8524;
+
+	leds {
+		panel {
+			label = "green:panel";
+			gpios = <&pca6408_2 0 GPIO_ACTIVE_LOW>;
+			default-state = "on";
+		};
+	};
+
+	reg_ab2_ana_pwr: regulator-ab2-ana-pwr {
+		compatible = "regulator-fixed";
+		regulator-name = "ANA_12V0";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_ab2_ana_pwr>;
+		regulator-min-microvolt = <12000000>;
+		regulator-max-microvolt = <12000000>;
+		gpio = <&gpio1 10 GPIO_ACTIVE_HIGH>;
+		vin-supply = <&buck5_reg>;
+		enable-active-high;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	reg_ab2_vdd_pwr_5v0: regulator-ab2-vdd-pwr-5v0 {
+		compatible = "regulator-fixed";
+		regulator-name = "VDD_5V0";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_ab2_vdd_pwr_5v0>;
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&gpio1 7 GPIO_ACTIVE_HIGH>;
+		vin-supply = <&buck5_reg>;
+		enable-active-high;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+};
+
+&fec1 {
+	mdio {
+		ethphy0: ethernet-phy@0 {
+			reset-gpios = <&gpio1 5 GPIO_ACTIVE_LOW>;
+			max-speed = <100>;
+		};
+	};
+};
+
+&i2c2 {
+	/delete-node/ adv7535@3d;
+	/delete-node/ tcpc@50;
+
+	pca6408_2: gpio@20 {
+		compatible = "ti,tca6408";
+		reg = <0x20>;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+
+	ptn5150: tcpc@1d {
+		compatible = "nxp,ptn5150";
+		reg = <0x1d>;
+		status = "okay";
+
+		port {
+			typec1_dr_sw: endpoint {
+				remote-endpoint = <&usb1_drd_sw>;
+			};
+		};
+
+		typec1_con: connector {
+			compatible = "usb-c-connector";
+			label = "USB-C";
+			power-role = "dual";
+			data-role = "dual";
+			try-power-role = "sink";
+			source-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)>;
+			sink-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)
+				PDO_VAR(5000, 20000, 3000)>;
+			op-sink-microwatt = <15000000>;
+			self-powered;
+		};
+	};
+};
+
+&iomuxc {
+	pinctrl_fec1: fec1grp {
+		fsl,pins = <
+			MX8MM_IOMUXC_ENET_MDC_ENET1_MDC		0x3
+			MX8MM_IOMUXC_ENET_MDIO_ENET1_MDIO	0x3
+			MX8MM_IOMUXC_ENET_TD3_ENET1_RGMII_TD3	0x1f
+			MX8MM_IOMUXC_ENET_TD2_ENET1_RGMII_TD2	0x1f
+			MX8MM_IOMUXC_ENET_TD1_ENET1_RGMII_TD1	0x1f
+			MX8MM_IOMUXC_ENET_TD0_ENET1_RGMII_TD0	0x1f
+			MX8MM_IOMUXC_ENET_RD3_ENET1_RGMII_RD3	0x91
+			MX8MM_IOMUXC_ENET_RD2_ENET1_RGMII_RD2	0x91
+			MX8MM_IOMUXC_ENET_RD1_ENET1_RGMII_RD1	0x91
+			MX8MM_IOMUXC_ENET_RD0_ENET1_RGMII_RD0	0x91
+			MX8MM_IOMUXC_ENET_TXC_ENET1_RGMII_TXC	0x1f
+			MX8MM_IOMUXC_ENET_RXC_ENET1_RGMII_RXC	0x91
+			MX8MM_IOMUXC_ENET_RX_CTL_ENET1_RGMII_RX_CTL	0x91
+			MX8MM_IOMUXC_ENET_TX_CTL_ENET1_RGMII_TX_CTL	0x1f
+			MX8MM_IOMUXC_GPIO1_IO05_GPIO1_IO5	0x19	/* ENET_PHY_RST_B */
+			MX8MM_IOMUXC_GPIO1_IO11_GPIO1_IO11	0x19	/* ENET_PHY_INT_B */
+		>;
+	};
+
+	pinctrl_ab2_ana_pwr: ab2anapwrgrp {
+		fsl,pins = <
+			MX8MM_IOMUXC_GPIO1_IO10_GPIO1_IO10	0x41
+		>;
+	};
+
+	pinctrl_ab2_vdd_pwr_5v0: ab2vddpwr5v0grp {
+		fsl,pins = <
+			MX8MM_IOMUXC_GPIO1_IO07_GPIO1_IO7	0x41
+		>;
+	};
+
+	pinctrl_usdhc2_gpio: usdhc2grpgpiogrp {
+		fsl,pins = <
+			MX8MM_IOMUXC_SD2_CD_B_GPIO2_IO12	0x1c4
+		>;
+	};
+};
+
+&lcdif {
+	status = "disabled";
+};
+
+&mipi_dsi {
+	status = "disabled";
+
+	/delete-node/ port@1;
+	/delete-node/ port@2;
+};
+
+&sai3 {
+	status = "disabled";
+};
+
+&usbotg1 {
+	extcon = <&ptn5150>;
+};
+
+&usdhc2 {
+	cd-gpios = <&gpio2 12 GPIO_ACTIVE_LOW>;
+};

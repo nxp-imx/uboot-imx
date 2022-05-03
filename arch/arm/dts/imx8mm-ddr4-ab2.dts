@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2020 NXP
+ */
+
+#include "imx8mm-ddr4-evk.dts"
+#include "imx8mm-ab2.dtsi"
+
+/ {
+	model = "NXP i.MX8MM DDR4 Audio board 2.0";
+	compatible = "fsl,imx8mm-ab2", "fsl,imx8mm";
+};
