@@ -102,6 +102,23 @@ int power_init_board(void)
 	return 0;
 }
 
+void display_ele_fw_version(void)
+{
+	u32 fw_version, sha1, res;
+	int ret;
+
+	ret = ahab_get_fw_version(&fw_version, &sha1, &res);
+	if (ret) {
+		printf("ahab get firmware version failed %d, 0x%x\n", ret, res);
+	} else {
+		printf("ELE firmware version %u.%u.%u-%x",
+		       (fw_version & (0x00ff0000)) >> 16,
+		       (fw_version & (0x0000ff00)) >> 8,
+		       (fw_version & (0x000000ff)), sha1);
+		((fw_version & (0x80000000)) >> 31) == 1 ? puts("-dirty\n") : puts("\n");
+	}
+}
+
 void spl_board_init(void)
 {
 	struct udevice *dev;
@@ -120,6 +137,8 @@ void spl_board_init(void)
 	preloader_console_init();
 
 	puts("Normal Boot\n");
+
+	display_ele_fw_version();
 
 	/* Set iomuxc0 for pmic when m33 is not booted */
 	if (!m33_image_booted())
