@@ -15,6 +15,7 @@
 
 #define REG_DDRDSR_2        	          (DDR_CTL_BASE + 0xB24)
 #define REG_DDR_SDRAM_CFG        	      (DDR_CTL_BASE + 0x110)
+#define REG_DDR_DEBUG_19        	      (DDR_CTL_BASE + 0xF48)
 
 #define SRC_BASE_ADDR                     (0x44460000)
 #define SRC_DPHY_BASE_ADDR                (SRC_BASE_ADDR + 0x1400)
