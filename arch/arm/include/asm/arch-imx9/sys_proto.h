@@ -13,4 +13,6 @@ ulong spl_romapi_get_uboot_base(u32 image_offset, u32 rom_bt_dev);
 extern unsigned long rom_pointer[];
 enum boot_device get_boot_device(void);
 bool is_usb_boot(void);
+int mix_power_init(enum mix_power_domain pd);
+void soc_power_init(void);
 #endif
