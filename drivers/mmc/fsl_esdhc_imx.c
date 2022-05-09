@@ -1039,15 +1039,10 @@ static int esdhc_init_common(struct fsl_esdhc_priv *priv, struct mmc *mmc)
 	/* Set timout to the maximum value */
 	esdhc_clrsetbits32(&regs->sysctl, SYSCTL_TIMEOUT_MASK, 14 << 16);
 
-	/* Set INITA to send 80 clocks after power stable */
-	esdhc_setbits32(&regs->sysctl, SYSCTL_INITA);
-
-	/* Wait until 74 clocks completed */
-	start = get_timer(0);
-	while ((esdhc_read32(&regs->sysctl) & SYSCTL_INITA)) {
-		if (get_timer(start) > 1000)
-			return -ETIMEDOUT;
-	}
+	/* max 1ms delay with clock on for initialization */
+	esdhc_setbits32(&regs->vendorspec, VENDORSPEC_FRC_SDCLK_ON);
+	udelay(1000);
+	esdhc_clrbits32(&regs->vendorspec, VENDORSPEC_FRC_SDCLK_ON);
 
 	return 0;
 }
