@@ -3,7 +3,6 @@
  * Copyright 2019 NXP
  *
  */
-
 #include <common.h>
 #include <dm.h>
 #include <dm/device_compat.h>
@@ -46,15 +45,20 @@ struct imx8_dc_priv {
 
 static int imx8_dc_soc_setup(struct udevice *dev, sc_pm_clock_rate_t pixel_clock)
 {
-	int err;
-	sc_rsrc_t dc_rsrc, pll0_rsrc, pll1_rsrc;
+	int err, div = 0;
+	sc_rsrc_t dc_rsrc, pll_rsrc;
 	sc_pm_clock_rate_t pll_clk;
+	const int max_div = 255;
+	const sc_pm_clock_rate_t min_pll_clk = 650000000,
+		max_pll_clk = 1300000000;
 	const char *pll1_pd_name;
 	u32 dc_lpcg;
 	struct imx8_dc_priv *priv = dev_get_priv(dev);
 
 	int dc_id = priv->dpu_id;
-
+	int disp_id = priv->disp_id;
+	sc_pm_clk_t misc_clk;
+	sc_ctrl_t link_addr, link_enable, link_valid, sync;
 	struct power_domain pd;
 	int ret;
 
@@ -62,16 +66,34 @@ static int imx8_dc_soc_setup(struct udevice *dev, sc_pm_clock_rate_t pixel_clock
 
 	if (dc_id == 0) {
 		dc_rsrc = SC_R_DC_0;
-		pll0_rsrc = SC_R_DC_0_PLL_0;
-		pll1_rsrc = SC_R_DC_0_PLL_1;
+		if (disp_id == 0)
+			pll_rsrc = SC_R_DC_0_PLL_0;
+		else
+			pll_rsrc = SC_R_DC_0_PLL_1;
 		pll1_pd_name = "dc0_pll1";
 		dc_lpcg = DC_0_LPCG;
 	} else {
 		dc_rsrc = SC_R_DC_1;
-		pll0_rsrc = SC_R_DC_1_PLL_0;
-		pll1_rsrc = SC_R_DC_1_PLL_1;
+		if (disp_id == 0)
+			pll_rsrc = SC_R_DC_1_PLL_0;
+		else
+			pll_rsrc = SC_R_DC_1_PLL_1;
 		pll1_pd_name = "dc1_pll1";
 		dc_lpcg = DC_1_LPCG;
+	}
+
+	if (disp_id == 0) {
+		misc_clk = SC_PM_CLK_MISC0;
+		link_addr = SC_C_PXL_LINK_MST1_ADDR;
+		link_enable = SC_C_PXL_LINK_MST1_ENB;
+		link_valid = SC_C_PXL_LINK_MST1_VLD;
+		sync = SC_C_SYNC_CTRL0;
+	} else {
+		misc_clk = SC_PM_CLK_MISC1;
+		link_addr = SC_C_PXL_LINK_MST2_ADDR;
+		link_enable = SC_C_PXL_LINK_MST2_ENB;
+		link_valid = SC_C_PXL_LINK_MST2_VLD;
+		sync = SC_C_SYNC_CTRL1;
 	}
 
 	if (!power_domain_lookup_name(pll1_pd_name, &pd)) {
@@ -85,119 +107,84 @@ static int imx8_dc_soc_setup(struct udevice *dev, sc_pm_clock_rate_t pixel_clock
 		return -EIO;
 	}
 
-	/* Setup the pll1/2 and DISP0/1 clock */
-	if (pixel_clock >= 40000000)
-		pll_clk = 1188000000;
-	else
-		pll_clk = 675000000;
+	/* find an even divisor for PLL greater than PLL minimum */
+	do {
+		div += 2;
+		if (div > max_div)
+			break;
+		pll_clk = pixel_clock * div;
+		if (pll_clk > max_pll_clk)
+			pll_clk = max_pll_clk;
+	} while (pll_clk < min_pll_clk);
 
-	err = sc_pm_set_clock_rate(-1, pll0_rsrc, SC_PM_CLK_PLL, &pll_clk);
+	debug("\n dc_id %d disp_id %d pll_clk %d pixel_clock %d\n",
+	      dc_id, disp_id, pll_clk, pixel_clock);
+
+	err = sc_pm_set_clock_rate(-1, pll_rsrc, SC_PM_CLK_PLL, &pll_clk);
 	if (err) {
-		printf("PLL0 set clock rate failed! (error = %d)\n", err);
+		printf("PLL%d set clock rate failed! (error = %d)\n",
+		       disp_id, err);
 		return -EIO;
 	}
 
-	err = sc_pm_set_clock_rate(-1, pll1_rsrc, SC_PM_CLK_PLL, &pll_clk);
+	err = sc_pm_set_clock_parent(-1, dc_rsrc, misc_clk,
+				     (misc_clk == SC_PM_CLK_MISC0) ? 2 : 3);
 	if (err) {
-		printf("PLL1 set clock rate failed! (error = %d)\n", err);
+		printf("DISP%d set clock parent failed! (error = %d)\n",
+		       disp_id, err);
 		return -EIO;
 	}
 
-	err = sc_pm_set_clock_parent(-1, dc_rsrc, SC_PM_CLK_MISC0, 2);
+	err = sc_pm_set_clock_rate(-1, dc_rsrc, misc_clk, &pixel_clock);
 	if (err) {
-		printf("DISP0 set clock parent failed! (error = %d)\n", err);
+		printf("DISP%d set clock rate failed! (error = %d)\n",
+		       disp_id, err);
 		return -EIO;
 	}
 
-	err = sc_pm_set_clock_parent(-1, dc_rsrc, SC_PM_CLK_MISC1, 3);
+	err = sc_pm_clock_enable(-1, pll_rsrc, SC_PM_CLK_PLL, true, false);
 	if (err) {
-		printf("DISP0 set clock parent failed! (error = %d)\n", err);
+		printf("PLL%d clock enable failed! (error = %d)\n",
+		       disp_id, err);
 		return -EIO;
 	}
 
-	err = sc_pm_set_clock_rate(-1, dc_rsrc, SC_PM_CLK_MISC0, &pixel_clock);
+	err = sc_pm_clock_enable(-1, dc_rsrc, misc_clk, true, false);
 	if (err) {
-		printf("DISP0 set clock rate failed! (error = %d)\n", err);
+		printf("DISP%d clock enable failed! (error = %d)\n",
+		       disp_id, err);
 		return -EIO;
 	}
 
-	err = sc_pm_set_clock_rate(-1, dc_rsrc, SC_PM_CLK_MISC1, &pixel_clock);
+	lpcg_clock_on(dc_lpcg, disp_id);
+	while (!lpcg_is_clock_on(dc_lpcg, disp_id))
+		;
+
+	err = sc_misc_set_control(-1, dc_rsrc, link_addr, 0);
 	if (err) {
-		printf("DISP1 set clock rate failed! (error = %d)\n", err);
+		printf("DC Set control _MST%d_ADDR failed! (error = %d)\n",
+		       disp_id + 1, err);
 		return -EIO;
 	}
 
-	err = sc_pm_clock_enable(-1, pll0_rsrc, SC_PM_CLK_PLL, true, false);
+	err = sc_misc_set_control(-1, dc_rsrc, link_enable, 1);
 	if (err) {
-		printf("PLL0 clock enable failed! (error = %d)\n", err);
+		printf("DC Set control _MST%d_ENB failed! (error = %d)\n",
+		       disp_id + 1, err);
 		return -EIO;
 	}
 
-	err = sc_pm_clock_enable(-1, pll1_rsrc, SC_PM_CLK_PLL, true, false);
+	err = sc_misc_set_control(-1, dc_rsrc, link_valid, 1);
 	if (err) {
-		printf("PLL1 clock enable failed! (error = %d)\n", err);
+		printf("DC Set control _MST%d_VLD failed! (error = %d)\n",
+		       disp_id + 1, err);
 		return -EIO;
 	}
 
-	err = sc_pm_clock_enable(-1, dc_rsrc, SC_PM_CLK_MISC0, true, false);
+	err = sc_misc_set_control(-1, dc_rsrc, sync, 1);
 	if (err) {
-		printf("DISP0 clock enable failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	err = sc_pm_clock_enable(-1, dc_rsrc, SC_PM_CLK_MISC1, true, false);
-	if (err) {
-		printf("DISP1 clock enable failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	lpcg_all_clock_on(dc_lpcg);
-
-	err = sc_misc_set_control(-1, dc_rsrc, SC_C_PXL_LINK_MST1_ADDR, 0);
-	if (err) {
-		printf("DC Set control fSC_C_PXL_LINK_MST1_ADDR ailed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	err = sc_misc_set_control(-1, dc_rsrc, SC_C_PXL_LINK_MST1_ENB, 1);
-	if (err) {
-		printf("DC Set control SC_C_PXL_LINK_MST1_ENB failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	err = sc_misc_set_control(-1, dc_rsrc, SC_C_PXL_LINK_MST1_VLD, 1);
-	if (err) {
-		printf("DC Set control SC_C_PXL_LINK_MST1_VLD failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	err = sc_misc_set_control(-1, dc_rsrc, SC_C_PXL_LINK_MST2_ADDR, 0);
-	if (err) {
-		printf("DC Set control SC_C_PXL_LINK_MST2_ADDR ailed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	err = sc_misc_set_control(-1, dc_rsrc, SC_C_PXL_LINK_MST2_ENB, 1);
-	if (err) {
-		printf("DC Set control SC_C_PXL_LINK_MST2_ENB failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	err = sc_misc_set_control(-1, dc_rsrc, SC_C_PXL_LINK_MST2_VLD, 1);
-	if (err) {
-		printf("DC Set control SC_C_PXL_LINK_MST2_VLD failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	err = sc_misc_set_control(-1, dc_rsrc, SC_C_SYNC_CTRL0, 1);
-	if (err) {
-		printf("DC Set control SC_C_SYNC_CTRL0 failed! (error = %d)\n", err);
-		return -EIO;
-	}
-
-	err = sc_misc_set_control(-1, dc_rsrc, SC_C_SYNC_CTRL1, 1);
-	if (err) {
-		printf("DC Set control SC_C_SYNC_CTRL1 failed! (error = %d)\n", err);
+		printf("DC Set control _SYNC_CTRL%d failed! (error = %d)\n",
+		       disp_id, err);
 		return -EIO;
 	}
 
@@ -351,12 +338,11 @@ static int imx8_dc_probe(struct udevice *dev)
 
 	priv->gpixfmt = IMXDPUV1_PIX_FMT_BGRA32;
 
-	imx8_dc_soc_setup(dev, priv->mode.pixelclock);
-
 	if (flag & FLAG_COMBO) /* QXP has one DC which contains 2 LVDS/MIPI_DSI combo */
 		priv->disp_id = dev_seq(priv->disp_dev->parent);
 	else
 		priv->disp_id = 1; /* QM has two DCs each contains one LVDS as secondary display output */
+	imx8_dc_soc_setup(dev, priv->mode.pixelclock);
 
 	debug("dpu %u, disp_id %u, pixelclock %u, hlen %u, vlen %u\n",
 		priv->dpu_id, priv->disp_id, priv->mode.pixelclock, priv->mode.hlen, priv->mode.vlen);
