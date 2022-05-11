@@ -15,4 +15,6 @@ enum boot_device get_boot_device(void);
 bool is_usb_boot(void);
 int mix_power_init(enum mix_power_domain pd);
 void soc_power_init(void);
+bool m33_is_rom_kicked(void);
+int m33_prepare(void);
 #endif
