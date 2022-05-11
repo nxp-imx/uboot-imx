@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright 2017, 2019-2021 NXP
+ * Copyright 2017, 2019-2022 NXP
  * Copyright 2015 Freescale Semiconductor
  */
 
@@ -76,6 +76,8 @@
 				FTIM2_NOR_TWP(0x1c))
 #define CONFIG_SYS_NOR_FTIM3	0x04000000
 #define CONFIG_SYS_IFC_CCR	0x01000000
+
+#define CONFIG_SYS_FLASH_CFI_WIDTH  FLASH_CFI_16BIT
 
 #ifdef CONFIG_MTD_NOR_FLASH
 #define CONFIG_SYS_FLASH_QUIET_TEST
