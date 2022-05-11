@@ -53,6 +53,7 @@
 #define BCTRL_GPR_ENET_QOS_INTF_SEL_RGMII        (0x1 << 1)
 #define BCTRL_GPR_ENET_QOS_CLK_GEN_EN            (0x1 << 0)
 
+#define BCTRL_S_ANOMIX_M33_CPU_WAIT_MASK 		BIT(2)
 
 enum mix_power_domain {
 	MIX_PD_MEDIAMIX,
