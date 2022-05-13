@@ -249,6 +249,16 @@ int dram_init(void)
 	return 0;
 }
 
+void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
+{
+	mac[0] = 0x1;
+	mac[1] = 0x2;
+	mac[2] = 0x3;
+	mac[3] = 0x4;
+	mac[4] = 0x5;
+	mac[5] = 0x6;
+}
+
 int print_cpuinfo(void)
 {
 	u32 cpurev;
