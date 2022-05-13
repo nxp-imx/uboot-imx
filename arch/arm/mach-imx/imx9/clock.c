@@ -606,6 +606,16 @@ void init_clk_usdhc(u32 index)
 	};
 }
 
+void enable_usboh3_clk(unsigned char enable)
+{
+	if (enable) {
+		ccm_clk_root_cfg(HSIO_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+		ccm_lpcg_on(CCGR_USBC, 1);
+	} else {
+		ccm_lpcg_on(CCGR_USBC, 0);
+	}
+}
+
 int clock_init(void)
 {
 	/* Set A55 periphal to 333M */
