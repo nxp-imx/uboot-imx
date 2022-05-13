@@ -12,6 +12,12 @@
 
 #define MHZ(x)	((x) * 1000000UL)
 
+enum enet_freq {
+	ENET_25MHZ = 0,
+	ENET_50MHZ,
+	ENET_125MHZ,
+};
+
 enum ccm_clk_src {
 	OSC_24M_CLK,
 	ARM_PLL,
@@ -228,5 +234,8 @@ int ccm_shared_gpr_set(u32 gpr, u32 val);
 int ccm_shared_gpr_get(u32 gpr, u32 *val);
 int ccm_shared_gpr_tz_access(u32 gpr,
 	bool non_secure, bool user_mode, bool lock_tz);
+
+int set_clk_enet(enum enet_freq type);
+int set_clk_eqos(enum enet_freq type);
 
 #endif

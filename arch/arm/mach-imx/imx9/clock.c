@@ -621,8 +621,8 @@ int clock_init(void)
 	ccm_clk_root_cfg(BUS_AON_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
 	/* M33 to 200M */
 	ccm_clk_root_cfg(M33_CLK_ROOT, SYS_PLL_PFD1_DIV2, 2);
-	/* WAKEUP_AXI to 333M */
-	ccm_clk_root_cfg(WAKEUP_AXI_CLK_ROOT, SYS_PLL_PFD0, 3);
+	/* WAKEUP_AXI to 312.5M, because of FEC only can support to 320M for generating MII clock at 2.5M  */
+	ccm_clk_root_cfg(WAKEUP_AXI_CLK_ROOT, SYS_PLL_PFD2, 2);
 	/* SWO TRACE to 133M */
 	ccm_clk_root_cfg(SWO_TRACE_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
 	/* M33 systetick to 133M */
@@ -645,6 +645,80 @@ int clock_init(void)
 
 	for (i = 0; i < SHARED_GPR_NUM; i++)
 		ccm_shared_gpr_tz_access(i, true, false, false);
+
+	return 0;
+}
+
+int set_clk_eqos(enum enet_freq type)
+{
+	u32 eqos_post_div;
+
+	switch (type) {
+	case ENET_125MHZ:
+		eqos_post_div = 2; /* 250M clock */
+		break;
+	case ENET_50MHZ:
+		eqos_post_div = 5; /* 100M clock */
+		break;
+	case ENET_25MHZ:
+		eqos_post_div = 10; /* 50M clock*/
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	/* disable the clock first */
+	ccm_lpcg_on(CCGR_ENETQOS, false);
+
+	ccm_clk_root_cfg(ENET_CLK_ROOT, SYS_PLL_PFD0_DIV2, eqos_post_div);
+	ccm_clk_root_cfg(ENET_TIMER2_CLK_ROOT, SYS_PLL_PFD0_DIV2, 5);
+
+	/* enable clock */
+	ccm_lpcg_on(CCGR_ENETQOS, true);
+
+	return 0;
+}
+
+u32 imx_get_eqos_csr_clk(void)
+{
+	return ccm_clk_root_get_rate(WAKEUP_AXI_CLK_ROOT);
+}
+
+u32 imx_get_fecclk(void)
+{
+	return ccm_clk_root_get_rate(WAKEUP_AXI_CLK_ROOT);
+}
+
+int set_clk_enet(enum enet_freq type)
+{
+	u32 div;
+
+	/* disable the clock first */
+	ccm_lpcg_on(CCGR_ENET1, false);
+
+	switch (type) {
+	case ENET_125MHZ:
+		div = 2; /* 250Mhz */
+		break;
+	case ENET_50MHZ:
+		div = 5; /* 100Mhz */
+		break;
+	case ENET_25MHZ:
+		div = 10; /* 50Mhz */
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	ccm_clk_root_cfg(ENET_REF_CLK_ROOT, SYS_PLL_PFD0_DIV2, div);
+	ccm_clk_root_cfg(ENET_TIMER1_CLK_ROOT, SYS_PLL_PFD0_DIV2, 5);
+
+#ifdef CONFIG_FEC_MXC_25M_REF_CLK
+	ccm_clk_root_cfg(ENET_REF_PHY_CLK_ROOT, SYS_PLL_PFD0_DIV2, 20);
+#endif
+
+	/* enable clock */
+	ccm_lpcg_on(CCGR_ENET1, true);
 
 	return 0;
 }

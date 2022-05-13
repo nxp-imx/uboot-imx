@@ -7,6 +7,7 @@
 #define __ASM_ARCH_IMX9_REGS_H__
 
 #define ARCH_MXC
+#define FEC_QUIRK_ENET_MAC
 
 #define IOMUXC_BASE_ADDR	0x443C0000UL
 #define CCM_BASE_ADDR		0x44450000UL
@@ -24,10 +25,37 @@
 
 #define FSB_BASE_ADDR   0x47510000
 
+#define BLK_CTRL_WAKEUPMIX_BASE_ADDR 0x42420000
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 #include <asm/types.h>
-
 #include <stdbool.h>
+
+#define BCTRL_GPR_ENET_QOS_INTF_MODE_MASK        GENMASK(3, 1)
+#define BCTRL_GPR_ENET_QOS_INTF_SEL_MII          (0x0 << 1)
+#define BCTRL_GPR_ENET_QOS_INTF_SEL_RMII         (0x4 << 1)
+#define BCTRL_GPR_ENET_QOS_INTF_SEL_RGMII        (0x1 << 1)
+#define BCTRL_GPR_ENET_QOS_CLK_GEN_EN            (0x1 << 0)
+
+struct blk_ctrl_wakeupmix_regs {
+	u32 upper_addr;
+	u32 ipg_debug_cm33;
+	u32 reserved[2];
+	u32 qch_dis;
+	u32 ssi;
+	u32 reserved1[1];
+	u32 dexsc_err;
+	u32 mqs_setting;
+	u32 sai_clk_sel;
+	u32 eqos_gpr;
+	u32 enet_clk_sel;
+	u32 reserved2[1];
+	u32 volt_detect;
+	u32 i3c2_wakeup;
+	u32 ipg_debug_ca55c0;
+	u32 ipg_debug_ca55c1;
+	u32 axi_attr_cfg;
+	u32 i3c2_sda_irq;
+};
 
 struct mu_type {
 	u32 ver;
