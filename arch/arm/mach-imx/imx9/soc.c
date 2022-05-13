@@ -292,6 +292,12 @@ void get_board_serial(struct tag_serialnr *serialnr)
 }
 #endif
 
+void disable_isolation(void)
+{
+	/* Clear isolation for usbphy*/
+	clrbits_le32(0x4446010c, BIT(0) | BIT(1));
+}
+
 int arch_cpu_init(void)
 {
 	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
@@ -301,6 +307,8 @@ int arch_cpu_init(void)
 		clock_init();
 
 		trdc_early_init();
+
+		disable_isolation();
 	}
 
 	return 0;

@@ -235,6 +235,7 @@ int ccm_shared_gpr_get(u32 gpr, u32 *val);
 int ccm_shared_gpr_tz_access(u32 gpr,
 	bool non_secure, bool user_mode, bool lock_tz);
 
+void enable_usboh3_clk(unsigned char enable);
 int set_clk_enet(enum enet_freq type);
 int set_clk_eqos(enum enet_freq type);
 
