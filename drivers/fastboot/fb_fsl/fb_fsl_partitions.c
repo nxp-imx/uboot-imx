@@ -118,15 +118,16 @@ static int _fastboot_parts_add_ptable_entry(int ptable_index,
 	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_OEM_A) ||
 	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_VENDOR_A) ||
 	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_OEM_B) ||
-	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_VENDOR_B) ||
-	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_DATA) ||
+	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_VENDOR_B))
 #else
 	if (!strcmp((const char *)info.name, FASTBOOT_PARTITION_SYSTEM) ||
-	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_DATA) ||
 	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_DEVICE) ||
-	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_CACHE) ||
+	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_CACHE))
 #endif
-	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_METADATA))
+		strcpy(ptable[ptable_index].fstype, "erofs");
+	else if (!strcmp((const char *)info.name, FASTBOOT_PARTITION_DATA))
+		strcpy(ptable[ptable_index].fstype, "f2fs");
+	else if (!strcmp((const char *)info.name, FASTBOOT_PARTITION_METADATA))
 		strcpy(ptable[ptable_index].fstype, "ext4");
 	else
 		strcpy(ptable[ptable_index].fstype, "raw");
