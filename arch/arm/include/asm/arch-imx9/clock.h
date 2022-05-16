@@ -218,6 +218,8 @@ void dram_pll_init(ulong pll_val);
 void dram_enable_bypass(ulong clk_val);
 void dram_disable_bypass(void);
 
+int configure_intpll(enum ccm_clk_src pll, u32 freq);
+
 int ccm_clk_src_on(enum ccm_clk_src oscpll, bool enable);
 int ccm_clk_src_auto(enum ccm_clk_src oscpll, bool enable);
 int ccm_clk_src_lpm(enum ccm_clk_src oscpll, bool enable);
