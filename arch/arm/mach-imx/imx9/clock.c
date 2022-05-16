@@ -563,6 +563,31 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	return -1;
 };
 
+int enable_i2c_clk(unsigned char enable, u32 i2c_num)
+{
+	if (i2c_num > 7)
+		return -EINVAL;
+
+	if (enable) {
+		/* 24M */
+		ccm_lpcg_on(CCGR_I2C1 + i2c_num, false);
+		ccm_clk_root_cfg(LPI2C1_CLK_ROOT + i2c_num, OSC_24M_CLK, 1);
+		ccm_lpcg_on(CCGR_I2C1 + i2c_num, true);
+	} else {
+		ccm_lpcg_on(CCGR_I2C1 + i2c_num, false);
+	}
+
+	return 0;
+}
+
+u32 imx_get_i2cclk(u32 i2c_num)
+{
+	if (i2c_num > 7)
+		return -EINVAL;
+
+	return ccm_clk_root_get_rate(LPUART1_CLK_ROOT + i2c_num);
+}
+
 u32 get_lpuart_clk(void)
 {
 	return mxc_get_clock(MXC_UART_CLK);
