@@ -513,7 +513,6 @@ void disable_isolation(void)
 
 void soc_power_init(void)
 {
-	mix_power_init(MIX_PD_DDRMIX);
 	mix_power_init(MIX_PD_MEDIAMIX);
 	mix_power_init(MIX_PD_MLMIX);
 
