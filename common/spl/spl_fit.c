@@ -67,7 +67,7 @@ static int find_node_from_desc(const void *fit, int node, const char *str)
 	return -ENOENT;
 }
 
-#ifdef CONFIG_DUAL_BOOTLOADER
+#ifdef CONFIG_IMX_TRUSTY_OS
 extern int spl_fit_get_rbindex(const void *fit);
 #endif
 
@@ -741,7 +741,7 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	if (ret < 0)
 		return ret;
 
-#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_IMX_TRUSTY_OS)
+#ifdef CONFIG_IMX_TRUSTY_OS
 	int rbindex;
 	rbindex = spl_fit_get_rbindex(ctx.fit);
 	if (rbindex < 0) {

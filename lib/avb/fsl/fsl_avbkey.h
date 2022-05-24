@@ -66,7 +66,7 @@ struct kblb_hdr {
 	/* Rollback index for bootloader is managed by SPL and
 	 * will be stored in RPMB.
 	 */
-#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_SPL_BUILD)
+#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_SPL_BUILD)
 	kblb_tag_t bootloader_rbk_tags;
 #endif
 	/* public key keyblb tag */

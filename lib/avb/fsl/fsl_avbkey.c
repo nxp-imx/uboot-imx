@@ -483,7 +483,7 @@ fail:
 }
 
 int rpmb_init(void) {
-#if !defined(CONFIG_SPL_BUILD) || !defined(CONFIG_DUAL_BOOTLOADER)
+#if !defined(CONFIG_SPL_BUILD) || !defined(CONFIG_IMX_TRUSTY_OS)
 	int i;
 #endif
 	kblb_hdr_t hdr;
@@ -502,7 +502,7 @@ int rpmb_init(void) {
 	 * RPMB which is different from the rollback index for vbmeta and
 	 * ATX key versions.
 	 */
-#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_DUAL_BOOTLOADER)
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_IMX_TRUSTY_OS)
 	if (rpmb_read(mmc_dev, (uint8_t *)&hdr, sizeof(hdr),
 			BOOTLOADER_RBIDX_OFFSET) != 0) {
 #else
@@ -516,7 +516,7 @@ int rpmb_init(void) {
 	else
 		printf("initialize rollback index...\n");
 	/* init rollback index */
-#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_DUAL_BOOTLOADER)
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_IMX_TRUSTY_OS)
 	offset = BOOTLOADER_RBIDX_START;
 	rbidx_len = BOOTLOADER_RBIDX_LEN;
 	rbidx = malloc(rbidx_len);
@@ -536,7 +536,7 @@ int rpmb_init(void) {
 	}
 	if (rbidx != NULL)
 		free(rbidx);
-#else /* CONFIG_SPL_BUILD && CONFIG_DUAL_BOOTLOADER */
+#else /* CONFIG_SPL_BUILD && CONFIG_IMX_TRUSTY_OS */
 	offset = AVB_RBIDX_START;
 	rbidx_len = AVB_RBIDX_LEN;
 	rbidx = malloc(rbidx_len);
@@ -582,11 +582,11 @@ int rpmb_init(void) {
 	if (rbidx != NULL)
 		free(rbidx);
 #endif
-#endif /* CONFIG_SPL_BUILD && CONFIG_DUAL_BOOTLOADER */
+#endif /* CONFIG_SPL_BUILD && CONFIG_IMX_TRUSTY_OS */
 
 	/* init hdr */
 	memcpy(hdr.magic, AVB_KBLB_MAGIC, AVB_KBLB_MAGIC_LEN);
-#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_DUAL_BOOTLOADER)
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_IMX_TRUSTY_OS)
 	if (rpmb_write(mmc_dev, (uint8_t *)&hdr, sizeof(hdr),
 			BOOTLOADER_RBIDX_OFFSET) != 0) {
 #else

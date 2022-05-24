@@ -272,7 +272,7 @@ void part_print_efi(struct blk_desc *dev_desc)
 		printf("\tguid:\t%pUl\n", uuid);
 	}
 
-#if !defined(CONFIG_DUAL_BOOTLOADER) || !defined(CONFIG_SPL_BUILD)
+#if !(defined(CONFIG_DUAL_BOOTLOADER) || defined(CONFIG_IMX_TRUSTY_OS)) || !defined(CONFIG_SPL_BUILD)
 	/* Remember to free pte */
 	free(gpt_pte);
 #endif
@@ -299,7 +299,7 @@ int part_get_info_efi(struct blk_desc *dev_desc, int part,
 	    !is_pte_valid(&gpt_pte[part - 1])) {
 		debug("%s: *** ERROR: Invalid partition number %d ***\n",
 			__func__, part);
-#if !defined(CONFIG_DUAL_BOOTLOADER) || !defined(CONFIG_SPL_BUILD)
+#if !(defined(CONFIG_DUAL_BOOTLOADER) || defined(CONFIG_IMX_TRUSTY_OS)) || !defined(CONFIG_SPL_BUILD)
 		free(gpt_pte);
 #endif
 		return -1;
@@ -328,7 +328,7 @@ int part_get_info_efi(struct blk_desc *dev_desc, int part,
 	debug("%s: start 0x" LBAF ", size 0x" LBAF ", name %s\n", __func__,
 	      info->start, info->size, info->name);
 
-#if !defined(CONFIG_DUAL_BOOTLOADER) || !defined(CONFIG_SPL_BUILD)
+#if !(defined(CONFIG_DUAL_BOOTLOADER) || defined(CONFIG_IMX_TRUSTY_OS)) || !defined(CONFIG_SPL_BUILD)
 	/* Heap memory is very limited in SPL, if the dual bootloader is
 	 * enabled, just load pte to dram instead of oc-ram. In such case,
 	 * this part of  memory shouldn't be freed. But in common routine,
@@ -339,7 +339,7 @@ int part_get_info_efi(struct blk_desc *dev_desc, int part,
 	return 0;
 }
 
-#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_SPL_BUILD)
+#if (defined(CONFIG_DUAL_BOOTLOADER) || defined(CONFIG_IMX_TRUSTY_OS)) && defined(CONFIG_SPL_BUILD)
 int part_get_info_efi_by_name(struct blk_desc *dev_desc, const char *name,
 		      struct disk_partition *info)
 {
@@ -393,7 +393,7 @@ int part_get_info_efi_by_name(struct blk_desc *dev_desc, const char *name,
 
 	return -1;
 }
-#endif /* CONFIG_DUAL_BOOTLOADER && CONFIG_SPL_BUILD */
+#endif /* (CONFIG_DUAL_BOOTLOADER || CONFIG_IMX_TRUSTY_OS) && CONFIG_SPL_BUILD */
 
 static int part_test_efi(struct blk_desc *dev_desc)
 {
@@ -1196,7 +1196,7 @@ static gpt_entry *alloc_read_gpt_entries(struct blk_desc *dev_desc,
 	 * don't forget to free the memory after use.
 	 */
 	if (count != 0) {
-#if defined(CONFIG_DUAL_BOOTLOADER) && defined(CONFIG_SPL_BUILD)
+#if (defined(CONFIG_DUAL_BOOTLOADER) || defined(CONFIG_IMX_TRUSTY_OS)) && defined(CONFIG_SPL_BUILD)
 		pte = (gpt_entry *)CONFIG_SYS_SPL_PTE_RAM_BASE;
 #else
 		pte = memalign(ARCH_DMA_MINALIGN,
@@ -1215,7 +1215,7 @@ static gpt_entry *alloc_read_gpt_entries(struct blk_desc *dev_desc,
 	blk_cnt = BLOCK_CNT(count, dev_desc);
 	if (blk_dread(dev_desc, blk, (lbaint_t)blk_cnt, pte) != blk_cnt) {
 		printf("*** ERROR: Can't read GPT Entries ***\n");
-#if !defined(CONFIG_DUAL_BOOTLOADER) || !defined(CONFIG_SPL_BUILD)
+#if !(defined(CONFIG_DUAL_BOOTLOADER) || defined(CONFIG_IMX_TRUSTY_OS)) || !defined(CONFIG_SPL_BUILD)
 		free(pte);
 #endif
 		return NULL;
