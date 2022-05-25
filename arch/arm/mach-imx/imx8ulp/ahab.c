@@ -321,7 +321,7 @@ static int do_ahab_status(struct cmd_tbl *cmdtp, int flag, int argc,
 	u32 lc;
 
 	lc = readl(FSB_BASE_ADDR + 0x41c);
-	lc &= 0x3f;
+	lc &= 0x3ff;
 
 	display_life_cycle(lc);
 	return 0;
