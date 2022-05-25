@@ -229,7 +229,7 @@ struct spl_image_info {
 	ulong dcrc_length;
 	ulong dcrc;
 #endif
-#ifdef CONFIG_DUAL_BOOTLOADER
+#ifdef CONFIG_IMX_TRUSTY_OS
 	uint64_t rbindex;
 #endif
 };

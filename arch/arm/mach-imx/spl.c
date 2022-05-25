@@ -458,10 +458,15 @@ void board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
 }
 
 #ifdef CONFIG_IMX_TRUSTY_OS
+int check_rollback_index(struct spl_image_info *spl_image, struct mmc *mmc);
 int check_rpmb_blob(struct mmc *mmc);
 
-int mmc_image_load_late(struct mmc *mmc)
+int mmc_image_load_late(struct spl_image_info *spl_image, struct mmc *mmc)
 {
+	/* Check the rollback index of next stage image */
+	if (check_rollback_index(spl_image, mmc) < 0)
+		return -1;
+
 	/* Check the rpmb key blob for trusty enabled platfrom. */
 	return check_rpmb_blob(mmc);
 }
