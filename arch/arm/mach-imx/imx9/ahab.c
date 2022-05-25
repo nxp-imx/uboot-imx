@@ -100,8 +100,6 @@ int ahab_verify_cntr_image(struct boot_img_t *img, int image_index)
 		       image_index, err, resp);
 		display_ahab_auth_ind(resp);
 
-		printf("auth debug stop\n");
-		asm volatile("b .");
 		return -EIO;
 	}
 
@@ -323,7 +321,8 @@ static int do_ahab_status(struct cmd_tbl *cmdtp, int flag, int argc,
 {
 	u32 lc;
 
-	lc = gd->arch.lifecycle & 0xffff;
+	lc = readl(FSB_BASE_ADDR + 0x41c);
+	lc &= 0x3ff;
 
 	display_life_cycle(lc);
 	return 0;
