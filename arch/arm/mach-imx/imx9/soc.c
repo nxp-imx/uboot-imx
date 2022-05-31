@@ -296,7 +296,7 @@ int arch_misc_init(void)
 
 int ft_system_setup(void *blob, struct bd_info *bd)
 {
-	return 0;
+	return ft_add_optee_node(blob, bd);
 }
 
 #if defined(CONFIG_SERIAL_TAG) || defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
