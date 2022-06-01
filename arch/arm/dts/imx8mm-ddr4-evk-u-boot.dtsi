@@ -6,6 +6,10 @@
 #include "imx8mm-u-boot.dtsi"
 
 / {
+	chosen {
+		bootargs = "console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200";
+	};
+
 	wdt-reboot {
 		compatible = "wdt-reboot";
 		wdt = <&wdog1>;
