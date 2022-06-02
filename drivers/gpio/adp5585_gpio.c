@@ -74,10 +74,10 @@
 #define ADP5585_GENERAL_CFG		0x3B
 #define ADP5585_INT_EN			0x3C
 
-#define ADP5585_MAXGPIO			11
-#define ADP5585_BANK(offs)		((offs) > 5)
-#define ADP5585_BIT(offs)		((offs) > 5 ? \
-					1u << (offs - 6) : 1u << (offs))
+#define ADP5585_MAXGPIO			10
+#define ADP5585_BANK(offs)		((offs) > 4)
+#define ADP5585_BIT(offs)		(offs > 4 ? \
+					1u << (offs - 5) : 1u << (offs))
 
 struct adp5585_plat {
 	fdt_addr_t addr;
@@ -164,9 +164,9 @@ static int adp5585_get_function(struct udevice *dev, unsigned offset)
 
 	bank =  ADP5585_BANK(offset);
 	bit = ADP5585_BIT(offset);
-	dir = plat->dir[bank] & 1 << bit;
+	dir = plat->dir[bank] & bit;
 
-	if (dir)
+	if (!dir)
 		return GPIOF_INPUT;
 	else
 		return GPIOF_OUTPUT;
@@ -209,6 +209,16 @@ static int adp5585_probe(struct udevice *dev)
 
 	uc_priv->gpio_count = ADP5585_MAXGPIO;
 	uc_priv->bank_name = "adp5585-gpio";
+
+	for(int i = 0; i < 2; i++) {
+		ret = dm_i2c_read(dev, ADP5585_GPO_DATA_OUT_A + i, &plat->dat_out[i], 1);
+		if (ret)
+			return ret;
+
+		ret = dm_i2c_read(dev, ADP5585_GPIO_DIRECTION_A + i, &plat->dir[i], 1);
+		if (ret)
+			return ret;
+	}
 
 	return 0;
 }
