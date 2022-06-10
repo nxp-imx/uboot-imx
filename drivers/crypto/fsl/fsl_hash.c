@@ -146,8 +146,8 @@ static int caam_hash_finish(void *hash_ctx, void *dest_buf,
 		sg_entry_len = (sec_in32(&ctx->sg_tbl[i].len_flag) &
 				SG_ENTRY_LENGTH_MASK);
 		len += sg_entry_len;
-		addr = ctx->sg_tbl[i].addr_hi;
-		addr = (addr << 32) | ctx->sg_tbl[i].addr_lo;
+		addr = sec_in32(&ctx->sg_tbl[i].addr_hi);
+		addr = (addr << 32) | sec_in32(&ctx->sg_tbl[i].addr_lo);
 		flush_dcache_range((ulong)addr, (ulong)addr + sg_entry_len);
 	}
 	inline_cnstr_jobdesc_hash(ctx->sha_desc, (uint8_t *)ctx->sg_tbl, len,
