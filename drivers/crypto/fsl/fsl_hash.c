@@ -146,9 +146,13 @@ static int caam_hash_finish(void *hash_ctx, void *dest_buf,
 		sg_entry_len = (sec_in32(&ctx->sg_tbl[i].len_flag) &
 				SG_ENTRY_LENGTH_MASK);
 		len += sg_entry_len;
+#ifdef CONFIG_CAAM_64BIT
 		addr = sec_in32(&ctx->sg_tbl[i].addr_hi);
 		addr = (addr << 32) | sec_in32(&ctx->sg_tbl[i].addr_lo);
-		flush_dcache_range((ulong)addr, (ulong)addr + sg_entry_len);
+#else
+		addr = sec_in32(&ctx->sg_tbl[i].addr_lo);
+#endif
+		flush_dcache_range(addr, addr + sg_entry_len);
 	}
 	inline_cnstr_jobdesc_hash(ctx->sha_desc, (uint8_t *)ctx->sg_tbl, len,
 				  ctx->hash,
