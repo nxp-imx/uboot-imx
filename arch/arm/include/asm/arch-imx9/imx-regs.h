@@ -43,6 +43,8 @@
 #define SRC_MIX_SLICE_FUNC_STAT_ISO_STAT BIT(4)
 #define SRC_MIX_SLICE_FUNC_STAT_MEM_STAT BIT(12)
 
+#define IMG_CONTAINER_BASE             (0x80000000UL)
+
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 #include <asm/types.h>
 #include <stdbool.h>
