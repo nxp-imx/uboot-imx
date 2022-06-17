@@ -1423,7 +1423,7 @@ static int ci_udc_otg_probe(struct udevice *dev)
 
 	ret = pinctrl_select_state(&priv->otgdev, "default");
 	if (ret)
-		printf("Failed to configure default pinctrl\n");
+		DBG("Failed to configure default pinctrl\n");
 
 #if defined(CONFIG_MX6)
 	if (usb_fused((u32)ehci)) {
