@@ -141,8 +141,10 @@ int board_eth_init(struct bd_info *bis)
 		puts("eTSEC1 is in sgmii mode\n");
 		tsec_info[num].flags |= TSEC_SGMII;
 		tsec_info[num].mii_devname = "LS1021A_SGMII_MDIO";
+		tsec_info[num].interface = PHY_INTERFACE_MODE_SGMII;
 	} else {
 		tsec_info[num].mii_devname = "LS1021A_RGMII_MDIO";
+		tsec_info[num].interface = PHY_INTERFACE_MODE_RGMII;
 	}
 	num++;
 #endif
@@ -152,14 +154,17 @@ int board_eth_init(struct bd_info *bis)
 		puts("eTSEC2 is in sgmii mode\n");
 		tsec_info[num].flags |= TSEC_SGMII;
 		tsec_info[num].mii_devname = "LS1021A_SGMII_MDIO";
+		tsec_info[num].interface = PHY_INTERFACE_MODE_SGMII;
 	} else {
 		tsec_info[num].mii_devname = "LS1021A_RGMII_MDIO";
+		tsec_info[num].interface = PHY_INTERFACE_MODE_RGMII;
 	}
 	num++;
 #endif
 #ifdef CONFIG_TSEC3
 	SET_STD_TSEC_INFO(tsec_info[num], 3);
 	tsec_info[num].mii_devname = "LS1021A_RGMII_MDIO";
+	tsec_info[num].interface = PHY_INTERFACE_MODE_RGMII;
 	num++;
 #endif
 	if (!num) {
