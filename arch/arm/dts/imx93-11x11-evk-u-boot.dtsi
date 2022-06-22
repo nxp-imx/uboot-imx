@@ -155,3 +155,25 @@
 	u-boot,dm-spl;
 	status = "okay";
 };
+
+&clk {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-rates;
+};
+
+&osc_32k {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&osc_24m {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&clk_ext1 {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
