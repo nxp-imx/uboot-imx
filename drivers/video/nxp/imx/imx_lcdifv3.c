@@ -353,6 +353,12 @@ static int lcdifv3_video_probe(struct udevice *dev)
 				return ret;
 			}
 
+			ret = video_bridge_check_timing(priv->disp_dev, &timings);
+			if (ret) {
+				dev_err(dev, "fail to check timing\n");
+				return ret;
+			}
+
 			ret = video_bridge_set_backlight(priv->disp_dev, 80);
 			if (ret) {
 				dev_err(dev, "fail to set backlight\n");
@@ -416,6 +422,7 @@ static int lcdifv3_video_remove(struct udevice *dev)
 
 static const struct udevice_id lcdifv3_video_ids[] = {
 	{ .compatible = "fsl,imx8mp-lcdif1" },
+	{ .compatible = "fsl,imx93-lcdif" },
 	{ /* sentinel */ }
 };
 
