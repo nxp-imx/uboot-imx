@@ -49,6 +49,16 @@ int video_bridge_check_attached(struct udevice *dev)
 	return ops->check_attached(dev);
 }
 
+int video_bridge_check_timing(struct udevice *dev, struct display_timing *timing)
+{
+	struct video_bridge_ops *ops = video_bridge_get_ops(dev);
+
+	if (ops->check_timing)
+		return ops->check_timing(dev, timing);
+
+	return 0;
+}
+
 int video_bridge_read_edid(struct udevice *dev, u8 *buf, int buf_size)
 {
 	struct video_bridge_ops *ops = video_bridge_get_ops(dev);
