@@ -274,6 +274,15 @@ config PHY_IMX8MQ_USB
 	help
 	  Support the USB3.0 PHY in NXP i.MX8MQ or i.MX8MP SoC
 
+config PHY_IMX93_MIPI_DPHY
+	bool "NXP i.MX93 MIPI DPHY Driver"
+	depends on PHY
+	depends on ARCH_IMX9
+	select REGMAP
+	help
+	  Enable this to add support for the Synopsys DW MIPI DPHY as found
+	  on NXP's i.MX93 SoC.
+
 config PHY_XILINX_ZYNQMP
 	tristate "Xilinx ZynqMP PHY driver"
 	depends on PHY && ARCH_ZYNQMP
