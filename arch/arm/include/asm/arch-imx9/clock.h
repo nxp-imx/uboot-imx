@@ -245,5 +245,5 @@ int ccm_shared_gpr_tz_access(u32 gpr,
 void enable_usboh3_clk(unsigned char enable);
 int set_clk_enet(enum enet_freq type);
 int set_clk_eqos(enum enet_freq type);
-
+void mxs_set_lcdclk(u32 base_addr, u32 freq);
 #endif
