@@ -35,6 +35,8 @@ static struct imx_fracpll_rate_table imx9_fracpll_tbl[] = {
 	FRAC_PLL_RATE(1000000000U, 1, 166, 4, 2, 3), /* 1000Mhz */
 	FRAC_PLL_RATE(933000000U, 1, 155, 4, 1, 2), /* 933Mhz */
 	FRAC_PLL_RATE(700000000U, 1, 145, 5, 5, 6), /* 700Mhz */
+	FRAC_PLL_RATE(484000000U, 1, 121, 6, 0, 1),
+	FRAC_PLL_RATE(445333333U, 1, 167, 9, 0, 1),
 	FRAC_PLL_RATE(466000000U, 1, 155, 8, 1, 3), /* 466Mhz */
 	FRAC_PLL_RATE(400000000U, 1, 200, 12, 0, 1), /* 400Mhz */
 };
@@ -797,6 +799,40 @@ int set_clk_enet(enum enet_freq type)
 	ccm_lpcg_on(CCGR_ENET1, true);
 
 	return 0;
+}
+
+void mxs_set_lcdclk(u32 base_addr, u32 freq)
+{
+	u32 div, i, krate, temp;
+	u32 best = 0, best_div = 0, best_pll = 0;
+
+	debug("%s to set rate to %dkhz\n", __func__, freq);
+
+	for (i = 0; i < ARRAY_SIZE(imx9_fracpll_tbl); i++) {
+		krate = imx9_fracpll_tbl[i].rate / 1000;
+		div = (krate + freq - 1) / freq;
+
+		if (div > 256)
+			continue;
+
+		temp = krate / div;
+		if (best == 0 || temp > best) {
+			best = temp;
+			best_div = div;
+			best_pll = imx9_fracpll_tbl[i].rate;
+		}
+	}
+
+	if (best == 0) {
+		printf("Can't find parent clock for LCDIF, target freq: %u\n", freq);
+		return;
+	}
+
+	/* Select to video PLL */
+	debug("%s, best_pll = %u, div = %u\n", __func__, best_pll, best_div);
+
+	configure_fracpll(VIDEO_PLL_CLK, best_pll);
+	ccm_clk_root_cfg(MEDIA_DISP_PIX_CLK_ROOT, VIDEO_PLL_CLK, best_div);
 }
 
 /*
