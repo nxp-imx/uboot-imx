@@ -8,6 +8,9 @@
 #include "imx93.dtsi"
 
 /{
+	model = "NXP i.MX93 11X11 EVK board";
+	compatible = "fsl,imx93-11x11-evk", "fsl,imx93";
+
 	chosen {
 		stdout-path = &lpuart1;
 	};
@@ -60,6 +63,56 @@
 		regulator-max-microvolt = <1800000>;
 	};
 
+	dsi_host: dsi-host {
+		compatible = "synopsys,dw-mipi-dsi";
+		status = "okay";
+	};
+
+	rm67199_panel {
+		compatible = "raydium,rm67199";
+		reset-gpio = <&adp5585gpio 6 GPIO_ACTIVE_LOW>;
+		dsi-lanes = <4>;
+		video-mode = <2>;	/* 0: burst mode
+					 * 1: non-burst mode with sync event
+					 * 2: non-burst mode with sync pulse
+					 */
+		width-mm = <68>;
+		height-mm = <121>;
+		status = "okay";
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&dsi_out>;
+			};
+		};
+	};
+};
+
+&dphy {
+	status = "okay";
+};
+
+&dsi {
+	status = "okay";
+
+	ports {
+		port@1 {
+			dsi_to_adv7535: endpoint {
+				remote-endpoint = <&adv7535_to_dsi>;
+			};
+		};
+
+		port@2 {
+			dsi_out: endpoint {
+				remote-endpoint = <&panel_in>;
+			};
+		};
+	};
+};
+
+&lcdif {
+	status = "okay";
+	assigned-clock-rates = <484000000>, <121000000>, <400000000>, <133333333>;
 };
 
 &lpi2c1 {
@@ -70,6 +123,20 @@
 	pinctrl-0 = <&pinctrl_lpi2c1>;
 	pinctrl-1 = <&pinctrl_lpi2c1>;
 	status = "okay";
+
+	adv7535: hdmi@3d {
+		compatible = "adi,adv7535";
+		reg = <0x3d>;
+		adi,addr-cec = <0x3c>;
+		adi,dsi-lanes = <4>;
+		status = "okay";
+
+		port {
+			adv7535_to_dsi: endpoint {
+				remote-endpoint = <&dsi_to_adv7535>;
+			};
+		};
+	};
 
 	ptn5110: tcpc@50 {
 		compatible = "nxp,ptn5110";
