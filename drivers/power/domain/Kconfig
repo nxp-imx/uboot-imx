@@ -39,6 +39,12 @@ config IMX8M_POWER_DOMAIN
 	  Enable support for manipulating NXP i.MX8M on-SoC power domains via
 	  requests to the ATF.
 
+config IMX93_BLK_CTRL
+	bool "Enable i.MX93 block control driver"
+	depends on POWER_DOMAIN && ARCH_IMX9
+	help
+	  Enable support for manipulating NXP i.MX93 on-SoC block control driver
+
 config MTK_POWER_DOMAIN
 	bool "Enable the MediaTek power domain driver"
 	depends on POWER_DOMAIN && ARCH_MEDIATEK
