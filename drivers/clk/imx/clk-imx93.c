@@ -387,6 +387,11 @@ static int imx93_clk_probe(struct udevice *dev)
 	clk_dm(IMX93_CLK_SYS_PLL_PFD2_DIV2,
 	       imx_clk_fixed_factor("sys_pll_pfd2_div2", "sys_pll_pfd2", 1, 2));
 
+#ifndef CONFIG_SPL_BUILD
+	clk_dm(IMX93_CLK_VIDEO_PLL,
+	       clk_register_imx93_pll("video_pll", "clock-osc-24m", (void __iomem *)0x44481400));
+#endif
+
 	ccm_base = dev_read_addr_ptr(dev);
 	if (ccm_base == (void *)FDT_ADDR_T_NONE) {
 		debug("%s: No CCM register base address\n", __func__);
