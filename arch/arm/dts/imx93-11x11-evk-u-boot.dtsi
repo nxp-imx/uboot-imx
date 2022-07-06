@@ -109,7 +109,15 @@
 	fsl,signal-voltage-switch-extra-delay-ms = <8>;
 };
 
+&lpi2c1 {
+	u-boot,dm-spl;
+};
+
 &lpi2c2 {
+	u-boot,dm-spl;
+};
+
+&lpi2c3 {
 	u-boot,dm-spl;
 };
 
@@ -121,7 +129,15 @@
 	u-boot,dm-spl;
 };
 
+&pinctrl_lpi2c1 {
+	u-boot,dm-spl;
+};
+
 &pinctrl_lpi2c2 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_lpi2c3 {
 	u-boot,dm-spl;
 };
 
