@@ -10,6 +10,10 @@
 
 static struct imx_pinctrl_soc_info imx8mq_pinctrl_soc_info __section(".data");
 
+static struct imx_pinctrl_soc_info imx93_pinctrl_soc_info = {
+	.flags = ZERO_OFFSET_VALID,
+};
+
 static int imx8mq_pinctrl_probe(struct udevice *dev)
 {
 	struct imx_pinctrl_soc_info *info =
@@ -23,6 +27,7 @@ static const struct udevice_id imx8m_pinctrl_match[] = {
 	{ .compatible = "fsl,imx8mm-iomuxc", .data = (ulong)&imx8mq_pinctrl_soc_info },
 	{ .compatible = "fsl,imx8mn-iomuxc", .data = (ulong)&imx8mq_pinctrl_soc_info },
 	{ .compatible = "fsl,imx8mp-iomuxc", .data = (ulong)&imx8mq_pinctrl_soc_info },
+	{ .compatible = "fsl,imx93-iomuxc", .data = (ulong)&imx93_pinctrl_soc_info },
 	{ /* sentinel */ }
 };
 

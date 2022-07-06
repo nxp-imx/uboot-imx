@@ -20,3 +20,4 @@ obj-$(CONFIG_$(SPL_TPL_)CLK_IMX8MP) += clk-imx8mp.o clk-pll14xx.o \
 
 obj-$(CONFIG_$(SPL_TPL_)CLK_IMXRT1020) += clk-imxrt1020.o
 obj-$(CONFIG_$(SPL_TPL_)CLK_IMXRT1050) += clk-imxrt1050.o
+obj-$(CONFIG_$(SPL_TPL_)CLK_IMX93) += clk-imx93.o clk-fracn-gppll.o

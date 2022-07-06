@@ -236,7 +236,7 @@ static const struct panel_ops adv7535_ops = {
 };
 
 static const struct udevice_id adv7535_ids[] = {
-	{ .compatible = "adi,adv7533" },
+	{ .compatible = "adi,adv7535" },
 	{ }
 };
 

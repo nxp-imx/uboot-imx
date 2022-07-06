@@ -10,7 +10,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/imx-regs.h>
 #include <env.h>
-#include <asm/arch/s400_api.h>
+#include <asm/mach-imx/s400_api.h>
 #include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -30,6 +30,9 @@ struct s400_map_entry {
 	u32 fuse_offset;
 	u32 s400_index;
 };
+
+#if defined(CONFIG_IMX8ULP)
+#define FSB_OTP_SHADOW	0x800
 
 struct fsb_map_entry fsb_mapping_table[] = {
 	{ 3, 8 },
@@ -65,6 +68,53 @@ struct s400_map_entry s400_api_mapping_table[] = {
 	{ 23, 1, 4, 2 }, /* OTFAD */
 	{ 25, 8 }, /* Test config2 */
 };
+#elif defined(CONFIG_ARCH_IMX9)
+#define FSB_OTP_SHADOW	0x8000
+
+struct fsb_map_entry fsb_mapping_table[] = {
+	{ 0, 8 },
+	{ 1, 8 },
+	{ 2, 8 },
+	{ 3, 8 },
+	{ 4, 8 },
+	{ 5, 8 },
+	{ 6, 4 },
+	{ -1, 260 },
+	{ 39, 8 },
+	{ 40, 8 },
+	{ 41, 8 },
+	{ 42, 8 },
+	{ 43, 8 },
+	{ 44, 8 },
+	{ 45, 8 },
+	{ 46, 8 },
+	{ 47, 8 },
+	{ 48, 8 },
+	{ 49, 8 },
+	{ 50, 8 },
+	{ 51, 8 },
+	{ 52, 8 },
+	{ 53, 8 },
+	{ 54, 8 },
+	{ 55, 8 },
+	{ 56, 8 },
+	{ 57, 8 },
+	{ 58, 8 },
+	{ 59, 8 },
+	{ 60, 8 },
+	{ 61, 8 },
+	{ 62, 8 },
+	{ 63, 8 },
+};
+
+struct s400_map_entry s400_api_mapping_table[] = {
+	{ 7, 1, 7, 63 },
+	{ 16, 8, },
+	{ 17, 8, },
+	{ 22, 1, 6 },
+	{ 23, 1, 4 },
+};
+#endif
 
 static s32 map_fsb_fuse_index(u32 bank, u32 word, bool *redundancy)
 {
@@ -74,7 +124,8 @@ static s32 map_fsb_fuse_index(u32 bank, u32 word, bool *redundancy)
 	/* map the fuse from ocotp fuse map to FSB*/
 	for (i = 0; i < size; i++) {
 		if (fsb_mapping_table[i].fuse_bank != -1 &&
-		    fsb_mapping_table[i].fuse_bank == bank) {
+		    fsb_mapping_table[i].fuse_bank == bank &&
+		    fsb_mapping_table[i].fuse_words > word) {
 			break;
 		}
 
@@ -118,6 +169,7 @@ static s32 map_s400_fuse_index(u32 bank, u32 word)
 	return s400_api_mapping_table[i].fuse_bank * 8 + word;
 }
 
+#if defined(CONFIG_IMX8ULP)
 int fuse_sense(u32 bank, u32 word, u32 *val)
 {
 	s32 word_index;
@@ -128,7 +180,7 @@ int fuse_sense(u32 bank, u32 word, u32 *val)
 
 	word_index = map_fsb_fuse_index(bank, word, &redundancy);
 	if (word_index >= 0) {
-		*val = readl((ulong)FSB_BASE_ADDR + 0x800 + (word_index << 2));
+		*val = readl((ulong)FSB_BASE_ADDR + FSB_OTP_SHADOW + (word_index << 2));
 		if (redundancy)
 			*val = (*val >> ((word % 2) * 16)) & 0xFFFF;
 
@@ -170,6 +222,44 @@ int fuse_sense(u32 bank, u32 word, u32 *val)
 
 	return -ENOENT;
 }
+#elif defined(CONFIG_ARCH_IMX9)
+int fuse_sense(u32 bank, u32 word, u32 *val)
+{
+	s32 word_index;
+	bool redundancy;
+
+	if (bank >= FUSE_BANKS || word >= WORDS_PER_BANKS || !val)
+		return -EINVAL;
+
+	word_index = map_fsb_fuse_index(bank, word, &redundancy);
+	if (word_index >= 0) {
+		*val = readl((ulong)FSB_BASE_ADDR + FSB_OTP_SHADOW + (word_index << 2));
+		if (redundancy)
+			*val = (*val >> ((word % 2) * 16)) & 0xFFFF;
+
+		return 0;
+	}
+
+	word_index = map_s400_fuse_index(bank, word);
+	if (word_index >= 0) {
+		u32 data;
+		u32 res, size = 1;
+		int ret;
+
+		ret = ahab_read_common_fuse(word_index, &data, size, &res);
+		if (ret) {
+			printf("ahab read fuse failed %d, 0x%x\n", ret, res);
+			return ret;
+		}
+
+		*val = data;
+
+		return 0;
+	}
+
+	return -ENOENT;
+}
+#endif
 
 int fuse_read(u32 bank, u32 word, u32 *val)
 {

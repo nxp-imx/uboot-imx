@@ -177,8 +177,7 @@ static int dev_power_domain_ctrl(struct udevice *dev, bool on)
 	 * off their power-domain parent. So we will get here again and
 	 * again and will be stuck in an endless loop.
 	 */
-	if (!on && dev_get_parent(dev) == pd.dev &&
-	    device_get_uclass_id(dev) == UCLASS_POWER_DOMAIN)
+	if (!on && dev_get_parent(dev) == pd.dev)
 		return ret;
 
 	/*

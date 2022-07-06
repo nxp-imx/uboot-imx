@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <common.h>
@@ -9,7 +9,7 @@
 #include <dm/lists.h>
 #include <dm/root.h>
 #include <dm/device-internal.h>
-#include <asm/arch/s400_api.h>
+#include <asm/mach-imx/s400_api.h>
 #include <asm/arch/imx-regs.h>
 #include <linux/iopoll.h>
 #include <misc.h>
@@ -95,7 +95,7 @@ int mu_hal_receivemsg(ulong base, u32 reg_index, u32 *msg)
 
 static int imx8ulp_mu_read(struct mu_type *base, void *data)
 {
-	struct imx8ulp_s400_msg *msg = (struct imx8ulp_s400_msg *)data;
+	struct sentinel_msg *msg = (struct sentinel_msg *)data;
 	int ret;
 	u8 count = 0;
 
@@ -128,7 +128,7 @@ static int imx8ulp_mu_read(struct mu_type *base, void *data)
 
 static int imx8ulp_mu_write(struct mu_type *base, void *data)
 {
-	struct imx8ulp_s400_msg *msg = (struct imx8ulp_s400_msg *)data;
+	struct sentinel_msg *msg = (struct sentinel_msg *)data;
 	int ret;
 	u8 count = 0;
 
@@ -181,7 +181,7 @@ static int imx8ulp_mu_call(struct udevice *dev, int no_resp, void *tx_msg,
 			return ret;
 	}
 
-	result = ((struct imx8ulp_s400_msg *)rx_msg)->data[0];
+	result = ((struct sentinel_msg *)rx_msg)->data[0];
 	if ((result & 0xff) == 0xd6)
 		return 0;
 
@@ -229,6 +229,7 @@ static struct misc_ops imx8ulp_mu_ops = {
 
 static const struct udevice_id imx8ulp_mu_ids[] = {
 	{ .compatible = "fsl,imx8ulp-mu" },
+	{ .compatible = "fsl,imx93-mu-s4" },
 	{ }
 };
 

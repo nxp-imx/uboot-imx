@@ -457,6 +457,20 @@ static struct phy_driver RTL8211F_driver = {
 	.writeext = &rtl8211f_phy_extwrite,
 };
 
+/* Support for RTL8211F-VD PHY */
+static struct phy_driver RTL8211FVD_driver = {
+	.name = "RealTek RTL8211F-VD",
+	.uid = 0x1cc878,
+	.mask = 0xffffff,
+	.features = PHY_GBIT_FEATURES,
+	.probe = &rtl8211f_probe,
+	.config = &rtl8211f_config,
+	.startup = &rtl8211f_startup,
+	.shutdown = &genphy_shutdown,
+	.readext = &rtl8211f_phy_extread,
+	.writeext = &rtl8211f_phy_extwrite,
+};
+
 /* Support for RTL8201F PHY */
 static struct phy_driver RTL8201F_driver = {
 	.name = "RealTek RTL8201F 10/100Mbps Ethernet",
@@ -476,6 +490,7 @@ int phy_realtek_init(void)
 	phy_register(&RTL8211F_driver);
 	phy_register(&RTL8211DN_driver);
 	phy_register(&RTL8201F_driver);
+	phy_register(&RTL8211FVD_driver);
 
 	return 0;
 }

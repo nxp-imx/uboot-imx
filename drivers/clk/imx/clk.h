@@ -41,6 +41,18 @@ struct imx_pll14xx_clk {
 	int flags;
 };
 
+struct imx93_pll_fracn_gp {
+	unsigned int rate;
+	unsigned int mfi;
+	unsigned int mfn;
+	unsigned int mfd;
+	unsigned int rdiv;
+	unsigned int odiv;
+};
+
+struct clk *clk_register_imx93_pll(const char *name, const char *parent_name,
+				   void __iomem *reg);
+
 struct clk *imx_clk_pll14xx(const char *name, const char *parent_name,
 			    void __iomem *base,
 			    const struct imx_pll14xx_clk *pll_clk);

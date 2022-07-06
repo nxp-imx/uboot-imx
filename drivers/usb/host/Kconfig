@@ -189,9 +189,9 @@ config USB_EHCI_MX6
 
 config USB_EHCI_MX7
 	bool "Support for i.MX7 on-chip EHCI USB controller"
-	depends on ARCH_MX7 || IMX8M
-	select PHY if IMX8M
-	select NOP_PHY if IMX8M
+	depends on ARCH_MX7 || IMX8M || IMX93
+	select PHY if IMX8M || IMX93
+	select NOP_PHY if IMX8M || IMX93
 	default y
 	---help---
 	  Enables support for the on-chip EHCI controller on i.MX7 SoCs.
