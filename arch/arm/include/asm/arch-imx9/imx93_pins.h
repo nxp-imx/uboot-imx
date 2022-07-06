@@ -34,39 +34,39 @@ enum {
          MX93_PAD_DAP_TDO_TRACESWO__LPUART5_TX                    = IOMUX_PAD(0x01BC, 0x000C, 6, 0x0434, 0, 0),
 
          MX93_PAD_GPIO_IO00__GPIO2_IO00                           = IOMUX_PAD(0x01C0, 0x0010, 0, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO00__LPI2C3_SDA                           = IOMUX_PAD(0x01C0, 0x0010, 1, 0x03E4, 0, 0),
+         MX93_PAD_GPIO_IO00__LPI2C3_SDA                           = IOMUX_PAD(0x01C0, 0x0010, 1 | IOMUX_CONFIG_SION, 0x03E4, 0, 0),
          MX93_PAD_GPIO_IO00__MEDIAMIX_CAM_CLK                     = IOMUX_PAD(0x01C0, 0x0010, 2, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO00__MEDIAMIX_DISP_CLK                    = IOMUX_PAD(0x01C0, 0x0010, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO00__LPSPI6_PCS0                          = IOMUX_PAD(0x01C0, 0x0010, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO00__LPUART5_TX                           = IOMUX_PAD(0x01C0, 0x0010, 5, 0x0434, 1, 0),
-         MX93_PAD_GPIO_IO00__LPI2C5_SDA                           = IOMUX_PAD(0x01C0, 0x0010, 6, 0x03EC, 0, 0),
+         MX93_PAD_GPIO_IO00__LPI2C5_SDA                           = IOMUX_PAD(0x01C0, 0x0010, 6 | IOMUX_CONFIG_SION, 0x03EC, 0, 0),
          MX93_PAD_GPIO_IO00__FLEXIO1_FLEXIO00                     = IOMUX_PAD(0x01C0, 0x0010, 7, 0x036C, 0, 0),
 
          MX93_PAD_GPIO_IO01__GPIO2_IO01                           = IOMUX_PAD(0x01C4, 0x0014, 0, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO01__LPI2C3_SCL                           = IOMUX_PAD(0x01C4, 0x0014, 1, 0x03E0, 0, 0),
+         MX93_PAD_GPIO_IO01__LPI2C3_SCL                           = IOMUX_PAD(0x01C4, 0x0014, 1 | IOMUX_CONFIG_SION, 0x03E0, 0, 0),
          MX93_PAD_GPIO_IO01__MEDIAMIX_CAM_DATA00                  = IOMUX_PAD(0x01C4, 0x0014, 2, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO01__MEDIAMIX_DISP_DE                     = IOMUX_PAD(0x01C4, 0x0014, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO01__LPSPI6_SIN                           = IOMUX_PAD(0x01C4, 0x0014, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO01__LPUART5_RX                           = IOMUX_PAD(0x01C4, 0x0014, 5, 0x0430, 1, 0),
-         MX93_PAD_GPIO_IO01__LPI2C5_SCL                           = IOMUX_PAD(0x01C4, 0x0014, 6, 0x03E8, 0, 0),
+         MX93_PAD_GPIO_IO01__LPI2C5_SCL                           = IOMUX_PAD(0x01C4, 0x0014, 6 | IOMUX_CONFIG_SION, 0x03E8, 0, 0),
          MX93_PAD_GPIO_IO01__FLEXIO1_FLEXIO01                     = IOMUX_PAD(0x01C4, 0x0014, 7, 0x0370, 0, 0),
 
          MX93_PAD_GPIO_IO02__GPIO2_IO02                           = IOMUX_PAD(0x01C8, 0x0018, 0, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO02__LPI2C4_SDA                           = IOMUX_PAD(0x01C8, 0x0018, 1, 0x0000, 0, 0),
+         MX93_PAD_GPIO_IO02__LPI2C4_SDA                           = IOMUX_PAD(0x01C8, 0x0018, 1 | IOMUX_CONFIG_SION, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO02__MEDIAMIX_CAM_VSYNC                   = IOMUX_PAD(0x01C8, 0x0018, 2, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO02__MEDIAMIX_DISP_VSYNC                  = IOMUX_PAD(0x01C8, 0x0018, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO02__LPSPI6_SOUT                          = IOMUX_PAD(0x01C8, 0x0018, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO02__LPUART5_CTS_B                        = IOMUX_PAD(0x01C8, 0x0018, 5, 0x042C, 1, 0),
-         MX93_PAD_GPIO_IO02__LPI2C6_SDA                           = IOMUX_PAD(0x01C8, 0x0018, 6, 0x03F4, 0, 0),
+         MX93_PAD_GPIO_IO02__LPI2C6_SDA                           = IOMUX_PAD(0x01C8, 0x0018, 6 | IOMUX_CONFIG_SION, 0x03F4, 0, 0),
          MX93_PAD_GPIO_IO02__FLEXIO1_FLEXIO02                     = IOMUX_PAD(0x01C8, 0x0018, 7, 0x0374, 0, 0),
 
          MX93_PAD_GPIO_IO03__GPIO2_IO03                           = IOMUX_PAD(0x01CC, 0x001C, 0, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO03__LPI2C4_SCL                           = IOMUX_PAD(0x01CC, 0x001C, 1, 0x0000, 0, 0),
+         MX93_PAD_GPIO_IO03__LPI2C4_SCL                           = IOMUX_PAD(0x01CC, 0x001C, 1 | IOMUX_CONFIG_SION, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO03__MEDIAMIX_CAM_HSYNC                   = IOMUX_PAD(0x01CC, 0x001C, 2, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO03__MEDIAMIX_DISP_HSYNC                  = IOMUX_PAD(0x01CC, 0x001C, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO03__LPSPI6_SCK                           = IOMUX_PAD(0x01CC, 0x001C, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO03__LPUART5_RTS_B                        = IOMUX_PAD(0x01CC, 0x001C, 5, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO03__LPI2C6_SCL                           = IOMUX_PAD(0x01CC, 0x001C, 6, 0x03F0, 0, 0),
+         MX93_PAD_GPIO_IO03__LPI2C6_SCL                           = IOMUX_PAD(0x01CC, 0x001C, 6 | IOMUX_CONFIG_SION, 0x03F0, 0, 0),
          MX93_PAD_GPIO_IO03__FLEXIO1_FLEXIO03                     = IOMUX_PAD(0x01CC, 0x001C, 7, 0x0378, 0, 0),
 
          MX93_PAD_GPIO_IO04__GPIO2_IO04                           = IOMUX_PAD(0x01D0, 0x0020, 0, 0x0000, 0, 0),
@@ -75,7 +75,7 @@ enum {
          MX93_PAD_GPIO_IO04__MEDIAMIX_DISP_DATA00                 = IOMUX_PAD(0x01D0, 0x0020, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO04__LPSPI7_PCS0                          = IOMUX_PAD(0x01D0, 0x0020, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO04__LPUART6_TX                           = IOMUX_PAD(0x01D0, 0x0020, 5, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO04__LPI2C6_SDA                           = IOMUX_PAD(0x01D0, 0x0020, 6, 0x03F4, 1, 0),
+         MX93_PAD_GPIO_IO04__LPI2C6_SDA                           = IOMUX_PAD(0x01D0, 0x0020, 6 | IOMUX_CONFIG_SION, 0x03F4, 1, 0),
          MX93_PAD_GPIO_IO04__FLEXIO1_FLEXIO04                     = IOMUX_PAD(0x01D0, 0x0020, 7, 0x037C, 0, 0),
 
          MX93_PAD_GPIO_IO05__GPIO2_IO05                           = IOMUX_PAD(0x01D4, 0x0024, 0, 0x0000, 0, 0),
@@ -84,7 +84,7 @@ enum {
          MX93_PAD_GPIO_IO05__MEDIAMIX_DISP_DATA01                 = IOMUX_PAD(0x01D4, 0x0024, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO05__LPSPI7_SIN                           = IOMUX_PAD(0x01D4, 0x0024, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO05__LPUART6_RX                           = IOMUX_PAD(0x01D4, 0x0024, 5, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO05__LPI2C6_SCL                           = IOMUX_PAD(0x01D4, 0x0024, 6, 0x03F0, 1, 0),
+         MX93_PAD_GPIO_IO05__LPI2C6_SCL                           = IOMUX_PAD(0x01D4, 0x0024, 6 | IOMUX_CONFIG_SION, 0x03F0, 1, 0),
          MX93_PAD_GPIO_IO05__FLEXIO1_FLEXIO05                     = IOMUX_PAD(0x01D4, 0x0024, 7, 0x0380, 0, 0),
 
          MX93_PAD_GPIO_IO06__GPIO2_IO06                           = IOMUX_PAD(0x01D8, 0x0028, 0, 0x0000, 0, 0),
@@ -93,7 +93,7 @@ enum {
          MX93_PAD_GPIO_IO06__MEDIAMIX_DISP_DATA02                 = IOMUX_PAD(0x01D8, 0x0028, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO06__LPSPI7_SOUT                          = IOMUX_PAD(0x01D8, 0x0028, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO06__LPUART6_CTS_B                        = IOMUX_PAD(0x01D8, 0x0028, 5, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO06__LPI2C7_SDA                           = IOMUX_PAD(0x01D8, 0x0028, 6, 0x03FC, 0, 0),
+         MX93_PAD_GPIO_IO06__LPI2C7_SDA                           = IOMUX_PAD(0x01D8, 0x0028, 6 | IOMUX_CONFIG_SION, 0x03FC, 0, 0),
          MX93_PAD_GPIO_IO06__FLEXIO1_FLEXIO06                     = IOMUX_PAD(0x01D8, 0x0028, 7, 0x0384, 0, 0),
 
          MX93_PAD_GPIO_IO07__GPIO2_IO07                           = IOMUX_PAD(0x01DC, 0x002C, 0, 0x0000, 0, 0),
@@ -102,7 +102,7 @@ enum {
          MX93_PAD_GPIO_IO07__MEDIAMIX_DISP_DATA03                 = IOMUX_PAD(0x01DC, 0x002C, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO07__LPSPI7_SCK                           = IOMUX_PAD(0x01DC, 0x002C, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO07__LPUART6_RTS_B                        = IOMUX_PAD(0x01DC, 0x002C, 5, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO07__LPI2C7_SCL                           = IOMUX_PAD(0x01DC, 0x002C, 6, 0x03F8, 0, 0),
+         MX93_PAD_GPIO_IO07__LPI2C7_SCL                           = IOMUX_PAD(0x01DC, 0x002C, 6 | IOMUX_CONFIG_SION, 0x03F8, 0, 0),
          MX93_PAD_GPIO_IO07__FLEXIO1_FLEXIO07                     = IOMUX_PAD(0x01DC, 0x002C, 7, 0x0388, 0, 0),
 
          MX93_PAD_GPIO_IO08__GPIO2_IO08                           = IOMUX_PAD(0x01E0, 0x0030, 0, 0x0000, 0, 0),
@@ -111,7 +111,7 @@ enum {
          MX93_PAD_GPIO_IO08__MEDIAMIX_DISP_DATA04                 = IOMUX_PAD(0x01E0, 0x0030, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO08__TPM6_CH0                             = IOMUX_PAD(0x01E0, 0x0030, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO08__LPUART7_TX                           = IOMUX_PAD(0x01E0, 0x0030, 5, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO08__LPI2C7_SDA                           = IOMUX_PAD(0x01E0, 0x0030, 6, 0x03FC, 1, 0),
+         MX93_PAD_GPIO_IO08__LPI2C7_SDA                           = IOMUX_PAD(0x01E0, 0x0030, 6 | IOMUX_CONFIG_SION, 0x03FC, 1, 0),
          MX93_PAD_GPIO_IO08__FLEXIO1_FLEXIO08                     = IOMUX_PAD(0x01E0, 0x0030, 7, 0x038C, 0, 0),
 
          MX93_PAD_GPIO_IO09__GPIO2_IO09                           = IOMUX_PAD(0x01E4, 0x0034, 0, 0x0000, 0, 0),
@@ -120,7 +120,7 @@ enum {
          MX93_PAD_GPIO_IO09__MEDIAMIX_DISP_DATA05                 = IOMUX_PAD(0x01E4, 0x0034, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO09__TPM3_EXTCLK                          = IOMUX_PAD(0x01E4, 0x0034, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO09__LPUART7_RX                           = IOMUX_PAD(0x01E4, 0x0034, 5, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO09__LPI2C7_SCL                           = IOMUX_PAD(0x01E4, 0x0034, 6, 0x03F8, 1, 0),
+         MX93_PAD_GPIO_IO09__LPI2C7_SCL                           = IOMUX_PAD(0x01E4, 0x0034, 6 | IOMUX_CONFIG_SION, 0x03F8, 1, 0),
          MX93_PAD_GPIO_IO09__FLEXIO1_FLEXIO09                     = IOMUX_PAD(0x01E4, 0x0034, 7, 0x0390, 0, 0),
 
          MX93_PAD_GPIO_IO10__GPIO2_IO10                           = IOMUX_PAD(0x01E8, 0x0038, 0, 0x0000, 0, 0),
@@ -129,7 +129,7 @@ enum {
          MX93_PAD_GPIO_IO10__MEDIAMIX_DISP_DATA06                 = IOMUX_PAD(0x01E8, 0x0038, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO10__TPM4_EXTCLK                          = IOMUX_PAD(0x01E8, 0x0038, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO10__LPUART7_CTS_B                        = IOMUX_PAD(0x01E8, 0x0038, 5, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO10__LPI2C8_SDA                           = IOMUX_PAD(0x01E8, 0x0038, 6, 0x0404, 0, 0),
+         MX93_PAD_GPIO_IO10__LPI2C8_SDA                           = IOMUX_PAD(0x01E8, 0x0038, 6 | IOMUX_CONFIG_SION, 0x0404, 0, 0),
          MX93_PAD_GPIO_IO10__FLEXIO1_FLEXIO10                     = IOMUX_PAD(0x01E8, 0x0038, 7, 0x0394, 0, 0),
 
          MX93_PAD_GPIO_IO11__GPIO2_IO11                           = IOMUX_PAD(0x01EC, 0x003C, 0, 0x0000, 0, 0),
@@ -138,7 +138,7 @@ enum {
          MX93_PAD_GPIO_IO11__MEDIAMIX_DISP_DATA07                 = IOMUX_PAD(0x01EC, 0x003C, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO11__TPM5_EXTCLK                          = IOMUX_PAD(0x01EC, 0x003C, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO11__LPUART7_RTS_B                        = IOMUX_PAD(0x01EC, 0x003C, 5, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO11__LPI2C8_SCL                           = IOMUX_PAD(0x01EC, 0x003C, 6, 0x0400, 0, 0),
+         MX93_PAD_GPIO_IO11__LPI2C8_SCL                           = IOMUX_PAD(0x01EC, 0x003C, 6 | IOMUX_CONFIG_SION, 0x0400, 0, 0),
          MX93_PAD_GPIO_IO11__FLEXIO1_FLEXIO11                     = IOMUX_PAD(0x01EC, 0x003C, 7, 0x0398, 0, 0),
 
          MX93_PAD_GPIO_IO12__GPIO2_IO12                           = IOMUX_PAD(0x01F0, 0x0040, 0, 0x0000, 0, 0),
@@ -147,7 +147,7 @@ enum {
          MX93_PAD_GPIO_IO12__MEDIAMIX_DISP_DATA08                 = IOMUX_PAD(0x01F0, 0x0040, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO12__LPSPI8_PCS0                          = IOMUX_PAD(0x01F0, 0x0040, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO12__LPUART8_TX                           = IOMUX_PAD(0x01F0, 0x0040, 5, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO12__LPI2C8_SDA                           = IOMUX_PAD(0x01F0, 0x0040, 6, 0x0404, 1, 0),
+         MX93_PAD_GPIO_IO12__LPI2C8_SDA                           = IOMUX_PAD(0x01F0, 0x0040, 6 | IOMUX_CONFIG_SION, 0x0404, 1, 0),
          MX93_PAD_GPIO_IO12__SAI3_RX_SYNC                         = IOMUX_PAD(0x01F0, 0x0040, 7, 0x0450, 0, 0),
 
          MX93_PAD_GPIO_IO13__GPIO2_IO13                           = IOMUX_PAD(0x01F4, 0x0044, 0, 0x0000, 0, 0),
@@ -156,7 +156,7 @@ enum {
          MX93_PAD_GPIO_IO13__MEDIAMIX_DISP_DATA09                 = IOMUX_PAD(0x01F4, 0x0044, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO13__LPSPI8_SIN                           = IOMUX_PAD(0x01F4, 0x0044, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO13__LPUART8_RX                           = IOMUX_PAD(0x01F4, 0x0044, 5, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO13__LPI2C8_SCL                           = IOMUX_PAD(0x01F4, 0x0044, 6, 0x0400, 1, 0),
+         MX93_PAD_GPIO_IO13__LPI2C8_SCL                           = IOMUX_PAD(0x01F4, 0x0044, 6 | IOMUX_CONFIG_SION, 0x0400, 1, 0),
          MX93_PAD_GPIO_IO13__FLEXIO1_FLEXIO13                     = IOMUX_PAD(0x01F4, 0x0044, 7, 0x039C, 0, 0),
 
          MX93_PAD_GPIO_IO14__GPIO2_IO14                           = IOMUX_PAD(0x01F8, 0x0048, 0, 0x0000, 0, 0),
@@ -237,7 +237,7 @@ enum {
          MX93_PAD_GPIO_IO22__MEDIAMIX_DISP_DATA18                 = IOMUX_PAD(0x0218, 0x0068, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO22__TPM5_CH1                             = IOMUX_PAD(0x0218, 0x0068, 4, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO22__TPM6_EXTCLK                          = IOMUX_PAD(0x0218, 0x0068, 5, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO22__LPI2C5_SDA                           = IOMUX_PAD(0x0218, 0x0068, 6, 0x03EC, 1, 0),
+         MX93_PAD_GPIO_IO22__LPI2C5_SDA                           = IOMUX_PAD(0x0218, 0x0068, 6 | IOMUX_CONFIG_SION, 0x03EC, 1, 0),
          MX93_PAD_GPIO_IO22__FLEXIO1_FLEXIO22                     = IOMUX_PAD(0x0218, 0x0068, 7, 0x03B8, 0, 0),
 
          MX93_PAD_GPIO_IO23__GPIO2_IO23                           = IOMUX_PAD(0x021C, 0x006C, 0, 0x0000, 0, 0),
@@ -245,7 +245,7 @@ enum {
          MX93_PAD_GPIO_IO23__SPDIF_OUT                            = IOMUX_PAD(0x021C, 0x006C, 2, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO23__MEDIAMIX_DISP_DATA19                 = IOMUX_PAD(0x021C, 0x006C, 3, 0x0000, 0, 0),
          MX93_PAD_GPIO_IO23__TPM6_CH1                             = IOMUX_PAD(0x021C, 0x006C, 4, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO23__LPI2C5_SCL                           = IOMUX_PAD(0x021C, 0x006C, 6, 0x03E8, 1, 0),
+         MX93_PAD_GPIO_IO23__LPI2C5_SCL                           = IOMUX_PAD(0x021C, 0x006C, 6 | IOMUX_CONFIG_SION, 0x03E8, 1, 0),
          MX93_PAD_GPIO_IO23__FLEXIO1_FLEXIO23                     = IOMUX_PAD(0x021C, 0x006C, 7, 0x03BC, 0, 0),
 
          MX93_PAD_GPIO_IO24__GPIO2_IO24                           = IOMUX_PAD(0x0220, 0x0070, 0, 0x0000, 0, 0),
@@ -284,11 +284,11 @@ enum {
          MX93_PAD_GPIO_IO27__FLEXIO1_FLEXIO27                     = IOMUX_PAD(0x022C, 0x007C, 7, 0x03C8, 0, 0),
 
          MX93_PAD_GPIO_IO28__GPIO2_IO28                           = IOMUX_PAD(0x0230, 0x0080, 0, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO28__LPI2C3_SDA                           = IOMUX_PAD(0x0230, 0x0080, 1, 0x03E4, 1, 0),
+         MX93_PAD_GPIO_IO28__LPI2C3_SDA                           = IOMUX_PAD(0x0230, 0x0080, 1 | IOMUX_CONFIG_SION, 0x03E4, 1, 0),
          MX93_PAD_GPIO_IO28__FLEXIO1_FLEXIO28                     = IOMUX_PAD(0x0230, 0x0080, 7, 0x0000, 0, 0),
 
          MX93_PAD_GPIO_IO29__GPIO2_IO29                           = IOMUX_PAD(0x0234, 0x0084, 0, 0x0000, 0, 0),
-         MX93_PAD_GPIO_IO29__LPI2C3_SCL                           = IOMUX_PAD(0x0234, 0x0084, 1, 0x03E0, 1, 0),
+         MX93_PAD_GPIO_IO29__LPI2C3_SCL                           = IOMUX_PAD(0x0234, 0x0084, 1 | IOMUX_CONFIG_SION, 0x03E0, 1, 0),
          MX93_PAD_GPIO_IO29__FLEXIO1_FLEXIO29                     = IOMUX_PAD(0x0234, 0x0084, 7, 0x0000, 0, 0),
 
          MX93_PAD_CCM_CLKO1__CCMSRCGPCMIX_CLKO1                   = IOMUX_PAD(0x0238, 0x0088, 0, 0x0000, 0, 0),
@@ -309,14 +309,14 @@ enum {
 
          MX93_PAD_ENET1_MDC__ENET_QOS_MDC                         = IOMUX_PAD(0x0248, 0x0098, 0, 0x0000, 0, 0),
          MX93_PAD_ENET1_MDC__LPUART3_DCB_B                        = IOMUX_PAD(0x0248, 0x0098, 1, 0x0000, 0, 0),
-         MX93_PAD_ENET1_MDC__I3C2_SCL                             = IOMUX_PAD(0x0248, 0x0098, 2, 0x03CC, 0, 0),
+         MX93_PAD_ENET1_MDC__I3C2_SCL                             = IOMUX_PAD(0x0248, 0x0098, 2 | IOMUX_CONFIG_SION, 0x03CC, 0, 0),
          MX93_PAD_ENET1_MDC__HSIOMIX_OTG_ID1                      = IOMUX_PAD(0x0248, 0x0098, 3, 0x0000, 0, 0),
          MX93_PAD_ENET1_MDC__FLEXIO2_FLEXIO00                     = IOMUX_PAD(0x0248, 0x0098, 4, 0x0000, 0, 0),
          MX93_PAD_ENET1_MDC__GPIO4_IO00                           = IOMUX_PAD(0x0248, 0x0098, 5, 0x0000, 0, 0),
 
          MX93_PAD_ENET1_MDIO__ENET_QOS_MDIO                       = IOMUX_PAD(0x024C, 0x009C, 0, 0x0000, 0, 0),
          MX93_PAD_ENET1_MDIO__LPUART3_RIN_B                       = IOMUX_PAD(0x024C, 0x009C, 1, 0x0000, 0, 0),
-         MX93_PAD_ENET1_MDIO__I3C2_SDA                            = IOMUX_PAD(0x024C, 0x009C, 2, 0x03D0, 0, 0),
+         MX93_PAD_ENET1_MDIO__I3C2_SDA                            = IOMUX_PAD(0x024C, 0x009C, 2 | IOMUX_CONFIG_SION, 0x03D0, 0, 0),
          MX93_PAD_ENET1_MDIO__HSIOMIX_OTG_PWR1                    = IOMUX_PAD(0x024C, 0x009C, 3, 0x0000, 0, 0),
          MX93_PAD_ENET1_MDIO__FLEXIO2_FLEXIO01                    = IOMUX_PAD(0x024C, 0x009C, 4, 0x0000, 0, 0),
          MX93_PAD_ENET1_MDIO__GPIO4_IO01                          = IOMUX_PAD(0x024C, 0x009C, 5, 0x0000, 0, 0),
@@ -569,13 +569,13 @@ enum {
 
          MX93_PAD_SD2_CD_B__USDHC2_CD_B                           = IOMUX_PAD(0x0300, 0x0150, 0, 0x0000, 0, 0),
          MX93_PAD_SD2_CD_B__ENET_QOS_1588_EVENT0_IN               = IOMUX_PAD(0x0300, 0x0150, 1, 0x0000, 0, 0),
-         MX93_PAD_SD2_CD_B__I3C2_SCL                              = IOMUX_PAD(0x0300, 0x0150, 2, 0x03CC, 1, 0),
+         MX93_PAD_SD2_CD_B__I3C2_SCL                              = IOMUX_PAD(0x0300, 0x0150, 2 | IOMUX_CONFIG_SION, 0x03CC, 1, 0),
          MX93_PAD_SD2_CD_B__FLEXIO1_FLEXIO00                      = IOMUX_PAD(0x0300, 0x0150, 4, 0x036C, 1, 0),
          MX93_PAD_SD2_CD_B__GPIO3_IO00                            = IOMUX_PAD(0x0300, 0x0150, 5, 0x0000, 0, 0),
 
          MX93_PAD_SD2_CLK__USDHC2_CLK                             = IOMUX_PAD(0x0304, 0x0154, 0, 0x0000, 0, 0),
          MX93_PAD_SD2_CLK__ENET_QOS_1588_EVENT0_OUT               = IOMUX_PAD(0x0304, 0x0154, 1, 0x0000, 0, 0),
-         MX93_PAD_SD2_CLK__I3C2_SDA                               = IOMUX_PAD(0x0304, 0x0154, 2, 0x03D0, 1, 0),
+         MX93_PAD_SD2_CLK__I3C2_SDA                               = IOMUX_PAD(0x0304, 0x0154, 2 | IOMUX_CONFIG_SION, 0x03D0, 1, 0),
          MX93_PAD_SD2_CLK__FLEXIO1_FLEXIO01                       = IOMUX_PAD(0x0304, 0x0154, 4, 0x0370, 1, 0),
          MX93_PAD_SD2_CLK__GPIO3_IO01                             = IOMUX_PAD(0x0304, 0x0154, 5, 0x0000, 0, 0),
          MX93_PAD_SD2_CLK__CCMSRCGPCMIX_OBSERVE0                  = IOMUX_PAD(0x0304, 0x0154, 6, 0x0000, 0, 0),
@@ -623,13 +623,13 @@ enum {
          MX93_PAD_SD2_RESET_B__CCMSRCGPCMIX_SYSTEM_RESET          = IOMUX_PAD(0x031C, 0x016C, 6, 0x0000, 0, 0),
 
          MX93_PAD_I2C1_SCL__LPI2C1_SCL                            = IOMUX_PAD(0x0320, 0x0170, 0 | IOMUX_CONFIG_SION, 0x0000, 0, 0),
-         MX93_PAD_I2C1_SCL__I3C1_SCL                              = IOMUX_PAD(0x0320, 0x0170, 1, 0x0000, 0, 0),
+         MX93_PAD_I2C1_SCL__I3C1_SCL                              = IOMUX_PAD(0x0320, 0x0170, 1 | IOMUX_CONFIG_SION, 0x0000, 0, 0),
          MX93_PAD_I2C1_SCL__LPUART1_DCB_B                         = IOMUX_PAD(0x0320, 0x0170, 2, 0x0000, 0, 0),
          MX93_PAD_I2C1_SCL__TPM2_CH0                              = IOMUX_PAD(0x0320, 0x0170, 3, 0x0000, 0, 0),
          MX93_PAD_I2C1_SCL__GPIO1_IO00                            = IOMUX_PAD(0x0320, 0x0170, 5, 0x0000, 0, 0),
 
          MX93_PAD_I2C1_SDA__LPI2C1_SDA                            = IOMUX_PAD(0x0324, 0x0174, 0 | IOMUX_CONFIG_SION, 0x0000, 0, 0),
-         MX93_PAD_I2C1_SDA__I3C1_SDA                              = IOMUX_PAD(0x0324, 0x0174, 1, 0x0000, 0, 0),
+         MX93_PAD_I2C1_SDA__I3C1_SDA                              = IOMUX_PAD(0x0324, 0x0174, 1 | IOMUX_CONFIG_SION, 0x0000, 0, 0),
          MX93_PAD_I2C1_SDA__LPUART1_RIN_B                         = IOMUX_PAD(0x0324, 0x0174, 2, 0x0000, 0, 0),
          MX93_PAD_I2C1_SDA__TPM2_CH1                              = IOMUX_PAD(0x0324, 0x0174, 3, 0x0000, 0, 0),
          MX93_PAD_I2C1_SDA__GPIO1_IO01                            = IOMUX_PAD(0x0324, 0x0174, 5, 0x0000, 0, 0),
