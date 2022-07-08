@@ -152,9 +152,18 @@ int board_usb_gadget_port_auto(void)
 }
 #endif
 
+static void set_cpu_info(struct sentinel_get_info_data *info)
+{
+	gd->arch.soc_rev = info->soc;
+	gd->arch.lifecycle = info->lc;
+	memcpy((void *)&gd->arch.uid, &info->uid, 4 * sizeof(u32));
+}
+
 u32 get_cpu_rev(void)
 {
-	return (MXC_CPU_IMX8ULP << 12) | CHIP_REV_1_0;
+	u32 rev = (gd->arch.soc_rev >> 24) - 0xa0;
+
+	return (MXC_CPU_IMX8ULP << 12) | (CHIP_REV_1_0 + rev);
 }
 
 enum bt_mode get_boot_mode(void)
@@ -760,6 +769,8 @@ int arch_cpu_init_dm(void)
 {
 	struct udevice *devp;
 	int node, ret;
+	u32 res;
+	struct sentinel_get_info_data info;
 
 	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "fsl,imx8ulp-mu");
 
@@ -768,6 +779,16 @@ int arch_cpu_init_dm(void)
 		printf("could not get S400 mu %d\n", ret);
 		return ret;
 	}
+
+	ret = ahab_get_info(&info, &res);
+	if (ret) {
+		printf("ahab_get_info failed %d\n", ret);
+		/* fallback to A0.1 revision */
+		memset((void *)&info, 0, sizeof(struct sentinel_get_info_data));
+		info.soc = 0xa000084d;
+	}
+
+	set_cpu_info(&info);
 
 	return 0;
 }
