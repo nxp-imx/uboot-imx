@@ -123,14 +123,11 @@ void spl_board_init(void)
 {
 	struct udevice *dev;
 	u32 res;
-	int node, ret;
+	int ret;
 
-	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "fsl,imx8ulp-mu");
-	ret = uclass_get_device_by_of_offset(UCLASS_MISC, node, &dev);
-	if (ret) {
+	ret = arch_cpu_init_dm();
+	if (ret)
 		return;
-	}
-	device_probe(dev);
 
 	board_early_init_f();
 
