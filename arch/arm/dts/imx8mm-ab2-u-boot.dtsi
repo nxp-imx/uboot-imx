@@ -1,0 +1,21 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2020 NXP
+ */
+
+#include "imx8mm-evk-u-boot.dtsi"
+
+/ {
+	usbg2: usbg2 {
+		status = "disabled";
+	};
+};
+
+&fec1 {
+	phy-reset-gpios = <&gpio1 5 GPIO_ACTIVE_LOW>;
+};
+
+&usbotg1 {
+	status = "okay";
+	extcon = <&ptn5150>;
+};

@@ -120,6 +120,24 @@ config TARGET_IMX8MM_DDR4_EVK
 	select ARCH_MISC_INIT
 	select SPL_CRYPTO if SPL
 
+config TARGET_IMX8MM_AB2
+	bool "imx8mm LPDDR4 Audio board 2.0"
+	select IMX8MM
+	select SUPPORT_SPL
+	select IMX8M_LPDDR4
+	select FSL_CAAM
+	select FSL_BLOB
+	select SPL_CRYPTO if SPL
+
+config TARGET_IMX8MM_DDR4_AB2
+	bool "imx8mm DDR4 Audio board 2.0"
+	select IMX8MM
+	select SUPPORT_SPL
+	select IMX8M_DDR4
+	select FSL_CAAM
+	select FSL_BLOB
+	select SPL_CRYPTO if SPL
+
 config TARGET_IMX8MM_ICORE_MX8MM
 	bool "Engicam i.Core MX8M Mini SOM"
 	select IMX8MM
@@ -172,6 +190,33 @@ config TARGET_IMX8MN_DDR4_EVK
 
 config TARGET_IMX8MN_DDR3_EVK
 	bool "imx8mn 11x11 DDR3 EVK board"
+	select IMX8MN
+	select SUPPORT_SPL
+	select IMX8M_DDR3L
+	select FSL_CAAM
+	select FSL_BLOB
+	select SPL_CRYPTO if SPL
+
+config TARGET_IMX8MN_AB2
+	bool "imx8mn LPDDR4 Audio board 2.0"
+	select IMX8MN
+	select SUPPORT_SPL
+	select IMX8M_LPDDR4
+	select FSL_CAAM
+	select FSL_BLOB
+	select SPL_CRYPTO if SPL
+
+config TARGET_IMX8MN_DDR4_AB2
+	bool "imx8mn DDR4 Audio board 2.0"
+	select IMX8MN
+	select SUPPORT_SPL
+	select IMX8M_DDR4
+	select FSL_CAAM
+	select FSL_BLOB
+	select SPL_CRYPTO if SPL
+
+config TARGET_IMX8MN_DDR3L_AB2
+	bool "imx8mn DDR3L Audio board 2.0"
 	select IMX8MN
 	select SUPPORT_SPL
 	select IMX8M_DDR3L
@@ -305,6 +350,7 @@ source "board/compulab/imx8mm-cl-iot-gate/Kconfig"
 source "board/engicam/imx8mm/Kconfig"
 source "board/freescale/imx8mq_evk/Kconfig"
 source "board/freescale/imx8mq_val/Kconfig"
+source "board/freescale/imx8mm_ab2/Kconfig"
 source "board/freescale/imx8mm_evk/Kconfig"
 source "board/freescale/imx8mm_val/Kconfig"
 source "board/freescale/imx8mn_evk/Kconfig"
