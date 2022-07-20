@@ -3083,10 +3083,11 @@ int mmc_init_device(int num)
 	}
 
 	m = mmc_get_mmc_dev(dev);
-	m->user_speed_mode = MMC_MODES_END; /* Initialising user set speed mode */
-
 	if (!m)
 		return 0;
+
+	m->user_speed_mode = MMC_MODES_END; /* Initialising user set speed mode */
+
 	if (m->preinit)
 		mmc_start_init(m);
 
