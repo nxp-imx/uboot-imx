@@ -491,3 +491,28 @@ int ahab_get_events(u32 *events, u32 *events_cnt, u32 *response)
 
 	return ret;
 }
+
+int ahab_start_rng(void)
+{
+	struct udevice *dev = gd->arch.s400_dev;
+	int size = sizeof(struct sentinel_msg);
+	struct sentinel_msg msg;
+	int ret;
+
+	if (!dev) {
+		printf("s400 dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = AHAB_VERSION;
+	msg.tag = AHAB_CMD_TAG;
+	msg.size = 1;
+	msg.command = ELE_START_RNG;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+
+	return ret;
+}
