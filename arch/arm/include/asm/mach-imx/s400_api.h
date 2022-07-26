@@ -24,6 +24,7 @@
 #define ELE_GET_FW_VERSION_REQ (0x9D)
 #define ELE_RET_LIFECYCLE_UP_REQ (0xA0)
 #define ELE_GET_EVENTS_REQ (0xA2)
+#define ELE_START_RNG (0xA3)
 #define ELE_ENABLE_PATCH_REQ (0xC3)
 #define ELE_RELEASE_RDC_REQ (0xC4)
 #define ELE_GET_FW_STATUS_REQ (0xC5)
@@ -142,5 +143,6 @@ int ahab_get_info(struct sentinel_get_info_data *info, u32 *response);
 int ahab_get_fw_status(u32 *status, u32 *response);
 int ahab_release_m33_trout(void);
 int ahab_get_events(u32 *events, u32 *events_cnt, u32 *response);
+int ahab_start_rng(void);
 
 #endif

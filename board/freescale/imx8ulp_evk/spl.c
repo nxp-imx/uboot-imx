@@ -180,6 +180,16 @@ void spl_board_init(void)
 				printf("Failed to initialize caam_jr: %d\n", ret);
 		}
 	}
+
+	/*
+	 * RNG start only available on the A1 soc revision.
+	 * Check some JTAG register for the SoC revision.
+	 */
+	if (!is_soc_rev(CHIP_REV_1_0)) {
+		ret = ahab_start_rng();
+		if (ret)
+			printf("Fail to start RNG: %d\n", ret);
+	}
 }
 
 void board_init_f(ulong dummy)
