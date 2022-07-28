@@ -31,6 +31,8 @@
 #include <hang.h>
 #include <cpu_func.h>
 #include <env.h>
+#include<dm/device-internal.h>
+#include<dm/lists.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1005,6 +1007,20 @@ int arch_misc_init(void)
 		if (ret)
 			printf("Failed to initialize caam_jr: %d\n", ret);
 	}
+
+	if (IS_ENABLED(CONFIG_FSL_DCP_RNG)) {
+		struct udevice *dev;
+		int ret;
+
+		ret = device_bind_driver(NULL, "dcp_rng", "dcp_rng", NULL);
+		if (ret)
+			printf("Couldn't bind dcp rng driver (%d)\n", ret);
+
+		ret = uclass_get_device_by_driver(UCLASS_RNG, DM_DRIVER_GET(dcp_rng), &dev);
+		if (ret)
+			printf("Failed to initialize dcp rng: %d\n", ret);
+	}
+
 	setup_serial_number();
 	return 0;
 }
