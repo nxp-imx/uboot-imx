@@ -164,7 +164,6 @@ void reset_lsm6dsx(uint8_t i2c_bus, uint8_t addr)
 
 int board_init(void)
 {
-	int sync = -ENODEV;
 #if defined(CONFIG_NXP_FSPI) || defined(CONFIG_FSL_FSPI_NAND)
 	setup_flexspi();
 
@@ -177,13 +176,8 @@ int board_init(void)
 	setup_fec();
 #endif
 
-	if (m33_image_booted()) {
-		sync = m33_image_handshake(1000);
-		printf("M33 Sync: %s\n", sync? "Timeout": "OK");
-	}
-
 	/* When sync with M33 is failed, use local driver to set for video */
-	if (sync != 0 && IS_ENABLED(CONFIG_DM_VIDEO)) {
+	if (!is_m33_handshake_necessary() && IS_ENABLED(CONFIG_DM_VIDEO)) {
 		mipi_dsi_mux_panel();
 		mipi_dsi_panel_backlight();
 	}
