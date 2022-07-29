@@ -42,6 +42,12 @@ config IMX_PMC_TEMPERATURE
 	  Enable PMC Temperature Sensor on NXP i.MX8ULP. The driver supports
 	  reading CPU temperature.
 
+config SCMI_THERMAL
+	bool "SCMI Sensor based thermal driver"
+	select SCMI_FIRMWARE
+	help
+	  Enable SCMI Sensor protocol based thermal driver to get temperature.
+
 config TI_DRA7_THERMAL
         bool "Temperature sensor driver for TI dra7xx SOCs"
         help
