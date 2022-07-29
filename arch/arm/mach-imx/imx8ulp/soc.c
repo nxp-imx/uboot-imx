@@ -186,14 +186,70 @@ enum bt_mode get_boot_mode(void)
 
 bool m33_image_booted(void)
 {
-	u32 gp6 = 0;
+	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
+		u32 gp6 = 0;
 
-	/* DGO_GP6 */
-	gp6 = readl(SIM_SEC_BASE_ADDR + 0x28);
-	if (gp6 & (1 << 5))
-		return true;
+		/* DGO_GP6 */
+		gp6 = readl(SIM_SEC_BASE_ADDR + 0x28);
+		if (gp6 & (1 << 5))
+			return true;
 
-	return false;
+		return false;
+	} else {
+		u32 gpr0 = readl(SIM1_BASE_ADDR);
+		if (gpr0 & 0x1)
+			return true;
+
+		return false;
+	}
+}
+
+bool rdc_enabled_in_boot(void)
+{
+	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
+		u32 val = 0;
+		int ret;
+		bool rdc_en = true; /* Default assume DBD_EN is set */
+
+		/* Read DBD_EN fuse */
+		ret = fuse_read(8, 1, &val);
+		if (!ret)
+			rdc_en = !!(val & 0x200); /* only A1 part uses DBD_EN, so check DBD_EN new place*/
+
+		return rdc_en;
+	} else {
+		u32 gpr0 = readl(SIM1_BASE_ADDR);
+		if (gpr0 & 0x2)
+			return true;
+
+		return false;
+	}
+}
+
+static void spl_pass_boot_info(void)
+{
+	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
+		bool m33_booted = m33_image_booted();
+		bool rdc_en = rdc_enabled_in_boot();
+		u32 val = 0;
+
+		if (m33_booted)
+			val |= 0x1;
+
+		if (rdc_en)
+			val |= 0x2;
+
+		writel(val, SIM1_BASE_ADDR);
+	}
+}
+
+bool is_m33_handshake_necessary(void)
+{
+	/* Only need handshake in u-boot */
+	if (!IS_ENABLED(CONFIG_SPL_BUILD))
+		return (m33_image_booted() || rdc_enabled_in_boot());
+	else
+		return false;
 }
 
 int m33_image_handshake(ulong timeout_ms)
@@ -641,33 +697,65 @@ static void set_core0_reset_vector(u32 entry)
 	setbits_le32(SIM1_BASE_ADDR + 0x8, (0x1 << 26));
 }
 
-static int trdc_set_access(void)
+/* Not used now */
+int trdc_set_access(void)
 {
 	/*
 	 * TRDC mgr + 4 MBC + 2 MRC.
-	 * S400 should already configure when release RDC
-	 * A35 only map non-secure region for pbridge0 and 1, set sec_access to false
 	 */
-	trdc_mbc_set_access(2, 7, 0, 49, false);
-	trdc_mbc_set_access(2, 7, 0, 50, false);
-	trdc_mbc_set_access(2, 7, 0, 51, false);
-	trdc_mbc_set_access(2, 7, 0, 52, false);
-	trdc_mbc_set_access(2, 7, 0, 53, false);
-	trdc_mbc_set_access(2, 7, 0, 54, false);
+	trdc_mbc_set_access(2, 7, 0, 49, true);
+	trdc_mbc_set_access(2, 7, 0, 50, true);
+	trdc_mbc_set_access(2, 7, 0, 51, true);
+	trdc_mbc_set_access(2, 7, 0, 52, true);
+	trdc_mbc_set_access(2, 7, 0, 53, true);
+	trdc_mbc_set_access(2, 7, 0, 54, true);
 
-	/* CGC0: PBridge0 slot 47 */
+	/* 0x1fff8000 used for resource table by remoteproc */
+	trdc_mbc_set_access(0, 7, 2, 31, false);
+
+	/* CGC0: PBridge0 slot 47 and PCC0 slot 48 */
 	trdc_mbc_set_access(2, 7, 0, 47, false);
+	trdc_mbc_set_access(2, 7, 0, 48, false);
+
+	/* PCC1 */
+	trdc_mbc_set_access(2, 7, 1, 17, false);
+	trdc_mbc_set_access(2, 7, 1, 34, false);
 
 	/* Iomuxc0: : PBridge1 slot 33 */
 	trdc_mbc_set_access(2, 7, 1, 33, false);
 
 	/* flexspi0 */
+	trdc_mbc_set_access(2, 7, 0, 57, false);
 	trdc_mrc_region_set_access(0, 7, 0x04000000, 0x0c000000, false);
 
 	/* tpm0: PBridge1 slot 21 */
 	trdc_mbc_set_access(2, 7, 1, 21, false);
 	/* lpi2c0: PBridge1 slot 24 */
 	trdc_mbc_set_access(2, 7, 1, 24, false);
+
+	/* Allow M33 to access TRDC MGR */
+	trdc_mbc_set_access(2, 6, 0, 49, true);
+	trdc_mbc_set_access(2, 6, 0, 50, true);
+	trdc_mbc_set_access(2, 6, 0, 51, true);
+	trdc_mbc_set_access(2, 6, 0, 52, true);
+	trdc_mbc_set_access(2, 6, 0, 53, true);
+	trdc_mbc_set_access(2, 6, 0, 54, true);
+
+	/* Set SAI0 for eDMA 0, NS */
+	trdc_mbc_set_access(2, 0, 1, 28, false);
+
+	/* Set SSRAM for eDMA0 access */
+	trdc_mbc_set_access(0, 0, 2, 0, false);
+	trdc_mbc_set_access(0, 0, 2, 1, false);
+	trdc_mbc_set_access(0, 0, 2, 2, false);
+	trdc_mbc_set_access(0, 0, 2, 3, false);
+	trdc_mbc_set_access(0, 0, 2, 4, false);
+	trdc_mbc_set_access(0, 0, 2, 5, false);
+	trdc_mbc_set_access(0, 0, 2, 6, false);
+	trdc_mbc_set_access(0, 0, 2, 7, false);
+
+	writel(0x800000a0, 0x28031840);
+
 	return 0;
 }
 
@@ -714,10 +802,6 @@ void set_lpav_qos(void)
 int arch_cpu_init(void)
 {
 	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
-		u32 val = 0;
-		int ret;
-		bool rdc_en = true; /* Default assume DBD_EN is set */
-
 		/* Enable System Reset Interrupt using WDOG_AD */
 		setbits_le32(CMC1_BASE_ADDR + 0x8C, BIT(13));
 		/* Clear AD_PERIPH Power switch domain out of reset interrupt flag */
@@ -734,34 +818,37 @@ int arch_cpu_init(void)
 		/* Disable wdog */
 		init_wdog();
 
-		/* Read DBD_EN fuse */
-		ret = fuse_read(8, 1, &val);
-		if (!ret)
-			rdc_en = !!(val & 0x4000);
-
 		if (get_boot_mode() == SINGLE_BOOT) {
-			if (rdc_en)
-				release_rdc(RDC_TRDC);
-
-			trdc_set_access();
-
 			lpav_configure(false);
 		} else {
 			lpav_configure(true);
 		}
 
 		/* Release xrdc, then allow A35 to write SRAM2 */
-		if (rdc_en)
+		if (rdc_enabled_in_boot())
 			release_rdc(RDC_XRDC);
 
 		xrdc_mrc_region_set_access(2, CONFIG_SPL_TEXT_BASE, 0xE00);
 
 		clock_init_early();
+
+		spl_pass_boot_info();
 	} else {
 		/* reconfigure core0 reset vector to ROM */
 		set_core0_reset_vector(0x1000);
 	}
 
+	return 0;
+}
+
+int checkcpu(void)
+{
+	if (is_m33_handshake_necessary()) {
+		if (!gd->arch.m33_handshake_done)
+			panic("M33 Sync: Timeout, Boot Stop!\n");
+		else
+			puts("M33 Sync: OK\n");
+	}
 	return 0;
 }
 
@@ -771,6 +858,17 @@ int arch_cpu_init_dm(void)
 	int node, ret;
 	u32 res;
 	struct sentinel_get_info_data info;
+
+	if (!IS_ENABLED(CONFIG_SPL_BUILD) && is_m33_handshake_necessary()) {
+		/* Start handshake with M33 to ensure TRDC configuration completed */
+		ret = m33_image_handshake(1000);
+		if (!ret) {
+			gd->arch.m33_handshake_done = true;
+		} else {
+			gd->arch.m33_handshake_done = false;
+			return 0; /* Skip and go through to panic in checkcpu as console is ready then */
+		}
+	}
 
 	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "fsl,imx8ulp-mu");
 
