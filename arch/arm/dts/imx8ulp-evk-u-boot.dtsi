@@ -33,6 +33,18 @@
 	u-boot,dm-spl;
 };
 
+&{/firmware} {
+	u-boot,dm-pre-reloc;
+};
+
+&{/firmware/scmi} {
+	u-boot,dm-pre-reloc;
+};
+
+&{/firmware/scmi/protocol@15} {
+	u-boot,dm-pre-reloc;
+};
+
 &per_bridge3 {
 	u-boot,dm-spl;
 };
