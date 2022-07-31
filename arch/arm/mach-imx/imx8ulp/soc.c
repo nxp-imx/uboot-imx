@@ -355,7 +355,7 @@ int print_cpuinfo(void)
 	       (cpurev & 0x000F0) >> 4, (cpurev & 0x0000F) >> 0,
 	       mxc_get_clock(MXC_ARM_CLK) / 1000000);
 
-#if defined(CONFIG_IMX_PMC_TEMPERATURE)
+#if defined(CONFIG_SCMI_THERMAL)
 	struct udevice *udev;
 	int ret, temp;
 

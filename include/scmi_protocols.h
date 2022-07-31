@@ -40,6 +40,12 @@ enum scmi_status_code {
 	SCMI_PROTOCOL_ERROR = -10,
 };
 
+enum scmi_common_message_id {
+	SCMI_PROTOCOL_VERSION = 0x000,
+	SCMI_PROTOCOL_ATTRIBUTES = 0x001,
+	SCMI_PROTOCOL_MESSAGE_ATTRIBUTES = 0x002
+};
+
 /*
  * SCMI Clock Protocol
  */
@@ -321,6 +327,90 @@ struct scmi_power_get_state {
 struct scmi_power_get_state_out {
 	s32 status;
 	u32 state;
+};
+
+/*
+ * SCMI Sensor protocol
+ */
+
+enum scmi_sensor_message_id {
+	SCMI_SENSOR_DESCRIPTION_GET = 0x3,
+	SCMI_SENSOR_TRIP_POINT_NOTIFY = 0x4,
+	SCMI_SENSOR_TRIP_POINT_CONFIG = 0x5,
+	SCMI_SENSOR_READING_GET = 0x6,
+	SCMI_SENSOR_AXIS_DESCRIPTION_GET = 0x7,
+	SCMI_SENSOR_LIST_UPDATE_INTERVALS = 0x8,
+	SCMI_SENSOR_CONFIG_GET = 0x9,
+	SCMI_SENSOR_CONFIG_SET = 0xA,
+	SCMI_SENSOR_CONTINUOUS_UPDATE_NOTIFY = 0xB,
+};
+
+struct scmi_protocol_attributes_p2a_sensor {
+	int32_t status;
+	int16_t num_sensors;
+	uint8_t max_reqs;
+	uint8_t res;
+	uint32_t sensor_reg_low;
+	uint32_t sensor_reg_high;
+	uint32_t sensor_reg_len;
+};
+
+#define SCMI_MAX_STR_SIZE   16
+
+struct scmi_msg_resp_attrs {
+	s32 min_range_low;
+	s32 min_range_high;
+	s32 max_range_low;
+	s32 max_range_high;
+};
+
+struct scmi_sensor_desc {
+	u32 id;
+	u32 attr_low;
+	u32 attr_high;
+	u8 name[SCMI_MAX_STR_SIZE];
+	u32 power;
+	u32 resolution;
+	struct scmi_msg_resp_attrs scalar_attrs;
+};
+
+struct scmi_sensor_description_get_a2p {
+	uint32_t desc_index;
+};
+
+struct scmi_sensor_descrition_get_p2a {
+	int32_t status;
+	uint32_t num_sensor_flags;
+	struct scmi_sensor_desc desc[1];
+};
+
+struct scmi_sensor_config_get_a2p {
+	uint32_t sensor_id;
+};
+
+struct scmi_sensor_config_get_p2a {
+	int32_t status;
+	uint32_t sensor_config;
+};
+
+/*
+ * Sensor Reading Get
+ */
+struct scmi_sensor_reading_get_a2p {
+	uint32_t sensor_id;
+	uint32_t flags;
+};
+
+struct scmi_sensor_val {
+	uint32_t value_low;
+	uint32_t value_high;
+	uint32_t timestap_low;
+	uint32_t timestap_high;
+};
+
+struct scmi_sensor_reading_get_p2a {
+	int32_t status;
+	struct scmi_sensor_val val;
 };
 
 #endif /* _SCMI_PROTOCOLS_H */
