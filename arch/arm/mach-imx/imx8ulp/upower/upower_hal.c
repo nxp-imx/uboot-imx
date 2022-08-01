@@ -6,6 +6,7 @@
 #include <log.h>
 #include <asm/io.h>
 #include <linux/delay.h>
+#include <asm/arch/sys_proto.h>
 
 #include "upower_soc_defs.h"
 #include "upower_api.h"
@@ -191,20 +192,22 @@ int upower_init(void)
 	if (ret != UPWR_REQ_OK)
 		printk("Faliure %d\n", ret);
 
-	/* Enable AFBB for AP domain */
-	bias.apply = BIAS_APPLY_APD;
-	bias.dommode = AFBB_BIAS_MODE;
-	ret = upwr_pwm_chng_dom_bias(&bias, NULL);
+	if (is_soc_rev(CHIP_REV_1_0)) {
+		/* Enable AFBB for AP domain */
+		bias.apply = BIAS_APPLY_APD;
+		bias.dommode = AFBB_BIAS_MODE;
+		ret = upwr_pwm_chng_dom_bias(&bias, NULL);
 
-	if (ret)
-		printf("Enable AFBB for APD bias fail %d\n", ret);
-	else
-		printf("Enable AFBB for APD bias ok\n");
+		if (ret)
+			printf("Enable AFBB for APD bias fail %d\n", ret);
+		else
+			printf("Enable AFBB for APD bias ok\n");
 
-	upower_wait_resp();
-	ret = upwr_poll_req_status(UPWR_SG_PWRMGMT, NULL, NULL, &ret_val, 1000);
-	if (ret != UPWR_REQ_OK)
-		printk("Faliure %d\n", ret);
+		upower_wait_resp();
+		ret = upwr_poll_req_status(UPWR_SG_PWRMGMT, NULL, NULL, &ret_val, 1000);
+		if (ret != UPWR_REQ_OK)
+			printk("Faliure %d\n", ret);
+	}
 
 	return 0;
 }
