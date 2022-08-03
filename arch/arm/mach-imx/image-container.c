@@ -191,39 +191,41 @@ static unsigned long get_boot_device_offset(void *dev, int dev_type)
 	unsigned long offset = 0, sec_set_off = 0;
 	bool sec_boot = false;
 
-	sec_boot = check_secondary_cnt_set(&sec_set_off);
-	if (sec_boot)
-		printf("Secondary set selected\n");
-	else
-		printf("Primary set selected\n");
-
-	if (dev_type == MMC_DEV) {
-		struct mmc *mmc = (struct mmc *)dev;
-
-		if (IS_SD(mmc) || mmc->part_config == MMCPART_NOAVAILABLE) {
-			offset = sec_boot? sec_set_off : CONTAINER_HDR_MMCSD_OFFSET;
-		} else {
-			u8 part = EXT_CSD_EXTRACT_BOOT_PART(mmc->part_config);
-
-			if (part == 1 || part == 2) {
-				if (is_imx8qxp() && is_soc_rev(CHIP_REV_B))
-					offset = CONTAINER_HDR_MMCSD_OFFSET;
-				else
-					offset = CONTAINER_HDR_EMMC_OFFSET;
-			} else {
-				offset = sec_boot? sec_set_off : CONTAINER_HDR_MMCSD_OFFSET;
-			}
-		}
-	} else if (dev_type == QSPI_DEV) {
-		offset = sec_boot? (sec_set_off + CONTAINER_HDR_QSPI_OFFSET) : CONTAINER_HDR_QSPI_OFFSET;
-	} else if (dev_type == NAND_DEV) {
-		offset = sec_boot? (sec_set_off + CONTAINER_HDR_NAND_OFFSET) : CONTAINER_HDR_NAND_OFFSET;
-	} else if (dev_type == QSPI_NOR_DEV) {
-		offset = CONTAINER_HDR_QSPI_OFFSET + 0x08000000;
-	} else if (dev_type == ROM_API_DEV) {
+	if (dev_type == ROM_API_DEV) {
 		offset = (unsigned long)dev;
-	} else if (dev_type == RAM_DEV) {
-		offset = (unsigned long)dev + CONTAINER_HDR_MMCSD_OFFSET;
+	} else {
+		sec_boot = check_secondary_cnt_set(&sec_set_off);
+		if (sec_boot)
+			printf("Secondary set selected\n");
+		else
+			printf("Primary set selected\n");
+
+		if (dev_type == MMC_DEV) {
+			struct mmc *mmc = (struct mmc *)dev;
+
+			if (IS_SD(mmc) || mmc->part_config == MMCPART_NOAVAILABLE) {
+				offset = sec_boot? sec_set_off : CONTAINER_HDR_MMCSD_OFFSET;
+			} else {
+				u8 part = EXT_CSD_EXTRACT_BOOT_PART(mmc->part_config);
+
+				if (part == 1 || part == 2) {
+					if (is_imx8qxp() && is_soc_rev(CHIP_REV_B))
+						offset = CONTAINER_HDR_MMCSD_OFFSET;
+					else
+						offset = CONTAINER_HDR_EMMC_OFFSET;
+				} else {
+					offset = sec_boot? sec_set_off : CONTAINER_HDR_MMCSD_OFFSET;
+				}
+			}
+		} else if (dev_type == QSPI_DEV) {
+			offset = sec_boot? (sec_set_off + CONTAINER_HDR_QSPI_OFFSET) : CONTAINER_HDR_QSPI_OFFSET;
+		} else if (dev_type == NAND_DEV) {
+			offset = sec_boot? (sec_set_off + CONTAINER_HDR_NAND_OFFSET) : CONTAINER_HDR_NAND_OFFSET;
+		} else if (dev_type == QSPI_NOR_DEV) {
+			offset = CONTAINER_HDR_QSPI_OFFSET + 0x08000000;
+		} else if (dev_type == RAM_DEV) {
+			offset = (unsigned long)dev + CONTAINER_HDR_MMCSD_OFFSET;
+		}
 	}
 
 	debug("container set offset 0x%lx\n", offset);
