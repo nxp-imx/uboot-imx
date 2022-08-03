@@ -844,10 +844,12 @@ int arch_cpu_init(void)
 int checkcpu(void)
 {
 	if (is_m33_handshake_necessary()) {
-		if (!gd->arch.m33_handshake_done)
-			panic("M33 Sync: Timeout, Boot Stop!\n");
-		else
+		if (!gd->arch.m33_handshake_done) {
+			puts("M33 Sync: Timeout, Boot Stop!\n");
+			hang();
+		} else {
 			puts("M33 Sync: OK\n");
+		}
 	}
 	return 0;
 }

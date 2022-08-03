@@ -408,15 +408,36 @@ int board_return_to_bootrom(struct spl_image_info *spl_image,
 {
 	volatile gd_t *pgd = gd;
 	int ret;
-	u32 boot;
+	u32 boot, bstage;
 
 	ret = g_rom_api->query_boot_infor(QUERY_BT_DEV, &boot,
 					  ((uintptr_t)&boot) ^ QUERY_BT_DEV);
+	ret |= g_rom_api->query_boot_infor(QUERY_BT_STAGE, &bstage,
+					   ((uintptr_t)&bstage) ^ QUERY_BT_STAGE);
 	set_gd(pgd);
 
 	if (ret != ROM_API_OKAY) {
 		puts("ROMAPI: failure at query_boot_info\n");
 		return -1;
+	}
+
+	printf("Boot Stage: ");
+
+	switch (bstage) {
+	case BT_STAGE_PRIMARY:
+		printf("Primary boot\n");
+		break;
+	case BT_STAGE_SECONDARY:
+		printf("Secondary boot\n");
+		break;
+	case BT_STAGE_RECOVERY:
+		printf("Recovery boot\n");
+		break;
+	case BT_STAGE_USB:
+		printf("USB boot\n");
+		break;
+	default:
+		printf("Unknow (0x%x)\n", bstage);
 	}
 
 	if (is_boot_from_stream_device(boot))
