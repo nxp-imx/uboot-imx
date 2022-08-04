@@ -120,6 +120,7 @@ int board_eth_init(struct bd_info *bis)
 	if (is_serdes_configured(SGMII_TSEC1)) {
 		puts("eTSEC1 is in sgmii mode.\n");
 		tsec_info[num].flags |= TSEC_SGMII;
+        tsec_info[num].interface = PHY_INTERFACE_MODE_SGMII;
 	}
 	num++;
 #endif
@@ -128,6 +129,7 @@ int board_eth_init(struct bd_info *bis)
 	if (is_serdes_configured(SGMII_TSEC2)) {
 		puts("eTSEC2 is in sgmii mode.\n");
 		tsec_info[num].flags |= TSEC_SGMII;
+        tsec_info[num].interface = PHY_INTERFACE_MODE_SGMII;
 	}
 	num++;
 #endif
