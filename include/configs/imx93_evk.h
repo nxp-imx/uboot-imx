@@ -51,11 +51,11 @@
 
 #define JAILHOUSE_ENV \
 	"jh_mmcboot=setenv fdtfile imx93-11x11-evk-root.dtb; " \
-		    "setenv jh_clk clk_ignore_unused mem=1GB kvm-arm.mode=nvhe; " \
+		    "setenv jh_clk clk_ignore_unused mem=1280MB kvm-arm.mode=nvhe; " \
 		    "if run loadimage; then run mmcboot;" \
 		    "else run jh_netboot; fi; \0" \
 	"jh_netboot=setenv fdtfile imx93-11x11-evk-root.dtb; " \
-		    "setenv jh_clk clk_ignore_unused mem=1GB kvm-arm.mode=nvhe; run netboot; \0 "
+		    "setenv jh_clk clk_ignore_unused mem=1280MB kvm-arm.mode=nvhe; run netboot; \0 "
 
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
