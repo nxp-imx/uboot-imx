@@ -24,6 +24,7 @@
 #define ELE_GET_FW_VERSION_REQ (0x9D)
 #define ELE_RET_LIFECYCLE_UP_REQ (0xA0)
 #define ELE_GET_EVENTS_REQ (0xA2)
+#define ELE_COMMIT_REQ (0xA8)
 #define ELE_START_RNG (0xA3)
 #define ELE_CMD_DERIVE_KEY    (0xA9)
 #define ELE_GENERATE_DEK_BLOB (0xAF)
@@ -162,6 +163,7 @@ int ahab_get_fw_status(u32 *status, u32 *response);
 int ahab_release_m33_trout(void);
 int ahab_get_events(u32 *events, u32 *events_cnt, u32 *response);
 int ahab_start_rng(void);
+int ahab_commit(u16 fuse_id, u32 *response, u32 *info_type);
 int ahab_generate_dek_blob(u32 key_id, u32 src_paddr, u32 dst_paddr,
 			   u32 max_output_size);
 int ahab_write_secure_fuse(ulong signed_msg_blk, u32 *response);

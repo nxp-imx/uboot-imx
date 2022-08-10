@@ -555,6 +555,38 @@ int ahab_start_rng(void)
 	return ret;
 }
 
+int ahab_commit(u16 fuse_id, u32 *response, u32 *info_type)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg;
+	int ret = 0;
+
+	if (!dev) {
+		printf("s400 dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = AHAB_VERSION;
+	msg.tag = AHAB_CMD_TAG;
+	msg.size = 2;
+	msg.command = ELE_COMMIT_REQ;
+	msg.data[0] = fuse_id;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, fuse_id 0x%x, response 0x%x\n",
+		       __func__, ret, fuse_id, msg.data[0]);
+
+	if (response)
+		*response = msg.data[0];
+
+	if (info_type)
+		*info_type = msg.data[1];
+
+	return ret;
+}
+
 int ahab_generate_dek_blob(u32 key_id, u32 src_paddr, u32 dst_paddr,
 			   u32 max_output_size)
 {
