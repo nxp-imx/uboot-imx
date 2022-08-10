@@ -3,6 +3,7 @@
  * Copyright 2018 NXP
  */
 #include <common.h>
+#include <efi_loader.h>
 #include <env.h>
 #include <init.h>
 #include <miiphy.h>
@@ -69,6 +70,23 @@ static void setup_gpmi_nand(void)
 	init_nand_clk();
 }
 #endif
+
+#if CONFIG_IS_ENABLED(EFI_HAVE_CAPSULE_SUPPORT)
+struct efi_fw_image fw_images[] = {
+	{
+		.image_type_id = IMX_BOOT_IMAGE_GUID,
+		.fw_name = u"IMX8MM-EVK-RAW",
+		.image_index = 1,
+	},
+};
+
+struct efi_capsule_update_info update_info = {
+	.dfu_string = "mmc 2=flash-bin raw 0x42 0x2000 mmcpart 1",
+	.images = fw_images,
+};
+
+u8 num_image_type_guids = ARRAY_SIZE(fw_images);
+#endif /* EFI_HAVE_CAPSULE_SUPPORT */
 
 int board_early_init_f(void)
 {
