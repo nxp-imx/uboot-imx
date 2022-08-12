@@ -122,7 +122,9 @@ int board_eth_init(struct bd_info *bis)
 		puts("eTSEC1 is in sgmii mode.\n");
 		tsec_info[num].flags |= TSEC_SGMII;
         tsec_info[num].interface = PHY_INTERFACE_MODE_SGMII;
-	}
+	} else {
+        tsec_info[num].interface = PHY_INTERFACE_MODE_NONE;
+    }
 	num++;
 #endif
 #ifdef CONFIG_TSEC2
@@ -131,7 +133,9 @@ int board_eth_init(struct bd_info *bis)
 		puts("eTSEC2 is in sgmii mode.\n");
 		tsec_info[num].flags |= TSEC_SGMII;
         tsec_info[num].interface = PHY_INTERFACE_MODE_SGMII;
-	}
+	} else {
+        tsec_info[num].interface = PHY_INTERFACE_MODE_NONE;
+    }
 	num++;
 #endif
 	if (!num) {
