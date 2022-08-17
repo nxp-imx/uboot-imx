@@ -321,10 +321,11 @@ int print_cpuinfo(void)
 
 	cpurev = get_cpu_rev();
 
-	printf("CPU:   i.MX93 rev%d.%d\n", (cpurev & 0x000F0) >> 4, (cpurev & 0x0000F) >> 0);
+	printf("CPU:   i.MX93 rev%d.%d at %d MHz\n",
+		(cpurev & 0x000F0) >> 4, (cpurev & 0x0000F) >> 0,
+		mxc_get_clock(MXC_ARM_CLK) / 1000000);
 
 	return 0;
-
 }
 
 int arch_misc_init(void)
