@@ -68,7 +68,11 @@ void cpld_set_defbank(void)
 
 void cpld_set_nand(void)
 {
-	u16 reg = CPLD_CFG_RCW_SRC_NAND;
+	u16 reg = CPLD_CFG_RCW_SRC_NAND_4K;
+
+    if (CPLD_READ(cpld_ver) < 0x3)
+	    reg = CPLD_CFG_RCW_SRC_NAND;
+
 	u8 reg5 = (u8)(reg >> 1);
 	u8 reg6 = (u8)(reg & 1);
 

@@ -167,7 +167,7 @@ int checkboard(void)
 
 	if (cfg_rcw_src == 0x25)
 		printf("vBank %d\n", CPLD_READ(vbank));
-	else if (cfg_rcw_src == 0x106)
+    else if ((cfg_rcw_src == 0x106) || (cfg_rcw_src == 0x118))
 		puts("NAND\n");
 	else
 		printf("Invalid setting of SW4\n");
