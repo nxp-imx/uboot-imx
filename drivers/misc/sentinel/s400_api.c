@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2022 NXP
  *
  */
 
@@ -13,6 +13,18 @@
 #include <misc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+static uint32_t compute_crc(const struct sentinel_msg *msg)
+{
+	u32 crc = 0;
+	size_t i = 0;
+	u32 *data = (u32 *)msg;
+
+	for (i = 0; i < (msg->size - 1); i++)
+		crc ^= data[i];
+
+	return crc;
+}
 
 int ahab_release_rdc(u8 core_id, u8 xrdc, u32 *response)
 {
@@ -512,6 +524,39 @@ int ahab_start_rng(void)
 	ret = misc_call(dev, false, &msg, size, &msg, size);
 	if (ret)
 		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+
+	return ret;
+}
+
+int ahab_generate_dek_blob(u32 key_id, u32 src_paddr, u32 dst_paddr,
+			   u32 max_output_size)
+{
+	struct udevice *dev = gd->arch.s400_dev;
+	int size = sizeof(struct sentinel_msg);
+	struct sentinel_msg msg;
+	int ret;
+
+	if (!dev) {
+		printf("s400 dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = AHAB_VERSION;
+	msg.tag = AHAB_CMD_TAG;
+	msg.size = 8;
+	msg.command = ELE_GENERATE_DEK_BLOB;
+	msg.data[0] = key_id;
+	msg.data[1] = 0x0;
+	msg.data[2] = src_paddr;
+	msg.data[3] = 0x0;
+	msg.data[4] = dst_paddr;
+	msg.data[5] = max_output_size;
+	msg.data[6] = compute_crc(&msg);
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret 0x%x, response 0x%x\n",
 		       __func__, ret, msg.data[0]);
 
 	return ret;
