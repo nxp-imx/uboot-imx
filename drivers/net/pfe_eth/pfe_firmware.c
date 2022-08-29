@@ -172,7 +172,7 @@ static int pfe_fit_check(void)
 int pfe_spi_flash_init(void)
 {
 	struct spi_flash *pfe_flash;
-	struct udevice *new;
+	struct udevice *new = NULL;
 	int ret = 0;
 	void *addr = malloc(CONFIG_SYS_LS_PFE_FW_LENGTH);
 
