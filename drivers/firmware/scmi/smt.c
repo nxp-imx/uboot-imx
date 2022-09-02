@@ -50,6 +50,9 @@ int scmi_dt_get_smt_buffer(struct udevice *dev, struct scmi_smt *smt)
 	if (!smt->buf)
 		return -ENOMEM;
 
+	/* make this configurable as function of DTS property */
+	scmi_smt_enable_intr(smt, true);
+
 #ifdef CONFIG_ARM
 	if (dcache_status()) {
 		if (IS_ENABLED(CONFIG_ARM64))
