@@ -757,6 +757,14 @@ static int eqos_stop_resets_tegra186(struct udevice *dev)
 	return 0;
 }
 
+static int eqos_start_resets_imx(struct udevice *dev)
+{
+	struct eqos_priv *eqos = dev_get_priv(dev);
+
+	writel(EQOS_DMA_MODE_SWR, &eqos->dma_regs->mode);
+	return 0;
+}
+
 static int eqos_calibrate_pads_tegra186(struct udevice *dev)
 {
 	struct eqos_priv *eqos = dev_get_priv(dev);
@@ -2130,7 +2138,7 @@ static struct eqos_ops eqos_imx_ops = {
 	.eqos_probe_resources = eqos_probe_resources_imx,
 	.eqos_remove_resources = eqos_remove_resources_imx,
 	.eqos_stop_resets = eqos_null_ops,
-	.eqos_start_resets = eqos_null_ops,
+	.eqos_start_resets = eqos_start_resets_imx,
 	.eqos_stop_clks = eqos_stop_clks_imx,
 	.eqos_start_clks = eqos_start_clks_imx,
 	.eqos_calibrate_pads = eqos_null_ops,
