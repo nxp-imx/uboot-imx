@@ -568,6 +568,39 @@ static int do_ahab_status(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+static int do_sec_fuse_prog(struct cmd_tbl *cmdtp, int flag, int argc,
+			   char *const argv[])
+{
+	ulong addr;
+	u32 header, response;
+
+	if (argc < 2)
+		return CMD_RET_USAGE;
+
+	addr = simple_strtoul(argv[1], NULL, 16);
+	header = *(u32 *)addr;
+
+	if ((header & 0xff0000ff) != 0x89000000) {
+		printf("Wrong Signed message block format, header 0x%x\n", header);
+		return CMD_RET_FAILURE;
+	}
+
+	header = (header & 0xffff00) >> 8;
+
+	printf("Signed Message block at 0x%lx, size 0x%x\n", addr, header);
+	flush_dcache_range(addr, addr + header - 1);
+
+	if (ahab_write_secure_fuse(addr, &response)) {
+		printf("Program secure fuse failed, response 0x%x\n", response);
+		return CMD_RET_FAILURE;
+	}
+
+	printf("Program secure fuse completed, response 0x%x\n", response);
+
+	return CMD_RET_SUCCESS;
+}
+
+
 U_BOOT_CMD(auth_cntr, CONFIG_SYS_MAXARGS, 1, do_authenticate,
 	   "autenticate OS container via AHAB",
 	   "addr\n"
@@ -587,4 +620,10 @@ U_BOOT_CMD(ahab_dump, CONFIG_SYS_MAXARGS, 1, do_ahab_dump,
 U_BOOT_CMD(ahab_status, CONFIG_SYS_MAXARGS, 1, do_ahab_status,
 	   "display AHAB lifecycle only",
 	   ""
+);
+
+U_BOOT_CMD(ahab_sec_fuse_prog, CONFIG_SYS_MAXARGS, 1, do_sec_fuse_prog,
+	   "Program secure fuse via signed message block",
+	   "addr\n"
+	   "addr - Signed message block for secure fuse\n"
 );
