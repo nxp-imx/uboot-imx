@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2019 NXP
+ * Copyright 2019, 2022 NXP
  */
 
 #include <common.h>
@@ -10,6 +10,11 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/mach-imx/module_fuse.h>
 #include <linux/errno.h>
+#include <command.h>
+#include <hexdump.h>
+#include <dm.h>
+#include <malloc.h>
+#include <rng.h>
 
 static struct fuse_entry_desc mx6_fuse_descs[] = {
 #if defined(CONFIG_MX6ULL)
@@ -300,7 +305,45 @@ add_status:
 		}
 	}
 
-	return 0;
+	/*Random number generation through RNG driver*/
+	struct udevice *dev;
+	void *buf;
+	char keys[2][16] = {"otp_crypto_key", "otp_unique_key"};
+	int ret = 0;
+	int nodeoff = fdt_path_offset(blob, "/soc/bus@2200000/crypto@2280000");
+
+	if (nodeoff < 0) {
+		printf("node to update the SoC serial number is not found.\n");
+		return nodeoff;
+	}
+	rc =  uclass_get_device(UCLASS_RNG, 0, &dev);
+	if (rc || !dev) {
+		printf("No RNG device\n");
+		return rc;
+	}
+
+	buf = malloc(16);
+	if (!buf) {
+		printf("Out of memory\n");
+		return -ENOMEM;
+	}
+
+	for (int i = 0; i < 2; i++) {
+		ret = dm_rng_read(dev, buf, 16);
+		if (ret) {
+			printf("Reading RNG failed\n");
+			goto err;
+		}
+
+		ret = fdt_setprop(blob, nodeoff, keys[i], buf, 16);
+		if (ret < 0) {
+			printf("WARNING: could not set %s key handle  %s.\n", keys[i], fdt_strerror(ret));
+			goto err;
+		}
+	}
+err:
+	free(buf);
+	return ret;
 }
 #endif
 
