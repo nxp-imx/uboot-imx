@@ -14,6 +14,24 @@
 
 #define UPOWER_AP_MU1_ADDR	0x29280000
 
+#define PS_RTD		BIT(0)
+#define PS_DSP		BIT(1)
+#define PS_A35_0	BIT(2)
+#define PS_A35_1	BIT(3)
+#define PS_L2		BIT(4)
+#define PS_FAST_NIC	BIT(5)
+#define PS_APD_PERIPH	BIT(6)
+#define PS_GPU3D	BIT(7)
+#define PS_HIFI4	BIT(8)
+#define PS_DDR		GENMASK(12, 9)
+#define PS_PXP_EPDC	BIT(13)
+#define PS_MIPI_DSI	BIT(14)
+#define PS_MIPI_CSI	BIT(15)
+#define PS_NIC_LPAV	BIT(16)
+#define PS_FUSION_AO	BIT(17)
+#define PS_FUSE		BIT(18)
+#define PS_UPOWER	BIT(19)
+
 static struct MU_tag *muptr = (struct MU_tag *)UPOWER_AP_MU1_ADDR;
 
 extern void upwr_txrx_isr(void);
@@ -156,7 +174,8 @@ int upower_init(void)
 		}
 	} while(0);
 
-	swton = 0xfff80;
+	swton = PS_UPOWER | PS_FUSE | PS_FUSION_AO | PS_NIC_LPAV | PS_PXP_EPDC | PS_DDR |
+		PS_HIFI4 | PS_GPU3D;
 	ret = upwr_pwm_power_on(&swton, NULL /* no memories */, NULL /* no callback */);
 	if (ret)
 		printf("Turn on switches fail %d\n", ret);
