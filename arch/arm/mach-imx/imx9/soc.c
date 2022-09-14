@@ -160,10 +160,33 @@ static void set_cpu_info(struct sentinel_get_info_data *info)
 	memcpy((void *)&gd->arch.uid, &info->uid, 4 * sizeof(u32));
 }
 
+static u32 get_cpu_variant_type(u32 type)
+{
+	/* word 19 */
+	u32 val = readl((ulong)FSB_BASE_ADDR + 0x8000 + (19 << 2));
+	u32 val2 = readl((ulong)FSB_BASE_ADDR + 0x8000 + (20 << 2));
+	bool npu_disable = !!(val & BIT(13));
+	bool core1_disable = !!(val & BIT(15));
+	u32 pack_9x9_fused = BIT(4) | BIT(17) | BIT(19) | BIT(24);
+
+	if ((val2 & pack_9x9_fused) == pack_9x9_fused)
+		type = MXC_CPU_IMX9322;
+
+	if (npu_disable && core1_disable)
+		return type + 3;
+	else if (npu_disable)
+		return type + 2;
+	else if (core1_disable)
+		return type + 1;
+
+	return type;
+}
+
 u32 get_cpu_rev(void)
 {
 	u32 rev = (gd->arch.soc_rev >> 24) - 0xa0;
-	return (MXC_CPU_IMX93 << 12) | (CHIP_REV_1_0 + rev);
+	return (get_cpu_variant_type(MXC_CPU_IMX93) << 12) |
+		(CHIP_REV_1_0 + rev);
 }
 
 #define UNLOCK_WORD 0xD928C520 /* unlock word */
@@ -315,13 +338,38 @@ err:
 	printf("%s: fuse read err: %d\n", __func__, ret);
 }
 
+const char *get_imx_type(u32 imxtype)
+{
+	switch (imxtype) {
+	case MXC_CPU_IMX93:
+		return "93(52)";/* iMX93 Dual core with NPU */
+	case MXC_CPU_IMX9351:
+		return "93(51)";/* iMX93 Single core with NPU */
+	case MXC_CPU_IMX9332:
+		return "93(32)";/* iMX93 Dual core without NPU */
+	case MXC_CPU_IMX9331:
+		return "93(31)";/* iMX93 Single core without NPU */
+	case MXC_CPU_IMX9322:
+		return "93(22)";/* iMX93 9x9 Dual core  */
+	case MXC_CPU_IMX9321:
+		return "93(21)";/* iMX93 9x9 Single core  */
+	case MXC_CPU_IMX9312:
+		return "93(12)";/* iMX93 9x9 Dual core without NPU */
+	case MXC_CPU_IMX9311:
+		return "93(11)";/* iMX93 9x9 Single core without NPU */
+	default:
+		return "??";
+	}
+}
+
 int print_cpuinfo(void)
 {
 	u32 cpurev;
 
 	cpurev = get_cpu_rev();
 
-	printf("CPU:   i.MX93 rev%d.%d at %d MHz\n",
+	printf("CPU:   i.MX%s rev%d.%d at %d MHz\n",
+		get_imx_type((cpurev & 0x1FF000) >> 12),
 		(cpurev & 0x000F0) >> 4, (cpurev & 0x0000F) >> 0,
 		mxc_get_clock(MXC_ARM_CLK) / 1000000);
 
@@ -333,8 +381,117 @@ int arch_misc_init(void)
 	return 0;
 }
 
+static int delete_fdt_nodes(void *blob, const char *const nodes_path[], int size_array)
+{
+	int i = 0;
+	int rc;
+	int nodeoff;
+
+	for (i = 0; i < size_array; i++) {
+		nodeoff = fdt_path_offset(blob, nodes_path[i]);
+		if (nodeoff < 0)
+			continue; /* Not found, skip it */
+
+		debug("Found %s node\n", nodes_path[i]);
+
+		rc = fdt_del_node(blob, nodeoff);
+		if (rc < 0) {
+			printf("Unable to delete node %s, err=%s\n",
+			       nodes_path[i], fdt_strerror(rc));
+		} else {
+			printf("Delete node %s\n", nodes_path[i]);
+		}
+	}
+
+	return 0;
+}
+
+static int disable_npu_nodes(void *blob)
+{
+	static const char * const nodes_path_npu[] = {
+		"/ethosu",
+		"/reserved-memory/ethosu_region@C0000000"
+	};
+
+	return delete_fdt_nodes(blob, nodes_path_npu, ARRAY_SIZE(nodes_path_npu));
+}
+
+static void disable_thermal_cpu_nodes(void *blob, u32 disabled_cores)
+{
+	static const char * const thermal_path[] = {
+		"/thermal-zones/cpu-thermal/cooling-maps/map0"
+	};
+
+	int nodeoff, cnt, i, ret, j;
+	u32 cooling_dev[6];
+
+	for (i = 0; i < ARRAY_SIZE(thermal_path); i++) {
+		nodeoff = fdt_path_offset(blob, thermal_path[i]);
+		if (nodeoff < 0)
+			continue; /* Not found, skip it */
+
+		cnt = fdtdec_get_int_array_count(blob, nodeoff, "cooling-device", cooling_dev, 6);
+		if (cnt < 0)
+			continue;
+
+		if (cnt != 6)
+			printf("Warning: %s, cooling-device count %d\n", thermal_path[i], cnt);
+
+		for (j = 0; j < cnt; j++)
+			cooling_dev[j] = cpu_to_fdt32(cooling_dev[j]);
+
+		ret = fdt_setprop(blob, nodeoff, "cooling-device", &cooling_dev,
+				  sizeof(u32) * (6 - disabled_cores * 3));
+		if (ret < 0) {
+			printf("Warning: %s, cooling-device setprop failed %d\n",
+			       thermal_path[i], ret);
+			continue;
+		}
+
+		printf("Update node %s, cooling-device prop\n", thermal_path[i]);
+	}
+}
+
+static int disable_cpu_nodes(void *blob, u32 disabled_cores)
+{
+	u32 i = 0;
+	int rc;
+	int nodeoff;
+	char nodes_path[32];
+
+	for (i = 1; i <= disabled_cores; i++) {
+
+		sprintf(nodes_path, "/cpus/cpu@%u00", i);
+
+		nodeoff = fdt_path_offset(blob, nodes_path);
+		if (nodeoff < 0)
+			continue; /* Not found, skip it */
+
+		debug("Found %s node\n", nodes_path);
+
+		rc = fdt_del_node(blob, nodeoff);
+		if (rc < 0) {
+			printf("Unable to delete node %s, err=%s\n",
+			       nodes_path, fdt_strerror(rc));
+		} else {
+			printf("Delete node %s\n", nodes_path);
+		}
+	}
+
+	disable_thermal_cpu_nodes(blob, disabled_cores);
+
+	return 0;
+}
+
 int ft_system_setup(void *blob, struct bd_info *bd)
 {
+	if (is_imx9351() || is_imx9331() || is_imx9321() || is_imx9311())
+		disable_cpu_nodes(blob, 1);
+
+	if (is_imx9332() || is_imx9331() || is_imx9312() || is_imx9311())
+		disable_npu_nodes(blob);
+
+
 	return ft_add_optee_node(blob, bd);
 }
 
