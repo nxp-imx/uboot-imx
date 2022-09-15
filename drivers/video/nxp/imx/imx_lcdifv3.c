@@ -99,8 +99,15 @@ static void lcdifv3_set_mode(struct lcdifv3_priv *priv,
 	writel(ctrldescl0_1, (ulong)(priv->reg_base + LCDIFV3_CTRLDESCL0_1));
 
 	/* Polarities */
-	writel(CTRL_INV_HS, (ulong)(priv->reg_base + LCDIFV3_CTRL_CLR));
-	writel(CTRL_INV_VS, (ulong)(priv->reg_base + LCDIFV3_CTRL_CLR));
+	if (mode->sync & FB_SYNC_VERT_HIGH_ACT)
+		writel(CTRL_INV_VS, (ulong)(priv->reg_base + LCDIFV3_CTRL_CLR));
+	else
+		writel(CTRL_INV_VS, (ulong)(priv->reg_base + LCDIFV3_CTRL_SET));
+
+	if (mode->sync & FB_SYNC_HOR_HIGH_ACT)
+		writel(CTRL_INV_HS, (ulong)(priv->reg_base + LCDIFV3_CTRL_CLR));
+	else
+		writel(CTRL_INV_HS, (ulong)(priv->reg_base + LCDIFV3_CTRL_SET));
 
 	/* SEC MIPI DSI specific */
 	writel(CTRL_INV_PXCK, (ulong)(priv->reg_base + LCDIFV3_CTRL_CLR));
@@ -316,7 +323,6 @@ static void lcdifv3_of_parse_thres(struct udevice *dev)
 	}
 }
 
-
 static int lcdifv3_video_probe(struct udevice *dev)
 {
 	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
@@ -377,6 +383,13 @@ static int lcdifv3_video_probe(struct udevice *dev)
 	mode.hsync_len = timings.hsync_len.typ;
 	mode.vsync_len = timings.vsync_len.typ;
 	mode.pixclock = HZ2PS(timings.pixelclock.typ);
+	mode.sync = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT;
+
+	if (timings.flags & DISPLAY_FLAGS_HSYNC_LOW )
+		mode.sync &= ~FB_SYNC_HOR_HIGH_ACT;
+
+	if (timings.flags & DISPLAY_FLAGS_VSYNC_LOW )
+		mode.sync &= ~FB_SYNC_VERT_HIGH_ACT;
 
 	lcdifv3_init(dev, &mode, GDF_32BIT_X888RGB);
 
