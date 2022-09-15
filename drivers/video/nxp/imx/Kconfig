@@ -123,3 +123,10 @@ config VIDEO_IMX_DCNANO
 	help
 	  Support for i.MX8ULP DCNANO LCD controller.
 
+config VIDEO_IMX93_PARALLEL_DISPLAY_FORMAT
+	bool "Support for i.MX93 parallel display format"
+	select VIDEO_BRIDGE
+	select VIDEO_LINK
+	help
+	  Choose this to enable the internal parallel display format
+	  configuration found on i.MX93 processors.

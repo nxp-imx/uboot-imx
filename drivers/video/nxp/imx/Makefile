@@ -15,4 +15,5 @@ obj-$(CONFIG_VIDEO_NW_MIPI_DSI) += mipi_dsi_northwest.o
 obj-$(CONFIG_VIDEO_IMX_NW_DSI) += nw_dsi_imx.o
 obj-$(CONFIG_VIDEO_IMX_DW_DSI) += dw_dsi_imx.o
 obj-$(CONFIG_VIDEO_IMX_DCNANO) += dcnano.o
+obj-$(CONFIG_VIDEO_IMX93_PARALLEL_DISPLAY_FORMAT) += imx93-parallel-disp-fmt.o
 obj-y += hdmi/
