@@ -349,6 +349,10 @@ static int dw_dsi_imx_check_timing(struct udevice *dev, struct display_timing *t
 		return -ENOTCONN;
 	}
 
+	/* DSI force the Polarities as high */
+	priv->adj.flags &= ~(DISPLAY_FLAGS_HSYNC_LOW | DISPLAY_FLAGS_VSYNC_LOW);
+	priv->adj.flags |= DISPLAY_FLAGS_HSYNC_HIGH | DISPLAY_FLAGS_VSYNC_HIGH;
+
 	*timing = priv->adj;
 
 	return 0;
