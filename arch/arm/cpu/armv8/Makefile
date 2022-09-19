@@ -36,3 +36,4 @@ obj-$(CONFIG_TARGET_HIKEY) += hisilicon/
 obj-$(CONFIG_ARMV8_PSCI) += psci.o
 obj-$(CONFIG_ARCH_SUNXI) += lowlevel_init.o
 obj-$(CONFIG_XEN) += xen/
+obj-$(CONFIG_CRYPTO_SHA2_ARM64_CE) += crypto/

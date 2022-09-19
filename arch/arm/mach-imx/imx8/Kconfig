@@ -168,6 +168,7 @@ config TARGET_IMX8DXL_EVK
 	bool "Support i.MX8DXL EVK board"
 	select BOARD_LATE_INIT
 	select IMX8DXL
+	select CRYPTO_SHA2_ARM64_CE
 
 config TARGET_IMX8DXL_DDR3_EVK
 	bool "Support i.MX8DXL EVK board"
