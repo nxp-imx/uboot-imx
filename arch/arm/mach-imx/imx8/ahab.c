@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2018-2019 NXP
+ * Copyright 2018-2019, 2022 NXP
  */
 
 #include <common.h>
@@ -13,6 +13,7 @@
 #include <asm/arch/image.h>
 #include <console.h>
 #include <cpu_func.h>
+#include <crypto/sha2.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -38,16 +39,58 @@ static inline bool check_in_dram(ulong addr)
 	return false;
 }
 
+int ahab_verify_cntr_image(struct boot_img_t *img, int image_index)
+{
+	sc_faddr_t start, end;
+	sc_rm_mr_t mr;
+	int err;
+	int ret = 0;
+
+	/* Find the memreg and set permission for seco pt */
+	err = sc_rm_find_memreg(-1, &mr,
+				img->dst & ~(CONFIG_SYS_CACHELINE_SIZE - 1),
+				ALIGN(img->dst + img->size, CONFIG_SYS_CACHELINE_SIZE) - 1);
+	if (err) {
+		printf("Not found memreg for image: %d, error %d\n", image_index, err);
+		return -ENOMEM;
+	}
+
+	err = sc_rm_get_memreg_info(-1, mr, &start, &end);
+	if (!err)
+		debug("memreg %u 0x%llx -- 0x%llx\n", mr, start, end);
+
+	err = sc_rm_set_memreg_permissions(-1, mr, SECO_PT, SC_RM_PERM_FULL);
+	if (err) {
+		printf("Set permission failed for img %d, error %d\n", image_index, err);
+		return -EPERM;
+	}
+
+	err = sc_seco_authenticate(-1, SC_SECO_VERIFY_IMAGE, (1 << image_index));
+	if (err) {
+		printf("Authenticate img %d failed, return %d\n", image_index, err);
+		ret = -EIO;
+	}
+
+	err = sc_rm_set_memreg_permissions(-1, mr, SECO_PT, SC_RM_PERM_NONE);
+	if (err) {
+		printf("Remove permission failed for img %d, error %d\n", image_index, err);
+		ret = -EPERM;
+	}
+
+	return ret;
+}
+
 int authenticate_os_container(ulong addr)
 {
 	struct container_hdr *phdr;
 	int i, ret = 0;
 	int err;
-	sc_rm_mr_t mr;
-	sc_faddr_t start, end;
 	u16 length;
 	struct boot_img_t *img;
 	unsigned long s, e;
+#ifdef CONFIG_CRYPTO_SHA2_ARM64_CE
+	u8 hash_value[SHA256_DIGEST_SIZE];
+#endif
 
 	if (addr % 4) {
 		puts("Error: Image's address is not 4 byte aligned\n");
@@ -102,46 +145,19 @@ int authenticate_os_container(ulong addr)
 
 		flush_dcache_range(s, e);
 
-		/* Find the memreg and set permission for seco pt */
-		err = sc_rm_find_memreg(-1, &mr, s, e - 1);
+#ifdef CONFIG_CRYPTO_SHA2_ARM64_CE
+		sha256_ce((void *)img->dst, img->size, hash_value);
+		err = memcmp(&img->hash, &hash_value, SHA256_DIGEST_SIZE);
 		if (err) {
-			printf("Not found memreg for image: %d, error %d\n",
-			       i, err);
-			ret = -ENOMEM;
-			goto exit;
-		}
-
-		err = sc_rm_get_memreg_info(-1, mr, &start, &end);
-		if (!err)
-			debug("memreg %u 0x%llx -- 0x%llx\n", mr, start, end);
-
-		err = sc_rm_set_memreg_permissions(-1, mr, SECO_PT,
-						   SC_RM_PERM_FULL);
-		if (err) {
-			printf("Set permission failed for img %d, error %d\n",
-			       i, err);
-			ret = -EPERM;
-			goto exit;
-		}
-
-		err = sc_seco_authenticate(-1, SC_SECO_VERIFY_IMAGE,
-					   (1 << i));
-		if (err) {
-			printf("Authenticate img %d failed, return %d\n",
-			       i, err);
+			printf("img %d hash comparison failed, error %d\n", i, err);
 			ret = -EIO;
+			goto exit;
 		}
-
-		err = sc_rm_set_memreg_permissions(-1, mr, SECO_PT,
-						   SC_RM_PERM_NONE);
-		if (err) {
-			printf("Remove permission failed for img %d, err %d\n",
-			       i, err);
-			ret = -EPERM;
-		}
-
+#else
+		ret = ahab_verify_cntr_image(img, i);
 		if (ret)
 			goto exit;
+#endif
 	}
 
 exit:
