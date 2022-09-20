@@ -75,7 +75,24 @@ static int imx8_ldb_soc_setup(struct udevice *dev, sc_pm_clock_rate_t pixel_cloc
 	/* Setup clocks */
 	err = sc_pm_set_clock_rate(-1, lvds_rsrc, SC_PM_CLK_BYPASS, &pixel_clock);
 	if (err != SC_ERR_NONE) {
-		printf("LVDS set rate SC_PM_CLK_BYPASS failed! (error = %d)\n", err);
+		printf("LVDS set rate SC_PM_CLK_BYPASS failed! (error = %d)\n",
+		       err);
+		return -EIO;
+	}
+
+	err = sc_pm_set_clock_parent(-1, lvds_rsrc, SC_PM_CLK_PER,
+				     SC_PM_PARENT_BYPS);
+	if (err != SC_ERR_NONE) {
+		printf("LVDS set SC_PM_CLK_PER parent failed! (error = %d)\n",
+		       err);
+		return -EIO;
+	}
+
+	err = sc_pm_set_clock_parent(-1, lvds_rsrc, SC_PM_CLK_PHY,
+				     SC_PM_PARENT_BYPS);
+	if (err != SC_ERR_NONE) {
+		printf("LVDS set SC_PM_CLK_PHY parent failed! (error = %d)\n",
+		       err);
 		return -EIO;
 	}
 
