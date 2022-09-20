@@ -19,6 +19,7 @@
 #include <dm/uclass.h>
 #include <usb.h>
 #include <dwc3-uboot.h>
+#include <asm/gpio.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -251,6 +252,36 @@ static int setup_eqos(void)
 	return set_clk_eqos(ENET_125MHZ);
 }
 
+static void board_gpio_init(void)
+{
+	struct gpio_desc desc;
+	int ret;
+
+	/* Enable EXT1_PWREN for PCIE_3.3V */
+	ret = dm_gpio_lookup_name("gpio@22_13", &desc);
+	if (ret)
+		return;
+
+	ret = dm_gpio_request(&desc, "EXT1_PWREN");
+	if (ret)
+		return;
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
+	dm_gpio_set_value(&desc, 1);
+
+	/* Deassert SD3_nRST */
+	ret = dm_gpio_lookup_name("gpio@22_12", &desc);
+	if (ret)
+		return;
+
+	ret = dm_gpio_request(&desc, "SD3_nRST");
+	if (ret)
+		return;
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
+	dm_gpio_set_value(&desc, 1);
+}
+
 int board_init(void)
 {
 #ifdef CONFIG_USB_TCPC
@@ -262,6 +293,8 @@ int board_init(void)
 
 	if (CONFIG_IS_ENABLED(DWC_ETH_QOS))
 		setup_eqos();
+
+	board_gpio_init();
 
 	return 0;
 }
