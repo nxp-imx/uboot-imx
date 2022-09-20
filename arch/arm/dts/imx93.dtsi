@@ -36,6 +36,7 @@
 		serial5 = &lpuart6;
 		serial6 = &lpuart7;
 		serial7 = &lpuart8;
+		spi0 = &flexspi;
 		isi0 = &isi_0;
 		i2c0 = &lpi2c1;
 		i2c1 = &lpi2c2;
@@ -498,7 +499,7 @@
 				#thermal-sensor-cells =  <0>;
 				status = "disabled";
 			};
-		
+
 			micfil: micfil@44520000 {
 				compatible = "fsl,imx93-micfil";
 				reg = <0x44520000 0x10000>;
@@ -848,9 +849,11 @@
 				reg = <0x425e0000 0x10000>, <0x28000000 0x10000000>;
 				reg-names = "fspi_base", "fspi_mmap";
 				interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
-				clocks = <&clk IMX93_CLK_DUMMY>,
-					 <&clk IMX93_CLK_DUMMY>;
+				clocks = <&clk IMX93_CLK_FLEXSPI1_GATE>,
+					 <&clk IMX93_CLK_FLEXSPI1_GATE>;
 				clock-names = "fspi", "fspi_en";
+				assigned-clock-rates = <80000000>;
+				assigned-clocks = <&clk IMX93_CLK_FLEXSPI1>;
 				status = "disabled";
 			};
 
