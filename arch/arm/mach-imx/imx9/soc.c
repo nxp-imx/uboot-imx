@@ -33,6 +33,7 @@
 #include <linux/delay.h>
 #include <fuse.h>
 #include <imx_thermal.h>
+#include <thermal.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -447,7 +448,25 @@ int print_cpuinfo(void)
 		puts("Consumer temperature grade ");
 		break;
 	}
-	printf("(%dC to %dC)\n", minc, maxc);
+	printf("(%dC to %dC)", minc, maxc);
+
+#if defined(CONFIG_IMX_TMU)
+	struct udevice *udev;
+	int ret, temp;
+
+	ret = uclass_get_device_by_name(UCLASS_THERMAL, "cpu-thermal", &udev);
+	if (!ret) {
+		ret = thermal_get_temp(udev, &temp);
+
+		if (!ret)
+			printf(" at %dC", temp);
+		else
+			debug(" - invalid sensor data\n");
+	} else {
+		debug(" - invalid sensor device\n");
+	}
+#endif
+	puts("\n");
 
 	return 0;
 }
