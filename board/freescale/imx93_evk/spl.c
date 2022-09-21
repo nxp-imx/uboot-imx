@@ -107,10 +107,7 @@ void board_init_f(ulong dummy)
 	}
 	power_init_board();
 
-	/* Increase ARM clock to 1.7Ghz */
-	ccm_shared_gpr_set(SHARED_GPR_A55_CLK, SHARED_GPR_A55_CLK_SEL_CCM);
-	configure_intpll(ARM_PLL_CLK, 1700000000); /* 1.7Ghz */
-	ccm_shared_gpr_set(SHARED_GPR_A55_CLK, SHARED_GPR_A55_CLK_SEL_PLL);
+	set_arm_core_max_clk();
 
 	/* Init power of mix */
 	soc_power_init();
