@@ -32,6 +32,7 @@
 #include <asm/mach-imx/optee.h>
 #include <linux/delay.h>
 #include <fuse.h>
+#include <imx_thermal.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -152,6 +153,56 @@ int board_usb_gadget_port_auto(void)
 	return usb_boot_index;
 }
 #endif
+
+u32 get_cpu_speed_grade_hz(void)
+{
+	u32 speed, max_speed;
+	u32 grade;
+	u32 val = readl((ulong)FSB_BASE_ADDR + 0x8000 + (19 << 2));
+	val >>= 6;
+	val &= 0xf;
+
+	speed = 2300000000 - val * 100000000;
+
+	if (is_imx93()) {
+		grade = get_cpu_temp_grade(NULL, NULL);
+		if (grade == TEMP_INDUSTRIAL)
+			max_speed = 1500000000;
+		else
+			max_speed = 1700000000;
+
+		/* In case the fuse of speed grade not programmed */
+		if (speed > max_speed)
+			speed = max_speed;
+	}
+
+	return speed;
+}
+
+u32 get_cpu_temp_grade(int *minc, int *maxc)
+{
+	u32 val = readl((ulong)FSB_BASE_ADDR + 0x8000 + (19 << 2));
+
+	val >>= 4;
+	val &= 0x3;
+
+	if (minc && maxc) {
+		if (val == TEMP_AUTOMOTIVE) {
+			*minc = -40;
+			*maxc = 125;
+		} else if (val == TEMP_INDUSTRIAL) {
+			*minc = -40;
+			*maxc = 105;
+		} else if (val == TEMP_EXTCOMMERCIAL) {
+			*minc = -20;
+			*maxc = 105;
+		} else {
+			*minc = 0;
+			*maxc = 95;
+		}
+	}
+	return val;
+}
 
 static void set_cpu_info(struct sentinel_get_info_data *info)
 {
@@ -364,14 +415,39 @@ const char *get_imx_type(u32 imxtype)
 
 int print_cpuinfo(void)
 {
-	u32 cpurev;
+	u32 cpurev, max_freq;
+	int minc, maxc;
 
 	cpurev = get_cpu_rev();
 
-	printf("CPU:   i.MX%s rev%d.%d at %d MHz\n",
+	printf("CPU:   i.MX%s rev%d.%d",
 		get_imx_type((cpurev & 0x1FF000) >> 12),
-		(cpurev & 0x000F0) >> 4, (cpurev & 0x0000F) >> 0,
-		mxc_get_clock(MXC_ARM_CLK) / 1000000);
+		(cpurev & 0x000F0) >> 4, (cpurev & 0x0000F) >> 0);
+
+	max_freq = get_cpu_speed_grade_hz();
+	if (!max_freq || max_freq == mxc_get_clock(MXC_ARM_CLK)) {
+		printf(" at %dMHz\n", mxc_get_clock(MXC_ARM_CLK) / 1000000);
+	} else {
+		printf(" %d MHz (running at %d MHz)\n", max_freq / 1000000,
+		       mxc_get_clock(MXC_ARM_CLK) / 1000000);
+	}
+
+	puts("CPU:   ");
+	switch (get_cpu_temp_grade(&minc, &maxc)) {
+	case TEMP_AUTOMOTIVE:
+		puts("Automotive temperature grade ");
+		break;
+	case TEMP_INDUSTRIAL:
+		puts("Industrial temperature grade ");
+		break;
+	case TEMP_EXTCOMMERCIAL:
+		puts("Extended Consumer temperature grade ");
+		break;
+	default:
+		puts("Consumer temperature grade ");
+		break;
+	}
+	printf("(%dC to %dC)\n", minc, maxc);
 
 	return 0;
 }
