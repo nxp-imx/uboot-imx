@@ -105,8 +105,7 @@ void board_init_f(ulong dummy)
 	}
 	power_init_board();
 
-	/* 1.7GHz */
-	set_arm_clk(1700000000);
+	set_arm_core_max_clk();
 
 	/* Init power of mix */
 	soc_power_init();
