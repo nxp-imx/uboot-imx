@@ -125,10 +125,9 @@ static int _fastboot_parts_add_ptable_entry(int ptable_index,
 	    !strcmp((const char *)info.name, FASTBOOT_PARTITION_CACHE))
 #endif
 		strcpy(ptable[ptable_index].fstype, "erofs");
-	else if (!strcmp((const char *)info.name, FASTBOOT_PARTITION_DATA))
+	else if (!strcmp((const char *)info.name, FASTBOOT_PARTITION_DATA) ||
+	         !strcmp((const char *)info.name, FASTBOOT_PARTITION_METADATA))
 		strcpy(ptable[ptable_index].fstype, "f2fs");
-	else if (!strcmp((const char *)info.name, FASTBOOT_PARTITION_METADATA))
-		strcpy(ptable[ptable_index].fstype, "ext4");
 	else
 		strcpy(ptable[ptable_index].fstype, "raw");
 	return 0;
