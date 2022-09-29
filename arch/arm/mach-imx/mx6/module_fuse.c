@@ -305,45 +305,49 @@ add_status:
 		}
 	}
 
-	/*Random number generation through RNG driver*/
-	struct udevice *dev;
-	void *buf;
-	char keys[2][16] = {"otp_crypto_key", "otp_unique_key"};
-	int ret = 0;
-	int nodeoff = fdt_path_offset(blob, "/soc/bus@2200000/crypto@2280000");
+	if (IS_ENABLED(CONFIG_FSL_DCP_RNG)) {
+		/*Random number generation through RNG driver*/
+		struct udevice *dev;
+		void *buf;
+		char keys[2][16] = {"otp_crypto_key", "otp_unique_key"};
+		int ret = 0;
+		int nodeoff = fdt_path_offset(blob, "/soc/bus@2200000/crypto@2280000");
 
-	if (nodeoff < 0) {
-		printf("node to update the SoC serial number is not found.\n");
-		return nodeoff;
-	}
-	rc =  uclass_get_device(UCLASS_RNG, 0, &dev);
-	if (rc || !dev) {
-		printf("No RNG device\n");
-		return rc;
-	}
-
-	buf = malloc(16);
-	if (!buf) {
-		printf("Out of memory\n");
-		return -ENOMEM;
-	}
-
-	for (int i = 0; i < 2; i++) {
-		ret = dm_rng_read(dev, buf, 16);
-		if (ret) {
-			printf("Reading RNG failed\n");
-			goto err;
+		if (nodeoff < 0) {
+			printf("node to update the SoC serial number is not found.\n");
+			return nodeoff;
+		}
+		rc =  uclass_get_device(UCLASS_RNG, 0, &dev);
+		if (rc || !dev) {
+			printf("No RNG device\n");
+			return rc;
 		}
 
-		ret = fdt_setprop(blob, nodeoff, keys[i], buf, 16);
-		if (ret < 0) {
-			printf("WARNING: could not set %s key handle  %s.\n", keys[i], fdt_strerror(ret));
-			goto err;
+		buf = malloc(16);
+		if (!buf) {
+			printf("Out of memory\n");
+			return -ENOMEM;
 		}
-	}
+
+		for (int i = 0; i < 2; i++) {
+			ret = dm_rng_read(dev, buf, 16);
+			if (ret) {
+				printf("Reading RNG failed\n");
+				goto err;
+			}
+
+			ret = fdt_setprop(blob, nodeoff, keys[i], buf, 16);
+			if (ret < 0) {
+				printf("WARNING: could not set %s key handle  %s.\n", keys[i], fdt_strerror(ret));
+				goto err;
+			}
+		}
 err:
-	free(buf);
-	return ret;
+		free(buf);
+		return ret;
+	}
+
+	return 0;
 }
 #endif
 
