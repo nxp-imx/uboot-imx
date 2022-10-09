@@ -25,6 +25,7 @@
 #define ELE_RET_LIFECYCLE_UP_REQ (0xA0)
 #define ELE_GET_EVENTS_REQ (0xA2)
 #define ELE_START_RNG (0xA3)
+#define ELE_GENERATE_DEK_BLOB (0xAF)
 #define ELE_ENABLE_PATCH_REQ (0xC3)
 #define ELE_RELEASE_RDC_REQ (0xC4)
 #define ELE_GET_FW_STATUS_REQ (0xC5)
@@ -144,5 +145,6 @@ int ahab_get_fw_status(u32 *status, u32 *response);
 int ahab_release_m33_trout(void);
 int ahab_get_events(u32 *events, u32 *events_cnt, u32 *response);
 int ahab_start_rng(void);
-
+int ahab_generate_dek_blob(u32 key_id, u32 src_paddr, u32 dst_paddr,
+			   u32 max_output_size);
 #endif

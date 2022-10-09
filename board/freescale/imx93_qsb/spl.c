@@ -70,13 +70,15 @@ int power_init_board(void)
 	/* enable DVS control through PMIC_STBY_REQ */
 	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
 
-	/* 0.9v
-	 */
+	/* 0.9v: for LPDDR4X 3722 */
 	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x18);
 	pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x18);
 
 	/* set standby voltage to 0.65v */
 	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x4);
+
+	/* 1.1v for LPDDR4 */
+	pmic_reg_write(dev, PCA9450_BUCK2OUT_DVS0, 0x28);
 
 	/* I2C_LT_EN*/
 	pmic_reg_write(dev, 0xa, 0x3);

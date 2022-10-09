@@ -3,8 +3,8 @@
  * Copyright 2022 NXP
  */
 
-#ifndef __IMX93_EVK_H
-#define __IMX93_EVK_H
+#ifndef __IMX93_QSB_H
+#define __IMX93_QSB_H
 
 #include <linux/sizes.h>
 #include <linux/stringify.h>
@@ -49,14 +49,6 @@
 #define BOOTENV
 #endif
 
-#define JAILHOUSE_ENV \
-	"jh_mmcboot=setenv fdtfile imx93-11x11-evk-root.dtb; " \
-		    "setenv jh_clk clk_ignore_unused mem=1280MB kvm-arm.mode=nvhe; " \
-		    "if run loadimage; then run mmcboot;" \
-		    "else run jh_netboot; fi; \0" \
-	"jh_netboot=setenv fdtfile imx93-11x11-evk-root.dtb; " \
-		    "setenv jh_clk clk_ignore_unused mem=1280MB kvm-arm.mode=nvhe; run netboot; \0 "
-
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x83800000\0" \
@@ -66,7 +58,6 @@
 
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
-	JAILHOUSE_ENV \
 	CONFIG_MFG_ENV_SETTINGS \
 	BOOTENV \
 	AHAB_ENV \
@@ -195,13 +186,10 @@
 #define CONFIG_SYS_I2C_SPEED		100000
 
 /* USB configs */
-#define CONFIG_USB_MAX_CONTROLLER_COUNT         2
+#define CONFIG_USB_MAX_CONTROLLER_COUNT         1
 
 #if defined(CONFIG_CMD_NET)
 #define CONFIG_ETHPRIME                 "eth1"
-
-#define CONFIG_FEC_XCV_TYPE             RGMII
-#define CONFIG_FEC_MXC_PHYADDR          2
 
 #define DWC_NET_PHYADDR			1
 

@@ -458,16 +458,16 @@
 &flexspi {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_flexspi>;
-	status = "disabled";
+	status = "okay";
 
-	flash0: flash@0 {
+	flash0: mt25qu512a@0 {
 		reg = <0>;
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "jedec,spi-nor";
 		spi-max-frequency = <80000000>;
-		spi-tx-bus-width = <1>;
-		spi-rx-bus-width = <1>;
+		spi-tx-bus-width = <4>;
+		spi-rx-bus-width = <4>;
 	};
 };
 
@@ -485,17 +485,11 @@
 	pinctrl_flexspi: flexspigrp {
 		fsl,pins = <
 			MX93_PAD_SD3_CMD__FLEXSPI1_A_SS0_B	0x42
-			MX93_PAD_SD1_DATA3__FLEXSPI1_A_SS1_B	0x42
 			MX93_PAD_SD3_CLK__FLEXSPI1_A_SCLK	0x42
-			MX93_PAD_SD1_STROBE__FLEXSPI1_A_DQS	0x42
 			MX93_PAD_SD3_DATA0__FLEXSPI1_A_DATA00	0x42
 			MX93_PAD_SD3_DATA1__FLEXSPI1_A_DATA01	0x42
 			MX93_PAD_SD3_DATA2__FLEXSPI1_A_DATA02	0x42
 			MX93_PAD_SD3_DATA3__FLEXSPI1_A_DATA03	0x42
-			MX93_PAD_SD1_DATA4__FLEXSPI1_A_DATA04	0x42
-			MX93_PAD_SD1_DATA5__FLEXSPI1_A_DATA05	0x42
-			MX93_PAD_SD1_DATA6__FLEXSPI1_A_DATA06	0x42
-			MX93_PAD_SD1_DATA7__FLEXSPI1_A_DATA07	0x42
 		>;
 	};
 

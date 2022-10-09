@@ -26,6 +26,7 @@ static struct anatop_reg *ana_regs = (struct anatop_reg *)ANATOP_BASE_ADDR;
 static struct imx_intpll_rate_table imx9_intpll_tbl[] = {
 	INT_PLL_RATE(1800000000U, 1, 150, 2), /* 1.8Ghz */
 	INT_PLL_RATE(1700000000U, 1, 141, 2), /* 1.7Ghz */
+	INT_PLL_RATE(1500000000U, 1, 125, 2), /* 1.5Ghz */
 	INT_PLL_RATE(1400000000U, 1, 175, 3), /* 1.4Ghz */
 	INT_PLL_RATE(1000000000U, 1, 166, 4), /* 1000Mhz */
 	INT_PLL_RATE(900000000U, 1, 150, 4), /* 900Mhz */
@@ -39,6 +40,7 @@ static struct imx_fracpll_rate_table imx9_fracpll_tbl[] = {
 	FRAC_PLL_RATE(445333333U, 1, 167, 9, 0, 1),
 	FRAC_PLL_RATE(466000000U, 1, 155, 8, 1, 3), /* 466Mhz */
 	FRAC_PLL_RATE(400000000U, 1, 200, 12, 0, 1), /* 400Mhz */
+	FRAC_PLL_RATE(300000000U, 1, 150, 12, 0, 1),
 };
 
 /* return in khz */
@@ -537,6 +539,18 @@ u32 get_arm_core_clk(void)
 		return decode_pll(ARM_PLL_CLK) * 1000;
 
 	return ccm_clk_root_get_rate(ARM_A55_CLK_ROOT);
+}
+
+void set_arm_core_max_clk(void)
+{
+	u32 speed;
+
+	/* Increase ARM clock to max rate according to speed grade */
+	speed = get_cpu_speed_grade_hz();
+
+	ccm_shared_gpr_set(SHARED_GPR_A55_CLK, SHARED_GPR_A55_CLK_SEL_CCM);
+	configure_intpll(ARM_PLL_CLK, speed);
+	ccm_shared_gpr_set(SHARED_GPR_A55_CLK, SHARED_GPR_A55_CLK_SEL_PLL);
 }
 
 unsigned int mxc_get_clock(enum mxc_clock clk)

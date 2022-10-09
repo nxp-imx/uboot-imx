@@ -23,12 +23,14 @@ static int simple_panel_enable_backlight(struct udevice *dev)
 	struct simple_panel_priv *priv = dev_get_priv(dev);
 	int ret;
 
-	debug("%s: start, backlight = '%s'\n", __func__, priv->backlight->name);
 	dm_gpio_set_value(&priv->enable, 1);
-	ret = backlight_enable(priv->backlight);
-	debug("%s: done, ret = %d\n", __func__, ret);
-	if (ret)
-		return ret;
+	if (priv->backlight) {
+		debug("%s: start, backlight = '%s'\n", __func__, priv->backlight->name);
+		ret = backlight_enable(priv->backlight);
+		debug("%s: done, ret = %d\n", __func__, ret);
+		if (ret)
+			return ret;
+	}
 
 	return 0;
 }
@@ -40,10 +42,12 @@ static int simple_panel_set_backlight(struct udevice *dev, int percent)
 
 	debug("%s: start, backlight = '%s'\n", __func__, priv->backlight->name);
 	dm_gpio_set_value(&priv->enable, 1);
-	ret = backlight_set_brightness(priv->backlight, percent);
-	debug("%s: done, ret = %d\n", __func__, ret);
-	if (ret)
-		return ret;
+	if (priv->backlight) {
+		ret = backlight_set_brightness(priv->backlight, percent);
+		debug("%s: done, ret = %d\n", __func__, ret);
+		if (ret)
+			return ret;
+	}
 
 	return 0;
 }
@@ -66,9 +70,10 @@ static int simple_panel_of_to_plat(struct udevice *dev)
 	ret = uclass_get_device_by_phandle(UCLASS_PANEL_BACKLIGHT, dev,
 					   "backlight", &priv->backlight);
 	if (ret) {
-		debug("%s: Cannot get backlight: ret=%d\n", __func__, ret);
-		return log_ret(ret);
+		printf("%s: Cannot get backlight: ret=%d\n", __func__, ret);
+		priv->backlight = NULL;
 	}
+
 	ret = gpio_request_by_name(dev, "enable-gpios", 0, &priv->enable,
 				   GPIOD_IS_OUT);
 	if (ret) {

@@ -32,6 +32,7 @@ struct imx_sec_dsim_priv {
 	struct reset_ctl_bulk soft_resetn;
 	struct reset_ctl_bulk clk_enable;
 	struct reset_ctl_bulk mipi_reset;
+	struct display_timing adj;
 };
 
 #if IS_ENABLED(CONFIG_DM_RESET)
@@ -119,6 +120,8 @@ static int imx_sec_dsim_attach(struct udevice *dev)
 		dev_err(dev, "decode display timing error %d\n", ret);
 		return ret;
 	}
+
+	priv->adj = timings;
 
 	ret = uclass_get_device(UCLASS_DSI_HOST, 0, &priv->dsi_host);
 	if (ret) {
@@ -209,9 +212,23 @@ static int imx_sec_dsim_remove(struct udevice *dev)
 	return 0;
 }
 
+static int imx_sec_dsim_check_timing(struct udevice *dev, struct display_timing *timing)
+{
+	struct imx_sec_dsim_priv *priv = dev_get_priv(dev);
+
+	/* DSI force the Polarities as high */
+	priv->adj.flags &= ~(DISPLAY_FLAGS_HSYNC_LOW | DISPLAY_FLAGS_VSYNC_LOW);
+	priv->adj.flags |= DISPLAY_FLAGS_HSYNC_HIGH | DISPLAY_FLAGS_VSYNC_HIGH;
+
+	*timing = priv->adj;
+
+	return 0;
+}
+
 struct video_bridge_ops imx_sec_dsim_ops = {
 	.attach = imx_sec_dsim_attach,
 	.set_backlight = imx_sec_dsim_set_backlight,
+	.check_timing = imx_sec_dsim_check_timing,
 };
 
 static const struct udevice_id imx_sec_dsim_ids[] = {

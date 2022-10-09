@@ -42,7 +42,6 @@ int board_early_init_f(void)
 
 #ifdef CONFIG_USB_TCPC
 struct tcpc_port port1;
-struct tcpc_port port2;
 struct tcpc_port portpd;
 
 static int setup_pd_switch(uint8_t i2c_bus, uint8_t addr)
@@ -92,16 +91,13 @@ int pd_switch_snk_enable(struct tcpc_port *port)
 {
 	if (port == &port1) {
 		debug("Setup pd switch on port 1\n");
-		return setup_pd_switch(2, 0x71);
-	} else if (port == &port2) {
-		debug("Setup pd switch on port 2\n");
-		return setup_pd_switch(2, 0x73);
+		return setup_pd_switch(0, 0x71);
 	} else
 		return -EINVAL;
 }
 
 struct tcpc_port_config portpd_config = {
-	.i2c_bus = 2, /*i2c3*/
+	.i2c_bus = 0, /*i2c1*/
 	.addr = 0x52,
 	.port_type = TYPEC_PORT_UFP,
 	.max_snk_mv = 20000,
@@ -111,22 +107,10 @@ struct tcpc_port_config portpd_config = {
 };
 
 struct tcpc_port_config port1_config = {
-	.i2c_bus = 2, /*i2c3*/
+	.i2c_bus = 0, /*i2c1*/
 	.addr = 0x50,
 	.port_type = TYPEC_PORT_UFP,
 	.max_snk_mv = 5000,
-	.max_snk_ma = 3000,
-	.max_snk_mw = 40000,
-	.op_snk_mv = 9000,
-	.switch_setup_func = &pd_switch_snk_enable,
-	.disable_pd = true,
-};
-
-struct tcpc_port_config port2_config = {
-	.i2c_bus = 2, /*i2c3*/
-	.addr = 0x51,
-	.port_type = TYPEC_PORT_UFP,
-	.max_snk_mv = 9000,
 	.max_snk_ma = 3000,
 	.max_snk_mw = 40000,
 	.op_snk_mv = 9000,
@@ -142,13 +126,6 @@ static int setup_typec(void)
 	ret = tcpc_init(&portpd, portpd_config, NULL);
 	if (ret) {
 		printf("%s: tcpc portpd init failed, err=%d\n",
-		       __func__, ret);
-	}
-
-	debug("tcpc_init port 2\n");
-	ret = tcpc_init(&port2, port2_config, NULL);
-	if (ret) {
-		printf("%s: tcpc port2 init failed, err=%d\n",
 		       __func__, ret);
 	}
 
@@ -169,10 +146,7 @@ int board_usb_init(int index, enum usb_init_type init)
 
 	debug("board_usb_init %d, type %d\n", index, init);
 
-	if (index == 0)
-		port_ptr = &port1;
-	else
-		port_ptr = &port2;
+	port_ptr = &port1;
 
 	if (init == USB_INIT_HOST)
 		tcpc_setup_dfp_mode(port_ptr);
@@ -188,12 +162,8 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 
 	debug("board_usb_cleanup %d, type %d\n", index, init);
 
-	if (init == USB_INIT_HOST) {
-		if (index == 0)
-			ret = tcpc_disable_src_vbus(&port1);
-		else
-			ret = tcpc_disable_src_vbus(&port2);
-	}
+	if (init == USB_INIT_HOST)
+		ret = tcpc_disable_src_vbus(&port1);
 
 	return ret;
 }
@@ -207,10 +177,7 @@ int board_ehci_usb_phy_mode(struct udevice *dev)
 
 	debug("%s %d\n", __func__, dev_seq(dev));
 
-	if (dev_seq(dev) == 0)
-		port_ptr = &port1;
-	else
-		port_ptr = &port2;
+	port_ptr = &port1;
 
 	tcpc_setup_ufp_mode(port_ptr);
 
@@ -225,11 +192,6 @@ int board_ehci_usb_phy_mode(struct udevice *dev)
 	return USB_INIT_DEVICE;
 }
 #endif
-
-static int setup_fec(void)
-{
-	return set_clk_enet(ENET_125MHZ);
-}
 
 int board_phy_config(struct phy_device *phydev)
 {
@@ -288,9 +250,6 @@ int board_init(void)
 	setup_typec();
 #endif
 
-	if (CONFIG_IS_ENABLED(FEC_MXC))
-		setup_fec();
-
 	if (CONFIG_IS_ENABLED(DWC_ETH_QOS))
 		setup_eqos();
 
@@ -311,7 +270,7 @@ int board_late_init(void)
 #endif
 
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-	env_set("board_name", "11X11_EVK");
+	env_set("board_name", "(9X9_QSB");
 	env_set("board_rev", "iMX93");
 #endif
 	return 0;
