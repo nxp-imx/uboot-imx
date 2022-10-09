@@ -175,7 +175,7 @@ int upower_init(void)
 	} while(0);
 
 	swton = PS_UPOWER | PS_FUSE | PS_FUSION_AO | PS_NIC_LPAV | PS_PXP_EPDC | PS_DDR |
-		PS_HIFI4 | PS_GPU3D;
+		PS_HIFI4 | PS_GPU3D | PS_MIPI_DSI;
 	ret = upwr_pwm_power_on(&swton, NULL /* no memories */, NULL /* no callback */);
 	if (ret)
 		printf("Turn on switches fail %d\n", ret);
