@@ -561,3 +561,34 @@ int ahab_generate_dek_blob(u32 key_id, u32 src_paddr, u32 dst_paddr,
 
 	return ret;
 }
+
+int ahab_write_secure_fuse(ulong signed_msg_blk, u32 *response)
+{
+	struct udevice *dev = gd->arch.s400_dev;
+	int size = sizeof(struct sentinel_msg);
+	struct sentinel_msg msg;
+	int ret;
+
+	if (!dev) {
+		printf("s400 dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = AHAB_VERSION;
+	msg.tag = AHAB_CMD_TAG;
+	msg.size = 3;
+	msg.command = ELE_WRITE_SECURE_FUSE_REQ;
+
+	msg.data[0] = upper_32_bits(signed_msg_blk);
+	msg.data[1] = lower_32_bits(signed_msg_blk);
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, response 0x%x, failed fuse row index %u\n",
+		       __func__, ret, msg.data[0], msg.data[1]);
+
+	if (response)
+		*response = msg.data[0];
+
+	return ret;
+}

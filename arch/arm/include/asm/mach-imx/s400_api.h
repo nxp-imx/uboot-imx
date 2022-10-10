@@ -147,4 +147,6 @@ int ahab_get_events(u32 *events, u32 *events_cnt, u32 *response);
 int ahab_start_rng(void);
 int ahab_generate_dek_blob(u32 key_id, u32 src_paddr, u32 dst_paddr,
 			   u32 max_output_size);
+int ahab_write_secure_fuse(ulong signed_msg_blk, u32 *response);
+
 #endif
