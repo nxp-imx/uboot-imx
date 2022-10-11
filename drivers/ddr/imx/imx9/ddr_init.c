@@ -197,6 +197,37 @@ void update_umctl2_rank_space_setting(unsigned int pstat_num)
 	writel(tmp_t, REG_DDR_TIMING_CFG_4);
 }
 
+void update_inline_ecc_setting(void)
+{
+	u32 val, sa, ea;
+
+	val = readl(REG_DDR_CS0_BNDS);
+	if (val != 0) {
+		sa = (val >> 16) & 0xff;
+		ea = val & 0xff;
+
+		/* 1/8 size is used for inline ecc */
+		ea = ea - ((ea + 1 - sa) >> 3);
+		writel((sa << 16) | ea, REG_DDR_CS0_BNDS);
+	}
+
+	val = readl(REG_DDR_CS1_BNDS);
+	if (val != 0) {
+		sa = (val >> 16) & 0xff;
+		ea = val & 0xff;
+
+		/* 1/8 size is used for inline ecc */
+		ea = ea - ((ea + 1 - sa) >> 3);
+		writel((sa << 16) | ea, REG_DDR_CS1_BNDS);
+	}
+
+	/* Enable Inline ECC */
+	setbits_le32(REG_DDR_ERR_EN, BIT(31) | BIT(30));
+
+	/* Enable data initialization */
+	setbits_le32(REG_DDR_SDRAM_CFG2, BIT(4));
+}
+
 int ddr_init(struct dram_timing_info *dram_timing)
 {
 	unsigned int initial_drate;
@@ -232,6 +263,10 @@ int ddr_init(struct dram_timing_info *dram_timing)
 	debug("DDRINFO: ddrc config done\n");
 
 	update_umctl2_rank_space_setting(dram_timing->fsp_msg_num - 1);
+
+#ifdef CONFIG_IMX9_DRAM_INLINE_ECC
+	update_inline_ecc_setting();
+#endif
 
 #ifdef CONFIG_IMX9_DRAM_PM_COUNTER
 	writel(0x200000, REG_DDR_DEBUG_19);
