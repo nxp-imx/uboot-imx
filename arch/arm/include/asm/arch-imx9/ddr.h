@@ -13,11 +13,15 @@
 #define DDR_PHY_BASE 		   	0x4E100000
 #define DDRMIX_BLK_CTRL_BASE    0x4E010000
 
+#define REG_DDR_CS0_BNDS        	    (DDR_CTL_BASE + 0x0)
+#define REG_DDR_CS1_BNDS        	    (DDR_CTL_BASE + 0x8)
 #define REG_DDRDSR_2        	          (DDR_CTL_BASE + 0xB24)
 #define REG_DDR_TIMING_CFG_0			(DDR_CTL_BASE + 0x104)
 #define REG_DDR_SDRAM_CFG        	      (DDR_CTL_BASE + 0x110)
+#define REG_DDR_SDRAM_CFG2        	      (DDR_CTL_BASE + 0x114)
 #define REG_DDR_TIMING_CFG_4			(DDR_CTL_BASE + 0x160)
 #define REG_DDR_DEBUG_19        	      (DDR_CTL_BASE + 0xF48)
+#define REG_DDR_ERR_EN        	        (DDR_CTL_BASE + 0x1000)
 
 #define SRC_BASE_ADDR                     (0x44460000)
 #define SRC_DPHY_BASE_ADDR                (SRC_BASE_ADDR + 0x1400)
