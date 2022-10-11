@@ -353,7 +353,7 @@ static int blob_encap_dek(u32 src_addr, u32 dst_addr, u32 len)
 	
 	/* Flush the cache */
 	flush_dcache_range(src_addr, src_addr + in_size);
-	flush_dcache_range(dst_ptr, (ulong)(dst_ptr +
+	flush_dcache_range((ulong)dst_ptr, (ulong)(dst_ptr +
 			roundup(out_size, ARCH_DMA_MINALIGN)));
 
 	/* Call ELE */
