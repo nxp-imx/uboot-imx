@@ -529,6 +529,7 @@ static int pkcs7_verify_one(struct pkcs7_message *pkcs7,
 		if (sinfo->signing_time < sinfo->signer->valid_from ||
 		    sinfo->signing_time > sinfo->signer->valid_to) {
 			pr_warn("Message signed outside of X.509 validity window\n");
+			return -EKEYREJECTED;
 		}
 	}
 
