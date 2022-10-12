@@ -70,10 +70,17 @@ int power_init_board(void)
 	/* enable DVS control through PMIC_STBY_REQ */
 	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
 
-	/* 0.9v
-	 */
-	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x18);
-	pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x18);
+	if (IS_ENABLED(CONFIG_IMX9_LOW_DRIVE_MODE)){
+		/* 0.75v for Low drive mode
+		 */
+		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x0c);
+		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x0c);
+	} else {
+		/* 0.9v for Over drive mode
+		 */
+		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x18);
+		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x18);
+	}
 
 	/* set standby voltage to 0.65v */
 	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x4);
@@ -109,9 +116,11 @@ void board_init_f(ulong dummy)
 		printf("SOC: 0x%x\n", gd->arch.soc_rev);
 		printf("LC: 0x%x\n", gd->arch.lifecycle);
 	}
+
 	power_init_board();
 
-	set_arm_core_max_clk();
+	if (!IS_ENABLED(CONFIG_IMX9_LOW_DRIVE_MODE))
+		set_arm_core_max_clk();
 
 	/* Init power of mix */
 	soc_power_init();
