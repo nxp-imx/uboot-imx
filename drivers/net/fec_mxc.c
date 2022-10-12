@@ -884,6 +884,9 @@ static int fec_recv(struct eth_device *dev)
 	ALLOC_CACHE_ALIGN_BUFFER(uchar, buff, FEC_MAX_PKT_SIZE);
 #endif
 
+	if (!(readl(&fec->eth->ecntrl) & FEC_ECNTRL_ETHER_EN))
+		return 0;
+
 	/* Check if any critical events have happened */
 	ievent = readl(&fec->eth->ievent);
 	writel(ievent, &fec->eth->ievent);
