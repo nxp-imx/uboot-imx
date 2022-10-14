@@ -553,6 +553,13 @@ void set_arm_core_max_clk(void)
 	ccm_shared_gpr_set(SHARED_GPR_A55_CLK, SHARED_GPR_A55_CLK_SEL_PLL);
 }
 
+void set_arm_core_low_drive_clk(void)
+{
+	ccm_shared_gpr_set(SHARED_GPR_A55_CLK, SHARED_GPR_A55_CLK_SEL_CCM);
+	configure_intpll(ARM_PLL_CLK, 900000000);
+	ccm_shared_gpr_set(SHARED_GPR_A55_CLK, SHARED_GPR_A55_CLK_SEL_PLL);
+}
+
 unsigned int mxc_get_clock(enum mxc_clock clk)
 {
 	switch (clk) {
@@ -625,21 +632,26 @@ void init_uart_clk(u32 index)
 
 void init_clk_usdhc(u32 index)
 {
-	/* 400 Mhz */
+	u32 div;
+	if (IS_ENABLED(CONFIG_IMX9_LOW_DRIVE_MODE))
+		div = 3; /* 266.67 Mhz */
+	else
+		div = 2; /* 400 Mhz */
+
 	switch (index) {
 	case 0:
 		ccm_lpcg_on(CCGR_USDHC1, 0);
-		ccm_clk_root_cfg(USDHC1_CLK_ROOT, SYS_PLL_PFD1, 2);
+		ccm_clk_root_cfg(USDHC1_CLK_ROOT, SYS_PLL_PFD1, div);
 		ccm_lpcg_on(CCGR_USDHC1, 1);
 		break;
 	case 1:
 		ccm_lpcg_on(CCGR_USDHC2, 0);
-		ccm_clk_root_cfg(USDHC2_CLK_ROOT, SYS_PLL_PFD1, 2);
+		ccm_clk_root_cfg(USDHC2_CLK_ROOT, SYS_PLL_PFD1, div);
 		ccm_lpcg_on(CCGR_USDHC2, 1);
 		break;
 	case 2:
 		ccm_lpcg_on(CCGR_USDHC3, 0);
-		ccm_clk_root_cfg(USDHC3_CLK_ROOT, SYS_PLL_PFD1, 2);
+		ccm_clk_root_cfg(USDHC3_CLK_ROOT, SYS_PLL_PFD1, div);
 		ccm_lpcg_on(CCGR_USDHC3, 1);
 		break;
 	default:
@@ -698,7 +710,36 @@ void dram_disable_bypass(void)
 }
 #endif
 
-int clock_init(void)
+void bus_clock_init_low_drive(void)
+{
+	/* Set A55 clk to 500M */
+	ccm_clk_root_cfg(ARM_A55_CLK_ROOT, SYS_PLL_PFD0, 2);
+	/* Set A55 periphal to 200M */
+	ccm_clk_root_cfg(ARM_A55_PERIPH_CLK_ROOT, SYS_PLL_PFD1, 4);
+	/* Set A55 mtr bus to 133M */
+	ccm_clk_root_cfg(ARM_A55_MTR_BUS_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+
+	/* Sentinel to 133M */
+	ccm_clk_root_cfg(SENTINEL_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+	/* Bus_wakeup to 133M */
+	ccm_clk_root_cfg(BUS_WAKEUP_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+	/* Bus_AON to 133M */
+	ccm_clk_root_cfg(BUS_AON_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+	/* M33 to 133M */
+	ccm_clk_root_cfg(M33_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+	/* WAKEUP_AXI to 200M  */
+	ccm_clk_root_cfg(WAKEUP_AXI_CLK_ROOT, SYS_PLL_PFD1, 4);
+	/* SWO TRACE to 133M */
+	ccm_clk_root_cfg(SWO_TRACE_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+	/* M33 systetick to 24M */
+	ccm_clk_root_cfg(M33_SYSTICK_CLK_ROOT, OSC_24M_CLK, 1);
+	/* NIC to 250M */
+	ccm_clk_root_cfg(NIC_CLK_ROOT, SYS_PLL_PFD0, 4);
+	/* NIC_APB to 133M */
+	ccm_clk_root_cfg(NIC_APB_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+}
+
+void bus_clock_init(void)
 {
 	/* Set A55 periphal to 333M */
 	ccm_clk_root_cfg(ARM_A55_PERIPH_CLK_ROOT, SYS_PLL_PFD0, 3);
@@ -717,12 +758,22 @@ int clock_init(void)
 	ccm_clk_root_cfg(WAKEUP_AXI_CLK_ROOT, SYS_PLL_PFD2, 2);
 	/* SWO TRACE to 133M */
 	ccm_clk_root_cfg(SWO_TRACE_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
-	/* M33 systetick to 133M */
-	ccm_clk_root_cfg(M33_SYSTICK_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+	/* M33 systetick to 24M */
+	ccm_clk_root_cfg(M33_SYSTICK_CLK_ROOT, OSC_24M_CLK, 1);
 	/* NIC to 400M */
 	ccm_clk_root_cfg(NIC_CLK_ROOT, SYS_PLL_PFD1, 2);
 	/* NIC_APB to 133M */
 	ccm_clk_root_cfg(NIC_APB_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+}
+
+int clock_init(void)
+{
+	if (IS_ENABLED(CONFIG_IMX9_LOW_DRIVE_MODE)){
+		bus_clock_init_low_drive();
+		set_arm_core_low_drive_clk();
+	} else {
+		bus_clock_init();
+	}
 
 	/* allow for non-secure access */
 	int i;
