@@ -446,6 +446,13 @@ void board_preboot_os(void)
 	gpio_set_value(IMX_GPIO_NR(5, 9), 0);
 }
 
+void board_quiesce_devices(void)
+{
+#if defined(CONFIG_VIDEO_MXS)
+	enable_lcdif_clock(LCDIF1_BASE_ADDR, 0);
+#endif
+}
+
 #ifdef CONFIG_SPL_BUILD
 #include <linux/libfdt.h>
 #include <spl.h>
