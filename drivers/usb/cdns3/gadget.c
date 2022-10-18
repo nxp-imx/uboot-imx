@@ -55,7 +55,7 @@ static struct usb_request *next_request(struct list_head *list)
 static void select_ep(struct usb_ss_dev *usb_ss, u32 ep)
 {
 	if (!usb_ss || !usb_ss->regs) {
-		dev_err(&usb_ss->dev, "Failed to select endpoint!\n");
+		printf("Failed to select endpoint!\n");
 		return;
 	}
 
