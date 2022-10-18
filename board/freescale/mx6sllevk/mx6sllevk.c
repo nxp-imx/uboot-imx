@@ -408,3 +408,10 @@ int checkboard(void)
 
 	return 0;
 }
+
+void board_quiesce_devices(void)
+{
+#if defined(CONFIG_VIDEO_MXS)
+	enable_lcdif_clock(MX6SLL_LCDIF_BASE_ADDR, 0);
+#endif
+}
