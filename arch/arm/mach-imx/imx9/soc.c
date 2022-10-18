@@ -562,10 +562,59 @@ const char *get_imx_type(u32 imxtype)
 	}
 }
 
+#define SRC_SRSR_RESET_CAUSE_NUM 16
+const char *reset_cause[SRC_SRSR_RESET_CAUSE_NUM] = {
+	"POR ",
+	"JTAG ",
+	"IPP USER ",
+	"WDOG1 ",
+	"WDOG2 ",
+	"WDOG3 ",
+	"WDOG4 ",
+	"WDOG5 ",
+	"TEMPSENSE ",
+	"CSU ",
+	"JTAG_SW ",
+	"M33_REQ ",
+	"M33_LOCKUP "
+	"UNK ",
+	"UNK ",
+	"UNK ",
+};
+
+static void save_reset_cause(void)
+{
+	struct src_general_regs *src = (struct src_general_regs *)SRC_GLOBAL_RBASE;
+	u32 srsr = readl(&src->srsr);
+	writel(srsr, &src->srsr); /* clear srsr in sec mode */
+
+	/* Save value to GPR1 to pass to nonsecure */
+	writel(srsr, &src->gpr[0]);
+}
+
+static const char *get_reset_cause(u32 *srsr_ret)
+{
+	struct src_general_regs *src = (struct src_general_regs *)SRC_GLOBAL_RBASE;
+	u32 srsr;
+	u32 i;
+
+	srsr = readl(&src->gpr[0]);
+	if (srsr_ret)
+		*srsr_ret = srsr;
+
+	for (i = SRC_SRSR_RESET_CAUSE_NUM; i > 0; i--) {
+		if (srsr & (1 << (i - 1)))
+			return reset_cause[i - 1];
+	}
+
+	return "unknown reset";
+}
+
 int print_cpuinfo(void)
 {
 	u32 cpurev, max_freq;
 	int minc, maxc;
+	u32 ssrs_ret;
 
 	cpurev = get_cpu_rev();
 
@@ -615,6 +664,9 @@ int print_cpuinfo(void)
 	}
 #endif
 	puts("\n");
+
+	printf("Reset cause: %s", get_reset_cause(&ssrs_ret));
+	printf("(0x%x)\n", ssrs_ret);
 
 	return 0;
 }
@@ -845,6 +897,9 @@ int arch_cpu_init(void)
 		clock_init();
 
 		trdc_early_init();
+
+		/* Save SRC SRSR to GPR1 and clear it */
+		save_reset_cause();
 	}
 
 	return 0;
