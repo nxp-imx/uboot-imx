@@ -794,3 +794,11 @@ int checkboard(void)
 #endif
 	return 0;
 }
+
+void board_quiesce_devices(void)
+{
+#if defined(CONFIG_VIDEO_MXS)
+	enable_lcdif_clock(MX6SX_LCDIF1_BASE_ADDR, 0);
+	enable_lcdif_clock(LCDIF2_BASE_ADDR, 0);
+#endif
+}
