@@ -368,7 +368,20 @@ void nand_fixup()
         csor = (csor & ~(CSOR_NAND_SPRZ_MASK)) | CSOR_NAND_SPRZ_224;
 
 #ifdef CONFIG_TFABOOT
-    set_ifc_csor(IFC_CS1, csor);
+    u8 cfg_rcw_src1, cfg_rcw_src2;
+    u16 cfg_rcw_src;
+    cfg_rcw_src1 = CPLD_READ(cfg_rcw_src1);
+    cfg_rcw_src2 = CPLD_READ(cfg_rcw_src2);
+    cpld_rev_bit(&cfg_rcw_src1);
+    cfg_rcw_src = cfg_rcw_src1;
+    cfg_rcw_src = (cfg_rcw_src << 1) | cfg_rcw_src2;
+
+    if (cfg_rcw_src == 0x25)
+        set_ifc_csor(IFC_CS1, csor);
+    else if (cfg_rcw_src == 0x118)
+        set_ifc_csor(IFC_CS0, csor);
+    else
+        printf("Invalid setting\n");
 #else
 #ifdef CONFIG_NAND_BOOT
     set_ifc_csor(IFC_CS0, csor);
