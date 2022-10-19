@@ -57,6 +57,9 @@ extern struct imx_pll14xx_clk imx_1443x_dram_pll;
 
 struct clk *clk_register_imx93_pll(const char *name, const char *parent_name,
 				   void __iomem *reg);
+struct clk *clk_register_imx93_clk_gate(const char *name, const char *parent_name,
+					void __iomem *reg_base, u8 lpcg_on_offset,
+					ulong flags);
 
 struct clk *imx_clk_pll14xx(const char *name, const char *parent_name,
 			    void __iomem *base,
