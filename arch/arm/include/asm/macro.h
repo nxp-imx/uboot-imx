@@ -3,6 +3,7 @@
  * include/asm-arm/macro.h
  *
  * Copyright (C) 2009 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
+ * Copyright 2022 NXP
  */
 
 #ifndef __ASM_ARM_MACRO_H__
@@ -355,6 +356,45 @@ lr	.req	x30
 	cbnz    \wreg2, 0b
 .endm
 #endif
+
+/*
+ * Select code when configured for LE.
+ */
+#ifdef CONFIG_CPU_BIG_ENDIAN
+#define CPU_LE(code...)
+#else
+#define CPU_LE(code...) code
+#endif
+
+/*
+ * Pseudo-ops for PC-relative adr/ldr <reg>, <symbol> where
+ * <symbol> is within the range +/- 4 GB of the PC.
+ */
+	/*
+	 * @dst: destination register (64 bit wide)
+	 * @sym: name of the symbol
+	 */
+	.macro	adr_l, dst, sym
+	adrp	\dst, \sym
+	add	\dst, \dst, :lo12:\sym
+	.endm
+
+	/*
+	 * @dst: destination register (32 or 64 bit wide)
+	 * @sym: name of the symbol
+	 * @tmp: optional 64-bit scratch register to be used if <dst> is a
+	 *       32-bit wide register, in which case it cannot be used to hold
+	 *       the address
+	 */
+	.macro	ldr_l, dst, sym, tmp=
+	.ifb	\tmp
+	adrp	\dst, \sym
+	ldr	\dst, [\dst, :lo12:\sym]
+	.else
+	adrp	\tmp, \sym
+	ldr	\dst, [\tmp, :lo12:\sym]
+	.endif
+	.endm
 
 #endif /* CONFIG_ARM64 */
 
