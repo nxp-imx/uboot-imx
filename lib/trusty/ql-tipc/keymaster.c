@@ -690,6 +690,11 @@ int trusty_set_boot_patch_level(uint32_t boot_patch_level)
     int rc;
 
     req = trusty_calloc(4, 1); // 4 bytes should be enough.
+    if (!req) {
+        trusty_error("trusty_calloc memory failed!\n");
+        return -1;
+    }
+
     memcpy(req, &boot_patch_level, sizeof(uint32_t));
     req_size = sizeof(uint32_t);
 
