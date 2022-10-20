@@ -407,8 +407,8 @@ static int imx93_clk_probe(struct udevice *dev)
 
 	for (int i = 0; i < ARRAY_SIZE(clk_ccgrs); i++) {
 		ccgr = &clk_ccgrs[i];
-		clk = imx_clk_gate4_flags(ccgr->name, ccgr->parent_names,
-					  ccm_base + ccgr->off, 0, ccgr->flags);
+		clk = clk_register_imx93_clk_gate(ccgr->name, ccgr->parent_names,
+						  ccm_base + ccgr->off, 0, ccgr->flags);
 		clk_dm(ccgr->clk_id, clk);
 	}
 
