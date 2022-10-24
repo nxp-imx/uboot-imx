@@ -22,6 +22,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define SECO_LOCAL_SEC_SEC_SECURE_RAM_BASE  (0x60000000UL)
 
 #define SECO_PT                 2U
+#define AHAB_HASH_TYPE_MASK    0x00000700
+#define AHAB_HASH_TYPE_SHA256  0
 
 static inline bool check_in_dram(ulong addr)
 {
@@ -146,17 +148,21 @@ int authenticate_os_container(ulong addr)
 		flush_dcache_range(s, e);
 
 #ifdef CONFIG_CRYPTO_SHA2_ARM64_CE
-		sha256_ce((void *)img->dst, img->size, hash_value);
-		err = memcmp(&img->hash, &hash_value, SHA256_DIGEST_SIZE);
-		if (err) {
-			printf("img %d hash comparison failed, error %d\n", i, err);
-			ret = -EIO;
-			goto exit;
-		}
-#else
+		if (((img->hab_flags & AHAB_HASH_TYPE_MASK) >> 8) == AHAB_HASH_TYPE_SHA256) {
+			sha256_ce((void *)img->dst, img->size, hash_value);
+			err = memcmp(&img->hash, &hash_value, SHA256_DIGEST_SIZE);
+			if (err) {
+				printf("img %d hash comparison failed, error %d\n", i, err);
+				ret = -EIO;
+				goto exit;
+			}
+		} else {
+#endif
 		ret = ahab_verify_cntr_image(img, i);
 		if (ret)
 			goto exit;
+#ifdef CONFIG_CRYPTO_SHA2_ARM64_CE
+		}
 #endif
 	}
 
