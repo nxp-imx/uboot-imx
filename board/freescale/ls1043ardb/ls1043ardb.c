@@ -362,28 +362,33 @@ void nand_fixup(void)
 	if ((csor & CSOR_NAND_SPRZ_MASK) == CSOR_NAND_SPRZ_64)
 		csor = (csor & ~(CSOR_NAND_SPRZ_MASK)) | CSOR_NAND_SPRZ_224;
 
-	if (IS_ENABLED(CONFIG_TFABOOT)) {
-		u8 cfg_rcw_src1, cfg_rcw_src2;
-		u16 cfg_rcw_src;
+#ifdef CONFIG_TFABOOT
+	enum boot_src src = get_boot_src();
+	u8 cfg_rcw_src1, cfg_rcw_src2;
+	u16 cfg_rcw_src;
 
-		cfg_rcw_src1 = CPLD_READ(cfg_rcw_src1);
-		cfg_rcw_src2 = CPLD_READ(cfg_rcw_src2);
-		cpld_rev_bit(&cfg_rcw_src1);
-		cfg_rcw_src = cfg_rcw_src1;
-		cfg_rcw_src = (cfg_rcw_src << 1) | cfg_rcw_src2;
+	cfg_rcw_src1 = CPLD_READ(cfg_rcw_src1);
+	cfg_rcw_src2 = CPLD_READ(cfg_rcw_src2);
+	cpld_rev_bit(&cfg_rcw_src1);
+	cfg_rcw_src = cfg_rcw_src1;
+	cfg_rcw_src = (cfg_rcw_src << 1) | cfg_rcw_src2;
 
-		if (cfg_rcw_src == 0x25)
+	if (cfg_rcw_src == 0x25)
+		set_ifc_csor(IFC_CS1, csor);
+	else if (cfg_rcw_src == 0x118)
+		set_ifc_csor(IFC_CS0, csor);
+	else {
+		if (src == BOOT_SOURCE_SD_MMC)
 			set_ifc_csor(IFC_CS1, csor);
-		else if (cfg_rcw_src == 0x118)
-			set_ifc_csor(IFC_CS0, csor);
 		else
-			printf("Invalid setting\n");
-	} else {
-		if (IS_ENABLED(CONFIG_NAND_BOOT))
-			set_ifc_csor(IFC_CS0, csor);
-		else
-			set_ifc_csor(IFC_CS1, csor);
+		    printf("Invalid setting\n");
 	}
+#else
+	if (IS_ENABLED(CONFIG_NAND_BOOT))
+		set_ifc_csor(IFC_CS0, csor);
+	else
+		set_ifc_csor(IFC_CS1, csor);
+#endif
 }
 
 #if IS_ENABLED(CONFIG_OF_BOARD_FIXUP)
