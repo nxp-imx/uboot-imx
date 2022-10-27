@@ -51,6 +51,7 @@
 #endif
 
 #define FASTBOOT_PARTITION_METADATA "metadata"
+#define ERASE_UBOOT_ENV "erase_uboot_env"
 
 #ifdef CONFIG_ANDROID_AB_SUPPORT
 #define FASTBOOT_PARTITION_BOOT_A "boot_a"
