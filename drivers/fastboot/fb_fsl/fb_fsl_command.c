@@ -472,6 +472,16 @@ static bool endswith(char* s, char* subs) {
 	return true;
 }
 
+static bool erase_uboot_env(void) {
+	FbLockState status;
+	status = fastboot_get_lock_stat();
+	if (status == FASTBOOT_LOCK) {
+		printf("can not erase env when device is in locked state\n");
+		return false;
+	} else
+		return env_erase() ? false : true;
+}
+
 static void flashing(char *cmd, char *response)
 {
 	FbLockState status;
@@ -726,7 +736,14 @@ static void flashing(char *cmd, char *response)
 	}
 #endif /* !CONFIG_AVB_ATX */
 #endif /* CONFIG_IMX_TRUSTY_OS */
-	else if (endswith(cmd, "unlock_critical")) {
+	else if (endswith(cmd, ERASE_UBOOT_ENV)) {
+		if(erase_uboot_env())
+			strcpy(response, "OKAY");
+		else {
+			printf("ERROR erase uboot environment variable failed!");
+		        strcpy(response, "FAILerase uboot environment variable failed!");
+		}
+	} else if (endswith(cmd, "unlock_critical")) {
 		strcpy(response, "OKAY");
 	} else if (endswith(cmd, "unlock")) {
 		printf("flashing unlock.\n");
