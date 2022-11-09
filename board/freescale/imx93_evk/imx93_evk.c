@@ -244,12 +244,16 @@ static int setup_eqos(void)
 	struct blk_ctrl_wakeupmix_regs *bctrl =
 		(struct blk_ctrl_wakeupmix_regs *)BLK_CTRL_WAKEUPMIX_BASE_ADDR;
 
-	/* set INTF as RGMII, enable RGMII TXC clock */
-	clrsetbits_le32(&bctrl->eqos_gpr,
-			BCTRL_GPR_ENET_QOS_INTF_MODE_MASK,
-			BCTRL_GPR_ENET_QOS_INTF_SEL_RGMII | BCTRL_GPR_ENET_QOS_CLK_GEN_EN);
+	if (!IS_ENABLED(CONFIG_TARGET_IMX93_14X14_EVK)) {
+		/* set INTF as RGMII, enable RGMII TXC clock */
+		clrsetbits_le32(&bctrl->eqos_gpr,
+				BCTRL_GPR_ENET_QOS_INTF_MODE_MASK,
+				BCTRL_GPR_ENET_QOS_INTF_SEL_RGMII | BCTRL_GPR_ENET_QOS_CLK_GEN_EN);
 
-	return set_clk_eqos(ENET_125MHZ);
+		return set_clk_eqos(ENET_125MHZ);
+	}
+
+	return 0;
 }
 
 static void board_gpio_init(void)
@@ -280,6 +284,20 @@ static void board_gpio_init(void)
 
 	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
 	dm_gpio_set_value(&desc, 1);
+
+	if (IS_ENABLED(CONFIG_TARGET_IMX93_14X14_EVK)) {
+		/* Enable I2C_LS_EN levelshift */
+		ret = dm_gpio_lookup_name("gpio@20_16", &desc);
+		if (ret)
+			return;
+
+		ret = dm_gpio_request(&desc, "I2C_LS_EN");
+		if (ret)
+			return;
+
+		dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
+		dm_gpio_set_value(&desc, 1);
+	}
 }
 
 int board_init(void)
