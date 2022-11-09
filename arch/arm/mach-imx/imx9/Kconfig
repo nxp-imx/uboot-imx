@@ -27,6 +27,10 @@ choice
 	prompt  "NXP i.MX9 board select"
 	optional
 
+config TARGET_IMX93_14X14_EVK
+	bool "imx93_14x14_evk"
+	select IMX93
+
 config TARGET_IMX93_11X11_EVK
 	bool "imx93_11x11_evk"
 	select IMX93
