@@ -311,7 +311,7 @@ add_status:
 		void *buf;
 		char keys[2][16] = {"otp_crypto_key", "otp_unique_key"};
 		int ret = 0;
-		int nodeoff = fdt_path_offset(blob, "/soc/bus@2200000/crypto@2280000");
+		int nodeoff = fdt_node_offset_by_compatible(blob, -1, "fsl,imx28-dcp");
 
 		if (nodeoff < 0) {
 			printf("node to update the SoC serial number is not found.\n");
