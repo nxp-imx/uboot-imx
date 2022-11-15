@@ -210,9 +210,39 @@ int board_late_init(void)
 
 #ifdef CONFIG_FSL_FASTBOOT
 #ifdef CONFIG_ANDROID_RECOVERY
+static iomux_cfg_t const recovery_pad[] = {
+	IMX8ULP_PAD_PTF7__PTF7 | MUX_PAD_CTRL(PAD_CTL_IBE_ENABLE),
+};
 int is_recovery_key_pressing(void)
 {
-	return 0; /*TODO*/
+	int ret;
+	struct gpio_desc desc;
+
+	imx8ulp_iomux_setup_multiple_pads(recovery_pad, ARRAY_SIZE(recovery_pad));
+
+	ret = dm_gpio_lookup_name("GPIO3_7", &desc);
+	if (ret) {
+		printf("%s lookup GPIO3_7 failed ret = %d\n", __func__, ret);
+		return 0;
+	}
+
+	ret = dm_gpio_request(&desc, "recovery");
+	if (ret) {
+		printf("%s request recovery pad failed ret = %d\n", __func__, ret);
+		return 0;
+	}
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_IN);
+
+	ret = dm_gpio_get_value(&desc);
+	if (ret < 0) {
+                printf("%s error in retrieving GPIO value ret = %d\n", __func__, ret);
+                return 0;
+        }
+
+	dm_gpio_free(desc.dev, &desc);
+
+	return !ret;
 }
 #endif /*CONFIG_ANDROID_RECOVERY*/
 #endif /*CONFIG_FSL_FASTBOOT*/
