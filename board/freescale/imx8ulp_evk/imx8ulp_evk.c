@@ -210,11 +210,14 @@ int board_late_init(void)
 
 #ifdef CONFIG_FSL_FASTBOOT
 #ifdef CONFIG_ANDROID_RECOVERY
+#ifdef CONFIG_TARGET_IMX8ULP_EVK
 static iomux_cfg_t const recovery_pad[] = {
 	IMX8ULP_PAD_PTF7__PTF7 | MUX_PAD_CTRL(PAD_CTL_IBE_ENABLE),
 };
+#endif
 int is_recovery_key_pressing(void)
 {
+#ifdef CONFIG_TARGET_IMX8ULP_EVK
 	int ret;
 	struct gpio_desc desc;
 
@@ -243,6 +246,9 @@ int is_recovery_key_pressing(void)
 	dm_gpio_free(desc.dev, &desc);
 
 	return !ret;
+#else
+	return 0;
+#endif
 }
 #endif /*CONFIG_ANDROID_RECOVERY*/
 #endif /*CONFIG_FSL_FASTBOOT*/
