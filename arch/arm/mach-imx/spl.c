@@ -21,6 +21,8 @@
 #include <g_dnl.h>
 #include <linux/libfdt.h>
 #include <mmc.h>
+#include <u-boot/lz4.h>
+#include <image.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -433,8 +435,25 @@ exit:
 }
 #endif
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+#define TEE_DEST_SIZE     0x04000000
+#define TEE_SUBNODE_NAME "tee-1"
+#define TEE_RELOAD_OFFSET 0x00800000
+#define LZ4_MAGIC_NUM     0x184D2204
+#endif
+
 void board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
 {
+
+#ifdef CONFIG_IMX_TRUSTY_OS
+	int tee_node;
+	ulong load_addr;
+	int size;
+	void *offset_addr;
+	size_t dest_size;
+	int ret;
+#endif
+
 	if (IS_ENABLED(CONFIG_IMX_HAB) && !(spl_image->flags & SPL_FIT_BYPASS_POST_LOAD)) {
 		u32 offset = ALIGN(fdt_totalsize(fit), 0x1000);
 
@@ -455,6 +474,46 @@ void board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
 					(void *)(CONFIG_IMX8M_MCU_RDC_STOP_CONFIG_ADDR + ALIGN(strlen(MCU_RDC_MAGIC), 4)));
 	}
 #endif
+
+#ifdef CONFIG_IMX_TRUSTY_OS
+        if (!(spl_image->flags & SPL_FIT_BYPASS_POST_LOAD)) {
+                tee_node = fit_image_get_node(fit, TEE_SUBNODE_NAME);
+                if (tee_node < 0) {
+                        printf ("Can't find FIT subimage\n");
+                        return;
+                }
+
+                ret = fit_image_get_load(fit, tee_node, &load_addr);
+                if (ret) {
+                        printf("Can't get image load address!\n");
+                        return;
+                }
+
+                if (*(u32*)load_addr == LZ4_MAGIC_NUM) {
+                        offset_addr = (void *)load_addr + TEE_RELOAD_OFFSET;
+
+                        ret = fit_image_get_data_size(fit, tee_node, &size);
+                        if (ret < 0) {
+                                printf("Can't get size of image (err=%d)\n", ret);
+                                return;
+                        }
+
+                        memcpy(offset_addr,(void *)load_addr, size);
+
+                        dest_size = TEE_DEST_SIZE;
+                        ret = ulz4fn((void *)offset_addr, size, (void *)load_addr, &dest_size);
+                        if (ret) {
+                                printf("Uncompressed err :%d\n", ret);
+                                return;
+                        }
+#if CONFIG_IS_ENABLED(LOAD_FIT) || CONFIG_IS_ENABLED(LOAD_FIT_FULL)
+                        /* Modify the image size had recorded in FDT */
+                        fdt_setprop_u32(spl_image->fdt_addr, tee_node, "size", (u32)dest_size);
+#endif
+                }
+        }
+#endif
+
 }
 
 #ifdef CONFIG_IMX_TRUSTY_OS
