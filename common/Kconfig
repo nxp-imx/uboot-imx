@@ -1106,3 +1106,10 @@ config FDT_SIMPLEFB
 
 config IO_TRACE
 	bool
+
+config KASLR
+	bool "Enable KASLR feature in kernel"
+	help
+	 Fixing up device-tree with random u64 value in kaslr-seed property
+	 of chosen node at kernel entry for randomizing the virtual address
+	 at which the kernel image is loaded.

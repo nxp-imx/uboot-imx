@@ -4,6 +4,7 @@
  * generator and uses them to set the kaslr-seed value in the chosen node.
  *
  * Copyright (c) 2021, Chris Morgan <macromorgan@hotmail.com>
+ * Copyright (c) 2022 NXP
  */
 
 #include <common.h>
@@ -13,30 +14,11 @@
 #include <malloc.h>
 #include <rng.h>
 #include <fdt_support.h>
+#include <kaslr.h>
 
 static int do_kaslr_seed(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
-	size_t n = 0x8;
-	struct udevice *dev;
-	u64 *buf;
-	int nodeoffset;
 	int ret = CMD_RET_SUCCESS;
-
-	if (uclass_get_device(UCLASS_RNG, 0, &dev) || !dev) {
-		printf("No RNG device\n");
-		return CMD_RET_FAILURE;
-	}
-
-	buf = malloc(n);
-	if (!buf) {
-		printf("Out of memory\n");
-		return CMD_RET_FAILURE;
-	}
-
-	if (dm_rng_read(dev, buf, n)) {
-		printf("Reading RNG failed\n");
-		return CMD_RET_FAILURE;
-	}
 
 	if (!working_fdt) {
 		printf("No FDT memory address configured. Please configure\n"
@@ -50,21 +32,9 @@ static int do_kaslr_seed(struct cmd_tbl *cmdtp, int flag, int argc, char *const 
 		printf("fdt_chosen: %s\n", fdt_strerror(ret));
 		return CMD_RET_FAILURE;
 	}
-
-	nodeoffset = fdt_find_or_add_subnode(working_fdt, 0, "chosen");
-	if (nodeoffset < 0) {
-		printf("Reading chosen node failed\n");
+	ret = do_generate_kaslr(working_fdt);
+        if (ret < 0)
 		return CMD_RET_FAILURE;
-	}
-
-	ret = fdt_setprop(working_fdt, nodeoffset, "kaslr-seed", buf, sizeof(buf));
-	if (ret < 0) {
-		printf("Unable to set kaslr-seed on chosen node: %s\n", fdt_strerror(ret));
-		return CMD_RET_FAILURE;
-	}
-
-	free(buf);
-
 	return ret;
 }
 
