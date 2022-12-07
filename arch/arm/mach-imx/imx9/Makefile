@@ -5,6 +5,6 @@
 obj-y += lowlevel_init.o
 obj-y += soc.o clock.o clock_root.o trdc.o
 
-#ifndef CONFIG_SPL_BUILD
+ifneq ($(CONFIG_SPL_BUILD),y)
 obj-y += imx_bootaux.o
-#endif
+endif
