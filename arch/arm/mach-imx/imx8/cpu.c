@@ -1121,6 +1121,7 @@ void * board_imx_vservice_get_buffer(struct imx_vservice_channel *node, u32 size
 }
 #endif
 
+#ifdef CONFIG_SYS_I2C_IMX_VIRT_I2C
 /* imx8qxp i2c1 has lots of devices may used by both M4 and A core
 *   If A core partition does not own the resource, we will start
 *   virtual i2c driver. Otherwise use local i2c driver.
@@ -1140,6 +1141,7 @@ int board_imx_lpi2c_bind(struct udevice *dev)
 
 	return -ENODEV;
 }
+#endif
 
 #ifdef CONFIG_USB_PORT_AUTO
 static int usb_port_auto_check(void)

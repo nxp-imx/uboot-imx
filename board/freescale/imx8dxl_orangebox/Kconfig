@@ -1,0 +1,15 @@
+if TARGET_IMX8DXL_ORANGEBOX
+
+config SYS_BOARD
+	default "imx8dxl_orangebox"
+
+config SYS_VENDOR
+	default "freescale"
+
+config SYS_CONFIG_NAME
+	default "imx8dxl_orangebox"
+
+config IMX_CONFIG
+	default "board/freescale/imx8dxl_orangebox/imximage.cfg"
+
+endif
