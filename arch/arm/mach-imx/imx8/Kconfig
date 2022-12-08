@@ -196,6 +196,15 @@ config TARGET_IMX8DXL_DDR3_EVK
 	select ARCH_MISC_INIT
 	select SPL_CRYPTO if SPL
 
+config TARGET_IMX8DXL_ORANGEBOX
+	bool "Support i.MX8DXL OrangeBox board"
+	select BOARD_LATE_INIT
+	select IMX8DXL
+	select FSL_CAAM
+	select FSL_BLOB
+	select ARCH_MISC_INIT
+	select SPL_CRYPTO if SPL
+
 endchoice
 
 source "board/freescale/imx8qm_mek/Kconfig"
@@ -205,6 +214,7 @@ source "board/freescale/imx8qm_val/Kconfig"
 source "board/freescale/imx8qxp_val/Kconfig"
 source "board/freescale/imx8dxl_phantom_mek/Kconfig"
 source "board/freescale/imx8dxl_evk/Kconfig"
+source "board/freescale/imx8dxl_orangebox/Kconfig"
 source "board/advantech/imx8qm_rom7720_a1/Kconfig"
 source "board/toradex/apalis-imx8/Kconfig"
 source "board/toradex/colibri-imx8x/Kconfig"
