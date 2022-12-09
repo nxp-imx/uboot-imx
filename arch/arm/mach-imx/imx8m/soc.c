@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2017-2019, 2021 NXP
+ * Copyright 2017-2019, 2021-2022 NXP
  *
  * Peng Fan <peng.fan@nxp.com>
  */
@@ -33,6 +33,7 @@
 #include <linux/bitops.h>
 #include <asm/setup.h>
 #include <asm/bootm.h>
+#include <kaslr.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1429,6 +1430,13 @@ usb_modify_speed:
 	cleanup_nodes_for_efi(blob);
 
 	delete_u_boot_nodes(blob);
+
+if (IS_ENABLED(CONFIG_KASLR)) {
+       int ret = do_generate_kaslr(blob);
+       if (ret)
+           printf("Unable to set property %s, err=%s\n",
+                       "kaslr-seed", fdt_strerror(ret));
+       }
 
 #if defined(CONFIG_ANDROID_SUPPORT) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
 	return 0;

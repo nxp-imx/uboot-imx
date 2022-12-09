@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <asm/io.h>
@@ -31,6 +31,7 @@
 #include <env_internal.h>
 #include <linux/iopoll.h>
 #include <thermal.h>
+#include <kaslr.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1015,6 +1016,11 @@ int ft_system_setup(void *blob, struct bd_info *bd)
 	if (ret)
 		printf("Error[0x%x] fdt_setprop serial-number.\n", ret);
 
+	if (IS_ENABLED(CONFIG_KASLR)) {
+		ret = do_generate_kaslr(blob);
+		if (ret)
+			goto skip_upt;
+	}
 
 skip_upt:
 	return ft_add_optee_node(blob, bd);
