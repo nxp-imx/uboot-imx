@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2008-2014 Freescale Semiconductor, Inc.
- * Copyright 2018, 2021 NXP
+ * Copyright 2018, 2021-2022 NXP
  *
  * Based on CAAM driver in drivers/crypto/caam in Linux
  */
@@ -917,13 +917,13 @@ init:
 
 		printf("SEC%u:  RNG instantiated\n", sec_idx);
 	}
-
+#if CONFIG_IS_ENABLED(OF_CONTROL)
 	if (IS_ENABLED(CONFIG_DM_RNG)) {
 		ret = device_bind_driver(NULL, "caam-rng", "caam-rng", NULL);
 		if (ret)
 			printf("Couldn't bind rng driver (%d)\n", ret);
 	}
-
+#endif
 	return ret;
 }
 
