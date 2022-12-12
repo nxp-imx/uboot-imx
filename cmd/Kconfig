@@ -1817,6 +1817,7 @@ config CMD_RNG
 config CMD_KASLRSEED
 	bool "kaslrseed"
 	depends on DM_RNG
+	select KASLR
 	help
 	  Set the kaslr-seed in the chosen node with entropy provided by a
 	  hardware random number generator.

@@ -878,3 +878,10 @@ config FDT_SIMPLEFB
 	  These functions can be used by board to indicate to the OS
 	  the presence of the simple frame buffer with associated reserved
 	  memory
+
+config KASLR
+	bool "Enable KASLR feature in kernel"
+	help
+	 Fixing up device-tree with random u64 value in kaslr-seed property
+	 of chosen node at kernel entry for randomizing the virtual address
+	 at which the kernel image is loaded.
