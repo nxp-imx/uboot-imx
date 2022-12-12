@@ -192,6 +192,8 @@ int board_early_init_f(void)
 
 int board_late_init(void)
 {
+	ulong addr;
+
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
@@ -204,6 +206,11 @@ int board_late_init(void)
 #ifdef CONFIG_SYS_I2C_IMX_I3C
 	reset_lsm6dsx(8, 0x9);
 #endif
+
+	/* clear fdtaddr to avoid obsolete data */
+	addr = env_get_hex("fdt_addr_r", 0);
+	if (addr)
+		memset((void *)addr, 0, 0x400);
 
 	return 0;
 }
