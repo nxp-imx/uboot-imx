@@ -678,6 +678,9 @@ void dram_pll_init(ulong pll_val)
 void dram_enable_bypass(ulong clk_val)
 {
 	switch (clk_val) {
+	case MHZ(625):
+		ccm_clk_root_cfg(DRAM_ALT_CLK_ROOT, SYS_PLL_PFD2, 1);
+		break;
 	case MHZ(400):
 		ccm_clk_root_cfg(DRAM_ALT_CLK_ROOT, SYS_PLL_PFD1, 2);
 		break;
@@ -741,6 +744,12 @@ void bus_clock_init_low_drive(void)
 
 void bus_clock_init(void)
 {
+	/*
+	 * Set A55 clk to 500M. This clock root is normally used as intermediate
+	 * clock source for A55 core/DSU when doing ARM PLL reconfig. set it to
+	 * 500MHz(LD mode frequency) should be ok.
+	 */
+	ccm_clk_root_cfg(ARM_A55_CLK_ROOT, SYS_PLL_PFD0, 2);
 	/* Set A55 periphal to 333M */
 	ccm_clk_root_cfg(ARM_A55_PERIPH_CLK_ROOT, SYS_PLL_PFD0, 3);
 	/* Set A55 mtr bus to 133M */
