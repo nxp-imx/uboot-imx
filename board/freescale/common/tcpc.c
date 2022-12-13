@@ -216,6 +216,20 @@ int tcpc_get_cc_status(struct tcpc_port *port, enum typec_cc_polarity *polarity,
 	return 0;
 }
 
+int tcpc_alert_mask(struct tcpc_port *port, uint16_t alert_mask)
+{
+	int err = 0;
+
+	if (!port || port->i2c_dev == NULL)
+		return -EINVAL;
+
+	err = dm_i2c_write(port->i2c_dev, TCPC_ALERT_MASK, (const uint8_t *)&alert_mask, 2);
+	if (err)
+		tcpc_log(port, "%s dm_i2c_write failed, err %d\n", __func__, err);
+
+	return err;
+}
+
 int tcpc_clear_alert(struct tcpc_port *port, uint16_t clear_mask)
 {
 	int err;
@@ -1042,6 +1056,8 @@ int tcpc_init(struct tcpc_port *port, struct tcpc_port_config config, ss_mux_sel
 		tcpc_pd_sink_disable(port);
 	}
 
+	/* Mask all alert status */
+	tcpc_alert_mask(port, 0);
 	/* Mask all fault status */
 	tcpc_fault_status_mask(port, 0);
 
