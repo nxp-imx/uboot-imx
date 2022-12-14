@@ -151,7 +151,8 @@
 			compatible = "ethernet-phy-ieee802.3-c22";
 			reg = <0>;
 			reset-gpios = <&gpio4 22 GPIO_ACTIVE_LOW>;
-			reset-assert-us = <10000>;
+			reset-assert-us = <15000>;
+			reset-deassert-us = <100000>;
 			qca,disable-smarteee;
 			vddio-supply = <&vddio>;
 
