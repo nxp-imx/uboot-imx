@@ -1,0 +1,329 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2022 NXP
+ */
+
+/dts-v1/;
+
+#include "fsl-imx8dxl.dtsi"
+
+/ {
+	model = "NXP i.MX8DXL OrangeBox Board";
+	compatible = "fsl,imx8dxl-orangebox", "fsl,imx8dxl";
+
+	chosen {
+		bootargs = "console=ttyLP0,115200 earlycon";
+		stdout-path = &lpuart0;
+	};
+
+	regulators {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		reg_usdhc2_vqmmc: regulator-0 {
+			compatible = "regulator-gpio";
+			regulator-name = "usdhc2_1v8_3v3";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <3300000>;
+			enable-gpios = <&pcal6524_i2c0_x23 22 GPIO_ACTIVE_HIGH>;
+			gpios = <&pcal6524_i2c0_x23 17 GPIO_ACTIVE_HIGH>;
+			states = <1800000 0x1>, <3300000 0x0>;
+			enable-active-high;
+		};
+
+		reg_usb_otg1_vbus: regulator-1 {
+			compatible = "regulator-fixed";
+			reg = <0>;
+			regulator-name = "usb_otg1_vbus";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			gpio = <&gpio4 3 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+		};
+
+		reg_usb_otg2_vbus: regulator-2 {
+			compatible = "regulator-fixed";
+			reg = <1>;
+			regulator-name = "usb_otg2_vbus";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			gpio = <&gpio4 4 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+		};
+	};
+};
+
+&iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog>;
+
+	imx8dxl-orangebox {
+		pinctrl_hog: hoggrp {
+			fsl,pins = <
+				SC_P_COMP_CTL_GPIO_1V8_3V3_GPIORHB_PAD	0x000514a0
+				SC_P_USB_SS3_TC0_LSIO_GPIO4_IO03	0x00000021
+				SC_P_USB_SS3_TC1_LSIO_GPIO4_IO04	0x00000021
+			>;
+		};
+
+		pinctrl_lpuart0: lpuart0grp {
+			fsl,pins = <
+				SC_P_UART0_RX_ADMA_UART0_RX	0x06000020
+				SC_P_UART0_TX_ADMA_UART0_TX	0x06000020
+			>;
+		};
+
+		pinctrl_lpi2c0: lpi2c0grp {
+			fsl,pins = <
+				SC_P_ADC_IN1_ADMA_I2C0_SDA	0x06000021
+				SC_P_ADC_IN0_ADMA_I2C0_SCL	0x06000021
+			>;
+		};
+
+		pinctrl_lpi2c2: lpi2c2grp {
+			fsl,pins = <
+				SC_P_SPI1_SDO_ADMA_I2C2_SCL	0x06000021
+				SC_P_SPI1_SCK_ADMA_I2C2_SDA	0x06000021
+			>;
+		};
+
+		pinctrl_lpi2c3: lpi2c3grp {
+			fsl,pins = <
+				SC_P_SPI1_SDI_ADMA_I2C3_SCL	0x06000021
+				SC_P_SPI1_CS0_ADMA_I2C3_SDA	0x06000021
+			>;
+		};
+
+		pinctrl_usdhc1: usdhc1grp {
+			fsl,pins = <
+				SC_P_EMMC0_CLK_CONN_EMMC0_CLK		0x06000041
+				SC_P_EMMC0_CMD_CONN_EMMC0_CMD		0x00000021
+				SC_P_EMMC0_DATA0_CONN_EMMC0_DATA0	0x00000021
+				SC_P_EMMC0_DATA1_CONN_EMMC0_DATA1	0x00000021
+				SC_P_EMMC0_DATA2_CONN_EMMC0_DATA2	0x00000021
+				SC_P_EMMC0_DATA3_CONN_EMMC0_DATA3	0x00000021
+				SC_P_EMMC0_DATA4_CONN_EMMC0_DATA4	0x00000021
+				SC_P_EMMC0_DATA5_CONN_EMMC0_DATA5	0x00000021
+				SC_P_EMMC0_DATA6_CONN_EMMC0_DATA6	0x00000021
+				SC_P_EMMC0_DATA7_CONN_EMMC0_DATA7	0x00000021
+				SC_P_EMMC0_STROBE_CONN_EMMC0_STROBE	0x00000041
+			>;
+		};
+
+		pinctrl_usdhc1_100mhz: usdhc1grp100mhz {
+			fsl,pins = <
+				SC_P_EMMC0_CLK_CONN_EMMC0_CLK		0x06000041
+				SC_P_EMMC0_CMD_CONN_EMMC0_CMD		0x00000021
+				SC_P_EMMC0_DATA0_CONN_EMMC0_DATA0	0x00000021
+				SC_P_EMMC0_DATA1_CONN_EMMC0_DATA1	0x00000021
+				SC_P_EMMC0_DATA2_CONN_EMMC0_DATA2	0x00000021
+				SC_P_EMMC0_DATA3_CONN_EMMC0_DATA3	0x00000021
+				SC_P_EMMC0_DATA4_CONN_EMMC0_DATA4	0x00000021
+				SC_P_EMMC0_DATA5_CONN_EMMC0_DATA5	0x00000021
+				SC_P_EMMC0_DATA6_CONN_EMMC0_DATA6	0x00000021
+				SC_P_EMMC0_DATA7_CONN_EMMC0_DATA7	0x00000021
+				SC_P_EMMC0_STROBE_CONN_EMMC0_STROBE	0x00000041
+			>;
+		};
+
+		pinctrl_usdhc1_200mhz: usdhc1grp200mhz {
+			fsl,pins = <
+				SC_P_EMMC0_CLK_CONN_EMMC0_CLK		0x06000041
+				SC_P_EMMC0_CMD_CONN_EMMC0_CMD		0x00000021
+				SC_P_EMMC0_DATA0_CONN_EMMC0_DATA0	0x00000021
+				SC_P_EMMC0_DATA1_CONN_EMMC0_DATA1	0x00000021
+				SC_P_EMMC0_DATA2_CONN_EMMC0_DATA2	0x00000021
+				SC_P_EMMC0_DATA3_CONN_EMMC0_DATA3	0x00000021
+				SC_P_EMMC0_DATA4_CONN_EMMC0_DATA4	0x00000021
+				SC_P_EMMC0_DATA5_CONN_EMMC0_DATA5	0x00000021
+				SC_P_EMMC0_DATA6_CONN_EMMC0_DATA6	0x00000021
+				SC_P_EMMC0_DATA7_CONN_EMMC0_DATA7	0x00000021
+				SC_P_EMMC0_STROBE_CONN_EMMC0_STROBE	0x00000041
+			>;
+		};
+
+		pinctrl_usdhc2: usdhc2grp {
+			fsl,pins = <
+				SC_P_ENET0_RGMII_RXC_CONN_USDHC1_CLK		0x06000041
+				SC_P_ENET0_RGMII_RX_CTL_CONN_USDHC1_CMD		0x00000021
+				SC_P_ENET0_RGMII_RXD0_CONN_USDHC1_DATA0		0x00000021
+				SC_P_ENET0_RGMII_RXD1_CONN_USDHC1_DATA1		0x00000021
+				SC_P_ENET0_RGMII_RXD2_CONN_USDHC1_DATA2		0x00000021
+				SC_P_ENET0_RGMII_RXD3_CONN_USDHC1_DATA3		0x00000021
+			>;
+		};
+
+		pinctrl_usdhc2_100mhz: usdhc2grp100mhz {
+			fsl,pins = <
+				SC_P_ENET0_RGMII_RXC_CONN_USDHC1_CLK		0x06000041
+				SC_P_ENET0_RGMII_RX_CTL_CONN_USDHC1_CMD		0x00000021
+				SC_P_ENET0_RGMII_RXD0_CONN_USDHC1_DATA0		0x00000021
+				SC_P_ENET0_RGMII_RXD1_CONN_USDHC1_DATA1		0x00000021
+				SC_P_ENET0_RGMII_RXD2_CONN_USDHC1_DATA2		0x00000021
+				SC_P_ENET0_RGMII_RXD3_CONN_USDHC1_DATA3		0x00000021
+			>;
+		};
+
+		pinctrl_usdhc2_200mhz: usdhc2grp200mhz {
+			fsl,pins = <
+				SC_P_ENET0_RGMII_RXC_CONN_USDHC1_CLK		0x06000041
+				SC_P_ENET0_RGMII_RX_CTL_CONN_USDHC1_CMD		0x00000021
+				SC_P_ENET0_RGMII_RXD0_CONN_USDHC1_DATA0		0x00000021
+				SC_P_ENET0_RGMII_RXD1_CONN_USDHC1_DATA1		0x00000021
+				SC_P_ENET0_RGMII_RXD2_CONN_USDHC1_DATA2		0x00000021
+				SC_P_ENET0_RGMII_RXD3_CONN_USDHC1_DATA3		0x00000021
+			>;
+		};
+
+		pinctrl_flexspi0: flexspi0grp {
+			fsl,pins = <
+				SC_P_QSPI0A_DATA0_LSIO_QSPI0A_DATA0		0x06000021
+				SC_P_QSPI0A_DATA1_LSIO_QSPI0A_DATA1		0x06000021
+				SC_P_QSPI0A_DATA2_LSIO_QSPI0A_DATA2		0x06000021
+				SC_P_QSPI0A_DATA3_LSIO_QSPI0A_DATA3		0x06000021
+				SC_P_QSPI0A_DQS_LSIO_QSPI0A_DQS			0x06000021
+				SC_P_QSPI0A_SS0_B_LSIO_QSPI0A_SS0_B		0x06000021
+				SC_P_QSPI0A_SCLK_LSIO_QSPI0A_SCLK		0x06000021
+				SC_P_QSPI0B_DATA0_LSIO_QSPI0B_DATA0		0x06000021
+				SC_P_QSPI0B_DATA1_LSIO_QSPI0B_DATA1		0x06000021
+				SC_P_QSPI0B_DATA2_LSIO_QSPI0B_DATA2		0x06000021
+				SC_P_QSPI0B_DATA3_LSIO_QSPI0B_DATA3		0x06000021
+			>;
+		};
+
+		pinctrl_pcal6524_i2c0_x22: pcal6524i2c0x22grp {
+			fsl,pins = <
+				SC_P_SNVS_TAMPER_IN0_LSIO_GPIO2_IO09_IN		0x06000021
+			>;
+		};
+
+		pinctrl_pcal6524_i2c0_x23: pcal6524i2c0x23grp {
+			fsl,pins = <
+				SC_P_SNVS_TAMPER_OUT4_LSIO_GPIO2_IO08_IN	0x06000021
+			>;
+		};
+	};
+};
+
+&A35_0 {
+	u-boot,dm-pre-reloc;
+};
+
+&lpuart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lpuart0>;
+	status = "okay";
+};
+
+&gpio4 {
+	status = "okay";
+};
+
+&i2c0 {
+	clock-frequency = <100000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lpi2c0>;
+	status = "okay";
+
+	pca6416_i2c0_x20: gpio@20 {
+		compatible = "ti,tca6416";
+		reg = <0x20>;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+
+	pca6408_i2c0_x21: gpio@21 {
+		compatible = "ti,tca6408";
+		reg = <0x21>;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+
+	pcal6524_i2c0_x22: gpio@22 {
+		compatible = "nxp,pcal6524";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_pcal6524_i2c0_x22>;
+		reg = <0x22>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+		interrupt-parent = <&gpio2>;
+		interrupts = <9 IRQ_TYPE_LEVEL_LOW>;
+	};
+
+	pcal6524_i2c0_x23: gpio@23 {
+		compatible = "nxp,pcal6524";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_pcal6524_i2c0_x23>;
+		reg = <0x23>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+		interrupt-parent = <&gpio2>;
+		interrupts = <8 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
+&flexspi0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_flexspi0>;
+	nxp,fspi-dll-slvdly = <4>;
+	status = "okay";
+
+	flash0: mt35xu512aba@0 {
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "jedec,spi-nor";
+		spi-max-frequency = <133000000>;
+		spi-tx-bus-width = <8>;
+		spi-rx-bus-width = <8>;
+	};
+};
+
+&usdhc1 {
+	pinctrl-names = "default", "state_100mhz", "state_200mhz";
+	pinctrl-0 = <&pinctrl_usdhc1>;
+	pinctrl-1 = <&pinctrl_usdhc1_100mhz>;
+	pinctrl-2 = <&pinctrl_usdhc1_200mhz>;
+	bus-width = <8>;
+	non-removable;
+	status = "okay";
+};
+
+&usdhc2 {
+	pinctrl-names = "default", "state_100mhz", "state_200mhz";
+	pinctrl-0 = <&pinctrl_usdhc2>;
+	pinctrl-1 = <&pinctrl_usdhc2_100mhz>;
+	pinctrl-2 = <&pinctrl_usdhc2_200mhz>;
+	bus-width = <4>;
+	cd-gpios = <&pcal6524_i2c0_x22 7 GPIO_ACTIVE_LOW>;
+	vqmmc-supply = <&reg_usdhc2_vqmmc>;
+	max-frequency = <100000000>;
+	status = "okay";
+};
+
+&usbotg1 {
+	vbus-supply = <&reg_usb_otg1_vbus>;
+	dr_mode = "otg";
+	srp-disable;
+	hnp-disable;
+	adp-disable;
+	power-polarity-active-high;
+	disable-over-current;
+	status = "okay";
+};
+
+&usbotg2 {
+	vbus-supply = <&reg_usb_otg2_vbus>;
+	dr_mode = "otg";
+	srp-disable;
+	hnp-disable;
+	adp-disable;
+	power-polarity-active-high;
+	disable-over-current;
+	status = "okay";
+};
