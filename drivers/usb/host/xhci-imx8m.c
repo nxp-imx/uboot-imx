@@ -100,6 +100,9 @@ static int xhci_imx8m_probe(struct udevice *dev)
 	}
 
 	hccr = (struct xhci_hccr *)((uintptr_t)dev_remap_addr(dev));
+	if (!hccr)
+		return -EINVAL;
+
 	hcor = (struct xhci_hcor *)((uintptr_t)hccr +
 			HC_LENGTH(xhci_readl(&(hccr)->cr_capbase)));
 
