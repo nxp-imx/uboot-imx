@@ -198,6 +198,11 @@ int power_init_board(void)
 		printf("power init failed");
 
 	p = pmic_get("BD71837");
+	if (!p) {
+		printf("Fail to get BD71837 pmic\n");
+		return -ENODEV;
+	}
+
 	pmic_probe(p);
 
 
