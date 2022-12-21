@@ -37,6 +37,8 @@ static lbaint_t mmc_sparse_write(struct sparse_storage *info,
 		fill_buf_num_blks = SPARSE_FILL_BUF_SIZE / info->blksz;
 
 		data = memalign(CONFIG_SYS_CACHELINE_SIZE, fill_buf_num_blks * info->blksz);
+		if (!data)
+			return ret;
 
 		while (blkcnt) {
 
