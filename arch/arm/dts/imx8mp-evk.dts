@@ -22,8 +22,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_gpio_led>;
 
-		status {
-			label = "yellow:status";
+		led-0 {
 			gpios = <&gpio3 16 GPIO_ACTIVE_HIGH>;
 			default-state = "on";
 		};
@@ -170,7 +169,7 @@
 	pinctrl-0 = <&pinctrl_flexspi0>;
 	status = "okay";
 
-	flash0: mt25qu256aba@0 {
+	flash0: flash@0 {
 		reg = <0>;
 		#address-cells = <1>;
 		#size-cells = <1>;
@@ -487,8 +486,6 @@
 };
 
 &iomuxc {
-	pinctrl-names = "default";
-
 	pinctrl_eqos: eqosgrp {
 		fsl,pins = <
 			MX8MP_IOMUXC_ENET_MDC__ENET_QOS_MDC	0x3
@@ -593,34 +590,34 @@
 		>;
 	};
 
-	pinctrl_i2c1_gpio: i2c1grp-gpio {
+	pinctrl_i2c1_gpio: i2c1gpiogrp {
 		fsl,pins = <
 			MX8MP_IOMUXC_I2C1_SCL__GPIO5_IO14        	0x1c3
 			MX8MP_IOMUXC_I2C1_SDA__GPIO5_IO15        	0x1c3
 		>;
 	};
 
-	pinctrl_i2c2_gpio: i2c2grp-gpio {
+	pinctrl_i2c2_gpio: i2c2gpiogrp {
 		fsl,pins = <
 			MX8MP_IOMUXC_I2C2_SCL__GPIO5_IO16        	0x1c3
 			MX8MP_IOMUXC_I2C2_SDA__GPIO5_IO17        	0x1c3
 		>;
 	};
 
-	pinctrl_i2c3_gpio: i2c3grp-gpio {
+	pinctrl_i2c3_gpio: i2c3gpiogrp {
 		fsl,pins = <
 			MX8MP_IOMUXC_I2C3_SCL__GPIO5_IO18        	0x1c3
 			MX8MP_IOMUXC_I2C3_SDA__GPIO5_IO19        	0x1c3
 		>;
 	};
 
-	pinctrl_mipi_dsi_en: mipi_dsi_en {
+	pinctrl_mipi_dsi_en: mipidsiengrp {
 		fsl,pins = <
 			MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08	0x16
 		>;
 	};
 
-	pinctrl_pmic: pmicirq {
+	pinctrl_pmic: pmicirqgrp {
 		fsl,pins = <
 			MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03	0x41
 		>;
@@ -638,7 +635,7 @@
 		>;
 	};
 
-	pinctrl_reg_usdhc2_vmmc: regusdhc2vmmc {
+	pinctrl_reg_usdhc2_vmmc: regusdhc2vmmcgrp {
 		fsl,pins = <
 			MX8MP_IOMUXC_SD2_RESET_B__GPIO2_IO19	0x41
 		>;
