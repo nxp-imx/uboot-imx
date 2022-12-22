@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 /*
- * Copyright 2019 NXP
+ * Copyright 2019,2022 NXP
  */
 
 #include <dt-bindings/clock/imx8mp-clock.h>
@@ -332,6 +332,7 @@
 		clock-frequency = <0>;
 		clock-output-names = "clk_dummy";
 	};
+
 	soc: soc@0 {
 		compatible = "simple-bus";
 		#address-cells = <1>;
@@ -453,7 +454,7 @@
 				reg = <0x30330000 0x10000>;
 			};
 
-			gpr: iomuxc-gpr@30340000 {
+			gpr: syscon@30340000 {
 				compatible = "fsl,imx8mp-iomuxc-gpr", "syscon";
 				reg = <0x30340000 0x10000>;
 			};
@@ -483,10 +484,10 @@
 				};
 			};
 
-			anatop: anatop@30360000 {
-				compatible = "fsl,imx8mp-anatop", "fsl,imx8mm-anatop",
-					     "syscon";
+			anatop: clock-controller@30360000 {
+				compatible = "fsl,imx8mp-anatop", "fsl,imx8mm-anatop";
 				reg = <0x30360000 0x10000>;
+				#clock-cells = <1>;
 			};
 
 			irq_sec_vio: caam_secvio {
@@ -797,7 +798,7 @@
 			ecspi1: spi@30820000 {
 				#address-cells = <1>;
 				#size-cells = <0>;
-				compatible = "fsl,imx8mp-ecspi", "fsl,imx51-ecspi";
+				compatible = "fsl,imx8mp-ecspi", "fsl,imx6ul-ecspi";
 				reg = <0x30820000 0x10000>;
 				interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clk IMX8MP_CLK_ECSPI1_ROOT>,
@@ -814,7 +815,7 @@
 			ecspi2: spi@30830000 {
 				#address-cells = <1>;
 				#size-cells = <0>;
-				compatible = "fsl,imx8mp-ecspi", "fsl,imx51-ecspi";
+				compatible = "fsl,imx8mp-ecspi", "fsl,imx6ul-ecspi";
 				reg = <0x30830000 0x10000>;
 				interrupts = <GIC_SPI 32 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clk IMX8MP_CLK_ECSPI2_ROOT>,
@@ -831,7 +832,7 @@
 			ecspi3: spi@30840000 {
 				#address-cells = <1>;
 				#size-cells = <0>;
-				compatible = "fsl,imx8mp-ecspi", "fsl,imx51-ecspi";
+				compatible = "fsl,imx8mp-ecspi", "fsl,imx6ul-ecspi";
 				reg = <0x30840000 0x10000>;
 				interrupts = <GIC_SPI 33 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clk IMX8MP_CLK_ECSPI3_ROOT>,
@@ -1292,7 +1293,7 @@
 		};
 
 		dma_apbh: dma-apbh@33000000 {
-			compatible = "fsl,imx7d-dma-apbh", "fsl,imx28-dma-apbh";
+			compatible = "fsl,imx28-dma-apbh";
 			reg = <0x33000000 0x2000>;
 			interrupts = <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>,
 				<GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>,
@@ -1304,10 +1305,10 @@
 			clocks = <&clk IMX8MP_CLK_NAND_USDHC_BUS_RAWNAND_CLK>;
 		};
 
-		gpmi: gpmi-nand@33002000{
+		gpmi: nand-controller@33002000 {
 			compatible = "fsl,imx7d-gpmi-nand";
 			#address-cells = <1>;
-			#size-cells = <1>;
+			#size-cells = <0>;
 			reg = <0x33002000 0x2000>, <0x33004000 0x4000>;
 			reg-names = "gpmi-nand", "bch";
 			interrupts = <GIC_SPI 14 IRQ_TYPE_LEVEL_HIGH>;
