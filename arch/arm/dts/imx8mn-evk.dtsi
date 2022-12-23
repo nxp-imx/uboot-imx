@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 /*
- * Copyright 2019 NXP
+ * Copyright 2019,2022 NXP
  */
 
 #include <dt-bindings/usb/pd.h>
@@ -17,8 +17,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_gpio_led>;
 
-		status {
-			label = "yellow:status";
+		led-0 {
 			gpios = <&gpio3 16 GPIO_ACTIVE_HIGH>;
 			default-state = "on";
 		};
@@ -471,21 +470,21 @@
 		>;
 	};
 
-	pinctrl_i2c1_gpio: i2c1grp-gpio {
+	pinctrl_i2c1_gpio: i2c1gpiogrp {
 		fsl,pins = <
 			MX8MN_IOMUXC_I2C1_SCL_GPIO5_IO14        	0x1c3
 			MX8MN_IOMUXC_I2C1_SDA_GPIO5_IO15        	0x1c3
 		>;
 	};
 
-	pinctrl_i2c2_gpio: i2c2grp-gpio {
+	pinctrl_i2c2_gpio: i2c2gpiogrp {
 		fsl,pins = <
 			MX8MN_IOMUXC_I2C2_SCL_GPIO5_IO16		0x1c3
 			MX8MN_IOMUXC_I2C2_SDA_GPIO5_IO17		0x1c3
 		>;
 	};
 
-	pinctrl_i2c3_gpio: i2c3grp-gpio {
+	pinctrl_i2c3_gpio: i2c3gpiogrp {
 		fsl,pins = <
 			MX8MN_IOMUXC_I2C3_SCL_GPIO5_IO18		0x1c3
 			MX8MN_IOMUXC_I2C3_SDA_GPIO5_IO19		0x1c3
@@ -498,7 +497,7 @@
 		>;
 	};
 
-	pinctrl_mipi_dsi_en: mipi_dsi_en {
+	pinctrl_mipi_dsi_en: mipidsiengrp {
 		fsl,pins = <
 			MX8MN_IOMUXC_GPIO1_IO08_GPIO1_IO8		0x16
 		>;
@@ -650,12 +649,6 @@
 	pinctrl_wdog: wdoggrp {
 		fsl,pins = <
 			MX8MN_IOMUXC_GPIO1_IO02_WDOG1_WDOG_B		0x166
-		>;
-	};
-
-	pinctrl_mipi_dsi_en: mipi_dsi_en {
-		fsl,pins = <
-			MX8MN_IOMUXC_GPIO1_IO08_GPIO1_IO8		0x16
 		>;
 	};
 };

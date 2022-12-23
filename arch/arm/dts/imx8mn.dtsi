@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 /*
- * Copyright 2019 NXP
+ * Copyright 2019,2022 NXP
  */
 
 #include <dt-bindings/clock/imx8mn-clock.h>
@@ -309,7 +309,7 @@
 		nvmem-cells = <&imx8mn_uid>;
 		nvmem-cell-names = "soc_unique_id";
 
-		caam_sm: caam-sm@00100000 {
+		caam_sm: caam-sm@100000 {
 			compatible = "fsl,imx6q-caam-sm";
 			reg = <0x100000 0x8000>;
 		};
@@ -561,7 +561,7 @@
 			};
 
 			sdma3: dma-controller@302b0000 {
-				compatible = "fsl,imx8mn-sdma", "fsl,imx8mq-sdma", "fsl,imx7d-sdma";
+				compatible = "fsl,imx8mn-sdma", "fsl,imx8mq-sdma";
 				reg = <0x302b0000 0x10000>;
 				interrupts = <GIC_SPI 34 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clk IMX8MN_CLK_SDMA3_ROOT>,
@@ -572,7 +572,7 @@
 			};
 
 			sdma2: dma-controller@302c0000 {
-				compatible = "fsl,imx8mn-sdma", "fsl,imx8mq-sdma", "fsl,imx7d-sdma";
+				compatible = "fsl,imx8mn-sdma", "fsl,imx8mq-sdma";
 				reg = <0x302c0000 0x10000>;
 				interrupts = <GIC_SPI 103 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clk IMX8MN_CLK_SDMA2_ROOT>,
@@ -587,13 +587,13 @@
 				reg = <0x30330000 0x10000>;
 			};
 
-			gpr: iomuxc-gpr@30340000 {
+			gpr: syscon@30340000 {
 				compatible = "fsl,imx8mn-iomuxc-gpr", "syscon";
 				reg = <0x30340000 0x10000>;
 			};
 
 			ocotp: efuse@30350000 {
-				compatible = "fsl,imx8mn-ocotp", "fsl,imx8mm-ocotp", "syscon", "simple-mfd";
+				compatible = "fsl,imx8mn-ocotp", "fsl,imx8mm-ocotp", "syscon";
 				reg = <0x30350000 0x10000>;
 				clocks = <&clk IMX8MN_CLK_OCOTP_ROOT>;
 				#address-cells = <1>;
@@ -610,18 +610,12 @@
 				fec_mac_address: mac-address@90 {
 					reg = <0x90 6>;
 				};
-
-				imx8mn_soc: imx8mn-soc {
-					compatible = "fsl,imx8mn-soc";
-					nvmem-cells = <&imx8mn_uid>;
-					nvmem-cell-names = "soc_unique_id";
-				};
 			};
 
-			anatop: anatop@30360000 {
-				compatible = "fsl,imx8mn-anatop", "fsl,imx8mm-anatop",
-					     "syscon";
+			anatop: clock-controller@30360000 {
+				compatible = "fsl,imx8mn-anatop", "fsl,imx8mm-anatop";
 				reg = <0x30360000 0x10000>;
+				#clock-cells = <1>;
 			};
 
 			irq_sec_vio: caam_secvio {
@@ -1052,7 +1046,7 @@
 			};
 
 			sdma1: dma-controller@30bd0000 {
-				compatible = "fsl,imx8mn-sdma", "fsl,imx8mq-sdma", "fsl,imx7d-sdma";
+				compatible = "fsl,imx8mn-sdma", "fsl,imx8mq-sdma";
 				reg = <0x30bd0000 0x10000>;
 				interrupts = <GIC_SPI 2 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clk IMX8MN_CLK_SDMA1_ROOT>,
@@ -1193,7 +1187,7 @@
 			};
 
 			usbotg1: usb@32e40000 {
-				compatible = "fsl,imx8mn-usb", "fsl,imx7d-usb", "fsl,imx27-usb";
+				compatible = "fsl,imx8mn-usb", "fsl,imx7d-usb";
 				reg = <0x32e40000 0x200>;
 				interrupts = <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clk IMX8MN_CLK_USB1_CTRL_ROOT>;
@@ -1216,7 +1210,7 @@
 		};
 
 		dma_apbh: dma-controller@33000000 {
-			compatible = "fsl,imx7d-dma-apbh", "fsl,imx28-dma-apbh";
+			compatible = "fsl,imx28-dma-apbh";
 			reg = <0x33000000 0x2000>;
 			interrupts = <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>,
