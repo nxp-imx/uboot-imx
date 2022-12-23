@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 /*
- * Copyright 2017 NXP
+ * Copyright 2017,2022 NXP
  * Copyright (C) 2017-2018 Pengutronix, Lucas Stach <kernel@pengutronix.de>
  */
 
@@ -551,8 +551,7 @@
 			};
 
 			iomuxc_gpr: syscon@30340000 {
-				compatible = "fsl,imx8mq-iomuxc-gpr", "fsl,imx6q-iomuxc-gpr",
-					     "syscon", "simple-mfd";
+				compatible = "fsl,imx8mq-iomuxc-gpr", "syscon", "simple-mfd";
 				reg = <0x30340000 0x10000>;
 
 				mux: mux-controller {
@@ -588,10 +587,11 @@
 				};
 			};
 
-			anatop: syscon@30360000 {
-				compatible = "fsl,imx8mq-anatop", "syscon";
+			anatop: clock-controller@30360000 {
+				compatible = "fsl,imx8mq-anatop";
 				reg = <0x30360000 0x10000>;
 				interrupts = <GIC_SPI 49 IRQ_TYPE_LEVEL_HIGH>;
+				#clock-cells = <1>;
 			};
 
 			irq_sec_vio: caam_secvio {
@@ -1517,8 +1517,8 @@
 			status = "disabled";
 		};
 
-		dma_apbh: dma-apbh@33000000 {
-			compatible = "fsl,imx7d-dma-apbh", "fsl,imx28-dma-apbh";
+		dma_apbh: dma-controller@33000000 {
+			compatible = "fsl,imx28-dma-apbh";
 			reg = <0x33000000 0x2000>;
 			interrupts = <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>,
@@ -1530,10 +1530,10 @@
 			clocks = <&clk IMX8MQ_CLK_NAND_USDHC_BUS_RAWNAND_CLK>;
 		};
 
-		gpmi: gpmi-nand@33002000{
+		gpmi: nand-controller@33002000{
 			compatible = "fsl,imx7d-gpmi-nand";
 			#address-cells = <1>;
-			#size-cells = <1>;
+			#size-cells = <0>;
 			reg = <0x33002000 0x2000>, <0x33004000 0x4000>;
 			reg-names = "gpmi-nand", "bch";
 			interrupts = <GIC_SPI 14 IRQ_TYPE_LEVEL_HIGH>;

@@ -52,6 +52,12 @@
 			   "else run jh_netboot; fi; \0" \
 	"jh_netboot=setenv fdtfile imx8mq-evk-root.dtb; setenv jh_clk clk_ignore_unused mem=1872MB; run netboot; \0 "
 
+#define SR_IR_V2_COMMAND \
+	"nodes=/soc@0/caam-sm@100000 /soc@0/bus@30000000/caam_secvio /soc@0/bus@30000000/caam-snvs@30370000 /soc@0/bus@32c00000/hdmi@32c00000 /soc@0/bus@32c00000/display-controller@32e00000 /soc@0/vpu@38300000 /soc@0/vpu_v4l2 /gpu3d@38000000 /audio-codec-bt-sco /audio-codec /sound-bt-sco /sound-wm8524 /sound-spdif /sound-hdmi-arc /binman \0" \
+	"sr_ir_v2_cmd=cp.b ${fdtcontroladdr} ${fdt_addr_r} 0x10000;"\
+	"fdt addr ${fdt_addr_r};"\
+	"for i in ${nodes}; do fdt rm ${i}; done \0"
+
 #define CFG_MFG_ENV_SETTINGS \
 	CFG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x43800000\0" \
@@ -63,6 +69,7 @@
 #define CFG_EXTRA_ENV_SETTINGS		\
 	CFG_MFG_ENV_SETTINGS \
 	BOOTENV \
+	SR_IR_V2_COMMAND \
 	JAILHOUSE_ENV \
 	"prepare_mcore=setenv mcore_clk clk-imx8mq.mcore_booted;\0" \
 	"scriptaddr=0x43500000\0" \
