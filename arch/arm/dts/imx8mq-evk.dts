@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0 OR MIT)
 /*
- * Copyright 2017 NXP
+ * Copyright 2017,2022 NXP
  * Copyright (C) 2017-2018 Pengutronix, Lucas Stach <kernel@pengutronix.de>
  */
 
@@ -136,22 +136,22 @@
 	ddrc_opp_table: opp-table {
 		compatible = "operating-points-v2";
 
-		opp-25M {
+		opp-25000000 {
 			opp-hz = /bits/ 64 <25000000>;
 		};
 
-		opp-100M {
+		opp-100000000 {
 			opp-hz = /bits/ 64 <100000000>;
 		};
 
 		/*
 		 * On imx8mq B0 PLL can't be bypassed so low bus is 166M
 		 */
-		opp-166M {
+		opp-166000000 {
 			opp-hz = /bits/ 64 <166935483>;
 		};
 
-		opp-800M {
+		opp-800000000 {
 			opp-hz = /bits/ 64 <800000000>;
 		};
 	};
@@ -355,7 +355,7 @@
 	pinctrl-0 = <&pinctrl_qspi>;
 	status = "okay";
 
-	flash0: n25q256a@0 {
+	flash0: flash@0 {
 		reg = <0>;
 		#address-cells = <1>;
 		#size-cells = <1>;
@@ -501,8 +501,6 @@
 };
 
 &iomuxc {
-	pinctrl-names = "default";
-
 	pinctrl_buck2: vddarmgrp {
 		fsl,pins = <
 			MX8MQ_IOMUXC_GPIO1_IO13_GPIO1_IO13		0x19
@@ -556,14 +554,14 @@
 		>;
 	};
 
-	pinctrl_i2c1_gpio: i2c1grp-gpio {
+	pinctrl_i2c1_gpio: i2c1gpiogrp {
 		fsl,pins = <
 			MX8MQ_IOMUXC_I2C1_SCL_GPIO5_IO14        		0x7f
 			MX8MQ_IOMUXC_I2C1_SDA_GPIO5_IO15        		0x7f
 		>;
 	};
 
-	pinctrl_i2c2_gpio: i2c2grp-gpio {
+	pinctrl_i2c2_gpio: i2c2gpiogrp {
 		fsl,pins = <
 			MX8MQ_IOMUXC_I2C2_SCL_GPIO5_IO16        		0x7f
 			MX8MQ_IOMUXC_I2C2_SDA_GPIO5_IO17        		0x7f

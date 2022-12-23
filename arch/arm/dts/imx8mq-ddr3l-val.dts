@@ -51,7 +51,7 @@
 
 		ledpwm2 {
 			label = "PWM2";
-			pwms = <&pwm2 0 50000>;
+			pwms = <&pwm2 0 50000 0>;
 			max-brightness = <255>;
 		};
 	};
