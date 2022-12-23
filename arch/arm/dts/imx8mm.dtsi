@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 /*
- * Copyright 2019 NXP
+ * Copyright 2019,2022 NXP
  */
 
 #include <dt-bindings/clock/imx8mm-clock.h>
@@ -582,8 +582,8 @@
 				reg = <0x30330000 0x10000>;
 			};
 
-			gpr: iomuxc-gpr@30340000 {
-				compatible = "fsl,imx8mm-iomuxc-gpr", "fsl,imx6q-iomuxc-gpr", "syscon";
+			gpr: syscon@30340000 {
+				compatible = "fsl,imx8mm-iomuxc-gpr", "syscon";
 				reg = <0x30340000 0x10000>;
 			};
 
@@ -614,9 +614,10 @@
 				};
 			};
 
-			anatop: anatop@30360000 {
-				compatible = "fsl,imx8mm-anatop", "syscon";
+			anatop: clock-controller@30360000 {
+				compatible = "fsl,imx8mm-anatop";
 				reg = <0x30360000 0x10000>;
+				#clock-cells = <1>;
 			};
 
 			irq_sec_vio: caam_secvio {
@@ -1145,7 +1146,6 @@
 				fsl,stop-mode = <&gpr 0x10 3>;
 				status = "disabled";
 			};
-
 		};
 
 		aips4: bus@32c00000 {
@@ -1210,7 +1210,7 @@
 			};
 
 			csi1_bridge: csi1_bridge@32e20000 {
-				compatible = "fsl,imx8mm-csi", "fsl,imx8mq-csi", "fsl,imx6s-csi";
+				compatible = "fsl,imx8mm-csi", "fsl,imx8mq-csi";
 				reg = <0x32e20000 0x1000>;
 				interrupts = <GIC_SPI 16 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clk IMX8MM_CLK_DISP_AXI_ROOT>,
@@ -1222,7 +1222,7 @@
 			};
 
 			mipi_csi_1: mipi_csi@32e30000 {
-				compatible = "fsl,imx8mm-mipi-csi";
+				compatible = "fsl,imx8mm-mipi-csi2";
 				reg = <0x32e30000 0x1000>;
 				interrupts = <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>;
 				clock-frequency = <333000000>;
@@ -1269,7 +1269,7 @@
 			};
 
 			usbotg1: usb@32e40000 {
-				compatible = "fsl,imx8mm-usb", "fsl,imx7d-usb", "fsl,imx27-usb";
+				compatible = "fsl,imx8mm-usb", "fsl,imx7d-usb";
 				reg = <0x32e40000 0x200>;
 				interrupts = <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clk IMX8MM_CLK_USB1_CTRL_ROOT>;
@@ -1291,7 +1291,7 @@
 			};
 
 			usbotg2: usb@32e50000 {
-				compatible = "fsl,imx8mm-usb", "fsl,imx7d-usb", "fsl,imx27-usb";
+				compatible = "fsl,imx8mm-usb", "fsl,imx7d-usb";
 				reg = <0x32e50000 0x200>;
 				interrupts = <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&clk IMX8MM_CLK_USB1_CTRL_ROOT>;
@@ -1328,7 +1328,7 @@
 		};
 
 		dma_apbh: dma-controller@33000000 {
-			compatible = "fsl,imx7d-dma-apbh", "fsl,imx28-dma-apbh";
+			compatible = "fsl,imx28-dma-apbh";
 			reg = <0x33000000 0x2000>;
 			interrupts = <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>,
@@ -1384,26 +1384,6 @@
 			reset-names = "apps", "turnoff";
 			phys = <&pcie_phy>;
 			phy-names = "pcie-phy";
-			status = "disabled";
-		};
-
-		pcie0_ep: pcie_ep@33800000 {
-			compatible = "fsl,imx8mm-pcie-ep";
-			reg = <0x33800000 0x000400000>,
-			      <0x18000000 0x08000000>;
-			reg-names = "regs", "addr_space";
-			num-lanes = <1>;
-			interrupts = <GIC_SPI 127 IRQ_TYPE_LEVEL_HIGH>; /* eDMA */
-			interrupt-names = "dma";
-			fsl,max-link-speed = <2>;
-			power-domains = <&pgc_pcie>;
-			resets = <&src IMX8MQ_RESET_PCIE_CTRL_APPS_EN>,
-				 <&src IMX8MQ_RESET_PCIE_CTRL_APPS_TURNOFF>;
-			reset-names = "apps", "turnoff";
-			phys = <&pcie_phy>;
-			phy-names = "pcie-phy";
-			num-ib-windows = <4>;
-			num-ob-windows = <4>;
 			status = "disabled";
 		};
 

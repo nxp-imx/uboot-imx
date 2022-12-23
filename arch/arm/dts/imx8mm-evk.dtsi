@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 /*
- * Copyright 2020 NXP
+ * Copyright 2020,2022 NXP
  */
 
 /dts-v1/;
@@ -24,8 +24,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_gpio_led>;
 
-		status {
-			label = "status";
+		led-0 {
 			gpios = <&gpio3 16 GPIO_ACTIVE_HIGH>;
 			default-state = "on";
 		};
@@ -180,7 +179,6 @@
 &ecspi2 {
 	#address-cells = <1>;
 	#size-cells = <0>;
-	fsl,spi-num-chipselects = <1>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_ecspi2 &pinctrl_ecspi2_cs>;
 	cs-gpios = <&gpio5 13 GPIO_ACTIVE_LOW>;
@@ -536,7 +534,7 @@
 		>;
 	};
 
-	pinctrl_ecspi2_cs: ecspi2cs {
+	pinctrl_ecspi2_cs: ecspi2csgrp {
 		fsl,pins = <
 			MX8MM_IOMUXC_ECSPI2_SS0_GPIO5_IO13		0x40000
 		>;
@@ -614,21 +612,21 @@
 		>;
 	};
 
-	pinctrl_i2c1_gpio: i2c1grp-gpio {
+	pinctrl_i2c1_gpio: i2c1-gpiogrp {
 		fsl,pins = <
 			MX8MM_IOMUXC_I2C1_SCL_GPIO5_IO14        		0x1c3
 			MX8MM_IOMUXC_I2C1_SDA_GPIO5_IO15        	0x1c3
 		>;
 	};
 
-	pinctrl_i2c2_gpio: i2c2grp-gpio {
+	pinctrl_i2c2_gpio: i2c2-gpiogrp {
 		fsl,pins = <
 			MX8MM_IOMUXC_I2C2_SCL_GPIO5_IO16        		0x1c3
 			MX8MM_IOMUXC_I2C2_SDA_GPIO5_IO17        	0x1c3
 		>;
 	};
 
-	pinctrl_i2c3_gpio: i2c3grp-gpio {
+	pinctrl_i2c3_gpio: i2c3-gpiogrp {
 		fsl,pins = <
 			MX8MM_IOMUXC_I2C3_SCL_GPIO5_IO18        		0x1c3
 			MX8MM_IOMUXC_I2C3_SDA_GPIO5_IO19        	0x1c3
@@ -732,7 +730,7 @@
 		>;
 	};
 
-	pinctrl_mipi_dsi_en: mipi_dsi_en {
+	pinctrl_mipi_dsi_en: mipidsiengrp {
 		fsl,pins = <
 			MX8MM_IOMUXC_GPIO1_IO08_GPIO1_IO8		0x19
 		>;
