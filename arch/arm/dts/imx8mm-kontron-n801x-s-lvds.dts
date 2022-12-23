@@ -11,7 +11,7 @@
 
 	backlight: backlight {
 		compatible = "pwm-backlight";
-		pwms = <&pwm1 0 50000>; /* period = 5000000 ns => f = 200 Hz */
+		pwms = <&pwm1 0 50000 0>; /* period = 5000000 ns => f = 200 Hz */
 		power-supply = <&reg_vdd_24v>;
 		brightness-levels = <0 100>;
 		num-interpolated-steps = <100>;
