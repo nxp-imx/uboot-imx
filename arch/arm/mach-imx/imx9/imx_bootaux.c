@@ -51,7 +51,6 @@ int arch_auxiliary_core_up(u32 core_id, ulong addr)
 	return 0;
 }
 
-#if IS_ENABLED(CONFIG_AHAB_BOOT)
 static inline bool check_in_ddr(ulong addr)
 {
 	int i;
@@ -68,12 +67,21 @@ static inline bool check_in_ddr(ulong addr)
 	return false;
 }
 
-static inline bool check_in_tcm(ulong addr)
+static inline bool check_in_tcm(ulong addr, bool mcore_view)
 {
-	if ((addr >= TCML_BASE_ADDR && addr < TCML_BASE_ADDR + TCML_SIZE)
-		|| (addr >= TCMU_BASE_ADDR && addr < TCMU_BASE_ADDR + TCMU_SIZE))
-		return true;
+	if (mcore_view) {
+		if ((addr >= TCML_BASE_MCORE_SEC_ADDR && addr < TCML_BASE_MCORE_SEC_ADDR + TCML_SIZE) ||
+			(addr >= TCMU_BASE_MCORE_SEC_ADDR && addr < TCMU_BASE_MCORE_SEC_ADDR + TCMU_SIZE))
+			return true;
 
+		if ((addr >= TCML_BASE_MCORE_NSEC_ADDR && addr < TCML_BASE_MCORE_NSEC_ADDR + TCML_SIZE) ||
+			(addr >= TCMU_BASE_MCORE_NSEC_ADDR && addr < TCMU_BASE_MCORE_NSEC_ADDR + TCMU_SIZE))
+			return true;
+	} else {
+		if ((addr >= TCML_BASE_ADDR && addr < TCML_BASE_ADDR + TCML_SIZE) ||
+			(addr >= TCMU_BASE_ADDR && addr < TCMU_BASE_ADDR + TCMU_SIZE))
+			return true;
+	}
 	return false;
 }
 
@@ -85,6 +93,7 @@ static inline bool check_in_flexspi(ulong addr)
 	return false;
 }
 
+#if IS_ENABLED(CONFIG_AHAB_BOOT)
 static int authenticate_auxcore_container(ulong addr, ulong *entry)
 {
 	struct container_hdr *phdr;
@@ -99,7 +108,7 @@ static int authenticate_auxcore_container(ulong addr, ulong *entry)
 		return -EINVAL;
 	}
 
-	if (!check_in_ddr(addr) && !check_in_tcm(addr) && !check_in_flexspi(addr)) {
+	if (!check_in_ddr(addr) && !check_in_tcm(addr, false) && !check_in_flexspi(addr)) {
 		puts("Error: Image's address is invalid\n");
 		return -EINVAL;
 	}
@@ -258,6 +267,13 @@ static int do_bootaux(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	if (!addr)
 		return CMD_RET_FAILURE;
+
+	if (!check_in_ddr(addr) && !check_in_tcm(addr, true) && !check_in_flexspi(addr)) {
+		printf("Error: Image's address 0x%lx is invalid\n", addr);
+		printf("     Address should be memory from M core view,\n"
+			   "     For example: 0x1ffe0000 for TCML in secure\n");
+		return CMD_RET_FAILURE;
+	}
 
 	ret = arch_auxiliary_core_up(core, addr);
 	if (ret)

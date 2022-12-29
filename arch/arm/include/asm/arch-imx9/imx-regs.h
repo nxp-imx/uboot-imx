@@ -41,8 +41,12 @@
 #define SRC_M33P_RBASE		(SRC_IPS_BASE_ADDR + 0x2800)
 
 #define TCML_BASE_ADDR              (0x201E0000UL)
+#define TCML_BASE_MCORE_SEC_ADDR    (0x1FFE0000UL)
+#define TCML_BASE_MCORE_NSEC_ADDR   (0x0FFE0000UL)
 #define TCML_SIZE                   (0x20000U)
 #define TCMU_BASE_ADDR              (0x20200000UL)
+#define TCMU_BASE_MCORE_SEC_ADDR    (0x30000000UL)
+#define TCMU_BASE_MCORE_NSEC_ADDR   (0x20000000UL)
 #define TCMU_SIZE                   (0x20000U)
 
 #define FLEXSPI_AHB_ADDR            (0x28000000UL)
