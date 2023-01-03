@@ -82,6 +82,12 @@
 			   "else run jh_netboot; fi; \0" \
 	"jh_netboot=setenv fdtfile ${jh_root_dtb}; setenv jh_clk clk_ignore_unused mem=1920MB; run netboot; \0 "
 
+#define SR_IR_V2_COMMAND \
+	"nodes=/busfreq /power-domains /soc@0/caam-sm@100000 /soc@0/bus@30000000/caam_secvio /soc@0/bus@30000000/caam-snvs@30370000 /soc@0/bus@30800000/flexspi_nand@30bb0000 /soc@0/bus@32c00000/mipi_dsi@32e60000 /soc@0/bus@32c00000/lcd-controller@32e80000 /soc@0/bus@32c00000/blk-ctl@32ec0000 /hsio-mix@32f10000 /pcie@33800000 /soc@0/bus@30800000/i2c@30a20000/pca9450@25 /soc@0/bus@30800000/i2c@30a30000/adv7535@3d /soc@0/bus@30800000/i2c@30a30000/tcpc@50 /wdt-reboot /mcu_rdc /soc@0/bus@30800000/ethernet@30bf0000 /dsi-host /rm67199_panel /cbtl04gp /pcie-phy@32f00000 /binman \0" \
+	"sr_ir_v2_cmd=cp.b ${fdtcontroladdr} ${fdt_addr_r} 0x10000;"\
+	"fdt addr ${fdt_addr_r};"\
+	"for i in ${nodes}; do fdt rm ${i}; done \0"
+
 #define CONFIG_MFG_ENV_SETTINGS \
 	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x43800000\0" \
@@ -116,6 +122,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	CONFIG_MFG_ENV_SETTINGS \
 	JAILHOUSE_ENV \
+	SR_IR_V2_COMMAND \
 	BOOTENV \
 	"prepare_mcore=setenv mcore_clk clk-imx8mp.mcore_booted;\0" \
 	"scriptaddr=0x43500000\0" \
