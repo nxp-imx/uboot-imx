@@ -1171,7 +1171,10 @@ static int ldpaa_eth_of_to_plat(struct udevice *dev)
 
 	priv->dpmac_id = ldpaa_eth_get_dpmac_id(dev);
 	phy_mode_str = ldpaa_eth_get_phy_mode_str(dev);
-	priv->phy_mode = phy_get_interface_by_name(phy_mode_str);
+	if (phy_mode_str)
+		priv->phy_mode = phy_get_interface_by_name(phy_mode_str);
+	else
+		priv->phy_mode = PHY_INTERFACE_MODE_NONE;
 
 	return 0;
 }
