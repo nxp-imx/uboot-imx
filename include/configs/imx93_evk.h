@@ -213,4 +213,8 @@
 
 #endif
 
+#ifdef CONFIG_ANDROID_SUPPORT
+#include "imx93_evk_android.h"
+#endif
+
 #endif
