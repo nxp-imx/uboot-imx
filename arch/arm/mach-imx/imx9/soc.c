@@ -171,7 +171,7 @@ static u32 get_cpu_variant_type(u32 type)
 	u32 val2 = readl((ulong)FSB_BASE_ADDR + 0x8000 + (20 << 2));
 	bool npu_disable = !!(val & BIT(13));
 	bool core1_disable = !!(val & BIT(15));
-	u32 pack_9x9_fused = BIT(4) | BIT(17) | BIT(19) | BIT(24);
+	u32 pack_9x9_fused = BIT(4) | BIT(5) | BIT(17) | BIT(19) | BIT(24);
 
 	if ((val2 & pack_9x9_fused) == pack_9x9_fused)
 		type = MXC_CPU_IMX9322;
