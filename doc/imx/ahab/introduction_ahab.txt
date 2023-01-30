@@ -5,10 +5,10 @@
 1. Introduction
 ----------------
 
-The i.MX 8/8x/8ULP family of applications processors introduce a new secure
+The i.MX 8/8x/8ULP/9x family of applications processors introduce a new secure
 boot concept. Due to the multi-core architecture, the Security Controller (SECO)
- and System Control Unit (SCU) in i.MX 8/8x, and Edgelock secure enclave in i.MX
- 8ULP are heavily involved in the secure boot process.
+and System Control Unit (SCU) in i.MX 8/8x, and Edgelock secure enclave (ELE) 
+in i.MX 8ULP/9x are heavily involved in the secure boot process.
 
 Step-by-step guides are available under doc/imx/hab/ahab/guides/ directory,
 users familiar with AHAB architecture and CST PKI tree generation should
@@ -71,7 +71,7 @@ available in the Linux BSP Release Notes.
 Details about SECO can be found in the processors Security Reference Manual
 (SRM).
 
-1.1.3 [i.MX 8ULP] The Edgelock secure enclave
+1.1.3 [i.MX 8ULP/9x] The Edgelock secure enclave
 -------------------------------------
 
 EdgeLock™ Secure Enclave is the security subsystem based on a dedicated core
@@ -92,7 +92,7 @@ this FW are available in the Linux BSP Release Notes.
 Details about Edgelock secure enclave can be found in the processors Security
 Reference Manual (SRM).
 
-NOTE: The terms Sentinel, S400, and EdgeLock secure enclave (ELke), and ELke
+NOTE: The terms Sentinel, S400, and EdgeLock secure enclave (ELE), and ELE
 are used interchangeably throughout the document.
 
 1.2 The image container
@@ -103,7 +103,7 @@ boot AHAB supporting devices. In order to store all the images in a single
 binary the container image structure is used.
 
 At least two containers are needed for the boot process, the first container
-must include only the Security Subsystem FW (SECO/ELke FW provided by NXP).
+must include only the Security Subsystem FW (SECO/ELE FW provided by NXP).
 Additional containers can contain one or multiple images, depending on the
 users specific application.
 
@@ -194,18 +194,18 @@ The sequence below explains the i.MX8 and i.MX8x boot flow:
      or the U-Boot proper and ATF. Details about current U-Boot implementation
      can be found in AHAB guides included in doc/imx/hab/ahab/guides/ directory.
 
-1.4 The i.MX 8ULP secure boot flow
+1.4 The i.MX 8ULP/9x secure boot flow
 ----------------------------------
 
-i.MX8ULP boot sequence involves multiple cores booting up at same time and
+The secure boot sequence involves multiple cores booting up at same time and
 Edgelock secure enclave ensure authentication of any boot software being loaded.
 
 The diagram below illustrate the secure boot flow overview for dual boot
-scenario:
+scenario in i.MX 8ULP:
 
 
     Cortex-M(CM)     │   Edgelock Secure   │    Cortex-A(CA)   │   uPower(uP)
-                     │    Enclave(ELke)     │                   │
+                     │    Enclave(ELE)     │                   │
           │          │          │          │         │         │        │
    ┌┬─────┴─────┬┐   │   ┌┬─────┴─────┬┐   │         │         │ ┌┬─────┴─────┬┐
    ││   INIT    ││   │   ││   INIT    ││   │         │         │ ││   INIT    ││
@@ -224,10 +224,10 @@ scenario:
           ├─────────────>├│Auth CM FW ││   ││ ┌┬─────┴─────┬┐  │
           │          │   └┴─────┬─────┴┘   ││ ││Start CA FW││  │
    ┌┬─────┴─────┬┐   │          │          ││ └┴─────┬─────┴┘  │
-   ││Load ELkeFW││   │          │          ││        │         │
+   ││Load ELE FW││   │          │          ││        │         │
    └┴─────┬─────┴┘   │          │          ││        │         │
           │          │   ┌┬─────┴─────┬┐   ││        │         │
-          ├─────────────>├│Auth ELkeFW││   ││        │         │
+          ├─────────────>├│Auth ELE FW││   ││        │         │
           │          │   └┴─────┬─────┴┘   ││ ┌┬─────┴─────┬┐  │
    ┌┬─────┴─────┬┐   │          │          ││ ││ Load SPL  ││  │
    ││Start CM FW││   │          │          ││ └┴─────┬─────┴┘  │
@@ -245,8 +245,51 @@ scenario:
           │          │          │          │  ││  Run SPL  ││  │
           │          │          │          │  └┴───────────┴┘  │
 
+
+The diagram below illustrate the secure boot flow overview for single boot
+scenario in i.MX 9x:
+
+
+    Cortex-A(CA)     │   Edgelock Secure   │    Cortex-M(CM)   
+                     │    Enclave(ELE)     │                   
+          │          │          │          │         │         
+   ┌┬─────┴─────┬┐   │   ┌┬─────┴─────┬┐   │         │         
+   ││   INIT    ││   │   ││   INIT    ││   │         │         
+   └┴─────┬─────┴┘   │   └┴─────┬─────┴┘   │         │         
+          │          │          │          │  ┌┬─────┴─────┬┐  
+          │          │          │          │┌>││   INIT    ││  
+          │          │          │          ││ └┴─────┬─────┴┘  
+   ┌┬─────┴─────┬┐   │          │          ││        |         
+   ││Load ELE FW││─────────────>│          ││        │         
+   └┴─────┬─────┴┘   |          |          |│        |         
+          │          │   ┌┬─────┴─────┬┐   ││ ┌┬─────┴─────┬┐  
+          │          │   ├│Auth ELE FW││   ││ ││Start CM FW││  
+          │          │   └┴─────┬─────┴┘   ││ └┴─────┬─────┴┘  
+          |          |          |          |│        |         
+   ┌┬─────┴─────┬┐   │          │          ││        │         
+   ││Load CM  FW││   │          |          ││        │         
+   └┴─────┬─────┴┘   │          │          ││        │         
+          │          │   ┌┬─────┴─────┬┐   ││        │         
+          ├─────────────>├│Auth CM FW ││   ││        │         
+          │          │   └┴─────┬─────┴┘   ││        │         
+          |          │          │          ││        │         
+          │          │          |───────────┘        │         
+   ┌┬─────┴─────┬┐   │          │          │         │         
+   ││Load  CA FW││   │          │          │         │         
+   └┴─────┬─────┴┘   │          │          │         │         
+          │          │   ┌┬─────┴─────┬┐   │         │         
+          ├─────────────>├│Auth CA  FW││   │         │         
+          │          │   └┴─────┬─────┴┘   │         │         
+   ┌┬─────┴─────┬┐   │          │          │         │         
+   ││Start CA FW││   │          |          │         │         
+   └┴─────┬─────┴┘   │          │          │         │         
+          |          │          │          │         │         
+          |          │          │          │         │         
+          |          │          │          │         │         
+
 More details on the boot flow can be found in respective Security Reference
 Manual (SRM).
+
 
 2. Generating a PKI tree
 -------------------------
@@ -337,7 +380,7 @@ The next step is to generated the SRK Table and its respective SRK Table Hash
 from the SRK public key certificates created in one of the steps above.
 
 In the AHAB architecture, the SRK Table is included in the signed image and the
-SRK Hash is programmed in the SoC SRK_HASH[511:0] fuses.
+SRK Hash is programmed in the SoC SRK_HASH[511:0]/SRK_HASH[255:0] fuses.
 
 On the target device during the authentication process the AHAB code verify the
 SRK Table against the SoC SRK_HASH fuses, in case the verification is successful
@@ -357,7 +400,7 @@ Table Hash.
 	  SRK3_sha384_secp384r1_v3_usr_crt.pem,\
 	  SRK4_sha384_secp384r1_v3_usr_crt.pem
 
-  - In i.MX 8ULP, the expected SRK HASH is of 256 bit.
+  - In i.MX 8ULP/9x, the expected SRK HASH is of 256 bit.
     $ cd ../crts/
     $ ../linux64/bin/srktool -a -d sha256 -s sha384 -t SRK_1_2_3_4_table.bin \
 	  -e SRK_1_2_3_4_fuse.bin -f 1 -c \
