@@ -1,5 +1,5 @@
      +=========================================================+
-     +       i.MX 8/8x/8ULP Extend RoT guide using AHAB      +
+     +              Extend RoT guide using AHAB                +
      +=========================================================+
 
 1. Extension of Root of Trust
@@ -88,7 +88,7 @@ Finally:
 
   $ sudo umount partition
 
-- For i.MX 8ULP
+- For i.MX 8ULP/9x
 
 Goto fastboot mode from uboot:
 
