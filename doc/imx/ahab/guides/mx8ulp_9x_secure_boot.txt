@@ -1,5 +1,5 @@
      +=========================================================+
-     +             i.MX 8ULP AHAB guide using AHAB             +
+     +       i.MX 8ULP/9x Secure boot guide using AHAB         +
      +=========================================================+
 
 1. AHAB secure boot process
@@ -25,8 +25,8 @@ to sign the image.
 
 Based on bootmode, following files are needed to prepare the boot image:
 - All boot modes
-  - Edgelock secure enclave Firmware (ELke).
-  - uPower Firmware.
+  - Edgelock secure enclave Firmware (ELE).
+  - uPower Firmware.(8ULP)
 
 - Dualboot mode / Singleboot mode
   - U-Boot proper and SPL.
@@ -59,7 +59,7 @@ by your target:
     ARM architecture -> Support i.MX 8 AHAB features
 
 Enabling this feature allows the SPL and uboot image to extend the Root of
-Trust by using the AHAB API call via ELke FW.
+Trust by using the AHAB API call via ELE FW.
 
 1.3 Building an image supporting secure boot
 ------------------------------------------------
@@ -76,12 +76,12 @@ A typical singleboot mode image with Cortex-M support contains three containers:
                          |       and signature       |   |
                          +---------------------------+   |
                          |          Padding          |   |  Authenticated at
-                         +---------------------------+   |  ELke ROM/FW Level
-                         |          ELke FW          |   |
+                         +---------------------------+   |  ELE ROM/FW Level
+                         |           ELE FW          |   |
                          +---------------------------+   |
                          |          Padding          |   |
                          +---------------------------+   |
-                         |         uPower FW         |   |
+                         |      uPower FW (8ULP)     |   |
                          +---------------------------+   |
                          |       Cortex-M Image      |   |
                          +---------------------------+   |
@@ -97,15 +97,15 @@ A typical singleboot mode image with Cortex-M support contains three containers:
                          |    ARM Trusted FW (ATF)   |   v
                          +---------------------------+ ---------
 
-The first container includes the ELke FW which is signed using NXP keys, this
-container is authenticated by ELke ROM.
+The first container includes the ELE FW which is signed using NXP keys, this
+container is authenticated by ELE ROM.
 
-The second container includes the SPL (in dualboot mode) or SPL and uPower FW
-(in singleboot mode) which are signed using OEM keys, this container is
-authenticated at ELke FW level.
+The second container includes the SPL (in dualboot mode) or SPL and uPower FW 
+(8ULP) (in singleboot mode) which are signed using OEM keys, this container is
+authenticated at ELE FW level.
 
 The third container includes the U-Boot proper and the ATF. The SPL is in
-charge to load this container and also to interface with ELke FW to authenticate
+charge to load this container and also to interface with ELE FW to authenticate
  the additional container.
 
 The signing procedure is slightly different when compared with HABv4 series. On
@@ -171,8 +171,9 @@ In the following sections building and signing a Cortex-A and Cortex-M image is
 
 The boot modes that target Cortex-A core (dualboot and singleboot modes) also
 build the uboot and ATF container called "u-boot-atf-container". Please refer
-to "soc.mk" file in "<imx-mkimage>/iMX8ULP" for more details. This container is
- needed to be signed first before signing the SPL container.
+to "soc.mk" file in imx-mkimage repository (for ex: "<imx-mkimage>/iMX8ULP") 
+for more details. This container is needed to be signed first before signing 
+the SPL container.
 
 1.4.1.1 Preparing the u-boot-atf-container
 -----------------------------------------
@@ -284,17 +285,16 @@ the device.
 ---------------------------------------
 
 The boot modes that target Cortex-M core (dualboot and LPboot modes) have one
-container to sign which contains the Cortex-M image along with uPower FW.
-Please refer to "soc.mk" file in "<imx-mkimage>/iMX8ULP" directory for more
-details.
+container to sign which contains the Cortex-M image along with uPower FW (8ULP).
+Please refer to "soc.mk" file in imx-mkimage repository for more details.
 
 1.4.2.1 Preparing the Cortex-M core image
 ------------------------------------------
 
 The final flash.bin image created using the imx-mkimage tool contains 2
-containers. 1st container consists of the NXP signed ELke FW and thus doesnt
-need signing. The 2nd container consists of the Cortex-M image and uPower FW at
- the minimum.
+containers. 1st container consists of the NXP signed ELE FW and thus doesnt
+need signing. The 2nd container consists of the Cortex-M image and uPower FW 
+(8ULP) at the minimum.
 
 - Generating the flash.bin image:
 
@@ -310,8 +310,8 @@ Keep a note of the offsets above to be used with CST/CSF.
 
 Note: The flash.bin image created for Cortex-M core targetting FlexSPI NOR
 flash has the 1st container at an offset of 0x1000. This offset can be found in
- "soc.mk" file in "<imx-mkimage>/iMX8ULP" directory. Thus the offsets provided
-by mkimage tool need to have 0x1000 added to them.
+ "soc.mk" file in imx-mkimage repository. Thus the offsets provided by mkimage
+tool need to have 0x1000 added to them.
 
 1.4.2.2 Signing the Cortex-M core flash.bin image
 --------------------------------------------------
@@ -365,14 +365,12 @@ The U-Boot fuse tool can be used for programming eFuses on i.MX SoCs.
 
 - Dump SRK Hash fuses values in host machine:
 
-  On i.MX8ULP, the SRK Hash uses sha256 and dump 8 words fuses
+  On i.MX8ULP/9x family, the SRK Hash uses sha256 and dump 8 words fuses
   $ od -t x4 SRK_1_2_3_4_fuse.bin
   0000000 db2959f2 90dfc39c 53394566 e0b75829
   0000020 85e6f3b1 af00983d e5e804fe 7a451024
 
 - Program SRK_HASH[255:0] fuses:
-
-  * On i.MX 8 ULP:
 
   => fuse prog 15 0 0xdb2959f2
   => fuse prog 15 1 0x90dfc39c
@@ -393,25 +391,26 @@ U-Boot terminal.
 No events should be returned after this command:
 
   => ahab_status
-  Lifecycle: 0x0020, NXP closed
+  Lifecycle: 0x00000008, OEM Open
 
+          No Events Found!
 
 1.8 Close the device
 ---------------------
 
 After the device successfully boots a signed image without generating any AHAB
 security events, it is safe to close the device. The chip lifecycle should be
-changed from 0x20 NXP closed to 0x80 OEM closed. Be aware this step can damage
-your board if a previous step failed. It is also irreversible. Run on the
-U-Boot terminal:
+changed from OEM open to OEM closed. Be aware this step can damage your board if
+a previous step failed. It is also irreversible. Run on the U-Boot terminal:
 
   => ahab_close
 
 Now reboot the target, and run:
 
   => ahab_status
+  Lifecycle: 0x00000020, OEM Closed
 
-The lifecycle value should now be 0x80 OEM closed.
+          No Events Found!
 
 2. Authenticating the OS container
 -----------------------------------
