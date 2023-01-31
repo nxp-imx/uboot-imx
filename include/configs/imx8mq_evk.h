@@ -76,6 +76,8 @@
 	"nodes=/soc@0/caam-sm@100000 /soc@0/bus@30000000/caam_secvio /soc@0/bus@30000000/caam-snvs@30370000 /soc@0/bus@32c00000/hdmi@32c00000 /soc@0/bus@32c00000/display-controller@32e00000 /soc@0/vpu@38300000 /audio-codec /sound-wm8524 /sound-spdif /sound-hdmi-arc /soc@0/pcie@33800000 /binman \0" \
 	"sr_ir_v2_cmd=cp.b ${fdtcontroladdr} ${fdt_addr_r} 0x10000;"\
 	"fdt addr ${fdt_addr_r};"\
+	"fdt set /soc@0/usb@38100000 compatible snps,dwc3;" \
+	"fdt set /soc@0/usb@38200000 compatible snps,dwc3;" \
 	"for i in ${nodes}; do fdt rm ${i}; done \0"
 
 #define CONFIG_MFG_ENV_SETTINGS \
