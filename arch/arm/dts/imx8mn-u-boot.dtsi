@@ -67,6 +67,10 @@
 	u-boot,dm-spl;
 };
 
+&cpu_pd_wait {
+	/delete-property/ compatible;
+};
+
 &osc_24m {
 	u-boot,dm-spl;
 	u-boot,dm-pre-reloc;
