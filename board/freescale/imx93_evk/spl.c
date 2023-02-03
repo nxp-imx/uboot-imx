@@ -77,10 +77,10 @@ int power_init_board(void)
 	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
 
 	if (IS_ENABLED(CONFIG_IMX9_LOW_DRIVE_MODE)){
-		/* 0.75v for Low drive mode
+		/* 0.8v for Low drive mode
 		 */
-		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x0c);
-		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x0c);
+		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x10);
+		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x10);
 	} else {
 		/* 0.9v for Over drive mode
 		 */
