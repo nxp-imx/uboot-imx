@@ -58,7 +58,7 @@ static int pcf2131_rtc_lock(struct udevice *dev)
 	if (ret < 0)
 		return ret;
 
-	buf[PCF2131_REG_CTRL1] |= PCF2131_BIT_CTRL1_STOP | PCF2131_BIT_CTRL1_100TH_S_DIS;
+	buf[PCF2131_REG_CTRL1] |= PCF2131_BIT_CTRL1_STOP;
 	ret = dm_i2c_write(dev, PCF2131_REG_CTRL1, &buf[PCF2131_REG_CTRL1], 1);
 	if (ret < 0)
 		return ret;
@@ -77,7 +77,7 @@ static int pcf2131_rtc_unlock(struct udevice *dev)
 	if (ret < 0)
 		return ret;
 
-	buf[PCF2131_REG_CTRL1] &= 0xdf;
+	buf[PCF2131_REG_CTRL1] &= ~PCF2131_BIT_CTRL1_STOP;
 	ret = dm_i2c_write(dev, PCF2131_REG_CTRL1, &buf[PCF2131_REG_CTRL1], 1);
 	return ret;
 }
