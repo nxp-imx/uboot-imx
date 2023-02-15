@@ -469,6 +469,9 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 	if (!memory)
 		return EFI_INVALID_PARAMETER;
 
+	if (!pages)
+		return EFI_INVALID_PARAMETER;
+
 	switch (type) {
 	case EFI_ALLOCATE_ANY_PAGES:
 		/* Any page */
