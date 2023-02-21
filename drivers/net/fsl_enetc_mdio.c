@@ -2,6 +2,7 @@
 /*
  * ENETC ethernet controller driver
  * Copyright 2019 NXP
+ * Copyright 2023 NXP
  */
 
 #include <common.h>
@@ -13,7 +14,11 @@
 #include <asm/processor.h>
 #include <miiphy.h>
 
+#ifdef CONFIG_ARCH_IMX9
+#include "fsl_enetc4.h"
+#else
 #include "fsl_enetc.h"
+#endif
 
 static void enetc_mdio_wait_bsy(struct enetc_mdio_priv *priv)
 {
@@ -133,22 +138,36 @@ static int enetc_mdio_probe(struct udevice *dev)
 
 	priv->regs_base += ENETC_MDIO_BASE;
 
+#ifdef CONFIG_ARCH_IMX9
+	dm_pci_clrset_config16(dev, PCI_COMMAND, 0, PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER);
+#else
 	dm_pci_clrset_config16(dev, PCI_COMMAND, 0, PCI_COMMAND_MEMORY);
+#endif
 
 	return 0;
 }
 
+static const struct udevice_id enetc_mdio_of_match[] = {
+	{ .compatible = "fsl,enetc4-mdio" },
+	{ }
+};
+
 U_BOOT_DRIVER(enetc_mdio) = {
 	.name	= "enetc_mdio",
 	.id	= UCLASS_MDIO,
+	.of_match	= enetc_mdio_of_match,
 	.bind	= enetc_mdio_bind,
 	.probe	= enetc_mdio_probe,
 	.ops	= &enetc_mdio_ops,
 	.priv_auto	= sizeof(struct enetc_mdio_priv),
+	.plat_auto	= sizeof(struct mdio_perdev_priv),
 };
 
 static struct pci_device_id enetc_mdio_ids[] = {
 	{ PCI_DEVICE(PCI_VENDOR_ID_FREESCALE, PCI_DEVICE_ID_ENETC_MDIO) },
+#ifdef CONFIG_ARCH_IMX9
+	{ PCI_DEVICE(PCI_VENDOR_ID_NXP, PCI_DEVICE_ID_EMDIO) },
+#endif
 	{ }
 };
 
