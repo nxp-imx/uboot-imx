@@ -961,7 +961,8 @@ int disable_vpu_nodes(void *blob)
 	static const char * const nodes_path_8mm[] = {
 		"/vpu_g1@38300000",
 		"/vpu_g2@38310000",
-		"/vpu_h1@38320000"
+		"/vpu_h1@38320000",
+		"/soc@0/blk-ctrl@38330000"
 	};
 
 	static const char * const nodes_path_8mp[] = {
