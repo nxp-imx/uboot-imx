@@ -2,7 +2,6 @@
 /*
  * Copyright 2022 NXP
  */
-
 #include <common.h>
 #include <errno.h>
 #include <log.h>
@@ -358,10 +357,17 @@ int ddr_init(struct dram_timing_info *dram_timing)
 	 */
 	debug("DDRINFO:ddrphy config start\n");
 
+#if defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN)
+	qb_state.flags = 0;
+#endif
+
 	ret = ddr_cfg_phy(dram_timing);
 	if (ret)
 		return ret;
 
+#if defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN)
+	ddrphy_qb_save();
+#endif
 	/* save the ddr PHY trained CSR in memory for low power use */
 	ddrphy_trained_csr_save(ddrphy_trained_csr, ddrphy_trained_csr_num);
 
@@ -410,6 +416,10 @@ int ddr_init(struct dram_timing_info *dram_timing)
 				 ARRAY_SIZE(saved_timing->fsp_cfg[1].mr_cfg));
 	}
 
+#if defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN)
+	memcpy((struct ddrphy_qb_state *)CONFIG_SAVED_QB_STATE_BASE,
+		&qb_state, sizeof(struct ddrphy_qb_state));
+#endif
 	return 0;
 }
 

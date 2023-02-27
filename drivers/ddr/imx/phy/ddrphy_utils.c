@@ -168,6 +168,6 @@ void ddrphy_init_set_dfi_clk(unsigned int drate)
 	}
 }
 
-void ddrphy_init_read_msg_block(enum fw_type type)
+__weak void ddrphy_init_read_msg_block(enum fw_type type)
 {
 }

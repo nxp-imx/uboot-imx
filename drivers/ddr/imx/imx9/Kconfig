@@ -30,4 +30,12 @@ config SAVED_DRAM_TIMING_BASE
 	  info into memory for low power use.
 	default 0x2051C000
 
+config SAVED_QB_STATE_BASE
+	hex "Define the base address for saved QuickBoot state"
+	depends on IMX_SNPS_DDR_PHY_QB_GEN
+	help
+	  Once DRAM is trained, need to save the dram related timing
+	  info into memory in order to be reachable from U-Boot.
+	default 0x83100000
+
 endmenu

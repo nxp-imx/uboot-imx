@@ -101,6 +101,24 @@ struct dram_timing_info {
 
 extern struct dram_timing_info dram_timing;
 
+#if defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN)
+#define DDRPHY_QB_FSP_SIZE	3
+#define DDRPHY_QB_CSR_SIZE	1792
+#define DDRPHY_QB_FLAG_2D	BIT(0)	/* =1 if First boot used 2D training, =0 otherwise */
+struct ddrphy_qb_state {
+	uint32_t crc;
+	uint32_t flags;
+	uint32_t fsp[DDRPHY_QB_FSP_SIZE];
+	uint32_t csr[DDRPHY_QB_CSR_SIZE];
+};
+#define DDRPHY_QB_STATE_SIZE \
+	(sizeof(uint32_t) * (1 + DDRPHY_QB_FSP_SIZE + DDRPHY_QB_CSR_SIZE))
+
+extern struct ddrphy_qb_state qb_state;
+
+int ddrphy_qb_save(void);
+#endif
+
 void ddr_load_train_firmware(enum fw_type type);
 int ddr_init(struct dram_timing_info *timing_info);
 int ddr_cfg_phy(struct dram_timing_info *timing_info);
