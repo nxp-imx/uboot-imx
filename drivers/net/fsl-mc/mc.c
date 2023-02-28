@@ -470,7 +470,11 @@ static int mc_fixup_mac_addrs(void *blob, enum mc_fixup_type type)
 	struct uclass *uc;
 	uint32_t dpmac_id;
 
-	uclass_get(UCLASS_ETH, &uc);
+	ret = uclass_get(UCLASS_ETH, &uc);
+	if (ret) {
+		printf("fsl-mc: Could not get UCLASS_ETH\n");
+		return ret;
+	}
 	uclass_foreach_dev(eth_dev, uc) {
 		if (!eth_dev->driver || !eth_dev->driver->name ||
 		    strcmp(eth_dev->driver->name, LDPAA_ETH_DRIVER_NAME))
