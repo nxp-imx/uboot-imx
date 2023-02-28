@@ -61,8 +61,12 @@ void fdt_fixup_enetc_mac(void *blob)
 	char path[256];
 	int offset;
 	int devfn;
+	int err;
 
-	uclass_get(UCLASS_ETH, &uc);
+	err = uclass_get(UCLASS_ETH, &uc);
+	if (err)
+		return;
+
 	uclass_foreach_dev(dev, uc) {
 		if (!dev->driver || !dev->driver->name ||
 		    strcmp(dev->driver->name, ENETC_DRIVER_NAME))
