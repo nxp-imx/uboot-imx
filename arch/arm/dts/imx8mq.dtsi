@@ -204,7 +204,7 @@
 		cpu_thermal: cpu-thermal {
 			polling-delay-passive = <250>;
 			polling-delay = <2000>;
-			thermal-sensors = <&tmu>;
+			thermal-sensors = <&tmu 0>;
 
 			trips {
 				cpu_alert: cpu-alert {
@@ -436,7 +436,7 @@
 						       0x00030005 0x00000053
 						       0x00030006 0x0000005f
 						       0x00030007 0x00000071>;
-				#thermal-sensor-cells =  <0>;
+				#thermal-sensor-cells =  <1>;
 			};
 
 			wdog1: watchdog@30280000 {
@@ -1449,7 +1449,7 @@
 			status = "disabled";
 		};
 
-		dma_apbh: dma-apbh@33000000 {
+		dma_apbh: dma-controller@33000000 {
 			compatible = "fsl,imx28-dma-apbh";
 			reg = <0x33000000 0x2000>;
 			interrupts = <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>,
@@ -1491,9 +1491,8 @@
 				 <0x82000000 0 0x18000000 0x18000000 0 0x07f00000>; /* non-prefetchable memory */
 			num-lanes = <1>;
 			num-viewport = <4>;
-			interrupts = <GIC_SPI 122 IRQ_TYPE_LEVEL_HIGH>,
-					<GIC_SPI 127 IRQ_TYPE_LEVEL_HIGH>; /* eDMA */
-			interrupt-names = "msi", "dma";
+			interrupts = <GIC_SPI 122 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "msi";
 			#interrupt-cells = <1>;
 			interrupt-map-mask = <0 0 0 0x7>;
 			interrupt-map = <0 0 0 1 &gic GIC_SPI 125 IRQ_TYPE_LEVEL_HIGH>,
@@ -1530,9 +1529,8 @@
 				  <0x82000000 0 0x20000000 0x20000000 0 0x07f00000>; /* non-prefetchable memory */
 			num-lanes = <1>;
 			num-viewport = <4>;
-			interrupts = <GIC_SPI 74 IRQ_TYPE_LEVEL_HIGH>,
-					<GIC_SPI 80 IRQ_TYPE_LEVEL_HIGH>; /* eDMA */
-			interrupt-names = "msi", "dma";
+			interrupts = <GIC_SPI 74 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "msi";
 			#interrupt-cells = <1>;
 			interrupt-map-mask = <0 0 0 0x7>;
 			interrupt-map = <0 0 0 1 &gic GIC_SPI 77 IRQ_TYPE_LEVEL_HIGH>,
