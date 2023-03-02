@@ -695,6 +695,28 @@ static void flashing(char *cmd, char *response)
 			strcpy(response, "OKAY");
 		}
 	}
+#ifdef CONFIG_IMX8M
+	else if (endswith(cmd, FASTBOOT_GENERATE_DEK_BLOB)) {
+		if (hwcrypto_gen_dek_blob(fastboot_buf_addr, &fastboot_bytes_received)) {
+			printf("ERROR generate dek_blob failed!\n");
+			strcpy(response, "FAILgenerate dek_blob failed!");
+		} else {
+			printf("Generate dek_blob successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	}
+#endif
+#if defined(CONFIG_AHAB_BOOT) && defined(CONFIG_CMD_DEKBLOB)
+        else if (endswith(cmd, FASTBOOT_GENERATE_DEK_BLOB)) {
+		if (generate_dek_blob(fastboot_buf_addr, &fastboot_bytes_received)) {
+			printf("ERROR generate dek_blob failed!\n");
+			strcpy(response, "FAILgenerate dek_blob failed!");
+		} else {
+			printf("Generate dek_blob successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	}
+#endif
 #ifdef CONFIG_ID_ATTESTATION
 	else if (endswith(cmd, FASTBOOT_SET_ATTESTATION_ID)) {
 		if (trusty_set_attestation_id()) {

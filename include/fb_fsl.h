@@ -108,6 +108,7 @@
 #define FASTBOOT_SET_ATTESTATION_ID "set-device-id"
 #define FASTBOOT_WV_PROVISION	"provision-wv-keybox"
 #define FASTBOOT_WV_PROVISION_ENC	"provision-wv-keybox-enc"
+#define FASTBOOT_GENERATE_DEK_BLOB	"generate-dek-blob"
 #endif
 
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT

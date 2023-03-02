@@ -327,3 +327,47 @@ int hwcrypto_provision_wv_key_enc(const char *data, uint32_t data_size)
 
     return rc;
 }
+
+#define CAAM_KB_HEADER_LEN 48
+#define HAB_DEK_BLOB_HEADER_LEN 8
+int hwcrypto_gen_dek_blob(char *data, uint32_t *data_size)
+{
+    uint8_t *req = NULL, *resp = NULL, *tmp = NULL;
+    uint32_t out_data_size;
+
+    /* sanity check */
+    if (!data || ((*data_size != 16) && (*data_size != 24) && (*data_size != 32))) {
+        trusty_error("Wrong input parameters!\n");
+        return TRUSTY_ERR_INVALID_ARGS;
+    }
+
+    /* serialize the request */
+    req = trusty_calloc(*data_size + sizeof(*data_size), 1);
+    if (!req) {
+        return TRUSTY_ERR_NO_MEMORY;
+    }
+    tmp = append_sized_buf_to_buf(req, (uint8_t *)data, *data_size);
+
+    /* allocate memory for result */
+    out_data_size = *data_size + CAAM_KB_HEADER_LEN + HAB_DEK_BLOB_HEADER_LEN;
+    resp = trusty_calloc(out_data_size + sizeof(*data_size), 1);
+    if (!resp) {
+        goto exit;
+    }
+
+    int rc = hwcrypto_do_tipc(HWCRYPTO_GEN_DEK_BLOB, (void*)req,
+                              *data_size + sizeof(data_size), resp, &out_data_size);
+    if (!rc) {
+        memcpy(data, resp, out_data_size);
+        *data_size = out_data_size;
+    }
+
+exit:
+    if (req)
+        trusty_free(req);
+
+    if (resp)
+        trusty_free(resp);
+
+    return rc;
+}

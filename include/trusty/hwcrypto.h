@@ -97,4 +97,7 @@ int hwcrypto_provision_wv_key(const char *data, uint32_t data_size);
  * */
 int hwcrypto_provision_wv_key_enc(const char *data, uint32_t data_size);
 
+/* Send request to secure side to generate dek blob
+ * */
+int hwcrypto_gen_dek_blob(char *data, uint32_t *data_size);
 #endif /* TRUSTY_HWCRYPTO_H_ */
