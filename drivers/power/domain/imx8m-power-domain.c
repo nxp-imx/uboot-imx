@@ -33,17 +33,31 @@ DECLARE_GLOBAL_DATA_PTR;
 #define IMX8M_OTG1_A53_DOMAIN			BIT(4)
 #define IMX8M_PCIE1_A53_DOMAIN			BIT(3)
 
+#define IMX8MM_VPUH1_A53_DOMAIN			BIT(15)
+#define IMX8MM_VPUG2_A53_DOMAIN			BIT(14)
+#define IMX8MM_VPUG1_A53_DOMAIN			BIT(13)
+#define IMX8MM_DISPMIX_A53_DOMAIN		BIT(12)
+#define IMX8MM_VPUMIX_A53_DOMAIN		BIT(10)
+#define IMX8MM_GPUMIX_A53_DOMAIN		BIT(9)
+#define IMX8MM_GPU_A53_DOMAIN			(BIT(8) | BIT(11))
+#define IMX8MM_DDR1_A53_DOMAIN			BIT(7)
 #define IMX8MM_OTG2_A53_DOMAIN			BIT(5)
 #define IMX8MM_OTG1_A53_DOMAIN			BIT(4)
 #define IMX8MM_PCIE_A53_DOMAIN			BIT(3)
+#define IMX8MM_MIPI_A53_DOMAIN			BIT(2)
 
+#define IMX8MN_DISPMIX_A53_DOMAIN		BIT(12)
+#define IMX8MN_GPUMIX_A53_DOMAIN		BIT(9)
+#define IMX8MN_DDR1_A53_DOMAIN		BIT(7)
 #define IMX8MN_OTG1_A53_DOMAIN			BIT(4)
 #define IMX8MN_MIPI_A53_DOMAIN			BIT(2)
 
 #define IMX8MP_HSIOMIX_A53_DOMAIN		BIT(19)
+#define IMX8MP_MEDIAMIX_A53_DOMAIN		BIT(12)
 #define IMX8MP_USB2_PHY_A53_DOMAIN		BIT(5)
 #define IMX8MP_USB1_PHY_A53_DOMAIN		BIT(4)
 #define IMX8MP_PCIE_PHY_A53_DOMAIN		BIT(3)
+#define IMX8MP_MIPI_PHY1_A53_DOMAIN		BIT(2)
 
 #define IMX8MP_GPC_PU_PGC_SW_PUP_REQ		0x0d8
 #define IMX8MP_GPC_PU_PGC_SW_PDN_REQ		0x0e4
@@ -52,34 +66,71 @@ DECLARE_GLOBAL_DATA_PTR;
 #define GPC_PU_PGC_SW_PDN_REQ			0x104
 
 #define IMX8M_PCIE2_SW_Pxx_REQ			BIT(13)
+#define IMX8M_MIPI_CSI2_SW_Pxx_REQ		BIT(12)
+#define IMX8M_MIPI_CSI1_SW_Pxx_REQ		BIT(11)
+#define IMX8M_DISP_SW_Pxx_REQ			BIT(10)
+#define IMX8M_HDMI_SW_Pxx_REQ			BIT(9)
+#define IMX8M_VPU_SW_Pxx_REQ			BIT(8)
+#define IMX8M_GPU_SW_Pxx_REQ			BIT(7)
+#define IMX8M_DDR2_SW_Pxx_REQ			BIT(6)
+#define IMX8M_DDR1_SW_Pxx_REQ			BIT(5)
+#define IMX8M_PCIE2_SW_Pxx_REQ			BIT(13)
 #define IMX8M_OTG2_SW_Pxx_REQ			BIT(3)
 #define IMX8M_OTG1_SW_Pxx_REQ			BIT(2)
 #define IMX8M_PCIE1_SW_Pxx_REQ			BIT(1)
 
+#define IMX8MM_VPUH1_SW_Pxx_REQ			BIT(13)
+#define IMX8MM_VPUG2_SW_Pxx_REQ			BIT(12)
+#define IMX8MM_VPUG1_SW_Pxx_REQ			BIT(11)
+#define IMX8MM_DISPMIX_SW_Pxx_REQ		BIT(10)
+#define IMX8MM_VPUMIX_SW_Pxx_REQ		BIT(8)
+#define IMX8MM_GPUMIX_SW_Pxx_REQ		BIT(7)
+#define IMX8MM_GPU_SW_Pxx_REQ			(BIT(6) | BIT(9))
+#define IMX8MM_DDR1_SW_Pxx_REQ			BIT(5)
 #define IMX8MM_OTG2_SW_Pxx_REQ			BIT(3)
 #define IMX8MM_OTG1_SW_Pxx_REQ			BIT(2)
 #define IMX8MM_PCIE_SW_Pxx_REQ			BIT(1)
+#define IMX8MM_MIPI_SW_Pxx_REQ			BIT(0)
 
+#define IMX8MN_DISPMIX_SW_Pxx_REQ		BIT(10)
+#define IMX8MN_GPUMIX_SW_Pxx_REQ		BIT(7)
+#define IMX8MN_DDR1_SW_Pxx_REQ		BIT(5)
 #define IMX8MN_OTG1_SW_Pxx_REQ			BIT(2)
 #define IMX8MN_MIPI_SW_Pxx_REQ			BIT(0)
 
 #define IMX8MP_HSIOMIX_Pxx_REQ			BIT(17)
+#define IMX8MP_MEDIMIX_Pxx_REQ			BIT(10)
 #define IMX8MP_USB2_PHY_Pxx_REQ			BIT(3)
 #define IMX8MP_USB1_PHY_Pxx_REQ			BIT(2)
 #define IMX8MP_PCIE_PHY_SW_Pxx_REQ		BIT(1)
+#define IMX8MP_MIPI_PHY1_SW_Pxx_REQ		BIT(0)
 
 #define GPC_M4_PU_PDN_FLG			0x1bc
 
 #define IMX8MP_GPC_PU_PWRHSK			0x190
 #define GPC_PU_PWRHSK				0x1fc
 
+#define IMX8MM_GPUMIX_HSK_PWRDNACKN		BIT(29)
+#define IMX8MM_GPU_HSK_PWRDNACKN		(BIT(27) | BIT(28))
+#define IMX8MM_VPUMIX_HSK_PWRDNACKN		BIT(26)
+#define IMX8MM_DISPMIX_HSK_PWRDNACKN		BIT(25)
 #define IMX8MM_HSIO_HSK_PWRDNACKN		(BIT(23) | BIT(24))
+#define IMX8MM_GPUMIX_HSK_PWRDNREQN		BIT(11)
+#define IMX8MM_GPU_HSK_PWRDNREQN		(BIT(9) | BIT(10))
+#define IMX8MM_VPUMIX_HSK_PWRDNREQN		BIT(8)
+#define IMX8MM_DISPMIX_HSK_PWRDNREQN		BIT(7)
 #define IMX8MM_HSIO_HSK_PWRDNREQN		(BIT(5) | BIT(6))
 
+#define IMX8MN_GPUMIX_HSK_PWRDNACKN		(BIT(29) | BIT(27))
+#define IMX8MN_DISPMIX_HSK_PWRDNACKN		BIT(25)
 #define IMX8MN_HSIO_HSK_PWRDNACKN		BIT(23)
+#define IMX8MN_GPUMIX_HSK_PWRDNREQN		(BIT(11) | BIT(9))
+#define IMX8MN_DISPMIX_HSK_PWRDNREQN		BIT(7)
 #define IMX8MN_HSIO_HSK_PWRDNREQN		BIT(5)
 
+#define IMX8MP_MEDIAMIX_PWRDNACKN		BIT(30)
 #define IMX8MP_HSIOMIX_PWRDNACKN		BIT(28)
+#define IMX8MP_MEDIAMIX_PWRDNREQN		BIT(14)
 #define IMX8MP_HSIOMIX_PWRDNREQN		BIT(12)
 
 /*
@@ -93,15 +144,31 @@ DECLARE_GLOBAL_DATA_PTR;
 #define IMX8M_PGC_OTG2			19
 #define IMX8M_PGC_PCIE2			29
 
+#define IMX8MM_PGC_MIPI			16
 #define IMX8MM_PGC_PCIE			17
 #define IMX8MM_PGC_OTG1			18
 #define IMX8MM_PGC_OTG2			19
+#define IMX8MM_PGC_DDR1			21
+#define IMX8MM_PGC_GPU2D		22
+#define IMX8MM_PGC_GPUMIX		23
+#define IMX8MM_PGC_VPUMIX		24
+#define IMX8MM_PGC_GPU3D		25
+#define IMX8MM_PGC_DISPMIX		26
+#define IMX8MM_PGC_VPUG1		27
+#define IMX8MM_PGC_VPUG2		28
+#define IMX8MM_PGC_VPUH1		29
 
-#define IMX8MN_PGC_OTG1			18
+#define IMX8MN_PGC_MIPI		16
+#define IMX8MN_PGC_OTG1		18
+#define IMX8MN_PGC_DDR1		21
+#define IMX8MN_PGC_GPUMIX		23
+#define IMX8MN_PGC_DISPMIX		26
 
+#define IMX8MP_PGC_MIPI1		12
 #define IMX8MP_PGC_PCIE			13
 #define IMX8MP_PGC_USB1			14
 #define IMX8MP_PGC_USB2			15
+#define IMX8MP_PGC_MEDIAMIX		22
 #define IMX8MP_PGC_HSIOMIX		29
 
 #define GPC_PGC_CTRL(n)			(0x800 + (n) * 0x40)
@@ -143,6 +210,7 @@ struct imx8m_power_domain_plat {
 	void __iomem *base;
 	int resource_id;
 	int has_pd;
+	int count;
 };
 
 #if defined(CONFIG_IMX8MM) || defined(CONFIG_IMX8MN) || defined(CONFIG_IMX8MQ)
@@ -231,6 +299,82 @@ static const struct imx_pgc_domain imx8mm_pgc_domains[] = {
 		},
 		.pgc   = BIT(IMX8MM_PGC_OTG2),
 	},
+
+	[IMX8MM_POWER_DOMAIN_GPUMIX] = {
+		.bits  = {
+			.pxx = IMX8MM_GPUMIX_SW_Pxx_REQ,
+			.map = IMX8MM_GPUMIX_A53_DOMAIN,
+			.hskreq = IMX8MM_GPUMIX_HSK_PWRDNREQN,
+			.hskack = IMX8MM_GPUMIX_HSK_PWRDNACKN,
+		},
+		.pgc   = BIT(IMX8MM_PGC_GPUMIX),
+		.keep_clocks = true,
+	},
+
+	[IMX8MM_POWER_DOMAIN_GPU] = {
+		.bits  = {
+			.pxx = IMX8MM_GPU_SW_Pxx_REQ,
+			.map = IMX8MM_GPU_A53_DOMAIN,
+			.hskreq = IMX8MM_GPU_HSK_PWRDNREQN,
+			.hskack = IMX8MM_GPU_HSK_PWRDNACKN,
+		},
+		.pgc   = BIT(IMX8MM_PGC_GPU2D) | BIT(IMX8MM_PGC_GPU3D),
+	},
+
+	[IMX8MM_POWER_DOMAIN_VPUMIX] = {
+		.bits  = {
+			.pxx = IMX8MM_VPUMIX_SW_Pxx_REQ,
+			.map = IMX8MM_VPUMIX_A53_DOMAIN,
+			.hskreq = IMX8MM_VPUMIX_HSK_PWRDNREQN,
+			.hskack = IMX8MM_VPUMIX_HSK_PWRDNACKN,
+		},
+		.pgc   = BIT(IMX8MM_PGC_VPUMIX),
+		.keep_clocks = true,
+	},
+
+	[IMX8MM_POWER_DOMAIN_VPUG1] = {
+		.bits  = {
+			.pxx = IMX8MM_VPUG1_SW_Pxx_REQ,
+			.map = IMX8MM_VPUG1_A53_DOMAIN,
+		},
+		.pgc   = BIT(IMX8MM_PGC_VPUG1),
+	},
+
+	[IMX8MM_POWER_DOMAIN_VPUG2] = {
+		.bits  = {
+			.pxx = IMX8MM_VPUG2_SW_Pxx_REQ,
+			.map = IMX8MM_VPUG2_A53_DOMAIN,
+		},
+		.pgc   = BIT(IMX8MM_PGC_VPUG2),
+	},
+
+	[IMX8MM_POWER_DOMAIN_VPUH1] = {
+		.bits  = {
+			.pxx = IMX8MM_VPUH1_SW_Pxx_REQ,
+			.map = IMX8MM_VPUH1_A53_DOMAIN,
+		},
+		.pgc   = BIT(IMX8MM_PGC_VPUH1),
+		.keep_clocks = true,
+	},
+
+	[IMX8MM_POWER_DOMAIN_DISPMIX] = {
+		.bits  = {
+			.pxx = IMX8MM_DISPMIX_SW_Pxx_REQ,
+			.map = IMX8MM_DISPMIX_A53_DOMAIN,
+			.hskreq = IMX8MM_DISPMIX_HSK_PWRDNREQN,
+			.hskack = IMX8MM_DISPMIX_HSK_PWRDNACKN,
+		},
+		.pgc   = BIT(IMX8MM_PGC_DISPMIX),
+		.keep_clocks = true,
+	},
+
+	[IMX8MM_POWER_DOMAIN_MIPI] = {
+		.bits  = {
+			.pxx = IMX8MM_MIPI_SW_Pxx_REQ,
+			.map = IMX8MM_MIPI_A53_DOMAIN,
+		},
+		.pgc   = BIT(IMX8MM_PGC_MIPI),
+	},
 };
 
 static const struct imx_pgc_domain_data imx8mm_pgc_domain_data = {
@@ -259,6 +403,36 @@ static const struct imx_pgc_domain imx8mn_pgc_domains[] = {
 		},
 		.pgc   = BIT(IMX8MN_PGC_OTG1),
 	},
+
+	[IMX8MN_POWER_DOMAIN_GPUMIX] = {
+		.bits  = {
+			.pxx = IMX8MN_GPUMIX_SW_Pxx_REQ,
+			.map = IMX8MN_GPUMIX_A53_DOMAIN,
+			.hskreq = IMX8MN_GPUMIX_HSK_PWRDNREQN,
+			.hskack = IMX8MN_GPUMIX_HSK_PWRDNACKN,
+		},
+		.pgc   = BIT(IMX8MN_PGC_GPUMIX),
+		.keep_clocks = true,
+	},
+
+	[IMX8MN_POWER_DOMAIN_DISPMIX] = {
+		.bits  = {
+			.pxx = IMX8MN_DISPMIX_SW_Pxx_REQ,
+			.map = IMX8MN_DISPMIX_A53_DOMAIN,
+			.hskreq = IMX8MN_DISPMIX_HSK_PWRDNREQN,
+			.hskack = IMX8MN_DISPMIX_HSK_PWRDNACKN,
+		},
+		.pgc   = BIT(IMX8MN_PGC_DISPMIX),
+		.keep_clocks = true,
+	},
+
+	[IMX8MN_POWER_DOMAIN_MIPI] = {
+		.bits  = {
+			.pxx = IMX8MN_MIPI_SW_Pxx_REQ,
+			.map = IMX8MN_MIPI_A53_DOMAIN,
+		},
+		.pgc   = BIT(IMX8MN_PGC_MIPI),
+	},
 };
 
 static const struct imx_pgc_domain_data imx8mn_pgc_domain_data = {
@@ -269,7 +443,15 @@ static const struct imx_pgc_domain_data imx8mn_pgc_domain_data = {
 #endif
 
 #ifdef CONFIG_IMX8MP
-static const struct imx_pgc_domain imx8mp_pgc_domains[] = {
+static const struct imx_pgc_domain imx8mp_pgc_domains[19] = {
+	[IMX8MP_POWER_DOMAIN_MIPI_PHY1] = {
+		.bits = {
+			.pxx = IMX8MP_MIPI_PHY1_SW_Pxx_REQ,
+			.map = IMX8MP_MIPI_PHY1_A53_DOMAIN,
+		},
+		.pgc = BIT(IMX8MP_PGC_MIPI1),
+	},
+
 	[IMX8MP_POWER_DOMAIN_PCIE_PHY] = {
 		.bits = {
 			.pxx = IMX8MP_PCIE_PHY_SW_Pxx_REQ,
@@ -292,6 +474,17 @@ static const struct imx_pgc_domain imx8mp_pgc_domains[] = {
 			.map = IMX8MP_USB2_PHY_A53_DOMAIN,
 		},
 		.pgc = BIT(IMX8MP_PGC_USB2),
+	},
+
+	[IMX8MP_POWER_DOMAIN_MEDIAMIX] = {
+		.bits = {
+			.pxx = IMX8MP_MEDIMIX_Pxx_REQ,
+			.map = IMX8MP_MEDIAMIX_A53_DOMAIN,
+			.hskreq = IMX8MP_MEDIAMIX_PWRDNREQN,
+			.hskack = IMX8MP_MEDIAMIX_PWRDNACKN,
+		},
+		.pgc = BIT(IMX8MP_PGC_MEDIAMIX),
+		.keep_clocks = true,
 	},
 
 	[IMX8MP_POWER_DOMAIN_HSIOMIX] = {
@@ -329,6 +522,11 @@ static int imx8m_power_domain_on(struct power_domain *power_domain)
 	void __iomem *base = pdata->base;
 	u32 pgc;
 	int ret;
+
+	if (pdata->count > 0) { /* Already on */
+		pdata->count++;
+		return 0;
+	}
 
 	if (pdata->clk.count) {
 		ret = clk_enable_bulk(&pdata->clk);
@@ -371,6 +569,8 @@ static int imx8m_power_domain_on(struct power_domain *power_domain)
 	if (!domain->keep_clocks && pdata->clk.count)
 		clk_disable_bulk(&pdata->clk);
 
+	pdata->count++;
+
 	return 0;
 
 out_clk_disable:
@@ -388,6 +588,13 @@ static int imx8m_power_domain_off(struct power_domain *power_domain)
 	void __iomem *base = pdata->base;
 	u32 pgc;
 	int ret;
+
+	if (!pdata->count) { /* Already off */
+		return 0;
+	} else if (pdata->count > 1) {
+		pdata->count--;
+		return 0;
+	}
 
 	/* Enable reset clocks for all devices in the domain */
 	if (!domain->keep_clocks && pdata->clk.count) {
@@ -436,6 +643,8 @@ static int imx8m_power_domain_off(struct power_domain *power_domain)
 
 	if (pdata->has_pd)
 		power_domain_off(&pdata->pd);
+
+	pdata->count--;
 
 	return 0;
 

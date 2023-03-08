@@ -40,6 +40,12 @@ config IMX8M_POWER_DOMAIN
 	  Enable support for manipulating NXP i.MX8M on-SoC power domains via
 	  requests to the ATF.
 
+config IMX8M_BLK_CTRL
+	bool "Enable i.MX8M block control driver"
+	depends on POWER_DOMAIN && ARCH_IMX8M
+	help
+	  Enable support for manipulating NXP i.MX8M on-SoC block control driver
+
 config IMX8MP_HSIOMIX_BLKCTRL
 	bool "Enable i.MX8MP HSIOMIX domain driver"
 	depends on POWER_DOMAIN && IMX8MP
