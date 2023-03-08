@@ -1,14 +1,14 @@
 /*
- * Copyright 2019 NXP
+ * Copyright 2019-2023 NXP
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * SPDX-License-Identifier:  GPL-2.0+
  *
  * Generated code from MX8M_DDR_tool
  *
  * Align with uboot version:
- * imx_v2018.03_4.14.78_1.0.0_ga ~ imx_v2018.04_4.19.35_1.1.0_ga
- * For imx_v2019.04_5.4.x and above version:
- * please replace #include <asm/arch/imx8m_ddr.h> with #include <asm/arch/ddr.h>
+ * imx_v2019.04_5.4.x and above version
+ * For imx_v2018.03_4.14.78_1.0.0_ga ~ imx_v2018.04_4.19.35_1.1.0_ga:
+ * please replace #include <asm/arch/ddr.h> with #include <asm/arch/imx8m_ddr.h>
  */
 
 #include <linux/kernel.h>
@@ -18,7 +18,7 @@ struct dram_cfg_param ddr_ddrc_cfg[] = {
 	/** Initialize DDRC registers **/
 	{ 0x3d400304, 0x1 },
 	{ 0x3d400030, 0x1 },
-	{ 0x3d400000, 0x81040010 },
+	{ 0x3d400000, 0xa1040010 },
 	{ 0x3d400030, 0xaa },
 	{ 0x3d400034, 0x221306 },
 	{ 0x3d400050, 0x210070 },
@@ -28,11 +28,11 @@ struct dram_cfg_param ddr_ddrc_cfg[] = {
 	{ 0x3d4000c0, 0x0 },
 	{ 0x3d4000c4, 0x1000 },
 #ifdef CONFIG_IMX8M_DRAM_INLINE_ECC
-	{ 0x3d400070, 0x1027f54 },
+	{ 0x3d400070, 0x3027fd4 },
 #else
-	{ 0x3d400070, 0x1027f10 },
+	{ 0x3d400070, 0x3027f90 },
 #endif
-	{ 0x3d400074, 0x7b0 },
+	{ 0x3d400074, 0x790 },
 	{ 0x3d4000d0, 0xc0030188 },
 	{ 0x3d4000d4, 0x9e0000 },
 	{ 0x3d4000dc, 0xc500501 },
@@ -43,10 +43,10 @@ struct dram_cfg_param ddr_ddrc_cfg[] = {
 	{ 0x3d4000f0, 0x20 },
 	{ 0x3d4000f4, 0xec7 },
 	{ 0x3d400100, 0x1618361a },
-	{ 0x3d400104, 0x50626 },
+	{ 0x3d400104, 0x50625 },
 	{ 0x3d400108, 0x80b0610 },
 	{ 0x3d40010c, 0x400c },
-	{ 0x3d400110, 0xc04060d },
+	{ 0x3d400110, 0xb04060c },
 	{ 0x3d400114, 0x8080504 },
 	{ 0x3d40011c, 0x808 },
 	{ 0x3d400120, 0x6060d0a },
@@ -71,10 +71,10 @@ struct dram_cfg_param ddr_ddrc_cfg[] = {
 	{ 0x3d400200, 0x1f },
 #ifdef CONFIG_IMX8M_DRAM_INLINE_ECC
 	{ 0x3d400204, 0x3f0505 },
-	{ 0x3d400208, 0x700 },
+	{ 0x3d400208, 0x600 },
 	{ 0x3d40020c, 0x14141400 },
 	{ 0x3d400210, 0x1f1f },
-	{ 0x3d400214, 0x4040403 },
+	{ 0x3d400214, 0x4040404 },
 	{ 0x3d400218, 0x4040404 },
 	{ 0x3d40021c, 0xf04 },
 #else
@@ -89,7 +89,7 @@ struct dram_cfg_param ddr_ddrc_cfg[] = {
 	{ 0x3d400220, 0x3f01 },
 	{ 0x3d400240, 0x6000618 },
 	{ 0x3d400244, 0x1323 },
-	{ 0x3d400250, 0x00001a05 },
+	{ 0x3d400250, 0x1a05 },
 	{ 0x3d400254, 0x1f },
 	{ 0x3d40025c, 0x10000010 },
 	{ 0x3d400264, 0x100000ff },
@@ -127,6 +127,7 @@ struct dram_cfg_param ddr_ddrc_cfg[] = {
 	{ 0x3d4021b8, 0x4 },
 	{ 0x3d402240, 0x6000604 },
 	{ 0x3d4020f4, 0xec7 },
+	{ 0x3d400028, 0x0 },
 };
 
 /* PHY Initialize Configuration */
@@ -1235,11 +1236,11 @@ struct dram_cfg_param ddr_phy_pie[] = {
 	{ 0xd00e7, 0x400 },
 	{ 0x90017, 0x0 },
 	{ 0x90026, 0x2a },
-	{ 0x2000b, 0x64 },
+	{ 0x2000b, 0x384 },
 	{ 0x2000c, 0xc8 },
 	{ 0x2000d, 0x7d0 },
 	{ 0x2000e, 0x2c },
-	{ 0x12000b, 0x21 },
+	{ 0x12000b, 0x12b },
 	{ 0x12000c, 0x42 },
 	{ 0x12000d, 0x29a },
 	{ 0x12000e, 0x21 },
