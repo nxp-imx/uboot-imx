@@ -1134,6 +1134,17 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 	trusty_ipc_shutdown();
 #endif
 
+#if defined(CONFIG_IMX_HAB) && defined(CONFIG_CMD_PRIBLOB)
+        /*
+         * prevent the dek blob usable to decrypt an encrypted image after
+         * encrypted boot stage has passed.
+         */
+        if(run_command("set_priblob_bitfield", 0)){
+                printf("set priblob bitfield failed!\n");
+        }
+
+#endif
+
 	/* Free AVB data */
 	if (avb_out_data != NULL)
 		avb_slot_verify_data_free(avb_out_data);
