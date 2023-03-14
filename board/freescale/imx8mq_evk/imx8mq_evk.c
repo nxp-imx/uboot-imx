@@ -98,6 +98,11 @@ static int setup_fec(void)
 
 int board_phy_config(struct phy_device *phydev)
 {
+#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+	if (phydev->drv->uid == 0x1cc916) /*RTL8211F*/
+		env_set("board_name", "WEVK");
+#endif
+
 	if (phydev->drv->config)
 		phydev->drv->config(phydev);
 
