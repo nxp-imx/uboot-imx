@@ -798,6 +798,69 @@ static void flashing(char *cmd, char *response)
 }
 #endif /* CONFIG_FASTBOOT_LOCK */
 
+#ifdef CONFIG_IMX_MATTER_TRUSTY
+static void flashing(char *cmd, char *response)
+{
+	if (endswith(cmd, SET_MATTER_DAC_CERT)) {
+		if (trusty_set_dac_cert(fastboot_buf_addr, fastboot_bytes_received)) {
+			printf("ERROR set matter dac cert failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			printf("Set matter dac cert successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	} else if (endswith(cmd, SET_MATTER_PAI_CERT)) {
+		if (trusty_set_pai_cert(fastboot_buf_addr, fastboot_bytes_received)) {
+			printf("ERROR set matter pai cert failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			printf("Set matter pai cert successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	} else if (endswith(cmd, SET_MATTER_CD_CERT)) {
+		if (trusty_set_cd_cert(fastboot_buf_addr, fastboot_bytes_received)) {
+			printf("ERROR set matter cd cert failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			printf("Set matter cd cert successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	} else if (endswith(cmd, SET_MATTER_DAC_PRIKEY)) {
+		if (trusty_set_dac_prikey(fastboot_buf_addr, fastboot_bytes_received)) {
+			printf("ERROR set matter dac private key failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			printf("Set matter dac private key successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	} else if (endswith(cmd, FASTBOOT_SET_RPMB_HARDWARE_KEY)) {
+		if (storage_set_rpmb_key()) {
+			printf("ERROR set rpmb hardware key failed!\n");
+			strcpy(response, "FAILset rpmb hardware key failed!");
+		} else
+			strcpy(response, "OKAY");
+	} else if (endswith(cmd, FASTBOOT_ERASE_RPMB)) {
+		if (storage_erase_rpmb()) {
+			printf("ERROR erase rpmb storage failed!\n");
+			strcpy(response, "FAILerase rpmb storage failed!");
+		} else {
+			printf("erase rpmb storage succeed!\n");
+			strcpy(response, "OKAY");
+		}
+	} else {
+		printf("Unknown oem command:%s\n", cmd);
+		strcpy(response, "FAILcommand not defined");
+	}
+
+	fastboot_tx_write_more(response);
+
+	/* Must call fastboot_none_resp before returning from the dispatch function
+	 *  which uses fastboot_tx_write_more
+	 */
+	fastboot_none_resp(response);
+}
+#endif
+
 #ifdef CONFIG_AVB_SUPPORT
 static void set_active_avb(char *cmd, char *response)
 {
@@ -1067,6 +1130,8 @@ static const struct {
 			.command = "flashing",
 			.dispatch = flashing,
 		},
+#endif
+#if defined(CONFIG_FASTBOOT_LOCK) || defined(CONFIG_IMX_MATTER_TRUSTY)
 		[FASTBOOT_COMMAND_OEM] = {
 			.command = "oem",
 			.dispatch = flashing,

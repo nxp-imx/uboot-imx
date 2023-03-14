@@ -402,6 +402,11 @@ config SECURE_UNLOCK
 	bool "Enable secure unlock for Android devices, it can only be enabled on HAB closed board"
 	depends on IMX_TRUSTY_OS
 
+config IMX_MATTER_TRUSTY
+	bool "Enable Trusty OS feature for Matter"
+	depends on IMX_TRUSTY_OS
+	default n
+
 endmenu
 
 config APPEND_BOOTARGS

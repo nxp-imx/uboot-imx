@@ -121,6 +121,13 @@
 #endif /* CONFIG_AVB_ATX */
 #endif /* CONFIG_ANDROID_THINGS_SUPPORT */
 
+#ifdef CONFIG_IMX_MATTER_TRUSTY
+#define SET_MATTER_DAC_CERT "set-matter-dac-cert"
+#define SET_MATTER_PAI_CERT "set-matter-pai-cert"
+#define SET_MATTER_CD_CERT  "set-matter-cd-cert"
+#define SET_MATTER_DAC_PRIKEY  "set-matter-dac-private-key"
+#endif
+
 #ifndef TEE_HWPARTITION_ID
 #define TEE_HWPARTITION_ID 2
 #endif

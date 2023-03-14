@@ -45,6 +45,8 @@ obj-y += \
     sysdeps/sysdeps_uboot.o \
     sysdeps/storage_ops_uboot.o
 
+obj-$(CONFIG_IMX_MATTER_TRUSTY) += $(QL_TIPC)/matter.o
+
 obj-$(CONFIG_ARM) += \
     $(QL_TIPC)/arch/arm/trusty_mem.o \
     $(QL_TIPC)/arch/arm/trusty_dev.o

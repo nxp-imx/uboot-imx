@@ -1271,7 +1271,7 @@ static gpt_entry *alloc_read_gpt_entries(struct blk_desc *dev_desc,
 	 * don't forget to free the memory after use.
 	 */
 	if (count != 0) {
-#if (defined(CONFIG_DUAL_BOOTLOADER) || defined(CONFIG_IMX_TRUSTY_OS)) && defined(CONFIG_SPL_BUILD)
+#if (defined(CONFIG_DUAL_BOOTLOADER) || defined(CONFIG_IMX_TRUSTY_OS)) && defined(CONFIG_SPL_BUILD) && !defined(CONFIG_IMX_MATTER_TRUSTY)
 		pte = (gpt_entry *)CFG_SYS_SPL_PTE_RAM_BASE;
 #else
 		pte = memalign(ARCH_DMA_MINALIGN,

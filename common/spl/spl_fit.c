@@ -742,7 +742,7 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	if (ret < 0)
 		return ret;
 
-#ifdef CONFIG_IMX_TRUSTY_OS
+#if defined(CONFIG_IMX_TRUSTY_OS) && !defined(CONFIG_IMX_MATTER_TRUSTY)
 	int rbindex;
 	rbindex = spl_fit_get_rbindex(ctx.fit);
 	if (rbindex < 0) {

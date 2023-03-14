@@ -40,6 +40,10 @@ void rpmb_storage_put_ctx(void *dev)
 {
 }
 
+__weak int board_get_emmc_id(void) {
+    return mmc_get_env_dev();
+}
+
 int rpmb_storage_send(void *rpmb_dev, const void *rel_write_data,
                       size_t rel_write_size, const void *write_data,
                       size_t write_size, void *read_buf, size_t read_size)
@@ -48,11 +52,39 @@ int rpmb_storage_send(void *rpmb_dev, const void *rel_write_data,
     ALLOC_CACHE_ALIGN_BUFFER(uint8_t, rpmb_write_data, write_size);
     ALLOC_CACHE_ALIGN_BUFFER(uint8_t, rpmb_read_data, read_size);
     int ret = TRUSTY_ERR_NONE;
-    struct mmc *mmc = find_mmc_device(mmc_get_env_dev());
+
+    struct mmc *mmc = find_mmc_device(board_get_emmc_id());
     if (!mmc) {
 	trusty_error("failed to get mmc device.\n");
 	return -1;
     }
+
+#ifdef CONFIG_IMX_MATTER_TRUSTY
+    int current_dev = mmc_get_env_dev();
+    int emmc_dev = board_get_emmc_id();
+    bool sd_boot = false;
+
+    if (emmc_dev != current_dev) {
+        /* not eMMC boot, need to switch to eMMC device */
+        if (!(mmc->has_init) && mmc_init(mmc)) {
+            trusty_error("failed to init eMMC device.\n");
+            return -1;
+        }
+
+#ifdef CONFIG_BLOCK_CACHE
+        struct blk_desc *bd = mmc_get_blk_desc(mmc);
+        blkcache_invalidate(bd->if_type, bd->devnum);
+#endif
+        /* swicth to eMMC device */
+        if (blk_select_hwpart_devnum(IF_TYPE_MMC, emmc_dev, 0)) {
+            trusty_error("failed to switch to eMMC device.\n");
+            return -1;
+        }
+
+        sd_boot = true;
+    }
+#endif
+
     struct blk_desc *desc = mmc_get_blk_desc(mmc);
     if (!desc) {
 	trusty_error("failed to get mmc desc.\n");
@@ -127,5 +159,16 @@ end:
         }
        desc->hwpart = original_part;
     }
+
+#ifdef CONFIG_IMX_MATTER_TRUSTY
+    if (sd_boot) {
+        /* swicth back to SD */
+        if (blk_select_hwpart_devnum(IF_TYPE_MMC, current_dev, 0)) {
+            trusty_error("failed to switch to SD.\n");
+            return -1;
+        }
+    }
+#endif
+
     return ret;
 }

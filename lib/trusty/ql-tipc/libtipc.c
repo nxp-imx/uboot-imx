@@ -34,6 +34,7 @@
 #include <hang.h>
 #include <env.h>
 #include <trusty/imx_snvs.h>
+#include <trusty/matter.h>
 
 #define LOCAL_LOG 0
 
@@ -53,17 +54,25 @@ void trusty_ipc_shutdown(void)
      * Trusty OS is not well initialized when the rpmb
      * key is not set, skip ipc shut down to avoid panic.
      */
+#ifndef CONFIG_IMX_MATTER_TRUSTY
     if (!rpmbkey_is_set()) {
         return;
     }
+#endif
 
     (void)rpmb_storage_proxy_shutdown(_ipc_dev);
     (void)rpmb_storage_put_ctx(rpmb_ctx);
 
+#ifndef CONFIG_IMX_MATTER_TRUSTY
     (void)avb_tipc_shutdown(_ipc_dev);
     (void)km_tipc_shutdown(_ipc_dev);
+#endif
 
-#ifndef CONFIG_AVB_ATX
+#ifdef CONFIG_IMX_MATTER_TRUSTY
+    (void)matter_tipc_shutdown(_ipc_dev);
+#endif
+
+#if !defined(CONFIG_AVB_ATX) && !defined(CONFIG_IMX_MATTER_TRUSTY)
     (void)hwcrypto_tipc_shutdown(_ipc_dev);
 #endif
 
@@ -102,7 +111,7 @@ int trusty_ipc_init(void)
     rc = rpmb_storage_proxy_init(_ipc_dev, rpmb_ctx);
     if (rc != 0) {
         trusty_error("Initlializing RPMB storage proxy service failed (%d)\n", rc);
-#ifndef CONFIG_AVB_ATX
+#if !defined(CONFIG_AVB_ATX) && !defined(CONFIG_IMX_MATTER_TRUSTY)
         /* check if rpmb key has been fused. */
         if(rpmbkey_is_set()) {
             /* Go to hang if the key has been destroyed. */
@@ -119,6 +128,7 @@ int trusty_ipc_init(void)
      * failed (when the rpmb key not set). Init the avb and keymaster service
      * only when the rpmb key has been set.
      */
+#ifndef CONFIG_IMX_MATTER_TRUSTY
     if (rpmbkey_is_set()) {
         rc = avb_tipc_init(_ipc_dev);
         if (rc != 0) {
@@ -149,6 +159,15 @@ int trusty_ipc_init(void)
     rc = imx_snvs_init(_ipc_dev);
     if (rc != 0) {
         trusty_error("Initlializing Trusty SNVS driver failed (%d)\n", rc);
+        return rc;
+    }
+#endif
+#endif /* CONFIG_IMX_MATTER_TRUSTY */
+
+#ifdef CONFIG_IMX_MATTER_TRUSTY
+    rc = matter_tipc_init(_ipc_dev);
+    if (rc != 0) {
+        trusty_error("Initlializing Trusty Matter failed (%d)\n", rc);
         return rc;
     }
 #endif
