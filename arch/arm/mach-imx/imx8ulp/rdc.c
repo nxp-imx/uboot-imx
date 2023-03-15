@@ -323,6 +323,7 @@ void xrdc_init_mrc(void)
 	/* Set MRC6 for DDR access from Sentinel */
 	xrdc_config_mrc_w0_w1(6, 0, CFG_SYS_SDRAM_BASE, PHYS_SDRAM_SIZE);
 	xrdc_config_mrc_dx_perm(6, 0, 4, 1);
+	xrdc_config_mrc_dx_perm(6, 0, 7, 1);
 	xrdc_config_mrc_w3_w4(6, 0, 0x0, 0x80000FFF);
 
 	/* The MRC8 is for SRAM1 */
