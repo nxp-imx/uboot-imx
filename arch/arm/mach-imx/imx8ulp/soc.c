@@ -784,7 +784,7 @@ int arch_cpu_init(void)
 
 		if (is_m33_handshake_necessary()) {
 			/* Start handshake with M33 to ensure TRDC configuration completed */
-			ret = m33_image_handshake(1000);
+			ret = m33_image_handshake(3000);
 			if (!ret)
 				gd->arch.m33_handshake_done = true;
 			else /* Skip and go through to panic in checkcpu as console is ready then */
