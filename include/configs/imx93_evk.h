@@ -9,6 +9,7 @@
 #include <linux/sizes.h>
 #include <linux/stringify.h>
 #include <asm/arch/imx-regs.h>
+#include "imx_env.h"
 
 #define CFG_SYS_UBOOT_BASE	\
 	(QSPI0_AMBA_BASE + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
@@ -17,19 +18,35 @@
 #define CFG_MALLOC_F_ADDR		0x204D0000
 #endif
 
+#ifdef CONFIG_AHAB_BOOT
+#define AHAB_ENV "sec_boot=yes\0"
+#else
+#define AHAB_ENV "sec_boot=no\0"
+#endif
+
 #ifdef CONFIG_DISTRO_DEFAULTS
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 0) \
 	func(MMC, mmc, 1) \
+	func(USB, usb, 0)
 
 #include <config_distro_bootcmd.h>
 #else
 #define BOOTENV
 #endif
 
+#define CFG_MFG_ENV_SETTINGS \
+	CFG_MFG_ENV_SETTINGS_DEFAULT \
+	"initrd_addr=0x83800000\0" \
+	"initrd_high=0xffffffffffffffff\0" \
+	"emmc_dev=0\0"\
+	"sd_dev=1\0" \
+
 /* Initial environment variables */
 #define CFG_EXTRA_ENV_SETTINGS		\
+	CFG_MFG_ENV_SETTINGS \
 	BOOTENV \
+	AHAB_ENV \
 	"scriptaddr=0x83500000\0" \
 	"kernel_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"image=Image\0" \
@@ -37,6 +54,7 @@
 	"console=ttyLP0,115200 earlycon\0" \
 	"fdt_addr_r=0x83000000\0"			\
 	"fdt_addr=0x83000000\0"			\
+	"fdt_high=0xffffffffffffffff\0"		\
 	"cntr_addr=0x98000000\0"			\
 	"cntr_file=os_cntr_signed.bin\0" \
 	"boot_fit=no\0" \
