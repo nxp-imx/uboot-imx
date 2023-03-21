@@ -34,7 +34,7 @@ int do_generate_kaslr(void *blob) {
 		printf("Reading RNG failed\n");
 		goto err;
 	}
-	ret = fdt_setprop(blob, nodeoff, "kaslr-seed", buf, sizeof(buf));
+	ret = fdt_setprop(blob, nodeoff, "kaslr-seed", buf, sizeof(*buf));
 	if (ret < 0) {
 		printf("Unable to set kaslr-seed on chosen node: %s\n", fdt_strerror(ret));
 		goto err;
