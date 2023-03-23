@@ -92,9 +92,9 @@ A typical singleboot mode image with Cortex-M support contains three containers:
                          +---------------------------+   |
                          |          Padding          |   | Authenticated
                          +---------------------------+   | at SPL Level
-                         |     U-Boot Proper IMG     |   |
+                         |    ARM Trusted FW (ATF)   |   |
                          +---------------------------+   |
-                         |    ARM Trusted FW (ATF)   |   v
+                         |     U-Boot Proper IMG     |   v
                          +---------------------------+ ---------
 
 The first container includes the ELE FW which is signed using NXP keys, this
@@ -372,6 +372,8 @@ The U-Boot fuse tool can be used for programming eFuses on i.MX SoCs.
 
 - Program SRK_HASH[255:0] fuses:
 
+On i.MX8ULP:
+
   => fuse prog 15 0 0xdb2959f2
   => fuse prog 15 1 0x90dfc39c
   => fuse prog 15 2 0x53394566
@@ -380,6 +382,17 @@ The U-Boot fuse tool can be used for programming eFuses on i.MX SoCs.
   => fuse prog 15 5 0xaf00983d
   => fuse prog 15 6 0xe5e804fe
   => fuse prog 15 7 0x7a451024
+  
+On i.MX93:
+
+  => fuse prog 16 0 0xdb2959f2
+  => fuse prog 16 1 0x90dfc39c
+  => fuse prog 16 2 0x53394566
+  => fuse prog 16 3 0xe0b75829
+  => fuse prog 16 4 0x85e6f3b1
+  => fuse prog 16 5 0xaf00983d
+  => fuse prog 16 6 0xe5e804fe
+  => fuse prog 16 7 0x7a451024
 
 1.7 Verify AHAB events
 -----------------------
