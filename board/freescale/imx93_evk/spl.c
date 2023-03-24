@@ -61,6 +61,7 @@ int power_init_board(void)
 {
 	struct udevice *dev;
 	int ret;
+	unsigned int val = 0;
 
 	ret = pmic_get("pmic@25", &dev);
 	if (ret == -ENODEV) {
@@ -76,16 +77,32 @@ int power_init_board(void)
 	/* enable DVS control through PMIC_STBY_REQ */
 	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
 
+	ret = pmic_reg_read(dev, PCA9450_PWR_CTRL);
+	if (ret < 0)
+		return ret;
+	else
+		val = ret;
+
 	if (IS_ENABLED(CONFIG_IMX9_LOW_DRIVE_MODE)){
 		/* 0.8v for Low drive mode
 		 */
-		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x10);
-		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x10);
+		if (val & PCA9450_REG_PWRCTRL_TOFF_DEB) {
+			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x0c);
+			pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x0c);
+		} else {
+			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x10);
+			pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x10);
+		}
 	} else {
 		/* 0.9v for Over drive mode
 		 */
-		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x18);
-		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x18);
+		if (val & PCA9450_REG_PWRCTRL_TOFF_DEB) {
+			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x14);
+			pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x14);
+		} else {
+			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x18);
+			pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x18);
+		}
 	}
 
 	/* set standby voltage to 0.65v */
