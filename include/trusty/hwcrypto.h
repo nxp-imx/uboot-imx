@@ -112,4 +112,10 @@ int hwcrypto_provision_firmware_sign_key(const char *data, uint32_t data_size);
 /* Send request to secure side to provision firmware encrypt key
  * */
 int hwcrypto_provision_firmware_encrypt_key(const char *data, uint32_t data_size);
+/* Send the bootloader dek blob to secure side then save in rpmb
+ * */
+int hwcrypto_provision_dek_blob(char *data, uint32_t *data_size, enum dek_blob_part);
+/* Get the dek blob which saved in rpmb
+ * */
+int hwcrypto_get_dek_blob(char *data, uint32_t *data_size, enum dek_blob_part);
 #endif /* TRUSTY_HWCRYPTO_H_ */

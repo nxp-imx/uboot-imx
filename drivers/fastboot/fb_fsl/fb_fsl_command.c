@@ -763,6 +763,39 @@ static void flashing(char *cmd, char *response)
 		}
 	}
 #endif
+	else if (endswith(cmd, FASTBOOT_PROVISION_SPL_DEK_BLOB)) {
+		if (hwcrypto_provision_dek_blob(fastboot_buf_addr, &fastboot_bytes_received, SPL_DEK_BLOB)) {
+			printf("ERROR provision spl_dek_blob failed!\n");
+			strcpy(response, "FAILprovision spl_dek_blob failed!");
+		} else {
+			printf("Provision spl_dek_blob successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	} else if (endswith(cmd, FASTBOOT_PROVISION_BOOTLOADER_DEK_BLOB)) {
+		if (hwcrypto_provision_dek_blob(fastboot_buf_addr, &fastboot_bytes_received, BOOTLOADER_DEK_BLOB)) {
+			printf("ERROR provision bootloader_dek_blob failed!\n");
+			strcpy(response, "FAILprovision bootloader_dek_blob failed!");
+		} else {
+			printf("Provision bootloader_dek_blob successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	} else if (endswith(cmd, FASTBOOT_GET_SPL_DEK_BLOB)) {
+		if (hwcrypto_get_dek_blob(fastboot_buf_addr, &fastboot_bytes_received, SPL_DEK_BLOB)) {
+			printf("ERROR get spl_dek_blob failed!\n");
+			strcpy(response, "FAILget spl_dek_blob failed!");
+		} else {
+			printf("Get spl_dek_blob successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	} else if (endswith(cmd, FASTBOOT_GET_BOOTLOADER_DEK_BLOB)) {
+		if (hwcrypto_get_dek_blob(fastboot_buf_addr, &fastboot_bytes_received, BOOTLOADER_DEK_BLOB)) {
+			printf("ERROR get bootloader_dek_blob failed!\n");
+			strcpy(response, "FAILget bootloader_dek_blob failed!");
+		} else {
+			printf("Get bootloader_dek_blob successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	}
 #ifdef CONFIG_ID_ATTESTATION
 	else if (endswith(cmd, FASTBOOT_SET_ATTESTATION_ID)) {
 		if (trusty_set_attestation_id()) {
