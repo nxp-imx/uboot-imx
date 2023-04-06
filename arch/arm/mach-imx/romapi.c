@@ -70,7 +70,10 @@ enum boot_device get_boot_device(void)
 		boot_dev = SPI_NOR_BOOT;
 		break;
 	case BT_DEV_TYPE_USB:
-		boot_dev = boot_instance + USB_BOOT;
+		if (is_imx8mn() || is_imx8mp())
+			boot_dev = USB_BOOT;
+		else
+			boot_dev = boot_instance + USB_BOOT;
 		break;
 	default:
 		break;
