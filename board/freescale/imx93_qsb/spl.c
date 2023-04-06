@@ -61,6 +61,7 @@ int power_init_board(void)
 {
 	struct udevice *dev;
 	int ret;
+	unsigned int val;
 
 	ret = pmic_get("pmic@25", &dev);
 	if (ret == -ENODEV) {
@@ -76,9 +77,20 @@ int power_init_board(void)
 	/* enable DVS control through PMIC_STBY_REQ */
 	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
 
+	ret = pmic_reg_read(dev, PCA9450_PWR_CTRL);
+	if (ret < 0)
+		return ret;
+	else
+		val = ret;
+
 	/* 0.9v: for LPDDR4X 3722 */
-	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x18);
-	pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x18);
+	if (val & PCA9450_REG_PWRCTRL_TOFF_DEB) {
+		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x14);
+		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x14);
+	} else {
+		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x18);
+		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x18);
+	}
 
 	/* set standby voltage to 0.65v */
 	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x4);
