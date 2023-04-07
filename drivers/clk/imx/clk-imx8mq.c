@@ -33,11 +33,11 @@ static const char *const imx8mq_ahb_sels[] = {"clock-osc-25m", "sys_pll1_133m", 
 					      "sys_pll1_400m", "sys_pll2_125m", "sys_pll3_out",
 					      "audio_pll1_out", "video_pll1_out", };
 
-static const char *const imx8mq_dram_alt_sels[] = {"osc_25m", "sys_pll1_800m", "sys_pll1_100m",
+static const char *const imx8mq_dram_alt_sels[] = {"clock-osc-25m", "sys_pll1_800m", "sys_pll1_100m",
 						   "sys_pll2_500m", "sys_pll2_250m",
 						   "sys_pll1_400m", "audio_pll1_out", "sys_pll1_266m", }  ;
 
-static const char * const imx8mq_dram_apb_sels[] = {"osc_25m", "sys_pll2_200m", "sys_pll1_40m",
+static const char * const imx8mq_dram_apb_sels[] = {"clock-osc-25m", "sys_pll2_200m", "sys_pll1_40m",
 						    "sys_pll1_160m", "sys_pll1_800m", "sys_pll3_out",
 						    "sys_pll2_250m", "audio_pll2_out", };
 
@@ -146,11 +146,25 @@ static const char *const pllout_monitor_sels[] = {"clock-osc-25m", "clock-osc-27
 static int imx8mq_clk_probe(struct udevice *dev)
 {
 	void __iomem *base;
+	struct clk osc_25m_clk, osc_27m_clk, osc_ckil_clk;
+	int ret;
 
 	base = (void *)ANATOP_BASE_ADDR;
 
-	clk_dm(IMX8MQ_CLK_32K, clk_register_fixed_rate(NULL, "ckil", 32768));
-	clk_dm(IMX8MQ_CLK_27M, clk_register_fixed_rate(NULL, "clock-osc-27m", 27000000));
+	ret = clk_get_by_name(dev, "ckil", &osc_ckil_clk);
+	if (ret)
+		return ret;
+	clk_dm(IMX8MQ_CLK_32K, dev_get_clk_ptr(osc_ckil_clk.dev));
+
+	ret = clk_get_by_name(dev, "osc_25m", &osc_25m_clk);
+	if (ret)
+		return ret;
+	clk_dm(IMX8MQ_CLK_25M, dev_get_clk_ptr(osc_25m_clk.dev));
+
+	ret = clk_get_by_name(dev, "osc_27m", &osc_27m_clk);
+	if (ret)
+		return ret;
+	clk_dm(IMX8MQ_CLK_27M, dev_get_clk_ptr(osc_27m_clk.dev));
 
 	clk_dm(IMX8MQ_DRAM_PLL1_REF_SEL,
 	       imx_clk_mux("dram_pll_ref_sel", base + 0x60, 0, 2,
