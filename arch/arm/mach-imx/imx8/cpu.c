@@ -73,6 +73,9 @@ static int imx8_init_mu(void *ctx, struct event *event)
 		return ret;
 	}
 
+	if (gd->flags & GD_FLG_RELOC) /* Skip others for board_r */
+		return 0;
+
 	if (IS_ENABLED(CONFIG_XEN))
 		return 0;
 
