@@ -1449,6 +1449,7 @@ static void mxs_compute_timings(struct nand_chip *chip,
 	u32 timing0;
 	u32 timing1;
 	u32 ctrl1n;
+	int ret;
 
 	if (sdr->tRC_min >= 30000) {
 		/* ONFI non-EDO modes [0-3] */
@@ -1465,6 +1466,12 @@ static void mxs_compute_timings(struct nand_chip *chip,
 		wrn_dly_sel = GPMI_CTRL1_WRN_DLY_SEL_NO_DELAY;
 		debug("%s, setting ONFI onfi edo 5\n", __func__);
 	}
+
+	ret = clk_set_rate(nand_info->gpmi_clk, clk_rate);
+	if (ret < 0)
+		return;
+
+	clk_rate = (ulong)ret;
 
 	/* SDR core timings are given in picoseconds */
 	period_ps = div_u64((u64)NSEC_PER_SEC * 1000, clk_rate);
