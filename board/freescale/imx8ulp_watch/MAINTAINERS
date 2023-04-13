@@ -1,0 +1,6 @@
+i.MX8ULP WATCH BOARD
+M:	NXP semiconductor
+S:	Maintained
+F:	board/freescale/imx8ulp_watch/
+F:	include/configs/imx8ulp_evk.h
+F:	configs/imx8ulp_watch_android_defconfig
