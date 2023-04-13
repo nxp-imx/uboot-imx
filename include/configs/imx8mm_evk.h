@@ -189,4 +189,8 @@
 
 #define CFG_SYS_NAND_BASE           0x20000000
 
+#ifdef CONFIG_IMX_MATTER_TRUSTY
+#define NS_ARCH_ARM64 1
+#endif
+
 #endif
