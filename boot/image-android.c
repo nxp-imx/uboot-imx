@@ -24,6 +24,8 @@
 #include <dm.h>
 #include <init.h>
 #include <mmc.h>
+#include <fsl_sec.h>
+#include <asm/cache.h>
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 #define COMMANDLINE_LENGTH			2048
@@ -206,6 +208,35 @@ static int append_androidboot_args(char *args, uint32_t *len, void *fdt_addr)
 			printf("failed to get boot device from device tree!\n");
 			return -1;
 		}
+
+#ifdef CONFIG_IMX8ULP
+		/* set the value of the /chosen/rng-seed property */
+		offset = fdt_path_offset(fdt_addr, "/chosen");
+		if (offset > 0) {
+			int prop_len = 0, ret = 0;
+			struct fdt_property *prop;
+
+			prop = fdt_get_property_w(fdt_addr, offset, "rng-seed", &prop_len);
+			if (prop) {
+				void *rand_buf = memalign(ARCH_DMA_MINALIGN, prop_len);
+
+				if (!rand_buf || hwrng_generate(rand_buf, prop_len) || \
+				 fdt_setprop(fdt_addr, offset, "rng-seed", rand_buf, prop_len)) {
+					ret = fdt_delprop(fdt_addr, offset, "rng-seed");
+				}
+				if (rand_buf) {
+					memset(rand_buf, 0, prop_len);
+					free(rand_buf);
+				}
+				if (ret) {
+					printf("fail to delete the /chosen/rng-seed property, the kernel crng may be compromised\n");
+					return -1;
+				}
+			}
+		} else {
+			printf("the device tree may not have the /chosen node\n");
+		}
+#endif
 	}
 
 	/* boot metric variables */
