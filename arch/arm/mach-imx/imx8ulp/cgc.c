@@ -136,7 +136,10 @@ void cgc1_pll3_init(ulong freq)
 	clrbits_le32(&cgc1_regs->pll3div_vco, BIT(7));
 
 	clrbits_le32(&cgc1_regs->pll3pfdcfg, 0x3F);
-	setbits_le32(&cgc1_regs->pll3pfdcfg, 30 << 0); /* PFD0 324M */
+	if (IS_ENABLED(CONFIG_IMX8ULP_ND_MODE))
+		setbits_le32(&cgc1_regs->pll3pfdcfg, 30 << 0); /* PFD0 324M */
+	else
+		setbits_le32(&cgc1_regs->pll3pfdcfg, 22 << 0); /* PFD0 442M */
 	clrbits_le32(&cgc1_regs->pll3pfdcfg, BIT(7));
 	while (!(readl(&cgc1_regs->pll3pfdcfg) & BIT(6)))
 		;
@@ -148,7 +151,7 @@ void cgc1_pll3_init(ulong freq)
 		;
 
 	clrbits_le32(&cgc1_regs->pll3pfdcfg, 0x3F << 16);
-	setbits_le32(&cgc1_regs->pll3pfdcfg, 30 << 16);	/* PFD2 324M */
+	setbits_le32(&cgc1_regs->pll3pfdcfg, 34 << 16);	/* PFD2 286M */
 	clrbits_le32(&cgc1_regs->pll3pfdcfg, BIT(23));
 	while (!(readl(&cgc1_regs->pll3pfdcfg) & BIT(22)))
 		;
@@ -161,7 +164,7 @@ void cgc1_pll3_init(ulong freq)
 
 	clrbits_le32(&cgc1_regs->pll3div_pfd0, 0x3f3f3f3f);
 	if (IS_ENABLED(CONFIG_IMX8ULP_ND_MODE))
-		clrsetbits_le32(&cgc1_regs->pll3div_pfd1, 0x3f3f3f3f, 0x03010000); /* Set PFD3 DIV1 to 194M, PFD3 DIV2 to 97M */
+		clrsetbits_le32(&cgc1_regs->pll3div_pfd1, 0x3f3f3f3f, 0x00010002); /* Set PFD3 DIV1 to 194M, PFD2 DIV1 to 95M */
 	else
 		clrsetbits_le32(&cgc1_regs->pll3div_pfd1, 0x3f3f3f3f, 0x01000000); /* Set PFD3 DIV1 to 389M, PFD3 DIV2 to 194M */
 	clrbits_le32(&cgc1_regs->pll3div_pfd0, BIT(7));
@@ -175,17 +178,15 @@ void cgc1_pll3_init(ulong freq)
 	clrbits_le32(&cgc1_regs->pll3div_pfd1, BIT(31));
 
 	/* NIC_AP:
-	 * OD source PLL3 PFD0, 324M
-	 * ND source FRO192, 192M
+	 * OD source PLL3 PFD0, 442M
+	 * ND source PLL3 PFD0, 324M
 	*/
 	clrbits_le32(&cgc1_regs->nicclk, GENMASK(26, 21));
+	clrsetbits_le32(&cgc1_regs->nicclk, GENMASK(29, 28), BIT(28)); /* nicclk select pll3 pfd0 */
+	while (!(readl(&cgc1_regs->nicclk) & BIT(27)))
+		;
 
-	if (!IS_ENABLED(CONFIG_IMX8ULP_ND_MODE)) {
-		/* nicclk select pll3 pfd0 */
-		clrsetbits_le32(&cgc1_regs->nicclk, GENMASK(29, 28), BIT(28));
-		while (!(readl(&cgc1_regs->nicclk) & BIT(27)))
-			;
-	}
+	clrsetbits_le32(&cgc1_regs->xbarclk, GENMASK(5, 0), 0x5); /* AD slow = XBAR_APCLK / 6 */
 }
 
 void cgc2_pll4_init(bool pll4_reset)
@@ -219,10 +220,10 @@ void cgc2_pll4_init(bool pll4_reset)
 	}
 
 	/* Enable all 4 PFDs */
-	setbits_le32(&cgc2_regs->pll4pfdcfg, 18 << 0); /* 528 */
+	setbits_le32(&cgc2_regs->pll4pfdcfg, 20 << 0); /* 475.2 for HIFI DSP */
 	setbits_le32(&cgc2_regs->pll4pfdcfg, 30 << 8); /* 316.8Mhz for NIC_LPAV */
-	setbits_le32(&cgc2_regs->pll4pfdcfg, 30 << 16); /* 316.8Mhz */
-	setbits_le32(&cgc2_regs->pll4pfdcfg, 24 << 24); /* 396Mhz */
+	setbits_le32(&cgc2_regs->pll4pfdcfg, 33 << 16); /* 288Mhz for gpu */
+	setbits_le32(&cgc2_regs->pll4pfdcfg, 24 << 24); /* 396Mhz for dcnano */
 
 	clrbits_le32(&cgc2_regs->pll4pfdcfg, BIT(7) | BIT(15) | BIT(23) | BIT(31));
 

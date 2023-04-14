@@ -167,9 +167,9 @@ void clock_init_early(void)
 void clock_init_late(void)
 {
 	if (IS_ENABLED(CONFIG_IMX8ULP_ND_MODE))
-		cgc1_init_core_clk(MHZ(750));
+		cgc1_init_core_clk(MHZ(650));
 	else
-		cgc1_init_core_clk(MHZ(960));
+		cgc1_init_core_clk(MHZ(800));
 
 	/*
 	 * Audio use this frequency in kernel dts,
@@ -185,12 +185,18 @@ void clock_init_late(void)
 	pcc_reset_peripheral(4, SDHC0_PCC4_SLOT, false);
 
 	pcc_clock_enable(4, SDHC1_PCC4_SLOT, false);
-	pcc_clock_sel(4, SDHC1_PCC4_SLOT, PLL3_PFD3_DIV2); /* 194M for OD, 97M for LD/ND */
+	if (IS_ENABLED(CONFIG_IMX8ULP_ND_MODE))
+		pcc_clock_sel(4, SDHC1_PCC4_SLOT, PLL3_PFD2_DIV1); /* 95M for ND */
+	else
+		pcc_clock_sel(4, SDHC1_PCC4_SLOT, PLL3_PFD3_DIV2); /* 194M for OD, */
 	pcc_clock_enable(4, SDHC1_PCC4_SLOT, true);
 	pcc_reset_peripheral(4, SDHC1_PCC4_SLOT, false);
 
 	pcc_clock_enable(4, SDHC2_PCC4_SLOT, false);
-	pcc_clock_sel(4, SDHC2_PCC4_SLOT, PLL3_PFD3_DIV2); /* 194M for OD, 97M for LD/ND*/
+	if (IS_ENABLED(CONFIG_IMX8ULP_ND_MODE))
+		pcc_clock_sel(4, SDHC2_PCC4_SLOT, PLL3_PFD2_DIV1); /* 95M for ND */
+	else
+		pcc_clock_sel(4, SDHC2_PCC4_SLOT, PLL3_PFD3_DIV2); /* 194M for OD */
 	pcc_clock_enable(4, SDHC2_PCC4_SLOT, true);
 	pcc_reset_peripheral(4, SDHC2_PCC4_SLOT, false);
 
@@ -372,7 +378,7 @@ void enable_mipi_dsi_clk(unsigned char enable)
 	if (enable) {
 		pcc_clock_enable(5, DSI_PCC5_SLOT, false);
 		pcc_reset_peripheral(5, DSI_PCC5_SLOT, true);
-		pcc_clock_sel(5, DSI_PCC5_SLOT, PLL4_PFD3_DIV2);
+		pcc_clock_sel(5, DSI_PCC5_SLOT, PLL4_PFD1_DIV2);
 		pcc_clock_div_config(5, DSI_PCC5_SLOT, 0, 6);
 		pcc_clock_enable(5, DSI_PCC5_SLOT, true);
 		pcc_reset_peripheral(5, DSI_PCC5_SLOT, false);
@@ -402,7 +408,7 @@ void reset_lcdclk(void)
 }
 
 /* PLL4 PFD0 max frequency */
-#define PLL4_PFD0_MAX_RATE 600000 /*khz*/
+#define PLL4_PFD3_MAX_RATE 480000 /*khz*/
 void mxs_set_lcdclk(u32 base_addr, u32 freq_in_khz)
 {
 	u8 pcd, best_pcd = 0;
@@ -421,7 +427,7 @@ void mxs_set_lcdclk(u32 base_addr, u32 freq_in_khz)
 		for (div = 1; div <= 64; div++) {
 			parent_rate = pll4_rate;
 			parent_rate = parent_rate * 18 / pfd;
-			if (parent_rate > PLL4_PFD0_MAX_RATE)
+			if (parent_rate > PLL4_PFD3_MAX_RATE)
 				continue;
 
 			parent_rate = parent_rate / div;
@@ -455,10 +461,10 @@ void mxs_set_lcdclk(u32 base_addr, u32 freq_in_khz)
 	debug("LCD target rate %ukhz, best rate %ukhz, frac %u, pcd %u, best_pfd %u, best_div %u\n",
 	      freq_in_khz, best, best_frac, best_pcd, best_pfd, best_div);
 
-	cgc2_pll4_pfd_config(PLL4_PFD0, best_pfd);
-	cgc2_pll4_pfddiv_config(PLL4_PFD0_DIV1, best_div - 1);
+	cgc2_pll4_pfd_config(PLL4_PFD3, best_pfd);
+	cgc2_pll4_pfddiv_config(PLL4_PFD3_DIV2, best_div - 1);
 
-	pcc_clock_sel(5, DCNANO_PCC5_SLOT, PLL4_PFD0_DIV1);
+	pcc_clock_sel(5, DCNANO_PCC5_SLOT, PLL4_PFD3_DIV2);
 	pcc_clock_div_config(5, DCNANO_PCC5_SLOT, best_frac, best_pcd + 1);
 	pcc_clock_enable(5, DCNANO_PCC5_SLOT, true);
 	pcc_reset_peripheral(5, DCNANO_PCC5_SLOT, false);
