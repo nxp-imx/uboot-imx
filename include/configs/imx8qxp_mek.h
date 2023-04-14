@@ -180,4 +180,10 @@
 /* Misc configuration */
 #define PHY_ANEG_TIMEOUT 20000
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+#include "imx8qxp_mek_android.h"
+#elif defined (CONFIG_ANDROID_AUTO_SUPPORT)
+#include "imx8qxp_mek_android_auto.h"
+#endif
+
 #endif /* __IMX8QXP_MEK_H */

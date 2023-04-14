@@ -12,6 +12,7 @@
 	compatible = "fsl,imx93-14x14-evk", "fsl,imx93";
 
 	chosen {
+		bootargs = "console=ttyLP0,115200";
 		stdout-path = &lpuart1;
 	};
 

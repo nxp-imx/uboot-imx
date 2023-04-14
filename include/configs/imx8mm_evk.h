@@ -193,4 +193,8 @@
 #define NS_ARCH_ARM64 1
 #endif
 
+#ifdef CONFIG_ANDROID_SUPPORT
+#include "imx8mm_evk_android.h"
+#endif
+
 #endif

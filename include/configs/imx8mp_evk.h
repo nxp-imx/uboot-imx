@@ -182,4 +182,8 @@
 #define CFG_SYS_FSL_USDHC_NUM	2
 #endif
 
+#ifdef CONFIG_ANDROID_SUPPORT
+#include "imx8mp_evk_android.h"
+#endif
+
 #endif

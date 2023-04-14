@@ -164,4 +164,9 @@
 
 /* Using ULP WDOG for reset */
 #define WDOG_BASE_ADDR			WDG3_RBASE
+
+#ifdef CONFIG_ANDROID_SUPPORT
+#include "imx8ulp_evk_android.h"
+#endif
+
 #endif

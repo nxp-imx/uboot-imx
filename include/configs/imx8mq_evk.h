@@ -154,4 +154,8 @@
 #define CFG_SYS_FSL_USDHC_NUM	2
 #define CFG_SYS_FSL_ESDHC_ADDR       0
 
+#ifdef CONFIG_ANDROID_SUPPORT
+#include "imx8mq_evk_android.h"
+#endif
+
 #endif
