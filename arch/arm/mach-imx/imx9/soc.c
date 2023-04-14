@@ -36,6 +36,7 @@
 #include <thermal.h>
 #include <imx_sip.h>
 #include <linux/arm-smccc.h>
+#include <asm/arch/ddr.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -333,16 +334,28 @@ void enable_caches(void)
 	dcache_enable();
 }
 
-__weak int board_phys_sdram_size(phys_size_t *size)
-{
+__weak int board_phys_sdram_size(phys_size_t *size){
+
+	phys_size_t start, end;
+	phys_size_t val;
+
 	if (!size)
 		return -EINVAL;
 
-	*size = PHYS_SDRAM_SIZE;
+	val = readl(REG_DDR_CS0_BNDS);
+	start = (val >> 16) << 24;
+	end   = (val & 0xFFFF);
+	end   = end ? end + 1 : 0;
+	end   = end << 24;
+	*size = end - start;
 
-#ifdef PHYS_SDRAM_2_SIZE
-	*size += PHYS_SDRAM_2_SIZE;
-#endif
+	val = readl(REG_DDR_CS1_BNDS);
+	start = (val >> 16) << 24;
+	end   = (val & 0xFFFF);
+	end   = end ? end + 1 : 0;
+	end   = end << 24;
+	*size += end - start;
+
 	return 0;
 }
 
