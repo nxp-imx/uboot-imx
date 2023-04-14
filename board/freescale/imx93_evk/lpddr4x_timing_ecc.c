@@ -12,16 +12,16 @@
 struct dram_cfg_param ddr_ddrc_cfg[] = {
     /** Initialize DDRC registers **/
     {0x4e300110, 0x44100001},
-    {0x4e300000, 0x8000ff},
+    {0x4e300000, 0x8000ef},
     {0x4e300008, 0x0},
     {0x4e300080, 0x80000512},
     {0x4e300084, 0x0},
-    {0x4e300114, 0x1002},
+    {0x4e300114, 0x1012},
     {0x4e300260, 0x80},
     {0x4e300f04, 0x80},
-    {0x4e300800, 0x43b30002},
+    {0x4e300800, 0x43b30d00},
     {0x4e300804, 0x1f1f1f1f},
-    {0x4e301000, 0x0},
+    {0x4e301000, 0xc0000000},
     {0x4e301240, 0x0},
     {0x4e301244, 0x0},
     {0x4e301248, 0x0},
@@ -1309,7 +1309,6 @@ struct dram_cfg_param ddr_fsp1_cfg[] = {
     {0x5403d, 0x400},
     {0xd0000, 0x1}
 };
-
 /* P2 message block parameter for training firmware */
 struct dram_cfg_param ddr_fsp2_cfg[] = {
     {0xd0000, 0x0},
@@ -1347,6 +1346,7 @@ struct dram_cfg_param ddr_fsp2_cfg[] = {
     {0x5403d, 0x400},
     {0xd0000, 0x1}
 };
+
 
 /* P0 2D message block parameter for training firmware */
 struct dram_cfg_param ddr_fsp0_2d_cfg[] = {
