@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2019 NXP
+ * Copyright 2019, 2023 NXP
  *
  */
 #include <common.h>
 #include <malloc.h>
 #include <spi.h>
 #include <asm/io.h>
+#include <linux/delay.h>
 #include <linux/sizes.h>
 #include <dm.h>
 #include <errno.h>
@@ -751,7 +752,7 @@ static int fsl_fspi_nand_child_pre_probe(struct udevice *dev)
 static int fsl_fspi_nand_probe(struct udevice *bus)
 {
 	u32 total_size;
-	struct fsl_fspi_platdata *plat = dev_get_platdata(bus);
+	struct fsl_fspi_platdata *plat = dev_get_plat(bus);
 	struct fsl_fspi_priv *priv = dev_get_priv(bus);
 	struct dm_spi_bus *dm_spi_bus;
 	u32 val;
@@ -773,9 +774,10 @@ static int fsl_fspi_nand_probe(struct udevice *bus)
 			return ret;
 		}
 	} else {
-		init_clk_fspi(bus->seq);
+		init_clk_fspi(bus->seq_);
 	}
-	dm_spi_bus = bus->uclass_priv;
+
+	dm_spi_bus = bus->uclass_priv_;
 
 	dm_spi_bus->max_hz = plat->speed_hz;
 
@@ -843,9 +845,9 @@ static int fsl_fspi_nand_probe(struct udevice *bus)
 static int fsl_fspi_nand_ofdata_to_platdata(struct udevice *bus)
 {
 	struct fdt_resource res_regs, res_mem;
-	struct fsl_fspi_platdata *plat = bus->platdata;
+	struct fsl_fspi_platdata *plat = bus->plat_;
 	const void *blob = gd->fdt_blob;
-	int node = ofnode_to_offset(bus->node);
+	int node = ofnode_to_offset(bus->node_);
 	int ret, flash_num = 0, subnode;
 
 	if (fdtdec_get_bool(blob, node, "big-endian"))
@@ -899,7 +901,7 @@ static int fsl_fspi_nand_claim_bus(struct udevice *dev)
 {
 	struct fsl_fspi_priv *priv;
 	struct udevice *bus;
-	struct dm_spi_slave_platdata *slave_plat = dev_get_parent_platdata(dev);
+	struct dm_spi_slave_plat *slave_plat = dev_get_parent_plat(dev);
 
 	bus = dev->parent;
 	priv = dev_get_priv(bus);
