@@ -43,9 +43,7 @@ typedef uintptr_t vaddr_t;
 static struct trusty_ipc_dev *_ipc_dev;
 static struct trusty_dev _tdev; /* There should only be one trusty device */
 static void *rpmb_ctx;
-#ifndef CONFIG_AVB_ATX
 bool rpmbkey_is_set(void);
-#endif
 
 void rpmb_storage_put_ctx(void *dev);
 void trusty_ipc_shutdown(void)
@@ -72,9 +70,7 @@ void trusty_ipc_shutdown(void)
     (void)matter_tipc_shutdown(_ipc_dev);
 #endif
 
-#if !defined(CONFIG_AVB_ATX) && !defined(CONFIG_IMX_MATTER_TRUSTY)
     (void)hwcrypto_tipc_shutdown(_ipc_dev);
-#endif
 
     /* shutdown Trusty IPC device */
     (void)trusty_ipc_dev_shutdown(_ipc_dev);
@@ -103,6 +99,17 @@ int trusty_ipc_init(void)
         return rc;
     }
 
+    trusty_info("Initializing Trusty Hardware Crypto client\n");
+    rc = hwcrypto_tipc_init(_ipc_dev);
+    if (rc != 0) {
+        trusty_error("Initlializing Trusty hwcrypto client failed (%d)\n", rc);
+        return rc;
+    }
+#ifdef CONFIG_IMX9
+    // pass eMMC card ID to Trusty OS
+    hwcrypto_commit_emmc_cid();
+#endif
+
     /* get storage rpmb */
     rpmb_ctx = rpmb_storage_get_ctx();
 
@@ -111,15 +118,13 @@ int trusty_ipc_init(void)
     rc = rpmb_storage_proxy_init(_ipc_dev, rpmb_ctx);
     if (rc != 0) {
         trusty_error("Initlializing RPMB storage proxy service failed (%d)\n", rc);
-#if !defined(CONFIG_AVB_ATX) && !defined(CONFIG_IMX_MATTER_TRUSTY)
+#ifndef CONFIG_IMX_MATTER_TRUSTY
         /* check if rpmb key has been fused. */
         if(rpmbkey_is_set()) {
             /* Go to hang if the key has been destroyed. */
             trusty_error("RPMB key was destroyed!\n");
             hang();
         }
-#else
-        return rc;
 #endif
     }
 
@@ -144,15 +149,6 @@ int trusty_ipc_init(void)
         }
     } else
         use_keystore = false;
-
-#ifndef CONFIG_AVB_ATX
-    trusty_info("Initializing Trusty Hardware Crypto client\n");
-    rc = hwcrypto_tipc_init(_ipc_dev);
-    if (rc != 0) {
-        trusty_error("Initlializing Trusty hwcrypto client failed (%d)\n", rc);
-        return rc;
-    }
-#endif
 
 #ifdef CONFIG_IMX8M
     trusty_info("Initializing Trusty SNVS driver\n");

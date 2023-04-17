@@ -100,4 +100,8 @@ int hwcrypto_provision_wv_key_enc(const char *data, uint32_t data_size);
 /* Send request to secure side to generate dek blob
  * */
 int hwcrypto_gen_dek_blob(char *data, uint32_t *data_size);
+
+/* pass emmc id to secure side
+ * */
+int hwcrypto_commit_emmc_cid(void);
 #endif /* TRUSTY_HWCRYPTO_H_ */

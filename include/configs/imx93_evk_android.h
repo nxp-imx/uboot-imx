@@ -29,7 +29,6 @@
 
 #define CFG_SYS_SPL_PTE_RAM_BASE    0x801F8000
 
-/*
 #ifdef CONFIG_IMX_TRUSTY_OS
 #define BOOTLOADER_RBIDX_OFFSET  0x3FE000
 #define BOOTLOADER_RBIDX_START   0x3FF000
@@ -43,6 +42,5 @@
 #define KEYSLOT_BLKS             0x1FFF
 #define NS_ARCH_ARM64 1
 #endif
-*/
 
 #endif /* IMX93_EVK_ANDROID_H */

@@ -31,6 +31,8 @@
 #ifdef CONFIG_ARCH_IMX8
 #include <asm/arch/sci/sci.h>
 #endif
+#include <asm/mach-imx/ele_api.h>
+#include <u-boot/sha256.h>
 
 #ifdef CONFIG_SPL_BUILD
 #include <spl.h>
@@ -67,7 +69,7 @@ int spl_get_mmc_dev(void)
 #endif
 
 #ifdef AVB_RPMB
-static u8 skeymod[] = {
+static u8 __attribute__((unused)) skeymod[] = {
 	0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
 	0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
 };
@@ -88,6 +90,7 @@ struct mmc *get_mmc(void) {
 
 void fill_secure_keyslot_package(struct keyslot_package *kp) {
 
+#ifndef CONFIG_IMX9
 	memcpy((void*)CAAM_ARB_BASE_ADDR, kp, sizeof(struct keyslot_package));
 
 	/* invalidate the cache to make sure no critical information left in it */
@@ -95,6 +98,7 @@ void fill_secure_keyslot_package(struct keyslot_package *kp) {
 	invalidate_dcache_range(((ulong)kp) & 0xffffffc0,(((((ulong)kp) +
 				sizeof(struct keyslot_package)) & 0xffffff00) +
 				0x100));
+#endif
 }
 
 int read_keyslot_package(struct keyslot_package* kp) {
@@ -258,6 +262,59 @@ bool rpmbkey_is_set(void)
 	return ret;
 }
 
+#ifdef CONFIG_IMX9
+#define HUK_LENGTH 16
+#define RPMB_EMMC_CID_SIZE 16
+#define RPMB_CID_PRV_OFFSET 9
+#define RPMB_CID_CRC_OFFSET 15
+int board_get_emmc_id(void);
+
+int ele_derive_rpmb_key(uint8_t *key) {
+	int ret = -1, i;
+	struct mmc *mmc = NULL;
+	uint8_t cid[RPMB_EMMC_CID_SIZE];
+	uint8_t ctx[16] = {"TEE_for_HUK_ELE"};
+	uint8_t huk[HUK_LENGTH];
+
+	/* get eMMC card ID */
+	mmc = find_mmc_device(board_get_emmc_id());
+	if (!mmc) {
+		printf("failed to get mmc device.\n");
+		return -1;
+	}
+	if (!(mmc->has_init) && mmc_init(mmc)) {
+		printf("failed to init eMMC device.\n");
+		return -1;
+	}
+	/* Get mmc card id (in big endian) */
+	/*
+	 * PRV/CRC would be changed when doing eMMC FFU
+	 * The following fields should be masked off when deriving RPMB key
+	 *
+	 * CID [55: 48]: PRV (Product revision)
+	 * CID [07: 01]: CRC (CRC7 checksum)
+	 * CID [00]: not used
+	 */
+	for (i = 0; i < ARRAY_SIZE(mmc->cid); i++)
+		((uint32_t *)cid)[i] = cpu_to_be32(mmc->cid[i]);
+	memset(cid + RPMB_CID_PRV_OFFSET, 0, 1);
+	memset(cid + RPMB_CID_CRC_OFFSET, 0, 1);
+
+	/* derive huk from ele */
+	ret = ahab_get_hw_unique_key(huk, HUK_LENGTH, ctx, sizeof(ctx));
+	if (ret) {
+		printf("failed to derive huk!\n");
+		return -1;
+	}
+
+	/* calculate the rpmb key */
+	sha256_hmac(huk, HUK_LENGTH, cid, RPMB_EMMC_CID_SIZE, key);
+
+	return 0;
+}
+
+#endif
+
 int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset) {
 
 	unsigned char *bdata = NULL;
@@ -272,7 +329,9 @@ int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset
 	struct blk_desc *desc = mmc_get_blk_desc(mmc);
 	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, extract_key, RPMBKEY_LENGTH);
 
+#ifndef CONFIG_IMX9
 	struct keyslot_package kp;
+#endif
 	int ret;
 
 	blksz = RPMB_BLKSZ;
@@ -299,6 +358,7 @@ int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset
 	}
 
 	/* get rpmb key */
+#ifndef CONFIG_IMX9
 	blob = (uint8_t *)memalign(ARCH_DMA_MINALIGN, RPMBKEY_BLOB_LEN);
 	keymod = (uint8_t *)memalign(ARCH_DMA_MINALIGN, sizeof(skeymod));
 	memcpy(keymod, skeymod, sizeof(skeymod));
@@ -321,6 +381,13 @@ int rpmb_read(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offset
 		ret = -1;
 		goto fail;
 	}
+#else
+	if (ele_derive_rpmb_key(extract_key)) {
+		ERR("get rpmb key error\n");
+		ret = -1;
+		goto fail;
+	}
+#endif
 
 	/* alloc a blksz mem */
 	bdata = (unsigned char *)memalign(ALIGN_BYTES, blksz);
@@ -381,7 +448,9 @@ int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offse
 	struct blk_desc *desc = mmc_get_blk_desc(mmc);
 	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, extract_key, RPMBKEY_LENGTH);
 
+#ifndef CONFIG_IMX9
 	struct keyslot_package kp;
+#endif
 	int ret;
 
 	blksz = RPMB_BLKSZ;
@@ -409,6 +478,7 @@ int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offse
 	}
 
 	/* get rpmb key */
+#ifndef CONFIG_IMX9
 	blob = (uint8_t *)memalign(ARCH_DMA_MINALIGN, RPMBKEY_BLOB_LEN);
 	keymod = (uint8_t *)memalign(ARCH_DMA_MINALIGN, sizeof(skeymod));
 	memcpy(keymod, skeymod, sizeof(skeymod));
@@ -430,6 +500,13 @@ int rpmb_write(struct mmc *mmc, uint8_t *buffer, size_t num_bytes, int64_t offse
 		ret = -1;
 		goto fail;
 	}
+#else
+	if (ele_derive_rpmb_key(extract_key)) {
+		ERR("get rpmb key error\n");
+		ret = -1;
+		goto fail;
+	}
+#endif
 	/* alloc a blksz mem */
 	bdata = (unsigned char *)memalign(ALIGN_BYTES, blksz);
 	if (bdata == NULL) {
@@ -660,6 +737,7 @@ int gen_rpmb_key(struct keyslot_package *kp) {
 	memset(plain_key, 0, RPMBKEY_LENGTH);
 #endif
 
+#ifndef CONFIG_IMX9
 	keymod = (uint8_t *)memalign(ARCH_DMA_MINALIGN, sizeof(skeymod));
 	memcpy(keymod, skeymod, sizeof(skeymod));
 	/* generate keyblob and program to boot1 partition */
@@ -667,6 +745,11 @@ int gen_rpmb_key(struct keyslot_package *kp) {
 		ERR("gen rpmb key blb error\n");
 		goto fail;
 	}
+#else
+	/* imx9 don't support this case, go to fail */
+	goto fail;
+#endif
+
 	memcpy(fill, kp, sizeof(struct keyslot_package));
 
 	if (mmc_switch_part(mmc, KEYSLOT_HWPARTITION_ID) != 0) {
