@@ -24,6 +24,7 @@ struct imx8mp_hsiomix_priv {
 	struct power_domain pd_usb;
 	struct power_domain pd_usb_phy1;
 	struct power_domain pd_usb_phy2;
+	int pd_usb_count;
 };
 
 static int imx8mp_hsiomix_on(struct power_domain *power_domain)
@@ -32,6 +33,11 @@ static int imx8mp_hsiomix_on(struct power_domain *power_domain)
 	struct imx8mp_hsiomix_priv *priv = dev_get_priv(dev);
 	struct power_domain *domain;
 	int ret;
+
+	if (power_domain->id == IMX8MP_HSIOBLK_PD_USB && priv->pd_usb_count > 0) { /* Already on */
+		priv->pd_usb_count++;
+		return 0;
+	}
 
 	ret = power_domain_on(&priv->pd_bus);
 	if (ret)
@@ -56,8 +62,10 @@ static int imx8mp_hsiomix_on(struct power_domain *power_domain)
 	if (ret)
 		goto err_clk;
 
-	if (power_domain->id == IMX8MP_HSIOBLK_PD_USB)
+	if (power_domain->id == IMX8MP_HSIOBLK_PD_USB) {
 		setbits_le32(priv->base + GPR_REG0, USB_CLOCK_MODULE_EN);
+		priv->pd_usb_count++;
+	}
 
 	return 0;
 
@@ -73,8 +81,16 @@ static int imx8mp_hsiomix_off(struct power_domain *power_domain)
 	struct udevice *dev = power_domain->dev;
 	struct imx8mp_hsiomix_priv *priv = dev_get_priv(dev);
 
-	if (power_domain->id == IMX8MP_HSIOBLK_PD_USB)
-		clrbits_le32(priv->base + GPR_REG0, USB_CLOCK_MODULE_EN);
+	if (power_domain->id == IMX8MP_HSIOBLK_PD_USB) {
+		if (!priv->pd_usb_count) { /* Already off */
+			return 0;
+		} else if (priv->pd_usb_count > 1) {
+			priv->pd_usb_count--;
+			return 0;
+		}
+
+		priv->pd_usb_count--;
+	}
 
 	clk_disable(&priv->clk_usb);
 
