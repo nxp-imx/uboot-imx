@@ -86,10 +86,7 @@ void setup_iomux_pmic(void)
 
 int power_init_board(void)
 {
-	if (IS_ENABLED(CONFIG_IMX8ULP_LD_MODE)) {
-		/* Set buck3 to 0.9v LD */
-		upower_pmic_i2c_write(0x22, 0x18);
-	} else if (IS_ENABLED(CONFIG_IMX8ULP_ND_MODE)) {
+	if (IS_ENABLED(CONFIG_IMX8ULP_ND_MODE)) {
 		/* Set buck3 to 1.0v ND */
 		upower_pmic_i2c_write(0x22, 0x20);
 	} else {

@@ -166,10 +166,7 @@ void clock_init_early(void)
 /* This will be invoked after pmic voltage setting */
 void clock_init_late(void)
 {
-
-	if (IS_ENABLED(CONFIG_IMX8ULP_LD_MODE))
-		cgc1_init_core_clk(MHZ(500));
-	else if (IS_ENABLED(CONFIG_IMX8ULP_ND_MODE))
+	if (IS_ENABLED(CONFIG_IMX8ULP_ND_MODE))
 		cgc1_init_core_clk(MHZ(750));
 	else
 		cgc1_init_core_clk(MHZ(960));

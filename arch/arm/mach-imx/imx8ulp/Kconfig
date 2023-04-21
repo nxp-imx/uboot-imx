@@ -11,9 +11,6 @@ config IMX8ULP
 config SYS_SOC
 	default "imx8ulp"
 
-config IMX8ULP_LD_MODE
-	bool
-
 config IMX8ULP_ND_MODE
 	bool "i.MX8ULP Low Driver Mode"
 
