@@ -34,6 +34,8 @@ void cgc1_soscdiv_init(void)
 void cgc1_pll2_init(ulong freq)
 {
 	u32 reg;
+	u32 num, denom = MHZ(24);
+	ulong round_rate;
 
 	if (readl(&cgc1_regs->pll2csr) & BIT(23))
 		clrbits_le32(&cgc1_regs->pll2csr, BIT(23));
@@ -49,6 +51,14 @@ void cgc1_pll2_init(ulong freq)
 	/* Select SOSC as source */
 	reg = (freq / MHZ(24)) << 16;
 	writel(reg, &cgc1_regs->pll2cfg);
+
+	round_rate = freq / MHZ(24) * MHZ(24);
+	num = freq - round_rate;
+
+	if (num < denom) {
+		writel(num, &cgc1_regs->pll2num);
+		writel(denom, &cgc1_regs->pll2denom);
+	}
 
 	/* Enable PLL2 */
 	setbits_le32(&cgc1_regs->pll2csr, BIT(0));
