@@ -169,7 +169,7 @@ void clock_init_late(void)
 	if (IS_ENABLED(CONFIG_IMX8ULP_ND_MODE))
 		cgc1_init_core_clk(MHZ(650));
 	else
-		cgc1_init_core_clk(MHZ(800));
+		cgc1_init_core_clk(get_cpu_speed_grade_hz());
 
 	/*
 	 * Audio use this frequency in kernel dts,

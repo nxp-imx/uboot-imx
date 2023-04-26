@@ -110,11 +110,59 @@ static void set_cpu_info(struct sentinel_get_info_data *info)
 	memcpy((void *)&gd->arch.uid, &info->uid, 4 * sizeof(u32));
 }
 
+u32 get_cpu_speed_grade_hz(void)
+{
+	int ret;
+	u32 val;
+	u32 speed = MHZ(800);
+
+	ret = fuse_read(3, 1, &val);
+	if (!ret) {
+		val >>= 14;
+		val &= 0x3;
+
+		switch (val) {
+		case 0x1:
+			speed = MHZ(900); /* 900Mhz*/
+			break;
+		default:
+			speed = MHZ(800); /* 800Mhz*/
+		}
+	}
+	return speed;
+}
+
+static u32 get_cpu_variant_type(u32 type)
+{
+	u32 val;
+	int ret;
+	ret = fuse_read(3, 2, &val);
+	if (!ret) {
+		bool epdc_disable = !!(val & BIT(23));
+		bool core1_disable = !!(val & BIT(15));
+		bool gpu_disable = false;
+		bool a35_900mhz = (get_cpu_speed_grade_hz() == MHZ(900));
+
+		if ((val & (BIT(18) | BIT(19))) == (BIT(18) | BIT(19)))
+			gpu_disable = true;
+
+		if (epdc_disable && gpu_disable)
+			return core1_disable? (type + 4): (type + 3);
+		else if (epdc_disable && a35_900mhz)
+			return MXC_CPU_IMX8ULPSC;
+		else if (epdc_disable)
+			return core1_disable? (type + 2): (type + 1);
+	}
+
+	return type;
+}
+
 u32 get_cpu_rev(void)
 {
 	u32 rev = (gd->arch.soc_rev >> 24) - 0xa0;
 
-	return (MXC_CPU_IMX8ULP << 12) | (CHIP_REV_1_0 + rev);
+	return (get_cpu_variant_type(MXC_CPU_IMX8ULP) << 12) |
+		(CHIP_REV_1_0 + rev);
 }
 
 enum bt_mode get_boot_mode(void)
@@ -289,20 +337,42 @@ static char *get_reset_cause(char *ret)
 #if defined(CONFIG_DISPLAY_CPUINFO)
 const char *get_imx_type(u32 imxtype)
 {
-	return "8ULP";
+	switch (imxtype) {
+	case MXC_CPU_IMX8ULP:
+		return "8ULP(Dual 7)";/* iMX8ULP Dual core 7D/7C */
+	case MXC_CPU_IMX8ULPD5:
+		return "8ULP(Dual 5)";/* iMX8ULP Dual core 5D/5C, EPDC disabled */
+	case MXC_CPU_IMX8ULPS5:
+		return "8ULP(Solo 5)";/* iMX8ULP Single core 5D/5C, EPDC disabled */
+	case MXC_CPU_IMX8ULPD3:
+		return "8ULP(Dual 3)";/* iMX8ULP Dual core 3D/3C, EPDC + GPU disabled */
+	case MXC_CPU_IMX8ULPS3:
+		return "8ULP(Solo 3)";/* iMX8ULP Single core 3D/3C, EPDC + GPU disabled */
+	case MXC_CPU_IMX8ULPSC:
+		return "8ULP(SC)";/* iMX8ULP SC part, 900Mhz + EPDC disabled */
+	default:
+		return "??";
+	}
 }
 
 int print_cpuinfo(void)
 {
-	u32 cpurev;
+	u32 cpurev, max_freq;
 	char cause[18];
 
 	cpurev = get_cpu_rev();
 
-	printf("CPU:   i.MX%s rev%d.%d at %d MHz\n",
-	       get_imx_type((cpurev & 0xFF000) >> 12),
-	       (cpurev & 0x000F0) >> 4, (cpurev & 0x0000F) >> 0,
-	       mxc_get_clock(MXC_ARM_CLK) / 1000000);
+	printf("CPU:   i.MX%s rev%d.%d",
+		get_imx_type((cpurev & 0x1FF000) >> 12),
+		(cpurev & 0x000F0) >> 4, (cpurev & 0x0000F) >> 0);
+
+	max_freq = get_cpu_speed_grade_hz();
+	if (!max_freq || max_freq == mxc_get_clock(MXC_ARM_CLK)) {
+		printf(" at %dMHz\n", mxc_get_clock(MXC_ARM_CLK) / 1000000);
+	} else {
+		printf(" %d MHz (running at %d MHz)\n", max_freq / 1000000,
+			   mxc_get_clock(MXC_ARM_CLK) / 1000000);
+	}
 
 #if defined(CONFIG_SCMI_THERMAL)
 	struct udevice *udev;
@@ -914,6 +984,121 @@ u32 spl_arch_boot_image_offset(u32 image_offset, u32 rom_bt_dev)
 	return image_offset;
 }
 
+static int delete_fdt_nodes(void *blob, const char *const nodes_path[], int size_array)
+{
+	int i = 0;
+	int rc;
+	int nodeoff;
+
+	for (i = 0; i < size_array; i++) {
+		nodeoff = fdt_path_offset(blob, nodes_path[i]);
+		if (nodeoff < 0)
+			continue; /* Not found, skip it */
+
+		debug("Found %s node\n", nodes_path[i]);
+
+		rc = fdt_del_node(blob, nodeoff);
+		if (rc < 0) {
+			printf("Unable to delete node %s, err=%s\n",
+			       nodes_path[i], fdt_strerror(rc));
+		} else {
+			printf("Delete node %s\n", nodes_path[i]);
+		}
+	}
+
+	return 0;
+}
+
+static int disable_gpu_nodes(void *blob)
+{
+	static const char * const nodes_path_npu[] = {
+		"/soc@0/gpu3d@2e000000",
+		"/soc@0/gpu2d@2e010000",
+		"/gpu"
+	};
+
+	return delete_fdt_nodes(blob, nodes_path_npu, ARRAY_SIZE(nodes_path_npu));
+}
+
+static int disable_pxp_epdc_nodes(void *blob)
+{
+	static const char * const nodes_path_npu[] = {
+		"/soc@0/bus@2d800000/epdc@2db30000",
+		"/soc@0/bus@2d800000/epxp@2db40000"
+	};
+
+	return delete_fdt_nodes(blob, nodes_path_npu, ARRAY_SIZE(nodes_path_npu));
+}
+
+#define MAX_CORE_NUM 2
+static void disable_pmu_cpu_nodes(void *blob, u32 disabled_cores)
+{
+	static const char * const pmu_path[] = {
+		"/pmu"
+	};
+
+	int nodeoff, cnt, i, ret, j;
+	u32 irq_affinity[MAX_CORE_NUM];
+
+	for (i = 0; i < ARRAY_SIZE(pmu_path); i++) {
+		nodeoff = fdt_path_offset(blob, pmu_path[i]);
+		if (nodeoff < 0)
+			continue; /* Not found, skip it */
+
+		cnt = fdtdec_get_int_array_count(blob, nodeoff, "interrupt-affinity",
+						 irq_affinity, MAX_CORE_NUM);
+		if (cnt < 0)
+			continue;
+
+		if (cnt != MAX_CORE_NUM)
+			printf("Warning: %s, interrupt-affinity count %d\n", pmu_path[i], cnt);
+
+		for (j = 0; j < cnt; j++)
+			irq_affinity[j] = cpu_to_fdt32(irq_affinity[j]);
+
+		ret = fdt_setprop(blob, nodeoff, "interrupt-affinity", &irq_affinity,
+				 sizeof(u32) * (MAX_CORE_NUM - disabled_cores));
+		if (ret < 0) {
+			printf("Warning: %s, interrupt-affinity setprop failed %d\n",
+			       pmu_path[i], ret);
+			continue;
+		}
+
+		printf("Update node %s, interrupt-affinity prop\n", pmu_path[i]);
+	}
+}
+
+static int disable_cpu_nodes(void *blob, u32 disabled_cores)
+{
+	u32 i = 0;
+	int rc;
+	int nodeoff;
+	char nodes_path[32];
+
+	for (i = 1; i <= disabled_cores; i++) {
+
+		sprintf(nodes_path, "/cpus/cpu@%u", i);
+
+		nodeoff = fdt_path_offset(blob, nodes_path);
+		if (nodeoff < 0)
+			continue; /* Not found, skip it */
+
+		debug("Found %s node\n", nodes_path);
+
+		rc = fdt_del_node(blob, nodeoff);
+		if (rc < 0) {
+			printf("Unable to delete node %s, err=%s\n",
+			       nodes_path, fdt_strerror(rc));
+		} else {
+			printf("Delete node %s\n", nodes_path);
+		}
+	}
+
+	disable_pmu_cpu_nodes(blob, disabled_cores);
+	return 0;
+}
+
+
 int ft_system_setup(void *blob, struct bd_info *bd)
 {
 	u32 uid[4];
@@ -952,6 +1137,16 @@ int ft_system_setup(void *blob, struct bd_info *bd)
 	}
 
 skip_upt:
+	if (is_imx8ulps5() || is_imx8ulps3())
+		disable_cpu_nodes(blob, 1);
+
+	if (is_imx8ulpd5() || is_imx8ulps5() || is_imx8ulpd3() ||
+	    is_imx8ulps3() || is_imx8ulpsc())
+		disable_pxp_epdc_nodes(blob);
+
+	if (is_imx8ulpd3() || is_imx8ulps3())
+		disable_gpu_nodes(blob);
+
 	return ft_add_optee_node(blob, bd);
 }
 

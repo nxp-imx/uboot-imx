@@ -176,8 +176,8 @@ int upower_init(void)
 		}
 	} while (0);
 
-	swton = PS_UPOWER | PS_FUSE | PS_FUSION_AO | PS_NIC_LPAV | PS_PXP_EPDC | PS_DDR |
-		PS_HIFI4 | PS_GPU3D | PS_MIPI_DSI;
+	swton = PS_UPOWER | PS_FUSE | PS_FUSION_AO | PS_NIC_LPAV | PS_DDR |
+		PS_HIFI4 | PS_MIPI_DSI;
 	ret = upwr_pwm_power_on(&swton, NULL, NULL);
 	if (ret)
 		printf("Turn on switches fail %d\n", ret);
@@ -249,7 +249,7 @@ int upower_init(void)
 	 * Sentinel Data RAM0, Inst RAM2
 	 */
 	/* MIPI-CSI FIFO BIT28 not set */
-	memon = 0x3FFFFFEFFFFFFCUL;
+	memon = 0x3FFFFFAC27FFFCUL;
 	ret = upwr_pwm_power_on(NULL, (const uint32_t *)&memon, NULL);
 	if (ret)
 		printf("Turn on memories fail %d\n", ret);
