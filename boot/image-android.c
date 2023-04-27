@@ -139,7 +139,7 @@ static int append_androidboot_args(char *args, uint32_t *len, void *fdt_addr)
 	char args_buf[512] = {0};
 	extern boot_metric metrics;
 
-#ifdef CONFIG_SERIAL_TAG
+#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	struct tag_serialnr serialnr;
 	get_board_serial(&serialnr);
 
