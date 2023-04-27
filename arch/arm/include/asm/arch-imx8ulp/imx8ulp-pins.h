@@ -73,6 +73,6 @@ enum {
 	IMX8ULP_PAD_PTF5__SDHC1_D2                          = IOMUX_PAD(0x0114, 0x0114, 0x8, 0x0A6C, 0x2, 0),
 	IMX8ULP_PAD_PTF0__SDHC1_D1                          = IOMUX_PAD(0x0100, 0x0100, 0x8, 0x0A68, 0x2, 0),
 	IMX8ULP_PAD_PTF1__SDHC1_D0                          = IOMUX_PAD(0x0104, 0x0104, 0x8, 0x0A64, 0x2, 0),
-
+	IMX8ULP_PAD_PTF7__PTF7                              = IOMUX_PAD(0x011C, 0x011C, 0x1, 0x0000, 0x0, 0),
 };
 #endif  /* __ASM_ARCH_IMX8ULP_PINS_H__ */
