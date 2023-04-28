@@ -243,7 +243,7 @@ int bee_test(struct bee_parameters *p, int region)
 static int region_valid(u32 start, u32 size)
 {
 	if ((start < PHYS_SDRAM) || (start >= (start + size - 1)) ||
-	    (start >= (PHYS_SDRAM + PHYS_SDRAM_SIZE - 1))) {
+	    (start >= (PHYS_SDRAM + gd->ram_size - 1))) {
 		printf("Invalid start 0x%x, size 0x%x\n", start, size);
 		return -EINVAL;
 	}
