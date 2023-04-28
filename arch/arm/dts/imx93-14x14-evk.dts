@@ -162,7 +162,7 @@
 	status = "okay";
 
 	pmic@25 {
-		compatible = "nxp,pca9452", "nxp,pca9451a";
+		compatible = "nxp,pca9452";
 		reg = <0x25>;
 		interrupt-parent = <&pcal6524>;
 		interrupts = <11 IRQ_TYPE_LEVEL_LOW>;
@@ -213,6 +213,14 @@
 			ldo1: LDO1 {
 				regulator-name = "LDO1";
 				regulator-min-microvolt = <1600000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			ldo3: LDO3 {
+				regulator-name = "LDO3";
+				regulator-min-microvolt = <800000>;
 				regulator-max-microvolt = <3300000>;
 				regulator-boot-on;
 				regulator-always-on;
