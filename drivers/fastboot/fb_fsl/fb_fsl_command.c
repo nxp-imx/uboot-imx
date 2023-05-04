@@ -210,23 +210,29 @@ static void reboot_fastboot(char *cmd_parameter, char *response)
 }
 #endif
 
-static void upload(char *cmd_parameter, char *response)
+static void send(char *response, const char *buffer, unsigned int buffer_size)
 {
-	if (!fastboot_bytes_received || fastboot_bytes_received > (EP_BUFFER_SIZE * 32)) {
+	if (!buffer_size || buffer_size > (EP_BUFFER_SIZE * 32)) {
+		printf("Cannot upload %d bytes, BS=%d.\n", buffer_size, (EP_BUFFER_SIZE * 32));
 		fastboot_fail("", response);
 		return;
 	}
 
-	printf("Will upload %d bytes.\n", fastboot_bytes_received);
-	snprintf(response, FASTBOOT_RESPONSE_LEN, "DATA%08x", fastboot_bytes_received);
+	printf("Will upload %d bytes.\n", buffer_size);
+	snprintf(response, FASTBOOT_RESPONSE_LEN, "DATA%08x", buffer_size);
 	fastboot_tx_write_more(response);
 
-	fastboot_tx_write((const char *)(fastboot_buf_addr), fastboot_bytes_received);
+	fastboot_tx_write(buffer, buffer_size);
 
 	snprintf(response,FASTBOOT_RESPONSE_LEN, "OKAY");
 	fastboot_tx_write_more(response);
 
 	fastboot_none_resp(response);
+}
+
+static void upload(char *cmd_parameter, char *response)
+{
+	send(response, (const char *)(fastboot_buf_addr), fastboot_bytes_received);
 }
 
 /**
