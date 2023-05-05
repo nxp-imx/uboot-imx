@@ -218,6 +218,8 @@ static void fastboot_fifo_complete(struct usb_ep *ep, struct usb_request *req)
 		if (fastboot_func->front != NULL) {
 			request = fastboot_func->front;
 			fastboot_func->front = fastboot_func->front->next;
+			if (fastboot_func->front == NULL)
+				fastboot_func->rear = NULL;
 			usb_ep_free_request(ep, request->in_req);
 			free(request);
 		} else {
@@ -454,14 +456,15 @@ int fastboot_tx_write_more_s(const void *buffer, unsigned int buffer_size)
 	}
 
 	/* usb request node FIFO enquene */
-	if ((fastboot_func->front == NULL) && (fastboot_func->rear == NULL)) {
-		fastboot_func->front = fastboot_func->rear = req;
-		req->next = NULL;
-	} else {
-		fastboot_func->rear->next = req;
-		fastboot_func->rear = req;
-		req->next = NULL;
+	if (fastboot_func->front == NULL) {
+		fastboot_func->front = req;
 	}
+
+	if (fastboot_func->rear != NULL) {
+		fastboot_func->rear->next = req;
+	}
+	fastboot_func->rear = req;
+	req->next = NULL;
 
 	/* alloc in request for current node */
 	req->in_req = fastboot_start_ep(fastboot_func->in_ep);
