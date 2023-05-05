@@ -212,17 +212,19 @@ static void reboot_fastboot(char *cmd_parameter, char *response)
 
 static void send(char *response, const char *buffer, unsigned int buffer_size)
 {
-	if (!buffer_size || buffer_size > (EP_BUFFER_SIZE * 32)) {
-		printf("Cannot upload %d bytes, BS=%d.\n", buffer_size, (EP_BUFFER_SIZE * 32));
-		fastboot_fail("", response);
-		return;
-	}
+	int remaining, size;
+	unsigned int sent = 0;
 
 	printf("Will upload %d bytes.\n", buffer_size);
 	snprintf(response, FASTBOOT_RESPONSE_LEN, "DATA%08x", buffer_size);
 	fastboot_tx_write_more(response);
 
-	fastboot_tx_write(buffer, buffer_size);
+	while (sent != buffer_size) {
+		remaining = buffer_size - sent;
+		size = EP_BUFFER_SIZE < remaining ? EP_BUFFER_SIZE : remaining;
+		fastboot_tx_write_more_s(buffer + sent, size);
+		sent += size;
+	}
 
 	snprintf(response,FASTBOOT_RESPONSE_LEN, "OKAY");
 	fastboot_tx_write_more(response);
