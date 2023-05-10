@@ -1852,7 +1852,7 @@ int imx8m_usb_power(int usb_id, bool on)
 	imx8m_usb_power_domain(2 + usb_id, on);
 #else
 #if IS_ENABLED(CONFIG_POWER_DOMAIN)
-	if (is_imx8mq()) {
+	if (is_imx8mq() || is_imx8mp()) {
 		struct power_domain pd;
 		if (!power_domain_lookup_name((usb_id == 0)? "power-domain@2": "power-domain@3", &pd)) {
 			if (on) {
@@ -1863,36 +1863,6 @@ int imx8m_usb_power(int usb_id, bool on)
 			} else {
 				if (power_domain_off(&pd)) {
 					printf("Error power off usb %d\n", usb_id);
-					return -EIO;
-				}
-			}
-		}
-	} else if (is_imx8mp()) {
-		struct power_domain pd;
-		if (!power_domain_lookup_name("blk-ctrl@32f10000", &pd)) {
-
-			if (on) {
-				pd.id = IMX8MP_HSIOBLK_PD_USB;
-				if (power_domain_on(&pd)) {
-					printf("Error power on hsio_pd_usb %d\n", usb_id);
-					return -EIO;
-				}
-
-				pd.id = (usb_id == 0)? IMX8MP_HSIOBLK_PD_USB_PHY1: IMX8MP_HSIOBLK_PD_USB_PHY2;
-				if (power_domain_on(&pd)) {
-					printf("Error power on hsio_pd_usb_phy %d\n", usb_id);
-					return -EIO;
-				}
-			} else {
-				pd.id = (usb_id == 0)? IMX8MP_HSIOBLK_PD_USB_PHY1: IMX8MP_HSIOBLK_PD_USB_PHY2;
-				if (power_domain_off(&pd)) {
-					printf("Error power off hsio_pd_usb_phy %d\n", usb_id);
-					return -EIO;
-				}
-
-				pd.id = IMX8MP_HSIOBLK_PD_USB;
-				if (power_domain_off(&pd)) {
-					printf("Error power off hsio_pd_usb %d\n", usb_id);
 					return -EIO;
 				}
 			}
