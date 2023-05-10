@@ -206,7 +206,7 @@ typedef enum option_type {
 	PARTITION,
 	FILEOFF,
 	MSG_BLOCK,
-	SENTINEL,
+	ELE,
 	UPOWER
 } option_type_t;
 
@@ -230,7 +230,7 @@ typedef struct {
 #define CORE_ULP_CM33		0x1
 #define CORE_ULP_CA35		0x2
 #define CORE_ULP_UPOWER 	0x4
-#define CORE_ULP_SENTINEL 	0x6
+#define CORE_ULP_ELE 	0x6
 
 #define SC_R_OTP	357U
 #define SC_R_DEBUG	354U
@@ -246,7 +246,7 @@ typedef struct {
 #define IMG_TYPE_DATA    0x04   /* Data image type */
 #define IMG_TYPE_DCD_DDR 0x05   /* DCD/DDR image type */
 #define IMG_TYPE_SECO    0x06   /* SECO image type */
-#define IMG_TYPE_SENTINEL 0x06	/* SENTINEL image type */
+#define IMG_TYPE_ELE 0x06	/* ELE image type */
 #define IMG_TYPE_PROV    0x07   /* Provisioning image type */
 #define IMG_TYPE_DEK     0x08   /* DEK validation type */
 

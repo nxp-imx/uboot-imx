@@ -720,8 +720,8 @@ void bus_clock_init_low_drive(void)
 	/* Set A55 mtr bus to 133M */
 	ccm_clk_root_cfg(ARM_A55_MTR_BUS_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
 
-	/* Sentinel to 133M */
-	ccm_clk_root_cfg(SENTINEL_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
+	/* ELE to 133M */
+	ccm_clk_root_cfg(ELE_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
 	/* Bus_wakeup to 133M */
 	ccm_clk_root_cfg(BUS_WAKEUP_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
 	/* Bus_AON to 133M */
@@ -753,8 +753,8 @@ void bus_clock_init(void)
 	/* Set A55 mtr bus to 133M */
 	ccm_clk_root_cfg(ARM_A55_MTR_BUS_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
 
-	/* Sentinel to 200M */
-	ccm_clk_root_cfg(SENTINEL_CLK_ROOT, SYS_PLL_PFD1_DIV2, 2);
+	/* ELE to 200M */
+	ccm_clk_root_cfg(ELE_CLK_ROOT, SYS_PLL_PFD1_DIV2, 2);
 	/* Bus_wakeup to 133M */
 	ccm_clk_root_cfg(BUS_WAKEUP_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3);
 	/* Bus_AON to 133M */

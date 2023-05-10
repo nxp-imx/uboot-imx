@@ -14,7 +14,7 @@
 #include <event.h>
 #include <spl.h>
 #include <asm/arch/rdc.h>
-#include <asm/mach-imx/s400_api.h>
+#include <asm/mach-imx/ele_api.h>
 #include <asm/mach-imx/mu_hal.h>
 #include <cpu_func.h>
 #include <asm/setup.h>
@@ -103,7 +103,7 @@ int board_usb_gadget_port_auto(void)
 }
 #endif
 
-static void set_cpu_info(struct sentinel_get_info_data *info)
+static void set_cpu_info(struct ele_get_info_data *info)
 {
 	gd->arch.soc_rev = info->soc;
 	gd->arch.lifecycle = info->lc;
@@ -887,7 +887,7 @@ int imx8ulp_dm_post_init(void)
 	struct udevice *devp;
 	int ret;
 	u32 res;
-	struct sentinel_get_info_data *info = (struct sentinel_get_info_data *)SRAM0_BASE;
+	struct ele_get_info_data *info = (struct ele_get_info_data *)SRAM0_BASE;
 
 	ret = uclass_get_device_by_driver(UCLASS_MISC, DM_DRIVER_GET(imx8ulp_mu), &devp);
 	if (ret) {
@@ -899,7 +899,7 @@ int imx8ulp_dm_post_init(void)
 	if (ret) {
 		printf("ahab_get_info failed %d\n", ret);
 		/* fallback to A0.1 revision */
-		memset((void *)info, 0, sizeof(struct sentinel_get_info_data));
+		memset((void *)info, 0, sizeof(struct ele_get_info_data));
 		info->soc = 0xa000084d;
 	}
 

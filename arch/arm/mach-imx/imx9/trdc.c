@@ -10,7 +10,7 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/sys_proto.h>
 #include <div64.h>
-#include <asm/mach-imx/s400_api.h>
+#include <asm/mach-imx/ele_api.h>
 #include <asm/mach-imx/mu_hal.h>
 
 #define DID_NUM 16
@@ -315,7 +315,7 @@ bool trdc_mbc_enabled(ulong trdc_base)
 int release_rdc(u8 xrdc)
 {
 	ulong s_mu_base = 0x47520000UL;
-	struct sentinel_msg msg;
+	struct ele_msg msg;
 	int ret;
 	u32 rdc_id;
 

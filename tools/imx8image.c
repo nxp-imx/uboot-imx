@@ -556,15 +556,15 @@ static void set_image_array_entry(flash_header_v3_t *container,
 		img->dst = 0x20C00000;
 		img->entry = 0x20000000;
 		break;
-	case SENTINEL:
+	case ELE:
 		if (container->num_images > 0) {
-			fprintf(stderr, "Error: SENTINEL container only allows 1 image\n");
+			fprintf(stderr, "Error: ELE container only allows 1 image\n");
 			return;
 		}
 
-		img->hab_flags |= IMG_TYPE_SENTINEL;
-		img->hab_flags |= CORE_ULP_SENTINEL << BOOT_IMG_FLAGS_CORE_SHIFT;
-		tmp_name = "SENTINEL";
+		img->hab_flags |= IMG_TYPE_ELE;
+		img->hab_flags |= CORE_ULP_ELE << BOOT_IMG_FLAGS_CORE_SHIFT;
+		tmp_name = "ELE";
 		img->dst = 0xe4000000; /* S400 IRAM base */
 		img->entry = 0xe4000000;
 		break;
@@ -883,7 +883,7 @@ static int build_container(soc_type_t soc, uint32_t sector_size,
 			break;
 
 		case SECO:
-		case SENTINEL:
+		case ELE:
 			if (container < 0) {
 				fprintf(stderr, "No container found\n");
 				exit(EXIT_FAILURE);
@@ -993,7 +993,7 @@ static int build_container(soc_type_t soc, uint32_t sector_size,
 		    img_sp->option == AP || img_sp->option == DATA ||
 		    img_sp->option == SCD || img_sp->option == SCFW ||
 		    img_sp->option == SECO || img_sp->option == MSG_BLOCK ||
-		    img_sp->option == UPOWER || img_sp->option == SENTINEL) {
+		    img_sp->option == UPOWER || img_sp->option == ELE) {
 			copy_file_aligned(ofd, img_sp->filename, img_sp->src,
 					  sector_size);
 		}

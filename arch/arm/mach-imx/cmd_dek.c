@@ -22,7 +22,7 @@
 #include <asm/mach-imx/image.h>
 #endif
 #ifdef CONFIG_IMX_ELE_DEK_ENCAP
-#include <asm/mach-imx/s400_api.h>
+#include <asm/mach-imx/ele_api.h>
 #include <asm/mach-imx/image.h>
 #endif
 

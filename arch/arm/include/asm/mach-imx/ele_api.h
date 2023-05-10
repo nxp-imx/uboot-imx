@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
-#ifndef __S400_API_H__
-#define __S400_API_H__
+#ifndef __ELE_API_H__
+#define __ELE_API_H__
 
 #define AHAB_VERSION    0x6
 #define AHAB_CMD_TAG    0x17
@@ -111,17 +111,17 @@
 #define ELE_SUCCESS_IND (0xD6)
 #define ELE_FAILURE_IND (0x29)
 
-#define S400_MAX_MSG          255U
+#define ELE_MAX_MSG          255U
 
-struct sentinel_msg {
+struct ele_msg {
 	u8 version;
 	u8 size;
 	u8 command;
 	u8 tag;
-	u32 data[(S400_MAX_MSG - 1U)];
+	u32 data[(ELE_MAX_MSG - 1U)];
 };
 
-struct sentinel_get_info_data {
+struct ele_get_info_data {
 	u32 hdr;
 	u32 soc;
 	u32 lc;
@@ -142,7 +142,7 @@ int ahab_read_common_fuse(u16 fuse_id, u32 *fuse_words, u32 fuse_num, u32 *respo
 int ahab_release_caam(u32 core_did, u32 *response);
 int ahab_get_fw_version(u32 *fw_version, u32 *sha1, u32 *response);
 int ahab_dump_buffer(u32 *buffer, u32 buffer_length);
-int ahab_get_info(struct sentinel_get_info_data *info, u32 *response);
+int ahab_get_info(struct ele_get_info_data *info, u32 *response);
 int ahab_get_fw_status(u32 *status, u32 *response);
 int ahab_release_m33_trout(void);
 int ahab_get_events(u32 *events, u32 *events_cnt, u32 *response);
