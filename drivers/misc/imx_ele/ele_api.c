@@ -11,6 +11,7 @@
 #include <dm.h>
 #include <asm/mach-imx/ele_api.h>
 #include <misc.h>
+#include <memalign.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -619,6 +620,83 @@ int ahab_return_lifecycle_update(ulong signed_msg_blk, u32 *response)
 
 	if (response)
 		*response = msg.data[0];
+
+	return ret;
+}
+
+int ahab_get_hw_unique_key(uint8_t *hwkey, size_t key_size, uint8_t *ctx, size_t ctx_size)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg;
+	uint8_t *ctx_addr = NULL;
+	uint8_t *key_addr = NULL;
+	int ret = -EINVAL;
+
+	if (!dev) {
+		printf("s400 dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	/* sanity check the key and context */
+	if (ctx_size >= (1U << 16) - 1) {
+		printf("%s: Invalid context size!\n", __func__);
+		return -EINVAL;
+	}
+	if ((key_size != 16) && (key_size != 32)) {
+		printf("%s: Invalid key size!\n", __func__);
+		return -EINVAL;
+	}
+	if (!hwkey || !ctx) {
+		printf("%s: invalid input buffer!\n", __func__);
+		return -EINVAL;
+	}
+
+	/* alloc temp buffer for input context in case it's not cacheline aligned */
+	ctx_addr = memalign(ARCH_DMA_MINALIGN, ctx_size);
+	if (!ctx_addr) {
+		printf("%s: Fail to alloc memory!\n", __func__);
+		return -EINVAL;
+	}
+	memcpy(ctx_addr, ctx, ctx_size);
+
+	/* key buffer */
+	key_addr = memalign(ARCH_DMA_MINALIGN, key_size);
+	if (!key_addr) {
+		printf("%s: Fail to alloc memory!\n", __func__);
+		goto exit;
+	}
+
+	flush_dcache_range((unsigned long)ctx_addr, ALIGN((unsigned long)ctx_addr + ctx_size, ARCH_DMA_MINALIGN));
+	invalidate_dcache_range((unsigned long)key_addr, ALIGN((unsigned long)key_addr + key_size, ARCH_DMA_MINALIGN));
+
+	msg.version = AHAB_VERSION;
+	msg.tag = AHAB_CMD_TAG;
+	msg.size = 7;
+	msg.command = ELE_CMD_DERIVE_KEY;
+	msg.data[0] = upper_32_bits((ulong)key_addr);
+	msg.data[1] = lower_32_bits((ulong)key_addr);
+	msg.data[2] = upper_32_bits((ulong)ctx_addr);
+	msg.data[3] = lower_32_bits((ulong)ctx_addr);
+	msg.data[4] = ((ctx_size << 16) | key_size);
+	msg.data[5] = compute_crc(&msg);
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret) {
+		printf("Error: %s: ret 0x%x, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+		goto exit;
+	}
+
+	invalidate_dcache_range((unsigned long)key_addr, ALIGN((unsigned long)key_addr + key_size, ARCH_DMA_MINALIGN));
+	memcpy(hwkey, key_addr, key_size);
+	ret = 0;
+
+exit:
+	if (ctx_addr)
+		free(ctx_addr);
+	if (key_addr)
+		free(key_addr);
 
 	return ret;
 }
