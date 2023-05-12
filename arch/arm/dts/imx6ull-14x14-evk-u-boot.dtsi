@@ -1,7 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
+
+&{/aliases} {
+	spi0 = &qspi;
+	spi1 = &ecspi1;
+	spi2 = &ecspi2;
+	spi3 = &ecspi3;
+	spi4 = &ecspi4;
+};
 
 &pinctrl_uart1 {
 	u-boot,dm-pre-reloc;
