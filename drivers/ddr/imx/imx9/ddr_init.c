@@ -283,6 +283,8 @@ void ddrc_mrs(u32 cs_sel, u32 opcode, u32 mr)
 	regval = (cs_sel << 28) | (opcode << 6) | (mr);
 	writel(regval, REG_DDR_SDRAM_MD_CNTL);
 	setbits_le32(REG_DDR_SDRAM_MD_CNTL, BIT(31));
+	while ((readl(REG_DDR_SDRAM_MD_CNTL) & 0x80000000) == 0x80000000)
+	;
 	check_ddrc_idle();
 }
 
