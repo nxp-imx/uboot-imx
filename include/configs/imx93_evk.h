@@ -166,6 +166,10 @@
 #define PHY_ANEG_TIMEOUT 20000
 #endif
 
+#ifdef CONFIG_IMX_MATTER_TRUSTY
+#define NS_ARCH_ARM64 1
+#endif
+
 #ifdef CONFIG_ANDROID_SUPPORT
 #include "imx93_evk_android.h"
 #endif
