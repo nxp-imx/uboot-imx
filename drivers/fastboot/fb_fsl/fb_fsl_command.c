@@ -338,6 +338,20 @@ void fastboot_data_complete(char *response)
 	fastboot_bytes_expected = 0;
 }
 
+bool endswith(char* s, char* subs) {
+	if (!s || !subs)
+		return false;
+	uint32_t len = strlen(s);
+	uint32_t sublen = strlen(subs);
+	if (len < sublen) {
+		return false;
+	}
+	if (strncmp(s + len - sublen, subs, sublen)) {
+		return false;
+	}
+	return true;
+}
+
 #if defined(CONFIG_FASTBOOT_LOCK)
 static int partition_table_valid(void)
 {
@@ -456,20 +470,6 @@ static FbLockState do_fastboot_lock(void)
 		return FASTBOOT_LOCK_ERROR;
 
 	return FASTBOOT_LOCK;
-}
-
-static bool endswith(char* s, char* subs) {
-	if (!s || !subs)
-		return false;
-	uint32_t len = strlen(s);
-	uint32_t sublen = strlen(subs);
-	if (len < sublen) {
-		return false;
-	}
-	if (strncmp(s + len - sublen, subs, sublen)) {
-		return false;
-	}
-	return true;
 }
 
 static bool erase_uboot_env(void) {

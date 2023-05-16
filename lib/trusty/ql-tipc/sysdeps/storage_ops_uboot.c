@@ -29,6 +29,7 @@
 #include <common.h>
 #include <memalign.h>
 #include <mmc.h>
+#include <env.h>
 
 void *rpmb_storage_get_ctx(void)
 {
@@ -40,8 +41,16 @@ void rpmb_storage_put_ctx(void *dev)
 {
 }
 
-__weak int board_get_emmc_id(void) {
-    return mmc_get_env_dev();
+#define INVALID_MMC_ID 100
+static int board_get_emmc_id(void) {
+    int emmc_dev;
+
+    emmc_dev = env_get_ulong("emmc_dev", 10, INVALID_MMC_ID);
+    if (emmc_dev == INVALID_MMC_ID) {
+        trusty_error("environment variable 'emmc_dev' is not set!\n");
+        return TRUSTY_ERR_GENERIC;
+    }
+    return emmc_dev;
 }
 
 int rpmb_storage_send(void *rpmb_dev, const void *rel_write_data,
@@ -73,10 +82,10 @@ int rpmb_storage_send(void *rpmb_dev, const void *rel_write_data,
 
 #ifdef CONFIG_BLOCK_CACHE
         struct blk_desc *bd = mmc_get_blk_desc(mmc);
-        blkcache_invalidate(bd->if_type, bd->devnum);
+        blkcache_invalidate(bd->uclass_id, bd->devnum);
 #endif
         /* swicth to eMMC device */
-        if (blk_select_hwpart_devnum(IF_TYPE_MMC, emmc_dev, 0)) {
+        if (blk_select_hwpart_devnum(UCLASS_MMC, emmc_dev, 0)) {
             trusty_error("failed to switch to eMMC device.\n");
             return -1;
         }
@@ -163,7 +172,7 @@ end:
 #ifdef CONFIG_IMX_MATTER_TRUSTY
     if (sd_boot) {
         /* swicth back to SD */
-        if (blk_select_hwpart_devnum(IF_TYPE_MMC, current_dev, 0)) {
+        if (blk_select_hwpart_devnum(UCLASS_MMC, current_dev, 0)) {
             trusty_error("failed to switch to SD.\n");
             return -1;
         }

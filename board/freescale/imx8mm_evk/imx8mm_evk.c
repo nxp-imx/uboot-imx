@@ -351,9 +351,3 @@ int is_recovery_key_pressing(void)
 }
 #endif /* CONFIG_ANDROID_RECOVERY */
 #endif /* CONFIG_FSL_FASTBOOT */
-
-#ifdef CONFIG_IMX_MATTER_TRUSTY
-int board_get_emmc_id(void) {
-	return 2;
-}
-#endif
