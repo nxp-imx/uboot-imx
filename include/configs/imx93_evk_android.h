@@ -17,7 +17,8 @@
 	"splashimage=0x90000000\0"		\
 	"fdt_high=0xffffffffffffffff\0"		\
 	"initrd_high=0xffffffffffffffff\0"	\
-	"emmc_dev=0\0"                          \
+	"emmc_dev=0\0"\
+	"sd_dev=1\0" \
 
 /* Enable mcu firmware flash */
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT

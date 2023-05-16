@@ -25,6 +25,8 @@
 	"splashpos=m,m\0"	  \
 	"fdt_high=0xffffffffffffffff\0"	  \
 	"initrd_high=0xffffffffffffffff\0" \
+	"emmc_dev=0\0" \
+	"sd_dev=1\0"
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 #define AVB_RPMB
