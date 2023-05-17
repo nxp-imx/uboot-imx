@@ -45,7 +45,7 @@ int enable_i2c_clk(unsigned char enable, unsigned i2c_num)
 #endif
 	};
 
-	if (i2c_num > ARRAY_SIZE(i2c_ccgr))
+	if (i2c_num >= ARRAY_SIZE(i2c_ccgr))
 		return -EINVAL;
 
 	clock_enable(i2c_ccgr[i2c_num], !!enable);
