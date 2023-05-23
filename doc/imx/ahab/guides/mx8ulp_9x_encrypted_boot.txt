@@ -1,0 +1,271 @@
+         +=========================================================+
+         +   i.MX 8ULP, i.MX 9x Encrypted Boot guide using AHAB    +
+         +=========================================================+
+
+1. AHAB Encrypted Boot process
+-------------------------------
+
+This document describes a step-by-step procedure on how to encrypt and sign a
+bootloader image for i.MX8ULP and i.MX9x family devices. It is assumed that the reader
+is familiar with basic AHAB concepts and has already closed the device,
+step-by-step procedure can be found in mx8ulp_9x_secure_boot.txt.
+
+The steps described in this document were based in i.MX93 device, the same
+concept can be applied to others processor with similar AHAB architecture like
+i.MX8ULP and i.MX9x family devices.
+
+1.1 Understanding the encrypted image signature block
+------------------------------------------------------
+
+As described in mx8ulp_9x_secure_boot.txt guide a single binary is used to boot
+the device. The imx-mkimage tool combines all the input images in a container
+structure, generating a flash.bin binary.
+
+AHAB is able to decrypt image containers by calling EdgeLock Enclave (ELE)
+authentication functions, the image must be encrypted by CST and the resulting
+DEK (Data Encryption Key) must be encapsulated and included into the container
+signature block:
+
+                +----------------------------+
+                |                            |  ^
+                |                            |  |
+                |      Container header      |  |
+                |                            |  |
+                |                            |  |
+                +---+------------------------+  |
+                | S | Signature block header |  | Signed
+                | i +------------------------+  |
+                | g |                        |  |
+                | n |                        |  |
+                | a |        SRK table       |  |
+                | t |                        |  |
+                | u |                        |  v
+                | r +------------------------+
+                | e |       Signature        |
+                |   +------------------------+
+                | B |                        |
+                | l |        SGK Key         |
+                | o | Certificate (optional) |
+                | c |                        |
+                | k +------------------------+
+                |   |        DEK Blob        |
+                +---+------------------------+
+
+1.1.1 Understanding and generating the DEK blob
+------------------------------------------------
+
+The encrypted boot image requires a DEK blob on each time AHAB is used to
+decrypt an image. The DEK blob is used as a security layer to wrap and store
+the DEK off-chip using the OTPMK which is unique per device.
+
+On i.MX8ULP/9x devices the DEK blob is generated using the ELE API, the following
+funtion is available in U-Boot and can be executed through dek_blob command:
+
+- ele_generate_key_blob_req(sc_ipc_t ipc, uint32_t id, sc_faddr_t load_addr,
+		       sc_faddr_t export_addr, uint16_t max_size)
+
+Details in API usage can be found in EdgeLock Enclave (ELE) API guide [1].
+
+1.2 Enabling the encrypted boot support in U-Boot
+--------------------------------------------------
+
+For deploying an encrypted boot image additional U-Boot tools are needed,
+please be sure to have the following features enabled, this can be achieved
+by following one of the methods below:
+
+- Defconfig:
+
+  CONFIG_AHAB_BOOT=y
+  CONFIG_CMD_DEKBLOB=y
+  CONFIG_IMX_ELE_DEK_ENCAP=y
+  CONFIG_FAT_WRITE=y
+
+- Kconfig:
+
+  ARM architecture -> Support i.MX8 AHAB features
+  ARM architecture -> Support the 'dek_blob' command
+  File systems -> Enable FAT filesystem support-> Enable FAT filesystem
+  write support
+  
+1.3 Enabling the encrypted boot support in CST
+-----------------------------------------------
+
+CST version 3.0.0 and later have the encryption feature enabled by default.
+If using an earlier version, the encryption feature must be explicitly
+enabled.
+
+For CST versions <3.0.0, the CST backend must be recompiled, execute the
+following commands to enable encryption support in CST:
+
+  $ sudo apt-get install libssl-dev openssl
+  $ cd <CST install directory>/code/back_end/src
+  $ gcc -o cst_encrypted -I ../hdr -L ../../../linux64/lib *.c
+    -lfrontend -lcrypto
+  $ cp cst_encrypted ../../../linux64/bin/
+
+1.4 Preparing the image container
+----------------------------------
+
+The container generation is explained in mx8ulp_9x_secure_boot.txt guide. This
+document is based in imx-mkimage flash target (3 containers in flash.bin).
+
+- Assembly flash.bin binary:
+
+  $ make SOC=<SoC Name> flash_<image target>
+  
+Note: Please see all target options in the make file <SoC Name>/soc.mak
+
+The mkimage log is used during the encrypted boot procedure to create the
+Command Sequence File (CSF) and for final image construction:
+
+  Output: u-boot-atf-container.img
+  ...
+  CST: CONTAINER 0 offset: 0x0
+  CST: CONTAINER 0: Signature Block: offset is at 0x110
+  DONE.
+  Note: Please copy image to offset: IVT_OFFSET + IMAGE_OFFSET
+  ...
+  Output: flash.bin
+  ...
+  CST: CONTAINER 0 offset: 0x400
+  CST: CONTAINER 0: Signature Block: offset is at 0x490
+  DONE.
+  Note: Please copy image to offset: IVT_OFFSET + IMAGE_OFFSET
+  append u-boot-atf-container.img at 271 KB
+
+1.5 Creating the CSF descriptions to encrypt the 2nd & 3rd containers
+--------------------------------------------------------------
+
+The 2nd & 3rd containers on the boot image must be encrypted. For details on
+the boot image structure and signing the boot image for authentication refer to
+mx8ulp_9x_secure_boot.txt. For generating the CSF, csf_enc_boot_image.txt is
+available under ahab/csf_examples/ and can be used as example for encrypting
+the flash.bin binary. The main change is the Install Secret Key command that
+must be added after Authenticate Data command.
+
+By default all images are encrypted. Optionally users can provide a key
+identifier that must match the value provided during the blob generation, by
+default its value is zero. Additionally, image indexes parameter can be used
+to mask the images indexes that must be encrypted.
+
+We start with the CSF for the 2nd Container containing SPL. The
+offsets are calculated by using the signature offset and container location.
+
+csf_boot_image.txt:
+  ...
+  [Authenticate Data]
+  File = "flash.bin"
+  # Container offset = 0x400
+  # Signature Block = 0x490
+  Offsets   = 0x400        0x490
+  
+  [Install Secret Key]
+  Key = "dek_2.bin"
+  Key Length = 128
+  #Key Identifier = 0x1234CAFE
+  #Image Indexes = 0xFFFFFFFE
+
+  
+The CSF for the 3rd container containing u-boot and ATF will look similar,
+but with different file, offsets, and DEK.
+
+csf_3rd_image.txt:
+  ...
+  [Authenticate Data]
+
+  File = "enc_2nd_cntnr_flash.bin" 
+  # Container location is 271KB in flash.bin 
+  # 0x110 is signature block offset inside u-boot-atf-container.img
+  # 271KB + 0x110 = 0x43C00 + 0x110 = 0x43D10
+  Offsets   = 0x43C00        0x43D10
+  
+  [Install Secret Key]
+  Key = "dek_3.bin"
+  Key Length = 128
+  #Key Identifier = 0x1234CAFE
+  #Image Indexes = 0xFFFFFFFE
+
+1.6 Encrypting the Image
+---------------------------------
+
+The image is encrypted using the Code Signing Tool. The tool generates the
+encrypted image and a random dek.bin file.
+
+- Encrypt flash.bin binary:
+
+  $ ./cst -i csf_boot_image.txt -o enc_2nd_cntnr_flash.bin
+   The DEK BLOB must be inserted at offset 0x6c0 (its expected size is 72 bytes)
+   CSF Processed successfully and signed image available in enc_2nd_cntnr_flash.bin
+   
+  $ ./cst -i csf_3rd_image.txt -o encrypted-flash.bin
+   The DEK BLOB must be inserted at offset 0x43f40 (its expected size is 72 bytes)
+   CSF Processed successfully and signed image available in encrypted-flash.bin
+
+The output log will be used in a later step to insert the DEK blob into the
+signature block.
+
+1.7 Generating the DEK Blob
+----------------------------
+
+The DEK must be encapsulated into a CAAM blob so it can be included into the
+final encrypted binary. The U-Boot provides a tool called dek_blob which is
+calling the ELE blob encapsulation API.
+
+Copy dek_2 and dek_3 to the i.MX8ULP or 9x and run the following commands from
+U-Boot prompt. Boot the flash.bin generated earlier with mkimage on board. Halt at
+U-Boot and connect to host computer with USB Mass Storage (UMS):
+
+  mmc2(part 0) is current device
+  flash target is MMC:2
+  Net:     eth0...
+  Fastboot: Normal
+  Normal Boot
+  Hit any Key to stop autoboot:  0
+  => ums 0 mmc 2:1
+  
+Copy both DEK over to the board using the computer's file system. Now use fatload
+and dek_blob to create and encapsulate the DEK blob.
+  => mmc list
+     FSL_SDHC: 1 
+     FSL_SDHC: 2 (eMMC)
+  => fatload mmc 2:1 0x80280000 dek_2.bin
+  => dek_blob 0x80280000 0x80281000 128
+  => fatwrite mmc 2:1 0x80281000 dek_blob2.bin 0x48
+  => fatload mmc 2:1 0x80280000 dek_3.bin
+  => dek_blob 0x80280000 0x80281000 128
+  => fatwrite mmc 2:1 0x80281000 dek_blob3.bin 0x48
+
+Use UMS to copy the dek blobs back to the host PC. In host PC copy the generated
+dek_blob binaries to the CST directory.
+
+1.8 Assembling the encrypted image
+-----------------------------------
+
+The DEK blobs generated in the step above have to be inserted into the containers'
+signature blocks.
+
+The CSF log is used to determine the DEK Blob offset:
+
+   The DEK BLOB must be inserted at offset 0x6c0 (its expected size is 72 bytes)
+   CSF Processed successfully and signed image available in enc_2nd_cntnr_flash.bin
+   
+   The DEK BLOB must be inserted at offset 0x43f40 (its expected size is 72 bytes)
+   CSF Processed successfully and signed image available in encrypted-flash.bin
+
+- Insert DEK Blobs into container signature blocks:
+
+  $ dd if=dek_blob2.bin of=encrypted-flash.bin bs=1 seek=$((0x6c0)) conv=notrunc
+  $ dd if=dek_blob3.bin of=encrypted-flash.bin bs=1 seek=$((0x43f40)) conv=notrunc
+  
+1.10 Flashing the encrypted boot image
+---------------------------------------
+
+After completing all steps in Section 1.8 the encrypted flash.bin image can be
+flashed to the device using UUU. Please refer to UUU documentation for more
+details on programming the flash devices on the target:
+
+  $ uuu -b emmc encrypted-flash.bin 
+
+
+References:
+[1] ELE API guide: "EdgeLock Enclave (ELE) API Reference Guide"
