@@ -74,6 +74,7 @@ int mmc_rpmb_request(struct mmc *mmc, const struct s_rpmb *s,
 	struct mmc_cmd cmd = {0};
 	struct mmc_data data;
 	struct sdhci_host *host = mmc->priv;
+	int timeout_ms = 1000;
 	int ret;
 
 	ret = mmc_set_blockcount(mmc, count, is_rel_write);
@@ -103,6 +104,15 @@ int mmc_rpmb_request(struct mmc *mmc, const struct s_rpmb *s,
 #endif
 		return 1;
 	}
+
+	/* poll for the ready status */
+	if (mmc_poll_for_busy(mmc, timeout_ms)) {
+#ifdef CONFIG_MMC_RPMB_TRACE
+		printf("%s:mmc is busy!\n", __func__);
+#endif
+		return 1;
+	}
+
 	return 0;
 }
 int mmc_rpmb_response(struct mmc *mmc, struct s_rpmb *s,
