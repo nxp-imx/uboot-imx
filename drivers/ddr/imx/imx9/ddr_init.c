@@ -362,6 +362,9 @@ int ddr_init(struct dram_timing_info *dram_timing)
 	if (ret)
 		return ret;
 
+	/* save the ddr PHY trained CSR in memory for low power use */
+	ddrphy_trained_csr_save(ddrphy_trained_csr, ddrphy_trained_csr_num);
+
 	debug("DDRINFO: ddrphy config done\n");
 
 	update_umctl2_rank_space_setting(dram_timing, dram_timing->fsp_msg_num - 1);
