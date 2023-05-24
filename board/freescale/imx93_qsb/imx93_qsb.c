@@ -250,7 +250,7 @@ int board_init(void)
 	setup_typec();
 #endif
 
-	if (CONFIG_IS_ENABLED(DWC_ETH_QOS))
+	if (CONFIG_IS_ENABLED(DWC_ETH_QOS) && !is_imx91p0())
 		setup_eqos();
 
 	board_gpio_init();
