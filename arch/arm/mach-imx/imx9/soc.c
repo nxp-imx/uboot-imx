@@ -174,6 +174,25 @@ static u32 get_cpu_variant_type(u32 type)
 	bool npu_disable = !!(val & BIT(13));
 	bool core1_disable = !!(val & BIT(15));
 	u32 pack_9x9_fused = BIT(4) | BIT(5) | BIT(17) | BIT(19) | BIT(24);
+	u32 phantom_fused = BIT(10) | BIT(17) | BIT(19) | BIT(24);
+	u32 phantom_9x9_fused = BIT(4) | BIT(5);
+	u32 can_fused = BIT(28) | BIT(29) | BIT(30) | BIT(31);
+	bool enet2_disable = !!(val2 & BIT(6));
+
+	/* For iMX91P */
+	if (((val2 & phantom_fused) == phantom_fused)
+		&& npu_disable && core1_disable) {
+		type = MXC_CPU_IMX91P3;
+
+		if ((val2 & phantom_9x9_fused) == phantom_9x9_fused) {
+			type = MXC_CPU_IMX91P1;
+
+			if ((val & can_fused) == can_fused && enet2_disable)
+				type = MXC_CPU_IMX91P0;
+		}
+
+		return type;
+	}
 
 	if ((val2 & pack_9x9_fused) == pack_9x9_fused)
 		type = MXC_CPU_IMX9322;
@@ -528,6 +547,12 @@ const char *get_imx_type(u32 imxtype)
 		return "93(12)";/* iMX93 9x9 Dual core without NPU */
 	case MXC_CPU_IMX9311:
 		return "93(11)";/* iMX93 9x9 Single core without NPU */
+	case MXC_CPU_IMX91P3:
+		return "91P(31)";/* iMX91P 11x11 Full feature */
+	case MXC_CPU_IMX91P1:
+		return "91P(11)";/* iMX91P 9x9 Reduced feature */
+	case MXC_CPU_IMX91P0:
+		return "91P(01)";/* iMX91P 9x9 Specific feature */
 	default:
 		return "??";
 	}
@@ -703,6 +728,35 @@ static int delete_fdt_nodes(void *blob, const char *const nodes_path[], int size
 	return 0;
 }
 
+static int disable_eqos_nodes(void *blob)
+{
+	static const char * const nodes_path_eqos[] = {
+		"/soc@0/bus@42800000/ethernet@428a0000"
+	};
+
+	return delete_fdt_nodes(blob, nodes_path_eqos, ARRAY_SIZE(nodes_path_eqos));
+}
+
+static int disable_flexcan_nodes(void *blob)
+{
+	static const char * const nodes_path_flexcan[] = {
+		"/soc@0/bus@44000000/can@443a0000",
+		"/soc@0/bus@42000000/can@425b0000"
+	};
+
+	return delete_fdt_nodes(blob, nodes_path_flexcan, ARRAY_SIZE(nodes_path_flexcan));
+}
+
+static int disable_parallel_display_nodes(void *blob)
+{
+	static const char * const nodes_path_display[] = {
+		"/soc@0/system-controller@4ac10000/dpi",
+		"/soc@0/lcd-controller@4ae30000"
+	};
+
+	return delete_fdt_nodes(blob, nodes_path_display, ARRAY_SIZE(nodes_path_display));
+}
+
 static int disable_npu_nodes(void *blob)
 {
 	static const char * const nodes_path_npu[] = {
@@ -860,6 +914,31 @@ int board_fix_fdt(void *fdt)
 		}
 	}
 
+	if (is_imx91p0()) {
+		int i = 0;
+		int nodeoff, ret;
+		const char *status = "disabled";
+		static const char * const nodes[] = {
+			"/soc@0/bus@42800000/ethernet@428a0000",
+			"/soc@0/system-controller@4ac10000/dpi",
+			"/soc@0/lcd-controller@4ae30000"
+		};
+
+		for (i = 0; i < ARRAY_SIZE(nodes); i++) {
+			nodeoff = fdt_path_offset(fdt, nodes[i]);
+			if (nodeoff > 0) {
+set_status:
+				ret = fdt_setprop(fdt, nodeoff, "status", status,
+						  strlen(status) + 1);
+				if (ret == -FDT_ERR_NOSPACE) {
+					ret = fdt_increase_size(fdt, 512);
+					if (!ret)
+						goto set_status;
+				}
+			}
+		}
+	}
+
 	return 0;
 }
 #endif
@@ -872,6 +951,12 @@ int ft_system_setup(void *blob, struct bd_info *bd)
 
 	if (is_imx9332() || is_imx9331() || is_imx9312() || is_imx9311())
 		disable_npu_nodes(blob);
+
+	if (is_imx91p0()) {
+		disable_eqos_nodes(blob);
+		disable_flexcan_nodes(blob);
+		disable_parallel_display_nodes(blob);
+	}
 
 	if (IS_ENABLED(CONFIG_IMX9_LOW_DRIVE_MODE))
 		low_drive_freq_update(blob);
@@ -1106,6 +1191,9 @@ int m33_prepare(void)
 	struct blk_ctrl_s_aonmix_regs *s_regs =
 			(struct blk_ctrl_s_aonmix_regs *)BLK_CTRL_S_ANOMIX_BASE_ADDR;
 	u32 val;
+
+	if (is_imx91p3() || is_imx91p1() || is_imx91p0())
+		return -ENODEV;
 
 	if (m33_is_rom_kicked())
 		return -EPERM;
