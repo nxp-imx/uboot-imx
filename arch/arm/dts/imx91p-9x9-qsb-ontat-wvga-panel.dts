@@ -1,0 +1,11 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2023 NXP
+ */
+
+#include "imx93-9x9-qsb-ontat-wvga-panel.dts"
+
+/ {
+	model = "NXP i.MX91P 9x9 Quick Start Board";
+	compatible = "fsl,imx91p-9x9-qsb", "fsl,imx91p", "fsl,imx93";
+};
