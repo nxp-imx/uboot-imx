@@ -115,7 +115,7 @@ int board_eth_init(struct bd_info *bis)
 	dev = miiphy_get_dev_by_name(DEFAULT_WRIOP_MDIO2_NAME);
 
 	/* new LX2160A-RDB2 revC board uses phy-less 25G/40G interfaces */
-	if (get_board_rev() == 'C') {
+	if (get_board_rev() >= 'C') {
 		setup_eth_rev_c(srds_s1);
 		goto next;
 	}
@@ -321,7 +321,7 @@ int fdt_fixup_board_phy_revc(void *fdt)
 {
 	int ret;
 
-	if (get_board_rev() != 'C')
+	if (get_board_rev() < 'C')
 		return 0;
 
 	/* DPMACs 3,4 have their Aquantia PHYs at new addresses */
