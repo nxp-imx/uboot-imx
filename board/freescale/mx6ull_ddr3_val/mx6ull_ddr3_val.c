@@ -32,7 +32,6 @@
 #include <usb.h>
 #include <usb/ehci-ci.h>
 #if defined(CONFIG_MXC_EPDC)
-#include <lcd.h>
 #include <mxc_epdc_fb.h>
 #endif
 #include <asm/mach-imx/video.h>
