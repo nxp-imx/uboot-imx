@@ -32,6 +32,8 @@
 #define PS_FUSE		BIT(18)
 #define PS_UPOWER	BIT(19)
 
+#define RETRY_TIMES 3
+
 static struct MU_tag *muptr = (struct MU_tag *)UPOWER_AP_MU1_ADDR;
 
 extern void upwr_txrx_isr(void);
@@ -147,7 +149,7 @@ int upower_init(void)
 
 	uint32_t swton;
 	uint64_t memon;
-	int ret, ret_val;
+	int ret, ret_val, retry;
 
 	struct upwr_dom_bias_cfg_t bias;
 
@@ -176,6 +178,8 @@ int upower_init(void)
 		}
 	} while (0);
 
+	retry = RETRY_TIMES;
+PS_PWR_ON:
 	swton = PS_UPOWER | PS_FUSE | PS_FUSION_AO | PS_NIC_LPAV | PS_DDR |
 		PS_HIFI4 | PS_MIPI_DSI;
 	ret = upwr_pwm_power_on(&swton, NULL, NULL);
@@ -186,10 +190,15 @@ int upower_init(void)
 
 	upower_wait_resp();
 	ret = upwr_poll_req_status(UPWR_SG_PWRMGMT, NULL, &err_code, &ret_val, 1000);
-	if (ret != UPWR_REQ_OK)
+	if (ret != UPWR_REQ_OK) {
 		printf("Turn on switches faliure %d, err_code %d, ret_val 0x%x\n", ret, err_code, ret_val);
-	else
+		if (err_code == UPWR_RESP_RESOURCE && retry--) {
+			mdelay(10); /* delay 10ms, then retry  */
+			goto PS_PWR_ON;
+		}
+	} else {
 		printf("Turn on switches ok\n");
+	}
 
 	/*
 	 * Ascending Order -> bit [0:54)
@@ -248,6 +257,9 @@ int upower_init(void)
 	 * SSRAM Partition 7_c(64KB)
 	 * ELE Data RAM0, Inst RAM2
 	 */
+
+	retry = RETRY_TIMES;
+MEM_PWR_ON:
 	/* MIPI-CSI FIFO BIT28 not set */
 	memon = 0x3FFFFFAC27FFFCUL;
 	ret = upwr_pwm_power_on(NULL, (const uint32_t *)&memon, NULL);
@@ -258,11 +270,15 @@ int upower_init(void)
 
 	upower_wait_resp();
 	ret = upwr_poll_req_status(UPWR_SG_PWRMGMT, NULL, &err_code, &ret_val, 1000);
-	if (ret != UPWR_REQ_OK)
+	if (ret != UPWR_REQ_OK) {
 		printf("Turn on memories faliure %d, err_code %d, ret_val 0x%x\n", ret, err_code, ret_val);
-	else
+		if (err_code == UPWR_RESP_RESOURCE && retry--) {
+			mdelay(10); /* delay 10ms, then retry  */
+			goto MEM_PWR_ON;
+		}
+	} else {
 		printf("Turn on memories ok\n");
-
+	}
 	mdelay(1);
 
 	ret = upwr_xcp_set_ddr_retention(APD_DOMAIN, 0, NULL);
