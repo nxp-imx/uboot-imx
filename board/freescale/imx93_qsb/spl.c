@@ -93,7 +93,10 @@ int power_init_board(void)
 	}
 
 	/* set standby voltage to 0.65v */
-	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x4);
+	if (val & PCA9450_REG_PWRCTRL_TOFF_DEB)
+		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x0);
+	else
+		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x4);
 
 	/* 1.1v for LPDDR4 */
 	pmic_reg_write(dev, PCA9450_BUCK2OUT_DVS0, 0x28);
