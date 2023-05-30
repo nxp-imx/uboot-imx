@@ -41,6 +41,10 @@ config TARGET_IMX93_9X9_QSB
 	select IMX93
 	select IMX9_LPDDR4X
 
+config TARGET_IMX91P_11X11_EVK
+	bool "imx91p_11x11_evk"
+	select IMX93
+
 config TARGET_IMX91P_9X9_QSB
 	bool "imx91p_9x9_qsb"
 	select IMX93
