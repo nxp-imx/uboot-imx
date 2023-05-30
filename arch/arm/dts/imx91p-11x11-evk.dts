@@ -1,0 +1,36 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2023 NXP
+ */
+
+#include "imx93-11x11-evk.dts"
+#include "imx93-11x11-evk-u-boot.dtsi"
+
+/ {
+	model = "NXP i.MX91P 11X11 EVK Board";
+	compatible = "fsl,imx91p-11x11-evk", "fsl,imx91p", "fsl,imx93";
+};
+
+&{/rm67199_panel} {
+	status = "disabled";
+};
+
+&A55_1 {
+	status = "disabled";
+};
+
+&dsi_host {
+	status = "disabled";
+};
+
+&dphy {
+	status = "disabled";
+};
+
+&dsi {
+	status = "disabled";
+};
+
+&lcdif {
+	status = "disabled";
+};
