@@ -56,6 +56,7 @@ struct bd_info;
 #define is_imx8ulp() (is_cpu_type(MXC_CPU_IMX8ULP) || is_cpu_type(MXC_CPU_IMX8ULPD5) || is_cpu_type(MXC_CPU_IMX8ULPS5) || \
 	is_cpu_type(MXC_CPU_IMX8ULPD3) || is_cpu_type(MXC_CPU_IMX8ULPS3) || \
 	is_cpu_type(MXC_CPU_IMX8ULPSC))
+#define is_imx8ulpd7() (is_cpu_type(MXC_CPU_IMX8ULP))
 #define is_imx8ulpd5() (is_cpu_type(MXC_CPU_IMX8ULPD5))
 #define is_imx8ulpd3() (is_cpu_type(MXC_CPU_IMX8ULPD3))
 #define is_imx8ulps5() (is_cpu_type(MXC_CPU_IMX8ULPS5))

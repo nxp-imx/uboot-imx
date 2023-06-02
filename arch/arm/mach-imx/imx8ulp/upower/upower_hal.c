@@ -182,6 +182,8 @@ int upower_init(void)
 PS_PWR_ON:
 	swton = PS_UPOWER | PS_FUSE | PS_FUSION_AO | PS_NIC_LPAV | PS_DDR |
 		PS_HIFI4 | PS_MIPI_DSI;
+	if (is_imx8ulpd7())
+		swton |= PS_PXP_EPDC; /* Work around for EPDC+PXP on M33 */
 	ret = upwr_pwm_power_on(&swton, NULL, NULL);
 	if (ret)
 		printf("Turn on switches fail %d\n", ret);
