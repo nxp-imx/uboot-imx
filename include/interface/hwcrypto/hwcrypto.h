@@ -107,10 +107,9 @@ typedef struct hwcrypto_blob_msg {
  * @buf:  physical start address of the output rng buf.
  * @len:  size of required rng.
  */
-typedef struct hwcrypto_rng_msg {
-    uint32_t buf;
+typedef struct hwcrypto_rng_req {
     uint32_t len;
-}hwcrypto_rng_msg;
+}hwcrypto_rng_req;
 
 /**
  * @buf:  physical start address of the output bkek buf.

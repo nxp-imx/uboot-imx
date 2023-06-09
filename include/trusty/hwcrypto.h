@@ -67,13 +67,13 @@ int hwcrypto_hash(uint32_t in_addr, uint32_t in_len, uint32_t out_addr,
 int hwcrypto_gen_blob(uint32_t plain_pa,
                       uint32_t plain_size, uint32_t blob_pa);
 
-/* Send request to secure side to generate rng with caam.
+/* Send request to secure side to generate rng.
  * Returns one of trusty_err.
  *
- * @buf: physical start address of the output rng buf.
+ * @buf: the output rng buf.
  * @len: size of required rng.
  * */
-int hwcrypto_gen_rng(uint32_t buf, uint32_t len);
+int hwcrypto_gen_rng(uint8_t *buf, uint32_t len);
 
 /* Send request to secure side to generate bkek with caam.
  * Returns one of trusty_err.
