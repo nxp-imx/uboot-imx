@@ -27,8 +27,9 @@ struct spl_fit_info {
 	int conf_node;		/* FDT offset to selected configuration node */
 };
 
-__weak void board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
+__weak int board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
 {
+	return 0;
 }
 
 __weak ulong board_spl_fit_size_align(ulong size)
@@ -867,7 +868,5 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 
 	spl_image->flags |= SPL_FIT_FOUND;
 
-	board_spl_fit_post_load(ctx.fit, spl_image);
-
-	return 0;
+	return board_spl_fit_post_load(ctx.fit, spl_image);
 }

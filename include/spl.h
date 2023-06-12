@@ -866,7 +866,7 @@ int board_return_to_bootrom(struct spl_image_info *spl_image,
  * board_spl_fit_post_load - allow process images after loading finished
  * @fit: Pointer to a valid Flattened Image Tree blob
  */
-void board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image);
+int board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image);
 
 /**
  * board_spl_fit_size_align - specific size align before processing payload

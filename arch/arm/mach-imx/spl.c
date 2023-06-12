@@ -442,7 +442,7 @@ exit:
 #define LZ4_MAGIC_NUM     0x184D2204
 #endif
 
-void board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
+int board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
 {
 
 #ifdef CONFIG_IMX_TRUSTY_OS
@@ -460,7 +460,12 @@ void board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
 		if (imx_hab_authenticate_image((uintptr_t)fit,
 					       offset + IVT_SIZE + CSF_PAD_SIZE,
 					       offset)) {
+#ifdef CONFIG_ANDROID_SUPPORT
+			printf("spl: ERROR:  image authentication unsuccessful\n");
+			return -1;
+#else
 			panic("spl: ERROR:  image authentication unsuccessful\n");
+#endif
 		}
 	}
 #if defined(CONFIG_IMX8MP) || defined(CONFIG_IMX8MN)
@@ -480,13 +485,13 @@ void board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
                 tee_node = fit_image_get_node(fit, TEE_SUBNODE_NAME);
                 if (tee_node < 0) {
                         printf ("Can't find FIT subimage\n");
-                        return;
+                        return -1;
                 }
 
                 ret = fit_image_get_load(fit, tee_node, &load_addr);
                 if (ret) {
                         printf("Can't get image load address!\n");
-                        return;
+                        return -1;
                 }
 
                 if (*(u32*)load_addr == LZ4_MAGIC_NUM) {
@@ -495,7 +500,7 @@ void board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
                         ret = fit_image_get_data_size(fit, tee_node, &size);
                         if (ret < 0) {
                                 printf("Can't get size of image (err=%d)\n", ret);
-                                return;
+                                return -1;
                         }
 
                         memcpy(offset_addr,(void *)load_addr, size);
@@ -504,7 +509,7 @@ void board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
                         ret = ulz4fn((void *)offset_addr, size, (void *)load_addr, &dest_size);
                         if (ret) {
                                 printf("Uncompressed err :%d\n", ret);
-                                return;
+                                return -1;
                         }
 #if CONFIG_IS_ENABLED(LOAD_FIT) || CONFIG_IS_ENABLED(LOAD_FIT_FULL)
                         /* Modify the image size had recorded in FDT */
@@ -513,6 +518,7 @@ void board_spl_fit_post_load(const void *fit, struct spl_image_info *spl_image)
                 }
         }
 #endif
+	return 0;
 
 }
 
