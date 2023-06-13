@@ -39,6 +39,11 @@
 #endif
 #include <asm/setup.h>
 
+#ifdef CONFIG_IMX_TRUSTY_OS
+#include <trusty/hwcrypto.h>
+#include <trusty/libtipc.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static struct tag *params;
@@ -68,6 +73,13 @@ static void announce_and_cleanup(int fake)
 
 #if defined(CONFIG_VIDEO_LINK)
 	video_link_shut_down();
+#endif
+
+#ifdef CONFIG_IMX_TRUSTY_OS
+	/* lock the boot state so linux can't use some hwcrypto commands. */
+	hwcrypto_lock_boot_state();
+	/* put ql-tipc to release resource for Linux */
+	trusty_ipc_shutdown();
 #endif
 
 	board_quiesce_devices();

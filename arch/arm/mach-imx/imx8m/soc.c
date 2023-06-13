@@ -1779,7 +1779,7 @@ void reset_cpu(void)
 #if defined(CONFIG_ARCH_MISC_INIT)
 int arch_misc_init(void)
 {
-#if !defined(CONFIG_ANDROID_SUPPORT) || defined(CONFIG_SPL_BUILD)
+#if !defined(CONFIG_IMX_TRUSTY_OS) || defined(CONFIG_SPL_BUILD)
 	if (IS_ENABLED(CONFIG_FSL_CAAM)) {
 		struct udevice *dev;
 		int ret;

@@ -1128,10 +1128,6 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 
 	/* lock the boot status and rollback_idx preventing Linux modify it */
 	trusty_lock_boot_state();
-	/* lock the boot state so linux can't use some hwcrypto commands. */
-	hwcrypto_lock_boot_state();
-	/* put ql-tipc to release resource for Linux */
-	trusty_ipc_shutdown();
 #endif
 
 #if defined(CONFIG_IMX_HAB) && defined(CONFIG_CMD_PRIBLOB)

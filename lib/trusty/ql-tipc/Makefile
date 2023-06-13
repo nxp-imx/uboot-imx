@@ -50,3 +50,6 @@ obj-$(CONFIG_IMX_MATTER_TRUSTY) += $(QL_TIPC)/matter.o
 obj-$(CONFIG_ARM) += \
     $(QL_TIPC)/arch/arm/trusty_mem.o \
     $(QL_TIPC)/arch/arm/trusty_dev.o
+
+obj-$(CONFIG_DM_RNG) += \
+    $(QL_TIPC)/rng.o
