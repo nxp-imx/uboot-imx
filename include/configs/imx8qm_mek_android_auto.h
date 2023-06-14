@@ -21,6 +21,8 @@
 #define IMX_HDMIRX_FIRMWARE_SIZE 0x20000
 
 #undef CFG_EXTRA_ENV_SETTINGS
+#undef CONFIG_BOOTCOMMAND
+
 #define CFG_EXTRA_ENV_SETTINGS					\
 	"emmc_dev=0\0" \
 	"sd_dev=1\0"
