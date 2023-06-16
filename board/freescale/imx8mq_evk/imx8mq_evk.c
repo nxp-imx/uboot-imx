@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2018 NXP
+ * Copyright 2018, 2023 NXP
  */
 
 #include <common.h>
@@ -300,6 +300,22 @@ int board_late_init(void)
 	board_late_mmc_env_init();
 #endif
 
+	return 0;
+}
+
+int board_phys_sdram_size(phys_size_t *size)
+{
+	if (!size)
+		return -EINVAL;
+
+	*size = PHYS_SDRAM_SIZE;
+
+#ifdef PHYS_SDRAM_2_SIZE
+	u32 val = readl(DDRC_IPS_BASE_ADDR(0) + 0x218);
+	val >>= 29;
+	if ((val & 0x3) == 0) /* 4GB board */
+		*size += PHYS_SDRAM_2_SIZE;
+#endif
 	return 0;
 }
 

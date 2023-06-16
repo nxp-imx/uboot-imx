@@ -148,6 +148,8 @@
 #define CFG_SYS_SDRAM_BASE           0x40000000
 #define PHYS_SDRAM                      0x40000000
 #define PHYS_SDRAM_SIZE			0xC0000000 /* 3GB DDR */
+#define PHYS_SDRAM_2			0x100000000
+#define PHYS_SDRAM_2_SIZE		0x40000000 /* 1GB */
 
 #define CFG_MXC_UART_BASE		UART_BASE_ADDR(1)
 

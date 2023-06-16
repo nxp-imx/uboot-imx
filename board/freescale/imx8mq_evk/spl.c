@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2018, 2021 NXP
+ * Copyright 2018 - 2023 NXP
  *
  */
 
@@ -36,9 +36,17 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 extern struct dram_timing_info dram_timing_b0;
+extern struct dram_timing_info dram_timing_4g;
 
 static void spl_dram_init(void)
 {
+	/* Check PCA6416A IO EXP on 4GB WEVK only */
+	I2C_SET_BUS(2);
+	if (!i2c_probe(0x20)) {
+		ddr_init(&dram_timing_4g);
+		return;
+	}
+
 	/* ddr init */
 	if (soc_rev() >= CHIP_REV_2_1)
 		ddr_init(&dram_timing);
@@ -58,6 +66,19 @@ static struct i2c_pads_info i2c_pad_info1 = {
 		.i2c_mode = IMX8MQ_PAD_I2C1_SDA__I2C1_SDA | PC,
 		.gpio_mode = IMX8MQ_PAD_I2C1_SDA__GPIO5_IO15 | PC,
 		.gp = IMX_GPIO_NR(5, 15),
+	},
+};
+
+static struct i2c_pads_info i2c_pad_info3 = {
+	.scl = {
+		.i2c_mode = IMX8MQ_PAD_I2C3_SCL__I2C3_SCL | PC,
+		.gpio_mode = IMX8MQ_PAD_I2C3_SCL__GPIO5_IO18| PC,
+		.gp = IMX_GPIO_NR(5, 18),
+	},
+	.sda = {
+		.i2c_mode = IMX8MQ_PAD_I2C3_SDA__I2C3_SDA | PC,
+		.gpio_mode = IMX8MQ_PAD_I2C3_SDA__GPIO5_IO19 | PC,
+		.gp = IMX_GPIO_NR(5, 19),
 	},
 };
 
@@ -267,6 +288,7 @@ void board_init_f(ulong dummy)
 	enable_tzc380();
 
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+	setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info3);
 
 	power_init_board();
 
