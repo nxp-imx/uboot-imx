@@ -6,3 +6,13 @@
 &pinctrl_uart1 {
 	u-boot,dm-pre-reloc;
 };
+
+&reg_sd1_vmmc {
+	off-on-delay-us = <10000>;
+	startup-delay-us = <2000>;
+};
+
+&reg_sd3_vmmc {
+	off-on-delay-us = <10000>;
+	startup-delay-us = <2000>;
+};
