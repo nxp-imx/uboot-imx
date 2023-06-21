@@ -432,3 +432,49 @@ int hwcrypto_commit_emmc_cid(void)
 
     return rc;
 }
+
+int hwcrypto_provision_firmware_sign_key(const char *data, uint32_t data_size)
+{
+    uint8_t *req = NULL, *tmp;
+    /* sanity check */
+    if (!data || !data_size)
+        return TRUSTY_ERR_INVALID_ARGS;
+
+    /* serialize the request */
+    req = trusty_calloc(data_size + sizeof(data_size), 1);
+    if (!req) {
+        return TRUSTY_ERR_NO_MEMORY;
+    }
+    tmp = append_sized_buf_to_buf(req, (uint8_t *)data, data_size);
+
+    int rc = hwcrypto_do_tipc(HWCRYPTO_PROVISION_FIRMWARE_SIGN_KEY, (void*)req,
+                              data_size + sizeof(data_size), NULL, 0);
+
+    if (req)
+        trusty_free(req);
+
+    return rc;
+}
+
+int hwcrypto_provision_firmware_encrypt_key(const char *data, uint32_t data_size)
+{
+    uint8_t *req = NULL, *tmp;
+    /* sanity check */
+    if (!data || !data_size)
+        return TRUSTY_ERR_INVALID_ARGS;
+
+    /* serialize the request */
+    req = trusty_calloc(data_size + sizeof(data_size), 1);
+    if (!req) {
+        return TRUSTY_ERR_NO_MEMORY;
+    }
+    tmp = append_sized_buf_to_buf(req, (uint8_t *)data, data_size);
+
+    int rc = hwcrypto_do_tipc(HWCRYPTO_PROVISION_FIRMWARE_ENCRYPT_KEY, (void*)req,
+                              data_size + sizeof(data_size), NULL, 0);
+
+    if (req)
+        trusty_free(req);
+
+    return rc;
+}

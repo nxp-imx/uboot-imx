@@ -104,4 +104,12 @@ int hwcrypto_gen_dek_blob(char *data, uint32_t *data_size);
 /* pass emmc id to secure side
  * */
 int hwcrypto_commit_emmc_cid(void);
+
+/* Send request to secure side to provision firmware sign key
+ * */
+int hwcrypto_provision_firmware_sign_key(const char *data, uint32_t data_size);
+
+/* Send request to secure side to provision firmware encrypt key
+ * */
+int hwcrypto_provision_firmware_encrypt_key(const char *data, uint32_t data_size);
 #endif /* TRUSTY_HWCRYPTO_H_ */

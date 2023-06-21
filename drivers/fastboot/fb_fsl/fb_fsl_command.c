@@ -724,6 +724,22 @@ static void flashing(char *cmd, char *response)
 			printf("Provision widevine keybox successfully!\n");
 			strcpy(response, "OKAY");
 		}
+	} else if (endswith(cmd, FASTBOOT_FIRMWARE_SIGN_KEY)) {
+		if (hwcrypto_provision_firmware_sign_key(fastboot_buf_addr, fastboot_bytes_received)) {
+			printf("ERROR provision firmware sign key failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			printf("Provision firmware sign key successfully!\n");
+			strcpy(response, "OKAY");
+		}
+	} else if (endswith(cmd, FASTBOOT_FIRMWARE_ENCRYPT_KEY)) {
+		if (hwcrypto_provision_firmware_encrypt_key(fastboot_buf_addr, fastboot_bytes_received)) {
+			printf("ERROR provision firmware encrypt key failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			printf("Provision firmware encrypt key successfully!\n");
+			strcpy(response, "OKAY");
+		}
 	}
 #ifdef CONFIG_IMX8M
 	else if (endswith(cmd, FASTBOOT_GENERATE_DEK_BLOB)) {
