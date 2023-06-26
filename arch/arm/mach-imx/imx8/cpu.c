@@ -60,6 +60,7 @@ int arch_cpu_init(void)
 
 static void power_off_all_usb(void);
 
+#define ARM_SMMU_sCR0_CLIENTPD	(1 << 0)
 static int imx8_init_mu(void *ctx, struct event *event)
 {
 	struct udevice *devp;
@@ -98,6 +99,8 @@ static int imx8_init_mu(void *ctx, struct event *event)
 						    SC_PM_PW_MODE_ON);
 		if (ret)
 			return ret;
+		/* bypass system MMU translation for all clients */
+		writel(ARM_SMMU_sCR0_CLIENTPD, SMMU_BASE);
 	}
 #endif
 
