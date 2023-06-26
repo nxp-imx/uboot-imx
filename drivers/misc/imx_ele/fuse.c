@@ -242,20 +242,27 @@ int fuse_sense(u32 bank, u32 word, u32 *val)
 {
 	s32 word_index;
 	bool redundancy;
+	u32 fuse_acc_dis;
 
 	if (bank >= FUSE_BANKS || word >= WORDS_PER_BANKS || !val)
 		return -EINVAL;
 
 	word_index = map_fsb_fuse_index(bank, word, &redundancy);
 	if (word_index >= 0) {
-		*val = readl((ulong)FSB_BASE_ADDR + FSB_OTP_SHADOW + (word_index << 2));
-		if (redundancy)
-			*val = (*val >> ((word % 2) * 16)) & 0xFFFF;
+		fuse_acc_dis = readl(BLK_CTRL_NS_ANOMIX_BASE_ADDR + 0x28);
+		if (!(fuse_acc_dis & BIT(0))) {
+			*val = readl((ulong)FSB_BASE_ADDR + FSB_OTP_SHADOW + (word_index << 2));
+			if (redundancy)
+				*val = (*val >> ((word % 2) * 16)) & 0xFFFF;
 
-		return 0;
+			return 0;
+		}
 	}
 
-	word_index = map_s400_fuse_index(bank, word);
+	/* S400 API supports all FSB fuse. When FSB is disabled, using the word_index from FSB map */
+	if (word_index < 0)
+		word_index = map_s400_fuse_index(bank, word);
+
 	if (word_index >= 0) {
 		u32 data;
 		u32 res, size = 1;
