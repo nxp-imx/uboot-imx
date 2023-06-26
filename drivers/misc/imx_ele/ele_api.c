@@ -205,8 +205,7 @@ int ahab_read_common_fuse(u16 fuse_id, u32 *fuse_words, u32 fuse_num, u32 *respo
 		return -EINVAL;
 	}
 
-	if ((fuse_id != 1 && fuse_num != 1) ||
-	    (fuse_id == 1 && fuse_num != 4)) {
+	if (fuse_num != 1 && !(fuse_id == 1 && fuse_num == 4)) {
 		printf("Invalid fuse number parameter\n");
 		return -EINVAL;
 	}
@@ -226,7 +225,7 @@ int ahab_read_common_fuse(u16 fuse_id, u32 *fuse_words, u32 fuse_num, u32 *respo
 		*response = msg.data[0];
 
 	fuse_words[0] = msg.data[1];
-	if (fuse_id == 1) {
+	if (fuse_id == 1 && fuse_num == 4) {
 		/* OTP_UNIQ_ID */
 		fuse_words[1] = msg.data[2];
 		fuse_words[2] = msg.data[3];
