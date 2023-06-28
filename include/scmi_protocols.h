@@ -24,6 +24,7 @@ enum scmi_std_protocol {
 	SCMI_PROTOCOL_ID_SENSOR = 0x15,
 	SCMI_PROTOCOL_ID_RESET_DOMAIN = 0x16,
 	SCMI_PROTOCOL_ID_VOLTAGE_DOMAIN = 0x17,
+	SCMI_PROTOCOL_ID_PINCTRL = 0x19,
 };
 
 enum scmi_status_code {
@@ -107,6 +108,7 @@ struct scmi_clk_attribute_out {
 struct scmi_clk_state_in {
 	u32 clock_id;
 	u32 attributes;
+	u32 oem_config_val;
 };
 
 /**
@@ -448,6 +450,32 @@ struct scmi_sensor_val {
 struct scmi_sensor_reading_get_p2a {
 	int32_t status;
 	struct scmi_sensor_val val;
+};
+
+/* SCMI Pinctrl Protocol */
+enum scmi_pinctrl_message_id {
+	SCMI_MSG_PINCTRL_CONFIG_SET = 0x6
+};
+
+struct scmi_pin_config {
+	u32 type;
+	u32 val;
+};
+
+/**
+ * struct scmi_pad_config_set_in - Message payload for PAD_CONFIG_SET command
+ * @clock_id:	SCMI clock ID
+ * @parent_clk:		SCMI clock ID
+ */
+struct scmi_pinctrl_config_set_in {
+	uint32_t identifier;
+	uint32_t attributes;
+	struct scmi_pin_config configs[4];
+};
+
+
+struct scmi_pinctrl_config_set_out {
+	s32 status;
 };
 
 #endif /* _SCMI_PROTOCOLS_H */
