@@ -26,6 +26,9 @@ struct imx_pinctrl_soc_info {
 struct imx_pinctrl_priv {
 	struct udevice *dev;
 	struct imx_pinctrl_soc_info *info;
+#ifdef CONFIG_PINCTRL_IMX_SCMI
+	struct scmi_channel *channel;
+#endif
 };
 
 extern const struct pinctrl_ops imx_pinctrl_ops;
@@ -47,6 +50,7 @@ extern const struct pinctrl_ops imx_pinctrl_ops;
 #define ZERO_OFFSET_VALID	0x2
 #define CFG_IBE_OBE		0x4
 #define IMX8_USE_SCU		0x8
+#define IMX_USE_SCMI		0x10
 
 #define IOMUXC_CONFIG_SION	(0x1 << 4)
 
@@ -60,6 +64,15 @@ int imx_pinctrl_scu_conf_pins(struct imx_pinctrl_soc_info *info,
 #else
 static inline int imx_pinctrl_scu_conf_pins(struct imx_pinctrl_soc_info *info,
 					    u32 *pin_data, int npins)
+{
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_PINCTRL_IMX_SCMI
+int imx_pinctrl_scmi_conf_pins(struct udevice *dev, u32 *pin_data, int npins);
+#else
+static inline int imx_pinctrl_scmi_conf_pins(struct udevice *dev, u32 *pin_data, int npins)
 {
 	return 0;
 }

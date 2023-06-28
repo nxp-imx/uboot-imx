@@ -66,7 +66,9 @@ static int imx_pinctrl_set_state(struct udevice *dev, struct udevice *config)
 
 	npins = size / pin_size;
 
-	if (info->flags & IMX8_USE_SCU) {
+	if (info->flags & IMX_USE_SCMI)
+		return (imx_pinctrl_scmi_conf_pins(dev, pin_data, npins));
+	else if (info->flags & IMX8_USE_SCU) {
 		imx_pinctrl_scu_conf_pins(info, pin_data, npins);
 	} else {
 		/*
@@ -216,7 +218,7 @@ int imx_pinctrl_probe(struct udevice *dev,
 	priv->dev = dev;
 	priv->info = info;
 
-	if (info->flags & IMX8_USE_SCU)
+	if ((info->flags & IMX8_USE_SCU) || (info->flags & IMX_USE_SCMI))
 		return 0;
 
 	addr = devfdt_get_addr_size_index(dev, 0, &size);

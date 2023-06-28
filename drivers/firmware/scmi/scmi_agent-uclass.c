@@ -104,6 +104,10 @@ static int scmi_bind_protocols(struct udevice *dev)
 			if (IS_ENABLED(CONFIG_DM_THERMAL))
 				drv = DM_DRIVER_GET(scmi_thermal);
 			break;
+		case SCMI_PROTOCOL_ID_PINCTRL:
+			if (IS_ENABLED(CONFIG_PINCTRL_IMX_SCMI))
+				drv = DM_DRIVER_GET(scmi_pinctrl_imx);
+			break;
 		default:
 			break;
 		}
