@@ -94,14 +94,14 @@ static int imx8_init_mu(void *ctx, struct event *event)
 	}
 
 #if !defined(CONFIG_TARGET_IMX8QM_MEK_A72_ONLY) && !defined(CONFIG_TARGET_IMX8QM_MEK_A53_ONLY)
-	if (is_imx8qm()) {
-		ret = sc_pm_set_resource_power_mode(-1, SC_R_SMMU,
-						    SC_PM_PW_MODE_ON);
-		if (ret)
-			return ret;
-		/* bypass system MMU translation for all clients */
-		writel(ARM_SMMU_sCR0_CLIENTPD, SMMU_BASE);
-	}
+#ifdef CONFIG_IMX8QM
+	ret = sc_pm_set_resource_power_mode(-1, SC_R_SMMU,
+					    SC_PM_PW_MODE_ON);
+	if (ret)
+		return ret;
+	/* bypass system MMU translation for all clients */
+	writel(ARM_SMMU_sCR0_CLIENTPD, SMMU_BASE);
+#endif
 #endif
 
 	power_off_all_usb();
