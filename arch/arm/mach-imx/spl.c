@@ -23,6 +23,7 @@
 #include <mmc.h>
 #include <u-boot/lz4.h>
 #include <image.h>
+#include <asm/sections.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -318,6 +319,9 @@ ulong board_spl_fit_size_align(ulong size)
 	size = ALIGN(size, 0x1000);
 	size += CONFIG_CSF_SIZE;
 
+	if (size > CONFIG_SYS_BOOTM_LEN)
+		panic("spl: ERROR: image too big\n");
+
 	return size;
 }
 
@@ -349,6 +353,41 @@ int dram_init_banksize(void)
 }
 #endif
 
+#if IS_ENABLED(CONFIG_SPL_LOAD_FIT)
+static int spl_verify_fit_hash(const void *fit)
+{
+	unsigned long size;
+	u8 value[SHA256_SUM_LEN];
+	int value_len;
+	ulong fit_hash;
+
+#if CONFIG_IS_ENABLED(OF_CONTROL)
+	if (gd->fdt_blob && !fdt_check_header(gd->fdt_blob)) {
+		fit_hash = roundup((unsigned long)&_end +
+				     fdt_totalsize(gd->fdt_blob), 4) + 0x18000;
+	}
+#else
+	fit_hash = (unsigned long)&_end + 0x18000;
+#endif
+
+	size = fdt_totalsize(fit);
+
+	if (calculate_hash(fit, size, "sha256", value, &value_len)) {
+		printf("Unsupported hash algorithm\n");
+		return -1;
+	}
+
+	if (value_len != SHA256_SUM_LEN) {
+		printf("Bad hash value len\n");
+		return -1;
+	} else if (memcmp(value, (const void *)fit_hash, value_len) != 0) {
+		printf("Bad hash value\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 /*
  * read the address where the IVT header must sit
  * from IVT image header, loaded from SPL into
@@ -362,6 +401,15 @@ void *spl_load_simple_fit_fix_load(const void *fit)
 	unsigned long offset;
 	unsigned long size;
 	u8 *tmp = (u8 *)fit;
+
+	if (IS_ENABLED(CONFIG_IMX_HAB)) {
+		int ret = spl_verify_fit_hash(fit);
+
+		if (ret && imx_hab_is_enabled())
+			panic("spl: ERROR:  FIT hash verify unsuccessful\n");
+
+		debug("spl_verify_fit_hash %d\n", ret);
+	}
 
 	offset = ALIGN(fdt_totalsize(fit), 0x1000);
 	size = ALIGN(fdt_totalsize(fit), 4);
@@ -381,6 +429,7 @@ void *spl_load_simple_fit_fix_load(const void *fit)
 
 	return (void *)new;
 }
+#endif
 
 #if defined(CONFIG_IMX8MP) || defined(CONFIG_IMX8MN)
 int board_handle_rdc_config(void *fdt_addr, const char *config_name, void *dst_addr)
