@@ -407,6 +407,13 @@ config IMX_MATTER_TRUSTY
 	depends on IMX_TRUSTY_OS
 	default n
 
+config AUTO_SET_RPMB_KEY
+	bool "Set RPMB key automatically"
+	depends on IMX_TRUSTY_OS
+	help
+	  Automatically set the rpmb key which is derived from the hardware
+	  unique key in Trusty OS.
+
 endmenu
 
 config APPEND_BOOTARGS

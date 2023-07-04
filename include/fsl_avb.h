@@ -204,4 +204,6 @@ bool hab_is_enabled(void);
 /* Return if device is in spl recovery mode. */
 bool is_spl_recovery(void);
 
+/* Program the RPMB key automatically */
+int trusty_rpmb_init(void);
 #endif /* __FSL_AVB_H__ */

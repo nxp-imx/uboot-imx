@@ -704,6 +704,10 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 			with_init_boot = true;
 	}
 
+#ifdef CONFIG_AUTO_SET_RPMB_KEY
+	if (trusty_rpmb_init())
+		goto fail;
+#endif
 	/* For imx6 on Android, we don't have a/b slot and we want to verify boot/recovery with AVB.
 	 * For imx8 and Android Things we don't have recovery and support a/b slot for boot */
 #ifdef CONFIG_DUAL_BOOTLOADER

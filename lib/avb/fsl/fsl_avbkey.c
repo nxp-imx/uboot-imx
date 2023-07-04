@@ -33,6 +33,7 @@
 #endif
 #include <asm/mach-imx/ele_api.h>
 #include <u-boot/sha256.h>
+#include <command.h>
 
 #ifdef CONFIG_SPL_BUILD
 #include <spl.h>
@@ -813,6 +814,25 @@ fail:
 	return ret;
 
 }
+
+#ifdef CONFIG_AUTO_SET_RPMB_KEY
+int trusty_rpmb_init(void) {
+	if(!hab_is_enabled()) {
+		printf("The device is not in closed LC, skip setting RPMB key!\n");
+	} else if (rpmbkey_is_set()) {
+		printf("RPMB key has already been set!\n");
+	} else {
+		if (fastboot_set_rpmb_hardware_key()) {
+			printf("Set RPMB key failed, will enter fastboot!\n");
+			return RESULT_ERROR;
+		} else {
+			printf("Set RPMB key successfully, Will reboot!\n");
+			do_reset(NULL, 0, 0, NULL);
+		}
+	}
+	return RESULT_OK;
+}
+#endif
 
 int init_avbkey(void) {
 	struct keyslot_package kp;
