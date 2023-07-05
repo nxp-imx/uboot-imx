@@ -158,6 +158,14 @@ config SANDBOX_CLK_CCF
 	  Enable this option if you want to test the Linux kernel's Common
 	  Clock Framework [CCF] code in U-Boot's Sandbox clock driver.
 
+config SPL_CLK_SCMI
+	bool "Enable SCMI clock driver"
+	depends on SCMI_FIRMWARE && CLK && SPL && SPL_DM
+	help
+	  Enable this option if you want to support clock devices exposed
+	  by a SCMI agent based on SCMI clock protocol communication
+	  with a SCMI server.
+
 config CLK_SCMI
 	bool "Enable SCMI clock driver"
 	depends on SCMI_FIRMWARE
