@@ -147,4 +147,5 @@ U_BOOT_DRIVER(scmi_mbox) = {
 	.plat_auto	= sizeof(struct scmi_mbox_channel),
 	.of_to_plat	= scmi_mbox_of_to_plat,
 	.ops		= &scmi_mbox_ops,
+	.flags		= DM_FLAG_PRE_RELOC,
 };
