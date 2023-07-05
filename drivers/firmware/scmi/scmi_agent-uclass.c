@@ -18,23 +18,25 @@
  * struct error_code - Helper structure for SCMI error code conversion
  * @scmi:	SCMI error code
  * @errno:	Related standard error number
+ * @string:	Name the scmi error code
  */
 struct error_code {
 	int scmi;
 	int errno;
+	char *string;
 };
 
 static const struct error_code scmi_linux_errmap[] = {
-	{ .scmi = SCMI_NOT_SUPPORTED, .errno = -EOPNOTSUPP, },
-	{ .scmi = SCMI_INVALID_PARAMETERS, .errno = -EINVAL, },
-	{ .scmi = SCMI_DENIED, .errno = -EACCES, },
-	{ .scmi = SCMI_NOT_FOUND, .errno = -ENOENT, },
-	{ .scmi = SCMI_OUT_OF_RANGE, .errno = -ERANGE, },
-	{ .scmi = SCMI_BUSY, .errno = -EBUSY, },
-	{ .scmi = SCMI_COMMS_ERROR, .errno = -ECOMM, },
-	{ .scmi = SCMI_GENERIC_ERROR, .errno = -EIO, },
-	{ .scmi = SCMI_HARDWARE_ERROR, .errno = -EREMOTEIO, },
-	{ .scmi = SCMI_PROTOCOL_ERROR, .errno = -EPROTO, },
+	{ .scmi = SCMI_NOT_SUPPORTED, .errno = -EOPNOTSUPP, .string = "SCMI_NOT_SUPPORTED" },
+	{ .scmi = SCMI_INVALID_PARAMETERS, .errno = -EINVAL, .string = "SCMI_INVALID_PARAMETERS" },
+	{ .scmi = SCMI_DENIED, .errno = -EACCES, .string = "SCMI_DENIED" },
+	{ .scmi = SCMI_NOT_FOUND, .errno = -ENOENT, .string = "SCMI_NOT_SUPPORTED" },
+	{ .scmi = SCMI_OUT_OF_RANGE, .errno = -ERANGE, .string = "SCMI_OUT_OF_RANGE" },
+	{ .scmi = SCMI_BUSY, .errno = -EBUSY, .string = "SCMI_BUSY" },
+	{ .scmi = SCMI_COMMS_ERROR, .errno = -ECOMM, .string = "SCMI_COMMS_ERROR" },
+	{ .scmi = SCMI_GENERIC_ERROR, .errno = -EIO, .string = "SCMI_GENERIC_ERROR" },
+	{ .scmi = SCMI_HARDWARE_ERROR, .errno = -EREMOTEIO, .string = "SCMI_HARDWARE_ERROR" },
+	{ .scmi = SCMI_PROTOCOL_ERROR, .errno = -EPROTO, .string = "SCMI_PROTOCOL_ERROR" },
 };
 
 int scmi_to_linux_errno(s32 scmi_code)
@@ -45,8 +47,10 @@ int scmi_to_linux_errno(s32 scmi_code)
 		return 0;
 
 	for (n = 0; n < ARRAY_SIZE(scmi_linux_errmap); n++)
-		if (scmi_code == scmi_linux_errmap[n].scmi)
-			return scmi_linux_errmap[1].errno;
+		if (scmi_code == scmi_linux_errmap[n].scmi) {
+			debug("errno: %s\n", scmi_linux_errmap[n].string);
+			return scmi_linux_errmap[n].errno;
+		}
 
 	return -EPROTO;
 }
