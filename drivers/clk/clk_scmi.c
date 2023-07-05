@@ -227,4 +227,5 @@ U_BOOT_DRIVER(scmi_clock) = {
 	.ops = &scmi_clk_ops,
 	.probe = scmi_clk_probe,
 	.priv_auto = sizeof(struct scmi_clk_priv *),
+	.flags = DM_FLAG_PRE_RELOC,
 };
