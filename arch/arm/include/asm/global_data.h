@@ -100,6 +100,10 @@ struct arch_global_data {
 #ifdef CONFIG_ARCH_IMX8ULP
 	bool m33_handshake_done;
 #endif
+#if defined(CONFIG_SCMI_FIRMWARE) && defined(CONFIG_IMX9)
+	struct udevice *scmi_dev;
+	struct scmi_channel *scmi_channel;
+#endif
 };
 
 #include <asm-generic/global_data.h>
