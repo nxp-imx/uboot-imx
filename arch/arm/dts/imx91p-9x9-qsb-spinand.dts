@@ -1,0 +1,24 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2023 NXP
+ */
+
+#include "imx91p-9x9-qsb-ontat-wvga-panel.dts"
+
+&flexspi1 {
+	compatible = "fsl,imx8-fspi-nand";
+	reg = <0x425e0000 0x10000>, <0x28000000 0x10000000>;
+	reg-names = "FlexSPI", "FlexSPI-memory";
+
+	flash1: mt29f4g01abbfd12@0 {
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "spi-nand";
+		spi-max-frequency = <80000000>;
+		spi-tx-bus-width = <4>;
+		spi-rx-bus-width = <4>;
+	};
+};
+
+/delete-node/ &flash0;

@@ -1090,7 +1090,8 @@ dtb-$(CONFIG_ARCH_IMX9) += \
 	imx93-9x9-qsb.dtb \
 	imx93-9x9-qsb-ontat-wvga-panel.dtb \
 	imx91p-11x11-evk.dtb \
-	imx91p-9x9-qsb-ontat-wvga-panel.dtb
+	imx91p-9x9-qsb-ontat-wvga-panel.dtb \
+	imx91p-9x9-qsb-spinand.dtb
 
 dtb-$(CONFIG_ARCH_IMXRT) += imxrt1050-evk.dtb \
 	imxrt1020-evk.dtb \
