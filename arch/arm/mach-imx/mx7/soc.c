@@ -353,7 +353,8 @@ int arch_cpu_init(void)
 
 	init_csu();
 	/* Disable PDE bit of WMCR register */
-	imx_wdog_disable_powerdown();
+	if (!IS_ENABLED(CONFIG_IMX_WATCHDOG))
+		imx_wdog_disable_powerdown();
 
 	init_cpu_basic();
 
@@ -369,6 +370,14 @@ int arch_cpu_init(void)
 	configure_tzc380();
 
 	enable_ca7_smp();
+
+	return 0;
+}
+
+int arch_initr_trap(void)
+{
+	if (IS_ENABLED(CONFIG_IMX_WATCHDOG))
+		imx_wdog_disable_powerdown();
 
 	return 0;
 }

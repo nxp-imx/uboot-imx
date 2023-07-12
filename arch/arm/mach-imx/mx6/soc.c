@@ -644,7 +644,8 @@ int arch_cpu_init(void)
 	if (has_err007805())
 		setbits_le32(&ccm->cscmr1, MXC_CCM_CSCMR1_PER_CLK_SEL_MASK);
 
-	imx_wdog_disable_powerdown(); /* Disable PDE bit of WMCR register */
+	if (!IS_ENABLED(CONFIG_IMX_WATCHDOG))
+		imx_wdog_disable_powerdown(); /* Disable PDE bit of WMCR register */
 
 	if (is_mx6sx())
 		setbits_le32(&ccm->cscdr1, MXC_CCM_CSCDR1_UART_CLK_SEL);
@@ -666,6 +667,14 @@ int arch_cpu_init(void)
 
 	enable_ca7_smp();
 	configure_tzc380();
+
+	return 0;
+}
+
+int arch_initr_trap(void)
+{
+	if (IS_ENABLED(CONFIG_IMX_WATCHDOG))
+		imx_wdog_disable_powerdown();
 
 	return 0;
 }
