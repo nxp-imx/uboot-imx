@@ -9,7 +9,7 @@
 #include <linux/kernel.h>
 #include <asm/arch/ddr.h>
 
-struct dram_cfg_param ddr_ddrc_cfg[] = {
+static struct dram_cfg_param ddr_ddrc_cfg[] = {
     /** Initialize DDRC registers **/
     {0x4e300110, 0x44100001},
     {0x4e300000, 0x8000ef},
@@ -120,7 +120,7 @@ static struct dram_fsp_cfg ddr_dram_fsp_cfg[] = {
 };
 
 /* PHY Initialize Configuration */
-struct dram_cfg_param ddr_ddrphy_cfg[] = {
+static struct dram_cfg_param ddr_ddrphy_cfg[] = {
     {0x100a0, 0x4},
     {0x100a1, 0x5},
     {0x100a2, 0x6},
@@ -256,7 +256,7 @@ struct dram_cfg_param ddr_ddrphy_cfg[] = {
 };
 
 /* ddr phy trained csr */
-struct dram_cfg_param ddr_ddrphy_trained_csr[] = {
+static struct dram_cfg_param ddr_ddrphy_trained_csr[] = {
     {0x1005f, 0x0},
     {0x1015f, 0x0},
     {0x1105f, 0x0},
@@ -1237,7 +1237,7 @@ struct dram_cfg_param ddr_ddrphy_trained_csr[] = {
 };
 
 /* P0 message block parameter for training firmware */
-struct dram_cfg_param ddr_fsp0_cfg[] = {
+static struct dram_cfg_param ddr_fsp0_cfg[] = {
     {0xd0000, 0x0},
     {0x54003, 0x640},
     {0x54004, 0x4},
@@ -1273,7 +1273,7 @@ struct dram_cfg_param ddr_fsp0_cfg[] = {
     {0xd0000, 0x1}
 };
 /* P1 message block parameter for training firmware */
-struct dram_cfg_param ddr_fsp1_cfg[] = {
+static struct dram_cfg_param ddr_fsp1_cfg[] = {
     {0xd0000, 0x0},
     {0x54002, 0x1},
     {0x54003, 0x320},
@@ -1310,7 +1310,7 @@ struct dram_cfg_param ddr_fsp1_cfg[] = {
     {0xd0000, 0x1}
 };
 /* P2 message block parameter for training firmware */
-struct dram_cfg_param ddr_fsp2_cfg[] = {
+static struct dram_cfg_param ddr_fsp2_cfg[] = {
     {0xd0000, 0x0},
     {0x54002, 0x102},
     {0x54003, 0x270},
@@ -1349,7 +1349,7 @@ struct dram_cfg_param ddr_fsp2_cfg[] = {
 
 
 /* P0 2D message block parameter for training firmware */
-struct dram_cfg_param ddr_fsp0_2d_cfg[] = {
+static struct dram_cfg_param ddr_fsp0_2d_cfg[] = {
     {0xd0000, 0x0},
     {0x54003, 0x640},
     {0x54004, 0x4},
@@ -1387,7 +1387,7 @@ struct dram_cfg_param ddr_fsp0_2d_cfg[] = {
 };
 
 /* DRAM PHY init engine image */
-struct dram_cfg_param ddr_phy_pie[] = {
+static struct dram_cfg_param ddr_phy_pie[] = {
     {0xd0000, 0x0},
     {0x90000, 0x10},
     {0x90001, 0x400},
@@ -1950,7 +1950,7 @@ struct dram_cfg_param ddr_phy_pie[] = {
 
 };
 
-struct dram_fsp_msg ddr_dram_fsp_msg[] = {
+static struct dram_fsp_msg ddr_dram_fsp_msg[] = {
     {
         /* P0 1600mts 1D */
         .drate = 1600,
@@ -1987,7 +1987,7 @@ struct dram_fsp_msg ddr_dram_fsp_msg[] = {
 };
 
 /* ddr timing config params */
-struct dram_timing_info dram_timing = {
+struct dram_timing_info dram_timing_1600mts = {
     .ddrc_cfg = ddr_ddrc_cfg,
     .ddrc_cfg_num = ARRAY_SIZE(ddr_ddrc_cfg),
     .ddrphy_cfg = ddr_ddrphy_cfg,
