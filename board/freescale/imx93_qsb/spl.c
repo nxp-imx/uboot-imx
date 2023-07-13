@@ -135,9 +135,13 @@ void board_init_f(ulong dummy)
 		printf("SOC: 0x%x\n", gd->arch.soc_rev);
 		printf("LC: 0x%x\n", gd->arch.lifecycle);
 	}
+
+	clock_init_late();
+
 	power_init_board();
 
-	set_arm_core_max_clk();
+	if (!is_voltage_mode(VOLT_LOW_DRIVE))
+		set_arm_core_max_clk();
 
 	/* Init power of mix */
 	soc_power_init();
