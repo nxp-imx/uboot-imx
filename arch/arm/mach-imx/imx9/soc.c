@@ -912,7 +912,7 @@ static int low_drive_freq_update(void *blob)
 int board_fix_fdt(void *fdt)
 {
 	/* Update u-boot dtb clocks for low drive mode */
-	if (IS_ENABLED(CONFIG_IMX9_LOW_DRIVE_MODE)){
+	if (is_voltage_mode(VOLT_LOW_DRIVE)){
 		int nodeoff;
 		int i;
 
@@ -974,7 +974,7 @@ int ft_system_setup(void *blob, struct bd_info *bd)
 		disable_parallel_display_nodes(blob);
 	}
 
-	if (IS_ENABLED(CONFIG_IMX9_LOW_DRIVE_MODE))
+	if (is_voltage_mode(VOLT_LOW_DRIVE))
 		low_drive_freq_update(blob);
 
 	return ft_add_optee_node(blob, bd);
@@ -1250,4 +1250,23 @@ int m33_prepare(void)
 	memset((void *)(ulong)0x201e0000, 0, 0x40000);
 
 	return 0;
+}
+
+enum imx9_soc_voltage_mode soc_target_voltage_mode(void)
+{
+	u32 speed = get_cpu_speed_grade_hz();
+	enum imx9_soc_voltage_mode voltage = VOLT_OVER_DRIVE;
+
+	if (is_imx93()) {
+		if (speed == 1700000000)
+			voltage = VOLT_OVER_DRIVE;
+		else if (speed == 1400000000)
+			voltage = VOLT_NOMINAL_DRIVE;
+		else if (speed == 900000000 || speed == 800000000)
+			voltage = VOLT_LOW_DRIVE;
+		else
+			printf("Unexpected A55 freq %u, default to OD\n", speed);
+	}
+
+	return voltage;
 }

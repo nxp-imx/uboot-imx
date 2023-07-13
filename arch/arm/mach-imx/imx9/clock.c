@@ -625,7 +625,7 @@ void init_uart_clk(u32 index)
 void init_clk_usdhc(u32 index)
 {
 	u32 div;
-	if (IS_ENABLED(CONFIG_IMX9_LOW_DRIVE_MODE))
+	if (is_voltage_mode(VOLT_LOW_DRIVE))
 		div = 3; /* 266.67 Mhz */
 	else
 		div = 2; /* 400 Mhz */
@@ -783,7 +783,7 @@ int clock_init(void)
 {
 	int i;
 
-	if (IS_ENABLED(CONFIG_IMX9_LOW_DRIVE_MODE)){
+	if (is_voltage_mode(VOLT_LOW_DRIVE)){
 		bus_clock_init_low_drive();
 		set_arm_core_low_drive_clk();
 	} else {
