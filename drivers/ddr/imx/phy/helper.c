@@ -14,6 +14,9 @@
 #include <asm/arch/ddr.h>
 #include <asm/arch/ddr.h>
 #include <asm/sections.h>
+#if defined(CONFIG_IMX_SNPS_DDR_PHY_QB)
+#include <u-boot/crc.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -31,7 +34,12 @@ binman_sym_declare(ulong, ddr_1d_imem_fw, size);
 binman_sym_declare(ulong, ddr_1d_dmem_fw, image_pos);
 binman_sym_declare(ulong, ddr_1d_dmem_fw, size);
 
-#if !IS_ENABLED(CONFIG_IMX8M_DDR3L)
+#if IS_ENABLED(CONFIG_IMX_SNPS_DDR_PHY_QB)
+binman_sym_declare(ulong, ddr_qb_state, image_pos);
+binman_sym_declare(ulong, ddr_qb_state, size);
+#endif
+
+#if !IS_ENABLED(CONFIG_IMX8M_DDR3L) && !IS_ENABLED(CONFIG_IMX_SNPS_DDR_PHY_QB)
 binman_sym_declare(ulong, ddr_2d_imem_fw, image_pos);
 binman_sym_declare(ulong, ddr_2d_imem_fw, size);
 
@@ -43,12 +51,20 @@ binman_sym_declare(ulong, ddr_2d_dmem_fw, size);
 void ddr_load_train_firmware(enum fw_type type)
 {
 	u32 tmp32, i;
-	u32 error = 0;
 	unsigned long pr_to32, pr_from32;
 	uint32_t fw_offset = type ? IMEM_2D_OFFSET : 0;
 	unsigned long imem_start = (unsigned long)&_end + fw_offset;
 	unsigned long dmem_start;
 	unsigned long imem_len = IMEM_LEN, dmem_len = DMEM_LEN;
+#if defined(CONFIG_IMX_SNPS_DDR_PHY_QB)
+	unsigned long qbst_start;
+	unsigned long qbst_len = sizeof(struct ddrphy_qb_state);
+	int size;
+	u32 *to32 = (u32 *)&qb_state;
+	uint32_t crc;
+#else
+	u32 error = 0;
+#endif
 
 #ifdef CONFIG_SPL_OF_CONTROL
 	if (gd->fdt_blob && !fdt_check_header(gd->fdt_blob)) {
@@ -59,6 +75,9 @@ void ddr_load_train_firmware(enum fw_type type)
 #endif
 
 	dmem_start = imem_start + imem_len;
+#if IS_ENABLED(CONFIG_IMX_SNPS_DDR_PHY_QB)
+	qbst_start = dmem_start + dmem_len;
+#endif
 
 	if (BINMAN_SYMS_OK) {
 		switch (type) {
@@ -67,6 +86,10 @@ void ddr_load_train_firmware(enum fw_type type)
 			imem_len = binman_sym(ulong, ddr_1d_imem_fw, size);
 			dmem_start = binman_sym(ulong, ddr_1d_dmem_fw, image_pos);
 			dmem_len = binman_sym(ulong, ddr_1d_dmem_fw, size);
+#if IS_ENABLED(CONFIG_IMX_SNPS_DDR_PHY_QB)
+			qbst_start = binman_sym(ulong, ddr_qb_state, image_pos);
+			qbst_len = binman_sym(ulong, ddr_qb_state, size);
+#endif
 			break;
 		case FW_2D_IMAGE:
 #if !IS_ENABLED(CONFIG_IMX8M_DDR3L)
@@ -105,6 +128,17 @@ void ddr_load_train_firmware(enum fw_type type)
 		i += 4;
 	}
 
+#if IS_ENABLED(CONFIG_IMX_SNPS_DDR_PHY_QB)
+	size = qbst_len / sizeof(*to32);
+	pr_from32 = qbst_start;
+	for (i = 0; i < size; i += 1, pr_from32 += 4, to32 += 1)
+		(*to32) = readl(pr_from32);
+
+	crc = crc32(0, (void *)&(qb_state.flags), DDRPHY_QB_STATE_SIZE);
+	if (crc != qb_state.crc)
+		log_err("DDRPHY TD CRC error FW BIN -> U-Boot: fw=0x%08x, uboot=0x%08x\n",
+			qb_state.crc, crc);
+#else
 	debug("check ddr_pmu_train_imem code\n");
 	pr_from32 = imem_start;
 	pr_to32 = IMEM_OFFSET_ADDR;
@@ -148,6 +182,7 @@ void ddr_load_train_firmware(enum fw_type type)
 		printf("check ddr_pmu_train_dmem code fail=%d", error);
 	else
 		debug("check ddr_pmu_train_dmem code pass\n");
+#endif
 }
 
 void ddrphy_trained_csr_save(struct dram_cfg_param *ddrphy_csr,

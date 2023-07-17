@@ -2,3 +2,15 @@ config IMX_SNPS_DDR_PHY
 	bool "i.MX Snopsys DDR PHY"
 	help
 	  Select the DDR PHY driver support on i.MX8M and i.MX9 SOC.
+
+config IMX_SNPS_DDR_PHY_QB_GEN
+	bool "i.MX Synopsys DDR PHY training data generation for QuickBoot mode"
+	depends on IMX_SNPS_DDR_PHY
+	help
+	  Select the DDR PHY training data generation for QuickBoot support on i.MX9 SOC.
+
+config IMX_SNPS_DDR_PHY_QB
+	bool "i.MX Synopsys DDR PHY QuickBoot mode"
+	depends on IMX_SNPS_DDR_PHY && !IMX_SNPS_DDR_PHY_QB_GEN
+	help
+	  Select the DDR PHY QuickBoot mode on i.MX9 SOC.

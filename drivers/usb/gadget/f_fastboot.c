@@ -218,6 +218,8 @@ static void fastboot_fifo_complete(struct usb_ep *ep, struct usb_request *req)
 		if (fastboot_func->front != NULL) {
 			request = fastboot_func->front;
 			fastboot_func->front = fastboot_func->front->next;
+			if (fastboot_func->front == NULL)
+				fastboot_func->rear = NULL;
 			usb_ep_free_request(ep, request->in_req);
 			free(request);
 		} else {
@@ -442,7 +444,7 @@ static int fastboot_add(struct usb_configuration *c)
 }
 DECLARE_GADGET_BIND_CALLBACK(usb_dnl_fastboot, fastboot_add);
 
-int fastboot_tx_write_more(const char *buffer)
+int fastboot_tx_write_more_s(const void *buffer, unsigned int buffer_size)
 {
 	int ret = 0;
 
@@ -454,14 +456,15 @@ int fastboot_tx_write_more(const char *buffer)
 	}
 
 	/* usb request node FIFO enquene */
-	if ((fastboot_func->front == NULL) && (fastboot_func->rear == NULL)) {
-		fastboot_func->front = fastboot_func->rear = req;
-		req->next = NULL;
-	} else {
-		fastboot_func->rear->next = req;
-		fastboot_func->rear = req;
-		req->next = NULL;
+	if (fastboot_func->front == NULL) {
+		fastboot_func->front = req;
 	}
+
+	if (fastboot_func->rear != NULL) {
+		fastboot_func->rear->next = req;
+	}
+	fastboot_func->rear = req;
+	req->next = NULL;
 
 	/* alloc in request for current node */
 	req->in_req = fastboot_start_ep(fastboot_func->in_ep);
@@ -472,8 +475,8 @@ int fastboot_tx_write_more(const char *buffer)
 	}
 	req->in_req->complete = fastboot_fifo_complete;
 
-	memcpy(req->in_req->buf, buffer, strlen(buffer));
-	req->in_req->length = strlen(buffer);
+	memcpy(req->in_req->buf, buffer, buffer_size);
+	req->in_req->length = buffer_size;
 
 	ret = usb_ep_queue(fastboot_func->in_ep, req->in_req, 0);
 	if (ret) {
@@ -483,6 +486,11 @@ int fastboot_tx_write_more(const char *buffer)
 
 	ret = 0;
 	return ret;
+}
+
+int fastboot_tx_write_more(const char *buffer)
+{
+	return fastboot_tx_write_more_s(buffer, strlen(buffer));
 }
 
 int fastboot_tx_write(const char *buffer, unsigned int buffer_size)

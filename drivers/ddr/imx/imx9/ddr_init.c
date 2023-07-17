@@ -2,7 +2,6 @@
 /*
  * Copyright 2022 NXP
  */
-
 #include <common.h>
 #include <errno.h>
 #include <log.h>
@@ -352,21 +351,38 @@ int ddr_init(struct dram_timing_info *dram_timing)
 	/* default to the frequency point 0 clock */
 	ddrphy_init_set_dfi_clk(initial_drate);
 
+#if defined(CONFIG_IMX_SNPS_DDR_PHY_QB)
+	/* Configure PHY in QuickBoot mode */
+	ret = ddr_cfg_phy_qb(dram_timing, 0);
+	if (ret)
+		return ret;
+#else
 	/*
 	 * Start PHY initialization and training by
 	 * accessing relevant PUB registers
 	 */
 	debug("DDRINFO:ddrphy config start\n");
 
+#if defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN)
+	qb_state.flags = 0;
+#endif
+
 	ret = ddr_cfg_phy(dram_timing);
 	if (ret)
 		return ret;
+
+#if defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN)
+	ddrphy_qb_save();
+#endif
+#endif
+	/* save the ddr PHY trained CSR in memory for low power use */
+	ddrphy_trained_csr_save(ddrphy_trained_csr, ddrphy_trained_csr_num);
 
 	debug("DDRINFO: ddrphy config done\n");
 
 	update_umctl2_rank_space_setting(dram_timing, dram_timing->fsp_msg_num - 1);
 
-	/* rogram the ddrc registers */
+	/* program the ddrc registers */
 	debug("DDRINFO: ddrc config start\n");
 	ddrc_config(dram_timing);
 	debug("DDRINFO: ddrc config done\n");
@@ -407,6 +423,10 @@ int ddr_init(struct dram_timing_info *dram_timing)
 				 ARRAY_SIZE(saved_timing->fsp_cfg[1].mr_cfg));
 	}
 
+#if defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN)
+	memcpy((struct ddrphy_qb_state *)CONFIG_SAVED_QB_STATE_BASE,
+		&qb_state, sizeof(struct ddrphy_qb_state));
+#endif
 	return 0;
 }
 

@@ -49,6 +49,11 @@
 #include <trusty/libtipc.h>
 #endif
 
+#ifdef CONFIG_IMX_SNPS_DDR_PHY_QB_GEN
+#include <asm/arch/ddr.h>
+#include <u-boot/crc.h>
+#endif
+
 #include "fb_fsl_common.h"
 #include "fb_fsl_virtual_ab.h"
 
@@ -210,23 +215,64 @@ static void reboot_fastboot(char *cmd_parameter, char *response)
 }
 #endif
 
-static void upload(char *cmd_parameter, char *response)
-{
-	if (!fastboot_bytes_received || fastboot_bytes_received > (EP_BUFFER_SIZE * 32)) {
-		fastboot_fail("", response);
-		return;
+#if (defined(CONFIG_FASTBOOT_LOCK) || defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN))
+static bool endswith(char* s, char* subs) {
+	if (!s || !subs)
+		return false;
+	uint32_t len = strlen(s);
+	uint32_t sublen = strlen(subs);
+	if (len < sublen) {
+		return false;
 	}
+	if (strncmp(s + len - sublen, subs, sublen)) {
+		return false;
+	}
+	return true;
+}
+#endif
 
-	printf("Will upload %d bytes.\n", fastboot_bytes_received);
-	snprintf(response, FASTBOOT_RESPONSE_LEN, "DATA%08x", fastboot_bytes_received);
+static void send(char *response, const char *buffer, unsigned int buffer_size)
+{
+	int remaining, size;
+	unsigned int sent = 0;
+
+	printf("Will upload %d bytes.\n", buffer_size);
+	snprintf(response, FASTBOOT_RESPONSE_LEN, "DATA%08x", buffer_size);
 	fastboot_tx_write_more(response);
 
-	fastboot_tx_write((const char *)(fastboot_buf_addr), fastboot_bytes_received);
+	while (sent != buffer_size) {
+		remaining = buffer_size - sent;
+		size = EP_BUFFER_SIZE < remaining ? EP_BUFFER_SIZE : remaining;
+		fastboot_tx_write_more_s(buffer + sent, size);
+		sent += size;
+	}
 
 	snprintf(response,FASTBOOT_RESPONSE_LEN, "OKAY");
 	fastboot_tx_write_more(response);
 
 	fastboot_none_resp(response);
+}
+
+static void upload(char *cmd_parameter, char *response)
+{
+	#if CONFIG_IS_ENABLED(IMX_SNPS_DDR_PHY_QB_GEN)
+	if (endswith(cmd_parameter, "snps-ddr-phy-qb")) {
+		struct ddrphy_qb_state *qb_state;
+		uint32_t crc;
+
+		qb_state = (struct ddrphy_qb_state *)CONFIG_SAVED_QB_STATE_BASE;
+		crc = crc32(0, (void *)&(qb_state->flags), DDRPHY_QB_STATE_SIZE);
+
+		if (crc != qb_state->crc)
+			log_err("DDRPHY TD CRC error SPL->U-Boot: spl=0x%08x, uboot=0x%08x\n",
+				qb_state->crc, crc);
+
+		send(response, (const char *)qb_state, sizeof(struct ddrphy_qb_state));
+		return;
+	}
+	#endif
+
+	send(response, (const char *)(fastboot_buf_addr), fastboot_bytes_received);
 }
 
 /**
