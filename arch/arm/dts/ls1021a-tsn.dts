@@ -169,7 +169,7 @@
 	status = "okay";
 
 	flash@0 {
-		compatible = "spi-flash";
+		compatible = "jedec,spi-nor", "spi-flash";
 		spi-max-frequency = <20000000>;
 		reg = <0>;
 	};
