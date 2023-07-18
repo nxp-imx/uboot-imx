@@ -215,8 +215,7 @@ static void reboot_fastboot(char *cmd_parameter, char *response)
 }
 #endif
 
-#if (defined(CONFIG_FASTBOOT_LOCK) || defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN))
-static bool endswith(char* s, char* subs) {
+bool endswith(char* s, char* subs) {
 	if (!s || !subs)
 		return false;
 	uint32_t len = strlen(s);
@@ -229,7 +228,6 @@ static bool endswith(char* s, char* subs) {
 	}
 	return true;
 }
-#endif
 
 static void send(char *response, const char *buffer, unsigned int buffer_size)
 {
@@ -382,20 +380,6 @@ void fastboot_data_complete(char *response)
 	env_set_hex("filesize", fastboot_bytes_received);
 	env_set_hex("fastboot_bytes", fastboot_bytes_received);
 	fastboot_bytes_expected = 0;
-}
-
-bool endswith(char* s, char* subs) {
-	if (!s || !subs)
-		return false;
-	uint32_t len = strlen(s);
-	uint32_t sublen = strlen(subs);
-	if (len < sublen) {
-		return false;
-	}
-	if (strncmp(s + len - sublen, subs, sublen)) {
-		return false;
-	}
-	return true;
 }
 
 #if defined(CONFIG_FASTBOOT_LOCK)
