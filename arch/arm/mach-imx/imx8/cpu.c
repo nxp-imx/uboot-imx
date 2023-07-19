@@ -694,6 +694,19 @@ int dram_init_banksize(void)
 			}
 		}
 	}
+#ifdef CONFIG_VPU_SECURE_HEAP
+	// pass the seucre memory to linux
+	gd->bd->bi_dram[i].start = CONFIG_SECURE_HEAP_BASE;
+	gd->bd->bi_dram[i].size = CONFIG_SECURE_HEAP_SIZE;
+	dram_bank_sort(i);
+	i++;
+
+	gd->bd->bi_dram[i].start = CONFIG_VPU_BOOT_BASE;
+	gd->bd->bi_dram[i].size = CONFIG_VPU_BOOT_SIZE;
+	dram_bank_sort(i);
+	i++;
+#endif
+
 
 	/* If error, set to the default value */
 	if (!i) {

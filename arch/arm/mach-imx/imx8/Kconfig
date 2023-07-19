@@ -64,6 +64,23 @@ config PSCI_BOARD_REBOOT
 	help
 	  This is a optional command used to trigger system board reboot on imx8.
 
+config SECURE_HEAP_BASE
+	hex "secure heap base addr"
+	default 0xe0000000
+
+config SECURE_HEAP_SIZE
+	hex "secure heap base size"
+	default 0x10000000
+
+config VPU_BOOT_BASE
+	hex "vpu boot memory addr"
+	default 0x96000000
+
+config VPU_BOOT_SIZE
+	hex "vpu boot memory size"
+	default 0x2000000
+
+
 choice
 	prompt "i.MX8 board select"
 	optional
