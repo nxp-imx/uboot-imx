@@ -237,6 +237,7 @@ enum apd_dgo_gpiox_op_range {
 enum apd_dgo_gpiox_port {
 	PTE = 0,
 	PTF,
+	PTD,
 };
 
 #include <stdbool.h>

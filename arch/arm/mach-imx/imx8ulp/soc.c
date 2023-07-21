@@ -870,6 +870,20 @@ void set_apd_gpiox_op_range(u32 port, u32 range)
 	};
 }
 
+void set_apd_gpiox_comp_cell(u32 port, bool enable) {
+	switch (port) {
+	case PTD:
+		/* Enable/disable PTD cell compensation */
+		if (enable)
+			setbits_le32(SIM1_BASE_ADDR + 0x48, BIT(15));
+		else
+			clrbits_le32(SIM1_BASE_ADDR + 0x48, BIT(15));
+		break;
+	default:
+		return;
+	};
+}
+
 int arch_cpu_init(void)
 {
 	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
