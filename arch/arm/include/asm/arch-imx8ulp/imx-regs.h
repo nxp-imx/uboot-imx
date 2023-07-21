@@ -228,6 +228,17 @@ struct adc_regs {
 	u32	resfifo0;	/* 0x300 */
 };
 
+enum apd_dgo_gpiox_op_range {
+	RANGE_AUTO = 0,
+	RANGE_1P8V,
+	RANGE_3V3V,
+};
+
+enum apd_dgo_gpiox_port {
+	PTE = 0,
+	PTF,
+};
+
 #include <stdbool.h>
 bool is_usb_boot(void);
 void disconnect_from_pc(void);

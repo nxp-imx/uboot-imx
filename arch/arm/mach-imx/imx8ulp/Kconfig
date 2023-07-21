@@ -18,6 +18,10 @@ config IMX8ULP_DRAM_AUTO_LP
 	bool "i.MX8ULP DDR Auto Low Power Interface"
 	default n
 
+config IMX8ULP_FIXED_OP_RANGE
+        bool "i.MX8ULP APD Port fixed operation range"
+        default n
+
 choice
 	prompt "i.MX8ULP board select"
 	optional

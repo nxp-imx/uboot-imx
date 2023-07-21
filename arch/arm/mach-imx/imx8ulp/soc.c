@@ -836,6 +836,40 @@ void set_lpav_qos(void)
 	writel(0xf, 0x2e447100);
 }
 
+void set_apd_gpiox_op_range(u32 port, u32 range)
+{
+	switch (port) {
+	case PTE:
+		/* update DGO4 operation range */
+		writel(range, SIM1_BASE_ADDR + 0x24);
+		/* set update bit */
+		setbits_le32(SIM1_BASE_ADDR + 0x8, BIT(4));
+		/* polling the ack */
+		while ((readl(SIM1_BASE_ADDR + 0x8) & BIT(12)) == 0)
+			;
+		/* clear update bit */
+		clrbits_le32(SIM1_BASE_ADDR + 0x8, BIT(4));
+		/* clear the ack by set 1 */
+		setbits_le32(SIM1_BASE_ADDR + 0x8, BIT(12));
+		break;
+	case PTF:
+		/* update DGO5 operation range */
+		writel(range, SIM1_BASE_ADDR + 0x28);
+		/* set update bit */
+		setbits_le32(SIM1_BASE_ADDR + 0x8, BIT(5));
+		/* polling the ack */
+		while ((readl(SIM1_BASE_ADDR + 0x8) & BIT(13)) == 0)
+			;
+		/* clear update bit */
+		clrbits_le32(SIM1_BASE_ADDR + 0x8, BIT(5));
+		/* clear the ack by set 1 */
+		setbits_le32(SIM1_BASE_ADDR + 0x8, BIT(13));
+		break;
+	default:
+		return;
+	};
+}
+
 int arch_cpu_init(void)
 {
 	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
