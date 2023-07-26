@@ -42,6 +42,12 @@
 	"jh_netboot=setenv fdtfile ${jh_root_dtb}; " \
 		    "setenv jh_clk clk_ignore_unused mem=1248MB kvm-arm.mode=nvhe; run netboot; \0 "
 
+#define SR_IR_V2_COMMAND \
+	"nodes=/imx93-lpm  \0" \
+	"sr_ir_v2_cmd=cp.b ${fdtcontroladdr} ${fdt_addr_r} 0x10000;"\
+	"fdt addr ${fdt_addr_r};"\
+	"for i in ${nodes}; do fdt rm ${i}; done \0"
+
 #define CFG_MFG_ENV_SETTINGS \
 	CFG_MFG_ENV_SETTINGS_DEFAULT \
 	"initrd_addr=0x83800000\0" \
@@ -55,6 +61,7 @@
 	CFG_MFG_ENV_SETTINGS \
 	BOOTENV \
 	AHAB_ENV \
+	SR_IR_V2_COMMAND \
 	"prepare_mcore=setenv mcore_clk clk-imx93.mcore_booted;\0" \
 	"scriptaddr=0x83500000\0" \
 	"kernel_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
