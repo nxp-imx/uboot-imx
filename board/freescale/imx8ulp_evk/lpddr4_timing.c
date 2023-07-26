@@ -121,14 +121,16 @@ struct dram_cfg_param ddr_ctl_cfg[] = {
 	{ 0x2e06021c, 0x5000000 },	/* 135 */
 	{ 0x2e060220, 0x5030503 },	/* 136 */
 	{ 0x2e060224, 0x3 },	/* 137 */
-	{ 0x2e060228, 0x7010a09 },	/* 138 */
-	{ 0x2e06022c, 0xe0a09 },	/* 139 */
-	{ 0x2e060230, 0x10a0900 },	/* 140 */
-	{ 0x2e060234, 0xe0a0907 },	/* 141 */
-	{ 0x2e060238, 0xa090000 },	/* 142 */
-	{ 0x2e06023c, 0xa090701 },	/* 143 */
+	{ 0x2e060228, 0x0 },	/* 138 */
+	{ 0x2e06022c, 0x500 },	/* 139 */
+	{ 0x2e060230, 0x0 },	/* 140 */
+	{ 0x2e060234, 0x50000 },	/* 141 */
+	{ 0x2e060238, 0x0 },	/* 142 */
+	{ 0x2e06023c, 0x5000000 },	/* 143 */
+	{ 0x2e060240, 0x1000000 },      /* 144 */
 	{ 0x2e060244, 0x40003 },	/* 145 */
 	{ 0x2e060248, 0x7 },	/* 146 */
+	{ 0x2e060250, 0xf000000 },      /* 148 */
 	{ 0x2e060264, 0x4040100 },	/* 153 */
 	{ 0x2e060268, 0x1000000 },	/* 154 */
 	{ 0x2e06026c, 0x100000c0 },	/* 155 */
@@ -1132,6 +1134,13 @@ struct dram_cfg_param ddr_phy_f2_cfg[] = {
 	{ 0x2e065964, 0x1342 },	/* 1625 */
 };
 
+/** Automatic Low Power settings **/
+struct dram_cfg_param ddr_auto_lp_cfg[] = {
+	{ 0x2e060240, 0x1000800 },	/* 144 */
+	{ 0x2e06024c, 0x4 },	/* 147 */
+	{ 0x2e060248, 0x4000007 },	/* 146 */
+};
+
 /* ddr timing config params */
 struct dram_timing_info2 dram_timing = {
 	.ctl_cfg = ddr_ctl_cfg,
@@ -1142,5 +1151,7 @@ struct dram_timing_info2 dram_timing = {
 	.phy_f1_cfg_num = ARRAY_SIZE(ddr_phy_f1_cfg),
 	.phy_f2_cfg = ddr_phy_f2_cfg,
 	.phy_f2_cfg_num = ARRAY_SIZE(ddr_phy_f2_cfg),
+	.auto_lp_cfg = ddr_auto_lp_cfg,
+	.auto_lp_cfg_num = ARRAY_SIZE(ddr_auto_lp_cfg),
 	.fsp_table = { 96, 192, 1056 },
 };

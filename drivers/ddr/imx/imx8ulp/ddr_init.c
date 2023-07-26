@@ -222,6 +222,7 @@ static void save_dram_config(struct dram_timing_info2 *timing_info, unsigned lon
 	saved_timing->ctl_cfg_num = timing_info->ctl_cfg_num;
 	saved_timing->phy_f1_cfg_num = timing_info->phy_f1_cfg_num;
 	saved_timing->phy_f2_cfg_num = timing_info->phy_f2_cfg_num;
+	saved_timing->auto_lp_cfg_num = timing_info->auto_lp_cfg_num;
 
 	/* save the fsp table */
 	for (i = 0; i < 3; i++)
@@ -253,11 +254,19 @@ static void save_dram_config(struct dram_timing_info2 *timing_info, unsigned lon
 		cfg->val = timing_info->phy_f2_cfg[i].val;
 		cfg++;
 	}
+
+	/* save auto low-power config */
+	saved_timing->auto_lp_cfg = cfg;
+	for (i = 0; i < timing_info->auto_lp_cfg_num; i++) {
+		cfg->reg = timing_info->auto_lp_cfg[i].reg;
+		cfg->val = timing_info->auto_lp_cfg[i].val;
+		cfg++;
+	}
 }
 
 int ddr_init(struct dram_timing_info2 *dram_timing)
 {
-	int i;
+	int i, ret = 0;
 
 	if (IS_ENABLED(CONFIG_IMX8ULP_DRAM_PHY_PLL_BYPASS)) {
 		/* Use PLL bypass for boot freq */
@@ -293,5 +302,17 @@ int ddr_init(struct dram_timing_info2 *dram_timing)
 	/* Re-enable MULTICAST mode */
 	writel(PHY_FREQ_SEL_MULTICAST_EN(1) | PHY_FREQ_SEL_INDEX(0), DENALI_PHY_1537);
 
-	return ddr_calibration(dram_timing->fsp_table);
+	ret = ddr_calibration(dram_timing->fsp_table);
+
+	if (IS_ENABLED(CONFIG_IMX8ULP_DRAM_AUTO_LP)) {
+		if (dram_timing->auto_lp_cfg_num != 0) {
+			debug("Has enabled automatic low power feature, will config\n");
+			for (i = 0; i < dram_timing->auto_lp_cfg_num; i++)
+				writel(dram_timing->auto_lp_cfg[i].val, (ulong)dram_timing->auto_lp_cfg[i].reg);
+		} else {
+			debug("Has disabled automatic low power feature\n");
+		}
+	}
+
+	return ret;
 }

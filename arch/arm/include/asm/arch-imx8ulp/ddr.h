@@ -27,6 +27,9 @@ struct dram_timing_info2 {
 	/* phy freq2 config */
 	struct dram_cfg_param *phy_f2_cfg;
 	unsigned int phy_f2_cfg_num;
+	/* automatic low power config */
+	struct dram_cfg_param *auto_lp_cfg;
+	unsigned int auto_lp_cfg_num;
 	/* initialized drate table */
 	unsigned int fsp_table[3];
 };
