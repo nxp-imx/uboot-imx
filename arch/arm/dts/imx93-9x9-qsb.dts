@@ -71,6 +71,16 @@
 		fsl,startup-delay-ms = <500>;
 	};
 
+	reg_rpi_3v3: regulator-rpi {
+		compatible = "regulator-fixed";
+		pinctrl-names = "default";
+		regulator-name = "VDD_RPI_3V3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&pcal6524 21 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+	};
+
 	reg_usdhc2_vmmc: regulator-usdhc2 {
 		compatible = "regulator-fixed";
 		pinctrl-names = "default";
