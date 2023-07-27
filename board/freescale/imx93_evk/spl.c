@@ -128,19 +128,11 @@ int power_init_board(void)
 		pmic_reg_write(dev, PCA9450_BUCK2OUT_DVS0, 0x28);
 	}
 
-	if (is_imx91p3()) {
-		/* set standby voltage to 0.8v */
-		if (val & PCA9450_REG_PWRCTRL_TOFF_DEB)
-			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0xc);
-		else
-			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x10);
-	} else {
-		/* set standby voltage to 0.65v */
-		if (val & PCA9450_REG_PWRCTRL_TOFF_DEB)
-			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x0);
-		else
-			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x4);
-	}
+	/* set standby voltage to 0.65v */
+	if (val & PCA9450_REG_PWRCTRL_TOFF_DEB)
+		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x0);
+	else
+		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x4);
 
 	/* I2C_LT_EN*/
 	pmic_reg_write(dev, 0xa, 0x3);

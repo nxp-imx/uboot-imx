@@ -110,19 +110,11 @@ int power_init_board(void)
 		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, buck_val + 0x4);
 	}
 
-	if (is_imx91p1() || is_imx91p0()) {
-		/* set standby voltage to 0.8v */
-		if (val & PCA9450_REG_PWRCTRL_TOFF_DEB)
-			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0xc);
-		else
-			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x10);
-	} else {
-		/* set standby voltage to 0.65v */
-		if (val & PCA9450_REG_PWRCTRL_TOFF_DEB)
-			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x0);
-		else
-			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x4);
-	}
+	/* set standby voltage to 0.65v */
+	if (val & PCA9450_REG_PWRCTRL_TOFF_DEB)
+		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x0);
+	else
+		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x4);
 
 	/* 1.1v for LPDDR4 */
 	pmic_reg_write(dev, PCA9450_BUCK2OUT_DVS0, 0x28);
