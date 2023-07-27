@@ -317,7 +317,7 @@ ulong board_spl_fit_size_align(ulong size)
 	 */
 
 	size = ALIGN(size, 0x1000);
-	size += CONFIG_CSF_SIZE;
+	size += 2 * CONFIG_CSF_SIZE;
 
 	if (size > CONFIG_SYS_BOOTM_LEN)
 		panic("spl: ERROR: image too big\n");
@@ -403,12 +403,27 @@ void *spl_load_simple_fit_fix_load(const void *fit)
 	u8 *tmp = (u8 *)fit;
 
 	if (IS_ENABLED(CONFIG_IMX_HAB)) {
-		int ret = spl_verify_fit_hash(fit);
+		if (IS_ENABLED(CONFIG_IMX_SPL_FIT_FDT_SIGNATURE)) {
+			u32 offset = ALIGN(fdt_totalsize(fit), 0x1000);
 
-		if (ret && imx_hab_is_enabled())
-			panic("spl: ERROR:  FIT hash verify unsuccessful\n");
+			if (imx_hab_authenticate_image((uintptr_t)fit,
+						       offset + 2 * CSF_PAD_SIZE,
+						       offset + CSF_PAD_SIZE)) {
+#ifdef CONFIG_ANDROID_SUPPORT
+				printf("spl: ERROR:  FIT FDT authentication unsuccessful\n");
+				return NULL;
+#else
+				panic("spl: ERROR:  FIT FDT authentication unsuccessful\n");
+#endif
+			}
+		} else {
+			int ret = spl_verify_fit_hash(fit);
 
-		debug("spl_verify_fit_hash %d\n", ret);
+			if (ret && imx_hab_is_enabled())
+				panic("spl: ERROR:  FIT hash verify unsuccessful\n");
+
+			debug("spl_verify_fit_hash %d\n", ret);
+		}
 	}
 
 	offset = ALIGN(fdt_totalsize(fit), 0x1000);

@@ -84,6 +84,14 @@ config IMX_HAB
 	  This option enables the support for secure boot (HAB).
 	  See doc/imx/habv4/* for more details.
 
+config IMX_SPL_FIT_FDT_SIGNATURE
+	bool "Enable to verify signature of FIT FDT"
+	depends on IMX_HAB
+	depends on ARCH_IMX8M
+	help
+	  Enable SPL to verify signature of FIT FDT during FIT loading.
+	  This needs additional signing to FIT FDT part.
+
 config CSF_SIZE
 	hex "Maximum size for Command Sequence File (CSF) binary"
 	depends on IMX_HAB
@@ -304,6 +312,7 @@ config ANDROID_SUPPORT
 	select SUPPORT_RAW_INITRD
 	select LIBAVB
 	select AVB_SUPPORT
+	imply IMX_SPL_FIT_FDT_SIGNATURE
 
 config ANDROID_AUTO_SUPPORT
 	bool "Android Automotive features support"

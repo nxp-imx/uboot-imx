@@ -292,7 +292,7 @@ static u32 img_header_size(void)
 static int img_info_size(void *img_hdr)
 {
 #ifdef CONFIG_SPL_LOAD_FIT
-	return fit_get_size(img_hdr);
+	return board_spl_fit_size_align(fit_get_size(img_hdr));
 #elif defined CONFIG_SPL_LOAD_IMX_CONTAINER
 	struct container_hdr *container = img_hdr;
 
