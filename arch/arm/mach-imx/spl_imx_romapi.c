@@ -17,8 +17,10 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+u32 rom_dev_page_size;
+
 /* Caller need ensure the offset and size to align with page size */
-ulong spl_romapi_raw_seekable_read(u32 offset, u32 size, void *buf)
+static ulong spl_romapi_raw_seekable_read(u32 offset, u32 size, void *buf)
 {
 	int ret;
 
@@ -34,7 +36,46 @@ ulong spl_romapi_raw_seekable_read(u32 offset, u32 size, void *buf)
 	return 0;
 }
 
-ulong __weak spl_romapi_get_uboot_base(u32 image_offset, u32 rom_bt_dev)
+ulong spl_romapi_read(u32 offset, u32 size, void *buf)
+{
+	u32 off_in_page, aligned_size, readsize;
+	int ret;
+	u8 *tmp;
+
+	if (!rom_dev_page_size) {
+		ret = rom_api_query_boot_infor(QUERY_PAGE_SZ, &rom_dev_page_size);
+		if (ret != ROM_API_OKAY) {
+			puts("ROMAPI: Failure query boot infor pagesize/offset\n");
+			return 0;
+		}
+	}
+
+	off_in_page = offset % rom_dev_page_size;
+	aligned_size = ALIGN(size + off_in_page, rom_dev_page_size);
+
+	if (aligned_size != size) {
+		tmp = malloc(aligned_size);
+		if (!tmp) {
+			printf("%s: Failed to malloc %u bytes\n", __func__, aligned_size);
+			return 0;
+		}
+
+		readsize = spl_romapi_raw_seekable_read(offset - off_in_page, aligned_size, tmp);
+		if (readsize != aligned_size) {
+			printf("%s: Failed read %u, actual %u\n", __func__, aligned_size, readsize);
+			free(tmp);
+			return 0;
+		}
+
+		memcpy(buf, tmp + off_in_page, size);
+		free(tmp);
+		return size;
+	}
+
+	return spl_romapi_raw_seekable_read(offset, size, buf);
+}
+
+ulong __weak spl_romapi_get_uboot_base(u32 image_offset, u32 rom_bt_dev, u32 pagesize)
 {
 	u32 offset;
 
@@ -129,7 +170,7 @@ static int spl_romapi_load_image_seekable(struct spl_image_info *spl_image,
 	printf("image offset 0x%x, pagesize 0x%x, ivt offset 0x%x\n",
 	       image_offset, pagesize, offset);
 
-	offset = spl_romapi_get_uboot_base(image_offset, rom_bt_dev);
+	offset = spl_romapi_get_uboot_base(image_offset, rom_bt_dev, pagesize);
 
 	size = ALIGN(sizeof(struct legacy_img_hdr), pagesize);
 	ret = rom_api_download_image((u8 *)header, offset, size);

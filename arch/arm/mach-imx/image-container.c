@@ -2,7 +2,6 @@
 /*
  * Copyright 2019 NXP
  */
-
 #include <common.h>
 #include <errno.h>
 #include <log.h>
@@ -141,7 +140,7 @@ static int get_dev_container_size(void *dev, int dev_type, unsigned long offset,
 
 #ifdef CONFIG_SPL_BOOTROM_SUPPORT
 	if (dev_type == ROM_API_DEV) {
-		ret = spl_romapi_raw_seekable_read(offset, CONTAINER_HDR_ALIGNMENT, buf);
+		ret = spl_romapi_read(offset, CONTAINER_HDR_ALIGNMENT, buf);
 		if (!ret) {
 			printf("Read container image from ROM API failed\n");
 			return -EIO;
@@ -379,7 +378,7 @@ u32 __weak spl_arch_boot_image_offset(u32 image_offset, u32 rom_bt_dev)
 	return image_offset;
 }
 
-ulong spl_romapi_get_uboot_base(u32 image_offset, u32 rom_bt_dev)
+ulong spl_romapi_get_uboot_base(u32 image_offset, u32 rom_bt_dev, u32 pagesize)
 {
 	ulong end;
 
@@ -387,6 +386,7 @@ ulong spl_romapi_get_uboot_base(u32 image_offset, u32 rom_bt_dev)
 
 	end = get_imageset_end((void *)(ulong)image_offset, ROM_API_DEV);
 	end = ROUND(end, SZ_1K);
+	end = ROUND(end, pagesize);
 
 	printf("Load image from 0x%lx by ROM_API\n", end);
 

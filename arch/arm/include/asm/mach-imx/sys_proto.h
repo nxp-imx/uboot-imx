@@ -220,8 +220,8 @@ enum boot_stage_type {
 extern struct rom_api *g_rom_api;
 extern unsigned long rom_pointer[];
 
-ulong spl_romapi_raw_seekable_read(u32 offset, u32 size, void *buf);
-ulong spl_romapi_get_uboot_base(u32 image_offset, u32 rom_bt_dev);
+ulong spl_romapi_read(u32 offset, u32 size, void *buf);
+ulong spl_romapi_get_uboot_base(u32 image_offset, u32 rom_bt_dev, u32 pagesize);
 
 u32 rom_api_download_image(u8 *dest, u32 offset, u32 size);
 u32 rom_api_query_boot_infor(u32 info_type, u32 *info);
