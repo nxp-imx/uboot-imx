@@ -1083,6 +1083,7 @@ enum env_location env_get_location(enum env_operation op, int prio)
 	case MMC1_BOOT:
 	case MMC2_BOOT:
 	case MMC3_BOOT:
+	case FLEXSPI_NAND_BOOT:
 		env_loc =  ENVL_MMC;
 		break;
 #endif
