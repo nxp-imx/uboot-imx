@@ -15,6 +15,7 @@
 #define DENALI_CTL_197		(DDR_CTL_BASE_ADDR + 4 * 197)
 #define DENALI_CTL_250		(DDR_CTL_BASE_ADDR + 4 * 250)
 #define DENALI_CTL_251		(DDR_CTL_BASE_ADDR + 4 * 251)
+#define DENALI_CTL_257		(DDR_CTL_BASE_ADDR + 4 * 257)
 #define DENALI_CTL_266		(DDR_CTL_BASE_ADDR + 4 * 266)
 #define DFI_INIT_COMPLETE	0x2
 
@@ -194,6 +195,9 @@ int ddr_calibration(unsigned int fsp_table[3])
 	}
 
 	debug("De-Skew PLL is locked and ready\n");
+
+	if (readl(DENALI_CTL_257) & 0x1f)
+		panic("[ERROR] DFI error. Please check DDR configuration\n");
 
 	/* Change LPDDR4 FREQ1 to bypass mode if it is lower than 200MHz */
 	if(is_lpddr4 && fsp_table[1] < 400) {
