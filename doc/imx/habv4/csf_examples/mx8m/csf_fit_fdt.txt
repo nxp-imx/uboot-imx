@@ -29,8 +29,4 @@
     # Key slot index used to authenticate the image data
     Verification index = 2
     # Authenticate Start Address, Offset, Length and file
-    Blocks = 0x401fcdc0 0x057c00 0x01020 "flash.bin", \
-             0x40200000 0x05CC00 0x9AAC8 "flash.bin", \
-             0x00910000 0x0F76C8 0x09139 "flash.bin", \
-             0xFE000000 0x100804 0x4D268 "flash.bin", \
-             0x4029AAC8 0x14DA6C 0x06DCF "flash.bin"
+    Blocks = 0x401fadc0 0x57c00 0x3020 "signed-flash.bin"

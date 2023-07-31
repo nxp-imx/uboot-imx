@@ -27,9 +27,9 @@
 [Authenticate Data]
     Verification index = 2
     Blocks = 0x401fcdc0 0x57c00 0x1020 "flash-spl-fit-enc.bin", \
-             0x40200000 0x5AC00 0xB8940 "flash-spl-fit-enc.bin", \
-             0x920000 0x113540 0xA160 "flash-spl-fit-enc.bin", \
-             0xBE000000 0x11D6A0 0x48520 "flash-spl-fit-enc.bin"
+             0x40200000 0x5CC00 0xB8940 "flash-spl-fit-enc.bin", \
+             0x920000 0x115540 0xA160 "flash-spl-fit-enc.bin", \
+             0xBE000000 0x11F6A0 0x48520 "flash-spl-fit-enc.bin"
 
 [Install Secret Key]
     # Install the blob
@@ -47,7 +47,7 @@
     # is a copy of the file used for the authentication command above
     Verification Index = 0
     Mac Bytes = 16
-    Blocks = 0x40200000 0x5AC00 0xB8940 "flash-spl-fit-enc-dummy.bin", \
-             0x920000 0x113540 0xA160 "flash-spl-fit-enc-dummy.bin", \
-             0xBE000000 0x11D6A0 0x48520 "flash-spl-fit-enc-dummy.bin"
+    Blocks = 0x40200000 0x5CC00 0xB8940 "flash-spl-fit-enc-dummy.bin", \
+             0x920000 0x115540 0xA160 "flash-spl-fit-enc-dummy.bin", \
+             0xBE000000 0x11F6A0 0x48520 "flash-spl-fit-enc-dummy.bin"
 

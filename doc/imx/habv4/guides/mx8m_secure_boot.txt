@@ -39,17 +39,23 @@ file are covered by a digital signature.
           Signed |   +-----------------------------+   |
            Data  |   |        u-boot-spl.bin       |   |
                  |   |              +              |   |  SPL
-                 v   |           DDR FW            |   | Image
+                 |   |           DDR FW            |   | Image
+                 |   |              +              |   |
+                 v   |      Hash of FIT FDT        |   |
              ------- +-----------------------------+   |
                      |      CSF - SPL + DDR FW     |   v
                      +-----------------------------+ --------
                      |           Padding           |
-             ------- +-----------------------------+ --------
-          Signed ^   |          FDT - FIT          |   ^
-           Data  |   +-----------------------------+   |
-                 v   |          IVT - FIT          |   |
-             ------- +-----------------------------+   |
-                     |          CSF - FIT          |   |
+   ----------------- +-----------------------------+ --------
+        ^ Signed ^   |          FDT - FIT          |   ^
+        |  Data  |   +-----------------------------+   |
+        |        v   |          IVT - FIT          |   |
+ Signed |     -------+-----------------------------+   |
+  Data  |            |          CSF - FIT          |   |
+(optional)           +-----------------------------+   |
+        v            |  IVT - FIT FDT (optional)   |   |
+   ----------------- +-----------------------------+   |
+                     |  CSF - FIT FDT (optional)   |   |
              ------- +-----------------------------+   |  FIT
                  ^   |       u-boot-nodtb.bin      |   | Image
                  |   +-----------------------------+   |
@@ -124,6 +130,17 @@ to extend the root of trust, authenticating the U-Boot, ARM trusted firmware
 The root of trust can be extended again at U-Boot level to authenticate Kernel
 and M4 images.
 
+Note:
+FIT uses a FDT structure to describe the images loading information. In SPL image,
+the Hash of the FIT FDT structure is appended after DDR firmware. By default,
+SPL will verify the Hash before parsing the FIT FDT structure to load images.
+It means SPL image having to bind with FIT image. Users who need to decouple SPL
+image with FIT image, for example upgrading FIT image individually, could use
+optional FIT FDT signature. The FIT FDT signature approach generates another
+signature to FIT image, see the IVT - FIT FDT (optional) and CSF - FIT FDT (optional)
+in the signed flash.bin image layout. SPL will authenticate the FIT FDT structure
+before parsing it to load images.
+
 1.2 Enabling the secure boot support in U-Boot
 -----------------------------------------------
 
@@ -138,6 +155,7 @@ configuration:
 - Defconfig:
 
   CONFIG_IMX_HAB=y
+  CONFIG_IMX_SPL_FIT_FDT_SIGNATURE=y (Optional, for FIT FDT signature only)
 
 - Kconfig:
 
@@ -204,9 +222,11 @@ parameters and CSF offsets:
    spl hab block: 	0x7e0fd0 0x1a000 0x2e600
 
   Second Loader IMAGE:
-   sld_header_off 	0x57c00
-   sld_csf_off 		0x58c20
-   sld hab block: 	0x401fcdc0 0x57c00 0x1020
+   sld_header_off  0x57c00
+   sld_csf_off        0x58c20
+   sld hab block:    0x401fadc0 0x57c00 0x1020
+   fit-fdt csf_off  0x5ac20
+   fit-fdt hab block:  0x401fadc0 0x57c00 0x3020
 
 Additional HAB information is provided by running the following command:
 
@@ -216,10 +236,10 @@ Additional HAB information is provided by running the following command:
 
   TEE_LOAD_ADDR=0xfe000000 ATF_LOAD_ADDR=0x00910000 ./print_fit_hab.sh \
   0x60000 fsl-imx8mq-evk.dtb
-  0x40200000 0x5AC00 0x9AAC8
-  0x910000 0xF56C8 0x9139
-  0xFE000000 0xFE804 0x4D268
-  0x4029AAC8 0x14BA6C 0x6DCF
+  0x40200000 0x5CC00 0x9AAC8
+  0x910000 0xF76C8 0x9139
+  0xFE000000 0x100804 0x4D268
+  0x4029AAC8 0x14DA6C 0x6DCF
 
 If problems are encountered while using mkimage, please refer to the Linux
 User Guide which can be found alongside the latest Linux BSP release.
@@ -238,7 +258,7 @@ this document. Please refer to introduction_habv4.txt for keys,
 certificates, SRK table, and SRK hash generation.
 The resulting file locations should be inserted into the CSF files like this:
 
-- Insertion into both csf_spl.txt and csf_fit.txt
+- Insertion into both csf_spl.txt, csf_fit.txt, and csf_fit_fdt.txt (optional)
 
 For Example:
 
@@ -281,10 +301,10 @@ needed again for binary insertion.
 
 - FIT image "Authenticate Data" addresses in print_fit_hab build log:
 
-  0x40200000 0x5AC00 0x9AAC8
-  0x910000 0xF56C8 0x9139
-  0xFE000000 0xFE804 0x4D268
-  0x4029AAC8 0x14BA6C 0x6DCF
+  0x40200000 0x5CC00 0x9AAC8
+  0x910000 0xF76C8 0x9139
+  0xFE000000 0x100804 0x4D268
+  0x4029AAC8 0x14DA6C 0x6DCF
 
 - "Authenticate Data" command in csf_fit.txt file:
 
@@ -292,11 +312,23 @@ needed again for binary insertion.
 
   [Authenticate Data]
     ...
-    Blocks = 0x401fcdc0 0x057c00 0x01020 "flash.bin", \
-           0x40200000 0x05AC00 0x9AAC8 "flash.bin", \
-           0x00910000 0x0F56C8 0x09139 "flash.bin", \
-           0xFE000000 0x0FE804 0x4D268 "flash.bin", \
-           0x4029AAC8 0x14BA6C 0x06DCF "flash.bin"
+    Blocks = 0x401fadc0 0x057c00 0x1020 "flash.bin", \
+           0x40200000 0x05CC00 0x9AAC8 "flash.bin", \
+           0x00910000 0x0F76C8 0x09139 "flash.bin", \
+           0xFE000000 0x100804 0x4D268 "flash.bin", \
+           0x4029AAC8 0x14DA6C 0x06DCF "flash.bin"
+
+- (Optional) FIT FDT signature "Authenticate Data" addresses in flash.bin build log:
+
+   fit-fdt hab block:  0x401fadc0 0x57c00 0x3020
+
+- (Optional) "Authenticate Data" command in csf_fit_fdt.txt file:
+
+  For example:
+
+  [Authenticate Data]
+    ...
+    Blocks = 0x401fadc0 0x57c00 0x3020 "signed-flash.bin"
 
 1.4.1 Avoiding Kernel crash in closed devices
 ----------------------------------------------
@@ -352,6 +384,10 @@ The CSF offsets can be obtained from the flash.bin build log:
 
   sld_csf_off 0x58c20
 
+- (Optional) FIT FDT CSF offset:
+
+  fit-fdt csf_off  0x5ac20
+
 The signed flash.bin image can be then assembled:
 
 - Create a flash.bin copy:
@@ -365,6 +401,17 @@ The signed flash.bin image can be then assembled:
 - Insert csf_fit.bin in signed_flash.bin at 0x58c20 offset:
 
   $ dd if=csf_fit.bin of=signed_flash.bin seek=$((0x58c20)) bs=1 conv=notrunc
+
+(Optional) If FIT FDT signature is used, users need to continue sign the signed_flash.bin
+with csf_fit_fdt.txt CSF file
+
+- (Optional) Create FIT FDT CSF binary file (must after signed_flash.bin is generated):
+
+ $ ./cst -i csf_fit_fdt.txt -o csf_fit_fdt.bin
+
+- (Optional) Insert csf_fit_fdt.bin in signed_flash.bin at 0x5ac20 offset:
+
+  $ dd if=csf_fit_fdt.bin of=signed_flash.bin seek=$((0x5ac20)) bs=1 conv=notrunc
 
 - Flash signed flash.bin image:
 
