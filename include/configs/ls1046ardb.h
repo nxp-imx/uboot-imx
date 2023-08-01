@@ -114,6 +114,7 @@
 #define SGMII_PHY2_ADDR			0x4
 
 #define FM1_10GEC1_PHY_ADDR		0x0
+#define FM1_10GEC2_PHY_ADDR		0x8
 
 #define FDT_SEQ_MACADDR_FROM_ENV
 #endif
