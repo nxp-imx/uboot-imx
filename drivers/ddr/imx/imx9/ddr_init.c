@@ -336,9 +336,11 @@ int ddr_init(struct dram_timing_info *dram_timing)
 	unsigned int initial_drate;
 	struct dram_timing_info *saved_timing;
 	void *fsp;
-	int ret;
+	int i, ret;
 	u32 mr12, mr14;
 	u32 regval;
+	struct dram_cfg_param *ddrc_cfg;
+	unsigned int ddrc_cfg_num;
 
 	debug("DDRINFO: start DRAM init\n");
 
@@ -397,6 +399,20 @@ int ddr_init(struct dram_timing_info *dram_timing)
 	writel((regval | 0x80000000), REG_DDR_SDRAM_CFG);
 
 	check_ddrc_idle();
+
+	/* if DRAM Data INIT set, wait it be completed */
+	ddrc_cfg = dram_timing->ddrc_cfg;
+	ddrc_cfg_num = dram_timing->ddrc_cfg_num;
+	for (i = 0; i < ddrc_cfg_num; i++) {
+		if (ddrc_cfg->reg == REG_DDR_SDRAM_CFG2) {
+			if (ddrc_cfg->val & 0x10) {
+				while (readl(REG_DDR_SDRAM_CFG2) & 0x10)
+					;
+			}
+			break;
+		}
+		ddrc_cfg++;
+	}
 
 	mr12 = lpddr4_mr_read(1, 12);
 	mr14 = lpddr4_mr_read(1, 14);
