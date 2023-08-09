@@ -46,6 +46,10 @@ static int ddrphy_qb_restore(struct dram_timing_info *info, int fsp_id)
 		ddrphy_w(0x5403c, 0x78, qb_state.fsp[2] >> 8);   /* TrainedVREFDQ_B1 -> MR14_B1 */
 	}
 
+	/* restore errata registers */
+	for (i = 0; i < DDRPHY_QB_ERR_SIZE; i++)
+		dwc_ddrphy_apb_wr(ddrphy_err_cfg[i], qb_state.err[i]);
+
 	/* save CSRs to address starting with 0x54800 */
 	for (i = 0, to_addr = 0x54800; i < DDRPHY_QB_CSR_SIZE; i++, to_addr++)
 		dwc_ddrphy_apb_wr(to_addr, qb_state.csr[i]);
