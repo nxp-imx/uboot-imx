@@ -12,4 +12,10 @@ config SYS_CONFIG_NAME
 config IMX_CONFIG
 	default "arch/arm/mach-imx/imx8m/imximage.cfg"
 
+config IMX8MQ_B0_DDR_TIMING
+	bool "Use DDR timing file for B0 revision"
+	help
+	  Select to use DDR timing file for B0 revision
+	  which does not support PLL bypass mode in DDR PHY
+
 endif

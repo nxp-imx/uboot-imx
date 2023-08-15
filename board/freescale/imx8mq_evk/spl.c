@@ -40,6 +40,7 @@ extern struct dram_timing_info dram_timing_4g;
 
 static void spl_dram_init(void)
 {
+#if !IS_ENABLED(CONFIG_IMX8MQ_B0_DDR_TIMING)
 	/* Check PCA6416A IO EXP on 4GB WEVK only */
 	I2C_SET_BUS(2);
 	if (!i2c_probe(0x20)) {
@@ -51,7 +52,13 @@ static void spl_dram_init(void)
 	if (soc_rev() >= CHIP_REV_2_1)
 		ddr_init(&dram_timing);
 	else
+		panic("Enable CONFIG_IMX8MQ_B0_DDR_TIMING for B0 or older rev\n");
+#else
+	if (soc_rev() < CHIP_REV_2_1)
 		ddr_init(&dram_timing_b0);
+	else
+		panic("Disable CONFIG_IMX8MQ_B0_DDR_TIMING for B1 or new rev\n");
+#endif
 }
 
 #define I2C_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE)
