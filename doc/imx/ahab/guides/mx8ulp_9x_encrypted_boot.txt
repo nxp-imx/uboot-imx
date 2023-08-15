@@ -7,10 +7,10 @@
 
 This document describes a step-by-step procedure on how to encrypt and sign a
 bootloader image for i.MX8ULP and i.MX9x family devices. It is assumed that the reader
-is familiar with basic AHAB concepts and has already closed the device,
+is familiar with basic AHAB concepts and the secure boot process,
 step-by-step procedure can be found in mx8ulp_9x_secure_boot.txt.
 
-The steps described in this document were based in i.MX93 device, the same
+The steps described in this document are based on i.MX93 device, the same
 concept can be applied to others processor with similar AHAB architecture like
 i.MX8ULP and i.MX9x family devices.
 
@@ -65,6 +65,10 @@ funtion is available in U-Boot and can be executed through dek_blob command:
 		       sc_faddr_t export_addr, uint16_t max_size)
 
 Details in API usage can be found in EdgeLock Enclave (ELE) API guide [1].
+
+As part of the DEK generation process, the DEK blob will need to be
+transferred to a host computer to insert into the boot image. Therefore,
+the target board must have a filesystem in place to transfer the DEK file.
 
 1.2 Enabling the encrypted boot support in U-Boot
 --------------------------------------------------
@@ -207,7 +211,7 @@ signature block.
 1.7 Generating the DEK Blob
 ----------------------------
 
-The DEK must be encapsulated into a CAAM blob so it can be included into the
+The DEK must be encapsulated into a blob so it can be included into the
 final encrypted binary. The U-Boot provides a tool called dek_blob which is
 calling the ELE blob encapsulation API.
 
@@ -266,6 +270,21 @@ details on programming the flash devices on the target:
 
   $ uuu -b emmc encrypted-flash.bin 
 
+1.11 Verify Encrypted Boot
+
+Once the encrypted flash.bin image has been flashed to the device, verify that
+the encrypted image was authenticated and decrypted properly by validating no
+AHAB security events are triggered by haulting boot at U-Boot and using
+ahab_status command:
+
+  => ahab_status
+  Lifecycle: 0x00000008, OEM Open
+
+          No Events Found!
+
+With no AHAB security events found, the target device has successfully booted
+an encrypted image. From here, the board can be moved into closed lifecycle
+if desired. 
 
 References:
 [1] ELE API guide: "EdgeLock Enclave (ELE) API Reference Guide"
