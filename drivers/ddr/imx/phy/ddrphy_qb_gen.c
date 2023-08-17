@@ -1817,6 +1817,9 @@ int ddrphy_qb_save(void)
 	/* enable the ddrphy apb */
 	dwc_ddrphy_apb_wr(0xd0000, 0x0);
 
+	for (i = 0; i < DDRPHY_QB_ERR_SIZE; i++)
+		qb_state.err[i] = dwc_ddrphy_apb_rd(ddrphy_err_cfg[i]);
+
 	for (i = 0; i < DDRPHY_QB_CSR_SIZE; i++)
 		qb_state.csr[i] = dwc_ddrphy_apb_rd(ddrphy_csr_cfg[i]);
 

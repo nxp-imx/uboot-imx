@@ -103,18 +103,21 @@ extern struct dram_timing_info dram_timing;
 
 #if (defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN) || defined(CONFIG_IMX_SNPS_DDR_PHY_QB))
 #define DDRPHY_QB_FSP_SIZE	3
+#define DDRPHY_QB_ERR_SIZE	6
 #define DDRPHY_QB_CSR_SIZE	1792
 #define DDRPHY_QB_FLAG_2D	BIT(0)	/* =1 if First boot used 2D training, =0 otherwise */
 struct ddrphy_qb_state {
 	uint32_t crc;
 	uint32_t flags;
 	uint32_t fsp[DDRPHY_QB_FSP_SIZE];
+	uint32_t err[DDRPHY_QB_ERR_SIZE];
 	uint32_t csr[DDRPHY_QB_CSR_SIZE];
 };
 #define DDRPHY_QB_STATE_SIZE \
-	(sizeof(uint32_t) * (1 + DDRPHY_QB_FSP_SIZE + DDRPHY_QB_CSR_SIZE))
+	(sizeof(uint32_t) * (1 + DDRPHY_QB_FSP_SIZE + DDRPHY_QB_ERR_SIZE + DDRPHY_QB_CSR_SIZE))
 
 extern struct ddrphy_qb_state qb_state;
+extern const uint32_t ddrphy_err_cfg[DDRPHY_QB_ERR_SIZE];
 
 #if defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN)
 int ddrphy_qb_save(void);
