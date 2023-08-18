@@ -458,6 +458,33 @@ int ahab_release_m33_trout(void)
 	return ret;
 }
 
+int ahab_enable_aux(enum ELE_AUX_ID id)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg;
+	int ret;
+
+	if (!dev) {
+		printf("s400 dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = AHAB_VERSION;
+	msg.tag = AHAB_CMD_TAG;
+	msg.size = 2;
+	msg.command = ELE_ENABLE_AUX_REQ;
+	msg.data[0] = id;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+
+	return ret;
+}
+
+
 int ahab_get_events(u32 *events, u32 *events_cnt, u32 *response)
 {
 	struct udevice *dev = gd->arch.ele_dev;

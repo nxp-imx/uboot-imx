@@ -37,6 +37,7 @@
 #define ELE_ENABLE_APC_REQ (0xD2)
 #define ELE_ENABLE_RTC_REQ (0xD3)
 #define ELE_DEEP_POWER_DOWN_REQ (0xD4)
+#define ELE_ENABLE_AUX_REQ (0xD4)
 #define ELE_STOP_RST_TIMER_REQ (0xD5)
 #define ELE_WRITE_FUSE_REQ (0xD6)
 #define ELE_RELEASE_CAAM_REQ (0xD7)
@@ -111,6 +112,12 @@
 /* ELE Status*/
 #define ELE_SUCCESS_IND (0xD6)
 #define ELE_FAILURE_IND (0x29)
+
+enum ELE_AUX_ID {
+	ELE_RTC = 0x1,
+	ELE_APC = 0x2,
+	ELE_CM7 = 0xb
+};
 
 #define ELE_MAX_MSG          255U
 
