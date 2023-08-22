@@ -788,6 +788,11 @@ static int rng_init(uint8_t sec_idx, ccsr_sec_t *sec)
 	 /* Enable RDB bit so that RNG works faster */
 	sec_setbits32(&sec->scfgr, SEC_SCFGR_RDBENABLE);
 
+	if (IS_ENABLED(CONFIG_SPL_BUILD) && IS_ENABLED(CONFIG_IMX8ULP)) {
+		/* AESA DPAR Mask is reseeded from RNG DRNG State Handle 0 */
+		sec_setbits32(&sec->scfgr, SEC_SCFGR_RANDDPAR);
+	}
+
 	return ret;
 }
 
