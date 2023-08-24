@@ -41,7 +41,7 @@ config TARGET_IMX8ULP_9X9_EVK
 	select FSL_BLOB
 	select MISC
 	select ARCH_MISC_INIT
-	select SPL_CRYPTO_SUPPORT if SPL
+	select SPL_CRYPTO if SPL
 
 config TARGET_IMX8ULP_WATCH
 	bool "imx8ulp_watch"
