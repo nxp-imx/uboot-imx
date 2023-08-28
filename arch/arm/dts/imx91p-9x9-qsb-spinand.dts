@@ -6,10 +6,6 @@
 #include "imx91p-9x9-qsb-ontat-wvga-panel.dts"
 
 &flexspi1 {
-	compatible = "fsl,imx8-fspi-nand";
-	reg = <0x425e0000 0x10000>, <0x28000000 0x10000000>;
-	reg-names = "FlexSPI", "FlexSPI-memory";
-
 	flash1: mt29f4g01abbfd12@0 {
 		reg = <0>;
 		#address-cells = <1>;
