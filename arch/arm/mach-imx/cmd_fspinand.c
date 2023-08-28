@@ -460,7 +460,6 @@ static int fspinand_prog_data(struct fspi_nand *f, void *data,
 			printf("Skipping bad block at 0x%08llx\n",
 			       erase_op.addr);
 			ret = 0;
-			erase_len -= mtd->erasesize;
 			erase_op.addr += mtd->erasesize;
 			continue;
 		}
