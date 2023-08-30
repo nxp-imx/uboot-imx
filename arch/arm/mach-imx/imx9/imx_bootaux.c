@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include <common.h>
@@ -14,11 +14,14 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define CORE_CM33       0
+#define CORE_CM7        1
+
 int arch_auxiliary_core_check_up(u32 core_id)
 {
 	struct arm_smccc_res res;
 
-	arm_smccc_smc(IMX_SIP_SRC, IMX_SIP_SRC_MCU_STARTED, 0, 0,
+	arm_smccc_smc(IMX_SIP_SRC, IMX_SIP_SRC_MCU_STARTED, 0, core_id,
 		      0, 0, 0, 0, &res);
 
 	return res.a0;
@@ -30,7 +33,7 @@ int arch_auxiliary_core_down(u32 core_id)
 
 	printf("## Stopping auxiliary core\n");
 
-	arm_smccc_smc(IMX_SIP_SRC, IMX_SIP_SRC_MCU_STOP, 0, 0,
+	arm_smccc_smc(IMX_SIP_SRC, IMX_SIP_SRC_MCU_STOP, 0, core_id,
 		      0, 0, 0, 0, &res);
 
 	return 0;
@@ -40,12 +43,9 @@ int arch_auxiliary_core_up(u32 core_id, ulong addr)
 {
 	struct arm_smccc_res res;
 
-	if (!addr)
-		return -EINVAL;
-
 	printf("## Starting auxiliary core addr = 0x%08lX...\n", addr);
 
-	arm_smccc_smc(IMX_SIP_SRC, IMX_SIP_SRC_MCU_START, addr, 0,
+	arm_smccc_smc(IMX_SIP_SRC, IMX_SIP_SRC_MCU_START, addr, core_id,
 		      0, 0, 0, 0, &res);
 
 	return 0;
@@ -67,20 +67,30 @@ static inline bool check_in_ddr(ulong addr)
 	return false;
 }
 
-static inline bool check_in_tcm(ulong addr, bool mcore_view)
+static inline bool check_in_tcm(u32 core_id, ulong addr, bool mcore_view)
 {
 	if (mcore_view) {
-		if ((addr >= TCML_BASE_MCORE_SEC_ADDR && addr < TCML_BASE_MCORE_SEC_ADDR + TCML_SIZE) ||
-			(addr >= TCMU_BASE_MCORE_SEC_ADDR && addr < TCMU_BASE_MCORE_SEC_ADDR + TCMU_SIZE))
-			return true;
+		if (core_id == CORE_CM33) {
+			if ((addr >= TCML_BASE_MCORE_SEC_ADDR && addr < TCML_BASE_MCORE_SEC_ADDR + TCML_SIZE) ||
+				(addr >= TCMU_BASE_MCORE_SEC_ADDR && addr < TCMU_BASE_MCORE_SEC_ADDR + TCMU_SIZE))
+				return true;
 
-		if ((addr >= TCML_BASE_MCORE_NSEC_ADDR && addr < TCML_BASE_MCORE_NSEC_ADDR + TCML_SIZE) ||
-			(addr >= TCMU_BASE_MCORE_NSEC_ADDR && addr < TCMU_BASE_MCORE_NSEC_ADDR + TCMU_SIZE))
-			return true;
+			if ((addr >= TCML_BASE_MCORE_NSEC_ADDR && addr < TCML_BASE_MCORE_NSEC_ADDR + TCML_SIZE) ||
+				(addr >= TCMU_BASE_MCORE_NSEC_ADDR && addr < TCMU_BASE_MCORE_NSEC_ADDR + TCMU_SIZE))
+				return true;
+		} else if (core_id == CORE_CM7) {
+			if (addr >= M7_TCML_BASE_MCORE_ADDR && addr < M7_TCML_BASE_MCORE_ADDR + M7_TCML_MAX_SIZE)
+				return true;
+		}
 	} else {
-		if ((addr >= TCML_BASE_ADDR && addr < TCML_BASE_ADDR + TCML_SIZE) ||
-			(addr >= TCMU_BASE_ADDR && addr < TCMU_BASE_ADDR + TCMU_SIZE))
-			return true;
+		if (core_id == CORE_CM33) {
+			if ((addr >= TCML_BASE_ADDR && addr < TCML_BASE_ADDR + TCML_SIZE) ||
+				(addr >= TCMU_BASE_ADDR && addr < TCMU_BASE_ADDR + TCMU_SIZE))
+				return true;
+		} else if (core_id == CORE_CM7) {
+			if (addr >= M7_TCML_BASE_ADDR && addr < M7_TCML_BASE_ADDR + M7_TCML_MAX_SIZE)
+				return true;
+		}
 	}
 	return false;
 }
@@ -94,7 +104,7 @@ static inline bool check_in_flexspi(ulong addr)
 }
 
 #if IS_ENABLED(CONFIG_AHAB_BOOT)
-static int authenticate_auxcore_container(ulong addr, ulong *entry)
+static int authenticate_auxcore_container(u32 core_id, ulong addr, ulong *entry)
 {
 	struct container_hdr *phdr;
 	int i, ret = 0;
@@ -108,7 +118,7 @@ static int authenticate_auxcore_container(ulong addr, ulong *entry)
 		return -EINVAL;
 	}
 
-	if (!check_in_ddr(addr) && !check_in_tcm(addr, false) && !check_in_flexspi(addr)) {
+	if (!check_in_ddr(addr) && !check_in_tcm(core_id, addr, false) && !check_in_flexspi(addr)) {
 		puts("Error: Image's address is invalid\n");
 		return -EINVAL;
 	}
@@ -213,7 +223,7 @@ static int do_bootaux_cntr(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	printf("Authenticate auxcore container at 0x%lx\n", addr);
 
-	ret = authenticate_auxcore_container(addr, &entry);
+	ret = authenticate_auxcore_container(core, addr, &entry);
 	if (ret) {
 		printf("Authenticate container failed %d\n", ret);
 		return CMD_RET_FAILURE;
@@ -268,7 +278,7 @@ static int do_bootaux(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (!addr)
 		return CMD_RET_FAILURE;
 
-	if (!check_in_ddr(addr) && !check_in_tcm(addr, true) && !check_in_flexspi(addr)) {
+	if (!check_in_ddr(addr) && !check_in_tcm(core, addr, true) && !check_in_flexspi(addr)) {
 		printf("Error: Image's address 0x%lx is invalid\n", addr);
 		printf("     Address should be memory from M core view,\n"
 			   "     For example: 0x1ffe0000 for TCML in secure\n");
@@ -287,14 +297,21 @@ static int do_stopaux(struct cmd_tbl *cmdtp, int flag, int argc,
 		      char *const argv[])
 {
 	int ret, up;
+	u32 core = 0;
 
-	up = arch_auxiliary_core_check_up(0);
+	if (argc < 2)
+		return CMD_RET_USAGE;
+
+	if (argc > 2)
+		core = simple_strtoul(argv[2], NULL, 10);
+
+	up = arch_auxiliary_core_check_up(core);
 	if (!up) {
 		printf("## Auxiliary core is already down\n");
 		return CMD_RET_SUCCESS;
 	}
 
-	ret = arch_auxiliary_core_down(0);
+	ret = arch_auxiliary_core_down(core);
 	if (ret)
 		return CMD_RET_FAILURE;
 

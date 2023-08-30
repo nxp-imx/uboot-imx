@@ -55,6 +55,10 @@
 #define TCMU_BASE_MCORE_NSEC_ADDR   (0x20000000UL)
 #define TCMU_SIZE                   (0x20000U)
 
+#define M7_TCML_BASE_ADDR              (0x20380000UL)
+#define M7_TCML_BASE_MCORE_ADDR    (0x0UL)
+#define M7_TCML_MAX_SIZE                (0x80000U) /* Could configure to 512KB TCML */
+
 #define FLEXSPI_AHB_ADDR            (0x28000000UL)
 #define FLEXSPI_AHB_SIZE            (0x8000000UL)
 
