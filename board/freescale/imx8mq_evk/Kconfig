@@ -12,10 +12,10 @@ config SYS_CONFIG_NAME
 config IMX_CONFIG
 	default "arch/arm/mach-imx/imx8m/imximage.cfg"
 
-config IMX8MQ_B0_DDR_TIMING
-	bool "Use DDR timing file for B0 revision"
+config IMX8MQ_4GB_DDR_TIMING
+	bool "Use DDR timing file for 4GB WEVK"
 	help
-	  Select to use DDR timing file for B0 revision
-	  which does not support PLL bypass mode in DDR PHY
+	  Select to use DDR timing file for WEVK board
+	  which has 4GB LPDDR4.
 
 endif
