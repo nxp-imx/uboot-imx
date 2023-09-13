@@ -1039,7 +1039,7 @@ int imxdpuv1_init_irqs(int8_t imxdpuv1_id)
 int imxdpuv1_disp_check_shadow_loads(int8_t imxdpuv1_id, int8_t disp)
 {
 	int ret = 0;
-	uint32_t addr_extdst = IMXDPUV1_OFFSET_INVALID; /* address for extdst */
+	uint32_t addr_extdst; /* address for extdst */
 	uint32_t extdst = 0;
 	uint32_t extdst_stat = 0;
 	uint32_t fgen = 1;
