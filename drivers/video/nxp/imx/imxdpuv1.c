@@ -1039,7 +1039,7 @@ int imxdpuv1_init_irqs(int8_t imxdpuv1_id)
 int imxdpuv1_disp_check_shadow_loads(int8_t imxdpuv1_id, int8_t disp)
 {
 	int ret = 0;
-	uint32_t addr_extdst = IMXDPUV1_OFFSET_INVALID; /* address for extdst */
+	uint32_t addr_extdst; /* address for extdst */
 	uint32_t extdst = 0;
 	uint32_t extdst_stat = 0;
 	uint32_t fgen = 1;
@@ -4532,11 +4532,17 @@ int imxdpuv1_disp_setup_channel(int8_t imxdpuv1_id,
 		uv_offset = src_width * src_height; /* works for NV12 and NV16*/
 	}
 	ret = imxdpuv1_init_channel(imxdpuv1_id, &channel);
+	if (ret) {
+		return ret;
+	}
 
 	ret = imxdpuv1_init_channel_buffer(imxdpuv1_id, channel.common.chan, channel.common.stride, IMXDPUV1_ROTATE_NONE,
 		disp_addr,
 		uv_offset,
 		0);
+	if (ret) {
+		return ret;
+	}
 
 	ret = imxdpuv1_disp_set_chan_crop(imxdpuv1_id,
 		channel.common.chan,
@@ -4548,6 +4554,9 @@ int imxdpuv1_disp_setup_channel(int8_t imxdpuv1_id,
 		channel.common.dest_left,
 		channel.common.dest_width,
 		channel.common.dest_height);
+	if (ret) {
+		return ret;
+	}
 
 #ifdef DEBUG
 	{
