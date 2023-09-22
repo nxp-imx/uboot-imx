@@ -161,7 +161,6 @@ int do_bootm(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 
 #ifdef CONFIG_IMX_OPTEE
 	ulong tee_addr = 0;
-	int ret;
 	ulong zi_start, zi_end;
 
 	tee_addr = env_get_ulong("tee_addr", 16, tee_addr);
