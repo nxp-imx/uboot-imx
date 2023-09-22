@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <common.h>
@@ -248,7 +248,7 @@ int fuse_sense(u32 bank, u32 word, u32 *val)
 		return -EINVAL;
 
 	word_index = map_fsb_fuse_index(bank, word, &redundancy);
-	if (word_index >= 0) {
+	if (!IS_ENABLED(CONFIG_SCMI_FIRMWARE) && word_index >= 0) {
 		fuse_acc_dis = readl(BLK_CTRL_NS_ANOMIX_BASE_ADDR + 0x28);
 		if (!(fuse_acc_dis & BIT(0))) {
 			*val = readl((ulong)FSB_BASE_ADDR + FSB_OTP_SHADOW + (word_index << 2));
