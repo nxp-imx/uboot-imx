@@ -152,6 +152,7 @@ int upower_init(void)
 	int ret, ret_val, retry;
 
 	struct upwr_dom_bias_cfg_t bias;
+	retry = RETRY_TIMES;
 
 	do {
 		status = upwr_init(1, muptr, NULL, NULL, upower_apd_inst_isr, NULL);
@@ -178,7 +179,28 @@ int upower_init(void)
 		}
 	} while (0);
 
-	retry = RETRY_TIMES;
+#if defined(CONFIG_IMX8ULP_UPOWER_OSC)
+	u32 mode = CONFIG_IMX8ULP_UPOWER_OSC_MODE;
+
+	ret = upwr_xcp_set_osc_mode(1, mode, NULL);
+	if (ret) {
+		printf("%s: upower osc revert to low freq\n", __func__);
+		goto PS_PWR_ON;
+	}
+
+	upower_wait_resp();
+	ret = upwr_poll_req_status(UPWR_SG_EXCEPT, NULL, &err_code, &ret_val, 1000);
+	if (ret != UPWR_REQ_OK) {
+		printf("%s: upower osc freq change failure\n", __func__);
+		goto PS_PWR_ON;
+	}
+
+	if (mode)
+		printf("%s: upower osc freq: high: 64Mhz\n", __func__);
+	else
+		printf("%s: upower osc freq: low: 16Mhz\n", __func__);
+#endif
+
 PS_PWR_ON:
 	swton = PS_UPOWER | PS_FUSE | PS_FUSION_AO | PS_NIC_LPAV | PS_DDR |
 		PS_HIFI4 | PS_MIPI_DSI;

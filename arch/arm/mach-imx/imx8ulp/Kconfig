@@ -22,6 +22,19 @@ config IMX8ULP_FIXED_OP_RANGE
         bool "i.MX8ULP APD Port fixed operation range"
         default n
 
+config IMX8ULP_UPOWER_OSC
+	bool "i.MX8ULP uPower OSC mode"
+	default n
+
+config IMX8ULP_UPOWER_OSC_MODE
+	hex "uPower OSC mode: 0x0 - low; 0x1 - high"
+	depends on IMX8ULP_UPOWER_OSC
+	default 0x0
+	help
+	  uPower OSC mode config options
+	  0x0 - osc low mode  - 16Mhz
+	  0x1 - osc high mode - 64Mhz
+
 choice
 	prompt "i.MX8ULP board select"
 	optional
