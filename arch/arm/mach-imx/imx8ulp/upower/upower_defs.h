@@ -278,9 +278,12 @@ typedef enum {             /* Exception Functions */
 	UPWR_XCP_SPARE_8 = UPWR_XCP_SET_RTD_APD_LLWU,  /*  8 = spare */
     UPWR_XCP_SET_RTD_USE_DDR,      /* 9 = M33 core set it is using DDR or not */
 	UPWR_XCP_SPARE_9 = UPWR_XCP_SET_RTD_USE_DDR,  /*  9 = spare */
-	UPWR_XCP_SPARE_10, /* 10 = spare */
-	UPWR_XCP_SPARE_11, /* 11 = spare */
-	UPWR_XCP_SPARE_12, /* 12 = spare */
+	UPWR_XCP_SET_MIPI_DSI_ENA, /*  10 = set/clear mipi dsi ena */
+	UPWR_XCP_SPARE_10 = UPWR_XCP_SET_MIPI_DSI_ENA, /* 10 = spare */
+	UPWR_XCP_GET_MIPI_DSI_ENA, /*  11 = get mipi dsi ena status */
+	UPWR_XCP_SPARE_11 = UPWR_XCP_GET_MIPI_DSI_ENA, /* 11 = spare */
+	UPWR_XCP_SET_OSC_MODE,     /* 12 = set uPower OSC mode, high or low */
+	UPWR_XCP_SPARE_12 = UPWR_XCP_SET_OSC_MODE, /* 12 = spare */
 	UPWR_XCP_SPARE_13, /* 13 = spare */
 	UPWR_XCP_SPARE_14, /* 14 = spare */
 	UPWR_XCP_SPARE_15, /* 15 = spare */
@@ -295,8 +298,11 @@ typedef upwr_start_msg      upwr_xcp_start_msg;
 typedef upwr_down_2w_msg    upwr_xcp_config_msg;
 typedef upwr_down_1w_msg    upwr_xcp_swalarm_msg;
 typedef upwr_down_1w_msg    upwr_xcp_ddr_retn_msg;
+typedef upwr_down_1w_msg    upwr_xcp_set_mipi_dsi_ena_msg;
+typedef upwr_down_1w_msg    upwr_xcp_get_mipi_dsi_ena_msg;
 typedef upwr_down_1w_msg    upwr_xcp_rtd_use_ddr_msg;
 typedef upwr_down_1w_msg    upwr_xcp_rtd_apd_llwu_msg;
+typedef upwr_down_1w_msg    upwr_xcp_set_osc_mode_msg;
 typedef upwr_pointer_msg    upwr_xcp_i2c_msg;
 
 typedef struct { /* structure pointed by message upwr_xcp_i2c_msg */
@@ -319,8 +325,11 @@ typedef union {
 	upwr_xcp_swalarm_msg      swalarm;   /* software alarm */
 	upwr_xcp_i2c_msg          i2c;       /* I2C access */
 	upwr_xcp_ddr_retn_msg     set_ddr_retn;       /* set ddr retention msg */
+	upwr_xcp_set_mipi_dsi_ena_msg  set_mipi_dsi_ena;  /* set mipi dsi ena msg */
+	upwr_xcp_get_mipi_dsi_ena_msg  get_mipi_dsi_ena;  /* get mipi dsi ena msg */
 	upwr_xcp_rtd_use_ddr_msg     set_rtd_use_ddr;       /* set rtd is using ddr msg */
 	upwr_xcp_rtd_apd_llwu_msg     set_llwu;       /* set rtd/apd llwu msg */
+	upwr_xcp_set_osc_mode_msg     set_osc_mode;   /* set osc_mode msg */
 } upwr_xcp_msg;
 
 typedef struct { /* structure pointed by message upwr_volt_dva_req_id_msg */
