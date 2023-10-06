@@ -86,6 +86,13 @@ void setup_iomux_pmic(void)
 
 int power_init_board(void)
 {
+	/* Set buck2 ramp-up speed 1us */
+	upower_pmic_i2c_write(0x14, 0x39);
+	/* Set buck3 ramp-up speed 1us */
+	upower_pmic_i2c_write(0x21, 0x39);
+	/* Set buck3out min limit 0.625v */
+	upower_pmic_i2c_write(0x2d, 0x2);
+
 	if (IS_ENABLED(CONFIG_IMX8ULP_ND_MODE)) {
 		/* Set buck3 to 1.0v ND */
 		upower_pmic_i2c_write(0x22, 0x20);
