@@ -1132,6 +1132,13 @@ struct dram_cfg_param ddr_phy_f2_cfg[] = {
 	{ 0x2e065964, 0x1342 },	/* 1625 */
 };
 
+/** Automatic Low Power settings **/
+struct dram_cfg_param ddr_auto_lp_cfg[] = {
+	{ 0x2e060240, 0x1000800 },	/* 144 */
+	{ 0x2e06024c, 0x4 },	/* 147 */
+	{ 0x2e060248, 0x4000007 },	/* 146 */
+};
+
 /* ddr timing config params */
 struct dram_timing_info2 dram_timing = {
 	.ctl_cfg = ddr_ctl_cfg,
@@ -1142,5 +1149,7 @@ struct dram_timing_info2 dram_timing = {
 	.phy_f1_cfg_num = ARRAY_SIZE(ddr_phy_f1_cfg),
 	.phy_f2_cfg = ddr_phy_f2_cfg,
 	.phy_f2_cfg_num = ARRAY_SIZE(ddr_phy_f2_cfg),
+	.auto_lp_cfg = ddr_auto_lp_cfg,
+	.auto_lp_cfg_num = ARRAY_SIZE(ddr_auto_lp_cfg),
 	.fsp_table = { 96, 192, 1056 },
 };
