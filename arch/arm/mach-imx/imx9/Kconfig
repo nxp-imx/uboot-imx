@@ -29,6 +29,7 @@ config TARGET_IMX93_14X14_EVK
 
 config TARGET_IMX93_11X11_EVK
 	bool "imx93_11x11_evk"
+	select OF_BOARD_FIXUP
 	select IMX93
 
 config TARGET_IMX93_9X9_QSB

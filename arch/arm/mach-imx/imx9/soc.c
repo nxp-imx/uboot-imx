@@ -210,6 +210,10 @@ static u32 get_cpu_variant_type(u32 type)
 		return type;
 	}
 
+	/* Low performance 93 part */
+	if (((val >> 6) & 0x3F) == 0xE && npu_disable)
+		return core1_disable ? MXC_CPU_IMX9301 : MXC_CPU_IMX9302;
+
 	if ((val2 & pack_9x9_fused) == pack_9x9_fused)
 		type = MXC_CPU_IMX9322;
 
@@ -566,6 +570,10 @@ const char *get_imx_type(u32 imxtype)
 		return "93(12)";/* iMX93 9x9 Dual core without NPU */
 	case MXC_CPU_IMX9311:
 		return "93(11)";/* iMX93 9x9 Single core without NPU */
+	case MXC_CPU_IMX9302:
+		return "93(02)";/* iMX93 900Mhz Low performance Dual core without NPU */
+	case MXC_CPU_IMX9301:
+		return "93(01)";/* iMX93 900Mhz Low performance Single core without NPU */
 	case MXC_CPU_IMX91P3:
 		return "91P(31)";/* iMX91P 11x11 Full feature */
 	case MXC_CPU_IMX91P1:
@@ -910,6 +918,35 @@ static int low_drive_freq_update(void *blob)
 	return 0;
 }
 
+static int disable_lpm(void *blob)
+{
+	int rc;
+	char path[64];
+	static const char *compat_lpm = "nxp,imx93-lpm";
+
+	int offset = fdt_node_offset_by_compatible(blob, -1, compat_lpm);
+
+	if (offset < 0) {
+		printf("node with compatible \"%s\" not found\n", compat_lpm);
+		return 0;
+	}
+
+	rc = fdt_get_path(blob, offset, path, sizeof(path));
+	if (rc) {
+		printf("Fail to get lpm node path, err=%s\n", fdt_strerror(rc));
+		return -ENOENT;
+	}
+
+	rc = fdt_del_node(blob, offset);
+	if (rc < 0)
+		printf("Unable to delete lpm node %s, err=%s\n",
+		       path, fdt_strerror(rc));
+	else
+		printf("Delete node %s\n", path);
+
+	return 0;
+}
+
 #ifdef CONFIG_OF_BOARD_FIXUP
 #ifndef CONFIG_SPL_BUILD
 int board_fix_fdt(void *fdt)
@@ -965,10 +1002,11 @@ set_status:
 
 int ft_system_setup(void *blob, struct bd_info *bd)
 {
-	if (is_imx9351() || is_imx9331() || is_imx9321() || is_imx9311())
+	if (is_imx9351() || is_imx9331() || is_imx9321() || is_imx9311() || is_imx9301())
 		disable_cpu_nodes(blob, 1);
 
-	if (is_imx9332() || is_imx9331() || is_imx9312() || is_imx9311())
+	if (is_imx9332() || is_imx9331() || is_imx9312() || is_imx9311() || is_imx9302() ||
+	    is_imx9301())
 		disable_npu_nodes(blob);
 
 	if (is_imx91p0()) {
@@ -977,8 +1015,10 @@ int ft_system_setup(void *blob, struct bd_info *bd)
 		disable_parallel_display_nodes(blob);
 	}
 
-	if (is_voltage_mode(VOLT_LOW_DRIVE))
+	if (is_voltage_mode(VOLT_LOW_DRIVE)) {
 		low_drive_freq_update(blob);
+		disable_lpm(blob);
+	}
 
 	return ft_add_optee_node(blob, bd);
 }
