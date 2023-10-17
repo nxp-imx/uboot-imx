@@ -444,7 +444,7 @@ dsi_host: dsi-host {
 	assigned-clock-rates = <80000000>;
 	status = "okay";
 
-	flash0: mt25qu512a@0 {
+	flash0: flash@0 {
 		reg = <0>;
 		#address-cells = <1>;
 		#size-cells = <1>;

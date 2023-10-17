@@ -305,8 +305,6 @@
 				clocks = <&clk IMX93_CLK_LPI2C1_GATE>,
 					 <&clk IMX93_CLK_BUS_AON>;
 				clock-names = "per", "ipg";
-				dmas = <&edma1 7 0 0>, <&edma1 8 0 1>;
-				dma-names = "tx","rx";
 				status = "disabled";
 			};
 
@@ -317,8 +315,6 @@
 				clocks = <&clk IMX93_CLK_LPI2C2_GATE>,
 					 <&clk IMX93_CLK_BUS_AON>;
 				clock-names = "per", "ipg";
-				dmas = <&edma1 9 0 0>, <&edma1 10 0 1>;
-				dma-names = "tx","rx";
 				status = "disabled";
 			};
 
@@ -331,8 +327,6 @@
 				clocks = <&clk IMX93_CLK_LPSPI1_GATE>,
 					 <&clk IMX93_CLK_BUS_AON>;
 				clock-names = "per", "ipg";
-				dmas = <&edma1 11 0 0>, <&edma1 12 0 1>;
-				dma-names = "tx","rx";
 				status = "disabled";
 			};
 
@@ -345,8 +339,6 @@
 				clocks = <&clk IMX93_CLK_LPSPI2_GATE>,
 					 <&clk IMX93_CLK_BUS_AON>;
 				clock-names = "per", "ipg";
-				dmas = <&edma1 13 0 0>, <&edma1 14 0 1>;
-				dma-names = "tx","rx";
 				status = "disabled";
 			};
 
@@ -390,8 +382,6 @@
 					 <&clk IMX93_CLK_SAI1_GATE>, <&clk IMX93_CLK_DUMMY>,
 					 <&clk IMX93_CLK_DUMMY>;
 				clock-names = "bus", "mclk0", "mclk1", "mclk2", "mclk3";
-				dmas = <&edma1 22 0 1>, <&edma1 21 0 0>;
-				dma-names = "rx", "tx";
 				status = "disabled";
 			};
 
@@ -493,8 +483,6 @@
 					 <&clk IMX93_CLK_DUMMY>;
 				clock-names = "ipg_clk", "ipg_clk_app",
 					     "pll8k", "clkext3";
-				dmas = <&edma1 29 0 5>;
-				dma-names = "rx";
 				status = "disabled";
 			};
 
@@ -713,8 +701,6 @@
 				clocks = <&clk IMX93_CLK_LPI2C3_GATE>,
 					 <&clk IMX93_CLK_BUS_WAKEUP>;
 				clock-names = "per", "ipg";
-				dmas = <&edma2 8 0 0>, <&edma2 9 0 1>;
-				dma-names = "tx","rx";
 				status = "disabled";
 			};
 
@@ -725,8 +711,6 @@
 				clocks = <&clk IMX93_CLK_LPI2C4_GATE>,
 					 <&clk IMX93_CLK_BUS_WAKEUP>;
 				clock-names = "per", "ipg";
-				dmas = <&edma2 10 0 0>, <&edma2 11 0 1>;
-				dma-names = "tx","rx";
 				status = "disabled";
 			};
 
@@ -807,7 +791,7 @@
 			flexspi1: spi@425e0000 {
 				#address-cells = <1>;
 				#size-cells = <0>;
-				compatible = "nxp,imx93-fspi", "nxp,imx8mm-fspi";
+				compatible = "nxp,imx8mm-fspi";
 				reg = <0x425e0000 0x10000>, <0x28000000 0x10000000>;
 				reg-names = "fspi_base", "fspi_mmap";
 				interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
@@ -827,8 +811,6 @@
 					 <&clk IMX93_CLK_SAI2_GATE>,
 					 <&clk IMX93_CLK_DUMMY>, <&clk IMX93_CLK_DUMMY>;
 				clock-names = "bus", "mclk0", "mclk1", "mclk2", "mclk3";
-				dmas = <&edma2 59 0 1>, <&edma2 58 0 0>;
-				dma-names = "rx", "tx";
 				status = "disabled";
 			};
 
@@ -840,8 +822,6 @@
 					 <&clk IMX93_CLK_SAI3_GATE>,
 					 <&clk IMX93_CLK_DUMMY>, <&clk IMX93_CLK_DUMMY>;
 				clock-names = "bus", "mclk0", "mclk1", "mclk2", "mclk3";
-				dmas = <&edma2 61 0 1>, <&edma2 60 0 0>;
-				dma-names = "rx", "tx";
 				status = "disabled";
 			};
 
@@ -868,8 +848,6 @@
 					 <&clk IMX93_CLK_DUMMY>,
 					 <&clk IMX93_CLK_AUD_XCVR_GATE>;
 				clock-names = "ipg", "phy", "spba", "pll_ipg";
-				dmas = <&edma2 65 0 1>, <&edma2 66 0 0>;
-				dma-names = "rx", "tx";
 				status = "disabled";
 			};
 
@@ -898,8 +876,6 @@
 				clocks = <&clk IMX93_CLK_LPI2C5_GATE>,
 					 <&clk IMX93_CLK_BUS_WAKEUP>;
 				clock-names = "per", "ipg";
-				dmas = <&edma2 71 0 0>, <&edma2 72 0 1>;
-				dma-names = "tx","rx";
 				status = "disabled";
 			};
 
@@ -910,8 +886,6 @@
 				clocks = <&clk IMX93_CLK_LPI2C6_GATE>,
 					 <&clk IMX93_CLK_BUS_WAKEUP>;
 				clock-names = "per", "ipg";
-				dmas = <&edma2 73 0 0>, <&edma2 74 0 1>;
-				dma-names = "tx","rx";
 				status = "disabled";
 			};
 
@@ -922,8 +896,6 @@
 				clocks = <&clk IMX93_CLK_LPI2C7_GATE>,
 					 <&clk IMX93_CLK_BUS_WAKEUP>;
 				clock-names = "per", "ipg";
-				dmas = <&edma2 75 0 0>, <&edma2 76 0 1>;
-				dma-names = "tx","rx";
 				status = "disabled";
 			};
 
@@ -934,8 +906,6 @@
 				clocks = <&clk IMX93_CLK_LPI2C8_GATE>,
 					 <&clk IMX93_CLK_BUS_WAKEUP>;
 				clock-names = "per", "ipg";
-				dmas = <&edma2 77 0 0>, <&edma2 78 0 1>;
-				dma-names = "tx","rx";
 				status = "disabled";
 			};
 
