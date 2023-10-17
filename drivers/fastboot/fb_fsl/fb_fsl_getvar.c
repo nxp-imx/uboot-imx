@@ -51,17 +51,11 @@
 #include "fb_fsl_virtual_ab.h"
 #endif
 
-#if defined(CONFIG_ANDROID_THINGS_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
-#define FASTBOOT_COMMON_VAR_NUM 15
-#else
-#define FASTBOOT_COMMON_VAR_NUM 14
-#endif
-
 #define FASTBOOT_VAR_YES    "yes"
 #define FASTBOOT_VAR_NO     "no"
 
 /* common variables of fastboot getvar command */
-char *fastboot_common_var[FASTBOOT_COMMON_VAR_NUM] = {
+char *fastboot_common_var[] = {
 	"version",
 	"version-bootloader",
 	"version-baseband",
@@ -77,8 +71,10 @@ char *fastboot_common_var[FASTBOOT_COMMON_VAR_NUM] = {
 	"battery-soc-ok",
 	"is-userspace",
 #if defined(CONFIG_ANDROID_THINGS_SUPPORT) && defined(CONFIG_ARCH_IMX8M)
-	"baseboard_id"
+	"baseboard_id",
 #endif
+	"tee_enabled",
+	"soc_rev",
 };
 
 /* at-vboot-state variable list */
@@ -133,14 +129,6 @@ char *get_serial(void)
 	return NULL;
 #endif
 }
-
-#if !defined(PRODUCT_NAME)
-#define PRODUCT_NAME "NXP i.MX"
-#endif
-
-#if !defined(VARIANT_NAME)
-#define VARIANT_NAME "NXP i.MX"
-#endif
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 static void uuid_hex2string(uint8_t *uuid, char* buf, uint32_t uuid_len, uint32_t uuid_strlen) {
@@ -215,7 +203,7 @@ static int get_single_var(char *cmd, char *response)
 	} else if (!strcmp_l1("battery-soc-ok", cmd)) {
 		strncat(response, "yes", chars_left);
 	} else if (!strcmp_l1("variant", cmd)) {
-		strncat(response, VARIANT_NAME, chars_left);
+		strncat(response, CONFIG_TARGET_PRODUCT_VARIANT, chars_left);
 	} else if (!strcmp_l1("off-mode-charge", cmd)) {
 		strncat(response, "1", chars_left);
 	} else if (!strcmp_l1("is-userspace", cmd)) {
@@ -246,7 +234,7 @@ static int get_single_var(char *cmd, char *response)
 			return -1;
 		}
 	} else if (!strcmp_l1("product", cmd)) {
-		strncat(response, PRODUCT_NAME, chars_left);
+		strncat(response, CONFIG_TARGET_PRODUCT_NAME, chars_left);
 	}
 #ifdef CONFIG_IMX_TRUSTY_OS
         else if(!strcmp_l1("at-attest-uuid", cmd)) {
@@ -448,6 +436,17 @@ static int get_single_var(char *cmd, char *response)
 			strncat(response, "none", chars_left);
 	}
 #endif
+	else if (!strcmp_l1("soc_rev", cmd)) {
+		s = env_get("soc_rev");
+		strncat(response, s ? s : "N/A", chars_left);
+	}
+        else if (!strcmp_l1("tee_enabled", cmd)) {
+#ifdef CONFIG_IMX_TRUSTY_OS
+		strncat(response, FASTBOOT_VAR_YES, chars_left);
+#else
+		strncat(response, FASTBOOT_VAR_NO, chars_left);
+#endif
+	}
 	else {
 		char envstr[32];
 
@@ -485,7 +484,7 @@ void fastboot_getvar(char *cmd, char *response)
 
 
 		/* get common variables */
-		for (n = 0; n < FASTBOOT_COMMON_VAR_NUM; n++) {
+		for (n = 0; n < sizeof(fastboot_common_var)/sizeof(char *); n++) {
 			snprintf(response, FASTBOOT_RESPONSE_LEN, "INFO%s:", fastboot_common_var[n]);
 			get_single_var(fastboot_common_var[n], response);
 			fastboot_tx_write_more(response);
