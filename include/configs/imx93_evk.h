@@ -43,9 +43,11 @@
 		    "setenv jh_clk clk_ignore_unused mem=1248MB kvm-arm.mode=nvhe; run netboot; \0 "
 
 #define SR_IR_V2_COMMAND \
-	"nodes=/imx93-lpm  \0" \
+	"nodes=/usbg1 /usbg2 /wdt-reboot /rm67199_panel /dsi-host /display-subsystem /soc@0/bus@44000000/dma-controller@44000000 /soc@0/bus@44000000/sai@443b0000 /soc@0/bus@44000000/mqs1 /soc@0/bus@44000000/bbnsm@44440000 /soc@0/bus@44000000/system-controller@44460000 /soc@0/bus@44000000/tmu@44482000 /soc@0/bus@44000000/micfil@44520000 /soc@0/bus@42000000/dma-controller@42000000 /soc@0/bus@44000000/i3c-master@44330000 /soc@0/bus@42000000/i3c-master@42520000 /soc@0/bus@42000000/sai@42650000 /soc@0/bus@42000000/sai@42660000 /soc@0/bus@42000000/mqs2 /soc@0/bus@42000000/xcvr@42680000 /soc@0/bus@42000000/flexio@425c0000 /soc@0/bus@42800000/epxp@4ae20000 /soc@0/bus@42800000/camera /soc@0/efuse@47510000 /soc@0/system-controller@4ac10000 /soc@0/ldb@4ac10020 /soc@0/phy@4ac10024 /soc@0/ele-mu /soc@0/dsi@4ae10000 /soc@0/lcd-controller@4ae30000 /soc@0/blk-ctrl@4e010000 /soc@0/memory-controller@4e300000 /soc@0/bus@44000000/i2c@44350000/pmic@25 /imx93-lpm  \0" \
 	"sr_ir_v2_cmd=cp.b ${fdtcontroladdr} ${fdt_addr_r} 0x10000;"\
 	"fdt addr ${fdt_addr_r};"\
+	"fdt resize 0x400;"\
+	"fdt set /soc@0/bus@44000000/i2c@44350000/gpio@34 compatible adi,adp5585;" \
 	"for i in ${nodes}; do fdt rm ${i}; done \0"
 
 #define CFG_MFG_ENV_SETTINGS \
