@@ -1040,6 +1040,113 @@ int upwr_xcp_set_ddr_retention(soc_domain_t     domain,
 }
 
 /**
+ * upwr_xcp_set_mipi_dsi_ena() - M33/A35 can use this API to set/clear mipi dsi ena
+ * @domain: identifier of the caller domain.
+ * soc_domain_t found in upower_soc_defs.h.
+ * @enable: true, means that set mipi_dsi_ena, false means that clear mipi_dsi_ena.
+ * @callb: NULL
+ *
+ * A callback may not be registered (NULL pointer), in which case polling has
+ * to be used to check the response, by calling upwr_req_status or
+ * upwr_poll_req_status, using UPWR_SG_EXCEPT as the service group argument.
+ *
+ * Context: no sleep, no locks taken/released.
+ * Return: 0 if ok,
+ *        -1 if service group is busy,
+ *        -3 if called in an invalid API state
+ */
+
+int upwr_xcp_set_mipi_dsi_ena(soc_domain_t domain,
+                        uint32_t enable,
+                        const upwr_callb callb)
+{
+	upwr_xcp_set_mipi_dsi_ena_msg txmsg = {0};
+
+	if (api_state != UPWR_API_READY)  return -3;
+	if (UPWR_SG_BUSY(UPWR_SG_EXCEPT)) return -1;
+
+	UPWR_USR_CALLB(UPWR_SG_EXCEPT, callb);
+
+	UPWR_MSG_HDR(txmsg.hdr, UPWR_SG_EXCEPT, UPWR_XCP_SET_MIPI_DSI_ENA);
+	txmsg.hdr.domain = (uint32_t)domain;
+	txmsg.hdr.arg    = (uint32_t)enable;
+
+	upwr_srv_req(UPWR_SG_EXCEPT, (uint32_t*)&txmsg, sizeof(txmsg) / 4U);
+
+	return 0;
+}
+
+/**
+ * upwr_xcp_get_mipi_dsi_ena() - M33/A35 can use this API to get mipi dsi ena status
+ * @domain: identifier of the caller domain.
+ * soc_domain_t found in upower_soc_defs.h.
+ * @callb: NULL
+ *
+ * A callback may not be registered (NULL pointer), in which case polling has
+ * to be used to check the response, by calling upwr_req_status or
+ * upwr_poll_req_status, using UPWR_SG_EXCEPT as the service group argument.
+ *
+ * Context: no sleep, no locks taken/released.
+ * Return: 0 if ok,
+ *        -1 if service group is busy,
+ *        -3 if called in an invalid API state
+ */
+
+int upwr_xcp_get_mipi_dsi_ena(soc_domain_t domain, const upwr_callb callb)
+{
+	upwr_xcp_get_mipi_dsi_ena_msg txmsg = {0};
+
+	if (api_state != UPWR_API_READY)  return -3;
+	if (UPWR_SG_BUSY(UPWR_SG_EXCEPT)) return -1;
+
+	UPWR_USR_CALLB(UPWR_SG_EXCEPT, callb);
+
+	UPWR_MSG_HDR(txmsg.hdr, UPWR_SG_EXCEPT, UPWR_XCP_GET_MIPI_DSI_ENA);
+	txmsg.hdr.domain = (uint32_t)domain;
+
+	upwr_srv_req(UPWR_SG_EXCEPT, (uint32_t*)&txmsg, sizeof(txmsg) / 4U);
+
+	return 0;
+}
+
+/**
+ * upwr_xcp_set_osc_mode() - M33/A35 can use this API to set uPower OSC mode
+ * @domain: identifier of the caller domain.
+ * soc_domain_t found in upower_soc_defs.h.
+ * @osc_mode, 0 means low frequency, not 0 means high frequency.
+ * @callb: NULL
+ *
+ * A callback may not be registered (NULL pointer), in which case polling has
+ * to be used to check the response, by calling upwr_req_status or
+ * upwr_poll_req_status, using UPWR_SG_EXCEPT as the service group argument.
+ *
+ * Context: no sleep, no locks taken/released.
+ * Return: 0 if ok,
+ *        -1 if service group is busy,
+ *        -3 if called in an invalid API state
+ */
+
+int upwr_xcp_set_osc_mode(soc_domain_t     domain,
+                        uint32_t osc_mode,
+                        const upwr_callb callb)
+{
+	upwr_xcp_set_osc_mode_msg txmsg = {0};
+
+	if (api_state != UPWR_API_READY)  return -3;
+	if (UPWR_SG_BUSY(UPWR_SG_EXCEPT)) return -1;
+
+	UPWR_USR_CALLB(UPWR_SG_EXCEPT, callb);
+
+	UPWR_MSG_HDR(txmsg.hdr, UPWR_SG_EXCEPT, UPWR_XCP_SET_OSC_MODE);
+	txmsg.hdr.domain = (uint32_t)domain;
+	txmsg.hdr.arg    = (uint32_t)osc_mode;
+
+	upwr_srv_req(UPWR_SG_EXCEPT, (uint32_t*)&txmsg, sizeof(txmsg) / 4U);
+
+	return 0;
+}
+
+/**
  * upwr_xcp_set_rtd_use_ddr() - M33 call this API to inform uPower, M33 is using ddr
  * @domain: identifier of the caller domain.
  * soc_domain_t found in upower_soc_defs.h.
