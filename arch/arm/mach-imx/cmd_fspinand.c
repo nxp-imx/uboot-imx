@@ -216,23 +216,24 @@ static struct mtd_info *get_mtd_by_name(const char *name)
 static void fspinand_prep_dft_config(struct fspi_nand *f)
 {
 	struct fspi_nand_config *config = &f->fcb.config;
+	struct mtd_info *mtd = f->mtd;
 
 	config->mem_config.tag = FSPI_CFG_BLK_TAG;
 	config->mem_config.version = FSPI_CFG_BLK_VERSION;
-	config->mem_config.sflashA1Size = 256 * 1024 * 1024;
+	config->mem_config.sflashA1Size = mtd->size;
 	config->mem_config.serialClkFreq = 1;
 	config->mem_config.sflashPadType = 1;
 	config->mem_config.dataHoldTime = 3;
 	config->mem_config.dataSetupTime = 3;
-	config->mem_config.columnAddressWidth = 13;
+	config->mem_config.columnAddressWidth = mtd->writesize_shift + 1;
 	config->mem_config.deviceType = 3; //Micron
 	config->mem_config.commandInterval = 100;
 
-	config->page_data_size = 4096;
-	config->page_total_size = 8192;
-	config->page_per_block = 64;
+	config->page_data_size = mtd->writesize;
+	config->page_total_size = 1 << config->mem_config.columnAddressWidth;
+	config->page_per_block = mtd->erasesize / mtd->writesize;
 	config->has_multi_plane = 0;
-	config->block_per_device = 0x400;
+	config->block_per_device = mtd_div_by_eb(mtd->size, mtd);
 
 	/* Read Status */
 	config->mem_config.lookupTable[4 * NAND_LUT_IDX_READSTATUS + 0] =
