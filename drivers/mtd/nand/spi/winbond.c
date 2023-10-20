@@ -14,6 +14,7 @@
 #endif
 #include <linux/bitops.h>
 #include <linux/mtd/spinand.h>
+#include <linux/bug.h>
 
 #define SPINAND_MFR_WINBOND		0xEF
 
@@ -64,6 +65,73 @@ static const struct mtd_ooblayout_ops w25m02gv_ooblayout = {
 	.rfree = w25m02gv_ooblayout_free,
 };
 
+static int w25n02kw_ooblayout_ecc(struct mtd_info *mtd, int section,
+				  struct mtd_oob_region *region)
+{
+	if (section > 3)
+		return -ERANGE;
+
+	region->offset = 64 + (16 * section);
+	region->length = 13;
+
+	return 0;
+}
+
+static int w25n02kw_ooblayout_free(struct mtd_info *mtd, int section,
+				   struct mtd_oob_region *region)
+{
+	if (section > 3)
+		return -ERANGE;
+
+	region->offset = (16 * section) + 2;
+	region->length = 14;
+
+	return 0;
+}
+
+static const struct mtd_ooblayout_ops w25n02kw_ooblayout = {
+	.ecc = w25n02kw_ooblayout_ecc,
+	.rfree = w25n02kw_ooblayout_free,
+};
+
+static int w25n02kw_ecc_get_status(struct spinand_device *spinand, u8 status)
+{
+	u8 mbf = 0;
+	struct spi_mem_op op = SPINAND_GET_FEATURE_OP(0x30, spinand->scratchbuf);
+	struct nand_device *nand = spinand_to_nand(spinand);
+	int ret;
+
+	switch (status & STATUS_ECC_MASK) {
+	case STATUS_ECC_NO_BITFLIPS:
+		return 0;
+
+	case STATUS_ECC_UNCOR_ERROR:
+		return -EBADMSG;
+
+	case STATUS_ECC_HAS_BITFLIPS:
+		/*
+		 * Let's try to retrieve the real maximum number of bitflips
+		 * in order to avoid forcing the wear-leveling layer to move
+		 * data around if it's not necessary.
+		 */
+		ret = spi_mem_exec_op(spinand->slave, &op);
+		if (ret)
+			return ret;
+
+		mbf = *spinand->scratchbuf >> 4;
+
+		if (WARN_ON(mbf > nand->eccreq.strength || !mbf))
+			return nand->eccreq.strength;
+
+		return mbf;
+
+	default:
+		break;
+	}
+
+	return -EINVAL;
+}
+
 static int w25m02gv_select_target(struct spinand_device *spinand,
 				  unsigned int target)
 {
@@ -96,6 +164,14 @@ static const struct spinand_info winbond_spinand_table[] = {
 					      &update_cache_variants),
 		     0,
 		     SPINAND_ECCINFO(&w25m02gv_ooblayout, NULL)),
+	SPINAND_INFO("W25N02KW", 0xBA,
+		     NAND_MEMORG(1, 2048, 128, 64, 2048, 1, 1, 1),
+		     NAND_ECCREQ(8, 512),
+		     SPINAND_INFO_OP_VARIANTS(&read_cache_variants,
+					      &write_cache_variants,
+					      &update_cache_variants),
+		     0,
+		     SPINAND_ECCINFO(&w25n02kw_ooblayout, w25n02kw_ecc_get_status)),
 };
 
 /**
