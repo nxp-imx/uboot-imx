@@ -85,7 +85,13 @@ static int scmi_clk_gate(struct clk *clk, int enable)
 	if (ret)
 		return ret;
 
-	return scmi_to_linux_errno(out.status);
+	ret = scmi_to_linux_errno(out.status);
+	if (ret == -EACCES) {
+		debug("Ignore %s enable failure\n", clk_hw_get_name(clk));
+		ret = 0;
+	}
+
+	return ret;
 }
 
 static int scmi_clk_enable(struct clk *clk)
@@ -121,7 +127,7 @@ static ulong scmi_clk_get_rate(struct clk *clk)
 	return (ulong)(((u64)out.rate_msb << 32) | out.rate_lsb);
 }
 
-static ulong scmi_clk_set_rate(struct clk *clk, ulong rate)
+static ulong __scmi_clk_set_rate(struct clk *clk, ulong rate)
 {
 	struct scmi_clk_priv *priv = dev_get_priv(clk->dev);
 	struct scmi_clk_rate_set_in in = {
@@ -145,6 +151,17 @@ static ulong scmi_clk_set_rate(struct clk *clk, ulong rate)
 		return ret;
 
 	return scmi_clk_get_rate(clk);
+}
+
+static ulong scmi_clk_set_rate(struct clk *clk, ulong rate)
+{
+	ulong orig_rate;
+
+	orig_rate = scmi_clk_get_rate(clk);
+	if (orig_rate == rate)
+		return orig_rate;
+
+	return __scmi_clk_set_rate(clk, rate);
 }
 
 static int scmi_clk_probe(struct udevice *dev)
