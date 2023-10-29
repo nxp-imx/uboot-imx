@@ -186,6 +186,21 @@ config SPL_DM_PMIC_PF0900
 	  This config enables implementation of driver-model pmic uclass features
 	  for PMIC PF0900 in SPL. The driver implements read/write operations.
 
+config DM_PMIC_PF5300
+	bool "Enable Driver Model for PMIC PF5300"
+	depends on DM_I2C
+	help
+	  This config enables implementation of driver-model pmic uclass features
+	  for PMIC PF5300. The driver implements read/write operations.
+
+config SPL_DM_PMIC_PF5300
+	bool "Enable Driver Model for PMIC PF5300 in SPL"
+	depends on SPL_DM_PMIC
+	depends on SPL_DM_I2C
+	help
+	  This config enables implementation of driver-model pmic uclass features
+	  for PMIC PF5300 in SPL. The driver implements read/write operations.
+
 config DM_PMIC_PFUZE100
 	bool "Enable Driver Model for PMIC PFUZE100"
 	---help---
