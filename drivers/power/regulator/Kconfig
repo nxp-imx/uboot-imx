@@ -89,6 +89,21 @@ config SPL_DM_REGULATOR_PCA9450
 	This config enables implementation of driver-model regulator uclass
 	features for regulators on ROHM PCA9450 in SPL.
 
+config DM_REGULATOR_PF0900
+	bool "Enable Driver Model for NXP PF0900 regulators"
+	depends on DM_REGULATOR && DM_PMIC_PF0900
+	help
+	This config enables implementation of driver-model regulator uclass
+	features for regulators on NXP PF0900 PMICs. PF0900 contains 1 vaon,
+	5 sws and 3 LDOS. The driver implements get/set api for value and enable.
+
+config SPL_DM_REGULATOR_PF0900
+	bool "Enable Driver Model for NXP PF0900 regulators in SPL"
+	depends on DM_REGULATOR_PF0900 && SPL
+	help
+	This config enables implementation of driver-model regulator uclass
+	features for regulators on ROHM PF0900 in SPL.
+
 config DM_REGULATOR_DA9063
 	bool "Enable Driver Model for REGULATOR DA9063"
 	depends on DM_REGULATOR && DM_PMIC_DA9063
