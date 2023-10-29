@@ -14,6 +14,7 @@ obj-$(CONFIG_$(SPL_)DM_PMIC_MP5416) += mp5416.o
 obj-$(CONFIG_$(SPL_)DM_PMIC_PFUZE100) += pfuze100.o
 obj-$(CONFIG_$(SPL_)DM_PMIC_PCA9450) += pca9450.o
 obj-$(CONFIG_$(SPL_)DM_PMIC_PF0900) += pf0900.o
+obj-$(CONFIG_$(SPL_)DM_PMIC_PF5300) += pf5300.o
 obj-$(CONFIG_PMIC_S2MPS11) += s2mps11.o
 obj-$(CONFIG_DM_PMIC_SANDBOX) += sandbox.o i2c_pmic_emul.o
 obj-$(CONFIG_PMIC_AB8500) += ab8500.o
