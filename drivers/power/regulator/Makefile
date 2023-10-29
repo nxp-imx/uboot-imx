@@ -14,6 +14,7 @@ obj-$(CONFIG_DM_REGULATOR_NPCM8XX) += npcm8xx_regulator.o
 obj-$(CONFIG_$(SPL_)DM_PMIC_PFUZE100) += pfuze100.o
 obj-$(CONFIG_$(SPL_)DM_REGULATOR_BD71837) += bd71837.o
 obj-$(CONFIG_$(SPL_)DM_REGULATOR_PCA9450) += pca9450.o
+obj-$(CONFIG_$(SPL_)DM_REGULATOR_PF0900) += pf0900.o
 obj-$(CONFIG_$(SPL_)REGULATOR_PWM) += pwm_regulator.o
 obj-$(CONFIG_$(SPL_)DM_REGULATOR_FAN53555) += fan53555.o
 obj-$(CONFIG_$(SPL_)DM_REGULATOR_COMMON) += regulator_common.o
