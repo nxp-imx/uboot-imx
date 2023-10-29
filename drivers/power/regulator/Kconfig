@@ -104,6 +104,21 @@ config SPL_DM_REGULATOR_PF0900
 	This config enables implementation of driver-model regulator uclass
 	features for regulators on ROHM PF0900 in SPL.
 
+config DM_REGULATOR_PF5300
+	bool "Enable Driver Model for NXP PF5300 regulators"
+	depends on DM_REGULATOR && DM_PMIC_PF5300
+	help
+	This config enables implementation of driver-model regulator uclass
+	features for regulators on NXP PF5300 PMICs. PF5300 contains 1 sw.
+	The driver implements get/set api for value and enable.
+
+config SPL_DM_REGULATOR_PF5300
+	bool "Enable Driver Model for NXP PF5300 regulators in SPL"
+	depends on DM_REGULATOR_PF0900 && SPL
+	help
+	This config enables implementation of driver-model regulator uclass
+	features for regulators on ROHM PF5300 in SPL.
+
 config DM_REGULATOR_DA9063
 	bool "Enable Driver Model for REGULATOR DA9063"
 	depends on DM_REGULATOR && DM_PMIC_DA9063
