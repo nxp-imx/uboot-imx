@@ -31,7 +31,7 @@
 #define BOOTENV
 #endif
 
-#define JH_ROOT_DTB    "imx8mp-evk-revb4-root.dtb"
+#define JH_ROOT_DTB    "imx8mp-evk-root.dtb"
 
 #define JAILHOUSE_ENV \
 	"jh_clk= \0 " \
