@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2023 NXP
  *
  * FSL i.MX8M USB HOST xHCI Controller
  *
@@ -40,6 +40,19 @@ static void imx8m_xhci_set_suspend_clk(struct dwc3 *dwc3_reg)
 	writel(reg, &dwc3_reg->g_ctl);
 }
 
+static void imx8m_xhci_sel_24m_refclk(struct dwc3 *dwc3_reg)
+{
+	u32 reg;
+
+	/* Set to 24M refclk */
+	reg = readl(&dwc3_reg->g_uctl);
+	reg &= ~(0xFFC00000);
+	reg |= (41 << 22);
+	writel(reg, &dwc3_reg->g_uctl);
+
+	writel(0x0a87f000, &dwc3_reg->g_fladj);
+}
+
 static int imx8m_xhci_core_init(struct dwc3 *dwc3_reg)
 {
 	int ret = 0;
@@ -54,6 +67,8 @@ static int imx8m_xhci_core_init(struct dwc3 *dwc3_reg)
 
 	/* We are hard-coding DWC3 core to Host Mode */
 	dwc3_set_mode(dwc3_reg, DWC3_GCTL_PRTCAP_HOST);
+
+	imx8m_xhci_sel_24m_refclk(dwc3_reg);
 
 	/* Set GFLADJ_30MHZ as 20h as per XHCI spec default value */
 	dwc3_set_fladj(dwc3_reg, GFLADJ_30MHZ_DEFAULT);
@@ -93,12 +108,6 @@ static int xhci_imx8m_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
-	ret = board_usb_init(dev_seq(dev), USB_INIT_HOST);
-	if (ret != 0) {
-		puts("Failed to initialize board for imx8m USB\n");
-		return ret;
-	}
-
 	hccr = (struct xhci_hccr *)((uintptr_t)dev_remap_addr(dev));
 	if (!hccr)
 		return -EINVAL;
@@ -115,6 +124,12 @@ static int xhci_imx8m_probe(struct udevice *dev)
 	ret = imx8m_xhci_core_init(dwc3_reg);
 	if (ret < 0) {
 		puts("Failed to initialize imx8m xhci\n");
+		return ret;
+	}
+
+	ret = board_usb_init(dev_seq(dev), USB_INIT_HOST);
+	if (ret != 0) {
+		puts("Failed to initialize board for imx8m USB\n");
 		return ret;
 	}
 
