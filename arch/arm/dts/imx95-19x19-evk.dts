@@ -14,6 +14,7 @@
 	compatible = "fsl,imx95-19x19-evk", "fsl,imx95";
 
 	chosen {
+		bootargs = "console=ttyLP0,115200 earlycon";
 		stdout-path = &lpuart1;
 	};
 
