@@ -168,6 +168,16 @@ static int pcf2131_rtc_reset(struct udevice *dev)
 	return 0;
 }
 
+static int pcf2131_probe(struct udevice *dev)
+{
+	struct udevice *bus, *udev;
+	struct dm_i2c_chip *chip = dev_get_parent_plat(dev);
+
+	bus = dev_get_parent(dev);
+
+	return dm_i2c_probe(bus, chip->chip_addr, 0, &udev);
+}
+
 static const struct rtc_ops pcf2131_rtc_ops = {
 	.get = pcf2131_rtc_get,
 	.set = pcf2131_rtc_set,
@@ -186,4 +196,5 @@ U_BOOT_DRIVER(rtc_pcf2131) = {
 	.id	= UCLASS_RTC,
 	.of_match = pcf2131_rtc_ids,
 	.ops	= &pcf2131_rtc_ops,
+	.probe  = pcf2131_probe,
 };
