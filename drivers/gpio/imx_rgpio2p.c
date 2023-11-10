@@ -205,6 +205,7 @@ static int imx_rgpio2p_bind(struct udevice *dev)
 
 static const struct udevice_id imx_rgpio2p_ids[] = {
 	{ .compatible = "fsl,imx7ulp-gpio" },
+	{ .compatible = "fsl,imx8ulp-gpio" },
 	{ }
 };
 
