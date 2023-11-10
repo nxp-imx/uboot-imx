@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2016 Freescale Semiconductor, Inc.
+ * Copyright 2023 NXP
  *
  * RGPIO2P driver for the Freescale i.MX7ULP.
  */
@@ -205,6 +206,7 @@ static int imx_rgpio2p_bind(struct udevice *dev)
 
 static const struct udevice_id imx_rgpio2p_ids[] = {
 	{ .compatible = "fsl,imx7ulp-gpio" },
+	{ .compatible = "fsl,imx8ulp-gpio" },
 	{ }
 };
 
