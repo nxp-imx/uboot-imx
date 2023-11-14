@@ -1087,6 +1087,7 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 dtb-$(CONFIG_ARCH_IMX9) += \
 	imx95-19x19-evk.dtb \
 	imx93-11x11-evk.dtb \
+	imx93-11x11-evk-pmic-pf0900.dtb \
 	imx93-14x14-evk.dtb \
 	imx93-9x9-qsb.dtb \
 	imx93-9x9-qsb-ontat-wvga-panel.dtb \
