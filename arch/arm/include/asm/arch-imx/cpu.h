@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2014 Freescale Semiconductor, Inc.
- * Copyright 2018-2020 NXP
+ * Copyright 2018-2023 NXP
  */
 
 #define MXC_CPU_MX23		0x23
@@ -82,6 +82,8 @@
 #define MXC_CPU_IMX91P3		0xCB /* dummy ID */
 #define MXC_CPU_IMX91P1		0xCC /* dummy ID */
 #define MXC_CPU_IMX91P0		0xCD /* dummy ID */
+
+#define MXC_CPU_IMX95		0x1C1 /* dummy ID */
 
 #define MXC_SOC_MX6		0x60
 #define MXC_SOC_MX7		0x70
