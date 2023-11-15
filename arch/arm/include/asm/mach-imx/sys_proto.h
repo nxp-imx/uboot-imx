@@ -113,6 +113,8 @@ struct bd_info;
 #define is_imx91p1() (is_cpu_type(MXC_CPU_IMX91P1))
 #define is_imx91p0() (is_cpu_type(MXC_CPU_IMX91P0))
 
+#define is_imx95() (is_cpu_type(MXC_CPU_IMX95))
+
 #define is_imxrt1020() (is_cpu_type(MXC_CPU_IMXRT1020))
 #define is_imxrt1050() (is_cpu_type(MXC_CPU_IMXRT1050))
 
@@ -229,6 +231,44 @@ ulong spl_romapi_get_uboot_base(u32 image_offset, u32 rom_bt_dev, u32 pagesize);
 
 u32 rom_api_download_image(u8 *dest, u32 offset, u32 size);
 u32 rom_api_query_boot_infor(u32 info_type, u32 *info);
+
+#ifdef CONFIG_SCMI_FIRMWARE
+typedef struct rom_passover
+{
+    uint16_t tag;                   //!< Tag
+    uint8_t  len;                   //!< Fixed value of 0x80
+    uint8_t  ver;                   //!< Version
+    uint32_t boot_mode;             //!< Boot mode
+    uint32_t card_addr_mode;        //!< SD card address mode
+    uint32_t bad_blks_of_img_set0;  //!< NAND bad block count skipped 1
+    uint32_t ap_mu_id;              //!< AP MU ID
+    uint32_t bad_blks_of_img_set1;  //!< NAND bad block count skipped 1
+    uint8_t  boot_stage;            //!< Boot stage
+    uint8_t  img_set_sel;           //!< Image set booted from
+    uint8_t  rsv0[2];               //!< Reserved
+    uint32_t img_set_end;           //!< Offset of Image End
+    uint32_t rom_version;           //!< ROM version
+    uint8_t  boot_dev_state;        //!< Boot device state
+    uint8_t  boot_dev_inst;         //!< Boot device type
+    uint8_t  boot_dev_type;         //!< Boot device instance
+    uint8_t  rsv1;                  //!< Reserved
+    uint32_t dev_page_size;         //!< Boot device page size
+    uint32_t cnt_header_ofs;        //!< Container header offset
+    uint32_t img_ofs;               //!< Image offset
+}  __attribute__ ((packed)) rom_passover_t;
+
+/**
+ * struct scmi_rom_passover_out - Response payload for ROM_PASSOVER_GET command
+ * @status:	SCMI clock ID
+ * @attributes:	Attributes of the targets clock state
+ */
+struct scmi_rom_passover_get_out {
+	u32 status;
+	u32 numPassover;
+	u32 passover[(sizeof(rom_passover_t) + 8) / 4];
+};
+
+#endif
 
 /* For i.MX ULP */
 #define BT0CFG_LPBOOT_MASK	0x1
