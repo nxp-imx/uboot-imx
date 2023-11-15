@@ -1,0 +1,182 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2023 NXP
+ */
+
+/ {
+	aliases {
+		ethernet0 = &enetc_port0;
+		ethernet1 = &enetc_port2;
+	};
+};
+
+&{/soc@0} {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&aips1 {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&aips2 {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&aips3 {
+	u-boot,dm-spl;
+};
+
+&gpio1 {
+	reg = <0 0x47400000 0 0x1000>, <0 0x47400040 0 0x40>;
+};
+
+&gpio2 {
+	reg = <0 0x43810000 0 0x1000>, <0 0x43810040 0 0x40>;
+	u-boot,dm-spl;
+};
+
+&gpio3 {
+	reg = <0 0x43820000 0 0x1000>, <0 0x43820040 0 0x40>;
+	u-boot,dm-spl;
+};
+
+&gpio4 {
+	reg = <0 0x43840000 0 0x1000>, <0 0x43840040 0 0x40>;
+	u-boot,dm-spl;
+};
+
+&gpio5 {
+	reg = <0 0x43850000 0 0x1000>, <0 0x43850040 0 0x40>;
+	u-boot,dm-spl;
+};
+
+&lpuart1 {
+	clocks = <&scmi_clk IMX95_CLK_LPUART1>, <&scmi_clk IMX95_CLK_LPUART1>;
+	clock-names = "ipg", "per";
+	u-boot,dm-spl;
+};
+
+&mu2 {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&dummy {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&osc_24m {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&clk_ext1 {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&scmi_buf1 {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&{/firmware} {
+	u-boot,dm-pre-reloc;
+        u-boot,dm-spl;
+};
+
+&{/firmware/scmi} {
+	u-boot,dm-pre-reloc;
+        u-boot,dm-spl;
+};
+
+&{/firmware/scmi/protocol@11} {
+	u-boot,dm-pre-reloc;
+        u-boot,dm-spl;
+};
+
+&{/firmware/scmi/protocol@13} {
+	u-boot,dm-pre-reloc;
+        u-boot,dm-spl;
+};
+
+&{/firmware/scmi/protocol@14} {
+	u-boot,dm-pre-reloc;
+        u-boot,dm-spl;
+};
+
+&{/firmware/scmi/protocol@19} {
+	u-boot,dm-pre-reloc;
+        u-boot,dm-spl;
+};
+
+&pinctrl_uart1 {
+	u-boot,dm-spl;
+};
+
+&usdhc1 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc1 {
+	u-boot,dm-spl;
+};
+
+&usdhc2 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2_gpio {
+	u-boot,dm-spl;
+};
+
+&reg_usdhc2_vmmc {
+	u-boot,dm-spl;
+};
+
+&pinctrl_reg_usdhc2_vmmc {
+	u-boot,dm-spl;
+};
+
+&usb2 {
+	compatible = "fsl,imx8mm-usb", "fsl,imx7d-usb";
+};
+
+&usb3_dwc3 {
+	compatible = "fsl,imx8mq-dwc3", "snps,dwc3";
+};
+
+&elemu3 {
+	compatible = "fsl,imx93-mu-s4";
+	status = "okay";
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&i2c3_gpio_expander_20 {
+	compatible = "ti,tca6408";
+	label = "i2c3_io";
+};
+
+&i2c4_gpio_expander_21 {
+	compatible = "ti,tca6408";
+	label = "i2c4_io";
+};
+
+&i2c5_gpio_expander_21 {
+	compatible = "ti,tca6408";
+	label = "i2c5_io";
+};
+
+&i2c6_gpio_expander_21 {
+	compatible = "ti,tca6416";
+	label = "i2c6_io";
+};

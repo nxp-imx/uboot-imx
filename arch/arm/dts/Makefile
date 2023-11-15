@@ -1085,6 +1085,7 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mq-librem5-r4.dtb
 
 dtb-$(CONFIG_ARCH_IMX9) += \
+	imx95-19x19-evk.dtb \
 	imx93-11x11-evk.dtb \
 	imx93-14x14-evk.dtb \
 	imx93-9x9-qsb.dtb \
