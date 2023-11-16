@@ -42,6 +42,7 @@
 #ifdef CONFIG_SCMI_FIRMWARE
 #include <scmi_agent.h>
 #include <scmi_protocols.h>
+#include <dt-bindings/power/fsl,imx95-power.h>
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -686,6 +687,15 @@ static int disable_pcieb_node(void *blob)
 	return delete_fdt_nodes(blob, nodes_path_pcieb, ARRAY_SIZE(nodes_path_pcieb));
 }
 
+static int disable_m7_node(void *blob)
+{
+	static const char * const nodes_path_m7[] = {
+		"/imx95-cm7"
+	};
+
+	return delete_fdt_nodes(blob, nodes_path_m7, ARRAY_SIZE(nodes_path_m7));
+}
+
 #ifdef CONFIG_OF_BOARD_FIXUP
 #ifndef CONFIG_SPL_BUILD
 int board_fix_fdt(void *fdt)
@@ -694,6 +704,26 @@ int board_fix_fdt(void *fdt)
 }
 #endif
 #endif
+
+static int is_m7_off(void)
+{
+	struct scmi_power_get_state power_in = {
+		.domain = IMX95_PD_M7,
+	};
+	struct scmi_power_get_state_out power_out;
+	struct scmi_msg msg = SCMI_MSG_IN(SCMI_PROTOCOL_ID_POWER_DOMAIN,
+					  SCMI_POWER_STATE_GET,
+					  power_in, power_out);
+
+	devm_scmi_process_msg(gd->arch.scmi_dev, gd->arch.scmi_channel, &msg);
+	if (power_out.status)
+		printf("SCMI_POWWER_STATE_SET Failed for DDR MIX\n");
+
+	if (power_out.state == BIT(30))
+		return true;
+	else
+		return false;
+}
 
 int ft_system_setup(void *blob, struct bd_info *bd)
 {
@@ -708,6 +738,10 @@ int ft_system_setup(void *blob, struct bd_info *bd)
 			disable_pciea_node(blob);
 		if (val & BIT(7)) /* PCIE B */
 			disable_pcieb_node(blob);
+	}
+
+	if (is_imx95() && is_m7_off()) {
+		disable_m7_node(blob);
 	}
 
 	return ft_add_optee_node(blob, bd);
