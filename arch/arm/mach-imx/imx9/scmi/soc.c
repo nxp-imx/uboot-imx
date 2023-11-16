@@ -643,6 +643,49 @@ int arch_misc_init(void)
 	return 0;
 }
 
+static int delete_fdt_nodes(void *blob, const char *const nodes_path[], int size_array)
+{
+	int i = 0;
+	int rc;
+	int nodeoff;
+
+	for (i = 0; i < size_array; i++) {
+		nodeoff = fdt_path_offset(blob, nodes_path[i]);
+		if (nodeoff < 0)
+			continue; /* Not found, skip it */
+
+		debug("Found %s node\n", nodes_path[i]);
+
+		rc = fdt_del_node(blob, nodeoff);
+		if (rc < 0) {
+			printf("Unable to delete node %s, err=%s\n",
+			       nodes_path[i], fdt_strerror(rc));
+		} else {
+			printf("Delete node %s\n", nodes_path[i]);
+		}
+	}
+
+	return 0;
+}
+
+static int disable_pciea_node(void *blob)
+{
+	static const char * const nodes_path_pciea[] = {
+		"/soc@0/pcie@4c300000"
+	};
+
+	return delete_fdt_nodes(blob, nodes_path_pciea, ARRAY_SIZE(nodes_path_pciea));
+}
+
+static int disable_pcieb_node(void *blob)
+{
+	static const char * const nodes_path_pcieb[] = {
+		"/soc@0/pcie@4c380000"
+	};
+
+	return delete_fdt_nodes(blob, nodes_path_pcieb, ARRAY_SIZE(nodes_path_pcieb));
+}
+
 #ifdef CONFIG_OF_BOARD_FIXUP
 #ifndef CONFIG_SPL_BUILD
 int board_fix_fdt(void *fdt)
@@ -654,6 +697,19 @@ int board_fix_fdt(void *fdt)
 
 int ft_system_setup(void *blob, struct bd_info *bd)
 {
+	u32 val;
+
+	if (is_imx95()) {
+		val = BIT(6) | BIT(7); /* In case fuse read failure, disable PCIE */
+
+		fuse_read(2, 3, &val);
+
+		if (val & BIT(6)) /* PCIE A */
+			disable_pciea_node(blob);
+		if (val & BIT(7)) /* PCIE B */
+			disable_pcieb_node(blob);
+	}
+
 	return ft_add_optee_node(blob, bd);
 }
 
