@@ -180,3 +180,15 @@
 	compatible = "ti,tca6416";
 	label = "i2c6_io";
 };
+
+&flexspi1 {
+	u-boot,dm-spl;
+};
+
+&mt35xu01gbba {
+	u-boot,dm-spl;
+};
+
+&pinctrl_flexspi1 {
+	u-boot,dm-spl;
+};
