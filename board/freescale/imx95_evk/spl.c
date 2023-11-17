@@ -49,6 +49,8 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 		return BOOT_DEVICE_MMC2;
 	case USB_BOOT:
 		return BOOT_DEVICE_BOARD;
+	case QSPI_BOOT:
+		return BOOT_DEVICE_SPI;
 	default:
 		return BOOT_DEVICE_NONE;
 	}
