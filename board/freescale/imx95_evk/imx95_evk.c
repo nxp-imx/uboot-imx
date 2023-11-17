@@ -184,6 +184,21 @@ int board_usb_init(int index, enum usb_init_type init)
 	int ret = 0;
 
 	if (index == 0 && init == USB_INIT_DEVICE) {
+		struct scmi_power_set_state power_in = {
+			.domain = IMX95_PD_HSIO_TOP,
+			.flags = 0,
+			.state = 0,
+		};
+		struct scmi_power_set_state_out power_out;
+		struct scmi_msg msg = SCMI_MSG_IN(SCMI_PROTOCOL_ID_POWER_DOMAIN,
+						  SCMI_POWER_STATE_SET,
+						  power_in, power_out);
+		ret = devm_scmi_process_msg(gd->arch.scmi_dev, gd->arch.scmi_channel, &msg);
+
+		if (power_out.status) {
+			printf("SCMI_POWWER_STATE_SET Failed for USB\n");
+			return ret;
+		}
 #ifdef CONFIG_USB_DWC3
 		dwc3_nxp_usb_phy_init(&dwc3_device_data);
 #endif
