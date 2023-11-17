@@ -992,6 +992,7 @@
 			#address-cells = <2>;
 			#size-cells = <2>;
 			dma-ranges = <0x40000000 0x40000000 0xc0000000>;
+			power-domains = <&scmi_devpd IMX95_PD_HSIO_TOP>;
 			ranges;
 			status = "disabled";
 
@@ -1015,6 +1016,7 @@
 				     <GIC_SPI 174 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&scmi_clk IMX95_CLK_HSIO>;
 			clock-names = "usb1_ctrl_root_clk";
+			power-domains = <&scmi_devpd IMX95_PD_HSIO_TOP>;
 			phys = <&usbphynop>;
 			fsl,usbmisc = <&usbmisc 0>;
 			status = "disabled";
