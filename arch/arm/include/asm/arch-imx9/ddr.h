@@ -101,6 +101,7 @@ struct dram_timing_info {
 
 extern struct dram_timing_info dram_timing;
 
+#if defined(CONFIG_IMX93)	/* CONFIG_IMX93 */
 #if (defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN) || defined(CONFIG_IMX_SNPS_DDR_PHY_QB))
 #define DDRPHY_QB_FSP_SIZE	3
 #define DDRPHY_QB_ERR_SIZE	6
@@ -126,6 +127,43 @@ int ddrphy_qb_save(void);
 int ddr_cfg_phy_qb(struct dram_timing_info *timing_info, int fsp_id);
 #endif
 #endif
+#elif defined(CONFIG_IMX95)	/* CONFIG_IMX95 */
+#if   defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN)
+/* Quick Boot related */
+#define DDRPHY_QB_CSR_SIZE	5168
+#define DDRPHY_QB_ACSM_SIZE	4 * 1024
+#define DDRPHY_QB_MSB_SIZE	0x200
+#define DDRPHY_QB_PSTATES	0
+#define DDRPHY_QB_PST_SIZE	DDRPHY_QB_PSTATES * 4 * 1024
+struct ddrphy_qb_state {
+	u8 TrainedVREFCA_A0;
+	u8 TrainedVREFCA_A1;
+	u8 TrainedVREFCA_B0;
+	u8 TrainedVREFCA_B1;
+	u8 TrainedVREFDQ_A0;
+	u8 TrainedVREFDQ_A1;
+	u8 TrainedVREFDQ_B0;
+	u8 TrainedVREFDQ_B1;
+	u8 TrainedVREFDQU_A0;
+	u8 TrainedVREFDQU_A1;
+	u8 TrainedVREFDQU_B0;
+	u8 TrainedVREFDQU_B1;
+	u8 TrainedDRAMDFE_A0;
+	u8 TrainedDRAMDFE_A1;
+	u8 TrainedDRAMDFE_B0;
+	u8 TrainedDRAMDFE_B1;
+	u8 TrainedDRAMDCA_A0;
+	u8 TrainedDRAMDCA_A1;
+	u8 TrainedDRAMDCA_B0;
+	u8 TrainedDRAMDCA_B1;
+	u16 csr[DDRPHY_QB_CSR_SIZE];
+	u16 acsm[DDRPHY_QB_ACSM_SIZE];
+	u16 pst[DDRPHY_QB_PST_SIZE];
+};
+#elif  defined(CONFIG_IMX_SNPS_DDR_PHY_QB)
+	#error "Quick Boot flow not supported in SPL for iMX95, please use DDR OEI!"
+#endif /* #if   defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN)  */
+#endif /* #elif defined(CONFIG_IMX95) */
 
 void ddr_load_train_firmware(enum fw_type type);
 int ddr_init(struct dram_timing_info *timing_info);
