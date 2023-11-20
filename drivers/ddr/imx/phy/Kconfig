@@ -5,7 +5,7 @@ config IMX_SNPS_DDR_PHY
 
 config IMX_SNPS_DDR_PHY_QB_GEN
 	bool "i.MX Synopsys DDR PHY training data generation for QuickBoot mode"
-	depends on IMX_SNPS_DDR_PHY
+	depends on IMX_SNPS_DDR_PHY || IMX95
 	help
 	  Select the DDR PHY training data generation for QuickBoot support on i.MX9 SOC.
 

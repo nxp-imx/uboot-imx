@@ -256,15 +256,17 @@ static void upload(char *cmd_parameter, char *response)
 	#if CONFIG_IS_ENABLED(IMX_SNPS_DDR_PHY_QB_GEN)
 	if (endswith(cmd_parameter, "snps-ddr-phy-qb")) {
 		struct ddrphy_qb_state *qb_state;
+	#if CONFIG_IS_ENABLED(IMX93)
 		uint32_t crc;
-
+	#endif
 		qb_state = (struct ddrphy_qb_state *)CONFIG_SAVED_QB_STATE_BASE;
+	#if CONFIG_IS_ENABLED(IMX93)
 		crc = crc32(0, (void *)&(qb_state->flags), DDRPHY_QB_STATE_SIZE);
 
 		if (crc != qb_state->crc)
 			log_err("DDRPHY TD CRC error SPL->U-Boot: spl=0x%08x, uboot=0x%08x\n",
 				qb_state->crc, crc);
-
+	#endif
 		send(response, (const char *)qb_state, sizeof(struct ddrphy_qb_state));
 		return;
 	}
