@@ -20,6 +20,7 @@
 #include <linux/delay.h>
 
 #ifdef CONFIG_ARCH_IMX9
+#include <asm/mach-imx/sys_proto.h>
 #include <cpu_func.h>
 #include "fsl_enetc4.h"
 #else
@@ -809,12 +810,42 @@ static int enetc_recv(struct udevice *dev, int flags, uchar **packetp)
 	return len;
 }
 
+#ifdef CONFIG_ARCH_IMX9
+static int enetc_read_rom_hwaddr(struct udevice *dev)
+{
+	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct pci_child_plat *ppdata = dev_get_parent_plat(dev);
+	unsigned char *mac = pdata->enetaddr;
+	unsigned int dev_id = 0;
+
+	switch (PCI_DEV(ppdata->devfn)) {
+	case 0x0:
+		dev_id = 0;
+		break;
+	case 0x8:
+		dev_id = 1;
+		break;
+	case 0x10:
+		dev_id = 2;
+		break;
+	default:
+		return -1;
+	}
+
+	imx_get_mac_from_fuse(dev_id, mac);
+	return !is_valid_ethaddr(mac);
+}
+#endif
+
 static const struct eth_ops enetc_ops = {
 	.start	= enetc_start,
 	.send	= enetc_send,
 	.recv	= enetc_recv,
 	.stop	= enetc_stop,
 	.write_hwaddr = enetc_write_hwaddr,
+#ifdef CONFIG_ARCH_IMX9
+	.read_rom_hwaddr = enetc_read_rom_hwaddr,
+#endif
 };
 
 U_BOOT_DRIVER(eth_enetc) = {
