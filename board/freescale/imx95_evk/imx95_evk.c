@@ -179,26 +179,37 @@ static void dwc3_nxp_usb_phy_init(struct dwc3_device *dwc3)
 }
 #endif
 
+static int imx9_scmi_power_domain_enable(u32 domain, bool enable)
+{
+	struct scmi_power_set_state power_in = {
+		.domain = domain,
+		.flags = 0,
+		.state = enable ? 0 : BIT(30),
+	};
+	struct scmi_power_set_state_out power_out;
+	struct scmi_msg msg = SCMI_MSG_IN(SCMI_PROTOCOL_ID_POWER_DOMAIN,
+					  SCMI_POWER_STATE_SET,
+					  power_in, power_out);
+	int ret;
+
+	ret = devm_scmi_process_msg(gd->arch.scmi_dev, gd->arch.scmi_channel, &msg);
+	if (ret)
+		return ret;
+
+	return scmi_to_linux_errno(power_out.status);
+}
+
 int board_usb_init(int index, enum usb_init_type init)
 {
 	int ret = 0;
 
 	if (index == 0 && init == USB_INIT_DEVICE) {
-		struct scmi_power_set_state power_in = {
-			.domain = IMX95_PD_HSIO_TOP,
-			.flags = 0,
-			.state = 0,
-		};
-		struct scmi_power_set_state_out power_out;
-		struct scmi_msg msg = SCMI_MSG_IN(SCMI_PROTOCOL_ID_POWER_DOMAIN,
-						  SCMI_POWER_STATE_SET,
-						  power_in, power_out);
-		ret = devm_scmi_process_msg(gd->arch.scmi_dev, gd->arch.scmi_channel, &msg);
-
-		if (power_out.status) {
+		ret = imx9_scmi_power_domain_enable(IMX95_PD_HSIO_TOP, true);
+		if (ret) {
 			printf("SCMI_POWWER_STATE_SET Failed for USB\n");
 			return ret;
 		}
+
 #ifdef CONFIG_USB_DWC3
 		dwc3_nxp_usb_phy_init(&dwc3_device_data);
 #endif
@@ -264,25 +275,16 @@ static void netc_phy_rst(void)
 
 void netc_init(void)
 {
+	int ret;
+
 	/* Power up the NETC MIX. */
-	struct scmi_power_set_state power_in = {
-		.domain = IMX95_PD_NETC,
-		.flags = 0,
-		.state = 0,
-	};
-	struct scmi_power_set_state_out power_out;
-	struct scmi_msg msg = SCMI_MSG_IN(SCMI_PROTOCOL_ID_POWER_DOMAIN,
-					  SCMI_POWER_STATE_SET,
-					  power_in, power_out);
-
-	devm_scmi_process_msg(gd->arch.scmi_dev, gd->arch.scmi_channel, &msg);
-
-	if (power_out.status) {
+	ret = imx9_scmi_power_domain_enable(IMX95_PD_NETC, true);
+	if (ret) {
 		printf("SCMI_POWWER_STATE_SET Failed for NETC MIX\n");
 		return;
 	}
 
-    set_clk_netc(ENET_125MHZ);
+	set_clk_netc(ENET_125MHZ);
 
 	netc_phy_rst();
 
@@ -329,4 +331,15 @@ int board_phys_sdram_size(phys_size_t *size)
 	*size = PHYS_SDRAM_SIZE + PHYS_SDRAM_2_SIZE;
 
 	return 0;
+}
+
+void board_quiesce_devices(void)
+{
+	int ret;
+
+	ret = imx9_scmi_power_domain_enable(IMX95_PD_NETC, false);
+	if (ret) {
+		printf("%s: Failed for NETC MIX: %d\n", __func__, ret);
+		return;
+	}
 }
