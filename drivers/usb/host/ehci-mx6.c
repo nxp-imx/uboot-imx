@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009 Daniel Mack <daniel@caiaq.de>
  * Copyright (C) 2010 Freescale Semiconductor, Inc.
- * Copyright 2017 NXP
+ * Copyright 2017-2023 NXP
  *
  */
 

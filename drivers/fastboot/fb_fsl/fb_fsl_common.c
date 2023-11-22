@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2019 NXP
+ * Copyright 2019-2023 NXP
  */
 
 #include <asm/mach-imx/sys_proto.h>

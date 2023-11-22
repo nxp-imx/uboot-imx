@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2023 NXP
  *
  * FSL i.MX8M USB HOST xHCI Controller
  *
