@@ -2,7 +2,7 @@
 /*
  * (C) Copyright 2009
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de.
- * Copyright 2018-2020 NXP
+ * Copyright 2018-2023 NXP
  */
 
 #ifndef _SYS_PROTO_H_

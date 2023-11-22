@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright (C) 2022 NXP
+ * Copyright (C) 2022-2023 NXP
  */
 
 #ifndef __ARCH_IMX9_SYS_PROTO_H

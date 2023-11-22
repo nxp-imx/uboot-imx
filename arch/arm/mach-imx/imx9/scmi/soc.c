@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2022 NXP
+ * Copyright 2023 NXP
  *
  * Peng Fan <peng.fan@nxp.com>
  */
