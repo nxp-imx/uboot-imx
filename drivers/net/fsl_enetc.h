@@ -144,6 +144,7 @@ struct bd_ring {
 	int next_prod_idx;
 	int next_cons_idx;
 	int bd_count;
+	int bd_num_in_cl; /* bd number in one cache line */
 };
 
 /* ENETC private structure */

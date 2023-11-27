@@ -27,7 +27,55 @@
 #include "fsl_enetc.h"
 #endif
 
+#ifdef CONFIG_ARCH_IMX9
+#define ENETC_DRV_DCACHE_OPS_EN 1
+#endif
+
 #define ENETC_DRIVER_NAME	"enetc_eth"
+
+static void enetc_inval_bd(void *desc, bool tx)
+{
+#ifdef ENETC_DRV_DCACHE_OPS_EN
+	unsigned long start = (unsigned long)desc & ~(ARCH_DMA_MINALIGN - 1);
+	unsigned long size = tx? sizeof(struct enetc_tx_bd) : sizeof(union enetc_rx_bd);
+	unsigned long end = ALIGN(start + size, ARCH_DMA_MINALIGN);
+
+	invalidate_dcache_range(start, end);
+#endif
+}
+
+static void enetc_flush_bd(void *desc, bool tx)
+{
+#ifdef ENETC_DRV_DCACHE_OPS_EN
+	unsigned long start = (unsigned long)desc & ~(ARCH_DMA_MINALIGN - 1);
+	unsigned long size = tx? sizeof(struct enetc_tx_bd) : sizeof(union enetc_rx_bd);
+	unsigned long end = ALIGN(start + size, ARCH_DMA_MINALIGN);
+
+	flush_dcache_range(start, end);
+#endif
+}
+
+static void enetc_inval_buffer(void *buf, size_t size)
+{
+#ifdef ENETC_DRV_DCACHE_OPS_EN
+	unsigned long start = rounddown((unsigned long)buf, ARCH_DMA_MINALIGN);
+	unsigned long end = roundup((unsigned long)buf + size,
+				    ARCH_DMA_MINALIGN);
+
+	invalidate_dcache_range(start, end);
+#endif
+}
+
+static void enetc_flush_buffer(void *buf, size_t size)
+{
+#ifdef ENETC_DRV_DCACHE_OPS_EN
+	unsigned long start = rounddown((unsigned long)buf, ARCH_DMA_MINALIGN);
+	unsigned long end = roundup((unsigned long)buf + size,
+				    ARCH_DMA_MINALIGN);
+
+	flush_dcache_range(start, end);
+#endif
+}
 
 static int enetc_remove(struct udevice *dev);
 
@@ -388,11 +436,30 @@ static int enetc_probe(struct udevice *dev)
 		return -ENODEV;
 	}
 
+#ifdef ENETC_DRV_DCACHE_OPS_EN
+	if (ARCH_DMA_MINALIGN % sizeof(struct enetc_tx_bd) ||
+	    ARCH_DMA_MINALIGN % sizeof(union enetc_rx_bd)) {
+		printf("Error: Cacheline size is not integral multiples of BD size\n");
+		return -EINVAL;
+	}
+
+	/* Only rx bdr uses the bd_num_in_cl */
+	priv->tx_bdr.bd_num_in_cl = ARCH_DMA_MINALIGN / sizeof(struct enetc_tx_bd);
+	priv->rx_bdr.bd_num_in_cl = ARCH_DMA_MINALIGN / sizeof(union enetc_rx_bd);
+
+	if (ENETC_BD_CNT % priv->rx_bdr.bd_num_in_cl) {
+		printf("Error: BD CNT is not integral multiples of bd_num_in_cl\n");
+		return -EINVAL;
+	}
+#else
+	priv->tx_bdr.bd_num_in_cl = 1;
+	priv->rx_bdr.bd_num_in_cl = 1;
+#endif
+
 	priv->enetc_txbd = memalign(ENETC_BD_ALIGN,
 				    sizeof(struct enetc_tx_bd) * ENETC_BD_CNT);
 	priv->enetc_rxbd = memalign(ENETC_BD_ALIGN,
 				    sizeof(union enetc_rx_bd) * ENETC_BD_CNT);
-
 	if (!priv->enetc_txbd || !priv->enetc_rxbd) {
 		/* free should be able to handle NULL, just free all pointers */
 		free(priv->enetc_txbd);
@@ -622,10 +689,8 @@ static void enetc_setup_rx_bdr(struct udevice *dev)
 		priv->enetc_rxbd[i].w.addr = enetc_rxb_address(dev, i);
 		/* each RX buffer must be aligned to 64B */
 		WARN_ON(priv->enetc_rxbd[i].w.addr & (ARCH_DMA_MINALIGN - 1));
-#ifdef CONFIG_ARCH_IMX9
-	flush_dcache_range((ulong)&priv->enetc_rxbd[i],
-			   (ulong)&priv->enetc_rxbd[i] + sizeof(union enetc_rx_bd));
-#endif
+
+		enetc_flush_bd((void *)&priv->enetc_rxbd[i], false);
 	}
 
 	/* reset producer (ENETC owned) and consumer (SW owned) index */
@@ -709,15 +774,8 @@ static int enetc_send(struct udevice *dev, void *packet, int length)
 	enetc_dbg(dev, "TxBD[%d]send: pkt_len=%d, buff @0x%x%08x\n", pi, length,
 		  upper_32_bits((u64)nv_packet), lower_32_bits((u64)nv_packet));
 
-#ifdef CONFIG_ARCH_IMX9
-	ulong start;
-	ulong stop;
+	enetc_flush_buffer(packet, length);
 
-	start = (ulong)packet;
-	start &= ~(ARCH_DMA_MINALIGN - 1);
-	stop = roundup(start + length, ARCH_DMA_MINALIGN);
-	flush_dcache_range(start, stop);
-#endif
 	/* prepare Tx BD */
 	memset(&priv->enetc_txbd[pi], 0x0, sizeof(struct enetc_tx_bd));
 	priv->enetc_txbd[pi].addr =
@@ -725,11 +783,10 @@ static int enetc_send(struct udevice *dev, void *packet, int length)
 	priv->enetc_txbd[pi].buf_len = cpu_to_le16(length);
 	priv->enetc_txbd[pi].frm_len = cpu_to_le16(length);
 	priv->enetc_txbd[pi].flags = cpu_to_le16(ENETC_TXBD_FLAGS_F);
-#ifdef CONFIG_ARCH_IMX9
-	flush_dcache_range((ulong)&priv->enetc_txbd[pi],
-			   (ulong)&priv->enetc_txbd[pi] + sizeof(struct enetc_tx_bd));
-#endif
+
 	dmb();
+	enetc_flush_bd((void *)&priv->enetc_txbd[pi], true);
+
 	/* send frame: increment producer index */
 	pi = (pi + 1) % txr->bd_count;
 	txr->next_prod_idx = pi;
@@ -753,22 +810,13 @@ static int enetc_recv(struct udevice *dev, int flags, uchar **packetp)
 	struct bd_ring *rxr = &priv->rx_bdr;
 	int tries = ENETC_POLL_TRIES;
 	int pi = rxr->next_prod_idx;
-	int ci = rxr->next_cons_idx;
 	u32 status;
 	int len;
 	u8 rdy;
 
 	do {
 		dmb();
-#ifdef CONFIG_ARCH_IMX9
-		ulong start;
-		ulong stop;
-
-		start = (ulong)&priv->enetc_rxbd[pi];
-		start &= ~(ARCH_DMA_MINALIGN - 1);
-		stop = roundup(start + sizeof(union enetc_rx_bd), ARCH_DMA_MINALIGN);
-		invalidate_dcache_range(start, stop);
-#endif
+		enetc_inval_bd((void *)&priv->enetc_rxbd[pi], false);
 		status = le32_to_cpu(priv->enetc_rxbd[pi].r.lstatus);
 		/* check if current BD is ready to be consumed */
 		rdy = ENETC_RXBD_STATUS_R(status);
@@ -779,35 +827,53 @@ static int enetc_recv(struct udevice *dev, int flags, uchar **packetp)
 
 	dmb();
 	len = le16_to_cpu(priv->enetc_rxbd[pi].r.buf_len);
-#ifdef CONFIG_ARCH_IMX9
-	ulong begin;
-	ulong end;
-
-	begin = (ulong)enetc_rxb_address(dev, pi);
-	begin &= ~(ARCH_DMA_MINALIGN - 1);
-	end = roundup(begin + len, ARCH_DMA_MINALIGN);
-	invalidate_dcache_range(begin, end);
-#endif
 	*packetp = (uchar *)enetc_rxb_address(dev, pi);
+	enetc_inval_buffer(*packetp, len);
 	enetc_dbg(dev, "RxBD[%d]: len=%d err=%d pkt=0x%x%08x\n", pi, len,
 		  ENETC_RXBD_STATUS_ERRORS(status),
 		  upper_32_bits((u64)*packetp), lower_32_bits((u64)*packetp));
 
-	/* BD clean up and advance to next in ring */
-	memset(&priv->enetc_rxbd[pi], 0, sizeof(union enetc_rx_bd));
-	priv->enetc_rxbd[pi].w.addr = enetc_rxb_address(dev, pi);
-#ifdef CONFIG_ARCH_IMX9
-	flush_dcache_range((ulong)&priv->enetc_rxbd[pi],
-			   (ulong)&priv->enetc_rxbd[pi] + sizeof(union enetc_rx_bd));
-#endif
+	return len;
+}
+
+static int enetc_free_pkt(struct udevice *dev, uchar *packet, int length)
+{
+	struct enetc_priv *priv = dev_get_priv(dev);
+	struct bd_ring *rxr = &priv->rx_bdr;
+	int pi = rxr->next_prod_idx;
+	int ci = rxr->next_cons_idx;
+	uchar *packet_expected;
+	int i;
+
+	packet_expected = (uchar *)enetc_rxb_address(dev, pi);
+	if (packet != packet_expected) {
+		printf("%s: Unexpected packet (expected %p)\n", __func__,
+		      packet_expected);
+		return -EINVAL;
+	}
+
 	rxr->next_prod_idx = (pi + 1) % rxr->bd_count;
 	ci = (ci + 1) % rxr->bd_count;
 	rxr->next_cons_idx = ci;
 	dmb();
-	/* free up the slot in the ring for HW */
-	enetc_write_reg(rxr->cons_idx, ci);
 
-	return len;
+	if ((pi + 1) % rxr->bd_num_in_cl == 0) {
+
+		/* BD clean up and advance to next in ring */
+		for (i = 0; i < rxr->bd_num_in_cl; i++) {
+			memset(&priv->enetc_rxbd[pi - i], 0, sizeof(union enetc_rx_bd));
+			priv->enetc_rxbd[pi - i].w.addr = enetc_rxb_address(dev, pi - i);
+		}
+
+		/* Will flush all bds in one cacheline */
+		enetc_flush_bd((void *)&priv->enetc_rxbd[pi - rxr->bd_num_in_cl + 1], false);
+
+		/* free up the slot in the ring for HW */
+		enetc_write_reg(rxr->cons_idx, ci);
+
+	}
+
+	return 0;
 }
 
 #ifdef CONFIG_ARCH_IMX9
@@ -842,6 +908,7 @@ static const struct eth_ops enetc_ops = {
 	.send	= enetc_send,
 	.recv	= enetc_recv,
 	.stop	= enetc_stop,
+	.free_pkt = enetc_free_pkt,
 	.write_hwaddr = enetc_write_hwaddr,
 #ifdef CONFIG_ARCH_IMX9
 	.read_rom_hwaddr = enetc_read_rom_hwaddr,
