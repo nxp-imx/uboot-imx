@@ -27,6 +27,7 @@
 #include <linux/iopoll.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/ccm_regs.h>
+#include <asm/gpio.h>
 #ifdef CONFIG_SCMI_FIRMWARE
 #include <scmi_agent.h>
 #include <scmi_protocols.h>
@@ -59,6 +60,29 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 void spl_board_init(void)
 {
 	puts("Normal Boot\n");
+}
+
+static void flexspi_nor_reset(void)
+{
+	int ret;
+	struct gpio_desc desc;
+
+	ret = dm_gpio_lookup_name("GPIO5_11", &desc);
+	if (ret) {
+		printf("%s lookup GPIO5_11 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "XSPI_RST_B");
+	if (ret) {
+		printf("%s request XSPI_RST_B failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	/* assert the XSPI_RST_B */
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE | GPIOD_ACTIVE_LOW);
+	udelay(200); /* 50 ns at least, so use 200ns */
+	dm_gpio_set_value(&desc, 0); /* deassert the XSPI_RST_B */
 }
 
 extern int imx9_probe_mu(void *ctx, struct event *event);
@@ -120,6 +144,8 @@ void board_init_f(ulong dummy)
 	} else {
 		printf("SCMI_POWER_STATE_GET Failed DDRMIX\n");
 	}
+
+	flexspi_nor_reset();
 
 	board_init_r(NULL, 0);
 }

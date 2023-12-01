@@ -111,7 +111,18 @@
 
 &{/firmware/scmi/protocol@19} {
 	u-boot,dm-pre-reloc;
-        u-boot,dm-spl;
+	u-boot,dm-spl;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog>;
+
+	pinctrl_hog: hoggrp {
+		u-boot,dm-spl;
+
+		fsl,pins = <
+			IMX95_PAD_XSPI1_SS1_B__GPIO5_IO_BIT11			0x3fe
+		>;
+	};
 };
 
 &pinctrl_uart1 {
