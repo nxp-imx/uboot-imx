@@ -31,6 +31,16 @@
 #define BOOTENV
 #endif
 
+#define JH_ROOT_DTB "imx95-19x19-evk-root.dtb"
+
+#define JAILHOUSE_ENV \
+	"jh_root_dtb=" JH_ROOT_DTB "\0" \
+	"jh_mmcboot=setenv fdtfile ${jh_root_dtb}; " \
+		    "setenv jh_clk clk_ignore_unused mem=512MB kvm-arm.mode=nvhe; " \
+		    "if run loadimage; then run mmcboot;" \
+		    "else run jh_netboot; fi; \0" \
+	"jh_netboot=setenv fdtfile ${jh_root_dtb}; " \
+		    "setenv jh_clk clk_ignore_unused mem=512MB kvm-arm.mode=nvhe; run netboot; \0 "
 
 #define CFG_MFG_ENV_SETTINGS \
 	CFG_MFG_ENV_SETTINGS_DEFAULT \
@@ -41,6 +51,7 @@
 
 /* Initial environment variables */
 #define CFG_EXTRA_ENV_SETTINGS		\
+	JAILHOUSE_ENV \
 	CFG_MFG_ENV_SETTINGS \
 	BOOTENV \
 	AHAB_ENV \
@@ -62,7 +73,7 @@
 	"mmcpart=1\0" \
 	"mmcroot=/dev/mmcblk1p2 rootwait rw\0" \
 	"mmcautodetect=yes\0" \
-	"mmcargs=setenv bootargs pd_ignore_unused ${mcore_clk} console=${console} root=${mmcroot}\0 " \
+	"mmcargs=setenv bootargs pd_ignore_unused ${jh_clk} ${mcore_clk} console=${console} root=${mmcroot}\0 " \
 	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
@@ -90,7 +101,7 @@
 				"fi; " \
 			"fi;" \
 		"fi;\0" \
-	"netargs=setenv bootargs pd_ignore_unused ${mcore_clk} console=${console} " \
+	"netargs=setenv bootargs pd_ignore_unused ${jh_clk} ${mcore_clk} console=${console} " \
 		"root=/dev/nfs " \
 		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 	"netboot=echo Booting from net ...; " \
