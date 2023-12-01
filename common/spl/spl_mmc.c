@@ -59,7 +59,7 @@ static int mmc_load_legacy(struct spl_image_info *spl_image,
 	return 0;
 }
 
-ulong h_spl_load_read(struct spl_load_info *load, ulong sector,
+ulong __weak h_spl_load_read(struct spl_load_info *load, ulong sector,
 			     ulong count, void *buf)
 {
 	struct mmc *mmc = load->dev;
