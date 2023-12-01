@@ -45,6 +45,9 @@
 #include <scmi_nxp_protocols.h>
 #include <dt-bindings/power/fsl,imx95-power.h>
 #endif
+#include <spl.h>
+#include <mmc.h>
+
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1037,3 +1040,39 @@ enum boot_device get_boot_device(void)
 	return boot_dev;
 }
 #endif
+
+ulong h_spl_load_read(struct spl_load_info *load, ulong sector,
+		      ulong count, void *buf)
+{
+	struct mmc *mmc = load->dev;
+	ulong trampoline_sz = SZ_16M;
+	void *trampoline = (void *)((ulong)CFG_SYS_SDRAM_BASE + PHYS_SDRAM_SIZE - trampoline_sz);
+	ulong ns_ddr_end = CFG_SYS_SDRAM_BASE + PHYS_SDRAM_SIZE;
+	ulong read_count, trampoline_cnt = trampoline_sz / 512, actual, total;
+
+#ifdef PHYS_SDRAM_2_SIZE
+	ns_ddr_end += PHYS_SDRAM_2_SIZE;
+#endif
+
+	/* Check if the buf is in non-secure world, otherwise copy from trampoline */
+	if ((ulong)buf < CFG_SYS_SDRAM_BASE || (ulong)buf + (count * sector) > ns_ddr_end) {
+		total = 0;
+		while (count) {
+			read_count = trampoline_cnt > count ? count : trampoline_cnt;
+			actual = blk_dread(mmc_get_blk_desc(mmc), sector, read_count, trampoline);
+			if (actual != read_count) {
+				printf("Error in blk_dread, %lu, %lu\n", read_count, actual);
+				return 0;
+			}
+			memcpy(buf, trampoline, actual * 512);
+			buf += actual * 512;
+			sector += actual;
+			total += actual;
+			count -= actual;
+		}
+
+		return total;
+	}
+
+	return blk_dread(mmc_get_blk_desc(mmc), sector, count, buf);
+}
