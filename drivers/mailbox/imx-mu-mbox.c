@@ -108,7 +108,7 @@ static int imx_mu_mbox_recv(struct mbox_chan *chan, void *data)
 		return -EPERM;
 
 	/* check if GSR[GIRn] bit is set */
-	if (readl_poll_timeout(&base->gsr, gsr, (gsr & BIT(chan->id)), 10000000000) < 0)
+	if (readl_poll_timeout(&base->gsr, gsr, (gsr & BIT(chan->id)), 1000000) < 0)
 		return -EBUSY;
 
 	/* read from receive register */
