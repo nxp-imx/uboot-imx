@@ -35,7 +35,7 @@
 #endif
 
 #ifdef CONFIG_NAND_BOOT
-#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)"
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(nandboot),16m(nandfit),64m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)"
 #endif
 
 #define CFG_MFG_ENV_SETTINGS \
@@ -57,8 +57,8 @@
 		"root=ubi0:nandrootfs rootfstype=ubifs "		     \
 		MFG_NAND_PARTITION \
 		"\0" \
-	"bootcmd=nand read ${loadaddr} 0x5000000 0x2000000;"\
-		"nand read ${fdt_addr} 0x7000000 0x100000;"\
+	"bootcmd=nand read ${loadaddr} 0x5000000 0x4000000;"\
+		"nand read ${fdt_addr} 0x9000000 0x100000;"\
 		"booti ${loadaddr} - ${fdt_addr}"
 
 #else

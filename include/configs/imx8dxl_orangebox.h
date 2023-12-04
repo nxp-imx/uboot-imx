@@ -34,7 +34,7 @@
 	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
 
 #ifdef CONFIG_NAND_BOOT
-#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:128m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)"
+#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:128m(nandboot),16m(nandfit),64m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)"
 #endif
 
 #define CFG_MFG_ENV_SETTINGS \
