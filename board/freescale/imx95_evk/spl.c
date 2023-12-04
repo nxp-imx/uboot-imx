@@ -120,6 +120,8 @@ void board_init_f(ulong dummy)
 	printf("SOC: 0x%x\n", gd->arch.soc_rev);
 	printf("LC: 0x%x\n", gd->arch.lifecycle);
 
+	get_reset_reason(true, false);
+
 	/* Will set ARM freq to max rate */
 	clock_init_late();
 

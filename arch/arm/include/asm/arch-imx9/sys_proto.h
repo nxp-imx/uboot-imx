@@ -20,6 +20,7 @@ bool m33_is_rom_kicked(void);
 int m33_prepare(void);
 bool is_usb_boot(void);
 enum imx9_soc_voltage_mode soc_target_voltage_mode(void);
+int get_reset_reason(bool sys, bool lm);
 
 #define is_voltage_mode(mode) (soc_target_voltage_mode() == mode)
 
