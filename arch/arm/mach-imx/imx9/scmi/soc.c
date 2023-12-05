@@ -398,7 +398,7 @@ int dram_init(void)
 		return ret;
 
 	/* rom_pointer[1] contains the size of TEE occupies */
-	if (rom_pointer[1])
+	if (rom_pointer[1] && (PHYS_SDRAM < (phys_addr_t)rom_pointer[0]))
 		gd->ram_size = sdram_size - rom_pointer[1];
 	else
 		gd->ram_size = sdram_size;
@@ -427,7 +427,7 @@ int dram_init_banksize(void)
 	}
 
 	gd->bd->bi_dram[bank].start = PHYS_SDRAM;
-	if (rom_pointer[1]) {
+	if (rom_pointer[1] && (PHYS_SDRAM < (phys_addr_t)rom_pointer[0])) {
 		phys_addr_t optee_start = (phys_addr_t)rom_pointer[0];
 		phys_size_t optee_size = (size_t)rom_pointer[1];
 
@@ -473,9 +473,10 @@ phys_size_t get_effective_memsize(void)
 		}
 
 		if (rom_pointer[1]) {
-			/* We will relocate u-boot to Top of dram1. Tee position has two cases:
+			/* We will relocate u-boot to Top of dram1. Tee position has three cases:
 			 * 1. At the top of dram1,  Then return the size removed optee size.
 			 * 2. In the middle of dram1, return the size of dram1.
+			 * 3. Not in the scope of dram1, return the size of dram1.
 			 */
 			if ((rom_pointer[0] + rom_pointer[1]) == (PHYS_SDRAM + sdram_b1_size))
 				return ((phys_addr_t)rom_pointer[0] - PHYS_SDRAM);
@@ -898,7 +899,11 @@ int imx9_probe_mu(void *ctx, struct event *event)
 	if (ret)
 		return ret;
 
-	ret = uclass_get_device_by_driver(UCLASS_MISC, DM_DRIVER_GET(imx8ulp_mu), &dev);
+#if defined(CONFIG_IMX_TRUSTY_OS) && defined(CONFIG_SPL_BUILD)
+	ret = uclass_get_device_by_name(UCLASS_MISC, "mailbox@47530000", &dev);
+#else
+	ret = uclass_get_device_by_name(UCLASS_MISC, "mailbox@47550000", &dev);
+#endif
 	if (ret)
 		return ret;
 

@@ -157,3 +157,9 @@ void board_init_f(ulong dummy)
 
 	board_init_r(NULL, 0);
 }
+
+#ifdef CONFIG_ANDROID_SUPPORT
+int board_get_emmc_id(void) {
+	return 0;
+}
+#endif

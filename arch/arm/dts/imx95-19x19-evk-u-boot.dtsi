@@ -165,6 +165,12 @@
 	compatible = "fsl,imx8mq-dwc3", "snps,dwc3";
 };
 
+&elemu1 {
+	status = "okay";
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
 &elemu3 {
 	status = "okay";
 	u-boot,dm-pre-reloc;
