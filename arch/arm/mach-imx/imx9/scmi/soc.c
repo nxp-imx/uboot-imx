@@ -875,7 +875,7 @@ int imx9_probe_mu(void *ctx, struct event *event)
 {
 	struct udevice *dev;
 	struct scmi_channel *channel;
-	int node, ret;
+	int ret;
 	u32 res;
 	struct ele_get_info_data info;
 
@@ -898,9 +898,7 @@ int imx9_probe_mu(void *ctx, struct event *event)
 	if (ret)
 		return ret;
 
-	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "fsl,imx93-mu-s4");
-
-	ret = uclass_get_device_by_of_offset(UCLASS_MISC, node, &dev);
+	ret = uclass_get_device_by_driver(UCLASS_MISC, DM_DRIVER_GET(imx8ulp_mu), &dev);
 	if (ret)
 		return ret;
 
