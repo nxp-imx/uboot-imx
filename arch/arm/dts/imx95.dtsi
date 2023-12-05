@@ -926,7 +926,7 @@
 		};
 
 		elemu0: mailbox@47520000 {
-			compatible = "fsl,imx8ulp-mu-s4";
+			compatible = "fsl,imx95-mu-ele";
 			reg = <0x0 0x47520000 0x0 0x10000>;
 			interrupts = <GIC_SPI 21 IRQ_TYPE_LEVEL_HIGH>;
 			#mbox-cells = <2>;
@@ -934,7 +934,7 @@
 		};
 
 		elemu1: mailbox@47530000 {
-			compatible = "fsl,imx8ulp-mu-s4";
+			compatible = "fsl,imx95-mu-ele";
 			reg = <0x0 0x47530000 0x0 0x10000>;
 			interrupts = <GIC_SPI 22 IRQ_TYPE_LEVEL_HIGH>;
 			#mbox-cells = <2>;
@@ -942,7 +942,7 @@
 		};
 
 		elemu2: mailbox@47540000 {
-			compatible = "fsl,imx8ulp-mu-s4";
+			compatible = "fsl,imx95-mu-ele";
 			reg = <0x0 0x47540000 0x0 0x10000>;
 			interrupts = <GIC_SPI 23 IRQ_TYPE_LEVEL_HIGH>;
 			#mbox-cells = <2>;
@@ -950,14 +950,14 @@
 		};
 
 		elemu3: mailbox@47550000 {
-			compatible = "fsl,imx8ulp-mu-s4";
+			compatible = "fsl,imx95-mu-ele";
 			reg = <0x0 0x47550000 0x0 0x10000>;
 			interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
 			#mbox-cells = <2>;
 		};
 
 		elemu4: mailbox@47560000 {
-			compatible = "fsl,imx8ulp-mu-s4";
+			compatible = "fsl,imx95-mu-ele";
 			reg = <0x0 0x47560000 0x0 0x10000>;
 			interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
 			#mbox-cells = <2>;
@@ -965,7 +965,7 @@
 		};
 
 		elemu5: mailbox@47570000 {
-			compatible = "fsl,imx8ulp-mu-s4";
+			compatible = "fsl,imx95-mu-ele";
 			reg = <0x0 0x47570000 0x0 0x10000>;
 			interrupts = <GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>;
 			#mbox-cells = <2>;

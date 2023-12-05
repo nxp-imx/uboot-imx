@@ -166,7 +166,6 @@
 };
 
 &elemu3 {
-	compatible = "fsl,imx93-mu-s4";
 	status = "okay";
 	u-boot,dm-pre-reloc;
 	u-boot,dm-spl;
