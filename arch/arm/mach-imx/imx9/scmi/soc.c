@@ -758,7 +758,8 @@ static int delete_fdt_nodes(void *blob, const char *const nodes_path[], int size
 static int disable_pciea_node(void *blob)
 {
 	static const char * const nodes_path_pciea[] = {
-		"/soc@0/pcie@4c300000"
+		"/soc@0/pcie@4c300000",
+		"/soc/pcie@4c300000"
 	};
 
 	return delete_fdt_nodes(blob, nodes_path_pciea, ARRAY_SIZE(nodes_path_pciea));
@@ -767,7 +768,8 @@ static int disable_pciea_node(void *blob)
 static int disable_pcieb_node(void *blob)
 {
 	static const char * const nodes_path_pcieb[] = {
-		"/soc@0/pcie@4c380000"
+		"/soc@0/pcie@4c380000",
+		"/soc/pcie@4c380000"
 	};
 
 	return delete_fdt_nodes(blob, nodes_path_pcieb, ARRAY_SIZE(nodes_path_pcieb));
