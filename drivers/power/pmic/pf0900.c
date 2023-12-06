@@ -134,6 +134,7 @@ static int pf0900_probe(struct udevice *dev)
 {
 	struct pf0900_priv *priv = dev_get_priv(dev);
 	unsigned int reg;
+	u8 dev_id;
 	int ret = 0;
 
 	ret = ofnode_read_u32(dev_ofnode(dev), "reg", &reg);
@@ -143,8 +144,13 @@ static int pf0900_probe(struct udevice *dev)
 
 	if (ofnode_read_bool(dev_ofnode(dev), "i2c-crc-enable"))
 		priv->crc_en = true;
-
-	return ret;
+	ret = pf0900_read(dev, PF0900_REG_DEV_ID, &dev_id, 1);
+	if (ret)
+		return ret;
+	if ((dev_id & 0x1F) == 0)
+		return ret;
+	else
+		return -EINVAL;
 }
 
 static struct dm_pmic_ops pf0900_ops = {
