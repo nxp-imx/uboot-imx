@@ -231,6 +231,9 @@ enum {
 #define GPO3_STBY_MASK			0x40
 #define GPO4_STBY_MASK			0x80
 
+/* PF0900_REG_SYS_CFG1 MASK */
+#define XRST_STBY_EN_MASK               0x40
+
 /* PF0900_REG_STSTEM_INT bits */
 #define IRQ_EWARN			0x80
 #define IRQ_GPIO			0x40
