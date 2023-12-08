@@ -726,3 +726,35 @@ exit:
 
 	return ret;
 }
+
+int ahab_v2x_get_state(struct v2x_get_state *state, u32 *response)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg;
+	int ret;
+
+	if (!dev) {
+		printf("s400 dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = AHAB_VERSION;
+	msg.tag = AHAB_CMD_TAG;
+	msg.size = 1;
+	msg.command = ELE_V2X_GET_STATE_REQ;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+
+	if (response)
+		*response = msg.data[0];
+
+	state->v2x_state = msg.data[1] & 0xFF;
+	state->v2x_power_state = (msg.data[1] & 0xFF00) >> 8;
+	state->v2x_err_code = msg.data[2];
+
+	return ret;
+}
