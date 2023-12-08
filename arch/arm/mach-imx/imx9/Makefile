@@ -11,5 +11,5 @@ obj-y += native/
 endif
 
 ifneq ($(CONFIG_SPL_BUILD),y)
-obj-y += imx_bootaux.o
+obj-y += imx_bootaux.o misc.o
 endif
