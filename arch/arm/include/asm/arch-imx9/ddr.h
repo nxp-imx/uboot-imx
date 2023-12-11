@@ -136,6 +136,7 @@ int ddr_cfg_phy_qb(struct dram_timing_info *timing_info, int fsp_id);
 #define DDRPHY_QB_PSTATES	0
 #define DDRPHY_QB_PST_SIZE	DDRPHY_QB_PSTATES * 4 * 1024
 struct ddrphy_qb_state {
+	uint32_t crc;
 	u8 TrainedVREFCA_A0;
 	u8 TrainedVREFCA_A1;
 	u8 TrainedVREFCA_B0;
