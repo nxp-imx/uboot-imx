@@ -342,6 +342,17 @@ void board_quiesce_devices(void)
 		printf("%s: Failed for NETC MIX: %d\n", __func__, ret);
 		return;
 	}
+
+	/*
+	 * Temperary workarount to enable NETC, because NETC kernel driver
+	 * not support suspend/resume, so enable the PD as of now, this need
+	 * to be remove in the end.
+	 */
+	ret = imx9_scmi_power_domain_enable(IMX95_PD_NETC, true);
+	if (ret) {
+		printf("%s: Failed for NETC MIX: %d\n", __func__, ret);
+		return;
+	}
 }
 
 #ifdef CONFIG_FSL_FASTBOOT
