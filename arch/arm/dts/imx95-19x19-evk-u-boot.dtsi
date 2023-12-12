@@ -159,6 +159,11 @@
 
 &usb2 {
 	compatible = "fsl,imx8mm-usb", "fsl,imx7d-usb";
+	/delete-property/power-domains;
+};
+
+&usb3 {
+	/delete-property/power-domains;
 };
 
 &usb3_dwc3 {
