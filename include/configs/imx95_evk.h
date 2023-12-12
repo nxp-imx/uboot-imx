@@ -36,11 +36,11 @@
 #define JAILHOUSE_ENV \
 	"jh_root_dtb=" JH_ROOT_DTB "\0" \
 	"jh_mmcboot=setenv fdtfile ${jh_root_dtb}; " \
-		    "setenv jh_clk clk_ignore_unused mem=512MB kvm-arm.mode=nvhe; " \
+		    "setenv jh_clk clk_ignore_unused mem=1408MB kvm-arm.mode=nvhe; " \
 		    "if run loadimage; then run mmcboot;" \
 		    "else run jh_netboot; fi; \0" \
 	"jh_netboot=setenv fdtfile ${jh_root_dtb}; " \
-		    "setenv jh_clk clk_ignore_unused mem=512MB kvm-arm.mode=nvhe; run netboot; \0 "
+		    "setenv jh_clk clk_ignore_unused mem=1408MB kvm-arm.mode=nvhe; run netboot; \0 "
 
 #define CFG_MFG_ENV_SETTINGS \
 	CFG_MFG_ENV_SETTINGS_DEFAULT \
