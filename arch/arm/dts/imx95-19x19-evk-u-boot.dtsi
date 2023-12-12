@@ -109,6 +109,10 @@
         u-boot,dm-spl;
 };
 
+&{/firmware/scmi/protocol@15} {
+	u-boot,dm-pre-reloc;
+};
+
 &{/firmware/scmi/protocol@19} {
 	u-boot,dm-pre-reloc;
 	u-boot,dm-spl;
