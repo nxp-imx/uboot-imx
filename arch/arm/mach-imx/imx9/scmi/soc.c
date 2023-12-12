@@ -684,7 +684,7 @@ int print_cpuinfo(void)
 		ret = thermal_get_temp(udev, &temp);
 
 		if (!ret)
-			printf(" at %dC", temp);
+			printf(" at %dC", temp / 100);
 		else
 			debug(" - invalid sensor data\n");
 	} else {
