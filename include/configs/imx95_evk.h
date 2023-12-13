@@ -73,7 +73,7 @@
 	"mmcpart=1\0" \
 	"mmcroot=/dev/mmcblk1p2 rootwait rw\0" \
 	"mmcautodetect=yes\0" \
-	"mmcargs=setenv bootargs pd_ignore_unused ${jh_clk} ${mcore_clk} console=${console} root=${mmcroot}\0 " \
+	"mmcargs=setenv bootargs ${jh_clk} ${mcore_clk} console=${console} root=${mmcroot}\0 " \
 	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
@@ -101,7 +101,7 @@
 				"fi; " \
 			"fi;" \
 		"fi;\0" \
-	"netargs=setenv bootargs pd_ignore_unused ${jh_clk} ${mcore_clk} console=${console} " \
+	"netargs=setenv bootargs ${jh_clk} ${mcore_clk} console=${console} " \
 		"root=/dev/nfs " \
 		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
 	"netboot=echo Booting from net ...; " \
