@@ -790,3 +790,23 @@ int ahab_v2x_get_state(struct v2x_get_state *state, u32 *response)
 
 	return ret;
 }
+
+int ele_message_call(struct ele_msg *msg)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	int ret = -EINVAL;
+
+	if (!dev) {
+		printf("s400 dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	/* Call pre-prepared ELE message. */
+	ret = misc_call(dev, false, msg, size, msg, size);
+	if (ret) 
+		printf("Error: %s: ret 0x%x, response 0x%x\n",
+		       __func__, ret, msg->data[0]);
+
+	return ret;
+}

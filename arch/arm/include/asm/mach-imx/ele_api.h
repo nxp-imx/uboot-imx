@@ -170,5 +170,6 @@ int ahab_write_secure_fuse(ulong signed_msg_blk, u32 *response);
 int ahab_return_lifecycle_update(ulong signed_msg_blk, u32 *response);
 int ahab_get_hw_unique_key(uint8_t *hwkey, size_t key_size, uint8_t *ctx, size_t ctx_size);
 int ahab_v2x_get_state(struct v2x_get_state *state, u32 *response);
+int ele_message_call(struct ele_msg *msg);
 
 #endif
