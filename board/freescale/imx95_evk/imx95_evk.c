@@ -204,6 +204,12 @@ int board_usb_init(int index, enum usb_init_type init)
 	int ret = 0;
 
 	if (index == 0 && init == USB_INIT_DEVICE) {
+		ret = imx9_scmi_power_domain_enable(IMX95_PD_HSIO_TOP, true);
+		if (ret) {
+			printf("SCMI_POWWER_STATE_SET Failed for USB\n");
+			return ret;
+		}
+
 #ifdef CONFIG_USB_DWC3
 		dwc3_nxp_usb_phy_init(&dwc3_device_data);
 #endif
