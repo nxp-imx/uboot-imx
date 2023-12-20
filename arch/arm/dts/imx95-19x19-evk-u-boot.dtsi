@@ -141,11 +141,27 @@
 	u-boot,dm-spl;
 };
 
+&pinctrl_usdhc1_100mhz {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc1_200mhz {
+	u-boot,dm-spl;
+};
+
 &usdhc2 {
 	u-boot,dm-spl;
 };
 
 &pinctrl_usdhc2 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2_100mhz {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2_200mhz {
 	u-boot,dm-spl;
 };
 
