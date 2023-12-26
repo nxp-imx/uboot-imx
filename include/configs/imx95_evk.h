@@ -49,10 +49,41 @@
 	"emmc_dev=0\0"\
 	"sd_dev=1\0" \
 
+#define XEN_BOOT_ENV \
+	    "domu-android-auto=no\0" \
+            "xenhyper_bootargs=console=dtuart dom0_mem=2048M dom0_max_vcpus=2 \0" \
+            "xenlinux_bootargs= \0" \
+            "xenlinux_console=hvc0 earlycon=xen\0" \
+            "xenlinux_addr=0x9e000000\0" \
+            "dom0fdt_file=imx95-19x19-evk.dtb\0" \
+            "xenboot_common=" \
+                "${get_cmd} ${loadaddr} xen;" \
+                "${get_cmd} ${fdt_addr} ${dom0fdt_file};" \
+                "${get_cmd} ${xenlinux_addr} ${image};" \
+                "fdt addr ${fdt_addr};" \
+                "fdt resize 256;" \
+                "fdt set /chosen/module@0 reg <0x00000000 ${xenlinux_addr} 0x00000000 0x${filesize}>;" \
+                "fdt set /chosen/module@0 bootargs \"${bootargs} ${xenlinux_bootargs}\"; " \
+                "setenv bootargs ${xenhyper_bootargs};" \
+                "booti ${loadaddr} - ${fdt_addr};" \
+            "\0" \
+            "xennetboot=" \
+                "setenv get_cmd dhcp;" \
+                "setenv console ${xenlinux_console};" \
+                "run netargs;" \
+                "run xenboot_common;" \
+            "\0" \
+            "xenmmcboot=" \
+                "setenv get_cmd \"fatload mmc ${mmcdev}:${mmcpart}\";" \
+                "setenv console ${xenlinux_console};" \
+                "run mmcargs;" \
+                "run xenboot_common;" \
+            "\0" \
 /* Initial environment variables */
 #define CFG_EXTRA_ENV_SETTINGS		\
 	JAILHOUSE_ENV \
 	CFG_MFG_ENV_SETTINGS \
+	XEN_BOOT_ENV \
 	BOOTENV \
 	AHAB_ENV \
 	"prepare_mcore=setenv mcore_clk clk-imx95.mcore_booted;\0" \
