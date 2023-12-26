@@ -9,7 +9,7 @@
 #include <imx_sip.h>
 #include <linux/arm-smccc.h>
 #include <asm/mach-imx/ahab.h>
-
+#include <cpu_func.h>
 #include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -108,7 +108,6 @@ static int authenticate_auxcore_container(u32 core_id, ulong addr, ulong *entry)
 {
 	struct container_hdr *phdr;
 	int i, ret = 0;
-	int err;
 	u16 length;
 	struct boot_img_t *img;
 	unsigned long s, e;
@@ -138,8 +137,8 @@ static int authenticate_auxcore_container(u32 core_id, ulong addr, ulong *entry)
 
 	debug("container length %u\n", length);
 
-	err = ahab_auth_cntr_hdr(phdr, length);
-	if (err) {
+	phdr = ahab_auth_cntr_hdr(phdr, length);
+	if (!phdr) {
 		ret = -EIO;
 		goto exit;
 	}
@@ -148,7 +147,7 @@ static int authenticate_auxcore_container(u32 core_id, ulong addr, ulong *entry)
 
 	/* Copy images to dest address */
 	for (i = 0; i < phdr->num_images; i++) {
-		img = (struct boot_img_t *)(addr +
+		img = (struct boot_img_t *)((ulong)phdr +
 					    sizeof(struct container_hdr) +
 					    i * sizeof(struct boot_img_t));
 

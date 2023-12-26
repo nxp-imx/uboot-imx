@@ -89,6 +89,7 @@ static int read_auth_container(struct spl_image_info *spl_image,
 			       struct spl_load_info *info, ulong sector)
 {
 	struct container_hdr *container = NULL;
+	struct container_hdr *authhdr;
 	u16 length;
 	u32 sectors;
 	int i, size, ret = 0;
@@ -144,15 +145,17 @@ static int read_auth_container(struct spl_image_info *spl_image,
 		}
 	}
 
+	authhdr = container;
+
 #ifdef CONFIG_AHAB_BOOT
-	ret = ahab_auth_cntr_hdr(container, length);
-	if (ret)
+	authhdr = ahab_auth_cntr_hdr(authhdr, length);
+	if (!authhdr)
 		goto end_auth;
 #endif
 
-	for (i = 0; i < container->num_images; i++) {
+	for (i = 0; i < authhdr->num_images; i++) {
 		struct boot_img_t *image = read_auth_image(spl_image, info,
-							   container, i,
+							   authhdr, i,
 							   sector);
 
 		if (!image) {
@@ -168,7 +171,7 @@ static int read_auth_container(struct spl_image_info *spl_image,
 
 #if defined(CONFIG_SPL_BUILD) && defined(CONFIG_IMX_TRUSTY_OS)
 	/* Everything checks out, get the sw_version now. */
-	spl_image->rbindex = (uint64_t)container->sw_version;
+	spl_image->rbindex = (uint64_t)authhdr->sw_version;
 #endif
 
 
