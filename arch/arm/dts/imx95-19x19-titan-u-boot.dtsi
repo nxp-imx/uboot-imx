@@ -1,0 +1,210 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2023 NXP
+ */
+
+&{/soc@0} {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&aips1 {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&aips2 {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&aips3 {
+	u-boot,dm-spl;
+};
+
+&gpio1 {
+	reg = <0 0x47400000 0 0x1000>, <0 0x47400040 0 0x40>;
+};
+
+&gpio2 {
+	reg = <0 0x43810000 0 0x1000>, <0 0x43810040 0 0x40>;
+	u-boot,dm-spl;
+};
+
+&gpio3 {
+	reg = <0 0x43820000 0 0x1000>, <0 0x43820040 0 0x40>;
+	u-boot,dm-spl;
+};
+
+&gpio4 {
+	reg = <0 0x43840000 0 0x1000>, <0 0x43840040 0 0x40>;
+	u-boot,dm-spl;
+};
+
+&gpio5 {
+	reg = <0 0x43850000 0 0x1000>, <0 0x43850040 0 0x40>;
+	u-boot,dm-spl;
+};
+
+&lpuart1 {
+	clocks = <&scmi_clk IMX95_CLK_LPUART1>, <&scmi_clk IMX95_CLK_LPUART1>;
+	clock-names = "ipg", "per";
+	u-boot,dm-spl;
+};
+
+&mu2 {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&dummy {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&osc_24m {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&clk_ext1 {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&scmi_buf1 {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&{/firmware} {
+	u-boot,dm-pre-reloc;
+        u-boot,dm-spl;
+};
+
+&{/firmware/scmi} {
+	u-boot,dm-pre-reloc;
+        u-boot,dm-spl;
+};
+
+&{/firmware/scmi/protocol@11} {
+	u-boot,dm-pre-reloc;
+        u-boot,dm-spl;
+};
+
+&{/firmware/scmi/protocol@13} {
+	u-boot,dm-pre-reloc;
+        u-boot,dm-spl;
+};
+
+&{/firmware/scmi/protocol@14} {
+	u-boot,dm-pre-reloc;
+        u-boot,dm-spl;
+};
+
+&{/firmware/scmi/protocol@15} {
+	u-boot,dm-pre-reloc;
+};
+
+&{/firmware/scmi/protocol@19} {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog>;
+
+	pinctrl_hog: hoggrp {
+		u-boot,dm-spl;
+
+		fsl,pins = <
+			IMX95_PAD_XSPI1_SS1_B__GPIO5_IO_BIT11			0x3fe
+		>;
+	};
+};
+
+&pinctrl_uart1 {
+	u-boot,dm-spl;
+};
+
+&usdhc1 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc1 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc1_100mhz {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc1_200mhz {
+	u-boot,dm-spl;
+};
+
+&usdhc2 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2 {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2_100mhz {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2_200mhz {
+	u-boot,dm-spl;
+};
+
+&pinctrl_usdhc2_gpio {
+	u-boot,dm-spl;
+};
+
+&reg_usdhc2_vmmc {
+	u-boot,dm-spl;
+	off-on-delay-us = <12000>;
+	startup-delay-us = <10000>;
+};
+
+&pinctrl_reg_usdhc2_vmmc {
+	u-boot,dm-spl;
+};
+
+&usb2 {
+	compatible = "fsl,imx8mm-usb", "fsl,imx7d-usb";
+	/delete-property/power-domains;
+};
+
+&usb3 {
+	/delete-property/power-domains;
+};
+
+&usb3_dwc3 {
+	compatible = "fsl,imx8mq-dwc3", "snps,dwc3";
+};
+
+&elemu1 {
+	status = "okay";
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&elemu3 {
+	status = "okay";
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&flexspi1 {
+	u-boot,dm-spl;
+};
+
+&mt35xu01gbba {
+	u-boot,dm-spl;
+};
+
+&pinctrl_flexspi1 {
+	u-boot,dm-spl;
+};
