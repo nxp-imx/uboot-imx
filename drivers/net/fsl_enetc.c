@@ -206,7 +206,11 @@ static int enetc_bind(struct udevice *dev)
 	 * PCI function # and enetc#N based on interface count
 	 */
 	if (ofnode_valid(dev_ofnode(dev)))
+#ifdef CONFIG_ARCH_IMX9
+		sprintf(name, "enetc-%u", PCI_DEV(pci_get_devfn(dev)) >> 3);
+#else
 		sprintf(name, "enetc-%u", PCI_FUNC(pci_get_devfn(dev)));
+#endif
 	else
 		sprintf(name, "enetc#%u", eth_num_devices++);
 	device_set_name(dev, name);
