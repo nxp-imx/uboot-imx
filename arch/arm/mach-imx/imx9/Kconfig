@@ -56,11 +56,16 @@ config TARGET_IMX95_19X19_EVK
 	bool "imx95_19x19_evk"
 	select IMX95
 
+config TARGET_TITAN_IMX95_19X19
+	bool "imx95_titan_evk"
+	select IMX95
+
 endchoice
 
 source "board/freescale/imx93_evk/Kconfig"
 source "board/freescale/imx93_qsb/Kconfig"
 source "board/freescale/imx95_evk/Kconfig"
+source "board/toradex/titan-imx95/Kconfig"
 
 endif
 

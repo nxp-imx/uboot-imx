@@ -1,0 +1,12 @@
+if TARGET_TITAN_IMX95_19X19
+
+config SYS_BOARD
+	default "titan-imx95"
+
+config SYS_VENDOR
+	default "toradex"
+
+config SYS_CONFIG_NAME
+	default "titan-imx95"
+
+endif
