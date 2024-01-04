@@ -210,10 +210,18 @@ struct dwc3 {					/* offset: 0xC100 */
 #define DWC3_DCTL_CSFTRST			(1 << 30)
 #define DWC3_DCTL_LSFTRST			(1 << 29)
 
+#define DWC3_GFLADJ_REFCLK_FLADJ_MASK		GENMASK(21, 8)
+#define DWC3_GFLADJ_REFCLK_LPM_SEL      	BIT(23)
+#define DWC3_GFLADJ_240MHZDECR			GENMASK(30, 24)
+#define DWC3_GFLADJ_240MHZDECR_PLS1		BIT(31)
+
 /* Global Frame Length Adjustment Register */
 #define GFLADJ_30MHZ_REG_SEL			(1 << 7)
 #define GFLADJ_30MHZ(n)				((n) & 0x3f)
 #define GFLADJ_30MHZ_DEFAULT			0x20
+
+/* Global User Control Register*/
+#define DWC3_GUCTL_REFCLKPER_MASK		0xffc00000
 
 #ifdef CONFIG_USB_XHCI_DWC3
 void dwc3_set_mode(struct dwc3 *dwc3_reg, u32 mode);
