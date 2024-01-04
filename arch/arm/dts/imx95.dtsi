@@ -977,40 +977,41 @@
 			status = "disabled";
 		};
 
-		usb3_phy: usb-phy@4c1f0040 {
+		usb3_phy: phy@4c1f0040 {
 			compatible = "fsl,imx8mp-usb-phy";
 			reg = <0x0 0x4c1f0040 0x0 0x40>;
-			clocks = <&dummy>;
+			clocks = <&scmi_clk IMX95_CLK_HSIO>;
 			clock-names = "phy";
 			#phy-cells = <0>;
 			status = "disabled";
 		};
 
-		usb3: usb@4c010004 {
-			compatible = "fsl,imx8mp-dwc3";
-			reg = <0x0 0x4c010004 0x0 0x0F>,
+		usb3: usb@4c010010 {
+			compatible = "fsl,imx95-dwc3", "fsl,imx8mp-dwc3";
+			reg = <0x0 0x4c010010 0x0 0x04>,
 			      <0x0 0x4c1f0000 0x0 0x20>;
-			clocks = <&dummy>,
-				 <&dummy>;
+			clocks = <&scmi_clk IMX95_CLK_HSIO>,
+				 <&scmi_clk IMX95_CLK_32K>;
 			clock-names = "hsio", "suspend";
 			interrupts = <GIC_SPI 173 IRQ_TYPE_LEVEL_HIGH>;
 			#address-cells = <2>;
 			#size-cells = <2>;
-			dma-ranges = <0x40000000 0x40000000 0xc0000000>;
-			power-domains = <&scmi_devpd IMX95_PD_HSIO_TOP>;
 			ranges;
+			power-domains = <&scmi_devpd IMX95_PD_HSIO_TOP>;
 			status = "disabled";
 
 			usb3_dwc3: usb@4c100000 {
 				compatible = "snps,dwc3";
 				reg = <0x0 0x4c100000 0x0 0x10000>;
-				clocks = <&dummy>,
-					 <&dummy>,
-					 <&dummy>;
+				clocks = <&scmi_clk IMX95_CLK_HSIO>,
+					 <&scmi_clk IMX95_CLK_24M>,
+					 <&scmi_clk IMX95_CLK_32K>;
 				clock-names = "bus_early", "ref", "suspend";
 				interrupts = <GIC_SPI 175 IRQ_TYPE_LEVEL_HIGH>;
 				phys = <&usb3_phy>, <&usb3_phy>;
 				phy-names = "usb2-phy", "usb3-phy";
+				snps,gfladj-refclk-lpm-sel-quirk;
+				snps,parkmode-disable-ss-quirk;
 			};
 		};
 
