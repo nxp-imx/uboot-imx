@@ -44,7 +44,7 @@ int board_early_init_f(void)
 struct tcpc_port port;
 struct tcpc_port_config port_config = {
 	.i2c_bus = 6, /* i2c7 */
-	.addr = 0x50,
+	.addr = 0x52,
 	.port_type = TYPEC_PORT_DFP,
 };
 ulong tca_base;

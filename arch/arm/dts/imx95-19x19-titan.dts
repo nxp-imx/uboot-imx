@@ -50,12 +50,18 @@
 };
 
 &lpi2c7 {
+	clock-frequency = <400000>;
+
 	i2c7_pcal6524_23: i2c7-gpio@23 {
 		compatible = "nxp,pcal6524";
 		reg = <0x23>;
 		gpio-controller;
 		#gpio-cells = <2>;
 	};
+};
+
+&ptn5110 {
+	reg = <0x52>;
 };
 
 &scmi_iomuxc {
