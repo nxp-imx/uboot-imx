@@ -64,7 +64,7 @@ Trust by using the AHAB API call via ELE FW.
 1.3 Building an image supporting secure boot
 ------------------------------------------------
 
-A typical singleboot mode image with Cortex-M support contains three containers:
+A typical singleboot mode 8ULP/93 image with Cortex-M support contains three containers:
 
             *start ----> +---------------------------+ ---------
                          |   1st Container header    |   ^
@@ -107,6 +107,47 @@ authenticated at ELE FW level.
 The third container includes the U-Boot proper and the ATF. The SPL is in
 charge to load this container and also to interface with ELE FW to authenticate
  the additional container.
+
+The image layout for the i.MX95 is very similar to the 8ULP and 93 image with
+ an additional executable image and V2X FW image:
+
+	    *start ----> +---------------------------+ ---------
+                         |   1st Container header    |   ^
+                         |       and signature       |   |
+                         +---------------------------+   |
+                         | Padding for 1kB alignment |   |
+     *start +0x400 ----> +---------------------------+   |
+                         |   2nd Container header    |   |
+                         |       and signature       |   |
+                         +---------------------------+   |
+                         | Padding for 1kB alignment |   |
+    *start + 0x800 ----> +---------------------------+   |
+                         |   3rd Container header    |   |  
+                         |       and signature       |   |  Authenticated at
+                         +---------------------------+   |  ELE ROM/FW Level
+                         |          Padding          |   |  
+                         +---------------------------+   |  
+                         |           ELE FW          |   |
+                         +---------------------------+   |
+                         |           V2X FW          |   |
+                         +---------------------------+   |
+                         |          Padding          |   |
+                         +---------------------------+   |
+                         |  Optional Executable Image|   |   
+			 +---------------------------+   |
+                         |       Cortex-M Image      |   |
+			 +---------------------------+   |
+                         |          SPL Image        |   v
+                         +---------------------------+ ---------
+                         |   4th Container header    |   ^
+                         |       and signature       |   |
+                         +---------------------------+   |
+                         |          Padding          |   | Authenticated
+                         +---------------------------+   | at SPL Level
+                         |    ARM Trusted FW (ATF)   |   |
+                         +---------------------------+   |
+                         |     U-Boot Proper IMG     |   v
+                         +---------------------------+ ---------
 
 The signing procedure is slightly different when compared with HABv4 series. On
 AHAB the signature is directly included in the container, the CST is
@@ -383,7 +424,7 @@ On i.MX8ULP:
   => fuse prog 15 6 0xe5e804fe
   => fuse prog 15 7 0x7a451024
   
-On i.MX93:
+On i.MX93 and i.MX95:
 
   => fuse prog 16 0 0xdb2959f2
   => fuse prog 16 1 0x90dfc39c
@@ -417,6 +458,11 @@ changed from OEM open to OEM closed. Be aware this step can damage your board if
 a previous step failed. It is also irreversible. Run on the U-Boot terminal:
 
   => ahab_close
+
+Warning: Please ensure your sample is in NXP closed state, OEM SRK hash has
+been fused,and you are able to boot a signed image successfully without any SECO
+events reported. If not, your sample will be unrecoverable.
+
 
 Now reboot the target, and run:
 
