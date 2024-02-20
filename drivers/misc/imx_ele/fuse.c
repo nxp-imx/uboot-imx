@@ -139,8 +139,7 @@ static s32 map_fsb_fuse_index(u32 bank, u32 word, bool *redundancy)
 	/* map the fuse from ocotp fuse map to FSB*/
 	for (i = 0; i < size; i++) {
 		if (fsb_mapping_table[i].fuse_bank != -1 &&
-		    fsb_mapping_table[i].fuse_bank == bank &&
-		    fsb_mapping_table[i].fuse_words > word) {
+		    fsb_mapping_table[i].fuse_bank == bank) {
 			break;
 		}
 
@@ -151,8 +150,13 @@ static s32 map_fsb_fuse_index(u32 bank, u32 word, bool *redundancy)
 		return -1; /* Failed to find */
 
 	if (fsb_mapping_table[i].redundancy) {
+		if ((fsb_mapping_table[i].fuse_words << 1) <= word)
+			return -2; /* Not valid word */
+
 		*redundancy = true;
 		return (word >> 1) + word_pos;
+	} else if (fsb_mapping_table[i].fuse_words <= word) {
+		return -2; /* Not valid word */
 	}
 
 	*redundancy = false;
