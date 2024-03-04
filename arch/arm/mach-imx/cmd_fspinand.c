@@ -421,7 +421,6 @@ static int fspinand_readback_check(struct fspi_nand *f, u64 offset, u64 len,
 	}
 
 	kfree(buf);
-	unmap_sysmem(buf);
 	return need_rewrite;
 };
 
