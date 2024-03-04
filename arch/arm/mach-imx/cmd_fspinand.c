@@ -11,7 +11,7 @@
 #include <mtd.h>
 
 #define FIRMWARE_MAX_NUM		8
-#define SERIAL_NAND_BAD_BLOCK_MAX_NUM	256
+#define SERIAL_NAND_BAD_BLOCK_MAX_NUM	256U
 #define FSPI_CFG_BLK_TAG		0x42464346/* FCFB, bigendian */
 #define FSPI_CFG_BLK_VERSION		0x56010000/* Version 1.0 */
 #define FSPI_CFG_BLK_SIZE		512
@@ -339,17 +339,17 @@ static int fspinand_prep_dbbt(struct fspi_nand *f)
 	struct mtd_info *mtd = f->mtd;
 	struct fspi_nand_dbbt *dbbt = &f->dbbt;
 	int ret = 0;
-	int i;
+	u32 i;
 	u64 off;
-	int toal_blk_num = mtd_div_by_eb(mtd->size, mtd);
-	int max_num = min(toal_blk_num, SERIAL_NAND_BAD_BLOCK_MAX_NUM);
+	u32 toal_blk_num = mtd_div_by_eb(mtd->size, mtd);
+	u32 max_num = min(toal_blk_num, SERIAL_NAND_BAD_BLOCK_MAX_NUM);
 
 	dbbt->crc_checksum = 0;
 	dbbt->fingerprint = FSPI_NAND_DBBT_FINGERPRINT;
 	dbbt->version = FSPI_NAND_DBBT_VERSION;
 
 	for (i = 0; i < max_num; i++) {
-		off = i * mtd->erasesize;
+		off = i * (u64)mtd->erasesize;
 		if (mtd_block_isbad(mtd, off)) {
 			dbbt->bad_block_table[dbbt->bad_block_number] = i;
 			dbbt->bad_block_number++;
@@ -551,7 +551,7 @@ static int fspinand_prog_fcb(struct fspi_nand *f)
 		printf("fspinand prog FCB0 success\n");
 	}
 
-	ret = fspinand_prog_data(f, fcb, fcb->search_stride * mtd->writesize,
+	ret = fspinand_prog_data(f, fcb, (u64)fcb->search_stride * mtd->writesize,
 				 sizeof(struct fspi_nand_fcb));
 	if (ret) {
 		printf("fspinand prog FCB1 fail\n");
@@ -571,7 +571,7 @@ static int fspinand_prog_dbbt(struct fspi_nand *f)
 	int ret = 0;
 	u64 off;
 
-	off = fcb->DBBT_search_start_page * mtd->writesize;
+	off = (u64)fcb->DBBT_search_start_page * mtd->writesize;
 	ret = fspinand_prog_data(f, dbbt, off, sizeof(struct fspi_nand_dbbt));
 	if (ret) {
 		printf("fspinand prog DBBT0 fail\n");
@@ -580,7 +580,7 @@ static int fspinand_prog_dbbt(struct fspi_nand *f)
 		printf("fspinand prog DBBT0 success\n");
 	}
 
-	off += fcb->search_stride * mtd->writesize;
+	off += (u64)fcb->search_stride * mtd->writesize;
 	ret = fspinand_prog_data(f, dbbt, off, sizeof(struct fspi_nand_dbbt));
 	if (ret) {
 		printf("fspinand prog DBBT1 fail\n");
@@ -600,8 +600,8 @@ static int fspinand_prog_firmware(struct fspi_nand *f, void *firmware)
 	u64 off;
 	u64 size;
 
-	off = fcb->firmware_table[0].start_page * mtd->writesize;
-	size = fcb->firmware_table[0].pages_in_firmware * mtd->writesize;
+	off = (u64)fcb->firmware_table[0].start_page * mtd->writesize;
+	size = (u64)fcb->firmware_table[0].pages_in_firmware * mtd->writesize;
 	ret = fspinand_prog_data(f, firmware, off, size);
 	if (ret) {
 		printf("fspinand prog FIRMWARE0 fail\n");
