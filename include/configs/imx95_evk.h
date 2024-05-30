@@ -25,8 +25,10 @@
 
 #define WDOG_BASE_ADDR			WDG3_BASE_ADDR
 
-#ifdef CONFIG_ANDROID_SUPPORT
+#if defined(CONFIG_ANDROID_SUPPORT)
 #include "imx95_evk_android.h"
+#elif defined (CONFIG_ANDROID_AUTO_SUPPORT)
+#include "imx95_evk_android_auto.h"
 #endif
 
 #endif
