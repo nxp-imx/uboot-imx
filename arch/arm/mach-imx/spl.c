@@ -27,8 +27,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-__weak int spl_board_boot_device(enum boot_device boot_dev_spl)
+__weak int spl_board_boot_device(u32 boot_device)
 {
+	enum boot_device boot_dev_spl = (enum boot_device)boot_device;
 	switch (boot_dev_spl) {
 #if defined(CONFIG_MX7)
 	case SD1_BOOT:
