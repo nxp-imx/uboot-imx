@@ -26,7 +26,9 @@
 #undef CFG_EXTRA_ENV_SETTINGS
 #undef CONFIG_BOOTCOMMAND
 
-#define CFG_EXTRA_ENV_SETTINGS					\
+#define CFG_EXTRA_ENV_SETTINGS		\
+	"fdt_high=0xffffffffffffffff\0"	  	\
+	"initrd_high=0xffffffffffffffff\0" 	\
 	"emmc_dev=0\0" \
 	"sd_dev=1\0"
 
