@@ -148,8 +148,8 @@ int board_fix_fdt(void *fdt)
 #if defined(CONFIG_TARGET_LX2160AQDS) || defined(CONFIG_TARGET_LX2162AQDS)
 void esdhc_dspi_status_fixup(void *blob)
 {
-	const char esdhc0_path[] = "/soc/esdhc@2140000";
-	const char esdhc1_path[] = "/soc/esdhc@2150000";
+	const char *esdhc0_path = "/soc/mmc@2140000";
+	const char *esdhc1_path = "/soc/mmc@2150000";
 	const char dspi0_path[] = "/soc/spi@2100000";
 	const char dspi1_path[] = "/soc/spi@2110000";
 	const char dspi2_path[] = "/soc/spi@2120000";
@@ -158,6 +158,12 @@ void esdhc_dspi_status_fixup(void *blob)
 	u32 sdhc1_base_pmux;
 	u32 sdhc2_base_pmux;
 	u32 iic5_pmux;
+
+	if (fdt_path_offset(blob, esdhc0_path) < 0)
+		esdhc0_path = "/soc/esdhc@2140000";
+
+	if (fdt_path_offset(blob, esdhc1_path) < 0)
+		esdhc1_path = "/soc/esdhc@2150000";
 
 	/* Check RCW field sdhc1_base_pmux to enable/disable
 	 * esdhc0/dspi0 DT node

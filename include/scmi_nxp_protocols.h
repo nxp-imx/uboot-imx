@@ -17,6 +17,7 @@ enum scmi_imx_protocol {
 
 #define SCMI_ARRAY(X, Y)	((SCMI_PAYLOAD_LEN - (X)) / sizeof(Y))
 
+#define SCMI_IMX_MISC_BUILD_INFO	0x6
 #define SCMI_IMX_MISC_RESET_REASON	0xA
 #define SCMI_IMX_MISC_CFG_INFO		0xC
 
@@ -60,5 +61,20 @@ struct scmi_imx_misc_cfg_info_out {
 #define MISC_MAX_CFGNAME	16
 	/* Config (cfg) file basename */
 	char cfgname[MISC_MAX_CFGNAME];
+};
+
+struct scmi_imx_misc_build_info_out {
+	/* Return status */
+	s32 status;
+	/* Build number */
+	u32 buildnum;
+	/* Most significant 32 bits of the git commit hash */
+	u32 buildcommit;
+#define MISC_MAX_BUILDDATE	16
+	/* Date of build */
+	char builddate[MISC_MAX_BUILDDATE];
+#define MISC_MAX_BUILDTIME	16
+	/* Time of build */
+	char buildtime[MISC_MAX_BUILDTIME];
 };
 #endif

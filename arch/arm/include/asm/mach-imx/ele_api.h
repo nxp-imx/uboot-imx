@@ -7,6 +7,7 @@
 #define __ELE_API_H__
 
 #define ELE_VERSION    0x6
+#define ELE_VERSION_FW 0x7
 #define ELE_CMD_TAG    0x17
 #define ELE_RESP_TAG   0xe1
 
@@ -14,6 +15,8 @@
 #define ELE_PING_REQ (0x01)
 #define ELE_FW_AUTH_REQ (0x02)
 #define ELE_RESTART_RST_TIMER_REQ (0x04)
+#define ELE_VOLT_CHANGE_START_REQ (0x12)
+#define ELE_VOLT_CHANGE_FINISH_REQ (0x13)
 #define ELE_DUMP_DEBUG_BUFFER_REQ (0x21)
 #define ELE_OEM_CNTN_AUTH_REQ (0x87)
 #define ELE_VERIFY_IMAGE_REQ (0x88)
@@ -26,6 +29,7 @@
 #define ELE_GET_EVENTS_REQ (0xA2)
 #define ELE_COMMIT_REQ (0xA8)
 #define ELE_START_RNG (0xA3)
+#define ELE_GET_TRNG_STATE (0xA4)
 #define ELE_CMD_DERIVE_KEY    (0xA9)
 #define ELE_GENERATE_DEK_BLOB (0xAF)
 #define ELE_V2X_GET_STATE_REQ (0xB2)
@@ -34,6 +38,7 @@
 #define ELE_GET_FW_STATUS_REQ (0xC5)
 #define ELE_ENABLE_OTFAD_REQ (0xC6)
 #define ELE_RESET_REQ (0xC7)
+#define ELE_GET_RNG (0xCD)
 #define ELE_UPDATE_OTP_CLKDIV_REQ (0xD0)
 #define ELE_POWER_DOWN_REQ (0xD1)
 #define ELE_ENABLE_APC_REQ (0xD2)
@@ -49,6 +54,8 @@
 #define ELE_ATTEST_REQ (0xDB)
 #define ELE_RELEASE_PATCH_REQ (0xDC)
 #define ELE_OTP_SEQ_SWITH_REQ (0xDD)
+#define ELE_WRITE_SHADOW_REQ (0xF2)
+#define ELE_READ_SHADOW_REQ (0xF3)
 
 /* ELE failure indications */
 #define ELE_ROM_PING_FAILURE_IND (0x0A)
@@ -168,6 +175,12 @@ int ele_return_lifecycle_update(ulong signed_msg_blk, u32 *response);
 int ele_start_rng(void);
 int ele_commit(u16 fuse_id, u32 *response, u32 *info_type);
 int ele_v2x_get_state(struct v2x_get_state *state, u32 *response);
+int ele_volt_change_start_req(void);
+int ele_volt_change_finish_req(void);
 int ele_message_call(struct ele_msg *msg);
 int ele_get_hw_unique_key(uint8_t *hwkey, size_t key_size, uint8_t *ctx, size_t ctx_size);
+int ele_write_shadow_fuse(u32 fuse_id, u32 fuse_val, u32 *response);
+int ele_read_shadow_fuse(u32 fuse_id, u32 *fuse_val, u32 *response);
+int ele_get_trng_state(void);
+int ele_get_random(u32 src_paddr, size_t len);
 #endif

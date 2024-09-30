@@ -183,7 +183,7 @@ void board_quiesce_devices(void)
 #ifdef CONFIG_TARGET_LS1012ARDB
 int esdhc_status_fixup(void *blob, const char *compat)
 {
-	char esdhc1_path[] = "/soc/esdhc@1580000";
+	char *esdhc1_path = "/soc/mmc@1580000";
 	bool sdhc2_en = false;
 	u8 mux_sdhc2;
 	u8 io = 0;
@@ -243,6 +243,10 @@ int esdhc_status_fixup(void *blob, const char *compat)
 		if (mux_sdhc2 == 2 || mux_sdhc2 == 0)
 			sdhc2_en = true;
 	}
+
+	if (fdt_path_offset(blob, esdhc1_path) < 0)
+		esdhc1_path = "/soc/esdhc@1580000";
+
 	if (sdhc2_en)
 		do_fixup_by_path(blob, esdhc1_path, "status", "okay",
 				 sizeof("okay"), 1);

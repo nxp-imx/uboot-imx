@@ -49,7 +49,8 @@ struct tcpc_port portpd;
 struct tcpc_port_config port_config = {
 	.i2c_bus = 2, /* i2c3 */
 	.addr = 0x50,
-	.port_type = TYPEC_PORT_DFP,
+	.port_type = TYPEC_PORT_DRP,
+	.disable_pd = true,
 };
 
 struct tcpc_port_config portpd_config = {
@@ -65,7 +66,8 @@ struct tcpc_port_config portpd_config = {
 struct tcpc_port_config port_config = {
 	.i2c_bus = 6, /* i2c7 */
 	.addr = 0x50,
-	.port_type = TYPEC_PORT_DFP,
+	.port_type = TYPEC_PORT_DRP,
+	.disable_pd = true,
 };
 #endif
 
@@ -331,6 +333,53 @@ void netc_init(void)
 	pci_init();
 }
 
+static void flexspi_nor_steup(void)
+{
+	struct gpio_desc desc;
+	int ret;
+
+	if (!IS_ENABLED(CONFIG_TARGET_IMX95_15X15_EVK))
+		return;
+
+	/* Power cycle the M2 3V3 */
+	ret = dm_gpio_lookup_name("gpio@22_10", &desc);
+	if (ret)
+		return;
+
+	ret = dm_gpio_request(&desc, "M2_PWREN");
+	if (ret)
+		return;
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
+	dm_gpio_set_value(&desc, 0);
+	udelay(100000);
+	dm_gpio_set_value(&desc, 1);
+
+	/* Enable 1.8V LDO */
+	ret = dm_gpio_lookup_name("gpio@22_11", &desc);
+	if (ret)
+		return;
+
+	ret = dm_gpio_request(&desc, "M2_DIS1");
+	if (ret)
+		return;
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
+	dm_gpio_set_value(&desc, 1);
+
+	/* Deassert M2_SD3_nRST */
+	ret = dm_gpio_lookup_name("GPIO5_9", &desc);
+	if (ret)
+		return;
+
+	ret = dm_gpio_request(&desc, "M2_SD3_nRST");
+	if (ret)
+		return;
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
+	dm_gpio_set_value(&desc, 1);
+}
+
 #if CONFIG_IS_ENABLED(NET)
 int board_phy_config(struct phy_device *phydev)
 {
@@ -357,6 +406,8 @@ int board_init(void)
 #endif
 
 	netc_init();
+
+	flexspi_nor_steup();
 
 	power_on_m7("mx95alt");
 

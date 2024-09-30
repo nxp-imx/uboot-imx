@@ -658,4 +658,13 @@
 			MX91_PAD_GPIO_IO21__MEDIAMIX_DISP_DATA17        0x31e
 		>;
 	};
+
+	pinctrl_lcdif_gpio: lcdifgpiogrp {
+		fsl,pins = <
+			MX91_PAD_GPIO_IO00__GPIO2_IO0			0x31e
+			MX91_PAD_GPIO_IO01__GPIO2_IO1			0x31e
+			MX91_PAD_GPIO_IO02__GPIO2_IO2			0x31e
+			MX91_PAD_GPIO_IO03__GPIO2_IO3			0x31e
+		>;
+	};
 };

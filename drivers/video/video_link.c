@@ -287,12 +287,13 @@ static bool video_link_cmp(struct video_link *linka, struct video_link *linkb)
 static int duplicate_video_link(void)
 {
 	ulong i;
-	if (video_links_num < MAX_LINKS) {
-		for (i = 0; i < video_links_num; i++){
-			if (video_link_cmp(&video_links[i], &temp_stack))
-				return 0;
-		}
 
+	for (i = 0; i < video_links_num; i++){
+		if (video_link_cmp(&video_links[i], &temp_stack))
+			return 0;
+	}
+
+	if (video_links_num < MAX_LINKS) {
 		video_links[video_links_num] = temp_stack;
 		video_links_num++;
 

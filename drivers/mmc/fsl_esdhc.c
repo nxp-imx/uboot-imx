@@ -866,8 +866,13 @@ static void esdhc_disable_for_no_card(void *blob)
 		if (fsl_esdhc_get_cd(dev))
 			continue;
 
-		snprintf(esdhc_path, sizeof(esdhc_path), "/soc/esdhc@%lx",
+		snprintf(esdhc_path, sizeof(esdhc_path), "/soc/mmc@%lx",
 			 (unsigned long)dev_read_addr(dev));
+
+		if (fdt_path_offset(blob, esdhc_path) < 0)
+			snprintf(esdhc_path, sizeof(esdhc_path), "/soc/esdhc@%lx",
+				 (unsigned long)dev_read_addr(dev));
+
 		do_fixup_by_path(blob, esdhc_path, "status", "disabled",
 				 sizeof("disabled"), 1);
 	}

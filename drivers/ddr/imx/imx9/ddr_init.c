@@ -265,6 +265,11 @@ void update_umctl2_rank_space_setting(struct dram_timing_info *dram_timing, unsi
 u32 ddrc_mrr(u32 chip_select, u32 mode_reg_num, u32 *mode_reg_val)
 {
 	u32 temp;
+	u8 dyn_ref_rate_en = 0;
+
+	dyn_ref_rate_en = !!(readl(REG_DDR_SDRAM_CFG_3) & BIT(7));
+	if (dyn_ref_rate_en)
+		clrbits_le32(REG_DDR_SDRAM_CFG_3, BIT(7));
 
 	writel(0x80000000, REG_DDR_SDRAM_MD_CNTL_2);
 	temp = 0x80000000 | (chip_select << 28) | (mode_reg_num << 0);
@@ -280,12 +285,20 @@ u32 ddrc_mrr(u32 chip_select, u32 mode_reg_num, u32 *mode_reg_val)
 	writel(0x0, REG_DDR_SDRAM_MPR4);
 	writel(0x0, REG_DDR_SDRAM_MD_CNTL_2);
 
+	if (dyn_ref_rate_en)
+		setbits_le32(REG_DDR_SDRAM_CFG_3, BIT(7));
+
 	return 0;
 }
 
 void ddrc_mrs(u32 cs_sel, u32 opcode, u32 mr)
 {
 	u32 regval;
+	u8 dyn_ref_rate_en = 0;
+
+	dyn_ref_rate_en = !!(readl(REG_DDR_SDRAM_CFG_3) & BIT(7));
+	if (dyn_ref_rate_en)
+		clrbits_le32(REG_DDR_SDRAM_CFG_3, BIT(7));
 
 	regval = (cs_sel << 28) | (opcode << 6) | (mr);
 	writel(regval, REG_DDR_SDRAM_MD_CNTL);
@@ -293,6 +306,9 @@ void ddrc_mrs(u32 cs_sel, u32 opcode, u32 mr)
 	while ((readl(REG_DDR_SDRAM_MD_CNTL) & 0x80000000) == 0x80000000)
 	;
 	check_ddrc_idle();
+
+	if (dyn_ref_rate_en)
+		setbits_le32(REG_DDR_SDRAM_CFG_3, BIT(7));
 }
 
 u32 lpddr4_mr_read(u32 mr_rank, u32 mr_addr)

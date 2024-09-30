@@ -14,6 +14,7 @@
 #include <linux/libfdt.h>
 #include <linux/printk.h>
 #include <malloc.h>
+#include <kaslr.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -598,6 +599,13 @@ int ft_system_setup(void *blob, struct bd_info *bd)
 		ret = config_smmu_fdt(blob);
 		if (ret)
 			return ret;
+	}
+
+	if (IS_ENABLED(CONFIG_KASLR)) {
+		ret = do_generate_kaslr(blob);
+		if (ret)
+			printf("Unable to set property %s, err=%s\n",
+				"kaslr-seed", fdt_strerror(ret));
 	}
 
 	return ft_add_optee_node(blob, bd);

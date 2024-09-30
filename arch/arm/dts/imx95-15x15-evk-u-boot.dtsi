@@ -124,10 +124,11 @@
 	pinctrl-0 = <&pinctrl_hog>;
 
 	pinctrl_hog: hoggrp {
+		bootph-all;
 		bootph-pre-ram;
 
 		fsl,pins = <
-			IMX95_PAD_XSPI1_SS1_B__GPIO5_IO_BIT11			0x3fe
+			IMX95_PAD_XSPI1_SCLK__GPIO5_IO_BIT9			0x3fe
 			IMX95_PAD_CCM_CLKO1__GPIO3_IO_BIT26			0x3fe
 			IMX95_PAD_CCM_CLKO2__GPIO3_IO_BIT27			0x3fe
 		>;

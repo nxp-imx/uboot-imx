@@ -12,6 +12,7 @@
 #include <asm/mach-imx/ele_api.h>
 #include <misc.h>
 #include <memalign.h>
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -264,6 +265,72 @@ int ele_write_fuse(u16 fuse_id, u32 fuse_val, bool lock, u32 *response)
 
 	if (response)
 		*response = msg.data[0];
+
+	return ret;
+}
+
+int ele_write_shadow_fuse(u32 fuse_id, u32 fuse_val, u32 *response)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg;
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 3;
+	msg.command = ELE_WRITE_SHADOW_REQ;
+	msg.data[0] = fuse_id;
+	msg.data[1] = fuse_val;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, fuse_id 0x%x, response 0x%x\n",
+		       __func__, ret, fuse_id, msg.data[0]);
+
+	if (response)
+		*response = msg.data[0];
+
+	return ret;
+}
+
+int ele_read_shadow_fuse(u32 fuse_id, u32 *fuse_val, u32 *response)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	if (!fuse_val) {
+		printf("Invalid parameters for shadow read\n");
+		return -EINVAL;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 2;
+	msg.command = ELE_READ_SHADOW_REQ;
+	msg.data[0] = fuse_id;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, fuse_id 0x%x, response 0x%x\n",
+		       __func__, ret, fuse_id, msg.data[0]);
+
+	if (response)
+		*response = msg.data[0];
+
+	*fuse_val = msg.data[1];
 
 	return ret;
 }
@@ -713,6 +780,56 @@ int ele_v2x_get_state(struct v2x_get_state *state, u32 *response)
 	return ret;
 }
 
+int ele_volt_change_start_req(void)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 1;
+	msg.command = ELE_VOLT_CHANGE_START_REQ;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+
+	return ret;
+}
+
+int ele_volt_change_finish_req(void)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 1;
+	msg.command = ELE_VOLT_CHANGE_FINISH_REQ;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+
+	return ret;
+}
+
 int ele_message_call(struct ele_msg *msg)
 {
 	struct udevice *dev = gd->arch.ele_dev;
@@ -806,6 +923,99 @@ exit:
 		free(ctx_addr);
 	if (key_addr)
 		free(key_addr);
+
+	return ret;
+}
+
+#define IMX_ELE_TRNG_STATUS_READY 0x3
+#define IMX_ELE_CSAL_STATUS_READY 0x2
+int ele_get_trng_state(void)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	struct ele_trng_state {
+		uint32_t rsp_code;
+		uint8_t trng_state;
+		uint8_t csal_state;
+		uint16_t rsv;
+	} *rsp = NULL;
+
+	if (!dev) {
+		printf("s400 dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 1;
+	msg.command = ELE_GET_TRNG_STATE;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret) {
+		printf("Error: %s: ret 0x%x, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+		return ret;
+	}
+
+	rsp = (void *)msg.data;
+	if (rsp->trng_state != IMX_ELE_TRNG_STATUS_READY ||
+		rsp->csal_state != IMX_ELE_CSAL_STATUS_READY) {
+		return -EBUSY;
+	} else {
+		return 0;
+	}
+}
+
+int ele_get_random(u32 src_paddr, size_t len)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+	u32 start = 0;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	if (src_paddr == 0 || len == 0) {
+		printf("Wrong input parameter!\n");
+		return -EINVAL;
+	}
+
+	/* make sure the ELE is ready to produce RNG */
+	start = get_timer(0);
+	while ((ele_get_trng_state() != 0)) {
+		/* timeout in 5ms */
+		if (get_timer(start) >= 5) {
+			printf("get random timeout!\n");
+			return -EBUSY;
+		}
+		udelay(100);
+	}
+
+	flush_dcache_range((ulong)src_paddr,
+				ALIGN((ulong)src_paddr + len, ARCH_DMA_MINALIGN));
+
+	msg.version = ELE_VERSION_FW;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 4;
+	msg.command = ELE_GET_RNG;
+	msg.data[0] = 0;
+	msg.data[1] = src_paddr;
+	msg.data[2] = len;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret 0x%x, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+	else
+		invalidate_dcache_range((ulong)src_paddr,
+				ALIGN((ulong)src_paddr + len, ARCH_DMA_MINALIGN));
 
 	return ret;
 }

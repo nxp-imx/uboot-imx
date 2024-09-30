@@ -1,0 +1,83 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2024 NXP
+ */
+
+#include "imx91-9x9-qsb.dts"
+#include "imx91-9x9-qsb-u-boot.dtsi"
+
+/ {
+	backlight: backlight {
+		compatible = "gpio-backlight";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_bl>;
+		gpios = <&gpio1 7 GPIO_ACTIVE_LOW>;
+	};
+
+	panel {
+		compatible = "simple-panel";
+		backlight = <&backlight>;
+		enable-gpios = <&pcal6524 8 GPIO_ACTIVE_HIGH>;
+		power-supply = <&reg_rpi_3v3>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&display_out>;
+			};
+		};
+
+		display-timings {
+			native-mode = <&timing0>;
+			timing0: timing0 {
+				clock-frequency = <30000000>;
+				hactive = <800>;
+				vactive = <480>;
+				hfront-porch = <40>;
+				hback-porch = <40>;
+				hsync-len = <48>;
+				vback-porch = <29>;
+				vfront-porch = <13>;
+				vsync-len = <3>;
+
+				vsync-active = <0>;
+				hsync-active = <0>;
+			};
+		};
+	};
+};
+
+&iomuxc {
+	pinctrl_bl: blgrp {
+		fsl,pins = <
+			MX91_PAD_UART2_TXD__GPIO1_IO7    0x31e
+		>;
+	};
+};
+
+&lcdif {
+	status = "okay";
+	/*assigned-clock-rates = <150000000>, <30000000>, <400000000>, <133333333>;*/
+};
+
+&parallel_disp_fmt {
+	pinctrl-names = "default", "gpio";
+	pinctrl-0 = <&pinctrl_lcdif>;
+	pinctrl-1 = <&pinctrl_lcdif_gpio>;
+	fsl,interface-pix-fmt = "rgb666";
+	status = "okay";
+
+	ports {
+		port@1 {
+			reg = <1>;
+
+			display_out: endpoint {
+				remote-endpoint = <&panel_in>;
+			};
+		};
+	};
+};
+
+/* pin conflicts */
+&sai3 {
+	status = "disabled";
+};

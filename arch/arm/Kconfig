@@ -20,6 +20,10 @@ config ARM64_CRC32
 	  not be present on all ARMv8.0, but is always present on ARMv8.1 and
 	  newer.
 
+config ARM64_NEON
+	bool "Enable support for NEON instruction"
+	default n
+
 config COUNTER_FREQUENCY
 	int "Timer clock frequency"
 	depends on ARM64 || CPU_V7A

@@ -708,10 +708,12 @@ void get_board_serial(struct tag_serialnr *serialnr)
 	if (ret)
 		printf("ele read fuse failed %d, 0x%x\n", ret, res);
 	else
-		printf("UID 0x%x,0x%x,0x%x,0x%x\n", uid[0], uid[1], uid[2], uid[3]);
+		printf("UID: %08x%08x%08x%08x\n", __be32_to_cpu(uid[0]),
+		       __be32_to_cpu(uid[1]), __be32_to_cpu(uid[2]),
+		       __be32_to_cpu(uid[3]));
 
-	serialnr->low = uid[0];
-	serialnr->high = uid[3];
+	serialnr->low = __be32_to_cpu(uid[1]);
+	serialnr->high = __be32_to_cpu(uid[0]);
 }
 #endif
 

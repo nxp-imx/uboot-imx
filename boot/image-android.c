@@ -26,6 +26,7 @@
 #include <mmc.h>
 #include <fsl_sec.h>
 #include <asm/cache.h>
+#include <rng.h>
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 #define COMMANDLINE_LENGTH          2048
@@ -379,7 +380,8 @@ static int append_androidboot_args(char *args, uint32_t *len, void *fdt_addr)
 			return -1;
 		}
 
-#ifdef CONFIG_IMX8ULP
+#if defined(CONFIG_ANDROID_SUPPORT) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
+#if defined(CONFIG_IMX8ULP) || defined(CONFIG_IMX95)
 		/* set the value of the /chosen/rng-seed property */
 		offset = fdt_path_offset(fdt_addr, "/chosen");
 		if (offset > 0) {
@@ -389,9 +391,13 @@ static int append_androidboot_args(char *args, uint32_t *len, void *fdt_addr)
 			prop = fdt_get_property_w(fdt_addr, offset, "rng-seed", &prop_len);
 			if (prop) {
 				void *rand_buf = memalign(ARCH_DMA_MINALIGN, prop_len);
+				struct udevice *dev;
 
-				if (!rand_buf || hwrng_generate(rand_buf, prop_len) || \
-				 fdt_setprop(fdt_addr, offset, "rng-seed", rand_buf, prop_len)) {
+				ret =  uclass_get_device(UCLASS_RNG, 0, &dev);
+
+				if (!rand_buf || ret || !dev || dm_rng_read(dev, rand_buf, prop_len) || \
+					fdt_setprop(fdt_addr, offset, "rng-seed", rand_buf, prop_len)) {
+					printf("failed to generate random, delete the 'rng-seed' node.\n");
 					ret = fdt_delprop(fdt_addr, offset, "rng-seed");
 				}
 				if (rand_buf) {
@@ -406,6 +412,7 @@ static int append_androidboot_args(char *args, uint32_t *len, void *fdt_addr)
 		} else {
 			printf("the device tree may not have the /chosen node\n");
 		}
+#endif
 #endif
 	}
 

@@ -218,19 +218,26 @@ static u32 get_cpu_variant_type(u32 type)
 	bool npu_disable = !!(val & BIT(13));
 	bool core1_disable = !!(val & BIT(15));
 	u32 pack_9x9_fused = BIT(4) | BIT(5) | BIT(17) | BIT(19) | BIT(24);
-	u32 imx91_9x9_fused = BIT(4) | BIT(5);
-	u32 can_fused = BIT(28) | BIT(29) | BIT(30) | BIT(31);
-	bool enet2_disable = !!(val2 & BIT(6));
+	u32 nxp_recog = (val & GENMASK(23, 16)) >> 16;
 
 	/* For iMX91 */
 	if (type == MXC_CPU_IMX91) {
-		if ((val2 & imx91_9x9_fused) == imx91_9x9_fused) {
+		switch (nxp_recog) {
+		case 0x9:
+		case 0xA:
 			type = MXC_CPU_IMX9111;
-
-			if ((val & can_fused) == can_fused && enet2_disable)
-				type = MXC_CPU_IMX9101;
+			break;
+		case 0xD:
+		case 0xE:
+			type = MXC_CPU_IMX9121;
+			break;
+		case 0xF:
+		case 0x10:
+			type = MXC_CPU_IMX9101;
+			break;
+		default:
+			break;	/* 9131 as default */
 		}
-
 		return type;
 	}
 
@@ -954,8 +961,9 @@ int ft_system_setup(void *blob, struct bd_info *bd)
 #if defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
 void get_board_serial(struct tag_serialnr *serialnr)
 {
-	printf("UID: 0x%x 0x%x 0x%x 0x%x\n",
-	       gd->arch.uid[0], gd->arch.uid[1], gd->arch.uid[2], gd->arch.uid[3]);
+	printf("UID: %08x%08x%08x%08x\n", __be32_to_cpu(gd->arch.uid[0]),
+	       __be32_to_cpu(gd->arch.uid[1]), __be32_to_cpu(gd->arch.uid[2]),
+	       __be32_to_cpu(gd->arch.uid[3]));
 
 	serialnr->low = __be32_to_cpu(gd->arch.uid[1]);
 	serialnr->high = __be32_to_cpu(gd->arch.uid[0]);
@@ -1147,7 +1155,7 @@ static int mix_power_init(enum mix_power_domain pd)
 	/* power on */
 	clrbits_le32(&mix_regs->slice_sw_ctrl, BIT(31));
 	val = readl(&mix_regs->func_stat);
-	while (val & SRC_MIX_SLICE_FUNC_STAT_ISO_STAT)
+	while (val & SRC_MIX_SLICE_FUNC_STAT_SSAR_STAT)
 		val = readl(&mix_regs->func_stat);
 
 	return 0;

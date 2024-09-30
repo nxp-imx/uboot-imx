@@ -69,8 +69,14 @@ int checkboard(void)
 #ifdef CONFIG_TARGET_LS1012AFRWY
 int esdhc_status_fixup(void *blob, const char *compat)
 {
-	char esdhc0_path[] = "/soc/esdhc@1560000";
-	char esdhc1_path[] = "/soc/esdhc@1580000";
+	char *esdhc0_path = "/soc/mmc@1560000";
+	char *esdhc1_path = "/soc/mmc@1580000";
+
+	if (fdt_path_offset(blob, esdhc0_path) < 0)
+		esdhc0_path = "/soc/esdhc@1560000";
+
+	if (fdt_path_offset(blob, esdhc1_path) < 0)
+		*esdhc1_path = "/soc/esdhc@1580000";
 
 	do_fixup_by_path(blob, esdhc0_path, "status", "okay",
 			 sizeof("okay"), 1);

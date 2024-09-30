@@ -727,9 +727,11 @@ struct imx_clk_setting imx_clk_ld_settings[] = {
 	/* SWO TRACE to 133M */
 	{SWO_TRACE_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3},
 	/* M33 systetick to 24M */
-	{M33_SYSTICK_CLK_ROOT, OSC_24M_CLK, 1},
+	{M33_SYSTICK_CLK_ROOT, OSC_24M_CLK, 1, CLK_SOC_IMX93},
 	/* NIC to 250M */
-	{NIC_CLK_ROOT, SYS_PLL_PFD0, 4},
+	{NIC_CLK_ROOT, SYS_PLL_PFD0, 4, CLK_SOC_IMX93},
+	/* NIC to 200M */
+	{NIC_CLK_ROOT, SYS_PLL_PFD1, 4, CLK_SOC_IMX91},
 	/* NIC_APB to 133M */
 	{NIC_APB_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3}
 };
@@ -757,13 +759,17 @@ struct imx_clk_setting imx_clk_settings[] = {
 	 * WAKEUP_AXI to 312.5M, because of FEC only can support to 320M for
 	 * generating MII clock at 2.5M
 	 */
-	{WAKEUP_AXI_CLK_ROOT, SYS_PLL_PFD2, 2},
+	{WAKEUP_AXI_CLK_ROOT, SYS_PLL_PFD2, 2, CLK_SOC_IMX93},
+	/* Wakeup AXI 250M*/
+	{WAKEUP_AXI_CLK_ROOT, SYS_PLL_PFD0, 4, CLK_SOC_IMX91},
 	/* SWO TRACE to 133M */
 	{SWO_TRACE_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3},
 	/* M33 systetick to 24M */
-	{M33_SYSTICK_CLK_ROOT, OSC_24M_CLK, 1},
+	{M33_SYSTICK_CLK_ROOT, OSC_24M_CLK, 1, CLK_SOC_IMX93},
 	/* NIC to 400M */
-	{NIC_CLK_ROOT, SYS_PLL_PFD1, 2},
+	{NIC_CLK_ROOT, SYS_PLL_PFD1, 2, CLK_SOC_IMX93},
+	/* NIC to 333M */
+	{NIC_CLK_ROOT, SYS_PLL_PFD0, 3, CLK_SOC_IMX91},
 	/* NIC_APB to 133M */
 	{NIC_APB_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3}
 };
@@ -773,14 +779,12 @@ void bus_clock_init_low_drive(void)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(imx_clk_ld_settings); i++) {
-		if (is_imx91()) {
-			if (imx_clk_ld_settings[i].clk_root == M33_CLK_ROOT ||
-				imx_clk_ld_settings[i].clk_root == M33_SYSTICK_CLK_ROOT)
-				continue;
+		if (imx_clk_ld_settings[i].soc == CLK_SOC_ALL ||
+		    (is_imx91() && imx_clk_ld_settings[i].soc == CLK_SOC_IMX91) ||
+		    (is_imx93() && imx_clk_ld_settings[i].soc == CLK_SOC_IMX93)) {
+			ccm_clk_root_cfg(imx_clk_ld_settings[i].clk_root,
+					 imx_clk_ld_settings[i].src, imx_clk_ld_settings[i].div);
 		}
-
-		ccm_clk_root_cfg(imx_clk_ld_settings[i].clk_root,
-				 imx_clk_ld_settings[i].src, imx_clk_ld_settings[i].div);
 	}
 }
 
@@ -789,14 +793,12 @@ void bus_clock_init(void)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(imx_clk_settings); i++) {
-		if (is_imx91()) {
-			if (imx_clk_ld_settings[i].clk_root == M33_CLK_ROOT ||
-				imx_clk_ld_settings[i].clk_root == M33_SYSTICK_CLK_ROOT)
-				continue;
+		if (imx_clk_settings[i].soc == CLK_SOC_ALL ||
+		    (is_imx91() && imx_clk_settings[i].soc == CLK_SOC_IMX91) ||
+		    (is_imx93() && imx_clk_settings[i].soc == CLK_SOC_IMX93)) {
+			ccm_clk_root_cfg(imx_clk_settings[i].clk_root,
+					 imx_clk_settings[i].src, imx_clk_settings[i].div);
 		}
-
-		ccm_clk_root_cfg(imx_clk_settings[i].clk_root,
-				 imx_clk_settings[i].src, imx_clk_settings[i].div);
 	}
 }
 

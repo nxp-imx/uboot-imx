@@ -74,6 +74,10 @@ static void flexspi_nor_reset(void)
 	int ret;
 	struct gpio_desc desc;
 
+	/* 15x15 EVK use M.2 QSPI card, not support booting */
+	if (IS_ENABLED(CONFIG_TARGET_IMX95_15X15_EVK))
+		return;
+
 	ret = dm_gpio_lookup_name("GPIO5_11", &desc);
 	if (ret) {
 		printf("%s lookup GPIO5_11 failed ret = %d\n", __func__, ret);

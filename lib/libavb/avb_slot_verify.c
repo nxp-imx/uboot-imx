@@ -29,8 +29,11 @@
 
 /* Maximum size of a vbmeta image - 64 KiB. */
 #define VBMETA_MAX_SIZE (64 * 1024)
-/* Set the image load addr start from 96MB offset of CONFIG_FASTBOOT_BUF_ADDR */
-#define PARTITION_LOAD_ADDR_START (CONFIG_FASTBOOT_BUF_ADDR + (96 * 1024 * 1024))
+/* Set the image load addr start from 65MB offset of CONFIG_FASTBOOT_BUF_ADDR,
+ * [CONFIG_FASTBOOT_BUF_ADDR, CONFIG_FASTBOOT_BUF_ADDR + 65MB] memory space would
+ * be used as a temporary buffer for sha256 hash calculation.
+ */
+#define PARTITION_LOAD_ADDR_START (CONFIG_FASTBOOT_BUF_ADDR + (65 * 1024 * 1024))
 
 /* Load dtbo/boot partition to fixed address instead of heap memory. */
 static void *image_addr_top = (void *)PARTITION_LOAD_ADDR_START;

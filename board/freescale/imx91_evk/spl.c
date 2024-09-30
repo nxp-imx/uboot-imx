@@ -66,9 +66,12 @@ void spl_board_init(void)
 	puts("Normal Boot\n");
 }
 
+extern struct dram_timing_info dram_timing_1600mts;
 void spl_dram_init(void)
 {
 	struct dram_timing_info *ptiming = &dram_timing;
+	if (is_voltage_mode(VOLT_LOW_DRIVE))
+		ptiming = &dram_timing_1600mts;
 
 	printf("DDR: %uMTS\n", ptiming->fsp_msg[0].drate);
 	ddr_init(ptiming);

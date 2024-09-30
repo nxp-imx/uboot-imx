@@ -108,10 +108,14 @@ int power_init_board(void)
 	if (ret < 0)
 		return ret;
 
+	ele_volt_change_start_req();
+
 	sw_val = (sw_val & SW_VRUN_MASK) | (ret & ~SW_VRUN_MASK);
 	ret = pmic_reg_write(dev, PF0900_REG_SW1_VRUN, sw_val);
 	if (ret != 0)
 		return ret;
+
+	ele_volt_change_finish_req();
 
 	ret = pmic_reg_read(dev, PF0900_REG_SW1_VSTBY);
 	if (ret < 0)
@@ -184,6 +188,8 @@ int power_init_board(void)
 		printf("PMIC: Over Drive Voltage Mode\n");
 	}
 
+	ele_volt_change_start_req();
+
 	if (val & PCA9450_REG_PWRCTRL_TOFF_DEB) {
 		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, buck_val);
 		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, buck_val);
@@ -191,6 +197,8 @@ int power_init_board(void)
 		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, buck_val + 0x4);
 		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, buck_val + 0x4);
 	}
+
+	ele_volt_change_finish_req();
 
 	if (IS_ENABLED(CONFIG_IMX93_EVK_LPDDR4)) {
 		/* Set VDDQ to 1.1V from buck2 */

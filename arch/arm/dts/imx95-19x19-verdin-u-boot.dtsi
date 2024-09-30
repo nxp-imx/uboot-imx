@@ -195,6 +195,11 @@
 	compatible = "fsl,imx95a-dwc3", "fsl,imx8mq-dwc3", "snps,dwc3";
 };
 
+&elemu1 {
+	status = "okay";
+	bootph-pre-ram;
+};
+
 &elemu3 {
 	status = "okay";
 	bootph-all;
@@ -211,4 +216,15 @@
 
 &pinctrl_flexspi1 {
 	bootph-pre-ram;
+};
+
+&dispmix_csr {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-rates;
+	/delete-property/ assigned-clock-parents;
+};
+
+&mipi_dsi {
+	assigned-clocks = <&scmi_clk IMX95_CLK_MIPIPHYPLLBYPASS>;
+	assigned-clock-parents = <&scmi_clk IMX95_CLK_VIDEOPLL1>;
 };

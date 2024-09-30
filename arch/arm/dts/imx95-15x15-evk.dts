@@ -57,6 +57,23 @@
 	};
 };
 
+&flexspi1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_flexspi1>;
+	assigned-clock-rates = <80000000>;
+	status = "okay";
+
+	flash0: flash@0 {
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "jedec,spi-nor";
+		spi-max-frequency = <80000000>;
+		spi-tx-bus-width = <4>;
+		spi-rx-bus-width = <4>;
+	};
+};
+
 &lpi2c2 {
 	#address-cells = <1>;
 	#size-cells = <0>;
@@ -239,6 +256,18 @@
 		fsl,pins = <
 			IMX95_PAD_GPIO_IO25__CAN2_TX			0x39e
 			IMX95_PAD_GPIO_IO27__CAN2_RX			0x39e
+		>;
+	};
+
+	pinctrl_flexspi1: flexspi1grp {
+		fsl,pins = <
+			IMX95_PAD_SD3_CMD__FLEXSPI1_A_SS0_B			0x3fe
+			IMX95_PAD_XSPI1_SCLK__GPIO5_IO_BIT9			0x3fe
+			IMX95_PAD_SD3_CLK__FLEXSPI1_A_SCLK			0x3fe
+			IMX95_PAD_SD3_DATA0__FLEXSPI1_A_DATA_BIT0		0x3fe
+			IMX95_PAD_SD3_DATA1__FLEXSPI1_A_DATA_BIT1		0x3fe
+			IMX95_PAD_SD3_DATA2__FLEXSPI1_A_DATA_BIT2		0x3fe
+			IMX95_PAD_SD3_DATA3__FLEXSPI1_A_DATA_BIT3		0x3fe
 		>;
 	};
 

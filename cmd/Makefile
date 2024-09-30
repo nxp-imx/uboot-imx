@@ -145,7 +145,6 @@ obj-$(CONFIG_CMD_PWM) += pwm.o
 obj-$(CONFIG_CMD_PXE) += pxe.o
 obj-$(CONFIG_CMD_WOL) += wol.o
 obj-$(CONFIG_CMD_QFW) += qfw.o
-obj-$(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN) += qb.o
 obj-$(CONFIG_CMD_READ) += read.o
 obj-$(CONFIG_CMD_WRITE) += read.o
 obj-$(CONFIG_CMD_REGINFO) += reginfo.o

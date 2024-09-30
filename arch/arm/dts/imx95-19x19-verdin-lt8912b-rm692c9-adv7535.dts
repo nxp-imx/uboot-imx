@@ -1,0 +1,134 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2024 NXP
+ */
+
+#include "imx95-19x19-verdin.dts"
+#include "imx95-19x19-verdin-u-boot.dtsi"
+
+/ {
+	dsi_host: dsi-host {
+		compatible = "synopsys,dw-mipi-dsi";
+		status = "okay";
+	};
+
+	rm692c9_panel {
+		compatible = "raydium,rm692c9";
+		reset-gpio = <&i2c7_pcal6524_23 10 GPIO_ACTIVE_LOW>;
+		dsi-lanes = <4>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&dsi_out>;
+			};
+		};
+	};
+};
+
+&lpi2c2 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <400000>;
+
+	hdmi@3d {
+		compatible = "adi,adv7535";
+		reg = <0x3d>;
+		adi,addr-cec = <0x3c>;
+		adi,dsi-lanes = <4>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_mipi_dsi_csi>;
+		status = "okay";
+
+		port {
+			adv7535_to_dsi: endpoint {
+				remote-endpoint = <&dsi_to_adv7535>;
+			};
+		};
+	};
+};
+
+&lpi2c7 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <400000>;
+
+	hdmi@48 {
+		compatible = "lontium,lt8912b";
+		reg = <0x48>;
+		pinctrl-names = "default";
+		reset-gpio = <&i2c7_pcal6524_23 9 GPIO_ACTIVE_LOW>;
+		status = "okay";
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				lt8912b_to_dsi: endpoint {
+					data-lanes = <1 2 3 4>;
+					remote-endpoint = <&dsi_to_lt8912b>;
+				};
+			};
+		};
+	};
+};
+
+&display_pixel_link {
+	status = "okay";
+};
+
+&dpu {
+	assigned-clocks = <&scmi_clk IMX95_CLK_DISP1PIX>,
+			  <&scmi_clk IMX95_CLK_VIDEOPLL1_VCO>,
+			  <&scmi_clk IMX95_CLK_VIDEOPLL1>;
+	assigned-clock-parents = <&scmi_clk IMX95_CLK_VIDEOPLL1>;
+	assigned-clock-rates = <0>, <4008000000>, <445333334>;
+	status = "okay";
+};
+
+&mipi_dsi {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@1 {
+			reg = <1>;
+
+			dsi_to_adv7535: endpoint {
+				remote-endpoint = <&adv7535_to_dsi>;
+			};
+		};
+
+		port@2 {
+			reg = <2>;
+
+			dsi_to_lt8912b: endpoint {
+				remote-endpoint = <&lt8912b_to_dsi>;
+			};
+		};
+
+		port@3 {
+			reg = <3>;
+
+			dsi_out: endpoint {
+				remote-endpoint = <&panel_in>;
+			};
+		};
+	};
+};
+
+&pixel_interleaver {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	channel@0 {
+		reg = <0>;
+		status = "okay";
+	};
+};

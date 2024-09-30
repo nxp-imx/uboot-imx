@@ -55,7 +55,7 @@
 
 #define XEN_BOOT_ENV \
 	    "domu-android-auto=no\0" \
-            "xenhyper_bootargs=console=dtuart dom0_mem=2048M dom0_max_vcpus=2 pci-passthrough=on\0" \
+            "xenhyper_bootargs=console=dtuart dom0_mem=4096M dom0_max_vcpus=2 pci-passthrough=on\0" \
             "xenlinux_bootargs= \0" \
             "xenlinux_console=hvc0 earlycon=xen\0" \
             "xenlinux_addr=0x9c000000\0" \
@@ -75,12 +75,14 @@
             "xennetboot=" \
                 "setenv get_cmd dhcp;" \
                 "setenv console ${xenlinux_console};" \
+		"setenv jh_clk clk_ignore_unused;" \
                 "run netargs;" \
                 "run xenboot_common;" \
             "\0" \
             "xenmmcboot=" \
                 "setenv get_cmd \"fatload mmc ${mmcdev}:${mmcpart}\";" \
                 "setenv console ${xenlinux_console};" \
+		"setenv jh_clk clk_ignore_unused;" \
                 "run mmcargs;" \
                 "run xenboot_common;" \
             "\0" \
@@ -92,7 +94,7 @@
 	BOOTENV \
 	AHAB_ENV \
 	"prepare_mcore=setenv mcore_args pd_ignore_unused;\0" \
-	"cpuidle=cpuidle.off=1\0" \
+	"cpuidle= \0" \
 	"scriptaddr=0x93500000\0" \
 	"kernel_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"image=Image\0" \

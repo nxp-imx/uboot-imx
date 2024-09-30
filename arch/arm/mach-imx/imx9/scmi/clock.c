@@ -322,3 +322,26 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 
 	return -1;
 };
+
+static uint32_t clock_ids[] =
+{
+	IMX95_CLK_SAI1,
+	IMX95_CLK_SAI2,
+	IMX95_CLK_SAI3,
+	IMX95_CLK_SAI4,
+	IMX95_CLK_SAI5,
+	IMX95_CLK_SPDIF,
+	IMX95_CLK_PDM,
+	IMX95_CLK_MQS1,
+	IMX95_CLK_MQS2,
+};
+
+int board_prep_linux(struct bootm_headers *images)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(clock_ids); i++)
+		imx_clk_scmi_enable(clock_ids[i], false);
+
+	return 0;
+}

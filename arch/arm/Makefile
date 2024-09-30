@@ -17,7 +17,11 @@ arch-$(CONFIG_CPU_V7A)		=$(call cc-option, -march=armv7-a, \
 arch-$(CONFIG_CPU_V7M)		=-march=armv7-m
 arch-$(CONFIG_CPU_V7R)		=-march=armv7-r
 ifeq ($(CONFIG_ARM64_CRC32),y)
+ifeq ($(CONFIG_ARM64_NEON),y)
+arch-$(CONFIG_ARM64)		=-march=armv8-a+crc+crypto
+else
 arch-$(CONFIG_ARM64)		=-march=armv8-a+crc
+endif
 else
 arch-$(CONFIG_ARM64)		=-march=armv8-a
 endif

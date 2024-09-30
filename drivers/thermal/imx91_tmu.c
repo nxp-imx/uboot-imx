@@ -123,11 +123,11 @@ static int imx_init_from_fuse(struct imx91_tmu *tmu)
 	int ret;
 	u32 trim_val[2] = {};
 
-	ret = fuse_read(4, 0, &trim_val[0]);
+	ret = fuse_read(5, 0, &trim_val[0]);
 	if (ret)
 		return ret;
 
-	ret = fuse_read(4, 1, &trim_val[1]);
+	ret = fuse_read(5, 1, &trim_val[1]);
 	if (ret)
 		return ret;
 

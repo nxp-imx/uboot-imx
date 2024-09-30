@@ -103,6 +103,13 @@ config CSF_SIZE
 	  Define the maximum size for Command Sequence File (CSF) binary
 	  this information is used to define the image boot data.
 
+config CMD_QB
+	bool "Support the 'qb' command"
+	default y
+	depends on IMX_SNPS_DDR_PHY_QB_GEN && IMX95
+	help
+	  Enable qb command to write DDR quick boot training data to boot device.
+
 config CMD_BMODE
 	bool "Support the 'bmode' command"
 	default y
@@ -164,6 +171,14 @@ config IMX_ELE_DEK_ENCAP
 	help
 	  This enabled the DEK blob encapsulation with the ELE API. This option
 	  is only available on imx8ulp and imx9.
+
+config ELE_SHARED_BUFFER
+	hex "Define the buffer address used for communication with ELE"
+	default 0x0
+	depends on IMX_ELE
+	help
+	  ELE can't access all DDR memory(0xE0000000 - 0xFFFFFFFF) due to the hardware
+	  limitation, use the shared buffer for exchanging data with ele.
 
 config CMD_PRIBLOB
 	bool "Support the set_priblob_bitfield command"

@@ -331,6 +331,7 @@ static int imx95_ldb_probe(struct udevice *dev)
 	int ret, i;
 	ofnode lvds_ch_node;
 	u32 ch_id;
+	const char *stat;
 
 	if (!drv_data) { /* sub node*/
 
@@ -460,6 +461,10 @@ static int imx95_ldb_probe(struct udevice *dev)
 			dev_err(dev, "invalid reg in node %s\n", ofnode_get_name(lvds_ch_node));
 			return -EINVAL;
 		}
+
+		stat = ofnode_read_string(lvds_ch_node, "status");
+		if (stat && strcmp(stat, "okay"))
+			continue;
 
 		ret = generic_phy_get_by_index_nodev(lvds_ch_node, 0, &priv->channel[ch_id].phy);
 		if (ret) {

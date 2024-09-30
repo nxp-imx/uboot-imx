@@ -113,4 +113,11 @@ config RNG_TURRIS_RWTM
 	  on other Armada-3700 devices (like EspressoBin) if Secure
 	  Firmware from CZ.NIC is used.
 
+config IMX_ELE_RNG
+	bool "Enable RNG driver for EdgeLock Enclave"
+	depends on IMX_ELE && DM_RNG
+	default n
+	help
+	  Say y to enable the RNG driver based on EdgeLock Enclave.
+
 endif

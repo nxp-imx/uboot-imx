@@ -24,16 +24,34 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL	(PAD_CTL_DSE(6) | PAD_CTL_FSEL2)
-#define WDOG_PAD_CTRL	(PAD_CTL_DSE(6) | PAD_CTL_ODE | PAD_CTL_PUE | PAD_CTL_PE)
+#define LCDIF_GPIO_PAD_CTRL	(PAD_CTL_DSE(0xf) | PAD_CTL_FSEL2 | PAD_CTL_PUE)
 
 static iomux_v3_cfg_t const uart_pads[] = {
 	MX91_PAD_UART1_RXD__LPUART1_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 	MX91_PAD_UART1_TXD__LPUART1_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
+static iomux_v3_cfg_t const lcdif_gpio_pads[] = {
+	MX91_PAD_GPIO_IO00__GPIO2_IO0| MUX_PAD_CTRL(LCDIF_GPIO_PAD_CTRL),
+	MX91_PAD_GPIO_IO01__GPIO2_IO1 | MUX_PAD_CTRL(LCDIF_GPIO_PAD_CTRL),
+	MX91_PAD_GPIO_IO02__GPIO2_IO2 | MUX_PAD_CTRL(LCDIF_GPIO_PAD_CTRL),
+	MX91_PAD_GPIO_IO03__GPIO2_IO3 | MUX_PAD_CTRL(LCDIF_GPIO_PAD_CTRL),
+};
+
 int board_early_init_f(void)
 {
 	imx_iomux_v3_setup_multiple_pads(uart_pads, ARRAY_SIZE(uart_pads));
+	imx_iomux_v3_setup_multiple_pads(lcdif_gpio_pads, ARRAY_SIZE(lcdif_gpio_pads));
+
+	/* Workaround LCD panel leakage, output low of CLK/DE/VSYNC/HSYNC as early as possible */
+	struct gpio_regs *gpio2 = (struct gpio_regs *)(GPIO2_BASE_ADDR + 0x40);
+	setbits_le32(&gpio2->gpio_pcor, 0xf);
+	setbits_le32(&gpio2->gpio_pddr, 0xf);
+
+	/* Set GPIO1_7 to output high to disable panel backlight at default */
+	struct gpio_regs *gpio1 = (struct gpio_regs *)(GPIO1_BASE_ADDR + 0x40);
+	setbits_le32(&gpio1->gpio_psor, BIT(7));
+	setbits_le32(&gpio1->gpio_pddr, BIT(7));
 
 	init_uart_clk(LPUART1_CLK_ROOT);
 
@@ -260,3 +278,62 @@ int board_late_init(void)
 	return 0;
 }
 
+#ifndef CONFIG_SPL_BUILD
+
+struct gpio_desc ext5v_en_desc, sai3_en_desc;
+
+static int last_stage_init(void)
+{
+	int ret;
+	struct gpio_desc desc;
+
+	/* Turn on the backlight later than video starting */
+	/* SAI3_TX/RX_SEL to L */
+	ret = dm_gpio_lookup_name("gpio@22_14", &desc);
+	if (ret)
+		return -ENODEV;
+
+	ret = dm_gpio_request(&desc, "SAI3_TXRX_SEL");
+	if (ret)
+		return -ENODEV;
+
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT);
+	dm_gpio_set_value(&desc, 0);
+
+	/* Enable SAI3_EN for mux */
+	ret = dm_gpio_lookup_name("gpio@22_23", &sai3_en_desc);
+	if (ret)
+		return -ENODEV;
+
+	ret = dm_gpio_request(&sai3_en_desc, "SAI3_EN");
+	if (ret)
+		return -ENODEV;
+
+	dm_gpio_set_dir_flags(&sai3_en_desc, GPIOD_IS_OUT);
+	dm_gpio_set_value(&sai3_en_desc, 0);
+
+	/* Enable EXT5V_EN for vRPi 5V */
+	ret = dm_gpio_lookup_name("gpio@22_4", &ext5v_en_desc);
+	if (ret)
+		return -ENODEV;
+
+	ret = dm_gpio_request(&ext5v_en_desc, "EXT5V_EN");
+	if (ret)
+		return -ENODEV;
+
+	dm_gpio_set_dir_flags(&ext5v_en_desc, GPIOD_IS_OUT);
+	dm_gpio_set_value(&ext5v_en_desc, 1);
+
+	return 0;
+}
+EVENT_SPY_SIMPLE(EVT_LAST_STAGE_INIT, last_stage_init);
+
+void board_quiesce_devices(void)
+{
+	/* Turn off 5V for backlight */
+	dm_gpio_set_value(&ext5v_en_desc, 0);
+
+	/* Turn off MUX for SAI3_TX_SYNC used by backlight */
+	dm_gpio_set_value(&sai3_en_desc, 1);
+}
+#endif

@@ -10,6 +10,10 @@
 
 #include "avb_sha.h"
 
+#ifdef CONFIG_ARM64_NEON
+#include "avb_sha256_neon.h"
+#endif
+
 #define SHFR(x, n) (x >> n)
 #define ROTR(x, n) ((x >> n) | (x << ((sizeof(x) << 3) - n)))
 #define ROTL(x, n) ((x << n) | (x >> ((sizeof(x) << 3) - n)))
@@ -70,7 +74,7 @@ static const uint32_t sha256_h0[8] = {0x6a09e667,
                                       0x9b05688c,
                                       0x1f83d9ab,
                                       0x5be0cd19};
-
+#ifndef CONFIG_ARM64_NEON
 static const uint32_t sha256_k[64] = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1,
     0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
@@ -83,6 +87,7 @@ static const uint32_t sha256_k[64] = {
     0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a,
     0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
     0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
+#endif
 
 /* SHA-256 implementation */
 void avb_sha256_init(AvbSHA256Ctx* ctx) {
@@ -106,6 +111,7 @@ void avb_sha256_init(AvbSHA256Ctx* ctx) {
   ctx->tot_len = 0;
 }
 
+#ifndef CONFIG_ARM64_NEON
 static void SHA256_transform(AvbSHA256Ctx* ctx,
                              const uint8_t* message,
                              size_t block_nb) {
@@ -304,6 +310,7 @@ static void SHA256_transform(AvbSHA256Ctx* ctx,
 #endif /* !UNROLL_LOOPS */
   }
 }
+#endif
 
 void avb_sha256_update(AvbSHA256Ctx* ctx, const uint8_t* data, size_t len) {
   size_t block_nb;
@@ -325,8 +332,13 @@ void avb_sha256_update(AvbSHA256Ctx* ctx, const uint8_t* data, size_t len) {
 
   shifted_data = data + rem_len;
 
+#ifdef CONFIG_ARM64_NEON
+  SHA256_transform_NEON(ctx, ctx->block, 1);
+  SHA256_transform_NEON(ctx, shifted_data, block_nb);
+#else
   SHA256_transform(ctx, ctx->block, 1);
   SHA256_transform(ctx, shifted_data, block_nb);
+#endif
 
   rem_len = new_len % AVB_SHA256_BLOCK_SIZE;
 
@@ -354,7 +366,11 @@ uint8_t* avb_sha256_final(AvbSHA256Ctx* ctx) {
   ctx->block[ctx->len] = 0x80;
   UNPACK64(len_b, ctx->block + pm_len - 8);
 
+#ifdef CONFIG_ARM64_NEON
+  SHA256_transform_NEON(ctx, ctx->block, block_nb);
+#else
   SHA256_transform(ctx, ctx->block, block_nb);
+#endif
 
 #ifndef UNROLL_LOOPS
   for (i = 0; i < 8; i++) {

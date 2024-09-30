@@ -47,7 +47,8 @@ struct tcpc_port port;
 struct tcpc_port_config port_config = {
 	.i2c_bus = 6, /* i2c7 */
 	.addr = 0x52,
-	.port_type = TYPEC_PORT_DFP,
+	.port_type = TYPEC_PORT_DRP,
+	.disable_pd = true,
 };
 ulong tca_base;
 
