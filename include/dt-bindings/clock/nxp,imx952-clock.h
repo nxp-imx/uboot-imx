@@ -1,0 +1,15 @@
+/* SPDX-License-Identifier: GPL-2.0-only OR MIT */
+/*
+ * Copyright 2025-2026 NXP
+ */
+
+#ifndef __DT_BINDINGS_CLOCK_IMX952_H
+#define __DT_BINDINGS_CLOCK_IMX952_H
+
+#define IMX952_CLK_DISPMIX_OCRAM_SEL	0
+#define IMX952_CLK_DISPMIX_ENG0_SEL	1
+#define IMX952_CLK_DISPMIX_ENG1_SEL	2
+
+#define IMX952_CLK_CM0P_GATE_SEL 0
+
+#endif	/* __DT_BINDINGS_CLOCK_IMX952_H */
