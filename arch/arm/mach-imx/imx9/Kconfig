@@ -72,6 +72,16 @@ config IMX94
 	select SPL_IMX_CONTAINER_USE_TRAMPOLINE
 	select IMX_PQC_SUPPORT
 
+config IMX952
+	bool
+	select ARMV8_SPL_EXCEPTION_VECTORS
+	select IMX9
+	select DM_MAILBOX
+	select SCMI_FIRMWARE
+	select SCMI_TRANSPORT_SMT_INTR
+	select SPL_IMX_CONTAINER_USE_TRAMPOLINE
+	select IMX_PQC_SUPPORT
+
 config SYS_SOC
 	default "imx9"
 
