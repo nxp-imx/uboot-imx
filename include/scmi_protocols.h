@@ -1103,8 +1103,7 @@ struct scmi_sensor_config_set_a2p {
 };
 
 struct scmi_sensor_config_set_p2a {
-	void *buf;
-	size_t len;
+	u32 status;
 };
 
 #define SCMI_SENS_CFG_ENABLED_MASK	BIT(0)

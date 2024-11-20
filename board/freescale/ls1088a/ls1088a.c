@@ -1006,6 +1006,42 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	return 0;
 }
 #endif
+
+#ifdef CONFIG_OF_BOARD_FIXUP
+int board_fix_fdt(void *fdt)
+{
+	static const char *node =
+		"/soc/i2c@2000000/i2c-mux@77/i2c@3/rtc@51";
+
+	u32 reg = 0x53;
+	const char *compatible = "nxp,pcf2131";
+	int nodeoff, ret;
+	struct udevice *dev;
+
+	if (i2c_get_chip_for_busnum(0x1, 0x53, 1, &dev))
+		return 0;
+	nodeoff = fdt_path_offset(fdt, node);
+	if (nodeoff > 0) {
+set_compatible:
+		ret = fdt_setprop(fdt, nodeoff, "compatible", compatible,
+				  strlen(compatible) + 1);
+		if (ret == -FDT_ERR_NOSPACE) {
+			ret = fdt_increase_size(fdt, 512);
+			if (!ret)
+				goto set_compatible;
+		}
+set_reg:
+		ret = fdt_setprop_u32(fdt, nodeoff, "reg", reg);
+		if (ret == -FDT_ERR_NOSPACE) {
+			ret = fdt_increase_size(fdt, 512);
+			if (!ret)
+				goto set_reg;
+		}
+	}
+
+	return 0;
+}
+#endif
 #endif /* defined(CONFIG_SPL_BUILD) */
 
 #ifdef CONFIG_TFABOOT

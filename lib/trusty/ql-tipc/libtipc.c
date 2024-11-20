@@ -35,6 +35,7 @@
 #include <env.h>
 #include <trusty/imx_snvs.h>
 #include <trusty/matter.h>
+#include <trusty/secretkeeper.h>
 
 #define LOCAL_LOG 0
 
@@ -54,6 +55,7 @@ void trusty_ipc_shutdown(void)
 #ifndef CONFIG_IMX_MATTER_TRUSTY
     (void)avb_tipc_shutdown(_ipc_dev);
     (void)km_tipc_shutdown(_ipc_dev);
+    (void)secretkeeper_tipc_shutdown();
 #endif
 
 #ifdef CONFIG_IMX_MATTER_TRUSTY
@@ -135,6 +137,13 @@ int trusty_ipc_init(void)
         rc = km_tipc_init(_ipc_dev);
         if (rc != 0) {
             trusty_error("Initlializing Trusty Keymaster client failed (%d)\n", rc);
+            return rc;
+        }
+
+        trusty_info("Initializing Trusty SecretKeeper client\n");
+        rc = secretkeeper_tipc_init(_ipc_dev);
+        if (rc != 0) {
+            trusty_error("Initlializing Trusty SecretKeeper client failed (%d)\n", rc);
             return rc;
         }
     } else

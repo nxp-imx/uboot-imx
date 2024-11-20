@@ -76,7 +76,7 @@ int esdhc_status_fixup(void *blob, const char *compat)
 		esdhc0_path = "/soc/esdhc@1560000";
 
 	if (fdt_path_offset(blob, esdhc1_path) < 0)
-		*esdhc1_path = "/soc/esdhc@1580000";
+		esdhc1_path = "/soc/esdhc@1580000";
 
 	do_fixup_by_path(blob, esdhc0_path, "status", "okay",
 			 sizeof("okay"), 1);

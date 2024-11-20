@@ -16,6 +16,7 @@
 #include <asm/arch/imx93_pins.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/arch/mu.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <asm/arch-mx7ulp/gpio.h>

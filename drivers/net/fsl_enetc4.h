@@ -187,6 +187,8 @@ int enetc4_ierb_cfg(void);
 int enetc4_ierb_cfg_is_valid(void);
 
 #define ENETC_PCS_PHY_ADDR      0
+#define ENETC_NON_PCS_PHY_ADDR      16
+
 /* LS1028ARM SerDes Module */
 #define ENETC_PCS_CR                    0x00
 #define ENETC_PCS_CR_RESET_AN           0x1200

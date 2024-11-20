@@ -1081,33 +1081,6 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 		}
 	}
 
-	/* Dump image info */
-	printf("kernel   @ %08x (%d)\n", (uint32_t)kernel_addr, kernel_image_size);
-	printf("ramdisk  @ %08x (%d)\n", (uint32_t)ramdisk_addr, ramdisk_size);
-	if (fdt_size)
-		printf("fdt      @ %08x (%d)\n", fdt_addr, fdt_size);
-
-	/* Set boot parameters */
-	char boot_addr_start[12];
-	char ramdisk_addr_start[25];
-	char fdt_addr_start[12];
-
-	char *boot_args[] = { NULL, boot_addr_start, ramdisk_addr_start, fdt_addr_start};
-	if (check_image_arm64)
-		boot_args[0] = "booti";
-	else
-		boot_args[0] = "bootm";
-
-	sprintf(boot_addr_start, "0x%lx", kernel_addr);
-	sprintf(ramdisk_addr_start, "0x%x:0x%x", (uint32_t)ramdisk_addr, ramdisk_size);
-	sprintf(fdt_addr_start, "0x%x", fdt_addr);
-
-	/* Don't pass ramdisk addr for Android Auto if we are not booting from recovery */
-#if !defined(CONFIG_ANDROID_DYNAMIC_PARTITION) && defined(CONFIG_SYSTEM_RAMDISK_SUPPORT)
-	if (!is_recovery_mode)
-		boot_args[2] = NULL;
-#endif
-
 	/* Show orange warning for unlocked device, press power button to skip. */
 #ifdef CONFIG_AVB_WARNING_LOGO
 	if (fastboot_get_lock_stat() == FASTBOOT_UNLOCK) {
@@ -1140,6 +1113,35 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 
 	/* lock the boot status and rollback_idx preventing Linux modify it */
 	trusty_lock_boot_state();
+
+	/* populate secretkeeper public key */
+	trusty_populate_sk_key((void *)(ulong)fdt_addr);
+#endif
+
+	/* Dump image info */
+	printf("kernel   @ %08x (%d)\n", (uint32_t)kernel_addr, kernel_image_size);
+	printf("ramdisk  @ %08x (%d)\n", (uint32_t)ramdisk_addr, ramdisk_size);
+	printf("fdt      @ %08x (%d)\n", fdt_addr, fdt_totalsize((void *)(ulong)fdt_addr));
+
+	/* Set boot parameters */
+	char boot_addr_start[12];
+	char ramdisk_addr_start[25];
+	char fdt_addr_start[12];
+
+	char *boot_args[] = { NULL, boot_addr_start, ramdisk_addr_start, fdt_addr_start};
+	if (check_image_arm64)
+		boot_args[0] = "booti";
+	else
+		boot_args[0] = "bootm";
+
+	sprintf(boot_addr_start, "0x%lx", kernel_addr);
+	sprintf(ramdisk_addr_start, "0x%x:0x%x", (uint32_t)ramdisk_addr, ramdisk_size);
+	sprintf(fdt_addr_start, "0x%x", fdt_addr);
+
+	/* Don't pass ramdisk addr for Android Auto if we are not booting from recovery */
+#if !defined(CONFIG_ANDROID_DYNAMIC_PARTITION) && defined(CONFIG_SYSTEM_RAMDISK_SUPPORT)
+	if (!is_recovery_mode)
+		boot_args[2] = NULL;
 #endif
 
 #if defined(CONFIG_IMX_HAB) && defined(CONFIG_CMD_PRIBLOB)

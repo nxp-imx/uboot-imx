@@ -14,11 +14,13 @@ config IMX93
 	bool
 	select IMX9
 	select ARMV8_SPL_EXCEPTION_VECTORS
+	select SYS_FSL_ERRATUM_052357
 
 config IMX91
 	bool
 	select IMX9
 	select ARMV8_SPL_EXCEPTION_VECTORS
+	select SYS_FSL_ERRATUM_052357
 
 config IMX95
 	bool

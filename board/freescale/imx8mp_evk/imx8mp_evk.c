@@ -84,6 +84,41 @@ int board_early_init_f(void)
 #ifdef CONFIG_OF_BOARD_SETUP
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
+	char *p, *b, *s;
+	char *token = NULL;
+	int i, ret = 0;
+	u64 base[CONFIG_NR_DRAM_BANKS] = {0};
+	u64 size[CONFIG_NR_DRAM_BANKS] = {0};
+
+	p = env_get("jh_root_mem");
+	if (!p)
+		return 0;
+
+	i = 0;
+	token = strtok(p, ",");
+	while (token) {
+		if (i >= CONFIG_NR_DRAM_BANKS) {
+			printf("Error: The number of size@base exceeds CONFIG_NR_DRAM_BANKS.\n");
+			return -EINVAL;
+		}
+
+		b = token;
+		s = strsep(&b, "@");
+		if (!s) {
+			printf("The format of jh_root_mem is size@base[,size@base...].\n");
+			return -EINVAL;
+		}
+
+		base[i] = simple_strtoull(b, NULL, 16);
+		size[i] = simple_strtoull(s, NULL, 16);
+		token = strtok(NULL, ",");
+		i++;
+	}
+
+	ret = fdt_fixup_memory_banks(blob, base, size, CONFIG_NR_DRAM_BANKS);
+	if (ret)
+		return ret;
+
 #ifdef CONFIG_IMX8M_DRAM_INLINE_ECC
 #ifdef CONFIG_TARGET_IMX8MP_DDR4_EVK
 	int rc;

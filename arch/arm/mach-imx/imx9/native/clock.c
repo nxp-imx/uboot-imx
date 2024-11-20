@@ -729,9 +729,7 @@ struct imx_clk_setting imx_clk_ld_settings[] = {
 	/* M33 systetick to 24M */
 	{M33_SYSTICK_CLK_ROOT, OSC_24M_CLK, 1, CLK_SOC_IMX93},
 	/* NIC to 250M */
-	{NIC_CLK_ROOT, SYS_PLL_PFD0, 4, CLK_SOC_IMX93},
-	/* NIC to 200M */
-	{NIC_CLK_ROOT, SYS_PLL_PFD1, 4, CLK_SOC_IMX91},
+	{NIC_CLK_ROOT, SYS_PLL_PFD0, 4},
 	/* NIC_APB to 133M */
 	{NIC_APB_CLK_ROOT, SYS_PLL_PFD1_DIV2, 3}
 };

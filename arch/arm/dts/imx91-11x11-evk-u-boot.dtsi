@@ -215,8 +215,8 @@
 
 &lcdif {
 	assigned-clocks = <&clk IMX91_CLK_MEDIA_AXI>, <&clk IMX91_CLK_MEDIA_APB>;
-	assigned-clock-parents = <&clk IMX91_CLK_SYS_PLL_PFD1>, <&clk IMX91_CLK_SYS_PLL_PFD1_DIV2>;
-	assigned-clock-rates = <200000000>, <133333334>;
+	assigned-clock-parents = <&clk IMX91_CLK_SYS_PLL_PFD0>, <&clk IMX91_CLK_SYS_PLL_PFD1_DIV2>;
+	assigned-clock-rates = <333333334>, <133333334>;
 };
 
 &parallel_disp_fmt {

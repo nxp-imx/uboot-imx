@@ -45,6 +45,12 @@
 
 #define DEFAULT_READY_WAIT_JIFFIES		(40UL * HZ)
 
+/*
+ * For full-chip erase, calibrated to a 2MB flash (M25P16); should be scaled up
+ * for larger flash
+ */
+#define CHIP_ERASE_2MB_READY_WAIT_JIFFIES	(40UL * HZ)
+
 #define ROUND_UP_TO(x, y)	(((x) + (y) - 1) / (y) * (y))
 
 struct sfdp_parameter_header {
@@ -993,6 +999,8 @@ static int spi_nor_erase(struct mtd_info *mtd, struct erase_info *instr)
 	bool addr_known = false;
 	u32 addr, len, rem;
 	int ret, err;
+	u64 sz = mtd->size;
+	unsigned long timeout = 0;
 
 	dev_dbg(nor->dev, "at 0x%llx, len %lld\n", (long long)instr->addr,
 		(long long)instr->len);
@@ -1028,6 +1036,14 @@ static int spi_nor_erase(struct mtd_info *mtd, struct erase_info *instr)
 		if (len == mtd->size &&
 		    !(nor->flags & SNOR_F_NO_OP_CHIP_ERASE)) {
 			ret = spi_nor_erase_chip(nor);
+			/*
+			 * Scale the timeout linearly with the size of the flash, with
+			 * a minimum calibrated to an old 2MB flash. We could try to
+			 * pull these from CFI/SFDP, but these values should be good
+			 * enough for now.
+			 */
+			do_div(sz, SZ_2M);
+			timeout = CHIP_ERASE_2MB_READY_WAIT_JIFFIES * max(1ULL, sz);
 		} else {
 			ret = spi_nor_erase_sector(nor, addr);
 		}
@@ -1037,7 +1053,10 @@ static int spi_nor_erase(struct mtd_info *mtd, struct erase_info *instr)
 		addr += ret;
 		len -= ret;
 
-		ret = spi_nor_wait_till_ready(nor);
+		if (timeout)
+			ret = spi_nor_wait_till_ready_with_timeout(nor, timeout);
+		else
+			ret = spi_nor_wait_till_ready(nor);
 		if (ret)
 			goto erase_err;
 	}

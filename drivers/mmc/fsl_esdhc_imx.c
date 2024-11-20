@@ -551,6 +551,11 @@ static int esdhc_send_cmd_common(struct fsl_esdhc_priv *priv, struct mmc *mmc,
 				}
 			} while ((irqstat & flags) != flags);
 
+			/* Add 10us delay for Errata ERR052357 */
+			if (IS_ENABLED(CONFIG_SYS_FSL_ERRATUM_052357) &&
+			    (data->flags & MMC_DATA_READ))
+				udelay(10);
+
 			/*
 			 * Need invalidate the dcache here again to avoid any
 			 * cache-fill during the DMA operations such as the

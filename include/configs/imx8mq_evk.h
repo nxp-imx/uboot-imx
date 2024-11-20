@@ -46,11 +46,11 @@
 #define JAILHOUSE_ENV \
 	"jh_clk= \0 " \
 	"jh_mmcboot=setenv fdtfile imx8mq-evk-root.dtb; " \
-		"setenv jh_clk clk_ignore_unused mem=1872M; " \
+		"setenv jh_clk kvm.enable_virt_at_load=false clk_ignore_unused mem=1872M; " \
 			   "if run loadimage; then " \
 				   "run mmcboot; " \
 			   "else run jh_netboot; fi; \0" \
-	"jh_netboot=setenv fdtfile imx8mq-evk-root.dtb; setenv jh_clk clk_ignore_unused mem=1872MB; run netboot; \0 "
+	"jh_netboot=setenv fdtfile imx8mq-evk-root.dtb; setenv jh_clk kvm.enable_virt_at_load=false clk_ignore_unused mem=1872MB; run netboot; \0 "
 
 #define SR_IR_V2_COMMAND \
 	"nodes=/soc@0/caam-sm@100000 /soc@0/bus@30000000/caam_secvio /soc@0/bus@30000000/caam-snvs@30370000 /soc@0/bus@32c00000/hdmi@32c00000 /soc@0/bus@32c00000/display-controller@32e00000 /soc@0/vpu@38300000 /soc@0/vpu_v4l2 /gpu3d@38000000 /audio-codec-bt-sco /audio-codec /sound-bt-sco /sound-wm8524 /sound-spdif /sound-hdmi-arc /binman \0" \

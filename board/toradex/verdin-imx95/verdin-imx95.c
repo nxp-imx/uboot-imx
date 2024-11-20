@@ -24,6 +24,7 @@
 #include <i2c.h>
 #include <dm/uclass.h>
 #include <dm/uclass-internal.h>
+#include <power/regulator.h>
 
 #ifdef CONFIG_SCMI_FIRMWARE
 #include <scmi_agent.h>
@@ -261,6 +262,24 @@ static void netc_phy_rst(void)
 	udelay(80000);
 }
 
+static void netc_regulator_enable(const char *devname)
+{
+	int ret;
+	struct udevice *dev;
+
+	ret = regulator_get_by_devname(devname, &dev);
+	if (ret) {
+		printf("Get %s regulator failed %d\n", devname, ret);
+		return;
+	}
+
+	ret = regulator_set_enable_if_allowed(dev, true);
+	if (ret) {
+		printf("Enable %s regulator %d\n", devname, ret);
+		return;
+	}
+}
+
 void netc_init(void)
 {
 	int ret;
@@ -275,6 +294,8 @@ void netc_init(void)
 	set_clk_netc(ENET_125MHZ);
 
 	netc_phy_rst();
+
+	netc_regulator_enable("regulator-aqr-stby");
 
 	pci_init();
 }

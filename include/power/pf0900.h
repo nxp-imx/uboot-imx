@@ -232,7 +232,7 @@ enum {
 #define GPO4_STBY_MASK			0x80
 
 /* PF0900_REG_SYS_CFG1 MASK */
-#define XRST_STBY_EN_MASK               0x40
+#define XRST_STBY_EN_MASK               0x04
 
 /* PF0900_REG_STSTEM_INT bits */
 #define IRQ_EWARN			0x80

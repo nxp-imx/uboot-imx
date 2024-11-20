@@ -59,6 +59,7 @@
 	assigned-clocks = <&scmi_clk IMX95_CLK_LDBPLL_VCO>,
 			  <&scmi_clk IMX95_CLK_LDBPLL>;
 	assigned-clock-rates = <2982000000>, <497000000>;
+	assigned-clock-parents = <0>, <&scmi_clk IMX95_CLK_LDBPLL_VCO>;
 	status = "okay";
 
 	channel@0 {

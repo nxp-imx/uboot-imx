@@ -67,7 +67,7 @@ void enetc4_netcmix_blk_ctrl_cfg(void)
 	/* configure Link0/1/2 PCS protocol */
 	writel(0, NETCMIX_BLK_CTRL_BASE + CFG_LINK_PCS_PROT_0);
 	writel(0, NETCMIX_BLK_CTRL_BASE + CFG_LINK_PCS_PROT_1);
-	writel(PCS_PROT_2500M_SGMII, NETCMIX_BLK_CTRL_BASE + CFG_LINK_PCS_PROT_2);
+	writel(PCS_PROT_10G_SXGMII, NETCMIX_BLK_CTRL_BASE + CFG_LINK_PCS_PROT_2);
 }
 
 static bool enetc4_ierb_is_locked(void)

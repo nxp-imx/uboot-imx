@@ -7,6 +7,7 @@
 
 #include <common.h>
 #include <dm.h>
+#include <dm/device_compat.h>
 #include <errno.h>
 #include <fdt_support.h>
 #include <malloc.h>
@@ -18,11 +19,14 @@
 #include <miiphy.h>
 #include <linux/bug.h>
 #include <linux/delay.h>
+#include <linux/bitfield.h>
+#include <power/regulator.h>
 
 #ifdef CONFIG_ARCH_IMX9
 #include <asm/mach-imx/sys_proto.h>
 #include <cpu_func.h>
 #include "fsl_enetc4.h"
+#include "fsl_enetc_xpcs_phy.c"
 #else
 #include "fsl_enetc.h"
 #endif
@@ -349,10 +353,13 @@ static void enetc_setup_mac_iface(struct udevice *dev,
 /* set up serdes for SXGMII */
 static int enetc_init_sxgmii(struct udevice *dev)
 {
-	struct enetc_priv *priv = dev_get_priv(dev);
-
 	if (!enetc_has_imdio(dev))
 		return 0;
+
+#ifdef CONFIG_ARCH_IMX9
+	xpcs_phy_usxgmii_pma_config(dev);
+#else
+	struct enetc_priv *priv = dev_get_priv(dev);
 
 	/* Dev ability - SXGMII */
 	enetc_mdio_write(&priv->imdio, ENETC_PCS_PHY_ADDR, ENETC_PCS_DEVAD_REPL,
@@ -362,6 +369,7 @@ static int enetc_init_sxgmii(struct udevice *dev)
 	enetc_mdio_write(&priv->imdio, ENETC_PCS_PHY_ADDR, ENETC_PCS_DEVAD_REPL,
 			 ENETC_PCS_CR,
 			 ENETC_PCS_CR_RST | ENETC_PCS_CR_RESET_AN);
+#endif
 
 	return 0;
 }
@@ -420,6 +428,9 @@ static int enetc_config_phy(struct udevice *dev)
 		return -ENODEV;
 
 	supported = PHY_GBIT_FEATURES | SUPPORTED_2500baseX_Full;
+#ifdef CONFIG_ARCH_IMX9
+	supported |= PHY_10G_FEATURES;
+#endif
 	priv->phy->supported &= supported;
 	priv->phy->advertising &= supported;
 
@@ -434,10 +445,29 @@ static int enetc_probe(struct udevice *dev)
 {
 	struct enetc_priv *priv = dev_get_priv(dev);
 	int res;
+	struct udevice *supply = NULL;
 
 	if (ofnode_valid(dev_ofnode(dev)) && !ofnode_is_enabled(dev_ofnode(dev))) {
 		enetc_dbg(dev, "interface disabled\n");
 		return -ENODEV;
+	}
+
+	if (CONFIG_IS_ENABLED(DM_REGULATOR)) {
+		res = device_get_supply_regulator(dev, "serdes-supply",
+						  &supply);
+		if (res  && res  != -ENOENT) {
+			printf("%s: device_get_supply_regulator failed: %d\n",
+			      __func__, res);
+			return res ;
+		}
+
+		if (supply) {
+			res = regulator_set_enable_if_allowed(supply, true);
+			if (res) {
+				printf("%s: Error enabling phy supply\n", dev->name);
+				return res;
+			}
+		}
 	}
 
 #ifdef ENETC_DRV_DCACHE_OPS_EN

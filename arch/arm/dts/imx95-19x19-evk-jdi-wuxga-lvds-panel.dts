@@ -9,6 +9,7 @@
 / {
 	lvds0_panel {
 		compatible = "jdi,tx26d202vm0bwa";
+		backlight = <&lvds_backlight>;
 
 		display-timings {
 			native-mode = <&timing0>;
@@ -48,6 +49,11 @@
 			};
 		};
 	};
+
+	lvds_backlight: backlight {
+		compatible = "gpio-backlight";
+		gpios = <&adp5585gpio 3 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &display_pixel_link {
@@ -74,6 +80,7 @@
 	assigned-clocks = <&scmi_clk IMX95_CLK_LDBPLL_VCO>,
 			  <&scmi_clk IMX95_CLK_LDBPLL>;
 	assigned-clock-rates = <3291120000>, <1097040000>;
+	assigned-clock-parents = <0>, <&scmi_clk IMX95_CLK_LDBPLL_VCO>;
 	status = "okay";
 
 	channel@0 {

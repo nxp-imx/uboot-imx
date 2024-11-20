@@ -27,6 +27,21 @@
 	gpio = <&i2c7_pcal6524_23 22 GPIO_ACTIVE_HIGH>;
 };
 
+&reg_aqr_stby {
+	gpio = <&i2c7_pcal6524_23 8 GPIO_ACTIVE_HIGH>;
+};
+
+&reg_aqr_en {
+	gpio = <&i2c7_pcal6524_23 21 GPIO_ACTIVE_HIGH>;
+};
+
+&reg_serdes_en {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_reg_serdes_en>;
+	vin-supply = <&dummy_reg>;
+	gpio = <&gpio4 28 GPIO_ACTIVE_LOW>;
+};
+
 &enetc_port1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_enetc1>;
@@ -35,18 +50,20 @@
 	status = "okay";
 };
 
-&enetc_port2 {
-	status = "disabled";
-};
-
 &ethphy0 {
 	reg = <1>;
 	/delete-property/ reset-gpios;
 };
 
 &netc_emdio {
-	ethphy1: ethernet-phy@2 {
-		reg = <2>;
+	ethphy1: ethernet-phy@7 {
+		compatible = "ethernet-phy-ieee802.3-c45";
+		reg = <7>;
+		reset-gpios = <&i2c7_pcal6524_23 23 GPIO_ACTIVE_LOW>;
+		reset-assert-us = <200>;
+		reset-deassert-us = <2000>;
+		tx-internal-delay-ps = <1800>;
+		rx-internal-delay-ps = <1666>;
 	};
 };
 
@@ -92,8 +109,15 @@
 			IMX95_PAD_GPIO_IO12__GPIO2_IO_BIT12			0x31e
 		>;
 	};
+
+	pinctrl_reg_serdes_en: serdesengrp {
+		fsl,pins = <
+			IMX95_PAD_CCM_CLKO3__GPIO4_IO_BIT28			0x51e
+		>;
+	};
 };
 
+/delete-node/ &reg_serdes_stby;
 /delete-node/ &adp5585gpio;
 /delete-node/ &i2c3_gpio_expander_20;
 /delete-node/ &i2c4_gpio_expander_21;

@@ -24,6 +24,7 @@
 #include <i2c.h>
 #include <dm/uclass.h>
 #include <dm/uclass-internal.h>
+#include <power/regulator.h>
 
 #ifdef CONFIG_SCMI_FIRMWARE
 #include <scmi_agent.h>
@@ -311,6 +312,24 @@ static void netc_phy_rst(const char *gpio_name, const char *label)
 
 }
 
+static void netc_regulator_enable(const char *devname)
+{
+	int ret;
+	struct udevice *dev;
+
+	ret = regulator_get_by_devname(devname, &dev);
+	if (ret) {
+		printf("Get %s regulator failed %d\n", devname, ret);
+		return;
+	}
+
+	ret = regulator_set_enable_if_allowed(dev, true);
+	if (ret) {
+		printf("Enable %s regulator %d\n", devname, ret);
+		return;
+	}
+}
+
 void netc_init(void)
 {
 	int ret;
@@ -329,6 +348,8 @@ void netc_init(void)
 	netc_phy_rst("gpio@22_5", "ENET2_RST_B");
 #else
 	netc_phy_rst("i2c5_io@21_2", "ENET1_RST_B");
+	netc_regulator_enable("regulator-aqr-stby");
+	netc_regulator_enable("regulator-mac-stby");
 #endif
 	pci_init();
 }
@@ -389,6 +410,29 @@ int board_phy_config(struct phy_device *phydev)
 }
 #endif
 
+void lvds_backlight_on(void)
+{
+	struct udevice *dev;
+	int ret;
+	u8 reg;
+
+	if (!IS_ENABLED(CONFIG_TARGET_IMX95_15X15_EVK))
+		return;
+
+	ret = i2c_get_chip_for_busnum(2, 0x62, 1, &dev);
+	if (ret) {
+		printf("%s: Cannot find pca9632 led dev\n",
+		       __func__);
+		return;
+	}
+
+	reg = 1;
+	dm_i2c_write(dev, 0x1, &reg, 1);
+
+	reg = 5;
+	dm_i2c_write(dev, 0x8, &reg, 1);
+}
+
 int board_init(void)
 {
 	int ret;
@@ -411,6 +455,8 @@ int board_init(void)
 
 	power_on_m7("mx95alt");
 
+	lvds_backlight_on();
+
 	return 0;
 }
 
@@ -431,6 +477,40 @@ int board_late_init(void)
 #ifdef CONFIG_OF_BOARD_SETUP
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
+	char *p, *b, *s;
+	char *token = NULL;
+	int i, ret = 0;
+	u64 base[CONFIG_NR_DRAM_BANKS] = {0};
+	u64 size[CONFIG_NR_DRAM_BANKS] = {0};
+
+	p = env_get("jh_root_mem");
+	if (!p)
+		return 0;
+
+	i = 0;
+	token = strtok(p, ",");
+	while (token) {
+		if (i >= CONFIG_NR_DRAM_BANKS) {
+			printf("Error: The number of size@base exceeds CONFIG_NR_DRAM_BANKS.\n");
+			return -EINVAL;
+		}
+
+		b = token;
+		s = strsep(&b, "@");
+		if (!s) {
+			printf("The format of jh_root_mem is size@base[,size@base...].\n");
+			return -EINVAL;
+		}
+		base[i] = simple_strtoull(b, NULL, 16);
+		size[i] = simple_strtoull(s, NULL, 16);
+		token = strtok(NULL, ",");
+		i++;
+	}
+
+	ret = fdt_fixup_memory_banks(blob, base, size, CONFIG_NR_DRAM_BANKS);
+	if (ret)
+		return ret;
+
 	return 0;
 }
 #endif

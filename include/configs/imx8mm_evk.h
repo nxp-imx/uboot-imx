@@ -57,11 +57,11 @@
 	"jh_clk= \0 " \
 	"jh_root_dtb=" JH_ROOT_DTB "\0" \
 	"jh_mmcboot=mw 0x303d0518 0xff; setenv fdtfile ${jh_root_dtb};" \
-		"setenv jh_clk clk_ignore_unused mem=1212MB; " \
+		"setenv jh_clk kvm.enable_virt_at_load=false clk_ignore_unused mem=1212MB; " \
 			   "if run loadimage; then " \
 				   "run mmcboot; " \
 			   "else run jh_netboot; fi; \0" \
-	"jh_netboot=mw 0x303d0518 0xff; setenv fdtfile ${jh_root_dtb}; setenv jh_clk clk_ignore_unused mem=1212MB; run netboot; \0 "
+	"jh_netboot=mw 0x303d0518 0xff; setenv fdtfile ${jh_root_dtb}; setenv jh_clk kvm.enable_virt_at_load=false clk_ignore_unused mem=1212MB; run netboot; \0 "
 
 #define SR_IR_V2_COMMAND \
 	"nodes=/usbg1 /usbg2 /wdt-reboot /soc@0/caam-sm@100000 /soc@0/bus@30000000/caam_secvio /soc@0/bus@30000000/caam-snvs@30370000 /soc@0/bus@32c00000/lcdif@32e00000 /soc@0/bus@32c00000/csi1_bridge@32e20000 /soc@0/bus@32c00000/mipi_dsi@32e10000 /soc@0/bus@32c00000/mipi_csi@32e30000 /soc@0/bus@32c00000/display-subsystem /audio-codec-bt-sco /sound-bt-sco /audio-codec /sound-wm8524 /dsi-host /rm67199_panel /soc@0/bus@30800000/i2c@30a20000/pca9450@25 /soc@0/bus@30800000/i2c@30a30000/adv7535@3d /soc@0/bus@30800000/i2c@30a30000/tcpc@50 /soc@0/memory-controller@3d400000 /soc@0/bus@30800000/spi@30830000/spi@0 /binman /vpu_h1@38320000 /vpu_g1@38300000 /vpu_g2@38310000 /vpu_v4l2 /gpu@38000000 \0" \

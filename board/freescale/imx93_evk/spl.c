@@ -142,9 +142,8 @@ int power_init_board(void)
 	ret = pmic_reg_read(dev, PF0900_REG_SYS_CFG1);
 	if (ret < 0)
 		return ret;
-	/*disable stby xrst*/
-	sw_val = 0x0;
-	sw_val = (sw_val & XRST_STBY_EN_MASK) | (ret & ~XRST_STBY_EN_MASK);
+	/*enable stby xrst*/
+	sw_val = ret | XRST_STBY_EN_MASK;
 	ret = pmic_reg_write(dev, PF0900_REG_SYS_CFG1, sw_val);
 	if (ret != 0)
 		return ret;

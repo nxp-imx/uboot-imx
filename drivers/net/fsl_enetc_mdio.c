@@ -13,12 +13,15 @@
 #include <asm/io.h>
 #include <asm/processor.h>
 #include <miiphy.h>
+#include <power/regulator.h>
 
 #ifdef CONFIG_ARCH_IMX9
 #include "fsl_enetc4.h"
 #else
 #include "fsl_enetc.h"
 #endif
+#include <linux/delay.h>
+
 
 static void enetc_mdio_wait_bsy(struct enetc_mdio_priv *priv)
 {
@@ -129,6 +132,8 @@ static int enetc_mdio_bind(struct udevice *dev)
 static int enetc_mdio_probe(struct udevice *dev)
 {
 	struct enetc_mdio_priv *priv = dev_get_priv(dev);
+	int ret;
+	struct udevice *supply = NULL;
 
 	priv->regs_base = dm_pci_map_bar(dev, PCI_BASE_ADDRESS_0, 0, 0, PCI_REGION_TYPE, 0);
 	if (!priv->regs_base) {
@@ -137,6 +142,29 @@ static int enetc_mdio_probe(struct udevice *dev)
 	}
 
 	priv->regs_base += ENETC_MDIO_BASE;
+
+	if (CONFIG_IS_ENABLED(DM_REGULATOR)) {
+		ret = device_get_supply_regulator(dev, "phy-supply",
+						  &supply);
+		if (ret && ret != -ENOENT) {
+			printf("%s: device_get_supply_regulator failed: %d\n",
+			      __func__, ret);
+			return ret;
+		}
+
+		if (supply) {
+
+			regulator_set_enable(supply, false);
+			mdelay(100);
+
+			ret = regulator_set_enable_if_allowed(supply, true);
+			if (ret) {
+				printf("%s: Error enabling phy supply\n", dev->name);
+				return ret;
+			}
+		}
+	}
+
 
 #ifdef CONFIG_ARCH_IMX9
 	dm_pci_clrset_config16(dev, PCI_COMMAND, 0, PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER);

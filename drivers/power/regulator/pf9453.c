@@ -79,7 +79,7 @@ static struct pf9453_vrange pf9453_ldo2_vranges[] = {
 };
 
 static struct pf9453_vrange pf9453_ldosnvs_vranges[] = {
-	PCA_RANGE(800000, 25000, 0x0, 0x58),
+	PCA_RANGE(1200000, 25000, 0x0, 0x58),
 };
 
 static struct pf9453_plat pf9453_reg_data[] = {
@@ -102,7 +102,7 @@ static struct pf9453_plat pf9453_reg_data[] = {
 	PCA_DATA("LDO2", PF9453_LDO2CFG, PF9453_EN_MODE_MASK,
 		 PF9453_LDO2OUT, PF9453_LDO2_MASK,
 		 pf9453_ldo2_vranges),
-	PCA_DATA("LDOS_NVS", PF9453_LDOSNVS_CFG2, PF9453_EN_MODE_MASK,
+	PCA_DATA("LDO_SNVS", PF9453_LDOSNVS_CFG2, PF9453_EN_MODE_MASK,
 		 PF9453_LDOSNVS_CFG1, PF9453_LDOSNVS_MASK,
 		 pf9453_ldosnvs_vranges),
 };

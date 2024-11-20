@@ -22,6 +22,7 @@ struct edma_ch_map {
 	sc_rsrc_t ch_start_rsrc;
 	u32 ch_start_regs;
 	u32 ch_num;
+	u32 ch_start_num;
 	const char* node_path;
 };
 
@@ -148,31 +149,76 @@ static int fdt_edma_update_stringlist(const char *stringlist, int stringlist_cou
 
 static int fdt_edma_get_channel_id(u32 *regs, int index, struct edma_ch_map *edma)
 {
-	u32 ch_reg = regs[(index << 2) + 1];
-	u32 ch_reg_size = regs[(index << 2) + 3];
+	u32 ch_reg = regs[index << 1];
+	u32 ch_reg_size = regs[(index << 1) + 1];
 	int ch_id = (ch_reg - edma->ch_start_regs) / ch_reg_size;
+
 	if (ch_id >= edma->ch_num)
 		return -1;
 
 	return ch_id;
 }
 
+static void check_fdt_edma_nodes(void *blob, int nodeoff, struct edma_ch_map *edma_array)
+{
+	u32 interrupts[99];
+	u32 ch = 0, dma_channels;
+	u32 dma_channel_mask = 0;
+	u32 rsrc_offset = 0;
+	int interrupts_count;
+	int remove_cnt = 0;
+	int ret;
+
+	interrupts_count = fdtdec_get_int_array_count(blob, nodeoff,
+						      "interrupts", interrupts, 99);
+	debug("interrupts_count %d\n", interrupts_count);
+	if (interrupts_count < 0)
+		return;
+
+	dma_channels = fdtdec_get_uint(blob, nodeoff, "dma-channels", 0);
+	if (dma_channels == 0)
+		return;
+
+	if (fdt_get_property(blob, nodeoff, "dma-channel-mask", NULL))
+		dma_channel_mask = fdtdec_get_uint(blob, nodeoff, "dma-channel-mask", 0);
+
+	fdt_edma_debug_int_array(interrupts, interrupts_count, 3);
+
+	for (ch = edma_array->ch_start_num; ch < dma_channels &&
+	     ch < edma_array->ch_num; ch++) {
+		if (dma_channel_mask & BIT(ch))
+			continue;
+
+		rsrc_offset = ch - edma_array->ch_start_num;
+		if (!check_owned_resource(edma_array->ch_start_rsrc + rsrc_offset)) {
+			printf("remove edma items %d\n", ch);
+			dma_channel_mask |= BIT(ch);
+			remove_cnt++;
+		}
+	}
+	if (remove_cnt > 0) {
+		ret = fdt_setprop_u32(blob, nodeoff, "dma-channel-mask", dma_channel_mask);
+		if (ret)
+			printf("fdt_setprop_u32 dma-channel-mask error %d\n", ret);
+	}
+}
+
 static __maybe_unused void update_fdt_edma_nodes(void *blob)
 {
 	struct edma_ch_map edma_qm[] = {
-		{ SC_R_DMA_0_CH0, 0x5a200000, 32, "/dma-controller@5a1f0000"},
-		{ SC_R_DMA_1_CH0, 0x5aa00000, 32, "/dma-controller@5a9f0000"},
-		{ SC_R_DMA_2_CH0, 0x59200000, 5, "/dma-controller@591F0000"},
-		{ SC_R_DMA_2_CH5, 0x59250000, 27, "/dma-controller@591F0000"},
-		{ SC_R_DMA_3_CH0, 0x59a00000, 32, "/dma-controller@599F0000"},
+		{ SC_R_DMA_0_CH0, 0x5a200000, 32, 0, "/bus@5a000000/dma-controller@5a1f0000"},
+		{ SC_R_DMA_1_CH0, 0x5aa00000, 32, 0, "/bus@5a000000/dma-controller@5a9f0000"},
+		{ SC_R_DMA_2_CH0, 0x59200000, 5,  0, "/bus@59000000/dma-controller@591f0000"},
+		{ SC_R_DMA_2_CH5, 0x59250000, 27, 5, "/bus@59000000/dma-controller@591f0000"},
+		{ SC_R_DMA_3_CH0, 0x59a00000, 32, 0, "/bus@59000000/dma-controller@599f0000"},
 	};
 
 	struct edma_ch_map edma_qxp[] = {
-		{ SC_R_DMA_0_CH0, 0x59200000, 32, "/dma-controller@591F0000"},
-		{ SC_R_DMA_1_CH0, 0x59a00000, 32, "/dma-controller@599F0000"},
-		{ SC_R_DMA_2_CH0, 0x5a200000, 5, "/dma-controller@5a1f0000"},
-		{ SC_R_DMA_2_CH5, 0x5a250000, 27, "/dma-controller@5a1f0000"},
-		{ SC_R_DMA_3_CH0, 0x5aa00000, 32, "/dma-controller@5a9f0000"},
+		{ SC_R_DMA_0_CH0, 0x59200000, 32, 0, "/bus@59000000/dma-controller@591f0000"},
+		{ SC_R_DMA_1_CH0, 0x59a00000, 32, 0, "/bus@59000000/dma-controller@599f0000"},
+		{ SC_R_DMA_2_CH0, 0x5a200000, 5,  0, "/bus@5a000000/dma-controller@5a1f0000"},
+		{ SC_R_DMA_2_CH5, 0x5a250000, 27, 5, "/bus@5a000000/dma-controller@5a1f0000"},
+		{ SC_R_DMA_3_CH0, 0x5aa00000, 32, 0,  "/bus@5a000000/dma-controller@5a9f0000"},
 	};
 
 	u32 i, j, edma_size;
@@ -188,16 +234,17 @@ static __maybe_unused void update_fdt_edma_nodes(void *blob)
 	}
 
 	for (i = 0; i < edma_size; i++, edma_array++) {
-		u32 regs[128];
-		u32 interrupts[96];
+		u32 regs[66];
+		u32 interrupts[99];
+		u32 pd[64];
 		u32 dma_channels;
 		int regs_count, interrupts_count, int_names_count;
-
-		const char *list;
-		int list_len, newlist_len;
+		int pd_count, pd_names_count;
+		const char *list, *list_pd;
+		int list_len, newlist_len, list_pd_len, newlist_pd_len;
 		int remove[32];
 		int remove_cnt = 0;
-		char * newlist;
+		char *newlist, *newlist_pd;
 
 		nodeoff = fdt_path_offset(blob, edma_array->node_path);
 		if (nodeoff < 0)
@@ -205,85 +252,147 @@ static __maybe_unused void update_fdt_edma_nodes(void *blob)
 
 		printf("%s, %d\n", edma_array->node_path, nodeoff);
 
-		regs_count = fdtdec_get_int_array_count(blob, nodeoff, "reg", regs, 128);
+		regs_count = fdtdec_get_int_array_count(blob, nodeoff, "reg", regs, 66);
 		debug("regs_count %d\n", regs_count);
 		if (regs_count < 0)
 			continue;
 
-		interrupts_count = fdtdec_get_int_array_count(blob, nodeoff, "interrupts", interrupts, 96);
-		debug("interrupts_count %d\n", interrupts_count);
-		if (interrupts_count < 0)
-			continue;
-
-		dma_channels = fdtdec_get_uint(blob, nodeoff, "dma-channels", 0);
-		if (dma_channels == 0)
-			continue;
-
-		list = fdt_getprop(blob, nodeoff, "interrupt-names", &list_len);
-		if (!list)
-			continue;
-
-		int_names_count = fdt_stringlist_count(blob, nodeoff, "interrupt-names");
-
-		fdt_edma_debug_int_array(regs, regs_count, 4);
-		fdt_edma_debug_int_array(interrupts, interrupts_count, 3);
-		fdt_edma_debug_stringlist(list, list_len);
-
-		for (j = 0; j < (regs_count >> 2); j++) {
-			int ch_id = fdt_edma_get_channel_id(regs, j, edma_array);
-			if (ch_id < 0)
+		if (regs_count == 2) {
+			check_fdt_edma_nodes(blob, nodeoff, edma_array);
+		} else {
+			interrupts_count = fdtdec_get_int_array_count(blob, nodeoff,
+								      "interrupts", interrupts, 99);
+			debug("interrupts_count %d\n", interrupts_count);
+			if (interrupts_count < 0)
 				continue;
 
-			if (!check_owned_resource(edma_array->ch_start_rsrc + ch_id)) {
-				printf("remove edma items %d\n", j);
-
-				dma_channels--;
-
-				remove[remove_cnt] = j;
-				remove_cnt++;
-			}
-		}
-
-		if (remove_cnt > 0) {
-			u32 new_regs[128];
-			u32 new_interrupts[96];
-
-			regs_count = fdt_edma_update_int_array(regs, regs_count, new_regs, 4, remove, remove_cnt);
-			interrupts_count = fdt_edma_update_int_array(interrupts, interrupts_count, new_interrupts, 3, remove, remove_cnt);
-
-			fdt_edma_debug_int_array(new_regs, regs_count, 4);
-			fdt_edma_debug_int_array(new_interrupts, interrupts_count, 3);
-
-			fdt_edma_swap_int_array(new_regs, regs_count);
-			fdt_edma_swap_int_array(new_interrupts, interrupts_count);
-
-			/* malloc a new string list */
-			newlist = (char *)malloc(list_len);
-			if (!newlist) {
-				printf("malloc new string list failed, len=%d\n", list_len);
+			dma_channels = fdtdec_get_uint(blob, nodeoff, "dma-channels", 0);
+			if (dma_channels == 0)
 				continue;
+
+			list = fdt_getprop(blob, nodeoff, "interrupt-names", &list_len);
+			if (!list)
+				continue;
+
+			int_names_count = fdt_stringlist_count(blob, nodeoff, "interrupt-names");
+
+			pd_count = fdtdec_get_int_array_count(blob, nodeoff,
+							      "power-domains", pd, 66);
+			if (pd_count < 0)
+				continue;
+			pd_names_count = fdt_stringlist_count(blob, nodeoff, "power-domain-names");
+			list_pd = fdt_getprop(blob, nodeoff, "power-domain-names", &list_pd_len);
+			if (!list_pd)
+				continue;
+
+			fdt_edma_debug_int_array(regs, regs_count, 2);
+			fdt_edma_debug_int_array(interrupts, interrupts_count, 3);
+			fdt_edma_debug_int_array(pd, pd_count, 2);
+			fdt_edma_debug_stringlist(list, list_len);
+			fdt_edma_debug_stringlist(list_pd, list_pd_len);
+
+			for (j = edma_array->ch_start_num; j < (regs_count >> 1); j++) {
+				int ch_id = fdt_edma_get_channel_id(regs, j, edma_array);
+
+				if (ch_id < 0)
+					continue;
+
+				if (!check_owned_resource(edma_array->ch_start_rsrc + ch_id)) {
+					printf("remove edma items %d\n", j);
+
+					dma_channels--;
+
+					remove[remove_cnt] = j;
+					remove_cnt++;
+				}
 			}
 
-			newlist_len = fdt_edma_update_stringlist(list, int_names_count, newlist, remove, remove_cnt);
-			fdt_edma_debug_stringlist(newlist, newlist_len);
+			if (remove_cnt > 0) {
+				u32 new_regs[66];
+				u32 new_interrupts[99], new_pd[64];
+				int i, int_pd_remove[32];
 
-			ret = fdt_setprop(blob, nodeoff, "reg", new_regs, regs_count * sizeof(u32));
-			if (ret)
-				printf("fdt_setprop regs error %d\n", ret);
+				/* The reg index is different from interrupt and power,
+				 *  the reg include mp address.
+				 */
+				for (i = 0; i < remove_cnt; i++)
+					int_pd_remove[i] = remove[i] - 1;
 
-			ret = fdt_setprop(blob, nodeoff, "interrupts", new_interrupts, interrupts_count * sizeof(u32));
-			if (ret)
-				printf("fdt_setprop interrupts error %d\n", ret);
+				regs_count = fdt_edma_update_int_array(regs, regs_count, new_regs,
+								       2, remove, remove_cnt);
+				interrupts_count = fdt_edma_update_int_array(interrupts,
+									     interrupts_count,
+									     new_interrupts, 3,
+									     int_pd_remove,
+									     remove_cnt);
+				pd_count = fdt_edma_update_int_array(pd, pd_count, new_pd,
+								     2, int_pd_remove, remove_cnt);
 
-			ret = fdt_setprop_u32(blob, nodeoff, "dma-channels", dma_channels);
-			if (ret)
-				printf("fdt_setprop_u32 dma-channels error %d\n", ret);
+				fdt_edma_debug_int_array(new_regs, regs_count, 2);
+				fdt_edma_debug_int_array(new_interrupts, interrupts_count, 3);
+				fdt_edma_debug_int_array(new_pd, pd_count, 2);
 
-			ret = fdt_setprop(blob, nodeoff, "interrupt-names", newlist, newlist_len);
-			if (ret)
-				printf("fdt_setprop interrupt-names error %d\n", ret);
+				fdt_edma_swap_int_array(new_regs, regs_count);
+				fdt_edma_swap_int_array(new_interrupts, interrupts_count);
+				fdt_edma_swap_int_array(new_pd, pd_count);
 
-			free(newlist);
+				/* malloc a new string list */
+				newlist = (char *)malloc(list_len);
+				if (!newlist) {
+					printf("malloc new string list failed, len=%d\n", list_len);
+					continue;
+				}
+				newlist_len = fdt_edma_update_stringlist(list, int_names_count,
+									 newlist, int_pd_remove,
+									 remove_cnt);
+				fdt_edma_debug_stringlist(newlist, newlist_len);
+
+				/* malloc a new string list */
+				newlist_pd = (char *)malloc(list_pd_len);
+				if (!newlist_pd) {
+					printf("malloc new string list failed, len=%d\n",
+					       list_pd_len);
+					continue;
+				}
+				newlist_pd_len = fdt_edma_update_stringlist(list_pd, pd_names_count,
+									    newlist_pd,
+									    int_pd_remove,
+									    remove_cnt);
+				fdt_edma_debug_stringlist(newlist_pd, newlist_pd_len);
+
+				ret = fdt_setprop(blob, nodeoff, "reg", new_regs,
+						  regs_count * sizeof(u32));
+				if (ret)
+					printf("fdt_setprop regs error %d\n", ret);
+
+				ret = fdt_setprop(blob, nodeoff, "interrupts", new_interrupts,
+						  interrupts_count * sizeof(u32));
+				if (ret)
+					printf("fdt_setprop interrupts error %d\n", ret);
+
+				ret = fdt_setprop_u32(blob, nodeoff, "dma-channels", dma_channels);
+				if (ret)
+					printf("fdt_setprop_u32 dma-channels error %d\n", ret);
+
+				ret = fdt_setprop(blob, nodeoff, "interrupt-names", newlist,
+						  newlist_len);
+				if (ret)
+					printf("fdt_setprop interrupt-names error %d\n", ret);
+
+				free(newlist);
+
+				ret = fdt_setprop(blob, nodeoff, "power-domains", new_pd,
+						  pd_count * sizeof(u32));
+				if (ret)
+					printf("fdt_setprop interrupts error %d\n", ret);
+
+				ret = fdt_setprop(blob, nodeoff, "power-domain-names", newlist_pd,
+						  newlist_pd_len);
+				if (ret)
+					printf("fdt_setprop power-domain-names error %d\n", ret);
+
+				free(newlist_pd);
+			}
 		}
 	}
 }
@@ -397,6 +506,7 @@ static __maybe_unused void update_fdt_with_owned_resources(void *blob)
 	int offset = 0, depth = 0;
 	u32 rsrc_id;
 	int rc, i, count;
+	u32 dma_channel_mask;
 
 	/* Check the new PD, if not find, continue with old PD tree */
 	count = fdt_node_offset_by_compatible(blob, -1, "fsl,scu-pd");
@@ -408,6 +518,7 @@ static __maybe_unused void update_fdt_with_owned_resources(void *blob)
 		debug("Node name: %s, depth %d\n",
 		      fdt_get_name(blob, offset, NULL), depth);
 
+		dma_channel_mask = 0;
 		if (!fdt_get_property(blob, offset, "power-domains", NULL)) {
 			debug("   - ignoring node %s\n",
 			      fdt_get_name(blob, offset, NULL));
@@ -420,8 +531,15 @@ static __maybe_unused void update_fdt_with_owned_resources(void *blob)
 			continue;
 		}
 
+		if (fdt_get_property(blob, offset, "dma-channel-mask", NULL))
+			dma_channel_mask = fdtdec_get_uint(blob, offset, "dma-channel-mask", 0);
+
 		i = 0;
 		while (true) {
+			if (dma_channel_mask & BIT(i)) {
+				i = i + 1;
+				continue;
+			}
 			rc = fdtdec_parse_phandle_with_args(blob, offset,
 							    "power-domains",
 							    "#power-domain-cells",

@@ -194,6 +194,7 @@ static int adp5585_probe(struct udevice *dev)
 {
 	struct adp5585_plat *plat = dev_get_plat(dev);
 	struct gpio_dev_priv *uc_priv = dev_get_uclass_priv(dev);
+	u8 data = 0;
 	int ret;
 
 	if (!plat)
@@ -209,6 +210,10 @@ static int adp5585_probe(struct udevice *dev)
 
 	uc_priv->gpio_count = ADP5585_MAXGPIO;
 	uc_priv->bank_name = "adp5585-gpio";
+
+	ret = dm_i2c_write(dev, ADP5585_PIN_CONFIG_D, &data, 1);
+	if (ret)
+		return ret;
 
 	for (int i = 0; i < 2; i++) {
 		ret = dm_i2c_read(dev, ADP5585_GPO_DATA_OUT_A + i, &plat->dat_out[i], 1);

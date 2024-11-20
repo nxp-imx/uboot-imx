@@ -33,18 +33,31 @@
 
 #ifdef CONFIG_TARGET_IMX95_15X15_EVK
 #define JH_ROOT_DTB "imx95-15x15-evk-root.dtb"
-#else
-#define JH_ROOT_DTB "imx95-19x19-evk-root.dtb"
-#endif
-
+/* jh_root_mem: set the memory space used by Jailhouse root cell */
 #define JAILHOUSE_ENV \
 	"jh_root_dtb=" JH_ROOT_DTB "\0" \
 	"jh_mmcboot=setenv fdtfile ${jh_root_dtb}; " \
-		    "setenv jh_clk cpuidle.off=1 clk_ignore_unused mem=1408MB kvm-arm.mode=nvhe; " \
-		    "if run loadimage; then run mmcboot;" \
-		    "else run jh_netboot; fi; \0" \
+		"setenv jh_clk kvm.enable_virt_at_load=false cpuidle.off=1 clk_ignore_unused kvm-arm.mode=nvhe; " \
+		"setenv jh_root_mem 0x58000000@0x90000000,0xc0000000@0x180000000; " \
+		"if run loadimage; then run mmcboot;" \
+		"else run jh_netboot; fi; \0" \
 	"jh_netboot=setenv fdtfile ${jh_root_dtb}; " \
-		    "setenv jh_clk cpuidle.off=1 clk_ignore_unused mem=1408MB kvm-arm.mode=nvhe; run netboot; \0 "
+		"setenv jh_root_mem 0x58000000@0x90000000,0xc0000000@0x180000000; " \
+		"setenv jh_clk kvm.enable_virt_at_load=false cpuidle.off=1 clk_ignore_unused kvm-arm.mode=nvhe; run netboot; \0 "
+#else
+#define JH_ROOT_DTB "imx95-19x19-evk-root.dtb"
+/* jh_root_mem: set the memory space used by Jailhouse root cell */
+ #define JAILHOUSE_ENV \
+	"jh_root_dtb=" JH_ROOT_DTB "\0" \
+	"jh_mmcboot=setenv fdtfile ${jh_root_dtb}; " \
+		"setenv jh_clk kvm.enable_virt_at_load=false cpuidle.off=1 clk_ignore_unused kvm-arm.mode=nvhe; " \
+		"setenv jh_root_mem 0x58000000@0x90000000,0x300000000@0x180000000; " \
+		"if run loadimage; then run mmcboot;" \
+		"else run jh_netboot; fi; \0" \
+	"jh_netboot=setenv fdtfile ${jh_root_dtb}; " \
+		"setenv jh_root_mem 0x58000000@0x90000000,0x300000000@0x180000000; " \
+		"setenv jh_clk kvm.enable_virt_at_load=false cpuidle.off=1 clk_ignore_unused kvm-arm.mode=nvhe; run netboot; \0 "
+#endif
 
 #define CFG_MFG_ENV_SETTINGS \
 	CFG_MFG_ENV_SETTINGS_DEFAULT \

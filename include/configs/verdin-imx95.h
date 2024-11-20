@@ -36,11 +36,11 @@
 #define JAILHOUSE_ENV \
 	"jh_root_dtb=" JH_ROOT_DTB "\0" \
 	"jh_mmcboot=setenv fdtfile ${jh_root_dtb}; " \
-		    "setenv jh_clk cpuidle.off=1 clk_ignore_unused mem=1408MB kvm-arm.mode=nvhe; " \
+		    "setenv jh_clk kvm.enable_virt_at_load=false cpuidle.off=1 clk_ignore_unused mem=1408MB kvm-arm.mode=nvhe; " \
 		    "if run loadimage; then run mmcboot;" \
 		    "else run jh_netboot; fi; \0" \
 	"jh_netboot=setenv fdtfile ${jh_root_dtb}; " \
-		    "setenv jh_clk cpuidle.off=1 clk_ignore_unused mem=1408MB kvm-arm.mode=nvhe; run netboot; \0 "
+		    "setenv jh_clk kvm.enable_virt_at_load=false cpuidle.off=1 clk_ignore_unused mem=1408MB kvm-arm.mode=nvhe; run netboot; \0 "
 
 #define CFG_MFG_ENV_SETTINGS \
 	CFG_MFG_ENV_SETTINGS_DEFAULT \
@@ -51,11 +51,11 @@
 
 #define XEN_BOOT_ENV \
 	    "domu-android-auto=no\0" \
-            "xenhyper_bootargs=console=dtuart dom0_mem=4096M dom0_max_vcpus=2 \0" \
+            "xenhyper_bootargs=console=dtuart dom0_mem=4096M dom0_max_vcpus=2 pci-passthrough=on\0" \
             "xenlinux_bootargs= \0" \
             "xenlinux_console=hvc0 earlycon=xen\0" \
-            "xenlinux_addr=0x9e000000\0" \
-            "dom0fdt_file=imx95-19x19-verdin.dtb\0" \
+            "xenlinux_addr=0x9c000000\0" \
+            "dom0fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
             "xenboot_common=" \
                 "${get_cmd} ${loadaddr} xen;" \
                 "${get_cmd} ${fdt_addr} ${dom0fdt_file};" \
@@ -64,6 +64,7 @@
                 "fdt resize 256;" \
                 "fdt set /chosen/module@0 reg <0x00000000 ${xenlinux_addr} 0x00000000 0x${filesize}>;" \
                 "fdt set /chosen/module@0 bootargs \"${bootargs} ${xenlinux_bootargs}\"; " \
+                "fdt set /soc/bus@49000000/iommu@490d0000 status disabled;" \
                 "setenv bootargs ${xenhyper_bootargs};" \
                 "booti ${loadaddr} - ${fdt_addr};" \
             "\0" \

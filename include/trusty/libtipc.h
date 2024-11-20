@@ -30,6 +30,7 @@
 #include <trusty/hwcrypto.h>
 #include <trusty/imx_snvs.h>
 #include <trusty/matter.h>
+#include <trusty/secretkeeper.h>
 
 /*
  * Initialize TIPC library

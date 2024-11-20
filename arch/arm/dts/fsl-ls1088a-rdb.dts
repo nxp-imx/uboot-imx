@@ -128,11 +128,13 @@
 		reg = <0x77>;
 		#address-cells = <1>;
 		#size-cells = <0>;
+		bootph-all;
 
 		i2c@3 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x3>;
+			bootph-all;
 
 			rtc@51 {
 				compatible = "nxp,pcf2129";

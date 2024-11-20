@@ -254,29 +254,15 @@ static void disable_wdog(void __iomem *wdog_base)
 
 static struct mm_region imx9_mem_map[] = {
 	{
-		/* ROM */
-		.virt = 0x0UL,
-		.phys = 0x0UL,
-		.size = 0x100000UL,
-		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
-			 PTE_BLOCK_OUTER_SHARE
-	}, {
-		/* TCM */
-		.virt = 0x201c0000UL,
-		.phys = 0x201c0000UL,
+		/* M7 TCM */
+		.virt = 0x203c0000UL,
+		.phys = 0x203c0000UL,
 		.size = 0x80000UL,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
 			 PTE_BLOCK_NON_SHARE |
 			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
-       }, {
-               /* M7 TCM */
-               .virt = 0x203c0000UL,
-               .phys = 0x203c0000UL,
-               .size = 0x80000UL,
-               .attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
-                        PTE_BLOCK_NON_SHARE |
-                        PTE_BLOCK_PXN | PTE_BLOCK_UXN
-	}, {
+	},
+	{
 		/* OCRAM */
 		.virt = 0x20480000UL,
 		.phys = 0x20480000UL,
