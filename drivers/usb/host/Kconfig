@@ -144,8 +144,8 @@ config USB_XHCI_IMX8
 
 config USB_XHCI_IMX8M
 	bool "XHCI support for imx8M(mscale)"
-	depends on ARCH_IMX8M || IMX95
-	select MISC if IMX8MP || IMX95
+	depends on ARCH_IMX8M || IMX95 || IMX94
+	select MISC if IMX8MP || IMX95 || IMX94
 	default y
 	help
 	  Enables support for the on-chip xHCI controller on imx8m(mscale) SoC.
