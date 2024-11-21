@@ -22,6 +22,9 @@
 #if defined(CONFIG_IMX95)
 #define DAISY_OFFSET	0x408
 #endif
+#if defined(CONFIG_IMX94)
+#define DAISY_OFFSET	0x608
+#endif
 
 /* SCMI pin control types */
 #define PINCTRL_TYPE_MUX        192
