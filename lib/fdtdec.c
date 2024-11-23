@@ -1686,7 +1686,7 @@ int fdtdec_setup(void)
 	}
 
 	/* Otherwise, the devicetree is typically appended to U-Boot */
-	if (ret) {
+	if (!ret) {
 		if (IS_ENABLED(CONFIG_OF_SEPARATE)) {
 			gd->fdt_blob = fdt_find_separate();
 			gd->fdt_src = FDTSRC_SEPARATE;
