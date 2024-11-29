@@ -9,15 +9,20 @@
 #include <clk-uclass.h>
 #include <dm.h>
 #include <dt-bindings/clock/nxp,imx95-clock.h>
+#include <dt-bindings/clock/nxp,imx94-clock.h>
 #include <linux/clk-provider.h>
 
 #include "clk.h"
 
-#define IMX95_LVDS_CSR_ID_BASE IMX95_CLK_END + 20
+/* Use 512 as base for lvds clock id, normally we won't have so many clocks */
+#define IMX_LVDS_CSR_ID_BASE 512
+
+static const char * const imx94_dispmix_clk_sels[] = {"disppix", "ldb_pll_div7"};
 
 static int imx95_blkctrl_clk_xlate(struct clk *clk,
 			struct ofnode_phandle_args *args)
 {
+	unsigned long id_base = IMX_LVDS_CSR_ID_BASE;
 	debug("%s(clk=%p)\n", __func__, clk);
 
 	if (args->args_count > 1) {
@@ -25,8 +30,11 @@ static int imx95_blkctrl_clk_xlate(struct clk *clk,
 		return -EINVAL;
 	}
 
+	if (device_is_compatible(clk->dev, "fsl,imx94-dispmix-csr"))
+		id_base += 1;
+
 	if (args->args_count)
-		clk->id = args->args[0] + IMX95_LVDS_CSR_ID_BASE;
+		clk->id = args->args[0] + id_base;
 	else
 		clk->id = 0;
 
@@ -45,20 +53,30 @@ static int imx95_blkctrl_clk_probe(struct udevice *dev)
 		return -EINVAL;
 	}
 
-	clk_dm(IMX95_CLK_DISPMIX_LVDS_PHY_DIV + IMX95_LVDS_CSR_ID_BASE,
-		clk_register_fixed_factor(NULL, "ldb_phy_div", "ldbpll", 0, 1, 2));
+	if (device_is_compatible(dev, "fsl,imx94-dispmix-lvds-csr")) {
+		clk_dm(IMX94_CLK_DISPMIX_LVDS_CLK_GATE + IMX_LVDS_CSR_ID_BASE,
+			clk_register_gate2(NULL, "lvds_ch_gate", "ldb_pll_div7", 0, addr + 0x0, 1, 0, 0, NULL));
+	} else if (device_is_compatible(dev, "fsl,imx94-dispmix-csr")) {
+		clk_dm(IMX94_CLK_DISPMIX_CLK_SEL + IMX_LVDS_CSR_ID_BASE + 1,
+			clk_register_mux(NULL, "dispmix_clk_sel", imx94_dispmix_clk_sels,
+				ARRAY_SIZE(imx94_dispmix_clk_sels), CLK_SET_RATE_PARENT | CLK_SET_RATE_NO_REPARENT,
+				addr + 0x0, 1, 1, 0));
+	} else {
+		clk_dm(IMX95_CLK_DISPMIX_LVDS_PHY_DIV + IMX_LVDS_CSR_ID_BASE,
+			clk_register_fixed_factor(NULL, "ldb_phy_div", "ldbpll", 0, 1, 2));
 
-	clk_dm(IMX95_CLK_DISPMIX_LVDS_CH0_GATE + IMX95_LVDS_CSR_ID_BASE,
-		clk_register_gate2(NULL, "lvds_ch0_gate", "ldb_pll_div7", 0, addr + 0x0, 1, 0, 0, NULL));
+		clk_dm(IMX95_CLK_DISPMIX_LVDS_CH0_GATE + IMX_LVDS_CSR_ID_BASE,
+			clk_register_gate2(NULL, "lvds_ch0_gate", "ldb_pll_div7", 0, addr + 0x0, 1, 0, 0, NULL));
 
-	clk_dm(IMX95_CLK_DISPMIX_LVDS_CH1_GATE + IMX95_LVDS_CSR_ID_BASE,
-		clk_register_gate2(NULL, "lvds_ch1_gate", "ldb_pll_div7", 0, addr + 0x0, 2, 0, 0, NULL));
+		clk_dm(IMX95_CLK_DISPMIX_LVDS_CH1_GATE + IMX_LVDS_CSR_ID_BASE,
+			clk_register_gate2(NULL, "lvds_ch1_gate", "ldb_pll_div7", 0, addr + 0x0, 2, 0, 0, NULL));
 
-	clk_dm(IMX95_CLK_DISPMIX_PIX_DI0_GATE + IMX95_LVDS_CSR_ID_BASE,
-		clk_register_gate2(NULL, "lvds_di0_gate", "ldb_pll_div7", 0, addr + 0x0, 3, 0, 0, NULL));
+		clk_dm(IMX95_CLK_DISPMIX_PIX_DI0_GATE + IMX_LVDS_CSR_ID_BASE,
+			clk_register_gate2(NULL, "lvds_di0_gate", "ldb_pll_div7", 0, addr + 0x0, 3, 0, 0, NULL));
 
-	clk_dm(IMX95_CLK_DISPMIX_PIX_DI1_GATE + IMX95_LVDS_CSR_ID_BASE,
-		clk_register_gate2(NULL, "lvds_di1_gate", "ldb_pll_div7", 0, addr + 0x0, 4, 0, 0, NULL));
+		clk_dm(IMX95_CLK_DISPMIX_PIX_DI1_GATE + IMX_LVDS_CSR_ID_BASE,
+			clk_register_gate2(NULL, "lvds_di1_gate", "ldb_pll_div7", 0, addr + 0x0, 4, 0, 0, NULL));
+	}
 
 	return 0;
 }
@@ -74,6 +92,8 @@ const struct clk_ops imx95_blkctrl_clk_ops = {
 
 static const struct udevice_id imx95_blkctrl_clk_ids[] = {
 	{ .compatible = "fsl,imx95-dispmix-lvds-csr" },
+	{ .compatible = "fsl,imx94-dispmix-lvds-csr" },
+	{ .compatible = "fsl,imx94-dispmix-csr" },
 	{ },
 };
 
