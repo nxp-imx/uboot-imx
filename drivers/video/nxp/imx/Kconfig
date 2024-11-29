@@ -119,10 +119,17 @@ config VIDEO_IMX_DW_DSI
 
 config VIDEO_IMX_LCDIFV3
 	bool "i.MX LCDIFv3 support"
-	depends on VIDEO && (IMX8MP || ARCH_IMX9)
+	depends on VIDEO && (IMX8MP || IMX91 || IMX93)
 	select VIDEO_LINK
 	help
 	  Support for i.MX8MP LCDIFv3 controller.
+
+config VIDEO_IMX_DCIF
+	bool "i.MX DCIF support"
+	depends on VIDEO && IMX94
+	select VIDEO_LINK
+	help
+	  Support for i.MX943 DCIF controller.
 
 config VIDEO_IMX_DCNANO
 	bool "i.MX DCNANO LCDIF support"
@@ -142,7 +149,7 @@ config VIDEO_IMX93_PARALLEL_DISPLAY_FORMAT
 config VIDEO_IMX95_LVDS
 	bool "i.MX95 LDVS bridge support"
 	default n
-	depends on IMX95 && VIDEO
+	depends on (IMX95 || IMX94) && VIDEO
 	select DISPLAY
 	select VIDEO_LINK
 	help
