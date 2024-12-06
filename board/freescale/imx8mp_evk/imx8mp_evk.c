@@ -82,7 +82,7 @@ int board_early_init_f(void)
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
-int ft_board_setup(void *blob, struct bd_info *bd)
+static int jh_mem_fdt_setup(void *blob)
 {
 	char *p, *b, *s;
 	char *token = NULL;
@@ -118,6 +118,18 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	ret = fdt_fixup_memory_banks(blob, base, size, CONFIG_NR_DRAM_BANKS);
 	if (ret)
 		return ret;
+
+	return 0;
+}
+
+int ft_board_setup(void *blob, struct bd_info *bd)
+{
+	int ret;
+	ret = jh_mem_fdt_setup(blob);
+	if (ret) {
+		printf("jailhouse memory process fail.\n");
+		return ret;
+	}
 
 #ifdef CONFIG_IMX8M_DRAM_INLINE_ECC
 #ifdef CONFIG_TARGET_IMX8MP_DDR4_EVK

@@ -687,35 +687,6 @@ static int delete_fdt_nodes(void *blob, const char *const nodes_path[], int size
 	return 0;
 }
 
-static int disable_eqos_nodes(void *blob)
-{
-	static const char * const nodes_path_eqos[] = {
-		"/soc@0/bus@42800000/ethernet@428a0000"
-	};
-
-	return delete_fdt_nodes(blob, nodes_path_eqos, ARRAY_SIZE(nodes_path_eqos));
-}
-
-static int disable_flexcan_nodes(void *blob)
-{
-	static const char * const nodes_path_flexcan[] = {
-		"/soc@0/bus@44000000/can@443a0000",
-		"/soc@0/bus@42000000/can@425b0000"
-	};
-
-	return delete_fdt_nodes(blob, nodes_path_flexcan, ARRAY_SIZE(nodes_path_flexcan));
-}
-
-static int disable_parallel_display_nodes(void *blob)
-{
-	static const char * const nodes_path_display[] = {
-		"/soc@0/system-controller@4ac10000/dpi",
-		"/soc@0/lcd-controller@4ae30000"
-	};
-
-	return delete_fdt_nodes(blob, nodes_path_display, ARRAY_SIZE(nodes_path_display));
-}
-
 static int disable_npu_nodes(void *blob)
 {
 	static const char * const nodes_path_npu[] = {
@@ -902,31 +873,6 @@ int board_fix_fdt(void *fdt)
 		}
 	}
 
-	if (is_imx9101()) {
-		int i = 0;
-		int nodeoff, ret;
-		const char *status = "disabled";
-		static const char * const nodes[] = {
-			"/soc@0/bus@42800000/ethernet@428a0000",
-			"/soc@0/system-controller@4ac10000/dpi",
-			"/soc@0/lcd-controller@4ae30000"
-		};
-
-		for (i = 0; i < ARRAY_SIZE(nodes); i++) {
-			nodeoff = fdt_path_offset(fdt, nodes[i]);
-			if (nodeoff > 0) {
-set_status:
-				ret = fdt_setprop(fdt, nodeoff, "status", status,
-						  strlen(status) + 1);
-				if (ret == -FDT_ERR_NOSPACE) {
-					ret = fdt_increase_size(fdt, 512);
-					if (!ret)
-						goto set_status;
-				}
-			}
-		}
-	}
-
 	return 0;
 }
 #endif
@@ -943,12 +889,6 @@ int ft_system_setup(void *blob, struct bd_info *bd)
 	if (is_imx9332() || is_imx9331() || is_imx9312() || is_imx9311() || is_imx9302() ||
 	    is_imx9301())
 		disable_npu_nodes(blob);
-
-	if (is_imx9101()) {
-		disable_eqos_nodes(blob);
-		disable_flexcan_nodes(blob);
-		disable_parallel_display_nodes(blob);
-	}
 
 	if (is_voltage_mode(VOLT_LOW_DRIVE)) {
 		low_drive_freq_update(blob);
