@@ -80,8 +80,32 @@ void enetc_blk_ctrl_cfg_imx95(void* base)
 	writel(PCS_PROT_10G_SXGMII, base + CFG_LINK_PCS_PROT_2);
 }
 
+void enetc_blk_ctrl_cfg_imx943(void* base)
+{
+	u32 val;
+	int i;
+
+	for (i = 0; i < 6; i++) {
+		val = readl(base + NETC_LINK_CFG(i));
+		val &= (~LINK_IO_VAR);
+		writel(val, base + NETC_LINK_CFG(i));
+	}
+	for (i = 0; i < 6; i++) {
+		val = readl(base + NETC_LINK_CFG(i));
+		val &= (~LINK_MII_PORT);
+		val |= 2;
+		writel(val, base + NETC_LINK_CFG(i));
+	}
+	for (i = 0; i < 6; i++)
+		writel(0, base + CFG_LINK_PCS_PROT(i));
+}
+
 static const struct enetc_bl_data enetc_bl_data_imx95 = {
 	.blk_ctrl_cfg = enetc_blk_ctrl_cfg_imx95,
+};
+
+static const struct enetc_bl_data enetc_bl_data_imx943 = {
+	.blk_ctrl_cfg = enetc_blk_ctrl_cfg_imx943,
 };
 
 static int enetc_blk_ctrl_of_to_plat(struct udevice *dev)
@@ -118,6 +142,7 @@ static int enetc_blk_ctrl_of_to_plat(struct udevice *dev)
 
 static const struct udevice_id netc_blk_ctrl_ids[] = {
 	{ .compatible = "nxp,imx95-netc-blk-ctrl", .data = (ulong)&enetc_bl_data_imx95 },
+	{ .compatible = "nxp,imx943-netc-blk-ctrl", .data = (ulong)&enetc_bl_data_imx943 },
 	{ }
 };
 
