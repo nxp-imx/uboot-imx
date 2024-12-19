@@ -15,6 +15,34 @@
 #define PCI_DEVICE_ID_ENETC_ETH	0xE100
 #define PCI_DEVICE_ID_ENETC_MDIO	0xEE01
 
+/**
+ * struct enetc_bl_plat - ENETC block control plat
+ * @netc_blk_ctrl_base: enetc4 netcmix blk ctrl base address
+ * @netc_ierb_base: enetc4 netcmix ierb base address
+ * @netc_priv_base: enetc4 netcmix priv address
+ *
+ * This information should be parsed from NETC block control node in DTS
+ */
+struct enetc_bl_plat {
+	void* netc_blk_ctrl_base;
+	void* netc_ierb_base;
+	void* netc_priv_base;
+};
+
+/**
+ * struct enetc_bl_data - ENETC block control data
+ * @blk_ctrl_cfg: enetc4 netcmix blk ctrl config operation
+ *
+ * This interface should be implemented by ENETC block control to config
+ * netcmix for different platform.
+ */
+struct enetc_bl_data {
+	void (*blk_ctrl_cfg)(void* base);
+};
+
+#define enetc_get_blk_ctrl_plat(dev) dev_get_plat((dev)->parent->parent)
+#define enetc_get_blk_ctrl_data(dev) dev_get_driver_data((dev)->parent->parent)
+
 struct enetc_tx_bd {
 	__le64 addr;
 	__le16 buf_len;
@@ -182,7 +210,6 @@ int enetc_mdio_write_priv(struct enetc_mdio_priv *priv, int addr, int devad,
 			  int reg, u16 val);
 
 void fdt_fixup_enetc_mac(void *blob);
-void enetc4_netcmix_blk_ctrl_cfg(void);
 int enetc4_ierb_cfg(void);
 int enetc4_ierb_cfg_is_valid(void);
 

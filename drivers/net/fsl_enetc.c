@@ -464,6 +464,8 @@ static int enetc_probe(struct udevice *dev)
 	struct enetc_priv *priv = dev_get_priv(dev);
 	int res;
 	struct udevice *supply = NULL;
+	struct enetc_bl_plat *plat = enetc_get_blk_ctrl_plat(dev);
+	struct enetc_bl_data *data = (struct enetc_bl_data*)enetc_get_blk_ctrl_data(dev);
 
 	if (ofnode_valid(dev_ofnode(dev)) && !ofnode_is_enabled(dev_ofnode(dev))) {
 		enetc_dbg(dev, "interface disabled\n");
@@ -530,7 +532,7 @@ static int enetc_probe(struct udevice *dev)
 
 	dm_pci_clrset_config16(dev, PCI_COMMAND, 0, PCI_COMMAND_MEMORY);
 #ifdef CONFIG_ARCH_IMX9
-	enetc4_netcmix_blk_ctrl_cfg();
+	data->blk_ctrl_cfg(plat->netc_blk_ctrl_base);
 #endif
 
 	enetc_start_pcs(dev);
