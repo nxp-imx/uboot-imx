@@ -127,7 +127,7 @@ int ddrphy_qb_save(void);
 int ddr_cfg_phy_qb(struct dram_timing_info *timing_info, int fsp_id);
 #endif
 #endif
-#elif defined(CONFIG_IMX95)	/* CONFIG_IMX95 */
+#elif defined(CONFIG_IMX95)	|| defined(CONFIG_IMX94) /* CONFIG_IMX95 || CONFIG_IMX94 */
 #if   defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN)
 /* Quick Boot related */
 #define DDRPHY_QB_CSR_SIZE	5168
@@ -136,7 +136,12 @@ int ddr_cfg_phy_qb(struct dram_timing_info *timing_info, int fsp_id);
 #define DDRPHY_QB_PSTATES	0
 #define DDRPHY_QB_PST_SIZE	DDRPHY_QB_PSTATES * 4 * 1024
 struct ddrphy_qb_state {
-	uint32_t crc;
+#if defined(CONFIG_IMX95)
+	uint32_t crc;		/** CRC field to be dropped for 95B0 */
+#else
+#define MAC_LENGTH		8 /** 256 bits, 32-bit aligned */
+	uint32_t mac[MAC_LENGTH];
+#endif
 	u8 TrainedVREFCA_A0;
 	u8 TrainedVREFCA_A1;
 	u8 TrainedVREFCA_B0;

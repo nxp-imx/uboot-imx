@@ -106,7 +106,7 @@ config CSF_SIZE
 config CMD_QB
 	bool "Support the 'qb' command"
 	default y
-	depends on IMX_SNPS_DDR_PHY_QB_GEN && IMX95
+	depends on IMX_SNPS_DDR_PHY_QB_GEN && (IMX95 || IMX94)
 	help
 	  Enable qb command to write DDR quick boot training data to boot device.
 

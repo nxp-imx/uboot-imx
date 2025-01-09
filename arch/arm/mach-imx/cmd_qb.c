@@ -27,9 +27,6 @@
 
 extern rom_passover_t rom_passover_data;
 
-#define MAX_V2X_CTNR_IMG_NUM   (4)
-#define MIN_V2X_CTNR_IMG_NUM   (2)
-
 #define IMG_FLAGS_IMG_TYPE_SHIFT  (0u)
 #define IMG_FLAGS_IMG_TYPE_MASK   (0xfU)
 #define IMG_FLAGS_IMG_TYPE(x)     (((x) & IMG_FLAGS_IMG_TYPE_MASK) >> \
@@ -40,12 +37,9 @@ extern rom_passover_t rom_passover_data;
 #define IMG_FLAGS_CORE_ID(x)      (((x) & IMG_FLAGS_CORE_ID_MASK) >> \
                                    IMG_FLAGS_CORE_ID_SHIFT)
 
-#define IMG_TYPE_V2X_PRI_FW     (0x0Bu)   /* Primary V2X FW */
-#define IMG_TYPE_V2X_SND_FW     (0x0Cu)   /* Secondary V2X FW */
+#define IMG_TYPE_DDR_TDATA_DUMMY  (0x0Du)   /* dummy DDR training data image */
 
-#define CORE_V2X_PRI 9
-#define CORE_V2X_SND 10
-
+#if defined(CONFIG_IMX95)
 /** Polynomial: 0xEDB88320 */
 static u32 const p_table[] =
 {
@@ -90,6 +84,25 @@ static bool qb_check(void)
 
 	return valid;
 }
+#else
+static bool qb_check(void)
+{
+	struct ddrphy_qb_state *qb_state;
+	u32 i;
+
+	/**
+	 * Ensure MAC is not empty, the reason is that
+	 * the data is invalidated after first save run
+	 */
+	qb_state = (struct ddrphy_qb_state *)CONFIG_SAVED_QB_STATE_BASE;
+	for (i = 0; i < MAC_LENGTH; i++)
+		if (qb_state->mac[i] == 0)
+			return false;
+
+	return true;
+	/** @todo - check signature using ELE verification function */
+}
+#endif
 
 static int do_qb_check(struct cmd_tbl *cmdtp, int flag,
 		       int argc, char * const argv[])
@@ -142,15 +155,22 @@ static int parse_container(void *addr, u32 *qb_data_off)
 	struct container_hdr *phdr;
 	struct boot_img_t *img_entry;
 	u8 i = 0;
-	u32 img_end;
+	u32 img_type, img_end;
 
 	phdr = (struct container_hdr *)addr;
-	if (phdr->tag != 0x87 || phdr->version != 0x0) {
+	if (phdr->tag != 0x87 || (phdr->version != 0x0 && phdr->version != 0x2)) {
 		return -1;
 	}
 
 	img_entry = (struct boot_img_t *)(addr + sizeof(struct container_hdr));
 	for (i = 0; i < phdr->num_images; i++) {
+		img_type = IMG_FLAGS_IMG_TYPE(img_entry->hab_flags);
+		if (img_type == IMG_TYPE_DDR_TDATA_DUMMY && img_entry->size == 0) {
+			/** Image entry pointing to DDR Training Data */
+			(*qb_data_off) = img_entry->offset;
+			return 0;
+		}
+
 		img_end = img_entry->offset + img_entry->size;
 		if (i + 1 < phdr->num_images) {
 			img_entry++;
@@ -217,14 +237,21 @@ static int get_dev_qbdata_offset(void *dev, int dev_type, unsigned long offset, 
 static int get_qbdata_offset(void *dev, int dev_type, u32 *qbdata_offset)
 {
 	u32 offset = get_boot_device_offset(dev, dev_type);
+	u32 contOffset;
+	int ret, i;
 
-	/** third container, @todo: v2x might be missing */
-	offset += 2 * CONTAINER_HDR_ALIGNMENT;
-	get_dev_qbdata_offset(dev, dev_type, offset, qbdata_offset);
+	for (i = 0; i < 3; i++)
+	{
+		contOffset = offset + i * CONTAINER_HDR_ALIGNMENT;
+		ret = get_dev_qbdata_offset(dev, dev_type, contOffset, qbdata_offset);
+		if (ret == 0)
+		{
+			(*qbdata_offset) += contOffset;
+			break;
+		}
+	}
 
-	(*qbdata_offset) += offset;
-
-	return 0;
+	return ret;
 }
 
 static int get_board_boot_device(enum boot_device dev)
