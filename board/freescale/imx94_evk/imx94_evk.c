@@ -278,6 +278,18 @@ void netc_init(void)
 	pci_init();
 }
 
+static void xspi_nor_setup(void)
+{
+	/* Set MTO to max */
+	imx_clk_scmi_enable(IMX94_CLK_XSPI1, true);
+	imx_clk_scmi_enable(IMX94_CLK_XSPI2, true);
+
+	writel(0xffffffff, 0x42b90928);
+	writel(0xffffffff, 0x42be0928);
+
+	return;
+}
+
 #if CONFIG_IS_ENABLED(NET)
 int board_phy_config(struct phy_device *phydev)
 {
@@ -303,6 +315,8 @@ int board_init(void)
 #endif
 
 	netc_init();
+
+	xspi_nor_setup();
 
 	power_on_m7("mx94alt");
 
