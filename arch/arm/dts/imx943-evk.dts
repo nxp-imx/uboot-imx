@@ -142,6 +142,25 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <3>;
+
+			lvds_to_hdmi: bridge@4c {
+				compatible = "ite,it6263";
+				reg = <0x4c>;
+				reset-gpios = <&pcal6416_i2c3_u171 8 GPIO_ACTIVE_HIGH>;
+
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					port@0 {
+						reg = <0>;
+
+						it6263_in: endpoint {
+							remote-endpoint = <&lvds_out>;
+						};
+					};
+				};
+			};
 		};
 
 		i2c@4 {
@@ -196,6 +215,12 @@
 				ethphy4-on-hog {
 					gpio-hog;
 					gpios = <4 GPIO_ACTIVE_HIGH>;
+					output-high;
+				};
+
+				lvds-en-hog {
+					gpio-hog;
+					gpios = <9 GPIO_ACTIVE_HIGH>;
 					output-high;
 				};
 			};
@@ -491,6 +516,61 @@
 		spi-rx-bus-width = <8>;
 	};
 };
+
+&dcif {
+	clocks = <&scmi_clk IMX94_CLK_DISPPIX>,
+				 <&scmi_clk IMX94_CLK_DISPAPB>,
+				 <&scmi_clk IMX94_CLK_DISPAXI>,
+				 <&scmi_clk IMX94_CLK_LDBPLL>,
+				 <&scmi_clk IMX94_CLK_LDBPLL_VCO>;
+	assigned-clocks = <&dispmix_csr IMX94_CLK_DISPMIX_CLK_SEL>;
+	assigned-clock-parents = <&ldb_pll_pixel>;
+	status = "okay";
+};
+
+&ldb {
+	assigned-clocks = <&scmi_clk IMX94_CLK_LDBPLL_VCO>,
+			  <&scmi_clk IMX94_CLK_LDBPLL>;
+	assigned-clock-parents = <0>,
+			  <&scmi_clk IMX94_CLK_LDBPLL_VCO>;
+	assigned-clock-rates = <4158000000>, <519750000>;
+	status = "okay";
+
+	channel@0 {
+		fsl,data-mapping = "jeida";
+		fsl,data-width = <24>;
+		status = "okay";
+
+		display-timings {
+			native-mode = <&timing0>;
+
+			timing0: timing0 {
+				clock-frequency = <74250000>;
+				hactive = <1280>;
+				vactive = <720>;
+				hfront-porch = <220>;
+				hback-porch = <110>;
+				hsync-len = <40>;
+				vback-porch = <5>;
+				vfront-porch = <20>;
+				vsync-len = <5>;
+			};
+		};
+
+		port@1 {
+			reg = <1>;
+
+			lvds_out: endpoint {
+				remote-endpoint = <&it6263_in>;
+			};
+		};
+	};
+};
+
+&ldb0_phy {
+	status = "okay";
+};
+
 
 &scmi_iomuxc {
 	pinctrl_ioexpander_int: ioexpanderintgrp {
