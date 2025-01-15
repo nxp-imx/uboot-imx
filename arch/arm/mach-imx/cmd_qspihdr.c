@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright (C) 2021 NXP
+ * Copyright 2021,2025 NXP
  */
 #include <common.h>
 #include <command.h>
@@ -18,7 +18,12 @@ static struct spi_flash *flash;
 #define FSPI_HDR_TAG		0x42464346/* FCFB, bigendian */
 #define FSPI_HDR_TAG_OFF	0x0
 
+#ifdef CONFIG_MX94
+#define HDR_LEN			0x300
+#else
 #define HDR_LEN			0x200
+#endif
+
 
 #ifdef CONFIG_MX7
 #define QSPI_HDR_OFF	0x0
@@ -97,13 +102,38 @@ struct fspi_config_parameter {
 	u8  dataSetupTime;		/* CS setup time */
 	u8  columnAddressWidth;		/* 3 - for HyperFlash, 0 - other devices */
 	u8  deviceModeCfgEnable;	/* device mode configuration enable feature, 0 - disable, 1- enable */
-	u8  reserved1[3];
+	union {
+		u8  reserved1[3];
+		struct {
+			u8	deviceModeType;		/* 0 -Generic, 1 - QuadEnable, 2 - Spi2Xpi, 3 - Xpi2Spi */
+			u8	waitTimeCfgCommands[2];	/* wait time for device mode configuration commands in unit of 100us */
+		};
+	};
 	u32 deviceModeSeq;		/* sequence parameter for device mode configuration */
 	u32 deviceModeArg;		/* device mode argument, effective only when deviceModeCfgEnable = 1 */
 	u8  configCmdEnable;		/* config command enable feature, 0 - disable, 1 - enable */
-	u8  reserved2[3];
-	u32 configCmdSeqs[4];		/* sequences for config command, allow 4 separate configuration command sequences */
-	u32 configCmdArgs[4];		/* arguments for each separate configuration command sequence */
+	union {
+		u8  reserved2[3];
+		u8  configModeType[3];	/* config mode type, similar to deviceModeType */
+	};
+	union {
+		u32 configCmdSeqsF[4];	/* sequences for config command, allow 4 separate configuration command sequences */
+		struct {
+			u32 configCmdSeqsX[3];		/* sequences for config command, allow 3 command sequences */
+			u8  ipedMode;			/* IPED mode, 0 - disable, 1 - enable */
+			u8  x16DllaSlvFineOffset;	/* Fine offset Delay Elements in incoming DQS1 */
+			u8  maxCsLowInterval;		/* Configure psram tcsm, unit 0.1 us */
+			u8 ahbAlignment;		/* AHB alignment, 00b - no limit, 01b - 256B, 10b - 512B, 11b - 1KB */
+		};
+	};
+	union {
+		u32 configCmdArgsF[4];		/* arguments for each separate configuration command sequence */
+		struct {
+			u32 configCmdArgsX[3];	/* arguments for each separate configuration command sequence */
+			u8  ahbSplitEn;		/* Enable AHB transaction split for PSRAM */
+			u8  reservedArgs0[3];
+		};
+	};
 	u32 controllerMiscOption;
 					/*
 					 *
@@ -165,18 +195,48 @@ struct fspi_config_parameter {
 					/* [15:0]  - data valid time for DLLA in terms of 0.1ns */
 	u16 busyOffset;			/* busy bit offset, valid range: 0 - 31 */
 	u16 busyBitPolarity;		/* 0 - busy bit is 1 if device is busy, 1 - busy bit is 0 if device is busy */
-	u32 lookupTable[64];		/* lookup table */
-	u32 lutCustomSeq[12];		/* customized LUT sequence */
-	u32 reserved4[4];
-	u32 pageSize;			/* page size of serial NOR flash, not used in ROM */
-	u32 sectorSize;			/* sector size of serial NOR flash, not used in ROM */
-	u32 reserved5[14];
+	union {
+		struct {
+			u32 lookupTableF[64];	/* lookup table */
+			u32 lutCustomSeqF[12];	/* customized LUT sequence */
+			u32 reserved4[4];
+			u32 pageSize;		/* page size of serial NOR flash, not used in ROM */
+			u32 sectorSize;		/* sector size of serial NOR flash, not used in ROM */
+			u32 reserved5[14];
+		};
+		struct {
+			u32 lookupTableX[80];	/* lookup table */
+			u32 lutCustomSeqX[12];	/* customized LUT sequence */
+			u32 dllCraSdrVal;	/* customized DLLCRA for SDR setting */
+			u32 smprSdrVal;		/* customized SMPR for SDR setting */
+			u32 dllCraDdrVal;	/* customized DLLCRA for DDR setting */
+			u32 smprDdrVal;		/* customized SMPR for DDR setting */
+		};
+	};
+};
+
+struct xspi_config_parameter {
+	struct fspi_config_parameter mem_config;
+	u32 pageSize;			/* page size of serial NOR flash */
+	u32 sectorSize;			/* sector size of serial NOR flash */
+	u8  ipcmdSerialClkFreq;		/* clock frequency for IP commands */
+	u8  isUniformBlockSize;		/* sector/block size is the same */
+	u8  isDataOrderSwapped;		/* data order (D0, D1, D2, D3) is swapped (D1, D0, D3, D2) */
+	u8  reserved0;
+	u8  serialNorType;		/* serial NOR flash type */
+	u8  needExitNoCmdMode;		/* need to exit NoCmd mode before other IP commands */
+	u8  halfClkForNonReadCmd;	/* half clock for non-read commands */
+	u8  needRestoreNoCmdMode;	/* need to restore NoCmd mode after IP commands */
+	u32 blockSize;			/* block size of serial NOR flash */
+	u32 flashStateCtx;		/* flash state context */
+	u32 reserved1[58];
 };
 
 struct header_config {
 	union {
 		struct qspi_config_parameter qspi_hdr_config;
 		struct fspi_config_parameter fspi_hdr_config;
+		struct xspi_config_parameter xspi_hdr_config;
 	};
 };
 
@@ -193,6 +253,21 @@ static struct qspi_config_parameter qspi_safe_config = {
 };
 
 static struct header_config *safe_config = (struct header_config *)&qspi_safe_config;
+#elif defined CONFIG_IMX94
+static struct xspi_config_parameter xspi_safe_config = {
+	.mem_config.tag			= 0x42464346,
+	.mem_config.version		= 0x56010000,
+	.mem_config.dataHoldTime	= 0x3,
+	.mem_config.dataSetupTime	= 0x3,
+	.mem_config.deviceType		= 0x1,
+	.mem_config.sflashPadType	= 0x1,
+	.mem_config.serialClkFreq	= 0x2,
+	.mem_config.sflashA1Size	= 0x10000000,
+	.mem_config.lookupTableX[0]	= 0x0818040b,
+	.mem_config.lookupTableX[1]	= 0x1c040c08,
+};
+
+static struct header_config *safe_config = (struct header_config *)&xspi_safe_config;
 #else
 static struct fspi_config_parameter fspi_safe_config = {
 	.tag			= 0x42464346,
@@ -203,8 +278,8 @@ static struct fspi_config_parameter fspi_safe_config = {
 	.sflashPadType		= 0x1,
 	.serialClkFreq		= 0x2,
 	.sflashA1Size		= 0x10000000,
-	.lookupTable[0]		= 0x0818040b,
-	.lookupTable[1]		= 0x24043008,
+	.lookupTableF[0]	= 0x0818040b,
+	.lookupTableF[1]	= 0x24043008,
 };
 
 static struct header_config *safe_config = (struct header_config *)&fspi_safe_config;
@@ -359,7 +434,7 @@ static void hdr_dump(void *data)
 	PH(sclk_fb_delay_chain_sel, 1);
 	PH(misc_clock_enable, 1);
 	PH(tag, 1);
-#else
+#elif defined CONFIG_IMX94
 	PH(tag, 1);
 	PH(version, 1);
 	PH(readSampleClkSrc, 1);
@@ -367,11 +442,18 @@ static void hdr_dump(void *data)
 	PH(dataSetupTime, 1);
 	PH(columnAddressWidth, 1);
 	PH(deviceModeCfgEnable, 1);
+	PH(deviceModeType, 1);
+	PH(waitTimeCfgCommands[0], 2);
 	PH(deviceModeSeq, 1);
 	PH(deviceModeArg, 1);
 	PH(configCmdEnable, 1);
-	PH(configCmdSeqs[0], 4);
-	PH(configCmdArgs[0], 4);
+	PH(configModeType[0], 3);
+	PH(configCmdSeqsX[0], 3);
+	PH(ipedMode, 1);
+	PH(x16DllaSlvFineOffset, 1);
+	PH(maxCsLowInterval, 1);
+	PH(ahbAlignment, 1);
+	PH(configCmdArgsX[0], 3);
 	PH(controllerMiscOption, 1);
 	PH(deviceType, 1);
 	PH(sflashPadType, 1);
@@ -390,8 +472,45 @@ static void hdr_dump(void *data)
 	PH(dataValidTime[0], 2);
 	PH(busyOffset, 1);
 	PH(busyBitPolarity, 1);
-	PH(lookupTable[0], 64);
-	PH(lutCustomSeq[0], 12);
+	PH(lookupTableX[0], 80);
+	PH(lutCustomSeqX[0], 12);
+	PH(dllCraSdrVal, 1);
+	PH(smprSdrVal, 1);
+	PH(dllCraDdrVal, 1);
+	PH(smprDdrVal, 1);
+#else
+	PH(tag, 1);
+	PH(version, 1);
+	PH(readSampleClkSrc, 1);
+	PH(dataHoldTime, 1);
+	PH(dataSetupTime, 1);
+	PH(columnAddressWidth, 1);
+	PH(deviceModeCfgEnable, 1);
+	PH(deviceModeSeq, 1);
+	PH(deviceModeArg, 1);
+	PH(configCmdEnable, 1);
+	PH(configCmdSeqsF[0], 4);
+	PH(configCmdArgsF[0], 4);
+	PH(controllerMiscOption, 1);
+	PH(deviceType, 1);
+	PH(sflashPadType, 1);
+	PH(serialClkFreq, 1);
+	PH(lutCustomSeqEnable, 1);
+	PH(sflashA1Size, 1);
+	PH(sflashA2Size, 1);
+	PH(sflashB1Size, 1);
+	PH(sflashB2Size, 1);
+	PH(csPadSettingOverride, 1);
+	PH(sclkPadSettingOverride, 1);
+	PH(dataPadSettingOverride, 1);
+	PH(dqsPadSettingOverride, 1);
+	PH(timeoutInMs, 1);
+	PH(commandInterval, 1);
+	PH(dataValidTime[0], 2);
+	PH(busyOffset, 1);
+	PH(busyBitPolarity, 1);
+	PH(lookupTableF[0], 64);
+	PH(lutCustomSeqF[0], 12);
 	PH(pageSize, 1);
 	PH(sectorSize, 1);
 #endif
@@ -463,10 +582,16 @@ static int do_qspihdr_init(int argc, char * const argv[])
 #if defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_ARCH_MX7ULP)
 	int hdr_off = QSPI_HDR_OFF;
 	int data_off = QSPI_DATA_OFF;
+
+#elif defined CONFIG_IMX94
+	int hdr_off = FSPI_HDR_OFF;
+	int data_off = FSPI_DATA_OFF;
+	safe_config->xspi_hdr_config.pageSize = flash->page_size;
+	safe_config->xspi_hdr_config.sectorSize = flash->sector_size;
+
 #else
 	int hdr_off = FSPI_HDR_OFF;
 	int data_off = FSPI_DATA_OFF;
-
 	safe_config->fspi_hdr_config.pageSize = flash->page_size;
 	safe_config->fspi_hdr_config.sectorSize = flash->sector_size;
 #endif
