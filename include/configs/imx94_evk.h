@@ -175,4 +175,8 @@
 /* Number of Rx BD rings: 8 per ENETC instance */
 #endif
 
+#ifdef CONFIG_ANDROID_SUPPORT
+#include "imx94_evk_android.h"
+#endif
+
 #endif
