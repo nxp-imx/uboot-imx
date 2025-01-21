@@ -1,0 +1,77 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2025 NXP
+ */
+
+#include "imx943-evk.dts"
+#include "imx943-evk-u-boot.dtsi"
+
+/delete-node/ &lvds_to_hdmi;
+
+/ {
+	panel_lvds: panel-lvds {
+		compatible = "boe,ev121wxm-n10-1850";
+
+		display-timings {
+			native-mode = <&timing0>;
+
+			timing0: timing0 {
+				clock-frequency = <71000000>;
+				hactive = <1280>;
+				vactive = <800>;
+				hfront-porch = <48>;
+				hback-porch = <80>;
+				hsync-len = <32>;
+				vback-porch = <14>;
+				vfront-porch = <3>;
+				vsync-len = <6>;
+			};
+		};
+
+		port {
+			panel_lvds_in: endpoint {
+				remote-endpoint = <&lvds_out>;
+			};
+		};
+	};
+};
+
+&dcif {
+	assigned-clocks = <&dispmix_csr IMX94_CLK_DISPMIX_CLK_SEL>;
+	assigned-clock-parents = <&ldb_pll_pixel>;
+	status = "okay";
+};
+
+&ldb {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	assigned-clocks = <&scmi_clk IMX94_CLK_LDBPLL_VCO>,
+			  <&scmi_clk IMX94_CLK_LDBPLL>;
+	assigned-clock-parents = <0>,
+			  <&scmi_clk IMX94_CLK_LDBPLL_VCO>;
+	assigned-clock-rates = <2982000000>, <497000000>;
+	status = "okay";
+
+	channel@0 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0>;
+		fsl,data-mapping = "spwg";
+		fsl,data-width = <24>;
+		status = "okay";
+
+		/delete-node/ display-timings;
+
+		port@1 {
+			reg = <1>;
+
+			lvds_out: endpoint {
+				remote-endpoint = <&panel_lvds_in>;
+			};
+		};
+	};
+};
+
+&ldb0_phy {
+	status = "okay";
+};
