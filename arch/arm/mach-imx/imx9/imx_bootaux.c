@@ -16,6 +16,8 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define CORE_CM33       0
 #define CORE_CM7        1
+#define CORE_CM71	7
+#define CORE_CM33S	8
 
 int arch_auxiliary_core_check_up(u32 core_id)
 {
@@ -70,7 +72,7 @@ static inline bool check_in_ddr(ulong addr)
 static inline bool check_in_tcm(u32 core_id, ulong addr, bool mcore_view)
 {
 	if (mcore_view) {
-		if (core_id == CORE_CM33) {
+		if (core_id == CORE_CM33 || core_id == CORE_CM33S) {
 			if ((addr >= TCML_BASE_MCORE_SEC_ADDR && addr < TCML_BASE_MCORE_SEC_ADDR + TCML_SIZE) ||
 				(addr >= TCMU_BASE_MCORE_SEC_ADDR && addr < TCMU_BASE_MCORE_SEC_ADDR + TCMU_SIZE))
 				return true;
@@ -78,17 +80,20 @@ static inline bool check_in_tcm(u32 core_id, ulong addr, bool mcore_view)
 			if ((addr >= TCML_BASE_MCORE_NSEC_ADDR && addr < TCML_BASE_MCORE_NSEC_ADDR + TCML_SIZE) ||
 				(addr >= TCMU_BASE_MCORE_NSEC_ADDR && addr < TCMU_BASE_MCORE_NSEC_ADDR + TCMU_SIZE))
 				return true;
-		} else if (core_id == CORE_CM7) {
+		} else if (core_id == CORE_CM7 || core_id == CORE_CM71) {
 			if (addr >= M7_TCML_BASE_MCORE_ADDR && addr < M7_TCML_BASE_MCORE_ADDR + M7_TCML_MAX_SIZE)
 				return true;
 		}
 	} else {
-		if (core_id == CORE_CM33) {
+		if (core_id == CORE_CM33 || core_id == CORE_CM33S) {
 			if ((addr >= TCML_BASE_ADDR && addr < TCML_BASE_ADDR + TCML_SIZE) ||
 				(addr >= TCMU_BASE_ADDR && addr < TCMU_BASE_ADDR + TCMU_SIZE))
 				return true;
 		} else if (core_id == CORE_CM7) {
 			if (addr >= M7_TCML_BASE_ADDR && addr < M7_TCML_BASE_ADDR + M7_TCML_MAX_SIZE)
+				return true;
+		} else if (core_id == CORE_CM71) {
+			if (addr >= M71_TCML_BASE_ADDR && addr < M71_TCML_BASE_ADDR + M7_TCML_MAX_SIZE)
 				return true;
 		}
 	}
@@ -274,7 +279,7 @@ static int do_bootaux(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	addr = simple_strtoul(argv[1], NULL, 16);
 
-	if ((core != CORE_CM7) && !addr) {
+	if ((core != CORE_CM7 && core != CORE_CM71) && !addr) {
 		printf("Invalid address 0x%lx for core: %d\n", addr, core);
 		return CMD_RET_FAILURE;
 	}

@@ -262,6 +262,36 @@ static struct mm_region imx9_mem_map[] = {
 			 PTE_BLOCK_NON_SHARE |
 			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
 	},
+#ifdef CONFIG_IMX94
+	{
+		/* M71 TCM */
+		.virt = 0x202c0000UL,
+		.phys = 0x202c0000UL,
+		.size = 0x80000UL,
+		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+			 PTE_BLOCK_NON_SHARE |
+			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
+	},
+	{
+		/* M33S TCM */
+		.virt = 0x209c0000UL,
+		.phys = 0x209c0000UL,
+		.size = 0x80000UL,
+		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+			 PTE_BLOCK_NON_SHARE |
+			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
+	},
+	/* 644K netc ocram for rpmsg buffer */
+	{
+		/* M33S NETC OCRAM */
+		.virt = 0x20800000UL,
+		.phys = 0x20800000UL,
+		.size = 0xa1000UL,
+		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+			 PTE_BLOCK_NON_SHARE |
+			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
+	},
+#endif
 	{
 		/* OCRAM */
 		.virt = 0x20480000UL,
@@ -652,6 +682,7 @@ int power_on_m7(char *name)
 				       SCMI_IMX_MISC_CFG_INFO, out);
 	int ret;
 
+
 	ret = devm_scmi_process_msg(gd->arch.scmi_dev, &msg);
 	if (out.status) {
 		printf("%s:%d fail\n", __func__, out.status);
@@ -673,6 +704,27 @@ int power_on_m7(char *name)
 	/* In case OEI not init ECC, do it here */
 	memset_io((void *)0x203c0000, 0, 0x40000);
 	memset_io((void *)0x20400000, 0, 0x40000);
+
+#ifdef CONFIG_IMX94
+	ret = scmi_pwd_state_set(gd->arch.scmi_dev, 0, SCMI_PD(M71), 0);
+	if (ret) {
+		printf("Power M71 failed\n");
+		return -EIO;
+	}
+
+	memset_io((void *)0x202c0000, 0, 0x40000);
+	memset_io((void *)0x20300000, 0, 0x40000);
+
+	ret = scmi_pwd_state_set(gd->arch.scmi_dev, 0, SCMI_PD(NETC), 0);
+	if (ret) {
+		printf("Power M33S failed\n");
+		return -EIO;
+	}
+
+	memset_io((void *)0x209c0000, 0, 0x40000);
+	memset_io((void *)0x20A00000, 0, 0x40000);
+	memset_io((void *)0x20800000, 0, 0xa1000);
+#endif
 
 	return 0;
 }
