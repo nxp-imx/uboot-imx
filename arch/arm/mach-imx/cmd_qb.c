@@ -319,6 +319,12 @@ static int do_qb_mmc(int dev, bool save)
 	if (ret)
 		return ret;
 
+	if (!mmc->has_init)
+		ret = mmc_init(mmc);
+
+	if (ret)
+		return ret;
+
 	if (IS_SD(mmc) || mmc->part_config == MMCPART_NOAVAILABLE) {
 		sprintf(blk_cmd, "mmc dev %x", mmc_dev);
 	} else {
@@ -359,7 +365,7 @@ static int do_qb_mmc(int dev, bool save)
 	return (ret > 0 ? 0 : -1);
 }
 
-static int do_qb_qspi(int dev, bool save)
+static int do_qb_spi(int dev, bool save)
 {
 	int ret = 0;
 	u32 offset;
@@ -403,32 +409,48 @@ static int do_qb_save(struct cmd_tbl *cmdtp, int flag,
 		      int argc, char * const argv[])
 {
 	int ret = CMD_RET_FAILURE;
-	enum boot_device dev;
-	int bb_dev;
+	long dev = -1;
+	enum boot_device boot_dev = UNKNOWN_BOOT;
+	int qb_dev = BOOT_DEVICE_NONE;
+	char *interface = "";
 
 	if (!qb_check())
 		return CMD_RET_FAILURE;
 
-	dev = get_boot_device();
-	bb_dev = get_board_boot_device(dev);
+	if (argc >= 2) {
+		interface = argv[1];
+	} else {
+		/** qb save -> use boot device */
+		boot_dev = get_boot_device();
+		qb_dev = get_board_boot_device(boot_dev);
+	}
 
-	switch (dev) {
-	case SD1_BOOT:
-	case SD2_BOOT:
-	case MMC1_BOOT:
-	case MMC2_BOOT:
-		ret = do_qb_mmc(bb_dev, true);
+	if (argc == 3)
+		dev = simple_strtol(argv[2], NULL, 10);
+
+	if (!strcmp(interface, "mmc") && dev >= 0
+	    && dev <= (BOOT_DEVICE_MMC2_2 - BOOT_DEVICE_MMC1))
+		qb_dev = BOOT_DEVICE_MMC1 + dev;
+
+	if (!strcmp(interface, "spi"))
+		qb_dev = BOOT_DEVICE_SPI;
+
+	switch (qb_dev) {
+	case BOOT_DEVICE_MMC1:
+	case BOOT_DEVICE_MMC2:
+	case BOOT_DEVICE_MMC2_2:
+		ret = do_qb_mmc(qb_dev, true);
 		break;
-	case QSPI_BOOT:
-		ret = do_qb_qspi(bb_dev, true);
+	case BOOT_DEVICE_SPI:
+		ret = do_qb_spi(qb_dev, true);
 		break;
-	case NAND_BOOT:
-	case USB_BOOT:
-	case USB2_BOOT:
 	default:
-		printf("Unsupported boot devices\n");
+		printf("Unsupported quickboot device\n");
 		break;
 	}
+
+	if (ret)
+		return CMD_RET_FAILURE;
 
 	/**
 	 * invalidate qb_state mem so that at next boot
@@ -436,34 +458,47 @@ static int do_qb_save(struct cmd_tbl *cmdtp, int flag,
 	 */
 	memset((void *)CONFIG_SAVED_QB_STATE_BASE, 0, sizeof(struct ddrphy_qb_state));
 
-	return ret == 0 ? CMD_RET_SUCCESS : CMD_RET_FAILURE;
+	return CMD_RET_SUCCESS;
 }
 
 static int do_qb_erase(struct cmd_tbl *cmdtp, int flag,
 		       int argc, char * const argv[])
 {
 	int ret = CMD_RET_FAILURE;
-	enum boot_device dev;
-	int bb_dev;
+	long dev = -1;
+	enum boot_device boot_dev = UNKNOWN_BOOT;
+	int qb_dev = BOOT_DEVICE_NONE;
+	char *interface = "";
 
-	dev = get_boot_device();
-	bb_dev = get_board_boot_device(dev);
+	if (argc >= 2) {
+		interface = argv[1];
+	} else {
+		/** qb erase -> use boot device */
+		boot_dev = get_boot_device();
+		qb_dev = get_board_boot_device(boot_dev);
+	}
 
-	switch (dev) {
-	case SD1_BOOT:
-	case SD2_BOOT:
-	case MMC1_BOOT:
-	case MMC2_BOOT:
-		ret = do_qb_mmc(bb_dev, false);
+	if (argc == 3)
+		dev = simple_strtol(argv[2], NULL, 10);
+
+	if (!strcmp(interface, "mmc") && dev >= 0
+	    && dev <= (BOOT_DEVICE_MMC2_2 - BOOT_DEVICE_MMC1))
+		qb_dev = BOOT_DEVICE_MMC1 + dev;
+
+	if (!strcmp(interface, "spi"))
+		qb_dev = BOOT_DEVICE_SPI;
+
+	switch (qb_dev) {
+	case BOOT_DEVICE_MMC1:
+	case BOOT_DEVICE_MMC2:
+	case BOOT_DEVICE_MMC2_2:
+		ret = do_qb_mmc(qb_dev, false);
 		break;
-	case QSPI_BOOT:
-		ret = do_qb_qspi(bb_dev, false);
+	case BOOT_DEVICE_SPI:
+		ret = do_qb_spi(qb_dev, false);
 		break;
-	case NAND_BOOT:
-	case USB_BOOT:
-	case USB2_BOOT:
 	default:
-		printf("unsupported boot devices\n");
+		printf("Unsupported quickboot device\n");
 		break;
 	}
 
@@ -472,8 +507,8 @@ static int do_qb_erase(struct cmd_tbl *cmdtp, int flag,
 
 static struct cmd_tbl cmd_qb[] = {
 	U_BOOT_CMD_MKENT(check, 1, 1, do_qb_check, "", ""),
-	U_BOOT_CMD_MKENT(save,  1, 1, do_qb_save,  "", ""),
-	U_BOOT_CMD_MKENT(erase, 1, 1, do_qb_erase, "", ""),
+	U_BOOT_CMD_MKENT(save,  3, 1, do_qb_save,  "", ""),
+	U_BOOT_CMD_MKENT(erase, 3, 1, do_qb_erase, "", ""),
 };
 
 static int do_qbops(struct cmd_tbl *cmdtp, int flag, int argc,
@@ -507,9 +542,9 @@ static int do_qbops(struct cmd_tbl *cmdtp, int flag, int argc,
 }
 
 U_BOOT_CMD(
-	qb, 2, 1, do_qbops,
+	qb, 4, 1, do_qbops,
 	"DDR Quick Boot sub system",
 	"check - check if quick boot data is stored in mem by training flow\n"
-	"qb save  - save quick boot data in NVM location    => trigger quick boot flow\n"
-	"qb erase - erase quick boot data from NVM loaciotn => trigger training flow\n"
+	"qb save [interface] [dev]  - save quick boot data in NVM location    => trigger quick boot flow\n"
+	"qb erase [interface] [dev] - erase quick boot data from NVM location => trigger training flow\n"
 );
