@@ -29,6 +29,13 @@ config IMX95
 	select SCMI_FIRMWARE
 	select DM_MAILBOX
 
+config IMX94
+	bool
+	select IMX9
+	select ARMV8_SPL_EXCEPTION_VECTORS
+	select SCMI_FIRMWARE
+	select DM_MAILBOX
+
 config SYS_SOC
 	default "imx9"
 

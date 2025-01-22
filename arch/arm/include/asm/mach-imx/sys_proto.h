@@ -119,6 +119,8 @@ struct bd_info;
 #define is_imx91() (is_cpu_type(MXC_CPU_IMX91) || is_cpu_type(MXC_CPU_IMX9111) || \
 	is_cpu_type(MXC_CPU_IMX9101) || is_cpu_type(MXC_CPU_IMX9121))
 
+#define is_imx94() (is_cpu_type(MXC_CPU_IMX94))
+
 #define is_imx95() (is_cpu_type(MXC_CPU_IMX95))
 
 #define is_imxrt1020() (is_cpu_type(MXC_CPU_IMXRT1020))
