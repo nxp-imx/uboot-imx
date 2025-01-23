@@ -14,7 +14,6 @@
 #include <command.h>
 #include <errno.h>
 #ifdef CONFIG_CLK_SCMI
-#include <../dts/imx95-clock.h>
 #include <dm/uclass.h>
 #include <dm/uclass-internal.h>
 #include <linux/clk-provider.h>
@@ -22,6 +21,8 @@
 #include <scmi_protocols.h>
 #include <dm/device.h>
 #include <dm/device-internal.h>
+
+#include "common.h"
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -31,10 +32,10 @@ u32 get_arm_core_clk(void)
 	u32 val;
 
 	/* TODO: */
-	val = imx_clk_scmi_get_rate(IMX95_CLK_SEL_A55C0);
+	val = imx_clk_scmi_get_rate(SCMI_CLK(SEL_A55C0));
 	if (val)
 		return val;
-	return imx_clk_scmi_get_rate(IMX95_CLK_A55);
+	return imx_clk_scmi_get_rate(SCMI_CLK(A55));
 }
 
 void enable_usboh3_clk(unsigned char enable)
@@ -57,7 +58,7 @@ int clock_init_late(void)
 
 u32 get_lpuart_clk(void)
 {
-	return imx_clk_scmi_get_rate(IMX95_CLK_LPUART1);
+	return imx_clk_scmi_get_rate(SCMI_CLK(LPUART1));
 }
 
 void init_uart_clk(u32 index)
@@ -65,13 +66,13 @@ void init_uart_clk(u32 index)
 	u32 clock_id;
 	switch (index) {
 	case 0:
-		clock_id = IMX95_CLK_LPUART1;
+		clock_id = SCMI_CLK(LPUART1);
 		break;
 	case 1:
-		clock_id = IMX95_CLK_LPUART2;
+		clock_id = SCMI_CLK(LPUART2);
 		break;
 	case 2:
-		clock_id = IMX95_CLK_LPUART3;
+		clock_id = SCMI_CLK(LPUART3);
 		break;
 	default:
 		return;
@@ -79,7 +80,7 @@ void init_uart_clk(u32 index)
 
 	/* 24MHz */
 	imx_clk_scmi_enable(clock_id, false);
-	imx_clk_scmi_set_parent(clock_id, IMX95_CLK_24M);
+	imx_clk_scmi_set_parent(clock_id, SCMI_CLK(24M));
 	imx_clk_scmi_set_rate(clock_id, 24000000);
 	imx_clk_scmi_enable(clock_id, true);
 
@@ -92,21 +93,21 @@ u32 imx_get_i2cclk(u32 i2c_num)
 		return -EINVAL;
 	switch (i2c_num) {
 	case 0:
-		return imx_clk_scmi_get_rate(IMX95_CLK_LPI2C1);
+		return imx_clk_scmi_get_rate(SCMI_CLK(LPI2C1));
 	case 1:
-		return imx_clk_scmi_get_rate(IMX95_CLK_LPI2C2);
+		return imx_clk_scmi_get_rate(SCMI_CLK(LPI2C2));
 	case 2:
-		return imx_clk_scmi_get_rate(IMX95_CLK_LPI2C3);
+		return imx_clk_scmi_get_rate(SCMI_CLK(LPI2C3));
 	case 3:
-		return imx_clk_scmi_get_rate(IMX95_CLK_LPI2C4);
+		return imx_clk_scmi_get_rate(SCMI_CLK(LPI2C4));
 	case 4:
-		return imx_clk_scmi_get_rate(IMX95_CLK_LPI2C5);
+		return imx_clk_scmi_get_rate(SCMI_CLK(LPI2C5));
 	case 5:
-		return imx_clk_scmi_get_rate(IMX95_CLK_LPI2C6);
+		return imx_clk_scmi_get_rate(SCMI_CLK(LPI2C6));
 	case 6:
-		return imx_clk_scmi_get_rate(IMX95_CLK_LPI2C7);
+		return imx_clk_scmi_get_rate(SCMI_CLK(LPI2C7));
 	case 7:
-		return imx_clk_scmi_get_rate(IMX95_CLK_LPI2C8);
+		return imx_clk_scmi_get_rate(SCMI_CLK(LPI2C8));
 	default:
 		return 0;
 	}
@@ -122,28 +123,28 @@ int enable_i2c_clk(unsigned char enable, u32 i2c_num)
 
 	switch (i2c_num) {
 	case 0:
-		clock_id = IMX95_CLK_LPI2C1;
+		clock_id = SCMI_CLK(LPI2C1);
 		break;
 	case 1:
-		clock_id = IMX95_CLK_LPI2C2;
+		clock_id = SCMI_CLK(LPI2C2);
 		break;
 	case 2:
-		clock_id = IMX95_CLK_LPI2C3;
+		clock_id = SCMI_CLK(LPI2C3);
 		break;
 	case 3:
-		clock_id = IMX95_CLK_LPI2C4;
+		clock_id = SCMI_CLK(LPI2C4);
 		break;
 	case 4:
-		clock_id = IMX95_CLK_LPI2C5;
+		clock_id = SCMI_CLK(LPI2C5);
 		break;
 	case 5:
-		clock_id = IMX95_CLK_LPI2C6;
+		clock_id = SCMI_CLK(LPI2C6);
 		break;
 	case 6:
-		clock_id = IMX95_CLK_LPI2C7;
+		clock_id = SCMI_CLK(LPI2C7);
 		break;
 	case 7:
-		clock_id = IMX95_CLK_LPI2C8;
+		clock_id = SCMI_CLK(LPI2C8);
 		break;
 	default:
 		return 0;
@@ -151,7 +152,7 @@ int enable_i2c_clk(unsigned char enable, u32 i2c_num)
 
 	/* 24MHz */
 	imx_clk_scmi_enable(clock_id, false);
-	imx_clk_scmi_set_parent(clock_id, IMX95_CLK_24M);
+	imx_clk_scmi_set_parent(clock_id, SCMI_CLK(24M));
 	imx_clk_scmi_set_rate(clock_id, 24000000);
 	imx_clk_scmi_enable(clock_id, true);
 
@@ -165,13 +166,13 @@ void init_clk_usdhc(u32 usdhc_id)
 
 	switch (usdhc_id) {
 	case 0:
-		clock_id = IMX95_CLK_USDHC1;
+		clock_id = SCMI_CLK(USDHC1);
 		break;
 	case 1:
-		clock_id = IMX95_CLK_USDHC2;
+		clock_id = SCMI_CLK(USDHC2);
 		break;
 	case 2:
-		clock_id = IMX95_CLK_USDHC3;
+		clock_id = SCMI_CLK(USDHC3);
 		break;
 	default:
 		return;
@@ -179,7 +180,7 @@ void init_clk_usdhc(u32 usdhc_id)
 
 	/* 400MHz */
 	imx_clk_scmi_enable(clock_id, false);
-	imx_clk_scmi_set_parent(clock_id, IMX95_CLK_SYSPLL1_PFD1);
+	imx_clk_scmi_set_parent(clock_id, SCMI_CLK(SYSPLL1_PFD1));
 	imx_clk_scmi_set_rate(clock_id, 400000000);
 	imx_clk_scmi_enable(clock_id, true);
 }
@@ -202,11 +203,24 @@ int set_clk_netc(enum enet_freq type)
 		return -EINVAL;
 	}
 
+#if IS_ENABLED(CONFIG_IMX94)
 	/* disable the clock first */
-	imx_clk_scmi_enable(IMX95_CLK_ENETREF, false);
-	imx_clk_scmi_set_parent(IMX95_CLK_ENETREF, IMX95_CLK_SYSPLL1_PFD0);
-	imx_clk_scmi_set_rate(IMX95_CLK_ENETREF, rate);
-	imx_clk_scmi_enable(IMX95_CLK_ENETREF, true);
+	imx_clk_scmi_enable(SCMI_CLK(MAC4), false);
+	imx_clk_scmi_set_parent(SCMI_CLK(MAC4), SCMI_CLK(SYSPLL1_PFD0));
+	imx_clk_scmi_set_rate(SCMI_CLK(MAC4), rate);
+	imx_clk_scmi_enable(SCMI_CLK(MAC4), true);
+
+	imx_clk_scmi_enable(SCMI_CLK(MAC5), false);
+	imx_clk_scmi_set_parent(SCMI_CLK(MAC5), SCMI_CLK(SYSPLL1_PFD0));
+	imx_clk_scmi_set_rate(SCMI_CLK(MAC5), rate);
+	imx_clk_scmi_enable(SCMI_CLK(MAC5), true);
+#else
+	/* disable the clock first */
+	imx_clk_scmi_enable(SCMI_CLK(ENETREF), false);
+	imx_clk_scmi_set_parent(SCMI_CLK(ENETREF), SCMI_CLK(SYSPLL1_PFD0));
+	imx_clk_scmi_set_rate(SCMI_CLK(ENETREF), rate);
+	imx_clk_scmi_enable(SCMI_CLK(ENETREF), true);
+#endif
 
 	return 0;
 }
@@ -220,8 +234,8 @@ void dram_pll_init(ulong pll_val)
 	/*vco_range 2.5G - 5G */
 	u64 vco_rate = ddr_rate * DIV_ROUND_UP(MHZ(3000), ddr_rate);
 	u64 v_rate, rate;
-	v_rate = imx_clk_scmi_set_rate(IMX95_CLK_DRAMPLL_VCO, vco_rate);
-	rate = imx_clk_scmi_set_rate(IMX95_CLK_DRAMPLL, ddr_rate);
+	v_rate = imx_clk_scmi_set_rate(SCMI_CLK(DRAMPLL_VCO), vco_rate);
+	rate = imx_clk_scmi_set_rate(SCMI_CLK(DRAMPLL), ddr_rate);
 
 	debug("%s vco:%llu rate:%llu\n", __func__, v_rate, rate);
 }
@@ -231,24 +245,24 @@ void dram_enable_bypass(ulong clk_val)
 	u64 rate;
 	switch (clk_val) {
 	case MHZ(625):
-		imx_clk_scmi_set_parent(IMX95_CLK_DRAMALT, IMX95_CLK_SYSPLL1_PFD2);
-		rate = imx_clk_scmi_set_rate(IMX95_CLK_DRAMALT, clk_val);
+		imx_clk_scmi_set_parent(SCMI_CLK(DRAMALT), SCMI_CLK(SYSPLL1_PFD2));
+		rate = imx_clk_scmi_set_rate(SCMI_CLK(DRAMALT), clk_val);
 		break;
 	case MHZ(400):
-		imx_clk_scmi_set_parent(IMX95_CLK_DRAMALT, IMX95_CLK_SYSPLL1_PFD1);
-		rate = imx_clk_scmi_set_rate(IMX95_CLK_DRAMALT, clk_val);
+		imx_clk_scmi_set_parent(SCMI_CLK(DRAMALT), SCMI_CLK(SYSPLL1_PFD1));
+		rate = imx_clk_scmi_set_rate(SCMI_CLK(DRAMALT), clk_val);
 		break;
 	case MHZ(333):
-		imx_clk_scmi_set_parent(IMX95_CLK_DRAMALT, IMX95_CLK_SYSPLL1_PFD0);
-		rate = imx_clk_scmi_set_rate(IMX95_CLK_DRAMALT, 333333333);
+		imx_clk_scmi_set_parent(SCMI_CLK(DRAMALT), SCMI_CLK(SYSPLL1_PFD0));
+		rate = imx_clk_scmi_set_rate(SCMI_CLK(DRAMALT), 333333333);
 		break;
 	case MHZ(200):
-		imx_clk_scmi_set_parent(IMX95_CLK_DRAMALT, IMX95_CLK_SYSPLL1_PFD1);
-		rate = imx_clk_scmi_set_rate(IMX95_CLK_DRAMALT, clk_val);
+		imx_clk_scmi_set_parent(SCMI_CLK(DRAMALT), SCMI_CLK(SYSPLL1_PFD1));
+		rate = imx_clk_scmi_set_rate(SCMI_CLK(DRAMALT), clk_val);
 		break;
 	case MHZ(100):
-		imx_clk_scmi_set_parent(IMX95_CLK_DRAMALT, IMX95_CLK_SYSPLL1_PFD1);
-		rate = imx_clk_scmi_set_rate(IMX95_CLK_DRAMALT, clk_val);
+		imx_clk_scmi_set_parent(SCMI_CLK(DRAMALT), SCMI_CLK(SYSPLL1_PFD1));
+		rate = imx_clk_scmi_set_rate(SCMI_CLK(DRAMALT), clk_val);
 		break;
 	default:
 		printf("No matched freq table %lu\n", clk_val);
@@ -258,23 +272,23 @@ void dram_enable_bypass(ulong clk_val)
 	debug("%s:%llu\n", __func__, rate);
 
 	/* Set DRAM APB to 133Mhz */
-	imx_clk_scmi_set_parent(IMX95_CLK_DRAMAPB, IMX95_CLK_SYSPLL1_PFD1_DIV2);
-	rate = imx_clk_scmi_set_rate(IMX95_CLK_DRAMAPB, 133333333);
+	imx_clk_scmi_set_parent(SCMI_CLK(DRAMAPB), SCMI_CLK(SYSPLL1_PFD1_DIV2));
+	rate = imx_clk_scmi_set_rate(SCMI_CLK(DRAMAPB), 133333333);
 
 	/* Switch from DRAM clock root from PLL to CCM */
-	imx_clk_scmi_set_parent(IMX95_CLK_SEL_DRAM, IMX95_CLK_DRAMALT);
+	imx_clk_scmi_set_parent(SCMI_CLK(SEL_DRAM), SCMI_CLK(DRAMALT));
 }
 
 void dram_disable_bypass(void)
 {
 	u64 rate;
 	/* Set DRAM APB to 133Mhz */
-	imx_clk_scmi_set_parent(IMX95_CLK_DRAMAPB, IMX95_CLK_SYSPLL1_PFD1_DIV2);
-	rate = imx_clk_scmi_set_rate(IMX95_CLK_DRAMAPB, 133333333);
+	imx_clk_scmi_set_parent(SCMI_CLK(DRAMAPB), SCMI_CLK(SYSPLL1_PFD1_DIV2));
+	rate = imx_clk_scmi_set_rate(SCMI_CLK(DRAMAPB), 133333333);
 
 	/*Set the DRAM_GPR_SEL to be sourced from DRAM_PLL.*/
-	imx_clk_scmi_set_parent(IMX95_CLK_SEL_DRAM, IMX95_CLK_DRAMPLL);
-	rate = imx_clk_scmi_get_rate(IMX95_CLK_SEL_DRAM);
+	imx_clk_scmi_set_parent(SCMI_CLK(SEL_DRAM), SCMI_CLK(DRAMPLL));
+	rate = imx_clk_scmi_get_rate(SCMI_CLK(SEL_DRAM));
 	printf("%s:SEL_DRAM: %llu\n", __func__, rate);
 }
 
@@ -286,19 +300,19 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	case MXC_ARM_CLK:
 		return get_arm_core_clk();
 	case MXC_IPG_CLK:
-		return imx_clk_scmi_get_rate(IMX95_CLK_BUSWAKEUP);
+		return imx_clk_scmi_get_rate(SCMI_CLK(BUSWAKEUP));
 	case MXC_CSPI_CLK:
-		return imx_clk_scmi_get_rate(IMX95_CLK_LPSPI1);
+		return imx_clk_scmi_get_rate(SCMI_CLK(LPSPI1));
 	case MXC_ESDHC_CLK:
-		return imx_clk_scmi_get_rate(IMX95_CLK_USDHC1);
+		return imx_clk_scmi_get_rate(SCMI_CLK(USDHC1));
 	case MXC_ESDHC2_CLK:
-		return imx_clk_scmi_get_rate(IMX95_CLK_USDHC2);
+		return imx_clk_scmi_get_rate(SCMI_CLK(USDHC2));
 	case MXC_ESDHC3_CLK:
-		return imx_clk_scmi_get_rate(IMX95_CLK_USDHC3);
+		return imx_clk_scmi_get_rate(SCMI_CLK(USDHC3));
 	case MXC_UART_CLK:
-		return imx_clk_scmi_get_rate(IMX95_CLK_LPUART1);
+		return imx_clk_scmi_get_rate(SCMI_CLK(LPUART1));
 	case MXC_FLEXSPI_CLK:
-		return imx_clk_scmi_get_rate(IMX95_CLK_FLEXSPI1);
+		return imx_clk_scmi_get_rate(SCMI_CLK(FLEXSPI1));
 	default:
 		return -1;
 	};
@@ -308,15 +322,19 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 
 static uint32_t clock_ids[] =
 {
-	IMX95_CLK_SAI1,
-	IMX95_CLK_SAI2,
-	IMX95_CLK_SAI3,
-	IMX95_CLK_SAI4,
-	IMX95_CLK_SAI5,
-	IMX95_CLK_SPDIF,
-	IMX95_CLK_PDM,
-	IMX95_CLK_MQS1,
-	IMX95_CLK_MQS2,
+	SCMI_CLK(SAI1),
+	SCMI_CLK(SAI2),
+	SCMI_CLK(SAI3),
+	SCMI_CLK(SAI4),
+#ifdef CONFIG_IMX95
+	SCMI_CLK(SAI5),
+	SCMI_CLK(SPDIF),
+#endif
+	SCMI_CLK(PDM),
+#ifdef CONFIG_IMX95
+	SCMI_CLK(MQS1),
+	SCMI_CLK(MQS2),
+#endif
 };
 
 int board_prep_linux(struct bootm_headers *images)
