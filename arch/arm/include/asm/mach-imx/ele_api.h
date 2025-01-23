@@ -147,6 +147,8 @@ struct ele_get_info_data {
 	u32 sha_fw[8];
 	u32 oem_srkh[16];
 	u32 state;
+	u32 oem_pqc_srkh[16];
+	u32 reserved[8];
 };
 
 struct v2x_get_state {
