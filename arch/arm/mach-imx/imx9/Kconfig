@@ -35,6 +35,7 @@ config IMX94
 	select ARMV8_SPL_EXCEPTION_VECTORS
 	select SCMI_FIRMWARE
 	select DM_MAILBOX
+	select IMX_PQC_SUPPORT
 
 config SYS_SOC
 	default "imx9"
