@@ -25,7 +25,7 @@ static int do_v2x_status(struct cmd_tbl *cmdtp, int flag, int argc, char *const 
 	u32 resp = 0;
 	struct v2x_get_state state;
 
-	if (!is_imx95()) {
+	if (!(is_imx95() || is_imx94())) {
 		printf("No V2X supported\n");
 		return CMD_RET_FAILURE;
 	}
