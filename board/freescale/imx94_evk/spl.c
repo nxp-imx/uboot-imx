@@ -74,6 +74,17 @@ void spl_board_init(void)
 		printf("Fail to start RNG: %d\n", ret);
 }
 
+static void xspi_nor_reset(void)
+{
+	int ret;
+	u32 resp = 0;
+
+	ret = ele_set_gmid(&resp);
+	if (ret)
+		printf("Fail to set GMID: %d, resp 0x%x\n", ret, resp);
+	return;
+}
+
 extern int imx9_probe_mu(void *ctx, struct event *event);
 
 /* SCMI suport by default */
@@ -128,6 +139,8 @@ void board_init_f(ulong dummy)
 			ddrmix_power = true;
 		}
 	}
+
+	xspi_nor_reset();
 
 	board_init_r(NULL, 0);
 }
