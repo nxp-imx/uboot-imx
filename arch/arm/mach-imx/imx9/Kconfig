@@ -90,6 +90,10 @@ config TARGET_IMX95_15X15_EVK
 	bool "imx95_15x15_evk"
 	select IMX95
 
+config TARGET_IMX943_EVK
+	bool "imx943_evk"
+	select IMX94
+
 endchoice
 
 source "board/freescale/imx91_evk/Kconfig"
@@ -100,6 +104,7 @@ source "board/variscite/imx93_var_som/Kconfig"
 source "board/freescale/imx93_qsb/Kconfig"
 source "board/freescale/imx95_evk/Kconfig"
 source "board/toradex/verdin-imx95/Kconfig"
+source "board/freescale/imx94_evk/Kconfig"
 
 endif
 
