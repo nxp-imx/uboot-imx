@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2025 NXP
  *
  * Peng Fan <peng.fan@nxp.com>
  */
@@ -17,7 +17,6 @@
 #include <dm/uclass-internal.h>
 #include <dm/device.h>
 #include <dm/device-internal.h>
-#include <dt-bindings/clock/fsl,imx95-clock.h>
 #include <linux/clk-provider.h>
 #include <scmi_agent.h>
 #include <scmi_protocols.h>

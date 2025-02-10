@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2025 NXP
  */
 
-#include <dt-bindings/clock/fsl,imx95-clock.h>
+#include <dt-bindings/clock/nxp,imx95-clock.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
-#include <dt-bindings/power/fsl,imx95-power.h>
 
+#include "imx95-clock.h"
+#include "imx95-power.h"
 #include "imx95-pinfunc.h"
 
 / {

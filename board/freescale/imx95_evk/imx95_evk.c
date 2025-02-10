@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <common.h>
@@ -30,8 +30,8 @@
 #ifdef CONFIG_SCMI_FIRMWARE
 #include <scmi_agent.h>
 #include <scmi_protocols.h>
-#include <dt-bindings/clock/fsl,imx95-clock.h>
-#include <dt-bindings/power/fsl,imx95-power.h>
+#include <../dts/imx95-clock.h>
+#include <../dts/imx95-power.h>
 #endif
 
 extern int board_fix_fdt_fuse(void *fdt);

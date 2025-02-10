@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2025 NXP
  *
  * Peng Fan <peng.fan@nxp.com>
  */
@@ -43,7 +43,7 @@
 #include <scmi_agent.h>
 #include <scmi_protocols.h>
 #include <scmi_nxp_protocols.h>
-#include <dt-bindings/power/fsl,imx95-power.h>
+#include <../dts/imx95-power.h>
 #endif
 #include <spl.h>
 #include <mmc.h>

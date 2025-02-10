@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2025 NXP
  *
  * Author: Alice Guo <alice.guo@nxp.com>
  */
@@ -14,7 +14,7 @@
 #include <command.h>
 #include <errno.h>
 #ifdef CONFIG_CLK_SCMI
-#include <dt-bindings/clock/fsl,imx95-clock.h>
+#include <../dts/imx95-clock.h>
 #include <dm/uclass.h>
 #include <dm/uclass-internal.h>
 #include <linux/clk-provider.h>

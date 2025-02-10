@@ -1,10 +1,10 @@
-/* SPDX-License-Identifier: (GPL-2.0 OR MIT) */
+/* SPDX-License-Identifier: (GPL-2.0-only OR MIT) */
 /*
- *  Copyright 2023 NXP
+ *  Copyright 2024-2025 NXP
  */
 
-#ifndef __DT_BINDINGS_IMX95_POWER_H__
-#define __DT_BINDINGS_IMX95_POWER_H__
+#ifndef __IMX95_POWER_H__
+#define __IMX95_POWER_H__
 
 #define IMX95_PD_ANA		0
 #define IMX95_PD_AON		1
@@ -43,13 +43,5 @@
 #define IMX95_PERF_VPU		10
 #define IMX95_PERF_CAM		11
 #define IMX95_PERF_DISP		12
-#define IMX95_PERF_A55PER	13
-#define IMX95_PERF_A55P		14
-#define IMX95_PERF_A55C0	15
-#define IMX95_PERF_A55C1	16
-#define IMX95_PERF_A55C2	17
-#define IMX95_PERF_A55C3	18
-#define IMX95_PERF_A55C4	19
-#define IMX95_PERF_A55C5	20
 
 #endif

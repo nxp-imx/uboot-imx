@@ -1,11 +1,12 @@
 /* SPDX-License-Identifier: GPL-2.0-only OR MIT */
 /*
- * Copyright 2023 NXP
+ * Copyright 2024-2025 NXP
  */
 
-#ifndef __DT_BINDINGS_CLOCK_IMX95_H
-#define __DT_BINDINGS_CLOCK_IMX95_H
+#ifndef __CLOCK_IMX95_H
+#define __CLOCK_IMX95_H
 
+/* The index should match i.MX95 SCMI Firmware */
 #define IMX95_CLK_32K                       1
 #define IMX95_CLK_24M                       2
 #define IMX95_CLK_FRO                       3
@@ -47,7 +48,7 @@
 #define IMX95_CLK_EXT1                      39
 #define IMX95_CLK_EXT2                      40
 
-#define IMX95_CCM_NUM_CLK_SRC                   41
+#define IMX95_CCM_NUM_CLK_SRC               41
 
 #define IMX95_CLK_ADC                      (IMX95_CCM_NUM_CLK_SRC + 0)
 #define IMX95_CLK_TMU                      (IMX95_CCM_NUM_CLK_SRC + 1)
@@ -183,45 +184,4 @@
 #define IMX95_CLK_SEL_DRAM                 (IMX95_CCM_NUM_CLK_SRC + 123 + 8)
 #define IMX95_CLK_SEL_TEMPSENSE            (IMX95_CCM_NUM_CLK_SRC + 123 + 9)
 
-#define IMX95_CLK_LDBPLLDIV7               175
-#define IMX95_CLK_DUMMY                    176
-#define IMX95_CLK_END                      177
-
-#define IMX95_CLK_DISPMIX_ENG0_SEL	0
-#define IMX95_CLK_DISPMIX_ENG1_SEL	1
-#define IMX95_CLK_DISPMIX_END		2
-
-#define IMX95_CLK_DISPMIX_LVDS_PHY_DIV		0
-#define IMX95_CLK_DISPMIX_LVDS_CH0_GATE		1
-#define IMX95_CLK_DISPMIX_LVDS_CH1_GATE		2
-#define IMX95_CLK_DISPMIX_PIX_DI0_GATE		3
-#define IMX95_CLK_DISPMIX_PIX_DI1_GATE		4
-#define IMX95_CLK_DISPMIX_LVDS_CSR_END		5
-
-#define IMX95_CLK_VPUBLK_WAVE		0
-#define IMX95_CLK_VPUBLK_JPEG_ENC	1
-#define IMX95_CLK_VPUBLK_JPEG_DEC	2
-#define IMX95_CLK_VPUBLK_END		3
-
-#define IMX95_CLK_CAMBLK_CSI2_FOR0	0
-#define IMX95_CLK_CAMBLK_CSI2_FOR1	1
-#define IMX95_CLK_CAMBLK_ISP_AXI	2
-#define IMX95_CLK_CAMBLK_ISP_PIXEL	3
-#define IMX95_CLK_CAMBLK_ISP		4
-#define IMX95_CLK_CAMBLK_END		5
-
-#define IMX95_CLK_WKU_SAI3_MCLK1_MUX	0
-#define IMX95_CLK_WKU_SAI3_MCLK2_MUX	1
-#define IMX95_CLK_WKU_SAI3_MCLK3_MUX	2
-#define IMX95_CLK_WKU_SAI4_MCLK1_MUX	3
-#define IMX95_CLK_WKU_SAI4_MCLK2_MUX	4
-#define IMX95_CLK_WKU_SAI4_MCLK3_MUX	5
-#define IMX95_CLK_WKU_SAI5_MCLK1_MUX	6
-#define IMX95_CLK_WKU_SAI5_MCLK2_MUX	7
-#define IMX95_CLK_WKU_SAI5_MCLK3_MUX	8
-#define IMX95_CLK_WKU_SAI_END		9
-
-#define IMX95_CLK_AON_NS_PDM_CLK_SEL	0
-#define IMX95_CLK_AON_NS_END		1
-
-#endif	/* __DT_BINDINGS_CLOCK_IMX95_H */
+#endif	/* __CLOCK_IMX95_H */

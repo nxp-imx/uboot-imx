@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2025 NXP
  *
  */
 
@@ -8,7 +8,7 @@
 #include <common.h>
 #include <clk-uclass.h>
 #include <dm.h>
-#include <dt-bindings/clock/fsl,imx95-clock.h>
+#include <dt-bindings/clock/nxp,imx95-clock.h>
 #include <linux/clk-provider.h>
 
 #include "clk.h"
