@@ -941,6 +941,65 @@ timeout:
 	return -ETIMEDOUT;
 }
 
+static bool xpcs_phy_link_is_up(struct udevice *dev)
+{
+	int stat1;
+
+	/* Double read */
+	stat1 = xpcs_read(dev, MDIO_MMD_PCS, MDIO_STAT1);
+	stat1 = xpcs_read(dev, MDIO_MMD_PCS, MDIO_STAT1);
+
+	if (stat1 & MDIO_STAT1_LSTATUS)
+		return true;
+
+	return false;
+}
+
+static int xpcs_phy_check_fault(struct udevice *dev)
+{
+	int stat1;
+
+	/* Double read */
+	stat1 = xpcs_read(dev, MDIO_MMD_PCS, MDIO_STAT1);
+	stat1 = xpcs_read(dev, MDIO_MMD_PCS, MDIO_STAT1);
+	if (stat1 & MDIO_STAT1_FAULT)
+		return true;
+
+	return false;
+}
+
+#define LINK_TIMEOUT 2000
+
+int xpcs_phy_startup(struct udevice *dev)
+{
+	int i;
+	bool recfg = false;
+	if (!xpcs_phy_link_is_up(dev)) {
+LINK_CHECK:
+		i = 0;
+		do {
+			udelay(1000);
+			i++;
+		} while (!xpcs_phy_link_is_up(dev) &&
+			 i < LINK_TIMEOUT);
+
+		if (i >= LINK_TIMEOUT) {
+			printf(" XPCS timeout\n");
+			if (!recfg && xpcs_phy_check_fault(dev)) {
+				printf("reconfig pcs\n");
+				xpcs_phy_usxgmii_pma_config(dev);
+				recfg = true;
+
+				goto LINK_CHECK;
+			} else {
+				return -ETIMEDOUT;
+			}
+		}
+	}
+
+	return 0;
+}
+
 u32 xpcs_phy_get_id(struct udevice *dev)
 {
 	int ret;

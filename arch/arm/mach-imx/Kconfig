@@ -136,6 +136,24 @@ config CMD_DEKBLOB
 	  creates a blob of data. See also CMD_BLOB and doc/imx/habv4/* for
 	  more information.
 
+config IMX_ROLLBACK_BLOB
+	bool "Encapsulate the bootloader rollback index as a blob"
+	depends on ARCH_IMX8M || ARCH_IMX8ULP || ARCH_IMX8
+	help
+	  To avoid disclosure of plaintext data in rpmb, this encapsulates
+	  the bootloader rollback index as a blob then keep in rpmb.
+
+config RPMB_INIT_ALLOW
+	bool "Do RPMB initilization even though magic number not matched"
+	help
+	  uboot will determine if rpmb has finished initializing by checking
+	  the magic number at the beginning of the rpmb. If the
+	  "CONFIG_IMX_ROLLBACK_BLOB" be set, uboot reject to boot if rpmb hasn't
+	  finished initializing or RPMB magic number not matched.
+	  This allow boot and RPMB initializing even though the RPMB magic not
+	  matched. This config should only be set for production then it should
+	  be disabled for release.
+
 config TARGET_PRODUCT_NAME
 	string "Target product name"
 	default "NXP i.MX"
@@ -445,10 +463,16 @@ config AUTO_SET_RPMB_KEY
 
 config VPU_SECURE_HEAP
 	bool "Memory need by WIDEVINE_L1"
-	depends on IMX_TRUSTY_OS && (IMX8QM)
+	depends on IMX_TRUSTY_OS && (IMX8QM || IMX8QXP)
 	help
-	  if enable widevine L1 on imx8qm, need to pass secure memory and vpu memory
+	  if enable widevine L1 on imx8q, need to pass secure memory and vpu memory
 	  to linux. It is only used by imx8qm.
+	default n
+
+config IMX_SUPPORT_SRM
+	bool "Support SRM feature"
+	help
+	  Let trusty to load srm before loading kernel.
 	default n
 
 endmenu

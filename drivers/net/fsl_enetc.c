@@ -417,6 +417,24 @@ static void enetc_start_pcs(struct udevice *dev)
 	};
 }
 
+static int enetc_pcs_phy_startup(struct udevice *dev)
+{
+	int ret = 0;
+
+#ifdef CONFIG_ARCH_IMX9
+	struct enetc_priv *priv = dev_get_priv(dev);
+
+	switch (priv->uclass_id) {
+	case PHY_INTERFACE_MODE_USXGMII:
+	case PHY_INTERFACE_MODE_10GBASER:
+		ret = xpcs_phy_startup(dev);
+		break;
+	}
+#endif
+
+	return ret;
+}
+
 /* Configure the actual/external ethernet PHY, if one is found */
 static int enetc_config_phy(struct udevice *dev)
 {
@@ -765,6 +783,10 @@ static int enetc_start(struct udevice *dev)
 
 	enetc_setup_mac_iface(dev, priv->phy);
 
+	ret = enetc_pcs_phy_startup(dev);
+	if (ret)
+		return ret;
+
 	return 0;
 }
 
@@ -856,8 +878,10 @@ static int enetc_recv(struct udevice *dev, int flags, uchar **packetp)
 		rdy = ENETC_RXBD_STATUS_R(status);
 	} while (--tries >= 0 && !rdy);
 
-	if (!rdy)
+	if (!rdy) {
+		enetc_pcs_phy_startup(dev);
 		return -EAGAIN;
+	}
 
 	dmb();
 	len = le16_to_cpu(priv->enetc_rxbd[pi].r.buf_len);

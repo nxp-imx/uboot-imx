@@ -37,23 +37,6 @@ u32 get_arm_core_clk(void)
 	return imx_clk_scmi_get_rate(IMX95_CLK_A55);
 }
 
-void set_arm_core_max_clk(void)
-{
-	int ret;
-	u32 arm_domain_id = 8;
-
-	struct scmi_perf_in in = {
-		.domain_id = arm_domain_id,
-		.perf_level = 3,
-	};
-	struct scmi_perf_out out;
-	struct scmi_msg msg = SCMI_MSG_IN(SCMI_PROTOCOL_ID_PERF, SCMI_PERF_LEVEL_SET, in, out);
-
-	ret = devm_scmi_process_msg(gd->arch.scmi_dev, &msg);
-	if (ret)
-		printf("%s: %d\n", __func__, ret);
-}
-
 void enable_usboh3_clk(unsigned char enable)
 {
 
@@ -64,10 +47,10 @@ int clock_init_early(void)
 	return 0;
 }
 
-/* Set bus and A55 core clock per voltage mode */
+
 int clock_init_late(void)
 {
-	set_arm_core_max_clk();
+	/* System Manager already sets the ARM CLK to max allowed. */
 
 	return 0;
 }

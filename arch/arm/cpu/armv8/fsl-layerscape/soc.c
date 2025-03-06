@@ -333,6 +333,18 @@ static void erratum_rcw_src(void)
 #endif
 }
 
+#if defined(CONFIG_ARCH_LX2160A) || defined(CONFIG_ARCH_LX2162A)
+static void ls216x_ccsr_dcsr_rcwsr12_sync(void)
+{
+	void __iomem *dcfg_ccsr = (void __iomem *)DCFG_BASE;
+	void __iomem *dcfg_dcsr = (void __iomem *)DCFG_DCSR_BASE;
+	u32 val;
+
+	val = in_le32(dcfg_ccsr + DCFG_RCWSR12);
+	out_le32(dcfg_dcsr + DCFG_RCWSR12, val);
+}
+#endif
+
 #define I2C_DEBUG_REG 0x6
 #define I2C_GLITCH_EN 0x8
 /*
@@ -400,6 +412,10 @@ void fsl_lsch3_early_init_f(void)
 	*/
 	if (fsl_check_boot_mode_secure() == 1)
 		bypass_smmu();
+#endif
+
+#if defined(CONFIG_ARCH_LX2160A) || defined(CONFIG_ARCH_LX2162A)
+	ls216x_ccsr_dcsr_rcwsr12_sync();
 #endif
 
 #if defined(CONFIG_ARCH_LS1088A) || defined(CONFIG_ARCH_LS1028A) || \

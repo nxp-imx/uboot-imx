@@ -115,6 +115,7 @@
 #define FASTBOOT_PROVISION_BOOTLOADER_DEK_BLOB       "provision-bootloader-dek-blob"
 #define FASTBOOT_GET_SPL_DEK_BLOB           "get-spl-dek-blob"
 #define FASTBOOT_GET_BOOTLOADER_DEK_BLOB           "get-bootloader-dek-blob"
+#define FASTBOOT_SRM_PROVISION    "provision-srm"
 #endif
 
 #ifdef CONFIG_ANDROID_THINGS_SUPPORT

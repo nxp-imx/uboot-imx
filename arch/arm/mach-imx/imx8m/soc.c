@@ -1153,19 +1153,19 @@ static int remove_phandle_from_node(void *blob, const char *const blkctrl_path,
 }
 
 /* Only remove vc8000e*/
-int disable_vpu_blk_ctrl_vc8000e(void *blob)
+int disable_vpu_blk_ctrl_vc8000e(void *blob, char *name)
 {
 	int ret;
 
 	ret = remove_phandle_from_node(blob, "/soc@0/blk-ctl@38330000",
-		"power-domain-names", "h1", "power-domains", "#power-domain-cells");
+		"power-domain-names", name, "power-domains", "#power-domain-cells");
 	if (!ret)
-		printf("removed power-domain h1\n");
+		printf("removed power-domain %s\n", name);
 
 	ret = remove_phandle_from_node(blob, "/soc@0/blk-ctl@38330000",
-		"clock-names", "h1", "clocks", "#clock-cells");
+		"clock-names", name, "clocks", "#clock-cells");
 	if (!ret)
-		printf("removed clocks h1\n");
+		printf("removed clocks %s\n", name);
 
 	return ret;
 }
@@ -1771,7 +1771,9 @@ usb_modify_speed:
 		disable_hdmi_lcdif_nodes(blob);
 
 		/* remove pgc for vc8000e only */
-		disable_vpu_blk_ctrl_vc8000e(blob);
+		disable_vpu_blk_ctrl_vc8000e(blob, "h1"); /* Pre 6.12 */
+
+		disable_vpu_blk_ctrl_vc8000e(blob, "vc8000e"); /* 6.12+ */
 
 		/* remove pgc for mipi csi2 only */
 		disable_media_blk_ctrl_mipi_phy2(blob);

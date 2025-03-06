@@ -612,8 +612,9 @@
 };
 
 &usb_dwc3_1 {
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_usb1_vbus>;
+	pinctrl-1 = <&pinctrl_usb1_vbus_gpio>;
 	dr_mode = "host";
 	status = "okay";
 };
@@ -843,6 +844,12 @@
 	pinctrl_usb1_vbus: usb1grp {
 		fsl,pins = <
 			MX8MP_IOMUXC_GPIO1_IO14__USB2_PWR		0x10
+		>;
+	};
+
+	pinctrl_usb1_vbus_gpio: usb1gpiogrp {
+		fsl,pins = <
+			MX8MP_IOMUXC_GPIO1_IO14__GPIO1_IO14		0x10
 		>;
 	};
 

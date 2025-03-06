@@ -1190,8 +1190,8 @@
 					assigned-clocks = <&clk IMX91_CLK_MEDIA_AXI>,
 							  <&clk IMX91_CLK_MEDIA_APB>;
 					assigned-clock-parents = <&clk IMX91_CLK_SYS_PLL_PFD0>,
-								 <&clk IMX91_CLK_SYS_PLL_PFD1_DIV2>;
-					assigned-clock-rates = <333333334>, <133333333>;
+								 <&clk IMX91_CLK_SYS_PLL_PFD0_DIV2>;
+					assigned-clock-rates = <333333334>, <125000000>;
 					interface = <2 0 2>;
 					no-reset-control;
 					power-domains = <&media_blk_ctrl IMX91_MEDIABLK_PD_ISI>;
@@ -1387,7 +1387,7 @@
 			assigned-clock-parents = <&clk IMX91_CLK_24M>,
 						 <&clk IMX91_CLK_VIDEO_PLL>,
 						 <&clk IMX91_CLK_SYS_PLL_PFD0>,
-						 <&clk IMX91_CLK_SYS_PLL_PFD1_DIV2>;
+						 <&clk IMX91_CLK_SYS_PLL_PFD0_DIV2>;
 			power-domains = <&media_blk_ctrl IMX91_MEDIABLK_PD_LCDIF>;
 			status = "disabled";
 

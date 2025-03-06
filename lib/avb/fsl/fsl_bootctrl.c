@@ -22,6 +22,11 @@
 #include "hang.h"
 #include "fsl_bootctrl.h"
 #include <spl_load.h>
+#include <asm/cache.h>
+
+#ifdef CONFIG_IMX_ROLLBACK_BLOB
+#include "fsl_sec.h"
+#endif
 
 /* Maximum values for slot data */
 #define AVB_AB_MAX_PRIORITY 15
@@ -509,6 +514,110 @@ int spl_fsl_load_metadata(struct blk_desc *dev_desc,
 #endif /* CONFIG_IMX_TRUSTY_OS || CONFIG_DUAL_BOOTLOADER */
 
 #ifdef CONFIG_IMX_TRUSTY_OS
+#ifdef CONFIG_IMX_ROLLBACK_BLOB
+extern u8 skeymod[16];
+
+static int spl_verify_rbidx(struct mmc *mmc, struct slot_metadata *slot,
+                        struct spl_image_info *spl_image)
+{
+	kblb_hdr_t hdr;
+	kblb_tag_t *rbk;
+	int ret = 0;
+	uint8_t *rollback_idx_blob = NULL;
+	uint32_t rbidx_len = BOOTLOADER_RBIDX_LEN;
+	uint8_t *extract_idx = NULL;
+	uint8_t *keymod = NULL;
+
+	/* Make sure rollback index has been initialized before verify */
+	if (rpmb_init()) {
+		printf("RPMB init failed!\n");
+		return -1;
+	}
+
+	extract_idx = (uint8_t *)memalign(ARCH_DMA_MINALIGN, rbidx_len);
+	if (!extract_idx) {
+		printf("failed to allocate memory!\n");
+		ret = -1;
+		goto exit;
+	}
+	memset(extract_idx, 0, rbidx_len);
+
+	keymod = (uint8_t *)memalign(ARCH_DMA_MINALIGN, sizeof(skeymod));
+	if (!keymod) {
+		printf("failed to allocate memory!\n");
+		ret = -1;
+		goto exit;
+	}
+	memcpy(keymod, skeymod, sizeof(skeymod));
+
+	/* Read bootloader rollback index header first. */
+	if (rpmb_read(mmc, (uint8_t *)&hdr, sizeof(hdr),
+			BOOTLOADER_RBIDX_OFFSET) != 0) {
+		printf("Read RPMB error!\n");
+		ret = -1;
+		goto exit;
+	}
+
+	/* Read bootloader rollback index. */
+	rbk = &(hdr.bootloader_rbk_tags);
+
+	rollback_idx_blob = (uint8_t *)memalign(ARCH_DMA_MINALIGN, rbk->len);
+	if (!rollback_idx_blob) {
+		printf("failed to allocate memory!\n");
+		ret = -1;
+		goto exit;
+	}
+
+	if (rpmb_read(mmc, (uint8_t *)rollback_idx_blob, rbk->len, rbk->offset) != 0) {
+		printf("Read rollback index blob error!\n");
+		ret = -1;
+		goto exit;
+	}
+
+	if (blob_decap(keymod, rollback_idx_blob, extract_idx, rbidx_len, 0)) {
+		printf("Decap rollback index error\n");
+		ret = -1;
+		goto exit;
+	}
+
+	/* Verify bootloader rollback index. */
+	if (spl_image->rbindex >= *((uint64_t *)extract_idx)) {
+		/* Rollback index verify pass, update it only when current slot
+		 * has been marked as successful.
+		 */
+		if ((slot->successful_boot != 0) && (spl_image->rbindex != *((uint64_t *)extract_idx)))
+		{
+			memcpy(extract_idx, (uint8_t *)(&(spl_image->rbindex)), rbidx_len);
+
+			if (blob_encap(keymod, extract_idx, rollback_idx_blob, rbidx_len, 0)) {
+				printf("Encap rollback index error\n");
+				ret = -1;
+				goto exit;
+			}
+
+			if (rpmb_write(mmc, rollback_idx_blob, rbk->len, rbk->offset)) {
+				printf("Update bootloader rollback index failed!\n");
+				ret = -1;
+				goto exit;
+			}
+		}
+		ret = 0;
+	} else {
+		printf("Rollback index verify rejected!\n");
+		ret = -1;
+	}
+
+exit:
+	if (rollback_idx_blob)
+		free(rollback_idx_blob);
+	if (extract_idx)
+		free(extract_idx);
+	if (keymod)
+		free(keymod);
+	return ret;
+}
+#else /* CONFIG_IMX_ROLLBACK_BLOB */
+
 static int spl_verify_rbidx(struct mmc *mmc, struct slot_metadata *slot,
 			struct spl_image_info *spl_image)
 {
@@ -568,6 +677,8 @@ static int spl_verify_rbidx(struct mmc *mmc, struct slot_metadata *slot,
 	}
 
 }
+#endif /* CONFIG_IMX_ROLLBACK_BLOB */
+
 /*
  * spl_fit_get_rbindex(): Get rollback index of the bootloader.
  * @fit:	Pointer to the FDT blob.

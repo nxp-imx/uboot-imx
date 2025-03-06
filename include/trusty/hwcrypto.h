@@ -118,4 +118,10 @@ int hwcrypto_provision_dek_blob(char *data, uint32_t *data_size, enum dek_blob_p
 /* Get the dek blob which saved in rpmb
  * */
 int hwcrypto_get_dek_blob(char *data, uint32_t *data_size, enum dek_blob_part);
+/* Send request to secure side to provision srm
+ * */
+int hwcrypto_provision_srm(const char *data, uint32_t data_size);
+/* Send request to secure side to load SRM
+ * */
+int hwcrypto_load_srm(void);
 #endif /* TRUSTY_HWCRYPTO_H_ */

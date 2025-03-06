@@ -519,6 +519,34 @@ int hwcrypto_provision_firmware_encrypt_key(const char *data, uint32_t data_size
     return rc;
 }
 
+int hwcrypto_provision_srm(const char *data, uint32_t data_size)
+{
+    uint8_t *req = NULL;
+    /* sanity check */
+    if (!data || !data_size)
+        return TRUSTY_ERR_INVALID_ARGS;
+
+    /* serialize the request */
+    req = trusty_calloc(data_size + sizeof(data_size), 1);
+    if (!req) {
+        return TRUSTY_ERR_NO_MEMORY;
+    }
+    append_sized_buf_to_buf(req, (uint8_t *)data, data_size);
+
+    int rc = hwcrypto_do_tipc(HWCRYPTO_PROVISION_SRM, (void*)req,
+                              data_size + sizeof(data_size), NULL, 0);
+    if (req)
+        trusty_free(req);
+
+    return rc;
+}
+
+int hwcrypto_load_srm(void)
+{
+    int rc = hwcrypto_do_tipc(HWCRYPTO_LOAD_SRM, NULL, 0, NULL, 0);
+    return rc;
+}
+
 int hwcrypto_get_dek_blob(char *data, uint32_t *data_size, enum dek_blob_part part)
 {
     uint32_t dek_blob_size = 0, tmp = 0;

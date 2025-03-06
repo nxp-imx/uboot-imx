@@ -908,7 +908,10 @@ void fsl_fdt_fixup_flash(void *fdt)
 	}
 
 	if (disable_ifc) {
-		offset = fdt_path_offset(fdt, "/soc/memory-controller/nor");
+		offset = fdt_path_offset(fdt, "/soc/memory-controller/flash");
+
+		if (offset < 0)
+			offset = fdt_path_offset(fdt, "/soc/memory-controller/nor");
 
 		if (offset < 0)
 			offset = fdt_path_offset(fdt, "/memory-controller/nor");
@@ -921,7 +924,10 @@ void fsl_fdt_fixup_flash(void *fdt)
 
 #else
 #ifdef CONFIG_FSL_QSPI
-	offset = fdt_path_offset(fdt, "/soc/memory-controller/nor");
+	offset = fdt_path_offset(fdt, "/soc/memory-controller/flash");
+
+	if (offset < 0)
+		offset = fdt_path_offset(fdt, "/soc/memory-controller/nor");
 
 	if (offset < 0)
 		offset = fdt_path_offset(fdt, "/memory-controller/nor");

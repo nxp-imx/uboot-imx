@@ -30,6 +30,9 @@ static void enetc_mdio_wait_bsy(struct enetc_mdio_priv *priv)
 	while ((enetc_read(priv, ENETC_MDIO_CFG) & ENETC_EMDIO_CFG_BSY) &&
 	       --to)
 		cpu_relax();
+
+	udelay(1);
+
 	if (!to)
 		printf("T");
 }

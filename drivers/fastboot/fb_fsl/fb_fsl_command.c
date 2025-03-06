@@ -742,6 +742,14 @@ static void flashing(char *cmd, char *response)
 			printf("Provision firmware encrypt key successfully!\n");
 			strcpy(response, "OKAY");
 		}
+	} else if (endswith(cmd, FASTBOOT_SRM_PROVISION)) {
+		if (hwcrypto_provision_srm(fastboot_buf_addr, fastboot_bytes_received)) {
+			printf("ERROR provision srm failed!\n");
+			strcpy(response, "FAILInternal error!");
+		} else {
+			printf("Provision srm successfully!\n");
+			strcpy(response, "OKAY");
+		}
 	}
 #ifdef CONFIG_IMX8M
 	else if (endswith(cmd, FASTBOOT_GENERATE_DEK_BLOB)) {
