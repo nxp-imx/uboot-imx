@@ -1,0 +1,63 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "spdxVersion": "SPDX-2.3",
+  "creationInfo": {
+    "created": "2025-04-15T05:06:25Z",
+    "creators": [
+      "Organization: NXP"
+    ],
+    "licenseListVersion": "3.20"
+  },
+  "name": "uboot-imx-automotive-15.0.0_1.1.0",
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "https://nxp.com/spdx/6099ccb0-cc2c-42ae-bcf4-b34daf65125c",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-package-6099ccb0-cc2c-42ae-bcf4-b34daf65125c",
+      "name": "uboot-imx",
+      "versionInfo": "automotive-15.0.0_1.1.0",
+      "licenseConcluded": "(GPL-2.0-only)",
+      "licenseDeclared": "(GPL-2.0-only)",
+      "downloadLocation": "https://github.com/nxp-imx/uboot-imx",
+      "originator": "Organization: NXP",
+      "externalRefs": [],
+      "filesAnalyzed": false,
+      "supplier": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-package-4a9554b4-fbaf-4209-ad65-1b741b30115e",
+      "name": "U-Boot",
+      "versionInfo": "2024.04",
+      "licenseConcluded": "GPL-2.0-only",
+      "licenseDeclared": "GPL-2.0-or-later",
+      "homepage": "https://source.denx.de/u-boot/u-boot",
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:u_boot:u_boot:2024.04:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:denx:u-boot:2024.04:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        }
+      ],
+      "filesAnalyzed": false,
+      "supplier": "NOASSERTION"
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-package-6099ccb0-cc2c-42ae-bcf4-b34daf65125c"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-6099ccb0-cc2c-42ae-bcf4-b34daf65125c",
+      "relationshipType": "DYNAMIC_LINK",
+      "relatedSpdxElement": "SPDXRef-package-4a9554b4-fbaf-4209-ad65-1b741b30115e"
+    }
+  ]
+}
