@@ -9,6 +9,10 @@
 #include <dt-bindings/usb/pd.h>
 #include "imx95.dtsi"
 
+#ifdef CONFIG_BOARD_I2C3_SRTM
+/delete-node/ &lpi2c3;
+#endif
+
 / {
 	model = "NXP i.MX95 19X19 board";
 	compatible = "fsl,imx95-19x19-evk", "fsl,imx95";
@@ -22,7 +26,6 @@
 		device_type = "memory";
 		reg = <0x0 0x80000000 0 0x80000000>;
 	};
-
 
 	reg_3p3v: regulator-3p3v {
 		compatible = "regulator-fixed";
@@ -87,6 +90,37 @@
 		vin-supply = <&reg_serdes_stby>;
 		gpio = <&i2c5_gpio_expander_21 3 GPIO_ACTIVE_LOW>;
 	};
+#ifdef CONFIG_BOARD_I2C3_SRTM
+	reserved-memory {
+		m7_reserved: m7@80000000 {
+			no-map;
+			reg = <0 0x80000000 0 0x1000000>;
+		};
+
+		micfil_reserved: micfil-rpmsg@81000000 {
+			compatible = "shared-dma-pool";
+			reg = <0 0x81000000 0 0x100000>;
+			no-map;
+		};
+		vdevbuffer: vdevbuffer@88020000 {
+			compatible = "shared-dma-pool";
+			reg = <0 0x88020000 0 0x100000>;
+			no-map;
+		};
+		audio_reserved: audio-rpmsg@c0000000 {
+			compatible = "shared-dma-pool";
+			reg = <0 0xc0000000 0 0x10000000>;
+			no-map;
+		};
+	};
+
+	lpi2c3: i2c-rpbus-3 {
+		compatible = "fsl,i2c-rpbus-v2";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "okay";
+	};
+#endif
 };
 
 &flexspi1 {

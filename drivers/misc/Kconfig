@@ -394,6 +394,13 @@ config IMX_M4_MU
 	  If you say Y here to enable Message Unit driver to work with
 	  Cortex M4 core on AMP Freescale i.MX processors.
 
+config BOARD_I2C3_SRTM
+	bool "Enable i.MX MU I2C Driver to tunnel I2C via Cortex M7"
+	default n
+	help
+	If you say Y here to enable Message Unit driver to work with
+	Cortex M7 core on AMP Freescale i.MX processors.	  
+
 config NUVOTON_NCT6102D
 	bool "Enable Nuvoton NCT6102D Super I/O driver"
 	help
