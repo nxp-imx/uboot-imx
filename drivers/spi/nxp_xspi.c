@@ -73,7 +73,7 @@ static struct nxp_xspi_devtype_data imx943_data = {
 };
 
 static const struct udevice_id nxp_xspi_ids[] = {
-	{ .compatible = "nxp,imx943-xspi", .data = (ulong)&imx943_data, },
+	{ .compatible = "nxp,imx94-xspi", .data = (ulong)&imx943_data, },
 	{ }
 };
 
@@ -743,16 +743,16 @@ static int nxp_xspi_of_to_plat(struct udevice *bus)
 
 	x->dev = bus;
 
-	iobase = devfdt_get_addr_size_name(bus, "xspi_base", &iobase_size);
+	iobase = devfdt_get_addr_size_name(bus, "base", &iobase_size);
 	if (iobase == FDT_ADDR_T_NONE) {
-		dev_err(bus, "xspi_base regs missing\n");
+		dev_err(bus, "xspi base regs missing\n");
 		return -ENODEV;
 	}
 	x->iobase = iobase;
 
-	ahb_addr = devfdt_get_addr_size_name(bus, "xspi_mmap", &ahb_size);
+	ahb_addr = devfdt_get_addr_size_name(bus, "mmap", &ahb_size);
 	if (ahb_addr == FDT_ADDR_T_NONE) {
-		dev_err(bus, "xspi_mmap regs missing\n");
+		dev_err(bus, "xspi mmap regs missing\n");
 		return -ENODEV;
 	}
 	x->ahb_addr = ahb_addr;
@@ -765,7 +765,7 @@ static int nxp_xspi_of_to_plat(struct udevice *bus)
 	x->config.env = val;
 
 #if CONFIG_IS_ENABLED(CLK)
-	ret = clk_get_by_name(bus, "xspi", &x->clk);
+	ret = clk_get_by_name(bus, "per", &x->clk);
 	if (ret) {
 		dev_err(bus, "failed to get xspi clock\n");
 		return ret;
@@ -876,6 +876,8 @@ static int nxp_xspi_default_setup(struct nxp_xspi *x)
 	reg |= XSPI_MCR_ISD2FA_MASK;
 	reg |= XSPI_MCR_ISD3FA_MASK;
 
+	reg |= XSPI_MCR_DQS_FA_SEL(1);
+
 	if (x->devtype_data->little_endian)
 		reg |= XSPI_MCR_END_CFG(3);
 	else
@@ -902,6 +904,9 @@ static int nxp_xspi_default_setup(struct nxp_xspi *x)
 	xspi_writel_offset(x, 0, reg, SMPR);
 
 	xspi_set_reg_field(x, 0, 0, MCR, MDIS);
+
+	/*set default to dll bypass*/
+	nxp_xspi_dll_bypass(x);
 
 	xspi_swreset(x);
 
