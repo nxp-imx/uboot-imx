@@ -1,0 +1,35 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "spdxVersion": "SPDX-2.3",
+  "creationInfo": {
+    "created": "2025-05-16T07:44:33Z",
+    "creators": [
+      "Organization: NXP"
+    ],
+    "licenseListVersion": "3.20"
+  },
+  "name": "uboot-imx-automotive-15.0.0_1.3.0-imx95-er",
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "https://nxp.com/spdx/5f26a4df-5271-4ee1-8e13-3b83a6774819",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-package-5f26a4df-5271-4ee1-8e13-3b83a6774819",
+      "name": "uboot-imx",
+      "versionInfo": "automotive-15.0.0_1.3.0-imx95-er",
+      "licenseConcluded": "(GPL-2.0-or-later)",
+      "licenseDeclared": "(GPL-2.0-or-later)",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: NXP",
+      "externalRefs": [],
+      "filesAnalyzed": false,
+      "supplier": "NOASSERTION"
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-package-5f26a4df-5271-4ee1-8e13-3b83a6774819"
+    }
+  ]
+}
