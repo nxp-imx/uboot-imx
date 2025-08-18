@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <display_options.h>
 #include <env_internal.h>
-#include "crrm.h"
+#include <asm/arch/crrm.h>
 
 struct crrm_info_struct crrm_info = {};
 

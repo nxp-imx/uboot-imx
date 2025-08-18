@@ -15,7 +15,7 @@
 #include <asm/gpio.h>
 #include <linux/delay.h>
 #include <../dts/imx94-clock.h>
-#include "crrm.h"
+#include <asm/arch/crrm.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

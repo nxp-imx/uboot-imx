@@ -5,7 +5,6 @@
 #
 
 obj-y += imx94_evk.o
-obj-$(CONFIG_IMX_CRRM) += crrm.o
 
 ifdef CONFIG_SPL_BUILD
 obj-y += spl.o

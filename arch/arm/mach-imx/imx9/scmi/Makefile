@@ -4,3 +4,4 @@
 
 obj-y += soc.o
 obj-y += clock_scmi.o clock.o
+obj-$(CONFIG_IMX_CRRM) += crrm.o

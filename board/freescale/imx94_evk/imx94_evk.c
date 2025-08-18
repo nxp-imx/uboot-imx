@@ -22,7 +22,7 @@
 #include <i2c.h>
 #include <dm/uclass.h>
 #include <dm/uclass-internal.h>
-#include "crrm.h"
+#include <asm/arch/crrm.h>
 
 int board_early_init_f(void)
 {
