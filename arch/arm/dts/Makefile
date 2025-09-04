@@ -956,6 +956,7 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mp-dhcom-pdk3-overlay-rev100.dtbo \
 	imx8mp-dhcom-picoitx.dtb \
 	imx8mp-ddr4-evk.dtb \
+	imx8mp-frdm.dtb \
 	imx8mp-icore-mx8mp-edimm2.2.dtb \
 	imx8mp-msc-sm2s.dtb \
 	imx8mq-pico-pi.dtb \
@@ -964,11 +965,15 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 
 dtb-$(CONFIG_ARCH_IMX9) += \
 	imx95-15x15-evk.dtb \
+	imx95-15x15-frdm.dtb \
 	imx95-19x19-verdin.dtb \
 	imx943-evk.dtb \
 	imx91-9x9-qsb.dtb \
+	imx91-11x11-frdm.dtb \
+	imx91-11x11-frdm-imx91s.dtb \
 	imx93-var-som-symphony.dtb \
-	imx93-phyboard-segin.dtb
+	imx93-phyboard-segin.dtb \
+	imx93-11x11-frdm.dtb
 
 dtb-$(CONFIG_ARCH_IMXRT) += imxrt1050-evk.dtb \
 	imxrt1020-evk.dtb \

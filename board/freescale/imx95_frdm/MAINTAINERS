@@ -1,0 +1,6 @@
+FRDM-IMX95 BOARD
+M:	Lei Xu <lei.xu@nxp.com>
+S:	Maintained
+F:	board/freescale/imx95_frdm/
+F:	include/configs/imx95_frdm.h
+F:	configs/imx95_15x15_frdm_defconfig

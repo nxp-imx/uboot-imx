@@ -388,13 +388,6 @@ int board_fix_fdt(void *fdt)
 }
 #endif
 
-int board_phys_sdram_size(phys_size_t *size)
-{
-	*size = PHYS_SDRAM_SIZE + PHYS_SDRAM_2_SIZE;
-
-	return 0;
-}
-
 void board_quiesce_devices(void)
 {
 	int ret;

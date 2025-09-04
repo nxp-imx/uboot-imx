@@ -1162,3 +1162,357 @@ int ele_get_random(u32 src_paddr, size_t len)
 
 	return ret;
 }
+
+#if IS_ENABLED(CONFIG_IMX_CRRM)
+int ele_crrm_init(u8 *action, u32 *response)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	if (!action) {
+		printf("Invalid parameters for CRRM init\n");
+		return -EINVAL;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 2;
+	msg.command = ELE_CRRM_INIT_REQ;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret) {
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+		goto end;
+	}
+
+	*action = msg.data[1] & 0xFF;
+
+end:
+	if (response)
+		*response = msg.data[0];
+
+	return ret;
+}
+
+int ele_crrm_get_boot_mode(enum CRRM_BOOT_MODE *boot_mode, u8 *timer_id, u32 *response)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	if (!boot_mode || !timer_id) {
+		printf("Invalid parameters for CRRM get boot mode\n");
+		return -EINVAL;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 2;
+	msg.command = ELE_CRRM_GET_BOOTMODE;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret) {
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+		goto end;
+	}
+
+	*boot_mode = msg.data[1] & 0xFF;
+	*timer_id = (msg.data[1] >> 8) & 0xFF;
+
+end:
+	if (response)
+		*response = msg.data[0];
+
+	return ret;
+}
+
+int ele_crrm_protect_image(u8 media_id, u32 start_addr, u32 length, u32 *response)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 4;
+	msg.command = ELE_CRRM_PROTECT_BOOTIMG;
+	msg.data[0] = media_id;
+	msg.data[1] = start_addr;
+	msg.data[2] = length;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+
+	if (response)
+		*response = msg.data[0];
+
+	return ret;
+}
+
+int ele_crrm_set_luts(u8 media_id, u8 luts_num, u32 luts_addr, u32 luts_size, u32 *response)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 4;
+	msg.command = ELE_CRRM_SET_LUTS;
+	msg.data[0] = (media_id << 8) | luts_num;
+	msg.data[1] = luts_addr;
+	msg.data[2] = luts_size;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+
+	if (response)
+		*response = msg.data[0];
+
+	return ret;
+}
+
+int ele_crrm_change_lut(u8 media_id, u8 lut_index, u32 *response)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 2;
+	msg.command = ELE_CRRM_CHANGE_LUT;
+	msg.data[0] = (media_id << 8) | lut_index;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+
+	if (response)
+		*response = msg.data[0];
+
+	return ret;
+}
+
+int ele_crrm_init_awdt(u8 timer_id, u8 operation, u32 config_addr, u32 config_size, u32 *response)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 4;
+	msg.command = ELE_CRRM_INIT_AWDT;
+	msg.data[0] = (operation << 8) | timer_id;
+	msg.data[1] = config_addr;
+	msg.data[2] = config_size;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+
+	if (response)
+		*response = msg.data[0];
+
+	return ret;
+}
+
+int ele_crrm_set_boot_mode(enum CRRM_BOOT_MODE *boot_mode, u32 *response)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	if (!boot_mode) {
+		printf("Invalid parameters for CRRM set boot mode\n");
+		return -EINVAL;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 2;
+	msg.command = ELE_CRRM_SET_BOOTMODE;
+	msg.data[0] = *boot_mode;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret) {
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+		goto end;
+	}
+
+	*boot_mode = msg.data[1] & 0xFF;
+
+end:
+	if (response)
+		*response = msg.data[0];
+
+	return ret;
+}
+
+int ele_crrm_refresh_awdt(u8 timer_id, u8 pub_key, u32 data_addr, u32 data_size, u32 *response)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 4;
+	msg.command = ELE_CRRM_REFRESH_AWDT;
+	msg.data[0] = (pub_key << 8) | timer_id;
+	msg.data[1] = data_addr;
+	msg.data[2] = data_size;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret)
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+
+	if (response)
+		*response = msg.data[0];
+
+	return ret;
+}
+
+int ele_crrm_get_nonce(u8 timer_id, u32 nonce_buf, u32 *buf_size, u32 *response)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	if (!nonce_buf || !buf_size || !*buf_size) {
+		printf("Wrong parameters for get nonce\n");
+		return -EINVAL;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 4;
+	msg.command = ELE_CRRM_GET_NONCE;
+	msg.data[0] = timer_id;
+	msg.data[1] = nonce_buf;
+	msg.data[2] = *buf_size;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret) {
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+		goto end;
+	}
+
+	*buf_size = msg.data[1];
+
+end:
+	if (response)
+		*response = msg.data[0];
+
+	return ret;
+}
+
+
+int ele_crrm_get_status(u8 timer_id, u32 status_addr, u32 *status_size, u32 *response)
+{
+	struct udevice *dev = gd->arch.ele_dev;
+	int size = sizeof(struct ele_msg);
+	struct ele_msg msg = {};
+	int ret;
+
+	if (!dev) {
+		printf("ele dev is not initialized\n");
+		return -ENODEV;
+	}
+
+	if (!status_size) {
+		printf("Invalid parameters for CRRM get status\n");
+		return -EINVAL;
+	}
+
+	msg.version = ELE_VERSION;
+	msg.tag = ELE_CMD_TAG;
+	msg.size = 4;
+	msg.command = ELE_CRRM_GET_STATUS;
+	msg.data[0] = timer_id;
+	msg.data[1] = status_addr;
+	msg.data[2] = *status_size;
+
+	ret = misc_call(dev, false, &msg, size, &msg, size);
+	if (ret) {
+		printf("Error: %s: ret %d, response 0x%x\n",
+		       __func__, ret, msg.data[0]);
+		goto end;
+	}
+
+	*status_size = msg.data[1];
+
+end:
+	if (response)
+		*response = msg.data[0];
+
+	return ret;
+}
+#endif

@@ -220,7 +220,7 @@ int trusty_write_permanent_attributes(uint8_t *attributes, uint32_t size)
                        NULL);
 }
 
-int trusty_read_vbmeta_public_key(uint8_t *publickey, uint32_t size)
+int trusty_read_vbmeta_public_key(uint8_t *publickey, uint32_t *size)
 {
     uint8_t resp_buf[AVB_MAX_BUFFER_LENGTH];
     uint32_t resp_size = AVB_MAX_BUFFER_LENGTH;
@@ -230,10 +230,11 @@ int trusty_read_vbmeta_public_key(uint8_t *publickey, uint32_t size)
         return rc;
     }
     /* ensure caller passed size matches size returned by Trusty */
-    if (size < resp_size) {
+    if (*size < resp_size) {
         return TRUSTY_ERR_INVALID_ARGS;
     }
     trusty_memcpy(publickey, resp_buf, resp_size);
+    *size = resp_size;
     return rc;
 }
 

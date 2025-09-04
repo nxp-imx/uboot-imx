@@ -216,6 +216,55 @@ static int get_dev_container_size(void *dev, int dev_type, unsigned long offset,
 	return ret;
 }
 
+#if IS_ENABLED(CONFIG_ARCH_IMX9) && IS_ENABLED(CONFIG_SCMI_FIRMWARE)
+static int scmi_get_boot_device_offset(unsigned long *img_off)
+{
+	int ret;
+	rom_passover_t rom_data = {0};
+	rom_passover_t *rdata = &rom_data;
+
+	ret = scmi_get_rom_data(rdata);
+	if (ret != 0) {
+		printf("SCMI: fail to get ROM passover data %d\n", ret);
+		return ret;
+	}
+
+	printf("Boot stage: ");
+	if (rom_data.boot_stage == 0x6)
+		printf("Primary\n");
+	else if (rom_data.boot_stage == 0x9)
+		printf("Secondary\n");
+	else if (rom_data.boot_stage == 0xa)
+		printf("Recovery\n");
+	else
+		printf("USB Serial Download\n");
+
+	printf("Image set: %u, offset: 0x%x\n", rom_data.img_set_sel, rom_data.img_ofs);
+
+	*img_off = rom_data.img_ofs;
+
+	return 0;
+}
+
+static int scmi_get_boot_stage(u8 *stage)
+{
+	int ret;
+	rom_passover_t rom_data = {0};
+	rom_passover_t *rdata = &rom_data;
+
+	ret = scmi_get_rom_data(rdata);
+	if (ret != 0) {
+		printf("SCMI: fail to get ROM passover data %d\n", ret);
+		return ret;
+	}
+
+	*stage = rom_data.boot_stage;
+
+	return 0;
+}
+
+#else
+
 static bool check_secondary_cnt_set(unsigned long *set_off)
 {
 #if IS_ENABLED(CONFIG_ARCH_IMX8)
@@ -242,6 +291,8 @@ static bool check_secondary_cnt_set(unsigned long *set_off)
 	return false;
 }
 
+#endif
+
 static unsigned long get_boot_device_offset(void *dev, int dev_type)
 {
 	unsigned long offset = 0, sec_set_off = 0;
@@ -252,11 +303,19 @@ static unsigned long get_boot_device_offset(void *dev, int dev_type)
 		return offset;
 	}
 
+#if IS_ENABLED(CONFIG_ARCH_IMX9) && IS_ENABLED(CONFIG_SCMI_FIRMWARE)
+	int ret;
+	ret = scmi_get_boot_device_offset(&offset);
+	if (!ret)
+		return offset;
+	/* fall back to boot from primary set if get rom passover failed */
+#else
 	sec_boot = check_secondary_cnt_set(&sec_set_off);
 	if (sec_boot)
 		printf("Secondary set selected\n");
 	else
 		printf("Primary set selected\n");
+#endif
 
 	if (dev_type == MMC_DEV) {
 		struct mmc *mmc = (struct mmc *)dev;
@@ -388,10 +447,17 @@ int spl_mmc_emmc_boot_partition(struct mmc *mmc)
 
 	part = EXT_CSD_EXTRACT_BOOT_PART(mmc->part_config);
 	if (part == EMMC_BOOT_PART_BOOT1 || part == EMMC_BOOT_PART_BOOT2) {
-		unsigned long sec_set_off = 0;
 		bool sec_boot = false;
-
+#if IS_ENABLED(CONFIG_ARCH_IMX9) && IS_ENABLED(CONFIG_SCMI_FIRMWARE)
+		u8 stage;
+		int ret;
+		ret = scmi_get_boot_stage(&stage);
+		if (!ret)
+			sec_boot = (stage == 0x9);
+#else
+		unsigned long sec_set_off = 0;
 		sec_boot = check_secondary_cnt_set(&sec_set_off);
+#endif
 		if (sec_boot)
 			part = (part == EMMC_BOOT_PART_BOOT1) ? EMMC_HWPART_BOOT2 : EMMC_HWPART_BOOT1;
 	} else if (part == EMMC_BOOT_PART_USER) {

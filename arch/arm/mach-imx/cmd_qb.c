@@ -101,10 +101,54 @@ static int do_qb_check(struct cmd_tbl *cmdtp, int flag,
 	return qb_check() ? CMD_RET_SUCCESS : CMD_RET_FAILURE;
 }
 
+#if IS_ENABLED(CONFIG_SCMI_FIRMWARE)
+static int scmi_get_boot_device_offset(unsigned long *img_off)
+{
+	int ret;
+	rom_passover_t rom_data = {0};
+	rom_passover_t *rdata = &rom_data;
+
+	ret = scmi_get_rom_data(rdata);
+	if (ret != 0) {
+		printf("SCMI: fail to get ROM passover data %d\n", ret);
+		return ret;
+	}
+
+	*img_off = rom_data.img_ofs;
+
+	return 0;
+}
+
+static int scmi_get_boot_stage(u8 *stage)
+{
+	int ret;
+	rom_passover_t rom_data = {0};
+	rom_passover_t *rdata = &rom_data;
+
+	ret = scmi_get_rom_data(rdata);
+	if (ret != 0) {
+		printf("SCMI: fail to get ROM passover data %d\n", ret);
+		return ret;
+	}
+
+	*stage = rom_data.boot_stage;
+
+	return 0;
+}
+#endif
+
 static unsigned long get_boot_device_offset(void *dev, int dev_type)
 {
 	unsigned long offset = 0;
 	struct mmc *mmc;
+
+#if IS_ENABLED(CONFIG_SCMI_FIRMWARE)
+	int ret;
+	ret = scmi_get_boot_device_offset(&offset);
+	if (!ret)
+		return offset;
+	/* fall back to boot from primary set if get rom passover failed */
+#endif
 
 	switch (dev_type) {
 	case ROM_API_DEV:
@@ -321,6 +365,14 @@ static int do_qb_mmc(int dev, bool save)
 	} else {
 		u8 part = EXT_CSD_EXTRACT_BOOT_PART(mmc->part_config);
 		if (part == 1 || part == 2) {
+#if IS_ENABLED(CONFIG_SCMI_FIRMWARE)
+			u8 stage;
+			ret = scmi_get_boot_stage(&stage);
+			if (!ret) {
+				if (stage == 0x9)
+					part = (part == 1) ? 2 : 1;
+			}
+#endif
 			sprintf(blk_cmd, "mmc dev %x %x", mmc_dev, part);
 		} else {
 			sprintf(blk_cmd, "mmc dev %x", mmc_dev);

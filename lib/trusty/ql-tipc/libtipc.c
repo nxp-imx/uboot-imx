@@ -35,6 +35,7 @@
 #include <trusty/imx_snvs.h>
 #include <trusty/matter.h>
 #include <trusty/secretkeeper.h>
+#include <trusty/hwbcc.h>
 
 #define LOCAL_LOG 0
 
@@ -153,6 +154,13 @@ int trusty_ipc_init(void)
         rc = secretkeeper_tipc_init(_ipc_dev);
         if (rc != 0) {
             trusty_error("Initlializing Trusty SecretKeeper client failed (%d)\n", rc);
+            return rc;
+        }
+
+        trusty_info("Initializing Trusty Hwbcc client\n");
+        rc = hwbcc_tipc_init(_ipc_dev);
+        if (rc != 0) {
+            trusty_error("Initlializing Trusty Hwbcc client failed (%d)\n", rc);
             return rc;
         }
     } else

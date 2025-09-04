@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2019 NXP
+ * Copyright 2019,2025 NXP
  */
 
 #include <asm/mach-imx/sys_proto.h>
@@ -430,16 +430,17 @@ int trusty_setbootparameter(uint32_t os_version,
 	}
 #else
 	uint8_t public_key_buf[AVB_MAX_BUFFER_LENGTH];
+	uint32_t public_key_size = sizeof(public_key_buf);
 #ifdef CONFIG_LOAD_KEY_FROM_RPMB
 	if (trusty_read_vbmeta_public_key(public_key_buf,
-						AVB_MAX_BUFFER_LENGTH) != 0) {
+						&public_key_size) != 0) {
 		printf("ERROR - failed to read public key for keymaster\n");
 		memset(boot_key_hash, '\0', AVB_SHA256_DIGEST_SIZE);
 	} else
 #else
 	memcpy(public_key_buf, fsl_public_key, AVB_SHA256_DIGEST_SIZE);
 #endif
-		sha256_csum_wd((unsigned char *)public_key_buf, AVB_SHA256_DIGEST_SIZE,
+		sha256_csum_wd((unsigned char *)public_key_buf, public_key_size,
 				(unsigned char *)boot_key_hash, CHUNKSZ_SHA256);
 #endif
 
@@ -1116,6 +1117,10 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 
 	/* populate secretkeeper public key */
 	trusty_populate_sk_key((void *)(ulong)fdt_addr);
+
+	/* set deprivilege state to stop NS access */
+	if (hwbcc_ns_deprivilege())
+		goto fail;
 
 #ifdef CONFIG_IMX_SUPPORT_SRM
 	char *keystore = env_get("keystore");

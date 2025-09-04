@@ -11,6 +11,7 @@
 #include <mapmem.h>
 #include <spl.h>
 #include <u-boot/lz4.h>
+#include <cpu_func.h>
 #ifdef CONFIG_AHAB_BOOT
 #include <asm/mach-imx/ahab.h>
 #endif
@@ -18,6 +19,9 @@
 #define TEE_DEST_SIZE   0x04000000
 #define LZ4_MAGIC_NUM	0x184D2204
 #define LZ4_OFFSET	0x00800000
+#endif
+#if IS_ENABLED(CONFIG_IMX_CRRM)
+#define IMG_TYPE_RECOVERY		0x09
 #endif
 
 __weak bool arch_check_dst_in_secure(void *start, ulong size)
@@ -28,6 +32,11 @@ __weak bool arch_check_dst_in_secure(void *start, ulong size)
 __weak void *arch_get_container_trampoline(void)
 {
 	return NULL;
+}
+
+void __weak arch_spl_load_configure(struct spl_image_info *spl_image)
+{
+	return;
 }
 
 static struct boot_img_t *read_auth_image(struct spl_image_info *spl_image,
@@ -54,6 +63,15 @@ static struct boot_img_t *read_auth_image(struct spl_image_info *spl_image,
 		return NULL;
 	}
 
+#if IS_ENABLED(CONFIG_IMX_CRRM)
+	if ((images[image_index].hab_flags & 0xF) == IMG_TYPE_RECOVERY) {
+		if (!spl_image->recovery) {
+			debug("Skip recovery image %d\n", image_index);
+			return &images[image_index];
+		}
+	}
+#endif
+
 	size = ALIGN(images[image_index].size, spl_get_bl_len(info));
 	offset = images[image_index].offset + container_offset;
 
@@ -76,9 +94,7 @@ static struct boot_img_t *read_auth_image(struct spl_image_info *spl_image,
 
 		memcpy(buf, trampoline, images[image_index].size);
 	} else {
-		if (info->read(info, offset, size,
-			       map_sysmem(images[image_index].dst,
-					  images[image_index].size)) <
+		if (info->read(info, offset, size, buf) <
 		    images[image_index].size) {
 			printf("%s wrong\n", __func__);
 			return NULL;
@@ -86,6 +102,7 @@ static struct boot_img_t *read_auth_image(struct spl_image_info *spl_image,
 	}
 
 #ifdef CONFIG_AHAB_BOOT
+	flush_dcache_range((ulong)buf, (ulong)(buf + images[image_index].size - 1));
 	if (ahab_verify_cntr_image(&images[image_index], image_index))
 		return NULL;
 #endif
@@ -218,5 +235,6 @@ end:
 int spl_load_imx_container(struct spl_image_info *spl_image,
 			   struct spl_load_info *info, ulong offset)
 {
+	arch_spl_load_configure(spl_image);
 	return read_auth_container(spl_image, info, offset);
 }

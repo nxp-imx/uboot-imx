@@ -1,0 +1,280 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2025 NXP
+ */
+
+#include "imx91-u-boot.dtsi"
+
+/ {
+	wdt-reboot {
+		compatible = "wdt-reboot";
+		wdt = <&wdog3>;
+		bootph-pre-ram;
+		bootph-some-ram;
+	};
+
+	aliases {
+		usb_gadget0 = &usbg1;
+		usb_gadget1 = &usbg2;
+	};
+
+	usbg1: usbg1 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg1>;
+		status = "okay";
+	};
+
+	usbg2: usbg2 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg2>;
+		status = "okay";
+	};
+
+	firmware {
+		optee {
+			compatible = "linaro,optee-tz";
+			method = "smc";
+		};
+	};
+
+	backlight: backlight {
+		compatible = "gpio-backlight";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_bl>;
+		gpios = <&gpio2 26 GPIO_ACTIVE_LOW>;
+	};
+
+	panel {
+		compatible = "simple-panel";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_panel>;
+		backlight = <&backlight>;
+		enable-gpios = <&gpio2 27 GPIO_ACTIVE_HIGH>;
+		power-supply = <&reg_exp_3v3>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&display_out>;
+			};
+		};
+
+		display-timings {
+			native-mode = <&timing0>;
+			timing0: timing0 {
+				clock-frequency = <30000000>;
+				hactive = <800>;
+				vactive = <480>;
+				hfront-porch = <40>;
+				hback-porch = <40>;
+				hsync-len = <48>;
+				vback-porch = <29>;
+				vfront-porch = <13>;
+				vsync-len = <3>;
+
+				vsync-active = <0>;
+				hsync-active = <0>;
+			};
+		};
+	};
+};
+
+&{/soc@0} {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&{/panel} {
+	power-supply = <&reg_exp_3v3>;
+};
+
+&aips1 {
+	bootph-pre-ram;
+	bootph-all;
+};
+
+&aips2 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&aips3 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&iomuxc {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&reg_usdhc2_vmmc {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&pinctrl_reg_usdhc2_vmmc {
+	bootph-pre-ram;
+};
+
+&pinctrl_uart1 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&pinctrl_usdhc2_gpio {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&pinctrl_usdhc2 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&gpio1 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&gpio2 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&gpio3 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&gpio4 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&lpuart1 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&usdhc1 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&usdhc2 {
+	bootph-pre-ram;
+	bootph-some-ram;
+	fsl,signal-voltage-switch-extra-delay-ms = <8>;
+};
+
+&lpi2c1 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&lpi2c2 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&lpi2c3 {
+	bootph-pre-ram;
+};
+
+&{/soc@0/bus@44000000/i2c@44350000/pmic@32} {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&{/soc@0/bus@44000000/i2c@44350000/pmic@32/regulators} {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&pinctrl_lpi2c1 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&pinctrl_lpi2c2 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&pinctrl_lpi2c3 {
+	bootph-pre-ram;
+	bootph-some-ram;
+};
+
+&ethphy1 {
+	reset-gpios = <&gpio3 17 GPIO_ACTIVE_LOW>;
+	reset-assert-us = <15000>;
+	reset-deassert-us = <100000>;
+};
+
+&usbotg1 {
+	status = "okay";
+	extcon = <&ptn5110>;
+};
+
+&usbotg2 {
+	status = "okay";
+};
+
+&s4muap {
+	bootph-pre-ram;
+	bootph-some-ram;
+	status = "okay";
+};
+
+&clk {
+	bootph-all;
+	bootph-pre-ram;
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-rates;
+	/delete-property/ assigned-clock-parents;
+};
+
+&osc_32k {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&osc_24m {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&clk_ext1 {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&lcdif {
+	assigned-clocks = <&clk IMX93_CLK_MEDIA_AXI>, <&clk IMX93_CLK_MEDIA_APB>;
+	assigned-clock-parents = <&clk IMX93_CLK_SYS_PLL_PFD0>, <&clk IMX93_CLK_SYS_PLL_PFD0_DIV2>;
+	assigned-clock-rates = <333333334>, <125000000>;
+	status = "okay";
+};
+
+&parallel_disp_fmt {
+	/delete-property/ power-domains;
+
+	pinctrl-names = "default", "gpio";
+	pinctrl-0 = <&pinctrl_lcdif>;
+	pinctrl-1 = <&pinctrl_lcdif_gpio>;
+	fsl,interface-pix-fmt = "rgb666";
+	status = "okay";
+
+	ports {
+		port@1 {
+			reg = <1>;
+
+			display_out: endpoint {
+				remote-endpoint = <&panel_in>;
+			};
+		};
+	};
+};

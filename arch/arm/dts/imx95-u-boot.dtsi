@@ -5,6 +5,15 @@
 
  #include <dt-bindings/clock/nxp,imx95-clock.h>
 
+#ifdef CONFIG_OPTEE
+&{/firmware} {
+	optee {
+		compatible = "linaro,optee-tz";
+		method = "smc";
+	};
+};
+#endif
+
 / {
 	binman {
 		multiple-images;

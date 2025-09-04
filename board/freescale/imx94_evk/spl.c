@@ -14,6 +14,8 @@
 #include <asm/mach-imx/ele_api.h>
 #include <asm/gpio.h>
 #include <linux/delay.h>
+#include <../dts/imx94-clock.h>
+#include "crrm.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -35,16 +37,7 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 	}
 }
 
-void spl_board_init(void)
-{
-	int ret;
-	puts("Normal Boot\n");
-
-	ret = ele_start_rng();
-	if (ret)
-		printf("Fail to start RNG: %d\n", ret);
-}
-
+#if !IS_ENABLED(CONFIG_IMX_CRRM)
 static void xspi_nor_reset(void)
 {
 	int ret;
@@ -53,7 +46,21 @@ static void xspi_nor_reset(void)
 	ret = ele_set_gmid(&resp);
 	if (ret)
 		printf("Fail to set GMID: %d, resp 0x%x\n", ret, resp);
+
+	/* Set MTO to max */
+	imx_clk_scmi_enable(IMX94_CLK_XSPI1, true);
+	imx_clk_scmi_enable(IMX94_CLK_XSPI2, true);
+
+	writel(0xffffffff, 0x42b90928);
+	writel(0xffffffff, 0x42be0928);
+
 	return;
+}
+#endif
+
+void spl_board_init(void)
+{
+	puts("Normal Boot\n");
 }
 
 /* SCMI suport by default */
@@ -92,7 +99,19 @@ void board_init_f(ulong dummy)
 	/* Will set ARM freq to max rate */
 	clock_init_late();
 
+	ret = ele_start_rng();
+	if (ret)
+		printf("Fail to start RNG: %d\n", ret);
+
+#if IS_ENABLED(CONFIG_IMX_CRRM)
+	ret = crrm_spl_init();
+	if (ret) {
+		printf("CRRM error, boot stop\n");
+		hang();
+	}
+#else
 	xspi_nor_reset();
+#endif
 
 	board_init_r(NULL, 0);
 }

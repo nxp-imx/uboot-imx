@@ -5,6 +5,28 @@ config AHAB_BOOT
     help
     This option enables the support for AHAB secure boot.
 
+config IMX_CRRM
+    bool "Support i.MX9 cyber resilient recovery module (CRRM)"
+	depends on IMX94
+	select PSCI_BOARD_REBOOT
+    help
+      This option enables the support for IMX CRRM.
+
+config IMX_CRRM_PROTECT_SIZE
+	hex "Specify the size for XSPI protected image"
+	depends on IMX_CRRM
+	default 0x400000
+
+config IMX_CRRM_AWDT_TIMEOUT
+	int "Specify the initialized timeout(ms) for CRRM AWDT timer"
+	depends on IMX_CRRM
+	default 300000
+
+config IMX_CRRM_SELFTEST
+    bool "Enable CRRM self test routing in SPL/u-boot"
+    help
+      This option enables CRRM self test. No CRRM OS is needed in the test.
+
 config IMX9
 	bool
 	select HAS_CAAM
@@ -66,6 +88,22 @@ config TARGET_IMX93_9X9_QSB
 	imply BOOTSTD_FULL
 	imply BOOTSTD_BOOTCOMMAND
 
+config TARGET_IMX91_11X11_FRDM
+	bool "imx91_11x11_frdm"
+	select OF_BOARD_FIXUP
+	select IMX91
+	select IMX9_LPDDR4X
+	imply BOOTSTD_FULL
+	imply BOOTSTD_BOOTCOMMAND
+
+config TARGET_IMX91_11X11_FRDM_IMX91S
+	bool "imx91_11x11_frdm_imx91s"
+	select OF_BOARD_FIXUP
+	select IMX91
+	select IMX9_LPDDR4X
+	imply BOOTSTD_FULL
+	imply BOOTSTD_BOOTCOMMAND
+
 config TARGET_IMX91_9X9_QSB
 	bool "imx91_9x9_qsb"
 	select OF_BOARD_FIXUP
@@ -87,6 +125,13 @@ config TARGET_IMX93_11X11_EVK
 	select OF_BOARD_FIXUP
 	select IMX93
 	imply OF_UPSTREAM
+	imply BOOTSTD_FULL
+	imply BOOTSTD_BOOTCOMMAND
+
+config TARGET_IMX93_11X11_FRDM
+	bool "imx93_11x11_frdm"
+	select OF_BOARD_FIXUP
+	select IMX93
 	imply BOOTSTD_FULL
 	imply BOOTSTD_BOOTCOMMAND
 
@@ -120,6 +165,12 @@ config TARGET_IMX95_15X15_EVK
 	imply BOOTSTD_BOOTCOMMAND
 	imply BOOTSTD_FULL
 
+config TARGET_IMX95_15X15_FRDM
+	bool "imx95_15x15_frdm"
+	select IMX95
+	imply BOOTSTD_BOOTCOMMAND
+	imply BOOTSTD_FULL
+
 config TARGET_IMX943_EVK
 	bool "imx943_evk"
 	select IMX94
@@ -130,11 +181,15 @@ endchoice
 
 source "board/freescale/imx91_evk/Kconfig"
 source "board/freescale/imx91_qsb/Kconfig"
+source "board/freescale/imx91_frdm/Kconfig"
+source "board/freescale/imx91_frdm_imx91s/Kconfig"
 source "board/freescale/imx93_evk/Kconfig"
 source "board/freescale/imx93_qsb/Kconfig"
+source "board/freescale/imx93_frdm/Kconfig"
 source "board/phytec/phycore_imx93/Kconfig"
 source "board/variscite/imx93_var_som/Kconfig"
 source "board/freescale/imx95_evk/Kconfig"
+source "board/freescale/imx95_frdm/Kconfig"
 source "board/toradex/verdin-imx95/Kconfig"
 source "board/freescale/imx94_evk/Kconfig"
 

@@ -1,0 +1,6 @@
+i.MX91 FRDM BOARD
+S:	Maintained
+F:	board/freescale/imx91_frdm/
+F:	include/configs/imx91_frdm.h
+F:	configs/imx91_11x11_frdm_defconfig
+F:	configs/imx91_11x11_frdm_inline_ecc_defconfig

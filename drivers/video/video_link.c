@@ -36,6 +36,7 @@ struct video_link temp_stack;
 ulong video_links_num = 0;
 ulong curr_video_link = 0;
 bool video_off = false;
+bool video_retain = false;
 
 ofnode ofnode_get_child_by_name(ofnode parent, const char *name)
 {
@@ -531,7 +532,7 @@ int video_link_init(void)
 {
 	struct udevice *dev;
 	ulong env_id;
-	int off;
+	int off, retain;
 	memset(&video_links, 0, sizeof(video_links));
 	memset(&temp_stack, 0, sizeof(temp_stack));
 
@@ -558,6 +559,10 @@ int video_link_init(void)
 	if (env_id < video_links_num)
 		curr_video_link = env_id;
 
+	retain = env_get_yesno("video_retain");
+	if (retain == 1)
+		video_retain = true;
+
 	list_videolink(true);
 
 	return 0;
@@ -567,7 +572,7 @@ int video_link_shut_down(void)
 {
 	struct udevice *video_dev = video_link_get_video_device();
 
-	if (video_dev)
+	if (video_dev && !video_retain)
 		device_remove(video_dev, DM_REMOVE_NORMAL);
 
 	return 0;

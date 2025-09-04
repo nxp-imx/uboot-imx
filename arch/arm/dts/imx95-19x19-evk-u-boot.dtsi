@@ -6,6 +6,22 @@
 #include "imx95-u-boot.dtsi"
 #include "imx95-19x19-evk-local.dtsi"
 
+/ {
+	aliases {
+		usb0 = &usb3_dwc3;
+		usb1 = &usb2;
+		usb_gadget1 = &usbg2;
+	};
+
+	usbg2: usbg2 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usb2>;
+		bootph-pre-ram;
+		status = "okay";
+	};
+};
+
 &scmi_iomuxc {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_hog>;
@@ -81,6 +97,15 @@
 &usb2 {
 	compatible = "fsl,imx8mm-usb", "fsl,imx7d-usb";
 	/delete-property/power-domains;
+	bootph-pre-ram;
+};
+
+&usbmisc {
+	bootph-pre-ram;
+};
+
+&usbphynop {
+	bootph-pre-ram;
 };
 
 &usb3 {

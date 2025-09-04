@@ -77,9 +77,6 @@ int power_init_board(void)
 	if (ret != 0)
 		return ret;
 
-	/* enable DVS control through PMIC_STBY_REQ */
-	pmic_reg_write(dev, PF9453_BUCK2CTRL, 0x59);
-
 	if (is_voltage_mode(VOLT_LOW_DRIVE)) {
 		buck_val = 0x10; /* 0.8v for Low drive mode */
 		printf("PMIC: Low Drive Voltage Mode\n");

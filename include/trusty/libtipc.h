@@ -31,6 +31,7 @@
 #include <trusty/imx_snvs.h>
 #include <trusty/matter.h>
 #include <trusty/secretkeeper.h>
+#include <trusty/hwbcc.h>
 
 /*
  * Initialize TIPC library

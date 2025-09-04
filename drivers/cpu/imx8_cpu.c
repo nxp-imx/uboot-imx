@@ -198,10 +198,7 @@ static int cpu_imx_get_desc(const struct udevice *dev, char *buf, int size)
 			grade = "Industrial temperature grade ";
 			break;
 		case TEMP_EXTCOMMERCIAL:
-			if (is_imx93())
-				grade = "Extended Industrial temperature grade ";
-			else
-				grade = "Extended Consumer temperature grade ";
+			grade = "Extended Industrial temperature grade ";
 			break;
 		default:
 			grade = "Consumer temperature grade ";

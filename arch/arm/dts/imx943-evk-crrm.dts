@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2025 NXP
+ */
+
+#include "imx943-evk.dts"
+#include "imx943-evk-u-boot.dtsi"
+
+&xspi1 {
+	/delete-property/ nxp,xspi-gmid;
+	nxp,xspi-env = <1>;
+};

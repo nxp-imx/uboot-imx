@@ -1,9 +1,9 @@
 /*
- * Copyright 2018-2024 NXP
+ * Copyright 2018-2025 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
- * Code generated with DDR Tool v3.5.0_21-045f7893.
+ * Code generated with DDR Tool v3.7.0_21-2ab57659.
  * DDR PHY FW2017.09
  */
 
@@ -30,7 +30,7 @@ struct dram_cfg_param ddr_ddrc_cfg[] = {
 	{ 0x3d4000e4, 0x110000 },
 	{ 0x3d4000e8, 0x2000640},
 	{ 0x3d4000ec, 0x814 },
-	{ 0x3d4000f0, 0x20 },
+	{ 0x3d4000f0, 0x22 },
 	{ 0x3d4000f4, 0xec7 },
 	{ 0x3d400100, 0x11122914 },
 	{ 0x3d400104, 0x4051c },
@@ -958,6 +958,7 @@ struct dram_cfg_param ddr_fsp0_cfg[] = {
 	{ 0x54006, 0x25e },
 	{ 0x54007, 0x2000 },
 	{ 0x54008, 0x101 },
+	{ 0x54009, 0x200 },
 	{ 0x5400b, 0x31f },
 	{ 0x5400c, 0xc8 },
 	{ 0x54012, 0x1 },
@@ -1009,6 +1010,7 @@ struct dram_cfg_param ddr_fsp0_2d_cfg[] = {
 	{ 0x54006, 0x25e },
 	{ 0x54007, 0x2000 },
 	{ 0x54008, 0x101 },
+	{ 0x54009, 0x200 },
 	{ 0x5400b, 0x61 },
 	{ 0x5400c, 0xc8 },
 	{ 0x5400d, 0x100 },

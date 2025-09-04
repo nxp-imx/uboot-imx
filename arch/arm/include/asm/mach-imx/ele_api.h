@@ -62,8 +62,18 @@
 #define ELE_RELEASE_PATCH_REQ (0xDC)
 #define ELE_OTP_SEQ_SWITH_REQ (0xDD)
 #define ELE_SET_GMID_REQ (0xE4)
+#define ELE_CRRM_CHANGE_LUT (0xE7)
+#define ELE_CRRM_INIT_REQ (0xE8)
+#define ELE_CRRM_GET_BOOTMODE (0xE9)
+#define ELE_CRRM_PROTECT_BOOTIMG (0xEA)
+#define ELE_CRRM_SET_LUTS (0xEB)
+#define ELE_CRRM_INIT_AWDT (0xEC)
+#define ELE_CRRM_SET_BOOTMODE (0xED)
+#define ELE_CRRM_GET_NONCE (0xEE)
+#define ELE_CRRM_REFRESH_AWDT (0xEF)
 #define ELE_WRITE_SHADOW_REQ (0xF2)
 #define ELE_READ_SHADOW_REQ (0xF3)
+#define ELE_CRRM_GET_STATUS (0xF8)
 
 /* ELE failure indications */
 #define ELE_ROM_PING_FAILURE_IND (0x0A)
@@ -139,6 +149,12 @@ enum ELE_AUX_ID {
 	ELE_CM7 = 0xb
 };
 
+enum CRRM_BOOT_MODE {
+	CRRM_NORMAL = 0x69,
+	CRRM_RECOVERY_DOWNLOAD = 0x3c,
+	CRRM_RECOVERY_INSTALL = 0x5a
+};
+
 #define ELE_MAX_MSG          255U
 
 struct ele_msg {
@@ -199,4 +215,15 @@ int ele_set_gmid(u32 *response);
 int ele_get_hw_unique_key(uint8_t *hwkey, size_t key_size, uint8_t *ctx, size_t ctx_size);
 int ele_get_trng_state(void);
 int ele_get_random(u32 src_paddr, size_t len);
+
+int ele_crrm_init(u8 *action, u32 *response);
+int ele_crrm_get_boot_mode(enum CRRM_BOOT_MODE *boot_mode, u8 *timer_id, u32 *response);
+int ele_crrm_protect_image(u8 media_id, u32 start_addr, u32 length, u32 *response);
+int ele_crrm_set_luts(u8 media_id, u8 luts_num, u32 luts_addr, u32 luts_size, u32 *response);
+int ele_crrm_change_lut(u8 media_id, u8 lut_index, u32 *response);
+int ele_crrm_init_awdt(u8 timer_id, u8 operation, u32 config_addr, u32 config_size, u32 *response);
+int ele_crrm_set_boot_mode(enum CRRM_BOOT_MODE *boot_mode, u32 *response);
+int ele_crrm_refresh_awdt(u8 timer_id, u8 pub_key, u32 data_addr, u32 data_size, u32 *response);
+int ele_crrm_get_status(u8 timer_id, u32 status_addr, u32 *status_size, u32 *response);
+int ele_crrm_get_nonce(u8 timer_id, u32 nonce_buf, u32 *buf_size, u32 *response);
 #endif

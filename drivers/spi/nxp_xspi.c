@@ -21,6 +21,7 @@
 
 #include <dm/device_compat.h>
 #include "nxp_xspi.h"
+#include <display_options.h>
 
 static inline void xspi_writel(struct nxp_xspi *x, u32 val, u32 addr)
 {
@@ -66,7 +67,7 @@ static struct nxp_xspi_devtype_data imx943_data = {
 	.rxfifo = SZ_512,	/* RX fifo Size*/
 	.rx_buf_size = 64 * 4, /* RBDR buffer size */
 	.txfifo = SZ_1K,
-	.ahb_buf_size = SZ_1K,
+	.ahb_buf_size = SZ_4K,
 	.quirks = 0,
 	.little_endian = true,
 };
@@ -222,10 +223,13 @@ static void nxp_xspi_enable_ddr(struct nxp_xspi *x)
 
 static int nxp_xspi_set_speed(struct udevice *bus, uint speed)
 {
-	printf("nxp_xspi_set_speed %u\n", speed);
 #if CONFIG_IS_ENABLED(CLK)
 	struct nxp_xspi *x = dev_get_priv(bus);
 	int ret;
+
+	/* Only allow EENV 0 to set speed */
+	if (x->config.env > 0)
+		return 0;
 
 	nxp_xspi_clk_disable_unprep(x);
 
@@ -361,7 +365,18 @@ static int xspi_update_lut(struct nxp_xspi *x, u32 seq_index, const u32 *lut_bas
 	return 0;
 }
 
-static void nxp_xspi_prepare_lut(struct nxp_xspi *x,
+/* User need to override the implementation when using EENV1-4 */
+int __weak xspi_install_lut_seqid(u32 *install_lut, u32 lut_num)
+{
+	return -EINVAL;
+}
+
+u32 __weak xspi_adjust_cmd_sfar(u32 sfar_addr)
+{
+	return sfar_addr;
+}
+
+static int nxp_xspi_prepare_lut(struct nxp_xspi *x,
 				 const struct spi_mem_op *op)
 {
 	u32 lutval[5] = {0};
@@ -412,11 +427,24 @@ static void nxp_xspi_prepare_lut(struct nxp_xspi *x,
 #ifdef DEBUG
 	print_buffer(0, lutval, 4, lutidx / 2 + 1, 4);
 #endif
-	xspi_update_lut(x, CMD_LUT_FOR_IP_CMD, lutval, 1);
 
-	if (op->data.nbytes && (op->data.dir == SPI_MEM_DATA_IN || op->data.dir == SPI_MEM_DATA_OUT) &&
-		op->addr.nbytes)
-		xspi_update_lut(x, CMD_LUT_FOR_AHB_CMD, lutval, 1);
+	if (x->config.env > 0) {
+		x->ipcmd_seq_id = xspi_install_lut_seqid(lutval, 5);
+		if (x->ipcmd_seq_id < 0) {
+			printf("Can't find prepared LUT %d\n", x->ipcmd_seq_id);
+			print_buffer(0, lutval, 4, lutidx / 2 + 1, 4);
+			return -EPERM;
+		}
+	} else {
+		xspi_update_lut(x, CMD_LUT_FOR_IP_CMD, lutval, 1);
+		x->ipcmd_seq_id = CMD_LUT_FOR_IP_CMD;
+
+		if (op->data.nbytes && (op->data.dir == SPI_MEM_DATA_IN || op->data.dir == SPI_MEM_DATA_OUT) &&
+			op->addr.nbytes)
+			xspi_update_lut(x, CMD_LUT_FOR_AHB_CMD, lutval, 1);
+	}
+
+	return 0;
 }
 
 static void nxp_xspi_read_ahb(struct nxp_xspi *x, const struct spi_mem_op *op)
@@ -427,7 +455,7 @@ static void nxp_xspi_read_ahb(struct nxp_xspi *x, const struct spi_mem_op *op)
 	memcpy_fromio(op->data.buf.in, (void*)(uintptr_t)(x->ahb_addr + op->addr.val), len);
 }
 
-static void nxp_xspi_fill_txfifo(struct nxp_xspi *x,
+static int nxp_xspi_fill_txfifo(struct nxp_xspi *x,
 				 const struct spi_mem_op *op)
 {
 	const u8 *buf = (u8 *)op->data.buf.out;
@@ -444,10 +472,24 @@ static void nxp_xspi_fill_txfifo(struct nxp_xspi *x,
 	xspi_writel_offset(x, x->config.env, reg, TBCT);
 
 	reg = x->ahb_addr + op->addr.val;
+	if (x->config.env > 0) {
+
+		if (!op->addr.nbytes && !op->addr.val) {
+			/* pure command, no address */
+			/* Check if reg is in protection, use non-protection address instead */
+			reg = xspi_adjust_cmd_sfar(reg);
+		} else {
+			val = xspi_adjust_cmd_sfar(reg);
+			if (val != reg) {
+				dev_err(x->dev, "Address 0x%x in read only region\n", reg);
+				return -EPERM;
+			}
+		}
+	}
 	xspi_writel_offset(x, x->config.env, reg, SFP_TG_SFAR);
 
 	udelay(2);
-	reg = XSPI_SFP_TG_IPCR_SEQID(CMD_LUT_FOR_IP_CMD) | XSPI_SFP_TG_IPCR_IDATSZ(op->data.nbytes);
+	reg = XSPI_SFP_TG_IPCR_SEQID(x->ipcmd_seq_id & 0xff) | XSPI_SFP_TG_IPCR_IDATSZ(op->data.nbytes);
 	u64 start = timer_get_us();
 	xspi_writel_offset(x, x->config.env, reg, SFP_TG_IPCR);
 
@@ -480,84 +522,17 @@ static void nxp_xspi_fill_txfifo(struct nxp_xspi *x,
 		dev_dbg(x->dev, "Fail to write data. tx_size = %u, trctr = %u.\n", op->data.nbytes, trctr * 4);
 
 	dev_dbg(x->dev ,"tx data size: %u bytes, spend: %llu us\r\n", op->data.nbytes, timer_get_us() - start);
+
+	return ret;
 }
 
-static void nxp_xspi_read_rxfifo(struct nxp_xspi *x,
+static int nxp_xspi_read_rxfifo(struct nxp_xspi *x,
 				 const struct spi_mem_op *op)
 {
 	u32 reg;
 	int ret, i;
 	u32 val;
-#if 0
-	int xfer_remaining_size = op->data.nbytes;
-	/* half rx buffer size */
-	const u32 burst_rx_size = x->devtype_data->rx_buf_size / 2;
 
-	u32 *buf = (u32 *)op->data.buf.in;
-
-	reg = XSPI_RBCT_WMRK(x->devtype_data->rx_buf_size / 4 / 2 - 1);
-	xspi_writel_offset(x, x->config.env, reg, RBCT);
-
-	/* clear the TX FIFO. */
-	xspi_set_reg_field(x, x->config.env, 1, MCR, CLR_RXF);
-	ret = xspi_readl_poll_tout(x, x->config.env, XSPI_MCR, XSPI_MCR_CLR_RXF_MASK, 1, POLL_TOUT, false);
-	WARN_ON(ret);
-
-	xspi_writel_offset(x, x->config.env,  x->ahb_addr + op->addr.val, SFP_TG_SFAR);
-	reg = XSPI_SFP_TG_IPCR_SEQID(CMD_LUT_FOR_IP_CMD) | XSPI_SFP_TG_IPCR_IDATSZ(ALIGN(op->data.nbytes, 2));
-	u64 start = timer_get_us();
-	xspi_writel_offset(x, x->config.env, reg, SFP_TG_IPCR);
-
-	while(xfer_remaining_size >= burst_rx_size) {
-		while(4U * xspi_get_reg_field(x, x->config.env, RBSR, RDBFL) < burst_rx_size)
-			udelay(1);
-
-		if (xspi_get_reg_field(x, x->config.env, FR, RBDF)) {
-			for (i = 0; i < burst_rx_size; i += 4)
-				*buf++ = xspi_readl(x, x->iobase + (x->config.env * ENV_ADDR_SIZE) + XSPI_RBDR + i);
-			xfer_remaining_size -= burst_rx_size;
-			xspi_set_reg_field(x, x->config.env, 1, FR, RBDF);
-		} else {
-			if (!xspi_get_reg_field(x, x->config.env, FR, RBDF) &&
-				!xspi_get_reg_field(x, x->config.env, SR, BUSY))
-				break;
-		}
-	}
-
-	/* Wait for controller being ready. */
-	ret = xspi_readl_poll_tout(x, x->config.env, XSPI_SR, XSPI_SR_BUSY_MASK, 1, POLL_TOUT, false);
-	WARN_ON(ret);
-
-	if (xfer_remaining_size >= burst_rx_size ||
-		xspi_readl_offset(x, 0, FR) & (XSPI_FR_ILLINE_MASK | XSPI_FR_RBOF_MASK) ) {
-		dev_dbg(x->dev ,"%s:%d error ...\r\n", __func__, __LINE__);
-		return;
-	}
-
-	if (xfer_remaining_size > 0) {
-		u32 fifo_size = 4U * xspi_get_reg_field(x, x->config.env, RBSR, RDBFL);
-		i = 0;
-
-		if (fifo_size >= xfer_remaining_size) {
-			while (xfer_remaining_size >= 4) {
-				*buf++ = xspi_readl(x, x->iobase + (x->config.env * ENV_ADDR_SIZE) + XSPI_RBDR + i++ * 4);
-				xfer_remaining_size -= 4;
-			}
-			if (xfer_remaining_size > 0) {
-				u32 val = xspi_readl(x, x->iobase + (x->config.env * ENV_ADDR_SIZE) + XSPI_RBDR + i * 4);
-				u8 *src = (u8*)&val;
-				u8 *dst = (u8*)buf;
-				for (u32 index = 0; index < xfer_remaining_size; index++)
-					*dst++ = *src++;
-			}
-			xfer_remaining_size = 0;
-		} else {
-			dev_dbg(x->dev ,"%s:%d error ...\r\n", __func__, __LINE__);
-			return;
-		}
-	}
-
-#else
 	u8 *buf = op->data.buf.in;
 
 	reg = XSPI_RBCT_WMRK(x->devtype_data->rx_buf_size / 4 - 1);
@@ -569,7 +544,7 @@ static void nxp_xspi_read_rxfifo(struct nxp_xspi *x,
 	WARN_ON(ret);
 
 	xspi_writel_offset(x, x->config.env,  x->ahb_addr + op->addr.val, SFP_TG_SFAR);
-	reg = XSPI_SFP_TG_IPCR_SEQID(CMD_LUT_FOR_IP_CMD) | XSPI_SFP_TG_IPCR_IDATSZ(op->data.nbytes);
+	reg = XSPI_SFP_TG_IPCR_SEQID(x->ipcmd_seq_id & 0xff) | XSPI_SFP_TG_IPCR_IDATSZ(op->data.nbytes);
 	u64 start = timer_get_us();
 	xspi_writel_offset(x, x->config.env, reg, SFP_TG_IPCR);
 
@@ -577,15 +552,20 @@ static void nxp_xspi_read_rxfifo(struct nxp_xspi *x,
 	WARN_ON(ret);
 
 	for (i = 0; i < ALIGN_DOWN(op->data.nbytes, 4); i += 4) {
-		val = xspi_readl(x, x->iobase + (x->config.env * ENV_ADDR_SIZE) + XSPI_RBDR + i);
+		if (i == x->devtype_data->rx_buf_size) {
+			reg = xspi_readl_offset(x, x->config.env, FR);
+			reg |= XSPI_FR_RBDF_MASK;
+			xspi_writel_offset(x, x->config.env, reg, FR);
+		}
+		val = xspi_readl(x, x->iobase + (x->config.env * ENV_ADDR_SIZE) + XSPI_RBDR + (i % x->devtype_data->rx_buf_size));
 		memcpy(buf + i, &val, 4);
+
 	}
 
 	if (i < op->data.nbytes) {
-		val = xspi_readl(x, x->iobase + (x->config.env * ENV_ADDR_SIZE) + XSPI_RBDR + i);
+		val = xspi_readl(x, x->iobase + (x->config.env * ENV_ADDR_SIZE) + XSPI_RBDR + (i % x->devtype_data->rx_buf_size));
 		memcpy(buf + i, &val, op->data.nbytes - i);
 	}
-#endif
 
 	/* clear the RX FIFO. */
 	xspi_set_reg_field(x, x->config.env, 1, MCR, CLR_RXF);
@@ -593,22 +573,39 @@ static void nxp_xspi_read_rxfifo(struct nxp_xspi *x,
 	WARN_ON(ret);
 
 	dev_dbg(x->dev ,"rx data size: %u bytes, spend: %llu us\r\n", op->data.nbytes, timer_get_us() - start);
+
+	return ret;
 }
 
 static int nxp_xspi_xfer_cmd(struct nxp_xspi *x, const struct spi_mem_op *op)
 {
-	u32 reg;
+	u32 reg, val;
 	int ret;
 
-	xspi_writel_offset(x, x->config.env, x->ahb_addr + op->addr.val, SFP_TG_SFAR);
-	reg = XSPI_SFP_TG_IPCR_SEQID(CMD_LUT_FOR_IP_CMD) | XSPI_SFP_TG_IPCR_IDATSZ(op->data.nbytes);
+	reg = x->ahb_addr + op->addr.val;
+	if (x->config.env > 0) {
+		if (!op->addr.nbytes && !op->addr.val) {
+			/* pure command, no address */
+			/* Check if reg is in protection, use non-protection address instead */
+			reg = xspi_adjust_cmd_sfar(reg);
+		} else {
+			val = xspi_adjust_cmd_sfar(reg);
+			if (val != reg) {
+				dev_err(x->dev, "Address 0x%x in read only region\n", reg);
+				return -EPERM;
+			}
+		}
+	}
+
+	xspi_writel_offset(x, x->config.env, reg, SFP_TG_SFAR);
+	reg = XSPI_SFP_TG_IPCR_SEQID(x->ipcmd_seq_id & 0xff) | XSPI_SFP_TG_IPCR_IDATSZ(op->data.nbytes);
 	xspi_writel_offset(x, x->config.env, reg, SFP_TG_IPCR);
 
 	/* Wait for controller being ready. */
 	ret = xspi_readl_poll_tout(x, x->config.env, XSPI_SR, XSPI_SR_BUSY_MASK, 1, POLL_TOUT, false);
 	WARN_ON(ret);
 
-	return 0;
+	return ret;
 }
 
 static void nxp_xspi_select_mem(struct nxp_xspi *xspi,
@@ -616,7 +613,8 @@ static void nxp_xspi_select_mem(struct nxp_xspi *xspi,
 {
 	unsigned long rate = slave->max_hz;
 
-	if (xspi->dtr == op->cmd.dtr)
+	if (xspi->selected == spi_chip_select(slave->dev) &&
+		xspi->dtr == op->cmd.dtr)
 		return;
 
 	if (!op->cmd.dtr) {
@@ -644,6 +642,8 @@ static void nxp_xspi_select_mem(struct nxp_xspi *xspi,
 		return;
 #endif
 
+	xspi->selected = spi_chip_select(slave->dev);
+
 	if (!op->cmd.dtr || rate < MHZ(60))
 		nxp_xspi_dll_bypass(xspi);
 	else
@@ -670,15 +670,19 @@ static int nxp_xspi_exec_op(struct spi_slave *slave,
 	dev_dbg(bus, "op->data.buswidth = %u,op->data.nbytes = %u,op->data.dtr = %u,op->data.dir = %u,op->data.buf = 0x%llx,\r\n",
 		op->data.buswidth, op->data.nbytes, op->data.dtr, op->data.dir, (u64)op->data.buf.in);
 
-	nxp_xspi_select_mem(x, slave, op);
+	if (x->config.env == 0)
+		nxp_xspi_select_mem(x, slave, op);
 
-	nxp_xspi_prepare_lut(x, op);
+	err = nxp_xspi_prepare_lut(x, op);
+	if (err)
+		return err;
 	/*
 	 * If we have large chunks of data, we read them through the AHB bus by
 	 * accessing the mapped memory. In all other cases we use IP commands
 	 * to access the flash. Read via AHB bus may be corrupted due to
 	 * existence of an errata and therefore discard AHB read in such cases.
 	 */
+	/* Only limit AHB access to EENV0, because BFGENCR is only configurable for EENV0 */
 	if (op->data.nbytes > (x->config.gmid ? x->devtype_data->rxfifo : DEFAULT_XMIT_SIZE) &&
 	    op->data.dir == SPI_MEM_DATA_IN) {
 		dev_dbg(bus, "ahb read\n");
@@ -693,13 +697,13 @@ static int nxp_xspi_exec_op(struct spi_slave *slave,
 
 		if (op->data.nbytes) {
 			if (op->data.dir == SPI_MEM_DATA_OUT)
-				nxp_xspi_fill_txfifo(x, op);
+				err = nxp_xspi_fill_txfifo(x, op);
 			else if (op->data.dir == SPI_MEM_DATA_IN)
-				nxp_xspi_read_rxfifo(x, op);
+				err = nxp_xspi_read_rxfifo(x, op);
 			else
 				dev_dbg(x->dev ,"%d: never should happen\r\n", __LINE__);
 		} else
-			nxp_xspi_xfer_cmd(x, op);
+			err = nxp_xspi_xfer_cmd(x, op);
 	}
 
 #ifdef DEBUG
@@ -786,7 +790,7 @@ static int nxp_xspi_config_ahb_buffers(struct nxp_xspi *x)
 	xspi_writel_offset(x, 0, reg, BUF2CR);
 
 	reg = XSPI_BUF3CR_MSTRID(0x6) | XSPI_BUF3CR_ALLMST_MASK;
-	reg |= XSPI_BUF3CR_ADATSZ((x->config.gmid ? 1024UL : DEFAULT_XMIT_SIZE) / 8U);
+	reg |= XSPI_BUF3CR_ADATSZ(x->devtype_data->ahb_buf_size / 8U);
 	xspi_writel_offset(x, 0, reg, BUF3CR);
 
 	/* Only the buffer3 is used */
@@ -853,10 +857,10 @@ static int nxp_xspi_default_setup(struct nxp_xspi *x)
 		xspi_writel_offset(x, 0, reg, MGC);
 
 		xspi_writel_offset(x, 0, GENMASK(31, 0), MTO);
-	} else {
-		nxp_xspi_config_mdad(x);
-		nxp_xspi_config_frad(x);
 	}
+
+	nxp_xspi_config_mdad(x);
+	nxp_xspi_config_frad(x);
 
 	xspi_set_reg_field(x, 0, 0, MCR, MDIS);
 
@@ -901,6 +905,8 @@ static int nxp_xspi_default_setup(struct nxp_xspi *x)
 
 	xspi_swreset(x);
 
+	x->selected = -1;
+
 	return ret;
 };
 
@@ -911,6 +917,10 @@ static int nxp_xspi_probe(struct udevice *bus)
 
 	x->devtype_data =
 		(struct nxp_xspi_devtype_data *)dev_get_driver_data(bus);
+
+	/* Only setup for env 0*/
+	if (x->config.env > 0)
+		return 0;
 
 	ret = nxp_xspi_default_setup(x);
 	if (ret)

@@ -232,6 +232,11 @@ typedef struct {
  *   androidboot.vbmeta.{hash_alg, size, digest}: Will be set to
  *   the digest of all images in |vbmeta_images|.
  *
+ *   androidboot.vbmeta.public_key_digest: Will be set to the SHA-256
+ *   digest of the public key used to verify the vbmeta partition (or
+ *   boot partition if there is no vbmeta partition). If the flag
+ *   AVB_SLOT_VERIFY_FLAGS_NO_VBMETA_PARTITION is used, this is not set.
+ *
  *   androidboot.vbmeta.device: This is set to the value
  *   PARTUUID=$(ANDROID_VBMETA_PARTUUID) before substitution so it
  *   will end up pointing to the vbmeta partition for the verified

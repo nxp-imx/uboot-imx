@@ -85,9 +85,9 @@ int trusty_write_permanent_attributes(uint8_t *attributes, uint32_t size);
  * of trusty_err.
  *
  * @publickey:   caller allocated buffer
- * @size:        size of |publickey|
+ * @size:        size of |publickey| as input, return actual public key size on success.
  */
-int trusty_read_vbmeta_public_key(uint8_t *publickey, uint32_t size);
+int trusty_read_vbmeta_public_key(uint8_t *publickey, uint32_t *size);
 /*
  * Send request to secure side to write vbmeta public key. Public key
  * can only be written to storage once.

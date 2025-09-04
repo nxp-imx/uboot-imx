@@ -4,6 +4,7 @@
  */
 
 #include <env.h>
+#include <efi_loader.h>
 #include <init.h>
 #include <fdt_support.h>
 #include <asm/arch/clock.h>
@@ -23,6 +24,26 @@
 #include <dm/uclass-internal.h>
 
 extern int board_fix_fdt_fuse(void *fdt);
+
+#if CONFIG_IS_ENABLED(EFI_HAVE_CAPSULE_SUPPORT)
+#define IMX_BOOT_IMAGE_GUID \
+	EFI_GUID(0x2c4db6b3, 0x0b15, 0x4a36, 0xbe, 0xae, \
+		 0x1e, 0xa1, 0x35, 0x46, 0x4f, 0x5b)
+
+struct efi_fw_image fw_images[] = {
+	{
+		.image_type_id = IMX_BOOT_IMAGE_GUID,
+		.fw_name = u"IMX95-EVK-RAW",
+		.image_index = 1,
+	},
+};
+
+struct efi_capsule_update_info update_info = {
+	.dfu_string = "mmc 0=flash-bin raw 0 0x2000 mmcpart 1",
+	.num_images = ARRAY_SIZE(fw_images),
+	.images = fw_images,
+};
+#endif /* EFI_HAVE_CAPSULE_SUPPORT */
 
 int board_early_init_f(void)
 {
@@ -513,13 +534,6 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 }
 #endif
 
-int board_phys_sdram_size(phys_size_t *size)
-{
-	*size = PHYS_SDRAM_SIZE + PHYS_SDRAM_2_SIZE;
-
-	return 0;
-}
-
 void board_quiesce_devices(void)
 {
 	int ret;
@@ -594,37 +608,6 @@ static int board_fix_15x15_evk(void *fdt)
 }
 
 #else
-
-static int imx9_scmi_misc_cfginfo(u32 *msel, char *cfgname)
-{
-	struct scmi_cfg_info_out out;
-	struct scmi_msg msg = {
-		.protocol_id = SCMI_PROTOCOL_ID_IMX_MISC,
-		.message_id = SCMI_MISC_CFG_INFO,
-		.in_msg = (u8 *)NULL,
-		.in_msg_sz = 0,
-		.out_msg = (u8 *)&out,
-		.out_msg_sz = sizeof(out),
-	};
-	int ret;
-	struct udevice *dev;
-
-	ret = uclass_get_device_by_name(UCLASS_CLK, "protocol@14", &dev);
-	if (ret)
-		return ret;
-
-	ret = devm_scmi_process_msg(dev, &msg);
-	if(ret == 0 && out.status == 0) {
-		strcpy(cfgname, (const char *)out.cfgname);
-	} else {
-		printf("Failed to get cfg name, scmi_err = %d\n",
-		       out.status);
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
 static void disable_fdt_resources(void *fdt)
 {
 	int i = 0;
@@ -658,7 +641,7 @@ static int board_fix_19x19_evk(void *fdt)
 	int ret;
 	const char *netcfg = "mx95netc";
 
-	ret = imx9_scmi_misc_cfginfo(&msel, cfgname);
+	ret = scmi_misc_cfginfo(&msel, cfgname);
 	if (!ret) {
 		debug("SM: %s\n", cfgname);
 		if (!strcmp(netcfg, cfgname))
@@ -673,7 +656,7 @@ int board_fix_fdt(void *fdt)
 {
 	/* Remove nodes based on fuses. */
 	board_fix_fdt_fuse(fdt);
-	
+
 #if IS_ENABLED(CONFIG_TARGET_IMX95_15X15_EVK)
 	return board_fix_15x15_evk(fdt);
 #else

@@ -13,6 +13,7 @@
 #include <asm/mach-imx/optee.h>
 #include <asm/mach-imx/ele_api.h>
 #include <asm/setup.h>
+#include <asm/system.h>
 #include <dm/uclass.h>
 #include <dm/device.h>
 #include <env_internal.h>
@@ -27,6 +28,7 @@
 #include <linux/bitfield.h>
 #include "common.h"
 #include <fdt_support.h>
+#include <time.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -35,7 +37,7 @@ static rom_passover_t rom_passover_data = {0};
 uint32_t scmi_get_rom_data(rom_passover_t *rom_data)
 {
 	/* Read ROM passover data */
-	struct scmi_rom_passover_get_out out;
+	struct scmi_rom_passover_get_out out = {};
 	struct scmi_msg msg = {
 		.protocol_id = SCMI_PROTOCOL_ID_IMX_MISC,
 		.message_id = SCMI_MISC_ROM_PASSOVER_GET,
@@ -57,6 +59,126 @@ uint32_t scmi_get_rom_data(rom_passover_t *rom_data)
 	} else {
 		printf("Failed to get ROM passover data, scmi_err = %d, size_of(out) = %ld\n",
 		       out.status, sizeof(out));
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+int scmi_set_bbnsm_gpr(u32 gpr_id, u32 val)
+{
+	struct scmi_bbm_gpr_in in;
+	s32 status = 0;
+	struct scmi_msg msg = {
+		.protocol_id = SCMI_PROTOCOL_ID_IMX_BBM,
+		.message_id = SCMI_BBM_GPR_SET,
+		.in_msg = (u8 *)&in,
+		.in_msg_sz = sizeof(in),
+		.out_msg = (u8 *)&status,
+		.out_msg_sz = sizeof(status),
+	};
+	int ret;
+	struct udevice *dev;
+
+	in.index = gpr_id;
+	in.value = val;
+
+	ret = uclass_get_device_by_name(UCLASS_CLK, "protocol@14", &dev);
+	if (ret)
+		return ret;
+
+	ret = devm_scmi_process_msg(dev, &msg);
+	if (ret != 0 || status != 0) {
+		printf("Failed to set bbnsm GPR, scmi_err = %d\n", status);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+int scmi_get_bbnsm_gpr(u32 gpr_id, u32 *val)
+{
+	struct scmi_bbm_gpr_out out = {};
+	u32 in = gpr_id;
+	struct scmi_msg msg = {
+		.protocol_id = SCMI_PROTOCOL_ID_IMX_BBM,
+		.message_id = SCMI_BBM_GPR_GET,
+		.in_msg = (u8 *)&in,
+		.in_msg_sz = sizeof(in),
+		.out_msg = (u8 *)&out,
+		.out_msg_sz = sizeof(out),
+	};
+	int ret;
+	struct udevice *dev;
+
+	ret = uclass_get_device_by_name(UCLASS_CLK, "protocol@14", &dev);
+	if (ret)
+		return ret;
+
+	ret = devm_scmi_process_msg(dev, &msg);
+	if (ret != 0 || out.status != 0) {
+		printf("Failed to get bbnsm GPR, scmi_err = %d\n", out.status);
+		return -EINVAL;
+	}
+
+	*val = out.value;
+
+	return 0;
+}
+
+int scmi_misc_cfginfo(u32 *msel, char *cfgname)
+{
+	struct scmi_cfg_info_out out = {};
+	struct scmi_msg msg = {
+		.protocol_id = SCMI_PROTOCOL_ID_IMX_MISC,
+		.message_id = SCMI_MISC_CFG_INFO,
+		.in_msg = (u8 *)NULL,
+		.in_msg_sz = 0,
+		.out_msg = (u8 *)&out,
+		.out_msg_sz = sizeof(out),
+	};
+	int ret;
+	struct udevice *dev;
+
+	ret = uclass_get_device_by_name(UCLASS_CLK, "protocol@14", &dev);
+	if (ret)
+		return ret;
+
+	ret = devm_scmi_process_msg(dev, &msg);
+	if(ret == 0 && out.status == 0) {
+		strcpy(cfgname, (const char *)out.cfgname);
+	} else {
+		printf("Failed to get cfg name, scmi_err = %d\n",
+		       out.status);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+int scmi_misc_ddrinfo(u32 ddrc_id, struct scmi_ddr_info_out *out)
+{
+	u32 in = ddrc_id;
+	struct scmi_msg msg = {
+		.protocol_id = SCMI_PROTOCOL_ID_IMX_MISC,
+		.message_id = SCMI_MISC_DDR_INFO_GET,
+		.in_msg = (u8 *)&in,
+		.in_msg_sz = sizeof(in),
+		.out_msg = (u8 *)out,
+		.out_msg_sz = sizeof(*out),
+	};
+	int ret;
+	struct udevice *dev;
+
+	memset(out, 0, sizeof(*out));
+	ret = uclass_get_device_by_name(UCLASS_CLK, "protocol@14", &dev);
+	if (ret)
+		return ret;
+
+	ret = devm_scmi_process_msg(dev, &msg);
+	if (ret != 0 || out->status != 0) {
+		printf("Failed to get ddr cfg, scmi_err = %d\n",
+		       out->status);
 		return -EINVAL;
 	}
 
@@ -194,8 +316,9 @@ u32 get_cpu_temp_grade(int *minc, int *maxc)
 			*minc = -40;
 			*maxc = 105;
 		} else if (val == TEMP_EXTCOMMERCIAL) {
-			*minc = -20;
-			*maxc = 105;
+			/* Map to Ext industrial */
+			*minc = -40;
+			*maxc = 125;
 		} else {
 			*minc = 0;
 			*maxc = 95;
@@ -284,6 +407,7 @@ static struct mm_region imx9_mem_map[] = {
 			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
 	},
 #endif
+#if IS_ENABLED(CONFIG_XPL_BUILD)
 	{
 		/* OCRAM */
 		.virt = 0x20480000UL,
@@ -291,7 +415,9 @@ static struct mm_region imx9_mem_map[] = {
 		.size = 0xA0000UL,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
 			 PTE_BLOCK_OUTER_SHARE
-	}, {
+	},
+#endif
+	{
 		/* AIPS */
 		.virt = 0x40000000UL,
 		.phys = 0x40000000UL,
@@ -324,6 +450,15 @@ static struct mm_region imx9_mem_map[] = {
 		.virt = 0x100000000UL,
 		.phys = 0x100000000UL,
 		.size = PHYS_SDRAM_2_SIZE,
+		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
+			 PTE_BLOCK_OUTER_SHARE
+	}, {
+#endif
+#if defined(CFG_SYS_SECURE_SDRAM_SIZE) && IS_ENABLED(CONFIG_XPL_BUILD)
+		/* DRAM2 */
+		.virt = CFG_SYS_SECURE_SDRAM_BASE,
+		.phys = CFG_SYS_SECURE_SDRAM_BASE,
+		.size = CFG_SYS_SECURE_SDRAM_SIZE,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
 			 PTE_BLOCK_OUTER_SHARE
 	}, {
@@ -380,27 +515,74 @@ void enable_caches(void)
 	dcache_enable();
 }
 
+/*
+ * Initialize the MMU and activate cache in SPL stage
+ */
+static void spl_enable_caches(void)
+{
+	u64 pgtable_size;
+
+	if (!IS_ENABLED(CONFIG_XPL_BUILD))
+		return;
+
+	if (CONFIG_IS_ENABLED(SYS_ICACHE_OFF) || CONFIG_IS_ENABLED(SYS_DCACHE_OFF))
+		return;
+
+	pgtable_size = PGTABLE_SIZE;
+	if (pgtable_size > SZ_2M) /* Only first 2MB avaliable for SPL */
+		return;
+
+	gd->arch.tlb_size = pgtable_size;
+	gd->arch.tlb_addr = (unsigned long)CFG_SYS_SECURE_SDRAM_BASE;
+
+	dcache_enable();
+}
+
+void spl_board_prepare_for_boot(void)
+{
+	dcache_disable();
+}
+
 __weak int board_phys_sdram_size(phys_size_t *size)
 {
+	struct scmi_ddr_info_out ddr_info;
+	int ret;
+	u32 ddrc_id = 0, ddrc_num = 1;
 	phys_size_t start, end;
-	phys_size_t val;
 
 	if (!size)
 		return -EINVAL;
 
-	val = readl(REG_DDR_CS0_BNDS);
-	start = (val >> 16) << 24;
-	end   = (val & 0xFFFF);
-	end   = end ? end + 1 : 0;
-	end   = end << 24;
-	*size = end - start;
+	*size = 0;
+	do {
+		ret = scmi_misc_ddrinfo(ddrc_id++, &ddr_info);
+		if (ret) {
+			/* if get DDR info failed, fall to default config */
+			*size = PHYS_SDRAM_SIZE;
+#ifdef PHYS_SDRAM_2_SIZE
+			*size += PHYS_SDRAM_2_SIZE;
+#endif
+			return 0;
+		} else {
+			ddrc_num = ((ddr_info.attributes >> 16) & 0x3);
+			start = ddr_info.starthigh;
+			start <<= 32;
+			start += ddr_info.startlow;
 
-	val = readl(REG_DDR_CS1_BNDS);
-	start = (val >> 16) << 24;
-	end   = (val & 0xFFFF);
-	end   = end ? end + 1 : 0;
-	end   = end << 24;
-	*size += end - start;
+			end = ddr_info.endhigh;
+			end <<= 32;
+			end += ddr_info.endlow;
+
+			*size += end + 1 - start;
+
+			debug("ddr info attr 0x%x, start 0x%x 0x%x, end 0x%x 0x%x, mts %u\n",
+				ddr_info.attributes, ddr_info.starthigh, ddr_info.startlow,
+				ddr_info.endhigh, ddr_info.endlow, ddr_info.mts);
+		}
+	} while (ddrc_id < ddrc_num);
+
+	/* SM reports total DDR size, need remove secure memory */
+	*size -= PHYS_SDRAM - 0x80000000;
 
 	return 0;
 }
@@ -587,11 +769,36 @@ static char *rst_string[32] = {
 	"cm33_exc",
 	"bbm",
 	"sw",
-	"unused", "unused", "unused", "unused", "unused", "unused",
+	"sm_err", "fusa_sreco", "pmic", "unused", "unused", "unused",
 	"unused", "unused", "unused", "unused", "unused", "unused",
 	"unused", "unused",
 	"por"
 };
+
+static char *rst_string_imx94[32] = {
+	"cm33_lockup",
+	"cm33_swreq",
+	"cm70_lockup",
+	"cm70_swreq",
+	"fccu",
+	"jtag_sw",
+	"ele",
+	"tempsense",
+	"wdog1",
+	"wdog2",
+	"wdog3",
+	"wdog4",
+	"wdog5",
+	"jtag",
+	"wdog6",
+	"wdog7",
+	"wdog8",
+	"wo_netc", "cm33s_lockup", "cm33s_swreq", "cm71_lockup", "cm71_swreq", "cm33_exc",
+	"bbm", "sw", "sm_err", "fusa_sreco", "pmic", "unused",
+	"unused", "unused",
+	"por"
+};
+
 
 int get_reset_reason(bool sys, bool lm)
 {
@@ -611,6 +818,12 @@ int get_reset_reason(bool sys, bool lm)
 	int ret;
 
 	struct udevice *dev;
+	char **rst;
+
+	if (is_imx94())
+		rst = rst_string_imx94;
+	else
+		rst = rst_string;
 
 	ret = uclass_get_device_by_name(UCLASS_CLK, "protocol@14", &dev);
 	if (ret)
@@ -625,7 +838,7 @@ int get_reset_reason(bool sys, bool lm)
 
 		if (out.bootflags & MISC_BOOT_FLAG_VLD) {
 			printf("SYS Boot reason: %s, origin: %ld, errid: %ld\n",
-			       rst_string[out.bootflags & MISC_BOOT_FLAG_REASON],
+			       rst[out.bootflags & MISC_BOOT_FLAG_REASON],
 			       out.bootflags & MISC_BOOT_FLAG_ORG_VLD ?
 			       FIELD_GET(MISC_BOOT_FLAG_ORIGIN, out.bootflags) : -1,
 			       out.bootflags & MISC_BOOT_FLAG_ERR_VLD ?
@@ -634,7 +847,7 @@ int get_reset_reason(bool sys, bool lm)
 		}
 		if (out.bootflags & MISC_SHUTDOWN_FLAG_VLD) {
 			printf("SYS shutdown reason: %s, origin: %ld, errid: %ld\n",
-			       rst_string[out.bootflags & MISC_SHUTDOWN_FLAG_REASON],
+			       rst[out.bootflags & MISC_SHUTDOWN_FLAG_REASON],
 			       out.bootflags & MISC_SHUTDOWN_FLAG_ORG_VLD ?
 			       FIELD_GET(MISC_SHUTDOWN_FLAG_ORIGIN, out.bootflags) : -1,
 			       out.bootflags & MISC_SHUTDOWN_FLAG_ERR_VLD ?
@@ -655,7 +868,7 @@ int get_reset_reason(bool sys, bool lm)
 
 		if (out.bootflags & MISC_BOOT_FLAG_VLD) {
 			printf("LM Boot reason: %s, origin: %ld, errid: %ld\n",
-			       rst_string[out.bootflags & MISC_BOOT_FLAG_REASON],
+			       rst[out.bootflags & MISC_BOOT_FLAG_REASON],
 			       out.bootflags & MISC_BOOT_FLAG_ORG_VLD ?
 			       FIELD_GET(MISC_BOOT_FLAG_ORIGIN, out.bootflags) : -1,
 			       out.bootflags & MISC_BOOT_FLAG_ERR_VLD ?
@@ -665,7 +878,7 @@ int get_reset_reason(bool sys, bool lm)
 
 		if (out.bootflags & MISC_SHUTDOWN_FLAG_VLD) {
 			printf("LM shutdown reason: %s, origin: %ld, errid: %ld\n",
-			       rst_string[out.bootflags & MISC_SHUTDOWN_FLAG_REASON],
+			       rst[out.bootflags & MISC_SHUTDOWN_FLAG_REASON],
 			       out.bootflags & MISC_SHUTDOWN_FLAG_ORG_VLD ?
 			       FIELD_GET(MISC_SHUTDOWN_FLAG_ORIGIN, out.bootflags) : -1,
 			       out.bootflags & MISC_SHUTDOWN_FLAG_ERR_VLD ?
@@ -786,10 +999,7 @@ int print_cpuinfo(void)
 		puts("Industrial temperature grade ");
 		break;
 	case TEMP_EXTCOMMERCIAL:
-		if (is_imx93())
-			puts("Extended Industrial temperature grade ");
-		else
-			puts("Extended Consumer temperature grade ");
+		puts("Extended Industrial temperature grade ");
 		break;
 	default:
 		puts("Consumer temperature grade ");
@@ -896,6 +1106,39 @@ static int delete_fdt_nodes(void *blob, const char *const nodes_path[], int size
 			       nodes_path[i], fdt_strerror(rc));
 		} else {
 			printf("Delete node %s\n", nodes_path[i]);
+		}
+	}
+
+	return 0;
+}
+
+static int disable_fdt_nodes(void *blob, const char *const nodes_path[], int size_array)
+{
+	int i = 0;
+	int rc;
+	int nodeoff;
+	const char *status = "disabled";
+
+	for (i = 0; i < size_array; i++) {
+		nodeoff = fdt_path_offset(blob, nodes_path[i]);
+		if (nodeoff < 0)
+			continue; /* Not found, skip it */
+
+		debug("Found %s node\n", nodes_path[i]);
+
+add_status:
+		rc = fdt_setprop(blob, nodeoff, "status", status, strlen(status) + 1);
+		if (rc) {
+			if (rc == -FDT_ERR_NOSPACE) {
+				rc = fdt_increase_size(blob, 512);
+				if (!rc)
+					goto add_status;
+			}
+			printf("Unable to update property %s:%s, err=%s\n",
+			       nodes_path[i], "status", fdt_strerror(rc));
+		} else {
+			debug("Modify %s:%s disabled\n",
+			       nodes_path[i], "status");
 		}
 	}
 
@@ -1195,9 +1438,8 @@ int disable_enet10g_node(void *blob)
 		"/soc/netc-blk-ctrl@4cde0000/pcie@4ca00000/ethernet@10,0",
 	};
 
-	return delete_fdt_nodes(blob, nodes_path_enet10g, ARRAY_SIZE(nodes_path_enet10g));
+	return disable_fdt_nodes(blob, nodes_path_enet10g, ARRAY_SIZE(nodes_path_enet10g));
 }
-
 
 int disable_mipidsi_node(void *blob)
 {
@@ -1413,6 +1655,8 @@ int arch_cpu_init(void)
 		gpio_reset(GPIO6_BASE_ADDR);
 		gpio_reset(GPIO7_BASE_ADDR);
 #endif
+
+		spl_enable_caches();
 	}
 
 	return 0;
@@ -1530,7 +1774,7 @@ int timer_init(void)
 	return 0;
 }
 
-enum env_location env_get_location(enum env_operation op, int prio)
+enum env_location arch_env_get_location(enum env_operation op, int prio)
 {
 	enum boot_device dev = get_boot_device();
 	enum env_location env_loc = ENVL_UNKNOWN;
@@ -1539,9 +1783,12 @@ enum env_location env_get_location(enum env_operation op, int prio)
 		return env_loc;
 
 	switch (dev) {
+#if IS_ENABLED(CONFIG_ENV_IS_IN_SPI_FLASH)
 	case QSPI_BOOT:
 		env_loc = ENVL_SPI_FLASH;
 		break;
+#endif
+#if IS_ENABLED(CONFIG_ENV_IS_IN_MMC)
 	case SD1_BOOT:
 	case SD2_BOOT:
 	case SD3_BOOT:
@@ -1550,6 +1797,7 @@ enum env_location env_get_location(enum env_operation op, int prio)
 	case MMC3_BOOT:
 		env_loc =  ENVL_MMC;
 		break;
+#endif
 	default:
 		env_loc = ENVL_NOWHERE;
 		break;

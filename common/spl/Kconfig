@@ -327,7 +327,7 @@ config SPL_BOOTCOUNT_LIMIT
 config SPL_RAW_IMAGE_SUPPORT
 	bool "Support SPL loading and booting of RAW images"
 	default n if ARCH_MVEBU
-	default n if ((ARCH_MX6 && (SPL_MMC || SPL_SATA)) || ARCH_IMX8 || ARCH_IMX8M)
+	default n if ((ARCH_MX6 && (SPL_MMC || SPL_SATA)) || ARCH_IMX8 || ARCH_IMX8M || ARCH_IMX8ULP || ARCH_IMX9)
 	default y
 	depends on !TI_SECURE_DEVICE
 	help
@@ -338,7 +338,7 @@ config SPL_RAW_IMAGE_SUPPORT
 config SPL_LEGACY_IMAGE_FORMAT
 	bool "Support SPL loading and booting of Legacy images"
 	default n if ARCH_MVEBU
-	default y if !SPL_LOAD_FIT
+	default y if !SPL_LOAD_FIT && !SPL_LOAD_IMX_CONTAINER
 	depends on !TI_SECURE_DEVICE
 	help
 	  SPL will support loading and booting Legacy images when this option

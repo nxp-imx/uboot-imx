@@ -927,12 +927,12 @@ int mmc_load_image_raw_sector_dual_uboot(struct spl_image_info *spl_image,
 
 		snprintf(partition_name, PARTITION_NAME_LEN,
 			 PARTITION_BOOTLOADER"%s",
-			 slot_suffix[target_slot]);
+			 slot_suffix[slot_index_to_boot]);
 
 		/* Read part info from gpt */
 		if (part_get_info_by_name(dev_desc, partition_name, &info) == -1) {
 			printf("Can't get partition info of partition bootloader%s\n",
-				slot_suffix[target_slot]);
+				slot_suffix[slot_index_to_boot]);
 			ret = -1;
 			goto end;
 		} else {
@@ -945,7 +945,7 @@ int mmc_load_image_raw_sector_dual_uboot(struct spl_image_info *spl_image,
 			/* Image loaded successfully, go to verify rollback index */
 			if (rpmbkey_is_set()) {
 				if (!ret)
-					ret = spl_verify_rbidx(mmc, &ab_data.slot_info[target_slot], spl_image);
+					ret = spl_verify_rbidx(mmc, &ab_data.slot_info[slot_index_to_boot], spl_image);
 
 				/* Copy rpmb keyslot to secure memory. */
 				if (!ret)

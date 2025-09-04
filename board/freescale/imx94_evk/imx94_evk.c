@@ -22,6 +22,7 @@
 #include <i2c.h>
 #include <dm/uclass.h>
 #include <dm/uclass-internal.h>
+#include "crrm.h"
 
 int board_early_init_f(void)
 {
@@ -247,9 +248,29 @@ static void netc_regulator_enable(const char *devname)
 	}
 }
 
+static bool is_netc_cfg(void)
+{
+	char cfgname[SCMI_MISC_MAX_CFGNAME];
+	u32 msel;
+	int ret;
+	const char *netcfg = "mx94evknetc";
+
+	ret = scmi_misc_cfginfo(&msel, cfgname);
+	if (!ret) {
+		debug("SM: %s\n", cfgname);
+		if (!strcmp(netcfg, cfgname))
+			return true;
+	}
+
+	return false;
+}
+
 void netc_init(void)
 {
 	int ret;
+
+	if (is_netc_cfg())
+		return;
 
 	/* Power up the NETC MIX. */
 	ret = imx9_scmi_power_domain_enable(IMX94_PD_NETC, true);
@@ -263,18 +284,6 @@ void netc_init(void)
 	netc_regulator_enable("regulator-gpy-stby");
 
 	pci_init();
-}
-
-static void xspi_nor_setup(void)
-{
-	/* Set MTO to max */
-	imx_clk_scmi_enable(IMX94_CLK_XSPI1, true);
-	imx_clk_scmi_enable(IMX94_CLK_XSPI2, true);
-
-	writel(0xffffffff, 0x42b90928);
-	writel(0xffffffff, 0x42be0928);
-
-	return;
 }
 
 int board_init(void)
@@ -294,9 +303,11 @@ int board_init(void)
 
 	netc_init();
 
-	xspi_nor_setup();
-
 	power_on_m7("mx94evkrpmsg");
+
+#if IS_ENABLED(CONFIG_IMX_CRRM)
+	crrm_uboot_init();
+#endif
 
 	return 0;
 }
@@ -310,11 +321,16 @@ int board_late_init(void)
 #ifdef CONFIG_AHAB_BOOT
 	env_set("sec_boot", "yes");
 #endif
+
+#if IS_ENABLED(CONFIG_IMX_CRRM)
+	crrm_uboot_late_init();
+#endif
+
 	return 0;
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
-int ft_board_setup(void *blob, struct bd_info *bd)
+static int jh_mem_fdt_setup(void *blob)
 {
 	char *p, *b, *s;
 	char *token = NULL;
@@ -352,21 +368,77 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 
 	return 0;
 }
+
+int ft_board_setup(void *blob, struct bd_info *bd)
+{
+	int ret;
+	ret = jh_mem_fdt_setup(blob);
+	if (ret) {
+		printf("jailhouse memory process fail.\n");
+		return ret;
+	}
+
+	/* Disable XSPI1 node for CRRM */
+#if IS_ENABLED(CONFIG_IMX_CRRM)
+	int nodeoff;
+	const char *status = "disabled";
+
+	nodeoff = fdt_path_offset(blob, "/soc/bus@42800000/spi@42b90000");
+	if (nodeoff > 0) {
+		ret = fdt_increase_size(blob, 256);
+		if (ret) {
+			printf("Unable to increase fdt size, err=%s\n", fdt_strerror(ret));
+			return ret;
+		}
+
+		ret = fdt_setprop(blob, nodeoff, "status", status,
+				  strlen(status) + 1);
+		if (ret) {
+			printf("Unable to disable XSPI1, err=%s\n", fdt_strerror(ret));
+			return ret;
+		}
+	}
+#endif
+
+	return 0;
+}
 #endif
 
 #if IS_ENABLED(CONFIG_OF_BOARD_FIXUP)
+static void disable_fdt_resources(void *fdt)
+{
+	int i = 0;
+	int nodeoff, ret;
+	const char *status = "disabled";
+	static const char * const dsi_nodes[] = {
+		"/soc/bus@42000000/i2c@42530000",
+		"/soc/bus@42000000/i2c@426c0000",
+		"/soc/system-controller@4ceb0000"
+	};
+
+	for (i = 0; i < ARRAY_SIZE(dsi_nodes); i++) {
+		nodeoff = fdt_path_offset(fdt, dsi_nodes[i]);
+		if (nodeoff > 0) {
+set_status:
+			ret = fdt_setprop(fdt, nodeoff, "status", status,
+					  strlen(status) + 1);
+			if (ret == -FDT_ERR_NOSPACE) {
+				ret = fdt_increase_size(fdt, 512);
+				if (!ret)
+					goto set_status;
+			}
+		}
+	}
+}
+
 int board_fix_fdt(void *fdt)
 {
+	if (is_netc_cfg())
+		disable_fdt_resources(fdt);
+
 	return 0;
 }
 #endif
-
-int board_phys_sdram_size(phys_size_t *size)
-{
-	*size = PHYS_SDRAM_SIZE + PHYS_SDRAM_2_SIZE;
-
-	return 0;
-}
 
 void board_quiesce_devices(void)
 {

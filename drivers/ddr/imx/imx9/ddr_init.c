@@ -11,6 +11,7 @@
 #include <asm/arch/sys_proto.h>
 #include <linux/delay.h>
 #include <linux/string.h>
+#include <linux/bitfield.h>
 
 static unsigned int g_cdd_rr_max[4];
 static unsigned int g_cdd_rw_max[4];
@@ -263,14 +264,70 @@ void update_umctl2_rank_space_setting(struct dram_timing_info *dram_timing, unsi
 	}
 }
 
+static u32 adjust_refint(u32 origin_refint)
+{
+	u32 ref_rate, ref_cs[2];
+	u32 new_refint = origin_refint;
+
+	ref_rate = readl(REG_DDR_SDRAM_REF_RATE);
+	ref_cs[1] = FIELD_GET(GENMASK(7, 0), ref_rate);
+	ref_cs[0] = FIELD_GET(GENMASK(15, 8), ref_rate);
+
+	/* Get the maximum reported refresh rate */
+	ref_rate = (ref_cs[0] > ref_cs[1]) ? ref_cs[0] : ref_cs[1];
+
+	/* Adjust refresh rate based on refRate value */
+	if (ref_rate == 0x4)
+		new_refint = new_refint >> 1; /* div 2 */
+	else if (ref_rate > 0x4)
+		new_refint = new_refint >> 2; /* div 4 */
+
+	return new_refint;
+}
+
 u32 ddrc_mrr(u32 chip_select, u32 mode_reg_num, u32 *mode_reg_val)
 {
-	u32 temp;
+	u32 temp, origin_refint, new_refint;
 	u8 dyn_ref_rate_en = 0;
 
 	dyn_ref_rate_en = !!(readl(REG_DDR_SDRAM_CFG_3) & BIT(7));
-	if (dyn_ref_rate_en)
+
+	/* If DYN_REF is enabled, it must first be disabled before performing
+	 * any SW initiated mode register operations.  In addition, a DYN_REF
+	 * MR4 read may already be in progress when DYN_REF is disabled as
+	 * disabling DYN_REF only prevents future MR4 reads from occurring.
+	 * To prevent an MR4 read collision with a subsequent mode register
+	 * operation, we must first clear and poll (for set)
+	 * DDR_SDRAM_MPR5[MPR_VLD] to ensure the last MR4 read has completed
+	 * and then immdeiately disable DYN_REF to prevent future MR4 reads.
+	 */
+	if (dyn_ref_rate_en) {
+		/* When DYN_REF is disabled, the DRAM refresh rate is reverted
+		 * back to nominal (1x). However, if the DRAM requires a
+		 * higher refresh rate at elevated temperatures, we need to
+		 * adjust the DDR_SDRAM_INTERVAL[REFINT] to compensate for
+		 * this while DYN_REF is disabled and then restore the
+		 * original value when re-enabling DYN_REF.
+		 * Get original REFINT to re-store later in case DYN_REF enable
+		 */
+		origin_refint = readl(REG_DDR_SDRAM_INTERVAL) >> 16;
+		new_refint = adjust_refint(origin_refint);
+
+		/* Clear MPR_VLD so that the next MR4 read will set it */
+		writel(0x0, REG_DDR_SDRAM_MPR5);
+		/* Wait till MPR_VLD is set (MR4 read done) then immediately disable DYN_REF */
+		while ((readl(REG_DDR_SDRAM_MPR5) & 0x1) == 0)
+			;
+		/* Disable DYN_REF */
 		clrbits_le32(REG_DDR_SDRAM_CFG_3, BIT(7));
+
+		/* Update DDR_SDRAM_INTERVAL[REFINT] */
+		clrsetbits_le32(REG_DDR_SDRAM_INTERVAL, GENMASK(31, 16), new_refint << 16);
+	}
+
+	/* Ensure DDR_SDRAM_MD_CNTL[MD_EN] is cleared before any MRR/MRS operation */
+	while ((readl(REG_DDR_SDRAM_MD_CNTL) & 0x80000000) == 0x80000000)
+		;
 
 	writel(0x80000000, REG_DDR_SDRAM_MD_CNTL_2);
 	temp = 0x80000000 | (chip_select << 28) | (mode_reg_num << 0);
@@ -286,20 +343,58 @@ u32 ddrc_mrr(u32 chip_select, u32 mode_reg_num, u32 *mode_reg_val)
 	writel(0x0, REG_DDR_SDRAM_MPR4);
 	writel(0x0, REG_DDR_SDRAM_MD_CNTL_2);
 
-	if (dyn_ref_rate_en)
+	if (dyn_ref_rate_en) {
+		/* Update DDR_SDRAM_INTERVAL[REFINT] back to original value */
+		clrsetbits_le32(REG_DDR_SDRAM_INTERVAL, GENMASK(31, 16), origin_refint << 16);
 		setbits_le32(REG_DDR_SDRAM_CFG_3, BIT(7));
+	}
 
 	return 0;
 }
 
 void ddrc_mrs(u32 cs_sel, u32 opcode, u32 mr)
 {
-	u32 regval;
+	u32 regval, origin_refint, new_refint;
 	u8 dyn_ref_rate_en = 0;
 
 	dyn_ref_rate_en = !!(readl(REG_DDR_SDRAM_CFG_3) & BIT(7));
-	if (dyn_ref_rate_en)
+
+	/* If DYN_REF is enabled, it must first be disabled before performing
+	 * any SW initiated mode register operations.  In addition, a DYN_REF
+	 * MR4 read may already be in progress when DYN_REF is disabled as
+	 * disabling DYN_REF only prevents future MR4 reads from occurring.
+	 * To prevent an MR4 read collision with a subsequent mode register
+	 * operation, we must first clear and poll (for set)
+	 * DDR_SDRAM_MPR5[MPR_VLD] to ensure the last MR4 read has completed
+	 * and then immdeiately disable DYN_REF to prevent future MR4 reads.
+	 */
+	if (dyn_ref_rate_en) {
+		/* When DYN_REF is disabled, the DRAM refresh rate is reverted
+		 * back to nominal (1x). However, if the DRAM requires a
+		 * higher refresh rate at elevated temperatures, we need to
+		 * adjust the DDR_SDRAM_INTERVAL[REFINT] to compensate for
+		 * this while DYN_REF is disabled and then restore the
+		 * original value when re-enabling DYN_REF.
+		 * Get original REFINT to re-store later in case DYN_REF enable
+		 */
+		origin_refint = readl(REG_DDR_SDRAM_INTERVAL) >> 16;
+		new_refint = adjust_refint(origin_refint);
+
+		/* Clear MPR_VLD so that the next MR4 read will set it */
+		writel(0x0, REG_DDR_SDRAM_MPR5);
+		/* Wait till MPR_VLD is set (MR4 read done) then immediately disable DYN_REF */
+		while ((readl(REG_DDR_SDRAM_MPR5) & 0x1) == 0)
+			;
+		/* Disable DYN_REF */
 		clrbits_le32(REG_DDR_SDRAM_CFG_3, BIT(7));
+
+		/* Update DDR_SDRAM_INTERVAL[REFINT] */
+		clrsetbits_le32(REG_DDR_SDRAM_INTERVAL, GENMASK(31, 16), new_refint << 16);
+	}
+
+	/* Ensure DDR_SDRAM_MD_CNTL[MD_EN] is cleared before any MRR/MRS operation */
+	while ((readl(REG_DDR_SDRAM_MD_CNTL) & 0x80000000) == 0x80000000)
+		;
 
 	regval = (cs_sel << 28) | (opcode << 6) | (mr);
 	writel(regval, REG_DDR_SDRAM_MD_CNTL);
@@ -308,8 +403,11 @@ void ddrc_mrs(u32 cs_sel, u32 opcode, u32 mr)
 	;
 	check_ddrc_idle();
 
-	if (dyn_ref_rate_en)
+	if (dyn_ref_rate_en) {
+		/* Update DDR_SDRAM_INTERVAL[REFINT] back to original value */
+		clrsetbits_le32(REG_DDR_SDRAM_INTERVAL, GENMASK(31, 16), origin_refint << 16);
 		setbits_le32(REG_DDR_SDRAM_CFG_3, BIT(7));
+	}
 }
 
 u32 lpddr4_mr_read(u32 mr_rank, u32 mr_addr)

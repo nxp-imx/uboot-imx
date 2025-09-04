@@ -580,8 +580,9 @@ AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
 
 #ifdef CONFIG_LOAD_KEY_FROM_RPMB
 	uint8_t public_key_buf[AVB_MAX_BUFFER_LENGTH];
+	uint32_t public_key_sz = sizeof(public_key_buf);
 	if (trusty_read_vbmeta_public_key(public_key_buf,
-						public_key_length) != 0) {
+						&public_key_sz) != 0) {
 		ERR("Read public key error\n");
 		/* We're not going to return error code here because it will
 		 * abort the following avb verify process even we allow the
@@ -592,7 +593,8 @@ AvbIOResult fsl_validate_vbmeta_public_key_rpmb(AvbOps* ops,
 		return AVB_IO_RESULT_OK;
 	}
 
-	if (memcmp(public_key_buf, public_key_data, public_key_length)) {
+	if ((public_key_sz != public_key_length) || \
+		memcmp(public_key_buf, public_key_data, public_key_length)) {
 #else
 	/* match given public key */
 	if (memcmp(fsl_public_key, public_key_data, public_key_length)) {

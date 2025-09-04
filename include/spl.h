@@ -311,6 +311,9 @@ struct spl_image_info {
 #ifdef CONFIG_IMX_TRUSTY_OS
 	uint64_t rbindex;
 #endif
+#if IS_ENABLED(CONFIG_IMX_CRRM)
+	bool recovery;
+#endif
 };
 
 /* function to jump to an image from SPL */

@@ -66,6 +66,9 @@ funtion is available in U-Boot and can be executed through dek_blob command:
 
 Details in API usage can be found in EdgeLock Enclave (ELE) API guide [1].
 
+Note: The i.MX8ULP/9x device MUST be in OEM Closed Lifecycle for DEK blob
+generation.
+
 As part of the DEK generation process, the DEK blob will need to be
 transferred to a host computer to insert into the boot image. Therefore,
 the target board must have a filesystem in place to transfer the DEK file.
@@ -214,6 +217,9 @@ signature block.
 The DEK must be encapsulated into a blob so it can be included into the
 final encrypted binary. The U-Boot provides a tool called dek_blob which is
 calling the ELE blob encapsulation API.
+
+Note: The i.MX8ULP/9x device MUST be in OEM Closed Lifecycle for DEK blob
+generation.
 
 Copy dek_2 and dek_3 to the i.MX8ULP or 9x and run the following commands from
 U-Boot prompt. Boot the flash.bin generated earlier with mkimage on board. Halt at

@@ -386,11 +386,10 @@ static int do_prepaux(struct cmd_tbl *cmdtp, int flag, int argc,
 	int ret;
 	u32 core = 0;
 
-	if (argc < 2)
+	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (argc > 2)
-		core = simple_strtoul(argv[2], NULL, 10);
+	core = simple_strtoul(argv[1], NULL, 10);
 
 	ret = arch_auxiliary_core_prepare(core);
 	if (ret)
