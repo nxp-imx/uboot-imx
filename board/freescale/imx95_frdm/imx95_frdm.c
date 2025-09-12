@@ -318,7 +318,7 @@ void lvds_backlight_on(void)
 	int ret;
 	u8 reg;
 
-	ret = i2c_get_chip_for_busnum(2, 0x62, 1, &dev);
+	ret = i2c_get_chip_for_busnum(3, 0x62, 1, &dev);
 	if (ret) {
 		printf("%s: Cannot find pca9632 led dev\n",
 		       __func__);

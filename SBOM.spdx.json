@@ -1,0 +1,74 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "spdxVersion": "SPDX-2.3",
+  "creationInfo": {
+    "created": "2025-08-24T08:20:38Z",
+    "creators": [
+      "Organization: NXP"
+    ],
+    "licenseListVersion": "3.20"
+  },
+  "name": "uboot-imx-LF_6.12.34_2.1.0",
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "https://nxp.com/spdx/4523e975-2160-4edc-aaa3-d6a9245996a8",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-package-4523e975-2160-4edc-aaa3-d6a9245996a8",
+      "name": "uboot-imx",
+      "versionInfo": "LF_6.12.34_2.1.0",
+      "licenseConcluded": "(GPL-2.0-only)",
+      "licenseDeclared": "(GPL-2.0-only)",
+      "downloadLocation": "https://github.com/nxp-imx/uboot-imx -b lf-6.12.34-2.1.0",
+      "originator": "Organization: NXP",
+      "supplier": "NOASSERTION",
+      "externalRefs": [],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-c563a3b4-eef4-41ba-b43d-fc73391411f4",
+      "name": "U-Boot",
+      "versionInfo": "2025.04",
+      "licenseConcluded": "GPL-2.0-or-later",
+      "licenseDeclared": "(LGPL-2.1-or-later AND GPL-2.0-or-later AND LGPL-2.0-or-later AND NOASSERTION)",
+      "homepage": "https://source.denx.de/u-boot/u-boot",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: u-boot",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:u_boot:u_boot:2025.04:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "933b4362-3a2f-4d20-a9aa-69cae7d12565",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:denx:u-boot:2025.04:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/u-boot/u-boot@v2025.04",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-package-4523e975-2160-4edc-aaa3-d6a9245996a8"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-4523e975-2160-4edc-aaa3-d6a9245996a8",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-c563a3b4-eef4-41ba-b43d-fc73391411f4"
+    }
+  ]
+}

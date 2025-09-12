@@ -847,7 +847,7 @@ int clock_init(void)
 		     SSCG_PLL_DIV10_CLKE_MASK | SSCG_PLL_DIV20_CLKE_MASK);
 
 	clock_set_target_val(NAND_USDHC_BUS_CLK_ROOT, CLK_ROOT_ON |
-			     CLK_ROOT_SOURCE_SEL(1));
+			     CLK_ROOT_SOURCE_SEL(4));
 
 	init_wdog_clk();
 	clock_enable(CCGR_TSENSOR, 1);
