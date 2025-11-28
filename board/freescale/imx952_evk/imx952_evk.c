@@ -21,6 +21,7 @@
 #include <i2c.h>
 #include <dm/uclass.h>
 #include <dm/uclass-internal.h>
+#include <asm/arch/crrm.h>
 #include "../arch/arm/dts/imx952-power.h"
 
 #define PD_HSIO_TOP IMX952_PD_HSIO_TOP
@@ -273,6 +274,10 @@ int board_init(void)
 
 	lvds_backlight_on();
 
+#if IS_ENABLED(CONFIG_IMX_CRRM)
+	crrm_uboot_init();
+#endif
+
 	return 0;
 }
 
@@ -286,11 +291,15 @@ int board_late_init(void)
 	env_set("sec_boot", "yes");
 #endif
 
+#if IS_ENABLED(CONFIG_IMX_CRRM)
+	crrm_uboot_late_init();
+#endif
+
 	return 0;
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
-int ft_board_setup(void *blob, struct bd_info *bd)
+static int jh_mem_fdt_setup(void *blob)
 {
 	char *p, *b, *s;
 	char *token = NULL;
@@ -325,6 +334,40 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	ret = fdt_fixup_memory_banks(blob, base, size, CONFIG_NR_DRAM_BANKS);
 	if (ret)
 		return ret;
+
+	return 0;
+}
+
+int ft_board_setup(void *blob, struct bd_info *bd)
+{
+	int ret;
+	ret = jh_mem_fdt_setup(blob);
+	if (ret) {
+		printf("jailhouse memory process fail.\n");
+		return ret;
+	}
+
+	/* Disable XSPI1 node for CRRM */
+#if IS_ENABLED(CONFIG_IMX_CRRM)
+	int nodeoff;
+	const char *status = "disabled";
+
+	nodeoff = fdt_path_offset(blob, "/soc/bus@42000000/spi@42400000");
+	if (nodeoff > 0) {
+		ret = fdt_increase_size(blob, 256);
+		if (ret) {
+			printf("Unable to increase fdt size, err=%s\n", fdt_strerror(ret));
+			return ret;
+		}
+
+		ret = fdt_setprop(blob, nodeoff, "status", status,
+				  strlen(status) + 1);
+		if (ret) {
+			printf("Unable to disable XSPI1, err=%s\n", fdt_strerror(ret));
+			return ret;
+		}
+	}
+#endif
 
 	return 0;
 }

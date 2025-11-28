@@ -15,7 +15,7 @@ config SPL_IMX_BBSM
 
 config IMX_CRRM
     bool "Support i.MX9 cyber resilient recovery module (CRRM)"
-	depends on IMX94
+	depends on IMX94 || IMX952
 	select PSCI_BOARD_REBOOT
     help
       This option enables the support for IMX CRRM.

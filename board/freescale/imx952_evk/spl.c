@@ -15,6 +15,7 @@
 #include <asm/gpio.h>
 #include <linux/delay.h>
 #include <../dts/imx952-clock.h>
+#include <asm/arch/crrm.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -39,15 +40,10 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 
 void spl_board_init(void)
 {
-	int ret;
-
 	puts("Normal Boot\n");
-
-	ret = ele_start_rng();
-	if (ret)
-		printf("Fail to start RNG: %d\n", ret);
 }
 
+#if !IS_ENABLED(CONFIG_IMX_CRRM)
 static void xspi_reset(void)
 {
 	int ret;
@@ -88,6 +84,7 @@ static void xspi_nor_reset(void)
 
 	xspi_reset();
 }
+#endif
 
 void board_init_f(ulong dummy)
 {
@@ -127,7 +124,19 @@ void board_init_f(ulong dummy)
 	/* Will set ARM freq to max rate */
 	clock_init_late();
 
+	ret = ele_start_rng();
+	if (ret)
+		printf("Fail to start RNG: %d\n", ret);
+
+#if IS_ENABLED(CONFIG_IMX_CRRM)
+	ret = crrm_spl_init();
+	if (ret) {
+		printf("CRRM error, boot stop\n");
+		hang();
+	}
+#else
 	xspi_nor_reset();
+#endif
 
 	board_init_r(NULL, 0);
 }
