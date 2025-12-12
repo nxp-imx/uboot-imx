@@ -252,7 +252,7 @@ static struct qspi_config_parameter qspi_safe_config = {
 };
 
 static struct header_config *safe_config = (struct header_config *)&qspi_safe_config;
-#elif defined CONFIG_IMX94
+#elif defined(CONFIG_IMX94) || defined(CONFIG_IMX952)
 static struct xspi_config_parameter xspi_safe_config = {
 	.mem_config.tag			= 0x42464346,
 	.mem_config.version		= 0x56010000,
@@ -433,7 +433,7 @@ static void hdr_dump(void *data)
 	PH(sclk_fb_delay_chain_sel, 1);
 	PH(misc_clock_enable, 1);
 	PH(tag, 1);
-#elif defined CONFIG_IMX94
+#elif defined(CONFIG_IMX94) || defined(CONFIG_IMX952)
 	PH(tag, 1);
 	PH(version, 1);
 	PH(readSampleClkSrc, 1);
@@ -582,7 +582,7 @@ static int do_qspihdr_init(int argc, char * const argv[])
 	int hdr_off = QSPI_HDR_OFF;
 	int data_off = QSPI_DATA_OFF;
 
-#elif defined CONFIG_IMX94
+#elif defined(CONFIG_IMX94) || defined(CONFIG_IMX952)
 	int hdr_off = FSPI_HDR_OFF;
 	int data_off = FSPI_DATA_OFF;
 	safe_config->xspi_hdr_config.pageSize = flash->page_size;
