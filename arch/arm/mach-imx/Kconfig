@@ -109,7 +109,7 @@ config CMD_QB
 	bool "Support the 'qb' command"
 	default y
 	imply USE_PREBOOT
-	depends on IMX_SNPS_DDR_PHY_QB_GEN && (IMX95 || IMX94)
+	depends on IMX_SNPS_DDR_PHY_QB_GEN && (IMX95 || IMX94 || IMX952)
 	help
 	  Enable qb command to write DDR quick boot training data to boot device.
 

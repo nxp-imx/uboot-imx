@@ -129,7 +129,7 @@ int ddrphy_qb_save(void);
 int ddr_cfg_phy_qb(struct dram_timing_info *timing_info, int fsp_id);
 #endif
 #endif
-#elif defined(CONFIG_IMX95)	|| defined(CONFIG_IMX94) /* CONFIG_IMX95 || CONFIG_IMX94 */
+#elif defined(CONFIG_IMX95)	|| defined(CONFIG_IMX94) || defined(CONFIG_IMX952) /* iMX95, iMX94, iMX952 */
 #if   defined(CONFIG_IMX_SNPS_DDR_PHY_QB_GEN)
 /* Quick Boot related */
 #define DDRPHY_QB_CSR_SIZE	5168
