@@ -4,6 +4,10 @@
  */
 
 / {
+	chosen {
+		bootargs = "console=ttyLP0,115200 earlycon";
+	};
+
 	aliases {
 		usb_gadget0 = &usbg1;
 		usb_gadget1 = &usbg2;

@@ -219,6 +219,9 @@ void board_fastboot_setup(void)
 	} else if (is_imx95()) {
 		if (!env_get("soc_type"))
 			env_set("soc_type", "imx95");
+	} else if (is_imx952()) {
+		if (!env_get("soc_type"))
+			env_set("soc_type", "imx952");
 	} else if (is_imx91()) {
 		if (!env_get("soc_type"))
 			env_set("soc_type", "imx91");
