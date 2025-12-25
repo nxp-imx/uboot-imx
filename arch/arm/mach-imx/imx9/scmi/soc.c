@@ -195,9 +195,12 @@ void disconnect_from_pc(void)
 {
 	enum boot_device bt_dev = get_boot_device();
 
-	if (bt_dev == USB_BOOT)
-		clrbits_le32(USB1_BASE_ADDR + 0xc704, (1 << 31));
-	else if (bt_dev == USB2_BOOT)
+	if (bt_dev == USB_BOOT) {
+		if (is_imx952())
+			writel(0x0, USB1_BASE_ADDR + 0x140);
+		else
+			clrbits_le32(USB1_BASE_ADDR + 0xc704, (1 << 31));
+	} else if (bt_dev == USB2_BOOT)
 		writel(0x0, USB2_BASE_ADDR + 0x140);
 
 	return;
