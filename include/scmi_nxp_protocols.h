@@ -17,9 +17,18 @@ enum scmi_imx_protocol {
 
 #define SCMI_ARRAY(X, Y)	((SCMI_PAYLOAD_LEN - (X)) / sizeof(Y))
 
+#define SCMI_IMX_MISC_CONTROL_SET	0x3
 #define SCMI_IMX_MISC_BUILD_INFO	0x6
 #define SCMI_IMX_MISC_RESET_REASON	0xA
 #define SCMI_IMX_MISC_CFG_INFO		0xC
+
+#define SCMI_MISC_CTRL_ID_COMBO_PHY	9U
+struct scmi_imx_misc_control_set_in {
+    u32 ctrlid;
+    u32 numval;
+#define MISC_MAX_VAL_T	SCMI_ARRAY(8U, u32)
+    u32 val[MISC_MAX_VAL_T];
+};
 
 struct scmi_imx_misc_reset_reason_in {
 #define MISC_REASON_FLAG_SYSTEM		BIT(0)

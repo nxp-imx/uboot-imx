@@ -5,6 +5,7 @@
  * Peng Fan <peng.fan@nxp.com>
  */
 
+#include <command.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/ddr.h>
 #include <asm/arch/sys_proto.h>
@@ -1037,6 +1038,80 @@ int power_on_m7(char *name)
 
 	return 0;
 }
+
+#if IS_ENABLED(CONFIG_IMX952)
+int set_combo_phy_mode(struct udevice *dev, u32 mode)
+{
+	struct scmi_imx_misc_control_set_in in = { 0 };
+	s32 status = 0;
+	struct scmi_msg msg = {
+		.protocol_id = SCMI_PROTOCOL_ID_IMX_MISC,
+		.message_id = SCMI_IMX_MISC_CONTROL_SET,
+		.in_msg = (u8 *)&in,
+		.in_msg_sz = sizeof(in),
+		.out_msg = (u8 *)&status,
+		.out_msg_sz = sizeof(status),
+	};
+	int ret;
+
+	in.ctrlid = SCMI_MISC_CTRL_ID_COMBO_PHY;
+	in.numval = 1;
+
+	if (mode > 4)
+		return -EINVAL;
+	in.val[0] = mode;
+
+	ret = devm_scmi_process_msg(dev, &msg);
+	if (ret != 0 || status != 0) {
+		printf("Failed to comphy mod, scmi_err = %d, mode=%u\n", status, mode);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int do_comphy_mode(struct cmd_tbl *cmdtp, int flag, int argc,
+			  char *const argv[])
+{
+	struct udevice *dev;
+	u32 mode = 0;
+	int ret;
+
+	if (argc != 2)
+		return CMD_RET_USAGE;
+
+	mode = simple_strtoul(argv[1], NULL, 10);
+	if (mode > 4)
+		return CMD_RET_USAGE;
+
+	ret = uclass_get_device_by_name(UCLASS_CLK, "protocol@14", &dev);
+	if (ret)
+		return ret;
+
+	ret = scmi_pwd_state_set(dev, 0, SCMI_PD(HSIO_TOP), 0);
+	if (ret) {
+		printf("Poweroff HSIO failed\n");
+		return -EIO;
+	}
+
+	set_combo_phy_mode(dev, mode);
+
+	ret = scmi_pwd_state_set(dev, 0, SCMI_PD(HSIO_TOP), 1);
+	if (ret) {
+		printf("Poweron HSIO failed\n");
+		return -EIO;
+	}
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	comphymod, CONFIG_SYS_MAXARGS, 1, do_comphy_mode,
+	"set comphy mode",
+	"\n"
+	" - set comphymod pcie[0,1,2], netc(3,4) (default 0)\n"
+);
+#endif
 
 static char *get_cpu_variant_type_name(u32 type)
 {
