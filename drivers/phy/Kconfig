@@ -306,6 +306,15 @@ config PHY_IMX93_MIPI_DPHY
 	  Enable this to add support for the Synopsys DW MIPI DPHY as found
 	  on NXP's i.MX93 SoC.
 
+config PHY_IMX952_MIPI_DPHY
+	bool "NXP i.MX952 MIPI DPHY Driver"
+	depends on PHY
+	depends on IMX952
+	select REGMAP
+	help
+	  Enable this to add support for the Synopsys MIPI CDPHY as found
+	  on NXP's i.MX952 SoC.
+
 config PHY_IMX8MP_LVDS_PHY
 	bool "NXP i.MX8MP/93/95 MIPI DPHY Driver"
 	depends on PHY
