@@ -5,14 +5,18 @@
 
 #include <asm/io.h>
 #include <dm.h>
+#include <dm/device-internal.h>
+#include <dm/lists.h>
 #include <errno.h>
 #include <generic-phy.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>
 #include <linux/err.h>
+#include <linux/clk-provider.h>
 #include <linux/delay.h>
 #include <linux/time.h>
 #include <clk.h>
+#include <clk-uclass.h>
 #include <regmap.h>
 #include <syscon.h>
 #include <dm/device_compat.h>
@@ -994,7 +998,6 @@ imx952_mipi_dphy_configure(struct phy *phy, void *params)
 	return 0;
 }
 
-
 static int imx952_mipi_dphy_init(struct phy *phy)
 {
 	struct imx952_mipi_dphy_priv *priv = dev_get_priv(phy->dev);
@@ -1056,6 +1059,7 @@ static const struct phy_ops imx952_mipi_dphy_phy_ops = {
 static int imx952_mipi_dphy_probe(struct udevice *dev)
 {
 	struct imx952_mipi_dphy_priv *priv = dev_get_priv(dev);
+	struct udevice *dphy_pll_dev;
 	int ret;
 
 	priv->regs = dev_read_addr(dev);
@@ -1095,6 +1099,18 @@ static int imx952_mipi_dphy_probe(struct udevice *dev)
 	dev_dbg(dev, "cfg clock rate: %lu\n", priv->clk_cfg_rate);
 #endif
 
+	ret = device_find_child_by_name(dev, "dphy-pll", &dphy_pll_dev);
+	if (ret) {
+		dev_err(dev, "failed to find dphy-pll device: %d\n", ret);
+		return ret;
+	}
+
+	ret = device_probe(dphy_pll_dev);
+	if (ret) {
+		dev_err(dev, "failed to probe dphy-pll device: %d\n", ret);
+		return ret;
+	}
+
 	return 0;
 }
 
@@ -1108,12 +1124,96 @@ static const struct udevice_id imx_dw_mipi_dphy_of_match[] = {
 	{ /* sentinel */ }
 };
 
+static int imx952_mipi_dphy_bind(struct udevice *dev)
+{
+	ofnode child;
+	struct udevice *dphy_pll_dev;
+
+	ofnode_for_each_subnode(child, dev_ofnode(dev)) {
+		if (ofnode_device_is_compatible(child, "nxp,imx952-mipi-dphy-pll")) {
+			int ret = device_bind_driver_to_node(dev, "imx952_mipi_dphy_pll",
+							     ofnode_get_name(child),
+							     child, &dphy_pll_dev);
+			if (ret) {
+				dev_err(dev, "bind imx952_mipi_dphy_pll failed: %d\n", ret);
+				return ret;
+			}
+
+			break;
+		}
+	}
+
+	return 0;
+}
+
 U_BOOT_DRIVER(imx_dw_mipi_dphy) = {
 	.name = "imx952_mipi_dphy",
 	.id = UCLASS_PHY,
 	.of_match = imx_dw_mipi_dphy_of_match,
+	.bind = imx952_mipi_dphy_bind,
 	.probe = imx952_mipi_dphy_probe,
 	.remove = imx952_mipi_dphy_remove,
 	.ops = &imx952_mipi_dphy_phy_ops,
 	.priv_auto	= sizeof(struct imx952_mipi_dphy_priv),
+};
+
+static int dphy_pll_enable(struct clk *clk)
+{
+	struct imx952_mipi_dphy_priv *priv = dev_get_priv(dev_get_parent(clk->dev));
+
+	return imx952_mipi_dphy_pll_enable(priv);
+}
+
+static int dphy_pll_disable(struct clk *clk)
+{
+	struct imx952_mipi_dphy_priv *priv = dev_get_priv(dev_get_parent(clk->dev));
+
+	imx952_mipi_dphy_pll_disable(priv);
+
+	return 0;
+}
+
+static ulong dphy_pll_round_rate(struct clk *clk, ulong rate)
+{
+	struct imx952_mipi_dphy_priv *priv = dev_get_priv(dev_get_parent(clk->dev));
+	struct phy_pll_config pll_cfg;
+	int ret;
+
+	ret = imx952_mipi_dphy_pll_find_settings(priv, &pll_cfg, rate);
+	if (ret)
+		return 0;
+
+	return pll_cfg.fout;
+}
+
+static ulong dphy_pll_set_rate(struct clk *clk, ulong rate)
+{
+	struct imx952_mipi_dphy_priv *priv = dev_get_priv(dev_get_parent(clk->dev));
+
+	return imx952_mipi_dphy_pll_set_rate(priv, rate);
+}
+
+static const struct clk_ops imx952_mipi_dphy_pll_ops = {
+	.enable		= dphy_pll_enable,
+	.disable	= dphy_pll_disable,
+	.round_rate	= dphy_pll_round_rate,
+	.set_rate	= dphy_pll_set_rate,
+};
+
+static int imx952_mipi_dphy_pll_probe(struct udevice *dev)
+{
+	return 0;
+}
+
+static const struct udevice_id imx952_mipi_dphy_pll_ids[] = {
+	{ .compatible = "nxp,imx952-mipi-dphy-pll" },
+	{ /* sentinel */ }
+};
+
+U_BOOT_DRIVER(imx952_mipi_dphy_pll) = {
+	.name		= "imx952_mipi_dphy_pll",
+	.id		= UCLASS_CLK,
+	.of_match	= imx952_mipi_dphy_pll_ids,
+	.probe		= imx952_mipi_dphy_pll_probe,
+	.ops		= &imx952_mipi_dphy_pll_ops,
 };
