@@ -24,6 +24,9 @@
 #include <asm/global_data.h>
 #include <asm/setjmp.h>
 #include <linux/libfdt_env.h>
+#include <video_link.h>
+#include <trusty/libtipc.h>
+#include <trusty/hwcrypto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -2238,8 +2241,17 @@ static efi_status_t EFIAPI efi_exit_boot_services(efi_handle_t image_handle,
 			udc_disconnect();
 		if (IS_ENABLED(CONFIG_DM_ETH))
 			eth_halt();
+		if (IS_ENABLED(CONFIG_VIDEO_LINK) && IS_ENABLED(CONFIG_IMX_ANDROID_GBL))
+			video_link_shut_down();
+		if (IS_ENABLED(CONFIG_IMX_TRUSTY_OS) && IS_ENABLED(CONFIG_IMX_ANDROID_GBL)) {
+			/* lock the boot state so linux can't use some hwcrypto commands. */
+			hwcrypto_lock_boot_state();
+			/* put ql-tipc to release resource for Linux */
+			trusty_ipc_shutdown();
+		}
 		board_quiesce_devices();
-		dm_remove_devices_active();
+		if (!IS_ENABLED(CONFIG_POWER_DOMAIN) || !IS_ENABLED(CONFIG_IMX_ANDROID_GBL))
+			dm_remove_devices_active();
 	}
 
 	/* Patch out unsupported runtime function */

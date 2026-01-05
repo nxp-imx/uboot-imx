@@ -84,6 +84,10 @@
 		clock-mult = <1>;
 		clock-output-names = "ldb_pll_div7";
 	};
+
+	cm7: imx95-cm7 {
+		compatible = "fsl,imx95-cm7";
+	};
 };
 
 &aips1 {

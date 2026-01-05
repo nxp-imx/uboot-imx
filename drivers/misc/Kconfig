@@ -387,6 +387,15 @@ config IMX_ELE
 	  If you say Y here to enable Message Unit driver to work with
 	  Sentinel core on some NXP i.MX processors.
 
+config IMX_ELE_RESP_TIMEOUT
+	int "Set the timeout for waiting ELE response"
+	depends on IMX_ELE
+	default 20
+	help
+	  After sending ELE message, normally ELE should return response
+	  to the caller. This config defines the timeout value in seconds
+	  for waiting the response
+
 config IMX_M4_MU
 	bool "Enable i.MX MU Driver to communicate with Cortex M4"
 	depends on MISC

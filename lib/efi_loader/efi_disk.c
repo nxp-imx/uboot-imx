@@ -18,6 +18,7 @@
 #include <log.h>
 #include <part.h>
 #include <malloc.h>
+#include <mmc.h>
 
 struct efi_system_partition efi_system_partition = {
 	.uclass_id = UCLASS_INVALID,
@@ -301,6 +302,10 @@ static efi_status_t EFIAPI efi_disk_flush_blocks(struct efi_block_io *this)
 }
 
 static const struct efi_block_io block_io_disk_template = {
+	/* Bump the revision to make the GBL happy */
+#ifdef CONFIG_IMX_ANDROID_GBL
+	.revision = EFI_BLOCK_IO_PROTOCOL_REVISION3,
+#endif
 	.reset = &efi_disk_reset,
 	.read_blocks = &efi_disk_read_blocks,
 	.write_blocks = &efi_disk_write_blocks,
@@ -678,6 +683,18 @@ int efi_disk_probe(void *ctx, struct event *event)
 	 * has already created an efi_disk at this moment.
 	 */
 	desc = dev_get_uclass_plat(dev);
+
+	/* Android supports booting from both eMMC and SD card, so valid
+	 * gpt maybe present in both devices. We don't want the partitions
+	 * be populated to the GBL unless they are in the boot device.
+	 */
+#ifdef CONFIG_IMX_ANDROID_GBL
+	if (desc->uclass_id == UCLASS_MMC && \
+		desc->devnum != mmc_get_env_dev()) {
+		return 0;
+	}
+#endif
+
 	if (desc->uclass_id != UCLASS_EFI_LOADER) {
 		ret = efi_disk_create_raw(dev, agent_handle);
 		if (ret)

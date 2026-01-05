@@ -27,6 +27,13 @@
 #include <fsl_sec.h>
 #include <asm/cache.h>
 #include <rng.h>
+#ifdef CONFIG_IMX_TRUSTY_OS
+#include <trusty/libtipc.h>
+#include <trusty/hwcrypto.h>
+#endif
+#ifdef CONFIG_INCLUDE_DTB_TO_VENDOR_BOOT
+#include <imx_android_dt_mapping.h>
+#endif
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 #define ANDROID_IMAGE_DEFAULT_RAMDISK_ADDR	0x11000000
@@ -413,6 +420,7 @@ static int append_androidboot_args(char *args, uint32_t *len, void *fdt_addr)
 		strncat(args, args_buf, *len - strlen(args));
 	}
 
+	/* boot_devices */
 	if (!fdt_addr) {
 		sprintf(args_buf,
 			" androidboot.boot_device_root=mmcblk%d", mmc_map_to_kernel_blk(mmc_get_env_dev()));
@@ -420,95 +428,16 @@ static int append_androidboot_args(char *args, uint32_t *len, void *fdt_addr)
 	} else {
 		char mmcblk[30];
 		char *boot_device = NULL;
-		int offset = -1;
 
-		/* The boot device should locates at "/firmware/android/"boot_devices_mmcblkX" */
-		offset = fdt_path_offset(fdt_addr, "/firmware/android");
-		if (offset > 0) {
-			sprintf(mmcblk, "boot_devices_mmcblk%d", mmc_map_to_kernel_blk(mmc_get_env_dev()));
-			boot_device = (char *)fdt_getprop(fdt_addr, offset, mmcblk, NULL);
-			if (boot_device) {
-				sprintf(args_buf,
-					" androidboot.boot_devices=%s", boot_device);
-				strncat(args, args_buf, *len - strlen(args));
-			} else {
-				printf("failed to get boot device from device tree!\n");
-				return -1;
-			}
-		} else {
-			printf("failed to get boot device from device tree!\n");
+		sprintf(mmcblk, "boot_devices_mmcblk%d", mmc_map_to_kernel_blk(mmc_get_env_dev()));
+		boot_device = env_get(mmcblk);
+		if (!boot_device) {
+			log_err("failed to get boot device from env!\n");
 			return -1;
-		}
-
-#ifdef CONFIG_DM_RNG
-#if defined(CONFIG_ANDROID_SUPPORT) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
-		/* set the value of the /chosen/rng-seed property */
-		offset = fdt_path_offset(fdt_addr, "/chosen");
-		if (offset > 0) {
-			int prop_len = 0, ret = 0;
-			void *rand_buf = NULL;
-			struct udevice *dev = NULL;
-
-			do {
-				/*
-				 * Delete the hardcode node which exists on some legacy
-				 * kernel dts, bootloader can handle the node without
-				 * inserting placeholder.
-				 */
-				if (fdt_get_property(fdt_addr, offset, "rng-seed", &prop_len) != NULL) {
-					printf("'rng-seed' node already exist, delete it\n");
-					fdt_delprop(fdt_addr, offset, "rng-seed");
-				}
-
-				/*
-				 * Don't pass bootloader randomness if no reliable
-				 * RNG driver found.
-				 */
-				ret = uclass_get_device(UCLASS_RNG, 0, &dev);
-				if (ret != 0 || !dev) {
-					printf("no RNG driver found! ret: %d\n", ret);
-					ret = 0;
-					break;
-				}
-
-				ret = fdt_increase_size(fdt_addr, RNG_SEED_DTB_RESERVE);
-				if (ret != 0) {
-					printf("failed to increase the fdt size! ret: %d", ret);
-					break;
-				}
-
-				rand_buf = memalign(ARCH_DMA_MINALIGN, RNG_SEED_LENGTH);
-				if (!rand_buf) {
-					printf("failed to allocate memory!\n");
-					ret = -1;
-					break;
-				}
-
-				ret = dm_rng_read(dev, rand_buf, RNG_SEED_LENGTH);
-				if (ret != 0) {
-					printf("failed to generate random! ret: %d\n", ret);
-					break;
-				}
-
-				ret = fdt_setprop(fdt_addr, offset, "rng-seed", rand_buf, RNG_SEED_LENGTH);
-				if (ret != 0) {
-					printf("failed to set 'rng-seed' node in device tree! ret: %d\n", ret);
-					break;
-				}
-			} while(0);
-
-			if (rand_buf) {
-				memset(rand_buf, 0, RNG_SEED_LENGTH);
-				free(rand_buf);
-			}
-			if (ret) {
-				return -1;
-			}
 		} else {
-			printf("the device tree may not have the /chosen node\n");
+			sprintf(args_buf, " androidboot.boot_devices=%s", boot_device);
+			strncat(args, args_buf, *len - strlen(args));
 		}
-#endif /* CONFIG_ANDROID_SUPPORT || CONFIG_ANDROID_AUTO_SUPPORT */
-#endif /* CONFIG_DM_RNG */
 	}
 
 	/* boot metric variables */
@@ -541,8 +470,10 @@ static int append_androidboot_args(char *args, uint32_t *len, void *fdt_addr)
 	 * partition and haven't enabled the dtb overlay.
 	 */
 #if defined(CONFIG_ANDROID_SUPPORT) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
+#ifndef CONFIG_INCLUDE_DTB_TO_VENDOR_BOOT
 	sprintf(args_buf," androidboot.dtbo_idx=0");
 	strncat(args, args_buf, *len - strlen(args));
+#endif
 #endif
 
 	char *keystore = env_get("keystore");
@@ -837,6 +768,206 @@ int android_image_get_kernel_v3(const struct boot_img_hdr_v3 *hdr,
 
 	return 0;
 }
+
+#if defined(CONFIG_ANDROID_SUPPORT) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
+int append_rng_seed(void *fdt_addr) {
+#ifdef CONFIG_DM_RNG
+	int offset = -1;
+	int ret = 0;
+
+	/* set the value of the /chosen/rng-seed property */
+	offset = fdt_path_offset(fdt_addr, "/chosen");
+	if (offset > 0) {
+		int prop_len = 0, ret = 0;
+		void *rand_buf = NULL;
+		struct udevice *dev = NULL;
+
+		do {
+			/*
+			 * Delete the hardcode node which exists on some legacy
+			 * kernel dts, bootloader can handle the node without
+			 * inserting placeholder.
+			 */
+			if (fdt_get_property(fdt_addr, offset, "rng-seed", &prop_len) != NULL) {
+				printf("'rng-seed' node already exist, delete it\n");
+				fdt_delprop(fdt_addr, offset, "rng-seed");
+			}
+
+			/*
+			 * Don't pass bootloader randomness if no reliable
+			 * RNG driver found.
+			 */
+			ret = uclass_get_device(UCLASS_RNG, 0, &dev);
+			if (ret != 0 || !dev) {
+				printf("no RNG driver found! ret: %d\n", ret);
+				ret = 0;
+				break;
+			}
+
+			ret = fdt_increase_size(fdt_addr, RNG_SEED_DTB_RESERVE);
+			if (ret != 0) {
+				printf("failed to increase the fdt size! ret: %d", ret);
+				break;
+			}
+
+			rand_buf = memalign(ARCH_DMA_MINALIGN, RNG_SEED_LENGTH);
+			if (!rand_buf) {
+				printf("failed to allocate memory!\n");
+				ret = -1;
+				break;
+			}
+
+			ret = dm_rng_read(dev, rand_buf, RNG_SEED_LENGTH);
+			if (ret != 0) {
+				printf("failed to generate random! ret: %d\n", ret);
+				break;
+			}
+
+			ret = fdt_setprop(fdt_addr, offset, "rng-seed", rand_buf, RNG_SEED_LENGTH);
+			if (ret != 0) {
+				printf("failed to set 'rng-seed' node in device tree! ret: %d\n", ret);
+				break;
+			}
+		} while(0);
+
+		if (rand_buf) {
+			memset(rand_buf, 0, RNG_SEED_LENGTH);
+			free(rand_buf);
+		}
+	} else {
+		printf("the device tree may not have the /chosen node\n");
+		ret = -1;
+	}
+
+	return ret;
+#else
+	return 0;
+#endif /* CONFIG_DM_RNG */
+}
+
+int fixup_gbl_bootargs(void *fdt_addr) {
+	char commandline[COMMANDLINE_LENGTH] = {0};
+	int offset;
+	char *bootargs = NULL;
+
+	/* First check the bootargs env */
+	bootargs = env_get("bootargs");
+	if (bootargs) {
+		if (strlen(bootargs) + 1 > sizeof(commandline)) {
+			printf("bootargs is too long!\n");
+			return -1;
+		}
+		else
+			strncpy(commandline, bootargs, sizeof(commandline) - 1);
+	} else {
+		/* fallback to the u-boot dts */
+		offset = fdt_path_offset(gd->fdt_blob, "/chosen");
+		if (offset > 0) {
+			bootargs = (char *)fdt_getprop(gd->fdt_blob, offset,
+							"bootargs", NULL);
+			if (bootargs)
+				sprintf(commandline, "%s", bootargs);
+		}
+	}
+
+	/* Append some runtime commandline */
+	append_kernel_cmdline(commandline);
+
+	/* Get bootargs from kernel dtb and concatenate
+	 * it with runtime commandline
+	 */
+	offset = fdt_path_offset(fdt_addr, "/chosen");
+	if (offset < 0) {
+		printf("no /chosen node found in kernel fdt!\n");
+		return -1;
+	} else {
+		bootargs = (char *)fdt_getprop(fdt_addr, offset,
+						"bootargs", NULL);
+		strncat(commandline, " ", COMMANDLINE_LENGTH - strlen(commandline));
+		strncat(commandline, bootargs, COMMANDLINE_LENGTH - strlen(commandline));
+
+		if (fdt_setprop(fdt_addr, offset,
+				"bootargs", commandline,
+				strlen(commandline) + 1) != 0) {
+			printf("Failed to set bootargs in kernel fdt!\n");
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+int imx_android_dt_fixup(void *fdt_addr) {
+	/* set rng seed to speed up the boot */
+#ifndef CONFIG_IMX_ANDROID_GBL
+	if (append_rng_seed(fdt_addr))
+		return -1;
+#endif
+
+	/* Append runtime boot commandline */
+#ifdef CONFIG_IMX_ANDROID_GBL
+	if (fixup_gbl_bootargs(fdt_addr))
+		return -1;
+#endif
+
+	/* Below functions will return error if RPMB key
+	 * is not programed, we want continue booting in
+	 * this case.
+	 */
+#ifdef CONFIG_IMX_TRUSTY_OS
+	/* populate secretkeeper public key */
+	trusty_populate_sk_key(fdt_addr);
+#endif
+
+	return 0;
+
+}
+
+#ifdef CONFIG_INCLUDE_DTB_TO_VENDOR_BOOT
+int get_imx_android_fdt_id(void) {
+	int i = 0;
+	char *fdt_name = NULL;
+
+	fdt_name = env_get("fdt_name");
+	if (!fdt_name) {
+		printf("Warning: Default fdt_name is not set, falling back to default fdt: %s!\n", imx_android_default_fdt_name);
+		fdt_name = (char *)imx_android_default_fdt_name;
+	}
+
+	if (!strlen(fdt_name)) {
+		printf("Error: Wrong fdt_name!\n");
+		return -1;
+	}
+
+	for (i = 0; imx_android_dt_mapping[i] != NULL; i++) {
+		if (!strncmp(fdt_name, imx_android_dt_mapping[i], strlen(fdt_name))) {
+			printf("Found fdt(%s) with id:%d.\n", fdt_name, i);
+			return i;
+		}
+	}
+
+	//No fdt found, fail.
+	return -1;
+}
+
+int do_show_fdt_list(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
+	int i = 0;
+
+	printf("Below android dtbs are supported:\n");
+	for (i = 0; imx_android_dt_mapping[i] != NULL; i++) {
+		printf("%s\n", imx_android_dt_mapping[i]);
+	}
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	show_fdt_list,	1,	1,	do_show_fdt_list,
+	"show_fdt_list \n",
+	"show_fdt_list - Show all supported android dtbs \n"
+);
+#endif /* CONFIG_INCLUDE_DTB_TO_VENDOR_BOOT */
+#endif /* CONFIG_ANDROID_SUPPORT || CONFIG_ANDROID_AUTO_SUPPORT */
 
 bool is_android_vendor_boot_image_header(const void *vendor_boot_img)
 {

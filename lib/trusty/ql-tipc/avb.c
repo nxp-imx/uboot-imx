@@ -244,6 +244,30 @@ int trusty_write_vbmeta_public_key(uint8_t *publickey, uint32_t size)
                        NULL);
 }
 
+int trusty_read_gbl_public_key(uint8_t *publickey, uint32_t *size)
+{
+    uint8_t resp_buf[AVB_MAX_BUFFER_LENGTH];
+    uint32_t resp_size = AVB_MAX_BUFFER_LENGTH;
+    int rc = avb_do_tipc(READ_GBL_PUBLIC_KEY, NULL, 0, resp_buf,
+                         &resp_size);
+    if (rc != 0) {
+        return rc;
+    }
+    /* ensure caller passed size matches size returned by Trusty */
+    if (*size < resp_size) {
+        return TRUSTY_ERR_INVALID_ARGS;
+    }
+    trusty_memcpy(publickey, resp_buf, resp_size);
+    *size = resp_size;
+    return rc;
+}
+
+int trusty_write_gbl_public_key(uint8_t *publickey, uint32_t size)
+{
+    return avb_do_tipc(WRITE_GBL_PUBLIC_KEY, publickey, size, NULL,
+                       NULL);
+}
+
 int trusty_read_lock_state(uint8_t *lock_state)
 {
     uint32_t resp_size = sizeof(*lock_state);

@@ -372,6 +372,11 @@ static int bus_i2c_init(struct udevice *bus)
 	u32 val;
 	int ret;
 
+	/* Recovery I2C out of possible fail state */
+	ret = i2c_deblock(bus);
+	if (ret)
+		debug("i2c: controller bus %d recovery fail %d\n", dev_seq(bus), ret);
+
 	struct dm_i2c_bus *i2c = dev_get_uclass_priv(bus);
 	int speed = i2c->speed_hz;
 

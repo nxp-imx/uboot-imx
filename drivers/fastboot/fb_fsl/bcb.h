@@ -36,6 +36,7 @@ int bcb_write_command(char *bcb_command);
 int bcb_read_command(char *command);
 
 #ifdef CONFIG_ANDROID_RECOVERY
+int bcb_read_recovery_opt(char *opts);
 int bcb_write_recovery_opt(char *opts);
 #endif
 #endif

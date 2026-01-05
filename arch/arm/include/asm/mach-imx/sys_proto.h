@@ -390,4 +390,6 @@ void configure_tzc380(void);
 
 /* Generate dek blob, return 0 if success, non 0 if fail. */
 int generate_dek_blob(char *data, uint32_t *data_size);
+
+int do_board_reboot(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]);
 #endif

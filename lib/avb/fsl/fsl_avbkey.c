@@ -1491,6 +1491,21 @@ int avb_set_public_key(uint8_t *staged_buffer, uint32_t size) {
 	return 0;
 }
 
+int avb_set_gbl_public_key(uint8_t *staged_buffer, uint32_t size) {
+
+	if ((staged_buffer == NULL) || (size <= 0)) {
+		ERR("Error. Get null staged_buffer\n");
+		return -1;
+	}
+	if (trusty_write_gbl_public_key(staged_buffer, size)) {
+		ERR("Error. Failed to write gbl public key into secure storage\n");
+		return -1;
+	} else
+		printf("Set gbl public key successfully!\n");
+
+	return 0;
+}
+
 #ifdef CONFIG_GENERATE_MPPUBK
 int fastboot_get_mppubk(uint8_t *staged_buffer, uint32_t *size) {
 

@@ -51,7 +51,7 @@ enum {
 struct fastboot_ptentry g_ptable[MAX_PTN];
 unsigned int g_pcount;
 
-static ulong bootloader_mmc_offset(void)
+ulong bootloader_mmc_offset(void)
 {
 	if (is_imx8mq() || is_imx8mm() || ((is_imx8qm() || is_imx8qxp()) && is_soc_rev(CHIP_REV_A)))
 		return 0x8400;

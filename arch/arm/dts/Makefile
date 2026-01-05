@@ -968,6 +968,7 @@ dtb-$(CONFIG_ARCH_IMX9) += \
 	imx95-15x15-frdm.dtb \
 	imx95-19x19-verdin.dtb \
 	imx943-evk.dtb \
+	imx943-orangebox.dtb \
 	imx91-9x9-qsb.dtb \
 	imx91-11x11-frdm.dtb \
 	imx91-11x11-frdm-imx91s.dtb \

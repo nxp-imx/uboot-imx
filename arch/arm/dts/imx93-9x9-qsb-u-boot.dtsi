@@ -75,6 +75,14 @@
 			MX93_PAD_SD3_DATA3__FLEXSPI1_A_DATA03	0x3fe
 		>;
 	};
+
+	pinctrl_lpi2c1_gpio: lpi2c1gpiogrp {
+		fsl,pins = <
+			MX93_PAD_I2C1_SCL__GPIO1_IO00		0x31e
+			MX93_PAD_I2C1_SDA__GPIO1_IO01		0x31e
+		>;
+	};
+
 };
 
 &reg_usdhc2_vmmc {
@@ -146,6 +154,11 @@
 &lpi2c1 {
 	bootph-pre-ram;
 	bootph-some-ram;
+	pinctrl-names = "default", "gpio";
+	pinctrl-0 = <&pinctrl_lpi2c1>;
+	pinctrl-1 = <&pinctrl_lpi2c1_gpio>;
+	gpios = <&gpio1 00 GPIO_ACTIVE_LOW>,
+		<&gpio1 01 GPIO_ACTIVE_LOW>;
 };
 
 &lpi2c2 {

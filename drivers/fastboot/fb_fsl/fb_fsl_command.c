@@ -62,7 +62,7 @@
 /**
  * fastboot_bytes_received - number of bytes received in the current download
  */
-static u32 fastboot_bytes_received;
+u32 fastboot_bytes_received;
 
 /**
  * fastboot_bytes_expected - number of bytes expected in the current download
@@ -209,6 +209,16 @@ bool endswith(char* s, char* subs) {
 		return false;
 	}
         return true;
+}
+
+bool is_command(char *s, char *subs) {
+	if (!s || !subs)
+		return false;
+
+	if (strstr(s, subs))
+		return true;
+	else
+		return false;
 }
 
 #ifdef CONFIG_ANDROID_RECOVERY
@@ -514,7 +524,7 @@ static bool erase_uboot_env(void) {
 		return env_erase() ? false : true;
 }
 
-static void flashing(char *cmd, char *response)
+void flashing(char *cmd, char *response)
 {
 	FbLockState status;
 	FbLockEnableResult result;
@@ -845,6 +855,15 @@ static void flashing(char *cmd, char *response)
 		else
 			strcpy(response, "OKAY");
 	}
+#ifdef CONFIG_IMX_ANDROID_GBL
+	else if (endswith(cmd, FASTBOOT_SET_GBL_PUBLIC_KEY)) {
+		if (avb_set_gbl_public_key(fastboot_buf_addr,
+					fastboot_bytes_received))
+			strcpy(response, "FAILcan't set gbl public key!");
+		else
+			strcpy(response, "OKAY");
+	}
+#endif
 #endif /* !CONFIG_AVB_ATX */
 #endif /* CONFIG_IMX_TRUSTY_OS */
 	else if (endswith(cmd, ERASE_UBOOT_ENV)) {
@@ -896,16 +915,37 @@ static void flashing(char *cmd, char *response)
 			printf("flashing get_unlock_ability fail!\n");
 			strcpy(response, "FAILget unlock ability failed.");
 		}
+#ifdef CONFIG_INCLUDE_DTB_TO_VENDOR_BOOT
+	} else if (is_command(cmd, "set-fdt-name")) {
+		char *fdt_name = strstr(cmd, "set-fdt-name") + strlen("set-fdt-name");
+		if (fdt_name[0] != '=' || strlen(fdt_name) == 1) {
+			printf("empty fdt_name provided!\n");
+			strcpy(response, "FAILWrong fdt_name!");
+		} else {
+			/* skip the "=" */
+			fdt_name = fdt_name + 1;
+			if (env_set("fdt_name", fdt_name) || env_save()) {
+				printf("Can't set and save fdt_name!\n");
+				strcpy(response, "FAILCan't set fdt_name!");
+			} else {
+				printf("setting the fdt_name to: %s\n", fdt_name);
+				strcpy(response, "OKAY");
+			}
+		}
+#endif
 	} else {
 		printf("Unknown flashing command:%s\n", cmd);
 		strcpy(response, "FAILcommand not defined");
 	}
+
+#ifndef CONFIG_IMX_ANDROID_GBL
 	fastboot_tx_write_more(response);
 
 	/* Must call fastboot_none_resp before returning from the dispatch function
 	 *  which uses fastboot_tx_write_more
 	 */
 	fastboot_none_resp(response);
+#endif
 }
 #endif /* CONFIG_FASTBOOT_LOCK */
 
@@ -1088,7 +1128,7 @@ static void flash(char *cmd, char *response)
 #endif
 }
 
-static void erase(char *cmd, char *response)
+void erase(char *cmd, char *response)
 {
 	if (!cmd) {
 		pr_err("missing partition name");

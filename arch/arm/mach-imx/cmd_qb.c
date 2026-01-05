@@ -143,10 +143,24 @@ static unsigned long get_boot_device_offset(void *dev, int dev_type)
 	struct mmc *mmc;
 
 #if IS_ENABLED(CONFIG_SCMI_FIRMWARE)
+#define SDP_BOOT	(0x5)
 	int ret;
-	ret = scmi_get_boot_device_offset(&offset);
-	if (!ret)
-		return offset;
+	u8 boot_stage;
+
+	ret = scmi_get_boot_stage(&boot_stage);
+	if (ret)
+		return ret;
+
+	/** Running qb save from SDP boot -> the current boot device
+	  * is different that the medium we are trying to save the qb
+	  * data to. ROM does not know what our final boot device
+	  * will be.
+	  */
+	if (boot_stage != SDP_BOOT) {
+		ret = scmi_get_boot_device_offset(&offset);
+		if (!ret)
+			return offset;
+	}
 	/* fall back to boot from primary set if get rom passover failed */
 #endif
 

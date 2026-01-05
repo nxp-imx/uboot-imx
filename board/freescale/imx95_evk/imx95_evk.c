@@ -469,6 +469,10 @@ int board_init(void)
 	setup_typec();
 #endif
 
+#if IS_ENABLED(CONFIG_TARGET_IMX95_19X19_EVK)
+	netc_regulator_enable("regulator-m2-pwr", true);
+#endif
+
 	netc_init();
 
 	flexspi_nor_steup();

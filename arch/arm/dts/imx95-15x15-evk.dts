@@ -78,6 +78,15 @@
 		enable-active-high;
 		regulator-always-on;
 	};
+
+	reg_m2_pwr: regulator-m2-pwr {
+		compatible = "regulator-fixed";
+		regulator-name = "M.2-power";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&pcal6524 10 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+	};
 };
 
 &flexspi1 {
@@ -274,6 +283,15 @@
 		};
 	};
 };
+
+&pcie0 {
+	pinctrl-0 = <&pinctrl_pcie0>;
+	pinctrl-names = "default";
+	reset-gpio = <&gpio5 13 GPIO_ACTIVE_LOW>;
+	vpcie-supply = <&reg_m2_pwr>;
+	status = "okay";
+};
+
 &scmi_iomuxc {
 	pinctrl_flexcan2: flexcan2grp {
 		fsl,pins = <
@@ -340,6 +358,13 @@
 	pinctrl_pcal6524: pcal6524grp {
 		fsl,pins = <
 			IMX95_PAD_GPIO_IO34__GPIO5_IO_BIT14		0x31e
+		>;
+	};
+
+	pinctrl_pcie0: pcie0grp {
+		fsl,pins = <
+			IMX95_PAD_GPIO_IO32__HSIOMIX_TOP_PCIE1_CLKREQ_B		0x40000b1e
+			IMX95_PAD_GPIO_IO33__GPIO5_IO_BIT13			0x31e
 		>;
 	};
 

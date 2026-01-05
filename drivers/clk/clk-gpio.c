@@ -13,14 +13,22 @@
 struct clk_gpio_priv {
 	struct gpio_desc	enable;	/* GPIO, controlling the gate */
 	struct clk		*clk;	/* Gated clock */
+	int enable_count;
 };
 
 static int clk_gpio_enable(struct clk *clk)
 {
 	struct clk_gpio_priv *priv = dev_get_priv(clk->dev);
 
+	if (priv->enable_count) {
+		priv->enable_count++;
+		return 0;
+	}
+
 	clk_enable(priv->clk);
 	dm_gpio_set_value(&priv->enable, 1);
+
+	priv->enable_count++;
 
 	return 0;
 }
@@ -28,6 +36,15 @@ static int clk_gpio_enable(struct clk *clk)
 static int clk_gpio_disable(struct clk *clk)
 {
 	struct clk_gpio_priv *priv = dev_get_priv(clk->dev);
+
+	if (priv->enable_count == 0) {
+		debug("clk %s already disabled\n",
+				       clk->dev->name);
+		return 0;
+	}
+
+	if (--priv->enable_count > 0)
+		return 0;
 
 	dm_gpio_set_value(&priv->enable, 0);
 	clk_disable(priv->clk);

@@ -364,6 +364,26 @@ config SYSTEM_RAMDISK_SUPPORT
 	bool "Support build ramdisk in system image"
 	default n
 
+config IMX_ANDROID_GBL
+	bool "Support Android Generic Bootloader (GBL)"
+	depends on ANDROID_SUPPORT || ANDROID_AUTO_SUPPORT
+	default n
+	select RSA
+	select SPL_RSA
+	select RSA_VERIFY_WITH_PKEY
+	select IMAGE_SIGN_INFO
+	select EFI_GBL_AVB
+	select EFI_GBL_OS_CONFIGURATION
+	select EFI_GBL_BOOT_CONTROL
+	select EFI_GBL_BOOT_MEMORY
+	select EFI_GBL_FASTBOOT_TRANSPORT
+	select EFI_GBL_FASTBOOT
+	select EFI_GBL_VENDOR_PARTITION
+	select INCLUDE_DTB_TO_VENDOR_BOOT
+	help
+	  Load and boot the Android image by Android Generic Bootloader (GBL),
+	  which is an UEFI application distributed by Google.
+
 menu "TRUSTY OS Support"
 
 config IMX_TRUSTY_OS
@@ -493,6 +513,10 @@ config ANDROID_DYNAMIC_PARTITION
 config VIRTUAL_AB_SUPPORT
 	bool "Support virtual AB update"
 	select ANDROID_DYNAMIC_PARTITION
+
+config INCLUDE_DTB_TO_VENDOR_BOOT
+	bool "Include the dtb into vendor_boot image"
+	default n
 
 config BOOTLOADER_MENU
 	bool "Enable bootloader menu for android device"

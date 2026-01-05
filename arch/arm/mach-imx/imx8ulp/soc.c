@@ -1208,7 +1208,7 @@ int ft_system_setup(void *blob, struct bd_info *bd)
 	if (ret)
 		printf("Error[0x%x] fdt_setprop serial-number.\n", ret);
 
-	if (IS_ENABLED(CONFIG_DM_RNG)) {
+	if (IS_ENABLED(CONFIG_DM_RNG) && !IS_ENABLED(CONFIG_IMX_ANDROID_GBL)) {
 		ret = fdt_kaslrseed(blob, true);
 		if (ret)
 			goto skip_upt;

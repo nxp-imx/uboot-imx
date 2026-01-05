@@ -1692,7 +1692,7 @@ usb_modify_speed:
 	    fixup_thermal_trips(blob, "soc-thermal"))
 		printf("Failed to update soc-thermal trip(s)");
 
-	if (IS_ENABLED(CONFIG_DM_RNG)) {
+	if (IS_ENABLED(CONFIG_DM_RNG) && !IS_ENABLED(CONFIG_IMX_ANDROID_GBL)) {
 		int ret = fdt_kaslrseed(blob, true);
 		if (ret)
 			printf("Unable to set property %s, err=%s\n",

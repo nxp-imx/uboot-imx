@@ -6,6 +6,8 @@
 #ifndef __FB_FSL_VIRTUAL_AB_H__
 #define __FB_FSL_VIRTUAL_AB_H__
 
+#include <android_bootloader_message.h>
+
 typedef enum {
 	VIRTUAL_AB_NONE = 0,
 	VIRTUAL_AB_UNKNOWN,
@@ -14,6 +16,7 @@ typedef enum {
 	VIRTUAL_AB_CANCELLED,
 } Virtual_AB_Status;
 
+int read_virtual_ab_message(misc_virtual_ab_message *message);
 bool partition_is_protected_during_merge(char *part);
 bool virtual_ab_update_is_merging(void);
 bool virtual_ab_update_is_snapshoted(void);

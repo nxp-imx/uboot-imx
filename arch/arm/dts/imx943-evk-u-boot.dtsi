@@ -3,6 +3,13 @@
  * Copyright 2025 NXP
  */
 
+/ {
+	aliases {
+		pci0 = &netc_bus0;
+		pci1 = &netc_bus1;
+	};
+};
+
 &aips1 {
 	bootph-all;
 	bootph-pre-ram;
@@ -237,4 +244,26 @@
 &pcal6408_i2c3_u172 {
 	compatible = "ti,tca6408";
 	label = "u172";
+};
+
+&pca9670_i2c3 {
+	u-boot,i2c-offset-len = <0>;
+};
+
+&pcie0 {
+	assigned-clocks =<&scmi_clk IMX94_CLK_HSIOPLL_VCO>,
+			 <&scmi_clk IMX94_CLK_HSIOPLL>,
+			 <&scmi_clk IMX94_CLK_HSIOPCIEAUX>;
+	assigned-clock-rates = <3600000000>, <100000000>, <10000000>;
+	assigned-clock-parents = <0>, <&scmi_clk IMX94_CLK_HSIOPLL_VCO>,
+				 <&scmi_clk IMX94_CLK_SYSPLL1_PFD1_DIV2>;
+};
+
+&pcie1 {
+	assigned-clocks =<&scmi_clk IMX94_CLK_HSIOPLL_VCO>,
+			 <&scmi_clk IMX94_CLK_HSIOPLL>,
+			 <&scmi_clk IMX94_CLK_HSIOPCIEAUX>;
+	assigned-clock-rates = <3600000000>, <100000000>, <10000000>;
+	assigned-clock-parents = <0>, <&scmi_clk IMX94_CLK_HSIOPLL_VCO>,
+				 <&scmi_clk IMX94_CLK_SYSPLL1_PFD1_DIV2>;
 };

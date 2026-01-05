@@ -140,6 +140,10 @@ int get_curr_slot(struct bootloader_control* ab_data);
  * */
 int current_slot(void);
 
+/* Return if current slot is successfully booted.
+ * */
+int is_current_slot_successful(bool *success);
+
 /* return 0 for the first slot
  * return 1 for the second slot
  * return -1 for not supported slot

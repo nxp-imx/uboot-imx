@@ -59,6 +59,13 @@
 &iomuxc {
 	bootph-pre-ram;
 	bootph-some-ram;
+
+	pinctrl_lpi2c1_gpio: lpi2c1gpiogrp {
+		fsl,pins = <
+			MX91_PAD_I2C1_SCL__GPIO1_IO0		0x31e
+			MX91_PAD_I2C1_SDA__GPIO1_IO1		0x31e
+		>;
+	};
 };
 
 &reg_usdhc2_vmmc {
@@ -123,6 +130,11 @@
 
 &lpi2c1 {
 	bootph-pre-ram;
+	pinctrl-names = "default", "gpio";
+	pinctrl-0 = <&pinctrl_lpi2c1>;
+	pinctrl-1 = <&pinctrl_lpi2c1_gpio>;
+	gpios = <&gpio1 00 GPIO_ACTIVE_LOW>,
+		<&gpio1 01 GPIO_ACTIVE_LOW>;
 };
 
 &lpi2c2 {

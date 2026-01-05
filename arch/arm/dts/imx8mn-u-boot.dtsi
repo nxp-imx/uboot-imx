@@ -35,6 +35,10 @@
 		};
 	};
 #endif
+
+	imx8mn-cm7 {
+		compatible = "fsl,imx8mn-cm7";
+	};
 };
 
 &{/soc@0} {

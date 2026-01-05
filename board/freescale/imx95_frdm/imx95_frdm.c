@@ -24,6 +24,7 @@
 #include <dm/uclass-internal.h>
 
 extern int board_fix_fdt_fuse(void *fdt);
+static int get_board_version(int *rev, int *data);
 
 int board_early_init_f(void)
 {
@@ -48,8 +49,8 @@ struct tcpc_port_config portpd_config = {
 	.addr = 0x52,
 	.port_type = TYPEC_PORT_UFP,
 	.max_snk_mv = 20000,
-	.max_snk_ma = 3000,
-	.max_snk_mw = 15000,
+	.max_snk_ma = 5000,
+	.max_snk_mw = 100000,
 	.op_snk_mv = 9000,
 };
 
@@ -93,6 +94,8 @@ void tca_mux_select(enum typec_cc_polarity pol)
 static void setup_typec(void)
 {
 	int ret;
+	unsigned int rev[2];
+	unsigned int data[2];
 
 	tca_base = USB1_BASE_ADDR + 0xfc000;
 
@@ -106,10 +109,23 @@ static void setup_typec(void)
 		printf("Power supply on USB PD\n");
 
 		/* Enable EXT PWR */
-		ret = dm_gpio_lookup_name("GPIO5_9", &ext_pwr_desc);
-		if (ret) {
-			printf("%s lookup GPIO5_9 failed ret = %d\n", __func__, ret);
-			return;
+		ret = get_board_version(rev, data);
+		if (ret == 0) {
+			if (rev[0] < 1) {
+				ret = dm_gpio_lookup_name("GPIO5_9", &ext_pwr_desc);
+				if (ret) {
+					printf("%s lookup GPIO5_9 failed ret = %d\n",
+					       __func__, ret);
+					return;
+				}
+			} else {
+				ret = dm_gpio_lookup_name("gpio@22_12", &ext_pwr_desc);
+				if (ret) {
+					printf("%s lookup gpio@22_12 failed ret = %d\n",
+					       __func__, ret);
+					return;
+				}
+			}
 		}
 
 		ret = dm_gpio_request(&ext_pwr_desc, "ext_pwr_en");
@@ -332,12 +348,10 @@ void lvds_backlight_on(void)
 	dm_i2c_write(dev, 0x8, &reg, 1);
 }
 
-static int print_board_version(void)
+static int get_board_version(int *rev, int *data)
 {
 	int i, ret;
 	struct udevice *dev;
-	unsigned int rev[2];
-	unsigned int data[2];
 
 	ret = uclass_first_device_check(UCLASS_ADC, &dev);
 
@@ -369,19 +383,23 @@ static int print_board_version(void)
 			else
 				rev[i] = 6;
 		}
-		printf("BOARD: V%d.%d(ADC2:%d,ADC3:%d)\n", rev[0], rev[1], data[0], data[1]);
+		return 0;
 	} else {
-		printf("BOARD: unknown\n");
+		return -1;
 	}
-
-	return 0;
 }
 
 int board_init(void)
 {
 	int ret;
+	unsigned int rev[2];
+	unsigned int data[2];
 
-	print_board_version();
+	ret = get_board_version(rev, data);
+	if (ret == 0)
+		printf("BOARD: V%d.%d(ADC2:%d,ADC3:%d)\n", rev[0], rev[1], data[0], data[1]);
+	else
+		printf("BOARD: Unable to determine board version\n");
 
 	ret = imx9_scmi_power_domain_enable(IMX95_PD_HSIO_TOP, true);
 	if (ret) {
@@ -419,13 +437,85 @@ int board_late_init(void)
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
+int board_fix_fdt_version(void *blob)
+{
+	int ret, nodeoffset;
+	int gpio5_offset;
+	u32 gpio5_phandle;
+	u32 gpio_phandle_data[3];
+
+	static const struct {
+		const char *path;
+		int gpio_pin;  // -1 means delete the node
+	} configs[] = {
+		{"/regulator-ext-3v3", -1},    // Delete node
+		{"/regulator-ext-5v", 9},      // GPIO pin 9
+		{"/regulator-m2-pwr", 11},     // GPIO pin 11
+		{"/regulator-m2-mkey-pwr", 10}, // GPIO pin 10
+	};
+
+	gpio5_offset = fdt_path_offset(blob, "/soc/gpio@43850000");
+	if (gpio5_offset < 0) {
+		printf("Failed to find gpio5 node\n");
+		return gpio5_offset;
+	}
+
+	gpio5_phandle = fdt_get_phandle(blob, gpio5_offset);
+	if (!gpio5_phandle) {
+		printf("Failed to get gpio5 phandle\n");
+		return gpio5_phandle;
+	}
+
+	for (int i = 0; i < ARRAY_SIZE(configs); i++) {
+		printf("Modify node: %s\n", configs[i].path);
+		nodeoffset = fdt_path_offset(blob, configs[i].path);
+		if (nodeoffset < 0)
+			return nodeoffset;
+
+		if (configs[i].gpio_pin < 0) {
+			/* Delete node */
+			ret = fdt_del_node(blob, nodeoffset);
+			if (ret < 0) {
+				printf("Unable to delete node %s, err=%s\n",
+				       configs[i].path, fdt_strerror(ret));
+			} else {
+				printf("Delete node %s\n", configs[i].path);
+			}
+		} else {
+			/* Set GPIO property */
+			gpio_phandle_data[0] = cpu_to_fdt32(gpio5_phandle);
+			gpio_phandle_data[1] = cpu_to_fdt32(configs[i].gpio_pin);
+			gpio_phandle_data[2] = cpu_to_fdt32(1);
+
+			ret = fdt_setprop(blob, nodeoffset, "gpio", gpio_phandle_data,
+					  sizeof(gpio_phandle_data));
+			if (ret < 0) {
+				printf("Failed to set gpio property for %s: %s\n",
+				       configs[i].path, fdt_strerror(ret));
+				return ret;
+			}
+		}
+	}
+
+	return 0;
+}
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
+	unsigned int rev[2];
+	unsigned int data[2];
 	char *p, *b, *s;
 	char *token = NULL;
 	int i, ret = 0;
 	u64 base[CONFIG_NR_DRAM_BANKS] = {0};
 	u64 size[CONFIG_NR_DRAM_BANKS] = {0};
+
+	ret = get_board_version(rev, data);
+	if (ret == 0) {
+		if (rev[0] < 1) {
+			/* For RevA and RevB, potentially remove or modify nodes */
+			board_fix_fdt_version(blob);
+		}
+	}
 
 	p = env_get("jh_root_mem");
 	if (!p)
