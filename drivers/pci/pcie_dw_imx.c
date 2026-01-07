@@ -431,6 +431,12 @@ static int pcie_dw_imx_probe(struct udevice *dev)
 		}
 	}
 
+	ret = imx_pcie_clk_enable(priv);
+	if (ret) {
+		dev_err(dev, "failed to enable clocks\n");
+		goto err_clk;
+	}
+
 	ret = imx_pcie_assert_core_reset(priv);
 	if (ret) {
 		dev_err(dev, "failed to assert core reset\n");
@@ -441,12 +447,6 @@ static int pcie_dw_imx_probe(struct udevice *dev)
 		info->init_phy(priv);
 
 	imx_pcie_configure_type(priv);
-
-	ret = imx_pcie_clk_enable(priv);
-	if (ret) {
-		dev_err(dev, "failed to enable clocks\n");
-		goto err_clk;
-	}
 
 	if (info->flags & IMX_PCIE_FLAG_HAS_PHYDRV) {
 		ret = generic_phy_init(&priv->phy);
