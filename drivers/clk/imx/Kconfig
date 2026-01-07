@@ -163,7 +163,7 @@ config CLK_IMXRT1170
 
 config CLK_IMX95_BLKCTRL
 	bool "Enable i.MX95 blkctrl clock driver"
-	depends on IMX95 || IMX94
+	depends on IMX95 || IMX94 || IMX952
 	select CLK
 	select CLK_CCF
 	help

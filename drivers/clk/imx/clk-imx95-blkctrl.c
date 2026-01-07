@@ -68,6 +68,9 @@ static int imx95_blkctrl_clk_probe(struct udevice *dev)
 		clk_dm(IMX_HSIO_BLK_CTL_ID_BASE,
 			clk_register_gate(NULL, "hsio_blk_ctl_clk", "hsiopll", 0, addr + 0x0,
 				6, 0, NULL));
+		clk_dm(IMX_HSIO_BLK_CTL_ID_BASE + 1,
+			clk_register_gate(NULL, "hsio_blk_ctl_clk1", "hsiopll", 0, addr + 0x0,
+				2, 0, NULL));
 	} else {
 		clk_dm(IMX95_CLK_DISPMIX_LVDS_PHY_DIV + IMX_LVDS_CSR_ID_BASE,
 			clk_register_fixed_factor(NULL, "ldb_phy_div", "ldbpll", 0, 1, 2));
