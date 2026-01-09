@@ -1,0 +1,313 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2025-2026 NXP
+ */
+
+/ {
+	aliases {
+		usb_gadget0 = &usbg1;
+		usb_gadget1 = &usbg2;
+		pci0 = &netc_bus0;
+		pci1 = &netc_bus1;
+	};
+
+	usbg1: usbg1 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usb1>;
+		bootph-pre-ram;
+		status = "okay";
+	};
+
+	usbg2: usbg2 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usb2>;
+		bootph-pre-ram;
+		status = "okay";
+	};
+};
+
+&{/soc} {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&aips1 {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&aips2 {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&aips3 {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&gpio1 {
+	reg = <0 0x47400000 0 0x1000>, <0 0x47400040 0 0x40>;
+};
+
+&gpio2 {
+	reg = <0 0x43810000 0 0x1000>, <0 0x43810040 0 0x40>;
+	bootph-pre-ram;
+};
+
+&gpio3 {
+	reg = <0 0x43820000 0 0x1000>, <0 0x43820040 0 0x40>;
+	bootph-pre-ram;
+};
+
+&gpio4 {
+	reg = <0 0x43840000 0 0x1000>, <0 0x43840040 0 0x40>;
+	bootph-pre-ram;
+};
+
+&gpio5 {
+	reg = <0 0x43850000 0 0x1000>, <0 0x43850040 0 0x40>;
+	bootph-pre-ram;
+};
+
+&lpuart1 {
+	bootph-pre-ram;
+};
+
+&reg_usdhc2_vmmc {
+	bootph-pre-ram;
+};
+
+&usdhc1 {
+	bootph-pre-ram;
+};
+
+&usdhc2 {
+	bootph-pre-ram;
+};
+
+&wdog3 {
+	status = "disabled";
+};
+
+&mu2 {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&clk_dummy {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&clk_osc_24m {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&clk_ext1 {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&sram0 {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&scmi_buf0 {
+	reg = <0x0 0x400>;
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&scmi_buf1 {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&{/firmware} {
+	bootph-all;
+        bootph-pre-ram;
+};
+
+&{/firmware/scmi} {
+	bootph-all;
+        bootph-pre-ram;
+};
+
+&{/firmware/scmi/protocol@11} {
+	bootph-all;
+        bootph-pre-ram;
+};
+
+&{/firmware/scmi/protocol@13} {
+	bootph-all;
+        bootph-pre-ram;
+};
+
+&{/firmware/scmi/protocol@14} {
+	bootph-all;
+        bootph-pre-ram;
+};
+
+&{/firmware/scmi/protocol@15} {
+	bootph-all;
+};
+
+&{/firmware/scmi/protocol@19} {
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&pinctrl_uart1 {
+	bootph-pre-ram;
+};
+
+&pinctrl_usdhc1 {
+	bootph-pre-ram;
+};
+
+&pinctrl_usdhc1_100mhz {
+	bootph-pre-ram;
+};
+
+&pinctrl_usdhc1_200mhz {
+	bootph-pre-ram;
+};
+
+&pinctrl_usdhc2 {
+	bootph-pre-ram;
+};
+
+&pinctrl_usdhc2_100mhz {
+	bootph-pre-ram;
+};
+
+&pinctrl_usdhc2_200mhz {
+	bootph-pre-ram;
+};
+
+&pinctrl_usdhc2_gpio {
+	bootph-pre-ram;
+};
+
+&pinctrl_reg_usdhc2_vmmc {
+	bootph-pre-ram;
+};
+
+&elemu1 {
+	status = "okay";
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&elemu3 {
+	status = "okay";
+	bootph-all;
+	bootph-pre-ram;
+};
+
+&usb1 {
+	compatible = "fsl,imx8mm-usb", "fsl,imx7d-usb";
+	/delete-property/power-domains;
+	bootph-pre-ram;
+	extcon = <&ptn5110>;
+};
+
+&usbmisc1 {
+	bootph-pre-ram;
+};
+
+&usbphynop1 {
+	bootph-pre-ram;
+};
+
+&usb2 {
+	compatible = "fsl,imx8mm-usb", "fsl,imx7d-usb";
+	/delete-property/power-domains;
+	bootph-pre-ram;
+};
+
+&usbphynop2 {
+	bootph-pre-ram;
+};
+
+&usbmisc2 {
+	bootph-pre-ram;
+};
+
+&i2c3_pcal6408 {
+	compatible = "ti,tca6408";
+	label = "i2c3_io";
+};
+
+&i2c4_pcal6408 {
+	compatible = "ti,tca6408";
+	label = "i2c4_io";
+};
+
+&pcal6416 {
+	compatible = "ti,tca6416";
+	label = "i2c6_io";
+};
+
+&pcal6524 {
+	label = "i2c7_io";
+};
+
+&xspi1 {
+	nxp,xspi-gmid;
+	nxp,xspi-env = <0>;
+	bootph-pre-ram;
+};
+
+&mt35xu01gbba {
+	bootph-pre-ram;
+};
+
+&pinctrl_xspi1 {
+	bootph-pre-ram;
+};
+
+&pinctrl_xspi1_reset {
+	bootph-pre-ram;
+};
+
+&scmi_iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog>;
+
+	pinctrl_hog: hoggrp {
+		bootph-pre-ram;
+
+		fsl,pins = <
+			IMX952_PAD_XSPI1_SS1_B__WAKEUPMIX_TOP_GPIO5_IO_11			0x3fe
+			IMX952_PAD_GPIO_IO12__WAKEUPMIX_TOP_TPM3_CH2           0x51e
+			IMX952_PAD_CCM_CLKO1__WAKEUPMIX_TOP_GPIO3_IO_26			0x3fe
+			IMX952_PAD_CCM_CLKO2__WAKEUPMIX_TOP_GPIO3_IO_27			0x3fe
+		>;
+	};
+};
+
+&dispmix_csr {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-rates;
+	/delete-property/ assigned-clock-parents;
+};
+
+&mipi_dsi {
+	assigned-clocks = <&scmi_clk IMX952_CLK_MIPIPHYPLLBYPASS>;
+	assigned-clock-parents = <&scmi_clk IMX952_CLK_VIDEOPLL1>;
+};
+
+&pcie0 {
+	assigned-clocks =<&scmi_clk IMX952_CLK_HSIOPLL_VCO>,
+					 <&scmi_clk IMX952_CLK_HSIOPLL>,
+					 <&scmi_clk IMX952_CLK_HSIOPCIEAUX>;
+	assigned-clock-rates = <3600000000>, <100000000>, <10000000>;
+	assigned-clock-parents = <0>, <&scmi_clk IMX952_CLK_HSIOPLL_VCO>,
+				 <&scmi_clk IMX952_CLK_SYSPLL1_PFD1_DIV2>;
+};
