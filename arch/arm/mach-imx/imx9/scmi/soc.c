@@ -17,6 +17,7 @@
 #include <asm/system.h>
 #include <dm/uclass.h>
 #include <dm/device.h>
+#include <dm/ofnode.h>
 #include <env_internal.h>
 #include <linux/iopoll.h>
 #include <fuse.h>
@@ -1979,6 +1980,22 @@ static void gpio_reset(ulong gpio_base)
 	writel(0, gpio_base + 0x1c);
 }
 
+static int gpio_available(const char *nodes_path)
+{
+	ofnode gpio_node = ofnode_path(nodes_path);
+	const char *status;
+
+	if (!ofnode_valid(gpio_node))
+		return false;
+
+	status = ofnode_read_string(gpio_node, "status");
+
+	if (status && !strcmp(status, "disabled"))
+		return false;
+
+	return true;
+}
+
 int arch_cpu_init(void)
 {
 	if (IS_ENABLED(CONFIG_XPL_BUILD)) {
@@ -1987,7 +2004,9 @@ int arch_cpu_init(void)
 
 		clock_init_early();
 
-		gpio_reset(GPIO2_BASE_ADDR);
+		if (gpio_available("/soc/gpio@43810000"))
+			gpio_reset(GPIO2_BASE_ADDR);
+
 		gpio_reset(GPIO3_BASE_ADDR);
 		gpio_reset(GPIO4_BASE_ADDR);
 		gpio_reset(GPIO5_BASE_ADDR);

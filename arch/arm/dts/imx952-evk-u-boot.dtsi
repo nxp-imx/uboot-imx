@@ -59,6 +59,11 @@
 &gpio2 {
 	reg = <0 0x43810000 0 0x1000>, <0 0x43810040 0 0x40>;
 	bootph-pre-ram;
+	/*
+	 * Use one SPL/U-Boot for mx952evk and mx952evkrpmsg, since GPIO2
+	 * is assigned to M7, disable gpio2 here
+	 */
+	status = "disabled";
 };
 
 &gpio3 {
