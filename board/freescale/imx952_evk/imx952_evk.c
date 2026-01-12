@@ -15,6 +15,7 @@
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <asm/gpio.h>
+#include <asm/global_data.h>
 #include <power/regulator.h>
 #include <scmi_agent.h>
 #include <asm/arch/sys_proto.h>
@@ -29,6 +30,7 @@
 #define PD_DISPLAY IMX952_PD_DISPLAY
 #define PD_CAMERA IMX952_PD_CAMERA
 
+DECLARE_GLOBAL_DATA_PTR;
 
 extern int board_fix_fdt_fuse(void *fdt);
 
@@ -283,6 +285,8 @@ int board_init(void)
 
 int board_late_init(void)
 {
+	char jh_root_mem[64];
+
 	if (IS_ENABLED(CONFIG_ENV_IS_IN_MMC))
 		board_late_mmc_env_init();
 
@@ -290,6 +294,15 @@ int board_late_init(void)
 #ifdef CONFIG_AHAB_BOOT
 	env_set("sec_boot", "yes");
 #endif
+	/*
+	 * jailhouse inmate cell uses the address [0x100000000, 0x180000000)
+	 * imx952_evk is to support two boards with different DRAM size, so
+	 * runtime cut off them from jh_root_mem.
+	 */
+	snprintf(jh_root_mem, sizeof(jh_root_mem), "0x58000000@0x90000000,0x%llx@0x180000000",
+		 gd->bd->bi_dram[1].size - SZ_2G);
+
+	env_set("jailhouse_root_mem", jh_root_mem);
 
 #if IS_ENABLED(CONFIG_IMX_CRRM)
 	crrm_uboot_late_init();
