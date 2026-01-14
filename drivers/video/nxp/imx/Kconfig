@@ -183,7 +183,7 @@ config VIDEO_IMX95_DPU
 config VIDEO_IMX95_PIXEL_LINK
 	bool "Enable iMX95 displaymix pixel link support"
 	default n
-	depends on VIDEO && IMX95
+	depends on VIDEO && (IMX95 || IMX952)
 	select VIDEO_BRIDGE
 	select VIDEO_LINK
 	select REGMAP
