@@ -173,7 +173,7 @@ config VIDEO_IMX95_DW_DSI
 config VIDEO_IMX95_DPU
 	bool "i.MX95 display controller support"
 	default n
-	depends on VIDEO && IMX95
+	depends on VIDEO && (IMX95 || IMX952)
 	select VIDEO_LINK
 	select REGMAP
 	select SYSCON

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2026 NXP
  *
  */
 #include <dm.h>
@@ -137,7 +137,6 @@ enum dpu95_linemode {
 
 
 /* register in blk-ctrl */
-#define PLANE_ASSOCIATION		0x20
 #define  VIDEO_PLANE(n)			BIT(8 + 2 * (n))
 #define  INT_PLANE			BIT(6)
 #define  FRAC_PLANE(n)			BIT(2 * (n))
@@ -181,7 +180,6 @@ enum dpu95_pec_clken {
 #define  DIV_MASK			0xff0000
 #define  DIV(n)				(((n) & 0xff) << 16)
 #define  DIV_RESET			0x80
-#define	 SHDEN				BIT(8)
 
 #define PIXENGCFG_EXTDST_DYNAMIC	0xc
 
@@ -330,7 +328,6 @@ enum dpu95_link_id {
 };
 
 /* registers in blk-ctrl */
-#define CLOCK_CTRL			0x0
 #define  DSIP_CLK_SEL(n)		(0x3 << (2 * (n)))
 #define  CCM				0x0
 #define  DSI_PLL(n)			(0x1 << (2 * (n)))
@@ -363,7 +360,22 @@ struct imx95_dpu_priv {
 	struct clk clk_ldbvco;
 
 	struct display_timing timings;
+	struct imx95_dpu_devdata *devdata;
+};
 
+struct dpu95_unit_id_off {
+	u32 id;
+	u32 offset;
+	enum dpu95_link_id link_id;
+};
+
+struct imx95_dpu_devdata {
+	unsigned int clock_ctrl;
+	unsigned int shden;
+	unsigned int plane_association;
+	struct dpu95_unit_id_off fetchlayer[2];
+	struct dpu95_unit_id_off domainblend[2];
+	struct dpu95_unit_id_off framegen[2];
 };
 
 static void dpu95_fl_set_linemode(struct imx95_dpu_priv *priv,
@@ -455,7 +467,7 @@ static void dpu95_fl_set_stream_id(struct imx95_dpu_priv *priv, unsigned int str
 {
 	int ret;
 
-	ret = regmap_update_bits(priv->regmap, PLANE_ASSOCIATION,
+	ret = regmap_update_bits(priv->regmap, priv->devdata->plane_association,
 				 FRAC_PLANE(0), stream_id ? FRAC_PLANE(0) : 0);
 	if (ret < 0)
 		printf("failed to set association Frac plane 0 bit: %d\n", ret);
@@ -508,7 +520,8 @@ static void dpu95_ed_pec_sync_mode_single(struct imx95_dpu_priv *priv)
 
 static void dpu95_ed_pec_enable_shden(struct imx95_dpu_priv *priv, bool enable)
 {
-	clrsetbits_le32(priv->regs_extdst + 0x1000 + PIXENGCFG_EXTDST_STATIC, SHDEN, enable ? SHDEN : 0);
+	clrsetbits_le32(priv->regs_extdst + 0x1000 + PIXENGCFG_EXTDST_STATIC,
+			priv->devdata->shden, enable ? priv->devdata->shden : 0);
 }
 
 static void dpu95_ed_pec_sync_trigger(struct imx95_dpu_priv *priv)
@@ -579,8 +592,8 @@ static void dpu95_fg_cfg_videomode(struct imx95_dpu_priv *priv,
 	if (enc_is_dsi)
 		clk_set_rate(&priv->clk_pix, priv->timings.pixelclock.typ);
 
-	ret = regmap_update_bits(priv->regmap, CLOCK_CTRL, DSIP_CLK_SEL(priv->disp_id),
-				 enc_is_dsi ? CCM : LVDS_PLL_7(priv->disp_id));
+	ret = regmap_update_bits(priv->regmap, priv->devdata->clock_ctrl,
+				 DSIP_CLK_SEL(priv->disp_id), enc_is_dsi ? CCM : LVDS_PLL_7(priv->disp_id));
 	if (ret < 0)
 		printf("FrameGen0 failed to set DSIP_CLK_SEL: %d\n", ret);
 }
@@ -652,17 +665,6 @@ static void dpu95_dm_extdst0_master(struct imx95_dpu_priv *priv)
 	writel(MASTER, priv->regs + 0x2000 + EXTDST0_STATIC);
 }
 
-struct dpu95_unit_id_off {
-	u32 id;
-	u32 offset;
-	enum dpu95_link_id link_id;
-};
-
-struct dpu95_unit_id_off fetchlayer[2] = {
-	{0, 0x1d0000, DPU95_LINK_ID_FETCHLAYER0 },
-	{1, 0x1e0000, DPU95_LINK_ID_FETCHLAYER1 },
-};
-
 struct dpu95_unit_id_off layerblend[6] = {
 	{1, 0x170000, DPU95_LINK_ID_LAYERBLEND1 },
 	{2, 0x180000, DPU95_LINK_ID_LAYERBLEND2 },
@@ -677,16 +679,6 @@ struct dpu95_unit_id_off extdst[4] = {
 	{4, 0x120000, DPU95_LINK_ID_EXTDST4 },
 	{1, 0x150000, DPU95_LINK_ID_EXTDST1 },
 	{5, 0x160000, DPU95_LINK_ID_EXTDST5 },
-};
-
-struct dpu95_unit_id_off domainblend[2] = {
-	{0, 0x2a0000},
-	{1, 0x320000},
-};
-
-struct dpu95_unit_id_off framegen[2] = {
-	{0, 0x2b0000},
-	{1, 0x330000},
 };
 
 struct dpu95_unit_id_off constframe[4] = {
@@ -726,7 +718,7 @@ static int imx95_dpu_path_config(struct udevice *dev, u32 fl_id, u32 lb_id, u32 
 	struct imx95_dpu_priv *priv = dev_get_priv(dev);
 	u32 off;
 
-	off = find_unit_addr(fetchlayer, ARRAY_SIZE(fetchlayer), fl_id);
+	off = find_unit_addr(priv->devdata->fetchlayer, ARRAY_SIZE(priv->devdata->fetchlayer), fl_id);
 	if (!off) {
 		dev_err(dev, "Invalid fl_id %u\n", fl_id);
 		return -EINVAL;
@@ -747,14 +739,14 @@ static int imx95_dpu_path_config(struct udevice *dev, u32 fl_id, u32 lb_id, u32 
 	}
 	priv->regs_extdst = priv->regs + off;
 
-	off = find_unit_addr(domainblend, ARRAY_SIZE(domainblend), db_id);
+	off = find_unit_addr(priv->devdata->domainblend, ARRAY_SIZE(priv->devdata->domainblend), db_id);
 	if (!off) {
 		dev_err(dev, "Invalid db_id %u\n", db_id);
 		return -EINVAL;
 	}
 	priv->regs_domainblend = priv->regs + off;
 
-	off = find_unit_addr(framegen, ARRAY_SIZE(framegen), fg_id);
+	off = find_unit_addr(priv->devdata->framegen, ARRAY_SIZE(priv->devdata->framegen), fg_id);
 	if (!off) {
 		dev_err(dev, "Invalid fg_id %u\n", fg_id);
 		return -EINVAL;
@@ -771,7 +763,7 @@ static int imx95_dpu_path_config(struct udevice *dev, u32 fl_id, u32 lb_id, u32 
 	dpu95_ed_pec_enable_shden(priv, false);
 	dpu95_ed_pec_poweron(priv);
 	dpu95_ed_pec_src_sel(priv, find_unit_link_id(layerblend, ARRAY_SIZE(layerblend),lb_id));
-	dpu95_lb_pec_dynamic_sec_sel(priv, find_unit_link_id(fetchlayer, ARRAY_SIZE(fetchlayer), fl_id));
+	dpu95_lb_pec_dynamic_sec_sel(priv, find_unit_link_id(priv->devdata->fetchlayer, ARRAY_SIZE(priv->devdata->fetchlayer), fl_id));
 	dpu95_lb_pec_dynamic_prim_sel(priv, find_unit_link_id(constframe, ARRAY_SIZE(constframe), cf_id));
 
 	if (ed_id == 0 || ed_id == 1)
@@ -887,12 +879,16 @@ static int imx95_dpu_get_timings_from_display(struct udevice *dev,
 
 static int imx95_dpu_probe(struct udevice *dev)
 {
+	struct imx95_dpu_devdata *devdata;
 	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
 	struct video_priv *uc_priv = dev_get_uclass_priv(dev);
 	struct imx95_dpu_priv *priv = dev_get_priv(dev);
 
 	u32 fb_start, fb_end;
 	int ret;
+
+	devdata = (struct imx95_dpu_devdata *)dev_get_driver_data(dev);
+	priv->devdata = devdata;
 
 	debug("%s() plat: base 0x%lx, size 0x%x\n",
 	       __func__, plat->base, plat->size);
@@ -1032,8 +1028,45 @@ static int imx95_dpu_remove(struct udevice *dev)
 	return 0;
 }
 
+static const struct imx95_dpu_devdata imx95_dpu_devdata = {
+	.clock_ctrl = 0x00,
+	.shden = BIT(8),
+	.plane_association = 0x20,
+	.fetchlayer = {
+		{0, 0x1d0000, DPU95_LINK_ID_FETCHLAYER0 },
+		{1, 0x1e0000, DPU95_LINK_ID_FETCHLAYER1 },
+	},
+	.domainblend = {
+		{0, 0x2a0000},
+		{1, 0x320000},
+	},
+	.framegen = {
+		{0, 0x2b0000},
+		{1, 0x330000},
+	},
+};
+
+static const struct imx95_dpu_devdata imx952_dpu_devdata = {
+	.clock_ctrl = 0x04,
+	.shden = BIT(0),
+	.plane_association = 0x18,
+	.fetchlayer = {
+		{0, 0x1c0000, 0x19 },
+		{1, 0x1d0000, 0x1a },
+	},
+	.domainblend = {
+		{0, 0x2a0000},
+		{1, 0x330000},
+	},
+	.framegen = {
+		{0, 0x2b0000},
+		{1, 0x340000},
+	},
+};
+
 static const struct udevice_id imx95_dpu_ids[] = {
-	{ .compatible = "nxp,imx95-dpu" },
+	{ .compatible = "nxp,imx95-dpu", .data = (ulong)&imx95_dpu_devdata, },
+	{ .compatible = "nxp,imx952-dpu", .data = (ulong)&imx952_dpu_devdata, },
 	{ /* sentinel */ }
 };
 
