@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <clk.h>
@@ -20,7 +20,6 @@
 #include <regmap.h>
 #include <syscon.h>
 
-#define PIXEL_INTERLEAVER_CTRL	0x4
 #define  DISP_IN_SEL		BIT(1)
 #define  MODE			BIT(0)
 
@@ -56,11 +55,16 @@ struct imx95_pinter {
 	struct regmap *regmap;
 	struct clk clk_bus;
 	enum imx95_pinter_mode mode;
+	unsigned int ctrl_reg;
 
 	struct display_timing adj;
 
 	unsigned int sid;	/* stream id */
 	struct udevice *pl_dev;
+};
+
+struct imx95_pinter_devdata {
+	unsigned int ctrl_reg;
 };
 
 static void imx95_pinter_sw_reset(struct imx95_pinter *pinter)
@@ -125,13 +129,13 @@ static int imx95_pinter_set_backlight(struct udevice *dev, int percent)
 
 	switch (pinter->mode) {
 	case BYPASS:
-		regmap_write(pinter->regmap, PIXEL_INTERLEAVER_CTRL, 0);
+		regmap_write(pinter->regmap, pinter->ctrl_reg, 0);
 		break;
 	case STREAM0_SPLIT2:
-		regmap_write(pinter->regmap, PIXEL_INTERLEAVER_CTRL, MODE);
+		regmap_write(pinter->regmap, pinter->ctrl_reg, MODE);
 		break;
 	case STREAM1_SPLIT2:
-		regmap_write(pinter->regmap, PIXEL_INTERLEAVER_CTRL,
+		regmap_write(pinter->regmap, pinter->ctrl_reg,
 			     MODE | DISP_IN_SEL);
 		break;
 	}
@@ -163,6 +167,7 @@ static struct video_bridge_ops imx95_pinter_bridge_ops = {
 
 static int imx95_pinter_probe(struct udevice *dev)
 {
+	struct imx95_pinter_devdata *devdata;
 	struct imx95_pinter *pinter = dev_get_priv(dev);
 	u8 inter_stream;
 	int ret = 0;
@@ -208,6 +213,8 @@ static int imx95_pinter_probe(struct udevice *dev)
 			break;
 		}
 
+		devdata = (struct imx95_pinter_devdata *)dev_get_driver_data(dev_get_parent(dev));
+		pinter->ctrl_reg = devdata->ctrl_reg;
 	}
 
 	return ret;
@@ -250,8 +257,17 @@ static int imx95_pinter_bind(struct udevice *dev)
 	return ret;
 }
 
+static const struct imx95_pinter_devdata imx95_pinter_devdata = {
+	.ctrl_reg = 0x4,
+};
+
+static const struct imx95_pinter_devdata imx952_pinter_devdata = {
+	.ctrl_reg = 0x8,
+};
+
 static const struct udevice_id imx95_pinter_dt_ids[] = {
-	{ .compatible = "nxp,imx95-pixel-interleaver" },
+	{ .compatible = "nxp,imx95-pixel-interleaver", .data = (ulong)&imx95_pinter_devdata, },
+	{ .compatible = "nxp,imx952-pixel-interleaver", .data = (ulong)&imx952_pinter_devdata, },
 	{ }
 };
 

@@ -194,7 +194,7 @@ config VIDEO_IMX95_PIXEL_LINK
 config VIDEO_IMX95_PIXEL_INTERLEAVER
 	bool "Enable iMX95 displaymix pixel interleaver support"
 	default n
-	depends on VIDEO && IMX95
+	depends on VIDEO && (IMX95 || IMX952)
 	select VIDEO_BRIDGE
 	select VIDEO_LINK
 	select REGMAP
