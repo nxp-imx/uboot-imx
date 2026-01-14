@@ -149,7 +149,7 @@ config VIDEO_IMX93_PARALLEL_DISPLAY_FORMAT
 config VIDEO_IMX95_LVDS
 	bool "i.MX95 LDVS bridge support"
 	default n
-	depends on (IMX95 || IMX94) && VIDEO
+	depends on (IMX95 || IMX94 || IMX952) && VIDEO
 	select DISPLAY
 	select VIDEO_LINK
 	help
