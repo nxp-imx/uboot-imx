@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2026 NXP
  *
  */
 
@@ -109,6 +109,7 @@ static const struct udevice_id imx95_blkctrl_clk_ids[] = {
 	{ .compatible = "fsl,imx94-dispmix-lvds-csr" },
 	{ .compatible = "fsl,imx94-dispmix-csr" },
 	{ .compatible = "nxp,imx95-hsio-blk-ctl" },
+	{ .compatible = "nxp,imx952-lvds-csr" },
 	{ },
 };
 
