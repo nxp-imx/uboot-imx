@@ -1411,7 +1411,7 @@
 		};
 
 		pixel_interleaver: bridge@4b0d0000 {
-			compatible = "nxp,imx95-pixel-interleaver";
+			compatible = "nxp,imx952-pixel-interleaver";
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x0 0x4b0d0000 0x0 0x20000>;
