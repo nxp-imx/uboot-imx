@@ -110,6 +110,16 @@ struct mipi_dsi_phy_timing {
 	u16 clk_lp2hs;
 };
 
+enum dw_mipi_dsi2_phy_type {
+	DW_MIPI_DSI2_DPHY,
+	DW_MIPI_DSI2_CPHY,
+};
+
+struct dw_mipi_dsi2_phy_iface {
+	int ppi_width;
+	enum dw_mipi_dsi2_phy_type phy_type;
+};
+
 /**
  * struct mipi_dsi_phy_ops - DSI host physical operations
  * @init: initialized host physical part
@@ -118,6 +128,9 @@ struct mipi_dsi_phy_timing {
  */
 struct mipi_dsi_phy_ops {
 	int (*init)(void *priv_data);
+	void (*power_on)(void *priv_data);
+	void (*power_off)(void *priv_data);
+	void (*get_interface)(void *priv_data, struct dw_mipi_dsi2_phy_iface *iface);
 	int (*get_lane_mbps)(void *priv_data, struct display_timing *timings,
 			     u32 lanes, u32 format, unsigned int *lane_mbps);
 	void (*post_set_mode)(void *priv_data,  unsigned long mode_flags);
@@ -486,5 +499,39 @@ int mipi_dsi_dcs_set_display_brightness(struct mipi_dsi_device *dsi,
  */
 int mipi_dsi_dcs_get_display_brightness(struct mipi_dsi_device *dsi,
 					u16 *brightness);
+
+enum dw_mipi_dsi2_ipi_mapping {
+	DW_MIPI_DSI2_IPI_MAPPING_IPI,
+	DW_MIPI_DSI2_IPI_MAPPING_DPI_CONFIG1,
+	DW_MIPI_DSI2_IPI_MAPPING_DPI_CONFIG2,
+	DW_MIPI_DSI2_IPI_MAPPING_DPI_CONFIG3,
+	DW_MIPI_DSI2_IPI_MAPPING_NA,
+};
+
+struct dw_mipi_dsi2_phy_timing {
+	u32 data_hs2lp;
+	u32 data_lp2hs;
+};
+
+struct dw_mipi_dsi2_host_ops {
+	int (*attach)(void *priv_data,
+		      struct mipi_dsi_device *dsi);
+	int (*detach)(void *priv_data,
+		      struct mipi_dsi_device *dsi);
+};
+
+struct dw_mipi_dsi2_plat_data {
+	struct regmap *regmap;
+	unsigned int max_data_lanes;
+	unsigned int ipi_lanes;
+	unsigned int ipi_fifo_depth;
+	enum dw_mipi_dsi2_ipi_mapping ipi_mapping;
+	unsigned int cri_cmd_wr_pld_fifo_depth;
+	unsigned int cri_cmd_rd_pld_fifo_depth;
+
+	const struct dw_mipi_dsi2_host_ops *host_ops;
+
+	void *priv_data;
+};
 
 #endif /* MIPI_DSI_H */
