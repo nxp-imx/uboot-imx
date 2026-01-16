@@ -219,6 +219,10 @@
 	bootph-pre-ram;
 };
 
+&mipi_dsi {
+	/delete-property/ power-domains;
+};
+
 &usb1 {
 	compatible = "fsl,imx8mm-usb", "fsl,imx7d-usb";
 	/delete-property/power-domains;
