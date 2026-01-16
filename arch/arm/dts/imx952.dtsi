@@ -1164,6 +1164,12 @@
 			#clock-cells = <1>;
 			clocks = <&scmi_clk IMX952_CLK_DISPAPB>;
 			power-domains = <&scmi_devpd IMX952_PD_DISPLAY>;
+			assigned-clocks = <&scmi_clk IMX952_CLK_DISPAXI>,
+					  <&scmi_clk IMX952_CLK_DISPAPB>,
+					  <&scmi_clk IMX952_CLK_CGC_DISPOCRAM>;
+			assigned-clock-parents = <&scmi_clk IMX952_CLK_SYSPLL1_PFD1>,
+						 <&scmi_clk IMX952_CLK_SYSPLL1_PFD1_DIV2>;
+			assigned-clock-rates = <400000000>, <133333333>, <400000000>;
 
 			/* Pixel Link Control */
 			display_pixel_link: bridge@c {
@@ -1230,13 +1236,13 @@
 			compatible = "nxp,imx952-mipi-dsi2";
 			reg = <0x0 0x4b060000 0x0 0x10000>;
 			clocks = <&scmi_clk IMX952_CLK_MIPIPHYPLLBYPASS>,
-				 <&scmi_clk IMX952_CLK_DISPAPB>,
+				 <&scmi_clk IMX952_CLK_CGC_DISPDSI>,
 				 <&scmi_clk IMX952_CLK_DISP1PIX>,
 				 <&scmi_clk IMX952_CLK_DISP1PIX>,
 				 <&dphy_pll>;
 			clock-names = "bypass", "pclk", "sys", "pix", "phy_pll";
-			assigned-clocks = <&scmi_clk IMX952_CLK_DISPPHYCFG>,
-					  <&scmi_clk IMX952_CLK_MIPIPHYPLLBYPASS>;
+			assigned-clocks = <&scmi_clk IMX952_CLK_MIPIPHYPLLBYPASS>,
+					  <&scmi_clk IMX952_CLK_CGC_DISPDSI>;
 			assigned-clock-parents = <&scmi_clk IMX952_CLK_VIDEOPLL1>,
 						 <&scmi_clk IMX952_CLK_DISPAPB>;
 			mux-controls = <&mux 0>;
@@ -1417,7 +1423,7 @@
 			reg = <0x0 0x4b0d0000 0x0 0x20000>;
 			interrupt-parent = <&displaymix_irqsteer>;
 			interrupts = <62>;
-			clocks = <&scmi_clk IMX952_CLK_DISPAPB>;
+			clocks = <&scmi_clk IMX952_CLK_CGC_DISPSEERIS>;
 			nxp,blk-ctrl = <&dispmix_csr>;
 			status = "disabled";
 
@@ -1600,11 +1606,11 @@
 					  "framegen1_threshold1_rise",
 					  "framegen1_threshold1_fail";
 			clocks = <&scmi_clk IMX952_CLK_DISP1PIX>,
-					 <&scmi_clk IMX952_CLK_DISPAPB>,
-					 <&scmi_clk IMX952_CLK_DISPAXI>,
-					 <&scmi_clk IMX952_CLK_DISPOCRAM>,
-					 <&scmi_clk IMX952_CLK_LDBPLL>,
-					 <&scmi_clk IMX952_CLK_LDBPLL_VCO>;
+				 <&scmi_clk IMX952_CLK_CGC_DISPSEERIS>,
+				 <&scmi_clk IMX952_CLK_DISPAXI>,
+				 <&scmi_clk IMX952_CLK_CGC_DISPOCRAM>,
+				 <&clk_ldb_pll_pixel>,
+				 <&scmi_clk IMX952_CLK_LDBPLL_VCO>;
 			clock-names = "pix", "apb", "axi", "ocram", "ldb", "ldb_vco";
 			power-domains = <&scmi_devpd IMX952_PD_DISPLAY>;
 			nxp,blk-ctrl = <&dispmix_csr>;
