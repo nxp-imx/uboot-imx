@@ -22,4 +22,5 @@ obj-$(CONFIG_VIDEO_IMX95_PIXEL_INTERLEAVER) += imx95-pixel-interleaver.o
 obj-$(CONFIG_VIDEO_IMX95_DPU) += imx95_dpu.o
 obj-$(CONFIG_VIDEO_IMX95_LVDS) += imx95-ldb.o
 obj-$(CONFIG_VIDEO_IMX95_DW_DSI) += dw_dsi_imx95.o
+obj-$(CONFIG_VIDEO_IMX952_MIPI_DSI2) += imx952-mipi-dsi2.o
 obj-y += hdmi/

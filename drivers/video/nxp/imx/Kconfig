@@ -170,6 +170,21 @@ config VIDEO_IMX95_DW_DSI
 	  This option enables support i.MX95 DSI internal bridge which can be used on
 	  devices which have DSI devices connected.
 
+config VIDEO_IMX952_MIPI_DSI2
+	bool "NXP i.MX952 specific extensions for Synopsys DW MIPI DSI2"
+	default n
+	depends on IMX952 && VIDEO
+	select VIDEO_BRIDGE
+	select VIDEO_DW_MIPI_DSI2
+	select VIDEO_LINK
+	select REGMAP
+	select SYSCON
+	select MULTIPLEXER
+	select MUX_MMIO
+	help
+	  Choose this to enable Synopsys DesignWare MIPI DSI2 found in NXP i.MX952
+	  processor.
+
 config VIDEO_IMX95_DPU
 	bool "i.MX95 display controller support"
 	default n
