@@ -33,10 +33,10 @@
 		compatible = "adi,adv7535";
 		reg = <0x3d>;
 		adi,addr-cec = <0x3c>;
-		adi,dsi-lanes = <2>;
+		adi,dsi-lanes = <4>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_mipi_dsi_csi>;
-		status = "disabled";
+		status = "okay";
 
 		port {
 			adv7535_to_dsi: endpoint {
