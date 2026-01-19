@@ -36,7 +36,7 @@
 
 #define PIXEL_LINK_STREAMS		2
 
-#define ESC_CLK_RATE_HZ			7425000
+#define ESC_CLK_RATE_HZ			18562500
 
 enum dsi_pixel_link_format {
 	RGB_24BIT,
@@ -201,8 +201,6 @@ imx952_dsi2_get_phy_configure_opts(struct imx952_dsi2_priv *dsi,
 		dev_dbg(dev, "failed to get default phy cfg %d\n", ret);
 		return ret;
 	}
-
-	phy_cfg->lpx = PSEC_PER_SEC / ESC_CLK_RATE_HZ;
 
 	fout = data_rate_to_fout(phy_cfg->hs_clk_rate);
 	if (fout != clk_round_rate(dsi->clk_phy_pll, fout)) {
