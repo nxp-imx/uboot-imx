@@ -164,6 +164,14 @@
 #define  LPCDCOCAL_VT_NREF_RANGE_MASK	GENMASK(6, 2)
 #define  LPCDCOCAL_VT_NREF_RANGE(x)	FIELD_PREP(LPCDCOCAL_VT_NREF_RANGE_MASK, (x))
 
+#define PPI_RW_LPDCOCAL_COARSE_CFG	0x3820
+#define  SCALE_REF_MASK			GENMASK(8, 4)
+#define  SCALE_REF(x)			FIELD_PREP(SCALE_REF_MASK, (x))
+#define  NCOARSE_DIAG_MASK		GENMASK(3, 2)
+#define  NCOARSE_DIAG(x)		FIELD_PREP(NCOARSE_DIAG_MASK, (x))
+#define  NCOARSE_START_MASK		GENMASK(1, 0)
+#define  NCOARSE_START(x)		FIELD_PREP(NCOARSE_START_MASK, (x))
+
 #define PPI_RW_DTB_SELECTOR		0x38cc
 #define  DTB_SOURCE_SELECT		BIT(8)
 #define  DTB_SELECT_ADDR_MASK		GENMASK(7, 0)
@@ -189,9 +197,15 @@
 #define  PLL_LOCK_DET_TIME_MASK		GENMASK(9, 0)
 #define  PLL_LOCK_DET_TIME(x)		FIELD_PREP(PLL_LOCK_DET_TIME_MASK, (x))
 
+#define DIG_IOCTRL_RW_AFE_LANE0_CTRL_2_2	0x4088
+#define  OA_LANE0_SEL_LANE_CFG		BIT(0)
+
 #define DIG_IOCTRL_RW_AFE_LANE0_CTRL_2_3	0x408c
 #define  OA_LANE0_HSTX_SEL_CLKLB	BIT(8)
 #define  OA_LANE0_HSTX_SEL_PHASE0	BIT(4)
+
+#define DIG_IOCTRL_RW_AFE_LANE1_CTRL_2_2	0x4888
+#define  OA_LANE1_SEL_LANE_CFG		BIT(0)
 
 #define DIG_IOCTRL_RW_AFE_LANE1_CTRL_2_3	0x488c
 #define  OA_LANE1_HSTX_SEL_CLKLB	BIT(8)
@@ -204,9 +218,15 @@
 #define  OA_LANE2_HSTX_SEL_CLKLB	BIT(8)
 #define  OA_LANE2_HSTX_SEL_PHASE0	BIT(4)
 
+#define DIG_IOCTRL_RW_AFE_LANE3_CTRL_2_2	0x5888
+#define  OA_LANE3_SEL_LANE_CFG		BIT(0)
+
 #define DIG_IOCTRL_RW_AFE_LANE3_CTRL_2_3	0x588c
 #define  OA_LANE3_HSTX_SEL_CLKLB	BIT(8)
 #define  OA_LANE3_HSTX_SEL_PHASE0	BIT(4)
+
+#define DIG_IOCTRL_RW_AFE_LANE4_CTRL_2_2	0x6088
+#define  OA_LANE4_SEL_LANE_CFG		BIT(0)
 
 #define DIG_IOCTRL_RW_AFE_LANE4_CTRL_2_3	0x608c
 #define  OA_LANE4_HSTX_SEL_CLKLB	BIT(8)
@@ -214,6 +234,18 @@
 
 #define DIG_IOCTRL_RW_AFE_CB_CTRL_2_2	0x7088
 #define  OA_CB_PLL_BUSTIEZ		BIT(15)
+
+#define DIG_IOCTRL_RW_AFE_CB_CTRL_2_4	0x7090
+#define  CB_SEL_VCOMMON_PROG_MASK	GENMASK(13, 11)
+#define  CB_SEL_VCOMMON_PROG(x)		FIELD_PREP(CB_SEL_VCOMMON_PROG_MASK, (x))
+#define  CB_SEL_HSRX_CM_DET_VREF_MASK	GENMASK(10, 9)
+#define  CB_SEL_HSRX_CM_DET_VREF(x)	FIELD_PREP(CB_SEL_HSRX_CM_DET_VREF_MASK, (x))
+#define  CB_SEL_TRIO2_ALP_VREF_MASK	GENMASK(8, 6)
+#define  CB_SEL_TRIO2_ALP_VREF(x)	FIELD_PREP(CB_SEL_TRIO2_ALP_VREF_MASK, (x))
+#define  CB_SEL_TRIO1_ALP_VREF_MASK	GENMASK(5, 3)
+#define  CB_SEL_TRIO1_ALP_VREF(x)	FIELD_PREP(CB_SEL_TRIO1_ALP_VREF_MASK, (x))
+#define  CB_SEL_TRIO0_ALP_VREF_MASK	GENMASK(2, 0)
+#define  CB_SEL_TRIO0_ALP_VREF(x)	FIELD_PREP(CB_SEL_TRIO0_ALP_VREF_MASK, (x))
 
 #define DIG_IOCTRL_RW_AFE_CB_CTRL_2_6	0x7098
 #define  OA_CB_HSTXLB_DCO_PON_OVR_EN	BIT(12)
@@ -224,6 +256,16 @@
 
 #define CORE_DIG_ANACTRL_RW_COMMON_ANACTRL_2	0x73c8
 #define  GLOBAL_ULPS_OVR_EN		BIT(12)
+
+#define CORE_DIG_DLANE_RW_LP(l, x)	(0xc100 + 0x800 * (l) + 0x4 * (x))
+#define  LP_0_ITMINRX_REG_MASK		GENMASK(15, 12)
+#define  LP_0_ITMINRX_REG(x)		FIELD_PREP(LP_0_ITMINRX_REG_MASK, (x))
+#define  LP_0_TTAGO_REG_MASK		GENMASK(11, 8)
+#define  LP_0_TTAGO_REG(x)		FIELD_PREP(LP_0_TTAGO_REG_MASK, (x))
+#define  LP_0_TTASURE_REG_MASK		GENMASK(7, 4)
+#define  LP_0_TTASURE_REG(x)		FIELD_PREP(LP_0_TTASURE_REG_MASK, (x))
+#define  LP_0_TTAGET_REG_MASK		GENMASK(3, 0)
+#define  LP_0_TTAGET_REG(x)		FIELD_PREP(LP_0_TTAGET_REG_MASK, (x))
 
 #define CORE_DIG_DLANE_RW_HS_TX(l, x)	(0xc400 + 0x800 * (l) + 0x4 * (x))
 #define  HS_TX_0_THSTRAIL_REG_MASK	GENMASK(15, 0)
@@ -244,6 +286,8 @@
 #define  HS_TX_10_TLP11INIT_DCO_REG(x)		FIELD_PREP(HS_TX_10_TLP11INIT_DCO_REG_MASK, (x))
 #define  HS_TX_12_THSEXIT_DCO_REG_MASK	GENMASK(15, 0)
 #define  HS_TX_12_THSEXIT_DCO_REG(x)	FIELD_PREP(HS_TX_12_THSEXIT_DCO_REG_MASK, (x))
+
+#define CORE_DIG_DLANE_CLK_RW_LP(x)	(0xe100 + 0x4 * (x))
 
 #define CORE_DIG_DLANE_CLK_RW_HS_TX(x)	(0xe400 + 0x4 * (x))
 #define  HS_TX_2_TCLKPRE_REG_MASK	GENMASK(15, 0)
@@ -708,6 +752,9 @@ imx952_mipi_dphy_static_configure(struct imx952_mipi_dphy_priv *priv)
 	val = LPCDCOCAL_TWAIT_FINE(29) | LPCDCOCAL_VT_NREF_RANGE(15);
 	writew(val, priv->regs + PPI_RW_LPDCOCAL_VT_CONFIG);
 
+	val = SCALE_REF(0x10) | NCOARSE_DIAG(0x1) | NCOARSE_START(0x1);
+	writew(val, priv->regs + PPI_RW_LPDCOCAL_COARSE_CFG);
+
 	val = readw(priv->regs + DIG_IOCTRL_RW_AFE_CB_CTRL_2_2);
 	val |= OA_CB_PLL_BUSTIEZ;
 	writew(val, priv->regs + DIG_IOCTRL_RW_AFE_CB_CTRL_2_2);
@@ -749,59 +796,77 @@ imx952_mipi_dphy_static_configure(struct imx952_mipi_dphy_priv *priv)
 	writew(val, priv->regs + PPI_RW_COMMON_CFG);
 }
 
-#define MULTI_1_DOT_1(x)		DIV_ROUND_DOWN_ULL((x) * 11, 10)
-
+#define MULTI5(x)			((x) * 5)
 #define D2A_HSTX_DLY			3
 
 /* T_DCO_MAX = 4.77 */
 #define T_DCO_MAX_DIV_ROUND_UP(x)	DIV_ROUND_UP((x) * 100, 477)
-#define T_DCO_MAX_MULTI_DIV_ROUND_UP(x, num, den)	\
-			DIV_ROUND_UP((x) * (num) * 100, 477 * (den))
-#define T_DCO_MAX_DIV_ROUND_DOWN(x)	DIV_ROUND_DOWN_ULL((x) * 100, 477)
+#define T_DCO_MAX_PS_DIV_ROUND_UP(x)	DIV_ROUND_UP((x) * 100, 477 * 1000)
+#define T_DCO_MAX_PS_DIV_ROUND_DOWN(x)	DIV_ROUND_DOWN_ULL((x) * 100, 477 * 1000)
 #define T_DCO_MAX_PS_MULTI(x)		((477 * 1000 * (x)) / 100)
-
-/* T_DCO_MID = 5.02 */
-#define T_DCO_MID_DIV_ROUND_UP(x)	DIV_ROUND_UP((x) * 100, 502)
 
 static void
 imx952_mipi_dphy_dynamic_configure(struct imx952_mipi_dphy_priv *priv,
 				   struct phy_configure_opts_mipi_dphy *cfg)
 {
-	unsigned long fout = priv->cur_pll_cfg.fout;
-	unsigned long hs_clk_rate = fout_to_data_rate(fout);
-	unsigned long lptx_clk_rate_hz;
-	unsigned long ui;
-	unsigned long wordclk_period_ps;
-	unsigned long clk_post_ps, clk_post_reg;
-	unsigned long clk_prepare_ps, clk_zero_ps, clk_zero_reg;
-	unsigned long hs_exit_reg;
-	unsigned long hs_prepare_dco_ps, hs_prepare_dco_ns, hs_prepare_dco_reg;
 	unsigned long t_hs_trail_ps, eot_ps, hs_trail_reg, hs_trail_dco_reg;
-	unsigned long tlptxoverlap_reg;
+	unsigned long lptx_clk_rate_hz = PSEC_PER_SEC / cfg->lpx;
+	unsigned long hs_prepare_dco_ps, hs_prepare_dco_reg;
+	unsigned long clk_prepare_ps, clk_prepare_dco_reg;
+	unsigned long fout = priv->cur_pll_cfg.fout;
+	unsigned long clk_post_ps, clk_post_reg;
+	unsigned long clk_zero_ps, clk_zero_reg;
+	unsigned long lpx_ns = MULTI5(cfg->lpx / 1000);
+	unsigned long hs_zero_ps, hs_zero_reg;
+	unsigned long lptx_io_sr0_fall_dly_ps;
 	unsigned long tlp11init_dco_reg;
+	unsigned long wordclk_period_ps;
+	unsigned long tlptxoverlap_reg;
 	unsigned long tlpx_dco_reg;
-	unsigned long lptx_io_sr0_fall_dly_ns;
-	unsigned long lpx_ns;
+	unsigned long hs_exit_reg;
+	unsigned long hs_clk_rate;
+	unsigned long ui;
 	u16 val;
 
-	if (hs_clk_rate == 891000000) {	/* 1080p60 & 720p60 */
-		cfg->lpx = 134680;
-		lptx_clk_rate_hz = 7425000;
-	} else { /* 4kp30 */
-		cfg->lpx = 67340;
-		lptx_clk_rate_hz = 14850000;
-	}
-
-	lpx_ns = cfg->lpx / 1000;
+	hs_clk_rate = fout_to_data_rate(fout);
 
 	ui = ALIGN(PSEC_PER_SEC, hs_clk_rate);
 	do_div(ui, hs_clk_rate);
 
 	wordclk_period_ps = ui * 8;
 
+	val = LP_0_ITMINRX_REG(0x4) | LP_0_TTAGO_REG(0x6) |
+	      LP_0_TTASURE_REG(0x3) | LP_0_TTAGET_REG(0xc);
+	writew(val, priv->regs + CORE_DIG_DLANE_RW_LP(0, 0));
+	writew(val, priv->regs + CORE_DIG_DLANE_RW_LP(1, 0));
+	writew(val, priv->regs + CORE_DIG_DLANE_RW_LP(2, 0));
+	writew(val, priv->regs + CORE_DIG_DLANE_RW_LP(3, 0));
+	writew(val, priv->regs + CORE_DIG_DLANE_CLK_RW_LP(0));
+
+	val = readw(priv->regs + DIG_IOCTRL_RW_AFE_LANE0_CTRL_2_2);
+	val &= ~OA_LANE0_SEL_LANE_CFG;
+	writew(val, priv->regs + DIG_IOCTRL_RW_AFE_LANE0_CTRL_2_2);
+
+	val = readw(priv->regs + DIG_IOCTRL_RW_AFE_LANE1_CTRL_2_2);
+	val &= ~OA_LANE1_SEL_LANE_CFG;
+	writew(val, priv->regs + DIG_IOCTRL_RW_AFE_LANE1_CTRL_2_2);
+
 	val = readw(priv->regs + DIG_IOCTRL_RW_AFE_LANE2_CTRL_2_2);
 	val |= OA_LANE2_SEL_LANE_CFG;
 	writew(val, priv->regs + DIG_IOCTRL_RW_AFE_LANE2_CTRL_2_2);
+
+	val = readw(priv->regs + DIG_IOCTRL_RW_AFE_LANE3_CTRL_2_2);
+	val &= ~OA_LANE3_SEL_LANE_CFG;
+	writew(val, priv->regs + DIG_IOCTRL_RW_AFE_LANE3_CTRL_2_2);
+
+	val = readw(priv->regs + DIG_IOCTRL_RW_AFE_LANE4_CTRL_2_2);
+	val &= ~OA_LANE4_SEL_LANE_CFG;
+	writew(val, priv->regs + DIG_IOCTRL_RW_AFE_LANE4_CTRL_2_2);
+
+	val = CB_SEL_VCOMMON_PROG(0x4) | CB_SEL_HSRX_CM_DET_VREF(0x1) |
+	      CB_SEL_TRIO2_ALP_VREF(0x2) | CB_SEL_TRIO1_ALP_VREF(0x2) |
+	      CB_SEL_TRIO0_ALP_VREF(0x2);
+	writew(val, priv->regs + DIG_IOCTRL_RW_AFE_CB_CTRL_2_4);
 
 	val = readw(priv->regs + DIG_IOCTRL_RW_AFE_LANE0_CTRL_2_3);
 	val |= OA_LANE0_HSTX_SEL_PHASE0;
@@ -824,7 +889,7 @@ imx952_mipi_dphy_dynamic_configure(struct imx952_mipi_dphy_priv *priv,
 	writew(val, priv->regs + DIG_IOCTRL_RW_AFE_LANE4_CTRL_2_3);
 
 	/* tlptxoverlap_reg */
-	tlptxoverlap_reg = 2;
+	tlptxoverlap_reg = T_DCO_MAX_DIV_ROUND_UP(5);
 	val = HS_TX_3_TLPTXOVERLAP_REG(tlptxoverlap_reg);
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(0, 3));
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(1, 3));
@@ -850,22 +915,19 @@ imx952_mipi_dphy_dynamic_configure(struct imx952_mipi_dphy_priv *priv,
 	/* hs_prepare_dco_reg */
 	hs_prepare_dco_ps = 40000 + 4 * ui +
 			    DIV_ROUND_DOWN_ULL((85000 + 6 * ui) - (40000 + 4 * ui), 2);
-	hs_prepare_dco_ns = hs_prepare_dco_ps / 1000;
-	lptx_io_sr0_fall_dly_ns = fout / MHZ(100);
-	hs_prepare_dco_reg = T_DCO_MID_DIV_ROUND_UP(hs_prepare_dco_ns + lptx_io_sr0_fall_dly_ns) - 1;
+	lptx_io_sr0_fall_dly_ps = 12500;
+	hs_prepare_dco_reg = T_DCO_MAX_PS_DIV_ROUND_UP(hs_prepare_dco_ps + lptx_io_sr0_fall_dly_ps) - 1;
 	val = HS_TX_9_THSPRPR_DCO_REG(hs_prepare_dco_reg);
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(0, 9));
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(1, 9));
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(2, 9));
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(3, 9));
 
-	/* clk_zero_reg */
-	/* clk_prepare_ns = floor(38.0 + ((95.0 - 38.0) / 2)) */
-	clk_prepare_ps = 66 * 1000;
-	clk_zero_ps = MULTI_1_DOT_1(300 * 1000 - clk_prepare_ps);
-	clk_zero_reg = DIV_ROUND_UP_ULL((cfg->lpx + clk_prepare_ps + clk_zero_ps +
+	/* hs_zero_reg */
+	hs_zero_ps = 145000 + 10 * ui - hs_prepare_dco_ps;
+	hs_zero_reg = DIV_ROUND_UP_ULL((hs_zero_ps + MULTI5(cfg->lpx) + hs_prepare_dco_ps +
 		T_DCO_MAX_PS_MULTI(5) - 3 * wordclk_period_ps), wordclk_period_ps) - 1;
-	val = HS_TX_1_THSZERO_REG(clk_zero_reg);
+	val = HS_TX_1_THSZERO_REG(hs_zero_reg);
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(0, 1));
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(1, 1));
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(2, 1));
@@ -873,7 +935,7 @@ imx952_mipi_dphy_dynamic_configure(struct imx952_mipi_dphy_priv *priv,
 
 	/* hs_trail_reg */
 	t_hs_trail_ps = max(8 * ui, 60000 + 4 * ui);	/* n = 1, see cfg->hs_trail */
-	eot_ps = 105 * 1000 + 12 * ui;
+	eot_ps = 105000 + 12 * ui;
 	t_hs_trail_ps = t_hs_trail_ps + (eot_ps - t_hs_trail_ps) / 2;
 	hs_trail_reg = DIV_ROUND_UP(t_hs_trail_ps, wordclk_period_ps) - 1 + D2A_HSTX_DLY;
 	val = HS_TX_0_THSTRAIL_REG(hs_trail_reg);
@@ -883,7 +945,8 @@ imx952_mipi_dphy_dynamic_configure(struct imx952_mipi_dphy_priv *priv,
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(3, 0));
 
 	/* hs_trail_dco_reg */
-	hs_trail_dco_reg = 0x13;
+	hs_trail_dco_reg = T_DCO_MAX_PS_DIV_ROUND_DOWN(hs_trail_reg * wordclk_period_ps -
+						       T_DCO_MAX_PS_MULTI(4)) - 1;
 	val = HS_TX_5_THSTRAIL_DCO_REG(hs_trail_dco_reg);
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(0, 5));
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(1, 5));
@@ -898,7 +961,7 @@ imx952_mipi_dphy_dynamic_configure(struct imx952_mipi_dphy_priv *priv,
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(3, 6));
 
 	/* hs_exit_reg */
-	hs_exit_reg = T_DCO_MAX_MULTI_DIV_ROUND_UP(100, 11, 10) - 1;
+	hs_exit_reg = T_DCO_MAX_DIV_ROUND_UP(MULTI5(100)) - 1;
 	val = HS_TX_12_THSEXIT_DCO_REG(hs_exit_reg);
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(0, 12));
 	writew(val, priv->regs + CORE_DIG_DLANE_RW_HS_TX(1, 12));
@@ -912,10 +975,21 @@ imx952_mipi_dphy_dynamic_configure(struct imx952_mipi_dphy_priv *priv,
 	writew(val, priv->regs + CORE_DIG_DLANE_CLK_RW_HS_TX(10));
 	val = HS_TX_4_TLPX_DCO_REG(tlpx_dco_reg);
 	writew(val, priv->regs + CORE_DIG_DLANE_CLK_RW_HS_TX(4));
-	val = HS_TX_9_THSPRPR_DCO_REG(hs_prepare_dco_reg);
-	writew(val, priv->regs + CORE_DIG_DLANE_CLK_RW_HS_TX(9));
+
+	/* clk_zero_reg */
+	/* clk_prepare_ns = floor(38.0 + ((95.0 - 38.0) / 2)) */
+	clk_prepare_ps = 66000;
+	clk_zero_ps = MULTI5(300000 - clk_prepare_ps);
+	clk_zero_reg = DIV_ROUND_UP_ULL((MULTI5(cfg->lpx) + clk_prepare_ps + clk_zero_ps +
+		T_DCO_MAX_PS_MULTI(5) - 3 * wordclk_period_ps), wordclk_period_ps) - 1;
 	val = HS_TX_1_THSZERO_REG(clk_zero_reg);
 	writew(val, priv->regs + CORE_DIG_DLANE_CLK_RW_HS_TX(1));
+
+	/* clk_prepare_dco_reg */
+	clk_prepare_dco_reg = T_DCO_MAX_PS_DIV_ROUND_UP(clk_prepare_ps + lptx_io_sr0_fall_dly_ps) - 1;
+	val = HS_TX_9_THSPRPR_DCO_REG(clk_prepare_dco_reg);
+	writew(val, priv->regs + CORE_DIG_DLANE_CLK_RW_HS_TX(9));
+
 	val = HS_TX_2_TCLKPRE_REG(D2A_HSTX_DLY);
 	writew(val, priv->regs + CORE_DIG_DLANE_CLK_RW_HS_TX(2));
 	val = HS_TX_0_THSTRAIL_REG(hs_trail_reg);
@@ -923,7 +997,7 @@ imx952_mipi_dphy_dynamic_configure(struct imx952_mipi_dphy_priv *priv,
 	val = HS_TX_5_THSTRAIL_DCO_REG(hs_trail_dco_reg);
 	writew(val, priv->regs + CORE_DIG_DLANE_CLK_RW_HS_TX(5));
 
-	clk_post_ps = MULTI_1_DOT_1(60 * 1000 + 52 * ui);
+	clk_post_ps = MULTI5(60000 + 52 * ui);
 	clk_post_reg = DIV_ROUND_UP_ULL(clk_post_ps, wordclk_period_ps) - 3;
 	val = HS_TX_8_TCLKPOST_REG(clk_post_reg);
 	writew(val, priv->regs + CORE_DIG_DLANE_CLK_RW_HS_TX(8));
@@ -935,10 +1009,12 @@ imx952_mipi_dphy_dynamic_configure(struct imx952_mipi_dphy_priv *priv,
 
 	debug("fout: %luHz, ui: %lups, tlp11init_dco_reg: 0x%lx, "
 		"tlpx_dco_reg: 0x%lx, hs_prepare_dco_reg: 0x%lx, "
-		"clk_zero_reg: 0x%lx, hs_trail_reg: 0x%lx, hs_exit_reg: 0x%lx, "
-		"clk_post_reg: 0x%lx\n",
+		"hs_trail_dco_reg: 0x%lx, hs_zero_reg: 0x%lx, "
+		"hs_trail_reg: 0x%lx, hs_exit_reg: 0x%lx, clk_zero_reg: 0x%lx, "
+		"clk_prepare_dco_reg: 0x%lx, clk_post_reg: 0x%lx\n",
 		fout, ui, tlp11init_dco_reg, tlpx_dco_reg, hs_prepare_dco_reg,
-		clk_zero_reg, hs_trail_reg, hs_exit_reg, clk_post_reg);
+		hs_trail_dco_reg, hs_zero_reg, hs_trail_reg, hs_exit_reg,
+		clk_zero_reg, clk_prepare_dco_reg, clk_post_reg);
 }
 
 static int
