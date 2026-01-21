@@ -36,6 +36,7 @@ u32 global_xspi_lut[2][80] = {
 		0x0818045a, 0x1c000c08, 0, 0, 0, /* Read SFDP*/
 		0x1c000470, 0, 0, 0, 0, /* Read flag status register */
 		0x082004dc, 0, 0, 0, 0, /* Erase Sector */
+		0x08200421, 0, 0, 0, 0, /* Erase Sector 4KB */
 		0x00000404, 0, 0, 0, 0, /* Write disable */
 		0x08200412, 0x00002000, 0, 0, 0, /* Page program (up to 256 bytes)*/
 	},
