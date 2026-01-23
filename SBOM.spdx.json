@@ -2,23 +2,23 @@
   "SPDXID": "SPDXRef-DOCUMENT",
   "spdxVersion": "SPDX-2.3",
   "creationInfo": {
-    "created": "2025-11-12T07:09:49Z",
+    "created": "2026-01-20T09:35:17Z",
     "creators": [
       "Organization: NXP"
     ],
-    "licenseListVersion": "3.20"
+    "licenseListVersion": "3.26"
   },
-  "name": "uboot-imx-LF_6.12.49_2.2.0",
+  "name": "uboot-imx-LF_6.18.2_IMX952_ER",
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://nxp.com/spdx/243f196e-38b2-437e-8ccc-cc7b8bd95c5e",
+  "documentNamespace": "https://nxp.com/spdx/92443ff3-d26f-498b-bf00-ef68b7f9e027",
   "packages": [
     {
-      "SPDXID": "SPDXRef-package-243f196e-38b2-437e-8ccc-cc7b8bd95c5e",
+      "SPDXID": "SPDXRef-package-92443ff3-d26f-498b-bf00-ef68b7f9e027",
       "name": "uboot-imx",
-      "versionInfo": "LF_6.12.49_2.2.0",
+      "versionInfo": "LF_6.18.2_IMX952_ER",
       "licenseConcluded": "(GPL-2.0-only)",
       "licenseDeclared": "(GPL-2.0-only)",
-      "downloadLocation": "https://github.com/nxp-imx/uboot-imx -b lf-6.12.49-2.2.0",
+      "downloadLocation": "https://github.com/nxp-imx/uboot-imx -b lf-6.18.2-imx952-er1",
       "originator": "Organization: NXP",
       "supplier": "NOASSERTION",
       "externalRefs": [],
@@ -28,11 +28,11 @@
       "SPDXID": "SPDXRef-package-c563a3b4-eef4-41ba-b43d-fc73391411f4",
       "name": "U-Boot",
       "versionInfo": "2025.04",
-      "licenseConcluded": "GPL-2.0-or-later",
-      "licenseDeclared": "(LGPL-2.0-or-later AND GPL-2.0-or-later AND LGPL-2.1-or-later AND NOASSERTION)",
+      "licenseConcluded": "GPL-2.0-only",
+      "licenseDeclared": "(GPL-2.0-or-later AND LGPL-2.0-or-later AND LGPL-2.1-or-later AND NOASSERTION)",
       "homepage": "https://source.denx.de/u-boot/u-boot",
-      "downloadLocation": "NOASSERTION",
-      "originator": "Organization: u-boot",
+      "downloadLocation": "https://bodhi.fedoraproject.org/updates/uboot-tools-2025.04-0.5.rc3.fc43",
+      "originator": "Organization: fedora",
       "supplier": "NOASSERTION",
       "externalRefs": [
         {
@@ -41,19 +41,19 @@
           "referenceType": "cpe23Type"
         },
         {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/u-boot/u-boot@v2025.04",
-          "referenceType": "purl"
-        },
-        {
           "referenceCategory": "SECURITY",
           "referenceLocator": "cpe:2.3:a:u_boot:u_boot:2025.04:*:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
         },
         {
           "referenceCategory": "OTHER",
-          "referenceLocator": "933b4362-3a2f-4d20-a9aa-69cae7d12565",
+          "referenceLocator": "e6be027f-aef2-4833-973e-eb5a9adc0a03",
           "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:rpm/fedora/uboot-tools@2025.04-0.5.rc3.fc43?arch=i686&epoch=1",
+          "referenceType": "purl"
         }
       ],
       "filesAnalyzed": false
@@ -63,10 +63,10 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
-      "relatedSpdxElement": "SPDXRef-package-243f196e-38b2-437e-8ccc-cc7b8bd95c5e"
+      "relatedSpdxElement": "SPDXRef-package-92443ff3-d26f-498b-bf00-ef68b7f9e027"
     },
     {
-      "spdxElementId": "SPDXRef-package-243f196e-38b2-437e-8ccc-cc7b8bd95c5e",
+      "spdxElementId": "SPDXRef-package-92443ff3-d26f-498b-bf00-ef68b7f9e027",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-package-c563a3b4-eef4-41ba-b43d-fc73391411f4"
     }
