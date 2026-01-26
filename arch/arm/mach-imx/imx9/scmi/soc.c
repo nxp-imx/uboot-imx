@@ -249,6 +249,20 @@ int mmc_get_env_dev(void)
 }
 #endif
 
+int power_on_hsio(void)
+{
+	int ret;
+	struct udevice *dev;
+
+	ret = uclass_get_device_by_name(UCLASS_CLK, "protocol@14", &dev);
+	if (ret)
+		return ret;
+
+	ret = scmi_pwd_state_set(dev, 0, SCMI_PD(HSIO_TOP), 0);
+
+	return ret;
+}
+
 #ifdef CONFIG_USB_PORT_AUTO
 int board_usb_gadget_port_auto(void)
 {
@@ -487,6 +501,13 @@ static struct mm_region imx9_mem_map[] = {
 			 PTE_BLOCK_NON_SHARE |
 			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
 	}, {
+		/* QB data */
+		.virt = CONFIG_SAVED_QB_STATE_BASE,
+		.phys = CONFIG_SAVED_QB_STATE_BASE,
+		.size = 0x200000UL,	/* 2M */
+		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
+			 PTE_BLOCK_OUTER_SHARE
+	}, {
 		/* empty entry to split table entry 5 if needed when TEEs are used */
 		0,
 	}, {
@@ -711,6 +732,35 @@ phys_size_t get_effective_memsize(void)
 	}
 }
 
+static inline u64 ether_addr_to_u64(const u8 *addr)
+{
+	u64 u = 0;
+	int i;
+
+	for (i = 0; i < 6; i++)
+		u = u << 8 | addr[i];
+
+	return u;
+}
+
+static inline void u64_to_ether_addr(u64 u, u8 *addr)
+{
+	int i;
+
+	for (i = 6 - 1; i >= 0; i--) {
+		addr[i] = u & 0xff;
+		u = u >> 8;
+	}
+}
+
+static inline void eth_addr_add(u8 *addr, long offset)
+{
+	u64 u = ether_addr_to_u64(addr);
+
+	u += offset;
+	u64_to_ether_addr(u, addr);
+}
+
 void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 {
 	u32 val[2] = {};
@@ -755,16 +805,16 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 		 * | 10     | netc switch | swp2                      |
 		*/
 		if (dev_id == 0)
-			mac[5] = mac[5] + 2; /* enetc3 mac/swp0 */
+			eth_addr_add(mac, 2); /* enetc3 mac/swp0 */
 		if (dev_id == 1)
-			mac[5] = mac[5] + 8; /* enetc1 */
+			eth_addr_add(mac, 8); /* enetc1 */
 		if (dev_id == 2)
-			mac[5] = mac[5] + 9; /* enetc2 */
+			eth_addr_add(mac, 9); /* enetc2 */
 	} else {
 		if (dev_id == 1)
-			mac[5] = mac[5] + 3;
+			eth_addr_add(mac, 3);
 		if (dev_id == 2)
-			mac[5] = mac[5] + 6;
+			eth_addr_add(mac, 6);
 	}
 
 	debug("%s: MAC%d: %02x.%02x.%02x.%02x.%02x.%02x\n",
@@ -987,21 +1037,24 @@ int power_on_m7(char *name)
 
 static char *get_cpu_variant_type_name(u32 type)
 {
+	u32 val, core_num, part_num;
+	int ret;
+
+	ret = fuse_read(2, 1, &val);
+	if (ret)
+		return NULL;
+
+	/* Get part num */
+	part_num = (val >> 4) & 0xff;
+	if (!part_num)
+		return NULL;
+
 	if (type == MXC_CPU_IMX95) {
-		u32 val = 0, core, segment;
-		int ret;
+		u32 segment;
 		static char *name = "9596";
 
-		ret = fuse_read(2, 1, &val);
-		if (ret)
-			return NULL;
-
-		val = (val >> 4) & 0xff; /* part num */
-		if (!val)
-			return NULL;
-
-		core = val & 0x3;
-		segment = (val >> 2) & 0xf;
+		core_num = part_num & 0x3;
+		segment = (part_num >> 2) & 0xf;
 
 		switch (segment) {
 		case 0xa:
@@ -1027,7 +1080,31 @@ static char *get_cpu_variant_type_name(u32 type)
 			break;
 		}
 
-		name[3] = core * 2 + '0';
+		name[3] = core_num * 2 + '0';
+
+		return name;
+	} else if (type == MXC_CPU_IMX94) {
+		static char *name = "94398";
+		core_num = 8;
+
+		ret = fuse_read(2, 2, &val);
+		if (ret)
+			return NULL;
+
+		if (part_num > 30) { /* 943 */
+			/* A55 2 & 3 disabled */
+			if ((val & 0x18) == 0x18)
+				core_num = 6;
+		} else if (part_num > 20) { /* 942 */
+			core_num = 5;
+
+			/* m7_0 disabled */
+			if ((val & 0x200) == 0x200)
+				core_num = 4;
+		} else if (part_num > 10) { /* 941 */
+			core_num = 5;
+		}
+		sprintf(name, "94%u%u", part_num, core_num);
 
 		return name;
 	}

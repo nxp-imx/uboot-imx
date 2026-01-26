@@ -117,6 +117,11 @@ static int dwc3_generic_probe(struct udevice *dev,
 	if (device_is_compatible(dev->parent, "rockchip,rk3399-dwc3"))
 		reset_deassert_bulk(&glue->resets);
 
+	if (mode == USB_DR_MODE_HOST)
+		board_usb_init(dev_seq(dev), USB_INIT_HOST);
+	else if (mode == USB_DR_MODE_PERIPHERAL)
+		board_usb_init(dev_seq(dev), USB_INIT_DEVICE);
+
 	priv->base = map_physmem(plat->base, DWC3_OTG_REGS_END, MAP_NOCACHE);
 	dwc3->regs = priv->base + DWC3_GLOBALS_REGS_START;
 
@@ -133,6 +138,7 @@ static int dwc3_generic_remove(struct udevice *dev,
 			       struct dwc3_generic_priv *priv)
 {
 	struct dwc3 *dwc3 = &priv->dwc3;
+	enum usb_dr_mode mode = dwc3->dr_mode;
 
 	if (CONFIG_IS_ENABLED(DM_GPIO) &&
 	    device_is_compatible(dev->parent, "xlnx,zynqmp-dwc3") &&
@@ -145,6 +151,11 @@ static int dwc3_generic_remove(struct udevice *dev,
 	dwc3_remove(dwc3);
 	dwc3_shutdown_phy(dev, &priv->phys);
 	unmap_physmem(dwc3->regs, MAP_NOCACHE);
+
+	if (mode == USB_DR_MODE_HOST)
+		board_usb_cleanup(dev_seq(dev), USB_INIT_HOST);
+	else if (mode == USB_DR_MODE_PERIPHERAL)
+		board_usb_cleanup(dev_seq(dev), USB_INIT_DEVICE);
 
 	return 0;
 }
@@ -506,7 +517,7 @@ static int dwc3_glue_bind_common(struct udevice *parent, ofnode node)
 	const char *name = ofnode_get_name(node);
 	const char *driver;
 	enum usb_dr_mode dr_mode;
-	struct udevice *dev;
+	struct udevice *dev = NULL;
 	int ret;
 
 	debug("%s: subnode name: %s\n", __func__, name);
@@ -520,20 +531,33 @@ static int dwc3_glue_bind_common(struct udevice *parent, ofnode node)
 	    (dr_mode == USB_DR_MODE_PERIPHERAL || dr_mode == USB_DR_MODE_OTG)) {
 		debug("%s: dr_mode: OTG or Peripheral\n", __func__);
 		driver = "dwc3-generic-peripheral";
-	} else if (CONFIG_IS_ENABLED(USB_HOST) && dr_mode == USB_DR_MODE_HOST) {
-		debug("%s: dr_mode: HOST\n", __func__);
-		driver = "dwc3-generic-host";
-	} else {
-		debug("%s: unsupported dr_mode %d\n", __func__, dr_mode);
-		return -ENODEV;
+
+		ret = device_bind_driver_to_node(parent, driver, name,
+					 node, &dev);
+		if (ret) {
+			debug("%s: not able to bind usb device mode\n",
+			      __func__);
+			return ret;
+		}
 	}
 
-	ret = device_bind_driver_to_node(parent, driver, name,
+	if (CONFIG_IS_ENABLED(USB_HOST) &&
+		(dr_mode == USB_DR_MODE_HOST || dr_mode == USB_DR_MODE_OTG)) {
+		debug("%s: dr_mode: HOST\n", __func__);
+		driver = "dwc3-generic-host";
+
+		ret = device_bind_driver_to_node(parent, driver, name,
 					 node, &dev);
-	if (ret) {
-		debug("%s: not able to bind usb device mode\n",
-		      __func__);
-		return ret;
+		if (ret) {
+			debug("%s: not able to bind usb device mode\n",
+			      __func__);
+			return ret;
+		}
+	}
+
+	if (!dev) {
+		debug("%s: unsupported dr_mode %d\n", __func__, dr_mode);
+		return -ENODEV;
 	}
 
 	return 0;

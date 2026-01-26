@@ -964,7 +964,7 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 				(void *)((ulong)hdr_v4 + 4096), hdr_v4->kernel_size);
 		} else if (IS_ENABLED(CONFIG_LZ4)) {
 			size_t lz4_len = MAX_KERNEL_LEN;
-			if (ulz4fn((void *)((ulong)hdr_v4 + 4096),
+			if (ulz4fn_auto((void *)((ulong)hdr_v4 + 4096),
 				hdr_v4->kernel_size, (void *)kernel_addr, &lz4_len) != 0) {
 				printf("Decompress kernel fail!\n");
 				goto fail;
@@ -980,7 +980,7 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 				(void *)((ulong)hdr_v3 + 4096), hdr_v3->kernel_size);
 		} else if (IS_ENABLED(CONFIG_LZ4)) {
 			size_t lz4_len = MAX_KERNEL_LEN;
-			if (ulz4fn((void *)((ulong)hdr_v3 + 4096),
+			if (ulz4fn_auto((void *)((ulong)hdr_v3 + 4096),
 				hdr_v3->kernel_size, (void *)kernel_addr, &lz4_len) != 0) {
 				printf("Decompress kernel fail!\n");
 				goto fail;
@@ -997,7 +997,7 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 				(void *)((ulong)hdr + hdr->page_size), hdr->kernel_size);
 		} else if (IS_ENABLED(CONFIG_LZ4)) {
 			size_t lz4_len = MAX_KERNEL_LEN;
-			if (ulz4fn((void *)((ulong)hdr + hdr->page_size),
+			if (ulz4fn_auto((void *)((ulong)hdr + hdr->page_size),
 				hdr->kernel_size, (void *)kernel_addr, &lz4_len) != 0) {
 				printf("Decompress kernel fail!\n");
 				goto fail;
@@ -1084,7 +1084,13 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 
 	struct dt_table_entry *dt_entry;
 #ifdef CONFIG_INCLUDE_DTB_TO_VENDOR_BOOT
-	int fdt_id = get_imx_android_fdt_id();
+	/* The first fdt contains the Id<-->Name mapping, parse expected
+	 * dt id from it.
+	 */
+	dt_entry = (struct dt_table_entry *)((ulong)dt_img + \
+			be32_to_cpu(dt_img->dt_entries_offset));
+	int fdt_id = get_imx_android_fdt_id((void *)((ulong)dt_img +
+						be32_to_cpu(dt_entry->dt_offset)));
 	if (fdt_id < 0) {
 		printf("Failed to select device tree!\n");
 		goto fail;
@@ -1114,7 +1120,8 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 	 */
 	/* Check if we have overlap between ramdisk, kernel and dtb */
 	if ((ramdisk_addr >= kernel_addr) && (ramdisk_addr < ALIGN(fdt_addr + fdt_size, 4096))) {
-		ulong ramdisk_addr_relocate = (ulong)ALIGN(fdt_addr + fdt_size, 4096);
+		/* Put ramdisk after the fdt, leave 1MB space for possible fdt runtime adjustment. */
+		ulong ramdisk_addr_relocate = (ulong)ALIGN(fdt_addr + fdt_size + (1024 * 1024), 4096);
 
 		printf("boota: ramdisk overlap detected!!! ");
 		printf("redirecting ramdisk from 0x%08x to 0x%08x\n", (uint32_t)ramdisk_addr, (uint32_t)ramdisk_addr_relocate);

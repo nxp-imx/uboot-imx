@@ -84,11 +84,9 @@ static int check_and_send_single_var(char *var_name, char *buf, size_t buf_len,
 
 static efi_status_t EFIAPI get_var_all(struct efi_gbl_fastboot_protocol* this,
 				       void* ctx, get_var_all_callback cb) {
-	int n = 0, count = 0;
+	int n = 0;
 	char buf[FASTBOOT_RESPONSE_LEN];
-	char partition_base_name[MAX_PTN][20];
 	char var_name[FASTBOOT_RESPONSE_LEN];
-	char slot_suffix[2][5] = {"a","b"};
 
 	EFI_ENTRY("%p %p %p", this, ctx, cb);
 
@@ -100,40 +98,6 @@ static efi_status_t EFIAPI get_var_all(struct efi_gbl_fastboot_protocol* this,
 	for (n = 0; fastboot_common_var[n] != NULL; n++) {
 		if (check_and_send_single_var(fastboot_common_var[n],
 					      buf, sizeof(buf), ctx, cb))
-			return EFI_EXIT(EFI_DEVICE_ERROR);
-	}
-
-	/* Get has-slot variables */
-	count = fastboot_parts_get_name(partition_base_name);
-	for (n = 0; n < count; n++) {
-		snprintf(var_name, sizeof(var_name), "has-slot:%s", partition_base_name[n]);
-		if (check_and_send_single_var(var_name, buf, sizeof(buf), ctx, cb))
-			return EFI_EXIT(EFI_DEVICE_ERROR);
-	}
-
-	/* Get current slot */
-	strncpy(var_name, "current-slot:", FASTBOOT_RESPONSE_LEN);
-	if (check_and_send_single_var(var_name, buf, sizeof(buf), ctx, cb))
-		return EFI_EXIT(EFI_DEVICE_ERROR);
-
-	/* Get slot-successful variable */
-	for (n = 0; n < 2; n++) {
-		snprintf(var_name, sizeof(var_name), "slot-successful:%s", slot_suffix[n]);
-		if (check_and_send_single_var(var_name, buf, sizeof(buf), ctx, cb))
-			return EFI_EXIT(EFI_DEVICE_ERROR);
-	}
-
-	/* Get slot-unbootable variable */
-	for (n = 0; n < 2; n++) {
-		snprintf(var_name, sizeof(var_name), "slot-unbootable:%s", slot_suffix[n]);
-		if (check_and_send_single_var(var_name, buf, sizeof(buf), ctx, cb))
-			return EFI_EXIT(EFI_DEVICE_ERROR);
-	}
-
-	/* Get slot-retry-count variable */
-	for (n = 0; n < 2; n++) {
-		snprintf(var_name, sizeof(var_name), "slot-retry-count:%s", slot_suffix[n]);
-		if (check_and_send_single_var(var_name, buf, sizeof(buf), ctx, cb))
 			return EFI_EXIT(EFI_DEVICE_ERROR);
 	}
 
@@ -365,25 +329,6 @@ exit:
 	return EFI_EXIT(status);
 }
 
-static efi_status_t EFIAPI start_local_session(struct efi_gbl_fastboot_protocol* this, void** ctx) {
-	EFI_ENTRY("%p %p", this, ctx);
-
-	return EFI_EXIT(EFI_UNSUPPORTED);
-}
-
-static efi_status_t EFIAPI update_local_session(struct efi_gbl_fastboot_protocol* this,
-						void* ctx, uint8_t* buf, size_t* buf_size) {
-	EFI_ENTRY("%p %p %p %p", this, ctx, buf, buf_size);
-
-	return EFI_EXIT(EFI_UNSUPPORTED);
-}
-
-static efi_status_t EFIAPI close_local_session(struct efi_gbl_fastboot_protocol* this, void* ctx) {
-	EFI_ENTRY("%p %p", this, ctx);
-
-	return EFI_EXIT(EFI_UNSUPPORTED);
-}
-
 static efi_gbl_fastboot_protocol efi_gbl_fastboot_proto = {
   .revision = EFI_GBL_FASTBOOT_PROTOCOL_REVISION,
   .get_var = get_var,
@@ -393,9 +338,6 @@ static efi_gbl_fastboot_protocol efi_gbl_fastboot_proto = {
   .get_lock = get_lock,
   .vendor_erase = vendor_erase,
   .command_exec = command_exec,
-  .start_local_session = start_local_session,
-  .update_local_session = update_local_session,
-  .close_local_session = close_local_session,
 };
 
 efi_status_t efi_gbl_fastboot_register(void)

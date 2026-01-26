@@ -19,6 +19,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/setup.h>
 #include <env.h>
+#include <linux/delay.h>
 #ifdef CONFIG_ANDROID_RECOVERY
 #include <recovery.h>
 #endif
@@ -76,6 +77,9 @@ static void enable_fastboot_command(void)
 	char fastboot_command[32] = {0};
 	strncpy(fastboot_command, FASTBOOT_BCB_CMD, 31);
 	bcb_write_command(fastboot_command);
+
+	/* Add some delay to workaround the eMMC data lost issue on FRDM board. */
+	mdelay(50);
 #endif
 }
 
@@ -89,6 +93,9 @@ static void enable_recovery_fastboot(void)
 	bcb_write_command(msg);
 	strncpy(msg, RECOVERY_FASTBOOT_ARG, 31);
 	bcb_write_recovery_opt(msg);
+
+	/* Add some delay to workaround the eMMC data lost issue on FRDM board. */
+	mdelay(50);
 #endif
 }
 #endif

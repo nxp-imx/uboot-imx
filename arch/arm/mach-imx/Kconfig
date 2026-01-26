@@ -108,6 +108,7 @@ config CSF_SIZE
 config CMD_QB
 	bool "Support the 'qb' command"
 	default y
+	imply USE_PREBOOT
 	depends on IMX_SNPS_DDR_PHY_QB_GEN && (IMX95 || IMX94)
 	help
 	  Enable qb command to write DDR quick boot training data to boot device.
@@ -380,6 +381,7 @@ config IMX_ANDROID_GBL
 	select EFI_GBL_FASTBOOT
 	select EFI_GBL_VENDOR_PARTITION
 	select INCLUDE_DTB_TO_VENDOR_BOOT
+	select EFI_GBL_TIMESTAMP
 	help
 	  Load and boot the Android image by Android Generic Bootloader (GBL),
 	  which is an UEFI application distributed by Google.

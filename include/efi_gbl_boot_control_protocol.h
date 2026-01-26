@@ -56,7 +56,7 @@ typedef struct efi_gbl_slot_info {
 	// will be interpreted as UNKNOWN_REASON.
 	efi_gbl_unbootable_reason unbootable_reason;
 	uint8_t priority;
-	uint8_t tries;
+	uint8_t tries_remaining;
 	// Value of 1 if slot has successfully booted.
 	uint8_t successful;
 } efi_gbl_slot_info;

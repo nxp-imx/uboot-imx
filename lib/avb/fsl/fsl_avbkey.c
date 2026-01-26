@@ -211,8 +211,16 @@ bool rpmbkey_is_set(void)
 #if !CONFIG_IS_ENABLED(BLK)
 	original_part = mmc->block_dev.hwpart;
 	desc = blk_get_dev("mmc", mmcc);
+	if (NULL == desc) {
+		printf("** Block device MMC %d not supported\n", mmcc);
+		return -1;
+	}
 #else
 	desc = mmc_get_blk_desc(mmc);
+	if (NULL == desc) {
+		printf("** Block device MMC %d not supported\n", mmcc);
+		return -1;
+	}
 	original_part = desc->hwpart;
 #endif
 
@@ -757,15 +765,18 @@ int gen_rpmb_key(struct keyslot_package *kp) {
 #if !CONFIG_IS_ENABLED(BLK)
 	original_part = mmc->block_dev.hwpart;
 	dev_desc = blk_get_dev("mmc", mmcc);
-#else
-	dev_desc = mmc_get_blk_desc(mmc);
-	original_part = dev_desc->hwpart;
-#endif
 	if (NULL == dev_desc) {
 		printf("** Block device MMC %d not supported\n", mmcc);
-		goto fail;
+		return -1;
 	}
-
+#else
+	dev_desc = mmc_get_blk_desc(mmc);
+	if (NULL == dev_desc) {
+		printf("** Block device MMC %d not supported\n", mmcc);
+		return -1;
+	}
+	original_part = dev_desc->hwpart;
+#endif
 	blksz = dev_desc->blksz;
 	fill = (unsigned char *)memalign(ALIGN_BYTES, blksz);
 
@@ -1392,6 +1403,10 @@ int do_rpmb_key_set(uint8_t *key, uint32_t key_size)
 		return -1;
 	}
 	desc = mmc_get_blk_desc(mmc);
+	if (NULL == desc) {
+		printf("** Block device MMC %d not supported\n", mmcc);
+		return -1;
+	}
 	original_part = desc->hwpart;
 
 	/* Switch to the RPMB partition */

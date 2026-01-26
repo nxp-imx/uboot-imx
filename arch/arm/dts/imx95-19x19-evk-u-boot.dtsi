@@ -10,6 +10,7 @@
 	aliases {
 		usb0 = &usb3_dwc3;
 		usb1 = &usb2;
+		usb_gadget0 = &usb3_dwc3;
 		usb_gadget1 = &usbg2;
 		pci0 = &pcie_4ca00000;
 		pci1 = &pcie_4cb00000;
@@ -110,12 +111,22 @@
 	bootph-pre-ram;
 };
 
+&usb3_phy {
+	bootph-pre-ram;
+};
+
 &usb3 {
+	clocks = <&scmi_clk IMX95_CLK_HSIO>,
+			 <&scmi_clk IMX95_CLK_24M>,
+			 <&scmi_clk IMX95_CLK_32K>;
+	clock-names = "hsio", "ref", "suspend";
+
 	/delete-property/power-domains;
+	bootph-pre-ram;
 };
 
 &usb3_dwc3 {
-	compatible = "fsl,imx8mq-dwc3", "snps,dwc3";
+	bootph-pre-ram;
 };
 
 &i2c3_gpio_expander_20 {

@@ -53,7 +53,7 @@ typedef efi_status_t (*fastboot_message_sender)(void* context,
                                                 const char* msg, size_t msg_len);
 
 static const uint64_t EFI_GBL_FASTBOOT_PROTOCOL_REVISION =
-    GBL_PROTOCOL_REVISION(0, 3);
+    GBL_PROTOCOL_REVISION(0, 4);
 
 EFI_ENUM(efi_gbl_fastboot_erase_action, uint32_t,
 	 // Treats the partition as a physical on disk partition and erases it.
@@ -101,11 +101,6 @@ typedef struct efi_gbl_fastboot_protocol {
 				       size_t download_data_full_size,
 				       efi_gbl_fastboot_cmd_exec_result *implementation,
 				       fastboot_message_sender sender, void* ctx);
-  // Local session methods
-  efi_status_t (EFIAPI *start_local_session)(struct efi_gbl_fastboot_protocol* this, void** ctx);
-  efi_status_t (EFIAPI *update_local_session)(struct efi_gbl_fastboot_protocol* this,
-                                              void* ctx, uint8_t* buf, size_t* buf_size);
-  efi_status_t (EFIAPI *close_local_session)(struct efi_gbl_fastboot_protocol* this, void* ctx);
 } efi_gbl_fastboot_protocol;
 
 efi_status_t efi_gbl_fastboot_register(void);

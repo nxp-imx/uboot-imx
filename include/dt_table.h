@@ -46,4 +46,23 @@ struct dt_table_entry {
 	u32 custom[4];		/* optional, must be zero if unused */
 };
 
+/* We store the Id<-->Name mapping of dtbs to the first entry of the dtb/dtbo
+ * structure (https://source.android.com/docs/core/architecture/dto/partitions).
+ */
+struct dt_mapping_header {
+	uint32_t magic;
+	uint32_t num_of_mapping;
+};
+
+struct dt_mapping_entry {
+	uint32_t magic;
+	uint32_t id;
+	uint8_t name[64];
+};
+/* Fixed dummy fdt header. This is android specific, check
+ * device/nxp/common/tools/create_dt_mapping.py for details.
+ *
+ */
+#define FDT_FIXED_HEADER_SIZE (40)
+
 #endif

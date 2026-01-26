@@ -71,26 +71,19 @@ static u32 qb_crc32(const void* addr, u32 len)
 static bool qb_check(void)
 {
 	struct ddrphy_qb_state *qb_state;
-	u32 i, size, crc;
+	u32 size, crc;
 
 	/**
-	 * Ensure MAC is not empty, the reason is that
+	 * Ensure CRC is not empty, the reason is that
 	 * the data is invalidated after first save run
+	 * or after it is overwritten.
 	 */
 	qb_state = (struct ddrphy_qb_state *)CONFIG_SAVED_QB_STATE_BASE;
+	size = sizeof(struct ddrphy_qb_state) - sizeof(qb_state->crc);
+	crc = qb_crc32(qb_state->mac, size);
 
-	if (is_imx95_a0()) {
-		/** For iMX95 A0/1 check the CRC32 value */
-		size = sizeof(struct ddrphy_qb_state) - MAC_LENGTH * sizeof(u32);
-		crc = qb_crc32(&qb_state->TrainedVREFCA_A0, size);
-
-		return (crc == qb_state->mac[0]);
-	} else {
-		for (i = 0; i < MAC_LENGTH; i++) {
-			if (qb_state->mac[i] == 0)
-				return false;
-		}
-	}
+	if (!qb_state->crc || crc != qb_state->crc)
+		return false;
 
 	return true;
 }
@@ -137,26 +130,20 @@ static int scmi_get_boot_stage(u8 *stage)
 }
 #endif
 
-static unsigned long get_boot_device_offset(void *dev, int dev_type)
+static unsigned long get_boot_device_offset(void *dev, int dev_type, bool bootdev)
 {
 	unsigned long offset = 0;
 	struct mmc *mmc;
 
 #if IS_ENABLED(CONFIG_SCMI_FIRMWARE)
-#define SDP_BOOT	(0x5)
 	int ret;
-	u8 boot_stage;
 
-	ret = scmi_get_boot_stage(&boot_stage);
-	if (ret)
-		return ret;
-
-	/** Running qb save from SDP boot -> the current boot device
-	  * is different that the medium we are trying to save the qb
-	  * data to. ROM does not know what our final boot device
-	  * will be.
+	/** Running qb save from SDP boot or qb save to non boot device.
+	  * The current boot device is different that the medium we
+	  * are trying to save the qb data to. ROM does not know what our
+	  * final boot device will be.
 	  */
-	if (boot_stage != SDP_BOOT) {
+	if (bootdev) {
 		ret = scmi_get_boot_device_offset(&offset);
 		if (!ret)
 			return offset;
@@ -282,9 +269,9 @@ static int get_dev_qbdata_offset(void *dev, int dev_type, unsigned long offset, 
 	return ret;
 }
 
-static int get_qbdata_offset(void *dev, int dev_type, u32 *qbdata_offset)
+static int get_qbdata_offset(void *dev, int dev_type, u32 *qbdata_offset, bool bootdev)
 {
-	u32 offset = get_boot_device_offset(dev, dev_type);
+	u32 offset = get_boot_device_offset(dev, dev_type, bootdev);
 	u16 ctnr_hdr_align = container_hdr_alignment();
 	u32 contOffset;
 	int ret, i;
@@ -352,12 +339,13 @@ static int mmc_find_device(struct mmc **mmcp, int mmc_dev)
 	return (*mmcp ? 0 : -ENODEV);
 }
 
-static int do_qb_mmc(int dev, bool save)
+static int do_qb_mmc(int dev, bool save, bool is_bootdev)
 {
 	struct mmc *mmc;
 	int ret = 0, mmc_dev;
+	bool has_hw_part;
+	u8 orig_part, part;
 	u32 offset;
-	char blk_cmd[128];
 	void *buf;
 
 	mmc_dev = mmc_get_device_index(dev);
@@ -374,11 +362,13 @@ static int do_qb_mmc(int dev, bool save)
 	if (ret)
 		return ret;
 
-	if (IS_SD(mmc) || mmc->part_config == MMCPART_NOAVAILABLE) {
-		sprintf(blk_cmd, "mmc dev %x", mmc_dev);
-	} else {
-		u8 part = EXT_CSD_EXTRACT_BOOT_PART(mmc->part_config);
-		if (part == 1 || part == 2) {
+	has_hw_part = !IS_SD(mmc) && mmc->part_config != MMCPART_NOAVAILABLE;
+
+	if (has_hw_part) {
+		orig_part = mmc_get_blk_desc(mmc)->hwpart;
+		part = EXT_CSD_EXTRACT_BOOT_PART(mmc->part_config);
+
+		if (is_bootdev && (part == 1 || part == 2)) {
 #if IS_ENABLED(CONFIG_SCMI_FIRMWARE)
 			u8 stage;
 			ret = scmi_get_boot_stage(&stage);
@@ -387,18 +377,15 @@ static int do_qb_mmc(int dev, bool save)
 					part = (part == 1) ? 2 : 1;
 			}
 #endif
-			sprintf(blk_cmd, "mmc dev %x %x", mmc_dev, part);
-		} else {
-			sprintf(blk_cmd, "mmc dev %x", mmc_dev);
 		}
+
+		/** Select the partition */
+		ret = mmc_switch_part(mmc, part);
+		if (ret)
+			return ret;
 	}
 
-	/** Select the device and partition */
-	ret = run_command(blk_cmd, 0);
-	if (ret)
-		return ret;
-
-	ret = get_qbdata_offset(mmc, MMC_DEV, &offset);
+	ret = get_qbdata_offset(mmc, MMC_DEV, &offset, is_bootdev);
 	if (ret)
 		return ret;
 
@@ -419,10 +406,16 @@ static int do_qb_mmc(int dev, bool save)
 			 QB_STATE_LOAD_SIZE / mmc->write_bl_len, (const void*)buf);
 	free(buf);
 
-	return (ret > 0 ? 0 : -1);
+	ret = (ret > 0) ? 0 : -1;
+
+	/** Return to original partition */
+	if (has_hw_part)
+		ret |= mmc_switch_part(mmc, orig_part);
+
+	return ret;
 }
 
-static int do_qb_spi(int dev, bool save)
+static int do_qb_spi(int dev, bool save, bool is_bootdev)
 {
 	int ret = 0;
 	u32 offset;
@@ -435,7 +428,7 @@ static int do_qb_spi(int dev, bool save)
 	if (ret)
 		return ret;
 
-	ret = get_qbdata_offset(0, QSPI_DEV, &offset);
+	ret = get_qbdata_offset(0, QSPI_DEV, &offset, is_bootdev);
 	if (ret)
 		return ret;
 
@@ -468,18 +461,20 @@ static int do_qb_save(struct cmd_tbl *cmdtp, int flag,
 	int ret = CMD_RET_FAILURE;
 	long dev = -1;
 	enum boot_device boot_dev = UNKNOWN_BOOT;
-	int qb_dev = BOOT_DEVICE_NONE;
+	int qb_dev = BOOT_DEVICE_NONE, qb_bootdev;
 	char *interface = "";
 
 	if (!qb_check())
 		return CMD_RET_FAILURE;
 
+	boot_dev = get_boot_device();
+	qb_bootdev = get_board_boot_device(boot_dev);
+
 	if (argc >= 2) {
 		interface = argv[1];
 	} else {
 		/** qb save -> use boot device */
-		boot_dev = get_boot_device();
-		qb_dev = get_board_boot_device(boot_dev);
+		qb_dev = qb_bootdev;
 	}
 
 	if (argc == 3)
@@ -496,10 +491,10 @@ static int do_qb_save(struct cmd_tbl *cmdtp, int flag,
 	case BOOT_DEVICE_MMC1:
 	case BOOT_DEVICE_MMC2:
 	case BOOT_DEVICE_MMC2_2:
-		ret = do_qb_mmc(qb_dev, true);
+		ret = do_qb_mmc(qb_dev, true, !!(qb_dev == qb_bootdev));
 		break;
 	case BOOT_DEVICE_SPI:
-		ret = do_qb_spi(qb_dev, true);
+		ret = do_qb_spi(qb_dev, true, !!(qb_dev == qb_bootdev));
 		break;
 	default:
 		printf("Unsupported quickboot device\n");
@@ -523,16 +518,18 @@ static int do_qb_erase(struct cmd_tbl *cmdtp, int flag,
 {
 	int ret = CMD_RET_FAILURE;
 	long dev = -1;
-	enum boot_device boot_dev = UNKNOWN_BOOT;
+	enum boot_device boot_dev = UNKNOWN_BOOT, qb_bootdev;
 	int qb_dev = BOOT_DEVICE_NONE;
 	char *interface = "";
+
+	boot_dev = get_boot_device();
+	qb_bootdev = get_board_boot_device(boot_dev);
 
 	if (argc >= 2) {
 		interface = argv[1];
 	} else {
 		/** qb erase -> use boot device */
-		boot_dev = get_boot_device();
-		qb_dev = get_board_boot_device(boot_dev);
+		qb_dev = qb_bootdev;
 	}
 
 	if (argc == 3)
@@ -549,10 +546,10 @@ static int do_qb_erase(struct cmd_tbl *cmdtp, int flag,
 	case BOOT_DEVICE_MMC1:
 	case BOOT_DEVICE_MMC2:
 	case BOOT_DEVICE_MMC2_2:
-		ret = do_qb_mmc(qb_dev, false);
+		ret = do_qb_mmc(qb_dev, false, !!(qb_dev == qb_bootdev));
 		break;
 	case BOOT_DEVICE_SPI:
-		ret = do_qb_spi(qb_dev, false);
+		ret = do_qb_spi(qb_dev, false, !!(qb_dev == qb_bootdev));
 		break;
 	default:
 		printf("Unsupported quickboot device\n");

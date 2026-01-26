@@ -3,13 +3,14 @@
  * Copyright (c) 2011 Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  *
  * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
- * Copyright 2017 NXP
+ * Copyright 2017-2025 NXP
  */
 
 #include <env.h>
 #include <image.h>
 #include <time.h>
 #include <image-android-dt.h>
+#include <dt_table.h>
 #include <android_image.h>
 #include <malloc.h>
 #include <errno.h>
@@ -25,6 +26,7 @@
 #include <init.h>
 #include <mmc.h>
 #include <fsl_sec.h>
+#include <fsl_avb.h>
 #include <asm/cache.h>
 #include <rng.h>
 #ifdef CONFIG_IMX_TRUSTY_OS
@@ -47,9 +49,9 @@
 				BOOTCONFIG_CHECKSUM_SIZE
 
 /* Reserve space to insert 'rng-seed' node */
-#define RNG_SEED_DTB_RESERVE (64)
-/* Generate 24 bytes (out of 32 bytes) rng seed */
-#define RNG_SEED_LENGTH (24)
+#define RNG_SEED_DTB_RESERVE (96)
+/* Generate 64 bytes rng seed */
+#define RNG_SEED_LENGTH (64)
 
 static char andr_tmp_str[ANDR_BOOT_ARGS_SIZE + 1];
 
@@ -884,7 +886,10 @@ int fixup_gbl_bootargs(void *fdt_addr) {
 		bootargs = (char *)fdt_getprop(fdt_addr, offset,
 						"bootargs", NULL);
 		strncat(commandline, " ", COMMANDLINE_LENGTH - strlen(commandline));
-		strncat(commandline, bootargs, COMMANDLINE_LENGTH - strlen(commandline));
+
+		if (bootargs) {
+			strncat(commandline, bootargs, COMMANDLINE_LENGTH - strlen(commandline));
+		}
 
 		if (fdt_setprop(fdt_addr, offset,
 				"bootargs", commandline,
@@ -924,9 +929,12 @@ int imx_android_dt_fixup(void *fdt_addr) {
 }
 
 #ifdef CONFIG_INCLUDE_DTB_TO_VENDOR_BOOT
-int get_imx_android_fdt_id(void) {
+int get_imx_android_fdt_id(void *fdt_mapping) {
 	int i = 0;
 	char *fdt_name = NULL;
+	struct dt_table_header *dt_table_header;
+	struct dt_mapping_header *dt_mapping_header = NULL;
+	struct dt_mapping_entry *dt_mapping_entry = NULL;
 
 	fdt_name = env_get("fdt_name");
 	if (!fdt_name) {
@@ -939,11 +947,38 @@ int get_imx_android_fdt_id(void) {
 		return -1;
 	}
 
-	for (i = 0; imx_android_dt_mapping[i] != NULL; i++) {
-		if (!strncmp(fdt_name, imx_android_dt_mapping[i], strlen(fdt_name))) {
-			printf("Found fdt(%s) with id:%d.\n", fdt_name, i);
-			return i;
+	/*
+	 * The fdt_mapping records the dtbs Id<-->Name mapping, we need to
+	 * iterate the list and find the expected id.
+	 */
+	dt_table_header = (struct dt_table_header *)fdt_mapping;
+	if (dt_table_header == NULL || be32_to_cpu(dt_table_header->magic) != FDT_MAGIC) {
+		printf("Invalid fdt mapping!\n");
+		return -1;
+	}
+	/* Skip the fixed fdt header */
+	dt_mapping_header = (struct dt_mapping_header *)(fdt_mapping + FDT_FIXED_HEADER_SIZE);
+
+	/* Check the magic in the dt_mapping_header */
+	if (be32_to_cpu(dt_mapping_header->magic) != FDT_MAGIC || dt_mapping_header->num_of_mapping == 0) {
+		printf("Error: Wrong magic or dtb mapping entry number!\n");
+		return -1;
+	}
+
+	dt_mapping_entry = (struct dt_mapping_entry *)((void *)dt_mapping_header + sizeof(struct dt_mapping_header));
+	for (i = 0; i < dt_mapping_header->num_of_mapping; i++) {
+		/* Check the magic */
+		if (be32_to_cpu(dt_mapping_entry->magic) != FDT_MAGIC) {
+			printf("Error: Wrong magic\n");
+			return -1;
 		}
+
+		if (!strncmp(fdt_name, dt_mapping_entry->name, strlen(fdt_name))) {
+			printf("Found fdt(%s) with id:%d.\n", fdt_name, i + 1);
+			return i + 1;
+		}
+
+		dt_mapping_entry += 1;
 	}
 
 	//No fdt found, fail.
@@ -952,13 +987,113 @@ int get_imx_android_fdt_id(void) {
 
 int do_show_fdt_list(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 	int i = 0;
+	int slot = 0;
+	int ret = 0;
+	void *dt = NULL;
+	size_t num_read = 0;
+	char part_name[16];
+	char* slot_suffixes[2] = {"_a", "_b"};
+	struct vendor_boot_img_hdr_v4 vendor_boot_hdr_v4;
+	struct dt_table_header dt_table_header;
+	struct dt_table_entry dt_table_entry;
+	struct dt_mapping_header *dt_mapping_header = NULL;
+	struct dt_mapping_entry *dt_mapping_entry = NULL;
 
-	printf("Below android dtbs are supported:\n");
-	for (i = 0; imx_android_dt_mapping[i] != NULL; i++) {
-		printf("%s\n", imx_android_dt_mapping[i]);
+	/* The dtbs Id<-->Name mapping was stored in the first entry
+	 * of dtb structure in vendor_boot image, load the image first.
+	 */
+	slot = current_slot();
+	if (slot == -1) {
+		printf("Failed to get current slot!\n");
+		ret = CMD_RET_FAILURE;
+		goto fail;
+	}
+	snprintf(part_name, sizeof(part_name), "vendor_boot%s", slot_suffixes[slot]);
+
+	/* Load vendor_boot header */
+	ret = read_from_partition_multi(part_name, 0, sizeof(vendor_boot_hdr_v4),
+					&vendor_boot_hdr_v4, &num_read);
+	if (ret != 0 || (num_read != sizeof(vendor_boot_hdr_v4))) {
+		printf("Failed to load vendor_boot image header!\n");
+		ret = CMD_RET_FAILURE;
+		goto fail;
 	}
 
-	return 0;
+	/* Figure out the dt_table_header offset and read it */
+	uint32_t dt_table_offset = ALIGN(sizeof(struct vendor_boot_img_hdr_v4), vendor_boot_hdr_v4.page_size) + \
+				   ALIGN(vendor_boot_hdr_v4.vendor_ramdisk_size, vendor_boot_hdr_v4.page_size);
+	ret = read_from_partition_multi(part_name, dt_table_offset, sizeof(dt_table_header),
+					&dt_table_header, &num_read);
+	if (ret != 0 || (num_read != sizeof(dt_table_header)) || \
+		be32_to_cpu(dt_table_header.magic) != DT_TABLE_MAGIC) {
+		printf("Failed to load dt table header!\n");
+		ret = CMD_RET_FAILURE;
+		goto fail;
+	}
+
+	/* Figure out the first dt table entry offset and read it */
+	uint32_t dt_table_entry_offset = dt_table_offset + be32_to_cpu(dt_table_header.dt_entries_offset);
+	ret = read_from_partition_multi(part_name, dt_table_entry_offset, sizeof(dt_table_entry),
+					&dt_table_entry, &num_read);
+	if (ret != 0 || \
+		num_read != sizeof(dt_table_entry) || \
+		be32_to_cpu(dt_table_entry.id) != 0) {
+		printf("Failed to load dt table entry!\n");
+		ret = CMD_RET_FAILURE;
+		goto fail;
+	}
+
+	/* Figure out the first dt offset and read it */
+	uint32_t dt_entry_offset = dt_table_offset + be32_to_cpu(dt_table_entry.dt_offset);
+	dt = malloc(be32_to_cpu(dt_table_entry.dt_size));
+	if (!dt) {
+		printf("Failed to allocate memory!\n");
+		ret = CMD_RET_FAILURE;
+		goto fail;
+	}
+	ret = read_from_partition_multi(part_name, dt_entry_offset,
+					be32_to_cpu(dt_table_entry.dt_size), dt, &num_read);
+	if (ret != 0 || \
+		num_read != be32_to_cpu(dt_table_entry.dt_size)) {
+		printf("Failed to load dt!\n");
+		ret = CMD_RET_FAILURE;
+		goto fail;
+	}
+
+	/* Skip the fixed fdt header */
+	dt_mapping_header = (struct dt_mapping_header *)(dt + FDT_FIXED_HEADER_SIZE);
+
+	/* Check the magic in the dt_mapping_header */
+	if (be32_to_cpu(dt_mapping_header->magic) != FDT_MAGIC || \
+		dt_mapping_header->num_of_mapping == 0) {
+		printf("Wrong magic or dtb mapping entry number!\n");
+		ret = CMD_RET_FAILURE;
+		goto fail;
+	}
+
+	/* Dump the dtb mapping list */
+	printf("Below %d android dtbs are supported:\n", dt_mapping_header->num_of_mapping);
+	dt_mapping_entry = (struct dt_mapping_entry *)((void *)dt_mapping_header + sizeof(struct dt_mapping_header));
+	for (i = 0; i < dt_mapping_header->num_of_mapping; i++) {
+		/* Check the magic */
+		if (be32_to_cpu(dt_mapping_entry->magic) != FDT_MAGIC) {
+			printf("Wrong magic\n");
+			ret = CMD_RET_FAILURE;
+			goto fail;
+		}
+
+		printf("%02d: %s\n", i + 1, dt_mapping_entry->name);
+
+		dt_mapping_entry += 1;
+	}
+
+	ret = CMD_RET_SUCCESS;
+
+fail:
+	if (dt)
+		free(dt);
+
+	return ret;
 }
 
 U_BOOT_CMD(

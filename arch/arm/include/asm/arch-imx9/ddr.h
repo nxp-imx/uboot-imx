@@ -138,8 +138,9 @@ int ddr_cfg_phy_qb(struct dram_timing_info *timing_info, int fsp_id);
 #define DDRPHY_QB_PSTATES	0
 #define DDRPHY_QB_PST_SIZE	DDRPHY_QB_PSTATES * 4 * 1024
 struct ddrphy_qb_state {
+	uint32_t crc;		  /** Used for assuring integrity in DRAM */
 #define MAC_LENGTH              8 /** 256 bits, 32-bit aligned */
-	uint32_t mac[MAC_LENGTH];     /** For 95A0/1 use mac[0] to keep CRC32 value */
+	uint32_t mac[MAC_LENGTH]; /** For 95A0/1 use mac[0] to keep CRC32 value */
 	u8 TrainedVREFCA_A0;
 	u8 TrainedVREFCA_A1;
 	u8 TrainedVREFCA_B0;

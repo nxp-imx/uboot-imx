@@ -63,20 +63,10 @@ void tca_mux_select(enum typec_cc_polarity pol)
 	if (!tca_base)
 		return;
 
-	/* reset XBar block */
-	setbits_le32(tca_base, BIT(9));
-
 	/* Set OP mode to System configure Mode */
 	clrbits_le32(tca_base + 0x10, 0x3);
 
 	val = readl(tca_base + 0x30);
-
-	WARN_ON((val & GENMASK(1, 0)) != 0x3);
-	WARN_ON((val & BIT(2)) != 0);
-	WARN_ON((val & BIT(3)) != 0);
-	WARN_ON((val & BIT(4)) != 0);
-
-	printf("tca pstate 0x%x\n", val);
 
 	setbits_le32(tca_base + 0x18, BIT(3));
 	udelay(1);
@@ -94,12 +84,20 @@ void tca_mux_select(enum typec_cc_polarity pol)
 static void setup_typec(void)
 {
 	int ret;
-	unsigned int rev[2];
-	unsigned int data[2];
 
 	tca_base = USB1_BASE_ADDR + 0xfc000;
-
+#ifdef CONFIG_TARGET_IMX95_19X19_FRDM_PRO
+	struct gpio_desc dcdc2_5v_desc;
+	struct gpio_desc dcdc_3_3v_desc;
+	struct gpio_desc ext_12v_desc;
+	struct gpio_desc ext_5v_desc;
+	struct gpio_desc ext_3_3v_desc;
+	struct gpio_desc ext_1_8v_desc;
+#else
 	struct gpio_desc ext_pwr_desc;
+	unsigned int rev[2];
+	unsigned int data[2];
+#endif
 
 	ret = tcpc_init(&portpd, portpd_config, NULL);
 	if (ret) {
@@ -107,7 +105,91 @@ static void setup_typec(void)
 		       __func__, ret);
 	} else if (tcpc_pd_sink_check_charging(&portpd)) {
 		printf("Power supply on USB PD\n");
+#ifdef CONFIG_TARGET_IMX95_19X19_FRDM_PRO
+		/* Enable dcdc2_5v */
+		ret = dm_gpio_lookup_name("gpio@22_1", &dcdc2_5v_desc);
+		if (ret) {
+			printf("%s lookup gpio@22_1 failed ret = %d\n", __func__, ret);
+			return;
+		}
+		ret = dm_gpio_request(&dcdc2_5v_desc, "dcdc2_5v_en");
+		if (ret) {
+			printf("%s request dcdc2_5v_en failed ret = %d\n", __func__, ret);
+			return;
+		}
+		/* Enable DCDC2_5V regulator */
+		dm_gpio_set_dir_flags(&dcdc2_5v_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
 
+		/* Enable dcdc_3_3v */
+		ret = dm_gpio_lookup_name("gpio@22_18", &dcdc_3_3v_desc);
+		if (ret) {
+			printf("%s lookup gpio@22_18 failed ret = %d\n", __func__, ret);
+			return;
+		}
+		ret = dm_gpio_request(&dcdc_3_3v_desc, "dcdc_3_3v_en");
+		if (ret) {
+			printf("%s request dcdc_3_3v_en failed ret = %d\n", __func__, ret);
+			return;
+		}
+		/* Enable DCDC_3_3V regulator */
+		dm_gpio_set_dir_flags(&dcdc_3_3v_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+		/* Enable EXT 12V */
+		ret = dm_gpio_lookup_name("gpio@22_17", &ext_12v_desc);
+		if (ret) {
+			printf("%s lookup gpio@22_17 failed ret = %d\n", __func__, ret);
+			return;
+		}
+		ret = dm_gpio_request(&ext_12v_desc, "ext_12v_en");
+		if (ret) {
+			printf("%s request ext_12v_en failed ret = %d\n", __func__, ret);
+			return;
+		}
+		/* Enable Ext 12V regulator */
+		dm_gpio_set_dir_flags(&ext_12v_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+		/* Enable EXT 5V */
+		ret = dm_gpio_lookup_name("gpio@22_5", &ext_5v_desc);
+		if (ret) {
+			printf("%s lookup gpio@22_5 failed ret = %d\n", __func__, ret);
+			return;
+		}
+		ret = dm_gpio_request(&ext_5v_desc, "ext_5v_en");
+		if (ret) {
+			printf("%s request ext_5v_en failed ret = %d\n", __func__, ret);
+			return;
+		}
+		/* Enable Ext 5V regulator */
+		dm_gpio_set_dir_flags(&ext_5v_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+		/* Enable EXT 3.3V */
+		ret = dm_gpio_lookup_name("gpio@22_6", &ext_3_3v_desc);
+		if (ret) {
+			printf("%s lookup gpio@22_6 failed ret = %d\n", __func__, ret);
+			return;
+		}
+		ret = dm_gpio_request(&ext_3_3v_desc, "ext_3_3v_en");
+		if (ret) {
+			printf("%s request ext_3_3v_en failed ret = %d\n", __func__, ret);
+			return;
+		}
+		/* Enable Ext 3.3V regulator */
+		dm_gpio_set_dir_flags(&ext_3_3v_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+
+		/* Enable EXT 1.8V */
+		ret = dm_gpio_lookup_name("gpio@22_10", &ext_1_8v_desc);
+		if (ret) {
+			printf("%s lookup gpio@22_10 failed ret = %d\n", __func__, ret);
+			return;
+		}
+		ret = dm_gpio_request(&ext_1_8v_desc, "ext_1_8v_en");
+		if (ret) {
+			printf("%s request ext_1_8v_en failed ret = %d\n", __func__, ret);
+			return;
+		}
+		/* Enable Ext 1.8V regulator */
+		dm_gpio_set_dir_flags(&ext_1_8v_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+#else
 		/* Enable EXT PWR */
 		ret = get_board_version(rev, data);
 		if (ret == 0) {
@@ -136,6 +218,7 @@ static void setup_typec(void)
 
 		/* Enable EXT PWR */
 		dm_gpio_set_dir_flags(&ext_pwr_desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+#endif
 	}
 
 	ret = tcpc_init(&port, port_config, &tca_mux_select);
@@ -143,82 +226,6 @@ static void setup_typec(void)
 		printf("%s: tcpc init failed, err=%d\n", __func__, ret);
 		return;
 	}
-}
-#endif
-
-#ifdef CONFIG_USB_DWC3
-
-#define PHY_CTRL0			0xF0040
-#define PHY_CTRL0_REF_SSP_EN		BIT(2)
-#define PHY_CTRL0_FSEL_MASK		GENMASK(10, 5)
-#define PHY_CTRL0_FSEL_24M		0x2a
-#define PHY_CTRL0_FSEL_100M		0x27
-#define PHY_CTRL0_SSC_RANGE_MASK	GENMASK(23, 21)
-#define PHY_CTRL0_SSC_RANGE_4003PPM	(0x2 << 21)
-
-#define PHY_CTRL1			0xF0044
-#define PHY_CTRL1_RESET			BIT(0)
-#define PHY_CTRL1_COMMONONN		BIT(1)
-#define PHY_CTRL1_ATERESET		BIT(3)
-#define PHY_CTRL1_DCDENB		BIT(17)
-#define PHY_CTRL1_CHRGSEL		BIT(18)
-#define PHY_CTRL1_VDATSRCENB0		BIT(19)
-#define PHY_CTRL1_VDATDETENB0		BIT(20)
-
-#define PHY_CTRL2			0xF0048
-#define PHY_CTRL2_TXENABLEN0		BIT(8)
-#define PHY_CTRL2_OTG_DISABLE		BIT(9)
-
-#define PHY_CTRL6			0xF0058
-#define PHY_CTRL6_RXTERM_OVERRIDE_SEL	BIT(29)
-#define PHY_CTRL6_ALT_CLK_EN		BIT(1)
-#define PHY_CTRL6_ALT_CLK_SEL		BIT(0)
-
-static struct dwc3_device dwc3_device_data = {
-#ifdef CONFIG_XPL_BUILD
-	.maximum_speed = USB_SPEED_HIGH,
-#else
-	.maximum_speed = USB_SPEED_SUPER,
-#endif
-	.base = USB1_BASE_ADDR,
-	.dr_mode = USB_DR_MODE_PERIPHERAL,
-	.index = 0,
-	.power_down_scale = 2,
-};
-
-static void dwc3_nxp_usb_phy_init(struct dwc3_device *dwc3)
-{
-	u32 value;
-
-	/* USB3.0 PHY signal fsel for 24M ref */
-	value = readl(dwc3->base + PHY_CTRL0);
-	value &= ~PHY_CTRL0_FSEL_MASK;
-	value |= FIELD_PREP(PHY_CTRL0_FSEL_MASK, PHY_CTRL0_FSEL_24M);
-	writel(value, dwc3->base + PHY_CTRL0);
-
-	/* Disable alt_clk_en and use internal MPLL clocks */
-	value = readl(dwc3->base + PHY_CTRL6);
-	value &= ~(PHY_CTRL6_ALT_CLK_SEL | PHY_CTRL6_ALT_CLK_EN);
-	writel(value, dwc3->base + PHY_CTRL6);
-
-	value = readl(dwc3->base + PHY_CTRL1);
-	value &= ~(PHY_CTRL1_VDATSRCENB0 | PHY_CTRL1_VDATDETENB0);
-	value |= PHY_CTRL1_RESET | PHY_CTRL1_ATERESET;
-	writel(value, dwc3->base + PHY_CTRL1);
-
-	value = readl(dwc3->base + PHY_CTRL0);
-	value |= PHY_CTRL0_REF_SSP_EN;
-	writel(value, dwc3->base + PHY_CTRL0);
-
-	value = readl(dwc3->base + PHY_CTRL2);
-	value |= PHY_CTRL2_TXENABLEN0 | PHY_CTRL2_OTG_DISABLE;
-	writel(value, dwc3->base + PHY_CTRL2);
-
-	udelay(10);
-
-	value = readl(dwc3->base + PHY_CTRL1);
-	value &= ~(PHY_CTRL1_RESET | PHY_CTRL1_ATERESET);
-	writel(value, dwc3->base + PHY_CTRL1);
 }
 #endif
 
@@ -239,22 +246,10 @@ int board_usb_init(int index, enum usb_init_type init)
 	int ret = 0;
 
 	if (index == 0 && init == USB_INIT_DEVICE) {
-		ret = imx9_scmi_power_domain_enable(IMX95_PD_HSIO_TOP, true);
-		if (ret) {
-			printf("SCMI_POWWER_STATE_SET Failed for USB\n");
-			return ret;
-		}
-
-#ifdef CONFIG_USB_DWC3
-		dwc3_nxp_usb_phy_init(&dwc3_device_data);
-#endif
 #ifdef CONFIG_USB_TCPC
 		ret = tcpc_setup_ufp_mode(&port);
 		if (ret)
 			return ret;
-#endif
-#ifdef CONFIG_USB_DWC3
-		return dwc3_uboot_init(&dwc3_device_data);
 #endif
 	} else if (index == 0 && init == USB_INIT_HOST) {
 #ifdef CONFIG_USB_TCPC
@@ -270,11 +265,7 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 {
 	int ret = 0;
 
-	if (index == 0 && init == USB_INIT_DEVICE) {
-#ifdef CONFIG_USB_DWC3
-		dwc3_uboot_exit(index);
-#endif
-	} else if (index == 0 && init == USB_INIT_HOST) {
+	if (index == 0 && init == USB_INIT_HOST) {
 #ifdef CONFIG_USB_TCPC
 		ret = tcpc_disable_src_vbus(&port);
 #endif
@@ -321,13 +312,18 @@ void netc_init(void)
 		printf("SCMI_POWWER_STATE_SET Failed for NETC MIX\n");
 		return;
 	}
-
+#ifdef CONFIG_TARGET_IMX95_19X19_FRDM_PRO
+	netc_phy_rst("gpio@20_1", "ENET1_RST_B");
+	netc_phy_rst("gpio@20_2", "ENET2_RST_B");
+#else
 	netc_phy_rst("gpio@22_0", "ENET1_RST_B");
 	netc_phy_rst("gpio@22_1", "ENET2_RST_B");
+#endif
 
 	pci_init();
 }
 
+#ifdef CONFIG_TARGET_IMX95_15X15_FRDM
 void lvds_backlight_on(void)
 {
 	struct udevice *dev;
@@ -347,6 +343,7 @@ void lvds_backlight_on(void)
 	reg = 5;
 	dm_i2c_write(dev, 0x8, &reg, 1);
 }
+#endif
 
 static int get_board_version(int *rev, int *data)
 {
@@ -417,8 +414,9 @@ int board_init(void)
 	netc_init();
 
 	power_on_m7("mx95evkrpmsg");
-
+#ifdef CONFIG_TARGET_IMX95_15X15_FRDM
 	lvds_backlight_on();
+#endif
 
 	return 0;
 }
@@ -437,6 +435,7 @@ int board_late_init(void)
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
+#ifdef CONFIG_TARGET_IMX95_15X15_FRDM
 int board_fix_fdt_version(void *blob)
 {
 	int ret, nodeoffset;
@@ -499,15 +498,17 @@ int board_fix_fdt_version(void *blob)
 
 	return 0;
 }
+#endif
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
-	unsigned int rev[2];
-	unsigned int data[2];
 	char *p, *b, *s;
 	char *token = NULL;
 	int i, ret = 0;
 	u64 base[CONFIG_NR_DRAM_BANKS] = {0};
 	u64 size[CONFIG_NR_DRAM_BANKS] = {0};
+#ifdef CONFIG_TARGET_IMX95_15X15_FRDM
+	unsigned int rev[2];
+	unsigned int data[2];
 
 	ret = get_board_version(rev, data);
 	if (ret == 0) {
@@ -516,7 +517,7 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 			board_fix_fdt_version(blob);
 		}
 	}
-
+#endif
 	p = env_get("jh_root_mem");
 	if (!p)
 		return 0;

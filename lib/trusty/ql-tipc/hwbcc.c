@@ -234,7 +234,7 @@ int hwbcc_commit_code_hash(uint8_t *code_hash, size_t hash_size) {
     }
 
     if (hash_size > MAX_CODE_HASH || hash_size < MIN_CODE_HASH) {
-        trusty_error("The code hash size is not expected! size: %d\n", hash_size);
+        trusty_error("The code hash size is not expected! size: %ld\n", hash_size);
         return TRUSTY_ERR_GENERIC;
     }
 

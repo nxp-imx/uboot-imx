@@ -67,7 +67,7 @@ static efi_status_t EFIAPI get_slot_info(struct efi_gbl_boot_control_protocol *t
 	info->suffix = slot_suffix[idx];
 	info->priority = ab_data.slot_info[idx].priority;
 	info->successful = ab_data.slot_info[idx].successful_boot;
-	info->tries = ab_data.slot_info[idx].tries_remaining;
+	info->tries_remaining = ab_data.slot_info[idx].tries_remaining;
 	info->unbootable_reason = 0;
 
 	return EFI_EXIT(EFI_SUCCESS);

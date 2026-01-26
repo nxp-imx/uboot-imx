@@ -19,3 +19,4 @@ obj-$(CONFIG_EFI_GBL_BOOT_MEMORY) += efi_gbl_boot_memory_protocol.o
 obj-$(CONFIG_EFI_GBL_FASTBOOT_TRANSPORT) += efi_gbl_fastboot_transport_protocol.o
 obj-$(CONFIG_EFI_GBL_FASTBOOT) += efi_gbl_fastboot_protocol.o
 obj-$(CONFIG_EFI_GBL_VENDOR_PARTITION) += efi_gbl_vendor_partition.o
+obj-$(CONFIG_EFI_GBL_TIMESTAMP) += efi_gbl_timestamp_protocol.o

@@ -61,3 +61,10 @@ config EFI_GBL_VENDOR_PARTITION
 	depends on EFI_LOADER
 	help
 	  This service will register GBL vendor defined partitions.
+
+config EFI_GBL_TIMESTAMP
+	bool "Include GBL timestamp protocol"
+	depends on EFI_LOADER
+	help
+	  This service will provide a platform independent interface for retrieving a high resolution
+	  timestamp counter.

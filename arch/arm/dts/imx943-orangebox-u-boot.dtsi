@@ -5,8 +5,19 @@
 
 / {
 	aliases {
+		usb0 = &usb3_dwc3;
+		usb1 = &usb2;
+		usb_gadget0 = &usb3_dwc3;
+		usb_gadget1 = &usbg2;
 		pci0 = &netc_bus0;
 		pci1 = &netc_bus1;
+	};
+
+	usbg2: usbg2 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usb2>;
+		status = "okay";
 	};
 };
 
@@ -163,12 +174,22 @@
 	/delete-property/power-domains;
 };
 
+&usb3_phy {
+	bootph-pre-ram;
+};
+
 &usb3 {
+	clocks = <&scmi_clk IMX94_CLK_HSIO>,
+		 <&scmi_clk IMX94_CLK_24M>,
+		 <&scmi_clk IMX94_CLK_32K>;
+	clock-names = "hsio", "ref", "suspend";
+
 	/delete-property/power-domains;
+	bootph-pre-ram;
 };
 
 &usb3_dwc3 {
-	compatible = "fsl,imx95a-dwc3", "fsl,imx8mq-dwc3", "snps,dwc3";
+	bootph-pre-ram;
 };
 
 &usdhc1 {
