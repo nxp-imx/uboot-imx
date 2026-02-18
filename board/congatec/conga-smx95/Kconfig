@@ -1,0 +1,12 @@
+if TARGET_CONGA_SMX95
+
+config SYS_BOARD
+    default "conga-smx95"
+
+config SYS_VENDOR
+    default "congatec"
+
+config SYS_CONFIG_NAME
+    default "conga_smx95"
+
+endif

@@ -38,3 +38,10 @@ endchoice
 source "board/congatec/conga-qeval20-qa3-e3845/Kconfig"
 
 endif
+
+config TARGET_CONGA_SMX95
+    bool "Support congatec conga-SMX95"
+    select ARM
+    select ARCH_IMX95
+    select BOARD_LATE_INIT
+
