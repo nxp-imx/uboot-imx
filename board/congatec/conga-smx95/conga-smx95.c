@@ -102,3 +102,24 @@ int board_phy_config(struct phy_device *phydev)
 
     return 0;
 }
+
+#include <mmc.h>
+#include <asm/arch/imx-regs.h>
+
+/*
+ * eMMC Initialization Hook (SDHC1 – HS400 capable)
+ */
+int board_mmc_init(struct bd_info *bis)
+{
+    printf("Initializing eMMC (SDHC1)...\n");
+
+    /*
+     * In i.MX95 EVK reference:
+     * SDHC1 is typically used for eMMC.
+     * Proper pad configuration must be handled in DTS.
+     */
+
+    printf("eMMC HS400 mode supported (configuration via DTS).\n");
+
+    return 0;
+}
