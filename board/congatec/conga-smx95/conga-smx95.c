@@ -74,3 +74,31 @@ int board_init(void)
     return 0;
 }
 
+#include <phy.h>
+#include <miiphy.h>
+
+#define DP83867_RGMII_CTRL       0x0032
+#define DP83867_RGMII_DELAY_CTRL 0x0086
+
+/*
+ * Ethernet PHY Fixup for TI DP83867
+ */
+int board_phy_config(struct phy_device *phydev)
+{
+    printf("Configuring DP83867 PHY...\n");
+
+    /*
+     * Enable RGMII internal delays
+     * Required for stable gigabit link
+     */
+
+    phy_write(phydev, MDIO_DEVAD_NONE, DP83867_RGMII_CTRL, 0x00D3);
+    phy_write(phydev, MDIO_DEVAD_NONE, DP83867_RGMII_DELAY_CTRL, 0x0008);
+
+    if (phydev->drv->config)
+        phydev->drv->config(phydev);
+
+    printf("DP83867 PHY configured.\n");
+
+    return 0;
+}
