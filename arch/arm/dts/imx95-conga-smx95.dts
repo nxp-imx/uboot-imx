@@ -1,0 +1,57 @@
+/dts-v1/;
+
+#include "imx95-19x19-evk.dts"
+
+/ {
+    model = "congatec conga-SMX95";
+    compatible = "congatec,conga-smx95", "nxp,imx95";
+
+    chosen {
+        stdout-path = &uart1;
+    };
+};
+
+/* UART1 Console */
+&uart1 {
+    status = "okay";
+};
+
+/* eMMC - USDHC1 */
+&usdhc1 {
+    bus-width = <8>;
+    non-removable;
+    cap-mmc-hs400;
+    status = "okay";
+};
+
+/* SD Card - USDHC2 */
+&usdhc2 {
+    bus-width = <4>;
+    status = "okay";
+};
+
+/* FlexSPI NOR */
+&fspi {
+    status = "okay";
+};
+
+/* Ethernet */
+&eqos {
+    phy-mode = "rgmii-id";
+    status = "okay";
+};
+
+/* I2C Buses */
+&i2c1 {
+    status = "okay";
+};
+
+&i2c2 {
+    status = "okay";
+};
+
+/* USB */
+&usb_dwc3_0 {
+    dr_mode = "otg";
+    status = "okay";
+};
