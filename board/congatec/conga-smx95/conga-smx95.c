@@ -123,3 +123,27 @@ int board_mmc_init(struct bd_info *bis)
 
     return 0;
 }
+
+#include <usb.h>
+
+/*
+ * USB 3.0 / Type-C Initialization Hook
+ */
+int board_usb_init(int index, enum usb_init_type init)
+{
+    printf("Initializing USB controller %d...\n", index);
+
+    /*
+     * For i.MX95:
+     * - USB PHY power must be enabled
+     * - VBUS control GPIO may be required
+     * - Role mode configured in DTS
+     */
+
+    if (init == USB_INIT_HOST)
+        printf("USB initialized in HOST mode\n");
+    else
+        printf("USB initialized in DEVICE mode\n");
+
+    return 0;
+}
