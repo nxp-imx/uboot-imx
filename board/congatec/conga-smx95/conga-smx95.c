@@ -147,3 +147,26 @@ int board_usb_init(int index, enum usb_init_type init)
 
     return 0;
 }
+
+#include <pci.h>
+
+/*
+ * PCIe Initialization Hook
+ */
+int board_pci_init(void)
+{
+    printf("Initializing PCIe subsystem...\n");
+
+    /*
+     * For i.MX95:
+     * - PCIe PHY power handled by PMIC rails
+     * - Clocks configured via DTS
+     * - Reset GPIO may be required
+     * - Link training handled by controller driver
+     */
+
+    printf("PCIe initialization framework ready.\n");
+
+    return 0;
+}
+
