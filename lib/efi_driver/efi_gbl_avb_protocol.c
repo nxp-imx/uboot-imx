@@ -12,6 +12,7 @@
 #include <trusty/libtipc.h>
 #include <trusty/hwcrypto.h>
 #include <fsl_avb.h>
+#include <fastboot.h>
 #include "../lib/avb/fsl/fsl_avbkey.h"
 #include "../../../drivers/fastboot/fb_fsl/fastboot_lock_unlock.h"
 
@@ -58,6 +59,9 @@ static efi_status_t EFIAPI read_device_status(struct efi_gbl_avb_protocol *this,
 		}
 		*status_flags = 0;
 	}
+
+	if (fastboot_lock_enable() == FASTBOOT_UL_ENABLE)
+		*status_flags |= GBL_EFI_AVB_DEVICE_STATUS_UNLOCKABLE;
 
 	return EFI_EXIT(EFI_SUCCESS);
 }
@@ -410,11 +414,50 @@ static efi_status_t EFIAPI handle_verification_result(struct efi_gbl_avb_protoco
 	* encrypted boot stage has passed.
 	*/
 	if(run_command("set_priblob_bitfield", 0)){
-		printf("set priblob bitfield failed!\n");
+		log_err("set priblob bitfield failed!\n");
 	}
 #endif
 
 	return EFI_EXIT(EFI_SUCCESS);
+}
+
+extern void flashing(char *cmd, char *response);
+static efi_status_t EFIAPI write_lock_state(struct efi_gbl_avb_protocol *this,
+					    efi_gbl_avb_lock_type type,
+					    efi_gbl_avb_lock_state state) {
+	uint8_t response[FASTBOOT_RESPONSE_LEN] = {0};
+
+	EFI_ENTRY("%p %d %d", this, type, state);
+
+	if (type == EFI_GBL_AVB_LOCK_TYPE_CRITICAL) {
+		log_err("Lock type (%d) is not supported.\n", type);
+		return EFI_EXIT(EFI_UNSUPPORTED);
+	} else if (type != EFI_GBL_AVB_LOCK_TYPE_DEVICE) {
+		log_err("Invalid avb lock type :%d.\n", type);
+		return EFI_EXIT(EFI_INVALID_PARAMETER);
+	}
+
+	if (state != EFI_GBL_AVB_LOCK_STATE_UNLOCKED &&
+		state != EFI_GBL_AVB_LOCK_STATE_LOCKED) {
+		log_err("Invalid avb lock state: %d.\n", state);
+		return EFI_EXIT(EFI_INVALID_PARAMETER);
+	}
+
+	if (state == EFI_GBL_AVB_LOCK_STATE_LOCKED) {
+		/* Lock the device */
+		flashing("lock", response);
+	} else {
+		/* Unlock the device */
+		flashing("unlock", response);
+	}
+
+	if (strncmp(response, "OKAY", 4) == 0) {
+		/* Successfully locked/unlocked */
+		return EFI_EXIT(EFI_SUCCESS);
+	} else {
+		/* Failed to lock/unlock */
+		return EFI_EXIT(EFI_ACCESS_DENIED);
+	}
 }
 
 static efi_gbl_avb_protocol efi_gbl_avb_proto = {
@@ -427,6 +470,7 @@ static efi_gbl_avb_protocol efi_gbl_avb_proto = {
 	.read_persistent_value = read_persistent_value,
 	.write_persistent_value = write_persistent_value,
 	.handle_verification_result = handle_verification_result,
+	.write_lock_state = write_lock_state,
 };
 
 efi_status_t efi_gbl_avb_register(void) {

@@ -79,7 +79,7 @@ static void enable_fastboot_command(void)
 	bcb_write_command(fastboot_command);
 
 	/* Add some delay to workaround the eMMC data lost issue on FRDM board. */
-	mdelay(50);
+	mdelay(100);
 #endif
 }
 
@@ -95,7 +95,7 @@ static void enable_recovery_fastboot(void)
 	bcb_write_recovery_opt(msg);
 
 	/* Add some delay to workaround the eMMC data lost issue on FRDM board. */
-	mdelay(50);
+	mdelay(100);
 #endif
 }
 #endif

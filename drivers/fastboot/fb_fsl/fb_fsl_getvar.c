@@ -58,6 +58,7 @@ char *fastboot_common_var[] = {
 #ifndef CONFIG_IMX_ANDROID_GBL
 	"max-download-size",
 	"version-bootloader",
+	"unlocked",
 #endif
 	"version",
 	"version-baseband",
@@ -65,7 +66,6 @@ char *fastboot_common_var[] = {
 	"secure",
 	"erase-block-size",
 	"logical-block-size",
-	"unlocked",
 	"off-mode-charge",
 	"battery-voltage",
 	"variant",

@@ -34,7 +34,7 @@
 #include <efi_gbl_protocol_utils.h>
 
 static const uint64_t EFI_GBL_OS_CONFIGURATION_PROTOCOL_REVISION = \
-			GBL_PROTOCOL_REVISION(0, 1);
+			GBL_PROTOCOL_REVISION(0, 2);
 
 enum GBL_EFI_DEVICE_TREE_TYPE {
 	// HLOS device tree.
@@ -84,17 +84,17 @@ struct efi_gbl_os_configuration_protocol {
 	// Generates fixups for the bootconfig built by GBL.
 	efi_status_t(EFIAPI *fixup_bootconfig)(
 		struct efi_gbl_os_configuration_protocol *this,
-		const char *bootconfig, /* in */
 		size_t size, /* in */
-		char *fixup, /* out */
-		size_t *fixup_buffer_size /* in-out */
+		const char *bootconfig, /* in */
+		size_t *fixup_buffer_size, /* in-out */
+		char *fixup /* out */
 	);
 
 	// Selects which device trees and overlays to use from those loaded by GBL.
 	efi_status_t(EFIAPI *select_device_trees)(
 		struct efi_gbl_os_configuration_protocol *this,
-		struct efi_gbl_verified_device_tree *device_trees, /* in-out */
-		size_t num_device_trees /* in */
+		size_t num_device_trees, /* in */
+		struct efi_gbl_verified_device_tree *device_trees /* in-out */
 	);
 
 	// Selects FIT configuration to be used.

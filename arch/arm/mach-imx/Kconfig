@@ -500,7 +500,23 @@ config RPMB_INIT_ALLOW
 endmenu
 
 config APPEND_BOOTARGS
-	bool "Append bootargs support"
+	bool "Append bootargs and/or bootconfig support"
+	help
+	  Allow appending user-defined parameters to bootargs and/or bootconfig
+	  which are then passed to the kernel.
+
+	  When enabled, the parameters defined in 'append_bootargs' environment
+	  variable will be appended to 'bootargs' (kernel command line). The
+	  parameters defined in 'append_bootconfig' will be appended to the
+	  kernel bootconfig structure, which is parsed by the kernel at early
+	  boot and subsequently read by the Android init process.
+
+	  IMPORTANT: Use the ":=" operator to override an existing key in
+	  bootconfig. Using "=" for duplicate keys will cause the kernel to
+	  fail parsing bootconfig with a "Value is redefined" error, potentially
+	  preventing system boot.
+
+	  This is a debug option and should always be disabled in production builds.
 
 config DUAL_BOOTLOADER
 	bool "Enable dual bootloader support"

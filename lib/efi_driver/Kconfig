@@ -1,11 +1,3 @@
-config EFI_GBL_IMAGE_LOADING
-	bool "Include GBL Image Loading protocol"
-	depends on EFI_LOADER
-	help
-	  Include the driver for the custom GBL Image Loading protocol.
-	  This protocol is used to provide buffers to load different images
-	  for verification and boot process.
-
 config EFI_GBL_AVB
 	bool "Include GBL AVB protocol"
 	depends on EFI_LOADER

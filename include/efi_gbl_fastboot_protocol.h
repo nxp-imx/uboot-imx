@@ -53,7 +53,9 @@ typedef efi_status_t (*fastboot_message_sender)(void* context,
                                                 const char* msg, size_t msg_len);
 
 static const uint64_t EFI_GBL_FASTBOOT_PROTOCOL_REVISION =
-    GBL_PROTOCOL_REVISION(0, 4);
+    GBL_PROTOCOL_REVISION(0, 7);
+
+static const size_t GBL_EFI_FASTBOOT_PARTITION_TYPE_BUF_LEN = 56;
 
 EFI_ENUM(efi_gbl_fastboot_erase_action, uint32_t,
 	 // Treats the partition as a physical on disk partition and erases it.
@@ -82,18 +84,9 @@ typedef struct efi_gbl_fastboot_protocol {
   efi_status_t (EFIAPI *get_staged)(struct efi_gbl_fastboot_protocol* this, uint8_t* out,
                                     size_t* out_size, size_t* out_remain);
 
-  // Device lock methods
-  efi_status_t (EFIAPI *set_lock)(struct efi_gbl_fastboot_protocol* this,
-                                  bool critical,
-                                  bool lock);
-  efi_status_t (EFIAPI *get_lock)(struct efi_gbl_fastboot_protocol* this,
-                                  bool critical,
-                                  bool* out_lock);
-
   // Misc methods
   efi_status_t (EFIAPI *vendor_erase)(struct efi_gbl_fastboot_protocol* this,
-                                      const char* part_name, size_t part_name_len,
-                                      efi_gbl_fastboot_erase_action* action);
+                                      const char* part_name, efi_gbl_fastboot_erase_action* action);
   efi_status_t (EFIAPI *command_exec) (struct efi_gbl_fastboot_protocol* this,
 				       size_t num_args, const char* const* args,
 				       size_t download_data_used_len,
@@ -101,6 +94,10 @@ typedef struct efi_gbl_fastboot_protocol {
 				       size_t download_data_full_size,
 				       efi_gbl_fastboot_cmd_exec_result *implementation,
 				       fastboot_message_sender sender, void* ctx);
+
+  efi_status_t (EFIAPI *get_partition_type)(struct efi_gbl_fastboot_protocol* this,
+					    const uint8_t* part_name, uint8_t* part_type,
+					    size_t* part_type_len);
 } efi_gbl_fastboot_protocol;
 
 efi_status_t efi_gbl_fastboot_register(void);

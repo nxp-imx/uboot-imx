@@ -146,8 +146,8 @@ static efi_status_t EFIAPI get_one_shot_boot_mode(struct efi_gbl_boot_control_pr
 }
 
 static efi_status_t EFIAPI handle_loaded_os(struct efi_gbl_boot_control_protocol *this,
-					    const efi_gbl_loaded_os *os, os_entry_point *entry_point) {
-	EFI_ENTRY("%p, %p, %p", this, os, entry_point);
+					    const efi_gbl_loaded_os *os) {
+	EFI_ENTRY("%p, %p", this, os);
 
 	return EFI_EXIT(EFI_UNSUPPORTED);
 }

@@ -497,6 +497,18 @@ static int append_androidboot_args(char *args, uint32_t *len, void *fdt_addr)
 	}
 #endif
 
+#ifdef CONFIG_APPEND_BOOTARGS
+	/* Add 'append_bootconfig' environment variable to hold some paramemters
+	 * which need to be appended to bootconfig. Must use ":=" operator when
+	 * doing variable override.
+	 */
+	char *append_bootconfig = env_get("append_bootconfig");
+	if (append_bootconfig) {
+		strncat(args, " ", *len - strlen(args));
+		strncat(args, append_bootconfig, *len - strlen(args));
+	}
+#endif
+
 	*len = strlen(args);
 
 	return 0;

@@ -12,7 +12,6 @@
 #include <log.h>
 #include <asm-generic/unaligned.h>
 
-#include <efi_gbl_image_loading_protocol.h>
 #include <efi_gbl_avb_protocol.h>
 #include <efi_gbl_os_configuration_protocol.h>
 #include <efi_gbl_boot_control_protocol.h>
@@ -359,13 +358,6 @@ efi_status_t efi_init_obj_list(void)
 	if (IS_ENABLED(CONFIG_EFI_CAPSULE_ON_DISK) &&
 	    !IS_ENABLED(CONFIG_EFI_CAPSULE_ON_DISK_EARLY))
 		ret = efi_launch_capsules();
-
-	/* Register GBL Image Loading protocol */
-	if (IS_ENABLED(CONFIG_EFI_GBL_IMAGE_LOADING)) {
-		ret = efi_gbl_image_loading_register();
-		if (ret != EFI_SUCCESS)
-			goto out;
-	}
 
 	/* Register GBL AVB protocol */
 	if (IS_ENABLED(CONFIG_EFI_GBL_AVB)) {

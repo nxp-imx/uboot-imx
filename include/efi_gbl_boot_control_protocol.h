@@ -34,7 +34,7 @@
 #include <efi_gbl_protocol_utils.h>
 
 static const uint64_t EFI_GBL_BOOT_CONTROL_PROTOCOL_REVISION = \
-			GBL_PROTOCOL_REVISION(0, 2);
+			GBL_PROTOCOL_REVISION(0, 3);
 extern const efi_guid_t efi_gbl_boot_control_guid;
 
 EFI_ENUM(efi_gbl_unbootable_reason, uint8_t,
@@ -80,12 +80,6 @@ typedef struct efi_memory_descriptor {
 	uint64_t attributes;
 } efi_memory_descriptor;
 
-typedef void (*os_entry_point)(size_t descriptor_size,
-				uint32_t descriptor_version,
-				size_t num_descriptors,
-				const efi_memory_descriptor *memory_map,
-				const efi_gbl_loaded_os* os);
-
 struct efi_gbl_boot_control_protocol {
 	uint64_t version;
 	// Slot metadata query methods
@@ -102,7 +96,7 @@ struct efi_gbl_boot_control_protocol {
 	efi_status_t(EFIAPI *get_one_shot_boot_mode) (struct efi_gbl_boot_control_protocol *this,
 							efi_gbl_one_shot_boot_mode *mode);
 	efi_status_t(EFIAPI *handle_loaded_os) (struct efi_gbl_boot_control_protocol *this,
-						const efi_gbl_loaded_os *os, os_entry_point *entry_point);
+						const efi_gbl_loaded_os *os);
 };
 
 efi_status_t efi_gbl_boot_control_register(void);
