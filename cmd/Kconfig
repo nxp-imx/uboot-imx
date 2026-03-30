@@ -279,6 +279,20 @@ config CMD_BOOTM
 	help
 	  Boot an application image from the memory.
 
+config CMD_BOOTM_REN
+	bool "bootm_ren"
+	depends on CMD_BOOTM && AHAB_BOOT
+	help
+	  Authenticate AHAB OS container and boot FIT image via bootm.
+
+config BOOTM_DISABLE_SHELL
+	bool "Disable shell bootm command"
+	depends on CMD_BOOTM
+	help
+	  Hide interactive 'bootm' command from the command table. Internal
+	  do_bootm() remains available for trusted commands (for example
+	  bootm_ren).
+
 config CMD_BOOTM_PRE_LOAD
 	bool "enable pre-load on bootm"
 	depends on CMD_BOOTM

@@ -3,8 +3,8 @@
  * Copyright 2024 NXP
  */
 
-#ifndef __IMX93_FRDM_H
-#define __IMX93_FRDM_H
+#ifndef __IMX91_FLUX_H
+#define __IMX91_FLUX_H
 
 #include <linux/sizes.h>
 #include <linux/stringify.h>
@@ -14,11 +14,7 @@
 #define CFG_SYS_UBOOT_BASE	\
 	(QSPI0_AMBA_BASE + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
 
-#ifdef CONFIG_SYS_MMC_ENV_DEV
-#define IMX93_EVK_MMC_ENV_DEV CONFIG_SYS_MMC_ENV_DEV
-#else
-#define IMX93_EVK_MMC_ENV_DEV 0
-#endif
+
 /* Link Definitions */
 
 #define CFG_SYS_INIT_RAM_ADDR        0x80000000
@@ -26,13 +22,9 @@
 
 #define CFG_SYS_SDRAM_BASE           0x80000000
 #define PHYS_SDRAM                      0x80000000
-#define PHYS_SDRAM_SIZE			0x80000000 /* 2GB DDR */
+#define PHYS_SDRAM_SIZE			0x40000000 /* 1GB DDR */
 
-/* Using ULP WDOG for reset */
+/* Using WDOG for reset */
 #define WDOG_BASE_ADDR          WDG3_BASE_ADDR
-
-#ifdef CONFIG_IMX_MATTER_TRUSTY
-#define NS_ARCH_ARM64 1
-#endif
-
+#define CFG_ENV_FLAGS_LIST_STATIC "BOOT_ORDER:sw,BOOT_A_LEFT:dw,BOOT_B_LEFT:dw,fit_conf:sw,boot_part:sw,rauc_slot:sw,mmcpart:dw,devtype:sw,devnum:dw,distro_bootpart:dw,mmcroot:sw,bootargs:sw"
 #endif

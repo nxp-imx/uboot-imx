@@ -515,6 +515,13 @@
 			"${scriptaddr} ${prefix}${script}; "              \
 		"source ${scriptaddr}\0"                                  \
 	\
+		"if test ${sec_boot} = yes; then "                      \
+			"if run auth_bs; then "                          \
+				"source ${loadaddr}; "                     \
+			"else "                                           \
+				"echo ERR: failed to authenticate; "         \
+			"fi; "                                            \
+		"fi\0"                                             \
 	"scan_dev_for_scripts="                                           \
 		"for script in ${boot_scripts}; do "                      \
 			"if test -e ${devtype} "                          \

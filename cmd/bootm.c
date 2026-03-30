@@ -287,10 +287,12 @@ U_BOOT_LONGHELP(bootm,
 #endif
 	"\tgo      - start OS");
 
+#ifndef CONFIG_BOOTM_DISABLE_SHELL
 U_BOOT_CMD(
 	bootm,	CONFIG_SYS_MAXARGS,	1,	do_bootm,
 	"boot application image from memory", bootm_help_text
 );
+#endif
 
 /*******************************************************************/
 /* bootd - boot default image */
