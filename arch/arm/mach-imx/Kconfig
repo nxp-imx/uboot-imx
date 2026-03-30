@@ -112,6 +112,23 @@ config CMD_QB
 	help
 	  Enable qb command to write DDR quick boot training data to boot device.
 
+config CMD_BOOT_STAGE
+	bool "Support the 'boot_stage' command"
+	depends on IMX8_ROMAPI
+	help
+	  This enables the 'boot_stage' command which queries the current boot
+	  stage from the ROM API. This is useful for determining if the system
+	  booted from primary, secondary, recovery, or USB boot mode.
+
+config FIX_BOOT_PART
+	bool "Fix eMMC boot partition when secondary boot is detected"
+	depends on IMX8_ROMAPI
+	help
+	  When the ROM reports secondary boot (fallback from primary), toggle
+	  the eMMC boot partition so the next reset boots from the other
+	  partition. This can fix ESD register issues that led to the
+	  fallback. Disable if you do not want automatic partition switching.
+
 config CMD_BMODE
 	bool "Support the 'bmode' command"
 	default y
