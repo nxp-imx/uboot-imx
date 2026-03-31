@@ -971,13 +971,14 @@ dtb-$(CONFIG_ARCH_IMX9) += \
 	imx943-evk.dtb \
 	imx943-orangebox.dtb \
 	imx91-9x9-qsb.dtb \
-	imx91-9x9-flux.dtb \
 	imx91-11x11-frdm.dtb \
 	imx91-11x11-frdm-imx91s.dtb \
 	imx93-var-som-symphony.dtb \
 	imx93-phyboard-segin.dtb \
 	imx93w-evk.dtb \
 	imx93-11x11-frdm.dtb
+
+dtb-$(CONFIG_TARGET_IMX91_9X9_FLUX) += imx91-9x9-flux.dtb
 
 dtb-$(CONFIG_ARCH_IMXRT) += imxrt1050-evk.dtb \
 	imxrt1020-evk.dtb \
