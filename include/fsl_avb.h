@@ -195,6 +195,9 @@ int at_disable_vboot_unlock(void);
 /* Set vbmeta public key */
 int avb_set_public_key(uint8_t *staged_buffer, uint32_t size);
 
+/* Set gbl public key */
+int avb_set_gbl_public_key(uint8_t *staged_buffer, uint32_t size);
+
 /* Get manufacture protection  public key */
 int fastboot_get_mppubk(uint8_t *staged_buffer, uint32_t *size);
 

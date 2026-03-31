@@ -1,0 +1,13 @@
+config IMX_SM_CPU
+	bool "Enable i.MX System Manager CPU API"
+	depends on MISC && ARCH_IMX9 && SCMI_FIRMWARE
+	help
+	  If you say Y here to enable i.MX System Manager CPU
+	  API to work on some NXP i.MX processors.
+
+config IMX_SM_LMM
+	bool "Enable i.MX System Manager Logical Machine API"
+	depends on MISC && ARCH_IMX9 && SCMI_FIRMWARE
+	help
+	  If you say Y here to enable i.MX System Manager Logical Machine
+	  API to work on some NXP i.MX processors.

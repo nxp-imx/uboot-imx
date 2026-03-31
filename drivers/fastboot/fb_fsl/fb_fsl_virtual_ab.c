@@ -10,7 +10,7 @@
 #include "fsl_avb.h"
 #include "fb_fsl.h"
 
-static int read_virtual_ab_message(misc_virtual_ab_message *message)
+int read_virtual_ab_message(misc_virtual_ab_message *message)
 {
 	size_t num_bytes;
 	int source_slot;

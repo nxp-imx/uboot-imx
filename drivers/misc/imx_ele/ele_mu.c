@@ -73,7 +73,7 @@ int mu_hal_receivemsg(ulong base, u32 reg_index, u32 *msg)
 	u32 mask = MU_SR_RF0_MASK << reg_index;
 	u32 val, rr_num;
 	int ret;
-	u32 count = 10;
+	u32 count = CONFIG_IMX_ELE_RESP_TIMEOUT;
 
 	rr_num = (readl(&mu_base->par) & 0xFF00) >> 8;
 	assert(reg_index < rr_num);
@@ -85,7 +85,7 @@ int mu_hal_receivemsg(ulong base, u32 reg_index, u32 *msg)
 		ret = readl_poll_timeout(&mu_base->rsr, val, val & mask, 1000000);
 		if (ret < 0) {
 			count--;
-			printf("mu receive msg wait %us\n", 10 - count);
+			printf("mu receive msg wait %us\n", CONFIG_IMX_ELE_RESP_TIMEOUT - count);
 		} else {
 			break;
 		}

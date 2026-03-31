@@ -310,6 +310,7 @@ static inline int image_ph_type(int image_ph_type)
 }
 
 #define LZ4F_MAGIC	0x184D2204	/* LZ4 Magic Number		*/
+#define LZ4L_MAGIC	0x184C2102	/* LZ4 Legacy Magic Number	*/
 #define IH_MAGIC	0x27051956	/* Image Magic Number		*/
 #define IH_NMLEN		32	/* Image Name Length		*/
 
@@ -2143,5 +2144,15 @@ struct fit_loadable_tbl {
  * Return:      0 on success, non-zero otherwise
  */
 int fit_update(const void *fit);
+
+/**
+ * Fixup the imx android fdt.
+ */
+int imx_android_dt_fixup(void *fdt_addr);
+
+/**
+ * Get android fdt id by name
+ */
+int get_imx_android_fdt_id(void *fdt_mapping);
 
 #endif	/* __IMAGE_H__ */

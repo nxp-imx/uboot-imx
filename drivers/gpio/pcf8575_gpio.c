@@ -162,6 +162,7 @@ static const struct udevice_id pcf8575_gpio_ids[] = {
 	{ .compatible = "nxp,pcf8575", .data = 2 },
 	{ .compatible = "ti,pcf8575", .data = 2 },
 	{ .compatible = "nxp,pca8574", .data = 1 },
+	{ .compatible = "nxp,pca9670", .data = 1 },
 	{ }
 };
 

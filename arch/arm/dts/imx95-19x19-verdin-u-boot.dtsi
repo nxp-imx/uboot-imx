@@ -3,6 +3,13 @@
  * Copyright 2023-2025 NXP
  */
 
+/ {
+	aliases {
+		pci0 = &pcie_4ca00000;
+		pci1 = &pcie_4cb00000;
+	};
+};
+
 &scmi_iomuxc {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_hog>;
@@ -79,12 +86,22 @@
 	/delete-property/power-domains;
 };
 
+&usb3_phy {
+	bootph-pre-ram;
+};
+
 &usb3 {
+	clocks = <&scmi_clk IMX95_CLK_HSIO>,
+			 <&scmi_clk IMX95_CLK_24M>,
+			 <&scmi_clk IMX95_CLK_32K>;
+	clock-names = "hsio", "ref", "suspend";
+
 	/delete-property/power-domains;
+	bootph-pre-ram;
 };
 
 &usb3_dwc3 {
-	compatible = "fsl,imx8mq-dwc3", "snps,dwc3";
+	bootph-pre-ram;
 };
 
 &flexspi1 {
@@ -112,4 +129,22 @@
 &mipi_dsi {
 	assigned-clocks = <&scmi_clk IMX95_CLK_MIPIPHYPLLBYPASS>;
 	assigned-clock-parents = <&scmi_clk IMX95_CLK_VIDEOPLL1>;
+};
+
+&pcie0 {
+	assigned-clocks =<&scmi_clk IMX95_CLK_HSIOPLL_VCO>,
+			 <&scmi_clk IMX95_CLK_HSIOPLL>,
+			 <&scmi_clk IMX95_CLK_HSIOPCIEAUX>;
+	assigned-clock-rates = <3600000000>, <100000000>, <10000000>;
+	assigned-clock-parents = <0>, <&scmi_clk IMX95_CLK_HSIOPLL_VCO>,
+				 <&scmi_clk IMX95_CLK_SYSPLL1_PFD1_DIV2>;
+};
+
+&pcie1 {
+	assigned-clocks =<&scmi_clk IMX95_CLK_HSIOPLL_VCO>,
+			 <&scmi_clk IMX95_CLK_HSIOPLL>,
+			 <&scmi_clk IMX95_CLK_HSIOPCIEAUX>;
+	assigned-clock-rates = <3600000000>, <100000000>, <10000000>;
+	assigned-clock-parents = <0>, <&scmi_clk IMX95_CLK_HSIOPLL_VCO>,
+				 <&scmi_clk IMX95_CLK_SYSPLL1_PFD1_DIV2>;
 };

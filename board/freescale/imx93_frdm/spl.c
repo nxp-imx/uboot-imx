@@ -40,17 +40,17 @@ DECLARE_GLOBAL_DATA_PTR;
 #define SRC_DDRC_SW_CTRL		(0x44461020)
 #define SRC_DDRPHY_SINGLE_RESET_SW_CTRL	(0x44461424)
 
-extern struct dram_timing_info dram_timing_1GB;
-extern struct dram_timing_info dram_timing_2GB;
+extern struct dram_timing_info dram_timing_1CS_2GB;
+extern struct dram_timing_info dram_timing_2CS_2GB;
 u32 lpddr4_mr_read(u32 mr_rank, u32 mr_addr);
 
 static struct _drams {
-	u8 mr8;
+	u8 density;
 	struct dram_timing_info *pdram_timing;
 	char *name;
-} frdm_drams[2] = {
-	{0x10, &dram_timing_1GB, "1GB DRAM" },
-	{0x18, &dram_timing_2GB, "2GB DRAM" },
+} frdm_drams[] = {
+	{0x4, &dram_timing_2CS_2GB, "2CS_2GB DRAM" },
+	{0x6, &dram_timing_1CS_2GB, "1CS_2GB DRAM" },
 };
 
 int spl_board_boot_device(enum boot_device boot_dev_spl)
@@ -93,7 +93,7 @@ void spl_dram_init(void)
 		printf("DDR: %uMTS\n", ptiming->fsp_msg[0].drate);
 		ret = ddr_init(ptiming);
 		if (ret == 0) {
-			if (lpddr4_mr_read(1, 8) == frdm_drams[i].mr8) {
+			if ((lpddr4_mr_read(1, 8) >> 2) == frdm_drams[i].density) {
 				printf("found DRAM %s matched\n", frdm_drams[i].name);
 				break;
 			}

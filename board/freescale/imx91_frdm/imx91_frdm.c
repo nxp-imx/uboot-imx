@@ -278,12 +278,10 @@ static void board_gpio_init(void)
 	dm_gpio_set_value(&ext_pwren_desc, 1);
 }
 
-static int print_board_version(void)
+static int get_board_version(int *rev, int *data)
 {
 	int i, ret;
 	struct udevice *dev;
-	unsigned int rev[2];
-	unsigned int data[2];
 
 	ret = uclass_first_device_check(UCLASS_ADC, &dev);
 
@@ -315,17 +313,24 @@ static int print_board_version(void)
 			else
 				rev[i] = 6;
 		}
-		printf("BOARD: V%d.%d(ADC2:%d,ADC3:%d)\n", rev[0], rev[1], data[0], data[1]);
+		return 0;
 	} else {
-		printf("BOARD: unknown\n");
+		return -1;
 	}
-
-	return 0;
 }
 
 int board_init(void)
 {
-	print_board_version();
+	int ret;
+	unsigned int rev[2];
+	unsigned int data[2];
+
+	ret = get_board_version(rev, data);
+	if (ret == 0)
+		printf("BOARD: V%d.%d(ADC2:%d,ADC3:%d)\n", rev[0], rev[1], data[0], data[1]);
+	else
+		printf("BOARD: Unable to determine board version\n");
+
 #ifdef CONFIG_USB_TCPC
 	setup_typec();
 #endif

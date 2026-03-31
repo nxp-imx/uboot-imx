@@ -19,6 +19,7 @@
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <asm/arch-mx7ulp/gpio.h>
+#include <asm/arch-imx9/bbsm.h>
 #include <asm/mach-imx/ele_api.h>
 #include <asm/mach-imx/syscounter.h>
 #include <asm/sections.h>
@@ -63,6 +64,11 @@ void spl_board_init(void)
 	if (ret)
 		printf("Fail to start RNG: %d\n", ret);
 
+#ifdef CONFIG_SPL_IMX_BBSM
+	ret = bbsm_tamper_detect_enable();
+	if (ret)
+		printf("Failed to enable BBSM Tamper Detection: %d\n", ret);
+#endif
 	puts("Normal Boot\n");
 }
 

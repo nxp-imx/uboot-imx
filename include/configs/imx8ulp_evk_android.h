@@ -18,7 +18,8 @@
 	"fdt_high=0xffffffffffffffff\0"		\
 	"initrd_high=0xffffffffffffffff\0"	\
 	"emmc_dev=0\0"\
-	"sd_dev=2\0"
+	"sd_dev=2\0" \
+	"boot_devices_mmcblk0=soc@0/29800000.bus/298d0000.mmc\0"
 
 /* Enable mcu firmware flash */
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT

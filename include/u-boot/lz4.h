@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2019 Google LLC
+ * Copyright 2025 NXP
  */
 
 #ifndef __LZ4_H
@@ -20,6 +21,17 @@
  *	the decompression algorithm
  */
 int ulz4fn(const void *src, size_t srcn, void *dst, size_t *dstn);
+
+/**
+ * ulz4fn_legacy() - LZ4 legacy format data decompression function.
+ */
+int ulz4fn_legacy(const void *src, size_t srcn, void *dst, size_t *dstn);
+
+/**
+ * ulz4fn_auto() - Auto select the correct funtion to decompress standard or
+ *                 legacy format based on the magic.
+ */
+int ulz4fn_auto(const void *src, size_t srcn, void *dst, size_t *dstn);
 
 /**
  * LZ4_decompress_safe() - Decompression protected against buffer overflow

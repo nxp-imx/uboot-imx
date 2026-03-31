@@ -564,9 +564,6 @@ int hwcrypto_get_dek_blob(char *data, uint32_t *data_size, enum dek_blob_part pa
         rc = hwcrypto_do_tipc(HWCRYPTO_GET_BOOTLOADER_DEK_BLOB_SIZE, NULL,
                               0, &dek_blob_size, &tmp);
         break;
-    default:
-        trusty_error("Wrong input parameters!\n");
-        return TRUSTY_ERR_INVALID_ARGS;
     }
 
     if(rc) {
@@ -589,9 +586,6 @@ int hwcrypto_get_dek_blob(char *data, uint32_t *data_size, enum dek_blob_part pa
         rc = hwcrypto_do_tipc(HWCRYPTO_GET_BOOTLOADER_DEK_BLOB, NULL,
                               0, resp, &dek_blob_size);
         break;
-    default:
-        trusty_error("Wrong input parameters!\n");
-        goto exit;
     }
 
     if (!rc) {
