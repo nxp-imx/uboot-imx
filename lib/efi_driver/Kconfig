@@ -1,0 +1,62 @@
+config EFI_GBL_AVB
+	bool "Include GBL AVB protocol"
+	depends on EFI_LOADER
+	help
+	  Include the driver for the custom GBL AVB protocol. This protocol
+	  allows to delegate device-specific Android verified booot (AVB)
+	  logic to the firmware.
+
+config EFI_GBL_OS_CONFIGURATION
+	bool "Include GBL Os Configuration protocol"
+	depends on EFI_LOADER
+	help
+	  Include the driver for the custom GBL os configuration protocol.
+	  This protocol is used to select base device trees and overlays
+	  and apply runtime fix-ups to the bootconfig.
+
+config EFI_GBL_BOOT_CONTROL
+	bool "Include GBL boot control protocol"
+	depends on EFI_LOADER
+	help
+	  Include the driver for the custom GBL boot control protocol.
+	  This protocol provides interfaces for platform specific boot operations,
+	  such as determining the number of slots, determining the current target slot,
+	  and changing the target boot slot.
+
+config EFI_GBL_BOOT_MEMORY
+	bool "Include GBL boot memory protocol"
+	depends on EFI_LOADER
+	help
+	  Include the driver for the custom GBL boot memory protocol.
+	  The protocol allows UEFI firmware to provide reserved buffers
+	  for sharing preloaded partition image to the GBL, or as destination
+	  buffers for the GBL to load the images to, assemble kernel/ramdisk/fdt images,
+	  and download data in fastboot mode etc.
+
+config EFI_GBL_FASTBOOT_TRANSPORT
+	bool "Include GBL fastboot transport protocol"
+	depends on EFI_LOADER
+	help
+	  This protocol defines interfaces that abstract platform Fastboot transport
+	  implementation such as USB/TCP or other custom channels.
+
+config EFI_GBL_FASTBOOT
+	bool "Include GBL fastboot protocol"
+	depends on EFI_LOADER
+	help
+	  This protocol provides interfaces for platform-specific operations during Fastboot.
+	  This can include support for vendor defined variables or variables whose query requires
+	  cooperation with vendor firmware, OEM commands.
+
+config EFI_GBL_VENDOR_PARTITION
+	bool "Include GBL vendor partisions"
+	depends on EFI_LOADER
+	help
+	  This service will register GBL vendor defined partitions.
+
+config EFI_GBL_TIMESTAMP
+	bool "Include GBL timestamp protocol"
+	depends on EFI_LOADER
+	help
+	  This service will provide a platform independent interface for retrieving a high resolution
+	  timestamp counter.

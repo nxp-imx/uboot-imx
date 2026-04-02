@@ -3,6 +3,24 @@
  * Copyright 2025 NXP
  */
 
+/ {
+	aliases {
+		usb0 = &usb3_dwc3;
+		usb1 = &usb2;
+		usb_gadget0 = &usb3_dwc3;
+		usb_gadget1 = &usbg2;
+		pci0 = &netc_bus0;
+		pci1 = &netc_bus1;
+	};
+
+	usbg2: usbg2 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usb2>;
+		status = "okay";
+	};
+};
+
 &aips1 {
 	bootph-all;
 	bootph-pre-ram;
@@ -156,12 +174,22 @@
 	/delete-property/power-domains;
 };
 
+&usb3_phy {
+	bootph-pre-ram;
+};
+
 &usb3 {
+	clocks = <&scmi_clk IMX94_CLK_HSIO>,
+		 <&scmi_clk IMX94_CLK_24M>,
+		 <&scmi_clk IMX94_CLK_32K>;
+	clock-names = "hsio", "ref", "suspend";
+
 	/delete-property/power-domains;
+	bootph-pre-ram;
 };
 
 &usb3_dwc3 {
-	compatible = "fsl,imx95a-dwc3", "fsl,imx8mq-dwc3", "snps,dwc3";
+	bootph-pre-ram;
 };
 
 &usdhc1 {
@@ -237,4 +265,26 @@
 &pcal6408_i2c3_u172 {
 	compatible = "ti,tca6408";
 	label = "u172";
+};
+
+&pca9670_i2c3 {
+	u-boot,i2c-offset-len = <0>;
+};
+
+&pcie0 {
+	assigned-clocks =<&scmi_clk IMX94_CLK_HSIOPLL_VCO>,
+			 <&scmi_clk IMX94_CLK_HSIOPLL>,
+			 <&scmi_clk IMX94_CLK_HSIOPCIEAUX>;
+	assigned-clock-rates = <3600000000>, <100000000>, <10000000>;
+	assigned-clock-parents = <0>, <&scmi_clk IMX94_CLK_HSIOPLL_VCO>,
+				 <&scmi_clk IMX94_CLK_SYSPLL1_PFD1_DIV2>;
+};
+
+&pcie1 {
+	assigned-clocks =<&scmi_clk IMX94_CLK_HSIOPLL_VCO>,
+			 <&scmi_clk IMX94_CLK_HSIOPLL>,
+			 <&scmi_clk IMX94_CLK_HSIOPCIEAUX>;
+	assigned-clock-rates = <3600000000>, <100000000>, <10000000>;
+	assigned-clock-parents = <0>, <&scmi_clk IMX94_CLK_HSIOPLL_VCO>,
+				 <&scmi_clk IMX94_CLK_SYSPLL1_PFD1_DIV2>;
 };

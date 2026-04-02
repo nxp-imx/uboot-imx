@@ -21,6 +21,11 @@
 		};
 	};
 #endif
+
+	imx8mq-cm4 {
+		compatible = "fsl,imx8mq-cm4";
+		syscon = <&src>;
+	};
 };
 
 &soc {

@@ -46,6 +46,9 @@ enum avb_command {
     WRITE_VBMETA_PUBLIC_KEY    = (9 << AVB_REQ_SHIFT),
     WRITE_OEM_UNLOCK_DEVICE_PERMISSION     = (10 << AVB_REQ_SHIFT),
     READ_OEM_UNLOCK_DEVICE_PERMISSION      = (11 << AVB_REQ_SHIFT),
+    /* Leave some gap for oem defined commands */
+    READ_GBL_PUBLIC_KEY     = (16 << AVB_REQ_SHIFT),
+    WRITE_GBL_PUBLIC_KEY    = (17 << AVB_REQ_SHIFT),
 };
 
 /**

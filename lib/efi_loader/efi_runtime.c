@@ -19,6 +19,9 @@
 #include <asm/global_data.h>
 #include <u-boot/crc.h>
 #include <asm/sections.h>
+#ifdef CONFIG_PSCI_BOARD_REBOOT
+#include <asm/arch/sys_proto.h>
+#endif
 
 /* For manual relocation support */
 DECLARE_GLOBAL_DATA_PTR;
@@ -258,8 +261,12 @@ static void EFIAPI efi_reset_system_boottime(
 	case EFI_RESET_COLD:
 	case EFI_RESET_WARM:
 	case EFI_RESET_PLATFORM_SPECIFIC:
+#ifdef CONFIG_PSCI_BOARD_REBOOT
+		do_board_reboot(NULL, 0, 0, NULL);
+#else
 		do_reset(NULL, 0, 0, NULL);
 		break;
+#endif
 	case EFI_RESET_SHUTDOWN:
 #ifdef CONFIG_CMD_POWEROFF
 		do_poweroff(NULL, 0, 0, NULL);

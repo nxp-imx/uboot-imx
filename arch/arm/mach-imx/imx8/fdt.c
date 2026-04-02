@@ -850,7 +850,7 @@ int ft_system_setup(void *blob, struct bd_info *bd)
 			return ret;
 	}
 
-	if (IS_ENABLED(CONFIG_DM_RNG)) {
+	if (IS_ENABLED(CONFIG_DM_RNG) && !IS_ENABLED(CONFIG_IMX_ANDROID_GBL)) {
 		ret = fdt_kaslrseed(blob, true);
 		if (ret)
 			printf("Unable to set property %s, err=%s\n",

@@ -60,7 +60,17 @@ static void xspi_nor_reset(void)
 
 void spl_board_init(void)
 {
+	int ret;
+	u32 bd;
+
 	puts("Normal Boot\n");
+
+	bd = spl_boot_device();
+	if (bd == BOOT_DEVICE_BOARD) { /* USB */
+		ret = power_on_hsio();
+		if (ret)
+			printf("power on hsio is failed\n");
+	}
 }
 
 /* SCMI suport by default */

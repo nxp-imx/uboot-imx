@@ -587,7 +587,9 @@ static int initr_fastboot_setup(void)
 
 static int initr_check_fastboot(void)
 {
+#ifndef CONFIG_IMX_ANDROID_GBL
 	fastboot_run_bootmode();
+#endif
 	return 0;
 }
 #endif

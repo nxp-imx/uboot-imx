@@ -249,6 +249,20 @@ int mmc_get_env_dev(void)
 }
 #endif
 
+int power_on_hsio(void)
+{
+	int ret;
+	struct udevice *dev;
+
+	ret = uclass_get_device_by_name(UCLASS_CLK, "protocol@14", &dev);
+	if (ret)
+		return ret;
+
+	ret = scmi_pwd_state_set(dev, 0, SCMI_PD(HSIO_TOP), 0);
+
+	return ret;
+}
+
 #ifdef CONFIG_USB_PORT_AUTO
 int board_usb_gadget_port_auto(void)
 {
@@ -463,6 +477,37 @@ static struct mm_region imx9_mem_map[] = {
 			 PTE_BLOCK_OUTER_SHARE
 	}, {
 #endif
+		/* PCIE2 ECAM */
+		.virt = 0x880000000UL,
+		.phys = 0x880000000UL,
+		.size = 0x10000000UL,
+		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+			 PTE_BLOCK_NON_SHARE |
+			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
+	}, {
+		/* PCIE1 Outbound */
+		.virt = 0x900000000UL,
+		.phys = 0x900000000UL,
+		.size = 0x100000000UL,
+		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+			 PTE_BLOCK_NON_SHARE |
+			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
+	}, {
+		/* PCIE2 Outbound */
+		.virt = 0xA00000000UL,
+		.phys = 0xA00000000UL,
+		.size = 0x100000000UL,
+		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+			 PTE_BLOCK_NON_SHARE |
+			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
+	}, {
+		/* QB data */
+		.virt = CONFIG_SAVED_QB_STATE_BASE,
+		.phys = CONFIG_SAVED_QB_STATE_BASE,
+		.size = 0x200000UL,	/* 2M */
+		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
+			 PTE_BLOCK_OUTER_SHARE
+	}, {
 		/* empty entry to split table entry 5 if needed when TEEs are used */
 		0,
 	}, {
@@ -687,6 +732,35 @@ phys_size_t get_effective_memsize(void)
 	}
 }
 
+static inline u64 ether_addr_to_u64(const u8 *addr)
+{
+	u64 u = 0;
+	int i;
+
+	for (i = 0; i < 6; i++)
+		u = u << 8 | addr[i];
+
+	return u;
+}
+
+static inline void u64_to_ether_addr(u64 u, u8 *addr)
+{
+	int i;
+
+	for (i = 6 - 1; i >= 0; i--) {
+		addr[i] = u & 0xff;
+		u = u >> 8;
+	}
+}
+
+static inline void eth_addr_add(u8 *addr, long offset)
+{
+	u64 u = ether_addr_to_u64(addr);
+
+	u += offset;
+	u64_to_ether_addr(u, addr);
+}
+
 void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 {
 	u32 val[2] = {};
@@ -731,16 +805,16 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 		 * | 10     | netc switch | swp2                      |
 		*/
 		if (dev_id == 0)
-			mac[5] = mac[5] + 2; /* enetc3 mac/swp0 */
+			eth_addr_add(mac, 2); /* enetc3 mac/swp0 */
 		if (dev_id == 1)
-			mac[5] = mac[5] + 8; /* enetc1 */
+			eth_addr_add(mac, 8); /* enetc1 */
 		if (dev_id == 2)
-			mac[5] = mac[5] + 9; /* enetc2 */
+			eth_addr_add(mac, 9); /* enetc2 */
 	} else {
 		if (dev_id == 1)
-			mac[5] = mac[5] + 3;
+			eth_addr_add(mac, 3);
 		if (dev_id == 2)
-			mac[5] = mac[5] + 6;
+			eth_addr_add(mac, 6);
 	}
 
 	debug("%s: MAC%d: %02x.%02x.%02x.%02x.%02x.%02x\n",
@@ -961,8 +1035,90 @@ int power_on_m7(char *name)
 	return 0;
 }
 
+static char *get_cpu_variant_type_name(u32 type)
+{
+	u32 val, core_num, part_num;
+	int ret;
+
+	ret = fuse_read(2, 1, &val);
+	if (ret)
+		return NULL;
+
+	/* Get part num */
+	part_num = (val >> 4) & 0xff;
+	if (!part_num)
+		return NULL;
+
+	if (type == MXC_CPU_IMX95) {
+		u32 segment;
+		static char *name = "9596";
+
+		core_num = part_num & 0x3;
+		segment = (part_num >> 2) & 0xf;
+
+		switch (segment) {
+		case 0xa:
+			name[2] = 'T';
+			break;
+		case 0xb:
+			name[2] = 'V';
+			break;
+		case 0xc:
+			name[2] = 'C';
+			break;
+		case 0xd:
+			name[2] = 'G';
+			break;
+		case 0xe:
+			name[2] = 'I';
+			break;
+		case 0xf:
+			name[2] = 'N';
+			break;
+		default:
+			name[2] = segment + '0';
+			break;
+		}
+
+		name[3] = core_num * 2 + '0';
+
+		return name;
+	} else if (type == MXC_CPU_IMX94) {
+		static char *name = "94398";
+		core_num = 8;
+
+		ret = fuse_read(2, 2, &val);
+		if (ret)
+			return NULL;
+
+		if (part_num > 30) { /* 943 */
+			/* A55 2 & 3 disabled */
+			if ((val & 0x18) == 0x18)
+				core_num = 6;
+		} else if (part_num > 20) { /* 942 */
+			core_num = 5;
+
+			/* m7_0 disabled */
+			if ((val & 0x200) == 0x200)
+				core_num = 4;
+		} else if (part_num > 10) { /* 941 */
+			core_num = 5;
+		}
+		sprintf(name, "94%u%u", part_num, core_num);
+
+		return name;
+	}
+
+	return NULL;
+}
+
 const char *get_imx_type(u32 imxtype)
 {
+	const char *name = get_cpu_variant_type_name(imxtype);
+
+	if (name)
+		return name;
+
 	switch (imxtype) {
 	case SCMI_CPU:
 		return IMX_PLAT_STR;
@@ -1112,7 +1268,8 @@ static int delete_fdt_nodes(void *blob, const char *const nodes_path[], int size
 	return 0;
 }
 
-static int disable_fdt_nodes(void *blob, const char *const nodes_path[], int size_array)
+static int disable_fdt_nodes(void *blob, const char *const nodes_path[], int size_array,
+	const char *prop, const char *value)
 {
 	int i = 0;
 	int rc;
@@ -1125,6 +1282,14 @@ static int disable_fdt_nodes(void *blob, const char *const nodes_path[], int siz
 			continue; /* Not found, skip it */
 
 		debug("Found %s node\n", nodes_path[i]);
+
+		if (prop && value) {
+			const char *prop_str;
+			prop_str = fdt_stringlist_get(blob, nodeoff, prop, 0, NULL);
+
+			if (!prop_str || strcmp(prop_str, value))
+				continue;
+		}
 
 add_status:
 		rc = fdt_setprop(blob, nodeoff, "status", status, strlen(status) + 1);
@@ -1245,8 +1410,8 @@ static void disable_thermal_cpu_nodes(void *blob, u32 disabled_cores)
 		"/thermal-zones/a55-thermal/cooling-maps/map0",
 	};
 	u32 cooling_dev[24];
-
 	int nodeoff, ret, i, cnt;
+	int prop_size = 3 * ((is_imx94()) ? 4: 6);
 
 	for (i = 0; i < ARRAY_SIZE(thermal_path); i++) {
 		nodeoff = fdt_path_offset(blob, thermal_path[i]);
@@ -1257,7 +1422,7 @@ static void disable_thermal_cpu_nodes(void *blob, u32 disabled_cores)
 		cnt = get_cooling_device_list(blob, nodeoff, thermal_path[i], cooling_dev, 24);
 
 		ret = fdt_setprop(blob, nodeoff, "cooling-device", &cooling_dev,
-				  sizeof(u32) * (18 - disabled_cores * 3));
+				  sizeof(u32) * (prop_size - disabled_cores * 3));
 
 		if (ret < 0) {
 			printf("Warning: %s, cooling-device setprop failed %d\n",
@@ -1266,8 +1431,8 @@ static void disable_thermal_cpu_nodes(void *blob, u32 disabled_cores)
 		}
 
 		/* Add GPU and VPU nodes back to ana thermal-zone. */
-		if (cnt > 18)
-			ret = fdt_appendprop(blob, nodeoff, "cooling-device", &cooling_dev[18],
+		if (cnt > prop_size)
+			ret = fdt_appendprop(blob, nodeoff, "cooling-device", &cooling_dev[prop_size],
 					  sizeof(u32) * 6);
 
 		if (ret < 0) {
@@ -1285,6 +1450,8 @@ static int disable_npu_node(void *blob)
 	static const char * const nodes_path_npu[] = {
 		"/soc/imx95-neutron-remoteproc@4ab00000",
 		"/soc/imx95-neutron@4ab00004",
+		"/soc/neutron-remoteproc@4ab00000",
+		"/soc/neutron@4ab00004",
 	};
 
 	return delete_fdt_nodes(blob, nodes_path_npu, ARRAY_SIZE(nodes_path_npu));
@@ -1296,9 +1463,9 @@ static int disable_arm_cpu_nodes(void *blob, u32 disabled_cores)
 	int rc;
 	int nodeoff;
 	char nodes_path[32];
+	int num_cpus = (is_imx94()) ? 4: 6;
 
-	printf("disable_arm_cpu_nodes, num_disabled_cores = %d\n", disabled_cores);
-	for (i = 6; i > (6 - disabled_cores); i--) {
+	for (i = num_cpus; i > (num_cpus - disabled_cores); i--) {
 
 		sprintf(nodes_path, "/cpus/cpu@%u00", i - 1);
 
@@ -1438,7 +1605,19 @@ int disable_enet10g_node(void *blob)
 		"/soc/netc-blk-ctrl@4cde0000/pcie@4ca00000/ethernet@10,0",
 	};
 
-	return disable_fdt_nodes(blob, nodes_path_enet10g, ARRAY_SIZE(nodes_path_enet10g));
+	return disable_fdt_nodes(blob, nodes_path_enet10g, ARRAY_SIZE(nodes_path_enet10g),
+		NULL, NULL);
+}
+
+int disable_enet25g_node(void *blob)
+{
+	static const char * const nodes_path_enet25g[] = {
+		"/soc/system-controller@4ceb0000/pcie@4ca00000/ethernet-switch@0,2/ports/port@0",
+		"/soc/system-controller@4ceb0000/pcie@4ca00000/ethernet-switch@0,2/ports/port@1",
+	};
+
+	return disable_fdt_nodes(blob, nodes_path_enet25g, ARRAY_SIZE(nodes_path_enet25g),
+		"phy-mode", "sgmii");
 }
 
 int disable_mipidsi_node(void *blob)
@@ -1451,6 +1630,29 @@ int disable_mipidsi_node(void *blob)
 	return delete_fdt_nodes(blob, nodes_path_mipidsi, ARRAY_SIZE(nodes_path_mipidsi));
 }
 
+int disable_dpu_node(void *blob)
+{
+	static const char * const nodes_path_dpu[] = {
+		"/soc/bridge@4b0d0000/channel@0/port@0/endpoint",
+		"/soc/bridge@4b0d0000/channel@0/port@1/endpoint",
+		"/soc/bridge@4b0d0000/channel@1/port@0/endpoint",
+		"/soc/bridge@4b0d0000/channel@1/port@1/endpoint",
+		"/soc/display-controller@4b400000/ports/port@0/endpoint",
+		"/soc/display-controller@4b400000/ports/port@1/endpoint",
+		"/soc/display-controller@4b400000",
+		"/soc/syscon@4b010000/bridge@8/ports/port@0/endpoint",
+		"/soc/syscon@4b010000/bridge@8/ports/port@2/endpoint@1",
+		"/soc/syscon@4b010000/bridge@8/ports/port@3/endpoint@0",
+		"/soc/syscon@4b010000/bridge@8/ports/port@3/endpoint@1",
+		"/soc/syscon@4b010000/bridge@8",
+		"/soc/syscon@4b010000",
+		"/soc/interrupt-controller@4b0b0000",
+		"/soc/bridge@4b0d0000"
+	};
+
+	return delete_fdt_nodes(blob, nodes_path_dpu, ARRAY_SIZE(nodes_path_dpu));
+}
+
 int disable_lvds_node(void *blob)
 {
 	static const char * const nodes_path_lvds[] = {
@@ -1458,9 +1660,40 @@ int disable_lvds_node(void *blob)
 		"/soc/syscon@4b0c0000/phy@8",
 		"/soc/syscon@4b0c0000/ldb@4/channel@1",
 		"/soc/syscon@4b0c0000/phy@c",
+		"/soc/syscon@4b0c0000"
 	};
 
 	return delete_fdt_nodes(blob, nodes_path_lvds, ARRAY_SIZE(nodes_path_lvds));
+}
+
+int disable_cm70_node(void *blob)
+{
+	static const char * const nodes_path_cm70[] = {
+		"/reserved-memory/vdev0vring0@82000000",
+		"/reserved-memory/vdev0vring1@82008000",
+		"/reserved-memory/vdev1vring0@82010000",
+		"/reserved-memory/vdev1vring1@82018000",
+		"/reserved-memory/rsc-table@82220000",
+		"/reserved-memory/vdevbuffer@82020000",
+		"/imx943-cm70",
+	};
+
+	return delete_fdt_nodes(blob, nodes_path_cm70, ARRAY_SIZE(nodes_path_cm70));
+}
+
+int disable_cm71_node(void *blob)
+{
+	static const char * const nodes_path_cm71[] = {
+		"/reserved-memory/vdev0vring0@84000000",
+		"/reserved-memory/vdev0vring1@84008000",
+		"/reserved-memory/vdev1vring0@84010000",
+		"/reserved-memory/vdev1vring1@84018000",
+		"/reserved-memory/rsc-table@84220000",
+		"/reserved-memory/vdevbuffer@84020000",
+		"/imx943-cm71",
+	};
+
+	return delete_fdt_nodes(blob, nodes_path_cm71, ARRAY_SIZE(nodes_path_cm71));
 }
 
 static int disable_smmu_node(void *blob)
@@ -1517,76 +1750,94 @@ static int disable_smmu_node(void *blob)
 int ft_system_setup(void *blob, struct bd_info *bd)
 {
 	u32 val = 0;
-	int ret = 0;
 	int num_a55_cores_disabled = 0;
 	int gpu_disabled = 0;
 
-	if (is_imx95()) {
-		fuse_read(2, 2, &val);
+	val = 0;
+	fuse_read(2, 2, &val);
 
-		if (val & BIT(0)) /* NPU */
-			disable_npu_node(blob);
+	if (val & BIT(0)) /* NPU */
+		disable_npu_node(blob);
 
-		if (val & BIT(3)) /* A55C4 */
-			num_a55_cores_disabled++;
+	if (val & BIT(2)) /* A55C1 */
+		num_a55_cores_disabled++;
 
-		if (val & BIT(4)) /* A55C5 */
-			num_a55_cores_disabled++;
+	if (val & BIT(3)) /* A55C2 */
+		num_a55_cores_disabled++;
 
-		if (val & BIT(5)) /* A55C4 */
-			num_a55_cores_disabled++;
+	if (val & BIT(4)) /* A55C3 */
+		num_a55_cores_disabled++;
 
-		if (val & BIT(6)) /* A55C5 */
-			num_a55_cores_disabled++;
+	if (val & BIT(5)) /* A55C4 */
+		num_a55_cores_disabled++;
 
-		if (num_a55_cores_disabled > 0)
-			disable_arm_cpu_nodes(blob, num_a55_cores_disabled);
+	if (val & BIT(6)) /* A55C5 */
+		num_a55_cores_disabled++;
 
-		if (val & BIT(27)) /* LVDS */
-			disable_lvds_node(blob);
+	if (num_a55_cores_disabled > 0)
+		disable_arm_cpu_nodes(blob, num_a55_cores_disabled);
 
-		if (val & BIT(29)) /* ISP */
-			disable_isp_node(blob);
+	if (val & BIT(9))
+		disable_cm70_node(blob);
 
-		/* Disable devices based on fuse*/
-		val = 0x0;
-
-		fuse_read(2, 3, &val);
-
-		if (val & BIT(6)) /* PCIE A */
-			disable_pciea_node(blob);
-		if (val & BIT(7)) /* PCIE B */
-			disable_pcieb_node(blob);
-
-		if (val & BIT(17)) { /* GPU MIX */
-			disable_gpu_node(blob, num_a55_cores_disabled);
-			gpu_disabled = 1;
-		}
-		if (val & BIT(18)) /* VPU MIX */
-			disable_vpu_node(blob, num_a55_cores_disabled, gpu_disabled);
-		if (val & BIT(19)) /* JPEGDEC disable */
-			disable_jpegenc_node(blob);
-		if (val & BIT(20)) /* JPEGENC disable */
-			disable_jpegdec_node(blob);
-
-		if (val & BIT(22)) /* MIPI-CSI0 */
-			disable_mipicsi0_node(blob);
-		if (val & BIT(23)) /* MIPI-CSI1 */
-			disable_mipicsi1_node(blob);
-		if (val & BIT(24)) /* MIPI-DSI MIX */
-			disable_mipidsi_node(blob);
-
-		val = 0x0;
-		fuse_read(2, 4, &val);
-
-		if (val & BIT(12)) /* Disable 10G */
-			disable_enet10g_node(blob);
-
-		disable_smmu_node(blob);
+	if (is_imx94()) {
+		if (val & BIT(17)) /* Fuse only for iMX94 */
+			disable_cm71_node(blob);
 	}
 
-	if (IS_ENABLED(CONFIG_DM_RNG)) {
-		ret = fdt_kaslrseed(blob, true);
+	if (val & BIT(22)) /* Display */
+		disable_dpu_node(blob);
+
+	if (val & BIT(27)) /* LVDS */
+		disable_lvds_node(blob);
+
+	if (val & BIT(29)) /* ISP */
+		disable_isp_node(blob);
+
+	/* Disable devices based on fuse*/
+	val = 0x0;
+	fuse_read(2, 3, &val);
+
+	if (val & BIT(6)) /* PCIE A */
+		disable_pciea_node(blob);
+	if (val & BIT(7)) /* PCIE B */
+		disable_pcieb_node(blob);
+
+	if (val & BIT(17)) { /* GPU MIX */
+		disable_gpu_node(blob, num_a55_cores_disabled);
+		gpu_disabled = 1;
+	}
+	if (val & BIT(18)) /* VPU MIX */
+		disable_vpu_node(blob, num_a55_cores_disabled, gpu_disabled);
+
+	if (val & BIT(19)) /* JPEGDEC disable */
+		disable_jpegenc_node(blob);
+	if (val & BIT(20)) /* JPEGENC disable */
+		disable_jpegdec_node(blob);
+
+	if (val & BIT(22)) /* MIPI-CSI0 */
+		disable_mipicsi0_node(blob);
+	if (val & BIT(23)) /* MIPI-CSI1 */
+		disable_mipicsi1_node(blob);
+
+	if (val & BIT(24)) /* MIPI-DSI MIX */
+		disable_mipidsi_node(blob);
+
+	val = 0x0;
+	fuse_read(2, 4, &val);
+
+	if (val & BIT(12)) { /* Disable 10G */
+		if (is_imx95())
+			disable_enet10g_node(blob);
+		else if (is_imx94())
+			disable_enet25g_node(blob);
+	}
+
+	if (is_imx95())
+		disable_smmu_node(blob);
+
+	if (IS_ENABLED(CONFIG_DM_RNG) && !IS_ENABLED(CONFIG_IMX_ANDROID_GBL)) {
+		int ret = fdt_kaslrseed(blob, true);
 		if (ret)
 			printf("Unable to set property %s, err=%s\n",
 				"kaslr-seed", fdt_strerror(ret));
@@ -1602,11 +1853,17 @@ int board_fix_fdt_fuse(void *fdt)
 
 	fuse_read(2, 2, &val);
 
+	if (val & BIT(22)) /* Display */
+		disable_dpu_node(fdt);
+
 	if (val & BIT(27)) /* LVDS */
 		disable_lvds_node(fdt);
 
 	val = 0x0;
 	fuse_read(2, 3, &val);
+
+	if (val & BIT(7)) /* PCIE B */
+		disable_pcieb_node(fdt);
 
 	if (val & BIT(24)) /* MIPI-DSI MIX */
 		disable_mipidsi_node(fdt);
@@ -1614,8 +1871,13 @@ int board_fix_fdt_fuse(void *fdt)
 	val = 0x0;
 	fuse_read(2, 4, &val);
 
-	if (val & BIT(12)) /* Disable 10G */
-		disable_enet10g_node(fdt);
+	if (val & BIT(12)) { /* Disable 10G */
+		if (is_imx95())
+			disable_enet10g_node(fdt);
+		else if (is_imx94())
+			disable_enet25g_node(fdt);
+	}
+
 	return 0;
 }
 

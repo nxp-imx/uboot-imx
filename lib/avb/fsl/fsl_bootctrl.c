@@ -79,6 +79,27 @@ int current_slot(void) {
 	return get_curr_slot(&ab_data);
 }
 
+int is_current_slot_successful(bool *success) {
+	struct bootloader_control ab_data;
+	int slot = 0;
+
+	/* Load A/B metadata and decide which slot we are going to load */
+	if (fsl_avb_ab_ops.read_ab_metadata(&fsl_avb_ab_ops, &ab_data) !=
+					    AVB_IO_RESULT_OK) {
+		printf("Error loading AB metadata from misc!\n");
+		return -1;
+	}
+
+	slot = get_curr_slot(&ab_data);
+	if (slot < 0) {
+		printf("Failed to get current slot number!\n");
+		return -1;
+	}
+
+	*success = ab_data.slot_info[slot].successful_boot != 0 ? true : false;
+	return 0;
+}
+
 int slotidx_from_suffix(char *suffix) {
 	int slot = -1;
 

@@ -96,6 +96,24 @@ int trusty_read_vbmeta_public_key(uint8_t *publickey, uint32_t *size);
  */
 int trusty_write_vbmeta_public_key(uint8_t *publickey, uint32_t size);
 /*
+ * Send request to secure side to read gbl public key.
+ *
+ * Copies public key received by secure side to |publickey|. If |size| does not
+ * match the size returned by the secure side, an error is returned. Returns one
+ * of trusty_err.
+ *
+ * @publickey:   caller allocated buffer
+ * @size:        size of |publickey| as input, return actual public key size on success.
+ */
+int trusty_read_gbl_public_key(uint8_t *publickey, uint32_t *size);
+/*
+ * Send request to secure side to write gbl public key. Public key
+ * can only be written to storage once.
+ *
+ * Returns one of trusty_err.
+ */
+int trusty_write_gbl_public_key(uint8_t *publickey, uint32_t size);
+/*
  * Send request to secure side to read device lock state from RPMB.
  *
  * Returns one of trusty_err.

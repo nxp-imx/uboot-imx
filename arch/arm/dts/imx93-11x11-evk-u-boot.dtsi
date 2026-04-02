@@ -111,6 +111,13 @@
 			MX93_PAD_SD3_DATA3__FLEXSPI1_A_DATA03   0x3fe
 		>;
 	};
+
+	pinctrl_lpi2c3_gpio: lpi2c3gpiogrp {
+		fsl,pins = <
+			MX93_PAD_GPIO_IO28__GPIO2_IO28			0x31e
+			MX93_PAD_GPIO_IO29__GPIO2_IO29			0x31e
+		>;
+	};
 };
 
 &reg_usdhc2_vmmc {
@@ -306,6 +313,11 @@
 
 &lpi2c3 {
 	bootph-pre-ram;
+	pinctrl-names = "default", "gpio";
+	pinctrl-0 = <&pinctrl_lpi2c3>;
+	pinctrl-1 = <&pinctrl_lpi2c3_gpio>;
+	gpios = <&gpio2 28 GPIO_ACTIVE_LOW>,
+		<&gpio2 29 GPIO_ACTIVE_LOW>;
 };
 
 #if CONFIG_IS_ENABLED(DM_PMIC_PF0900)

@@ -29,7 +29,7 @@ int get_margin_pos(long part_start, long part_end, long blksz,
  		// offset == -1 means the last byte?, or start need -1
 		margin->start = (off = offset % blksz) == 0 ?
 			        0 : blksz + off;
-		if (offset + num_bytes - 1 >= 0) {
+		if (offset + (long)num_bytes -1 >= 0) {
 			if (!allow_partial)
 				return -1;
 			margin->blk_end = part_end;

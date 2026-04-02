@@ -12,16 +12,16 @@
 /* Initialize DDRC registers */
 static struct dram_cfg_param ddr_ddrc_cfg[] = {
 	{0x4e300110, 0x44100001},
-	{0x4e300000, 0x8000bf},
+	{0x4e300000, 0x8000b7},
 	{0x4e300008, 0x0},
 	{0x4e300080, 0x80000412},
 	{0x4e300084, 0x0},
-	{0x4e300114, 0x1002},
+	{0x4e300114, 0x1012},
 	{0x4e300260, 0x80},
 	{0x4e300f04, 0x80},
-	{0x4e300800, 0x43b30002},
+	{0x4e300800, 0x43b30d00},
 	{0x4e300804, 0x1f1f1f1f},
-	{0x4e301000, 0x0},
+	{0x4e301000, 0xc0000000},
 	{0x4e301240, 0x0},
 	{0x4e301244, 0x0},
 	{0x4e301248, 0x0},
@@ -1979,7 +1979,7 @@ static struct dram_fsp_msg ddr_dram_fsp_msg[] = {
 };
 
 /* ddr timing config params */
-struct dram_timing_info dram_timing_1GB = {
+struct dram_timing_info dram_timing = {
 	.ddrc_cfg = ddr_ddrc_cfg,
 	.ddrc_cfg_num = ARRAY_SIZE(ddr_ddrc_cfg),
 	.ddrphy_cfg = ddr_ddrphy_cfg,

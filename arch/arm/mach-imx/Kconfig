@@ -108,6 +108,7 @@ config CSF_SIZE
 config CMD_QB
 	bool "Support the 'qb' command"
 	default y
+	imply USE_PREBOOT
 	depends on IMX_SNPS_DDR_PHY_QB_GEN && (IMX95 || IMX94)
 	help
 	  Enable qb command to write DDR quick boot training data to boot device.
@@ -381,6 +382,27 @@ config SYSTEM_RAMDISK_SUPPORT
 	bool "Support build ramdisk in system image"
 	default n
 
+config IMX_ANDROID_GBL
+	bool "Support Android Generic Bootloader (GBL)"
+	depends on ANDROID_SUPPORT || ANDROID_AUTO_SUPPORT
+	default n
+	select RSA
+	select SPL_RSA
+	select RSA_VERIFY_WITH_PKEY
+	select IMAGE_SIGN_INFO
+	select EFI_GBL_AVB
+	select EFI_GBL_OS_CONFIGURATION
+	select EFI_GBL_BOOT_CONTROL
+	select EFI_GBL_BOOT_MEMORY
+	select EFI_GBL_FASTBOOT_TRANSPORT
+	select EFI_GBL_FASTBOOT
+	select EFI_GBL_VENDOR_PARTITION
+	select INCLUDE_DTB_TO_VENDOR_BOOT
+	select EFI_GBL_TIMESTAMP
+	help
+	  Load and boot the Android image by Android Generic Bootloader (GBL),
+	  which is an UEFI application distributed by Google.
+
 menu "TRUSTY OS Support"
 
 config IMX_TRUSTY_OS
@@ -495,7 +517,23 @@ config RPMB_INIT_ALLOW
 endmenu
 
 config APPEND_BOOTARGS
-	bool "Append bootargs support"
+	bool "Append bootargs and/or bootconfig support"
+	help
+	  Allow appending user-defined parameters to bootargs and/or bootconfig
+	  which are then passed to the kernel.
+
+	  When enabled, the parameters defined in 'append_bootargs' environment
+	  variable will be appended to 'bootargs' (kernel command line). The
+	  parameters defined in 'append_bootconfig' will be appended to the
+	  kernel bootconfig structure, which is parsed by the kernel at early
+	  boot and subsequently read by the Android init process.
+
+	  IMPORTANT: Use the ":=" operator to override an existing key in
+	  bootconfig. Using "=" for duplicate keys will cause the kernel to
+	  fail parsing bootconfig with a "Value is redefined" error, potentially
+	  preventing system boot.
+
+	  This is a debug option and should always be disabled in production builds.
 
 config DUAL_BOOTLOADER
 	bool "Enable dual bootloader support"
@@ -510,6 +548,10 @@ config ANDROID_DYNAMIC_PARTITION
 config VIRTUAL_AB_SUPPORT
 	bool "Support virtual AB update"
 	select ANDROID_DYNAMIC_PARTITION
+
+config INCLUDE_DTB_TO_VENDOR_BOOT
+	bool "Include the dtb into vendor_boot image"
+	default n
 
 config BOOTLOADER_MENU
 	bool "Enable bootloader menu for android device"

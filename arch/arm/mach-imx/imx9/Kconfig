@@ -5,6 +5,14 @@ config AHAB_BOOT
     help
     This option enables the support for AHAB secure boot.
 
+config SPL_IMX_BBSM
+    bool "Support BBSM Tamper Detection feature"
+	depends on IMX93
+	default n
+    help
+      This option enables the support for BBSM Tamper Detection. This option is
+      only supported on i.MX93.
+
 config IMX_CRRM
     bool "Support i.MX9 cyber resilient recovery module (CRRM)"
 	depends on IMX94
@@ -87,6 +95,10 @@ config TARGET_IMX93_9X9_QSB
 	imply OF_UPSTREAM
 	imply BOOTSTD_FULL
 	imply BOOTSTD_BOOTCOMMAND
+	select CMD_REMOTEPROC
+	select REMOTEPROC_IMX
+	select REGMAP
+	select SYSCON
 
 config TARGET_IMX91_11X11_FRDM
 	bool "imx91_11x11_frdm"
@@ -127,6 +139,10 @@ config TARGET_IMX93_14X14_EVK
 	imply OF_UPSTREAM
 	imply BOOTSTD_FULL
 	imply BOOTSTD_BOOTCOMMAND
+	select CMD_REMOTEPROC
+	select REMOTEPROC_IMX
+	select REGMAP
+	select SYSCON
 
 config TARGET_IMX93_11X11_EVK
 	bool "imx93_11x11_evk"
@@ -135,6 +151,10 @@ config TARGET_IMX93_11X11_EVK
 	imply OF_UPSTREAM
 	imply BOOTSTD_FULL
 	imply BOOTSTD_BOOTCOMMAND
+	select CMD_REMOTEPROC
+	select REMOTEPROC_IMX
+	select REGMAP
+	select SYSCON
 
 config TARGET_IMX93_11X11_FRDM
 	bool "imx93_11x11_frdm"
@@ -142,6 +162,10 @@ config TARGET_IMX93_11X11_FRDM
 	select IMX93
 	imply BOOTSTD_FULL
 	imply BOOTSTD_BOOTCOMMAND
+	select CMD_REMOTEPROC
+	select REMOTEPROC_IMX
+	select REGMAP
+	select SYSCON
 
 config TARGET_IMX93_VAR_SOM
 	bool "imx93_var_som"
@@ -160,27 +184,75 @@ config TARGET_IMX95_19X19_EVK
 	select IMX95
 	imply BOOTSTD_BOOTCOMMAND
 	imply BOOTSTD_FULL
+	select CMD_REMOTEPROC
+	select REMOTEPROC_IMX
+	select REGMAP
+	select SYSCON
+	select IMX_SM_LMM
+	select IMX_SM_CPU
 
 config TARGET_VERDIN_IMX95_19X19
 	bool "imx95_verdin_evk"
 	select IMX95
 	imply BOOTSTD_BOOTCOMMAND
 	imply BOOTSTD_FULL
+	select CMD_REMOTEPROC
+	select REMOTEPROC_IMX
+	select REGMAP
+	select SYSCON
+	select IMX_SM_LMM
+	select IMX_SM_CPU
 
 config TARGET_IMX95_15X15_EVK
 	bool "imx95_15x15_evk"
 	select IMX95
 	imply BOOTSTD_BOOTCOMMAND
 	imply BOOTSTD_FULL
+	select CMD_REMOTEPROC
+	select REMOTEPROC_IMX
+	select REGMAP
+	select SYSCON
+	select IMX_SM_LMM
+	select IMX_SM_CPU
 
 config TARGET_IMX95_15X15_FRDM
 	bool "imx95_15x15_frdm"
 	select IMX95
 	imply BOOTSTD_BOOTCOMMAND
 	imply BOOTSTD_FULL
+	select CMD_REMOTEPROC
+	select REMOTEPROC_IMX
+	select REGMAP
+	select SYSCON
+	select IMX_SM_LMM
+	select IMX_SM_CPU
+
+config TARGET_IMX95_19X19_FRDM_PRO
+	bool "imx95_19x19_frdm_pro"
+	select IMX95
+	imply BOOTSTD_BOOTCOMMAND
+	imply BOOTSTD_FULL
+	select CMD_REMOTEPROC
+	select REMOTEPROC_IMX
+	select REGMAP
+	select SYSCON
+	select IMX_SM_LMM
+	select IMX_SM_CPU
 
 config TARGET_IMX943_EVK
 	bool "imx943_evk"
+	select IMX94
+	select CMD_REMOTEPROC
+	select REMOTEPROC_IMX
+	select REGMAP
+	select SYSCON
+	select IMX_SM_LMM
+	select IMX_SM_CPU
+	imply BOOTSTD_BOOTCOMMAND
+	imply BOOTSTD_FULL
+
+config TARGET_IMX943_ORANGEBOX
+	bool "imx943_orangebox"
 	select IMX94
 	imply BOOTSTD_BOOTCOMMAND
 	imply BOOTSTD_FULL
@@ -201,6 +273,7 @@ source "board/freescale/imx95_evk/Kconfig"
 source "board/freescale/imx95_frdm/Kconfig"
 source "board/toradex/verdin-imx95/Kconfig"
 source "board/freescale/imx94_evk/Kconfig"
+source "board/freescale/imx94_orangebox/Kconfig"
 
 endif
 

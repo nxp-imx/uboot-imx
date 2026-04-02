@@ -21,7 +21,9 @@
 	"fdt_high=0xffffffffffffffff\0"	  	\
 	"initrd_high=0xffffffffffffffff\0" 	\
 	"emmc_dev=0\0" \
-	"sd_dev=1\0"
+	"sd_dev=1\0" \
+	"boot_devices_mmcblk0=bus@5b000000/5b010000.mmc\0" \
+	"boot_devices_mmcblk1=bus@5b000000/5b020000.mmc\0"
 
 #define CFG_SYS_SPL_PTE_RAM_BASE 0x801F8000
 

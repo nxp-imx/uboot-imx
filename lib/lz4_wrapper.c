@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL 2.0+ OR BSD-3-Clause
 /*
  * Copyright 2015 Google Inc.
+ * Copyright 2025 NXP
  */
 
 #include <compiler.h>
@@ -105,4 +106,76 @@ __rcode int ulz4fn(const void *src, size_t srcn, void *dst, size_t *dstn)
 
 	*dstn = out - dst;
 	return ret;
+}
+
+__rcode int ulz4fn_legacy(const void *src, size_t srcn, void *dst, size_t *dstn)
+{
+	const void *end = dst + *dstn;
+	const void *in = src;
+	void *out = dst;
+	int ret = 0;
+	*dstn = 0;
+	u32 block_size;
+	u32 magic;
+
+	if (srcn < sizeof(u32) * 2) {
+		printf("lz4: wrong input image size!\n");
+		return -EINVAL;
+	}
+
+	magic = get_unaligned_le32(in);
+	if (magic != LZ4L_MAGIC) {
+		printf("lz4: expect legacy lz4 magic (0x%x), but get 0x%x\n", LZ4L_MAGIC, magic);
+		return -EPROTONOSUPPORT;
+	}
+	in += sizeof(u32);
+
+	while (1) {
+		if (in >= src + srcn) {
+			// success
+			ret = 0;
+			break;
+		}
+
+		block_size = get_unaligned_le32(in);
+		in += sizeof(u32);
+		if (block_size == 0) {
+			continue;
+		}
+
+		if (in - src + block_size > srcn) {
+			printf("lz4: input overrun\n");
+			ret = -EINVAL;
+			break;
+		}
+
+		ret = LZ4_decompress_safe(in, out, block_size, end - out);
+		if (ret < 0) {
+			ret = -EPROTO;
+			printf("lz4: decompression error!");
+			break;
+		}
+
+		out += ret;
+		in += block_size;
+	}
+
+	*dstn = out - dst;
+	return ret;
+}
+
+__rcode int ulz4fn_auto(const void *src, size_t srcn, void *dst, size_t *dstn)
+{
+	u32 magic;
+
+	magic = get_unaligned_le32(src);
+	if (magic == LZ4L_MAGIC) {
+		// lz4 legacy format
+		return ulz4fn_legacy(src, srcn, dst, dstn);
+	} else if (magic == LZ4F_MAGIC) {
+		// standard lz4 format
+		return ulz4fn(src, srcn, dst, dstn);
+	} else {
+		return -EPROTONOSUPPORT;
+	}
 }

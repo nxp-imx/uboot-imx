@@ -643,6 +643,14 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 		}
 	}
 
+	if (IS_ENABLED(CONFIG_ANDROID_SUPPORT) || IS_ENABLED(CONFIG_ANDROID_AUTO_SUPPORT)) {
+		fdt_ret = imx_android_dt_fixup(blob);
+		if (fdt_ret) {
+			printf("ERROR: imx android fdt fixup failed!");
+			goto err;
+		}
+	}
+
 	if (fdt_initrd(blob, *initrd_start, *initrd_end))
 		goto err;
 
