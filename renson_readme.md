@@ -1,52 +1,60 @@
-# Renson U-Boot Change Notes
+# Renson U-Boot Customization Overview
 
-This file tracks the main custom changes integrated in this `uboot-imx` tree for Renson up to now.
+This document summarizes Renson-specific board enablement and customization in this `uboot-imx` tree.
 
-## Latest Board Addition
+## Board Support Added by Renson
 
-### `imx91-9x9-flux-v3` support
+- Added support for `imx91-9x9-flux`.
+- Added support for `imx91-9x9-flux-v3`.
+- Added/customized support for FRDM-based platforms used by Renson (for example `imx93_frdm` and related boot environment updates).
 
-Integrated in commit:
-- `c6bf53b03f0` - Add support for `imx91-9x9-flux-v3` device tree and related configurations
+## Flux Family Layout
 
-Implemented items:
-- New defconfig: `configs/imx91_9x9_flux_v3_defconfig`
-- New target symbol: `CONFIG_TARGET_IMX91_9X9_FLUX_V3`
-- Shared board implementation reuse under `board/freescale/imx91_flux`
-- New DTS: `arch/arm/dts/imx91-9x9-flux-v3.dts`
-- DTB registration in `arch/arm/dts/Makefile`
+The `flux` and `flux-v3` boards currently reuse the same board implementation directory:
 
-Current decision:
-- LPDDR timing is reused from existing flux board for now.
-- V3-specific timing can be split later if hardware characterization requires it.
+- `board/freescale/imx91_flux`
 
-## Other Recent Renson-Related Changes
+The `flux-v3` board has its own target and board description files:
 
-- `82623f10480` - Added `fdt_addr` and `fdt_addr_r` to `imx91_flux` and `imx93_frdm` environment files.
-- `ad8c9d5c5b2` - Updated DTS Makefile mapping so `imx91-9x9-flux.dtb` is tied to `CONFIG_TARGET_IMX91_9X9_FLUX`.
-- `6079880dc24` - Merged Renson patch set into this U-Boot branch.
+- Defconfig: `configs/imx91_9x9_flux_v3_defconfig`
+- Kconfig target: `CONFIG_TARGET_IMX91_9X9_FLUX_V3` in `arch/arm/mach-imx/imx9/Kconfig`
+- DTS: `arch/arm/dts/imx91-9x9-flux-v3.dts`
+- DTB registration: `arch/arm/dts/Makefile`
 
-## Merge/Integration Milestones
+## FRDM Customizations
 
-- `56f7e9fe874` - Merge pull request #3 from `lf_v2025.04`
-- `99376713491` - Merge pull request #2 from `lf_v2025.04_rpre`
-- `b4b9d1b7105` - Synced remote-tracking branch into `lf_v2025.04_rpre`
-- `fc0745ed281` - Merge from upstream U-Boot/NXP line into Renson integration branch
-- `1a30c555d74` - Merge pull request #1 for patch integration
+Renson has also customized FRDM-oriented flows, including boot environment improvements such as explicit FDT addresses in board env files.
 
-## Quick Build Targets
+Examples:
 
-Use GNU make (`gmake`) on macOS:
+- `board/freescale/imx91_flux/imx91_flux.env`
+- `board/freescale/imx93_frdm/imx93_frdm.env`
 
-- Build existing flux:
+## DDR Timing Note for Flux V3
+
+At this stage, `imx91-9x9-flux-v3` reuses existing Flux DDR timing objects.
+
+If V3 requires different memory timing, update:
+
+- Timing source files under `board/freescale/imx91_flux/` (for example create V3-specific LPDDR timing files).
+- `board/freescale/imx91_flux/Makefile` to select V3 timing objects for:
+  - `CONFIG_TARGET_IMX91_9X9_FLUX_V3`
+- If needed, board init/SPL logic in `board/freescale/imx91_flux/spl.c` to reference the correct timing structures.
+
+In short, switching memory timing from existing Flux settings to dedicated V3 settings is mainly controlled by the board Makefile object selection and the SPL timing references.
+
+## Build Quick Start
+
+Use GNU make (`gmake`) on macOS.
+
+- Flux:
   - `gmake imx91_9x9_flux_defconfig`
   - `gmake -j8`
 
-- Build new flux-v3:
+- Flux V3:
   - `gmake imx91_9x9_flux_v3_defconfig`
   - `gmake -j8`
 
-## Notes
+## Environment Note
 
-- Some host environments require OpenSSL development headers for U-Boot host tools (`openssl/evp.h`).
-- If full build fails on host tool dependencies, defconfig generation can still be used to validate Kconfig wiring.
+Some host setups require OpenSSL development headers for U-Boot host tools (`openssl/evp.h`).
