@@ -14,7 +14,7 @@ extern int authenticate_os_container(ulong addr);
 static int do_bootm_ren(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	ulong cntr_addr, fit_addr;
-	const char *fit_conf = "conf-1";
+	const char *fit_conf = "conf-imx91-9x9-flux.dtb";
 	const char *env_fit_conf;
 	char fit_spec[64];
 	char *bootm_argv[3];
