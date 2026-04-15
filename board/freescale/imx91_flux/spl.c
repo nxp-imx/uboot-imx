@@ -140,14 +140,7 @@ void board_init_f(ulong dummy)
 		debug("SOC: 0x%x\n", gd->arch.soc_rev);
 		debug("LC: 0x%x\n", gd->arch.lifecycle);
 	}
-	#if 0
-	/* Toggle GPIO2_19 and GPIO2_20 for early debug (active low) */
-	setbits_le32(&gpio2->gpio_pddr,  BIT(21)); /* Set as output */
-	setbits_le32(&gpio2->gpio_pcor,  BIT(21)); /* Set low (LED ON) */
-	udelay(2000000); /* 5 second delay */
-	setbits_le32(&gpio2->gpio_psor, BIT(21)); /* Set high (LED OFF) */
-	udelay(2000000); /* 5 second delay */
-#endif
+
 	clock_init_late();
 
 	power_init_board();

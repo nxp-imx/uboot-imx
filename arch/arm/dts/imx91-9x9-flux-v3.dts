@@ -1,0 +1,6 @@
+/include/ "imx91-9x9-qsb.dts"
+
+/ {
+	model = "FLUX i.MX91 9x9 Board V3";
+	compatible = "fsl,imx91-9x9-flux-v3", "fsl,imx91";
+};
