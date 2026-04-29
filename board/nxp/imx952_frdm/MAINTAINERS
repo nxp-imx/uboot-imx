@@ -1,0 +1,6 @@
+i.MX952 FRDM BOARD
+M:	Steven Yang <steven.yang@nxp.com>
+S:	Maintained
+F:	board/nxp/imx952_frdm/
+F:	include/configs/imx952_frdm.h
+F:	configs/imx952_frdm_defconfig

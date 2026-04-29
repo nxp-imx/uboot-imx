@@ -1,0 +1,12 @@
+if TARGET_IMX952_FRDM
+
+config SYS_BOARD
+	default "imx952_frdm"
+
+config SYS_VENDOR
+	default "nxp"
+
+config SYS_CONFIG_NAME
+	default "imx952_frdm"
+
+endif
