@@ -1118,10 +1118,10 @@ int disable_vpu_nodes(void *blob)
 		"/soc@0/video-codec@38310000",
 		"/soc@0/blk-ctrl@38330000",
 		"/soc@0/blk-ctl@38330000",
-		"/soc@0/bus@30000000/gpc@303a0000/pgc/power-domain@19",
-		"/soc@0/bus@30000000/gpc@303a0000/pgc/power-domain@20",
-		"/soc@0/bus@30000000/gpc@303a0000/pgc/power-domain@21",
-		"/soc@0/bus@30000000/gpc@303a0000/pgc/power-domain@22"
+		"/soc@0/bus@30000000/gpc@303a0000/pgc/power-domain@8",
+		"/soc@0/bus@30000000/gpc@303a0000/pgc/power-domain@11",
+		"/soc@0/bus@30000000/gpc@303a0000/pgc/power-domain@12",
+		"/soc@0/bus@30000000/gpc@303a0000/pgc/power-domain@13"
 	};
 
 	if (is_imx8mq())
