@@ -1,0 +1,63 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "spdxVersion": "SPDX-2.3",
+  "creationInfo": {
+    "created": "2026-04-24T03:41:51Z",
+    "creators": [
+      "Organization: NXP"
+    ],
+    "licenseListVersion": "3.26"
+  },
+  "name": "uboot-imx-automotive-16.0.0_1.3.0",
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "https://nxp.com/spdx/35e2ee1c-0b9a-47b0-8bad-dde6b08cb7c9",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-package-35e2ee1c-0b9a-47b0-8bad-dde6b08cb7c9",
+      "name": "uboot-imx",
+      "versionInfo": "automotive-16.0.0_1.3.0",
+      "licenseConcluded": "(GPL-2.0-or-later)",
+      "licenseDeclared": "(GPL-2.0-or-later)",
+      "downloadLocation": "https://github.com/nxp-imx/uboot-imx",
+      "originator": "Organization: NXP",
+      "supplier": "NOASSERTION",
+      "externalRefs": [],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-35e2ee1c-0b9a-47b0-8bad-dde6b08cb7c9---137f3999-492a-47c5-a0b5-33d4dd2afca7",
+      "name": "nxp-qoriq/u-boot",
+      "versionInfo": "lf-6.12.49-2.2.0",
+      "licenseConcluded": "GPL-2.0-or-later",
+      "licenseDeclared": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: NXP",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "f08b6026-b9b3-4177-b8bb-d6fb2986bb9c",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/nxp-qoriq/u-boot@lf-6.12.49-2.2.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-package-35e2ee1c-0b9a-47b0-8bad-dde6b08cb7c9"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-35e2ee1c-0b9a-47b0-8bad-dde6b08cb7c9",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-35e2ee1c-0b9a-47b0-8bad-dde6b08cb7c9---137f3999-492a-47c5-a0b5-33d4dd2afca7"
+    }
+  ]
+}
