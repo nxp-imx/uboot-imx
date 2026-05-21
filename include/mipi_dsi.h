@@ -104,8 +104,8 @@ struct mipi_dsi_host_ops {
  * @clk_lp2hs: Low Speed to High Speed Clock Transition Time
  */
 struct mipi_dsi_phy_timing {
-	u16 data_hs2lp;
-	u16 data_lp2hs;
+	u32 data_hs2lp;
+	u32 data_lp2hs;
 	u16 clk_hs2lp;
 	u16 clk_lp2hs;
 };

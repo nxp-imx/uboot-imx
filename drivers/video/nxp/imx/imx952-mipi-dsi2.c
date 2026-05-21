@@ -36,7 +36,7 @@
 
 #define PIXEL_LINK_STREAMS		2
 
-#define ESC_CLK_RATE_HZ			18562500
+#define MAX_ESC_CLK_RATE_HZ			20000000
 
 enum dsi_pixel_link_format {
 	RGB_24BIT,
@@ -70,6 +70,10 @@ struct imx952_dsi2_priv {
 	u32 lanes;
 	u32 format;
 	struct display_timing adj;
+	unsigned long esc_clk_rate;
+	unsigned long mode_flags;
+	bool phy_submode;
+	bool hs2lp_lp2hs_quirk;
 };
 
 static inline unsigned long data_rate_to_fout(unsigned long data_rate)
@@ -111,7 +115,7 @@ static int imx952_dsi2_phy_init(void *priv_data)
 		return -EINVAL;
 	}
 
-	ret = generic_phy_set_mode(&dsi->phy, PHY_MODE_MIPI_DPHY, 0);
+	ret = generic_phy_set_mode(&dsi->phy, PHY_MODE_MIPI_DPHY, dsi->phy_submode);
 	if (ret < 0) {
 		dev_err(dev, "failed to set phy mode: %d\n", ret);
 		return ret;
@@ -123,27 +127,29 @@ static int imx952_dsi2_phy_init(void *priv_data)
 		return ret;
 	}
 
-	ret = generic_phy_configure(&dsi->phy, &dsi->phy_cfg);
-	if (ret < 0) {
-		dev_err(dev, "failed to configure phy: %d\n", ret);
-		goto uninit_phy;
-	}
-
-	ret = generic_phy_power_on(&dsi->phy);
-	if (ret < 0) {
-		dev_err(dev, "failed to power on phy: %d\n", ret);
-		goto uninit_phy;
-	}
-
 	return 0;
-
-uninit_phy:
-	generic_phy_exit(&dsi->phy);
-	return ret;
 }
 
 static void imx952_dsi2_phy_power_on(void *priv_data)
 {
+	struct imx952_dsi2_priv *dsi = priv_data;
+	struct udevice *dev = dsi->device.dev;
+	struct phy_configure_opts_mipi_dphy *dphy_opts = &dsi->phy_cfg;
+	int ret;
+
+	dphy_opts->lpx = PSEC_PER_SEC / dsi->esc_clk_rate;
+
+	debug("PHY lpx = %ups\n", dphy_opts->lpx);
+
+	ret = generic_phy_configure(&dsi->phy, &dsi->phy_cfg);
+	if (ret < 0) {
+		dev_err(dev, "failed to configure phy: %d\n", ret);
+		return;
+	}
+
+	ret = generic_phy_power_on(&dsi->phy);
+	if (ret < 0)
+		dev_err(dev, "failed to power on phy: %d\n", ret);
 }
 
 static void imx952_dsi2_phy_power_off(void *priv_data)
@@ -241,21 +247,32 @@ static int imx952_dsi2_phy_get_timing(void *priv_data, unsigned int lane_mbps,
 				      struct mipi_dsi_phy_timing *timing)
 {
 	struct imx952_dsi2_priv *dsi = priv_data;
-	struct phy_configure_opts_mipi_dphy *cfg = &dsi->phy_cfg;
-	unsigned long long tmp;
-	unsigned long long hstx_clk;
+	unsigned int lp2hs_m, lp2hs_b;
+	unsigned int hs2lp_m, hs2lp_b;
 
-	hstx_clk = DIV_ROUND_CLOSEST_ULL(lane_mbps * USEC_PER_SEC, 8);
+	if (dsi->hs2lp_lp2hs_quirk) {
+		timing->data_lp2hs = 0x10000;
+		timing->data_hs2lp = 0x10000;
+		dev_dbg(dsi->device.dev, "hs2lp_lp2hs_quirk\n");
 
-	/* PHY_LP2HS_TIME = (TLPX + THS-PREPARE + THS-ZERO) / Tphy_hstx_clk */
-	tmp = cfg->lpx + cfg->hs_prepare + cfg->hs_zero;
-	tmp = DIV_ROUND_CLOSEST_ULL((tmp * hstx_clk) << 16, PSEC_PER_SEC);
-	timing->data_lp2hs = tmp;
+		return 0;
+	}
 
-	/* PHY_HS2LP_TIME = (THS-TRAIL + THS-EXIT) / Tphy_hstx_clk */
-	tmp = cfg->hs_trail + cfg->hs_exit;
-	tmp = DIV_ROUND_CLOSEST_ULL((tmp * hstx_clk) << 16, PSEC_PER_SEC);
-	timing->data_hs2lp = tmp;
+	/* PHY_LP2HS/HS2LP_TIME = DIV_ROUND_UP((lane_mbps * m), 100) + b */
+	if (dsi->mode_flags & MIPI_DSI_CLOCK_NON_CONTINUOUS) {
+		lp2hs_m = 13;
+		lp2hs_b = 20;
+		hs2lp_m = 7;
+		hs2lp_b = 25;
+	} else {
+		lp2hs_m = 7;
+		lp2hs_b = 20;
+		hs2lp_m = 5;
+		hs2lp_b = 10;
+	}
+
+	timing->data_lp2hs = (DIV_ROUND_UP(lane_mbps * lp2hs_m, 100) + lp2hs_b) << 16;
+	timing->data_hs2lp = (DIV_ROUND_UP(lane_mbps * hs2lp_m, 100) + hs2lp_b) << 16;
 
 	return 0;
 }
@@ -263,7 +280,26 @@ static int imx952_dsi2_phy_get_timing(void *priv_data, unsigned int lane_mbps,
 static void
 imx952_dsi2_phy_get_esc_clk_rate(void *priv_data, unsigned int *esc_clk_rate)
 {
-	*esc_clk_rate = ESC_CLK_RATE_HZ;
+	struct imx952_dsi2_priv *dsi = priv_data;
+	unsigned long pclk_rate;
+	unsigned int div = 2;
+
+	pclk_rate = clk_get_rate(dsi->clk_pixel);
+	if (pclk_rate == 0)
+		return;
+
+	*esc_clk_rate = pclk_rate;
+	while (*esc_clk_rate > MAX_ESC_CLK_RATE_HZ) {
+		*esc_clk_rate = pclk_rate / div;
+		div = div + 2;
+
+		if (div > 126)
+			return;
+	}
+
+	dsi->esc_clk_rate = *esc_clk_rate;
+
+	debug("get esc_clk_rate = %u\n", *esc_clk_rate);
 }
 
 static const struct mipi_dsi_phy_ops imx952_dsi2_phy_ops = {
@@ -275,6 +311,18 @@ static const struct mipi_dsi_phy_ops imx952_dsi2_phy_ops = {
 	.get_timing = imx952_dsi2_phy_get_timing,
 	.get_esc_clk_rate = imx952_dsi2_phy_get_esc_clk_rate,
 };
+
+static bool is_using_adv7535(struct udevice *panel)
+{
+	int ret;
+	const char *compatible;
+
+	ret = dev_read_string_index(panel, "compatible", 0, &compatible);
+	if (!ret && !strcmp(compatible, "adi,adv7535"))
+		return true;
+
+	return false;
+}
 
 static int imx952_dsi2_attach(struct udevice *dev)
 {
@@ -308,6 +356,13 @@ static int imx952_dsi2_attach(struct udevice *dev)
 	priv->lanes = device->lanes;
 	priv->format = device->format;
 	priv->adj = timings;
+
+	if (is_using_adv7535(priv->panel) && priv->adj.pixelclock.typ >= 40000000)
+		priv->phy_submode = true;
+	else
+		priv->phy_submode = false;
+
+	priv->hs2lp_lp2hs_quirk = priv->phy_submode;
 
 	ret = uclass_get_device(UCLASS_DSI_HOST, 0, &priv->dsi_host);
 	if (ret) {
@@ -479,6 +534,7 @@ static int imx952_dsi2_imx_host_attach(void *priv_data,
 	struct imx952_dsi2_priv *dsi = priv_data;
 
 	dsi->format = device->format;
+	dsi->mode_flags = device->mode_flags;
 
 	return 0;
 }

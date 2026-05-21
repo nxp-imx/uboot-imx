@@ -509,7 +509,7 @@ static void disable_fdt_resources(void *fdt)
 	static const char * const dsi_nodes[] = {
 		"/soc/bus@42000000/i2c@426b0000",
 		"/soc/bus@42000000/i2c@426d0000",
-		"/soc/netc-blk-ctrl@4cde0000"
+		"/soc/system-controller@4cde0000"
 	};
 
 	for (i = 0; i < ARRAY_SIZE(dsi_nodes); i++) {
