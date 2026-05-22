@@ -1,0 +1,8 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2026 NXP
+ */
+
+#include "imx937-evk.dts"
+#include "imx937-evk-u-boot.dtsi"
+#include "imx952-evk-rm692c9-adv7535.dtsi"
