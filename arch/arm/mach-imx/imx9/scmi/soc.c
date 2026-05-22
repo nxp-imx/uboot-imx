@@ -1144,7 +1144,8 @@ const char *get_cpu_variant_type_name(u32 type)
 	if (!part_num)
 		return NULL;
 
-	if (type == MXC_CPU_IMX95 || type == MXC_CPU_IMX952) {
+	if (type == MXC_CPU_IMX95 || type == MXC_CPU_IMX952 ||
+	    type == MXC_CPU_IMX937) {
 		u32 segment;
 		static char name[8] = "95294";
 		char pn[2];
@@ -1180,9 +1181,10 @@ const char *get_cpu_variant_type_name(u32 type)
 
 		if (type == MXC_CPU_IMX95)
 			sprintf(name, "95%c%c", pn[0], pn[1]);
-		else
+		else if (type == MXC_CPU_IMX952)
 			sprintf(name, "952%c%c", pn[0], pn[1]);
-
+		else
+			sprintf(name, "937%c%c", pn[0], pn[1]);
 		return name;
 	} else if (type == MXC_CPU_IMX94) {
 		static char *name = "94398";

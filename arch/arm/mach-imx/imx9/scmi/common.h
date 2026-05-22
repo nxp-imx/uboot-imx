@@ -21,7 +21,8 @@
 
 #define IMX95_PD_M70 IMX95_PD_M7
 #endif
-#ifdef CONFIG_IMX952
+
+#if defined(CONFIG_IMX952) || defined(CONFIG_IMX937)
 #define IMX_PLAT 952
 #include <../dts/imx952-clock.h>
 #include <../dts/imx952-power.h>
@@ -30,6 +31,14 @@
 #define IMX952_PD_M70 IMX952_PD_M7
 #define IMX952_CLK_FLEXSPI1 IMX952_CLK_XSPI1
 #define IMX952_CLK_24M IMX952_CLK_OSC24M
+
+#if defined(CONFIG_IMX937)
+#define CPU_NAME 937
+#endif
+#endif
+
+#ifndef CPU_NAME
+#define CPU_NAME IMX_PLAT
 #endif
 
 #define IMX_PLAT_STR__(plat) # plat
@@ -46,6 +55,6 @@
 
 #define SCMI_CPU__(plat) MXC_CPU_IMX ## plat
 #define SCMI_CPU_(plat) SCMI_CPU__(plat)
-#define SCMI_CPU SCMI_CPU_(IMX_PLAT)
+#define SCMI_CPU SCMI_CPU_(CPU_NAME)
 
 #endif
