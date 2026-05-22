@@ -50,6 +50,10 @@ config IMX93
 	select ARMV8_SPL_EXCEPTION_VECTORS
 	select SYS_FSL_ERRATUM_052357
 
+config IMX937
+	bool
+	select IMX952
+
 config IMX91
 	bool
 	select IMX9
@@ -195,6 +199,18 @@ config TARGET_PHYCORE_IMX93
 	imply OF_UPSTREAM
 	select OF_BOARD_FIXUP
 	select OF_BOARD_SETUP
+
+config TARGET_IMX937_EVK
+	bool "imx937_evk"
+	select IMX937
+	imply BOOTSTD_BOOTCOMMAND
+	imply BOOTSTD_FULL
+	select CMD_REMOTEPROC
+	select REMOTEPROC_IMX
+	select REGMAP
+	select SYSCON
+	select IMX_SM_LMM
+	select IMX_SM_CPU
 
 config TARGET_IMX95_19X19_EVK
 	bool "imx95_19x19_evk"
