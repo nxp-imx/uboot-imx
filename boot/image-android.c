@@ -767,13 +767,15 @@ int android_image_get_kernel(const void *hdr,
  *			of the image.
  * @vendor_hdr:	Pointer to vendor_boot image header, which is at the start
  *			of the image.
+ * @fdt_addr: Pointer to the kernel dtb.
  * @bootconfig: bootconfig flag
  * This function appends the kernel command line to the bootargs env variable.
  *
  * Return: Zero on success, otherwise on failure.
  */
 int android_image_get_kernel_v3(const struct boot_img_hdr_v3 *hdr,
-				const struct vendor_boot_img_hdr_v3 *vendor_hdr, bool bootconfig)
+				const struct vendor_boot_img_hdr_v3 *vendor_hdr,
+				void *fdt_addr, bool bootconfig)
 {
 	u32 len;
 	u32 kernel_addr = vendor_hdr->kernel_addr;
@@ -829,6 +831,21 @@ int android_image_get_kernel_v3(const struct boot_img_hdr_v3 *hdr,
 			}
 			else
 				strncat(commandline, (char *)hdr->cmdline, COMMANDLINE_LENGTH - strlen(commandline));
+		}
+
+		/* Get bootargs from kernel dtb and concatenate
+		 * it with runtime commandline
+		 */
+		offset = fdt_path_offset(fdt_addr, "/chosen");
+		if (offset < 0) {
+			printf("no /chosen node found in kernel fdt!\n");
+		} else {
+			bootargs = (char *)fdt_getprop(fdt_addr, offset,
+							"bootargs", NULL);
+			if (bootargs) {
+				strncat(commandline, " ", COMMANDLINE_LENGTH - strlen(commandline));
+				strncat(commandline, bootargs, COMMANDLINE_LENGTH - strlen(commandline));
+			}
 		}
 	}
 

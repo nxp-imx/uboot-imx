@@ -189,6 +189,11 @@
 /* Tuning bits */
 #define	MIX_CTRL_TUNING_MASK	0x03c00000
 
+#define CQCFG_CQUE BIT(0)
+
+#define CQCTL_HALT BIT(0)
+#define CQCTL_CLEAR BIT(8)
+
 /* strobe dll register */
 #define ESDHC_STROBE_DLL_CTRL		0x70
 #define ESDHC_STROBE_DLL_CTRL_ENABLE	BIT(0)
@@ -221,6 +226,7 @@
 #define	ESDHC_FLAG_HS400		BIT(9)
 #define	ESDHC_FLAG_ERR010450		BIT(10)
 #define	ESDHC_FLAG_HS400_ES		BIT(11)
+#define	ESDHC_FLAG_CQHCI		BIT(12)
 
 struct fsl_esdhc_cfg {
 	phys_addr_t esdhc_base;

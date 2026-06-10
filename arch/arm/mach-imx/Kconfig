@@ -277,7 +277,7 @@ config NXP_BOARD_REVISION
 
 config FLASH_MCUFIRMWARE_SUPPORT
 	bool "Enable mcu firmware flash support"
-	depends on ARCH_MX7ULP || ARCH_IMX8M || IMX95
+	depends on ARCH_MX7ULP || ARCH_IMX8M || IMX95 || IMX952
 	help
 	  This enables the mcu firmware flash support for some SOCs.
 

@@ -1263,6 +1263,8 @@ void build_info(void)
 
 int arch_misc_init(void)
 {
+	get_reset_reason(false, true);
+
 	build_info();
 	return 0;
 }

@@ -188,7 +188,7 @@ U_BOOT_CMD(
 #endif
 
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
-#if defined (CONFIG_IMX95) || defined(CONFIG_ARCH_IMX8M)
+#if defined (CONFIG_IMX95) || defined (CONFIG_IMX952) || defined(CONFIG_ARCH_IMX8M)
 static int do_bootmcu(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	int ret;
@@ -1191,9 +1191,10 @@ int do_boota(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]) {
 	/* Combine cmdline */
 	if (boot_header_version == 4) {
 		android_image_get_kernel_v3((struct boot_img_hdr_v3 *)hdr_v4,
-						(struct vendor_boot_img_hdr_v3 *)vendor_boot_hdr_v4, true);
+					    (struct vendor_boot_img_hdr_v3 *)vendor_boot_hdr_v4,
+					    (void *)(ulong)fdt_addr, true);
 	} else if (boot_header_version == 3) {
-		android_image_get_kernel_v3(hdr_v3, vendor_boot_hdr_v3, false);
+		android_image_get_kernel_v3(hdr_v3, vendor_boot_hdr_v3, (void *)(ulong)fdt_addr, false);
 	} else {
 		if (check_image_arm64) {
 			android_image_get_kernel(hdr, NULL, 0, NULL, NULL);

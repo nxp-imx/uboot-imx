@@ -1859,6 +1859,7 @@ struct vendor_boot_img_hdr_v3;
 int android_image_check_header_v3(uint8_t *boot_magic, uint8_t * vendor_boot_magic);
 int android_image_get_kernel_v3(const struct boot_img_hdr_v3 *hdr,
 				const struct vendor_boot_img_hdr_v3 *vendor_hdr,
+				void *fdt_addr,
 				bool bootconfig);
 int32_t add_bootconfig_trailer(uint64_t bootconfig_start_addr, uint32_t bootconfig_size);
 

@@ -467,7 +467,7 @@ void fastboot_process_flash(const char *cmdbuf, void *download_buffer,
 			process_flash_sf(cmdbuf, download_buffer,
 				download_bytes, response);
 			break;
-#if defined(CONFIG_ARCH_IMX8M) || defined(CONFIG_IMX95)
+#if defined(CONFIG_ARCH_IMX8M) || defined(CONFIG_IMX95) || defined(CONFIG_IMX952)
 		case DEV_MMC:
 #ifdef CONFIG_ARCH_IMX8M
 			if (is_tcm_image(download_buffer))

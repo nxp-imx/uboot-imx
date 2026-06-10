@@ -310,6 +310,12 @@ void init_wdog(void)
 	disable_wdog((void __iomem *)WDG5_BASE_ADDR);
 }
 
+#if IS_ENABLED(CONFIG_IMX93)
+#define OCRAM_NONSECURE_SIZE 0x60000UL /* iMX93 384KB */
+#else
+#define OCRAM_NONSECURE_SIZE 0x18000UL /* iMX91 96KB */
+#endif
+
 static struct mm_region imx93_mem_map[] = {
 	{
 		/* ROM */
@@ -330,7 +336,7 @@ static struct mm_region imx93_mem_map[] = {
 		/* OCRAM */
 		.virt = 0x20480000UL,
 		.phys = 0x20480000UL,
-		.size = 0xA0000UL,
+		.size = OCRAM_NONSECURE_SIZE,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
 			 PTE_BLOCK_OUTER_SHARE
 	}, {
