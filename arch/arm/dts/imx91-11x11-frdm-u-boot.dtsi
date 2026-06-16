@@ -6,6 +6,17 @@
 #include "imx91-u-boot.dtsi"
 
 / {
+	aliases {
+		usb_gadget0 = &usbg1;
+	};
+
+	usbg1: usbg1 {
+		compatible = "fsl,imx27-usb-gadget";
+		dr_mode = "peripheral";
+		chipidea,usb = <&usbotg1>;
+		status = "okay";
+	};
+
 	wdt-reboot {
 		compatible = "wdt-reboot";
 		wdt = <&wdog3>;
@@ -19,6 +30,10 @@
 			method = "smc";
 		};
 	};
+};
+
+&usbotg1 {
+	extcon = <&ptn5110>;
 };
 
 &s4muap {
