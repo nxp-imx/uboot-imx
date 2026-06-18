@@ -24,4 +24,8 @@
 
 #define WDOG_BASE_ADDR			WDG3_BASE_ADDR
 
+#ifdef CONFIG_ANDROID_SUPPORT
+#include "imx952_evk_android.h"
+#endif
+
 #endif
