@@ -46,7 +46,7 @@ static int do_v2x_status(struct cmd_tbl *cmdtp, int flag, int argc, char *const 
 static int do_ele_info(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	int ret;
-	u32 res = 0;
+	u32 res = 0, length;
 	struct ele_get_info_data *info;
 
 	/* ELE can't access full DDR */
@@ -78,6 +78,12 @@ static int do_ele_info(struct cmd_tbl *cmdtp, int flag, int argc, char *const ar
 	print_buffer(0, &info->oem_srkh, 4, 16, 0);
 
 	printf("\nSTATE: 0x%x\n", info->state);
+
+	length = (info->hdr >> 16) & 0xffff;
+	if (length == sizeof(struct ele_get_info_data)) {
+		printf("\nOEM PQC SRKH:\n");
+		print_buffer(0, &info->oem_pqc_srkh, 4, 16, 0);
+	}
 
 	return CMD_RET_SUCCESS;
 }
