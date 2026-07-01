@@ -241,9 +241,13 @@ void netc_init(void)
 		printf("SCMI_POWWER_STATE_SET Failed for NETC MIX\n");
 		return;
 	}
-
+#if IS_ENABLED(CONFIG_TARGET_IMX937_FRDM)
+	netc_phy_rst("i2c2_io@21_0", "ENET1_RST_B");
+	netc_phy_rst("i2c2_io@21_1", "ENET2_RST_B");
+#else
 	netc_phy_rst("i2c2_io@20_0", "ENET1_RST_B");
 	netc_phy_rst("i2c2_io@20_1", "ENET2_RST_B");
+#endif
 }
 
 void lvds_backlight_on(void)

@@ -266,6 +266,18 @@ config TARGET_IMX952_FRDM
 	select IMX_SM_LMM
 	select IMX_SM_CPU
 
+config TARGET_IMX937_FRDM
+	bool "imx937_frdm"
+	select IMX937
+	imply BOOTSTD_BOOTCOMMAND
+	imply BOOTSTD_FULL
+	select CMD_REMOTEPROC
+	select REMOTEPROC_IMX
+	select REGMAP
+	select SYSCON
+	select IMX_SM_LMM
+	select IMX_SM_CPU
+
 config TARGET_IMX943_EVK
 	bool "imx943_evk"
 	select IMX94
