@@ -1,0 +1,8 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2026 NXP
+ */
+
+#include "imx937-frdm.dts"
+#include "imx937-frdm-u-boot.dtsi"
+#include "imx952-frdm-waveshare-7inch-c-panel.dtsi"
