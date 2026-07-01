@@ -1,0 +1,106 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2026 NXP
+ */
+
+/ {
+	panel-lvds {
+		compatible = "boe,ev121wxm-n10-1850";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_lvds0>;
+		enable-gpios = <&gpio5 18 GPIO_ACTIVE_HIGH>;
+		backlight = <&lvds_backlight>;
+
+		display-timings {
+			native-mode = <&timing0>;
+
+			timing0: timing0 {
+				clock-frequency = <71000000>;
+				hactive = <1280>;
+				vactive = <800>;
+				hfront-porch = <48>;
+				hback-porch = <80>;
+				hsync-len = <32>;
+				vback-porch = <14>;
+				vfront-porch = <3>;
+				vsync-len = <6>;
+			};
+		};
+
+		port {
+			panel_lvds_in: endpoint {
+				remote-endpoint = <&lvds0_out>;
+			};
+		};
+	};
+
+	lvds_backlight: backlight {
+		compatible = "gpio-backlight";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_lvds_backlight>;
+		gpios = <&gpio2 23 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&display_pixel_link {
+	status = "okay";
+};
+
+&ldb {
+	assigned-clocks = <&scmi_clk IMX952_CLK_LDBPLL_VCO>,
+			  <&scmi_clk IMX952_CLK_LDBPLL>;
+	assigned-clock-rates = <2982000000>, <497000000>;
+	assigned-clock-parents = <0>, <&scmi_clk IMX952_CLK_LDBPLL_VCO>;
+	status = "okay";
+
+	channel@0 {
+		fsl,data-mapping = "spwg";
+		fsl,data-width = <24>;
+		status = "okay";
+
+		port@1 {
+			lvds0_out: endpoint {
+				remote-endpoint = <&panel_lvds_in>;
+			};
+		};
+	};
+
+	channel@1 {
+		status = "disabled";
+		/delete-node/ display-timings;
+	};
+};
+
+&ldb0_phy {
+	status = "okay";
+};
+
+&ldb1_phy {
+	status = "disabled";
+};
+
+&pixel_interleaver {
+	status = "okay";
+
+	channel@0 {
+		status = "okay";
+	};
+
+	channel@1 {
+		status = "disabled";
+	};
+};
+
+&scmi_iomuxc {
+	pinctrl_lvds0: lvds0_grp {
+		fsl,pins = <
+			IMX952_PAD_GPIO_IO38__GPIO_IO38         0x31e
+		>;
+	};
+
+	pinctrl_lvds_backlight: backlight_grp {
+		fsl,pins = <
+			IMX952_PAD_GPIO_IO23__WAKEUPMIX_TOP_GPIO2_IO_23	0x31e
+		>;
+	};
+};
