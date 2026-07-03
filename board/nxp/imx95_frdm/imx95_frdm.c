@@ -206,7 +206,7 @@ static void setup_typec(void)
 		/* Enable EXT PWR */
 		ret = get_board_version(rev, data);
 		if (ret == 0) {
-			if (rev[0] < 1) {
+			if (rev[0] < 2) {
 				ret = dm_gpio_lookup_name("GPIO5_9", &ext_pwr_desc);
 				if (ret) {
 					printf("%s lookup GPIO5_9 failed ret = %d\n",
@@ -524,7 +524,7 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 
 	ret = get_board_version(rev, data);
 	if (ret == 0) {
-		if (rev[0] < 1) {
+		if (rev[0] < 2) {
 			/* For RevA and RevB, potentially remove or modify nodes */
 			board_fix_fdt_version(blob);
 		}
