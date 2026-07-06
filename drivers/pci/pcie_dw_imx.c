@@ -357,6 +357,7 @@ static int pcie_link_up(struct pcie_dw_imx *priv, u32 cap_speed)
 
 static int imx_pcie_assert_core_reset(struct pcie_dw_imx *priv)
 {
+	int ret = 0;
 	struct pcie_chip_info *info = (struct pcie_chip_info *)(priv->info);
 
 	if (info->core_reset)
@@ -367,7 +368,10 @@ static int imx_pcie_assert_core_reset(struct pcie_dw_imx *priv)
 		mdelay(20);
 	}
 
-	return reset_assert(&priv->apps_reset);
+	if (info->flags & IMX_PCIE_FLAG_HAS_APP_RESET)
+		ret = reset_deassert(&priv->apps_reset);
+
+	return ret;
 }
 
 static int imx_pcie_clk_enable(struct pcie_dw_imx *priv)
@@ -491,6 +495,7 @@ static int pcie_dw_imx_probe(struct udevice *dev)
 	return 0;
 
 err_link:
+	imx_pcie_assert_core_reset(priv);
 	if (info->flags & IMX_PCIE_FLAG_HAS_PHYDRV)
 		generic_shutdown_phy(&priv->phy);
 err_phy_power:
@@ -499,8 +504,6 @@ err_phy_power:
 err_phy_init:
 	clk_release_bulk(&priv->clks);
 err_clk:
-	imx_pcie_deassert_core_reset(priv);
-
 	dm_gpio_free(dev, &priv->reset_gpio);
 
 	if (priv->vpcie)
@@ -513,6 +516,8 @@ static int pcie_dw_imx_remove(struct udevice *dev)
 {
 	struct pcie_dw_imx *priv = dev_get_priv(dev);
 	struct pcie_chip_info *info = (void *)dev_get_driver_data(dev);
+
+	imx_pcie_assert_core_reset(priv);
 
 	if (info->flags & IMX_PCIE_FLAG_HAS_PHYDRV)
 		generic_shutdown_phy(&priv->phy);
