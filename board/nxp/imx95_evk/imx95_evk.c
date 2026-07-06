@@ -432,6 +432,16 @@ void board_quiesce_devices(void)
 	int ret;
 	struct uclass *uc_dev;
 
+	ret = uclass_get(UCLASS_PCI, &uc_dev);
+	if (uc_dev)
+		ret = uclass_destroy(uc_dev);
+	if (ret)
+		printf("couldn't remove PCI devices\n");
+
+#if IS_ENABLED(CONFIG_TARGET_IMX95_19X19_EVK)
+	netc_regulator_enable("regulator-m2-pwr", false);
+#endif
+
 	ret = imx9_scmi_power_domain_enable(IMX95_PD_HSIO_TOP, false);
 	if (ret) {
 		printf("%s: Failed for HSIO MIX: %d\n", __func__, ret);
@@ -549,7 +559,7 @@ int board_fix_fdt(void *fdt)
 {
 	/* Remove nodes based on fuses. */
 	board_fix_fdt_fuse(fdt);
-	
+
 #if IS_ENABLED(CONFIG_TARGET_IMX95_15X15_EVK)
 	return board_fix_15x15_evk(fdt);
 #else

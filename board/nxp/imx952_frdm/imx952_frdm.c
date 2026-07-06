@@ -364,6 +364,12 @@ void board_quiesce_devices(void)
 	int ret;
 	struct uclass *uc_dev;
 
+	ret = uclass_get(UCLASS_PCI, &uc_dev);
+	if (uc_dev)
+		ret = uclass_destroy(uc_dev);
+	if (ret)
+		printf("couldn't remove PCI devices\n");
+
 	ret = imx9_scmi_power_domain_enable(PD_HSIO_TOP, false);
 	if (ret) {
 		printf("%s: Failed for HSIO MIX: %d\n", __func__, ret);

@@ -227,7 +227,7 @@ void netc_init(void)
 	netc_phy_rst("i2c6_io@21_13", "ENET1_RST_B");
 }
 
-static void pcie_setup(void)
+static void pcie_setup(bool enable)
 {
 	int ret;
 	struct udevice *dev;
@@ -238,7 +238,7 @@ static void pcie_setup(void)
 		return;
 	}
 
-	ret = regulator_set_enable_if_allowed(dev, true);
+	ret = regulator_set_enable_if_allowed(dev, enable);
 	if (ret) {
 		printf("Enable regulator-m2-pwr regulator %d\n", ret);
 		return;
@@ -266,7 +266,7 @@ int board_init(void)
 	setup_typec();
 #endif
 
-	pcie_setup();
+	pcie_setup(true);
 
 	netc_init();
 
@@ -388,6 +388,14 @@ void board_quiesce_devices(void)
 {
 	int ret;
 	struct uclass *uc_dev;
+
+	ret = uclass_get(UCLASS_PCI, &uc_dev);
+	if (uc_dev)
+		ret = uclass_destroy(uc_dev);
+	if (ret)
+		printf("couldn't remove PCI devices\n");
+
+	pcie_setup(false);
 
 	ret = imx9_scmi_power_domain_enable(PD_HSIO_TOP, false);
 	if (ret) {

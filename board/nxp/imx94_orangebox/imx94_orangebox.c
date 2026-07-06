@@ -137,7 +137,7 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 	return 0;
 }
 
-static void netc_regulator_enable(const char *devname)
+static void netc_regulator_enable(const char *devname, bool enable)
 {
 	int ret;
 	struct udevice *dev;
@@ -150,7 +150,8 @@ static void netc_regulator_enable(const char *devname)
 
 	ret = regulator_set_enable_if_allowed(dev, true);
 	if (ret) {
-		printf("Enable %s regulator %d\n", devname, ret);
+		printf("%s %s regulator %d\n",
+			enable ? "Enable": "Disable", devname, ret);
 		return;
 	}
 }
@@ -202,7 +203,7 @@ int board_init(void)
 
 	setup_usb3_typec();
 
-	netc_regulator_enable("regulator-m2-pwr");
+	netc_regulator_enable("regulator-m2-pwr", true);
 
 	netc_init();
 
@@ -262,6 +263,14 @@ void board_quiesce_devices(void)
 {
 	int ret;
 	struct uclass *uc_dev;
+
+	ret = uclass_get(UCLASS_PCI, &uc_dev);
+	if (uc_dev)
+		ret = uclass_destroy(uc_dev);
+	if (ret)
+		printf("couldn't remove PCI devices\n");
+
+	netc_regulator_enable("regulator-m2-pwr", false);
 
 	ret = imx9_scmi_power_domain_enable(IMX94_PD_HSIO_TOP, false);
 	if (ret) {
