@@ -1468,6 +1468,15 @@ int imx95_xpcs_phy_sgmii_1g_config(struct udevice *dev)
 	return 0;
 }
 
+int xpcs_phy_sgmii_1g_config(struct udevice *dev)
+{
+	if (is_imx95())
+		return imx95_xpcs_phy_sgmii_1g_config(dev);
+
+	dev_dbg(dev, "SGMII 1G config skipped\n");
+	return -ENODEV;
+}
+
 static bool xpcs_phy_link_is_up(struct udevice *dev)
 {
 	int stat1;
@@ -1514,7 +1523,12 @@ LINK_CHECK:
 			printf(" XPCS timeout\n");
 			if (!recfg && xpcs_phy_check_fault(dev)) {
 				printf("reconfig pcs\n");
-				xpcs_phy_usxgmii_pma_config(dev);
+				struct enetc_priv *priv = dev_get_priv(dev);
+
+				if (priv->uclass_id == PHY_INTERFACE_MODE_SGMII && is_imx95())
+					imx95_xpcs_phy_sgmii_1g_config(dev);
+				else
+					xpcs_phy_usxgmii_pma_config(dev);
 				recfg = true;
 
 				goto LINK_CHECK;
