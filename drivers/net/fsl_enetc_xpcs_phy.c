@@ -1756,8 +1756,14 @@ int imx952_xpcs_phy_sgmii_config(struct udevice *dev)
 
 int xpcs_phy_sgmii_1g_config(struct udevice *dev)
 {
+	struct enetc_priv *priv = dev_get_priv(dev);
+
 	if (is_imx95())
 		return imx95_xpcs_phy_sgmii_1g_config(dev);
+	else if (is_imx952()) {
+		priv->without_pcs_pma = true;
+		return imx952_xpcs_phy_sgmii_config(dev);
+	}
 
 	dev_dbg(dev, "SGMII 1G config skipped\n");
 	return -ENODEV;
@@ -1813,6 +1819,8 @@ LINK_CHECK:
 
 				if (priv->uclass_id == PHY_INTERFACE_MODE_SGMII && is_imx95())
 					imx95_xpcs_phy_sgmii_1g_config(dev);
+				else if (priv->uclass_id == PHY_INTERFACE_MODE_SGMII && is_imx952())
+					imx952_xpcs_phy_sgmii_config(dev);
 				else
 					xpcs_phy_usxgmii_pma_config(dev);
 				recfg = true;
