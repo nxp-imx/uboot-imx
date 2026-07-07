@@ -432,6 +432,7 @@ static ulong android_image_get_kernel_addr(struct andr_image_data *img_data,
 	return img_data->kernel_addr;
 }
 
+extern int board_phys_sdram_size(phys_size_t *size);
 /*
  * The parameters start with androidboot.* should be used
  * by android userspace, let's handle them here.
@@ -556,6 +557,16 @@ static int append_androidboot_args(char *args, uint32_t *len, void *fdt_addr)
 	if (bootargs_sec) {
 		strncat(args, " ", *len - strlen(args));
 		strncat(args, bootargs_sec, *len - strlen(args));
+	}
+#endif
+
+#ifdef CONFIG_IMX9
+	/* append total DDR size into bootconfig for android userspace */
+	phys_size_t ddr_bytes = 0;
+	if (board_phys_sdram_size(&ddr_bytes) == 0) {
+		u32 ddr_mb = (u32)(ddr_bytes >> 20);
+		sprintf(args_buf, " androidboot.ddr_size=%uMB", ddr_mb);
+		strncat(args, args_buf, *len - strlen(args));
 	}
 #endif
 
