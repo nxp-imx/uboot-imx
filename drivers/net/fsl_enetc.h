@@ -193,6 +193,7 @@ struct enetc_priv {
 	int uclass_id;
 	struct mii_dev imdio;
 	struct phy_device *phy;
+	bool without_pcs_pma;
 };
 
 struct enetc_data {

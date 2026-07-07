@@ -259,12 +259,18 @@ int xpcs_phy_write(struct udevice *dev, int devaddr, u32 reg, u16 val)
 
 int xpcs_phy_read_pma(struct udevice *dev, u32 reg)
 {
-	return xpcs_read(dev, MDIO_MMD_PMAPMD, XPCS_PHY_REG(reg));
+	struct enetc_priv *priv = dev_get_priv(dev);
+	int mdio_mmd = priv->without_pcs_pma ? MDIO_MMD_VEND2 : MDIO_MMD_PMAPMD;
+
+	return xpcs_read(dev, mdio_mmd, XPCS_PHY_REG(reg));
 }
 
 int xpcs_phy_write_pma(struct udevice *dev, int reg, u16 val)
 {
-	return xpcs_write(dev, MDIO_MMD_PMAPMD, XPCS_PHY_REG(reg), val);
+	struct enetc_priv *priv = dev_get_priv(dev);
+	int mdio_mmd = priv->without_pcs_pma ? MDIO_MMD_VEND2 : MDIO_MMD_PMAPMD;
+
+	return xpcs_write(dev, mdio_mmd, XPCS_PHY_REG(reg), val);
 }
 
 static int xpcs_phy_common_init_seq_1(struct udevice *dev)
@@ -1267,6 +1273,8 @@ static int xpcs_phy_common_init_seq_2(struct udevice *dev, bool an)
 {
 	ulong begin;
 	u16 val;
+	struct enetc_priv *priv = dev_get_priv(dev);
+	int mdio_mmd = priv->without_pcs_pma ? MDIO_MMD_VEND2 : MDIO_MMD_PCS;
 
 	val = xpcs_read(dev, MDIO_MMD_VEND2, XPCS_PHY_REG(MII_CTRL));
 	if (an)
@@ -1275,9 +1283,9 @@ static int xpcs_phy_common_init_seq_2(struct udevice *dev, bool an)
 		val &= ~MII_CTRL_AN_ENABLE;
 	xpcs_write(dev, MDIO_MMD_VEND2, XPCS_PHY_REG(MII_CTRL), val);
 
-	val = xpcs_read(dev, MDIO_MMD_PCS, XPCS_PHY_REG(PCS_DEBUG_CTRL));
+	val = xpcs_read(dev, mdio_mmd, XPCS_PHY_REG(PCS_DEBUG_CTRL));
 	val |= PCS_DEBUG_CTRL_TX_PMBL_CTL;
-	xpcs_write(dev, MDIO_MMD_PCS, XPCS_PHY_REG(PCS_DEBUG_CTRL), val);
+	xpcs_write(dev, mdio_mmd, XPCS_PHY_REG(PCS_DEBUG_CTRL), val);
 
 	val = xpcs_phy_read_pma(dev, PMA_MP_12G_16G_25G_TX_POWER_STATE_CTRL);
 	val = u16_replace_bits(val, 2, PMA_POWER_STATE_CTRL_TX0_PSTATE_MASK);
