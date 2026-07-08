@@ -9,8 +9,16 @@ obj-y += imx93_frdm.o
 ifdef CONFIG_XPL_BUILD
 obj-y += spl.o
 ifdef CONFIG_IMX9_DRAM_INLINE_ECC
+ifdef CONFIG_TARGET_IMX93W_FRDM
+obj-y += lpddr4x_ecc_2cs_3600_timing.o
+else
 obj-y += lpddr4x_ecc_1cs_2gb_timing.o lpddr4x_ecc_2cs_2gb_timing.o
+endif
+else
+ifdef CONFIG_TARGET_IMX93W_FRDM
+obj-y += lpddr4x_2cs_3600_timing.o
 else
 obj-y += lpddr4x_1cs_2gb_timing.o lpddr4x_2cs_2gb_timing.o
+endif
 endif
 endif

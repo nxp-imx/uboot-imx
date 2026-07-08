@@ -30,6 +30,7 @@ extern struct dram_timing_info dram_timing_1CS_2GB;
 extern struct dram_timing_info dram_timing_2CS_2GB;
 u32 lpddr4_mr_read(u32 mr_rank, u32 mr_addr);
 
+#ifdef CONFIG_TARGET_IMX93_11X11_FRDM
 static struct _drams {
 	u8 density;
 	struct dram_timing_info *pdram_timing;
@@ -38,6 +39,7 @@ static struct _drams {
 	{0x4, &dram_timing_2CS_2GB, "2CS_2GB DRAM" },
 	{0x6, &dram_timing_1CS_2GB, "1CS_2GB DRAM" },
 };
+#endif
 
 int spl_board_boot_device(enum boot_device boot_dev_spl)
 {
@@ -70,6 +72,7 @@ void spl_board_init(void)
 
 void spl_dram_init(void)
 {
+#ifdef CONFIG_TARGET_IMX93_11X11_FRDM
 	int i;
 	int ret;
 
@@ -101,6 +104,14 @@ void spl_dram_init(void)
 			udelay(10);
 		}
 	}
+#endif
+
+#ifdef CONFIG_TARGET_IMX93W_FRDM
+	struct dram_timing_info *ptiming = &dram_timing;
+
+	printf("DDR: %uMTS\n", ptiming->fsp_msg[0].drate);
+	ddr_init(ptiming);
+#endif
 }
 
 #if CONFIG_IS_ENABLED(DM_PMIC_PCA9450)

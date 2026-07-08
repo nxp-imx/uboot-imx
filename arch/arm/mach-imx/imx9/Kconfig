@@ -190,6 +190,18 @@ config TARGET_IMX93_11X11_FRDM
 	select REGMAP
 	select SYSCON
 
+config TARGET_IMX93W_FRDM
+	bool "imx93w_frdm"
+	select OF_BOARD_FIXUP
+	select IMX93
+	select IMX9_LPDDR4X
+	imply BOOTSTD_FULL
+	imply BOOTSTD_BOOTCOMMAND
+	select CMD_REMOTEPROC
+	select REMOTEPROC_IMX
+	select REGMAP
+	select SYSCON
+
 config TARGET_IMX93_VAR_SOM
 	bool "imx93_var_som"
 	select IMX93
