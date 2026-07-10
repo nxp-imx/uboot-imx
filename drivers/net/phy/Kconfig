@@ -304,6 +304,12 @@ config PHY_MSCC
 	depends on !COMPILE_TEST
 	bool "Microsemi Corp Ethernet PHYs support"
 
+config PHY_MXL_GPY
+	bool "MaxLinear GPY215C PHY support"
+	help
+	  This adds support for the MaxLinear GPY215C Ethernet PHY,
+	  operating in SGMII with auto-negotiation.
+
 config PHY_NATSEMI
 	bool "National Semiconductor Ethernet PHYs support"
 
