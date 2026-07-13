@@ -24,6 +24,9 @@
 #include <dm/uclass-internal.h>
 #include <asm/arch/crrm.h>
 #include "../arch/arm/dts/imx952-power.h"
+#if IS_ENABLED(CONFIG_IMX952_ENETC_SGMII)
+#include <scmi_nxp_protocols.h>
+#endif
 
 #define PD_HSIO_TOP IMX952_PD_HSIO_TOP
 #define PD_NETC IMX952_PD_NETC
@@ -207,6 +210,82 @@ static bool is_netc_cfg(void)
 	return false;
 }
 
+#if IS_ENABLED(CONFIG_IMX952_ENETC_SGMII)
+#define IMX952_COMBO_PHY_MODE_SGMII	3
+
+static int configure_si5332(void)
+{
+	struct udevice *bus, *dev;
+	int ret;
+
+	ret = uclass_get_device_by_name(UCLASS_I2C, "i2c@422f0000", &bus);
+	if (ret) {
+		printf("%s: failed to get SI5332 I2C bus, ret %d\n", __func__, ret);
+		return ret;
+	}
+
+	ret = i2c_get_chip(bus, 0x6a, 1, &dev);
+	if (ret) {
+		printf("%s: failed to find SI5332 at addr 0x6a, ret %d\n", __func__, ret);
+		return ret;
+	}
+
+	ret = dm_i2c_reg_write(dev, 0x42, 0x0a);
+	if (ret) {
+		printf("%s: failed to write SI5332 reg 0x42, ret %d\n", __func__, ret);
+		return ret;
+	}
+
+	return 0;
+}
+
+static int do_comphy_mode(u32 mode)
+{
+	struct udevice *dev;
+	int ret;
+
+	ret = uclass_get_device_by_name(UCLASS_CLK, "protocol@14", &dev);
+	if (ret)
+		return ret;
+
+	ret = imx9_scmi_power_domain_enable(PD_HSIO_TOP, false);
+	if (ret) {
+		printf("Poweroff HSIO failed\n");
+		return -EIO;
+	}
+
+	set_combo_phy_mode(dev, mode);
+
+	ret = imx9_scmi_power_domain_enable(PD_HSIO_TOP, true);
+	if (ret) {
+		printf("Poweron HSIO failed\n");
+		return -EIO;
+	}
+
+	return 0;
+}
+
+static int enetc_sgmii_phy_en(void)
+{
+	struct udevice *dev;
+	int ret;
+
+	ret = regulator_get_by_devname("regulator-si5332-en", &dev);
+	if (ret) {
+		printf("Get regulator-si5332-en failed %d\n", ret);
+		return ret;
+	}
+
+	ret = regulator_set_enable_if_allowed(dev, true);
+	if (ret) {
+		printf("Enable regulator-si5332-en %d\n", ret);
+		return ret;
+	}
+
+	return 0;
+}
+#endif
+
 void netc_init(void)
 {
 	int ret;
@@ -264,6 +343,12 @@ int board_init(void)
 
 #if defined(CONFIG_USB_TCPC)
 	setup_typec();
+#endif
+
+#if IS_ENABLED(CONFIG_IMX952_ENETC_SGMII)
+	configure_si5332();
+	do_comphy_mode(IMX952_COMBO_PHY_MODE_SGMII);
+	enetc_sgmii_phy_en();
 #endif
 
 	pcie_setup(true);

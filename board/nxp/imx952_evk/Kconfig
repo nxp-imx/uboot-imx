@@ -9,4 +9,8 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
 	default "imx952_evk"
 
+config IMX952_ENETC_SGMII
+	bool "Enable ENETC SGMII 1G mode support"
+	default n
+
 endif

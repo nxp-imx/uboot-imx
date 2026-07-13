@@ -6,6 +6,7 @@
 #ifndef __ARCH_IMX9_SYS_PROTO_H
 #define __ARCH_IMX9_SYS_PROTO_H
 
+#include <dm/device.h>
 #include <asm/mach-imx/sys_proto.h>
 
 enum imx9_soc_voltage_mode {
@@ -28,6 +29,10 @@ int power_on_hsio(void);
 int power_on_m7(char *name);
 
 int disable_smmuv3(void);
+
+#if IS_ENABLED(CONFIG_IMX952)
+int set_combo_phy_mode(struct udevice *dev, u32 mode);
+#endif
 
 #define is_voltage_mode(mode) (soc_target_voltage_mode() == (mode))
 
