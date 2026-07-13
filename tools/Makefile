@@ -77,7 +77,7 @@ FIT_SIG_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := image-sig-host.o generated/boot/image-
 FIT_CIPHER_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := generated/boot/image-cipher.o
 
 HOSTCFLAGS_image-host.o += \
-	$(shell pkg-config --cflags libssl libcrypto 2> /dev/null || echo "")
+	$(shell $(HOSTPKG_CONFIG) --cflags libssl libcrypto 2> /dev/null || echo "")
 
 # The following files are synced with upstream DTC.
 # Use synced versions from scripts/dtc/libfdt/.
@@ -88,11 +88,11 @@ RSA_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := $(addprefix generated/lib/rsa/, \
 					rsa-sign.o rsa-verify.o \
 					rsa-mod-exp.o)
 HOSTCFLAGS_generated/lib/rsa/rsa-sign.o += \
-	$(shell pkg-config --cflags libssl libcrypto 2> /dev/null || echo "")
+	$(shell $(HOSTPKG_CONFIG) --cflags libssl libcrypto 2> /dev/null || echo "")
 
 ECDSA_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := $(addprefix generated/lib/ecdsa/, ecdsa-libcrypto.o)
 HOSTCFLAGS_generated/lib/ecdsa/ecdsa-libcrypto.o += \
-	$(shell pkg-config --cflags libssl libcrypto 2> /dev/null || echo "")
+	$(shell $(HOSTPKG_CONFIG) --cflags libssl libcrypto 2> /dev/null || echo "")
 
 AES_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := $(addprefix generated/lib/aes/, \
 					aes-encrypt.o aes-decrypt.o)
@@ -171,7 +171,7 @@ fdt_add_pubkey-objs   := $(dumpimage-mkimage-objs) fdt_add_pubkey.o
 file2include-objs := file2include.o
 preload_check_sign-objs := $(dumpimage-mkimage-objs) $(PRELOAD_OBJS-y) preload_check_sign.o
 HOSTCFLAGS_preload_check_sign.o += \
-	$(shell pkg-config --cflags libssl libcrypto 2> /dev/null || echo "")
+	$(shell $(HOSTPKG_CONFIG) --cflags libssl libcrypto 2> /dev/null || echo "")
 
 ifneq ($(CONFIG_MX23)$(CONFIG_MX28)$(CONFIG_TOOLS_LIBCRYPTO),)
 # Add CFG_MXS into host CFLAGS, so we can check whether or not register
@@ -190,9 +190,9 @@ endif
 # MXSImage needs LibSSL
 ifneq ($(CONFIG_MX23)$(CONFIG_MX28)$(CONFIG_ARMADA_38X)$(CONFIG_TOOLS_LIBCRYPTO),)
 HOSTCFLAGS_kwbimage.o += \
-	$(shell pkg-config --cflags libssl libcrypto 2> /dev/null || echo "")
+	$(shell $(HOSTPKG_CONFIG) --cflags libssl libcrypto 2> /dev/null || echo "")
 HOSTLDLIBS_mkimage += \
-	$(shell pkg-config --libs libssl libcrypto 2> /dev/null || echo "-lssl -lcrypto")
+	$(shell $(HOSTPKG_CONFIG) --libs libssl libcrypto 2> /dev/null || echo "-lssl -lcrypto")
 
 # OS X deprecate openssl in favour of CommonCrypto, supress deprecation
 # warnings on those systems
@@ -211,7 +211,7 @@ HOSTLDLIBS_fit_check_sign := $(HOSTLDLIBS_mkimage)
 HOSTLDLIBS_fdt_add_pubkey := $(HOSTLDLIBS_mkimage)
 HOSTLDLIBS_preload_check_sign := $(HOSTLDLIBS_mkimage)
 HOSTLDLIBS_preload_check_sign += \
-	$(shell pkg-config --libs libssl libcrypto 2> /dev/null || echo "-lssl -lcrypto")
+	$(shell $(HOSTPKG_CONFIG) --libs libssl libcrypto 2> /dev/null || echo "-lssl -lcrypto")
 
 hostprogs-always-$(CONFIG_EXYNOS5250) += mkexynosspl
 hostprogs-always-$(CONFIG_EXYNOS5420) += mkexynosspl
@@ -220,7 +220,7 @@ HOSTCFLAGS_mkexynosspl.o := -pedantic
 HOSTCFLAGS_kwboot.o += -pthread
 HOSTLDLIBS_kwboot += -pthread
 HOSTLDLIBS_kwboot += \
-	$(shell pkg-config --libs tinfo 2> /dev/null || echo "-ltinfo")
+	$(shell $(HOSTPKG_CONFIG) --libs tinfo 2> /dev/null || echo "-ltinfo")
 
 ifdtool-objs := $(LIBFDT_OBJS) ifdtool.o
 hostprogs-always-$(CONFIG_X86) += ifdtool
@@ -263,9 +263,9 @@ hostprogs-always-$(CONFIG_ASN1_COMPILER)	+= asn1_compiler
 HOSTCFLAGS_asn1_compiler.o = -idirafter $(srctree)/include
 
 HOSTCFLAGS_mkeficapsule.o += \
-	$(shell pkg-config --cflags gnutls 2> /dev/null || echo "")
+	$(shell $(HOSTPKG_CONFIG) --cflags gnutls 2> /dev/null || echo "")
 HOSTLDLIBS_mkeficapsule += \
-	$(shell pkg-config --libs gnutls 2> /dev/null || echo "-lgnutls")
+	$(shell $(HOSTPKG_CONFIG) --libs gnutls 2> /dev/null || echo "-lgnutls")
 mkeficapsule-objs := generated/lib/uuid.o \
 	generated/lib/sha1.o \
 	$(LIBFDT_OBJS) \
