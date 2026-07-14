@@ -112,7 +112,7 @@
 	"console=ttyS0,115200\0"		\
 	"boot_os=y\0"				\
 	BOOTENV					\
-	"boot_scripts=ls1043ardb_boot.scr\0"	\
+	"boot_scripts=boot.scr\0"	\
 	"boot_script_hdr=hdr_ls1043ardb_bs.out\0"	\
 	"scan_dev_for_boot_part="		\
 		"part list ${devtype} ${devnum} devplist; "	\

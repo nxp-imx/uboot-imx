@@ -78,7 +78,7 @@
 	"boot_script_hdr=hdr_ls1046aqds_bs.out\0"
 #else
 #define LS1046A_BOOT_SRC_AND_HDR\
-	"boot_scripts=ls1046ardb_boot.scr\0"	\
+	"boot_scripts=boot.scr\0"	\
 	"boot_script_hdr=hdr_ls1046ardb_bs.out\0"
 #endif
 #ifndef SPL_NO_MISC
