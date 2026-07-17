@@ -2065,18 +2065,6 @@ int imx9_probe_mu(void)
 	if (ret)
 		return ret;
 
-	ret = uclass_get_device_by_name(UCLASS_CLK, "protocol@14", &dev);
-	if (ret)
-		return ret;
-
-	ret = devm_scmi_of_get_channel(dev);
-	if (ret)
-		return ret;
-
-	ret = uclass_get_device_by_name(UCLASS_PINCTRL, "protocol@19", &dev);
-	if (ret)
-		return ret;
-
 #if defined(CONFIG_XPL_BUILD)
 	ret = uclass_get_device_by_name(UCLASS_MISC, "mailbox@47530000", &dev);
 #else
