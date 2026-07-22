@@ -301,7 +301,9 @@
 	clock-frequency = <400000>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_lpi2c3>;
+#ifndef CONFIG_IMX_DISABLE_ANDROID_CAR_M7_I2C
 	status = "okay";
+#endif
 
 	i2c3_gpio_expander_20: gpio@20 {
 		compatible = "nxp,pcal6408";

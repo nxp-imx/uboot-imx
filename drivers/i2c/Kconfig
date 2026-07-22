@@ -281,6 +281,14 @@ config SYS_I2C_IMX_LPI2C
 	depends on MACH_IMX
 	help
 	  Add support for the NXP i.MX LPI2C driver.
+CONFIG_IMX_DISABLE_ANDROID_CAR_M7_I2C=y
+
+config IMX_DISABLE_ANDROID_CAR_M7_I2C
+	bool "In Android image disable I2C's controled by M7 fw."
+	depends on SYS_I2C_IMX_LPI2C
+	help
+	 Leaving I2C control to Android Auto's M7 fw is
+	 required for M7 reverse camera to work.
 
 config SYS_I2C_LPC32XX
 	bool "LPC32XX I2C driver"
