@@ -612,6 +612,7 @@ static void nxp_xspi_select_mem(struct nxp_xspi *xspi,
 			struct spi_slave *slave, const struct spi_mem_op *op)
 {
 	unsigned long rate = slave->max_hz;
+	unsigned long root_clk_rate;
 
 	if (xspi->selected == spi_chip_select(slave->dev) &&
 		xspi->dtr == op->cmd.dtr)
@@ -619,21 +620,36 @@ static void nxp_xspi_select_mem(struct nxp_xspi *xspi,
 
 	if (!op->cmd.dtr) {
 		nxp_xspi_disable_ddr(xspi);
-		rate = min(xspi->support_max_rate, rate);
 		xspi->dtr = false;
 	} else {
 		nxp_xspi_enable_ddr(xspi);
-		rate = min(xspi->support_max_rate, rate);
-		rate *= 2;
 		xspi->dtr = true;
 	}
+
+	rate = min(xspi->support_max_rate, rate);
+
+	/*
+	 * There is two dividers between xspi_clk_root(from SoC CCM) and xspi_sfif.
+	 * xspi_clk_root ---->divider1 ----> ipg_clk_2xsfif
+	 *								|
+	 *								|
+	 *								|---> divider2 ---> ipg_clk_sfif
+	 * divider1 is controlled by SOCCR, SOCCR default value is 0.
+	 * divider2 fix to divide 2.
+	 * when SOCCR = 0:
+	 *		  ipg_clk_2xsfif = xspi_clk_root
+	 *		  ipg_clk_sfif = ipg_clk_2xsfif / 2 = xspi_clk_root / 2
+	 * ipg_clk_2xsfif is used for DTR mode.
+	 * xspi_sck(output to device) is defined based on xspi_sfif clock.
+	 */
+	root_clk_rate = rate * 2;
 
 #if CONFIG_IS_ENABLED(CLK)
 	int ret;
 
 	nxp_xspi_clk_disable_unprep(xspi);
 
-	ret = clk_set_rate(&xspi->clk, rate);
+	ret = clk_set_rate(&xspi->clk, root_clk_rate);
 	if (ret < 0)
 		return;
 
