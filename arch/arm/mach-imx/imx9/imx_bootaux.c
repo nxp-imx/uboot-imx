@@ -164,7 +164,7 @@ static int authenticate_auxcore_container(u32 core_id, ulong addr, ulong *entry)
 	}
 
 	phdr = (struct container_hdr *)addr;
-	if (phdr->tag != 0x87 || phdr->version != 0x0) {
+	if (!valid_container_hdr(phdr)) {
 		printf("Error: Wrong container header\n");
 		return -EFAULT;
 	}
@@ -193,8 +193,8 @@ static int authenticate_auxcore_container(u32 core_id, ulong addr, ulong *entry)
 					    i * sizeof(struct boot_img_t));
 
 		/* Check Core ID of M core */
-		if ((img->hab_flags & 0xf0) != 0x10) {
-			printf("Error: Wrong Image core ID, flags = 0x%x\n", img->hab_flags);
+		if ((img->meta & 0xff) != core_id) {
+			printf("Error: Wrong Image core ID, meta = 0x%x\n", img->meta);
 			ret = -EFAULT;
 			break;
 		}
@@ -209,6 +209,14 @@ static int authenticate_auxcore_container(u32 core_id, ulong addr, ulong *entry)
 				break;
 			}
 		} else {
+			if (!check_in_ddr(img->dst) &&
+			    !check_in_tcm(core_id, img->dst, false)) {
+				printf("Error: Invalid Image[%u] load address 0x%llx\n",
+				       i, img->dst);
+				ret = -EFAULT;
+				break;
+			}
+
 			memcpy((void *)img->dst, (const void *)(img->offset + addr), img->size);
 
 			s = img->dst & ~(CONFIG_SYS_CACHELINE_SIZE - 1);
@@ -272,6 +280,12 @@ static int do_bootaux_cntr(struct cmd_tbl *cmdtp, int flag, int argc,
 	ret = authenticate_auxcore_container(core, addr, &entry);
 	if (ret) {
 		printf("Authenticate container failed %d\n", ret);
+		return CMD_RET_FAILURE;
+	}
+
+	if (!check_in_ddr(entry) && !check_in_tcm(core, entry, true) &&
+	    !check_in_flexspi(entry)) {
+		printf("Error: Image's entry 0x%lx is invalid\n", entry);
 		return CMD_RET_FAILURE;
 	}
 
@@ -378,6 +392,11 @@ U_BOOT_CMD(
 	"<address> [<core>]\n"
 	"   - start auxiliary core [<core>] (default 0),\n"
 	"     at address <address>\n"
+	"     <core>:\n"
+	"         0 - CM33\n"
+	"         1 - CM70\n"
+	"         7 - CM71\n"
+	"         8 - CM33 Sync\n"
 );
 
 static int do_prepaux(struct cmd_tbl *cmdtp, int flag, int argc,
@@ -403,6 +422,11 @@ U_BOOT_CMD(
 	"prepare auxiliary core",
 	"[<core>]\n"
 	"   - prep auxiliary core [<core>] (default 0),\n"
+	"     <core>:\n"
+	"         0 - CM33\n"
+	"         1 - CM70\n"
+	"         7 - CM71\n"
+	"         8 - CM33 Sync\n"
 );
 
 #if IS_ENABLED(CONFIG_AHAB_BOOT)
@@ -412,6 +436,11 @@ U_BOOT_CMD(
 	"<container_address> [<core>]\n"
 	"   - start auxiliary core [<core>] (default 0),\n"
 	"     with signed container image at address <address> in A core view\n"
+	"     <core>:\n"
+	"         0 - CM33\n"
+	"         1 - CM70\n"
+	"         7 - CM71\n"
+	"         8 - CM33 Sync\n"
 );
 #else
 U_BOOT_CMD(
@@ -420,5 +449,10 @@ U_BOOT_CMD(
 	"<address> [<core>]\n"
 	"   - start auxiliary core [<core>] (default 0),\n"
 	"     at address <address> of auxiliary core view\n"
+	"     <core>:\n"
+	"         0 - CM33\n"
+	"         1 - CM70\n"
+	"         7 - CM71\n"
+	"         8 - CM33 Sync\n"
 );
 #endif
