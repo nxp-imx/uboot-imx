@@ -324,6 +324,44 @@ static void pcie_setup(bool enable)
 	}
 }
 
+static bool board_is_sgmii(void)
+{
+	const char *sgmii_dtb = "imx952-evk-sgmii.dtb";
+	const char *fdtfile;
+
+	fdtfile = env_get("fdtfile");
+	if (!fdtfile)
+		return false;
+
+	/* fdtfile may or may not be wrapped in double quotes */
+	if (*fdtfile == '"')
+		fdtfile++;
+
+	return !strncmp(fdtfile, sgmii_dtb, strlen(sgmii_dtb));
+}
+
+static void pcie_perst_deassert(void)
+{
+	struct gpio_desc desc;
+	int ret;
+
+	ret = dm_gpio_lookup_name("i2c7_io@22_5", &desc);
+	if (ret) {
+		printf("%s lookup i2c7_io@22_5 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "pcie_perst");
+	if (ret) {
+		printf("%s request pcie_perst failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	/* pin is active-low, value 0 -> deasserted (inactive) */
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_ACTIVE_LOW);
+	dm_gpio_set_value(&desc, 0);
+}
+
 void lvds_backlight_on(void)
 {
 	/* None */
@@ -481,6 +519,11 @@ void board_quiesce_devices(void)
 		printf("couldn't remove PCI devices\n");
 
 	pcie_setup(false);
+
+	if (board_is_sgmii()) {
+		printf("Deasserting M.2 PERST# for SGMII mode, keep PHY non-reset\n");
+		pcie_perst_deassert();
+	}
 
 	ret = imx9_scmi_power_domain_enable(PD_HSIO_TOP, false);
 	if (ret) {
