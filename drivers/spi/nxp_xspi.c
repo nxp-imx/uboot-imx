@@ -127,7 +127,7 @@ static void nxp_xspi_dll_bypass(struct nxp_xspi *x)
 	xspi_writel_offset(x, 0, reg, DLLCRA);
 
 	reg = XSPI_DLLCRA_FREQEN_MASK | XSPI_DLLCRA_SLV_EN_MASK |
-		XSPI_DLLCRA_SLV_DLL_BYPASS_MASK | XSPI_DLLCRA_SLV_DLY_COARSE(7);
+		XSPI_DLLCRA_SLV_DLL_BYPASS_MASK | XSPI_DLLCRA_SLV_DLY_COARSE(0);
 	xspi_writel_offset(x, 0, reg, DLLCRA);
 
 	reg |= XSPI_DLLCRA_SLV_UPD_MASK;
@@ -186,7 +186,8 @@ static void nxp_xspi_disable_ddr(struct nxp_xspi *x)
 	reg &= ~XSPI_FLSHCR_TDH_MASK;
 	xspi_writel_offset(x, 0, reg, FLSHCR);
 
-	xspi_writel_offset(x, 0, XSPI_SMPR_DLLFSMPFA(7), SMPR);
+	/* Select sampling at inverted clock */
+	xspi_writel_offset(x, 0, XSPI_SMPR_DLLFSMPFA(0) | XSPI_SMPR_FSPHS_MASK, SMPR);
 
 	reg = xspi_readl_offset(x, 0, MCR);
 	reg &= ~XSPI_MCR_MDIS_MASK;
