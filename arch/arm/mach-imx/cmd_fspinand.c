@@ -287,7 +287,24 @@ static void fspinand_prep_dft_config(struct fspi_nand *f)
 		FSPI_LUT_SEQ(READ_SDR, FSPI_1PAD, 0x01, STOP, FSPI_1PAD, 0x00);
 };
 
-static void fspinand_prep_micron_mem_config(struct fspi_nand *f)
+/*
+ * Default memory configuration for SPI NAND.
+ *
+ * The key purpose is to enable on-die ECC by setting the ECC_EN bit in the
+ * device status/configuration register via two SET FEATURE commands run by
+ * the FlexSPI ROM before any read or program operation:
+ *
+ *   configCmd[0]: SET FEATURE 0xA0 = 0x00  -- clear all block-lock bits
+ *   configCmd[1]: SET FEATURE 0xB0 = 0x10  -- set ECC_EN (bit 4)
+ *
+ * Most SPI NAND vendors follow the same JEDEC SET FEATURE opcode (0x1F) and
+ * use the same register layout, so this config works for the majority of
+ * devices.  If your chip uses a different register address, a different bit
+ * position for ECC_EN, or requires additional initialization steps, this
+ * default config will not be compatible -- use a customized header image
+ * instead (see FSPI_NAND_HDR_SLOTS layout).
+ */
+static void fspinand_prep_dft_mem_config(struct fspi_nand *f)
 {
 	struct fspi_nand_config *config = &f->fcb.config;
 
@@ -621,10 +638,64 @@ static int fspinand_prog_firmware(struct fspi_nand *f, void *firmware)
 	return CMD_RET_SUCCESS;
 }
 
+/*
+ * Image-with-header memory layout
+ * --------------------------------
+ * When a boot image is packaged with a fspi_nand_config header the file
+ * reserves space for 4 header slots before the actual firmware binary.
+ * Only slot 0 carries the active config; slots 1-3 are reserved/padding.
+ *
+ *   offset 0x000 (   0 B): fspi_nand_config slot 0 -- active FCFB config (512 B)
+ *   offset 0x200 ( 512 B): fspi_nand_config slot 1 -- reserved (512 B)
+ *   offset 0x400 (1024 B): fspi_nand_config slot 2 -- reserved (512 B)
+ *   offset 0x600 (1536 B): fspi_nand_config slot 3 -- reserved (512 B)
+ *   offset 0x800 (2048 B): firmware (boot image)
+ *
+ * Total header area = FSPI_NAND_HDR_SLOTS * sizeof(struct fspi_nand_config)
+ *                   = 4 * 512 = 2048 bytes
+ */
+#define FSPI_NAND_HDR_SLOTS		4
+#define FSPI_NAND_HDR_AREA_SIZE		(FSPI_NAND_HDR_SLOTS * sizeof(struct fspi_nand_config))
+
+/*
+ * fspinand_image_has_config - check if the image at addr starts with a
+ * fspi_nand_config header by looking for the FCFB tag at offset 0.
+ *
+ * Returns 0 when the tag is found (condition 2), 1 when not found
+ * (condition 1, plain boot image), or negative on mapping error.
+ */
+static int fspinand_image_has_config(unsigned long addr, int verbose)
+{
+	u32 *tag;
+	int ret;
+
+	tag = map_physmem(addr, sizeof(u32), MAP_WRBACK);
+	if (!tag) {
+		printf("Failed to map physical memory\n");
+		return -1;
+	}
+
+	if (*tag == FSPI_CFG_BLK_TAG) {
+		if (verbose)
+			printf("Found fspi_nand_config header in image\n");
+		ret = 0;
+	} else {
+		if (verbose)
+			printf("No fspi_nand_config header in image\n");
+		ret = 1;
+	}
+
+	unmap_physmem(tag, sizeof(u32));
+	return ret;
+}
+
 static int do_fspinand_init(int argc, char *const argv[])
 {
 	struct fspi_nand fspinand;
 	struct fspi_nand *f = &fspinand;
+	unsigned long addr;
+	u32 firmware_size;
+	void *img;
 
 	if (argc < 5)
 		return CMD_RET_USAGE;
@@ -638,13 +709,47 @@ static int do_fspinand_init(int argc, char *const argv[])
 		return CMD_RET_FAILURE;
 	}
 
-	fspinand_prep_dft_config(f);
-	fspinand_prep_micron_mem_config(f);
-	fspinand_prep_fcb(f, simple_strtoul(argv[4], NULL, 16));
+	addr = simple_strtoul(argv[3], NULL, 16);
+	firmware_size = simple_strtoul(argv[4], NULL, 16);
+
+	if (fspinand_image_has_config(addr, 1) == 0) {
+		/*
+		 * Condition 1: image starts with a fspi_nand_config header.
+		 * Extract the config, copy it into the FCB, then point the
+		 * firmware pointer past the header.  The real boot image
+		 * follows immediately after FSPI_NAND_HDR_AREA.
+		 */
+		img = map_physmem(addr, sizeof(struct fspi_nand_config),
+				  MAP_WRBACK);
+		if (!img) {
+			printf("fspinand init fail: cannot map image\n");
+			return CMD_RET_FAILURE;
+		}
+		memcpy(&f->fcb.config, img, sizeof(struct fspi_nand_config));
+		unmap_physmem(img, sizeof(struct fspi_nand_config));
+
+		/*
+		 * Firmware data starts after the full header area (4 slots).
+		 * See FSPI_NAND_HDR_AREA_SIZE layout comment above.
+		 */
+		addr += FSPI_NAND_HDR_AREA_SIZE;
+		firmware_size -= FSPI_NAND_HDR_AREA_SIZE;
+
+		fspinand_prep_fcb(f, firmware_size);
+	} else {
+		/*
+		 * Condition 2: plain boot image with no config header.
+		 * Generate the default config, mem config and FCB as before.
+		 */
+		fspinand_prep_dft_config(f);
+		fspinand_prep_dft_mem_config(f);
+		fspinand_prep_fcb(f, firmware_size);
+	}
+
 	fspinand_prep_dbbt(f);
 	fspinand_prog_fcb(f);
 	fspinand_prog_dbbt(f);
-	fspinand_prog_firmware(f, (void *)simple_strtoul(argv[3], NULL, 16));
+	fspinand_prog_firmware(f, (void *)addr);
 
 	printf("fspinand init succeed\n");
 
@@ -690,6 +795,12 @@ static int do_fspinand(struct cmd_tbl *cmdtp, int flag, int argc, char * const a
 
 	cmd = argv[1];
 
+	if (strcmp(cmd, "check") == 0) {
+		if (argc < 3)
+			goto usage;
+		return fspinand_image_has_config(simple_strtoul(argv[2], NULL, 16), 1);
+	}
+
 	if (strcmp(cmd, "init") == 0) {
 		if (argc < 5)
 			goto usage;
@@ -708,7 +819,12 @@ usage:
 }
 
 static char fspinand_help_text[] =
-	"init name addr len - burn data to FSPI NAND with FCB/DBBT\n"
+	"check addr - check if image at memory addr has a fspi_nand_config header\n"
+	"		0 - config header found, 1 - plain boot image\n"
+	"fspinand init name addr len - burn data to FSPI NAND with FCB/DBBT\n"
+	"		if image starts with fspi_nand_config header (FCFB tag), it\n"
+	"		is extracted and used; the boot image follows the header.\n"
+	"		if no header, default config is generated (original behavior)\n"
 	"fspinand mark_bad name addr - mark the addr located block as bad\n";
 
 U_BOOT_CMD(fspinand, 5, 1, do_fspinand,
