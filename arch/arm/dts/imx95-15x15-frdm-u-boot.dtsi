@@ -4,11 +4,6 @@
  */
 
 / {
-	aliases {
-		pci0 = &pcie_4ca00000;
-		pci1 = &pcie_4cb00000;
-	};
-
 	chosen {
 		bootargs = "console=ttyLP0,115200 earlycon";
 	};
