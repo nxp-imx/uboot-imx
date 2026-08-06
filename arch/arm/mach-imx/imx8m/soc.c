@@ -1700,6 +1700,21 @@ usb_modify_speed:
 	}
 
 #if defined(CONFIG_ANDROID_SUPPORT) || defined(CONFIG_ANDROID_AUTO_SUPPORT)
+#if CONFIG_IS_ENABLED(VIDEO)
+        /* Seamless boot: reserve the U-Boot fb in the kernel DTB so it is
+        * not reused, avoiding a hand-edit of the kernel dts each time.
+        */
+        if (env_get_yesno("video_retain") == 1) {
+                int ret = fdt_add_fb_mem_rsv(blob);
+
+                if (ret)
+                        printf("Unable to reserve video fb mem, err=%s\n",
+                                fdt_strerror(ret));
+                else
+                        printf("Reserved video fb [%lx-%lx] in kernel DTB\n",
+                                gd->video_bottom, gd->video_top);
+        }
+#endif
 	return 0;
 #else
 	return ft_add_optee_node(blob, bd);
