@@ -30,7 +30,6 @@ int ft_add_optee_overlay(void *fdt, struct bd_info *bd)
 			ret = fdt_overlay_apply_verbose(fdt, (void *)(rom_pointer[2] + SZ_1M));
 			if (ret == 0) {
 				debug("Overlay applied with success");
-				fdt_pack(fdt);
 			}
 		} else {
 			printf("DTB overlay not present, exiting without applying\n");
