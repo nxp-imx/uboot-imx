@@ -425,7 +425,12 @@ int board_init(void)
 
 	netc_init();
 
+	/* For i.MX95-LP4-FRDM */
 	power_on_m7("mx95evkrpmsg");
+
+	/* For i.MX95-LP5-FRDM */
+	power_on_m7("mx95frdmrpmsg");
+
 #ifdef CONFIG_TARGET_IMX95_15X15_FRDM
 	lvds_backlight_on();
 #endif
