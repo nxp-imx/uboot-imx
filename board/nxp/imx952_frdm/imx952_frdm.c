@@ -359,6 +359,40 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 }
 #endif
 
+static bool board_is_sgmii(void)
+{
+	const char *fdtfile;
+
+	fdtfile = env_get("fdtfile");
+	if (!fdtfile)
+		return false;
+
+	return strstr(fdtfile, "sgmii") != NULL;
+}
+
+static void pcie_perst_deassert(void)
+{
+	struct gpio_desc desc;
+	int ret;
+
+	/* PCIe nPERST# and SGMII PHY reset share this pin */
+	ret = dm_gpio_lookup_name("GPIO5_13", &desc);
+	if (ret) {
+		printf("%s lookup GPIO5_13 failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	ret = dm_gpio_request(&desc, "pcie_perst");
+	if (ret) {
+		printf("%s request pcie_perst failed ret = %d\n", __func__, ret);
+		return;
+	}
+
+	/* pin is active-low, value 0 -> deasserted (inactive) */
+	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_ACTIVE_LOW);
+	dm_gpio_set_value(&desc, 0);
+}
+
 void board_quiesce_devices(void)
 {
 	int ret;
@@ -369,6 +403,11 @@ void board_quiesce_devices(void)
 		ret = uclass_destroy(uc_dev);
 	if (ret)
 		printf("couldn't remove PCI devices\n");
+
+	if (board_is_sgmii()) {
+		printf("Deasserting M.2 PERST# for SGMII mode, keep PHY non-reset\n");
+		pcie_perst_deassert();
+	}
 
 	ret = imx9_scmi_power_domain_enable(PD_HSIO_TOP, false);
 	if (ret) {
