@@ -274,7 +274,11 @@ int board_init(void)
 
 	netc_init();
 
-	power_on_m7("mx952evkrpmsg");
+#if IS_ENABLED(CONFIG_TARGET_IMX937_FRDM)
+	power_on_m7("mx937frdmrpmsg");
+#else
+	power_on_m7("mx952frdmrpmsg");
+#endif
 
 	lvds_backlight_on();
 
