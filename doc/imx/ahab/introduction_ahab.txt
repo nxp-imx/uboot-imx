@@ -11,7 +11,8 @@ and System Control Unit (SCU) in i.MX 8/8x, and Edgelock secure enclave (ELE)
 in i.MX 8ULP/9x are heavily involved in the secure boot process.
 
 Step-by-step guides are available under doc/imx/hab/ahab/guides/ directory,
-users familiar with AHAB architecture and CST PKI tree generation should
+users familiar with AHAB architecture and Code Signing Tool (CST) PKI tree
+generation should
 refer to these documents instead.
 
 1.1 The AHAB Secure Boot Architecture
@@ -373,6 +374,24 @@ The diagram below illustrate the PKI tree generated:
     │  SGK1  │       │  SGK2  │       │  SGK3  │       │  SGK4  │
     └────────┘       └────────┘       └────────┘       └────────┘
 
+NOTE: Starting from i.MX95 B0, all subsequent i.MX9x series
+SoCs use AHAB 2.0.
+PKI tree generation and image signing for these devices require CST 4.0.1 or
+the Secure Provisioning SDK (SPSDK) tool.
+The SPSDK tool is the recommended signing tool for the i.MX9x family
+going forward. CST will be maintained with bug fixes only and will not
+receive new features for AHAB-based devices.
+
+- Generating a hybrid PKI tree with a subordinate SGK key on CST (version 4.0.1):
+
+  $ ./linux64/bin/ahab_pki_tree 
+  Do you want to use an existing CA key (y/n)?:  n
+  Select the key type (possible values: rsa, rsa-pss, ecc, dilithium, ml-dsa, hybrid):  hybrid
+  Enter classical/pqc algorithm combinations (Possible values p384_dilithium3, p384_mldsa65, p521_dilithium5, p521_mldsa87):  p384_mldsa65
+  Enter the digest algorithm to use (Possible values: sha256, sha384, sha512, sha3-256, sha3-384, sha3-512):  sha384
+  Enter PKI tree duration (years): 10
+  Do you want the SRK certificates to have the CA flag set? (y/n):  y
+
 2.2 Generating a SRK Table and SRK Hash
 ----------------------------------------
 
@@ -400,7 +419,7 @@ Table Hash.
 	  SRK3_sha384_secp384r1_v3_usr_crt.pem,\
 	  SRK4_sha384_secp384r1_v3_usr_crt.pem
 
-  - In i.MX 8ULP/9x, the expected SRK HASH is of 256 bit.
+  - In i.MX 8ULP/91/93, the expected SRK HASH is of 256 bit.
     $ cd ../crts/
     $ ../linux64/bin/srktool -a -d sha256 -s sha384 -t SRK_1_2_3_4_table.bin \
 	  -e SRK_1_2_3_4_fuse.bin -f 1 -c \
@@ -409,11 +428,29 @@ Table Hash.
 	  SRK3_sha384_secp384r1_v3_usr_crt.pem,\
 	  SRK4_sha384_secp384r1_v3_usr_crt.pem
 
-    Regenerate the SRK HASH (SRK_1_2_3_4_fuse.bin) by using SHA256 with
-    SRK_1_2_3_4_table.bin.
-    $ openssl dgst -binary -sha256 SRK_1_2_3_4_table.bin
+  - In i.MX95 B0 (AHAB 2.0), two separate 512-bit SRK Hash fuse regions are
+    used: the classic SRKH (SRK_HASH[511:0]) for traditional RSA/ECC algorithms
+    and the PQC SRKH (PQC_SRK_HASH[511:0]) for PQC algorithms.
 
+    Generate SRK table array and SRK fuses values for classic ECC keys:
+    $ cd ../crts/
+    $ ../linux64/bin/srktool -a 2 -s sha384 -t SRK_1_2_3_4_table.bin \
+	  -e SRK_1_2_3_4_fuse.bin -f 1 -c \
+	  SRK1_sha384_secp384r1_v3_usr_crt.pem,\
+	  SRK2_sha384_secp384r1_v3_usr_crt.pem,\
+	  SRK3_sha384_secp384r1_v3_usr_crt.pem,\
+	  SRK4_sha384_secp384r1_v3_usr_crt.pem
 
+    Generate SRK table array and SRK fuses values for hybrid mode:
+    The -a argument is used to specify the AHAB container version, and it
+    should be set to the value 2, which refers to AHAB container version 2.
+    $ cd ../crts/
+    $ ../linux64/bin/srktool -a 2 -s sha384 -t SRK_1_2_3_4_table.bin \
+	  -e SRK_1_2_3_4_fuse.bin -f 1 -c \
+	  SRK1_sha384_p384_mldsa65_v3_ca_crt.pem,\
+	  SRK2_sha384_p384_mldsa65_v3_ca_crt.pem,\
+	  SRK3_sha384_p384_mldsa65_v3_ca_crt.pem,\
+	  SRK4_sha384_p384_mldsa65_v3_ca_crt.pem
 
 - Optionally users can check if the sha512sum/sha256sum of SRK_1_2_3_4_table
 matches with the SRK_1_2_3_4_fuse.bin:
@@ -435,7 +472,7 @@ NOTE: The commands above cannot be used as reference to program the SoC
       SRK_HASH fuses.
 
 The SRK_1_2_3_4_table.bin and SRK_1_2_3_4_fuse.bin files can be used in further
-steps as explained in AHAB guides available under doc/imx/hab/ahab/guides/
+steps as explained in AHAB guides available under doc/imx/ahab/guides/
 directory.
 
 3 Known limitations
