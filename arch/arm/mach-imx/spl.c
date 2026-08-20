@@ -199,7 +199,11 @@ int g_dnl_bind_fixup(struct usb_device_descriptor *dev, const char *name)
 	snprintf(serial_string, sizeof(serial_string), "%08x%08x", serialnr.high, serialnr.low);
 	g_dnl_set_serialnumber(serial_string);
 #endif
-	put_unaligned(0x0151, &dev->idProduct);
+
+	if (CONFIG_USB_GADGET_VENDOR_NUM == 0x1fc9 && CONFIG_USB_GADGET_PRODUCT_NUM == 0x152)
+		put_unaligned(0x0151, &dev->idProduct);
+	else
+		put_unaligned(CONFIG_USB_GADGET_PRODUCT_NUM + 0xfff, &dev->idProduct);
 
 	return 0;
 }
