@@ -2,30 +2,30 @@
   "SPDXID": "SPDXRef-DOCUMENT",
   "spdxVersion": "SPDX-2.3",
   "creationInfo": {
-    "created": "2026-06-02T03:01:00Z",
+    "created": "2026-08-26T06:15:53Z",
     "creators": [
       "Organization: NXP"
     ],
-    "licenseListVersion": "3.26"
+    "licenseListVersion": "3.28"
   },
-  "name": "uboot-imx-lf-6.18.20-2.0.0",
+  "name": "uboot-imx-lf-6.18.37-2.1.0",
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://nxp.com/spdx/b7f68ba3-77a4-48bb-a777-0387e536c385",
+  "documentNamespace": "https://nxp.com/spdx/768062d0-b93b-4449-93ed-936df7ae2df7",
   "packages": [
     {
-      "SPDXID": "SPDXRef-package-b7f68ba3-77a4-48bb-a777-0387e536c385",
+      "SPDXID": "SPDXRef-package-768062d0-b93b-4449-93ed-936df7ae2df7",
       "name": "uboot-imx",
-      "versionInfo": "lf-6.18.20-2.0.0",
+      "versionInfo": "lf-6.18.37-2.1.0",
       "licenseConcluded": "(GPL-2.0-only)",
       "licenseDeclared": "(GPL-2.0-only)",
-      "downloadLocation": "https://github.com/nxp-imx/uboot-imx -b lf-6.18.20-2.0.0",
+      "downloadLocation": "https://github.com/nxp-imx/uboot-imx -b lf-6.18.37-2.1.0",
       "originator": "Organization: NXP",
       "supplier": "NOASSERTION",
       "externalRefs": [],
       "filesAnalyzed": false
     },
     {
-      "SPDXID": "SPDXRef-package-b7f68ba3-77a4-48bb-a777-0387e536c385---a8aa5caa-c3bf-4654-8b07-f11fbe86557b",
+      "SPDXID": "SPDXRef-package-768062d0-b93b-4449-93ed-936df7ae2df7---a8aa5caa-c3bf-4654-8b07-f11fbe86557b",
       "name": "U-Boot",
       "versionInfo": "v2026.04",
       "licenseConcluded": "GPL-2.0-only",
@@ -53,12 +53,12 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
-      "relatedSpdxElement": "SPDXRef-package-b7f68ba3-77a4-48bb-a777-0387e536c385"
+      "relatedSpdxElement": "SPDXRef-package-768062d0-b93b-4449-93ed-936df7ae2df7"
     },
     {
-      "spdxElementId": "SPDXRef-package-b7f68ba3-77a4-48bb-a777-0387e536c385",
+      "spdxElementId": "SPDXRef-package-768062d0-b93b-4449-93ed-936df7ae2df7",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-package-b7f68ba3-77a4-48bb-a777-0387e536c385---a8aa5caa-c3bf-4654-8b07-f11fbe86557b"
+      "relatedSpdxElement": "SPDXRef-package-768062d0-b93b-4449-93ed-936df7ae2df7---a8aa5caa-c3bf-4654-8b07-f11fbe86557b"
     }
   ]
 }
