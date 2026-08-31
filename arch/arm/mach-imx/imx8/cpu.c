@@ -604,6 +604,16 @@ phys_size_t get_effective_memsize(void)
 	return phys_sdram_1_size;
 }
 
+__weak int board_phys_sdram_size(phys_size_t *size)
+{
+	if (!size)
+		return -EINVAL;
+
+	*size = PHYS_SDRAM_1_SIZE + PHYS_SDRAM_2_SIZE;
+
+	return 0;
+}
+
 int dram_init(void)
 {
 	sc_rm_mr_t mr;
