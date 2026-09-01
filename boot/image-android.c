@@ -560,6 +560,7 @@ static int append_androidboot_args(char *args, uint32_t *len, void *fdt_addr)
 	}
 #endif
 
+#if IS_ENABLED(CONFIG_MACH_IMX) && IS_ENABLED(CONFIG_ARM64)
 	/* append total DDR size into bootconfig for android userspace */
 	phys_size_t ddr_bytes = 0;
 	if (board_phys_sdram_size(&ddr_bytes) == 0) {
@@ -567,6 +568,7 @@ static int append_androidboot_args(char *args, uint32_t *len, void *fdt_addr)
 		sprintf(args_buf, " androidboot.ddr_size=%uMB", ddr_mb);
 		strncat(args, args_buf, *len - strlen(args));
 	}
+#endif
 
 #ifdef CONFIG_APPEND_BOOTARGS
 	/* Add 'append_bootconfig' environment variable to hold some paramemters
