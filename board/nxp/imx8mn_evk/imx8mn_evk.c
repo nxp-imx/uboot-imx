@@ -6,6 +6,11 @@
 #include <config.h>
 #include <efi_loader.h>
 #include <env.h>
+#ifdef CONFIG_ANDROID_SUPPORT
+#include <net.h>
+#include <asm/setup.h>
+#include <asm/bootm.h>
+#endif
 #include <init.h>
 #include <asm/io.h>
 #include <miiphy.h>
@@ -284,6 +289,42 @@ int board_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_ANDROID_SUPPORT
+static void setup_eth_mac_if_empty(int dev_id, const char *envname)
+{
+	unsigned char mac[6];
+	struct tag_serialnr serial;
+
+	if (eth_env_get_enetaddr(envname, mac))
+		return;
+
+	imx_get_mac_from_fuse(dev_id, mac);
+	if (is_valid_ethaddr(mac)) {
+		eth_env_set_enetaddr(envname, mac);
+		return;
+	}
+
+	memset(&serial, 0, sizeof(serial));
+	get_board_serial(&serial);
+
+	mac[0] = (serial.high >> 16) & 0xff;
+	mac[1] = (serial.high >> 8)  & 0xff;
+	mac[2] =  serial.high        & 0xff;
+	mac[3] = (serial.low >> 16)  & 0xff;
+	mac[4] = (serial.low >> 8)   & 0xff;
+	mac[5] = (serial.low & 0xff) + (unsigned char)dev_id;
+
+	mac[0] |= 0x02;
+	mac[0] &= 0xfe;
+
+	if (!is_valid_ethaddr(mac))
+		net_random_ethaddr(mac);
+
+	eth_env_set_enetaddr(envname, mac);
+	printf("%s: derived stable MAC for %s: %pM\n", __func__, envname, mac);
+}
+#endif
+
 int board_late_init(void)
 {
 #if CONFIG_IS_ENABLED(ENV_IS_IN_MMC)
@@ -294,6 +335,10 @@ int board_late_init(void)
 	env_set("board_name", "DDR4 EVK");
 	env_set("board_rev", "iMX8MN");
 #endif
+#ifdef CONFIG_ANDROID_SUPPORT
+	setup_eth_mac_if_empty(0, "ethaddr");
+#endif
+
 	return 0;
 }
 
