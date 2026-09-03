@@ -21,7 +21,16 @@ processors Security Reference Manual Document (SRM).
 -----------------------------------------------------------
 
 Secure boot image preparation requires mkimage to build and Code Signing tool
-to sign the image.
+to sign the image. Starting from i.MX95 B0, all subsequent i.MX9x series
+SoCs use AHAB 2.0.
+PKI tree generation and image signing for these devices require the
+Secure Provisioning SDK (SPSDK) tool or Code Signing Tool (CST) 4.0.1.
+For a complete AHAB 2.0 example on i.MX95 using SPSDK, refer to:
+  https://spsdk.readthedocs.io/en/latest/examples/ahab/imx95/imx95_ahab_sign.html
+
+The SPSDK tool is the recommended signing tool for the i.MX9x family
+going forward. CST will be maintained with bug fixes only and will not
+receive new features for AHAB-based devices.
 
 Based on bootmode, following files are needed to prepare the boot image:
 - All boot modes
@@ -237,7 +246,7 @@ CSF description file:
 Keep a note of the offsets above to be used with CST/CSF.
 
 The u-boot-atf-container.img file generated is needed to be signed using the
-Code Signing Tool (CST).
+CST.
 
 1.4.1.2 Signing the u-boot-atf-container container
 -------------------------------------------------
@@ -248,6 +257,23 @@ which memory areas of the image to authenticate, which keys to install, use
 and etc.
 
 CSF examples are available under doc/imx/hab/ahab/csf_examples/ directory.
+
+NOTE: For i.MX95 B0 (AHAB 2.0), the [Header] section in the CSF file must use
+Version = 2.0 instead of the default Version = 1.0 (example provided in
+csf_boot_image_ahab_v2.0.txt):
+
+  [Header]
+  Target = AHAB
+  Version = 2.0
+
+To validate hybrid signatures (classic RSA/ECC + PQC), add the following field
+to the [Install SRK] section:
+
+  # Signature verification policy
+  Check All Signatures = All
+
+If "Check All Signatures = All" is not specified, the fuse policy will
+be enforced for signature authentication.
 
 As explained in section above, the mkimage log provides the container and
 signature block offsets used by the CSF description file (example provided in
@@ -403,10 +429,12 @@ Be careful when programming these values, as this data is the basis for the
 root of trust. An error in SRK Hash results in a part that does not boot.
 
 The U-Boot fuse tool can be used for programming eFuses on i.MX SoCs.
+The values listed here are examples and must be repalced with values generated
+from the user's PKI.
 
 - Dump SRK Hash fuses values in host machine:
 
-  On i.MX8ULP/9x family, the SRK Hash uses sha256 and dump 8 words fuses
+  On i.MX8ULP/91/93 family, the SRK Hash uses sha256 and dump 8 words fuses
   $ od -t x4 SRK_1_2_3_4_fuse.bin
   0000000 db2959f2 90dfc39c 53394566 e0b75829
   0000020 85e6f3b1 af00983d e5e804fe 7a451024
@@ -424,7 +452,7 @@ On i.MX8ULP:
   => fuse prog 15 6 0xe5e804fe
   => fuse prog 15 7 0x7a451024
   
-On i.MX93 and i.MX95:
+On i.MX93:
 
   => fuse prog 16 0 0xdb2959f2
   => fuse prog 16 1 0x90dfc39c
@@ -434,6 +462,50 @@ On i.MX93 and i.MX95:
   => fuse prog 16 5 0xaf00983d
   => fuse prog 16 6 0xe5e804fe
   => fuse prog 16 7 0x7a451024
+
+On i.MX95 B0 (AHAB 2.0), two separate 512-bit SRK Hash fuse regions are used.
+Program the classic SRKH (SRK_HASH[511:0]) for RSA/ECC keys (fuse bank 16
+word 0-7 and bank 17 word 0-7):
+
+  => fuse prog 16 0  0x9EAE2E44
+  => fuse prog 16 1  0xE11AD5B7
+  => fuse prog 16 2  0x5C2799B3
+  => fuse prog 16 3  0x6D9E8732
+  => fuse prog 16 4  0xD422A125
+  => fuse prog 16 5  0xD731BC2B
+  => fuse prog 16 6  0x97A74470
+  => fuse prog 16 7  0xEA71800A
+  => fuse prog 17 0  0xC0EB92A7
+  => fuse prog 17 1  0x49861BD4
+  => fuse prog 17 2 0x3DD22111
+  => fuse prog 17 3 0x6C2D487C
+  => fuse prog 17 4 0x9E6FBB52
+  => fuse prog 17 5 0xD3DB0AA3
+  => fuse prog 17 6 0x0B7AF95B
+  => fuse prog 17 7 0x05881C85
+
+If PQC keys are used, also program the PQC SRKH (PQC_SRK_HASH[511:0]) fuses
+(fuse bank 56 word 0-7 and bank 57 word 0-7):
+
+  => fuse prog 56 0 0x95FBFCEC
+  => fuse prog 56 1 0x6B764B02
+  => fuse prog 56 2 0x5DDEBA1C
+  => fuse prog 56 3 0x6ED213DB
+  => fuse prog 56 4 0x8391549E
+  => fuse prog 56 5 0xAB30B4F3
+  => fuse prog 56 6 0x897C19D1
+  => fuse prog 56 7 0x5AB23DEA
+  => fuse prog 57 0 0x587C5179
+  => fuse prog 57 1 0xA3108831
+  => fuse prog 57 2 0x395869DE
+  => fuse prog 57 3 0xC13ABF64
+  => fuse prog 57 4 0x3D1B8221
+  => fuse prog 57 5 0xC229F760
+  => fuse prog 57 6 0xA8C1C37A
+  => fuse prog 57 7 0x4C84C288
+
+For other devices, refer to the fuse map for the target device to identify
+the specific fuse word index and bank where the SRKH should be written.
 
 1.7 Verify AHAB events
 -----------------------
