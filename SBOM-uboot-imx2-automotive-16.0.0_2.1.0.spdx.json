@@ -1,0 +1,578 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "spdxVersion": "SPDX-2.3",
+  "creationInfo": {
+    "created": "2026-09-14T09:46:42Z",
+    "creators": [
+      "Organization: NXP"
+    ],
+    "licenseListVersion": "3.28"
+  },
+  "name": "uboot-imx-automotive-16.0.0_2.1.0",
+  "dataLicense": "CC0-1.0",
+  "hasExtractedLicensingInfos": [
+    {
+      "name": "LA_OPT_NFC_Infra v2 December 2024",
+      "licenseId": "LicenseRef-37d37522-de21-4495-aafe-149c29add306",
+      "extractedText": "LA_OPT_NFC_Infra_02 December 2024\nNFC Infrastructure Software License and Distribution Agreement\nIMPORTANT - READ CAREFULLY: This NFC Infrastructure Software License and Distribution Agreement (“Agreement”) is a legal and binding agreement between you, either an individual or entity (“Licensee”) and NXP Semiconductors Netherlands B.V., a company having its registered office at High Tech Campus 60, 5656 AG Eindhoven, the Netherlands (“NXP”). NXP and Licensee are occasionally referred to in this Agreement individually as a “Party” and collectively as the “Parties”. This Agreement governs the use of the Licensed Materials (defined below). BY LICENSEE INDICATING ITS ACCEPTANCE OF THIS AGREEMENT OR BY LICENSEE INSTALLING OR USING THE LICENSED MATERIALS, LICENSEE AGREES TO ALL OF THE TERMS AND CONDITIONS OF THIS AGREEMENT. IF YOU (LICENSEE) DO NOT AGREE TO THESE TERMS AND CONDITIONS, DO NOT INSTALL OR USE THE LICENSED MATERIALS.\n1.\nDefinitions. In addition to other terms defined elsewhere in this Agreement, the following terms, when the first letter is capitalized, shall have the meanings set forth below.\n1.1\n“Affiliate” means: (a) with respect to NXP, (i) any Person Controlled by NXP Semiconductors N.V. or (ii) any Person Controlled by any transferee of all or substantially all of the assets of NXP Semiconductors N.V., where; provided, any such Person described in clause (i) or (ii) shall be deemed to be an “Affiliate” only for so long as such Person is Controlled by NXP Semiconductors N.V. or such transferee, and (b) with respect to Licensee, any corporation or other legal entity that Licensee now or hereafter Controls, is Controlled by or is under common Control with; an entity may be considered an Affiliate of Licensee only when such Control exists. “Control” or “Controlled” means the direct or indirect beneficial ownership of more than fifty percent (50%) of the voting stock, or decision-making authority in the event that there is no voting stock, in another entity.\n1.2\n“Licensed Materials” mean the software (in object code or source code form) and/or documentation with which this Agreement is provided, and all upgrades, updates and/or information relating thereto that NXP may (in its sole discretion) provide to Licensee under this Agreement.\n1.3\n“Licensed Software” means any software included in the licensed materials.\n1.4\n“Licensee Platform(s)” means any module or product developed by or for Licensee, which incorporates a NXP Chip and integrates any Redistributable Object Code, for use in Products.\n1.5\n“Modification(s)” means all derivative works, updates, improvements, enhancements, transformations and modifications of any portion of the Licensed Materials, made by or for Licensee.\n1.6\n“NXP Chip(s)” means any of the following integrated circuit(s) manufactured by NXP or under license of NXP, which utilize the Licensed Materials: CLRC632, CLRC663, MFRC631, MFRC630, SLRC610, MFRC500, SLRC400, MFRC522, MFRC523, MFRC530, MFRC531, MFRX852, PR601, PRH601, PR533, PN512, PN531, PN532, PN533, PN71x PN51x, PN7462 family, PN76 family, NT3X family, CTN and CRN families, NTP5X and NTA5X families or equivalent products.\n1.7\n“Open Source Licensing Terms” means terms in any license for software which require, as a condition of use, modification and/or distribution of such software or other software incorporated into, derived from or distributed with such software (a “Work”), any of the following: (a) the making available of source code or design information regarding the Work; (b) the granting of permission for creating derivative works regarding the Work; or (c) the granting of a royalty-free license to any party under intellectual property rights regarding the Work. By means of example and without limitation, Open Source Licensing Terms include the following licenses or distribution models: (i) the GNU General Public License (GPL) or Lesser/Library GPL (LGPL), (ii) the Artistic License (e.g. PERL), (iii) the Mozilla Public License, (iv) the Common Public License, (v) the Sun Community Source License (SCSL), (vi) the Sun Industry Standards Source License (SISSL), and (vii) the Open Software License.\n1.8\n“Product(s)” means any device made by or for Licensee, or by or for its OEM Customers, which incorporates a Licensee Platform with a NXP Chip.\n1.9\n“Redistributable Object Code” means any: (a) object code portions of the Licensed Materials provided by NXP to Licensee hereunder, (b) source code portions of the Licensed Materials, provided by NXP to Licensee hereunder, that have been compiled into object code form, and/or (c) Modifications that have been compiled into object code form or the avoidance of doubt, Redistributable Object Code is solely in object code form.\n1.10\n“Software Content Register” means the documentation accompanying the Licensed Software which identifies the contents of the Licensed Software, including but not limited to identification of any Third Party Software. The Software Content Register may be provided to Licensee with any of the following: a separate document, a digital file, release notes, a Licensor support website, or software code (“Notice File”) that may contain notices pertaining to such Third Party Software.\n1.11\n“Third Party Software” means certain software code and/or materials, including, without limitation, open source software components, that are written or owned by third parties.\n2.\nLicense.\n2.1\nSeparate license grants to Third Party Software, or other terms applicable to the Licensed Software if different from those granted in this Section 2, are contained in a Software Content Register. The Licensed Software is accompanied by a Software Content Register which will identify that portion of the Licensed Software, if any, that is subject to the different terms in Appendix A.\n2.2\nSource Code License. Subject to the terms and conditions of this Agreement, NXP hereby grants to Licensee a worldwide, non-exclusive, non-transferable, royalty-free copyright license in the Licensed Materials, without the right to sublicense (except as permitted in Section 2.3), to internally use and create Modifications based upon the source code portions of the Licensed Materials that are provided by NXP to Licensee hereunder, and to compile such source code portions of the Licensed Materials and Modifications into Redistributable Object Code. The Redistributable Object Code may only be used incorporated in, or in conjunction with, the Licensee Platforms incorporating NXP Chips. Licensee shall be allowed to redistribute its Modifications of the source code to Licensee’s customers, provided that each of such customer (i) has downloaded and installed the Licensed Materials from the NXP internet, (ii) has accepted the same license agreement as the Agreement, and (iii) has agreed that the Modifications provided to such customer shall be deemed to be Modifications under customer’s own license agreements with NXP. Section 2.3 (“Authorized Contractors”) shall not be applicable to the redistribution of Modifications.\n2.3\nObject Code License. Subject to the terms and conditions of this Agreement, NXP hereby grants to Licensee a worldwide, non-exclusive, non-transferable, royalty-free copyright license in the Licensed Materials, without the right to sublicense (except as permitted in Sections 2.3 and 2.4), to use, reproduce, create, manufacture, have manufactured, distribute, and have distributed the Redistributable Object Code. The Redistributable Object Code may only be used and distributed incorporated in, or in conjunction with, the Licensee Platforms incorporating NXP Chips, solely for use in Products. No right is granted to Licensee to distribute the Redistributable Object Code as a standalone product.\n2.4\nAuthorized Contractors. Licensee may grant a sublicense, under its license rights granted under Sections 2.1 and 2.2 to a contractor of Licensee (“Authorized Contractor”), without the right to further sublicense, solely as necessary for the development of Licensee’s Platforms and/or Licensee’s Products; provided, however, that such Authorized Contractor executes a written agreement with Licensee in which such Authorized Contractor has agreed in writing to provisions that substantially provide that the Authorized Contractor shall:\n(a)\nbe bound by obligations of confidentiality at least as restrictive as the confidentiality provisions of this Agreement;\n(b)\nuse the Licensed Materials only on the behalf of Licensee for the certification of Licensee’s Platforms and/or Licensee’s Products; and\n(c)\ncomply with the license restrictions under Section 3.\nLicensee shall be liable to NXP for such Authorized Contractor’s violations of the confidentiality provisions of this Agreement or the Authorized Contractor’s intentional or unintentional misappropriation of or loss of NXP’s intellectual property rights or ownership of the Licensed Materials or Modifications.\n2.4 OEM Customers. Licensee may grant sublicenses, under its license rights granted under Section 2.2 to original equipment manufacturer customers of Licensee (“OEM Customers”), only in respect to the Redistributable Object Code that is incorporated in, or for use in conjunction with, the Licensee Platform and solely for use with NXP Chips in such OEM Customer’s Products; provided, however, that such Redistributable Object Code is subject to a written software license agreement, in the form that Licensee normally uses for protecting its own software of like nature, executed by such OEM Customer and Licensee, which shall include at a minimum provisions that materially provide:\n(d)\nthat such Redistributable Object Code is to be used only for the development of the OEM Customer’s Products;\n(e)\nthat such Redistributable Object Code may be distributed only in Products with NXP Chips;\n(f)\nthat the OEM Customer will comply with the license restrictions under Section 3; and\n(g)\nthat such Redistributable Object Code shall be protected as the confidential information of NXP under obligations of confidentiality no less restrictive than the confidentiality provisions of this Agreement.\n2.5 End User’s Right to use the Redistributable Object Code. The rights granted hereunder include the right for any end user to personally use the Redistributable Object Code as integrated in a Product with an NXP Chip, and that such right of use shall survive any expiration or termination of this Agreement.\n3.\nLicense Restrictions. The license granted in Section 2 does not include any license, right, power or authority to cause the Licensed Materials or Modifications, in whole or in part, to be subject to Open Source Licensing Terms. Licensee shall not, and shall not permit any third party to (i) reverse engineer, decompile or disassemble any object code portions of the Licensed Materials, (ii) remove or alter any proprietary markings or notices from the Licensed Materials, or (iii) otherwise use any portion of the Licensed Materials or Modifications in any manner not expressly authorized in Section 2 of this Agreement.\n4.\nConfidentiality. The Licensed Materials include confidential and proprietary information and materials and may include trade secrets. Licensee agrees to use the Licensed Materials only for the purposes expressly permitted under this Agreement. Licensee agrees to maintain the confidentiality of the Licensed Materials by not disclosing the Licensed Materials to any third parties, except\nto the extent expressly permitted under this Agreement, provided that the recipient shall be subject to nondisclosure agreements at least as restrictive as the confidentiality provisions of this Agreement. Licensee agrees to use at least the same physical and other security measures for the Licensed Materials as Licensee uses for its own highly confidential information and documentation, however, in no event less than a reasonable degree of care. Licensee agrees that it shall be responsible for violations of this obligation by its employees, contractors and/or any third party receiving such licensed Materials from Licensee. Licensee agrees to notify NXP promptly in the event of circumstances in which it would appear that any portion of the Licensed Materials have been prejudiced or exposed to loss or disclosure, and Licensee shall, upon NXP’s request, take reasonable steps necessary to recover any such compromised Licensed Materials. The cost of taking such reasonable steps shall be borne solely by Licensee. Notwithstanding the above, this Section 4 does not apply to Redistributable Object Code.\n5.\nOwnership; Reservation of Rights. This Agreement does not transfer any ownership interest in the Licensed Materials. NXP and its Affiliates shall have the right to use (i) any Modifications and (ii) any feedback provided by Licensee to NXP relating to the Licensed Materials and its related Documentation without any limitation for any purpose. In the event that Licensee at any time creates any Modification or any intellectual property rights related to the Licensed Software or to any Modifications thereto, Licensee hereby grants NXP and NXP’s Affiliates a fully paid-up, royalty free, perpetual, irrevocable, world-wide, non-exclusive license under such intellectual property rights to use, modify, sell, copy, license, distribute, change, amend, modify, reconfigure, alter, improve, translate, transform, and make derivate work from the Licensed Software Modifications and to grant sub-licenses on the same terms to any third party. For the avoidance of doubts, Licensee has no obligation under this Section 5 to provide any Modification as such to NXP.\n6.\nTerm; Termination; Effects. his Agreement shall commence on the date that Licensee accepts this Agreement (by Licensee indicating its acceptance of this Agreement or by Licensee installing or using the Licensed Materials) and shall remain in effect until terminated as provided in this Section 6 (the “Term”). Licensee may terminate this Agreement, at any time for any or no reason. This Agreement will automatically terminate if Licensee fails to comply with any of the terms of this Agreement. Upon any termination of this Agreement: (i) all rights and licenses granted to Licensee under this Agreement shall immediately terminate; (ii) Licensee shall promptly return to NXP or, at NXP’s discretion, destroy all of the Licensed Materials, Modifications and all whole and partial copies thereof (including without limitation all Redistributable Object Code); (iii) within thirty (30) days after such termination, Licensee shall furnish to NXP a written certification that all of the Licensed Materials, Modifications and all whole and partial copies thereof, have been (a) destroyed or returned to NXP, and (b) erased from all of Licensee’s storage elements and devices; and (iv) Licensee shall not keep any archival copies of the Licensed Materials or Modifications except and only to the extent that applicable law notwithstanding this limitation expressly permits such. All defined terms, Section 2.5 and Sections 3 through 12 shall survive any termination of this Agreement. In addition, any termination of this Agreement shall not affect the rights of Licensee’s customers regarding Redistributable Object Code properly furnished to such customers before such termination.\n7.\nRemedies. Licensee acknowledges and agrees that, if NXP is required to bring an action to enforce the provisions of this Agreement, the damages may be irreparable and difficult to measure and NXP shall be entitled to seek equitable relief including a preliminary injunction in addition to any other relief available. Licensee agrees that in the event that NXP seeks an injunction hereunder, Licensee hereby waives any requirement for the posting of a bond or any other security.\n8.\nDisclaimer. THE LICENSED MATERIALS ARE PROVIDED ON AN “AS IS” AND “WITH ALL FAULTS” BASIS. NXP, ITS AFFILIATES AND THEIR SUPPLIERS EXPRESSLY DISCLAIM ALL WARRANTIES, WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF NONINFRINGEMENT, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK AS TO THE QUALITY, OR ARISING OUT OF THE USE OR PERFORMANCE, OF THE LICENSED MATERIALS REMAINS WITH LICENSEE.\n9.\nLimitation of Liability. IN NO EVENT SHALL NXP, ITS AFFILIATES OR THEIR SUPPLIERS BE LIABLE TO LICENSEE FOR ANY SPECIAL, INDIRECT, CONSEQUENTIAL, PUNITIVE, OR INCIDENTAL DAMAGES (INCLUDING WITHOUT LIMITATION DAMAGES FOR LOSS OF BUSINESS, BUSINESS INTERRUPTION, LOSS OF USE, LOSS OF DATA OR INFORMATION, AND THE LIKE) ARISING OUT OF THIS AGREEMENT OR THE USE OF OR INABILITY TO USE THE LICENSED MATERIALS, WHETHER OR NOT BASED ON TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY, BREACH OF CONTRACT, BREACH OF WARRANTY OR ANY OTHER THEORY, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. NOTWITHSTANDING ANY DAMAGES THAT LICENSEE MIGHT INCUR FOR ANY REASON WHATSOEVER (INCLUDING, WITHOUT LIMITATION, ALL DAMAGES REFERENCED ABOVE AND ALL DIRECT OR GENERAL DAMAGES), THE ENTIRE LIABILITY OF NXP, ITS AFFILIATES AND THEIR SUPPLIERS UNDER ANY PROVISION OF THIS AGREEMENT AND LICENSEE’S EXCLUSIVE REMEDY FOR ALL OF THE FOREGOING SHALL BE LIMITED TO ACTUAL DAMAGES INCURRED BY LICENSEE BASED ON REASONABLE RELIANCE UP TO THE GREATER OF THE AMOUNT ACTUALLY PAID BY LICENSEE UNDER THIS AGREEMENT OR FIVE U.S. DOLLARS (U.S. $5.00). THE FOREGOING LIMITATIONS, EXCLUSIONS AND DISCLAIMERS SHALL APPLY TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, EVEN IF ANY REMEDY FAILS OF ITS ESSENTIAL PURPOSE.\n10.\nGoverning Law; Jurisdiction. This Agreement shall be governed by and construed in accordance with the laws of The Netherlands without regard to any principle of conflicts of law. Any dispute arising hereunder shall be resolved in the competent courts in Amsterdam, The Netherlands, and the Parties hereby agree that venue and jurisdiction for any related proceedings arising hereunder shall lie exclusively with such courts; provided, however, that each Party may enforce its and its Affiliates’ intellectual property rights in any court, and similar governing body, of competent jurisdiction, including but not limited to equitable relief.\n11.\nExport Compliance\n11.1.\nLicensee shall comply with all applicable export and import control laws and regulations including but not limited to the US Export Administration Regulation (including restrictions on certain military end uses and military end users as specified in Section 15 C.F.R. § 744.21 and prohibited party lists issued by other federal governments), Catch-all regulations and all national and international embargoes. In particular, Licensee shall not directly or indirectly export, re-export, transfer or release any Licensed Materials in whole or in part or direct product thereof or technical data to any destination, person, entity or end use restricted or prohibited by applicable laws, without obtaining prior authorization from the applicable competent government authorities to the extent required by those laws. This provision shall survive termination or expiration of this Agreement.\n11.2.\nProhibition of Export to Russian Federation\n(a)\nWith respect to activities that fall under the scope of Article 12g, 12ga of Council Regulation (EU) No 833/2014, or Council Regulation (EU) No 765/2006 (as the case requires), Licensee (a) will not sell, export or re-export, directly or indirectly any item, and (b) will not sell, license or sublicense any intellectual property rights or trade secrets, to the Russian Federation or Belarus, or for use in the Russian Federation or Belarus.\n(b)\nLicensee will ensure that the purpose of paragraph (a) above is not frustrated by any third parties further down the commercial chain, including by either resellers, sublicensees, or both.\n(c)\nLicensee will set up and maintain an adequate monitoring mechanism to detect conduct by any third parties further down the commercial chain, including by either resellers, sublicensees, or both, that would frustrate the purpose of paragraph (a).\n(d)\nAny violation of paragraphs (a), (b) or (c) will constitute a material breach of this Agreement, and NXP will be entitled to seek appropriate remedies, including, but not limited to: (i) termination of this Agreement; (ii) suspension of any of its business relationships with Licensee, Licensee’s affiliates or both, until the breach of paragraph (a) above is remedied, and (iii) a plan to remedy the breach.\n(e)\nLicensee will immediately inform NXP about any problems in applying paragraphs (a), (b) or (c), above, including any relevant activities by third parties that could frustrate the purpose of paragraph (a). Licensee will make available to NXP information concerning compliance with the obligations under paragraphs (a), (b) and (c) within 2 weeks of the request for information.\n12.\nMiscellaneous. (A) Nothing in this Agreement shall create a joint venture, partnership or principal/agent relationship between the Parties. (B) NXP may assign this Agreement or any rights thereof to any of its Affiliates or any third party. Licensee shall not assign or transfer any of its rights or obligations hereunder without the prior written consent of NXP. (C) All notices to NXP required or permitted hereunder shall be in writing and shall be deemed delivered upon hand delivery or upon receipt if sent by world renown overnight courier or mailed by registered or certified mail, return receipt requested, postage prepaid, to NXP at its address set forth in the header of this Agreement or such other address of which NXP may notify Licensee from time to time. (D) A waiver of any right hereunder shall in no way waive any other rights. No waiver, alteration, modification or amendment of this Agreement shall be effective unless in writing and signed by both Parties. (E) In the event that any provision of this Agreement is held to be invalid, illegal or unenforceable, such provision shall be deemed amended to achieve the economic effect of the intent of the Parties in a valid, lawful and enforceable manner, or if not possible, then deleted and ineffective to the extent thereof, without affecting any other provision of this Agreement. (F) This Agreement constitutes the entire agreement regarding the subject matter hereof and supersedes all prior agreements, understandings and communications, oral and written, between the Parties regarding the subject matter hereof.\nAPPENDIX A\nOther License Grants and Restrictions:\nThe Licensed Software may include some or all of the following software, which is either 1) not NXP proprietary software or 2) NXP proprietary software subject to different terms than those in the Agreement. If the Software Content Register that accompanies the Licensed Software identifies any of the following Third Party Software or specific components of the NXP Proprietary Software, the following terms apply to the extent they deviate from the terms in the Agreement.\nACCEPTED AND AGREED\nLicensee (“Licensee”):\nBy: ____________________________________\nName: ____________________________________\nTitle: ____________________________________\nDate: ____________________________________\n____________________________________________________________________________________\nName of Company\n____________________________________________________________________________________\nRegistered office at (full address)\n____________________________________________________________________________________\nCountry"
+    }
+  ],
+  "documentNamespace": "https://nxp.com/spdx/7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "name": "uboot-imx",
+      "versionInfo": "automotive-16.0.0_2.1.0",
+      "licenseConcluded": "(GPL-2.0-only)",
+      "licenseDeclared": "(GPL-2.0-only)",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: NXP",
+      "supplier": "NOASSERTION",
+      "externalRefs": [],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---3eaae6f4-caea-4623-aec5-f047bf3dd90d",
+      "name": "infra_silicon-testbench",
+      "versionInfo": "rdlibtop_CryptoLib",
+      "licenseConcluded": "LicenseRef-37d37522-de21-4495-aafe-149c29add306",
+      "licenseDeclared": "LicenseRef-37d37522-de21-4495-aafe-149c29add306",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: Nxp Semiconductor",
+      "supplier": "NOASSERTION",
+      "externalRefs": [],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---d8a0cca9-9868-4c29-9fe2-5aacbe9b759b",
+      "name": "libgcrypt",
+      "versionInfo": "1.9.15",
+      "licenseConcluded": "GPL-2.0-or-later",
+      "licenseDeclared": "GPL-2.0-or-later",
+      "homepage": "http://www.gnupg.org",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: rocky",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "7c4dab45-fe47-4e46-8cb9-3180eba1c00b",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:rpm/rocky/virtio-win@1.9.15-0.el8?arch=noarch",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---f5cbea1c-beac-4d52-a19c-655e142f1ecb",
+      "name": "libgcrypt",
+      "versionInfo": "1.9.16",
+      "licenseConcluded": "GPL-2.0-or-later",
+      "licenseDeclared": "GPL-2.0-or-later",
+      "homepage": "http://www.gnupg.org",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: rocky",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "101125d0-04eb-470a-bc8a-719e80b21d77",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:rpm/rocky/virtio-win@1.9.16-2.el8?arch=noarch",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---78fa9655-24ee-4a22-8f12-c76f302d3a76",
+      "name": "libgcrypt",
+      "versionInfo": "1.9.25",
+      "licenseConcluded": "(Apache-2.0 AND BSD-3-Clause AND GPL-2.0-or-later)",
+      "licenseDeclared": "(Apache-2.0 AND BSD-3-Clause AND GPL-2.0-or-later)",
+      "homepage": "http://www.gnupg.org",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: rocky",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "176aaf14-1ce6-4bc8-bedc-d15579a118cd",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:rpm/rocky/virtio-win@1.9.25-2.el9_0?arch=noarch",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---c82be287-a096-4b21-9157-cc375ffe88f8",
+      "name": "Linux Kernel",
+      "versionInfo": "99d24edeb6abc6ca3a0d0fbdb83c664c04403c8c",
+      "licenseConcluded": "(GPL-2.0-only AND GPL-2.0-or-later)",
+      "licenseDeclared": "(GPL-2.0-only AND GPL-2.0-or-later)",
+      "homepage": "http://git.kernel.org/pub/scm/linux/kernel/git/longterm/linux-2.6.34.y.git",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: long_tail",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "d3152776-28e4-4c09-8445-ead4489ff207",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---89a19619-b2b7-421b-ab89-3b74cb1f04a8",
+      "name": "mbed",
+      "versionInfo": "3.6.6",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "homepage": "http://mbed.org/",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: fedora",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "f9b0de68-8f69-4629-93bb-c8f142745bc2",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:rpm/fedora/mbedtls-devel@3.6.6-2.fc45?arch=x86_64",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---c5fb9f50-a1e7-4c44-80f0-b0d356389d16",
+      "name": "meow-lwip",
+      "versionInfo": "0.3.15",
+      "licenseConcluded": "(Apache-2.0 OR MIT)",
+      "licenseDeclared": "(Apache-2.0 OR MIT)",
+      "homepage": "https://github.com/madeye/lwip",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: crates",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "30f918ce-5716-4d77-996c-76655f745f5a",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:cargo/meow-lwip@0.3.15",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---d9e6b880-e968-4d59-8b53-bd44b40f9e2b",
+      "name": "nxp-imx/uboot-imx",
+      "versionInfo": "lf-6.18.2-imx952-er1",
+      "licenseConcluded": "GPL-2.0-only",
+      "licenseDeclared": "GPL-2.0-only",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: nxp-imx",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "e1a949b1-aa9c-4a51-bfa1-0209665721d7",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/nxp-imx/uboot-imx@lf-6.18.2-imx952-er1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---06a09288-df38-4338-8c9c-0c849b487d9e",
+      "name": "nxp-imx/uboot-imx",
+      "versionInfo": "lf-6.6.23-imx95-er1",
+      "licenseConcluded": "GPL-2.0-only",
+      "licenseDeclared": "GPL-2.0-only",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: nxp-imx",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "64c1fb8f-d282-404f-a9c5-138eb3b2d280",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:nxp_imx:uboot_imx_lf:6.6.23:imx95-er1:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/nxp-imx/uboot-imx@lf-6.6.23-imx95-er1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---114b1767-4eea-49c8-95fe-eb10e8f11609",
+      "name": "nxp-qoriq/u-boot",
+      "versionInfo": "lf-6.18.20-2.0.0",
+      "licenseConcluded": "GPL-2.0-or-later",
+      "licenseDeclared": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: nxp-qoriq",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "ed26c91d-f534-4d03-8138-54d3fe6f04c5",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/nxp-qoriq/u-boot@lf-6.18.20-2.0.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---d930610c-ef5b-448d-977d-e8ac8e5c0592",
+      "name": "python-dtoc",
+      "versionInfo": "0.0.7",
+      "licenseConcluded": "GPL-2.0-or-later",
+      "licenseDeclared": "GPL-2.0-or-later",
+      "homepage": "https://docs.u-boot.org/en/latest/develop/driver-model/of-plat.html",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: fedora",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "6d3f3ac9-8ef8-43da-abb1-81d0c2706121",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:rpm/fedora/python-dtoc@0.0.7-1.fc45?arch=noarch",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---98855e37-7f33-48bb-8102-3175214d63cd",
+      "name": "python-u-boot-pylib",
+      "versionInfo": "0.0.7",
+      "licenseConcluded": "GPL-2.0-or-later",
+      "licenseDeclared": "GPL-2.0-or-later",
+      "homepage": "https://docs.u-boot.org",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: fedora",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "31b62a50-e679-4d27-84e0-3261e0493cd7",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:rpm/fedora/python-u-boot-pylib@0.0.7-1.fc45?arch=noarch",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---d493687a-d6ef-477e-9666-c08993ed6759",
+      "name": "U-Boot",
+      "versionInfo": "v2026.04-rc3",
+      "licenseConcluded": "GPL-2.0-or-later",
+      "licenseDeclared": "NOASSERTION",
+      "homepage": "https://source.denx.de/u-boot/u-boot",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: unknown",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:denx:u-boot:2026.04:rc3:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:u_boot:u_boot:2026.04:rc3:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---481b91a3-4712-4bdb-b158-9b80b8b22b8c",
+      "name": "u-boot-cubieboard",
+      "versionInfo": "2026.01",
+      "licenseConcluded": "GPL-2.0-only",
+      "licenseDeclared": "GPL-2.0-only",
+      "homepage": "http://www.denx.de/wiki/U-Boot",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: opensuse",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "be45745c-e410-4bcc-bfc0-9c0789c31c09",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:rpm/opensuse/u-boot-cubieboard@2026.01-1.1?arch=armv7hl",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---fbc138d1-6b00-477b-ae5c-d75ae4ccc0db",
+      "name": "u-boot-socfpgade0nanosoc",
+      "versionInfo": "2026.01",
+      "licenseConcluded": "GPL-2.0-only",
+      "licenseDeclared": "GPL-2.0-only",
+      "homepage": "http://www.denx.de/wiki/U-Boot",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: opensuse",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "87f0d32b-e77a-4bf0-82c2-484f15e96313",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:rpm/opensuse/u-boot-socfpgade0nanosoc@2026.01-1.1?arch=armv7hl",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---70f2c5f5-8aad-4c48-9d80-51a41bb9c503",
+      "name": "u-boot-xlnx",
+      "versionInfo": "xilinx-v2022.1",
+      "licenseConcluded": "GPL-2.0-or-later",
+      "licenseDeclared": "GPL-2.0-or-later",
+      "homepage": "https://github.com/Xilinx/u-boot-xlnx",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: xilinx",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "65feb862-45dc-4751-a0c4-38a0644c7291",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/xilinx/u-boot-xlnx@xilinx-v2022.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---110d8fe2-4019-4849-9531-a59dc1792af2",
+      "name": "u-boot-xlnx",
+      "versionInfo": "xlnx_rebase_v2023.01_2023.1",
+      "licenseConcluded": "GPL-2.0-or-later",
+      "licenseDeclared": "GPL-2.0-or-later",
+      "homepage": "https://github.com/Xilinx/u-boot-xlnx",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: xilinx",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "0fe13833-5eb2-4c0d-8dc6-f79e3e193377",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/xilinx/u-boot-xlnx@xlnx_rebase_v2023.01_2023.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---3d13e3aa-5391-4f97-96bc-e6b3b44dd9c3",
+      "name": "u-boot-xlnx",
+      "versionInfo": "xlnx_rebase_v2024.01_2024.1",
+      "licenseConcluded": "GPL-2.0-or-later",
+      "licenseDeclared": "GPL-2.0-or-later",
+      "homepage": "https://github.com/Xilinx/u-boot-xlnx",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: xilinx",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "a90dda3e-ee8c-4ec8-8d14-8dccfb1a1814",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/xilinx/u-boot-xlnx@xlnx_rebase_v2024.01_2024.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---709401b3-b5a3-4a62-b18b-220b9f95af02",
+      "name": "u-boot-xlnx",
+      "versionInfo": "xlnx_rebase_v2025.01_2025.1",
+      "licenseConcluded": "GPL-2.0-or-later",
+      "licenseDeclared": "GPL-2.0-or-later",
+      "homepage": "https://github.com/Xilinx/u-boot-xlnx",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: xilinx",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "ca288b23-df48-4432-b87c-9494755789ec",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/xilinx/u-boot-xlnx@xlnx_rebase_v2025.01_2025.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---06a09288-df38-4338-8c9c-0c849b487d9e"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---110d8fe2-4019-4849-9531-a59dc1792af2"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "DYNAMIC_LINK",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---114b1767-4eea-49c8-95fe-eb10e8f11609"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---3d13e3aa-5391-4f97-96bc-e6b3b44dd9c3"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "DYNAMIC_LINK",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---3eaae6f4-caea-4623-aec5-f047bf3dd90d"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "DYNAMIC_LINK",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---481b91a3-4712-4bdb-b158-9b80b8b22b8c"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---709401b3-b5a3-4a62-b18b-220b9f95af02"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---70f2c5f5-8aad-4c48-9d80-51a41bb9c503"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---78fa9655-24ee-4a22-8f12-c76f302d3a76"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "DYNAMIC_LINK",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---89a19619-b2b7-421b-ab89-3b74cb1f04a8"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "DYNAMIC_LINK",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---98855e37-7f33-48bb-8102-3175214d63cd"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "DYNAMIC_LINK",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---c5fb9f50-a1e7-4c44-80f0-b0d356389d16"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---c82be287-a096-4b21-9157-cc375ffe88f8"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---d493687a-d6ef-477e-9666-c08993ed6759"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---d8a0cca9-9868-4c29-9fe2-5aacbe9b759b"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "DYNAMIC_LINK",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---d930610c-ef5b-448d-977d-e8ac8e5c0592"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---d9e6b880-e968-4d59-8b53-bd44b40f9e2b"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---f5cbea1c-beac-4d52-a19c-655e142f1ecb"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c",
+      "relationshipType": "DYNAMIC_LINK",
+      "relatedSpdxElement": "SPDXRef-package-7da426fc-6c4b-454a-b5d1-dee5265b7a6c---fbc138d1-6b00-477b-ae5c-d75ae4ccc0db"
+    }
+  ]
+}
