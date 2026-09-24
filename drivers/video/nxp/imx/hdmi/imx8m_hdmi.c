@@ -288,22 +288,22 @@ static int imx8m_hdmi_remove(struct udevice *dev)
 }
 
 struct dm_display_ops imx8m_hdmi_ops = {
-	.read_timing =  imx8m_hdmi_read_timing,
-	.enable =  imx8m_hdmi_enable,
+	.read_timing = imx8m_hdmi_read_timing,
+	.enable = imx8m_hdmi_enable,
 };
 
-static const struct udevice_id  imx8m_hdmi_ids[] = {
+static const struct udevice_id imx8m_hdmi_ids[] = {
 	{ .compatible = "fsl,imx8mq-hdmi" },
 	{ }
 };
 
-U_BOOT_DRIVER( imx8m_hdmi) = {
-	.name				= " imx8m_hdmi",
+U_BOOT_DRIVER(imx8m_hdmi) = {
+	.name				= "imx8m_hdmi",
 	.id				= UCLASS_DISPLAY,
-	.of_match			=  imx8m_hdmi_ids,
+	.of_match			= imx8m_hdmi_ids,
 	.bind				= dm_scan_fdt_dev,
-	.probe				=  imx8m_hdmi_probe,
+	.probe				= imx8m_hdmi_probe,
 	.remove				= imx8m_hdmi_remove,
-	.ops				= & imx8m_hdmi_ops,
-	.priv_auto		= sizeof(struct  imx8m_hdmi_priv),
+	.ops				= &imx8m_hdmi_ops,
+	.priv_auto		= sizeof(struct imx8m_hdmi_priv),
 };
